@@ -72,7 +72,7 @@ Sensitisation is clamped to $\geq 0$.
 | PyO3 wrapper | `py_neuron_default!` macro in `pyo3_neurons.rs` |
 | NetworkRunner wired | `NeuronVariant::NociceptorCell` |
 | `create_neuron("Nociceptor")` | Yes |
-| STRONG tests | 4 (high threshold, sensitisation buildup + decay, no-fire, reset) |
+| coverage tests | 4 (high threshold, sensitisation buildup + decay, no-fire, reset) |
 | NaN/extreme input test | Via NetworkRunner `all_models_*` tests |
 | Benchmark | `nociceptor_10k_steps`: **370 µs** (37 ns/step), i5-11600K |
 

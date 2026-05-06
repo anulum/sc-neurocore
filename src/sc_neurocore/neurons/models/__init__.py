@@ -73,6 +73,7 @@ _CLASS_TO_MODULE = {
     "HillTononiNeuron": "hill_tononi",
     "HindmarshRoseNeuron": "hindmarsh_rose",
     "HodgkinHuxleyNeuron": "hodgkin_huxley",
+    "HybridFisherPosnerLIFNeuron": "hybrid_fisher_posner_lif",
     "HuberBraunNeuron": "huber_braun",
     "IbarzTanakaMapNeuron": "ibarz_tanaka_map",
     "InhibitoryLIFNeuron": "ilif",

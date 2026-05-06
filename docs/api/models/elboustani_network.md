@@ -486,7 +486,7 @@ on a single Zynq-7020 with room for inter-region coupling logic.
 | NetworkRunner wired | `NeuronVariant::ElBoustani` |
 | `create_neuron("ElBoustaniNetwork")` | Yes |
 | `supported_models()` | Includes "ElBoustaniNetwork" |
-| STRONG tests | 10 |
+| coverage tests | 10 |
 | Benchmark | `elboustani_100k_steps`: **6.05 ms** (60.5 ns/step), i5-11600K |
 
 ---

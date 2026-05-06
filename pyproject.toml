@@ -48,6 +48,7 @@ dependencies = [
   "numpy>=1.24",
   "scipy>=1.10",
   "defusedxml>=0.7.1",
+  "tomli>=2.0; python_version < '3.11'",
 ]
 
 [project.urls]
@@ -169,6 +170,10 @@ omit = [
     "*/nir_bridge/*",                   # NIR interop (nir package)
     "*/accel/jax_backend.py",           # JAX GPU backend
     "*/layers/jax_dense_layer.py",      # JAX dense layer
+    "*/accel/julia/neurons/__init__.py",  # Optional Julia backend shim
+    "*/accel/julia/solvers/__init__.py",  # Optional Julia backend shim
+    "*/accel/go/rk4_neurons/__init__.py",  # Optional Go backend shim
+    "*/accel/mojo/rk4_neurons/__init__.py",  # Optional Mojo backend shim
     # --- 116 neuron model files (each tested via model-agnostic step/reset) ---
     "*/neurons/models/*",
     # --- Network engine: coverage enforced since v3.14.0 ---
@@ -179,9 +184,16 @@ omit = [
     "*/network/mpi_runner.py",
     # --- CLI (tested via subprocess in CI, not via pytest) ---
     "*/cli.py",
+    "*/neurons/__main__.py",
+    "*/neurons/dsl_cli.py",
+    "*/quantum_cognition/__main__.py",
+    # --- Hardware/IP packaging tooling ---
+    "*/hdl_gen/ip_xact.py",
     # --- Research/frontier modules ---
     "*/experiments/*",
     "*/drivers/*",
+    "*/quantum_cognition/fs_watcher.py",  # filesystem daemon, integration-tested outside unit CI
+    "*/quantum_cognition/tests/*",        # package-local tests are not source modules
     "*/audio/adaptive_engine.py",
     "*/audio/evs_engine.py",
     "*/sleep/report_generator.py",
@@ -251,12 +263,15 @@ ignore_missing_imports = false
 warn_unused_ignores = false
 warn_return_any = false
 disallow_any_generics = false
+exclude = [
+    "src/sc_neurocore/quantum_cognition/tests/",
+]
 [[tool.mypy.overrides]]
-module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'nir.*', 'h5py.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*', 'gdsfactory.*', 'meep.*', 'gdstk.*', 'dimod.*', 'dwave.*', 'nupack.*']
+module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'qiskit_ibm_runtime.*', 'psutil.*', 'watchdog.*', 'pytest.*', 'llm.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'nir.*', 'h5py.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*', 'gdsfactory.*', 'meep.*', 'gdstk.*', 'dimod.*', 'dwave.*', 'nupack.*']
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ['sc_neurocore.training.*', 'sc_neurocore.qat.*', 'sc_neurocore.conversion.*', 'sc_neurocore.accel.jax_backend', 'sc_neurocore.accel.jit_kernels', 'sc_neurocore.nas.*', 'sc_neurocore._native.*']
+module = ['sc_neurocore.training.*', 'sc_neurocore.qat.*', 'sc_neurocore.conversion.*', 'sc_neurocore.accel.jax_backend', 'sc_neurocore.accel.jit_kernels', 'sc_neurocore.nas.*', 'sc_neurocore._native.*', 'sc_neurocore.quantum_cognition.fs_watcher']
 disallow_subclassing_any = false
 disallow_untyped_decorators = false
 disallow_untyped_calls = false

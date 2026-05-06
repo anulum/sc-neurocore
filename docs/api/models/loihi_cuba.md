@@ -417,7 +417,7 @@ tau, processing at ~20 billion neuron-steps/s.
 | NetworkRunner wired | `NeuronVariant::LoihiCUBA` |
 | `create_neuron("LoihiCUBANeuron")` | Yes |
 | `supported_models()` | Includes "LoihiCUBANeuron" |
-| STRONG tests | 12 (construction, step binary, silent, spikes, u accumulation, u decay, integer type, rate increase, reset, deterministic, population, spike_count) |
+| coverage tests | 12 (construction, step binary, silent, spikes, u accumulation, u decay, integer type, rate increase, reset, deterministic, population, spike_count) |
 | Benchmark | Python: ~445K steps/s |
 
 ---

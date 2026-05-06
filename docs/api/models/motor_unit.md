@@ -75,7 +75,7 @@ where $A_{twitch}$ is the peak twitch amplitude and $\tau_{twitch}$ is the contr
 | NetworkRunner wired | `NeuronVariant::MotorUnitCell` |
 | `create_neuron("MotorUnit")` | Yes (creates slow subtype) |
 | `supported_models()` | Includes "MotorUnit" |
-| STRONG tests | 11 (fire, no-fire, negative, force increase, force decay, fast>slow, force cap, reset, bounded, NaN, performance) |
+| coverage tests | 11 (fire, no-fire, negative, force increase, force decay, fast>slow, force cap, reset, bounded, NaN, performance) |
 | Pipeline integration | Covered by `create_neuron_all_supported` |
 | Benchmark | `motor_unit_10k_steps`: **187 µs** (18.7 ns/step), i5-11600K |
 

@@ -337,5 +337,6 @@ at I=50.0, 200 steps for linear models:
 
 - [Hardware Profiles Guide](hardware_profiles.md) — 32 platform profiles, overflow, rounding
 - [Co-Simulation Guide](cosimulation_guide.md) — Python↔Verilog verification
+- [Pipeline & Adaptive Precision Guide](pipeline_adaptive_precision.md) — Dual-datapath LP/HP switching, 15 canonical pairs
 - [Tutorial 33: Equation-to-Verilog](../tutorials/33_equation_to_verilog.md)
 - [Fixed-Point Design Tutorial](../tutorials/13_fixed_point_design.md)

@@ -88,7 +88,7 @@ ATP release is directly proportional to intracellular Ca2+.
 | PyO3 wrapper | `py_sensory_graded!` macro in `pyo3_neurons.rs` |
 | NetworkRunner wired | **No** — graded model, `step()` returns `f64` |
 | `create_neuron("TasteReceptorCell")` | No (not in NetworkRunner variant enum) |
-| STRONG tests | 5 (depolarise, ATP release, no-response, Ca bounded, reset) |
+| coverage tests | 5 (depolarise, ATP release, no-response, Ca bounded, reset) |
 | NaN/extreme input test | Covered by `ca_bounded` test (10k steps at extreme input) |
 | Benchmark | Not benchmarked (shares arch with olfactory, ~100 ns/step) |
 

@@ -476,7 +476,7 @@ A minimal vestibulocerebellar model:
 | NetworkRunner wired | `NeuronVariant::UnipolarBrush` |
 | `create_neuron("UnipolarBrushCell")` | Yes |
 | `supported_models()` | Includes "UnipolarBrushCell" |
-| STRONG tests | 9 |
+| coverage tests | 9 |
 | Benchmark | `ubc_10k_steps`: **93 µs** (9.3 ns/step), i5-11600K |
 
 ---

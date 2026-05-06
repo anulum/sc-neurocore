@@ -529,7 +529,7 @@ Gilon & Henquin, 2001).
 | NetworkRunner wired | `NeuronVariant::BetaCell` |
 | `create_neuron("EndocrineBetaCell")` | Yes |
 | `supported_models()` | Includes "EndocrineBetaCell" |
-| STRONG tests | 10 |
+| coverage tests | 10 |
 | Benchmark | `beta_cell_1k_steps`: **185.0 µs** (185.0 ns/step), i5-11600K |
 
 ---

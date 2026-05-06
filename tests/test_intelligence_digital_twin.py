@@ -10,6 +10,7 @@ import unittest
 
 from sc_neurocore.compiler.intelligence import ingest_telemetry
 
+
 class TestHILCalibration:
     def test_basic(self):
         from sc_neurocore.compiler.intelligence import generate_hil_calibration
@@ -78,4 +79,3 @@ class TestTelemetry(unittest.TestCase):
         r = ingest_telemetry([], [])
         self.assertTrue(r.healthy)
         self.assertEqual(r.samples, 0)
-

@@ -71,7 +71,7 @@ $$\frac{d[Ca]}{dt} = -(I_{Ca_T})_{inward} \cdot 0.001 - \frac{[Ca]}{\tau_{Ca}} +
 | NetworkRunner wired | `NeuronVariant::DCN` |
 | `create_neuron("DCNNeuron")` | Yes |
 | `supported_models()` | Includes "DCNNeuron" |
-| STRONG tests | 14 (fire, spontaneous, rebound, Ih, NaP excitability, AHP limits rate, Ca²⁺ rises, 7 currents, gates, reset, negative, NaN, extreme, performance) |
+| coverage tests | 14 (fire, spontaneous, rebound, Ih, NaP excitability, AHP limits rate, Ca²⁺ rises, 7 currents, gates, reset, negative, NaN, extreme, performance) |
 | Benchmark | `dcn_1k_steps`: **2.14 ms** (2.14 µs/step), i5-11600K |
 
 ---

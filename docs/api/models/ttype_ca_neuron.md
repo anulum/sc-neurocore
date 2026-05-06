@@ -459,7 +459,7 @@ only during spike sub-steps. In FPGA, this can be a conditional multiply-by-cons
 | NetworkRunner wired | `NeuronVariant::TTypeCa` |
 | `create_neuron("TTypeCa")` | Yes |
 | `supported_models()` | Includes "TTypeCa" |
-| STRONG tests | 11 (fire, silent, rebound, s de-inactivation, spike inactivation, negative, NaN, extreme, reset, gates, performance) |
+| coverage tests | 11 (fire, silent, rebound, s de-inactivation, spike inactivation, negative, NaN, extreme, reset, gates, performance) |
 | Benchmark | `ttype_ca_1k_steps`: **3.94 ms** (3.94 µs/step), i5-11600K |
 
 ---

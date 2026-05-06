@@ -433,7 +433,7 @@ applications, a 32-bit LFSR provides sufficient randomness.
 | NetworkRunner wired | `NeuronVariant::InhomogeneousPoisson` |
 | `create_neuron("InhomogeneousPoissonNeuron")` | Yes |
 | `supported_models()` | Includes "InhomogeneousPoissonNeuron" |
-| STRONG tests | 12 (construction, step, zero rate, negative rate, spikes, rate proportional, time-varying, stochastic, reset noop, custom dt, population, spike_count) |
+| coverage tests | 12 (construction, step, zero rate, negative rate, spikes, rate proportional, time-varying, stochastic, reset noop, custom dt, population, spike_count) |
 | Benchmark | Python: ~205K steps/s |
 
 ---

@@ -269,7 +269,9 @@ class Morphology:
 
 
 def synthesize_morphology(equations: dict[str, str], max_generations: int = 10) -> Morphology:
-    inter_dependencies = sum(1 for v, e in equations.items() for v2 in equations if v2 in e and v != v2)
+    inter_dependencies = sum(
+        1 for v, e in equations.items() for v2 in equations if v2 in e and v != v2
+    )
 
     if inter_dependencies > len(equations) * 1.5:
         topology = "Hypercube"
@@ -287,8 +289,8 @@ def synthesize_morphology(equations: dict[str, str], max_generations: int = 10) 
         bw = 128.0
         lat = 10.0
 
-    bw *= (1.0 + (max_generations * 0.05))
-    lat *= (1.0 - (max_generations * 0.01))
+    bw *= 1.0 + (max_generations * 0.05)
+    lat *= 1.0 - (max_generations * 0.01)
 
     return Morphology(
         topology=topology,
@@ -321,7 +323,9 @@ def enforce_cognitive_bounds(
     for var, expr in equations.items():
         if var in state_bounds:
             min_v, max_v = state_bounds[var]
-            safe_eqs[var] = f"({expr}) > {max_v} ? {max_v} : (({expr}) < {min_v} ? {min_v} : ({expr}))"
+            safe_eqs[var] = (
+                f"({expr}) > {max_v} ? {max_v} : (({expr}) < {min_v} ? {min_v} : ({expr}))"
+            )
             switches += 2
             lyapunov += abs(max_v - min_v) / 100.0
         else:

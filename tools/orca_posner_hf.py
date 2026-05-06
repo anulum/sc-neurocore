@@ -20,6 +20,7 @@ Provides:
 Reference geometry: DFT-optimized S₆ structure from
 Swift et al., Phys. Chem. Chem. Phys. 20 (2018) 12373, Supporting Info.
 """
+
 from __future__ import annotations
 import math
 import re
@@ -46,8 +47,8 @@ import numpy as np
 #   - Nearest P-P (cross-face): ~4.17 Å
 
 # ── Physical Constants ──
-_PO_BOND = 1.534        # P-O bond length in PO₄³⁻ (Å)
-_TETRA_ANGLE = 109.47   # ideal tetrahedral angle (degrees)
+_PO_BOND = 1.534  # P-O bond length in PO₄³⁻ (Å)
+_TETRA_ANGLE = 109.47  # ideal tetrahedral angle (degrees)
 
 # ── S₆ distortion parameters ──
 # Real S₆ symmetry introduces slight deviations from perfect trigonal.
@@ -69,16 +70,16 @@ _TETRA_ANGLE = 109.47   # ideal tetrahedral angle (degrees)
 # ║  molecule is ever isolated.                                 ║
 # ╚═══════════════════════════════════════════════════════════════╝
 _S6_RADIAL_PERTURBATION = np.array([0.015, -0.008, -0.007])  # Å — ESTIMATED
-_S6_ANGULAR_PERTURBATION = np.array([0.8, -0.3, -0.5])       # deg — ESTIMATED
-_S6_HEIGHT_PERTURBATION = np.array([0.012, -0.005, -0.007])   # Å — ESTIMATED
+_S6_ANGULAR_PERTURBATION = np.array([0.8, -0.3, -0.5])  # deg — ESTIMATED
+_S6_HEIGHT_PERTURBATION = np.array([0.012, -0.005, -0.007])  # Å — ESTIMATED
 
 # ── Calcium positions ──
 # Peripheral Ca form two S₆-related tetrahedra around the central Ca.
 # Distances from DFT: Ca_c-Ca_p ≈ 3.30 Å.
 # The two tetrahedra are rotated 60° relative to each other.
 _CA_CENTRAL = np.array([0.0, 0.0, 0.0])
-_CA_RADIAL = 3.30   # Ca-center distance projected to xy (Å)
-_CA_HEIGHT = 0.80    # ±z displacement (Å)
+_CA_RADIAL = 3.30  # Ca-center distance projected to xy (Å)
+_CA_HEIGHT = 0.80  # ±z displacement (Å)
 
 
 def _build_ca_positions() -> dict[str, np.ndarray]:
@@ -101,23 +102,19 @@ def _build_ca_positions() -> dict[str, np.ndarray]:
 
     ca_specs = [
         # (angle_deg, z, radius) — at r=3.80 Å, well outside PO₄ envelope
-        (30,   2.20, 3.80),   # Ca1: between P1(0°) and P6(300°)
-        (90,   2.20, 3.80),   # Ca2: between P2(120°) and P4(240°)
-        (210,  2.20, 3.80),   # Ca3: between P3(240°) and P5(120°)
-        (330, -0.40, 3.80),   # Ca4: below equator
-        (150, -2.20, 3.80),   # Ca5: mirror of Ca1
-        (270, -2.20, 3.80),   # Ca6: mirror of Ca2
-        (30,  -2.20, 3.80),   # Ca7: mirror of Ca3
-        (210, -0.40, 3.80),   # Ca8: below equator
+        (30, 2.20, 3.80),  # Ca1: between P1(0°) and P6(300°)
+        (90, 2.20, 3.80),  # Ca2: between P2(120°) and P4(240°)
+        (210, 2.20, 3.80),  # Ca3: between P3(240°) and P5(120°)
+        (330, -0.40, 3.80),  # Ca4: below equator
+        (150, -2.20, 3.80),  # Ca5: mirror of Ca1
+        (270, -2.20, 3.80),  # Ca6: mirror of Ca2
+        (30, -2.20, 3.80),  # Ca7: mirror of Ca3
+        (210, -0.40, 3.80),  # Ca8: below equator
     ]
 
     for i, (ang, z, r) in enumerate(ca_specs):
         angle = math.radians(ang)
-        coords[f"Ca{i+1}"] = np.array([
-            r * math.cos(angle),
-            r * math.sin(angle),
-            z
-        ])
+        coords[f"Ca{i + 1}"] = np.array([r * math.cos(angle), r * math.sin(angle), z])
 
     return coords
 
@@ -138,19 +135,16 @@ def _build_p_positions() -> dict[str, np.ndarray]:
         r = r_base + _S6_RADIAL_PERTURBATION[i]
         angle = math.radians(i * 120 + _S6_ANGULAR_PERTURBATION[i])
         z = z_base + _S6_HEIGHT_PERTURBATION[i]
-        coords[f"P{i+1}"] = np.array([r * math.cos(angle),
-                                       r * math.sin(angle), z])
+        coords[f"P{i + 1}"] = np.array([r * math.cos(angle), r * math.sin(angle), z])
         # Lower face: S₆ operation = rotation by 60° + z inversion
         # S₆ symmetry: if upper atom is at (r, φ, z), the S₆-related
         # atom is at (r, φ + 60°, -z)
         angle_lower = math.radians(i * 120 + 60 + _S6_ANGULAR_PERTURBATION[i])
-        coords[f"P{i+4}"] = np.array([r * math.cos(angle_lower),
-                                       r * math.sin(angle_lower), -z])
+        coords[f"P{i + 4}"] = np.array([r * math.cos(angle_lower), r * math.sin(angle_lower), -z])
     return coords
 
 
-def _build_po4_tetrahedron(p_center: np.ndarray, face_normal: np.ndarray
-                            ) -> list[np.ndarray]:
+def _build_po4_tetrahedron(p_center: np.ndarray, face_normal: np.ndarray) -> list[np.ndarray]:
     """Generate 4 oxygen positions for a PO₄ tetrahedron.
 
     Places O atoms at exact tetrahedral angles (109.47°) around P
@@ -162,12 +156,15 @@ def _build_po4_tetrahedron(p_center: np.ndarray, face_normal: np.ndarray
     """
     # Standard tetrahedron vertices (inscribed in unit sphere)
     # These give exact 109.47° angles between any pair
-    tet = np.array([
-        [ 1.0,  1.0,  1.0],
-        [ 1.0, -1.0, -1.0],
-        [-1.0,  1.0, -1.0],
-        [-1.0, -1.0,  1.0],
-    ], dtype=np.float64)
+    tet = np.array(
+        [
+            [1.0, 1.0, 1.0],
+            [1.0, -1.0, -1.0],
+            [-1.0, 1.0, -1.0],
+            [-1.0, -1.0, 1.0],
+        ],
+        dtype=np.float64,
+    )
     # Normalize to unit vectors
     tet = tet / np.linalg.norm(tet[0])
 
@@ -193,11 +190,13 @@ def _build_po4_tetrahedron(p_center: np.ndarray, face_normal: np.ndarray
         axis /= ax_norm
         cos_a = np.clip(np.dot(src, target), -1, 1)
         sin_a = ax_norm
-        K = np.array([
-            [0, -axis[2], axis[1]],
-            [axis[2], 0, -axis[0]],
-            [-axis[1], axis[0], 0],
-        ])
+        K = np.array(
+            [
+                [0, -axis[2], axis[1]],
+                [axis[2], 0, -axis[0]],
+                [-axis[1], axis[0], 0],
+            ]
+        )
         R = np.eye(3) + sin_a * K + (1 - cos_a) * (K @ K)
     else:
         R = np.eye(3)
@@ -205,8 +204,7 @@ def _build_po4_tetrahedron(p_center: np.ndarray, face_normal: np.ndarray
     return [p_center + _PO_BOND * (R @ v) for v in tet]
 
 
-def _build_all_oxygens(p_coords: dict[str, np.ndarray]
-                        ) -> dict[str, list[np.ndarray]]:
+def _build_all_oxygens(p_coords: dict[str, np.ndarray]) -> dict[str, list[np.ndarray]]:
     """Generate O positions for all 6 PO₄ tetrahedra."""
     oxygens = {}
     face_normal_up = np.array([0, 0, 1.0])
@@ -336,7 +334,7 @@ def compute_pp_distances() -> list[tuple[str, str, float]]:
     names = sorted(P.keys())
     pairs = []
     for i, a in enumerate(names):
-        for b in names[i+1:]:
+        for b in names[i + 1 :]:
             d = float(np.linalg.norm(P[a] - P[b]))
             pairs.append((a, b, round(d, 3)))
     return sorted(pairs, key=lambda x: x[2])
@@ -413,7 +411,7 @@ def compute_qubit_dipolar_tensor_table(
     table: list[dict[str, float | int | str]] = []
     names = sorted(p_qubit_map)
     for i, pa in enumerate(names):
-        for pb in names[i + 1:]:
+        for pb in names[i + 1 :]:
             tensor = _dipolar_tensor_from_vector(p_coords[pb] - p_coords[pa], a_ref_Hz)
             table.append(
                 {
@@ -499,16 +497,18 @@ def generate_orca_input(
     ]
     if extra_keywords:
         lines.append(f"! {extra_keywords}")
-    lines.extend([
-        "",
-        "%eprnmr",
-        "  gtensor = true",
-        f"  nuclei = {eprnmr_nuclei}",
-        "  nuclei = all Ca {{aiso, adip}}",
-        "  printlevel = 5",
-        "end",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "%eprnmr",
+            "  gtensor = true",
+            f"  nuclei = {eprnmr_nuclei}",
+            "  nuclei = all Ca {{aiso, adip}}",
+            "  printlevel = 5",
+            "end",
+            "",
+        ]
+    )
 
     if xyz_path:
         p = Path(xyz_path)
@@ -551,6 +551,7 @@ def generate_radical_input(n_cores: int = 6) -> str:
 # ORCA Output Parser
 # ═════════════════════════════════════════════════════════════════
 
+
 def parse_orca_hf_output(output_path: str | Path) -> list[dict]:
     """Parse ORCA output file for ³¹P HF tensor components.
 
@@ -569,7 +570,7 @@ def parse_orca_hf_output(output_path: str | Path) -> list[dict]:
         r"\s*y\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s*\n"
         r"\s*z\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s*\n"
         r".*?Isotropic\s*=\s*([-\d.]+)\s*MHz",
-        re.DOTALL
+        re.DOTALL,
     )
 
     # Pattern 2: Alternative ORCA format with "A(iso)" label
@@ -580,45 +581,61 @@ def parse_orca_hf_output(output_path: str | Path) -> list[dict]:
         r"([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s*\n"
         r"\s*([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s*\n"
         r"\s*([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)",
-        re.DOTALL
+        re.DOTALL,
     )
 
     for m in p_block.finditer(text):
         idx = int(m.group(1))
-        A = np.array([
-            [float(m.group(2)), float(m.group(3)), float(m.group(4))],
-            [float(m.group(5)), float(m.group(6)), float(m.group(7))],
-            [float(m.group(8)), float(m.group(9)), float(m.group(10))],
-        ])
+        A = np.array(
+            [
+                [float(m.group(2)), float(m.group(3)), float(m.group(4))],
+                [float(m.group(5)), float(m.group(6)), float(m.group(7))],
+                [float(m.group(8)), float(m.group(9)), float(m.group(10))],
+            ]
+        )
         aiso = float(m.group(11))
         # Enforce symmetry: A should be symmetric
         A = 0.5 * (A + A.T)
-        results.append({
-            "atom_index": idx,
-            "Axx": A[0, 0], "Ayy": A[1, 1], "Azz": A[2, 2],
-            "Axy": A[0, 1], "Axz": A[0, 2], "Ayz": A[1, 2],
-            "aiso": aiso,
-            "raw_matrix_MHz": A,
-        })
+        results.append(
+            {
+                "atom_index": idx,
+                "Axx": A[0, 0],
+                "Ayy": A[1, 1],
+                "Azz": A[2, 2],
+                "Axy": A[0, 1],
+                "Axz": A[0, 2],
+                "Ayz": A[1, 2],
+                "aiso": aiso,
+                "raw_matrix_MHz": A,
+            }
+        )
 
     if not results:
         for m in p_block_alt.finditer(text):
             idx = int(m.group(1))
             aiso = float(m.group(2))
-            A_dip = np.array([
-                [float(m.group(3)), float(m.group(4)), float(m.group(5))],
-                [float(m.group(6)), float(m.group(7)), float(m.group(8))],
-                [float(m.group(9)), float(m.group(10)), float(m.group(11))],
-            ])
+            A_dip = np.array(
+                [
+                    [float(m.group(3)), float(m.group(4)), float(m.group(5))],
+                    [float(m.group(6)), float(m.group(7)), float(m.group(8))],
+                    [float(m.group(9)), float(m.group(10)), float(m.group(11))],
+                ]
+            )
             A = A_dip + aiso * np.eye(3)
             A = 0.5 * (A + A.T)
-            results.append({
-                "atom_index": idx,
-                "Axx": A[0, 0], "Ayy": A[1, 1], "Azz": A[2, 2],
-                "Axy": A[0, 1], "Axz": A[0, 2], "Ayz": A[1, 2],
-                "aiso": aiso,
-                "raw_matrix_MHz": A,
-            })
+            results.append(
+                {
+                    "atom_index": idx,
+                    "Axx": A[0, 0],
+                    "Ayy": A[1, 1],
+                    "Azz": A[2, 2],
+                    "Axy": A[0, 1],
+                    "Axz": A[0, 2],
+                    "Ayz": A[1, 2],
+                    "aiso": aiso,
+                    "raw_matrix_MHz": A,
+                }
+            )
 
     return results
 
@@ -644,8 +661,7 @@ def auto_a_ref(hf_list: list[dict], target_max: float = 0.5) -> float:
     return max_component / target_max if max_component > 0 else 7080.0
 
 
-def convert_to_dimensionless(hf_list: list[dict],
-                              a_ref_MHz: float | None = None) -> list[dict]:
+def convert_to_dimensionless(hf_list: list[dict], a_ref_MHz: float | None = None) -> list[dict]:
     """Convert ORCA HF tensors (MHz) to dimensionless circuit units.
 
     If a_ref_MHz is None, it is computed automatically from the data
@@ -656,8 +672,11 @@ def convert_to_dimensionless(hf_list: list[dict],
 
     out = []
     for hf in hf_list:
-        d = {k: v / a_ref_MHz for k, v in hf.items()
-             if k in ("Axx", "Ayy", "Azz", "Axy", "Axz", "Ayz")}
+        d = {
+            k: v / a_ref_MHz
+            for k, v in hf.items()
+            if k in ("Axx", "Ayy", "Azz", "Axy", "Axz", "Ayz")
+        }
         d["atom_index"] = hf["atom_index"]
         d["aiso_MHz"] = hf.get("aiso", 0)
         d["a_ref_MHz"] = a_ref_MHz
@@ -675,6 +694,7 @@ def group_by_site(hf_dimless: list[dict]) -> tuple[list[dict], list[dict]]:
 # ═════════════════════════════════════════════════════════════════
 # Full Pipeline
 # ═════════════════════════════════════════════════════════════════
+
 
 def run_full_pipeline(orca_output: str | Path | None = None) -> dict[str, Any]:
     """Run the complete DFT → circuit parameter pipeline.

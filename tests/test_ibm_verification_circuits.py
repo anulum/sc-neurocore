@@ -7,6 +7,7 @@
 # SC-NeuroCore — Posner verification circuit tests
 
 """Tests for explicit Posner verification circuit construction."""
+
 import math
 import sys
 from pathlib import Path
@@ -20,13 +21,24 @@ pytest.importorskip("scipy")
 
 import verify_ibm_heron as vih  # noqa: E402
 from verify_ibm_heron import (  # noqa: E402
-    REFERENCE_TEST_HF_SITE1, REFERENCE_TEST_HF_SITE2, DEFAULT_NUC_DIPOLAR,
-    DEFAULT_NUC_DIPOLAR_CROSS, _INTRA_PAIRS, _CROSS_PAIRS,
-    _DIPOLAR_PAIRS, analyse_chain, analyse_rpm_8q,
-    analytical_singlet_thermal, analytical_singlet_recombination,
-    analytical_chain_corr, _posner_chain_couplings,
-    _parse_dipolar_pairs, build_posner_circuit, build_posner_decoherence_circuit,
-    build_chain_circuit, posner_hamiltonian,
+    REFERENCE_TEST_HF_SITE1,
+    REFERENCE_TEST_HF_SITE2,
+    DEFAULT_NUC_DIPOLAR,
+    DEFAULT_NUC_DIPOLAR_CROSS,
+    _INTRA_PAIRS,
+    _CROSS_PAIRS,
+    _DIPOLAR_PAIRS,
+    analyse_chain,
+    analyse_rpm_8q,
+    analytical_singlet_thermal,
+    analytical_singlet_recombination,
+    analytical_chain_corr,
+    _posner_chain_couplings,
+    _parse_dipolar_pairs,
+    build_posner_circuit,
+    build_posner_decoherence_circuit,
+    build_chain_circuit,
+    posner_hamiltonian,
 )
 from qiskit.quantum_info import Statevector  # noqa: E402
 
@@ -39,14 +51,23 @@ INCORPORATION_TEST_TENSORS = {
     "p2_p3": {"Axx": 0.02, "Ayy": 0.02, "Azz": 0.03, "Axy": 0.0, "Axz": 0.0, "Ayz": 0.01},
 }
 CA_ELECTRON_MAP_TEST = {
-    8: 0, 11: 0, 14: 0,
-    17: 1, 20: 1, 23: 1,
-    26: 0, 29: 1, 32: 0,
+    8: 0,
+    11: 0,
+    14: 0,
+    17: 1,
+    20: 1,
+    23: 1,
+    26: 0,
+    29: 1,
+    32: 0,
 }
 CA43_ZERO_TENSORS = {start: ZERO_TENSOR for start in CA_ELECTRON_MAP_TEST}
 
+
 def _sv(qc, shots=100_000):
-    return Statevector.from_instruction(qc.remove_final_measurements(inplace=False)).sample_counts(shots)
+    return Statevector.from_instruction(qc.remove_final_measurements(inplace=False)).sample_counts(
+        shots
+    )
 
 
 def _angle_sum(qc, gate_name: str, qa: int, qb: int) -> float:
@@ -60,6 +81,7 @@ def _angle_sum(qc, gate_name: str, qa: int, qb: int) -> float:
         if qubits == target:
             total += float(inst.params[0])
     return total
+
 
 class TestHamiltonian:
     def test_hermitian(self):
@@ -99,15 +121,15 @@ class TestHamiltonian:
         assert len(_CROSS_PAIRS) == 9
 
     def test_anisotropic_differs(self):
-        iso = [{"Axx":0.5,"Ayy":0.5,"Azz":0.5}]*3
+        iso = [{"Axx": 0.5, "Ayy": 0.5, "Azz": 0.5}] * 3
         H_iso = posner_hamiltonian(1.0, iso, iso)
         H_aniso = posner_hamiltonian(1.0, HF1, HF2)
         assert not np.allclose(H_iso, H_aniso)
 
     def test_off_diagonal_hf(self):
         """Off-diagonal HF (Axy, Axz, Ayz) must change H vs diagonal-only."""
-        diag = [{"Axx":0.5,"Ayy":0.5,"Azz":0.5,"Axy":0,"Axz":0,"Ayz":0}]*3
-        full = [{"Axx":0.5,"Ayy":0.5,"Azz":0.5,"Axy":0.05,"Axz":0.03,"Ayz":0.02}]*3
+        diag = [{"Axx": 0.5, "Ayy": 0.5, "Azz": 0.5, "Axy": 0, "Axz": 0, "Ayz": 0}] * 3
+        full = [{"Axx": 0.5, "Ayy": 0.5, "Azz": 0.5, "Axy": 0.05, "Axz": 0.03, "Ayz": 0.02}] * 3
         H_diag = posner_hamiltonian(1.0, diag, diag)
         H_full = posner_hamiltonian(1.0, full, full)
         assert not np.allclose(H_diag, H_full), "Off-diagonal HF must affect H"
@@ -118,8 +140,9 @@ class TestHamiltonian:
         assert len(_DIPOLAR_PAIRS) == 15
         couplings = [d for _, _, d in _DIPOLAR_PAIRS]
         # Couplings are ~10⁻⁸, need high-precision rounding
-        assert len(set(round(c, 12) for c in couplings)) >= 3, \
-            f"Must have >=3 distinct values, got {set(round(c,12) for c in couplings)}"
+        assert len(set(round(c, 12) for c in couplings)) >= 3, (
+            f"Must have >=3 distinct values, got {set(round(c, 12) for c in couplings)}"
+        )
 
     def test_external_dipolar_pairs_require_all_31p_pairs(self):
         pairs = [
@@ -142,8 +165,9 @@ class TestHamiltonian:
         assert parsed[0][2]["Azz"] == 10.5e-8
 
     def test_external_dipolar_pairs_fail_closed_when_incomplete(self):
-        pairs = [[i, j, -1e-8, -1e-8, 2e-8, 0.0, 0.0, 0.0]
-                 for i in range(2, 8) for j in range(i + 1, 8)]
+        pairs = [
+            [i, j, -1e-8, -1e-8, 2e-8, 0.0, 0.0, 0.0] for i in range(2, 8) for j in range(i + 1, 8)
+        ]
         with pytest.raises(ValueError, match="15 unique"):
             _parse_dipolar_pairs(pairs[:-1])
 
@@ -151,6 +175,7 @@ class TestHamiltonian:
         pairs = [[i, j, 1e-8] for i in range(2, 8) for j in range(i + 1, 8)]
         with pytest.raises(ValueError, match="full tensor"):
             _parse_dipolar_pairs(pairs)
+
 
 class TestExchangeProtection:
     def test_weak_exchange_allows_mixing(self):
@@ -162,9 +187,10 @@ class TestExchangeProtection:
         assert p > 0.85, f"J=10 must protect, got {p}"
 
     def test_zero_hf_preserves(self):
-        z = [{"Axx":0,"Ayy":0,"Azz":0,"Axy":0,"Axz":0,"Ayz":0}]*3
+        z = [{"Axx": 0, "Ayy": 0, "Azz": 0, "Axy": 0, "Axz": 0, "Ayz": 0}] * 3
         p = analytical_singlet_thermal(1.0, z, z, 0.0, math.pi, 0.0, 0.0)
         assert p > 0.99
+
 
 class TestRecombination:
     def test_recombination_callable(self):
@@ -176,19 +202,22 @@ class TestRecombination:
         phi_i = analytical_singlet_thermal(1.0, HF1, HF2, omega_0=0.5, t=math.pi)
         assert abs(phi_r - phi_i) > 0.01, "Recomb-weighted must differ from single-t"
 
+
 class TestThermalAverage:
     def test_64_configs_differ_from_single(self):
         from scipy.linalg import expm
+
         H = posner_hamiltonian(1.0, HF1, HF2)
         U = expm(-1j * H * math.pi)
-        se = np.array([0,1,-1,0], dtype=complex)/math.sqrt(2)
-        PS = np.kron(np.outer(se,se.conj()), np.eye(64))
+        se = np.array([0, 1, -1, 0], dtype=complex) / math.sqrt(2)
+        PS = np.kron(np.outer(se, se.conj()), np.eye(64))
         ns = np.zeros(64, dtype=complex)
         ns[0] = 1.0
         psi = U @ np.kron(se, ns)
         p_single = float(np.real(psi.conj() @ PS @ psi))
         p_thermal = analytical_singlet_thermal(1.0, HF1, HF2, t=math.pi)
         assert abs(p_single - p_thermal) > 0.001
+
 
 class TestCircuits:
     def test_posner_8q(self):
@@ -237,6 +266,7 @@ class TestCircuits:
         assert math.isclose(_angle_sum(qc, "rxx", qi, qj), tensor["Axx"] * t / 2, rel_tol=1e-12)
         assert math.isclose(_angle_sum(qc, "ryy", qi, qj), tensor["Ayy"] * t / 2, rel_tol=1e-12)
 
+
 class TestChainPhysics:
     def test_exponential_superexchange(self):
         J = _posner_chain_couplings(10)
@@ -257,6 +287,7 @@ class TestChainPhysics:
         J = _posner_chain_couplings(n)
         th = analytical_chain_corr(n, J, 1.0)
         assert abs(th[0]) > abs(th[4])
+
 
 class TestDecoherencePhysics:
     def test_zero_delay_preserves(self):
@@ -281,8 +312,14 @@ class TestDecoherencePhysics:
 
     def test_dd_vs_raw_same_on_simulator(self):
         """On exact simulator, DD and raw give same result (no noise)."""
-        r_raw = analyse_rpm_8q(_sv(build_posner_decoherence_circuit(delay_dt=4000, hf1=HF1, hf2=HF2)))
-        r_dd = analyse_rpm_8q(_sv(build_posner_decoherence_circuit(delay_dt=4000, dd_sequence="xy4", hf1=HF1, hf2=HF2)))
+        r_raw = analyse_rpm_8q(
+            _sv(build_posner_decoherence_circuit(delay_dt=4000, hf1=HF1, hf2=HF2))
+        )
+        r_dd = analyse_rpm_8q(
+            _sv(
+                build_posner_decoherence_circuit(delay_dt=4000, dd_sequence="xy4", hf1=HF1, hf2=HF2)
+            )
+        )
         # DD adds extra X,Y gates that cancel in noiseless sim
         # Allow some tolerance due to the gates not being perfectly transparent on state
         assert abs(r_raw["singlet_probability"] - r_dd["singlet_probability"]) < 0.05
@@ -490,6 +527,7 @@ class TestCa43Enriched:
         ext = pytest.importorskip("posner_extended")
         qiskit_aer = pytest.importorskip("qiskit_aer")
         from qiskit import transpile
+
         sim = qiskit_aer.AerSimulator(
             method="matrix_product_state",
             matrix_product_state_max_bond_dimension=32,

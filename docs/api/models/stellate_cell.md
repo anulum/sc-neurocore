@@ -457,7 +457,7 @@ Comparable to other WB + channel extension models (BK, Ih, TTypeCa).
 | NetworkRunner wired | `NeuronVariant::Stellate` |
 | `create_neuron("StellateCell")` | Yes |
 | `supported_models()` | Includes "StellateCell" |
-| STRONG tests | 11 (fire, silent, high-freq, minimal adaptation, Kv3.1, negative, NaN, extreme, reset, gates, performance) |
+| coverage tests | 11 (fire, silent, high-freq, minimal adaptation, Kv3.1, negative, NaN, extreme, reset, gates, performance) |
 | Benchmark | `stellate_1k_steps`: **5.58 ms** (5.58 µs/step), i5-11600K |
 
 ---

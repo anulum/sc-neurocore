@@ -81,7 +81,7 @@ Sub-stepping: 4 steps per call (0.1 ms real time per call).
 | NetworkRunner wired | `NeuronVariant::UpperMotor` |
 | `create_neuron("UpperMotor")` | Yes |
 | `supported_models()` | Includes "UpperMotor" |
-| STRONG tests | 10 (fire, no-fire, negative, adaptation, Ca2+, reset, bounded, NaN, extreme, performance) |
+| coverage tests | 10 (fire, no-fire, negative, adaptation, Ca2+, reset, bounded, NaN, extreme, performance) |
 | Pipeline integration | Covered by `create_neuron_all_supported` |
 | Benchmark | `upper_motor_1k_steps`: **3.24 ms** (3.24 µs/step), i5-11600K |
 

@@ -16,6 +16,7 @@ Experiments
 2. **Heisenberg Propagation** — 10q magnon dynamics (first-principles).
 3. **Posner Decoherence** — 8q Posner circuit with calibrated delay.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -62,6 +63,7 @@ def _ps(n, i, P):
     ops[i] = P
     return _kron(*ops)
 
+
 # ── Hyperfine test fixtures ─────────────────────────────────────
 # These tensors are unit-test fixtures only. Runtime verification requires
 # explicit `--hf-json`; builder functions call `_require_hf()` and do not use
@@ -74,8 +76,9 @@ REFERENCE_TEST_HF_SITE1 = [
 REFERENCE_TEST_HF_SITE2 = [
     {"Axx": 0.30, "Ayy": 0.33, "Azz": 0.37, "Axy": 0.012, "Axz": 0.008, "Ayz": 0.01},
     {"Axx": 0.28, "Ayy": 0.32, "Azz": 0.35, "Axy": 0.015, "Axz": 0.006, "Ayz": 0.012},
-    {"Axx": 0.27, "Ayy": 0.30, "Azz": 0.33, "Axy": 0.01,  "Axz": 0.01,  "Ayz": 0.008},
+    {"Axx": 0.27, "Ayy": 0.30, "Azz": 0.33, "Axy": 0.01, "Axz": 0.01, "Ayz": 0.008},
 ]
+
 
 def _load_hf_json(path: str | Path) -> tuple[list[dict], list[dict]]:
     """Load explicit hyperfine tensors from JSON.
@@ -140,9 +143,7 @@ def _dipolar_tensor_from_mapping(raw: dict, idx: int) -> dict[str, float]:
                 tensor[key] = float(raw[name])
                 break
         else:
-            raise ValueError(
-                f"nuclear_dipolar_pairs[{idx}] missing full tensor component {key}"
-            )
+            raise ValueError(f"nuclear_dipolar_pairs[{idx}] missing full tensor component {key}")
     return tensor
 
 
@@ -169,9 +170,7 @@ def _parse_dipolar_pairs(raw_pairs) -> list[tuple[int, int, dict[str, float]]]:
         if qi_i > qj_i:
             qi_i, qj_i = qj_i, qi_i
         if qi_i < 2 or qj_i > 7 or qi_i == qj_i:
-            raise ValueError(
-                f"nuclear_dipolar_pairs[{idx}] has invalid 31P qubits {(qi_i, qj_i)}"
-            )
+            raise ValueError(f"nuclear_dipolar_pairs[{idx}] has invalid 31P qubits {(qi_i, qj_i)}")
         if any(not math.isfinite(value) for value in tensor.values()):
             raise ValueError(f"nuclear_dipolar_pairs[{idx}] has non-finite tensor")
         pairs.append((qi_i, qj_i, tensor))
@@ -199,8 +198,7 @@ def _configure_dipolar_pairs_from_extended(extended: dict) -> None:
     global _DIPOLAR_TENSORS, _DIPOLAR_PAIRS
     _DIPOLAR_TENSORS = _parse_dipolar_pairs(raw_pairs)
     _DIPOLAR_PAIRS = [
-        (i, j, max(abs(tensor[key]) for key in _DIPOLAR_KEYS))
-        for i, j, tensor in _DIPOLAR_TENSORS
+        (i, j, max(abs(tensor[key]) for key in _DIPOLAR_KEYS)) for i, j, tensor in _DIPOLAR_TENSORS
     ]
 
 
@@ -231,6 +229,7 @@ def _require_hf(hf1: list[dict] | None, hf2: list[dict] | None) -> tuple[list[di
         )
     return hf1, hf2
 
+
 # Per-pair nuclear dipolar coupling from the local S6 Posner geometry helper.
 # This table is used for unit tests and explicit reference calculations only.
 # Runtime verification requires external nuclear_dipolar_pairs in --extended-json.
@@ -247,12 +246,13 @@ def _require_hf(hf1: list[dict] | None, hf2: list[dict] | None) -> tuple[list[di
 # negligible for RPM singlet yield (ns timescale) but relevant for
 # Posner coherence on Fisher's proposed s–min timescale.
 
-_MU0_4PI = 1e-7           # T·m/A
-_GAMMA_P = 1.0829e8       # rad/(s·T) for ³¹P
-_HBAR = 1.0546e-34        # J·s
+_MU0_4PI = 1e-7  # T·m/A
+_GAMMA_P = 1.0829e8  # rad/(s·T) for ³¹P
+_HBAR = 1.0546e-34  # J·s
 # Circuit reference scale for dimensionless Trotter angles. Hyperfine JSON
 # inputs must be prepared in the same circuit units.
-_A_REF_HZ = 7.08e9        # Hz
+_A_REF_HZ = 7.08e9  # Hz
+
 
 def _d_from_r_physical(r_angstrom):
     """Physically correct ³¹P-³¹P dipolar coupling in dimensionless units.
@@ -271,6 +271,7 @@ def _d_from_r_physical(r_angstrom):
     D_dd_Hz = _MU0_4PI * _GAMMA_P**2 * _HBAR / (r_m**3 * 2 * math.pi)
     return D_dd_Hz / _A_REF_HZ
 
+
 # (qubit_i, qubit_j, distance_Å) — dynamically computed from S₆ coordinates
 # See tools/orca_posner_hf.py compute_pp_distances() for derivation.
 # With S₆ distortions, all 15 P-P distances are non-degenerate:
@@ -281,6 +282,7 @@ def _build_dipolar_table():
     """Build dipolar table from DFT-optimized S₆ coordinates."""
     try:
         from orca_posner_hf import compute_qubit_dipolar_table
+
         qt = compute_qubit_dipolar_table()
         return [(qi, qj, r) for qi, qj, r, _ in qt]
     except ImportError:
@@ -298,43 +300,50 @@ def _build_dipolar_table():
             "Could not compute Posner qubit dipolar table from ORCA geometry helper"
         ) from exc
 
+
 _DIPOLAR_TABLE = _build_dipolar_table()
 # Precompute coupling strengths (physically correct magnitudes)
 _DIPOLAR_PAIRS = [(i, j, _d_from_r_physical(r)) for i, j, r in _DIPOLAR_TABLE]
 try:
     from orca_posner_hf import compute_qubit_dipolar_tensor_table
+
     _DIPOLAR_TENSORS = [
         (int(row["qubit_i"]), int(row["qubit_j"]), {key: float(row[key]) for key in _DIPOLAR_KEYS})
         for row in compute_qubit_dipolar_tensor_table()
     ]
 except Exception:
     _DIPOLAR_TENSORS = [
-        (i, j, {"Axx": -d, "Ayy": -d, "Azz": 2*d, "Axy": 0.0, "Axz": 0.0, "Ayz": 0.0})
+        (i, j, {"Axx": -d, "Ayy": -d, "Azz": 2 * d, "Axy": 0.0, "Axz": 0.0, "Ayz": 0.0})
         for i, j, d in _DIPOLAR_PAIRS
     ]
 
-DEFAULT_NUC_DIPOLAR = _d_from_r_physical(5.0)      # intra-site avg
-DEFAULT_NUC_DIPOLAR_CROSS = _d_from_r_physical(6.5) # cross-far avg
-_INTRA_PAIRS = [(2,3),(2,4),(3,4),(5,6),(5,7),(6,7)]
-_CROSS_PAIRS = [(2,5),(2,6),(2,7),(3,5),(3,6),(3,7),(4,5),(4,6),(4,7)]
+DEFAULT_NUC_DIPOLAR = _d_from_r_physical(5.0)  # intra-site avg
+DEFAULT_NUC_DIPOLAR_CROSS = _d_from_r_physical(6.5)  # cross-far avg
+_INTRA_PAIRS = [(2, 3), (2, 4), (3, 4), (5, 6), (5, 7), (6, 7)]
+_CROSS_PAIRS = [(2, 5), (2, 6), (2, 7), (3, 5), (3, 6), (3, 7), (4, 5), (4, 6), (4, 7)]
 
 
 def _add_spin_tensor_hamiltonian(H, n, qi, qj, tensor):
-    H += (tensor["Axx"]/4)*_pp(n,qi,qj,_X,_X)
-    H += (tensor["Ayy"]/4)*_pp(n,qi,qj,_Y,_Y)
-    H += (tensor["Azz"]/4)*_pp(n,qi,qj,_Z,_Z)
-    H += (tensor["Axy"]/4)*(_pp(n,qi,qj,_X,_Y) + _pp(n,qi,qj,_Y,_X))
-    H += (tensor["Axz"]/4)*(_pp(n,qi,qj,_X,_Z) + _pp(n,qi,qj,_Z,_X))
-    H += (tensor["Ayz"]/4)*(_pp(n,qi,qj,_Y,_Z) + _pp(n,qi,qj,_Z,_Y))
+    H += (tensor["Axx"] / 4) * _pp(n, qi, qj, _X, _X)
+    H += (tensor["Ayy"] / 4) * _pp(n, qi, qj, _Y, _Y)
+    H += (tensor["Azz"] / 4) * _pp(n, qi, qj, _Z, _Z)
+    H += (tensor["Axy"] / 4) * (_pp(n, qi, qj, _X, _Y) + _pp(n, qi, qj, _Y, _X))
+    H += (tensor["Axz"] / 4) * (_pp(n, qi, qj, _X, _Z) + _pp(n, qi, qj, _Z, _X))
+    H += (tensor["Ayz"] / 4) * (_pp(n, qi, qj, _Y, _Z) + _pp(n, qi, qj, _Z, _Y))
     return H
+
 
 # ═════════════════════════════════════════════════════════════════
 # Posner Hamiltonian (8 qubits)
 # ═════════════════════════════════════════════════════════════════
 
+
 def posner_hamiltonian(
-    J: float, hf1: list[dict] | None = None, hf2: list[dict] | None = None,
-    omega_0: float = 0.0, d_nuc: float = DEFAULT_NUC_DIPOLAR,
+    J: float,
+    hf1: list[dict] | None = None,
+    hf2: list[dict] | None = None,
+    omega_0: float = 0.0,
+    d_nuc: float = DEFAULT_NUC_DIPOLAR,
     d_nuc_cross: float = DEFAULT_NUC_DIPOLAR_CROSS,
 ) -> np.ndarray:
     r"""Full 8-qubit Posner Hamiltonian with nuclear dipolar coupling.
@@ -358,94 +367,124 @@ def posner_hamiltonian(
     # Anisotropic hyperfine site 1 (q0 ↔ q2,q3,q4) — full 3×3 tensor
     for k, hf in enumerate(hf1):
         nq = 2 + k
-        H += (hf["Axx"]/4)*_pp(n,0,nq,_X,_X)
-        H += (hf["Ayy"]/4)*_pp(n,0,nq,_Y,_Y)
-        H += (hf["Azz"]/4)*_pp(n,0,nq,_Z,_Z)
+        H += (hf["Axx"] / 4) * _pp(n, 0, nq, _X, _X)
+        H += (hf["Ayy"] / 4) * _pp(n, 0, nq, _Y, _Y)
+        H += (hf["Azz"] / 4) * _pp(n, 0, nq, _Z, _Z)
         # Off-diagonal: Axy→(XY+YX)/2, Axz→(XZ+ZX)/2, Ayz→(YZ+ZY)/2
-        H += (hf.get("Axy",0)/4)*(_pp(n,0,nq,_X,_Y) + _pp(n,0,nq,_Y,_X))
-        H += (hf.get("Axz",0)/4)*(_pp(n,0,nq,_X,_Z) + _pp(n,0,nq,_Z,_X))
-        H += (hf.get("Ayz",0)/4)*(_pp(n,0,nq,_Y,_Z) + _pp(n,0,nq,_Z,_Y))
+        H += (hf.get("Axy", 0) / 4) * (_pp(n, 0, nq, _X, _Y) + _pp(n, 0, nq, _Y, _X))
+        H += (hf.get("Axz", 0) / 4) * (_pp(n, 0, nq, _X, _Z) + _pp(n, 0, nq, _Z, _X))
+        H += (hf.get("Ayz", 0) / 4) * (_pp(n, 0, nq, _Y, _Z) + _pp(n, 0, nq, _Z, _Y))
 
     # Anisotropic hyperfine site 2 (q1 ↔ q5,q6,q7)
     for k, hf in enumerate(hf2):
         nq = 5 + k
-        H += (hf["Axx"]/4)*_pp(n,1,nq,_X,_X)
-        H += (hf["Ayy"]/4)*_pp(n,1,nq,_Y,_Y)
-        H += (hf["Azz"]/4)*_pp(n,1,nq,_Z,_Z)
-        H += (hf.get("Axy",0)/4)*(_pp(n,1,nq,_X,_Y) + _pp(n,1,nq,_Y,_X))
-        H += (hf.get("Axz",0)/4)*(_pp(n,1,nq,_X,_Z) + _pp(n,1,nq,_Z,_X))
-        H += (hf.get("Ayz",0)/4)*(_pp(n,1,nq,_Y,_Z) + _pp(n,1,nq,_Z,_Y))
+        H += (hf["Axx"] / 4) * _pp(n, 1, nq, _X, _X)
+        H += (hf["Ayy"] / 4) * _pp(n, 1, nq, _Y, _Y)
+        H += (hf["Azz"] / 4) * _pp(n, 1, nq, _Z, _Z)
+        H += (hf.get("Axy", 0) / 4) * (_pp(n, 1, nq, _X, _Y) + _pp(n, 1, nq, _Y, _X))
+        H += (hf.get("Axz", 0) / 4) * (_pp(n, 1, nq, _X, _Z) + _pp(n, 1, nq, _Z, _X))
+        H += (hf.get("Ayz", 0) / 4) * (_pp(n, 1, nq, _Y, _Z) + _pp(n, 1, nq, _Z, _Y))
 
     # Zeeman (electrons only; nuclear Zeeman is γ_n/γ_e ≈ 1/2500 — negligible)
-    H += (omega_0/2)*_ps(n,0,_Z) + (omega_0/2)*_ps(n,1,_Z)
+    H += (omega_0 / 2) * _ps(n, 0, _Z) + (omega_0 / 2) * _ps(n, 1, _Z)
 
     # Nuclear dipolar: per-pair tensor from Posner geometry table
     # If d_nuc or d_nuc_cross are overridden from defaults, use uniform values
     # (backward compat); otherwise use the per-pair distance table.
-    use_table = (d_nuc == DEFAULT_NUC_DIPOLAR and d_nuc_cross == DEFAULT_NUC_DIPOLAR_CROSS)
+    use_table = d_nuc == DEFAULT_NUC_DIPOLAR and d_nuc_cross == DEFAULT_NUC_DIPOLAR_CROSS
     if use_table:
         for i, j, tensor in _DIPOLAR_TENSORS:
             H = _add_spin_tensor_hamiltonian(H, n, i, j, tensor)
     else:
         for i, j in _INTRA_PAIRS:
-            tensor = {"Axx": -d_nuc, "Ayy": -d_nuc, "Azz": 2*d_nuc, "Axy": 0.0, "Axz": 0.0, "Ayz": 0.0}
+            tensor = {
+                "Axx": -d_nuc,
+                "Ayy": -d_nuc,
+                "Azz": 2 * d_nuc,
+                "Axy": 0.0,
+                "Axz": 0.0,
+                "Ayz": 0.0,
+            }
             H = _add_spin_tensor_hamiltonian(H, n, i, j, tensor)
         for i, j in _CROSS_PAIRS:
-            tensor = {"Axx": -d_nuc_cross, "Ayy": -d_nuc_cross, "Azz": 2*d_nuc_cross, "Axy": 0.0, "Axz": 0.0, "Ayz": 0.0}
+            tensor = {
+                "Axx": -d_nuc_cross,
+                "Ayy": -d_nuc_cross,
+                "Azz": 2 * d_nuc_cross,
+                "Axy": 0.0,
+                "Axz": 0.0,
+                "Ayz": 0.0,
+            }
             H = _add_spin_tensor_hamiltonian(H, n, i, j, tensor)
 
     return H
 
 
 def _singlet_proj_8q():
-    s = np.array([0,1,-1,0], dtype=complex)/math.sqrt(2)
+    s = np.array([0, 1, -1, 0], dtype=complex) / math.sqrt(2)
     return np.kron(np.outer(s, s.conj()), np.eye(2**6))
 
 
-def analytical_singlet_thermal(J, hf1=None, hf2=None, omega_0=0.0, t=math.pi,
-                                d_nuc=DEFAULT_NUC_DIPOLAR, d_nuc_cross=DEFAULT_NUC_DIPOLAR_CROSS):
+def analytical_singlet_thermal(
+    J,
+    hf1=None,
+    hf2=None,
+    omega_0=0.0,
+    t=math.pi,
+    d_nuc=DEFAULT_NUC_DIPOLAR,
+    d_nuc_cross=DEFAULT_NUC_DIPOLAR_CROSS,
+):
     hf1, hf2 = _require_hf(hf1, hf2)
     H = posner_hamiltonian(J, hf1, hf2, omega_0, d_nuc, d_nuc_cross)
     U = expm(-1j * H * t)
-    se = np.array([0,1,-1,0], dtype=complex)/math.sqrt(2)
+    se = np.array([0, 1, -1, 0], dtype=complex) / math.sqrt(2)
     PS = _singlet_proj_8q()
     total = 0.0
-    for bits in itertools.product([0,1], repeat=6):
+    for bits in itertools.product([0, 1], repeat=6):
         ns = np.zeros(64, dtype=complex)
-        ns[sum(b<<(5-i) for i,b in enumerate(bits))] = 1.0
+        ns[sum(b << (5 - i) for i, b in enumerate(bits))] = 1.0
         psi = U @ np.kron(se, ns)
         total += float(np.real(psi.conj() @ PS @ psi))
     return total / 64.0
 
 
-def analytical_singlet_recombination(J, hf1=None, hf2=None, omega_0=0.0,
-                                      k_recomb=0.1, t_max=15.0, n_t=20,
-                                      d_nuc=DEFAULT_NUC_DIPOLAR, d_nuc_cross=DEFAULT_NUC_DIPOLAR_CROSS):
+def analytical_singlet_recombination(
+    J,
+    hf1=None,
+    hf2=None,
+    omega_0=0.0,
+    k_recomb=0.1,
+    t_max=15.0,
+    n_t=20,
+    d_nuc=DEFAULT_NUC_DIPOLAR,
+    d_nuc_cross=DEFAULT_NUC_DIPOLAR_CROSS,
+):
     """Recombination-weighted, thermally averaged singlet yield."""
     hf1, hf2 = _require_hf(hf1, hf2)
     H = posner_hamiltonian(J, hf1, hf2, omega_0, d_nuc, d_nuc_cross)
-    se = np.array([0,1,-1,0], dtype=complex)/math.sqrt(2)
+    se = np.array([0, 1, -1, 0], dtype=complex) / math.sqrt(2)
     PS = _singlet_proj_8q()
     dt = t_max / n_t
     wsum, wnorm = 0.0, 0.0
     for ti in range(n_t):
-        t = (ti+0.5)*dt
-        U = expm(-1j*H*t)
-        w = k_recomb * math.exp(-k_recomb*t) * dt
+        t = (ti + 0.5) * dt
+        U = expm(-1j * H * t)
+        w = k_recomb * math.exp(-k_recomb * t) * dt
         ps = 0.0
-        for bits in itertools.product([0,1], repeat=6):
+        for bits in itertools.product([0, 1], repeat=6):
             ns = np.zeros(64, dtype=complex)
-            ns[sum(b<<(5-i) for i,b in enumerate(bits))] = 1.0
+            ns[sum(b << (5 - i) for i, b in enumerate(bits))] = 1.0
             psi = U @ np.kron(se, ns)
             ps += float(np.real(psi.conj() @ PS @ psi))
-        wsum += (ps/64.0) * w
+        wsum += (ps / 64.0) * w
         wnorm += w
-    return wsum/wnorm if wnorm > 0 else 0.0
+    return wsum / wnorm if wnorm > 0 else 0.0
 
 
 # ═════════════════════════════════════════════════════════════════
 # Circuit builders
 # ═════════════════════════════════════════════════════════════════
+
 
 def _apply_cross_coupling(qc, eq, nq, alpha, beta, angle):
     """Apply exp(-iθ·σα⊗σβ/2) via basis rotation + RXX.
@@ -523,18 +562,18 @@ def _trotter_half(qc, J, hf1, hf2, omega_0, d_nuc, d_cross, dt):
     qc.rzz(J * dt / 2, 0, 1)
     # Hyperfine site 1 (full tensor: diagonal + off-diagonal)
     for k, hf in enumerate(hf1):
-        nq = 2+k
-        qc.rxx(hf["Axx"]*dt/2, 0, nq)
-        qc.ryy(hf["Ayy"]*dt/2, 0, nq)
-        qc.rzz(hf["Azz"]*dt/2, 0, nq)
-        _apply_offdiag_hf(qc, 0, nq, hf, dt/2)
+        nq = 2 + k
+        qc.rxx(hf["Axx"] * dt / 2, 0, nq)
+        qc.ryy(hf["Ayy"] * dt / 2, 0, nq)
+        qc.rzz(hf["Azz"] * dt / 2, 0, nq)
+        _apply_offdiag_hf(qc, 0, nq, hf, dt / 2)
     # Hyperfine site 2
     for k, hf in enumerate(hf2):
-        nq = 5+k
-        qc.rxx(hf["Axx"]*dt/2, 1, nq)
-        qc.ryy(hf["Ayy"]*dt/2, 1, nq)
-        qc.rzz(hf["Azz"]*dt/2, 1, nq)
-        _apply_offdiag_hf(qc, 1, nq, hf, dt/2)
+        nq = 5 + k
+        qc.rxx(hf["Axx"] * dt / 2, 1, nq)
+        qc.ryy(hf["Ayy"] * dt / 2, 1, nq)
+        qc.rzz(hf["Azz"] * dt / 2, 1, nq)
+        _apply_offdiag_hf(qc, 1, nq, hf, dt / 2)
     # Zeeman
     qc.rz(omega_0 * dt, 0)
     qc.rz(omega_0 * dt, 1)
@@ -553,27 +592,36 @@ def _trotter_half_rev(qc, J, hf1, hf2, omega_0, d_nuc, d_cross, dt):
     for k in reversed(range(len(hf2))):
         nq = 5 + k
         hf = hf2[k]
-        _apply_offdiag_hf(qc, 1, nq, hf, dt/2)
-        qc.rzz(hf["Azz"]*dt/2, 1, nq)
-        qc.ryy(hf["Ayy"]*dt/2, 1, nq)
-        qc.rxx(hf["Axx"]*dt/2, 1, nq)
+        _apply_offdiag_hf(qc, 1, nq, hf, dt / 2)
+        qc.rzz(hf["Azz"] * dt / 2, 1, nq)
+        qc.ryy(hf["Ayy"] * dt / 2, 1, nq)
+        qc.rxx(hf["Axx"] * dt / 2, 1, nq)
     for k in reversed(range(len(hf1))):
         nq = 2 + k
         hf = hf1[k]
-        _apply_offdiag_hf(qc, 0, nq, hf, dt/2)
-        qc.rzz(hf["Azz"]*dt/2, 0, nq)
-        qc.ryy(hf["Ayy"]*dt/2, 0, nq)
-        qc.rxx(hf["Axx"]*dt/2, 0, nq)
+        _apply_offdiag_hf(qc, 0, nq, hf, dt / 2)
+        qc.rzz(hf["Azz"] * dt / 2, 0, nq)
+        qc.ryy(hf["Ayy"] * dt / 2, 0, nq)
+        qc.rxx(hf["Axx"] * dt / 2, 0, nq)
     qc.rzz(J * dt / 2, 0, 1)
     qc.ryy(J * dt / 2, 0, 1)
     qc.rxx(J * dt / 2, 0, 1)
 
 
-def build_posner_circuit(J=1.0, hf1=None, hf2=None, omega_0=0.0, t=math.pi,
-                         n_trotter=5, nuclear_init=(0,)*6, d_nuc=DEFAULT_NUC_DIPOLAR,
-                         d_cross=DEFAULT_NUC_DIPOLAR_CROSS):
+def build_posner_circuit(
+    J=1.0,
+    hf1=None,
+    hf2=None,
+    omega_0=0.0,
+    t=math.pi,
+    n_trotter=5,
+    nuclear_init=(0,) * 6,
+    d_nuc=DEFAULT_NUC_DIPOLAR,
+    d_cross=DEFAULT_NUC_DIPOLAR_CROSS,
+):
     """8q Posner, 2nd-order Suzuki-Trotter, full tensor dipolar."""
     from qiskit import QuantumCircuit
+
     hf1, hf2 = _require_hf(hf1, hf2)
     qc = QuantumCircuit(8, 8)
     qc.x(1)
@@ -586,21 +634,29 @@ def build_posner_circuit(J=1.0, hf1=None, hf2=None, omega_0=0.0, t=math.pi,
     dt = t / n_trotter
     # 2nd-order Suzuki-Trotter: S₂(dt) = U(dt/2)·U†(dt/2)
     for _ in range(n_trotter):
-        _trotter_half(qc, J, hf1, hf2, omega_0, d_nuc, d_cross, dt/2)
-        _trotter_half_rev(qc, J, hf1, hf2, omega_0, d_nuc, d_cross, dt/2)
+        _trotter_half(qc, J, hf1, hf2, omega_0, d_nuc, d_cross, dt / 2)
+        _trotter_half_rev(qc, J, hf1, hf2, omega_0, d_nuc, d_cross, dt / 2)
     qc.cx(0, 1)
     qc.h(0)
     qc.measure(range(8), range(8))
     return qc
 
 
-def build_posner_decoherence_circuit(J=1.0, hf1=None, hf2=None, omega_0=0.0,
-                                      # DD: XY-4 dynamical decoupling sequence
-                                      dd_sequence: str | None = None,
-                                      t=math.pi, n_trotter=5, delay_dt=0,
-                                      nuclear_init=(0,)*6):
+def build_posner_decoherence_circuit(
+    J=1.0,
+    hf1=None,
+    hf2=None,
+    omega_0=0.0,
+    # DD: XY-4 dynamical decoupling sequence
+    dd_sequence: str | None = None,
+    t=math.pi,
+    n_trotter=5,
+    delay_dt=0,
+    nuclear_init=(0,) * 6,
+):
     """8q Posner + calibrated delay. 2nd-order Suzuki-Trotter."""
     from qiskit import QuantumCircuit
+
     hf1, hf2 = _require_hf(hf1, hf2)
     qc = QuantumCircuit(8, 8)
     qc.x(1)
@@ -612,8 +668,12 @@ def build_posner_decoherence_circuit(J=1.0, hf1=None, hf2=None, omega_0=0.0,
             qc.x(2 + i)
     dt = t / n_trotter
     for _ in range(n_trotter):
-        _trotter_half(qc, J, hf1, hf2, omega_0, DEFAULT_NUC_DIPOLAR, DEFAULT_NUC_DIPOLAR_CROSS, dt/2)
-        _trotter_half_rev(qc, J, hf1, hf2, omega_0, DEFAULT_NUC_DIPOLAR, DEFAULT_NUC_DIPOLAR_CROSS, dt/2)
+        _trotter_half(
+            qc, J, hf1, hf2, omega_0, DEFAULT_NUC_DIPOLAR, DEFAULT_NUC_DIPOLAR_CROSS, dt / 2
+        )
+        _trotter_half_rev(
+            qc, J, hf1, hf2, omega_0, DEFAULT_NUC_DIPOLAR, DEFAULT_NUC_DIPOLAR_CROSS, dt / 2
+        )
     if delay_dt > 0:
         if dd_sequence == "xy4":
             # XY-4: τ/2 - X - τ - Y - τ - X - τ - Y - τ/2
@@ -657,14 +717,16 @@ def build_posner_decoherence_circuit(J=1.0, hf1=None, hf2=None, omega_0=0.0,
 # β ≈ 1.0 Å⁻¹ for oxide-bridge superexchange pathways.
 def _posner_chain_couplings(n):
     """Inter-Posner couplings from exponential superexchange decay."""
-    beta = 1.0   # Å⁻¹, decay constant for Ca-O-P superexchange pathway
-    r_nn = 4.0   # Å, nearest P-P distance in Posner
-    dr = 2.5     # Å, inter-site spacing increment
+    beta = 1.0  # Å⁻¹, decay constant for Ca-O-P superexchange pathway
+    r_nn = 4.0  # Å, nearest P-P distance in Posner
+    dr = 2.5  # Å, inter-site spacing increment
     return [math.exp(-beta * dr * i) for i in range(n - 1)]
+
 
 def build_chain_circuit(n_qubits=10, J_vals=None, t=1.0, n_trotter=3):
     """Heisenberg chain with 2nd-order Suzuki-Trotter."""
     from qiskit import QuantumCircuit
+
     if J_vals is None:
         J_vals = _posner_chain_couplings(n_qubits)
     qc = QuantumCircuit(n_qubits, n_qubits)
@@ -672,54 +734,69 @@ def build_chain_circuit(n_qubits=10, J_vals=None, t=1.0, n_trotter=3):
     dt = t / n_trotter
     for _ in range(n_trotter):
         # Forward half
-        for i in range(n_qubits-1):
-            qc.rxx(J_vals[i]*dt/4, i, i+1)
-            qc.ryy(J_vals[i]*dt/4, i, i+1)
-            qc.rzz(J_vals[i]*dt/4, i, i+1)
+        for i in range(n_qubits - 1):
+            qc.rxx(J_vals[i] * dt / 4, i, i + 1)
+            qc.ryy(J_vals[i] * dt / 4, i, i + 1)
+            qc.rzz(J_vals[i] * dt / 4, i, i + 1)
         # Reversed half
-        for i in reversed(range(n_qubits-1)):
-            qc.rxx(J_vals[i]*dt/4, i, i+1)
-            qc.ryy(J_vals[i]*dt/4, i, i+1)
-            qc.rzz(J_vals[i]*dt/4, i, i+1)
+        for i in reversed(range(n_qubits - 1)):
+            qc.rxx(J_vals[i] * dt / 4, i, i + 1)
+            qc.ryy(J_vals[i] * dt / 4, i, i + 1)
+            qc.rzz(J_vals[i] * dt / 4, i, i + 1)
     qc.measure(range(n_qubits), range(n_qubits))
     return qc
 
+
 def heisenberg_chain_H(n, J_vals):
     H = np.zeros((2**n, 2**n), dtype=complex)
-    for i in range(n-1):
+    for i in range(n - 1):
         for P in (_X, _Y, _Z):
             H += (J_vals[i] / 4) * _pp(n, i, i + 1, P, P)
     return H
+
 
 def analytical_chain_corr(n, J_vals, t):
     H = heisenberg_chain_H(n, J_vals)
     psi0 = np.zeros(2**n, dtype=complex)
     psi0[2 ** (n - 1)] = 1.0
-    psi = expm(-1j*H*t) @ psi0
-    return [float(np.real(psi.conj() @ _pp(n,0,d,_Z,_Z) @ psi)) for d in range(1,n)]
+    psi = expm(-1j * H * t) @ psi0
+    return [float(np.real(psi.conj() @ _pp(n, 0, d, _Z, _Z) @ psi)) for d in range(1, n)]
 
 
 # ═════════════════════════════════════════════════════════════════
 # Analysis
 # ═════════════════════════════════════════════════════════════════
 
+
 def _berr(p, n):
     return math.sqrt(p * (1 - p) / n) if n > 0 else 0.0
 
+
 def analyse_rpm_8q(counts):
     total = sum(counts.values())
-    ns = sum(c for bs,c in counts.items()
-             if int(bs.replace(" ","")[-(0+1)])==1 and int(bs.replace(" ","")[-(1+1)])==1)
-    p = ns/total if total else 0.0
-    return {"singlet_probability": round(p,6), "error_bar": round(_berr(p,total),6), "shots": total}
+    ns = sum(
+        c
+        for bs, c in counts.items()
+        if int(bs.replace(" ", "")[-(0 + 1)]) == 1 and int(bs.replace(" ", "")[-(1 + 1)]) == 1
+    )
+    p = ns / total if total else 0.0
+    return {
+        "singlet_probability": round(p, 6),
+        "error_bar": round(_berr(p, total), 6),
+        "shots": total,
+    }
+
 
 def analyse_chain(counts, n):
     total = sum(counts.values())
     corrs = []
-    for d in range(1,n):
-        ns = sum(c for bs,c in counts.items()
-                 if int(bs.replace(" ","")[-(0+1)])==int(bs.replace(" ","")[-(d+1)]))
-        corrs.append(round((2*ns-total)/total,6) if total else 0.0)
+    for d in range(1, n):
+        ns = sum(
+            c
+            for bs, c in counts.items()
+            if int(bs.replace(" ", "")[-(0 + 1)]) == int(bs.replace(" ", "")[-(d + 1)])
+        )
+        corrs.append(round((2 * ns - total) / total, 6) if total else 0.0)
     return {"zz_from_0": corrs, "shots": total}
 
 
@@ -730,14 +807,16 @@ def analyse_chain(counts, n):
 # Layout used only when the caller explicitly has no live backend object.
 _LOCAL_LAYOUT = [0, 1, 2, 3, 4, 5, 6, 7]
 
+
 def _find_best_layout(backend, n_qubits):
     """Find connected n-qubit subgraph with lowest avg 2Q gate error."""
     try:
         import networkx as nx
+
         cmap = backend.coupling_map
         G = cmap.graph.to_undirected()
         props = backend.properties()
-        best_layout, best_err = None, float('inf')
+        best_layout, best_err = None, float("inf")
         # Enumerate all connected subgraphs of size n_qubits
         for component in nx.connected_components(G):
             sub = G.subgraph(component)
@@ -754,26 +833,23 @@ def _find_best_layout(backend, n_qubits):
                     for v in bfs_nodes:
                         if sub.has_edge(u, v) and u < v:
                             try:
-                                total_err += props.gate_error('ecr', [u, v])
+                                total_err += props.gate_error("ecr", [u, v])
                             except Exception:
                                 try:
-                                    total_err += props.gate_error('cx', [u, v])
+                                    total_err += props.gate_error("cx", [u, v])
                                 except Exception:
-                                    raise RuntimeError(
-                                        f"No calibrated 2Q error for edge {(u, v)}"
-                                    )
+                                    raise RuntimeError(f"No calibrated 2Q error for edge {(u, v)}")
                             n_edges += 1
                 avg_err = total_err / max(n_edges, 1)
                 if avg_err < best_err:
                     best_err = avg_err
                     best_layout = bfs_nodes
         if best_layout is None:
-            raise RuntimeError(
-                f"No connected calibrated {n_qubits}-qubit layout found"
-            )
+            raise RuntimeError(f"No connected calibrated {n_qubits}-qubit layout found")
         return best_layout
     except AttributeError:
         return _LOCAL_LAYOUT[:n_qubits]
+
 
 # Cached runner context to avoid reconnecting on every circuit
 _runner_ctx = {"service": None, "backend": None, "layout_cache": {}}
@@ -792,7 +868,9 @@ def _normalise_label(label: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", label.lower())
 
 
-def _vault_field(path: str | Path | None, section_regex: str, labels: tuple[str, ...]) -> str | None:
+def _vault_field(
+    path: str | Path | None, section_regex: str, labels: tuple[str, ...]
+) -> str | None:
     if not path:
         return None
     vault_path = Path(path)
@@ -876,9 +954,7 @@ def _ibm_backend(args):
     try:
         from qiskit_ibm_runtime import QiskitRuntimeService
     except ImportError as exc:
-        raise RuntimeError(
-            "qiskit-ibm-runtime is required for hardware execution"
-        ) from exc
+        raise RuntimeError("qiskit-ibm-runtime is required for hardware execution") from exc
     token, instance, channel = _ibm_credentials(args)
     kwargs = {"channel": channel, "token": token}
     if instance:
@@ -937,6 +1013,7 @@ def _submit_hardware_job(circuits, args, initial_layout=None):
 def _exec(qc, args):
     if args.simulator:
         from qiskit.quantum_info import Statevector
+
         sv = Statevector.from_instruction(qc.remove_final_measurements(inplace=False))
         return sv.sample_counts(args.shots)
     return _run_hardware_counts(qc, args)
@@ -945,10 +1022,16 @@ def _exec(qc, args):
 def _thermal_avg_singlet(J, omega_0, t, args, n_trotter=5):
     """Run 64 nuclear configs, return (mean, stderr) singlet yield."""
     ps_vals = []
-    for bits in itertools.product([0,1], repeat=6):
-        qc = build_posner_circuit(J=J, omega_0=omega_0, t=t,
-                                  nuclear_init=bits, n_trotter=n_trotter,
-                                  hf1=args.hf1, hf2=args.hf2)
+    for bits in itertools.product([0, 1], repeat=6):
+        qc = build_posner_circuit(
+            J=J,
+            omega_0=omega_0,
+            t=t,
+            nuclear_init=bits,
+            n_trotter=n_trotter,
+            hf1=args.hf1,
+            hf2=args.hf2,
+        )
         counts = _exec(qc, args)
         ps_vals.append(analyse_rpm_8q(counts)["singlet_probability"])
     arr = np.array(ps_vals)
@@ -958,12 +1041,18 @@ def _thermal_avg_singlet(J, omega_0, t, args, n_trotter=5):
 def _thermal_avg_decoherence(delay_dt, dd_sequence, args):
     """Run 64 nuclear configs for decoherence circuit, return (mean, stderr)."""
     ps_vals = []
-    for bits in itertools.product([0,1], repeat=6):
-        qc = build_posner_decoherence_circuit(J=1.0, omega_0=0.5, t=math.pi,
-                                               n_trotter=5, delay_dt=delay_dt,
-                                               dd_sequence=dd_sequence,
-                                               nuclear_init=bits,
-                                               hf1=args.hf1, hf2=args.hf2)
+    for bits in itertools.product([0, 1], repeat=6):
+        qc = build_posner_decoherence_circuit(
+            J=1.0,
+            omega_0=0.5,
+            t=math.pi,
+            n_trotter=5,
+            delay_dt=delay_dt,
+            dd_sequence=dd_sequence,
+            nuclear_init=bits,
+            hf1=args.hf1,
+            hf2=args.hf2,
+        )
         counts = _exec(qc, args)
         ps_vals.append(analyse_rpm_8q(counts)["singlet_probability"])
     arr = np.array(ps_vals)
@@ -973,24 +1062,36 @@ def _thermal_avg_decoherence(delay_dt, dd_sequence, args):
 def run_verification(args):
     _load_runtime_parameters(args, require_extended=not args.simulator)
 
-    results = {"timestamp": datetime.now().isoformat(),
-               "mode": "simulator" if args.simulator else "hardware"}
+    results = {
+        "timestamp": datetime.now().isoformat(),
+        "mode": "simulator" if args.simulator else "hardware",
+    }
     P = print
-    P("═"*72)
+    P("═" * 72)
     P("  SC-NeuroCore — Full Posner Molecule Verification (Heron v2)")
     P("  8q Posner: aniso-HF + nuclear dipolar + thermal avg + recombination")
-    P("═"*72)
+    P("═" * 72)
 
     # ── Exp 1a: Exchange sweep (J) ────────────────────────────────
     P("\n▸ Exp 1a: Exchange protection sweep (fixed ω₀=0.5)")
     omega_0, t = 0.5, math.pi
     rpm_j = []
     for J in [0.0, 0.5, 1.0, 3.0, 10.0]:
-        nt = max(5, math.ceil(3*J))
+        nt = max(5, math.ceil(3 * J))
         p, se = _thermal_avg_singlet(J, omega_0, t, args, nt)
         th = analytical_singlet_thermal(J, hf1=args.hf1, hf2=args.hf2, omega_0=omega_0, t=t)
-        rpm_j.append({"J":J, "p":round(p,6), "se":round(se,6), "theory":round(th,6), "err":round(abs(p-th),6)})
-        P(f"  J={J:>5.1f}  Φ_S={p:.4f}±{se:.4f}  theory={th:.4f}  [{'protected' if th>0.7 else 'mixing'}]")
+        rpm_j.append(
+            {
+                "J": J,
+                "p": round(p, 6),
+                "se": round(se, 6),
+                "theory": round(th, 6),
+                "err": round(abs(p - th), 6),
+            }
+        )
+        P(
+            f"  J={J:>5.1f}  Φ_S={p:.4f}±{se:.4f}  theory={th:.4f}  [{'protected' if th > 0.7 else 'mixing'}]"
+        )
     results["rpm_exchange_sweep"] = rpm_j
 
     # ── Exp 1b: Zeeman field sweep (ω₀) ──────────────────────────
@@ -998,10 +1099,10 @@ def run_verification(args):
     J_fixed = 1.0
     rpm_b = []
     for w in [0.0, 0.3, 0.7, 1.0, 2.0, 5.0]:
-        nt = max(5, math.ceil(3*max(J_fixed, w)))
+        nt = max(5, math.ceil(3 * max(J_fixed, w)))
         p, se = _thermal_avg_singlet(J_fixed, w, t, args, nt)
         th = analytical_singlet_thermal(J_fixed, hf1=args.hf1, hf2=args.hf2, omega_0=w, t=t)
-        rpm_b.append({"omega_0":w, "p":round(p,6), "se":round(se,6), "theory":round(th,6)})
+        rpm_b.append({"omega_0": w, "p": round(p, 6), "se": round(se, 6), "theory": round(th, 6)})
         P(f"  ω₀={w:.1f}  Φ_S={p:.4f}±{se:.4f}  theory={th:.4f}")
     results["rpm_zeeman_sweep"] = rpm_b
 
@@ -1018,21 +1119,26 @@ def run_verification(args):
         elif idx == len(time_points) - 1:
             dt_i = ti - (time_points[-2] + ti) / 2  # from midpoint to end
         else:
-            dt_i = (time_points[idx+1] - time_points[idx-1]) / 2  # trapezoidal
+            dt_i = (time_points[idx + 1] - time_points[idx - 1]) / 2  # trapezoidal
         nt = max(5, math.ceil(3 * max(1.0, 0.5) * ti / math.pi))
         p, se = _thermal_avg_singlet(1.0, 0.5, ti, args, nt)
         w = k_recomb * math.exp(-k_recomb * ti) * dt_i  # includes Δt
         wsum += p * w
         wnorm += w
-        recomb_data.append({"t": ti, "p_singlet": round(p, 6), "weight": round(w, 6), "dt": round(dt_i, 3)})
+        recomb_data.append(
+            {"t": ti, "p_singlet": round(p, 6), "weight": round(w, 6), "dt": round(dt_i, 3)}
+        )
         P(f"  t={ti:>5.1f}  Φ_S={p:.4f}±{se:.4f}  w={w:.4f}")
     phi_recomb_circuit = wsum / wnorm if wnorm > 0 else 0.0
     phi_recomb_exact = analytical_singlet_recombination(
         1.0, hf1=args.hf1, hf2=args.hf2, omega_0=0.5, k_recomb=k_recomb, n_t=10
     )
-    results["recombination"] = {"phi_circuit": round(phi_recomb_circuit, 6),
-                                 "phi_exact": round(phi_recomb_exact, 6),
-                                 "time_points": recomb_data, "k": k_recomb}
+    results["recombination"] = {
+        "phi_circuit": round(phi_recomb_circuit, 6),
+        "phi_exact": round(phi_recomb_exact, 6),
+        "time_points": recomb_data,
+        "k": k_recomb,
+    }
     P(f"  Φ_S(circuit recomb) = {phi_recomb_circuit:.4f}")
     P(f"  Φ_S(exact recomb)   = {phi_recomb_exact:.4f}")
 
@@ -1043,8 +1149,9 @@ def run_verification(args):
     P("\n▸ Exp 1d: Semiclassical vs full-quantum comparison")
     try:
         from sc_neurocore.quantum_cognition.radical_pair import RadicalPairModel
+
         gamma_31P = 17.235e6  # Hz/T
-        B_earth = 50e-6       # T
+        B_earth = 50e-6  # T
         # Convert B to dimensionless ω₀ using our a_ref scaling
         # a_ref ≈ 3540 MHz (³¹P isotropic HF), so ω₀ = γ·B / a_ref
         a_ref = 3540e6  # Hz
@@ -1055,12 +1162,13 @@ def run_verification(args):
             1.0, hf1=args.hf1, hf2=args.hf2, omega_0=omega_matched, t=math.pi
         )
         results["classical_vs_quantum"] = {
-            "B_field_T": B_earth, "omega_0_matched": round(omega_matched, 6),
+            "B_field_T": B_earth,
+            "omega_0_matched": round(omega_matched, 6),
             "semiclassical_schulten_wolynes": round(phi_sc, 6),
             "full_quantum_8q": round(phi_q, 6),
             "discrepancy": round(abs(phi_sc - phi_q), 6),
         }
-        P(f"  B = {B_earth*1e6:.0f} µT → ω₀ = {omega_matched:.6f}")
+        P(f"  B = {B_earth * 1e6:.0f} µT → ω₀ = {omega_matched:.6f}")
         P(f"  Schulten-Wolynes (semiclassical): {phi_sc:.4f}")
         P(f"  Full quantum (8q Posner):         {phi_q:.4f}")
         P(f"  Discrepancy:                      {abs(phi_sc - phi_q):.4f}")
@@ -1077,11 +1185,11 @@ def run_verification(args):
     cr = analyse_chain(counts, nc)
     if nc <= 14:
         th_c = analytical_chain_corr(nc, Jc, tc)
-        cr["theory"] = [round(c,6) for c in th_c]
+        cr["theory"] = [round(c, 6) for c in th_c]
     results["spin_chain"] = cr
-    for d in range(min(5, nc-1)):
-        ts = f" (theory {th_c[d]:.4f})" if nc<=14 else ""
-        P(f"  ⟨Z₀Z_{d+1}⟩ = {cr['zz_from_0'][d]:.4f}{ts}")
+    for d in range(min(5, nc - 1)):
+        ts = f" (theory {th_c[d]:.4f})" if nc <= 14 else ""
+        P(f"  ⟨Z₀Z_{d + 1}⟩ = {cr['zz_from_0'][d]:.4f}{ts}")
 
     # ── Exp 3a: Posner decoherence (raw T₂*) ─────────────────────
     P("\n▸ Exp 3a: Posner decoherence — raw (no DD)")
@@ -1089,8 +1197,15 @@ def run_verification(args):
     dec_raw = []
     for dd in delays:
         p, se = _thermal_avg_decoherence(dd, None, args)
-        dec_raw.append({"delay_dt": dd, "delay_us": round(dd*0.00022,3), "singlet": round(p,6), "se": round(se,6)})
-        P(f"  delay={dd:>5d}dt ({dd*0.00022:.2f}μs)  Φ_S={p:.4f}±{se:.4f}")
+        dec_raw.append(
+            {
+                "delay_dt": dd,
+                "delay_us": round(dd * 0.00022, 3),
+                "singlet": round(p, 6),
+                "se": round(se, 6),
+            }
+        )
+        P(f"  delay={dd:>5d}dt ({dd * 0.00022:.2f}μs)  Φ_S={p:.4f}±{se:.4f}")
     results["decoherence_raw"] = dec_raw
 
     # ── Exp 3b: Posner decoherence WITH XY-4 DD ──────────────────
@@ -1102,8 +1217,15 @@ def run_verification(args):
             P(f"  delay=    0dt (0.00μs)  Φ_S={dec_raw[0]['singlet']:.4f}")
             continue
         p, se = _thermal_avg_decoherence(dd, "xy4", args)
-        dec_dd.append({"delay_dt": dd, "delay_us": round(dd*0.00022,3), "singlet": round(p,6), "se": round(se,6)})
-        P(f"  delay={dd:>5d}dt ({dd*0.00022:.2f}μs)  Φ_S={p:.4f}±{se:.4f}  [XY-4]")
+        dec_dd.append(
+            {
+                "delay_dt": dd,
+                "delay_us": round(dd * 0.00022, 3),
+                "singlet": round(p, 6),
+                "se": round(se, 6),
+            }
+        )
+        P(f"  delay={dd:>5d}dt ({dd * 0.00022:.2f}μs)  Φ_S={p:.4f}±{se:.4f}  [XY-4]")
     results["decoherence_xy4"] = dec_dd
 
     # ── Extended experiments (from posner_extended.py) ────────────
@@ -1113,10 +1235,12 @@ def run_verification(args):
             run_exp5_transport,
             run_exp6_43ca,
         )
+
         # Exp 4: Biological noise comparison
         try:
             results["biological_noise"] = run_exp4_biological_noise(
-                build_posner_circuit, _exec, args, P)
+                build_posner_circuit, _exec, args, P
+            )
         except Exception as e:
             P(f"\n▸ Exp 4: [SKIP] {e}")
 
@@ -1141,7 +1265,7 @@ def run_verification(args):
     with open(op, "w") as f:
         json.dump(results, f, indent=2, default=str)
     P(f"\n  Results → {op}")
-    P("═"*72)
+    P("═" * 72)
     return results
 
 
@@ -1152,7 +1276,9 @@ def main():
     ap.add_argument("--token", default=None, help="IBM Quantum API token")
     ap.add_argument("--instance", default=None, help="IBM Cloud CRN or Runtime instance")
     ap.add_argument("--channel", default="ibm_cloud", help="IBM Runtime channel")
-    ap.add_argument("--credential-vault", default=None, help="Read IBM credentials from a local vault file")
+    ap.add_argument(
+        "--credential-vault", default=None, help="Read IBM credentials from a local vault file"
+    )
     ap.add_argument("--vault-section", default="IBM", help="Credential vault section heading")
     ap.add_argument("--optimization-level", type=int, default=3)
     ap.add_argument("--shots", type=int, default=4096)
@@ -1170,10 +1296,17 @@ def main():
             "only those experiments to skip"
         ),
     )
-    ap.add_argument("--submit-only", action="store_true",
-                    help="Submit circuits and print job IDs without waiting")
-    ap.add_argument("--retrieve", nargs="+", metavar="JOB_ID",
-                    help="Retrieve results from previously submitted job IDs")
+    ap.add_argument(
+        "--submit-only",
+        action="store_true",
+        help="Submit circuits and print job IDs without waiting",
+    )
+    ap.add_argument(
+        "--retrieve",
+        nargs="+",
+        metavar="JOB_ID",
+        help="Retrieve results from previously submitted job IDs",
+    )
     args = ap.parse_args()
 
     if args.retrieve:

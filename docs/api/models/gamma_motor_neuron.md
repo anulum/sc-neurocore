@@ -69,7 +69,7 @@ Forward Euler, single step per call (no sub-stepping needed — simple dynamics)
 | NetworkRunner wired | `NeuronVariant::GammaMotor` |
 | `create_neuron("GammaMotor")` | Yes (creates dynamic subtype) |
 | `supported_models()` | Includes "GammaMotor" |
-| STRONG tests | 11 (dynamic fire, static fire, no-fire, negative, adaptation, static-vs-dynamic, reset, bounded, NaN, extreme, performance) |
+| coverage tests | 11 (dynamic fire, static fire, no-fire, negative, adaptation, static-vs-dynamic, reset, bounded, NaN, extreme, performance) |
 | Pipeline integration | Covered by `create_neuron_all_supported` |
 | Benchmark | `gamma_motor_10k_steps`: **1.21 ms** (121 ns/step), i5-11600K |
 

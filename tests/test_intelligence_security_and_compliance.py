@@ -10,6 +10,7 @@ import unittest
 
 from sc_neurocore.compiler.intelligence import protect_ip_pqc
 
+
 class TestModelChecksum:
     """SHA-256 model checksum embedding."""
 
@@ -344,4 +345,3 @@ class TestLicenseChecker:
         r = check_license_compliance("MIT", {"gpl_lib": "GPL-3.0"})
         assert r.compatible is False
         assert len(r.conflicts) == 1
-
