@@ -467,7 +467,7 @@ At 100 MHz with 50 sub-steps:
 | NetworkRunner wired | `NeuronVariant::ATypeK` |
 | `create_neuron("ATypeK")` | Yes |
 | `supported_models()` | Includes "ATypeK" |
-| STRONG tests | 10 |
+| coverage tests | 10 |
 | Benchmark | from channels.rs family: ~3 µs/step range, i5-11600K |
 
 ---

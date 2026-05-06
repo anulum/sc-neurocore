@@ -476,7 +476,7 @@ At 100 MHz:
 | NetworkRunner wired | `NeuronVariant::TUM` |
 | `create_neuron("TUMNetwork")` | Yes |
 | `supported_models()` | Includes "TUMNetwork" |
-| STRONG tests | 10 |
+| coverage tests | 10 |
 | Benchmark | `tum_100k_steps`: **15.63 ms** (156.3 ns/step), i5-11600K |
 
 ---

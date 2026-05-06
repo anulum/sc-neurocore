@@ -452,7 +452,7 @@ At 100 MHz with 20 sub-steps:
 | NetworkRunner wired | `NeuronVariant::NodeOfRanvier` |
 | `create_neuron("NodeOfRanvier")` | Yes |
 | `supported_models()` | Includes "NodeOfRanvier" |
-| STRONG tests | 10 |
+| coverage tests | 10 |
 | Benchmark | `node_of_ranvier_1k_steps`: **3.99 ms** (3.99 µs/step), i5-11600K |
 
 ---

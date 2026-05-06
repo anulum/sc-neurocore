@@ -536,7 +536,7 @@ This validation is performed at the Python level (not in the Rust engine).
 | NetworkRunner wired | `NeuronVariant::MontbrioMPR` |
 | `create_neuron("MontbrioMeanField")` | Yes |
 | `supported_models()` | Includes "MontbrioMeanField" |
-| STRONG tests | 10 |
+| coverage tests | 10 |
 | Benchmark | `montbrio_100k_steps`: **3.92 ms** (39.2 ns/step), i5-11600K |
 
 ---

@@ -439,7 +439,7 @@ exponential, saving ~20 LUTs per evaluation compared to exp-based τ formulas.
 | NetworkRunner wired | `NeuronVariant::PersistentNa` |
 | `create_neuron("PersistentNa")` | Yes |
 | `supported_models()` | Includes "PersistentNa" |
-| STRONG tests | 11 (fire, subthreshold oscillations, lower threshold, p-gate activation, rate increase, negative, NaN, extreme, reset, gates, performance) |
+| coverage tests | 11 (fire, subthreshold oscillations, lower threshold, p-gate activation, rate increase, negative, NaN, extreme, reset, gates, performance) |
 | Benchmark | `persistent_na_1k_steps`: **3.06 ms** (3.06 µs/step), i5-11600K |
 
 ---

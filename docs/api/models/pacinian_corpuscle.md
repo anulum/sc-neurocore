@@ -72,7 +72,7 @@ $$\text{if } V \geq V_{threshold}: \quad V \leftarrow V_{reset}, \quad \text{emi
 | PyO3 wrapper | `py_neuron_default!` macro in `pyo3_neurons.rs` |
 | NetworkRunner wired | `NeuronVariant::Pacinian` |
 | `create_neuron("Pacinian")` or `create_neuron("PacinianCorpuscle")` | Yes |
-| STRONG tests | 4 (fires on onset, adapts to sustained, no-fire at rest, reset) |
+| coverage tests | 4 (fires on onset, adapts to sustained, no-fire at rest, reset) |
 | NaN/extreme input test | Via NetworkRunner `all_models_*` tests |
 | Benchmark | `pacinian_10k_steps`: **837 µs** (83.7 ns/step), i5-11600K |
 

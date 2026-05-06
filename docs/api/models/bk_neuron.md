@@ -553,7 +553,7 @@ BK channel mutations (KCNMA1) are associated with several human disorders:
 | NetworkRunner wired | `NeuronVariant::BK` |
 | `create_neuron("BK")` | Yes |
 | `supported_models()` | Includes "BK" |
-| STRONG tests | 10 (fire, silent, Ca²⁺ accumulation, AHP deepening, rate reduction, negative, NaN, extreme, reset, performance) |
+| coverage tests | 10 (fire, silent, Ca²⁺ accumulation, AHP deepening, rate reduction, negative, NaN, extreme, reset, performance) |
 | Benchmark | `bk_1k_steps`: **3.16 ms** (3.16 µs/step), i5-11600K |
 
 ---

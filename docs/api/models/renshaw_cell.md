@@ -78,7 +78,7 @@ Sub-stepping: 50 per call (0.5 ms real time per call).
 | NetworkRunner wired | `NeuronVariant::Renshaw` |
 | `create_neuron("Renshaw")` | Yes |
 | `supported_models()` | Includes "Renshaw" |
-| STRONG tests | 10 (fire, no-fire, negative, burst-adapt, adapt variable, reset, bounded, NaN, extreme, performance) |
+| coverage tests | 10 (fire, no-fire, negative, burst-adapt, adapt variable, reset, bounded, NaN, extreme, performance) |
 | Pipeline integration | Covered by `create_neuron_all_supported` |
 | Benchmark | `renshaw_1k_steps`: **2.78 ms** (2.78 µs/step), i5-11600K |
 
