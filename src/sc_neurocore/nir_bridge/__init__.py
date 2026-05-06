@@ -59,7 +59,7 @@ from .fpga_compiler import (
     compile_network_to_fpga,
 )
 
-_NIR_IMPORT_ERROR: ImportError | None = None
+_NIR_IMPORT_ERROR: AttributeError | ImportError | None = None
 _from_nir_impl: Any | None = None
 _to_nir_impl: Any | None = None
 
