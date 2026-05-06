@@ -267,25 +267,14 @@ def frequency_response(
         duration = cfg.get("duration", 200.0)
         n_steps = min(int(duration / dt), 100_000)
 
-        # Build sinusoidal current trace
-        t = np.arange(n_steps) * dt
-        I_sin = amplitude * np.sin(2 * np.pi * freq / 1000.0 * t)
-
-        # Run simulation with the sine current by using ramp protocol hack:
-        # Actually, we need a custom approach. Use constant protocol at mean rate.
-        # Better: compute rate at this frequency via multiple short bursts.
-        # Simplest correct approach: modify the simulation to accept a current array.
-        # For now: use the simulate function with constant current = amplitude,
-        # and scale by frequency coupling estimate.
-        # Actually, just run at constant I=amplitude and measure baseline rate.
-        # The frequency response is about how the neuron responds to oscillatory input.
-
-        # Honest approach: run simulate with protocol="constant" at amplitude,
-        # then at zero, and use the ratio. This gives DC transfer, not AC.
-        # True frequency response needs the current array passed through.
-        # Let's pass protocol="constant" but at effective amplitude.
-
-        result = simulate_fn(**{**cfg, "current": amplitude, "protocol": "constant"})
+        result = simulate_fn(
+            **{
+                **cfg,
+                "current": amplitude,
+                "protocol": "sine",
+                "frequency_hz": freq,
+            }
+        )
         rates.append(result["stats"]["rate_hz"])
 
     return {"frequencies_hz": freqs, "rates": rates, "amplitude": amplitude}

@@ -212,6 +212,25 @@ class TestChipletGenerator:
         out = gen.generate(topo)
         assert "sc_aer_router" in out.die_modules[0]
 
+    def test_top_wires_die_and_bridge_stream_ports(self):
+        topo = ChipletTopology.ring(2)
+        gen = ChipletGenerator()
+        out = gen.generate(topo)
+        assert "link_0_1_tdata" in out.top_sv
+        assert ".link_out_1_tdata(link_0_1_tdata)" in out.top_sv
+        assert ".s_tdata(link_0_1_tdata)" in out.top_sv
+        assert ".m_tdata(link_0_1_rx_tdata)" in out.top_sv
+        assert "TODO" not in out.top_sv
+
+    def test_die_wrapper_drives_link_outputs_and_ready(self):
+        topo = ChipletTopology.ring(2)
+        gen = ChipletGenerator()
+        out = gen.generate(topo)
+        die = out.die_modules[0]
+        assert "assign link_out_1_tvalid = local_out_valid;" in die
+        assert "assign link_in_1_tready = 1'b1;" in die
+        assert "{{(64-AER_ID_W){1'b0}}, local_out_id}" in die
+
     def test_bridge_has_async_fifo(self):
         topo = ChipletTopology.ring(2)
         gen = ChipletGenerator()

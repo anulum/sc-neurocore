@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 from dataclasses import dataclass
@@ -63,6 +64,7 @@ class HubBundleConfig:
     def __post_init__(self) -> None:
         if not self.bind_host:
             raise ValueError("bind_host must not be empty")
+        _validate_bind_host(self.bind_host)
         if not 1 <= self.studio_port <= 65535:
             raise ValueError("studio_port must be in the range 1..65535")
         if not self.image:
@@ -74,6 +76,8 @@ class HubBundleConfig:
             ("compose_name", self.compose_name),
         ):
             _validate_relative_path(label, value)
+        if PurePosixPath(self.compose_name).name != self.compose_name:
+            raise ValueError("compose_name must be a file name, not a nested path")
 
 
 def build_model_zoo_index() -> dict[str, Any]:
@@ -158,13 +162,43 @@ def build_hub_manifest(config: HubBundleConfig | None = None) -> dict[str, Any]:
                 "kind": "fastapi_studio",
                 "url": f"http://{cfg.bind_host}:{cfg.studio_port}",
                 "compose_service": "studio",
-                "command": f"sc-neurocore studio --port {cfg.studio_port}",
+                "command": _studio_container_command(cfg),
+                "healthcheck": f"http://127.0.0.1:{cfg.studio_port}/api/health",
+                "writable_paths": [
+                    "/var/lib/sc-neurocore/cache",
+                    "/tmp",
+                ],
             },
             "benchmark_runner": {
                 "kind": "opt_in_benchmark_runner",
                 "compose_service": "benchmark-runner",
                 "profile": "benchmark",
                 "command": "python benchmarks/benchmark_suite.py --markdown",
+                "writable_paths": [
+                    "/workspace/benchmarks/results",
+                    "/var/lib/sc-neurocore/cache",
+                    "/tmp",
+                ],
+            },
+        },
+        "service_contracts": {
+            "studio": {
+                "readiness_endpoint": "/api/health",
+                "serves": [
+                    "visual SNN design studio API",
+                    "local model catalogue",
+                    "local simulation and code-generation endpoints",
+                ],
+                "does_not_provide": [
+                    "remote model hosting",
+                    "automatic container-image publishing",
+                    "hardware or cloud job submission",
+                ],
+            },
+            "benchmark_runner": {
+                "activation": "docker compose --profile benchmark run --rm benchmark-runner",
+                "serves": ["local benchmark-suite execution"],
+                "does_not_provide": ["continuous benchmark daemon"],
             },
         },
         "storage": {
@@ -183,8 +217,16 @@ def build_hub_manifest(config: HubBundleConfig | None = None) -> dict[str, Any]:
         "benchmark_plan": build_benchmark_plan(cfg),
         "network_policy": {
             "bind_host": cfg.bind_host,
+            "ingress_scope": _ingress_scope(cfg.bind_host),
             "external_egress_required": False,
             "offline_environment": _offline_environment(cfg),
+        },
+        "container_hardening": {
+            "non_root_runtime_user": True,
+            "read_only_root_filesystem": True,
+            "no_new_privileges": True,
+            "tmpfs_paths": ["/tmp"],
+            "restart_policy": "unless-stopped",
         },
         "limitations": [
             "bundle generation does not build or publish a container image",
@@ -250,20 +292,39 @@ services:
   studio:
     build: *hub-build
     image: {config.image}
-    command: sc-neurocore studio --port {config.studio_port}
+    pull_policy: never
+    command: {_studio_container_command(config)}
     environment: *hub-env
     ports:
       - "{config.bind_host}:{config.studio_port}:{config.studio_port}"
     volumes:
       - ./{config.cache_dir}:/var/lib/sc-neurocore/cache:rw
       - ./{config.models_dir}:/var/lib/sc-neurocore/models:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:{config.studio_port}/api/health', timeout=2).read()"
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
+    networks:
+      - neurocore-hub
 
   benchmark-runner:
     profiles:
       - benchmark
     build: *hub-build
     image: {config.image}
+    pull_policy: never
     command: python benchmarks/benchmark_suite.py --markdown
     environment: *hub-env
     working_dir: /workspace
@@ -271,6 +332,17 @@ services:
       - {repo_context}:/workspace:ro
       - ./{config.benchmarks_dir}/results:/workspace/benchmarks/results:rw
       - ./{config.cache_dir}:/var/lib/sc-neurocore/cache:rw
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - neurocore-hub
+
+networks:
+  neurocore-hub:
+    driver: bridge
 """
 
 
@@ -333,6 +405,29 @@ def _offline_environment(config: HubBundleConfig) -> dict[str, str]:
     }
 
 
+def _studio_container_command(config: HubBundleConfig) -> str:
+    return (
+        "python -m uvicorn sc_neurocore.studio.app:create_app "
+        f"--factory --host 0.0.0.0 --port {config.studio_port}"
+    )
+
+
+def _ingress_scope(bind_host: str) -> str:
+    if bind_host in {"localhost", "127.0.0.1", "::1"}:
+        return "loopback"
+    try:
+        address = ipaddress.ip_address(bind_host)
+    except ValueError:
+        return "operator_selected_hostname"
+    if address.is_loopback:
+        return "loopback"
+    if address.is_unspecified:
+        return "all_interfaces"
+    if address.is_private:
+        return "private_network"
+    return "public_or_routable"
+
+
 def _json(payload: dict[str, Any]) -> str:
     return json.dumps(payload, indent=2, sort_keys=True) + "\n"
 
@@ -349,3 +444,17 @@ def _validate_relative_path(label: str, value: str) -> None:
     path = PurePosixPath(value)
     if not value or path.is_absolute() or ".." in path.parts:
         raise ValueError(f"{label} must be a non-empty relative path without '..'")
+
+
+def _validate_bind_host(value: str) -> None:
+    if any(char.isspace() for char in value):
+        raise ValueError("bind_host must not contain whitespace")
+    if "/" in value:
+        raise ValueError("bind_host must be a host name or IP address, not a CIDR")
+    if value in {"localhost", "0.0.0.0", "::", "::1"}:
+        return
+    try:
+        ipaddress.ip_address(value)
+    except ValueError:
+        if not all(part and part.replace("-", "").isalnum() for part in value.split(".")):
+            raise ValueError("bind_host must be a valid host name or IP address") from None

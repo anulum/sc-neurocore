@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 
 import pytest
+import yaml
 
 from sc_neurocore.hub import (
     HubBundleConfig,
@@ -52,18 +53,50 @@ def test_hub_manifest_is_offline_first_and_points_to_local_storage() -> None:
 
     assert manifest["schema_version"] == "sc-neurocore.self-hosted-hub.v1"
     assert manifest["services"]["studio"]["url"] == "http://127.0.0.1:8123"
+    assert "--host 0.0.0.0 --port 8123" in manifest["services"]["studio"]["command"]
+    assert manifest["services"]["studio"]["healthcheck"] == "http://127.0.0.1:8123/api/health"
     assert manifest["services"]["benchmark_runner"]["profile"] == "benchmark"
+    assert manifest["service_contracts"]["studio"]["readiness_endpoint"] == "/api/health"
+    assert (
+        "hardware or cloud job submission"
+        in manifest["service_contracts"]["studio"]["does_not_provide"]
+    )
     assert manifest["storage"] == {
         "cache": "cache",
         "models": "models",
         "benchmark_results": "benchmarks/results",
     }
     assert manifest["network_policy"]["external_egress_required"] is False
+    assert manifest["network_policy"]["ingress_scope"] == "loopback"
     assert manifest["network_policy"]["offline_environment"] == {
         "SC_NEUROCORE_HUB_OFFLINE": "1",
         "HF_HUB_OFFLINE": "1",
         "TRANSFORMERS_OFFLINE": "1",
     }
+    assert manifest["container_hardening"] == {
+        "non_root_runtime_user": True,
+        "read_only_root_filesystem": True,
+        "no_new_privileges": True,
+        "tmpfs_paths": ["/tmp"],
+        "restart_policy": "unless-stopped",
+    }
+
+
+def test_hub_manifest_records_non_loopback_ingress_scope() -> None:
+    manifest = build_hub_manifest(HubBundleConfig(bind_host="10.10.0.5", offline=False))
+
+    assert manifest["network_policy"]["ingress_scope"] == "private_network"
+    assert manifest["network_policy"]["offline_environment"] == {
+        "SC_NEUROCORE_HUB_OFFLINE": "0",
+        "HF_HUB_OFFLINE": "0",
+        "TRANSFORMERS_OFFLINE": "0",
+    }
+
+
+def test_hub_manifest_records_all_interface_ingress_scope() -> None:
+    manifest = build_hub_manifest(HubBundleConfig(bind_host="0.0.0.0"))
+
+    assert manifest["network_policy"]["ingress_scope"] == "all_interfaces"
 
 
 def test_benchmark_plan_is_opt_in() -> None:
@@ -83,6 +116,9 @@ def test_benchmark_plan_is_opt_in() -> None:
         ({"image": ""}, "image must not be empty"),
         ({"cache_dir": "/tmp/cache"}, "cache_dir must be"),
         ({"models_dir": "../models"}, "models_dir must be"),
+        ({"bind_host": "127.0.0.1:8001"}, "bind_host must be"),
+        ({"bind_host": "10.0.0.0/24"}, "bind_host must be"),
+        ({"compose_name": "nested/docker-compose.yml"}, "compose_name must be a file name"),
     ],
 )
 def test_hub_bundle_config_rejects_invalid_values(kwargs: dict[str, object], message: str) -> None:
@@ -113,7 +149,23 @@ def test_write_hub_bundle_creates_compose_manifests_and_directories(tmp_path: Pa
     assert f"      - {repo_context}:/workspace:ro" in compose
     assert "INSTALL_EXTRAS: studio,nir" in compose
     assert '"127.0.0.1:9000:9000"' in compose
+    assert "python -m uvicorn sc_neurocore.studio.app:create_app" in compose
+    assert "--host 0.0.0.0 --port 9000" in compose
     assert "profiles:" in compose
+    assert "pull_policy: never" in compose
+    assert "read_only: true" in compose
+    assert "no-new-privileges:true" in compose
+    assert "/api/health" in compose
+    assert "neurocore-hub:" in compose
+    compose_doc = yaml.safe_load(compose)
+    assert compose_doc["services"]["studio"]["healthcheck"]["test"][:3] == [
+        "CMD",
+        "python",
+        "-c",
+    ]
+    assert compose_doc["services"]["studio"]["read_only"] is True
+    assert compose_doc["services"]["benchmark-runner"]["profiles"] == ["benchmark"]
+    assert compose_doc["networks"]["neurocore-hub"]["driver"] == "bridge"
     manifest = json.loads(paths["manifest"].read_text(encoding="utf-8"))
     assert manifest["artefacts"]["model_zoo_index"] == "model_zoo_index.json"
     index = json.loads(paths["model_zoo_index"].read_text(encoding="utf-8"))

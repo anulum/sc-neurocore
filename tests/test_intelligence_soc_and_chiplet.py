@@ -431,6 +431,15 @@ class TestBRAMArray:
         assert "spike_neuron_id" in v
         assert "tick_done" in v
 
+    def test_current_based_lif_datapath_is_explicit(self):
+        """Array documents and emits the concrete LIF update it implements."""
+        from sc_neurocore.compiler.intelligence import generate_bram_array
+
+        v = generate_bram_array()
+        assert "current-based LIF datapath" in v
+        assert "assign v_next = v_curr + (I_global >>> 4) - (v_curr >>> 3);" in v
+        assert "TODO" not in v
+
 
 class TestMemoryMap:
     def test_basic(self):

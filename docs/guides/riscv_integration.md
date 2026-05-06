@@ -184,6 +184,8 @@ driver = generate_riscv_driver(
 This generates:
 - Standard MMIO accessors (`enable`, `disable`, `reset`, `set_current`)
 - Per-parameter setters (`set_e_l`, `set_tau_m`, `set_c`)
+- A weak `sc_lif_read_current()` hook that integrators override with their
+  board-specific ADC, DMA, or sensor path
 - A FreeRTOS tick task with `xTaskCreate` boilerplate
 - Start function `sc_lif_start_rtos()`
 

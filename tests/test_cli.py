@@ -9,6 +9,7 @@
 """Tests for sc_neurocore.cli."""
 
 import builtins
+import importlib.metadata
 import importlib.util
 import json
 import types
@@ -78,29 +79,29 @@ def test_info_reports_engine_version_mismatch(capsys):
     assert "expected" in out
 
 
-def test_info_ignores_broken_optional_jax_import(capsys):
-    real_import = builtins.__import__
-
-    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+def test_info_uses_metadata_without_importing_optional_jax(capsys):
+    def fake_version(name: str) -> str:
         if name == "jax":
-            raise AttributeError("broken jax")
-        return real_import(name, globals, locals, fromlist, level)
+            return "0.0-meta"
+        if name == "numpy":
+            return "0.0-numpy"
+        raise importlib.metadata.PackageNotFoundError(name)
 
-    with mock.patch("builtins.__import__", side_effect=fake_import):
+    with mock.patch("sc_neurocore.cli.importlib.metadata.version", side_effect=fake_version):
         rc = _cmd_info()
     assert rc == 0
-    assert "JAX:" not in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "JAX: 0.0-meta" in out
 
 
-def test_info_ignores_broken_optional_numpy_import(capsys):
-    real_import = builtins.__import__
-
-    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
-        if name == "numpy":
-            raise RuntimeError("broken numpy")
-        return real_import(name, globals, locals, fromlist, level)
-
-    with mock.patch("builtins.__import__", side_effect=fake_import):
+def test_info_ignores_missing_optional_metadata(capsys):
+    with (
+        mock.patch.dict("sys.modules", {"numpy": None, "jax": None}),
+        mock.patch(
+            "sc_neurocore.cli.importlib.metadata.version",
+            side_effect=importlib.metadata.PackageNotFoundError("missing"),
+        ),
+    ):
         rc = _cmd_info()
     assert rc == 0
     assert "NumPy:" not in capsys.readouterr().out
@@ -347,12 +348,23 @@ class TestHubInitCommand:
         from sc_neurocore.cli import _cmd_hub_init
 
         out = tmp_path / "hub"
-        rc = _cmd_hub_init(str(out), port=8111)
+        rc = _cmd_hub_init(
+            str(out),
+            port=8111,
+            bind_host="10.0.0.5",
+            image="sc-neurocore:test",
+            offline=False,
+        )
 
         assert rc == 0
         assert (out / "docker-compose.yml").exists()
         manifest = json.loads((out / "hub_manifest.json").read_text(encoding="utf-8"))
-        assert manifest["services"]["studio"]["url"] == "http://127.0.0.1:8111"
+        assert manifest["services"]["studio"]["url"] == "http://10.0.0.5:8111"
+        assert manifest["network_policy"]["ingress_scope"] == "private_network"
+        assert manifest["network_policy"]["offline_environment"]["SC_NEUROCORE_HUB_OFFLINE"] == "0"
+        assert "image: sc-neurocore:test" in (out / "docker-compose.yml").read_text(
+            encoding="utf-8"
+        )
         assert "hub bundle generated" in capsys.readouterr().out
 
     def test_hub_init_rejects_invalid_port(self, tmp_path, capsys):

@@ -16,7 +16,8 @@ from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.codegen import classify_firing_pattern, generate_model_script
-from sc_neurocore.studio.simulation import simulate
+from sc_neurocore.studio.analysis import frequency_response
+from sc_neurocore.studio.simulation import _make_current_trace, simulate
 
 
 @pytest.fixture
@@ -80,6 +81,31 @@ class TestSimulationProtocols:
         )
         assert r["current_trace"][0] == 0.0
         assert r["current_trace"][-1] == pytest.approx(10.0, rel=0.1)
+
+    def test_sine_protocol_trace_has_ac_current(self):
+        trace = _make_current_trace("sine", 2.0, 1000, dt=1.0, frequency_hz=10.0)
+        assert trace[0] == pytest.approx(0.0)
+        assert max(trace) == pytest.approx(2.0, rel=0.02)
+        assert min(trace) == pytest.approx(-2.0, rel=0.02)
+
+    def test_frequency_response_uses_sine_protocol(self):
+        calls: list[dict[str, float | str]] = []
+
+        def fake_simulate(**cfg):
+            calls.append(cfg)
+            return {"stats": {"rate_hz": float(cfg["frequency_hz"])}}
+
+        result = frequency_response(
+            fake_simulate,
+            {"dt": 0.1, "duration": 20.0},
+            freq_min=5.0,
+            freq_max=20.0,
+            n_freqs=3,
+            amplitude=4.0,
+        )
+        assert result["rates"] == pytest.approx([5.0, 10.0, 20.0])
+        assert all(call["protocol"] == "sine" for call in calls)
+        assert all(call["current"] == 4.0 for call in calls)
 
     def test_stats_have_isi_histogram(self):
         r = simulate(

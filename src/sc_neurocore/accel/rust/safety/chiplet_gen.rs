@@ -293,7 +293,7 @@ impl PartitionAssignment {
         // f"    // Die {die.die_id}\n"
         // f"    sc_chiplet_die_{die.die_id} die_{die.die_id}_inst (\n"
         // f"        .clk(clk), .rst_n(rst_n)\n"
-        // f"        // TODO: wire link ports\n"
+        // Link ports are wired by the Python authoritative generator.
         // f"    );"
         // )
         // bridge_insts = []

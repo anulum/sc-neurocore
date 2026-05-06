@@ -101,3 +101,39 @@ noise = build_noise_annotation("loihi2", {"spike_drop_rate": 0.001})
 
 Noise annotations validate channel names and reject non-finite or negative
 measurements before they can influence simulation.
+
+## Loihi 2 / SpiNNaker2 Adapter Packages
+
+::: sc_neurocore.nir_bridge.neuromorphic_adapters
+    options:
+      show_root_heading: true
+      members:
+        - NeuromorphicAdapterPackage
+        - build_neuromorphic_adapter_package
+        - build_neuromorphic_adapter_bundle
+        - write_neuromorphic_adapter_bundle
+
+`build_neuromorphic_adapter_package()` turns a parsed NIR graph into a
+deterministic handoff package for either `loihi2` or `spinnaker2`. The package
+contains:
+
+- `adapter_manifest.json` with lowering status, fallback requirements, selected
+  bitstream length, and noise back-annotation hooks;
+- `nir_silicon_mapping_report.json`, the full mapping report used to build the
+  manifest;
+- `README.md` documenting the vendor SDK boundary.
+
+The adapter package is intentionally SDK-free. Loihi 2 execution still requires
+Lava/Loihi access, and SpiNNaker2 execution still requires the SpiNNaker2 SDK
+and board access. The package is therefore a reproducible planning and handoff
+artefact, not a hardware-execution claim.
+
+```python
+from sc_neurocore.nir_bridge import write_neuromorphic_adapter_bundle
+
+write_neuromorphic_adapter_bundle(
+    "build/neuromorphic_targets",
+    nir_graph,
+    targets=("loihi2", "spinnaker2"),
+)
+```

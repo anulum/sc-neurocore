@@ -273,9 +273,10 @@ module {module_name} (
     wire signed [{data_width - 1}:0] v_next;
     wire spike_w;
 
-    // ── Time-multiplexed compute ────────────────────────────
-    // TODO: Replace with actual neuron equation datapath
-    // This template shows the BRAM read→compute→write pattern
+    // ── Time-multiplexed current-based LIF datapath ─────────
+    // v_next = v + I/16 - v/8. Spike resets the stored membrane value to 0.
+    // More detailed neuron equations are emitted by the equation compiler;
+    // this array implements the BRAM read→compute→write pattern directly.
     assign v_next = v_curr + (I_global >>> 4) - (v_curr >>> 3);
     assign spike_w = (v_next > {data_width}'sd{(1 << (data_width - 2)) - 1});
 

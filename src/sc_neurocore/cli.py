@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import sys
 from typing import Any, cast
 
@@ -59,6 +60,21 @@ def main() -> int:
     )
     parser.add_argument("--T", type=int, default=256, help="Bitstream length for SC layers")
     parser.add_argument("--port", type=int, default=8001, help="Port for serve command")
+    parser.add_argument(
+        "--bind-host",
+        default="127.0.0.1",
+        help="Bind host for hub-init generated Studio service",
+    )
+    parser.add_argument(
+        "--hub-image",
+        default="sc-neurocore-hub:local",
+        help="Container image tag used by hub-init generated Compose bundle",
+    )
+    parser.add_argument(
+        "--online",
+        action="store_true",
+        help="For hub-init, clear generated offline-mode environment flags",
+    )
     parser.add_argument(
         "--hardware-targets",
         default="loihi2,spinnaker2,akida",
@@ -216,7 +232,13 @@ def main() -> int:
             return 1
         return _cmd_map_nir(args.model, args.output, args.hardware_targets, args.dt, args.T)
     if args.command == "hub-init":
-        return _cmd_hub_init(args.output, args.port)
+        return _cmd_hub_init(
+            args.output,
+            args.port,
+            bind_host=args.bind_host,
+            image=args.hub_image,
+            offline=not args.online,
+        )
     if args.command == "studio":
         return _cmd_studio(args.port)
     if args.command == "collect-synthesis":
@@ -518,11 +540,17 @@ def _cmd_collect_synthesis(args: Any) -> int:
 
 
 def _print_optional_dependency_version(module_name: str, label: str) -> None:
-    try:
-        module = __import__(module_name)
-    except Exception:
+    loaded_module = sys.modules.get(module_name)
+    if loaded_module is not None:
+        version = getattr(loaded_module, "__version__", None)
+        if version is not None:
+            print(f"{label}: {version}")
         return
-    print(f"{label}: {getattr(module, '__version__', 'unknown')}")
+    try:
+        version = importlib.metadata.version(module_name)
+    except importlib.metadata.PackageNotFoundError:
+        return
+    print(f"{label}: {version}")
 
 
 def _format_engine_status(expected_version: str) -> str:
@@ -751,14 +779,20 @@ def _cmd_map_nir(
     return 0
 
 
-def _cmd_hub_init(output_dir: str, port: int) -> int:
+def _cmd_hub_init(
+    output_dir: str,
+    port: int,
+    bind_host: str = "127.0.0.1",
+    image: str = "sc-neurocore-hub:local",
+    offline: bool = True,
+) -> int:
     """Generate a local self-hosted hub Compose bundle."""
     from sc_neurocore.hub import HubBundleConfig, write_hub_bundle
 
     try:
         paths = write_hub_bundle(
             output_dir,
-            HubBundleConfig(studio_port=port),
+            HubBundleConfig(studio_port=port, bind_host=bind_host, image=image, offline=offline),
         )
     except (OSError, ValueError) as exc:
         print(f"Error: {exc}")

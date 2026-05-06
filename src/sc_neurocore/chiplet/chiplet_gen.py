@@ -480,6 +480,13 @@ class ChipletGenerator:
             f"    output wire                  link_in_{l.src_die}_tready,"
             for l in incoming
         )
+        out_assigns = "\n".join(
+            f"    assign link_out_{l.dst_die}_tdata = "
+            f"{{{{({l.data_width}-AER_ID_W){{1'b0}}}}, local_out_id}};\n"
+            f"    assign link_out_{l.dst_die}_tvalid = local_out_valid;"
+            for l in outgoing
+        )
+        in_assigns = "\n".join(f"    assign link_in_{l.src_die}_tready = 1'b1;" for l in incoming)
         return textwrap.dedent(f"""\
 {_SPDX}
 // SC-NeuroCore Chiplet — Die {die.die_id} wrapper
@@ -520,6 +527,9 @@ module sc_chiplet_die_{die.die_id} #(
         .out_target_id(local_out_id),
         .out_weight(local_out_weight)
     );
+
+{in_assigns}
+{out_assigns}
 
 endmodule
 """)
@@ -667,13 +677,53 @@ endmodule
 """)
 
     def _emit_top(self, topo: ChipletTopology) -> str:
+        link_wires = []
+        for link in topo.links:
+            link_wires.append(
+                f"    wire [{link.data_width - 1}:0] link_{link.src_die}_{link.dst_die}_tdata;\n"
+                f"    wire                  link_{link.src_die}_{link.dst_die}_tvalid;\n"
+                f"    wire                  link_{link.src_die}_{link.dst_die}_tready;\n"
+                f"    wire [{link.data_width - 1}:0] link_{link.src_die}_{link.dst_die}_rx_tdata;\n"
+                f"    wire                  link_{link.src_die}_{link.dst_die}_rx_tvalid;\n"
+                f"    wire                  link_{link.src_die}_{link.dst_die}_rx_tready;"
+            )
+        link_wire_block = "\n".join(link_wires)
+
         die_insts = []
         for die in topo.dies:
+            outgoing = topo.get_links_from(die.die_id)
+            incoming = topo.get_links_to(die.die_id)
+            link_ports = []
+            for link in outgoing:
+                link_ports.extend(
+                    [
+                        f"        .link_out_{link.dst_die}_tdata(link_{link.src_die}_{link.dst_die}_tdata)",
+                        f"        .link_out_{link.dst_die}_tvalid(link_{link.src_die}_{link.dst_die}_tvalid)",
+                        f"        .link_out_{link.dst_die}_tready(link_{link.src_die}_{link.dst_die}_tready)",
+                    ]
+                )
+            for link in incoming:
+                link_ports.extend(
+                    [
+                        f"        .link_in_{link.src_die}_tdata(link_{link.src_die}_{link.dst_die}_rx_tdata)",
+                        f"        .link_in_{link.src_die}_tvalid(link_{link.src_die}_{link.dst_die}_rx_tvalid)",
+                        f"        .link_in_{link.src_die}_tready(link_{link.src_die}_{link.dst_die}_rx_tready)",
+                    ]
+                )
+            link_port_block = ""
+            if link_ports:
+                link_port_block = ",\n" + ",\n".join(link_ports)
             die_insts.append(
                 f"    // Die {die.die_id}\n"
                 f"    sc_chiplet_die_{die.die_id} die_{die.die_id}_inst (\n"
-                f"        .clk(clk), .rst_n(rst_n)\n"
-                f"        // TODO: wire link ports\n"
+                f"        .clk(clk),\n"
+                f"        .rst_n(rst_n)"
+                f"{link_port_block},\n"
+                f"        .local_spike_valid(1'b0),\n"
+                f"        .local_spike_id({die.aer_id_width}'d0),\n"
+                f"        .local_out_valid(),\n"
+                f"        .local_out_id(),\n"
+                f"        .local_out_weight()\n"
                 f"    );"
             )
         bridge_insts = []
@@ -682,8 +732,13 @@ endmodule
                 f"    // Bridge {link.src_die} → {link.dst_die} ({link.technology.value})\n"
                 f"    sc_chiplet_bridge_{link.src_die}_to_{link.dst_die} bridge_{link.src_die}_{link.dst_die}_inst (\n"
                 f"        .src_clk(clk), .src_rst(!rst_n),\n"
-                f"        .dst_clk(clk), .dst_rst(!rst_n)\n"
-                f"        // TODO: wire AXI-Stream ports\n"
+                f"        .dst_clk(clk), .dst_rst(!rst_n),\n"
+                f"        .s_tdata(link_{link.src_die}_{link.dst_die}_tdata),\n"
+                f"        .s_tvalid(link_{link.src_die}_{link.dst_die}_tvalid),\n"
+                f"        .s_tready(link_{link.src_die}_{link.dst_die}_tready),\n"
+                f"        .m_tdata(link_{link.src_die}_{link.dst_die}_rx_tdata),\n"
+                f"        .m_tvalid(link_{link.src_die}_{link.dst_die}_rx_tvalid),\n"
+                f"        .m_tready(link_{link.src_die}_{link.dst_die}_rx_tready)\n"
                 f"    );"
             )
 
@@ -700,6 +755,8 @@ module sc_chiplet_top (
     input wire clk,
     input wire rst_n
 );
+
+{link_wire_block}
 
 {die_block}
 

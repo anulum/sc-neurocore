@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import sc_neurocore.fault_injection as fi
 from sc_neurocore.fault_injection import fault_injection as inner
+from sc_neurocore.fault_injection import resilience_mode
 from sc_neurocore.fault_injection import resilience_policy
 
 
@@ -26,6 +27,10 @@ SYMBOLS: tuple[str, ...] = (
     "DegradationAction",
     "DegradationPlan",
     "GracefulDegradationPolicy",
+    "FaultInjectionResilienceMode",
+    "ResilienceModeConfig",
+    "ResilienceModeReport",
+    "ResilienceModeTrialReport",
 )
 
 
@@ -52,8 +57,14 @@ def test_symbols_identity_with_inner() -> None:
 
 def test_resilience_policy_symbols_identity() -> None:
     """Top-level resilience policy symbols are the module symbols."""
-    for sym in SYMBOLS[6:]:
+    for sym in SYMBOLS[6:10]:
         assert getattr(fi, sym) is getattr(resilience_policy, sym)
+
+
+def test_resilience_mode_symbols_identity() -> None:
+    """Top-level resilience mode symbols are the module symbols."""
+    for sym in SYMBOLS[10:]:
+        assert getattr(fi, sym) is getattr(resilience_mode, sym)
 
 
 def test_fault_model_enum_has_five_members() -> None:
@@ -81,8 +92,8 @@ def test_radiation_profile_presets() -> None:
     assert terrestrial.ber < leo.ber < geo.ber < deep.ber
 
 
-def test_radiation_profile_published_bers() -> None:
-    """The published BER constants are within the documented orders of magnitude.
+def test_radiation_profile_stress_preset_bers() -> None:
+    """The engineering stress presets keep documented orders of magnitude.
 
     From `fault_injection.py` lines 43–58:
         terrestrial 1e-10, LEO 1e-7, GEO 5e-6, deep space 1e-4

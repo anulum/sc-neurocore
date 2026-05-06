@@ -1,6 +1,6 @@
 # Roadmap
 
-> Last updated: 2026-04-28 (v3.14.0). Priorities may shift based on
+> Last updated: 2026-05-06. Priorities may shift based on
 > validation results and community feedback.
 
 ## Current Maintenance Snapshot — 2026-04-28
@@ -155,9 +155,14 @@ New in this release:
 Complete train → quantise → synthesise → bitstream flow for Spiking
 Heidelberg Digits (SHD) speech classification on Zynq XC7Z020 (PYNQ-Z2):
 
-- **Training:** DCLS max (Hammouamri 2024) on Vertex AI T4, 18 runs total
-  (baseline + lambda sweep + sigma=0 + L1 pruning)
-- **Best result:** 75.2% test accuracy, 0% rounding drop (FPGA-deployable)
+- **Training:** DCLS max (Hammouamri 2024) on Vertex AI T4. The historical
+  75.2% `dcls_max` result is now treated as exploratory because it selected
+  checkpoints under native validation rather than the deployable rounded-delay
+  validation condition.
+- **Current deployable evidence:** corrected deployable-selector runs across
+  seeds 0-4 reached 72.3990% mean test accuracy with 1.9672 percentage-point
+  sample standard deviation and 0.0 percentage-point rounding drop in all five
+  runs.
 - **Verilog:** 5 new modules (sc_shd_top, sc_vmin_lif_neuron, sc_axonal_delay,
   sc_dense_int8_sparse, sc_shd_axi_wrapper) — 25 total HDL modules, 5 455 lines
 - **Vivado synthesis:** 1 317 LUT (2.5%), 848 FF (0.8%), 0 BRAM, 0 DSP,
@@ -341,7 +346,7 @@ verification:
 - Boundedness: token counts within proven upper bounds
 - Deadlock freedom: compiler output is provably deadlock-free
 
-## Frontier TODO Intake — 2026-04-30
+## Frontier Roadmap Intake — 2026-04-30
 
 The following items are accepted as roadmap candidates. They require scoped
 design docs, milestone split, and evidence gates before claims move into the
@@ -403,7 +408,7 @@ Multi-tenant edge-cluster orchestration built on AER routing and deployment
 contracts. Target isolation, scheduling, telemetry, and per-tenant evidence
 manifests for distributed neuromorphic deployments.
 
-## Focused TODO — 2026-05-01
+## Focused Roadmap Priorities — 2026-05-01
 
 ### Studio as default path (drag-drop → train → deploy)
 
