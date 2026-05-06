@@ -1,0 +1,14 @@
+! UB3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 SP
+%maxcore 3000
+%pal
+  nprocs 6
+end
+
+%eprnmr
+  gtensor = true
+  nuclei = all P {aiso, adip, aorb}
+  nuclei = all Ca {aiso, adip}
+  printlevel = 5
+end
+
+* xyzfile 1 2 00_posner_neutral_opt.xyz

@@ -64,7 +64,7 @@ sc-neurocore = "sc_neurocore.cli:main"
 [project.optional-dependencies]
 core = []
 dev = ["pytest", "pytest-cov", "hypothesis", "mypy", "ruff", "bandit", "pyyaml", "onnx", "pint>=0.23", "tomli; python_version < '3.11'"]
-dev-full = ["sc-neurocore[dev]", "jax", "jaxlib", "qiskit", "pennylane", "qiskit-aer"]
+dev-full = ["sc-neurocore[dev]", "jax", "jaxlib", "qiskit", "pennylane", "qiskit-aer", "qiskit-ibm-runtime"]
 accel = ["numba>=0.56"]
 gpu = ["cupy-cuda12x>=12.0"]
 hdl = ["pint>=0.23"]
@@ -85,15 +85,23 @@ full = [
   "qiskit",
   "pennylane",
   "qiskit-aer",
+  "qiskit-ibm-runtime",
 ]
 research = ["matplotlib>=3.5", "networkx", "onnx", "torch>=2.0"]
+chemistry = [
+  "ase>=3.23",
+  "basis-set-exchange>=0.10",
+  "cclib>=1.8",
+  "periodictable>=2.0",
+]
 training = ["torch>=2.0"]
 jax = ["jax", "jaxlib"]
 julia = ["juliacall>=0.9"]
-quantum = ["qiskit", "pennylane", "qiskit-aer"]
+quantum = ["qiskit", "pennylane", "qiskit-aer", "qiskit-ibm-runtime"]
+quantum-cognition = ["sc-neurocore[quantum]"]  # Fisher-Posner experimental layer
 nir = ["nir>=1.0"]
 mpi = ["mpi4py>=3.0"]
-lava = ["lava-nc"]
+lava = ["lava-nc; python_version < '3.11'"]
 studio = ["fastapi>=0.100", "uvicorn[standard]>=0.20", "httpx>=0.27"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
 compression = ["PyWavelets>=1.4", "zstandard>=0.22"]
@@ -148,6 +156,7 @@ source = ["sc_neurocore"]
 omit = [
     # --- Requires external hardware/services ---
     "*/quantum/hardware_bridge.py",     # IBM Quantum hardware
+    "*/quantum_cognition/bridge_adapter.py",  # Optional PennyLane
     "*/integrations/lava_bridge.py",    # Intel Loihi hardware
     "*/interfaces/ccw_bridge.py",       # CCW system bridge
     # --- Requires optional heavy deps (torch, JAX, nir) ---

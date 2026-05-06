@@ -1,0 +1,36 @@
+scheduling:
+  timeout: 86400s
+workerPoolSpecs:
+  - machineSpec:
+      machineType: n1-standard-8
+    replicaCount: 1
+    diskSpec:
+      bootDiskType: pd-ssd
+      bootDiskSizeGb: 100
+    containerSpec:
+      imageUri: gcr.io/google.com/cloudsdktool/google-cloud-cli:stable
+      command:
+        - /bin/bash
+        - -lc
+      args:
+        - |
+          set -euo pipefail
+          export PATH="/google-cloud-sdk/bin:/usr/lib/google-cloud-sdk/bin:/usr/local/google-cloud-sdk/bin:${PATH}"
+          GCLOUD_BIN="$(command -v gcloud || true)"
+          if [[ -z "$GCLOUD_BIN" ]]; then
+            echo "gcloud CLI not found in Vertex container PATH" >&2
+            exit 4
+          fi
+          mkdir -p /tmp/sc-neurocore-posner-vertex
+          "$GCLOUD_BIN" storage cp \
+            gs://gotm-sc-neurocore/sc-neurocore-posner-orca/20260505T195306Z/input/run_vertex_posner_orca.sh \
+            /tmp/sc-neurocore-posner-vertex/run_vertex_posner_orca.sh
+          chmod +x /tmp/sc-neurocore-posner-vertex/run_vertex_posner_orca.sh
+          ORCA_ARCHIVE_URI=gs://gotm-sc-neurocore/sc-neurocore-posner-orca/20260505T195306Z/input/orca_6_1_1_linux_x86-64_shared_openmpi418.tar.xz \
+          ORCA_ARCHIVE_SHA1=98490e09ad999792bd23ed7a06a6799aef01fb5a \
+          INPUT_XYZ_URI=gs://gotm-sc-neurocore/sc-neurocore-posner-orca/20260505T195306Z/input/input_from_local_cycle_snapshot.xyz \
+          OUTPUT_URI=gs://gotm-sc-neurocore/sc-neurocore-posner-orca/20260505T195306Z/output-r3 \
+          JOB_NAME=posner_vertex_neutral_opt_20260505T195306Z_r3 \
+          NPROCS=6 \
+          MAXCORE_MB=3000 \
+          bash /tmp/sc-neurocore-posner-vertex/run_vertex_posner_orca.sh
