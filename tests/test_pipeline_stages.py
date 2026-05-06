@@ -178,9 +178,7 @@ class TestCriticalPathIntegration:
 
     def test_pipeline_analysis_full(self, izhikevich_neuron):
         """Full pipeline analysis should return per-variable results."""
-        result = pipeline_analysis(
-            izhikevich_neuron.equations, target_freq_mhz=500
-        )
+        result = pipeline_analysis(izhikevich_neuron.equations, target_freq_mhz=500)
         assert "v" in result
         assert "u" in result
         assert "depth" in result["v"]
@@ -189,10 +187,7 @@ class TestCriticalPathIntegration:
 
     def test_auto_pipeline_zero_at_100mhz(self, lif_neuron):
         """Auto-pipeline at 100 MHz should give 0 stages for LIF."""
-        max_depth = max(
-            critical_path_depth(expr)
-            for expr in lif_neuron.equations.values()
-        )
+        max_depth = max(critical_path_depth(expr) for expr in lif_neuron.equations.values())
         stages = pipeline_stages_needed(max_depth, 100)
         assert stages == 0
 

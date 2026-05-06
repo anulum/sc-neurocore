@@ -89,14 +89,19 @@ def _check_rust() -> tuple[str, bool, float]:
 
             result = subprocess.run(
                 ["rustc", "--test", str(rs_path), "-o", out_path, "-C", "opt-level=2"],
-                capture_output=True, text=True, timeout=60,
+                capture_output=True,
+                text=True,
+                timeout=60,
             )
             if result.returncode != 0:
                 print(f"  Rust compile error ({rs_name}):\n{result.stderr[:300]}")
                 return "Rust", False, time.monotonic() - t0
 
             result = subprocess.run(
-                [out_path], capture_output=True, text=True, timeout=30,
+                [out_path],
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
             if result.returncode != 0:
                 print(f"  Rust test error ({rs_name}):\n{result.stdout[:300]}")
@@ -108,6 +113,7 @@ def _check_rust() -> tuple[str, bool, float]:
                     print(f"  [{rs_name}] {line.strip()}")
                     # Parse "X passed"
                     import re
+
                     m = re.search(r"(\d+) passed", line)
                     if m:
                         total_tests += int(m.group(1))
@@ -137,7 +143,9 @@ def _check_mojo() -> tuple[str, bool, float]:
     try:
         result = subprocess.run(
             ["mojo", "run", str(mojo_file)],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
         dt = time.monotonic() - t0
         if result.returncode != 0:
@@ -166,7 +174,9 @@ def _check_julia() -> tuple[str, bool, float]:
     try:
         result = subprocess.run(
             ["julia", "--project=@.", str(jl_file)],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True,
+            text=True,
+            timeout=120,
             cwd=str(_QC_DIR),
         )
         dt = time.monotonic() - t0
@@ -191,9 +201,9 @@ def main() -> int:
         name, passed, dt = check()
         results.append((name, passed, dt))
         status = f"{_GREEN}PASS{_RESET}" if passed else f"{_RED}FAIL{_RESET}"
-        print(f"  {name:15s}  {status}  ({dt*1000:.0f} ms)")
+        print(f"  {name:15s}  {status}  ({dt * 1000:.0f} ms)")
 
-    print(f"\n{_BOLD}{'='*50}{_RESET}")
+    print(f"\n{_BOLD}{'=' * 50}{_RESET}")
     passed = sum(1 for _, p, _ in results if p)
     total = len(results)
     colour = _GREEN if passed == total else _RED

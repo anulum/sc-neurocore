@@ -46,12 +46,14 @@ _QC_DIR = _ROOT / "src" / "sc_neurocore" / "quantum_cognition"
 
 # ─── Python Benchmarks ───
 
+
 def bench_py_apply_measurement(n_sites: int, n_calls: int) -> float:
     pool = SpinPoolMPS(n_sites=n_sites, bond_dim=16)
     t0 = time.perf_counter()
     for i in range(n_calls):
         pool.apply_measurement(i % n_sites, 1.0)
     return (time.perf_counter() - t0) / n_calls * 1e6  # µs/call
+
 
 def bench_py_neuron_step(n_neurons: int, n_steps: int) -> float:
     pool = SpinPoolMPS(n_sites=n_neurons, bond_dim=16)
@@ -65,6 +67,7 @@ def bench_py_neuron_step(n_neurons: int, n_steps: int) -> float:
     dt = time.perf_counter() - t0
     return dt / (n_steps * n_neurons) * 1e6  # µs/neuron-step
 
+
 def bench_py_singlet_yield(n_calls: int) -> float:
     model = RadicalPairModel()
     fields = np.linspace(0, 1e-3, n_calls)
@@ -73,13 +76,16 @@ def bench_py_singlet_yield(n_calls: int) -> float:
         model.singlet_yield(b)
     return (time.perf_counter() - t0) / n_calls * 1e6
 
+
 def bench_py_coupling_matrix(n_sites: int) -> float:
     mapper = KaneSiliconMapper(spacing_nm=10.0, topology="linear")
     t0 = time.perf_counter()
     mapper.map_pool_to_register(n_sites)
     return (time.perf_counter() - t0) * 1e3  # ms
 
+
 # ─── Rust Benchmarks ───
+
 
 def _run_rust_benchmark(rs_file: str, opt: str = "-C opt-level=2") -> dict[str, Any] | None:
     rs_path = _QC_DIR / rs_file
@@ -88,16 +94,22 @@ def _run_rust_benchmark(rs_file: str, opt: str = "-C opt-level=2") -> dict[str, 
     bin_path = f"/tmp/{rs_file.replace('.rs', '_bench')}"
     result = subprocess.run(
         ["rustc", str(rs_path), "-o", bin_path] + opt.split(),
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     if result.returncode != 0:
         return None
     result = subprocess.run(
-        [bin_path], capture_output=True, text=True, timeout=60,
+        [bin_path],
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     if result.returncode != 0:
         return None
     return {"output": result.stdout}
+
 
 def bench_e2e_pipeline(n_neurons: int, n_chunks: int) -> dict[str, float]:
     """Measure end-to-end neuron stepping throughput.
@@ -129,10 +141,13 @@ def bench_e2e_pipeline(n_neurons: int, n_chunks: int) -> dict[str, float]:
         "total_spikes": total_spikes,
     }
 
+
 # ─── Main ───
+
 
 def main() -> int:
     import argparse
+
     parser = argparse.ArgumentParser(description="QC Benchmark Suite")
     parser.add_argument("--quick", action="store_true", help="Reduced iterations")
     parser.add_argument("--json", action="store_true", help="JSON output")
@@ -143,9 +158,9 @@ def main() -> int:
     results: dict[str, Any] = {"timestamp": time.strftime("%Y-%m-%d %H:%M:%S")}
 
     if not args.json:
-        print(f"\n\033[1;36m{'='*60}")
+        print(f"\n\033[1;36m{'=' * 60}")
         print("  Quantum Cognition Benchmark Suite")
-        print(f"{'='*60}\033[0m\n")
+        print(f"{'=' * 60}\033[0m\n")
         print(f"  Iterations: {n_calls}  |  Sizes: {sizes}")
         print(f"  System: {os.uname().sysname} {os.uname().machine}\n")
 
@@ -182,7 +197,7 @@ def main() -> int:
     us = bench_py_singlet_yield(n_calls)
     results["singlet_yield_us"] = us
     if not args.json:
-        print(f"  {n_calls} calls: {us:.2f} µs/call ({us*n_calls/1e3:.1f} ms total)")
+        print(f"  {n_calls} calls: {us:.2f} µs/call ({us * n_calls / 1e3:.1f} ms total)")
 
     # 4. coupling_matrix
     if not args.json:
@@ -202,9 +217,11 @@ def main() -> int:
     e2e = bench_e2e_pipeline(32, 200 if not args.quick else 50)
     results["e2e_pipeline"] = e2e
     if not args.json:
-        print(f"  {e2e['chunks_per_sec']:.0f} chunks/sec  "
-              f"({e2e['ms_per_chunk']:.1f} ms/chunk, "
-              f"{e2e['total_spikes']} spikes)")
+        print(
+            f"  {e2e['chunks_per_sec']:.0f} chunks/sec  "
+            f"({e2e['ms_per_chunk']:.1f} ms/chunk, "
+            f"{e2e['total_spikes']} spikes)"
+        )
 
     # 6. Rust benchmarks
     if not args.json:
@@ -224,9 +241,9 @@ def main() -> int:
                 print(f"  [{rs_file}] \033[33mSKIPPED\033[0m")
 
     if not args.json:
-        print(f"\n\033[1;32m{'='*60}")
+        print(f"\n\033[1;32m{'=' * 60}")
         print("  Benchmark Complete")
-        print(f"{'='*60}\033[0m\n")
+        print(f"{'=' * 60}\033[0m\n")
 
     if args.json:
         print(json.dumps(results, indent=2))

@@ -22,14 +22,18 @@ import pytest
 from sc_neurocore.quantum_cognition.spin_pool import SpinPoolMPS
 from sc_neurocore.quantum_cognition.fisher_posner import HybridFisherPosnerLIF
 from sc_neurocore.quantum_cognition.bridge_adapter import (
-    FisherPosnerQuantumBridge, compute_max_qubits, _get_available_ram,
+    FisherPosnerQuantumBridge,
+    compute_max_qubits,
+    _get_available_ram,
 )
 from sc_neurocore.quantum_cognition.gotm_brain import GOTMBrain
 from sc_neurocore.quantum_cognition.content_indexer import (
-    ContentChunk, index_gotm_repo,
+    ContentChunk,
+    index_gotm_repo,
 )
 from sc_neurocore.quantum_cognition.radical_pair import (
-    RadicalPairModel, RadicalPairParams,
+    RadicalPairModel,
+    RadicalPairParams,
 )
 from sc_neurocore.quantum_cognition.kane_mapper import (
     KaneSiliconMapper,
@@ -41,6 +45,7 @@ _QC_DIR = Path(__file__).resolve().parent.parent / "src" / "sc_neurocore" / "qua
 
 
 # ─── Scenario 1: Full Pipeline Stress ───
+
 
 class TestFullPipelineStress:
     """Index real files, feed through GOTMBrain, verify learning progression."""
@@ -87,6 +92,7 @@ class TestFullPipelineStress:
 
 
 # ─── Scenario 2: Cross-Backend Parity ───
+
 
 class TestCrossBackendParity:
     """Verify Python and Rust produce identical numerical results."""
@@ -135,11 +141,13 @@ class TestCrossBackendParity:
         # Analytical: J(10nm) = 0.1 * exp(-2*10/2.5) = 0.1 * exp(-8)
         expected = 0.1 * math.exp(-8.0)
         nn_coupling = layout.coupling_matrix[0, 1]
-        assert abs(nn_coupling - expected) < 1e-15, \
+        assert abs(nn_coupling - expected) < 1e-15, (
             f"NN coupling mismatch: {nn_coupling} vs {expected}"
+        )
 
 
 # ─── Scenario 3: Large-Scale Population ───
+
 
 class TestLargeScalePopulation:
     """256 neurons, 1000 steps — no NaN, no Inf, memory bounded."""
@@ -171,6 +179,7 @@ class TestLargeScalePopulation:
 
 
 # ─── Scenario 4: Metabolic Crisis Recovery ───
+
 
 class TestMetabolicCrisisRecovery:
     """Drain ATP, verify neurons recover and resume spiking."""
@@ -212,6 +221,7 @@ class TestMetabolicCrisisRecovery:
 
 # ─── Scenario 5: Directive-Driven Coherence ───
 
+
 class TestDirectiveDrivenCoherence:
     """Verify that FOCUS increases coherence, EXPLORE increases entropy."""
 
@@ -235,6 +245,7 @@ class TestDirectiveDrivenCoherence:
 
 
 # ─── Scenario 6: Radical Pair Field Response ───
+
 
 class TestRadicalPairFieldResponse:
     """Sweep B from 0 to 100 µT, verify monotonic physics response."""
@@ -267,6 +278,7 @@ class TestRadicalPairFieldResponse:
 
 # ─── Scenario 7: Kane Register Feasibility ───
 
+
 class TestKaneRegisterFeasibility:
     """Generate large registers, verify properties."""
 
@@ -296,6 +308,7 @@ class TestKaneRegisterFeasibility:
 
 
 # ─── Scenario 8: Content Indexer Adversarial ───
+
 
 class TestContentIndexerAdversarial:
     """Edge cases: Unicode, empty, binary, deeply nested."""
@@ -334,6 +347,7 @@ class TestContentIndexerAdversarial:
 
 # ─── Scenario 9: RAM-Aware Qubit Sizing ───
 
+
 class TestRAMAwareQubitSizing:
     """Verify compute_max_qubits respects system RAM."""
 
@@ -348,11 +362,11 @@ class TestRAMAwareQubitSizing:
     def test_safety_factor_effect(self) -> None:
         q_liberal = compute_max_qubits(safety_factor=0.9)
         q_strict = compute_max_qubits(safety_factor=0.1)
-        assert q_liberal >= q_strict, \
-            f"Liberal ({q_liberal}) should >= strict ({q_strict})"
+        assert q_liberal >= q_strict, f"Liberal ({q_liberal}) should >= strict ({q_strict})"
 
 
 # ─── Scenario 10: Studio Hook & Dashboard ───
+
 
 class TestStudioHookIntegration:
     """Verify telemetry hook produces valid structured data."""
@@ -392,6 +406,7 @@ class TestStudioHookIntegration:
 
 # ─── Scenario 11: Rust Compilation Verification ───
 
+
 class TestRustCompilation:
     """Verify all Rust files compile and pass tests."""
 
@@ -406,12 +421,17 @@ class TestRustCompilation:
 
         result = subprocess.run(
             ["rustc", "--test", str(rs_path), "-o", out_path, "-C", "opt-level=2"],
-            capture_output=True, text=True, timeout=60,
+            capture_output=True,
+            text=True,
+            timeout=60,
         )
         assert result.returncode == 0, f"Compilation failed:\n{result.stderr}"
 
         result = subprocess.run(
-            [out_path], capture_output=True, text=True, timeout=30,
+            [out_path],
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         assert result.returncode == 0, f"Tests failed:\n{result.stdout}\n{result.stderr}"
         assert "test result: ok" in result.stdout

@@ -42,6 +42,7 @@ from sc_neurocore.quantum_cognition import (
 @dataclass
 class BenchmarkResult:
     """Single benchmark measurement."""
+
     name: str
     scale: str
     total_time_ms: float
@@ -124,9 +125,12 @@ def bench_neuron_step(n_neurons: int, n_steps: int) -> BenchmarkResult:
 def bench_embed_chunks(n_chunks: int, n_dims: int) -> BenchmarkResult:
     chunks = [
         ContentChunk(
-            "BENCH", f"file_{i}.py", 0,
+            "BENCH",
+            f"file_{i}.py",
+            0,
             f"benchmark content {i} with words " * 30,
-            "code", 1.0,
+            "code",
+            1.0,
         )
         for i in range(n_chunks)
     ]
@@ -263,7 +267,9 @@ def main() -> None:
     for n_neurons, n_steps in [(32, 1000), (128, 1000), (256, 500)]:
         r = bench_neuron_step(n_neurons, n_steps)
         results.append(r)
-        print(f"  {r.name} [{r.scale}]: {_fmt(r.per_call_us)}/call ({r.total_time_ms:.1f} ms) [{r.notes}]")
+        print(
+            f"  {r.name} [{r.scale}]: {_fmt(r.per_call_us)}/call ({r.total_time_ms:.1f} ms) [{r.notes}]"
+        )
 
     for n_chunks in (100, 1000, 5000):
         r = bench_embed_chunks(n_chunks, 32)
@@ -305,7 +311,12 @@ def main() -> None:
         print(f"  {r.name[:42]:<43} {_fmt(r.per_call_us):>12} {r.total_time_ms:>8.1f} ms")
 
     # ─── Save JSON ───
-    out_path = Path(__file__).resolve().parent.parent / "docs" / "internal" / "BENCHMARK_QUANTUM_COGNITION.json"
+    out_path = (
+        Path(__file__).resolve().parent.parent
+        / "docs"
+        / "internal"
+        / "BENCHMARK_QUANTUM_COGNITION.json"
+    )
     with open(out_path, "w") as f:
         json.dump(
             {
@@ -313,7 +324,8 @@ def main() -> None:
                 "python_version": sys.version.split()[0],
                 "results": [
                     {
-                        "name": r.name, "scale": r.scale,
+                        "name": r.name,
+                        "scale": r.scale,
                         "total_ms": round(r.total_time_ms, 2),
                         "per_call_us": round(r.per_call_us, 3),
                         "throughput": r.throughput,
@@ -322,7 +334,8 @@ def main() -> None:
                     for r in results
                 ],
             },
-            f, indent=2,
+            f,
+            indent=2,
         )
     print(f"\nResults saved to: {out_path}")
 

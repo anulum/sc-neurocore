@@ -173,9 +173,7 @@ class NeuronGraph:
             "  Populations:",
         ]
         for pop in self.populations:
-            lines.append(
-                f"    {pop.name}: {pop.neuron_type} × {pop.n_neurons}"
-            )
+            lines.append(f"    {pop.name}: {pop.neuron_type} × {pop.n_neurons}")
         lines.append("")
         lines.append("  Connections:")
         for conn in self.connections:
@@ -358,7 +356,8 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
         if neuron_type is None:
             logger.warning(
                 "Skipping unsupported node type %s (%s) in FPGA compilation",
-                class_name, name,
+                class_name,
+                name,
             )
             continue
 
@@ -441,7 +440,10 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
 
     logger.info(
         "Built NeuronGraph: %d populations, %d connections, %d neurons, %d synapses",
-        len(populations), len(connections), graph.total_neurons, graph.total_synapses,
+        len(populations),
+        len(connections),
+        graph.total_neurons,
+        graph.total_synapses,
     )
 
     return graph

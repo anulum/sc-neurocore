@@ -149,7 +149,9 @@ def _quantise_array(
         )
         logger.warning(
             "Quantisation overflow in %s: %d/%d values clamped",
-            label, overflow_count, len(flat),
+            label,
+            overflow_count,
+            len(flat),
         )
 
     if underflow_count > 0:
@@ -159,7 +161,9 @@ def _quantise_array(
         )
         logger.warning(
             "Quantisation underflow in %s: %d/%d values clamped",
-            label, underflow_count, len(flat),
+            label,
+            underflow_count,
+            len(flat),
         )
 
     return result.reshape(arr.shape)
@@ -194,7 +198,9 @@ def _check_dt_quantisation(
         )
         logger.error(
             "dt=%s quantises to 0 in Q%d.%d — all dynamics frozen",
-            dt, q.data_width - q.fraction, q.fraction,
+            dt,
+            q.data_width - q.fraction,
+            q.fraction,
         )
 
 
@@ -224,7 +230,8 @@ def quantise_graph(graph: NeuronGraph, q: Q88) -> QuantisedGraph:
         q_params: dict[str, np.ndarray] = {}
         for pname, pval in pop.params.items():
             q_params[pname] = _quantise_array(
-                pval, q,
+                pval,
+                q,
                 label=f"{pop.name}.{pname}",
                 warnings=warnings,
             )
@@ -242,14 +249,16 @@ def quantise_graph(graph: NeuronGraph, q: Q88) -> QuantisedGraph:
     q_connections: list[ConnectionSpec] = []
     for conn in graph.connections:
         q_weights = _quantise_array(
-            conn.weights, q,
+            conn.weights,
+            q,
             label=f"weights[{conn.src}→{conn.dst}]",
             warnings=warnings,
         )
         q_bias = None
         if conn.bias is not None:
             q_bias = _quantise_array(
-                conn.bias, q,
+                conn.bias,
+                q,
                 label=f"bias[{conn.src}→{conn.dst}]",
                 warnings=warnings,
             )
@@ -276,8 +285,11 @@ def quantise_graph(graph: NeuronGraph, q: Q88) -> QuantisedGraph:
 
     logger.info(
         "Quantised %d populations, %d connections to Q%d.%d (%d warnings)",
-        len(q_populations), len(q_connections),
-        q.data_width - q.fraction, q.fraction, len(warnings),
+        len(q_populations),
+        len(q_connections),
+        q.data_width - q.fraction,
+        q.fraction,
+        len(warnings),
     )
 
     return result

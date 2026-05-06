@@ -91,10 +91,10 @@ class RadicalPairParams:
         Gauss-Legendre points for finite-lifetime recombination integration.
     """
 
-    hyperfine_a: float = 10.0       # MHz
-    exchange_j: float = 1.0         # MHz
+    hyperfine_a: float = 10.0  # MHz
+    exchange_j: float = 1.0  # MHz
     recombination_rate: float = 0.1  # µs⁻¹
-    lifetime_us: float = 100.0      # µs
+    lifetime_us: float = 100.0  # µs
     hyperfine_tensors_1: list[np.ndarray] = field(default_factory=list)
     hyperfine_tensors_2: list[np.ndarray] = field(default_factory=list)
     quadrature_order: int = 64
@@ -208,8 +208,10 @@ class RadicalPairModel:
         dim = 1 << n_spins
         H = np.zeros((dim, dim), dtype=np.complex128)
         H += _GAMMA_E_RAD_PER_US_T * float(b_local) * (sz[0] + sz[1])
-        H += _RAD_PER_US_PER_MHZ * float(p.exchange_j) * (
-            sx[0] @ sx[1] + sy[0] @ sy[1] + sz[0] @ sz[1]
+        H += (
+            _RAD_PER_US_PER_MHZ
+            * float(p.exchange_j)
+            * (sx[0] @ sx[1] + sy[0] @ sy[1] + sz[0] @ sz[1])
         )
 
         nuc_idx = 2
@@ -262,17 +264,12 @@ class RadicalPairModel:
             rho_t = U @ rho0 @ U.conj().T
             p_s_t = float(np.real(np.trace(p_s @ rho_t)))
             numerator += (
-                weight
-                * p.recombination_rate
-                * np.exp(-p.recombination_rate * t_us)
-                * p_s_t
+                weight * p.recombination_rate * np.exp(-p.recombination_rate * t_us) * p_s_t
             )
 
         return float(np.clip(numerator / norm, 0.0, 1.0))
 
-    def singlet_yield_field_sweep(
-        self, b_range: np.ndarray
-    ) -> np.ndarray:
+    def singlet_yield_field_sweep(self, b_range: np.ndarray) -> np.ndarray:
         """Compute singlet yield over a range of magnetic fields.
 
         Parameters
