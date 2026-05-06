@@ -39,15 +39,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
+COPY requirements/build.txt ./requirements/build.txt
 COPY requirements/runtime.txt ./requirements/runtime.txt
 COPY pyproject.toml README.md LICENSE ./
 COPY src/ ./src/
 
-RUN pip install --no-cache-dir --require-hashes --prefix=/install -r requirements/runtime.txt \
-    && pip install --no-cache-dir --prefix=/install --no-deps .
+RUN pip install --no-cache-dir --require-hashes -r requirements/build.txt \
+    && pip install --no-cache-dir --require-hashes --prefix=/install -r requirements/runtime.txt
+RUN python -m build --wheel --no-isolation --outdir /tmp/sc-neurocore-wheel \
+    && python -m installer --prefix=/install /tmp/sc-neurocore-wheel/*.whl
 
 COPY --from=rust-builder /build/target/wheels/*.whl /tmp/
-RUN pip install --no-cache-dir --prefix=/install --no-deps /tmp/*.whl
+RUN python -m installer --prefix=/install /tmp/*.whl
 
 # ── Stage 3: Runtime ─────────────────────────────────────────────
 FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0 AS runtime
