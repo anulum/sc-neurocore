@@ -69,7 +69,9 @@ class NeuroSymbolicSelfVerificationTrace:
     @property
     def failed_obligations(self) -> tuple[str, ...]:
         """Names of failed obligations."""
-        return tuple(item.name for item in self.obligations if item.status == VerificationStatus.FAIL)
+        return tuple(
+            item.name for item in self.obligations if item.status == VerificationStatus.FAIL
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-ready trace."""

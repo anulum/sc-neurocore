@@ -193,9 +193,9 @@ class TestBRFProjectWiring:
         assert "PyBalancedResonateAndFireNeuron" in (
             REPO_ROOT / "engine/src/pyo3_neurons.rs"
         ).read_text(encoding="utf-8")
-        assert "BalancedResonateAndFire" in (
-            REPO_ROOT / "engine/src/network_runner.rs"
-        ).read_text(encoding="utf-8")
+        assert "BalancedResonateAndFire" in (REPO_ROOT / "engine/src/network_runner.rs").read_text(
+            encoding="utf-8"
+        )
 
     def test_benchmark_and_documentation_are_wired(self) -> None:
         assert (REPO_ROOT / "benchmarks/bench_balanced_resonate_and_fire.py").exists()
@@ -208,8 +208,8 @@ class TestBRFProjectWiring:
         assert '"go_step_ns"' in benchmark
         assert '"julia_step_ns"' in benchmark
         assert '"mojo_step_ns"' in benchmark
-        doc = (
-            REPO_ROOT / "docs/api/models/balanced_resonate_and_fire.md"
-        ).read_text(encoding="utf-8")
+        doc = (REPO_ROOT / "docs/api/models/balanced_resonate_and_fire.md").read_text(
+            encoding="utf-8"
+        )
         assert "Algorithm 1" in doc
         assert "bench_balanced_resonate_and_fire.py" in doc
