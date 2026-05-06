@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 try:
     from sc_neurocore._native.learning_bridge import (
@@ -217,6 +218,7 @@ class BCIClosedLoopPrimitive:
         initial_weights: np.ndarray[Any, Any] | None = None,
     ) -> None:
         self.config = config or BCIPrimitiveConfig()
+        self.weights: npt.NDArray[np.float32]
         if initial_weights is None:
             self.weights = np.ones(self.config.channels, dtype=np.float32)
         else:
