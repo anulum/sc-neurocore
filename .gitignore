@@ -159,6 +159,13 @@ VISION2030/
 network_schema.json
 network_schema.json_layer_*_weights.npy
 
+# Generated waveform dumps from Verilog testbenches
+tb_sc_*.vcd
+
+# IBM/Aer verification run outputs are runtime provenance artifacts.
+# Curated baselines should live under tests/fixtures with explicit metadata.
+results/ibm_verification/*.json
+
 # ORCA/Vertex chemistry run outputs. Acquisition inputs, scripts, manifests,
 # and README/YAML provenance stay tracked explicitly; generated scratch/output
 # artifacts are regenerated or pulled from GCS.

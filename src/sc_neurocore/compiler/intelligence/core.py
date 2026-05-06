@@ -87,6 +87,7 @@ from dataclasses import dataclass
 
 from typing import Literal
 
+
 def verilog_to_vhdl_wrapper(
     module_name: str,
     *,
@@ -194,6 +195,7 @@ class PositConfig:
     def min_positive(self) -> float:
         """Smallest positive value."""
         return 1.0 / self.max_value
+
 
 def posit_encode(value: float, config: PositConfig) -> int:
     """Encode a float to posit integer representation.
@@ -726,6 +728,7 @@ class MXFPConfig:
         """Total bits for one block including shared exponent."""
         return self.shared_exp_bits + self.block_size * self.element_bits
 
+
 MXFP4 = MXFPConfig(element_bits=4, exp_bits=2, mantissa_bits=1, block_size=32)
 
 
@@ -954,6 +957,7 @@ class QuantSweepResult:
     estimated_ffs: int
     max_representable: float
     min_step: float
+
 
 def auto_quantisation_sweep(
     equations: dict[str, str],
@@ -1238,6 +1242,7 @@ class OnChipLearningParams:
     reward_tau_ms: float
     target_platform: str
 
+
 def generate_learning_params(
     *,
     learning_rule: str = "stdp",
@@ -1377,6 +1382,7 @@ class WeightNoiseProfile:
     retention_loss_per_day: float
     target_platform: str
 
+
 def inject_weight_noise(
     weights: list[list[float | int]],
     *,
@@ -1497,6 +1503,7 @@ class TimescalePartition:
     slow_clock_div: int
     cdc_signals: list[str]
 
+
 def partition_timescales(
     equations: dict[str, str],
     time_constants: dict[str, float] | None = None,
@@ -1603,6 +1610,7 @@ class DispatchPlan:
     total_neurons_per_backend: dict[str, int]
     estimated_speedup: float
 
+
 def plan_heterogeneous_dispatch(
     equations: dict[str, str],
     backends: list[str],
@@ -1688,6 +1696,7 @@ class TargetRecommendation:
     profile_name: str
     score: float
     rationale: str
+
 
 def recommend_target(
     equations: dict[str, str],
@@ -1811,6 +1820,7 @@ class ReconfigPartition:
     schedule: list[str]
     total_regions: int
     bitstream_count: int
+
 
 def plan_partial_reconfiguration(
     equations: dict[str, str],
@@ -1958,6 +1968,7 @@ class CompilationCache:
         """Number of cached entries."""
         return len(self._store)
 
+
 @dataclass(frozen=True)
 class TopologyPlan:
     """Multi-chip network topology optimisation result.
@@ -1981,6 +1992,7 @@ class TopologyPlan:
     intra_chip_spikes: int
     bandwidth_reduction: float
     num_chips: int
+
 
 def optimize_network_topology(
     adjacency: dict[int, list[int]],
@@ -2085,6 +2097,7 @@ class NIRGraph:
     equations: dict[str, str]
     framework: str
 
+
 def import_nir_graph(
     nir_data: dict,
     *,
@@ -2149,6 +2162,7 @@ class DebugProbeSpec:
     signals: list[str]
     depth: int
     tcl_commands: str
+
 
 def insert_debug_probes(
     module_name: str,

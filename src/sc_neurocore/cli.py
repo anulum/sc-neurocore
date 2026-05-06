@@ -33,6 +33,7 @@ def main() -> int:
             "map-nir",
             "hub-init",
             "compile",
+            "compile-nir",
             "studio",
             "collect-synthesis",
         ],
@@ -108,6 +109,49 @@ def main() -> int:
         help="Number of inferences represented by the reported latency",
     )
     parser.add_argument("--out", help="Output JSON evidence path for collect-synthesis")
+    parser.add_argument(
+        "--pipeline",
+        default=None,
+        help=(
+            "Pipeline register insertion for high-frequency targets. "
+            "'auto' selects based on target frequency, or an integer N "
+            "for explicit stage count. Applies to 'compile' command."
+        ),
+    )
+    parser.add_argument(
+        "--pipeline-points",
+        default=None,
+        help=(
+            "Comma-separated list of intermediate signal names where "
+            "pipeline registers should be inserted (e.g. '_mul0,_mul2'). "
+            "Only used when --pipeline is not set."
+        ),
+    )
+    parser.add_argument(
+        "--adaptive-precision",
+        action="store_true",
+        help=(
+            "Generate dual-datapath Verilog with runtime precision switching "
+            "between low-precision (default Q8.8) and high-precision (default Q16.16). "
+            "Applies to 'compile' command."
+        ),
+    )
+    parser.add_argument(
+        "--lp-width", type=int, default=16,
+        help="Low-precision data width for adaptive precision (default: 16)",
+    )
+    parser.add_argument(
+        "--lp-frac", type=int, default=8,
+        help="Low-precision fractional bits for adaptive precision (default: 8)",
+    )
+    parser.add_argument(
+        "--hp-width", type=int, default=32,
+        help="High-precision data width for adaptive precision (default: 32)",
+    )
+    parser.add_argument(
+        "--hp-frac", type=int, default=16,
+        help="High-precision fractional bits for adaptive precision (default: 16)",
+    )
     args = parser.parse_args()
 
     if args.version:
@@ -133,6 +177,15 @@ def main() -> int:
             )
             return 1
         return _cmd_compile(args)
+    if args.command == "compile-nir":
+        if not args.model:
+            print(
+                "Error: compile-nir requires a model file. Usage:\n"
+                '  sc-neurocore compile-nir model.nir --target artix7 -o build/\n'
+                '  sc-neurocore compile-nir model.nir --data-width 32 --fraction 16'
+            )
+            return 1
+        return _cmd_compile_nir(args)
     if args.command == "deploy":
         if not args.model:
             print(
@@ -165,12 +218,103 @@ def main() -> int:
     return 0
 
 
+def _cmd_compile_nir(args: Any) -> int:
+    """Compile NIR/ONNX model to Verilog RTL artefacts."""
+    import os
+
+    import nir as nir_lib
+
+    from sc_neurocore.nir_bridge import compile_network_to_fpga, from_nir, from_scnetwork
+
+    ext = os.path.splitext(args.model)[1].lower()
+    if ext not in (".nir", ".onnx"):
+        print(f"Error: compile-nir supports .nir and .onnx files, got '{ext}'")
+        return 1
+
+    data_width = getattr(args, "data_width", None) or 16
+    fraction = getattr(args, "fraction", None) or 8
+
+    print(f"[1/4] Loading model: {args.model}")
+    if ext == ".nir":
+        graph = nir_lib.read(args.model)
+        network = from_nir(graph, dt=args.dt)
+    else:
+        # ONNX → NIR → SCNetwork
+        graph = nir_lib.read(args.model)
+        network = from_nir(graph, dt=args.dt)
+
+    print(f"  Loaded {len(network.topo_order)} nodes")
+
+    print("[2/4] Building NeuronGraph...")
+    neuron_graph = from_scnetwork(network, dt=args.dt)
+    print(f"  {neuron_graph.total_neurons} neurons, {neuron_graph.total_synapses} synapses")
+    print(f"  Types: {', '.join(sorted(neuron_graph.neuron_types))}")
+
+    print(f"[3/4] Compiling to Verilog (Q{data_width - fraction}.{fraction})...")
+    result = compile_network_to_fpga(
+        neuron_graph,
+        module_name=args.module_name,
+        data_width=data_width,
+        fraction=fraction,
+        target=args.target,
+    )
+    print(f"  Interconnect: {result.interconnect}")
+    print(f"  Neuron modules: {len(result.neuron_modules)}")
+
+    # Write output files
+    out_dir = args.output
+    os.makedirs(out_dir, exist_ok=True)
+
+    # Top module
+    top_path = os.path.join(out_dir, f"{args.module_name}.v")
+    with open(top_path, "w") as f:
+        f.write(result.top_module)
+
+    # Neuron modules
+    for ntype, verilog in result.neuron_modules.items():
+        mod_path = os.path.join(out_dir, f"sc_nir_{ntype}.v")
+        with open(mod_path, "w") as f:
+            f.write(verilog)
+
+    # Weight ROM
+    rom_path = os.path.join(out_dir, "sc_nir_weight_rom.v")
+    with open(rom_path, "w") as f:
+        f.write(result.weight_rom)
+
+    print(f"[4/4] Output written to {out_dir}/")
+    print(f"  {args.module_name}.v — top-level network")
+    for ntype in result.neuron_modules:
+        print(f"  sc_nir_{ntype}.v — {ntype} neuron module")
+    print("  sc_nir_weight_rom.v — synaptic weight ROM")
+
+    if result.warnings:
+        print(f"\n  ⚠ {len(result.warnings)} warning(s):")
+        for w in result.warnings:
+            print(f"    {w}")
+
+    return 0
+
+
 def _cmd_compile(args: Any) -> int:
-    """Compile ODE equation string to Verilog RTL + optional synthesis."""
+    """Compile ODE equation string to Verilog RTL + optional synthesis.
+
+    Supports three compilation modes via CLI flags:
+
+    1. **Standard** (default): combinational datapath at the configured
+       precision (``--data-width`` / ``--fraction``).
+    2. **Pipelined** (``--pipeline auto|N``): insert register stages at
+       multiply outputs for high-frequency targets.  ``auto`` uses
+       ``critical_path_depth()`` + ``pipeline_stages_needed()`` from
+       ``static_analysis.py``.  ``--pipeline-points`` selects individual
+       signals to register.
+    3. **Adaptive precision** (``--adaptive-precision``): generate a
+       dual-datapath module with LP and HP sub-modules, hysteresis-based
+       precision switching, and clock gating.  Configure LP/HP widths via
+       ``--lp-width``, ``--lp-frac``, ``--hp-width``, ``--hp-frac``.
+    """
     import os
 
     from sc_neurocore.compiler.equation_compiler import (
-        equation_to_fpga,
         generate_testbench,
     )
 
@@ -187,16 +331,70 @@ def _cmd_compile(args: Any) -> int:
     params = _parse_kvpairs(args.params)
     init = _parse_kvpairs(args.init)
 
+    # Pipeline configuration
+    pipeline_stages = 0
+    pipeline_points_list = None
+    if args.pipeline:
+        if args.pipeline.lower() == "auto":
+
+            # Will compute after neuron is built
+            pipeline_stages = -1  # sentinel for "auto"
+        else:
+            pipeline_stages = int(args.pipeline)
+    if args.pipeline_points and pipeline_stages <= 0:
+        pipeline_points_list = [p.strip() for p in args.pipeline_points.split(",")]
+
     print(f"[1/4] Parsing ODE: {args.model}")
-    neuron, verilog = equation_to_fpga(
+
+    from sc_neurocore.compiler.equation_compiler import compile_to_verilog
+    from sc_neurocore.neurons.equation_builder import from_equations
+
+    neuron = from_equations(
         args.model,
         threshold=args.threshold,
         reset=args.reset,
         params=params,
         init=init,
         dt=args.dt,
-        module_name=args.module_name,
     )
+
+    # Auto pipeline: compute from ODE critical path
+    if pipeline_stages == -1:
+        from sc_neurocore.compiler.static_analysis import (
+            critical_path_depth,
+            pipeline_stages_needed,
+        )
+
+        max_depth = max(
+            (critical_path_depth(expr) for expr in neuron.equations.values()), default=0
+        )
+        # Default Artix-7 100 MHz — use profile if available
+        freq = 100
+        pipeline_stages = pipeline_stages_needed(max_depth, freq)
+        print(f"  Auto-pipeline: depth={max_depth}, stages={pipeline_stages}")
+
+    # Adaptive precision or standard compile
+    if getattr(args, "adaptive_precision", False):
+        from sc_neurocore.compiler.adaptive_runtime_precision import (
+            compile_adaptive_precision,
+        )
+
+        verilog = compile_adaptive_precision(
+            neuron,
+            module_name=args.module_name,
+            lp_width=args.lp_width,
+            lp_frac=args.lp_frac,
+            hp_width=args.hp_width,
+            hp_frac=args.hp_frac,
+        )
+    else:
+        verilog = compile_to_verilog(
+            neuron,
+            module_name=args.module_name,
+            pipeline_stages=pipeline_stages,
+            pipeline_points=pipeline_points_list,
+        )
+
     print(f"  State variables: {list(neuron.equations.keys())}")
     print(f"  Parameters: {list(neuron.parameters.keys())}")
 

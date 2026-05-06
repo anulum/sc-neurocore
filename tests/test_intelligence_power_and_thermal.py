@@ -14,6 +14,7 @@ from sc_neurocore.compiler.intelligence import (
     model_energy_harvest,
 )
 
+
 class TestApproximation(unittest.TestCase):
     def test_basic(self):
         r = configure_approximation({"v": "-(v)/tau + I"})
@@ -328,4 +329,3 @@ class TestPowerFSM:
         v = generate_power_state_machine("sc_lif", states=["ON", "OFF"])
         assert "ON" in v
         assert "OFF" in v
-

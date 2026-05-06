@@ -21,6 +21,7 @@ from sc_neurocore.compiler.intelligence import (
 )
 from sc_neurocore.compiler.platforms import get_profile
 
+
 class TestAging(unittest.TestCase):
     def test_degradation_increases(self):
         r5 = predict_aging(250.0, years=5.0, temperature_c=25.0)
@@ -389,4 +390,3 @@ class TestWave9Integration:
         assert r.total_crossings >= 2
         fp = plan_multi_die_floorplan({"region_a": 500, "region_b": 500})
         assert fp.total_dies >= 1
-

@@ -216,6 +216,19 @@ dependabot PRs merged.
 
 - Added HIL Debugger: real-time FPGA telemetry server with WebSocket broadcast, lock-free ring buffer, per-layer stats, triggers, and Python orchestration daemon (experimental).
 
+### ~~Quantum Cognition (Fisher-Posner)~~ ✓
+
+- Experimental subpackage implementing the Fisher-Posner quantum cognition
+  hypothesis: `SpinPoolMPS`, `HybridFisherPosnerLIF`, `FisherPosnerQuantumBridge`,
+  `QuantumStudioHook`, `ContentChunk`, `GOTMBrain` (8 public exports).
+- 7 Python modules (1,586 LOC) + 3 polyglot acceleration kernels
+  (Rust 312 LOC, Mojo 180 LOC, Julia 248 LOC).
+- 74 Python tests + 10 Rust inline tests = 84 total, all passing.
+- Cross-language benchmarks: Rust 200–340× Python, Mojo 240–500× Python.
+- GOTM Brain self-learning module with local LLM guidance loop.
+- API documentation updated with experimental scope and hardware-validation boundaries.
+- Cross-repo bridges verified: SCPN-QUANTUM-CONTROL, SCPN-PHASE-ORCHESTRATOR.
+
 ## v4.0 — Physical FPGA Demos + Production (target: Q3 2026)
 
 ### FPGA deployment proof ~~(P0 blocker)~~ PARTIALLY DONE

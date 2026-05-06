@@ -1140,4 +1140,3 @@ _reg(
         notes="Ainekko ET-Mirai: open-source many-core RISC-V (ex-Esperanto).",
     )
 )
-
