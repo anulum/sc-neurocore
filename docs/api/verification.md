@@ -1,3 +1,11 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- (C) Concepts 1996-2026 Miroslav Sotek. All rights reserved. -->
+<!-- (C) Code 2020-2026 Miroslav Sotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore documentation -->
+
 # Verification
 
 Formal and functional verification utilities for SNN designs.
@@ -6,11 +14,35 @@ Formal and functional verification utilities for SNN designs.
 - Equivalence checking: verify Python simulation matches Verilog RTL bit-for-bit
 - Coverage metrics: track which neuron states and transitions have been exercised
 
-7 SymbiYosys formal verification scripts + 72 properties in `hdl/formal/`.
+## Formal SNN Verification Standard
 
 ```python
-from sc_neurocore.verification import TemporalPropertyChecker
+from sc_neurocore.verification import (
+    SNNVerificationEvidence,
+    VerificationClaimStatus,
+    VerificationEvidenceKind,
+    VerificationLevel,
+    assess_snn_verification_standard,
+)
+
+report = assess_snn_verification_standard(
+    [
+        SNNVerificationEvidence(
+            evidence_id="temporal",
+            level=VerificationLevel.TEMPORAL_PROPERTIES,
+            kind=VerificationEvidenceKind.TEMPORAL_RESULT,
+            status=VerificationClaimStatus.PASS,
+            description="bounded temporal properties",
+        ),
+    ]
+)
+assert not report.passed  # external formal proof and other mandatory evidence are missing
 ```
+
+The publication-grade profile requires bounded temporal evidence, interval
+probability/state bounds, implementation-equivalence evidence, and an external
+formal proof log. Missing evidence is reported explicitly; the standard does not
+claim unbounded semantic correctness without a passing external proof artefact.
 
 ::: sc_neurocore.verification
     options:

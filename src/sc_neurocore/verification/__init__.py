@@ -12,9 +12,33 @@ __tier__ = "research"
 
 from .formal_proofs import FormalVerifier, Interval
 from .safety import CodeSafetyVerifier
+from .snn_standard import (
+    SNNVerificationConformanceReport,
+    SNNVerificationEvidence,
+    SNNVerificationRequirement,
+    SNNVerificationRequirementResult,
+    SNNVerificationStandard,
+    SNNVerificationStandardProfile,
+    VerificationClaimStatus,
+    VerificationEvidenceKind,
+    VerificationLevel,
+    assess_snn_verification_standard,
+    publication_grade_snn_standard_profile,
+)
 
 __all__ = [
     "FormalVerifier",
     "Interval",
     "CodeSafetyVerifier",
+    "SNNVerificationConformanceReport",
+    "SNNVerificationEvidence",
+    "SNNVerificationRequirement",
+    "SNNVerificationRequirementResult",
+    "SNNVerificationStandard",
+    "SNNVerificationStandardProfile",
+    "VerificationClaimStatus",
+    "VerificationEvidenceKind",
+    "VerificationLevel",
+    "assess_snn_verification_standard",
+    "publication_grade_snn_standard_profile",
 ]
