@@ -34,24 +34,20 @@ RUN cd bridge && maturin build --release --interpreter python3 \
 # ── Stage 2: Python package build ────────────────────────────────
 FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0 AS py-builder
 
-ARG INSTALL_EXTRAS=""
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
+COPY requirements/runtime.txt ./requirements/runtime.txt
 COPY pyproject.toml README.md LICENSE ./
 COPY src/ ./src/
 
-RUN if [ -n "$INSTALL_EXTRAS" ]; then \
-        pip install --no-cache-dir --prefix=/install ".[${INSTALL_EXTRAS}]"; \
-    else \
-        pip install --no-cache-dir --prefix=/install .; \
-    fi
+RUN pip install --no-cache-dir --require-hashes --prefix=/install -r requirements/runtime.txt \
+    && pip install --no-cache-dir --prefix=/install --no-deps .
 
 COPY --from=rust-builder /build/target/wheels/*.whl /tmp/
-RUN pip install --no-cache-dir --prefix=/install /tmp/*.whl
+RUN pip install --no-cache-dir --prefix=/install --no-deps /tmp/*.whl
 
 # ── Stage 3: Runtime ─────────────────────────────────────────────
 FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0 AS runtime

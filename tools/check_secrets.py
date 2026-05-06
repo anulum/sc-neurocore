@@ -152,6 +152,13 @@ def _find_high_entropy_strings(
     return [c for c in candidates if len(c) >= min_length and _shannon_entropy(c) >= threshold]
 
 
+def _redacted_finding_detail(finding: dict[str, str]) -> str:
+    """Return non-sensitive context for a scanner finding."""
+    if finding["line_num"] == "git-history":
+        return "Sensitive filename pattern remains in git history."
+    return "Matched content redacted."
+
+
 def _scan_git_history(repo_root: Path, max_commits: int = 100) -> list[dict[str, str]]:
     """Scan recent git history for secrets that were committed then removed."""
     findings: list[dict[str, str]] = []
@@ -278,7 +285,7 @@ def main() -> int:
     print(f"\n\033[31m✗ Found {len(findings)} potential secret(s):\033[0m\n")
     for f in findings:
         print(f"  {f['file']}:{f['line_num']} [{f['pattern']}]")
-        print(f"    {f['snippet']}")
+        print(f"    {_redacted_finding_detail(f)}")
         print()
 
     return 1
