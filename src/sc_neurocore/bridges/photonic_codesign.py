@@ -142,7 +142,9 @@ class PhotonicCoDesignReport:
 
     def export_json(self, path: str | Path) -> None:
         """Write the report to a JSON file."""
-        Path(path).write_text(json.dumps(self.to_json(), indent=2, sort_keys=True), encoding="utf-8")
+        Path(path).write_text(
+            json.dumps(self.to_json(), indent=2, sort_keys=True), encoding="utf-8"
+        )
 
 
 def _unpack_words(words: tuple[int, ...], bit_length: int) -> npt.NDArray[np.uint8]:
@@ -318,7 +320,9 @@ class StochasticPhotonicCoDesignLoop:
         )
         optical_compiler = PhotonicCompiler(self.config.target)
         optical_results: list[CompilationResult] = []
-        representative_idx = max(range(len(bitstreams)), key=lambda idx: bitstreams[idx].transitions)
+        representative_idx = max(
+            range(len(bitstreams)), key=lambda idx: bitstreams[idx].transitions
+        )
         for idx, entry in enumerate(bitstreams):
             bits = _unpack_words(entry.packed_words, entry.bit_length)
             optical_results.append(

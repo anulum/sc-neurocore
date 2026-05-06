@@ -146,7 +146,9 @@ class IndustrialApplicationRegistry:
 
     def list_profiles(self) -> tuple[IndustrialApplicationProfile, ...]:
         """Return all registered profiles in deterministic order."""
-        return tuple(self._profiles[key] for key in sorted(self._profiles, key=lambda item: item.value))
+        return tuple(
+            self._profiles[key] for key in sorted(self._profiles, key=lambda item: item.value)
+        )
 
     def assess(
         self,

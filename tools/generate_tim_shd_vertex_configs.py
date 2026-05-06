@@ -15,16 +15,12 @@ from pathlib import Path
 OUT_DIR = Path("docs/internal/vertex_job_configs")
 TRAINING_URI = "gs://gotm-director-ai-training/sc-neurocore-shd-training/"
 RESULTS_URI = "gs://gotm-director-ai-training/sc-neurocore-shd-results/"
-IMAGE = (
-    "europe-west4-docker.pkg.dev/gotm-sc-neurocore/"
-    "sc-neurocore-training/shd-retrain:latest"
-)
+IMAGE = "europe-west4-docker.pkg.dev/gotm-sc-neurocore/sc-neurocore-training/shd-retrain:latest"
 
 
 def _env_block(env: dict[str, str]) -> str:
     return "\n".join(
-        f"        - name: {name}\n          value: \"{value}\""
-        for name, value in env.items()
+        f'        - name: {name}\n          value: "{value}"' for name, value in env.items()
     )
 
 
