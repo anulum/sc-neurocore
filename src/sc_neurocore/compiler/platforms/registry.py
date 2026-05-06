@@ -49,9 +49,14 @@ Supported Platform Classes
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Literal
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - exercised on Python < 3.11
+    import tomli as tomllib  # type: ignore[no-redef]
 
 
 # ── Type aliases ─────────────────────────────────────────────────────
@@ -337,7 +342,6 @@ def load_toml_profile(path: str) -> HardwareProfile:
     ValueError
         If required fields are missing.
     """
-    import tomllib
     from pathlib import Path
 
     toml_path = Path(path)
@@ -437,8 +441,6 @@ def load_profiles_from_toml(path: str) -> list[str]:
     list[str]
         Names of loaded profiles.
     """
-    import tomllib
-
     with open(path, "rb") as f:
         data = tomllib.load(f)
 
