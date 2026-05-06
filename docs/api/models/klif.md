@@ -398,7 +398,7 @@ in parallel, processing 110 × 50M = 5.5 billion neuron-steps/s.
 | NetworkRunner wired | `NeuronVariant::KLIF` |
 | `create_neuron("KLIFNeuron")` | Yes |
 | `supported_models()` | Includes "KLIFNeuron" |
-| STRONG tests | 13 (construction, step binary, subthreshold, spikes, k effect, alpha precomputed, hard reset, stability, reset, deterministic, population, spikes, spike_count) |
+| coverage tests | 13 (construction, step binary, subthreshold, spikes, k effect, alpha precomputed, hard reset, stability, reset, deterministic, population, spikes, spike_count) |
 | Benchmark | Python: ~325K steps/s, Rust parity: EXACT |
 
 ---

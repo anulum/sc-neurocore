@@ -84,7 +84,7 @@ Sub-stepping: 50 steps per call (0.5 ms real time per call).
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` macro |
 | NetworkRunner wired | `NeuronVariant::PVFastSpiking` |
 | `create_neuron("PVFastSpiking")` | Yes |
-| STRONG tests | 7 (fire, no-fire, negative, high-rate, reset, bounded, performance) |
+| coverage tests | 7 (fire, no-fire, negative, high-rate, reset, bounded, performance) |
 | Pipeline integration test | `interneuron_population_create_step_reset`, `interneuron_mixed_network` |
 | NaN/extreme input test | `all_models_nan_input_stays_finite`, `all_models_extreme_input_stays_finite` |
 | Benchmark | `pv_fs_1k_steps`: **4.35 ms** (4.35 us/step), i5-11600K |

@@ -456,7 +456,7 @@ somatosensory arrays (e.g., robotic skin with 1000+ touch sensors).
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` |
 | NetworkRunner wired | `NeuronVariant::Merkel` |
 | `create_neuron("MerkelCell")` | Yes |
-| STRONG tests | 4 (fires sustained, slow adaptation, no-fire, reset) |
+| coverage tests | 4 (fires sustained, slow adaptation, no-fire, reset) |
 | Benchmark | `merkel_10k_steps`: **239 µs** (23.9 ns/step), i5-11600K |
 
 ---

@@ -412,7 +412,7 @@ Both sigmoid and tanh can be approximated with piecewise-linear LUTs for FPGA.
 | NetworkRunner wired | `NeuronVariant::LTC` |
 | `create_neuron("LiquidTimeConstantNeuron")` | Yes |
 | `supported_models()` | Includes "LiquidTimeConstantNeuron" |
-| STRONG tests | 14 (construction, step, silent, subthreshold settle, spikes, sharp transition, tau input-dependent, tanh target, stability, reset, deterministic, population, spikes, spike_count) |
+| coverage tests | 14 (construction, step, silent, subthreshold settle, spikes, sharp transition, tau input-dependent, tanh target, stability, reset, deterministic, population, spikes, spike_count) |
 | Benchmark | Python: ~157K steps/s, Rust parity: EXACT |
 
 ---

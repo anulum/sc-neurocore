@@ -92,7 +92,7 @@ Sub-stepping: 50 steps per call (0.5 ms real time per call).
 | NetworkRunner wired | `NeuronVariant::AlphaMotor` |
 | `create_neuron("AlphaMotor")` | Yes |
 | `supported_models()` | Includes "AlphaMotor" |
-| STRONG tests | 11 (fire, no-fire, negative, AHP rate-limit, PIC, Ca2+, reset, bounded, NaN, extreme, performance) |
+| coverage tests | 11 (fire, no-fire, negative, AHP rate-limit, PIC, Ca2+, reset, bounded, NaN, extreme, performance) |
 | Pipeline integration | Covered by `create_neuron_all_supported` |
 | Benchmark | `alpha_motor_1k_steps`: **34.2 ms** (34.2 µs/step), i5-11600K |
 

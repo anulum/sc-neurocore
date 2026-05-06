@@ -611,7 +611,7 @@ impl Default for MotorUnit {
 mod tests {
     use super::*;
 
-    // ── Alpha Motor Neuron — 6-dimension STRONG ──────────────────
+    // ── Alpha Motor Neuron — 6-dimension coverage ──────────────────
 
     #[test]
     fn alpha_motor_fires_with_input() {
@@ -747,7 +747,7 @@ mod tests {
         );
     }
 
-    // ── Gamma Motor Neuron — 6-dimension STRONG ──────────────────
+    // ── Gamma Motor Neuron — 6-dimension coverage ──────────────────
 
     #[test]
     fn gamma_dynamic_fires_with_drive() {
@@ -863,7 +863,7 @@ mod tests {
         );
     }
 
-    // ── Upper Motor Neuron — 6-dimension STRONG ──────────────────
+    // ── Upper Motor Neuron — 6-dimension coverage ──────────────────
 
     #[test]
     fn upper_motor_fires_with_input() {
@@ -972,7 +972,7 @@ mod tests {
         );
     }
 
-    // ── Renshaw Cell — 6-dimension STRONG ────────────────────────
+    // ── Renshaw Cell — 6-dimension coverage ────────────────────────
 
     #[test]
     fn renshaw_fires_with_input() {
@@ -1082,7 +1082,7 @@ mod tests {
         );
     }
 
-    // ── Motor Unit — 6-dimension STRONG ──────────────────────────
+    // ── Motor Unit — 6-dimension coverage ──────────────────────────
 
     #[test]
     fn motor_unit_fires_with_drive() {

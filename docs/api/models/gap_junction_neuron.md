@@ -477,7 +477,7 @@ At 100 MHz:
 | NetworkRunner wired | `NeuronVariant::GapJunction` |
 | `create_neuron("GapJunctionNeuron")` | Yes |
 | `supported_models()` | Includes "GapJunctionNeuron" |
-| STRONG tests | 10 |
+| coverage tests | 10 |
 | Benchmark | `gap_junction_100k_steps`: **6.28 ms** (62.8 ns/step), i5-11600K |
 
 ---

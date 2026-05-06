@@ -551,7 +551,7 @@ The wide dynamic range of the α/β functions makes Q8.8 inadequate.
 | NetworkRunner wired | `NeuronVariant::FHAxon` |
 | `create_neuron("FrankenhaeUserHuxleyAxon")` | Yes |
 | `supported_models()` | Includes "FrankenhaeUserHuxleyAxon" |
-| STRONG tests | 10 |
+| coverage tests | 10 |
 | Benchmark | `fh_axon_1k_steps`: **19.88 ms** (19.88 µs/step), i5-11600K |
 
 ---

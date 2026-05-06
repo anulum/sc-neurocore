@@ -85,7 +85,7 @@ Sub-stepping: 4 steps per call (0.1 ms real time per call at dt=0.025).
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` macro |
 | NetworkRunner wired | `NeuronVariant::VIP` |
 | `create_neuron("VIP")` | Yes |
-| STRONG tests | 7 (fire, no-fire, negative, accommodation, reset, bounded, performance) |
+| coverage tests | 7 (fire, no-fire, negative, accommodation, reset, bounded, performance) |
 | Pipeline integration test | `interneuron_population_create_step_reset`, `interneuron_mixed_network` |
 | NaN/extreme input test | `all_models_nan_input_stays_finite`, `all_models_extreme_input_stays_finite` |
 | Benchmark | `vip_1k_steps`: **351 us** (351 ns/step), i5-11600K |

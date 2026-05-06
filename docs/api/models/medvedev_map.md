@@ -430,7 +430,7 @@ minimal logic can implement the entire neuron. A Zynq-7020 could potentially run
 | NetworkRunner wired | `NeuronVariant::MedvedevMap` |
 | `create_neuron("MedvedevMapNeuron")` | Yes |
 | `supported_models()` | Includes "MedvedevMapNeuron" |
-| STRONG tests | 13 (construction, step binary, silent, spikes, x bounded, piecewise branches, rate increase, chaotic sensitivity, stability, reset, deterministic, population, spike_count) |
+| coverage tests | 13 (construction, step binary, silent, spikes, x bounded, piecewise branches, rate increase, chaotic sensitivity, stability, reset, deterministic, population, spike_count) |
 | Benchmark | Python: ~712K steps/s |
 
 ---

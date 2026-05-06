@@ -429,7 +429,7 @@ The cgmp³ is one multiply + one squaring. Both are DSP-friendly.
 | PyO3 wrapper | `py_sensory_graded!` macro |
 | NetworkRunner wired | **No** — graded model, returns f64 |
 | `create_neuron("RodPhotoreceptor")` | No (not in variant enum) |
-| STRONG tests | 5 (hyperpolarise, dark stability, slow recovery, cGMP bounded, performance) |
+| coverage tests | 5 (hyperpolarise, dark stability, slow recovery, cGMP bounded, performance) |
 | Benchmark | `rod_10k_steps`: **308 µs** (30.8 ns/step), i5-11600K |
 
 ---

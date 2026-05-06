@@ -127,7 +127,7 @@ benchmarks/results/experimental_runs/
 # Hardware tests (PYNQ board-specific, not part of CI)
 hardware_tests/
 
-# Claude Code local config — never commit
+# local assistant config — never commit
 CLAUDE.md
 .claude/
 
@@ -135,7 +135,7 @@ CLAUDE.md
 BACKUP/
 ARCHIVE/
 
-# AutoResearch sandbox — Gemini working copies, never committed
+# AutoResearch sandbox — local working copies, never committed
 .autoresearch-gemini/
 
 # Vivado
@@ -146,7 +146,7 @@ vivado*.backup.*
 # Internal coordination (incidents, sessions)
 .coordination/
 
-# Gemini Internal
+# Internal local automation
 docs/internal/gemini/
 
 # VISION 2030 Development

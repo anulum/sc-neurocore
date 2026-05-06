@@ -440,7 +440,7 @@ approximation of the continuous exponential.
 | NetworkRunner wired | `NeuronVariant::GradedSynapse` |
 | `create_neuron("GradedSynapseNeuron")` | Yes |
 | `supported_models()` | Includes "GradedSynapseNeuron" |
-| STRONG tests | 10 |
+| coverage tests | 10 |
 | Benchmark | `graded_synapse_100k_steps`: **4.66 ms** (46.6 ns/step), i5-11600K |
 
 ---

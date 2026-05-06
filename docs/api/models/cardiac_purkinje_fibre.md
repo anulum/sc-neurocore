@@ -577,7 +577,7 @@ if the rate is faster than in vivo.
 | NetworkRunner wired | `NeuronVariant::CardiacPurkinje` |
 | `create_neuron("CardiacPurkinjeFibre")` | Yes |
 | `supported_models()` | Includes "CardiacPurkinjeFibre" |
-| STRONG tests | 10 |
+| coverage tests | 10 |
 | Benchmark | `cardiac_purkinje_1k_steps`: **586.7 µs** (586.7 ns/step), i5-11600K |
 
 ---

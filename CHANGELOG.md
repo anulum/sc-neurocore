@@ -1327,7 +1327,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [3.7.0] - 2026-02-11
 
-### Phase 14: Polymorphic Engine -- HDC/VSA, SCPN Petri Nets, Fault-Tolerant Logic
+### Phase 14: Adaptive Runtime Engine -- HDC/VSA, SCPN Petri Nets, Fault-Tolerant Logic
 - **HDC/VSA kernel**: `BitStreamTensor` gains `xor`, `xor_inplace`, `rotate_right`, `hamming_distance`, `bundle` methods for hyper-dimensional computing on 10,000-bit vectors
 - **SIMD fused XOR+popcount**: AVX-512 VPOPCNTDQ / AVX2 / portable dispatch for hamming distance hot path
 - **PyBitStreamTensor**: New `#[pyclass]` exposing full HDC algebra to Python (13 methods)
@@ -1336,7 +1336,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - **Fault-tolerant logic**: Boolean logic with stochastic redundancy (1024-bit) survives 40%+ bit-flip rates
 - **44 new tests**: 15 Rust integration + 20 Python HDC + 9 Python Petri Net
 - **2 demos**: HDC symbolic query ("Capital of France?"), safety-critical Boolean logic with error sweep
-- **Comprehensive study**: `docs/research/SC_NEUROCORE_V3.7_POLYMORPHIC_ENGINE_STUDY.md`
+- **Comprehensive study**: `docs/research/SC_NEUROCORE_V3.7_ADAPTIVE_RUNTIME_ENGINE_STUDY.md`
 
 ---
 

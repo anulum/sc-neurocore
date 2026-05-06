@@ -472,7 +472,7 @@ applications.
 | NetworkRunner wired | `NeuronVariant::AiharaMap` |
 | `create_neuron("AiharaMap")` | Yes |
 | `supported_models()` | Includes "AiharaMap" |
-| STRONG tests | 9 (fire, silent, chaos, negative, NaN, extreme, reset, rate-input, performance) |
+| coverage tests | 9 (fire, silent, chaos, negative, NaN, extreme, reset, rate-input, performance) |
 | Benchmark | `aihara_100k_steps`: **1.97 ms** (19.7 ns/step), i5-11600K |
 
 ---
