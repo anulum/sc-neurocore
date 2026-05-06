@@ -40,6 +40,7 @@ pub mod atype_k_neuron;
 pub mod audio_synthesis;
 pub mod auto_reservoir;
 pub mod av_ron_cardiac;
+pub mod balanced_resonate_and_fire;
 pub mod base;
 pub mod bci;
 pub mod bci_primitives;

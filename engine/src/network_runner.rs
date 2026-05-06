@@ -205,6 +205,7 @@ pub enum NeuronVariant {
     MorrisLecar(MorrisLecarNeuron),
     HindmarshRose(HindmarshRoseNeuron),
     ResonateAndFire(ResonateAndFireNeuron),
+    BalancedResonateAndFire(BalancedResonateAndFireNeuron),
     FitzHughRinzel(FitzHughRinzelNeuron),
     McKean(McKeanNeuron),
     TermanWang(TermanWangOscillator),
@@ -401,7 +402,7 @@ macro_rules! all_variants {
             Pospischil, MainenSejnowski, DeSchutterPurkinje,
             PlantR15, Prescott, MihalasNiebur, GLIF, GIFPopulation,
             AvRonCardiac, DurstewitzDopamine, HillTononi, BertramPhantom, Yamada, Akida, StochasticLIF,
-            FitzHughNagumo, MorrisLecar, HindmarshRose, ResonateAndFire,
+            FitzHughNagumo, MorrisLecar, HindmarshRose, ResonateAndFire, BalancedResonateAndFire,
             FitzHughRinzel, McKean, TermanWang, GutkinErmentrout, WilsonHR,
             Chay, ChayKeizer, ShermanRinzelKeizer, ButeraRespiratory,
             EPropALIF, SuperSpike, LearnableNeuron, Pernarowski,
@@ -479,6 +480,7 @@ impl NeuronVariant {
             NeuronVariant::MorrisLecar(n) => n.v,
             NeuronVariant::HindmarshRose(n) => n.x,
             NeuronVariant::ResonateAndFire(n) => n.x,
+            NeuronVariant::BalancedResonateAndFire(n) => n.x,
             NeuronVariant::FitzHughRinzel(n) => n.v,
             NeuronVariant::McKean(n) => n.v,
             NeuronVariant::TermanWang(n) => n.v,
@@ -933,6 +935,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "ResonateAndFire" | "ResonateAndFireNeuron" => {
             Ok(NeuronVariant::ResonateAndFire(ResonateAndFireNeuron::new()))
         }
+        "BalancedResonateAndFire" | "BalancedResonateAndFireNeuron" => Ok(
+            NeuronVariant::BalancedResonateAndFire(BalancedResonateAndFireNeuron::new()),
+        ),
         "FitzHughRinzel" | "FitzHughRinzelNeuron" => {
             Ok(NeuronVariant::FitzHughRinzel(FitzHughRinzelNeuron::new()))
         }
@@ -1245,6 +1250,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "MorrisLecar",
         "HindmarshRose",
         "ResonateAndFire",
+        "BalancedResonateAndFire",
         "FitzHughRinzel",
         "McKean",
         "TermanWang",

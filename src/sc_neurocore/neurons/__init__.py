@@ -59,6 +59,7 @@ _MODEL_NAMES = {
     "AmariNeuralField",
     "AstrocyteModel",
     "AvRonCardiacNeuron",
+    "BalancedResonateAndFireNeuron",
     "BendaHerzNeuron",
     "BertramPhantomBurster",
     "BoothRinzelNeuron",
