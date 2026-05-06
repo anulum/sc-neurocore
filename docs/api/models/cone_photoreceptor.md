@@ -64,7 +64,7 @@ $$V = V_{hyper} + (V_{dark} - V_{hyper}) \cdot f_{CNG}$$
 | PyO3 wrapper | `py_sensory_graded!` macro in `pyo3_neurons.rs` |
 | NetworkRunner wired | **No** — graded model, `step()` returns `f64` |
 | `create_neuron("ConePhotoreceptor")` | No (not in NetworkRunner variant enum) |
-| STRONG tests | 3 (hyperpolarise, faster-than-rod comparative, reset) |
+| coverage tests | 3 (hyperpolarise, faster-than-rod comparative, reset) |
 | NaN/extreme input test | Inherits rod's cGMP clamping logic |
 | Benchmark | Not benchmarked (shares arch with rod, ~30 ns/step) |
 

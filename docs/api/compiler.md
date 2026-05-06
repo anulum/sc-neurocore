@@ -621,7 +621,7 @@ python -m pytest tests/e2e/test_e2e_pipeline.py -v
 
 ## Further Reading
 
-- [Equation Builder Tutorial](../tutorials/02_equation_builder.md) — ODE syntax guide
+- [Equation to Verilog Tutorial](../tutorials/33_equation_to_verilog.md) — ODE syntax guide
 - [Static Analysis Guide](../guides/static_analysis_guide.md) — Guard bits, SVA
 - [Formal Verification Guide](../guides/formal_verification.md) — SymbiYosys
 - [Deployment Guide](../guides/deployment_guide.md) — Constraints, drivers

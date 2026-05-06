@@ -458,7 +458,7 @@ At 100 MHz with 50 sub-steps:
 | NetworkRunner wired | `NeuronVariant::NMDA` |
 | `create_neuron("NMDA")` | Yes |
 | `supported_models()` | Includes "NMDA" |
-| STRONG tests | 12 |
+| coverage tests | 12 |
 | Benchmark | `nmda_1k_steps`: **3.29 ms** (3.29 µs/step), i5-11600K |
 
 ---

@@ -512,7 +512,7 @@ voltage sag.
 | NetworkRunner wired | `NeuronVariant::Ih` |
 | `create_neuron("Ih")` | Yes |
 | `supported_models()` | Includes "Ih" |
-| STRONG tests | 11 (fire, silent, sag potential, r-gate activation, rebound, negative, NaN, extreme, reset, gates, performance) |
+| coverage tests | 11 (fire, silent, sag potential, r-gate activation, rebound, negative, NaN, extreme, reset, gates, performance) |
 | Benchmark | `ih_1k_steps`: **5.17 ms** (5.17 µs/step), i5-11600K |
 
 ---

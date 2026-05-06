@@ -492,7 +492,7 @@ adapted firing rate → reduced dynamic range.
 | NetworkRunner wired | `NeuronVariant::OlfactoryReceptor` |
 | `create_neuron("OlfactoryReceptorNeuron")` | Yes |
 | `supported_models()` | Includes "OlfactoryReceptorNeuron" |
-| STRONG tests | 7 (fires, adapts, no-fire, reset, PDE4 activates, PDE4 reduces cAMP, PDE4 enhances adaptation) |
+| coverage tests | 7 (fires, adapts, no-fire, reset, PDE4 activates, PDE4 reduces cAMP, PDE4 enhances adaptation) |
 | Benchmark | `olfactory_10k_steps`: **334 µs** (33.4 ns/step), i5-11600K |
 
 ---

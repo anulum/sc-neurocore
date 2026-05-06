@@ -1,4 +1,4 @@
-# SC-NeuroCore v3.7 "Polymorphic Engine" -- Comprehensive Technical Study
+# SC-NeuroCore v3.7 "Adaptive Runtime Engine" -- Comprehensive Technical Study
 
 © 1998–2026 Miroslav Šotek. All rights reserved.
 Contact: www.anulum.li | protoscience@anulum.li
@@ -161,7 +161,7 @@ over the existing infrastructure.
 
 ## 3. What This Means for the SCPN Framework
 
-### 3.1 The Polymorphic Processor Thesis
+### 3.1 The Adaptive Processor Thesis
 
 SC-NeuroCore v3.0--3.6 was an SNN engine: it could encode probabilities as
 Bernoulli bitstreams, multiply them via AND, accumulate via popcount, and
@@ -504,5 +504,5 @@ closer to a self-contained SCPN simulation engine.
 
 ---
 
-*SC-NeuroCore v3.7.0 "Polymorphic Engine" -- February 2026*
+*SC-NeuroCore v3.7.0 "Adaptive Runtime Engine" -- February 2026*
 *Miroslav Sotek, Anulum Research*

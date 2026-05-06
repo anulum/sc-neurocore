@@ -89,7 +89,7 @@ $$\frac{d[Ca]}{dt} = -\frac{(I_{Ca_T} + I_{Ca_N})_{inward} \cdot 0.001}{\text{vo
 | NetworkRunner wired | `NeuronVariant::Golgi` |
 | `create_neuron("GolgiCell")` | Yes |
 | `supported_models()` | Includes "GolgiCell" |
-| STRONG tests | 17 (fire, spontaneous, 11-currents, NaP depolarises, KM slows, KA transient, Ih sag, BK fast AHP, SK slow AHP, Ca²⁺ accumulates, gates bounded, reset, negative, NaN, extreme, AHP rate, performance) |
+| coverage tests | 17 (fire, spontaneous, 11-currents, NaP depolarises, KM slows, KA transient, Ih sag, BK fast AHP, SK slow AHP, Ca²⁺ accumulates, gates bounded, reset, negative, NaN, extreme, AHP rate, performance) |
 | Benchmark | `golgi_1k_steps`: **1.39 ms** (1.39 µs/step), i5-11600K |
 
 ---

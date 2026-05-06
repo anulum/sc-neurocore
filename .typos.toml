@@ -46,5 +46,8 @@ useed = "useed"   # Posit arithmetic useed term: 2^(2^es)
 evn = "evn"       # ECP5 EVN board identifier
 # Scientific journal abbreviations
 Reson = "Reson"   # Journal abbreviation, e.g. J. Magn. Reson.
+sur = "sur"       # French bibliography title word
+Dorp = "Dorp"     # Author name: van Dorp
+Collet = "Collet" # Author name: Pierre Collet
 # Cargo.lock / third-party crate descriptions
 THS = "THS"          # abbreviation in rand crate docs
