@@ -288,11 +288,17 @@ class TestCrosstalkAnalyzer:
         result = ct.analyze(simple_design.wdm_channels)
         assert result["n_channels"] == 4
         assert "worst_xt_db" in result
+        assert result["worst_xt_db"] < 0.0
 
     def test_per_channel_osnr(self, simple_design: PhotonicCircuitDesign) -> None:
         result = CrosstalkAnalyzer().analyze(simple_design.wdm_channels)
         for ch in result["per_channel"]:
             assert "osnr_db" in ch
+
+    def test_empty_channel_list_has_zero_worst_crosstalk(self) -> None:
+        result = CrosstalkAnalyzer().analyze([])
+        assert result["n_channels"] == 0
+        assert result["worst_xt_db"] == 0.0
 
 
 # ══════════════════════════════════════════════════════════════════════

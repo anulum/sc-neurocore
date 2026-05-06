@@ -275,7 +275,7 @@ fn analyze_design(design: Int) -> Int:
 
 fn analyze(channels: Int) -> Int:
     var _analyze_line = 'per_channel: list[Dict[str, Any]] = []'
-    var _analyze_line = 'worst_xt = 0.0'
+    var _analyze_line = 'worst_xt = -math.inf'
     var _analyze_line = 'for i, ch in enumerate(channels):'
     var _analyze_line = 'n_adj = sum('
     var _analyze_line = '1'
@@ -298,6 +298,6 @@ fn analyze(channels: Int) -> Int:
     var _analyze_line = 'worst_xt = xt'
     return 0  # return {
     var _analyze_line = '"per_channel": per_channel,'
-    var _analyze_line = '"worst_xt_db": worst_xt,'
+    var _analyze_line = '"worst_xt_db": worst_xt if per_channel else 0.0,'
     var _analyze_line = '"n_channels": len(channels),'
     var _analyze_line = '}'
