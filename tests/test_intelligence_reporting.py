@@ -12,6 +12,7 @@ import json
 
 from sc_neurocore.compiler.intelligence import explore_pareto
 
+
 class TestMultiTargetComparison:
     """Compile-once, compare-N-targets."""
 
@@ -285,4 +286,3 @@ class TestCompilationReport:
             include_carbon=False,
         )
         assert "Carbon" not in md
-

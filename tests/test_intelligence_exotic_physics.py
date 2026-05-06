@@ -18,6 +18,7 @@ from sc_neurocore.compiler.intelligence import (
     synthesize_reversible_logic,
 )
 
+
 class TestMZIWeightEncoding:
     """Photonic MZI phase-shift weight encoding."""
 
@@ -176,4 +177,3 @@ def test_route_holographic_interconnects():
     # Fanout = 10_000_000 // 1000 = 10_000
     assert router.optical_fanout_per_beam == 10000
     assert router.slm_grid_size[0] >= 4096  # Huge grid needed
-

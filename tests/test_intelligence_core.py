@@ -14,6 +14,7 @@ import json
 import numpy as np
 import sc_neurocore_engine as v3
 
+
 class TestQuantisationSweep:
     """Quantisation design-space exploration."""
 
@@ -1936,4 +1937,3 @@ class TestSetNumThreads:
 class TestPhase9Version:
     def test_version_is_current(self):
         assert version("sc-neurocore-engine") == sc_neurocore.__version__
-

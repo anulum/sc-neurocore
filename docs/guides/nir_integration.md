@@ -367,3 +367,33 @@ python examples/spikingjelly_nir_roundtrip.py
 All demos verify full roundtrip: node names, edge sets, CubaLIF parameter
 preservation, and file save/load. SC-NeuroCore's roundtrip preserves all
 7 CubaLIF parameters exactly (bit-for-bit verified).
+
+## FPGA Compilation
+
+To compile an imported NIR graph directly to synthesisable Verilog RTL:
+
+```python
+from sc_neurocore.nir_bridge import (
+    compile_network_to_fpga,
+    from_nir,
+    from_scnetwork,
+)
+
+network = from_nir("model.nir", dt=1.0)
+neuron_graph = from_scnetwork(network, dt=1.0)
+result = compile_network_to_fpga(neuron_graph, module_name="my_snn")
+
+# result.top_module      → top-level interconnect Verilog
+# result.neuron_modules  → per-type neuron Verilog modules
+# result.weight_rom      → combined weight ROM Verilog
+```
+
+Or via CLI:
+
+```bash
+sc-neurocore compile-nir model.nir --target artix7 -o build/
+```
+
+See the [NIR/ONNX → FPGA Compilation Guide](nir_fpga_compilation.md) for
+the full pipeline documentation, mathematical formalism, interconnect
+selection, and quantisation details.

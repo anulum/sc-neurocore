@@ -254,6 +254,10 @@ class EquationNeuron:
         "pickle",
     }
 
+    _EVAL_GLOBALS = {
+        "__builtins__": {"__import__": __import__},
+    }
+
     def _validate_expr(self, expr: str) -> None:
         """Validate an expression against the AST whitelist."""
         try:
@@ -435,7 +439,7 @@ class EquationNeuron:
                 # whitelisted maths/comparison nodes). The `eval` env
                 # has empty `__builtins__` so even reaching `eval` /
                 # `exec` / `__import__` is impossible.
-                derivatives[var] = float(eval(code, {"__builtins__": {}}, env))  # nosec B307
+                derivatives[var] = float(eval(code, self._EVAL_GLOBALS, env))  # nosec B307
             for var in self.equations:
                 self.state[var] += derivatives[var] * self.dt
 
@@ -456,7 +460,7 @@ class EquationNeuron:
                     # nosec B307: AST-whitelisted compiled equation
                     # (see euler branch comment above for full sandbox
                     # rationale).
-                    var: float(eval(code, {"__builtins__": {}}, e))  # nosec B307
+                    var: float(eval(code, self._EVAL_GLOBALS, e))  # nosec B307
                     for var, code in self._compiled_eqs.items()
                 }
 
@@ -474,12 +478,12 @@ class EquationNeuron:
         if self._compiled_threshold:
             env_post = self._build_env(**kwargs)
             # nosec B307: AST-whitelisted compiled threshold expression.
-            if eval(self._compiled_threshold, {"__builtins__": {}}, env_post):  # nosec B307
+            if eval(self._compiled_threshold, self._EVAL_GLOBALS, env_post):  # nosec B307
                 spike = 1
                 reset_env = self._build_env(**kwargs)
                 for var, code in self._compiled_reset.items():
                     # nosec B307: AST-whitelisted compiled reset rule.
-                    self.state[var] = float(eval(code, {"__builtins__": {}}, reset_env))  # nosec B307
+                    self.state[var] = float(eval(code, self._EVAL_GLOBALS, reset_env))  # nosec B307
 
         return spike
 

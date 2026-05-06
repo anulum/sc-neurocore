@@ -6,6 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore
 
+
 class TestTMRWrapper:
     """Triple Modular Redundancy wrapper generation."""
 
@@ -467,4 +468,3 @@ class TestFloorplanner:
             num_dies=2,
         )
         assert r.total_dies == 2
-

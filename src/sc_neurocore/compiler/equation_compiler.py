@@ -241,6 +241,9 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         self._mul_count = mul_start
         self._trunc_count = trunc_start
         self.intermediates: list[str] = []
+        self._pipeline = False
+        self._pipeline_points: set[str] = set()  # user-specified insertion points
+        self._pipeline_regs: list[str] = []  # registered intermediates
 
     def _trunc(self, wide_name: str) -> str:
         """Emit an intermediate wire for fixed-point truncation with rounding.
@@ -318,10 +321,25 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             # Fixed-point multiply: (a * b) >>> FRACTION
             tmp = f"_mul{self._mul_count}"
             self._mul_count += 1
-            self.intermediates.append(
-                f"wire signed [{2 * self.q.data_width - 1}:0] {tmp} = {left} * {right};"
+            # Pipeline: register the multiply output if enabled
+            should_pipe = (
+                self._pipeline
+                or tmp in self._pipeline_points
+                or f"mul{self._mul_count - 1}" in self._pipeline_points
             )
-            return self._trunc(tmp)
+            if should_pipe:
+                self._pipeline_regs.append(
+                    f"reg signed [{2 * self.q.data_width - 1}:0] {tmp}_r;"
+                )
+                self.intermediates.append(
+                    f"wire signed [{2 * self.q.data_width - 1}:0] {tmp} = {left} * {right};"
+                )
+                return self._trunc(f"{tmp}_r")
+            else:
+                self.intermediates.append(
+                    f"wire signed [{2 * self.q.data_width - 1}:0] {tmp} = {left} * {right};"
+                )
+                return self._trunc(tmp)
         elif isinstance(node.op, ast.Div):
             # Fixed-point division: (a << fraction) / b
             # For constants, we use the more efficient reciprocal multiplication.
@@ -594,8 +612,13 @@ def _emit_expr(
     *,
     mul_start: int = 0,
     trunc_start: int = 0,
-) -> tuple[str, list[str], int, int]:
-    """Parse a Python expression string and return (verilog_expr, intermediate_wires, mul_end, trunc_end)."""
+    pipeline: bool = False,
+    pipeline_points: set[str] | None = None,
+) -> tuple[str, list[str], int, int, list[str]]:
+    """Parse a Python expression string and return Verilog.
+
+    Returns (verilog_expr, intermediate_wires, mul_end, trunc_end, pipeline_regs).
+    """
     tree = ast.parse(expr_str, mode="eval")
     emitter = _VerilogExprEmitter(
         state_vars,
@@ -604,8 +627,11 @@ def _emit_expr(
         mul_start=mul_start,
         trunc_start=trunc_start,
     )
+    emitter._pipeline = pipeline
+    if pipeline_points:
+        emitter._pipeline_points = pipeline_points
     result = emitter.visit(tree.body)
-    return result, emitter.intermediates, emitter._mul_count, emitter._trunc_count
+    return result, emitter.intermediates, emitter._mul_count, emitter._trunc_count, emitter._pipeline_regs
 
 
 def compile_to_verilog(
@@ -617,6 +643,8 @@ def compile_to_verilog(
     signed: bool = True,
     overflow: str = "saturate",
     rounding: str = "truncate",
+    pipeline_stages: int = 0,
+    pipeline_points: list[str] | None = None,
 ) -> str:
     """Compile an EquationNeuron to synthesizable Verilog RTL.
 
@@ -637,6 +665,15 @@ def compile_to_verilog(
     rounding : str
         Rounding mode: ``"truncate"`` (default), ``"nearest"``,
         ``"bankers"``, or ``"stochastic"``.
+    pipeline_stages : int
+        Number of pipeline register stages to insert at multiply outputs.
+        0 = combinational (default). >0 = register every multiply output,
+        enabling higher clock frequencies at the cost of latency.
+    pipeline_points : list[str], optional
+        Explicit list of intermediate signal names (e.g. ``["_mul0", "_mul2"]``)
+        where pipeline registers should be inserted.  When specified,
+        only the named multiplies are registered instead of all.
+        Ignored if ``pipeline_stages > 0`` (which registers all multiplies).
 
     Returns
     -------
@@ -685,31 +722,52 @@ def compile_to_verilog(
     deriv_wires: list[str] = []
     deriv_assigns: list[str] = []
     all_intermediates: list[str] = []
+    all_pipeline_regs: list[str] = []
     _mc = 0  # persistent mul counter
     _tc = 0  # persistent trunc counter
 
+    # Pipeline configuration
+    use_pipeline = pipeline_stages > 0
+    pp_set = set(pipeline_points) if pipeline_points and not use_pipeline else set()
+
     for var, expr_str in neuron.equations.items():
         safe_var = state_var_map[var]
-        vexpr, intermediates, _mc, _tc = _emit_expr(
+        vexpr, intermediates, _mc, _tc, p_regs = _emit_expr(
             expr_str,
             state_var_map,
             param_map,
             q,
             mul_start=_mc,
             trunc_start=_tc,
+            pipeline=use_pipeline,
+            pipeline_points=pp_set,
         )
         all_intermediates.extend(intermediates)
+        all_pipeline_regs.extend(p_regs)
         # dv = expr * dt (multiply by dt in fixed-point)
         dt_literal = q.encode_signed_literal(neuron.dt)
         dt_tmp = f"_dt_mul_{safe_var}"
+        # Check if this dt multiply should be pipelined
+        dt_should_pipe = use_pipeline or dt_tmp in pp_set
         all_intermediates.append(
             f"wire signed [{2 * data_width - 1}:0] {dt_tmp} = ({vexpr}) * {dt_literal};"
         )
-        deriv_name = f"d{safe_var}"
-        deriv_trunc = f"_dt_trunc_{safe_var}"
-        all_intermediates.append(
-            f"wire signed [{data_width - 1}:0] {deriv_trunc} = ({dt_tmp} >>> {fraction});"
-        )
+        if dt_should_pipe:
+            dt_reg = f"{dt_tmp}_r"
+            all_pipeline_regs.append(
+                f"reg signed [{2 * data_width - 1}:0] {dt_reg};"
+            )
+            deriv_name = f"d{safe_var}"
+            deriv_trunc = f"_dt_trunc_{safe_var}"
+            all_intermediates.append(
+                f"wire signed [{data_width - 1}:0] {deriv_trunc} = ({dt_reg} >>> {fraction});"
+            )
+        else:
+            deriv_name = f"d{safe_var}"
+            deriv_trunc = f"_dt_trunc_{safe_var}"
+            all_intermediates.append(
+                f"wire signed [{data_width - 1}:0] {deriv_trunc} = ({dt_tmp} >>> {fraction});"
+            )
         deriv_wires.append(f"wire signed [{data_width - 1}:0] {deriv_name} = {deriv_trunc};")
 
     # Next-state computation with configurable overflow handling
@@ -788,7 +846,7 @@ def compile_to_verilog(
             safe_var = state_var_map[var]
             thr_param_map[var] = f"{safe_var}_next"
         # Pass empty state_vars so no _reg suffixes are appended
-        threshold_verilog, thr_intermediates, _mc, _tc = _emit_expr(
+        threshold_verilog, thr_intermediates, _mc, _tc, thr_pregs = _emit_expr(
             neuron.threshold_expr,
             {},
             thr_param_map,
@@ -797,12 +855,13 @@ def compile_to_verilog(
             trunc_start=_tc,
         )
         all_intermediates.extend(thr_intermediates)
+        all_pipeline_regs.extend(thr_pregs)
 
     # Reset assignments
     reset_assignments: list[str] = []
     for var, expr_str in neuron.reset_rules.items():
         safe_var = state_var_map[var]
-        rexpr, r_intermediates, _mc, _tc = _emit_expr(
+        rexpr, r_intermediates, _mc, _tc, r_pregs = _emit_expr(
             expr_str,
             state_var_map,
             param_map,
@@ -811,7 +870,11 @@ def compile_to_verilog(
             trunc_start=_tc,
         )
         all_intermediates.extend(r_intermediates)
+        all_pipeline_regs.extend(r_pregs)
         reset_assignments.append(f"            {safe_var}_reg <= {rexpr};")
+
+    # Compute total pipeline latency
+    total_pipeline_latency = len(all_pipeline_regs)
 
     # Build the Verilog module
     lines = [
@@ -833,10 +896,23 @@ def compile_to_verilog(
     for var in neuron.equations:
         safe_var = state_var_map[var]
         lines.append(f"    output reg signed [{data_width - 1}:0] {safe_var}_out,")
+
+    # Pipeline latency output port
+    if total_pipeline_latency > 0:
+        lat_w = max(1, (total_pipeline_latency).bit_length())
+        lines.append(f"    output wire [{lat_w - 1}:0] latency,")
+
     # Remove trailing comma from last port
     lines[-1] = lines[-1].rstrip(",")
     lines.append(");")
     lines.append("")
+
+    # Pipeline latency assignment
+    if total_pipeline_latency > 0:
+        lat_w = max(1, (total_pipeline_latency).bit_length())
+        lines.append(f"// Pipeline latency: {total_pipeline_latency} cycle(s)")
+        lines.append(f"assign latency = {lat_w}'d{total_pipeline_latency};")
+        lines.append("")
 
     # State registers
     for var in neuron.equations:
@@ -844,6 +920,13 @@ def compile_to_verilog(
         lines.append(f"reg signed [{data_width - 1}:0] {safe_var}_reg;")
 
     lines.append("")
+
+    # Pipeline registers (if any)
+    if all_pipeline_regs:
+        lines.append("// Pipeline registers for multiply outputs")
+        for reg_decl in all_pipeline_regs:
+            lines.append(reg_decl)
+        lines.append("")
 
     # Intermediate wires (multiply pipelines)
     for wire in all_intermediates:
@@ -859,6 +942,19 @@ def compile_to_verilog(
     for wire in next_wires:
         lines.append(wire)
     lines.append("")
+
+    # Pipeline register always block (if any)
+    if all_pipeline_regs:
+        lines.append("// Pipeline register stage — register multiply outputs")
+        lines.append("always @(posedge clk) begin")
+        for reg_decl in all_pipeline_regs:
+            # Extract reg name from "reg signed [31:0] _mul0_r;"
+            reg_name = reg_decl.split()[-1].rstrip(";")
+            # Corresponding wire is the name without _r suffix
+            wire_name = reg_name[:-2] if reg_name.endswith("_r") else reg_name
+            lines.append(f"    {reg_name} <= {wire_name};")
+        lines.append("end")
+        lines.append("")
 
     # Sequential logic
     lines.append("always @(posedge clk or negedge rst_n) begin")
