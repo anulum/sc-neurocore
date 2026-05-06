@@ -27,6 +27,13 @@ from .predictive_coding import (
     SymbolEncoder,
     VerifiableInference,
 )
+from .self_verification import (
+    NeuroSymbolicSelfVerificationTrace,
+    NeuroSymbolicSelfVerifier,
+    VerificationObligation,
+    VerificationStatus,
+    build_self_verification_trace,
+)
 
 __all__ = [
     "HybridInferenceResult",
@@ -39,4 +46,9 @@ __all__ = [
     "ReasoningTrace",
     "SymbolEncoder",
     "VerifiableInference",
+    "NeuroSymbolicSelfVerificationTrace",
+    "NeuroSymbolicSelfVerifier",
+    "VerificationObligation",
+    "VerificationStatus",
+    "build_self_verification_trace",
 ]

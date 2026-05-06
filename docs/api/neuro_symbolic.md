@@ -1,3 +1,11 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- (C) Concepts 1996-2026 Miroslav Sotek. All rights reserved. -->
+<!-- (C) Code 2020-2026 Miroslav Sotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore documentation -->
+
 # Neuro-Symbolic (Predictive Coding)
 
 Predictive coding primitives with hyperdimensional symbol binding.
@@ -34,6 +42,27 @@ contract is explicit:
 - integer error magnitude is `popcount`;
 - `normalised_popcount` is the hardware-friendly magnitude proxy;
 - optional `learn=True` applies one predictive-coding update after inference.
+
+## Self-Verification Trace
+
+The self-verification layer turns a neuro-symbolic inference result into
+checked obligations rather than a narrative explanation:
+
+```python
+from sc_neurocore.neuro_symbolic import build_self_verification_trace
+
+observation = [0.25, -0.2, 0.1, -0.1]
+result = agent.observe(observation, top_k=2)
+verification = build_self_verification_trace(result, observation=observation)
+assert verification.passed
+print(verification.result_digest)
+```
+
+The trace checks prediction/error consistency, SC XOR/popcount consistency,
+reasoning-trace bounds, confidence/similarity ranges, sorted symbolic scores,
+and emits a stable SHA-256 digest for audit logs.
+
+::: sc_neurocore.neuro_symbolic.self_verification
 
 ## Low-Level Primitives
 
