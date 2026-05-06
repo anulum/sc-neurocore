@@ -159,5 +159,23 @@ VISION2030/
 network_schema.json
 network_schema.json_layer_*_weights.npy
 
+# ORCA/Vertex chemistry run outputs. Acquisition inputs, scripts, manifests,
+# and README/YAML provenance stay tracked explicitly; generated scratch/output
+# artifacts are regenerated or pulled from GCS.
+results/posner_external_data/orca/*.bas*
+results/posner_external_data/orca/*.carthess
+results/posner_external_data/orca/*.densities*
+results/posner_external_data/orca/*.gbw
+results/posner_external_data/orca/*.hostnames
+results/posner_external_data/orca/*.opt
+results/posner_external_data/orca/*.out
+results/posner_external_data/orca/*.pid
+results/posner_external_data/orca/*.property.txt
+results/posner_external_data/orca/*.tmp.*
+results/posner_external_data/orca/*.xyz
+results/posner_external_data/orca/orca_env.sh
+results/posner_external_data/vertex/**/input_from_local_cycle_snapshot.xyz
+results/posner_external_data/vertex/**/output*/
+
 # Stale lowercase-name symlink to this repo root (deleted on cleanup)
 sc-neurocore

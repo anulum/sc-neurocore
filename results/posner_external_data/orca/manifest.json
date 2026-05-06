@@ -1,0 +1,40 @@
+{
+  "created_utc": "20260506T021449Z",
+  "status": "prepared_inputs_only",
+  "orca_qc_binary": "/home/anulum/.local/opt/orca-qc/orca_6_1_1_linux_x86-64_shared_openmpi418/orca",
+  "orca_qc_available": true,
+  "method": {
+    "functional": "B3LYP",
+    "basis": "def2-TZVP",
+    "dispersion": "D3BJ",
+    "scf": "VeryTightSCF",
+    "grid": "DefGrid3",
+    "grid_note": "Verified against ORCA 6.1.1; Grid5/DefGrid4/DefGrid5 are rejected as simple-input keywords by this binary.",
+    "n_cores": 6,
+    "maxcore_mb": 3000
+  },
+  "publication_sources": [
+    {
+      "title": "Posner molecules: from atomic structure to nuclear spins",
+      "doi": "10.1039/C7CP07720C"
+    },
+    {
+      "title": "Quantum cognition: The possibility of processing with nuclear spins in the brain",
+      "doi": "10.1016/j.aop.2015.08.020"
+    }
+  ],
+  "required_next_steps": [
+    "Run 00_posner_neutral_opt.inp with the ORCA quantum-chemistry package.",
+    "Export the optimized XYZ as 00_posner_neutral_opt.xyz.",
+    "Run 01_posner_cation_radical_relaxed_opt.inp from 00_posner_neutral_opt.xyz to test radical geometry relaxation.",
+    "Export the optimized radical XYZ as 01_posner_cation_radical_relaxed_opt.xyz.",
+    "Run 01_posner_cation_radical_epr.inp for vertical cation-radical HFC at neutral geometry and/or 02_posner_cation_radical_relaxed_epr.inp for relaxed cation-radical HFC.",
+    "Parse the completed ORCA output with parse-orca."
+  ],
+  "charge_state_notes": {
+    "neutral_closed_shell": "charge 0 multiplicity 1: 462 electrons",
+    "cation_radical_doublet": "charge +1 multiplicity 2: 461 electrons; electron-hole radical state",
+    "invalid_neutral_doublet": "charge 0 multiplicity 2 is forbidden for the all-electron Ca9(PO4)6 model and is not generated"
+  },
+  "not_runtime_data": true
+}
