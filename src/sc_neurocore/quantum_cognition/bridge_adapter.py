@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import logging
 import math
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -37,11 +38,12 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 try:
-    import pennylane as qml
+    import pennylane as _qml
 
+    qml: Any = _qml
     HAS_PENNYLANE = True
 except (ImportError, AttributeError):
-    qml = None  # type: ignore[assignment]
+    qml = None
     HAS_PENNYLANE = False
 
 # Hard limits for qubit auto-sizing
@@ -252,7 +254,7 @@ class FisherPosnerQuantumBridge:
 
         return self._dispatch_qiskit_circuit(qc, shots)
 
-    def execute_posner_circuit(self, shots: int = 4096, **posner_kwargs) -> dict:
+    def execute_posner_circuit(self, shots: int = 4096, **posner_kwargs: Any) -> dict[str, int]:
         """Dispatch an actual 8q Posner Hamiltonian circuit to IBM QPU.
 
         Builds the full radical-pair Trotter circuit from
@@ -271,7 +273,7 @@ class FisherPosnerQuantumBridge:
         dict
             Bitstring counts from QPU execution.
         """
-        build_posner_circuit = None
+        build_posner_circuit: Callable[..., Any] | None = None
         # Try multiple import paths for robustness
         for module_path in [
             "tools.verify_ibm_heron",
@@ -306,12 +308,17 @@ class FisherPosnerQuantumBridge:
                         "Cannot import build_posner_circuit. Ensure tools/ is "
                         "in sys.path or install SC-NeuroCore with tool entry points."
                     )
+            if build_posner_circuit is None:
+                raise ImportError(
+                    "Cannot import build_posner_circuit. Ensure tools/ is in "
+                    "sys.path or install SC-NeuroCore with tool entry points."
+                )
 
         qc = build_posner_circuit(**posner_kwargs)
         return self._dispatch_qiskit_circuit_raw(qc, shots)
 
     @staticmethod
-    def _extract_qiskit_counts(pub_result) -> dict:
+    def _extract_qiskit_counts(pub_result: Any) -> dict[str, int]:
         """Extract counts from a SamplerV2 result regardless of register name."""
         data = pub_result.data
         for reg_name in ("meas", "c", "cr", "c0", "c1"):
@@ -326,7 +333,7 @@ class FisherPosnerQuantumBridge:
                 return register.get_counts()
         raise RuntimeError("SamplerV2 result does not expose a counts register")
 
-    def _dispatch_qiskit_circuit(self, qc, shots: int) -> np.ndarray:
+    def _dispatch_qiskit_circuit(self, qc: Any, shots: int) -> np.ndarray:
         """Dispatch a circuit and return ⟨Z⟩ expectation values."""
         if self._backend == "ibm_qiskit" and self._ibm_service is not None:
             try:
@@ -356,7 +363,7 @@ class FisherPosnerQuantumBridge:
 
         return self._counts_to_expvals(counts, shots)
 
-    def _dispatch_qiskit_circuit_raw(self, qc, shots: int) -> dict:
+    def _dispatch_qiskit_circuit_raw(self, qc: Any, shots: int) -> dict[str, int]:
         """Dispatch a circuit and return raw bitstring counts."""
         from qiskit import transpile
 
@@ -389,7 +396,7 @@ class FisherPosnerQuantumBridge:
             f"Raw Qiskit dispatch requires backend='ibm_qiskit' or 'ibm_aer', got {self._backend!r}"
         )
 
-    def _sync_ibm_aer(self, qc, shots: int = 4096) -> np.ndarray:
+    def _sync_ibm_aer(self, qc: Any, shots: int = 4096) -> np.ndarray:
         """Execute circuit on explicit local AerSimulator backend."""
         try:
             from qiskit_aer import AerSimulator
@@ -417,7 +424,7 @@ class FisherPosnerQuantumBridge:
         """PennyLane Bell pair circuit → PauliZ expectations."""
         dev = self.dev
 
-        @qml.qnode(dev)
+        @qml.qnode(dev)  # type: ignore[untyped-decorator]
         def circuit() -> list:
             for p1, p2 in entangle_pairs:
                 qml.Hadamard(wires=p1)
@@ -468,7 +475,7 @@ class FisherPosnerQuantumBridge:
 
         params = qml.numpy.array(np.random.uniform(0, np.pi, self.n_qubits), requires_grad=True)
 
-        @qml.qnode(self.dev)
+        @qml.qnode(self.dev)  # type: ignore[untyped-decorator]
         def cost_circuit(phi: np.ndarray) -> Any:
             for i in range(self.n_qubits):
                 qml.Hadamard(wires=i)
