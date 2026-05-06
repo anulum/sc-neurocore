@@ -166,20 +166,34 @@ from .photonic_noc import (
     export_photonic_json,
     visualize_photonic,
 )
+from .photonic_codesign import (
+    BitstreamEvidence,
+    PhotonicCoDesignConfig,
+    PhotonicCoDesignReport,
+    StochasticPhotonicCoDesignLoop,
+    derive_probabilities_from_adjacency,
+    encode_bitstream_bank,
+)
 
 __all__ += [
+    "BitstreamEvidence",
     "CrosstalkAnalyzer",
     "MZICompiler",
     "MZIGate",
+    "PhotonicCoDesignConfig",
+    "PhotonicCoDesignReport",
     "PhotonicCircuitDesign",
     "PowerBudgetAnalyzer",
     "SCToPhotonic",
+    "StochasticPhotonicCoDesignLoop",
     "ThermalPhaseShifter",
     "WDMAssigner",
     "WDMChannel",
     "WaveguideRouter",
     "WaveguideSegment",
     "WaveguideType",
+    "derive_probabilities_from_adjacency",
+    "encode_bitstream_bank",
     "export_photonic_json",
     "visualize_photonic",
 ]

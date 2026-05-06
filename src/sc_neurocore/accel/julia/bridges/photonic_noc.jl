@@ -243,7 +243,7 @@ end
 
 function analyze(s::CrosstalkAnalyzerState, channels)
     per_channel: list[Dict[str, Any]] = []
-    worst_xt = 0.0
+    worst_xt = -math.inf
     for i, ch in enumerate(channels)
         n_adj = sum(
             1
@@ -266,7 +266,7 @@ function analyze(s::CrosstalkAnalyzerState, channels)
             worst_xt = xt
     return {
         "per_channel": per_channel,
-        "worst_xt_db": worst_xt,
+        "worst_xt_db": worst_xt if per_channel else 0.0,
         "n_channels": length(channels),
     }
 end
