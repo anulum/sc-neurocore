@@ -247,7 +247,7 @@ class KaneSiliconMapper:
 
         for i in range(n):
             for j in range(i + 1, n):
-                d = np.linalg.norm(positions[i] - positions[j])
+                d = float(np.linalg.norm(positions[i] - positions[j]))
                 j_val = self._exchange_coupling(d)
                 coupling[i, j] = j_val
                 coupling[j, i] = j_val
