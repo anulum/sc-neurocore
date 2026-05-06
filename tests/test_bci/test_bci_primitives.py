@@ -74,6 +74,7 @@ def test_primitive_processes_matrix_frame_with_trace_and_packet() -> None:
             refractory_samples=4,
             command_threshold_hz=10.0,
             weight_decay=1.0,
+            latency_budget_ms=1_000.0,
             enable_native_learning=False,
         )
     )
