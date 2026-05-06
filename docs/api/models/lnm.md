@@ -373,7 +373,7 @@ for FPGA deployment, avoiding the exp() entirely.
 | NetworkRunner wired | `NeuronVariant::LNM` |
 | `create_neuron("LearnableNeuronModel")` | Yes |
 | `supported_models()` | Includes "LearnableNeuronModel" |
-| STRONG tests | 14 (construction, step, silent, spikes, rate, α effect, β effect, γ=0 linear, stability, reset, deterministic, population, spikes, spike_count) |
+| coverage tests | 14 (construction, step, silent, spikes, rate, α effect, β effect, γ=0 linear, stability, reset, deterministic, population, spikes, spike_count) |
 | Benchmark | Python: ~327K steps/s, Rust parity: EXACT |
 
 ---

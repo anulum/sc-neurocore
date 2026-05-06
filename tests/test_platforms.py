@@ -12,6 +12,7 @@ import pytest
 
 from sc_neurocore.compiler.platforms import get_profile, list_profile_names
 
+
 class TestPhotonicProfiles:
     """Photonic / optical compute platform profiles."""
 
@@ -968,4 +969,3 @@ class TestTOMLLoader:
         assert "test_custom_chip" in loaded
         p = get_profile("test_custom_chip")
         assert p.vendor == "TestVendor"
-

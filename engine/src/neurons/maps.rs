@@ -544,7 +544,7 @@ mod tests {
         assert!(t > 0);
     }
 
-    // -- Aihara Map STRONG tests --
+    // -- Aihara Map coverage tests --
 
     #[test]
     fn aihara_fires_with_input() {
@@ -639,7 +639,7 @@ mod tests {
         );
     }
 
-    // -- Kilinc-Bhatt Map STRONG tests --
+    // -- Kilinc-Bhatt Map coverage tests --
 
     #[test]
     fn kb_fires_with_input() {
@@ -731,7 +731,7 @@ mod tests {
         );
     }
 
-    // -- Ermentrout-Kopell Map STRONG tests --
+    // -- Ermentrout-Kopell Map coverage tests --
 
     #[test]
     fn ek_fires_with_input() {
@@ -825,7 +825,7 @@ mod tests {
         );
     }
 
-    // -- Courbage-Nekorkin STRONG tests (extending existing) --
+    // -- Courbage-Nekorkin coverage tests (extending existing) --
 
     #[test]
     fn cn_silent_without_input() {

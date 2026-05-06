@@ -1088,4 +1088,3 @@ _reg(
         "gated perovskite semiconductor.",
     )
 )
-

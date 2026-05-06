@@ -35,11 +35,19 @@ VOR = "VOR"       # Vestibulo-Ocular Reflex
 systemc = "systemc"  # SystemC (hardware description language)
 lik = "lik"       # abbreviation for "likelihood" (log_lik, lik_out, etc.)
 aci = "aci"       # variable name: AdaptiveCheckpointInterval instance
+bve = "bve"       # einsum index label
+ment = "ment"     # suffix fragment in the content-indexer stemmer
+ful = "ful"       # suffix fragment in the content-indexer stemmer
 # Hardware / reliability acronyms
 DED = "DED"       # Double-Error-Detection (SEC-DED ECC)
 ane = "ane"       # Apple Neural Engine profile identifier
 VALU = "VALU"     # AMD vector ALU block naming
 useed = "useed"   # Posit arithmetic useed term: 2^(2^es)
 evn = "evn"       # ECP5 EVN board identifier
+# Scientific journal abbreviations
+Reson = "Reson"   # Journal abbreviation, e.g. J. Magn. Reson.
+sur = "sur"       # French bibliography title word
+Dorp = "Dorp"     # Author name: van Dorp
+Collet = "Collet" # Author name: Pierre Collet
 # Cargo.lock / third-party crate descriptions
 THS = "THS"          # abbreviation in rand crate docs

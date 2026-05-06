@@ -433,7 +433,7 @@ To use with this model, pre-filter the stimulus spatially:
 | PyO3 wrapper | `pyo3_neurons.rs` |
 | NetworkRunner wired | `NeuronVariant::RetinalGanglion` |
 | `create_neuron("RetinalGanglion")` | Yes |
-| STRONG tests | 5 (ON fires, OFF fires, no-fire, refractory period, reset) |
+| coverage tests | 5 (ON fires, OFF fires, no-fire, refractory period, reset) |
 | Benchmark | `rgc_10k_steps`: **130 µs** (13 ns/step), i5-11600K |
 
 ---

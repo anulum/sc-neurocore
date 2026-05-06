@@ -467,7 +467,7 @@ FPGA pipeline could simulate many OHCs time-multiplexed.
 | PyO3 wrapper | `py_sensory_graded!` macro in `pyo3_neurons.rs` |
 | NetworkRunner wired | **No** — graded model, returns f64 |
 | `create_neuron("OuterHairCell")` | No (not in variant enum) |
-| STRONG tests | 3 (depolarise + motility, reset, bounded) |
+| coverage tests | 3 (depolarise + motility, reset, bounded) |
 | Benchmark | ~20 ns/step (estimated, comparable to IHC) |
 
 ---

@@ -75,7 +75,7 @@ $$V \geq V_{thresh} \Rightarrow V \leftarrow V_{reset}, \quad s \leftarrow 0.5 \
 | NetworkRunner wired | `NeuronVariant::Granule` |
 | `create_neuron("GranuleCell")` | Yes |
 | `supported_models()` | Includes "GranuleCell" |
-| STRONG tests | 11 (fire, no-fire, silent, GABA threshold, rebound, negative, NaN, extreme, reset, high Rin, performance) |
+| coverage tests | 11 (fire, no-fire, silent, GABA threshold, rebound, negative, NaN, extreme, reset, high Rin, performance) |
 | Pipeline integration | Covered by `create_neuron_all_supported` |
 | Benchmark | `granule_10k_steps`: **466 µs** (46.6 ns/step), i5-11600K |
 

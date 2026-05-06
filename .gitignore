@@ -127,7 +127,7 @@ benchmarks/results/experimental_runs/
 # Hardware tests (PYNQ board-specific, not part of CI)
 hardware_tests/
 
-# Claude Code local config — never commit
+# local assistant config — never commit
 CLAUDE.md
 .claude/
 
@@ -135,7 +135,7 @@ CLAUDE.md
 BACKUP/
 ARCHIVE/
 
-# AutoResearch sandbox — Gemini working copies, never committed
+# AutoResearch sandbox — local working copies, never committed
 .autoresearch-gemini/
 
 # Vivado
@@ -146,7 +146,7 @@ vivado*.backup.*
 # Internal coordination (incidents, sessions)
 .coordination/
 
-# Gemini Internal
+# Internal local automation
 docs/internal/gemini/
 
 # VISION 2030 Development
@@ -158,6 +158,13 @@ VISION2030/
 # Per-run network export artifacts (left by interactive scripts)
 network_schema.json
 network_schema.json_layer_*_weights.npy
+
+# Generated waveform dumps from Verilog testbenches
+tb_sc_*.vcd
+
+# IBM/Aer verification run outputs are runtime provenance artifacts.
+# Curated baselines should live under tests/fixtures with explicit metadata.
+results/ibm_verification/*.json
 
 # ORCA/Vertex chemistry run outputs. Acquisition inputs, scripts, manifests,
 # and README/YAML provenance stay tracked explicitly; generated scratch/output

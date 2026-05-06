@@ -64,6 +64,7 @@ sc-neurocore/
 │   ├── training/           Surrogate gradient training cells
 │   ├── hdc/                Hyper-dimensional computing (VSA)
 │   ├── quantum/            Quantum circuit stochastic bridge (Qiskit + PennyLane)
+│   ├── quantum_cognition/  Fisher-Posner quantum cognition (experimental) + GOTM Brain
 │   ├── adapters/           SCPN layer adapters (L1-L16), holonomic (JAX)
 │   ├── scpn/               SCPN layer implementations (L1-L16)
 │   ├── analysis/           127-function spike train analysis toolkit

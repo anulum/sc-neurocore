@@ -867,7 +867,7 @@ mod tests {
         assert!((n.v).abs() < 1e-12);
     }
 
-    // ── AdEx STRONG tests ────────────────────────────────────────
+    // ── AdEx coverage tests ────────────────────────────────────────
 
     #[test]
     fn adex_no_fire_without_input() {
@@ -936,7 +936,7 @@ mod tests {
         );
     }
 
-    // ── ExpIF STRONG tests ───────────────────────────────────────
+    // ── ExpIF coverage tests ───────────────────────────────────────
 
     #[test]
     fn expif_negative_current_no_fire() {
@@ -996,7 +996,7 @@ mod tests {
         );
     }
 
-    // ── Lapicque STRONG tests ────────────────────────────────────
+    // ── Lapicque coverage tests ────────────────────────────────────
 
     #[test]
     fn lapicque_no_fire_without_input() {

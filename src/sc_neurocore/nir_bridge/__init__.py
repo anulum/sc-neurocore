@@ -38,6 +38,20 @@ from .silicon_mapping import (
     build_silicon_mapping_report,
     write_silicon_mapping_report,
 )
+from .neuron_graph import (
+    ConnectionSpec,
+    NeuronGraph,
+    NeuronSpec,
+    from_scnetwork,
+)
+from .quantise_params import (
+    QuantisedGraph,
+    quantise_graph,
+)
+from .fpga_compiler import (
+    NetworkCompilationResult,
+    compile_network_to_fpga,
+)
 
 _NIR_IMPORT_ERROR: ImportError | None = None
 _from_nir_impl: Any | None = None
@@ -73,6 +87,14 @@ def to_nir(network: Any, path: str | Path | None = None) -> Any:
 __all__ = [
     "from_nir",
     "to_nir",
+    "ConnectionSpec",
+    "NeuronGraph",
+    "NeuronSpec",
+    "NetworkCompilationResult",
+    "QuantisedGraph",
+    "compile_network_to_fpga",
+    "from_scnetwork",
+    "quantise_graph",
     "HardwareNoiseAnnotation",
     "NeuromorphicHardwareProfile",
     "SCMappingConstraints",

@@ -16,6 +16,7 @@ Experiments:
 6. **⁴³Ca-enriched Posner** — 35q model with I=7/2 calcium nuclear spins
    using MPS simulator for reference.
 """
+
 from __future__ import annotations
 import math
 from typing import Any
@@ -39,8 +40,7 @@ def _require_three_hf(name: str, tensors: list[dict] | None) -> list[dict[str, f
     if len(tensors) != 3:
         raise ValueError(f"{name} must contain exactly 3 tensor dictionaries")
     return [
-        _require_spin_tensor(f"{name}[{idx}]", dict(tensor))
-        for idx, tensor in enumerate(tensors)
+        _require_spin_tensor(f"{name}[{idx}]", dict(tensor)) for idx, tensor in enumerate(tensors)
     ]
 
 
@@ -115,13 +115,9 @@ def _require_ca43_inputs(
     ca_electron_map: dict[int, int] | None,
 ) -> tuple[dict[int, dict[str, float]], dict[int, int]]:
     if ca43_hf_tensors is None:
-        raise ValueError(
-            "ca43_hf_tensors is required; no ⁴³Ca hyperfine estimate is bundled"
-        )
+        raise ValueError("ca43_hf_tensors is required; no ⁴³Ca hyperfine estimate is bundled")
     if ca_electron_map is None:
-        raise ValueError(
-            "ca_electron_map is required; no proximity-based electron map is bundled"
-        )
+        raise ValueError("ca_electron_map is required; no proximity-based electron map is bundled")
     tensors = {
         int(k): _require_spin_tensor(f"ca43_hf_tensors[{k}]", dict(v))
         for k, v in ca43_hf_tensors.items()
@@ -134,9 +130,7 @@ def _require_ca43_inputs(
         raise ValueError(f"ca_electron_map keys must be {sorted(expected)}")
     invalid = {k: v for k, v in mapping.items() if v not in (0, 1)}
     if invalid:
-        raise ValueError(
-            f"ca_electron_map values must be electron qubits 0 or 1, got {invalid}"
-        )
+        raise ValueError(f"ca_electron_map values must be electron qubits 0 or 1, got {invalid}")
     return tensors, mapping
 
 
@@ -153,9 +147,7 @@ def _transport_rate_for_delay(args: Any, delay: int) -> float | None:
         return None
     rates = _extended_arg(args, "transport_depolarizing_rates")
     if rates is None:
-        raise ValueError(
-            "transport_depolarizing_rates is required for nonzero transport delays"
-        )
+        raise ValueError("transport_depolarizing_rates is required for nonzero transport delays")
     if delay in rates:
         return float(rates[delay])
     delay_key = str(delay)
@@ -204,6 +196,7 @@ def _ca43_unitary(tensor: dict[str, float], angle: float) -> np.ndarray:
 # Biological Noise Model (310K)
 # ═════════════════════════════════════════════════════════════════
 
+
 def biological_noise_model(
     T_celsius: float = 37.0,
     n_qubits: int = 8,
@@ -241,10 +234,10 @@ def biological_noise_model(
     from qiskit_aer.noise import NoiseModel, thermal_relaxation_error
 
     # Physical relaxation parameters
-    T1_electron = 1e-6    # 1 µs  — radical electron in solution
+    T1_electron = 1e-6  # 1 µs  — radical electron in solution
     T2_electron = 0.5e-6  # 0.5 µs — electron spin dephasing
-    T1_nuclear = 5.0      # 5 s   — ³¹P longitudinal relaxation
-    T2_nuclear = 0.5      # 0.5 s — ³¹P transverse relaxation
+    T1_nuclear = 5.0  # 5 s   — ³¹P longitudinal relaxation
+    T2_nuclear = 0.5  # 0.5 s — ³¹P transverse relaxation
 
     # Gate time: one RXX/RYY/RZZ gate ≈ 1 ns of physical time
     gate_time = 1e-9  # seconds
@@ -256,15 +249,19 @@ def biological_noise_model(
 
     # Electron error channel (fast: T₁=1µs, T₂=0.5µs)
     e_err_1q = thermal_relaxation_error(
-        t1=T1_electron, t2=T2_electron,
-        time=gate_time, excited_state_population=p_excited,
+        t1=T1_electron,
+        t2=T2_electron,
+        time=gate_time,
+        excited_state_population=p_excited,
     )
     e_err_2q = e_err_1q.tensor(e_err_1q)
 
     # Nuclear error channel (slow: T₁=5s, T₂=0.5s)
     n_err_1q = thermal_relaxation_error(
-        t1=T1_nuclear, t2=T2_nuclear,
-        time=gate_time, excited_state_population=p_excited,
+        t1=T1_nuclear,
+        t2=T2_nuclear,
+        time=gate_time,
+        excited_state_population=p_excited,
     )
     n_err_2q = n_err_1q.tensor(n_err_1q)
 
@@ -283,14 +280,12 @@ def biological_noise_model(
         electron_qubits = [0, 1]
         nuclear_qubits = list(range(2, 35))  # ³¹P + ⁴³Ca all nuclear
     else:
-        raise ValueError(
-            f"Unsupported n_qubits={n_qubits}. Use 8, 16, or 35."
-        )
+        raise ValueError(f"Unsupported n_qubits={n_qubits}. Use 8, 16, or 35.")
 
     for gate in ["rxx", "ryy", "rzz", "cx", "ecr"]:
         # Electron-electron gates
         for i, eq1 in enumerate(electron_qubits):
-            for eq2 in electron_qubits[i+1:]:
+            for eq2 in electron_qubits[i + 1 :]:
                 noise.add_quantum_error(e_err_2q, gate, [eq1, eq2])
         # Electron-nuclear gates (HF coupling)
         for eq in electron_qubits:
@@ -299,7 +294,7 @@ def biological_noise_model(
                 noise.add_quantum_error(ne_err_2q, gate, [nq, eq])
         # Nuclear-nuclear gates (dipolar)
         for i, nq1 in enumerate(nuclear_qubits):
-            for nq2 in nuclear_qubits[i+1:]:
+            for nq2 in nuclear_qubits[i + 1 :]:
                 noise.add_quantum_error(n_err_2q, gate, [nq1, nq2])
 
     # Posner cage vibrational dephasing: additional T₂ channel. This is an
@@ -310,6 +305,7 @@ def biological_noise_model(
             "vibrational dephasing value is bundled"
         )
     from qiskit_aer.noise import phase_damping_error
+
     cage_dephasing = phase_damping_error(float(cage_dephasing_rate))
     for nq in nuclear_qubits:
         for gate_1q in ["rz", "x", "h"]:
@@ -337,6 +333,7 @@ def get_noise_params_dict(T_celsius: float = 37.0) -> dict[str, Any]:
 # ═════════════════════════════════════════════════════════════════
 # Two-Posner Transport Circuit (16 qubits)
 # ═════════════════════════════════════════════════════════════════
+
 
 def build_two_posner_transport_circuit(
     J: float = 1.0,
@@ -390,7 +387,8 @@ def build_two_posner_transport_circuit(
     inc_a = _require_incorporation_tensors("incorporation_tensors", incorporation_tensors)
     inc_b = (
         _require_incorporation_tensors("incorporation_tensors_b", incorporation_tensors_b)
-        if incorporation_tensors_b is not None else inc_a
+        if incorporation_tensors_b is not None
+        else inc_a
     )
 
     qc = QuantumCircuit(16, 16)
@@ -444,6 +442,7 @@ def build_two_posner_transport_circuit(
     # Pre-compute dipolar table ONCE (not per Trotter step)
     try:
         from orca_posner_hf import compute_qubit_dipolar_tensor_table
+
         _16q_dip_table = compute_qubit_dipolar_tensor_table()
     except ImportError:
         raise RuntimeError(
@@ -539,10 +538,9 @@ def build_two_posner_transport_circuit(
         # This MUST be supplied as a calibrated probability. The code no
         # longer derives a rate from an unvalidated Brownian surrogate.
         if transport_depolarizing_rate is None:
-            raise ValueError(
-                "transport_depolarizing_rate is required when transport_delay_dt > 0"
-            )
+            raise ValueError("transport_depolarizing_rate is required when transport_delay_dt > 0")
         from qiskit_aer.noise import NoiseModel, depolarizing_error
+
         _transport_noise = NoiseModel()
         p_depol = _validate_rate("transport_depolarizing_rate", transport_depolarizing_rate)
         depol_1q = depolarizing_error(p_depol, 1)
@@ -578,12 +576,14 @@ def run_two_posner_simulation(shots: int = 4096, **circuit_kwargs) -> tuple:
     transport depolarizing noise model automatically wired in.
     """
     from qiskit import transpile
+
     qc = build_two_posner_transport_circuit(**circuit_kwargs)
     noise_model = None
     if qc.metadata and "transport_noise_model" in qc.metadata:
         noise_model = qc.metadata["transport_noise_model"]
     try:
         from qiskit_aer import AerSimulator
+
         sim = AerSimulator(noise_model=noise_model)
         tqc = transpile(qc, sim)
         counts = sim.run(tqc, shots=shots).result().get_counts()
@@ -594,6 +594,7 @@ def run_two_posner_simulation(shots: int = 4096, **circuit_kwargs) -> tuple:
                 "refusing noiseless statevector fallback"
             )
         from qiskit.quantum_info import Statevector
+
         sv = Statevector.from_instruction(qc.remove_final_measurements(inplace=False))
         counts = sv.sample_counts(shots)
     analysis = analyse_two_posner(counts, shots)
@@ -660,6 +661,7 @@ def analyse_two_posner(counts: dict, shots: int | None = None) -> dict:
 #   q29-q31: ⁴³Ca₈
 #   q32-q34: ⁴³Ca₉ (central Ca)
 
+
 def build_posner_43ca_circuit(
     J: float = 1.0,
     omega_0: float = 0.5,
@@ -701,6 +703,7 @@ def build_posner_43ca_circuit(
             _apply_spin_half_tensor(qc, e_qubit, nq, hf, angle_factor)
 
     from qiskit.circuit.library import UnitaryGate
+
     _ca_gates = {
         ca_start: UnitaryGate(_ca43_unitary(tensor, dt / 4), label=f"Ca{ca_start}-e HF")
         for ca_start, tensor in ca_tensors.items()
@@ -709,6 +712,7 @@ def build_posner_43ca_circuit(
     # Pre-compute dipolar table ONCE
     try:
         from orca_posner_hf import compute_qubit_dipolar_tensor_table
+
         _35q_dip_table = compute_qubit_dipolar_tensor_table()
     except ImportError:
         raise RuntimeError(
@@ -795,6 +799,7 @@ def analyse_43ca(counts: dict) -> dict:
 # Experiment Runners (for integration with verify_ibm_heron.py)
 # ═════════════════════════════════════════════════════════════════
 
+
 def run_exp4_biological_noise(build_posner_circuit, _exec_fn, args, P=print):
     """Exp 4: Compare ideal vs biological noise predictions.
 
@@ -821,6 +826,7 @@ def run_exp4_biological_noise(build_posner_circuit, _exec_fn, args, P=print):
     sv = Statevector.from_instruction(qc.remove_final_measurements(inplace=False))
     counts_ideal = sv.sample_counts(args.shots)
     from verify_ibm_heron import analyse_rpm_8q
+
     r_ideal = analyse_rpm_8q(counts_ideal)
     P(f"  Ideal (no noise):     Φ_S = {r_ideal['singlet_probability']:.4f}")
     results["ideal"] = r_ideal
@@ -833,6 +839,7 @@ def run_exp4_biological_noise(build_posner_circuit, _exec_fn, args, P=print):
         )
         sim_bio = AerSimulator(noise_model=bio_noise)
         from qiskit import transpile
+
         tqc = transpile(qc, sim_bio)
         counts_bio = sim_bio.run(tqc, shots=args.shots).result().get_counts()
         r_bio = analyse_rpm_8q(counts_bio)
@@ -874,8 +881,10 @@ def run_exp5_transport(args, P=print):
             incorporation_tensors_b=_extended_arg(args, "incorporation_tensors_b"),
             transport_depolarizing_rate=_transport_rate_for_delay(args, delay),
         )
-        P(f"  transport={delay:>5d}dt  P(bind)={r['binding_probability']:.4f}"
-          f"  ⟨Z₃Z₁₁⟩={r['nuclear_correlation_zz']:.4f}")
+        P(
+            f"  transport={delay:>5d}dt  P(bind)={r['binding_probability']:.4f}"
+            f"  ⟨Z₃Z₁₁⟩={r['nuclear_correlation_zz']:.4f}"
+        )
         results[f"delay_{delay}dt"] = r
 
     return results
@@ -889,6 +898,7 @@ def run_exp6_43ca(args, P=print):
     try:
         from qiskit_aer import AerSimulator
         from qiskit import transpile
+
         sim = AerSimulator(method="matrix_product_state")
     except ImportError:
         P("  [SKIP] qiskit-aer not available for MPS simulation")
@@ -909,8 +919,10 @@ def run_exp6_43ca(args, P=print):
             res = sim.run(tqc, shots=args.shots).result()
             counts = res.get_counts()
             r = analyse_43ca(counts)
-            P(f"  J={J:.1f}  Φ_S={r['singlet_probability']:.4f}"
-              f"  ⟨Iz_Ca1⟩={r['ca_polarizations'][0]:.3f}")
+            P(
+                f"  J={J:.1f}  Φ_S={r['singlet_probability']:.4f}"
+                f"  ⟨Iz_Ca1⟩={r['ca_polarizations'][0]:.3f}"
+            )
             results[f"J_{J}"] = r
         except Exception as e:
             P(f"  J={J:.1f}  ERROR: {e}")

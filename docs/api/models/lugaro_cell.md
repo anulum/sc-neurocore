@@ -505,7 +505,7 @@ in real time.
 | NetworkRunner wired | `NeuronVariant::Lugaro` |
 | `create_neuron("LugaroCell")` | Yes |
 | `supported_models()` | Includes "LugaroCell" |
-| STRONG tests | 10 (fire, low-threshold, adaptation, 5-HT, adapt increase, negative, NaN, extreme, reset, performance) |
+| coverage tests | 10 (fire, low-threshold, adaptation, 5-HT, adapt increase, negative, NaN, extreme, reset, performance) |
 | Pipeline integration | Covered by `create_neuron_all_supported` |
 | Benchmark | `lugaro_10k_steps`: **164 µs** (16.4 ns/step), i5-11600K |
 

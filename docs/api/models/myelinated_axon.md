@@ -551,7 +551,7 @@ This validation requires multi-segment simulation (not single-segment).
 | NetworkRunner wired | `NeuronVariant::MyelinAxon` |
 | `create_neuron("MyelinatedAxon")` | Yes |
 | `supported_models()` | Includes "MyelinatedAxon" |
-| STRONG tests | 10 |
+| coverage tests | 10 |
 | Benchmark | `myelinated_axon_1k_steps`: **1.26 ms** (1.26 µs/step), i5-11600K |
 
 ---

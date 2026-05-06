@@ -577,7 +577,7 @@ proportional to Z(θ₀) = (1-cos θ₀)/f(θ₀).  Numerical verification:
 | NetworkRunner wired | `NeuronVariant::ErmentroutKopellMap` |
 | `create_neuron("ErmentroutKopellMap")` | Yes |
 | `supported_models()` | Includes "ErmentroutKopellMap" |
-| STRONG tests | 9 (fire, silent, Type I, theta wraps, negative, NaN, extreme, reset, performance) |
+| coverage tests | 9 (fire, silent, Type I, theta wraps, negative, NaN, extreme, reset, performance) |
 | Benchmark | `ermentrout_kopell_100k_steps`: **5.45 ms** (54.5 ns/step), i5-11600K |
 
 ---

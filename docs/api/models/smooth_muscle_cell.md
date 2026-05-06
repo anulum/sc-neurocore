@@ -601,7 +601,7 @@ spurious Ca²⁺ creation.
 | NetworkRunner wired | `NeuronVariant::SmoothMuscle` |
 | `create_neuron("SmoothMuscleCell")` | Yes |
 | `supported_models()` | Includes "SmoothMuscleCell" |
-| STRONG tests | 10 |
+| coverage tests | 10 |
 | Benchmark | `smooth_muscle_1k_steps`: **149.8 µs** (149.8 ns/step), i5-11600K |
 
 ---

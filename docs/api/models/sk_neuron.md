@@ -472,7 +472,7 @@ At 100 MHz with 50 sub-steps:
 | NetworkRunner wired | `NeuronVariant::SK` |
 | `create_neuron("SK")` | Yes |
 | `supported_models()` | Includes "SK" |
-| STRONG tests | 10 (fire, silent, adaptation, Ca²⁺-only, rate reduction, negative, NaN, extreme, reset, performance) |
+| coverage tests | 10 (fire, silent, adaptation, Ca²⁺-only, rate reduction, negative, NaN, extreme, reset, performance) |
 | Benchmark | `sk_1k_steps`: **2.79 ms** (2.79 µs/step), i5-11600K |
 
 ---

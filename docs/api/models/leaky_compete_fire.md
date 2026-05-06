@@ -434,7 +434,7 @@ For N > 16, consider a shared global inhibition bus.
 | NetworkRunner wired | `NeuronVariant::LeakyCompeteFire` |
 | `create_neuron("LeakyCompeteFireNeuron")` | Yes |
 | `supported_models()` | Includes "LeakyCompeteFireNeuron" |
-| STRONG tests | 12 (construction, step type, scalar broadcast, WTA dominance, lateral inhibition, no negative V, equal inputs, custom n_units, stability, reset, deterministic, population) |
+| coverage tests | 12 (construction, step type, scalar broadcast, WTA dominance, lateral inhibition, no negative V, equal inputs, custom n_units, stability, reset, deterministic, population) |
 | Benchmark | Python: ~146K steps/s |
 
 ---

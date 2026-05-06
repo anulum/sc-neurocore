@@ -234,169 +234,173 @@ cargo test --lib analysis::gpfa
 
 ## Benchmark Results
 
-Measured with Criterion 0.8 on mining rig (i5-11600K @ 3.90 GHz, DDR4-2400).
-Values are median latency. GPUs unused — pure CPU benchmarks.
-Hardware verified via `lscpu` on 2026-04-04.
+Measured with Criterion on i5-11600K @ 3.90 GHz, DDR4-3200.
+Values are median latency. Pure CPU benchmarks.
+
+Last measured: **2026-05-02** (`cargo bench --bench analysis_bench`)
 
 ### basic
 
 | Function | 100 | 10K | 100K |
 |----------|----:|----:|-----:|
-| spike_times | 142 ns | 7.9 us | 102 us |
-| isi | 176 ns | 8.5 us | 100 us |
-| firing_rate | 24 ns | 1.6 us | 23 us |
-| bin_spike_train | 62 ns | 3.6 us | 49 us |
+| spike_times | 86 ns | 5.4 µs | 85.0 µs |
+| isi | 106 ns | 5.6 µs | 86.3 µs |
+| firing_rate | 13 ns | 1.2 µs | 15.3 µs |
+| bin_spike_train | 36 ns | 2.5 µs | 29.0 µs |
 
 ### rate
 
 | Function | 100 | 10K | 100K |
 |----------|----:|----:|-----:|
-| instantaneous_rate | 5.7 us | 446 us | 4.1 ms |
+| instantaneous_rate | 4.3 µs | 352 µs | 3.5 ms |
 
 ### variability
 
 | Function | 100 | 10K | 100K |
 |----------|----:|----:|-----:|
-| cv_isi | 146 ns | 9.8 us | 125 us |
-| fano_factor | 98 ns | 6.5 us | 75 us |
-| sample_entropy | 46 us | 4.3 ms | O(n^2) — not benchmarked |
+| cv_isi | 108 ns | 6.5 µs | 94.7 µs |
+| fano_factor | 76 ns | 4.8 µs | 50.7 µs |
+| sample_entropy | 32.6 µs | 3.23 ms | O(n²) — not benchmarked |
 
 ### correlation
 
 | Function | 100 | 10K |
 |----------|----:|----:|
-| cross_correlation | 8.8 us | 1.5 ms |
-| event_synchronization | 212 ns | 73 us |
+| cross_correlation | 1.46 µs | 213 µs |
+| event_synchronization | 142 ns | 63.1 µs |
 
 ### distance
 
 | Function | 100 | 5K |
 |----------|----:|---:|
-| van_rossum | 1.4 us | 388 us |
-| victor_purpura | 258 ns | 339 us |
-| isi_distance | 254 ns | 8.3 us |
+| van_rossum | 1.07 µs | 314 µs |
+| victor_purpura | 162 ns | 274 µs |
+| isi_distance | 165 ns | 5.95 µs |
 
 ### information
 
 | Function | 100 | 10K |
 |----------|----:|----:|
-| mutual_information | 1.0 us | 70 us |
-| transfer_entropy | 1.3 us | 91 us |
+| mutual_information | 714 ns | 48.7 µs |
+| transfer_entropy | 1.03 µs | 60.8 µs |
 
 ### causality
 
 | Function | 100 | 5K |
 |----------|----:|---:|
-| pairwise_granger | 157 ns | 113 us |
+| pairwise_granger | 102 ns | 81.7 µs |
 
 ### decoding
 
 | Function | Latency |
 |----------|--------:|
-| population_vector_decode (20n, 1000t) | 10.7 us |
-| bayesian_decode (20n, 8 stim) | 982 ns |
+| population_vector_decode | 14.9 µs |
+| bayesian_decode | 11.0 µs |
 
 ### network
 
 | Function | Latency |
 |----------|--------:|
-| functional_connectivity (10n, 2000t) | 4.3 ms |
+| functional_connectivity (10n) | 814 µs |
 
 ### surrogates
 
 | Function | 1K | 100K |
 |----------|---:|-----:|
-| isi_shuffle | 1.2 us | 139 us |
-| homogeneous_poisson | 3.5 us | 316 us |
+| isi_shuffle | 865 ns | 103 µs |
+| homogeneous_poisson | 2.55 µs | 242 µs |
 
 ### temporal
 
 | Function | 1K | 100K |
 |----------|---:|-----:|
-| burst_detection | 1.0 us | 131 us |
-| change_point_detection | 347 ns | 39 us |
+| burst_detection | 708 ns | 91.4 µs |
+| change_point_detection | 296 ns | 31.8 µs |
 
 ### patterns
 
 | Function | Latency |
 |----------|--------:|
-| spike_directionality (5K) | 68 us |
-| cubic_higher_order (5K, lag=20) | 2.2 ms |
+| spike_directionality (5K) | 3.85 µs |
+| cubic_higher_order (5K) | 409 µs |
 
 ### spectral
 
 | Function | 256 | 10K | 100K |
 |----------|----:|----:|-----:|
-| power_spectrum | 4.0 us | 194 us | 5.7 ms |
+| power_spectrum | 3.81 µs | 177 µs | 4.91 ms |
 
-### waveform (64 samples)
+### waveform (50 samples)
 
 | Function | Latency |
 |----------|--------:|
-| waveform_width | 63 ns |
-| waveform_amplitude | 39 ns |
-| waveform_repolarization_slope | 75 ns |
-| waveform_halfwidth | 216 ns |
-| waveform_pt_ratio | 61 ns |
+| waveform_width | 64 ns |
+| waveform_amplitude | 38 ns |
+| waveform_repolarization_slope | 72 ns |
+| waveform_halfwidth | 168 ns |
+| waveform_pt_ratio | 58 ns |
 
 ### point_process
 
 | Function | 1K | 100K |
 |----------|---:|-----:|
-| conditional_intensity | 25 us | 3.0 ms |
-| isi_hazard | 1.5 us | 126 us |
+| conditional_intensity | 22.9 µs | 2.33 ms |
+| isi_hazard | 1.07 µs | 103 µs |
 
 ### statistics
 
 | Function | Latency |
 |----------|--------:|
-| significance_bootstrap (200 surr) | 727 us |
+| significance_bootstrap (200 surr) | 661 µs |
 
 ### stimulus
 
 | Function | 1K | 50K |
 |----------|---:|----:|
-| spike_triggered_average | 1.4 us | 85 us |
-| spatial_information | 4.7 us | 224 us |
+| STA | 1.18 µs | 67.8 µs |
+| spatial_information | 3.89 µs | 205 µs |
 
 ### lfp
 
 | Function | 500 | 10K |
 |----------|----:|----:|
-| phase_locking_value | 34 us | 628 us |
-| spike_field_coherence | 13 us | 330 us |
+| phase_locking_value | 26.2 µs | 540 µs |
+| spike_field_coherence | 11.9 µs | 237 µs |
 
 ### sorting_quality
 
 | Function | Latency |
 |----------|--------:|
-| isolation_distance (50 pts, 4D) | 8.9 us |
-| isolation_distance (200 pts, 4D) | 33 us |
-| silhouette_score (100 pts, 4D) | 40 us |
-| silhouette_score (400 pts, 4D) | 544 us |
-| isi_violation_rate (5K) | 4.2 us |
+| isolation_distance (50 pts, 4D) | 6.82 µs |
+| isolation_distance (200 pts, 4D) | 27.0 µs |
+| silhouette_score (50 pts, 4D) | 35.8 µs |
+| silhouette_score (200 pts, 4D) | 536 µs |
+| isi_violation_rate (5K) | 2.93 µs |
 
 ### dimensionality
 
 | Function | Latency |
 |----------|--------:|
-| pca (10n, 2000t) | 58 us |
-| factor_analysis (10n, 2000t, 20 iter) | 531 us |
+| PCA (10n, 2000t) | 43.4 µs |
+| factor_analysis (10n, 2000t) | 408 µs |
 
 ### gpfa
 
 | Function | Latency |
 |----------|--------:|
-| gpfa (4n, 500t, 5 EM iter) | 5.8 ms |
+| GPFA (4n, 500t, 5 EM iter) | 4.84 ms |
 
 ### spade
 
 | Function | Latency |
 |----------|--------:|
-| spade_detect (3n, 500t, 50 surr) | 811 us |
+| SPADE detect (3n, 500t, 50 surr) | 748 µs |
 
 ## Performance Notes
 
 All functions are single-threaded pure CPU. Benchmarks run via
 `cargo bench --bench analysis_bench`. Parallelisation is left to the
 Python caller via `concurrent.futures` or joblib.
+
+Full benchmark results with scaling analysis:
+see [Analysis Benchmarks](../internal/ANALYSIS_BENCHMARKS.md).

@@ -49,9 +49,14 @@ Supported Platform Classes
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Literal
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - exercised on Python < 3.11
+    import tomli as tomllib  # type: ignore[no-redef]
 
 
 # ── Type aliases ─────────────────────────────────────────────────────
@@ -159,41 +164,41 @@ class HardwareProfile:
     ) -> "HardwareProfile":
         """Auto-construct an optimal profile from spec-sheet constraints.
 
-        This is the **ultimate extensibility mechanism**: instead of manually
-        defining every field, provide constraints and let SC-NeuroCore select
-        the optimal fixed-point configuration.
+            This is the **ultimate extensibility mechanism**: instead of manually
+            defining every field, provide constraints and let SC-NeuroCore select
+            the optimal fixed-point configuration.
 
-        Parameters
-        ----------
-        name : str
-            Unique profile identifier.
-        vendor : str
-            Vendor name.
-        family : str
-            Product family.
-        platform_class : str
-            Platform class identifier.
-        data_width : int, optional
-            Override total bit width. Auto-selects if None.
-        fraction : int, optional
-            Override fraction bits. Auto-selects if None.
-    max_freq_mhz : int | None
-            Maximum clock frequency.
-        overflow : OverflowMode
-            Overflow handling.
-        rounding : RoundingMode
-            Rounding mode.
-        min_precision_bits : int
-            Minimum fractional precision required.
-        max_power_budget_mw : float, optional
-            Power budget constraint (used for width selection).
-        notes : str
-            Human-readable description.
+            Parameters
+            ----------
+            name : str
+                Unique profile identifier.
+            vendor : str
+                Vendor name.
+            family : str
+                Product family.
+            platform_class : str
+                Platform class identifier.
+            data_width : int, optional
+                Override total bit width. Auto-selects if None.
+            fraction : int, optional
+                Override fraction bits. Auto-selects if None.
+        max_freq_mhz : int | None
+                Maximum clock frequency.
+            overflow : OverflowMode
+                Overflow handling.
+            rounding : RoundingMode
+                Rounding mode.
+            min_precision_bits : int
+                Minimum fractional precision required.
+            max_power_budget_mw : float, optional
+                Power budget constraint (used for width selection).
+            notes : str
+                Human-readable description.
 
-        Returns
-        -------
-        HardwareProfile
-            Auto-constructed profile.
+            Returns
+            -------
+            HardwareProfile
+                Auto-constructed profile.
         """
         # Auto-select data width based on precision and power
         if data_width is None:
@@ -337,7 +342,6 @@ def load_toml_profile(path: str) -> HardwareProfile:
     ValueError
         If required fields are missing.
     """
-    import tomllib
     from pathlib import Path
 
     toml_path = Path(path)
@@ -437,8 +441,6 @@ def load_profiles_from_toml(path: str) -> list[str]:
     list[str]
         Names of loaded profiles.
     """
-    import tomllib
-
     with open(path, "rb") as f:
         data = tomllib.load(f)
 
