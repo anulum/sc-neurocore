@@ -141,12 +141,7 @@ pub fn frequency_response(simulate_fn: f64, base_config: f64, freq_min: f64, fre
     // dt = cfg.get("dt", 0.1)
     // duration = cfg.get("duration", 200.0)
     // n_steps = min(int(duration / dt), 100_000)
-    // # Build sinusoidal current trace
-    // t = arange(n_steps) * dt
-    // I_sin = amplitude * sin(2 * pi * freq / 1000.0 * t)
-    // # Run simulation with the sine current by using ramp protocol hack {
-    // # Actually, we need a custom approach. Use constant protocol at mean r
-    // # Better: compute rate at this frequency via multiple short bursts.
+    // Authoritative Python path uses protocol="sine" with frequency_hz.
     0.0
 }
 

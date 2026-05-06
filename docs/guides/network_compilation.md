@@ -188,6 +188,17 @@ with open("sc_neuron_array.v", "w") as f:
     f.write(verilog)
 ```
 
+The generated array implements a concrete current-based LIF update in the
+time-multiplexed datapath:
+
+```verilog
+assign v_next = v_curr + (I_global >>> 4) - (v_curr >>> 3);
+```
+
+It is therefore suitable as a compact BRAM-backed LIF array. More detailed
+biophysical equations should use the equation compiler path, which emits the
+requested equation-specific datapath instead of this fixed LIF recurrence.
+
 ### 4.3 Generate Weight ROM
 
 ```python

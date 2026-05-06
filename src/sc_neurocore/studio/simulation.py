@@ -45,6 +45,8 @@ def _make_current_trace(
     protocol: str,
     current: float,
     n_steps: int,
+    dt: float = 0.1,
+    frequency_hz: float = 10.0,
     step_onset: float = 0.2,
     step_offset: float = 0.8,
     ramp_start: float = 0.0,
@@ -66,6 +68,9 @@ def _make_current_trace(
         on_dur = max(period // 5, 2)
         for start in range(0, n_steps, period):
             I[start : start + on_dur] = current
+    elif protocol == "sine":
+        t_ms = np.arange(n_steps) * dt
+        I[:] = current * np.sin(2 * np.pi * frequency_hz * t_ms / 1000.0)
     else:
         I[:] = current
     return I
@@ -81,6 +86,7 @@ def simulate(
     duration: float = 100.0,
     current: float = 0.0,
     protocol: str = "constant",
+    frequency_hz: float = 10.0,
 ) -> dict:
     """Run an ODE neuron simulation and return time series data."""
     n_steps = int(duration / dt)
@@ -102,7 +108,7 @@ def simulate(
     traces = {v: np.empty(n_steps) for v in var_names}
     spike_indices: list[int] = []
 
-    I_trace = _make_current_trace(protocol, current, n_steps)
+    I_trace = _make_current_trace(protocol, current, n_steps, dt=dt, frequency_hz=frequency_hz)
 
     for t in range(n_steps):
         spike = neuron.step(I=float(I_trace[t]))

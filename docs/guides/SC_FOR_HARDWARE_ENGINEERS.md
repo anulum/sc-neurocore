@@ -45,6 +45,10 @@ Yosys for Lattice iCE40 and ECP5:
 | `sc_cdc_primitives.v` | Clock domain crossing (2-FF sync, Gray counter, async FIFO) | ~60 | ~32 |
 | `sc_neurocore_top.v` | System top (DMA + AXI + layers) | varies | varies |
 
+`sc_axis_interface.v` propagates the accepted slave-side `s_axis_tlast` marker
+to `m_axis_tlast` on the corresponding layer output word. This keeps frame
+boundaries explicit for DMA and host-side packet accounting.
+
 ## Architecture: `sc_dense_layer_top.v`
 
 The core building block is a fully-connected layer:

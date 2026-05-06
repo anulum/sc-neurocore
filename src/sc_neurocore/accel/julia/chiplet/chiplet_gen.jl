@@ -311,7 +311,7 @@ function _emit_top(s::PartitionAssignmentState, topo)
             f"    // Die {die.die_id}\n"
             f"    sc_chiplet_die_{die.die_id} die_{die.die_id}_inst (\n"
             f"        .clk(clk), .rst_n(rst_n)\n"
-            f"        // TODO: wire link ports\n"
+            f"        // Link ports are wired by the Python authoritative generator\n"
             f"    );"
         )
     bridge_insts = []
@@ -321,7 +321,7 @@ function _emit_top(s::PartitionAssignmentState, topo)
             f"    sc_chiplet_bridge_{link.src_die}_to_{link.dst_die} bridge_{link.src_die}_{link.dst_die}_inst (\n"
             f"        .src_clk(clk), .src_rst(!rst_n),\n"
             f"        .dst_clk(clk), .dst_rst(!rst_n)\n"
-            f"        // TODO: wire AXI-Stream ports\n"
+            f"        // AXI-Stream ports are wired by the Python authoritative generator\n"
             f"    );"
         )
     die_block = "\n\n".join(die_insts)

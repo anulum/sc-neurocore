@@ -52,6 +52,7 @@ import math
 import os
 import sys
 import time
+from typing import Callable, Optional
 
 _script_dir = os.path.dirname(os.path.abspath(__file__))
 _training_dir = os.path.join(_script_dir, "neuromorphic_training-main")
@@ -68,12 +69,45 @@ import wandb
 os.environ["WANDB_MODE"] = "disabled"
 wandb.init(mode="disabled")
 
+from spikingjelly.activation_based import neuron, surrogate
 from configs.config_SHD import Config
 from src.datasets import SHD_dataloaders
 from src.modules import dcls_module
+from src.neurons import Vmin_LIFNode
 from src.SHD.snn import SNN_axonal_feedforward_delays
 from src.SHD.trainer import test, init_optim_sche, count_parameters
 from src.utils import seed_everything
+
+
+class CompatibleLIFNode(neuron.LIFNode):
+    """Standard SpikingJelly LIFNode with Vmin_LIF-compatible constructor."""
+
+    def __init__(
+        self,
+        tau: float = 2.0,
+        decay_input: bool = True,
+        v_threshold: float = 1.0,
+        v_reset: Optional[float] = 0.0,
+        v_inf: Optional[float] = None,
+        beta_v_inf: Optional[float] = None,
+        surrogate_function: Callable = surrogate.Sigmoid(),
+        detach_reset: bool = False,
+        step_mode="s",
+        backend="torch",
+        store_v_seq: bool = False,
+    ):
+        del v_inf, beta_v_inf
+        super().__init__(
+            tau,
+            decay_input,
+            v_threshold,
+            v_reset,
+            surrogate_function,
+            detach_reset,
+            step_mode,
+            backend,
+            store_v_seq,
+        )
 
 
 def magnitude_prune(model: torch.nn.Module, sparsity_list: list):
@@ -190,6 +224,48 @@ def epsilon_prune(model: torch.nn.Module, epsilon: float = 0.01):
     return sparsity
 
 
+def iterative_epsilon_prune_to_target(
+    model: torch.nn.Module,
+    epsilon: float,
+    target_sparsity: float,
+    growth: float = 1.25,
+    max_steps: int = 20,
+) -> dict:
+    """Raise an absolute-value threshold until target sparsity is reached.
+
+    Tim Masquelier's April 13 guidance was to prune weights below an epsilon
+    threshold iteratively instead of dropping a fixed percentage in one shot.
+    This routine records the exact threshold path so the pruning rule remains
+    reproducible and auditable.
+    """
+    if epsilon <= 0:
+        raise ValueError("epsilon must be > 0 for iterative epsilon pruning")
+    if not 0.0 < target_sparsity < 1.0:
+        raise ValueError("target_sparsity must be in (0, 1)")
+    if growth <= 1.0:
+        raise ValueError("growth must be > 1")
+
+    history = []
+    current_epsilon = epsilon
+    sparsity = 0.0
+    for step in range(max_steps):
+        sparsity = epsilon_prune(model, current_epsilon)
+        history.append({"step": step, "epsilon": current_epsilon, "sparsity": sparsity})
+        if sparsity >= target_sparsity:
+            break
+        current_epsilon *= growth
+
+    return {
+        "initial_epsilon": epsilon,
+        "final_epsilon": current_epsilon,
+        "target_sparsity": target_sparsity,
+        "achieved_sparsity": sparsity,
+        "growth": growth,
+        "max_steps": max_steps,
+        "history": history,
+    }
+
+
 def integer_delay_penalty(model: torch.nn.Module) -> torch.Tensor:
     """Sum quadratic penalty (P - round(P))^2 over all DCLS delay parameters.
 
@@ -303,6 +379,9 @@ if __name__ == "__main__":
     config.lambda_delay = float(os.environ.get("SHD_LAMBDA_DELAY", "0.01"))
     config.l1_weight = float(os.environ.get("SHD_L1_WEIGHT", "0.0"))
     config.prune_sparsity = float(os.environ.get("SHD_PRUNE_SPARSITY", "0.9"))
+    config.prune_epsilon = float(os.environ.get("SHD_PRUNE_EPSILON", "0.01"))
+    config.prune_epsilon_growth = float(os.environ.get("SHD_PRUNE_EPSILON_GROWTH", "1.25"))
+    config.prune_method = os.environ.get("SHD_PRUNE_METHOD", "magnitude").strip().lower()
     config.finetune_epochs = int(os.environ.get("SHD_FINETUNE_EPOCHS", "20"))
     if os.environ.get("SHD_SEED"):
         config.seed = int(os.environ["SHD_SEED"])
@@ -311,14 +390,30 @@ if __name__ == "__main__":
     out_subdir = os.environ.get("SHD_OUTPUT_SUBDIR", "dcls_max")
     config.hidden_layers = [128, 128]
 
+    neuron_module_name = os.environ.get("SHD_NEURON_MODULE", "vmin_lif").strip().lower()
+    if neuron_module_name in {"vmin", "vmin_lif", "vmin_lifnode"}:
+        config.neuron_module = Vmin_LIFNode
+        neuron_module_name = "vmin_lif"
+    elif neuron_module_name in {"lif", "standard_lif", "lifnode"}:
+        config.neuron_module = CompatibleLIFNode
+        neuron_module_name = "standard_lif"
+    else:
+        raise ValueError(
+            "SHD_NEURON_MODULE must be one of: vmin_lif, standard_lif"
+        )
+
     l1_mode = config.l1_weight > 0
 
     print(f"SHD_LAMBDA_DELAY   = {config.lambda_delay}")
     print(f"SHD_L1_WEIGHT      = {config.l1_weight}")
     print(f"SHD_PRUNE_SPARSITY = {config.prune_sparsity}")
+    print(f"SHD_PRUNE_METHOD   = {config.prune_method}")
+    print(f"SHD_PRUNE_EPSILON  = {config.prune_epsilon}")
+    print(f"SHD_PRUNE_EPSILON_GROWTH = {config.prune_epsilon_growth}")
     print(f"SHD_FINETUNE_EPOCHS= {config.finetune_epochs}")
     print(f"SHD_EPOCHS         = {config.epochs}")
     print(f"SHD_SEED           = {config.seed}")
+    print(f"SHD_NEURON_MODULE  = {neuron_module_name}")
     print(f"SHD_SIGMA_INIT     = {SIG_INIT}")
     print(f"SHD_SIGMA_FINAL    = {SIG_FINAL}")
     print(f"SHD_ROUND_EACH_EPOCH = {ROUND_EACH_EPOCH}")
@@ -491,11 +586,23 @@ if __name__ == "__main__":
                 near_zero = (w.abs() < 0.01).sum().item()
                 print(f"  {name}: {nz}/{total} non-zero, {near_zero} near-zero (<0.01)")
 
-        # Magnitude prune: keep top (1-sparsity) fraction per layer
-        sparsity_list = [0.0]  # first layer (input→hidden1): no pruning
-        for _ in range(len(config.weight_sparsity_mask) - 1):
-            sparsity_list.append(config.prune_sparsity)
-        magnitude_prune(model, sparsity_list)
+        prune_summary = None
+        if config.prune_method == "epsilon":
+            prune_summary = iterative_epsilon_prune_to_target(
+                model,
+                epsilon=config.prune_epsilon,
+                target_sparsity=config.prune_sparsity,
+                growth=config.prune_epsilon_growth,
+            )
+            print("epsilon prune summary:", prune_summary)
+        elif config.prune_method == "magnitude":
+            # Magnitude prune: keep top (1-sparsity) fraction per layer
+            sparsity_list = [0.0]  # first layer (input->hidden1): no pruning
+            for _ in range(len(config.weight_sparsity_mask) - 1):
+                sparsity_list.append(config.prune_sparsity)
+            magnitude_prune(model, sparsity_list)
+        else:
+            raise ValueError("SHD_PRUNE_METHOD must be 'magnitude' or 'epsilon'")
 
         # Report after pruning
         total_params = sum(
@@ -658,6 +765,7 @@ if __name__ == "__main__":
     config_data = {
         "dcls_version": "max",
         "reference": "Hammouamri 2024 arxiv 2306.00817",
+        "neuron_module": neuron_module_name,
         "sigma_schedule": "cosine",
         "sigma_init": SIG_INIT,
         "sigma_final": SIG_FINAL,
@@ -671,8 +779,8 @@ if __name__ == "__main__":
         "best_native_sigma": best_native_sigma,
         "best_test_at_native_sigma": best_before,
         "last_epoch": last_epoch,
-        "last_test_at_sig_final_before_round": test_before,
-        "last_test_at_sig_final_after_round": test_after,
+        "last_test_at_sig_final_before_round": last_before,
+        "last_test_at_sig_final_after_round": last_after,
         "rounding_drop": drop,
         "fpga_deployable_test_acc": test_after,
         "comparison": {
@@ -690,7 +798,11 @@ if __name__ == "__main__":
             "l1_weight": config.l1_weight,
             "prune_sparsity": config.prune_sparsity,
             "finetune_epochs": config.finetune_epochs,
-            "method": "Han et al. 2015 — L1 + magnitude prune + fine-tune",
+            "prune_method": config.prune_method,
+            "prune_epsilon": config.prune_epsilon,
+            "prune_epsilon_growth": config.prune_epsilon_growth,
+            "epsilon_prune_summary": prune_summary,
+            "method": "L1 + prune + fine-tune",
         }
 
     with open(os.path.join(out_dir, "config.json"), "w") as f:

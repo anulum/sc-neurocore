@@ -30,16 +30,20 @@ Use cases:
 
 ## 2. Public API surface
 
-The package re-exports 6 symbols from a single module:
+The package re-exports the injector, Monte-Carlo benchmark, seeded degradation
+policy, and resilience-mode orchestrator:
 
 ```python
 from sc_neurocore.fault_injection import (
     FaultModel,             # enum: BIT_FLIP / STUCK_AT_0 / STUCK_AT_1 / GAUSSIAN_NOISE / DROPOUT
-    RadiationProfile,       # dataclass: name + BER + description
+    RadiationProfile,       # dataclass: name + BER stress preset + description
     FaultInjectionResult,   # dataclass: per-injection outcome record
     ResilienceReport,       # dataclass: aggregated benchmark output
     FaultInjector,          # injector: applies one fault model to a tensor
     ResilienceBenchmark,    # harness: runs N injections + computes drift curve
+    GracefulDegradationPolicy,
+    FaultInjectionResilienceMode,
+    ResilienceModeConfig,
 )
 ```
 
@@ -66,11 +70,13 @@ operate on tensor elements (suitable for SC numerator/denominator
 representations where the per-element error is more meaningful
 than per-bit).
 
-## 4. Radiation profiles
+## 4. Radiation Profiles
 
-Four published preset profiles, with empirical bit-error rates
-(BER per bit per cycle) drawn from public radiation-effects
-data:
+Four engineering stress presets are available. They are ordered to represent
+increasingly harsh environments, but they are not a substitute for a
+mission-specific radiation transport analysis using the actual orbit,
+shielding, process node, memory macro, scrubbing cadence, and operating
+temperature.
 
 | Profile | BER (per bit per cycle) | Environment |
 |---|---:|---|
@@ -79,10 +85,9 @@ data:
 | `RadiationProfile.geo()` | 5 × 10⁻⁶ | Geostationary — prolonged Van Allen belt + solar storms |
 | `RadiationProfile.deep_space()` | 1 × 10⁻⁴ | Interplanetary — galactic cosmic rays |
 
-The four constants are **monotone non-decreasing** in BER as the
-environment becomes more hostile (verified by
-`test_radiation_profile_presets`). The deep-space BER is
-~6 orders of magnitude worse than the terrestrial baseline.
+The presets are deliberately conservative stress points for software
+resilience testing. Flight, medical, automotive, or safety certification
+evidence must replace them with externally justified rates.
 
 Custom profiles are constructed directly:
 
@@ -94,39 +99,49 @@ custom = RadiationProfile(
 )
 ```
 
-## 5. Injection mechanics
+## 5. Injection Mechanics
 
-`FaultInjector(model=FaultModel.BIT_FLIP, profile=RadiationProfile.leo())`
-is the basic injector. Its `inject(tensor, rng)` method:
+`FaultInjector(seed=...)` is the basic seeded injector. Its
+`inject(bitstream, model, ber)` method:
 
-1. Samples per-bit (or per-element) Bernoulli trials at the
-   profile's BER.
+1. Samples per-bit Bernoulli trials at the supplied BER.
 2. Applies the fault model to each selected bit/element.
-3. Records the indices + before/after values as a
-   `FaultInjectionResult` (so post-mortem analysis can
-   reconstruct what was hit).
+3. Returns a corrupted copy plus the number of affected bits.
 
 Injection is **non-destructive**: the original tensor is preserved
 and a corrupted copy is returned, so the user can compare
 side-by-side without losing the ground truth.
 
-`ResilienceBenchmark` wraps `FaultInjector` for a sweep over
-multiple BERs (or multiple radiation profiles) and produces a
+`ResilienceBenchmark` wraps `FaultInjector` for a BER sweep and produces a
 `ResilienceReport`:
 
 ```python
-bench = ResilienceBenchmark(
-    network=my_network,
+bench = ResilienceBenchmark(seed=42)
+report = bench.run(
     fault_model=FaultModel.BIT_FLIP,
-    n_trials=1000,
+    ber=RadiationProfile.leo().ber,
+    bitstream_length=4096,
+    probability=0.5,
+    num_trials=1000,
 )
-report = bench.run([
-    RadiationProfile.terrestrial(),
-    RadiationProfile.leo(),
-    RadiationProfile.geo(),
-    RadiationProfile.deep_space(),
-])
-print(report.degradation_slope)   # 1/BER decade of accuracy lost
+print(report.mean_error)
+```
+
+`FaultInjectionResilienceMode` runs seeded trials directly on a layer's
+existing binary SC bitstreams and combines the drift statistics with
+`GracefulDegradationPolicy`:
+
+```python
+mode = FaultInjectionResilienceMode(
+    ResilienceModeConfig(
+        layer_id="encoder.l0",
+        radiation_profile=RadiationProfile.leo(),
+        num_trials=256,
+        seed=17,
+    )
+)
+report = mode.run(bitstreams)  # shape: (neurons, bits), values 0/1
+print(report.recommended_action.value)
 ```
 
 ## 6. Pipeline wiring

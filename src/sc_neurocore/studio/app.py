@@ -301,6 +301,7 @@ def _make_simulate_fn(req_dict: dict[str, Any]) -> Callable[..., dict[str, Any]]
                 "duration": overrides.get("duration", req_dict.get("duration", 200)),
                 "current": overrides.get("current", req_dict.get("current", 10)),
                 "protocol": overrides.get("protocol", req_dict.get("protocol", "constant")),
+                "frequency_hz": overrides.get("frequency_hz", req_dict.get("frequency_hz", 10.0)),
             }
             return simulate_model(**cfg)
 
@@ -318,6 +319,7 @@ def _make_simulate_fn(req_dict: dict[str, Any]) -> Callable[..., dict[str, Any]]
                 duration=overrides.get("duration", req_dict.get("duration", 200)),
                 current=overrides.get("current", req_dict.get("current", 10)),
                 protocol=overrides.get("protocol", req_dict.get("protocol", "constant")),
+                frequency_hz=overrides.get("frequency_hz", req_dict.get("frequency_hz", 10.0)),
             )
 
         return fn
@@ -466,7 +468,7 @@ def create_app() -> FastAPI:
                 "dt": req.dt,
                 "duration": req.duration,
                 "current": req.current,
-                "protocol": "constant",
+                "protocol": "sine",
             }
             return bifurcation_sweep(
                 sim_fn, base_cfg, req.sweep_param, req.sweep_min, req.sweep_max, req.sweep_steps

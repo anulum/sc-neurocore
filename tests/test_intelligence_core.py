@@ -272,6 +272,7 @@ class TestRISCVDriver:
         assert "sc_lif_enable" in c
         assert "sc_lif_reset" in c
         assert "sc_lif_set_current" in c
+        assert "sc_lif_read_current" in c
         assert "sc_lif_get_spikes" in c
         assert "sc_lif_encode" in c
         assert "sc_lif_set_tau" in c
@@ -288,6 +289,8 @@ class TestRISCVDriver:
         assert "sc_lif_tick" in c
         assert "sc_lif_start_rtos" in c
         assert "vTaskDelay" in c
+        assert "float I = sc_lif_read_current();" in c
+        assert "TODO" not in c
 
     def test_zephyr_template(self):
         """Zephyr template includes thread and K_THREAD_DEFINE."""
@@ -297,6 +300,7 @@ class TestRISCVDriver:
         assert "zephyr/kernel.h" in c
         assert "K_THREAD_DEFINE" in c
         assert "k_msleep" in c
+        assert "sc_lif_set_current(sc_lif_read_current())" in c
 
     def test_custom_base_address(self):
         """Custom base address propagates."""

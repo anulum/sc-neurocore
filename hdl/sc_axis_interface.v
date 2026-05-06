@@ -57,7 +57,9 @@ module sc_axis_interface #(
         end
     end
 
-    // Output path: forward SC layer output as AXI-Stream
+    // Output path: forward SC layer output as AXI-Stream. The dense-layer
+    // interface is one-result-per-input, so the accepted input TLAST bit is
+    // delayed until the corresponding output word is emitted.
     reg [DATA_WIDTH-1:0] output_buf;
     reg output_buf_valid;
     reg output_last;
@@ -73,7 +75,7 @@ module sc_axis_interface #(
         end else if (layer_output_valid) begin
             output_buf <= layer_output_data;
             output_buf_valid <= 1'b1;
-            output_last <= 1'b0; // TODO: frame counter for tlast
+            output_last <= input_last;
         end else if (m_axis_tready) begin
             output_buf_valid <= 1'b0;
         end

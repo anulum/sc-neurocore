@@ -1,0 +1,111 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# © Code 2020-2026 Miroslav Sotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Fault-injection resilience mode tests
+
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+from sc_neurocore.fault_injection import (
+    DegradationAction,
+    FaultInjectionResilienceMode,
+    FaultModel,
+    RadiationProfile,
+    ResilienceModeConfig,
+)
+from sc_neurocore.fault_injection.resilience_policy import GracefulDegradationPolicy
+
+
+def test_resilience_mode_reports_seeded_probability_error_and_policy() -> None:
+    bitstreams = np.array(
+        [
+            [0, 1, 0, 1, 1, 0, 0, 1],
+            [1, 0, 0, 1, 0, 1, 1, 0],
+        ],
+        dtype=np.uint8,
+    )
+    mode = FaultInjectionResilienceMode(
+        ResilienceModeConfig(
+            layer_id="layer0",
+            radiation_profile=RadiationProfile("test", 0.25, "deterministic stress"),
+            fault_models=(FaultModel.BIT_FLIP,),
+            num_trials=16,
+            seed=7,
+            policy=GracefulDegradationPolicy(
+                warning_affected_ratio=0.01,
+                critical_affected_ratio=0.9,
+            ),
+        )
+    )
+
+    report = mode.run(bitstreams)
+    payload = report.to_dict()
+    trial = report.trial_reports[0]
+
+    assert report.layer_id == "layer0"
+    assert report.input_shape == (2, 8)
+    assert report.nominal_probability == 0.5
+    assert report.recommended_action == DegradationAction.EXTEND_BITSTREAM
+    assert trial.expected_affected_bits == 4.0
+    assert trial.observed_mean_affected_bits > 0.0
+    assert 0.0 <= trial.mean_probability_error <= 1.0
+    assert payload["trial_reports"][0]["degradation_plan"]["action"] == "extend_bitstream"
+
+
+def test_resilience_mode_is_deterministic_for_same_seed() -> None:
+    rng = np.random.default_rng(123)
+    bitstreams = rng.integers(0, 2, size=(4, 32), dtype=np.uint8)
+    config = ResilienceModeConfig(
+        layer_id="det",
+        radiation_profile=RadiationProfile("test", 0.1, "deterministic stress"),
+        fault_models=(FaultModel.STUCK_AT_0, FaultModel.DROPOUT),
+        num_trials=8,
+        seed=99,
+    )
+
+    first = FaultInjectionResilienceMode(config).run(bitstreams)
+    second = FaultInjectionResilienceMode(config).run(bitstreams)
+
+    assert first.to_dict() == second.to_dict()
+
+
+def test_resilience_mode_recommends_replay_for_correlated_streams() -> None:
+    bitstreams = np.tile(np.array([1, 0, 1, 0, 1, 0, 1, 0], dtype=np.uint8), (4, 1))
+    mode = FaultInjectionResilienceMode(
+        ResilienceModeConfig(
+            layer_id="correlated",
+            radiation_profile=RadiationProfile("zero", 0.0, "no injected faults"),
+            fault_models=(FaultModel.BIT_FLIP,),
+            num_trials=4,
+            seed=11,
+        )
+    )
+
+    report = mode.run(bitstreams)
+
+    assert report.recommended_action == DegradationAction.REPLAY_WITH_SEED
+    assert report.requires_replay is True
+    assert report.trial_reports[0].degradation_plan.replay_seed == 11
+
+
+def test_resilience_mode_rejects_invalid_inputs_and_config() -> None:
+    with pytest.raises(ValueError, match="num_trials"):
+        ResilienceModeConfig(
+            layer_id="bad",
+            radiation_profile=RadiationProfile("test", 0.0),
+            num_trials=0,
+        )
+
+    mode = FaultInjectionResilienceMode(
+        ResilienceModeConfig(
+            layer_id="bad-shape",
+            radiation_profile=RadiationProfile("test", 0.0),
+        )
+    )
+    with pytest.raises(ValueError, match="0/1"):
+        mode.run(np.array([[0, 2]], dtype=np.uint8))

@@ -367,6 +367,7 @@ def simulate_model(
     duration: float = 100.0,
     current: float = 10.0,
     protocol: str = "constant",
+    frequency_hz: float = 10.0,
 ) -> dict[str, Any]:
     """Simulate a named model. Uses Rust engine when model has default params."""
     import numpy as np
@@ -391,7 +392,9 @@ def simulate_model(
                 actual_dt = float(dt_field.default)
         n_steps = min(int(duration / actual_dt), MAX_STEPS)
         if n_steps >= 1:
-            I_trace = _make_current_trace(protocol, current, n_steps)
+            I_trace = _make_current_trace(
+                protocol, current, n_steps, dt=actual_dt, frequency_hz=frequency_hz
+            )
             rust_result = _try_rust_simulate(name, n_steps, I_trace, actual_dt)
             if rust_result is not None:
                 return rust_result
@@ -446,7 +449,9 @@ def simulate_model(
     traces = {v: np.empty(n_steps) for v in var_names}
     spike_indices: list[int] = []
 
-    I_trace = _make_current_trace(protocol, current, n_steps)
+    I_trace = _make_current_trace(
+        protocol, current, n_steps, dt=actual_dt, frequency_hz=frequency_hz
+    )
     step_kwarg = _detect_step_kwarg(cls)
 
     # Detect if this is an integer-arithmetic model

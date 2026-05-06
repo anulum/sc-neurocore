@@ -2,8 +2,8 @@
 
 **Module:** `sc_neurocore.cli`
 **Entry point:** `sc-neurocore` (declared in `pyproject.toml` `[project.scripts]`)
-**Source:** `src/sc_neurocore/cli.py` — 633 lines, `argparse`-based, single-`main()` dispatch
-**Status (v3.14.0):** eight sub-commands wired; deployment, serving, compilation, and synthesis-evidence collection have focused tests.
+**Source:** `src/sc_neurocore/cli.py` — `argparse`-based, single-`main()` dispatch
+**Status (v3.14.0):** deployment, serving, hub bundle generation, compilation, and synthesis-evidence collection have focused tests.
 
 ---
 
@@ -41,7 +41,7 @@ sc-neurocore = "sc_neurocore.cli:main"
 The CLI accepts a single positional `command` token chosen from:
 
 ```text
-{info, benchmark, preflight, deploy, serve, compile, studio, collect-synthesis}
+{info, benchmark, preflight, deploy, serve, map-nir, hub-init, compile, compile-nir, studio, collect-synthesis}
 ```
 
 with an optional positional `model` argument (file path or ODE string,
@@ -56,6 +56,9 @@ depending on the command). All other parameters are keyword flags; running
 | `compile` | Equation string → SystemVerilog RTL (+ optional TB + Yosys) | ODE string | `0` on success, `1` on missing model |
 | `deploy` | NIR/PyTorch model → SC-NeuroCore HDL project for FPGA, or static web scaffold with `--target web` | model file path | `0` on success, `1` on bad format |
 | `serve` | Start streaming spike inference server (`SpikeServer`) | `.nir` file path | `0` while running |
+| `map-nir` | Generate deterministic silicon-mapping reports for neuromorphic targets | `.nir` file path | `0` on success, `1` on bad input |
+| `hub-init` | Generate an offline-first self-hosted Docker Compose hub bundle | — | `0` on success, `1` on invalid config |
+| `compile-nir` | Compile NIR/ONNX network files to FPGA artefacts | `.nir` or `.onnx` path | `0` on success, `1` on bad input |
 | `studio` | Launch Visual SNN Design Studio (FastAPI + Uvicorn) | — | `0` on clean exit, `1` if FastAPI missing |
 | `collect-synthesis` | Convert real utilisation, timing, and power reports into optimiser evidence JSON | — | `0` on success, `1` on missing or invalid input |
 
@@ -100,7 +103,41 @@ Delegates to `tools/preflight.py`. Used by the pre-push policy (see
 `feedback_preflight_no_block` memory: never let the pre-push hook run the full
 suite — `preflight.py` is the gated subset).
 
-### 2.4 `compile`
+### 2.4 `hub-init`
+
+Writes a deterministic local hub bundle containing:
+
+- `docker-compose.yml`
+- `.env.example`
+- `hub_manifest.json`
+- `model_zoo_index.json`
+- `benchmark_plan.json`
+- `README.md`
+- local `cache/`, `models/`, and `benchmarks/results/` directories
+
+Default generation is offline-first and loopback-bound:
+
+```bash
+sc-neurocore hub-init --output build/hub --port 8001
+docker compose -f build/hub/docker-compose.yml up studio
+```
+
+Operational flags:
+
+| Flag | Default | Meaning |
+|------|---------|---------|
+| `--bind-host` | `127.0.0.1` | Host address used for Studio port publishing |
+| `--port` | `8001` | Studio service port |
+| `--hub-image` | `sc-neurocore-hub:local` | Compose image tag |
+| `--online` | unset | Clears generated offline environment flags |
+
+The generated Compose services use the checked-in `deploy/Dockerfile`, run
+with a read-only root filesystem, mount only cache/model/result directories,
+set `no-new-privileges`, and include a Studio readiness check against
+`/api/health`. The benchmark runner is opt-in via the `benchmark` Compose
+profile; it is not started with the Studio service.
+
+### 2.5 `compile`
 
 Compiles a free-form ODE description into synthesisable SystemVerilog using
 `sc_neurocore.compiler.equation_compiler.equation_to_fpga`. Optionally emits a

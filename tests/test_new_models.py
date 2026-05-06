@@ -8,8 +8,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from sc_neurocore.neurons.models.brunel_wang import BrunelWangNeuron
 from sc_neurocore.neurons.models.srm0 import SRM0Neuron
 
@@ -48,10 +46,11 @@ class TestSRM0:
         s = n.get_state()
         assert "v" in s and "eta" in s and "t" in s
 
-    @pytest.mark.skip(reason="TODO: SRM0 eta dynamics need investigation — gh-issue pending")
     def test_rate_increases_with_current(self):
-        r1 = sum(SRM0Neuron(dt=0.1).step(8.0) for _ in range(5000))
-        r2 = sum(SRM0Neuron(dt=0.1).step(15.0) for _ in range(5000))
+        n1 = SRM0Neuron(dt=0.1)
+        n2 = SRM0Neuron(dt=0.1)
+        r1 = sum(n1.step(8.0) for _ in range(5000))
+        r2 = sum(n2.step(15.0) for _ in range(5000))
         assert r2 > r1
 
 
