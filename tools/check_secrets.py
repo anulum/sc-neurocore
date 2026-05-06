@@ -273,8 +273,8 @@ def main() -> int:
 
     print(f"\n\033[31m✗ Found {len(findings)} potential secret(s):\033[0m\n")
     for f in findings:
-        print(f"  {f['file']}:{f['line_num']} [{f['pattern']}]")
-        print("    Matched content redacted.")
+        print(f"  {f['file']}:{f['line_num']}")
+        print("    Finding details redacted.")
         print()
 
     return 1
