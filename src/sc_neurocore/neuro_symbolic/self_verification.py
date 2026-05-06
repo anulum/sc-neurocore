@@ -28,7 +28,8 @@ SCHEMA_VERSION = "sc-neurocore.neuro-symbolic.self-verification.v1"
 class VerificationStatus(Enum):
     """Status of one self-verification obligation."""
 
-    PASS = "pass"
+    # Verification outcome label, not a credential.
+    PASS = "pass"  # nosec B105
     FAIL = "fail"
 
 

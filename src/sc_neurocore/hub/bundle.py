@@ -166,7 +166,8 @@ def build_hub_manifest(config: HubBundleConfig | None = None) -> dict[str, Any]:
                 "healthcheck": f"http://127.0.0.1:{cfg.studio_port}/api/health",
                 "writable_paths": [
                     "/var/lib/sc-neurocore/cache",
-                    "/tmp",
+                    # Declared container tmpfs path, not a host tempfile.
+                    "/tmp",  # nosec B108
                 ],
             },
             "benchmark_runner": {
@@ -177,7 +178,8 @@ def build_hub_manifest(config: HubBundleConfig | None = None) -> dict[str, Any]:
                 "writable_paths": [
                     "/workspace/benchmarks/results",
                     "/var/lib/sc-neurocore/cache",
-                    "/tmp",
+                    # Declared container tmpfs path, not a host tempfile.
+                    "/tmp",  # nosec B108
                 ],
             },
         },
@@ -225,7 +227,10 @@ def build_hub_manifest(config: HubBundleConfig | None = None) -> dict[str, Any]:
             "non_root_runtime_user": True,
             "read_only_root_filesystem": True,
             "no_new_privileges": True,
-            "tmpfs_paths": ["/tmp"],
+            "tmpfs_paths": [
+                # Explicit Docker tmpfs mount inside the container.
+                "/tmp",  # nosec B108
+            ],
             "restart_policy": "unless-stopped",
         },
         "limitations": [
@@ -451,7 +456,8 @@ def _validate_bind_host(value: str) -> None:
         raise ValueError("bind_host must not contain whitespace")
     if "/" in value:
         raise ValueError("bind_host must be a host name or IP address, not a CIDR")
-    if value in {"localhost", "0.0.0.0", "::", "::1"}:
+    # Explicit user-selected all-interface bind is allowed and recorded in the manifest.
+    if value in {"localhost", "0.0.0.0", "::", "::1"}:  # nosec B104
         return
     try:
         ipaddress.ip_address(value)

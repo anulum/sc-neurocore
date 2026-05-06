@@ -50,7 +50,8 @@ class VerificationEvidenceKind(Enum):
 class VerificationClaimStatus(Enum):
     """Status of one evidence item or standard requirement."""
 
-    PASS = "pass"
+    # Verification outcome label, not a credential.
+    PASS = "pass"  # nosec B105
     FAIL = "fail"
     MISSING = "missing"
 
