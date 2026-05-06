@@ -42,37 +42,64 @@ from pathlib import Path
 
 # Patterns that indicate a potential secret leak
 _SECRET_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
-    ("API key", re.compile(r'(?:api[_-]?key|apikey|token)\s*[=:]\s*["\']?[A-Za-z0-9_\-]{20,}', re.IGNORECASE)),
-    ("Bearer token", re.compile(r'Bearer\s+[A-Za-z0-9_\-\.]{20,}', re.IGNORECASE)),
-    ("sk-prefixed API key", re.compile(r'sk-[A-Za-z0-9]{20,}')),
-    ("AWS key", re.compile(r'(?:AKIA|ASIA)[A-Z0-9]{16}')),
-    ("Private key", re.compile(r'-----BEGIN\s+(?:RSA|EC|DSA|OPENSSH)?\s*PRIVATE KEY-----')),
-    ("Password", re.compile(r'(?:password|passwd|secret)\s*[=:]\s*["\'][^"\']{4,}["\']', re.IGNORECASE)),
+    (
+        "API key",
+        re.compile(
+            r'(?:api[_-]?key|apikey|token)\s*[=:]\s*["\']?[A-Za-z0-9_\-]{20,}', re.IGNORECASE
+        ),
+    ),
+    ("Bearer token", re.compile(r"Bearer\s+[A-Za-z0-9_\-\.]{20,}", re.IGNORECASE)),
+    ("sk-prefixed API key", re.compile(r"sk-[A-Za-z0-9]{20,}")),
+    ("AWS key", re.compile(r"(?:AKIA|ASIA)[A-Z0-9]{16}")),
+    ("Private key", re.compile(r"-----BEGIN\s+(?:RSA|EC|DSA|OPENSSH)?\s*PRIVATE KEY-----")),
+    (
+        "Password",
+        re.compile(r'(?:password|passwd|secret)\s*[=:]\s*["\'][^"\']{4,}["\']', re.IGNORECASE),
+    ),
     ("GCP service account", re.compile(r'"type"\s*:\s*"service_account"')),
-    ("Hardcoded cred URL", re.compile(r'https?://[^@\s]+:[^@\s]+@[^/\s]+')),
-    (".env file", re.compile(r'\.env\b(?!\.example|\.template|\.dist)', re.IGNORECASE)),
+    ("Hardcoded cred URL", re.compile(r"https?://[^@\s]+:[^@\s]+@[^/\s]+")),
+    (".env file", re.compile(r"\.env\b(?!\.example|\.template|\.dist)", re.IGNORECASE)),
 ]
 
 # Patterns that are explicitly allowed (false positives)
 _ALLOWED_PATTERNS: list[re.Pattern[str]] = [
-    re.compile(r'agentic-shared'),              # local path, not a secret
-    re.compile(r'api_key\s*=\s*["\']?local'),    # dummy key for llama-server
-    re.compile(r'LOCAL_LLM_API_KEY\s*=\s*local'),  # dummy env var
-    re.compile(r'Bearer\s+local'),               # dummy bearer
-    re.compile(r'\.env\.\w+'),                   # .env.example, .env.template
-    re.compile(r'#.*\.env'),                     # commented out
-    re.compile(r'check_secrets'),                # self-reference
+    re.compile(r"agentic-shared"),  # local path, not a secret
+    re.compile(r'api_key\s*=\s*["\']?local'),  # dummy key for llama-server
+    re.compile(r"LOCAL_LLM_API_KEY\s*=\s*local"),  # dummy env var
+    re.compile(r"Bearer\s+local"),  # dummy bearer
+    re.compile(r"\.env\.\w+"),  # .env.example, .env.template
+    re.compile(r"#.*\.env"),  # commented out
+    re.compile(r"check_secrets"),  # self-reference
 ]
 
 # File extensions to skip (binary, media, etc.)
-_SKIP_EXTENSIONS = frozenset({
-    '.pyc', '.pyo', '.so', '.dylib', '.dll',
-    '.png', '.jpg', '.jpeg', '.gif', '.ico', '.webp',
-    '.mp4', '.avi', '.mov', '.webm',
-    '.pdf', '.zip', '.tar', '.gz', '.bz2',
-    '.whl', '.egg',
-    '.gguf',  # LLM model files
-})
+_SKIP_EXTENSIONS = frozenset(
+    {
+        ".pyc",
+        ".pyo",
+        ".so",
+        ".dylib",
+        ".dll",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".ico",
+        ".webp",
+        ".mp4",
+        ".avi",
+        ".mov",
+        ".webm",
+        ".pdf",
+        ".zip",
+        ".tar",
+        ".gz",
+        ".bz2",
+        ".whl",
+        ".egg",
+        ".gguf",  # LLM model files
+    }
+)
 
 
 def _get_tracked_files(repo_root: Path) -> list[Path]:
@@ -80,7 +107,10 @@ def _get_tracked_files(repo_root: Path) -> list[Path]:
     try:
         result = subprocess.run(
             ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
-            cwd=repo_root, capture_output=True, text=True, timeout=30,
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode == 0:
             return [repo_root / f for f in result.stdout.strip().split("\n") if f]
@@ -107,29 +137,31 @@ def _shannon_entropy(s: str) -> float:
         return 0.0
     from collections import Counter
     import math
+
     freq = Counter(s)
     n = len(s)
     return -sum((c / n) * math.log2(c / n) for c in freq.values())
 
 
-def _find_high_entropy_strings(line: str, threshold: float = 4.5,
-                                min_length: int = 16) -> list[str]:
+def _find_high_entropy_strings(
+    line: str, threshold: float = 4.5, min_length: int = 16
+) -> list[str]:
     """Find substrings with entropy above threshold (likely secrets)."""
     # Split on common delimiters
-    candidates = re.findall(r'[A-Za-z0-9+/=_\-]{16,}', line)
-    return [c for c in candidates
-            if len(c) >= min_length and _shannon_entropy(c) >= threshold]
+    candidates = re.findall(r"[A-Za-z0-9+/=_\-]{16,}", line)
+    return [c for c in candidates if len(c) >= min_length and _shannon_entropy(c) >= threshold]
 
 
-def _scan_git_history(repo_root: Path, max_commits: int = 100
-                       ) -> list[dict[str, str]]:
+def _scan_git_history(repo_root: Path, max_commits: int = 100) -> list[dict[str, str]]:
     """Scan recent git history for secrets that were committed then removed."""
     findings: list[dict[str, str]] = []
     try:
         result = subprocess.run(
-            ["git", "log", f"-{max_commits}", "--diff-filter=D",
-             "--name-only", "--format=%H"],
-            cwd=repo_root, capture_output=True, text=True, timeout=30,
+            ["git", "log", f"-{max_commits}", "--diff-filter=D", "--name-only", "--format=%H"],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode != 0:
             return findings
@@ -141,14 +173,17 @@ def _scan_git_history(repo_root: Path, max_commits: int = 100
                 continue
             # Check if any deleted file had a suspicious name
             lower = line.lower()
-            if any(kw in lower for kw in [".env", "credentials", "secret",
-                                           ".pem", ".key", "token"]):
-                findings.append({
-                    "file": f"[DELETED] {line}",
-                    "line_num": "git-history",
-                    "pattern": "Deleted sensitive file",
-                    "snippet": "File was deleted but may exist in git history",
-                })
+            if any(
+                kw in lower for kw in [".env", "credentials", "secret", ".pem", ".key", "token"]
+            ):
+                findings.append(
+                    {
+                        "file": f"[DELETED] {line}",
+                        "line_num": "git-history",
+                        "pattern": "Deleted sensitive file",
+                        "snippet": "File was deleted but may exist in git history",
+                    }
+                )
     except (subprocess.SubprocessError, FileNotFoundError):
         pass
     return findings
@@ -195,24 +230,28 @@ def scan_repo(repo_root: Path, scan_history: bool = True) -> list[dict[str, str]
                 match = pattern.search(line)
                 if match:
                     snippet = line.strip()[:120]
-                    findings.append({
-                        "file": rel_path,
-                        "line_num": str(line_num),
-                        "pattern": pattern_name,
-                        "snippet": snippet,
-                    })
+                    findings.append(
+                        {
+                            "file": rel_path,
+                            "line_num": str(line_num),
+                            "pattern": pattern_name,
+                            "snippet": snippet,
+                        }
+                    )
                     break
 
             # Layer 2: Entropy analysis
             high_entropy = _find_high_entropy_strings(line)
             for he_str in high_entropy:
                 entropy = _shannon_entropy(he_str)
-                findings.append({
-                    "file": rel_path,
-                    "line_num": str(line_num),
-                    "pattern": f"High entropy ({entropy:.1f} bits)",
-                    "snippet": he_str[:80],
-                })
+                findings.append(
+                    {
+                        "file": rel_path,
+                        "line_num": str(line_num),
+                        "pattern": f"High entropy ({entropy:.1f} bits)",
+                        "snippet": he_str[:80],
+                    }
+                )
 
     # Layer 3: Git history
     if scan_history:

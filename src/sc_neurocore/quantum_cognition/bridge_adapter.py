@@ -84,7 +84,9 @@ def compute_max_qubits(safety_factor: float = _RAM_SAFETY_FACTOR) -> int:
     result = max(_QUBIT_FLOOR, min(max_n, _QUBIT_CEILING))
     logger.debug(
         "RAM auto-sizing: %.1f GB available, safety=%.0f%%, max_qubits=%d",
-        avail_bytes / (1024**3), safety_factor * 100, result,
+        avail_bytes / (1024**3),
+        safety_factor * 100,
+        result,
     )
     return result
 
@@ -93,6 +95,7 @@ def _get_available_ram() -> int:
     """Return available RAM in bytes.  psutil → /proc/meminfo fallback."""
     try:
         import psutil
+
         return psutil.virtual_memory().available
     except (ImportError, AttributeError):
         pass
@@ -168,6 +171,7 @@ class FisherPosnerQuantumBridge:
     def _init_ibm_backend(self) -> None:
         """Initialise IBM Quantum backend via qiskit-ibm-runtime."""
         import os
+
         token = (
             os.environ.get("SC_NEUROCORE_IBM_TOKEN", "")
             or os.environ.get("QISKIT_IBM_TOKEN", "")
@@ -180,13 +184,13 @@ class FisherPosnerQuantumBridge:
                 "Use backend='ibm_aer' explicitly for simulator runs."
             )
         channel = os.environ.get("SC_NEUROCORE_IBM_CHANNEL", "ibm_cloud")
-        instance = (
-            os.environ.get("SC_NEUROCORE_IBM_CRN")
-            or os.environ.get("SC_NEUROCORE_IBM_INSTANCE")
+        instance = os.environ.get("SC_NEUROCORE_IBM_CRN") or os.environ.get(
+            "SC_NEUROCORE_IBM_INSTANCE"
         )
 
         try:
             from qiskit_ibm_runtime import QiskitRuntimeService
+
             kwargs = {"channel": channel, "token": token}
             if instance:
                 kwargs["instance"] = instance
@@ -203,9 +207,7 @@ class FisherPosnerQuantumBridge:
         """Active backend name."""
         return self._backend
 
-    def execute_non_local_sync(
-        self, entangle_pairs: list[tuple[int, int]]
-    ) -> np.ndarray:
+    def execute_non_local_sync(self, entangle_pairs: list[tuple[int, int]]) -> np.ndarray:
         """Execute non-local synchronisation via entanglement.
 
         Creates Bell pairs for the specified site pairs and measures
@@ -250,9 +252,7 @@ class FisherPosnerQuantumBridge:
 
         return self._dispatch_qiskit_circuit(qc, shots)
 
-    def execute_posner_circuit(
-        self, shots: int = 4096, **posner_kwargs
-    ) -> dict:
+    def execute_posner_circuit(self, shots: int = 4096, **posner_kwargs) -> dict:
         """Dispatch an actual 8q Posner Hamiltonian circuit to IBM QPU.
 
         Builds the full radical-pair Trotter circuit from
@@ -280,6 +280,7 @@ class FisherPosnerQuantumBridge:
         ]:
             try:
                 import importlib
+
                 mod = importlib.import_module(module_path)
                 build_posner_circuit = mod.build_posner_circuit
                 break
@@ -290,6 +291,7 @@ class FisherPosnerQuantumBridge:
             # Last resort: try adding tools/ to sys.path
             import sys
             from pathlib import Path
+
             tools_dir = Path(__file__).resolve().parents[3] / "tools"
             if tools_dir.is_dir() and str(tools_dir) not in sys.path:
                 sys.path.insert(0, str(tools_dir))
@@ -330,6 +332,7 @@ class FisherPosnerQuantumBridge:
             try:
                 from qiskit_ibm_runtime import SamplerV2
                 from qiskit import transpile
+
                 # Use qc.num_qubits (circuit size), NOT self.n_qubits
                 # (cognitive layer), because Posner circuits can be
                 # 8q/16q/35q while cognitive layer may be 4-16q.
@@ -356,9 +359,11 @@ class FisherPosnerQuantumBridge:
     def _dispatch_qiskit_circuit_raw(self, qc, shots: int) -> dict:
         """Dispatch a circuit and return raw bitstring counts."""
         from qiskit import transpile
+
         if self._backend == "ibm_qiskit" and self._ibm_service is not None:
             try:
                 from qiskit_ibm_runtime import SamplerV2
+
                 backend = self._ibm_service.least_busy(
                     min_num_qubits=qc.num_qubits, operational=True
                 )
@@ -367,14 +372,14 @@ class FisherPosnerQuantumBridge:
                 job = sampler.run([tqc], shots=shots)
                 result = job.result()
                 counts = self._extract_qiskit_counts(result[0])
-                logger.info("IBM QPU Posner job %s completed (%d shots)",
-                            job.job_id(), shots)
+                logger.info("IBM QPU Posner job %s completed (%d shots)", job.job_id(), shots)
                 return counts
             except Exception as e:
                 raise RuntimeError(f"IBM QPU Posner dispatch failed: {e}") from e
         if self._backend == "ibm_aer":
             try:
                 from qiskit_aer import AerSimulator
+
                 sim = AerSimulator()
                 tqc = transpile(qc, sim)
                 return sim.run(tqc, shots=shots).result().get_counts()
@@ -389,6 +394,7 @@ class FisherPosnerQuantumBridge:
         try:
             from qiskit_aer import AerSimulator
             from qiskit import transpile
+
             sim = AerSimulator()
             tqc = transpile(qc, sim)
             counts = sim.run(tqc, shots=shots).result().get_counts()
@@ -460,9 +466,7 @@ class FisherPosnerQuantumBridge:
             logger.debug("optimize_phases: skipped (emulated backend)")
             return None
 
-        params = qml.numpy.array(
-            np.random.uniform(0, np.pi, self.n_qubits), requires_grad=True
-        )
+        params = qml.numpy.array(np.random.uniform(0, np.pi, self.n_qubits), requires_grad=True)
 
         @qml.qnode(self.dev)
         def cost_circuit(phi: np.ndarray) -> Any:
@@ -533,10 +537,7 @@ class FisherPosnerQuantumBridge:
         }
 
     def __repr__(self) -> str:
-        return (
-            f"FisherPosnerQuantumBridge(n_qubits={self.n_qubits}, "
-            f"backend={self._backend!r})"
-        )
+        return f"FisherPosnerQuantumBridge(n_qubits={self.n_qubits}, backend={self._backend!r})"
 
 
 __all__ = ["FisherPosnerQuantumBridge", "HAS_PENNYLANE", "compute_max_qubits"]

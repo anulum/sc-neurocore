@@ -63,15 +63,15 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 # Physical constants for Si:P system
-_BOHR_RADIUS_STAR_NM = 2.5    # effective Bohr radius in Si [nm]
-_J0_MEV = 0.1                  # exchange coupling prefactor [meV]
-_DEFAULT_SPACING_NM = 20.0     # default inter-donor spacing [nm]
-_T2_NUCLEAR_S = 30.0           # nuclear spin T₂ in ²⁸Si [s]
-_T2_ELECTRON_MS = 2.0          # electron spin T₂ at 1 K [ms]
-_GATE_1Q_NS = 10.0             # single-qubit A-gate time [ns]
-_GATE_2Q_NS = 50.0             # two-qubit J-gate time [ns]
-_SWAP_COST_GATES = 3           # SWAP = 3 CX gates
-_DEPTH_NM = 20.0               # donor implantation depth below surface [nm]
+_BOHR_RADIUS_STAR_NM = 2.5  # effective Bohr radius in Si [nm]
+_J0_MEV = 0.1  # exchange coupling prefactor [meV]
+_DEFAULT_SPACING_NM = 20.0  # default inter-donor spacing [nm]
+_T2_NUCLEAR_S = 30.0  # nuclear spin T₂ in ²⁸Si [s]
+_T2_ELECTRON_MS = 2.0  # electron spin T₂ at 1 K [ms]
+_GATE_1Q_NS = 10.0  # single-qubit A-gate time [ns]
+_GATE_2Q_NS = 50.0  # two-qubit J-gate time [ns]
+_SWAP_COST_GATES = 3  # SWAP = 3 CX gates
+_DEPTH_NM = 20.0  # donor implantation depth below surface [nm]
 
 _VALID_TOPOLOGIES = ("linear", "grid", "triangular", "hexagonal")
 
@@ -142,17 +142,13 @@ class KaneSiliconMapper:
         if spacing_nm <= 0:
             raise ValueError(f"spacing_nm must be > 0, got {spacing_nm}")
         if topology not in _VALID_TOPOLOGIES:
-            raise ValueError(
-                f"topology must be one of {_VALID_TOPOLOGIES}, got {topology!r}"
-            )
+            raise ValueError(f"topology must be one of {_VALID_TOPOLOGIES}, got {topology!r}")
 
         self.spacing_nm = spacing_nm
         self.depth_nm = depth_nm
         self.topology = topology
 
-    def map_pool_to_register(
-        self, n_sites: int
-    ) -> KaneRegisterLayout:
+    def map_pool_to_register(self, n_sites: int) -> KaneRegisterLayout:
         """Compute physical qubit placement and coupling matrix.
 
         Parameters
@@ -188,9 +184,13 @@ class KaneSiliconMapper:
         logger.info(
             "Kane register: %d qubits, topology=%s, spacing=%.1f nm, "
             "max_coupling=%.4f meV, T₂=%.1f ms, max_depth=%d, gates=%d",
-            n_sites, self.topology, self.spacing_nm,
+            n_sites,
+            self.topology,
+            self.spacing_nm,
             float(np.max(coupling[coupling > 0])) if np.any(coupling > 0) else 0.0,
-            t2_ms, max_depth, len(schedule),
+            t2_ms,
+            max_depth,
+            len(schedule),
         )
 
         return layout
@@ -233,8 +233,7 @@ class KaneSiliconMapper:
                 sub = (row + col) % 2
                 positions[idx, 0] = col * self.spacing_nm * 1.5
                 positions[idx, 1] = (
-                    row * self.spacing_nm * np.sqrt(3) / 2
-                    + sub * self.spacing_nm * np.sqrt(3) / 4
+                    row * self.spacing_nm * np.sqrt(3) / 2 + sub * self.spacing_nm * np.sqrt(3) / 4
                 )
                 idx += 1
             if idx >= n:
@@ -266,9 +265,7 @@ class KaneSiliconMapper:
             return _J0_MEV
         return _J0_MEV * np.exp(-2.0 * distance_nm / _BOHR_RADIUS_STAR_NM)
 
-    def _build_gate_schedule(
-        self, n: int, coupling: np.ndarray
-    ) -> list[dict[str, Any]]:
+    def _build_gate_schedule(self, n: int, coupling: np.ndarray) -> list[dict[str, Any]]:
         """Build a gate schedule with DAG-based parallel scheduling.
 
         Produces an optimized gate schedule where:
@@ -282,12 +279,16 @@ class KaneSiliconMapper:
 
         # Layer 0: parallel A-gates on all qubits
         for q in range(n):
-            schedule.append({
-                "gate": "A", "qubits": [q],
-                "time_ns": t_ns, "duration_ns": _GATE_1Q_NS,
-                "layer": 0,
-                "description": f"A-gate: init qubit {q}",
-            })
+            schedule.append(
+                {
+                    "gate": "A",
+                    "qubits": [q],
+                    "time_ns": t_ns,
+                    "duration_ns": _GATE_1Q_NS,
+                    "layer": 0,
+                    "description": f"A-gate: init qubit {q}",
+                }
+            )
         t_ns += _GATE_1Q_NS
 
         # Collect all J-gate pairs sorted by coupling strength
@@ -316,25 +317,33 @@ class KaneSiliconMapper:
                     still_remaining.append((qi, qj, j_val))
 
             for qi, qj, j_val in layer:
-                schedule.append({
-                    "gate": "J", "qubits": [qi, qj],
-                    "time_ns": t_ns, "duration_ns": _GATE_2Q_NS,
-                    "coupling_meV": float(j_val),
-                    "layer": layer_idx,
-                    "description": f"J-gate: exchange q{qi}-q{qj}",
-                })
+                schedule.append(
+                    {
+                        "gate": "J",
+                        "qubits": [qi, qj],
+                        "time_ns": t_ns,
+                        "duration_ns": _GATE_2Q_NS,
+                        "coupling_meV": float(j_val),
+                        "layer": layer_idx,
+                        "description": f"J-gate: exchange q{qi}-q{qj}",
+                    }
+                )
             t_ns += _GATE_2Q_NS
             layer_idx += 1
             remaining = still_remaining
 
         # Final layer: parallel A-gate readout
         for q in range(n):
-            schedule.append({
-                "gate": "A", "qubits": [q],
-                "time_ns": t_ns, "duration_ns": _GATE_1Q_NS,
-                "layer": layer_idx,
-                "description": f"A-gate: readout qubit {q}",
-            })
+            schedule.append(
+                {
+                    "gate": "A",
+                    "qubits": [q],
+                    "time_ns": t_ns,
+                    "duration_ns": _GATE_1Q_NS,
+                    "layer": layer_idx,
+                    "description": f"A-gate: readout qubit {q}",
+                }
+            )
         t_ns += _GATE_1Q_NS
 
         return schedule

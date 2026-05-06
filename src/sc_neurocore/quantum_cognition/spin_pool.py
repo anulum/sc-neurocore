@@ -180,7 +180,7 @@ class SpinPoolMPS:
             keep = int(np.sum(atol < S))
             keep = max(1, keep)
             if keep > self.bond_dim:
-                discarded = float(np.sum(S[self.bond_dim:] ** 2))
+                discarded = float(np.sum(S[self.bond_dim :] ** 2))
                 raise ValueError(
                     f"State requires bond dimension {keep} at bond {site}; "
                     f"configured bond_dim={self.bond_dim}, discarded_norm={discarded:.3e}"
@@ -242,7 +242,12 @@ class SpinPoolMPS:
                 raise ValueError(f"coupling tensor must have shape (3, 3), got {tensor.shape}")
             for a in range(3):
                 for b in range(3):
-                    H += 2.0 * np.pi * float(tensor[a, b]) * (ops[coupling.i][a] @ ops[coupling.j][b])
+                    H += (
+                        2.0
+                        * np.pi
+                        * float(tensor[a, b])
+                        * (ops[coupling.i][a] @ ops[coupling.j][b])
+                    )
 
         from scipy.linalg import expm
 
@@ -288,9 +293,7 @@ class SpinPoolMPS:
         """
         n = self.n_sites
         if site < 0 or site >= n - 1:
-            raise IndexError(
-                f"Two-site RDM requires 0 <= site < {n-1}, got {site}"
-            )
+            raise IndexError(f"Two-site RDM requires 0 <= site < {n - 1}, got {site}")
 
         # Contract from left up to site
         L = np.ones((1, 1), dtype=np.complex128)
@@ -299,7 +302,7 @@ class SpinPoolMPS:
             L = np.einsum("ab,asc,bsd->cd", L, A, A.conj())
 
         # Two site tensors
-        A_i = self.tensors[site]      # (d_L, 2, d_mid)
+        A_i = self.tensors[site]  # (d_L, 2, d_mid)
         A_j = self.tensors[site + 1]  # (d_mid, 2, d_R)
 
         # Contract from right
@@ -310,10 +313,7 @@ class SpinPoolMPS:
 
         # ρ[σ₁,σ₂,σ₁',σ₂'] = Σ L[α,α'] A_i[α,σ₁,γ] A_j[γ,σ₂,β]
         #                              A_i*[α',σ₁',γ'] A_j*[γ',σ₂',β'] R[β,β']
-        rho_4 = np.einsum(
-            "ab,asc,cud,bve,ewf,df->suvw",
-            L, A_i, A_j, A_i.conj(), A_j.conj(), R
-        )
+        rho_4 = np.einsum("ab,asc,cud,bve,ewf,df->suvw", L, A_i, A_j, A_i.conj(), A_j.conj(), R)
         # Reshape to 4×4: index = σ₁*2 + σ₂
         rho = rho_4.reshape(4, 4)
         tr = np.trace(rho)
@@ -331,9 +331,7 @@ class SpinPoolMPS:
     def _update_entanglement_map(self) -> None:
         """Recompute entanglement map from MPS bond entropies."""
         for i in range(self.n_sites):
-            self.entanglement_map[i] = max(
-                self._compute_entanglement_entropy(i), 1e-10
-            )
+            self.entanglement_map[i] = max(self._compute_entanglement_entropy(i), 1e-10)
         total = np.sum(self.entanglement_map)
         if total > 0:
             self.entanglement_map /= total
@@ -346,9 +344,7 @@ class SpinPoolMPS:
         must be supplied explicitly through ``evolve_exact()``.
         """
         if not 0 <= site_idx < self.n_sites:
-            raise IndexError(
-                f"site_idx {site_idx} out of range for {self.n_sites} sites"
-            )
+            raise IndexError(f"site_idx {site_idx} out of range for {self.n_sites} sites")
         if intensity < 0.0:
             raise ValueError(f"intensity must be >= 0, got {intensity}")
 
@@ -421,10 +417,7 @@ class SpinPoolMPS:
     def _swap_adjacent(self, i: int) -> None:
         """Apply an exact adjacent SWAP gate inside the MPS."""
         swap = np.array(
-            [[1, 0, 0, 0],
-             [0, 0, 1, 0],
-             [0, 1, 0, 0],
-             [0, 0, 0, 1]],
+            [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]],
             dtype=np.complex128,
         )
         self._apply_adjacent_unitary(i, swap)
@@ -489,10 +482,11 @@ class SpinPoolMPS:
         I2 = np.eye(2, dtype=np.complex128)
 
         # Full Heisenberg Hamiltonian: XX + YY + ZZ
-        H = (np.kron(sx, sx) + np.kron(sy, sy) + np.kron(sz, sz))
+        H = np.kron(sx, sx) + np.kron(sy, sy) + np.kron(sz, sz)
 
         # Exact matrix exponentiation
         from scipy.linalg import expm
+
         U = expm(-1j * angle * H)
 
         self._apply_adjacent_unitary(i, U)
@@ -506,9 +500,7 @@ class SpinPoolMPS:
         so this method cannot manufacture ATP gain from a classical proxy.
         """
         if not 0 <= site_idx < self.n_sites:
-            raise IndexError(
-                f"site_idx {site_idx} out of range for {self.n_sites} sites"
-            )
+            raise IndexError(f"site_idx {site_idx} out of range for {self.n_sites} sites")
         # Choose pair: prefer (site, site+1); for last site use (site-1, site)
         if site_idx < self.n_sites - 1:
             pair_site = site_idx
@@ -571,9 +563,7 @@ class SpinPoolMPS:
             "quantum_cognition_spin_pool": {
                 "n_sites": self.n_sites,
                 "entanglement_map": self.entanglement_map.tolist(),
-                "atp_efficiencies": [
-                    self.get_local_atp_efficiency(i) for i in range(self.n_sites)
-                ],
+                "atp_efficiencies": [self.get_local_atp_efficiency(i) for i in range(self.n_sites)],
             },
         }
 

@@ -177,16 +177,12 @@ class TestHPAuthoritativeOutput:
 
     def test_output_register_uses_hp_spike(self, lif_neuron):
         """Spike output must be driven by HP."""
-        v = compile_adaptive_precision(
-            lif_neuron, lp_width=16, lp_frac=8, hp_width=32, hp_frac=16
-        )
+        v = compile_adaptive_precision(lif_neuron, lp_width=16, lp_frac=8, hp_width=32, hp_frac=16)
         assert "spike_out <= hp_spike;" in v
 
     def test_output_register_uses_hp_state(self, lif_neuron):
         """State output must be driven by HP."""
-        v = compile_adaptive_precision(
-            lif_neuron, lp_width=16, lp_frac=8, hp_width=32, hp_frac=16
-        )
+        v = compile_adaptive_precision(lif_neuron, lp_width=16, lp_frac=8, hp_width=32, hp_frac=16)
         assert "v_out <= hp_v_out;" in v
         assert "v_out <= lp_v_out" not in v
 
@@ -203,7 +199,7 @@ class TestAllPrecisionPairs:
         "lp_hp",
         PRECISION_PAIRS,
         ids=[
-            f"Q{lp[0]-lp[1]-1}.{lp[1]}_to_Q{hp[0]-hp[1]-1}.{hp[1]}"
+            f"Q{lp[0] - lp[1] - 1}.{lp[1]}_to_Q{hp[0] - hp[1] - 1}.{hp[1]}"
             for lp, hp in PRECISION_PAIRS
         ],
     )
@@ -234,23 +230,17 @@ class TestValidation:
     def test_lp_wider_than_hp_rejected(self, lif_neuron):
         """LP wider than HP must raise ValueError."""
         with pytest.raises(ValueError, match="strictly less"):
-            compile_adaptive_precision(
-                lif_neuron, lp_width=32, lp_frac=16, hp_width=16, hp_frac=8
-            )
+            compile_adaptive_precision(lif_neuron, lp_width=32, lp_frac=16, hp_width=16, hp_frac=8)
 
     def test_equal_widths_rejected(self, lif_neuron):
         """Equal LP and HP widths must raise ValueError."""
         with pytest.raises(ValueError, match="strictly less"):
-            compile_adaptive_precision(
-                lif_neuron, lp_width=16, lp_frac=8, hp_width=16, hp_frac=8
-            )
+            compile_adaptive_precision(lif_neuron, lp_width=16, lp_frac=8, hp_width=16, hp_frac=8)
 
     def test_zero_frac_rejected(self, lif_neuron):
         """Zero fractional bits must raise ValueError."""
         with pytest.raises(ValueError, match="fraction"):
-            compile_adaptive_precision(
-                lif_neuron, lp_width=8, lp_frac=0, hp_width=16, hp_frac=8
-            )
+            compile_adaptive_precision(lif_neuron, lp_width=8, lp_frac=0, hp_width=16, hp_frac=8)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -263,9 +253,7 @@ class TestMultiStateVariable:
 
     def test_izhikevich_both_vars_present(self, izhikevich_neuron):
         """Both v and u must appear in all three modules."""
-        v = compile_adaptive_precision(
-            izhikevich_neuron, module_name="sc_izh_adapt"
-        )
+        v = compile_adaptive_precision(izhikevich_neuron, module_name="sc_izh_adapt")
         assert "v_reg" in v
         assert "u_reg" in v
         assert "lp_v_out" in v

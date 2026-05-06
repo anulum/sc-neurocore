@@ -248,9 +248,7 @@ class HybridFisherPosnerLIFNeuron:
         # Allocate a pool site for this neuron
         pool_id = HybridFisherPosnerLIFNeuron._pool_counter
         if pool_id not in HybridFisherPosnerLIFNeuron._shared_pools:
-            HybridFisherPosnerLIFNeuron._shared_pools[pool_id] = SpinPoolMPS(
-                n_sites=n_sites
-            )
+            HybridFisherPosnerLIFNeuron._shared_pools[pool_id] = SpinPoolMPS(n_sites=n_sites)
         pool = HybridFisherPosnerLIFNeuron._shared_pools[pool_id]
 
         # Find next free site in the pool

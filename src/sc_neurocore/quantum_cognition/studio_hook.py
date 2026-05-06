@@ -96,9 +96,7 @@ class QuantumStudioHook:
         pool = self.spin_pool
         return {
             "entanglement_map": pool.entanglement_map.tolist(),
-            "atp_efficiencies": [
-                pool.get_local_atp_efficiency(i) for i in range(pool.n_sites)
-            ],
+            "atp_efficiencies": [pool.get_local_atp_efficiency(i) for i in range(pool.n_sites)],
             "bridge_backend": self.bridge.backend,
             "bridge_n_qubits": self.bridge.n_qubits,
         }
@@ -121,9 +119,7 @@ class QuantumStudioHook:
             "timestamp": time.time(),
             "n_sites": pool.n_sites,
             "entanglement_map": pool.entanglement_map.tolist(),
-            "atp_efficiencies": [
-                pool.get_local_atp_efficiency(i) for i in range(pool.n_sites)
-            ],
+            "atp_efficiencies": [pool.get_local_atp_efficiency(i) for i in range(pool.n_sites)],
             "avg_entanglement": status["avg_entanglement"],
             "max_entanglement": status["max_entanglement"],
             "min_entanglement": status["min_entanglement"],
@@ -158,10 +154,7 @@ class QuantumStudioHook:
         return json.dumps(event, separators=(",", ":"))
 
     def __repr__(self) -> str:
-        return (
-            f"QuantumStudioHook(spin_pool={self.spin_pool!r}, "
-            f"bridge={self.bridge!r})"
-        )
+        return f"QuantumStudioHook(spin_pool={self.spin_pool!r}, bridge={self.bridge!r})"
 
 
 __all__ = ["QuantumStudioHook", "QuantumCognitionLayerMetadata"]

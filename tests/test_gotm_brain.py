@@ -58,9 +58,7 @@ def tmp_repo(tmp_path: Path) -> Path:
         "- Feature 1: quantum coupling\n"
         "- Feature 2: metabolic feedback\n"
     )
-    (tmp_path / "Cargo.toml").write_text(
-        '[package]\nname = "example"\nversion = "0.1.0"\n'
-    )
+    (tmp_path / "Cargo.toml").write_text('[package]\nname = "example"\nversion = "0.1.0"\n')
     rust_src = tmp_path / "src" / "lib.rs"
     rust_src.write_text(
         "/// Main computation function.\n"
@@ -82,9 +80,12 @@ def tmp_repo(tmp_path: Path) -> Path:
 class TestContentChunk:
     def test_create(self) -> None:
         c = ContentChunk(
-            repo_name="TEST", file_path="a.py",
-            chunk_index=0, text="hello world",
-            content_type="code", weight=1.0,
+            repo_name="TEST",
+            file_path="a.py",
+            chunk_index=0,
+            text="hello world",
+            content_type="code",
+            weight=1.0,
         )
         assert c.repo_name == "TEST"
         assert len(c.sha256) == 16
@@ -92,9 +93,12 @@ class TestContentChunk:
 
     def test_to_dict(self) -> None:
         c = ContentChunk(
-            repo_name="R", file_path="b.md",
-            chunk_index=1, text="test content",
-            content_type="markdown", weight=1.2,
+            repo_name="R",
+            file_path="b.md",
+            chunk_index=1,
+            text="test content",
+            content_type="markdown",
+            weight=1.2,
         )
         d = c.to_dict()
         assert d["repo"] == "R"
@@ -324,10 +328,14 @@ class TestGOTMBrain:
 class TestLearningStep:
     def test_to_dict(self) -> None:
         s = LearningStep(
-            step_index=0, directive="FOCUS",
-            target_coherence=0.8, n_spikes=5,
-            avg_atp=0.95, avg_entanglement=0.125,
-            chunk_summary="test", chunk_sha256="abc123",
+            step_index=0,
+            directive="FOCUS",
+            target_coherence=0.8,
+            n_spikes=5,
+            avg_atp=0.95,
+            avg_entanglement=0.125,
+            chunk_summary="test",
+            chunk_sha256="abc123",
         )
         d = s.to_dict()
         assert d["step"] == 0
@@ -345,6 +353,7 @@ class TestPackageImport:
             embed_chunks,
             index_gotm_repo,
         )
+
         assert ContentChunk is not None
         assert GOTMBrain is not None
         assert embed_chunks is not None

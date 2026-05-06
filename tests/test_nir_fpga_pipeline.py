@@ -64,22 +64,28 @@ def _build_lif_feedforward(n_in=4, n_hidden=8, n_out=2, seed=42):
                 bias=np.zeros(n_hidden, dtype=np.float32),
             ),
             "lif1": nir.LIF(
-                tau=np.full(n_hidden, 20.0), r=np.ones(n_hidden),
-                v_leak=np.zeros(n_hidden), v_threshold=np.ones(n_hidden),
+                tau=np.full(n_hidden, 20.0),
+                r=np.ones(n_hidden),
+                v_leak=np.zeros(n_hidden),
+                v_threshold=np.ones(n_hidden),
             ),
             "aff2": nir.Affine(
                 weight=rng.randn(n_out, n_hidden).astype(np.float32),
                 bias=np.zeros(n_out, dtype=np.float32),
             ),
             "lif2": nir.LIF(
-                tau=np.full(n_out, 20.0), r=np.ones(n_out),
-                v_leak=np.zeros(n_out), v_threshold=np.ones(n_out),
+                tau=np.full(n_out, 20.0),
+                r=np.ones(n_out),
+                v_leak=np.zeros(n_out),
+                v_threshold=np.ones(n_out),
             ),
             "output": nir.Output(output_type={"output": np.array([n_out])}),
         },
         edges=[
-            ("input", "aff1"), ("aff1", "lif1"),
-            ("lif1", "aff2"), ("aff2", "lif2"),
+            ("input", "aff1"),
+            ("aff1", "lif1"),
+            ("lif1", "aff2"),
+            ("aff2", "lif2"),
             ("lif2", "output"),
         ],
     )
@@ -96,9 +102,12 @@ def _build_cubalif_network(n_in=3, n_out=4, seed=99):
                 bias=np.zeros(n_out, dtype=np.float32),
             ),
             "cuba": nir.CubaLIF(
-                tau_syn=np.full(n_out, 5.0), tau_mem=np.full(n_out, 20.0),
-                r=np.ones(n_out), v_leak=np.zeros(n_out),
-                v_threshold=np.ones(n_out), w_in=np.ones(n_out),
+                tau_syn=np.full(n_out, 5.0),
+                tau_mem=np.full(n_out, 20.0),
+                r=np.ones(n_out),
+                v_leak=np.zeros(n_out),
+                v_threshold=np.ones(n_out),
+                w_in=np.ones(n_out),
             ),
             "output": nir.Output(output_type={"output": np.array([n_out])}),
         },
@@ -122,14 +131,18 @@ def _build_mixed_type_network(n_in=4, seed=77):
                 bias=np.zeros(3, dtype=np.float32),
             ),
             "lif_layer": nir.LIF(
-                tau=np.full(3, 15.0), r=np.ones(3),
-                v_leak=np.zeros(3), v_threshold=np.ones(3),
+                tau=np.full(3, 15.0),
+                r=np.ones(3),
+                v_leak=np.zeros(3),
+                v_threshold=np.ones(3),
             ),
             "output": nir.Output(output_type={"output": np.array([3])}),
         },
         edges=[
-            ("input", "aff1"), ("aff1", "if_layer"),
-            ("if_layer", "aff2"), ("aff2", "lif_layer"),
+            ("input", "aff1"),
+            ("aff1", "if_layer"),
+            ("if_layer", "aff2"),
+            ("aff2", "lif_layer"),
             ("lif_layer", "output"),
         ],
     )
@@ -140,8 +153,10 @@ def _full_pipeline(nir_graph, dt=1.0, data_width=16, fraction=8, module_name="sc
     net = from_nir(nir_graph, dt=dt)
     ng = from_scnetwork(net, dt=dt)
     return compile_network_to_fpga(
-        ng, module_name=module_name,
-        data_width=data_width, fraction=fraction,
+        ng,
+        module_name=module_name,
+        data_width=data_width,
+        fraction=fraction,
     )
 
 
@@ -297,7 +312,9 @@ class TestE2EOverflowDetection:
                 ),
                 "lif": nir.LIF(
                     tau=np.full(2, 50000.0),  # WAY out of range for Q8.8
-                    r=np.ones(2), v_leak=np.zeros(2), v_threshold=np.ones(2),
+                    r=np.ones(2),
+                    v_leak=np.zeros(2),
+                    v_threshold=np.ones(2),
                 ),
                 "output": nir.Output(output_type={"output": np.array([2])}),
             },
@@ -320,8 +337,10 @@ class TestE2EOverflowDetection:
                     bias=np.zeros(2, dtype=np.float32),
                 ),
                 "lif": nir.LIF(
-                    tau=np.full(2, 20.0), r=np.ones(2),
-                    v_leak=np.zeros(2), v_threshold=np.ones(2),
+                    tau=np.full(2, 20.0),
+                    r=np.ones(2),
+                    v_leak=np.zeros(2),
+                    v_threshold=np.ones(2),
                 ),
                 "output": nir.Output(output_type={"output": np.array([2])}),
             },
@@ -363,8 +382,10 @@ class TestE2EAutoInterconnect:
                     bias=np.zeros(n_big, dtype=np.float32),
                 ),
                 "lif1": nir.LIF(
-                    tau=np.full(n_big, 20.0), r=np.ones(n_big),
-                    v_leak=np.zeros(n_big), v_threshold=np.ones(n_big),
+                    tau=np.full(n_big, 20.0),
+                    r=np.ones(n_big),
+                    v_leak=np.zeros(n_big),
+                    v_threshold=np.ones(n_big),
                 ),
                 "output": nir.Output(output_type={"output": np.array([n_big])}),
             },
@@ -411,8 +432,9 @@ class TestE2ERoundTrip:
         for pop in qg.populations:
             for pname, pval in pop.params.items():
                 # All values should be integers (Q-encoded)
-                assert np.all(pval == pval.astype(np.int64)), \
+                assert np.all(pval == pval.astype(np.int64)), (
                     f"Non-integer in quantised {pop.name}.{pname}"
+                )
 
         # Re-simulate with fp32 (same model) — should be identical
         net.reset()
@@ -452,11 +474,17 @@ class TestE2ECLI:
 
         # Run CLI
         cmd = [
-            sys.executable, "-m", "sc_neurocore.cli",
-            "compile-nir", nir_path,
-            "-o", out_dir,
-            "--module-name", "cli_test_net",
-            "--dt", "1.0",
+            sys.executable,
+            "-m",
+            "sc_neurocore.cli",
+            "compile-nir",
+            nir_path,
+            "-o",
+            out_dir,
+            "--module-name",
+            "cli_test_net",
+            "--dt",
+            "1.0",
         ]
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
 

@@ -112,9 +112,7 @@ class TestSpinPoolMPS:
         state = pool.get_state()
         pool2 = SpinPoolMPS(n_sites=4)
         pool2.set_state(state)
-        np.testing.assert_array_almost_equal(
-            pool.entanglement_map, pool2.entanglement_map
-        )
+        np.testing.assert_array_almost_equal(pool.entanglement_map, pool2.entanglement_map)
 
     def test_reset(self) -> None:
         pool = SpinPoolMPS(n_sites=4)
@@ -376,6 +374,7 @@ class TestPackageImport:
             FisherPosnerQuantumBridge,
             QuantumStudioHook,
         )
+
         assert SpinPoolMPS is not None
         assert HybridFisherPosnerLIF is not None
         assert FisherPosnerQuantumBridge is not None
@@ -383,4 +382,5 @@ class TestPackageImport:
 
     def test_tier_label(self) -> None:
         from sc_neurocore import quantum_cognition
+
         assert quantum_cognition.__tier__ == "experimental"

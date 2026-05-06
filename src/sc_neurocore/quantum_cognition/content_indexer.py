@@ -51,16 +51,28 @@ _EXTENSION_WEIGHTS: dict[str, float] = {
     ".yml": 0.5,
     ".json": 0.3,
     ".sv": 0.6,  # SystemVerilog
-    ".v": 0.6,   # Verilog
-    ".lean": 0.9, # Lean 4 proofs
+    ".v": 0.6,  # Verilog
+    ".lean": 0.9,  # Lean 4 proofs
 }
 
 # Directories to skip
-_SKIP_DIRS = frozenset({
-    "__pycache__", ".git", ".mypy_cache", ".ruff_cache",
-    "node_modules", ".venv", ".pixi", "build", "dist",
-    ".eggs", "*.egg-info", ".tox", ".pytest_cache",
-})
+_SKIP_DIRS = frozenset(
+    {
+        "__pycache__",
+        ".git",
+        ".mypy_cache",
+        ".ruff_cache",
+        "node_modules",
+        ".venv",
+        ".pixi",
+        "build",
+        "dist",
+        ".eggs",
+        "*.egg-info",
+        ".tox",
+        ".pytest_cache",
+    }
+)
 
 # Maximum file size to index (256 KB)
 _MAX_FILE_BYTES = 256 * 1024
@@ -191,9 +203,7 @@ def _chunk_text(text: str, target_size: int = _CHUNK_TARGET_SIZE) -> list[str]:
     return [c for c in chunks if c.strip()]
 
 
-def index_file(
-    file_path: Path, repo_name: str, repo_root: Path
-) -> list[ContentChunk]:
+def index_file(file_path: Path, repo_name: str, repo_root: Path) -> list[ContentChunk]:
     """Index a single file into content chunks.
 
     Parameters
@@ -230,43 +240,68 @@ def index_file(
     if ext == ".py":
         doc_chunks = _extract_python_docstrings(text)
         for i, doc in enumerate(doc_chunks):
-            chunks.append(ContentChunk(
-                repo_name=repo_name, file_path=rel_path,
-                chunk_index=i, text=doc,
-                content_type="docstring", weight=weight * 1.5,
-            ))
+            chunks.append(
+                ContentChunk(
+                    repo_name=repo_name,
+                    file_path=rel_path,
+                    chunk_index=i,
+                    text=doc,
+                    content_type="docstring",
+                    weight=weight * 1.5,
+                )
+            )
         # Also index the full code in larger chunks
         code_chunks = _chunk_text(text)
         for i, code in enumerate(code_chunks):
-            chunks.append(ContentChunk(
-                repo_name=repo_name, file_path=rel_path,
-                chunk_index=len(doc_chunks) + i, text=code,
-                content_type="code", weight=weight,
-            ))
+            chunks.append(
+                ContentChunk(
+                    repo_name=repo_name,
+                    file_path=rel_path,
+                    chunk_index=len(doc_chunks) + i,
+                    text=code,
+                    content_type="code",
+                    weight=weight,
+                )
+            )
     elif ext == ".md":
         md_chunks = _chunk_text(text)
         for i, md in enumerate(md_chunks):
-            chunks.append(ContentChunk(
-                repo_name=repo_name, file_path=rel_path,
-                chunk_index=i, text=md,
-                content_type="markdown", weight=weight,
-            ))
+            chunks.append(
+                ContentChunk(
+                    repo_name=repo_name,
+                    file_path=rel_path,
+                    chunk_index=i,
+                    text=md,
+                    content_type="markdown",
+                    weight=weight,
+                )
+            )
     elif ext in (".rs",):
         doc_chunks = _extract_rust_doc_comments(text)
         for i, doc in enumerate(doc_chunks):
-            chunks.append(ContentChunk(
-                repo_name=repo_name, file_path=rel_path,
-                chunk_index=i, text=doc,
-                content_type="comment", weight=weight * 1.3,
-            ))
+            chunks.append(
+                ContentChunk(
+                    repo_name=repo_name,
+                    file_path=rel_path,
+                    chunk_index=i,
+                    text=doc,
+                    content_type="comment",
+                    weight=weight * 1.3,
+                )
+            )
     else:
         text_chunks = _chunk_text(text)
         for i, tc in enumerate(text_chunks):
-            chunks.append(ContentChunk(
-                repo_name=repo_name, file_path=rel_path,
-                chunk_index=i, text=tc,
-                content_type="code", weight=weight,
-            ))
+            chunks.append(
+                ContentChunk(
+                    repo_name=repo_name,
+                    file_path=rel_path,
+                    chunk_index=i,
+                    text=tc,
+                    content_type="code",
+                    weight=weight,
+                )
+            )
 
     return chunks
 
@@ -311,7 +346,9 @@ def index_gotm_repo(
     all_chunks.sort(key=lambda c: c.weight, reverse=True)
     logger.info(
         "Indexed %s: %d files → %d chunks",
-        repo_name, file_count, len(all_chunks),
+        repo_name,
+        file_count,
+        len(all_chunks),
     )
     return all_chunks
 
@@ -372,7 +409,13 @@ def embed_chunks(
         if n_dims > 28:
             vectors[i, 28] = min(chunk.weight / 2.0, 1.0)
         if n_dims > 29:
-            type_map = {"docstring": 0.9, "markdown": 0.8, "comment": 0.7, "code": 0.5, "metadata": 0.3}
+            type_map = {
+                "docstring": 0.9,
+                "markdown": 0.8,
+                "comment": 0.7,
+                "code": 0.5,
+                "metadata": 0.3,
+            }
             vectors[i, 29] = type_map.get(chunk.content_type, 0.5)
         if n_dims > 31:
             h = int(chunk.sha256[:8], 16)
@@ -422,28 +465,103 @@ def embed_tfidf(
         return np.zeros((0, n_dims), dtype=np.float64), {}
 
     # Stopwords: common programming and English terms
-    _STOPWORDS = frozenset({
-        "the", "and", "for", "that", "this", "with", "from", "are", "was",
-        "not", "but", "has", "have", "had", "will", "can", "all", "been",
-        "were", "they", "their", "which", "when", "what", "how", "who",
-        "each", "than", "other", "into", "also", "its", "may", "use",
-        # Programming stopwords
-        "self", "none", "true", "false", "return", "import", "def", "class",
-        "elif", "else", "pass", "raise", "yield", "lambda", "try", "except",
-        "finally", "assert", "while", "break", "continue", "global",
-        "str", "int", "float", "bool", "list", "dict", "set", "tuple",
-        "type", "any", "args", "kwargs",
-    })
+    _STOPWORDS = frozenset(
+        {
+            "the",
+            "and",
+            "for",
+            "that",
+            "this",
+            "with",
+            "from",
+            "are",
+            "was",
+            "not",
+            "but",
+            "has",
+            "have",
+            "had",
+            "will",
+            "can",
+            "all",
+            "been",
+            "were",
+            "they",
+            "their",
+            "which",
+            "when",
+            "what",
+            "how",
+            "who",
+            "each",
+            "than",
+            "other",
+            "into",
+            "also",
+            "its",
+            "may",
+            "use",
+            # Programming stopwords
+            "self",
+            "none",
+            "true",
+            "false",
+            "return",
+            "import",
+            "def",
+            "class",
+            "elif",
+            "else",
+            "pass",
+            "raise",
+            "yield",
+            "lambda",
+            "try",
+            "except",
+            "finally",
+            "assert",
+            "while",
+            "break",
+            "continue",
+            "global",
+            "str",
+            "int",
+            "float",
+            "bool",
+            "list",
+            "dict",
+            "set",
+            "tuple",
+            "type",
+            "any",
+            "args",
+            "kwargs",
+        }
+    )
 
     def _stem(word: str) -> str:
         """Minimal suffix-stripping stemmer (Porter-like)."""
         if len(word) <= 4:
             return word
-        for suffix in ("ation", "ment", "ness", "ting", "ing", "ies",
-                       "ous", "ive", "ful", "ble", "ed", "ly", "er",
-                       "es", "al"):
+        for suffix in (
+            "ation",
+            "ment",
+            "ness",
+            "ting",
+            "ing",
+            "ies",
+            "ous",
+            "ive",
+            "ful",
+            "ble",
+            "ed",
+            "ly",
+            "er",
+            "es",
+            "al",
+        ):
             if word.endswith(suffix) and len(word) - len(suffix) >= 3:
-                return word[:-len(suffix)]
+                return word[: -len(suffix)]
         return word
 
     # Tokenise all documents with stopword removal and stemming
@@ -463,7 +581,8 @@ def embed_tfidf(
     # Filter by min_df and max_df
     max_df = int(N * max_df_ratio)
     vocab = {
-        term: i for i, (term, freq) in enumerate(
+        term: i
+        for i, (term, freq) in enumerate(
             sorted(
                 ((t, f) for t, f in df.items() if min_df <= f <= max_df),
                 key=lambda x: -x[1],

@@ -76,9 +76,7 @@ class TestSpinPoolMPS:
 
         pool2 = SpinPoolMPS(n_sites=8)
         pool2.set_state(state)
-        np.testing.assert_array_almost_equal(
-            pool.entanglement_map, pool2.entanglement_map
-        )
+        np.testing.assert_array_almost_equal(pool.entanglement_map, pool2.entanglement_map)
         assert pool2._measurement_count == 2
 
     def test_scpn_payload(self) -> None:

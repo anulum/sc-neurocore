@@ -207,8 +207,7 @@ def install_orca(args: argparse.Namespace) -> int:
         env_file = Path(args.env_file)
         env_file.parent.mkdir(parents=True, exist_ok=True)
         env_file.write_text(
-            f"export ORCA_QC_BIN={qc_bin}\n"
-            f"export PATH={qc_bin.parent}:$PATH\n",
+            f"export ORCA_QC_BIN={qc_bin}\nexport PATH={qc_bin.parent}:$PATH\n",
             encoding="utf-8",
         )
     print(f"Installed ORCA QC executable: {qc_bin}")
@@ -329,7 +328,9 @@ def prepare_orca(args: argparse.Namespace) -> int:
         _input_text(
             charge=1,
             multiplicity=2,
-            functional=f"U{args.functional}" if not args.functional.startswith("U") else args.functional,
+            functional=f"U{args.functional}"
+            if not args.functional.startswith("U")
+            else args.functional,
             basis=args.basis,
             scf=args.scf,
             n_cores=args.n_cores,
@@ -344,7 +345,9 @@ def prepare_orca(args: argparse.Namespace) -> int:
         _input_text(
             charge=1,
             multiplicity=2,
-            functional=f"U{args.functional}" if not args.functional.startswith("U") else args.functional,
+            functional=f"U{args.functional}"
+            if not args.functional.startswith("U")
+            else args.functional,
             basis=args.basis,
             scf=args.scf,
             n_cores=args.n_cores,
@@ -358,7 +361,9 @@ def prepare_orca(args: argparse.Namespace) -> int:
         _input_text(
             charge=1,
             multiplicity=2,
-            functional=f"U{args.functional}" if not args.functional.startswith("U") else args.functional,
+            functional=f"U{args.functional}"
+            if not args.functional.startswith("U")
+            else args.functional,
             basis=args.basis,
             scf=args.scf,
             n_cores=args.n_cores,
@@ -558,8 +563,7 @@ def acquire_ibm(args: argparse.Namespace) -> int:
     )
     if not token:
         raise SystemExit(
-            "IBM token missing: pass --token, set "
-            f"{args.token_env}, or pass --credential-vault"
+            f"IBM token missing: pass --token, set {args.token_env}, or pass --credential-vault"
         )
     instance = (
         args.instance
@@ -576,9 +580,7 @@ def acquire_ibm(args: argparse.Namespace) -> int:
     try:
         from qiskit_ibm_runtime import QiskitRuntimeService
     except ImportError as exc:
-        raise SystemExit(
-            "qiskit-ibm-runtime is not installed in this environment"
-        ) from exc
+        raise SystemExit("qiskit-ibm-runtime is not installed in this environment") from exc
 
     kwargs = {"channel": channel, "token": token}
     if instance:
@@ -677,8 +679,10 @@ def validate_runtime(args: argparse.Namespace) -> int:
             errors.append("extended.nuclear_dipolar_pairs must cover exactly q2-q7 pairs")
 
     for key in ("p1_p2", "p1_p3", "p2_p3"):
-        _check_tensor(f"extended.incorporation_tensors.{key}",
-                      extended.get("incorporation_tensors", {}).get(key))
+        _check_tensor(
+            f"extended.incorporation_tensors.{key}",
+            extended.get("incorporation_tensors", {}).get(key),
+        )
 
     ca_tensors = extended.get("ca43_hf_tensors")
     if not isinstance(ca_tensors, dict) or len(ca_tensors) != 9:

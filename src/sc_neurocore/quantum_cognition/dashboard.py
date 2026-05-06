@@ -47,11 +47,11 @@ _BLOCKS = " ▁▂▃▄▅▆▇█"
 
 # Colour gradient for entanglement heatmap (cold → hot)
 _HEAT_COLOURS = [
-    "\033[38;5;17m",   # deep blue (low)
+    "\033[38;5;17m",  # deep blue (low)
     "\033[38;5;27m",
     "\033[38;5;33m",
-    "\033[38;5;39m",   # cyan
-    "\033[38;5;46m",   # green
+    "\033[38;5;39m",  # cyan
+    "\033[38;5;46m",  # green
     "\033[38;5;226m",  # yellow
     "\033[38;5;208m",  # orange
     "\033[38;5;196m",  # red (high)
@@ -138,8 +138,10 @@ class TerminalDashboard:
             f"Spikes: {state['total_spikes']}  │  "
             f"Backend: {state['bridge_backend']}"
         )
-        lines.append(f"  LLM: {'✓' if state['has_llm'] else '✗'}  │  "
-                      f"Metabolic fails: {state['total_metabolic_failures']}")
+        lines.append(
+            f"  LLM: {'✓' if state['has_llm'] else '✗'}  │  "
+            f"Metabolic fails: {state['total_metabolic_failures']}"
+        )
         lines.append("")
 
         # Entanglement heatmap
@@ -164,7 +166,7 @@ class TerminalDashboard:
 
         # Spike raster (last N steps)
         history = brain.get_history()
-        recent = history[-self.max_raster_steps:]
+        recent = history[-self.max_raster_steps :]
         if recent:
             lines.append(f"  {_BOLD}Spike Raster{_RESET}  (last {len(recent)} steps)")
             raster_line = "  "

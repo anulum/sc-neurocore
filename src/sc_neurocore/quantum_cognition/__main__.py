@@ -43,18 +43,12 @@ from .gotm_brain import GOTMBrain, HAS_LLM
 logger = logging.getLogger("sc_neurocore.quantum_cognition")
 
 # GOTM collection master path (NTFS, never SAS mirror)
-_DEFAULT_GOTM_PATH = (
-    "/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection"
-)
+_DEFAULT_GOTM_PATH = "/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection"
 _DEFAULT_STATE_FILE = "gotm_brain_state.json"
-_DEFAULT_SNN_DIR = os.path.join(
-    _DEFAULT_GOTM_PATH, "04_ARCANE_SAPIENCE", "snn_stimuli"
-)
+_DEFAULT_SNN_DIR = os.path.join(_DEFAULT_GOTM_PATH, "04_ARCANE_SAPIENCE", "snn_stimuli")
 
 
-def _emit_snn_stimulus(
-    snn_dir: str, chunk_summary: str, directive: str, step_index: int
-) -> None:
+def _emit_snn_stimulus(snn_dir: str, chunk_summary: str, directive: str, step_index: int) -> None:
     """Write an SNN stimulus JSON file (GEMINI_RULES.md compliance)."""
     os.makedirs(snn_dir, exist_ok=True)
     ts = int(time.time())
@@ -81,6 +75,7 @@ def _make_llm_endpoint(model: str | None) -> Any:
         if _sys_path not in sys.path:
             sys.path.insert(0, _sys_path)
         from llm import Endpoint  # type: ignore[import-untyped]
+
         return Endpoint(model=model)
     except ImportError:
         logger.warning("agentic-shared not available, --model ignored")
@@ -118,7 +113,7 @@ def cmd_learn(args: argparse.Namespace) -> int:
 
     # Print summary
     state = brain.get_learning_state()
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Learning complete: {len(steps)} chunks processed")
     print(f"  Total steps:   {state['total_steps']}")
     print(f"  Total spikes:  {state['total_spikes']}")
@@ -126,7 +121,7 @@ def cmd_learn(args: argparse.Namespace) -> int:
     print(f"  Avg entangle:  {state['avg_entanglement']:.6f}")
     print(f"  LLM available: {state['has_llm']}")
     print(f"  Backend:       {state['bridge_backend']}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     return 0
 
@@ -164,6 +159,7 @@ def cmd_daemon(args: argparse.Namespace) -> int:
     if args.dashboard:
         try:
             from .dashboard import TerminalDashboard
+
             dashboard = TerminalDashboard()
         except ImportError:
             logger.warning("Dashboard module not available")
@@ -186,8 +182,10 @@ def cmd_daemon(args: argparse.Namespace) -> int:
             # SNN stimuli
             for step in steps:
                 _emit_snn_stimulus(
-                    args.snn_dir, step.chunk_summary,
-                    step.directive, step.step_index,
+                    args.snn_dir,
+                    step.chunk_summary,
+                    step.directive,
+                    step.step_index,
                 )
 
             # Dashboard update
@@ -241,9 +239,9 @@ def cmd_status(args: argparse.Namespace) -> int:
         print(f"Cannot read state file: {exc}")
         return 1
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"GOTM Brain State: {args.state_file}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"  Neurons:         {state.get('n_neurons', '?')}")
     print(f"  Total steps:     {state.get('total_steps', 0)}")
     print(f"  Backend:         {state.get('bridge_backend', '?')}")
@@ -271,11 +269,13 @@ def cmd_status(args: argparse.Namespace) -> int:
     if history:
         print("\n  Last 5 learning steps:")
         for h in history[-5:]:
-            print(f"    [{h['step']:4d}] {h['directive']:10s} "
-                  f"spikes={h['n_spikes']:3d} ATP={h['avg_atp']:.3f} "
-                  f"ent={h['avg_entanglement']:.5f}")
+            print(
+                f"    [{h['step']:4d}] {h['directive']:10s} "
+                f"spikes={h['n_spikes']:3d} ATP={h['avg_atp']:.3f} "
+                f"ent={h['avg_entanglement']:.5f}"
+            )
 
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     return 0
 
 
@@ -286,7 +286,9 @@ def main(argv: list[str] | None = None) -> int:
         description="GOTM Quantum Cognition Brain — learning system CLI",
     )
     parser.add_argument(
-        "-v", "--verbose", action="store_true",
+        "-v",
+        "--verbose",
+        action="store_true",
         help="Enable debug logging",
     )
 
@@ -294,46 +296,55 @@ def main(argv: list[str] | None = None) -> int:
 
     # --- learn ---
     p_learn = sub.add_parser("learn", help="One-shot learning from a repository")
-    p_learn.add_argument("repo_path", nargs="?", default=None,
-                         help=f"Repository path (default: {_DEFAULT_GOTM_PATH})")
-    p_learn.add_argument("--max-chunks", type=int, default=None,
-                         help="Max chunks to process")
-    p_learn.add_argument("--n-neurons", type=int, default=32,
-                         help="Number of neurons (default: 32)")
-    p_learn.add_argument("--seed", type=int, default=42,
-                         help="Random seed")
-    p_learn.add_argument("--model", default=None,
-                         help="LLM model alias (e.g. qwq:32b, gemma4:e4b)")
-    p_learn.add_argument("--state-file", default=_DEFAULT_STATE_FILE,
-                         help="Path to save/restore brain state")
-    p_learn.add_argument("--snn-dir", default=_DEFAULT_SNN_DIR,
-                         help="SNN stimuli output directory")
+    p_learn.add_argument(
+        "repo_path",
+        nargs="?",
+        default=None,
+        help=f"Repository path (default: {_DEFAULT_GOTM_PATH})",
+    )
+    p_learn.add_argument("--max-chunks", type=int, default=None, help="Max chunks to process")
+    p_learn.add_argument(
+        "--n-neurons", type=int, default=32, help="Number of neurons (default: 32)"
+    )
+    p_learn.add_argument("--seed", type=int, default=42, help="Random seed")
+    p_learn.add_argument("--model", default=None, help="LLM model alias (e.g. qwq:32b, gemma4:e4b)")
+    p_learn.add_argument(
+        "--state-file", default=_DEFAULT_STATE_FILE, help="Path to save/restore brain state"
+    )
+    p_learn.add_argument("--snn-dir", default=_DEFAULT_SNN_DIR, help="SNN stimuli output directory")
 
     # --- daemon ---
     p_daemon = sub.add_parser("daemon", help="Continuous learning daemon")
-    p_daemon.add_argument("repo_path", nargs="?", default=None,
-                          help=f"Repository path (default: {_DEFAULT_GOTM_PATH})")
-    p_daemon.add_argument("--max-chunks", type=int, default=50,
-                          help="Max chunks per cycle (default: 50)")
-    p_daemon.add_argument("--n-neurons", type=int, default=32,
-                          help="Number of neurons (default: 32)")
-    p_daemon.add_argument("--seed", type=int, default=42,
-                          help="Random seed")
-    p_daemon.add_argument("--model", default=None,
-                          help="LLM model alias")
-    p_daemon.add_argument("--state-file", default=_DEFAULT_STATE_FILE,
-                          help="Path to save/restore brain state")
-    p_daemon.add_argument("--snn-dir", default=_DEFAULT_SNN_DIR,
-                          help="SNN stimuli output directory")
-    p_daemon.add_argument("--sleep", type=int, default=5,
-                          help="Seconds between cycles (default: 5)")
-    p_daemon.add_argument("--dashboard", action="store_true",
-                          help="Show ANSI terminal dashboard")
+    p_daemon.add_argument(
+        "repo_path",
+        nargs="?",
+        default=None,
+        help=f"Repository path (default: {_DEFAULT_GOTM_PATH})",
+    )
+    p_daemon.add_argument(
+        "--max-chunks", type=int, default=50, help="Max chunks per cycle (default: 50)"
+    )
+    p_daemon.add_argument(
+        "--n-neurons", type=int, default=32, help="Number of neurons (default: 32)"
+    )
+    p_daemon.add_argument("--seed", type=int, default=42, help="Random seed")
+    p_daemon.add_argument("--model", default=None, help="LLM model alias")
+    p_daemon.add_argument(
+        "--state-file", default=_DEFAULT_STATE_FILE, help="Path to save/restore brain state"
+    )
+    p_daemon.add_argument(
+        "--snn-dir", default=_DEFAULT_SNN_DIR, help="SNN stimuli output directory"
+    )
+    p_daemon.add_argument(
+        "--sleep", type=int, default=5, help="Seconds between cycles (default: 5)"
+    )
+    p_daemon.add_argument("--dashboard", action="store_true", help="Show ANSI terminal dashboard")
 
     # --- status ---
     p_status = sub.add_parser("status", help="Print saved learning state")
-    p_status.add_argument("--state-file", default=_DEFAULT_STATE_FILE,
-                          help="Path to brain state file")
+    p_status.add_argument(
+        "--state-file", default=_DEFAULT_STATE_FILE, help="Path to brain state file"
+    )
 
     args = parser.parse_args(argv)
 

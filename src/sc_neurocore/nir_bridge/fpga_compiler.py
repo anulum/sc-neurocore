@@ -65,8 +65,13 @@ _NEURON_TEMPLATES: dict[str, dict[str, Any]] = {
         "equations": ["dv/dt = -(v - v_leak) / tau + I * r / tau"],
         "threshold": "v > v_threshold",
         "reset": "v = v_reset",
-        "default_params": {"tau": 20.0, "r": 1.0, "v_leak": 0.0,
-                           "v_threshold": 1.0, "v_reset": 0.0},
+        "default_params": {
+            "tau": 20.0,
+            "r": 1.0,
+            "v_leak": 0.0,
+            "v_threshold": 1.0,
+            "v_reset": 0.0,
+        },
     },
     "if": {
         "equations": ["dv/dt = I * r"],
@@ -87,9 +92,15 @@ _NEURON_TEMPLATES: dict[str, dict[str, Any]] = {
         ],
         "threshold": "v > v_threshold",
         "reset": "v = v_reset",
-        "default_params": {"tau_syn": 5.0, "tau_mem": 20.0, "r": 1.0,
-                           "v_leak": 0.0, "v_threshold": 1.0, "v_reset": 0.0,
-                           "w_in": 1.0},
+        "default_params": {
+            "tau_syn": 5.0,
+            "tau_mem": 20.0,
+            "r": 1.0,
+            "v_leak": 0.0,
+            "v_threshold": 1.0,
+            "v_reset": 0.0,
+            "w_in": 1.0,
+        },
     },
     "cuba_li": {
         "equations": [
@@ -98,8 +109,7 @@ _NEURON_TEMPLATES: dict[str, dict[str, Any]] = {
         ],
         "threshold": None,
         "reset": None,
-        "default_params": {"tau_syn": 5.0, "tau_mem": 20.0, "r": 1.0,
-                           "v_leak": 0.0, "w_in": 1.0},
+        "default_params": {"tau_syn": 5.0, "tau_mem": 20.0, "r": 1.0, "v_leak": 0.0, "w_in": 1.0},
     },
 }
 
@@ -124,8 +134,7 @@ def _resolved_population_params(neuron_type: str, pop: NeuronSpec) -> dict[str, 
         raise ValueError(f"No ODE template for neuron type: {neuron_type!r}")
 
     params: dict[str, float] = {
-        name: float(value)
-        for name, value in template["default_params"].items()
+        name: float(value) for name, value in template["default_params"].items()
     }
     for pname, pval in pop.params.items():
         if pname not in params:
@@ -343,30 +352,32 @@ def _build_weight_rom(
         lines.append(f"// {src} → {dst}: offset={offset}, count={count}")
     lines.append("")
 
-    lines.extend([
-        "module sc_nir_weight_rom (",
-        f"    input  wire [{addr_w - 1}:0] addr,",
-        f"    output reg  signed [{data_width - 1}:0] data",
-        ");",
-        "",
-        "    always @(*) begin",
-        "        case (addr)",
-    ])
+    lines.extend(
+        [
+            "module sc_nir_weight_rom (",
+            f"    input  wire [{addr_w - 1}:0] addr,",
+            f"    output reg  signed [{data_width - 1}:0] data",
+            ");",
+            "",
+            "    always @(*) begin",
+            "        case (addr)",
+        ]
+    )
 
     mask = (1 << data_width) - 1
     for i, w in enumerate(all_weights):
         val = w & mask
-        lines.append(
-            f"            {addr_w}'d{i}: data = {data_width}'sh{val:0{data_width // 4}x};"
-        )
+        lines.append(f"            {addr_w}'d{i}: data = {data_width}'sh{val:0{data_width // 4}x};")
 
-    lines.extend([
-        f"            default: data = {data_width}'sd0;",
-        "        endcase",
-        "    end",
-        "",
-        "endmodule",
-    ])
+    lines.extend(
+        [
+            f"            default: data = {data_width}'sd0;",
+            "        endcase",
+            "    end",
+            "",
+            "endmodule",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -433,14 +444,10 @@ def _build_top_direct(
     for conn in conns:
         weights = np.asarray(conn.weights)
         if weights.ndim != 2:
-            raise ValueError(
-                f"Connection {conn.src}->{conn.dst} weights must be a 2-D matrix"
-            )
+            raise ValueError(f"Connection {conn.src}->{conn.dst} weights must be a 2-D matrix")
         dst_pop = pop_by_name.get(conn.dst)
         if dst_pop is None:
-            raise ValueError(
-                f"Connection destination {conn.dst!r} is not a neuron population"
-            )
+            raise ValueError(f"Connection destination {conn.dst!r} is not a neuron population")
         if weights.shape[0] != dst_pop.n_neurons:
             raise ValueError(
                 f"Connection {conn.src}->{conn.dst} has {weights.shape[0]} "
@@ -488,10 +495,8 @@ def _build_top_direct(
         "",
         f"    localparam integer DATA_WIDTH = {data_width};",
         f"    localparam integer ACC_WIDTH = {acc_width};",
-        "    localparam signed [DATA_WIDTH - 1:0] Q_MAX = "
-        "{1'b0, {(DATA_WIDTH - 1){1'b1}}};",
-        "    localparam signed [DATA_WIDTH - 1:0] Q_MIN = "
-        "{1'b1, {(DATA_WIDTH - 1){1'b0}}};",
+        "    localparam signed [DATA_WIDTH - 1:0] Q_MAX = {1'b0, {(DATA_WIDTH - 1){1'b1}}};",
+        "    localparam signed [DATA_WIDTH - 1:0] Q_MIN = {1'b1, {(DATA_WIDTH - 1){1'b0}}};",
         "",
         "    function signed [DATA_WIDTH - 1:0] sat_acc;",
         "        input signed [ACC_WIDTH - 1:0] x;",
@@ -524,19 +529,21 @@ def _build_top_direct(
         )
         for neuron_idx in range(pop.n_neurons):
             prefix = neuron_prefix(pop, neuron_idx)
-            lines.extend([
-                f"    wire signed [DATA_WIDTH - 1:0] {prefix}_I;",
-                f"    wire {prefix}_spike;",
-                f"    wire signed [DATA_WIDTH - 1:0] {prefix}_v;",
-                f"    {mod} {prefix}_inst (",
-                "        .clk(clk),",
-                "        .rst_n(rst_n),",
-                f"        .I_t({prefix}_I),",
-                f"        .spike_out({prefix}_spike),",
-                f"        .v_out({prefix}_v)",
-                "    );",
-                "",
-            ])
+            lines.extend(
+                [
+                    f"    wire signed [DATA_WIDTH - 1:0] {prefix}_I;",
+                    f"    wire {prefix}_spike;",
+                    f"    wire signed [DATA_WIDTH - 1:0] {prefix}_v;",
+                    f"    {mod} {prefix}_inst (",
+                    "        .clk(clk),",
+                    "        .rst_n(rst_n),",
+                    f"        .I_t({prefix}_I),",
+                    f"        .spike_out({prefix}_spike),",
+                    f"        .v_out({prefix}_v)",
+                    "    );",
+                    "",
+                ]
+            )
 
     lines.append("    // Weighted fixed-point input accumulation")
     for pop in pops:
@@ -568,12 +575,13 @@ def _build_top_direct(
                     if src_pop is None:
                         mul = f"{term_base}_mul"
                         term = f"{term_base}_term"
-                        term_defs.extend([
-                            f"    wire signed [{product_width - 1}:0] {mul} = "
-                            f"ext_input_{src_idx} * {_signed_hex(weight, data_width)};",
-                            f"    wire signed [ACC_WIDTH - 1:0] {term} = "
-                            f"{mul} >>> {fraction};",
-                        ])
+                        term_defs.extend(
+                            [
+                                f"    wire signed [{product_width - 1}:0] {mul} = "
+                                f"ext_input_{src_idx} * {_signed_hex(weight, data_width)};",
+                                f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};",
+                            ]
+                        )
                         term_names.append(term)
                         continue
 
@@ -581,12 +589,13 @@ def _build_top_direct(
                     if _connection_sources_are_analogue(src_pop):
                         mul = f"{term_base}_mul"
                         term = f"{term_base}_term"
-                        term_defs.extend([
-                            f"    wire signed [{product_width - 1}:0] {mul} = "
-                            f"{src_prefix}_v * {_signed_hex(weight, data_width)};",
-                            f"    wire signed [ACC_WIDTH - 1:0] {term} = "
-                            f"{mul} >>> {fraction};",
-                        ])
+                        term_defs.extend(
+                            [
+                                f"    wire signed [{product_width - 1}:0] {mul} = "
+                                f"{src_prefix}_v * {_signed_hex(weight, data_width)};",
+                                f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};",
+                            ]
+                        )
                         term_names.append(term)
                     else:
                         term_names.append(
@@ -598,8 +607,7 @@ def _build_top_direct(
             acc_expr = " + ".join(term_names) if term_names else f"{acc_width}'sd0"
             lines.append(f"    wire signed [ACC_WIDTH - 1:0] {prefix}_I_acc = {acc_expr};")
             lines.append(
-                f"    assign {prefix}_I = en ? sat_acc({prefix}_I_acc) "
-                f": {data_width}'sd0;"
+                f"    assign {prefix}_I = en ? sat_acc({prefix}_I_acc) : {data_width}'sd0;"
             )
 
     lines.append("")
@@ -714,14 +722,14 @@ def compile_network_to_fpga(
 
     for ntype, rep_pop in type_representative.items():
         if ntype not in _NEURON_TEMPLATES:
-            warnings.append(
-                f"Unsupported neuron type '{ntype}' — skipping module generation"
-            )
+            warnings.append(f"Unsupported neuron type '{ntype}' — skipping module generation")
             continue
         try:
             verilog = _build_neuron_module(
-                ntype, rep_pop,
-                data_width=data_width, fraction=fraction,
+                ntype,
+                rep_pop,
+                data_width=data_width,
+                fraction=fraction,
             )
             neuron_modules[ntype] = verilog
             logger.info("Generated Verilog for neuron type: %s", ntype)
@@ -742,7 +750,10 @@ def compile_network_to_fpga(
             "verified; generated exact direct interconnect instead"
         )
     top_module = _build_top_direct(
-        module_name, qgraph, data_width=data_width, fraction=fraction,
+        module_name,
+        qgraph,
+        data_width=data_width,
+        fraction=fraction,
     )
 
     q_label = f"Q{data_width - fraction}.{fraction}"
@@ -760,10 +771,12 @@ def compile_network_to_fpga(
     )
 
     logger.info(
-        "Network compilation complete: %s, %d neurons, %d synapses, "
-        "%s interconnect, %d warnings",
-        q_label, total_neurons, graph.total_synapses,
-        interconnect, len(warnings),
+        "Network compilation complete: %s, %d neurons, %d synapses, %s interconnect, %d warnings",
+        q_label,
+        total_neurons,
+        graph.total_synapses,
+        interconnect,
+        len(warnings),
     )
 
     return result

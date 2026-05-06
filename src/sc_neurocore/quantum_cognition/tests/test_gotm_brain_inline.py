@@ -26,9 +26,12 @@ class TestGOTMBrainPersistence:
 
         # Simulate some learning
         chunk = ContentChunk(
-            repo_name="test", file_path="test.md",
-            chunk_index=0, text="Test mathematical content",
-            content_type="markdown", weight=1.0,
+            repo_name="test",
+            file_path="test.md",
+            chunk_index=0,
+            text="Test mathematical content",
+            content_type="markdown",
+            weight=1.0,
         )
         vec = np.random.default_rng(42).random(8)
         brain.learn_step(chunk, vec)
@@ -77,8 +80,12 @@ class TestGOTMBrainMisc:
     def test_reset(self) -> None:
         brain = GOTMBrain(n_neurons=4)
         chunk = ContentChunk(
-            repo_name="t", file_path="t.md",
-            chunk_index=0, text="content", content_type="markdown", weight=1.0,
+            repo_name="t",
+            file_path="t.md",
+            chunk_index=0,
+            text="content",
+            content_type="markdown",
+            weight=1.0,
         )
         brain.learn_step(chunk, np.ones(4))
         assert brain._total_steps > 0
@@ -101,10 +108,14 @@ class TestGOTMBrainMisc:
 
     def test_learning_step_to_dict(self) -> None:
         step = LearningStep(
-            step_index=0, directive="FOCUS",
-            target_coherence=0.8, n_spikes=3,
-            avg_atp=0.95, avg_entanglement=0.125,
-            chunk_summary="test", chunk_sha256="abc123",
+            step_index=0,
+            directive="FOCUS",
+            target_coherence=0.8,
+            n_spikes=3,
+            avg_atp=0.95,
+            avg_entanglement=0.125,
+            chunk_summary="test",
+            chunk_sha256="abc123",
         )
         d = step.to_dict()
         assert d["directive"] == "FOCUS"

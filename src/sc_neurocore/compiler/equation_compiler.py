@@ -328,9 +328,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                 or f"mul{self._mul_count - 1}" in self._pipeline_points
             )
             if should_pipe:
-                self._pipeline_regs.append(
-                    f"reg signed [{2 * self.q.data_width - 1}:0] {tmp}_r;"
-                )
+                self._pipeline_regs.append(f"reg signed [{2 * self.q.data_width - 1}:0] {tmp}_r;")
                 self.intermediates.append(
                     f"wire signed [{2 * self.q.data_width - 1}:0] {tmp} = {left} * {right};"
                 )
@@ -631,7 +629,13 @@ def _emit_expr(
     if pipeline_points:
         emitter._pipeline_points = pipeline_points
     result = emitter.visit(tree.body)
-    return result, emitter.intermediates, emitter._mul_count, emitter._trunc_count, emitter._pipeline_regs
+    return (
+        result,
+        emitter.intermediates,
+        emitter._mul_count,
+        emitter._trunc_count,
+        emitter._pipeline_regs,
+    )
 
 
 def compile_to_verilog(
@@ -754,9 +758,7 @@ def compile_to_verilog(
         )
         if dt_should_pipe:
             dt_reg = f"{dt_tmp}_r"
-            all_pipeline_regs.append(
-                f"reg signed [{2 * data_width - 1}:0] {dt_reg};"
-            )
+            all_pipeline_regs.append(f"reg signed [{2 * data_width - 1}:0] {dt_reg};")
             deriv_name = f"d{safe_var}"
             deriv_trunc = f"_dt_trunc_{safe_var}"
             all_intermediates.append(

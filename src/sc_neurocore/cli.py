@@ -137,19 +137,27 @@ def main() -> int:
         ),
     )
     parser.add_argument(
-        "--lp-width", type=int, default=16,
+        "--lp-width",
+        type=int,
+        default=16,
         help="Low-precision data width for adaptive precision (default: 16)",
     )
     parser.add_argument(
-        "--lp-frac", type=int, default=8,
+        "--lp-frac",
+        type=int,
+        default=8,
         help="Low-precision fractional bits for adaptive precision (default: 8)",
     )
     parser.add_argument(
-        "--hp-width", type=int, default=32,
+        "--hp-width",
+        type=int,
+        default=32,
         help="High-precision data width for adaptive precision (default: 32)",
     )
     parser.add_argument(
-        "--hp-frac", type=int, default=16,
+        "--hp-frac",
+        type=int,
+        default=16,
         help="High-precision fractional bits for adaptive precision (default: 16)",
     )
     args = parser.parse_args()
@@ -181,8 +189,8 @@ def main() -> int:
         if not args.model:
             print(
                 "Error: compile-nir requires a model file. Usage:\n"
-                '  sc-neurocore compile-nir model.nir --target artix7 -o build/\n'
-                '  sc-neurocore compile-nir model.nir --data-width 32 --fraction 16'
+                "  sc-neurocore compile-nir model.nir --target artix7 -o build/\n"
+                "  sc-neurocore compile-nir model.nir --data-width 32 --fraction 16"
             )
             return 1
         return _cmd_compile_nir(args)
@@ -336,7 +344,6 @@ def _cmd_compile(args: Any) -> int:
     pipeline_points_list = None
     if args.pipeline:
         if args.pipeline.lower() == "auto":
-
             # Will compute after neuron is built
             pipeline_stages = -1  # sentinel for "auto"
         else:

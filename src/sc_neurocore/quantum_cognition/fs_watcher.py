@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 try:
     from watchdog.observers import Observer  # type: ignore[import-untyped]
     from watchdog.events import FileSystemEventHandler  # type: ignore[import-untyped]
+
     HAS_WATCHDOG = True
 except ImportError:
     HAS_WATCHDOG = False
@@ -110,9 +111,7 @@ class GOTMWatcher:
             return
 
         self._stop_event.clear()
-        self._thread = threading.Thread(
-            target=self._run, name="gotm-watcher", daemon=True
-        )
+        self._thread = threading.Thread(target=self._run, name="gotm-watcher", daemon=True)
         self._thread.start()
         logger.info("GOTMWatcher started")
 
@@ -196,10 +195,7 @@ class GOTMWatcher:
         snapshot: dict[str, float] = {}
         for dirpath, dirnames, filenames in os.walk(self.watch_path):
             # Skip hidden and cache directories
-            dirnames[:] = [
-                d for d in dirnames
-                if not d.startswith(".") and d != "__pycache__"
-            ]
+            dirnames[:] = [d for d in dirnames if not d.startswith(".") and d != "__pycache__"]
             for fname in filenames:
                 fpath = os.path.join(dirpath, fname)
                 try:
@@ -214,10 +210,7 @@ class GOTMWatcher:
 
             # Scan for changes
             for dirpath, dirnames, filenames in os.walk(self.watch_path):
-                dirnames[:] = [
-                    d for d in dirnames
-                    if not d.startswith(".") and d != "__pycache__"
-                ]
+                dirnames[:] = [d for d in dirnames if not d.startswith(".") and d != "__pycache__"]
                 for fname in filenames:
                     fpath = os.path.join(dirpath, fname)
                     try:

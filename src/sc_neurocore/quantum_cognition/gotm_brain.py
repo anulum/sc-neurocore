@@ -54,6 +54,7 @@ logger = logging.getLogger(__name__)
 # Attempt to import the local LLM adapter
 try:
     import sys as _sys
+
     # The agentic-shared llm module is available on the GOTM workstation
     _sys.path.insert(0, "/media/anulum/724AA8E84AA8AA75/agentic-shared")
     from llm import chat as _llm_chat  # type: ignore[import-untyped]
@@ -145,15 +146,15 @@ class GOTMBrain:
         n_qubits = min(n_neurons, max_qubits)
         logger.info(
             "GOTMBrain: %d neurons, %d qubits (RAM limit: %d)",
-            n_neurons, n_qubits, max_qubits,
+            n_neurons,
+            n_qubits,
+            max_qubits,
         )
         self.bridge = FisherPosnerQuantumBridge(
             n_qubits=n_qubits,
             backend=bridge_backend,
         )
-        self.neurons = [
-            HybridFisherPosnerLIF(i, self.pool) for i in range(n_neurons)
-        ]
+        self.neurons = [HybridFisherPosnerLIF(i, self.pool) for i in range(n_neurons)]
         self._rng = np.random.default_rng(seed)
         self._history: list[LearningStep] = []
         self._total_steps = 0
@@ -227,9 +228,7 @@ class GOTMBrain:
         lr = _DIRECTIVE_LR.get(directive, 0.1)
 
         # Optimise quantum bridge phases (if PennyLane available)
-        self.bridge.optimize_phases(
-            target_coherence=target, learning_rate=lr, n_steps=1
-        )
+        self.bridge.optimize_phases(target_coherence=target, learning_rate=lr, n_steps=1)
 
         # Prepare input currents
         if len(input_vector) < self.n_neurons:
@@ -343,9 +342,7 @@ class GOTMBrain:
             "n_neurons": self.n_neurons,
             "total_steps": self._total_steps,
             "total_spikes": sum(n._total_spikes for n in self.neurons),
-            "total_metabolic_failures": sum(
-                n._metabolic_failures for n in self.neurons
-            ),
+            "total_metabolic_failures": sum(n._metabolic_failures for n in self.neurons),
             "avg_atp": float(np.mean([n.atp_level for n in self.neurons])),
             "avg_entanglement": float(np.mean(self.pool.entanglement_map)),
             "pool_state": self.pool.get_state(),
@@ -382,7 +379,12 @@ class GOTMBrain:
         }
         with open(path, "w") as f:
             # Convert numpy types for JSON compatibility
-            json.dump(state, f, indent=2, default=lambda o: float(o) if hasattr(o, "__float__") else str(o))
+            json.dump(
+                state,
+                f,
+                indent=2,
+                default=lambda o: float(o) if hasattr(o, "__float__") else str(o),
+            )
         logger.info("Brain state saved to %s (%d steps)", path, self._total_steps)
 
     def load_state(self, path: str) -> None:
@@ -400,10 +402,7 @@ class GOTMBrain:
 
         # Validate compatibility
         if state["n_neurons"] != self.n_neurons:
-            raise ValueError(
-                f"State has {state['n_neurons']} neurons, "
-                f"brain has {self.n_neurons}"
-            )
+            raise ValueError(f"State has {state['n_neurons']} neurons, brain has {self.n_neurons}")
 
         # Restore pool
         pool_state = state["pool_state"]
@@ -421,9 +420,12 @@ class GOTMBrain:
         self._total_steps = state["total_steps"]
         self._history = [
             LearningStep(
-                step_index=h["step"], directive=h["directive"],
-                target_coherence=h["target_coherence"], n_spikes=h["n_spikes"],
-                avg_atp=h["avg_atp"], avg_entanglement=h["avg_entanglement"],
+                step_index=h["step"],
+                directive=h["directive"],
+                target_coherence=h["target_coherence"],
+                n_spikes=h["n_spikes"],
+                avg_atp=h["avg_atp"],
+                avg_entanglement=h["avg_entanglement"],
                 chunk_summary=h.get("chunk_summary", ""),
                 chunk_sha256=h.get("chunk_sha256", ""),
             )
