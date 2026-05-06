@@ -32,6 +32,7 @@ use sc_neurocore_engine::neurons::{
     AttentionGatedNeuron,
     AvRonCardiacNeuron,
     BKNeuron,
+    BalancedResonateAndFireNeuron,
     BendaHerzNeuron,
     BertramPhantomBurster,
     BoothRinzelNeuron,
@@ -1165,6 +1166,15 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("resonate_and_fire_10k_steps", |b| {
         b.iter(|| {
             let mut n = ResonateAndFireNeuron::new();
+            for _ in 0..10_000 {
+                black_box(n.step(3.0));
+            }
+        })
+    });
+
+    c.bench_function("balanced_resonate_and_fire_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = BalancedResonateAndFireNeuron::new();
             for _ in 0..10_000 {
                 black_box(n.step(3.0));
             }

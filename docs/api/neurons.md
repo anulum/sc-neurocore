@@ -1,7 +1,7 @@
 # Neurons — 173 Models
 
-173 neuron models spanning 83 years of computational neuroscience
-(1943-2026): 113 Python model files under `neurons/models/` plus 173 Rust
+174 Python-facing neuron models spanning 83 years of computational neuroscience
+(1943-2026): 114 Python model files under `neurons/models/` plus 174 Rust
 implementations, 9 AI-optimised models (ArcaneNeuron + 8), 160 wired
 into the NetworkRunner pipeline.
 
@@ -94,6 +94,7 @@ from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 | Morris-Lecar | `morris_lecar.py` | Morris 1981 |
 | Hindmarsh-Rose | `hindmarsh_rose.py` | HR 1984, chaotic bursting |
 | Resonate-and-Fire | `resonate_and_fire.py` | Izhikevich 2001 |
+| Balanced Resonate-and-Fire | `balanced_resonate_and_fire.py` | Higuchi et al. 2024 |
 | Theta | `theta.py` | Ermentrout 1986 |
 | FitzHugh-Rinzel | `fitzhugh_rinzel.py` | FitzHugh 1976, 3D |
 | Terman-Wang | `terman_wang.py` | Terman 1995, LEGION |

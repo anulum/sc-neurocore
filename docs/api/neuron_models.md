@@ -1,6 +1,6 @@
-# Neuron Model Reference — 120 Python / 173 Rust
+# Neuron Model Reference — 121 Python / 174 Rust
 
-SC-NeuroCore provides 120 neuron models in Python (113 files in `models/`)
+SC-NeuroCore provides 121 neuron models in Python (114 files in `models/`)
 and 173 Rust implementations callable via PyO3
 bindings. Both backends expose identical `step()` / `reset()` /
 `get_state()` interfaces.
@@ -27,7 +27,7 @@ spike = hh_rs.step(current=10.0)
 | Rust | `sc_neurocore_engine.sc_neurocore_engine` | Production, benchmarks, batch simulation |
 
 Both backends use identical class names (e.g., `HodgkinHuxleyNeuron`).
-The Rust engine provides 173 neuron models with PyO3 bindings, 160 of
+The Rust engine provides 174 neuron models with PyO3 bindings, 161 of
 which are wired into the NetworkRunner pipeline.
 
 ## Model Catalogue
@@ -55,7 +55,7 @@ which are wired into the NetworkRunner pipeline.
 | `IntegerQIFNeuron` | `IntegerQIFNeuron` | — |
 | `ClosedFormContinuousNeuron` | `ClosedFormContinuousNeuron` | Hasani et al. 2022 |
 
-### Simple Spiking (20 models)
+### Simple Spiking (21 models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
@@ -63,6 +63,7 @@ which are wired into the NetworkRunner pipeline.
 | `MorrisLecarNeuron` | `MorrisLecarNeuron` | Morris & Lecar 1981 |
 | `HindmarshRoseNeuron` | `HindmarshRoseNeuron` | Hindmarsh & Rose 1984 |
 | `ResonateAndFireNeuron` | `ResonateAndFireNeuron` | Izhikevich 2001 |
+| `BalancedResonateAndFireNeuron` | `BalancedResonateAndFireNeuron` | Higuchi et al. 2024 |
 | `FitzHughRinzelNeuron` | `FitzHughRinzelNeuron` | Rinzel 1987 |
 | `McKeanNeuron` | `McKeanNeuron` | McKean 1970 |
 | `TermanWangOscillator` | `TermanWangOscillator` | Terman & Wang 1995 |

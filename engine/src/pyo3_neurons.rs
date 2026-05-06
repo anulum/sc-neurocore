@@ -532,6 +532,7 @@ py_neuron_default!("FitzHughNagumoNeuron", PyFitzHughNagumoNeuron, neurons::Fitz
 py_neuron_default!("MorrisLecarNeuron", PyMorrisLecarNeuron, neurons::MorrisLecarNeuron, state v, state w);
 py_neuron_default!("HindmarshRoseNeuron", PyHindmarshRoseNeuron, neurons::HindmarshRoseNeuron, state x, state y, state z);
 py_neuron_default!("ResonateAndFireNeuron", PyResonateAndFireNeuron, neurons::ResonateAndFireNeuron, state x, state y);
+py_neuron_default!("BalancedResonateAndFireNeuron", PyBalancedResonateAndFireNeuron, neurons::BalancedResonateAndFireNeuron, state x, state y, state q);
 py_neuron_default!("FitzHughRinzelNeuron", PyFitzHughRinzelNeuron, neurons::FitzHughRinzelNeuron, state v, state w, state y);
 py_neuron_default!("McKeanNeuron", PyMcKeanNeuron, neurons::McKeanNeuron, state v, state w);
 py_neuron_default!("TermanWangOscillator", PyTermanWangOscillator, neurons::TermanWangOscillator, state v, state w);
@@ -1992,6 +1993,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyMorrisLecarNeuron>()?;
     m.add_class::<PyHindmarshRoseNeuron>()?;
     m.add_class::<PyResonateAndFireNeuron>()?;
+    m.add_class::<PyBalancedResonateAndFireNeuron>()?;
     m.add_class::<PyFitzHughRinzelNeuron>()?;
     m.add_class::<PyMcKeanNeuron>()?;
     m.add_class::<PyTermanWangOscillator>()?;

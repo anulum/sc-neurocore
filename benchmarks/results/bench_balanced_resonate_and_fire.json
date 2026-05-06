@@ -1,0 +1,165 @@
+{
+  "backends": {
+    "go": "service mirror implemented",
+    "julia": "service mirror implemented",
+    "mojo": "kernel mirror implemented",
+    "python": "executed",
+    "rust": "engine implementation added; PyO3 benchmark executes when rebuilt extension exposes it"
+  },
+  "comparison": [
+    {
+      "b_offset": 1.0,
+      "current": 2.0,
+      "n_steps": 200000,
+      "omega": 10.0,
+      "parity": {
+        "abs_q_delta": 0.0,
+        "abs_x_delta": 0.0,
+        "abs_y_delta": 0.0,
+        "spikes_match": true
+      },
+      "python": {
+        "elapsed_seconds": 0.3117340081371367,
+        "final_state": {
+          "q": 0.0,
+          "x": 0.029363343430484898,
+          "y": 0.1955918095998993
+        },
+        "spikes": 0,
+        "status": "executed",
+        "step_ns": 1558.6700406856835
+      },
+      "rust_pyo3": {
+        "elapsed_seconds": 0.017570513067767024,
+        "final_state": {
+          "q": 0.0,
+          "x": 0.029363343430484898,
+          "y": 0.1955918095998993
+        },
+        "spikes": 0,
+        "status": "executed",
+        "step_ns": 87.85256533883512
+      },
+      "speedup": {
+        "rust_vs_python_step_ns": 17.74188419739492
+      },
+      "workload": "scalar_200k_i2_omega10"
+    },
+    {
+      "b_offset": 1.0,
+      "backend_status": {
+        "go": "executed",
+        "julia": "executed",
+        "mojo": "executed",
+        "python": "executed",
+        "rust_pyo3": "executed"
+      },
+      "current": 2.0,
+      "go_step_ns": 33.66,
+      "julia_step_ns": 20.518635,
+      "mojo_step_ns": 5.815225,
+      "n_steps": 200000,
+      "omega": 10.0,
+      "python_step_ns": 1558.6700406856835,
+      "rust_pyo3_step_ns": 87.85256533883512,
+      "workload": "scalar_200k_i2_omega10"
+    }
+  ],
+  "host": {
+    "numpy": "2.2.6",
+    "platform": "Linux-6.17.0-22-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "module": "sc_neurocore.neurons.models.balanced_resonate_and_fire",
+  "publication_reference": "Higuchi, Kairat, Bohte, and Otte (2024), Balanced Resonate-and-Fire Neurons, ICML/PMLR 235.",
+  "runs": [
+    {
+      "b_offset": 1.0,
+      "backend": "python",
+      "current": 2.0,
+      "elapsed_seconds": 0.3117340081371367,
+      "final_q": 0.0,
+      "final_x": 0.029363343430484898,
+      "final_y": 0.1955918095998993,
+      "n_steps": 200000,
+      "omega": 10.0,
+      "spikes": 0,
+      "status": "executed",
+      "step_ns": 1558.6700406856835
+    },
+    {
+      "b_offset": 2.0,
+      "backend": "python",
+      "current": 20.0,
+      "elapsed_seconds": 0.31794722797349095,
+      "final_q": 2.5e-323,
+      "final_x": 0.19321292555805689,
+      "final_y": 0.96116023830909,
+      "n_steps": 200000,
+      "omega": 20.0,
+      "spikes": 1,
+      "status": "executed",
+      "step_ns": 1589.7361398674548
+    },
+    {
+      "elapsed_seconds": 0.797865369124338,
+      "n_neurons": 256,
+      "n_steps": 2000,
+      "spikes": 94,
+      "update_ns": 1558.3307990709727,
+      "updates": 512000,
+      "updates_per_second": 641712.2735404884
+    },
+    {
+      "b_offset": 1.0,
+      "backend": "rust_pyo3",
+      "current": 2.0,
+      "elapsed_seconds": 0.017570513067767024,
+      "n_steps": 200000,
+      "omega": 10.0,
+      "spikes": 0,
+      "state": {
+        "q": 0.0,
+        "x": 0.029363343430484898,
+        "y": 0.1955918095998993
+      },
+      "status": "executed",
+      "step_ns": 87.85256533883512
+    },
+    {
+      "backend": "go",
+      "command": "go test ./services -run ^$ -bench ^BenchmarkBalancedRFStep$",
+      "status": "executed",
+      "step_ns": 33.66
+    },
+    {
+      "b_offset": 1.0,
+      "backend": "julia",
+      "current": 2.0,
+      "elapsed_seconds": 0.004103727,
+      "final_q": 0.0,
+      "final_x": 0.029363343430484898,
+      "final_y": 0.1955918095998993,
+      "n_steps": 200000.0,
+      "omega": 10.0,
+      "spikes": 0.0,
+      "status": "executed",
+      "step_ns": 20.518635
+    },
+    {
+      "b_offset": 1.0,
+      "backend": "mojo",
+      "current": 2.0,
+      "elapsed_seconds": 0.001163045,
+      "final_q": 0.0,
+      "final_x": 0.029363343430484894,
+      "final_y": 0.1955918095998993,
+      "n_steps": 200000.0,
+      "omega": 10.0,
+      "spikes": 0.0,
+      "status": "executed",
+      "step_ns": 5.815225
+    }
+  ],
+  "schema_version": 1
+}

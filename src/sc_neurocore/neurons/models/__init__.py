@@ -26,6 +26,7 @@ _CLASS_TO_MODULE = {
     "AstrocyteNeuron": "astrocyte_adapter",
     "AttentionGatedNeuron": "ai_optimized",
     "AvRonCardiacNeuron": "av_ron_cardiac",
+    "BalancedResonateAndFireNeuron": "balanced_resonate_and_fire",
     "BendaHerzNeuron": "benda_herz",
     "BertramPhantomBurster": "bertram_phantom",
     "BoothRinzelNeuron": "booth_rinzel",
