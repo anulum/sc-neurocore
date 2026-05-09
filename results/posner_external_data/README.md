@@ -78,21 +78,27 @@ Until all three gates pass, results remain acquisition/preparation artifacts.
 
 ## Active Vertex Run
 
-The active molecular acquisition lane is Vertex r4:
+The active molecular acquisition lane is Vertex r6:
 
 - Job:
-  `projects/144846334489/locations/europe-west4/customJobs/1147877907331284992`
+  `projects/144846334489/locations/europe-west4/customJobs/2516198137865961472`
 - Project: `gotm-sc-neurocore`
 - Region: `europe-west4`
 - Output prefix:
-  `gs://gotm-sc-neurocore/sc-neurocore-posner-orca/20260505T195306Z/output-r4/`
+  `gs://gotm-sc-neurocore/sc-neurocore-posner-orca/20260507T032756Z-r6-resync/`
 - Method:
   `B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 Opt Freq`
 - Charge/multiplicity: neutral closed shell, `0 1`
-- Last checked state on 2026-05-06: `JOB_STATE_RUNNING`
+- Last checked state on 2026-05-09: `JOB_STATE_RUNNING`
+- Start time: `2026-05-09T05:09:37Z`
+- Explicit timeout: `259200s` (deadline `2026-05-12T05:09:37Z`)
+- Latest observed output snapshot: cycle 27 completed, latest final single
+  point energy `-9953.816434214637`; neither `ORCA TERMINATED NORMALLY` nor
+  `THE OPTIMIZATION HAS CONVERGED` had appeared at the latest check.
 
 This run is expected to take hours. The runner uploads outputs at process exit,
-so an empty `output-r4/` prefix while the job is running is not itself an error.
+so an output prefix with only prepared input objects while the job is running is
+not itself an error.
 
 ## Molecular Data
 
@@ -161,37 +167,96 @@ Publication-grade acquisition workflow:
      --extended-json results/posner_external_data/parsed/extended.json
    ```
 
-## Follow-Up Tasks After Vertex r4 Completes
+## Published Comparison Data
+
+Published Posner work contains data that can be used for validation and
+comparison, but it must not be silently substituted for SC-NeuroCore runtime
+parameters. Any imported numeric table needs provenance, units, source DOI,
+extraction notes, and a parser/fixture test before it can become a comparison
+fixture.
+
+Usable comparison sources:
+
+- Swift, Van de Walle, and Fisher 2018 is the primary structural baseline for
+  the `Ca9(PO4)6` workflow. It provides first-principles structure, vibrational
+  spectra, cation-interaction, pair-binding, and nuclear-spin context. Use it
+  to compare the final ORCA geometry, point-group assumptions, P-P distance
+  matrix, P-O/Ca-O statistics, and vibrational signatures. Do not use the
+  current generated coordinate table as final evidence; it remains an initial
+  guess until the r6 ORCA markers pass.
+- Player and Hore 2018 is a spin-dynamics benchmark, not a geometry source.
+  It publishes Posner scalar-coupling assumptions and a 37-minute idealised
+  entanglement-lifetime upper bound. Use it to compare downstream simulator
+  behaviour once molecular tensors and IBM calibration are available.
+- Agarwal, Aiello, Kattnig, and Banerjee 2021 is a required control source
+  because it challenges the high-symmetry Posner assumption and reports
+  predominantly low-symmetry room-temperature structures. Use it to test
+  whether our final neutral geometry remains near the high-symmetry baseline
+  or relaxes toward low-symmetry configurations.
+- Agarwal, Kattnig, Aiello, and Banerjee 2023 extends that challenge into
+  spin dynamics and calcium-phosphate dimer comparisons. Use it as a negative
+  or alternative-structure benchmark, especially for entanglement-decay claims.
+- The 2025 pure/doped Posner coherence paper is directly relevant to coupling
+  constants: it reports ORCA-based J-coupling calculations for pure and
+  lithium-doped Posner models. Its public article states that generated or
+  analysed data is available from the corresponding author, so it is a
+  comparison target but not yet a local fixture. Fetch the tables or author
+  data package before citing any exact numeric constants from it in runtime
+  validation.
+
+Comparison plan after r6 converges:
+
+1. Extract the final neutral geometry and reject it unless ORCA printed both
+   normal-termination and optimisation-convergence markers.
+2. Compute a reproducible geometry report: P-P distance matrix, P-O and Ca-O
+   distance summaries, centre-of-mass alignment, point-group/symmetry residual,
+   and RMSD against the Swift structural baseline where the source data is
+   licensed or manually entered with provenance.
+3. Compare the geometry against both the high-symmetry Swift baseline and the
+   low-symmetry Agarwal ensemble framing. If r6 lands in a low-symmetry basin,
+   document that explicitly and do not force it into a high-symmetry model.
+4. Run the vertical and relaxed cation-radical EPR decks from the accepted
+   neutral geometry and parse full hyperfine tensors.
+5. Compare parsed hyperfine, dipolar, and scalar-coupling values against
+   published tables only after their units, sign conventions, atom ordering,
+   and extraction provenance are recorded.
+6. Keep published numbers in comparison fixtures; promote only our validated
+   ORCA-derived tensors into `hf.json` and `extended.json` runtime data.
+
+Detailed internal tracking is in
+`docs/internal/posner_prior_art_comparison_plan_2026-05-09.md`.
+
+## Follow-Up Tasks After Vertex r6 Completes
 
 1. Check the final Vertex state:
 
    ```bash
    gcloud ai custom-jobs describe \
-     projects/144846334489/locations/europe-west4/customJobs/1147877907331284992 \
+     projects/144846334489/locations/europe-west4/customJobs/2516198137865961472 \
      --project=gotm-sc-neurocore \
      --region=europe-west4 \
      --format='yaml(state,startTime,endTime,error)'
    ```
 
-2. Pull the isolated r4 outputs:
+2. Pull the isolated r6 outputs:
 
    ```bash
    gcloud storage cp --recursive \
-     gs://gotm-sc-neurocore/sc-neurocore-posner-orca/20260505T195306Z/output-r4 \
-     results/posner_external_data/vertex/20260505T195306Z/
+     gs://gotm-sc-neurocore/sc-neurocore-posner-orca/20260507T032756Z-r6-resync/output \
+     results/posner_external_data/vertex/20260507T032756Z-r6-resync/
    ```
 
 3. Inspect the runner exit status and ORCA output:
 
-   - `results/posner_external_data/vertex/20260505T195306Z/output-r4/output/exit_status.txt`
-   - `results/posner_external_data/vertex/20260505T195306Z/output-r4/output/posner_vertex_neutral_opt_20260505T195306Z_r4.out`
+   - `results/posner_external_data/vertex/20260507T032756Z-r6-resync/output/exit_status.txt`
+   - `results/posner_external_data/vertex/20260507T032756Z-r6-resync/output/posner_vertex_neutral_opt_20260507T032756Z_r6.out`
 
 4. Accept the neutral geometry only if both markers are present:
 
    - `ORCA TERMINATED NORMALLY`
    - `THE OPTIMIZATION HAS CONVERGED`
 
-5. If r4 converged, archive the final neutral XYZ and use it as the starting
+5. If r6 converged, archive the final neutral XYZ and use it as the starting
    point for the cation-radical doublet workflow:
 
    - vertical radical EPR at neutral geometry;
@@ -209,7 +274,7 @@ Publication-grade acquisition workflow:
 
 ## Failure Handling
 
-If r4 fails before ORCA starts, inspect the Vertex logs and runner environment.
+If r6 fails before ORCA starts, inspect the Vertex logs and runner environment.
 If ORCA starts but fails before convergence, preserve the full output and decide
 whether the failure is an input formulation issue, an optimizer instability, or
 only an insufficient wall-time issue. Do not promote intermediate `.xyz`,
