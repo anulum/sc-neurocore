@@ -50,4 +50,4 @@ if v >= 30 mV: v ← c, u ← u + d
 ## Test Files
 
 - `tests/test_izhikevich_20_patterns.py` — pytest suite
-- `benchmarks/results/phase1_validation_results.json` — measured data
+- `benchmarks/results/credibility_validation_results.json` — measured data

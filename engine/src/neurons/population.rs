@@ -8,7 +8,7 @@
 
 //! Population-level and mean-field neuron models.
 //!
-//! Phase 3G: Montbrio-Pazo-Roxin, Brunel balanced network,
+//! Population and mean-field model group: Montbrio-Pazo-Roxin, Brunel balanced network,
 //! Tsodyks-Uziel-Markram, El Boustani network.
 //! Added one by one with full 7-point checklist verification.
 

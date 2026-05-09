@@ -28,7 +28,7 @@ SYNTH_DIR="$BUILD_DIR/synth"
 REPORT_DIR="$BUILD_DIR/reports"
 
 # Default target
-TARGET_SV="${1:-$REPO_ROOT/VISION2030/phase6_unification/neuro_safe_monitor/safety_monitor.sv}"
+TARGET_SV="${1:-$REPO_ROOT/sc_neurocore/hdl_gen/safety/safety_monitor.sv}"
 TOP_MODULE="neuro_safe_monitor"
 CLOCK_PERIOD_NS=10  # 100 MHz target
 

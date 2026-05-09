@@ -8,7 +8,7 @@
 
 //! Motor neuron models for spinal and cortical motor circuits.
 //!
-//! Phase 3C: alpha motor, gamma motor, upper motor, Renshaw cell, motor unit.
+//! Motor model group: alpha motor, gamma motor, upper motor, Renshaw cell, motor unit.
 //! Added one by one with full 7-point checklist verification.
 
 use super::biophysical::safe_rate;

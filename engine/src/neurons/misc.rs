@@ -8,7 +8,7 @@
 
 //! Miscellaneous neuron and cell models.
 //!
-//! Phase 3H: graded synapse, gap junction, axon, cardiac,
+//! Miscellaneous model group: graded synapse, gap junction, axon, cardiac,
 //! smooth muscle, and endocrine models.
 //! Added one by one with full 7-point checklist verification.
 

@@ -119,6 +119,24 @@ def test_dense_run_longer_than_source_length():
     assert spikes.shape[1] == 6
 
 
+def test_dense_layer_passes_bipolar_mode_to_current_source():
+    """SCDenseLayer should expose signed XNOR SC inference through its source."""
+    layer = _make_layer(
+        x_inputs=[1.0],
+        x_min=-1.0,
+        x_max=1.0,
+        weight_values=[-1.0],
+        w_min=-1.0,
+        w_max=1.0,
+        y_min=-1.0,
+        y_max=1.0,
+        sc_mode="bipolar",
+    )
+
+    assert layer.source.sc_mode == "bipolar"
+    assert np.isclose(layer.source.full_current_estimate(), -1.0)
+
+
 @pytest.mark.skipif(not _perf_enabled(), reason="Set SC_NEUROCORE_PERF=1 to enable perf checks.")
 def test_dense_layer_perf_small():
     """Benchmark a small run for basic performance sanity."""

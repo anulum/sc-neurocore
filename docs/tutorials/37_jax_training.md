@@ -15,20 +15,52 @@ pip install sc-neurocore[jax]
 
 ## 1. JAX Dense Layer
 
-The `JaxSCDenseLayer` provides a JAX-compatible SC dense layer:
+The `JaxSCDenseLayer` provides a JAX-compatible SC dense layer. Inputs of
+shape `(n_inputs,)` are projected through the layer weights into neuron
+currents; direct current vectors of shape `(n_neurons,)` remain supported for
+low-level experiments.
 
 ```python
-import jax
 import jax.numpy as jnp
 from sc_neurocore.layers.jax_dense_layer import JaxSCDenseLayer
 
-layer = JaxSCDenseLayer(n_inputs=8, n_neurons=4, bitstream_length=256, seed=42)
+weights = jnp.asarray(
+    [
+        [1.0, 0.0, 0.2, 0.0],
+        [0.0, 0.8, 0.0, 0.2],
+        [0.5, 0.5, 0.0, 0.0],
+    ],
+    dtype=jnp.float32,
+)
+layer = JaxSCDenseLayer(
+    n_inputs=4,
+    n_neurons=3,
+    bitstream_length=256,
+    weights=weights,
+    seed=42,
+)
 
-# Step pass — JIT-compiled
-inputs = jnp.array([0.3, 0.5, 0.7, 0.2, 0.8, 0.1, 0.6, 0.4])
-output = layer.step(inputs)
-print(f"Output: {output}")
+# Single input vector: shape (n_inputs,)
+spikes = layer.step(jnp.asarray([0.9, 0.1, 0.5, 0.0], dtype=jnp.float32))
+print(f"Step spikes: {spikes}")
+
+# Time sequence: shape (T, n_inputs)
+spike_train = layer.run(
+    jnp.asarray(
+        [
+            [0.9, 0.1, 0.5, 0.0],
+            [0.0, 0.8, 0.0, 0.2],
+        ],
+        dtype=jnp.float32,
+    )
+)
+print(f"Spike train shape: {spike_train.shape}")
 ```
+
+Constructor and runtime inputs fail closed: dimensions must be positive,
+`weights` must have shape `(n_neurons, n_inputs)`, `seed` must fit the JAX PRNG
+range, neuron parameters must be known finite values, and runtime arrays must
+be floating-point, finite, non-empty, and shape-compatible.
 
 ## 2. Surrogate Gradient Training
 

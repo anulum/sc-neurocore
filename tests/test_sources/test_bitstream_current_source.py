@@ -51,6 +51,20 @@ def test_source_init_mismatch_raises():
         )
 
 
+def test_source_requires_at_least_one_input_in_all_sc_modes():
+    """Bipolar mode must preserve the legacy no-empty-dot-product invariant."""
+    with pytest.raises(ValueError, match="at least one"):
+        _make_source(
+            x_inputs=[],
+            weight_values=[],
+            x_min=-1.0,
+            x_max=1.0,
+            w_min=-1.0,
+            w_max=1.0,
+            sc_mode="bipolar",
+        )
+
+
 def test_source_step_within_bounds():
     """step() output should be in [y_min, y_max]."""
     source = _make_source(y_min=0.01, y_max=0.05)
@@ -102,6 +116,49 @@ def test_source_post_matrix_shape():
     """post_matrix should be (n_inputs, length)."""
     source = _make_source(length=10)
     assert source.post_matrix.shape == (2, 10)
+
+
+def test_source_bipolar_mode_preserves_negative_weight_sign():
+    """Bipolar mode should map a positive input times negative weight below neutral."""
+    source = _make_source(
+        x_inputs=[1.0],
+        x_min=-1.0,
+        x_max=1.0,
+        weight_values=[-1.0],
+        w_min=-1.0,
+        w_max=1.0,
+        length=32,
+        y_min=-1.0,
+        y_max=1.0,
+        sc_mode="bipolar",
+    )
+
+    assert np.isclose(source.full_current_estimate(), -1.0)
+    assert np.isclose(source.step(), -1.0)
+
+
+def test_source_bipolar_mode_maps_zero_product_to_neutral_current():
+    """Bipolar mode should decode a zero-valued product to the current midpoint."""
+    source = _make_source(
+        x_inputs=[0.0],
+        x_min=-1.0,
+        x_max=1.0,
+        weight_values=[1.0],
+        w_min=-1.0,
+        w_max=1.0,
+        length=65536,
+        y_min=-2.0,
+        y_max=2.0,
+        sc_mode="bipolar",
+    )
+
+    assert abs(source.full_current_estimate()) < 0.03
+
+
+def test_source_rejects_unknown_sc_mode():
+    """Unknown SC mode should fail closed instead of silently using AND semantics."""
+    with pytest.raises(ValueError, match="sc_mode"):
+        _make_source(sc_mode="ternary")
 
 
 def test_source_step_returns_float():

@@ -201,6 +201,28 @@ class TestSpikingNet:
             assert entry["weight"].min() >= 0.0
             assert entry["weight"].max() <= 1.0
 
+    def test_to_sc_weights_bipolar_preserves_sign(self):
+        net = SpikingNet(n_input=2, n_hidden=2, n_output=1, n_layers=0)
+        with torch.no_grad():
+            net.linears[0].weight.copy_(torch.tensor([[-2.0, 1.0]]))
+
+        weights = net.to_sc_weights(encoding="bipolar", include_bias=False)
+
+        assert weights[0]["encoding"] == "bipolar"
+        torch.testing.assert_close(weights[0]["weight"], torch.tensor([[-1.0, 0.5]]))
+
+    def test_to_sc_weights_bipolar_scales_bias_with_weight_normalisation(self):
+        net = SpikingNet(n_input=2, n_hidden=2, n_output=1, n_layers=0)
+        with torch.no_grad():
+            net.linears[0].weight.copy_(torch.tensor([[-4.0, 2.0]]))
+            net.linears[0].bias.copy_(torch.tensor([2.0]))
+
+        weights = net.to_sc_weights(encoding="bipolar")
+
+        torch.testing.assert_close(weights[0]["weight"], torch.tensor([[-1.0, 0.5]]))
+        torch.testing.assert_close(weights[0]["bias"], torch.tensor([0.5]))
+        assert weights[0]["weight_scale"].item() == pytest.approx(4.0)
+
     def test_to_sc_weights_binomial_noise_is_deterministic(self):
         net = SpikingNet(n_input=5, n_hidden=8, n_output=3, n_layers=1)
         model = SCWeightNoiseModel(mode="binomial", bitstream_length=32, seed=17)
@@ -350,6 +372,31 @@ class TestConvSpikingNet:
             assert "weight" in entry
             assert entry["weight"].min() >= 0.0
             assert entry["weight"].max() <= 1.0
+
+    def test_to_sc_weights_bipolar_range(self):
+        net = ConvSpikingNet(n_output=3)
+        weights = net.to_sc_weights(encoding="bipolar", include_bias=False)
+        assert len(weights) == 4
+        for entry in weights:
+            assert entry["encoding"] == "bipolar"
+            assert entry["weight"].min() >= -1.0
+            assert entry["weight"].max() <= 1.0
+            assert bool((entry["weight"] < 0.0).any())
+
+    def test_to_sc_weights_bipolar_scales_conv_and_linear_biases(self):
+        net = ConvSpikingNet(n_output=3)
+        with torch.no_grad():
+            net.conv1.weight.fill_(2.0)
+            net.conv1.bias.fill_(1.0)
+            net.fc2.weight.fill_(4.0)
+            net.fc2.bias.fill_(2.0)
+
+        weights = net.to_sc_weights(encoding="bipolar")
+
+        torch.testing.assert_close(weights[0]["bias"], torch.full_like(weights[0]["bias"], 0.5))
+        torch.testing.assert_close(weights[3]["bias"], torch.full_like(weights[3]["bias"], 0.5))
+        assert weights[0]["weight_scale"].item() == pytest.approx(2.0)
+        assert weights[3]["weight_scale"].item() == pytest.approx(4.0)
 
     def test_to_sc_weights_noise_metadata(self):
         net = ConvSpikingNet(n_output=3)

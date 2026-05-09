@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from math import isfinite
 
 
 @dataclass
@@ -26,11 +27,25 @@ class LeakyCompeteFireNeuron:
     dt: float = 1.0
 
     def __post_init__(self) -> None:
+        if self.n_units <= 0:
+            raise ValueError("n_units must be positive")
+        if not isfinite(self.tau) or self.tau <= 0.0:
+            raise ValueError("tau must be finite and positive")
+        if not isfinite(self.v_threshold):
+            raise ValueError("v_threshold must be finite")
+        if not isfinite(self.w_inh) or self.w_inh < 0.0:
+            raise ValueError("w_inh must be finite and non-negative")
+        if not isfinite(self.dt) or self.dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
         self.v = [0.0] * self.n_units
 
     def step(self, currents: list[float] | float) -> list[int]:
         if isinstance(currents, (int, float)):
             currents = [currents] * self.n_units
+        if len(currents) != self.n_units:
+            raise ValueError(f"currents must have length {self.n_units}")
+        if any(not isfinite(current) for current in currents):
+            raise ValueError("currents must contain only finite values")
         spikes = [0] * self.n_units
         for i in range(self.n_units):
             self.v[i] += (-self.v[i] + currents[i]) / self.tau * self.dt

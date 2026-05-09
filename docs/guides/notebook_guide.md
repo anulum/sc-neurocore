@@ -1,6 +1,6 @@
 # Notebook Guide
 
-Complete index of all 29 Jupyter notebooks in `notebooks/`.
+Complete index of all 40 Jupyter notebooks in `notebooks/`.
 
 ## Quickstart
 
@@ -58,6 +58,22 @@ These notebooks demonstrate capabilities unique to SC-NeuroCore — features not
 | 27 | `27_python_to_proven_silicon` | Complete ODE→sim→type check→Verilog→testbench→formal→resource | End-to-end verified hardware pipeline |
 | 28 | `28_domain_bridge` | TensorStream prob↔bitstream↔quantum, Born rule, cos²(θ/2) | Cross-domain probability bridge |
 
+## Evidence Notebooks (29–39)
+
+| # | Notebook | What you learn | Evidence boundary |
+|---|----------|---------------|-------------------|
+| 29 | `29_golden_path_evidence` | Deterministic training -> Q8.8 -> SC simulation -> typed IR -> generated Verilog -> manifest | Local generated evidence only; no physical FPGA, timing, power, QPU, or external-data claim |
+| 30 | `30_shd_vertex_deployable_evidence` | Summarise downloaded SHD Vertex deployable-selector artifacts by seed | Available local artifacts only; no claim that all intended seeds are downloaded or externally accepted |
+| 31 | `31_balanced_resonate_and_fire_evidence` | Verify BRF Algorithm 1 update, deterministic traces, guardrails, and committed benchmark artifact | Scalar model and benchmark evidence only; no full BRF-RSNN training reproduction or hardware timing claim |
+| 32 | `32_posner_ibm_readiness_evidence` | Verify ORCA/IBM readiness gates, runtime JSON refusal paths, and minimum QPU shot budget | Readiness gates only; no ORCA-derived runtime parameter, IBM calibration, or QPU-result claim |
+| 33 | `33_hil_digital_twin_evidence` | Generate HIL protocol, drift controller, digital twin, SEU schedule, and telemetry drift manifest | Local generated protocols and synthetic telemetry only; no physical hardware calibration or certification claim |
+| 34 | `34_industrial_readiness_evidence` | Evaluate industrial application profiles, mandatory evidence categories, and fail-closed readiness arithmetic | Local readiness profile arithmetic only; no certification, target-hardware, or authority-accepted safety-case claim |
+| 35 | `35_bci_closed_loop_evidence` | Process synthetic waveform windows through BCI compression, AER, rate decoding, emulator feedback, telemetry, and HIL manifests | Synthetic waveform and implant-emulator evidence only; no clinical, stimulation, physical implant, or HIL timing claim |
+| 36 | `36_fault_resilience_evidence` | Run seeded fault-injection resilience mode, deterministic replay policy, radiation stress presets, and input guardrails | Local seeded fault-injection evidence only; no radiation qualification, mission acceptance, hardware SEU, or certified fault-tolerance claim |
+| 37 | `37_neuro_symbolic_self_verification_evidence` | Verify neuro-symbolic inference traces, stable digests, tamper detection, symbol-score ordering, trace-only evidence, and vector guardrails | Internal consistency evidence only; no external semantic-truth, clinical, physical, or deployment-validity claim |
+| 38 | `38_formal_snn_verification_standard_evidence` | Exercise the formal SNN verification profile, pass/fail/missing evidence accounting, wrong-kind rejection, optional safety-case evidence, and evidence guardrails | Local evidence-accounting behavior only; no external prover, model-checker, HDL proof, safety certification, or unbounded semantic-correctness claim |
+| 39 | `39_self_hosted_hub_evidence` | Generate and validate offline-first hub manifests, model-zoo index, Compose hardening, opt-in benchmark plan, bundle files, and config guardrails | Local bundle generation only; no Docker start, image build, production exposure, network-isolation proof, or operational-security certification claim |
+
 ## Running Notebooks
 
 ### Local
@@ -84,6 +100,17 @@ Use `quickstart_colab.ipynb` — installs sc-neurocore automatically.
 | 26 | `time` (benchmarking) |
 | 27 | None beyond sc-neurocore |
 | 28 | `matplotlib` |
+| 29 | None beyond sc-neurocore |
+| 30 | None beyond sc-neurocore |
+| 31 | None beyond sc-neurocore |
+| 32 | None beyond sc-neurocore |
+| 33 | None beyond sc-neurocore |
+| 34 | None beyond sc-neurocore |
+| 35 | None beyond sc-neurocore |
+| 36 | None beyond sc-neurocore |
+| 37 | None beyond sc-neurocore |
+| 38 | None beyond sc-neurocore |
+| 39 | `pyyaml` |
 
 ## Test Coverage
 
@@ -103,6 +130,17 @@ Every notebook topic has a corresponding test suite in `tests/`:
 | Identity (24) | `test_identity_lazarus.py` | 20 |
 | Cortical col (25) | `test_cortical_column_dynamics.py` | 13 |
 | Domain bridge (28) | `test_tensor_stream.py`, `test_quantum_hybrid.py` | 24 |
+| Golden path evidence (29) | `test_notebooks/test_golden_path_notebook.py` | 2 |
+| SHD Vertex deployable evidence (30) | `test_notebooks/test_shd_vertex_notebook.py` | 2 |
+| BRF evidence (31) | `test_notebooks/test_brf_notebook.py` | 2 |
+| Posner/IBM readiness evidence (32) | `test_notebooks/test_posner_ibm_readiness_notebook.py` | 2 |
+| HIL/digital twin evidence (33) | `test_notebooks/test_hil_digital_twin_notebook.py` | 2 |
+| Industrial readiness evidence (34) | `test_notebooks/test_industrial_readiness_notebook.py` | 2 |
+| BCI closed-loop evidence (35) | `test_notebooks/test_bci_closed_loop_notebook.py` | 2 |
+| Fault resilience evidence (36) | `test_notebooks/test_fault_resilience_notebook.py` | 2 |
+| Neuro-symbolic self-verification evidence (37) | `test_notebooks/test_neuro_symbolic_self_verification_notebook.py` | 2 |
+| Formal SNN verification standard evidence (38) | `test_notebooks/test_formal_snn_verification_standard_notebook.py` | 2 |
+| Self-hosted hub evidence (39) | `test_notebooks/test_self_hosted_hub_notebook.py` | 2 |
 | SCPN (—) | `test_scpn_integrated.py` | 17 |
 | CORDIV (14) | `test_cordiv_division.py` | 10 |
 | Monitors (—) | `test_network_monitors_stimulus.py` | 19 |

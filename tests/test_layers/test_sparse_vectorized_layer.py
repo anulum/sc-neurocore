@@ -129,3 +129,74 @@ def test_dense_path_unchanged():
     out = layer.forward([0.3, 0.5, 0.7])
     assert out.shape == (2,)
     assert np.all(out >= 0.0)
+
+
+def test_sparse_bipolar_preserves_signed_dot_product():
+    """Sparse bipolar mode should accumulate XNOR-decoded signed products."""
+    layer = VectorizedSCLayer(
+        n_inputs=2,
+        n_neurons=1,
+        length=65536,
+        use_gpu=False,
+        sparse=True,
+        connectivity=1.0,
+        sc_mode="bipolar",
+    )
+
+    import scipy.sparse as sp
+
+    layer.weights_csr = sp.csr_matrix(np.array([[0.5, -0.25]]))
+    layer._pack_sparse_weights()
+    out = layer.forward([1.0, -1.0])
+
+    np.testing.assert_allclose(out, [0.75], atol=0.03)
+
+
+def test_sparse_from_exported_bipolar_weights_matches_dense_export_path():
+    """Sparse export construction should preserve signed packed SC semantics."""
+    exported = {
+        "weight": np.array([[0.5, -0.25], [-0.75, 0.5]], dtype=np.float64),
+        "bias": np.array([0.05, -0.10], dtype=np.float64),
+        "encoding": "bipolar",
+    }
+    dense = VectorizedSCLayer.from_exported_weights(exported, length=65_536, use_gpu=False, seed=31)
+    sparse = VectorizedSCLayer.from_exported_weights(
+        exported, length=65_536, use_gpu=False, sparse=True, seed=31
+    )
+
+    dense_out = dense.forward([1.0, -1.0])
+    sparse_out = sparse.forward([1.0, -1.0])
+
+    np.testing.assert_allclose(sparse_out, dense_out, atol=0.03)
+
+
+def test_sparse_from_exported_zero_weights_still_applies_bias():
+    """Exported sparse inference must not drop bias when all weights are zero."""
+    exported = {
+        "weight": np.zeros((2, 3), dtype=np.float64),
+        "bias": np.array([0.2, -0.3], dtype=np.float64),
+        "encoding": "unipolar",
+    }
+    layer = VectorizedSCLayer.from_exported_weights(exported, sparse=True, use_gpu=False)
+
+    out = layer.forward([0.1, 0.2, 0.3])
+
+    np.testing.assert_array_equal(out, exported["bias"])
+
+
+def test_sparse_exported_seed_does_not_depend_on_constructor_prefill():
+    """Exported sparse packing should start from the requested seed."""
+    exported = {
+        "weight": np.array([[0.5, -0.25]], dtype=np.float64),
+        "bias": np.array([0.125], dtype=np.float64),
+        "encoding": "bipolar",
+    }
+    first = VectorizedSCLayer.from_exported_weights(
+        exported, length=4096, use_gpu=False, sparse=True, seed=47
+    )
+    second = VectorizedSCLayer.from_exported_weights(
+        exported, length=4096, use_gpu=False, sparse=True, seed=47
+    )
+
+    np.testing.assert_array_equal(first._sparse_packed, second._sparse_packed)
+    np.testing.assert_array_equal(first.forward([0.8, -0.4]), second.forward([0.8, -0.4]))

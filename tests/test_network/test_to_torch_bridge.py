@@ -178,6 +178,118 @@ def test_network_to_torch_validates_input_rank_and_dimension():
         raise AssertionError("Expected ValueError for wrong input_dim")
 
 
+def test_network_to_torch_validates_input_time_dtype_and_finiteness():
+    pop = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="src")
+    bridge = Network(pop).to_torch()
+
+    with pytest.raises(ValueError, match="timestep"):
+        bridge(torch.zeros((0, 1, 2), dtype=torch.float32))
+
+    with pytest.raises(ValueError, match="floating-point"):
+        bridge(torch.zeros((1, 1, 2), dtype=torch.int64))
+
+    bad = torch.zeros((1, 1, 2), dtype=torch.float32)
+    bad[0, 0, 0] = torch.nan
+    with pytest.raises(ValueError, match="finite"):
+        bridge(bad)
+
+
+def test_network_to_torch_rejects_empty_populations():
+    pop = Population("LapicqueNeuron", 0, params={"tau": 5.0, "dt": 1.0}, label="empty")
+
+    with pytest.raises(ValueError, match="n > 0"):
+        Network(pop).to_torch()
+
+
+def test_network_to_torch_rejects_projection_endpoint_outside_network():
+    src = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="src")
+    out = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")
+    outsider = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="outsider")
+    projection = Projection(src, outsider, weight=1.0)
+
+    with pytest.raises(ValueError, match="endpoints"):
+        Network(src, out, projection).to_torch()
+
+
+@pytest.mark.parametrize(
+    ("topology", "message"),
+    [
+        (
+            (
+                np.array([0, 1], dtype=np.int64),
+                np.array([0], dtype=np.int64),
+                np.array([1.0], dtype=np.float64),
+            ),
+            "indptr",
+        ),
+        (
+            (
+                np.array([0, 2, 1], dtype=np.int64),
+                np.array([0], dtype=np.int64),
+                np.array([1.0], dtype=np.float64),
+            ),
+            "monotonic",
+        ),
+        (
+            (
+                np.array([0, 1, 1], dtype=np.int64),
+                np.array([2], dtype=np.int64),
+                np.array([1.0], dtype=np.float64),
+            ),
+            "indices",
+        ),
+        (
+            (
+                np.array([0, 1, 1], dtype=np.int64),
+                np.array([0], dtype=np.int64),
+                np.array([np.nan], dtype=np.float64),
+            ),
+            "finite",
+        ),
+        (
+            (
+                np.array([0.0, 1.0, 1.0], dtype=np.float64),
+                np.array([0], dtype=np.int64),
+                np.array([1.0], dtype=np.float64),
+            ),
+            "indptr",
+        ),
+        (
+            (
+                np.array([0, 1, 1], dtype=np.int64),
+                np.array([0.0], dtype=np.float64),
+                np.array([1.0], dtype=np.float64),
+            ),
+            "indices",
+        ),
+        (
+            (
+                np.array([0, 1, 1], dtype=np.int64),
+                np.array([0], dtype=np.int64),
+                np.array([1.0, 2.0], dtype=np.float64),
+            ),
+            "lengths",
+        ),
+    ],
+)
+def test_network_to_torch_rejects_malformed_projection_csr(topology, message):
+    src = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="src")
+    out = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="out")
+    projection = Projection(src, out, weight=0.0, topology=_all_to_all_topology(2, 2, 0.0))
+    projection.indptr, projection.indices, projection.data = topology
+
+    with pytest.raises(ValueError, match=message):
+        Network(src, out, projection).to_torch()
+
+
+def test_network_to_torch_rejects_duplicate_output_trace_labels():
+    left = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")
+    right = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")
+
+    with pytest.raises(ValueError, match="labels"):
+        Network(left, right).to_torch()
+
+
 def test_network_to_torch_return_traces_returns_output_label_trace_stack():
     pop = Population("LapicqueNeuron", 1, params={"tau": 2.0, "dt": 1.0}, label="out")
     net = Network(pop)

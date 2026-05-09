@@ -49,4 +49,4 @@ firing rates approach the dt=0.1ms discretisation limit.
 ## Test Files
 
 - `tests/test_lif_fi_curve.py` — pytest suite (dt=1ms for fast CI)
-- `benchmarks/results/phase1_validation_results.json` — Kaggle measured data (dt=0.1ms)
+- `benchmarks/results/credibility_validation_results.json` — Kaggle measured data (dt=0.1ms)

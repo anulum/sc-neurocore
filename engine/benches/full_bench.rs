@@ -521,7 +521,7 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
-    // -- Interneurons (Phase 3A) --
+    // -- Interneurons --
     c.bench_function("pv_fs_1k_steps", |b| {
         b.iter(|| {
             let mut n = PVFastSpikingNeuron::new();
@@ -576,7 +576,7 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
-    // -- Motor Neurons (Phase 3C) --
+    // -- Motor Neurons --
     c.bench_function("alpha_motor_1k_steps", |b| {
         b.iter(|| {
             let mut n = AlphaMotorNeuron::new();
@@ -622,7 +622,7 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
-    // -- Sensory Neurons (Phase 3B) --
+    // -- Sensory Neurons --
     c.bench_function("ihc_10k_steps", |b| {
         b.iter(|| {
             let mut n = InnerHairCell::new();
@@ -686,7 +686,7 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
-    // -- Cerebellar Neurons (Phase 3D) --
+    // -- Cerebellar Neurons --
     c.bench_function("granule_10k_steps", |b| {
         b.iter(|| {
             let mut n = GranuleCell::new();
@@ -741,7 +741,7 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
-    // -- Ion Channel Variant Neurons (Phase 3E) --
+    // -- Ion Channel Variant Neurons --
     c.bench_function("persistent_na_1k_steps", |b| {
         b.iter(|| {
             let mut n = PersistentNaNeuron::new();
@@ -805,7 +805,7 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
-    // -- Map Neurons (Phase 3F) --
+    // -- Map Neurons --
     c.bench_function("aihara_100k_steps", |b| {
         b.iter(|| {
             let mut n = AiharaMapNeuron::new();
@@ -833,7 +833,7 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
-    // -- Population / Mean-Field (Phase 3G) --
+    // -- Population / Mean-Field --
     c.bench_function("montbrio_100k_steps", |b| {
         b.iter(|| {
             let mut n = MontbrioMeanField::new();
@@ -870,7 +870,7 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
-    // -- Misc Models (Phase 3H) --
+    // -- Misc Models --
     c.bench_function("graded_synapse_100k_steps", |b| {
         b.iter(|| {
             let mut n = GradedSynapseNeuron::new();

@@ -8,7 +8,7 @@ Commercial Licensing: Available
 
 ## Status
 
-Phase 1 scaffolding is in place:
+Rust-engine scaffolding is in place:
 
 - Rust engine crate in `engine/`
 - Python bridge package in `bridge/sc_neurocore_engine/`
@@ -42,7 +42,7 @@ python -m pytest tests/equivalence -v --tb=short
 - Encoder and LIF in v3 currently follow strict blueprint operation ordering
   (step-then-compare encoder, refractory override after threshold evaluation).
 
-## Phase 2 Features (February 2026)
+## Surrogate Gradients and Stochastic Attention (February 2026)
 
 ### Surrogate Gradients
 
@@ -57,12 +57,12 @@ computing layers via surrogate gradients:
 
 - Rate-mode: bit-exact match with v2 (atol < 1e-12)
 - SC-mode: bitstream-based matrix multiply (new v3 capability)
-- Multi-head support (Phase 3)
+- Multi-head support in the integration hardening release
 
 ### Graph Neural Network
 
 - Rate-mode: bit-exact match with v2 (atol < 1e-12)
-- SC-mode: bitstream-based message passing (Phase 3)
+- SC-mode: bitstream-based message passing in the integration hardening release
 
 ### Kuramoto Oscillator Solver
 
@@ -71,7 +71,7 @@ computing layers via surrogate gradients:
 - Pre-allocated scratch arrays, rayon parallelism
 - Box-Muller noise generation with ChaCha8Rng
 
-## Phase 3 Features (February 2026)
+## SSGF Integration and Property Testing (February 2026)
 
 ### SSGF Integration
 
@@ -85,7 +85,7 @@ computing layers via surrogate gradients:
 - proptest coverage for all numeric modules
 - Catches edge cases: overflows, NaN, extreme values
 
-## Phase 4 Features (February 2026)
+## SC Compute Graph IR and SystemVerilog Emitter (February 2026)
 
 ### SC Compute Graph IR
 
@@ -114,7 +114,7 @@ Verify generated HDL against Rust golden model:
 - Encoder probability convergence
 - Synapse AND operation verification
 
-## Phase 5 Features (February 2026)
+## IR Python Bridge and Distributable Wheels (February 2026)
 
 ### IR Python Bridge
 
@@ -152,7 +152,7 @@ Pre-built wheels available for:
 - Windows (x86_64)
 - Python 3.10, 3.11, 3.12, 3.13, 3.14
 
-## Phase 6 Features (February 2026)
+## NumPy Zero-Copy Interop and Batch Operations (February 2026)
 
 ### NumPy Zero-Copy Interop
 
@@ -193,7 +193,7 @@ spikes, voltages = v3.batch_lif_run_varying(
 - Verilator co-simulation runs automatically on every push (Ubuntu)
 - Wheel builds on 3 OS x 4 Python versions
 
-## Phase 7 Features (February 2026)
+## Dense Forward Optimization (February 2026)
 
 ### Dense Forward Optimization
 
@@ -228,7 +228,7 @@ packed = v3.batch_encode_numpy(probs, length=1024, seed=42)
 # packed.dtype == np.uint64
 ```
 
-## Phase 8 Features (February 2026)
+## Single-Call Dense Forward with NumPy (February 2026)
 
 ### Single-Call Dense Forward with NumPy
 
@@ -259,7 +259,7 @@ packed = v3.batch_encode_numpy(probs, length=1024, seed=42)
 Note: `batch_encode_numpy` uses per-index seeding (`seed + index`) for
 parallelism. Use `batch_encode` for sequential single-RNG seeding.
 
-## Phase 9 Features (February 2026)
+## Fast Bernoulli Encoding and Zero-Copy Prepacked Forward (February 2026)
 
 ### Fast Bernoulli Encoding
 
@@ -299,7 +299,7 @@ v3.set_num_threads(4)  # Use 4 threads for all parallel ops
 Must be called before any parallel operation. Pass 0 for automatic
 (number of CPU cores).
 
-## Phase 10 Features (February 2026)
+## SIMD Pack Dispatch and Parallel LIF Batch (February 2026)
 
 ### SIMD Pack Dispatch
 
@@ -338,7 +338,7 @@ input counts and rayon encoding for larger inputs. This avoids thread-pool
 overhead on small workloads without changing numerical outputs (per-index
 RNG seeding remains identical).
 
-## Phase 11 Features (February 2026)
+## SIMD Dense Inner Loop and Bernoulli Encoding (February 2026)
 
 ### SIMD Dense Inner Loop
 
@@ -358,7 +358,7 @@ This path is used across dense forward variants without API changes.
 - AVX2 compare path (`2 x 32-byte compares`)
 - Scalar fallback for partial words and non-SIMD systems
 
-Sampling semantics remain statistically equivalent to Phase 10 fast encoding.
+Sampling semantics remain statistically equivalent to SIMD pack dispatch fast encoding.
 
 ### Flat Packed Weight Storage
 
@@ -379,7 +379,7 @@ This removes nested `Vec<Vec<Vec<u64>>>` indirection and improves cache locality
 
 Outputs and public signatures are unchanged.
 
-## Phase 12 Features (February 2026)
+## Fused Dense Forward and Fast PRNG (February 2026)
 
 ### Fused Dense Forward Kernel
 

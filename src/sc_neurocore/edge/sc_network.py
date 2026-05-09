@@ -15,12 +15,14 @@ execution model: encode inputs → layer-by-layer SC inference → decode output
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any, Literal
 
 from .bitstream import popcount_slice, MASK32
 from .lfsr import Lfsr16
 
 
 MAX_NEURONS_PER_LAYER = 64
+SCMode = Literal["unipolar"]
 
 
 @dataclass
@@ -31,12 +33,39 @@ class SCLayer:
     n_outputs: int
     threshold: int = 512
     weights: list[list[int]] = field(default_factory=list)
+    sc_mode: SCMode = "unipolar"
 
     def __post_init__(self) -> None:
+        self._validate_configuration()
         if not self.weights:
             self.weights = [
                 [0x5555_5555] * ((self.n_inputs + 31) // 32) for _ in range(self.n_outputs)
             ]
+        self._validate_weights()
+
+    def _validate_configuration(self) -> None:
+        if self.sc_mode != "unipolar":
+            raise ValueError("SCLayer currently supports only sc_mode='unipolar'")
+        if self.n_inputs <= 0:
+            raise ValueError("n_inputs must be positive")
+        if self.n_outputs <= 0:
+            raise ValueError("n_outputs must be positive")
+        if self.threshold < 0:
+            raise ValueError("threshold must be non-negative")
+        if self.n_inputs > MAX_NEURONS_PER_LAYER:
+            raise ValueError(f"n_inputs must be <= {MAX_NEURONS_PER_LAYER}")
+        if self.n_outputs > MAX_NEURONS_PER_LAYER:
+            raise ValueError(f"n_outputs must be <= {MAX_NEURONS_PER_LAYER}")
+
+    def _validate_weights(self) -> None:
+        if len(self.weights) != self.n_outputs:
+            raise ValueError("weights must contain one row per output")
+        words_per_input = self.words_per_input
+        for row in self.weights:
+            if len(row) != words_per_input:
+                raise ValueError("each weight row must match words_per_input")
+            if any((word < 0 or word > MASK32) for word in row):
+                raise ValueError("weight words must be unsigned 32-bit values")
 
     @property
     def words_per_input(self) -> int:
@@ -44,6 +73,12 @@ class SCLayer:
 
     def forward(self, input_words: list[int], bit_length: int) -> list[bool]:
         """Run SC inference: AND each weight row with input, threshold popcount."""
+        if bit_length <= 0:
+            raise ValueError("bit_length must be positive")
+        if len(input_words) < self.words_per_input:
+            raise ValueError("input_words length must be at least words_per_input")
+        if any((word < 0 or word > MASK32) for word in input_words):
+            raise ValueError("input words must be unsigned 32-bit values")
         spikes = []
         for row in self.weights:
             acc = 0
@@ -68,12 +103,23 @@ class SCNetwork:
     bit_length: int = 1024
     layers: list[SCLayer] = field(default_factory=list)
     lfsr_seed: int = 0xACE1
+    sc_mode: SCMode = "unipolar"
+
+    def __post_init__(self) -> None:
+        if self.sc_mode != "unipolar":
+            raise ValueError("SCNetwork currently supports only sc_mode='unipolar'")
+        if self.bit_length <= 0:
+            raise ValueError("bit_length must be positive")
 
     def add_layer(self, layer: SCLayer) -> None:
+        if layer.sc_mode != self.sc_mode:
+            raise ValueError("layer sc_mode must match network sc_mode")
         self.layers.append(layer)
 
     def encode_inputs(self, probabilities: list[float]) -> list[list[int]]:
         """Encode float probabilities into per-input packed bitstreams."""
+        if any((p < 0.0 or p > 1.0) for p in probabilities):
+            raise ValueError("input probabilities must be in [0, 1]")
         lfsr = Lfsr16(self.lfsr_seed)
         return [lfsr.encode_float(p, self.bit_length) for p in probabilities]
 
@@ -107,6 +153,8 @@ class SCNetwork:
         """
         if not self.layers:
             return []
+        if len(input_probabilities) != self.layers[0].n_inputs:
+            raise ValueError("input_probabilities length must match first layer n_inputs")
 
         lfsr = Lfsr16(self.lfsr_seed)
         input_streams = self.encode_inputs(input_probabilities)
@@ -130,7 +178,10 @@ class SCNetwork:
 
     @classmethod
     def from_weights(
-        cls, layers_data: list[tuple], bit_length: int = 1024, lfsr_seed: int = 0xACE1
+        cls,
+        layers_data: list[tuple[Any, list[list[int]]]],
+        bit_length: int = 1024,
+        lfsr_seed: int = 0xACE1,
     ) -> SCNetwork:
         """Construct network from deserialized weight data."""
         net = cls(bit_length=bit_length, lfsr_seed=lfsr_seed)

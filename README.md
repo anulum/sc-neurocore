@@ -429,14 +429,14 @@ dependency matrix and research-only boundaries.
 
 ### Rust Engine (39–202× faster)
 
-The optional Rust engine provides SIMD-accelerated simulation, 173 neuron
+The optional Rust engine provides SIMD-accelerated simulation, 174 neuron
 models via PyO3, and fused E-I network simulation. Pre-built wheels are
 available through repository release assets or source builds when present in
 the local environment.
 
 When installed, SC-NeuroCore automatically uses the Rust engine for:
 
-- **NetworkRunner:** 160-model fused Rayon-parallel simulation loop
+- **NetworkRunner:** 161-model fused Rayon-parallel simulation loop
 - **E-I network:** single Rust call for connectivity + Poisson + Euler + spike detection
 - **Batch simulate:** model dispatch loop in compiled Rust
 - **SIMD bitstream ops:** 190 Gbit/s popcount (AVX-512)
@@ -561,7 +561,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>39–202× vs Brian2 · 173 neuron models<br/>160-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>39–202× vs Brian2 · 174 neuron models<br/>161-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 
@@ -739,7 +739,7 @@ bridge install. For source-tree runs against local bridge code, use
 
 | Workflow | Purpose |
 |----------|---------|
-| **ci.yml** | Lint (ruff format + ruff check + bandit) + Test (Python 3.10-3.14, coverage = 100%) + Build |
+| **ci.yml** | Lint (ruff format + ruff check + bandit) + Test (Python 3.10-3.14, coverage gate enforced in CI) + Build |
 | **v3-engine.yml** | Rust engine `cargo test` + `cargo clippy` |
 | **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.14) |
 | **docker.yml** | Build & push Docker image to GHCR on release tags |
@@ -780,7 +780,7 @@ Sample results (CPU, quick mode):
 - [Getting Started](docs/guides/getting-started.md) — Installation & quickstart
 - [Install Profiles](docs/guides/install_profiles.md) — Base install, optional extras, and research-only polyglot boundary
 - [FPGA Deploy Cookbook](docs/tutorials/fpga_deploy_cookbook.md) — Five-minute scaffold, optional synthesis, report-to-optimiser handoff
-- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 51 hands-on guides (SC fundamentals → MNIST → FPGA → quantum → formal verification)
+- [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 88 tracked guides and tutorials (SC fundamentals → MNIST → FPGA → quantum → formal verification)
 - [API Reference](docs/api/API_REFERENCE.md) — Python package API
 - [Rust Engine API](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/) — Rust engine docs
 - [Hardware Guide](docs/hardware/HARDWARE_GUIDE.md) — FPGA deployment workflow

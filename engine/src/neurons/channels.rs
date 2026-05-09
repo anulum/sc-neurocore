@@ -8,7 +8,7 @@
 
 //! Neuron models defined by a single additional ion channel beyond base HH.
 //!
-//! Phase 3E: persistent Na+, Ih, T-type Ca2+, A-type K+, BK, SK, NMDA.
+//! Ion-channel variant model group: persistent Na+, Ih, T-type Ca2+, A-type K+, BK, SK, NMDA.
 //! Each model demonstrates one biophysical mechanism on a WB Na+/K+ base.
 //! Added one by one with full 7-point checklist verification.
 

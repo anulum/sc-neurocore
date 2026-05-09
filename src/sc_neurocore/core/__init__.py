@@ -10,11 +10,25 @@
 
 __tier__ = "research"
 
+from .bipolar import (
+    bipolar_decode,
+    bipolar_encode,
+    bipolar_mac,
+    bipolar_multiply,
+    bipolar_sc_layer,
+    float_to_bipolar_weights,
+)
 from .mdl_parser import MindDescriptionLanguage, MDLSpecification
 from .orchestrator import CognitiveOrchestrator
 from .tensor_stream import TensorStream
 
 __all__ = [
+    "bipolar_decode",
+    "bipolar_encode",
+    "bipolar_mac",
+    "bipolar_multiply",
+    "bipolar_sc_layer",
+    "float_to_bipolar_weights",
     "MindDescriptionLanguage",
     "MDLSpecification",
     "CognitiveOrchestrator",

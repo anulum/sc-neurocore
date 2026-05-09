@@ -149,9 +149,6 @@ vivado*.backup.*
 # Internal local automation
 docs/internal/gemini/
 
-# VISION 2030 Development
-VISION2030/
-
 # Agent metadata (per `feedback_agent_metadata_gitignore`)
 .agent_metadata.json
 
@@ -183,6 +180,11 @@ results/posner_external_data/orca/*.xyz
 results/posner_external_data/orca/orca_env.sh
 results/posner_external_data/vertex/**/input_from_local_cycle_snapshot.xyz
 results/posner_external_data/vertex/**/output*/
+
+# Local downloads from Vertex/GCS jobs. Keep curated summaries or fixtures in
+# tracked docs/results paths; raw job payloads, checkpoints, and archives do not
+# belong on main.
+results/vertex/
 
 # Stale lowercase-name symlink to this repo root (deleted on cleanup)
 sc-neurocore

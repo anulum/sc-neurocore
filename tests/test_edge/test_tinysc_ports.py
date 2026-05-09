@@ -198,6 +198,56 @@ class TestIzhikevichNeuron:
 
 
 class TestSCNetwork:
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"n_inputs": 0, "n_outputs": 1},
+            {"n_inputs": 1, "n_outputs": 0},
+            {"n_inputs": 1, "n_outputs": 1, "threshold": -1},
+            {"n_inputs": 65, "n_outputs": 1},
+            {"n_inputs": 1, "n_outputs": 65},
+            {"n_inputs": 1, "n_outputs": 1, "sc_mode": "bipolar"},
+        ],
+    )
+    def test_layer_invalid_configuration(self, kwargs):
+        with pytest.raises(ValueError):
+            SCLayer(**kwargs)
+
+    def test_layer_invalid_weight_shape(self):
+        with pytest.raises(ValueError, match="one row"):
+            SCLayer(n_inputs=1, n_outputs=2, weights=[[0xFFFF_FFFF]])
+
+    def test_layer_rejects_invalid_weight_word(self):
+        with pytest.raises(ValueError, match="unsigned"):
+            SCLayer(n_inputs=1, n_outputs=1, weights=[[MASK32 + 1]])
+
+    def test_layer_rejects_invalid_input_words(self):
+        layer = SCLayer(n_inputs=4, n_outputs=1)
+        with pytest.raises(ValueError, match="input_words"):
+            layer.forward([], 32)
+        with pytest.raises(ValueError, match="unsigned"):
+            layer.forward([-1], 32)
+        with pytest.raises(ValueError, match="bit_length"):
+            layer.forward([0], 0)
+
+    def test_network_invalid_configuration(self):
+        with pytest.raises(ValueError, match="bit_length"):
+            SCNetwork(bit_length=0)
+        with pytest.raises(ValueError, match="unipolar"):
+            SCNetwork(sc_mode="bipolar")
+
+    def test_network_rejects_invalid_probabilities(self):
+        net = SCNetwork(bit_length=256)
+        net.add_layer(SCLayer(n_inputs=2, n_outputs=1))
+        with pytest.raises(ValueError, match="probabilities"):
+            net.run([0.5, 1.1])
+
+    def test_network_rejects_input_length_mismatch(self):
+        net = SCNetwork(bit_length=256)
+        net.add_layer(SCLayer(n_inputs=2, n_outputs=1))
+        with pytest.raises(ValueError, match="n_inputs"):
+            net.run([0.5])
+
     def test_empty_network(self):
         net = SCNetwork(bit_length=256)
         assert net.run([]) == []

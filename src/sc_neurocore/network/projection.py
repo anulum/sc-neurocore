@@ -20,6 +20,8 @@ Supports three delay modes:
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 
 from . import topology as _topo
@@ -77,6 +79,52 @@ def _csr_delayed_matvec(
                 continue
             out[indices[k]] += data[k] * spike_val
     return out
+
+
+def validate_csr_topology(
+    indptr: np.ndarray,
+    indices: np.ndarray,
+    data: np.ndarray,
+    n_source: int,
+    n_target: int,
+    *,
+    context: str = "Projection",
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Validate and normalize CSR connectivity arrays."""
+    indptr = np.asarray(indptr)
+    indices = np.asarray(indices)
+    data = np.asarray(data)
+
+    if indptr.ndim != 1:
+        raise ValueError(f"{context} indptr must be 1-D")
+    if indices.ndim != 1:
+        raise ValueError(f"{context} indices must be 1-D")
+    if data.ndim != 1:
+        raise ValueError(f"{context} data must be 1-D")
+    if not np.issubdtype(indptr.dtype, np.integer):
+        raise ValueError(f"{context} indptr must contain integers")
+    if not np.issubdtype(indices.dtype, np.integer):
+        raise ValueError(f"{context} indices must contain integers")
+    if indptr.shape[0] != n_source + 1:
+        raise ValueError(f"{context} indptr length is invalid")
+    if indices.shape[0] != data.shape[0]:
+        raise ValueError(f"{context} indices/data lengths differ")
+    if indptr[0] != 0:
+        raise ValueError(f"{context} indptr must start at 0")
+    if not np.all(indptr[1:] >= indptr[:-1]):
+        raise ValueError(f"{context} indptr must be monotonic")
+    if int(indptr[-1]) != indices.shape[0]:
+        raise ValueError(f"{context} indptr terminal length is invalid")
+    if indices.size and (np.any(indices < 0) or np.any(indices >= n_target)):
+        raise ValueError(f"{context} indices are out of bounds")
+    if not np.all(np.isfinite(data)):
+        raise ValueError(f"{context} data must contain only finite values")
+
+    return (
+        indptr.astype(np.int64, copy=False),
+        indices.astype(np.int64, copy=False),
+        data.astype(np.float64, copy=False),
+    )
 
 
 class Projection:
@@ -192,7 +240,8 @@ class Projection:
             return 0
         if self._delay_mode == "uniform":
             return self._delay_steps_uniform
-        assert self._per_syn_delays is not None
+        if self._per_syn_delays is None:
+            raise RuntimeError("Projection per-synapse delay state is not initialized")
         return int(self._per_syn_delays.max())
 
     def _build_connectivity(
@@ -203,7 +252,13 @@ class Projection:
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Build CSR arrays from topology name or pre-built tuple."""
         if isinstance(topology, tuple) and len(topology) == 3:
-            return topology
+            return validate_csr_topology(
+                topology[0],
+                topology[1],
+                topology[2],
+                self.source.n,
+                self.target.n,
+            )
         if topology == "random":
             return _topo.random_connectivity(
                 self.source.n, self.target.n, probability, self.weight, seed
@@ -232,17 +287,20 @@ class Projection:
             )
 
         if self._delay_mode == "uniform":
-            assert self._delay_buf is not None
+            delay_buf = self._delay_buf
+            if delay_buf is None:
+                raise RuntimeError("Projection uniform delay buffer is not initialized")
             current = _csr_matvec(
                 self.indptr, self.indices, self.data, source_spikes, self.target.n, wt
             )
-            output = self._delay_buf[self._delay_idx].copy()
-            self._delay_buf[self._delay_idx] = current
+            output = cast(np.ndarray, delay_buf[self._delay_idx].copy())
+            delay_buf[self._delay_idx] = current
             self._delay_idx = (self._delay_idx + 1) % self._delay_steps_uniform
             return output
 
         # Per-synapse delay
-        assert self._per_syn_delays is not None
+        if self._per_syn_delays is None:
+            raise RuntimeError("Projection per-synapse delay state is not initialized")
         self._spike_history[self._hist_idx] = source_spikes.astype(np.float64)
         current = _csr_delayed_matvec(
             self.indptr,

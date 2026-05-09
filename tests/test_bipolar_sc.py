@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from sc_neurocore.core.bipolar import (
     bipolar_decode,
@@ -39,11 +40,19 @@ class TestBipolarEncodeDecode:
             decoded = bipolar_decode(bits)
             assert abs(decoded - v) < 0.02, f"v={v}, decoded={decoded}"
 
-    def test_clamps_out_of_range(self):
-        bits = bipolar_encode(2.0, 100, rng=np.random.default_rng(42))
-        assert bits.mean() > 0.9
-        bits = bipolar_encode(-2.0, 100, rng=np.random.default_rng(42))
-        assert bits.mean() < 0.1
+    def test_rejects_out_of_range_encode_values(self):
+        with pytest.raises(ValueError, match=r"\[-1, 1\]"):
+            bipolar_encode(2.0, 100, rng=np.random.default_rng(42))
+        with pytest.raises(ValueError, match=r"\[-1, 1\]"):
+            bipolar_encode(-2.0, 100, rng=np.random.default_rng(42))
+
+    def test_rejects_nonpositive_bitstream_length(self):
+        with pytest.raises(ValueError, match="positive"):
+            bipolar_encode(0.0, 0, rng=np.random.default_rng(42))
+
+    def test_decode_rejects_empty_bitstream(self):
+        with pytest.raises(ValueError, match="non-empty"):
+            bipolar_decode(np.array([], dtype=np.uint8))
 
 
 class TestBipolarMultiply:
@@ -57,6 +66,10 @@ class TestBipolarMultiply:
         b = 1 - a
         result = bipolar_multiply(a, b)
         assert (result == 0).all()
+
+    def test_xnor_rejects_shape_mismatch(self):
+        with pytest.raises(ValueError, match="same shape"):
+            bipolar_multiply(np.array([1, 0], dtype=np.uint8), np.array([1], dtype=np.uint8))
 
     def test_statistical_multiplication(self):
         rng = np.random.default_rng(42)
@@ -103,6 +116,16 @@ class TestBipolarMAC:
         expected = 0.4
         assert abs(r2[0] - expected) < abs(r1[0] - expected) + 0.01
 
+    def test_rejects_shape_mismatch(self):
+        with pytest.raises(ValueError, match="shape"):
+            bipolar_mac(np.array([0.5, -0.2]), np.array([[0.8]]), L=1000, seed=42)
+
+    def test_rejects_out_of_range_inputs_and_weights(self):
+        with pytest.raises(ValueError, match=r"\[-1, 1\]"):
+            bipolar_mac(np.array([1.2]), np.array([[0.8]]), L=1000, seed=42)
+        with pytest.raises(ValueError, match=r"\[-1, 1\]"):
+            bipolar_mac(np.array([0.5]), np.array([[1.2]]), L=1000, seed=42)
+
 
 class TestBipolarSCLayer:
     def test_output_shape(self):
@@ -123,6 +146,16 @@ class TestBipolarSCLayer:
         weights = np.random.default_rng(43).uniform(-1, 1, (5, 10))
         out = bipolar_sc_layer(inputs, weights, bias=None, L=1000)
         assert (out >= -1.0).all() and (out <= 1.0).all()
+
+    def test_rejects_unknown_activation(self):
+        with pytest.raises(ValueError, match="activation"):
+            bipolar_sc_layer(
+                np.array([0.5]),
+                np.array([[0.5]]),
+                bias=None,
+                L=1000,
+                activation="sigmoid",
+            )
 
 
 class TestFloatToBipolarWeights:

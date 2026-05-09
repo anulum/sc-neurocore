@@ -65,6 +65,7 @@ class SCDenseLayer:
     dt_ms: float = LIF_DT
     neuron_params: Optional[Dict[str, Any]] = None
     base_seed: Optional[int] = None
+    sc_mode: str = "unipolar"
 
     def __post_init__(self) -> None:
         if len(self.x_inputs) != len(self.weight_values):
@@ -82,6 +83,7 @@ class SCDenseLayer:
             y_min=self.y_min,
             y_max=self.y_max,
             seed=self.base_seed,
+            sc_mode=self.sc_mode,
         )
 
         # Build neurons

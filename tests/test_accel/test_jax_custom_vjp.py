@@ -66,6 +66,50 @@ def test_jax_surrogate_loss_rejects_unknown_path():
         jax_surrogate_loss(weights, x, targets, surrogate_path="unknown")
 
 
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"n_steps": 0}, "n_steps"),
+        ({"beta": 0.0}, "beta"),
+        ({"threshold": np.inf}, "threshold"),
+    ],
+)
+def test_jax_surrogate_loss_rejects_invalid_training_parameters(kwargs, match):
+    x = jnp.asarray([[1.2, 0.0]], dtype=jnp.float32)
+    targets = jnp.asarray([[1.0, 0.0]], dtype=jnp.float32)
+    weights = [jnp.asarray([[0.5, 0.1], [0.0, 0.4]], dtype=jnp.float32)]
+
+    with pytest.raises(ValueError, match=match):
+        jax_surrogate_loss(weights, x, targets, **kwargs)
+
+
+def test_jax_surrogate_loss_rejects_shape_mismatches_before_jax_matmul():
+    x = jnp.asarray([[1.0, 0.2, 0.1]], dtype=jnp.float32)
+    targets = jnp.asarray([[1.0, 0.0]], dtype=jnp.float32)
+    weights = [jnp.asarray([[0.5, -0.2], [0.1, 0.4]], dtype=jnp.float32)]
+
+    with pytest.raises(ValueError, match="input dimension"):
+        jax_surrogate_loss(weights, x, targets)
+
+
+def test_jax_surrogate_loss_rejects_nonfinite_concrete_inputs():
+    x = jnp.asarray([[1.0, np.nan]], dtype=jnp.float32)
+    targets = jnp.asarray([[1.0, 0.0]], dtype=jnp.float32)
+    weights = [jnp.asarray([[0.5, -0.2], [0.1, 0.4]], dtype=jnp.float32)]
+
+    with pytest.raises(ValueError, match="finite"):
+        jax_surrogate_loss(weights, x, targets)
+
+
+def test_jax_surrogate_gradient_step_rejects_invalid_learning_rate():
+    x = jnp.asarray([[1.0, 0.2]], dtype=jnp.float32)
+    targets = jnp.asarray([[1.0, 0.0]], dtype=jnp.float32)
+    weights = [jnp.asarray([[0.5, -0.2], [0.1, 0.4]], dtype=jnp.float32)]
+
+    with pytest.raises(ValueError, match="lr"):
+        jax_surrogate_gradient_step(weights, x, targets, lr=np.nan)
+
+
 def test_custom_vjp_path_supports_jit_vmap_grad():
     x = jnp.asarray([[1.1, 0.3], [0.8, 0.6]], dtype=jnp.float32)
     targets = jnp.asarray([[1.0, 0.0], [0.0, 1.0]], dtype=jnp.float32)
