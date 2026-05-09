@@ -29,8 +29,14 @@ def test_hil_digital_twin_notebook_declares_boundary_and_has_no_saved_outputs() 
     assert "synthetic telemetry only" in text
     assert "does not claim that a physical FPGA" in text
     assert "sc-neurocore.hil-digital-twin-evidence.v1" in text
-    assert all(cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code")
-    assert all(cell.get("execution_count") is None for cell in notebook["cells"] if cell["cell_type"] == "code")
+    assert all(
+        cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code"
+    )
+    assert all(
+        cell.get("execution_count") is None
+        for cell in notebook["cells"]
+        if cell["cell_type"] == "code"
+    )
 
 
 def test_hil_digital_twin_notebook_code_executes() -> None:
@@ -48,6 +54,9 @@ def test_hil_digital_twin_notebook_code_executes() -> None:
     assert manifest["hil_summary"]["num_parameters"] == 3
     assert manifest["drift_summary"]["has_verilog_module"] is True
     assert manifest["digital_twin_summary"]["cycle"] == 2
-    assert manifest["seu_summary"]["higher_orbit_interval_ms"] < manifest["seu_summary"]["leo_interval_ms"]
+    assert (
+        manifest["seu_summary"]["higher_orbit_interval_ms"]
+        < manifest["seu_summary"]["leo_interval_ms"]
+    )
     assert manifest["telemetry_summary"]["healthy"] is True
     assert manifest["telemetry_summary"]["drifted_healthy"] is False

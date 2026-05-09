@@ -98,7 +98,9 @@ if HAS_JAX:
             raise ValueError(f"{name} must be a floating-point array")
         return arr
 
-    def _validate_lif_array(name: str, value: Any, expected_shape: tuple[int, ...] | None = None) -> jax.Array:
+    def _validate_lif_array(
+        name: str, value: Any, expected_shape: tuple[int, ...] | None = None
+    ) -> jax.Array:
         arr = _validate_floating_array(name, value)
         if arr.size == 0 or 0 in arr.shape:
             raise ValueError(f"{name} must be a non-empty floating-point array")

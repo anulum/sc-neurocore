@@ -29,8 +29,14 @@ def test_shd_vertex_notebook_declares_partial_artifact_boundary() -> None:
     assert "reports only artifact directories present" in text
     assert "does not claim that every intended Vertex seed has been downloaded" in text
     assert "sc-neurocore.shd-vertex-notebook-evidence.v1" in text
-    assert all(cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code")
-    assert all(cell.get("execution_count") is None for cell in notebook["cells"] if cell["cell_type"] == "code")
+    assert all(
+        cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code"
+    )
+    assert all(
+        cell.get("execution_count") is None
+        for cell in notebook["cells"]
+        if cell["cell_type"] == "code"
+    )
 
 
 def test_shd_vertex_notebook_code_executes_against_available_artifacts() -> None:

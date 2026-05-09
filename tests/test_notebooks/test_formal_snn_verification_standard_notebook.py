@@ -28,8 +28,14 @@ def test_formal_snn_standard_notebook_declares_boundary_and_has_no_saved_outputs
     assert "Evidence Boundary" in text
     assert "does not generate an external theorem-prover proof" in text
     assert "sc-neurocore.formal-snn-verification-standard-evidence.v1" in text
-    assert all(cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code")
-    assert all(cell.get("execution_count") is None for cell in notebook["cells"] if cell["cell_type"] == "code")
+    assert all(
+        cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code"
+    )
+    assert all(
+        cell.get("execution_count") is None
+        for cell in notebook["cells"]
+        if cell["cell_type"] == "code"
+    )
 
 
 def test_formal_snn_standard_notebook_code_executes() -> None:
@@ -47,6 +53,8 @@ def test_formal_snn_standard_notebook_code_executes() -> None:
     assert manifest["profile_summary"]["profile_id"] == "publication-grade-snn-v1"
     assert manifest["passing_summary"]["passed"] is True
     assert "external_formal_proof" in manifest["missing_external_summary"]["missing_mandatory"]
-    assert "implementation_equivalence" in manifest["failed_equivalence_summary"]["failed_mandatory"]
+    assert (
+        "implementation_equivalence" in manifest["failed_equivalence_summary"]["failed_mandatory"]
+    )
     assert "external_formal_proof" in manifest["wrong_kind_summary"]["missing_mandatory"]
     assert "evidence_id" in manifest["guardrails"]["empty_id_refusal"]

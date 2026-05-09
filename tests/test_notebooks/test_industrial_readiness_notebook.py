@@ -28,8 +28,14 @@ def test_industrial_readiness_notebook_declares_boundary_and_has_no_saved_output
     assert "Evidence Boundary" in text
     assert "does not claim that aerospace, automotive, medical, rail" in text
     assert "sc-neurocore.industrial-readiness-evidence.v1" in text
-    assert all(cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code")
-    assert all(cell.get("execution_count") is None for cell in notebook["cells"] if cell["cell_type"] == "code")
+    assert all(
+        cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code"
+    )
+    assert all(
+        cell.get("execution_count") is None
+        for cell in notebook["cells"]
+        if cell["cell_type"] == "code"
+    )
 
 
 def test_industrial_readiness_notebook_code_executes() -> None:
@@ -49,6 +55,5 @@ def test_industrial_readiness_notebook_code_executes() -> None:
     assert "hil" in manifest["partial_aerospace"]["missing_categories"]
     assert manifest["complete_examples"]["industrial_control_ready"] is True
     assert all(
-        item["ready_without_evidence"] is False
-        for item in manifest["fail_closed_rollup"].values()
+        item["ready_without_evidence"] is False for item in manifest["fail_closed_rollup"].values()
     )

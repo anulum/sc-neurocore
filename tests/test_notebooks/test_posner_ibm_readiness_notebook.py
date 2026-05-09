@@ -29,8 +29,14 @@ def test_posner_readiness_notebook_declares_boundary_and_has_no_saved_outputs() 
     assert "does not claim that ORCA-derived `hf.json`" in text
     assert "sc-neurocore.posner-ibm-readiness-evidence.v1" in text
     assert "minimum planned QPU shot budget" in text
-    assert all(cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code")
-    assert all(cell.get("execution_count") is None for cell in notebook["cells"] if cell["cell_type"] == "code")
+    assert all(
+        cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code"
+    )
+    assert all(
+        cell.get("execution_count") is None
+        for cell in notebook["cells"]
+        if cell["cell_type"] == "code"
+    )
 
 
 def test_posner_readiness_notebook_code_executes_and_refuses_incomplete_runtime_data() -> None:
