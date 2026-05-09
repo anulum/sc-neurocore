@@ -22,7 +22,7 @@ from __future__ import annotations
 import ctypes
 import math
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -79,7 +79,7 @@ def _current_trace(current_trace: npt.ArrayLike) -> npt.NDArray[np.float64]:
         raise ValueError("current_trace must be non-empty")
     if not np.isfinite(currents).all():
         raise ValueError("current_trace must contain only finite values")
-    return cast(npt.NDArray[np.float64], currents)
+    return currents
 
 
 def _dt_or_default(dt: float | None, default: float) -> float:

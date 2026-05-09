@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -155,4 +155,4 @@ class StochasticLIFNeuron(BaseNeuron):
             # Treat bit as current pulse of amplitude 'input_scale'
             current = bit * input_scale
             spikes[i] = self.step(current)
-        return cast(npt.NDArray[np.uint8], spikes)
+        return spikes
