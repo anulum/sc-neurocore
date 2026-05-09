@@ -28,8 +28,14 @@ def test_brf_notebook_declares_scientific_boundary_and_has_no_saved_outputs() ->
     assert "Evidence Boundary" in text
     assert "does not claim reproduction of the full BRF-RSNN ICML training experiments" in text
     assert "sc-neurocore.brf-evidence.v1" in text
-    assert all(cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code")
-    assert all(cell.get("execution_count") is None for cell in notebook["cells"] if cell["cell_type"] == "code")
+    assert all(
+        cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code"
+    )
+    assert all(
+        cell.get("execution_count") is None
+        for cell in notebook["cells"]
+        if cell["cell_type"] == "code"
+    )
 
 
 def test_brf_notebook_code_executes_against_committed_artifacts() -> None:

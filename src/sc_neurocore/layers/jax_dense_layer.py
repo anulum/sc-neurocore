@@ -84,7 +84,9 @@ class JaxSCDenseLayer:
         self.v_threshold = self._finite_param(
             "v_threshold", self.neuron_params.get("v_threshold", LIF_V_THRESHOLD)
         )
-        self.tau_mem = self._positive_param("tau_mem", self.neuron_params.get("tau_mem", LIF_TAU_MEM))
+        self.tau_mem = self._positive_param(
+            "tau_mem", self.neuron_params.get("tau_mem", LIF_TAU_MEM)
+        )
         self.resistance = self._positive_param(
             "resistance", self.neuron_params.get("resistance", LIF_RESISTANCE)
         )

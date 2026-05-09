@@ -277,11 +277,31 @@ def test_jax_forward_pass_returns_layer_spikes_and_final_voltage():
     ("weights", "x", "kwargs", "match"),
     [
         ([], np.ones((1, 2), dtype=np.float64), {}, "weights"),
-        ([np.ones((1, 2), dtype=np.float64)], np.ones((1, 2), dtype=np.float64), {"n_steps": 0}, "n_steps"),
+        (
+            [np.ones((1, 2), dtype=np.float64)],
+            np.ones((1, 2), dtype=np.float64),
+            {"n_steps": 0},
+            "n_steps",
+        ),
         ([np.ones((1, 2), dtype=np.float64)], np.ones(2, dtype=np.float64), {}, "2-D"),
-        ([np.ones((1, 3), dtype=np.float64)], np.ones((1, 2), dtype=np.float64), {}, "input dimension"),
-        ([np.ones((1, 2), dtype=np.float64)], np.array([[np.nan, 0.0]], dtype=np.float64), {}, "finite"),
-        ([np.ones((1, 2), dtype=np.float64)], np.ones((1, 2), dtype=np.float64), {"alpha": 0.0}, "alpha"),
+        (
+            [np.ones((1, 3), dtype=np.float64)],
+            np.ones((1, 2), dtype=np.float64),
+            {},
+            "input dimension",
+        ),
+        (
+            [np.ones((1, 2), dtype=np.float64)],
+            np.array([[np.nan, 0.0]], dtype=np.float64),
+            {},
+            "finite",
+        ),
+        (
+            [np.ones((1, 2), dtype=np.float64)],
+            np.ones((1, 2), dtype=np.float64),
+            {"alpha": 0.0},
+            "alpha",
+        ),
     ],
 )
 def test_jax_forward_pass_rejects_invalid_contracts(weights, x, kwargs, match):

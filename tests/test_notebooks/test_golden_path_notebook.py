@@ -28,8 +28,14 @@ def test_golden_path_notebook_has_evidence_boundary_and_no_saved_outputs() -> No
     assert "Evidence Boundary" in text
     assert "does not claim physical FPGA timing" in text
     assert "sc-neurocore.golden-path-evidence.v1" in text
-    assert all(cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code")
-    assert all(cell.get("execution_count") is None for cell in notebook["cells"] if cell["cell_type"] == "code")
+    assert all(
+        cell.get("outputs", []) == [] for cell in notebook["cells"] if cell["cell_type"] == "code"
+    )
+    assert all(
+        cell.get("execution_count") is None
+        for cell in notebook["cells"]
+        if cell["cell_type"] == "code"
+    )
 
 
 def test_golden_path_notebook_code_executes() -> None:
