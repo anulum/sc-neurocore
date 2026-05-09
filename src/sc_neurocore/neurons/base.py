@@ -7,7 +7,7 @@
 # SC-NeuroCore — Abstract base class for stochastic neuron models
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any
 
 
 class BaseNeuron(ABC):
@@ -31,6 +31,6 @@ class BaseNeuron(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         """Return a dict with the internal state (e.g., membrane potential)."""
         raise NotImplementedError

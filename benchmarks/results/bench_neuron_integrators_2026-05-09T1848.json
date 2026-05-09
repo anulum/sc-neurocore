@@ -1,0 +1,395 @@
+{
+  "meta": {
+    "timestamp_utc": "2026-05-09T16:49:04Z",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "platform": "Linux-6.17.0-23-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "n_steps": 10000,
+    "parity_steps": 1000,
+    "repeats": 3
+  },
+  "benchmark": {
+    "izhikevich": {
+      "python": {
+        "available": true,
+        "used": true,
+        "reason": "primary reference",
+        "best_wall_ms": 92.704,
+        "steps_per_s": 107870.0,
+        "speedup_over_python": 1.0
+      },
+      "rust": {
+        "available": true,
+        "used": true,
+        "reason": "available",
+        "best_wall_ms": 0.295,
+        "steps_per_s": 33862950.0,
+        "speedup_over_python": 314.251
+      },
+      "julia": {
+        "available": true,
+        "used": true,
+        "reason": "available",
+        "best_wall_ms": 0.306,
+        "steps_per_s": 32629835.0,
+        "speedup_over_python": 302.954
+      },
+      "go": {
+        "available": true,
+        "used": true,
+        "reason": "available",
+        "best_wall_ms": 0.316,
+        "steps_per_s": 31603865.0,
+        "speedup_over_python": 293.367
+      },
+      "mojo": {
+        "available": true,
+        "used": true,
+        "reason": "available",
+        "best_wall_ms": 0.283,
+        "steps_per_s": 35316098.0,
+        "speedup_over_python": 327.576
+      }
+    },
+    "hodgkin_huxley": {
+      "python": {
+        "available": true,
+        "used": true,
+        "reason": "primary reference",
+        "best_wall_ms": 9677.227,
+        "steps_per_s": 1033.0,
+        "speedup_over_python": 1.0
+      },
+      "rust": {
+        "available": true,
+        "used": true,
+        "reason": "available",
+        "best_wall_ms": 65.511,
+        "steps_per_s": 152645.0,
+        "speedup_over_python": 147.719
+      },
+      "julia": {
+        "available": true,
+        "used": true,
+        "reason": "available",
+        "best_wall_ms": 75.749,
+        "steps_per_s": 132015.0,
+        "speedup_over_python": 127.754
+      },
+      "go": {
+        "available": true,
+        "used": true,
+        "reason": "available",
+        "best_wall_ms": 186.141,
+        "steps_per_s": 53723.0,
+        "speedup_over_python": 51.989
+      },
+      "mojo": {
+        "available": true,
+        "used": true,
+        "reason": "available",
+        "best_wall_ms": 63.191,
+        "steps_per_s": 158250.0,
+        "speedup_over_python": 153.142
+      }
+    },
+    "adex": {
+      "python": {
+        "available": true,
+        "used": true,
+        "reason": "primary reference",
+        "best_wall_ms": 210.343,
+        "steps_per_s": 47541.0,
+        "speedup_over_python": 1.0
+      },
+      "rust": {
+        "available": true,
+        "used": true,
+        "reason": "available",
+        "best_wall_ms": 0.744,
+        "steps_per_s": 13448850.0,
+        "speedup_over_python": 282.719
+      },
+      "julia": {
+        "available": true,
+        "used": true,
+        "reason": "available",
+        "best_wall_ms": 0.881,
+        "steps_per_s": 11349772.0,
+        "speedup_over_python": 238.755
+      },
+      "go": {
+        "available": true,
+        "used": true,
+        "reason": "available",
+        "best_wall_ms": 1.348,
+        "steps_per_s": 7420363.0,
+        "speedup_over_python": 156.041
+      },
+      "mojo": {
+        "available": true,
+        "used": true,
+        "reason": "available",
+        "best_wall_ms": 1.132,
+        "steps_per_s": 8835195.0,
+        "speedup_over_python": 185.815
+      }
+    }
+  },
+  "parity": {
+    "n_steps": 1000,
+    "backend_order": [
+      "python",
+      "rust",
+      "julia",
+      "go",
+      "mojo"
+    ],
+    "models": {
+      "izhikevich": {
+        "display_name": "Izhikevich",
+        "dt": 1.0,
+        "n_steps": 1000,
+        "tolerance": 1e-09,
+        "backends": {
+          "python": {
+            "available": true,
+            "used": true,
+            "reason": "primary reference",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 0.0,
+              "u": 0.0
+            },
+            "max_abs_delta": 0.0,
+            "bit_exact": true
+          },
+          "rust": {
+            "available": true,
+            "used": true,
+            "reason": "available",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 0.0,
+              "u": 0.0
+            },
+            "max_abs_delta": 0.0,
+            "bit_exact": true
+          },
+          "julia": {
+            "available": true,
+            "used": true,
+            "reason": "available",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 0.0,
+              "u": 0.0
+            },
+            "max_abs_delta": 0.0,
+            "bit_exact": true
+          },
+          "go": {
+            "available": true,
+            "used": true,
+            "reason": "available",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 5.684341886080802e-14,
+              "u": 1.7763568394002505e-15
+            },
+            "max_abs_delta": 5.684341886080802e-14,
+            "bit_exact": false
+          },
+          "mojo": {
+            "available": true,
+            "used": true,
+            "reason": "available",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 5.684341886080802e-14,
+              "u": 1.7763568394002505e-15
+            },
+            "max_abs_delta": 5.684341886080802e-14,
+            "bit_exact": false
+          }
+        }
+      },
+      "hodgkin_huxley": {
+        "display_name": "Hodgkin-Huxley",
+        "dt": 0.02,
+        "n_steps": 1000,
+        "tolerance": 1e-08,
+        "backends": {
+          "python": {
+            "available": true,
+            "used": true,
+            "reason": "primary reference",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 0.0,
+              "m": 0.0,
+              "h": 0.0,
+              "n": 0.0
+            },
+            "max_abs_delta": 0.0,
+            "bit_exact": true
+          },
+          "rust": {
+            "available": true,
+            "used": true,
+            "reason": "available",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 1.6299850358336698e-11,
+              "m": 2.7172708527700706e-13,
+              "h": 5.065392549852277e-14,
+              "n": 7.560618797697316e-14
+            },
+            "max_abs_delta": 1.6299850358336698e-11,
+            "bit_exact": false
+          },
+          "julia": {
+            "available": true,
+            "used": true,
+            "reason": "available",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 2.326672188246448e-11,
+              "m": 2.598476989135179e-13,
+              "h": 4.901634653720066e-14,
+              "n": 7.30526750203353e-14
+            },
+            "max_abs_delta": 2.326672188246448e-11,
+            "bit_exact": false
+          },
+          "go": {
+            "available": true,
+            "used": true,
+            "reason": "available",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 2.219380235146673e-11,
+              "m": 3.044231533522179e-13,
+              "h": 5.6538107529036097e-14,
+              "n": 8.548717289613705e-14
+            },
+            "max_abs_delta": 2.219380235146673e-11,
+            "bit_exact": false
+          },
+          "mojo": {
+            "available": true,
+            "used": true,
+            "reason": "available",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 4.101820216817487e-09,
+              "m": 3.03128633305505e-11,
+              "h": 5.902056621209795e-12,
+              "n": 6.715183964445259e-12
+            },
+            "max_abs_delta": 4.101820216817487e-09,
+            "bit_exact": false
+          }
+        }
+      },
+      "adex": {
+        "display_name": "AdEx",
+        "dt": 0.2,
+        "n_steps": 1000,
+        "tolerance": 1e-09,
+        "backends": {
+          "python": {
+            "available": true,
+            "used": true,
+            "reason": "primary reference",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 0.0,
+              "w": 0.0
+            },
+            "max_abs_delta": 0.0,
+            "bit_exact": true
+          },
+          "rust": {
+            "available": true,
+            "used": true,
+            "reason": "available",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 0.0,
+              "w": 0.0
+            },
+            "max_abs_delta": 0.0,
+            "bit_exact": true
+          },
+          "julia": {
+            "available": true,
+            "used": true,
+            "reason": "available",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 0.0,
+              "w": 0.0
+            },
+            "max_abs_delta": 0.0,
+            "bit_exact": true
+          },
+          "go": {
+            "available": true,
+            "used": true,
+            "reason": "available",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 7.105427357601002e-15,
+              "w": 0.0
+            },
+            "max_abs_delta": 7.105427357601002e-15,
+            "bit_exact": false
+          },
+          "mojo": {
+            "available": true,
+            "used": true,
+            "reason": "available",
+            "within_tolerance": true,
+            "n_steps": 1000,
+            "spike_indices_equal": true,
+            "state_max_abs_delta": {
+              "v": 1.1226575225009583e-12,
+              "w": 1.4210854715202004e-14
+            },
+            "max_abs_delta": 1.1226575225009583e-12,
+            "bit_exact": false
+          }
+        }
+      }
+    }
+  }
+}

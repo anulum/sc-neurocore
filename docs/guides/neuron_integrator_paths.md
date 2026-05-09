@@ -111,6 +111,27 @@ python benchmarks/bench_neuron_integrators.py
 python benchmarks/bench_neuron_integrators.py --parity-only
 ```
 
+Latest local E2E benchmark evidence:
+
+- `benchmarks/results/bench_neuron_integrators_2026-05-09T1848.json`
+- `benchmarks/results/bench_neuron_integrators.json`
+
+The 2026-05-09 run used 1 000-step parity traces, 10 000-step timing traces,
+and three timing repeats on CPython 3.12. All five backend slots were available
+and within tolerance for `SCIzhikevichNeuron`, `HodgkinHuxleyNeuron`, and
+`AdExNeuron`.
+
+## Input Contract
+
+All maintained RK4 parity entry points reject invalid runtime inputs before
+integration:
+
+- `dt` must be a positive finite scalar
+- `current_trace` must be a non-empty one-dimensional finite `float64` trace
+- Python `SCIzhikevichNeuron.step(...)` rejects non-finite `input_current`
+- Python `SCIzhikevichNeuron` rejects non-finite `a`, `b`, `c`, `d`, invalid
+  `dt`, and invalid `noise_std`
+
 ## Design Rules
 
 - default construction must preserve historical behaviour

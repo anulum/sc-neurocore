@@ -280,16 +280,36 @@ pub fn py_rk4_neuron_simulate<'py>(
     let currents = current_trace.as_slice()?;
     match normalise_model_name(model_name).as_str() {
         "izhikevich" | "scizhikevichneuron" | "izhikevichneuron" => {
-            simulate_izhikevich(py, currents, dt.unwrap_or(1.0))
+            let dt = validate_trace_dt(currents, dt.unwrap_or(1.0))?;
+            simulate_izhikevich(py, currents, dt)
         }
         "hodgkinhuxley" | "hodgkinhuxleyneuron" => {
-            simulate_hodgkin_huxley(py, currents, dt.unwrap_or(0.01))
+            let dt = validate_trace_dt(currents, dt.unwrap_or(0.01))?;
+            simulate_hodgkin_huxley(py, currents, dt)
         }
-        "adex" | "adexneuron" => simulate_adex(py, currents, dt.unwrap_or(0.1)),
+        "adex" | "adexneuron" => {
+            let dt = validate_trace_dt(currents, dt.unwrap_or(0.1))?;
+            simulate_adex(py, currents, dt)
+        }
         _ => Err(PyValueError::new_err(format!(
             "unsupported RK4 neuron model {model_name:?}"
         ))),
     }
+}
+
+fn validate_trace_dt(currents: &[f64], dt: f64) -> PyResult<f64> {
+    if !dt.is_finite() || dt <= 0.0 {
+        return Err(PyValueError::new_err("dt must be a positive finite scalar"));
+    }
+    if currents.is_empty() {
+        return Err(PyValueError::new_err("current_trace must be non-empty"));
+    }
+    if currents.iter().any(|current| !current.is_finite()) {
+        return Err(PyValueError::new_err(
+            "current_trace must contain only finite values",
+        ));
+    }
+    Ok(dt)
 }
 
 fn normalise_model_name(name: &str) -> String {

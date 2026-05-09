@@ -137,6 +137,22 @@ def test_rust_rk4_neuron_simulator_rejects_unknown_model() -> None:
         _engine.py_rk4_neuron_simulate("unknown", np.ones(4, dtype=np.float64))
 
 
+@pytest.mark.parametrize(
+    ("currents", "dt", "match"),
+    [
+        (np.array([], dtype=np.float64), 1.0, "non-empty"),
+        (np.array([np.nan], dtype=np.float64), 1.0, "finite"),
+        (np.ones(4, dtype=np.float64), 0.0, "dt"),
+        (np.ones(4, dtype=np.float64), np.nan, "dt"),
+    ],
+)
+def test_rust_rk4_neuron_simulator_rejects_invalid_trace_or_dt(
+    currents: np.ndarray, dt: float, match: str
+) -> None:
+    with pytest.raises(ValueError, match=match):
+        _engine.py_rk4_neuron_simulate("izhikevich", currents, dt)
+
+
 def test_rk4_neuron_simulator_is_reexported_when_available() -> None:
     assert hasattr(_engine, "py_rk4_neuron_simulate")
     assert "py_rk4_neuron_simulate" in getattr(_engine, "__all__", [])

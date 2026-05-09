@@ -25,6 +25,32 @@ def test_izhikevich_integrator_validation():
         SCIzhikevichNeuron(integrator="bad-path")  # type: ignore[arg-type]
 
 
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"a": np.nan}, "a"),
+        ({"b": np.inf}, "b"),
+        ({"c": np.nan}, "c"),
+        ({"d": np.inf}, "d"),
+        ({"dt": 0.0}, "dt"),
+        ({"dt": np.nan}, "dt"),
+        ({"noise_std": -0.1}, "noise_std"),
+        ({"noise_std": np.nan}, "noise_std"),
+    ],
+)
+def test_izhikevich_rejects_invalid_numerical_configuration(kwargs, match):
+    with pytest.raises(ValueError, match=match):
+        SCIzhikevichNeuron(**kwargs)
+
+
+@pytest.mark.parametrize("integrator", ["baseline_half_euler", "rk4"])
+def test_izhikevich_rejects_non_finite_input_current(integrator):
+    neuron = SCIzhikevichNeuron(noise_std=0.0, dt=0.5, integrator=integrator)
+
+    with pytest.raises(ValueError, match="input_current"):
+        neuron.step(np.nan)
+
+
 def test_hodgkin_huxley_integrator_validation():
     with pytest.raises(ValueError, match="Unsupported integrator"):
         HodgkinHuxleyNeuron(integrator="bad-path")  # type: ignore[arg-type]
