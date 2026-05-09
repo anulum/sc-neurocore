@@ -7,14 +7,18 @@
 # SC-NeuroCore — Stochastic Computing Attention Block
 
 from __future__ import annotations
-from typing import Any
 from dataclasses import dataclass
+from typing import Any, Literal
+
 import numpy as np
+from numpy.typing import NDArray
 
 from ..utils.bitstreams import (
     generate_bernoulli_bitstream,
     generate_sobol_bitstream,
 )
+
+SCMode = Literal["unipolar"]
 
 
 @dataclass
@@ -41,24 +45,61 @@ class StochasticAttention:
 
     dim_k: int
     temperature: float = 1.0
+    sc_mode: SCMode = "unipolar"
+
+    def __post_init__(self) -> None:
+        if self.dim_k <= 0:
+            raise ValueError("dim_k must be positive")
+        if self.temperature <= 0.0 or not np.isfinite(self.temperature):
+            raise ValueError("temperature must be finite and positive")
+        if self.sc_mode != "unipolar":
+            raise ValueError("StochasticAttention currently supports only sc_mode='unipolar'")
 
     def _ensure_2d(
         self,
         Q: np.ndarray[Any, Any],
         K: np.ndarray[Any, Any],
         V: np.ndarray[Any, Any],
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+        Q = np.asarray(Q, dtype=np.float64)
+        K = np.asarray(K, dtype=np.float64)
+        V = np.asarray(V, dtype=np.float64)
         if Q.ndim == 1:
             Q = Q[None, :]
         if K.ndim == 1:
             K = K[None, :]
         if V.ndim == 1:
             V = V[None, :]
+        if Q.ndim != 2 or K.ndim != 2 or V.ndim != 2:
+            raise ValueError("Q, K, and V must be one- or two-dimensional arrays")
+        if Q.shape[1] != self.dim_k:
+            raise ValueError(f"Q must have dim_k={self.dim_k} columns")
+        if K.shape[1] != self.dim_k:
+            raise ValueError(f"K must have dim_k={self.dim_k} columns")
+        if V.shape[0] != K.shape[0]:
+            raise ValueError("V must have the same number of rows as K")
+        if not (np.all(np.isfinite(Q)) and np.all(np.isfinite(K)) and np.all(np.isfinite(V))):
+            raise ValueError("Q, K, and V must contain only finite values")
         return Q, K, V
+
+    def _validate_unipolar_bitstream_inputs(
+        self,
+        Q: NDArray[np.float64],
+        K: NDArray[np.float64],
+        V: NDArray[np.float64],
+        length: int,
+    ) -> None:
+        if length <= 0:
+            raise ValueError("length must be positive")
+        for name, array in (("Q", Q), ("K", K), ("V", V)):
+            if np.any((array < 0.0) | (array > 1.0)):
+                raise ValueError(
+                    f"{name} values must be in [0, 1] for unipolar bitstream attention"
+                )
 
     def forward(
         self, Q: np.ndarray[Any, Any], K: np.ndarray[Any, Any], V: np.ndarray[Any, Any]
-    ) -> np.ndarray[Any, Any]:
+    ) -> NDArray[np.float64]:
         """
         Row-sum normalised attention (SC-native, no exp).
 
@@ -77,11 +118,11 @@ class StochasticAttention:
         row_sums = np.sum(scores, axis=1, keepdims=True)
         row_sums[row_sums == 0] = 1.0
         attn_weights = scores / row_sums
-        return np.dot(attn_weights, V)
+        return np.asarray(np.dot(attn_weights, V), dtype=np.float64)
 
     def forward_softmax(
         self, Q: np.ndarray[Any, Any], K: np.ndarray[Any, Any], V: np.ndarray[Any, Any]
-    ) -> np.ndarray[Any, Any]:
+    ) -> NDArray[np.float64]:
         """
         Proper softmax attention with temperature scaling.
 
@@ -104,7 +145,7 @@ class StochasticAttention:
         scores -= scores.max(axis=1, keepdims=True)
         exp_scores = np.exp(scores)
         attn_weights = exp_scores / exp_scores.sum(axis=1, keepdims=True)
-        return np.dot(attn_weights, V)
+        return np.asarray(np.dot(attn_weights, V), dtype=np.float64)
 
     def forward_bitstream(
         self,
@@ -113,7 +154,7 @@ class StochasticAttention:
         V: np.ndarray[Any, Any],
         length: int = 1024,
         use_sobol: bool = False,
-    ) -> np.ndarray[Any, Any]:
+    ) -> NDArray[np.float64]:
         """SC-native attention via bitstream AND gates.
 
         Each element is encoded as a bitstream, inner products computed
@@ -135,6 +176,7 @@ class StochasticAttention:
         (N, dim_v) — attention output probabilities
         """
         Q, K, V = self._ensure_2d(Q, K, V)
+        self._validate_unipolar_bitstream_inputs(Q, K, V, length)
         N, dk = Q.shape
         M, dv = V.shape
 
@@ -142,10 +184,10 @@ class StochasticAttention:
 
         # Encode Q, K as bitstreams
         Q_bits = np.array(
-            [[gen(float(np.clip(Q[i, d], 0, 1)), length) for d in range(dk)] for i in range(N)]
+            [[gen(float(Q[i, d]), length) for d in range(dk)] for i in range(N)]
         )  # (N, dk, L)
         K_bits = np.array(
-            [[gen(float(np.clip(K[j, d], 0, 1)), length) for d in range(dk)] for j in range(M)]
+            [[gen(float(K[j, d]), length) for d in range(dk)] for j in range(M)]
         )  # (M, dk, L)
 
         # Compute attention scores via AND (SC multiply) + popcount
@@ -165,4 +207,4 @@ class StochasticAttention:
         attn_weights = scores / row_sums
 
         # Weighted sum over V
-        return np.dot(attn_weights, np.clip(V, 0, 1))
+        return np.asarray(np.dot(attn_weights, V), dtype=np.float64)

@@ -181,7 +181,7 @@ train-to-hardware export path.
 ## Rust Engine (Optional, Recommended)
 
 The Rust SIMD engine provides 113 Gbit/s bitstream packing (AVX-512) with
-AVX-512, AVX2, or NEON auto-dispatch. 111 neuron models compiled
+AVX-512, AVX2, or NEON auto-dispatch. 174 neuron models compiled
 to native code with PyO3 bindings.
 
 ```bash
@@ -216,7 +216,7 @@ package. The engine adds speed, not features.
 ## Licensing
 
 SC-NeuroCore is **free for research and education** under AGPL-3.0.
-Academic labs can use the full framework — 173 neuron models, Rust
+Academic labs can use the full framework — 174 neuron models, Rust
 engine, Verilog RTL, quantum modules, training pipeline — at no cost.
 
 Proprietary integration requires a [commercial license](../pricing.md).

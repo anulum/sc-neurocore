@@ -47,4 +47,4 @@ Standard parameters: g_Na=120, g_K=36, g_L=0.3, E_Na=50, E_K=-77, E_L=-54.4 mV.
 ## Test Files
 
 - `tests/test_hh_validation.py` — pytest suite
-- `benchmarks/results/phase1_validation_results.json` — measured data
+- `benchmarks/results/credibility_validation_results.json` — measured data

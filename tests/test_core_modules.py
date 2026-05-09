@@ -26,10 +26,22 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from sc_neurocore.core.tensor_stream import TensorStream
 from sc_neurocore.core.orchestrator import CognitiveOrchestrator
+from sc_neurocore.core import bipolar_decode, bipolar_encode, bipolar_mac, bipolar_multiply
 
 # =============================================================================
 # TensorStream Tests
 # =============================================================================
+
+
+def test_core_exports_bipolar_sc_primitives():
+    """Core package should expose signed SC primitives without deep imports."""
+    bits = bipolar_encode(1.0, 8, rng=np.random.default_rng(42))
+    product = bipolar_multiply(bits, bits)
+    decoded = bipolar_decode(product)
+    result = bipolar_mac(np.array([1.0]), np.array([[1.0]]), L=8, seed=42)
+
+    assert decoded == 1.0
+    assert np.isclose(result[0], 1.0)
 
 
 class TestTensorStream:

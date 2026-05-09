@@ -5,7 +5,7 @@
 ```
 sc_neurocore/
 ├── Core Tier (Production-Ready — ships in pip install sc-neurocore)
-│   ├── neurons/       173 neuron models (113 in models/, 173 Rust)
+│   ├── neurons/       174 neuron models (Python-facing catalogue + Rust engine mirrors)
 │   ├── synapses/      4 synapse types (bitstream, dot product, STDP, R-STDP)
 │   ├── layers/        8 layer types (dense, conv, learning, vectorized, recurrent, memristive, fusion, attention)
 │   ├── sources/       Bitstream current sources

@@ -18,7 +18,7 @@ Commercial Licensing: Available
 - For low-latency use (single sample or micro-batch), prefer `DenseLayer.forward_fast`.
 - For throughput use (batch >= 10), prefer `DenseLayer.forward_batch_numpy`.
 
-## Phase 12 Results (Fused Dense + Fast PRNG + Batch Forward)
+## Fused Dense, Fast PRNG, and Batch Forward Results
 
 Measured via `examples/03_benchmark_report.py` on this machine.
 
@@ -39,7 +39,7 @@ Measured via `examples/03_benchmark_report.py` on this machine.
 | LIF (batch, 100K) | 126.313 | 0.905 | 139.6x | 400x |
 | LIF multi (100x100K) | 12911.296 | 25.196 | 512.4x | 400x |
 
-## Criterion Diagnosis (Phase 12)
+## Criterion Diagnosis for Fused Dense and Fast PRNG
 
 Measured via targeted commands:
 
@@ -62,7 +62,7 @@ Interpretation:
 - Batched dense API reduces Python-level overhead substantially vs per-sample loops.
 - Multi-neuron LIF remains above the Blueprint 400x target on this host.
 
-## Phase 11 Results (Reference)
+## SIMD Dense Inner Loop Results (Reference)
 
 | Operation | v2 (ms) | v3 (ms) | Speedup | Target |
 |-----------|---------|---------|---------|--------|
@@ -79,7 +79,7 @@ Interpretation:
 | LIF (batch, 100K) | 106.451 | 0.897 | 118.7x | 400x |
 | LIF multi (100x100K) | 13349.151 | 31.783 | 420.0x | 400x |
 
-## Phase 10 Results (Reference)
+## SIMD Pack Dispatch Results (Reference)
 
 | Operation | v2 (ms) | v3 (ms) | Speedup | Target |
 |-----------|---------|---------|---------|--------|
@@ -96,7 +96,7 @@ Interpretation:
 | LIF (batch, 100K) | 139.417 | 0.992 | 140.5x | 400x |
 | LIF multi (100x100K) | 15442.319 | 90.480 | 170.7x | 400x |
 
-## Phase 9 Results (Reference)
+## Fast Bernoulli Encoding Results (Reference)
 
 | Operation | v2 (ms) | v3 (ms) | Speedup | Target |
 |-----------|---------|---------|---------|--------|
@@ -112,7 +112,7 @@ Interpretation:
 | LIF (per-call, 100K) | 143.202 | 35.008 | 4.1x | 400x |
 | LIF (batch, 100K) | 143.202 | 1.404 | 102.0x | 400x |
 
-## Phase 7 Results (Reference)
+## Dense Forward Optimization Results (Reference)
 
 | Operation | v2 (ms) | v3 (ms) | Speedup | Target |
 |-----------|---------|---------|---------|--------|

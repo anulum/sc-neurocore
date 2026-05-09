@@ -434,14 +434,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 #### Documentation
 - `docs/api/evo_substrate.md` §7.3 — new whole-process runners section with entry-point table, measured 4-way parity matrix, honest timing breakdown per backend (Rust PyO3 warm 0.57 ms, Go execution 2 ms excluding ~3 s `go build` first time, Mojo cold ~1.1 s pixi + JIT + Python interop, Julia cold ~3 s JSON.jl + SHA.jl precompile, Python reference 40.88 ms), decision matrix for which backend to pick, and the 4-way test-suite invocation list.
 
-### ArcaneZenith + VISION2030 unification (2026-04-20)
+### Strategic module unification (2026-04-20)
 
 #### Added
 - `sc_neurocore.arcane_zenith.ArcaneZenithCognitiveCore` — three-compartment ArcaneNeuron (fast / working / deep membrane states) coupled via attention gate + self-model predictor, wired to four reward-modulated plasticity rules via a sharpened sigmoid that maps weights into biological ranges for `tau_deep`, `surprise_baseline`, `delta_conf`, `lr_base`. Factory `create_arcane_neuron_with_zenith_plasticity(backend=…)`, plus `step_from_bio_rates` (MEA rate dict) and `step_from_genome` (evo_substrate bridge). 32 multi-angle tests in `tests/test_arcane_zenith/`.
 - `sc_neurocore.optics.photonic_emitter` — full rewrite of `CrosstalkModel.analyze_bank` on Marcatili coupled-mode theory (adjacent + next-nearest pairs); new `analyze_pairs` for O(N²) arbitrary geometry. Rust FFI `py_ph_analyze_crosstalk_bank` / `py_ph_analyze_crosstalk_pairs` (with 4 cargo tests); Python fallback matches to 1e-9. `FDTD2DSolver` split-field Berenger PML (Ezx + Ezy with σ-matched magnetic conductivity). `CompilationResult.to_gdsii` now produces real GDSII via `gdsfactory` + `klayout` (PDK auto-activation, `allow_duplicate` cells, netlist string to GDS TEXT layer 63/0). 43 tests in `tests/test_optics/`.
 - `sc_neurocore.bioware` closed-loop surface: `BioHybridSession.process_frame` returns `BioHybridFrameResult` (typed dataclass with legacy mapping view — `result["round"]` + `result.round` both valid). `SpikeSorter` fit/assign with sklearn PCA+KMeans, no-op on empty input. `HomeostaticPlasticity.update_threshold` Q8.8 proportional controller (error × α × 256, clamped to min/max). New `mea_fitness_hook` — converts MEA spike dynamics to `{accuracy, energy_mw, latency_ms}` for evo_substrate's `ReplicationEngine(metrics_fn=…)`. Matching PCA / Berenger / closed-loop regression tests added.
 - `sc_neurocore.accel.mojo.MojoKernelRunner` + `kernels.mojo` — Mojo SIMD primitives (packed SC ops, `sc_and/or/xor/mux/sub/not`, pack/unpack, `vec_mac`, `stdp_update`, `reward_modulated_stdp`, `hdc_bind`). Pixi-managed toolchain; `_HAS_MOJO` flag never raises on missing tooling. `benchmarks/bench_mojo_vs_rust.py` pure-text side-by-side harness.
-- `sc_neurocore.edge.aer_router.AERRoutingDaemon` — Python lifecycle wrapper for the Go AER UDP mesh router (`accel/go/services/aer_router/main.go`). Three sibling Go modules: `hil_debugger` (WebSocket telemetry), `services` / `services_ext` (Phase 2 / Phase 6 coordination). Each with its own `go.mod` + `main_test.go`.
+- `sc_neurocore.edge.aer_router.AERRoutingDaemon` — Python lifecycle wrapper for the Go AER UDP mesh router (`accel/go/services/aer_router/main.go`). Three sibling Go modules: `hil_debugger` (WebSocket telemetry), `services` / `services_ext` (service coordination). Each with its own `go.mod` + `main_test.go`.
 - `sc_neurocore.debug.hil_server.HILServerDaemon` + `HILDebugger` — lifecycle wrapper for the Go HIL debugger binary with `GET /health` readiness probe, 5 s timeout, SIGTERM → SIGKILL ladder.
 - `sc_neurocore.formal.FormalProofEngine` — Lean 4 bridge. `safety_bounds.lean` proves six theorems (`monitor_soundness`, `safe_transition`, `sc_precision_bound`, `sc_add_preserves_range`, `lif_membrane_bounded`, `correlation_range`) mapped 1:1 to `neuro_safe_monitor.sv` P-properties. New `src/sc_neurocore/formal/__init__.py` exports the engine.
 - `sc_neurocore.accel.julia.solvers.JuliaFusionSolver` + 4 `.jl` scripts (`fusion_solver`, `neuron_zoo`, `dynamical_analysis`, `spike_analysis`) — reference continuous-time ODE solvers via `DifferentialEquations.jl` (Tsit5).
@@ -1000,7 +1000,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Multi-variable ODE support (FitzHugh-Nagumo, Izhikevich, Hodgkin-Huxley)
 - Threshold and reset logic auto-generated
 
-### NIR Bridge (Phase 1)
+### NIR Bridge
 - `nir_bridge` package: import NIR graphs into SC-NeuroCore (FPGA backend for NIR)
 - Maps 11 NIR primitives (LIF, IF, LI, Integrator, Affine, Linear, Scale, Threshold, Flatten, Input, Output)
 - Recursive graph parser with topological sort, fan-in summation, nested subgraph support
@@ -1070,7 +1070,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Single-directory migration: `03_CODE/sc-neurocore/` is canonical repo
 - PyPI deployment branch policy fixed (main added)
 - 12 known Rust/Python parity divergences tracked as xfail
-- 5 phase test version assertions updated
+- 5 version-gate assertions updated
 
 ## [3.12.0] - 2026-03-17
 
@@ -1327,7 +1327,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [3.7.0] - 2026-02-11
 
-### Phase 14: Adaptive Runtime Engine -- HDC/VSA, SCPN Petri Nets, Fault-Tolerant Logic
+### Adaptive Runtime Engine -- HDC/VSA, SCPN Petri Nets, Fault-Tolerant Logic
 - **HDC/VSA kernel**: `BitStreamTensor` gains `xor`, `xor_inplace`, `rotate_right`, `hamming_distance`, `bundle` methods for hyper-dimensional computing on 10,000-bit vectors
 - **SIMD fused XOR+popcount**: AVX-512 VPOPCNTDQ / AVX2 / portable dispatch for hamming distance hot path
 - **PyBitStreamTensor**: New `#[pyclass]` exposing full HDC algebra to Python (13 methods)
@@ -1342,18 +1342,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [3.6.0] - 2026-02-10
 
-### Phase 12: Fused Dense Pipeline + Fast PRNG + Batch Forward
+### Fused Dense Pipeline + Fast PRNG + Batch Forward
 - **Fused encode+AND+popcount**: `forward_fused()` eliminates intermediate input bitstream materialization
 - **Fast PRNG switch**: xoshiro256++ for dense fast-path input encoding and numpy batch encoding
 - **Batched dense API**: `DenseLayer.forward_batch_numpy()` processes N samples in one FFI call
 - **New diagnostics**: criterion benches for fused dense, encode+popcount, batch dense, and PRNG throughput
-- **Version/test/docs update**: bumped to 3.6.0 with Phase 12 test suite and migration notes
+- **Version/test/docs update**: bumped to 3.6.0 with the fused dense pipeline test suite and migration notes
 
 ---
 
 ## [3.5.0] - 2026-02-10
 
-### Phase 11: SIMD Pipeline Acceleration
+### SIMD Pipeline Acceleration
 - **SIMD fused AND+popcount**: AVX-512 VPOPCNTDQ accelerated dense inner loop with AVX2 fallback
 - **SIMD Bernoulli encode**: AVX-512BW/AVX2 threshold compare path for packed Bernoulli generation
 - **Flat weight storage**: Contiguous `[neuron][input][word]` packed layout for cache-friendly access
@@ -1364,7 +1364,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [3.4.0] - 2026-02-10
 
-### Phase 10: SIMD Pack, LIF Optimization, Rayon Guard
+### SIMD Pack, LIF Optimization, Rayon Guard
 - **SIMD pack vectorization**: AVX-512/AVX2/portable fast packing (closes 6x Blueprint target)
 - **Branchless LIF mask**: Eliminates branches in fixed-point sign extension
 - **batch_lif_run_multi()**: Parallel multi-neuron batch execution via rayon
@@ -1375,7 +1375,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [3.3.0] - 2026-02-10
 
-### Phase 9: Fast Bernoulli, Fused AND+Popcount, Zero-Copy Prepacked
+### Fast Bernoulli, Fused AND+Popcount, Zero-Copy Prepacked
 - **bernoulli_packed_fast**: 8x less RNG bandwidth via byte-threshold encoding
 - **Fused AND+popcount**: Eliminates intermediate buffer allocation in neuron compute
 - **forward_prepacked_numpy()**: True zero-copy from numpy 2D uint64 arrays
@@ -1386,7 +1386,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [3.2.0] - 2026-02-10
 
-### Phase 8: Benchmark CI, Single-Call Dense Forward, Parallel Encoding
+### Benchmark CI, Single-Call Dense Forward, Parallel Encoding
 - **Criterion Benchmarks**: Expanded suite with bernoulli encoding comparison and dense forward variants
 - **Benchmark CI**: Automated criterion runs with artifact upload
 - **DenseLayer.forward_numpy()**: Single FFI call with numpy input/output plus parallel encoding
@@ -1397,7 +1397,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [3.1.0] - 2026-02-10
 
-### Phase 7: Dense Forward Optimization & PyPI Publishing
+### Dense Forward Optimization & PyPI Publishing
 - **Direct Packed Bernoulli**: `bernoulli_packed()` eliminates `Vec<u8>` intermediate allocations
 - **Parallel Encoding**: `DenseLayer.forward_fast()` parallelizes input encoding with per-input RNGs
 - **Pre-packed Forward**: `DenseLayer.forward_prepacked()` accepts pre-encoded numpy/list inputs and skips encoding
@@ -1409,27 +1409,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [3.0.0] - 2026-02-10
 
-### Phase 6: Performance Optimization & Stable Release
+### Performance Optimization & Stable Release
 - **NumPy Zero-Copy**: `pack_bitstream_numpy()`, `popcount_numpy()`, `unpack_bitstream_numpy()` — eliminate FFI marshalling overhead
 - **Batch Operations**: `batch_lif_run()`, `batch_lif_run_varying()`, `batch_encode()` — process arrays in single FFI calls
 - **Verilator CI**: Co-simulation tests run automatically on Ubuntu runners
 - **Updated Benchmarks**: Formal report showing true kernel performance with zero-copy interop
 - **Bridge Version Fix**: `bridge/pyproject.toml` version now matches engine
 
-### Phase 5: Release Candidate (3.0.0-rc.1)
+### Release Candidate (3.0.0-rc.1)
 - **IR Python Bridge**: Full PyO3 bindings for ScGraphBuilder, ScGraph, verify, print, parse, emit_sv
 - **Co-sim Activation**: Verilator compilation + simulation when available; graceful skip preserved
 - **Wheel CI**: Cross-platform wheel builds (Linux/macOS/Windows x Python 3.9-3.12)
 - **Benchmark Report**: Formal v2-vs-v3 performance comparison with Blueprint section 8 targets
 - **IR Demo**: Real end-to-end Python->IR->verification->SystemVerilog demo
 
-### Phase 4: HDL Compilation Pipeline (3.0.0-beta.1)
+### HDL Compilation Pipeline (3.0.0-beta.1)
 - **SC IR**: Rust-native intermediate representation with 11 op types
 - **SV Emitter**: Compile IR graphs to synthesizable SystemVerilog
 - **Co-sim**: Verilator-based verification against Rust golden model
-- **CI**: Expanded test coverage to include all Phase 2-4 Python tests
+- **CI**: Expanded test coverage to include all differentiation, acceleration, integration, and HDL Python tests
 
-### Phase 3: Integration & Hardening
+### Integration & Hardening
 - SSGF-compatible Kuramoto solver (`step_ssgf`, `run_ssgf`)
 - Property-based testing with proptest (12 property tests)
 - Multi-head attention (`forward_multihead`)
@@ -1437,7 +1437,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - End-to-end training demo
 - Comprehensive rustdoc
 
-### Phase 2: Differentiation & Acceleration
+### Differentiation & Acceleration
 - Surrogate gradient LIF (FastSigmoid, SuperSpike, ArcTan)
 - DifferentiableDenseLayer for backpropagation
 - Stochastic attention (rate + SC mode)
@@ -1445,7 +1445,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Kuramoto oscillator solver
 - Criterion benchmarks + v2/v3 comparison
 
-### Phase 1: Foundation
+### Foundation
 - Rust engine with PyO3 bindings
 - Bit-exact LFSR, LIF neuron, dense layer
 - SIMD dispatch (AVX-512, AVX2, NEON, portable)

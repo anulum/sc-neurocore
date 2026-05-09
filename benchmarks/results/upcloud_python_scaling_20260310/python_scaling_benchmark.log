@@ -91,4 +91,4 @@ MNIST loaded: 60000 train, 10000 test
  snntorch           95.8%     147.1      14.7   118282
 ============================================================
 
-Results saved to ../benchmarks/results/upcloud_phase3_20260310/phase3_benchmark.json
+Results saved to ../benchmarks/results/upcloud_python_scaling_20260310/python_scaling_benchmark.json

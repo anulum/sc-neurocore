@@ -9,8 +9,23 @@
 """Tests for Python StochasticAttention forward pass."""
 
 import numpy as np
+import pytest
 
 from sc_neurocore.layers.attention import StochasticAttention
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"dim_k": 0},
+        {"dim_k": 4, "temperature": 0.0},
+        {"dim_k": 4, "temperature": np.inf},
+        {"dim_k": 4, "sc_mode": "bipolar"},
+    ],
+)
+def test_attention_invalid_configuration_raises(kwargs):
+    with pytest.raises(ValueError):
+        StochasticAttention(**kwargs)
 
 
 def test_forward_shape():
@@ -51,6 +66,24 @@ def test_forward_single_key():
     out = attn.forward(Q, K, V)
     # With a single key, all queries must attend to it -> output = V
     np.testing.assert_allclose(out, np.tile(V, (3, 1)), atol=1e-12)
+
+
+def test_forward_rejects_dimension_mismatch():
+    attn = StochasticAttention(dim_k=4)
+    Q = np.ones((2, 4))
+    K = np.ones((3, 5))
+    V = np.ones((3, 2))
+    with pytest.raises(ValueError, match="K"):
+        attn.forward(Q, K, V)
+
+
+def test_forward_rejects_non_finite_inputs():
+    attn = StochasticAttention(dim_k=2)
+    Q = np.array([[np.nan, 0.0]])
+    K = np.ones((1, 2))
+    V = np.ones((1, 1))
+    with pytest.raises(ValueError, match="finite"):
+        attn.forward(Q, K, V)
 
 
 # -- forward_softmax tests --
@@ -102,3 +135,26 @@ def test_softmax_1d_inputs():
     out = attn.forward_softmax(q, k, v)
     assert out.shape == (1, 2)
     assert np.all(np.isfinite(out))
+
+
+def test_forward_bitstream_rejects_invalid_length():
+    attn = StochasticAttention(dim_k=2)
+    Q = np.ones((1, 2))
+    K = np.ones((1, 2))
+    V = np.ones((1, 1))
+    with pytest.raises(ValueError, match="length"):
+        attn.forward_bitstream(Q, K, V, length=0)
+
+
+@pytest.mark.parametrize(
+    ("Q", "K", "V", "message"),
+    [
+        (np.array([[1.1, 0.5]]), np.ones((1, 2)), np.ones((1, 1)), "Q"),
+        (np.ones((1, 2)), np.array([[-0.1, 0.5]]), np.ones((1, 1)), "K"),
+        (np.ones((1, 2)), np.ones((1, 2)), np.array([[1.1]]), "V"),
+    ],
+)
+def test_forward_bitstream_rejects_out_of_range_probabilities(Q, K, V, message):
+    attn = StochasticAttention(dim_k=2)
+    with pytest.raises(ValueError, match=message):
+        attn.forward_bitstream(Q, K, V, length=8)

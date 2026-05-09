@@ -7,15 +7,15 @@ stochastic computing (SC) neural networks — from individual neurons to full
 SCPN layer hierarchies, with both software simulation and Verilog RTL for
 FPGA deployment.
 
-**Version 3.14.0** | 173 neuron models | optional Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.14.0** | 174 neuron models | optional Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
 *Train in PyTorch → Quantise to Q8.8 → Simulate with stochastic bitstreams → Compile to SystemVerilog → Synthesise for FPGA. The Rust SIMD engine accelerates all stages.*
 
 ## Key Features
 
-- **173 neuron models** — McCulloch-Pitts (1943) through ArcaneNeuron (2026), 9 hardware chip emulators, 9 AI-optimised
-- **173 Rust neuron models** — PyO3 bindings, 160-model NetworkRunner with Rayon parallelism
+- **174 neuron models** — McCulloch-Pitts (1943) through ArcaneNeuron (2026), 9 hardware chip emulators, 9 AI-optimised
+- **174 Rust neuron models** — PyO3 bindings, 161-model NetworkRunner with Rayon parallelism
 - **ArcaneNeuron** — primary self-referential cognition model with 3 coupled compartments (fast / working / deep) + attention gate + self-model predictor
 - **Identity substrate** — persistent spiking network with checkpointing, trace encoding/decoding, L16 Director control
 - **Network simulation** — Population-Projection-Network with 3 backends (Python, Rust, MPI)
@@ -126,9 +126,8 @@ See [Architecture](architecture/architecture.md) for the full package map.
 
 ## Demo
 
-<!-- TODO: Replace with YouTube embed or hosted video when recorded -->
 See the [Neuron Explorer Notebook](https://github.com/anulum/sc-neurocore/blob/main/notebooks/04_neuron_explorer.ipynb)
-for an interactive walkthrough of all 173 neuron models with voltage traces,
+for an interactive walkthrough of all 174 neuron models with voltage traces,
 phase portraits, and F-I curves. The [NIR Bridge Notebook](https://github.com/anulum/sc-neurocore/blob/main/notebooks/05_nir_bridge.ipynb)
 demonstrates importing NIR graphs and simulating spiking networks. Or try the
 [Quickstart on Google Colab](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)

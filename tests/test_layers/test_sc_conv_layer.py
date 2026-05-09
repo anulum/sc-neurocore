@@ -62,6 +62,16 @@ def test_conv_forward_known_kernel():
     assert np.allclose(out, 8.0)
 
 
+def test_conv_bipolar_signed_kernel_and_input():
+    """Bipolar mode supports signed XNOR-equivalent products."""
+    layer = SCConv2DLayer(in_channels=1, out_channels=1, kernel_size=2, sc_mode="bipolar")
+    layer.kernels[:] = np.array([[[[1.0, -1.0], [0.5, -0.5]]]])
+    inp = np.array([[[1.0, -1.0], [-1.0, 1.0]]])
+    out = layer.forward(inp)
+    expected = np.array([[[1.0 + 1.0 - 0.5 - 0.5]]])
+    assert np.allclose(out, expected)
+
+
 def test_conv_deterministic_with_seed():
     """Setting numpy seed produces repeatable kernels."""
     np.random.seed(42)
@@ -77,6 +87,59 @@ def test_conv_input_channel_mismatch_raises():
     inp = np.ones((1, 5, 5))
     with pytest.raises(IndexError):
         layer.forward(inp)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"in_channels": 0, "out_channels": 1, "kernel_size": 3},
+        {"in_channels": 1, "out_channels": 0, "kernel_size": 3},
+        {"in_channels": 1, "out_channels": 1, "kernel_size": 0},
+        {"in_channels": 1, "out_channels": 1, "kernel_size": 3, "stride": 0},
+        {"in_channels": 1, "out_channels": 1, "kernel_size": 3, "padding": -1},
+        {"in_channels": 1, "out_channels": 1, "kernel_size": 3, "length": 0},
+        {"in_channels": 1, "out_channels": 1, "kernel_size": 3, "sc_mode": "ternary"},
+    ],
+)
+def test_conv_invalid_configuration_raises(kwargs):
+    """Invalid convolution configuration should fail at construction."""
+    with pytest.raises(ValueError):
+        SCConv2DLayer(**kwargs)
+
+
+def test_conv_unipolar_rejects_out_of_range_input():
+    """Unipolar mode should reject invalid probability values."""
+    layer = SCConv2DLayer(in_channels=1, out_channels=1, kernel_size=1)
+    with pytest.raises(ValueError, match="unipolar"):
+        layer.forward(np.array([[[1.01]]]))
+
+
+def test_conv_bipolar_rejects_out_of_range_input():
+    """Bipolar mode should reject values outside [-1, 1]."""
+    layer = SCConv2DLayer(in_channels=1, out_channels=1, kernel_size=1, sc_mode="bipolar")
+    with pytest.raises(ValueError, match="bipolar"):
+        layer.forward(np.array([[[-1.01]]]))
+
+
+def test_conv_rejects_empty_output_geometry():
+    """Kernels larger than the padded image should not produce silent empty output."""
+    layer = SCConv2DLayer(in_channels=1, out_channels=1, kernel_size=5)
+    with pytest.raises(ValueError, match="empty output"):
+        layer.forward(np.ones((1, 3, 3)))
+
+
+def test_conv_rejects_non_finite_input():
+    """NaN and infinity are invalid stochastic probabilities."""
+    layer = SCConv2DLayer(in_channels=1, out_channels=1, kernel_size=1)
+    with pytest.raises(ValueError, match="finite"):
+        layer.forward(np.array([[[np.nan]]]))
+
+
+def test_conv_rejects_rank_mismatch():
+    """Input tensors must be channel-first images."""
+    layer = SCConv2DLayer(in_channels=1, out_channels=1, kernel_size=1)
+    with pytest.raises(ValueError, match="shape"):
+        layer.forward(np.ones((3, 3)))
 
 
 def test_conv_padding_changes_output_size():

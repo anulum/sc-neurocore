@@ -21,6 +21,8 @@ import torch.nn as nn
 
 from .surrogate import atan_surrogate
 
+SurrogateFn = Callable[[torch.Tensor], torch.Tensor]
+
 
 @dataclass(frozen=True)
 class SCWeightNoiseModel:
@@ -61,22 +63,55 @@ def _coerce_sc_weight_noise_model(noise_model: SCWeightNoiseSpec) -> SCWeightNoi
     return SCWeightNoiseModel(**dict(noise_model))
 
 
-def _normalise_sc_weight_tensor(weight: torch.Tensor) -> torch.Tensor:
+def _normalise_sc_weight_tensor(weight: torch.Tensor, encoding: str = "unipolar") -> torch.Tensor:
+    if encoding not in {"unipolar", "bipolar"}:
+        raise ValueError("encoding must be 'unipolar' or 'bipolar'")
+    if encoding == "bipolar":
+        abs_max = weight.abs().max()
+        if abs_max > 0:
+            return weight / abs_max
+        return torch.zeros_like(weight)
+
     w_min, w_max = weight.min(), weight.max()
     if w_max > w_min:
         return (weight - w_min) / (w_max - w_min)
     return torch.zeros_like(weight)
 
 
+def _sc_weight_scale(weight: torch.Tensor, encoding: str = "unipolar") -> torch.Tensor:
+    if encoding == "bipolar":
+        abs_max = weight.abs().max()
+        if abs_max > 0:
+            return abs_max
+        return torch.ones((), dtype=weight.dtype, device=weight.device)
+    return torch.ones((), dtype=weight.dtype, device=weight.device)
+
+
+def _normalise_sc_bias_tensor(
+    bias: torch.Tensor,
+    scale: torch.Tensor,
+    encoding: str = "unipolar",
+) -> torch.Tensor:
+    if encoding == "bipolar":
+        return bias.detach() / scale
+    return bias.detach()
+
+
 def _apply_sc_weight_noise(
-    weight: torch.Tensor, model: SCWeightNoiseModel | None, layer_index: int
+    weight: torch.Tensor,
+    model: SCWeightNoiseModel | None,
+    layer_index: int,
+    encoding: str = "unipolar",
 ) -> torch.Tensor:
     if model is None or model.mode == "none":
         return weight
 
     generator = torch.Generator(device=weight.device)
     generator.manual_seed(model.seed + layer_index)
-    probabilities = weight.clamp(0.0, 1.0)
+    if encoding == "bipolar":
+        probabilities = ((weight.clamp(-1.0, 1.0) + 1.0) / 2.0).clamp(0.0, 1.0)
+    else:
+        probabilities = weight.clamp(0.0, 1.0)
 
     if model.mode == "binomial":
         samples = torch.rand(
@@ -85,7 +120,8 @@ def _apply_sc_weight_noise(
             device=probabilities.device,
             dtype=probabilities.dtype,
         )
-        return (samples < probabilities.unsqueeze(-1)).to(probabilities.dtype).mean(dim=-1)
+        noisy = (samples < probabilities.unsqueeze(-1)).to(probabilities.dtype).mean(dim=-1)
+        return 2.0 * noisy - 1.0 if encoding == "bipolar" else noisy
 
     noise = torch.randn(
         probabilities.shape,
@@ -93,7 +129,8 @@ def _apply_sc_weight_noise(
         device=probabilities.device,
         dtype=probabilities.dtype,
     )
-    return (probabilities + noise * model.sigma).clamp(0.0, 1.0)
+    noisy = (probabilities + noise * model.sigma).clamp(0.0, 1.0)
+    return 2.0 * noisy - 1.0 if encoding == "bipolar" else noisy
 
 
 class LIFCell(nn.Module):
@@ -108,7 +145,7 @@ class LIFCell(nn.Module):
         self,
         beta: float = 0.9,
         threshold: float = 1.0,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: SurrogateFn = atan_surrogate,
         learn_beta: bool = False,
         learn_threshold: bool = False,
     ):
@@ -153,7 +190,7 @@ class IFCell(nn.Module):
     def __init__(
         self,
         threshold: float = 1.0,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: SurrogateFn = atan_surrogate,
         learn_threshold: bool = False,
     ):
         super().__init__()
@@ -187,7 +224,7 @@ class SynapticCell(nn.Module):
         alpha: float = 0.9,
         beta: float = 0.8,
         threshold: float = 1.0,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: SurrogateFn = atan_surrogate,
         learn_beta: bool = False,
         learn_threshold: bool = False,
     ):
@@ -241,7 +278,7 @@ class ALIFCell(nn.Module):
         threshold: float = 1.0,
         rho: float = 0.99,
         beta_adapt: float = 1.8,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: SurrogateFn = atan_surrogate,
     ):
         super().__init__()
         self.beta = beta
@@ -278,7 +315,7 @@ class ExpIFCell(nn.Module):
         threshold: float = 1.0,
         delta_t: float = 0.5,
         v_rh: float = 0.8,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: SurrogateFn = atan_surrogate,
         learn_beta: bool = False,
         learn_threshold: bool = False,
     ):
@@ -330,7 +367,7 @@ class AdExCell(nn.Module):
         b: float = 0.1,
         rho: float = 0.99,
         v_rest: float = 0.0,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: SurrogateFn = atan_surrogate,
         learn_beta: bool = False,
         learn_threshold: bool = False,
     ):
@@ -389,7 +426,7 @@ class LapicqueCell(nn.Module):
         dt: float = 1.0,
         threshold: float = 1.0,
         v_rest: float = 0.0,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: SurrogateFn = atan_surrogate,
         learn_threshold: bool = False,
     ):
         super().__init__()
@@ -427,7 +464,7 @@ class AlphaCell(nn.Module):
         alpha_inh: float = 0.85,
         beta: float = 0.9,
         threshold: float = 1.0,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: SurrogateFn = atan_surrogate,
         learn_beta: bool = False,
         learn_threshold: bool = False,
     ):
@@ -484,7 +521,7 @@ class SecondOrderLIFCell(nn.Module):
         alpha: float = 0.95,
         beta: float = 0.9,
         threshold: float = 1.0,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: SurrogateFn = atan_surrogate,
         learn_beta: bool = False,
         learn_threshold: bool = False,
     ):
@@ -532,7 +569,7 @@ class RecurrentLIFCell(nn.Module):
         n_neurons: int,
         beta: float = 0.9,
         threshold: float = 1.0,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: SurrogateFn = atan_surrogate,
         learn_beta: bool = False,
         learn_threshold: bool = False,
     ):
@@ -547,7 +584,7 @@ class RecurrentLIFCell(nn.Module):
         v: torch.Tensor,
         spike_prev: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        return self.lif(current + self.recurrent(spike_prev), v)
+        return self.lif.forward(current + self.recurrent(spike_prev), v)
 
 
 class SpikingNet(nn.Module):
@@ -564,7 +601,7 @@ class SpikingNet(nn.Module):
         n_output: int,
         n_layers: int = 2,
         beta: float = 0.9,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: SurrogateFn = atan_surrogate,
         learn_beta: bool = False,
         learn_threshold: bool = False,
     ):
@@ -609,9 +646,12 @@ class SpikingNet(nn.Module):
         return spike_sum, mem_sum
 
     def to_sc_weights(
-        self, include_bias: bool = True, noise_model: SCWeightNoiseSpec = None
-    ) -> List[dict]:
-        """Export weight matrices normalised to [0,1] for SC bitstream deployment.
+        self,
+        include_bias: bool = True,
+        noise_model: SCWeightNoiseSpec = None,
+        encoding: str = "unipolar",
+    ) -> List[dict[str, Any]]:
+        """Export weight matrices for SC bitstream deployment.
 
         Parameters
         ----------
@@ -621,22 +661,28 @@ class SpikingNet(nn.Module):
             Optional deterministic export-time SC noise model. ``"binomial"``
             samples Bernoulli bitstreams and stores realised probabilities;
             ``"gaussian"`` adds clamped probability noise with ``sigma``.
+        encoding : {"unipolar", "bipolar"}
+            ``"unipolar"`` preserves the legacy [0, 1] export. ``"bipolar"``
+            preserves sign by normalising weights to [-1, 1] for XNOR SC.
 
         Returns
         -------
-        List of dicts with keys "weight" (Tensor [0,1]) and optionally "bias" (Tensor).
+        List of dicts with keys "weight" and optionally "bias" (Tensor).
         """
-        layers = []
+        layers: list[dict[str, Any]] = []
         model = _coerce_sc_weight_noise_model(noise_model)
         for layer_index, lin in enumerate(self.linears):
             lin_typed = cast(torch.nn.Linear, lin)
-            w = _normalise_sc_weight_tensor(lin_typed.weight.detach())
-            w = _apply_sc_weight_noise(w, model, layer_index)
-            entry: dict = {"weight": w}
+            scale = _sc_weight_scale(lin_typed.weight.detach(), encoding=encoding)
+            w = _normalise_sc_weight_tensor(lin_typed.weight.detach(), encoding=encoding)
+            w = _apply_sc_weight_noise(w, model, layer_index, encoding=encoding)
+            entry: dict[str, Any] = {"weight": w, "encoding": encoding}
+            if encoding == "bipolar":
+                entry["weight_scale"] = scale.detach()
             if model is not None:
                 entry["noise_model"] = model.metadata()
             if include_bias and lin_typed.bias is not None:
-                entry["bias"] = lin_typed.bias.detach()
+                entry["bias"] = _normalise_sc_bias_tensor(lin_typed.bias, scale, encoding)
             layers.append(entry)
         return layers
 
@@ -651,7 +697,7 @@ class ConvSpikingNet(nn.Module):
         self,
         n_output: int = 10,
         beta: float = 0.9,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: SurrogateFn = atan_surrogate,
         learn_beta: bool = False,
         learn_threshold: bool = False,
     ):
@@ -710,14 +756,17 @@ class ConvSpikingNet(nn.Module):
         return spike_sum, mem_sum
 
     def to_sc_weights(
-        self, include_bias: bool = True, noise_model: SCWeightNoiseSpec = None
-    ) -> List[dict]:
-        """Export weight matrices normalised to [0,1] for SC bitstream deployment.
+        self,
+        include_bias: bool = True,
+        noise_model: SCWeightNoiseSpec = None,
+        encoding: str = "unipolar",
+    ) -> List[dict[str, Any]]:
+        """Export weight matrices for SC bitstream deployment.
 
         Returns list of dicts with "weight" and optionally "bias" keys,
         matching SpikingNet.to_sc_weights() format.
         """
-        layers = []
+        layers: list[dict[str, Any]] = []
         model = _coerce_sc_weight_noise_model(noise_model)
         for layer_index, mod in enumerate([self.conv1, self.conv2, self.fc1, self.fc2]):
             w = (
@@ -725,13 +774,18 @@ class ConvSpikingNet(nn.Module):
                 if isinstance(mod, nn.Conv2d)
                 else mod.weight.detach()  # type: ignore[operator]
             )
-            w = _normalise_sc_weight_tensor(w)
-            w = _apply_sc_weight_noise(w, model, layer_index)
-            entry: dict[str, Any] = {"weight": w}
+            scale = _sc_weight_scale(w, encoding=encoding)
+            w = _normalise_sc_weight_tensor(w, encoding=encoding)
+            w = _apply_sc_weight_noise(w, model, layer_index, encoding=encoding)
+            entry: dict[str, Any] = {"weight": w, "encoding": encoding}
+            if encoding == "bipolar":
+                entry["weight_scale"] = scale.detach()
             if model is not None:
                 entry["noise_model"] = model.metadata()
             if include_bias and mod.bias is not None:
-                entry["bias"] = mod.bias.detach()  # type: ignore[operator]
+                entry["bias"] = _normalise_sc_bias_tensor(
+                    cast(torch.Tensor, mod.bias), scale, encoding
+                )
             layers.append(entry)
         return layers
 

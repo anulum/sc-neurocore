@@ -93,11 +93,11 @@ quadrantChart
 3. **Formal verification** — 67 SymbiYosys properties across 7 HDL
    modules (no other SNN framework offers formal proofs)
 4. **Rust SIMD engine** — AVX-512/AVX2/NEON/SVE/RVV dispatch with
-   173 Rust neuron models with PyO3 bindings, 160-model NetworkRunner
+   174 Rust neuron models with PyO3 bindings, 161-model NetworkRunner
 5. **Network simulation** — 3 backends (Python, Rust, MPI), 6 topology
    generators, 10 model zoo configs, 3 pre-trained weight sets
-6. **Analysis toolkit** — 128 spike train analysis functions across
-   23 modules, matching Elephant + PySpike combined
+6. **Analysis toolkit** — 132 spike train analysis functions across
+   24 modules, matching Elephant + PySpike combined
 7. **ArcaneNeuron** — self-referential cognition model with 5 coupled
    subsystems (no equivalent in any other toolkit)
 8. **Identity substrate** — persistent spiking network with checkpointing,

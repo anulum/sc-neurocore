@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Phase 1 Credibility Validation (Kaggle runner)
 #
-# Run on Kaggle with: pip install sc-neurocore && python phase1_credibility_validation.py
+# Run on Kaggle with: pip install sc-neurocore && python credibility_validation.py
 # Or copy cells into a Kaggle notebook.
 #
 # Validates:
@@ -643,7 +643,7 @@ def main():
         "all_results": RESULTS,
     }
 
-    out_path = Path("phase1_validation_results.json")
+    out_path = Path("credibility_validation_results.json")
     with open(out_path, "w") as f:
         json.dump(output, f, indent=2, default=str)
     print(f"\n  Results saved: {out_path}")

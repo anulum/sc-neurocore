@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 from collections.abc import Sequence
 import numpy as np
 
@@ -42,11 +42,16 @@ class BitstreamCurrentSource:
     y_min: float = 0.0  # output current min
     y_max: float = 0.1  # output current max
     seed: Optional[int] = None
+    sc_mode: str = "unipolar"
 
     def __post_init__(self) -> None:
         self.n_inputs = len(self.x_inputs)
+        if self.n_inputs < 1:
+            raise ValueError("BitstreamCurrentSource requires at least one input.")
         if len(self.weight_values) != self.n_inputs:
             raise ValueError("x_inputs and weight_values must have same length.")
+        if self.sc_mode not in {"unipolar", "bipolar"}:
+            raise ValueError("sc_mode must be 'unipolar' or 'bipolar'.")
 
         # Encoders for input channels
         self._encoders: List[BitstreamEncoder] = []
@@ -57,6 +62,7 @@ class BitstreamCurrentSource:
                     x_max=self.x_max,
                     length=self.length,
                     seed=None if self.seed is None else self.seed + i,
+                    mode="bipolar" if self.sc_mode == "bipolar" else "bernoulli",
                 )
             )
 
@@ -65,29 +71,56 @@ class BitstreamCurrentSource:
         for i, (enc, x) in enumerate(zip(self._encoders, self.x_inputs)):
             self.pre_matrix[i] = enc.encode(x)
 
-        # Build synapses
         self.synapses: List[BitstreamSynapse] = []
-        for i, w in enumerate(self.weight_values):
-            self.synapses.append(
-                BitstreamSynapse(
-                    w_min=self.w_min,
-                    w_max=self.w_max,
-                    length=self.length,
-                    w=w,
-                    seed=None if self.seed is None else self.seed + 1000 + i,
+        self.dot: BitstreamDotProduct | None = None
+        if self.sc_mode == "bipolar":
+            self.dot = None
+            self.post_matrix, self.current_scalar = self._apply_bipolar_xnor()
+        else:
+            # Build synapses
+            for i, w in enumerate(self.weight_values):
+                self.synapses.append(
+                    BitstreamSynapse(
+                        w_min=self.w_min,
+                        w_max=self.w_max,
+                        length=self.length,
+                        w=w,
+                        seed=None if self.seed is None else self.seed + 1000 + i,
+                    )
                 )
+
+            # Dot-product engine
+            self.dot = BitstreamDotProduct(self.synapses)
+
+            # Post-synaptic streams and scalar current
+            self.post_matrix, self.current_scalar = self.dot.apply(
+                self.pre_matrix, y_min=self.y_min, y_max=self.y_max
             )
-
-        # Dot-product engine
-        self.dot = BitstreamDotProduct(self.synapses)
-
-        # Post-synaptic streams and scalar current
-        self.post_matrix, self.current_scalar = self.dot.apply(
-            self.pre_matrix, y_min=self.y_min, y_max=self.y_max
-        )
 
         # We'll treat each timestep as one index in the bitstreams
         self._t = 0
+
+    def _apply_bipolar_xnor(self) -> tuple[np.ndarray[Any, Any], float]:
+        weight_matrix = np.zeros((self.n_inputs, self.length), dtype=np.uint8)
+        for i, w in enumerate(self.weight_values):
+            weight_encoder = BitstreamEncoder(
+                x_min=self.w_min,
+                x_max=self.w_max,
+                length=self.length,
+                seed=None if self.seed is None else self.seed + 1000 + i,
+                mode="bipolar",
+            )
+            weight_matrix[i] = weight_encoder.encode(w)
+
+        post_matrix = (self.pre_matrix == weight_matrix).astype(np.uint8)
+        products = 2.0 * post_matrix.mean(axis=1) - 1.0
+        bipolar_mean = float(products.mean()) if products.size else 0.0
+        current = self._map_bipolar_to_current(bipolar_mean)
+        return post_matrix, current
+
+    def _map_bipolar_to_current(self, value: float) -> float:
+        clipped = max(min(value, 1.0), -1.0)
+        return float(self.y_min + ((clipped + 1.0) / 2.0) * (self.y_max - self.y_min))
 
     def reset(self) -> None:
         self._t = 0
@@ -106,6 +139,13 @@ class BitstreamCurrentSource:
 
         # Retrieve bits from all post-synaptic streams at time idx
         bits = self.post_matrix[:, idx]
+
+        if self.sc_mode == "bipolar":
+            prob = float(bits.mean()) if bits.size else 0.5
+            bipolar_value = 2.0 * prob - 1.0
+            I_t = self._map_bipolar_to_current(bipolar_value)
+            self._t += 1
+            return float(I_t)
 
         # Sum bits and normalize
         n_ones = int(bits.sum())

@@ -54,6 +54,13 @@ and recorders into reusable building blocks.
 
 ## JAX Dense Layer
 
+`JaxSCDenseLayer` accepts dense inputs shaped `(n_inputs,)` or `(T, n_inputs)`
+and projects them through a validated `(n_neurons, n_inputs)` weight matrix.
+It also accepts direct current vectors shaped `(n_neurons,)` or
+`(T, n_neurons)` for low-level LIF experiments. Constructor and runtime inputs
+validate dimensions, finite values, dense weight shape, known neuron parameter
+keys, and JAX PRNG seed range before backend execution.
+
 ::: sc_neurocore.layers.jax_dense_layer.JaxSCDenseLayer
 
 ## Hardware-Aware SC Layer

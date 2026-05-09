@@ -44,15 +44,7 @@ def _detect_mojo() -> bool:
     pixi = os.path.expanduser("~/.pixi/bin/pixi")
     if not os.path.exists(pixi):
         return False
-    kernel_dir = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "..",
-        "..",
-        "VISION2030",
-        "phase1_industrial",
-        "cuda_mojo",
-    )
+    kernel_dir = os.path.join(os.path.dirname(__file__), "mojo")
     kernel_dir = os.path.normpath(kernel_dir)
     if os.path.exists(os.path.join(kernel_dir, "kernels.mojo")):
         _MOJO_BIN = kernel_dir

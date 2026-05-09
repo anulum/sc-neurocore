@@ -63,6 +63,33 @@ class TestLCFIsolation:
             traces.append(trace)
         assert traces[0] == traces[1]
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"n_units": 0},
+            {"tau": 0.0},
+            {"tau": np.inf},
+            {"v_threshold": np.nan},
+            {"w_inh": -0.1},
+            {"w_inh": np.inf},
+            {"dt": 0.0},
+            {"dt": np.inf},
+        ],
+    )
+    def test_invalid_configuration_raises(self, kwargs):
+        with pytest.raises(ValueError):
+            LeakyCompeteFireNeuron(**kwargs)
+
+    def test_step_rejects_current_length_mismatch(self):
+        n = LeakyCompeteFireNeuron(n_units=3)
+        with pytest.raises(ValueError, match="length"):
+            n.step([1.0, 2.0])
+
+    def test_step_rejects_non_finite_current(self):
+        n = LeakyCompeteFireNeuron(n_units=2)
+        with pytest.raises(ValueError, match="finite"):
+            n.step([1.0, np.nan])
+
 
 # ---------------------------------------------------------------------------
 # 2. ANALYTICAL — WTA mechanism, lateral inhibition

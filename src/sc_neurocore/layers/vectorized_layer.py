@@ -8,11 +8,11 @@
 
 from __future__ import annotations
 from typing import Any
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import numpy as np
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
-from ..accel.vector_ops import pack_bitstream, vec_and
+from ..accel.vector_ops import pack_bitstream, vec_and, vec_xnor
 from ..accel.gpu_backend import (
     HAS_CUPY,
     to_device,
@@ -56,6 +56,30 @@ def _popcount_rows(packed: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     return result
 
 
+def _bipolar_prob(values: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    result: np.ndarray[Any, Any] = ((values + 1.0) / 2.0).clip(0.0, 1.0)
+    return result
+
+
+def _mask_unused_tail_bits(packed: np.ndarray[Any, Any], length: int) -> np.ndarray[Any, Any]:
+    valid_tail = length % 64
+    if valid_tail == 0:
+        return packed
+    masked = packed.copy()
+    mask = np.uint64((1 << valid_tail) - 1)
+    masked[..., -1] = masked[..., -1] & mask
+    return masked
+
+
+def _as_float_array(value: Any, name: str) -> np.ndarray[Any, Any]:
+    if hasattr(value, "detach"):
+        value = value.detach().cpu().numpy()
+    array = np.asarray(value, dtype=np.float64)
+    if not np.all(np.isfinite(array)):
+        raise ValueError(f"{name} contains NaN or Inf")
+    return array
+
+
 @dataclass
 class VectorizedSCLayer:
     """
@@ -81,6 +105,10 @@ class VectorizedSCLayer:
     use_gpu: bool = True
     sparse: bool = False
     connectivity: float = 1.0
+    sc_mode: str = "unipolar"
+    seed: int | None = None
+    bias: Sequence[float] | None = None
+    _rng: np.random.Generator | None = field(init=False, repr=False, default=None)
 
     def __post_init__(self) -> None:
         if self.n_inputs < 1:
@@ -93,22 +121,117 @@ class VectorizedSCLayer:
             raise ImportError("scipy is required for sparse=True")
         if not 0.0 < self.connectivity <= 1.0:
             raise ValueError(f"connectivity must be in (0, 1], got {self.connectivity}")
+        if self.sc_mode not in {"unipolar", "bipolar"}:
+            raise ValueError("sc_mode must be 'unipolar' or 'bipolar'")
+        self.bias_values: np.ndarray[Any, Any] | None = None
+        if self.bias is not None:
+            bias = _as_float_array(self.bias, "bias")
+            if bias.ndim != 1 or bias.shape[0] != self.n_neurons:
+                raise ValueError(
+                    f"bias must be a 1-D vector of length {self.n_neurons}, got {bias.shape}"
+                )
+            self.bias_values = bias
+        self._rng = np.random.default_rng(self.seed) if self.seed is not None else None
 
-        self._on_gpu = self.use_gpu and HAS_CUPY
+        self._on_gpu = self.use_gpu and HAS_CUPY and self.sc_mode == "unipolar"
 
         if self.sparse:
             self._init_sparse()
         else:
-            self.weights = np.random.uniform(0.0, 1.0, (self.n_neurons, self.n_inputs))
+            weight_low, weight_high = (-1.0, 1.0) if self.sc_mode == "bipolar" else (0.0, 1.0)
+            self.weights = self._uniform(weight_low, weight_high, (self.n_neurons, self.n_inputs))
             self.packed_weights: np.ndarray[Any, Any] | None = None
             self._refresh_packed_weights()
 
-    # -- Dense path (unchanged) ------------------------------------------------
+    @classmethod
+    def from_exported_weights(
+        cls,
+        exported_layer: Mapping[str, Any],
+        *,
+        length: int = LAYER_DEFAULT_LENGTH,
+        use_gpu: bool = True,
+        sparse: bool = False,
+        connectivity: float = 1.0,
+        sc_mode: str | None = None,
+        seed: int | None = None,
+    ) -> "VectorizedSCLayer":
+        """Build a packed SC inference layer from ``to_sc_weights()`` output."""
+        if "weight" not in exported_layer:
+            raise ValueError("exported_layer must contain a 'weight' entry")
+        weights = _as_float_array(exported_layer["weight"], "weight")
+        if weights.ndim != 2:
+            raise ValueError(f"weight must be a 2-D matrix, got {weights.shape}")
+
+        exported_encoding = str(exported_layer.get("encoding", "unipolar"))
+        resolved_mode = exported_encoding if sc_mode is None else sc_mode
+        if resolved_mode != exported_encoding:
+            raise ValueError(
+                f"sc_mode {resolved_mode!r} does not match exported encoding {exported_encoding!r}"
+            )
+        if resolved_mode not in {"unipolar", "bipolar"}:
+            raise ValueError("exported encoding must be 'unipolar' or 'bipolar'")
+
+        if resolved_mode == "bipolar":
+            if np.any(weights < -1.0) or np.any(weights > 1.0):
+                raise ValueError("bipolar exported weights must be in [-1, 1]")
+        elif np.any(weights < 0.0) or np.any(weights > 1.0):
+            raise ValueError("unipolar exported weights must be in [0, 1]")
+
+        bias = exported_layer.get("bias")
+        layer = cls(
+            n_inputs=int(weights.shape[1]),
+            n_neurons=int(weights.shape[0]),
+            length=length,
+            use_gpu=use_gpu,
+            sparse=sparse,
+            connectivity=connectivity,
+            sc_mode=resolved_mode,
+            seed=seed,
+            bias=bias,
+        )
+        if seed is not None:
+            layer._rng = np.random.default_rng(seed)
+        if sparse:
+            sp = _get_scipy_sparse()
+            layer.weights_csr = sp.csr_matrix(weights)
+            layer._pack_sparse_weights()
+        else:
+            layer.weights = weights.copy()
+            layer._refresh_packed_weights()
+        return layer
+
+    def _random(self, size: int | tuple[int, ...]) -> np.ndarray[Any, Any]:
+        if self._rng is not None:
+            return self._rng.random(size)
+        result: np.ndarray[Any, Any] = np.random.random(size)
+        return result
+
+    def _uniform(
+        self, low: float, high: float, size: int | tuple[int, ...]
+    ) -> np.ndarray[Any, Any]:
+        if self._rng is not None:
+            return self._rng.uniform(low, high, size)
+        result: np.ndarray[Any, Any] = np.random.uniform(low, high, size)
+        return result
+
+    def _choice(self, n_items: int, size: int) -> np.ndarray[Any, Any]:
+        if self._rng is not None:
+            return self._rng.choice(n_items, size=size, replace=False)
+        result: np.ndarray[Any, Any] = np.random.choice(n_items, size=size, replace=False)
+        return result
+
+    def _apply_bias(self, outputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        if self.bias_values is None:
+            return outputs
+        result: np.ndarray[Any, Any] = outputs + self.bias_values
+        return result
+
+    # -- Dense path ------------------------------------------------------------
 
     def _refresh_packed_weights(self) -> None:
-        w_probs = self.weights
+        w_probs = _bipolar_prob(self.weights) if self.sc_mode == "bipolar" else self.weights
         bits = (
-            np.random.random((self.n_neurons, self.n_inputs, self.length)) < w_probs[:, :, None]
+            self._random((self.n_neurons, self.n_inputs, self.length)) < w_probs[:, :, None]
         ).astype(np.uint8)
 
         flat = bits.reshape(-1, self.length)
@@ -126,9 +249,10 @@ class VectorizedSCLayer:
         sp = _get_scipy_sparse()
         n_total = self.n_neurons * self.n_inputs
         n_nonzero = max(1, int(round(n_total * self.connectivity)))
-        indices = np.random.choice(n_total, size=n_nonzero, replace=False)
+        indices = self._choice(n_total, size=n_nonzero)
         rows, cols = np.divmod(indices, self.n_inputs)
-        weight_vals = np.random.uniform(0.0, 1.0, n_nonzero)
+        weight_low, weight_high = (-1.0, 1.0) if self.sc_mode == "bipolar" else (0.0, 1.0)
+        weight_vals = self._uniform(weight_low, weight_high, n_nonzero)
 
         self.mask_csr = sp.csr_matrix(
             (np.ones(n_nonzero, dtype=np.float32), (rows, cols)),
@@ -147,7 +271,8 @@ class VectorizedSCLayer:
         self._sparse_packed = np.empty((csr.nnz, n_words), dtype=np.uint64)
         for k in range(csr.nnz):
             w = csr.data[k]
-            bits = (np.random.random(self.length) < w).astype(np.uint8)
+            p = (w + 1.0) / 2.0 if self.sc_mode == "bipolar" else w
+            bits = (self._random(self.length) < p).astype(np.uint8)
             self._sparse_packed[k] = pack_bitstream(bits)
 
     # -- Forward ---------------------------------------------------------------
@@ -161,7 +286,10 @@ class VectorizedSCLayer:
             )
         if not np.all(np.isfinite(in_probs)):
             raise ValueError("Input contains NaN or Inf")
-        if np.any(in_probs < 0.0) or np.any(in_probs > 1.0):
+        if self.sc_mode == "bipolar":
+            if np.any(in_probs < -1.0) or np.any(in_probs > 1.0):
+                raise ValueError("Bipolar input values must be in [-1, 1]")
+        elif np.any(in_probs < 0.0) or np.any(in_probs > 1.0):
             raise ValueError("Input probabilities must be in [0, 1]")
 
         if self.sparse:
@@ -169,7 +297,8 @@ class VectorizedSCLayer:
         return self._forward_dense(in_probs)
 
     def _forward_dense(self, in_probs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-        input_bits = (np.random.random((self.n_inputs, self.length)) < in_probs[:, None]).astype(
+        input_probs = _bipolar_prob(in_probs) if self.sc_mode == "bipolar" else in_probs
+        input_bits = (self._random((self.n_inputs, self.length)) < input_probs[:, None]).astype(
             np.uint8
         )
         packed_inputs = pack_bitstream(input_bits)
@@ -180,33 +309,48 @@ class VectorizedSCLayer:
             outputs = to_host(counts).astype(np.float64)
         else:
             assert self.packed_weights is not None
-            products = vec_and(self.packed_weights, packed_inputs[None, :, :])
-            flat_products = products.reshape(self.n_neurons, -1)
-            outputs = _popcount_rows(flat_products)
+            if self.sc_mode == "bipolar":
+                products = vec_xnor(self.packed_weights, packed_inputs[None, :, :])
+                products = _mask_unused_tail_bits(products, self.length)
+                flat_products = products.reshape(-1, products.shape[-1])
+                counts = _popcount_rows(flat_products).reshape(self.n_neurons, self.n_inputs)
+                outputs = ((2.0 * counts / self.length) - 1.0).sum(axis=1)
+            else:
+                products = vec_and(self.packed_weights, packed_inputs[None, :, :])
+                flat_products = products.reshape(self.n_neurons, -1)
+                outputs = _popcount_rows(flat_products)
 
-        return outputs / self.length
+        result = outputs if self.sc_mode == "bipolar" else outputs / self.length
+        return self._apply_bias(result)
 
     def _forward_sparse(self, in_probs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-        input_bits = (np.random.random((self.n_inputs, self.length)) < in_probs[:, None]).astype(
+        input_probs = _bipolar_prob(in_probs) if self.sc_mode == "bipolar" else in_probs
+        input_bits = (self._random((self.n_inputs, self.length)) < input_probs[:, None]).astype(
             np.uint8
         )
         packed_inputs = pack_bitstream(input_bits)
 
         csr = self.weights_csr
-        if csr.nnz == 0:  # pragma: no cover
-            return np.zeros(self.n_neurons, dtype=np.float64)
+        if csr.nnz == 0:
+            return self._apply_bias(np.zeros(self.n_neurons, dtype=np.float64))
 
         if self._on_gpu:  # pragma: no cover
-            return self._forward_sparse_gpu(packed_inputs)
+            return self._apply_bias(self._forward_sparse_gpu(packed_inputs))
 
         gathered_inputs = packed_inputs[csr.indices]
-        products = vec_and(self._sparse_packed, gathered_inputs)
+        if self.sc_mode == "bipolar":
+            products = vec_xnor(self._sparse_packed, gathered_inputs)
+            products = _mask_unused_tail_bits(products, self.length)
+        else:
+            products = vec_and(self._sparse_packed, gathered_inputs)
         counts = _popcount_rows(products)
+        terms = (2.0 * counts / self.length) - 1.0 if self.sc_mode == "bipolar" else counts
 
         outputs = np.zeros(self.n_neurons, dtype=np.float64)
-        np.add.at(outputs, np.repeat(np.arange(self.n_neurons), np.diff(csr.indptr)), counts)
+        np.add.at(outputs, np.repeat(np.arange(self.n_neurons), np.diff(csr.indptr)), terms)
 
-        return outputs / self.length
+        result = outputs if self.sc_mode == "bipolar" else outputs / self.length
+        return self._apply_bias(result)
 
     def _forward_sparse_gpu(
         self, packed_inputs: np.ndarray[Any, Any]

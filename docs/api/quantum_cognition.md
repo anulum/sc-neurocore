@@ -685,7 +685,6 @@ Internal:
 
 - Quantum hardware layer: [`api/quantum.md`](quantum.md) (if exists)
 - Network integration: [`api/network.md`](network.md)
-- GOTM Brain TODO: [`internal/TODO_GOTM_BRAIN.md`](../internal/TODO_GOTM_BRAIN.md)
 - CROSSREPO BINDER MANUAL: [`internal/CROSSREPO BINDER MANUAL .md`](../internal/CROSSREPO%20BINDER%20MANUAL%20.md)
 - IBM Quantum Hardware Verification: [`internal/IBM_QUANTUM_VERIFICATION.md`](../internal/IBM_QUANTUM_VERIFICATION.md)
 

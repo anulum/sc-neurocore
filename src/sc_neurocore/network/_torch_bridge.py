@@ -27,7 +27,7 @@ from sc_neurocore.training.snn_modules import LapicqueCell
 from sc_neurocore.training.surrogate import atan_surrogate_custom_op
 
 from .population import Population
-from .projection import Projection
+from .projection import Projection, validate_csr_topology
 
 
 @dataclass(frozen=True)
@@ -54,6 +54,17 @@ def _csr_mask(projection: Projection) -> np.ndarray:
             tgt_idx = projection.indices[k]
             mask[tgt_idx, src_idx] = 1.0
     return mask
+
+
+def _validate_projection_csr(projection: Projection) -> None:
+    validate_csr_topology(
+        projection.indptr,
+        projection.indices,
+        projection.data,
+        projection.source.n,
+        projection.target.n,
+        context="Network.to_torch() projection",
+    )
 
 
 def _build_population_spec(
@@ -123,7 +134,7 @@ def _build_population_spec(
     )
 
 
-class NetworkTorchBridge(nn.Module):  # type: ignore[misc]
+class NetworkTorchBridge(nn.Module):
     """Differentiable bridge for a bounded subset of declarative ``Network`` graphs."""
 
     def __init__(
@@ -133,6 +144,21 @@ class NetworkTorchBridge(nn.Module):  # type: ignore[misc]
         surrogate_fn: Callable[[torch.Tensor], torch.Tensor] = atan_surrogate_custom_op,
     ) -> None:
         super().__init__()
+        if not populations:
+            raise ValueError("Network.to_torch() requires at least one population")
+        for population in populations:
+            if population.n <= 0:
+                raise ValueError("Network.to_torch() requires populations with n > 0")
+        population_ids = {id(population) for population in populations}
+        for projection in projections:
+            if (
+                id(projection.source) not in population_ids
+                or id(projection.target) not in population_ids
+            ):
+                raise ValueError(
+                    "Network.to_torch() projection endpoints must belong to the network"
+                )
+
         self.populations = populations
         self.projections = projections
         self.surrogate_fn = surrogate_fn
@@ -152,6 +178,13 @@ class NetworkTorchBridge(nn.Module):  # type: ignore[misc]
         self.output_dim = sum(
             self.population_specs[pid].population.n for pid in self._output_population_ids
         )
+        if self.input_dim <= 0:
+            raise ValueError("Network.to_torch() resolved an empty input surface")
+        if self.output_dim <= 0:
+            raise ValueError("Network.to_torch() resolved an empty output surface")
+        output_labels = [self.population_specs[pid].label for pid in self._output_population_ids]
+        if len(output_labels) != len(set(output_labels)):
+            raise ValueError("Network.to_torch() output population labels must be unique")
 
         self._projection_names: dict[int, str] = {}
         for index, projection in enumerate(projections):
@@ -163,6 +196,7 @@ class NetworkTorchBridge(nn.Module):  # type: ignore[misc]
                 raise NotImplementedError(
                     "Network.to_torch() does not support delayed projections yet"
                 )
+            _validate_projection_csr(projection)
             name = f"proj_{index}"
             self._projection_names[id(projection)] = name
             self.register_parameter(
@@ -188,6 +222,8 @@ class NetworkTorchBridge(nn.Module):  # type: ignore[misc]
         name = self._projection_names[id(projection)]
         weight = getattr(self, f"{name}_weight")
         mask = getattr(self, f"{name}_mask")
+        if not isinstance(weight, torch.Tensor) or not isinstance(mask, torch.Tensor):
+            raise TypeError("registered projection tensors are corrupted")
         return weight * mask
 
     def _initial_state(
@@ -222,6 +258,12 @@ class NetworkTorchBridge(nn.Module):  # type: ignore[misc]
             )
         if inputs.shape[2] != self.input_dim:
             raise ValueError(f"Expected input_dim={self.input_dim}, got {inputs.shape[2]}")
+        if inputs.shape[0] <= 0:
+            raise ValueError("Network.to_torch() requires at least one timestep")
+        if not torch.is_floating_point(inputs):
+            raise ValueError("Network.to_torch() inputs must be floating-point tensors")
+        if not torch.isfinite(inputs).all():
+            raise ValueError("Network.to_torch() inputs must contain only finite values")
 
         timesteps, batch, _ = inputs.shape
         device = inputs.device

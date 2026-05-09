@@ -69,7 +69,7 @@ cargo bench --bench analysis_bench -- --quick
 | ExpIF | 25.0 µs | 237 µs | **24 ns** |
 | AdEx | 29.1 µs | 291 µs | **29 ns** |
 
-### Interneurons (`neurons/interneurons.rs`) — Phase 3A
+### Interneurons (`neurons/interneurons.rs`) — Interneuron model group
 
 | Model | 1k steps | Per step | Sub-steps | Notes |
 |-------|----------|----------|-----------|-------|
@@ -84,7 +84,7 @@ cargo bench --bench analysis_bench -- --quick
 > for Wang-Buzsáki gating stability. SST/VIP/Martinotti use 4 sub-steps
 > (dt=0.025 ms, 0.1 ms per call) with Pospischil-style gating.
 
-### Sensory Neurons (`neurons/sensory.rs`) — Phase 3B
+### Sensory Neurons (`neurons/sensory.rs`) — Sensory model group
 
 | Model | 10k steps | Per step | Type | Notes |
 |-------|-----------|----------|------|-------|
@@ -99,7 +99,7 @@ cargo bench --bench analysis_bench -- --quick
 > Sensory models use simple Euler integration (no sub-stepping).
 > Measured 2026-04-05 on i5-11600K @ 3.90 GHz.
 
-### Motor Neurons (`neurons/motor.rs`) — Phase 3C
+### Motor Neurons (`neurons/motor.rs`) — Motor model group
 
 | Model | 1k steps | Per step | Sub-steps | Notes |
 |-------|----------|----------|-----------|-------|
@@ -112,7 +112,7 @@ cargo bench --bench analysis_bench -- --quick
 > Alpha motor is the most expensive per-step model due to WB gating (50 sub-steps),
 > PIC evaluation, Ca2+ dynamics, and AHP computation at each sub-step.
 
-### Cerebellar Neurons (`neurons/cerebellar.rs`) — Phase 3D
+### Cerebellar Neurons (`neurons/cerebellar.rs`) — Cerebellar model group
 
 | Model | Steps | Median | Per step | Sub-steps | Notes |
 |-------|-------|--------|----------|-----------|-------|
@@ -126,7 +126,7 @@ cargo bench --bench analysis_bench -- --quick
 > Granule cell uses simple Euler integration with T-type Ca2+ gating for
 > rebound bursting. No sub-stepping needed.
 
-### Ion Channel Variant Neurons (`neurons/channels.rs`) — Phase 3E
+### Ion Channel Variant Neurons (`neurons/channels.rs`) — Ion-channel variant group
 
 | Model | Steps | Median | Per step | Sub-steps | Notes |
 |-------|-------|--------|----------|-----------|-------|
@@ -138,7 +138,7 @@ cargo bench --bench analysis_bench -- --quick
 | SK (Ca²⁺-K+) | 1k | 4.35 ms | **4.35 µs** | 50 | WB + SK medium AHP |
 | NMDA receptor | 1k | 4.81 ms | **4.81 µs** | 50 | WB + NMDA + Mg²⁺ block |
 
-### Map Neurons (`neurons/maps.rs`) — Phase 3F
+### Map Neurons (`neurons/maps.rs`) — Map-neuron model group
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
@@ -146,7 +146,7 @@ cargo bench --bench analysis_bench -- --quick
 | Kilinc-Bhatt map | 100k | 2.45 ms | **24.5 ns** | Adaptive threshold map |
 | Ermentrout-Kopell | 100k | 2.90 ms | **29.0 ns** | Canonical Type I (theta) |
 
-### Population / Mean-Field (`neurons/population.rs`) — Phase 3G
+### Population / Mean-Field (`neurons/population.rs`) — Population and mean-field model group
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
@@ -155,7 +155,7 @@ cargo bench --bench analysis_bench -- --quick
 | TUM (STP) | 100k | 3.03 ms | **30.3 ns** | Rate + depression + facilitation, 3 ODEs |
 | El Boustani (NMDA) | 100k | 2.74 ms | **27.4 ns** | E/I + NMDA gating, 3 ODEs |
 
-### Miscellaneous (`neurons/misc.rs`) — Phase 3H
+### Miscellaneous (`neurons/misc.rs`) — Miscellaneous model group
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|

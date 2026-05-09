@@ -8,7 +8,7 @@
 
 //! Cerebellar circuit neuron models for granular and molecular layer computations.
 //!
-//! Phase 3D: granule cell, Golgi cell, stellate cell, Lugaro cell,
+//! Cerebellar model group: granule cell, Golgi cell, stellate cell, Lugaro cell,
 //! unipolar brush cell, deep cerebellar nuclei neuron.
 //! Added one by one with full 7-point checklist verification.
 

@@ -1,16 +1,16 @@
 # Roadmap
 
-> Last updated: 2026-05-06. Priorities may shift based on
+> Last updated: 2026-05-07. Priorities may shift based on
 > validation results and community feedback.
 
-## Current Maintenance Snapshot — 2026-04-28
+## Current Maintenance Snapshot — 2026-05-07
 
-- Mainline CI was last verified green before the coverage-recovery branch.
+- Mainline CI was verified green on 2026-05-07 after the historical
+  non-green GitHub Actions cleanup.
 - Coverage is being recovered in staged slices. The active branch raises the
   Python gate to 96%; 100% remains the target, not the current release claim.
-- Open production blockers are tracked in the internal audit index: HDL
-  identifier sanitisation, C FFI contiguity validation, stochastic-source RTL
-  parity wiring, and follow-up numerical-integrator parity work.
+- Open production blockers are tracked in internal audit and roadmap files.
+  Do not use public docs as the source of truth for detailed task queues.
 - Cross-repository validation must confirm the SCPN datastream contract with
   SCPN-QUANTUM-CONTROL and SCPN-PHASE-ORCHESTRATOR before claiming bridge
   readiness.
@@ -188,11 +188,12 @@ Feature-gated wgpu backend for DenseLayer stochastic computing:
 - 4 Metaplasticity rules (STDP, BCM, R-STDP, ELIGENT).
 - **Available now via v4.1**: Fully functional, verified natively on `rust-wgpu` parallel cross-platform frameworks supporting massive scale edge deployments natively.
 
-### ~~Model documentation upgrade~~ in progress
+### Model documentation upgrade — in progress
 
 Per-model documentation pages (567+ lines each) with equations, parameters,
-defaults, benchmarks — all verified against Rust source. 38/122 complete,
-84 remaining.
+defaults, benchmarks, tests, and benchmark artefacts. Current machine-audited
+coverage is tracked by timestamped manifests in `docs/internal/`; human
+scientific review remains the promotion gate.
 
 ### ~~WaveformCodec~~ ✓
 

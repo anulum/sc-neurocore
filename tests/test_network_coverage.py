@@ -13,6 +13,7 @@ coverage audit."""
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from sc_neurocore import StochasticLIFNeuron
 from sc_neurocore.network.population import Population
@@ -184,6 +185,74 @@ class TestProjectionCoverage:
         tgt_sp = np.zeros(5, dtype=np.int8)
         tgt_sp[0] = 1
         proj.update_plasticity(src_sp, tgt_sp, directional_bias=1.36)
+
+    @pytest.mark.parametrize(
+        ("topology", "message"),
+        [
+            (
+                (
+                    np.array([0, 1], dtype=np.int64),
+                    np.array([0], dtype=np.int64),
+                    np.array([1.0], dtype=np.float64),
+                ),
+                "indptr",
+            ),
+            (
+                (
+                    np.array([0.0, 1.0, 1.0], dtype=np.float64),
+                    np.array([0], dtype=np.int64),
+                    np.array([1.0], dtype=np.float64),
+                ),
+                "indptr",
+            ),
+            (
+                (
+                    np.array([0, 2, 1], dtype=np.int64),
+                    np.array([0], dtype=np.int64),
+                    np.array([1.0], dtype=np.float64),
+                ),
+                "monotonic",
+            ),
+            (
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array([0.0], dtype=np.float64),
+                    np.array([1.0], dtype=np.float64),
+                ),
+                "indices",
+            ),
+            (
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array([2], dtype=np.int64),
+                    np.array([1.0], dtype=np.float64),
+                ),
+                "indices",
+            ),
+            (
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array([0], dtype=np.int64),
+                    np.array([1.0, 2.0], dtype=np.float64),
+                ),
+                "lengths",
+            ),
+            (
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array([0], dtype=np.int64),
+                    np.array([np.nan], dtype=np.float64),
+                ),
+                "finite",
+            ),
+        ],
+    )
+    def test_rejects_malformed_custom_csr(self, topology, message):
+        src = Population("LapicqueNeuron", 2)
+        tgt = Population("LapicqueNeuron", 2)
+
+        with pytest.raises(ValueError, match=message):
+            Projection(src, tgt, weight=0.5, topology=topology)
 
 
 # --- Deep monitor coverage ---
