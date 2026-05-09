@@ -17,7 +17,7 @@ mapped without hidden approximations.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 import numpy as np
 import torch
@@ -28,6 +28,34 @@ from sc_neurocore.training.surrogate import atan_surrogate_custom_op
 
 from .population import Population
 from .projection import Projection, validate_csr_topology
+
+
+if TYPE_CHECKING:
+
+    class _TorchModuleBase:
+        """Typed surface used when optional Torch imports are unavailable to mypy."""
+
+        def __init__(self) -> None: ...
+
+        def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+
+        def register_buffer(
+            self,
+            name: str,
+            tensor: torch.Tensor | None,
+            persistent: bool = True,
+        ) -> None: ...
+
+        def register_parameter(
+            self,
+            name: str,
+            param: torch.nn.Parameter | None,
+        ) -> None: ...
+
+        def parameters(self, recurse: bool = True) -> Any: ...
+
+else:
+    _TorchModuleBase = nn.Module
 
 
 @dataclass(frozen=True)
@@ -134,7 +162,7 @@ def _build_population_spec(
     )
 
 
-class NetworkTorchBridge(nn.Module):
+class NetworkTorchBridge(_TorchModuleBase):
     """Differentiable bridge for a bounded subset of declarative ``Network`` graphs."""
 
     def __init__(
