@@ -23,7 +23,7 @@ import re
 import shutil
 import subprocess
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -59,7 +59,7 @@ _POSNER_ELECTRONS_NEUTRAL = 9 * 20 + 6 * 15 + 24 * 8
 
 
 def _now_stamp() -> str:
-    return datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
 def _write(path: Path, text: str) -> None:
