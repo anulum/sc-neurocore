@@ -7,11 +7,11 @@
 # SC-NeuroCore — Discrete-time noisy leaky integrate-and-fire neuron
 
 from __future__ import annotations
-from typing import Any
 from dataclasses import dataclass
-from typing import Dict
+from typing import Any, cast
 
 import numpy as np
+import numpy.typing as npt
 
 from .base import BaseNeuron
 from ..utils.rng import RNG
@@ -68,14 +68,30 @@ class StochasticLIFNeuron(BaseNeuron):
     entropy_source: Any | None = None  # Optional external entropy (e.g. Quantum)
 
     def __post_init__(self) -> None:
-        if self.tau_mem <= 0:
+        if not np.isfinite(self.v_rest):
+            raise ValueError("v_rest must be finite")
+        if not np.isfinite(self.v_reset):
+            raise ValueError("v_reset must be finite")
+        if not np.isfinite(self.v_threshold):
+            raise ValueError("v_threshold must be finite")
+        if not np.isfinite(self.tau_mem) or self.tau_mem <= 0:
             raise ValueError(f"tau_mem must be > 0, got {self.tau_mem}")
+        if not np.isfinite(self.dt) or self.dt <= 0:
+            raise ValueError(f"dt must be > 0, got {self.dt}")
+        if not np.isfinite(self.noise_std) or self.noise_std < 0:
+            raise ValueError(f"noise_std must be >= 0, got {self.noise_std}")
+        if not np.isfinite(self.resistance):
+            raise ValueError("resistance must be finite")
+        if self.refractory_period < 0:
+            raise ValueError("refractory_period must be non-negative")
         self._rng = RNG(self.seed)
         self.v = self.v_rest
         self.refractory_counter = 0
         self.reset_state()
 
     def step(self, input_current: float) -> int:
+        if not np.isfinite(input_current):
+            raise ValueError("input_current must be finite")
         if self.refractory_counter > 0:
             self.refractory_counter -= 1
             self.v = self.v_rest
@@ -112,21 +128,31 @@ class StochasticLIFNeuron(BaseNeuron):
         self.v = self.v_rest
         self.refractory_counter = 0
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"v": float(self.v), "refractory": self.refractory_counter}
 
     def process_bitstream(
-        self, input_bits: np.ndarray[Any, Any], input_scale: float = 1.0
-    ) -> np.ndarray[Any, Any]:
+        self, input_bits: npt.ArrayLike, input_scale: float = 1.0
+    ) -> npt.NDArray[np.uint8]:
         """
         Process a bitstream (array of 0s and 1s) as input current.
         Returns an array of spikes (0s and 1s).
 
         input_scale: scaling factor to convert bit (0/1) to current amplitude.
         """
-        spikes = np.zeros_like(input_bits, dtype=np.uint8)
-        for i, bit in enumerate(input_bits):
+        bits = np.asarray(input_bits)
+        if bits.ndim != 1:
+            raise ValueError("input_bits must be a one-dimensional bitstream")
+        if not np.all(np.isfinite(bits)):
+            raise ValueError("input_bits must contain only finite values")
+        if np.any((bits != 0) & (bits != 1)):
+            raise ValueError("input_bits must contain only binary 0/1 values")
+        if not np.isfinite(input_scale):
+            raise ValueError("input_scale must be finite")
+
+        spikes = np.zeros_like(bits, dtype=np.uint8)
+        for i, bit in enumerate(bits):
             # Treat bit as current pulse of amplitude 'input_scale'
             current = bit * input_scale
             spikes[i] = self.step(current)
-        return spikes
+        return cast(npt.NDArray[np.uint8], spikes)

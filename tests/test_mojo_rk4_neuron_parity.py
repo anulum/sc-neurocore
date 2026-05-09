@@ -138,6 +138,23 @@ def test_mojo_rk4_neuron_simulator_rejects_unknown_model() -> None:
         simulate_rk4_neuron("unknown", np.ones(4, dtype=np.float64))
 
 
+@pytest.mark.parametrize(
+    ("currents", "dt", "match"),
+    [
+        (np.array([], dtype=np.float64), 1.0, "non-empty"),
+        (np.array([np.nan], dtype=np.float64), 1.0, "finite"),
+        (np.ones((1, 2), dtype=np.float64), 1.0, "1-D"),
+        (np.ones(4, dtype=np.float64), 0.0, "dt"),
+        (np.ones(4, dtype=np.float64), np.nan, "dt"),
+    ],
+)
+def test_mojo_rk4_neuron_simulator_rejects_invalid_trace_or_dt(
+    currents: np.ndarray, dt: float, match: str
+) -> None:
+    with pytest.raises(ValueError, match=match):
+        simulate_rk4_neuron("izhikevich", currents, dt)
+
+
 def test_mojo_rk4_neuron_simulator_matches_rust_when_available() -> None:
     rust = pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
     currents = np.linspace(0.0, 12.0, 96, dtype=np.float64)

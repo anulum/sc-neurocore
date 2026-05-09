@@ -7,6 +7,8 @@
 # SC-NeuroCore — Tests for Neurons
 
 import numpy as np
+import pytest
+
 from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
 
 
@@ -51,6 +53,53 @@ def test_lif_noise():
     neuron = StochasticLIFNeuron(noise_std=0.5, seed=42)
     neuron.step(0.0)
     assert neuron.v != 0.0  # Should have moved due to noise
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"v_rest": np.nan},
+        {"v_reset": np.inf},
+        {"v_threshold": np.nan},
+        {"tau_mem": 0.0},
+        {"tau_mem": np.inf},
+        {"dt": 0.0},
+        {"dt": np.inf},
+        {"noise_std": -0.1},
+        {"noise_std": np.nan},
+        {"resistance": np.inf},
+        {"refractory_period": -1},
+    ],
+)
+def test_lif_invalid_configuration_raises(kwargs):
+    with pytest.raises(ValueError):
+        StochasticLIFNeuron(**kwargs)
+
+
+def test_lif_rejects_non_finite_current():
+    neuron = StochasticLIFNeuron()
+    with pytest.raises(ValueError, match="input_current"):
+        neuron.step(np.nan)
+
+
+@pytest.mark.parametrize(
+    ("bits", "message"),
+    [
+        (np.array([[0, 1]], dtype=np.uint8), "one-dimensional"),
+        (np.array([0, 2], dtype=np.uint8), "binary"),
+        (np.array([0.0, np.nan]), "finite"),
+    ],
+)
+def test_lif_process_bitstream_rejects_invalid_bits(bits, message):
+    neuron = StochasticLIFNeuron()
+    with pytest.raises(ValueError, match=message):
+        neuron.process_bitstream(bits)
+
+
+def test_lif_process_bitstream_rejects_non_finite_scale():
+    neuron = StochasticLIFNeuron()
+    with pytest.raises(ValueError, match="input_scale"):
+        neuron.process_bitstream(np.array([0, 1], dtype=np.uint8), input_scale=np.inf)
 
 
 def test_neurons_lazy_load_model():

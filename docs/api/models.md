@@ -3,6 +3,7 @@
 Pre-built network architectures and model registry.
 
 - `SCDigitClassifier` — Pre-configured SC network for MNIST digit classification. Architecture: Conv (28x28, 1ch->4ch, kernel 3, stride 2) + Vectorized dense + output.
+- [`SCIzhikevichNeuron`](models/izhikevich.md) — maintained Izhikevich software neuron reference with explicit baseline/RK4 integrator paths, cross-language RK4 parity, and latest benchmark evidence.
 
 10 pre-built configurations in the model zoo:
 

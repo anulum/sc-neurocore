@@ -20,10 +20,12 @@ tracked. The returned schema mirrors the Rust, Julia, and Go RK4 dispatchers.
 from __future__ import annotations
 
 import ctypes
+import math
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
+import numpy.typing as npt
 
 _LIB_PATH = Path(__file__).resolve().parent / "librk4_neurons.so"
 _lib: ctypes.CDLL | None
@@ -69,8 +71,22 @@ def _normalise_model_name(model_name: str) -> str:
     return "".join(ch.lower() for ch in model_name if ch.isalnum())
 
 
-def _current_trace(current_trace: np.ndarray | list[float]) -> np.ndarray:
-    return np.ascontiguousarray(current_trace, dtype=np.float64)
+def _current_trace(current_trace: npt.ArrayLike) -> npt.NDArray[np.float64]:
+    currents = np.ascontiguousarray(current_trace, dtype=np.float64)
+    if currents.ndim != 1:
+        raise ValueError(f"current_trace must be 1-D, got {currents.ndim}-D")
+    if currents.size == 0:
+        raise ValueError("current_trace must be non-empty")
+    if not np.isfinite(currents).all():
+        raise ValueError("current_trace must contain only finite values")
+    return cast(npt.NDArray[np.float64], currents)
+
+
+def _dt_or_default(dt: float | None, default: float) -> float:
+    value = default if dt is None else dt
+    if not isinstance(value, int | float) or not math.isfinite(float(value)) or float(value) <= 0.0:
+        raise ValueError("dt must be a positive finite scalar")
+    return float(value)
 
 
 def _missing_library_error() -> ImportError:
@@ -82,7 +98,7 @@ def _missing_library_error() -> ImportError:
 
 def simulate_rk4_neuron(
     model_name: str,
-    current_trace: np.ndarray | list[float],
+    current_trace: npt.ArrayLike,
     dt: float | None = None,
 ) -> dict[str, Any]:
     """Mojo-backed RK4 batch simulator for priority neuron models."""
@@ -91,39 +107,39 @@ def simulate_rk4_neuron(
 
     currents = _current_trace(current_trace)
     n = currents.size
-    spikes = np.empty(n, dtype=np.uint64)
+    spikes: npt.NDArray[np.uint64] = np.empty(n, dtype=np.uint64)
     model = _normalise_model_name(model_name)
 
     if model in {"izhikevich", "scizhikevichneuron", "izhikevichneuron"}:
-        v = np.empty(n, dtype=np.float64)
-        u = np.empty(n, dtype=np.float64)
+        izh_v: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+        u: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
         n_spikes = _lib.simulate_izhikevich_rk4_c(
             ctypes.c_int(n),
-            ctypes.c_double(1.0 if dt is None else dt),
+            ctypes.c_double(_dt_or_default(dt, 1.0)),
             currents.ctypes.data,
-            v.ctypes.data,
+            izh_v.ctypes.data,
             u.ctypes.data,
             spikes.ctypes.data,
         )
-        return {"v": v, "u": u, "spikes": spikes[:n_spikes].copy(), "n_steps": n}
+        return {"v": izh_v, "u": u, "spikes": spikes[:n_spikes].copy(), "n_steps": n}
 
     if model in {"hodgkinhuxley", "hodgkinhuxleyneuron"}:
-        v = np.empty(n, dtype=np.float64)
-        m = np.empty(n, dtype=np.float64)
-        h = np.empty(n, dtype=np.float64)
-        gate_n = np.empty(n, dtype=np.float64)
+        hh_v: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+        m: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+        h: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+        gate_n: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
         n_spikes = _lib.simulate_hodgkin_huxley_rk4_c(
             ctypes.c_int(n),
-            ctypes.c_double(0.01 if dt is None else dt),
+            ctypes.c_double(_dt_or_default(dt, 0.01)),
             currents.ctypes.data,
-            v.ctypes.data,
+            hh_v.ctypes.data,
             m.ctypes.data,
             h.ctypes.data,
             gate_n.ctypes.data,
             spikes.ctypes.data,
         )
         return {
-            "v": v,
+            "v": hh_v,
             "m": m,
             "h": h,
             "n": gate_n,
@@ -132,16 +148,16 @@ def simulate_rk4_neuron(
         }
 
     if model in {"adex", "adexneuron"}:
-        v = np.empty(n, dtype=np.float64)
-        w = np.empty(n, dtype=np.float64)
+        adex_v: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+        w: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
         n_spikes = _lib.simulate_adex_rk4_c(
             ctypes.c_int(n),
-            ctypes.c_double(0.1 if dt is None else dt),
+            ctypes.c_double(_dt_or_default(dt, 0.1)),
             currents.ctypes.data,
-            v.ctypes.data,
+            adex_v.ctypes.data,
             w.ctypes.data,
             spikes.ctypes.data,
         )
-        return {"v": v, "w": w, "spikes": spikes[:n_spikes].copy(), "n_steps": n}
+        return {"v": adex_v, "w": w, "spikes": spikes[:n_spikes].copy(), "n_steps": n}
 
     raise ValueError(f"unsupported RK4 neuron model {model_name!r}")

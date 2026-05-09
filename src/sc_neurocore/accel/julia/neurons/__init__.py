@@ -15,17 +15,19 @@ JIT warm-up (~5-10 s on cold start; sub-millisecond warm).
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
+import numpy.typing as npt
 
 try:
-    from juliacall import Main as _jl  # type: ignore[import-untyped,import-not-found]
+    from juliacall import Main as _jl
 
     _HAS_JULIA_NEURONS = True
 except ImportError:
-    _jl = None  # type: ignore[assignment]
+    _jl = None
     _HAS_JULIA_NEURONS = False
 
 
@@ -91,27 +93,27 @@ def simulate_wong_wang(
     i_0: float,
     sigma: float,
     dt: float,
-    stim1: np.ndarray | list[float],
-    stim2: np.ndarray | list[float],
-    xi: np.ndarray | list[float],
+    stim1: npt.ArrayLike,
+    stim2: npt.ArrayLike,
+    xi: npt.ArrayLike,
 ) -> dict[str, Any]:
     """Julia-accelerated N-step Wong-Wang simulator; parity with
     ``sc_neurocore_engine.py_wong_wang_simulate``. Returns a dict with
     per-step ``s1``/``s2``/``r1``/``r2`` arrays + final scalars.
     """
     mod = _ensure_wong_wang_loaded()
-    stim1 = np.asarray(stim1, dtype=np.float64)
-    stim2 = np.asarray(stim2, dtype=np.float64)
-    xi = np.asarray(xi, dtype=np.float64)
-    n = stim1.size
-    if stim2.size != n:
-        raise ValueError(f"stim1 and stim2 length mismatch: {n} vs {stim2.size}")
-    if xi.size != 2 * n:
-        raise ValueError(f"xi length must be 2 * n_steps ({2 * n}): got {xi.size}")
-    s1_out = np.empty(n, dtype=np.float64)
-    s2_out = np.empty(n, dtype=np.float64)
-    r1_out = np.empty(n, dtype=np.float64)
-    r2_out = np.empty(n, dtype=np.float64)
+    stim1_arr: npt.NDArray[np.float64] = np.asarray(stim1, dtype=np.float64)
+    stim2_arr: npt.NDArray[np.float64] = np.asarray(stim2, dtype=np.float64)
+    xi_arr: npt.NDArray[np.float64] = np.asarray(xi, dtype=np.float64)
+    n = stim1_arr.size
+    if stim2_arr.size != n:
+        raise ValueError(f"stim1 and stim2 length mismatch: {n} vs {stim2_arr.size}")
+    if xi_arr.size != 2 * n:
+        raise ValueError(f"xi length must be 2 * n_steps ({2 * n}): got {xi_arr.size}")
+    s1_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+    s2_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+    r1_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+    r2_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
     s1_final, s2_final = mod.simulate_wong_wang_b(
         s1_init,
         s2_init,
@@ -122,9 +124,9 @@ def simulate_wong_wang(
         i_0,
         sigma,
         dt,
-        stim1,
-        stim2,
-        xi,
+        stim1_arr,
+        stim2_arr,
+        xi_arr,
         s1_out,
         s2_out,
         r1_out,
@@ -152,17 +154,17 @@ def simulate_wilson_cowan(
     a: float,
     theta: float,
     dt: float,
-    ext_input: np.ndarray | list[float],
+    ext_input: npt.ArrayLike,
 ) -> dict[str, Any]:
     """Julia-accelerated N-step Wilson-Cowan simulator; parity with
     ``sc_neurocore_engine.py_wilson_cowan_simulate``. Returns a dict
     with per-step ``e``/``i`` arrays + final scalars.
     """
     mod = _ensure_wilson_cowan_loaded()
-    ext_input = np.asarray(ext_input, dtype=np.float64)
-    n = ext_input.size
-    e_out = np.empty(n, dtype=np.float64)
-    i_out = np.empty(n, dtype=np.float64)
+    ext_input_arr: npt.NDArray[np.float64] = np.asarray(ext_input, dtype=np.float64)
+    n = ext_input_arr.size
+    e_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+    i_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
     e_final, i_final = mod.simulate_wilson_cowan_b(
         e_init,
         i_init,
@@ -175,7 +177,7 @@ def simulate_wilson_cowan(
         a,
         theta,
         dt,
-        ext_input,
+        ext_input_arr,
         e_out,
         i_out,
     )
@@ -189,7 +191,7 @@ def simulate_wilson_cowan(
 
 def simulate_rk4_neuron(
     model_name: str,
-    current_trace: np.ndarray | list[float],
+    current_trace: npt.ArrayLike,
     dt: float | None = None,
 ) -> dict[str, Any]:
     """Julia-backed RK4 batch simulator for the first priority neuron models.
@@ -197,35 +199,41 @@ def simulate_rk4_neuron(
     The returned schema mirrors ``sc_neurocore_engine.py_rk4_neuron_simulate``:
     state trajectories, zero-based spike indices, and ``n_steps``.
     """
-    mod = _ensure_rk4_neurons_loaded()
-    currents = np.asarray(current_trace, dtype=np.float64)
+    currents = cast(npt.NDArray[np.float64], np.asarray(current_trace, dtype=np.float64))
+    if currents.ndim != 1:
+        raise ValueError(f"current_trace must be 1-D, got {currents.ndim}-D")
+    if currents.size == 0:
+        raise ValueError("current_trace must be non-empty")
+    if not np.isfinite(currents).all():
+        raise ValueError("current_trace must contain only finite values")
     n = currents.size
-    spikes = np.empty(n, dtype=np.uint64)
+    spikes: npt.NDArray[np.uint64] = np.empty(n, dtype=np.uint64)
     model = _normalise_model_name(model_name)
+    mod = _ensure_rk4_neurons_loaded()
 
     if model in {"izhikevich", "scizhikevichneuron", "izhikevichneuron"}:
-        v = np.empty(n, dtype=np.float64)
-        u = np.empty(n, dtype=np.float64)
+        izh_v: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+        u: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
         n_spikes = int(
-            mod.simulate_izhikevich_rk4_b(currents, 1.0 if dt is None else dt, v, u, spikes)
+            mod.simulate_izhikevich_rk4_b(currents, _dt_or_default(dt, 1.0), izh_v, u, spikes)
         )
         return {
-            "v": v,
+            "v": izh_v,
             "u": u,
             "spikes": spikes[:n_spikes].copy(),
             "n_steps": n,
         }
 
     if model in {"hodgkinhuxley", "hodgkinhuxleyneuron"}:
-        v = np.empty(n, dtype=np.float64)
-        m = np.empty(n, dtype=np.float64)
-        h = np.empty(n, dtype=np.float64)
-        gate_n = np.empty(n, dtype=np.float64)
+        hh_v: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+        m: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+        h: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+        gate_n: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
         n_spikes = int(
             mod.simulate_hodgkin_huxley_rk4_b(
                 currents,
-                0.01 if dt is None else dt,
-                v,
+                _dt_or_default(dt, 0.01),
+                hh_v,
                 m,
                 h,
                 gate_n,
@@ -233,7 +241,7 @@ def simulate_rk4_neuron(
             )
         )
         return {
-            "v": v,
+            "v": hh_v,
             "m": m,
             "h": h,
             "n": gate_n,
@@ -242,14 +250,23 @@ def simulate_rk4_neuron(
         }
 
     if model in {"adex", "adexneuron"}:
-        v = np.empty(n, dtype=np.float64)
-        w = np.empty(n, dtype=np.float64)
-        n_spikes = int(mod.simulate_adex_rk4_b(currents, 0.1 if dt is None else dt, v, w, spikes))
+        adex_v: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+        w: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+        n_spikes = int(
+            mod.simulate_adex_rk4_b(currents, _dt_or_default(dt, 0.1), adex_v, w, spikes)
+        )
         return {
-            "v": v,
+            "v": adex_v,
             "w": w,
             "spikes": spikes[:n_spikes].copy(),
             "n_steps": n,
         }
 
     raise ValueError(f"unsupported RK4 neuron model {model_name!r}")
+
+
+def _dt_or_default(dt: float | None, default: float) -> float:
+    value = default if dt is None else dt
+    if not isinstance(value, int | float) or not math.isfinite(float(value)) or float(value) <= 0.0:
+        raise ValueError("dt must be a positive finite scalar")
+    return float(value)

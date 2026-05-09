@@ -7,11 +7,13 @@
 # SC-NeuroCore — Stochastic Izhikevich neuron (software-only)
 
 from __future__ import annotations
-from typing import Any
+
 from dataclasses import dataclass
-from typing import Dict, Literal
+import math
+from typing import Any, Literal
 
 import numpy as np
+import numpy.typing as npt
 
 from .base import BaseNeuron
 from ..utils.rng import RNG
@@ -60,12 +62,37 @@ class SCIzhikevichNeuron(BaseNeuron):
     def __post_init__(self) -> None:
         if self.integrator not in {"baseline_half_euler", "rk4"}:
             raise ValueError(f"Unsupported integrator for SCIzhikevichNeuron: {self.integrator}")
+        for name in ("a", "b", "c", "d"):
+            self._require_finite(name, getattr(self, name))
+        self.dt = self._require_positive("dt", self.dt)
+        self.noise_std = self._require_nonnegative("noise_std", self.noise_std)
         self._rng = RNG(self.seed)
         self.v: float = self.c
         self.u: float = self.b * self.c
         self.reset_state()
 
+    @staticmethod
+    def _require_finite(name: str, value: float) -> float:
+        if not isinstance(value, int | float) or not math.isfinite(float(value)):
+            raise ValueError(f"{name} must be finite")
+        return float(value)
+
+    @classmethod
+    def _require_positive(cls, name: str, value: float) -> float:
+        result = cls._require_finite(name, value)
+        if result <= 0.0:
+            raise ValueError(f"{name} must be positive")
+        return result
+
+    @classmethod
+    def _require_nonnegative(cls, name: str, value: float) -> float:
+        result = cls._require_finite(name, value)
+        if result < 0.0:
+            raise ValueError(f"{name} must be non-negative")
+        return result
+
     def step(self, input_current: float) -> int:
+        input_current = self._require_finite("input_current", input_current)
         if self.integrator == "baseline_half_euler":
             return self._step_baseline_half_euler(input_current)
         return self._step_rk4(input_current)
@@ -100,7 +127,7 @@ class SCIzhikevichNeuron(BaseNeuron):
     def _step_rk4(self, input_current: float) -> int:
         state = np.array([self.v, self.u], dtype=np.float64)
 
-        def rhs(state_vec: np.ndarray) -> np.ndarray:
+        def rhs(state_vec: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             dv, du = self._rhs(float(state_vec[0]), float(state_vec[1]), input_current)
             return np.array([dv, du], dtype=np.float64)
 
@@ -117,5 +144,5 @@ class SCIzhikevichNeuron(BaseNeuron):
         self.v = self.c  # membrane potential
         self.u = self.b * self.v  # recovery variable
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"v": float(self.v), "u": float(self.u)}
