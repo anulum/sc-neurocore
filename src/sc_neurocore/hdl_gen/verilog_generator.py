@@ -61,7 +61,7 @@ class VerilogGenerator:
         Emits Verilog code.
         """
         if mode == "async_aer":
-            emitter = AEREmitter(module_name=self.module_name)
+            emitter = AEREmitter(module_name=self.module_name, bus_width=self.bus_width)
             for layer in self.layers:
                 emitter.add_layer(layer["type"], layer["name"], layer["params"])
             return emitter.generate()
