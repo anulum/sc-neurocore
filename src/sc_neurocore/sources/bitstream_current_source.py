@@ -25,11 +25,12 @@ class BitstreamCurrentSource:
     - Takes scalar inputs x_i in [x_min, x_max]
     - Encodes each into a bitstream via BitstreamEncoder
     - Passes them through BitstreamSynapses
-    - Uses BitstreamDotProduct to compute a scalar current I(t)
-      for the neuron.
+    - Decodes the realised post-synaptic bitstreams into a per-cycle
+      current trace for neuron simulation.
 
-    For now we assume static inputs and weights over the full length,
-    but you can extend this to time-varying later.
+    Static inputs and weights are encoded once at construction time.
+    The stochastic realisation is then fixed until a new source is
+    constructed with different parameters or seeds.
     """
 
     x_inputs: Sequence[float]
@@ -75,7 +76,7 @@ class BitstreamCurrentSource:
         self.dot: BitstreamDotProduct | None = None
         if self.sc_mode == "bipolar":
             self.dot = None
-            self.post_matrix, self.current_scalar = self._apply_bipolar_xnor()
+            self.post_matrix, _ = self._apply_bipolar_xnor()
         else:
             # Build synapses
             for i, w in enumerate(self.weight_values):
@@ -92,10 +93,14 @@ class BitstreamCurrentSource:
             # Dot-product engine
             self.dot = BitstreamDotProduct(self.synapses)
 
-            # Post-synaptic streams and scalar current
-            self.post_matrix, self.current_scalar = self.dot.apply(
+            # Post-synaptic streams; the scalar current is decoded below from
+            # the same realised trace used by step().
+            self.post_matrix, _ = self.dot.apply(
                 self.pre_matrix, y_min=self.y_min, y_max=self.y_max
             )
+
+        self._current_trace = self._decode_current_trace()
+        self.current_scalar = float(self._current_trace.mean())
 
         # We'll treat each timestep as one index in the bitstreams
         self._t = 0
@@ -122,44 +127,50 @@ class BitstreamCurrentSource:
         clipped = max(min(value, 1.0), -1.0)
         return float(self.y_min + ((clipped + 1.0) / 2.0) * (self.y_max - self.y_min))
 
+    def _decode_current_trace(self) -> np.ndarray[Any, Any]:
+        if self.sc_mode == "bipolar":
+            probs = self.post_matrix.mean(axis=0, dtype=np.float64)
+            bipolar_values = (2.0 * probs) - 1.0
+            clipped = np.clip(bipolar_values, -1.0, 1.0)
+            return (self.y_min + ((clipped + 1.0) / 2.0) * (self.y_max - self.y_min)).astype(
+                np.float64, copy=False
+            )
+
+        probs = self.post_matrix.mean(axis=0, dtype=np.float64)
+        return (self.y_min + probs * (self.y_max - self.y_min)).astype(np.float64, copy=False)
+
     def reset(self) -> None:
         self._t = 0
+
+    def current_trace(self) -> np.ndarray[Any, Any]:
+        """
+        Return the realised per-cycle decoded current trace.
+
+        The returned trace is computed from the fixed post-synaptic
+        bitstreams generated during construction. It is therefore the
+        exact sequence consumed by repeated ``step()`` calls, not a
+        separate probability-space approximation.
+        """
+        return self._current_trace.copy()
 
     def step(self) -> float:
         """
         Return the current I_t at the current time index and advance.
 
-        We approximate I_t by reading the t-th bit of each post-synaptic
-        stream, then mapping their sum to [y_min, y_max].
+        ``step()`` returns the t-th element of ``current_trace()`` and
+        clamps at the final element after the bitstream is exhausted.
         """
         idx = self._t
         if idx >= self.length:
             # Clamp at last timestep (or you can wrap)
             idx = self.length - 1
 
-        # Retrieve bits from all post-synaptic streams at time idx
-        bits = self.post_matrix[:, idx]
-
-        if self.sc_mode == "bipolar":
-            prob = float(bits.mean()) if bits.size else 0.5
-            bipolar_value = 2.0 * prob - 1.0
-            I_t = self._map_bipolar_to_current(bipolar_value)
-            self._t += 1
-            return float(I_t)
-
-        # Sum bits and normalize
-        n_ones = int(bits.sum())
-        prob = n_ones / max(self.n_inputs, 1)
-
-        # Map probability into [y_min, y_max]
-        I_t = self.y_min + prob * (self.y_max - self.y_min)
-
+        I_t = self._current_trace[idx]
         self._t += 1
         return float(I_t)
 
     def full_current_estimate(self) -> float:
         """
-        Estimate average current over full bitstream duration
-        using the dot-product's scalar value.
+        Return the mean current over the realised bitstream duration.
         """
         return float(self.current_scalar)

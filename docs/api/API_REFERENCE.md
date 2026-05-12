@@ -1687,18 +1687,21 @@ Multi-channel bitstream current source.
 - Takes scalar inputs x_i in [x_min, x_max]
 - Encodes each into a bitstream via BitstreamEncoder
 - Passes them through BitstreamSynapses
-- Uses BitstreamDotProduct to compute a scalar current I(t)
-  for the neuron.
+- Decodes the realised post-synaptic bitstreams into a per-cycle
+  current trace for neuron simulation.
 
-For now we assume static inputs and weights over the full length,
-but you can extend this to time-varying later.
+Static inputs and weights are encoded once at construction time.
+The stochastic realisation is then fixed until a new source is
+constructed with different parameters or seeds.
 
 - **__post_init__**()
 - **reset**()
+- **current_trace**()
+  - Return the realised per-cycle decoded current trace.
 - **step**()
   - Return the current I_t at the current time index and advance.
 - **full_current_estimate**()
-  - Estimate average current over full bitstream duration
+  - Return the mean current over the realised bitstream duration.
 
 ---
 
