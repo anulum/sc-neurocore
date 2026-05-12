@@ -33,6 +33,7 @@ class L13_StochasticParameters:
     binding_window: int = 10  # timesteps
     binding_threshold: float = 0.5
     quantum_info_coupling: float = 0.1  # from L12
+    rng_seed: Optional[int] = None
 
 
 class L13_TemporalLayer:
@@ -47,6 +48,7 @@ class L13_TemporalLayer:
         self.binding_matrix = np.zeros((n, n))
         self.step_count = 0
         self.time = 0.0
+        self._rng = np.random.default_rng(self.params.rng_seed)
 
     def step(
         self,
@@ -64,7 +66,7 @@ class L13_TemporalLayer:
         if l12_input is not None and "coherence" in l12_input:
             signal = self._coherence_signal(l12_input["coherence"], n)
 
-        self.history = np.roll(self.history, -1, axis=1)  # type: ignore[assignment]
+        self.history = np.roll(self.history, -1, axis=1)
         self.history[:, -1] = signal
 
         # Max-lag cross-correlation binding over the temporal window.
@@ -75,7 +77,7 @@ class L13_TemporalLayer:
         binding_strength = float(bound_pairs / max(n * (n - 1), 1))
 
         activation = np.clip(np.diag(self.binding_matrix) * 0.5 + 0.5, 0, 1)
-        rands = np.random.random((n, self.params.bitstream_length))
+        rands = self._rng.random((n, self.params.bitstream_length))
         output_bitstreams = (rands < activation[:, None]).astype(np.uint8)
 
         return {
@@ -99,6 +101,11 @@ class L13_TemporalLayer:
             raise ValueError("binding_window must be greater than one")
         if not 0.0 <= params.binding_threshold <= 1.0:
             raise ValueError("binding_threshold must be in [0, 1]")
+        if params.rng_seed is not None:
+            if isinstance(params.rng_seed, bool) or not isinstance(params.rng_seed, int):
+                raise ValueError("rng_seed must be a non-negative integer or None")
+            if params.rng_seed < 0:
+                raise ValueError("rng_seed must be a non-negative integer or None")
 
     @staticmethod
     def _coherence_signal(coherence: Any, n_channels: int) -> np.ndarray:
