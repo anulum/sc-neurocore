@@ -23,9 +23,13 @@ Ref: Paper 16 / SSGF l16_closure.py.
 from __future__ import annotations
 from dataclasses import dataclass
 import math
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Final, Optional
 
 import numpy as np
+
+
+_L16_DIRECTOR_TERMINALS: Final[tuple[str, ...]] = ("T1", "T2", "T3", "T4", "T5", "T6", "T7")
+_L16_DIRECTOR_TERMINAL_SET: Final[frozenset[str]] = frozenset(_L16_DIRECTOR_TERMINALS)
 
 
 @dataclass
@@ -41,6 +45,19 @@ class L16_StochasticParameters:
     bridge_alignment_coupling: float = 0.2
     bridge_protection_coupling: float = 0.2
     rng_seed: Optional[int] = None
+
+
+@dataclass(frozen=True)
+class _L16StepInputs:
+    gci: float
+    ethical_dissonance: float
+    free_energy: float
+    bridge_alignment_credit: float
+    bridge_protection_penalty: float
+    boundary_context_id: str | None
+    boundary_terminals: tuple[str, ...]
+    director_terminal_set: tuple[str, ...]
+    director_terminal_bandwidth: float
 
 
 class L16_DirectorLayer:
@@ -64,23 +81,17 @@ class L16_DirectorLayer:
         dt: float,
         l15_input: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        (
-            gci,
-            ethical_dissonance,
-            free_energy,
-            bridge_alignment_credit,
-            bridge_protection_penalty,
-        ) = self._validate_step_inputs(dt, l15_input, self.params)
+        inputs = self._validate_step_inputs(dt, l15_input, self.params)
         self.time += dt
         n = self.params.n_control_nodes
 
         # PI controller
-        coherence_error = self.params.target_gci - gci
+        coherence_error = self.params.target_gci - inputs.gci
         audited_error = (
             coherence_error
-            + self.params.meta_coupling * ethical_dissonance
-            + bridge_protection_penalty
-            - bridge_alignment_credit
+            + self.params.meta_coupling * inputs.ethical_dissonance
+            + inputs.bridge_protection_penalty
+            - inputs.bridge_alignment_credit
         )
         self.integral_error = np.clip(
             self.integral_error + audited_error * dt,
@@ -93,14 +104,16 @@ class L16_DirectorLayer:
         # Entropy proxy (inverse coherence plus L15 free-energy leakage)
         self.entropy_flux = float(
             np.clip(
-                (1.0 - gci)
-                + self.params.meta_coupling * free_energy
-                + bridge_protection_penalty,
+                (1.0 - inputs.gci)
+                + self.params.meta_coupling * inputs.free_energy
+                + inputs.bridge_protection_penalty,
                 0.0,
                 1.0,
             )
         )
-        self.entropy_proxy = float(np.clip(0.9 * self.entropy_proxy + 0.1 * self.entropy_flux, 0.0, 1.0))
+        self.entropy_proxy = float(
+            np.clip(0.9 * self.entropy_proxy + 0.1 * self.entropy_flux, 0.0, 1.0)
+        )
 
         # Veto
         self.veto_active = self.entropy_proxy > self.params.veto_threshold
@@ -109,20 +122,22 @@ class L16_DirectorLayer:
         alignment_cost = max(
             0.0,
             abs(coherence_error)
-            + ethical_dissonance
-            + bridge_protection_penalty
-            - bridge_alignment_credit,
+            + inputs.ethical_dissonance
+            + inputs.bridge_protection_penalty
+            - inputs.bridge_alignment_credit,
         )
         self.h_rec = float(alignment_cost + self.entropy_proxy)
 
         # Will update
-        d_will = self.params.meta_coupling * (0.1 * gci - 0.2 * self.entropy_proxy + 0.05 * u)
+        d_will = self.params.meta_coupling * (
+            0.1 * inputs.gci - 0.2 * self.entropy_proxy + 0.05 * u
+        )
         self.will = np.clip(self.will + d_will * dt, 0, 1)
 
         effective_will = self.will * (0.0 if self.veto_active else 1.0)
         qecc_syndrome = np.full(
             n,
-            1 if self.veto_active or bridge_protection_penalty > 0.0 else 0,
+            1 if self.veto_active or inputs.bridge_protection_penalty > 0.0 else 0,
             dtype=np.uint8,
         )
         rands = self._rng.random((n, self.params.bitstream_length))
@@ -136,8 +151,12 @@ class L16_DirectorLayer:
             "recursive_hamiltonian": self.h_rec,
             "entropy_flux": self.entropy_flux,
             "entropy_proxy": self.entropy_proxy,
-            "closure_bridge_alignment_credit": bridge_alignment_credit,
-            "closure_bridge_protection_penalty": bridge_protection_penalty,
+            "closure_bridge_alignment_credit": inputs.bridge_alignment_credit,
+            "closure_bridge_protection_penalty": inputs.bridge_protection_penalty,
+            "boundary_context_id": inputs.boundary_context_id,
+            "boundary_terminals": inputs.boundary_terminals,
+            "director_terminal_set": inputs.director_terminal_set,
+            "director_terminal_bandwidth": inputs.director_terminal_bandwidth,
             "effective_will": effective_will.copy(),
             "qecc_syndrome": qecc_syndrome,
             "output_bitstreams": output_bitstreams,
@@ -184,12 +203,22 @@ class L16_DirectorLayer:
     @staticmethod
     def _validate_step_inputs(
         dt: float, l15_input: Optional[Dict[str, Any]], params: L16_StochasticParameters
-    ) -> tuple[float, float, float, float, float]:
+    ) -> _L16StepInputs:
         if not math.isfinite(dt) or dt <= 0.0:
             raise ValueError("dt must be finite and positive")
 
         if l15_input is None:
-            return 0.5, 0.0, 0.0, 0.0, 0.0
+            return _L16StepInputs(
+                gci=0.5,
+                ethical_dissonance=0.0,
+                free_energy=0.0,
+                bridge_alignment_credit=0.0,
+                bridge_protection_penalty=0.0,
+                boundary_context_id=None,
+                boundary_terminals=(),
+                director_terminal_set=(),
+                director_terminal_bandwidth=1.0,
+            )
 
         if "gci" not in l15_input:
             raise ValueError("l15_input must include gci")
@@ -206,9 +235,19 @@ class L16_DirectorLayer:
         if not math.isfinite(free_energy) or not 0.0 <= free_energy <= 1.0:
             raise ValueError("l15 free_energy must be finite and in [0, 1]")
 
-        bridge_alignment_credit = params.bridge_alignment_coupling * L16_DirectorLayer._unit_scalar(
-            l15_input.get("bridge_alignment_credit", 0.0),
-            "l15 bridge_alignment_credit",
+        (
+            boundary_context_id,
+            boundary_terminals,
+            director_terminal_set,
+            director_terminal_bandwidth,
+        ) = L16_DirectorLayer._validate_boundary_context(l15_input)
+        bridge_alignment_credit = (
+            params.bridge_alignment_coupling
+            * L16_DirectorLayer._unit_scalar(
+                l15_input.get("bridge_alignment_credit", 0.0),
+                "l15 bridge_alignment_credit",
+            )
+            * director_terminal_bandwidth
         )
         bridge_protection_penalty = (
             params.bridge_protection_coupling
@@ -218,12 +257,64 @@ class L16_DirectorLayer:
             )
         )
 
+        return _L16StepInputs(
+            gci=gci,
+            ethical_dissonance=ethical_dissonance,
+            free_energy=free_energy,
+            bridge_alignment_credit=bridge_alignment_credit,
+            bridge_protection_penalty=bridge_protection_penalty,
+            boundary_context_id=boundary_context_id,
+            boundary_terminals=boundary_terminals,
+            director_terminal_set=director_terminal_set,
+            director_terminal_bandwidth=director_terminal_bandwidth,
+        )
+
+    @staticmethod
+    def _validate_boundary_context(
+        l15_input: Dict[str, Any],
+    ) -> tuple[str | None, tuple[str, ...], tuple[str, ...], float]:
+        has_context_id = "boundary_context_id" in l15_input
+        has_terminals = "boundary_terminals" in l15_input
+        if not has_context_id and not has_terminals:
+            return None, (), (), 1.0
+        if has_context_id != has_terminals:
+            raise ValueError(
+                "l15 boundary context requires boundary_context_id and boundary_terminals"
+            )
+
+        boundary_context_id = l15_input["boundary_context_id"]
+        if not isinstance(boundary_context_id, str) or not boundary_context_id.strip():
+            raise ValueError("l15 boundary_context_id must be a non-empty string")
+
+        raw_terminals = l15_input["boundary_terminals"]
+        if isinstance(raw_terminals, str):
+            raise ValueError(
+                "l15 boundary_terminals must be a non-empty sequence of terminal identifiers"
+            )
+        try:
+            boundary_terminals = tuple(raw_terminals)
+        except TypeError as exc:
+            raise ValueError(
+                "l15 boundary_terminals must be a non-empty sequence of terminal identifiers"
+            ) from exc
+        if not boundary_terminals:
+            raise ValueError("l15 boundary_terminals must be non-empty")
+        if len(set(boundary_terminals)) != len(boundary_terminals):
+            raise ValueError("l15 boundary_terminals must not contain duplicates")
+
+        for terminal in boundary_terminals:
+            if not isinstance(terminal, str) or terminal not in _L16_DIRECTOR_TERMINAL_SET:
+                raise ValueError("l15 boundary_terminals must contain only T1-T7 identifiers")
+
+        director_terminal_set = tuple(
+            terminal for terminal in _L16_DIRECTOR_TERMINALS if terminal in boundary_terminals
+        )
+        director_terminal_bandwidth = len(director_terminal_set) / len(_L16_DIRECTOR_TERMINALS)
         return (
-            gci,
-            ethical_dissonance,
-            free_energy,
-            bridge_alignment_credit,
-            bridge_protection_penalty,
+            boundary_context_id,
+            boundary_terminals,
+            director_terminal_set,
+            director_terminal_bandwidth,
         )
 
     @staticmethod
