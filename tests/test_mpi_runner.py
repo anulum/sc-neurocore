@@ -223,3 +223,67 @@ def test_run_mpi_raises_on_plasticity_before_mpi_import():
         NotImplementedError, match="synaptic plasticity is not supported by the MPI backend"
     ):
         net.run(0.005, dt=0.001, backend="mpi")
+
+
+def test_step_local_uses_rust_dispatch_when_supported(monkeypatch):
+    """Supported local populations should step through the Rust per-rank API."""
+    import sc_neurocore.network.mpi_runner as mpimod
+    from sc_neurocore.network import Network, Population
+
+    class FakeRustRunner:
+        def __init__(self):
+            self.added: list[tuple[str, int]] = []
+            self.calls: list[tuple[int, np.ndarray]] = []
+
+        def add_population(self, model: str, n: int) -> int:
+            self.added.append((model, n))
+            return len(self.added) - 1
+
+        def step_population(self, pop_index: int, currents: np.ndarray):
+            self.calls.append((pop_index, np.asarray(currents, dtype=np.float64).copy()))
+            return {
+                "spikes": np.array([1, 0, 1], dtype=np.uint8),
+                "voltages": np.array([0.25, 0.5, 0.75], dtype=np.float64),
+            }
+
+    rust_instances: list[FakeRustRunner] = []
+
+    class FakeRustEngine:
+        @staticmethod
+        def supported_models():
+            return ["LapicqueNeuron", "Lapicque"]
+
+        def __new__(cls):
+            instance = FakeRustRunner()
+            rust_instances.append(instance)
+            return instance
+
+    comm_mock = MagicMock()
+    comm_mock.Get_rank.return_value = 0
+    comm_mock.Get_size.return_value = 1
+
+    pop = Population("LapicqueNeuron", 3, label="A")
+    net = Network(pop, seed=42)
+
+    def forbidden_python_step(_currents, spike_gating=False):
+        raise AssertionError("MPIRunner used Python step_all despite available Rust dispatch")
+
+    pop.step_all = forbidden_python_step
+
+    monkeypatch.setattr(mpimod, "HAS_MPI", True)
+    monkeypatch.setattr(mpimod, "MPI", MagicMock(COMM_WORLD=comm_mock))
+    monkeypatch.setattr(mpimod, "_get_rust_engine", lambda: FakeRustEngine)
+    monkeypatch.setattr(mpimod, "_rust_supports_model", lambda _model: True)
+
+    runner = mpimod.MPIRunner(net)
+    currents = np.array([1.0, 2.0, 3.0], dtype=np.float64)
+    local_spikes = runner._step_local({0: currents}, {})
+
+    assert runner._rust_dispatch_enabled is True
+    assert rust_instances[0].added == [("LapicqueNeuron", 3)]
+    assert len(rust_instances[0].calls) == 1
+    call_pop_index, call_currents = rust_instances[0].calls[0]
+    assert call_pop_index == 0
+    np.testing.assert_allclose(call_currents, currents)
+    np.testing.assert_array_equal(local_spikes[0], np.array([1, 0, 1], dtype=np.int8))
+    np.testing.assert_allclose(pop.voltages, np.array([0.25, 0.5, 0.75]))

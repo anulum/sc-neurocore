@@ -345,6 +345,23 @@ impl PyNetworkRunner {
         self.inner.add_projection(proj);
     }
 
+    fn step_population<'py>(
+        &mut self,
+        py: Python<'py>,
+        pop_index: usize,
+        currents: PyReadonlyArray1<'py, f64>,
+    ) -> PyResult<Py<PyAny>> {
+        let currents = currents.as_slice()?;
+        let (spikes, voltages) = self
+            .inner
+            .step_population_with_currents(pop_index, currents)
+            .map_err(PyValueError::new_err)?;
+        let dict = PyDict::new(py);
+        dict.set_item("spikes", spikes.into_pyarray(py))?;
+        dict.set_item("voltages", voltages.into_pyarray(py))?;
+        Ok(dict.into_any().unbind())
+    }
+
     fn run<'py>(&mut self, py: Python<'py>, n_steps: usize) -> PyResult<Py<PyAny>> {
         let results = self.inner.run(n_steps);
         let dict = PyDict::new(py);

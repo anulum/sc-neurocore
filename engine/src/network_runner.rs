@@ -682,6 +682,18 @@ impl PopulationRunner {
         self.currents.fill(0.0);
     }
 
+    pub fn set_currents(&mut self, currents: &[f64]) -> Result<(), String> {
+        if currents.len() != self.currents.len() {
+            return Err(format!(
+                "current vector length mismatch: got {}, expected {}",
+                currents.len(),
+                self.currents.len()
+            ));
+        }
+        self.currents.copy_from_slice(currents);
+        Ok(())
+    }
+
     pub fn collect_voltages(&self) -> Vec<f64> {
         self.neurons.iter().map(|n| n.soma_voltage()).collect()
     }
@@ -795,6 +807,20 @@ impl NetworkRunner {
 
     pub fn add_projection(&mut self, proj: ProjectionRunner) {
         self.projections.push(proj);
+    }
+
+    pub fn step_population_with_currents(
+        &mut self,
+        pop_idx: usize,
+        currents: &[f64],
+    ) -> Result<(Vec<u8>, Vec<f64>), String> {
+        let pop = self
+            .populations
+            .get_mut(pop_idx)
+            .ok_or_else(|| format!("population index {pop_idx} out of range"))?;
+        pop.set_currents(currents)?;
+        pop.step_all();
+        Ok((pop.spikes.clone(), pop.collect_voltages()))
     }
 
     pub fn run(&mut self, n_steps: usize) -> SimResults {
@@ -1431,6 +1457,27 @@ mod tests {
 
         assert!((tgt_currents[0] - 5.0).abs() < 1e-10);
         assert!((tgt_currents[1] - 3.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn single_population_step_accepts_external_currents() {
+        let mut runner = NetworkRunner::new();
+        let idx = runner.add_population(create_population("Lapicque", 3).unwrap());
+
+        let (spikes, voltages) = runner
+            .step_population_with_currents(idx, &[1.0, 2.0, 3.0])
+            .unwrap();
+
+        assert_eq!(spikes.len(), 3);
+        assert_eq!(voltages.len(), 3);
+        assert!(spikes.iter().all(|&s| s <= 1));
+        assert!(voltages.iter().all(|v| v.is_finite()));
+        assert!(runner
+            .step_population_with_currents(idx, &[1.0, 2.0])
+            .is_err());
+        assert!(runner
+            .step_population_with_currents(idx + 1, &[1.0, 2.0, 3.0])
+            .is_err());
     }
 
     #[test]

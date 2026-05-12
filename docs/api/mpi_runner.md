@@ -1,13 +1,16 @@
 # MPI Distributed Runner
 
 **Module:** `sc_neurocore.network.mpi_runner`
-**Source:** `src/sc_neurocore/network/mpi_runner.py` — 191 LOC
-**Status (v3.14.0):** code path complete; 8 mocked-mpi4py tests pass
-(2 added by task #19 verifying the new fail-fast guards); real
+**Source:** `src/sc_neurocore/network/mpi_runner.py` — 265 LOC
+**Status (v3.14.0):** code path complete; 12 mocked-mpi4py tests pass
+(2 fail-fast guards added by task #19, plus Rust dispatch regression);
+real
 multi-rank semantics with `mpirun -n 2` are not yet exercised (task #17).
 Spike gating and FIM feedback are now refused by the dispatcher with
-`NotImplementedError` (was: silently ignored). Per-rank Rust dispatch
-is not implemented in this runner.
+`NotImplementedError` (was: silently ignored). Per-rank Rust dispatch is
+available when the installed `sc_neurocore_engine.NetworkRunner` exposes
+`step_population` and supports every rank-local population model; otherwise
+the runner uses the Python stepping path.
 
 `MPIRunner` provides distributed execution of a `Network` across MPI ranks.
 It partitions populations round-robin, identifies cross-rank projections,
@@ -426,17 +429,17 @@ load-balance ratio (slowest rank wall ÷ fastest rank wall).
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | `Network._run_mpi` → `MPIRunner.run` complete; every public method reachable |
-| 2 | Multi-angle tests | ⚠️ WARN | 8 mocked-mpi4py tests pass (6 original + 2 fail-fast guards added by task #19); real multi-rank not exercised (task #17) |
-| 3 | Rust path | ⚠️ WARN | `_step_local` always calls `Population.step_all` (Python loop) — per-rank Rust dispatch is not implemented |
+| 2 | Multi-angle tests | ⚠️ WARN | 12 mocked-mpi4py tests pass, including fail-fast guards and per-rank Rust-dispatch regression; real multi-rank not exercised (task #17) |
+| 3 | Rust path | ✅ PASS | `_step_local` dispatches rank-local populations through `NetworkRunner.step_population` when the Rust engine is importable and model-compatible; Python fallback remains for CPU-only installs |
 | 4 | Benchmarks | ❌ FAIL | None — `mpi4py` absent in this env. Document as gap rather than fabricate numbers (§11) |
 | 5 | Performance docs | ⚠️ WARN | Bandwidth model documented (§6.4) but not validated empirically |
 | 6 | Documentation page | ✅ PASS | This page |
 | 7 | Rules followed | ✅ PASS | SPDX header ✅, no `# noqa`, no `# type: ignore` |
 
-Net: **3 WARN, 1 FAIL.** All four items resolve to the same root cause —
-no `mpi4py` in this environment. Adding `mpi4py` + a multi-rank test
-harness (task #17) closes WARN #2, WARN #5, FAIL #4 in one stroke.
-WARN #3 (per-rank Rust) is a separate enhancement.
+Net: **2 WARN, 1 FAIL.** The remaining WARN/FAIL items resolve to the same
+root cause — no `mpi4py` in this environment. Adding `mpi4py` + a
+multi-rank test harness (task #17) closes WARN #2, WARN #5, FAIL #4 in one
+stroke.
 
 ---
 
@@ -458,13 +461,14 @@ dispatcher prevents silent wrong results.
 not call `Network._apply_fim`; refusing the run is preferred over
 silently dropping the synchronisation feedback. Use `backend="python"`.
 
-### 13.3 No per-rank Rust dispatch
+### 13.3 Per-rank Rust dispatch
 
-The class docstring previously claimed "Works with both Python and Rust
-backends per-rank". The corrected docstring (since task #19) states the
-actual behaviour: `_step_local` always calls `Population.step_all`
-(pure-Python). The Rust fast-path is only available via
-`backend="auto"` / `backend="rust"` on a single process.
+`MPIRunner` creates a rank-local `NetworkRunner` when the PyO3 engine is
+available, every local population model is supported, and the engine exposes
+`step_population(pop_index, currents)`. `_step_local` sends the current
+vector into Rust, receives spike and voltage vectors, validates their shapes,
+and synchronises voltages back into the Python `Population`. CPU-only
+environments keep the original `Population.step_all` fallback.
 
 ### 13.4 Monitoring on rank 0 only
 

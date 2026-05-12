@@ -15818,13 +15818,13 @@ Partitions populations across MPI ranks via round-robin assignment.
 Each rank steps only its local populations; spikes propagate via
 ``MPI_Allgatherv`` every timestep.
 
-Each rank steps its local populations through ``Population.step_all``
-(pure-Python). Per-rank Rust dispatch is not implemented in
-v3.14.0; the network's ``backend='auto'`` Rust fast-path is the
-Python alternative when MPI is not needed. ``spike_gating`` and
-``fim_lambda`` are likewise unsupported by this runner — the
-``Network._run_mpi`` dispatcher raises ``NotImplementedError``
-when either is requested with ``backend='mpi'``.
+Each rank steps supported local populations through the Rust engine's
+``step_population`` API when the extension is importable and every
+local model on the rank is supported. Otherwise the runner falls back
+to ``Population.step_all`` for CPU-only environments. ``spike_gating``
+and ``fim_lambda`` are unsupported by this runner — the
+``Network._run_mpi`` dispatcher raises ``NotImplementedError`` when
+either is requested with ``backend='mpi'``.
 
 - **__init__**(network)
 - **_partition_populations**()

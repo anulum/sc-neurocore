@@ -1,8 +1,8 @@
 # Network Simulation Engine
 
 **Module:** `sc_neurocore.network` (re-exported from `sc_neurocore.network.__init__`)
-**Source:** `src/sc_neurocore/network/` — 11 files, 1740 LOC
-**Status (v3.14.0):** core orchestrator + Population/Projection/topology/monitors fully wired (87 tests passing); Rust dispatch path declared but engine wheel not installed in this environment; `MPIRunner` present with **0** dedicated tests; topology/projection compute paths are pure-Python (no Rust path yet).
+**Source:** `src/sc_neurocore/network/` — 12 files, 4065 LOC
+**Status (v3.14.0):** core orchestrator + Population/Projection/topology/monitors fully wired; Rust network dispatch and MPI per-rank Rust dispatch are implemented, with Python fallback when the engine wheel is absent; `MPIRunner` has 12 mocked-mpi4py tests; topology/projection compute paths are still pure-Python (no Rust path yet).
 
 This page covers the **simulation engine** — the declarative `Network`
 container, populations of neurons, sparse `Projection` connectivity (with
@@ -487,8 +487,8 @@ runtime check. There are no orphan helpers.
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | All 18 public symbols wired; backend dispatcher complete |
-| 2 | Multi-angle tests | ⚠️ WARN | 87 tests pass across 8 test files (network_basic 345L, network_coverage 355L, monitors_stimulus 164L, cortical_column 98+132L, gamma_oscillation 63L, topology 94+200L). MPIRunner adds 8 mocked-mpi4py tests (`test_mpi_runner.py`); real multi-rank coverage missing (task #17). `export.py` not directly covered. |
-| 3 | Rust path | ⚠️ WARN | `Network._run_rust` exists and tested logically; **engine wheel not installed in this environment** so empirical Rust numbers in §11 are not available. `topology.py`, `_csr_matvec`/`_csr_delayed_matvec`, `update_plasticity` are pure Python — task #13 tracks the Rustification. |
+| 2 | Multi-angle tests | ⚠️ WARN | Network tests cover the orchestrator, monitors, topology, cortical column, gamma circuit, and 12 mocked-mpi4py MPIRunner paths including per-rank Rust dispatch. Real multi-rank coverage is still missing (task #17). `export.py` is not directly covered. |
+| 3 | Rust path | ⚠️ WARN | `Network._run_rust` and MPIRunner per-rank Rust dispatch exist and are tested logically; **engine wheel not installed in this environment** so empirical Rust numbers in §11 are not available. `topology.py`, `_csr_matvec`/`_csr_delayed_matvec`, `update_plasticity` are pure Python — task #13 tracks the Rustification. |
 | 4 | Benchmarks | ✅ PASS | §6.1, §11, §11.1 measured this session. `benchmarks/sc_network_benchmark.py` exists (306 lines) but covers SC pipeline (encode/MAC/decode), not network orchestration — that gap is now filled by §11. |
 | 5 | Performance docs | ✅ PASS | §11 + §6.1 + §11.1 |
 | 6 | Documentation page | ✅ PASS | This page |
@@ -528,7 +528,8 @@ takes a Python-side CSR tuple. Task #13 tracks closing this gap.
 
 ### 14.3 MPIRunner real multi-rank coverage missing
 
-`tests/test_mpi_runner.py` covers 8 paths via mocked `mpi4py`. The
+`tests/test_mpi_runner.py` covers 12 paths via mocked `mpi4py`, including
+the `NetworkRunner.step_population` per-rank Rust dispatch contract. The
 custom spike-packing protocol and `Allgatherv` choreography are not
 exercised against real mpi4py + `mpirun -n 2`; a regression in real-MPI
 buffer ordering or datatype matching would not be caught. Task #17
@@ -579,7 +580,7 @@ What the existing tests cover:
 
 What the existing tests do **not** cover:
 
-- `MPIRunner` real multi-rank semantics — 8 mocked-mpi4py tests exist; real `mpirun -n 2` coverage missing (task #17)
+- `MPIRunner` real multi-rank semantics — 12 mocked-mpi4py tests exist; real `mpirun -n 2` coverage missing (task #17)
 - `export_verilog` — no direct test; covered transitively by FPGA flow
   smoke tests at most
 - Performance regressions — no `pytest-benchmark` cases for the network
