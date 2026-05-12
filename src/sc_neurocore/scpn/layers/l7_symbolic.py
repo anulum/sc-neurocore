@@ -214,10 +214,11 @@ class L7_SymbolicLayer:
         qi_flow = np.roll(self.meridian_qi, 1) - self.meridian_qi
         self.meridian_qi += qi_flow * self.params.symbol_coupling * dt
 
-        # Ecological coupling (Schumann affects Qi)
-        if l6_input is not None and "schumann_field" in l6_input:
-            schumann_mean = self._finite_mean(l6_input["schumann_field"], "schumann_field")
-            self.meridian_qi *= 1.0 + self.params.ecological_coupling * (schumann_mean - 1.0)
+        # Ecological coupling (structured L6 symbolic drive, with Schumann fallback)
+        if l6_input is not None:
+            l6_effect = self._l6_symbolic_effect(l6_input)
+            if l6_effect != 0.0:
+                self.meridian_qi *= 1.0 + self.params.ecological_coupling * l6_effect
 
         self.meridian_qi = np.clip(self.meridian_qi, 0.0, 1.0)
 
@@ -397,6 +398,25 @@ class L7_SymbolicLayer:
             raise ValueError(f"{name} must contain at least one value")
         if not np.all(np.isfinite(values)):
             raise ValueError(f"{name} must contain only finite values")
+        return float(np.mean(values))
+
+    @classmethod
+    def _l6_symbolic_effect(cls, l6_input: Dict[str, Any]) -> float:
+        if "symbolic_drive" in l6_input:
+            return cls._unit_mean(l6_input["symbolic_drive"], "symbolic_drive")
+        if "schumann_field" in l6_input:
+            return cls._finite_mean(l6_input["schumann_field"], "schumann_field") - 1.0
+        return 0.0
+
+    @staticmethod
+    def _unit_mean(value: Any, name: str) -> float:
+        values = np.asarray(value, dtype=np.float64).reshape(-1)
+        if values.size == 0:
+            raise ValueError(f"{name} must contain at least one value")
+        if not np.all(np.isfinite(values)):
+            raise ValueError(f"{name} must contain only finite values")
+        if np.any(values < 0.0) or np.any(values > 1.0):
+            raise ValueError(f"{name} values must be within [0, 1]")
         return float(np.mean(values))
 
     def _acupoint_stimulus(self, stimulus: Dict[int, float]) -> Dict[int, float]:
