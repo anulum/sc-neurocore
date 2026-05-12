@@ -8,6 +8,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from math import ceil, log2
+from numbers import Integral
 from typing import Any
 
 from ._ident import sanitize_ident
@@ -21,8 +24,9 @@ class AEREmitter:
     interface. It is not a QDI async network replacement.
     """
 
-    def __init__(self, module_name: str = "sc_network_async_aer") -> None:
+    def __init__(self, module_name: str = "sc_network_async_aer", bus_width: int = 8) -> None:
         self.module_name = sanitize_ident(module_name, context="module name")
+        self.bus_width = self._require_positive_int(bus_width, "bus_width")
         self.layers: list[dict[str, Any]] = []
 
     def add_layer(self, layer_type: str, name: str, params: dict[str, Any]) -> None:
@@ -35,68 +39,79 @@ class AEREmitter:
         )
 
     def generate(self) -> str:
+        self._validate_layers()
+        layer_widths = self._dense_layer_widths()
+        input_width = layer_widths[0][0] if layer_widths else self.bus_width
+        spike_width = layer_widths[-1][1] if layer_widths else self.bus_width
+        addr_width = max(1, ceil(log2(spike_width)))
+
         code = f"module {self.module_name} (\n"
         code += "    input wire clk,\n"
         code += "    input wire rst_n,\n"
-        code += "    input wire [7:0] input_bus,\n"
+        code += f"    input wire [{input_width - 1}:0] input_bus,\n"
         code += "    input wire aer_ack,\n"
         code += "    output reg aer_req,\n"
-        code += "    output reg [7:0] aer_addr,\n"
-        code += "    output wire [7:0] output_bus\n"
+        code += f"    output reg [{addr_width - 1}:0] aer_addr,\n"
+        code += f"    output wire [{spike_width - 1}:0] output_bus\n"
         code += ");\n\n"
 
         code += "    // Research boundary: sync compute path with AER output wrapper.\n"
         code += "    // This is not a full asynchronous micropipeline implementation.\n"
-        code += "    wire [7:0] spike_vector;\n"
+        code += f"    wire [{spike_width - 1}:0] spike_vector;\n"
 
-        for i in range(len(self.layers) - 1):
-            code += f"    wire [7:0] layer_{i}_to_{i + 1};\n"
+        for i in range(len(layer_widths) - 1):
+            code += f"    wire [{layer_widths[i][1] - 1}:0] layer_{i}_to_{i + 1};\n"
         code += "\n"
 
+        dense_idx = 0
         for i, layer in enumerate(self.layers):
             if layer["type"] != "Dense":
                 continue
 
-            output_bus = "spike_vector" if i == len(self.layers) - 1 else f"layer_{i}_to_{i + 1}"
-            input_bus = "input_bus" if i == 0 else f"layer_{i - 1}_to_{i}"
+            output_bus = (
+                "spike_vector"
+                if dense_idx == len(layer_widths) - 1
+                else f"layer_{dense_idx}_to_{dense_idx + 1}"
+            )
+            input_bus = "input_bus" if dense_idx == 0 else f"layer_{dense_idx - 1}_to_{dense_idx}"
             code += f"    // Sync layer {i}: {layer['name']}\n"
             code += "    sc_dense_layer_core #(\n"
-            code += f"        .NUM_NEURONS({layer['params'].get('n_neurons', 10)})\n"
+            code += f"        .NUM_NEURONS({layer['params']['n_neurons']})\n"
             code += f"    ) {layer['name']}_inst (\n"
             code += "        .clk(clk),\n"
             code += "        .rst_n(rst_n),\n"
             code += f"        .input_bus({input_bus}),\n"
             code += f"        .output_bus({output_bus})\n"
             code += "    );\n\n"
+            dense_idx += 1
 
         if not self.layers:
-            code += "    assign spike_vector = 8'b0;\n\n"
+            code += f"    assign spike_vector = {spike_width}'b0;\n\n"
 
         code += "    assign output_bus = spike_vector;\n"
         code += "    wire spike_valid = |spike_vector;\n\n"
 
-        code += "    function [7:0] first_hot_index;\n"
-        code += "        input [7:0] vector;\n"
+        code += f"    function [{addr_width - 1}:0] first_hot_index;\n"
+        code += f"        input [{spike_width - 1}:0] vector;\n"
+        code += "        integer k;\n"
+        code += "        reg found;\n"
         code += "        begin\n"
-        code += "            casex (vector)\n"
-        code += "                8'b???????1: first_hot_index = 8'd0;\n"
-        code += "                8'b??????10: first_hot_index = 8'd1;\n"
-        code += "                8'b?????100: first_hot_index = 8'd2;\n"
-        code += "                8'b????1000: first_hot_index = 8'd3;\n"
-        code += "                8'b???10000: first_hot_index = 8'd4;\n"
-        code += "                8'b??100000: first_hot_index = 8'd5;\n"
-        code += "                8'b?1000000: first_hot_index = 8'd6;\n"
-        code += "                8'b10000000: first_hot_index = 8'd7;\n"
-        code += "                default: first_hot_index = 8'd0;\n"
-        code += "            endcase\n"
+        code += f"            first_hot_index = {addr_width}'d0;\n"
+        code += "            found = 1'b0;\n"
+        code += f"            for (k = 0; k < {spike_width}; k = k + 1) begin\n"
+        code += "                if (!found && vector[k]) begin\n"
+        code += f"                    first_hot_index = k[{addr_width - 1}:0];\n"
+        code += "                    found = 1'b1;\n"
+        code += "                end\n"
+        code += "            end\n"
         code += "        end\n"
         code += "    endfunction\n\n"
 
-        code += "    wire [7:0] encoded_addr = first_hot_index(spike_vector);\n\n"
+        code += f"    wire [{addr_width - 1}:0] encoded_addr = first_hot_index(spike_vector);\n\n"
         code += "    always @(posedge clk or negedge rst_n) begin\n"
         code += "        if (!rst_n) begin\n"
         code += "            aer_req <= 1'b0;\n"
-        code += "            aer_addr <= 8'd0;\n"
+        code += f"            aer_addr <= {addr_width}'d0;\n"
         code += "        end else begin\n"
         code += "            if (!aer_req && spike_valid) begin\n"
         code += "                aer_req <= 1'b1;\n"
@@ -108,3 +123,54 @@ class AEREmitter:
         code += "    end\n\n"
         code += "endmodule\n"
         return code
+
+    @staticmethod
+    def _require_positive_int(value: Any, name: str) -> int:
+        if isinstance(value, bool) or not isinstance(value, Integral) or int(value) <= 0:
+            raise ValueError(f"{name} must be a positive integer")
+        return int(value)
+
+    def _validate_layers(self) -> None:
+        for layer in self.layers:
+            if layer["type"] != "Dense":
+                raise ValueError(
+                    f"unsupported async AER layer type '{layer['type']}' for layer '{layer['name']}'"
+                )
+            params = layer["params"]
+            if "n_neurons" not in params:
+                raise ValueError(f"Dense layer '{layer['name']}' requires n_neurons")
+            self._require_positive_int(params["n_neurons"], f"Dense layer '{layer['name']}' n_neurons")
+            for width_name in ("input_width", "output_width"):
+                if width_name in params:
+                    self._require_positive_int(
+                        params[width_name],
+                        f"Dense layer '{layer['name']}' {width_name}",
+                    )
+
+    def _dense_input_width(self, params: Mapping[str, Any], previous_width: int | None) -> int:
+        if "input_width" in params:
+            return self._require_positive_int(params["input_width"], "input_width")
+        return previous_width if previous_width is not None else self.bus_width
+
+    def _dense_output_width(self, params: Mapping[str, Any]) -> int:
+        if "output_width" in params:
+            return self._require_positive_int(params["output_width"], "output_width")
+        return self._require_positive_int(params["n_neurons"], "n_neurons")
+
+    def _dense_layer_widths(self) -> list[tuple[int, int]]:
+        widths: list[tuple[int, int]] = []
+        previous_width: int | None = None
+        previous_name: str | None = None
+        for layer in self.layers:
+            params = layer["params"]
+            input_width = self._dense_input_width(params, previous_width)
+            output_width = self._dense_output_width(params)
+            if previous_width is not None and input_width != previous_width:
+                raise ValueError(
+                    f"{previous_name} -> {layer['name']} width mismatch: "
+                    f"{previous_width} output bits cannot drive {input_width} input bits"
+                )
+            widths.append((input_width, output_width))
+            previous_width = output_width
+            previous_name = layer["name"]
+        return widths

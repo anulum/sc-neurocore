@@ -34,8 +34,33 @@ def test_async_aer_emitter_has_handshake_ports() -> None:
     assert "module async_top" in code
     assert "input wire aer_ack" in code
     assert "output reg aer_req" in code
-    assert "output reg [7:0] aer_addr" in code
-    assert "function [7:0] first_hot_index;" in code
+    assert "output reg [1:0] aer_addr" in code
+    assert "function [1:0] first_hot_index;" in code
+
+
+def test_async_aer_emitter_derives_declared_widths() -> None:
+    emitter = AEREmitter(module_name="async_wide", bus_width=16)
+    emitter.add_layer("Dense", "dense0", {"n_neurons": 12, "output_width": 12})
+
+    code = emitter.generate()
+
+    assert "input wire [15:0] input_bus" in code
+    assert "output reg [3:0] aer_addr" in code
+    assert "output wire [11:0] output_bus" in code
+    assert "wire [11:0] spike_vector" in code
+    assert "function [3:0] first_hot_index;" in code
+
+
+def test_async_aer_emitter_requires_dense_neuron_count() -> None:
+    emitter = AEREmitter(module_name="async_invalid")
+    emitter.add_layer("Dense", "dense0", {})
+
+    try:
+        emitter.generate()
+    except ValueError as exc:
+        assert "Dense layer 'dense0' requires n_neurons" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for omitted n_neurons")
 
 
 def test_verilog_generator_async_mode_routes_to_aer_wrapper() -> None:
