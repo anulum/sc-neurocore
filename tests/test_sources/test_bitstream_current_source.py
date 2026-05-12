@@ -98,6 +98,64 @@ def test_source_full_current_estimate_matches_scalar():
     assert np.isclose(source.full_current_estimate(), source.current_scalar)
 
 
+def test_source_current_trace_matches_realised_step_sequence_unipolar():
+    """current_trace should expose the exact realised per-cycle unipolar current."""
+    source = _make_source(
+        x_inputs=[0.25, 0.75, 1.0],
+        weight_values=[1.0, 1.0, 1.0],
+        length=32,
+        y_min=-0.5,
+        y_max=1.5,
+        sc_mode="unipolar",
+    )
+
+    trace = source.current_trace()
+    stepped = np.array([source.step() for _ in range(source.length)], dtype=np.float64)
+
+    assert trace.shape == (source.length,)
+    assert trace.dtype == np.float64
+    assert np.all(np.isfinite(trace))
+    assert np.allclose(trace, stepped)
+
+
+def test_source_current_trace_matches_realised_step_sequence_bipolar():
+    """current_trace should expose the exact realised per-cycle bipolar XNOR current."""
+    source = _make_source(
+        x_inputs=[-1.0, 1.0],
+        x_min=-1.0,
+        x_max=1.0,
+        weight_values=[1.0, -1.0],
+        w_min=-1.0,
+        w_max=1.0,
+        length=32,
+        y_min=-2.0,
+        y_max=2.0,
+        sc_mode="bipolar",
+    )
+
+    trace = source.current_trace()
+    stepped = np.array([source.step() for _ in range(source.length)], dtype=np.float64)
+
+    assert trace.shape == (source.length,)
+    assert np.allclose(trace, stepped)
+
+
+def test_source_full_current_estimate_is_mean_realised_trace_for_multi_channel_unipolar():
+    """The full estimate must match the same realised current trace used by step()."""
+    source = _make_source(
+        x_inputs=[0.8, 0.8, 0.8],
+        weight_values=[1.0, 1.0, 1.0],
+        length=4096,
+        y_min=0.0,
+        y_max=2.0,
+    )
+
+    trace = source.current_trace()
+
+    assert source.full_current_estimate() == pytest.approx(float(trace.mean()))
+    assert source.full_current_estimate() < source.y_max
+
+
 def test_source_seed_determinism():
     """Same seed and params yield identical post matrices."""
     source_a = _make_source(seed=10)

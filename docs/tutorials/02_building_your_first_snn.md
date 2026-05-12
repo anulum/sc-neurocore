@@ -88,8 +88,8 @@ standard error is ~0.8%.
 ## 3. Multi-channel current source
 
 `BitstreamCurrentSource` wires multiple input channels through synapses,
-computes a bitstream dot-product, and delivers a scalar current $I(t)$ at
-each time step:
+builds the realised post-synaptic bitstreams, and delivers the decoded current
+$I(t)$ at each time step:
 
 ```python
 from sc_neurocore import BitstreamCurrentSource
@@ -105,8 +105,10 @@ source = BitstreamCurrentSource(
 )
 
 currents = [source.step() for _ in range(100)]
+full_trace = source.current_trace()
 avg_I = np.mean(currents)
 print(f"Average current over 100 steps: {avg_I:.4f}")
+print(f"Trace length: {len(full_trace)}")
 print(f"Full-length estimate: {source.full_current_estimate():.4f}")
 ```
 
