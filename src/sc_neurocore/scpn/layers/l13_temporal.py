@@ -33,6 +33,7 @@ class L13_StochasticParameters:
     binding_window: int = 10  # timesteps
     binding_threshold: float = 0.5
     quantum_info_coupling: float = 0.1  # from L12
+    source_decoherence_coupling: float = 0.1
     rng_seed: Optional[int] = None
 
 
@@ -63,8 +64,19 @@ class L13_TemporalLayer:
 
         # Shift history and add current state
         signal = np.zeros(n, dtype=np.float64)
-        if l12_input is not None and "coherence" in l12_input:
-            signal = self._coherence_signal(l12_input["coherence"], n)
+        source_sampling_gain = 0.0
+        temporal_decoherence_load = 0.0
+        if l12_input is not None:
+            signal = self._coherence_signal(l12_input.get("coherence", np.zeros(n)), n)
+            l12_effect = self._l12_source_sampling_effect(l12_input)
+            source_sampling_gain = l12_effect["source_sampling_gain"]
+            temporal_decoherence_load = l12_effect["temporal_decoherence_load"]
+            signal = np.clip(
+                signal + source_sampling_gain - self.params.source_decoherence_coupling
+                * temporal_decoherence_load,
+                0.0,
+                1.0,
+            )
 
         self.history = np.roll(self.history, -1, axis=1)
         self.history[:, -1] = signal
@@ -83,6 +95,9 @@ class L13_TemporalLayer:
         return {
             "binding_matrix": self.binding_matrix.copy(),
             "binding_strength": binding_strength,
+            "source_sampling_signal": signal.copy(),
+            "source_sampling_gain": source_sampling_gain,
+            "temporal_decoherence_load": temporal_decoherence_load,
             "output_bitstreams": output_bitstreams,
         }
 
@@ -101,6 +116,16 @@ class L13_TemporalLayer:
             raise ValueError("binding_window must be greater than one")
         if not 0.0 <= params.binding_threshold <= 1.0:
             raise ValueError("binding_threshold must be in [0, 1]")
+        if (
+            not math.isfinite(float(params.quantum_info_coupling))
+            or params.quantum_info_coupling < 0.0
+        ):
+            raise ValueError("quantum_info_coupling must be finite and non-negative")
+        if (
+            not math.isfinite(float(params.source_decoherence_coupling))
+            or params.source_decoherence_coupling < 0.0
+        ):
+            raise ValueError("source_decoherence_coupling must be finite and non-negative")
         if params.rng_seed is not None:
             if isinstance(params.rng_seed, bool) or not isinstance(params.rng_seed, int):
                 raise ValueError("rng_seed must be a non-negative integer or None")
@@ -114,9 +139,40 @@ class L13_TemporalLayer:
             raise ValueError("coherence must contain at least one value")
         if not np.all(np.isfinite(values)):
             raise ValueError("coherence must contain only finite values")
+        if np.any(values < 0.0) or np.any(values > 1.0):
+            raise ValueError("coherence values must be within [0, 1]")
         if values.size >= n_channels:
             return values[:n_channels].copy()
         return np.pad(values, (0, n_channels - values.size))
+
+    def _l12_source_sampling_effect(self, l12_input: Dict[str, Any]) -> Dict[str, float]:
+        source_sampling_gain = self.params.quantum_info_coupling * self._scalar(
+            l12_input.get("gaian_stabilization_drive", 0.0),
+            "gaian_stabilization_drive",
+            lower_bound=None,
+        )
+        noospheric_entropy_load = self._scalar(
+            l12_input.get("noospheric_entropy_load", 0.0), "noospheric_entropy_load"
+        )
+        effective_dephasing_gamma = self._scalar(
+            l12_input.get("effective_dephasing_gamma", 0.0), "effective_dephasing_gamma"
+        )
+        return {
+            "source_sampling_gain": source_sampling_gain,
+            "temporal_decoherence_load": noospheric_entropy_load + effective_dephasing_gamma,
+        }
+
+    @staticmethod
+    def _scalar(value: Any, name: str, *, lower_bound: Optional[float] = 0.0) -> float:
+        values = np.asarray(value, dtype=np.float64)
+        if values.shape != ():
+            raise ValueError(f"{name} must be a finite scalar")
+        scalar = float(values)
+        if not math.isfinite(scalar):
+            raise ValueError(f"{name} must be a finite scalar")
+        if lower_bound is not None and scalar < lower_bound:
+            raise ValueError(f"{name} must be finite and non-negative")
+        return scalar
 
     @staticmethod
     def _pearson(a: np.ndarray, b: np.ndarray) -> float:
