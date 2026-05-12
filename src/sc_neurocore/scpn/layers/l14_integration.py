@@ -93,10 +93,18 @@ class L14_IntegrationLayer:
 
         transdimensional_bridge_drive = 0.0
         holographic_protection_load = 0.0
+        boundary_context_id: Optional[str] = None
+        boundary_terminals: tuple[str, ...] = ()
+        bridge_terminal_set: tuple[str, ...] = ()
+        bridge_terminal_bandwidth = 1.0
         if l13_input is not None:
             bridge_effect = self._l13_bridge_effect(l13_input)
             transdimensional_bridge_drive = bridge_effect["bridge_drive"]
             holographic_protection_load = bridge_effect["protection_load"]
+            boundary_context_id = bridge_effect["boundary_context_id"]
+            boundary_terminals = bridge_effect["boundary_terminals"]
+            bridge_terminal_set = bridge_effect["bridge_terminal_set"]
+            bridge_terminal_bandwidth = bridge_effect["bridge_terminal_bandwidth"]
             source_drive = np.clip(
                 transdimensional_bridge_drive
                 - self.params.bridge_decoherence_coupling * holographic_protection_load,
@@ -114,7 +122,9 @@ class L14_IntegrationLayer:
         self.integrated_coherence = float(np.clip(self.integrated_coherence, 0.0, 1.0))
         resonance_matrix = np.diag(self.layer_metrics - self.integrated_coherence)
         self.resonance_determinant = float(np.linalg.det(resonance_matrix))
-        self.resonance_lock = abs(self.resonance_determinant) <= self.params.resonance_lock_tolerance
+        self.resonance_lock = (
+            abs(self.resonance_determinant) <= self.params.resonance_lock_tolerance
+        )
 
         activation = np.full(self.params.n_dimensions, self.integrated_coherence)
         activation = np.clip(activation, 0, 1).astype(np.float64, copy=False)
@@ -129,6 +139,10 @@ class L14_IntegrationLayer:
             "resonance_lock": self.resonance_lock,
             "transdimensional_bridge_drive": transdimensional_bridge_drive,
             "holographic_protection_load": holographic_protection_load,
+            "boundary_context_id": boundary_context_id,
+            "boundary_terminals": boundary_terminals,
+            "bridge_terminal_set": bridge_terminal_set,
+            "bridge_terminal_bandwidth": bridge_terminal_bandwidth,
             "output_bitstreams": output_bitstreams,
         }
 
@@ -152,7 +166,11 @@ class L14_IntegrationLayer:
         weights = np.asarray(params.integration_weights, dtype=np.float64)
         if weights.shape != (params.n_dimensions,):
             raise ValueError("integration_weights must contain one value per dimension")
-        if not np.all(np.isfinite(weights)) or np.any(weights < 0.0) or float(np.sum(weights)) <= 0.0:
+        if (
+            not np.all(np.isfinite(weights))
+            or np.any(weights < 0.0)
+            or float(np.sum(weights)) <= 0.0
+        ):
             raise ValueError("integration_weights must be finite, non-negative, and non-zero")
         if not math.isfinite(float(params.temporal_coupling)) or params.temporal_coupling < 0.0:
             raise ValueError("temporal_coupling must be finite and non-negative")
@@ -211,25 +229,86 @@ class L14_IntegrationLayer:
         return mean
 
     @classmethod
-    def _l13_bridge_effect(cls, l13_input: Dict[str, Any]) -> Dict[str, float]:
+    def _l13_bridge_effect(cls, l13_input: Dict[str, Any]) -> Dict[str, Any]:
+        bridge_context = cls._bridge_context(l13_input)
         if "source_sampling_signal" not in l13_input:
             if "source_field" in l13_input:
                 return {
-                    "bridge_drive": cls._finite_mean(l13_input["source_field"], "source_field"),
+                    "bridge_drive": cls._finite_mean(l13_input["source_field"], "source_field")
+                    * bridge_context["bridge_terminal_bandwidth"],
                     "protection_load": 0.0,
+                    "boundary_context_id": bridge_context["boundary_context_id"],
+                    "boundary_terminals": bridge_context["boundary_terminals"],
+                    "bridge_terminal_set": bridge_context["bridge_terminal_set"],
+                    "bridge_terminal_bandwidth": bridge_context["bridge_terminal_bandwidth"],
                 }
-            return {"bridge_drive": 0.0, "protection_load": 0.0}
+            return {
+                "bridge_drive": 0.0,
+                "protection_load": 0.0,
+                "boundary_context_id": bridge_context["boundary_context_id"],
+                "boundary_terminals": bridge_context["boundary_terminals"],
+                "bridge_terminal_set": bridge_context["bridge_terminal_set"],
+                "bridge_terminal_bandwidth": bridge_context["bridge_terminal_bandwidth"],
+            }
 
         source_sampling = cls._finite_mean(
             l13_input["source_sampling_signal"], "source_sampling_signal"
         )
-        source_gain = cls._finite_scalar(l13_input.get("source_sampling_gain", 0.0), "source_sampling_gain")
-        binding_strength = cls._unit_scalar(l13_input.get("binding_strength", 0.0), "binding_strength")
+        source_gain = cls._finite_scalar(
+            l13_input.get("source_sampling_gain", 0.0), "source_sampling_gain"
+        )
+        binding_strength = cls._unit_scalar(
+            l13_input.get("binding_strength", 0.0), "binding_strength"
+        )
         protection_load = cls._finite_scalar(
             l13_input.get("temporal_decoherence_load", 0.0), "temporal_decoherence_load"
         )
-        bridge_drive = float(np.clip(source_sampling + source_gain + binding_strength, 0.0, 1.0))
-        return {"bridge_drive": bridge_drive, "protection_load": protection_load}
+        bridge_drive = float(
+            np.clip(
+                source_sampling + source_gain + binding_strength,
+                0.0,
+                1.0,
+            )
+            * bridge_context["bridge_terminal_bandwidth"]
+        )
+        return {
+            "bridge_drive": bridge_drive,
+            "protection_load": protection_load,
+            "boundary_context_id": bridge_context["boundary_context_id"],
+            "boundary_terminals": bridge_context["boundary_terminals"],
+            "bridge_terminal_set": bridge_context["bridge_terminal_set"],
+            "bridge_terminal_bandwidth": bridge_context["bridge_terminal_bandwidth"],
+        }
+
+    @staticmethod
+    def _bridge_context(l13_input: Dict[str, Any]) -> Dict[str, Any]:
+        has_context_id = "boundary_context_id" in l13_input
+        has_terminals = "boundary_terminals" in l13_input
+        if not has_context_id and not has_terminals:
+            return {
+                "boundary_context_id": None,
+                "boundary_terminals": (),
+                "bridge_terminal_set": (),
+                "bridge_terminal_bandwidth": 1.0,
+            }
+        if not has_context_id or not has_terminals:
+            raise ValueError("boundary context requires boundary_context_id and boundary_terminals")
+
+        context_id = str(l13_input["boundary_context_id"])
+        if not context_id:
+            raise ValueError("boundary_context_id must be non-empty")
+        terminals = tuple(l13_input["boundary_terminals"])
+        valid_terminals = {"T1", "T2", "T3", "T4", "T5", "T6", "T7"}
+        if not terminals or any(terminal not in valid_terminals for terminal in terminals):
+            raise ValueError("boundary_terminals must contain valid T1-T7 terminal identifiers")
+
+        bridge_terminals = tuple(terminal for terminal in terminals if terminal in {"T2", "T5"})
+        return {
+            "boundary_context_id": context_id,
+            "boundary_terminals": terminals,
+            "bridge_terminal_set": bridge_terminals,
+            "bridge_terminal_bandwidth": float(len(bridge_terminals) / 2.0),
+        }
 
     @staticmethod
     def _finite_scalar(value: Any, name: str) -> float:
