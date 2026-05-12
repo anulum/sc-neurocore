@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import hashlib
 import json
+import string
 from typing import Any
 
 import numpy as np
@@ -157,8 +158,12 @@ def validate_datastream_payload(payload: dict[str, Any]) -> None:
     telemetry = payload.get("telemetry")
     if not isinstance(telemetry, dict) or telemetry.get("total_ticks", 0) <= 0:
         raise DatastreamValidationError("telemetry must contain at least one recorded tick")
-    if "packet_sha256" not in payload:
-        raise DatastreamValidationError("packet_sha256 is required")
+    packet_hash = payload.get("packet_sha256")
+    if not _is_sha256_hex(packet_hash):
+        raise DatastreamValidationError("packet_sha256 must be a SHA256 hex digest")
+    expected_hash = _payload_sha256_without_packet_hash(payload)
+    if packet_hash != expected_hash:
+        raise DatastreamValidationError("packet_sha256 does not match payload")
 
 
 def _validate_waveform(waveform: np.ndarray) -> np.ndarray:
@@ -245,6 +250,25 @@ def _observation_record(observation: BenchmarkObservation) -> dict[str, int | fl
 
 def _hash_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _is_sha256_hex(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in string.hexdigits for character in value)
+    )
+
+
+def _payload_sha256_without_packet_hash(payload: dict[str, Any]) -> str:
+    canonical_payload = dict(payload)
+    canonical_payload.pop("packet_sha256", None)
+    encoded = json.dumps(
+        canonical_payload,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 __all__ = [

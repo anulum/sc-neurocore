@@ -134,3 +134,32 @@ def test_datastream_payload_validator_rejects_missing_hashes() -> None:
 
     with pytest.raises(DatastreamValidationError, match="aer_bytes_sha256"):
         validate_datastream_payload(payload)
+
+
+def test_datastream_payload_validator_rejects_tampered_packet_hash() -> None:
+    packet = build_datastream_packet(
+        waveform=_waveform(),
+        spike_raster=_spikes(),
+        source_name="unit-replay",
+        source_mode="fixture",
+        metadata={"window": "unit"},
+    )
+    payload = packet.to_bridge_dict()
+    payload["source_name"] = "tampered-replay"
+
+    with pytest.raises(DatastreamValidationError, match="packet_sha256"):
+        validate_datastream_payload(payload)
+
+
+def test_datastream_payload_validator_rejects_malformed_packet_hash() -> None:
+    packet = build_datastream_packet(
+        waveform=_waveform(),
+        spike_raster=_spikes(),
+        source_name="unit-replay",
+        source_mode="fixture",
+    )
+    payload = packet.to_bridge_dict()
+    payload["packet_sha256"] = "not-a-sha256"
+
+    with pytest.raises(DatastreamValidationError, match="packet_sha256"):
+        validate_datastream_payload(payload)
