@@ -22,6 +22,11 @@ and recorders into reusable building blocks.
 
 ## Dense Layer
 
+`SCDenseLayer` accepts either a 1-D `weight_values` vector, which creates one
+shared stochastic-computing current source for all neurons, or a 2-D
+`(n_neurons, n_inputs)` weight matrix, which creates one SC dot-product source
+per output neuron.
+
 ::: sc_neurocore.layers.sc_dense_layer.SCDenseLayer
 
 ## Vectorized Layer

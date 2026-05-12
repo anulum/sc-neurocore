@@ -251,7 +251,7 @@ sample = X_te[0].numpy()
 layer = SCDenseLayer(
     n_neurons=sc_w.shape[0],
     x_inputs=sample.tolist(),
-    weight_values=sc_w[0].tolist(),  # one neuron's weights
+    weight_values=sc_w.tolist(),  # one SC dot-product source per output neuron
     x_min=0.0, x_max=1.0,
     w_min=0.0, w_max=1.0,
     length=2048,

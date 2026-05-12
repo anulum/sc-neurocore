@@ -36,9 +36,10 @@ class SCDenseLayer:
     """
     Stochastic-computing dense layer of LIF neurons.
 
-    Each neuron receives shared SC dot-product input current and
-    produces independent spike trains. Software-only but fully
-    SC-driven at the input/synapse level.
+    Each neuron receives SC dot-product input current and produces independent
+    spike trains. ``weight_values`` may be either a single shared vector of
+    length ``n_inputs`` or a dense matrix shaped ``(n_neurons, n_inputs)``.
+    Software-only but fully SC-driven at the input/synapse level.
 
     Example
     -------
@@ -54,7 +55,7 @@ class SCDenseLayer:
 
     n_neurons: int
     x_inputs: Sequence[float]
-    weight_values: Sequence[float]
+    weight_values: Sequence[float] | Sequence[Sequence[float]]
     x_min: float
     x_max: float
     w_min: float
@@ -68,15 +69,15 @@ class SCDenseLayer:
     sc_mode: str = "unipolar"
 
     def __post_init__(self) -> None:
-        if len(self.x_inputs) != len(self.weight_values):
-            raise ValueError("x_inputs and weight_values must have same length.")
+        if self.n_neurons < 0:
+            raise ValueError("n_neurons must be non-negative.")
+        self._weight_matrix, self._shared_source = self._normalise_weight_values()
 
-        # Shared SC current source for now (can be extended to per-neuron later)
         self.source = BitstreamCurrentSource(
             x_inputs=self.x_inputs,
             x_min=self.x_min,
             x_max=self.x_max,
-            weight_values=self.weight_values,
+            weight_values=self._weight_matrix[0],
             w_min=self.w_min,
             w_max=self.w_max,
             length=self.length,
@@ -85,6 +86,24 @@ class SCDenseLayer:
             seed=self.base_seed,
             sc_mode=self.sc_mode,
         )
+        self.sources: List[BitstreamCurrentSource] = [self.source]
+        if not self._shared_source:
+            self.sources.extend(
+                BitstreamCurrentSource(
+                    x_inputs=self.x_inputs,
+                    x_min=self.x_min,
+                    x_max=self.x_max,
+                    weight_values=self._weight_matrix[i],
+                    w_min=self.w_min,
+                    w_max=self.w_max,
+                    length=self.length,
+                    y_min=self.y_min,
+                    y_max=self.y_max,
+                    seed=None if self.base_seed is None else self.base_seed + (10_000 * i),
+                    sc_mode=self.sc_mode,
+                )
+                for i in range(1, self.n_neurons)
+            )
 
         # Build neurons
         if self.neuron_params is None:
@@ -111,8 +130,39 @@ class SCDenseLayer:
             self.neurons.append(neuron)
             self.recorders.append(BitstreamSpikeRecorder(dt_ms=self.dt_ms))
 
+    def _normalise_weight_values(self) -> tuple[np.ndarray[Any, Any], bool]:
+        weights = np.asarray(self.weight_values, dtype=np.float64)
+        n_inputs = len(self.x_inputs)
+        if weights.ndim == 1:
+            if weights.shape != (n_inputs,):
+                raise ValueError(
+                    "1-D weight_values must have shape (n_inputs,), "
+                    f"got {weights.shape} for n_inputs={n_inputs}"
+                )
+            if not np.all(np.isfinite(weights)):
+                raise ValueError("weight_values must contain only finite values.")
+            return weights.reshape(1, n_inputs), True
+
+        if weights.ndim == 2:
+            if self.n_neurons == 0:
+                raise ValueError("2-D weight_values requires at least one output neuron.")
+            expected = (self.n_neurons, n_inputs)
+            if weights.shape != expected:
+                raise ValueError(
+                    f"2-D weight_values must have shape {expected}, got {weights.shape}"
+                )
+            if not np.all(np.isfinite(weights)):
+                raise ValueError("weight_values must contain only finite values.")
+            return weights, False
+
+        raise ValueError(
+            "weight_values must be either a 1-D shared vector or a 2-D "
+            f"(n_neurons, n_inputs) matrix, got {weights.ndim}-D"
+        )
+
     def reset(self) -> None:
-        self.source.reset()
+        for source in self.sources:
+            source.reset()
         for neuron, rec in zip(self.neurons, self.recorders):
             neuron.reset_state()
             rec.reset()
@@ -121,13 +171,20 @@ class SCDenseLayer:
         """
         Run the layer for T time steps, updating all neurons.
 
-        The current I_t is shared across all neurons (common input
-        processed through SC dot-product). Neurons differ by their
-        internal noise and parameters.
+        A 1-D weight vector produces one shared SC current source for all
+        neurons. A 2-D weight matrix produces one SC current source per neuron.
         """
+        if self._shared_source:
+            for _ in range(T):
+                I_t = self.source.step()
+                for neuron, rec in zip(self.neurons, self.recorders):
+                    spike = neuron.step(I_t)
+                    rec.record(spike)
+            return
+
         for _ in range(T):
-            I_t = self.source.step()
-            for neuron, rec in zip(self.neurons, self.recorders):
+            currents = [source.step() for source in self.sources]
+            for neuron, rec, I_t in zip(self.neurons, self.recorders, currents):
                 spike = neuron.step(I_t)
                 rec.record(spike)
 
