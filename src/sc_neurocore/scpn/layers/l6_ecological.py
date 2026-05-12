@@ -24,10 +24,12 @@ Key Features:
 
 """
 
-from dataclasses import dataclass
-import numpy as np
 import logging
+import math
+from dataclasses import dataclass
 from typing import Dict, List
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +61,7 @@ class L6_StochasticParameters:
     # Inter-layer coupling
     organismal_coupling: float = 0.15  # From L5
     symbolic_coupling: float = 0.1  # To L7
+    rng_seed: Optional[int] = None
 
 
 class L6_EcologicalLayer:
@@ -71,6 +74,8 @@ class L6_EcologicalLayer:
 
     def __init__(self, params: Optional[L6_StochasticParameters] = None):
         self.params = params or L6_StochasticParameters()
+        self._validate_params(self.params)
+        self._rng = np.random.default_rng(self.params.rng_seed)
 
         # Schumann resonance field (superposition of modes)
         self.schumann_phases = np.zeros(len(self.params.schumann_frequencies))
@@ -83,7 +88,7 @@ class L6_EcologicalLayer:
         self.circadian_phase = 0.0
 
         # Biospheric network state (collective field)
-        self.biospheric_field = np.random.random(self.params.n_field_nodes) * 0.3
+        self.biospheric_field = self._rng.random(self.params.n_field_nodes) * 0.3
 
         # Planetary consciousness coherence
         self.planetary_coherence = 0.5
@@ -113,6 +118,7 @@ class L6_EcologicalLayer:
         Returns:
             Dict with schumann_field, geomag, circadian, output_bitstreams
         """
+        self._validate_step_inputs(dt, l5_input, solar_activity, lunar_phase)
         self.time += dt
 
         # 1. Schumann resonance dynamics
@@ -132,7 +138,7 @@ class L6_EcologicalLayer:
             )
 
         # Add noise
-        schumann_signal += self.params.schumann_noise * np.random.normal(
+        schumann_signal += self.params.schumann_noise * self._rng.normal(
             0, 1, self.params.n_field_nodes
         )
 
@@ -147,7 +153,7 @@ class L6_EcologicalLayer:
         geomag_variation = (
             self.params.geomag_variation
             * storm_factor
-            * np.random.normal(0, 1, self.params.n_field_nodes)
+            * self._rng.normal(0, 1, self.params.n_field_nodes)
         )
         self.geomag_field = np.clip(
             self.geomag_field + geomag_variation * dt,
@@ -170,7 +176,7 @@ class L6_EcologicalLayer:
 
         self.biospheric_field += (
             self.params.network_coupling * network_coupling
-            + self.params.network_noise * np.random.normal(0, 1, self.params.n_field_nodes)
+            + self.params.network_noise * self._rng.normal(0, 1, self.params.n_field_nodes)
         ) * dt
 
         # Modulate by Schumann and circadian
@@ -180,7 +186,9 @@ class L6_EcologicalLayer:
         # 5. Organismal coupling (L5 collective emotional state affects field)
         if l5_input is not None:
             if "emotional_state" in l5_input:
-                emotional_coherence = np.mean(l5_input["emotional_state"])
+                emotional_coherence = self._finite_mean(
+                    l5_input["emotional_state"], "emotional_state"
+                )
                 self.biospheric_field += (
                     self.params.organismal_coupling * (emotional_coherence - 0.5) * dt
                 )
@@ -199,8 +207,9 @@ class L6_EcologicalLayer:
 
         # 8. Generate output bitstreams
         output_probs = self.biospheric_field * circadian_signal
-        rands = np.random.random((self.params.n_field_nodes, self.params.bitstream_length))
+        rands = self._rng.random((self.params.n_field_nodes, self.params.bitstream_length))
         output_bitstreams = (rands < output_probs[:, None]).astype(np.uint8)
+        symbolic_drive = self.params.symbolic_coupling * schumann_field
 
         # Store history
         result = {
@@ -211,6 +220,7 @@ class L6_EcologicalLayer:
             "circadian_signal": circadian_signal,
             "biospheric_field": self.biospheric_field.copy(),
             "planetary_coherence": self.planetary_coherence,
+            "symbolic_drive": symbolic_drive.copy(),
             "output_bitstreams": output_bitstreams,
         }
 
@@ -242,3 +252,77 @@ class L6_EcologicalLayer:
     def get_circadian_time(self) -> float:
         """Return current circadian time (0-24 hours)."""
         return (self.circadian_phase / (2 * np.pi)) * 24.0
+
+    @staticmethod
+    def _validate_params(params: L6_StochasticParameters) -> None:
+        if (
+            not isinstance(params.n_field_nodes, int)
+            or isinstance(params.n_field_nodes, bool)
+            or params.n_field_nodes <= 0
+        ):
+            raise ValueError("n_field_nodes must be a positive integer")
+        if (
+            not isinstance(params.bitstream_length, int)
+            or isinstance(params.bitstream_length, bool)
+            or params.bitstream_length <= 0
+        ):
+            raise ValueError("bitstream_length must be a positive integer")
+        if (
+            not isinstance(params.schumann_frequencies, tuple)
+            or len(params.schumann_frequencies) == 0
+            or any(not math.isfinite(float(freq)) or float(freq) <= 0.0 for freq in params.schumann_frequencies)
+        ):
+            raise ValueError("schumann_frequencies must be a non-empty tuple of positive finite values")
+        for field_name in (
+            "schumann_amplitude",
+            "schumann_noise",
+            "geomag_variation",
+            "circadian_amplitude",
+            "network_coupling",
+            "network_noise",
+            "organismal_coupling",
+            "symbolic_coupling",
+        ):
+            value = float(getattr(params, field_name))
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"{field_name} must be finite and non-negative")
+        if not math.isfinite(float(params.geomag_baseline)) or params.geomag_baseline <= 0.0:
+            raise ValueError("geomag_baseline must be finite and positive")
+        if not math.isfinite(float(params.circadian_period)) or params.circadian_period <= 0.0:
+            raise ValueError("circadian_period must be finite and positive")
+        if params.circadian_amplitude > 0.5:
+            raise ValueError("circadian_amplitude must keep circadian output within [0, 1]")
+        if params.rng_seed is not None and (
+            not isinstance(params.rng_seed, int)
+            or isinstance(params.rng_seed, bool)
+            or params.rng_seed < 0
+        ):
+            raise ValueError("rng_seed must be None or a non-negative integer")
+
+    @classmethod
+    def _validate_step_inputs(
+        cls,
+        dt: float,
+        l5_input: Optional[Dict[str, Any]],
+        solar_activity: float,
+        lunar_phase: float,
+    ) -> None:
+        if not math.isfinite(float(dt)) or dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+        if (
+            not math.isfinite(float(solar_activity))
+            or solar_activity < 0.0
+            or solar_activity > 1.0
+        ):
+            raise ValueError("solar_activity must be finite and within [0, 1]")
+        if not math.isfinite(float(lunar_phase)):
+            raise ValueError("lunar_phase must be finite")
+        if l5_input is not None and "emotional_state" in l5_input:
+            cls._finite_mean(l5_input["emotional_state"], "emotional_state")
+
+    @staticmethod
+    def _finite_mean(values: Any, name: str) -> float:
+        arr = np.asarray(values, dtype=np.float64)
+        if arr.size == 0 or not np.all(np.isfinite(arr)):
+            raise ValueError(f"{name} must contain finite values")
+        return float(np.mean(arr))
