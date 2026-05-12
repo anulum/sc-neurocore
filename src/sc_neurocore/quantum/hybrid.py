@@ -24,6 +24,10 @@ class QuantumStochasticLayer:
 
     n_qubits: int
     length: int = 1024
+    rng_seed: int | None = None
+
+    def __post_init__(self) -> None:
+        self._rng = np.random.default_rng(self.rng_seed)
 
     def forward(self, input_bitstreams: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """
@@ -41,7 +45,7 @@ class QuantumStochasticLayer:
 
         # 4. Re-encode to bitstream (Collapse)
         # (n_qubits, length)
-        rands = np.random.random((self.n_qubits, self.length))
+        rands = self._rng.random((self.n_qubits, self.length))
         out_bits = (rands < p_measure[:, None]).astype(np.uint8)
 
         return out_bits
