@@ -146,6 +146,9 @@ def validate_datastream_payload(payload: dict[str, Any]) -> None:
     """Validate the public shape of a bridge datastream payload."""
     if payload.get("schema_version") != SC_NEUROCORE_DATASTREAM_SCHEMA_VERSION:
         raise DatastreamValidationError("unsupported datastream schema_version")
+    for key in ("source_name", "waveform_codec", "waveform_mode", "aer_codec"):
+        if not isinstance(payload.get(key), str) or not payload[key].strip():
+            raise DatastreamValidationError(f"{key} must be a non-empty string")
     source_mode = payload.get("source_mode")
     if source_mode not in SOURCE_MODES:
         raise DatastreamValidationError("unsupported source_mode")
@@ -153,11 +156,42 @@ def validate_datastream_payload(payload: dict[str, Any]) -> None:
     if not isinstance(hashes, dict):
         raise DatastreamValidationError("hashes must be present")
     for key in ("waveform_bytes_sha256", "aer_bytes_sha256"):
-        if not isinstance(hashes.get(key), str) or len(hashes[key]) != 64:
+        if not _is_sha256_hex(hashes.get(key)):
             raise DatastreamValidationError(f"{key} must be a SHA256 hex digest")
-    telemetry = payload.get("telemetry")
-    if not isinstance(telemetry, dict) or telemetry.get("total_ticks", 0) <= 0:
-        raise DatastreamValidationError("telemetry must contain at least one recorded tick")
+
+    waveform_shape = _shape_from_payload(payload, "waveform_shape")
+    spike_shape = _shape_from_payload(payload, "spike_shape")
+    if waveform_shape != spike_shape:
+        raise DatastreamValidationError("waveform_shape and spike_shape must match")
+
+    waveform_metrics = _mapping_from_payload(payload, "waveform_metrics")
+    aer_metrics = _mapping_from_payload(payload, "aer_metrics")
+    telemetry = _mapping_from_payload(payload, "telemetry")
+    total_ticks = _positive_int_from_mapping(telemetry, "total_ticks", "telemetry")
+    total_spikes = _nonnegative_int_from_mapping(telemetry, "total_spikes", "telemetry")
+    if total_ticks != spike_shape[0]:
+        raise DatastreamValidationError("total_ticks must match spike_shape timesteps")
+    aer_spikes = _nonnegative_int_from_mapping(aer_metrics, "n_spikes", "aer_metrics")
+    if total_spikes != aer_spikes:
+        raise DatastreamValidationError("total_spikes must match aer_metrics n_spikes")
+    aer_timesteps = _positive_int_from_mapping(aer_metrics, "n_timesteps", "aer_metrics")
+    if aer_timesteps != spike_shape[0]:
+        raise DatastreamValidationError("n_timesteps must match spike_shape timesteps")
+    aer_neurons = _positive_int_from_mapping(aer_metrics, "n_neurons", "aer_metrics")
+    if aer_neurons != spike_shape[1]:
+        raise DatastreamValidationError("n_neurons must match spike_shape neurons")
+    waveform_samples = _positive_int_from_mapping(waveform_metrics, "n_samples", "waveform_metrics")
+    if waveform_samples != waveform_shape[0]:
+        raise DatastreamValidationError("n_samples must match waveform_shape samples")
+    waveform_channels = _positive_int_from_mapping(
+        waveform_metrics, "n_channels", "waveform_metrics"
+    )
+    if waveform_channels != waveform_shape[1]:
+        raise DatastreamValidationError("n_channels must match waveform_shape channels")
+
+    qpu_artifact_sha256 = payload.get("qpu_artifact_sha256")
+    if qpu_artifact_sha256 is not None and not _is_sha256_hex(qpu_artifact_sha256):
+        raise DatastreamValidationError("qpu_artifact_sha256 must be a SHA256 hex digest")
     packet_hash = payload.get("packet_sha256")
     if not _is_sha256_hex(packet_hash):
         raise DatastreamValidationError("packet_sha256 must be a SHA256 hex digest")
@@ -258,6 +292,39 @@ def _is_sha256_hex(value: Any) -> bool:
         and len(value) == 64
         and all(character in string.hexdigits for character in value)
     )
+
+
+def _shape_from_payload(payload: dict[str, Any], key: str) -> tuple[int, int]:
+    value = payload.get(key)
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
+        raise DatastreamValidationError(f"{key} must be a two-element shape")
+    dimensions: list[int] = []
+    for dimension in value:
+        if isinstance(dimension, bool) or not isinstance(dimension, int) or dimension <= 0:
+            raise DatastreamValidationError(f"{key} dimensions must be positive integers")
+        dimensions.append(dimension)
+    return dimensions[0], dimensions[1]
+
+
+def _mapping_from_payload(payload: dict[str, Any], key: str) -> dict[str, Any]:
+    value = payload.get(key)
+    if not isinstance(value, dict):
+        raise DatastreamValidationError(f"{key} must be present")
+    return value
+
+
+def _positive_int_from_mapping(mapping: dict[str, Any], key: str, owner: str) -> int:
+    value = mapping.get(key)
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise DatastreamValidationError(f"{key} in {owner} must be a positive integer")
+    return value
+
+
+def _nonnegative_int_from_mapping(mapping: dict[str, Any], key: str, owner: str) -> int:
+    value = mapping.get(key)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise DatastreamValidationError(f"{key} in {owner} must be a non-negative integer")
+    return value
 
 
 def _payload_sha256_without_packet_hash(payload: dict[str, Any]) -> str:
