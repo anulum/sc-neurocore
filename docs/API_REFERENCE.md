@@ -702,7 +702,7 @@ JAX-traceable adapter for the SCPN Planetary-Biospheric layer.
 - **__init__**(params, seed)
 - **encode**(domain_state)
   - Maps planetary coherence to stochastic bitstreams.
-- **_gaia_kernel**(phi, sync_inputs, alpha, freq, t, dt)
+- **_gaia_kernel**(phi, sync_inputs, alpha, freq, q_factor, p_percolation, t, dt)
   - Solves the Planetary Gaia-field dynamics:
 - **step_jax**(dt, inputs)
   - Advances the L6 holonomic dynamics using JAX.
