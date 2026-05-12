@@ -8,6 +8,9 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
+
 import numpy as np
 import pytest
 
@@ -51,6 +54,15 @@ def _observation() -> BenchmarkObservation:
         accuracy_score=0.998,
         is_critical_path=True,
     )
+
+
+def _refresh_packet_hash(payload: dict) -> dict:
+    body = dict(payload)
+    body.pop("packet_sha256", None)
+    payload["packet_sha256"] = hashlib.sha256(
+        json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    return payload
 
 
 def test_datastream_packet_combines_waveform_aer_telemetry_and_hashes() -> None:
@@ -133,6 +145,65 @@ def test_datastream_payload_validator_rejects_missing_hashes() -> None:
     payload["hashes"].pop("aer_bytes_sha256")
 
     with pytest.raises(DatastreamValidationError, match="aer_bytes_sha256"):
+        validate_datastream_payload(payload)
+
+
+def test_datastream_payload_validator_rejects_malformed_data_hashes() -> None:
+    packet = build_datastream_packet(
+        waveform=_waveform(),
+        spike_raster=_spikes(),
+        source_name="unit-replay",
+        source_mode="fixture",
+    )
+    payload = packet.to_bridge_dict()
+    payload["hashes"]["waveform_bytes_sha256"] = "z" * 64
+    _refresh_packet_hash(payload)
+
+    with pytest.raises(DatastreamValidationError, match="waveform_bytes_sha256"):
+        validate_datastream_payload(payload)
+
+
+def test_datastream_payload_validator_rejects_inconsistent_shapes_and_metrics() -> None:
+    packet = build_datastream_packet(
+        waveform=_waveform(),
+        spike_raster=_spikes(),
+        source_name="unit-replay",
+        source_mode="fixture",
+    )
+    payload = packet.to_bridge_dict()
+    bad_cases = [
+        ("waveform_shape", {"waveform_shape": [8]}),
+        ("spike_shape", {"spike_shape": [8, 0]}),
+        ("waveform_shape and spike_shape", {"spike_shape": [8, 5]}),
+        ("total_ticks", {"telemetry": {**payload["telemetry"], "total_ticks": 7}}),
+        ("total_spikes", {"telemetry": {**payload["telemetry"], "total_spikes": 4}}),
+        ("n_timesteps", {"aer_metrics": {**payload["aer_metrics"], "n_timesteps": 7}}),
+        ("n_neurons", {"aer_metrics": {**payload["aer_metrics"], "n_neurons": 5}}),
+        ("n_samples", {"waveform_metrics": {**payload["waveform_metrics"], "n_samples": 7}}),
+        ("n_channels", {"waveform_metrics": {**payload["waveform_metrics"], "n_channels": 5}}),
+    ]
+
+    for match, overrides in bad_cases:
+        bad_payload = packet.to_bridge_dict()
+        bad_payload.update(overrides)
+        _refresh_packet_hash(bad_payload)
+
+        with pytest.raises(DatastreamValidationError, match=match):
+            validate_datastream_payload(bad_payload)
+
+
+def test_datastream_payload_validator_rejects_malformed_qpu_artifact_hash() -> None:
+    packet = build_datastream_packet(
+        waveform=_waveform(),
+        spike_raster=_spikes(),
+        source_name="unit-replay",
+        source_mode="fixture",
+    )
+    payload = packet.to_bridge_dict()
+    payload["qpu_artifact_sha256"] = "not-a-sha256"
+    _refresh_packet_hash(payload)
+
+    with pytest.raises(DatastreamValidationError, match="qpu_artifact_sha256"):
         validate_datastream_payload(payload)
 
 
