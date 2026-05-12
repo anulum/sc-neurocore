@@ -309,8 +309,90 @@ def test_datastream_payload_validator_rejects_non_finite_json_payload_values() -
     }
     _refresh_packet_hash(observation_payload)
 
-    with pytest.raises(DatastreamValidationError, match="strict finite JSON"):
+    with pytest.raises(DatastreamValidationError, match="accuracy_score"):
         validate_datastream_payload(observation_payload)
+
+
+def test_datastream_payload_validator_rejects_malformed_metadata_mapping() -> None:
+    packet = build_datastream_packet(
+        waveform=_waveform(),
+        spike_raster=_spikes(),
+        source_name="unit-replay",
+        source_mode="fixture",
+    )
+    payload = packet.to_bridge_dict()
+    payload["metadata"] = ["not", "a", "mapping"]
+    _refresh_packet_hash(payload)
+
+    with pytest.raises(DatastreamValidationError, match="metadata"):
+        validate_datastream_payload(payload)
+
+
+def test_datastream_payload_validator_rejects_malformed_optimiser_observation() -> None:
+    packet = build_datastream_packet(
+        waveform=_waveform(),
+        spike_raster=_spikes(),
+        source_name="unit-replay",
+        source_mode="fixture",
+        optimiser_observation=_observation(),
+    )
+    payload = packet.to_bridge_dict()
+    bad_cases = [
+        ("optimiser_observation", {"optimiser_observation": ["not", "a", "mapping"]}),
+        (
+            "mac_count",
+            {
+                "optimiser_observation": {
+                    **payload["optimiser_observation"],
+                    "mac_count": 0,
+                }
+            },
+        ),
+        (
+            "decorrelator",
+            {
+                "optimiser_observation": {
+                    **payload["optimiser_observation"],
+                    "decorrelator": "",
+                }
+            },
+        ),
+        (
+            "power_mw",
+            {
+                "optimiser_observation": {
+                    **payload["optimiser_observation"],
+                    "power_mw": -0.1,
+                }
+            },
+        ),
+        (
+            "accuracy_score",
+            {
+                "optimiser_observation": {
+                    **payload["optimiser_observation"],
+                    "accuracy_score": 1.5,
+                }
+            },
+        ),
+        (
+            "is_critical_path",
+            {
+                "optimiser_observation": {
+                    **payload["optimiser_observation"],
+                    "is_critical_path": "yes",
+                }
+            },
+        ),
+    ]
+
+    for match, overrides in bad_cases:
+        bad_payload = packet.to_bridge_dict()
+        bad_payload.update(overrides)
+        _refresh_packet_hash(bad_payload)
+
+        with pytest.raises(DatastreamValidationError, match=match):
+            validate_datastream_payload(bad_payload)
 
 
 def test_datastream_packet_hash_rejects_non_finite_json_metadata() -> None:
