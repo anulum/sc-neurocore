@@ -81,6 +81,47 @@ def test_l13_l12_entropy_and_dephasing_reduce_source_sampling_signal() -> None:
     )
 
 
+def test_l13_uses_ebs_t5_t6_terminals_as_source_sampling_bandwidth() -> None:
+    params = L13_StochasticParameters(
+        n_channels=3,
+        bitstream_length=16,
+        binding_window=3,
+        quantum_info_coupling=0.5,
+        source_decoherence_coupling=0.0,
+        rng_seed=44,
+    )
+    no_source_sampling_interface = L13_TemporalLayer(params)
+    full_source_sampling_interface = L13_TemporalLayer(params)
+
+    blocked = no_source_sampling_interface.step(
+        0.5,
+        {
+            "coherence": np.full(3, 0.2, dtype=np.float64),
+            "gaian_stabilization_drive": 0.4,
+            "boundary_context_id": "ebs-l13",
+            "boundary_terminals": ("T2", "T4"),
+        },
+    )
+    sampled = full_source_sampling_interface.step(
+        0.5,
+        {
+            "coherence": np.full(3, 0.2, dtype=np.float64),
+            "gaian_stabilization_drive": 0.4,
+            "boundary_context_id": "ebs-l13",
+            "boundary_terminals": ("T5", "T6"),
+        },
+    )
+
+    assert blocked["source_terminal_set"] == ()
+    assert blocked["source_sampling_bandwidth"] == pytest.approx(0.0)
+    assert sampled["boundary_context_id"] == "ebs-l13"
+    assert sampled["boundary_terminals"] == ("T5", "T6")
+    assert sampled["source_terminal_set"] == ("T5", "T6")
+    assert sampled["source_sampling_bandwidth"] == pytest.approx(1.0)
+    assert sampled["source_sampling_gain"] > blocked["source_sampling_gain"]
+    assert np.mean(sampled["source_sampling_signal"]) > np.mean(blocked["source_sampling_signal"])
+
+
 def test_l13_rejects_invalid_l12_source_sampling_contracts() -> None:
     with pytest.raises(ValueError, match="quantum_info_coupling"):
         L13_TemporalLayer(L13_StochasticParameters(quantum_info_coupling=-0.1))
@@ -93,6 +134,9 @@ def test_l13_rejects_invalid_l12_source_sampling_contracts() -> None:
         {"coherence": np.ones(2), "noospheric_entropy_load": -0.1},
         {"coherence": np.ones(2), "effective_dephasing_gamma": -0.1},
         {"coherence": np.array([1.2, 0.0])},
+        {"coherence": np.ones(2), "boundary_context_id": "ebs"},
+        {"coherence": np.ones(2), "boundary_terminals": ("T5",)},
+        {"coherence": np.ones(2), "boundary_context_id": "ebs", "boundary_terminals": ("T8",)},
     ]
 
     for payload in invalid_payloads:
