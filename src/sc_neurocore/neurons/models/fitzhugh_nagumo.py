@@ -9,6 +9,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
+
+import math
+
+import numpy as np
+
+from sc_neurocore.solvers import RK4Solver, RosenbrockEuler
 
 
 @dataclass
@@ -19,6 +26,11 @@ class FitzHughNagumoNeuron:
     dw/dt = ε(v + a - bw)
 
     Reference: FitzHugh, R. (1961). Biophys. J. 1:445–466.
+
+    Integrator options:
+    - ``baseline_euler`` preserves the historical explicit-Euler path
+    - ``rk4`` is an explicit fourth-order path over the same two-state ODE
+    - ``rosenbrock`` is a linearly implicit path for stiff slow-fast regimes
     """
 
     v: float = -1.0
@@ -28,14 +40,69 @@ class FitzHughNagumoNeuron:
     epsilon: float = 0.08
     dt: float = 0.1
     v_threshold: float = 1.0
+    integrator: Literal["baseline_euler", "rk4", "rosenbrock"] = "baseline_euler"
+
+    def __post_init__(self) -> None:
+        if self.integrator not in {"baseline_euler", "rk4", "rosenbrock"}:
+            raise ValueError(f"Unsupported integrator for FitzHughNagumoNeuron: {self.integrator}")
+        for name in ("v", "w", "a", "b", "epsilon", "dt", "v_threshold"):
+            value = getattr(self, name)
+            if not isinstance(value, int | float) or not math.isfinite(float(value)):
+                raise ValueError(f"{name} must be finite")
+            setattr(self, name, float(value))
+        for name in ("b", "epsilon", "dt"):
+            if getattr(self, name) <= 0.0:
+                raise ValueError(f"{name} must be positive")
 
     def step(self, current: float) -> int:
+        if not isinstance(current, int | float) or not math.isfinite(float(current)):
+            raise ValueError("current must be finite")
+        current = float(current)
         v_prev = self.v
+        if self.integrator == "baseline_euler":
+            self._step_baseline_euler(current)
+        elif self.integrator == "rk4":
+            self._step_rk4(current)
+        else:
+            self._step_rosenbrock(current)
+        return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
+
+    def _rhs(self, _t: float, state: np.ndarray, current: float) -> np.ndarray:
+        v = float(state[0])
+        w = float(state[1])
+        dv = v - v**3 / 3.0 - w + current
+        dw = self.epsilon * (v + self.a - self.b * w)
+        return np.array([dv, dw], dtype=np.float64)
+
+    def _step_baseline_euler(self, current: float) -> None:
         dv = (self.v - self.v**3 / 3.0 - self.w + current) * self.dt
         dw = self.epsilon * (self.v + self.a - self.b * self.w) * self.dt
         self.v += dv
         self.w += dw
-        return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
+
+    def _step_rk4(self, current: float) -> None:
+        solver = RK4Solver()
+        state = np.array([self.v, self.w], dtype=np.float64)
+        state, _ = solver.step(
+            lambda time, y: self._rhs(time, y, current),
+            state,
+            0.0,
+            self.dt,
+        )
+        self.v = float(state[0])
+        self.w = float(state[1])
+
+    def _step_rosenbrock(self, current: float) -> None:
+        solver = RosenbrockEuler()
+        state = np.array([self.v, self.w], dtype=np.float64)
+        state, _ = solver.step(
+            lambda time, y: self._rhs(time, y, current),
+            state,
+            0.0,
+            self.dt,
+        )
+        self.v = float(state[0])
+        self.w = float(state[1])
 
     def reset(self) -> None:
         self.v = -1.0
