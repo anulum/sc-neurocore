@@ -35,6 +35,8 @@ class L11_StochasticParameters:
     beta_infection: float = 0.2
     gamma_recovery: float = 0.05
     boundary_coupling: float = 0.1  # from L10
+    boundary_shielding_coupling: float = 0.35
+    boundary_pressure_coupling: float = 0.25
     rng_seed: Optional[int] = None
 
 
@@ -60,10 +62,20 @@ class L11_MorphicLayer:
         self.time += dt
         n = self.params.n_nodes
 
+        boundary_shielding = 0.0
+        boundary_fragmentation_pressure = 0.0
+        l10_rejection_fraction = 0.0
         field_input = np.zeros(n)
-        if l10_input is not None and "integrity" in l10_input:
-            integrity = self._integrity_signal(l10_input["integrity"])
-            field_input = np.full(n, integrity * self.params.boundary_coupling)
+        if l10_input is not None:
+            l10_effect = self._l10_boundary_effect(l10_input, n)
+            boundary_shielding = l10_effect["shielding"]
+            boundary_fragmentation_pressure = l10_effect["fragmentation_pressure"]
+            l10_rejection_fraction = l10_effect["rejection_fraction"]
+            protected_drive = l10_effect["integrity"] * self.params.boundary_coupling
+            fragmented_drive = (
+                boundary_fragmentation_pressure * self.params.boundary_pressure_coupling
+            )
+            field_input = np.full(n, protected_drive - fragmented_drive)
 
         mean_field = np.mean(self.spins)
         d_spin = (
@@ -73,7 +85,10 @@ class L11_MorphicLayer:
             - 0.1 * self.spins
         )
         self.spins = np.clip(self.spins + d_spin * dt, 0, 1)
-        self.info_density = self._update_info_density(dt)
+        transmission = max(
+            0.0, 1.0 - self.params.boundary_shielding_coupling * boundary_shielding
+        )
+        self.info_density = self._update_info_density(dt, transmission)
 
         rands = self._rng.random((n, self.params.bitstream_length))
         output_bitstreams = (rands < self.spins[:, None]).astype(np.uint8)
@@ -82,6 +97,9 @@ class L11_MorphicLayer:
             "spins": self.spins.copy(),
             "polarization": float(np.std(self.spins)),
             "info_saturation": float(np.mean(self.info_density)),
+            "boundary_shielding": boundary_shielding,
+            "boundary_fragmentation_pressure": boundary_fragmentation_pressure,
+            "l10_rejection_fraction": l10_rejection_fraction,
             "output_bitstreams": output_bitstreams,
         }
 
@@ -110,6 +128,16 @@ class L11_MorphicLayer:
             raise ValueError("gamma_recovery must be finite and non-negative")
         if not math.isfinite(float(params.boundary_coupling)) or params.boundary_coupling < 0.0:
             raise ValueError("boundary_coupling must be finite and non-negative")
+        if (
+            not math.isfinite(float(params.boundary_shielding_coupling))
+            or params.boundary_shielding_coupling < 0.0
+        ):
+            raise ValueError("boundary_shielding_coupling must be finite and non-negative")
+        if (
+            not math.isfinite(float(params.boundary_pressure_coupling))
+            or params.boundary_pressure_coupling < 0.0
+        ):
+            raise ValueError("boundary_pressure_coupling must be finite and non-negative")
         if params.rng_seed is not None:
             if isinstance(params.rng_seed, bool) or not isinstance(params.rng_seed, int):
                 raise ValueError("rng_seed must be a non-negative integer or None")
@@ -126,9 +154,105 @@ class L11_MorphicLayer:
             raise ValueError("integrity must be a finite scalar")
         return integrity
 
-    def _update_info_density(self, dt: float) -> np.ndarray:
+    @classmethod
+    def _l10_boundary_effect(cls, l10_input: Dict[str, Any], n_nodes: int) -> Dict[str, float]:
+        integrity = cls._integrity_signal(l10_input.get("integrity", 0.0))
+        if integrity < 0.0 or integrity > 1.0:
+            raise ValueError("integrity must be within [0, 1]")
+
+        firewall_strength = cls._project_nonnegative_vector(
+            l10_input.get("firewall_strength", np.zeros(n_nodes)),
+            n_nodes,
+            "firewall_strength",
+        )
+        topological_rejection = cls._project_rejection_mask(
+            l10_input.get("topological_rejection_mask", np.zeros(n_nodes, dtype=bool)),
+            n_nodes,
+        )
+        boundary_complexity = cls._nonnegative_scalar(
+            l10_input.get("boundary_complexity", 0.0), "boundary_complexity"
+        )
+        qec_residual_load = cls._unit_scalar(
+            l10_input.get("qec_residual_load", 0.0), "qec_residual_load"
+        )
+        memory_complexity_flux = cls._nonnegative_scalar(
+            l10_input.get("memory_complexity_flux", 0.0), "memory_complexity_flux"
+        )
+
+        firewall_pressure = float(np.mean(firewall_strength / (1.0 + firewall_strength)))
+        rejection_fraction = float(np.mean(topological_rejection))
+        shielding = float(
+            np.clip(
+                firewall_pressure
+                + rejection_fraction
+                + boundary_complexity
+                + qec_residual_load
+                + memory_complexity_flux,
+                0.0,
+                1.0,
+            )
+        )
+        fragmentation_pressure = float(
+            boundary_complexity + qec_residual_load + memory_complexity_flux + rejection_fraction
+        )
+        return {
+            "integrity": integrity,
+            "shielding": shielding,
+            "fragmentation_pressure": fragmentation_pressure,
+            "rejection_fraction": rejection_fraction,
+        }
+
+    @staticmethod
+    def _project_nonnegative_vector(value: Any, n_nodes: int, name: str) -> np.ndarray:
+        values = np.asarray(value, dtype=np.float64).reshape(-1)
+        if values.size == 0:
+            raise ValueError(f"{name} must contain at least one value")
+        if not np.all(np.isfinite(values)):
+            raise ValueError(f"{name} must contain only finite values")
+        if np.any(values < 0.0):
+            raise ValueError(f"{name} must be non-negative")
+        if values.size >= n_nodes:
+            return values[:n_nodes].copy()
+        return np.pad(values, (0, n_nodes - values.size), constant_values=0.0)
+
+    @staticmethod
+    def _project_rejection_mask(value: Any, n_nodes: int) -> np.ndarray:
+        values = np.asarray(value)
+        if values.size == 0:
+            raise ValueError("topological_rejection_mask must contain at least one value")
+        if values.dtype == np.bool_:
+            mask = values.reshape(-1)
+        else:
+            numeric = np.asarray(value, dtype=np.float64).reshape(-1)
+            if not np.all(np.isfinite(numeric)):
+                raise ValueError("topological_rejection_mask must contain only finite values")
+            if np.any((numeric != 0.0) & (numeric != 1.0)):
+                raise ValueError("topological_rejection_mask must be boolean or 0/1")
+            mask = numeric.astype(bool)
+        if mask.size >= n_nodes:
+            return mask[:n_nodes].copy()
+        return np.pad(mask, (0, n_nodes - mask.size), constant_values=False)
+
+    @staticmethod
+    def _nonnegative_scalar(value: Any, name: str) -> float:
+        values = np.asarray(value, dtype=np.float64)
+        if values.shape != ():
+            raise ValueError(f"{name} must be a finite scalar")
+        scalar = float(values)
+        if not math.isfinite(scalar) or scalar < 0.0:
+            raise ValueError(f"{name} must be finite and non-negative")
+        return scalar
+
+    @classmethod
+    def _unit_scalar(cls, value: Any, name: str) -> float:
+        scalar = cls._nonnegative_scalar(value, name)
+        if scalar > 1.0:
+            raise ValueError(f"{name} must be within [0, 1]")
+        return scalar
+
+    def _update_info_density(self, dt: float, transmission: float) -> np.ndarray:
         memetic_activation = np.clip(2.0 * np.abs(self.spins - 0.5), 0.0, 1.0)
         susceptible = 1.0 - self.info_density
-        infection = self.params.beta_infection * susceptible * memetic_activation
+        infection = self.params.beta_infection * transmission * susceptible * memetic_activation
         recovery = self.params.gamma_recovery * self.info_density
         return np.clip(self.info_density + (infection - recovery) * dt, 0.0, 1.0)
