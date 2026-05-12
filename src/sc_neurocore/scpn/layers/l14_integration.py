@@ -50,6 +50,7 @@ class L14_StochasticParameters:
     bitstream_length: int = 1024
     integration_weights: Optional[np.ndarray] = None
     temporal_coupling: float = 0.1  # from L13
+    bridge_decoherence_coupling: float = 0.1
     resonance_lock_tolerance: float = 1e-6
     rng_seed: Optional[int] = None
 
@@ -90,8 +91,18 @@ class L14_IntegrationLayer:
             values = self._metric_vector(layer_metrics, self.params.n_dimensions)
             self.layer_metrics[: len(values)] = values
 
-        if l13_input is not None and "source_field" in l13_input:
-            source_drive = self._finite_mean(l13_input["source_field"], "source_field")
+        transdimensional_bridge_drive = 0.0
+        holographic_protection_load = 0.0
+        if l13_input is not None:
+            bridge_effect = self._l13_bridge_effect(l13_input)
+            transdimensional_bridge_drive = bridge_effect["bridge_drive"]
+            holographic_protection_load = bridge_effect["protection_load"]
+            source_drive = np.clip(
+                transdimensional_bridge_drive
+                - self.params.bridge_decoherence_coupling * holographic_protection_load,
+                0.0,
+                1.0,
+            )
             self.layer_metrics[-1] = np.clip(
                 (1.0 - self.params.temporal_coupling) * self.layer_metrics[-1]
                 + self.params.temporal_coupling * source_drive,
@@ -116,6 +127,8 @@ class L14_IntegrationLayer:
             "layer_metrics": self.layer_metrics.copy(),
             "resonance_determinant": self.resonance_determinant,
             "resonance_lock": self.resonance_lock,
+            "transdimensional_bridge_drive": transdimensional_bridge_drive,
+            "holographic_protection_load": holographic_protection_load,
             "output_bitstreams": output_bitstreams,
         }
 
@@ -144,6 +157,11 @@ class L14_IntegrationLayer:
         if not math.isfinite(float(params.temporal_coupling)) or params.temporal_coupling < 0.0:
             raise ValueError("temporal_coupling must be finite and non-negative")
         if (
+            not math.isfinite(float(params.bridge_decoherence_coupling))
+            or params.bridge_decoherence_coupling < 0.0
+        ):
+            raise ValueError("bridge_decoherence_coupling must be finite and non-negative")
+        if (
             not math.isfinite(float(params.resonance_lock_tolerance))
             or params.resonance_lock_tolerance <= 0.0
         ):
@@ -165,8 +183,8 @@ class L14_IntegrationLayer:
             raise ValueError("dt must be finite and positive")
         if layer_metrics is not None:
             cls._metric_vector(layer_metrics, len(layer_metrics))
-        if l13_input is not None and "source_field" in l13_input:
-            cls._finite_mean(l13_input["source_field"], "source_field")
+        if l13_input is not None:
+            cls._l13_bridge_effect(l13_input)
 
     @staticmethod
     def _normalised_weights(weights: np.ndarray) -> np.ndarray:
@@ -187,7 +205,45 @@ class L14_IntegrationLayer:
         arr = np.asarray(values, dtype=np.float64)
         if arr.size == 0 or not np.all(np.isfinite(arr)):
             raise ValueError(f"{name} must contain finite values")
+        if np.any(arr < 0.0) or np.any(arr > 1.0):
+            raise ValueError(f"{name} values must be within [0, 1]")
         mean = float(np.mean(arr))
-        if mean < 0.0 or mean > 1.0:
-            raise ValueError(f"{name} must be within [0, 1]")
         return mean
+
+    @classmethod
+    def _l13_bridge_effect(cls, l13_input: Dict[str, Any]) -> Dict[str, float]:
+        if "source_sampling_signal" not in l13_input:
+            if "source_field" in l13_input:
+                return {
+                    "bridge_drive": cls._finite_mean(l13_input["source_field"], "source_field"),
+                    "protection_load": 0.0,
+                }
+            return {"bridge_drive": 0.0, "protection_load": 0.0}
+
+        source_sampling = cls._finite_mean(
+            l13_input["source_sampling_signal"], "source_sampling_signal"
+        )
+        source_gain = cls._finite_scalar(l13_input.get("source_sampling_gain", 0.0), "source_sampling_gain")
+        binding_strength = cls._unit_scalar(l13_input.get("binding_strength", 0.0), "binding_strength")
+        protection_load = cls._finite_scalar(
+            l13_input.get("temporal_decoherence_load", 0.0), "temporal_decoherence_load"
+        )
+        bridge_drive = float(np.clip(source_sampling + source_gain + binding_strength, 0.0, 1.0))
+        return {"bridge_drive": bridge_drive, "protection_load": protection_load}
+
+    @staticmethod
+    def _finite_scalar(value: Any, name: str) -> float:
+        values = np.asarray(value, dtype=np.float64)
+        if values.shape != ():
+            raise ValueError(f"{name} must be a finite scalar")
+        scalar = float(values)
+        if not math.isfinite(scalar) or scalar < 0.0:
+            raise ValueError(f"{name} must be finite and non-negative")
+        return scalar
+
+    @classmethod
+    def _unit_scalar(cls, value: Any, name: str) -> float:
+        scalar = cls._finite_scalar(value, name)
+        if scalar > 1.0:
+            raise ValueError(f"{name} must be within [0, 1]")
+        return scalar
