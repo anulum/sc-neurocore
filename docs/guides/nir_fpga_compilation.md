@@ -9,7 +9,8 @@
 Compile supported NIR spiking neural networks to synthesisable Verilog RTL with
 a single command.  This guide covers the full pipeline: model import,
 graph extraction, parameter quantisation, neuron module generation,
-weight ROM artefact emission, and exact direct interconnect generation.
+weight ROM artefact emission, exact direct interconnect generation for small
+networks, and weighted event interconnect generation for larger networks.
 
 ---
 
@@ -160,7 +161,9 @@ neurons.  The new pipeline extends this to entire networks by:
 - Iterating over the graph topology
 - Calling `compile_to_verilog()` once per unique neuron type
 - Generating a weight ROM artefact for inspection and downstream flows
-- Emitting a top-level direct interconnect module with per-neuron instances
+- Emitting a top-level interconnect module with per-neuron instances
+- Selecting exact direct wiring for small networks and weighted event fan-out
+  for large spike-producing populations
 
 ---
 
@@ -563,7 +566,9 @@ sc-neurocore compile-nir <model> [options]
 
 ### 7.1 Compilation Time
 
-The direct interconnect grows with the number of neurons and synapses.  Record
+The direct interconnect grows with the number of neurons and synapses.  Larger
+networks use weighted event fan-out for spike-producing source populations
+while preserving fixed-point affine accumulation at each destination.  Record
 compile-time measurements from the target host before using this table in a
 report:
 
@@ -572,7 +577,7 @@ report:
 | 3-layer LIF (4→8→2) | 10 | 48 | measure locally |
 | CubaLIF (3→4) | 4 | 12 | measure locally |
 | Mixed IF+LIF (4→6→3) | 9 | 42 | measure locally |
-| Large LIF (4→74→2) | 76 (direct) | 312 | measure locally |
+| Large LIF (4→74→2) | 76 (weighted event) | 312 | measure locally |
 
 ### 7.2 Generated Verilog Size
 
