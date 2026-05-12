@@ -17,6 +17,7 @@ from sc_neurocore.adapters.neuroml import (
     create_neuron,
     import_neuroml,
 )
+from sc_neurocore.neurons.models import Izhikevich2007Neuron
 
 FIXTURES = Path(__file__).parent / "fixtures" / "neuroml"
 
@@ -98,13 +99,27 @@ class TestImportIzhikevich:
         f = _write_nml(
             tmp_path / "izh07.nml",
             dedent("""\
-            <izhikevich2007Cell id="izh07" C="100pF" k="0.7"
+            <izhikevich2007Cell id="izh07" C="100pF" k="0.7nS_per_mV"
                                 vr="-60mV" vt="-40mV" vpeak="35mV"
-                                a="0.03" b="-2" c="-50" d="100"/>
+                                a="0.03per_ms" b="-2nS" c="-50mV" d="100pA"
+                                v0="-61mV"/>
         """),
         )
         cells = import_neuroml(f)
-        assert cells[0].cell_type == "SCIzhikevichNeuron"
+        cell = cells[0]
+        assert cell.cell_type == "Izhikevich2007Neuron"
+        assert cell.params["C"] == pytest.approx(100.0)
+        assert cell.params["k"] == pytest.approx(0.7)
+        assert cell.params["vr"] == pytest.approx(-60.0)
+        assert cell.params["vt"] == pytest.approx(-40.0)
+        assert cell.params["vpeak"] == pytest.approx(35.0)
+        assert cell.params["a"] == pytest.approx(0.03)
+        assert cell.params["b"] == pytest.approx(-2.0)
+        assert cell.params["c"] == pytest.approx(-50.0)
+        assert cell.params["d"] == pytest.approx(100.0)
+        assert cell.params["v0"] == pytest.approx(-61.0)
+        assert cell.params["integrator"] == "rk4"
+        assert "_neuroml2007_raw" not in cell.params
 
 
 class TestImportAdEx:
@@ -172,3 +187,68 @@ class TestCreateNeuron:
         neuron = create_neuron(cells[0])
         spikes = sum(neuron.step(10.0) for _ in range(100))
         assert spikes > 0
+
+    def test_izhikevich2007_instantiation_preserves_biophysical_state(self, tmp_path):
+        f = _write_nml(
+            tmp_path / "izh07.nml",
+            dedent("""\
+            <izhikevich2007Cell id="izh07" C="100pF" k="0.7nS_per_mV"
+                                vr="-60mV" vt="-40mV" vpeak="35mV"
+                                a="0.03per_ms" b="-2nS" c="-50mV" d="100pA"
+                                v0="-60mV"/>
+        """),
+        )
+        cells = import_neuroml(f)
+
+        neuron = create_neuron(cells[0])
+
+        assert isinstance(neuron, Izhikevich2007Neuron)
+        assert neuron.get_state() == {"v": pytest.approx(-60.0), "u": pytest.approx(0.0)}
+
+
+class TestIzhikevich2007Neuron:
+    def test_euler_step_matches_biophysical_equations_below_threshold(self):
+        neuron = Izhikevich2007Neuron(
+            C=100.0,
+            k=0.7,
+            vr=-60.0,
+            vt=-40.0,
+            vpeak=35.0,
+            a=0.03,
+            b=-2.0,
+            c=-50.0,
+            d=100.0,
+            v0=-61.0,
+            dt=0.1,
+            integrator="euler",
+        )
+
+        spike = neuron.step(70.0)
+
+        expected_dv = (0.7 * (-1.0) * (-21.0) - 2.0 + 70.0) / 100.0
+        expected_du = 0.03 * (-2.0 * (-1.0) - 2.0)
+        assert spike == 0
+        assert neuron.v == pytest.approx(-61.0 + 0.1 * expected_dv)
+        assert neuron.u == pytest.approx(2.0 + 0.1 * expected_du)
+
+    def test_spike_reset_uses_vpeak_c_and_d(self):
+        neuron = Izhikevich2007Neuron(
+            C=100.0,
+            k=0.7,
+            vr=-60.0,
+            vt=-40.0,
+            vpeak=35.0,
+            a=0.03,
+            b=-2.0,
+            c=-50.0,
+            d=100.0,
+            v0=34.0,
+            dt=1.0,
+            integrator="euler",
+        )
+
+        spike = neuron.step(500.0)
+
+        assert spike == 1
+        assert neuron.v == pytest.approx(-50.0)
+        assert neuron.u == pytest.approx(-88.0)

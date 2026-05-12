@@ -11,7 +11,7 @@ Import neuron models from NeuroML 2 XML files into SC-NeuroCore.
 | `<iafTauCell>` | StochasticLIFNeuron | Direct tau mapping |
 | `<iafTauRefCell>` | StochasticLIFNeuron | tau + refractory |
 | `<izhikevichCell>` | SCIzhikevichNeuron | 2003 dimensionless model |
-| `<izhikevich2007Cell>` | SCIzhikevichNeuron | Biophysical units, converted |
+| `<izhikevich2007Cell>` | Izhikevich2007Neuron | Exact biophysical NeuroML units |
 | `<adExIaFCell>` | AdExNeuron | Brette & Gerstner 2005 |
 
 ## Usage
@@ -39,12 +39,14 @@ SC-NeuroCore uses time constant:
 - `tau_mem = C / leakConductance` (ms)
 - Voltages normalised relative to leak reversal
 
-### Izhikevich (2007 -> 2003)
+### Izhikevich 2007
 
-NeuroML `<izhikevich2007Cell>` uses physical units (pF, mV, nS).
-SC-NeuroCore uses the dimensionless 2003 model. Parameters are
-approximately mapped. The raw 2007 values are preserved in
-`params["_neuroml2007_raw"]` for reference.
+NeuroML `<izhikevich2007Cell>` uses physical units and is imported as
+`Izhikevich2007Neuron` without conversion to the dimensionless 2003 model:
+
+- `C` in pF, `k` in nS/mV, voltages in mV
+- `a` in 1/ms, `b` in nS, `d` and runtime input current in pA
+- RK4 integration is selected by default for imported cells
 
 ### AdEx
 

@@ -1,9 +1,9 @@
-# Neurons — 173 Models
+# Neurons
 
-174 Python-facing neuron models spanning 83 years of computational neuroscience
-(1943-2026): 114 Python model files under `neurons/models/` plus 174 Rust
-implementations, 9 AI-optimised models (ArcaneNeuron + 8), 160 wired
-into the NetworkRunner pipeline.
+Python-facing neuron models spanning classical integrate-and-fire dynamics,
+conductance-based cells, neural-mass models, maps, hardware-specific neurons,
+and differentiable training cells. Use the source tree and benchmark inventory
+as the authority for exact model and backend counts.
 
 ## Quick Start
 
@@ -37,7 +37,7 @@ from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 
 ::: sc_neurocore.neurons.dendritic.StochasticDendriticNeuron
 
-## Extended Model Library (113 models in `neurons/models/`)
+## Extended Model Library (`neurons/models/`)
 
 ### Integrate-and-Fire Variants (21)
 
@@ -68,6 +68,7 @@ from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 | K-LIF | `klif.py` | Learnable scaling |
 | Inhibitory LIF | `ilif.py` | 2025, temporal inhibition |
 | E-prop ALIF | `e_prop_alif.py` | Bellec 2020, eligibility |
+| Izhikevich 2007 | `izhikevich2007.py` | Izhikevich 2007 biophysical |
 | Energy LIF | `energy_lif.py` | Fardet 2020 |
 
 ### Biophysical / Conductance-Based (11)

@@ -77,6 +77,7 @@ _CLASS_TO_MODULE = {
     "HybridFisherPosnerLIFNeuron": "hybrid_fisher_posner_lif",
     "HuberBraunNeuron": "huber_braun",
     "IbarzTanakaMapNeuron": "ibarz_tanaka_map",
+    "Izhikevich2007Neuron": "izhikevich2007",
     "InhibitoryLIFNeuron": "ilif",
     "InhomogeneousPoissonNeuron": "inhomogeneous_poisson",
     "IntegerQIFNeuron": "iqif",
