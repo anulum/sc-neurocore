@@ -90,6 +90,46 @@ def test_l12_noospheric_entropy_load_raises_effective_dephasing() -> None:
     assert volatile_out["transport_efficiency"] < quiet_out["transport_efficiency"]
 
 
+def test_l12_uses_ebs_t2_t4_t5_terminals_as_gaian_bandwidth() -> None:
+    params = L12_StochasticParameters(
+        n_sites=4,
+        bitstream_length=16,
+        transport_rate=0.0,
+        dephasing_gamma=0.0,
+        morphic_coupling=0.2,
+        noospheric_entropy_coupling=0.0,
+        rng_seed=34,
+    )
+    no_gaian_interface = L12_QuantumInfoLayer(params)
+    full_gaian_interface = L12_QuantumInfoLayer(params)
+
+    blocked = no_gaian_interface.step(
+        0.5,
+        {
+            "info_saturation": 0.8,
+            "boundary_context_id": "ebs-l12",
+            "boundary_terminals": ("T3", "T6"),
+        },
+    )
+    admitted = full_gaian_interface.step(
+        0.5,
+        {
+            "info_saturation": 0.8,
+            "boundary_context_id": "ebs-l12",
+            "boundary_terminals": ("T2", "T4", "T5"),
+        },
+    )
+
+    assert blocked["gaian_terminal_set"] == ()
+    assert blocked["gaian_terminal_bandwidth"] == pytest.approx(0.0)
+    assert admitted["boundary_context_id"] == "ebs-l12"
+    assert admitted["boundary_terminals"] == ("T2", "T4", "T5")
+    assert admitted["gaian_terminal_set"] == ("T2", "T4", "T5")
+    assert admitted["gaian_terminal_bandwidth"] == pytest.approx(1.0)
+    assert admitted["gaian_stabilization_drive"] > blocked["gaian_stabilization_drive"]
+    assert np.mean(admitted["coherence"]) > np.mean(blocked["coherence"])
+
+
 def test_l12_rejects_invalid_noospheric_gaian_contracts() -> None:
     with pytest.raises(ValueError, match="noospheric_entropy_coupling"):
         L12_QuantumInfoLayer(L12_StochasticParameters(noospheric_entropy_coupling=-0.1))
@@ -100,6 +140,9 @@ def test_l12_rejects_invalid_noospheric_gaian_contracts() -> None:
         {"info_saturation": 0.5, "boundary_shielding": 1.1},
         {"info_saturation": 0.5, "boundary_fragmentation_pressure": -0.1},
         {"info_saturation": 0.5, "polarization": np.array([0.1, 0.2])},
+        {"info_saturation": 0.5, "boundary_context_id": "ebs"},
+        {"info_saturation": 0.5, "boundary_terminals": ("T4",)},
+        {"info_saturation": 0.5, "boundary_context_id": "ebs", "boundary_terminals": ("T8",)},
     ]
 
     for payload in invalid_payloads:

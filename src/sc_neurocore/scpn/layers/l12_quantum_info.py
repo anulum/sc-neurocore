@@ -61,10 +61,18 @@ class L12_QuantumInfoLayer:
         noospheric_entropy_load = 0.0
         gaian_stabilization_drive = 0.0
         effective_dephasing_gamma = self.params.dephasing_gamma
+        boundary_context_id: Optional[str] = None
+        boundary_terminals: tuple[str, ...] = ()
+        gaian_terminal_set: tuple[str, ...] = ()
+        gaian_terminal_bandwidth = 1.0
         if l11_input is not None:
             l11_effect = self._l11_noospheric_effect(l11_input)
             noospheric_entropy_load = l11_effect["entropy_load"]
             gaian_stabilization_drive = l11_effect["stabilization_drive"]
+            boundary_context_id = l11_effect["boundary_context_id"]
+            boundary_terminals = l11_effect["boundary_terminals"]
+            gaian_terminal_set = l11_effect["gaian_terminal_set"]
+            gaian_terminal_bandwidth = l11_effect["gaian_terminal_bandwidth"]
             effective_dephasing_gamma = self.params.dephasing_gamma * (
                 1.0 + self.params.noospheric_entropy_coupling * noospheric_entropy_load
             )
@@ -91,6 +99,10 @@ class L12_QuantumInfoLayer:
             "noospheric_entropy_load": noospheric_entropy_load,
             "gaian_stabilization_drive": gaian_stabilization_drive,
             "effective_dephasing_gamma": effective_dephasing_gamma,
+            "boundary_context_id": boundary_context_id,
+            "boundary_terminals": boundary_terminals,
+            "gaian_terminal_set": gaian_terminal_set,
+            "gaian_terminal_bandwidth": gaian_terminal_bandwidth,
             "output_bitstreams": output_bitstreams,
         }
 
@@ -140,8 +152,9 @@ class L12_QuantumInfoLayer:
             raise ValueError("info_saturation must be a finite scalar within [0, 1]")
         return info_saturation
 
-    def _l11_noospheric_effect(self, l11_input: Dict[str, Any]) -> Dict[str, float]:
+    def _l11_noospheric_effect(self, l11_input: Dict[str, Any]) -> Dict[str, Any]:
         info_saturation = self._info_saturation(l11_input.get("info_saturation", 0.0))
+        gaian_context = self._gaian_context(l11_input)
         structured_keys = {
             "boundary_shielding",
             "boundary_fragmentation_pressure",
@@ -149,9 +162,16 @@ class L12_QuantumInfoLayer:
         }
         has_structured_diagnostics = any(key in l11_input for key in structured_keys)
         if not has_structured_diagnostics:
+            stabilization_drive = (
+                self.params.morphic_coupling * info_saturation * gaian_context["terminal_bandwidth"]
+            )
             return {
                 "entropy_load": 0.0,
-                "stabilization_drive": self.params.morphic_coupling * info_saturation,
+                "stabilization_drive": stabilization_drive,
+                "boundary_context_id": gaian_context["boundary_context_id"],
+                "boundary_terminals": gaian_context["boundary_terminals"],
+                "gaian_terminal_set": gaian_context["gaian_terminal_set"],
+                "gaian_terminal_bandwidth": gaian_context["terminal_bandwidth"],
             }
 
         boundary_shielding = self._unit_scalar(
@@ -163,17 +183,52 @@ class L12_QuantumInfoLayer:
         )
         polarization = self._nonnegative_scalar(l11_input.get("polarization", 0.0), "polarization")
         entropy_load = (
-            info_saturation * (1.0 - boundary_shielding)
-            + fragmentation_pressure
-            + polarization
+            info_saturation * (1.0 - boundary_shielding) + fragmentation_pressure + polarization
         )
         stabilization_drive = (
             self.params.morphic_coupling * info_saturation
             - self.params.noospheric_entropy_coupling * entropy_load
         )
+        stabilization_drive *= gaian_context["terminal_bandwidth"]
         return {
             "entropy_load": float(entropy_load),
             "stabilization_drive": float(stabilization_drive),
+            "boundary_context_id": gaian_context["boundary_context_id"],
+            "boundary_terminals": gaian_context["boundary_terminals"],
+            "gaian_terminal_set": gaian_context["gaian_terminal_set"],
+            "gaian_terminal_bandwidth": gaian_context["terminal_bandwidth"],
+        }
+
+    @staticmethod
+    def _gaian_context(l11_input: Dict[str, Any]) -> Dict[str, Any]:
+        has_context_id = "boundary_context_id" in l11_input
+        has_terminals = "boundary_terminals" in l11_input
+        if not has_context_id and not has_terminals:
+            return {
+                "boundary_context_id": None,
+                "boundary_terminals": (),
+                "gaian_terminal_set": (),
+                "terminal_bandwidth": 1.0,
+            }
+        if not has_context_id or not has_terminals:
+            raise ValueError("boundary context requires boundary_context_id and boundary_terminals")
+
+        context_id = str(l11_input["boundary_context_id"])
+        if not context_id:
+            raise ValueError("boundary_context_id must be non-empty")
+        terminals = tuple(l11_input["boundary_terminals"])
+        valid_terminals = {"T1", "T2", "T3", "T4", "T5", "T6", "T7"}
+        if not terminals or any(terminal not in valid_terminals for terminal in terminals):
+            raise ValueError("boundary_terminals must contain valid T1-T7 terminal identifiers")
+
+        gaian_terminals = tuple(
+            terminal for terminal in terminals if terminal in {"T2", "T4", "T5"}
+        )
+        return {
+            "boundary_context_id": context_id,
+            "boundary_terminals": terminals,
+            "gaian_terminal_set": gaian_terminals,
+            "terminal_bandwidth": float(len(gaian_terminals) / 3.0),
         }
 
     @staticmethod
