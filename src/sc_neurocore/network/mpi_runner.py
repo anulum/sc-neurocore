@@ -42,6 +42,18 @@ def _require_mpi() -> None:
         raise RuntimeError("mpi4py is required for MPI backend: pip install mpi4py")
 
 
+def _get_rust_engine() -> Any:
+    from .network import _get_rust_engine as get_network_rust_engine
+
+    return get_network_rust_engine()
+
+
+def _rust_supports_model(model_name: str) -> bool:
+    from .network import _rust_supports_model as network_rust_supports_model
+
+    return network_rust_supports_model(model_name)
+
+
 class MPIRunner:
     """MPI-distributed network simulation.
 
@@ -49,13 +61,13 @@ class MPIRunner:
     Each rank steps only its local populations; spikes propagate via
     ``MPI_Allgatherv`` every timestep.
 
-    Each rank steps its local populations through ``Population.step_all``
-    (pure-Python). Per-rank Rust dispatch is not implemented in
-    v3.14.0; the network's ``backend='auto'`` Rust fast-path is the
-    Python alternative when MPI is not needed. ``spike_gating`` and
-    ``fim_lambda`` are likewise unsupported by this runner — the
-    ``Network._run_mpi`` dispatcher raises ``NotImplementedError``
-    when either is requested with ``backend='mpi'``.
+    Each rank steps supported local populations through the Rust engine's
+    ``step_population`` API when the extension is importable and every
+    local model on the rank is supported. Otherwise the runner falls back
+    to ``Population.step_all`` for CPU-only environments. ``spike_gating``
+    and ``fim_lambda`` are unsupported by this runner — the
+    ``Network._run_mpi`` dispatcher raises ``NotImplementedError`` when
+    either is requested with ``backend='mpi'``.
     """
 
     def __init__(self, network: Network) -> None:
@@ -75,6 +87,32 @@ class MPIRunner:
         self._cross_rank_projs: list[tuple[int, Projection]] = []
         self._local_projs: list[Projection] = []
         self._identify_cross_rank_projections()
+
+        self._rust_runner: Any | None = None
+        self._rust_local_pop_indices: dict[int, int] = {}
+        self._rust_dispatch_enabled = False
+        self._initialize_rust_dispatch()
+
+    def _initialize_rust_dispatch(self) -> None:
+        """Prepare a rank-local Rust runner when the installed engine supports it."""
+        if not self._local_indices:
+            return
+        if not all(
+            _rust_supports_model(self._populations[idx].model_name) for idx in self._local_indices
+        ):
+            return
+        engine_cls = _get_rust_engine()
+        if engine_cls is False:
+            return
+        runner = engine_cls()
+        if not hasattr(runner, "step_population"):
+            return
+        for global_idx in self._local_indices:
+            pop = self._populations[global_idx]
+            rust_idx = runner.add_population(pop.model_name, pop.n)
+            self._rust_local_pop_indices[global_idx] = int(rust_idx)
+        self._rust_runner = runner
+        self._rust_dispatch_enabled = True
 
     def _partition_populations(self) -> None:
         """Round-robin assignment of populations to ranks."""
@@ -147,7 +185,37 @@ class MPIRunner:
         local_spikes: dict[int, np.ndarray] = {}
         for idx in self._local_indices:
             pop = self._populations[idx]
-            spikes = pop.step_all(pop_to_currents.get(idx, np.zeros(pop.n, dtype=np.float64)))
+            currents = np.asarray(
+                pop_to_currents.get(idx, np.zeros(pop.n, dtype=np.float64)),
+                dtype=np.float64,
+            )
+            if currents.shape != (pop.n,):
+                raise ValueError(
+                    f"current vector for population {idx} has shape {currents.shape}, "
+                    f"expected {(pop.n,)}"
+                )
+            if self._rust_dispatch_enabled:
+                assert self._rust_runner is not None
+                result = self._rust_runner.step_population(
+                    self._rust_local_pop_indices[idx],
+                    np.ascontiguousarray(currents, dtype=np.float64),
+                )
+                spikes = np.asarray(result["spikes"], dtype=np.int8)
+                voltages = np.asarray(result["voltages"], dtype=np.float64)
+                if spikes.shape != (pop.n,):
+                    raise RuntimeError(
+                        f"Rust spike vector for population {idx} has shape {spikes.shape}, "
+                        f"expected {(pop.n,)}"
+                    )
+                if voltages.shape != (pop.n,):
+                    raise RuntimeError(
+                        f"Rust voltage vector for population {idx} has shape {voltages.shape}, "
+                        f"expected {(pop.n,)}"
+                    )
+                pop.set_voltages(voltages)
+                spikes = spikes.copy()
+            else:
+                spikes = pop.step_all(currents)
             local_spikes[idx] = spikes
         return local_spikes
 
