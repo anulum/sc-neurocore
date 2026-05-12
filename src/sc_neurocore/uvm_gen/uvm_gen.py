@@ -221,8 +221,9 @@ class ScoreboardConfig:
     check_popcount: bool = True
     check_probability: bool = True
     check_spike_timing: bool = True
-    check_golden_comparison: bool = True
+    check_golden_comparison: bool = False
     golden_model_type: str = "bit_true"
+    golden_expressions: Dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -610,6 +611,11 @@ endclass
             golden_lines = []
             for p in rtl.output_ports:
                 if p.width > 1:
+                    if p.name not in self.scoreboard.golden_expressions:
+                        raise ValueError(
+                            "Missing golden reference expression for output "
+                            f"{p.name!r}; provide ScoreboardConfig.golden_expressions."
+                        )
                     golden_lines.append(
                         f"        // Golden model comparison for {p.name}\n"
                         f"        expected_{p.name} = golden_compute_{p.name}(txn);\n"
@@ -630,10 +636,11 @@ endclass
             for p in rtl.output_ports:
                 if p.width > 1:
                     w = p.width
+                    expression = self.scoreboard.golden_expressions[p.name]
                     golden_funcs.append(
-                        f"    // Golden model placeholder for {p.name}\n"
+                        f"    // Bit-true reference expression for {p.name}\n"
                         f"    function logic [{w - 1}:0] golden_compute_{p.name}({m}_transaction txn);\n"
-                        f"        return txn.{p.name}; // Replace with bit-true golden model\n"
+                        f"        return {expression};\n"
                         f"    endfunction"
                     )
                     golden_vars.append(f"    logic [{p.width - 1}:0] expected_{p.name};")
