@@ -35,6 +35,7 @@ class L10_StochasticParameters:
     shielding_strength: float = 1.5
     steering_gain: float = 0.2
     memory_coupling: float = 0.1  # from L9
+    qec_coupling: float = 0.2
     rng_seed: Optional[int] = None
 
 
@@ -69,7 +70,17 @@ class L10_BoundaryLayer:
             retrieval_quality = self._retrieval_quality(l9_input["retrieval_quality"])
             self.intention = np.full(n, retrieval_quality * self.params.memory_coupling)
 
-        dissonance = np.abs(noise - self.intention)
+        qec_residual = np.zeros(n, dtype=np.float64)
+        memory_complexity_flux = 0.0
+        if l9_input is not None:
+            qec_residual = self._qec_residual(l9_input, n)
+            memory_complexity_flux = self._memory_complexity_flux(l9_input)
+
+        dissonance = (
+            np.abs(noise - self.intention)
+            + self.params.qec_coupling * qec_residual
+            + memory_complexity_flux
+        )
         rejection_excess = np.maximum(dissonance - self.params.rejection_threshold, 0.0)
         shielding_loss = rejection_excess * self.firewall_strength / self.params.shielding_strength
         d_strength = (
@@ -86,6 +97,10 @@ class L10_BoundaryLayer:
             "firewall_strength": self.firewall_strength.copy(),
             "dissonance": float(np.mean(dissonance)),
             "integrity": self._integrity(),
+            "qec_residual_load": float(np.mean(qec_residual)),
+            "memory_complexity_flux": memory_complexity_flux,
+            "boundary_complexity": float(np.mean(rejection_excess)),
+            "topological_rejection_mask": rejection_excess > 0.0,
             "output_bitstreams": output_bitstreams,
         }
 
@@ -123,6 +138,12 @@ class L10_BoundaryLayer:
             raise ValueError("steering_gain must be finite and non-negative")
         if not math.isfinite(float(params.memory_coupling)) or params.memory_coupling < 0.0:
             raise ValueError("memory_coupling must be finite and non-negative")
+        if (
+            not math.isfinite(float(params.qec_coupling))
+            or params.qec_coupling < 0.0
+            or params.qec_coupling > 1.0
+        ):
+            raise ValueError("qec_coupling must be finite and in [0, 1]")
         if params.rng_seed is not None:
             if isinstance(params.rng_seed, bool) or not isinstance(params.rng_seed, int):
                 raise ValueError("rng_seed must be a non-negative integer or None")
@@ -138,6 +159,48 @@ class L10_BoundaryLayer:
         if not math.isfinite(retrieval_quality):
             raise ValueError("retrieval_quality must be a finite scalar")
         return retrieval_quality
+
+    @staticmethod
+    def _qec_residual(l9_input: Dict[str, Any], n_boundary_nodes: int) -> np.ndarray:
+        if "qec_syndrome" not in l9_input:
+            return np.zeros(n_boundary_nodes, dtype=np.float64)
+
+        syndrome = L10_BoundaryLayer._bounded_l9_vector(
+            l9_input["qec_syndrome"], n_boundary_nodes, "qec_syndrome", pad_value=0.0
+        )
+        recovery = L10_BoundaryLayer._bounded_l9_vector(
+            l9_input.get("recovery_operator", np.zeros(n_boundary_nodes)),
+            n_boundary_nodes,
+            "recovery_operator",
+            pad_value=1.0,
+        )
+        return np.clip(syndrome * (1.0 - recovery), 0.0, 1.0)
+
+    @staticmethod
+    def _bounded_l9_vector(
+        value: Any, n_boundary_nodes: int, name: str, *, pad_value: float
+    ) -> np.ndarray:
+        values = np.asarray(value, dtype=np.float64).reshape(-1)
+        if values.size == 0:
+            raise ValueError(f"{name} must contain at least one value")
+        if not np.all(np.isfinite(values)):
+            raise ValueError(f"{name} must contain only finite values")
+        if np.any(values < 0.0) or np.any(values > 1.0):
+            raise ValueError(f"{name} values must be within [0, 1]")
+        if values.size >= n_boundary_nodes:
+            return values[:n_boundary_nodes].copy()
+        return np.pad(values, (0, n_boundary_nodes - values.size), constant_values=pad_value)
+
+    def _memory_complexity_flux(self, l9_input: Dict[str, Any]) -> float:
+        if "memory_free_energy" not in l9_input:
+            return 0.0
+        values = np.asarray(l9_input["memory_free_energy"], dtype=np.float64)
+        if values.shape != ():
+            raise ValueError("memory_free_energy must be a finite scalar")
+        free_energy = float(values)
+        if not math.isfinite(free_energy) or free_energy < 0.0:
+            raise ValueError("memory_free_energy must be finite and non-negative")
+        return float(np.clip(free_energy, 0.0, 1.0) * self.params.qec_coupling)
 
     @staticmethod
     def _noise_vector(external_noise: np.ndarray, n_boundary_nodes: int) -> np.ndarray:
