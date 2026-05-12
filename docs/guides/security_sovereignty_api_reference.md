@@ -113,7 +113,7 @@ assert s.total_components >= 4
 
 ---
 
-### §62. `generate_hil_calibration(module_name, equations, *, parameters=None) → HILCalibration`
+### §62. `generate_hil_calibration(module_name, equations, *, parameters=None, sample_points=10, repetitions=3, settle_cycles=32, acceptance_tolerance=1/256, correction_model="weighted_least_squares", observables=None) → HILCalibration`
 
 Generate hardware-in-the-loop calibration protocol for drift compensation.
 
@@ -122,11 +122,22 @@ Generate hardware-in-the-loop calibration protocol for drift compensation.
 | `protocol_steps` | `list[str]` | Step-by-step procedure |
 | `num_parameters` | `int` | Number of sweep parameters |
 | `sweep_ranges` | `dict[str, tuple]` | Parameter → (min, max) |
+| `design_matrix` | `list[dict[str, float]]` | Deterministic Latin-hypercube calibration points |
+| `sample_count` | `int` | Total hardware measurements, including repetitions |
+| `correction_model` | `str` | Residual-fit model for correction coefficients |
+| `acceptance_tolerance` | `float` | Maximum accepted post-correction drift |
 
 ```python
 from sc_neurocore.compiler.intelligence import generate_hil_calibration
-cal = generate_hil_calibration("sc_lif", {"v": "expr"}, parameters={"tau": (5.0, 50.0)})
+cal = generate_hil_calibration(
+    "sc_lif",
+    {"v": "expr"},
+    parameters={"tau": (5.0, 50.0)},
+    sample_points=10,
+    repetitions=3,
+)
 assert cal.num_parameters == 1
+assert cal.sample_count == 30
 ```
 
 ---

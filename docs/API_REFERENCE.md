@@ -5616,6 +5616,13 @@ Attributes
 protocol_steps : list[str]
 num_parameters : int
 sweep_ranges : dict[str, tuple[float, float]]
+design_matrix : list[dict[str, float]]
+sample_count : int
+repetitions : int
+settle_cycles : int
+acceptance_tolerance : float
+correction_model : str
+observables : tuple[str, ...]
 
 
 ### Class `UCIeMapping`
@@ -7325,7 +7332,7 @@ Returns
 -------
 SBOM
 
-### Function `generate_hil_calibration(module_name, equations)`
+### Function `generate_hil_calibration(module_name, equations, *, parameters=None, sample_points=10, repetitions=3, settle_cycles=32, acceptance_tolerance=1/256, correction_model="weighted_least_squares", observables=None)`
 Generate hardware-in-the-loop calibration protocol.
 
 Produces a step-by-step calibration procedure for compensating
@@ -7339,6 +7346,18 @@ equations : dict[str, str]
     State variable equations.
 parameters : dict[str, tuple[float, float]], optional
     Parameter sweep ranges {name: (min, max)}.
+sample_points : int
+    Deterministic Latin-hypercube design points across the parameter space.
+repetitions : int
+    Repeated measurements per design point for variance estimation.
+settle_cycles : int
+    Hardware cycles to wait before sampling after each parameter update.
+acceptance_tolerance : float
+    Maximum absolute drift allowed for each observable.
+correction_model : str
+    Calibration model fitted to measured residuals.
+observables : tuple[str, ...], optional
+    State variables to compare against the software golden model.
 
 Returns
 -------

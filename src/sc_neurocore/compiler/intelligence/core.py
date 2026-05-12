@@ -71,7 +71,7 @@ Modules
 59. **Compilation report generator** — one-click markdown report
 60. **Hardware trojan lint** — detect suspicious dormant trigger paths
 61. **SBOM/HBOM generator** — CycloneDX/SPDX for EU CRA compliance
-62. **HIL calibration stub** — hardware-in-the-loop drift compensation
+62. **HIL calibration protocol** — hardware-in-the-loop drift compensation
 63. **Digital twin shadow** — software mirror of deployed hardware state
 64. **UCIe protocol mapper** — map neuron arrays to chiplet lanes
 65. **SEU scrub scheduler** — space-grade configuration scrubbing
