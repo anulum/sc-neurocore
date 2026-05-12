@@ -350,13 +350,35 @@ class TestCompilerCoverage:
             CompilerPipeline(work_dir=new_dir)
             assert os.path.isdir(new_dir)
 
-    def test_pipeline_compile_firtool_fallback(self):
+    def test_pipeline_compile_firtool_missing_fails_closed(self):
+        from sc_neurocore.exceptions import SCCompilerError
         from sc_neurocore.compiler.pipeline import CompilerPipeline
 
         with tempfile.TemporaryDirectory() as td:
             p = CompilerPipeline(work_dir=td)
-            v_path = p.compile_mlir_to_verilog("module test();", output_name="stub")
-            assert os.path.exists(v_path)
+            with pytest.raises(SCCompilerError, match="firtool failed"):
+                p.compile_mlir_to_verilog("module test();", output_name="no_stub")
+            assert not os.path.exists(os.path.join(td, "no_stub.v"))
+
+    def test_pipeline_compile_uses_firtool_output_without_stub(self, monkeypatch):
+        from sc_neurocore.compiler.pipeline import CompilerPipeline
+
+        def fake_firtool(cmd, check):
+            assert check is True
+            assert cmd[0] == "firtool"
+            out_path = cmd[cmd.index("-o") + 1]
+            with open(out_path, "w") as f:
+                f.write("module real_lowered(); endmodule\n")
+
+        with tempfile.TemporaryDirectory() as td:
+            monkeypatch.setattr("subprocess.run", fake_firtool)
+            p = CompilerPipeline(work_dir=td)
+            v_path = p.compile_mlir_to_verilog("module test();", output_name="real")
+
+            with open(v_path) as f:
+                lowered = f.read()
+            assert "module real_lowered" in lowered
+            assert "Stub" not in lowered
 
     def test_pipeline_synthesis_yosys_missing(self):
         from sc_neurocore.compiler.pipeline import CompilerPipeline
