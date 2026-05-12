@@ -76,6 +76,53 @@ def test_l6_organismal_coupling_uses_validated_emotional_state() -> None:
     assert np.mean(with_l5) > np.mean(without_l5)
 
 
+def test_l6_consumes_l5_ecological_drive_contract() -> None:
+    base = L6_EcologicalLayer(
+        L6_StochasticParameters(
+            n_field_nodes=16,
+            bitstream_length=16,
+            schumann_noise=0.0,
+            geomag_variation=0.0,
+            network_noise=0.0,
+            organismal_coupling=1.0,
+            rng_seed=790,
+        )
+    )
+    driven = L6_EcologicalLayer(base.params)
+
+    without_drive = base.step(0.01)["biospheric_field"]
+    with_drive = driven.step(0.01, l5_input={"ecological_drive": np.ones(8)})["biospheric_field"]
+
+    assert np.mean(with_drive) > np.mean(without_drive)
+
+
+def test_l6_prefers_structured_ecological_drive_over_fallback_emotional_mean() -> None:
+    params = L6_StochasticParameters(
+        n_field_nodes=16,
+        bitstream_length=16,
+        schumann_noise=0.0,
+        geomag_variation=0.0,
+        network_noise=0.0,
+        organismal_coupling=1.0,
+        rng_seed=791,
+    )
+    drive_only = L6_EcologicalLayer(params)
+    both_payloads = L6_EcologicalLayer(params)
+
+    drive_only_field = drive_only.step(0.01, l5_input={"ecological_drive": np.ones(8)})[
+        "biospheric_field"
+    ]
+    both_field = both_payloads.step(
+        0.01,
+        l5_input={
+            "emotional_state": np.zeros(8),
+            "ecological_drive": np.ones(8),
+        },
+    )["biospheric_field"]
+
+    np.testing.assert_allclose(both_field, drive_only_field)
+
+
 def test_l6_rejects_invalid_parameters_and_inputs() -> None:
     with pytest.raises(ValueError, match="n_field_nodes"):
         L6_EcologicalLayer(L6_StochasticParameters(n_field_nodes=0))
@@ -119,3 +166,7 @@ def test_l6_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.01, lunar_phase=np.nan)
     with pytest.raises(ValueError, match="emotional_state"):
         layer.step(0.01, l5_input={"emotional_state": np.array([0.5, np.nan])})
+    with pytest.raises(ValueError, match="ecological_drive"):
+        layer.step(0.01, l5_input={"ecological_drive": np.array([0.5, np.nan])})
+    with pytest.raises(ValueError, match="ecological_drive"):
+        layer.step(0.01, l5_input={"ecological_drive": np.array([-0.1, 0.2])})

@@ -185,13 +185,9 @@ class L6_EcologicalLayer:
 
         # 5. Organismal coupling (L5 collective emotional state affects field)
         if l5_input is not None:
-            if "emotional_state" in l5_input:
-                emotional_coherence = self._finite_mean(
-                    l5_input["emotional_state"], "emotional_state"
-                )
-                self.biospheric_field += (
-                    self.params.organismal_coupling * (emotional_coherence - 0.5) * dt
-                )
+            l5_effect = self._l5_organismal_effect(l5_input)
+            if l5_effect != 0.0:
+                self.biospheric_field += self.params.organismal_coupling * l5_effect * dt
                 self.biospheric_field = np.clip(self.biospheric_field, 0.0, 1.0)
 
         # 6. Lunar phase modulation
@@ -317,12 +313,30 @@ class L6_EcologicalLayer:
             raise ValueError("solar_activity must be finite and within [0, 1]")
         if not math.isfinite(float(lunar_phase)):
             raise ValueError("lunar_phase must be finite")
-        if l5_input is not None and "emotional_state" in l5_input:
-            cls._finite_mean(l5_input["emotional_state"], "emotional_state")
+        if l5_input is not None:
+            cls._l5_organismal_effect(l5_input)
 
     @staticmethod
     def _finite_mean(values: Any, name: str) -> float:
         arr = np.asarray(values, dtype=np.float64)
         if arr.size == 0 or not np.all(np.isfinite(arr)):
             raise ValueError(f"{name} must contain finite values")
+        return float(np.mean(arr))
+
+    @classmethod
+    def _l5_organismal_effect(cls, l5_input: Dict[str, Any]) -> float:
+        if "ecological_drive" in l5_input:
+            return cls._unit_mean(l5_input["ecological_drive"], "ecological_drive")
+        if "emotional_state" in l5_input:
+            emotional_coherence = cls._finite_mean(l5_input["emotional_state"], "emotional_state")
+            return emotional_coherence - 0.5
+        return 0.0
+
+    @classmethod
+    def _unit_mean(cls, values: Any, name: str) -> float:
+        arr = np.asarray(values, dtype=np.float64)
+        if arr.size == 0 or not np.all(np.isfinite(arr)):
+            raise ValueError(f"{name} must contain finite values")
+        if np.any(arr < 0.0) or np.any(arr > 1.0):
+            raise ValueError(f"{name} values must be within [0, 1]")
         return float(np.mean(arr))
