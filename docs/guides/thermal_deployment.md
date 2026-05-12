@@ -76,7 +76,8 @@ $$
 
 ### 1.5 Dynamic Power Equation
 
-From the switching activity model:
+From measured VCD switching activity when available, or from the structural
+activity-factor fallback when no waveform is provided:
 
 $$
 P_{\text{dynamic}} = \alpha \cdot C \cdot V_{DD}^2 \cdot f
@@ -208,6 +209,18 @@ print(f"Static:   {pe.static_mw:.4f} mW")
 print(f"Total:    {pe.total_mw:.4f} mW")
 print(f"Energy/spike: {pe.energy_per_spike_nj:.2f} nJ")
 print(f"Toggle rate:  {pe.toggle_rate:.3f}")
+```
+
+For post-simulation runs, pass a VCD trace so the dynamic term is driven by
+observed bit transitions instead of structural defaults:
+
+```python
+pe = estimate_power(
+    verilog_source,
+    activity_vcd="build/sc_lif.vcd",
+    vcd_time_units_per_cycle=5,  # e.g. 1 ns VCD units, 200 MHz clock
+    freq_mhz=200.0,
+)
 ```
 
 ### 4.2 Thermal Analysis

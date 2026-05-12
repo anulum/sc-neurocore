@@ -738,6 +738,37 @@ class TestPowerEstimation:
         p = estimate_power("")
         assert p.total_mw == 0
 
+    def test_vcd_activity_drives_measured_toggle_rate(self):
+        """VCD switching activity overrides structural default toggles."""
+        from sc_neurocore.compiler.static_analysis import estimate_power
+
+        vcd = """
+        $timescale 1ns $end
+        $scope module top $end
+        $var wire 4 ! data [3:0] $end
+        $upscope $end
+        $enddefinitions $end
+        #0
+        b0000 !
+        #10
+        b1111 !
+        #20
+        b1010 !
+        """
+
+        p = estimate_power("", activity_vcd=vcd, vcd_time_units_per_cycle=10)
+
+        assert p.dynamic_mw > 0
+        assert p.total_mw == p.dynamic_mw
+        assert p.toggle_rate == 0.75
+
+    def test_vcd_activity_rejects_invalid_cycle_scale(self):
+        """VCD-derived activity needs a positive time-unit to cycle scale."""
+        from sc_neurocore.compiler.static_analysis import estimate_power
+
+        with pytest.raises(ValueError, match="vcd_time_units_per_cycle"):
+            estimate_power("", activity_vcd="$enddefinitions $end", vcd_time_units_per_cycle=0)
+
 
 class TestMultiTarget:
     """Tests for multi-target --compare compilation."""
