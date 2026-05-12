@@ -114,8 +114,10 @@ print(f"Full-length estimate: {source.full_current_estimate():.4f}")
 
 ## 4. Dense layer: 8 inputs, 4 neurons
 
-`SCDenseLayer` bundles a shared `BitstreamCurrentSource` with $N$ LIF
-neurons, each with independent noise seeds:
+`SCDenseLayer` bundles one or more `BitstreamCurrentSource` instances with
+$N$ LIF neurons, each with independent noise seeds. Pass a 1-D weight vector
+to share one SC current across all neurons, or a `(n_neurons, n_inputs)`
+matrix to drive each neuron with its own SC dot-product source:
 
 ```python
 from sc_neurocore import SCDenseLayer
@@ -123,7 +125,12 @@ from sc_neurocore import SCDenseLayer
 layer = SCDenseLayer(
     n_neurons=4,
     x_inputs=[0.3, 0.7, 0.5, 0.2, 0.9, 0.4, 0.6, 0.8],
-    weight_values=[0.5, 0.6, 0.4, 0.3, 0.7, 0.5, 0.8, 0.2],
+    weight_values=[
+        [0.5, 0.6, 0.4, 0.3, 0.7, 0.5, 0.8, 0.2],
+        [0.4, 0.5, 0.7, 0.2, 0.6, 0.8, 0.3, 0.9],
+        [0.8, 0.2, 0.5, 0.6, 0.4, 0.7, 0.5, 0.3],
+        [0.3, 0.7, 0.6, 0.5, 0.8, 0.4, 0.2, 0.6],
+    ],
     x_min=0.0, x_max=1.0,
     w_min=0.0, w_max=1.0,
     length=2048,
@@ -143,8 +150,9 @@ for stat in layer.summary()["stats"]:
           f"{stat['firing_rate_hz']:.1f} Hz")
 ```
 
-Neurons share the same SC current but differ by noise realisations. With
-`noise_std=0.02`, firing rate variance across neurons is small (~5%).
+With a 2-D matrix, neurons receive distinct SC currents and also differ by
+noise realisations. With a 1-D vector, neurons share the same SC current and
+their firing-rate variance is dominated by neuron noise and parameter spread.
 
 ## 5. Two-layer network (manual wiring)
 

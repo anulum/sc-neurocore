@@ -215,7 +215,8 @@ For more complex experiments, use analysis utilities in `analysis/` or build cus
 ### 3.8 Layer types
 sc-neurocore includes a variety of layer types. The most common ones are:
 
-- `SCDenseLayer`: uses a shared current source for a population of neurons.
+- `SCDenseLayer`: uses a shared SC current source for 1-D weights, or one SC
+  current source per neuron for `(n_neurons, n_inputs)` dense weight matrices.
 - `SCLearningLayer`: similar to dense but includes per-neuron synapses with STDP updates.
 - `SCConv2DLayer`: convolutional layer using SC multiplication for local patches.
 - `SCRecurrentLayer`: recurrent layer that updates a state vector based on inputs and previous state.

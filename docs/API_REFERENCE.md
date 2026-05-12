@@ -14391,9 +14391,11 @@ Example
 ### Class `SCDenseLayer`
 Stochastic-computing dense layer of LIF neurons.
 
-Each neuron receives shared SC dot-product input current and
-produces independent spike trains. Software-only but fully
-SC-driven at the input/synapse level.
+Each neuron receives SC dot-product input current and produces independent
+spike trains. `weight_values` may be either a single
+shared vector of length `n_inputs` or a dense matrix shaped
+`(n_neurons, n_inputs)`. Software-only but fully SC-driven at the
+input/synapse level.
 
 Example
 -------
@@ -14410,6 +14412,9 @@ Example
 - **reset**()
 - **run**(T)
   - Run the layer for T time steps, updating all neurons.
+
+    A 1-D weight vector produces one shared SC current source for all neurons.
+    A 2-D weight matrix produces one SC current source per neuron.
 - **get_spike_trains**()
   - Return spike matrix of shape (n_neurons, T).
 - **summary**()

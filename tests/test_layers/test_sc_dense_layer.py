@@ -53,6 +53,24 @@ def test_dense_init_mismatch_raises():
         )
 
 
+def test_dense_rejects_negative_neuron_count():
+    """Layer size must not silently create invalid negative output shapes."""
+    with pytest.raises(ValueError, match="n_neurons"):
+        _make_layer(n_neurons=-1)
+
+
+def test_dense_rejects_weight_matrix_with_wrong_input_width():
+    """Per-neuron weight matrices must keep one weight per input channel."""
+    with pytest.raises(ValueError, match="shape"):
+        _make_layer(n_neurons=2, weight_values=[[0.5], [0.2]])
+
+
+def test_dense_rejects_weight_matrix_with_wrong_output_count():
+    """Per-neuron weight matrices must keep one row per output neuron."""
+    with pytest.raises(ValueError, match="shape"):
+        _make_layer(n_neurons=3, weight_values=[[0.5, 0.5], [0.2, 0.2]])
+
+
 def test_dense_builds_neurons_and_recorders():
     """Verify neuron and recorder counts match n_neurons."""
     layer = _make_layer(n_neurons=3)
@@ -135,6 +153,47 @@ def test_dense_layer_passes_bipolar_mode_to_current_source():
 
     assert layer.source.sc_mode == "bipolar"
     assert np.isclose(layer.source.full_current_estimate(), -1.0)
+
+
+def test_dense_layer_accepts_per_neuron_weight_matrix():
+    """A dense layer should support distinct SC dot-product weights per neuron."""
+    layer = _make_layer(
+        n_neurons=2,
+        x_inputs=[1.0, 1.0],
+        weight_values=[[1.0, 1.0], [0.0, 0.0]],
+        y_min=0.0,
+        y_max=1.0,
+        length=64,
+    )
+
+    assert len(layer.sources) == 2
+    assert layer.source is layer.sources[0]
+    assert layer.sources[0].full_current_estimate() == pytest.approx(1.0)
+    assert layer.sources[1].full_current_estimate() == pytest.approx(0.0)
+
+
+def test_dense_layer_matrix_weights_drive_distinct_neuron_spike_trains():
+    """Per-neuron sources should feed their matching neurons during run()."""
+    layer = _make_layer(
+        n_neurons=2,
+        x_inputs=[1.0, 1.0],
+        weight_values=[[1.0, 1.0], [0.0, 0.0]],
+        y_min=0.0,
+        y_max=1.0,
+        length=32,
+        neuron_params={
+            "noise_std": 0.0,
+            "tau_mem": 1e9,
+            "v_threshold": 0.5,
+            "resistance": 1.0,
+        },
+    )
+
+    layer.run(16)
+    spikes = layer.get_spike_trains()
+
+    assert spikes[0].sum() == 16
+    assert spikes[1].sum() == 0
 
 
 @pytest.mark.skipif(not _perf_enabled(), reason="Set SC_NEUROCORE_PERF=1 to enable perf checks.")

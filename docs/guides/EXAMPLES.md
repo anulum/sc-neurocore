@@ -25,7 +25,7 @@ What to expect: a small number of spikes. Increase input current or lower thresh
 
 ---
 
-## Example 2: Dense layer with shared current source
+## Example 2: Dense layer with SC current sources
 
 ```python
 import numpy as np
@@ -48,6 +48,10 @@ spikes = layer.get_spike_trains()
 print("Spike matrix shape:", spikes.shape)
 print("Summary:", layer.summary())
 ```
+
+Pass `weight_values` as a 1-D vector to share one SC source across all output
+neurons, or as a `(n_neurons, n_inputs)` matrix to assign a distinct SC
+dot-product source to each neuron.
 
 ---
 
