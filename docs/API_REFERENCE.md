@@ -12462,7 +12462,7 @@ Lowers SC-NeuroCore IR to TVM Relay IR text representation.
 - **lower**(ir_graph, input_shapes, func_name)
   - Lower SC-IR graph to Relay IR text.
 - **emit_build_script**(relay_text)
-  - Generate a TVM build script stub for the lowered IR.
+  - Generate a self-contained TVM build script for the lowered IR.
 
 ---
 
