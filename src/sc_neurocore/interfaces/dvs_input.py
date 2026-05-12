@@ -7,10 +7,11 @@
 # SC-NeuroCore — Interface for Dynamic Vision Sensors (Event Cameras)
 
 from __future__ import annotations
-from typing import Any
 from dataclasses import dataclass
+import math
+from typing import Any
+
 import numpy as np
-from typing import List, Tuple
 
 
 @dataclass
@@ -25,11 +26,13 @@ class DVSInputLayer:
     decay_tau: float = 100.0  # Time constant to decay old events
 
     def __post_init__(self) -> None:
+        if not math.isfinite(float(self.decay_tau)) or float(self.decay_tau) <= 0.0:
+            raise ValueError("decay_tau must be finite and positive")
         # Surface potential representing event density
         self.surface = np.zeros((self.height, self.width), dtype=np.float32)
         self.last_update_time = 0.0
 
-    def process_events(self, events: List[Tuple[int, int, float, int]]) -> np.ndarray[Any, Any]:
+    def process_events(self, events: list[tuple[int, int, float, int]]) -> np.ndarray[Any, Any]:
         """
         Integrate a batch of events.
         Events format: (x, y, timestamp_ms, polarity)
@@ -37,6 +40,7 @@ class DVSInputLayer:
         """
         if not events:
             return self.surface
+        self._validate_events(events)
 
         current_time = events[-1][2]
         dt = current_time - self.last_update_time
@@ -51,7 +55,6 @@ class DVSInputLayer:
             if 0 <= x < self.width and 0 <= y < self.height:
                 # Polarity is usually -1 or 1.
                 # We want activity map. Let's just accumulate magnitude or positive density.
-                # For simplified SC vision, we map events to "Probability of Edge".
                 self.surface[y, x] += 1.0
 
         # Clip/Sigmoid to [0, 1] for SC generation
@@ -60,6 +63,19 @@ class DVSInputLayer:
 
         self.last_update_time = current_time
         return output_probs
+
+    @staticmethod
+    def _validate_events(events: list[tuple[int, int, float, int]]) -> None:
+        previous_t: float | None = None
+        for _, _, t, p in events:
+            timestamp = float(t)
+            if not math.isfinite(timestamp):
+                raise ValueError("event timestamp must be finite")
+            if previous_t is not None and timestamp < previous_t:
+                raise ValueError("event timestamps must be monotonically non-decreasing")
+            if p not in {-1, 0, 1}:
+                raise ValueError("event polarity must be -1, 0, or 1")
+            previous_t = timestamp
 
     def generate_bitstream_frame(self, length: int = 256) -> np.ndarray[Any, Any]:
         """
