@@ -496,7 +496,9 @@ JAX-traceable adapter for the SCPN Source-Field layer.
 - **encode**(domain_state)
   - Maps vacuum potential to stochastic bitstreams.
 - **_vacuum_kernel**(state, coupling, bias, dt)
-  - Solves the Vacuum Lattice dynamics (Mean-field approximation):
+  - Advances local spin-like vacuum lattice dynamics.
+- **_vacuum_lattice_kernel**(state, coupling, bias, scission_rate, feedback_drive, dt)
+  - Advances local spin-like vacuum lattice dynamics.
 - **step_jax**(dt, inputs)
   - Advances the L13 holonomic dynamics using JAX.
 - **decode**(bitstreams)
