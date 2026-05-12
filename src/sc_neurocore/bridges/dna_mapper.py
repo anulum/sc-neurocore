@@ -105,6 +105,44 @@ _NN_DG: Dict[str, float] = {
     "CC": -1.84,
 }
 _NN_INIT_DG = 1.96  # initiation penalty kcal/mol
+_NN_DH: Dict[str, float] = {
+    "AA": -7.9,
+    "TT": -7.9,
+    "AT": -7.2,
+    "TA": -7.2,
+    "CA": -8.5,
+    "TG": -8.5,
+    "GT": -8.4,
+    "AC": -8.4,
+    "CT": -7.8,
+    "AG": -7.8,
+    "GA": -8.2,
+    "TC": -8.2,
+    "CG": -10.6,
+    "GC": -9.8,
+    "GG": -8.0,
+    "CC": -8.0,
+}
+_NN_DS: Dict[str, float] = {
+    "AA": -22.2,
+    "TT": -22.2,
+    "AT": -20.4,
+    "TA": -21.3,
+    "CA": -22.7,
+    "TG": -22.7,
+    "GT": -22.4,
+    "AC": -22.4,
+    "CT": -21.0,
+    "AG": -21.0,
+    "GA": -22.2,
+    "TC": -22.2,
+    "CG": -27.2,
+    "GC": -24.4,
+    "GG": -19.9,
+    "CC": -19.9,
+}
+_NN_INIT_DH = 0.2  # kcal/mol, SantaLucia helix initiation
+_NN_INIT_DS = -5.7  # cal/(mol·K), SantaLucia helix initiation
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -197,23 +235,41 @@ class DNAStrand:
             dg += _NN_DG.get(dinuc, -1.0)
         return dg
 
-    def melting_temperature(self, na_conc_M: float = 1.0) -> float:
-        """Estimated Tm using nearest-neighbour model (°C).
-
-        Uses the simplified formula:
-            Tm = ΔH / (ΔS + R·ln(Ct/4)) − 273.15
-        with a reasonable ΔH/ΔS ratio derived from the ΔG values.
-        """
+    def melting_temperature(self, na_conc_M: float = 1.0, strand_conc_M: float = 2.5e-7) -> float:
+        """Return nearest-neighbour DNA duplex melting temperature in °C."""
+        if not math.isfinite(float(na_conc_M)) or float(na_conc_M) <= 0.0:
+            raise ValueError("na_conc_M must be finite and positive")
+        if not math.isfinite(float(strand_conc_M)) or float(strand_conc_M) <= 0.0:
+            raise ValueError("strand_conc_M must be finite and positive")
         n = len(self.sequence)
-        if n < 6:
-            return 2.0 * (self.sequence.count("A") + self.sequence.count("T")) + 4.0 * (
-                self.sequence.count("G") + self.sequence.count("C")
-            )
-        # Wallace rule fallback for short sequences
-        dg = self.delta_g_37()
-        # Approximate: Tm ≈ 64.9 + 41*(nGC - 16.4)/n for longer sequences
-        gc = sum(1 for c in self.sequence if c in "GC")
-        return 64.9 + 41.0 * (gc - 16.4) / n
+        if n < 2:
+            raise ValueError("melting_temperature requires at least two nucleotides")
+
+        delta_h = _NN_INIT_DH
+        delta_s = _NN_INIT_DS
+        if self.sequence[0] in "AT":
+            delta_h += 2.2
+            delta_s += 6.9
+        else:
+            delta_h += 0.1
+            delta_s -= 2.8
+        if self.sequence[-1] in "AT":
+            delta_h += 2.2
+            delta_s += 6.9
+        else:
+            delta_h += 0.1
+            delta_s -= 2.8
+
+        for i in range(n - 1):
+            dinuc = self.sequence[i : i + 2]
+            delta_h += _NN_DH[dinuc]
+            delta_s += _NN_DS[dinuc]
+
+        tm_kelvin = (1000.0 * delta_h) / (
+            delta_s + (1000.0 * _R_GAS) * math.log(float(strand_conc_M) / 4.0)
+        )
+        salt_correction_c = 16.6 * math.log10(float(na_conc_M))
+        return tm_kelvin - 273.15 + salt_correction_c
 
 
 @dataclass
