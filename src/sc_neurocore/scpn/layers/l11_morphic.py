@@ -65,12 +65,20 @@ class L11_MorphicLayer:
         boundary_shielding = 0.0
         boundary_fragmentation_pressure = 0.0
         l10_rejection_fraction = 0.0
+        boundary_context_id: Optional[str] = None
+        boundary_terminals: tuple[str, ...] = ()
+        noospheric_terminal_set: tuple[str, ...] = ()
+        noospheric_terminal_bandwidth = 1.0
         field_input = np.zeros(n)
         if l10_input is not None:
             l10_effect = self._l10_boundary_effect(l10_input, n)
             boundary_shielding = l10_effect["shielding"]
             boundary_fragmentation_pressure = l10_effect["fragmentation_pressure"]
             l10_rejection_fraction = l10_effect["rejection_fraction"]
+            boundary_context_id = l10_effect["boundary_context_id"]
+            boundary_terminals = l10_effect["boundary_terminals"]
+            noospheric_terminal_set = l10_effect["noospheric_terminal_set"]
+            noospheric_terminal_bandwidth = l10_effect["noospheric_terminal_bandwidth"]
             protected_drive = l10_effect["integrity"] * self.params.boundary_coupling
             fragmented_drive = (
                 boundary_fragmentation_pressure * self.params.boundary_pressure_coupling
@@ -85,9 +93,8 @@ class L11_MorphicLayer:
             - 0.1 * self.spins
         )
         self.spins = np.clip(self.spins + d_spin * dt, 0, 1)
-        transmission = max(
-            0.0, 1.0 - self.params.boundary_shielding_coupling * boundary_shielding
-        )
+        transmission = max(0.0, 1.0 - self.params.boundary_shielding_coupling * boundary_shielding)
+        transmission *= noospheric_terminal_bandwidth
         self.info_density = self._update_info_density(dt, transmission)
 
         rands = self._rng.random((n, self.params.bitstream_length))
@@ -100,6 +107,10 @@ class L11_MorphicLayer:
             "boundary_shielding": boundary_shielding,
             "boundary_fragmentation_pressure": boundary_fragmentation_pressure,
             "l10_rejection_fraction": l10_rejection_fraction,
+            "boundary_context_id": boundary_context_id,
+            "boundary_terminals": boundary_terminals,
+            "noospheric_terminal_set": noospheric_terminal_set,
+            "noospheric_terminal_bandwidth": noospheric_terminal_bandwidth,
             "output_bitstreams": output_bitstreams,
         }
 
@@ -155,7 +166,7 @@ class L11_MorphicLayer:
         return integrity
 
     @classmethod
-    def _l10_boundary_effect(cls, l10_input: Dict[str, Any], n_nodes: int) -> Dict[str, float]:
+    def _l10_boundary_effect(cls, l10_input: Dict[str, Any], n_nodes: int) -> Dict[str, Any]:
         integrity = cls._integrity_signal(l10_input.get("integrity", 0.0))
         if integrity < 0.0 or integrity > 1.0:
             raise ValueError("integrity must be within [0, 1]")
@@ -178,6 +189,7 @@ class L11_MorphicLayer:
         memory_complexity_flux = cls._nonnegative_scalar(
             l10_input.get("memory_complexity_flux", 0.0), "memory_complexity_flux"
         )
+        noospheric_context = cls._noospheric_context(l10_input)
 
         firewall_pressure = float(np.mean(firewall_strength / (1.0 + firewall_strength)))
         rejection_fraction = float(np.mean(topological_rejection))
@@ -200,6 +212,40 @@ class L11_MorphicLayer:
             "shielding": shielding,
             "fragmentation_pressure": fragmentation_pressure,
             "rejection_fraction": rejection_fraction,
+            "boundary_context_id": noospheric_context["boundary_context_id"],
+            "boundary_terminals": noospheric_context["boundary_terminals"],
+            "noospheric_terminal_set": noospheric_context["noospheric_terminal_set"],
+            "noospheric_terminal_bandwidth": noospheric_context["terminal_bandwidth"],
+        }
+
+    @staticmethod
+    def _noospheric_context(l10_input: Dict[str, Any]) -> Dict[str, Any]:
+        has_context_id = "boundary_context_id" in l10_input
+        has_terminals = "boundary_terminals" in l10_input
+        if not has_context_id and not has_terminals:
+            return {
+                "boundary_context_id": None,
+                "boundary_terminals": (),
+                "noospheric_terminal_set": (),
+                "terminal_bandwidth": 1.0,
+            }
+        if not has_context_id or not has_terminals:
+            raise ValueError("boundary context requires boundary_context_id and boundary_terminals")
+
+        context_id = str(l10_input["boundary_context_id"])
+        if not context_id:
+            raise ValueError("boundary_context_id must be non-empty")
+        terminals = tuple(l10_input["boundary_terminals"])
+        valid_terminals = {"T1", "T2", "T3", "T4", "T5", "T6", "T7"}
+        if not terminals or any(terminal not in valid_terminals for terminal in terminals):
+            raise ValueError("boundary_terminals must contain valid T1-T7 terminal identifiers")
+
+        noospheric_terminals = tuple(terminal for terminal in terminals if terminal in {"T3", "T6"})
+        return {
+            "boundary_context_id": context_id,
+            "boundary_terminals": terminals,
+            "noospheric_terminal_set": noospheric_terminals,
+            "terminal_bandwidth": float(len(noospheric_terminals) / 2.0),
         }
 
     @staticmethod

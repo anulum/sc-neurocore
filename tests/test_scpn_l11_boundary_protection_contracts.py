@@ -99,6 +99,46 @@ def test_l11_l10_residual_boundary_pressure_reduces_noospheric_alignment() -> No
     assert np.mean(fragmented_out["spins"]) < np.mean(coherent_out["spins"])
 
 
+def test_l11_uses_ebs_t3_t6_terminals_as_noospheric_bandwidth() -> None:
+    params = L11_StochasticParameters(
+        n_nodes=4,
+        bitstream_length=16,
+        j_coupling=0.0,
+        h_bias=1.0,
+        beta_infection=1.0,
+        gamma_recovery=0.0,
+        boundary_coupling=0.0,
+        rng_seed=24,
+    )
+    no_noospheric_interface = L11_MorphicLayer(params)
+    t3_t6_interface = L11_MorphicLayer(params)
+
+    blocked = no_noospheric_interface.step(
+        0.5,
+        {
+            "integrity": 0.9,
+            "boundary_context_id": "ebs-l11",
+            "boundary_terminals": ("T2", "T5"),
+        },
+    )
+    admitted = t3_t6_interface.step(
+        0.5,
+        {
+            "integrity": 0.9,
+            "boundary_context_id": "ebs-l11",
+            "boundary_terminals": ("T3", "T6"),
+        },
+    )
+
+    assert blocked["noospheric_terminal_set"] == ()
+    assert blocked["noospheric_terminal_bandwidth"] == pytest.approx(0.0)
+    assert admitted["boundary_context_id"] == "ebs-l11"
+    assert admitted["boundary_terminals"] == ("T3", "T6")
+    assert admitted["noospheric_terminal_set"] == ("T3", "T6")
+    assert admitted["noospheric_terminal_bandwidth"] == pytest.approx(1.0)
+    assert admitted["info_saturation"] > blocked["info_saturation"]
+
+
 def test_l11_rejects_invalid_l10_boundary_diagnostics() -> None:
     with pytest.raises(ValueError, match="boundary_shielding_coupling"):
         L11_MorphicLayer(L11_StochasticParameters(boundary_shielding_coupling=-0.1))
@@ -113,6 +153,9 @@ def test_l11_rejects_invalid_l10_boundary_diagnostics() -> None:
         {"integrity": 0.5, "boundary_complexity": -0.1},
         {"integrity": 0.5, "qec_residual_load": 1.1},
         {"integrity": 0.5, "memory_complexity_flux": np.array([0.1, 0.2])},
+        {"integrity": 0.5, "boundary_context_id": "ebs"},
+        {"integrity": 0.5, "boundary_terminals": ("T3",)},
+        {"integrity": 0.5, "boundary_context_id": "ebs", "boundary_terminals": ("T8",)},
     ]
 
     for payload in invalid_payloads:
