@@ -192,6 +192,85 @@ def test_datastream_payload_validator_rejects_inconsistent_shapes_and_metrics() 
             validate_datastream_payload(bad_payload)
 
 
+def test_datastream_payload_validator_rejects_inconsistent_telemetry_layers() -> None:
+    packet = build_datastream_packet(
+        waveform=_waveform(),
+        spike_raster=_spikes(),
+        source_name="unit-replay",
+        source_mode="fixture",
+        layer_id="sensory",
+    )
+    payload = packet.to_bridge_dict()
+    bad_cases = [
+        ("error_count", {"telemetry": {**payload["telemetry"], "error_count": -1}}),
+        ("layers", {"telemetry": {**payload["telemetry"], "layers": {}}}),
+        (
+            "spike_count",
+            {
+                "telemetry": {
+                    **payload["telemetry"],
+                    "layers": {
+                        "sensory": {
+                            **payload["telemetry"]["layers"]["sensory"],
+                            "spike_count": 4,
+                        }
+                    },
+                }
+            },
+        ),
+        (
+            "tick_count",
+            {
+                "telemetry": {
+                    **payload["telemetry"],
+                    "layers": {
+                        "sensory": {
+                            **payload["telemetry"]["layers"]["sensory"],
+                            "tick_count": 7,
+                        }
+                    },
+                }
+            },
+        ),
+        (
+            "mean_spike_rate",
+            {
+                "telemetry": {
+                    **payload["telemetry"],
+                    "layers": {
+                        "sensory": {
+                            **payload["telemetry"]["layers"]["sensory"],
+                            "mean_spike_rate": float("nan"),
+                        }
+                    },
+                }
+            },
+        ),
+        (
+            "mean_utilization",
+            {
+                "telemetry": {
+                    **payload["telemetry"],
+                    "layers": {
+                        "sensory": {
+                            **payload["telemetry"]["layers"]["sensory"],
+                            "mean_utilization": 101.0,
+                        }
+                    },
+                }
+            },
+        ),
+    ]
+
+    for match, overrides in bad_cases:
+        bad_payload = packet.to_bridge_dict()
+        bad_payload.update(overrides)
+        _refresh_packet_hash(bad_payload)
+
+        with pytest.raises(DatastreamValidationError, match=match):
+            validate_datastream_payload(bad_payload)
+
+
 def test_datastream_payload_validator_rejects_malformed_qpu_artifact_hash() -> None:
     packet = build_datastream_packet(
         waveform=_waveform(),

@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import hashlib
 import json
+import math
 import string
 from typing import Any
 
@@ -169,6 +170,11 @@ def validate_datastream_payload(payload: dict[str, Any]) -> None:
     telemetry = _mapping_from_payload(payload, "telemetry")
     total_ticks = _positive_int_from_mapping(telemetry, "total_ticks", "telemetry")
     total_spikes = _nonnegative_int_from_mapping(telemetry, "total_spikes", "telemetry")
+    _validate_telemetry_layers(
+        telemetry,
+        expected_total_ticks=total_ticks,
+        expected_total_spikes=total_spikes,
+    )
     if total_ticks != spike_shape[0]:
         raise DatastreamValidationError("total_ticks must match spike_shape timesteps")
     aer_spikes = _nonnegative_int_from_mapping(aer_metrics, "n_spikes", "aer_metrics")
@@ -325,6 +331,51 @@ def _nonnegative_int_from_mapping(mapping: dict[str, Any], key: str, owner: str)
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise DatastreamValidationError(f"{key} in {owner} must be a non-negative integer")
     return value
+
+
+def _nonnegative_finite_number_from_mapping(mapping: dict[str, Any], key: str, owner: str) -> float:
+    value = mapping.get(key)
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        raise DatastreamValidationError(f"{key} in {owner} must be a finite non-negative number")
+    if value < 0.0:
+        raise DatastreamValidationError(f"{key} in {owner} must be a finite non-negative number")
+    return float(value)
+
+
+def _validate_telemetry_layers(
+    telemetry: dict[str, Any],
+    *,
+    expected_total_ticks: int,
+    expected_total_spikes: int,
+) -> None:
+    _nonnegative_int_from_mapping(telemetry, "error_count", "telemetry")
+    layers = telemetry.get("layers")
+    if not isinstance(layers, dict) or not layers:
+        raise DatastreamValidationError("layers in telemetry must contain at least one layer")
+
+    layer_tick_total = 0
+    layer_spike_total = 0
+    for layer_id, record in layers.items():
+        if not isinstance(layer_id, str) or not layer_id.strip():
+            raise DatastreamValidationError("layer_id in telemetry layers must be non-empty")
+        if not isinstance(record, dict):
+            raise DatastreamValidationError(f"layers[{layer_id}] must be a telemetry mapping")
+        owner = f"layers[{layer_id}]"
+        layer_spike_total += _nonnegative_int_from_mapping(record, "spike_count", owner)
+        layer_tick_total += _positive_int_from_mapping(record, "tick_count", owner)
+        _nonnegative_finite_number_from_mapping(record, "mean_spike_rate", owner)
+        mean_utilization = _nonnegative_finite_number_from_mapping(
+            record, "mean_utilization", owner
+        )
+        if mean_utilization > 100.0:
+            raise DatastreamValidationError("mean_utilization must not exceed 100 percent")
+
+    if layer_tick_total != expected_total_ticks:
+        raise DatastreamValidationError("tick_count layer totals must match telemetry total_ticks")
+    if layer_spike_total != expected_total_spikes:
+        raise DatastreamValidationError(
+            "spike_count layer totals must match telemetry total_spikes"
+        )
 
 
 def _payload_sha256_without_packet_hash(payload: dict[str, Any]) -> str:
