@@ -201,6 +201,23 @@ def test_kalman_filter_covariance_psd() -> None:
         assert np.all(eigs > -1e-9), f"non-PSD at t={t}: eigs={eigs}"
 
 
+def test_kalman_filter_rejects_corrupted_innovation_covariance() -> None:
+    """A corrupted model with non-positive innovation covariance fails closed."""
+    model = LinearGaussianSSM(
+        A=np.array([[1.0]]),
+        B=np.zeros((1, 0)),
+        C=np.array([[1.0]]),
+        D=np.zeros((1, 0)),
+        Q=np.array([[0.1]]),
+        R=np.array([[0.1]]),
+        mu_0=np.array([0.0]),
+        Sigma_0=np.array([[1.0]]),
+    )
+    model.R = np.array([[-2.0]])
+    with pytest.raises(np.linalg.LinAlgError, match="non-PSD innovation covariance"):
+        KalmanFilter(model).filter(np.array([[0.0]]), backend="python")
+
+
 # ───────────────────────── RTS smoother ─────────────────────────
 
 
@@ -308,6 +325,28 @@ def test_em_improves_held_out_log_likelihood() -> None:
     assert learned_ll > init_ll, (
         f"EM did not improve test log-likelihood: init={init_ll:.2f}, learned={learned_ll:.2f}"
     )
+
+
+def test_em_stops_when_likelihood_change_reaches_tolerance() -> None:
+    """EM should honour tolerance and stop before max_iter on a stationary fit."""
+    _, observations = _simulate(_scalar_random_walk(), T=80, seed=123)
+    init = LinearGaussianSSM(
+        A=np.array([[0.8]]),
+        B=np.zeros((1, 0)),
+        C=np.array([[1.0]]),
+        D=np.zeros((1, 0)),
+        Q=np.array([[0.2]]),
+        R=np.array([[0.2]]),
+        mu_0=np.array([0.0]),
+        Sigma_0=np.array([[1.0]]),
+    )
+    learner = EMLearner(max_iter=25, tol=1e6)
+
+    learned = learner.fit(observations, init)
+
+    assert isinstance(learned, LinearGaussianSSM)
+    assert len(learner.log_likelihood_history) == 2
+    assert all(np.isfinite(learner.log_likelihood_history))
 
 
 # ───────────────────────── PredictiveWorldModel wrapper ───────────

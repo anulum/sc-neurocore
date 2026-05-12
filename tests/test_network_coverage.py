@@ -12,6 +12,8 @@ coverage audit."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 import pytest
 
@@ -27,6 +29,46 @@ from sc_neurocore.network.stimulus import PoissonInput, StepCurrent, TimedArray
 
 
 class TestPopulationCoverage:
+    class GatedNeuron:
+        def __init__(self):
+            self.v = 0.0
+            self.v_rest = 0.0
+            self.v_threshold = 1.0
+            self.step_calls = 0
+
+        def step(self, current):
+            self.step_calls += 1
+            self.v += current
+            return self.v >= self.v_threshold
+
+    class MinimalVoltageNeuron:
+        def __init__(self):
+            self.v = -0.25
+
+    class ResetNeuron:
+        def __init__(self):
+            self.v = 1.0
+            self.reset_calls = 0
+
+        def reset(self):
+            self.reset_calls += 1
+            self.v = -0.125
+
+    class ResetStateNeuron:
+        def __init__(self):
+            self.v = 1.0
+            self.reset_state_calls = 0
+
+        def reset_state(self):
+            self.reset_state_calls += 1
+            self.v = -0.375
+
+    @dataclass
+    class DataclassStateNeuron:
+        v: float = -0.5
+        adaptation: float = 0.25
+        dt: float = 0.001
+
     def test_get_states(self):
         pop = Population(StochasticLIFNeuron, n=5, label="test")
         pop.step_all(np.ones(5) * 0.5)
@@ -47,6 +89,65 @@ class TestPopulationCoverage:
         currents = np.ones(10) * 0.5
         spikes = pop.step_all(currents, spike_gating=True)
         assert len(spikes) == 10
+
+    def test_spike_gating_skips_resting_silent_neuron_and_advances_active_one(self):
+        pop = Population(self.GatedNeuron, n=2, label="gated")
+
+        spikes = pop.step_all(np.array([0.0, 1.25]), spike_gating=True)
+
+        assert pop.neurons[0].step_calls == 0
+        assert pop.neurons[0].v == 0.0
+        assert pop.voltages[0] == 0.0
+        assert pop.neurons[1].step_calls == 1
+        assert pop.neurons[1].v == 1.25
+        assert pop.voltages[1] == 1.25
+        np.testing.assert_array_equal(spikes, np.array([0, 1], dtype=np.int8))
+
+    def test_get_states_falls_back_to_voltage_for_public_minimal_neuron(self):
+        pop = Population(self.MinimalVoltageNeuron, n=3, label="minimal")
+        for neuron, voltage in zip(pop.neurons, [-0.5, 0.0, 0.75], strict=True):
+            neuron.v = voltage
+
+        states = pop.get_states()
+
+        assert set(states) == {"v"}
+        np.testing.assert_allclose(states["v"], np.array([-0.5, 0.0, 0.75]))
+
+    def test_reset_all_prefers_reset_and_resynchronizes_voltage_cache(self):
+        pop = Population(self.ResetNeuron, n=2, label="reset")
+        pop.neurons[0].v = 0.5
+        pop.neurons[1].v = 0.75
+
+        pop.reset_all()
+
+        assert [neuron.reset_calls for neuron in pop.neurons] == [1, 1]
+        np.testing.assert_allclose(pop.voltages, np.array([-0.125, -0.125]))
+
+    def test_reset_all_uses_reset_state_when_reset_is_unavailable(self):
+        pop = Population(self.ResetStateNeuron, n=2, label="reset_state")
+        pop.neurons[0].v = 0.5
+        pop.neurons[1].v = 0.75
+
+        pop.reset_all()
+
+        assert [neuron.reset_state_calls for neuron in pop.neurons] == [1, 1]
+        np.testing.assert_allclose(pop.voltages, np.array([-0.375, -0.375]))
+
+    def test_get_states_uses_dataclass_fields_without_timestep_parameter(self):
+        pop = Population(
+            self.DataclassStateNeuron,
+            n=2,
+            params={"v": -0.4, "adaptation": 0.125, "dt": 0.002},
+            label="dataclass",
+        )
+        pop.neurons[1].v = 0.6
+        pop.neurons[1].adaptation = 0.5
+
+        states = pop.get_states()
+
+        assert set(states) == {"v", "adaptation"}
+        np.testing.assert_allclose(states["v"], np.array([-0.4, 0.6]))
+        np.testing.assert_allclose(states["adaptation"], np.array([0.125, 0.5]))
 
     def test_voltages_property(self):
         pop = Population(StochasticLIFNeuron, n=3, label="test")
