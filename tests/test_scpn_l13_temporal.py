@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 
@@ -53,3 +55,29 @@ def test_l13_temporal_layer_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.0)
     with pytest.raises(ValueError, match="coherence"):
         layer.step(0.001, {"coherence": np.array([np.nan, 0.0])})
+
+
+def test_l13_temporal_output_bitstreams_are_seed_scoped() -> None:
+    params = L13_StochasticParameters(
+        n_channels=3,
+        bitstream_length=64,
+        binding_window=3,
+        rng_seed=1234,
+    )
+    layer_a = L13_TemporalLayer(params)
+    layer_b = L13_TemporalLayer(params)
+    drive = {"coherence": np.array([1.0, 0.5, 0.0], dtype=np.float64)}
+
+    out_a0 = layer_a.step(0.001, drive)["output_bitstreams"]
+    out_b0 = layer_b.step(0.001, drive)["output_bitstreams"]
+    out_a1 = layer_a.step(0.001, drive)["output_bitstreams"]
+    out_b1 = layer_b.step(0.001, drive)["output_bitstreams"]
+
+    np.testing.assert_array_equal(out_a0, out_b0)
+    np.testing.assert_array_equal(out_a1, out_b1)
+    assert not np.array_equal(out_a0, out_a1)
+
+    with pytest.raises(ValueError, match="rng_seed"):
+        L13_TemporalLayer(L13_StochasticParameters(rng_seed=-1))
+    with pytest.raises(ValueError, match="rng_seed"):
+        L13_TemporalLayer(L13_StochasticParameters(rng_seed=cast(Any, 1.5)))
