@@ -811,6 +811,9 @@ Parse NeuroML unit string like '10nS', '-65mV', '100pF' to SI-ish float.
 
 Returns value in base NeuroML units (mV, nS, pF, ms, nA).
 
+### Function `_parse_current_pa(s)`
+Parse a NeuroML current string into pA for biophysical IF equations.
+
 ### Function `_import_iaf_cell(elem)`
 Import <iafCell> or <iafRefCell>.
 
@@ -823,7 +826,7 @@ Import <izhikevichCell> (2003 dimensionless).
 ### Function `_import_izhikevich2007_cell(elem)`
 Import <izhikevich2007Cell> (biophysical units).
 
-Convert to dimensionless 2003 model parameters.
+Preserve the NeuroML 2 biophysical parameterisation.
 
 ### Function `_import_adex_cell(elem)`
 Import <adExIaFCell>.
@@ -17763,6 +17766,28 @@ Reference: Ibarz, B. et al. (2011). Phys. Rep. 501:1–74.
 - **_f**(x)
 - **step**(current)
 - **reset**()
+
+---
+
+## Module `neurons.models.izhikevich2007`
+
+### Class `Izhikevich2007Neuron`
+Izhikevich 2007 biophysical quadratic integrate-and-fire neuron.
+
+Equations from Izhikevich, E. M. (2007), *Dynamical Systems in
+Neuroscience*, using the NeuroML 2 ``izhikevich2007Cell`` parameterisation:
+
+``C dv/dt = k (v - vr) (v - vt) - u + I``
+``du/dt = a (b (v - vr) - u)``
+
+If ``v >= vpeak`` after integration, the neuron emits one spike and applies
+``v <- c`` and ``u <- u + d``. Units are the NeuroML base units used by the
+importer: pF, nS, mV, ms, and pA.
+
+- **__post_init__**()
+- **step**(input_current)
+- **reset_state**()
+- **get_state**()
 
 ---
 

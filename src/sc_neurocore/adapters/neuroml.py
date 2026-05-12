@@ -11,7 +11,7 @@
 Supports:
   <iafCell>, <iafRefCell>, <iafTauCell>, <iafTauRefCell> -> StochasticLIFNeuron
   <izhikevichCell> (2003 dimensionless) -> SCIzhikevichNeuron
-  <izhikevich2007Cell> (biophysical) -> SCIzhikevichNeuron (converted)
+  <izhikevich2007Cell> (biophysical) -> Izhikevich2007Neuron
   <adExIaFCell> -> AdExNeuron
 
 NeuroML 2 spec: https://docs.neuroml.org/Userdocs/Schemas/Cells.html
@@ -59,6 +59,8 @@ def _parse_unit_value(s: str) -> float:
         "nA": 1.0,
         "uA": 1e3,
         "pA": 1e-3,
+        "per_ms": 1.0,
+        "nS_per_mV": 1.0,
         "mS_per_cm2": 1.0,
         "S_per_m2": 0.1,
         "uF_per_cm2": 1.0,
@@ -70,6 +72,24 @@ def _parse_unit_value(s: str) -> float:
             return float(num) * multipliers[unit]
     # Dimensionless
     return float(s)
+
+
+def _parse_current_pa(s: str) -> float:
+    """Parse a NeuroML current string into pA for biophysical IF equations."""
+    if s is None:
+        return 0.0
+    text = s.strip()
+    multipliers = {
+        "pA": 1.0,
+        "nA": 1e3,
+        "uA": 1e6,
+        "mA": 1e9,
+        "A": 1e12,
+    }
+    for unit in sorted(multipliers, key=len, reverse=True):
+        if text.endswith(unit):
+            return float(text[: -len(unit)].strip()) * multipliers[unit]
+    return float(text)
 
 
 @dataclass
@@ -167,7 +187,7 @@ def _import_izhikevich_cell(elem: Any) -> ImportedCell:
 def _import_izhikevich2007_cell(elem: Any) -> ImportedCell:
     """Import <izhikevich2007Cell> (biophysical units).
 
-    Convert to dimensionless 2003 model parameters.
+    Preserve the NeuroML 2 biophysical parameterisation.
     """
     cell_id = elem.get("id", "unnamed")
     C = _parse_unit_value(elem.get("C", "100pF"))
@@ -178,20 +198,25 @@ def _import_izhikevich2007_cell(elem: Any) -> ImportedCell:
     a = _parse_unit_value(elem.get("a", "0.03"))
     b = _parse_unit_value(elem.get("b", "-2"))
     c = _parse_unit_value(elem.get("c", "-50mV"))
-    d = _parse_unit_value(elem.get("d", "100"))
+    d = _parse_current_pa(elem.get("d", "100pA"))
+    v0 = _parse_unit_value(elem.get("v0", f"{vr}mV"))
 
-    # Store as 2003 dimensionless (approximate mapping)
     return ImportedCell(
         cell_id,
-        "SCIzhikevichNeuron",
+        "Izhikevich2007Neuron",
         {
-            "a": a / 1000.0 if a > 1 else a,  # per_time -> dimensionless
-            "b": b / 1000.0 if abs(b) > 1 else b,
+            "C": C,
+            "k": k,
+            "vr": vr,
+            "vt": vt,
+            "vpeak": vpeak,
+            "a": a,
+            "b": b,
             "c": c,
-            "d": d / 1000.0 if abs(d) > 10 else d,
-            "dt": 0.5,
-            "noise_std": 0.0,
-            "_neuroml2007_raw": {"C": C, "k": k, "vr": vr, "vt": vt, "vpeak": vpeak},
+            "d": d,
+            "v0": v0,
+            "dt": 0.1,
+            "integrator": "rk4",
         },
         "izhikevich2007Cell",
     )
@@ -271,6 +296,11 @@ def create_neuron(cell: ImportedCell) -> Any:
 
         safe = {k: v for k, v in cell.params.items() if not k.startswith("_")}
         return SCIzhikevichNeuron(**safe)
+
+    if cell.cell_type == "Izhikevich2007Neuron":
+        from ..neurons.models import Izhikevich2007Neuron
+
+        return Izhikevich2007Neuron(**cell.params)
 
     if cell.cell_type == "AdExNeuron":
         from ..neurons.models.adex import AdExNeuron

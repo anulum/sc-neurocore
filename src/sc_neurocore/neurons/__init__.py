@@ -105,6 +105,7 @@ _MODEL_NAMES = {
     "HodgkinHuxleyNeuron",
     "HuberBraunNeuron",
     "IbarzTanakaMapNeuron",
+    "Izhikevich2007Neuron",
     "InhibitoryLIFNeuron",
     "InhomogeneousPoissonNeuron",
     "IntegerQIFNeuron",
