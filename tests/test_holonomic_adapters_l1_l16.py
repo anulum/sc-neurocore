@@ -23,7 +23,7 @@ from sc_neurocore.adapters.holonomic.l11_noos import L11_NoosphericAdapter
 from sc_neurocore.adapters.holonomic.l12_gaian import L12_GaianAdapter
 from sc_neurocore.quantum.qec import QecShield
 from sc_neurocore.compiler.pipeline import CompilerPipeline
-from sc_neurocore.adapters.holonomic.l7_sym import L7_SymbolicAdapter
+from sc_neurocore.adapters.holonomic.l7_sym import L7_HolonomicParameters, L7_SymbolicAdapter
 from sc_neurocore.adapters.holonomic.l8_cosm import L8_CosmicAdapter
 from sc_neurocore.adapters.holonomic.l9_mem import L9_MemoryAdapter
 from sc_neurocore.adapters.holonomic.l10_fire import L10_FirewallAdapter
@@ -121,6 +121,29 @@ def test_l7_adapter_coverage():
     assert out.shape == (13, 1024)
     metrics = adapter.get_metrics()
     assert "routing_coherence" in metrics
+
+
+def test_l7_metatron_matrix_is_full_13_node_geometry():
+    adapter = L7_SymbolicAdapter()
+    matrix = np.asarray(adapter.metatron_matrix)
+
+    assert matrix.shape == (13, 13)
+    np.testing.assert_allclose(matrix, matrix.T, rtol=1e-7, atol=1e-7)
+    np.testing.assert_allclose(matrix.sum(axis=1), np.ones(13), rtol=1e-7, atol=1e-7)
+    assert np.all(np.diag(matrix) >= 0.05)
+    assert np.count_nonzero(matrix - np.diag(np.diag(matrix))) == 13 * 12
+    assert matrix[0, 1] > matrix[0, 7]
+
+
+def test_l7_rejects_invalid_routing_parameters():
+    with pytest.raises(ValueError, match="n_nodes"):
+        L7_SymbolicAdapter(L7_HolonomicParameters(n_nodes=0))
+    with pytest.raises(ValueError, match="bitstream_length"):
+        L7_SymbolicAdapter(L7_HolonomicParameters(bitstream_length=0))
+    with pytest.raises(ValueError, match="g_geometric_gain"):
+        L7_SymbolicAdapter(L7_HolonomicParameters(g_geometric_gain=0.0))
+    with pytest.raises(ValueError, match="coupling_leak"):
+        L7_SymbolicAdapter(L7_HolonomicParameters(coupling_leak=1.0))
 
 
 def test_l8_adapter_coverage():

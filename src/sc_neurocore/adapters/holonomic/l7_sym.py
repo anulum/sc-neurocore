@@ -24,6 +24,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
+import numpy as np
+
 from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 from ..base import BaseStochasticAdapter
@@ -51,6 +53,7 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
 
     def __init__(self, params: Optional[L7_HolonomicParameters] = None, seed: int = 47) -> None:
         self.params = params or L7_HolonomicParameters()
+        self._validate_params(self.params)
         self.rng_key = make_rng(seed)
 
         # State: Node Phases (representing symbolic glyphs)
@@ -59,15 +62,59 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
         self.metatron_matrix = self._init_metatron_matrix()
 
     def _init_metatron_matrix(self) -> jnp.ndarray:
-        """Initializes the standard Metatron's Cube connection topology."""
-        # Simple placeholder for the complex 13-node geometry
-        # In a full implementation, this is a specific sparse matrix.
-        import numpy as _np
-
+        """Initialise a symmetric bounded Metatron routing topology."""
         n = self.params.n_nodes
-        m = _np.eye(n) * 0.5
-        m[0, :] = 0.1
-        return jnp.array(m)
+        if n == 1:
+            return jnp.array([[1.0]], dtype=jnp.float32)
+
+        coords = self._metatron_coordinates(n)
+        deltas = coords[:, None, :] - coords[None, :, :]
+        distances = np.linalg.norm(deltas, axis=2)
+
+        off_diag = np.exp(-distances / self.params.phi_golden_ratio)
+        off_diag *= self.params.g_geometric_gain
+        np.fill_diagonal(off_diag, 0.0)
+
+        row_sums = off_diag.sum(axis=1)
+        max_row_sum = float(np.max(row_sums))
+        if max_row_sum <= 0.0:
+            raise ValueError("Metatron topology requires at least one off-diagonal edge.")
+
+        off_diag *= (1.0 - self.params.coupling_leak) / max_row_sum
+        matrix = off_diag
+        np.fill_diagonal(matrix, 1.0 - matrix.sum(axis=1))
+        return jnp.array(matrix, dtype=jnp.float32)
+
+    @staticmethod
+    def _metatron_coordinates(n_nodes: int) -> np.ndarray[Any, Any]:
+        if n_nodes == 13:
+            angles = np.linspace(0.0, 2.0 * np.pi, 6, endpoint=False)
+            inner = np.stack([np.cos(angles), np.sin(angles)], axis=1)
+            outer = 2.0 * inner
+            return np.vstack([np.zeros((1, 2)), inner, outer]).astype(np.float64)
+
+        angles = np.linspace(0.0, 2.0 * np.pi, n_nodes - 1, endpoint=False)
+        ring = np.stack([np.cos(angles), np.sin(angles)], axis=1)
+        return np.vstack([np.zeros((1, 2)), ring]).astype(np.float64)
+
+    @staticmethod
+    def _validate_params(params: L7_HolonomicParameters) -> None:
+        if not isinstance(params.n_nodes, int) or isinstance(params.n_nodes, bool):
+            raise ValueError("n_nodes must be a positive integer.")
+        if params.n_nodes <= 0:
+            raise ValueError("n_nodes must be positive.")
+        if not isinstance(params.bitstream_length, int) or isinstance(
+            params.bitstream_length, bool
+        ):
+            raise ValueError("bitstream_length must be a positive integer.")
+        if params.bitstream_length <= 0:
+            raise ValueError("bitstream_length must be positive.")
+        if not np.isfinite(params.g_geometric_gain) or params.g_geometric_gain <= 0.0:
+            raise ValueError("g_geometric_gain must be finite and positive.")
+        if not np.isfinite(params.phi_golden_ratio) or params.phi_golden_ratio <= 0.0:
+            raise ValueError("phi_golden_ratio must be finite and positive.")
+        if not np.isfinite(params.coupling_leak) or not 0.0 <= params.coupling_leak < 1.0:
+            raise ValueError("coupling_leak must be finite and in [0, 1).")
 
     def encode(self, domain_state: Any) -> jnp.ndarray:
         """
