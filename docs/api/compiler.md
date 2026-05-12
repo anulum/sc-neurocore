@@ -290,10 +290,18 @@ sva = generate_sva(
 
 # Power estimation
 pe = estimate_power(
-    verilog_source=verilog,
+    verilog,
     data_width=16,
     freq_mhz=200.0,
     process_nm=28,
+)
+
+# Use measured VCD switching activity when available
+pe_vcd = estimate_power(
+    verilog,
+    activity_vcd="build/sc_lif.vcd",
+    vcd_time_units_per_cycle=5,
+    freq_mhz=200.0,
 )
 ```
 

@@ -56,6 +56,7 @@ from __future__ import annotations
 
 import ast
 import math
+from pathlib import Path
 from dataclasses import dataclass
 from typing import Any
 
@@ -637,6 +638,84 @@ class PowerEstimate:
     toggle_rate: float
 
 
+def _load_vcd_text(activity_vcd: str | Path) -> str:
+    if isinstance(activity_vcd, Path):
+        return activity_vcd.read_text(encoding="utf-8")
+    candidate = Path(activity_vcd)
+    if "$var" not in activity_vcd and candidate.exists():
+        return candidate.read_text(encoding="utf-8")
+    return activity_vcd
+
+
+def _bit_toggle_count(previous: str, current: str, width: int) -> int:
+    previous = previous[-width:].zfill(width)
+    current = current[-width:].zfill(width)
+    return sum(a != b for a, b in zip(previous, current, strict=True))
+
+
+def _parse_vcd_activity(
+    activity_vcd: str | Path, time_units_per_cycle: float
+) -> tuple[float, float]:
+    """Return measured toggles per cycle and average bit toggle rate from VCD."""
+    if time_units_per_cycle <= 0 or not math.isfinite(time_units_per_cycle):
+        raise ValueError("vcd_time_units_per_cycle must be finite and > 0")
+
+    import re as _re
+
+    text = _load_vcd_text(activity_vcd)
+    widths: dict[str, int] = {}
+    previous_values: dict[str, str] = {}
+    observed_codes: set[str] = set()
+    current_time = 0.0
+    first_time: float | None = None
+    last_time: float | None = None
+    total_toggles = 0
+
+    var_re = _re.compile(r"\$var\s+\S+\s+(\d+)\s+(\S+)\s+.+?\$end")
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        var_match = var_re.match(line)
+        if var_match:
+            widths[var_match.group(2)] = int(var_match.group(1))
+            continue
+        if line.startswith("#"):
+            current_time = float(line[1:])
+            if first_time is None:
+                first_time = current_time
+            last_time = current_time
+            continue
+        if line[0] in "01" and len(line) >= 2:
+            value = line[0]
+            code = line[1:].strip()
+        elif line[0] in "bB":
+            parts = line.split()
+            if len(parts) != 2:
+                continue
+            value = parts[0][1:]
+            code = parts[1]
+        else:
+            continue
+        if code not in widths or any(bit not in "01" for bit in value):
+            continue
+        observed_codes.add(code)
+        if code in previous_values:
+            total_toggles += _bit_toggle_count(previous_values[code], value, widths[code])
+        previous_values[code] = value
+
+    if not observed_codes:
+        return 0.0, 0.0
+    if first_time is None or last_time is None or last_time <= first_time:
+        cycles = 1.0
+    else:
+        cycles = max(1.0, (last_time - first_time) / time_units_per_cycle)
+    observed_bits = sum(widths[code] for code in observed_codes)
+    toggles_per_cycle = total_toggles / cycles
+    toggle_rate = total_toggles / max(1.0, observed_bits * cycles)
+    return toggles_per_cycle, toggle_rate
+
+
 def estimate_power(
     verilog: str,
     *,
@@ -645,12 +724,15 @@ def estimate_power(
     vdd: float = 1.0,
     process_nm: int = 28,
     spike_rate_hz: float = 10.0,
+    activity_vcd: str | Path | None = None,
+    vcd_time_units_per_cycle: float = 1.0,
 ) -> PowerEstimate:
     """Estimate power consumption from generated Verilog.
 
-    Uses a simplified switching-activity model based on wire counts,
-    multiplier counts, and technology parameters. Estimates are within
-    2–5× of actual synthesis-reported values.
+    When a VCD trace is provided, dynamic power uses measured bit-level
+    switching activity. Otherwise the function falls back to structural
+    activity factors derived from registers, adders, multipliers, and
+    technology parameters.
 
     Parameters
     ----------
@@ -666,6 +748,11 @@ def estimate_power(
         Process node in nm (7, 16, 28, 45, ...).
     spike_rate_hz : float
         Expected average spike rate.
+    activity_vcd : str or Path, optional
+        VCD trace text or a path to a VCD file. When provided, bit-level
+        transitions in the trace drive dynamic power.
+    vcd_time_units_per_cycle : float
+        Number of VCD timestamp units per target clock cycle.
 
     Returns
     -------
@@ -692,14 +779,19 @@ def estimate_power(
         65: 2.5,
     }.get(process_nm, 1.0)
 
-    # Toggle rate estimation (heuristic)
-    # Registers toggle ~25% per cycle, adders ~50%, multipliers ~75%
-    reg_toggles = reg_count * data_width * 0.25
-    add_toggles = add_count * data_width * 0.50
-    mul_toggles = mul_count * data_width * data_width * 0.10
+    if activity_vcd is not None:
+        total_toggles, avg_toggle_rate = _parse_vcd_activity(
+            activity_vcd,
+            vcd_time_units_per_cycle,
+        )
+    else:
+        # Structural activity factors used when measured switching data is absent.
+        reg_toggles = reg_count * data_width * 0.25
+        add_toggles = add_count * data_width * 0.50
+        mul_toggles = mul_count * data_width * data_width * 0.10
 
-    total_toggles = reg_toggles + add_toggles + mul_toggles
-    avg_toggle_rate = total_toggles / max(1, (reg_count + add_count + mul_count) * data_width)
+        total_toggles = reg_toggles + add_toggles + mul_toggles
+        avg_toggle_rate = total_toggles / max(1, (reg_count + add_count + mul_count) * data_width)
 
     # P_dynamic = α × C × V² × f
     cap_f = cap_per_bit_ff * 1e-15  # convert fF to F

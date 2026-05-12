@@ -8848,12 +8848,13 @@ dict
     Per-variable analysis: ``{var: {"depth": int, "stages": int,
     "achievable_mhz": int}}``.
 
-### Function `estimate_power(verilog)`
+### Function `estimate_power(verilog, *, data_width=16, freq_mhz=100.0, vdd=1.0, process_nm=28, spike_rate_hz=10.0, activity_vcd=None, vcd_time_units_per_cycle=1.0)`
 Estimate power consumption from generated Verilog.
 
-Uses a simplified switching-activity model based on wire counts,
-multiplier counts, and technology parameters. Estimates are within
-2–5× of actual synthesis-reported values.
+When a VCD trace is provided, dynamic power uses measured bit-level
+switching activity. Otherwise the function falls back to structural
+activity factors derived from registers, adders, multipliers, and
+technology parameters.
 
 Parameters
 ----------
@@ -8869,6 +8870,11 @@ process_nm : int
     Process node in nm (7, 16, 28, 45, ...).
 spike_rate_hz : float
     Expected average spike rate.
+activity_vcd : str or Path, optional
+    VCD trace text or a path to a VCD file. When provided, bit-level
+    transitions in the trace drive dynamic power.
+vcd_time_units_per_cycle : float
+    Number of VCD timestamp units per target clock cycle.
 
 Returns
 -------
