@@ -37,9 +37,7 @@ class L8_StochasticParameters:
 
     def __post_init__(self) -> None:
         if self.pulsar_omegas is None:
-            base_omegas = np.array(
-                [1.6, 2.3, 0.8, 4.1, 1.1, 0.5, 3.2, 2.7, 1.9, 0.4, 5.5, 0.2]
-            )
+            base_omegas = np.array([1.6, 2.3, 0.8, 4.1, 1.1, 0.5, 3.2, 2.7, 1.9, 0.4, 5.5, 0.2])
             self.pulsar_omegas = np.resize(base_omegas, self.n_pulsars)
 
 
@@ -69,8 +67,8 @@ class L8_PhaseFieldLayer:
         coupling = self.params.k_cosmic * np.sum(np.sin(phase_diff), axis=1) / n
 
         d_phase = omegas + coupling
-        if l7_input is not None and "glyph_vector" in l7_input:
-            drive = self._glyph_drive(l7_input["glyph_vector"])
+        if l7_input is not None:
+            drive = self._l7_phase_drive(l7_input)
             d_phase += self.params.symbolic_coupling * drive * np.sin(-self.phases)
 
         self.phases = (self.phases + d_phase * dt) % (2 * np.pi)
@@ -133,3 +131,21 @@ class L8_PhaseFieldLayer:
         if not np.all(np.isfinite(values)):
             raise ValueError("glyph_vector must contain only finite values")
         return float(np.mean(values))
+
+    @classmethod
+    def _l7_phase_drive(cls, l7_input: Dict[str, Any]) -> float:
+        if "cosmic_phase_drive" in l7_input:
+            return cls._nonnegative_scalar(l7_input["cosmic_phase_drive"], "cosmic_phase_drive")
+        if "glyph_vector" in l7_input:
+            return cls._glyph_drive(l7_input["glyph_vector"])
+        return 0.0
+
+    @staticmethod
+    def _nonnegative_scalar(value: Any, name: str) -> float:
+        values = np.asarray(value, dtype=np.float64)
+        if values.shape != ():
+            raise ValueError(f"{name} must be a finite scalar")
+        scalar = float(values)
+        if not math.isfinite(scalar) or scalar < 0.0:
+            raise ValueError(f"{name} must be finite and non-negative")
+        return scalar
