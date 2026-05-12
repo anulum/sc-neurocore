@@ -32,7 +32,22 @@ from sc_neurocore.adapters.holonomic.grn import GeneticRegulatoryLayer
 from sc_neurocore.adapters.holonomic.neuromodulation import NeuromodulatorSystem
 
 
-def test_compiler_pipeline_stubs():
+def test_compiler_pipeline_invokes_real_lowering(monkeypatch):
+    def fake_tool(cmd, check):
+        assert check is True
+        if cmd[0] == "firtool":
+            out_path = cmd[cmd.index("-o") + 1]
+            with open(out_path, "w") as f:
+                f.write("module test(); endmodule\n")
+        elif cmd[0] == "yosys":
+            assert "-s" in cmd
+        elif cmd[0] == "nextpnr-ice40":
+            assert "--json" in cmd
+            assert "--asc" in cmd
+        else:
+            raise AssertionError(f"unexpected tool command: {cmd}")
+
+    monkeypatch.setattr("subprocess.run", fake_tool)
     pipeline = CompilerPipeline(work_dir=".tmp/test_compiler")
     mlir = "hw.module @test() { hw.output }"
     v_path = pipeline.compile_mlir_to_verilog(mlir, "test")

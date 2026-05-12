@@ -21,6 +21,8 @@ import os
 import subprocess
 import logging
 
+from sc_neurocore.exceptions import SCCompilerError
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,8 +41,6 @@ class CompilerPipeline:
         """Restrict output_name to alphanumeric + underscore."""
         sanitized = "".join(c for c in name if c.isalnum() or c == "_")
         if not sanitized:
-            from sc_neurocore.exceptions import SCCompilerError
-
             raise SCCompilerError(f"Invalid output name: {name!r}")
         return sanitized
 
@@ -56,16 +56,15 @@ class CompilerPipeline:
             f.write(mlir_content)
 
         logger.info(f"Lowering {mlir_path} to Verilog...")
-        # Note: In a real environment, firtool must be in PATH
         try:
             subprocess.run(["firtool", mlir_path, "-o", v_path], check=True)
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            logger.warning(f"firtool failed or not found: {e}. Falling back to stub Verilog.")
-            # Fallback for demo/development without full toolchain
-            with open(v_path, "w") as f:
-                f.write(
-                    f"// Stub Verilog generated for {output_name}\nmodule {output_name}(); endmodule"
-                )
+            if os.path.exists(v_path):
+                os.remove(v_path)
+            raise SCCompilerError(
+                "firtool failed; refusing to emit placeholder Verilog. "
+                "Install CIRCT firtool or run MLIR bundle generation for evidence-only output."
+            ) from e
 
         return v_path
 
@@ -75,8 +74,6 @@ class CompilerPipeline:
         """Ensure path resolves inside work_dir."""
         real = os.path.realpath(path)
         if not real.startswith(self.work_dir):
-            from sc_neurocore.exceptions import SCCompilerError
-
             raise SCCompilerError(f"Path escapes work_dir: {path!r}")
         return real
 
@@ -86,8 +83,6 @@ class CompilerPipeline:
         """
         v_path = self._validate_path(v_path)
         if target_fpga not in self._ALLOWED_TARGETS:
-            from sc_neurocore.exceptions import SCCompilerError
-
             raise SCCompilerError(f"Unknown target FPGA: {target_fpga!r}")
 
         base = os.path.splitext(v_path)[0]
