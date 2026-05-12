@@ -39,12 +39,8 @@ def test_l8_symbolic_coupling_controls_phase_drive() -> None:
         pulsar_omegas=np.zeros(2, dtype=np.float64),
         rng_seed=18,
     )
-    uncoupled = L8_PhaseFieldLayer(
-        L8_StochasticParameters(**common, symbolic_coupling=0.0)
-    )
-    coupled = L8_PhaseFieldLayer(
-        L8_StochasticParameters(**common, symbolic_coupling=0.5)
-    )
+    uncoupled = L8_PhaseFieldLayer(L8_StochasticParameters(**common, symbolic_coupling=0.0))
+    coupled = L8_PhaseFieldLayer(L8_StochasticParameters(**common, symbolic_coupling=0.5))
     uncoupled.phases = np.full(2, np.pi / 2.0, dtype=np.float64)
     coupled.phases = np.full(2, np.pi / 2.0, dtype=np.float64)
 
@@ -53,6 +49,54 @@ def test_l8_symbolic_coupling_controls_phase_drive() -> None:
 
     np.testing.assert_allclose(base, np.full(2, np.pi / 2.0))
     np.testing.assert_allclose(driven, np.full(2, np.pi / 2.0 - 0.1))
+
+
+def test_l8_consumes_l7_cosmic_phase_drive_contract() -> None:
+    common = dict(
+        n_pulsars=2,
+        bitstream_length=16,
+        k_cosmic=0.0,
+        director_coupling=0.0,
+        pulsar_omegas=np.zeros(2, dtype=np.float64),
+        rng_seed=19,
+    )
+    base_layer = L8_PhaseFieldLayer(L8_StochasticParameters(**common, symbolic_coupling=0.5))
+    driven_layer = L8_PhaseFieldLayer(L8_StochasticParameters(**common, symbolic_coupling=0.5))
+    base_layer.phases = np.full(2, np.pi / 2.0, dtype=np.float64)
+    driven_layer.phases = np.full(2, np.pi / 2.0, dtype=np.float64)
+
+    base = base_layer.step(0.2)["phases"]
+    driven = driven_layer.step(0.2, {"cosmic_phase_drive": 1.0})["phases"]
+
+    np.testing.assert_allclose(base, np.full(2, np.pi / 2.0))
+    np.testing.assert_allclose(driven, np.full(2, np.pi / 2.0 - 0.1))
+
+
+def test_l8_prefers_structured_cosmic_phase_drive_over_glyph_fallback() -> None:
+    params = L8_StochasticParameters(
+        n_pulsars=2,
+        bitstream_length=16,
+        k_cosmic=0.0,
+        symbolic_coupling=0.5,
+        director_coupling=0.0,
+        pulsar_omegas=np.zeros(2, dtype=np.float64),
+        rng_seed=20,
+    )
+    drive_only = L8_PhaseFieldLayer(params)
+    both_payloads = L8_PhaseFieldLayer(params)
+    drive_only.phases = np.full(2, np.pi / 2.0, dtype=np.float64)
+    both_payloads.phases = np.full(2, np.pi / 2.0, dtype=np.float64)
+
+    drive_only_phases = drive_only.step(0.2, {"cosmic_phase_drive": 1.0})["phases"]
+    both_phases = both_payloads.step(
+        0.2,
+        {
+            "glyph_vector": np.zeros(2, dtype=np.float64),
+            "cosmic_phase_drive": 1.0,
+        },
+    )["phases"]
+
+    np.testing.assert_allclose(both_phases, drive_only_phases)
 
 
 def test_l8_seed_scopes_initial_phases_and_output_bitstreams() -> None:
@@ -89,9 +133,7 @@ def test_l8_director_coupling_is_exposed_as_downstream_drive() -> None:
 
     result = layer.step(0.001)
 
-    assert result["director_drive"] == pytest.approx(
-        0.25 * result["cosmic_alignment"]
-    )
+    assert result["director_drive"] == pytest.approx(0.25 * result["cosmic_alignment"])
 
 
 def test_l8_rejects_invalid_parameters_and_inputs() -> None:
@@ -110,9 +152,7 @@ def test_l8_rejects_invalid_parameters_and_inputs() -> None:
             L8_StochasticParameters(n_pulsars=2, pulsar_omegas=np.array([1.0, np.nan]))
         )
     with pytest.raises(ValueError, match="pulsar_omegas"):
-        L8_PhaseFieldLayer(
-            L8_StochasticParameters(n_pulsars=2, pulsar_omegas=np.array([1.0]))
-        )
+        L8_PhaseFieldLayer(L8_StochasticParameters(n_pulsars=2, pulsar_omegas=np.array([1.0])))
     with pytest.raises(ValueError, match="rng_seed"):
         L8_PhaseFieldLayer(L8_StochasticParameters(rng_seed=cast(Any, 1.5)))
 
@@ -123,3 +163,9 @@ def test_l8_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.001, {"glyph_vector": np.array([1.0, np.nan])})
     with pytest.raises(ValueError, match="glyph_vector"):
         layer.step(0.001, {"glyph_vector": np.array([])})
+    with pytest.raises(ValueError, match="cosmic_phase_drive"):
+        layer.step(0.001, {"cosmic_phase_drive": np.nan})
+    with pytest.raises(ValueError, match="cosmic_phase_drive"):
+        layer.step(0.001, {"cosmic_phase_drive": np.array([0.1, 0.2])})
+    with pytest.raises(ValueError, match="cosmic_phase_drive"):
+        layer.step(0.001, {"cosmic_phase_drive": -0.1})

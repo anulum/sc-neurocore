@@ -271,6 +271,7 @@ class L7_SymbolicLayer:
             "platonic_coherence": self.platonic_coherence,
             "e8_alignment": self.e8_alignment,
             "symbolic_health": self.symbolic_health,
+            "cosmic_phase_drive": self.params.cosmic_coupling * self.symbolic_health,
             "meridian_qi": self.meridian_qi.copy(),
             "acupoint_activations": self.acupoint_activations.copy(),
             "e8_state": self.e8_state.copy(),
@@ -291,9 +292,7 @@ class L7_SymbolicLayer:
             raise ValueError("meridian_id must be in range")
         if not math.isfinite(float(intensity)):
             raise ValueError("intensity must be finite")
-        self.meridian_qi[meridian_id] = np.clip(
-            self.meridian_qi[meridian_id] + intensity, 0.0, 1.0
-        )
+        self.meridian_qi[meridian_id] = np.clip(self.meridian_qi[meridian_id] + intensity, 0.0, 1.0)
 
     def get_acupoint_map(self) -> Dict[str, float]:
         """Return clinically common named acupoint activations."""
@@ -365,7 +364,11 @@ class L7_SymbolicLayer:
             ],
             dtype=np.float64,
         )
-        if not np.all(np.isfinite(weights)) or np.any(weights < 0.0) or float(np.sum(weights)) <= 0.0:
+        if (
+            not np.all(np.isfinite(weights))
+            or np.any(weights < 0.0)
+            or float(np.sum(weights)) <= 0.0
+        ):
             raise ValueError("weights must be finite, non-negative, and sum positive")
         for field_name in (
             "symbol_decay",

@@ -78,6 +78,24 @@ def test_l7_symbolic_health_weights_are_validated_and_used() -> None:
     assert result["symbolic_health"] == pytest.approx(result["phi_alignment"])
 
 
+def test_l7_cosmic_coupling_exports_l8_phase_drive() -> None:
+    params = L7_StochasticParameters(
+        n_symbols=16,
+        n_meridians=4,
+        n_acupoints=16,
+        bitstream_length=16,
+        cosmic_coupling=0.5,
+        rng_seed=12,
+    )
+    layer = L7_SymbolicLayer(params)
+
+    result = layer.step(0.001)
+
+    assert result["cosmic_phase_drive"] == pytest.approx(
+        params.cosmic_coupling * result["symbolic_health"]
+    )
+
+
 def test_l7_consumes_l6_symbolic_drive_contract() -> None:
     params = L7_StochasticParameters(
         n_symbols=16,
@@ -108,9 +126,7 @@ def test_l7_prefers_structured_symbolic_drive_over_schumann_fallback() -> None:
     drive_only = L7_SymbolicLayer(params)
     both_payloads = L7_SymbolicLayer(params)
 
-    drive_only_qi = drive_only.step(0.001, l6_input={"symbolic_drive": np.ones(8)})[
-        "meridian_qi"
-    ]
+    drive_only_qi = drive_only.step(0.001, l6_input={"symbolic_drive": np.ones(8)})["meridian_qi"]
     both_qi = both_payloads.step(
         0.001,
         l6_input={
