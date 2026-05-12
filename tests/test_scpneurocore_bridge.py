@@ -106,6 +106,25 @@ def test_synthetic_live_stream_is_replayable_per_step() -> None:
     assert a.replay_id == "synthetic:eeg_powergrid:step:3"
 
 
+def test_qpu_artifact_hash_rejects_non_finite_json_metadata() -> None:
+    artifact = QPUBridgeArtifact(
+        domain="power_grid",
+        source_name="unit-grid",
+        source_mode="fixture",
+        K_nm=np.array([[0.0, 0.5], [0.5, 0.0]], dtype=np.float64),
+        omega=np.ones(2, dtype=np.float64),
+        theta0=np.zeros(2, dtype=np.float64),
+        layer_assignments=[0, 1],
+        normalization="unit",
+        extraction_method="unit_fixture",
+        replay_id="fixture:unit-grid:n2",
+        metadata={"bad": float("nan")},
+    )
+
+    with pytest.raises(ValueError, match="strict finite JSON"):
+        artifact.to_qpu_artifact_dict()
+
+
 def test_bridge_rejects_invalid_source_inputs() -> None:
     with pytest.raises(ValueError, match="unsupported connectome"):
         load_connectome("unknown", source_mode="synthetic")
