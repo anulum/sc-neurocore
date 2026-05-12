@@ -205,15 +205,18 @@ class TVMLowering:
         return "\n".join(header_lines) + func.to_relay_text()
 
     def emit_build_script(self, relay_text: str) -> str:
-        """Generate a TVM build script stub for the lowered IR."""
+        """Generate a self-contained TVM build script for the lowered IR."""
         return (
+            "from __future__ import annotations\n\n"
             "import tvm\n"
             "from tvm import relay\n\n"
+            f"relay_ir = {relay_text!r}\n"
             f"target = tvm.target.Target('{self.schedule.device.value}')\n"
             f"opt_level = {self.schedule.opt_level}\n\n"
-            "# Parse the relay module\n"
+            "output_path = 'sc_neurocore_tvm_module.tar'\n\n"
             "mod = relay.fromtext(relay_ir)\n\n"
-            "# Build\n"
             "with tvm.transform.PassContext(opt_level=opt_level):\n"
-            "    lib = relay.build(mod, target=target)\n"
+            "    lib = relay.build(mod, target=target)\n\n"
+            "lib.export_library(output_path)\n"
+            "print(output_path)\n"
         )
