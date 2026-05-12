@@ -30,6 +30,7 @@ _SOURCE_NODE_TYPES = {
 _LFSR_SOURCE_TYPES = {"lfsr", "lfsr16", "lfsr_16", "lfsr16_source", "sc_lfsr16_source"}
 _SOBOL_SOURCE_TYPES = {"sobol", "sobol16", "sobol_16", "sobol16_source", "sc_sobol16_source"}
 _HALTON_SOURCE_TYPES = {"halton", "halton16", "halton_16", "halton16_source", "sc_halton16_source"}
+_SYNC_AUXILIARY_LAYER_TYPES = {"StochasticSource"}
 
 
 class VerilogGenerator:
@@ -65,6 +66,7 @@ class VerilogGenerator:
             return emitter.generate()
         if mode != "sync":
             raise ValueError("mode must be 'sync' or 'async_aer'")
+        self._validate_sync_layers()
 
         code = f"module {self.module_name} (\n"
         code += "    input wire clk,\n"
@@ -86,11 +88,10 @@ class VerilogGenerator:
             l_type = layer["type"]
             l_name = layer["name"]
 
-            # Simple Dense Layer instantiation logic
             if l_type == "Dense":
                 code += f"    // Layer {i}: {l_name}\n"
                 code += "    sc_dense_layer_core #(\n"
-                code += f"        .NUM_NEURONS({layer['params'].get('n_neurons', 10)})\n"
+                code += f"        .NUM_NEURONS({layer['params']['n_neurons']})\n"
                 code += f"    ) {l_name}_inst (\n"
                 code += "        .clk(clk),\n"
                 code += "        .rst_n(rst_n),\n"
@@ -114,6 +115,23 @@ class VerilogGenerator:
         if source_modules:
             code += f"\n\n{source_modules}\n"
         return code
+
+    def _validate_sync_layers(self) -> None:
+        """Reject sync RTL configurations that cannot be emitted faithfully."""
+        for layer in self.layers:
+            layer_type = layer["type"]
+            layer_name = layer["name"]
+            params = layer["params"]
+            if layer_type == "Dense":
+                if "n_neurons" not in params:
+                    raise ValueError(f"Dense layer '{layer_name}' requires n_neurons")
+                n_neurons = params["n_neurons"]
+                if not isinstance(n_neurons, Integral) or int(n_neurons) <= 0:
+                    raise ValueError(f"Dense layer '{layer_name}' n_neurons must be a positive integer")
+                continue
+            if layer_type in _SYNC_AUXILIARY_LAYER_TYPES:
+                continue
+            raise ValueError(f"unsupported sync layer type '{layer_type}' for layer '{layer_name}'")
 
     def emit_lfsr16_source(self, module_name: str = "sc_lfsr16_source", seed: int = 0xACE1) -> str:
         """Emit a standalone LFSR-16 stochastic source module."""
