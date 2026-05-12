@@ -24,6 +24,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
+import numpy as np
+
 from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 from ..base import BaseStochasticAdapter
@@ -57,14 +59,41 @@ class L2_NeurochemicalAdapter(BaseStochasticAdapter):
 
     def __init__(self, params: Optional[L2_HolonomicParameters] = None, seed: int = 42) -> None:
         self.params = params or L2_HolonomicParameters()
+        self._validate_params(self.params)
         self.rng_key = make_rng(seed)
 
         # State: Receptors (n_types, n_receptors)
         self.receptor_states = jnp.zeros((self.params.n_transmitters, self.params.n_receptors))
         # State: Information-Geometric Field potential
         self.phi_field = jnp.zeros((self.params.n_transmitters,))
+        # State: Field velocity for the second-order IIIEF wave dynamics
+        self.phi_velocity = jnp.zeros((self.params.n_transmitters,))
         # State: Concentrations
         self.concentrations = jnp.full((self.params.n_transmitters,), 0.5)
+
+    @staticmethod
+    def _validate_positive_int(name: str, value: int) -> None:
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise ValueError(f"{name} must be a positive integer.")
+
+    @classmethod
+    def _validate_params(cls, params: L2_HolonomicParameters) -> None:
+        cls._validate_positive_int("n_transmitters", params.n_transmitters)
+        cls._validate_positive_int("n_receptors", params.n_receptors)
+        cls._validate_positive_int("bitstream_length", params.bitstream_length)
+
+        if not np.isfinite(params.alpha_iiief) or params.alpha_iiief < 0.0:
+            raise ValueError("alpha_iiief must be finite and non-negative.")
+        if not np.isfinite(params.c_info) or params.c_info <= 0.0:
+            raise ValueError("c_info must be finite and positive.")
+        if not np.isfinite(params.g_snare) or params.g_snare <= 0.0:
+            raise ValueError("g_snare must be finite and positive.")
+        if not np.isfinite(params.v_critical) or params.v_critical <= 0.0:
+            raise ValueError("v_critical must be finite and positive.")
+        if not np.isfinite(params.dopamine_gain) or params.dopamine_gain <= 0.0:
+            raise ValueError("dopamine_gain must be finite and positive.")
+        if not np.isfinite(params.serotonin_leak) or not 0.0 <= params.serotonin_leak <= 1.0:
+            raise ValueError("serotonin_leak must be finite and in the interval [0, 1].")
 
     def encode(self, domain_state: Any) -> jnp.ndarray:
         """
@@ -79,15 +108,28 @@ class L2_NeurochemicalAdapter(BaseStochasticAdapter):
     @staticmethod
     @maybe_jit
     def _iiief_kernel(
-        phi: jnp.ndarray, integrated_info: jnp.ndarray, alpha: float, dt: float
-    ) -> jnp.ndarray:
+        phi: jnp.ndarray,
+        velocity: jnp.ndarray,
+        integrated_info: jnp.ndarray,
+        alpha: float,
+        c_info: float,
+        dt: float,
+    ) -> tuple[jnp.ndarray, jnp.ndarray]:
         """
-        Solves the simplified IIIEF wave equation:
-        dPhi/dt = alpha * Phi_integrated - decay * Phi
+        Advances the damped finite-difference IIIEF wave equation.
         """
-        # Paper 2: Field emerges from Integrated Information geometry
-        d_phi = alpha * integrated_info - 0.1 * phi
-        return phi + d_phi * dt
+        source = jnp.clip(integrated_info, 0.0, 1.0)
+        laplacian = jnp.roll(phi, -1) - 2.0 * phi + jnp.roll(phi, 1)
+        courant = c_info / (1.0 + c_info)
+        acceleration = (
+            4.0 * jnp.pi * alpha * source
+            + courant * courant * laplacian
+            - 0.15 * velocity
+            - 0.05 * phi
+        )
+        velocity_next = velocity + acceleration * dt
+        phi_next = phi + velocity_next * dt
+        return phi_next, velocity_next
 
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
@@ -96,6 +138,9 @@ class L2_NeurochemicalAdapter(BaseStochasticAdapter):
         inputs: (n_transmitters, bitstream_length) representing L1 or L5 feedback.
         Returns: (n_transmitters, bitstream_length) output bitstreams.
         """
+        if not np.isfinite(dt) or dt <= 0.0:
+            raise ValueError("dt must be finite and positive.")
+
         # 1. Calculate Integrated Information Proxy (Phi_integrated) from inputs
         if inputs is not None:
             raw_phi = jnp.mean(inputs.astype(jnp.float32), axis=1)
@@ -109,11 +154,24 @@ class L2_NeurochemicalAdapter(BaseStochasticAdapter):
             phi_int = jnp.zeros((self.params.n_transmitters,))
 
         # 2. Update IIIEF Field
-        self.phi_field = self._iiief_kernel(self.phi_field, phi_int, self.params.alpha_iiief, dt)
+        self.phi_field, self.phi_velocity = self._iiief_kernel(
+            self.phi_field,
+            self.phi_velocity,
+            phi_int,
+            self.params.alpha_iiief,
+            self.params.c_info,
+            dt,
+        )
 
         # 3. H_QC Bridge: Field modulates concentrations (Vesicle release)
         # H_int = -lambda * Psi * sigma -> mapped to P_release modulation
-        release_mod = jnp.exp(self.phi_field) * self.params.g_snare
+        trigger = 1.0 / (
+            1.0 + jnp.exp(-self.params.dopamine_gain * (self.phi_field - self.params.v_critical))
+        )
+        release_mod = (
+            self.params.serotonin_leak
+            + (1.0 - self.params.serotonin_leak) * self.params.g_snare * trigger
+        )
         self.concentrations = jnp.clip(self.concentrations * release_mod, 0.0, 1.0)
 
         # 4. Return encoded bitstreams for hardware consumption
@@ -137,5 +195,6 @@ class L2_NeurochemicalAdapter(BaseStochasticAdapter):
         """
         return {
             "avg_field_potential": float(jnp.mean(self.phi_field)),
+            "avg_field_velocity": float(jnp.mean(jnp.abs(self.phi_velocity))),
             "system_coherence_r2": float(jnp.mean(self.concentrations)),
         }
