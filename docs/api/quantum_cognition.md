@@ -287,7 +287,7 @@ Accepts phase vectors from `scpn_phase_orchestrator.adapters.quantum_control_bri
 
 | SC-NEUROCORE method | External consumer |
 |---------------------|-------------------|
-| `to_qpu_artifact_metadata()` | `scpneurocore.bridge.QPUBridgeArtifact` schema v1 |
+| `to_qpu_artifact_metadata()` | `scpn_neurocore.bridge.QPUBridgeArtifact` schema v1 |
 | `apply_orchestrator_bias()` | PO `QuantumControlBridge.export_artifact()` format |
 | `execute_non_local_sync()` | QC `bridge/snn_adapter.py` entangle-pairs pattern |
 

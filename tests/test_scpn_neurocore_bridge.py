@@ -4,20 +4,24 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Quantum-control bridge compatibility tests
+# SC-NeuroCore — Quantum-control bridge namespace tests
 
-"""Tests for the legacy quantum-control bridge import surface."""
+"""Tests for the canonical quantum-control bridge import surface."""
 
 from __future__ import annotations
 
 import hashlib
 import json
+import os
+from pathlib import Path
+import subprocess
+import sys
 
 import numpy as np
 import pytest
 
-import scpneurocore.bridge as bridge
-from scpneurocore.bridge import (
+import scpn_neurocore.bridge as bridge
+from scpn_neurocore.bridge import (
     QPU_ARTIFACT_SCHEMA_VERSION,
     QPUBridgeArtifact,
     SourceDataUnavailable,
@@ -69,6 +73,27 @@ def test_expected_import_surface() -> None:
     assert callable(load_power_grid)
     assert callable(load_live_stream)
     assert callable(validate_qpu_artifact_payload)
+
+
+def test_bridge_import_does_not_eagerly_require_datastream_dependencies() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(repo_root / "src")
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from scpn_neurocore.bridge import load_live_stream; print(load_live_stream.__name__)",
+        ],
+        cwd=repo_root,
+        env=env,
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "load_live_stream"
 
 
 def test_default_loaders_do_not_silently_generate_data() -> None:

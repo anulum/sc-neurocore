@@ -18,7 +18,7 @@ duplicating it:
 - Uses ``sc_neurocore.quantum.hardware_bridge.QuantumHardwareLayer``
   for actual QPU dispatch when available.
 - Produces/consumes payloads compatible with
-  ``scpneurocore.bridge.QPUBridgeArtifact`` schema v1.
+  ``scpn_neurocore.bridge.QPUBridgeArtifact`` schema v1.
 - Accepts orchestrator state dicts matching the format from
   ``scpn_phase_orchestrator.adapters.quantum_control_bridge``.
 

@@ -23,9 +23,9 @@ from sc_neurocore.edge.telemetry import DeviceTelemetry
 from sc_neurocore.optimizer.surrogate_sc_optimizer import BenchmarkObservation
 from sc_neurocore.spike_codec.aer_codec import AERCompressionResult, AERSpikeCodec
 from sc_neurocore.spike_codec.waveform_codec import WaveformCodec, WaveformCompressionResult
-from scpneurocore.bridge import QPUBridgeArtifact, SOURCE_MODES
+from scpn_neurocore.bridge import QPUBridgeArtifact, SOURCE_MODES
 
-SC_NEUROCORE_DATASTREAM_SCHEMA_VERSION = "scpneurocore.datastream.v1"
+SC_NEUROCORE_DATASTREAM_SCHEMA_VERSION = "scpn_neurocore.datastream.v1"
 
 
 class DatastreamValidationError(ValueError):
