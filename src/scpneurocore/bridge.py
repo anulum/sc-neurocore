@@ -48,9 +48,22 @@ class QPUBridgeArtifact:
 
     def __post_init__(self) -> None:
         _validate_source_mode(self.source_mode)
+        for key, value in (
+            ("domain", self.domain),
+            ("source_name", self.source_name),
+            ("normalization", self.normalization),
+            ("extraction_method", self.extraction_method),
+        ):
+            _require_non_empty_string(value, key)
         _validate_artifact_arrays(self.K_nm, self.omega, self.theta0, self.layer_assignments)
         if self.source_timestamp is None and self.replay_id is None:
             raise ValueError("source_timestamp or replay_id is required")
+        if self.source_timestamp is not None:
+            _require_non_empty_string(self.source_timestamp, "source_timestamp")
+        if self.replay_id is not None:
+            _require_non_empty_string(self.replay_id, "replay_id")
+        if not isinstance(self.metadata, dict):
+            raise ValueError("metadata must be a mapping")
 
     @property
     def hashes(self) -> dict[str, str]:
@@ -287,6 +300,11 @@ def _validate_source_mode(source_mode: str) -> None:
         raise ValueError(f"unsupported source_mode {source_mode!r}")
 
 
+def _require_non_empty_string(value: str, field_name: str) -> None:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} must be a non-empty string")
+
+
 def _raise_unavailable(source_name: str, expected_shape: tuple[int, int]) -> None:
     raise SourceDataUnavailable(
         f"source {source_name!r} is unavailable; expected K_nm shape {expected_shape}"
@@ -314,6 +332,13 @@ def _validate_artifact_arrays(
         raise ValueError(f"theta0 must have shape ({n},), got {theta0.shape}")
     if len(layer_assignments) != n:
         raise ValueError(f"layer_assignments must have length {n}")
+    if any(
+        isinstance(layer_id, bool) or not isinstance(layer_id, int) or layer_id < 0
+        for layer_id in layer_assignments
+    ):
+        raise ValueError("layer_assignments must be non-negative integer ids")
+    if len(set(layer_assignments)) != n:
+        raise ValueError("layer_assignments must be unique")
     if not np.all(np.isfinite(knm)):
         raise ValueError("K_nm must contain only finite values")
     if not np.all(np.isfinite(omega)):
