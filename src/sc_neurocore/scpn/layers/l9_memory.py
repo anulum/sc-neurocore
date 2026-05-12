@@ -34,6 +34,7 @@ class L9_StochasticParameters:
     imprint_rate: float = 0.3
     decay_rate: float = 0.02
     phase_field_coupling: float = 0.1  # from L8
+    boundary_cue_coupling: float = 1.0
     rng_seed: Optional[int] = None
 
 
@@ -61,9 +62,13 @@ class L9_MemoryLayer:
         self,
         dt: float,
         l8_input: Optional[Dict[str, Any]] = None,
+        boundary_cue: Optional[np.ndarray[Any, Any]] = None,
+        ebs_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         if not math.isfinite(float(dt)) or float(dt) <= 0.0:
             raise ValueError("dt must be finite and positive")
+        cue = self._boundary_cue_vector(boundary_cue)
+        boundary_context = self._boundary_context(ebs_context)
         self.time += dt
         n = self.params.n_memory_slots
 
@@ -77,6 +82,17 @@ class L9_MemoryLayer:
         proposed_state = np.where(h > 0.0, 1.0, np.where(h < 0.0, -1.0, self.state))
         self.state = np.where(update_mask, proposed_state, self.state)
 
+        qec_syndrome = np.zeros(n, dtype=np.uint8)
+        recovery_operator = np.zeros(n, dtype=np.float64)
+        if cue is not None:
+            cue_sign = np.sign(cue)
+            cue_sign = np.where(cue_sign == 0.0, 1.0, cue_sign)
+            mismatch = np.sign(self.state) != cue_sign
+            qec_syndrome = mismatch.astype(np.uint8)
+            recovery_mask = mismatch & (self._rng.random(n) < self.params.boundary_cue_coupling)
+            recovery_operator = recovery_mask.astype(np.float64)
+            self.state = np.where(recovery_mask, cue_sign, self.state)
+
         # Retrieval quality: overlap with stored patterns
         activation = (self.state + 1) / 2  # map [-1,1] -> [0,1]
         activation = np.clip(activation, 0, 1)
@@ -88,11 +104,19 @@ class L9_MemoryLayer:
         output_bitstreams = (rands < activation[:, None]).astype(np.uint8)
 
         energy = -0.5 * float(self.state @ self.patterns @ self.state)
+        holographic_entropy = self._holographic_entropy(activation)
+        memory_free_energy = float(max(0.0, -energy) + holographic_entropy)
 
         return {
             "state": self.state.copy(),
             "energy": energy,
             "retrieval_quality": self._retrieval_quality(),
+            "holographic_entropy": holographic_entropy,
+            "memory_free_energy": memory_free_energy,
+            "qec_syndrome": qec_syndrome,
+            "recovery_operator": recovery_operator,
+            "boundary_context_id": boundary_context["ebs_id"],
+            "boundary_terminals": boundary_context["terminal_set"],
             "output_bitstreams": output_bitstreams,
         }
 
@@ -128,6 +152,12 @@ class L9_MemoryLayer:
             or params.phase_field_coupling < 0.0
         ):
             raise ValueError("phase_field_coupling must be finite and non-negative")
+        if (
+            not math.isfinite(float(params.boundary_cue_coupling))
+            or params.boundary_cue_coupling < 0.0
+            or params.boundary_cue_coupling > 1.0
+        ):
+            raise ValueError("boundary_cue_coupling must be finite and in [0, 1]")
         if params.rng_seed is not None:
             if isinstance(params.rng_seed, bool) or not isinstance(params.rng_seed, int):
                 raise ValueError("rng_seed must be a non-negative integer or None")
@@ -152,3 +182,35 @@ class L9_MemoryLayer:
         if not math.isfinite(cosmic_alignment):
             raise ValueError("cosmic_alignment must be a finite scalar")
         return cosmic_alignment
+
+    def _boundary_cue_vector(
+        self, boundary_cue: Optional[np.ndarray[Any, Any]]
+    ) -> Optional[np.ndarray]:
+        if boundary_cue is None:
+            return None
+        values = np.asarray(boundary_cue, dtype=np.float64).reshape(-1)
+        if values.size != self.params.n_memory_slots:
+            raise ValueError("boundary_cue must contain exactly n_memory_slots values")
+        if not np.all(np.isfinite(values)):
+            raise ValueError("boundary_cue must contain only finite values")
+        if np.any(values < -1.0) or np.any(values > 1.0):
+            raise ValueError("boundary_cue values must be within [-1, 1]")
+        return values
+
+    @staticmethod
+    def _boundary_context(ebs_context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        if ebs_context is None:
+            return {"ebs_id": None, "terminal_set": ()}
+        if "ebs_id" not in ebs_context:
+            raise ValueError("ebs_context must include ebs_id")
+        terminals = tuple(ebs_context.get("terminal_set", ()))
+        valid_terminals = {"T1", "T2", "T3", "T4", "T5", "T6", "T7"}
+        if not terminals or any(terminal not in valid_terminals for terminal in terminals):
+            raise ValueError("terminal_set must contain valid T1-T7 terminal identifiers")
+        return {"ebs_id": str(ebs_context["ebs_id"]), "terminal_set": terminals}
+
+    @staticmethod
+    def _holographic_entropy(activation: np.ndarray) -> float:
+        probs = np.clip(np.asarray(activation, dtype=np.float64), 1e-12, 1.0 - 1e-12)
+        entropy = -(probs * np.log2(probs) + (1.0 - probs) * np.log2(1.0 - probs))
+        return float(np.mean(entropy))
