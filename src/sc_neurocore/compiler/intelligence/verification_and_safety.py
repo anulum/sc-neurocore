@@ -546,7 +546,7 @@ def predict_reliability(
 ) -> ReliabilityEstimate:
     """Predict MTTF from voltage, temperature, and technology node.
 
-    Uses simplified Arrhenius + voltage acceleration model.
+    Uses Arrhenius temperature acceleration and voltage stress factors.
 
     Parameters
     ----------
@@ -564,6 +564,11 @@ def predict_reliability(
     ReliabilityEstimate
         MTTF prediction.
     """
+    _require_finite_positive(voltage_v, "voltage_v")
+    _require_celsius_above_absolute_zero(temperature_c, "temperature_c")
+    if not isinstance(node_nm, int) or node_nm <= 0:
+        raise ValueError("node_nm must be a positive integer")
+    _require_finite_positive(base_mttf_hours, "base_mttf_hours")
 
     ea = 0.7  # activation energy (eV)
     k = 8.617e-5  # Boltzmann constant (eV/K)
@@ -923,7 +928,7 @@ def predict_aging(
 ) -> AgingPrediction:
     """Predict end-of-life Fmax after transistor aging.
 
-    Models NBTI and HCI degradation using simplified Arrhenius kinetics.
+    Models NBTI and HCI degradation from temperature, voltage, and lifetime stress.
 
     Parameters
     ----------
@@ -940,6 +945,11 @@ def predict_aging(
     -------
     AgingPrediction
     """
+    _require_finite_positive(initial_fmax_mhz, "initial_fmax_mhz")
+    _require_finite_positive(voltage_v, "voltage_v")
+    _require_celsius_above_absolute_zero(temperature_c, "temperature_c")
+    _require_finite_non_negative(years, "years")
+
     # NBTI: ~2-5% per decade at nominal; accelerated by V and T
     temp_factor = 2.0 ** ((temperature_c - 25) / 10)
     voltage_factor = (voltage_v / 0.9) ** 2
@@ -959,6 +969,21 @@ def predict_aging(
         recommended_derating=round(1.0 + total_degradation / 100, 3),
         dominant_mechanism=dominant,
     )
+
+
+def _require_finite_positive(value: float, name: str) -> None:
+    if not math.isfinite(float(value)) or float(value) <= 0.0:
+        raise ValueError(f"{name} must be finite and positive")
+
+
+def _require_finite_non_negative(value: float, name: str) -> None:
+    if not math.isfinite(float(value)) or float(value) < 0.0:
+        raise ValueError(f"{name} must be finite and non-negative")
+
+
+def _require_celsius_above_absolute_zero(value: float, name: str) -> None:
+    if not math.isfinite(float(value)) or float(value) <= -273.15:
+        raise ValueError(f"{name} must be finite and above absolute zero")
 
 
 # ═══════════════════════════════════════════════════════════════════════

@@ -15,6 +15,7 @@ from sc_neurocore.compiler.intelligence import (
     ingest_telemetry,
     model_energy_harvest,
     predict_aging,
+    predict_reliability,
     protect_ip_pqc,
     run_fault_campaign,
     verify_timing_closure,
@@ -37,6 +38,35 @@ class TestAging(unittest.TestCase):
     def test_dominant_mechanism(self):
         r = predict_aging(250.0)
         self.assertIn(r.dominant_mechanism, ("NBTI", "HCI"))
+
+    def test_predict_aging_rejects_invalid_inputs(self):
+        invalid_cases = [
+            ({"initial_fmax_mhz": 0.0}, "initial_fmax_mhz"),
+            ({"initial_fmax_mhz": 250.0, "voltage_v": 0.0}, "voltage_v"),
+            ({"initial_fmax_mhz": 250.0, "temperature_c": -274.0}, "temperature_c"),
+            ({"initial_fmax_mhz": 250.0, "years": -1.0}, "years"),
+        ]
+        for kwargs, message in invalid_cases:
+            with self.assertRaisesRegex(ValueError, message):
+                predict_aging(**kwargs)
+
+
+class TestReliability(unittest.TestCase):
+    def test_predict_reliability_rejects_invalid_inputs(self):
+        invalid_cases = [
+            ({"voltage_v": 0.0}, "voltage_v"),
+            ({"temperature_c": -274.0}, "temperature_c"),
+            ({"node_nm": 0}, "node_nm"),
+            ({"base_mttf_hours": 0.0}, "base_mttf_hours"),
+        ]
+        for kwargs, message in invalid_cases:
+            with self.assertRaisesRegex(ValueError, message):
+                predict_reliability(**kwargs)
+
+    def test_predict_reliability_hotter_voltage_stressed_mttf_is_lower(self):
+        nominal = predict_reliability(voltage_v=0.9, temperature_c=85.0)
+        stressed = predict_reliability(voltage_v=1.05, temperature_c=105.0)
+        self.assertLess(stressed.mttf_hours, nominal.mttf_hours)
 
 
 class TestFaultCampaign(unittest.TestCase):
