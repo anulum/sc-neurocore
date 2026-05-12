@@ -80,6 +80,52 @@ def test_l14_l13_decoherence_load_reduces_bridge_integrity() -> None:
     assert decohered_out["integrated_coherence"] < protected_out["integrated_coherence"]
 
 
+def test_l14_uses_ebs_t2_t5_terminals_as_bridge_bandwidth() -> None:
+    params = L14_StochasticParameters(
+        n_dimensions=3,
+        bitstream_length=16,
+        integration_weights=np.ones(3, dtype=np.float64),
+        temporal_coupling=1.0,
+        bridge_decoherence_coupling=0.0,
+        rng_seed=53,
+    )
+    no_bridge_interface = L14_IntegrationLayer(params)
+    full_bridge_interface = L14_IntegrationLayer(params)
+    metrics = {"l1": 0.2, "l2": 0.2, "l3": 0.2}
+
+    blocked = no_bridge_interface.step(
+        0.01,
+        metrics,
+        l13_input={
+            "source_sampling_signal": np.full(3, 0.6, dtype=np.float64),
+            "source_sampling_gain": 0.2,
+            "binding_strength": 0.2,
+            "boundary_context_id": "ebs-l14",
+            "boundary_terminals": ("T3", "T6"),
+        },
+    )
+    bridged = full_bridge_interface.step(
+        0.01,
+        metrics,
+        l13_input={
+            "source_sampling_signal": np.full(3, 0.6, dtype=np.float64),
+            "source_sampling_gain": 0.2,
+            "binding_strength": 0.2,
+            "boundary_context_id": "ebs-l14",
+            "boundary_terminals": ("T2", "T5"),
+        },
+    )
+
+    assert blocked["bridge_terminal_set"] == ()
+    assert blocked["bridge_terminal_bandwidth"] == pytest.approx(0.0)
+    assert bridged["boundary_context_id"] == "ebs-l14"
+    assert bridged["boundary_terminals"] == ("T2", "T5")
+    assert bridged["bridge_terminal_set"] == ("T2", "T5")
+    assert bridged["bridge_terminal_bandwidth"] == pytest.approx(1.0)
+    assert bridged["transdimensional_bridge_drive"] > blocked["transdimensional_bridge_drive"]
+    assert bridged["integrated_coherence"] > blocked["integrated_coherence"]
+
+
 def test_l14_rejects_invalid_l13_source_bridge_contracts() -> None:
     with pytest.raises(ValueError, match="bridge_decoherence_coupling"):
         L14_IntegrationLayer(L14_StochasticParameters(bridge_decoherence_coupling=-0.1))
@@ -91,6 +137,13 @@ def test_l14_rejects_invalid_l13_source_bridge_contracts() -> None:
         {"source_sampling_signal": np.ones(3), "source_sampling_gain": np.array([0.1, 0.2])},
         {"source_sampling_signal": np.ones(3), "binding_strength": 1.2},
         {"source_sampling_signal": np.ones(3), "temporal_decoherence_load": -0.1},
+        {"source_sampling_signal": np.ones(3), "boundary_context_id": "ebs"},
+        {"source_sampling_signal": np.ones(3), "boundary_terminals": ("T5",)},
+        {
+            "source_sampling_signal": np.ones(3),
+            "boundary_context_id": "ebs",
+            "boundary_terminals": ("T8",),
+        },
     ]
 
     for payload in invalid_payloads:
