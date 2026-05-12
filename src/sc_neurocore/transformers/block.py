@@ -7,12 +7,23 @@
 # SC-NeuroCore — Spiking Transformer Block (S-Former)
 
 from __future__ import annotations
-from typing import Any
+from typing import Any, Protocol
 from dataclasses import dataclass
 import numpy as np
 
 from ..layers.attention import StochasticAttention
 from ..layers.vectorized_layer import VectorizedSCLayer
+
+
+class _AttentionHead(Protocol):
+    dim_k: int
+
+    def forward(
+        self,
+        Q: np.ndarray[Any, Any],
+        K: np.ndarray[Any, Any],
+        V: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]: ...
 
 
 @dataclass
@@ -28,8 +39,19 @@ class StochasticTransformerBlock:
     length: int = 1024
 
     def __post_init__(self) -> None:
-        # We simplify Multi-Head to Single-Head for this demo
-        self.attention = StochasticAttention(dim_k=self.d_model)
+        if self.d_model <= 0:
+            raise ValueError("d_model must be positive")
+        if self.n_heads <= 0:
+            raise ValueError("n_heads must be positive")
+        if self.d_model % self.n_heads != 0:
+            raise ValueError("d_model must be divisible by n_heads")
+        if self.length <= 0:
+            raise ValueError("length must be positive")
+
+        self.head_dim = self.d_model // self.n_heads
+        self.attention_heads: list[_AttentionHead] = [
+            StochasticAttention(dim_k=self.head_dim) for _ in range(self.n_heads)
+        ]
 
         # Feed Forward Network (FFN)
         # 2-layer MLP: d_model -> 4*d_model -> d_model
@@ -45,11 +67,20 @@ class StochasticTransformerBlock:
         """
         x: (d_model,) or (Sequence_Length, d_model). Returns same shape.
         """
+        x = np.asarray(x, dtype=np.float64)
+        if x.ndim not in (1, 2):
+            raise ValueError("x must be a one- or two-dimensional array")
+        if x.shape[-1] != self.d_model:
+            raise ValueError(f"x must have trailing dimension d_model={self.d_model}")
+        if not np.all(np.isfinite(x)):
+            raise ValueError("x must contain only finite values")
+
         input_1d = x.ndim == 1
-        attn_out = self.attention.forward(Q=x, K=x, V=x)
+        x_2d = x[None, :] if input_1d else x
+        attn_out = self._multi_head_attention(x_2d)
 
         # Match shapes for residual: attention may add a batch dim
-        if input_1d and attn_out.ndim > 1:
+        if input_1d:
             attn_out = attn_out.reshape(-1)[: x.shape[0]]
 
         res1 = np.clip(0.5 * x + 0.5 * attn_out, 0.0, 1.0)
@@ -68,3 +99,17 @@ class StochasticTransformerBlock:
             ff_out = _ffn(res1)
 
         return 0.5 * res1 + 0.5 * ff_out
+
+    def _multi_head_attention(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        x_2d = np.asarray(x, dtype=np.float64)
+        if x_2d.ndim != 2 or x_2d.shape[1] != self.d_model:
+            raise ValueError(f"x must have shape (sequence_length, {self.d_model})")
+
+        head_outputs = []
+        for head_idx, head in enumerate(self.attention_heads):
+            start = head_idx * self.head_dim
+            stop = start + self.head_dim
+            head_x = x_2d[:, start:stop]
+            head_outputs.append(head.forward(Q=head_x, K=head_x, V=head_x))
+
+        return np.concatenate(head_outputs, axis=1)
