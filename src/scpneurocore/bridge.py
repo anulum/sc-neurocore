@@ -67,8 +67,7 @@ class QPUBridgeArtifact:
     def artifact_sha256(self) -> str:
         """Stable SHA256 of the full JSON-compatible artifact payload."""
         payload = self.to_qpu_artifact_dict(include_artifact_hash=False)
-        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return _canonical_artifact_sha256(payload)
 
     def to_qpu_artifact_dict(self, *, include_artifact_hash: bool = True) -> dict[str, Any]:
         """Return the Quantum Control artifact mapping."""
@@ -332,6 +331,19 @@ def _validate_artifact_arrays(
 def _hash_array(array: np.ndarray) -> str:
     stable = np.ascontiguousarray(array, dtype=np.float64)
     return hashlib.sha256(stable.tobytes()).hexdigest()
+
+
+def _canonical_artifact_sha256(payload: dict[str, Any]) -> str:
+    try:
+        encoded = json.dumps(
+            payload,
+            allow_nan=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    except (TypeError, ValueError) as exc:
+        raise ValueError("artifact payload must be strict finite JSON") from exc
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _banded_coupling(n: int, *, base: float, decay: float) -> np.ndarray:
