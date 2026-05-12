@@ -136,6 +136,31 @@ def test_l8_director_coupling_is_exposed_as_downstream_drive() -> None:
     assert result["director_drive"] == pytest.approx(0.25 * result["cosmic_alignment"])
 
 
+def test_l8_exports_memory_imprint_reference_wave_for_l9() -> None:
+    layer = L8_PhaseFieldLayer(
+        L8_StochasticParameters(
+            n_pulsars=2,
+            bitstream_length=16,
+            k_cosmic=0.0,
+            symbolic_coupling=0.0,
+            director_coupling=0.0,
+            pulsar_omegas=np.zeros(2, dtype=np.float64),
+            rng_seed=81,
+        )
+    )
+    layer.phases = np.array([0.0, np.pi / 2.0], dtype=np.float64)
+
+    result = layer.step(0.001)
+    reference = result["memory_imprint_drive"]
+
+    expected_order = np.mean(np.exp(1j * result["phases"]))
+    expected_amplitude = float(np.abs(expected_order))
+    expected_phase = float(np.angle(expected_order))
+    assert reference["reference_amplitude"] == pytest.approx(expected_amplitude)
+    assert reference["reference_phase"] == pytest.approx(expected_phase)
+    assert reference["reference_real"] == pytest.approx(expected_amplitude * np.cos(expected_phase))
+
+
 def test_l8_rejects_invalid_parameters_and_inputs() -> None:
     with pytest.raises(ValueError, match="n_pulsars"):
         L8_PhaseFieldLayer(L8_StochasticParameters(n_pulsars=0))

@@ -75,10 +75,8 @@ class L9_MemoryLayer:
         # Hopfield dynamics: async update (random subset)
         update_mask = self._rng.random(n) < 0.3
         h = self.params.retrieval_gain * (self.patterns @ self.state)
-        if l8_input is not None and "cosmic_alignment" in l8_input:
-            h += self.params.phase_field_coupling * self._cosmic_alignment(
-                l8_input["cosmic_alignment"]
-            )
+        if l8_input is not None:
+            h += self.params.phase_field_coupling * self._l8_phase_reference_drive(l8_input)
         proposed_state = np.where(h > 0.0, 1.0, np.where(h < 0.0, -1.0, self.state))
         self.state = np.where(update_mask, proposed_state, self.state)
 
@@ -182,6 +180,47 @@ class L9_MemoryLayer:
         if not math.isfinite(cosmic_alignment):
             raise ValueError("cosmic_alignment must be a finite scalar")
         return cosmic_alignment
+
+    @classmethod
+    def _l8_phase_reference_drive(cls, l8_input: Dict[str, Any]) -> float:
+        if "memory_imprint_drive" in l8_input:
+            return cls._memory_imprint_drive(l8_input["memory_imprint_drive"])
+        if "cosmic_alignment" in l8_input:
+            return cls._cosmic_alignment(l8_input["cosmic_alignment"])
+        return 0.0
+
+    @staticmethod
+    def _memory_imprint_drive(payload: Any) -> float:
+        if not isinstance(payload, dict):
+            raise ValueError("memory_imprint_drive must be a mapping")
+        try:
+            amplitude_values = np.asarray(payload["reference_amplitude"], dtype=np.float64)
+            phase_values = np.asarray(payload["reference_phase"], dtype=np.float64)
+        except KeyError as exc:
+            raise ValueError(
+                "memory_imprint_drive requires reference_amplitude and reference_phase"
+            ) from exc
+        if amplitude_values.shape != () or phase_values.shape != ():
+            raise ValueError("memory_imprint_drive fields must be finite scalars")
+        amplitude = float(amplitude_values)
+        phase = float(phase_values)
+        if not math.isfinite(amplitude) or not 0.0 <= amplitude <= 1.0:
+            raise ValueError(
+                "memory_imprint_drive reference_amplitude must be finite and in [0, 1]"
+            )
+        if not math.isfinite(phase):
+            raise ValueError("memory_imprint_drive reference_phase must be finite")
+        drive = float(amplitude * math.cos(phase))
+        if "reference_real" in payload:
+            reference_real_values = np.asarray(payload["reference_real"], dtype=np.float64)
+            if reference_real_values.shape != ():
+                raise ValueError("memory_imprint_drive reference_real must be a finite scalar")
+            reference_real = float(reference_real_values)
+            if not math.isfinite(reference_real) or not math.isclose(
+                reference_real, drive, rel_tol=1e-9, abs_tol=1e-12
+            ):
+                raise ValueError("memory_imprint_drive reference_real is inconsistent")
+        return drive
 
     def _boundary_cue_vector(
         self, boundary_cue: Optional[np.ndarray[Any, Any]]
