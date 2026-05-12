@@ -176,20 +176,28 @@ are available.
 The MEA → `ReplicationEngine` bridge computes three fitness scalars:
 
 $$
-\bar r = \frac{1}{|C|}\sum_{c \in C} k_c,
+\bar r = \frac{1}{|C|}\sum_{c \in C} \frac{k_c}{T_\mathrm{frame}},
 \qquad
 \mathrm{acc} =
 \mathrm{clip}\!\left(1 - \frac{|\bar r - r^\star|}{r^\star},\;
 0.1,\; 0.99\right),
 $$
 
-where $k_c$ is the per-channel spike count and $r^\star$ the target
-rate (``target_rate = 10`` Hz by default). Energy and latency:
+where $k_c$ is the per-channel spike count, $T_\mathrm{frame}$ is
+``duration_s`` when supplied, and $r^\star$ is the target rate
+(``target_rate = 10`` Hz by default). When ``duration_s`` is omitted,
+the hook preserves the legacy count-domain score for callers that do
+not know the frame length. Energy and latency:
 
 $$
 E = 0.5\,\text{mW} \cdot N_\text{spikes},
 \qquad
-T = 1\,\text{ms}.
+T_\mathrm{lat} =
+\begin{cases}
+T_\mathrm{measured}, & \text{if measured latency is supplied},\\
+t_\mathrm{first\ response} - t_\mathrm{stim}, & \text{if stimulus time is supplied},\\
+t_\mathrm{first\ spike}, & \text{otherwise}.
+\end{cases}
 $$
 
 ---
@@ -561,14 +569,20 @@ class BioHybridSession:
 def mea_fitness_hook(
     detected_spikes: list[DetectedSpike],
     target_rate: float = 10.0,
+    *,
+    duration_s: float | None = None,
+    stimulus_time_s: float | None = None,
+    measured_latency_ms: float | None = None,
 ) -> dict[str, float]
 ```
 
 Returns ``{"accuracy", "energy_mw", "latency_ms"}``. Empty input
 returns the floor ``{0.1, 0.0, 0.0}``; ``target_rate == 0`` also
-returns the floor accuracy. Groups spikes by
-``DetectedSpike.channel`` (regression guard against the previous
-``channel_id`` bug).
+returns the floor accuracy. ``duration_s`` must be finite and
+positive when supplied. ``stimulus_time_s`` and
+``measured_latency_ms`` must be finite; measured latency must be
+non-negative. Groups spikes by ``DetectedSpike.channel`` (regression
+guard against the previous ``channel_id`` bug).
 
 ---
 
