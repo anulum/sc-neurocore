@@ -22,6 +22,7 @@ Ref: Paper 16 / SSGF l16_closure.py.
 
 from __future__ import annotations
 from dataclasses import dataclass
+import math
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -37,6 +38,7 @@ class L16_StochasticParameters:
     target_gci: float = 0.8
     integral_clamp: float = 5.0
     meta_coupling: float = 0.2  # from L15
+    rng_seed: Optional[int] = None
 
 
 class L16_DirectorLayer:
@@ -44,10 +46,13 @@ class L16_DirectorLayer:
 
     def __init__(self, params: Optional[L16_StochasticParameters] = None):
         self.params = params or L16_StochasticParameters()
+        self._validate_params(self.params)
+        self._rng = np.random.default_rng(self.params.rng_seed)
         n = self.params.n_control_nodes
         self.will = np.full(n, 0.9)
         self.integral_error = 0.0
         self.entropy_proxy = 0.0
+        self.entropy_flux = 0.0
         self.veto_active = False
         self.h_rec = 0.0
         self.time = 0.0
@@ -57,38 +62,38 @@ class L16_DirectorLayer:
         dt: float,
         l15_input: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
+        gci, ethical_dissonance, free_energy = self._validate_step_inputs(dt, l15_input)
         self.time += dt
         n = self.params.n_control_nodes
 
-        gci = 0.5
-        if l15_input is not None and "gci" in l15_input:
-            gci = l15_input["gci"]
-
         # PI controller
-        error = self.params.target_gci - gci
+        coherence_error = self.params.target_gci - gci
+        audited_error = coherence_error + self.params.meta_coupling * ethical_dissonance
         self.integral_error = np.clip(
-            self.integral_error + error * dt,
+            self.integral_error + audited_error * dt,
             -self.params.integral_clamp,
             self.params.integral_clamp,
         )
-        u = self.params.kp * error + self.params.ki * self.integral_error
+        u = self.params.kp * audited_error + self.params.ki * self.integral_error
         u = np.clip(u, -1, 1)
 
-        # Entropy proxy (inverse of coherence stability)
-        self.entropy_proxy = 0.9 * self.entropy_proxy + 0.1 * (1.0 - gci)
+        # Entropy proxy (inverse coherence plus L15 free-energy leakage)
+        self.entropy_flux = float(np.clip((1.0 - gci) + self.params.meta_coupling * free_energy, 0.0, 1.0))
+        self.entropy_proxy = float(np.clip(0.9 * self.entropy_proxy + 0.1 * self.entropy_flux, 0.0, 1.0))
 
         # Veto
         self.veto_active = self.entropy_proxy > self.params.veto_threshold
 
         # Lyapunov candidate
-        self.h_rec = abs(error) + (1 - gci) + self.entropy_proxy
+        self.h_rec = float(abs(coherence_error) + ethical_dissonance + self.entropy_proxy)
 
         # Will update
-        d_will = 0.1 * gci - 0.2 * self.entropy_proxy + 0.05 * u
+        d_will = self.params.meta_coupling * (0.1 * gci - 0.2 * self.entropy_proxy + 0.05 * u)
         self.will = np.clip(self.will + d_will * dt, 0, 1)
 
         effective_will = self.will * (0.0 if self.veto_active else 1.0)
-        rands = np.random.random((n, self.params.bitstream_length))
+        qecc_syndrome = np.full(n, 1 if self.veto_active else 0, dtype=np.uint8)
+        rands = self._rng.random((n, self.params.bitstream_length))
         output_bitstreams = (rands < effective_will[:, None]).astype(np.uint8)
 
         return {
@@ -96,9 +101,61 @@ class L16_DirectorLayer:
             "control_signal": float(u),
             "veto_active": self.veto_active,
             "h_rec": self.h_rec,
+            "recursive_hamiltonian": self.h_rec,
+            "entropy_flux": self.entropy_flux,
             "entropy_proxy": self.entropy_proxy,
+            "effective_will": effective_will.copy(),
+            "qecc_syndrome": qecc_syndrome,
             "output_bitstreams": output_bitstreams,
         }
 
     def get_global_metric(self) -> float:
         return float(np.mean(self.will))
+
+    @staticmethod
+    def _validate_params(params: L16_StochasticParameters) -> None:
+        if params.n_control_nodes <= 0:
+            raise ValueError("n_control_nodes must be positive")
+        if params.bitstream_length <= 0:
+            raise ValueError("bitstream_length must be positive")
+        if not math.isfinite(params.kp):
+            raise ValueError("kp must be finite")
+        if not math.isfinite(params.ki):
+            raise ValueError("ki must be finite")
+        if not math.isfinite(params.veto_threshold) or not 0.0 <= params.veto_threshold <= 1.0:
+            raise ValueError("veto_threshold must be finite and in [0, 1]")
+        if not math.isfinite(params.target_gci) or not 0.0 <= params.target_gci <= 1.0:
+            raise ValueError("target_gci must be finite and in [0, 1]")
+        if not math.isfinite(params.integral_clamp) or params.integral_clamp <= 0.0:
+            raise ValueError("integral_clamp must be finite and positive")
+        if not math.isfinite(params.meta_coupling) or not 0.0 <= params.meta_coupling <= 1.0:
+            raise ValueError("meta_coupling must be finite and in [0, 1]")
+        if params.rng_seed is not None and params.rng_seed < 0:
+            raise ValueError("rng_seed must be non-negative when provided")
+
+    @staticmethod
+    def _validate_step_inputs(
+        dt: float, l15_input: Optional[Dict[str, Any]]
+    ) -> tuple[float, float, float]:
+        if not math.isfinite(dt) or dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+
+        if l15_input is None:
+            return 0.5, 0.0, 0.0
+
+        if "gci" not in l15_input:
+            raise ValueError("l15_input must include gci")
+
+        gci = float(l15_input["gci"])
+        if not math.isfinite(gci) or not 0.0 <= gci <= 1.0:
+            raise ValueError("l15 gci must be finite and in [0, 1]")
+
+        ethical_dissonance = float(l15_input.get("ethical_dissonance", 0.0))
+        if not math.isfinite(ethical_dissonance) or not 0.0 <= ethical_dissonance <= 1.0:
+            raise ValueError("l15 ethical_dissonance must be finite and in [0, 1]")
+
+        free_energy = float(l15_input.get("free_energy", 0.0))
+        if not math.isfinite(free_energy) or not 0.0 <= free_energy <= 1.0:
+            raise ValueError("l15 free_energy must be finite and in [0, 1]")
+
+        return gci, ethical_dissonance, free_energy
