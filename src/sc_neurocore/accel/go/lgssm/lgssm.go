@@ -16,7 +16,8 @@
 // under the same model parameters and observation sequence.
 //
 // References (match Python module):
-//   Kalman 1960; Bishop 2006 §13.3.1.
+//
+//	Kalman 1960; Bishop 2006 §13.3.1.
 package main
 
 /*
@@ -36,27 +37,29 @@ import (
 // wrapper) allocates the output buffers with the correct shapes.
 //
 // Inputs (caller-allocated, read-only):
-//   obsFlat:     T*p elements, observations[t, p]
-//   ctlFlat:     T*m elements, controls[t, m]
-//   aFlat:       d*d, A
-//   bFlat:       d*m, B
-//   cFlat:       p*d, C
-//   dFlatMat:    p*m, D
-//   qFlat:       d*d, Q
-//   rFlat:       p*p, R
-//   mu0:         d,   mu_0
-//   sigma0Flat:  d*d, Sigma_0
-//   tLen:        T
-//   pDim:        p
-//   mDim:        m
-//   dDim:        d
+//
+//	obsFlat:     T*p elements, observations[t, p]
+//	ctlFlat:     T*m elements, controls[t, m]
+//	aFlat:       d*d, A
+//	bFlat:       d*m, B
+//	cFlat:       p*d, C
+//	dFlatMat:    p*m, D
+//	qFlat:       d*d, Q
+//	rFlat:       p*p, R
+//	mu0:         d,   mu_0
+//	sigma0Flat:  d*d, Sigma_0
+//	tLen:        T
+//	pDim:        p
+//	mDim:        m
+//	dDim:        d
 //
 // Outputs (caller-allocated, written):
-//   meansOut:        T*d
-//   covsOut:         T*d*d
-//   predMeansOut:    T*d
-//   predCovsOut:     T*d*d
-//   logLikOut:       1
+//
+//	meansOut:        T*d
+//	covsOut:         T*d*d
+//	predMeansOut:    T*d
+//	predCovsOut:     T*d*d
+//	logLikOut:       1
 func kalmanFilter(
 	obsFlat, ctlFlat []float64,
 	aFlat, bFlat, cFlat, dFlatMat, qFlat, rFlat []float64,
@@ -67,13 +70,7 @@ func kalmanFilter(
 ) {
 	hasControl := mDim > 0
 
-	// Helpers to view flat slices as row-major matrices
-	idx2 := func(rows int) func(i, j int) int {
-		_ = rows
-		return func(i, j int) int { return i*0 + j } // placeholder
-	}
-	_ = idx2
-
+	// Helpers to view flat slices as row-major matrices.
 	get := func(buf []float64, rows, cols, i, j int) float64 {
 		_ = rows
 		return buf[i*cols+j]
