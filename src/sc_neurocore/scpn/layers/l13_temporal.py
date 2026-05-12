@@ -66,14 +66,23 @@ class L13_TemporalLayer:
         signal = np.zeros(n, dtype=np.float64)
         source_sampling_gain = 0.0
         temporal_decoherence_load = 0.0
+        boundary_context_id: Optional[str] = None
+        boundary_terminals: tuple[str, ...] = ()
+        source_terminal_set: tuple[str, ...] = ()
+        source_sampling_bandwidth = 1.0
         if l12_input is not None:
             signal = self._coherence_signal(l12_input.get("coherence", np.zeros(n)), n)
             l12_effect = self._l12_source_sampling_effect(l12_input)
             source_sampling_gain = l12_effect["source_sampling_gain"]
             temporal_decoherence_load = l12_effect["temporal_decoherence_load"]
+            boundary_context_id = l12_effect["boundary_context_id"]
+            boundary_terminals = l12_effect["boundary_terminals"]
+            source_terminal_set = l12_effect["source_terminal_set"]
+            source_sampling_bandwidth = l12_effect["source_sampling_bandwidth"]
             signal = np.clip(
-                signal + source_sampling_gain - self.params.source_decoherence_coupling
-                * temporal_decoherence_load,
+                signal
+                + source_sampling_gain
+                - self.params.source_decoherence_coupling * temporal_decoherence_load,
                 0.0,
                 1.0,
             )
@@ -101,6 +110,10 @@ class L13_TemporalLayer:
             "source_sampling_signal": signal.copy(),
             "source_sampling_gain": source_sampling_gain,
             "temporal_decoherence_load": temporal_decoherence_load,
+            "boundary_context_id": boundary_context_id,
+            "boundary_terminals": boundary_terminals,
+            "source_terminal_set": source_terminal_set,
+            "source_sampling_bandwidth": source_sampling_bandwidth,
             "output_bitstreams": output_bitstreams,
         }
 
@@ -148,11 +161,16 @@ class L13_TemporalLayer:
             return values[:n_channels].copy()
         return np.pad(values, (0, n_channels - values.size))
 
-    def _l12_source_sampling_effect(self, l12_input: Dict[str, Any]) -> Dict[str, float]:
-        source_sampling_gain = self.params.quantum_info_coupling * self._scalar(
-            l12_input.get("gaian_stabilization_drive", 0.0),
-            "gaian_stabilization_drive",
-            lower_bound=None,
+    def _l12_source_sampling_effect(self, l12_input: Dict[str, Any]) -> Dict[str, Any]:
+        source_context = self._source_context(l12_input)
+        source_sampling_gain = (
+            self.params.quantum_info_coupling
+            * self._scalar(
+                l12_input.get("gaian_stabilization_drive", 0.0),
+                "gaian_stabilization_drive",
+                lower_bound=None,
+            )
+            * source_context["source_sampling_bandwidth"]
         )
         noospheric_entropy_load = self._scalar(
             l12_input.get("noospheric_entropy_load", 0.0), "noospheric_entropy_load"
@@ -163,6 +181,40 @@ class L13_TemporalLayer:
         return {
             "source_sampling_gain": source_sampling_gain,
             "temporal_decoherence_load": noospheric_entropy_load + effective_dephasing_gamma,
+            "boundary_context_id": source_context["boundary_context_id"],
+            "boundary_terminals": source_context["boundary_terminals"],
+            "source_terminal_set": source_context["source_terminal_set"],
+            "source_sampling_bandwidth": source_context["source_sampling_bandwidth"],
+        }
+
+    @staticmethod
+    def _source_context(l12_input: Dict[str, Any]) -> Dict[str, Any]:
+        has_context_id = "boundary_context_id" in l12_input
+        has_terminals = "boundary_terminals" in l12_input
+        if not has_context_id and not has_terminals:
+            return {
+                "boundary_context_id": None,
+                "boundary_terminals": (),
+                "source_terminal_set": (),
+                "source_sampling_bandwidth": 1.0,
+            }
+        if not has_context_id or not has_terminals:
+            raise ValueError("boundary context requires boundary_context_id and boundary_terminals")
+
+        context_id = str(l12_input["boundary_context_id"])
+        if not context_id:
+            raise ValueError("boundary_context_id must be non-empty")
+        terminals = tuple(l12_input["boundary_terminals"])
+        valid_terminals = {"T1", "T2", "T3", "T4", "T5", "T6", "T7"}
+        if not terminals or any(terminal not in valid_terminals for terminal in terminals):
+            raise ValueError("boundary_terminals must contain valid T1-T7 terminal identifiers")
+
+        source_terminals = tuple(terminal for terminal in terminals if terminal in {"T5", "T6"})
+        return {
+            "boundary_context_id": context_id,
+            "boundary_terminals": terminals,
+            "source_terminal_set": source_terminals,
+            "source_sampling_bandwidth": float(len(source_terminals) / 2.0),
         }
 
     @staticmethod
