@@ -557,6 +557,38 @@ class TestPharmModel:
         result = pm.modulate_spikes(counts, 100.0)
         assert np.all(result == 0)
 
+    def test_modulate_spike_events_inhibitory_preserves_response_span(self):
+        pm = PharmModel(gain=0.5, onset_delay_s=0.0)
+        pm.apply(0.0)
+        spikes = [
+            DetectedSpike(channel=i % 2, timestamp_s=i * 0.001, amplitude_uv=-40.0)
+            for i in range(10)
+        ]
+
+        result = pm.modulate_spike_events(spikes, 1.0)
+
+        assert len(result) == 5
+        assert result[0].timestamp_s == pytest.approx(spikes[0].timestamp_s)
+        assert result[-1].timestamp_s == pytest.approx(spikes[-1].timestamp_s)
+
+    def test_modulate_spike_events_excitatory_inserts_within_observed_window(self):
+        pm = PharmModel(gain=2.0, onset_delay_s=0.0)
+        pm.apply(0.0)
+        spikes = [
+            DetectedSpike(channel=0, timestamp_s=0.000, amplitude_uv=-42.0),
+            DetectedSpike(channel=1, timestamp_s=0.010, amplitude_uv=-38.0),
+            DetectedSpike(channel=0, timestamp_s=0.020, amplitude_uv=-41.0),
+        ]
+
+        result = pm.modulate_spike_events(spikes, 1.0)
+        timestamps = [s.timestamp_s for s in result]
+
+        assert len(result) == 6
+        assert timestamps == sorted(timestamps)
+        assert min(timestamps) >= spikes[0].timestamp_s
+        assert max(timestamps) <= spikes[-1].timestamp_s
+        assert {s.channel for s in result} == {0, 1}
+
 
 # ── Multi-Well Plate Tests (Gap 5) ─────────────────────────────────────
 

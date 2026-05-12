@@ -500,7 +500,28 @@ class HomeostaticPlasticity:
     def update_threshold(self, current_q88: int,
                          observed_rate_hz: float,
                          dt_ms: float) -> int
+
+@dataclass
+class PharmModel:
+    agent_name: str = "none"
+    gain: float = 1.0
+    onset_delay_s: float = 30.0
+    wash_time_s: float = 120.0
+
+    def apply(self, t_current_s: float) -> None
+    def effective_gain(self, t_current_s: float) -> float
+    def modulate_spikes(self, spike_counts: np.ndarray,
+                        t_current_s: float) -> np.ndarray
+    def modulate_spike_events(self, spikes: list[DetectedSpike],
+                              t_current_s: float) -> list[DetectedSpike]
 ```
+
+``modulate_spike_events`` is the path used by
+``BioHybridSession.process_frame``. Inhibitory gains deterministically
+thin events across the observed response span, so the pharmacological
+model does not bias output toward the earliest detected spikes.
+Excitatory gains preserve the observed events and add
+template-derived events inside the observed temporal support.
 
 ### 6.6 `SpikeSorter`
 
