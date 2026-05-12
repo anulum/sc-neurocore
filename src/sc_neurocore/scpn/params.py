@@ -71,6 +71,9 @@ def build_knm_matrix(n_layers: int = N_LAYERS) -> np.ndarray:
     Construction: exponential decay baseline, calibration anchor overrides,
     cross-hierarchy boosts, symmetrisation, zero diagonal.
     """
+    if not isinstance(n_layers, int) or isinstance(n_layers, bool) or n_layers <= 0:
+        raise ValueError("n_layers must be a positive integer")
+
     K = np.zeros((n_layers, n_layers), dtype=np.float64)
 
     for n in range(n_layers):
@@ -88,7 +91,7 @@ def build_knm_matrix(n_layers: int = N_LAYERS) -> np.ndarray:
             K[i - 1, j - 1] = val
             K[j - 1, i - 1] = val
 
-    K = 0.5 * (K + K.T)  # type: ignore[assignment]
+    K = 0.5 * (K + K.T)
     np.fill_diagonal(K, 0.0)
 
     return K
