@@ -15,7 +15,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.optimizer.surrogate_sc_optimizer import BenchmarkObservation
-from scpneurocore import (
+from scpn_neurocore import (
     SC_NEUROCORE_DATASTREAM_SCHEMA_VERSION,
     DatastreamValidationError,
     build_datastream_packet,
@@ -81,6 +81,7 @@ def test_datastream_packet_combines_waveform_aer_telemetry_and_hashes() -> None:
 
     validate_datastream_payload(payload)
     assert payload["schema_version"] == SC_NEUROCORE_DATASTREAM_SCHEMA_VERSION
+    assert payload["schema_version"] == "scpn_neurocore.datastream.v1"
     assert payload["waveform_shape"] == [8, 4]
     assert payload["spike_shape"] == [8, 4]
     assert payload["aer_metrics"]["n_spikes"] == 3
