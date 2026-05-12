@@ -76,17 +76,29 @@ class L8_PhaseFieldLayer:
         activation = (1.0 + np.cos(self.phases)) / 2.0
         rands = self._rng.random((n, self.params.bitstream_length))
         output_bitstreams = (rands < activation[:, None]).astype(np.uint8)
-        cosmic_alignment = self._order_parameter()
+        memory_imprint_drive = self._memory_imprint_drive()
+        cosmic_alignment = memory_imprint_drive["reference_amplitude"]
 
         return {
             "phases": self.phases.copy(),
             "cosmic_alignment": cosmic_alignment,
+            "memory_imprint_drive": memory_imprint_drive,
             "director_drive": self.params.director_coupling * cosmic_alignment,
             "output_bitstreams": output_bitstreams,
         }
 
     def _order_parameter(self) -> float:
         return float(np.abs(np.mean(np.exp(1j * self.phases))))
+
+    def _memory_imprint_drive(self) -> Dict[str, float]:
+        reference = np.mean(np.exp(1j * self.phases))
+        amplitude = float(np.abs(reference))
+        phase = 0.0 if amplitude <= 1e-12 else float(np.angle(reference))
+        return {
+            "reference_amplitude": amplitude,
+            "reference_phase": phase,
+            "reference_real": float(amplitude * math.cos(phase)),
+        }
 
     def get_global_metric(self) -> float:
         return self._order_parameter()

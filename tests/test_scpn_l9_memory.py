@@ -73,6 +73,36 @@ def test_l9_retrieval_gain_and_phase_field_coupling_drive_state_update() -> None
     np.testing.assert_array_equal(retrieval_state, -np.ones(3, dtype=np.float64))
 
 
+def test_l9_prefers_l8_memory_reference_wave_over_alignment_fallback() -> None:
+    layer = L9_MemoryLayer(
+        L9_StochasticParameters(
+            n_memory_slots=3,
+            bitstream_length=16,
+            retrieval_gain=0.0,
+            imprint_rate=0.0,
+            decay_rate=0.0,
+            phase_field_coupling=1.0,
+            rng_seed=19,
+        )
+    )
+    layer.state = np.ones(3, dtype=np.float64)
+    vars(layer)["_rng"] = _DeterministicRng()
+
+    out = layer.step(
+        0.001,
+        {
+            "cosmic_alignment": 1.0,
+            "memory_imprint_drive": {
+                "reference_amplitude": 1.0,
+                "reference_phase": np.pi,
+                "reference_real": -1.0,
+            },
+        },
+    )
+
+    np.testing.assert_array_equal(out["state"], -np.ones(3, dtype=np.float64))
+
+
 def test_l9_seed_scopes_initial_state_update_and_output_bitstreams() -> None:
     params = L9_StochasticParameters(
         n_memory_slots=4,
@@ -123,3 +153,12 @@ def test_l9_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.001, {"cosmic_alignment": np.nan})
     with pytest.raises(ValueError, match="cosmic_alignment"):
         layer.step(0.001, {"cosmic_alignment": np.array([0.1, 0.2])})
+    invalid_reference_payloads: list[Any] = [
+        {"reference_amplitude": np.nan, "reference_phase": 0.0},
+        {"reference_amplitude": 1.1, "reference_phase": 0.0},
+        {"reference_amplitude": 1.0, "reference_phase": np.array([0.0, 1.0])},
+        {"reference_amplitude": 1.0, "reference_phase": 0.0, "reference_real": 0.0},
+    ]
+    for payload in invalid_reference_payloads:
+        with pytest.raises(ValueError, match="memory_imprint_drive"):
+            layer.step(0.001, {"memory_imprint_drive": payload})
