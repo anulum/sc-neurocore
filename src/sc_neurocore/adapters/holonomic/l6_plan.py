@@ -24,6 +24,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
+import numpy as np
+
 from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 from ..base import BaseStochasticAdapter
@@ -52,6 +54,7 @@ class L6_PlanetaryAdapter(BaseStochasticAdapter):
 
     def __init__(self, params: Optional[L6_HolonomicParameters] = None, seed: int = 46) -> None:
         self.params = params or L6_HolonomicParameters()
+        self._validate_params(self.params)
         self.rng_key = make_rng(seed)
 
         # State: Planetary Field Potential (Psi_P)
@@ -73,24 +76,53 @@ class L6_PlanetaryAdapter(BaseStochasticAdapter):
     @staticmethod
     @maybe_jit
     def _gaia_kernel(
-        phi: jnp.ndarray, sync_inputs: jnp.ndarray, alpha: float, freq: float, t: float, dt: float
+        phi: jnp.ndarray,
+        sync_inputs: jnp.ndarray,
+        alpha: float,
+        freq: float,
+        q_factor: float,
+        p_percolation: float,
+        t: float,
+        dt: float,
     ) -> Tuple[jnp.ndarray, jnp.ndarray]:
         """
         Solves the Planetary Gaia-field dynamics:
-        dPhi/dt = alpha * sync_inputs * cos(2*pi*f*t) - decay * Phi
+        dPhi/dt = alpha * sync_inputs * G(R, Q) * cos(2*pi*f*t) - decay * Phi
         """
+        bounded_sync = jnp.clip(sync_inputs, 0.0, 1.0)
+        order_parameter = jnp.clip(jnp.mean(bounded_sync), 0.0, 1.0)
+
         # Schumann resonance driving term
         driver = jnp.cos(2.0 * jnp.pi * freq * t)
-        d_phi = alpha * sync_inputs * driver - 0.05 * phi
+        superradiant_gain = 1.0 + q_factor * order_parameter**2
+        d_phi = alpha * bounded_sync * superradiant_gain * driver - 0.05 * phi
 
-        # Superradiant scaling (simplified)
         phi_next = phi + d_phi * dt
 
-        # Calculate resulting coherence (Percolation transition proxy)
-        # Regional coherence increases when field potential is high
-        coherence_next = jnp.clip(jnp.abs(phi_next) * 2.0, 0.0, 1.0)
+        percolation_gate = 1.0 / (1.0 + jnp.exp(-q_factor * (order_parameter - p_percolation)))
+        local_field_activation = 1.0 - jnp.exp(-q_factor * jnp.abs(phi_next))
+        coherence_next = jnp.clip(percolation_gate * local_field_activation, 0.0, 1.0)
 
         return phi_next, coherence_next
+
+    @staticmethod
+    def _validate_params(params: L6_HolonomicParameters) -> None:
+        if not isinstance(params.n_regions, int) or isinstance(params.n_regions, bool):
+            raise ValueError("n_regions must be a positive integer.")
+        if params.n_regions <= 0:
+            raise ValueError("n_regions must be positive.")
+        if not isinstance(params.bitstream_length, int) or isinstance(
+            params.bitstream_length, bool
+        ):
+            raise ValueError("bitstream_length must be a positive integer.")
+        if params.bitstream_length <= 0:
+            raise ValueError("bitstream_length must be positive.")
+        for field_name in ("f_schumann", "q_factor", "alpha_gaia"):
+            value = float(getattr(params, field_name))
+            if not np.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field_name} must be finite and positive.")
+        if not np.isfinite(params.p_percolation) or not 0.0 < params.p_percolation < 1.0:
+            raise ValueError("p_percolation must be finite and in (0, 1).")
 
     def step_jax(self, dt: float, inputs: Optional[jnp.ndarray] = None) -> jnp.ndarray:
         """
@@ -99,6 +131,8 @@ class L6_PlanetaryAdapter(BaseStochasticAdapter):
         inputs: (n_regions, bitstream_length) representing L5 Organismal output.
         Returns: (n_regions, bitstream_length) output bitstreams.
         """
+        if not np.isfinite(dt) or dt <= 0.0:
+            raise ValueError("dt must be finite and positive.")
         self.t += dt
 
         # 1. Extract Organismal Synchronization (L5 -> L6)
@@ -116,6 +150,8 @@ class L6_PlanetaryAdapter(BaseStochasticAdapter):
             sync_drive,
             self.params.alpha_gaia,
             self.params.f_schumann,
+            self.params.q_factor,
+            self.params.p_percolation,
             self.t,
             dt,
         )

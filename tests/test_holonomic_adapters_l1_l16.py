@@ -18,7 +18,7 @@ from sc_neurocore.adapters.holonomic.l2_chem import L2_NeurochemicalAdapter, L2_
 from sc_neurocore.adapters.holonomic.l3_gen import L3_GenomicAdapter, L3_HolonomicParameters
 from sc_neurocore.adapters.holonomic.l4_cell import L4_CellularAdapter
 from sc_neurocore.adapters.holonomic.l5_org import L5_OrganismalAdapter
-from sc_neurocore.adapters.holonomic.l6_plan import L6_PlanetaryAdapter
+from sc_neurocore.adapters.holonomic.l6_plan import L6_HolonomicParameters, L6_PlanetaryAdapter
 from sc_neurocore.adapters.holonomic.l11_noos import L11_NoosphericAdapter
 from sc_neurocore.adapters.holonomic.l12_gaian import L12_GaianAdapter
 from sc_neurocore.quantum.qec import QecShield
@@ -113,6 +113,51 @@ def test_l6_adapter_coverage():
     assert out.shape[0] == 100
     metrics = adapter.get_metrics()
     assert "gaia_potential" in metrics
+
+
+def test_l6_percolation_threshold_controls_regional_coherence():
+    low_threshold = L6_PlanetaryAdapter(
+        L6_HolonomicParameters(n_regions=8, bitstream_length=16, p_percolation=0.2)
+    )
+    high_threshold = L6_PlanetaryAdapter(
+        L6_HolonomicParameters(n_regions=8, bitstream_length=16, p_percolation=0.8)
+    )
+    inputs = jnp.full((8, 16), 0.5)
+
+    low_threshold.step_jax(0.01, inputs=inputs)
+    high_threshold.step_jax(0.01, inputs=inputs)
+
+    assert float(jnp.mean(low_threshold.regional_coherence)) > float(
+        jnp.mean(high_threshold.regional_coherence)
+    )
+
+
+def test_l6_quality_factor_amplifies_coherent_drive():
+    low_q = L6_PlanetaryAdapter(
+        L6_HolonomicParameters(n_regions=8, bitstream_length=16, q_factor=1.0)
+    )
+    high_q = L6_PlanetaryAdapter(
+        L6_HolonomicParameters(n_regions=8, bitstream_length=16, q_factor=8.0)
+    )
+    inputs = jnp.ones((8, 16))
+
+    low_q.step_jax(0.01, inputs=inputs)
+    high_q.step_jax(0.01, inputs=inputs)
+
+    assert float(jnp.mean(jnp.abs(high_q.phi_planetary))) > float(
+        jnp.mean(jnp.abs(low_q.phi_planetary))
+    )
+
+
+def test_l6_rejects_invalid_holonomic_parameters():
+    with pytest.raises(ValueError, match="n_regions"):
+        L6_PlanetaryAdapter(L6_HolonomicParameters(n_regions=0))
+    with pytest.raises(ValueError, match="bitstream_length"):
+        L6_PlanetaryAdapter(L6_HolonomicParameters(bitstream_length=0))
+    with pytest.raises(ValueError, match="q_factor"):
+        L6_PlanetaryAdapter(L6_HolonomicParameters(q_factor=0.0))
+    with pytest.raises(ValueError, match="p_percolation"):
+        L6_PlanetaryAdapter(L6_HolonomicParameters(p_percolation=1.0))
 
 
 def test_l7_adapter_coverage():
