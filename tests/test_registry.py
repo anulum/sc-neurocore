@@ -10,6 +10,9 @@
 
 from __future__ import annotations
 
+import importlib
+import sys
+
 import pytest
 
 from sc_neurocore.utils.registry import ComponentRegistry
@@ -67,6 +70,27 @@ def test_list_namespace(reg):
 
 def test_list_empty_namespace(reg):
     assert reg.list("empty") == []
+
+
+def test_singleton_list_lazy_loads_holonomic_adapters():
+    from sc_neurocore.utils.registry import registry
+
+    module_name = "sc_neurocore.adapters.holonomic"
+    sys.modules.pop(module_name, None)
+
+    registry.clear("adapter")
+    try:
+        adapters = registry.list("adapter")
+
+        assert len(adapters) == 16
+        assert adapters[0] == "L10_Firewall"
+        assert "L1_Quantum" in adapters
+        assert "L16_Meta" in adapters
+        assert registry.get("adapter", "L1_Quantum").__name__ == "L1_QuantumAdapter"
+    finally:
+        registry.clear("adapter")
+        sys.modules.pop(module_name, None)
+        importlib.import_module(module_name)
 
 
 def test_namespaces(reg):

@@ -16,10 +16,16 @@ new conductance-based API. The fidelity tests pin the published
 weak-PING gain-loop direction (raising w_ie suppresses E firing).
 """
 
+import importlib
+
 import numpy as np
 import pytest
 
+from sc_neurocore.network import gamma_oscillation as gamma_oscillation_module
 from sc_neurocore.network.gamma_oscillation import (
+    _HAS_GO_PING_STEP,
+    _HAS_JULIA_PING_STEP,
+    _HAS_MOJO_PING_STEP,
     _HAS_RUST_PING_STEP,
     PINGCircuit,
 )
@@ -165,6 +171,99 @@ class TestPINGCircuitDeterminism:
         np.random.seed(1)
         ping2.reset_state()
         np.testing.assert_array_equal(v_e_after, ping2.v_e)
+
+
+# ── Native backend dispatch contracts ────────────────────────────────
+
+
+class TestNativeBackendDispatch:
+    """Explicit native backends expose the same public step contract."""
+
+    @pytest.mark.parametrize(
+        "backend,availability_flag,match",
+        [
+            (
+                "rust",
+                "_HAS_RUST_PING_STEP",
+                "sc_neurocore_engine.py_ping_step",
+            ),
+            ("julia", "_HAS_JULIA_PING_STEP", "julia kernel"),
+            ("go", "_HAS_GO_PING_STEP", "go kernel"),
+            ("mojo", "_HAS_MOJO_PING_STEP", "mojo kernel"),
+        ],
+    )
+    def test_explicit_backend_fails_closed_when_kernel_unavailable(
+        self,
+        monkeypatch,
+        backend,
+        availability_flag,
+        match,
+    ):
+        monkeypatch.setattr(gamma_oscillation_module, availability_flag, False)
+        with pytest.raises(RuntimeError, match=match):
+            PINGCircuit(backend=backend)
+
+    @pytest.mark.parametrize(
+        "backend,is_available",
+        [
+            ("julia", _HAS_JULIA_PING_STEP),
+            ("go", _HAS_GO_PING_STEP),
+            ("mojo", _HAS_MOJO_PING_STEP),
+        ],
+    )
+    def test_explicit_backend_produces_boolean_spike_trains(self, backend, is_available):
+        if not is_available:
+            pytest.skip(f"{backend} PING kernel is not built")
+
+        ping = PINGCircuit(
+            n_excitatory=12,
+            n_inhibitory=6,
+            i_drive_e_mean=4.0,
+            i_drive_e_sigma=0.0,
+            i_drive_i_mean=4.0,
+            i_drive_i_sigma=0.0,
+            sigma_e=0.0,
+            sigma_i=0.0,
+            seed=17,
+            backend=backend,
+        )
+
+        total_e = 0
+        total_i = 0
+        for _ in range(250):
+            spikes_e, spikes_i = ping.step(dt=0.1)
+            assert spikes_e.dtype == np.bool_
+            assert spikes_i.dtype == np.bool_
+            assert spikes_e.shape == (12,)
+            assert spikes_i.shape == (6,)
+            total_e += int(np.count_nonzero(spikes_e))
+            total_i += int(np.count_nonzero(spikes_i))
+
+        assert total_e > 0
+        assert total_i > 0
+        assert np.all(np.isfinite(ping.v_e))
+        assert np.all(np.isfinite(ping.v_i))
+        assert np.all(ping.g_ampa_e >= 0.0)
+        assert np.all(ping.g_gaba_i >= 0.0)
+
+    def test_rust_kernel_discovery_falls_back_without_import_side_effects(self, monkeypatch):
+        real_import_module = gamma_oscillation_module._importlib.import_module
+
+        def reject_rust_engine(name):
+            if name in {"sc_neurocore_engine.sc_neurocore_engine", "sc_neurocore_engine"}:
+                raise ImportError(name)
+            return real_import_module(name)
+
+        monkeypatch.setattr(gamma_oscillation_module._importlib, "import_module", reject_rust_engine)
+        reloaded = importlib.reload(gamma_oscillation_module)
+        try:
+            assert reloaded._HAS_RUST_PING_STEP is False
+            assert reloaded._rust_ping_step is None
+            with pytest.raises(RuntimeError, match="sc_neurocore_engine.py_ping_step"):
+                reloaded.PINGCircuit(backend="rust")
+        finally:
+            monkeypatch.undo()
+            importlib.reload(gamma_oscillation_module)
 
 
 # ── Fidelity tests vs Börgers-Kopell 2003 ────────────────────────────

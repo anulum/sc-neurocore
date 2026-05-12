@@ -22,6 +22,7 @@ from sc_neurocore.quantum_cognition.content_indexer import (
     _extract_rust_doc_comments,
     _should_skip_dir,
     embed_chunks,
+    embed_tfidf,
     index_file,
     index_gotm_repo,
 )
@@ -165,6 +166,42 @@ class TestIndexFile:
         chunks = index_file(unk, "TEST", tmp_repo)
         assert len(chunks) == 0
 
+    def test_skips_empty_oversized_and_non_file_inputs(self, tmp_path: Path) -> None:
+        """Indexer ignores unsupported filesystem payloads without poisoning a scan."""
+        empty_md = tmp_path / "empty.md"
+        empty_md.write_text("")
+        assert index_file(empty_md, "TEST", tmp_path) == []
+
+        oversized_py = tmp_path / "oversized.py"
+        oversized_py.write_text('"""Large module docstring."""\n' + ("x = 1\n" * 60_000))
+        assert index_file(oversized_py, "TEST", tmp_path) == []
+
+        directory_with_supported_suffix = tmp_path / "not_a_file.md"
+        directory_with_supported_suffix.mkdir()
+        assert index_file(directory_with_supported_suffix, "TEST", tmp_path) == []
+
+    def test_indexes_supported_metadata_and_hardware_files_as_code_chunks(
+        self, tmp_path: Path
+    ) -> None:
+        """Non-doc source formats retain provenance and extension-specific weights."""
+        payloads = {
+            "Project.toml": 'name = "qc-indexer"\nversion = "1.0.0"\n',
+            "config.yaml": "model: fisher_posner\nqubits: 12\n",
+            "manifest.json": '{"repo": "SC-NEUROCORE", "pipeline": "quantum"}\n',
+            "kernel.go": "package main\nfunc Step() {}\n",
+            "proof.lean": "theorem posner_index : True := by trivial\n",
+            "bridge.sv": "module bridge; endmodule\n",
+        }
+        for rel_path, text in payloads.items():
+            path = tmp_path / rel_path
+            path.write_text(text)
+            chunks = index_file(path, "TEST", tmp_path)
+            assert len(chunks) == 1
+            assert chunks[0].repo_name == "TEST"
+            assert chunks[0].file_path == rel_path
+            assert chunks[0].content_type == "code"
+            assert chunks[0].summary
+
 
 # ───────── index_gotm_repo ─────────
 
@@ -190,6 +227,23 @@ class TestIndexRepo:
         chunks = index_gotm_repo(tmp_repo)
         weights = [c.weight for c in chunks]
         assert weights == sorted(weights, reverse=True)
+
+    def test_skips_hidden_and_build_directories_during_walk(self, tmp_path: Path) -> None:
+        visible = tmp_path / "src"
+        visible.mkdir()
+        (visible / "model.md").write_text("Visible quantum cognition notes.")
+
+        hidden = tmp_path / ".cache"
+        hidden.mkdir()
+        (hidden / "secret.md").write_text("This hidden file must not be indexed.")
+
+        build = tmp_path / "build"
+        build.mkdir()
+        (build / "artifact.md").write_text("This build artifact must not be indexed.")
+
+        chunks = index_gotm_repo(tmp_path, "SCAN")
+        paths = {chunk.file_path for chunk in chunks}
+        assert paths == {"src/model.md"}
 
 
 # ───────── embed_chunks ─────────
@@ -222,6 +276,87 @@ class TestEmbedChunks:
         v1 = embed_chunks(c1)
         v2 = embed_chunks(c2)
         assert not np.allclose(v1, v2)
+
+    def test_low_dimension_embeddings_preserve_requested_shape(self) -> None:
+        chunk = ContentChunk("R", "empty.md", 0, "", "metadata", 0.3)
+        zero_dim = embed_chunks([chunk], n_dims=0)
+        assert zero_dim.shape == (1, 0)
+
+        one_dim = embed_chunks([chunk], n_dims=1)
+        assert one_dim.shape == (1, 1)
+        assert np.all(one_dim == 0.0)
+
+    def test_feature_dimensions_encode_weight_type_and_hash(self) -> None:
+        chunks = [
+            ContentChunk("R", "doc.py", 0, "alpha beta gamma", "docstring", 3.0),
+            ContentChunk("R", "unknown.dat", 0, "alpha beta gamma", "custom", 1.0),
+        ]
+        vectors = embed_chunks(chunks, n_dims=32)
+        assert vectors[0, 26] > 0.0
+        assert vectors[0, 27] == pytest.approx(1.0)
+        assert vectors[0, 28] == 1.0
+        assert vectors[0, 29] == pytest.approx(0.9)
+        assert vectors[1, 29] == pytest.approx(0.5)
+        assert np.all((vectors[:, 30:32] >= 0.0) & (vectors[:, 30:32] <= 1.0))
+
+
+# ───────── embed_tfidf ─────────
+
+
+class TestEmbedTfidf:
+    def test_empty_corpus_returns_empty_matrix_and_vocab(self) -> None:
+        matrix, vocab = embed_tfidf([], n_dims=7)
+        assert matrix.shape == (0, 7)
+        assert vocab == {}
+
+    def test_terms_filtered_out_returns_zero_matrix(self) -> None:
+        chunks = [
+            ContentChunk("R", "a.md", 0, "single unique alpha", "markdown", 1.0),
+            ContentChunk("R", "b.md", 0, "another unique beta", "markdown", 1.0),
+        ]
+        matrix, vocab = embed_tfidf(chunks, n_dims=5, min_df=3)
+        assert matrix.shape == (2, 5)
+        assert vocab == {}
+        assert np.all(matrix == 0.0)
+
+    def test_corpus_tfidf_stems_stopwords_filters_and_l2_normalises(self) -> None:
+        chunks = [
+            ContentChunk(
+                "R",
+                "quantum_a.md",
+                0,
+                "the the fisher posner binding oscillation return",
+                "markdown",
+                1.0,
+            ),
+            ContentChunk(
+                "R",
+                "quantum_b.md",
+                0,
+                "fisher posner binding oscillations coherence",
+                "markdown",
+                1.0,
+            ),
+            ContentChunk(
+                "R",
+                "metabolic.md",
+                0,
+                "fisher atp metabolism coherence",
+                "markdown",
+                1.0,
+            ),
+        ]
+        matrix, vocab = embed_tfidf(chunks, n_dims=8, min_df=2, max_df_ratio=0.85)
+
+        assert matrix.shape == (3, 8)
+        assert "the" not in vocab
+        assert "return" not in vocab
+        assert "fisher" not in vocab  # appears in every document, above max_df_ratio
+        assert {"posn", "bind", "coherence"} <= set(vocab)
+
+        row_norms = np.linalg.norm(matrix[:, : len(vocab)], axis=1)
+        assert np.all(row_norms > 0.0)
+        np.testing.assert_allclose(row_norms, np.ones_like(row_norms))
 
 
 # ───────── GOTMBrain ─────────
