@@ -57,6 +57,67 @@ def test_l16_l15_bridge_alignment_credit_reduces_recursive_correction() -> None:
     assert aligned_out["recursive_hamiltonian"] < unaligned_out["recursive_hamiltonian"]
 
 
+def test_l16_gates_director_bridge_credit_by_ebs_terminal_bandwidth() -> None:
+    params = L16_StochasticParameters(
+        n_control_nodes=3,
+        bitstream_length=16,
+        kp=1.0,
+        ki=0.0,
+        target_gci=0.8,
+        meta_coupling=0.0,
+        bridge_alignment_coupling=1.0,
+        bridge_protection_coupling=0.0,
+        rng_seed=161,
+    )
+    legacy = L16_DirectorLayer(params)
+    partial = L16_DirectorLayer(params)
+    full = L16_DirectorLayer(params)
+
+    payload = {
+        "gci": 0.6,
+        "ethical_dissonance": 0.0,
+        "free_energy": 0.0,
+        "bridge_alignment_credit": 0.14,
+        "bridge_protection_penalty": 0.0,
+    }
+
+    legacy_out = legacy.step(0.1, l15_input=payload)
+    partial_out = partial.step(
+        0.1,
+        l15_input={
+            **payload,
+            "boundary_context_id": "ebs-l16-partial",
+            "boundary_terminals": ("T1", "T4", "T7"),
+        },
+    )
+    full_out = full.step(
+        0.1,
+        l15_input={
+            **payload,
+            "boundary_context_id": "ebs-l16-full",
+            "boundary_terminals": ("T1", "T2", "T3", "T4", "T5", "T6", "T7"),
+        },
+    )
+
+    assert legacy_out["boundary_context_id"] is None
+    assert legacy_out["boundary_terminals"] == ()
+    assert legacy_out["director_terminal_set"] == ()
+    assert legacy_out["director_terminal_bandwidth"] == pytest.approx(1.0)
+
+    assert partial_out["boundary_context_id"] == "ebs-l16-partial"
+    assert partial_out["boundary_terminals"] == ("T1", "T4", "T7")
+    assert partial_out["director_terminal_set"] == ("T1", "T4", "T7")
+    assert partial_out["director_terminal_bandwidth"] == pytest.approx(3.0 / 7.0)
+    assert partial_out["closure_bridge_alignment_credit"] == pytest.approx(0.06)
+
+    assert full_out["boundary_context_id"] == "ebs-l16-full"
+    assert full_out["director_terminal_set"] == ("T1", "T2", "T3", "T4", "T5", "T6", "T7")
+    assert full_out["director_terminal_bandwidth"] == pytest.approx(1.0)
+    assert full_out["closure_bridge_alignment_credit"] == pytest.approx(0.14)
+    assert partial_out["control_signal"] > full_out["control_signal"]
+    assert partial_out["recursive_hamiltonian"] > full_out["recursive_hamiltonian"]
+
+
 def test_l16_l15_bridge_protection_penalty_drives_entropy_qecc() -> None:
     params = L16_StochasticParameters(
         n_control_nodes=4,
@@ -109,6 +170,11 @@ def test_l16_rejects_invalid_l15_bridge_closure_contracts() -> None:
         {"gci": 0.8, "bridge_alignment_credit": 1.1},
         {"gci": 0.8, "bridge_protection_penalty": -0.1},
         {"gci": 0.8, "bridge_protection_penalty": np.array([0.1, 0.2])},
+        {"gci": 0.8, "boundary_context_id": "ebs-missing-terminals"},
+        {"gci": 0.8, "boundary_terminals": ("T1",)},
+        {"gci": 0.8, "boundary_context_id": "", "boundary_terminals": ("T1",)},
+        {"gci": 0.8, "boundary_context_id": "ebs-empty", "boundary_terminals": ()},
+        {"gci": 0.8, "boundary_context_id": "ebs-invalid", "boundary_terminals": ("T8",)},
     ]
 
     for l15_input in invalid_inputs:
