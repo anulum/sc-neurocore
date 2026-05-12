@@ -7,6 +7,7 @@
 # SC-NeuroCore — Chiplet/Interposer Generator Tests
 
 import numpy as np
+import pytest
 
 from sc_neurocore.chiplet.chiplet_gen import (
     ChipletDie,
@@ -639,6 +640,50 @@ class TestThermalModel:
             f"COWOS coupling should heat die 1 more than ORGANIC: "
             f"COWOS={rep_lo.die_temps[1]:.2f} ORGANIC={rep_hi.die_temps[1]:.2f}"
         )
+
+    def test_custom_link_thermal_resistance_overrides_technology_default(self):
+        """Custom interposer links must carry explicit thermal coupling data."""
+        powers = {0: 10_000.0, 1: 0.0}
+
+        weak = ChipletTopology()
+        weak.add_die(ChipletDie(die_id=0))
+        weak.add_die(ChipletDie(die_id=1))
+        weak.add_link(
+            InterposerLink(
+                0,
+                1,
+                technology=InterposerTech.CUSTOM,
+                thermal_resistance_k_per_w=10.0,
+            )
+        )
+
+        strong = ChipletTopology()
+        strong.add_die(ChipletDie(die_id=0))
+        strong.add_die(ChipletDie(die_id=1))
+        strong.add_link(
+            InterposerLink(
+                0,
+                1,
+                technology=InterposerTech.CUSTOM,
+                thermal_resistance_k_per_w=0.2,
+            )
+        )
+
+        rep_weak = simulate_thermal(weak, power_per_die_mw=powers)
+        rep_strong = simulate_thermal(strong, power_per_die_mw=powers)
+
+        assert rep_strong.die_temps[1] > rep_weak.die_temps[1]
+        assert rep_strong.die_temps[0] < rep_weak.die_temps[0]
+
+    def test_custom_link_rejects_invalid_thermal_resistance(self):
+        """Thermal resistance is physical and must be strictly positive."""
+        with pytest.raises(ValueError, match="thermal_resistance_k_per_w"):
+            InterposerLink(
+                0,
+                1,
+                technology=InterposerTech.CUSTOM,
+                thermal_resistance_k_per_w=0.0,
+            )
 
     def test_transient_converges_to_steady_state(self):
         """T(t→∞) of the implicit-Euler integrator → steady-state solution.

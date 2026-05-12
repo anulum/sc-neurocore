@@ -70,7 +70,7 @@ constructs a link with technology-specific defaults:
 | `EMIB` | 1.0 | 64.0 | 1e-15 | Intel Embedded Multi-die Interconnect Bridge (silicon bridge) |
 | `COWOS` | 0.5 | 128.0 | 1e-16 | TSMC Chip-on-Wafer-on-Substrate (silicon interposer) |
 | `ORGANIC` | 5.0 | 8.0 | 1e-12 | Organic substrate (BGA-style routing, lowest cost, slowest) |
-| `CUSTOM` | 2.0 | 32.0 | 1e-15 | User-defined, defaults to UCIe-like timing |
+| `CUSTOM` | 2.0 | 32.0 | 1e-15 | User-defined timing; pass `thermal_resistance_k_per_w` for custom thermal coupling |
 
 Latency ordering: CoWoS (0.5 ns) < EMIB (1.0) < BoW (1.5) <
 UCIe = Custom (2.0) < Organic (5.0). Bandwidth is roughly in
@@ -121,26 +121,22 @@ take a per-link traffic matrix — earlier drafts of this page
 incorrectly described that.
 
 `simulate_thermal(topology, power_per_die_mw=None,
-ambient_c=25.0)` is a **closed-form per-die calculation**:
-`T = T_ambient + P · R_thermal` where `R_thermal = 5 K/W` per
-die (constant, no inter-die coupling). It is **not** a
-finite-difference solve — earlier drafts of this page
-incorrectly described that. The implementation is one
-`DieThermal.step()` call per die, returning a
-`PackageThermalReport` (per-die temperature, max temp,
-throttled-die list).
+ambient_c=25.0, *, die_state=None, transient_steps=0,
+transient_dt_s=1e-3)` solves a HotSpot-style package thermal
+network. The solver builds a conductance matrix from die-to-ambient
+paths and interposer bonds, solves the steady-state linear system,
+and can also compute an implicit-Euler transient trajectory.
 
-The simplistic single-equation model means:
+Interposer thermal coupling uses technology defaults from
+`InterposerTech`; for `CUSTOM` or package-characterised links, set
+`InterposerLink(..., thermal_resistance_k_per_w=...)`. The value must
+be strictly positive and overrides the technology default in the
+conductance matrix. `die_state` can override die area, heat capacity,
+spreading resistance, ambient resistance, and maximum temperature.
 
-- **No spatial coupling** between adjacent dies (a hot die
-  next to a cold die has no thermal effect on its neighbour).
-- **No transient response** — output is steady-state for the
-  given input power.
-- **Constant 5 K/W thermal resistance** regardless of die area
-  or interposer technology.
-
-A proper FEM/FDM solver with adjacent-die heat conduction is
-listed as future work (see followup #64).
+The returned `PackageThermalReport` includes per-die steady-state
+temperatures, package maximum, throttled dies, the off-diagonal
+conductance matrix, and optional transient temperatures/timestamps.
 
 `estimate_congestion(topology, routing)` returns a
 `CongestionReport` describing per-link utilisation under the

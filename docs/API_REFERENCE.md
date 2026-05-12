@@ -4327,7 +4327,11 @@ CompilationResult
 ### Class `InterposerTech`
 
 ### Class `InterposerLink`
-Timing model for a die-to-die link.
+Timing and thermal model for a die-to-die link.
+
+`thermal_resistance_k_per_w`, when provided, overrides the
+technology-level bond thermal resistance used by `simulate_thermal`.
+The value must be strictly positive.
 
 - **from_tech**(cls, src, dst, tech)
   - Create link with technology-specific defaults.
