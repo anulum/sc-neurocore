@@ -724,7 +724,7 @@ JAX-traceable adapter for the SCPN Geometrical-Symbolic layer.
 
 - **__init__**(params, seed)
 - **_init_metatron_matrix**()
-  - Initializes the standard Metatron's Cube connection topology.
+  - Initialise a symmetric bounded Metatron routing topology.
 - **encode**(domain_state)
   - Maps symbolic phases to stochastic bitstreams.
 - **_symbolic_kernel**(phases, metatron, inputs, dt)
