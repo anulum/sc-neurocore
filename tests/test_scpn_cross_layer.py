@@ -17,6 +17,8 @@ from sc_neurocore.scpn.layers import (
     get_global_metrics,
     L8_PhaseFieldLayer,
     L8_StochasticParameters,
+    L13_StochasticParameters,
+    L14_StochasticParameters,
 )
 
 
@@ -37,6 +39,35 @@ def test_full_stack_step_no_error():
     assert len(outputs) == 16
     for key, out in outputs.items():
         assert "output_bitstreams" in out, f"{key} missing output_bitstreams"
+
+
+def test_integrated_stack_routes_l13_source_bridge_into_l14():
+    """L14 must consume live L13 Source diagnostics during full-stack stepping."""
+    stack = create_full_stack(
+        {
+            "l13": L13_StochasticParameters(
+                n_channels=4,
+                bitstream_length=16,
+                binding_window=2,
+                quantum_info_coupling=1.0,
+                source_decoherence_coupling=0.0,
+                rng_seed=413,
+            ),
+            "l14": L14_StochasticParameters(
+                n_dimensions=13,
+                bitstream_length=16,
+                temporal_coupling=1.0,
+                bridge_decoherence_coupling=0.0,
+                rng_seed=414,
+            ),
+        }
+    )
+
+    outputs = run_integrated_step(stack, dt=0.01)
+
+    assert outputs["l13"]["source_sampling_signal"].shape == (4,)
+    assert outputs["l14"]["transdimensional_bridge_drive"] > 0.0
+    assert outputs["l14"]["layer_metrics"][-1] > 0.0
 
 
 def test_l16_director_stabilises_gci():
@@ -78,7 +109,8 @@ def test_energy_nonincreasing_under_coupling():
     """L9 Hopfield energy should not increase after pattern storage and relaxation."""
     stack = create_full_stack()
     # Store a pattern in L9
-    pattern = np.random.choice([-1, 1], size=64)
+    rng = np.random.default_rng(9009)
+    pattern = rng.choice(np.array([-1, 1], dtype=np.int8), size=64)
     stack["l9"].store(pattern)
 
     energies = []

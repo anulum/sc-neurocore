@@ -85,7 +85,10 @@ class L13_TemporalLayer:
         if self.step_count >= self.params.binding_window:
             self.binding_matrix = self._max_lag_binding_matrix(self.history)
 
-        bound_pairs = np.sum(np.abs(self.binding_matrix) > self.params.binding_threshold) - n
+        off_diagonal = ~np.eye(n, dtype=bool)
+        bound_pairs = np.count_nonzero(
+            np.abs(self.binding_matrix[off_diagonal]) > self.params.binding_threshold
+        )
         binding_strength = float(bound_pairs / max(n * (n - 1), 1))
 
         activation = np.clip(np.diag(self.binding_matrix) * 0.5 + 0.5, 0, 1)
