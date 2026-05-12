@@ -24,10 +24,25 @@ def _perf_enabled() -> bool:
 def test_block_init_shapes():
     """FFN layers should match expected input/output sizes."""
     block = StochasticTransformerBlock(d_model=4, n_heads=1, length=16)
+    assert len(block.attention_heads) == 1
+    assert block.attention_heads[0].dim_k == 4
     assert block.ffn_1.n_inputs == 4
     assert block.ffn_1.n_neurons == 16
     assert block.ffn_2.n_inputs == 16
     assert block.ffn_2.n_neurons == 4
+
+
+def test_block_initialises_all_attention_heads():
+    """Multi-head blocks should allocate one attention primitive per head."""
+    block = StochasticTransformerBlock(d_model=8, n_heads=4, length=16)
+    assert len(block.attention_heads) == 4
+    assert [head.dim_k for head in block.attention_heads] == [2, 2, 2, 2]
+
+
+def test_block_rejects_invalid_head_partition():
+    """Each head must receive an equal non-empty feature subspace."""
+    with pytest.raises(ValueError, match="d_model must be divisible by n_heads"):
+        StochasticTransformerBlock(d_model=6, n_heads=4, length=16)
 
 
 def test_block_forward_shape_1d():
@@ -53,6 +68,32 @@ def test_block_forward_multi_token():
     out = block.forward(x)
     assert out.shape == (2, 2)
     assert np.all(np.isfinite(out))
+
+
+def test_block_multi_head_uses_disjoint_feature_slices():
+    """Each attention head must receive its own contiguous feature slice."""
+
+    class RecordingHead:
+        def __init__(self, value: float) -> None:
+            self.value = value
+            self.calls: list[tuple[tuple[int, ...], tuple[int, ...], tuple[int, ...]]] = []
+
+        def forward(self, Q, K, V):  # noqa: N803 - mirrors attention API
+            q = np.asarray(Q)
+            k = np.asarray(K)
+            v = np.asarray(V)
+            self.calls.append((q.shape, k.shape, v.shape))
+            return np.full((q.shape[0], v.shape[1]), self.value, dtype=float)
+
+    block = StochasticTransformerBlock(d_model=4, n_heads=2, length=16)
+    block.attention_heads = [RecordingHead(0.25), RecordingHead(0.75)]  # type: ignore[list-item]
+
+    out = block._multi_head_attention(np.array([[0.1, 0.2, 0.3, 0.4]]))
+
+    assert out.shape == (1, 4)
+    np.testing.assert_allclose(out, np.array([[0.25, 0.25, 0.75, 0.75]]))
+    assert block.attention_heads[0].calls == [((1, 2), (1, 2), (1, 2))]  # type: ignore[attr-defined]
+    assert block.attention_heads[1].calls == [((1, 2), (1, 2), (1, 2))]  # type: ignore[attr-defined]
 
 
 def test_block_output_finite():

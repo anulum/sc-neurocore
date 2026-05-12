@@ -24646,6 +24646,7 @@ Structure:
 Input -> Multi-Head Attention -> Add & Norm -> Feed Forward -> Add & Norm -> Output
 
 - **__post_init__**()
+- **_multi_head_attention**(x)
 - **forward**(x)
   - x: (d_model,) or (Sequence_Length, d_model). Returns same shape.
 
