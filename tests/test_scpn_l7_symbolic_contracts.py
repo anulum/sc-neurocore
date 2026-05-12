@@ -78,6 +78,50 @@ def test_l7_symbolic_health_weights_are_validated_and_used() -> None:
     assert result["symbolic_health"] == pytest.approx(result["phi_alignment"])
 
 
+def test_l7_consumes_l6_symbolic_drive_contract() -> None:
+    params = L7_StochasticParameters(
+        n_symbols=16,
+        n_meridians=4,
+        n_acupoints=16,
+        bitstream_length=16,
+        ecological_coupling=0.2,
+        rng_seed=10,
+    )
+    base = L7_SymbolicLayer(params)
+    driven = L7_SymbolicLayer(params)
+
+    base_qi = base.step(0.001)["meridian_qi"]
+    driven_qi = driven.step(0.001, l6_input={"symbolic_drive": np.ones(8)})["meridian_qi"]
+
+    assert np.mean(driven_qi) > np.mean(base_qi)
+
+
+def test_l7_prefers_structured_symbolic_drive_over_schumann_fallback() -> None:
+    params = L7_StochasticParameters(
+        n_symbols=16,
+        n_meridians=4,
+        n_acupoints=16,
+        bitstream_length=16,
+        ecological_coupling=0.2,
+        rng_seed=11,
+    )
+    drive_only = L7_SymbolicLayer(params)
+    both_payloads = L7_SymbolicLayer(params)
+
+    drive_only_qi = drive_only.step(0.001, l6_input={"symbolic_drive": np.ones(8)})[
+        "meridian_qi"
+    ]
+    both_qi = both_payloads.step(
+        0.001,
+        l6_input={
+            "schumann_field": np.zeros(8),
+            "symbolic_drive": np.ones(8),
+        },
+    )["meridian_qi"]
+
+    np.testing.assert_allclose(both_qi, drive_only_qi)
+
+
 def test_l7_rejects_invalid_parameters_and_inputs() -> None:
     with pytest.raises(ValueError, match="n_symbols"):
         L7_SymbolicLayer(L7_StochasticParameters(n_symbols=1))
@@ -113,6 +157,10 @@ def test_l7_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.001, symbol_input=np.ones(15, dtype=np.float64))
     with pytest.raises(ValueError, match="schumann_field"):
         layer.step(0.001, l6_input={"schumann_field": np.array([0.5, np.nan])})
+    with pytest.raises(ValueError, match="symbolic_drive"):
+        layer.step(0.001, l6_input={"symbolic_drive": np.array([0.5, np.nan])})
+    with pytest.raises(ValueError, match="symbolic_drive"):
+        layer.step(0.001, l6_input={"symbolic_drive": np.array([-0.1, 0.2])})
     with pytest.raises(ValueError, match="acupoint_stimulus"):
         layer.step(0.001, acupoint_stimulus={0: np.nan})
     with pytest.raises(ValueError, match="acupoint_stimulus"):
