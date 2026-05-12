@@ -67,7 +67,7 @@ and integrated into the production `SC-NEUROCORE` tree. Each module has been:
 
 #### uvm_gen — UVM Testbench Generator
 - **Source:** `src/sc_neurocore/uvm_gen/uvm_gen.py`
-- **Tests:** `tests/test_uvm_gen/test_uvm_gen.py` — **71 tests**
+- **Tests:** `tests/test_uvm_gen/test_uvm_gen.py` — **72 tests**
 - **Key Classes:**
   - `UVMGenerator` — Full UVM testbench emission
   - `RTLModule` — RTL module abstraction
@@ -260,7 +260,7 @@ and integrated into the production `SC-NEUROCORE` tree. Each module has been:
 | safety_cert | `tests/test_safety_cert/` | 81 |
 | asic_flow | `tests/test_asic_flow/` | 67 |
 | fault_injection | `tests/test_fault_injection/` | 22 |
-| uvm_gen | `tests/test_uvm_gen/` | 71 |
+| uvm_gen | `tests/test_uvm_gen/` | 72 |
 | hypervisor | `tests/test_hypervisor/` | 78 |
 | twinsync | `tests/test_twinsync/` | 72 |
 | spintronic | `tests/test_spintronic/` | 66 |
