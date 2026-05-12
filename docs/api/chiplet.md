@@ -184,7 +184,8 @@ respecting NUMA topology hints when supplied.
 The package emits SystemVerilog source files that are compiled
 by downstream EDA tools (Vivado for FPGA, Innovus for ASIC):
 
-- `emit_crc32_sv(data_width)` — CRC32-error-detecting bridge
+- `emit_crc32_sv(data_width)` — IEEE 802.3 CRC32 link checker with
+  reflected-input support, frame reset, and expected-frame-CRC comparison
 - `emit_credit_controller_sv(config, link_name)` — credit-based
   flow control to prevent buffer overflow at the receiver
 - `emit_power_gating_sv(domain)` — fine-grained power-gating
