@@ -2802,6 +2802,11 @@ as gain factors on firing rate.
 - **effective_gain**(t_current_s)
 - **modulate_spikes**(spike_counts, t_current_s)
   - Modulate spike counts by pharmacological gain.
+- **modulate_spike_events**(spikes, t_current_s)
+  - Apply gain to detected spike events. Inhibitory gains thin events
+    across the observed response span; excitatory gains preserve
+    observed events and insert additional template-derived events
+    inside the observed temporal support.
 
 ### Class `WellConfig`
 One well in a multi-well MEA plate.

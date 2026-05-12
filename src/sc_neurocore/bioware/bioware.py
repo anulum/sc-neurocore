@@ -39,7 +39,7 @@ from __future__ import annotations
 import hashlib
 import math
 import time
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, replace
 from enum import Enum
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
@@ -553,11 +553,7 @@ class BioHybridSession:
             spikes = self.sorter.assign(spikes)
 
         if self.pharm_model is not None:
-            spike_counts = np.array([len(spikes)], dtype=float)  # scalar → array for API
-            mod_counts = self.pharm_model.modulate_spikes(spike_counts, t_start_s)
-            mod_count = int(mod_counts[0])
-            if mod_count < len(spikes):
-                spikes = spikes[:mod_count]  # simplified density modulation
+            spikes = self.pharm_model.modulate_spike_events(spikes, t_start_s)
 
         # 2. Transcode to AER
         aer_events = self.transcoder.transcode(spikes, t_start_s)
@@ -788,6 +784,73 @@ class PharmModel:
         """Modulate spike counts by pharmacological gain."""
         g = self.effective_gain(t_current_s)
         return np.round(spike_counts * g).astype(int)
+
+    def modulate_spike_events(
+        self,
+        spikes: List[DetectedSpike],
+        t_current_s: float,
+    ) -> List[DetectedSpike]:
+        """Apply pharmacological rate gain to spike events.
+
+        Inhibitory gains deterministically thin events across the observed
+        response span instead of truncating the head of the frame. Excitatory
+        gains preserve observed events and insert synthetic events inside the
+        observed temporal support, using nearest observed spikes as channel,
+        unit, amplitude, and waveform templates.
+        """
+        if not spikes:
+            return []
+
+        gain = self.effective_gain(t_current_s)
+        if not math.isfinite(gain) or gain < 0.0:
+            raise ValueError("pharmacological gain must be finite and >= 0")
+
+        ordered = sorted(spikes, key=lambda s: (s.timestamp_s, s.channel, s.unit_id))
+        target_count = int(round(len(ordered) * gain))
+        if target_count <= 0:
+            return []
+        if target_count == len(ordered):
+            return list(ordered)
+        if target_count < len(ordered):
+            indices = _quantile_indices(len(ordered), target_count)
+            return [ordered[i] for i in indices]
+
+        extra = target_count - len(ordered)
+        timestamps = np.array([s.timestamp_s for s in ordered], dtype=float)
+        if not np.all(np.isfinite(timestamps)):
+            raise ValueError("detected spike timestamps must be finite")
+
+        if len(ordered) == 1 or timestamps[-1] <= timestamps[0]:
+            synthetic = [
+                _clone_spike(ordered[0], timestamp_s=float(timestamps[0])) for _ in range(extra)
+            ]
+        else:
+            insert_times = np.linspace(timestamps[0], timestamps[-1], extra + 2)[1:-1]
+            synthetic = []
+            for t in insert_times:
+                idx = int(np.searchsorted(timestamps, t, side="left"))
+                if idx >= len(ordered):
+                    idx = len(ordered) - 1
+                elif idx > 0 and abs(timestamps[idx - 1] - t) <= abs(timestamps[idx] - t):
+                    idx -= 1
+                synthetic.append(_clone_spike(ordered[idx], timestamp_s=float(t)))
+
+        return sorted([*ordered, *synthetic], key=lambda s: (s.timestamp_s, s.channel, s.unit_id))
+
+
+def _quantile_indices(n_items: int, target_count: int) -> List[int]:
+    if target_count <= 0:
+        return []
+    if target_count >= n_items:
+        return list(range(n_items))
+    if target_count == 1:
+        return [0]
+    return [int(i) for i in np.rint(np.linspace(0, n_items - 1, target_count)).astype(int)]
+
+
+def _clone_spike(template: DetectedSpike, *, timestamp_s: float) -> DetectedSpike:
+    waveform = None if template.waveform is None else template.waveform.copy()
+    return replace(template, timestamp_s=timestamp_s, waveform=waveform)
 
 
 # ── Multi-Well Plate Support (Gap 5) ─────────────────────────────────
