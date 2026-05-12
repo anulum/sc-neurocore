@@ -72,6 +72,7 @@ class L10_BoundaryLayer:
 
         qec_residual = np.zeros(n, dtype=np.float64)
         memory_complexity_flux = 0.0
+        boundary_context = self._boundary_context(l9_input)
         if l9_input is not None:
             qec_residual = self._qec_residual(l9_input, n)
             memory_complexity_flux = self._memory_complexity_flux(l9_input)
@@ -100,6 +101,8 @@ class L10_BoundaryLayer:
             "qec_residual_load": float(np.mean(qec_residual)),
             "memory_complexity_flux": memory_complexity_flux,
             "boundary_complexity": float(np.mean(rejection_excess)),
+            "boundary_context_id": boundary_context["ebs_id"],
+            "boundary_terminals": boundary_context["terminal_set"],
             "topological_rejection_mask": rejection_excess > 0.0,
             "output_bitstreams": output_bitstreams,
         }
@@ -129,10 +132,7 @@ class L10_BoundaryLayer:
             or not 0.0 <= params.rejection_threshold <= 1.0
         ):
             raise ValueError("rejection_threshold must be finite and in [0, 1]")
-        if (
-            not math.isfinite(float(params.shielding_strength))
-            or params.shielding_strength <= 0.0
-        ):
+        if not math.isfinite(float(params.shielding_strength)) or params.shielding_strength <= 0.0:
             raise ValueError("shielding_strength must be finite and positive")
         if not math.isfinite(float(params.steering_gain)) or params.steering_gain < 0.0:
             raise ValueError("steering_gain must be finite and non-negative")
@@ -201,6 +201,25 @@ class L10_BoundaryLayer:
         if not math.isfinite(free_energy) or free_energy < 0.0:
             raise ValueError("memory_free_energy must be finite and non-negative")
         return float(np.clip(free_energy, 0.0, 1.0) * self.params.qec_coupling)
+
+    @staticmethod
+    def _boundary_context(l9_input: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        if l9_input is None:
+            return {"ebs_id": None, "terminal_set": ()}
+        has_context_id = "boundary_context_id" in l9_input
+        has_terminals = "boundary_terminals" in l9_input
+        if not has_context_id and not has_terminals:
+            return {"ebs_id": None, "terminal_set": ()}
+        if not has_context_id or not has_terminals:
+            raise ValueError("boundary context requires boundary_context_id and boundary_terminals")
+        ebs_id = str(l9_input["boundary_context_id"])
+        if not ebs_id:
+            raise ValueError("boundary_context_id must be non-empty")
+        terminals = tuple(l9_input["boundary_terminals"])
+        valid_terminals = {"T1", "T2", "T3", "T4", "T5", "T6", "T7"}
+        if not terminals or any(terminal not in valid_terminals for terminal in terminals):
+            raise ValueError("boundary_terminals must contain valid T1-T7 terminal identifiers")
+        return {"ebs_id": ebs_id, "terminal_set": terminals}
 
     @staticmethod
     def _noise_vector(external_noise: np.ndarray, n_boundary_nodes: int) -> np.ndarray:
