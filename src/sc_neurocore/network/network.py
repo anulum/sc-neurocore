@@ -128,6 +128,19 @@ class Network:
                 "fim_lambda > 0 (FIM feedback) is not supported by the MPI backend; "
                 "use backend='python'"
             )
+        if self.stimuli:
+            raise NotImplementedError(
+                "embedded stimuli are not supported by the MPI backend; "
+                "use backend='python' or provide rank-local currents externally"
+            )
+        if self.state_monitors:
+            raise NotImplementedError(
+                "state monitors are not supported by the MPI backend; use backend='python'"
+            )
+        if any(proj.plasticity for proj in self.projections):
+            raise NotImplementedError(
+                "synaptic plasticity is not supported by the MPI backend; use backend='python'"
+            )
 
         from .mpi_runner import MPIRunner
 

@@ -180,3 +180,46 @@ def test_run_mpi_raises_on_fim_lambda():
         NotImplementedError, match="fim_lambda > 0 .* is not supported by the MPI backend"
     ):
         net.run(0.005, dt=0.001, backend="mpi")
+
+
+def test_run_mpi_raises_on_embedded_stimuli_before_mpi_import():
+    """MPI backend must fail closed when stimuli would otherwise be ignored."""
+    from sc_neurocore.network import Network, Population, StepCurrent
+
+    pop = Population("LapicqueNeuron", 4, label="A")
+    stim = StepCurrent(onset=0, offset=5, amplitude=1.0)
+    stim.target = pop
+    net = Network(pop, stim, seed=42)
+
+    with pytest.raises(
+        NotImplementedError, match="embedded stimuli are not supported by the MPI backend"
+    ):
+        net.run(0.005, dt=0.001, backend="mpi")
+
+
+def test_run_mpi_raises_on_state_monitors_before_mpi_import():
+    """MPI backend must fail closed when state traces would otherwise be dropped."""
+    from sc_neurocore.network import Network, Population, StateMonitor
+
+    pop = Population("LapicqueNeuron", 4, label="A")
+    mon = StateMonitor(pop, variables=["v"])
+    net = Network(pop, mon, seed=42)
+
+    with pytest.raises(
+        NotImplementedError, match="state monitors are not supported by the MPI backend"
+    ):
+        net.run(0.005, dt=0.001, backend="mpi")
+
+
+def test_run_mpi_raises_on_plasticity_before_mpi_import():
+    """MPI backend must fail closed when plasticity updates would otherwise be skipped."""
+    from sc_neurocore.network import Network, Population, Projection
+
+    pop = Population("LapicqueNeuron", 4, label="A")
+    proj = Projection(pop, pop, weight=1.0, probability=0.5, plasticity="stdp")
+    net = Network(pop, proj, seed=42)
+
+    with pytest.raises(
+        NotImplementedError, match="synaptic plasticity is not supported by the MPI backend"
+    ):
+        net.run(0.005, dt=0.001, backend="mpi")
