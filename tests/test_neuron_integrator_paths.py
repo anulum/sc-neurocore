@@ -13,6 +13,7 @@ import pytest
 
 from sc_neurocore.neurons.models.adex import AdExNeuron
 from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
+from sc_neurocore.neurons.models.morris_lecar import MorrisLecarNeuron
 from sc_neurocore.neurons.sc_izhikevich import SCIzhikevichNeuron
 
 
@@ -59,6 +60,34 @@ def test_hodgkin_huxley_integrator_validation():
 def test_adex_integrator_validation():
     with pytest.raises(ValueError, match="Unsupported integrator"):
         AdExNeuron(integrator="bad-path")  # type: ignore[arg-type]
+
+
+def test_morris_lecar_integrator_validation():
+    with pytest.raises(ValueError, match="Unsupported integrator"):
+        MorrisLecarNeuron(integrator="bad-path")  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"c_m": 0.0}, "c_m"),
+        ({"dt": 0.0}, "dt"),
+        ({"phi": -0.1}, "phi"),
+        ({"g_ca": np.nan}, "g_ca"),
+        ({"v": np.inf}, "v"),
+    ],
+)
+def test_morris_lecar_rejects_invalid_numerical_configuration(kwargs, match):
+    with pytest.raises(ValueError, match=match):
+        MorrisLecarNeuron(**kwargs)
+
+
+@pytest.mark.parametrize("integrator", ["baseline_euler", "rk4", "rosenbrock"])
+def test_morris_lecar_rejects_non_finite_input_current(integrator):
+    neuron = MorrisLecarNeuron(dt=0.05, integrator=integrator)
+
+    with pytest.raises(ValueError, match="current"):
+        neuron.step(np.nan)
 
 
 def test_izhikevich_rk4_regular_spiking_and_default_preserved():
@@ -138,19 +167,57 @@ def test_adex_rosenbrock_path_tracks_rk4_and_stays_finite():
     assert abs(candidate.w - reference.w) < 1.0
 
 
+def test_morris_lecar_rk4_path_stays_finite_and_tracks_baseline():
+    baseline = MorrisLecarNeuron(dt=0.05, integrator="baseline_euler")
+    candidate = MorrisLecarNeuron(dt=0.05, integrator="rk4")
+
+    baseline_spikes = _count_spikes(baseline, 100.0, 2000)
+    candidate_spikes = _count_spikes(candidate, 100.0, 2000)
+
+    assert np.isfinite(candidate.v)
+    assert np.isfinite(candidate.w)
+    assert baseline_spikes > 0
+    assert candidate_spikes > 0
+    assert abs(candidate_spikes - baseline_spikes) <= 5
+    assert abs(candidate.v - baseline.v) < 5.0
+    assert abs(candidate.w - baseline.w) < 0.1
+
+
+def test_morris_lecar_rosenbrock_path_tracks_rk4_and_keeps_gate_bounded():
+    reference = MorrisLecarNeuron(dt=0.05, integrator="rk4")
+    candidate = MorrisLecarNeuron(dt=0.05, integrator="rosenbrock")
+
+    reference_spikes = _count_spikes(reference, 100.0, 1000)
+    candidate_spikes = _count_spikes(candidate, 100.0, 1000)
+
+    assert np.isfinite(candidate.v)
+    assert np.isfinite(candidate.w)
+    assert 0.0 <= candidate.w <= 1.0
+    assert reference_spikes > 0
+    assert candidate_spikes > 0
+    assert abs(candidate_spikes - reference_spikes) <= 2
+    assert abs(candidate.v - reference.v) < 5.0
+    assert abs(candidate.w - reference.w) < 0.1
+
+
 def test_default_integrators_match_historical_paths():
     hh_default = HodgkinHuxleyNeuron(dt=0.01)
     hh_baseline = HodgkinHuxleyNeuron(dt=0.01, integrator="baseline_euler")
     adex_default = AdExNeuron(dt=0.1)
     adex_baseline = AdExNeuron(dt=0.1, integrator="baseline_euler")
+    ml_default = MorrisLecarNeuron(dt=0.05)
+    ml_baseline = MorrisLecarNeuron(dt=0.05, integrator="baseline_euler")
 
     hh_default_spikes = _count_spikes(hh_default, 10.0, 200)
     hh_baseline_spikes = _count_spikes(hh_baseline, 10.0, 200)
     adex_default_spikes = _count_spikes(adex_default, 500.0, 2000)
     adex_baseline_spikes = _count_spikes(adex_baseline, 500.0, 2000)
+    ml_default_spikes = _count_spikes(ml_default, 100.0, 1000)
+    ml_baseline_spikes = _count_spikes(ml_baseline, 100.0, 1000)
 
     assert hh_default_spikes == hh_baseline_spikes
     assert adex_default_spikes == adex_baseline_spikes
+    assert ml_default_spikes == ml_baseline_spikes
 
 
 def test_izhikevich_noise_injection_is_reachable_on_both_paths():
