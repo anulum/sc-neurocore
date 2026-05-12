@@ -33,6 +33,7 @@ class L12_StochasticParameters:
     transport_rate: float = 0.3
     dephasing_gamma: float = 0.05
     morphic_coupling: float = 0.1  # from L11
+    noospheric_entropy_coupling: float = 0.15
     rng_seed: Optional[int] = None
 
 
@@ -57,14 +58,24 @@ class L12_QuantumInfoLayer:
         self.time += dt
         n = self.params.n_sites
 
+        noospheric_entropy_load = 0.0
+        gaian_stabilization_drive = 0.0
+        effective_dephasing_gamma = self.params.dephasing_gamma
+        if l11_input is not None:
+            l11_effect = self._l11_noospheric_effect(l11_input)
+            noospheric_entropy_load = l11_effect["entropy_load"]
+            gaian_stabilization_drive = l11_effect["stabilization_drive"]
+            effective_dephasing_gamma = self.params.dephasing_gamma * (
+                1.0 + self.params.noospheric_entropy_coupling * noospheric_entropy_load
+            )
+
         # Nearest-neighbour transport (ring topology)
         transport = np.roll(self.coherence, 1) - 2 * self.coherence + np.roll(self.coherence, -1)
-        dephasing = -self.params.dephasing_gamma * self.coherence
+        dephasing = -effective_dephasing_gamma * self.coherence
         self.coherence += (self.params.transport_rate * transport + dephasing) * dt
 
-        if l11_input is not None and "info_saturation" in l11_input:
-            info_saturation = self._info_saturation(l11_input["info_saturation"])
-            self.coherence += self.params.morphic_coupling * info_saturation * dt
+        if l11_input is not None:
+            self.coherence += gaian_stabilization_drive * dt
 
         self.coherence = np.clip(self.coherence, 0, 1)
 
@@ -77,6 +88,9 @@ class L12_QuantumInfoLayer:
             "coherence": self.coherence.copy(),
             "entropy": entropy,
             "transport_efficiency": float(np.mean(self.coherence)),
+            "noospheric_entropy_load": noospheric_entropy_load,
+            "gaian_stabilization_drive": gaian_stabilization_drive,
+            "effective_dephasing_gamma": effective_dephasing_gamma,
             "output_bitstreams": output_bitstreams,
         }
 
@@ -105,6 +119,11 @@ class L12_QuantumInfoLayer:
             raise ValueError("dephasing_gamma must be finite and non-negative")
         if not math.isfinite(float(params.morphic_coupling)) or params.morphic_coupling < 0.0:
             raise ValueError("morphic_coupling must be finite and non-negative")
+        if (
+            not math.isfinite(float(params.noospheric_entropy_coupling))
+            or params.noospheric_entropy_coupling < 0.0
+        ):
+            raise ValueError("noospheric_entropy_coupling must be finite and non-negative")
         if params.rng_seed is not None:
             if isinstance(params.rng_seed, bool) or not isinstance(params.rng_seed, int):
                 raise ValueError("rng_seed must be a non-negative integer or None")
@@ -117,6 +136,59 @@ class L12_QuantumInfoLayer:
         if values.shape != ():
             raise ValueError("info_saturation must be a finite scalar")
         info_saturation = float(values)
-        if not math.isfinite(info_saturation):
-            raise ValueError("info_saturation must be a finite scalar")
+        if not math.isfinite(info_saturation) or info_saturation < 0.0 or info_saturation > 1.0:
+            raise ValueError("info_saturation must be a finite scalar within [0, 1]")
         return info_saturation
+
+    def _l11_noospheric_effect(self, l11_input: Dict[str, Any]) -> Dict[str, float]:
+        info_saturation = self._info_saturation(l11_input.get("info_saturation", 0.0))
+        structured_keys = {
+            "boundary_shielding",
+            "boundary_fragmentation_pressure",
+            "polarization",
+        }
+        has_structured_diagnostics = any(key in l11_input for key in structured_keys)
+        if not has_structured_diagnostics:
+            return {
+                "entropy_load": 0.0,
+                "stabilization_drive": self.params.morphic_coupling * info_saturation,
+            }
+
+        boundary_shielding = self._unit_scalar(
+            l11_input.get("boundary_shielding", 0.0), "boundary_shielding"
+        )
+        fragmentation_pressure = self._nonnegative_scalar(
+            l11_input.get("boundary_fragmentation_pressure", 0.0),
+            "boundary_fragmentation_pressure",
+        )
+        polarization = self._nonnegative_scalar(l11_input.get("polarization", 0.0), "polarization")
+        entropy_load = (
+            info_saturation * (1.0 - boundary_shielding)
+            + fragmentation_pressure
+            + polarization
+        )
+        stabilization_drive = (
+            self.params.morphic_coupling * info_saturation
+            - self.params.noospheric_entropy_coupling * entropy_load
+        )
+        return {
+            "entropy_load": float(entropy_load),
+            "stabilization_drive": float(stabilization_drive),
+        }
+
+    @staticmethod
+    def _nonnegative_scalar(value: Any, name: str) -> float:
+        values = np.asarray(value, dtype=np.float64)
+        if values.shape != ():
+            raise ValueError(f"{name} must be a finite scalar")
+        scalar = float(values)
+        if not math.isfinite(scalar) or scalar < 0.0:
+            raise ValueError(f"{name} must be finite and non-negative")
+        return scalar
+
+    @classmethod
+    def _unit_scalar(cls, value: Any, name: str) -> float:
+        scalar = cls._nonnegative_scalar(value, name)
+        if scalar > 1.0:
+            raise ValueError(f"{name} must be within [0, 1]")
+        return scalar
