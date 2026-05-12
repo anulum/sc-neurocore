@@ -282,13 +282,27 @@ def generate_energy_schedule(
     EnergySchedule
         Update schedule.
     """
+    if not isinstance(neuron_count, int) or neuron_count <= 0:
+        raise ValueError("neuron_count must be a positive integer")
+    _require_finite_non_negative(energy_budget_uj, "energy_budget_uj")
+    _require_finite_positive(energy_per_neuron_nj, "energy_per_neuron_nj")
+    _require_finite_positive(epoch_duration_ms, "epoch_duration_ms")
+
     budget_nj = energy_budget_uj * 1000
     max_neurons = int(budget_nj / energy_per_neuron_nj)
     updatable = min(max_neurons, neuron_count)
 
     # Priority ordering
     if priority_neurons:
-        order = list(priority_neurons)
+        order = []
+        seen = set()
+        for idx in priority_neurons:
+            if not isinstance(idx, int) or idx < 0 or idx >= neuron_count:
+                raise ValueError("priority_neurons must contain valid neuron indices")
+            if idx in seen:
+                continue
+            seen.add(idx)
+            order.append(idx)
         remaining = [i for i in range(neuron_count) if i not in order]
         order.extend(remaining)
     else:

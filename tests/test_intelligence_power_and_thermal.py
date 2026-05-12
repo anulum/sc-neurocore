@@ -252,6 +252,32 @@ class TestEnergyScheduler:
         assert s.neurons_per_epoch == 10
         assert s.duty_cycle == 1.0
 
+    def test_rejects_invalid_schedule_inputs(self):
+        from sc_neurocore.compiler.intelligence import (
+            generate_energy_schedule,
+        )
+
+        invalid_cases = [
+            ({"neuron_count": 0}, "neuron_count"),
+            ({"neuron_count": 10, "energy_budget_uj": -1.0}, "energy_budget_uj"),
+            ({"neuron_count": 10, "energy_per_neuron_nj": 0.0}, "energy_per_neuron_nj"),
+            ({"neuron_count": 10, "epoch_duration_ms": 0.0}, "epoch_duration_ms"),
+            ({"neuron_count": 10, "priority_neurons": [-1]}, "priority_neurons"),
+            ({"neuron_count": 10, "priority_neurons": [10]}, "priority_neurons"),
+        ]
+        for kwargs, message in invalid_cases:
+            with pytest.raises(ValueError, match=message):
+                generate_energy_schedule(**kwargs)
+
+    def test_priority_neurons_are_deduplicated(self):
+        from sc_neurocore.compiler.intelligence import (
+            generate_energy_schedule,
+        )
+
+        s = generate_energy_schedule(5, priority_neurons=[2, 2, 1])
+        assert s.update_order[:2] == [2, 1]
+        assert len(s.update_order) == len(set(s.update_order))
+
 
 class TestThermalEnvelope:
     def test_pass(self):
