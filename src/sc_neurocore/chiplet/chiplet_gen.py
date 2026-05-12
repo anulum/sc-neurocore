@@ -63,6 +63,11 @@ class InterposerLink:
     bit_error_rate: float = 1e-15
     data_width: int = 64
     is_bidirectional: bool = True
+    thermal_resistance_k_per_w: Optional[float] = None
+
+    def __post_init__(self) -> None:
+        if self.thermal_resistance_k_per_w is not None and self.thermal_resistance_k_per_w <= 0:
+            raise ValueError("thermal_resistance_k_per_w must be > 0 when provided")
 
     @classmethod
     def from_tech(cls, src: int, dst: int, tech: InterposerTech) -> InterposerLink:
@@ -916,7 +921,7 @@ def compute_cdc_configs(topology: ChipletTopology) -> Dict[Tuple[int, int], CDCC
 #   Coskun, A. et al. "Cross-Layer Thermal Modeling and
 #   Management for 3D Stacked Multi-Chip Modules." DATE 2013.
 #
-# The lumped-element placeholder previously here (T = T_amb + P·R)
+# The earlier single-die lumped-element equation (T = T_amb + P·R)
 # was replaced 2026-04-17 per `feedback_sophisticated_from_start.md`.
 
 
@@ -930,7 +935,7 @@ _R_THERMAL_K_PER_W: Dict[InterposerTech, float] = {
     InterposerTech.EMIB: 0.5,  # silicon bridge, high conductivity
     InterposerTech.COWOS: 0.3,  # bulk silicon interposer, very low R
     InterposerTech.ORGANIC: 8.0,  # organic only, high R
-    InterposerTech.CUSTOM: 1.0,  # placeholder default
+    InterposerTech.CUSTOM: 1.0,
 }
 
 
@@ -1022,8 +1027,13 @@ def _build_conductance_matrix(
         j = idx_of.get(link.dst_die)
         if i is None or j is None or i == j:
             continue
+        r_link = (
+            link.thermal_resistance_k_per_w
+            if link.thermal_resistance_k_per_w is not None
+            else _R_THERMAL_K_PER_W.get(link.technology, 1.0)
+        )
         r_bond = (
-            _R_THERMAL_K_PER_W.get(link.technology, 1.0)
+            r_link
             + die_state[link.src_die].r_spread_k_per_w
             + die_state[link.dst_die].r_spread_k_per_w
         )
