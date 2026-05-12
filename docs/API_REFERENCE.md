@@ -4567,19 +4567,21 @@ Uses BFS but excludes links with utilisation above the threshold.
 Falls back to shortest path if no uncongested route exists.
 
 ### Function `emit_crc32_sv(data_width)`
-CRC-32 checker stub for link error detection.
+Emit IEEE 802.3 CRC-32 link-protection RTL with reflected-input support,
+frame reset (`crc_init`), expected-frame-CRC comparison (`expected_crc` plus
+`crc_check`), and fail-fast validation of non-positive `DATA_W` values.
 
 ### Function `bandwidth_aware_route(topology, src_die, dst_die, required_gbps)`
 Find a path where all links have bandwidth >= required_gbps.
 
 ### Function `emit_credit_controller_sv(config, link_name)`
-Credit-based flow controller stub.
+Emit saturating credit-based flow control RTL for a die-to-die link.
 
 ### Function `add_3d_stack(topology, bottom_die, top_die, stacking)`
 Add a vertical (3D) link between stacked dies.
 
 ### Function `emit_power_gating_sv(domain)`
-Power-gating controller stub for a voltage island.
+Emit sequenced isolation and switch-control RTL for a voltage island.
 
 ---
 

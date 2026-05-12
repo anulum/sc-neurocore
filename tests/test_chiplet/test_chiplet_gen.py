@@ -728,6 +728,21 @@ class TestLinkProtection:
         assert "crc_next" in sv
         assert "crc_reg <= crc_next;" in sv
 
+    def test_crc32_sv_checks_expected_frame_crc(self):
+        sv = emit_crc32_sv(64)
+        assert "expected_crc" in sv
+        assert "crc_check" in sv
+        assert "crc_error <= (crc_compare_value != expected_crc);" in sv
+        assert "crc_error <= 0;" not in sv
+
+    def test_crc32_sv_rejects_invalid_data_widths(self):
+        for width in (0, -1):
+            try:
+                emit_crc32_sv(width)
+            except ValueError:
+                continue
+            raise AssertionError(f"emit_crc32_sv accepted invalid DATA_W={width}")
+
 
 # ── Bandwidth-Aware Routing Tests ────────────────────────────────────
 

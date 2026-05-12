@@ -1246,18 +1246,26 @@ class LinkProtection:
 
 def emit_crc32_sv(data_width: int = 64) -> str:
     """Emit IEEE 802.3 CRC-32 feedback logic for link error detection."""
+    if data_width <= 0:
+        raise ValueError("data_width must be a positive integer")
+
     return textwrap.dedent(f"""\
 {_SPDX}
 // SC-NeuroCore Chiplet — CRC-32 link checker
 
 module sc_chiplet_crc32 #(
-    parameter DATA_W     = {data_width},
-    parameter CRC32_POLY = 32'h04C11DB7
+    parameter DATA_W             = {data_width},
+    parameter CRC32_POLY_NORMAL  = 32'h04C11DB7,
+    parameter CRC32_POLY_REFLECT = 32'hEDB88320,
+    parameter REFLECT_INPUT      = 1'b1
 )(
     input  wire               clk,
     input  wire               rst_n,
+    input  wire               crc_init,
     input  wire [DATA_W-1:0]  data_in,
     input  wire               data_valid,
+    input  wire [31:0]        expected_crc,
+    input  wire               crc_check,
     output reg  [31:0]        crc_out,
     output reg                crc_valid,
     output reg                crc_error
@@ -1265,7 +1273,8 @@ module sc_chiplet_crc32 #(
 
     reg [31:0] crc_reg;
     wire [31:0] crc_next;
-    integer i;
+    wire [31:0] crc_candidate;
+    wire [31:0] crc_compare_value;
 
     function automatic [31:0] crc32_update;
         input [31:0] crc;
@@ -1275,30 +1284,47 @@ module sc_chiplet_crc32 #(
         begin
             next_crc = crc;
             for (bit_idx = 0; bit_idx < DATA_W; bit_idx = bit_idx + 1) begin
-                if (next_crc[31] ^ data[DATA_W-1-bit_idx])
-                    next_crc = {{next_crc[30:0], 1'b0}} ^ CRC32_POLY;
-                else
-                    next_crc = {{next_crc[30:0], 1'b0}};
+                if (REFLECT_INPUT) begin
+                    if (next_crc[0] ^ data[bit_idx])
+                        next_crc = {{1'b0, next_crc[31:1]}} ^ CRC32_POLY_REFLECT;
+                    else
+                        next_crc = {{1'b0, next_crc[31:1]}};
+                end else begin
+                    if (next_crc[31] ^ data[DATA_W-1-bit_idx])
+                        next_crc = {{next_crc[30:0], 1'b0}} ^ CRC32_POLY_NORMAL;
+                    else
+                        next_crc = {{next_crc[30:0], 1'b0}};
+                end
             end
             crc32_update = next_crc;
         end
     endfunction
 
     assign crc_next = crc32_update(crc_reg, data_in);
+    assign crc_candidate = data_valid ? crc_next : crc_reg;
+    assign crc_compare_value = crc_candidate ^ 32'hFFFFFFFF;
 
     always @(posedge clk) begin
         if (!rst_n) begin
             crc_reg   <= 32'hFFFFFFFF;
-            crc_out   <= 0;
-            crc_valid <= 0;
-            crc_error <= 0;
-        end else if (data_valid) begin
-            crc_reg <= crc_next;
-            crc_out   <= crc_next ^ 32'hFFFFFFFF;
-            crc_valid <= 1;
-            crc_error <= 0;
+            crc_out   <= 32'h00000000;
+            crc_valid <= 1'b0;
+            crc_error <= 1'b0;
+        end else if (crc_init) begin
+            crc_reg   <= 32'hFFFFFFFF;
+            crc_out   <= 32'h00000000;
+            crc_valid <= 1'b0;
+            crc_error <= 1'b0;
         end else begin
-            crc_valid <= 0;
+            if (data_valid) begin
+                crc_reg <= crc_next;
+                crc_out <= crc_next ^ 32'hFFFFFFFF;
+            end
+            crc_valid <= data_valid || crc_check;
+            if (crc_check) begin
+                crc_error <= (crc_compare_value != expected_crc);
+                crc_out   <= crc_compare_value;
+            end
         end
     end
 
