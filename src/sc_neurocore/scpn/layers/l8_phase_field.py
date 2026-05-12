@@ -19,6 +19,7 @@ Ref: Paper 8 — Cosmic Phase-Locking and PTA synchronisation.
 
 from __future__ import annotations
 from dataclasses import dataclass
+import math
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -32,12 +33,14 @@ class L8_StochasticParameters:
     symbolic_coupling: float = 0.1  # from L7
     director_coupling: float = 0.15  # to L16
     pulsar_omegas: Optional[np.ndarray] = None
+    rng_seed: Optional[int] = None
 
     def __post_init__(self) -> None:
         if self.pulsar_omegas is None:
-            self.pulsar_omegas = np.array(
+            base_omegas = np.array(
                 [1.6, 2.3, 0.8, 4.1, 1.1, 0.5, 3.2, 2.7, 1.9, 0.4, 5.5, 0.2]
             )
+            self.pulsar_omegas = np.resize(base_omegas, self.n_pulsars)
 
 
 class L8_PhaseFieldLayer:
@@ -45,7 +48,9 @@ class L8_PhaseFieldLayer:
 
     def __init__(self, params: Optional[L8_StochasticParameters] = None):
         self.params = params or L8_StochasticParameters()
-        self.phases = np.random.uniform(0, 2 * np.pi, self.params.n_pulsars)
+        self._validate_params(self.params)
+        self._rng = np.random.default_rng(self.params.rng_seed)
+        self.phases = self._rng.uniform(0, 2 * np.pi, self.params.n_pulsars)
         self.time = 0.0
 
     def step(
@@ -53,6 +58,8 @@ class L8_PhaseFieldLayer:
         dt: float,
         l7_input: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
+        if not math.isfinite(float(dt)) or float(dt) <= 0.0:
+            raise ValueError("dt must be finite and positive")
         self.time += dt
         n = self.params.n_pulsars
         omegas = self.params.pulsar_omegas
@@ -63,18 +70,20 @@ class L8_PhaseFieldLayer:
 
         d_phase = omegas + coupling
         if l7_input is not None and "glyph_vector" in l7_input:
-            drive = np.mean(l7_input["glyph_vector"])
+            drive = self._glyph_drive(l7_input["glyph_vector"])
             d_phase += self.params.symbolic_coupling * drive * np.sin(-self.phases)
 
         self.phases = (self.phases + d_phase * dt) % (2 * np.pi)
 
         activation = (1.0 + np.cos(self.phases)) / 2.0
-        rands = np.random.random((n, self.params.bitstream_length))
+        rands = self._rng.random((n, self.params.bitstream_length))
         output_bitstreams = (rands < activation[:, None]).astype(np.uint8)
+        cosmic_alignment = self._order_parameter()
 
         return {
             "phases": self.phases.copy(),
-            "cosmic_alignment": self._order_parameter(),
+            "cosmic_alignment": cosmic_alignment,
+            "director_drive": self.params.director_coupling * cosmic_alignment,
             "output_bitstreams": output_bitstreams,
         }
 
@@ -83,3 +92,44 @@ class L8_PhaseFieldLayer:
 
     def get_global_metric(self) -> float:
         return self._order_parameter()
+
+    @staticmethod
+    def _validate_params(params: L8_StochasticParameters) -> None:
+        if not isinstance(params.n_pulsars, int) or isinstance(params.n_pulsars, bool):
+            raise ValueError("n_pulsars must be a positive integer")
+        if params.n_pulsars <= 0:
+            raise ValueError("n_pulsars must be positive")
+        if not isinstance(params.bitstream_length, int) or isinstance(
+            params.bitstream_length, bool
+        ):
+            raise ValueError("bitstream_length must be a positive integer")
+        if params.bitstream_length <= 0:
+            raise ValueError("bitstream_length must be positive")
+        if not math.isfinite(float(params.k_cosmic)) or params.k_cosmic < 0.0:
+            raise ValueError("k_cosmic must be finite and non-negative")
+        if not math.isfinite(float(params.symbolic_coupling)) or params.symbolic_coupling < 0.0:
+            raise ValueError("symbolic_coupling must be finite and non-negative")
+        if not math.isfinite(float(params.director_coupling)) or params.director_coupling < 0.0:
+            raise ValueError("director_coupling must be finite and non-negative")
+        if params.pulsar_omegas is None:
+            raise ValueError("pulsar_omegas must be initialised")
+        omegas = np.asarray(params.pulsar_omegas, dtype=np.float64).reshape(-1)
+        if omegas.size != params.n_pulsars:
+            raise ValueError("pulsar_omegas length must match n_pulsars")
+        if not np.all(np.isfinite(omegas)):
+            raise ValueError("pulsar_omegas must contain only finite values")
+        params.pulsar_omegas = omegas
+        if params.rng_seed is not None:
+            if isinstance(params.rng_seed, bool) or not isinstance(params.rng_seed, int):
+                raise ValueError("rng_seed must be a non-negative integer or None")
+            if params.rng_seed < 0:
+                raise ValueError("rng_seed must be a non-negative integer or None")
+
+    @staticmethod
+    def _glyph_drive(glyph_vector: Any) -> float:
+        values = np.asarray(glyph_vector, dtype=np.float64).reshape(-1)
+        if values.size == 0:
+            raise ValueError("glyph_vector must contain at least one value")
+        if not np.all(np.isfinite(values)):
+            raise ValueError("glyph_vector must contain only finite values")
+        return float(np.mean(values))
