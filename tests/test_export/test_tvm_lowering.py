@@ -134,10 +134,16 @@ class TestTVMLowering(unittest.TestCase):
 
     def test_build_script(self):
         lowering = TVMLowering(TargetSchedule.for_gpu())
-        script = lowering.emit_build_script("")
+        relay_text = "def @main(%x: Tensor[(1), dtype=bool]) -> Tensor[(1), dtype=bool] {\n  %x\n}"
+        script = lowering.emit_build_script(relay_text)
         self.assertIn("import tvm", script)
         self.assertIn("target", script)
         self.assertIn("cuda", script)
+        self.assertIn("relay_ir =", script)
+        self.assertIn(repr(relay_text), script)
+        self.assertIn("relay.build(mod, target=target)", script)
+        self.assertIn("lib.export_library(output_path)", script)
+        self.assertNotIn("stub", script.lower())
 
     def test_empty_graph(self):
         graph = MockGraph([])
