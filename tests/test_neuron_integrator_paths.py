@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.neurons.models.adex import AdExNeuron
+from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
 from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 from sc_neurocore.neurons.models.morris_lecar import MorrisLecarNeuron
 from sc_neurocore.neurons.sc_izhikevich import SCIzhikevichNeuron
@@ -67,6 +68,11 @@ def test_morris_lecar_integrator_validation():
         MorrisLecarNeuron(integrator="bad-path")  # type: ignore[arg-type]
 
 
+def test_fitzhugh_nagumo_integrator_validation():
+    with pytest.raises(ValueError, match="Unsupported integrator"):
+        FitzHughNagumoNeuron(integrator="bad-path")  # type: ignore[arg-type]
+
+
 @pytest.mark.parametrize(
     ("kwargs", "match"),
     [
@@ -82,12 +88,36 @@ def test_morris_lecar_rejects_invalid_numerical_configuration(kwargs, match):
         MorrisLecarNeuron(**kwargs)
 
 
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"dt": 0.0}, "dt"),
+        ({"dt": np.nan}, "dt"),
+        ({"epsilon": 0.0}, "epsilon"),
+        ({"b": -0.1}, "b"),
+        ({"v": np.inf}, "v"),
+        ({"w": np.nan}, "w"),
+    ],
+)
+def test_fitzhugh_nagumo_rejects_invalid_numerical_configuration(kwargs, match):
+    with pytest.raises(ValueError, match=match):
+        FitzHughNagumoNeuron(**kwargs)
+
+
 @pytest.mark.parametrize("integrator", ["baseline_euler", "rk4", "rosenbrock"])
 def test_morris_lecar_rejects_non_finite_input_current(integrator):
     neuron = MorrisLecarNeuron(dt=0.05, integrator=integrator)
 
     with pytest.raises(ValueError, match="current"):
         neuron.step(np.nan)
+
+
+@pytest.mark.parametrize("integrator", ["baseline_euler", "rk4", "rosenbrock"])
+def test_fitzhugh_nagumo_rejects_non_finite_input_current(integrator):
+    neuron = FitzHughNagumoNeuron(dt=0.05, integrator=integrator)
+
+    with pytest.raises(ValueError, match="current"):
+        neuron.step(np.inf)
 
 
 def test_izhikevich_rk4_regular_spiking_and_default_preserved():
@@ -200,6 +230,38 @@ def test_morris_lecar_rosenbrock_path_tracks_rk4_and_keeps_gate_bounded():
     assert abs(candidate.w - reference.w) < 0.1
 
 
+def test_fitzhugh_nagumo_rk4_path_stays_finite_and_tracks_baseline():
+    baseline = FitzHughNagumoNeuron(dt=0.05, integrator="baseline_euler")
+    candidate = FitzHughNagumoNeuron(dt=0.05, integrator="rk4")
+
+    baseline_spikes = _count_spikes(baseline, 0.8, 2000)
+    candidate_spikes = _count_spikes(candidate, 0.8, 2000)
+
+    assert np.isfinite(candidate.v)
+    assert np.isfinite(candidate.w)
+    assert baseline_spikes > 0
+    assert candidate_spikes > 0
+    assert abs(candidate_spikes - baseline_spikes) <= 2
+    assert abs(candidate.v - baseline.v) < 0.3
+    assert abs(candidate.w - baseline.w) < 0.3
+
+
+def test_fitzhugh_nagumo_rosenbrock_path_tracks_rk4_and_stays_finite():
+    reference = FitzHughNagumoNeuron(dt=0.05, integrator="rk4")
+    candidate = FitzHughNagumoNeuron(dt=0.05, integrator="rosenbrock")
+
+    reference_spikes = _count_spikes(reference, 0.8, 1000)
+    candidate_spikes = _count_spikes(candidate, 0.8, 1000)
+
+    assert np.isfinite(candidate.v)
+    assert np.isfinite(candidate.w)
+    assert reference_spikes > 0
+    assert candidate_spikes > 0
+    assert abs(candidate_spikes - reference_spikes) <= 1
+    assert abs(candidate.v - reference.v) < 0.2
+    assert abs(candidate.w - reference.w) < 0.2
+
+
 def test_default_integrators_match_historical_paths():
     hh_default = HodgkinHuxleyNeuron(dt=0.01)
     hh_baseline = HodgkinHuxleyNeuron(dt=0.01, integrator="baseline_euler")
@@ -207,6 +269,8 @@ def test_default_integrators_match_historical_paths():
     adex_baseline = AdExNeuron(dt=0.1, integrator="baseline_euler")
     ml_default = MorrisLecarNeuron(dt=0.05)
     ml_baseline = MorrisLecarNeuron(dt=0.05, integrator="baseline_euler")
+    fhn_default = FitzHughNagumoNeuron(dt=0.05)
+    fhn_baseline = FitzHughNagumoNeuron(dt=0.05, integrator="baseline_euler")
 
     hh_default_spikes = _count_spikes(hh_default, 10.0, 200)
     hh_baseline_spikes = _count_spikes(hh_baseline, 10.0, 200)
@@ -214,10 +278,13 @@ def test_default_integrators_match_historical_paths():
     adex_baseline_spikes = _count_spikes(adex_baseline, 500.0, 2000)
     ml_default_spikes = _count_spikes(ml_default, 100.0, 1000)
     ml_baseline_spikes = _count_spikes(ml_baseline, 100.0, 1000)
+    fhn_default_spikes = _count_spikes(fhn_default, 0.8, 1000)
+    fhn_baseline_spikes = _count_spikes(fhn_baseline, 0.8, 1000)
 
     assert hh_default_spikes == hh_baseline_spikes
     assert adex_default_spikes == adex_baseline_spikes
     assert ml_default_spikes == ml_baseline_spikes
+    assert fhn_default_spikes == fhn_baseline_spikes
 
 
 def test_izhikevich_noise_injection_is_reachable_on_both_paths():
