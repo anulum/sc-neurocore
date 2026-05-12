@@ -850,17 +850,26 @@ print(f"Components: {sbom.total_components}")
 
 ---
 
-### §62. HIL Calibration Stub — `generate_hil_calibration()`
+### §62. HIL Calibration Protocol — `generate_hil_calibration()`
 
-Step-by-step hardware-in-the-loop calibration for analog drift compensation.
+Hardware-in-the-loop calibration protocol for analog drift compensation. The
+generator emits a deterministic Latin-hypercube design matrix, repetition
+count, settle-cycle requirement, correction model, observable list, and
+acceptance tolerance so the protocol can be replayed and audited.
 
 ```python
 from sc_neurocore.compiler.intelligence import generate_hil_calibration
 
 cal = generate_hil_calibration("sc_lif", {"v": "expr", "u": "expr"},
-    parameters={"tau": (5.0, 50.0)})
+    parameters={"tau": (5.0, 50.0)},
+    sample_points=10,
+    repetitions=3,
+    settle_cycles=32,
+    acceptance_tolerance=1 / 256,
+)
 for step in cal.protocol_steps:
     print(step)
+print(cal.sample_count, cal.design_matrix[0])
 ```
 
 ---

@@ -216,8 +216,10 @@ probes_intel = insert_debug_probes(
 
 ### HIL Calibration Protocol (§62)
 
-Generate a step-by-step hardware-in-the-loop calibration procedure
-for compensating analog drift, mismatch, and process variation:
+Generate a replayable hardware-in-the-loop calibration procedure for
+compensating analog drift, mismatch, and process variation. The protocol
+includes deterministic design points, repetitions, settle cycles, correction
+model, and acceptance tolerance:
 
 ```python
 from sc_neurocore.compiler.intelligence import generate_hil_calibration
@@ -225,9 +227,13 @@ from sc_neurocore.compiler.intelligence import generate_hil_calibration
 cal = generate_hil_calibration(
     "sc_lif", {"v": "expr", "u": "expr"},
     parameters={"tau": (5.0, 50.0), "threshold": (0.5, 2.0)},
+    sample_points=10,
+    repetitions=3,
+    settle_cycles=32,
 )
 for step in cal.protocol_steps:
     print(step)
+print(cal.sample_count)
 ```
 
 ### Digital Twin Shadow (§63)
