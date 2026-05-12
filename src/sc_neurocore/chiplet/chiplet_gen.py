@@ -1245,13 +1245,14 @@ class LinkProtection:
 
 
 def emit_crc32_sv(data_width: int = 64) -> str:
-    """CRC-32 checker stub for link error detection."""
+    """Emit IEEE 802.3 CRC-32 feedback logic for link error detection."""
     return textwrap.dedent(f"""\
 {_SPDX}
 // SC-NeuroCore Chiplet — CRC-32 link checker
 
 module sc_chiplet_crc32 #(
-    parameter DATA_W = {data_width}
+    parameter DATA_W     = {data_width},
+    parameter CRC32_POLY = 32'h04C11DB7
 )(
     input  wire               clk,
     input  wire               rst_n,
@@ -1263,7 +1264,27 @@ module sc_chiplet_crc32 #(
 );
 
     reg [31:0] crc_reg;
+    wire [31:0] crc_next;
     integer i;
+
+    function automatic [31:0] crc32_update;
+        input [31:0] crc;
+        input [DATA_W-1:0] data;
+        reg [31:0] next_crc;
+        integer bit_idx;
+        begin
+            next_crc = crc;
+            for (bit_idx = 0; bit_idx < DATA_W; bit_idx = bit_idx + 1) begin
+                if (next_crc[31] ^ data[DATA_W-1-bit_idx])
+                    next_crc = {{next_crc[30:0], 1'b0}} ^ CRC32_POLY;
+                else
+                    next_crc = {{next_crc[30:0], 1'b0}};
+            end
+            crc32_update = next_crc;
+        end
+    endfunction
+
+    assign crc_next = crc32_update(crc_reg, data_in);
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -1272,11 +1293,10 @@ module sc_chiplet_crc32 #(
             crc_valid <= 0;
             crc_error <= 0;
         end else if (data_valid) begin
-            crc_reg <= crc_reg;  // Placeholder: real CRC-32 polynomial
-            for (i = 0; i < DATA_W; i = i + 1)
-                crc_reg <= {{crc_reg[30:0], crc_reg[31] ^ data_in[i]}};
-            crc_out   <= crc_reg;
+            crc_reg <= crc_next;
+            crc_out   <= crc_next ^ 32'hFFFFFFFF;
             crc_valid <= 1;
+            crc_error <= 0;
         end else begin
             crc_valid <= 0;
         end
@@ -1332,14 +1352,16 @@ class CreditConfig:
 
 
 def emit_credit_controller_sv(config: CreditConfig, link_name: str = "link") -> str:
-    """Credit-based flow controller stub."""
+    """Emit saturating credit-based flow control for a die-to-die link."""
     return textwrap.dedent(f"""\
 {_SPDX}
 // SC-NeuroCore Chiplet — Credit controller for {link_name}
 
 module sc_chiplet_credit_{link_name} #(
     parameter INIT_CREDITS = {config.initial_credits},
-    parameter DATA_W       = 64
+    parameter MAX_CREDITS = {config.initial_credits},
+    parameter CREDIT_GRANULARITY = {config.credit_granularity},
+    parameter DATA_W = 64
 )(
     input  wire               clk,
     input  wire               rst_n,
@@ -1352,18 +1374,21 @@ module sc_chiplet_credit_{link_name} #(
     output reg  [7:0]         credits_available
 );
 
+    wire consume_credit = tx_valid && tx_ready;
+    wire return_credit  = credit_return;
+
     always @(posedge clk) begin
         if (!rst_n)
             credits_available <= INIT_CREDITS;
         else begin
-            if (tx_valid && tx_ready && !credit_return)
+            if (consume_credit && !return_credit && credits_available != 0)
                 credits_available <= credits_available - 1;
-            else if (!tx_valid && credit_return)
+            else if (!consume_credit && return_credit && credits_available != MAX_CREDITS)
                 credits_available <= credits_available + 1;
         end
     end
 
-    assign tx_ready = (credits_available > 0);
+    assign tx_ready = (credits_available != 0);
 
 endmodule
 """)
@@ -1481,7 +1506,7 @@ class PowerDomainMap:
 
 
 def emit_power_gating_sv(domain: PowerDomain) -> str:
-    """Power-gating controller stub for a voltage island."""
+    """Emit sequenced isolation and switch control for a voltage island."""
     die_list = ", ".join(str(d) for d in domain.die_ids)
     return textwrap.dedent(f"""\
 {_SPDX}
@@ -1494,16 +1519,64 @@ module sc_chiplet_pwr_domain_{domain.domain_id} (
     input  wire rst_n,
     input  wire enable,
     output reg  domain_active,
-    output reg  isolation_en
+    output reg  isolation_en,
+    output reg  power_switch_en
 );
+
+    localparam PWR_OFF     = 2'd0;
+    localparam PWR_ON      = 2'd1;
+    localparam PWR_ISOLATE = 2'd2;
+    localparam PWR_RESTORE = 2'd3;
+    localparam ISO_CYCLES  = 4;
+
+    reg [1:0] state;
+    reg [2:0] iso_count;
 
     always @(posedge clk) begin
         if (!rst_n) begin
+            state         <= PWR_OFF;
+            iso_count     <= 0;
             domain_active <= 1'b0;
             isolation_en  <= 1'b1;
+            power_switch_en <= 1'b0;
         end else begin
-            domain_active <= enable;
-            isolation_en  <= !enable;
+            case (state)
+                PWR_OFF: begin
+                    domain_active <= 1'b0;
+                    isolation_en <= 1'b1;
+                    power_switch_en <= 1'b0;
+                    iso_count <= 0;
+                    if (enable)
+                        state <= PWR_RESTORE;
+                end
+                PWR_RESTORE: begin
+                    power_switch_en <= 1'b1;
+                    isolation_en <= 1'b1;
+                    domain_active <= 1'b0;
+                    state <= PWR_ON;
+                end
+                PWR_ON: begin
+                    domain_active <= 1'b1;
+                    isolation_en <= 1'b0;
+                    power_switch_en <= 1'b1;
+                    iso_count <= 0;
+                    if (!enable)
+                        state <= PWR_ISOLATE;
+                end
+                PWR_ISOLATE: begin
+                    domain_active <= 1'b1;
+                    isolation_en <= 1'b1;
+                    power_switch_en <= 1'b1;
+                    if (iso_count == ISO_CYCLES[2:0]) begin
+                        domain_active <= 1'b0;
+                        power_switch_en <= 1'b0;
+                        state <= PWR_OFF;
+                    end else begin
+                        iso_count <= iso_count + 1'b1;
+                    end
+                end
+                default: state <= PWR_OFF;
+            endcase
         end
     end
 
