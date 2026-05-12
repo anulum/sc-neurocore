@@ -286,6 +286,46 @@ def test_datastream_payload_validator_rejects_malformed_qpu_artifact_hash() -> N
         validate_datastream_payload(payload)
 
 
+def test_datastream_payload_validator_rejects_non_finite_json_payload_values() -> None:
+    packet = build_datastream_packet(
+        waveform=_waveform(),
+        spike_raster=_spikes(),
+        source_name="unit-replay",
+        source_mode="fixture",
+        optimiser_observation=_observation(),
+        metadata={"window": "unit"},
+    )
+    metadata_payload = packet.to_bridge_dict()
+    metadata_payload["metadata"] = {"window": float("nan")}
+    _refresh_packet_hash(metadata_payload)
+
+    with pytest.raises(DatastreamValidationError, match="strict finite JSON"):
+        validate_datastream_payload(metadata_payload)
+
+    observation_payload = packet.to_bridge_dict()
+    observation_payload["optimiser_observation"] = {
+        **observation_payload["optimiser_observation"],
+        "accuracy_score": float("inf"),
+    }
+    _refresh_packet_hash(observation_payload)
+
+    with pytest.raises(DatastreamValidationError, match="strict finite JSON"):
+        validate_datastream_payload(observation_payload)
+
+
+def test_datastream_packet_hash_rejects_non_finite_json_metadata() -> None:
+    packet = build_datastream_packet(
+        waveform=_waveform(),
+        spike_raster=_spikes(),
+        source_name="unit-replay",
+        source_mode="fixture",
+        metadata={"bad": float("inf")},
+    )
+
+    with pytest.raises(DatastreamValidationError, match="strict finite JSON"):
+        packet.to_bridge_dict()
+
+
 def test_datastream_payload_validator_rejects_tampered_packet_hash() -> None:
     packet = build_datastream_packet(
         waveform=_waveform(),

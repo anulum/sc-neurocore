@@ -55,12 +55,7 @@ class SCNeuroCoreDatastreamPacket:
     @property
     def packet_sha256(self) -> str:
         """Stable hash of the JSON-compatible datastream payload."""
-        encoded = json.dumps(
-            self.to_bridge_dict(include_packet_hash=False),
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return _canonical_payload_sha256(self.to_bridge_dict(include_packet_hash=False))
 
     def to_bridge_dict(self, *, include_packet_hash: bool = True) -> dict[str, Any]:
         """Return the SCPN bridge packet mapping."""
@@ -381,11 +376,19 @@ def _validate_telemetry_layers(
 def _payload_sha256_without_packet_hash(payload: dict[str, Any]) -> str:
     canonical_payload = dict(payload)
     canonical_payload.pop("packet_sha256", None)
-    encoded = json.dumps(
-        canonical_payload,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
+    return _canonical_payload_sha256(canonical_payload)
+
+
+def _canonical_payload_sha256(payload: dict[str, Any]) -> str:
+    try:
+        encoded = json.dumps(
+            payload,
+            allow_nan=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    except (TypeError, ValueError) as exc:
+        raise DatastreamValidationError("payload must be strict finite JSON") from exc
     return hashlib.sha256(encoded).hexdigest()
 
 
