@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import hashlib
 import json
+import string
 from typing import Any
 
 import numpy as np
@@ -254,6 +255,54 @@ def load_live_stream(
     )
 
 
+def validate_qpu_artifact_payload(payload: dict[str, Any]) -> None:
+    """Validate a JSON-deserialised QPU bridge artifact payload."""
+    if not isinstance(payload, dict):
+        raise ValueError("QPU artifact payload must be a mapping")
+    if payload.get("schema_version") != QPU_ARTIFACT_SCHEMA_VERSION:
+        raise ValueError("unsupported QPU artifact schema_version")
+    for key in ("domain", "source_name", "normalization", "extraction_method"):
+        _require_non_empty_string(payload.get(key), key)
+    source_mode = payload.get("source_mode")
+    _validate_source_mode(source_mode)
+    source_timestamp = payload.get("source_timestamp")
+    replay_id = payload.get("replay_id")
+    if source_timestamp is None and replay_id is None:
+        raise ValueError("source_timestamp or replay_id is required")
+    if source_timestamp is not None:
+        _require_non_empty_string(source_timestamp, "source_timestamp")
+    if replay_id is not None:
+        _require_non_empty_string(replay_id, "replay_id")
+    if not isinstance(payload.get("metadata"), dict):
+        raise ValueError("metadata must be a mapping")
+
+    knm = _array_from_payload(payload, "K_nm")
+    omega = _array_from_payload(payload, "omega")
+    theta0 = None if payload.get("theta0") is None else _array_from_payload(payload, "theta0")
+    layer_assignments = payload.get("layer_assignments")
+    if not isinstance(layer_assignments, list):
+        raise ValueError("layer_assignments must be a list")
+    _validate_artifact_arrays(knm, omega, theta0, layer_assignments)
+
+    hashes = payload.get("hashes")
+    if not isinstance(hashes, dict):
+        raise ValueError("hashes must be present")
+    _validate_payload_array_hash(hashes, "K_nm_sha256", knm)
+    _validate_payload_array_hash(hashes, "omega_sha256", omega)
+    if theta0 is None:
+        if "theta0_sha256" in hashes:
+            raise ValueError("theta0_sha256 must be absent when theta0 is null")
+    else:
+        _validate_payload_array_hash(hashes, "theta0_sha256", theta0)
+
+    artifact_hash = payload.get("artifact_sha256")
+    if not _is_sha256_hex(artifact_hash):
+        raise ValueError("artifact_sha256 must be a SHA256 hex digest")
+    expected_hash = _payload_sha256_without_artifact_hash(payload)
+    if artifact_hash != expected_hash:
+        raise ValueError("artifact_sha256 does not match payload")
+
+
 def _artifact(
     *,
     domain: str,
@@ -358,6 +407,35 @@ def _hash_array(array: np.ndarray) -> str:
     return hashlib.sha256(stable.tobytes()).hexdigest()
 
 
+def _array_from_payload(payload: dict[str, Any], key: str) -> np.ndarray:
+    try:
+        return np.asarray(payload.get(key), dtype=np.float64)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{key} must be a numeric JSON array") from exc
+
+
+def _validate_payload_array_hash(hashes: dict[str, Any], key: str, array: np.ndarray) -> None:
+    value = hashes.get(key)
+    if not _is_sha256_hex(value):
+        raise ValueError(f"{key} must be a SHA256 hex digest")
+    if value != _hash_array(array):
+        raise ValueError(f"{key} does not match payload")
+
+
+def _is_sha256_hex(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in string.hexdigits for character in value)
+    )
+
+
+def _payload_sha256_without_artifact_hash(payload: dict[str, Any]) -> str:
+    canonical_payload = dict(payload)
+    canonical_payload.pop("artifact_sha256", None)
+    return _canonical_artifact_sha256(canonical_payload)
+
+
 def _canonical_artifact_sha256(payload: dict[str, Any]) -> str:
     try:
         encoded = json.dumps(
@@ -419,4 +497,5 @@ __all__ = [
     "load_live_stream",
     "load_power_grid",
     "load_tokamak_data",
+    "validate_qpu_artifact_payload",
 ]

@@ -10,9 +10,13 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
+
 import numpy as np
 import pytest
 
+import scpneurocore.bridge as bridge
 from scpneurocore.bridge import (
     QPU_ARTIFACT_SCHEMA_VERSION,
     QPUBridgeArtifact,
@@ -21,7 +25,23 @@ from scpneurocore.bridge import (
     load_live_stream,
     load_power_grid,
     load_tokamak_data,
+    validate_qpu_artifact_payload,
 )
+
+
+def _validate_qpu_payload(payload: dict) -> None:
+    validator = getattr(bridge, "validate_qpu_artifact_payload", None)
+    assert callable(validator)
+    validator(payload)
+
+
+def _refresh_artifact_hash(payload: dict) -> dict:
+    body = dict(payload)
+    body.pop("artifact_sha256", None)
+    payload["artifact_sha256"] = hashlib.sha256(
+        json.dumps(body, allow_nan=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    return payload
 
 
 def _assert_qpu_artifact(artifact: QPUBridgeArtifact, n: int, mode: str) -> None:
@@ -48,6 +68,7 @@ def test_expected_import_surface() -> None:
     assert callable(load_tokamak_data)
     assert callable(load_power_grid)
     assert callable(load_live_stream)
+    assert callable(validate_qpu_artifact_payload)
 
 
 def test_default_loaders_do_not_silently_generate_data() -> None:
@@ -163,6 +184,61 @@ def test_qpu_artifact_rejects_invalid_layer_assignments() -> None:
     for layer_assignments in bad_assignments:
         with pytest.raises(ValueError, match="layer_assignments"):
             QPUBridgeArtifact(**base, layer_assignments=layer_assignments)
+
+
+def test_validate_qpu_artifact_payload_accepts_round_trip_artifact() -> None:
+    payload = load_power_grid(n=4, source_mode="fixture").to_qpu_artifact_dict()
+
+    _validate_qpu_payload(payload)
+
+
+def test_validate_qpu_artifact_payload_rejects_tampered_artifact_hash() -> None:
+    payload = load_power_grid(n=4, source_mode="fixture").to_qpu_artifact_dict()
+    payload["source_name"] = "tampered-grid"
+
+    with pytest.raises(ValueError, match="artifact_sha256"):
+        _validate_qpu_payload(payload)
+
+
+def test_validate_qpu_artifact_payload_rejects_malformed_arrays_and_hashes() -> None:
+    payload = load_power_grid(n=4, source_mode="fixture").to_qpu_artifact_dict()
+    bad_cases = [
+        ("K_nm", {"K_nm": [[0.0, 0.5], [0.5, 0.0], [0.0, 0.0]]}),
+        ("omega", {"omega": [1.0, 1.0, 1.0]}),
+        ("theta0", {"theta0": [0.0, 0.0, 0.0]}),
+        ("layer_assignments", {"layer_assignments": [0, 1, 1, 3]}),
+        ("K_nm_sha256", {"hashes": {**payload["hashes"], "K_nm_sha256": "0" * 64}}),
+        ("theta0_sha256", {"hashes": {**payload["hashes"], "theta0_sha256": "f" * 64}}),
+    ]
+
+    for match, overrides in bad_cases:
+        bad_payload = load_power_grid(n=4, source_mode="fixture").to_qpu_artifact_dict()
+        bad_payload.update(overrides)
+        _refresh_artifact_hash(bad_payload)
+
+        with pytest.raises(ValueError, match=match):
+            _validate_qpu_payload(bad_payload)
+
+
+def test_validate_qpu_artifact_payload_rejects_malformed_metadata_and_source() -> None:
+    payload = load_power_grid(n=4, source_mode="fixture").to_qpu_artifact_dict()
+    bad_cases = [
+        ("schema_version", {"schema_version": "old"}),
+        ("source_mode", {"source_mode": "unknown"}),
+        ("source_name", {"source_name": ""}),
+        ("metadata", {"metadata": ["not", "mapping"]}),
+        ("strict finite JSON", {"metadata": {"bad": float("nan")}}),
+        ("artifact_sha256", {"artifact_sha256": "not-a-sha256"}),
+    ]
+
+    for match, overrides in bad_cases:
+        bad_payload = load_power_grid(n=4, source_mode="fixture").to_qpu_artifact_dict()
+        bad_payload.update(overrides)
+        if match not in {"artifact_sha256", "strict finite JSON"}:
+            _refresh_artifact_hash(bad_payload)
+
+        with pytest.raises(ValueError, match=match):
+            _validate_qpu_payload(bad_payload)
 
 
 def test_bridge_rejects_invalid_source_inputs() -> None:

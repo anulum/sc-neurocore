@@ -17,6 +17,7 @@ from .bridge import (
     load_live_stream,
     load_power_grid,
     load_tokamak_data,
+    validate_qpu_artifact_payload,
 )
 from .datastream import (
     SC_NEUROCORE_DATASTREAM_SCHEMA_VERSION,
@@ -38,4 +39,5 @@ __all__ = [
     "load_power_grid",
     "load_tokamak_data",
     "validate_datastream_payload",
+    "validate_qpu_artifact_payload",
 ]
