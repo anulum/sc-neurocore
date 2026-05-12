@@ -116,6 +116,7 @@ See [Architecture](architecture/architecture.md) for the full package map.
 - **[Network To Torch Bridge](guides/network_to_torch_bridge.md)** — Explicit differentiable bridge from declarative `Network` graphs to torch execution
 - **[JAX Surrogate Execution Paths](guides/jax_surrogate_paths.md)** — Explicit `custom_vjp` vs legacy `stop_gradient` routes for JAX training
 - **[Equation Units](guides/equation_units.md)** — Opt-in strict dimensional validation for `EquationNeuron` and `from_equations(...)`
+- **[SCPN NeuroCore Bridge API](api/scpn_neurocore.md)** — Canonical `scpn_neurocore` bridge artifacts and datastream packets for cross-repository SCPN workflows
 - **[API Reference](api/API_REFERENCE.md)** — Python package API
 - **[Rust Engine API](api/rust-engine.md)** — High-performance Rust engine docs
 - **[Hardware Guide](hardware/HARDWARE_GUIDE.md)** — FPGA deployment workflow

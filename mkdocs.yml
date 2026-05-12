@@ -350,6 +350,7 @@ nav:
           - Reservoir: api/reservoir.md
           - Robotics: api/robotics.md
           - SCPN Layers: api/scpn.md
+          - SCPN NeuroCore Bridge: api/scpn_neurocore.md
           - Sleep: api/sleep.md
           - Spatial: api/spatial.md
           - Spike GNN: api/spike_gnn.md
