@@ -12,6 +12,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"hash/crc32"
 	"math"
 	"math/bits"
 	"net"
@@ -24,6 +25,8 @@ import (
 // §1  AER Spike Packet (28-byte wire format)
 // ============================================================
 
+const SpikePacketWireSize = 28
+
 type SpikePacket struct {
 	Timestamp uint64
 	NeuronID  uint32
@@ -33,25 +36,40 @@ type SpikePacket struct {
 }
 
 func EncodeSpikePacket(p SpikePacket) []byte {
-	buf := make([]byte, 28)
+	buf := make([]byte, SpikePacketWireSize)
 	binary.BigEndian.PutUint64(buf[0:8], p.Timestamp)
 	binary.BigEndian.PutUint32(buf[8:12], p.NeuronID)
 	binary.BigEndian.PutUint16(buf[12:14], p.LayerID)
 	buf[14] = p.Polarity
 	copy(buf[15:24], p.Payload[:])
-	// CRC32 placeholder
-	binary.BigEndian.PutUint32(buf[24:28], 0xDEADBEEF)
+	binary.BigEndian.PutUint32(buf[24:28], crc32.ChecksumIEEE(buf[:24]))
 	return buf
 }
 
 func DecodeSpikePacket(buf []byte) SpikePacket {
+	p, err := DecodeSpikePacketChecked(buf)
+	if err != nil {
+		panic(err)
+	}
+	return p
+}
+
+func DecodeSpikePacketChecked(buf []byte) (SpikePacket, error) {
 	var p SpikePacket
+	if len(buf) != SpikePacketWireSize {
+		return p, fmt.Errorf("spike packet length %d, want %d", len(buf), SpikePacketWireSize)
+	}
+	gotCRC := binary.BigEndian.Uint32(buf[24:28])
+	wantCRC := crc32.ChecksumIEEE(buf[:24])
+	if gotCRC != wantCRC {
+		return p, fmt.Errorf("spike packet CRC32 %#08x, want %#08x", gotCRC, wantCRC)
+	}
 	p.Timestamp = binary.BigEndian.Uint64(buf[0:8])
 	p.NeuronID = binary.BigEndian.Uint32(buf[8:12])
 	p.LayerID = binary.BigEndian.Uint16(buf[12:14])
 	p.Polarity = buf[14]
 	copy(p.Payload[:], buf[15:24])
-	return p
+	return p, nil
 }
 
 // ============================================================
@@ -59,10 +77,10 @@ func DecodeSpikePacket(buf []byte) SpikePacket {
 // ============================================================
 
 type SpikeRingBuffer struct {
-	data  []SpikePacket
-	head  uint64
-	tail  uint64
-	cap   uint64
+	data []SpikePacket
+	head uint64
+	tail uint64
+	cap  uint64
 }
 
 func NewSpikeRingBuffer(capacity int) *SpikeRingBuffer {
@@ -143,9 +161,9 @@ type RouteEntry struct {
 }
 
 type AERRouter struct {
-	mu     sync.RWMutex
-	routes map[uint16][]RouteEntry
-	sent   uint64
+	mu      sync.RWMutex
+	routes  map[uint16][]RouteEntry
+	sent    uint64
 	dropped uint64
 }
 
@@ -253,10 +271,10 @@ func (rl *RateLimiter) Allow() bool {
 // ============================================================
 
 type HealthStatus struct {
-	Healthy   bool      `json:"healthy"`
-	Uptime    string    `json:"uptime"`
+	Healthy   bool            `json:"healthy"`
+	Uptime    string          `json:"uptime"`
 	Checks    map[string]bool `json:"checks"`
-	Timestamp string    `json:"timestamp"`
+	Timestamp string          `json:"timestamp"`
 }
 
 type HealthChecker struct {
@@ -303,9 +321,9 @@ func (hc *HealthChecker) Status() HealthStatus {
 // ============================================================
 
 type TelemetryUDP struct {
-	conn      *net.UDPConn
-	addr      *net.UDPAddr
-	seqNum    uint64
+	conn   *net.UDPConn
+	addr   *net.UDPAddr
+	seqNum uint64
 }
 
 func NewTelemetryUDP(address string) (*TelemetryUDP, error) {
