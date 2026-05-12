@@ -219,10 +219,18 @@ class L15_MetaLayer:
         if not has_context_id or not has_terminals:
             raise ValueError("boundary context requires boundary_context_id and boundary_terminals")
 
-        context_id = str(l14_input["boundary_context_id"])
+        raw_context_id = l14_input["boundary_context_id"]
+        terminals = tuple(l14_input["boundary_terminals"])
+        if raw_context_id is None and not terminals:
+            return {
+                "boundary_context_id": None,
+                "boundary_terminals": (),
+                "consilium_terminal_set": (),
+                "consilium_terminal_bandwidth": 1.0,
+            }
+        context_id = str(raw_context_id)
         if not context_id:
             raise ValueError("boundary_context_id must be non-empty")
-        terminals = tuple(l14_input["boundary_terminals"])
         valid_terminals = {"T1", "T2", "T3", "T4", "T5", "T6", "T7"}
         if not terminals or any(terminal not in valid_terminals for terminal in terminals):
             raise ValueError("boundary_terminals must contain valid T1-T7 terminal identifiers")

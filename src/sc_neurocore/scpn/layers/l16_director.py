@@ -283,10 +283,19 @@ class L16_DirectorLayer:
             )
 
         boundary_context_id = l15_input["boundary_context_id"]
+        raw_terminals = l15_input["boundary_terminals"]
+        if boundary_context_id is None:
+            try:
+                boundary_terminals = tuple(raw_terminals)
+            except TypeError as exc:
+                raise ValueError(
+                    "l15 boundary_terminals must be a non-empty sequence of terminal identifiers"
+                ) from exc
+            if not boundary_terminals:
+                return None, (), (), 1.0
         if not isinstance(boundary_context_id, str) or not boundary_context_id.strip():
             raise ValueError("l15 boundary_context_id must be a non-empty string")
 
-        raw_terminals = l15_input["boundary_terminals"]
         if isinstance(raw_terminals, str):
             raise ValueError(
                 "l15 boundary_terminals must be a non-empty sequence of terminal identifiers"

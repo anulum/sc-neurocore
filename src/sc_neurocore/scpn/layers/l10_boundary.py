@@ -212,10 +212,13 @@ class L10_BoundaryLayer:
             return {"ebs_id": None, "terminal_set": ()}
         if not has_context_id or not has_terminals:
             raise ValueError("boundary context requires boundary_context_id and boundary_terminals")
-        ebs_id = str(l9_input["boundary_context_id"])
+        raw_context_id = l9_input["boundary_context_id"]
+        terminals = tuple(l9_input["boundary_terminals"])
+        if raw_context_id is None and not terminals:
+            return {"ebs_id": None, "terminal_set": ()}
+        ebs_id = str(raw_context_id)
         if not ebs_id:
             raise ValueError("boundary_context_id must be non-empty")
-        terminals = tuple(l9_input["boundary_terminals"])
         valid_terminals = {"T1", "T2", "T3", "T4", "T5", "T6", "T7"}
         if not terminals or any(terminal not in valid_terminals for terminal in terminals):
             raise ValueError("boundary_terminals must contain valid T1-T7 terminal identifiers")
