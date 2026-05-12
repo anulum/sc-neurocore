@@ -38,9 +38,10 @@ class VerilogGenerator:
     Generates Top-Level Verilog for a defined SC Network.
     """
 
-    def __init__(self, module_name="sc_network_top") -> None:  # type: ignore[no-untyped-def]
+    def __init__(self, module_name="sc_network_top", bus_width: int = 8) -> None:
         """Initialise with a top-level module name."""
         self.module_name = sanitize_ident(module_name, context="module name")
+        self.bus_width = self._require_positive_int(bus_width, "bus_width")
         self.layers = []  # type: ignore[var-annotated]
         self.wires = []  # type: ignore[var-annotated]
         self.instances = []  # type: ignore[var-annotated]
@@ -67,23 +68,26 @@ class VerilogGenerator:
         if mode != "sync":
             raise ValueError("mode must be 'sync' or 'async_aer'")
         self._validate_sync_layers()
+        layer_widths = self._sync_layer_widths()
+        input_width = layer_widths[0][0] if layer_widths else self.bus_width
+        output_width = layer_widths[-1][1] if layer_widths else self.bus_width
 
         code = f"module {self.module_name} (\n"
         code += "    input wire clk,\n"
         code += "    input wire rst_n,\n"
-        # Determine I/O from first/last layer logic (simplified)
-        code += "    input wire [7:0] input_bus,\n"
-        code += "    output wire [7:0] output_bus\n"
+        code += f"    input wire [{input_width - 1}:0] input_bus,\n"
+        code += f"    output wire [{output_width - 1}:0] output_bus\n"
         code += ");\n\n"
 
         code += "    // Internal Signals\n"
         # Generate wires for connections
-        for i in range(len(self.layers) - 1):
-            code += f"    wire [7:0] layer_{i}_to_{i + 1};\n"
+        for i in range(len(layer_widths) - 1):
+            code += f"    wire [{layer_widths[i][1] - 1}:0] layer_{i}_to_{i + 1};\n"
 
         code += "\n"
 
         # Instantiate Layers
+        dense_idx = 0
         for i, layer in enumerate(self.layers):
             l_type = layer["type"]
             l_name = layer["name"]
@@ -97,18 +101,19 @@ class VerilogGenerator:
                 code += "        .rst_n(rst_n),\n"
 
                 # Connect Input
-                if i == 0:
+                if dense_idx == 0:
                     code += "        .input_bus(input_bus),\n"
                 else:
-                    code += f"        .input_bus(layer_{i - 1}_to_{i}),\n"
+                    code += f"        .input_bus(layer_{dense_idx - 1}_to_{dense_idx}),\n"
 
                 # Connect Output
-                if i == len(self.layers) - 1:
+                if dense_idx == len(layer_widths) - 1:
                     code += "        .output_bus(output_bus)\n"
                 else:
-                    code += f"        .output_bus(layer_{i}_to_{i + 1})\n"
+                    code += f"        .output_bus(layer_{dense_idx}_to_{dense_idx + 1})\n"
 
                 code += "    );\n\n"
+                dense_idx += 1
 
         code += "endmodule\n"
         source_modules = emit_sources_from_ir({"nodes": self.layers})
@@ -125,13 +130,59 @@ class VerilogGenerator:
             if layer_type == "Dense":
                 if "n_neurons" not in params:
                     raise ValueError(f"Dense layer '{layer_name}' requires n_neurons")
-                n_neurons = params["n_neurons"]
-                if not isinstance(n_neurons, Integral) or int(n_neurons) <= 0:
-                    raise ValueError(f"Dense layer '{layer_name}' n_neurons must be a positive integer")
+                self._require_positive_int(
+                    params["n_neurons"],
+                    f"Dense layer '{layer_name}' n_neurons",
+                )
+                for width_name in ("input_width", "output_width"):
+                    if width_name in params:
+                        self._require_positive_int(
+                            params[width_name],
+                            f"Dense layer '{layer_name}' {width_name}",
+                        )
                 continue
             if layer_type in _SYNC_AUXILIARY_LAYER_TYPES:
                 continue
             raise ValueError(f"unsupported sync layer type '{layer_type}' for layer '{layer_name}'")
+
+    @staticmethod
+    def _require_positive_int(value: Any, name: str) -> int:
+        """Return value as int after rejecting booleans and non-positive values."""
+        if isinstance(value, bool) or not isinstance(value, Integral) or int(value) <= 0:
+            raise ValueError(f"{name} must be a positive integer")
+        return int(value)
+
+    def _dense_input_width(self, params: Mapping[str, Any], previous_width: int | None) -> int:
+        if "input_width" in params:
+            return self._require_positive_int(params["input_width"], "input_width")
+        return previous_width if previous_width is not None else self.bus_width
+
+    def _dense_output_width(self, params: Mapping[str, Any]) -> int:
+        if "output_width" in params:
+            return self._require_positive_int(params["output_width"], "output_width")
+        return self._require_positive_int(params["n_neurons"], "n_neurons")
+
+    def _sync_layer_widths(self) -> list[tuple[int, int]]:
+        """Return per-layer ``(input_width, output_width)`` and reject mismatches."""
+        widths: list[tuple[int, int]] = []
+        previous_width: int | None = None
+        previous_name: str | None = None
+        for layer in self.layers:
+            if layer["type"] != "Dense":
+                continue
+            name = layer["name"]
+            params = layer["params"]
+            input_width = self._dense_input_width(params, previous_width)
+            output_width = self._dense_output_width(params)
+            if previous_width is not None and input_width != previous_width:
+                raise ValueError(
+                    f"{previous_name} -> {name} width mismatch: "
+                    f"{previous_width} output bits cannot drive {input_width} input bits"
+                )
+            widths.append((input_width, output_width))
+            previous_width = output_width
+            previous_name = name
+        return widths
 
     def emit_lfsr16_source(self, module_name: str = "sc_lfsr16_source", seed: int = 0xACE1) -> str:
         """Emit a standalone LFSR-16 stochastic source module."""

@@ -50,7 +50,28 @@ def test_verilog_generator_two_layers_wires():
     gen.add_layer("Dense", "dense0", {"n_neurons": 4})
     gen.add_layer("Dense", "dense1", {"n_neurons": 4})
     code = gen.generate()
-    assert "wire [7:0] layer_0_to_1;" in code
+    assert "wire [3:0] layer_0_to_1;" in code
+
+
+def test_verilog_generator_derives_declared_bus_widths():
+    """Sync generator should not force every top-level bus to eight bits."""
+    gen = VerilogGenerator(module_name="wide_top", bus_width=16)
+    gen.add_layer("Dense", "dense0", {"n_neurons": 12, "output_width": 12})
+
+    code = gen.generate()
+
+    assert "input wire [15:0] input_bus" in code
+    assert "output wire [11:0] output_bus" in code
+
+
+def test_verilog_generator_rejects_mismatched_dense_widths():
+    """Adjacent Dense layers must agree on the inter-layer bus width."""
+    gen = VerilogGenerator()
+    gen.add_layer("Dense", "dense0", {"n_neurons": 5, "output_width": 5})
+    gen.add_layer("Dense", "dense1", {"n_neurons": 3, "input_width": 7})
+
+    with pytest.raises(ValueError, match="dense0 -> dense1 width mismatch"):
+        gen.generate()
 
 
 def test_verilog_generator_dense_instances():
