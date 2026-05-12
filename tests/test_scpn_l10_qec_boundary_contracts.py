@@ -84,6 +84,32 @@ def test_l10_memory_free_energy_adds_bounded_complexity_flux() -> None:
     assert out["boundary_complexity"] == pytest.approx(0.3)
 
 
+def test_l10_preserves_l9_boundary_context_for_auditability() -> None:
+    layer = L10_BoundaryLayer(
+        L10_StochasticParameters(
+            n_boundary_nodes=3,
+            bitstream_length=16,
+            rejection_threshold=1.0,
+            steering_gain=0.0,
+            memory_coupling=0.0,
+            qec_coupling=0.0,
+            rng_seed=5,
+        )
+    )
+
+    out = layer.step(
+        0.1,
+        l9_input={
+            "retrieval_quality": 0.0,
+            "boundary_context_id": "ebs-memory-10",
+            "boundary_terminals": ("T2", "T5"),
+        },
+    )
+
+    assert out["boundary_context_id"] == "ebs-memory-10"
+    assert out["boundary_terminals"] == ("T2", "T5")
+
+
 def test_l10_projects_l9_qec_vectors_into_boundary_space() -> None:
     layer = L10_BoundaryLayer(
         L10_StochasticParameters(
@@ -126,6 +152,9 @@ def test_l10_rejects_invalid_l9_qec_payloads() -> None:
             "recovery_operator": np.array([0.0, 2.0, 0.0]),
         },
         {"retrieval_quality": 0.0, "memory_free_energy": -0.1},
+        {"retrieval_quality": 0.0, "boundary_context_id": "ebs", "boundary_terminals": ("T8",)},
+        {"retrieval_quality": 0.0, "boundary_context_id": "ebs"},
+        {"retrieval_quality": 0.0, "boundary_terminals": ("T2",)},
     ]
 
     for payload in invalid_payloads:
