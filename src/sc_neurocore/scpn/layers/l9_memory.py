@@ -20,6 +20,7 @@ Ref: Paper 9 — Memory Imprint-Existential Holograph.
 
 from __future__ import annotations
 from dataclasses import dataclass
+import math
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -33,6 +34,7 @@ class L9_StochasticParameters:
     imprint_rate: float = 0.3
     decay_rate: float = 0.02
     phase_field_coupling: float = 0.1  # from L8
+    rng_seed: Optional[int] = None
 
 
 class L9_MemoryLayer:
@@ -40,16 +42,18 @@ class L9_MemoryLayer:
 
     def __init__(self, params: Optional[L9_StochasticParameters] = None):
         self.params = params or L9_StochasticParameters()
+        self._validate_params(self.params)
         n = self.params.n_memory_slots
         self.patterns = np.zeros((n, n))  # weight matrix
-        self.state = np.random.choice([-1, 1], size=n).astype(np.float64)
+        self._rng = np.random.default_rng(self.params.rng_seed)
+        self.state = self._rng.choice([-1.0, 1.0], size=n).astype(np.float64)
         self.n_stored = 0
         self.time = 0.0
 
     def store(self, pattern: np.ndarray) -> None:
         """Hebbian imprint: W += pattern ⊗ pattern."""
-        p = np.sign(pattern[: self.params.n_memory_slots])
-        self.patterns += np.outer(p, p) / self.params.n_memory_slots
+        p = self._pattern_vector(pattern)
+        self.patterns += self.params.imprint_rate * np.outer(p, p) / self.params.n_memory_slots
         np.fill_diagonal(self.patterns, 0)
         self.n_stored += 1
 
@@ -58,26 +62,29 @@ class L9_MemoryLayer:
         dt: float,
         l8_input: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
+        if not math.isfinite(float(dt)) or float(dt) <= 0.0:
+            raise ValueError("dt must be finite and positive")
         self.time += dt
         n = self.params.n_memory_slots
 
         # Hopfield dynamics: async update (random subset)
-        update_mask = np.random.random(n) < 0.3
-        h = self.patterns @ self.state
-        self.state = np.where(update_mask, np.sign(h + 1e-10), self.state)
+        update_mask = self._rng.random(n) < 0.3
+        h = self.params.retrieval_gain * (self.patterns @ self.state)
+        if l8_input is not None and "cosmic_alignment" in l8_input:
+            h += self.params.phase_field_coupling * self._cosmic_alignment(
+                l8_input["cosmic_alignment"]
+            )
+        proposed_state = np.where(h > 0.0, 1.0, np.where(h < 0.0, -1.0, self.state))
+        self.state = np.where(update_mask, proposed_state, self.state)
 
         # Retrieval quality: overlap with stored patterns
         activation = (self.state + 1) / 2  # map [-1,1] -> [0,1]
-
-        if l8_input is not None and "cosmic_alignment" in l8_input:
-            activation *= 0.9 + 0.1 * l8_input["cosmic_alignment"]
-
         activation = np.clip(activation, 0, 1)
 
         # Decay
-        self.patterns *= 1.0 - self.params.decay_rate * dt
+        self.patterns *= math.exp(-self.params.decay_rate * float(dt))
 
-        rands = np.random.random((n, self.params.bitstream_length))
+        rands = self._rng.random((n, self.params.bitstream_length))
         output_bitstreams = (rands < activation[:, None]).astype(np.uint8)
 
         energy = -0.5 * float(self.state @ self.patterns @ self.state)
@@ -92,8 +99,56 @@ class L9_MemoryLayer:
     def _retrieval_quality(self) -> float:
         if self.n_stored == 0:
             return 0.0
-        h = self.patterns @ self.state
+        h = self.params.retrieval_gain * (self.patterns @ self.state)
         return float(np.mean(np.sign(h) == np.sign(self.state)))
 
     def get_global_metric(self) -> float:
         return self._retrieval_quality()
+
+    @staticmethod
+    def _validate_params(params: L9_StochasticParameters) -> None:
+        if not isinstance(params.n_memory_slots, int) or isinstance(params.n_memory_slots, bool):
+            raise ValueError("n_memory_slots must be a positive integer")
+        if params.n_memory_slots <= 0:
+            raise ValueError("n_memory_slots must be positive")
+        if not isinstance(params.bitstream_length, int) or isinstance(
+            params.bitstream_length, bool
+        ):
+            raise ValueError("bitstream_length must be a positive integer")
+        if params.bitstream_length <= 0:
+            raise ValueError("bitstream_length must be positive")
+        if not math.isfinite(float(params.retrieval_gain)) or params.retrieval_gain < 0.0:
+            raise ValueError("retrieval_gain must be finite and non-negative")
+        if not math.isfinite(float(params.imprint_rate)) or not 0.0 <= params.imprint_rate <= 1.0:
+            raise ValueError("imprint_rate must be finite and in [0, 1]")
+        if not math.isfinite(float(params.decay_rate)) or params.decay_rate < 0.0:
+            raise ValueError("decay_rate must be finite and non-negative")
+        if (
+            not math.isfinite(float(params.phase_field_coupling))
+            or params.phase_field_coupling < 0.0
+        ):
+            raise ValueError("phase_field_coupling must be finite and non-negative")
+        if params.rng_seed is not None:
+            if isinstance(params.rng_seed, bool) or not isinstance(params.rng_seed, int):
+                raise ValueError("rng_seed must be a non-negative integer or None")
+            if params.rng_seed < 0:
+                raise ValueError("rng_seed must be a non-negative integer or None")
+
+    def _pattern_vector(self, pattern: np.ndarray) -> np.ndarray:
+        values = np.asarray(pattern, dtype=np.float64).reshape(-1)
+        if values.size < self.params.n_memory_slots:
+            raise ValueError("pattern must contain at least n_memory_slots values")
+        values = values[: self.params.n_memory_slots]
+        if not np.all(np.isfinite(values)):
+            raise ValueError("pattern must contain only finite values")
+        return np.sign(values)
+
+    @staticmethod
+    def _cosmic_alignment(value: Any) -> float:
+        values = np.asarray(value, dtype=np.float64)
+        if values.shape != ():
+            raise ValueError("cosmic_alignment must be a finite scalar")
+        cosmic_alignment = float(values)
+        if not math.isfinite(cosmic_alignment):
+            raise ValueError("cosmic_alignment must be a finite scalar")
+        return cosmic_alignment
