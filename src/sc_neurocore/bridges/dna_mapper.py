@@ -929,13 +929,33 @@ class StrandDisplacementCompiler:
     def _estimate_leak_rate(self, strand: DNAStrand, blocker: DNAStrand) -> float:
         """Estimate spurious strand displacement rate.
 
-        Uses a simplified Arrhenius model based on the ΔG of the
-        toehold-blocker interaction.
+        Uses the strongest contiguous Watson-Crick interaction between
+        the strand and blocker to approximate the leak suppression.
         """
-        dg = strand.delta_g_37()
+        dg = self._strongest_blocker_delta_g(strand, blocker)
         temp_k = self._temperature_c + 273.15
-        k_leak = 1e-6 * math.exp(-abs(dg) / (_R_GAS * temp_k))
+        k_leak = 1e-6 * math.exp(dg / (_R_GAS * temp_k))
         return min(k_leak, 1e-6)
+
+    @staticmethod
+    def _strongest_blocker_delta_g(strand: DNAStrand, blocker: DNAStrand) -> float:
+        """Return the most stable contiguous blocker-binding ΔG° at 37 °C."""
+        query = strand.sequence
+        target = blocker.complement
+        best_dg = 0.0
+        for offset in range(-len(target) + 1, len(query)):
+            run: list[str] = []
+            for i, base in enumerate(query):
+                j = i - offset
+                if 0 <= j < len(target) and base == target[j]:
+                    run.append(base)
+                    continue
+                if len(run) >= 2:
+                    best_dg = min(best_dg, DNAStrand("blocker_run", "".join(run)).delta_g_37())
+                run = []
+            if len(run) >= 2:
+                best_dg = min(best_dg, DNAStrand("blocker_run", "".join(run)).delta_g_37())
+        return best_dg
 
 
 # ══════════════════════════════════════════════════════════════════════
