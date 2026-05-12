@@ -58,8 +58,19 @@ class L15_MetaLayer:
         dt: float,
         l14_input: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        actual, resonance_penalty, bridge_credit, bridge_penalty = self._validate_step_inputs(
-            dt, l14_input, self.params
+        (
+            actual,
+            resonance_penalty,
+            bridge_credit,
+            bridge_penalty,
+            boundary_context_id,
+            boundary_terminals,
+            consilium_terminal_set,
+            consilium_terminal_bandwidth,
+        ) = self._validate_step_inputs(
+            dt,
+            l14_input,
+            self.params,
         )
         self.time += dt
 
@@ -99,6 +110,10 @@ class L15_MetaLayer:
             "oversoul_attractor": self.oversoul_attractor,
             "bridge_alignment_credit": bridge_credit,
             "bridge_protection_penalty": bridge_penalty,
+            "boundary_context_id": boundary_context_id,
+            "boundary_terminals": boundary_terminals,
+            "consilium_terminal_set": consilium_terminal_set,
+            "consilium_terminal_bandwidth": consilium_terminal_bandwidth,
             "umo_weights": self.umo_weights.copy(),
             "output_bitstreams": output_bitstreams,
         }
@@ -141,12 +156,13 @@ class L15_MetaLayer:
     @staticmethod
     def _validate_step_inputs(
         dt: float, l14_input: Optional[Dict[str, Any]], params: L15_StochasticParameters
-    ) -> tuple[float, float, float, float]:
+    ) -> tuple[float, float, float, float, Optional[str], tuple[str, ...], tuple[str, ...], float]:
         if not math.isfinite(dt) or dt <= 0.0:
             raise ValueError("dt must be finite and positive")
 
         if l14_input is None:
-            return 0.5, 0.0, 0.0, 0.0
+            return 0.5, 0.0, 0.0, 0.0, None, (), (), 1.0
+        consilium_context = L15_MetaLayer._consilium_context(l14_input)
 
         if "integrated_coherence" not in l14_input:
             raise ValueError("l14_input must include integrated_coherence")
@@ -172,9 +188,54 @@ class L15_MetaLayer:
             "l14 holographic_protection_load",
         )
         resonance_penalty = 0.0 if resonance_lock else min(abs(determinant), 1.0)
-        bridge_credit = params.bridge_alignment_coupling * bridge_drive
+        bridge_credit = (
+            params.bridge_alignment_coupling
+            * bridge_drive
+            * consilium_context["consilium_terminal_bandwidth"]
+        )
         bridge_penalty = params.bridge_protection_coupling * protection_load
-        return actual, resonance_penalty, bridge_credit, bridge_penalty
+        return (
+            actual,
+            resonance_penalty,
+            bridge_credit,
+            bridge_penalty,
+            consilium_context["boundary_context_id"],
+            consilium_context["boundary_terminals"],
+            consilium_context["consilium_terminal_set"],
+            consilium_context["consilium_terminal_bandwidth"],
+        )
+
+    @staticmethod
+    def _consilium_context(l14_input: Dict[str, Any]) -> Dict[str, Any]:
+        has_context_id = "boundary_context_id" in l14_input
+        has_terminals = "boundary_terminals" in l14_input
+        if not has_context_id and not has_terminals:
+            return {
+                "boundary_context_id": None,
+                "boundary_terminals": (),
+                "consilium_terminal_set": (),
+                "consilium_terminal_bandwidth": 1.0,
+            }
+        if not has_context_id or not has_terminals:
+            raise ValueError("boundary context requires boundary_context_id and boundary_terminals")
+
+        context_id = str(l14_input["boundary_context_id"])
+        if not context_id:
+            raise ValueError("boundary_context_id must be non-empty")
+        terminals = tuple(l14_input["boundary_terminals"])
+        valid_terminals = {"T1", "T2", "T3", "T4", "T5", "T6", "T7"}
+        if not terminals or any(terminal not in valid_terminals for terminal in terminals):
+            raise ValueError("boundary_terminals must contain valid T1-T7 terminal identifiers")
+
+        consilium_terminals = tuple(
+            terminal for terminal in terminals if terminal in {"T2", "T4", "T5", "T6"}
+        )
+        return {
+            "boundary_context_id": context_id,
+            "boundary_terminals": terminals,
+            "consilium_terminal_set": consilium_terminals,
+            "consilium_terminal_bandwidth": float(len(consilium_terminals) / 4.0),
+        }
 
     @staticmethod
     def _nonnegative_scalar(value: Any, name: str) -> float:
