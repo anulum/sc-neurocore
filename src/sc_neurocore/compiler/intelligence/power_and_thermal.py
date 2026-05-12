@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
+import math
 
 # 9. Thermal-Aware Compilation
 # ═══════════════════════════════════════════════════════════════════════
@@ -54,9 +55,8 @@ def thermal_analysis(
 ) -> ThermalEstimate:
     """Estimate thermal impact and frequency derating.
 
-    Uses a simplified thermal model: ``ΔT = P × θ_JA`` where θ_JA is
-    the junction-to-ambient thermal resistance. DSP-heavy designs risk
-    hotspots in DSP columns, which degrades timing.
+    Estimates lumped junction rise from total power and applies timing
+    derating from both die temperature and DSP-column concentration.
 
     Parameters
     ----------
@@ -83,6 +83,18 @@ def thermal_analysis(
     ThermalEstimate
         Thermal analysis with derating and hotspot risk.
     """
+    _require_finite_non_negative(estimated_power_mw, "estimated_power_mw")
+    _require_finite_positive(target_freq_mhz, "target_freq_mhz")
+    _require_finite_positive(theta_ja, "theta_ja")
+    _require_finite(t_ambient_c, "t_ambient_c")
+    _require_finite_positive(t_junction_max_c, "t_junction_max_c")
+    if not isinstance(process_nm, int) or process_nm <= 0:
+        raise ValueError("process_nm must be a positive integer")
+    if not isinstance(mul_count, int) or mul_count < 0:
+        raise ValueError("mul_count must be a non-negative integer")
+    if not isinstance(dsp_columns, int) or dsp_columns <= 0:
+        raise ValueError("dsp_columns must be a positive integer")
+
     # Temperature rise
     power_w = estimated_power_mw / 1000.0
     delta_t = power_w * theta_ja
@@ -103,18 +115,21 @@ def thermal_analysis(
     elif process_nm <= 16:
         derate_factor *= 0.99
 
-    derated_freq = target_freq_mhz * derate_factor
-
     # Hotspot risk based on DSP concentration
     muls_per_column = mul_count / max(1, dsp_columns)
     if muls_per_column > 20:
         hotspot = "high"
+        derate_factor *= 0.94
     elif muls_per_column > 10:
         hotspot = "medium"
+        derate_factor *= 0.97
     elif muls_per_column > 4:
         hotspot = "low"
+        derate_factor *= 0.99
     else:
         hotspot = "none"
+
+    derated_freq = target_freq_mhz * derate_factor
 
     return ThermalEstimate(
         power_mw=estimated_power_mw,
@@ -124,6 +139,21 @@ def thermal_analysis(
         thermal_safe=thermal_safe,
         hotspot_risk=hotspot,
     )
+
+
+def _require_finite(value: float, name: str) -> None:
+    if not math.isfinite(float(value)):
+        raise ValueError(f"{name} must be finite")
+
+
+def _require_finite_positive(value: float, name: str) -> None:
+    if not math.isfinite(float(value)) or float(value) <= 0.0:
+        raise ValueError(f"{name} must be finite and positive")
+
+
+def _require_finite_non_negative(value: float, name: str) -> None:
+    if not math.isfinite(float(value)) or float(value) < 0.0:
+        raise ValueError(f"{name} must be finite and non-negative")
 
 
 def generate_thermal_constraints(
