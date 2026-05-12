@@ -225,6 +225,22 @@ class TestDNAStrand:
         at_rich = DNAStrand(name="at", sequence="ATATATATATATATATAT")
         assert gc_rich.melting_temperature() > at_rich.melting_temperature()
 
+    def test_melting_temperature_depends_on_salt_and_strand_concentration(self) -> None:
+        strand = DNAStrand(name="thermo", sequence="ACGTTGCAACGTTGCA")
+        low_salt = strand.melting_temperature(na_conc_M=0.05, strand_conc_M=2.5e-7)
+        high_salt = strand.melting_temperature(na_conc_M=1.0, strand_conc_M=2.5e-7)
+        high_conc = strand.melting_temperature(na_conc_M=0.05, strand_conc_M=2.5e-6)
+
+        assert high_salt > low_salt
+        assert high_conc > low_salt
+
+    def test_melting_temperature_rejects_invalid_conditions(self) -> None:
+        strand = DNAStrand(name="thermo", sequence="ACGTTGCA")
+        with pytest.raises(ValueError, match="na_conc_M must be finite and positive"):
+            strand.melting_temperature(na_conc_M=0.0)
+        with pytest.raises(ValueError, match="strand_conc_M must be finite and positive"):
+            strand.melting_temperature(strand_conc_M=0.0)
+
     def test_empty_strand(self) -> None:
         s = DNAStrand(name="empty", sequence="")
         assert s.length == 0
