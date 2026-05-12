@@ -193,6 +193,9 @@ def validate_datastream_payload(payload: dict[str, Any]) -> None:
     qpu_artifact_sha256 = payload.get("qpu_artifact_sha256")
     if qpu_artifact_sha256 is not None and not _is_sha256_hex(qpu_artifact_sha256):
         raise DatastreamValidationError("qpu_artifact_sha256 must be a SHA256 hex digest")
+    _validate_optimiser_observation(payload.get("optimiser_observation"))
+    if not isinstance(payload.get("metadata"), dict):
+        raise DatastreamValidationError("metadata must be a mapping")
     packet_hash = payload.get("packet_sha256")
     if not _is_sha256_hex(packet_hash):
         raise DatastreamValidationError("packet_sha256 must be a SHA256 hex digest")
@@ -371,6 +374,33 @@ def _validate_telemetry_layers(
         raise DatastreamValidationError(
             "spike_count layer totals must match telemetry total_spikes"
         )
+
+
+def _validate_optimiser_observation(observation: Any) -> None:
+    if observation is None:
+        return
+    if not isinstance(observation, dict):
+        raise DatastreamValidationError("optimiser_observation must be a mapping or null")
+
+    for key in (
+        "mac_count",
+        "bitstream_length",
+        "precision_bits",
+        "luts_used",
+        "latency_cycles",
+    ):
+        _positive_int_from_mapping(observation, key, "optimiser_observation")
+    for key in ("decorrelator", "mode", "lfsr_polynomial"):
+        if not isinstance(observation.get(key), str) or not observation[key].strip():
+            raise DatastreamValidationError(f"{key} in optimiser_observation must be non-empty")
+    _nonnegative_finite_number_from_mapping(observation, "power_mw", "optimiser_observation")
+    accuracy_score = _nonnegative_finite_number_from_mapping(
+        observation, "accuracy_score", "optimiser_observation"
+    )
+    if accuracy_score > 1.0:
+        raise DatastreamValidationError("accuracy_score in optimiser_observation must be in [0, 1]")
+    if not isinstance(observation.get("is_critical_path"), bool):
+        raise DatastreamValidationError("is_critical_path in optimiser_observation must be boolean")
 
 
 def _payload_sha256_without_packet_hash(payload: dict[str, Any]) -> str:
