@@ -288,6 +288,18 @@ class TestStrandDisplacementCompiler:
         assert gate.leak_rate > 0
         assert gate.leak_rate < 1e-4
 
+    def test_leak_rate_depends_on_blocker_complementarity(
+        self, displacement_compiler: StrandDisplacementCompiler
+    ) -> None:
+        strand = DNAStrand(name="strand", sequence="ACGTTGCAACGTTGCA")
+        matched = DNAStrand(name="matched", sequence=strand.complement)
+        unrelated = DNAStrand(name="unrelated", sequence="AAAAAAAAAAAAAAAA")
+
+        matched_leak = displacement_compiler._estimate_leak_rate(strand, matched)
+        unrelated_leak = displacement_compiler._estimate_leak_rate(strand, unrelated)
+
+        assert matched_leak < unrelated_leak
+
 
 # ══════════════════════════════════════════════════════════════════════
 # 4. Enzymatic Gate Compiler
