@@ -721,6 +721,13 @@ class TestLinkProtection:
         assert "SPDX" in sv
         assert "crc_error" in sv
 
+    def test_crc32_sv_uses_real_ieee_polynomial_feedback(self):
+        sv = emit_crc32_sv(64)
+        assert "Placeholder" not in sv
+        assert "32'h04C11DB7" in sv
+        assert "crc_next" in sv
+        assert "crc_reg <= crc_next;" in sv
+
 
 # ── Bandwidth-Aware Routing Tests ────────────────────────────────────
 
@@ -759,6 +766,14 @@ class TestCreditConfig:
         assert "sc_chiplet_credit_test_link" in sv
         assert "INIT_CREDITS = 8" in sv
         assert "SPDX" in sv
+
+    def test_credit_controller_sv_saturates_credit_bounds(self):
+        cc = CreditConfig(initial_credits=8)
+        sv = emit_credit_controller_sv(cc, "bounded")
+        assert "stub" not in sv.lower()
+        assert "MAX_CREDITS" in sv
+        assert "credits_available != 0" in sv
+        assert "credits_available != MAX_CREDITS" in sv
 
 
 # ── 3D Stacking Tests ────────────────────────────────────────────────
@@ -830,6 +845,14 @@ class TestPowerDomain:
         assert "sc_chiplet_pwr_domain_0" in sv
         assert "750 mV" in sv
         assert "SPDX" in sv
+
+    def test_power_gating_sv_sequences_isolation_before_shutdown(self):
+        pd = PowerDomain(domain_id=0, die_ids=[0, 1], voltage_mv=750)
+        sv = emit_power_gating_sv(pd)
+        assert "stub" not in sv.lower()
+        assert "ISO_CYCLES" in sv
+        assert "state <= PWR_ISOLATE" in sv
+        assert "state <= PWR_OFF" in sv
 
 
 # ── Auto-Partitioning Tests ──────────────────────────────────────────
