@@ -610,8 +610,8 @@ JAX-traceable adapter for the SCPN Neurochemical layer.
 - **__init__**(params, seed)
 - **encode**(domain_state)
   - Maps neurochemical concentrations to stochastic bitstreams.
-- **_iiief_kernel**(phi, integrated_info, alpha, dt)
-  - Solves the simplified IIIEF wave equation:
+- **_iiief_kernel**(phi, velocity, integrated_info, alpha, c_info, dt)
+  - Advances the damped finite-difference IIIEF wave equation.
 - **step_jax**(dt, inputs)
   - Advances the L2 holonomic dynamics using JAX.
 - **decode**(bitstreams)
