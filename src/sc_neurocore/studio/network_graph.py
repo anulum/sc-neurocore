@@ -158,9 +158,9 @@ def simulate_graph(graph: dict) -> dict:
     """Simulate a network graph using the E-I network backend.
 
     Maps populations and projections to the existing E-I simulation.
-    For graphs with exactly 2 populations (1 exc + 1 inh), this
-    directly uses simulate_ei_network. For other topologies, falls
-    back to a simplified all-to-all simulation.
+    Only graphs with exactly 2 populations (1 exc + 1 inh) are
+    currently supported; other topologies fail closed instead of
+    being collapsed into an unfaithful surrogate.
     """
     populations = graph.get("populations", [])
     projections = graph.get("projections", [])
@@ -173,6 +173,15 @@ def simulate_graph(graph: dict) -> dict:
 
     exc_pops = [p for p in populations if p.get("neuron_type") == "excitatory"]
     inh_pops = [p for p in populations if p.get("neuron_type") == "inhibitory"]
+    if len(exc_pops) != 1 or len(inh_pops) != 1 or len(populations) != 2:
+        return {
+            "success": False,
+            "errors": [
+                "Studio graph simulation currently requires exactly one excitatory "
+                "and one inhibitory population; export richer topologies to NIR or "
+                "run them through the full network backend."
+            ],
+        }
 
     n_exc = sum(p.get("count", 80) for p in exc_pops) if exc_pops else 80
     n_inh = sum(p.get("count", 20) for p in inh_pops) if inh_pops else 20

@@ -141,6 +141,22 @@ class TestGraphSimulation:
         assert result["success"] is False
         assert "errors" in result
 
+    def test_simulate_rejects_unsupported_topology(self):
+        exc0 = create_population(count=20, neuron_type="excitatory")
+        exc1 = create_population(count=20, neuron_type="excitatory")
+        inh = create_population(count=10, neuron_type="inhibitory")
+        graph = {
+            "populations": [exc0, exc1, inh],
+            "projections": [create_projection(exc0["id"], inh["id"])],
+            "duration": 10.0,
+            "dt": 0.1,
+        }
+
+        result = simulate_graph(graph)
+
+        assert result["success"] is False
+        assert any("exactly one excitatory and one inhibitory" in e for e in result["errors"])
+
 
 # --- NIR Export/Import ---
 
