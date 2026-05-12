@@ -828,6 +828,13 @@ class TestMEAFitnessHook:
         r = mea_fitness_hook(spikes)
         assert r["energy_mw"] == pytest.approx(20 * 0.5)
 
+    def test_duration_converts_counts_to_rates(self):
+        spikes = [
+            DetectedSpike(channel=0, timestamp_s=i * 0.05, amplitude_uv=-40.0) for i in range(20)
+        ]
+        r = mea_fitness_hook(spikes, target_rate=10.0, duration_s=2.0)
+        assert r["accuracy"] == pytest.approx(0.99, abs=1e-9)
+
     def test_target_rate_zero_returns_floor(self):
         spikes = [DetectedSpike(channel=0, timestamp_s=0.0, amplitude_uv=-40.0)]
         r = mea_fitness_hook(spikes, target_rate=0.0)
@@ -843,3 +850,38 @@ class TestMEAFitnessHook:
         ]
         r = mea_fitness_hook(spikes)
         assert {"accuracy", "energy_mw", "latency_ms"} == set(r.keys())
+
+    def test_latency_uses_measured_closed_loop_value(self):
+        spikes = [DetectedSpike(channel=0, timestamp_s=0.25, amplitude_uv=-40.0)]
+        r = mea_fitness_hook(spikes, measured_latency_ms=3.75)
+        assert r["latency_ms"] == pytest.approx(3.75)
+
+    def test_latency_uses_first_response_after_stimulus(self):
+        spikes = [
+            DetectedSpike(channel=0, timestamp_s=0.090, amplitude_uv=-40.0),
+            DetectedSpike(channel=0, timestamp_s=0.125, amplitude_uv=-40.0),
+            DetectedSpike(channel=1, timestamp_s=0.140, amplitude_uv=-40.0),
+        ]
+        r = mea_fitness_hook(spikes, stimulus_time_s=0.100)
+        assert r["latency_ms"] == pytest.approx(25.0)
+
+    def test_latency_without_stimulus_uses_first_spike_timestamp(self):
+        spikes = [
+            DetectedSpike(channel=0, timestamp_s=0.006, amplitude_uv=-40.0),
+            DetectedSpike(channel=1, timestamp_s=0.014, amplitude_uv=-40.0),
+        ]
+        r = mea_fitness_hook(spikes)
+        assert r["latency_ms"] == pytest.approx(6.0)
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"measured_latency_ms": -1.0},
+            {"stimulus_time_s": float("nan")},
+            {"duration_s": 0.0},
+        ],
+    )
+    def test_rejects_invalid_fitness_timing_parameters(self, kwargs):
+        spikes = [DetectedSpike(channel=0, timestamp_s=0.0, amplitude_uv=-40.0)]
+        with pytest.raises(ValueError):
+            mea_fitness_hook(spikes, **kwargs)

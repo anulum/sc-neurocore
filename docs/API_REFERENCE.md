@@ -2869,17 +2869,20 @@ Decode SC bitstreams back to biological firing rates (Hz).
 Interprets popcount/length as probability, scales by SC clock
 to get equivalent biological firing rate.
 
-### Function `mea_fitness_hook(detected_spikes, target_rate)`
+### Function `mea_fitness_hook(detected_spikes, target_rate, *, duration_s, stimulus_time_s, measured_latency_ms)`
 Organism fitness metrics derived from MEA response dynamics.
 
 Designed to plug into the evo_substrate
 ``ReplicationEngine(metrics_fn=mea_fitness_hook)`` — returns the
 ``{"accuracy", "energy_mw", "latency_ms"}`` triple the engine scores.
 
-Accuracy is a bounded distance to the target mean per-channel spike
-count (``target_rate``); ``energy_mw`` is a proxy (0.5 mW / spike);
-``latency_ms`` is a constant placeholder for the round-trip time
-budget of the closed-loop system.
+Accuracy is a bounded distance to the target mean per-channel firing
+rate when ``duration_s`` is supplied, or to the legacy per-channel
+spike count when it is omitted. ``energy_mw`` remains the documented
+spike-count proxy (0.5 mW / spike). ``latency_ms`` is either a caller
+supplied closed-loop measurement, the first response latency after
+``stimulus_time_s``, or the first spike timestamp relative to frame
+start.
 
 ---
 
