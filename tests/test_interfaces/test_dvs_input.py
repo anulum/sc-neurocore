@@ -89,6 +89,26 @@ def test_dvs_negative_coordinates_ignored():
     assert np.allclose(out, 0.0)
 
 
+def test_dvs_rejects_invalid_decay_tau():
+    """Decay time constant must be finite and positive."""
+    with pytest.raises(ValueError, match="decay_tau must be finite and positive"):
+        DVSInputLayer(height=2, width=2, decay_tau=0.0)
+
+
+def test_dvs_rejects_invalid_polarity():
+    """AER polarity must be encoded as -1, 0, or 1."""
+    layer = DVSInputLayer(height=2, width=2)
+    with pytest.raises(ValueError, match="polarity must be -1, 0, or 1"):
+        layer.process_events([(0, 0, 1.0, 7)])
+
+
+def test_dvs_rejects_non_monotonic_timestamps():
+    """Event batches must be timestamp ordered before decay integration."""
+    layer = DVSInputLayer(height=2, width=2)
+    with pytest.raises(ValueError, match="timestamps must be monotonically non-decreasing"):
+        layer.process_events([(0, 0, 2.0, 1), (1, 1, 1.0, -1)])
+
+
 @pytest.mark.skipif(not _perf_enabled(), reason="Set SC_NEUROCORE_PERF=1 to enable perf checks.")
 def test_dvs_perf_small():
     """Benchmark processing a small event batch."""
