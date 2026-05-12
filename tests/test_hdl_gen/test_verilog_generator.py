@@ -61,20 +61,20 @@ def test_verilog_generator_dense_instances():
     assert "sc_dense_layer_core" in code
 
 
-def test_verilog_generator_default_neurons():
-    """Missing n_neurons should default to 10."""
+def test_verilog_generator_requires_dense_neuron_count():
+    """Dense sync generation must not invent omitted neuron counts."""
     gen = VerilogGenerator()
     gen.add_layer("Dense", "dense0", {})
-    code = gen.generate()
-    assert ".NUM_NEURONS(10)" in code
+    with pytest.raises(ValueError, match="Dense layer 'dense0' requires n_neurons"):
+        gen.generate()
 
 
-def test_verilog_generator_non_dense_ignored():
-    """Non-Dense layers should not emit instantiations."""
+def test_verilog_generator_rejects_unsupported_sync_layer():
+    """Unsupported sync layers must fail closed instead of being silently dropped."""
     gen = VerilogGenerator()
     gen.add_layer("Custom", "custom0", {})
-    code = gen.generate()
-    assert "custom0_inst" not in code
+    with pytest.raises(ValueError, match="unsupported sync layer type 'Custom'"):
+        gen.generate()
 
 
 def test_verilog_generator_generate_routes_stochastic_source_layers():
