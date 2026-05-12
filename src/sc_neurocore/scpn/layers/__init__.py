@@ -180,7 +180,7 @@ def run_integrated_step(
 
     # L14: Integration (receives metrics from all layers)
     all_metrics = get_global_metrics(layers)
-    l14_out = layers["l14"].step(dt, layer_metrics=all_metrics)
+    l14_out = layers["l14"].step(dt, layer_metrics=all_metrics, l13_input=l13_out)
     outputs["l14"] = l14_out
 
     # L15: Meta-cognitive (receives L14 integrated coherence)
