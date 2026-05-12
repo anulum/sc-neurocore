@@ -107,6 +107,15 @@ def builtin_cases_for_route(route_name: str) -> list[AlternativePathCase]:
                     "dt": 4e-4,
                 },
             ),
+            AlternativePathCase(
+                "quartet_higher_coupling_short",
+                args=(np.array([0.05, 0.9, 1.7, 2.6], dtype=np.float64), 0.008),
+                kwargs={
+                    "omegas": np.array([0.88, 0.96, 1.04, 1.12], dtype=np.float64),
+                    "coupling": 1.0,
+                    "dt": 2.5e-4,
+                },
+            ),
         ]
     if route_name == "solver.lif.subthreshold-exact":
         return [

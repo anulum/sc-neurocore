@@ -163,6 +163,35 @@ def _kuramoto_interaction_energy(phases: np.ndarray, coupling: float) -> float:
     return float(-0.5 * coupling * np.mean(np.cos(phase_diff)))
 
 
+def _validate_kuramoto_route_inputs(
+    initial_phases: np.ndarray,
+    horizon: float,
+    omegas: np.ndarray,
+    coupling: float,
+    dt: float,
+) -> tuple[np.ndarray, np.ndarray, float, float, float, int]:
+    phases = np.asarray(initial_phases, dtype=np.float64)
+    omega_arr = np.asarray(omegas, dtype=np.float64)
+
+    if phases.ndim != 1 or phases.size == 0:
+        raise ValueError("initial_phases must be a non-empty 1-D array")
+    if omega_arr.shape != phases.shape:
+        raise ValueError("omegas must be a 1-D array matching initial_phases")
+    if not np.all(np.isfinite(phases)):
+        raise ValueError("initial_phases must contain only finite values")
+    if not np.all(np.isfinite(omega_arr)):
+        raise ValueError("omegas must contain only finite values")
+    if not math.isfinite(horizon) or horizon <= 0.0:
+        raise ValueError("horizon must be finite and positive")
+    if not math.isfinite(coupling) or coupling < 0.0:
+        raise ValueError("coupling must be finite and non-negative")
+    if not math.isfinite(dt) or dt <= 0.0:
+        raise ValueError("dt must be finite and positive")
+
+    steps = max(1, int(round(horizon / dt)))
+    return phases.copy(), omega_arr.copy(), float(horizon), float(coupling), float(dt), steps
+
+
 def _wrap_phases(phases: np.ndarray) -> np.ndarray:
     return np.mod(phases, 2.0 * np.pi)
 
@@ -175,9 +204,9 @@ def _kuramoto_euler_baseline(
     coupling: float,
     dt: float = 1e-3,
 ) -> dict[str, np.ndarray | float]:
-    phases = np.asarray(initial_phases, dtype=np.float64).copy()
-    omega_arr = np.asarray(omegas, dtype=np.float64)
-    steps = max(1, int(round(horizon / dt)))
+    phases, omega_arr, _, coupling, dt, steps = _validate_kuramoto_route_inputs(
+        initial_phases, horizon, omegas, coupling, dt
+    )
     initial_order = _kuramoto_order_parameter(phases)
     initial_energy = _kuramoto_interaction_energy(phases, coupling)
 
@@ -203,9 +232,9 @@ def _kuramoto_xy_lift_candidate(
     coupling: float,
     dt: float = 1e-3,
 ) -> dict[str, np.ndarray | float]:
-    phases = np.asarray(initial_phases, dtype=np.float64)
-    omega_arr = np.asarray(omegas, dtype=np.float64)
-    steps = max(1, int(round(horizon / dt)))
+    phases, omega_arr, _, coupling, dt, steps = _validate_kuramoto_route_inputs(
+        initial_phases, horizon, omegas, coupling, dt
+    )
     initial_order = _kuramoto_order_parameter(phases)
     initial_energy = _kuramoto_interaction_energy(phases, coupling)
     initial_momenta = _kuramoto_phase_velocity(phases, omega_arr, coupling)

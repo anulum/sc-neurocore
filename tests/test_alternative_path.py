@@ -27,6 +27,7 @@ from sc_neurocore.experimental import (
     make_lif_subthreshold_exact_route,
     write_batch_report,
 )
+from sc_neurocore.experimental.builtins import builtin_cases_for_route
 
 
 def test_baseline_mode_does_not_call_candidate():
@@ -262,6 +263,14 @@ def test_builtin_registry_exposes_real_physics_route():
     assert "solver.lif.subthreshold-exact" in names
 
 
+def test_builtin_kuramoto_cases_include_higher_coupling_evidence():
+    cases = builtin_cases_for_route("physics.kuramoto.noiseless-symplectic-lift")
+
+    couplings = [case.kwargs["coupling"] for case in cases]
+
+    assert max(couplings) >= 1.0
+
+
 def test_delayed_recall_shared_state_route_beats_local_baseline():
     route = make_delayed_recall_shared_state_route()
 
@@ -299,6 +308,62 @@ def test_kuramoto_noiseless_symplectic_lift_route_stays_close_on_short_horizon()
     assert result.returned_path == "shadow-baseline"
     assert result.comparison is not None
     assert result.comparison.matched
+
+
+def test_kuramoto_noiseless_symplectic_lift_route_matches_at_higher_coupling():
+    route = make_kuramoto_noiseless_symplectic_lift_route()
+
+    result = route.run(
+        AlternativePathConfig(
+            enabled=True,
+            mode=AlternativePathMode.SHADOW,
+            absolute_tolerance=8e-2,
+            relative_tolerance=2e-1,
+        ),
+        np.array([0.05, 0.9, 1.7, 2.6], dtype=np.float64),
+        0.008,
+        omegas=np.array([0.88, 0.96, 1.04, 1.12], dtype=np.float64),
+        coupling=1.0,
+        dt=2.5e-4,
+    )
+
+    assert result.returned_path == "shadow-baseline"
+    assert result.comparison is not None
+    assert result.comparison.matched
+    assert result.comparison.max_abs_diff is not None
+    assert result.comparison.max_abs_diff < 1e-3
+    assert result.candidate_value is not None
+    assert np.isfinite(result.candidate_value["order_parameter"])
+    assert np.isfinite(result.candidate_value["interaction_energy_drift"])
+
+
+@pytest.mark.parametrize(
+    ("initial_phases", "horizon", "omegas", "coupling", "dt"),
+    [
+        (np.array([0.1, np.nan, 2.4]), 0.01, np.array([0.8, 1.0, 1.1]), 0.18, 5e-4),
+        (np.array([0.1, 1.2, 2.4]), 0.01, np.array([0.8, 1.0]), 0.18, 5e-4),
+        (np.array([0.1, 1.2, 2.4]), 0.01, np.array([0.8, 1.0, 1.1]), -0.1, 5e-4),
+        (np.array([0.1, 1.2, 2.4]), 0.01, np.array([0.8, 1.0, 1.1]), 0.18, 0.0),
+    ],
+)
+def test_kuramoto_noiseless_symplectic_lift_route_rejects_invalid_inputs(
+    initial_phases,
+    horizon,
+    omegas,
+    coupling,
+    dt,
+):
+    route = make_kuramoto_noiseless_symplectic_lift_route()
+
+    with pytest.raises(ValueError):
+        route.run(
+            AlternativePathConfig(enabled=True, mode=AlternativePathMode.SHADOW),
+            initial_phases,
+            horizon,
+            omegas=omegas,
+            coupling=coupling,
+            dt=dt,
+        )
 
 
 def test_harmonic_symplectic_route_matches_rk4_with_low_energy_drift():
