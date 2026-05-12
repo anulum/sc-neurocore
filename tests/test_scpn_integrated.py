@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from sc_neurocore.scpn import (
     create_full_stack,
@@ -41,6 +42,11 @@ class TestKnmMatrix:
     def test_custom_size(self):
         K = build_knm_matrix(8)
         assert K.shape == (8, 8)
+
+    @pytest.mark.parametrize("n_layers", [0, -1, 1.5, True])
+    def test_rejects_invalid_layer_count(self, n_layers):
+        with pytest.raises(ValueError, match="n_layers"):
+            build_knm_matrix(n_layers)
 
     def test_adjacent_layers_coupled(self):
         """Adjacent layers should have nonzero coupling."""
