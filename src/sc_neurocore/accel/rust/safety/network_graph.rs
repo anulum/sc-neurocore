@@ -15,12 +15,12 @@ pub fn available_models() -> f64 {
 }
 
 pub fn create_population(
-    label: f64,
-    model: f64,
-    count: f64,
-    neuron_type: f64,
-    x: f64,
-    y: f64,
+    _label: f64,
+    _model: f64,
+    _count: f64,
+    _neuron_type: f64,
+    _x: f64,
+    _y: f64,
 ) -> f64 {
     // label: str = "Population",
     // model: str = "LIFNeuron",
@@ -43,11 +43,11 @@ pub fn create_population(
 }
 
 pub fn create_projection(
-    source_id: f64,
-    target_id: f64,
-    weight: f64,
-    delay: f64,
-    probability: f64,
+    _source_id: f64,
+    _target_id: f64,
+    _weight: f64,
+    _delay: f64,
+    _probability: f64,
 ) -> f64 {
     // source_id: str,
     // target_id: str,
@@ -66,7 +66,7 @@ pub fn create_projection(
     0.0
 }
 
-pub fn validate_graph(graph: f64) -> f64 {
+pub fn validate_graph(_graph: f64) -> f64 {
     // errors = []
     // populations = graph.get("populations", [])
     // projections = graph.get("projections", [])
@@ -90,7 +90,7 @@ pub fn validate_graph(graph: f64) -> f64 {
     0.0
 }
 
-pub fn simulate_graph(graph: f64) -> f64 {
+pub fn simulate_graph(_graph: f64) -> f64 {
     // populations = graph.get("populations", [])
     // projections = graph.get("projections", [])
     // duration = graph.get("duration", 200.0)
@@ -114,7 +114,7 @@ pub fn simulate_graph(graph: f64) -> f64 {
     0.0
 }
 
-pub fn graph_to_nir(graph: f64) -> f64 {
+pub fn graph_to_nir(_graph: f64) -> f64 {
     // nodes = {}
     // edges = []
     // for pop in graph.get("populations", []) {
@@ -138,7 +138,7 @@ pub fn graph_to_nir(graph: f64) -> f64 {
     0.0
 }
 
-pub fn nir_to_graph(nir_data: f64) -> f64 {
+pub fn nir_to_graph(_nir_data: f64) -> f64 {
     // populations = []
     // projections = []
     // x_offset = 0

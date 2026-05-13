@@ -7,11 +7,11 @@
 // SC-NeuroCore — Rust safety acceleration for codegen
 
 pub fn generate_model_script(
-    model_name: f64,
-    params: f64,
-    duration: f64,
-    current: f64,
-    dt: f64,
+    _model_name: f64,
+    _params: f64,
+    _duration: f64,
+    _current: f64,
+    _dt: f64,
 ) -> f64 {
     // model_name: str,
     // params: dict[str, float] | 0 = 0,
@@ -29,12 +29,12 @@ pub fn generate_model_script(
 }
 
 pub fn generate_ode_script(
-    equations: f64,
-    threshold: f64,
-    reset: f64,
-    params: f64,
-    init: f64,
-    duration: f64,
+    _equations: f64,
+    _threshold: f64,
+    _reset: f64,
+    _params: f64,
+    _init: f64,
+    _duration: f64,
 ) -> f64 {
     // equations: list[str],
     // threshold: str | 0 = 0,
@@ -52,7 +52,7 @@ pub fn generate_ode_script(
     0.0
 }
 
-pub fn generate_oneliner(model_name: f64, params: f64, current: f64) -> f64 {
+pub fn generate_oneliner(_model_name: f64, _params: f64, _current: f64) -> f64 {
     // model_name: str | 0 = 0,
     // params: dict[str, float] | 0 = 0,
     // current: float = 10.0,
@@ -64,7 +64,7 @@ pub fn generate_oneliner(model_name: f64, params: f64, current: f64) -> f64 {
     0.0
 }
 
-pub fn classify_firing_pattern(spikes: f64, n_steps: f64, dt: f64) -> f64 {
+pub fn classify_firing_pattern(_spikes: f64, _n_steps: f64, _dt: f64) -> f64 {
     // spikes: list[int],
     // n_steps: int,
     // dt: float,

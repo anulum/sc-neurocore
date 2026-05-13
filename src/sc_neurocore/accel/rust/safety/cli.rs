@@ -30,7 +30,7 @@ pub fn main() -> f64 {
     0.0
 }
 
-pub fn _cmd_compile(args: f64) -> f64 {
+pub fn _cmd_compile(_args: f64) -> f64 {
     // import os
     // from sc_neurocore.compiler.equation_compiler import (
     // equation_to_fpga,
@@ -54,7 +54,7 @@ pub fn _cmd_compile(args: f64) -> f64 {
     0.0
 }
 
-pub fn _cmd_serve(model_path: f64, port: f64, dt: f64) -> f64 {
+pub fn _cmd_serve(_model_path: f64, _port: f64, _dt: f64) -> f64 {
     // import os
     // ext = os.path.splitext(model_path)[1].lower()
     // if ext != ".nir" {
@@ -83,7 +83,7 @@ pub fn _cmd_info() -> f64 {
     0.0
 }
 
-pub fn _print_optional_dependency_version(module_name: f64, label: f64) -> f64 {
+pub fn _print_optional_dependency_version(_module_name: f64, _label: f64) -> f64 {
     // try {
     // module = __import__(module_name)
     // except Exception {
@@ -92,7 +92,7 @@ pub fn _print_optional_dependency_version(module_name: f64, label: f64) -> f64 {
     0.0
 }
 
-pub fn _format_engine_status(expected_version: f64) -> f64 {
+pub fn _format_engine_status(_expected_version: f64) -> f64 {
     // try {
     // import sc_neurocore_engine as engine
     // except ImportError {
@@ -107,7 +107,7 @@ pub fn _format_engine_status(expected_version: f64) -> f64 {
     0.0
 }
 
-pub fn _safe_simd_tier(engine: f64) -> f64 {
+pub fn _safe_simd_tier(_engine: f64) -> f64 {
     // simd_tier = getattr(engine, "simd_tier", 0)
     // if not callable(simd_tier) {
     // return "unknown"
@@ -127,11 +127,11 @@ pub fn _cmd_benchmark() -> f64 {
 }
 
 pub fn _cmd_deploy(
-    model_path: f64,
-    target: f64,
-    output_dir: f64,
-    dt: f64,
-    bitstream_length: f64,
+    _model_path: f64,
+    _target: f64,
+    _output_dir: f64,
+    _dt: f64,
+    _bitstream_length: f64,
 ) -> f64 {
     // model_path: str, target: str, output_dir: str, dt: float, bitstream_le
     // ) -> int {
@@ -156,7 +156,7 @@ pub fn _cmd_deploy(
     0.0
 }
 
-pub fn _auto_synthesize(output_dir: f64, target: f64, top_module: f64, cfg: f64) -> f64 {
+pub fn _auto_synthesize(_output_dir: f64, _target: f64, _top_module: f64, _cfg: f64) -> f64 {
     // import os
     // import shutil
     // import subprocess
@@ -180,7 +180,7 @@ pub fn _auto_synthesize(output_dir: f64, target: f64, top_module: f64, cfg: f64)
     0.0
 }
 
-pub fn _generate_project(output_dir: f64, target: f64, top_module: f64) -> f64 {
+pub fn _generate_project(_output_dir: f64, _target: f64, _top_module: f64) -> f64 {
     // import os
     // cfg = _TARGET_CONFIGS[target]
     // if cfg["tool"] == "yosys" {
@@ -196,7 +196,7 @@ pub fn _generate_project(output_dir: f64, target: f64, top_module: f64) -> f64 {
     0.0
 }
 
-pub fn _cmd_studio(port: f64) -> f64 {
+pub fn _cmd_studio(_port: f64) -> f64 {
     // try {
     // import uvicorn
     // except ImportError {
@@ -220,7 +220,7 @@ pub fn _cmd_preflight() -> f64 {
     0.0
 }
 
-pub fn _parse_kvpairs(s: f64) -> f64 {
+pub fn _parse_kvpairs(_s: f64) -> f64 {
     // if not s {
     // return 0
     // result = {}
