@@ -61,6 +61,22 @@ sc-neurocore scnir export model.nir --output model.scnir.json --T 1024
 Exit code `0` means the document passed the SC-NIR validator. Exit code `1`
 means validation/export failed or the input could not be read.
 
+## FPGA Compilation Integration
+
+`compile_network_to_fpga(...)` constructs SC-NIR metadata for the lowered
+`NeuronGraph` before emitting top-level RTL. The returned
+`NetworkCompilationResult` exposes `scnir_document`, and the generated top
+module includes deterministic handoff localparams:
+
+```verilog
+localparam integer SCNIR_BITSTREAM_LENGTH = 1024;
+localparam integer SCNIR_STREAM_COUNT = 2;
+```
+
+These localparams provide the stable boundary for follow-on HDL source-generator
+work, where LFSR/Sobol source instances will consume the same SC-NIR metadata
+directly.
+
 ## Python API
 
 ```python
