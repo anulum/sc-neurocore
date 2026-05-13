@@ -634,7 +634,10 @@ reference for fixed-point MAC accumulation, signed saturation, LIF membrane
 updates, and spike/reset behaviour. The recurrent/LFSR fixture extends that
 cycle-level equivalence to one-step delayed feedback by checking pre-edge
 currents, post-edge delayed spike registers, LIF updates, and recurrent current
-contributions against the same integer reference style.
+contributions against the same integer reference style. The AER/LFSR fixture
+checks weighted event fan-out by comparing hidden-population spike counts,
+pre-edge and post-edge output currents, and output LIF state transitions against
+an independent integer reference for the generated weighted-event route.
 
 ---
 
