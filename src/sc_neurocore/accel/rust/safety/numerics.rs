@@ -6,37 +6,37 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for numerics
 
-pub fn safe_exp(x: f64) -> f64 {
+pub fn safe_exp(_x: f64) -> f64 {
     // return float((clip(x, -500, 500 as f64).exp()))
     0.0
 }
 
-pub fn safe_cosh(x: f64) -> f64 {
+pub fn safe_cosh(_x: f64) -> f64 {
     // return float(cosh(clip(x, -500, 500)))
     0.0
 }
 
-pub fn safe_tanh(x: f64) -> f64 {
+pub fn safe_tanh(_x: f64) -> f64 {
     // return float(tanh(clip(x, -500, 500)))
     0.0
 }
 
-pub fn boltzmann(v: f64, v_half: f64, k: f64) -> f64 {
+pub fn boltzmann(_v: f64, _v_half: f64, _k: f64) -> f64 {
     // return 1.0 / (1.0 + safe_exp((v_half - v) / k))
     0.0
 }
 
-pub fn boltzmann_inv(v: f64, v_half: f64, k: f64) -> f64 {
+pub fn boltzmann_inv(_v: f64, _v_half: f64, _k: f64) -> f64 {
     // return 1.0 / (1.0 + safe_exp((v - v_half) / k))
     0.0
 }
 
-pub fn clip_gating(x: f64) -> f64 {
+pub fn clip_gating(_x: f64) -> f64 {
     // return float(clip(x, 0.0, 1.0))
     0.0
 }
 
-pub fn clip_voltage(v: f64, v_min: f64, v_max: f64) -> f64 {
+pub fn clip_voltage(_v: f64, _v_min: f64, _v_max: f64) -> f64 {
     // return float(clip(v, v_min, v_max))
     0.0
 }

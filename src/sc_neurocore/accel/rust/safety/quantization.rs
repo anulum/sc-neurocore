@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for quantization
 
-pub fn quantize_weights(weights: f64, bits: f64, symmetric: f64) -> f64 {
+pub fn quantize_weights(_weights: f64, _bits: f64, _symmetric: f64) -> f64 {
     // weights: list[ndarray],
     // bits: int = 8,
     // symmetric: bool = true,
@@ -30,7 +30,7 @@ pub fn quantize_weights(weights: f64, bits: f64, symmetric: f64) -> f64 {
     0.0
 }
 
-pub fn quantize_delays(delays: f64, resolution: f64, max_delay: f64) -> f64 {
+pub fn quantize_delays(_delays: f64, _resolution: f64, _max_delay: f64) -> f64 {
     // delays: ndarray,
     // resolution: int = 1,
     // max_delay: int | 0 = 0,

@@ -11,7 +11,7 @@ pub fn _ensure_dir() -> f64 {
     0.0
 }
 
-pub fn _safe_name(name: f64) -> f64 {
+pub fn _safe_name(_name: f64) -> f64 {
     // base = os.path.basename(name).replace("..", "").strip()
     // if not base or base in (".", "..") {
     // raise ValueError("Invalid project name")
@@ -19,7 +19,7 @@ pub fn _safe_name(name: f64) -> f64 {
     0.0
 }
 
-pub fn _safe_path(name: f64) -> f64 {
+pub fn _safe_path(_name: f64) -> f64 {
     // safe = _safe_name(name)
     // path = os.path.normpath(os.path.join(_PROJECTS_DIR, f"{safe}.json"))
     // if not path.startswith(os.path.normpath(_PROJECTS_DIR)) {
@@ -28,7 +28,7 @@ pub fn _safe_path(name: f64) -> f64 {
     0.0
 }
 
-pub fn save_project(name: f64, state: f64) -> f64 {
+pub fn save_project(_name: f64, _state: f64) -> f64 {
     // _ensure_dir()
     // path = _safe_path(name)
     // name = _safe_name(name)
@@ -44,7 +44,7 @@ pub fn save_project(name: f64, state: f64) -> f64 {
     0.0
 }
 
-pub fn load_project(name: f64) -> f64 {
+pub fn load_project(_name: f64) -> f64 {
     // path = _safe_path(name)
     // name = _safe_name(name)
     // if not os.path.exists(path) {
@@ -78,7 +78,7 @@ pub fn list_projects() -> f64 {
     0.0
 }
 
-pub fn delete_project(name: f64) -> f64 {
+pub fn delete_project(_name: f64) -> f64 {
     // path = _safe_path(name)
     // name = _safe_name(name)
     // if not os.path.exists(path) {
@@ -88,7 +88,7 @@ pub fn delete_project(name: f64) -> f64 {
     0.0
 }
 
-pub fn run_pipeline(graph: f64, target: f64) -> f64 {
+pub fn run_pipeline(_graph: f64, _target: f64) -> f64 {
     // from sc_neurocore.studio.network_graph import validate_graph, simulate
     // from sc_neurocore.studio.synthesis import run_synthesis
     // steps: dict[str, Any] = {}

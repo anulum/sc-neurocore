@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for correlation
 
-pub fn cross_correlation(train_a: f64, train_b: f64, max_lag_ms: f64, dt: f64) -> f64 {
+pub fn cross_correlation(_train_a: f64, _train_b: f64, _max_lag_ms: f64, _dt: f64) -> f64 {
     // train_a: ndarray[Any, Any],
     // train_b: ndarray[Any, Any],
     // max_lag_ms: float = 50.0,
@@ -30,7 +30,7 @@ pub fn cross_correlation(train_a: f64, train_b: f64, max_lag_ms: f64, dt: f64) -
     0.0
 }
 
-pub fn pairwise_correlation(trains: f64, dt: f64) -> f64 {
+pub fn pairwise_correlation(_trains: f64, _dt: f64) -> f64 {
     // trains: list[ndarray[Any, Any]], dt: float = 0.001
     // ) -> ndarray[Any, Any] {
     // n = len(trains)
@@ -42,7 +42,7 @@ pub fn pairwise_correlation(trains: f64, dt: f64) -> f64 {
     0.0
 }
 
-pub fn event_synchronization(train_a: f64, train_b: f64, dt: f64, tau_ms: f64) -> f64 {
+pub fn event_synchronization(_train_a: f64, _train_b: f64, _dt: f64, _tau_ms: f64) -> f64 {
     // train_a: ndarray[Any, Any],
     // train_b: ndarray[Any, Any],
     // dt: float = 0.001,
@@ -66,7 +66,7 @@ pub fn event_synchronization(train_a: f64, train_b: f64, dt: f64, tau_ms: f64) -
     0.0
 }
 
-pub fn spike_train_coherence(train_a: f64, train_b: f64, dt: f64) -> f64 {
+pub fn spike_train_coherence(_train_a: f64, _train_b: f64, _dt: f64) -> f64 {
     // train_a: ndarray[Any, Any], train_b: ndarray[Any, Any], dt: float = 0.
     // ) -> tuple[ndarray[Any, Any], ndarray[Any, Any]] {
     // n = min(train_a.size, train_b.size)
@@ -88,10 +88,10 @@ pub fn spike_train_coherence(train_a: f64, train_b: f64, dt: f64) -> f64 {
 }
 
 pub fn spike_time_tiling_coefficient(
-    train_a: f64,
-    train_b: f64,
-    dt_param: f64,
-    delta_ms: f64,
+    _train_a: f64,
+    _train_b: f64,
+    _dt_param: f64,
+    _delta_ms: f64,
 ) -> f64 {
     // train_a: ndarray[Any, Any],
     // train_b: ndarray[Any, Any],
@@ -116,7 +116,7 @@ pub fn spike_time_tiling_coefficient(
     0.0
 }
 
-pub fn covariance_matrix(trains: f64, bin_size: f64) -> f64 {
+pub fn covariance_matrix(_trains: f64, _bin_size: f64) -> f64 {
     // trains: list[ndarray[Any, Any]], bin_size: int = 10
     // ) -> ndarray[Any, Any] {
     // binned = [bin_spike_train(t, bin_size).astype(float64) for t in trains
@@ -126,7 +126,7 @@ pub fn covariance_matrix(trains: f64, bin_size: f64) -> f64 {
     0.0
 }
 
-pub fn autocorrelation_time(binary_train: f64, dt: f64, max_lag_ms: f64) -> f64 {
+pub fn autocorrelation_time(_binary_train: f64, _dt: f64, _max_lag_ms: f64) -> f64 {
     // binary_train: ndarray[Any, Any], dt: float = 0.001, max_lag_ms: float
     // ) -> float {
     // max_lag = int(max_lag_ms / (dt * 1000))
@@ -144,7 +144,7 @@ pub fn autocorrelation_time(binary_train: f64, dt: f64, max_lag_ms: f64) -> f64 
     0.0
 }
 
-pub fn noise_correlation(trains: f64, bin_size: f64) -> f64 {
+pub fn noise_correlation(_trains: f64, _bin_size: f64) -> f64 {
     // trains: list[ndarray[Any, Any]], bin_size: int = 50
     // ) -> ndarray[Any, Any] {
     // binned = [bin_spike_train(t, bin_size).astype(float64) for t in trains
@@ -163,7 +163,7 @@ pub fn noise_correlation(trains: f64, bin_size: f64) -> f64 {
     0.0
 }
 
-pub fn signal_correlation(trains: f64, bin_size: f64) -> f64 {
+pub fn signal_correlation(_trains: f64, _bin_size: f64) -> f64 {
     // trains: list[ndarray[Any, Any]], bin_size: int = 50
     // ) -> ndarray[Any, Any] {
     // binned = [bin_spike_train(t, bin_size).astype(float64) for t in trains
@@ -173,14 +173,14 @@ pub fn signal_correlation(trains: f64, bin_size: f64) -> f64 {
     0.0
 }
 
-pub fn spike_count_covariance(trains: f64, window: f64) -> f64 {
+pub fn spike_count_covariance(_trains: f64, _window: f64) -> f64 {
     // trains: list[ndarray[Any, Any]], window: int = 50
     // ) -> ndarray[Any, Any] {
     // return covariance_matrix(trains, bin_size=window)
     0.0
 }
 
-pub fn joint_psth(train_a: f64, train_b: f64, bin_size: f64) -> f64 {
+pub fn joint_psth(_train_a: f64, _train_b: f64, _bin_size: f64) -> f64 {
     // train_a: ndarray[Any, Any], train_b: ndarray[Any, Any], bin_size: int
     // ) -> ndarray[Any, Any] {
     // ca = bin_spike_train(train_a, bin_size).astype(float64)
@@ -193,7 +193,7 @@ pub fn joint_psth(train_a: f64, train_b: f64, bin_size: f64) -> f64 {
     0.0
 }
 
-pub fn coincidence_index(train_a: f64, train_b: f64, dt: f64, delta_ms: f64) -> f64 {
+pub fn coincidence_index(_train_a: f64, _train_b: f64, _dt: f64, _delta_ms: f64) -> f64 {
     // train_a: ndarray[Any, Any],
     // train_b: ndarray[Any, Any],
     // dt: float = 0.001,
@@ -217,7 +217,7 @@ pub fn coincidence_index(train_a: f64, train_b: f64, dt: f64, delta_ms: f64) -> 
     0.0
 }
 
-pub fn _tile_fraction(times: f64) -> f64 {
+pub fn _tile_fraction(_times: f64) -> f64 {
     // covered = 0.0
     // intervals: list[tuple[Any, Any]] = []
     // for t in times {
@@ -238,7 +238,7 @@ pub fn _tile_fraction(times: f64) -> f64 {
     0.0
 }
 
-pub fn _coincidence_fraction(times_ref: f64, times_target: f64) -> f64 {
+pub fn _coincidence_fraction(_times_ref: f64, _times_target: f64) -> f64 {
     // times_ref: ndarray[Any, Any], times_target: ndarray[Any, Any]
     // ) -> float {
     // count = 0
@@ -249,7 +249,7 @@ pub fn _coincidence_fraction(times_ref: f64, times_target: f64) -> f64 {
     0.0
 }
 
-pub fn _sttc_term(p: f64, t: f64) -> f64 {
+pub fn _sttc_term(_p: f64, _t: f64) -> f64 {
     // if abs(1.0 - t) < 1e-15 {
     // return 0.0
     // return (p - t) / (1.0 - p * t) if abs(1.0 - p * t) > 1e-15 else 0.0

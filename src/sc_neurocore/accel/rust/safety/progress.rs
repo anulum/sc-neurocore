@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for progress
 
-pub fn _characterize_with_progress(simulate_fn: f64, base_config: f64, q: f64) -> f64 {
+pub fn _characterize_with_progress(_simulate_fn: f64, _base_config: f64, _q: f64) -> f64 {
     // simulate_fn: Callable[..., dict[str, Any]],
     // base_config: dict[str, Any],
     // q: queue.Queue[dict[str, Any]],
@@ -31,12 +31,12 @@ pub fn _characterize_with_progress(simulate_fn: f64, base_config: f64, q: f64) -
 }
 
 pub fn _heatmap_with_progress(
-    simulate_fn: f64,
-    base_config: f64,
-    param_x: f64,
-    x_vals: f64,
-    param_y: f64,
-    y_vals: f64,
+    _simulate_fn: f64,
+    _base_config: f64,
+    _param_x: f64,
+    _x_vals: f64,
+    _param_y: f64,
+    _y_vals: f64,
 ) -> f64 {
     // simulate_fn: Callable[..., dict[str, Any]],
     // base_config: dict[str, Any],
@@ -61,7 +61,7 @@ pub fn _heatmap_with_progress(
     0.0
 }
 
-pub fn _scan_with_progress(q: f64) -> f64 {
+pub fn _scan_with_progress(_q: f64) -> f64 {
     // try {
     // from sc_neurocore.studio.models import list_models, simulate_model
     // from sc_neurocore.studio.codegen import classify_firing_pattern
