@@ -467,6 +467,135 @@ def _simulate_network_bundle(
     return run_result.stdout
 
 
+def _direct_equivalence_testbench(module_name: str) -> str:
+    return f"""
+module tb;
+    reg clk = 1'b0;
+    reg rst_n = 1'b0;
+    reg en = 1'b0;
+    reg signed [31:0] I_ext_flat = 32'h02000200;
+    wire [1:0] spike_bus;
+    integer cycle;
+
+    {module_name} uut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .en(en),
+        .I_ext_flat(I_ext_flat),
+        .spike_bus(spike_bus)
+    );
+
+    initial begin
+        #1 clk = 1'b1;
+        #1 clk = 1'b0;
+        rst_n = 1'b1;
+        en = 1'b1;
+        for (cycle = 0; cycle < 8; cycle = cycle + 1) begin
+            #1 clk = 1'b1;
+            #1 $display(
+                "cycle %0d i0 %0d v0 %0d s0 %0d i1 %0d v1 %0d s1 %0d",
+                cycle,
+                uut.p0_n0_I,
+                uut.p0_n0_v,
+                spike_bus[0],
+                uut.p0_n1_I,
+                uut.p0_n1_v,
+                spike_bus[1]
+            );
+            #1 clk = 1'b0;
+        end
+        $finish;
+    end
+endmodule
+"""
+
+
+def _simulate_network_with_testbench(out_dir, *, module_name: str, testbench: str, tmp_path) -> str:
+    iverilog = shutil.which("iverilog")
+    vvp = shutil.which("vvp")
+    assert iverilog is not None and vvp is not None, "Icarus Verilog must be installed"
+
+    rtl_paths = sorted(out_dir.glob("*.v"))
+    assert rtl_paths, f"no RTL files emitted in {out_dir}"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    tb_path = tmp_path / f"{module_name}_equivalence_tb.v"
+    out_path = tmp_path / f"{module_name}_equivalence_tb.out"
+    tb_path.write_text(testbench, encoding="utf-8")
+
+    compile_result = subprocess.run(
+        [iverilog, "-g2012", "-o", str(out_path), *map(str, rtl_paths), str(tb_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert compile_result.returncode == 0, compile_result.stderr
+
+    run_result = subprocess.run(
+        [vvp, str(out_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert run_result.returncode == 0, run_result.stderr
+    return run_result.stdout
+
+
+def _trunc_div(numerator: int, denominator: int) -> int:
+    assert denominator > 0
+    sign = -1 if numerator < 0 else 1
+    return sign * (abs(numerator) // denominator)
+
+
+def _small_direct_fixed_point_reference(
+    cycles: int,
+) -> list[tuple[int, int, int, int, int, int, int]]:
+    ext0 = 0x0200
+    ext1 = 0x0200
+    current0 = ((ext0 * 0x0040) >> 8) + _trunc_div(ext1 * -0x0080, 1 << 8)
+    current1 = ((ext0 * 0x00C0) >> 8) + ((ext1 * 0x0020) >> 8)
+    voltages = [0, 0]
+    currents = [current0, current1]
+    rows: list[tuple[int, int, int, int, int, int, int]] = []
+
+    for cycle in range(cycles):
+        row: list[int] = [cycle]
+        for idx, current in enumerate(currents):
+            leak = _trunc_div((-voltages[idx]) << 8, 5120)
+            drive = _trunc_div(current << 8, 5120)
+            next_voltage = max(-32768, min(32767, voltages[idx] + leak + drive))
+            spike = int(next_voltage > 256)
+            if spike:
+                observed_voltage = voltages[idx]
+                voltages[idx] = 0
+            else:
+                observed_voltage = next_voltage
+                voltages[idx] = next_voltage
+            row.extend([current, observed_voltage, spike])
+        rows.append(tuple(row))
+
+    return rows
+
+
+def _parse_direct_equivalence_stdout(stdout: str) -> list[tuple[int, int, int, int, int, int, int]]:
+    rows: list[tuple[int, int, int, int, int, int, int]] = []
+    for line in stdout.splitlines():
+        parts = line.split()
+        if not parts or parts[0] != "cycle":
+            continue
+        rows.append(
+            (
+                int(parts[1]),
+                int(parts[3]),
+                int(parts[5]),
+                int(parts[7]),
+                int(parts[9]),
+                int(parts[11]),
+                int(parts[13]),
+            )
+        )
+    return rows
+
+
 def test_version_flag(capsys):
     rc = _run_main("--version")
     assert rc == 0
@@ -891,6 +1020,8 @@ class TestCompileNirCommand:
         top_module = (out_dir / "aer_fixture_net.v").read_text(encoding="utf-8")
         assert "Interconnect: weighted event routing" in top_module
         assert "localparam integer AER_SRC_COUNT = 67;" in top_module
+        assert "$signed({{(ACC_WIDTH - DATA_WIDTH){Q_MAX[DATA_WIDTH - 1]}}, Q_MAX})" in top_module
+        assert "$signed({{(ACC_WIDTH - DATA_WIDTH){Q_MIN[DATA_WIDTH - 1]}}, Q_MIN})" in top_module
 
         manifest = json.loads((out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8"))
         assert manifest["interconnect"] == "aer"
@@ -1140,6 +1271,37 @@ class TestCompileNirCommand:
         output = capsys.readouterr().out
         assert "Interconnect: direct" in output
         assert "Interconnect: aer" in output
+
+    def test_compile_nir_direct_network_matches_fixed_point_reference(self, tmp_path):
+        nir = pytest.importorskip("nir")
+        model_path = tmp_path / "direct_equivalence_fixture.nir"
+        nir.write(str(model_path), _small_lif_nir_graph())
+        out_dir = tmp_path / "direct_equivalence_compiled"
+        module_name = "direct_equivalence_net"
+
+        rc = _run_main(
+            "compile-nir",
+            str(model_path),
+            "--module-name",
+            module_name,
+            "--T",
+            "512",
+            "--source-kind",
+            "sobol",
+            "--base-seed",
+            "66",
+            "-o",
+            str(out_dir),
+        )
+
+        assert rc == 0
+        stdout = _simulate_network_with_testbench(
+            out_dir,
+            module_name=module_name,
+            testbench=_direct_equivalence_testbench(module_name),
+            tmp_path=tmp_path / "direct_equivalence_sim",
+        )
+        assert _parse_direct_equivalence_stdout(stdout) == _small_direct_fixed_point_reference(8)
 
 
 # ---------------------------------------------------------------------------
