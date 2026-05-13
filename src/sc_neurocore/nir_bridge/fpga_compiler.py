@@ -38,13 +38,17 @@ from __future__ import annotations
 import logging
 import math
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 
 from ..hdl_gen._ident import sanitize_ident
 from ..compiler.equation_compiler import Q88, compile_to_verilog
 from ..ir.scnir_convert import SCNIRConversionConfig, build_scnir_from_neuron_graph
+from ..ir.scnir_hdl import (
+    SCNIRHDLSourceManifestEntry,
+    build_scnir_source_bundle,
+)
 from ..ir.scnir_schema import SCNIRDocument
 from ..neurons.equation_builder import from_equations
 from .neuron_graph import NeuronGraph, NeuronSpec
@@ -207,6 +211,10 @@ class NetworkCompilationResult:
         Quantisation and compilation warnings.
     scnir_document : SCNIRDocument
         SC-aware metadata document consumed by the compilation artefacts.
+    scnir_source_modules : dict[str, str]
+        Concrete stochastic source HDL modules keyed by Verilog module name.
+    scnir_source_manifest : tuple[SCNIRHDLSourceManifestEntry, ...]
+        Deterministic manifest mapping SC-NIR streams to source modules.
     """
 
     neuron_modules: dict[str, str]
@@ -218,6 +226,8 @@ class NetworkCompilationResult:
     q_format: str
     interconnect: str
     scnir_document: SCNIRDocument
+    scnir_source_modules: dict[str, str]
+    scnir_source_manifest: tuple[SCNIRHDLSourceManifestEntry, ...]
     warnings: list[str] = field(default_factory=list)
 
 
@@ -400,6 +410,7 @@ def _build_top_direct(
     fraction: int = 8,
     bitstream_length: int = 256,
     scnir_stream_count: int = 0,
+    scnir_source_module_count: int = 0,
 ) -> str:
     """Generate direct-wired per-neuron top-level interconnect.
 
@@ -504,6 +515,7 @@ def _build_top_direct(
         f"    localparam integer ACC_WIDTH = {acc_width};",
         f"    localparam integer SCNIR_BITSTREAM_LENGTH = {bitstream_length};",
         f"    localparam integer SCNIR_STREAM_COUNT = {scnir_stream_count};",
+        f"    localparam integer SCNIR_SOURCE_MODULE_COUNT = {scnir_source_module_count};",
         "    localparam signed [DATA_WIDTH - 1:0] Q_MAX = {1'b0, {(DATA_WIDTH - 1){1'b1}}};",
         "    localparam signed [DATA_WIDTH - 1:0] Q_MIN = {1'b1, {(DATA_WIDTH - 1){1'b0}}};",
         "",
@@ -638,6 +650,7 @@ def _build_top_aer(
     fraction: int = 8,
     bitstream_length: int = 256,
     scnir_stream_count: int = 0,
+    scnir_source_module_count: int = 0,
 ) -> str:
     """Generate weighted event-bus top-level interconnect.
 
@@ -752,6 +765,7 @@ def _build_top_aer(
         f"    localparam integer ACC_WIDTH = {acc_width};",
         f"    localparam integer SCNIR_BITSTREAM_LENGTH = {bitstream_length};",
         f"    localparam integer SCNIR_STREAM_COUNT = {scnir_stream_count};",
+        f"    localparam integer SCNIR_SOURCE_MODULE_COUNT = {scnir_source_module_count};",
         f"    localparam integer AER_SRC_COUNT = {aer_src_count};",
         f"    localparam integer AER_ADDR_WIDTH = {aer_addr_width};",
         "    localparam signed [DATA_WIDTH - 1:0] Q_MAX = {1'b0, {(DATA_WIDTH - 1){1'b1}}};",
@@ -932,6 +946,8 @@ def compile_network_to_fpga(
     data_width: int = 16,
     fraction: int = 8,
     bitstream_length: int = 256,
+    source_kind: Literal["lfsr", "sobol"] = "lfsr",
+    base_seed: int = 1,
     target: str = "artix7",
 ) -> NetworkCompilationResult:
     """Compile a NeuronGraph to synthesisable Verilog RTL.
@@ -955,6 +971,10 @@ def compile_network_to_fpga(
         Fractional bits.
     bitstream_length : int
         SC-NIR bitstream length metadata propagated into compilation artefacts.
+    source_kind : {"lfsr", "sobol"}
+        Hardware stochastic source family materialised from SC-NIR metadata.
+    base_seed : int
+        First deterministic source seed; stream index increments from this base.
     target : str
         FPGA target for resource estimation hints.
 
@@ -969,12 +989,20 @@ def compile_network_to_fpga(
         If the graph is empty or contains unsupported neuron types.
     """
     q = Q88(data_width=data_width, fraction=fraction)
+    if source_kind == "lfsr" or source_kind == "sobol":
+        resolved_source_kind: Literal["lfsr", "sobol"] = source_kind
+    else:
+        raise ValueError("source_kind must be 'lfsr' or 'sobol' for FPGA source emission")
+
     scnir_config = SCNIRConversionConfig(
         bitstream_length=bitstream_length,
         data_width=data_width,
         fraction=fraction,
+        base_seed=base_seed,
+        source_kind=resolved_source_kind,
     )
     scnir_document = build_scnir_from_neuron_graph(graph, config=scnir_config)
+    scnir_source_bundle = build_scnir_source_bundle(scnir_document)
     warnings: list[str] = []
 
     # Step 1: Quantise
@@ -1032,6 +1060,7 @@ def compile_network_to_fpga(
             fraction=fraction,
             bitstream_length=bitstream_length,
             scnir_stream_count=len(scnir_document.streams),
+            scnir_source_module_count=len(scnir_source_bundle.manifest),
         )
     else:
         top_module = _build_top_direct(
@@ -1041,6 +1070,7 @@ def compile_network_to_fpga(
             fraction=fraction,
             bitstream_length=bitstream_length,
             scnir_stream_count=len(scnir_document.streams),
+            scnir_source_module_count=len(scnir_source_bundle.manifest),
         )
 
     q_label = f"Q{data_width - fraction}.{fraction}"
@@ -1055,6 +1085,8 @@ def compile_network_to_fpga(
         q_format=q_label,
         interconnect=interconnect,
         scnir_document=scnir_document,
+        scnir_source_modules=dict(scnir_source_bundle.modules),
+        scnir_source_manifest=scnir_source_bundle.manifest,
         warnings=warnings,
     )
 

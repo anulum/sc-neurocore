@@ -65,17 +65,24 @@ means validation/export failed or the input could not be read.
 
 `compile_network_to_fpga(...)` constructs SC-NIR metadata for the lowered
 `NeuronGraph` before emitting top-level RTL. The returned
-`NetworkCompilationResult` exposes `scnir_document`, and the generated top
-module includes deterministic handoff localparams:
+`NetworkCompilationResult` exposes `scnir_document`,
+`scnir_source_modules`, and `scnir_source_manifest`. The generated top module
+includes deterministic handoff localparams:
 
 ```verilog
 localparam integer SCNIR_BITSTREAM_LENGTH = 1024;
 localparam integer SCNIR_STREAM_COUNT = 2;
+localparam integer SCNIR_SOURCE_MODULE_COUNT = 2;
 ```
 
-These localparams provide the stable boundary for follow-on HDL source-generator
-work, where LFSR/Sobol source instances will consume the same SC-NIR metadata
-directly.
+`scnir_source_modules` is keyed by emitted Verilog module name and contains the
+standalone LFSR-16 or Sobol-16 source RTL generated from each SC-NIR stream.
+`scnir_source_manifest` records the stream identifier, module name, source
+family, seed, bitstream length, encoding, precision, and source-specific
+metadata used for each module. FPGA compilation currently materialises LFSR-16
+and Sobol-16 source families because both expose the standard
+`threshold[15:0]`/`bit_out` contract; unsupported source families fail closed
+instead of being emitted through an incompatible HDL interface.
 
 ## Python API
 
@@ -86,6 +93,7 @@ from sc_neurocore.ir import (
     SCNIRPrecision,
     SCNIRSource,
     SCNIRStream,
+    build_scnir_source_bundle,
     build_scnir_from_neuron_graph,
     export_scnir_from_nir,
     load_scnir,
@@ -118,3 +126,11 @@ from sc_neurocore.ir import (
         - SCNIRConversionConfig
         - build_scnir_from_neuron_graph
         - export_scnir_from_nir
+
+::: sc_neurocore.ir.scnir_hdl
+    options:
+      show_root_heading: true
+      members:
+        - SCNIRHDLSourceManifestEntry
+        - SCNIRHDLSourceBundle
+        - build_scnir_source_bundle

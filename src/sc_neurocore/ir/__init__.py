@@ -29,6 +29,11 @@ from .scnir_convert import (
     build_scnir_from_neuron_graph,
     export_scnir_from_nir,
 )
+from .scnir_hdl import (
+    SCNIRHDLSourceBundle,
+    SCNIRHDLSourceManifestEntry,
+    build_scnir_source_bundle,
+)
 
 __all__ = [
     "SCNIR_SCHEMA_VERSION",
@@ -39,7 +44,10 @@ __all__ = [
     "SCNIRStream",
     "SCNIRValidationError",
     "SCNIRConversionConfig",
+    "SCNIRHDLSourceBundle",
+    "SCNIRHDLSourceManifestEntry",
     "build_scnir_from_neuron_graph",
+    "build_scnir_source_bundle",
     "export_scnir_from_nir",
     "load_scnir",
     "scnir_from_dict",
