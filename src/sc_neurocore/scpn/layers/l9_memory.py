@@ -166,10 +166,10 @@ class L9_MemoryLayer:
         values = np.asarray(pattern, dtype=np.float64).reshape(-1)
         if values.size < self.params.n_memory_slots:
             raise ValueError("pattern must contain at least n_memory_slots values")
-        values = values[: self.params.n_memory_slots]
-        if not np.all(np.isfinite(values)):
+        trimmed = values[: self.params.n_memory_slots]
+        if not np.all(np.isfinite(trimmed)):
             raise ValueError("pattern must contain only finite values")
-        return np.sign(values)
+        return np.sign(trimmed)
 
     @staticmethod
     def _cosmic_alignment(value: Any) -> float:

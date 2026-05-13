@@ -173,12 +173,13 @@ class L3_GenomicLayer:
         # Spin polarization depends on DNA chirality and electron flow
         electron_flow = np.mean(self.expression_levels)  # Proxy for metabolic activity
         ciss_baseline = self.params.ciss_efficiency * self.params.dna_chirality * electron_flow
-        self.spin_polarization = np.clip(
+        spin_polarization = np.clip(
             np.full(self.params.n_genes, ciss_baseline, dtype=np.float64)
             + self._rng.normal(0, 0.1, self.params.n_genes),
             -1.0,
             1.0,
         )
+        self.spin_polarization[...] = spin_polarization
 
         # 5. Neurochemical coupling (L2 input modulates expression)
         if l2_input is not None and "second_messengers" in l2_input:

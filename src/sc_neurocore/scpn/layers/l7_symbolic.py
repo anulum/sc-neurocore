@@ -233,7 +233,7 @@ class L7_SymbolicLayer:
         self.acupoint_activations *= 1.0 - self.params.symbol_decay * dt
 
         # 10. Assemble glyph vector
-        self.glyph_vector = np.array(
+        self.glyph_vector[...] = np.array(
             [
                 self.phi_alignment,
                 self.fibonacci_alignment,
@@ -389,10 +389,10 @@ class L7_SymbolicLayer:
         values = np.asarray(symbol_input, dtype=np.float64).reshape(-1)
         if values.size < self.params.n_symbols:
             raise ValueError("symbol_input must contain at least n_symbols values")
-        values = values[: self.params.n_symbols]
-        if not np.all(np.isfinite(values)):
+        trimmed = values[: self.params.n_symbols]
+        if not np.all(np.isfinite(trimmed)):
             raise ValueError("symbol_input must contain only finite values")
-        return values
+        return trimmed
 
     @staticmethod
     def _finite_mean(value: Any, name: str) -> float:

@@ -93,7 +93,7 @@ class L15_MetaLayer:
         self.gci = float(np.clip(self.gci, 0.0, 1.0))
 
         # Per-monitor error tracking (shift and append)
-        self.error_history = np.roll(self.error_history, -1)
+        self.error_history[...] = np.roll(self.error_history, -1)
         self.error_history[-1] = error
 
         activation = np.full(self.params.n_monitors, np.clip(self.gci, 0, 1))
