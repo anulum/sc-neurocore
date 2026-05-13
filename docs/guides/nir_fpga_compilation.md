@@ -164,6 +164,8 @@ neurons.  The new pipeline extends this to entire networks by:
 - Emitting a top-level interconnect module with per-neuron instances
 - Selecting exact direct wiring for small networks and weighted event fan-out
   for large spike-producing populations
+- Preserving one-step recurrent NIR feedback with explicit `delay_steps`
+  metadata and registered source values in generated RTL
 
 ---
 
@@ -236,7 +238,7 @@ neurons.  The new pipeline extends this to entire networks by:
 | `sc_nir_<type>.v` | Per-type neuron Verilog (one per unique neuron type) |
 | `sc_nir_weight_rom.v` | Combined weight ROM artefact for all connections |
 | `result.scnir_source_modules` | Standalone LFSR-16/Sobol-16 source RTL keyed by module name |
-| `result.scnir_source_manifest` | Stream-to-source manifest for deterministic hardware handoff |
+| `result.scnir_source_manifest` | Stream-to-source manifest for deterministic hardware handoff, including recurrent `delay_steps` |
 
 ---
 
@@ -560,7 +562,7 @@ values and accumulates warnings.
 | `interconnect` | `str` | `"direct"` or `"aer"` |
 | `scnir_document` | `SCNIRDocument` | Validated stochastic-computing metadata |
 | `scnir_source_modules` | `dict[str, str]` | Source module name → LFSR-16/Sobol-16 Verilog |
-| `scnir_source_manifest` | `tuple[...]` | Stream-to-source module handoff manifest |
+| `scnir_source_manifest` | `tuple[...]` | Stream-to-source module handoff manifest, including recurrent `delay_steps` |
 | `warnings` | `list[str]` | Accumulated warnings |
 
 #### `compile_network_to_fpga(graph, *, module_name, data_width, fraction, bitstream_length, source_kind, base_seed, target) → NetworkCompilationResult`
@@ -596,7 +598,8 @@ sc-neurocore compile-nir <model> [options]
 `compile-nir` writes `scnir_source_manifest.json` with schema version
 `sc-neurocore.scnir.hdl-sources.v0.1`. The manifest rows record the stream
 identifier, emitted module name, source kind, seed, bitstream length, encoding,
-precision, and LFSR/Sobol source metadata used to generate each module.
+explicit recurrent delay steps, precision, and LFSR/Sobol source metadata used
+to generate each module.
 
 ---
 
@@ -606,7 +609,10 @@ precision, and LFSR/Sobol source metadata used to generate each module.
 
 The direct interconnect grows with the number of neurons and synapses.  Larger
 networks use weighted event fan-out for spike-producing source populations
-while preserving fixed-point affine accumulation at each destination.  Record
+while preserving fixed-point affine accumulation at each destination. Graphs
+with delayed recurrent connections use direct interconnect so the generated RTL
+can register one-step source values exactly instead of collapsing feedback into
+same-cycle combinational fan-in. Record
 compile-time measurements from the target host before using this table in a
 report:
 

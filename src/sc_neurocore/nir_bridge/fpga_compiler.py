@@ -459,7 +459,14 @@ def _build_top_direct(
         external_width = 1
 
     max_terms = external_width if pops else 1
+    delayed_source_regs: set[tuple[str, int]] = set()
     for conn in conns:
+        delay_steps = getattr(conn, "delay_steps", 0)
+        if delay_steps not in (0, 1):
+            raise ValueError(
+                f"Connection {conn.src}->{conn.dst} has unsupported delay_steps={delay_steps}; "
+                "only one-step recurrent delays are currently synthesisable"
+            )
         weights = np.asarray(conn.weights)
         if weights.ndim != 2:
             raise ValueError(f"Connection {conn.src}->{conn.dst} weights must be a 2-D matrix")
@@ -472,12 +479,20 @@ def _build_top_direct(
                 f"destination rows for {dst_pop.n_neurons} destination neurons"
             )
         src_pop = pop_by_name.get(conn.src)
+        if delay_steps and src_pop is None:
+            raise ValueError(
+                f"Connection {conn.src}->{conn.dst} is delayed but does not originate from "
+                "a neuron population"
+            )
         expected_src = src_pop.n_neurons if src_pop is not None else external_width
         if weights.shape[1] != expected_src:
             raise ValueError(
                 f"Connection {conn.src}->{conn.dst} has {weights.shape[1]} "
                 f"source columns for {expected_src} source signals"
             )
+        if delay_steps and src_pop is not None:
+            for src_idx in range(src_pop.n_neurons):
+                delayed_source_regs.add((src_pop.name, src_idx))
         if conn.bias is not None and np.asarray(conn.bias).reshape(-1).size != dst_pop.n_neurons:
             raise ValueError(
                 f"Connection {conn.src}->{conn.dst} bias length does not match "
@@ -566,6 +581,45 @@ def _build_top_direct(
                 ]
             )
 
+    if delayed_source_regs:
+        lines.append("    // One-cycle recurrent source registers")
+        for pop_name, neuron_idx in sorted(
+            delayed_source_regs,
+            key=lambda item: (pop_index[item[0]], item[1]),
+        ):
+            pop = pop_by_name[pop_name]
+            prefix = neuron_prefix(pop, neuron_idx)
+            lines.append(f"    reg {prefix}_spike_d1;")
+            lines.append(f"    reg signed [DATA_WIDTH - 1:0] {prefix}_v_d1;")
+        lines.extend(
+            [
+                "    always @(posedge clk or negedge rst_n) begin",
+                "        if (!rst_n) begin",
+            ]
+        )
+        for pop_name, neuron_idx in sorted(
+            delayed_source_regs,
+            key=lambda item: (pop_index[item[0]], item[1]),
+        ):
+            pop = pop_by_name[pop_name]
+            prefix = neuron_prefix(pop, neuron_idx)
+            lines.append(f"            {prefix}_spike_d1 <= 1'b0;")
+            lines.append(f"            {prefix}_v_d1 <= {data_width}'sd0;")
+        lines.extend(
+            [
+                "        end else if (en) begin",
+            ]
+        )
+        for pop_name, neuron_idx in sorted(
+            delayed_source_regs,
+            key=lambda item: (pop_index[item[0]], item[1]),
+        ):
+            pop = pop_by_name[pop_name]
+            prefix = neuron_prefix(pop, neuron_idx)
+            lines.append(f"            {prefix}_spike_d1 <= {prefix}_spike;")
+            lines.append(f"            {prefix}_v_d1 <= {prefix}_v;")
+        lines.extend(["        end", "    end", ""])
+
     lines.append("    // Weighted fixed-point input accumulation")
     for pop in pops:
         feeding = [conn for conn in conns if conn.dst == pop.name]
@@ -607,21 +661,25 @@ def _build_top_direct(
                         continue
 
                     src_prefix = neuron_prefix(src_pop, src_idx)
+                    delay_steps = getattr(conn, "delay_steps", 0)
                     if _connection_sources_are_analogue(src_pop):
+                        src_value = f"{src_prefix}_v_d1" if delay_steps == 1 else f"{src_prefix}_v"
                         mul = f"{term_base}_mul"
                         term = f"{term_base}_term"
                         term_defs.extend(
                             [
                                 f"    wire signed [{product_width - 1}:0] {mul} = "
-                                f"{src_prefix}_v * {_signed_hex(weight, data_width)};",
+                                f"{src_value} * {_signed_hex(weight, data_width)};",
                                 f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};",
                             ]
                         )
                         term_names.append(term)
                     else:
+                        src_spike = (
+                            f"{src_prefix}_spike_d1" if delay_steps == 1 else f"{src_prefix}_spike"
+                        )
                         term_names.append(
-                            f"({src_prefix}_spike ? {_signed_hex(weight, acc_width)} "
-                            f": {acc_width}'sd0)"
+                            f"({src_spike} ? {_signed_hex(weight, acc_width)} : {acc_width}'sd0)"
                         )
 
             lines.extend(term_defs)
@@ -1051,7 +1109,8 @@ def compile_network_to_fpga(
     # preserving dense affine accumulation semantics.
     total_neurons = graph.total_neurons
     interconnect = "direct"
-    if total_neurons > _AER_THRESHOLD:
+    has_delayed_connections = any(getattr(conn, "delay_steps", 0) for conn in qgraph.connections)
+    if total_neurons > _AER_THRESHOLD and not has_delayed_connections:
         interconnect = "aer"
         top_module = _build_top_aer(
             module_name,
@@ -1063,6 +1122,11 @@ def compile_network_to_fpga(
             scnir_source_module_count=len(scnir_source_bundle.manifest),
         )
     else:
+        if total_neurons > _AER_THRESHOLD and has_delayed_connections:
+            warnings.append(
+                "Using direct interconnect because delayed recurrent connections require "
+                "registered one-step source semantics"
+            )
         top_module = _build_top_direct(
             module_name,
             qgraph,

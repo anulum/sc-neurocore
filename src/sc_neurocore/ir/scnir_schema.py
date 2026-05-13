@@ -23,8 +23,9 @@ from pathlib import Path
 import re
 from typing import Any, Literal, Mapping, Sequence, cast
 
-SCNIR_SCHEMA_VERSION = "sc-neurocore.scnir.v0.1"
-SCNIR_SUPPORTED_SCHEMA_VERSIONS = frozenset({SCNIR_SCHEMA_VERSION})
+SCNIR_SCHEMA_VERSION = "sc-neurocore.scnir.v0.2"
+SCNIR_PREVIOUS_SCHEMA_VERSION = "sc-neurocore.scnir.v0.1"
+SCNIR_SUPPORTED_SCHEMA_VERSIONS = frozenset({SCNIR_PREVIOUS_SCHEMA_VERSION, SCNIR_SCHEMA_VERSION})
 
 SCNIREncoding = Literal[
     "unipolar",
@@ -121,6 +122,7 @@ class SCNIRStream:
     encoding: SCNIREncoding
     precision: SCNIRPrecision
     source: SCNIRSource
+    delay_steps: int = 0
     correlation_constraints: Sequence[SCNIRCorrelationConstraint] = field(default_factory=tuple)
 
 
@@ -221,15 +223,24 @@ def write_scnir(path: str | Path, document: SCNIRDocument) -> None:
 def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
     """Upgrade supported SC-NIR payloads to the current canonical schema.
 
-    The current release only has one public schema version, so the migration is
-    an identity migration through the typed validator. Keeping this as an
-    explicit API gives future schema revisions a fail-closed migration surface
-    instead of letting callers guess whether a document is silently accepted.
+    Version ``v0.1`` did not encode recurrent connection delay.  Upgrading to
+    ``v0.2`` inserts ``delay_steps=0`` for all legacy streams before validating
+    through the typed schema.  Current documents are canonicalised through the
+    same deterministic writer.
     """
 
     version = payload.get("schema_version")
     if not isinstance(version, str) or version not in SCNIR_SUPPORTED_SCHEMA_VERSIONS:
         raise SCNIRValidationError(f"unsupported SC-NIR schema_version {version!r}")
+    if version == SCNIR_PREVIOUS_SCHEMA_VERSION:
+        upgraded: dict[str, Any] = dict(payload)
+        upgraded["schema_version"] = SCNIR_SCHEMA_VERSION
+        streams = _expect_sequence(upgraded.get("streams"), "streams")
+        upgraded["streams"] = [
+            {**_expect_mapping(stream, f"streams[{index}]"), "delay_steps": 0}
+            for index, stream in enumerate(streams)
+        ]
+        return scnir_to_dict(scnir_from_dict(upgraded))
     return scnir_to_dict(scnir_from_dict(payload))
 
 
@@ -243,6 +254,7 @@ def _validate_stream(stream: Mapping[str, Any], path: str) -> None:
             "encoding",
             "precision",
             "source",
+            "delay_steps",
             "correlation_constraints",
         },
         path,
@@ -253,6 +265,7 @@ def _validate_stream(stream: Mapping[str, Any], path: str) -> None:
     _expect_enum(stream["encoding"], _ENCODINGS, f"{path}.encoding")
     _validate_precision(_expect_mapping(stream["precision"], f"{path}.precision"), path)
     _validate_source(_expect_mapping(stream["source"], f"{path}.source"), path)
+    _expect_non_negative_int(stream["delay_steps"], f"{path}.delay_steps")
     constraints = _expect_sequence(
         stream["correlation_constraints"], f"{path}.correlation_constraints"
     )
@@ -378,6 +391,7 @@ def _stream_from_dict(stream: Mapping[str, Any]) -> SCNIRStream:
             replay_uri=cast(str | None, source["replay_uri"]),
             hardware_id=cast(str | None, source["hardware_id"]),
         ),
+        delay_steps=cast(int, stream["delay_steps"]),
         correlation_constraints=tuple(
             _correlation_from_dict(_expect_mapping(item, "correlation_constraint"))
             for item in constraints
@@ -400,6 +414,7 @@ def _stream_to_dict(stream: SCNIRStream) -> dict[str, Any]:
         "layer": stream.layer,
         "bitstream_length": stream.bitstream_length,
         "encoding": stream.encoding,
+        "delay_steps": stream.delay_steps,
         "precision": {
             "signed": stream.precision.signed,
             "total_bits": stream.precision.total_bits,

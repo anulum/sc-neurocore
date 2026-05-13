@@ -49,6 +49,33 @@ def _build_small_lif_graph() -> object:
     )
 
 
+def _build_recurrent_lif_graph() -> object:
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "aff": nir.Affine(
+                weight=np.eye(2, dtype=np.float32),
+                bias=np.zeros(2, dtype=np.float32),
+            ),
+            "lif": nir.LIF(
+                tau=np.full(2, 20.0),
+                r=np.ones(2),
+                v_leak=np.zeros(2),
+                v_threshold=np.ones(2),
+            ),
+            "rec": nir.Linear(weight=np.array([[0.125, 0.0], [0.0, -0.25]], dtype=np.float32)),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[
+            ("input", "aff"),
+            ("aff", "lif"),
+            ("lif", "rec"),
+            ("rec", "lif"),
+            ("lif", "output"),
+        ],
+    )
+
+
 def _neuron_graph() -> object:
     network = from_nir(_build_small_lif_graph(), dt=1.0)
     return from_scnetwork(network, dt=1.0)
@@ -112,6 +139,32 @@ def test_scnir_conversion_is_deterministic() -> None:
     right = scnir_to_dict(build_scnir_from_neuron_graph(graph, config=config))
 
     assert left == right
+
+
+def test_scnir_export_preserves_delayed_recurrent_weight_stream() -> None:
+    network = from_nir(_build_recurrent_lif_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    recurrent_connections = [
+        conn for conn in neuron_graph.connections if conn.src == "lif" and conn.dst == "lif"
+    ]
+    assert len(recurrent_connections) == 1
+    assert recurrent_connections[0].delay_steps == 1
+
+    document = build_scnir_from_neuron_graph(
+        neuron_graph,
+        config=SCNIRConversionConfig(bitstream_length=768, base_seed=41),
+    )
+    payload = scnir_to_dict(document)
+    validate_scnir_dict(payload)
+
+    stream_ids = {stream["stream_id"] for stream in payload["streams"]}
+    assert "conn.lif_to_lif.weight" in stream_ids
+    assert {stream["bitstream_length"] for stream in payload["streams"]} == {768}
+    recurrent_stream = next(
+        stream for stream in payload["streams"] if stream["stream_id"] == "conn.lif_to_lif.weight"
+    )
+    assert recurrent_stream["delay_steps"] == 1
 
 
 def test_scnir_export_from_nir_file_round_trips(tmp_path: Path) -> None:

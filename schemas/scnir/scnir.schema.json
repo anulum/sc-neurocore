@@ -8,7 +8,7 @@
   "required": ["schema_version", "producer", "streams"],
   "properties": {
     "schema_version": {
-      "const": "sc-neurocore.scnir.v0.1"
+      "const": "sc-neurocore.scnir.v0.2"
     },
     "producer": {
       "type": "string",
@@ -31,6 +31,7 @@
         "layer",
         "bitstream_length",
         "encoding",
+        "delay_steps",
         "precision",
         "source",
         "correlation_constraints"
@@ -57,6 +58,10 @@
             "stochastic_lfsr",
             "hardware_source"
           ]
+        },
+        "delay_steps": {
+          "type": "integer",
+          "minimum": 0
         },
         "precision": {
           "$ref": "#/$defs/precision"

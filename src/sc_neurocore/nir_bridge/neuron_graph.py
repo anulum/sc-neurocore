@@ -111,12 +111,17 @@ class ConnectionSpec:
         destination neuron *i*.
     bias : np.ndarray | None
         Optional bias vector of shape ``(n_dst,)``.
+    delay_steps : int
+        Number of explicit unit-delay timesteps on this connection.  Recurrent
+        NIR edges broken by the parser currently use ``1``; feed-forward
+        connections use ``0``.
     """
 
     src: str
     dst: str
     weights: np.ndarray
     bias: np.ndarray | None = None
+    delay_steps: int = 0
 
 
 @dataclass
@@ -179,7 +184,8 @@ class NeuronGraph:
         for conn in self.connections:
             shape = f"{conn.weights.shape[1]}→{conn.weights.shape[0]}"
             bias_str = " +bias" if conn.bias is not None else ""
-            lines.append(f"    {conn.src} → {conn.dst}: {shape}{bias_str}")
+            delay_str = f" delay={conn.delay_steps}" if conn.delay_steps else ""
+            lines.append(f"    {conn.src} → {conn.dst}: {shape}{bias_str}{delay_str}")
         return "\n".join(lines)
 
 
@@ -415,6 +421,44 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
                 bias=bias,
             )
         )
+
+    # Recurrent edges are broken into _UnitDelayNode sources by SCNetwork.
+    # If the delayed source is a weight-carrying node, rebuild the original
+    # weighted recurrent connection with an explicit one-step delay marker so
+    # SC-NIR and downstream HDL do not silently lose the feedback stream.
+    recurrent_map = getattr(network, "_recurrent_map", {})
+    for delay_name, recurrent_src in recurrent_map.items():
+        weight_data = pending_weights.get(recurrent_src)
+        if weight_data is None:
+            continue
+
+        src_name = ""
+        for pred in predecessors.get(recurrent_src, []):
+            if type(nodes[pred]).__name__ in _SC_NODE_TO_TYPE:
+                src_name = pred
+                break
+        if not src_name:
+            continue
+
+        dst_names = [
+            dst
+            for dst in successors.get(delay_name, [])
+            if type(nodes[dst]).__name__ in _SC_NODE_TO_TYPE
+        ]
+        if not dst_names:
+            continue
+
+        weights, bias = weight_data
+        for dst_name in dst_names:
+            connections.append(
+                ConnectionSpec(
+                    src=src_name,
+                    dst=dst_name,
+                    weights=weights,
+                    bias=bias,
+                    delay_steps=1,
+                )
+            )
 
     # Determine effective input/output
     if not input_pop and populations:

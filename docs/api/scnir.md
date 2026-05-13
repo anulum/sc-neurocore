@@ -29,7 +29,7 @@ schemas/scnir/scnir.schema.json
 Current schema version:
 
 ```text
-sc-neurocore.scnir.v0.1
+sc-neurocore.scnir.v0.2
 ```
 
 Each stream entry must provide:
@@ -40,6 +40,7 @@ Each stream entry must provide:
 | `layer` | Producer layer or graph node name |
 | `bitstream_length` | Positive integer SC stream length |
 | `encoding` | `unipolar`, `bipolar`, low-discrepancy, replay, LFSR, or hardware-source encoding |
+| `delay_steps` | Explicit unit-delay count for recurrent streams; feed-forward streams use `0` |
 | `precision` | Signedness, total bits, fractional bits, accumulator bits, rounding, overflow |
 | `source` | LFSR, Sobol, Halton, replay, or hardware source metadata |
 | `correlation_constraints` | Pairwise policy metadata between streams |
@@ -58,9 +59,10 @@ Upgrade a supported document to the current canonical schema:
 sc-neurocore scnir upgrade model.scnir.json --output upgraded.scnir.json
 ```
 
-The `sc-neurocore.scnir.v0.1` upgrade path is an identity migration through the
-typed validator and deterministic JSON writer. Unknown schema versions fail
-closed so migration support must be added deliberately when the schema evolves.
+The `sc-neurocore.scnir.v0.1` upgrade path adds explicit `delay_steps=0` to
+legacy streams before the typed validator and deterministic JSON writer produce
+`sc-neurocore.scnir.v0.2`. Unknown schema versions fail closed so migration
+support must be added deliberately when the schema evolves.
 
 Export SC-NIR metadata from a NIR graph:
 
@@ -88,9 +90,9 @@ localparam integer SCNIR_SOURCE_MODULE_COUNT = 2;
 `scnir_source_modules` is keyed by emitted Verilog module name and contains the
 standalone LFSR-16 or Sobol-16 source RTL generated from each SC-NIR stream.
 `scnir_source_manifest` records the stream identifier, module name, source
-family, seed, bitstream length, encoding, precision, and source-specific
-metadata used for each module. FPGA compilation currently materialises LFSR-16
-and Sobol-16 source families because both expose the standard
+family, seed, bitstream length, encoding, recurrent delay steps, precision, and
+source-specific metadata used for each module. FPGA compilation currently
+materialises LFSR-16 and Sobol-16 source families because both expose the standard
 `threshold[15:0]`/`bit_out` contract; unsupported source families fail closed
 instead of being emitted through an incompatible HDL interface.
 
@@ -98,6 +100,8 @@ instead of being emitted through an incompatible HDL interface.
 
 ```python
 from sc_neurocore.ir import (
+    SCNIR_PREVIOUS_SCHEMA_VERSION,
+    SCNIR_SCHEMA_VERSION,
     SCNIRConversionConfig,
     SCNIRDocument,
     SCNIRPrecision,
@@ -118,6 +122,7 @@ from sc_neurocore.ir import (
       show_root_heading: true
       members:
         - SCNIR_SCHEMA_VERSION
+        - SCNIR_PREVIOUS_SCHEMA_VERSION
         - SCNIRValidationError
         - SCNIRPrecision
         - SCNIRSource
