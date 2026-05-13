@@ -89,6 +89,35 @@ go test -v ./...
 | neuro_safe_monitor (SV) | uvm_gen/ (testbench) | — |
 | proto/ | — (unused schemas) | — |
 
+## Rust Safety Mirror Library
+
+The nested crate at `src/sc_neurocore/accel/rust/` contains safety and
+contract mirrors for Python surfaces that are not C-FFI entry points.  It is
+excluded from the root Cargo workspace so it can be tested directly without
+being confused with the PyO3 engine workspace.
+
+Run the safety mirror suite with:
+
+```bash
+cargo test --manifest-path src/sc_neurocore/accel/rust/Cargo.toml --lib --no-default-features
+```
+
+Recent mirror hardening is covered by both Rust unit tests and Python
+reference-path tests:
+
+| Mirror module | Python authority | Rust contract coverage | Python verification surface |
+|---|---|---|---|
+| `safety/l7_symbolic.rs` | `sc_neurocore.scpn.layers.l7_symbolic` | parameter validation, deterministic stepping, meridian/acupoint bounds, geometry metrics, bitstream emission | `tests/test_scpn_l7_symbolic_contracts.py`, `tests/test_scpn_cross_layer.py`, `tests/test_advanced_layers.py` |
+| `safety/dna_mapper.rs` | `sc_neurocore.bridges.dna_mapper` | sequence constraints, nearest-neighbour thermodynamics, strand-displacement and enzymatic gate compilation, kinetics, GF(4), plate layout | `tests/test_bridges_dna_mapper.py`, `tests/test_bridges/test_dna_mapper.py` |
+| `safety/predictive_model.rs` | `sc_neurocore.world_model.predictive_model` | LGSSM shape checks, positive-definite covariance checks, Cholesky solve path, Joseph-form covariance update, log-likelihood | `tests/test_world_model.py`, `tests/test_world_model/test_predictive_model.py`, `tests/test_world_model/test_predictive_model_backends.py` |
+| `safety/analysis.rs` | `sc_neurocore.studio.analysis` | bifurcation sweeps, sensitivity ordering, nullcline contour extraction, heatmaps, STA, frequency response, fixed-point error reporting | `tests/test_studio_analysis.py` |
+
+The Python import side treats optional engine submodules as optional
+accelerators.  If a wheel exposes only the compiled extension module and not
+`sc_neurocore_engine.dna`, `.world_model`, `.studio`, `.quantum`, or
+`.photonics`, the Python implementation remains importable and the Rust path is
+disabled until the corresponding engine submodule is present.
+
 ## Performance Results
 
 | Operation | NumPy (µs) | Rust C-FFI (µs) | Speedup |

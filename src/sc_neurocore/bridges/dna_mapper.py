@@ -55,7 +55,13 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from sc_neurocore_engine.dna import has_full_dna_backend
+
+try:
+    from sc_neurocore_engine.dna import has_full_dna_backend
+except ImportError:
+
+    def has_full_dna_backend() -> bool:
+        return False
 
 # ── Soft imports ──────────────────────────────────────────────────────
 

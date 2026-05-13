@@ -57,7 +57,8 @@ stochastic computing and wet-lab molecular computation.
 | Wet-lab protocol generation (Markdown) | `generate_protocol()` | ✅ |
 | 4 export formats (GenBank, FASTA, NUPACK, JSON) | `export_*()` functions | ✅ |
 | NUPACK integration (soft import with fallback) | `NUPACKInterface` | ✅ |
-| 73 tests, 5 benchmark suites | `tests/test_bridges/`, `benchmarks/` | ✅ |
+| 139 tests, 5 benchmark suites | `tests/test_bridges_dna_mapper.py`, `tests/test_bridges/`, `benchmarks/` | ✅ |
+| Rust safety mirror | `src/sc_neurocore/accel/rust/safety/dna_mapper.rs` | ✅ |
 
 ### Metrics
 
@@ -68,7 +69,7 @@ stochastic computing and wet-lab molecular computation.
 | **Benchmark LOC** | 247 |
 | **Classes** | 14 |
 | **Gate types** | 10 |
-| **Test count** | 73 |
+| **Test count** | 139 |
 | **Test pass rate** | 100% |
 | **Compile throughput** | ~50 gates in 196 ms |
 | **Simulation throughput** | 7,200 s in 4.1 ms |

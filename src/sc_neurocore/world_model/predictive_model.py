@@ -58,7 +58,13 @@ from typing import Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
-from sc_neurocore_engine.world_model import get_lgssm_kalman_filter
+
+try:
+    from sc_neurocore_engine.world_model import get_lgssm_kalman_filter
+except ImportError:
+
+    def get_lgssm_kalman_filter() -> object:
+        raise ImportError("Rust LGSSM backend is not available")
 
 
 def _missing_rust_kalman_filter(*_args: object, **_kwargs: object) -> object:
