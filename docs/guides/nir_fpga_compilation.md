@@ -213,10 +213,11 @@ computed output tensor. Shape-known `SumPool2d` and `AvgPool2d` nodes are
 lowered to dense pooling matrices when exact CHW input/output metadata and
 positive kernel/stride geometry are available; average pooling scales each
 window coefficient by the kernel area. `Input` and `Output` are boundary nodes.
-Nested
-`NIRGraph` nodes remain parser-only until their NeuronGraph and HDL semantics
-are explicitly lowered and audited; attempting to lower such nested subgraphs to
-SC-NIR/FPGA now fails closed instead of silently dropping the subgraph.
+Single-input/single-output nested `NIRGraph` nodes are inlined into the parent
+hardware graph with namespaced node and stream identifiers, preserving the
+nested contents through the same SC-NIR/HDL paths as the equivalent flat graph.
+Multi-port nested graphs still fail closed until a standalone hierarchical
+hardware handoff defines port maps, submodule boundaries, and audit evidence.
 
 ---
 

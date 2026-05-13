@@ -575,6 +575,37 @@ def _build_nested_subgraph_lif_graph() -> object:
     )
 
 
+def _build_multiport_nested_subgraph_graph() -> object:
+    inner = nir.NIRGraph(
+        nodes={
+            "a": nir.Input(input_type={"input": np.array([1])}),
+            "b": nir.Input(input_type={"input": np.array([1])}),
+            "aff": nir.Affine(
+                weight=np.array([[1.0, -1.0]], dtype=np.float32),
+                bias=np.zeros(1, dtype=np.float32),
+            ),
+            "output": nir.Output(output_type={"output": np.array([1])}),
+        },
+        edges=[("a", "aff"), ("b", "aff"), ("aff", "output")],
+        type_check=False,
+    )
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([1])}),
+            "subgraph": inner,
+            "lif": nir.LIF(
+                tau=np.full(1, 20.0),
+                r=np.ones(1),
+                v_leak=np.zeros(1),
+                v_threshold=np.ones(1),
+            ),
+            "output": nir.Output(output_type={"output": np.array([1])}),
+        },
+        edges=[("input", "subgraph"), ("subgraph", "lif"), ("lif", "output")],
+        type_check=False,
+    )
+
+
 def _neuron_graph() -> object:
     network = from_nir(_build_small_lif_graph(), dt=1.0)
     return from_scnetwork(network, dt=1.0)
@@ -1008,10 +1039,22 @@ def test_neuron_graph_rejects_sum_pool2d_without_shape_metadata() -> None:
         from_scnetwork(network, dt=1.0)
 
 
-def test_neuron_graph_rejects_nested_nir_graph_hardware_lowering() -> None:
+def test_neuron_graph_inlines_single_port_nested_nir_graph_for_hardware_lowering() -> None:
     network = from_nir(_build_nested_subgraph_lif_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
 
-    with pytest.raises(ValueError, match="Nested NIRGraph.*SC-NIR/FPGA lowering"):
+    assert [pop.name for pop in neuron_graph.populations] == ["lif"]
+    assert len(neuron_graph.connections) == 1
+    nested_connection = neuron_graph.connections[0]
+    assert nested_connection.src == "subgraph__input"
+    assert nested_connection.dst == "lif"
+    np.testing.assert_allclose(nested_connection.weights, np.eye(2))
+
+
+def test_neuron_graph_rejects_multiport_nested_nir_graph_hardware_lowering() -> None:
+    network = from_nir(_build_multiport_nested_subgraph_graph(), dt=1.0)
+
+    with pytest.raises(ValueError, match="Multi-port nested NIRGraph.*hierarchical"):
         from_scnetwork(network, dt=1.0)
 
 

@@ -122,7 +122,7 @@ The executable compatibility matrix is exposed by
 `scnir_compatibility_matrix()` and checked against the parser's declared
 `NODE_MAP` support. It separates parser execution from SC-NIR/FPGA handoff so
 documentation cannot claim hardware closure for primitives that are currently
-parser-only.
+parser-only or only closed under a bounded shape/port contract.
 
 | NIR primitive | SC-NIR / FPGA level | Stream metadata | HDL handoff |
 |---|---|---|---|
@@ -137,7 +137,7 @@ parser-only.
 | `Conv1d` | metadata and HDL when `input_shape` is explicit and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `convolution_lowered_weight` | dense Toeplitz-style fixed-point MAC terms through the weight path |
 | `Conv2d` | metadata and HDL when exact spatial input shape is explicit and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `convolution_lowered_weight` | dense 2D convolution fixed-point MAC terms through the weight path |
 | `SumPool2d`, `AvgPool2d` | metadata and HDL when exact CHW shape metadata is present and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `pool2d_lowered_weight` | dense pooling fixed-point MAC terms through the weight path |
-| nested `NIRGraph` | parser only; SC-NIR/FPGA lowering fails closed | none | nested execution exists; hierarchical SC-NIR/HDL handoff remains open |
+| nested `NIRGraph` | metadata and HDL for single-input/single-output subgraphs inlined into the parent graph; multi-port hierarchy fails closed | namespaced stream IDs from the inlined subgraph contents | namespaced inline fixed-point terms; standalone hierarchical submodule handoff remains open |
 
 Use `validate_scnir_compatibility_matrix()` in tests or release checks to fail
 when parser support changes without a corresponding compatibility row.
