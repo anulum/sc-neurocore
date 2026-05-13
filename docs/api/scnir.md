@@ -1,3 +1,11 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996-2026 Miroslav Sotek. All rights reserved. -->
+<!-- © Code 2020-2026 Miroslav Sotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — SC-NIR API documentation -->
+
 # SC-NIR API
 
 SC-NIR is the SC-NeuroCore metadata layer for stochastic-computing semantics
@@ -44,17 +52,26 @@ Validate a document:
 sc-neurocore scnir validate model.scnir.json
 ```
 
+Export SC-NIR metadata from a NIR graph:
+
+```bash
+sc-neurocore scnir export model.nir --output model.scnir.json --T 1024
+```
+
 Exit code `0` means the document passed the SC-NIR validator. Exit code `1`
-means it failed validation or could not be read.
+means validation/export failed or the input could not be read.
 
 ## Python API
 
 ```python
 from sc_neurocore.ir import (
+    SCNIRConversionConfig,
     SCNIRDocument,
     SCNIRPrecision,
     SCNIRSource,
     SCNIRStream,
+    build_scnir_from_neuron_graph,
+    export_scnir_from_nir,
     load_scnir,
     validate_scnir_dict,
     write_scnir,
@@ -77,3 +94,11 @@ from sc_neurocore.ir import (
         - scnir_to_dict
         - load_scnir
         - write_scnir
+
+::: sc_neurocore.ir.scnir_convert
+    options:
+      show_root_heading: true
+      members:
+        - SCNIRConversionConfig
+        - build_scnir_from_neuron_graph
+        - export_scnir_from_nir

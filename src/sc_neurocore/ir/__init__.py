@@ -24,6 +24,11 @@ from .scnir_schema import (
     validate_scnir_dict,
     write_scnir,
 )
+from .scnir_convert import (
+    SCNIRConversionConfig,
+    build_scnir_from_neuron_graph,
+    export_scnir_from_nir,
+)
 
 __all__ = [
     "SCNIR_SCHEMA_VERSION",
@@ -33,6 +38,9 @@ __all__ = [
     "SCNIRSource",
     "SCNIRStream",
     "SCNIRValidationError",
+    "SCNIRConversionConfig",
+    "build_scnir_from_neuron_graph",
+    "export_scnir_from_nir",
     "load_scnir",
     "scnir_from_dict",
     "scnir_to_dict",
