@@ -683,7 +683,7 @@ sc-neurocore compile-nir <model> [options]
 
 `compile-nir` writes `scnir_document.json`, the full validated SC-NIR document
 used during compilation, and `scnir_source_manifest.json` with schema version
-`sc-neurocore.scnir.hdl-sources.v0.1`. The top-level manifest records
+`sc-neurocore.scnir.hdl-sources.v0.2`. The top-level manifest records
 `interconnect`, `q_format`, `total_neurons`, `total_synapses`, and
 `scnir_stream_count`; these fields make event-driven/AER compile outputs
 machine-checkable without parsing RTL comments. It also records

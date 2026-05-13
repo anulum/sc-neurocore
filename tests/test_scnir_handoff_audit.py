@@ -109,7 +109,7 @@ def _write_valid_handoff(root: Path) -> None:
     root.mkdir()
     write_scnir(root / "scnir_document.json", _document())
     manifest = {
-        "schema_version": "sc-neurocore.scnir.hdl-sources.v0.1",
+        "schema_version": "sc-neurocore.scnir.hdl-sources.v0.2",
         "module_name": "mixed_audit_net",
         "bitstream_length": 512,
         "source_kind": "sobol",

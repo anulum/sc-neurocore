@@ -17,7 +17,7 @@ from typing import Any, Mapping, Sequence, cast
 
 from .scnir_schema import SCNIRDocument, SCNIRStream, load_scnir, scnir_to_dict
 
-SCNIR_HDL_HANDOFF_MANIFEST_VERSION = "sc-neurocore.scnir.hdl-sources.v0.1"
+SCNIR_HDL_HANDOFF_MANIFEST_VERSION = "sc-neurocore.scnir.hdl-sources.v0.2"
 
 
 class SCNIRHDLHandoffAuditError(ValueError):
