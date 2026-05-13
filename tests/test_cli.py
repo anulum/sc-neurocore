@@ -148,6 +148,34 @@ def _aer_lif_nir_graph():
     )
 
 
+def _recurrent_lif_nir_graph():
+    nir = pytest.importorskip("nir")
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "aff": nir.Affine(
+                weight=np.eye(2, dtype=np.float32),
+                bias=np.zeros(2, dtype=np.float32),
+            ),
+            "lif": nir.LIF(
+                tau=np.full(2, 20.0),
+                r=np.ones(2),
+                v_leak=np.zeros(2),
+                v_threshold=np.ones(2),
+            ),
+            "rec": nir.Linear(weight=np.array([[0.125, 0.0], [0.0, -0.25]], dtype=np.float32)),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[
+            ("input", "aff"),
+            ("aff", "lif"),
+            ("lif", "rec"),
+            ("rec", "lif"),
+            ("lif", "output"),
+        ],
+    )
+
+
 def _mixed_li_lif_nir_graph():
     nir = pytest.importorskip("nir")
     return nir.NIRGraph(
@@ -259,7 +287,49 @@ endmodule
 """
 
 
+def _lfsr_source_smoke_testbench(module_name: str) -> str:
+    return f"""
+module tb;
+    reg clk = 1'b0;
+    reg rst_n = 1'b0;
+    reg [15:0] threshold = 16'h9000;
+    wire bit_out;
+    wire [15:0] state;
+
+    {module_name} uut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .threshold(threshold),
+        .bit_out(bit_out),
+        .state(state)
+    );
+
+    initial begin
+        #1 clk = 1'b1;
+        #1 clk = 1'b0;
+        rst_n = 1'b1;
+        #1 $display("sample0 %04h %0d", state, bit_out);
+        $finish;
+    end
+endmodule
+"""
+
+
+def _lfsr16_step(state: int) -> int:
+    feedback = ((state >> 0) ^ (state >> 2) ^ (state >> 3) ^ (state >> 5)) & 1
+    return ((state >> 1) | (feedback << 15)) & 0xFFFF
+
+
 def _simulate_single_source_module(module_name: str, verilog: str, tmp_path) -> str:
+    return _simulate_source_module(
+        module_name,
+        verilog,
+        testbench=_sobol_source_smoke_testbench(module_name),
+        tmp_path=tmp_path,
+    )
+
+
+def _simulate_source_module(module_name: str, verilog: str, *, testbench: str, tmp_path) -> str:
     iverilog = shutil.which("iverilog")
     vvp = shutil.which("vvp")
     assert iverilog is not None and vvp is not None, "Icarus Verilog must be installed"
@@ -268,7 +338,7 @@ def _simulate_single_source_module(module_name: str, verilog: str, tmp_path) -> 
     tb_path = tmp_path / "tb_source.v"
     out_path = tmp_path / "tb_source.out"
     rtl_path.write_text(verilog, encoding="utf-8")
-    tb_path.write_text(_sobol_source_smoke_testbench(module_name), encoding="utf-8")
+    tb_path.write_text(testbench, encoding="utf-8")
 
     compile_result = subprocess.run(
         [iverilog, "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
@@ -286,6 +356,35 @@ def _simulate_single_source_module(module_name: str, verilog: str, tmp_path) -> 
     )
     assert run_result.returncode == 0, run_result.stderr
     return run_result.stdout
+
+
+def _simulate_manifest_source(out_dir, row: dict[str, object], tmp_path) -> str:
+    module_name = str(row["module_name"])
+    source_verilog = (out_dir / f"{module_name}.v").read_text(encoding="utf-8")
+
+    if row["source_kind"] == "sobol16":
+        stdout = _simulate_source_module(
+            module_name,
+            source_verilog,
+            testbench=_sobol_source_smoke_testbench(module_name),
+            tmp_path=tmp_path,
+        )
+        first_sample = (int(row["seed"]) ^ 0x8000) & 0xFFFF
+        assert f"sample0 {first_sample:04x} {int(first_sample < 0x9000)} 1" in stdout
+        return stdout
+
+    if row["source_kind"] == "lfsr16":
+        stdout = _simulate_source_module(
+            module_name,
+            source_verilog,
+            testbench=_lfsr_source_smoke_testbench(module_name),
+            tmp_path=tmp_path,
+        )
+        first_sample = _lfsr16_step(int(row["seed"]))
+        assert f"sample0 {first_sample:04x} {int(first_sample < 0x9000)}" in stdout
+        return stdout
+
+    raise AssertionError(f"unsupported source_kind {row['source_kind']!r}")
 
 
 def test_version_flag(capsys):
@@ -821,6 +920,70 @@ class TestCompileNirCommand:
             "weight": "stochastic_source_module",
         }
         assert "Interconnect: aer" in capsys.readouterr().out
+
+    def test_compile_nir_cosimulates_sources_across_interconnects(self, tmp_path, capsys):
+        nir = pytest.importorskip("nir")
+        cases = [
+            (
+                "direct_sobol",
+                _small_lif_nir_graph(),
+                "sobol",
+                66,
+                "direct",
+                "pop.lif.spike",
+            ),
+            (
+                "aer_lfsr",
+                _aer_lif_nir_graph(),
+                "lfsr",
+                11,
+                "aer",
+                "pop.lif1.spike",
+            ),
+            (
+                "recurrent_lfsr",
+                _recurrent_lif_nir_graph(),
+                "lfsr",
+                41,
+                "direct",
+                "conn.lif_to_lif.weight",
+            ),
+        ]
+
+        for name, graph, source_kind, base_seed, expected_interconnect, stream_id in cases:
+            model_path = tmp_path / f"{name}.nir"
+            nir.write(str(model_path), graph)
+            out_dir = tmp_path / f"{name}_compiled"
+
+            rc = _run_main(
+                "compile-nir",
+                str(model_path),
+                "--module-name",
+                f"{name}_net",
+                "--T",
+                "512",
+                "--source-kind",
+                source_kind,
+                "--base-seed",
+                str(base_seed),
+                "-o",
+                str(out_dir),
+            )
+
+            assert rc == 0
+            manifest = json.loads(
+                (out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8")
+            )
+            assert manifest["interconnect"] == expected_interconnect
+            row = next(item for item in manifest["sources"] if item["stream_id"] == stream_id)
+            assert row["source_kind"] == f"{source_kind}16"
+            sim_dir = tmp_path / f"{name}_sim"
+            sim_dir.mkdir()
+            _simulate_manifest_source(out_dir, row, sim_dir)
+
+        output = capsys.readouterr().out
+        assert "Interconnect: direct" in output
+        assert "Interconnect: aer" in output
 
 
 # ---------------------------------------------------------------------------
