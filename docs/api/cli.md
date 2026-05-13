@@ -104,7 +104,11 @@ weight ROM, one SC-NIR stochastic source module per stream, and
 is the full validated SC-NIR metadata document for the compiled network;
 `scnir_source_manifest.json` maps those streams to emitted source modules and
 records compile evidence including `interconnect`, `q_format`,
-`total_neurons`, `total_synapses`, and `scnir_stream_count`. `--source-kind`
+`total_neurons`, `total_synapses`, `scnir_stream_count`, and
+`scnir_signal_kinds`. Mixed analogue/spiking exports therefore expose a
+top-level count of `spike`, `analogue_state`, and `weight` streams without
+requiring downstream tools to infer that summary from RTL comments.
+`--source-kind`
 currently accepts `lfsr` and `sobol`; both map to source modules with the
 `threshold[15:0]`/`bit_out` interface. `--base-seed` controls deterministic
 stream seed allocation.

@@ -606,12 +606,15 @@ used during compilation, and `scnir_source_manifest.json` with schema version
 `sc-neurocore.scnir.hdl-sources.v0.1`. The top-level manifest records
 `interconnect`, `q_format`, `total_neurons`, `total_synapses`, and
 `scnir_stream_count`; these fields make event-driven/AER compile outputs
-machine-checkable without parsing RTL comments. The manifest rows record the
+machine-checkable without parsing RTL comments. It also records
+`scnir_signal_kinds`, a deterministic count of `spike`, `analogue_state`, and
+`weight` streams when those stream roles are present. The manifest rows record the
 stream identifier, emitted module name, source kind, seed, bitstream length,
 encoding, signal kind, explicit recurrent delay steps, precision, and
 LFSR/Sobol source metadata used to generate each module. Mixed
-analogue/spiking graphs use this field to distinguish voltage-state population
-streams from spike population streams in downstream evidence manifests.
+analogue/spiking graphs use these row and aggregate fields to distinguish
+voltage-state population streams from spike population streams in downstream
+evidence manifests.
 
 ---
 
