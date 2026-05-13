@@ -416,6 +416,7 @@ module tb;
         #1 clk = 1'b0;
         rst_n = 1'b1;
         en = 1'b1;
+        #1;
         for (cycle = 0; cycle < 8; cycle = cycle + 1) begin
             #1 clk = 1'b1;
             #1 $display("cycle %0d spikes %0h", cycle, spike_bus);
@@ -510,6 +511,64 @@ endmodule
 """
 
 
+def _recurrent_equivalence_testbench(module_name: str) -> str:
+    return f"""
+module tb;
+    reg clk = 1'b0;
+    reg rst_n = 1'b0;
+    reg en = 1'b0;
+    reg signed [31:0] I_ext_flat = 32'h20002000;
+    wire [1:0] spike_bus;
+    reg signed [15:0] i0_pre;
+    reg signed [15:0] i1_pre;
+    reg d0_pre;
+    reg d1_pre;
+    integer cycle;
+
+    {module_name} uut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .en(en),
+        .I_ext_flat(I_ext_flat),
+        .spike_bus(spike_bus)
+    );
+
+    initial begin
+        #1 clk = 1'b1;
+        #1 clk = 1'b0;
+        rst_n = 1'b1;
+        en = 1'b1;
+        #1;
+        for (cycle = 0; cycle < 8; cycle = cycle + 1) begin
+            i0_pre = uut.p0_n0_I;
+            i1_pre = uut.p0_n1_I;
+            d0_pre = uut.p0_n0_spike_d1;
+            d1_pre = uut.p0_n1_spike_d1;
+            #1 clk = 1'b1;
+            #1 $display(
+                "cycle %0d i0_pre %0d d0_pre %0d v0 %0d s0 %0d d0_post %0d i0_post %0d i1_pre %0d d1_pre %0d v1 %0d s1 %0d d1_post %0d i1_post %0d",
+                cycle,
+                i0_pre,
+                d0_pre,
+                uut.p0_n0_v,
+                spike_bus[0],
+                uut.p0_n0_spike_d1,
+                uut.p0_n0_I,
+                i1_pre,
+                d1_pre,
+                uut.p0_n1_v,
+                spike_bus[1],
+                uut.p0_n1_spike_d1,
+                uut.p0_n1_I
+            );
+            #1 clk = 1'b0;
+        end
+        $finish;
+    end
+endmodule
+"""
+
+
 def _simulate_network_with_testbench(out_dir, *, module_name: str, testbench: str, tmp_path) -> str:
     iverilog = shutil.which("iverilog")
     vvp = shutil.which("vvp")
@@ -576,6 +635,67 @@ def _small_direct_fixed_point_reference(
     return rows
 
 
+def _lif_q88_step(voltage: int, current: int) -> tuple[int, int, int]:
+    leak = _trunc_div((-voltage) << 8, 5120)
+    drive = _trunc_div(current << 8, 5120)
+    next_voltage = max(-32768, min(32767, voltage + leak + drive))
+    spike = int(next_voltage > 256)
+    if spike:
+        return voltage, spike, 0
+    return next_voltage, spike, next_voltage
+
+
+def _recurrent_fixed_point_reference(
+    cycles: int,
+) -> list[tuple[int, int, int, int, int, int, int, int, int, int, int, int, int]]:
+    ext_current = 0x2000
+    voltages = [0, 0]
+    spike_outputs = [0, 0]
+    delayed_spikes = [0, 0]
+    rows: list[tuple[int, int, int, int, int, int, int, int, int, int, int, int, int]] = []
+
+    for cycle in range(cycles):
+        current_pre = [
+            ext_current + (0x0020 if delayed_spikes[0] else 0),
+            ext_current + (-0x0040 if delayed_spikes[1] else 0),
+        ]
+        delayed_pre = delayed_spikes.copy()
+        observed: list[tuple[int, int, int]] = []
+        next_voltages: list[int] = []
+        for voltage, current in zip(voltages, current_pre, strict=True):
+            observed_voltage, spike, next_voltage = _lif_q88_step(voltage, current)
+            observed.append((observed_voltage, spike, next_voltage))
+            next_voltages.append(next_voltage)
+
+        delayed_post = spike_outputs.copy()
+        current_post = [
+            ext_current + (0x0020 if delayed_post[0] else 0),
+            ext_current + (-0x0040 if delayed_post[1] else 0),
+        ]
+        rows.append(
+            (
+                cycle,
+                current_pre[0],
+                delayed_pre[0],
+                observed[0][0],
+                observed[0][1],
+                delayed_post[0],
+                current_post[0],
+                current_pre[1],
+                delayed_pre[1],
+                observed[1][0],
+                observed[1][1],
+                delayed_post[1],
+                current_post[1],
+            )
+        )
+        voltages = next_voltages
+        spike_outputs = [observed[0][1], observed[1][1]]
+        delayed_spikes = delayed_post
+
+    return rows
+
+
 def _parse_direct_equivalence_stdout(stdout: str) -> list[tuple[int, int, int, int, int, int, int]]:
     rows: list[tuple[int, int, int, int, int, int, int]] = []
     for line in stdout.splitlines():
@@ -591,6 +711,34 @@ def _parse_direct_equivalence_stdout(stdout: str) -> list[tuple[int, int, int, i
                 int(parts[9]),
                 int(parts[11]),
                 int(parts[13]),
+            )
+        )
+    return rows
+
+
+def _parse_recurrent_equivalence_stdout(
+    stdout: str,
+) -> list[tuple[int, int, int, int, int, int, int, int, int, int, int, int, int]]:
+    rows: list[tuple[int, int, int, int, int, int, int, int, int, int, int, int, int]] = []
+    for line in stdout.splitlines():
+        parts = line.split()
+        if not parts or parts[0] != "cycle":
+            continue
+        rows.append(
+            (
+                int(parts[1]),
+                int(parts[3]),
+                int(parts[5]),
+                int(parts[7]),
+                int(parts[9]),
+                int(parts[11]),
+                int(parts[13]),
+                int(parts[15]),
+                int(parts[17]),
+                int(parts[19]),
+                int(parts[21]),
+                int(parts[23]),
+                int(parts[25]),
             )
         )
     return rows
@@ -1302,6 +1450,42 @@ class TestCompileNirCommand:
             tmp_path=tmp_path / "direct_equivalence_sim",
         )
         assert _parse_direct_equivalence_stdout(stdout) == _small_direct_fixed_point_reference(8)
+
+    def test_compile_nir_recurrent_network_matches_fixed_point_reference(self, tmp_path):
+        nir = pytest.importorskip("nir")
+        model_path = tmp_path / "recurrent_equivalence_fixture.nir"
+        nir.write(str(model_path), _recurrent_lif_nir_graph())
+        out_dir = tmp_path / "recurrent_equivalence_compiled"
+        module_name = "recurrent_equivalence_net"
+
+        rc = _run_main(
+            "compile-nir",
+            str(model_path),
+            "--module-name",
+            module_name,
+            "--T",
+            "512",
+            "--source-kind",
+            "lfsr",
+            "--base-seed",
+            "41",
+            "-o",
+            str(out_dir),
+        )
+
+        assert rc == 0
+        manifest = json.loads((out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8"))
+        recurrent_row = next(
+            row for row in manifest["sources"] if row["stream_id"] == "conn.lif_to_lif.weight"
+        )
+        assert recurrent_row["delay_steps"] == 1
+        stdout = _simulate_network_with_testbench(
+            out_dir,
+            module_name=module_name,
+            testbench=_recurrent_equivalence_testbench(module_name),
+            tmp_path=tmp_path / "recurrent_equivalence_sim",
+        )
+        assert _parse_recurrent_equivalence_stdout(stdout) == _recurrent_fixed_point_reference(8)
 
 
 # ---------------------------------------------------------------------------
