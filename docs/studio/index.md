@@ -1,7 +1,7 @@
 # Visual SNN Design Studio
 
 > **Status:** Development preview — functional but under active development.
-> API and UI may change between releases.
+> API and UI may change between releases until the v4.0 stable API freeze.
 
 The Visual SNN Design Studio is a web-based IDE for the complete spiking
 neural network lifecycle: design neuron models, build networks, train with

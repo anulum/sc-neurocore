@@ -318,6 +318,7 @@ nav:
           - AER-over-UDP: api/comm.md
       - Interoperability:
           - NIR Bridge: api/nir_bridge.md
+          - SC-NIR Metadata: api/scnir.md
       - Domain Modules:
           - Adapters: api/adapters.md
           - Audio: api/audio.md

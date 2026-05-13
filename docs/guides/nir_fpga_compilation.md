@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <!-- Commercial license available -->
-<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
-<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Concepts 1996-2026 Miroslav Sotek. All rights reserved. -->
+<!-- © Code 2020-2026 Miroslav Sotek. All rights reserved. -->
 <!-- ORCID: 0009-0009-3560-0851 -->
 
 # NIR/ONNX → FPGA Compilation Guide
@@ -105,9 +105,9 @@ all dynamics.  For Q8.8, the minimum safe $dt$ is approximately $0.004$.
 
 ### 1.4 Interconnect Contract
 
-The compiler emits explicit per-neuron direct wiring for all supported
-networks.  This is resource-heavier than a routed event fabric, but it
-preserves NIR affine semantics exactly.
+The compiler emits explicit per-neuron direct wiring for small supported
+networks and weighted event fan-out for larger spike-producing populations.
+Both paths preserve NIR affine semantics exactly.
 
 For each destination neuron, the generated top module accumulates:
 
@@ -119,9 +119,9 @@ For each destination neuron, the generated top module accumulates:
 All terms are summed in a widened signed accumulator and saturated back to
 the target Q-format before entering the neuron module.
 
-Weighted event-bus RTL is intentionally not emitted until address-event
-fan-out, weight lookup, and destination accumulation have an audited
-implementation.
+The weighted event path keeps analogue sources as direct fixed-point
+multiply-accumulate terms and routes spike-producing sources through audited
+event fan-out accumulation.
 
 ---
 
@@ -164,6 +164,64 @@ neurons.  The new pipeline extends this to entire networks by:
 - Emitting a top-level interconnect module with per-neuron instances
 - Selecting exact direct wiring for small networks and weighted event fan-out
   for large spike-producing populations
+- Preserving one-step recurrent NIR feedback with explicit `delay_steps`
+  metadata and registered source values in generated RTL
+- Marking mixed analogue/spiking graphs explicitly in SC-NIR: LI/CubaLI and
+  integrator population streams are `analogue_state`, while thresholding
+  populations remain `spike` streams and connections remain `weight` streams
+
+### 2.4 Compatibility Boundary
+
+SC-NeuroCore intentionally separates NIR parser support from SC-NIR/FPGA
+handoff support. The executable matrix in
+`sc_neurocore.ir.scnir_compatibility` is the release gate for this boundary.
+It is checked against the parser's `NODE_MAP`, so adding parser support for a
+new NIR primitive must also add a compatibility row.
+
+Closed SC-NIR/HDL handoff currently covers `LIF`, `IF`, `LI`, `I`, `CubaLIF`,
+`CubaLI`, `Affine`, and `Linear` through population streams, weight streams,
+LFSR-16/Sobol-16 source metadata, fixed-point precision metadata, and
+direct/AER compile evidence. `I` lowers to a canonical pure-integrator
+state-update module for `dv/dt = I * r` and routes its state as an
+`analogue_state` stream. Adjacent `Scale` nodes on either side of `Affine` or
+`Linear` are folded into the connection weights: source-side scale multiplies
+connection columns, and post-weight scale multiplies connection rows and bias
+terms. Shape-known `Flatten` nodes adjacent to `Affine` or `Linear` are folded
+as structural indexing only when their input and output element counts exactly
+match the adjacent weight and destination widths. Unknown shapes or incompatible
+flattened widths fail closed before SC-NIR/HDL lowering. Homogeneous
+source-side or post-weight `Threshold` nodes adjacent to `Affine` or `Linear`
+are represented as explicit SC-NIR threshold transforms and emitted as
+fixed-point comparators. Source-side thresholds turn analogue/external source
+values into weighted event contributions; post-weight thresholds compare the
+connection accumulator before adding a unit fixed-point destination current.
+Threshold vectors must be scalar or exact-width, and multiple thresholds on one
+side of a connection fail closed until pre-lowered. Homogeneous
+source-side `Delay` nodes feeding `Affine` or `Linear`
+population connections are preserved as scalar or exact source-width
+`delay_steps` on the downstream weight stream and emitted as direct interconnect
+register chains for both spike and analogue-state sources. Heterogeneous
+per-channel delay vectors select the corresponding delayed source tap per
+weight-matrix column. Shape-known `Conv1d`
+nodes are lowered to an exact dense Toeplitz-style weight matrix when numeric
+padding, positive stride/dilation/groups, and a destination width matching the
+flattened convolution output are present; missing shape metadata or ambiguous
+tensor routing fails closed. Shape-known `Conv2d` nodes use the same dense
+convolution handoff for explicit spatial input shapes, numeric padding,
+positive stride/dilation/groups, and a flattened destination width matching the
+computed output tensor. Shape-known `SumPool2d` and `AvgPool2d` nodes are
+lowered to dense pooling matrices when exact CHW input/output metadata and
+positive kernel/stride geometry are available; average pooling scales each
+window coefficient by the kernel area. `Input` and `Output` are boundary nodes.
+Single-input/single-output nested `NIRGraph` nodes are inlined into the parent
+hardware graph with namespaced node and stream identifiers, preserving the
+nested contents through the same SC-NIR/HDL paths as the equivalent flat graph.
+The SC-NIR document also retains the inlined boundary as a hierarchy instance:
+generated hierarchy ports reference the exact stream identifiers emitted by the
+inlined subgraph and use the active fixed-point width. This preserves audit and
+future submodule handoff metadata without weakening the current flat RTL path.
+Multi-port nested graphs still fail closed until a standalone hierarchical
+hardware handoff defines port maps, submodule boundaries, and audit evidence.
 
 ---
 
@@ -207,7 +265,12 @@ neurons.  The new pipeline extends this to entire networks by:
    │ Neuron   │   │ Weight   │  │ Top-Level      │
    │ Modules  │   │ ROM      │  │ Interconnect   │
    │ (*.v)    │   │ (.v)     │  │ (.v)           │
-   └──────────┘   └──────────┘  └────────────────┘
+   └──────────┘   └──────────┘  └───┬────────────┘
+                                    │
+                          ┌─────────▼─────────┐
+                          │ SC-NIR Source     │
+                          │ Modules + Manifest│
+                          └───────────────────┘
 ```
 
 ### 3.2 Inputs
@@ -218,6 +281,9 @@ neurons.  The new pipeline extends this to entire networks by:
 | `dt` | float | Simulation timestep (must match export framework) |
 | `data_width` | int | Fixed-point total bits (default: 16) |
 | `fraction` | int | Fractional bits (default: 8) |
+| `bitstream_length` | int | SC-NIR stream length metadata |
+| `source_kind` | str | `lfsr` or `sobol` source modules |
+| `base_seed` | int | First deterministic source seed |
 | `target` | str | FPGA target for hints (default: `"artix7"`) |
 
 ### 3.3 Outputs
@@ -227,6 +293,9 @@ neurons.  The new pipeline extends this to entire networks by:
 | `<module_name>.v` | Top-level network interconnect |
 | `sc_nir_<type>.v` | Per-type neuron Verilog (one per unique neuron type) |
 | `sc_nir_weight_rom.v` | Combined weight ROM artefact for all connections |
+| `result.scnir_source_modules` | Standalone LFSR-16/Sobol-16 source RTL keyed by module name |
+| `result.scnir_source_manifest` | Stream-to-source manifest for deterministic hardware handoff, including `signal_kind` and recurrent `delay_steps` |
+| `scnir_handoff_audit.json` | Optional audit report with stream/source counts, signal routes, and SC-NIR hierarchy instance/port summaries |
 
 ---
 
@@ -251,8 +320,27 @@ neurons.  The new pipeline extends this to entire networks by:
 
 ### 4.3 Pass-Through Nodes
 
-Input, Output, Scale, Flatten, Threshold, and Delay nodes are folded
-into the graph metadata — they do not generate Verilog modules.
+Input and Output nodes are graph boundaries. Adjacent Scale nodes are folded
+into connection weights and bias terms when they sit immediately before or
+after Affine/Linear. Source-side Delay nodes are preserved as scalar or
+source-width vector connection `delay_steps`. Shape-known Flatten nodes are structural pass-through
+nodes for this pipeline when their flattened element count exactly matches the
+adjacent weight input/output width and the destination population width.
+Adjacent Threshold nodes are explicit comparators: source-side thresholds gate
+source values before weight contribution, and post-weight thresholds compare
+the connection accumulator before forwarding a unit current. Non-adjacent or
+ambiguous Threshold placement still requires explicit pre-lowering.
+Shape-known Conv1d nodes are weight-carrying nodes in this pipeline: their
+kernel, stride, dilation, padding, groups, and bias are lowered to the same
+dense fixed-point MAC path as Affine/Linear after any explicit Flatten needed
+to connect the tensor output to a vector neuron population.
+Shape-known Conv2d nodes follow the same contract over flattened CHW tensors:
+the 4-D kernel, stride, dilation, padding, groups, and per-output-channel bias
+are expanded into a dense matrix whose rows enumerate output channels and
+spatial positions.
+Shape-known SumPool2d and AvgPool2d nodes are also weight-carrying in this
+pipeline: each pooling window becomes a sparse dense-matrix row, with AvgPool2d
+using `1 / (kernel_height * kernel_width)` coefficients.
 
 ### 4.4 Quantisation Features
 
@@ -335,6 +423,9 @@ result = compile_network_to_fpga(
     module_name="my_snn",
     data_width=16,
     fraction=8,
+    bitstream_length=1024,
+    source_kind="lfsr",
+    base_seed=1,
     target="artix7",
 )
 
@@ -348,6 +439,10 @@ for ntype, verilog in result.neuron_modules.items():
 
 with open("sc_nir_weight_rom.v", "w") as f:
     f.write(result.weight_rom)
+
+for module_name, verilog in result.scnir_source_modules.items():
+    with open(f"{module_name}.v", "w") as f:
+        f.write(verilog)
 
 print(f"Interconnect: {result.interconnect}")
 print(f"Q-format: {result.q_format}")
@@ -365,6 +460,15 @@ sc-neurocore compile-nir model.nir --data-width 32 --fraction 16 -o build/
 
 # Target-specific + custom module name
 sc-neurocore compile-nir model.nir --target ice40 --module-name my_snn -o build/
+
+# Sobol source modules with deterministic seed allocation
+sc-neurocore compile-nir model.nir --source-kind sobol --base-seed 66 --T 1024 -o build/
+
+# Compile and emit a machine-checkable SC-NIR HDL handoff audit
+sc-neurocore compile-nir model.nir --audit-handoff -o build/
+
+# Validate the complete SC-NIR HDL handoff after compilation
+sc-neurocore scnir audit-hdl build/ --output build/scnir_handoff_audit.json
 ```
 
 Output:
@@ -377,10 +481,17 @@ Output:
 [3/4] Compiling to Verilog (Q8.8)...
   Interconnect: direct
   Neuron modules: 1
+  SC-NIR source modules: 4
 [4/4] Output written to build/
   my_snn.v — top-level network
   sc_nir_lif.v — lif neuron module
   sc_nir_weight_rom.v — synaptic weight ROM
+  scnir_src_000_pop_lif1_spike.v — SC-NIR stochastic source module
+  scnir_src_001_pop_lif2_spike.v — SC-NIR stochastic source module
+  scnir_src_002_conn_input_to_lif1_weight.v — SC-NIR stochastic source module
+  scnir_src_003_conn_lif1_to_lif2_weight.v — SC-NIR stochastic source module
+  scnir_document.json — validated SC-NIR document
+  scnir_source_manifest.json — SC-NIR source manifest
 ```
 
 ### 5.3 CubaLIF Network
@@ -534,9 +645,12 @@ values and accumulates warnings.
 | `total_synapses` | `int` | Total synapse count |
 | `q_format` | `str` | e.g. `"Q8.8"` |
 | `interconnect` | `str` | `"direct"` or `"aer"` |
+| `scnir_document` | `SCNIRDocument` | Validated stochastic-computing metadata |
+| `scnir_source_modules` | `dict[str, str]` | Source module name → LFSR-16/Sobol-16 Verilog |
+| `scnir_source_manifest` | `tuple[...]` | Stream-to-source module handoff manifest, including `signal_kind` and recurrent `delay_steps` |
 | `warnings` | `list[str]` | Accumulated warnings |
 
-#### `compile_network_to_fpga(graph, *, module_name, data_width, fraction, target) → NetworkCompilationResult`
+#### `compile_network_to_fpga(graph, *, module_name, data_width, fraction, bitstream_length, source_kind, base_seed, target) → NetworkCompilationResult`
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
@@ -544,6 +658,9 @@ values and accumulates warnings.
 | `module_name` | `"sc_nir_network"` | Top Verilog module name |
 | `data_width` | `16` | Fixed-point total width |
 | `fraction` | `8` | Fractional bits |
+| `bitstream_length` | `256` | SC-NIR bitstream length metadata |
+| `source_kind` | `"lfsr"` | Hardware source family: `"lfsr"` or `"sobol"` |
+| `base_seed` | `1` | First deterministic SC-NIR source seed |
 | `target` | `"artix7"` | FPGA target hint |
 
 ### 6.4 CLI: `compile-nir`
@@ -559,6 +676,65 @@ sc-neurocore compile-nir <model> [options]
 | `-o, --output` | `build` | Output directory |
 | `--module-name` | `sc_equation_neuron` | Top module name |
 | `--dt` | `1.0` | Simulation timestep |
+| `--T` | `256` | SC-NIR bitstream length |
+| `--source-kind` | `lfsr` | Source modules to emit: `lfsr` or `sobol` |
+| `--base-seed` | `1` | First deterministic source seed |
+| `--audit-handoff` | off | Write `scnir_handoff_audit.json` after validating the emitted HDL handoff |
+
+`compile-nir` writes `scnir_document.json`, the full validated SC-NIR document
+used during compilation, and `scnir_source_manifest.json` with schema version
+`sc-neurocore.scnir.hdl-sources.v0.2`. The top-level manifest records
+`interconnect`, `q_format`, `total_neurons`, `total_synapses`, and
+`scnir_stream_count`; these fields make event-driven/AER compile outputs
+machine-checkable without parsing RTL comments. It also records
+`scnir_signal_kinds`, a deterministic count of `spike`, `analogue_state`, and
+`weight` streams when those stream roles are present. `scnir_signal_routes`
+records the route selected for each present stream role: analogue-state streams
+use direct fixed-point MAC terms, spike streams use either direct wiring or
+weighted AER event routing depending on the selected interconnect, and weight
+streams are materialised as stochastic source modules. Nested-graph exports also
+record `scnir_hierarchy_instance_count` and `scnir_hierarchy_port_count`, so
+downstream tooling can detect preserved hierarchy boundaries from the manifest
+without reparsing the SC-NIR document. The manifest rows record the stream
+identifier, emitted module name, source kind, seed, bitstream length, encoding,
+signal kind, explicit recurrent delay steps, precision, and LFSR/Sobol source
+metadata used to generate each module. Mixed analogue/spiking graphs use these
+row and aggregate fields to distinguish voltage-state population streams from
+spike population streams in downstream evidence manifests.
+
+After generation, run `sc-neurocore scnir audit-hdl build/` to validate the
+handoff directory before passing artefacts to downstream simulation, synthesis,
+or packaging jobs. The audit loads `scnir_document.json`, checks
+`scnir_source_manifest.json` against the typed SC-NIR streams, verifies aggregate
+signal-kind counts and route selections, verifies top-level SC-NIR localparams,
+records hierarchy instance and port summaries from `scnir_document.json`, and
+fails closed if any expected source module, top module, or weight ROM artefact
+is missing. Use `compile-nir --audit-handoff` when the audit report should be
+generated atomically with the RTL bundle.
+
+The CLI regression suite co-simulates emitted source modules selected from
+`scnir_source_manifest.json` for direct/Sobol, AER/LFSR, and recurrent/LFSR
+exports. These tests verify that source modules in real output directories
+follow the same advance-before-compare first-sample contract as the software and
+Rust stochastic encoders. A separate full-network HDL smoke matrix elaborates
+every emitted RTL file in the `compile-nir` output directory and runs the
+generated top-level module for direct, weighted-AER, and one-step recurrent NIR
+fixtures. That matrix proves the exported network bundles are executable as
+complete Verilog systems under reset, enable, external-input, and spike-bus
+traffic across the current interconnect families. The direct/Sobol fixture also
+has a cycle-level Q8.8 equivalence check against an independent integer
+reference for fixed-point MAC accumulation, signed saturation, LIF membrane
+updates, and spike/reset behaviour. The recurrent/LFSR fixture extends that
+cycle-level equivalence to one-step delayed feedback by checking pre-edge
+currents, post-edge delayed spike registers, LIF updates, and recurrent current
+contributions against the same integer reference style. The AER/LFSR fixture
+checks weighted event fan-out by comparing hidden-population spike counts,
+pre-edge and post-edge output currents, and output LIF state transitions against
+an independent integer reference for the generated weighted-event route. The
+mixed/Sobol fixture checks LI analogue-state updates, direct analogue-state MAC
+terms feeding the downstream LIF readout, same-edge scheduling from pre-edge LI
+voltages, and downstream LIF state transitions against an independent Q8.8
+integer reference.
 
 ---
 
@@ -568,7 +744,10 @@ sc-neurocore compile-nir <model> [options]
 
 The direct interconnect grows with the number of neurons and synapses.  Larger
 networks use weighted event fan-out for spike-producing source populations
-while preserving fixed-point affine accumulation at each destination.  Record
+while preserving fixed-point affine accumulation at each destination. Graphs
+with delayed recurrent connections use direct interconnect so the generated RTL
+can register one-step source values exactly instead of collapsing feedback into
+same-cycle combinational fan-in. Record
 compile-time measurements from the target host before using this table in a
 report:
 

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# © Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# © Code 2020-2026 Miroslav Sotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — NIR node type → SC-NeuroCore primitive factories
@@ -17,6 +17,22 @@ try:
     import nir
 except ImportError as e:
     raise ImportError("pip install nir") from e
+
+
+def _shape_tuple_from_type(type_map: Any, key: str) -> tuple[int, ...] | None:
+    """Return a positive integer shape tuple from a NIR type map."""
+
+    if not type_map:
+        return None
+    raw_shape = type_map.get(key)
+    if raw_shape is None:
+        return None
+    shape = np.atleast_1d(np.asarray(raw_shape, dtype=np.int64)).reshape(-1)
+    if shape.size == 0:
+        return ()
+    if np.any(shape < 0):
+        raise ValueError(f"NIR shape for {key!r} contains negative dimensions: {shape}")
+    return tuple(int(dim) for dim in shape)
 
 
 @dataclass
@@ -290,7 +306,7 @@ class SCScaleNode:
 
 @dataclass
 class SCThresholdNode:
-    """Spike threshold: y = 1 if x >= threshold else 0"""
+    """Spike threshold: y = 1 if x > threshold else 0"""
 
     name: str
     threshold: np.ndarray
@@ -300,7 +316,7 @@ class SCThresholdNode:
         return cls(name=name, threshold=node.threshold)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        return (x >= self.threshold).astype(np.float64)
+        return (x > self.threshold).astype(np.float64)
 
 
 @dataclass
@@ -310,10 +326,20 @@ class SCFlattenNode:
     name: str
     start_dim: int
     end_dim: int
+    input_shape: tuple[int, ...] | None = None
+    output_shape: tuple[int, ...] | None = None
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Flatten) -> SCFlattenNode:
-        return cls(name=name, start_dim=node.start_dim, end_dim=node.end_dim)
+        input_shape = _shape_tuple_from_type(getattr(node, "input_type", None), "input")
+        output_shape = _shape_tuple_from_type(getattr(node, "output_type", None), "output")
+        return cls(
+            name=name,
+            start_dim=node.start_dim,
+            end_dim=node.end_dim,
+            input_shape=input_shape,
+            output_shape=output_shape,
+        )
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         x = np.asarray(x)
@@ -351,6 +377,12 @@ class SCIntegratorNode:
     def from_nir(cls, name: str, node: nir.I, dt: float = 1.0) -> SCIntegratorNode:
         r = np.atleast_1d(node.r).flatten()
         return cls(name=name, r=r, dt=dt)
+
+    @property
+    def n_neurons(self) -> int:
+        """Number of integrator state channels."""
+
+        return int(self.r.size)
 
     def __post_init__(self) -> None:
         if self.v is None:
@@ -579,6 +611,8 @@ class SCSumPool2dNode:
     kernel_size: tuple[int, int]
     stride: tuple[int, int]
     padding: tuple[int, int]
+    input_shape: tuple[int, int, int] | None = None
+    output_shape: tuple[int, int, int] | None = None
 
     @classmethod
     def from_nir(cls, name: str, node: nir.SumPool2d) -> SCSumPool2dNode:
@@ -588,7 +622,14 @@ class SCSumPool2dNode:
         ks = (ks_raw[0], ks_raw[0]) if len(ks_raw) == 1 else (ks_raw[0], ks_raw[1])
         st = (st_raw[0], st_raw[0]) if len(st_raw) == 1 else (st_raw[0], st_raw[1])
         pad = (pad_raw[0], pad_raw[0]) if len(pad_raw) == 1 else (pad_raw[0], pad_raw[1])
-        return cls(name=name, kernel_size=ks, stride=st, padding=pad)
+        return cls(
+            name=name,
+            kernel_size=ks,
+            stride=st,
+            padding=pad,
+            input_shape=_shape_tuple_from_type(getattr(node, "input_type", None), "input"),
+            output_shape=_shape_tuple_from_type(getattr(node, "output_type", None), "output"),
+        )
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         if x.ndim < 2:
@@ -620,6 +661,8 @@ class SCAvgPool2dNode:
     kernel_size: tuple[int, int]
     stride: tuple[int, int]
     padding: tuple[int, int]
+    input_shape: tuple[int, int, int] | None = None
+    output_shape: tuple[int, int, int] | None = None
 
     @classmethod
     def from_nir(cls, name: str, node: nir.AvgPool2d) -> SCAvgPool2dNode:
@@ -629,7 +672,14 @@ class SCAvgPool2dNode:
         ks = (ks_raw[0], ks_raw[0]) if len(ks_raw) == 1 else (ks_raw[0], ks_raw[1])
         st = (st_raw[0], st_raw[0]) if len(st_raw) == 1 else (st_raw[0], st_raw[1])
         pad = (pad_raw[0], pad_raw[0]) if len(pad_raw) == 1 else (pad_raw[0], pad_raw[1])
-        return cls(name=name, kernel_size=ks, stride=st, padding=pad)
+        return cls(
+            name=name,
+            kernel_size=ks,
+            stride=st,
+            padding=pad,
+            input_shape=_shape_tuple_from_type(getattr(node, "input_type", None), "input"),
+            output_shape=_shape_tuple_from_type(getattr(node, "output_type", None), "output"),
+        )
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         sum_node = SCSumPool2dNode(
@@ -711,6 +761,7 @@ class SCConv2dNode:
     dilation: tuple[int, int]
     groups: int
     input_shape: tuple[int, int] | None = None
+    output_shape: tuple[int, int, int] | None = None
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Conv2d) -> SCConv2dNode:
@@ -732,6 +783,7 @@ class SCConv2dNode:
             dilation=dilation,
             groups=node.groups,
             input_shape=getattr(node, "input_shape", None),
+            output_shape=_shape_tuple_from_type(getattr(node, "output_type", None), "output"),
         )
 
     def forward(self, x: np.ndarray) -> np.ndarray:

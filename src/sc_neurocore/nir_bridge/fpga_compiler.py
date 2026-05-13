@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# © Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# © Code 2020-2026 Miroslav Sotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — NIR/ONNX → FPGA network compiler
@@ -38,22 +38,31 @@ from __future__ import annotations
 import logging
 import math
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 
 from ..hdl_gen._ident import sanitize_ident
 from ..compiler.equation_compiler import Q88, compile_to_verilog
+from ..ir.scnir_convert import SCNIRConversionConfig, build_scnir_from_neuron_graph
+from ..ir.scnir_hdl import (
+    SCNIRHDLSourceManifestEntry,
+    build_scnir_source_bundle,
+)
+from ..ir.scnir_schema import SCNIRDocument
 from ..neurons.equation_builder import from_equations
 from .neuron_graph import NeuronGraph, NeuronSpec
 from .quantise_params import QuantisedGraph, quantise_graph
 
 logger = logging.getLogger(__name__)
 
+DelayVector = tuple[int, ...]
+
 # Threshold above which the compiler records that event-bus RTL would be useful.
 # The default emitter still uses exact direct wiring until weighted routing is
 # implemented and verified.
 _AER_THRESHOLD = 64
+_MAX_SYNTHESISABLE_DELAY_STEPS = 1024
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -110,6 +119,12 @@ _NEURON_TEMPLATES: dict[str, dict[str, Any]] = {
         "threshold": None,
         "reset": None,
         "default_params": {"tau_syn": 5.0, "tau_mem": 20.0, "r": 1.0, "v_leak": 0.0, "w_in": 1.0},
+    },
+    "integrator": {
+        "equations": ["dv/dt = I * r"],
+        "threshold": None,
+        "reset": None,
+        "default_params": {"r": 1.0},
     },
 }
 
@@ -174,6 +189,52 @@ def _connection_sources_are_analogue(pop: NeuronSpec) -> bool:
     return pop.neuron_type in {"li", "cuba_li", "integrator"}
 
 
+def _connection_has_thresholds(conn: Any) -> bool:
+    """Whether a connection carries explicit NIR Threshold metadata."""
+
+    return (
+        getattr(conn, "source_threshold", None) is not None
+        or getattr(conn, "destination_threshold", None) is not None
+    )
+
+
+def _normalise_connection_delay_steps(
+    delay_steps: Any,
+    source_width: int,
+    label: str,
+) -> DelayVector:
+    """Return one validated delay value per source column."""
+
+    if source_width <= 0:
+        raise ValueError(f"{label} source width must be positive")
+    if isinstance(delay_steps, int) and not isinstance(delay_steps, bool):
+        value = delay_steps
+        if value < 0:
+            raise ValueError(f"{label} delay_steps must be non-negative")
+        if value > _MAX_SYNTHESISABLE_DELAY_STEPS:
+            raise ValueError(
+                f"{label} has delay_steps={value}, above "
+                f"the synthesis guard {_MAX_SYNTHESISABLE_DELAY_STEPS}"
+            )
+        return tuple(value for _ in range(source_width))
+
+    raw = np.atleast_1d(np.asarray(delay_steps, dtype=np.int64)).reshape(-1)
+    if raw.size != source_width:
+        raise ValueError(
+            f"{label} delay_steps vector length {raw.size} does not match "
+            f"source width {source_width}"
+        )
+    if np.any(raw < 0):
+        raise ValueError(f"{label} delay_steps must be non-negative")
+    max_delay = int(np.max(raw)) if raw.size else 0
+    if max_delay > _MAX_SYNTHESISABLE_DELAY_STEPS:
+        raise ValueError(
+            f"{label} has delay_steps={max_delay}, above "
+            f"the synthesis guard {_MAX_SYNTHESISABLE_DELAY_STEPS}"
+        )
+    return tuple(int(value) for value in raw)
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # Result Container
 # ═══════════════════════════════════════════════════════════════════════
@@ -203,6 +264,12 @@ class NetworkCompilationResult:
         ``"direct"`` or ``"aer"``.
     warnings : list[str]
         Quantisation and compilation warnings.
+    scnir_document : SCNIRDocument
+        SC-aware metadata document consumed by the compilation artefacts.
+    scnir_source_modules : dict[str, str]
+        Concrete stochastic source HDL modules keyed by Verilog module name.
+    scnir_source_manifest : tuple[SCNIRHDLSourceManifestEntry, ...]
+        Deterministic manifest mapping SC-NIR streams to source modules.
     """
 
     neuron_modules: dict[str, str]
@@ -213,6 +280,9 @@ class NetworkCompilationResult:
     total_synapses: int
     q_format: str
     interconnect: str
+    scnir_document: SCNIRDocument
+    scnir_source_modules: dict[str, str]
+    scnir_source_manifest: tuple[SCNIRHDLSourceManifestEntry, ...]
     warnings: list[str] = field(default_factory=list)
 
 
@@ -393,6 +463,9 @@ def _build_top_direct(
     *,
     data_width: int = 16,
     fraction: int = 8,
+    bitstream_length: int = 256,
+    scnir_stream_count: int = 0,
+    scnir_source_module_count: int = 0,
 ) -> str:
     """Generate direct-wired per-neuron top-level interconnect.
 
@@ -441,6 +514,8 @@ def _build_top_direct(
         external_width = 1
 
     max_terms = external_width if pops else 1
+    delayed_source_depths: dict[tuple[str, int], int] = {}
+    delay_vectors: dict[int, DelayVector] = {}
     for conn in conns:
         weights = np.asarray(conn.weights)
         if weights.ndim != 2:
@@ -460,11 +535,41 @@ def _build_top_direct(
                 f"Connection {conn.src}->{conn.dst} has {weights.shape[1]} "
                 f"source columns for {expected_src} source signals"
             )
+        delay_vector = _normalise_connection_delay_steps(
+            getattr(conn, "delay_steps", 0),
+            expected_src,
+            f"Connection {conn.src}->{conn.dst}",
+        )
+        delay_vectors[id(conn)] = delay_vector
+        if any(delay_vector) and src_pop is None:
+            raise ValueError(
+                f"Connection {conn.src}->{conn.dst} is delayed but does not originate from "
+                "a neuron population"
+            )
+        if any(delay_vector) and src_pop is not None:
+            for src_idx in range(src_pop.n_neurons):
+                delay_steps = delay_vector[src_idx]
+                key = (src_pop.name, src_idx)
+                delayed_source_depths[key] = max(delayed_source_depths.get(key, 0), delay_steps)
         if conn.bias is not None and np.asarray(conn.bias).reshape(-1).size != dst_pop.n_neurons:
             raise ValueError(
                 f"Connection {conn.src}->{conn.dst} bias length does not match "
                 f"{dst_pop.n_neurons} destination neurons"
             )
+        if conn.source_threshold is not None:
+            source_threshold = np.asarray(conn.source_threshold).reshape(-1)
+            if source_threshold.size != weights.shape[1]:
+                raise ValueError(
+                    f"Connection {conn.src}->{conn.dst} source_threshold length "
+                    f"does not match {weights.shape[1]} source columns"
+                )
+        if conn.destination_threshold is not None:
+            destination_threshold = np.asarray(conn.destination_threshold).reshape(-1)
+            if destination_threshold.size != dst_pop.n_neurons:
+                raise ValueError(
+                    f"Connection {conn.src}->{conn.dst} destination_threshold length "
+                    f"does not match {dst_pop.n_neurons} destination neurons"
+                )
         max_terms = max(max_terms, weights.shape[1] + (1 if conn.bias is not None else 0))
 
     acc_width = max(
@@ -495,15 +600,18 @@ def _build_top_direct(
         "",
         f"    localparam integer DATA_WIDTH = {data_width};",
         f"    localparam integer ACC_WIDTH = {acc_width};",
+        f"    localparam integer SCNIR_BITSTREAM_LENGTH = {bitstream_length};",
+        f"    localparam integer SCNIR_STREAM_COUNT = {scnir_stream_count};",
+        f"    localparam integer SCNIR_SOURCE_MODULE_COUNT = {scnir_source_module_count};",
         "    localparam signed [DATA_WIDTH - 1:0] Q_MAX = {1'b0, {(DATA_WIDTH - 1){1'b1}}};",
         "    localparam signed [DATA_WIDTH - 1:0] Q_MIN = {1'b1, {(DATA_WIDTH - 1){1'b0}}};",
         "",
         "    function signed [DATA_WIDTH - 1:0] sat_acc;",
         "        input signed [ACC_WIDTH - 1:0] x;",
         "        begin",
-        "            if (x > {{(ACC_WIDTH - DATA_WIDTH){Q_MAX[DATA_WIDTH - 1]}}, Q_MAX})",
+        "            if (x > $signed({{(ACC_WIDTH - DATA_WIDTH){Q_MAX[DATA_WIDTH - 1]}}, Q_MAX}))",
         "                sat_acc = Q_MAX;",
-        "            else if (x < {{(ACC_WIDTH - DATA_WIDTH){Q_MIN[DATA_WIDTH - 1]}}, Q_MIN})",
+        "            else if (x < $signed({{(ACC_WIDTH - DATA_WIDTH){Q_MIN[DATA_WIDTH - 1]}}, Q_MIN}))",
         "                sat_acc = Q_MIN;",
         "            else",
         "                sat_acc = x[DATA_WIDTH - 1:0];",
@@ -545,6 +653,53 @@ def _build_top_direct(
                 ]
             )
 
+    if delayed_source_depths:
+        lines.append(
+            "    // Delayed source register chains for recurrent and explicit NIR Delay paths"
+        )
+        for pop_name, neuron_idx in sorted(
+            delayed_source_depths,
+            key=lambda item: (pop_index[item[0]], item[1]),
+        ):
+            pop = pop_by_name[pop_name]
+            prefix = neuron_prefix(pop, neuron_idx)
+            for step in range(1, delayed_source_depths[(pop_name, neuron_idx)] + 1):
+                lines.append(f"    reg {prefix}_spike_d{step};")
+                lines.append(f"    reg signed [DATA_WIDTH - 1:0] {prefix}_v_d{step};")
+        lines.extend(
+            [
+                "    always @(posedge clk or negedge rst_n) begin",
+                "        if (!rst_n) begin",
+            ]
+        )
+        for pop_name, neuron_idx in sorted(
+            delayed_source_depths,
+            key=lambda item: (pop_index[item[0]], item[1]),
+        ):
+            pop = pop_by_name[pop_name]
+            prefix = neuron_prefix(pop, neuron_idx)
+            for step in range(1, delayed_source_depths[(pop_name, neuron_idx)] + 1):
+                lines.append(f"            {prefix}_spike_d{step} <= 1'b0;")
+                lines.append(f"            {prefix}_v_d{step} <= {data_width}'sd0;")
+        lines.extend(
+            [
+                "        end else if (en) begin",
+            ]
+        )
+        for pop_name, neuron_idx in sorted(
+            delayed_source_depths,
+            key=lambda item: (pop_index[item[0]], item[1]),
+        ):
+            pop = pop_by_name[pop_name]
+            prefix = neuron_prefix(pop, neuron_idx)
+            depth = delayed_source_depths[(pop_name, neuron_idx)]
+            lines.append(f"            {prefix}_spike_d1 <= {prefix}_spike;")
+            lines.append(f"            {prefix}_v_d1 <= {prefix}_v;")
+            for step in range(2, depth + 1):
+                lines.append(f"            {prefix}_spike_d{step} <= {prefix}_spike_d{step - 1};")
+                lines.append(f"            {prefix}_v_d{step} <= {prefix}_v_d{step - 1};")
+        lines.extend(["        end", "    end", ""])
+
     lines.append("    // Weighted fixed-point input accumulation")
     for pop in pops:
         feeding = [conn for conn in conns if conn.dst == pop.name]
@@ -561,11 +716,17 @@ def _build_top_direct(
 
             for conn_idx, conn in enumerate(feeding):
                 weights = np.asarray(conn.weights, dtype=np.int64)
+                conn_terms: list[str] = []
                 if conn.bias is not None:
                     bias = int(np.asarray(conn.bias, dtype=np.int64).reshape(-1)[neuron_idx])
-                    term_names.append(_signed_hex(bias, acc_width))
+                    conn_terms.append(_signed_hex(bias, acc_width))
 
                 src_pop = pop_by_name.get(conn.src)
+                source_thresholds = (
+                    None
+                    if conn.source_threshold is None
+                    else np.asarray(conn.source_threshold, dtype=np.int64).reshape(-1)
+                )
                 for src_idx in range(weights.shape[1]):
                     weight = int(weights[neuron_idx, src_idx])
                     if weight == 0:
@@ -573,35 +734,86 @@ def _build_top_direct(
                     term_base = f"{prefix}_c{conn_idx}_s{src_idx}"
 
                     if src_pop is None:
-                        mul = f"{term_base}_mul"
-                        term = f"{term_base}_term"
-                        term_defs.extend(
-                            [
-                                f"    wire signed [{product_width - 1}:0] {mul} = "
-                                f"ext_input_{src_idx} * {_signed_hex(weight, data_width)};",
-                                f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};",
-                            ]
-                        )
-                        term_names.append(term)
+                        if source_thresholds is not None:
+                            threshold = int(source_thresholds[src_idx])
+                            conn_terms.append(
+                                f"(ext_input_{src_idx} > {_signed_hex(threshold, data_width)} "
+                                f"? {_signed_hex(weight, acc_width)} : {acc_width}'sd0)"
+                            )
+                        else:
+                            mul = f"{term_base}_mul"
+                            term = f"{term_base}_term"
+                            term_defs.extend(
+                                [
+                                    f"    wire signed [{product_width - 1}:0] {mul} = "
+                                    f"ext_input_{src_idx} * {_signed_hex(weight, data_width)};",
+                                    f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};",
+                                ]
+                            )
+                            conn_terms.append(term)
                         continue
 
                     src_prefix = neuron_prefix(src_pop, src_idx)
+                    delay_steps = delay_vectors[id(conn)][src_idx]
                     if _connection_sources_are_analogue(src_pop):
-                        mul = f"{term_base}_mul"
-                        term = f"{term_base}_term"
-                        term_defs.extend(
-                            [
-                                f"    wire signed [{product_width - 1}:0] {mul} = "
-                                f"{src_prefix}_v * {_signed_hex(weight, data_width)};",
-                                f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};",
-                            ]
+                        src_value = (
+                            f"{src_prefix}_v_d{delay_steps}" if delay_steps else f"{src_prefix}_v"
                         )
-                        term_names.append(term)
+                        if source_thresholds is not None:
+                            threshold = int(source_thresholds[src_idx])
+                            conn_terms.append(
+                                f"({src_value} > {_signed_hex(threshold, data_width)} "
+                                f"? {_signed_hex(weight, acc_width)} : {acc_width}'sd0)"
+                            )
+                        else:
+                            mul = f"{term_base}_mul"
+                            term = f"{term_base}_term"
+                            term_defs.extend(
+                                [
+                                    f"    wire signed [{product_width - 1}:0] {mul} = "
+                                    f"{src_value} * {_signed_hex(weight, data_width)};",
+                                    f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};",
+                                ]
+                            )
+                            conn_terms.append(term)
                     else:
-                        term_names.append(
-                            f"({src_prefix}_spike ? {_signed_hex(weight, acc_width)} "
-                            f": {acc_width}'sd0)"
+                        src_spike = (
+                            f"{src_prefix}_spike_d{delay_steps}"
+                            if delay_steps
+                            else f"{src_prefix}_spike"
                         )
+                        if source_thresholds is not None:
+                            threshold = int(source_thresholds[src_idx])
+                            spike_value = f"({src_spike} ? {_signed_hex(1 << fraction, data_width)} : {data_width}'sd0)"
+                            conn_terms.append(
+                                f"({spike_value} > {_signed_hex(threshold, data_width)} "
+                                f"? {_signed_hex(weight, acc_width)} : {acc_width}'sd0)"
+                            )
+                        else:
+                            conn_terms.append(
+                                f"({src_spike} ? {_signed_hex(weight, acc_width)} : {acc_width}'sd0)"
+                            )
+
+                if conn.destination_threshold is not None:
+                    threshold = int(
+                        np.asarray(conn.destination_threshold, dtype=np.int64).reshape(-1)[
+                            neuron_idx
+                        ]
+                    )
+                    raw_name = f"{prefix}_c{conn_idx}_raw"
+                    out_name = f"{prefix}_c{conn_idx}_threshold_out"
+                    raw_expr = " + ".join(conn_terms) if conn_terms else f"{acc_width}'sd0"
+                    term_defs.extend(
+                        [
+                            f"    wire signed [ACC_WIDTH - 1:0] {raw_name} = {raw_expr};",
+                            f"    wire {out_name} = ({raw_name} > {_signed_hex(threshold, acc_width)});",
+                        ]
+                    )
+                    term_names.append(
+                        f"({out_name} ? {_signed_hex(1 << fraction, acc_width)} : {acc_width}'sd0)"
+                    )
+                else:
+                    term_names.extend(conn_terms)
 
             lines.extend(term_defs)
             acc_expr = " + ".join(term_names) if term_names else f"{acc_width}'sd0"
@@ -627,6 +839,9 @@ def _build_top_aer(
     *,
     data_width: int = 16,
     fraction: int = 8,
+    bitstream_length: int = 256,
+    scnir_stream_count: int = 0,
+    scnir_source_module_count: int = 0,
 ) -> str:
     """Generate weighted event-bus top-level interconnect.
 
@@ -739,6 +954,9 @@ def _build_top_aer(
         "",
         f"    localparam integer DATA_WIDTH = {data_width};",
         f"    localparam integer ACC_WIDTH = {acc_width};",
+        f"    localparam integer SCNIR_BITSTREAM_LENGTH = {bitstream_length};",
+        f"    localparam integer SCNIR_STREAM_COUNT = {scnir_stream_count};",
+        f"    localparam integer SCNIR_SOURCE_MODULE_COUNT = {scnir_source_module_count};",
         f"    localparam integer AER_SRC_COUNT = {aer_src_count};",
         f"    localparam integer AER_ADDR_WIDTH = {aer_addr_width};",
         "    localparam signed [DATA_WIDTH - 1:0] Q_MAX = {1'b0, {(DATA_WIDTH - 1){1'b1}}};",
@@ -747,9 +965,9 @@ def _build_top_aer(
         "    function signed [DATA_WIDTH - 1:0] sat_acc;",
         "        input signed [ACC_WIDTH - 1:0] x;",
         "        begin",
-        "            if (x > {{(ACC_WIDTH - DATA_WIDTH){Q_MAX[DATA_WIDTH - 1]}}, Q_MAX})",
+        "            if (x > $signed({{(ACC_WIDTH - DATA_WIDTH){Q_MAX[DATA_WIDTH - 1]}}, Q_MAX}))",
         "                sat_acc = Q_MAX;",
-        "            else if (x < {{(ACC_WIDTH - DATA_WIDTH){Q_MIN[DATA_WIDTH - 1]}}, Q_MIN})",
+        "            else if (x < $signed({{(ACC_WIDTH - DATA_WIDTH){Q_MIN[DATA_WIDTH - 1]}}, Q_MIN}))",
         "                sat_acc = Q_MIN;",
         "            else",
         "                sat_acc = x[DATA_WIDTH - 1:0];",
@@ -918,6 +1136,9 @@ def compile_network_to_fpga(
     module_name: str = "sc_nir_network",
     data_width: int = 16,
     fraction: int = 8,
+    bitstream_length: int = 256,
+    source_kind: Literal["lfsr", "sobol"] = "lfsr",
+    base_seed: int = 1,
     target: str = "artix7",
 ) -> NetworkCompilationResult:
     """Compile a NeuronGraph to synthesisable Verilog RTL.
@@ -939,6 +1160,12 @@ def compile_network_to_fpga(
         Fixed-point total width (16 for Q8.8, 32 for Q16.16).
     fraction : int
         Fractional bits.
+    bitstream_length : int
+        SC-NIR bitstream length metadata propagated into compilation artefacts.
+    source_kind : {"lfsr", "sobol"}
+        Hardware stochastic source family materialised from SC-NIR metadata.
+    base_seed : int
+        First deterministic source seed; stream index increments from this base.
     target : str
         FPGA target for resource estimation hints.
 
@@ -953,6 +1180,20 @@ def compile_network_to_fpga(
         If the graph is empty or contains unsupported neuron types.
     """
     q = Q88(data_width=data_width, fraction=fraction)
+    if source_kind == "lfsr" or source_kind == "sobol":
+        resolved_source_kind: Literal["lfsr", "sobol"] = source_kind
+    else:
+        raise ValueError("source_kind must be 'lfsr' or 'sobol' for FPGA source emission")
+
+    scnir_config = SCNIRConversionConfig(
+        bitstream_length=bitstream_length,
+        data_width=data_width,
+        fraction=fraction,
+        base_seed=base_seed,
+        source_kind=resolved_source_kind,
+    )
+    scnir_document = build_scnir_from_neuron_graph(graph, config=scnir_config)
+    scnir_source_bundle = build_scnir_source_bundle(scnir_document)
     warnings: list[str] = []
 
     # Step 1: Quantise
@@ -1001,20 +1242,51 @@ def compile_network_to_fpga(
     # preserving dense affine accumulation semantics.
     total_neurons = graph.total_neurons
     interconnect = "direct"
-    if total_neurons > _AER_THRESHOLD:
+    has_delayed_connections = any(
+        any(
+            _normalise_connection_delay_steps(
+                getattr(conn, "delay_steps", 0),
+                int(np.asarray(conn.weights).shape[1]),
+                f"Connection {conn.src}->{conn.dst}",
+            )
+        )
+        for conn in qgraph.connections
+    )
+    has_threshold_connections = any(_connection_has_thresholds(conn) for conn in qgraph.connections)
+    if (
+        total_neurons > _AER_THRESHOLD
+        and not has_delayed_connections
+        and not has_threshold_connections
+    ):
         interconnect = "aer"
         top_module = _build_top_aer(
             module_name,
             qgraph,
             data_width=data_width,
             fraction=fraction,
+            bitstream_length=bitstream_length,
+            scnir_stream_count=len(scnir_document.streams),
+            scnir_source_module_count=len(scnir_source_bundle.manifest),
         )
     else:
+        if total_neurons > _AER_THRESHOLD and has_delayed_connections:
+            warnings.append(
+                "Using direct interconnect because delayed recurrent connections require "
+                "registered one-step source semantics"
+            )
+        if total_neurons > _AER_THRESHOLD and has_threshold_connections:
+            warnings.append(
+                "Using direct interconnect because NIR Threshold transforms require exact "
+                "fixed-point comparator semantics"
+            )
         top_module = _build_top_direct(
             module_name,
             qgraph,
             data_width=data_width,
             fraction=fraction,
+            bitstream_length=bitstream_length,
+            scnir_stream_count=len(scnir_document.streams),
+            scnir_source_module_count=len(scnir_source_bundle.manifest),
         )
 
     q_label = f"Q{data_width - fraction}.{fraction}"
@@ -1028,6 +1300,9 @@ def compile_network_to_fpga(
         total_synapses=graph.total_synapses,
         q_format=q_label,
         interconnect=interconnect,
+        scnir_document=scnir_document,
+        scnir_source_modules=dict(scnir_source_bundle.modules),
+        scnir_source_manifest=scnir_source_bundle.manifest,
         warnings=warnings,
     )
 
