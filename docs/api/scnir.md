@@ -53,7 +53,10 @@ The top-level `hierarchy` array records bounded nested-hardware contracts. Each
 entry must provide a stable `instance_id`, synthesisable `module_name`, and at
 least one port. Each port records `port_name`, `direction`, `stream_id`,
 `signal_kind`, and `bit_width`; the referenced stream must exist and its
-`signal_kind` must match the port.
+`signal_kind` must match the port. Single-input/single-output nested NIR graphs
+that are inlined for flat HDL lowering preserve their original boundary as a
+hierarchy instance, with ports generated from the SC-NIR streams produced by
+the inlined contents.
 
 ## CLI
 
@@ -146,7 +149,7 @@ parser-only or only closed under a bounded shape/port contract.
 | `Conv1d` | metadata and HDL when `input_shape` is explicit and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `convolution_lowered_weight` | dense Toeplitz-style fixed-point MAC terms through the weight path |
 | `Conv2d` | metadata and HDL when exact spatial input shape is explicit and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `convolution_lowered_weight` | dense 2D convolution fixed-point MAC terms through the weight path |
 | `SumPool2d`, `AvgPool2d` | metadata and HDL when exact CHW shape metadata is present and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `pool2d_lowered_weight` | dense pooling fixed-point MAC terms through the weight path |
-| nested `NIRGraph` | metadata and HDL for single-input/single-output subgraphs inlined into the parent graph; multi-port hierarchy fails closed | namespaced stream IDs from the inlined subgraph contents | namespaced inline fixed-point terms; standalone hierarchical submodule handoff remains open |
+| nested `NIRGraph` | metadata and HDL for single-input/single-output subgraphs inlined into the parent graph; multi-port hierarchy fails closed | namespaced stream IDs from the inlined subgraph contents plus a top-level hierarchy instance whose ports reference those streams | namespaced inline fixed-point terms; standalone hierarchical submodule handoff remains open |
 
 Use `validate_scnir_compatibility_matrix()` in tests or release checks to fail
 when parser support changes without a corresponding compatibility row.
@@ -160,6 +163,8 @@ from sc_neurocore.ir import (
     SCNIRCompatibilityRow,
     SCNIRConversionConfig,
     SCNIRDocument,
+    SCNIRHierarchyInstance,
+    SCNIRHierarchyPort,
     SCNIRPrecision,
     SCNIRSignalKind,
     SCNIRSource,
@@ -188,6 +193,8 @@ from sc_neurocore.ir import (
         - SCNIRSource
         - SCNIRSignalKind
         - SCNIRCorrelationConstraint
+        - SCNIRHierarchyPort
+        - SCNIRHierarchyInstance
         - SCNIRStream
         - SCNIRDocument
         - validate_scnir_dict

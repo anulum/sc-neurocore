@@ -903,9 +903,7 @@ def test_neuron_graph_preserves_post_weight_threshold_metadata() -> None:
         )
     )
     thresholded_stream = next(
-        stream
-        for stream in payload["streams"]
-        if stream["stream_id"] == "conn.input_to_lif.weight"
+        stream for stream in payload["streams"] if stream["stream_id"] == "conn.input_to_lif.weight"
     )
     assert thresholded_stream["transforms"][0]["kind"] == "threshold"
     assert thresholded_stream["transforms"][0]["position"] == "destination"
@@ -1049,6 +1047,39 @@ def test_neuron_graph_inlines_single_port_nested_nir_graph_for_hardware_lowering
     assert nested_connection.src == "subgraph__input"
     assert nested_connection.dst == "lif"
     np.testing.assert_allclose(nested_connection.weights, np.eye(2))
+
+
+def test_scnir_export_records_inlined_single_port_hierarchy_metadata() -> None:
+    network = from_nir(_build_nested_subgraph_lif_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    document = build_scnir_from_neuron_graph(
+        neuron_graph,
+        config=SCNIRConversionConfig(
+            bitstream_length=1024,
+            data_width=18,
+            fraction=10,
+            base_seed=83,
+        ),
+    )
+    payload = scnir_to_dict(document)
+    validate_scnir_dict(payload)
+
+    assert payload["hierarchy"] == [
+        {
+            "instance_id": "subgraph",
+            "module_name": "scnir_subgraph",
+            "ports": [
+                {
+                    "port_name": "weight_0",
+                    "direction": "output",
+                    "stream_id": "conn.subgraph__input_to_lif.weight",
+                    "signal_kind": "weight",
+                    "bit_width": 18,
+                }
+            ],
+        }
+    ]
 
 
 def test_neuron_graph_rejects_multiport_nested_nir_graph_hardware_lowering() -> None:

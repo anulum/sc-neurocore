@@ -137,6 +137,15 @@ class ConnectionSpec:
     destination_threshold: np.ndarray | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class HierarchyInstanceSpec:
+    """Flattened nested graph provenance preserved for SC-NIR hierarchy export."""
+
+    instance_id: str
+    module_name: str
+    node_name_prefix: str
+
+
 @dataclass
 class NeuronGraph:
     """Complete network description ready for FPGA compilation.
@@ -153,6 +162,9 @@ class NeuronGraph:
         Name of the output population.
     dt : float
         Global simulation timestep.
+    hierarchy : tuple[HierarchyInstanceSpec, ...]
+        Nested NIR graph instances that were inlined for flat hardware lowering
+        but must remain visible in SC-NIR hierarchy metadata.
     """
 
     populations: list[NeuronSpec]
@@ -160,6 +172,7 @@ class NeuronGraph:
     input_pop: str
     output_pop: str
     dt: float = 1.0
+    hierarchy: tuple[HierarchyInstanceSpec, ...] = ()
 
     @property
     def total_neurons(self) -> int:
@@ -295,7 +308,9 @@ def _topological_order(nodes: dict[str, Any], edges: list[tuple[str, str]]) -> l
     in_degree: dict[str, int] = {name: 0 for name in nodes}
     for src, dst in edges:
         if src not in nodes or dst not in nodes:
-            raise ValueError(f"Flattened nested NIRGraph edge references unknown node {src!r}->{dst!r}")
+            raise ValueError(
+                f"Flattened nested NIRGraph edge references unknown node {src!r}->{dst!r}"
+            )
         successors[src].append(dst)
         in_degree[dst] += 1
 
@@ -310,13 +325,37 @@ def _topological_order(nodes: dict[str, Any], edges: list[tuple[str, str]]) -> l
                 ready.append(dst)
 
     if len(order) != len(nodes):
-        raise ValueError("Flattened nested NIRGraph contains a cycle without an explicit delay node")
+        raise ValueError(
+            "Flattened nested NIRGraph contains a cycle without an explicit delay node"
+        )
     return order
+
+
+def _hdl_identifier_fragment(value: str) -> str:
+    """Return a conservative Verilog identifier fragment for generated metadata."""
+
+    fragment = "".join(
+        char if char.isascii() and (char.isalnum() or char == "_") else "_" for char in value
+    )
+    fragment = fragment.strip("_")
+    if not fragment:
+        fragment = "instance"
+    if not (fragment[0].isalpha() or fragment[0] == "_"):
+        fragment = f"n_{fragment}"
+    return fragment
 
 
 def _inline_single_port_subgraphs(
     network: Any,
-) -> tuple[dict[str, Any], list[tuple[str, str]], list[str], set[str], set[str], dict[str, str]]:
+) -> tuple[
+    dict[str, Any],
+    list[tuple[str, str]],
+    list[str],
+    set[str],
+    set[str],
+    dict[str, str],
+    tuple[HierarchyInstanceSpec, ...],
+]:
     """Inline parser-executable single-port subgraphs for SC-NIR/FPGA lowering.
 
     The runtime parser keeps nested NIR graphs as executable wrapper nodes.  HDL
@@ -331,6 +370,7 @@ def _inline_single_port_subgraphs(
     recurrent_map = dict(getattr(network, "_recurrent_map", {}))
     boundary_inputs = set(getattr(network, "input_nodes", ()))
     boundary_outputs = set(getattr(network, "output_nodes", ()))
+    hierarchy: list[HierarchyInstanceSpec] = []
 
     changed = True
     while changed:
@@ -357,7 +397,10 @@ def _inline_single_port_subgraphs(
 
             subnetwork.topo_order
             prefix = f"{name}__"
-            prefixed_nodes = {f"{prefix}{inner_name}": inner_node for inner_name, inner_node in subnetwork.nodes.items()}
+            prefixed_nodes = {
+                f"{prefix}{inner_name}": inner_node
+                for inner_name, inner_node in subnetwork.nodes.items()
+            }
             collisions = sorted(set(nodes).intersection(prefixed_nodes))
             if collisions:
                 raise ValueError(
@@ -368,6 +411,13 @@ def _inline_single_port_subgraphs(
             outgoing = [dst for src, dst in edges if src == name]
             inner_input = f"{prefix}{subnetwork.input_nodes[0]}"
             inner_output = f"{prefix}{subnetwork.output_nodes[0]}"
+            hierarchy.append(
+                HierarchyInstanceSpec(
+                    instance_id=name,
+                    module_name=f"scnir_{_hdl_identifier_fragment(name)}",
+                    node_name_prefix=prefix,
+                )
+            )
 
             edges = [(src, dst) for src, dst in edges if src != name and dst != name]
             edges.extend((src, inner_input) for src in incoming)
@@ -385,7 +435,15 @@ def _inline_single_port_subgraphs(
             break
 
     topo_order = _topological_order(nodes, edges)
-    return nodes, edges, topo_order, boundary_inputs, boundary_outputs, recurrent_map
+    return (
+        nodes,
+        edges,
+        topo_order,
+        boundary_inputs,
+        boundary_outputs,
+        recurrent_map,
+        tuple(hierarchy),
+    )
 
 
 def _delay_steps(node: Any, node_name: str) -> DelaySteps:
@@ -487,9 +545,7 @@ def _compose_scale(left: np.ndarray | None, right: np.ndarray) -> np.ndarray:
     try:
         return np.multiply(left, right, dtype=np.float32)
     except ValueError as exc:
-        raise ValueError(
-            "Adjacent Scale nodes have incompatible shapes for FPGA lowering"
-        ) from exc
+        raise ValueError("Adjacent Scale nodes have incompatible shapes for FPGA lowering") from exc
 
 
 def _broadcast_scale(scale: np.ndarray | None, size: int, label: str) -> np.ndarray | None:
@@ -517,7 +573,9 @@ def _broadcast_threshold(
         return np.full(size, float(threshold[0]), dtype=np.float32)
     if threshold.size == size:
         return threshold.astype(np.float32, copy=False)
-    raise ValueError(f"{label} threshold length {threshold.size} does not match required width {size}")
+    raise ValueError(
+        f"{label} threshold length {threshold.size} does not match required width {size}"
+    )
 
 
 def _shape_width(shape: tuple[int, ...] | None, *, node_name: str, label: str) -> int:
@@ -548,8 +606,7 @@ def _flatten_widths(node: Any, node_name: str) -> tuple[int, int]:
     )
     if input_width != output_width:
         raise ValueError(
-            f"Flatten node {node_name!r} changes element count "
-            f"from {input_width} to {output_width}"
+            f"Flatten node {node_name!r} changes element count from {input_width} to {output_width}"
         )
     return input_width, output_width
 
@@ -563,9 +620,7 @@ def _conv1d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, np.n
 
     input_shape = getattr(node, "input_shape", None)
     if input_shape is None:
-        raise ValueError(
-            f"Conv1d node {node_name!r} requires input_shape for FPGA lowering"
-        )
+        raise ValueError(f"Conv1d node {node_name!r} requires input_shape for FPGA lowering")
     input_length = int(np.asarray(input_shape).reshape(-1)[0])
     if input_length <= 0:
         raise ValueError(f"Conv1d node {node_name!r} input_shape must be positive")
@@ -573,9 +628,7 @@ def _conv1d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, np.n
     stride = int(getattr(node, "stride", 1))
     padding = getattr(node, "padding", 0)
     if isinstance(padding, str):
-        raise ValueError(
-            f"Conv1d node {node_name!r} string padding requires explicit pre-lowering"
-        )
+        raise ValueError(f"Conv1d node {node_name!r} string padding requires explicit pre-lowering")
     padding = int(padding)
     dilation = int(getattr(node, "dilation", 1))
     groups = int(getattr(node, "groups", 1))
@@ -622,15 +675,12 @@ def _conv2d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, np.n
     weight = np.asarray(getattr(node, "weight", None), dtype=np.float32)
     if weight.ndim != 4:
         raise ValueError(
-            f"Conv2d node {node_name!r} weight must have shape "
-            "(C_out, C_in/group, K_h, K_w)"
+            f"Conv2d node {node_name!r} weight must have shape (C_out, C_in/group, K_h, K_w)"
         )
 
     input_shape = getattr(node, "input_shape", None)
     if input_shape is None:
-        raise ValueError(
-            f"Conv2d node {node_name!r} requires input_shape for FPGA lowering"
-        )
+        raise ValueError(f"Conv2d node {node_name!r} requires input_shape for FPGA lowering")
     if len(input_shape) != 2:
         raise ValueError(f"Conv2d node {node_name!r} input_shape must be (height, width)")
     input_height, input_width = (int(value) for value in input_shape)
@@ -640,9 +690,7 @@ def _conv2d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, np.n
     stride_height, stride_width = (int(value) for value in node.stride)
     pad_height, pad_width = node.padding
     if isinstance(pad_height, str) or isinstance(pad_width, str):
-        raise ValueError(
-            f"Conv2d node {node_name!r} string padding requires explicit pre-lowering"
-        )
+        raise ValueError(f"Conv2d node {node_name!r} string padding requires explicit pre-lowering")
     pad_height = int(pad_height)
     pad_width = int(pad_width)
     dilation_height, dilation_width = (int(value) for value in node.dilation)
@@ -895,7 +943,9 @@ def _resolve_weight_source(
                 f"source width {required_source_width}"
             )
         next_required_source_width = input_width
-        next_flatten_output_width = output_width if flatten_output_width is None else flatten_output_width
+        next_flatten_output_width = (
+            output_width if flatten_output_width is None else flatten_output_width
+        )
 
     upstream = predecessors.get(node_name, [])
     if len(upstream) != 1:
@@ -977,7 +1027,9 @@ def _resolve_weight_destination(
                 f"destination width {required_destination_width}"
             )
         next_required_destination_width = output_width
-        next_flatten_input_width = input_width if flatten_input_width is None else flatten_input_width
+        next_flatten_input_width = (
+            input_width if flatten_input_width is None else flatten_input_width
+        )
 
     downstream = successors.get(node_name, [])
     if len(downstream) != 1:
@@ -1064,9 +1116,15 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
         If the network contains no neuron populations or no connections.
     """
     network.topo_order
-    nodes, edges, topo_order, boundary_inputs, boundary_outputs, flattened_recurrent_map = (
-        _inline_single_port_subgraphs(network)
-    )
+    (
+        nodes,
+        edges,
+        topo_order,
+        boundary_inputs,
+        boundary_outputs,
+        flattened_recurrent_map,
+        hierarchy,
+    ) = _inline_single_port_subgraphs(network)
 
     # Build adjacency: node_name → list of successor node names
     successors: dict[str, list[str]] = {}
@@ -1314,6 +1372,7 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
         input_pop=input_pop,
         output_pop=output_pop,
         dt=global_dt,
+        hierarchy=hierarchy,
     )
 
     logger.info(

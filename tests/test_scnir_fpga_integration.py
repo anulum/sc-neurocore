@@ -624,6 +624,35 @@ def test_fpga_compile_inlines_single_port_nested_graph_weight_terms() -> None:
     assert "ext_input_1 * 16'sh0020" in result.top_module
 
 
+def test_fpga_compile_reports_inlined_single_port_hierarchy_metadata() -> None:
+    network = from_nir(_single_port_nested_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    result = compile_network_to_fpga(
+        neuron_graph,
+        module_name="scnir_nested_hierarchy",
+        bitstream_length=896,
+    )
+
+    payload = scnir_to_dict(result.scnir_document)
+    validate_scnir_dict(payload)
+    assert payload["hierarchy"] == [
+        {
+            "instance_id": "subgraph",
+            "module_name": "scnir_subgraph",
+            "ports": [
+                {
+                    "port_name": "weight_0",
+                    "direction": "output",
+                    "stream_id": "conn.subgraph__input_to_lif.weight",
+                    "signal_kind": "weight",
+                    "bit_width": 16,
+                }
+            ],
+        }
+    ]
+
+
 def test_fpga_compile_emits_integrator_module_and_analogue_state_routes() -> None:
     network = from_nir(_integrator_graph(), dt=1.0)
     neuron_graph = from_scnetwork(network, dt=1.0)
@@ -738,9 +767,7 @@ def test_fpga_compile_preserves_post_weight_threshold_comparators() -> None:
     payload = scnir_to_dict(result.scnir_document)
     validate_scnir_dict(payload)
     stream = next(
-        stream
-        for stream in payload["streams"]
-        if stream["stream_id"] == "conn.input_to_lif.weight"
+        stream for stream in payload["streams"] if stream["stream_id"] == "conn.input_to_lif.weight"
     )
     assert stream["transforms"][0]["position"] == "destination"
     manifest = {entry.stream_id: entry.as_dict() for entry in result.scnir_source_manifest}
