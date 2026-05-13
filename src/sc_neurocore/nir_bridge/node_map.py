@@ -35,6 +35,17 @@ def _shape_tuple_from_type(type_map: Any, key: str) -> tuple[int, ...] | None:
     return tuple(int(dim) for dim in shape)
 
 
+def _shape3_tuple_from_type(type_map: Any, key: str) -> tuple[int, int, int] | None:
+    """Return a rank-3 positive integer shape tuple from a NIR type map."""
+
+    shape = _shape_tuple_from_type(type_map, key)
+    if shape is None:
+        return None
+    if len(shape) != 3:
+        raise ValueError(f"NIR shape for {key!r} must be rank 3, got {shape}")
+    return (shape[0], shape[1], shape[2])
+
+
 @dataclass
 class SCInputNode:
     """Graph entry point — passes input through unchanged."""
@@ -627,8 +638,8 @@ class SCSumPool2dNode:
             kernel_size=ks,
             stride=st,
             padding=pad,
-            input_shape=_shape_tuple_from_type(getattr(node, "input_type", None), "input"),
-            output_shape=_shape_tuple_from_type(getattr(node, "output_type", None), "output"),
+            input_shape=_shape3_tuple_from_type(getattr(node, "input_type", None), "input"),
+            output_shape=_shape3_tuple_from_type(getattr(node, "output_type", None), "output"),
         )
 
     def forward(self, x: np.ndarray) -> np.ndarray:
@@ -677,8 +688,8 @@ class SCAvgPool2dNode:
             kernel_size=ks,
             stride=st,
             padding=pad,
-            input_shape=_shape_tuple_from_type(getattr(node, "input_type", None), "input"),
-            output_shape=_shape_tuple_from_type(getattr(node, "output_type", None), "output"),
+            input_shape=_shape3_tuple_from_type(getattr(node, "input_type", None), "input"),
+            output_shape=_shape3_tuple_from_type(getattr(node, "output_type", None), "output"),
         )
 
     def forward(self, x: np.ndarray) -> np.ndarray:
@@ -783,7 +794,7 @@ class SCConv2dNode:
             dilation=dilation,
             groups=node.groups,
             input_shape=getattr(node, "input_shape", None),
-            output_shape=_shape_tuple_from_type(getattr(node, "output_type", None), "output"),
+            output_shape=_shape3_tuple_from_type(getattr(node, "output_type", None), "output"),
         )
 
     def forward(self, x: np.ndarray) -> np.ndarray:
