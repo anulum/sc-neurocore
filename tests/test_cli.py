@@ -108,6 +108,46 @@ def _dense_lif_nir_graph():
     )
 
 
+def _aer_lif_nir_graph():
+    nir = pytest.importorskip("nir")
+    n_in = 4
+    n_hidden = 65
+    n_out = 2
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([n_in])}),
+            "aff1": nir.Affine(
+                weight=np.full((n_hidden, n_in), 0.125, dtype=np.float32),
+                bias=np.zeros(n_hidden, dtype=np.float32),
+            ),
+            "lif1": nir.LIF(
+                tau=np.full(n_hidden, 20.0),
+                r=np.ones(n_hidden),
+                v_leak=np.zeros(n_hidden),
+                v_threshold=np.ones(n_hidden),
+            ),
+            "aff2": nir.Affine(
+                weight=np.full((n_out, n_hidden), -0.0625, dtype=np.float32),
+                bias=np.zeros(n_out, dtype=np.float32),
+            ),
+            "lif2": nir.LIF(
+                tau=np.full(n_out, 20.0),
+                r=np.ones(n_out),
+                v_leak=np.zeros(n_out),
+                v_threshold=np.ones(n_out),
+            ),
+            "output": nir.Output(output_type={"output": np.array([n_out])}),
+        },
+        edges=[
+            ("input", "aff1"),
+            ("aff1", "lif1"),
+            ("lif1", "aff2"),
+            ("aff2", "lif2"),
+            ("lif2", "output"),
+        ],
+    )
+
+
 def _sobol_source_smoke_testbench(module_name: str) -> str:
     return f"""
 module tb;
@@ -565,6 +605,46 @@ class TestCompileNirCommand:
             stream["stream_id"] for stream in payload["streams"]
         ]
         assert "scnir_document.json" in capsys.readouterr().out
+
+    def test_compile_nir_records_aer_interconnect_in_manifest(self, tmp_path, capsys):
+        nir = pytest.importorskip("nir")
+        model_path = tmp_path / "aer_fixture.nir"
+        nir.write(str(model_path), _aer_lif_nir_graph())
+
+        out_dir = tmp_path / "aer_compiled"
+        rc = _run_main(
+            "compile-nir",
+            str(model_path),
+            "--module-name",
+            "aer_fixture_net",
+            "--T",
+            "384",
+            "--source-kind",
+            "lfsr",
+            "--base-seed",
+            "11",
+            "-o",
+            str(out_dir),
+        )
+
+        assert rc == 0
+        top_module = (out_dir / "aer_fixture_net.v").read_text(encoding="utf-8")
+        assert "Interconnect: weighted event routing" in top_module
+        assert "localparam integer AER_SRC_COUNT = 67;" in top_module
+
+        manifest = json.loads((out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8"))
+        assert manifest["interconnect"] == "aer"
+        assert manifest["q_format"] == "Q8.8"
+        assert manifest["total_neurons"] == 67
+        assert manifest["total_synapses"] == 390
+        assert manifest["scnir_stream_count"] == 4
+
+        payload = json.loads((out_dir / "scnir_document.json").read_text(encoding="utf-8"))
+        validate_scnir_dict(payload)
+        assert [row["stream_id"] for row in manifest["sources"]] == [
+            stream["stream_id"] for stream in payload["streams"]
+        ]
+        assert "Interconnect: aer" in capsys.readouterr().out
 
 
 # ---------------------------------------------------------------------------
