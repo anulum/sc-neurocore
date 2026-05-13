@@ -214,7 +214,8 @@ positive kernel/stride geometry are available; average pooling scales each
 window coefficient by the kernel area. `Input` and `Output` are boundary nodes.
 Nested
 `NIRGraph` nodes remain parser-only until their NeuronGraph and HDL semantics
-are explicitly lowered and audited.
+are explicitly lowered and audited; attempting to lower such nested subgraphs to
+SC-NIR/FPGA now fails closed instead of silently dropping the subgraph.
 
 ---
 
