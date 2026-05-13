@@ -28,7 +28,7 @@ impl DirectorController {
         }
     }
 
-    pub fn monitor(&self, ) -> f64 {
+    pub fn monitor(&self) -> f64 {
         // history = self.substrate.spike_history
         // if len(history) < 50:
         // return {
@@ -47,7 +47,7 @@ impl DirectorController {
         0.0
     }
 
-    pub fn diagnose(&self, ) -> f64 {
+    pub fn diagnose(&self) -> f64 {
         // metrics = self.monitor()
         // problems = []
         // rate = metrics["mean_rate"]
@@ -66,7 +66,7 @@ impl DirectorController {
         0.0
     }
 
-    pub fn correct(&self, ) -> f64 {
+    pub fn correct(&self) -> f64 {
         // problems = self.diagnose()
         // if not problems:
         // return
@@ -85,7 +85,7 @@ impl DirectorController {
         0.0
     }
 
-    pub fn report(&self, ) -> f64 {
+    pub fn report(&self) -> f64 {
         // metrics = self.monitor()
         // problems = self.diagnose()
         // lines = [
@@ -102,7 +102,6 @@ impl DirectorController {
         // return "\n".join(lines)
         0.0
     }
-
 }
 
 pub fn validate_director(state: &DirectorController) -> bool {
@@ -118,5 +117,4 @@ mod tests {
         let state = DirectorController::new();
         assert!(validate_director(&state));
     }
-
 }

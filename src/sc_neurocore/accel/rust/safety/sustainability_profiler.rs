@@ -78,7 +78,7 @@ impl SustainabilityOptimizer {
         }
     }
 
-    pub fn dynamic_power_mw(&self, ) -> f64 {
+    pub fn dynamic_power_mw(&self) -> f64 {
         // c_lut = 2.5e-12   # fF per LUT
         // c_ff = 1.0e-12
         // c_bram = 50e-12    # per kB
@@ -91,12 +91,12 @@ impl SustainabilityOptimizer {
         0.0
     }
 
-    pub fn total_power_mw(&self, ) -> f64 {
+    pub fn total_power_mw(&self) -> f64 {
         // return self.static_power_mw + self.dynamic_power_mw
         0.0
     }
 
-    pub fn power_breakdown(&self, ) -> f64 {
+    pub fn power_breakdown(&self) -> f64 {
         // freq = self.clock_mhz * 1e6
         // v2 = self.voltage_v .powi 2
         // t = self.toggle_rate
@@ -138,7 +138,7 @@ impl SustainabilityOptimizer {
         0.0
     }
 
-    pub fn co2_g_per_kwh(&self, ) -> f64 {
+    pub fn co2_g_per_kwh(&self) -> f64 {
         // return _CO2_G_PER_KWH[self.region]
         0.0
     }
@@ -154,20 +154,20 @@ impl SustainabilityOptimizer {
         0.0
     }
 
-    pub fn total_embodied_kg(&self, ) -> f64 {
+    pub fn total_embodied_kg(&self) -> f64 {
         // return (self.manufacturing_kg_co2 + self.packaging_kg_co2 +
         // self.pcb_kg_co2 + self.disposal_kg_co2)
         0.0
     }
 
-    pub fn amortised_annual_kg(&self, ) -> f64 {
+    pub fn amortised_annual_kg(&self) -> f64 {
         // if self.lifetime_years <= 0:
         // return self.total_embodied_kg
         // return self.total_embodied_kg / self.lifetime_years
         0.0
     }
 
-    pub fn average_power_mw(&self, ) -> f64 {
+    pub fn average_power_mw(&self) -> f64 {
         // return self.peak_power_mw * self.duty_cycle
         0.0
     }
@@ -192,13 +192,7 @@ impl SustainabilityOptimizer {
         0.0
     }
 
-
-
-
-
-
-
-    pub fn num_sources(&self, ) -> f64 {
+    pub fn num_sources(&self) -> f64 {
         // return len(self.profiles)
         0.0
     }
@@ -219,12 +213,12 @@ impl SustainabilityOptimizer {
         0 // spike indicator
     }
 
-    pub fn energy_stored_mwh(&self, ) -> f64 {
+    pub fn energy_stored_mwh(&self) -> f64 {
         // return self.soc * self.capacity_mwh
         0.0
     }
 
-    pub fn is_depleted(&self, ) -> f64 {
+    pub fn is_depleted(&self) -> f64 {
         // return self.soc <= 0.0
         0.0
     }
@@ -239,7 +233,7 @@ impl SustainabilityOptimizer {
         0.0
     }
 
-    pub fn max_power_mw(&self, ) -> f64 {
+    pub fn max_power_mw(&self) -> f64 {
         // return (self.max_junction_c - self.ambient_c) / self.r_theta_ja * 1000
         0.0
     }
@@ -388,7 +382,6 @@ impl SustainabilityOptimizer {
         // surplus = h_power - effective_load
         0.0
     }
-
 }
 
 pub fn validate_sustainability_profiler(state: &SustainabilityOptimizer) -> bool {

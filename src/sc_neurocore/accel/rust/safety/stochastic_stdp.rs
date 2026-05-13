@@ -43,18 +43,17 @@ impl StochasticSTDPSynapse {
         0.0
     }
 
-    pub fn _potentiate(&self, ) -> f64 {
+    pub fn _potentiate(&self) -> f64 {
         // new_w = min(self.w_max, self.w + self.learning_rate * (self.w_max - se
         // self.update_weight(new_w)
         0.0
     }
 
-    pub fn _depress(&self, ) -> f64 {
+    pub fn _depress(&self) -> f64 {
         // new_w = max(self.w_min, self.w - self.learning_rate * (self.w_max - se
         // self.update_weight(new_w)
         0.0
     }
-
 }
 
 pub fn validate_stochastic_stdp(state: &StochasticSTDPSynapse) -> bool {
@@ -70,5 +69,4 @@ mod tests {
         let state = StochasticSTDPSynapse::new();
         assert!(validate_stochastic_stdp(&state));
     }
-
 }

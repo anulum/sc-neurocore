@@ -48,7 +48,7 @@ impl AdaptiveThresholdMoENeuron {
         0.0
     }
 
-    pub fn sparsity(&self, ) -> f64 {
+    pub fn sparsity(&self) -> f64 {
         // return 1.0 if abs(self.v) < self.v_th else 0.0
         0.0
     }
@@ -63,7 +63,6 @@ impl AdaptiveThresholdMoENeuron {
         self.v_th = 0.0_f64;
         self._mean_abs_x = 0.0_f64;
     }
-
 }
 
 pub fn validate_adaptive_threshold_moe(state: &AdaptiveThresholdMoENeuron) -> bool {

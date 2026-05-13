@@ -37,7 +37,6 @@ impl SCAudioSynthesizer {
         // return audio
         0.0
     }
-
 }
 
 pub fn validate_audio_synthesis(state: &SCAudioSynthesizer) -> bool {
@@ -53,5 +52,4 @@ mod tests {
         let state = SCAudioSynthesizer::new();
         assert!(validate_audio_synthesis(&state));
     }
-
 }

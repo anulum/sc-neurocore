@@ -42,7 +42,7 @@ impl Network {
         0.0
     }
 
-    pub fn _can_use_rust(&self, ) -> f64 {
+    pub fn _can_use_rust(&self) -> f64 {
         // if self.stimuli:
         // return false
         // if _get_rust_engine() is false:
@@ -54,7 +54,14 @@ impl Network {
         0.0
     }
 
-    pub fn run(&self, duration: f64, dt: f64, progress: f64, backend: f64, spike_gating: f64) -> f64 {
+    pub fn run(
+        &self,
+        duration: f64,
+        dt: f64,
+        progress: f64,
+        backend: f64,
+        spike_gating: f64,
+    ) -> f64 {
         // self,
         // duration: float,
         // dt: float = 0.001,
@@ -196,7 +203,6 @@ impl Network {
         // proj.data[k] = max(0.0, proj.data[k] - correction)
         0.0
     }
-
 }
 
 pub fn validate_network(state: &Network) -> bool {
@@ -212,5 +218,4 @@ mod tests {
         let state = Network::new();
         assert!(validate_network(&state));
     }
-
 }

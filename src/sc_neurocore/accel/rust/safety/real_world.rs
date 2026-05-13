@@ -35,7 +35,6 @@ impl ROS2Node {
         // return true
         0.0
     }
-
 }
 
 pub fn validate_real_world(state: &ROS2Node) -> bool {
@@ -51,5 +50,4 @@ mod tests {
         let state = ROS2Node::new();
         assert!(validate_real_world(&state));
     }
-
 }

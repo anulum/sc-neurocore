@@ -11,7 +11,7 @@
 #[derive(Debug, Clone)]
 pub struct SwarmEvolver {
     pub pop_size: f64,
-    pub n_elite: f64,
+    pub n_survivors: f64,
     pub mutation_rate: f64,
     pub mutation_std: f64,
     pub n_eval_steps: f64,
@@ -31,7 +31,7 @@ impl SwarmEvolver {
     pub fn new() -> Self {
         Self {
             pop_size: 20.0_f64,
-            n_elite: 4.0_f64,
+            n_survivors: 4.0_f64,
             mutation_rate: 0.1_f64,
             mutation_std: 0.3_f64,
             n_eval_steps: 200.0_f64,
@@ -48,7 +48,7 @@ impl SwarmEvolver {
         }
     }
 
-    pub fn _make_env(&self, ) -> f64 {
+    pub fn _make_env(&self) -> f64 {
         // env_cfg = self.cfg.env_config || EnvConfig()
         // # Ensure the environment uses our agent_config so weight sizes match
         // env_cfg = EnvConfig(
@@ -86,9 +86,9 @@ impl SwarmEvolver {
         0.0
     }
 
-    pub fn _select_elite(&self, ) -> f64 {
+    pub fn _select_survivors(&self) -> f64 {
         // order = np.argsort(self.fitnesses)[::-1]
-        // return [self.population[i].copy() for i in order[: self.cfg.n_elite]]
+        // return [self.population[i].copy() for i in order[: self.cfg.n_survivors]]
         0.0
     }
 
@@ -109,26 +109,26 @@ impl SwarmEvolver {
         0.0
     }
 
-    pub fn evolve_generation(&self, ) -> f64 {
+    pub fn evolve_generation(&self) -> f64 {
         // # Evaluate
         // for i, w in enumerate(self.population):
         // self.fitnesses[i] = self.evaluate_individual(w)
         // best = float(self.fitnesses.max())
         // self.best_fitness_history.append(best)
-        // # Select elite
-        // elite = self._select_elite()
+        // # Select survivor set
+        // survivors = self._select_survivors()
         // # Build next generation
-        // new_pop: list[np.ndarray[Any, Any]] = list(elite)  # elite survive unc
+        // new_pop: list[np.ndarray[Any, Any]] = list(survivors)  # survivors persist unchanged
         // while len(new_pop) < self.cfg.pop_size:
-        // pa = elite[self.rng.integers(0, len(elite))]
-        // pb = elite[self.rng.integers(0, len(elite))]
+        // pa = survivors[self.rng.integers(0, len(survivors))]
+        // pb = survivors[self.rng.integers(0, len(survivors))]
         // child = self._crossover(pa, pb)
         // child = self._mutate(child)
         // new_pop.append(child)
         0.0
     }
 
-    pub fn get_best_weights(&self, ) -> f64 {
+    pub fn get_best_weights(&self) -> f64 {
         // idx = int(np.argmax(self.fitnesses))
         // return self.population[idx].copy()
         0.0
@@ -140,7 +140,6 @@ impl SwarmEvolver {
         // return list(self.best_fitness_history)
         0.0
     }
-
 }
 
 pub fn validate_neuroevolution_swarm(state: &SwarmEvolver) -> bool {
@@ -156,5 +155,4 @@ mod tests {
         let state = SwarmEvolver::new();
         assert!(validate_neuroevolution_swarm(&state));
     }
-
 }

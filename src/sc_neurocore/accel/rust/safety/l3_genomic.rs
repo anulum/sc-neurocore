@@ -64,7 +64,7 @@ impl L3_GenomicLayer {
         }
     }
 
-    pub fn _init_regulatory_network(&self, ) -> f64 {
+    pub fn _init_regulatory_network(&self) -> f64 {
         // # Sparse random regulatory matrix
         // matrix = np.random.random((self.params.n_genes, self.params.n_regulato
         // matrix = np.where(matrix > 0.9, matrix, 0)  # Sparse
@@ -93,16 +93,15 @@ impl L3_GenomicLayer {
         0 // spike indicator
     }
 
-    pub fn get_global_metric(&self, ) -> f64 {
+    pub fn get_global_metric(&self) -> f64 {
         // return float(np.mean(self.expression_levels))
         0.0
     }
 
-    pub fn get_ciss_coherence(&self, ) -> f64 {
+    pub fn get_ciss_coherence(&self) -> f64 {
         // return float((np.mean(self.spin_polarization_f64).abs()))
         0.0
     }
-
 }
 
 pub fn validate_l3_genomic(state: &L3_GenomicLayer) -> bool {

@@ -66,13 +66,13 @@ impl Handler {
         0.0
     }
 
-    pub fn stop(&self, ) -> f64 {
+    pub fn stop(&self) -> f64 {
         // if self._server:
         // self._server.shutdown()
         0.0
     }
 
-    pub fn do_POST(&self, ) -> f64 {
+    pub fn do_POST(&self) -> f64 {
         // if self.path == "/step":
         // length = int(self.headers.get("Content-Length", 0))
         // body = self.rfile.read(length)
@@ -91,7 +91,7 @@ impl Handler {
         0.0
     }
 
-    pub fn do_GET(&self, ) -> f64 {
+    pub fn do_GET(&self) -> f64 {
         // if self.path == "/info":
         // self._respond(
         // 200,
@@ -119,7 +119,6 @@ impl Handler {
         // pass
         0.0
     }
-
 }
 
 pub fn validate_server(state: &Handler) -> bool {

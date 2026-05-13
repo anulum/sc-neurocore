@@ -12,7 +12,7 @@
 pub struct SNNGeneticEvolver {
     pub population_size: f64,
     pub mutation_rate: f64,
-    pub elite_fraction: f64,
+    pub survivor_fraction: f64,
     pub layer_factory: f64,
     pub fitness_func: f64,
     pub population: f64,
@@ -23,7 +23,7 @@ impl SNNGeneticEvolver {
         Self {
             population_size: 20.0_f64,
             mutation_rate: 0.05_f64,
-            elite_fraction: 0.2_f64,
+            survivor_fraction: 0.2_f64,
             layer_factory: 0.0_f64,
             fitness_func: 0.0_f64,
             population: 0.0_f64,
@@ -38,13 +38,13 @@ impl SNNGeneticEvolver {
         // ranked_indices = np.argsort(scores)[::-1]
         // ranked_pop = [self.population[i] for i in ranked_indices]
         // logger.info("Gen %d: Best Fitness = %.4f", gen, scores[ranked_indices[
-        // # 2. Selection (Elitism)
-        // n_elite = int(self.population_size * self.elite_fraction)
-        // next_gen = ranked_pop[:n_elite]
+        // # 2. Survivor selection
+        // n_survivors = int(self.population_size * self.survivor_fraction)
+        // next_gen = ranked_pop[:n_survivors]
         // # 3. Crossover & Mutation
         // while len(next_gen) < self.population_size:
         // # Simple random selection for parents
-        // p1, p2 = np.random.choice(ranked_pop[: n_elite + 5], 2, replace=false)
+        // p1, p2 = np.random.choice(ranked_pop[: n_survivors + 5], 2, replace=false)
         // child = self._crossover(p1, p2)  # type_val: ignore[func-returns-value]
         0.0
     }
@@ -71,7 +71,6 @@ impl SNNGeneticEvolver {
         // ind.weights = (ind.weights_f64).clamp(0, 1)
         0.0
     }
-
 }
 
 pub fn validate_neuroevolution(state: &SNNGeneticEvolver) -> bool {
@@ -87,5 +86,4 @@ mod tests {
         let state = SNNGeneticEvolver::new();
         assert!(validate_neuroevolution(&state));
     }
-
 }

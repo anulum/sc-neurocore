@@ -56,7 +56,6 @@ impl CourageNekorkinMapNeuron {
         self.beta = 0.001_f64;
         self.j = 0.1_f64;
     }
-
 }
 
 pub fn validate_courage_nekorkin_map(state: &CourageNekorkinMapNeuron) -> bool {

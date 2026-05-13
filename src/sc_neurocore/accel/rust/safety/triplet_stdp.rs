@@ -67,7 +67,6 @@ impl TripletSTDP {
         self.tau_y = 125.0_f64;
         self.a2_plus = 7.5e-10_f64;
     }
-
 }
 
 pub fn validate_triplet_stdp(state: &TripletSTDP) -> bool {

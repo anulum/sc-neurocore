@@ -55,7 +55,6 @@ impl EscapeRateNeuron {
         self.v_threshold = -50.0_f64;
         self.tau_m = 10.0_f64;
     }
-
 }
 
 pub fn validate_escape_rate(state: &EscapeRateNeuron) -> bool {

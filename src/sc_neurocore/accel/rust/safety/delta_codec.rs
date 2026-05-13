@@ -65,7 +65,6 @@ impl DeltaSpikeCodec {
         // if c == ref_local:
         0.0
     }
-
 }
 
 pub fn validate_delta_codec(state: &DeltaSpikeCodec) -> bool {
@@ -81,5 +80,4 @@ mod tests {
         let state = DeltaSpikeCodec::new();
         assert!(validate_delta_codec(&state));
     }
-
 }

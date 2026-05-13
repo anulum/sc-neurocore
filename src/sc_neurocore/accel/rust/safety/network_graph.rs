@@ -14,7 +14,14 @@ pub fn available_models() -> f64 {
     0.0
 }
 
-pub fn create_population(label: f64, model: f64, count: f64, neuron_type: f64, x: f64, y: f64) -> f64 {
+pub fn create_population(
+    label: f64,
+    model: f64,
+    count: f64,
+    neuron_type: f64,
+    x: f64,
+    y: f64,
+) -> f64 {
     // label: str = "Population",
     // model: str = "LIFNeuron",
     // count: int = 80,
@@ -35,7 +42,13 @@ pub fn create_population(label: f64, model: f64, count: f64, neuron_type: f64, x
     0.0
 }
 
-pub fn create_projection(source_id: f64, target_id: f64, weight: f64, delay: f64, probability: f64) -> f64 {
+pub fn create_projection(
+    source_id: f64,
+    target_id: f64,
+    weight: f64,
+    delay: f64,
+    probability: f64,
+) -> f64 {
     // source_id: str,
     // target_id: str,
     // weight: float = 0.1,

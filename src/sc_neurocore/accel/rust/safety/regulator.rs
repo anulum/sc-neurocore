@@ -44,7 +44,7 @@ impl SleepConsolidation {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // status = "STABLE" if self.is_stable else "UNSTABLE"
         // lines = [
         // f"Network Stability: {status}",
@@ -59,7 +59,13 @@ impl SleepConsolidation {
         0.0
     }
 
-    pub fn regulate(&self, firing_rates: f64, thresholds: f64, learning_rate: f64, weights: f64) -> f64 {
+    pub fn regulate(
+        &self,
+        firing_rates: f64,
+        thresholds: f64,
+        learning_rate: f64,
+        weights: f64,
+    ) -> f64 {
         // self,
         // firing_rates: np.ndarray,
         // thresholds: np.ndarray,
@@ -102,7 +108,6 @@ impl SleepConsolidation {
         // return epoch > 0 && epoch % interval == 0
         0.0
     }
-
 }
 
 pub fn validate_regulator(state: &SleepConsolidation) -> bool {
@@ -118,5 +123,4 @@ mod tests {
         let state = SleepConsolidation::new();
         assert!(validate_regulator(&state));
     }
-
 }

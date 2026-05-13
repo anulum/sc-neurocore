@@ -46,12 +46,12 @@ impl RateMonitor {
         0.0
     }
 
-    pub fn spike_times(&self, ) -> f64 {
+    pub fn spike_times(&self) -> f64 {
         // return np.array(self._timesteps, dtype=np.int64)
         0.0
     }
 
-    pub fn spike_trains(&self, ) -> f64 {
+    pub fn spike_trains(&self) -> f64 {
         // trains: dict[int, list[int]] = {}
         // for nid, ts in zip(self._neuron_ids, self._timesteps):
         // trains.setdefault(nid, []).append(ts)
@@ -59,12 +59,12 @@ impl RateMonitor {
         0.0
     }
 
-    pub fn count(&self, ) -> f64 {
+    pub fn count(&self) -> f64 {
         // return len(self._neuron_ids)
         0.0
     }
 
-    pub fn raster_data(&self, ) -> f64 {
+    pub fn raster_data(&self) -> f64 {
         // return (
         // np.array(self._timesteps, dtype=np.int64),
         // np.array(self._neuron_ids, dtype=np.int64),
@@ -121,19 +121,17 @@ impl RateMonitor {
         0.0
     }
 
-    pub fn traces(&self, ) -> f64 {
+    pub fn traces(&self) -> f64 {
         // return {k: np.array(v) if v else np.empty((0, 0)) for k, v in self._da
         0.0
     }
 
-    pub fn t(&self, ) -> f64 {
+    pub fn t(&self) -> f64 {
         // return np.array(self._t, dtype=np.int64)
         0.0
     }
 
-
-
-    pub fn rate(&self, ) -> f64 {
+    pub fn rate(&self) -> f64 {
         // if not self._spike_counts:
         // return np.array([], dtype=np.float64)
         // duration_s = self.bin_ms / 1000.0
@@ -141,9 +139,6 @@ impl RateMonitor {
         // return counts / (duration_s * self.population.n)
         0.0
     }
-
-
-
 }
 
 pub fn validate_monitor(state: &RateMonitor) -> bool {
@@ -159,5 +154,4 @@ mod tests {
         let state = RateMonitor::new();
         assert!(validate_monitor(&state));
     }
-
 }

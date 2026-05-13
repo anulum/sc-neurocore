@@ -42,7 +42,6 @@ impl SCFusionLayer {
         // # (Simulation shortcut: use float math which is expected value of SC)
         0.0
     }
-
 }
 
 pub fn validate_fusion(state: &SCFusionLayer) -> bool {
@@ -58,5 +57,4 @@ mod tests {
         let state = SCFusionLayer::new();
         assert!(validate_fusion(&state));
     }
-
 }

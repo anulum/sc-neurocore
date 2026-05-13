@@ -89,7 +89,6 @@ impl SpikeAugment {
         // return result
         0.0
     }
-
 }
 
 pub fn validate_spike_augment(state: &SpikeAugment) -> bool {
@@ -105,5 +104,4 @@ mod tests {
         let state = SpikeAugment::new();
         assert!(validate_spike_augment(&state));
     }
-
 }

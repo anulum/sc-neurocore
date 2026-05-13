@@ -44,22 +44,22 @@ impl MembershipAudit {
         0.0
     }
 
-    pub fn spent_epsilon(&self, ) -> f64 {
+    pub fn spent_epsilon(&self) -> f64 {
         // return self._spent_epsilon
         0.0
     }
 
-    pub fn remaining_epsilon(&self, ) -> f64 {
+    pub fn remaining_epsilon(&self) -> f64 {
         // return max(0.0, self.target_epsilon - self._spent_epsilon)
         0.0
     }
 
-    pub fn budget_exhausted(&self, ) -> f64 {
+    pub fn budget_exhausted(&self) -> f64 {
         // return self._spent_epsilon >= self.target_epsilon
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // return (
         // f"Privacy: epsilon={self._spent_epsilon:.4f}/{self.target_epsilon} "
         // f"({self._steps} steps), delta={self.target_delta}"
@@ -79,7 +79,7 @@ impl MembershipAudit {
         0.0
     }
 
-    pub fn per_step_epsilon(&self, ) -> f64 {
+    pub fn per_step_epsilon(&self) -> f64 {
         // return self.epsilon
         0.0
     }
@@ -102,7 +102,6 @@ impl MembershipAudit {
         // correct += 1
         0.0
     }
-
 }
 
 pub fn validate_dp_snn(state: &MembershipAudit) -> bool {
@@ -118,5 +117,4 @@ mod tests {
         let state = MembershipAudit::new();
         assert!(validate_dp_snn(&state));
     }
-
 }

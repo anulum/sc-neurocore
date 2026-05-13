@@ -53,7 +53,6 @@ impl RulkovMapNeuron {
         self.sigma = -1.6_f64;
         self.mu = 0.001_f64;
     }
-
 }
 
 pub fn validate_rulkov_map(state: &RulkovMapNeuron) -> bool {

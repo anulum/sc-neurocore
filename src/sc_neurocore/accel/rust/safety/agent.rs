@@ -54,13 +54,13 @@ impl SwarmAgent {
         }
     }
 
-    pub fn n_weights(&self, ) -> f64 {
+    pub fn n_weights(&self) -> f64 {
         // c = self.cfg
         // return c.n_hidden * c.n_sensory + c.n_hidden * c.n_hidden + c.n_motor
         0.0
     }
 
-    pub fn weights(&self, ) -> f64 {
+    pub fn weights(&self) -> f64 {
         // return np.concatenate(
         // [
         // self.W_in.ravel(),
@@ -70,8 +70,6 @@ impl SwarmAgent {
         // )
         0.0
     }
-
-
 
     pub fn think(&self, sensory: f64) -> f64 {
         // c = self.cfg
@@ -118,7 +116,6 @@ impl SwarmAgent {
         self.membrane_decay = 0.9_f64;
         self.threshold = 1.0_f64;
     }
-
 }
 
 pub fn validate_agent(state: &SwarmAgent) -> bool {
@@ -134,5 +131,4 @@ mod tests {
         let state = SwarmAgent::new();
         assert!(validate_agent(&state));
     }
-
 }

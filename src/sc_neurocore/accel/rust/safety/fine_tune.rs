@@ -23,7 +23,6 @@ impl TransferConfig {
             lr_head: 0.01_f64,
         }
     }
-
 }
 
 pub fn validate_fine_tune(state: &TransferConfig) -> bool {
@@ -39,5 +38,4 @@ mod tests {
         let state = TransferConfig::new();
         assert!(validate_fine_tune(&state));
     }
-
 }

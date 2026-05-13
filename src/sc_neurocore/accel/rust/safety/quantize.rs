@@ -56,7 +56,7 @@ impl QuantizedSNNLayer {
         0.0
     }
 
-    pub fn export_weights(&self, ) -> f64 {
+    pub fn export_weights(&self) -> f64 {
         // return _ste_quantize(self.W, self.weight_bits)
         0.0
     }
@@ -69,7 +69,6 @@ impl QuantizedSNNLayer {
         self.weight_bits = 8.0_f64;
         self.threshold = 1.0_f64;
     }
-
 }
 
 pub fn validate_quantize(state: &QuantizedSNNLayer) -> bool {
@@ -85,5 +84,4 @@ mod tests {
         let state = QuantizedSNNLayer::new();
         assert!(validate_quantize(&state));
     }
-
 }

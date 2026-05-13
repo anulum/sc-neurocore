@@ -63,7 +63,6 @@ impl EPropALIFNeuron {
         self.tau_m = 20.0_f64;
         self.tau_a = 200.0_f64;
     }
-
 }
 
 pub fn validate_e_prop_alif(state: &EPropALIFNeuron) -> bool {

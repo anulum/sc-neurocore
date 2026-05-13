@@ -44,7 +44,7 @@ impl SleepOptimizer {
         }
     }
 
-    pub fn start_session(&self, ) -> f64 {
+    pub fn start_session(&self) -> f64 {
         // self._detector.reset()
         // self._active = true
         // self._sample_count = 0
@@ -56,7 +56,7 @@ impl SleepOptimizer {
         0.0
     }
 
-    pub fn stop_session(&self, ) -> f64 {
+    pub fn stop_session(&self) -> f64 {
         // self._active = false
         // return list(self._history)
         0.0
@@ -78,7 +78,7 @@ impl SleepOptimizer {
         0.0
     }
 
-    pub fn check_and_adapt(&self, ) -> f64 {
+    pub fn check_and_adapt(&self) -> f64 {
         // if not self._active:
         // return 0.0
         // if self._sample_count < (self._tick_count + 1) * self.config.stage_che
@@ -97,12 +97,12 @@ impl SleepOptimizer {
         0.0
     }
 
-    pub fn get_history(&self, ) -> f64 {
+    pub fn get_history(&self) -> f64 {
         // return list(self._history)
         0.0
     }
 
-    pub fn get_stage_durations(&self, ) -> f64 {
+    pub fn get_stage_durations(&self) -> f64 {
         // interval_min = self.config.stage_check_interval / (self.config.sample_
         // durations: Dict[SleepStage, float] = {s: 0.0 for s in SleepStage}
         // for tick in self._history:
@@ -111,12 +111,12 @@ impl SleepOptimizer {
         0.0
     }
 
-    pub fn get_hypnogram(&self, ) -> f64 {
+    pub fn get_hypnogram(&self) -> f64 {
         // return [int(t.current_stage) for t in self._history]
         0.0
     }
 
-    pub fn get_state(&self, ) -> f64 {
+    pub fn get_state(&self) -> f64 {
         // last = self._history[-1] if self._history else 0.0
         // return {
         // "active": self._active,
@@ -133,7 +133,6 @@ impl SleepOptimizer {
         // }
         0.0
     }
-
 }
 
 pub fn validate_sleep_optimizer(state: &SleepOptimizer) -> bool {
@@ -149,5 +148,4 @@ mod tests {
         let state = SleepOptimizer::new();
         assert!(validate_sleep_optimizer(&state));
     }
-
 }

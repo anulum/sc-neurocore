@@ -72,7 +72,6 @@ impl WangBuzsakiNeuron {
         self.g_na = 35.0_f64;
         self.g_k = 9.0_f64;
     }
-
 }
 
 pub fn validate_wang_buzsaki(state: &WangBuzsakiNeuron) -> bool {

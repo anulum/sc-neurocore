@@ -34,7 +34,7 @@ impl FractionalLIFNeuron {
         }
     }
 
-    pub fn _compute_gl_coefficients(&self, ) -> f64 {
+    pub fn _compute_gl_coefficients(&self) -> f64 {
         // coeffs = [1.0]
         // for k in range(1, self._max_history):
         // coeffs.append(coeffs[-1] * (k - 1 - self.alpha) / k)
@@ -70,7 +70,6 @@ impl FractionalLIFNeuron {
         self.v_threshold = 1.0_f64;
         self.alpha = 0.8_f64;
     }
-
 }
 
 pub fn validate_fractional_lif(state: &FractionalLIFNeuron) -> bool {

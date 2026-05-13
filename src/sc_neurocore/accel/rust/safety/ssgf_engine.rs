@@ -77,7 +77,7 @@ impl SSGFEngine {
         0.0
     }
 
-    pub fn _micro_step(&self, ) -> f64 {
+    pub fn _micro_step(&self) -> f64 {
         // c = self.cfg
         // N = self.N
         // theta = self.theta
@@ -94,7 +94,7 @@ impl SSGFEngine {
         0.0
     }
 
-    pub fn _spectral(&self, ) -> f64 {
+    pub fn _spectral(&self) -> f64 {
         // W = self.W
         // d = W.sum(axis=1)
         // d_safe = np.where(d > 1e-12, d, 1e-12)
@@ -108,13 +108,13 @@ impl SSGFEngine {
         0.0
     }
 
-    pub fn _compute_R(&self, ) -> f64 {
+    pub fn _compute_R(&self) -> f64 {
         // z_complex = np.mean((1j * self.theta_f64).exp())
         // return float((z_complex_f64).abs())
         0.0
     }
 
-    pub fn _cost(&self, ) -> f64 {
+    pub fn _cost(&self) -> f64 {
         // R = self._compute_R()
         // c_micro = 1.0 - R
         // c_reg = 0.01 * np.sum(self.W.powi2) / (self.N * self.N)
@@ -122,7 +122,7 @@ impl SSGFEngine {
         0.0
     }
 
-    pub fn outer_step(&self, ) -> f64 {
+    pub fn outer_step(&self) -> f64 {
         // c = self.cfg
         // # Save state
         // self._prev_theta = self.theta.copy()
@@ -141,7 +141,7 @@ impl SSGFEngine {
         0.0
     }
 
-    pub fn get_audio_mapping(&self, ) -> f64 {
+    pub fn get_audio_mapping(&self) -> f64 {
         // R = self.R_global
         // # Layer 2 phase velocity -> binaural Hz (0.5 - 40)
         // if self.N > 2:
@@ -160,7 +160,7 @@ impl SSGFEngine {
         0.0
     }
 
-    pub fn get_state(&self, ) -> f64 {
+    pub fn get_state(&self) -> f64 {
         // return {
         // "outer_step": self.outer_step_count,
         // "R_global": round(self.R_global, 6),
@@ -174,7 +174,6 @@ impl SSGFEngine {
         // }
         0.0
     }
-
 }
 
 pub fn validate_ssgf_engine(state: &SSGFEngine) -> bool {
@@ -190,5 +189,4 @@ mod tests {
         let state = SSGFEngine::new();
         assert!(validate_ssgf_engine(&state));
     }
-
 }

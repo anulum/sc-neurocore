@@ -45,7 +45,6 @@ impl PerfectIntegratorNeuron {
         self.v_reset = 0.0_f64;
         self.dt = 0.1_f64;
     }
-
 }
 
 pub fn validate_perfect_integrator(state: &PerfectIntegratorNeuron) -> bool {

@@ -78,7 +78,6 @@ impl PospischilNeuron {
         self.n = 0.3_f64;
         self.p = 0.0_f64;
     }
-
 }
 
 pub fn validate_pospischil(state: &PospischilNeuron) -> bool {

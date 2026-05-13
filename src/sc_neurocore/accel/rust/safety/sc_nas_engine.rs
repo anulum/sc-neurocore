@@ -88,7 +88,7 @@ impl NASVerilogEmitter {
         0.0
     }
 
-    pub fn lut_cost(&self, ) -> f64 {
+    pub fn lut_cost(&self) -> f64 {
         // base = self.neurons * 12
         // length_factor = int(math.log2(max(64, self.bitstream_length))) * 5
         // type_mult = NEURON_LUT_MULTIPLIER.get(self.neuron_type, 1.0)
@@ -96,30 +96,30 @@ impl NASVerilogEmitter {
         0.0
     }
 
-    pub fn ff_cost(&self, ) -> f64 {
+    pub fn ff_cost(&self) -> f64 {
         // return self.neurons * (self.bitstream_length // 64 + 8)
         0.0
     }
 
-    pub fn dsp_cost(&self, ) -> f64 {
+    pub fn dsp_cost(&self) -> f64 {
         // per_neuron = NEURON_DSP_COST.get(self.neuron_type, 0)
         // return self.neurons * per_neuron
         0.0
     }
 
-    pub fn bram_cost_kb(&self, ) -> f64 {
+    pub fn bram_cost_kb(&self) -> f64 {
         // # Weight storage: neurons × bitstream_length bits → KB
         // return (self.neurons * self.bitstream_length) / 8192.0
         0.0
     }
 
-    pub fn power_cost(&self, ) -> f64 {
+    pub fn power_cost(&self) -> f64 {
         // type_mult = NEURON_LUT_MULTIPLIER.get(self.neuron_type, 1.0)
         // return self.neurons * 0.01 * (self.bitstream_length / 256.0) * type_mu
         0.0
     }
 
-    pub fn evaluate_resources(&self, ) -> f64 {
+    pub fn evaluate_resources(&self) -> f64 {
         // self.total_luts = sum(l.lut_cost for l in self.layers)
         // self.total_ffs = sum(l.ff_cost for l in self.layers)
         // self.total_dsp = sum(l.dsp_cost for l in self.layers)
@@ -138,7 +138,7 @@ impl NASVerilogEmitter {
         0.0
     }
 
-    pub fn fingerprint(&self, ) -> f64 {
+    pub fn fingerprint(&self) -> f64 {
         // desc = "|".join(
         // f"{l.neurons}-{l.neuron_type.value}-{l.bitstream_length}-{l.decorrelat
         // for l in self.layers
@@ -166,7 +166,7 @@ impl NASVerilogEmitter {
         0.0
     }
 
-    pub fn _random_layer(&self, ) -> f64 {
+    pub fn _random_layer(&self) -> f64 {
         // return LayerConfig(
         // neurons=int(self.rng.choice([16, 32, 64, 128, 256])),
         // neuron_type=self.rng.choice(self.objective.allowed_neuron_types),
@@ -227,7 +227,7 @@ impl NASVerilogEmitter {
         0.0
     }
 
-    pub fn search(&self, ) -> f64 {
+    pub fn search(&self) -> f64 {
         // population = [self._random_candidate(0) for _ in range(self.pop_size)]
         // for c in population:
         // acc = self.evaluator.evaluate(c)
@@ -246,21 +246,21 @@ impl NASVerilogEmitter {
         0.0
     }
 
-    pub fn best_accuracy(&self, ) -> f64 {
+    pub fn best_accuracy(&self) -> f64 {
         // if not self.pareto_front:
         // return 0.0
         // return max(c.accuracy for c in self.pareto_front)
         0.0
     }
 
-    pub fn most_efficient(&self, ) -> f64 {
+    pub fn most_efficient(&self) -> f64 {
         // if not self.pareto_front:
         // return 0.0
         // return min(self.pareto_front, key=lambda c: c.total_luts)
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [
         // f"SC-NAS Report",
         // f"  Pareto front size: {len(self.pareto_front)}",
@@ -301,7 +301,6 @@ impl NASVerilogEmitter {
         // return result
         0.0
     }
-
 }
 
 pub fn validate_sc_nas_engine(state: &NASVerilogEmitter) -> bool {
@@ -317,5 +316,4 @@ mod tests {
         let state = NASVerilogEmitter::new();
         assert!(validate_sc_nas_engine(&state));
     }
-
 }

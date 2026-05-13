@@ -15,9 +15,7 @@ pub struct Lfsr16 {
 
 impl Lfsr16 {
     pub fn new() -> Self {
-        Self {
-            reg: 0.0_f64,
-        }
+        Self { reg: 0.0_f64 }
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
@@ -44,7 +42,6 @@ impl Lfsr16 {
         // return self.encode(threshold, bit_length)
         0.0
     }
-
 }
 
 pub fn validate_lfsr(state: &Lfsr16) -> bool {

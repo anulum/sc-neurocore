@@ -75,7 +75,6 @@ impl CorticalColumn {
         self.w_exc = 0.1_f64;
         self.w_inh = -0.15_f64;
     }
-
 }
 
 pub fn validate_cortical_column(state: &CorticalColumn) -> bool {

@@ -58,7 +58,6 @@ impl GLMNeuron {
         self.dt_ms = 1.0_f64;
         self.k = 0.0_f64;
     }
-
 }
 
 pub fn validate_glm_neuron(state: &GLMNeuron) -> bool {

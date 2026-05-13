@@ -55,7 +55,6 @@ impl BendaHerzNeuron {
         self.i_half = 5.0_f64;
         self.tau_a = 100.0_f64;
     }
-
 }
 
 pub fn validate_benda_herz(state: &BendaHerzNeuron) -> bool {

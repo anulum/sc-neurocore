@@ -56,7 +56,6 @@ impl AiharaMapNeuron {
         self.k_s = 0.95_f64;
         self.alpha = 2.0_f64;
     }
-
 }
 
 pub fn validate_aihara_map_neuron(state: &AiharaMapNeuron) -> bool {

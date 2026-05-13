@@ -107,7 +107,6 @@ impl MockGraph {
         // in_regs = [ssa.get(inp) for inp in node.inputs]
         0.0
     }
-
 }
 
 pub fn validate_compiler_export(state: &MockGraph) -> bool {
@@ -123,5 +122,4 @@ mod tests {
         let state = MockGraph::new();
         assert!(validate_compiler_export(&state));
     }
-
 }

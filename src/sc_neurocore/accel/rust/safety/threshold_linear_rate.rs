@@ -36,7 +36,6 @@ impl ThresholdLinearRateNeuron {
         self.theta = 0.0_f64;
         self.gain = 1.0_f64;
     }
-
 }
 
 pub fn validate_threshold_linear_rate(state: &ThresholdLinearRateNeuron) -> bool {

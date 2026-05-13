@@ -37,7 +37,6 @@ impl QuantumStochasticLayer {
         // return out_bits
         0.0
     }
-
 }
 
 pub fn validate_hybrid(state: &QuantumStochasticLayer) -> bool {
@@ -53,5 +52,4 @@ mod tests {
         let state = QuantumStochasticLayer::new();
         assert!(validate_hybrid(&state));
     }
-
 }

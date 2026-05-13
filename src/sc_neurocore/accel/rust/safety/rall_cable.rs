@@ -60,7 +60,6 @@ impl RallCableNeuron {
         self.g_ratio = 0.5_f64;
         self.v_threshold = -50.0_f64;
     }
-
 }
 
 pub fn validate_rall_cable(state: &RallCableNeuron) -> bool {

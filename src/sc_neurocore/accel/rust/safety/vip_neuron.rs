@@ -79,7 +79,6 @@ impl VIPNeuron {
         self.a = 0.0_f64;
         self.b = 0.9_f64;
     }
-
 }
 
 pub fn validate_vip_neuron(state: &VIPNeuron) -> bool {

@@ -15,9 +15,7 @@ pub struct SC3DGenerator {
 
 impl SC3DGenerator {
     pub fn new() -> Self {
-        Self {
-            iso_level: 0.5_f64,
-        }
+        Self { iso_level: 0.5_f64 }
     }
 
     pub fn export_point_cloud_json(&self, points: f64, intensities: f64, filename: f64) -> f64 {
@@ -55,7 +53,14 @@ impl SC3DGenerator {
         0.0
     }
 
-    pub fn _get_edge_vertices(&self, i: f64, j: f64, k: f64, cube_vals: f64, iso_level: f64) -> f64 {
+    pub fn _get_edge_vertices(
+        &self,
+        i: f64,
+        j: f64,
+        k: f64,
+        cube_vals: f64,
+        iso_level: f64,
+    ) -> f64 {
         // self, i: int, j: int, k: int, cube_vals: list[float], iso_level: float
         // ) -> dict[int, np.ndarray]:
         // # Cube corner positions
@@ -165,7 +170,6 @@ impl SC3DGenerator {
         // "normals": np.zeros((0, 3)),
         0.0
     }
-
 }
 
 pub fn validate_three_d_gen(state: &SC3DGenerator) -> bool {
@@ -181,5 +185,4 @@ mod tests {
         let state = SC3DGenerator::new();
         assert!(validate_three_d_gen(&state));
     }
-
 }

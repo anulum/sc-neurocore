@@ -51,7 +51,6 @@ impl FitzHughNagumoNeuron {
         self.b = 0.8_f64;
         self.epsilon = 0.08_f64;
     }
-
 }
 
 pub fn validate_fitzhugh_nagumo(state: &FitzHughNagumoNeuron) -> bool {

@@ -99,7 +99,6 @@ impl BoothRinzelNeuron {
         self.n = 0.0_f64;
         self.q = 0.0_f64;
     }
-
 }
 
 pub fn validate_booth_rinzel(state: &BoothRinzelNeuron) -> bool {

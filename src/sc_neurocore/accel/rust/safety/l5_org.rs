@@ -89,7 +89,7 @@ impl L5_OrganismalAdapter {
         0.0
     }
 
-    pub fn get_metrics(&self, ) -> f64 {
+    pub fn get_metrics(&self) -> f64 {
         // return {
         // "hrv_coherence_r5": float(self.autonomic[1]),
         // "self_soliton_magnitude": float(jnp.mean(self.self_soliton)),
@@ -97,7 +97,6 @@ impl L5_OrganismalAdapter {
         // }
         0.0
     }
-
 }
 
 pub fn validate_l5_org(state: &L5_OrganismalAdapter) -> bool {
@@ -113,5 +112,4 @@ mod tests {
         let state = L5_OrganismalAdapter::new();
         assert!(validate_l5_org(&state));
     }
-
 }

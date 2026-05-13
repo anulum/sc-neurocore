@@ -78,7 +78,7 @@ impl ComplexityTracker {
         }
     }
 
-    pub fn to_vector(&self, ) -> f64 {
+    pub fn to_vector(&self) -> f64 {
         // return np.array(
         // [
         // self.num_neurons,
@@ -102,24 +102,12 @@ impl ComplexityTracker {
         0.0
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-    pub fn vector_dim(&self, ) -> f64 {
+    pub fn vector_dim(&self) -> f64 {
         // return len(self.to_vector())
         0.0
     }
 
-    pub fn compute_id(&self, ) -> f64 {
+    pub fn compute_id(&self) -> f64 {
         // h = hashlib.sha256(self.to_vector().tobytes())
         // self.genome_id = h.hexdigest()[:12]
         // return self.genome_id
@@ -225,7 +213,7 @@ impl ComplexityTracker {
         0.0
     }
 
-    pub fn num_records(&self, ) -> f64 {
+    pub fn num_records(&self) -> f64 {
         // return len(self.records)
         0.0
     }
@@ -332,7 +320,7 @@ impl ComplexityTracker {
         0.0
     }
 
-    pub fn best_organism(&self, ) -> f64 {
+    pub fn best_organism(&self) -> f64 {
         // alive_with_fitness = [o for o in self.population if o.alive && o.fitne
         // return (
         // max(alive_with_fitness, key=lambda o: o.fitness.composite)
@@ -342,13 +330,13 @@ impl ComplexityTracker {
         0.0
     }
 
-    pub fn best_fitness(&self, ) -> f64 {
+    pub fn best_fitness(&self) -> f64 {
         // b = self.best_organism
         // return b.fitness.composite if b && b.fitness else 0.0
         0.0
     }
 
-    pub fn mean_fitness(&self, ) -> f64 {
+    pub fn mean_fitness(&self) -> f64 {
         // fits = [o.fitness.composite for o in self.population if o.fitness]
         // return float(np.mean(fits)) if fits else 0.0
         0.0
@@ -423,12 +411,12 @@ impl ComplexityTracker {
         0.0
     }
 
-    pub fn free_tiles(&self, ) -> f64 {
+    pub fn free_tiles(&self) -> f64 {
         // return [tid for tid, a in self.allocations.items() if a is 0.0]
         0.0
     }
 
-    pub fn utilisation(&self, ) -> f64 {
+    pub fn utilisation(&self) -> f64 {
         // used = sum(1 for a in self.allocations.values() if a is not 0.0)
         // return used / self.num_tiles if self.num_tiles > 0 else 0.0
         0.0
@@ -446,9 +434,7 @@ impl ComplexityTracker {
         0.0
     }
 
-
-
-    pub fn size(&self, ) -> f64 {
+    pub fn size(&self) -> f64 {
         // return len(self.entries)
         0.0
     }
@@ -476,7 +462,7 @@ impl ComplexityTracker {
         0.0
     }
 
-    pub fn total_population(&self, ) -> f64 {
+    pub fn total_population(&self) -> f64 {
         // return sum(len(isl.population) for isl in self.islands.values())
         0.0
     }
@@ -523,8 +509,6 @@ impl ComplexityTracker {
         0.0
     }
 
-
-
     pub fn check(&self, genome: f64) -> f64 {
         // violations = []
         // if genome.topology.num_neurons > self.max_neurons:
@@ -535,8 +519,6 @@ impl ComplexityTracker {
         // return (len(violations) == 0, violations)
         0.0
     }
-
-
 
     pub fn apply(&self, population: f64, rng: f64) -> f64 {
         // n_kill = int(len(population) * self.kill_fraction)
@@ -559,7 +541,7 @@ impl ComplexityTracker {
         0.0
     }
 
-    pub fn evaluate_interactions(&self, ) -> f64 {
+    pub fn evaluate_interactions(&self) -> f64 {
         // results = {}
         // for pred in self.predators:
         // score = sum(
@@ -578,14 +560,12 @@ impl ComplexityTracker {
         0.0
     }
 
-    pub fn total_organisms(&self, ) -> f64 {
+    pub fn total_organisms(&self) -> f64 {
         // return len(self.predators) + len(self.prey)
         0.0
     }
 
-
-
-    pub fn rejection_rate(&self, ) -> f64 {
+    pub fn rejection_rate(&self) -> f64 {
         // return self.rejected / self.checked if self.checked > 0 else 0.0
         0.0
     }
@@ -615,13 +595,7 @@ impl ComplexityTracker {
         0.0
     }
 
-
-
-
-
-
-
-    pub fn is_bloated(&self, ) -> f64 {
+    pub fn is_bloated(&self) -> f64 {
         // return self.bloat_score > 1.0
         0.0
     }
@@ -671,17 +645,17 @@ impl ComplexityTracker {
         0.0
     }
 
-    pub fn num_nodes(&self, ) -> f64 {
+    pub fn num_nodes(&self) -> f64 {
         // return len(self.nodes)
         0.0
     }
 
-    pub fn num_edges(&self, ) -> f64 {
+    pub fn num_edges(&self) -> f64 {
         // return len(self.edges)
         0.0
     }
 
-    pub fn hw_composite(&self, ) -> f64 {
+    pub fn hw_composite(&self) -> f64 {
         // time_score = min(1.0, 100.0 / max(1.0, self.fmax_mhz)) if self.fmax_mh
         // return (
         // 0.5 * self.fpga_accuracy
@@ -701,54 +675,49 @@ impl ComplexityTracker {
         0.0
     }
 
-    pub fn total_reports(&self, ) -> f64 {
+    pub fn total_reports(&self) -> f64 {
         // return len(self.reports)
         0.0
     }
 
-
-
-    pub fn generations_tracked(&self, ) -> f64 {
+    pub fn generations_tracked(&self) -> f64 {
         // return len(self.history)
         0.0
     }
 
-    pub fn fitness_trajectory(&self, ) -> f64 {
+    pub fn fitness_trajectory(&self) -> f64 {
         // return [s.best_fitness for s in self.history]
         0.0
     }
 
-    pub fn diversity_trajectory(&self, ) -> f64 {
+    pub fn diversity_trajectory(&self) -> f64 {
         // return [s.diversity for s in self.history]
         0.0
     }
 
-    pub fn improvement_rate(&self, ) -> f64 {
+    pub fn improvement_rate(&self) -> f64 {
         // if len(self.history) < 2:
         // return 0.0
         // return self.history[-1].best_fitness - self.history[0].best_fitness
         0.0
     }
 
-    pub fn is_identical(&self, ) -> f64 {
+    pub fn is_identical(&self) -> f64 {
         // return self.total_param_changes == 0
         0.0
     }
 
-
-
-    pub fn mean_trajectory(&self, ) -> f64 {
+    pub fn mean_trajectory(&self) -> f64 {
         // return [h[1] for h in self.history]
         0.0
     }
 
-    pub fn is_complexifying(&self, ) -> f64 {
+    pub fn is_complexifying(&self) -> f64 {
         // if len(self.history) < 3:
         // return false
         // return self.history[-1][1] > self.history[0][1]
         0.0
     }
-
 }
 
 pub fn validate_evo_substrate(state: &ComplexityTracker) -> bool {
@@ -764,5 +733,4 @@ mod tests {
         let state = ComplexityTracker::new();
         assert!(validate_evo_substrate(&state));
     }
-
 }

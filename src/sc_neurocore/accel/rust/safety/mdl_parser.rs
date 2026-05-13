@@ -52,7 +52,6 @@ impl MindDescriptionLanguage {
         // return data
         0.0
     }
-
 }
 
 pub fn validate_mdl_parser(state: &MindDescriptionLanguage) -> bool {
@@ -68,5 +67,4 @@ mod tests {
         let state = MindDescriptionLanguage::new();
         assert!(validate_mdl_parser(&state));
     }
-
 }

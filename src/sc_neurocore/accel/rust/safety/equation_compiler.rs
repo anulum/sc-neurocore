@@ -149,14 +149,14 @@ impl _VerilogExprEmitter {
         0.0
     }
 
-    pub fn _exp_lut_entries(&self, ) -> f64 {
+    pub fn _exp_lut_entries(&self) -> f64 {
         // import math
         // points = [(-8 + i) for i in range(16)]
         // return [min(int(round(math.exp(x) * (1 << self.q.fraction))), 32767) f
         0.0
     }
 
-    pub fn _log_lut_entries(&self, ) -> f64 {
+    pub fn _log_lut_entries(&self) -> f64 {
         // import math
         // return [
         // int(round(math.log(max(0.06 + i * 0.5, 0.001)) * (1 << self.q.fraction
@@ -165,34 +165,34 @@ impl _VerilogExprEmitter {
         0.0
     }
 
-    pub fn _sqrt_lut_entries(&self, ) -> f64 {
+    pub fn _sqrt_lut_entries(&self) -> f64 {
         // import math
         // return [int(round(math.sqrt(max(i * 0.5, 0)) * (1 << self.q.fraction))
         0.0
     }
 
-    pub fn _tanh_lut_entries(&self, ) -> f64 {
+    pub fn _tanh_lut_entries(&self) -> f64 {
         // import math
         // points = [(-8 + i) for i in range(16)]
         // return [int(round(math.tanh(x) * (1 << self.q.fraction))) for x in poi
         0.0
     }
 
-    pub fn _sigmoid_lut_entries(&self, ) -> f64 {
+    pub fn _sigmoid_lut_entries(&self) -> f64 {
         // import math
         // points = [(-8 + i) for i in range(16)]
         // return [int(round(1.0 / (1.0 + math.exp(-x)) * (1 << self.q.fraction))
         0.0
     }
 
-    pub fn _sin_lut_entries(&self, ) -> f64 {
+    pub fn _sin_lut_entries(&self) -> f64 {
         // import math
         // points = [(-8 + i) for i in range(16)]
         // return [int(round(math.sin(x) * (1 << self.q.fraction))) for x in poin
         0.0
     }
 
-    pub fn _cos_lut_entries(&self, ) -> f64 {
+    pub fn _cos_lut_entries(&self) -> f64 {
         // import math
         // points = [(-8 + i) for i in range(16)]
         // return [int(round(math.cos(x) * (1 << self.q.fraction))) for x in poin
@@ -203,7 +203,6 @@ impl _VerilogExprEmitter {
         // raise ValueError(f"Unsupported AST node for Verilog: {type(node).__nam
         0.0
     }
-
 }
 
 pub fn validate_equation_compiler(state: &_VerilogExprEmitter) -> bool {
@@ -219,5 +218,4 @@ mod tests {
         let state = _VerilogExprEmitter::new();
         assert!(validate_equation_compiler(&state));
     }
-
 }

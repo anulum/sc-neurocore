@@ -60,7 +60,7 @@ impl CPGPositionalEncoding {
         0.0
     }
 
-    pub fn num_multiply_ops(&self, ) -> f64 {
+    pub fn num_multiply_ops(&self) -> f64 {
         // return 0
         0.0
     }
@@ -85,8 +85,6 @@ impl CPGPositionalEncoding {
         0 // spike indicator
     }
 
-
-
     pub fn encode(&self, seq_len: f64) -> f64 {
         // t = np.arange(seq_len)[:, np.newaxis]
         // angles = t * self.frequencies[np.newaxis, :] * 0.01 + self.phases[np.n
@@ -101,7 +99,6 @@ impl CPGPositionalEncoding {
         // return (rng.random(rates.shape) < rates).astype(np.int8)
         0.0
     }
-
 }
 
 pub fn validate_spikformer(state: &CPGPositionalEncoding) -> bool {

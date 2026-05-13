@@ -34,16 +34,15 @@ impl StochasticDendriticNeuron {
         0 // spike indicator
     }
 
-    pub fn reset_state(&self, ) -> f64 {
+    pub fn reset_state(&self) -> f64 {
         // self._last_current = 0.0
         0.0
     }
 
-    pub fn get_state(&self, ) -> f64 {
+    pub fn get_state(&self) -> f64 {
         // return {"last_current": self._last_current, "threshold": self.threshol
         0.0
     }
-
 }
 
 pub fn validate_dendritic(state: &StochasticDendriticNeuron) -> bool {

@@ -47,7 +47,7 @@ impl StochasticIsingGraph {
         0 // spike indicator
     }
 
-    pub fn get_energy(&self, ) -> f64 {
+    pub fn get_energy(&self) -> f64 {
         // # E = -0.5 * S^T * J * S - h^T * S
         // # Factor 0.5 because J_ij is counted twice in full matrix sum
         // interaction = -0.5 * np.dot(self.bipolar_spins, np.dot(self.J, self.bi
@@ -56,11 +56,10 @@ impl StochasticIsingGraph {
         0.0
     }
 
-    pub fn get_config(&self, ) -> f64 {
+    pub fn get_config(&self) -> f64 {
         // return self.spins
         0.0
     }
-
 }
 
 pub fn validate_ising(state: &StochasticIsingGraph) -> bool {

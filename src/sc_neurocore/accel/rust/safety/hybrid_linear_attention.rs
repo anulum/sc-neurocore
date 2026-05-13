@@ -72,7 +72,6 @@ impl HybridLinearAttentionNeuron {
         self.dt = 1.0_f64;
         self.v = 0.0_f64;
     }
-
 }
 
 pub fn validate_hybrid_linear_attention(state: &HybridLinearAttentionNeuron) -> bool {

@@ -78,12 +78,12 @@ impl MigrationThrottle {
         }
     }
 
-    pub fn axi_end_addr(&self, ) -> f64 {
+    pub fn axi_end_addr(&self) -> f64 {
         // return self.axi_base_addr + self.axi_size
         0.0
     }
 
-    pub fn is_free(&self, ) -> f64 {
+    pub fn is_free(&self) -> f64 {
         // return self.state == RegionState.FREE
         0.0
     }
@@ -93,7 +93,7 @@ impl MigrationThrottle {
         0.0
     }
 
-    pub fn compute_checksum(&self, ) -> f64 {
+    pub fn compute_checksum(&self) -> f64 {
         // h = hashlib.sha256()
         // if self.neuron_voltages is not 0.0:
         // h.update(self.neuron_voltages.tobytes())
@@ -106,7 +106,7 @@ impl MigrationThrottle {
         0.0
     }
 
-    pub fn end_addr(&self, ) -> f64 {
+    pub fn end_addr(&self) -> f64 {
         // return self.base_addr + self.size
         0.0
     }
@@ -153,17 +153,17 @@ impl MigrationThrottle {
         0.0
     }
 
-    pub fn violation_count(&self, ) -> f64 {
+    pub fn violation_count(&self) -> f64 {
         // return len(self.violations)
         0.0
     }
 
-    pub fn clear_violations(&self, ) -> f64 {
+    pub fn clear_violations(&self) -> f64 {
         // self.violations.clear()
         0.0
     }
 
-    pub fn end_cycle(&self, ) -> f64 {
+    pub fn end_cycle(&self) -> f64 {
         // return self.start_cycle + self.duration_cycles
         0.0
     }
@@ -339,11 +339,7 @@ impl MigrationThrottle {
         0.0
     }
 
-
-
-
-
-    pub fn status(&self, ) -> f64 {
+    pub fn status(&self) -> f64 {
         // free_regions = sum(1 for r in self.regions.values() if r.is_free)
         // active_tenants = sum(1 for t in self.tenants.values() if t.active)
         // return {
@@ -376,7 +372,7 @@ impl MigrationThrottle {
         0.0
     }
 
-    pub fn compute_utilisation(&self, ) -> f64 {
+    pub fn compute_utilisation(&self) -> f64 {
         // result = {}
         // for rid, region in self.regions.items():
         // if region.is_free:
@@ -393,14 +389,14 @@ impl MigrationThrottle {
         0.0
     }
 
-    pub fn check_overcommit(&self, ) -> f64 {
+    pub fn check_overcommit(&self) -> f64 {
         // total_neurons_needed = sum(t.qos.max_neurons for t in self.tenants.val
         // total_neurons_available = sum(r.num_neurons for r in self.regions.valu
         // return total_neurons_needed > total_neurons_available
         0.0
     }
 
-    pub fn get_faulted_regions(&self, ) -> f64 {
+    pub fn get_faulted_regions(&self) -> f64 {
         // return [rid for rid, r in self.regions.items() if r.state == RegionSta
         0.0
     }
@@ -496,7 +492,7 @@ impl MigrationThrottle {
         0.0
     }
 
-    pub fn total_violations(&self, ) -> f64 {
+    pub fn total_violations(&self) -> f64 {
         // return len(self.violations)
         0.0
     }
@@ -505,8 +501,6 @@ impl MigrationThrottle {
         // return [v for v in self.violations if v.tenant_id == tenant_id]
         0.0
     }
-
-
 
     pub fn total_cycles(&self, tenant_id: f64) -> f64 {
         // return self._totals.get(tenant_id, {}).get("cycles", 0)
@@ -523,7 +517,7 @@ impl MigrationThrottle {
         0.0
     }
 
-    pub fn health_score(&self, ) -> f64 {
+    pub fn health_score(&self) -> f64 {
         // temp_pen = max(0, (self.temperature_c - 85)) * 0.01
         // age_pen = self.age_hours / 100_000 * 0.1
         // err_pen = min(self.error_count * 0.05, 0.5)
@@ -531,12 +525,12 @@ impl MigrationThrottle {
         0.0
     }
 
-    pub fn is_degraded(&self, ) -> f64 {
+    pub fn is_degraded(&self) -> f64 {
         // return self.health_score < 0.8
         0.0
     }
 
-    pub fn record_error(&self, ) -> f64 {
+    pub fn record_error(&self) -> f64 {
         // self.error_count += 1
         0.0
     }
@@ -558,12 +552,12 @@ impl MigrationThrottle {
         0.0
     }
 
-    pub fn count(&self, ) -> f64 {
+    pub fn count(&self) -> f64 {
         // return len(self.entries)
         0.0
     }
 
-    pub fn checksum(&self, ) -> f64 {
+    pub fn checksum(&self) -> f64 {
         // h = hashlib.sha256()
         // for entry in self.entries:
         // h.update(f"{entry.event_type.value}:{entry.tenant_id}:{entry.timestamp
@@ -571,7 +565,7 @@ impl MigrationThrottle {
         0.0
     }
 
-    pub fn allow(&self, ) -> f64 {
+    pub fn allow(&self) -> f64 {
         // now = time.time_ns()
         // cutoff = now - self.window_ns
         // self._timestamps = [t for t in self._timestamps if t > cutoff]
@@ -579,15 +573,12 @@ impl MigrationThrottle {
         0.0
     }
 
-
-
-    pub fn recent_count(&self, ) -> f64 {
+    pub fn recent_count(&self) -> f64 {
         // now = time.time_ns()
         // cutoff = now - self.window_ns
         // return sum(1 for t in self._timestamps if t > cutoff)
         0.0
     }
-
 }
 
 pub fn validate_hypervisor(state: &MigrationThrottle) -> bool {
@@ -603,5 +594,4 @@ mod tests {
         let state = MigrationThrottle::new();
         assert!(validate_hypervisor(&state));
     }
-
 }

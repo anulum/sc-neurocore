@@ -44,7 +44,6 @@ impl StochasticGraphLayer {
         // # 3. Non-linearity (Tanh/Sigmoid)
         0.0
     }
-
 }
 
 pub fn validate_gnn(state: &StochasticGraphLayer) -> bool {
@@ -60,5 +59,4 @@ mod tests {
         let state = StochasticGraphLayer::new();
         assert!(validate_gnn(&state));
     }
-
 }

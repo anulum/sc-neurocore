@@ -72,7 +72,6 @@ impl BrainScaleSAdExNeuron {
         self.v_reset = -68.0_f64;
         self.v_threshold = -50.0_f64;
     }
-
 }
 
 pub fn validate_brainscales_adex(state: &BrainScaleSAdExNeuron) -> bool {

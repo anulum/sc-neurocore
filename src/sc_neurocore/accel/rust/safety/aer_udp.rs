@@ -60,12 +60,12 @@ impl AERReceiver {
         0.0
     }
 
-    pub fn close(&self, ) -> f64 {
+    pub fn close(&self) -> f64 {
         // self._sock.close()
         0.0
     }
 
-    pub fn receive(&self, ) -> f64 {
+    pub fn receive(&self) -> f64 {
         // try:
         // data, addr = self._sock.recvfrom(2048)
         // except TimeoutError:
@@ -95,9 +95,6 @@ impl AERReceiver {
         // return vector, ts
         0.0
     }
-
-
-
 }
 
 pub fn validate_aer_udp(state: &AERReceiver) -> bool {
@@ -113,5 +110,4 @@ mod tests {
         let state = AERReceiver::new();
         assert!(validate_aer_udp(&state));
     }
-
 }

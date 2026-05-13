@@ -37,7 +37,7 @@ impl SleepStageDetector {
         0.0
     }
 
-    pub fn detect(&self, ) -> f64 {
+    pub fn detect(&self) -> f64 {
         // if len(self._buffer) < self.config.min_samples:
         // return 0.0
         // powers = self._compute_band_powers()
@@ -50,7 +50,7 @@ impl SleepStageDetector {
         0.0
     }
 
-    pub fn get_band_powers(&self, ) -> f64 {
+    pub fn get_band_powers(&self) -> f64 {
         // return self._band_powers
         0.0
     }
@@ -65,7 +65,7 @@ impl SleepStageDetector {
         self.min_samples = 128.0_f64;
     }
 
-    pub fn _compute_band_powers(&self, ) -> f64 {
+    pub fn _compute_band_powers(&self) -> f64 {
         // data = np.array(self._buffer, dtype=np.float64)
         // # Apply Hann window
         // window = np.hanning(len(data))
@@ -96,12 +96,11 @@ impl SleepStageDetector {
         0.0
     }
 
-    pub fn _smooth(&self, ) -> f64 {
+    pub fn _smooth(&self) -> f64 {
         // counter = Counter(self._stage_history)
         // return counter.most_common(1)[0][0]
         0.0
     }
-
 }
 
 pub fn validate_sleep_stage_detector(state: &SleepStageDetector) -> bool {
@@ -117,5 +116,4 @@ mod tests {
         let state = SleepStageDetector::new();
         assert!(validate_sleep_stage_detector(&state));
     }
-
 }

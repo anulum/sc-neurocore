@@ -64,7 +64,6 @@ impl GIFPopulationNeuron {
         self.tau_m = 20.0_f64;
         self.tau_eta = 100.0_f64;
     }
-
 }
 
 pub fn validate_gif_population(state: &GIFPopulationNeuron) -> bool {

@@ -48,7 +48,14 @@ pub fn bipolar_mac(inputs: f64, weights: f64, L: f64, seed: f64) -> f64 {
     0.0
 }
 
-pub fn bipolar_sc_layer(inputs: f64, weights: f64, bias: f64, L: f64, seed: f64, activation: f64) -> f64 {
+pub fn bipolar_sc_layer(
+    inputs: f64,
+    weights: f64,
+    bias: f64,
+    L: f64,
+    seed: f64,
+    activation: f64,
+) -> f64 {
     // inputs: ndarray,
     // weights: ndarray,
     // bias: ndarray | 0,

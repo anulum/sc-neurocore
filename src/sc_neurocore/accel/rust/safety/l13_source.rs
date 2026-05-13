@@ -68,14 +68,13 @@ impl L13_SourceAdapter {
         0.0
     }
 
-    pub fn get_metrics(&self, ) -> f64 {
+    pub fn get_metrics(&self) -> f64 {
         // return {
         // "vacuum_potential": float(jnp.mean(self.vacuum_state)),
         // "fisher_information_metric": float(jnp.mean(self.fim_density)),
         // }
         0.0
     }
-
 }
 
 pub fn validate_l13_source(state: &L13_SourceAdapter) -> bool {
@@ -91,5 +90,4 @@ mod tests {
         let state = L13_SourceAdapter::new();
         assert!(validate_l13_source(&state));
     }
-
 }

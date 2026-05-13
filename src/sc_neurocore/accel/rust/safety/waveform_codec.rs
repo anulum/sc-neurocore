@@ -186,7 +186,6 @@ impl WaveformCodec {
         // # Calibrated: threshold=3.0 gives SNR ≥24 dB, energy retained ≥99.7%
         0.0
     }
-
 }
 
 pub fn validate_waveform_codec(state: &WaveformCodec) -> bool {
@@ -202,5 +201,4 @@ mod tests {
         let state = WaveformCodec::new();
         assert!(validate_waveform_codec(&state));
     }
-
 }

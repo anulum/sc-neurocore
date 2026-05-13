@@ -46,7 +46,14 @@ impl L16_MetaAdapter {
         0.0
     }
 
-    pub fn _director_kernel(&self, will: f64, gci_input: f64, entropy: f64, threshold: f64, dt: f64) -> f64 {
+    pub fn _director_kernel(
+        &self,
+        will: f64,
+        gci_input: f64,
+        entropy: f64,
+        threshold: f64,
+        dt: f64,
+    ) -> f64 {
         // will: jnp.ndarray, gci_input: float, entropy: float, threshold: float,
         // ) -> Tuple[jnp.ndarray, jnp.ndarray]:
         // # Ethical Veto: Active if entropy exceeds threshold
@@ -82,7 +89,7 @@ impl L16_MetaAdapter {
         0.0
     }
 
-    pub fn get_metrics(&self, ) -> f64 {
+    pub fn get_metrics(&self) -> f64 {
         // return {
         // "director_will": float(jnp.mean(self.meta_will)),
         // "system_entropy": float(self.entropy_proxy),
@@ -90,7 +97,6 @@ impl L16_MetaAdapter {
         // }
         0.0
     }
-
 }
 
 pub fn validate_l16_meta(state: &L16_MetaAdapter) -> bool {
@@ -106,5 +112,4 @@ mod tests {
         let state = L16_MetaAdapter::new();
         assert!(validate_l16_meta(&state));
     }
-
 }

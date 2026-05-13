@@ -65,27 +65,18 @@ impl FixedPointBitstreamEncoder {
         self.v_threshold = 0.0_f64;
     }
 
-    pub fn reset_state(&self, ) -> f64 {
+    pub fn reset_state(&self) -> f64 {
         // self.reset()
         0.0
     }
 
-    pub fn get_state(&self, ) -> f64 {
+    pub fn get_state(&self) -> f64 {
         // return {
         // "v": self.v,
         // "refractory_counter": self.refractory_counter,
         // }
         0.0
     }
-
-
-
-
-
-
-
-
-
 }
 
 pub fn validate_fixed_point_lif(state: &FixedPointBitstreamEncoder) -> bool {

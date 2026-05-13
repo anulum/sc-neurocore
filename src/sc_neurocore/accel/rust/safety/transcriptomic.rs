@@ -215,7 +215,6 @@ impl GeneformerInterface {
         // s = h * head_dim
         0.0
     }
-
 }
 
 pub fn validate_transcriptomic(state: &GeneformerInterface) -> bool {
@@ -231,5 +230,4 @@ mod tests {
         let state = GeneformerInterface::new();
         assert!(validate_transcriptomic(&state));
     }
-
 }

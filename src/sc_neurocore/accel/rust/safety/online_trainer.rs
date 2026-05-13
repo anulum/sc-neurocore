@@ -72,10 +72,6 @@ impl OnlineTrainer {
         0.0
     }
 
-
-
-
-
     pub fn train_sequence(&self, inputs: f64, targets: f64) -> f64 {
         // self.reset()
         // total_loss = 0.0
@@ -87,19 +83,18 @@ impl OnlineTrainer {
         0.0
     }
 
-    pub fn n_layers(&self, ) -> f64 {
+    pub fn n_layers(&self) -> f64 {
         // return len(self.layers)
         0.0
     }
 
-    pub fn memory_per_step(&self, ) -> f64 {
+    pub fn memory_per_step(&self) -> f64 {
         // return sum(
         // layer.n_neurons + layer.n_neurons + layer.n_neurons * layer.n_inputs
         // for layer in self.layers
         // )
         0.0
     }
-
 }
 
 pub fn validate_online_trainer(state: &OnlineTrainer) -> bool {

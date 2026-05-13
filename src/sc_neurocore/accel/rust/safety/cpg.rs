@@ -37,7 +37,6 @@ impl StochasticCPG {
         // return spike1, spike2
         0 // spike indicator
     }
-
 }
 
 pub fn validate_cpg(state: &StochasticCPG) -> bool {

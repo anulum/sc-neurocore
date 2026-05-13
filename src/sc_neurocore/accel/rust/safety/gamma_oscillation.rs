@@ -61,12 +61,11 @@ impl PINGCircuit {
         0 // spike indicator
     }
 
-    pub fn reset_state(&self, ) -> f64 {
+    pub fn reset_state(&self) -> f64 {
         // self.v_e = self._rng.uniform(0, 0.5, self.n_excitatory)
         // self.v_i = self._rng.uniform(0, 0.5, self.n_inhibitory)
         0.0
     }
-
 }
 
 pub fn validate_gamma_oscillation(state: &PINGCircuit) -> bool {

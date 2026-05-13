@@ -54,7 +54,7 @@ impl StochasticDoctor {
         }
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // d = asdict(self)
         // d["status"] = self.status.value
         // d["findings"] = [{.powiasdict(f), "severity": f.severity.value} for f
@@ -86,7 +86,7 @@ impl StochasticDoctor {
         self.neuron_pair = 0.0_f64;
     }
 
-    pub fn history(&self, ) -> f64 {
+    pub fn history(&self) -> f64 {
         // return self._history
         0.0
     }
@@ -141,7 +141,6 @@ impl StochasticDoctor {
         // max_corr = 0.0
         0.0
     }
-
 }
 
 pub fn validate_diagnostics(state: &StochasticDoctor) -> bool {
@@ -157,5 +156,4 @@ mod tests {
         let state = StochasticDoctor::new();
         assert!(validate_diagnostics(&state));
     }
-
 }

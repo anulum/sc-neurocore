@@ -56,7 +56,6 @@ impl AkidaNeuron {
         self._rank = 0.0_f64;
         self._spiked = 0.0_f64;
     }
-
 }
 
 pub fn validate_akida_neuron(state: &AkidaNeuron) -> bool {

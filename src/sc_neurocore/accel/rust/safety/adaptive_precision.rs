@@ -27,7 +27,6 @@ impl LayerPrecision {
             sensitivity: 0.0_f64,
         }
     }
-
 }
 
 pub fn validate_adaptive_precision(state: &LayerPrecision) -> bool {
@@ -43,5 +42,4 @@ mod tests {
         let state = LayerPrecision::new();
         assert!(validate_adaptive_precision(&state));
     }
-
 }

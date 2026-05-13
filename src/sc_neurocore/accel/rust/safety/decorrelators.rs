@@ -26,11 +26,6 @@ impl LFSRRegenDecorrelator {
         // raise NotImplementedError
         0.0
     }
-
-
-
-
-
 }
 
 pub fn validate_decorrelators(state: &LFSRRegenDecorrelator) -> bool {
@@ -46,5 +41,4 @@ mod tests {
         let state = LFSRRegenDecorrelator::new();
         assert!(validate_decorrelators(&state));
     }
-
 }

@@ -32,7 +32,7 @@ impl SCQuantumCircuit {
         }
     }
 
-    pub fn simulate(&self, ) -> f64 {
+    pub fn simulate(&self) -> f64 {
         // dim = 2.powiself.n_qubits
         // state = np.zeros(dim, dtype=complex)
         // state[0] = 1.0  # |000...0⟩
@@ -42,7 +42,7 @@ impl SCQuantumCircuit {
         0.0
     }
 
-    pub fn output_probability(&self, ) -> f64 {
+    pub fn output_probability(&self) -> f64 {
         // state = self.simulate()
         // prob = 0.0
         // for i in range(len(state)):
@@ -86,7 +86,7 @@ impl SCQuantumCircuit {
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [f"SCQuantumCircuit: {self.n_qubits} qubits, {len(self.gates)}
         // for g in self.gates:
         // lines.append(f"  {g.name} on qubit(s) {g.qubits}")
@@ -94,7 +94,6 @@ impl SCQuantumCircuit {
         // return "\n".join(lines)
         0.0
     }
-
 }
 
 pub fn validate_sc_quantum_compiler(state: &SCQuantumCircuit) -> bool {
@@ -110,5 +109,4 @@ mod tests {
         let state = SCQuantumCircuit::new();
         assert!(validate_sc_quantum_compiler(&state));
     }
-
 }

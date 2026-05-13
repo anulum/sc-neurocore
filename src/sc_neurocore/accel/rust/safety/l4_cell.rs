@@ -83,14 +83,13 @@ impl L4_CellularAdapter {
         0.0
     }
 
-    pub fn get_metrics(&self, ) -> f64 {
+    pub fn get_metrics(&self) -> f64 {
         // return {
         // "order_parameter": float(j(jnp.mean(j(1j * self.phases_f64_f64).abs().
         // "avalanche_density": float(jnp.mean(self.avalanches)),
         // }
         0.0
     }
-
 }
 
 pub fn validate_l4_cell(state: &L4_CellularAdapter) -> bool {
@@ -106,5 +105,4 @@ mod tests {
         let state = L4_CellularAdapter::new();
         assert!(validate_l4_cell(&state));
     }
-
 }

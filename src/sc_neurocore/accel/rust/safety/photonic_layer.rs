@@ -46,7 +46,6 @@ impl PhotonicBitstreamLayer {
         // return bits
         0.0
     }
-
 }
 
 pub fn validate_photonic_layer(state: &PhotonicBitstreamLayer) -> bool {
@@ -62,5 +61,4 @@ mod tests {
         let state = PhotonicBitstreamLayer::new();
         assert!(validate_photonic_layer(&state));
     }
-
 }

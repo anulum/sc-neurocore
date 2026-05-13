@@ -33,12 +33,11 @@ impl StochasticHeatSolver {
         0 // spike indicator
     }
 
-    pub fn get_temperature_profile(&self, ) -> f64 {
+    pub fn get_temperature_profile(&self) -> f64 {
         // density, _ = np.histogram(self.walkers, bins=self.length, range=(0, se
         // return density / len(self.walkers)
         0.0
     }
-
 }
 
 pub fn validate_heat(state: &StochasticHeatSolver) -> bool {

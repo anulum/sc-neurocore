@@ -32,13 +32,10 @@ impl WinnerTakeAll {
         0.0
     }
 
-
-
     pub fn winners(&self, rates: f64) -> f64 {
         // return np.argsort(rates)[-self.k :][::-1]
         0.0
     }
-
 }
 
 pub fn validate_circuit_primitives(state: &WinnerTakeAll) -> bool {
@@ -54,5 +51,4 @@ mod tests {
         let state = WinnerTakeAll::new();
         assert!(validate_circuit_primitives(&state));
     }
-
 }

@@ -79,7 +79,6 @@ impl MainenSejnowskiNeuron {
         self.h = 0.6_f64;
         self.n = 0.3_f64;
     }
-
 }
 
 pub fn validate_mainen_sejnowski(state: &MainenSejnowskiNeuron) -> bool {

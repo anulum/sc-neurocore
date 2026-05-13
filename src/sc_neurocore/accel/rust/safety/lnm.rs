@@ -52,7 +52,6 @@ impl LearnableNeuronModel {
         self.gamma = 0.05_f64;
         self.v_threshold = 1.0_f64;
     }
-
 }
 
 pub fn validate_lnm(state: &LearnableNeuronModel) -> bool {

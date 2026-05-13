@@ -75,7 +75,6 @@ impl ChayKeizerNeuron {
         self.g_ca = 20.0_f64;
         self.g_k = 25.0_f64;
     }
-
 }
 
 pub fn validate_chay_keizer(state: &ChayKeizerNeuron) -> bool {

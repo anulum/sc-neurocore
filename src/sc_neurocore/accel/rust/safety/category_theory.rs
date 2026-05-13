@@ -57,7 +57,6 @@ impl CategoryTheoryBridge {
         // raise ValueError(f"No morphism from {source} to {target}")
         0.0
     }
-
 }
 
 pub fn validate_category_theory(state: &CategoryTheoryBridge) -> bool {
@@ -73,5 +72,4 @@ mod tests {
         let state = CategoryTheoryBridge::new();
         assert!(validate_category_theory(&state));
     }
-
 }

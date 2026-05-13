@@ -22,7 +22,7 @@ impl DVSLoader {
         }
     }
 
-    pub fn n_pixels(&self, ) -> f64 {
+    pub fn n_pixels(&self) -> f64 {
         // return self.width * self.height
         0.0
     }
@@ -59,7 +59,6 @@ impl DVSLoader {
         // return self.from_numpy(events), target
         0.0
     }
-
 }
 
 pub fn validate_dvs(state: &DVSLoader) -> bool {
@@ -75,5 +74,4 @@ mod tests {
         let state = DVSLoader::new();
         assert!(validate_dvs(&state));
     }
-
 }

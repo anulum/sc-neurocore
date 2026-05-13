@@ -55,7 +55,6 @@ impl ClosedFormContinuousNeuron {
         self.w_in = 1.0_f64;
         self.tau_base = 10.0_f64;
     }
-
 }
 
 pub fn validate_cfc(state: &ClosedFormContinuousNeuron) -> bool {

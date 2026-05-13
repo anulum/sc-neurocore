@@ -15,9 +15,7 @@ pub struct McCullochPittsNeuron {
 
 impl McCullochPittsNeuron {
     pub fn new() -> Self {
-        Self {
-            theta: 1.0_f64,
-        }
+        Self { theta: 1.0_f64 }
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
@@ -29,7 +27,6 @@ impl McCullochPittsNeuron {
         // pass
         self.theta = 1.0_f64;
     }
-
 }
 
 pub fn validate_mcculloch_pitts(state: &McCullochPittsNeuron) -> bool {

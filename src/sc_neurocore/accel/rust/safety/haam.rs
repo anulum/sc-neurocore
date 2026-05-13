@@ -99,7 +99,6 @@ impl SpikePrototypeNet {
         // prototypes[c] = np.mean(patterns, axis=0)
         0.0
     }
-
 }
 
 pub fn validate_haam(state: &SpikePrototypeNet) -> bool {
@@ -115,5 +114,4 @@ mod tests {
         let state = SpikePrototypeNet::new();
         assert!(validate_haam(&state));
     }
-
 }

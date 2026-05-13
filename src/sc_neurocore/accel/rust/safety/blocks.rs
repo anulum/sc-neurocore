@@ -60,24 +60,15 @@ impl DeepSNNStack {
         self.W2 = 0.0_f64;
     }
 
-
-
-
-
-
-
-
-
-    pub fn n_blocks(&self, ) -> f64 {
+    pub fn n_blocks(&self) -> f64 {
         // return len(self.blocks)
         0.0
     }
 
-    pub fn depth(&self, ) -> f64 {
+    pub fn depth(&self) -> f64 {
         // return len(self.blocks) * 2
         0.0
     }
-
 }
 
 pub fn validate_blocks(state: &DeepSNNStack) -> bool {
@@ -93,5 +84,4 @@ mod tests {
         let state = DeepSNNStack::new();
         assert!(validate_blocks(&state));
     }
-
 }

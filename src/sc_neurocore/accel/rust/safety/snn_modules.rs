@@ -78,12 +78,12 @@ impl ConvSpikingNet {
         }
     }
 
-    pub fn beta(&self, ) -> f64 {
+    pub fn beta(&self) -> f64 {
         // return self._beta_logit.sigmoid() if self._learn_beta else self._beta_
         0.0
     }
 
-    pub fn threshold(&self, ) -> f64 {
+    pub fn threshold(&self) -> f64 {
         // return self._threshold_log.exp() if self._learn_threshold else self._t
         0.0
     }
@@ -95,50 +95,6 @@ impl ConvSpikingNet {
         // return spike, v_next
         0.0
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     pub fn to_sc_weights(&self, include_bias: f64) -> f64 {
         // layers = []
@@ -156,11 +112,6 @@ impl ConvSpikingNet {
         // return layers
         0.0
     }
-
-
-
-
-
 }
 
 pub fn validate_snn_modules(state: &ConvSpikingNet) -> bool {
@@ -176,5 +127,4 @@ mod tests {
         let state = ConvSpikingNet::new();
         assert!(validate_snn_modules(&state));
     }
-
 }

@@ -38,7 +38,6 @@ impl SwarmCoupling {
         // # Update Agent B (Reciprocal)
         0.0
     }
-
 }
 
 pub fn validate_swarm(state: &SwarmCoupling) -> bool {
@@ -54,5 +53,4 @@ mod tests {
         let state = SwarmCoupling::new();
         assert!(validate_swarm(&state));
     }
-
 }

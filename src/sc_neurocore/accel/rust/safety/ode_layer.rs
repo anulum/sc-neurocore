@@ -87,11 +87,10 @@ impl SpikingODELayer {
         self.C_mem = 1.0_f64;
     }
 
-    pub fn voltage(&self, ) -> f64 {
+    pub fn voltage(&self) -> f64 {
         // return self._v.copy()
         0.0
     }
-
 }
 
 pub fn validate_ode_layer(state: &SpikingODELayer) -> bool {

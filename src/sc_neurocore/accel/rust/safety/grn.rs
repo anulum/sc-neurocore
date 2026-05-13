@@ -32,11 +32,10 @@ impl GeneticRegulatoryLayer {
         0 // spike indicator
     }
 
-    pub fn get_threshold_modulators(&self, ) -> f64 {
+    pub fn get_threshold_modulators(&self) -> f64 {
         // return self.protein_levels
         0.0
     }
-
 }
 
 pub fn validate_grn(state: &GeneticRegulatoryLayer) -> bool {

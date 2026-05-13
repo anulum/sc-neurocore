@@ -64,11 +64,10 @@ impl BitstreamCurrentSource {
         0 // spike indicator
     }
 
-    pub fn full_current_estimate(&self, ) -> f64 {
+    pub fn full_current_estimate(&self) -> f64 {
         // return float(self.current_scalar)
         0.0
     }
-
 }
 
 pub fn validate_bitstream_current_source(state: &BitstreamCurrentSource) -> bool {

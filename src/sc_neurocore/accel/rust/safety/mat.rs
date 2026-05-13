@@ -67,7 +67,6 @@ impl MATNeuron {
         self.v_rest = -70.0_f64;
         self.v_reset = -70.0_f64;
     }
-
 }
 
 pub fn validate_mat(state: &MATNeuron) -> bool {

@@ -51,7 +51,6 @@ impl WilsonHRNeuron {
         self.v_peak = 0.4_f64;
         self.dt = 0.05_f64;
     }
-
 }
 
 pub fn validate_wilson_hr(state: &WilsonHRNeuron) -> bool {

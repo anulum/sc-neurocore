@@ -51,9 +51,7 @@ impl SCAwareLIFNet {
         0.0
     }
 
-
-
-    pub fn export_quantized(&self, ) -> f64 {
+    pub fn export_quantized(&self) -> f64 {
         // w = self.linear.weight.detach()
         // abs_max = w.abs().max().clamp(min=1e-8)
         // half = 2 .powi (self.n_bits - 1) - 1
@@ -66,11 +64,7 @@ impl SCAwareLIFNet {
         0.0
     }
 
-
-
-
-
-    pub fn effective_bits(&self, ) -> f64 {
+    pub fn effective_bits(&self) -> f64 {
         // total_params = 0
         // total_bits = 0
         // for lin in self.linears:
@@ -81,11 +75,7 @@ impl SCAwareLIFNet {
         0.0
     }
 
-
-
-
-
-    pub fn export_bipolar_weights(&self, ) -> f64 {
+    pub fn export_bipolar_weights(&self) -> f64 {
         // layers = []
         // for lin in self.linears:
         // w = lin.linear.weight.detach().clamp(-1.0, 1.0)
@@ -96,7 +86,6 @@ impl SCAwareLIFNet {
         // return layers
         0.0
     }
-
 }
 
 pub fn validate_torch_qat(state: &SCAwareLIFNet) -> bool {
@@ -112,5 +101,4 @@ mod tests {
         let state = SCAwareLIFNet::new();
         assert!(validate_torch_qat(&state));
     }
-
 }

@@ -76,7 +76,6 @@ impl StreamingSpikeCodec {
         // return window
         0.0
     }
-
 }
 
 pub fn validate_streaming_codec(state: &StreamingSpikeCodec) -> bool {
@@ -92,5 +91,4 @@ mod tests {
         let state = StreamingSpikeCodec::new();
         assert!(validate_streaming_codec(&state));
     }
-
 }

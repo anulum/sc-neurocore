@@ -32,7 +32,7 @@ impl SCNetwork {
         }
     }
 
-    pub fn words_per_input(&self, ) -> f64 {
+    pub fn words_per_input(&self) -> f64 {
         // return (self.n_inputs + 31) // 32
         0.0
     }
@@ -96,7 +96,7 @@ impl SCNetwork {
         0.0
     }
 
-    pub fn export_weights(&self, ) -> f64 {
+    pub fn export_weights(&self) -> f64 {
         // return [
         // (layer.n_inputs, layer.n_outputs, layer.threshold, layer.weights)
         // for layer in self.layers
@@ -116,16 +116,15 @@ impl SCNetwork {
         0.0
     }
 
-    pub fn layer_count(&self, ) -> f64 {
+    pub fn layer_count(&self) -> f64 {
         // return len(self.layers)
         0.0
     }
 
-    pub fn total_neurons(&self, ) -> f64 {
+    pub fn total_neurons(&self) -> f64 {
         // return sum(layer.n_outputs for layer in self.layers)
         0.0
     }
-
 }
 
 pub fn validate_sc_network(state: &SCNetwork) -> bool {
@@ -141,5 +140,4 @@ mod tests {
         let state = SCNetwork::new();
         assert!(validate_sc_network(&state));
     }
-
 }

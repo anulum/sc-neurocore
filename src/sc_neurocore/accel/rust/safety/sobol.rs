@@ -51,7 +51,6 @@ impl SobolGenerator {
         self._reg = 0.0_f64;
         self._index = 0.0_f64;
     }
-
 }
 
 pub fn validate_sobol(state: &SobolGenerator) -> bool {

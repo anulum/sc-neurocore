@@ -38,12 +38,12 @@ impl DirectionSelectiveRGC {
         }
     }
 
-    pub fn new_on(&self, ) -> f64 {
+    pub fn new_on(&self) -> f64 {
         // return cls(is_on_centre=true)
         0.0
     }
 
-    pub fn new_off(&self, ) -> f64 {
+    pub fn new_off(&self) -> f64 {
         // return cls(is_on_centre=false)
         0.0
     }
@@ -81,7 +81,6 @@ impl DirectionSelectiveRGC {
         self.w_centre = 1.0_f64;
         self.w_surround = 0.3_f64;
     }
-
 }
 
 pub fn validate_direction_selective_rgc(state: &DirectionSelectiveRGC) -> bool {

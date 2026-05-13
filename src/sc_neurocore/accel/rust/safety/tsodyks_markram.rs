@@ -71,7 +71,6 @@ impl TsodyksMarkramNeuron {
         self.v_rest = -65.0_f64;
         self.v_reset = -65.0_f64;
     }
-
 }
 
 pub fn validate_tsodyks_markram(state: &TsodyksMarkramNeuron) -> bool {

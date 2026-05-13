@@ -6,7 +6,14 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for loaders
 
-pub fn _synthetic_event_dataset(n_samples: f64, spatial_size: f64, n_classes: f64, T: f64, dt_ms: f64, seed: f64) -> f64 {
+pub fn _synthetic_event_dataset(
+    n_samples: f64,
+    spatial_size: f64,
+    n_classes: f64,
+    T: f64,
+    dt_ms: f64,
+    seed: f64,
+) -> f64 {
     // n_samples: int,
     // spatial_size: int,
     // n_classes: int,
@@ -38,7 +45,14 @@ pub fn _check_root(root: f64, dataset_name: f64, url: f64) -> f64 {
     0.0
 }
 
-pub fn load_nmnist(root: f64, train: f64, dt_ms: f64, T: f64, synthetic: f64, n_samples: f64) -> f64 {
+pub fn load_nmnist(
+    root: f64,
+    train: f64,
+    dt_ms: f64,
+    T: f64,
+    synthetic: f64,
+    n_samples: f64,
+) -> f64 {
     // root: str | Path = "data/nmnist",
     // train: bool = true,
     // dt_ms: float = 1.0,
@@ -127,7 +141,14 @@ pub fn _synthetic_shd(n_samples: f64, T: f64, dt_ms: f64, seed: f64) -> f64 {
     0.0
 }
 
-pub fn load_dvs_cifar10(root: f64, train: f64, dt_ms: f64, T: f64, synthetic: f64, n_samples: f64) -> f64 {
+pub fn load_dvs_cifar10(
+    root: f64,
+    train: f64,
+    dt_ms: f64,
+    T: f64,
+    synthetic: f64,
+    n_samples: f64,
+) -> f64 {
     // root: str | Path = "data/dvs_cifar10",
     // train: bool = true,
     // dt_ms: float = 1.0,

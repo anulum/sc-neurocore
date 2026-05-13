@@ -54,7 +54,6 @@ impl SiegertTransferFunction {
         self.v_reset = -70.0_f64;
         self.v_rest = -65.0_f64;
     }
-
 }
 
 pub fn validate_siegert(state: &SiegertTransferFunction) -> bool {

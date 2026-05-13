@@ -64,7 +64,6 @@ impl SFANeuron {
         self.v_reset = -70.0_f64;
         self.v_threshold = -50.0_f64;
     }
-
 }
 
 pub fn validate_sfa(state: &SFANeuron) -> bool {

@@ -84,7 +84,6 @@ impl SKNeuron {
         self.ca = 0.0_f64;
         self.g_na = 35.0_f64;
     }
-
 }
 
 pub fn validate_sk_neuron(state: &SKNeuron) -> bool {

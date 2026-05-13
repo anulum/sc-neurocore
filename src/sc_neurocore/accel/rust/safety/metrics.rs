@@ -40,7 +40,7 @@ impl BenchmarkResult {
         }
     }
 
-    pub fn to_neurobench_json(&self, ) -> f64 {
+    pub fn to_neurobench_json(&self) -> f64 {
         // result = {
         // "task": self.task,
         // "model": self.model,
@@ -59,7 +59,7 @@ impl BenchmarkResult {
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [
         // f"NeuroBench Result: {self.task} / {self.model}",
         // f"  Accuracy:          {self.accuracy:.4f}",
@@ -75,7 +75,6 @@ impl BenchmarkResult {
         // return "\n".join(lines)
         0.0
     }
-
 }
 
 pub fn validate_metrics(state: &BenchmarkResult) -> bool {
@@ -91,5 +90,4 @@ mod tests {
         let state = BenchmarkResult::new();
         assert!(validate_metrics(&state));
     }
-
 }

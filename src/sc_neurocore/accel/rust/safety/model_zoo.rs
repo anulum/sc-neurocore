@@ -38,25 +38,25 @@ impl DocGenerator {
         }
     }
 
-    pub fn copy(&self, ) -> f64 {
+    pub fn copy(&self) -> f64 {
         // return NeuronState(variables=dict(self.variables))
         0.0
     }
 
-    pub fn as_dict(&self, ) -> f64 {
+    pub fn as_dict(&self) -> f64 {
         // return dict(self.variables)
         0.0
     }
 
-    pub fn meta(&self, ) -> f64 {
+    pub fn meta(&self) -> f64 {
         0.0
     }
 
-    pub fn default_state(&self, ) -> f64 {
+    pub fn default_state(&self) -> f64 {
         0.0
     }
 
-    pub fn default_params(&self, ) -> f64 {
+    pub fn default_params(&self) -> f64 {
         0.0
     }
 
@@ -104,54 +104,6 @@ impl DocGenerator {
         0.0
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     pub fn register(&self, plugin: f64) -> f64 {
         // name = plugin.meta().name
         // self._plugins[name] = plugin
@@ -163,12 +115,12 @@ impl DocGenerator {
         0.0
     }
 
-    pub fn list_plugins(&self, ) -> f64 {
+    pub fn list_plugins(&self) -> f64 {
         // return sorted(self._plugins.keys())
         0.0
     }
 
-    pub fn with_builtins(&self, ) -> f64 {
+    pub fn with_builtins(&self) -> f64 {
         // reg = cls()
         // for plugin_cls in (LIFPlugin, IzhikevichPlugin, AdExPlugin, HodgkinHux
         // reg.register(plugin_cls())
@@ -200,8 +152,6 @@ impl DocGenerator {
         0.0
     }
 
-
-
     pub fn generate_index(&self, registry: f64) -> f64 {
         // lines = [
         // "# SC-NeuroCore Model Zoo",
@@ -218,7 +168,6 @@ impl DocGenerator {
         // return "\n".join(lines)
         0.0
     }
-
 }
 
 pub fn validate_model_zoo(state: &DocGenerator) -> bool {
@@ -234,5 +183,4 @@ mod tests {
         let state = DocGenerator::new();
         assert!(validate_model_zoo(&state));
     }
-
 }

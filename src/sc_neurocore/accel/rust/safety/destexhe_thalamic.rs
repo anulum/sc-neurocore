@@ -76,7 +76,6 @@ impl DestexheThalamicNeuron {
         self.m_t = 0.0_f64;
         self.h_t = 1.0_f64;
     }
-
 }
 
 pub fn validate_destexhe_thalamic(state: &DestexheThalamicNeuron) -> bool {

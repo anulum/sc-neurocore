@@ -56,13 +56,13 @@ impl L4_CellularLayer {
         }
     }
 
-    pub fn _init_gap_junctions(&self, ) -> f64 {
+    pub fn _init_gap_junctions(&self) -> f64 {
         // # Random initial state with bias toward open
         // return (np.random.random(self.n_cells) > 0.3).astype(np.float32)
         0.0
     }
 
-    pub fn _build_neighbor_matrix(&self, ) -> f64 {
+    pub fn _build_neighbor_matrix(&self) -> f64 {
         // h, w = self.params.grid_size
         // n = self.n_cells
         // neighbors = np.zeros((n, n), dtype=np.float32)
@@ -97,16 +97,15 @@ impl L4_CellularLayer {
         0 // spike indicator
     }
 
-    pub fn get_global_metric(&self, ) -> f64 {
+    pub fn get_global_metric(&self) -> f64 {
         // return float((np.mean((1j * self.phases_f64_f64).abs().exp())))
         0.0
     }
 
-    pub fn get_tissue_pattern(&self, ) -> f64 {
+    pub fn get_tissue_pattern(&self) -> f64 {
         // return self.activity_pattern.reshape(self.params.grid_size)
         0.0
     }
-
 }
 
 pub fn validate_l4_cellular(state: &L4_CellularLayer) -> bool {

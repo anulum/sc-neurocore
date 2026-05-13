@@ -62,7 +62,7 @@ impl L5_OrganismalLayer {
         }
     }
 
-    pub fn _init_emotional_attractors(&self, ) -> f64 {
+    pub fn _init_emotional_attractors(&self) -> f64 {
         // # Define stable emotional configurations
         // attractors = np.array(
         // [
@@ -96,7 +96,7 @@ impl L5_OrganismalLayer {
         0 // spike indicator
     }
 
-    pub fn _compute_rmssd(&self, ) -> f64 {
+    pub fn _compute_rmssd(&self) -> f64 {
         // if len(self.rr_intervals) < 2:
         // return 0.0
         // rr = np.array(self.rr_intervals)
@@ -105,7 +105,7 @@ impl L5_OrganismalLayer {
         0.0
     }
 
-    pub fn get_global_metric(&self, ) -> f64 {
+    pub fn get_global_metric(&self) -> f64 {
         // # Combine HRV coherence with emotional stability
         // hrv_coherence = self._compute_rmssd() / 100  # Normalize
         // emotional_stability = 1.0 - np.std(self.emotional_state)
@@ -113,11 +113,10 @@ impl L5_OrganismalLayer {
         0.0
     }
 
-    pub fn get_emotional_valence(&self, ) -> f64 {
+    pub fn get_emotional_valence(&self) -> f64 {
         // return float(self.emotional_state[self.VALENCE])
         0.0
     }
-
 }
 
 pub fn validate_l5_organismal(state: &L5_OrganismalLayer) -> bool {

@@ -97,27 +97,27 @@ impl TapeOutChecklist {
         0.0
     }
 
-    pub fn is_open_source(&self, ) -> f64 {
+    pub fn is_open_source(&self) -> f64 {
         // return self.pdk_type in (PDKType.SKY130, PDKType.GF180MCU)
         0.0
     }
 
-    pub fn clock_period_ns(&self, ) -> f64 {
+    pub fn clock_period_ns(&self) -> f64 {
         // return 1000.0 / self.target_frequency_mhz
         0.0
     }
 
-    pub fn die_width_um(&self, ) -> f64 {
+    pub fn die_width_um(&self) -> f64 {
         // return self.die_area_um[2] - self.die_area_um[0]
         0.0
     }
 
-    pub fn die_height_um(&self, ) -> f64 {
+    pub fn die_height_um(&self) -> f64 {
         // return self.die_area_um[3] - self.die_area_um[1]
         0.0
     }
 
-    pub fn core_area_mm2(&self, ) -> f64 {
+    pub fn core_area_mm2(&self) -> f64 {
         // w = self.core_area_um[2] - self.core_area_um[0]
         // h = self.core_area_um[3] - self.core_area_um[1]
         // return (w * h) / 1e6
@@ -130,12 +130,6 @@ impl TapeOutChecklist {
         // rtl_reads = f"read_verilog {design.top_module}.v"
         0.0
     }
-
-
-
-
-
-
 
     pub fn generate_sta_script(&self, pdk: f64, design: f64) -> f64 {
         0.0
@@ -180,9 +174,7 @@ impl TapeOutChecklist {
         0.0
     }
 
-
-
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // return {
         // "synth.tcl": self.synth_tcl,
         // "constraints.sdc": self.sdc,
@@ -197,13 +189,18 @@ impl TapeOutChecklist {
         0.0
     }
 
-
-
     pub fn _generate_makefile(&self, design: f64) -> f64 {
         0.0
     }
 
-    pub fn estimate(&self, n_neurons: f64, n_synapses: f64, bitstream_width: f64, n_aer_ports: f64, pdk: f64) -> f64 {
+    pub fn estimate(
+        &self,
+        n_neurons: f64,
+        n_synapses: f64,
+        bitstream_width: f64,
+        n_aer_ports: f64,
+        pdk: f64,
+    ) -> f64 {
         // cls,
         // n_neurons: int,
         // n_synapses: int,
@@ -222,12 +219,10 @@ impl TapeOutChecklist {
         0.0
     }
 
-    pub fn label(&self, ) -> f64 {
+    pub fn label(&self) -> f64 {
         // return f"{self.corner.value}_{self.temperature_c:.0f}C_{self.voltage_v
         0.0
     }
-
-
 
     pub fn worst_slack(&self, per_corner_wns: f64) -> f64 {
         // if not per_corner_wns:
@@ -236,12 +231,6 @@ impl TapeOutChecklist {
         // return worst
         0.0
     }
-
-
-
-
-
-
 
     pub fn auto_assign(&self, signal_names: f64, sides: f64) -> f64 {
         // pins = []
@@ -252,13 +241,11 @@ impl TapeOutChecklist {
         0.0
     }
 
-
-
-    pub fn generate_sdc_fragment(&self, ) -> f64 {
+    pub fn generate_sdc_fragment(&self) -> f64 {
         0.0
     }
 
-    pub fn conservative(&self, ) -> f64 {
+    pub fn conservative(&self) -> f64 {
         // return cls(
         // data_cell_early=0.93,
         // data_cell_late=1.07,
@@ -270,12 +257,12 @@ impl TapeOutChecklist {
         0.0
     }
 
-    pub fn drc_clean(&self, ) -> f64 {
+    pub fn drc_clean(&self) -> f64 {
         // return not any(v.severity == "error" && v.count > 0 for v in self.drc_
         0.0
     }
 
-    pub fn all_pass(&self, ) -> f64 {
+    pub fn all_pass(&self) -> f64 {
         // return (
         // self.timing.passed
         // && self.power.passed
@@ -286,14 +273,12 @@ impl TapeOutChecklist {
         0.0
     }
 
-
-
     pub fn add_block(&self, block: f64) -> f64 {
         // self.blocks.append(block)
         0.0
     }
 
-    pub fn block_names(&self, ) -> f64 {
+    pub fn block_names(&self) -> f64 {
         // return [b.name for b in self.blocks]
         0.0
     }
@@ -319,7 +304,7 @@ impl TapeOutChecklist {
         0.0
     }
 
-    pub fn readiness_score(&self, ) -> f64 {
+    pub fn readiness_score(&self) -> f64 {
         // checks = [
         // self.synthesis_clean,
         // self.timing_met,
@@ -336,12 +321,12 @@ impl TapeOutChecklist {
         0.0
     }
 
-    pub fn is_tape_out_ready(&self, ) -> f64 {
+    pub fn is_tape_out_ready(&self) -> f64 {
         // return self.readiness_score == 1.0
         0.0
     }
 
-    pub fn failing_checks(&self, ) -> f64 {
+    pub fn failing_checks(&self) -> f64 {
         // names = [
         // "synthesis_clean",
         // "timing_met",
@@ -366,7 +351,6 @@ impl TapeOutChecklist {
         // self.lvs_clean = summary.lvs_match
         0.0
     }
-
 }
 
 pub fn validate_asic_flow(state: &TapeOutChecklist) -> bool {
@@ -382,5 +366,4 @@ mod tests {
         let state = TapeOutChecklist::new();
         assert!(validate_asic_flow(&state));
     }
-
 }

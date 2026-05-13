@@ -40,9 +40,6 @@ impl SpikeIIR {
         // return output if output.shape[1] > 1 else output[:, 0]
         0.0
     }
-
-
-
 }
 
 pub fn validate_filters(state: &SpikeIIR) -> bool {
@@ -58,5 +55,4 @@ mod tests {
         let state = SpikeIIR::new();
         assert!(validate_filters(&state));
     }
-
 }

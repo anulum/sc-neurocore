@@ -75,7 +75,6 @@ impl ChayNeuron {
         self.g_ca = 25.0_f64;
         self.g_k = 1400.0_f64;
     }
-
 }
 
 pub fn validate_chay(state: &ChayNeuron) -> bool {

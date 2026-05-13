@@ -15,9 +15,7 @@ pub struct SCTextGenerator {
 
 impl SCTextGenerator {
     pub fn new() -> Self {
-        Self {
-            vocab: 0.0_f64,
-        }
+        Self { vocab: 0.0_f64 }
     }
 
     pub fn generate_token(&self, prob_dist: f64) -> f64 {
@@ -36,7 +34,6 @@ impl SCTextGenerator {
         // return " ".join(tokens)
         0.0
     }
-
 }
 
 pub fn validate_text_gen(state: &SCTextGenerator) -> bool {
@@ -52,5 +49,4 @@ mod tests {
         let state = SCTextGenerator::new();
         assert!(validate_text_gen(&state));
     }
-
 }

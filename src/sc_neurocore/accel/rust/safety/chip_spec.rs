@@ -50,12 +50,12 @@ impl ChipSpec {
         }
     }
 
-    pub fn total_neurons(&self, ) -> f64 {
+    pub fn total_neurons(&self) -> f64 {
         // return self.total_cores * self.core.max_neurons
         0.0
     }
 
-    pub fn total_power_mw(&self, ) -> f64 {
+    pub fn total_power_mw(&self) -> f64 {
         // return self.total_cores * self.power_mw_per_core
         0.0
     }
@@ -71,7 +71,6 @@ impl ChipSpec {
         // return max(1, -(-n_neurons // self.core.max_neurons))
         0.0
     }
-
 }
 
 pub fn validate_chip_spec(state: &ChipSpec) -> bool {
@@ -87,5 +86,4 @@ mod tests {
         let state = ChipSpec::new();
         assert!(validate_chip_spec(&state));
     }
-
 }

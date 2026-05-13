@@ -38,7 +38,7 @@ impl AmariNeuralField {
         }
     }
 
-    pub fn _build_kernel(&self, ) -> f64 {
+    pub fn _build_kernel(&self) -> f64 {
         // x = (np.arange(self.n_f64).abs() - self.n // 2) * self.dx
         // k = self.a_exc * (-self.a_width * x_f64).exp() - self.b_inh * (-self.b
         // self._w = np.roll(k, -self.n // 2)
@@ -61,7 +61,6 @@ impl AmariNeuralField {
         self.a_width = 1.0_f64;
         self.b_inh = 0.75_f64;
     }
-
 }
 
 pub fn validate_amari_field(state: &AmariNeuralField) -> bool {

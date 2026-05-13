@@ -53,7 +53,6 @@ impl ExpIFNeuron {
         self.v_threshold = -50.0_f64;
         self.v_rh = -55.0_f64;
     }
-
 }
 
 pub fn validate_expif(state: &ExpIFNeuron) -> bool {

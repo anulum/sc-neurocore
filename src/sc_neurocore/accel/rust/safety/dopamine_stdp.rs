@@ -78,7 +78,6 @@ impl DopamineStdpSynapse {
         self.tau_e = 1000.0_f64;
         self.tau_da = 200.0_f64;
     }
-
 }
 
 pub fn validate_dopamine_stdp(state: &DopamineStdpSynapse) -> bool {

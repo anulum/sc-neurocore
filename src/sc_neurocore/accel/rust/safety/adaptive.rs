@@ -42,7 +42,6 @@ impl AdaptiveInference {
         // return current_val
         0.0
     }
-
 }
 
 pub fn validate_adaptive(state: &AdaptiveInference) -> bool {
@@ -58,5 +57,4 @@ mod tests {
         let state = AdaptiveInference::new();
         assert!(validate_adaptive(&state));
     }
-
 }

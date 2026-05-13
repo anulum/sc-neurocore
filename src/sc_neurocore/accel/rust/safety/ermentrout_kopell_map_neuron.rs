@@ -50,7 +50,6 @@ impl ErmentroutKopellMapNeuron {
         self.gain = 1.0_f64;
         self.theta_threshold = 0.0_f64;
     }
-
 }
 
 pub fn validate_ermentrout_kopell_map_neuron(state: &ErmentroutKopellMapNeuron) -> bool {

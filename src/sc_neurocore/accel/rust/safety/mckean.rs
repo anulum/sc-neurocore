@@ -63,7 +63,6 @@ impl McKeanNeuron {
         self.epsilon = 0.01_f64;
         self.gamma = 0.5_f64;
     }
-
 }
 
 pub fn validate_mckean(state: &McKeanNeuron) -> bool {

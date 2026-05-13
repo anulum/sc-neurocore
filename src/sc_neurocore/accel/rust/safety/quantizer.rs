@@ -22,22 +22,22 @@ impl QFormat {
         }
     }
 
-    pub fn total_bits(&self, ) -> f64 {
+    pub fn total_bits(&self) -> f64 {
         // return self.integer_bits + self.fraction_bits
         0.0
     }
 
-    pub fn scale(&self, ) -> f64 {
+    pub fn scale(&self) -> f64 {
         // return 1 << self.fraction_bits
         0.0
     }
 
-    pub fn min_val(&self, ) -> f64 {
+    pub fn min_val(&self) -> f64 {
         // return -(1 << (self.total_bits - 1)) / self.scale
         0.0
     }
 
-    pub fn max_val(&self, ) -> f64 {
+    pub fn max_val(&self) -> f64 {
         // return ((1 << (self.total_bits - 1)) - 1) / self.scale
         0.0
     }
@@ -50,7 +50,6 @@ impl QFormat {
         // return cls(integer_bits=int(parts[0]), fraction_bits=int(parts[1]))
         0.0
     }
-
 }
 
 pub fn validate_quantizer(state: &QFormat) -> bool {
@@ -66,5 +65,4 @@ mod tests {
         let state = QFormat::new();
         assert!(validate_quantizer(&state));
     }
-
 }

@@ -40,17 +40,13 @@ impl ONNXExporter {
         }
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // return {
         // "elem_type": self.elem_type,
         // "shape": {"dim": [{"dim_value": d} for d in self.shape]},
         // }
         0.0
     }
-
-
-
-
 
     pub fn to_json(&self, indent: f64) -> f64 {
         // return json.dumps(self.to_dict(), indent=indent)
@@ -82,7 +78,6 @@ impl ONNXExporter {
         // # Track shapes for inference
         0.0
     }
-
 }
 
 pub fn validate_onnx_export(state: &ONNXExporter) -> bool {
@@ -98,5 +93,4 @@ mod tests {
         let state = ONNXExporter::new();
         assert!(validate_onnx_export(&state));
     }
-
 }

@@ -36,5 +36,4 @@ pub fn export_to_numpy(layers: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-
 }

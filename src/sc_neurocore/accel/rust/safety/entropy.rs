@@ -39,5 +39,4 @@ pub fn decode(data: f64, n_symbols: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-
 }

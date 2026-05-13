@@ -74,7 +74,7 @@ impl SCRuntimeEngine {
         }
     }
 
-    pub fn effective_length(&self, ) -> f64 {
+    pub fn effective_length(&self) -> f64 {
         // if self.ecc_enabled:
         // if self.ecc_mode == ECCMode.SECDED:
         // n_chunks = self.bitstream_length // 4
@@ -89,7 +89,7 @@ impl SCRuntimeEngine {
         0.0
     }
 
-    pub fn copy(&self, ) -> f64 {
+    pub fn copy(&self) -> f64 {
         // return RuntimeConfig(
         // bitstream_length=self.bitstream_length,
         // decorrelator=self.decorrelator,
@@ -134,22 +134,22 @@ impl SCRuntimeEngine {
         0.0
     }
 
-    pub fn mean_density(&self, ) -> f64 {
+    pub fn mean_density(&self) -> f64 {
         // return float(np.mean(list(self._density_history))) if self._density_hi
         0.0
     }
 
-    pub fn mean_scc(&self, ) -> f64 {
+    pub fn mean_scc(&self) -> f64 {
         // return float(np.mean(list(self._scc_history))) if self._scc_history el
         0.0
     }
 
-    pub fn drift_active(&self, ) -> f64 {
+    pub fn drift_active(&self) -> f64 {
         // return abs(self._ema_scc) > self.drift_threshold
         0.0
     }
 
-    pub fn current_zone(&self, ) -> f64 {
+    pub fn current_zone(&self) -> f64 {
         // return self._zone_history[-1] if self._zone_history else ActivityZone.
         0.0
     }
@@ -212,14 +212,6 @@ impl SCRuntimeEngine {
         0.0
     }
 
-
-
-
-
-
-
-
-
     pub fn decide(&self, config: f64, metrics: f64) -> f64 {
         // self,
         // config: RuntimeConfig,
@@ -250,7 +242,7 @@ impl SCRuntimeEngine {
         0.0
     }
 
-    pub fn num_adaptations(&self, ) -> f64 {
+    pub fn num_adaptations(&self) -> f64 {
         // return len(self.adaptations)
         0.0
     }
@@ -265,7 +257,7 @@ impl SCRuntimeEngine {
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [
         // f"Runtime Report: {self.total_observations} observations, {self.num_ad
         // ]
@@ -280,8 +272,6 @@ impl SCRuntimeEngine {
         // return "\n".join(lines)
         0.0
     }
-
-
 
     pub fn protect(&self, bitstream: f64) -> f64 {
         // if not self.config.ecc_enabled:
@@ -329,7 +319,6 @@ impl SCRuntimeEngine {
         // return [self.recover(enc) for enc in encoded_list]
         0.0
     }
-
 }
 
 pub fn validate_sc_runtime(state: &SCRuntimeEngine) -> bool {
@@ -345,5 +334,4 @@ mod tests {
         let state = SCRuntimeEngine::new();
         assert!(validate_sc_runtime(&state));
     }
-
 }

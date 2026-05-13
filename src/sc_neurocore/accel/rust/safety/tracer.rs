@@ -34,12 +34,12 @@ impl SpikeTracer {
         }
     }
 
-    pub fn spike_count(&self, ) -> f64 {
+    pub fn spike_count(&self) -> f64 {
         // return int(self.spikes.sum())
         0.0
     }
 
-    pub fn firing_rates(&self, ) -> f64 {
+    pub fn firing_rates(&self) -> f64 {
         // return self.spikes.mean(axis=0)
         0.0
     }
@@ -85,7 +85,6 @@ impl SpikeTracer {
         // all_currents = np.zeros((n_steps, total_neurons), dtype=np.float64)
         0.0
     }
-
 }
 
 pub fn validate_tracer(state: &SpikeTracer) -> bool {
@@ -101,5 +100,4 @@ mod tests {
         let state = SpikeTracer::new();
         assert!(validate_tracer(&state));
     }
-
 }

@@ -88,7 +88,6 @@ impl HillTononiNeuron {
         self.m_h = 0.0_f64;
         self.h_t = 0.9_f64;
     }
-
 }
 
 pub fn validate_hill_tononi(state: &HillTononiNeuron) -> bool {

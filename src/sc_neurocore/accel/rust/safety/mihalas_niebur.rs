@@ -82,7 +82,6 @@ impl MihalasNieburNeuron {
         self.i2 = 0.0_f64;
         self.v_rest = 0.0_f64;
     }
-
 }
 
 pub fn validate_mihalas_niebur(state: &MihalasNieburNeuron) -> bool {

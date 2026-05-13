@@ -88,7 +88,7 @@ impl LayerSpec {
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // return (
         // f"LUTs: {self.total_luts}, FFs: {self.total_ffs}, "
         // f"DSP: {self.total_dsp}, BRAM: {self.total_bram_kb:.1f} KB, "
@@ -99,7 +99,7 @@ impl LayerSpec {
         0.0
     }
 
-    pub fn estimate_luts(&self, ) -> f64 {
+    pub fn estimate_luts(&self) -> f64 {
         // if self.mode == ComputeMode.DETERMINISTIC:
         // return max(self.mac_count, self.neurons) * 120
         // base_macs = max(self.mac_count, self.neurons * 2)
@@ -118,7 +118,7 @@ impl LayerSpec {
         0.0
     }
 
-    pub fn estimate_power_mw(&self, ) -> f64 {
+    pub fn estimate_power_mw(&self) -> f64 {
         // if self.mode == ComputeMode.DETERMINISTIC:
         // return max(self.mac_count, self.neurons) * 0.5
         // base = max(self.mac_count, self.neurons)
@@ -126,7 +126,7 @@ impl LayerSpec {
         0.0
     }
 
-    pub fn estimate_accuracy(&self, ) -> f64 {
+    pub fn estimate_accuracy(&self) -> f64 {
         // if self.mode == ComputeMode.DETERMINISTIC:
         // return 1.0
         // length = max(1, self.bitstream_length)
@@ -139,7 +139,6 @@ impl LayerSpec {
         // return max(0.1, min(1.0, base))
         0.0
     }
-
 }
 
 pub fn validate_types(state: &LayerSpec) -> bool {
@@ -155,5 +154,4 @@ mod tests {
         let state = LayerSpec::new();
         assert!(validate_types(&state));
     }
-
 }

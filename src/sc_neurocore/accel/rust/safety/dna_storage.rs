@@ -43,7 +43,6 @@ impl DNAEncoder {
         // return np.array(bits, dtype=np.uint8)
         0.0
     }
-
 }
 
 pub fn validate_dna_storage(state: &DNAEncoder) -> bool {
@@ -59,5 +58,4 @@ mod tests {
         let state = DNAEncoder::new();
         assert!(validate_dna_storage(&state));
     }
-
 }

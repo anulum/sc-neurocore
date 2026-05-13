@@ -62,7 +62,6 @@ impl NonlinearLIFNeuron {
         self.v_crit = -40.0_f64;
         self.v_threshold = -20.0_f64;
     }
-
 }
 
 pub fn validate_nlif(state: &NonlinearLIFNeuron) -> bool {

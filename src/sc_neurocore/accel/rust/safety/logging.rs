@@ -24,5 +24,4 @@ pub fn format(record: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-
 }

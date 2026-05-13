@@ -69,7 +69,6 @@ impl TraubMilesNeuron {
         self.n = 0.3_f64;
         self.g_na = 100.0_f64;
     }
-
 }
 
 pub fn validate_traub_miles(state: &TraubMilesNeuron) -> bool {

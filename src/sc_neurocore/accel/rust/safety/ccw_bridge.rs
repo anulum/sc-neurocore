@@ -169,7 +169,6 @@ impl CCWBridge {
         // "sample_rate": self.params.sample_rate,
         0.0
     }
-
 }
 
 pub fn validate_ccw_bridge(state: &CCWBridge) -> bool {
@@ -185,5 +184,4 @@ mod tests {
         let state = CCWBridge::new();
         assert!(validate_ccw_bridge(&state));
     }
-
 }

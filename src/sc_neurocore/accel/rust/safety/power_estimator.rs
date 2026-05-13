@@ -58,7 +58,13 @@ impl MemoryFootprint {
         0.0
     }
 
-    pub fn estimate(&self, num_layers: f64, neurons_per_layer: f64, bs_words: f64, board: f64) -> f64 {
+    pub fn estimate(
+        &self,
+        num_layers: f64,
+        neurons_per_layer: f64,
+        bs_words: f64,
+        board: f64,
+    ) -> f64 {
         // bs_words: int, board: Board) -> MemoryFootprint:
         // neuron_size = 12
         // layer_size = neuron_size * neurons_per_layer + 32
@@ -85,7 +91,6 @@ impl MemoryFootprint {
         // return (ram - overhead) // 12
         0.0
     }
-
 }
 
 pub fn validate_power_estimator(state: &MemoryFootprint) -> bool {
@@ -101,5 +106,4 @@ mod tests {
         let state = MemoryFootprint::new();
         assert!(validate_power_estimator(&state));
     }
-
 }

@@ -44,7 +44,6 @@ impl TrueNorthNeuron {
         self.threshold = 100.0_f64;
         self.v_reset = 0.0_f64;
     }
-
 }
 
 pub fn validate_truenorth(state: &TrueNorthNeuron) -> bool {

@@ -42,7 +42,6 @@ impl QuadraticIFNeuron {
         self.v_peak = 1.0_f64;
         self.dt = 0.01_f64;
     }
-
 }
 
 pub fn validate_quadratic_if(state: &QuadraticIFNeuron) -> bool {

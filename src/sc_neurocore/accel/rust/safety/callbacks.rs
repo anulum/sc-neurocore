@@ -29,23 +29,10 @@ impl CSVCallback {
         0.0
     }
 
-    pub fn close(&self, ) -> f64 {
+    pub fn close(&self) -> f64 {
         // pass
         0.0
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 pub fn validate_callbacks(state: &CSVCallback) -> bool {
@@ -61,5 +48,4 @@ mod tests {
         let state = CSVCallback::new();
         assert!(validate_callbacks(&state));
     }
-
 }

@@ -87,7 +87,12 @@ pub fn spike_train_coherence(train_a: f64, train_b: f64, dt: f64) -> f64 {
     0.0
 }
 
-pub fn spike_time_tiling_coefficient(train_a: f64, train_b: f64, dt_param: f64, delta_ms: f64) -> f64 {
+pub fn spike_time_tiling_coefficient(
+    train_a: f64,
+    train_b: f64,
+    dt_param: f64,
+    delta_ms: f64,
+) -> f64 {
     // train_a: ndarray[Any, Any],
     // train_b: ndarray[Any, Any],
     // dt_param: float = 0.001,

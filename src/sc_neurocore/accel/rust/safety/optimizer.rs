@@ -77,7 +77,7 @@ impl EncodingOptimizer {
         0.0
     }
 
-    pub fn _encodings(&self, ) -> f64 {
+    pub fn _encodings(&self) -> f64 {
         // return [
         // ("rate", encoders.rate_encode, lambda s: 0.7 + 0.3 * (1 - s["sparsity"
         // ("latency", encoders.latency_encode, lambda s: 0.8 if s["sparsity"] <
@@ -103,7 +103,6 @@ impl EncodingOptimizer {
         // return reasons.get(name, "")
         0.0
     }
-
 }
 
 pub fn validate_optimizer(state: &EncodingOptimizer) -> bool {
@@ -119,5 +118,4 @@ mod tests {
         let state = EncodingOptimizer::new();
         assert!(validate_optimizer(&state));
     }
-
 }

@@ -54,7 +54,6 @@ impl SCPlanner {
         // return plan
         0.0
     }
-
 }
 
 pub fn validate_planner(state: &SCPlanner) -> bool {
@@ -70,5 +69,4 @@ mod tests {
         let state = SCPlanner::new();
         assert!(validate_planner(&state));
     }
-
 }

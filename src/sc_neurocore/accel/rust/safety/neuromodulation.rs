@@ -48,7 +48,6 @@ impl NeuromodulatorSystem {
         // return mod_params
         0.0
     }
-
 }
 
 pub fn validate_neuromodulation(state: &NeuromodulatorSystem) -> bool {
@@ -64,5 +63,4 @@ mod tests {
         let state = NeuromodulatorSystem::new();
         assert!(validate_neuromodulation(&state));
     }
-
 }

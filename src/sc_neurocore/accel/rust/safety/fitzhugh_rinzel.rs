@@ -60,7 +60,6 @@ impl FitzHughRinzelNeuron {
         self.a = 0.7_f64;
         self.b = 0.8_f64;
     }
-
 }
 
 pub fn validate_fitzhugh_rinzel(state: &FitzHughRinzelNeuron) -> bool {

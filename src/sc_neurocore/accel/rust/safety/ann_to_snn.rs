@@ -52,7 +52,6 @@ impl ConvertedSNN {
         // return np.argmax(counts, axis=-1)
         0.0
     }
-
 }
 
 pub fn validate_ann_to_snn(state: &ConvertedSNN) -> bool {
@@ -68,5 +67,4 @@ mod tests {
         let state = ConvertedSNN::new();
         assert!(validate_ann_to_snn(&state));
     }
-
 }

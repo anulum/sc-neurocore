@@ -46,7 +46,14 @@ impl L12_GaianAdapter {
         0.0
     }
 
-    pub fn _enaqt_kernel(&self, coherence: f64, flow: f64, j_coupling: f64, noise_gain: f64, dt: f64) -> f64 {
+    pub fn _enaqt_kernel(
+        &self,
+        coherence: f64,
+        flow: f64,
+        j_coupling: f64,
+        noise_gain: f64,
+        dt: f64,
+    ) -> f64 {
         // coherence: jnp.ndarray, flow: jnp.ndarray, j_coupling: float, noise_ga
         // ) -> Tuple[jnp.ndarray, jnp.ndarray]:
         // # Noise-assisted transport increases coherence
@@ -85,7 +92,7 @@ impl L12_GaianAdapter {
         0.0
     }
 
-    pub fn get_metrics(&self, ) -> f64 {
+    pub fn get_metrics(&self) -> f64 {
         // return {
         // "eco_system_coherence": float(jnp.mean(self.eco_coherence)),
         // "global_nutrient_flow": float(jnp.mean(self.flow_density)),
@@ -93,7 +100,6 @@ impl L12_GaianAdapter {
         // }
         0.0
     }
-
 }
 
 pub fn validate_l12_gaian(state: &L12_GaianAdapter) -> bool {
@@ -109,5 +115,4 @@ mod tests {
         let state = L12_GaianAdapter::new();
         assert!(validate_l12_gaian(&state));
     }
-
 }

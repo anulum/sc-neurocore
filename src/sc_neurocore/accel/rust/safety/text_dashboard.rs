@@ -15,9 +15,7 @@ pub struct SCDashboard {
 
 impl SCDashboard {
     pub fn new() -> Self {
-        Self {
-            n_neurons: 0.0_f64,
-        }
+        Self { n_neurons: 0.0_f64 }
     }
 
     pub fn update(&self, firing_rates: f64, step: f64) -> f64 {
@@ -48,7 +46,6 @@ impl SCDashboard {
         // trend = "\\ DWN"
         0.0
     }
-
 }
 
 pub fn validate_text_dashboard(state: &SCDashboard) -> bool {
@@ -64,5 +61,4 @@ mod tests {
         let state = SCDashboard::new();
         assert!(validate_text_dashboard(&state));
     }
-
 }

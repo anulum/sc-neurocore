@@ -93,8 +93,6 @@ impl SurfaceCodeShield {
         0.0
     }
 
-
-
     pub fn measure_syndrome(&self, physical_bits: f64) -> f64 {
         // self, physical_bits: np.ndarray[Any, Any]
         // ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
@@ -114,8 +112,6 @@ impl SurfaceCodeShield {
         0.0
     }
 
-
-
     pub fn _apply_lut_correction(&self, physical: f64, syndromes: f64, lut: f64) -> f64 {
         // physical: np.ndarray[Any, Any],
         // syndromes: np.ndarray[Any, Any],
@@ -131,9 +127,6 @@ impl SurfaceCodeShield {
         // physical[l_idx, qubit, t] ^= 1
         0.0
     }
-
-
-
 }
 
 pub fn validate_qec(state: &SurfaceCodeShield) -> bool {
@@ -149,5 +142,4 @@ mod tests {
         let state = SurfaceCodeShield::new();
         assert!(validate_qec(&state));
     }
-
 }

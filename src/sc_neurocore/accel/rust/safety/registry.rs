@@ -48,5 +48,4 @@ pub fn clear(namespace: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-
 }

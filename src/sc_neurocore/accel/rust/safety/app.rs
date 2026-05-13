@@ -103,7 +103,6 @@ impl _SimCache {
         // self._cache.popitem(last=false)
         0.0
     }
-
 }
 
 pub fn validate_app(state: &_SimCache) -> bool {
@@ -119,5 +118,4 @@ mod tests {
         let state = _SimCache::new();
         assert!(validate_app(&state));
     }
-
 }

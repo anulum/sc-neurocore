@@ -58,30 +58,22 @@ impl SCNetwork {
         self.edges = 0.0_f64;
     }
 
-
-
-
-
-    pub fn input_ports(&self, ) -> f64 {
+    pub fn input_ports(&self) -> f64 {
         // return self.network.input_nodes
         0.0
     }
 
-    pub fn output_ports(&self, ) -> f64 {
+    pub fn output_ports(&self) -> f64 {
         // return self.network.output_nodes
         0.0
     }
-
-
 
     pub fn forward_multi(&self, inputs: f64) -> f64 {
         // return self.network.step(inputs)
         0.0
     }
 
-
-
-    pub fn _find_back_edges(&self, ) -> f64 {
+    pub fn _find_back_edges(&self) -> f64 {
         // WHITE, GRAY, BLACK = 0, 1, 2
         // color: dict[str, int] = {n: WHITE for n in self.nodes}
         // adj: dict[str, list[str]] = {n: [] for n in self.nodes}
@@ -100,7 +92,7 @@ impl SCNetwork {
         0.0
     }
 
-    pub fn _break_cycles(&self, ) -> f64 {
+    pub fn _break_cycles(&self) -> f64 {
         // back_edges = self._find_back_edges()
         // if not back_edges:
         // return
@@ -114,7 +106,7 @@ impl SCNetwork {
         0.0
     }
 
-    pub fn _topological_sort(&self, ) -> f64 {
+    pub fn _topological_sort(&self) -> f64 {
         // self._break_cycles()
         // adj: dict[str, list[str]] = {n: [] for n in self.nodes}
         // in_deg: dict[str, int] = {n: 0 for n in self.nodes}
@@ -133,7 +125,7 @@ impl SCNetwork {
         0.0
     }
 
-    pub fn topo_order(&self, ) -> f64 {
+    pub fn topo_order(&self) -> f64 {
         // if self._topo_order is 0.0:
         // self._topo_order = self._topological_sort()
         // return self._topo_order
@@ -169,9 +161,7 @@ impl SCNetwork {
         0.0
     }
 
-
-
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [f"SCNetwork: {len(self.nodes)} nodes, {len(self.edges)} edges
         // for name in self.topo_order:
         // node = self.nodes[name]
@@ -183,7 +173,6 @@ impl SCNetwork {
         // return "\n".join(lines)
         0.0
     }
-
 }
 
 pub fn validate_parser(state: &SCNetwork) -> bool {

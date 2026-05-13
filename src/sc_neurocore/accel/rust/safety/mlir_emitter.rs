@@ -30,7 +30,7 @@ impl MLIREmitter {
         }
     }
 
-    pub fn get_wire(&self, ) -> f64 {
+    pub fn get_wire(&self) -> f64 {
         // self._wire_counter += 1
         // return f"%w{self._wire_counter}"
         0.0
@@ -75,7 +75,7 @@ impl MLIREmitter {
         0.0
     }
 
-    pub fn generate(&self, ) -> f64 {
+    pub fn generate(&self) -> f64 {
         // lines = []
         // # Modern CIRCT / MLIR HW dialect syntax
         // lines.append(f"hw.module @{self.module_name}(in %clk: i1, in %rst: i1,
@@ -93,7 +93,6 @@ impl MLIREmitter {
         // f'  {node.output} = hw.instance "{node.attributes["sym_name"]}" @{node
         0.0
     }
-
 }
 
 pub fn validate_mlir_emitter(state: &MLIREmitter) -> bool {
@@ -109,5 +108,4 @@ mod tests {
         let state = MLIREmitter::new();
         assert!(validate_mlir_emitter(&state));
     }
-
 }

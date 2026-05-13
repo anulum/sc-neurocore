@@ -30,7 +30,14 @@ pub fn _characterize_with_progress(simulate_fn: f64, base_config: f64, q: f64) -
     0.0
 }
 
-pub fn _heatmap_with_progress(simulate_fn: f64, base_config: f64, param_x: f64, x_vals: f64, param_y: f64, y_vals: f64) -> f64 {
+pub fn _heatmap_with_progress(
+    simulate_fn: f64,
+    base_config: f64,
+    param_x: f64,
+    x_vals: f64,
+    param_y: f64,
+    y_vals: f64,
+) -> f64 {
     // simulate_fn: Callable[..., dict[str, Any]],
     // base_config: dict[str, Any],
     // param_x: str,

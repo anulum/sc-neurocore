@@ -60,7 +60,6 @@ impl SpikeResponseNeuron {
         self.tau_kappa = 5.0_f64;
         self.eta_reset = -5.0_f64;
     }
-
 }
 
 pub fn validate_spike_response(state: &SpikeResponseNeuron) -> bool {

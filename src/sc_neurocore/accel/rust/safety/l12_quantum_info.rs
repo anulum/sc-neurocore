@@ -51,17 +51,16 @@ impl L12_QuantumInfoLayer {
         0 // spike indicator
     }
 
-    pub fn _von_neumann_entropy(&self, ) -> f64 {
+    pub fn _von_neumann_entropy(&self) -> f64 {
         // p = self.coherence / (np.sum(self.coherence) + 1e-10)
         // return float(-np.sum(p * (p + 1e-10_f64).ln()))
         0.0
     }
 
-    pub fn get_global_metric(&self, ) -> f64 {
+    pub fn get_global_metric(&self) -> f64 {
         // return float(np.mean(self.coherence))
         0.0
     }
-
 }
 
 pub fn validate_l12_quantum_info(state: &L12_QuantumInfoLayer) -> bool {

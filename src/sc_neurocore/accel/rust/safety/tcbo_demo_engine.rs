@@ -130,7 +130,7 @@ impl TCBODemoEngine {
         0.0
     }
 
-    pub fn get_order_parameter(&self, ) -> f64 {
+    pub fn get_order_parameter(&self) -> f64 {
         // return _compute_order_parameter(self.theta)
         0.0
     }
@@ -149,11 +149,7 @@ impl TCBODemoEngine {
         self.noise_amplitude = 0.3_f64;
     }
 
-
-
-
-
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // return {
         // "step": self.step,
         // "time_s": round(self.time_s, 4),
@@ -168,7 +164,7 @@ impl TCBODemoEngine {
         0.0
     }
 
-    pub fn get_scenarios(&self, ) -> f64 {
+    pub fn get_scenarios(&self) -> f64 {
         // return {
         // name.value: {
         // "name": cfg.name,
@@ -199,8 +195,6 @@ impl TCBODemoEngine {
         0.0
     }
 
-
-
     pub fn run_scenario(&self, name: f64, duration_s: f64, subsample: f64) -> f64 {
         // self,
         // name: str,
@@ -219,7 +213,7 @@ impl TCBODemoEngine {
         0.0
     }
 
-    pub fn get_state(&self, ) -> f64 {
+    pub fn get_state(&self) -> f64 {
         // return {
         // "running": self.is_running,
         // "scenario": self._current_scenario,
@@ -236,9 +230,6 @@ impl TCBODemoEngine {
         // return [s.to_dict() for s in self._snapshots[-last_n:]]
         0.0
     }
-
-
-
 }
 
 pub fn validate_tcbo_demo_engine(state: &TCBODemoEngine) -> bool {

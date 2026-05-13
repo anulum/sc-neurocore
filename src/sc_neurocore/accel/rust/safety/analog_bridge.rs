@@ -56,7 +56,7 @@ impl MockNode {
         }
     }
 
-    pub fn brainscales3(&self, ) -> f64 {
+    pub fn brainscales3(&self) -> f64 {
         // return cls(
         // name="BrainScaleS-3",
         // g_min=0.0,
@@ -71,7 +71,7 @@ impl MockNode {
         0.0
     }
 
-    pub fn dynapse2(&self, ) -> f64 {
+    pub fn dynapse2(&self) -> f64 {
         // return cls(
         // name="DynapSE-2",
         // g_min=0.0,
@@ -125,7 +125,13 @@ impl MockNode {
         0.0
     }
 
-    pub fn events_to_current(&self, events: f64, duration_us: f64, tau_syn: f64, weight: f64) -> f64 {
+    pub fn events_to_current(
+        &self,
+        events: f64,
+        duration_us: f64,
+        tau_syn: f64,
+        weight: f64,
+    ) -> f64 {
         // self,
         // events: List[AEREvent],
         // duration_us: float,
@@ -151,7 +157,7 @@ impl MockNode {
         0.0
     }
 
-    pub fn sweep_conductance(&self, ) -> f64 {
+    pub fn sweep_conductance(&self) -> f64 {
         // results = []
         // for step in range(self.num_steps + 1):
         // frac = step / self.num_steps
@@ -162,13 +168,13 @@ impl MockNode {
         0.0
     }
 
-    pub fn max_quantization_error(&self, ) -> f64 {
+    pub fn max_quantization_error(&self) -> f64 {
         // sweep = self.sweep_conductance()
         // return max(abs(target - actual) for _, target, actual in sweep)
         0.0
     }
 
-    pub fn effective_resolution_bits(&self, ) -> f64 {
+    pub fn effective_resolution_bits(&self) -> f64 {
         // max_err = self.max_quantization_error()
         // full_range = self.bridge.g_max - self.bridge.g_min
         // if max_err == 0 || full_range == 0:
@@ -176,7 +182,6 @@ impl MockNode {
         // return np.log2(full_range / max_err)
         0.0
     }
-
 }
 
 pub fn validate_analog_bridge(state: &MockNode) -> bool {
@@ -192,5 +197,4 @@ mod tests {
         let state = MockNode::new();
         assert!(validate_analog_bridge(&state));
     }
-
 }

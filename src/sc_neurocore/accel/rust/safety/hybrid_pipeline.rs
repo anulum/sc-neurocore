@@ -63,7 +63,6 @@ impl HybridQuantumClassicalPipeline {
         // return self.circuit(params)
         0.0
     }
-
 }
 
 pub fn validate_hybrid_pipeline(state: &HybridQuantumClassicalPipeline) -> bool {
@@ -79,5 +78,4 @@ mod tests {
         let state = HybridQuantumClassicalPipeline::new();
         assert!(validate_hybrid_pipeline(&state));
     }
-
 }

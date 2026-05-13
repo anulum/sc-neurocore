@@ -52,7 +52,7 @@ impl EVSEngine {
         }
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // return {
         // "evs_score": round(self.evs_score, 2),
         // "relative_increase": round(self.relative_increase, 4),
@@ -69,7 +69,7 @@ impl EVSEngine {
         0.0
     }
 
-    pub fn start_baseline(&self, ) -> f64 {
+    pub fn start_baseline(&self) -> f64 {
         // self._baseline_active = true
         // self._baseline_done = false
         // self._baseline_samples.clear()
@@ -78,7 +78,7 @@ impl EVSEngine {
         0.0
     }
 
-    pub fn _finalise_baseline(&self, ) -> f64 {
+    pub fn _finalise_baseline(&self) -> f64 {
         // arr = np.array(self._baseline_samples[-self.cfg.fft_window :])
         // if len(arr) < 32:
         // # Not enough samples; use flat baseline
@@ -112,7 +112,7 @@ impl EVSEngine {
         0.0
     }
 
-    pub fn _ordered_buf(&self, ) -> f64 {
+    pub fn _ordered_buf(&self) -> f64 {
         // if not self._buf_full:
         // return self._buf[: self._buf_idx].copy()
         // return np.concatenate([self._buf[self._buf_idx :], self._buf[: self._b
@@ -149,7 +149,7 @@ impl EVSEngine {
         0.0
     }
 
-    pub fn compute(&self, ) -> f64 {
+    pub fn compute(&self) -> f64 {
         // if not self._baseline_done:
         // return 0.0
         // if not self._buf_full && self._buf_idx < 32:
@@ -168,12 +168,12 @@ impl EVSEngine {
         0.0
     }
 
-    pub fn baseline_done(&self, ) -> f64 {
+    pub fn baseline_done(&self) -> f64 {
         // return self._baseline_done
         0.0
     }
 
-    pub fn score_history(&self, ) -> f64 {
+    pub fn score_history(&self) -> f64 {
         // return list(self._score_history)
         0.0
     }
@@ -194,7 +194,6 @@ impl EVSEngine {
         self.update_interval_samples = 128.0_f64;
         self.evs_score = 0.0_f64;
     }
-
 }
 
 pub fn validate_evs_engine(state: &EVSEngine) -> bool {
@@ -210,5 +209,4 @@ mod tests {
         let state = EVSEngine::new();
         assert!(validate_evs_engine(&state));
     }
-
 }

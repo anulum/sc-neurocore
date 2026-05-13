@@ -51,17 +51,16 @@ impl SCIzhikevichNeuron {
         0 // spike indicator
     }
 
-    pub fn reset_state(&self, ) -> f64 {
+    pub fn reset_state(&self) -> f64 {
         // self.v = self.c  # membrane potential
         // self.u = self.b * self.v
         0.0
     }
 
-    pub fn get_state(&self, ) -> f64 {
+    pub fn get_state(&self) -> f64 {
         // return {"v": float(self.v), "u": float(self.u)}
         0.0
     }
-
 }
 
 pub fn validate_sc_izhikevich(state: &SCIzhikevichNeuron) -> bool {

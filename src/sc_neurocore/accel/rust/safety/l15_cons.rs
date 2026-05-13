@@ -45,7 +45,14 @@ impl L15_ConsiliumAdapter {
         0.0
     }
 
-    pub fn _umo_kernel(&self, metric: f64, layer_coherences: f64, target: f64, lr: f64, dt: f64) -> f64 {
+    pub fn _umo_kernel(
+        &self,
+        metric: f64,
+        layer_coherences: f64,
+        target: f64,
+        lr: f64,
+        dt: f64,
+    ) -> f64 {
         // metric: jnp.ndarray, layer_coherences: jnp.ndarray, target: float, lr:
         // ) -> Tuple[jnp.ndarray, jnp.ndarray]:
         // # Calculate global coherence proxy
@@ -84,7 +91,7 @@ impl L15_ConsiliumAdapter {
         0.0
     }
 
-    pub fn get_metrics(&self, ) -> f64 {
+    pub fn get_metrics(&self) -> f64 {
         // return {
         // "gci_index": float(self.gci),
         // "metric_entropy": float(
@@ -94,7 +101,6 @@ impl L15_ConsiliumAdapter {
         // }
         0.0
     }
-
 }
 
 pub fn validate_l15_cons(state: &L15_ConsiliumAdapter) -> bool {
@@ -110,5 +116,4 @@ mod tests {
         let state = L15_ConsiliumAdapter::new();
         assert!(validate_l15_cons(&state));
     }
-
 }

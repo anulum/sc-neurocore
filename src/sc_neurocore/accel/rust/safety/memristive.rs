@@ -22,7 +22,7 @@ impl MemristiveDenseLayer {
         }
     }
 
-    pub fn apply_hardware_defects(&self, ) -> f64 {
+    pub fn apply_hardware_defects(&self) -> f64 {
         // # 1. Variability (Write Noise)
         // noise = np.random.normal(0, self.variability, self.weights.shape)
         // self.weights = (self.weights + noise_f64).clamp(0, 1)
@@ -34,7 +34,6 @@ impl MemristiveDenseLayer {
         // self._refresh_packed_weights()
         0.0
     }
-
 }
 
 pub fn validate_memristive(state: &MemristiveDenseLayer) -> bool {
@@ -50,5 +49,4 @@ mod tests {
         let state = MemristiveDenseLayer::new();
         assert!(validate_memristive(&state));
     }
-
 }

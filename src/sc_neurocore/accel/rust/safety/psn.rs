@@ -49,7 +49,6 @@ impl ParallelSpikingNeuron {
         self.buffer = 0.0_f64;
         self._ptr = 0.0_f64;
     }
-
 }
 
 pub fn validate_psn(state: &ParallelSpikingNeuron) -> bool {

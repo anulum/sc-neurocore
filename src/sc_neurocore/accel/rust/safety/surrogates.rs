@@ -95,7 +95,13 @@ pub fn gamma_process(rate_hz: f64, shape: f64, duration_s: f64, dt: f64, seed: f
     0.0
 }
 
-pub fn compound_poisson_process(rate_hz: f64, burst_mean: f64, duration_s: f64, dt: f64, seed: f64) -> f64 {
+pub fn compound_poisson_process(
+    rate_hz: f64,
+    burst_mean: f64,
+    duration_s: f64,
+    dt: f64,
+    seed: f64,
+) -> f64 {
     // rate_hz: float, burst_mean: float, duration_s: float, dt: float = 0.00
     // ) -> ndarray[Any, Any] {
     // rng = random.default_rng(seed)

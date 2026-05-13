@@ -81,7 +81,7 @@ impl SpikingLQR {
         self.dt = 0.0_f64;
     }
 
-    pub fn predict(&self, ) -> f64 {
+    pub fn predict(&self) -> f64 {
         // self.x = self.A @ self.x
         // self.P = self.A @ self.P @ self.A.T + self.Q
         // return self.x.copy()
@@ -97,10 +97,6 @@ impl SpikingLQR {
         // return self.x.copy()
         0.0
     }
-
-
-
-
 
     pub fn _solve_dare(&self, max_iter: f64) -> f64 {
         // P = self.Q.copy()
@@ -127,11 +123,10 @@ impl SpikingLQR {
         0.0
     }
 
-    pub fn gain_matrix(&self, ) -> f64 {
+    pub fn gain_matrix(&self) -> f64 {
         // return self.K.copy()
         0.0
     }
-
 }
 
 pub fn validate_controllers(state: &SpikingLQR) -> bool {

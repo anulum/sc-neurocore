@@ -51,8 +51,6 @@ impl SpikeGNNLayer {
         0.0
     }
 
-
-
     pub fn graph_classify(&self, node_features: f64, adjacency: f64) -> f64 {
         // node_out = self.forward(node_features, adjacency)
         // graph_vec = node_out.sum(axis=0)
@@ -60,11 +58,10 @@ impl SpikeGNNLayer {
         0.0
     }
 
-    pub fn n_layers(&self, ) -> f64 {
+    pub fn n_layers(&self) -> f64 {
         // return len(self.convs)
         0.0
     }
-
 }
 
 pub fn validate_spike_gnn(state: &SpikeGNNLayer) -> bool {
@@ -80,5 +77,4 @@ mod tests {
         let state = SpikeGNNLayer::new();
         assert!(validate_spike_gnn(&state));
     }
-
 }

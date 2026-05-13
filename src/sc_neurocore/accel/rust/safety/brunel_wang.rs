@@ -96,11 +96,10 @@ impl BrunelWangNeuron {
         self.tau_m = 20.0_f64;
     }
 
-    pub fn get_state(&self, ) -> f64 {
+    pub fn get_state(&self) -> f64 {
         // return {"v": self.v, "ref_remaining": self._ref_remaining}
         0.0
     }
-
 }
 
 pub fn validate_brunel_wang(state: &BrunelWangNeuron) -> bool {

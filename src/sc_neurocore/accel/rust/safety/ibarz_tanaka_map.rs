@@ -62,7 +62,6 @@ impl IbarzTanakaMapNeuron {
         self.beta = 0.25_f64;
         self.mu = 0.0005_f64;
     }
-
 }
 
 pub fn validate_ibarz_tanaka_map(state: &IbarzTanakaMapNeuron) -> bool {

@@ -32,14 +32,20 @@ impl UserProfile {
         }
     }
 
-    pub fn get_best_target_hz(&self, ) -> f64 {
+    pub fn get_best_target_hz(&self) -> f64 {
         // if self.preferred_target_hz is not 0.0:
         // return self.preferred_target_hz
         // return _CHRONOTYPE_TARGET_HZ.get(self.chronotype, 10.0)
         0.0
     }
 
-    pub fn update_from_session(&self, avg_evs: f64, peak_evs: f64, best_target_hz: f64, band_powers: f64) -> f64 {
+    pub fn update_from_session(
+        &self,
+        avg_evs: f64,
+        peak_evs: f64,
+        best_target_hz: f64,
+        band_powers: f64,
+    ) -> f64 {
         // self,
         // avg_evs: float,
         // peak_evs: float,
@@ -58,7 +64,7 @@ impl UserProfile {
         0.0
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // return {
         // "user_id": self.user_id,
         // "chronotype": self.chronotype.value,
@@ -84,7 +90,6 @@ impl UserProfile {
         // )
         0.0
     }
-
 }
 
 pub fn validate_user_profile(state: &UserProfile) -> bool {
@@ -100,5 +105,4 @@ mod tests {
         let state = UserProfile::new();
         assert!(validate_user_profile(&state));
     }
-
 }

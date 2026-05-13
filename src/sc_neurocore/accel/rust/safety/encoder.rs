@@ -69,7 +69,6 @@ impl TraceEncoder {
         // return self.encode(combined, duration_ms=150)
         0.0
     }
-
 }
 
 pub fn validate_encoder(state: &TraceEncoder) -> bool {
@@ -85,5 +84,4 @@ mod tests {
         let state = TraceEncoder::new();
         assert!(validate_encoder(&state));
     }
-
 }

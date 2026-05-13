@@ -77,29 +77,29 @@ impl VerifiableInference {
         0.0
     }
 
-    pub fn length(&self, ) -> f64 {
+    pub fn length(&self) -> f64 {
         // return len(self.steps)
         0.0
     }
 
-    pub fn mean_confidence(&self, ) -> f64 {
+    pub fn mean_confidence(&self) -> f64 {
         // if not self.steps:
         // return 0.0
         // return float(np.mean([s.confidence for s in self.steps]))
         0.0
     }
 
-    pub fn is_complete(&self, ) -> f64 {
+    pub fn is_complete(&self) -> f64 {
         // return self.end_ns > 0 && self.length > 0
         0.0
     }
 
-    pub fn finalize(&self, ) -> f64 {
+    pub fn finalize(&self) -> f64 {
         // self.end_ns = time.perf_counter_ns()
         0.0
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // return {
         // "steps": [
         // {
@@ -161,12 +161,12 @@ impl VerifiableInference {
         0.0
     }
 
-    pub fn popcount(&self, ) -> f64 {
+    pub fn popcount(&self) -> f64 {
         // return sum(bin(int(w)).count("1") for w in self.data)
         0.0
     }
 
-    pub fn density(&self, ) -> f64 {
+    pub fn density(&self) -> f64 {
         // return self.popcount() / self.length if self.length else 0.0
         0.0
     }
@@ -210,7 +210,7 @@ impl VerifiableInference {
         0.0
     }
 
-    pub fn vocabulary_size(&self, ) -> f64 {
+    pub fn vocabulary_size(&self) -> f64 {
         // return len(self._cache)
         0.0
     }
@@ -254,7 +254,7 @@ impl VerifiableInference {
         0.0
     }
 
-    pub fn mean_recent_error(&self, ) -> f64 {
+    pub fn mean_recent_error(&self) -> f64 {
         // if not self._error_history:
         // return 0.0
         // recent = self._error_history[-50:]
@@ -262,7 +262,7 @@ impl VerifiableInference {
         0.0
     }
 
-    pub fn converged(&self, ) -> f64 {
+    pub fn converged(&self) -> f64 {
         // if len(self._error_history) < 10:
         // return false
         // recent = self._error_history[-10:]
@@ -281,7 +281,7 @@ impl VerifiableInference {
         0.0
     }
 
-    pub fn num_symbols(&self, ) -> f64 {
+    pub fn num_symbols(&self) -> f64 {
         // return len(self._library)
         0.0
     }
@@ -304,7 +304,6 @@ impl VerifiableInference {
         // for name, hv in self._library.items():
         0.0
     }
-
 }
 
 pub fn validate_predictive_coding(state: &VerifiableInference) -> bool {
@@ -320,5 +319,4 @@ mod tests {
         let state = VerifiableInference::new();
         assert!(validate_predictive_coding(&state));
     }
-
 }

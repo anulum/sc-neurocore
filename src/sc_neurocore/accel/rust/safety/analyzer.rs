@@ -50,7 +50,7 @@ impl TopologyAnalyzer {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // sw = "YES" if self.small_world_sigma > 1.0 else "NO"
         // return (
         // f"Topology: {self.n_nodes} nodes, {self.n_edges} edges, "
@@ -64,7 +64,7 @@ impl TopologyAnalyzer {
         0.0
     }
 
-    pub fn analyze(&self, ) -> f64 {
+    pub fn analyze(&self) -> f64 {
         // report = TopologyReport()
         // report.n_nodes = self.N
         // report.n_edges = int(self.adj.sum()) // (1 if self.directed else 2)
@@ -121,7 +121,7 @@ impl TopologyAnalyzer {
         0.0
     }
 
-    pub fn _clustering(&self, ) -> f64 {
+    pub fn _clustering(&self) -> f64 {
         // A = self.adj if not self.directed else (self.adj_f64).max(self.adj.T)
         // coeffs = []
         // for i in range(self.N):
@@ -137,7 +137,7 @@ impl TopologyAnalyzer {
         0.0
     }
 
-    pub fn _avg_path_length(&self, ) -> f64 {
+    pub fn _avg_path_length(&self) -> f64 {
         // A = self.adj if not self.directed else (self.adj_f64).max(self.adj.T)
         // cap = self.n_path_samples if self.n_path_samples > 0 else self.N
         // total = 0.0
@@ -179,7 +179,6 @@ impl TopologyAnalyzer {
         // return float(np.corrcoef(d_src, d_tgt)[0, 1])
         0.0
     }
-
 }
 
 pub fn validate_analyzer(state: &TopologyAnalyzer) -> bool {
@@ -195,5 +194,4 @@ mod tests {
         let state = TopologyAnalyzer::new();
         assert!(validate_analyzer(&state));
     }
-
 }

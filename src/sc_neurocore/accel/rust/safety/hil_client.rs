@@ -100,12 +100,12 @@ impl HealthStatus {
         0.0
     }
 
-    pub fn head(&self, ) -> f64 {
+    pub fn head(&self) -> f64 {
         // return self._head
         0.0
     }
 
-    pub fn capacity(&self, ) -> f64 {
+    pub fn capacity(&self) -> f64 {
         // return self._cap
         0.0
     }
@@ -136,7 +136,7 @@ impl HealthStatus {
         0.0
     }
 
-    pub fn all(&self, ) -> f64 {
+    pub fn all(&self) -> f64 {
         // with self._lock:
         // return {k: dict(v) for k, v in self._layers.items()}
         0.0
@@ -176,12 +176,12 @@ impl HealthStatus {
         0.0
     }
 
-    pub fn count(&self, ) -> f64 {
+    pub fn count(&self) -> f64 {
         // return self._cap if self._full else self._pos
         0.0
     }
 
-    pub fn mean(&self, ) -> f64 {
+    pub fn mean(&self) -> f64 {
         // n = self.count
         // if n == 0:
         // return 0.0
@@ -189,7 +189,7 @@ impl HealthStatus {
         0.0
     }
 
-    pub fn max(&self, ) -> f64 {
+    pub fn max(&self) -> f64 {
         // n = self.count
         // if n == 0:
         // return 0.0
@@ -235,9 +235,7 @@ impl HealthStatus {
         0.0
     }
 
-
-
-    pub fn allow(&self, ) -> f64 {
+    pub fn allow(&self) -> f64 {
         // with self._lock:
         // if self._tokens > 0:
         // self._tokens -= 1
@@ -252,12 +250,11 @@ impl HealthStatus {
         0.0
     }
 
-    pub fn available(&self, ) -> f64 {
+    pub fn available(&self) -> f64 {
         // with self._lock:
         // return self._tokens
         0.0
     }
-
 }
 
 pub fn validate_hil_client(state: &HealthStatus) -> bool {
@@ -273,5 +270,4 @@ mod tests {
         let state = HealthStatus::new();
         assert!(validate_hil_client(&state));
     }
-
 }

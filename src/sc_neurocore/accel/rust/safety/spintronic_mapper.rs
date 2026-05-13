@@ -78,7 +78,7 @@ impl MuMax3OutputParser {
         }
     }
 
-    pub fn cofeb_mgo(&self, ) -> f64 {
+    pub fn cofeb_mgo(&self) -> f64 {
         // return cls(
         // saturation_magnetisation_a_m=1.2e6,
         // exchange_stiffness_j_m=1.5e-11,
@@ -89,7 +89,7 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn pt_co_multilayer(&self, ) -> f64 {
+    pub fn pt_co_multilayer(&self) -> f64 {
         // return cls(
         // saturation_magnetisation_a_m=5.8e5,
         // exchange_stiffness_j_m=1.5e-11,
@@ -100,7 +100,7 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn w_cofeb(&self, ) -> f64 {
+    pub fn w_cofeb(&self) -> f64 {
         // return cls(
         // saturation_magnetisation_a_m=1.1e6,
         // exchange_stiffness_j_m=1.3e-11,
@@ -130,19 +130,19 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn area_nm2(&self, ) -> f64 {
+    pub fn area_nm2(&self) -> f64 {
         // return self.width_nm * self.length_nm
         0.0
     }
 
-    pub fn switching_energy_fj(&self, ) -> f64 {
+    pub fn switching_energy_fj(&self) -> f64 {
         // r_ohm = 10000.0
         // i_a = self.switching_current_ua * 1e-6
         // return i_a.powi2 * r_ohm * self.switching_time_ns * 1e6
         0.0
     }
 
-    pub fn thermal_stability(&self, ) -> f64 {
+    pub fn thermal_stability(&self) -> f64 {
         // kb = 1.38064852e-23
         // volume_m3 = (self.width_nm * self.length_nm * self.thickness_nm) * 1e-
         // t = self.material.temperature_k
@@ -150,13 +150,13 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn read_disturb_probability(&self, ) -> f64 {
+    pub fn read_disturb_probability(&self) -> f64 {
         // delta = self.thermal_stability
         // return float((-delta_f64).exp()) if delta < 100 else 0.0
         0.0
     }
 
-    pub fn endurance_cycles(&self, ) -> f64 {
+    pub fn endurance_cycles(&self) -> f64 {
         // endurance_map = {
         // SpintronicTech.DOMAIN_WALL: 10.powi15,
         // SpintronicTech.SKYRMION: 10.powi15,
@@ -185,18 +185,18 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn resistance_ohm(&self, ) -> f64 {
+    pub fn resistance_ohm(&self) -> f64 {
         // r_p = 5000.0  # parallel resistance
         // return r_p * (1 + self.state * self.device.tmr_ratio)
         0.0
     }
 
-    pub fn total_cells(&self, ) -> f64 {
+    pub fn total_cells(&self) -> f64 {
         // return self.rows * self.cols
         0.0
     }
 
-    pub fn total_area_um2(&self, ) -> f64 {
+    pub fn total_area_um2(&self) -> f64 {
         // return sum(c.device.area_nm2 for row in self.cells for c in row) / 1e6
         0.0
     }
@@ -210,7 +210,7 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn read_weights(&self, ) -> f64 {
+    pub fn read_weights(&self) -> f64 {
         // w = np.zeros((self.rows, self.cols), dtype=np.int32)
         // for r in range(self.rows):
         // for c in range(self.cols):
@@ -276,7 +276,12 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn generate_switching(&self, device: f64, current_density_a_m2: f64, duration_ns: f64) -> f64 {
+    pub fn generate_switching(
+        &self,
+        device: f64,
+        current_density_a_m2: f64,
+        duration_ns: f64,
+    ) -> f64 {
         // device: SpintronicDeviceConfig,
         // current_density_a_m2: float = 1e12,
         // duration_ns: float = 5.0,
@@ -326,14 +331,14 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn shift_energy_fj(&self, ) -> f64 {
+    pub fn shift_energy_fj(&self) -> f64 {
         // r_ohm = 500.0
         // i_a = self.shift_current_ua * 1e-6
         // return i_a.powi2 * r_ohm * self.shift_time_ns * 1e6
         0.0
     }
 
-    pub fn hall_angle_deg(&self, ) -> f64 {
+    pub fn hall_angle_deg(&self) -> f64 {
         // ratio = 4 * math.pi * abs(self.topological_charge) * self.damping_alph
         // return math.degrees(math.atan(ratio))
         0.0
@@ -347,12 +352,12 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn needs_confinement(&self, ) -> f64 {
+    pub fn needs_confinement(&self) -> f64 {
         // return self.hall_angle_deg > 5.0
         0.0
     }
 
-    pub fn resistance_margins(&self, ) -> f64 {
+    pub fn resistance_margins(&self) -> f64 {
         // r_p, r_ap = 5000.0, 12500.0
         // step = (r_ap - r_p) / (self.levels - 1) if self.levels > 1 else 0
         // return [r_p + i * step for i in range(self.levels)]
@@ -370,12 +375,12 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn density_improvement(&self, ) -> f64 {
+    pub fn density_improvement(&self) -> f64 {
         // return float(self.bits_per_cell)
         0.0
     }
 
-    pub fn error(&self, ) -> f64 {
+    pub fn error(&self) -> f64 {
         // return abs(self.target_weight - self.actual_weight)
         0.0
     }
@@ -396,7 +401,7 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn is_worn_out(&self, ) -> f64 {
+    pub fn is_worn_out(&self) -> f64 {
         // return self.cycles_written > 0 && self.tmr_degradation(1.5, 10.powi12)
         0.0
     }
@@ -418,7 +423,7 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn is_rad_hard(&self, ) -> f64 {
+    pub fn is_rad_hard(&self) -> f64 {
         // return self.tid_threshold_krad >= 100.0
         0.0
     }
@@ -428,7 +433,7 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn defect_count(&self, ) -> f64 {
+    pub fn defect_count(&self) -> f64 {
         // return len(self.defects)
         0.0
     }
@@ -455,7 +460,7 @@ impl MuMax3OutputParser {
         0.0
     }
 
-    pub fn magnetisation_magnitude(&self, ) -> f64 {
+    pub fn magnetisation_magnitude(&self) -> f64 {
         // return math.sqrt(self.final_mx.powi2 + self.final_my.powi2 + self.fina
         0.0
     }
@@ -483,7 +488,6 @@ impl MuMax3OutputParser {
         // return result.switched && result.magnetisation_magnitude > 0.9
         0.0
     }
-
 }
 
 pub fn validate_spintronic_mapper(state: &MuMax3OutputParser) -> bool {
@@ -499,5 +503,4 @@ mod tests {
         let state = MuMax3OutputParser::new();
         assert!(validate_spintronic_mapper(&state));
     }
-
 }

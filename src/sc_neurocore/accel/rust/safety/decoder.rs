@@ -15,9 +15,7 @@ pub struct StateDecoder {
 
 impl StateDecoder {
     pub fn new() -> Self {
-        Self {
-            substrate: 0.0_f64,
-        }
+        Self { substrate: 0.0_f64 }
     }
 
     pub fn _recent_trains(&self, n_neurons: f64, window: f64) -> f64 {
@@ -59,7 +57,7 @@ impl StateDecoder {
         0.0
     }
 
-    pub fn extract_connectivity_signature(&self, ) -> f64 {
+    pub fn extract_connectivity_signature(&self) -> f64 {
         // trains = self._recent_trains(n_neurons=30)
         // if not trains:
         // return np.zeros((0, 0))
@@ -67,7 +65,7 @@ impl StateDecoder {
         0.0
     }
 
-    pub fn generate_priming_context(&self, ) -> f64 {
+    pub fn generate_priming_context(&self) -> f64 {
         // history = self.substrate.spike_history
         // n_steps = len(history)
         // if n_steps < 10:
@@ -85,7 +83,6 @@ impl StateDecoder {
         // health = self.substrate.health_check()
         0.0
     }
-
 }
 
 pub fn validate_decoder(state: &StateDecoder) -> bool {
@@ -101,5 +98,4 @@ mod tests {
         let state = StateDecoder::new();
         assert!(validate_decoder(&state));
     }
-
 }

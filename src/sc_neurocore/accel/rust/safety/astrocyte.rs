@@ -79,7 +79,6 @@ impl AstrocyteModel {
         self.v_er = 0.9_f64;
         self.k_er = 0.15_f64;
     }
-
 }
 
 pub fn validate_astrocyte(state: &AstrocyteModel) -> bool {

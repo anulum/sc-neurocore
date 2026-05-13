@@ -38,7 +38,7 @@ impl SuperSpikeNeuron {
         }
     }
 
-    pub fn surrogate_grad(&self, ) -> f64 {
+    pub fn surrogate_grad(&self) -> f64 {
         // return 1.0 / (self.beta_sg * abs(self.v - self.v_threshold) + 1.0) .po
         0.0
     }
@@ -62,7 +62,6 @@ impl SuperSpikeNeuron {
         self.tau_e = 10.0_f64;
         self.v_threshold = 1.0_f64;
     }
-
 }
 
 pub fn validate_superspike_neuron(state: &SuperSpikeNeuron) -> bool {

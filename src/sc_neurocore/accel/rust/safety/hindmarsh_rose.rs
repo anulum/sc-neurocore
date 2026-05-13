@@ -58,7 +58,6 @@ impl HindmarshRoseNeuron {
         self.b = 3.0_f64;
         self.r = 0.001_f64;
     }
-
 }
 
 pub fn validate_hindmarsh_rose(state: &HindmarshRoseNeuron) -> bool {

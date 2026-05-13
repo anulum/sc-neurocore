@@ -115,8 +115,6 @@ impl CEBRAEncoder {
         0.0
     }
 
-
-
     pub fn bin_and_embed(&self, spike_trains: f64, dt: f64) -> f64 {
         // self,
         // spike_trains: list[np.ndarray],
@@ -152,10 +150,6 @@ impl CEBRAEncoder {
         // return attended @ self._output_w.T + self._output_b
         0.0
     }
-
-
-
-
 
     pub fn cosine_similarity(&self, a: f64, b: f64) -> f64 {
         // a_norm = a / (np.linalg.norm(a, axis=-1, keepdims=true) + 1e-30)
@@ -243,7 +237,6 @@ impl CEBRAEncoder {
         // return self.encode(data)
         0.0
     }
-
 }
 
 pub fn validate_neural_decoders(state: &CEBRAEncoder) -> bool {

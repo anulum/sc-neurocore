@@ -40,7 +40,7 @@ impl SpikeCodec {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // mode = "lossless" if self.lossless else "lossy"
         // return (
         // f"SpikeCodec ({mode}): {self.compression_ratio:.1f}x compression, "
@@ -201,7 +201,6 @@ impl SpikeCodec {
         // return value, pos
         0.0
     }
-
 }
 
 pub fn validate_codec(state: &SpikeCodec) -> bool {
@@ -217,5 +216,4 @@ mod tests {
         let state = SpikeCodec::new();
         assert!(validate_codec(&state));
     }
-
 }

@@ -79,7 +79,7 @@ impl SpikeCurriculum {
         0.0
     }
 
-    pub fn schedule_summary(&self, ) -> f64 {
+    pub fn schedule_summary(&self) -> f64 {
         // lines = ["Epoch | T    | Rate Scale | Noise"]
         // lines.append("-" * 40)
         // for e in range(0, self.total_epochs, max(1, self.total_epochs // 10)):
@@ -93,7 +93,6 @@ impl SpikeCurriculum {
         // return "\n".join(lines)
         0.0
     }
-
 }
 
 pub fn validate_curriculum(state: &SpikeCurriculum) -> bool {
@@ -109,5 +108,4 @@ mod tests {
         let state = SpikeCurriculum::new();
         assert!(validate_curriculum(&state));
     }
-
 }

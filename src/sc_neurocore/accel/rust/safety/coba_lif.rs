@@ -69,7 +69,6 @@ impl COBALIFNeuron {
         self.c_m = 200.0_f64;
         self.g_l = 10.0_f64;
     }
-
 }
 
 pub fn validate_coba_lif(state: &COBALIFNeuron) -> bool {

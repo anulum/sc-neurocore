@@ -62,7 +62,6 @@ impl Loihi2Neuron {
         self.tau1 = 10.0_f64;
         self.tau2 = 5.0_f64;
     }
-
 }
 
 pub fn validate_loihi2(state: &Loihi2Neuron) -> bool {

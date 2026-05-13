@@ -74,7 +74,6 @@ impl DendrifyNeuron {
         self.tau_s = 10.0_f64;
         self.tau_d = 20.0_f64;
     }
-
 }
 
 pub fn validate_dendrify(state: &DendrifyNeuron) -> bool {

@@ -56,7 +56,6 @@ impl ComplementaryLIFNeuron {
         self.v_threshold = 1.0_f64;
         self.dt = 1.0_f64;
     }
-
 }
 
 pub fn validate_clif(state: &ComplementaryLIFNeuron) -> bool {

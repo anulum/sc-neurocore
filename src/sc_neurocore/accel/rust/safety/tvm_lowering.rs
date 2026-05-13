@@ -53,7 +53,7 @@ impl TVMLowering {
         0.0
     }
 
-    pub fn for_gpu(&self, ) -> f64 {
+    pub fn for_gpu(&self) -> f64 {
         // return cls(
         // device=TargetDevice.CUDA,
         // opt_level=3,
@@ -66,7 +66,7 @@ impl TVMLowering {
         0.0
     }
 
-    pub fn for_cpu(&self, ) -> f64 {
+    pub fn for_cpu(&self) -> f64 {
         // return cls(
         // device=TargetDevice.CPU,
         // opt_level=3,
@@ -74,7 +74,7 @@ impl TVMLowering {
         0.0
     }
 
-    pub fn to_relay_text(&self, ) -> f64 {
+    pub fn to_relay_text(&self) -> f64 {
         // sig_parts = [f"%{p[0]}: Tensor[{p[1]}]" for p in self.params]
         // sig = ", ".join(sig_parts)
         // lines = [f"def @{self.name}({sig}) -> Tensor[{self.ret_type}] {{"]
@@ -144,7 +144,6 @@ impl TVMLowering {
         // )
         0.0
     }
-
 }
 
 pub fn validate_tvm_lowering(state: &TVMLowering) -> bool {
@@ -160,5 +159,4 @@ mod tests {
         let state = TVMLowering::new();
         assert!(validate_tvm_lowering(&state));
     }
-
 }

@@ -64,11 +64,10 @@ impl SRM0Neuron {
         self.tau_eta = 50.0_f64;
     }
 
-    pub fn get_state(&self, ) -> f64 {
+    pub fn get_state(&self) -> f64 {
         // return {"v": self.v, "eta": self._eta, "t": self._t}
         0.0
     }
-
 }
 
 pub fn validate_srm0(state: &SRM0Neuron) -> bool {

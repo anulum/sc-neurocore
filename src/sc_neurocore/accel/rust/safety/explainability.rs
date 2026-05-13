@@ -103,19 +103,27 @@ impl ExplainabilityEngine {
         self.margin = 0.0_f64;
     }
 
-    pub fn is_leaf(&self, ) -> f64 {
+    pub fn is_leaf(&self) -> f64 {
         // return len(self.children) == 0
         0.0
     }
 
-    pub fn margin(&self, ) -> f64 {
+    pub fn margin(&self) -> f64 {
         // m = self.popcount - self.threshold
         // conf = abs(m) / self.bitstream_length if self.bitstream_length > 0 els
         // return DecisionMargin(self.popcount, self.threshold, m, conf)
         0.0
     }
 
-    pub fn add_decision(&self, neuron_id: f64, bitstream: f64, threshold: f64, scc: f64, parent: f64, timestep: f64) -> f64 {
+    pub fn add_decision(
+        &self,
+        neuron_id: f64,
+        bitstream: f64,
+        threshold: f64,
+        scc: f64,
+        parent: f64,
+        timestep: f64,
+    ) -> f64 {
         // self,
         // neuron_id: str,
         // bitstream: np.ndarray,
@@ -134,7 +142,7 @@ impl ExplainabilityEngine {
         0.0
     }
 
-    pub fn depth(&self, ) -> f64 {
+    pub fn depth(&self) -> f64 {
         // if self.root is 0.0:
         // return 0
         // return self._compute_depth(self.root)
@@ -148,12 +156,12 @@ impl ExplainabilityEngine {
         0.0
     }
 
-    pub fn num_spikes(&self, ) -> f64 {
+    pub fn num_spikes(&self) -> f64 {
         // return sum(1 for n in self._nodes if n.decision == SpikeDecision.SPIKE
         0.0
     }
 
-    pub fn num_nodes(&self, ) -> f64 {
+    pub fn num_nodes(&self) -> f64 {
         // return len(self._nodes)
         0.0
     }
@@ -176,7 +184,7 @@ impl ExplainabilityEngine {
         0.0
     }
 
-    pub fn spike_path(&self, ) -> f64 {
+    pub fn spike_path(&self) -> f64 {
         // if self.root is 0.0:
         // return []
         // path = []
@@ -193,7 +201,7 @@ impl ExplainabilityEngine {
         0.0
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // if self.root is 0.0:
         // return {}
         // return self._node_to_dict(self.root)
@@ -238,22 +246,22 @@ impl ExplainabilityEngine {
         0.0
     }
 
-    pub fn finalize(&self, ) -> f64 {
+    pub fn finalize(&self) -> f64 {
         // self._complete = true
         0.0
     }
 
-    pub fn is_complete(&self, ) -> f64 {
+    pub fn is_complete(&self) -> f64 {
         // return self._complete
         0.0
     }
 
-    pub fn num_steps(&self, ) -> f64 {
+    pub fn num_steps(&self) -> f64 {
         // return len(self._steps)
         0.0
     }
 
-    pub fn chain_hash(&self, ) -> f64 {
+    pub fn chain_hash(&self) -> f64 {
         // h = hashlib.sha256()
         // for step in self._steps:
         // h.update(step.data_hash.encode())
@@ -262,7 +270,7 @@ impl ExplainabilityEngine {
         0.0
     }
 
-    pub fn to_list(&self, ) -> f64 {
+    pub fn to_list(&self) -> f64 {
         // return [
         // {
         // "stage": s.stage,
@@ -303,7 +311,7 @@ impl ExplainabilityEngine {
         0.0
     }
 
-    pub fn top_contributors(&self, ) -> f64 {
+    pub fn top_contributors(&self) -> f64 {
         // return sorted(self.attributions.items(), key=lambda x: x[1], reverse=t
         0.0
     }
@@ -359,12 +367,12 @@ impl ExplainabilityEngine {
         0.0
     }
 
-    pub fn active_timesteps(&self, ) -> f64 {
+    pub fn active_timesteps(&self) -> f64 {
         // return sorted(self._windows.keys())
         0.0
     }
 
-    pub fn peak_timestep(&self, ) -> f64 {
+    pub fn peak_timestep(&self) -> f64 {
         // best_t = 0
         // best_rate = -1.0
         // for t in self._windows:
@@ -376,7 +384,7 @@ impl ExplainabilityEngine {
         0.0
     }
 
-    pub fn num_timesteps(&self, ) -> f64 {
+    pub fn num_timesteps(&self) -> f64 {
         // return len(self._windows)
         0.0
     }
@@ -423,9 +431,7 @@ impl ExplainabilityEngine {
         0.0
     }
 
-
-
-    pub fn layer_ids(&self, ) -> f64 {
+    pub fn layer_ids(&self) -> f64 {
         // return list(self._layers.keys())
         0.0
     }
@@ -443,7 +449,7 @@ impl ExplainabilityEngine {
         0.0
     }
 
-    pub fn propagation_path(&self, ) -> f64 {
+    pub fn propagation_path(&self) -> f64 {
         // return [
         // {"layer": lid, "spike_rate": self.spike_rate_at_layer(lid), "count": l
         // for lid, nodes in self._layers.items()
@@ -451,16 +457,20 @@ impl ExplainabilityEngine {
         0.0
     }
 
-
-
-    pub fn length(&self, ) -> f64 {
+    pub fn length(&self) -> f64 {
         // return len(self.steps)
         0.0
     }
 
-
-
-    pub fn explain_spike(&self, neuron_id: f64, threshold_q16: f64, bitstream_length: f64, spike_threshold_count: f64, scc: f64, timestep: f64) -> f64 {
+    pub fn explain_spike(
+        &self,
+        neuron_id: f64,
+        threshold_q16: f64,
+        bitstream_length: f64,
+        spike_threshold_count: f64,
+        scc: f64,
+        timestep: f64,
+    ) -> f64 {
         // self,
         // neuron_id: str,
         // threshold_q16: int,
@@ -516,9 +526,6 @@ impl ExplainabilityEngine {
         // return SensitivityAnalyzer.analyze(node, perturbations)
         0.0
     }
-
-
-
 }
 
 pub fn validate_explainability(state: &ExplainabilityEngine) -> bool {

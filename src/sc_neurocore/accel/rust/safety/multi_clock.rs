@@ -65,7 +65,7 @@ impl MultiClockSNN {
         self.n_neurons = 0.0_f64;
     }
 
-    pub fn tau_stats(&self, ) -> f64 {
+    pub fn tau_stats(&self) -> f64 {
         // return {
         // "mean": float(self.tau.mean()),
         // "std": float(self.tau.std()),
@@ -75,8 +75,6 @@ impl MultiClockSNN {
         // }
         0.0
     }
-
-
 
     pub fn run(&self, inputs: f64, dt: f64) -> f64 {
         // self.reset()
@@ -88,9 +86,6 @@ impl MultiClockSNN {
         // return outputs
         0.0
     }
-
-
-
 }
 
 pub fn validate_multi_clock(state: &MultiClockSNN) -> bool {

@@ -78,12 +78,12 @@ impl VerilogEmitter {
         }
     }
 
-    pub fn dynamic_range(&self, ) -> f64 {
+    pub fn dynamic_range(&self) -> f64 {
         // return self.g_on / self.g_off if self.g_off > 0 else float("inf")
         0.0
     }
 
-    pub fn level_step(&self, ) -> f64 {
+    pub fn level_step(&self) -> f64 {
         // return (self.g_on - self.g_off) / max(1, self.num_levels - 1)
         0.0
     }
@@ -176,12 +176,12 @@ impl VerilogEmitter {
         0.0
     }
 
-    pub fn num_faults(&self, ) -> f64 {
+    pub fn num_faults(&self) -> f64 {
         // return len(self.stuck_on) + len(self.stuck_off)
         0.0
     }
 
-    pub fn fault_rate(&self, ) -> f64 {
+    pub fn fault_rate(&self) -> f64 {
         // total = self.rows * self.cols
         // return self.num_faults / total if total > 0 else 0.0
         0.0
@@ -206,7 +206,13 @@ impl VerilogEmitter {
         0.0
     }
 
-    pub fn compute_adjusted_thresholds(&self, ideal_weights: f64, actual_conductances: f64, model: f64, q_bits: f64) -> f64 {
+    pub fn compute_adjusted_thresholds(
+        &self,
+        ideal_weights: f64,
+        actual_conductances: f64,
+        model: f64,
+        q_bits: f64,
+    ) -> f64 {
         // ideal_weights: np.ndarray,
         // actual_conductances: np.ndarray,
         // model: ConductanceModel,
@@ -254,14 +260,14 @@ impl VerilogEmitter {
         0.0
     }
 
-    pub fn num_devices(&self, ) -> f64 {
+    pub fn num_devices(&self) -> f64 {
         // if self.topology == CrossbarTopology.DIFFERENTIAL:
         // return self.rows * self.cols * 2
         // return self.rows * self.cols
         0.0
     }
 
-    pub fn conductance_model(&self, ) -> f64 {
+    pub fn conductance_model(&self) -> f64 {
         // return ConductanceModel(technology=self.technology)
         0.0
     }
@@ -335,7 +341,7 @@ impl VerilogEmitter {
         0.0
     }
 
-    pub fn max_compensation(&self, ) -> f64 {
+    pub fn max_compensation(&self) -> f64 {
         // ratios = self.compensated_thresholds.astype(np.float64) / 256.0
         // return float(np.max((ratios - 1.0_f64).abs()))
         0.0
@@ -413,7 +419,6 @@ impl VerilogEmitter {
         // inst_block = "\n".join(inst_lines)
         0.0
     }
-
 }
 
 pub fn validate_memristor_mapper(state: &VerilogEmitter) -> bool {
@@ -429,5 +434,4 @@ mod tests {
         let state = VerilogEmitter::new();
         assert!(validate_memristor_mapper(&state));
     }
-
 }

@@ -56,7 +56,6 @@ impl LeakyCompeteFireNeuron {
         self.v_threshold = 1.0_f64;
         self.w_inh = 0.5_f64;
     }
-
 }
 
 pub fn validate_leaky_compete_fire(state: &LeakyCompeteFireNeuron) -> bool {

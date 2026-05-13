@@ -33,7 +33,6 @@ impl BenchmarkTask {
             baseline_accuracy: 0.0_f64,
         }
     }
-
 }
 
 pub fn validate_tasks(state: &BenchmarkTask) -> bool {
@@ -49,5 +48,4 @@ mod tests {
         let state = BenchmarkTask::new();
         assert!(validate_tasks(&state));
     }
-
 }

@@ -58,9 +58,7 @@ impl SCNASNetwork {
         0.0
     }
 
-
-
-    pub fn expected_resource_cost(&self, ) -> f64 {
+    pub fn expected_resource_cost(&self) -> f64 {
         // # Expected LUT && Power costs based on current architecture weights
         // weights = F.softmax(self.alphas, dim=0)
         // exp_luts = sum(w * op.lut_cost for w, op in zip(weights, self.ops))
@@ -69,22 +67,19 @@ impl SCNASNetwork {
         0.0
     }
 
-    pub fn extract_optimal_config(&self, ) -> f64 {
+    pub fn extract_optimal_config(&self) -> f64 {
         // idx = torch.argmax(self.alphas).item()
         // return self.lengths[idx]
         0.0
     }
 
-
-
-    pub fn hardware_penalty(&self, ) -> f64 {
+    pub fn hardware_penalty(&self) -> f64 {
         // l1, p1 = self.layer1.expected_resource_cost()
         // l2, p2 = self.layer2.expected_resource_cost()
         // l3, p3 = self.layer3.expected_resource_cost()
         // return l1 + l2 + l3, p1 + p2 + p3
         0.0
     }
-
 }
 
 pub fn validate_darts_sc_nas(state: &SCNASNetwork) -> bool {
@@ -100,5 +95,4 @@ mod tests {
         let state = SCNASNetwork::new();
         assert!(validate_darts_sc_nas(&state));
     }
-
 }

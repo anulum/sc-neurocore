@@ -97,9 +97,7 @@ impl TTSAnalyzer {
         0.0
     }
 
-
-
-    pub fn to_ising(&self, ) -> f64 {
+    pub fn to_ising(&self) -> f64 {
         // h: Dict[int, float] = {}
         // j_couplings: Dict[tuple[int, int], float] = {}
         // offset = self.offset
@@ -136,8 +134,6 @@ impl TTSAnalyzer {
         // h[i] = float(bias_arr[i]) * self._field_scale
         0.0
     }
-
-
 
     pub fn solve_ising(&self, model: f64, num_reads: f64) -> f64 {
         // self,
@@ -207,12 +203,10 @@ impl TTSAnalyzer {
         0.0
     }
 
-    pub fn available(&self, ) -> f64 {
+    pub fn available(&self) -> f64 {
         // return _HAS_DWAVE && _HAS_DIMOD
         0.0
     }
-
-
 
     pub fn analyze(&self, model: f64, samples: f64) -> f64 {
         // self,
@@ -244,9 +238,7 @@ impl TTSAnalyzer {
         0.0
     }
 
-
-
-    pub fn n_physical_qubits(&self, ) -> f64 {
+    pub fn n_physical_qubits(&self) -> f64 {
         // if self._topology == "chimera":
         // return self._size * self._size * 8
         // elif self._topology == "pegasus":
@@ -256,7 +248,7 @@ impl TTSAnalyzer {
         0.0
     }
 
-    pub fn connectivity(&self, ) -> f64 {
+    pub fn connectivity(&self) -> f64 {
         // return self._props["connectivity"]
         0.0
     }
@@ -324,7 +316,13 @@ impl TTSAnalyzer {
         0.0
     }
 
-    pub fn pause_and_quench(&self, ramp_time_us: f64, pause_at_s: f64, pause_duration_us: f64, quench_time_us: f64) -> f64 {
+    pub fn pause_and_quench(
+        &self,
+        ramp_time_us: f64,
+        pause_at_s: f64,
+        pause_duration_us: f64,
+        quench_time_us: f64,
+    ) -> f64 {
         // self,
         // ramp_time_us: float = 5.0,
         // pause_at_s: float = 0.4,
@@ -343,7 +341,14 @@ impl TTSAnalyzer {
         0.0
     }
 
-    pub fn reverse(&self, initial_s: f64, reverse_to_s: f64, ramp_time_us: f64, hold_time_us: f64, forward_time_us: f64) -> f64 {
+    pub fn reverse(
+        &self,
+        initial_s: f64,
+        reverse_to_s: f64,
+        ramp_time_us: f64,
+        hold_time_us: f64,
+        forward_time_us: f64,
+    ) -> f64 {
         // self,
         // initial_s: float = 1.0,
         // reverse_to_s: float = 0.3,
@@ -362,17 +367,17 @@ impl TTSAnalyzer {
         0.0
     }
 
-    pub fn points(&self, ) -> f64 {
+    pub fn points(&self) -> f64 {
         // return list(self._points)
         0.0
     }
 
-    pub fn total_time_us(&self, ) -> f64 {
+    pub fn total_time_us(&self) -> f64 {
         // return self._points[-1][0] if self._points else 0.0
         0.0
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // return {
         // "schedule": self._points,
         // "total_time_us": self.total_time_us,
@@ -409,7 +414,12 @@ impl TTSAnalyzer {
         0.0
     }
 
-    pub fn weight_optimization(&self, target_output: f64, candidate_weights: f64, n_bits: f64) -> f64 {
+    pub fn weight_optimization(
+        &self,
+        target_output: f64,
+        candidate_weights: f64,
+        n_bits: f64,
+    ) -> f64 {
         // self,
         // target_output: np.ndarray[Any, Any],
         // candidate_weights: np.ndarray[Any, Any],
@@ -466,7 +476,7 @@ impl TTSAnalyzer {
         0.0
     }
 
-    pub fn n_levels(&self, ) -> f64 {
+    pub fn n_levels(&self) -> f64 {
         // if self._encoding == "binary":
         // return 2.powiself._n_bits
         // elif self._encoding == "unary":
@@ -577,7 +587,14 @@ impl TTSAnalyzer {
         0.0
     }
 
-    pub fn from_samples(&self, energies: f64, ground_state_energy: f64, t_anneal_us: f64, tolerance: f64, p_target: f64) -> f64 {
+    pub fn from_samples(
+        &self,
+        energies: f64,
+        ground_state_energy: f64,
+        t_anneal_us: f64,
+        tolerance: f64,
+        p_target: f64,
+    ) -> f64 {
         // self,
         // energies: list[float],
         // ground_state_energy: float,
@@ -608,7 +625,6 @@ impl TTSAnalyzer {
         // return comparison
         0.0
     }
-
 }
 
 pub fn validate_quantum_annealing(state: &TTSAnalyzer) -> bool {
@@ -624,5 +640,4 @@ mod tests {
         let state = TTSAnalyzer::new();
         assert!(validate_quantum_annealing(&state));
     }
-
 }

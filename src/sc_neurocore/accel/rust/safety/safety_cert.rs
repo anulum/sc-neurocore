@@ -111,7 +111,7 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn coverage(&self, ) -> f64 {
+    pub fn coverage(&self) -> f64 {
         // if not self.requirements:
         // return 0.0
         // verified = sum(1 for r in self.requirements.values() if r.status == "v
@@ -119,12 +119,12 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn open_count(&self, ) -> f64 {
+    pub fn open_count(&self) -> f64 {
         // return sum(1 for r in self.requirements.values() if r.status == "open"
         0.0
     }
 
-    pub fn generate_report(&self, ) -> f64 {
+    pub fn generate_report(&self) -> f64 {
         // lines = [
         // "# Safety Traceability Matrix",
         // f"Generated: {datetime.now().isoformat()}",
@@ -142,7 +142,7 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn safe_failure_fraction(&self, ) -> f64 {
+    pub fn safe_failure_fraction(&self) -> f64 {
         // if self.category in (FailureCategory.SAFE, FailureCategory.NO_EFFECT):
         // return 1.0
         // if self.category == FailureCategory.DANGEROUS_DETECTED:
@@ -175,14 +175,12 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn total_failure_rate(&self, ) -> f64 {
+    pub fn total_failure_rate(&self) -> f64 {
         // return sum(fm.failure_rate_fit for fm in self.failure_modes)
         0.0
     }
 
-
-
-    pub fn diagnostic_coverage(&self, ) -> f64 {
+    pub fn diagnostic_coverage(&self) -> f64 {
         // dd = [fm for fm in self.failure_modes if fm.category == FailureCategor
         // if not dd:
         // return 0.0
@@ -192,14 +190,14 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn residual_risk_fit(&self, ) -> f64 {
+    pub fn residual_risk_fit(&self) -> f64 {
         // return sum(
         // fm.failure_rate_fit * (1.0 - fm.safe_failure_fraction) for fm in self.
         // )
         0.0
     }
 
-    pub fn sff_by_component(&self, ) -> f64 {
+    pub fn sff_by_component(&self) -> f64 {
         // components: Dict[str, List[FailureMode]] = {}
         // for fm in self.failure_modes:
         // components.setdefault(fm.component, []).append(fm)
@@ -212,7 +210,7 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn max_achievable_sil(&self, ) -> f64 {
+    pub fn max_achievable_sil(&self) -> f64 {
         // sff = self.safe_failure_fraction
         // dc = self.diagnostic_coverage
         // if sff >= 0.99 && dc >= 0.99:
@@ -227,29 +225,27 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-
-
     pub fn add_property(&self, prop: f64) -> f64 {
         // self.properties.append(prop)
         0.0
     }
 
-    pub fn proven_count(&self, ) -> f64 {
+    pub fn proven_count(&self) -> f64 {
         // return sum(1 for p in self.properties if p.status == "proven")
         0.0
     }
 
-    pub fn total_count(&self, ) -> f64 {
+    pub fn total_count(&self) -> f64 {
         // return len(self.properties)
         0.0
     }
 
-    pub fn pass_rate(&self, ) -> f64 {
+    pub fn pass_rate(&self) -> f64 {
         // return self.proven_count / self.total_count if self.total_count > 0 el
         0.0
     }
 
-    pub fn compute_hash(&self, ) -> f64 {
+    pub fn compute_hash(&self) -> f64 {
         // h = hashlib.sha256()
         // for p in sorted(self.properties, key=lambda x: x.prop_id):
         // h.update(f"{p.prop_id}:{p.status}:{p.module}".encode())
@@ -259,9 +255,7 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-
-
-    pub fn total_cycles(&self, ) -> f64 {
+    pub fn total_cycles(&self) -> f64 {
         // return sum(self.cycles_per_stage)
         0.0
     }
@@ -271,7 +265,13 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn analyze(&self, bitstream_length: f64, num_inputs: f64, num_neurons: f64, has_stp: f64) -> f64 {
+    pub fn analyze(
+        &self,
+        bitstream_length: f64,
+        num_inputs: f64,
+        num_neurons: f64,
+        has_stp: f64,
+    ) -> f64 {
         // cls,
         // bitstream_length: int,
         // num_inputs: int,
@@ -328,15 +328,13 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn checklist_coverage(&self, ) -> f64 {
+    pub fn checklist_coverage(&self) -> f64 {
         // if not self.checklist:
         // return 0.0
         // addressed = sum(1 for c in self.checklist if c.status != "not_addresse
         // return addressed / len(self.checklist)
         0.0
     }
-
-
 
     pub fn mark_implemented(&self, defence_id: f64) -> f64 {
         // for d in self.defences:
@@ -347,14 +345,14 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn beta_factor(&self, ) -> f64 {
+    pub fn beta_factor(&self) -> f64 {
         // base = 0.10
         // reduction = sum(d.beta_reduction for d in self.defences if d.implement
         // return max(0.005, base - reduction)
         0.0
     }
 
-    pub fn implemented_count(&self, ) -> f64 {
+    pub fn implemented_count(&self) -> f64 {
         // return sum(1 for d in self.defences if d.implemented)
         0.0
     }
@@ -398,7 +396,7 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn required_hft(&self, ) -> f64 {
+    pub fn required_hft(&self) -> f64 {
         // if self.sff >= 0.99:
         // if self.target_sil.value <= 3:
         // return HFTLevel.HFT_0
@@ -417,7 +415,7 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn is_simplex_ok(&self, ) -> f64 {
+    pub fn is_simplex_ok(&self) -> f64 {
         // return self.required_hft == HFTLevel.HFT_0
         0.0
     }
@@ -429,7 +427,7 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn affected_requirements(&self, ) -> f64 {
+    pub fn affected_requirements(&self) -> f64 {
         // reqs: set = set()
         // for c in self.changes:
         // reqs.update(c.affected_reqs)
@@ -437,24 +435,22 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn high_risk_count(&self, ) -> f64 {
+    pub fn high_risk_count(&self) -> f64 {
         // return sum(1 for c in self.changes if c.risk_level == "high")
         0.0
     }
 
-    pub fn needs_re_certification(&self, ) -> f64 {
+    pub fn needs_re_certification(&self) -> f64 {
         // return self.high_risk_count > 0
         0.0
     }
 
-
-
-    pub fn requires_unit_testing(&self, ) -> f64 {
+    pub fn requires_unit_testing(&self) -> f64 {
         // return self.sw_class in (SWClass.CLASS_B, SWClass.CLASS_C)
         0.0
     }
 
-    pub fn requires_architectural_design(&self, ) -> f64 {
+    pub fn requires_architectural_design(&self) -> f64 {
         // return self.sw_class == SWClass.CLASS_C
         0.0
     }
@@ -470,26 +466,26 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn mtbf_hours(&self, ) -> f64 {
+    pub fn mtbf_hours(&self) -> f64 {
         // if self.total_fit <= 0:
         // return float("inf")
         // return 1e9 / self.total_fit
         0.0
     }
 
-    pub fn mtbf_years(&self, ) -> f64 {
+    pub fn mtbf_years(&self) -> f64 {
         // return self.mtbf_hours / 8760.0
         0.0
     }
 
-    pub fn pfh_d(&self, ) -> f64 {
+    pub fn pfh_d(&self) -> f64 {
         // if self.dangerous_undetected_fit <= 0:
         // return 0.0
         // return self.dangerous_undetected_fit / 1e9
         0.0
     }
 
-    pub fn pfh_sil(&self, ) -> f64 {
+    pub fn pfh_sil(&self) -> f64 {
         // pfh = self.pfh_d
         // if pfh <= 1e-8:
         // return SILLevel.SIL_4
@@ -523,12 +519,12 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn file_count(&self, ) -> f64 {
+    pub fn file_count(&self) -> f64 {
         // return len(self.items)
         0.0
     }
 
-    pub fn manifest(&self, ) -> f64 {
+    pub fn manifest(&self) -> f64 {
         // lines = ["# Evidence Bag Manifest", f"Items: {self.file_count}", ""]
         // for item in self.items:
         // lines.append(f"- [{item.category}] {item.filename}: {item.description}
@@ -536,7 +532,7 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-    pub fn compute_hashes(&self, ) -> f64 {
+    pub fn compute_hashes(&self) -> f64 {
         // h = hashlib.sha256()
         // for item in sorted(self.items, key=lambda x: x.filename):
         // h.update(f"{item.filename}:{item.category}".encode())
@@ -563,8 +559,6 @@ impl FormalPropertyGapDetector {
         0.0
     }
 
-
-
     pub fn detect(&self, properties: f64, required_modules: f64) -> f64 {
         // cls, properties: List[FormalProperty], required_modules: List[str]
         // ) -> List[PropertyGap]:
@@ -590,7 +584,6 @@ impl FormalPropertyGapDetector {
         // return len(cls.detect(properties, required_modules)) == 0
         0.0
     }
-
 }
 
 pub fn validate_safety_cert(state: &FormalPropertyGapDetector) -> bool {
@@ -606,5 +599,4 @@ mod tests {
         let state = FormalPropertyGapDetector::new();
         assert!(validate_safety_cert(&state));
     }
-
 }

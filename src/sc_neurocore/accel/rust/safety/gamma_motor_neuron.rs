@@ -40,7 +40,7 @@ impl GammaMotorNeuron {
         }
     }
 
-    pub fn static_type(&self, ) -> f64 {
+    pub fn static_type(&self) -> f64 {
         // return cls(tau=12.0, tau_adapt=200.0, a_adapt=0.5, dynamic=false)
         0.0
     }
@@ -67,7 +67,6 @@ impl GammaMotorNeuron {
         self.v_threshold = -50.0_f64;
         self.tau = 8.0_f64;
     }
-
 }
 
 pub fn validate_gamma_motor_neuron(state: &GammaMotorNeuron) -> bool {

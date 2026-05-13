@@ -41,11 +41,6 @@ impl StepCurrent {
         // return float(self.values[idx])
         0.0
     }
-
-
-
-
-
 }
 
 pub fn validate_stimulus(state: &StepCurrent) -> bool {
@@ -61,5 +56,4 @@ mod tests {
         let state = StepCurrent::new();
         assert!(validate_stimulus(&state));
     }
-
 }

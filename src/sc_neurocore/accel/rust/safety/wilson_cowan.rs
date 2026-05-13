@@ -62,7 +62,6 @@ impl WilsonCowanUnit {
         self.w_ei = 6.0_f64;
         self.w_ie = 10.0_f64;
     }
-
 }
 
 pub fn validate_wilson_cowan(state: &WilsonCowanUnit) -> bool {

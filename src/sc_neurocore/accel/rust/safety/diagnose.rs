@@ -32,7 +32,7 @@ impl DiagnosticReport {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [f"SNN Architecture Doctor — target: {self.target}", ""]
         // counts = {s: 0 for s in Severity}
         // for f in self.findings:
@@ -51,12 +51,12 @@ impl DiagnosticReport {
         0.0
     }
 
-    pub fn has_critical(&self, ) -> f64 {
+    pub fn has_critical(&self) -> f64 {
         // return any(f.severity == Severity.CRITICAL for f in self.findings)
         0.0
     }
 
-    pub fn score(&self, ) -> f64 {
+    pub fn score(&self) -> f64 {
         // penalty = sum(
         // 10 if f.severity == Severity.CRITICAL else 5 if f.severity == Severity
         // for f in self.findings
@@ -65,7 +65,6 @@ impl DiagnosticReport {
         // return max(0, 100 - penalty)
         0.0
     }
-
 }
 
 pub fn validate_diagnose(state: &DiagnosticReport) -> bool {
@@ -81,5 +80,4 @@ mod tests {
         let state = DiagnosticReport::new();
         assert!(validate_diagnose(&state));
     }
-
 }

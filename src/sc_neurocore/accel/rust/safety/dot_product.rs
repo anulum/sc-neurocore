@@ -15,12 +15,10 @@ pub struct BitstreamDotProduct {
 
 impl BitstreamDotProduct {
     pub fn new() -> Self {
-        Self {
-            synapses: 0.0_f64,
-        }
+        Self { synapses: 0.0_f64 }
     }
 
-    pub fn n_inputs(&self, ) -> f64 {
+    pub fn n_inputs(&self) -> f64 {
         // return len(self.synapses)
         0.0
     }
@@ -43,7 +41,6 @@ impl BitstreamDotProduct {
         // probs.append(bitstream_to_probability(post_i))
         0.0
     }
-
 }
 
 pub fn validate_dot_product(state: &BitstreamDotProduct) -> bool {
@@ -59,5 +56,4 @@ mod tests {
         let state = BitstreamDotProduct::new();
         assert!(validate_dot_product(&state));
     }
-
 }

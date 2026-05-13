@@ -42,7 +42,6 @@ impl StochasticTransformerBlock {
         // else:
         0.0
     }
-
 }
 
 pub fn validate_block(state: &StochasticTransformerBlock) -> bool {
@@ -58,5 +57,4 @@ mod tests {
         let state = StochasticTransformerBlock::new();
         assert!(validate_block(&state));
     }
-
 }

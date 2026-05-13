@@ -49,7 +49,6 @@ impl KLIFNeuron {
         self.v_threshold = 1.0_f64;
         self.v_reset = 0.0_f64;
     }
-
 }
 
 pub fn validate_klif(state: &KLIFNeuron) -> bool {

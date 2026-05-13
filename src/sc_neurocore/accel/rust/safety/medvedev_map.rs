@@ -44,7 +44,6 @@ impl MedvedevMapNeuron {
         self.beta = 0.5_f64;
         self.x_threshold = 0.9_f64;
     }
-
 }
 
 pub fn validate_medvedev_map(state: &MedvedevMapNeuron) -> bool {

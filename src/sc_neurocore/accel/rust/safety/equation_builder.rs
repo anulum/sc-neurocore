@@ -61,7 +61,7 @@ impl EquationNeuron {
         0.0
     }
 
-    pub fn _build_env(&self, ) -> f64 {
+    pub fn _build_env(&self) -> f64 {
         // env: dict[str, object] = dict(self._namespace)
         // # Euler-Maruyama: noise scaled by sqrt(dt)/dt so that after deriv*dt
         // # the net noise is noise_scale * sqrt(dt) * N(0,1)
@@ -93,7 +93,7 @@ impl EquationNeuron {
         0 // spike indicator
     }
 
-    pub fn get_state(&self, ) -> f64 {
+    pub fn get_state(&self) -> f64 {
         // return dict(self.state)
         0.0
     }
@@ -106,7 +106,6 @@ impl EquationNeuron {
         self.initial_state = 0.0_f64;
         self.threshold_expr = 0.0_f64;
     }
-
 }
 
 pub fn validate_equation_builder(state: &EquationNeuron) -> bool {

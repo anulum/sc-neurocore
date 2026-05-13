@@ -40,7 +40,6 @@ impl SpatialTransformer3D {
         // output_grid = np.mean(attn_out, axis=1).reshape((res, res, res))
         0.0
     }
-
 }
 
 pub fn validate_transformer_3d(state: &SpatialTransformer3D) -> bool {
@@ -56,5 +55,4 @@ mod tests {
         let state = SpatialTransformer3D::new();
         assert!(validate_transformer_3d(&state));
     }
-
 }

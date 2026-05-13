@@ -97,7 +97,13 @@ impl CrosstalkAnalyzer {
         0.0
     }
 
-    pub fn compile_gate(&self, gate_type: f64, input_ports: f64, output_port: f64, gate_id: f64) -> f64 {
+    pub fn compile_gate(
+        &self,
+        gate_type: f64,
+        input_ports: f64,
+        output_port: f64,
+        gate_id: f64,
+    ) -> f64 {
         // self,
         // gate_type: str,
         // input_ports: list[int],
@@ -216,9 +222,6 @@ impl CrosstalkAnalyzer {
         // "total_power_mw": total_mw,
         0.0
     }
-
-
-
 }
 
 pub fn validate_photonic_noc(state: &CrosstalkAnalyzer) -> bool {
@@ -234,5 +237,4 @@ mod tests {
         let state = CrosstalkAnalyzer::new();
         assert!(validate_photonic_noc(&state));
     }
-
 }

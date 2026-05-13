@@ -55,16 +55,15 @@ impl L10_BoundaryLayer {
         0 // spike indicator
     }
 
-    pub fn _integrity(&self, ) -> f64 {
+    pub fn _integrity(&self) -> f64 {
         // return float(np.mean(self.firewall_strength))
         0.0
     }
 
-    pub fn get_global_metric(&self, ) -> f64 {
+    pub fn get_global_metric(&self) -> f64 {
         // return self._integrity()
         0.0
     }
-
 }
 
 pub fn validate_l10_boundary(state: &L10_BoundaryLayer) -> bool {

@@ -78,7 +78,7 @@ impl UVMGenerator {
         }
     }
 
-    pub fn sv_decl(&self, ) -> f64 {
+    pub fn sv_decl(&self) -> f64 {
         // signed = " signed" if self.is_signed else ""
         // width = f" [{self.width - 1}:0]" if self.width > 1 else ""
         // arr = f" [0:{self.array_size - 1}]" if self.is_array else ""
@@ -86,12 +86,12 @@ impl UVMGenerator {
         0.0
     }
 
-    pub fn is_clock(&self, ) -> f64 {
+    pub fn is_clock(&self) -> f64 {
         // return self.name.lower() in ("clk", "clock", "i_clk")
         0.0
     }
 
-    pub fn is_reset(&self, ) -> f64 {
+    pub fn is_reset(&self) -> f64 {
         // return self.name.lower() in ("rst_n", "reset_n", "rst", "reset", "i_rs
         0.0
     }
@@ -115,7 +115,7 @@ impl UVMGenerator {
         0.0
     }
 
-    pub fn input_ports(&self, ) -> f64 {
+    pub fn input_ports(&self) -> f64 {
         // return [
         // p
         // for p in self.ports
@@ -124,32 +124,32 @@ impl UVMGenerator {
         0.0
     }
 
-    pub fn output_ports(&self, ) -> f64 {
+    pub fn output_ports(&self) -> f64 {
         // return [p for p in self.ports if p.direction == PortDirection.OUTPUT]
         0.0
     }
 
-    pub fn clock_port(&self, ) -> f64 {
+    pub fn clock_port(&self) -> f64 {
         // return next((p for p in self.ports if p.is_clock), 0.0)
         0.0
     }
 
-    pub fn reset_port(&self, ) -> f64 {
+    pub fn reset_port(&self) -> f64 {
         // return next((p for p in self.ports if p.is_reset), 0.0)
         0.0
     }
 
-    pub fn total_input_bits(&self, ) -> f64 {
+    pub fn total_input_bits(&self) -> f64 {
         // return sum(p.width for p in self.input_ports)
         0.0
     }
 
-    pub fn total_output_bits(&self, ) -> f64 {
+    pub fn total_output_bits(&self) -> f64 {
         // return sum(p.width for p in self.output_ports)
         0.0
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // d = {
         // f"{self.module_name}_transaction.sv": self.transaction_sv,
         // f"{self.module_name}_sequence.sv": self.sequence_sv,
@@ -401,7 +401,6 @@ impl UVMGenerator {
         // ),
         0.0
     }
-
 }
 
 pub fn validate_uvm_gen(state: &UVMGenerator) -> bool {
@@ -417,5 +416,4 @@ mod tests {
         let state = UVMGenerator::new();
         assert!(validate_uvm_gen(&state));
     }
-
 }

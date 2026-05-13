@@ -51,17 +51,17 @@ impl TripartiteSynapse {
         0 // spike indicator
     }
 
-    pub fn ca(&self, ) -> f64 {
+    pub fn ca(&self) -> f64 {
         // return self.astrocyte.ca
         0.0
     }
 
-    pub fn ip3(&self, ) -> f64 {
+    pub fn ip3(&self) -> f64 {
         // return self.astrocyte.ip3
         0.0
     }
 
-    pub fn effective_weight(&self, ) -> f64 {
+    pub fn effective_weight(&self) -> f64 {
         // return self.weight
         0.0
     }
@@ -76,7 +76,6 @@ impl TripartiteSynapse {
         self.facilitation = 1.5_f64;
         self.depression_rate = 0.001_f64;
     }
-
 }
 
 pub fn validate_tripartite(state: &TripartiteSynapse) -> bool {

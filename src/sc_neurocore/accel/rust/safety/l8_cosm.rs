@@ -77,14 +77,13 @@ impl L8_CosmicAdapter {
         0.0
     }
 
-    pub fn get_metrics(&self, ) -> f64 {
+    pub fn get_metrics(&self) -> f64 {
         // return {
         // "clock_stability": float(jnp.std(self.system_phases)),
         // "pta_locking_index": float(j(jnp.mean(j(1j * self.system_phases_f64_f6
         // }
         0.0
     }
-
 }
 
 pub fn validate_l8_cosm(state: &L8_CosmicAdapter) -> bool {
@@ -100,5 +99,4 @@ mod tests {
         let state = L8_CosmicAdapter::new();
         assert!(validate_l8_cosm(&state));
     }
-
 }

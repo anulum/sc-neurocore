@@ -82,7 +82,6 @@ impl BCIDecoder {
         // return bits
         0.0
     }
-
 }
 
 pub fn validate_bci(state: &BCIDecoder) -> bool {
@@ -98,5 +97,4 @@ mod tests {
         let state = BCIDecoder::new();
         assert!(validate_bci(&state));
     }
-
 }

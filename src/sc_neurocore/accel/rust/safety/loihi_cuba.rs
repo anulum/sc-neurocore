@@ -48,7 +48,6 @@ impl LoihiCUBANeuron {
         self.tau_u = 5.0_f64;
         self.v_threshold = 1000.0_f64;
     }
-
 }
 
 pub fn validate_loihi_cuba(state: &LoihiCUBANeuron) -> bool {

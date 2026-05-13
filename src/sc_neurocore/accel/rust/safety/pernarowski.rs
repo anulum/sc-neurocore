@@ -59,7 +59,6 @@ impl PernarowskiNeuron {
         self.alpha = 0.1_f64;
         self.beta = 0.5_f64;
     }
-
 }
 
 pub fn validate_pernarowski(state: &PernarowskiNeuron) -> bool {

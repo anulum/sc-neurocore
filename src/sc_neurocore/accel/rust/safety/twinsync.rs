@@ -78,13 +78,13 @@ impl AdaptiveCheckpointInterval {
         }
     }
 
-    pub fn tick(&self, ) -> f64 {
+    pub fn tick(&self) -> f64 {
         // self.time += 1
         // return self.time
         0.0
     }
 
-    pub fn send(&self, ) -> f64 {
+    pub fn send(&self) -> f64 {
         // self.time += 1
         // return self.time
         0.0
@@ -95,12 +95,6 @@ impl AdaptiveCheckpointInterval {
         // return self.time
         0.0
     }
-
-
-
-
-
-
 
     pub fn happened_before(&self, other: f64) -> f64 {
         // return bool(np.all(self.clock <= other) && np.any(self.clock < other))
@@ -114,7 +108,7 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn compute_checksum(&self, ) -> f64 {
+    pub fn compute_checksum(&self) -> f64 {
         // h = hashlib.sha256()
         // h.update(self.checkpoint_id.to_bytes(4, "little"))
         // h.update(self.virtual_time_ns.to_bytes(8, "little"))
@@ -126,7 +120,15 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn save(&self, node_id: f64, virtual_time_ns: f64, neuron_state: f64, synapse_state: f64, lfsr_state: f64, identity_deep: f64) -> f64 {
+    pub fn save(
+        &self,
+        node_id: f64,
+        virtual_time_ns: f64,
+        neuron_state: f64,
+        synapse_state: f64,
+        lfsr_state: f64,
+        identity_deep: f64,
+    ) -> f64 {
         // self,
         // node_id: int,
         // virtual_time_ns: int,
@@ -163,7 +165,7 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn total_checkpoints(&self, ) -> f64 {
+    pub fn total_checkpoints(&self) -> f64 {
         // return sum(len(v) for v in self.checkpoints.values())
         0.0
     }
@@ -173,7 +175,7 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn process_next(&self, ) -> f64 {
+    pub fn process_next(&self) -> f64 {
         // if not self.event_queue:
         // return 0.0
         // event = heapq.heappop(self.event_queue)
@@ -211,7 +213,7 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn compute_gvt(&self, ) -> f64 {
+    pub fn compute_gvt(&self) -> f64 {
         // lvts = [n.local_virtual_time_ns for n in self.nodes.values()]
         // in_transit = [e.virtual_time_ns for e in self.event_queue if not e.can
         // all_times = lvts + in_transit
@@ -220,7 +222,7 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn fossil_collect(&self, ) -> f64 {
+    pub fn fossil_collect(&self) -> f64 {
         // gvt = self.compute_gvt()
         // removed = 0
         // for nid in list(self.checkpoint_mgr.checkpoints.keys()):
@@ -232,7 +234,7 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn status(&self, ) -> f64 {
+    pub fn status(&self) -> f64 {
         // return {
         // "num_nodes": self.num_nodes,
         // "gvt_ns": self.gvt_ns,
@@ -258,7 +260,7 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn verify_causal_order(&self, ) -> f64 {
+    pub fn verify_causal_order(&self) -> f64 {
         // violations = []
         // for i in range(len(self.processed) - 1):
         // a = self.processed[i]
@@ -277,12 +279,12 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn node_throughput(&self, ) -> f64 {
+    pub fn node_throughput(&self) -> f64 {
         // return {nid: n.processed_events for nid, n in self.nodes.items()}
         0.0
     }
 
-    pub fn total_divergence(&self, ) -> f64 {
+    pub fn total_divergence(&self) -> f64 {
         // return (
         // self.spike_rate_divergence
         // + abs(self.timing_offset_ns) / 1e6
@@ -292,22 +294,27 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn within_tolerance(&self, ) -> f64 {
+    pub fn within_tolerance(&self) -> f64 {
         // return self.total_divergence < 1.0
         0.0
     }
 
-    pub fn start(&self, ) -> f64 {
+    pub fn start(&self) -> f64 {
         // self.running = true
         0.0
     }
 
-    pub fn stop(&self, ) -> f64 {
+    pub fn stop(&self) -> f64 {
         // self.running = false
         0.0
     }
 
-    pub fn inject_physical_event(&self, spike_time_ns: f64, neuron_id: f64, target_node: f64) -> f64 {
+    pub fn inject_physical_event(
+        &self,
+        spike_time_ns: f64,
+        neuron_id: f64,
+        target_node: f64,
+    ) -> f64 {
         // self, spike_time_ns: int, neuron_id: int, target_node: int = 0
         // ) -> 0.0:
         // event = TwinEvent(
@@ -335,7 +342,12 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn update_divergence(&self, physical_rate_hz: f64, digital_rate_hz: f64, physical_identity: f64) -> f64 {
+    pub fn update_divergence(
+        &self,
+        physical_rate_hz: f64,
+        digital_rate_hz: f64,
+        physical_identity: f64,
+    ) -> f64 {
         // self,
         // physical_rate_hz: float,
         // digital_rate_hz: float,
@@ -353,8 +365,6 @@ impl AdaptiveCheckpointInterval {
         // )
         0.0
     }
-
-
 
     pub fn can_advance_to(&self, target_ns: f64) -> f64 {
         // return target_ns <= self.last_null_message_ns + self.lookahead_ns
@@ -380,7 +390,15 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn compute_delta(&self, base_state: f64, new_state: f64, base_id: f64, new_id: f64, virtual_time_ns: f64, node_id: f64) -> f64 {
+    pub fn compute_delta(
+        &self,
+        base_state: f64,
+        new_state: f64,
+        base_id: f64,
+        new_id: f64,
+        virtual_time_ns: f64,
+        node_id: f64,
+    ) -> f64 {
         // base_state: np.ndarray,
         // new_state: np.ndarray,
         // base_id: int,
@@ -399,14 +417,14 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn compression_ratio(&self, ) -> f64 {
+    pub fn compression_ratio(&self) -> f64 {
         // if self.size_bytes <= 0:
         // return 0.0
         // return 1.0
         0.0
     }
 
-    pub fn num_changes(&self, ) -> f64 {
+    pub fn num_changes(&self) -> f64 {
         // return len(self.changed_indices)
         0.0
     }
@@ -421,7 +439,7 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn is_deterministic(&self, ) -> f64 {
+    pub fn is_deterministic(&self) -> f64 {
         // if not self.run_a_hashes || not self.run_b_hashes:
         // return false
         // min_len = min(len(self.run_a_hashes), len(self.run_b_hashes))
@@ -429,7 +447,7 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn first_divergence_index(&self, ) -> f64 {
+    pub fn first_divergence_index(&self) -> f64 {
         // min_len = min(len(self.run_a_hashes), len(self.run_b_hashes))
         // for i in range(min_len):
         // if self.run_a_hashes[i] != self.run_b_hashes[i]:
@@ -438,12 +456,17 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn compared_count(&self, ) -> f64 {
+    pub fn compared_count(&self) -> f64 {
         // return min(len(self.run_a_hashes), len(self.run_b_hashes))
         0.0
     }
 
-    pub fn check_and_correct(&self, physical_time_ns: f64, digital_time_ns: f64, node_id: f64) -> f64 {
+    pub fn check_and_correct(
+        &self,
+        physical_time_ns: f64,
+        digital_time_ns: f64,
+        node_id: f64,
+    ) -> f64 {
         // self,
         // physical_time_ns: int,
         // digital_time_ns: int,
@@ -459,12 +482,12 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn total_corrections(&self, ) -> f64 {
+    pub fn total_corrections(&self) -> f64 {
         // return len(self.corrections)
         0.0
     }
 
-    pub fn neuron_count(&self, ) -> f64 {
+    pub fn neuron_count(&self) -> f64 {
         // return self.neuron_range[1] - self.neuron_range[0]
         0.0
     }
@@ -474,12 +497,12 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn total_neurons(&self, ) -> f64 {
+    pub fn total_neurons(&self) -> f64 {
         // return sum(r.neuron_count for r in self.ranks.values())
         0.0
     }
 
-    pub fn num_ranks(&self, ) -> f64 {
+    pub fn num_ranks(&self) -> f64 {
         // return len(self.ranks)
         0.0
     }
@@ -509,14 +532,14 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn rejection_rate(&self, ) -> f64 {
+    pub fn rejection_rate(&self) -> f64 {
         // if self.total_offered <= 0:
         // return 0.0
         // return self.rejected_count / self.total_offered
         0.0
     }
 
-    pub fn is_backpressured(&self, ) -> f64 {
+    pub fn is_backpressured(&self) -> f64 {
         // return self.rejection_rate > 0.1
         0.0
     }
@@ -532,7 +555,7 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn verify(&self, ) -> f64 {
+    pub fn verify(&self) -> f64 {
         // prev = "0" * 16
         // for cp_id, cp_hash, stored_chain_hash in self.chain:
         // h = hashlib.sha256()
@@ -546,7 +569,7 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn length(&self, ) -> f64 {
+    pub fn length(&self) -> f64 {
         // return len(self.chain)
         0.0
     }
@@ -567,7 +590,7 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // return {
         // "session_time_ns": self.session_time_ns,
         // "num_nodes": self.num_nodes,
@@ -587,12 +610,12 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn twin_count(&self, ) -> f64 {
+    pub fn twin_count(&self) -> f64 {
         // return len(self.twins)
         0.0
     }
 
-    pub fn global_gvt(&self, ) -> f64 {
+    pub fn global_gvt(&self) -> f64 {
         // if not self.twins:
         // return 0
         // return min(t.session.engine.gvt_ns for t in self.twins.values())
@@ -603,8 +626,6 @@ impl AdaptiveCheckpointInterval {
         // return {tid: t.session.advance(steps) for tid, t in self.twins.items()
         0.0
     }
-
-
 
     pub fn update(&self, total_rollbacks: f64, total_events: f64) -> f64 {
         // new_rollbacks = total_rollbacks - self._last_rollbacks
@@ -620,11 +641,10 @@ impl AdaptiveCheckpointInterval {
         0.0
     }
 
-    pub fn is_aggressive(&self, ) -> f64 {
+    pub fn is_aggressive(&self) -> f64 {
         // return self.current_interval <= self.min_interval * 2
         0.0
     }
-
 }
 
 pub fn validate_twinsync(state: &AdaptiveCheckpointInterval) -> bool {
@@ -640,5 +660,4 @@ mod tests {
         let state = AdaptiveCheckpointInterval::new();
         assert!(validate_twinsync(&state));
     }
-
 }

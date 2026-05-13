@@ -43,21 +43,13 @@ impl TemporalAccumulatedBN {
         0.0
     }
 
-
-
-
-
-
-
-    pub fn fused_threshold(&self, ) -> f64 {
+    pub fn fused_threshold(&self) -> f64 {
         // result: np.ndarray[Any, Any] = (self.threshold - self.beta) * np.sqrt(
         // self.running_var + self.eps
         // ) / (self.gamma_f64).clamp(1e-8, 0.0) + self.running_mean
         // return result
         0.0
     }
-
-
 
     pub fn reset(&mut self) {
         // self._accumulated = np.zeros(self.n_features)
@@ -67,7 +59,6 @@ impl TemporalAccumulatedBN {
         self.eps = 1e-05_f64;
         self.T = 0.0_f64;
     }
-
 }
 
 pub fn validate_normalizers(state: &TemporalAccumulatedBN) -> bool {
@@ -83,5 +74,4 @@ mod tests {
         let state = TemporalAccumulatedBN::new();
         assert!(validate_normalizers(&state));
     }
-
 }

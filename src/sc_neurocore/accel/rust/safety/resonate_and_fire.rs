@@ -53,7 +53,6 @@ impl ResonateAndFireNeuron {
         self.omega = 1.0_f64;
         self.threshold = 1.0_f64;
     }
-
 }
 
 pub fn validate_resonate_and_fire(state: &ResonateAndFireNeuron) -> bool {

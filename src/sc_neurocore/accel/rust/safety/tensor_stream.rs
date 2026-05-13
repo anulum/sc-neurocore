@@ -38,7 +38,7 @@ impl TensorStream {
         0.0
     }
 
-    pub fn to_prob(&self, ) -> f64 {
+    pub fn to_prob(&self) -> f64 {
         // if self.domain == "prob":
         // return self.data
         // if self.domain == "bitstream":
@@ -51,7 +51,7 @@ impl TensorStream {
         0.0
     }
 
-    pub fn to_quantum(&self, ) -> f64 {
+    pub fn to_quantum(&self) -> f64 {
         // if self.domain == "quantum":
         // return self.data
         // p = (self.to_prob()_f64).clamp(0.0, 1.0)
@@ -63,7 +63,6 @@ impl TensorStream {
         // return np.stack([alpha, beta], axis=-1).astype(complex)
         0.0
     }
-
 }
 
 pub fn validate_tensor_stream(state: &TensorStream) -> bool {
@@ -79,5 +78,4 @@ mod tests {
         let state = TensorStream::new();
         assert!(validate_tensor_stream(&state));
     }
-
 }

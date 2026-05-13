@@ -83,7 +83,7 @@ impl L3_GenomicAdapter {
         0.0
     }
 
-    pub fn get_metrics(&self, ) -> f64 {
+    pub fn get_metrics(&self) -> f64 {
         // return {
         // "avg_p_spin": float(jnp.mean(self.p_spin)),
         // "avg_v_bio": float(jnp.mean(self.v_bio)),
@@ -91,7 +91,6 @@ impl L3_GenomicAdapter {
         // }
         0.0
     }
-
 }
 
 pub fn validate_l3_gen(state: &L3_GenomicAdapter) -> bool {
@@ -107,5 +106,4 @@ mod tests {
         let state = L3_GenomicAdapter::new();
         assert!(validate_l3_gen(&state));
     }
-
 }
