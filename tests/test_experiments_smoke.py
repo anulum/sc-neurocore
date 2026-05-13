@@ -126,11 +126,22 @@ class TestExperimentExecution:
         result = run_learning_experiment()
         assert result is None or result is not None
 
-    def test_convergence_demo(self):
+    def test_convergence_demo(self, tmp_path):
         from sc_neurocore.experiments.demonstration_convergence import run_demonstration
 
-        result = run_demonstration()
-        assert result is None or result is not None
+        result = run_demonstration(
+            hardware_mode="bundle",
+            work_dir=str(tmp_path / "compiler"),
+            bundle_dir=str(tmp_path / "mlir_bundle"),
+        )
+
+        assert result["hardware"]["mode"] == "bundle"
+        assert result["hardware"]["verilog_path"] is None
+        bundle = result["hardware"]["bundle"]
+        assert bundle["module_name"] == "director_top"
+        assert bundle["node_count"] >= 1
+        assert (tmp_path / "mlir_bundle" / "director_top.mlir").is_file()
+        assert (tmp_path / "mlir_bundle" / "mlir_bundle_manifest.json").is_file()
 
     def test_advanced_demo(self):
         from sc_neurocore.experiments.advanced_demo import run_advanced_demo

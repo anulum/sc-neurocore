@@ -125,6 +125,31 @@ def main() -> None:
         )
         written.append(path)
 
+    for seed in range(5):
+        out_subdir = f"dcls_max_standard_lif_iter_eps_l1e5_seed{seed}_20260513"
+        display_name = f"scn-tim-stdlif-iter-eps-l1e5-seed{seed}-20260513"
+        path = OUT_DIR / (f"director_shd_standard_lif_iter_eps_l1e5_seed{seed}_2026_05_13.yaml")
+        path.write_text(
+            _config(
+                display_name,
+                out_subdir,
+                {
+                    "SHD_SEED": str(seed),
+                    "SHD_NEURON_MODULE": "standard_lif",
+                    "SHD_L1_WEIGHT": "0.00001",
+                    "SHD_PRUNE_METHOD": "epsilon",
+                    "SHD_PRUNE_PROTOCOL": "iterative_finetune",
+                    "SHD_PRUNE_SPARSITY": "0.30",
+                    "SHD_PRUNE_EPSILONS": "0.0075,0.01,0.0125,0.015,0.02,0.03,0.04,0.05",
+                    "SHD_PRUNE_STEP_FINETUNE_EPOCHS": "15",
+                    "SHD_PRUNE_MAX_DEPLOYABLE_DROP": "1.0",
+                    "SHD_FINETUNE_EPOCHS": "15",
+                },
+            ),
+            encoding="utf-8",
+        )
+        written.append(path)
+
     for path in written:
         print(path)
 
