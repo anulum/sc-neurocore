@@ -8,6 +8,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
+import sc_neurocore.training.loops as training_loops
 from sc_neurocore.training import (
     HAS_TORCH,
     # Cells
@@ -410,6 +411,22 @@ class TestTrainingLoops:
     def test_auto_device(self):
         dev = auto_device()
         assert isinstance(dev, torch.device)
+
+    def test_auto_device_falls_back_when_cuda_probe_fails(self, monkeypatch):
+        monkeypatch.setattr(training_loops.torch.cuda, "is_available", lambda: True)
+        monkeypatch.setattr(training_loops, "_device_usable", lambda device: device.type != "cuda")
+        if hasattr(training_loops.torch.backends, "mps"):
+            monkeypatch.setattr(
+                training_loops.torch.backends.mps, "is_available", lambda: False, raising=False
+            )
+
+        assert training_loops.auto_device().type == "cpu"
+
+    def test_auto_device_uses_cuda_when_probe_passes(self, monkeypatch):
+        monkeypatch.setattr(training_loops.torch.cuda, "is_available", lambda: True)
+        monkeypatch.setattr(training_loops, "_device_usable", lambda device: True)
+
+        assert training_loops.auto_device().type == "cuda"
 
     def test_train_epoch(self, tiny_model, tiny_loader):
         optimizer = torch.optim.Adam(tiny_model.parameters(), lr=1e-3)
