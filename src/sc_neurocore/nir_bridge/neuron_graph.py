@@ -21,8 +21,11 @@ nodes of a parsed ``SCNetwork`` (from ``nir_bridge/parser.py``).  Neuron
 nodes (LIF, IF, CubaLIF, LI, CubaLI) become ``NeuronSpec`` entries.
 Weight-carrying nodes (Affine, Linear) become ``ConnectionSpec`` entries
 that bind the source population to the destination population.  Non-compute
-nodes (Input, Output, Scale, Flatten, Threshold, Delay) are folded into
-the graph metadata or the adjacent connection.
+nodes (Input, Output, Flatten, Threshold) are folded into the graph metadata
+or the adjacent connection.  Scale nodes adjacent to a weight-carrying node are
+folded into that connection's columns or rows.  Explicit NIR Delay nodes on the
+source side of a weight-carrying node are preserved as
+``ConnectionSpec.delay_steps`` when their per-channel delay is homogeneous.
 
 Canonical ODE Templates
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,6 +118,12 @@ class ConnectionSpec:
         Number of explicit unit-delay timesteps on this connection.  Recurrent
         NIR edges broken by the parser currently use ``1``; feed-forward
         connections use ``0``.
+    source_threshold : np.ndarray | None
+        Optional threshold vector applied to source signals before the weight
+        matrix.  Represents NIR ``Threshold`` on the source side.
+    destination_threshold : np.ndarray | None
+        Optional threshold vector applied after this connection's affine
+        accumulation and before the destination population input.
     """
 
     src: str
@@ -122,6 +131,8 @@ class ConnectionSpec:
     weights: np.ndarray
     bias: np.ndarray | None = None
     delay_steps: int = 0
+    source_threshold: np.ndarray | None = None
+    destination_threshold: np.ndarray | None = None
 
 
 @dataclass
@@ -220,6 +231,11 @@ _SC_PASSTHROUGH_NODES: set[str] = {
     "_UnitDelayNode",
 }
 
+_DELAY_NODE_NAME = "SCDelayNode"
+_SCALE_NODE_NAME = "SCScaleNode"
+_FLATTEN_NODE_NAME = "SCFlattenNode"
+_THRESHOLD_NODE_NAME = "SCThresholdNode"
+
 
 def _extract_neuron_params(node: Any, neuron_type: str) -> dict[str, np.ndarray]:
     """Extract canonical parameters from an SC neuron node.
@@ -262,6 +278,348 @@ def _extract_neuron_params(node: Any, neuron_type: str) -> dict[str, np.ndarray]
             params.pop(attr, None)
 
     return params
+
+
+def _homogeneous_delay_steps(node: Any, node_name: str) -> int:
+    """Return a scalar delay for an explicit NIR Delay node or fail closed."""
+
+    raw_steps = getattr(node, "delay_steps", None)
+    if raw_steps is None:
+        raise ValueError(f"Delay node {node_name!r} does not expose delay_steps")
+    steps = np.atleast_1d(np.asarray(raw_steps, dtype=np.int64)).reshape(-1)
+    if steps.size == 0:
+        raise ValueError(f"Delay node {node_name!r} must contain at least one delay value")
+    if np.any(steps < 0):
+        raise ValueError(f"Delay node {node_name!r} contains negative delay_steps")
+    if not np.all(steps == steps[0]):
+        raise ValueError(
+            f"Delay node {node_name!r} has heterogeneous delay_steps; "
+            "split the delayed channels before FPGA lowering"
+        )
+    return int(steps[0])
+
+
+def _scale_vector(node: Any, node_name: str) -> np.ndarray:
+    """Return a finite one-dimensional scale vector from an SCScaleNode."""
+
+    raw_scale = getattr(node, "scale", None)
+    if raw_scale is None:
+        raise ValueError(f"Scale node {node_name!r} does not expose scale")
+    scale = np.atleast_1d(np.asarray(raw_scale, dtype=np.float32)).reshape(-1)
+    if scale.size == 0:
+        raise ValueError(f"Scale node {node_name!r} must contain at least one scale value")
+    if not np.all(np.isfinite(scale)):
+        raise ValueError(f"Scale node {node_name!r} contains non-finite scale values")
+    return scale
+
+
+def _threshold_vector(node: Any, node_name: str) -> np.ndarray:
+    """Return a finite one-dimensional threshold vector from an SCThresholdNode."""
+
+    raw_threshold = getattr(node, "threshold", None)
+    if raw_threshold is None:
+        raise ValueError(f"Threshold node {node_name!r} does not expose threshold")
+    threshold = np.atleast_1d(np.asarray(raw_threshold, dtype=np.float32)).reshape(-1)
+    if threshold.size == 0:
+        raise ValueError(f"Threshold node {node_name!r} must contain at least one threshold")
+    if not np.all(np.isfinite(threshold)):
+        raise ValueError(f"Threshold node {node_name!r} contains non-finite threshold values")
+    return threshold
+
+
+def _compose_scale(left: np.ndarray | None, right: np.ndarray) -> np.ndarray:
+    """Compose adjacent scale vectors under NumPy broadcasting rules."""
+
+    if left is None:
+        return right
+    try:
+        return np.multiply(left, right, dtype=np.float32)
+    except ValueError as exc:
+        raise ValueError(
+            "Adjacent Scale nodes have incompatible shapes for FPGA lowering"
+        ) from exc
+
+
+def _broadcast_scale(scale: np.ndarray | None, size: int, label: str) -> np.ndarray | None:
+    """Broadcast a scalar/vector scale to ``size`` or fail closed."""
+
+    if scale is None:
+        return None
+    if scale.size == 1:
+        return np.full(size, float(scale[0]), dtype=np.float32)
+    if scale.size == size:
+        return scale.astype(np.float32, copy=False)
+    raise ValueError(f"{label} scale length {scale.size} does not match required width {size}")
+
+
+def _broadcast_threshold(
+    threshold: np.ndarray | None,
+    size: int,
+    label: str,
+) -> np.ndarray | None:
+    """Broadcast a scalar/vector threshold to ``size`` or fail closed."""
+
+    if threshold is None:
+        return None
+    if threshold.size == 1:
+        return np.full(size, float(threshold[0]), dtype=np.float32)
+    if threshold.size == size:
+        return threshold.astype(np.float32, copy=False)
+    raise ValueError(f"{label} threshold length {threshold.size} does not match required width {size}")
+
+
+def _shape_width(shape: tuple[int, ...] | None, *, node_name: str, label: str) -> int:
+    """Return the element count for a finite NIR shape or fail closed."""
+
+    if shape is None:
+        raise ValueError(f"Flatten node {node_name!r} lacks {label} shape metadata")
+    if not shape:
+        return 1
+    width = int(np.prod(np.asarray(shape, dtype=np.int64)))
+    if width <= 0:
+        raise ValueError(f"Flatten node {node_name!r} has invalid {label} shape {shape}")
+    return width
+
+
+def _flatten_widths(node: Any, node_name: str) -> tuple[int, int]:
+    """Return input/output element counts for a shape-typed SCFlattenNode."""
+
+    input_width = _shape_width(
+        getattr(node, "input_shape", None),
+        node_name=node_name,
+        label="input",
+    )
+    output_width = _shape_width(
+        getattr(node, "output_shape", None),
+        node_name=node_name,
+        label="output",
+    )
+    if input_width != output_width:
+        raise ValueError(
+            f"Flatten node {node_name!r} changes element count "
+            f"from {input_width} to {output_width}"
+        )
+    return input_width, output_width
+
+
+def _node_logical_width(node: Any) -> int | None:
+    """Return the flattened channel width for a source/destination node."""
+
+    class_name = type(node).__name__
+    if class_name == "SCInputNode":
+        shape = getattr(node, "shape", None)
+        if shape is None:
+            return None
+        if not shape:
+            return 1
+        return int(np.prod(np.asarray(shape, dtype=np.int64)))
+    if class_name in _SC_NODE_TO_TYPE:
+        return int(getattr(node, "n_neurons", 1))
+    return None
+
+
+def _resolve_weight_source(
+    node_name: str,
+    *,
+    nodes: dict[str, Any],
+    predecessors: dict[str, list[str]],
+    accumulated_delay_steps: int = 0,
+    accumulated_scale: np.ndarray | None = None,
+    accumulated_threshold: np.ndarray | None = None,
+    required_source_width: int | None = None,
+    flatten_output_width: int | None = None,
+    seen: frozenset[str] = frozenset(),
+) -> tuple[str, int, np.ndarray | None, int | None, np.ndarray | None] | None:
+    """Resolve the population/input source feeding a weight node.
+
+    Traverses pass-through nodes immediately upstream of ``Affine``/``Linear``
+    nodes and accumulates explicit NIR Delay metadata.  Ambiguous fan-in fails
+    closed so the compiler does not invent a source for hardware handoff.
+    """
+
+    if node_name in seen:
+        raise ValueError(f"Cycle while resolving weighted source through {node_name!r}")
+    node = nodes[node_name]
+    class_name = type(node).__name__
+    if class_name in _SC_NODE_TO_TYPE or class_name == "SCInputNode":
+        node_width = _node_logical_width(node)
+        if (
+            required_source_width is not None
+            and node_width is not None
+            and node_width != required_source_width
+        ):
+            raise ValueError(
+                f"Flatten input width {required_source_width} does not match "
+                f"source {node_name!r} width {node_width}"
+            )
+        return (
+            node_name,
+            accumulated_delay_steps,
+            accumulated_scale,
+            flatten_output_width,
+            accumulated_threshold,
+        )
+
+    if class_name not in _SC_PASSTHROUGH_NODES:
+        return None
+
+    delay_steps = accumulated_delay_steps
+    if class_name == _DELAY_NODE_NAME:
+        delay_steps += _homogeneous_delay_steps(node, node_name)
+    scale = accumulated_scale
+    if class_name == _SCALE_NODE_NAME:
+        scale = _compose_scale(scale, _scale_vector(node, node_name))
+    threshold = accumulated_threshold
+    if class_name == _THRESHOLD_NODE_NAME:
+        if threshold is not None:
+            raise ValueError(
+                "Multiple source-side Threshold nodes on one connection require explicit "
+                "pre-lowering before FPGA compilation"
+            )
+        threshold = _threshold_vector(node, node_name)
+    next_required_source_width = required_source_width
+    next_flatten_output_width = flatten_output_width
+    if class_name == _FLATTEN_NODE_NAME:
+        input_width, output_width = _flatten_widths(node, node_name)
+        if required_source_width is not None and output_width != required_source_width:
+            raise ValueError(
+                f"Flatten output width {output_width} does not match downstream "
+                f"source width {required_source_width}"
+            )
+        next_required_source_width = input_width
+        next_flatten_output_width = output_width if flatten_output_width is None else flatten_output_width
+
+    upstream = predecessors.get(node_name, [])
+    if len(upstream) != 1:
+        raise ValueError(
+            f"Pass-through node {node_name!r} has {len(upstream)} upstream sources; "
+            "explicit pre-lowering is required before FPGA compilation"
+        )
+    return _resolve_weight_source(
+        upstream[0],
+        nodes=nodes,
+        predecessors=predecessors,
+        accumulated_delay_steps=delay_steps,
+        accumulated_scale=scale,
+        accumulated_threshold=threshold,
+        required_source_width=next_required_source_width,
+        flatten_output_width=next_flatten_output_width,
+        seen=seen | {node_name},
+    )
+
+
+def _resolve_weight_destination(
+    node_name: str,
+    *,
+    nodes: dict[str, Any],
+    successors: dict[str, list[str]],
+    accumulated_scale: np.ndarray | None = None,
+    accumulated_threshold: np.ndarray | None = None,
+    required_destination_width: int | None = None,
+    flatten_input_width: int | None = None,
+    seen: frozenset[str] = frozenset(),
+) -> tuple[str, np.ndarray | None, int | None, np.ndarray | None] | None:
+    """Resolve the neuron destination fed by a weight node.
+
+    Traverses pass-through nodes immediately downstream of ``Affine``/``Linear``
+    and accumulates post-weight Scale metadata.  The scale is later folded into
+    connection rows and bias terms.
+    """
+
+    if node_name in seen:
+        raise ValueError(f"Cycle while resolving weighted destination through {node_name!r}")
+    node = nodes[node_name]
+    class_name = type(node).__name__
+    if class_name in _SC_NODE_TO_TYPE:
+        node_width = _node_logical_width(node)
+        if (
+            required_destination_width is not None
+            and node_width is not None
+            and node_width != required_destination_width
+        ):
+            raise ValueError(
+                f"Flatten output width {required_destination_width} does not match "
+                f"destination {node_name!r} width {node_width}"
+            )
+        return node_name, accumulated_scale, flatten_input_width, accumulated_threshold
+
+    if class_name not in _SC_PASSTHROUGH_NODES or class_name in {"SCInputNode", "SCOutputNode"}:
+        return None
+
+    scale = accumulated_scale
+    if class_name == _SCALE_NODE_NAME:
+        scale = _compose_scale(scale, _scale_vector(node, node_name))
+    threshold = accumulated_threshold
+    if class_name == _THRESHOLD_NODE_NAME:
+        if threshold is not None:
+            raise ValueError(
+                "Multiple post-weight Threshold nodes on one connection require explicit "
+                "pre-lowering before FPGA compilation"
+            )
+        threshold = _threshold_vector(node, node_name)
+    next_required_destination_width = required_destination_width
+    next_flatten_input_width = flatten_input_width
+    if class_name == _FLATTEN_NODE_NAME:
+        input_width, output_width = _flatten_widths(node, node_name)
+        if required_destination_width is not None and input_width != required_destination_width:
+            raise ValueError(
+                f"Flatten input width {input_width} does not match upstream "
+                f"destination width {required_destination_width}"
+            )
+        next_required_destination_width = output_width
+        next_flatten_input_width = input_width if flatten_input_width is None else flatten_input_width
+
+    downstream = successors.get(node_name, [])
+    if len(downstream) != 1:
+        raise ValueError(
+            f"Pass-through node {node_name!r} has {len(downstream)} downstream targets; "
+            "explicit pre-lowering is required before FPGA compilation"
+        )
+    return _resolve_weight_destination(
+        downstream[0],
+        nodes=nodes,
+        successors=successors,
+        accumulated_scale=scale,
+        accumulated_threshold=threshold,
+        required_destination_width=next_required_destination_width,
+        flatten_input_width=next_flatten_input_width,
+        seen=seen | {node_name},
+    )
+
+
+def _fold_connection_scales(
+    weights: np.ndarray,
+    bias: np.ndarray | None,
+    *,
+    source_scale: np.ndarray | None,
+    destination_scale: np.ndarray | None,
+    src: str,
+    dst: str,
+) -> tuple[np.ndarray, np.ndarray | None]:
+    """Fold adjacent Scale nodes into a connection's weights and bias."""
+
+    folded_weights = np.asarray(weights, dtype=np.float32).copy()
+    folded_bias = None if bias is None else np.asarray(bias, dtype=np.float32).copy()
+
+    src_scale = _broadcast_scale(
+        source_scale,
+        folded_weights.shape[1],
+        f"source-side Scale for connection {src}->{dst}",
+    )
+    if src_scale is not None:
+        folded_weights *= src_scale[np.newaxis, :]
+
+    dst_scale = _broadcast_scale(
+        destination_scale,
+        folded_weights.shape[0],
+        f"post-weight Scale for connection {src}->{dst}",
+    )
+    if dst_scale is not None:
+        folded_weights *= dst_scale[:, np.newaxis]
+        if folded_bias is not None:
+            folded_bias *= dst_scale
+
+    return folded_weights, folded_bias
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -314,8 +672,11 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
     # Track which weight node feeds which neuron node
     # Pattern: Input → [Affine/Linear] → [Neuron] → [Affine/Linear] → [Neuron] → Output
     pending_weights: dict[str, tuple[np.ndarray, np.ndarray | None]] = {}
-    # Maps a neuron node name → the weight node that feeds it
-    weight_source_for: dict[str, str] = {}
+    # Maps a neuron node name → (weight node, post-weight scale, flatten width, threshold)
+    weight_source_for: dict[
+        str,
+        tuple[str, np.ndarray | None, int | None, np.ndarray | None],
+    ] = {}
 
     # First pass: classify nodes
     for name in topo_order:
@@ -347,11 +708,27 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
                     bias = np.asarray(bias, dtype=np.float32)
                 pending_weights[name] = (weight, bias)
 
-                # Find the neuron this feeds into
+                # Find the neuron this feeds into, preserving post-weight
+                # Scale nodes as row/bias multipliers.
                 for succ in successors.get(name, []):
-                    succ_class = type(nodes[succ]).__name__
-                    if succ_class in _SC_NODE_TO_TYPE:
-                        weight_source_for[succ] = name
+                    resolved_dst = _resolve_weight_destination(
+                        succ,
+                        nodes=nodes,
+                        successors=successors,
+                    )
+                    if resolved_dst is not None:
+                        (
+                            dst_name,
+                            destination_scale,
+                            destination_flatten_width,
+                            destination_threshold,
+                        ) = resolved_dst
+                        weight_source_for[dst_name] = (
+                            name,
+                            destination_scale,
+                            destination_flatten_width,
+                            destination_threshold,
+                        )
             continue
 
         if class_name in _SC_PASSTHROUGH_NODES:
@@ -382,10 +759,16 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
         )
 
     # Second pass: build connections from weight nodes
-    for i, pop in enumerate(populations):
-        weight_node_name = weight_source_for.get(pop.name)
-        if weight_node_name is None:
+    for pop in populations:
+        weight_source = weight_source_for.get(pop.name)
+        if weight_source is None:
             continue
+        (
+            weight_node_name,
+            destination_scale,
+            destination_flatten_width,
+            destination_threshold,
+        ) = weight_source
 
         weight_data = pending_weights.get(weight_node_name)
         if weight_data is None:
@@ -393,16 +776,24 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
 
         weights, bias = weight_data
 
-        # Find the source population: the neuron or input node that feeds
-        # the weight node
+        # Find the source population: the neuron or input node that feeds the
+        # weight node, preserving homogeneous explicit NIR Delay nodes along
+        # the immediate source path as scalar connection delay metadata.
         src_name = ""
+        delay_steps = 0
+        source_scale: np.ndarray | None = None
+        source_flatten_width: int | None = None
+        source_threshold: np.ndarray | None = None
         for pred in predecessors.get(weight_node_name, []):
-            pred_class = type(nodes[pred]).__name__
-            if pred_class in _SC_NODE_TO_TYPE:
-                src_name = pred
-                break
-            if pred_class == "SCInputNode":
-                src_name = pred
+            resolved = _resolve_weight_source(pred, nodes=nodes, predecessors=predecessors)
+            if resolved is not None:
+                (
+                    src_name,
+                    delay_steps,
+                    source_scale,
+                    source_flatten_width,
+                    source_threshold,
+                ) = resolved
                 break
 
         if not src_name:
@@ -413,12 +804,47 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
             else:
                 src_name = input_pop or "input"
 
+        if source_flatten_width is not None and source_flatten_width != int(weights.shape[1]):
+            raise ValueError(
+                f"Flatten output width {source_flatten_width} does not match "
+                f"weight input width {int(weights.shape[1])} for connection {src_name}->{pop.name}"
+            )
+        if destination_flatten_width is not None and destination_flatten_width != int(
+            weights.shape[0]
+        ):
+            raise ValueError(
+                f"Flatten input width {destination_flatten_width} does not match "
+                f"weight output width {int(weights.shape[0])} for connection {src_name}->{pop.name}"
+            )
+        source_threshold = _broadcast_threshold(
+            source_threshold,
+            int(weights.shape[1]),
+            f"source-side Threshold for connection {src_name}->{pop.name}",
+        )
+        destination_threshold = _broadcast_threshold(
+            destination_threshold,
+            int(weights.shape[0]),
+            f"post-weight Threshold for connection {src_name}->{pop.name}",
+        )
+
+        folded_weights, folded_bias = _fold_connection_scales(
+            weights,
+            bias,
+            source_scale=source_scale,
+            destination_scale=destination_scale,
+            src=src_name,
+            dst=pop.name,
+        )
+
         connections.append(
             ConnectionSpec(
                 src=src_name,
                 dst=pop.name,
-                weights=weights,
-                bias=bias,
+                weights=folded_weights,
+                bias=folded_bias,
+                delay_steps=delay_steps,
+                source_threshold=source_threshold,
+                destination_threshold=destination_threshold,
             )
         )
 

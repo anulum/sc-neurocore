@@ -136,10 +136,11 @@ surface:
 sc-neurocore scnir upgrade model.scnir.json --output upgraded.scnir.json
 ```
 
-The current schema is `sc-neurocore.scnir.v0.3`. The upgrade command migrates
+The current schema is `sc-neurocore.scnir.v0.4`. The upgrade command migrates
 `sc-neurocore.scnir.v0.1` documents by adding explicit `delay_steps=0` to legacy
-streams and migrates every pre-`v0.3` document by adding explicit
-`signal_kind` metadata before running the typed validator and deterministic
+streams, migrates every pre-`v0.3` document by adding explicit `signal_kind`
+metadata, and migrates every pre-`v0.4` document by adding explicit stream
+`transforms=[]` metadata before running the typed validator and deterministic
 writer. Unsupported schema versions are rejected instead of being guessed.
 
 Exports deterministic SC-NIR metadata from a NIR graph by using the existing

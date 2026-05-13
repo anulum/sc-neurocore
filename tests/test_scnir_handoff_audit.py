@@ -106,6 +106,7 @@ def _write_valid_handoff(root: Path) -> None:
                 "delay_steps": 0,
                 "total_bits": 16,
                 "fractional_bits": 8,
+                "transforms": [],
                 "lfsr_polynomial": None,
                 "tap_mask": None,
                 "sobol_dimension": 1,
@@ -122,6 +123,7 @@ def _write_valid_handoff(root: Path) -> None:
                 "delay_steps": 0,
                 "total_bits": 16,
                 "fractional_bits": 8,
+                "transforms": [],
                 "lfsr_polynomial": None,
                 "tap_mask": None,
                 "sobol_dimension": 2,
@@ -138,6 +140,7 @@ def _write_valid_handoff(root: Path) -> None:
                 "delay_steps": 0,
                 "total_bits": 16,
                 "fractional_bits": 8,
+                "transforms": [],
                 "lfsr_polynomial": None,
                 "tap_mask": None,
                 "sobol_dimension": 3,
@@ -213,6 +216,27 @@ def test_audit_scnir_hdl_handoff_rejects_source_metadata_mismatch(tmp_path: Path
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
     with pytest.raises(SCNIRHDLHandoffAuditError, match="sobol_dimension"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_scnir_hdl_handoff_rejects_transform_metadata_mismatch(
+    tmp_path: Path,
+) -> None:
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    manifest_path = handoff / "scnir_source_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["sources"][2]["transforms"] = [
+        {
+            "kind": "threshold",
+            "position": "source",
+            "comparison": "greater_than",
+            "values": [0.25],
+        }
+    ]
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="transforms"):
         audit_scnir_hdl_handoff(handoff)
 
 
