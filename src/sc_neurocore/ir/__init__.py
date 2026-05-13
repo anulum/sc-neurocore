@@ -37,6 +37,12 @@ from .scnir_hdl import (
     SCNIRHDLSourceManifestEntry,
     build_scnir_source_bundle,
 )
+from .scnir_handoff_audit import (
+    SCNIRHDLHandoffAuditError,
+    SCNIRHDLHandoffAuditReport,
+    audit_scnir_hdl_handoff,
+    write_scnir_hdl_handoff_audit,
+)
 
 __all__ = [
     "SCNIR_SCHEMA_VERSION",
@@ -51,6 +57,9 @@ __all__ = [
     "SCNIRConversionConfig",
     "SCNIRHDLSourceBundle",
     "SCNIRHDLSourceManifestEntry",
+    "SCNIRHDLHandoffAuditError",
+    "SCNIRHDLHandoffAuditReport",
+    "audit_scnir_hdl_handoff",
     "build_scnir_from_neuron_graph",
     "build_scnir_source_bundle",
     "export_scnir_from_nir",
@@ -59,5 +68,6 @@ __all__ = [
     "scnir_to_dict",
     "upgrade_scnir_dict",
     "validate_scnir_dict",
+    "write_scnir_hdl_handoff_audit",
     "write_scnir",
 ]

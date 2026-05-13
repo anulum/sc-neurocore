@@ -632,10 +632,11 @@ def _cmd_scnir(args: Any) -> int:
 
     action = args.model
     path = args.scnir_path
-    if action not in {"validate", "upgrade", "export"} or not path:
+    if action not in {"validate", "upgrade", "export", "audit-hdl"} or not path:
         print("Error: usage: sc-neurocore scnir validate model.scnir.json")
         print("       or: sc-neurocore scnir upgrade model.scnir.json --output upgraded.scnir.json")
         print("       or: sc-neurocore scnir export model.nir --output model.scnir.json")
+        print("       or: sc-neurocore scnir audit-hdl build/ --output scnir_audit.json")
         return 1
 
     if action == "validate":
@@ -666,6 +667,28 @@ def _cmd_scnir(args: Any) -> int:
             encoding="utf-8",
         )
         print(f"SC-NIR upgraded: {args.output} ({len(payload['streams'])} stream(s))")
+        return 0
+
+    if action == "audit-hdl":
+        from sc_neurocore.ir import SCNIRHDLHandoffAuditError, audit_scnir_hdl_handoff
+
+        try:
+            report = audit_scnir_hdl_handoff(path)
+            if args.output:
+                Path(args.output).write_text(
+                    json.dumps(report.as_dict(), indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+        except (OSError, SCNIRHDLHandoffAuditError, ValueError, TypeError) as exc:
+            print(f"SC-NIR HDL handoff invalid: {exc}")
+            return 1
+
+        suffix = f"; report written: {args.output}" if args.output else ""
+        print(
+            "SC-NIR HDL handoff valid: "
+            f"{path} ({report.stream_count} stream(s), "
+            f"{report.source_module_count} source module(s)){suffix}"
+        )
         return 0
 
     if not args.output:

@@ -390,6 +390,9 @@ sc-neurocore compile-nir model.nir --target ice40 --module-name my_snn -o build/
 
 # Sobol source modules with deterministic seed allocation
 sc-neurocore compile-nir model.nir --source-kind sobol --base-seed 66 --T 1024 -o build/
+
+# Validate the complete SC-NIR HDL handoff after compilation
+sc-neurocore scnir audit-hdl build/ --output build/scnir_handoff_audit.json
 ```
 
 Output:
@@ -618,6 +621,14 @@ encoding, signal kind, explicit recurrent delay steps, precision, and LFSR/Sobol
 source metadata used to generate each module. Mixed analogue/spiking graphs use
 these row and aggregate fields to distinguish voltage-state population streams
 from spike population streams in downstream evidence manifests.
+
+After generation, run `sc-neurocore scnir audit-hdl build/` to validate the
+handoff directory before passing artefacts to downstream simulation, synthesis,
+or packaging jobs. The audit loads `scnir_document.json`, checks
+`scnir_source_manifest.json` against the typed SC-NIR streams, verifies aggregate
+signal-kind counts and route selections, verifies top-level SC-NIR localparams,
+and fails closed if any expected source module, top module, or weight ROM
+artefact is missing.
 
 The CLI regression suite co-simulates emitted source modules selected from
 `scnir_source_manifest.json` for direct/Sobol, AER/LFSR, and recurrent/LFSR
