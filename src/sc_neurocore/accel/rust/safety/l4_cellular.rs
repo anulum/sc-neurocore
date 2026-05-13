@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for l4_cellular
 
-#![allow(unused_variables, dead_code, non_snake_case)]
+#![allow(unused_variables, dead_code, non_snake_case, non_camel_case_types)]
 
 #[derive(Debug, Clone)]
 pub struct L4_CellularLayer {

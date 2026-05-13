@@ -6,13 +6,13 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for encoding
 
-pub fn rate_encode(x: f64, n_timesteps: f64) -> f64 {
+pub fn rate_encode(_x: f64, _n_timesteps: f64) -> f64 {
     // x = x.clamp(0.0, 1.0)
     // return (torch.rand(n_timesteps, *x.shape, device=x.device) < x.unsquee
     0.0
 }
 
-pub fn latency_encode(x: f64, n_timesteps: f64, tau: f64) -> f64 {
+pub fn latency_encode(_x: f64, _n_timesteps: f64, _tau: f64) -> f64 {
     // x = x.clamp(1e-6, 1.0)
     // spike_time = (tau * (1.0 - x)).long().clamp(0, n_timesteps - 1)
     // spikes = torch.zeros(n_timesteps, *x.shape, device=x.device)
@@ -23,7 +23,7 @@ pub fn latency_encode(x: f64, n_timesteps: f64, tau: f64) -> f64 {
     0.0
 }
 
-pub fn delta_encode(x: f64, threshold: f64) -> f64 {
+pub fn delta_encode(_x: f64, _threshold: f64) -> f64 {
     // dx = torch.zeros_like(x)
     // dx[1:] = x[1:] - x[:-1]
     // return (dx.abs() > threshold).float()
