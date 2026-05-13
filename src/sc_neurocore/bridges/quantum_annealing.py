@@ -47,12 +47,27 @@ from enum import Enum
 from typing import Any, Dict
 
 import numpy as np
-from sc_neurocore_engine.quantum import (
-    get_batch_ising_energy,
-    get_ising_energy,
-    get_simulated_annealing,
-    has_full_quantum_annealing_backend,
-)
+
+try:
+    from sc_neurocore_engine.quantum import (
+        get_batch_ising_energy,
+        get_ising_energy,
+        get_simulated_annealing,
+        has_full_quantum_annealing_backend,
+    )
+except ImportError:
+
+    def get_ising_energy() -> object:
+        raise ImportError("Rust quantum annealing energy backend unavailable")
+
+    def get_batch_ising_energy() -> object:
+        raise ImportError("Rust quantum annealing batch backend unavailable")
+
+    def get_simulated_annealing() -> object:
+        raise ImportError("Rust quantum annealing solver backend unavailable")
+
+    def has_full_quantum_annealing_backend() -> bool:
+        return False
 
 # ── Constants ─────────────────────────────────────────────────────────
 

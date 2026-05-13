@@ -24,12 +24,27 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
-from sc_neurocore_engine.photonics import (
-    get_crosstalk_analyzer,
-    get_crosstalk_bank_analyzer,
-    get_crosstalk_pair_analyzer,
-    has_full_photonic_crosstalk_backend,
-)
+
+try:
+    from sc_neurocore_engine.photonics import (
+        get_crosstalk_analyzer,
+        get_crosstalk_bank_analyzer,
+        get_crosstalk_pair_analyzer,
+        has_full_photonic_crosstalk_backend,
+    )
+except ImportError:
+
+    def get_crosstalk_analyzer() -> object:
+        raise ImportError("Rust photonic crosstalk backend unavailable")
+
+    def get_crosstalk_bank_analyzer() -> object:
+        raise ImportError("Rust photonic crosstalk bank backend unavailable")
+
+    def get_crosstalk_pair_analyzer() -> object:
+        raise ImportError("Rust photonic crosstalk pair backend unavailable")
+
+    def has_full_photonic_crosstalk_backend() -> bool:
+        return False
 
 try:
     # py_ph_analyze_crosstalk is kept imported for backward-compatible

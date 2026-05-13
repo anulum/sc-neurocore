@@ -12,7 +12,12 @@ import dataclasses
 import importlib
 from typing import Any
 
-from sc_neurocore_engine.studio import get_batch_simulate
+try:
+    from sc_neurocore_engine.studio import get_batch_simulate
+except ImportError:
+
+    def get_batch_simulate() -> object:
+        raise ImportError("Studio Rust batch simulator unavailable")
 
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 

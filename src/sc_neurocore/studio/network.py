@@ -10,7 +10,12 @@ from __future__ import annotations
 
 import numpy as np
 
-from sc_neurocore_engine.studio import get_ei_network_simulator
+try:
+    from sc_neurocore_engine.studio import get_ei_network_simulator
+except ImportError:
+
+    def get_ei_network_simulator() -> object:
+        raise ImportError("Studio Rust E-I network simulator unavailable")
 
 
 def simulate_ei_network(

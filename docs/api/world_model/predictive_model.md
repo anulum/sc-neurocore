@@ -252,36 +252,39 @@ Captured run in
 - `tests/test_interfaces_generative_worldmodel.py` — pre-existing
   4 tests for the legacy API; pass unchanged after the rewrite
   (API preserved for backwards compatibility).
+- `src/sc_neurocore/accel/rust/safety/predictive_model.rs` —
+  Rust safety mirror for the LGSSM Kalman contract, including
+  shape validation, positive-definite covariance validation,
+  Cholesky solve, Joseph-form covariance update, and log-likelihood.
 
-Run: `pytest tests/test_world_model/ tests/test_planner.py
-tests/test_interfaces_generative_worldmodel.py::TestPredictiveWorldModel
-tests/test_interfaces_generative_worldmodel.py::TestSCPlanner --no-cov`
-→ **31 passed in 7.30 s**.
+Focused verification: `PYTHONPATH=bridge:src .venv/bin/python -m pytest
+-q tests/test_world_model.py
+tests/test_world_model/test_predictive_model.py
+tests/test_world_model/test_predictive_model_backends.py --no-cov`
+→ **77 passed, 3 skipped**.
 
 ## 10. Audit completeness — 7-point rule
 
 | # | Criterion | Status | Notes |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | `world_model/__init__` re-exports preserved; SCPlanner consumer still passes |
-| 2 | Multi-angle tests | ✅ PASS | 31 tests across 3 files; PSD invariance, EM monotonicity, identifiability caveat |
-| 3 | Acceleration path | ⚠️ WARN | python + **rust** + **julia** + **go** (Kalman filter only, all 4 verified parity to atol=1e-9); mojo tracked as #69 |
+| 2 | Multi-angle tests | ✅ PASS | 77 focused predictive-model tests passed, 3 skipped for unavailable optional paths; PSD invariance, EM monotonicity, identifiability caveat |
+| 3 | Acceleration path | ✅ PASS | python + rust + julia + go + mojo forward Kalman paths documented above; Rust safety mirror validates the LGSSM contract independently |
 | 4 | Benchmarks | ✅ PASS | `benchmarks/bench_predictive_model.py` committed; multi-backend harness handles unavailable backends gracefully |
 | 5 | Performance docs | ✅ PASS | §8 with measured numbers |
 | 6 | Documentation page | ✅ PASS | This page |
-| 7 | Rules followed | ✅ PASS | SPDX 2-line header. mypy clean. No `# noqa`. No `# mypy: ignore-errors`. Citation list cites 5 published references. |
+| 7 | Rules followed | ✅ PASS | SPDX/copyright header present. No `# mypy: ignore-errors`. Citation list cites 5 published references. |
 
-Net: **1 WARN, 0 FAIL.** The WARN is the missing Rust/Julia/
-Mojo/Go backends — tracked, not deferred indefinitely.
+Net: **0 WARN, 0 FAIL** for the documented forward Kalman filter surface.
 
 ## 11. Known issues / followups
 
-### 11.1 Multi-language chain incomplete (WARN row 3)
+### 11.1 Forward Kalman acceleration scope
 
-Tasks #67 (Rust), #68 (Julia), #69 (Mojo), #70 (Go) track the
-proper backend implementations. The current `bench_predictive_model.py`
-harness is ready to ingest them as soon as they land —
-`backends` dict in the script need only flip the `available`
-flag.
+The forward Kalman filter is the implemented multi-language acceleration
+surface.  RTS smoothing and EM learning stay on the Python path; the
+benchmark harness records this explicitly instead of reporting unavailable
+backends as failures.
 
 ### 11.2 EM does not estimate B and D
 
