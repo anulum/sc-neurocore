@@ -154,8 +154,9 @@ parser-only or only closed under a bounded shape/port contract.
 Use `validate_scnir_compatibility_matrix()` in tests or release checks to fail
 when parser support changes without a corresponding compatibility row. Use
 `build_scnir_compatibility_audit()` for release evidence bundles that need the
-validated matrix, support-level counts, and the exact evidence file set in one
-versioned JSON object.
+validated matrix, support-level counts, the exact evidence file set, file
+sizes, per-evidence SHA-256 digests, and a canonical matrix SHA-256 digest in
+one versioned JSON object.
 
 ## Python API
 

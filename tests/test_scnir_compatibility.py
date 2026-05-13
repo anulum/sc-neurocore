@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -54,13 +55,25 @@ def test_scnir_compatibility_audit_report_summarises_evidence() -> None:
     evidence_paths = sorted(
         {path for row in scnir_compatibility_matrix() for path in row.audit_evidence}
     )
-    assert report["schema_version"] == "sc-neurocore.scnir.compatibility-audit.v0.1"
+    matrix_digest = hashlib.sha256(
+        (json.dumps(matrix, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+    ).hexdigest()
+    first_evidence = REPO_ROOT / evidence_paths[0]
+    first_digest = hashlib.sha256(first_evidence.read_bytes()).hexdigest()
+
+    assert report["schema_version"] == "sc-neurocore.scnir.compatibility-audit.v0.2"
     assert report["status"] == "valid"
     assert report["evidence_root"] == str(REPO_ROOT.resolve())
     assert report["primitive_count"] == len(matrix)
     assert report["support_level_counts"]["metadata_and_hdl"] >= 1
     assert report["audit_evidence_file_count"] == len(evidence_paths)
     assert report["audit_evidence_paths"] == evidence_paths
+    assert report["matrix_sha256"] == matrix_digest
+    assert report["audit_evidence_files"][0] == {
+        "path": evidence_paths[0],
+        "sha256": first_digest,
+        "size_bytes": first_evidence.stat().st_size,
+    }
     assert report["matrix"] == matrix
 
 
@@ -110,10 +123,12 @@ def test_scnir_closure_audit_cli_writes_versioned_report(
     assert main() == 0
     assert f"report written: {output}" in capsys.readouterr().out
     payload = json.loads(output.read_text(encoding="utf-8"))
-    assert payload["schema_version"] == "sc-neurocore.scnir.compatibility-audit.v0.1"
+    assert payload["schema_version"] == "sc-neurocore.scnir.compatibility-audit.v0.2"
     assert payload["status"] == "valid"
     assert payload["primitive_count"] == len(scnir_compatibility_matrix())
     assert payload["audit_evidence_file_count"] >= 1
+    assert payload["matrix_sha256"]
+    assert payload["audit_evidence_files"][0]["sha256"]
     assert payload["matrix"][0]["nir_primitive"] == "Input"
 
 
