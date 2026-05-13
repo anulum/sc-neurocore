@@ -387,6 +387,86 @@ def _simulate_manifest_source(out_dir, row: dict[str, object], tmp_path) -> str:
     raise AssertionError(f"unsupported source_kind {row['source_kind']!r}")
 
 
+def _network_smoke_testbench(module_name: str, input_words: int, total_neurons: int) -> str:
+    input_width = max(1, input_words * 16)
+    spike_width = max(1, total_neurons)
+    input_hex = "".join("0200" for _ in range(input_words))
+    if not input_hex:
+        input_hex = "0"
+    return f"""
+module tb;
+    reg clk = 1'b0;
+    reg rst_n = 1'b0;
+    reg en = 1'b0;
+    reg signed [{input_width - 1}:0] I_ext_flat = {input_width}'h{input_hex};
+    wire [{spike_width - 1}:0] spike_bus;
+    integer cycle;
+
+    {module_name} uut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .en(en),
+        .I_ext_flat(I_ext_flat),
+        .spike_bus(spike_bus)
+    );
+
+    initial begin
+        $display("network_start {total_neurons}");
+        #1 clk = 1'b1;
+        #1 clk = 1'b0;
+        rst_n = 1'b1;
+        en = 1'b1;
+        for (cycle = 0; cycle < 8; cycle = cycle + 1) begin
+            #1 clk = 1'b1;
+            #1 $display("cycle %0d spikes %0h", cycle, spike_bus);
+            #1 clk = 1'b0;
+        end
+        $display("network_done {module_name}");
+        $finish;
+    end
+endmodule
+"""
+
+
+def _simulate_network_bundle(
+    out_dir,
+    *,
+    module_name: str,
+    input_words: int,
+    total_neurons: int,
+    tmp_path,
+) -> str:
+    iverilog = shutil.which("iverilog")
+    vvp = shutil.which("vvp")
+    assert iverilog is not None and vvp is not None, "Icarus Verilog must be installed"
+
+    rtl_paths = sorted(out_dir.glob("*.v"))
+    assert rtl_paths, f"no RTL files emitted in {out_dir}"
+    tb_path = tmp_path / f"{module_name}_network_tb.v"
+    out_path = tmp_path / f"{module_name}_network_tb.out"
+    tb_path.write_text(
+        _network_smoke_testbench(module_name, input_words, total_neurons),
+        encoding="utf-8",
+    )
+
+    compile_result = subprocess.run(
+        [iverilog, "-g2012", "-o", str(out_path), *map(str, rtl_paths), str(tb_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert compile_result.returncode == 0, compile_result.stderr
+
+    run_result = subprocess.run(
+        [vvp, str(out_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert run_result.returncode == 0, run_result.stderr
+    return run_result.stdout
+
+
 def test_version_flag(capsys):
     rc = _run_main("--version")
     assert rc == 0
@@ -980,6 +1060,82 @@ class TestCompileNirCommand:
             sim_dir = tmp_path / f"{name}_sim"
             sim_dir.mkdir()
             _simulate_manifest_source(out_dir, row, sim_dir)
+
+        output = capsys.readouterr().out
+        assert "Interconnect: direct" in output
+        assert "Interconnect: aer" in output
+
+    def test_compile_nir_cosimulates_complete_networks_across_interconnects(self, tmp_path, capsys):
+        nir = pytest.importorskip("nir")
+        cases = [
+            (
+                "direct_top_sobol",
+                _small_lif_nir_graph(),
+                "sobol",
+                66,
+                2,
+                2,
+                "direct",
+            ),
+            (
+                "aer_top_lfsr",
+                _aer_lif_nir_graph(),
+                "lfsr",
+                11,
+                4,
+                67,
+                "aer",
+            ),
+            (
+                "recurrent_top_lfsr",
+                _recurrent_lif_nir_graph(),
+                "lfsr",
+                41,
+                2,
+                2,
+                "direct",
+            ),
+        ]
+
+        for name, graph, source_kind, base_seed, input_words, total_neurons, interconnect in cases:
+            model_path = tmp_path / f"{name}.nir"
+            nir.write(str(model_path), graph)
+            out_dir = tmp_path / f"{name}_compiled"
+            module_name = f"{name}_net"
+
+            rc = _run_main(
+                "compile-nir",
+                str(model_path),
+                "--module-name",
+                module_name,
+                "--T",
+                "512",
+                "--source-kind",
+                source_kind,
+                "--base-seed",
+                str(base_seed),
+                "-o",
+                str(out_dir),
+            )
+
+            assert rc == 0
+            manifest = json.loads(
+                (out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8")
+            )
+            assert manifest["interconnect"] == interconnect
+            assert manifest["total_neurons"] == total_neurons
+
+            sim_dir = tmp_path / f"{name}_network_sim"
+            sim_dir.mkdir()
+            stdout = _simulate_network_bundle(
+                out_dir,
+                module_name=module_name,
+                input_words=input_words,
+                total_neurons=total_neurons,
+                tmp_path=sim_dir,
+            )
+            assert f"network_start {total_neurons}" in stdout
+            assert f"network_done {module_name}" in stdout
 
         output = capsys.readouterr().out
         assert "Interconnect: direct" in output

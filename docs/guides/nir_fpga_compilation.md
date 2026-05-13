@@ -619,13 +619,16 @@ source metadata used to generate each module. Mixed analogue/spiking graphs use
 these row and aggregate fields to distinguish voltage-state population streams
 from spike population streams in downstream evidence manifests.
 
-The CLI regression suite also co-simulates emitted source modules selected from
+The CLI regression suite co-simulates emitted source modules selected from
 `scnir_source_manifest.json` for direct/Sobol, AER/LFSR, and recurrent/LFSR
 exports. These tests verify that source modules in real output directories
 follow the same advance-before-compare first-sample contract as the software and
-Rust stochastic encoders. They do not replace full-network HDL co-simulation;
-they prove the exported stochastic source artefacts are concrete and executable
-across the current interconnect families.
+Rust stochastic encoders. A separate full-network HDL smoke matrix elaborates
+every emitted RTL file in the `compile-nir` output directory and runs the
+generated top-level module for direct, weighted-AER, and one-step recurrent NIR
+fixtures. That matrix proves the exported network bundles are executable as
+complete Verilog systems under reset, enable, external-input, and spike-bus
+traffic across the current interconnect families.
 
 ---
 
