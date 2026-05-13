@@ -166,12 +166,15 @@ declared audit-evidence file path:
 
 ```bash
 sc-neurocore scnir compatibility .
+sc-neurocore scnir compatibility . --output scnir_compatibility.json
 ```
 
 When the optional repository root argument is omitted, the command uses the
-current working directory. Missing parser rows, stale rows, unsupported
-HDL-support claims without stream metadata, empty audit evidence, or evidence
-paths that do not resolve to files fail closed.
+current working directory. Supplying `--output` writes the deterministic
+machine-readable compatibility matrix only after validation succeeds. Missing
+parser rows, stale rows, unsupported HDL-support claims without stream
+metadata, empty audit evidence, or evidence paths that do not resolve to files
+fail closed.
 
 ### 2.4 `benchmark`
 
