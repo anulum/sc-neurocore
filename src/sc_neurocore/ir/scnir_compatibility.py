@@ -280,10 +280,26 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         support_level="metadata_and_hdl",
         parser_node="SCSubgraphNode or SCMultiPortSubgraphNode",
         neuron_graph_lowering="single-port subgraphs are inlined with namespaced nodes",
-        scnir_stream_metadata=("inline_single_port_subgraph", "namespaced_stream_ids"),
-        source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
+        scnir_stream_metadata=(
+            "inline_single_port_subgraph",
+            "namespaced_stream_ids",
+            "hierarchy_instance_metadata",
+        ),
+        source_metadata=(
+            "lfsr16",
+            "sobol16",
+            "seed",
+            "bitstream_length",
+            "precision",
+            "manifest_hierarchy_counts",
+        ),
         hdl_support="namespaced inline fixed-point terms; no standalone submodule boundary yet",
-        audit_evidence=("tests/test_scnir_convert.py", "tests/test_scnir_fpga_integration.py"),
+        audit_evidence=(
+            "tests/test_scnir_convert.py",
+            "tests/test_scnir_fpga_integration.py",
+            "tests/test_cli.py",
+            "tests/test_scnir_handoff_audit.py",
+        ),
         limitation=(
             "Single-port nested graphs are inlined exactly into the parent hardware graph. "
             "Multi-port nested NIRGraph nodes still fail closed until explicit hierarchical "
