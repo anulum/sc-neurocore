@@ -167,11 +167,14 @@ declared audit-evidence file path:
 ```bash
 sc-neurocore scnir compatibility .
 sc-neurocore scnir compatibility . --output scnir_compatibility.json
+sc-neurocore scnir closure-audit . --output scnir_closure_audit.json
 ```
 
 When the optional repository root argument is omitted, the command uses the
 current working directory. Supplying `--output` writes the deterministic
-machine-readable compatibility matrix only after validation succeeds. Missing
+machine-readable compatibility matrix only after validation succeeds.
+`closure-audit` writes a versioned audit bundle containing the validated matrix,
+support-level counts, and the unique evidence files that were checked. Missing
 parser rows, stale rows, unsupported HDL-support claims without stream
 metadata, empty audit evidence, or evidence paths that do not resolve to files
 fail closed.

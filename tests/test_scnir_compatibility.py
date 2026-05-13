@@ -45,6 +45,25 @@ def test_scnir_compatibility_matrix_rejects_missing_evidence_root(tmp_path: Path
         validate_scnir_compatibility_matrix(evidence_root=tmp_path)
 
 
+def test_scnir_compatibility_audit_report_summarises_evidence() -> None:
+    from sc_neurocore.ir import build_scnir_compatibility_audit
+
+    report = build_scnir_compatibility_audit(evidence_root=REPO_ROOT)
+
+    matrix = json.loads(json.dumps(scnir_compatibility_matrix_dicts(), sort_keys=True))
+    evidence_paths = sorted(
+        {path for row in scnir_compatibility_matrix() for path in row.audit_evidence}
+    )
+    assert report["schema_version"] == "sc-neurocore.scnir.compatibility-audit.v0.1"
+    assert report["status"] == "valid"
+    assert report["evidence_root"] == str(REPO_ROOT.resolve())
+    assert report["primitive_count"] == len(matrix)
+    assert report["support_level_counts"]["metadata_and_hdl"] >= 1
+    assert report["audit_evidence_file_count"] == len(evidence_paths)
+    assert report["audit_evidence_paths"] == evidence_paths
+    assert report["matrix"] == matrix
+
+
 def test_scnir_compatibility_cli_validates_evidence_root(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -75,6 +94,27 @@ def test_scnir_compatibility_cli_writes_matrix_report(
     assert isinstance(payload, list)
     assert payload == json.loads(json.dumps(scnir_compatibility_matrix_dicts(), sort_keys=True))
     assert payload[0]["nir_primitive"] == "Input"
+
+
+def test_scnir_closure_audit_cli_writes_versioned_report(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "scnir_closure_audit.json"
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sc-neurocore", "scnir", "closure-audit", str(REPO_ROOT), "--output", str(output)],
+    )
+
+    assert main() == 0
+    assert f"report written: {output}" in capsys.readouterr().out
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == "sc-neurocore.scnir.compatibility-audit.v0.1"
+    assert payload["status"] == "valid"
+    assert payload["primitive_count"] == len(scnir_compatibility_matrix())
+    assert payload["audit_evidence_file_count"] >= 1
+    assert payload["matrix"][0]["nir_primitive"] == "Input"
 
 
 def test_scnir_compatibility_cli_rejects_missing_evidence_root(

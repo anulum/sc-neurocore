@@ -20,6 +20,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Literal
 
+SCNIR_COMPATIBILITY_AUDIT_VERSION = "sc-neurocore.scnir.compatibility-audit.v0.1"
+
 SCNIRSupportLevel = Literal[
     "boundary",
     "parser_only",
@@ -45,7 +47,11 @@ class SCNIRCompatibilityRow:
     def as_dict(self) -> dict[str, object]:
         """Return a deterministic JSON-ready row."""
 
-        return asdict(self)
+        payload = asdict(self)
+        payload["scnir_stream_metadata"] = list(self.scnir_stream_metadata)
+        payload["source_metadata"] = list(self.source_metadata)
+        payload["audit_evidence"] = list(self.audit_evidence)
+        return payload
 
 
 _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
@@ -320,6 +326,34 @@ def scnir_compatibility_matrix_dicts() -> tuple[dict[str, object], ...]:
     """Return the matrix as deterministic JSON-ready dictionaries."""
 
     return tuple(row.as_dict() for row in _MATRIX)
+
+
+def build_scnir_compatibility_audit(evidence_root: str | Path) -> dict[str, object]:
+    """Build a versioned closure-audit report for the SC-NIR compatibility matrix.
+
+    The report is intentionally derived from the executable matrix after
+    validation, so release automation consumes the same data that enforces
+    parser coverage and evidence-path freshness.
+    """
+
+    root = Path(evidence_root).resolve()
+    validate_scnir_compatibility_matrix(evidence_root=root)
+
+    support_level_counts: dict[str, int] = {}
+    for row in _MATRIX:
+        support_level_counts[row.support_level] = support_level_counts.get(row.support_level, 0) + 1
+    evidence_paths = sorted({path for row in _MATRIX for path in row.audit_evidence})
+
+    return {
+        "schema_version": SCNIR_COMPATIBILITY_AUDIT_VERSION,
+        "status": "valid",
+        "evidence_root": str(root),
+        "primitive_count": len(_MATRIX),
+        "support_level_counts": dict(sorted(support_level_counts.items())),
+        "audit_evidence_file_count": len(evidence_paths),
+        "audit_evidence_paths": evidence_paths,
+        "matrix": list(scnir_compatibility_matrix_dicts()),
+    }
 
 
 def validate_scnir_compatibility_matrix(evidence_root: str | Path | None = None) -> None:
