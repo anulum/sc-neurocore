@@ -158,6 +158,7 @@ when parser support changes without a corresponding compatibility row.
 
 ```python
 from sc_neurocore.ir import (
+    SCNIR_HDL_HANDOFF_MANIFEST_VERSION,
     SCNIR_PREVIOUS_SCHEMA_VERSION,
     SCNIR_SCHEMA_VERSION,
     SCNIRCompatibilityRow,
@@ -228,3 +229,12 @@ from sc_neurocore.ir import (
         - SCNIRHDLSourceManifestEntry
         - SCNIRHDLSourceBundle
         - build_scnir_source_bundle
+
+::: sc_neurocore.ir.scnir_handoff_audit
+    options:
+      show_root_heading: true
+      members:
+        - SCNIR_HDL_HANDOFF_MANIFEST_VERSION
+        - SCNIRHDLHandoffAuditReport
+        - audit_scnir_hdl_handoff
+        - write_scnir_hdl_handoff_audit
