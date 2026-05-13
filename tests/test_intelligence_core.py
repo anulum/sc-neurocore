@@ -7,12 +7,23 @@
 # SC-NeuroCore
 
 import sc_neurocore
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 
 import pytest
 import json
 import numpy as np
 import sc_neurocore_engine as v3
+
+
+def _assert_engine_version_matches_core() -> None:
+    """Validate source-tree and installed-wheel version surfaces."""
+
+    assert v3.__version__ == sc_neurocore.__version__
+    try:
+        installed_version = version("sc-neurocore-engine")
+    except PackageNotFoundError:
+        return
+    assert installed_version == sc_neurocore.__version__
 
 
 class TestQuantisationSweep:
@@ -1505,7 +1516,7 @@ class TestRayonThreshold:
 
 class TestPhase10Version:
     def test_version(self):
-        assert version("sc-neurocore-engine") == sc_neurocore.__version__
+        _assert_engine_version_matches_core()
 
 
 class TestSIMDFusedAndPopcount:
@@ -1647,7 +1658,7 @@ class TestZeroAllocLIF:
 
 class TestPhase11Version:
     def test_version(self):
-        assert version("sc-neurocore-engine") == sc_neurocore.__version__
+        _assert_engine_version_matches_core()
 
 
 class TestFusedKernel:
@@ -1744,7 +1755,7 @@ class TestBatchForward:
 
 class TestPhase12Version:
     def test_version(self):
-        assert version("sc-neurocore-engine") == sc_neurocore.__version__
+        _assert_engine_version_matches_core()
 
 
 class TestForwardNumpy:
@@ -1842,7 +1853,7 @@ class TestParallelBatchEncodeNumpy:
 
 class TestPhase8Version:
     def test_version_is_current(self):
-        assert version("sc-neurocore-engine") == sc_neurocore.__version__
+        _assert_engine_version_matches_core()
 
 
 class TestFastBernoulli:
@@ -1971,4 +1982,4 @@ class TestSetNumThreads:
 
 class TestPhase9Version:
     def test_version_is_current(self):
-        assert version("sc-neurocore-engine") == sc_neurocore.__version__
+        _assert_engine_version_matches_core()
