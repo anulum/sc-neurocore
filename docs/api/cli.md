@@ -59,6 +59,7 @@ depending on the command). All other parameters are keyword flags; running
 | `map-nir` | Generate deterministic silicon-mapping reports for neuromorphic targets | `.nir` file path | `0` on success, `1` on bad input |
 | `hub-init` | Generate an offline-first self-hosted Docker Compose hub bundle | — | `0` on success, `1` on invalid config |
 | `compile-nir` | Compile NIR/ONNX network files to FPGA artefacts | `.nir` or `.onnx` path | `0` on success, `1` on bad input |
+| `scnir` | Validate SC-aware NIR metadata documents | `validate model.scnir.json` | `0` on valid document, `1` on invalid document |
 | `studio` | Launch Visual SNN Design Studio (FastAPI + Uvicorn) | — | `0` on clean exit, `1` if FastAPI missing |
 | `collect-synthesis` | Convert real utilisation, timing, and power reports into optimiser evidence JSON | — | `0` on success, `1` on missing or invalid input |
 
@@ -82,7 +83,21 @@ The Rust-engine status line additionally reports a version mismatch when the
 engine wheel reports a different `__version__` than the Python package
 (handled by `_format_engine_status`).
 
-### 2.2 `benchmark`
+### 2.2 `scnir`
+
+Validates SC-NIR JSON metadata with the fail-closed validator in
+`sc_neurocore.ir.scnir_schema`. The current minimal command is:
+
+```bash
+sc-neurocore scnir validate model.scnir.json
+```
+
+The validator rejects unknown fields, duplicate stream identifiers, invalid
+bitstream lengths, unsupported encodings, invalid fixed-point precision,
+under-specified random sources, and correlation constraints that reference
+missing streams. The reference schema is `schemas/scnir/scnir.schema.json`.
+
+### 2.3 `benchmark`
 
 Delegates to the project's pytest-benchmark suite via `subprocess.run`:
 
@@ -97,13 +112,13 @@ The CLI itself is not benchmarked (see [Section 7](#7-performance)). The exit
 code is the pytest exit code; CI consumers should treat any non-zero value as
 failure.
 
-### 2.3 `preflight`
+### 2.4 `preflight`
 
 Delegates to `tools/preflight.py`. Used by the pre-push policy (see
 `feedback_preflight_no_block` memory: never let the pre-push hook run the full
 suite — `preflight.py` is the gated subset).
 
-### 2.4 `hub-init`
+### 2.5 `hub-init`
 
 Writes a deterministic local hub bundle containing:
 
@@ -137,7 +152,7 @@ set `no-new-privileges`, and include a Studio readiness check against
 `/api/health`. The benchmark runner is opt-in via the `benchmark` Compose
 profile; it is not started with the Studio service.
 
-### 2.5 `compile`
+### 2.6 `compile`
 
 Compiles a free-form ODE description into synthesisable SystemVerilog using
 `sc_neurocore.compiler.equation_compiler.equation_to_fpga`. Optionally emits a
@@ -171,7 +186,7 @@ parameters) and synthesises with Yosys for ICE40/ECP5 targets when
 > for the history. The compiler now rejects values that quantise to 0
 > in Q8.8 with an actionable `ValueError`.
 
-### 2.5 `deploy`
+### 2.7 `deploy`
 
 FPGA targets run a five-step pipeline (six with auto-synthesis):
 
@@ -217,7 +232,7 @@ invoke PyTorch, NIR import, Node.js, or a native WASM build during generation,
 so packaging can be tested in CI without browser drivers or hardware
 accelerators.
 
-### 2.6 `serve`
+### 2.8 `serve`
 
 Loads a `.nir` graph and starts `sc_neurocore.serve.SpikeServer` in blocking
 mode on the configured port. Other formats are rejected with exit code 1.
@@ -226,7 +241,7 @@ mode on the configured port. Other formats are rejected with exit code 1.
 sc-neurocore serve model.nir --port 8001 --dt 1.0
 ```
 
-### 2.7 `collect-synthesis`
+### 2.9 `collect-synthesis`
 
 Collects FPGA synthesis reports into the strict optimiser observation format.
 The command requires explicit compiler-design metadata and measured model
@@ -264,7 +279,7 @@ sc-neurocore collect-synthesis \
 The output is accepted by `sc_neurocore.optimizer.load_observations()` and by
 `tools/optimise_sc_design.py --evidence`.
 
-### 2.8 `studio`
+### 2.10 `studio`
 
 Launches the Visual SNN Design Studio (FastAPI + Uvicorn) and opens
 `http://127.0.0.1:{port}` in the default browser. Requires the `studio`

@@ -1,0 +1,188 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# © Code 2020-2026 Miroslav Sotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Tests for SC-NIR schema and validator
+
+"""Contract tests for the stochastic-computing NIR metadata layer."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from unittest import mock
+
+import pytest
+
+from sc_neurocore.cli import main
+from sc_neurocore.ir.scnir_schema import (
+    SCNIR_SCHEMA_VERSION,
+    SCNIRCorrelationConstraint,
+    SCNIRDocument,
+    SCNIRPrecision,
+    SCNIRSource,
+    SCNIRStream,
+    SCNIRValidationError,
+    load_scnir,
+    scnir_from_dict,
+    scnir_to_dict,
+    validate_scnir_dict,
+    write_scnir,
+)
+
+
+def _valid_document() -> SCNIRDocument:
+    return SCNIRDocument(
+        producer="sc-neurocore-test",
+        streams=[
+            SCNIRStream(
+                stream_id="layer0_input",
+                layer="layer0",
+                bitstream_length=1024,
+                encoding="bipolar",
+                precision=SCNIRPrecision(
+                    signed=True,
+                    total_bits=16,
+                    fractional_bits=8,
+                    accumulator_bits=32,
+                    rounding="nearest_even",
+                    overflow="saturate",
+                ),
+                source=SCNIRSource(
+                    kind="lfsr",
+                    seed=17,
+                    lfsr_polynomial="x^16 + x^14 + x^13 + x^11 + 1",
+                    tap_mask=0xB400,
+                ),
+                correlation_constraints=[
+                    SCNIRCorrelationConstraint(
+                        peer_stream_id="layer0_weight",
+                        policy="max_correlation",
+                        max_abs_correlation=0.03,
+                    )
+                ],
+            ),
+            SCNIRStream(
+                stream_id="layer0_weight",
+                layer="layer0",
+                bitstream_length=1024,
+                encoding="unipolar",
+                precision=SCNIRPrecision(
+                    signed=False,
+                    total_bits=12,
+                    fractional_bits=10,
+                    accumulator_bits=24,
+                    rounding="stochastic",
+                    overflow="error",
+                ),
+                source=SCNIRSource(kind="sobol", sobol_dimension=3),
+            ),
+        ],
+    )
+
+
+def test_scnir_round_trip_is_deterministic(tmp_path: Path) -> None:
+    doc = _valid_document()
+    payload = scnir_to_dict(doc)
+
+    assert payload["schema_version"] == SCNIR_SCHEMA_VERSION
+    assert payload == scnir_to_dict(scnir_from_dict(payload))
+
+    path = tmp_path / "model.scnir.json"
+    write_scnir(path, doc)
+    assert json.loads(path.read_text(encoding="utf-8")) == payload
+    assert scnir_to_dict(load_scnir(path)) == payload
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("bitstream_length", 0, "bitstream_length"),
+        ("encoding", "rate_only", "encoding"),
+    ],
+)
+def test_scnir_rejects_invalid_stream_core_fields(field: str, value: object, message: str) -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["streams"][0][field] = value
+
+    with pytest.raises(SCNIRValidationError, match=message):
+        validate_scnir_dict(payload)
+
+
+def test_scnir_rejects_unknown_fields_fail_closed() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["streams"][0]["unmodelled_runtime_hint"] = "accepting this would be unsafe"
+
+    with pytest.raises(SCNIRValidationError, match="unknown"):
+        validate_scnir_dict(payload)
+
+
+def test_scnir_rejects_invalid_precision() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["streams"][0]["precision"]["fractional_bits"] = 16
+
+    with pytest.raises(SCNIRValidationError, match="fractional_bits"):
+        validate_scnir_dict(payload)
+
+
+def test_scnir_rejects_invalid_random_source_metadata() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["streams"][0]["source"].pop("lfsr_polynomial")
+
+    with pytest.raises(SCNIRValidationError, match="lfsr_polynomial"):
+        validate_scnir_dict(payload)
+
+
+def test_scnir_rejects_invalid_correlation_reference() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["streams"][0]["correlation_constraints"][0]["peer_stream_id"] = "missing"
+
+    with pytest.raises(SCNIRValidationError, match="peer_stream_id"):
+        validate_scnir_dict(payload)
+
+
+def test_scnir_rejects_duplicate_stream_ids() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["streams"][1]["stream_id"] = payload["streams"][0]["stream_id"]
+
+    with pytest.raises(SCNIRValidationError, match="duplicate"):
+        validate_scnir_dict(payload)
+
+
+def test_scnir_json_schema_resource_is_bundled() -> None:
+    schema_path = Path("schemas/scnir/scnir.schema.json")
+    payload = json.loads(schema_path.read_text(encoding="utf-8"))
+
+    assert payload["$id"].endswith("/schemas/scnir/scnir.schema.json")
+    assert "bitstream_length" in json.dumps(payload)
+    assert "correlation_constraints" in json.dumps(payload)
+
+
+def test_scnir_validate_cli_reports_valid_document(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / "valid.scnir.json"
+    write_scnir(path, _valid_document())
+
+    with mock.patch("sys.argv", ["sc-neurocore", "scnir", "validate", str(path)]):
+        rc = main()
+
+    assert rc == 0
+    assert "SC-NIR valid" in capsys.readouterr().out
+
+
+def test_scnir_validate_cli_reports_invalid_document(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / "invalid.scnir.json"
+    payload = scnir_to_dict(_valid_document())
+    payload["streams"][0]["source"]["seed"] = -1
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with mock.patch("sys.argv", ["sc-neurocore", "scnir", "validate", str(path)]):
+        rc = main()
+
+    assert rc == 1
+    assert "seed" in capsys.readouterr().out

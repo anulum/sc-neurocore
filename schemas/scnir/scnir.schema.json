@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anulum.li/sc-neurocore/schemas/scnir/scnir.schema.json",
+  "$comment": "SPDX-License-Identifier: AGPL-3.0-or-later; © Concepts 1996-2026 Miroslav Sotek. All rights reserved.; © Code 2020-2026 Miroslav Sotek. All rights reserved.",
+  "title": "SC-NeuroCore SC-NIR Metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "producer", "streams"],
+  "properties": {
+    "schema_version": {
+      "const": "sc-neurocore.scnir.v0.1"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "streams": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/stream"
+      }
+    }
+  },
+  "$defs": {
+    "stream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stream_id",
+        "layer",
+        "bitstream_length",
+        "encoding",
+        "precision",
+        "source",
+        "correlation_constraints"
+      ],
+      "properties": {
+        "stream_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "layer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bitstream_length": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "encoding": {
+          "enum": [
+            "unipolar",
+            "bipolar",
+            "low_discrepancy",
+            "deterministic_replay",
+            "stochastic_lfsr",
+            "hardware_source"
+          ]
+        },
+        "precision": {
+          "$ref": "#/$defs/precision"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "correlation_constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/correlation_constraint"
+          }
+        }
+      }
+    },
+    "precision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signed",
+        "total_bits",
+        "fractional_bits",
+        "accumulator_bits",
+        "rounding",
+        "overflow"
+      ],
+      "properties": {
+        "signed": {
+          "type": "boolean"
+        },
+        "total_bits": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "fractional_bits": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "accumulator_bits": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "rounding": {
+          "enum": ["nearest_even", "towards_zero", "stochastic", "floor", "ceil"]
+        },
+        "overflow": {
+          "enum": ["saturate", "wrap", "error"]
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "seed",
+        "lfsr_polynomial",
+        "tap_mask",
+        "sobol_dimension",
+        "halton_base",
+        "replay_uri",
+        "hardware_id"
+      ],
+      "properties": {
+        "kind": {
+          "enum": ["lfsr", "sobol", "halton", "replay", "hardware"]
+        },
+        "seed": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "lfsr_polynomial": {
+          "type": ["string", "null"]
+        },
+        "tap_mask": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "sobol_dimension": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "halton_base": {
+          "type": ["integer", "null"],
+          "minimum": 2
+        },
+        "replay_uri": {
+          "type": ["string", "null"]
+        },
+        "hardware_id": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "correlation_constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["peer_stream_id", "policy", "max_abs_correlation", "seed_domain"],
+      "properties": {
+        "peer_stream_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "policy": {
+          "enum": [
+            "independent",
+            "must_share_source",
+            "must_decorrelate",
+            "max_correlation",
+            "seed_isolation_domain"
+          ]
+        },
+        "max_abs_correlation": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "seed_domain": {
+          "type": ["string", "null"]
+        }
+      }
+    }
+  }
+}
