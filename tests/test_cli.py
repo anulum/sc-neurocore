@@ -1086,7 +1086,10 @@ def test_info_uses_metadata_without_importing_optional_jax(capsys):
             return "0.0-numpy"
         raise importlib.metadata.PackageNotFoundError(name)
 
-    with mock.patch("sc_neurocore.cli.importlib.metadata.version", side_effect=fake_version):
+    with (
+        mock.patch.dict("sys.modules", {"jax": None}),
+        mock.patch("sc_neurocore.cli.importlib.metadata.version", side_effect=fake_version),
+    ):
         rc = _cmd_info()
     assert rc == 0
     out = capsys.readouterr().out
