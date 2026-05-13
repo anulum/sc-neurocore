@@ -11,12 +11,14 @@
 SC-NIR is the SC-NeuroCore metadata layer for stochastic-computing semantics
 that plain NIR does not encode. It records bitstream length, stochastic
 encoding, stream signal kind, fixed-point precision, deterministic transform
-metadata, random-source metadata, and stream correlation constraints before a
-model reaches hardware compilation or experiment handoff.
+metadata, random-source metadata, stream correlation constraints, and explicit
+hierarchy instance boundaries before a model reaches hardware compilation or
+experiment handoff.
 
 The schema is intentionally strict. Unknown fields, missing fields, duplicate
-stream identifiers, invalid random-source metadata, and dangling correlation
-references are rejected rather than ignored.
+stream identifiers, invalid random-source metadata, dangling correlation
+references, and hierarchy ports that do not match an existing stream are
+rejected rather than ignored.
 
 ## JSON Schema
 
@@ -29,7 +31,7 @@ schemas/scnir/scnir.schema.json
 Current schema version:
 
 ```text
-sc-neurocore.scnir.v0.5
+sc-neurocore.scnir.v0.6
 ```
 
 Each stream entry must provide:
@@ -46,6 +48,12 @@ Each stream entry must provide:
 | `precision` | Signedness, total bits, fractional bits, accumulator bits, rounding, overflow |
 | `source` | LFSR, Sobol, Halton, replay, or hardware source metadata |
 | `correlation_constraints` | Pairwise policy metadata between streams |
+
+The top-level `hierarchy` array records bounded nested-hardware contracts. Each
+entry must provide a stable `instance_id`, synthesisable `module_name`, and at
+least one port. Each port records `port_name`, `direction`, `stream_id`,
+`signal_kind`, and `bit_width`; the referenced stream must exist and its
+`signal_kind` must match the port.
 
 ## CLI
 
@@ -65,10 +73,11 @@ The `sc-neurocore.scnir.v0.1` upgrade path adds explicit `delay_steps=0` to
 legacy streams, every pre-`v0.3` upgrade adds `signal_kind` inferred from the
 stream identifier, and every pre-`v0.4` upgrade adds an explicit empty
 `transforms` list. Version `v0.5` keeps scalar delay metadata compatible and
-adds per-source delay vectors for heterogeneous NIR `Delay` lowering. The typed
-validator and deterministic JSON writer then produce `sc-neurocore.scnir.v0.5`.
-Unknown schema versions fail closed so migration support must be added
-deliberately when the schema evolves.
+adds per-source delay vectors for heterogeneous NIR `Delay` lowering. Version
+`v0.6` adds top-level hierarchy instance and port metadata; legacy documents
+upgrade with an empty hierarchy list. The typed validator and deterministic JSON
+writer then produce `sc-neurocore.scnir.v0.6`. Unknown schema versions fail
+closed so migration support must be added deliberately when the schema evolves.
 
 Export SC-NIR metadata from a NIR graph:
 
