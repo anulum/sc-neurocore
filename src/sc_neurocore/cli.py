@@ -74,6 +74,11 @@ def main() -> int:
         default=1,
         help="First deterministic source seed for compile-nir SC-NIR source modules",
     )
+    parser.add_argument(
+        "--audit-handoff",
+        action="store_true",
+        help="For compile-nir, validate emitted SC-NIR HDL artefacts and write an audit report",
+    )
     parser.add_argument("--port", type=int, default=8001, help="Port for serve command")
     parser.add_argument(
         "--bind-host",
@@ -367,6 +372,12 @@ def _cmd_compile_nir(args: Any) -> int:
         )
         f.write("\n")
 
+    if getattr(args, "audit_handoff", False):
+        from sc_neurocore.ir import write_scnir_hdl_handoff_audit
+
+        audit_path = os.path.join(out_dir, "scnir_handoff_audit.json")
+        write_scnir_hdl_handoff_audit(out_dir, audit_path)
+
     print(f"[4/4] Output written to {out_dir}/")
     print(f"  {args.module_name}.v — top-level network")
     for ntype in result.neuron_modules:
@@ -376,6 +387,8 @@ def _cmd_compile_nir(args: Any) -> int:
         print(f"  {module_name}.v — SC-NIR stochastic source module")
     print("  scnir_document.json — validated SC-NIR document")
     print("  scnir_source_manifest.json — SC-NIR source manifest")
+    if getattr(args, "audit_handoff", False):
+        print("  scnir_handoff_audit.json — SC-NIR HDL handoff audit")
 
     if result.warnings:
         print(f"\n  ⚠ {len(result.warnings)} warning(s):")

@@ -1814,6 +1814,36 @@ class TestCompileNirCommand:
         )
         assert _parse_mixed_equivalence_stdout(stdout) == _mixed_fixed_point_reference(8)
 
+    def test_compile_nir_can_write_scnir_handoff_audit_report(self, tmp_path):
+        nir = pytest.importorskip("nir")
+        model_path = tmp_path / "audit_handoff_fixture.nir"
+        nir.write(str(model_path), _small_lif_nir_graph())
+        out_dir = tmp_path / "audit_handoff_compiled"
+        module_name = "audit_handoff_net"
+
+        rc = _run_main(
+            "compile-nir",
+            str(model_path),
+            "--module-name",
+            module_name,
+            "--T",
+            "512",
+            "--source-kind",
+            "sobol",
+            "--base-seed",
+            "77",
+            "--audit-handoff",
+            "-o",
+            str(out_dir),
+        )
+
+        assert rc == 0
+        report = json.loads((out_dir / "scnir_handoff_audit.json").read_text(encoding="utf-8"))
+        assert report["status"] == "valid"
+        assert report["module_name"] == module_name
+        assert report["stream_count"] == 2
+        assert report["source_module_count"] == 2
+
 
 # ---------------------------------------------------------------------------
 # Self-hosted hub command
