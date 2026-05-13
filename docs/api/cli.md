@@ -105,9 +105,11 @@ is the full validated SC-NIR metadata document for the compiled network;
 `scnir_source_manifest.json` maps those streams to emitted source modules and
 records compile evidence including `interconnect`, `q_format`,
 `total_neurons`, `total_synapses`, `scnir_stream_count`, and
-`scnir_signal_kinds`. Mixed analogue/spiking exports therefore expose a
-top-level count of `spike`, `analogue_state`, and `weight` streams without
-requiring downstream tools to infer that summary from RTL comments.
+`scnir_signal_kinds`. Mixed analogue/spiking exports also include
+`scnir_signal_routes`, which records whether each present stream role is routed
+through direct fixed-point MAC, weighted AER event routing, or stochastic
+source-module generation. Downstream tools do not need to infer those summaries
+from RTL comments.
 `--source-kind`
 currently accepts `lfsr` and `sobol`; both map to source modules with the
 `threshold[15:0]`/`bit_out` interface. `--base-seed` controls deterministic
