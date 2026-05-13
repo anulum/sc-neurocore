@@ -96,7 +96,10 @@ The `compile-nir` CLI writes the full validated document as
 can be reproduced from the same stream metadata that drove source generation.
 `scnir_source_manifest` records the stream identifier, module name, source
 family, seed, bitstream length, encoding, signal kind, recurrent delay steps,
-precision, and source-specific metadata used for each module. FPGA compilation
+precision, and source-specific metadata used for each module. CLI manifests
+also record the selected interconnect, Q-format, total neuron count, total
+synapse count, and SC-NIR stream count so AER/event-driven output directories
+carry machine-readable compile evidence. FPGA compilation
 marks non-spiking LI/CubaLI/integrator population streams as
 `analogue_state`, so mixed analogue/spiking NIR graphs expose voltage-state
 handoff metadata instead of being mislabeled as spike streams. FPGA

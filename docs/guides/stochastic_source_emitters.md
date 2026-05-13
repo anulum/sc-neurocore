@@ -110,6 +110,8 @@ Use these emitters when you need:
   recurrent stream `delay_steps`
 - `compile-nir` output directories that pair source modules with the validated
   `scnir_document.json` used to generate them
+- machine-readable compile evidence in `scnir_source_manifest.json`, including
+  direct versus AER interconnect selection and graph size
 
 Do **not** treat them as proof that every HDL path in the repository is now
 automatically sourced from these modules. They are explicit building blocks,
