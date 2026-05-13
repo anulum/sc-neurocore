@@ -37,10 +37,12 @@ def main() -> int:
             "compile-nir",
             "studio",
             "collect-synthesis",
+            "scnir",
         ],
         help="Command to run",
     )
     parser.add_argument("model", nargs="?", help="Model file (.nir) or ODE string for compile")
+    parser.add_argument("scnir_path", nargs="?", help="SC-NIR JSON document path")
     parser.add_argument(
         "--target",
         default="ice40",
@@ -243,6 +245,8 @@ def main() -> int:
         return _cmd_studio(args.port)
     if args.command == "collect-synthesis":
         return _cmd_collect_synthesis(args)
+    if args.command == "scnir":
+        return _cmd_scnir(args)
 
     parser.print_help()
     return 0
@@ -536,6 +540,27 @@ def _cmd_collect_synthesis(args: Any) -> int:
 
     if args.out is not None:
         print(f"Evidence written: {args.out}")
+    return 0
+
+
+def _cmd_scnir(args: Any) -> int:
+    """Validate SC-aware NIR metadata documents."""
+
+    from sc_neurocore.ir import SCNIRValidationError, load_scnir
+
+    action = args.model
+    path = args.scnir_path
+    if action != "validate" or not path:
+        print("Error: usage: sc-neurocore scnir validate model.scnir.json")
+        return 1
+
+    try:
+        document = load_scnir(path)
+    except (OSError, SCNIRValidationError, ValueError) as exc:
+        print(f"SC-NIR invalid: {exc}")
+        return 1
+
+    print(f"SC-NIR valid: {path} ({len(document.streams)} stream(s))")
     return 0
 
 
