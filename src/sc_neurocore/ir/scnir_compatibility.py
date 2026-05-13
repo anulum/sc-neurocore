@@ -285,7 +285,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         source_metadata=(),
         hdl_support="not emitted as a standalone nested hardware hierarchy",
         audit_evidence=("tests/test_nir_bridge.py",),
-        limitation="Nested graph execution is supported; hierarchical SC-NIR/HDL handoff is not closed.",
+        limitation=(
+            "Nested graph execution is supported in the parser; SC-NIR/FPGA "
+            "lowering fails closed until hierarchical hardware handoff is closed."
+        ),
     ),
 )
 

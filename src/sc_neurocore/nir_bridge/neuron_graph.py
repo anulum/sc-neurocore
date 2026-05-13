@@ -980,6 +980,12 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
         # Neuron node
         neuron_type = _SC_NODE_TO_TYPE.get(class_name)
         if neuron_type is None:
+            if class_name in {"SCSubgraphNode", "SCMultiPortSubgraphNode"}:
+                raise ValueError(
+                    f"Nested NIRGraph node {name!r} is parser-executable but is not "
+                    "supported by SC-NIR/FPGA lowering; flatten or pre-lower the "
+                    "subgraph before hardware compilation"
+                )
             logger.warning(
                 "Skipping unsupported node type %s (%s) in FPGA compilation",
                 class_name,

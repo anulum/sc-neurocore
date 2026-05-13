@@ -547,6 +547,34 @@ def _build_sum_pool2d_without_shape_lif_graph() -> object:
     )
 
 
+def _build_nested_subgraph_lif_graph() -> object:
+    inner = nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "aff": nir.Affine(
+                weight=np.eye(2, dtype=np.float32),
+                bias=np.zeros(2, dtype=np.float32),
+            ),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[("input", "aff"), ("aff", "output")],
+    )
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "subgraph": inner,
+            "lif": nir.LIF(
+                tau=np.full(2, 20.0),
+                r=np.ones(2),
+                v_leak=np.zeros(2),
+                v_threshold=np.ones(2),
+            ),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[("input", "subgraph"), ("subgraph", "lif"), ("lif", "output")],
+    )
+
+
 def _neuron_graph() -> object:
     network = from_nir(_build_small_lif_graph(), dt=1.0)
     return from_scnetwork(network, dt=1.0)
@@ -960,6 +988,13 @@ def test_neuron_graph_rejects_sum_pool2d_without_shape_metadata() -> None:
     network = from_nir(_build_sum_pool2d_without_shape_lif_graph(), dt=1.0)
 
     with pytest.raises(ValueError, match="SumPool2d.*shape metadata"):
+        from_scnetwork(network, dt=1.0)
+
+
+def test_neuron_graph_rejects_nested_nir_graph_hardware_lowering() -> None:
+    network = from_nir(_build_nested_subgraph_lif_graph(), dt=1.0)
+
+    with pytest.raises(ValueError, match="Nested NIRGraph.*SC-NIR/FPGA lowering"):
         from_scnetwork(network, dt=1.0)
 
 
