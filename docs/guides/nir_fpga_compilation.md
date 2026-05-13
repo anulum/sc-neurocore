@@ -382,6 +382,9 @@ sc-neurocore compile-nir model.nir --data-width 32 --fraction 16 -o build/
 
 # Target-specific + custom module name
 sc-neurocore compile-nir model.nir --target ice40 --module-name my_snn -o build/
+
+# Sobol source modules with deterministic seed allocation
+sc-neurocore compile-nir model.nir --source-kind sobol --base-seed 66 --T 1024 -o build/
 ```
 
 Output:
@@ -394,10 +397,14 @@ Output:
 [3/4] Compiling to Verilog (Q8.8)...
   Interconnect: direct
   Neuron modules: 1
+  SC-NIR source modules: 2
 [4/4] Output written to build/
   my_snn.v — top-level network
   sc_nir_lif.v — lif neuron module
   sc_nir_weight_rom.v — synaptic weight ROM
+  scnir_src_000_pop_lif_spike.v — SC-NIR stochastic source module
+  scnir_src_001_conn_input_to_lif_weight.v — SC-NIR stochastic source module
+  scnir_source_manifest.json — SC-NIR source manifest
 ```
 
 ### 5.3 CubaLIF Network
@@ -582,6 +589,14 @@ sc-neurocore compile-nir <model> [options]
 | `-o, --output` | `build` | Output directory |
 | `--module-name` | `sc_equation_neuron` | Top module name |
 | `--dt` | `1.0` | Simulation timestep |
+| `--T` | `256` | SC-NIR bitstream length |
+| `--source-kind` | `lfsr` | Source modules to emit: `lfsr` or `sobol` |
+| `--base-seed` | `1` | First deterministic source seed |
+
+`compile-nir` writes `scnir_source_manifest.json` with schema version
+`sc-neurocore.scnir.hdl-sources.v0.1`. The manifest rows record the stream
+identifier, emitted module name, source kind, seed, bitstream length, encoding,
+precision, and LFSR/Sobol source metadata used to generate each module.
 
 ---
 

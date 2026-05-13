@@ -12,9 +12,12 @@ import builtins
 import importlib.metadata
 import importlib.util
 import json
+import shutil
+import subprocess
 import types
 from unittest import mock
 
+import numpy as np
 import pytest
 
 from sc_neurocore.cli import _cmd_info, _cmd_studio, _format_engine_status, main
@@ -30,6 +33,86 @@ def _fake_module(name: str, **attrs):
     for key, value in attrs.items():
         setattr(module, key, value)
     return module
+
+
+def _small_lif_nir_graph():
+    nir = pytest.importorskip("nir")
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "aff": nir.Affine(
+                weight=np.array([[0.25, -0.5], [0.75, 0.125]], dtype=np.float32),
+                bias=np.zeros(2, dtype=np.float32),
+            ),
+            "lif": nir.LIF(
+                tau=np.full(2, 20.0),
+                r=np.ones(2),
+                v_leak=np.zeros(2),
+                v_threshold=np.ones(2),
+            ),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[("input", "aff"), ("aff", "lif"), ("lif", "output")],
+    )
+
+
+def _sobol_source_smoke_testbench(module_name: str) -> str:
+    return f"""
+module tb;
+    reg clk = 1'b0;
+    reg rst_n = 1'b0;
+    reg [15:0] threshold = 16'h9000;
+    wire bit_out;
+    wire [15:0] value;
+    wire [15:0] index;
+
+    {module_name} uut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .threshold(threshold),
+        .bit_out(bit_out),
+        .value(value),
+        .index(index)
+    );
+
+    initial begin
+        #1 clk = 1'b1;
+        #1 clk = 1'b0;
+        rst_n = 1'b1;
+        #1 $display("sample0 %04h %0d %0d", value, bit_out, index);
+        $finish;
+    end
+endmodule
+"""
+
+
+def _simulate_single_source_module(module_name: str, verilog: str, tmp_path) -> str:
+    iverilog = shutil.which("iverilog")
+    vvp = shutil.which("vvp")
+    assert iverilog is not None and vvp is not None, "Icarus Verilog must be installed"
+
+    rtl_path = tmp_path / f"{module_name}.v"
+    tb_path = tmp_path / "tb_source.v"
+    out_path = tmp_path / "tb_source.out"
+    rtl_path.write_text(verilog, encoding="utf-8")
+    tb_path.write_text(_sobol_source_smoke_testbench(module_name), encoding="utf-8")
+
+    compile_result = subprocess.run(
+        [iverilog, "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert compile_result.returncode == 0, compile_result.stderr
+
+    run_result = subprocess.run(
+        [vvp, str(out_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert run_result.returncode == 0, run_result.stderr
+    return run_result.stdout
 
 
 def test_version_flag(capsys):
@@ -334,6 +417,62 @@ class TestMapNirCommand:
         ]
         assert report["targets"][0]["summary"]["estimated_synapses"] == 6
         assert "NIR silicon mapping report generated" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# NIR FPGA compilation command
+# ---------------------------------------------------------------------------
+
+
+class TestCompileNirCommand:
+    """Tests for `sc-neurocore compile-nir ...` exported artefacts."""
+
+    def test_compile_nir_writes_scnir_source_bundle_and_simulates_source(self, tmp_path, capsys):
+        nir = pytest.importorskip("nir")
+        model_path = tmp_path / "fixture.nir"
+        nir.write(str(model_path), _small_lif_nir_graph())
+
+        out_dir = tmp_path / "compiled"
+        rc = _run_main(
+            "compile-nir",
+            str(model_path),
+            "--module-name",
+            "fixture_net",
+            "--T",
+            "512",
+            "--source-kind",
+            "sobol",
+            "--base-seed",
+            "66",
+            "-o",
+            str(out_dir),
+        )
+
+        assert rc == 0
+        assert (out_dir / "fixture_net.v").exists()
+        assert (out_dir / "sc_nir_lif.v").exists()
+        assert (out_dir / "sc_nir_weight_rom.v").exists()
+
+        manifest_path = out_dir / "scnir_source_manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        assert manifest["schema_version"] == "sc-neurocore.scnir.hdl-sources.v0.1"
+        assert len(manifest["sources"]) == 2
+
+        first = manifest["sources"][0]
+        assert first["stream_id"] == "pop.lif.spike"
+        assert first["source_kind"] == "sobol16"
+        assert first["seed"] == 66
+        assert first["bitstream_length"] == 512
+        assert first["sobol_dimension"] == 1
+
+        source_path = out_dir / f"{first['module_name']}.v"
+        source_verilog = source_path.read_text(encoding="utf-8")
+        assert "module " + first["module_name"] in source_verilog
+        assert "localparam [15:0] SEED = 16'h0042;" in source_verilog
+
+        stdout = _simulate_single_source_module(first["module_name"], source_verilog, tmp_path)
+        assert "sample0 8042 1 1" in stdout
+        assert f"{first['module_name']}.v" in capsys.readouterr().out
 
 
 # ---------------------------------------------------------------------------

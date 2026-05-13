@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.metadata
+import json
 import sys
 from typing import Any, cast
 
@@ -61,6 +62,18 @@ def main() -> int:
         ),
     )
     parser.add_argument("--T", type=int, default=256, help="Bitstream length for SC layers")
+    parser.add_argument(
+        "--source-kind",
+        choices=["lfsr", "sobol"],
+        default="lfsr",
+        help="Stochastic source family for compile-nir SC-NIR source modules",
+    )
+    parser.add_argument(
+        "--base-seed",
+        type=int,
+        default=1,
+        help="First deterministic source seed for compile-nir SC-NIR source modules",
+    )
     parser.add_argument("--port", type=int, default=8001, help="Port for serve command")
     parser.add_argument(
         "--bind-host",
@@ -291,10 +304,13 @@ def _cmd_compile_nir(args: Any) -> int:
         data_width=data_width,
         fraction=fraction,
         bitstream_length=args.T,
+        source_kind=args.source_kind,
+        base_seed=args.base_seed,
         target=args.target,
     )
     print(f"  Interconnect: {result.interconnect}")
     print(f"  Neuron modules: {len(result.neuron_modules)}")
+    print(f"  SC-NIR source modules: {len(result.scnir_source_modules)}")
 
     # Write output files
     out_dir = args.output
@@ -302,25 +318,49 @@ def _cmd_compile_nir(args: Any) -> int:
 
     # Top module
     top_path = os.path.join(out_dir, f"{args.module_name}.v")
-    with open(top_path, "w") as f:
+    with open(top_path, "w", encoding="utf-8") as f:
         f.write(result.top_module)
 
     # Neuron modules
     for ntype, verilog in result.neuron_modules.items():
         mod_path = os.path.join(out_dir, f"sc_nir_{ntype}.v")
-        with open(mod_path, "w") as f:
+        with open(mod_path, "w", encoding="utf-8") as f:
             f.write(verilog)
 
     # Weight ROM
     rom_path = os.path.join(out_dir, "sc_nir_weight_rom.v")
-    with open(rom_path, "w") as f:
+    with open(rom_path, "w", encoding="utf-8") as f:
         f.write(result.weight_rom)
+
+    for module_name, verilog in result.scnir_source_modules.items():
+        source_path = os.path.join(out_dir, f"{module_name}.v")
+        with open(source_path, "w", encoding="utf-8") as f:
+            f.write(verilog)
+
+    manifest_path = os.path.join(out_dir, "scnir_source_manifest.json")
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "schema_version": "sc-neurocore.scnir.hdl-sources.v0.1",
+                "module_name": result.module_name,
+                "bitstream_length": args.T,
+                "source_kind": args.source_kind,
+                "sources": [entry.as_dict() for entry in result.scnir_source_manifest],
+            },
+            f,
+            indent=2,
+            sort_keys=True,
+        )
+        f.write("\n")
 
     print(f"[4/4] Output written to {out_dir}/")
     print(f"  {args.module_name}.v — top-level network")
     for ntype in result.neuron_modules:
         print(f"  sc_nir_{ntype}.v — {ntype} neuron module")
     print("  sc_nir_weight_rom.v — synaptic weight ROM")
+    for module_name in result.scnir_source_modules:
+        print(f"  {module_name}.v — SC-NIR stochastic source module")
+    print("  scnir_source_manifest.json — SC-NIR source manifest")
 
     if result.warnings:
         print(f"\n  ⚠ {len(result.warnings)} warning(s):")
