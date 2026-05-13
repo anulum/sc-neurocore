@@ -297,6 +297,35 @@ def _post_weight_threshold_graph() -> object:
     )
 
 
+def _conv1d_graph() -> object:
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([1, 4])}),
+            "conv": nir.Conv1d(
+                input_shape=4,
+                weight=np.array(
+                    [[[1.0, 2.0]], [[-1.0, 0.5]]],
+                    dtype=np.float32,
+                ),
+                stride=1,
+                padding=0,
+                dilation=1,
+                groups=1,
+                bias=np.array([0.1, -0.2], dtype=np.float32),
+            ),
+            "flatten": nir.Flatten(input_type={"input": np.array([2, 3])}, start_dim=0),
+            "lif": nir.LIF(
+                tau=np.full(6, 20.0),
+                r=np.ones(6),
+                v_leak=np.zeros(6),
+                v_threshold=np.ones(6),
+            ),
+            "output": nir.Output(output_type={"output": np.array([6])}),
+        },
+        edges=[("input", "conv"), ("conv", "flatten"), ("flatten", "lif"), ("lif", "output")],
+    )
+
+
 def _mixed_analogue_spiking_graph() -> object:
     return nir.NIRGraph(
         nodes={
@@ -553,6 +582,28 @@ def test_fpga_compile_preserves_post_weight_threshold_comparators() -> None:
     assert "p0_n0_c0_threshold_out = (p0_n0_c0_raw > 34'sh000000033)" in result.top_module
     assert "p0_n1_c0_threshold_out = (p0_n1_c0_raw > 34'sh3ffffffe6)" in result.top_module
     assert "p0_n0_c0_threshold_out ? 34'sh000000100 : 34'sd0" in result.top_module
+
+
+def test_fpga_compile_lowers_conv1d_to_dense_weight_stream() -> None:
+    network = from_nir(_conv1d_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    result = compile_network_to_fpga(
+        neuron_graph,
+        module_name="scnir_conv1d_lif",
+        bitstream_length=640,
+    )
+
+    payload = scnir_to_dict(result.scnir_document)
+    validate_scnir_dict(payload)
+    streams = {stream["stream_id"]: stream for stream in payload["streams"]}
+    assert streams["conn.input_to_lif.weight"]["signal_kind"] == "weight"
+    assert result.total_synapses == 24
+    assert "ext_input_0 * 16'sh0100" in result.top_module
+    assert "ext_input_1 * 16'sh0200" in result.top_module
+    assert "ext_input_2 * 16'shff00" in result.top_module
+    assert "ext_input_3 * 16'sh0080" in result.top_module
+    assert "localparam integer SCNIR_STREAM_COUNT = 2;" in result.top_module
 
 
 def test_fpga_compile_carries_mixed_signal_kinds_into_manifest() -> None:

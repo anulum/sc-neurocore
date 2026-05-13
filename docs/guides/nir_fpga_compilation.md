@@ -201,8 +201,12 @@ source-side `Delay` nodes feeding `Affine` or `Linear`
 population connections are preserved as `delay_steps` on the downstream weight
 stream and emitted as direct interconnect register chains for both spike and
 analogue-state sources. Heterogeneous per-channel delay vectors fail closed
-until they are split into separate hardware streams. `Input` and `Output` are
-boundary nodes. Pooling, convolution, and nested
+until they are split into separate hardware streams. Shape-known `Conv1d`
+nodes are lowered to an exact dense Toeplitz-style weight matrix when numeric
+padding, positive stride/dilation/groups, and a destination width matching the
+flattened convolution output are present; missing shape metadata or ambiguous
+tensor routing fails closed. `Input` and `Output` are boundary nodes. Pooling,
+`Conv2d`, and nested
 `NIRGraph` nodes remain parser-only until their NeuronGraph and HDL semantics
 are explicitly lowered and audited.
 
@@ -312,6 +316,10 @@ Adjacent Threshold nodes are explicit comparators: source-side thresholds gate
 source values before weight contribution, and post-weight thresholds compare
 the connection accumulator before forwarding a unit current. Non-adjacent or
 ambiguous Threshold placement still requires explicit pre-lowering.
+Shape-known Conv1d nodes are weight-carrying nodes in this pipeline: their
+kernel, stride, dilation, padding, groups, and bias are lowered to the same
+dense fixed-point MAC path as Affine/Linear after any explicit Flatten needed
+to connect the tensor output to a vector neuron population.
 
 ### 4.4 Quantisation Features
 

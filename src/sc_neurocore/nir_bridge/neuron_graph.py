@@ -218,6 +218,7 @@ _SC_NODE_TO_TYPE: dict[str, str] = {
 _SC_WEIGHT_NODES: set[str] = {
     "SCAffineNode",
     "SCLinearNode",
+    "SCConv1dNode",
 }
 
 # Maps SC node class names to pass-through nodes (folded into graph)
@@ -400,6 +401,86 @@ def _flatten_widths(node: Any, node_name: str) -> tuple[int, int]:
             f"from {input_width} to {output_width}"
         )
     return input_width, output_width
+
+
+def _conv1d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, np.ndarray]:
+    """Lower a shape-known NIR Conv1d node to an exact dense matrix."""
+
+    weight = np.asarray(getattr(node, "weight", None), dtype=np.float32)
+    if weight.ndim != 3:
+        raise ValueError(f"Conv1d node {node_name!r} weight must have shape (C_out, C_in/group, K)")
+
+    input_shape = getattr(node, "input_shape", None)
+    if input_shape is None:
+        raise ValueError(
+            f"Conv1d node {node_name!r} requires input_shape for FPGA lowering"
+        )
+    input_length = int(np.asarray(input_shape).reshape(-1)[0])
+    if input_length <= 0:
+        raise ValueError(f"Conv1d node {node_name!r} input_shape must be positive")
+
+    stride = int(getattr(node, "stride", 1))
+    padding = getattr(node, "padding", 0)
+    if isinstance(padding, str):
+        raise ValueError(
+            f"Conv1d node {node_name!r} string padding requires explicit pre-lowering"
+        )
+    padding = int(padding)
+    dilation = int(getattr(node, "dilation", 1))
+    groups = int(getattr(node, "groups", 1))
+    if stride <= 0 or padding < 0 or dilation <= 0 or groups <= 0:
+        raise ValueError(f"Conv1d node {node_name!r} has invalid stride/padding/dilation/groups")
+
+    out_channels, in_channels_per_group, kernel_size = weight.shape
+    if out_channels % groups != 0:
+        raise ValueError(f"Conv1d node {node_name!r} output channels must be divisible by groups")
+    in_channels = in_channels_per_group * groups
+    output_length = (input_length + 2 * padding - dilation * (kernel_size - 1) - 1) // stride + 1
+    if output_length <= 0:
+        raise ValueError(f"Conv1d node {node_name!r} output length is not positive")
+
+    dense = np.zeros((out_channels * output_length, in_channels * input_length), dtype=np.float32)
+    out_channels_per_group = out_channels // groups
+    for out_channel in range(out_channels):
+        group = out_channel // out_channels_per_group
+        in_channel_offset = group * in_channels_per_group
+        for out_pos in range(output_length):
+            row = out_channel * output_length + out_pos
+            for local_channel in range(in_channels_per_group):
+                in_channel = in_channel_offset + local_channel
+                for kernel_pos in range(kernel_size):
+                    in_pos = out_pos * stride + kernel_pos * dilation - padding
+                    if 0 <= in_pos < input_length:
+                        col = in_channel * input_length + in_pos
+                        dense[row, col] = weight[out_channel, local_channel, kernel_pos]
+
+    raw_bias = getattr(node, "bias", None)
+    if raw_bias is None:
+        bias = np.zeros(out_channels, dtype=np.float32)
+    else:
+        bias = np.asarray(raw_bias, dtype=np.float32).reshape(-1)
+    if bias.size != out_channels:
+        raise ValueError(f"Conv1d node {node_name!r} bias length must equal output channels")
+
+    return dense, np.repeat(bias, output_length).astype(np.float32, copy=False)
+
+
+def _weight_matrix_and_bias(node: Any, node_name: str) -> tuple[np.ndarray, np.ndarray | None]:
+    """Return dense weight and bias arrays for a weight-carrying NIR node."""
+
+    class_name = type(node).__name__
+    if class_name == "SCConv1dNode":
+        return _conv1d_to_dense_matrix(node, node_name)
+
+    weight = getattr(node, "weight", None)
+    bias = getattr(node, "bias", None)
+    if weight is None:
+        weight = getattr(node, "weights", None)
+    if weight is None:
+        raise ValueError(f"Weight node {node_name!r} does not expose weights")
+    dense_weight = np.asarray(weight, dtype=np.float32)
+    dense_bias = None if bias is None else np.asarray(bias, dtype=np.float32)
+    return dense_weight, dense_bias
 
 
 def _node_logical_width(node: Any) -> int | None:
@@ -696,39 +777,30 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
 
         if class_name in _SC_WEIGHT_NODES:
             # Weight-carrying node: store weights for the downstream neuron
-            weight = getattr(node, "weight", None)
-            bias = getattr(node, "bias", None)
-            if weight is None:
-                w = getattr(node, "weights", None)
-                if w is not None:
-                    weight = w
-            if weight is not None:
-                weight = np.asarray(weight, dtype=np.float32)
-                if bias is not None:
-                    bias = np.asarray(bias, dtype=np.float32)
-                pending_weights[name] = (weight, bias)
+            weight, bias = _weight_matrix_and_bias(node, name)
+            pending_weights[name] = (weight, bias)
 
-                # Find the neuron this feeds into, preserving post-weight
-                # Scale nodes as row/bias multipliers.
-                for succ in successors.get(name, []):
-                    resolved_dst = _resolve_weight_destination(
-                        succ,
-                        nodes=nodes,
-                        successors=successors,
+            # Find the neuron this feeds into, preserving post-weight
+            # Scale nodes as row/bias multipliers.
+            for succ in successors.get(name, []):
+                resolved_dst = _resolve_weight_destination(
+                    succ,
+                    nodes=nodes,
+                    successors=successors,
+                )
+                if resolved_dst is not None:
+                    (
+                        dst_name,
+                        destination_scale,
+                        destination_flatten_width,
+                        destination_threshold,
+                    ) = resolved_dst
+                    weight_source_for[dst_name] = (
+                        name,
+                        destination_scale,
+                        destination_flatten_width,
+                        destination_threshold,
                     )
-                    if resolved_dst is not None:
-                        (
-                            dst_name,
-                            destination_scale,
-                            destination_flatten_width,
-                            destination_threshold,
-                        ) = resolved_dst
-                        weight_source_for[dst_name] = (
-                            name,
-                            destination_scale,
-                            destination_flatten_width,
-                            destination_threshold,
-                        )
             continue
 
         if class_name in _SC_PASSTHROUGH_NODES:
