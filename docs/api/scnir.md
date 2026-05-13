@@ -29,7 +29,7 @@ schemas/scnir/scnir.schema.json
 Current schema version:
 
 ```text
-sc-neurocore.scnir.v0.4
+sc-neurocore.scnir.v0.5
 ```
 
 Each stream entry must provide:
@@ -41,7 +41,7 @@ Each stream entry must provide:
 | `bitstream_length` | Positive integer SC stream length |
 | `encoding` | `unipolar`, `bipolar`, low-discrepancy, replay, LFSR, or hardware-source encoding |
 | `signal_kind` | Logical stream role: `spike`, `analogue_state`, or `weight` |
-| `delay_steps` | Explicit unit-delay count for recurrent streams; feed-forward streams use `0` |
+| `delay_steps` | Explicit unit-delay count as a scalar integer or exact source-width integer vector; feed-forward streams use `0` |
 | `transforms` | Ordered deterministic transforms applied to the stream, currently threshold comparators |
 | `precision` | Signedness, total bits, fractional bits, accumulator bits, rounding, overflow |
 | `source` | LFSR, Sobol, Halton, replay, or hardware source metadata |
@@ -64,9 +64,11 @@ sc-neurocore scnir upgrade model.scnir.json --output upgraded.scnir.json
 The `sc-neurocore.scnir.v0.1` upgrade path adds explicit `delay_steps=0` to
 legacy streams, every pre-`v0.3` upgrade adds `signal_kind` inferred from the
 stream identifier, and every pre-`v0.4` upgrade adds an explicit empty
-`transforms` list. The typed validator and deterministic JSON writer then
-produce `sc-neurocore.scnir.v0.4`. Unknown schema versions fail closed so
-migration support must be added deliberately when the schema evolves.
+`transforms` list. Version `v0.5` keeps scalar delay metadata compatible and
+adds per-source delay vectors for heterogeneous NIR `Delay` lowering. The typed
+validator and deterministic JSON writer then produce `sc-neurocore.scnir.v0.5`.
+Unknown schema versions fail closed so migration support must be added
+deliberately when the schema evolves.
 
 Export SC-NIR metadata from a NIR graph:
 
@@ -131,7 +133,7 @@ parser-only.
 | `Scale` | metadata and HDL when adjacent to `Affine`/`Linear` | folded into the downstream weight stream as connection gain | folded fixed-point gain in direct/AER weight terms |
 | `Flatten` | metadata and HDL when exact shape metadata preserves element count adjacent to `Affine`/`Linear` | folded into the downstream weight stream as `shape_preserving_flatten` | fixed-point weight indexing with exact flattened width checks |
 | `Threshold` | metadata and HDL when adjacent to `Affine`/`Linear` with scalar or exact-width thresholds | weight stream carries a `threshold` transform with `source` or `destination` position | fixed-point comparator before weighted-event contribution or destination current |
-| `Delay` | metadata and HDL for homogeneous source-side delays feeding `Affine`/`Linear` population connections | downstream weight stream carries `delay_steps>=0` | direct-interconnect register chain for spike and analogue-state sources |
+| `Delay` | metadata and HDL for scalar or exact source-width source-side delays feeding `Affine`/`Linear` population connections | downstream weight stream carries scalar `delay_steps>=0` or vector `delay_steps=[...]` | direct-interconnect register chains with per-source delay taps for spike and analogue-state sources |
 | `Conv1d` | metadata and HDL when `input_shape` is explicit and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `convolution_lowered_weight` | dense Toeplitz-style fixed-point MAC terms through the weight path |
 | `Conv2d` | metadata and HDL when exact spatial input shape is explicit and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `convolution_lowered_weight` | dense 2D convolution fixed-point MAC terms through the weight path |
 | `SumPool2d`, `AvgPool2d` | metadata and HDL when exact CHW shape metadata is present and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `pool2d_lowered_weight` | dense pooling fixed-point MAC terms through the weight path |

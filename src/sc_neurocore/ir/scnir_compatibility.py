@@ -207,15 +207,14 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         nir_primitive="Delay",
         support_level="metadata_and_hdl",
         parser_node="SCDelayNode",
-        neuron_graph_lowering="homogeneous source-side delay on weighted population connections",
-        scnir_stream_metadata=("signal_kind=weight", "delay_steps>=0"),
+        neuron_graph_lowering="scalar or per-source source-side delay on weighted population connections",
+        scnir_stream_metadata=("signal_kind=weight", "delay_steps>=0 or vector[int>=0]"),
         source_metadata=("seed", "bitstream_length", "precision"),
-        hdl_support="direct-interconnect source register chain for delayed population streams",
+        hdl_support="direct-interconnect source register chains with per-source delay taps",
         audit_evidence=("tests/test_scnir_fpga_integration.py", "tests/test_nir_fpga_pipeline.py"),
         limitation=(
-            "Delay is hardware-closed for homogeneous source-side delays feeding "
-            "Affine/Linear population connections; heterogeneous channel delays "
-            "must be split before lowering."
+            "Delay is hardware-closed for scalar and exact source-width vector delays "
+            "feeding Affine/Linear population connections; invalid vector widths fail closed."
         ),
     ),
     SCNIRCompatibilityRow(

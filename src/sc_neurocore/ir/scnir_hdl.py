@@ -35,7 +35,7 @@ class SCNIRHDLSourceManifestEntry:
     bitstream_length: int
     encoding: str
     signal_kind: str
-    delay_steps: int
+    delay_steps: int | tuple[int, ...]
     total_bits: int
     fractional_bits: int
     transforms: tuple[dict[str, object], ...] = ()
@@ -55,7 +55,11 @@ class SCNIRHDLSourceManifestEntry:
             "bitstream_length": self.bitstream_length,
             "encoding": self.encoding,
             "signal_kind": self.signal_kind,
-            "delay_steps": self.delay_steps,
+            "delay_steps": (
+                self.delay_steps
+                if isinstance(self.delay_steps, int)
+                else list(self.delay_steps)
+            ),
             "total_bits": self.total_bits,
             "fractional_bits": self.fractional_bits,
             "transforms": [dict(transform) for transform in self.transforms],
@@ -157,7 +161,11 @@ def _manifest_entry(
         bitstream_length=stream.bitstream_length,
         encoding=stream.encoding,
         signal_kind=stream.signal_kind,
-        delay_steps=stream.delay_steps,
+        delay_steps=(
+            stream.delay_steps
+            if isinstance(stream.delay_steps, int)
+            else tuple(int(value) for value in stream.delay_steps)
+        ),
         total_bits=stream.precision.total_bits,
         fractional_bits=stream.precision.fractional_bits,
         transforms=tuple(

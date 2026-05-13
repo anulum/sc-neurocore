@@ -198,10 +198,11 @@ connection accumulator before adding a unit fixed-point destination current.
 Threshold vectors must be scalar or exact-width, and multiple thresholds on one
 side of a connection fail closed until pre-lowered. Homogeneous
 source-side `Delay` nodes feeding `Affine` or `Linear`
-population connections are preserved as `delay_steps` on the downstream weight
-stream and emitted as direct interconnect register chains for both spike and
-analogue-state sources. Heterogeneous per-channel delay vectors fail closed
-until they are split into separate hardware streams. Shape-known `Conv1d`
+population connections are preserved as scalar or exact source-width
+`delay_steps` on the downstream weight stream and emitted as direct interconnect
+register chains for both spike and analogue-state sources. Heterogeneous
+per-channel delay vectors select the corresponding delayed source tap per
+weight-matrix column. Shape-known `Conv1d`
 nodes are lowered to an exact dense Toeplitz-style weight matrix when numeric
 padding, positive stride/dilation/groups, and a destination width matching the
 flattened convolution output are present; missing shape metadata or ambiguous
@@ -315,8 +316,8 @@ SC-NIR/FPGA now fails closed instead of silently dropping the subgraph.
 
 Input and Output nodes are graph boundaries. Adjacent Scale nodes are folded
 into connection weights and bias terms when they sit immediately before or
-after Affine/Linear. Homogeneous source-side Delay nodes are preserved as
-connection `delay_steps`. Shape-known Flatten nodes are structural pass-through
+after Affine/Linear. Source-side Delay nodes are preserved as scalar or
+source-width vector connection `delay_steps`. Shape-known Flatten nodes are structural pass-through
 nodes for this pipeline when their flattened element count exactly matches the
 adjacent weight input/output width and the destination population width.
 Adjacent Threshold nodes are explicit comparators: source-side thresholds gate

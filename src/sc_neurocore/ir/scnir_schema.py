@@ -24,14 +24,16 @@ from pathlib import Path
 import re
 from typing import Any, Literal, Mapping, Sequence, cast
 
-SCNIR_SCHEMA_VERSION = "sc-neurocore.scnir.v0.4"
-SCNIR_PREVIOUS_SCHEMA_VERSION = "sc-neurocore.scnir.v0.3"
+SCNIR_SCHEMA_VERSION = "sc-neurocore.scnir.v0.5"
+SCNIR_PREVIOUS_SCHEMA_VERSION = "sc-neurocore.scnir.v0.4"
+SCNIR_V03_SCHEMA_VERSION = "sc-neurocore.scnir.v0.3"
 SCNIR_V02_SCHEMA_VERSION = "sc-neurocore.scnir.v0.2"
 SCNIR_LEGACY_SCHEMA_VERSION = "sc-neurocore.scnir.v0.1"
 SCNIR_SUPPORTED_SCHEMA_VERSIONS = frozenset(
     {
         SCNIR_LEGACY_SCHEMA_VERSION,
         SCNIR_V02_SCHEMA_VERSION,
+        SCNIR_V03_SCHEMA_VERSION,
         SCNIR_PREVIOUS_SCHEMA_VERSION,
         SCNIR_SCHEMA_VERSION,
     }
@@ -59,6 +61,7 @@ SCNIRCorrelationPolicy = Literal[
     "max_correlation",
     "seed_isolation_domain",
 ]
+SCNIRDelaySteps = int | Sequence[int]
 
 _ENCODINGS = frozenset(
     {
@@ -151,7 +154,7 @@ class SCNIRStream:
     precision: SCNIRPrecision
     source: SCNIRSource
     signal_kind: SCNIRSignalKind = "spike"
-    delay_steps: int = 0
+    delay_steps: SCNIRDelaySteps = 0
     transforms: Sequence[SCNIRStreamTransform] = field(default_factory=tuple)
     correlation_constraints: Sequence[SCNIRCorrelationConstraint] = field(default_factory=tuple)
 
@@ -255,10 +258,12 @@ def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
 
     Version ``v0.1`` did not encode recurrent connection delay, and versions
     before ``v0.3`` did not distinguish spiking, analogue-state, and weight
-    streams.  Version ``v0.4`` adds explicit stream transform metadata for
-    threshold comparators.  Legacy upgrades insert the missing fields before
-    validating through the typed schema.  Current documents are canonicalised
-    through the same deterministic writer.
+    streams.  Version ``v0.4`` added explicit stream transform metadata for
+    threshold comparators.  Version ``v0.5`` permits ``delay_steps`` to be
+    either a scalar integer or a per-source-column integer vector.  Legacy
+    upgrades insert the missing fields before validating through the typed
+    schema.  Current documents are canonicalised through the same deterministic
+    writer.
     """
 
     version = payload.get("schema_version")
@@ -267,6 +272,7 @@ def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
     if version in {
         SCNIR_LEGACY_SCHEMA_VERSION,
         SCNIR_V02_SCHEMA_VERSION,
+        SCNIR_V03_SCHEMA_VERSION,
         SCNIR_PREVIOUS_SCHEMA_VERSION,
     }:
         upgraded: dict[str, Any] = dict(payload)
@@ -313,7 +319,7 @@ def _validate_stream(stream: Mapping[str, Any], path: str) -> None:
     _expect_enum(stream["signal_kind"], _SIGNAL_KINDS, f"{path}.signal_kind")
     _validate_precision(_expect_mapping(stream["precision"], f"{path}.precision"), path)
     _validate_source(_expect_mapping(stream["source"], f"{path}.source"), path)
-    _expect_non_negative_int(stream["delay_steps"], f"{path}.delay_steps")
+    _expect_delay_steps(stream["delay_steps"], f"{path}.delay_steps")
     transforms = _expect_sequence(stream["transforms"], f"{path}.transforms")
     for index, item in enumerate(transforms):
         _validate_transform(_expect_mapping(item, f"{path}.transforms[{index}]"), path)
@@ -460,7 +466,7 @@ def _stream_from_dict(stream: Mapping[str, Any]) -> SCNIRStream:
             replay_uri=cast(str | None, source["replay_uri"]),
             hardware_id=cast(str | None, source["hardware_id"]),
         ),
-        delay_steps=cast(int, stream["delay_steps"]),
+        delay_steps=_delay_steps_from_value(stream["delay_steps"], "stream.delay_steps"),
         transforms=tuple(
             _transform_from_dict(_expect_mapping(item, "transform")) for item in transforms
         ),
@@ -497,7 +503,7 @@ def _stream_to_dict(stream: SCNIRStream) -> dict[str, Any]:
         "bitstream_length": stream.bitstream_length,
         "encoding": stream.encoding,
         "signal_kind": stream.signal_kind,
-        "delay_steps": stream.delay_steps,
+        "delay_steps": _delay_steps_to_json(stream.delay_steps),
         "precision": {
             "signed": stream.precision.signed,
             "total_bits": stream.precision.total_bits,
@@ -590,6 +596,33 @@ def _expect_non_negative_int(value: Any, path: str) -> int:
     if not isinstance(value, int) or isinstance(value, bool) or value < 0:
         raise SCNIRValidationError(f"{path} must be a non-negative integer")
     return value
+
+
+def _expect_delay_steps(value: Any, path: str) -> int | tuple[int, ...]:
+    """Validate scalar or per-source-column stream delay metadata."""
+
+    if isinstance(value, int) and not isinstance(value, bool):
+        return _expect_non_negative_int(value, path)
+    sequence = _expect_sequence(value, path)
+    if not sequence:
+        raise SCNIRValidationError(f"{path} vector must contain at least one value")
+    steps: list[int] = []
+    for index, item in enumerate(sequence):
+        steps.append(_expect_non_negative_int(item, f"{path}[{index}]"))
+    return tuple(steps)
+
+
+def _delay_steps_from_value(value: Any, path: str) -> int | tuple[int, ...]:
+    return _expect_delay_steps(value, path)
+
+
+def _delay_steps_to_json(value: SCNIRDelaySteps) -> int | list[int]:
+    if isinstance(value, int) and not isinstance(value, bool):
+        return value
+    steps = _expect_delay_steps(value, "delay_steps")
+    if isinstance(steps, int):
+        return steps
+    return list(steps)
 
 
 def _expect_enum(value: Any, allowed: frozenset[str], path: str) -> str:
