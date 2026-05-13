@@ -16,11 +16,13 @@ silently over-claim support.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Literal
 
-SCNIR_COMPATIBILITY_AUDIT_VERSION = "sc-neurocore.scnir.compatibility-audit.v0.1"
+SCNIR_COMPATIBILITY_AUDIT_VERSION = "sc-neurocore.scnir.compatibility-audit.v0.2"
 
 SCNIRSupportLevel = Literal[
     "boundary",
@@ -343,6 +345,21 @@ def build_scnir_compatibility_audit(evidence_root: str | Path) -> dict[str, obje
     for row in _MATRIX:
         support_level_counts[row.support_level] = support_level_counts.get(row.support_level, 0) + 1
     evidence_paths = sorted({path for row in _MATRIX for path in row.audit_evidence})
+    evidence_files = []
+    for path in evidence_paths:
+        evidence_file = root / path
+        evidence_bytes = evidence_file.read_bytes()
+        evidence_files.append(
+            {
+                "path": path,
+                "sha256": hashlib.sha256(evidence_bytes).hexdigest(),
+                "size_bytes": len(evidence_bytes),
+            }
+        )
+    matrix = list(scnir_compatibility_matrix_dicts())
+    matrix_bytes = (json.dumps(matrix, sort_keys=True, separators=(",", ":")) + "\n").encode(
+        "utf-8"
+    )
 
     return {
         "schema_version": SCNIR_COMPATIBILITY_AUDIT_VERSION,
@@ -352,7 +369,9 @@ def build_scnir_compatibility_audit(evidence_root: str | Path) -> dict[str, obje
         "support_level_counts": dict(sorted(support_level_counts.items())),
         "audit_evidence_file_count": len(evidence_paths),
         "audit_evidence_paths": evidence_paths,
-        "matrix": list(scnir_compatibility_matrix_dicts()),
+        "audit_evidence_files": evidence_files,
+        "matrix_sha256": hashlib.sha256(matrix_bytes).hexdigest(),
+        "matrix": matrix,
     }
 
 
