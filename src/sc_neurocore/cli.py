@@ -17,6 +17,21 @@ import sys
 from typing import Any, cast
 
 
+class _OutputAction(argparse.Action):
+    """Track whether ``--output`` was supplied explicitly."""
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str | None,
+        option_string: str | None = None,
+    ) -> None:
+        del parser, option_string
+        setattr(namespace, self.dest, values)
+        namespace.output_supplied = True
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="sc-neurocore",
@@ -50,7 +65,14 @@ def main() -> int:
         choices=["ice40", "ecp5", "artix7", "zynq", "web"],
         help="Deployment target (default: ice40)",
     )
-    parser.add_argument("--output", "-o", default="build", help="Output directory for deploy")
+    parser.set_defaults(output_supplied=False)
+    parser.add_argument(
+        "--output",
+        "-o",
+        default="build",
+        action=_OutputAction,
+        help="Output directory or JSON report path for commands that emit artefacts",
+    )
     parser.add_argument(
         "--dt",
         type=float,
@@ -646,6 +668,7 @@ def _cmd_scnir(args: Any) -> int:
         SCNIRValidationError,
         export_scnir_from_nir,
         load_scnir,
+        scnir_compatibility_matrix_dicts,
         validate_scnir_compatibility_matrix,
         upgrade_scnir_dict,
     )
@@ -666,11 +689,19 @@ def _cmd_scnir(args: Any) -> int:
         evidence_root = Path(path) if path else Path.cwd()
         try:
             validate_scnir_compatibility_matrix(evidence_root=evidence_root)
+            if getattr(args, "output_supplied", False):
+                Path(args.output).write_text(
+                    json.dumps(scnir_compatibility_matrix_dicts(), indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
         except (OSError, ValueError, TypeError) as exc:
             print(f"SC-NIR compatibility matrix invalid: {exc}")
             return 1
 
-        print(f"SC-NIR compatibility matrix valid: {evidence_root}")
+        suffix = (
+            f"; report written: {args.output}" if getattr(args, "output_supplied", False) else ""
+        )
+        print(f"SC-NIR compatibility matrix valid: {evidence_root}{suffix}")
         return 0
 
     if action == "validate":

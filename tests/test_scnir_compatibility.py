@@ -58,6 +58,25 @@ def test_scnir_compatibility_cli_validates_evidence_root(
     assert "SC-NIR compatibility matrix valid" in capsys.readouterr().out
 
 
+def test_scnir_compatibility_cli_writes_matrix_report(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "scnir_compatibility.json"
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sc-neurocore", "scnir", "compatibility", str(REPO_ROOT), "--output", str(output)],
+    )
+
+    assert main() == 0
+    assert f"report written: {output}" in capsys.readouterr().out
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert isinstance(payload, list)
+    assert payload == json.loads(json.dumps(scnir_compatibility_matrix_dicts(), sort_keys=True))
+    assert payload[0]["nir_primitive"] == "Input"
+
+
 def test_scnir_compatibility_cli_rejects_missing_evidence_root(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
