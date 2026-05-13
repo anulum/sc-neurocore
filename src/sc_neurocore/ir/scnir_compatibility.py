@@ -263,14 +263,18 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
     ),
     SCNIRCompatibilityRow(
         nir_primitive="Conv2d",
-        support_level="parser_only",
+        support_level="metadata_and_hdl",
         parser_node="SCConv2dNode",
-        neuron_graph_lowering="not lowered",
-        scnir_stream_metadata=(),
-        source_metadata=(),
-        hdl_support="not emitted by the current SC-NIR/FPGA path",
-        audit_evidence=("tests/test_nir_bridge.py",),
-        limitation="Convolution parser support still needs NeuronGraph and RTL lowering.",
+        neuron_graph_lowering="shape-known 2D convolution lowered to a dense weighted connection",
+        scnir_stream_metadata=("signal_kind=weight", "convolution_lowered_weight"),
+        source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
+        hdl_support="dense 2D convolution fixed-point MAC terms through the weight-stream path",
+        audit_evidence=("tests/test_scnir_convert.py", "tests/test_scnir_fpga_integration.py"),
+        limitation=(
+            "Conv2d is hardware-closed only when NIR provides finite integer "
+            "input_shape, numeric padding, positive stride/dilation/groups, "
+            "and a destination width matching the flattened convolution output."
+        ),
     ),
     SCNIRCompatibilityRow(
         nir_primitive="NIRGraph",

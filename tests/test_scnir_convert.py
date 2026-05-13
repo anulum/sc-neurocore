@@ -424,6 +424,61 @@ def _build_conv1d_without_shape_lif_graph() -> object:
     )
 
 
+def _build_conv2d_lif_graph() -> object:
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([1, 3, 3])}),
+            "conv": nir.Conv2d(
+                input_shape=(3, 3),
+                weight=np.array(
+                    [[[[1.0, 2.0], [3.0, 4.0]]]],
+                    dtype=np.float32,
+                ),
+                stride=1,
+                padding=0,
+                dilation=1,
+                groups=1,
+                bias=np.array([0.5], dtype=np.float32),
+            ),
+            "flatten": nir.Flatten(input_type={"input": np.array([1, 2, 2])}, start_dim=0),
+            "lif": nir.LIF(
+                tau=np.full(4, 20.0),
+                r=np.ones(4),
+                v_leak=np.zeros(4),
+                v_threshold=np.ones(4),
+            ),
+            "output": nir.Output(output_type={"output": np.array([4])}),
+        },
+        edges=[("input", "conv"), ("conv", "flatten"), ("flatten", "lif"), ("lif", "output")],
+    )
+
+
+def _build_conv2d_without_shape_lif_graph() -> object:
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([1, 3, 3])}),
+            "conv": nir.Conv2d(
+                input_shape=None,
+                weight=np.ones((1, 1, 2, 2), dtype=np.float32),
+                stride=1,
+                padding=0,
+                dilation=1,
+                groups=1,
+                bias=np.zeros(1, dtype=np.float32),
+            ),
+            "lif": nir.LIF(
+                tau=np.full(4, 20.0),
+                r=np.ones(4),
+                v_leak=np.zeros(4),
+                v_threshold=np.ones(4),
+            ),
+            "output": nir.Output(output_type={"output": np.array([4])}),
+        },
+        edges=[("input", "conv"), ("conv", "lif"), ("lif", "output")],
+        type_check=False,
+    )
+
+
 def _build_sum_pool2d_lif_graph() -> object:
     return nir.NIRGraph(
         nodes={
@@ -836,6 +891,34 @@ def test_neuron_graph_rejects_conv1d_without_input_shape() -> None:
     network = from_nir(_build_conv1d_without_shape_lif_graph(), dt=1.0)
 
     with pytest.raises(ValueError, match="Conv1d.*input_shape"):
+        from_scnetwork(network, dt=1.0)
+
+
+def test_neuron_graph_lowers_shape_known_conv2d_to_weight_matrix() -> None:
+    network = from_nir(_build_conv2d_lif_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    conv_connection = next(
+        conn for conn in neuron_graph.connections if conn.src == "input" and conn.dst == "lif"
+    )
+
+    assert conv_connection.weights.shape == (4, 9)
+    np.testing.assert_allclose(
+        conv_connection.weights,
+        [
+            [1.0, 2.0, 0.0, 3.0, 4.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 2.0, 0.0, 3.0, 4.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 3.0, 4.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 3.0, 4.0],
+        ],
+    )
+    np.testing.assert_allclose(conv_connection.bias, np.full(4, 0.5))
+
+
+def test_neuron_graph_rejects_conv2d_without_input_shape() -> None:
+    network = from_nir(_build_conv2d_without_shape_lif_graph(), dt=1.0)
+
+    with pytest.raises(ValueError, match="Conv2d.*input_shape"):
         from_scnetwork(network, dt=1.0)
 
 

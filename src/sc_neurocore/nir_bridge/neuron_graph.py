@@ -219,6 +219,7 @@ _SC_WEIGHT_NODES: set[str] = {
     "SCAffineNode",
     "SCLinearNode",
     "SCConv1dNode",
+    "SCConv2dNode",
     "SCSumPool2dNode",
     "SCAvgPool2dNode",
 }
@@ -467,6 +468,110 @@ def _conv1d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, np.n
     return dense, np.repeat(bias, output_length).astype(np.float32, copy=False)
 
 
+def _conv2d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, np.ndarray]:
+    """Lower a shape-known NIR Conv2d node to an exact dense matrix."""
+
+    weight = np.asarray(getattr(node, "weight", None), dtype=np.float32)
+    if weight.ndim != 4:
+        raise ValueError(
+            f"Conv2d node {node_name!r} weight must have shape "
+            "(C_out, C_in/group, K_h, K_w)"
+        )
+
+    input_shape = getattr(node, "input_shape", None)
+    if input_shape is None:
+        raise ValueError(
+            f"Conv2d node {node_name!r} requires input_shape for FPGA lowering"
+        )
+    if len(input_shape) != 2:
+        raise ValueError(f"Conv2d node {node_name!r} input_shape must be (height, width)")
+    input_height, input_width = (int(value) for value in input_shape)
+    if input_height <= 0 or input_width <= 0:
+        raise ValueError(f"Conv2d node {node_name!r} input_shape must be positive")
+
+    stride_height, stride_width = (int(value) for value in node.stride)
+    pad_height, pad_width = node.padding
+    if isinstance(pad_height, str) or isinstance(pad_width, str):
+        raise ValueError(
+            f"Conv2d node {node_name!r} string padding requires explicit pre-lowering"
+        )
+    pad_height = int(pad_height)
+    pad_width = int(pad_width)
+    dilation_height, dilation_width = (int(value) for value in node.dilation)
+    groups = int(node.groups)
+    if (
+        stride_height <= 0
+        or stride_width <= 0
+        or pad_height < 0
+        or pad_width < 0
+        or dilation_height <= 0
+        or dilation_width <= 0
+        or groups <= 0
+    ):
+        raise ValueError(f"Conv2d node {node_name!r} has invalid stride/padding/dilation/groups")
+
+    out_channels, in_channels_per_group, kernel_height, kernel_width = weight.shape
+    if out_channels % groups != 0:
+        raise ValueError(f"Conv2d node {node_name!r} output channels must be divisible by groups")
+    in_channels = in_channels_per_group * groups
+    output_height = (
+        input_height + 2 * pad_height - dilation_height * (kernel_height - 1) - 1
+    ) // stride_height + 1
+    output_width = (
+        input_width + 2 * pad_width - dilation_width * (kernel_width - 1) - 1
+    ) // stride_width + 1
+    if output_height <= 0 or output_width <= 0:
+        raise ValueError(f"Conv2d node {node_name!r} output shape is not positive")
+
+    output_shape = getattr(node, "output_shape", None)
+    if output_shape is not None:
+        expected_output_shape = (out_channels, output_height, output_width)
+        if tuple(int(value) for value in output_shape) != expected_output_shape:
+            raise ValueError(
+                f"Conv2d node {node_name!r} output_shape {output_shape} does not match "
+                f"computed shape {expected_output_shape}"
+            )
+
+    dense = np.zeros(
+        (out_channels * output_height * output_width, in_channels * input_height * input_width),
+        dtype=np.float32,
+    )
+    out_channels_per_group = out_channels // groups
+    for out_channel in range(out_channels):
+        group = out_channel // out_channels_per_group
+        in_channel_offset = group * in_channels_per_group
+        for out_y in range(output_height):
+            for out_x in range(output_width):
+                row = (out_channel * output_height + out_y) * output_width + out_x
+                for local_channel in range(in_channels_per_group):
+                    in_channel = in_channel_offset + local_channel
+                    for kernel_y in range(kernel_height):
+                        in_y = out_y * stride_height + kernel_y * dilation_height - pad_height
+                        if not 0 <= in_y < input_height:
+                            continue
+                        for kernel_x in range(kernel_width):
+                            in_x = out_x * stride_width + kernel_x * dilation_width - pad_width
+                            if not 0 <= in_x < input_width:
+                                continue
+                            col = (in_channel * input_height + in_y) * input_width + in_x
+                            dense[row, col] += weight[
+                                out_channel,
+                                local_channel,
+                                kernel_y,
+                                kernel_x,
+                            ]
+
+    raw_bias = getattr(node, "bias", None)
+    if raw_bias is None:
+        bias = np.zeros(out_channels, dtype=np.float32)
+    else:
+        bias = np.asarray(raw_bias, dtype=np.float32).reshape(-1)
+    if bias.size != out_channels:
+        raise ValueError(f"Conv2d node {node_name!r} bias length must equal output channels")
+
+    return dense, np.repeat(bias, output_height * output_width).astype(np.float32, copy=False)
+
+
 def _pool2d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, None]:
     """Lower a shape-known NIR Pool2d node to an exact dense matrix."""
 
@@ -533,6 +638,8 @@ def _weight_matrix_and_bias(node: Any, node_name: str) -> tuple[np.ndarray, np.n
     class_name = type(node).__name__
     if class_name == "SCConv1dNode":
         return _conv1d_to_dense_matrix(node, node_name)
+    if class_name == "SCConv2dNode":
+        return _conv2d_to_dense_matrix(node, node_name)
     if class_name in {"SCSumPool2dNode", "SCAvgPool2dNode"}:
         return _pool2d_to_dense_matrix(node, node_name)
 
