@@ -19,6 +19,7 @@ except ImportError:
     def get_batch_simulate() -> object:
         raise ImportError("Studio Rust batch simulator unavailable")
 
+
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
 # State variable names that change during .step() — common across models

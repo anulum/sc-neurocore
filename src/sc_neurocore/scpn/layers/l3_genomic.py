@@ -141,8 +141,8 @@ class L3_GenomicLayer:
         self.methylation = np.clip(self.methylation, 0.0, 1.0)
 
         # Chromatin openness inversely related to methylation
-        self.chromatin_openness = 1.0 - self.methylation + self._rng.normal(
-            0, 0.05, self.params.n_genes
+        self.chromatin_openness = (
+            1.0 - self.methylation + self._rng.normal(0, 0.05, self.params.n_genes)
         )
         self.chromatin_openness = np.clip(self.chromatin_openness, 0.0, 1.0)
 
@@ -191,9 +191,7 @@ class L3_GenomicLayer:
         # 6. Bioelectric pattern formation
         if bioelectric_signal is not None:
             signal = self._bioelectric_signal(bioelectric_signal, self.params.n_genes)
-            self.membrane_potential = (
-                0.9 * self.membrane_potential + 0.1 * signal
-            )
+            self.membrane_potential = 0.9 * self.membrane_potential + 0.1 * signal
         # Internal bioelectric dynamics (gap junction diffusion)
         diffusion = np.roll(self.membrane_potential, 1) - self.membrane_potential
         self.membrane_potential += diffusion * self.params.bioelectric_coupling * dt
@@ -263,7 +261,10 @@ class L3_GenomicLayer:
             or params.ciss_efficiency > 1.0
         ):
             raise ValueError("ciss_efficiency must be finite and within [0, 1]")
-        if not math.isfinite(float(params.dna_chirality)) or params.dna_chirality not in (-1.0, 1.0):
+        if not math.isfinite(float(params.dna_chirality)) or params.dna_chirality not in (
+            -1.0,
+            1.0,
+        ):
             raise ValueError("dna_chirality must be finite and either -1.0 or 1.0")
         if not math.isfinite(float(params.membrane_potential_rest)):
             raise ValueError("membrane_potential_rest must be finite")

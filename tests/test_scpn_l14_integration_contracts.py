@@ -80,10 +80,14 @@ def test_l14_rejects_invalid_parameters_and_inputs() -> None:
     with pytest.raises(ValueError, match="bitstream_length"):
         L14_IntegrationLayer(L14_StochasticParameters(bitstream_length=0))
     with pytest.raises(ValueError, match="integration_weights"):
-        L14_IntegrationLayer(L14_StochasticParameters(n_dimensions=3, integration_weights=np.ones(2)))
+        L14_IntegrationLayer(
+            L14_StochasticParameters(n_dimensions=3, integration_weights=np.ones(2))
+        )
     with pytest.raises(ValueError, match="integration_weights"):
         L14_IntegrationLayer(
-            L14_StochasticParameters(n_dimensions=3, integration_weights=np.array([1.0, np.nan, 1.0]))
+            L14_StochasticParameters(
+                n_dimensions=3, integration_weights=np.array([1.0, np.nan, 1.0])
+            )
         )
     with pytest.raises(ValueError, match="integration_weights"):
         L14_IntegrationLayer(

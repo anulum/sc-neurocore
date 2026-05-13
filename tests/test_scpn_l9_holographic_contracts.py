@@ -58,7 +58,9 @@ def test_l9_boundary_cue_generates_syndrome_and_recovery() -> None:
 
 
 def test_l9_rejects_invalid_boundary_cue_and_context() -> None:
-    layer = L9_MemoryLayer(L9_StochasticParameters(n_memory_slots=3, bitstream_length=8, rng_seed=1))
+    layer = L9_MemoryLayer(
+        L9_StochasticParameters(n_memory_slots=3, bitstream_length=8, rng_seed=1)
+    )
 
     invalid_cues: list[Any] = [
         np.array([1.0, -1.0]),

@@ -139,7 +139,9 @@ class AEREmitter:
             params = layer["params"]
             if "n_neurons" not in params:
                 raise ValueError(f"Dense layer '{layer['name']}' requires n_neurons")
-            self._require_positive_int(params["n_neurons"], f"Dense layer '{layer['name']}' n_neurons")
+            self._require_positive_int(
+                params["n_neurons"], f"Dense layer '{layer['name']}' n_neurons"
+            )
             for width_name in ("input_width", "output_width"):
                 if width_name in params:
                     self._require_positive_int(

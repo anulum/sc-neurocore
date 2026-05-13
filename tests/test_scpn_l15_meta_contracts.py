@@ -53,7 +53,11 @@ def test_l15_uses_l14_resonance_and_integration_coupling() -> None:
         )
     )
 
-    l14_input = {"integrated_coherence": 0.7, "resonance_lock": False, "resonance_determinant": 0.25}
+    l14_input = {
+        "integrated_coherence": 0.7,
+        "resonance_lock": False,
+        "resonance_determinant": 0.25,
+    }
     coupled_out = coupled.step(0.05, l14_input=l14_input)
     decoupled_out = decoupled.step(0.05, l14_input=l14_input)
 
@@ -80,11 +84,19 @@ def test_l15_tracks_consilium_trend_with_bounded_metrics() -> None:
 
     first = layer.step(
         0.1,
-        l14_input={"integrated_coherence": 0.75, "resonance_lock": True, "resonance_determinant": 0.0},
+        l14_input={
+            "integrated_coherence": 0.75,
+            "resonance_lock": True,
+            "resonance_determinant": 0.0,
+        },
     )
     second = layer.step(
         0.1,
-        l14_input={"integrated_coherence": 0.25, "resonance_lock": True, "resonance_determinant": 0.0},
+        l14_input={
+            "integrated_coherence": 0.25,
+            "resonance_lock": True,
+            "resonance_determinant": 0.0,
+        },
     )
 
     assert first["gci"] == pytest.approx(1.0)
