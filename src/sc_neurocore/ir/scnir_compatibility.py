@@ -220,25 +220,31 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
     ),
     SCNIRCompatibilityRow(
         nir_primitive="SumPool2d",
-        support_level="parser_only",
+        support_level="metadata_and_hdl",
         parser_node="SCSumPool2dNode",
-        neuron_graph_lowering="not lowered",
-        scnir_stream_metadata=(),
-        source_metadata=(),
-        hdl_support="not emitted by the current SC-NIR/FPGA path",
-        audit_evidence=("tests/test_nir_bridge.py",),
-        limitation="Pooling is executable in parser tests but has no SC-NIR hardware handoff yet.",
+        neuron_graph_lowering="shape-known pooling lowered to a dense weighted connection",
+        scnir_stream_metadata=("signal_kind=weight", "pool2d_lowered_weight"),
+        source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
+        hdl_support="dense pooling fixed-point MAC terms through the weight-stream path",
+        audit_evidence=("tests/test_scnir_convert.py", "tests/test_scnir_fpga_integration.py"),
+        limitation=(
+            "SumPool2d is hardware-closed only when NIR provides exact CHW "
+            "input/output shape metadata and positive kernel/stride geometry."
+        ),
     ),
     SCNIRCompatibilityRow(
         nir_primitive="AvgPool2d",
-        support_level="parser_only",
+        support_level="metadata_and_hdl",
         parser_node="SCAvgPool2dNode",
-        neuron_graph_lowering="not lowered",
-        scnir_stream_metadata=(),
-        source_metadata=(),
-        hdl_support="not emitted by the current SC-NIR/FPGA path",
-        audit_evidence=("tests/test_nir_bridge.py",),
-        limitation="Pooling is executable in parser tests but has no SC-NIR hardware handoff yet.",
+        neuron_graph_lowering="shape-known average pooling lowered to scaled dense weights",
+        scnir_stream_metadata=("signal_kind=weight", "pool2d_lowered_weight"),
+        source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
+        hdl_support="dense pooling fixed-point MAC terms scaled by kernel area",
+        audit_evidence=("tests/test_scnir_convert.py", "tests/test_scnir_fpga_integration.py"),
+        limitation=(
+            "AvgPool2d is hardware-closed only when NIR provides exact CHW "
+            "input/output shape metadata and positive kernel/stride geometry."
+        ),
     ),
     SCNIRCompatibilityRow(
         nir_primitive="Conv1d",

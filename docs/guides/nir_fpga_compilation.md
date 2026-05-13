@@ -205,8 +205,11 @@ until they are split into separate hardware streams. Shape-known `Conv1d`
 nodes are lowered to an exact dense Toeplitz-style weight matrix when numeric
 padding, positive stride/dilation/groups, and a destination width matching the
 flattened convolution output are present; missing shape metadata or ambiguous
-tensor routing fails closed. `Input` and `Output` are boundary nodes. Pooling,
-`Conv2d`, and nested
+tensor routing fails closed. Shape-known `SumPool2d` and `AvgPool2d` nodes are
+lowered to dense pooling matrices when exact CHW input/output metadata and
+positive kernel/stride geometry are available; average pooling scales each
+window coefficient by the kernel area. `Input` and `Output` are boundary nodes.
+`Conv2d` and nested
 `NIRGraph` nodes remain parser-only until their NeuronGraph and HDL semantics
 are explicitly lowered and audited.
 
@@ -320,6 +323,9 @@ Shape-known Conv1d nodes are weight-carrying nodes in this pipeline: their
 kernel, stride, dilation, padding, groups, and bias are lowered to the same
 dense fixed-point MAC path as Affine/Linear after any explicit Flatten needed
 to connect the tensor output to a vector neuron population.
+Shape-known SumPool2d and AvgPool2d nodes are also weight-carrying in this
+pipeline: each pooling window becomes a sparse dense-matrix row, with AvgPool2d
+using `1 / (kernel_height * kernel_width)` coefficients.
 
 ### 4.4 Quantisation Features
 

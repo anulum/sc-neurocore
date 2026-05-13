@@ -326,6 +326,28 @@ def _conv1d_graph() -> object:
     )
 
 
+def _sum_pool2d_graph() -> object:
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([1, 3, 3])}),
+            "pool": nir.SumPool2d(
+                kernel_size=np.array([2, 2]),
+                stride=np.array([1, 1]),
+                padding=np.array([0, 0]),
+            ),
+            "flatten": nir.Flatten(input_type={"input": np.array([1, 2, 2])}, start_dim=0),
+            "lif": nir.LIF(
+                tau=np.full(4, 20.0),
+                r=np.ones(4),
+                v_leak=np.zeros(4),
+                v_threshold=np.ones(4),
+            ),
+            "output": nir.Output(output_type={"output": np.array([4])}),
+        },
+        edges=[("input", "pool"), ("pool", "flatten"), ("flatten", "lif"), ("lif", "output")],
+    )
+
+
 def _mixed_analogue_spiking_graph() -> object:
     return nir.NIRGraph(
         nodes={
@@ -603,6 +625,27 @@ def test_fpga_compile_lowers_conv1d_to_dense_weight_stream() -> None:
     assert "ext_input_1 * 16'sh0200" in result.top_module
     assert "ext_input_2 * 16'shff00" in result.top_module
     assert "ext_input_3 * 16'sh0080" in result.top_module
+    assert "localparam integer SCNIR_STREAM_COUNT = 2;" in result.top_module
+
+
+def test_fpga_compile_lowers_sum_pool2d_to_dense_weight_stream() -> None:
+    network = from_nir(_sum_pool2d_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    result = compile_network_to_fpga(
+        neuron_graph,
+        module_name="scnir_sum_pool2d_lif",
+        bitstream_length=640,
+    )
+
+    payload = scnir_to_dict(result.scnir_document)
+    validate_scnir_dict(payload)
+    streams = {stream["stream_id"]: stream for stream in payload["streams"]}
+    assert streams["conn.input_to_lif.weight"]["signal_kind"] == "weight"
+    assert result.total_synapses == 36
+    assert "ext_input_0 * 16'sh0100" in result.top_module
+    assert "ext_input_4 * 16'sh0100" in result.top_module
+    assert "ext_input_8 * 16'sh0100" in result.top_module
     assert "localparam integer SCNIR_STREAM_COUNT = 2;" in result.top_module
 
 

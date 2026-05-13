@@ -424,6 +424,74 @@ def _build_conv1d_without_shape_lif_graph() -> object:
     )
 
 
+def _build_sum_pool2d_lif_graph() -> object:
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([1, 3, 3])}),
+            "pool": nir.SumPool2d(
+                kernel_size=np.array([2, 2]),
+                stride=np.array([1, 1]),
+                padding=np.array([0, 0]),
+            ),
+            "flatten": nir.Flatten(input_type={"input": np.array([1, 2, 2])}, start_dim=0),
+            "lif": nir.LIF(
+                tau=np.full(4, 20.0),
+                r=np.ones(4),
+                v_leak=np.zeros(4),
+                v_threshold=np.ones(4),
+            ),
+            "output": nir.Output(output_type={"output": np.array([4])}),
+        },
+        edges=[("input", "pool"), ("pool", "flatten"), ("flatten", "lif"), ("lif", "output")],
+    )
+
+
+def _build_avg_pool2d_lif_graph() -> object:
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([1, 3, 3])}),
+            "pool": nir.AvgPool2d(
+                kernel_size=np.array([2, 2]),
+                stride=np.array([1, 1]),
+                padding=np.array([0, 0]),
+            ),
+            "flatten": nir.Flatten(input_type={"input": np.array([1, 2, 2])}, start_dim=0),
+            "lif": nir.LIF(
+                tau=np.full(4, 20.0),
+                r=np.ones(4),
+                v_leak=np.zeros(4),
+                v_threshold=np.ones(4),
+            ),
+            "output": nir.Output(output_type={"output": np.array([4])}),
+        },
+        edges=[("input", "pool"), ("pool", "flatten"), ("flatten", "lif"), ("lif", "output")],
+    )
+
+
+def _build_sum_pool2d_without_shape_lif_graph() -> object:
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([1, 3, 3])}),
+            "pool": nir.SumPool2d(
+                kernel_size=np.array([2, 2]),
+                stride=np.array([1, 1]),
+                padding=np.array([0, 0]),
+                input_type={"input": None},
+                output_type={"output": None},
+            ),
+            "lif": nir.LIF(
+                tau=np.full(4, 20.0),
+                r=np.ones(4),
+                v_leak=np.zeros(4),
+                v_threshold=np.ones(4),
+            ),
+            "output": nir.Output(output_type={"output": np.array([4])}),
+        },
+        edges=[("input", "pool"), ("pool", "lif"), ("lif", "output")],
+        type_check=False,
+    )
+
+
 def _neuron_graph() -> object:
     network = from_nir(_build_small_lif_graph(), dt=1.0)
     return from_scnetwork(network, dt=1.0)
@@ -768,6 +836,47 @@ def test_neuron_graph_rejects_conv1d_without_input_shape() -> None:
     network = from_nir(_build_conv1d_without_shape_lif_graph(), dt=1.0)
 
     with pytest.raises(ValueError, match="Conv1d.*input_shape"):
+        from_scnetwork(network, dt=1.0)
+
+
+def test_neuron_graph_lowers_sum_pool2d_to_weight_matrix() -> None:
+    network = from_nir(_build_sum_pool2d_lif_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    pool_connection = next(
+        conn for conn in neuron_graph.connections if conn.src == "input" and conn.dst == "lif"
+    )
+
+    assert pool_connection.weights.shape == (4, 9)
+    np.testing.assert_allclose(
+        pool_connection.weights,
+        [
+            [1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0],
+        ],
+    )
+    assert pool_connection.bias is None
+
+
+def test_neuron_graph_lowers_avg_pool2d_to_weight_matrix() -> None:
+    network = from_nir(_build_avg_pool2d_lif_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    pool_connection = next(
+        conn for conn in neuron_graph.connections if conn.src == "input" and conn.dst == "lif"
+    )
+
+    assert pool_connection.weights.shape == (4, 9)
+    np.testing.assert_allclose(pool_connection.weights.sum(axis=1), np.ones(4))
+    np.testing.assert_allclose(pool_connection.weights[0, [0, 1, 3, 4]], np.full(4, 0.25))
+
+
+def test_neuron_graph_rejects_sum_pool2d_without_shape_metadata() -> None:
+    network = from_nir(_build_sum_pool2d_without_shape_lif_graph(), dt=1.0)
+
+    with pytest.raises(ValueError, match="SumPool2d.*shape metadata"):
         from_scnetwork(network, dt=1.0)
 
 
