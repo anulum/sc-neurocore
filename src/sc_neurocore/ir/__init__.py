@@ -47,6 +47,7 @@ from .scnir_hdl import (
     build_scnir_source_bundle,
 )
 from .scnir_handoff_audit import (
+    SCNIR_HDL_HANDOFF_MANIFEST_VERSION,
     SCNIRHDLHandoffAuditError,
     SCNIRHDLHandoffAuditReport,
     audit_scnir_hdl_handoff,
@@ -70,6 +71,7 @@ __all__ = [
     "SCNIRCompatibilityRow",
     "SCNIRHDLSourceBundle",
     "SCNIRHDLSourceManifestEntry",
+    "SCNIR_HDL_HANDOFF_MANIFEST_VERSION",
     "SCNIRHDLHandoffAuditError",
     "SCNIRHDLHandoffAuditReport",
     "audit_scnir_hdl_handoff",

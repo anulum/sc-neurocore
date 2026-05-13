@@ -1371,7 +1371,7 @@ class TestCompileNirCommand:
 
         manifest_path = out_dir / "scnir_source_manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        assert manifest["schema_version"] == "sc-neurocore.scnir.hdl-sources.v0.1"
+        assert manifest["schema_version"] == "sc-neurocore.scnir.hdl-sources.v0.2"
         assert len(manifest["sources"]) == 2
 
         first = manifest["sources"][0]

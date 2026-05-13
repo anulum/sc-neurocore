@@ -276,7 +276,7 @@ def _cmd_compile_nir(args: Any) -> int:
 
     import nir as nir_lib
 
-    from sc_neurocore.ir import write_scnir
+    from sc_neurocore.ir import SCNIR_HDL_HANDOFF_MANIFEST_VERSION, write_scnir
     from sc_neurocore.nir_bridge import compile_network_to_fpga, from_nir, from_scnetwork
 
     ext = os.path.splitext(args.model)[1].lower()
@@ -350,7 +350,7 @@ def _cmd_compile_nir(args: Any) -> int:
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(
             {
-                "schema_version": "sc-neurocore.scnir.hdl-sources.v0.1",
+                "schema_version": SCNIR_HDL_HANDOFF_MANIFEST_VERSION,
                 "module_name": result.module_name,
                 "bitstream_length": args.T,
                 "source_kind": args.source_kind,
