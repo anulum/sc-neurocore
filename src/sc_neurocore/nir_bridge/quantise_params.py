@@ -262,12 +262,31 @@ def quantise_graph(graph: NeuronGraph, q: Q88) -> QuantisedGraph:
                 label=f"bias[{conn.src}→{conn.dst}]",
                 warnings=warnings,
             )
+        q_source_threshold = None
+        if conn.source_threshold is not None:
+            q_source_threshold = _quantise_array(
+                conn.source_threshold,
+                q,
+                label=f"source_threshold[{conn.src}→{conn.dst}]",
+                warnings=warnings,
+            )
+        q_destination_threshold = None
+        if conn.destination_threshold is not None:
+            q_destination_threshold = _quantise_array(
+                conn.destination_threshold,
+                q,
+                label=f"destination_threshold[{conn.src}→{conn.dst}]",
+                warnings=warnings,
+            )
         q_connections.append(
             ConnectionSpec(
                 src=conn.src,
                 dst=conn.dst,
                 weights=q_weights,
                 bias=q_bias,
+                delay_steps=conn.delay_steps,
+                source_threshold=q_source_threshold,
+                destination_threshold=q_destination_threshold,
             )
         )
 

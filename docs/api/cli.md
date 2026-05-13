@@ -41,7 +41,7 @@ sc-neurocore = "sc_neurocore.cli:main"
 The CLI accepts a single positional `command` token chosen from:
 
 ```text
-{info, benchmark, preflight, deploy, serve, map-nir, hub-init, compile, compile-nir, studio, collect-synthesis}
+{info, benchmark, preflight, deploy, serve, map-nir, hub-init, compile, compile-nir, scnir, studio, collect-synthesis}
 ```
 
 with an optional positional `model` argument (file path or ODE string,
@@ -59,6 +59,7 @@ depending on the command). All other parameters are keyword flags; running
 | `map-nir` | Generate deterministic silicon-mapping reports for neuromorphic targets | `.nir` file path | `0` on success, `1` on bad input |
 | `hub-init` | Generate an offline-first self-hosted Docker Compose hub bundle | — | `0` on success, `1` on invalid config |
 | `compile-nir` | Compile NIR/ONNX network files to FPGA artefacts | `.nir` or `.onnx` path | `0` on success, `1` on bad input |
+| `scnir` | Validate, upgrade, or export SC-aware NIR metadata documents | `validate model.scnir.json`, `upgrade model.scnir.json --output upgraded.scnir.json`, or `export model.nir --output model.scnir.json` | `0` on success, `1` on invalid input |
 | `studio` | Launch Visual SNN Design Studio (FastAPI + Uvicorn) | — | `0` on clean exit, `1` if FastAPI missing |
 | `collect-synthesis` | Convert real utilisation, timing, and power reports into optimiser evidence JSON | — | `0` on success, `1` on missing or invalid input |
 
@@ -82,7 +83,104 @@ The Rust-engine status line additionally reports a version mismatch when the
 engine wheel reports a different `__version__` than the Python package
 (handled by `_format_engine_status`).
 
-### 2.2 `benchmark`
+### 2.2 `compile-nir`
+
+Compiles `.nir` or `.onnx` network files through NIR import,
+`NeuronGraph` lowering, fixed-point quantisation, SC-NIR metadata export, and
+FPGA RTL generation:
+
+```bash
+sc-neurocore compile-nir model.nir \
+  --module-name my_snn \
+  --T 1024 \
+  --source-kind sobol \
+  --base-seed 66 \
+  -o build/
+```
+
+The output directory contains the top module, per-neuron modules, combined
+weight ROM, one SC-NIR stochastic source module per stream, and
+`scnir_document.json` plus `scnir_source_manifest.json`. `scnir_document.json`
+is the full validated SC-NIR metadata document for the compiled network;
+`scnir_source_manifest.json` maps those streams to emitted source modules and
+records compile evidence including `interconnect`, `q_format`,
+`total_neurons`, `total_synapses`, `scnir_stream_count`, and
+`scnir_signal_kinds`. Nested-graph exports also include
+`scnir_hierarchy_instance_count` and `scnir_hierarchy_port_count`, derived from
+the generated SC-NIR document. Mixed analogue/spiking exports also include
+`scnir_signal_routes`, which records whether each present stream role is routed
+through direct fixed-point MAC, weighted AER event routing, or stochastic
+source-module generation. Downstream tools do not need to infer those summaries
+from RTL comments.
+`--source-kind`
+currently accepts `lfsr` and `sobol`; both map to source modules with the
+`threshold[15:0]`/`bit_out` interface. `--base-seed` controls deterministic
+stream seed allocation.
+
+### 2.3 `scnir`
+
+Validates SC-NIR JSON metadata with the fail-closed validator in
+`sc_neurocore.ir.scnir_schema`:
+
+```bash
+sc-neurocore scnir validate model.scnir.json
+```
+
+The validator rejects unknown fields, duplicate stream identifiers, invalid
+bitstream lengths, unsupported encodings, invalid fixed-point precision,
+under-specified random sources, and correlation constraints that reference
+missing streams. The reference schema is `schemas/scnir/scnir.schema.json`.
+
+Canonicalises a supported SC-NIR document through the versioned migration
+surface:
+
+```bash
+sc-neurocore scnir upgrade model.scnir.json --output upgraded.scnir.json
+```
+
+The current schema is `sc-neurocore.scnir.v0.6`. The upgrade command migrates
+`sc-neurocore.scnir.v0.1` documents by adding explicit `delay_steps=0` to legacy
+streams, migrates every pre-`v0.3` document by adding explicit `signal_kind`
+metadata, and migrates every pre-`v0.4` document by adding explicit stream
+`transforms=[]` metadata before running the typed validator and deterministic
+writer. Version `v0.5` also accepts exact source-width delay vectors for
+heterogeneous NIR `Delay` streams while preserving scalar delay metadata.
+Version `v0.6` adds explicit hierarchy instance and port metadata, and legacy
+documents upgrade with `hierarchy=[]`.
+Unsupported schema versions are rejected instead of being guessed.
+
+Exports deterministic SC-NIR metadata from a NIR graph by using the existing
+NIR import path and `NeuronGraph` lowering:
+
+```bash
+sc-neurocore scnir export model.nir --output model.scnir.json --T 1024
+```
+
+The export records spiking population streams, analogue-state population
+streams, weight streams, fixed-point precision, explicit recurrent delay steps,
+unique source seeds, and max-correlation constraints. It fails closed on
+invalid bitstream length or fixed-point precision configuration.
+
+Validates the executable SC-NIR primitive compatibility matrix and every
+declared audit-evidence file path:
+
+```bash
+sc-neurocore scnir compatibility .
+sc-neurocore scnir compatibility . --output scnir_compatibility.json
+sc-neurocore scnir closure-audit . --output scnir_closure_audit.json
+```
+
+When the optional repository root argument is omitted, the command uses the
+current working directory. Supplying `--output` writes the deterministic
+machine-readable compatibility matrix only after validation succeeds.
+`closure-audit` writes a versioned audit bundle containing the validated matrix,
+support-level counts, the unique evidence files that were checked, file sizes,
+per-evidence SHA-256 digests, and a canonical matrix SHA-256 digest. Missing
+parser rows, stale rows, unsupported HDL-support claims without stream
+metadata, empty audit evidence, or evidence paths that do not resolve to files
+fail closed.
+
+### 2.4 `benchmark`
 
 Delegates to the project's pytest-benchmark suite via `subprocess.run`:
 
@@ -97,13 +195,13 @@ The CLI itself is not benchmarked (see [Section 7](#7-performance)). The exit
 code is the pytest exit code; CI consumers should treat any non-zero value as
 failure.
 
-### 2.3 `preflight`
+### 2.5 `preflight`
 
 Delegates to `tools/preflight.py`. Used by the pre-push policy (see
 `feedback_preflight_no_block` memory: never let the pre-push hook run the full
 suite — `preflight.py` is the gated subset).
 
-### 2.4 `hub-init`
+### 2.5 `hub-init`
 
 Writes a deterministic local hub bundle containing:
 
@@ -137,7 +235,7 @@ set `no-new-privileges`, and include a Studio readiness check against
 `/api/health`. The benchmark runner is opt-in via the `benchmark` Compose
 profile; it is not started with the Studio service.
 
-### 2.5 `compile`
+### 2.6 `compile`
 
 Compiles a free-form ODE description into synthesisable SystemVerilog using
 `sc_neurocore.compiler.equation_compiler.equation_to_fpga`. Optionally emits a
@@ -171,7 +269,7 @@ parameters) and synthesises with Yosys for ICE40/ECP5 targets when
 > for the history. The compiler now rejects values that quantise to 0
 > in Q8.8 with an actionable `ValueError`.
 
-### 2.5 `deploy`
+### 2.7 `deploy`
 
 FPGA targets run a five-step pipeline (six with auto-synthesis):
 
@@ -217,7 +315,7 @@ invoke PyTorch, NIR import, Node.js, or a native WASM build during generation,
 so packaging can be tested in CI without browser drivers or hardware
 accelerators.
 
-### 2.6 `serve`
+### 2.8 `serve`
 
 Loads a `.nir` graph and starts `sc_neurocore.serve.SpikeServer` in blocking
 mode on the configured port. Other formats are rejected with exit code 1.
@@ -226,7 +324,7 @@ mode on the configured port. Other formats are rejected with exit code 1.
 sc-neurocore serve model.nir --port 8001 --dt 1.0
 ```
 
-### 2.7 `collect-synthesis`
+### 2.9 `collect-synthesis`
 
 Collects FPGA synthesis reports into the strict optimiser observation format.
 The command requires explicit compiler-design metadata and measured model
@@ -264,7 +362,7 @@ sc-neurocore collect-synthesis \
 The output is accepted by `sc_neurocore.optimizer.load_observations()` and by
 `tools/optimise_sc_design.py --evidence`.
 
-### 2.8 `studio`
+### 2.10 `studio`
 
 Launches the Visual SNN Design Studio (FastAPI + Uvicorn) and opens
 `http://127.0.0.1:{port}` in the default browser. Requires the `studio`
