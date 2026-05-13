@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <!-- Commercial license available -->
-<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
-<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Concepts 1996-2026 Miroslav Sotek. All rights reserved. -->
+<!-- © Code 2020-2026 Miroslav Sotek. All rights reserved. -->
 <!-- ORCID: 0009-0009-3560-0851 -->
 
 # NIR/ONNX → FPGA Compilation Guide
@@ -216,6 +216,10 @@ window coefficient by the kernel area. `Input` and `Output` are boundary nodes.
 Single-input/single-output nested `NIRGraph` nodes are inlined into the parent
 hardware graph with namespaced node and stream identifiers, preserving the
 nested contents through the same SC-NIR/HDL paths as the equivalent flat graph.
+The SC-NIR document also retains the inlined boundary as a hierarchy instance:
+generated hierarchy ports reference the exact stream identifiers emitted by the
+inlined subgraph and use the active fixed-point width. This preserves audit and
+future submodule handoff metadata without weakening the current flat RTL path.
 Multi-port nested graphs still fail closed until a standalone hierarchical
 hardware handoff defines port maps, submodule boundaries, and audit evidence.
 
