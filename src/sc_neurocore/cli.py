@@ -14,7 +14,7 @@ import argparse
 import importlib.metadata
 import json
 import sys
-from typing import Any, cast
+from typing import Any, Sequence, cast
 
 
 class _OutputAction(argparse.Action):
@@ -24,7 +24,7 @@ class _OutputAction(argparse.Action):
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: str | None,
+        values: str | Sequence[Any] | None,
         option_string: str | None = None,
     ) -> None:
         del parser, option_string
@@ -714,10 +714,10 @@ def _cmd_scnir(args: Any) -> int:
     if action == "closure-audit":
         evidence_root = Path(path) if path else Path.cwd()
         try:
-            report = build_scnir_compatibility_audit(evidence_root=evidence_root)
+            closure_report = build_scnir_compatibility_audit(evidence_root=evidence_root)
             if getattr(args, "output_supplied", False):
                 Path(args.output).write_text(
-                    json.dumps(report, indent=2, sort_keys=True) + "\n",
+                    json.dumps(closure_report, indent=2, sort_keys=True) + "\n",
                     encoding="utf-8",
                 )
         except (OSError, ValueError, TypeError) as exc:
@@ -729,8 +729,8 @@ def _cmd_scnir(args: Any) -> int:
         )
         print(
             "SC-NIR closure audit valid: "
-            f"{evidence_root} ({report['primitive_count']} primitive(s), "
-            f"{report['audit_evidence_file_count']} evidence file(s)){suffix}"
+            f"{evidence_root} ({closure_report['primitive_count']} primitive(s), "
+            f"{closure_report['audit_evidence_file_count']} evidence file(s)){suffix}"
         )
         return 0
 
@@ -768,10 +768,10 @@ def _cmd_scnir(args: Any) -> int:
         from sc_neurocore.ir import SCNIRHDLHandoffAuditError, audit_scnir_hdl_handoff
 
         try:
-            report = audit_scnir_hdl_handoff(path)
+            handoff_report = audit_scnir_hdl_handoff(path)
             if args.output:
                 Path(args.output).write_text(
-                    json.dumps(report.as_dict(), indent=2, sort_keys=True) + "\n",
+                    json.dumps(handoff_report.as_dict(), indent=2, sort_keys=True) + "\n",
                     encoding="utf-8",
                 )
         except (OSError, SCNIRHDLHandoffAuditError, ValueError, TypeError) as exc:
@@ -781,8 +781,8 @@ def _cmd_scnir(args: Any) -> int:
         suffix = f"; report written: {args.output}" if args.output else ""
         print(
             "SC-NIR HDL handoff valid: "
-            f"{path} ({report.stream_count} stream(s), "
-            f"{report.source_module_count} source module(s)){suffix}"
+            f"{path} ({handoff_report.stream_count} stream(s), "
+            f"{handoff_report.source_module_count} source module(s)){suffix}"
         )
         return 0
 
