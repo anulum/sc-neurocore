@@ -38,7 +38,7 @@ class VerilogGenerator:
     Generates Top-Level Verilog for a defined SC Network.
     """
 
-    def __init__(self, module_name="sc_network_top", bus_width: int = 8) -> None:
+    def __init__(self, module_name: str = "sc_network_top", bus_width: int = 8) -> None:
         """Initialise with a top-level module name."""
         self.module_name = sanitize_ident(module_name, context="module name")
         self.bus_width = self._require_positive_int(bus_width, "bus_width")

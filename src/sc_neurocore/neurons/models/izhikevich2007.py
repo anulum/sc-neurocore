@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import math
 from typing import Any, Literal
 
@@ -45,6 +45,8 @@ class Izhikevich2007Neuron(BaseNeuron):
     v0: float | None = None
     dt: float = 0.1
     integrator: Literal["euler", "rk4"] = "rk4"
+    v: float = field(init=False, default=0.0)
+    u: float = field(init=False, default=0.0)
 
     def __post_init__(self) -> None:
         if self.integrator not in {"euler", "rk4"}:
@@ -113,7 +115,8 @@ class Izhikevich2007Neuron(BaseNeuron):
         return 0
 
     def reset_state(self) -> None:
-        self.v = float(self.v0)
+        v0 = self.vr if self.v0 is None else self.v0
+        self.v = float(v0)
         self.u = self.b * (self.v - self.vr)
 
     def get_state(self) -> dict[str, Any]:

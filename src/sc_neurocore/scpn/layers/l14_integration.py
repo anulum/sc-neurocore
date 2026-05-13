@@ -71,6 +71,8 @@ class L14_IntegrationLayer:
         self.params = params or L14_StochasticParameters()
         self._validate_params(self.params)
         self._rng = np.random.default_rng(self.params.rng_seed)
+        if self.params.integration_weights is None:
+            raise ValueError("integration_weights must be initialised by L14_StochasticParameters")
         self.integration_weights = self._normalised_weights(self.params.integration_weights)
         self.layer_metrics = np.zeros(self.params.n_dimensions)
         self.integrated_coherence = 0.5
