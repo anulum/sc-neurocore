@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for demo_sleep_optimization
 
-pub fn generate_eeg_epoch(stage: f64, n_samples: f64, sample_rate: f64, rng: f64) -> f64 {
+pub fn generate_eeg_epoch(_stage: f64, _n_samples: f64, _sample_rate: f64, _rng: f64) -> f64 {
     // stage: SleepStage,
     // n_samples: int = 256,
     // sample_rate: int = 256,
@@ -25,7 +25,7 @@ pub fn generate_eeg_epoch(stage: f64, n_samples: f64, sample_rate: f64, rng: f64
     0.0
 }
 
-pub fn _night_schedule(n_epochs: f64) -> f64 {
+pub fn _night_schedule(_n_epochs: f64) -> f64 {
     // cycle = [
     // SleepStage.WAKE,
     // SleepStage.N1,

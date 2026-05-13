@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for characterize
 
-pub fn characterize_model(simulate_fn: f64, base_config: f64) -> f64 {
+pub fn characterize_model(_simulate_fn: f64, _base_config: f64) -> f64 {
     // # 1. Default simulation
     // trace = simulate_fn(.powibase_config)
     // pattern = classify_firing_pattern(trace["spikes"], trace["n_steps"], t

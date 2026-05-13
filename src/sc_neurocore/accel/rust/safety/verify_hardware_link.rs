@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for verify_hardware_link
 
-pub fn verify_link(extras: f64) -> f64 {
+pub fn verify_link(_extras: f64) -> f64 {
     // n_steps = 3 if extras else 1
     // print("=" * 60)
     // print("SCPN HARDWARE LINK DIAGNOSTIC TOOL")
