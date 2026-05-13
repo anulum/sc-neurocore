@@ -105,9 +105,9 @@ all dynamics.  For Q8.8, the minimum safe $dt$ is approximately $0.004$.
 
 ### 1.4 Interconnect Contract
 
-The compiler emits explicit per-neuron direct wiring for all supported
-networks.  This is resource-heavier than a routed event fabric, but it
-preserves NIR affine semantics exactly.
+The compiler emits explicit per-neuron direct wiring for small supported
+networks and weighted event fan-out for larger spike-producing populations.
+Both paths preserve NIR affine semantics exactly.
 
 For each destination neuron, the generated top module accumulates:
 
@@ -119,9 +119,9 @@ For each destination neuron, the generated top module accumulates:
 All terms are summed in a widened signed accumulator and saturated back to
 the target Q-format before entering the neuron module.
 
-Weighted event-bus RTL is intentionally not emitted until address-event
-fan-out, weight lookup, and destination accumulation have an audited
-implementation.
+The weighted event path keeps analogue sources as direct fixed-point
+multiply-accumulate terms and routes spike-producing sources through audited
+event fan-out accumulation.
 
 ---
 
@@ -207,7 +207,12 @@ neurons.  The new pipeline extends this to entire networks by:
    │ Neuron   │   │ Weight   │  │ Top-Level      │
    │ Modules  │   │ ROM      │  │ Interconnect   │
    │ (*.v)    │   │ (.v)     │  │ (.v)           │
-   └──────────┘   └──────────┘  └────────────────┘
+   └──────────┘   └──────────┘  └───┬────────────┘
+                                    │
+                          ┌─────────▼─────────┐
+                          │ SC-NIR Source     │
+                          │ Modules + Manifest│
+                          └───────────────────┘
 ```
 
 ### 3.2 Inputs
@@ -218,6 +223,9 @@ neurons.  The new pipeline extends this to entire networks by:
 | `dt` | float | Simulation timestep (must match export framework) |
 | `data_width` | int | Fixed-point total bits (default: 16) |
 | `fraction` | int | Fractional bits (default: 8) |
+| `bitstream_length` | int | SC-NIR stream length metadata |
+| `source_kind` | str | `lfsr` or `sobol` source modules |
+| `base_seed` | int | First deterministic source seed |
 | `target` | str | FPGA target for hints (default: `"artix7"`) |
 
 ### 3.3 Outputs
@@ -227,6 +235,8 @@ neurons.  The new pipeline extends this to entire networks by:
 | `<module_name>.v` | Top-level network interconnect |
 | `sc_nir_<type>.v` | Per-type neuron Verilog (one per unique neuron type) |
 | `sc_nir_weight_rom.v` | Combined weight ROM artefact for all connections |
+| `result.scnir_source_modules` | Standalone LFSR-16/Sobol-16 source RTL keyed by module name |
+| `result.scnir_source_manifest` | Stream-to-source manifest for deterministic hardware handoff |
 
 ---
 
@@ -335,6 +345,9 @@ result = compile_network_to_fpga(
     module_name="my_snn",
     data_width=16,
     fraction=8,
+    bitstream_length=1024,
+    source_kind="lfsr",
+    base_seed=1,
     target="artix7",
 )
 
@@ -348,6 +361,10 @@ for ntype, verilog in result.neuron_modules.items():
 
 with open("sc_nir_weight_rom.v", "w") as f:
     f.write(result.weight_rom)
+
+for module_name, verilog in result.scnir_source_modules.items():
+    with open(f"{module_name}.v", "w") as f:
+        f.write(verilog)
 
 print(f"Interconnect: {result.interconnect}")
 print(f"Q-format: {result.q_format}")
@@ -534,9 +551,12 @@ values and accumulates warnings.
 | `total_synapses` | `int` | Total synapse count |
 | `q_format` | `str` | e.g. `"Q8.8"` |
 | `interconnect` | `str` | `"direct"` or `"aer"` |
+| `scnir_document` | `SCNIRDocument` | Validated stochastic-computing metadata |
+| `scnir_source_modules` | `dict[str, str]` | Source module name → LFSR-16/Sobol-16 Verilog |
+| `scnir_source_manifest` | `tuple[...]` | Stream-to-source module handoff manifest |
 | `warnings` | `list[str]` | Accumulated warnings |
 
-#### `compile_network_to_fpga(graph, *, module_name, data_width, fraction, target) → NetworkCompilationResult`
+#### `compile_network_to_fpga(graph, *, module_name, data_width, fraction, bitstream_length, source_kind, base_seed, target) → NetworkCompilationResult`
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
@@ -544,6 +564,9 @@ values and accumulates warnings.
 | `module_name` | `"sc_nir_network"` | Top Verilog module name |
 | `data_width` | `16` | Fixed-point total width |
 | `fraction` | `8` | Fractional bits |
+| `bitstream_length` | `256` | SC-NIR bitstream length metadata |
+| `source_kind` | `"lfsr"` | Hardware source family: `"lfsr"` or `"sobol"` |
+| `base_seed` | `1` | First deterministic SC-NIR source seed |
 | `target` | `"artix7"` | FPGA target hint |
 
 ### 6.4 CLI: `compile-nir`

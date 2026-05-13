@@ -105,6 +105,8 @@ Use these emitters when you need:
 - standalone RTL source blocks for FPGA or co-simulation
 - explicit parity testing between software, Rust, and Verilog
 - deterministic seed control for stochastic source generation
+- SC-NIR FPGA compile artefacts via `result.scnir_source_modules` and
+  `result.scnir_source_manifest`
 
 Do **not** treat them as proof that every HDL path in the repository is now
 automatically sourced from these modules. They are explicit building blocks,
