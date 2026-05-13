@@ -98,6 +98,7 @@ def build_scnir_from_neuron_graph(
                 encoding=_population_encoding(str(pop.neuron_type)),
                 precision=_precision(config, signed=False),
                 source=_source(config, len(streams)),
+                delay_steps=0,
                 correlation_constraints=(),
             )
         )
@@ -117,6 +118,7 @@ def build_scnir_from_neuron_graph(
                 encoding="bipolar",
                 precision=_precision(config, signed=True),
                 source=_source(config, stream_index),
+                delay_steps=int(getattr(conn, "delay_steps", 0)),
                 correlation_constraints=(
                     SCNIRCorrelationConstraint(
                         peer_stream_id=dst_stream_id,

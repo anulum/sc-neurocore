@@ -34,6 +34,7 @@ class SCNIRHDLSourceManifestEntry:
     seed: int
     bitstream_length: int
     encoding: str
+    delay_steps: int
     total_bits: int
     fractional_bits: int
     lfsr_polynomial: str | None = None
@@ -51,6 +52,7 @@ class SCNIRHDLSourceManifestEntry:
             "seed": self.seed,
             "bitstream_length": self.bitstream_length,
             "encoding": self.encoding,
+            "delay_steps": self.delay_steps,
             "total_bits": self.total_bits,
             "fractional_bits": self.fractional_bits,
             "lfsr_polynomial": self.lfsr_polynomial,
@@ -150,6 +152,7 @@ def _manifest_entry(
         seed=seed & 0xFFFF,
         bitstream_length=stream.bitstream_length,
         encoding=stream.encoding,
+        delay_steps=stream.delay_steps,
         total_bits=stream.precision.total_bits,
         fractional_bits=stream.precision.fractional_bits,
         lfsr_polynomial=lfsr_polynomial,

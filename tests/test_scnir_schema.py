@@ -18,6 +18,7 @@ import pytest
 
 from sc_neurocore.cli import main
 from sc_neurocore.ir.scnir_schema import (
+    SCNIR_PREVIOUS_SCHEMA_VERSION,
     SCNIR_SCHEMA_VERSION,
     SCNIRCorrelationConstraint,
     SCNIRDocument,
@@ -107,6 +108,19 @@ def test_scnir_upgrade_canonicalises_supported_current_payload() -> None:
     validate_scnir_dict(upgraded)
 
 
+def test_scnir_upgrade_migrates_v01_documents_with_zero_delay() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["schema_version"] = SCNIR_PREVIOUS_SCHEMA_VERSION
+    for stream in payload["streams"]:
+        stream.pop("delay_steps")
+
+    upgraded = upgrade_scnir_dict(payload)
+
+    assert upgraded["schema_version"] == SCNIR_SCHEMA_VERSION
+    assert {stream["delay_steps"] for stream in upgraded["streams"]} == {0}
+    validate_scnir_dict(upgraded)
+
+
 def test_scnir_upgrade_rejects_unknown_schema_version() -> None:
     payload = scnir_to_dict(_valid_document())
     payload["schema_version"] = "sc-neurocore.scnir.v9.9"
@@ -119,6 +133,7 @@ def test_scnir_upgrade_rejects_unknown_schema_version() -> None:
     ("field", "value", "message"),
     [
         ("bitstream_length", 0, "bitstream_length"),
+        ("delay_steps", -1, "delay_steps"),
         ("encoding", "rate_only", "encoding"),
     ],
 )
@@ -175,7 +190,9 @@ def test_scnir_json_schema_resource_is_bundled() -> None:
     payload = json.loads(schema_path.read_text(encoding="utf-8"))
 
     assert payload["$id"].endswith("/schemas/scnir/scnir.schema.json")
+    assert payload["properties"]["schema_version"]["const"] == SCNIR_SCHEMA_VERSION
     assert "bitstream_length" in json.dumps(payload)
+    assert "delay_steps" in json.dumps(payload)
     assert "correlation_constraints" in json.dumps(payload)
 
 

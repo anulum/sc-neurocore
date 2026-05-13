@@ -268,6 +268,7 @@ def quantise_graph(graph: NeuronGraph, q: Q88) -> QuantisedGraph:
                 dst=conn.dst,
                 weights=q_weights,
                 bias=q_bias,
+                delay_steps=conn.delay_steps,
             )
         )
 

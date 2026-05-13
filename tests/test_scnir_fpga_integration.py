@@ -39,6 +39,33 @@ def _graph() -> object:
     )
 
 
+def _recurrent_graph() -> object:
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "aff": nir.Affine(
+                weight=np.eye(2, dtype=np.float32),
+                bias=np.zeros(2, dtype=np.float32),
+            ),
+            "lif": nir.LIF(
+                tau=np.full(2, 20.0),
+                r=np.ones(2),
+                v_leak=np.zeros(2),
+                v_threshold=np.ones(2),
+            ),
+            "rec": nir.Linear(weight=np.array([[0.25, 0.0], [0.0, 0.125]], dtype=np.float32)),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[
+            ("input", "aff"),
+            ("aff", "lif"),
+            ("lif", "rec"),
+            ("rec", "lif"),
+            ("lif", "output"),
+        ],
+    )
+
+
 def test_fpga_compile_result_carries_valid_scnir_metadata() -> None:
     network = from_nir(_graph(), dt=1.0)
     neuron_graph = from_scnetwork(network, dt=1.0)
@@ -58,6 +85,38 @@ def test_fpga_compile_result_carries_valid_scnir_metadata() -> None:
     assert {stream["precision"]["fractional_bits"] for stream in payload["streams"]} == {10}
     assert "localparam integer SCNIR_BITSTREAM_LENGTH = 2048;" in result.top_module
     assert "localparam integer SCNIR_STREAM_COUNT = 2;" in result.top_module
+
+
+def test_fpga_compile_carries_recurrent_scnir_stream_and_delay_register() -> None:
+    network = from_nir(_recurrent_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    result = compile_network_to_fpga(
+        neuron_graph,
+        module_name="scnir_recurrent",
+        bitstream_length=768,
+    )
+
+    payload = scnir_to_dict(result.scnir_document)
+    validate_scnir_dict(payload)
+    assert {stream["stream_id"] for stream in payload["streams"]} == {
+        "pop.lif.spike",
+        "conn.input_to_lif.weight",
+        "conn.lif_to_lif.weight",
+    }
+    recurrent_stream = next(
+        stream for stream in payload["streams"] if stream["stream_id"] == "conn.lif_to_lif.weight"
+    )
+    assert recurrent_stream["delay_steps"] == 1
+    assert "localparam integer SCNIR_STREAM_COUNT = 3;" in result.top_module
+    assert "reg p0_n0_spike_d1;" in result.top_module
+    assert "(p0_n0_spike_d1 ? 34'sh000000040 : 34'sd0)" in result.top_module
+    recurrent_manifest = next(
+        entry
+        for entry in result.scnir_source_manifest
+        if entry.stream_id == "conn.lif_to_lif.weight"
+    )
+    assert recurrent_manifest.delay_steps == 1
 
 
 def test_fpga_compile_materialises_scnir_lfsr_source_modules() -> None:

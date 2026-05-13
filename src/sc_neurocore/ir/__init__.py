@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from .scnir_schema import (
+    SCNIR_PREVIOUS_SCHEMA_VERSION,
     SCNIR_SCHEMA_VERSION,
     SCNIRCorrelationConstraint,
     SCNIRDocument,
@@ -38,6 +39,7 @@ from .scnir_hdl import (
 
 __all__ = [
     "SCNIR_SCHEMA_VERSION",
+    "SCNIR_PREVIOUS_SCHEMA_VERSION",
     "SCNIRCorrelationConstraint",
     "SCNIRDocument",
     "SCNIRPrecision",
