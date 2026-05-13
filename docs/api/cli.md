@@ -41,7 +41,7 @@ sc-neurocore = "sc_neurocore.cli:main"
 The CLI accepts a single positional `command` token chosen from:
 
 ```text
-{info, benchmark, preflight, deploy, serve, map-nir, hub-init, compile, compile-nir, studio, collect-synthesis}
+{info, benchmark, preflight, deploy, serve, map-nir, hub-init, compile, compile-nir, scnir, studio, collect-synthesis}
 ```
 
 with an optional positional `model` argument (file path or ODE string,
@@ -83,7 +83,28 @@ The Rust-engine status line additionally reports a version mismatch when the
 engine wheel reports a different `__version__` than the Python package
 (handled by `_format_engine_status`).
 
-### 2.2 `scnir`
+### 2.2 `compile-nir`
+
+Compiles `.nir` or `.onnx` network files through NIR import,
+`NeuronGraph` lowering, fixed-point quantisation, SC-NIR metadata export, and
+FPGA RTL generation:
+
+```bash
+sc-neurocore compile-nir model.nir \
+  --module-name my_snn \
+  --T 1024 \
+  --source-kind sobol \
+  --base-seed 66 \
+  -o build/
+```
+
+The output directory contains the top module, per-neuron modules, combined
+weight ROM, one SC-NIR stochastic source module per stream, and
+`scnir_source_manifest.json`. `--source-kind` currently accepts `lfsr` and
+`sobol`; both map to source modules with the `threshold[15:0]`/`bit_out`
+interface. `--base-seed` controls deterministic stream seed allocation.
+
+### 2.3 `scnir`
 
 Validates SC-NIR JSON metadata with the fail-closed validator in
 `sc_neurocore.ir.scnir_schema`:
@@ -108,7 +129,7 @@ The export records population streams, weight streams, fixed-point precision,
 unique source seeds, and max-correlation constraints. It fails closed on invalid
 bitstream length or fixed-point precision configuration.
 
-### 2.3 `benchmark`
+### 2.4 `benchmark`
 
 Delegates to the project's pytest-benchmark suite via `subprocess.run`:
 
@@ -123,7 +144,7 @@ The CLI itself is not benchmarked (see [Section 7](#7-performance)). The exit
 code is the pytest exit code; CI consumers should treat any non-zero value as
 failure.
 
-### 2.4 `preflight`
+### 2.5 `preflight`
 
 Delegates to `tools/preflight.py`. Used by the pre-push policy (see
 `feedback_preflight_no_block` memory: never let the pre-push hook run the full
