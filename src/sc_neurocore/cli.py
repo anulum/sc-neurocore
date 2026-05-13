@@ -646,17 +646,32 @@ def _cmd_scnir(args: Any) -> int:
         SCNIRValidationError,
         export_scnir_from_nir,
         load_scnir,
+        validate_scnir_compatibility_matrix,
         upgrade_scnir_dict,
     )
 
     action = args.model
     path = args.scnir_path
-    if action not in {"validate", "upgrade", "export", "audit-hdl"} or not path:
+    if action not in {"validate", "upgrade", "export", "audit-hdl", "compatibility"} or (
+        action != "compatibility" and not path
+    ):
         print("Error: usage: sc-neurocore scnir validate model.scnir.json")
         print("       or: sc-neurocore scnir upgrade model.scnir.json --output upgraded.scnir.json")
         print("       or: sc-neurocore scnir export model.nir --output model.scnir.json")
         print("       or: sc-neurocore scnir audit-hdl build/ --output scnir_audit.json")
+        print("       or: sc-neurocore scnir compatibility [repo-root]")
         return 1
+
+    if action == "compatibility":
+        evidence_root = Path(path) if path else Path.cwd()
+        try:
+            validate_scnir_compatibility_matrix(evidence_root=evidence_root)
+        except (OSError, ValueError, TypeError) as exc:
+            print(f"SC-NIR compatibility matrix invalid: {exc}")
+            return 1
+
+        print(f"SC-NIR compatibility matrix valid: {evidence_root}")
+        return 0
 
     if action == "validate":
         try:

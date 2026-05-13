@@ -22,6 +22,7 @@ from sc_neurocore.ir import (
     scnir_compatibility_matrix_dicts,
     validate_scnir_compatibility_matrix,
 )
+from sc_neurocore.cli import main
 from sc_neurocore.nir_bridge.node_map import NODE_MAP
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -42,6 +43,33 @@ def test_scnir_compatibility_matrix_evidence_paths_exist() -> None:
 def test_scnir_compatibility_matrix_rejects_missing_evidence_root(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="missing audit evidence paths"):
         validate_scnir_compatibility_matrix(evidence_root=tmp_path)
+
+
+def test_scnir_compatibility_cli_validates_evidence_root(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sc-neurocore", "scnir", "compatibility", str(REPO_ROOT)],
+    )
+
+    assert main() == 0
+    assert "SC-NIR compatibility matrix valid" in capsys.readouterr().out
+
+
+def test_scnir_compatibility_cli_rejects_missing_evidence_root(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sc-neurocore", "scnir", "compatibility", str(tmp_path)],
+    )
+
+    assert main() == 1
+    assert "SC-NIR compatibility matrix invalid" in capsys.readouterr().out
 
 
 def test_scnir_compatibility_matrix_is_deterministic_json() -> None:
