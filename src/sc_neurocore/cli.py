@@ -587,17 +587,21 @@ def _cmd_collect_synthesis(args: Any) -> int:
 def _cmd_scnir(args: Any) -> int:
     """Validate or export SC-aware NIR metadata documents."""
 
+    from pathlib import Path
+
     from sc_neurocore.ir import (
         SCNIRConversionConfig,
         SCNIRValidationError,
         export_scnir_from_nir,
         load_scnir,
+        upgrade_scnir_dict,
     )
 
     action = args.model
     path = args.scnir_path
-    if action not in {"validate", "export"} or not path:
+    if action not in {"validate", "upgrade", "export"} or not path:
         print("Error: usage: sc-neurocore scnir validate model.scnir.json")
+        print("       or: sc-neurocore scnir upgrade model.scnir.json --output upgraded.scnir.json")
         print("       or: sc-neurocore scnir export model.nir --output model.scnir.json")
         return 1
 
@@ -609,6 +613,26 @@ def _cmd_scnir(args: Any) -> int:
             return 1
 
         print(f"SC-NIR valid: {path} ({len(document.streams)} stream(s))")
+        return 0
+
+    if action == "upgrade":
+        if not args.output:
+            print("Error: scnir upgrade requires --output upgraded.scnir.json")
+            return 1
+        try:
+            raw = json.loads(Path(path).read_text(encoding="utf-8"))
+            if not isinstance(raw, dict):
+                raise ValueError("SC-NIR document must be a JSON object")
+            payload = upgrade_scnir_dict(raw)
+        except (OSError, SCNIRValidationError, ValueError, TypeError) as exc:
+            print(f"SC-NIR upgrade failed: {exc}")
+            return 1
+
+        Path(args.output).write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        print(f"SC-NIR upgraded: {args.output} ({len(payload['streams'])} stream(s))")
         return 0
 
     if not args.output:

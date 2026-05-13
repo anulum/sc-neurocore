@@ -28,6 +28,7 @@ from sc_neurocore.ir.scnir_schema import (
     load_scnir,
     scnir_from_dict,
     scnir_to_dict,
+    upgrade_scnir_dict,
     validate_scnir_dict,
     write_scnir,
 )
@@ -94,6 +95,24 @@ def test_scnir_round_trip_is_deterministic(tmp_path: Path) -> None:
     write_scnir(path, doc)
     assert json.loads(path.read_text(encoding="utf-8")) == payload
     assert scnir_to_dict(load_scnir(path)) == payload
+
+
+def test_scnir_upgrade_canonicalises_supported_current_payload() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["streams"] = list(reversed(payload["streams"]))
+
+    upgraded = upgrade_scnir_dict(payload)
+
+    assert upgraded == scnir_to_dict(scnir_from_dict(payload))
+    validate_scnir_dict(upgraded)
+
+
+def test_scnir_upgrade_rejects_unknown_schema_version() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["schema_version"] = "sc-neurocore.scnir.v9.9"
+
+    with pytest.raises(SCNIRValidationError, match="unsupported SC-NIR schema_version"):
+        upgrade_scnir_dict(payload)
 
 
 @pytest.mark.parametrize(
@@ -186,3 +205,28 @@ def test_scnir_validate_cli_reports_invalid_document(
 
     assert rc == 1
     assert "seed" in capsys.readouterr().out
+
+
+def test_scnir_upgrade_cli_writes_canonical_document(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    input_path = tmp_path / "input.scnir.json"
+    output_path = tmp_path / "upgraded.scnir.json"
+    write_scnir(input_path, _valid_document())
+
+    with mock.patch(
+        "sys.argv",
+        [
+            "sc-neurocore",
+            "scnir",
+            "upgrade",
+            str(input_path),
+            "--output",
+            str(output_path),
+        ],
+    ):
+        rc = main()
+
+    assert rc == 0
+    assert json.loads(output_path.read_text(encoding="utf-8")) == scnir_to_dict(_valid_document())
+    assert "SC-NIR upgraded" in capsys.readouterr().out

@@ -24,6 +24,7 @@ import re
 from typing import Any, Literal, Mapping, Sequence, cast
 
 SCNIR_SCHEMA_VERSION = "sc-neurocore.scnir.v0.1"
+SCNIR_SUPPORTED_SCHEMA_VERSIONS = frozenset({SCNIR_SCHEMA_VERSION})
 
 SCNIREncoding = Literal[
     "unipolar",
@@ -215,6 +216,21 @@ def write_scnir(path: str | Path, document: SCNIRDocument) -> None:
         json.dumps(payload, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+
+def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Upgrade supported SC-NIR payloads to the current canonical schema.
+
+    The current release only has one public schema version, so the migration is
+    an identity migration through the typed validator. Keeping this as an
+    explicit API gives future schema revisions a fail-closed migration surface
+    instead of letting callers guess whether a document is silently accepted.
+    """
+
+    version = payload.get("schema_version")
+    if not isinstance(version, str) or version not in SCNIR_SUPPORTED_SCHEMA_VERSIONS:
+        raise SCNIRValidationError(f"unsupported SC-NIR schema_version {version!r}")
+    return scnir_to_dict(scnir_from_dict(payload))
 
 
 def _validate_stream(stream: Mapping[str, Any], path: str) -> None:

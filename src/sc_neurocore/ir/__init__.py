@@ -21,6 +21,7 @@ from .scnir_schema import (
     load_scnir,
     scnir_from_dict,
     scnir_to_dict,
+    upgrade_scnir_dict,
     validate_scnir_dict,
     write_scnir,
 )
@@ -52,6 +53,7 @@ __all__ = [
     "load_scnir",
     "scnir_from_dict",
     "scnir_to_dict",
+    "upgrade_scnir_dict",
     "validate_scnir_dict",
     "write_scnir",
 ]
