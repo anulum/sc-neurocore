@@ -56,9 +56,7 @@ class SCNIRHDLSourceManifestEntry:
             "encoding": self.encoding,
             "signal_kind": self.signal_kind,
             "delay_steps": (
-                self.delay_steps
-                if isinstance(self.delay_steps, int)
-                else list(self.delay_steps)
+                self.delay_steps if isinstance(self.delay_steps, int) else list(self.delay_steps)
             ),
             "total_bits": self.total_bits,
             "fractional_bits": self.fractional_bits,

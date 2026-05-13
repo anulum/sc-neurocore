@@ -128,9 +128,7 @@ def main() -> None:
     for seed in range(5):
         out_subdir = f"dcls_max_standard_lif_iter_eps_l1e5_seed{seed}_20260513"
         display_name = f"scn-tim-stdlif-iter-eps-l1e5-seed{seed}-20260513"
-        path = OUT_DIR / (
-            f"director_shd_standard_lif_iter_eps_l1e5_seed{seed}_2026_05_13.yaml"
-        )
+        path = OUT_DIR / (f"director_shd_standard_lif_iter_eps_l1e5_seed{seed}_2026_05_13.yaml")
         path.write_text(
             _config(
                 display_name,
