@@ -166,6 +166,9 @@ neurons.  The new pipeline extends this to entire networks by:
   for large spike-producing populations
 - Preserving one-step recurrent NIR feedback with explicit `delay_steps`
   metadata and registered source values in generated RTL
+- Marking mixed analogue/spiking graphs explicitly in SC-NIR: LI/CubaLI and
+  integrator population streams are `analogue_state`, while thresholding
+  populations remain `spike` streams and connections remain `weight` streams
 
 ---
 
@@ -238,7 +241,7 @@ neurons.  The new pipeline extends this to entire networks by:
 | `sc_nir_<type>.v` | Per-type neuron Verilog (one per unique neuron type) |
 | `sc_nir_weight_rom.v` | Combined weight ROM artefact for all connections |
 | `result.scnir_source_modules` | Standalone LFSR-16/Sobol-16 source RTL keyed by module name |
-| `result.scnir_source_manifest` | Stream-to-source manifest for deterministic hardware handoff, including recurrent `delay_steps` |
+| `result.scnir_source_manifest` | Stream-to-source manifest for deterministic hardware handoff, including `signal_kind` and recurrent `delay_steps` |
 
 ---
 
@@ -562,7 +565,7 @@ values and accumulates warnings.
 | `interconnect` | `str` | `"direct"` or `"aer"` |
 | `scnir_document` | `SCNIRDocument` | Validated stochastic-computing metadata |
 | `scnir_source_modules` | `dict[str, str]` | Source module name → LFSR-16/Sobol-16 Verilog |
-| `scnir_source_manifest` | `tuple[...]` | Stream-to-source module handoff manifest, including recurrent `delay_steps` |
+| `scnir_source_manifest` | `tuple[...]` | Stream-to-source module handoff manifest, including `signal_kind` and recurrent `delay_steps` |
 | `warnings` | `list[str]` | Accumulated warnings |
 
 #### `compile_network_to_fpga(graph, *, module_name, data_width, fraction, bitstream_length, source_kind, base_seed, target) → NetworkCompilationResult`
@@ -598,8 +601,10 @@ sc-neurocore compile-nir <model> [options]
 `compile-nir` writes `scnir_source_manifest.json` with schema version
 `sc-neurocore.scnir.hdl-sources.v0.1`. The manifest rows record the stream
 identifier, emitted module name, source kind, seed, bitstream length, encoding,
-explicit recurrent delay steps, precision, and LFSR/Sobol source metadata used
-to generate each module.
+signal kind, explicit recurrent delay steps, precision, and LFSR/Sobol source
+metadata used to generate each module. Mixed analogue/spiking graphs use this
+field to distinguish voltage-state population streams from spike population
+streams in downstream evidence manifests.
 
 ---
 

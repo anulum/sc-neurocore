@@ -125,10 +125,11 @@ surface:
 sc-neurocore scnir upgrade model.scnir.json --output upgraded.scnir.json
 ```
 
-The current schema is `sc-neurocore.scnir.v0.2`. The upgrade command migrates
+The current schema is `sc-neurocore.scnir.v0.3`. The upgrade command migrates
 `sc-neurocore.scnir.v0.1` documents by adding explicit `delay_steps=0` to legacy
-streams before running the typed validator and deterministic writer. Unsupported
-schema versions are rejected instead of being guessed.
+streams and migrates every pre-`v0.3` document by adding explicit
+`signal_kind` metadata before running the typed validator and deterministic
+writer. Unsupported schema versions are rejected instead of being guessed.
 
 Exports deterministic SC-NIR metadata from a NIR graph by using the existing
 NIR import path and `NeuronGraph` lowering:
@@ -137,10 +138,10 @@ NIR import path and `NeuronGraph` lowering:
 sc-neurocore scnir export model.nir --output model.scnir.json --T 1024
 ```
 
-The export records population streams, weight streams, fixed-point precision,
-explicit recurrent delay steps, unique source seeds, and max-correlation
-constraints. It fails closed on invalid bitstream length or fixed-point
-precision configuration.
+The export records spiking population streams, analogue-state population
+streams, weight streams, fixed-point precision, explicit recurrent delay steps,
+unique source seeds, and max-correlation constraints. It fails closed on
+invalid bitstream length or fixed-point precision configuration.
 
 ### 2.4 `benchmark`
 

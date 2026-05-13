@@ -23,9 +23,12 @@ from pathlib import Path
 import re
 from typing import Any, Literal, Mapping, Sequence, cast
 
-SCNIR_SCHEMA_VERSION = "sc-neurocore.scnir.v0.2"
-SCNIR_PREVIOUS_SCHEMA_VERSION = "sc-neurocore.scnir.v0.1"
-SCNIR_SUPPORTED_SCHEMA_VERSIONS = frozenset({SCNIR_PREVIOUS_SCHEMA_VERSION, SCNIR_SCHEMA_VERSION})
+SCNIR_SCHEMA_VERSION = "sc-neurocore.scnir.v0.3"
+SCNIR_PREVIOUS_SCHEMA_VERSION = "sc-neurocore.scnir.v0.2"
+SCNIR_LEGACY_SCHEMA_VERSION = "sc-neurocore.scnir.v0.1"
+SCNIR_SUPPORTED_SCHEMA_VERSIONS = frozenset(
+    {SCNIR_LEGACY_SCHEMA_VERSION, SCNIR_PREVIOUS_SCHEMA_VERSION, SCNIR_SCHEMA_VERSION}
+)
 
 SCNIREncoding = Literal[
     "unipolar",
@@ -38,6 +41,7 @@ SCNIREncoding = Literal[
 SCNIRRounding = Literal["nearest_even", "towards_zero", "stochastic", "floor", "ceil"]
 SCNIROverflow = Literal["saturate", "wrap", "error"]
 SCNIRSourceKind = Literal["lfsr", "sobol", "halton", "replay", "hardware"]
+SCNIRSignalKind = Literal["spike", "analogue_state", "weight"]
 SCNIRCorrelationPolicy = Literal[
     "independent",
     "must_share_source",
@@ -59,6 +63,7 @@ _ENCODINGS = frozenset(
 _ROUNDING_MODES = frozenset({"nearest_even", "towards_zero", "stochastic", "floor", "ceil"})
 _OVERFLOW_MODES = frozenset({"saturate", "wrap", "error"})
 _SOURCE_KINDS = frozenset({"lfsr", "sobol", "halton", "replay", "hardware"})
+_SIGNAL_KINDS = frozenset({"spike", "analogue_state", "weight"})
 _CORRELATION_POLICIES = frozenset(
     {
         "independent",
@@ -122,6 +127,7 @@ class SCNIRStream:
     encoding: SCNIREncoding
     precision: SCNIRPrecision
     source: SCNIRSource
+    signal_kind: SCNIRSignalKind = "spike"
     delay_steps: int = 0
     correlation_constraints: Sequence[SCNIRCorrelationConstraint] = field(default_factory=tuple)
 
@@ -223,8 +229,9 @@ def write_scnir(path: str | Path, document: SCNIRDocument) -> None:
 def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
     """Upgrade supported SC-NIR payloads to the current canonical schema.
 
-    Version ``v0.1`` did not encode recurrent connection delay.  Upgrading to
-    ``v0.2`` inserts ``delay_steps=0`` for all legacy streams before validating
+    Version ``v0.1`` did not encode recurrent connection delay, and versions
+    before ``v0.3`` did not distinguish spiking, analogue-state, and weight
+    streams.  Legacy upgrades insert the missing fields before validating
     through the typed schema.  Current documents are canonicalised through the
     same deterministic writer.
     """
@@ -232,14 +239,21 @@ def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
     version = payload.get("schema_version")
     if not isinstance(version, str) or version not in SCNIR_SUPPORTED_SCHEMA_VERSIONS:
         raise SCNIRValidationError(f"unsupported SC-NIR schema_version {version!r}")
-    if version == SCNIR_PREVIOUS_SCHEMA_VERSION:
+    if version in {SCNIR_LEGACY_SCHEMA_VERSION, SCNIR_PREVIOUS_SCHEMA_VERSION}:
         upgraded: dict[str, Any] = dict(payload)
         upgraded["schema_version"] = SCNIR_SCHEMA_VERSION
         streams = _expect_sequence(upgraded.get("streams"), "streams")
-        upgraded["streams"] = [
-            {**_expect_mapping(stream, f"streams[{index}]"), "delay_steps": 0}
-            for index, stream in enumerate(streams)
-        ]
+        upgraded_streams: list[dict[str, Any]] = []
+        for index, stream in enumerate(streams):
+            stream_payload = dict(_expect_mapping(stream, f"streams[{index}]"))
+            if "delay_steps" not in stream_payload:
+                stream_payload["delay_steps"] = 0
+            if "signal_kind" not in stream_payload:
+                stream_payload["signal_kind"] = _infer_legacy_signal_kind(
+                    str(stream_payload.get("stream_id", ""))
+                )
+            upgraded_streams.append(stream_payload)
+        upgraded["streams"] = upgraded_streams
         return scnir_to_dict(scnir_from_dict(upgraded))
     return scnir_to_dict(scnir_from_dict(payload))
 
@@ -252,6 +266,7 @@ def _validate_stream(stream: Mapping[str, Any], path: str) -> None:
             "layer",
             "bitstream_length",
             "encoding",
+            "signal_kind",
             "precision",
             "source",
             "delay_steps",
@@ -263,6 +278,7 @@ def _validate_stream(stream: Mapping[str, Any], path: str) -> None:
     _expect_non_empty_string(stream["layer"], f"{path}.layer")
     _expect_positive_int(stream["bitstream_length"], f"{path}.bitstream_length")
     _expect_enum(stream["encoding"], _ENCODINGS, f"{path}.encoding")
+    _expect_enum(stream["signal_kind"], _SIGNAL_KINDS, f"{path}.signal_kind")
     _validate_precision(_expect_mapping(stream["precision"], f"{path}.precision"), path)
     _validate_source(_expect_mapping(stream["source"], f"{path}.source"), path)
     _expect_non_negative_int(stream["delay_steps"], f"{path}.delay_steps")
@@ -373,6 +389,7 @@ def _stream_from_dict(stream: Mapping[str, Any]) -> SCNIRStream:
         layer=cast(str, stream["layer"]),
         bitstream_length=cast(int, stream["bitstream_length"]),
         encoding=cast(SCNIREncoding, stream["encoding"]),
+        signal_kind=cast(SCNIRSignalKind, stream["signal_kind"]),
         precision=SCNIRPrecision(
             signed=cast(bool, precision["signed"]),
             total_bits=cast(int, precision["total_bits"]),
@@ -414,6 +431,7 @@ def _stream_to_dict(stream: SCNIRStream) -> dict[str, Any]:
         "layer": stream.layer,
         "bitstream_length": stream.bitstream_length,
         "encoding": stream.encoding,
+        "signal_kind": stream.signal_kind,
         "delay_steps": stream.delay_steps,
         "precision": {
             "signed": stream.precision.signed,
@@ -443,6 +461,14 @@ def _stream_to_dict(stream: SCNIRStream) -> dict[str, Any]:
             for constraint in stream.correlation_constraints
         ],
     }
+
+
+def _infer_legacy_signal_kind(stream_id: str) -> SCNIRSignalKind:
+    if stream_id.startswith("conn.") or stream_id.endswith((".weight", "_weight", "-weight")):
+        return "weight"
+    if stream_id.endswith(".state") or stream_id.endswith(".value"):
+        return "analogue_state"
+    return "spike"
 
 
 def _expect_keys(payload: Mapping[str, Any], allowed: set[str], path: str) -> None:
