@@ -637,7 +637,11 @@ currents, post-edge delayed spike registers, LIF updates, and recurrent current
 contributions against the same integer reference style. The AER/LFSR fixture
 checks weighted event fan-out by comparing hidden-population spike counts,
 pre-edge and post-edge output currents, and output LIF state transitions against
-an independent integer reference for the generated weighted-event route.
+an independent integer reference for the generated weighted-event route. The
+mixed/Sobol fixture checks LI analogue-state updates, direct analogue-state MAC
+terms feeding the downstream LIF readout, same-edge scheduling from pre-edge LI
+voltages, and downstream LIF state transitions against an independent Q8.8
+integer reference.
 
 ---
 

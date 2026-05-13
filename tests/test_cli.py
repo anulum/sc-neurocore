@@ -636,6 +636,58 @@ endmodule
 """
 
 
+def _mixed_equivalence_testbench(module_name: str) -> str:
+    return f"""
+module tb;
+    reg clk = 1'b0;
+    reg rst_n = 1'b0;
+    reg en = 1'b0;
+    reg signed [31:0] I_ext_flat = 32'h08002000;
+    wire [2:0] spike_bus;
+    reg signed [15:0] li0_i_pre;
+    reg signed [15:0] li1_i_pre;
+    reg signed [15:0] lif_i_pre;
+    integer cycle;
+
+    {module_name} uut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .en(en),
+        .I_ext_flat(I_ext_flat),
+        .spike_bus(spike_bus)
+    );
+
+    initial begin
+        #1 clk = 1'b1;
+        #1 clk = 1'b0;
+        rst_n = 1'b1;
+        en = 1'b1;
+        #1;
+        for (cycle = 0; cycle < 8; cycle = cycle + 1) begin
+            li0_i_pre = uut.p0_n0_I;
+            li1_i_pre = uut.p0_n1_I;
+            lif_i_pre = uut.p1_n0_I;
+            #1 clk = 1'b1;
+            #1 $display(
+                "cycle %0d li0_i_pre %0d li1_i_pre %0d lif_i_pre %0d li0_v %0d li1_v %0d lif_i_post %0d lif_v %0d lif_s %0d",
+                cycle,
+                li0_i_pre,
+                li1_i_pre,
+                lif_i_pre,
+                uut.p0_n0_v,
+                uut.p0_n1_v,
+                uut.p1_n0_I,
+                uut.p1_n0_v,
+                spike_bus[2]
+            );
+            #1 clk = 1'b0;
+        end
+        $finish;
+    end
+endmodule
+"""
+
+
 def _simulate_network_with_testbench(out_dir, *, module_name: str, testbench: str, tmp_path) -> str:
     iverilog = shutil.which("iverilog")
     vvp = shutil.which("vvp")
@@ -712,6 +764,12 @@ def _lif_q88_step(voltage: int, current: int) -> tuple[int, int, int]:
     return next_voltage, spike, next_voltage
 
 
+def _li_q88_step(voltage: int, current: int) -> int:
+    leak = _trunc_div((-voltage) << 8, 3840)
+    drive = _trunc_div(current << 8, 3840)
+    return max(-32768, min(32767, voltage + leak + drive))
+
+
 def _recurrent_fixed_point_reference(
     cycles: int,
 ) -> list[tuple[int, int, int, int, int, int, int, int, int, int, int, int, int]]:
@@ -763,6 +821,48 @@ def _recurrent_fixed_point_reference(
     return rows
 
 
+def _mixed_readout_current(li0_voltage: int, li1_voltage: int) -> int:
+    return ((li0_voltage * 0x0080) >> 8) + ((li1_voltage * -0x0040) >> 8)
+
+
+def _mixed_fixed_point_reference(
+    cycles: int,
+) -> list[tuple[int, int, int, int, int, int, int, int, int]]:
+    li0_current = 0x2000
+    li1_current = 0x0800
+    li0_voltage = 0
+    li1_voltage = 0
+    lif_voltage = 0
+    rows: list[tuple[int, int, int, int, int, int, int, int, int]] = []
+
+    for cycle in range(cycles):
+        lif_current_pre = _mixed_readout_current(li0_voltage, li1_voltage)
+        next_li0_voltage = _li_q88_step(li0_voltage, li0_current)
+        next_li1_voltage = _li_q88_step(li1_voltage, li1_current)
+        observed_lif_voltage, lif_spike, next_lif_voltage = _lif_q88_step(
+            lif_voltage, lif_current_pre
+        )
+        lif_current_post = _mixed_readout_current(next_li0_voltage, next_li1_voltage)
+        rows.append(
+            (
+                cycle,
+                li0_current,
+                li1_current,
+                lif_current_pre,
+                next_li0_voltage,
+                next_li1_voltage,
+                lif_current_post,
+                observed_lif_voltage,
+                lif_spike,
+            )
+        )
+        li0_voltage = next_li0_voltage
+        li1_voltage = next_li1_voltage
+        lif_voltage = next_lif_voltage
+
+    return rows
+
+
 def _aer_fixed_point_reference(
     cycles: int,
 ) -> list[tuple[int, int, int, int, int, int, int, int, int, int]]:
@@ -802,6 +902,30 @@ def _aer_fixed_point_reference(
         output_voltage = next_output_voltage
         assert next_output_spike in (0, 1)
 
+    return rows
+
+
+def _parse_mixed_equivalence_stdout(
+    stdout: str,
+) -> list[tuple[int, int, int, int, int, int, int, int, int]]:
+    rows: list[tuple[int, int, int, int, int, int, int, int, int]] = []
+    for line in stdout.splitlines():
+        parts = line.split()
+        if not parts or parts[0] != "cycle":
+            continue
+        rows.append(
+            (
+                int(parts[1]),
+                int(parts[3]),
+                int(parts[5]),
+                int(parts[7]),
+                int(parts[9]),
+                int(parts[11]),
+                int(parts[13]),
+                int(parts[15]),
+                int(parts[17]),
+            )
+        )
     return rows
 
 
@@ -1654,6 +1778,41 @@ class TestCompileNirCommand:
             tmp_path=tmp_path / "aer_equivalence_sim",
         )
         assert _parse_aer_equivalence_stdout(stdout) == _aer_fixed_point_reference(8)
+
+    def test_compile_nir_mixed_network_matches_fixed_point_reference(self, tmp_path):
+        nir = pytest.importorskip("nir")
+        model_path = tmp_path / "mixed_equivalence_fixture.nir"
+        nir.write(str(model_path), _mixed_li_lif_nir_graph())
+        out_dir = tmp_path / "mixed_equivalence_compiled"
+        module_name = "mixed_equivalence_net"
+
+        rc = _run_main(
+            "compile-nir",
+            str(model_path),
+            "--module-name",
+            module_name,
+            "--T",
+            "512",
+            "--source-kind",
+            "sobol",
+            "--base-seed",
+            "91",
+            "-o",
+            str(out_dir),
+        )
+
+        assert rc == 0
+        manifest = json.loads((out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8"))
+        assert manifest["interconnect"] == "direct"
+        assert manifest["scnir_signal_kinds"] == {"analogue_state": 1, "spike": 1, "weight": 2}
+        assert manifest["scnir_signal_routes"]["analogue_state"] == "direct_mac"
+        stdout = _simulate_network_with_testbench(
+            out_dir,
+            module_name=module_name,
+            testbench=_mixed_equivalence_testbench(module_name),
+            tmp_path=tmp_path / "mixed_equivalence_sim",
+        )
+        assert _parse_mixed_equivalence_stdout(stdout) == _mixed_fixed_point_reference(8)
 
 
 # ---------------------------------------------------------------------------
