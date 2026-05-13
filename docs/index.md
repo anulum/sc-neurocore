@@ -9,6 +9,14 @@ FPGA deployment.
 
 **Version 3.14.0** | 174 neuron models | optional Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
+!!! note "v4.0 transition"
+    Until v4.0, this repository intentionally keeps a broad kitchen-sink
+    research surface in one checkout while the current experimental
+    verification campaigns determine which runtime, compiler, hardware, bridge,
+    and research paths are promoted. v4.0 is planned as the stable public API
+    freeze and the point where the source tree is split into several focused
+    repositories.
+
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
 *Train in PyTorch → Quantise to Q8.8 → Simulate with stochastic bitstreams → Compile to SystemVerilog → Synthesise for FPGA. The Rust SIMD engine accelerates all stages.*
 
