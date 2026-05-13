@@ -619,6 +619,14 @@ source metadata used to generate each module. Mixed analogue/spiking graphs use
 these row and aggregate fields to distinguish voltage-state population streams
 from spike population streams in downstream evidence manifests.
 
+The CLI regression suite also co-simulates emitted source modules selected from
+`scnir_source_manifest.json` for direct/Sobol, AER/LFSR, and recurrent/LFSR
+exports. These tests verify that source modules in real output directories
+follow the same advance-before-compare first-sample contract as the software and
+Rust stochastic encoders. They do not replace full-network HDL co-simulation;
+they prove the exported stochastic source artefacts are concrete and executable
+across the current interconnect families.
+
 ---
 
 ## 7. Performance and Resource Notes
