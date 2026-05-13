@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -23,6 +24,8 @@ from sc_neurocore.ir import (
 )
 from sc_neurocore.nir_bridge.node_map import NODE_MAP
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 def test_scnir_compatibility_matrix_covers_parser_primitives() -> None:
     validate_scnir_compatibility_matrix()
@@ -30,6 +33,15 @@ def test_scnir_compatibility_matrix_covers_parser_primitives() -> None:
     primitives = {row.nir_primitive for row in scnir_compatibility_matrix()}
     assert {primitive.__name__ for primitive in NODE_MAP}.issubset(primitives)
     assert "NIRGraph" in primitives
+
+
+def test_scnir_compatibility_matrix_evidence_paths_exist() -> None:
+    validate_scnir_compatibility_matrix(evidence_root=REPO_ROOT)
+
+
+def test_scnir_compatibility_matrix_rejects_missing_evidence_root(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="missing audit evidence paths"):
+        validate_scnir_compatibility_matrix(evidence_root=tmp_path)
 
 
 def test_scnir_compatibility_matrix_is_deterministic_json() -> None:
