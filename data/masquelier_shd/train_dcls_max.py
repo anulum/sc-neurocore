@@ -158,7 +158,11 @@ def round_delays_inplace(model: torch.nn.Module) -> None:
 
 
 def fpga_val_accuracy(
-    model: torch.nn.Module, valid_loader, device, config, epoch: int,
+    model: torch.nn.Module,
+    valid_loader,
+    device,
+    config,
+    epoch: int,
 ) -> float:
     """Evaluate validation accuracy with rounded integer delays.
 
@@ -220,11 +224,14 @@ def epsilon_prune(model: torch.nn.Module, epsilon: float = 0.01):
 
             def make_hook(mask_t):
                 return lambda grad: grad * mask_t.float()
+
             m.weight.register_hook(make_hook(mask))
 
     sparsity = pruned_params / max(1, total_params)
-    print(f"  epsilon_prune(eps={epsilon}): {pruned_params}/{total_params} "
-          f"pruned ({sparsity:.1%} sparsity)")
+    print(
+        f"  epsilon_prune(eps={epsilon}): {pruned_params}/{total_params} "
+        f"pruned ({sparsity:.1%} sparsity)"
+    )
     return sparsity
 
 
@@ -374,8 +381,14 @@ def l1_weight_penalty(model: torch.nn.Module) -> torch.Tensor:
 
 
 def train_with_regulariser(
-    train_loader, model, optimizer, epoch, device, config,
-    lambda_delay=0.0, l1_weight=0.0,
+    train_loader,
+    model,
+    optimizer,
+    epoch,
+    device,
+    config,
+    lambda_delay=0.0,
+    l1_weight=0.0,
 ):
     """Custom training loop with integer delay regulariser and L1 weight penalty."""
     from src.SHD.trainer import (
@@ -465,17 +478,10 @@ def fine_tune_pruned_model(
             lambda_delay=getattr(config, "lambda_delay", 0.01),
             l1_weight=0.0,
         )
-        ft_fpga_val = fpga_val_accuracy(
-            model, valid_loader, device, config, global_epoch
-        )
+        ft_fpga_val = fpga_val_accuracy(model, valid_loader, device, config, global_epoch)
 
-        saved_state = {
-            key: value.detach().clone()
-            for key, value in model.state_dict().items()
-        }
-        ft_val_acc, ft_val_loss = test(
-            valid_loader, model, global_epoch, device, config
-        )
+        saved_state = {key: value.detach().clone() for key, value in model.state_dict().items()}
+        ft_val_acc, ft_val_loss = test(valid_loader, model, global_epoch, device, config)
         model.load_state_dict(saved_state)
 
         for sc in scheduler:
@@ -551,15 +557,11 @@ if __name__ == "__main__":
     config.prune_method = os.environ.get("SHD_PRUNE_METHOD", "magnitude").strip().lower()
     config.prune_protocol = os.environ.get("SHD_PRUNE_PROTOCOL", "one_shot").strip().lower()
     config.finetune_epochs = int(os.environ.get("SHD_FINETUNE_EPOCHS", "20"))
-    config.prune_epsilon_schedule = parse_epsilon_schedule(
-        os.environ.get("SHD_PRUNE_EPSILONS")
-    )
+    config.prune_epsilon_schedule = parse_epsilon_schedule(os.environ.get("SHD_PRUNE_EPSILONS"))
     config.prune_step_finetune_epochs = int(
         os.environ.get("SHD_PRUNE_STEP_FINETUNE_EPOCHS", str(config.finetune_epochs))
     )
-    config.prune_max_deployable_drop = float(
-        os.environ.get("SHD_PRUNE_MAX_DEPLOYABLE_DROP", "1.0")
-    )
+    config.prune_max_deployable_drop = float(os.environ.get("SHD_PRUNE_MAX_DEPLOYABLE_DROP", "1.0"))
     config.prune_max_steps = int(os.environ.get("SHD_PRUNE_MAX_STEPS", "20"))
     if os.environ.get("SHD_SEED"):
         config.seed = int(os.environ["SHD_SEED"])
@@ -576,9 +578,7 @@ if __name__ == "__main__":
         config.neuron_module = CompatibleLIFNode
         neuron_module_name = "standard_lif"
     else:
-        raise ValueError(
-            "SHD_NEURON_MODULE must be one of: vmin_lif, standard_lif"
-        )
+        raise ValueError("SHD_NEURON_MODULE must be one of: vmin_lif, standard_lif")
 
     l1_mode = config.l1_weight > 0
 
@@ -697,10 +697,7 @@ if __name__ == "__main__":
         if ROUND_EACH_EPOCH:
             round_delays_inplace(model)
 
-        saved_state = {
-            key: value.detach().clone()
-            for key, value in model.state_dict().items()
-        }
+        saved_state = {key: value.detach().clone() for key, value in model.state_dict().items()}
         val_acc, val_loss = test(valid_loader, model, epoch, device, config)
         if not ROUND_EACH_EPOCH:
             model.load_state_dict(saved_state)
@@ -744,8 +741,12 @@ if __name__ == "__main__":
             )
 
         state = {
-            "net": model.state_dict(), "acc": val_acc, "fpga_val_acc": fpga_val,
-            "epoch": epoch, "sigma": sigma, "round_each_epoch": ROUND_EACH_EPOCH,
+            "net": model.state_dict(),
+            "acc": val_acc,
+            "fpga_val_acc": fpga_val,
+            "epoch": epoch,
+            "sigma": sigma,
+            "round_each_epoch": ROUND_EACH_EPOCH,
         }
         torch.save(state, os.path.join(out_dir, "last.pth"))
 
@@ -775,10 +776,7 @@ if __name__ == "__main__":
                 print(f"  {name}: {nz}/{total} non-zero, {near_zero} near-zero (<0.01)")
 
         dense_best_val_acc = best_val_acc
-        if (
-            config.prune_method == "epsilon"
-            and config.prune_protocol == "iterative_finetune"
-        ):
+        if config.prune_method == "epsilon" and config.prune_protocol == "iterative_finetune":
             schedule = iterative_epsilon_schedule(
                 initial_epsilon=config.prune_epsilon,
                 target_sparsity=config.prune_sparsity,
@@ -818,8 +816,7 @@ if __name__ == "__main__":
                     model=model,
                     optimizer=ft_optimizer,
                     scheduler=ft_scheduler,
-                    start_epoch=config.epochs
-                    + step * config.prune_step_finetune_epochs,
+                    start_epoch=config.epochs + step * config.prune_step_finetune_epochs,
                     epochs=config.prune_step_finetune_epochs,
                     device=device,
                     config=config,
@@ -830,9 +827,7 @@ if __name__ == "__main__":
                     state_extra=state_extra,
                 )
                 step_best_val = (
-                    step_best_state["fpga_val_acc"]
-                    if step_best_state is not None
-                    else step_val
+                    step_best_state["fpga_val_acc"] if step_best_state is not None else step_val
                 )
                 if step_best_state is not None and step_best_val >= best_sparse_val_acc:
                     best_sparse_val_acc = step_best_val

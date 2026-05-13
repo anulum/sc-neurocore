@@ -508,7 +508,9 @@ def _validate_hierarchy(
             )
             port_name = _expect_hdl_identifier(port["port_name"], f"{port_path}.port_name")
             if port_name in port_names:
-                raise SCNIRValidationError(f"{path}.ports contains duplicate port_name {port_name!r}")
+                raise SCNIRValidationError(
+                    f"{path}.ports contains duplicate port_name {port_name!r}"
+                )
             port_names.add(port_name)
             _expect_enum(port["direction"], _HIERARCHY_DIRECTIONS, f"{port_path}.direction")
             stream_id = _expect_stream_id(port["stream_id"], f"{port_path}.stream_id")
@@ -592,7 +594,9 @@ def _hierarchy_instance_from_dict(instance: Mapping[str, Any]) -> SCNIRHierarchy
     return SCNIRHierarchyInstance(
         instance_id=cast(str, instance["instance_id"]),
         module_name=cast(str, instance["module_name"]),
-        ports=tuple(_hierarchy_port_from_dict(_expect_mapping(port, "hierarchy.port")) for port in ports),
+        ports=tuple(
+            _hierarchy_port_from_dict(_expect_mapping(port, "hierarchy.port")) for port in ports
+        ),
     )
 
 

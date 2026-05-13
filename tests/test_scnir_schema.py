@@ -261,9 +261,7 @@ def test_scnir_upgrade_migrates_v05_documents_with_empty_hierarchy() -> None:
             "stream_id",
         ),
         (
-            lambda payload: payload["hierarchy"][0]["ports"][0].update(
-                {"signal_kind": "weight"}
-            ),
+            lambda payload: payload["hierarchy"][0]["ports"][0].update({"signal_kind": "weight"}),
             "signal_kind",
         ),
         (

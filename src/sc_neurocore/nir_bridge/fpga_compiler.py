@@ -192,9 +192,10 @@ def _connection_sources_are_analogue(pop: NeuronSpec) -> bool:
 def _connection_has_thresholds(conn: Any) -> bool:
     """Whether a connection carries explicit NIR Threshold metadata."""
 
-    return getattr(conn, "source_threshold", None) is not None or getattr(
-        conn, "destination_threshold", None
-    ) is not None
+    return (
+        getattr(conn, "source_threshold", None) is not None
+        or getattr(conn, "destination_threshold", None) is not None
+    )
 
 
 def _normalise_connection_delay_steps(
@@ -653,7 +654,9 @@ def _build_top_direct(
             )
 
     if delayed_source_depths:
-        lines.append("    // Delayed source register chains for recurrent and explicit NIR Delay paths")
+        lines.append(
+            "    // Delayed source register chains for recurrent and explicit NIR Delay paths"
+        )
         for pop_name, neuron_idx in sorted(
             delayed_source_depths,
             key=lambda item: (pop_index[item[0]], item[1]),
@@ -754,9 +757,7 @@ def _build_top_direct(
                     delay_steps = delay_vectors[id(conn)][src_idx]
                     if _connection_sources_are_analogue(src_pop):
                         src_value = (
-                            f"{src_prefix}_v_d{delay_steps}"
-                            if delay_steps
-                            else f"{src_prefix}_v"
+                            f"{src_prefix}_v_d{delay_steps}" if delay_steps else f"{src_prefix}_v"
                         )
                         if source_thresholds is not None:
                             threshold = int(source_thresholds[src_idx])
@@ -1252,7 +1253,11 @@ def compile_network_to_fpga(
         for conn in qgraph.connections
     )
     has_threshold_connections = any(_connection_has_thresholds(conn) for conn in qgraph.connections)
-    if total_neurons > _AER_THRESHOLD and not has_delayed_connections and not has_threshold_connections:
+    if (
+        total_neurons > _AER_THRESHOLD
+        and not has_delayed_connections
+        and not has_threshold_connections
+    ):
         interconnect = "aer"
         top_module = _build_top_aer(
             module_name,
