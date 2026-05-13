@@ -23,6 +23,4 @@ pub fn generate_crossbar(weights: f64, filename: f64) -> f64 {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-}
+mod tests {}

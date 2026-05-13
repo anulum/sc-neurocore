@@ -31,6 +31,4 @@ pub fn secure_sum_protocol(client_gradients: f64) -> f64 {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-}
+mod tests {}

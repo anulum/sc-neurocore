@@ -34,6 +34,4 @@ pub fn verify(commitment: f64, challenge_idx: f64, revealed_bit: f64, bitstream_
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-}
+mod tests {}

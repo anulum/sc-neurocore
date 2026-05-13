@@ -24,7 +24,7 @@ pub fn check_tools() -> f64 {
     0.0
 }
 
-pub fn run_synthesis(verilog_source: f64, target: f64) -> f64 {
+pub fn run_synthesis(_verilog_source: f64, _target: f64) -> f64 {
     // if target not in _TARGETS {
     // raise ValueError(f"Unknown target: {target}. Supported: {list(_TARGETS
     // with tempfile.TemporaryDirectory(prefix="sc_synth_") as tmpdir {
@@ -48,7 +48,7 @@ pub fn run_synthesis(verilog_source: f64, target: f64) -> f64 {
     0.0
 }
 
-pub fn _parse_yosys_json(json_path: f64) -> f64 {
+pub fn _parse_yosys_json(_json_path: f64) -> f64 {
     // with open(json_path) as f {
     // data = json.load(f)
     // resources = {"luts": 0, "ffs": 0, "brams": 0, "dsps": 0, "cells": 0, "
@@ -70,7 +70,7 @@ pub fn _parse_yosys_json(json_path: f64) -> f64 {
     0.0
 }
 
-pub fn estimate_resources(ir_op_count: f64, target: f64) -> f64 {
+pub fn estimate_resources(_ir_op_count: f64, _target: f64) -> f64 {
     // capacity = _DEVICE_CAPACITY.get(target, _DEVICE_CAPACITY["ice40"])
     // est_luts = ir_op_count * 2 + 12
     // est_ffs = ir_op_count + 8
@@ -90,7 +90,7 @@ pub fn estimate_resources(ir_op_count: f64, target: f64) -> f64 {
     0.0
 }
 
-pub fn multi_target_synthesis(verilog_source: f64) -> f64 {
+pub fn multi_target_synthesis(_verilog_source: f64) -> f64 {
     // results = {}
     // for target in _TARGETS {
     // results[target] = run_synthesis(verilog_source, target)
@@ -98,7 +98,7 @@ pub fn multi_target_synthesis(verilog_source: f64) -> f64 {
     0.0
 }
 
-pub fn run_pnr(json_path: f64, target: f64) -> f64 {
+pub fn run_pnr(_json_path: f64, _target: f64) -> f64 {
     // cfg = _TARGETS.get(target)
     // if not cfg or not cfg["pnr"] {
     // return {"success": false, "error": f"No PnR tool for target {target}"}

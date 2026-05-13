@@ -34,6 +34,4 @@ pub fn verify_watermark(layer: f64, trigger_pattern: f64, target_neuron_idx: f64
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-}
+mod tests {}

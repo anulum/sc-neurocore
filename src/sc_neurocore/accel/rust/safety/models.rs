@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for models
 
-pub fn _load_class(name: f64) -> f64 {
+pub fn _load_class(_name: f64) -> f64 {
     // if name in _class_cache {
     // return _class_cache[name]
     // module_name = _CLASS_TO_MODULE[name]
@@ -41,7 +41,7 @@ pub fn _classify_fields() -> f64 {
     0.0
 }
 
-pub fn _categorize(name: f64) -> f64 {
+pub fn _categorize(_name: f64) -> f64 {
     // for category, keywords in _CATEGORY_RULES {
     // if any(kw in name for kw in keywords) {
     // return category
@@ -73,7 +73,7 @@ pub fn list_models() -> f64 {
     0.0
 }
 
-pub fn get_model_detail(name: f64) -> f64 {
+pub fn get_model_detail(_name: f64) -> f64 {
     // if name not in _CLASS_TO_MODULE {
     // return 0
     // try {
@@ -112,7 +112,7 @@ pub fn _detect_step_kwarg() -> f64 {
     0.0
 }
 
-pub fn _try_rust_simulate(name: f64, n_steps: f64, current_trace: f64, actual_dt: f64) -> f64 {
+pub fn _try_rust_simulate(_name: f64, _n_steps: f64, _current_trace: f64, _actual_dt: f64) -> f64 {
     // name: str,
     // n_steps: int,
     // current_trace: Any,
@@ -137,12 +137,12 @@ pub fn _try_rust_simulate(name: f64, n_steps: f64, current_trace: f64, actual_dt
 }
 
 pub fn simulate_model(
-    name: f64,
-    param_overrides: f64,
-    dt: f64,
-    duration: f64,
-    current: f64,
-    protocol: f64,
+    _name: f64,
+    _param_overrides: f64,
+    _dt: f64,
+    _duration: f64,
+    _current: f64,
+    _protocol: f64,
 ) -> f64 {
     // name: str,
     // param_overrides: dict[str, float] | 0 = 0,
