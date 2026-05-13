@@ -112,7 +112,8 @@ Use these emitters when you need:
   `scnir_document.json` used to generate them
 - machine-readable compile evidence in `scnir_source_manifest.json`, including
   direct versus AER interconnect selection, graph size, and aggregate
-  `scnir_signal_kinds` counts for mixed analogue/spiking exports
+  `scnir_signal_kinds` plus `scnir_signal_routes` for mixed analogue/spiking
+  exports
 
 Do **not** treat them as proof that every HDL path in the repository is now
 automatically sourced from these modules. They are explicit building blocks,

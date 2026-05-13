@@ -355,6 +355,10 @@ def _cmd_compile_nir(args: Any) -> int:
                 "total_synapses": result.total_synapses,
                 "scnir_stream_count": len(result.scnir_document.streams),
                 "scnir_signal_kinds": _scnir_signal_kind_counts(result.scnir_document),
+                "scnir_signal_routes": _scnir_signal_routes(
+                    result.scnir_document,
+                    interconnect=result.interconnect,
+                ),
                 "sources": [entry.as_dict() for entry in result.scnir_source_manifest],
             },
             f,
@@ -387,6 +391,16 @@ def _scnir_signal_kind_counts(document: Any) -> dict[str, int]:
         signal_kind = str(stream.signal_kind)
         counts[signal_kind] = counts.get(signal_kind, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _scnir_signal_routes(document: Any, *, interconnect: str) -> dict[str, str]:
+    present_kinds = {str(stream.signal_kind) for stream in document.streams}
+    routes = {
+        "analogue_state": "direct_mac",
+        "spike": "weighted_event_aer" if interconnect == "aer" else "direct_wire",
+        "weight": "stochastic_source_module",
+    }
+    return {kind: routes[kind] for kind in routes if kind in present_kinds}
 
 
 def _cmd_compile(args: Any) -> int:

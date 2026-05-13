@@ -608,13 +608,16 @@ used during compilation, and `scnir_source_manifest.json` with schema version
 `scnir_stream_count`; these fields make event-driven/AER compile outputs
 machine-checkable without parsing RTL comments. It also records
 `scnir_signal_kinds`, a deterministic count of `spike`, `analogue_state`, and
-`weight` streams when those stream roles are present. The manifest rows record the
-stream identifier, emitted module name, source kind, seed, bitstream length,
-encoding, signal kind, explicit recurrent delay steps, precision, and
-LFSR/Sobol source metadata used to generate each module. Mixed
-analogue/spiking graphs use these row and aggregate fields to distinguish
-voltage-state population streams from spike population streams in downstream
-evidence manifests.
+`weight` streams when those stream roles are present. `scnir_signal_routes`
+records the route selected for each present stream role: analogue-state streams
+use direct fixed-point MAC terms, spike streams use either direct wiring or
+weighted AER event routing depending on the selected interconnect, and weight
+streams are materialised as stochastic source modules. The manifest rows record
+the stream identifier, emitted module name, source kind, seed, bitstream length,
+encoding, signal kind, explicit recurrent delay steps, precision, and LFSR/Sobol
+source metadata used to generate each module. Mixed analogue/spiking graphs use
+these row and aggregate fields to distinguish voltage-state population streams
+from spike population streams in downstream evidence manifests.
 
 ---
 

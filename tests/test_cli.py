@@ -181,6 +181,54 @@ def _mixed_li_lif_nir_graph():
     )
 
 
+def _mixed_aer_li_lif_nir_graph():
+    nir = pytest.importorskip("nir")
+    n_hidden = 65
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([3])}),
+            "aff": nir.Affine(
+                weight=np.array(
+                    [[0.25, -0.125, 0.5], [-0.5, 0.375, 0.125]],
+                    dtype=np.float32,
+                ),
+                bias=np.zeros(2, dtype=np.float32),
+            ),
+            "li": nir.LI(
+                tau=np.full(2, 15.0),
+                r=np.ones(2),
+                v_leak=np.zeros(2),
+            ),
+            "expand": nir.Linear(
+                weight=np.tile(np.array([[0.5, -0.25]], dtype=np.float32), (n_hidden, 1))
+            ),
+            "lif1": nir.LIF(
+                tau=np.full(n_hidden, 20.0),
+                r=np.ones(n_hidden),
+                v_leak=np.zeros(n_hidden),
+                v_threshold=np.ones(n_hidden),
+            ),
+            "readout": nir.Linear(weight=np.full((1, n_hidden), 0.0625, dtype=np.float32)),
+            "lif2": nir.LIF(
+                tau=np.full(1, 20.0),
+                r=np.ones(1),
+                v_leak=np.zeros(1),
+                v_threshold=np.ones(1),
+            ),
+            "output": nir.Output(output_type={"output": np.array([1])}),
+        },
+        edges=[
+            ("input", "aff"),
+            ("aff", "li"),
+            ("li", "expand"),
+            ("expand", "lif1"),
+            ("lif1", "readout"),
+            ("readout", "lif2"),
+            ("lif2", "output"),
+        ],
+    )
+
+
 def _sobol_source_smoke_testbench(module_name: str) -> str:
     return f"""
 module tb;
@@ -720,6 +768,59 @@ class TestCompileNirCommand:
             stream["signal_kind"] for stream in payload["streams"]
         ]
         assert "Interconnect: direct" in capsys.readouterr().out
+
+    def test_compile_nir_records_mixed_aer_routing_summary(self, tmp_path, capsys):
+        nir = pytest.importorskip("nir")
+        model_path = tmp_path / "mixed_aer_fixture.nir"
+        nir.write(str(model_path), _mixed_aer_li_lif_nir_graph())
+
+        out_dir = tmp_path / "mixed_aer_compiled"
+        rc = _run_main(
+            "compile-nir",
+            str(model_path),
+            "--module-name",
+            "mixed_aer_fixture_net",
+            "--T",
+            "896",
+            "--source-kind",
+            "lfsr",
+            "--base-seed",
+            "123",
+            "-o",
+            str(out_dir),
+        )
+
+        assert rc == 0
+        top_module = (out_dir / "mixed_aer_fixture_net.v").read_text(encoding="utf-8")
+        assert "Interconnect: weighted event routing" in top_module
+        assert "localparam integer AER_SRC_COUNT = 66;" in top_module
+        assert "p0_n0_v * 16'sh0080" in top_module
+        assert "p0_n1_v * 16'shffc0" in top_module
+
+        payload = json.loads((out_dir / "scnir_document.json").read_text(encoding="utf-8"))
+        validate_scnir_dict(payload)
+        assert {stream["stream_id"]: stream["signal_kind"] for stream in payload["streams"]} == {
+            "pop.li.state": "analogue_state",
+            "pop.lif1.spike": "spike",
+            "pop.lif2.spike": "spike",
+            "conn.input_to_li.weight": "weight",
+            "conn.li_to_lif1.weight": "weight",
+            "conn.lif1_to_lif2.weight": "weight",
+        }
+
+        manifest = json.loads((out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8"))
+        assert manifest["interconnect"] == "aer"
+        assert manifest["scnir_signal_kinds"] == {
+            "analogue_state": 1,
+            "spike": 2,
+            "weight": 3,
+        }
+        assert manifest["scnir_signal_routes"] == {
+            "analogue_state": "direct_mac",
+            "spike": "weighted_event_aer",
+            "weight": "stochastic_source_module",
+        }
+        assert "Interconnect: aer" in capsys.readouterr().out
 
 
 # ---------------------------------------------------------------------------

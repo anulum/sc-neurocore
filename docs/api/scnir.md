@@ -98,12 +98,14 @@ can be reproduced from the same stream metadata that drove source generation.
 family, seed, bitstream length, encoding, signal kind, recurrent delay steps,
 precision, and source-specific metadata used for each module. CLI manifests
 also record the selected interconnect, Q-format, total neuron count, total
-synapse count, SC-NIR stream count, and `scnir_signal_kinds` counts so
-AER/event-driven and mixed analogue/spiking output directories carry
-machine-readable compile evidence. FPGA compilation
+synapse count, SC-NIR stream count, `scnir_signal_kinds` counts, and
+`scnir_signal_routes` so AER/event-driven and mixed analogue/spiking output
+directories carry machine-readable compile evidence. FPGA compilation
 marks non-spiking LI/CubaLI/integrator population streams as
 `analogue_state`, so mixed analogue/spiking NIR graphs expose voltage-state
-handoff metadata instead of being mislabeled as spike streams. FPGA
+handoff metadata instead of being mislabeled as spike streams; combined mixed
+AER graphs record analogue-state streams as direct MAC routes and spike streams
+as weighted event routes. FPGA
 compilation currently materialises LFSR-16 and Sobol-16 source families
 because both expose the standard `threshold[15:0]`/`bit_out` contract;
 unsupported source families fail closed instead of being emitted through an
