@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for surrogates
 
-pub fn surrogate_isi_shuffle(binary_train: f64, seed: f64) -> f64 {
+pub fn surrogate_isi_shuffle(_binary_train: f64, _seed: f64) -> f64 {
     // binary_train: ndarray[Any, Any], seed: int = 0
     // ) -> ndarray[Any, Any] {
     // intervals = diff(where(binary_train > 0)[0])
@@ -25,7 +25,7 @@ pub fn surrogate_isi_shuffle(binary_train: f64, seed: f64) -> f64 {
     0.0
 }
 
-pub fn surrogate_dither(binary_train: f64, dither_ms: f64, dt: f64, seed: f64) -> f64 {
+pub fn surrogate_dither(_binary_train: f64, _dither_ms: f64, _dt: f64, _seed: f64) -> f64 {
     // binary_train: ndarray[Any, Any], dither_ms: float = 5.0, dt: float = 0
     // ) -> ndarray[Any, Any] {
     // rng = random.default_rng(seed)
@@ -40,7 +40,7 @@ pub fn surrogate_dither(binary_train: f64, dither_ms: f64, dt: f64, seed: f64) -
     0.0
 }
 
-pub fn surrogate_trial_shuffle(trains: f64, seed: f64) -> f64 {
+pub fn surrogate_trial_shuffle(_trains: f64, _seed: f64) -> f64 {
     // trains: list[ndarray[Any, Any]], seed: int = 0
     // ) -> list[ndarray[Any, Any]] {
     // rng = random.default_rng(seed)
@@ -49,7 +49,7 @@ pub fn surrogate_trial_shuffle(trains: f64, seed: f64) -> f64 {
     0.0
 }
 
-pub fn homogeneous_poisson(rate_hz: f64, duration_s: f64, dt: f64, seed: f64) -> f64 {
+pub fn homogeneous_poisson(_rate_hz: f64, _duration_s: f64, _dt: f64, _seed: f64) -> f64 {
     // rate_hz: float, duration_s: float, dt: float = 0.001, seed: int = 0
     // ) -> ndarray[Any, Any] {
     // rng = random.default_rng(seed)
@@ -58,7 +58,7 @@ pub fn homogeneous_poisson(rate_hz: f64, duration_s: f64, dt: f64, seed: f64) ->
     0.0
 }
 
-pub fn inhomogeneous_poisson(rate_func: f64, duration_s: f64, dt: f64, seed: f64) -> f64 {
+pub fn inhomogeneous_poisson(_rate_func: f64, _duration_s: f64, _dt: f64, _seed: f64) -> f64 {
     // rate_func: Callable[[float], float], duration_s: float, dt: float = 0.
     // ) -> ndarray[Any, Any] {
     // rng = random.default_rng(seed)
@@ -75,7 +75,7 @@ pub fn inhomogeneous_poisson(rate_func: f64, duration_s: f64, dt: f64, seed: f64
     0.0
 }
 
-pub fn gamma_process(rate_hz: f64, shape: f64, duration_s: f64, dt: f64, seed: f64) -> f64 {
+pub fn gamma_process(_rate_hz: f64, _shape: f64, _duration_s: f64, _dt: f64, _seed: f64) -> f64 {
     // rate_hz: float, shape: float, duration_s: float, dt: float = 0.001, se
     // ) -> ndarray[Any, Any] {
     // rng = random.default_rng(seed)
@@ -96,11 +96,11 @@ pub fn gamma_process(rate_hz: f64, shape: f64, duration_s: f64, dt: f64, seed: f
 }
 
 pub fn compound_poisson_process(
-    rate_hz: f64,
-    burst_mean: f64,
-    duration_s: f64,
-    dt: f64,
-    seed: f64,
+    _rate_hz: f64,
+    _burst_mean: f64,
+    _duration_s: f64,
+    _dt: f64,
+    _seed: f64,
 ) -> f64 {
     // rate_hz: float, burst_mean: float, duration_s: float, dt: float = 0.00
     // ) -> ndarray[Any, Any] {
@@ -119,7 +119,7 @@ pub fn compound_poisson_process(
     0.0
 }
 
-pub fn surrogate_joint_isi(binary_train: f64, seed: f64) -> f64 {
+pub fn surrogate_joint_isi(_binary_train: f64, _seed: f64) -> f64 {
     // times_idx = where(binary_train > 0)[0]
     // if times_idx.size < 4 {
     // return binary_train.copy()
@@ -142,7 +142,7 @@ pub fn surrogate_joint_isi(binary_train: f64, seed: f64) -> f64 {
     0.0
 }
 
-pub fn surrogate_bin_shuffling(binary_train: f64, bin_size: f64, seed: f64) -> f64 {
+pub fn surrogate_bin_shuffling(_binary_train: f64, _bin_size: f64, _seed: f64) -> f64 {
     // binary_train: ndarray[Any, Any], bin_size: int = 10, seed: int = 0
     // ) -> ndarray[Any, Any] {
     // rng = random.default_rng(seed)
@@ -157,7 +157,7 @@ pub fn surrogate_bin_shuffling(binary_train: f64, bin_size: f64, seed: f64) -> f
     0.0
 }
 
-pub fn surrogate_spike_train_shifting(binary_train: f64, max_shift: f64, seed: f64) -> f64 {
+pub fn surrogate_spike_train_shifting(_binary_train: f64, _max_shift: f64, _seed: f64) -> f64 {
     // binary_train: ndarray[Any, Any], max_shift: int = 50, seed: int = 0
     // ) -> ndarray[Any, Any] {
     // rng = random.default_rng(seed)
