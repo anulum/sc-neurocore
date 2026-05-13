@@ -18,12 +18,28 @@ from torch.utils.data import DataLoader
 from .losses import spike_count_loss
 
 
+def _device_usable(device: torch.device) -> bool:
+    """Return whether a Torch device can execute a minimal tensor operation."""
+    try:
+        probe = torch.empty(1, device=device)
+        probe.fill_(1)
+        if device.type == "cuda":
+            torch.cuda.synchronize(device)
+        return bool(probe.cpu().item() == 1)
+    except (AssertionError, RuntimeError):
+        return False
+
+
 def auto_device() -> torch.device:
     """Select best available device: CUDA > MPS > CPU."""
     if torch.cuda.is_available():
-        return torch.device("cuda")
+        cuda_device = torch.device("cuda")
+        if _device_usable(cuda_device):
+            return cuda_device
     if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-        return torch.device("mps")
+        mps_device = torch.device("mps")
+        if _device_usable(mps_device):
+            return mps_device
     return torch.device("cpu")
 
 
