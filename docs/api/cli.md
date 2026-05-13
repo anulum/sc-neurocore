@@ -161,6 +161,18 @@ streams, weight streams, fixed-point precision, explicit recurrent delay steps,
 unique source seeds, and max-correlation constraints. It fails closed on
 invalid bitstream length or fixed-point precision configuration.
 
+Validates the executable SC-NIR primitive compatibility matrix and every
+declared audit-evidence file path:
+
+```bash
+sc-neurocore scnir compatibility .
+```
+
+When the optional repository root argument is omitted, the command uses the
+current working directory. Missing parser rows, stale rows, unsupported
+HDL-support claims without stream metadata, empty audit evidence, or evidence
+paths that do not resolve to files fail closed.
+
 ### 2.4 `benchmark`
 
 Delegates to the project's pytest-benchmark suite via `subprocess.run`:
