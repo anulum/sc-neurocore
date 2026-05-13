@@ -52,6 +52,16 @@ Validate a document:
 sc-neurocore scnir validate model.scnir.json
 ```
 
+Upgrade a supported document to the current canonical schema:
+
+```bash
+sc-neurocore scnir upgrade model.scnir.json --output upgraded.scnir.json
+```
+
+The `sc-neurocore.scnir.v0.1` upgrade path is an identity migration through the
+typed validator and deterministic JSON writer. Unknown schema versions fail
+closed so migration support must be added deliberately when the schema evolves.
+
 Export SC-NIR metadata from a NIR graph:
 
 ```bash
@@ -59,7 +69,7 @@ sc-neurocore scnir export model.nir --output model.scnir.json --T 1024
 ```
 
 Exit code `0` means the document passed the SC-NIR validator. Exit code `1`
-means validation/export failed or the input could not be read.
+means validation, upgrade, export, or input loading failed.
 
 ## FPGA Compilation Integration
 
@@ -99,6 +109,7 @@ from sc_neurocore.ir import (
     load_scnir,
     validate_scnir_dict,
     write_scnir,
+    upgrade_scnir_dict,
 )
 ```
 
@@ -118,6 +129,7 @@ from sc_neurocore.ir import (
         - scnir_to_dict
         - load_scnir
         - write_scnir
+        - upgrade_scnir_dict
 
 ::: sc_neurocore.ir.scnir_convert
     options:

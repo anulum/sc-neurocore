@@ -59,7 +59,7 @@ depending on the command). All other parameters are keyword flags; running
 | `map-nir` | Generate deterministic silicon-mapping reports for neuromorphic targets | `.nir` file path | `0` on success, `1` on bad input |
 | `hub-init` | Generate an offline-first self-hosted Docker Compose hub bundle | — | `0` on success, `1` on invalid config |
 | `compile-nir` | Compile NIR/ONNX network files to FPGA artefacts | `.nir` or `.onnx` path | `0` on success, `1` on bad input |
-| `scnir` | Validate or export SC-aware NIR metadata documents | `validate model.scnir.json` or `export model.nir --output model.scnir.json` | `0` on success, `1` on invalid input |
+| `scnir` | Validate, upgrade, or export SC-aware NIR metadata documents | `validate model.scnir.json`, `upgrade model.scnir.json --output upgraded.scnir.json`, or `export model.nir --output model.scnir.json` | `0` on success, `1` on invalid input |
 | `studio` | Launch Visual SNN Design Studio (FastAPI + Uvicorn) | — | `0` on clean exit, `1` if FastAPI missing |
 | `collect-synthesis` | Convert real utilisation, timing, and power reports into optimiser evidence JSON | — | `0` on success, `1` on missing or invalid input |
 
@@ -117,6 +117,17 @@ The validator rejects unknown fields, duplicate stream identifiers, invalid
 bitstream lengths, unsupported encodings, invalid fixed-point precision,
 under-specified random sources, and correlation constraints that reference
 missing streams. The reference schema is `schemas/scnir/scnir.schema.json`.
+
+Canonicalises a supported SC-NIR document through the versioned migration
+surface:
+
+```bash
+sc-neurocore scnir upgrade model.scnir.json --output upgraded.scnir.json
+```
+
+For `sc-neurocore.scnir.v0.1`, upgrade is an identity migration through the
+typed validator and deterministic writer. Unsupported schema versions are
+rejected instead of being guessed.
 
 Exports deterministic SC-NIR metadata from a NIR graph by using the existing
 NIR import path and `NeuronGraph` lowering:
