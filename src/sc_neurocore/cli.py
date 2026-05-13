@@ -12,8 +12,24 @@ from __future__ import annotations
 
 import argparse
 import importlib.metadata
+import json
 import sys
 from typing import Any, cast
+
+
+class _OutputAction(argparse.Action):
+    """Track whether ``--output`` was supplied explicitly."""
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str | None,
+        option_string: str | None = None,
+    ) -> None:
+        del parser, option_string
+        setattr(namespace, self.dest, values)
+        namespace.output_supplied = True
 
 
 def main() -> int:
@@ -37,17 +53,26 @@ def main() -> int:
             "compile-nir",
             "studio",
             "collect-synthesis",
+            "scnir",
         ],
         help="Command to run",
     )
     parser.add_argument("model", nargs="?", help="Model file (.nir) or ODE string for compile")
+    parser.add_argument("scnir_path", nargs="?", help="SC-NIR JSON document path")
     parser.add_argument(
         "--target",
         default="ice40",
         choices=["ice40", "ecp5", "artix7", "zynq", "web"],
         help="Deployment target (default: ice40)",
     )
-    parser.add_argument("--output", "-o", default="build", help="Output directory for deploy")
+    parser.set_defaults(output_supplied=False)
+    parser.add_argument(
+        "--output",
+        "-o",
+        default="build",
+        action=_OutputAction,
+        help="Output directory or JSON report path for commands that emit artefacts",
+    )
     parser.add_argument(
         "--dt",
         type=float,
@@ -59,6 +84,23 @@ def main() -> int:
         ),
     )
     parser.add_argument("--T", type=int, default=256, help="Bitstream length for SC layers")
+    parser.add_argument(
+        "--source-kind",
+        choices=["lfsr", "sobol"],
+        default="lfsr",
+        help="Stochastic source family for compile-nir SC-NIR source modules",
+    )
+    parser.add_argument(
+        "--base-seed",
+        type=int,
+        default=1,
+        help="First deterministic source seed for compile-nir SC-NIR source modules",
+    )
+    parser.add_argument(
+        "--audit-handoff",
+        action="store_true",
+        help="For compile-nir, validate emitted SC-NIR HDL artefacts and write an audit report",
+    )
     parser.add_argument("--port", type=int, default=8001, help="Port for serve command")
     parser.add_argument(
         "--bind-host",
@@ -243,6 +285,8 @@ def main() -> int:
         return _cmd_studio(args.port)
     if args.command == "collect-synthesis":
         return _cmd_collect_synthesis(args)
+    if args.command == "scnir":
+        return _cmd_scnir(args)
 
     parser.print_help()
     return 0
@@ -254,6 +298,7 @@ def _cmd_compile_nir(args: Any) -> int:
 
     import nir as nir_lib
 
+    from sc_neurocore.ir import SCNIR_HDL_HANDOFF_MANIFEST_VERSION, write_scnir
     from sc_neurocore.nir_bridge import compile_network_to_fpga, from_nir, from_scnetwork
 
     ext = os.path.splitext(args.model)[1].lower()
@@ -286,10 +331,14 @@ def _cmd_compile_nir(args: Any) -> int:
         module_name=args.module_name,
         data_width=data_width,
         fraction=fraction,
+        bitstream_length=args.T,
+        source_kind=args.source_kind,
+        base_seed=args.base_seed,
         target=args.target,
     )
     print(f"  Interconnect: {result.interconnect}")
     print(f"  Neuron modules: {len(result.neuron_modules)}")
+    print(f"  SC-NIR source modules: {len(result.scnir_source_modules)}")
 
     # Write output files
     out_dir = args.output
@@ -297,25 +346,73 @@ def _cmd_compile_nir(args: Any) -> int:
 
     # Top module
     top_path = os.path.join(out_dir, f"{args.module_name}.v")
-    with open(top_path, "w") as f:
+    with open(top_path, "w", encoding="utf-8") as f:
         f.write(result.top_module)
 
     # Neuron modules
     for ntype, verilog in result.neuron_modules.items():
         mod_path = os.path.join(out_dir, f"sc_nir_{ntype}.v")
-        with open(mod_path, "w") as f:
+        with open(mod_path, "w", encoding="utf-8") as f:
             f.write(verilog)
 
     # Weight ROM
     rom_path = os.path.join(out_dir, "sc_nir_weight_rom.v")
-    with open(rom_path, "w") as f:
+    with open(rom_path, "w", encoding="utf-8") as f:
         f.write(result.weight_rom)
+
+    for module_name, verilog in result.scnir_source_modules.items():
+        source_path = os.path.join(out_dir, f"{module_name}.v")
+        with open(source_path, "w", encoding="utf-8") as f:
+            f.write(verilog)
+
+    scnir_document_path = os.path.join(out_dir, "scnir_document.json")
+    write_scnir(scnir_document_path, result.scnir_document)
+
+    manifest_path = os.path.join(out_dir, "scnir_source_manifest.json")
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "schema_version": SCNIR_HDL_HANDOFF_MANIFEST_VERSION,
+                "module_name": result.module_name,
+                "bitstream_length": args.T,
+                "source_kind": args.source_kind,
+                "interconnect": result.interconnect,
+                "q_format": result.q_format,
+                "total_neurons": result.total_neurons,
+                "total_synapses": result.total_synapses,
+                "scnir_stream_count": len(result.scnir_document.streams),
+                "scnir_signal_kinds": _scnir_signal_kind_counts(result.scnir_document),
+                "scnir_signal_routes": _scnir_signal_routes(
+                    result.scnir_document,
+                    interconnect=result.interconnect,
+                ),
+                "scnir_hierarchy_instance_count": len(result.scnir_document.hierarchy),
+                "scnir_hierarchy_port_count": _scnir_hierarchy_port_count(result.scnir_document),
+                "sources": [entry.as_dict() for entry in result.scnir_source_manifest],
+            },
+            f,
+            indent=2,
+            sort_keys=True,
+        )
+        f.write("\n")
+
+    if getattr(args, "audit_handoff", False):
+        from sc_neurocore.ir import write_scnir_hdl_handoff_audit
+
+        audit_path = os.path.join(out_dir, "scnir_handoff_audit.json")
+        write_scnir_hdl_handoff_audit(out_dir, audit_path)
 
     print(f"[4/4] Output written to {out_dir}/")
     print(f"  {args.module_name}.v — top-level network")
     for ntype in result.neuron_modules:
         print(f"  sc_nir_{ntype}.v — {ntype} neuron module")
     print("  sc_nir_weight_rom.v — synaptic weight ROM")
+    for module_name in result.scnir_source_modules:
+        print(f"  {module_name}.v — SC-NIR stochastic source module")
+    print("  scnir_document.json — validated SC-NIR document")
+    print("  scnir_source_manifest.json — SC-NIR source manifest")
+    if getattr(args, "audit_handoff", False):
+        print("  scnir_handoff_audit.json — SC-NIR HDL handoff audit")
 
     if result.warnings:
         print(f"\n  ⚠ {len(result.warnings)} warning(s):")
@@ -323,6 +420,28 @@ def _cmd_compile_nir(args: Any) -> int:
             print(f"    {w}")
 
     return 0
+
+
+def _scnir_signal_kind_counts(document: Any) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for stream in document.streams:
+        signal_kind = str(stream.signal_kind)
+        counts[signal_kind] = counts.get(signal_kind, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _scnir_signal_routes(document: Any, *, interconnect: str) -> dict[str, str]:
+    present_kinds = {str(stream.signal_kind) for stream in document.streams}
+    routes = {
+        "analogue_state": "direct_mac",
+        "spike": "weighted_event_aer" if interconnect == "aer" else "direct_wire",
+        "weight": "stochastic_source_module",
+    }
+    return {kind: routes[kind] for kind in routes if kind in present_kinds}
+
+
+def _scnir_hierarchy_port_count(document: Any) -> int:
+    return sum(len(instance.ports) for instance in document.hierarchy)
 
 
 def _cmd_compile(args: Any) -> int:
@@ -536,6 +655,152 @@ def _cmd_collect_synthesis(args: Any) -> int:
 
     if args.out is not None:
         print(f"Evidence written: {args.out}")
+    return 0
+
+
+def _cmd_scnir(args: Any) -> int:
+    """Validate or export SC-aware NIR metadata documents."""
+
+    from pathlib import Path
+
+    from sc_neurocore.ir import (
+        SCNIRConversionConfig,
+        SCNIRValidationError,
+        build_scnir_compatibility_audit,
+        export_scnir_from_nir,
+        load_scnir,
+        scnir_compatibility_matrix_dicts,
+        validate_scnir_compatibility_matrix,
+        upgrade_scnir_dict,
+    )
+
+    action = args.model
+    path = args.scnir_path
+    if action not in {
+        "validate",
+        "upgrade",
+        "export",
+        "audit-hdl",
+        "compatibility",
+        "closure-audit",
+    } or (action not in {"compatibility", "closure-audit"} and not path):
+        print("Error: usage: sc-neurocore scnir validate model.scnir.json")
+        print("       or: sc-neurocore scnir upgrade model.scnir.json --output upgraded.scnir.json")
+        print("       or: sc-neurocore scnir export model.nir --output model.scnir.json")
+        print("       or: sc-neurocore scnir audit-hdl build/ --output scnir_audit.json")
+        print("       or: sc-neurocore scnir compatibility [repo-root]")
+        print("       or: sc-neurocore scnir closure-audit [repo-root] --output scnir_audit.json")
+        return 1
+
+    if action == "compatibility":
+        evidence_root = Path(path) if path else Path.cwd()
+        try:
+            validate_scnir_compatibility_matrix(evidence_root=evidence_root)
+            if getattr(args, "output_supplied", False):
+                Path(args.output).write_text(
+                    json.dumps(scnir_compatibility_matrix_dicts(), indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+        except (OSError, ValueError, TypeError) as exc:
+            print(f"SC-NIR compatibility matrix invalid: {exc}")
+            return 1
+
+        suffix = (
+            f"; report written: {args.output}" if getattr(args, "output_supplied", False) else ""
+        )
+        print(f"SC-NIR compatibility matrix valid: {evidence_root}{suffix}")
+        return 0
+
+    if action == "closure-audit":
+        evidence_root = Path(path) if path else Path.cwd()
+        try:
+            report = build_scnir_compatibility_audit(evidence_root=evidence_root)
+            if getattr(args, "output_supplied", False):
+                Path(args.output).write_text(
+                    json.dumps(report, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+        except (OSError, ValueError, TypeError) as exc:
+            print(f"SC-NIR closure audit invalid: {exc}")
+            return 1
+
+        suffix = (
+            f"; report written: {args.output}" if getattr(args, "output_supplied", False) else ""
+        )
+        print(
+            "SC-NIR closure audit valid: "
+            f"{evidence_root} ({report['primitive_count']} primitive(s), "
+            f"{report['audit_evidence_file_count']} evidence file(s)){suffix}"
+        )
+        return 0
+
+    if action == "validate":
+        try:
+            document = load_scnir(path)
+        except (OSError, SCNIRValidationError, ValueError) as exc:
+            print(f"SC-NIR invalid: {exc}")
+            return 1
+
+        print(f"SC-NIR valid: {path} ({len(document.streams)} stream(s))")
+        return 0
+
+    if action == "upgrade":
+        if not args.output:
+            print("Error: scnir upgrade requires --output upgraded.scnir.json")
+            return 1
+        try:
+            raw = json.loads(Path(path).read_text(encoding="utf-8"))
+            if not isinstance(raw, dict):
+                raise ValueError("SC-NIR document must be a JSON object")
+            payload = upgrade_scnir_dict(raw)
+        except (OSError, SCNIRValidationError, ValueError, TypeError) as exc:
+            print(f"SC-NIR upgrade failed: {exc}")
+            return 1
+
+        Path(args.output).write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        print(f"SC-NIR upgraded: {args.output} ({len(payload['streams'])} stream(s))")
+        return 0
+
+    if action == "audit-hdl":
+        from sc_neurocore.ir import SCNIRHDLHandoffAuditError, audit_scnir_hdl_handoff
+
+        try:
+            report = audit_scnir_hdl_handoff(path)
+            if args.output:
+                Path(args.output).write_text(
+                    json.dumps(report.as_dict(), indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+        except (OSError, SCNIRHDLHandoffAuditError, ValueError, TypeError) as exc:
+            print(f"SC-NIR HDL handoff invalid: {exc}")
+            return 1
+
+        suffix = f"; report written: {args.output}" if args.output else ""
+        print(
+            "SC-NIR HDL handoff valid: "
+            f"{path} ({report.stream_count} stream(s), "
+            f"{report.source_module_count} source module(s)){suffix}"
+        )
+        return 0
+
+    if not args.output:
+        print("Error: scnir export requires --output model.scnir.json")
+        return 1
+    try:
+        document = export_scnir_from_nir(
+            path,
+            output_path=args.output,
+            config=SCNIRConversionConfig(bitstream_length=args.T),
+            dt=args.dt,
+        )
+    except (OSError, SCNIRValidationError, ValueError, ImportError) as exc:
+        print(f"SC-NIR export failed: {exc}")
+        return 1
+
+    print(f"SC-NIR exported: {args.output} ({len(document.streams)} stream(s))")
     return 0
 
 
