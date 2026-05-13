@@ -159,6 +159,16 @@ def test_scnir_upgrade_migrates_v01_documents_with_zero_delay_and_signal_kind() 
     validate_scnir_dict(upgraded)
 
 
+def test_scnir_preserves_delay_step_vectors() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["streams"][1]["delay_steps"] = [1, 2]
+
+    validate_scnir_dict(payload)
+    round_tripped = scnir_to_dict(scnir_from_dict(payload))
+
+    assert round_tripped["streams"][1]["delay_steps"] == [1, 2]
+
+
 def test_scnir_upgrade_rejects_unknown_schema_version() -> None:
     payload = scnir_to_dict(_valid_document())
     payload["schema_version"] = "sc-neurocore.scnir.v9.9"
@@ -172,6 +182,8 @@ def test_scnir_upgrade_rejects_unknown_schema_version() -> None:
     [
         ("bitstream_length", 0, "bitstream_length"),
         ("delay_steps", -1, "delay_steps"),
+        ("delay_steps", [], "delay_steps"),
+        ("delay_steps", [0, -1], "delay_steps"),
         ("encoding", "rate_only", "encoding"),
         ("signal_kind", "voltageish", "signal_kind"),
     ],

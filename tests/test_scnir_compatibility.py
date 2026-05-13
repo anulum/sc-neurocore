@@ -92,8 +92,8 @@ def test_scnir_compatibility_matrix_does_not_overclaim_parser_only_rows() -> Non
 
     delay = rows["Delay"]
     assert delay.support_level == "metadata_and_hdl"
-    assert "delay_steps>=0" in delay.scnir_stream_metadata
-    assert "register chain" in delay.hdl_support
+    assert "delay_steps>=0 or vector[int>=0]" in delay.scnir_stream_metadata
+    assert "per-source delay taps" in delay.hdl_support
 
     integrator = rows["I"]
     assert integrator.support_level == "metadata_and_hdl"

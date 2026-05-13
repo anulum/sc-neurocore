@@ -277,7 +277,7 @@ def _verify_source_row_matches_stream(
         "bitstream_length": stream.bitstream_length,
         "encoding": stream.encoding,
         "signal_kind": stream.signal_kind,
-        "delay_steps": stream.delay_steps,
+        "delay_steps": _delay_steps_for_row(stream.delay_steps),
         "total_bits": stream.precision.total_bits,
         "fractional_bits": stream.precision.fractional_bits,
         "source_kind": f"{stream.source.kind}16",
@@ -310,6 +310,12 @@ def _stream_transform_rows(stream: SCNIRStream) -> list[dict[str, object]]:
         }
         for transform in stream.transforms
     ]
+
+
+def _delay_steps_for_row(delay_steps: int | Sequence[int]) -> int | list[int]:
+    if isinstance(delay_steps, int):
+        return delay_steps
+    return [int(value) for value in delay_steps]
 
 
 def _signal_kind_counts(document: SCNIRDocument) -> dict[str, int]:

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# © Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# © Code 2020-2026 Miroslav Sotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — NIR/ONNX → FPGA network compiler
@@ -55,6 +55,8 @@ from .neuron_graph import NeuronGraph, NeuronSpec
 from .quantise_params import QuantisedGraph, quantise_graph
 
 logger = logging.getLogger(__name__)
+
+DelayVector = tuple[int, ...]
 
 # Threshold above which the compiler records that event-bus RTL would be useful.
 # The default emitter still uses exact direct wiring until weighted routing is
@@ -193,6 +195,43 @@ def _connection_has_thresholds(conn: Any) -> bool:
     return getattr(conn, "source_threshold", None) is not None or getattr(
         conn, "destination_threshold", None
     ) is not None
+
+
+def _normalise_connection_delay_steps(
+    delay_steps: Any,
+    source_width: int,
+    label: str,
+) -> DelayVector:
+    """Return one validated delay value per source column."""
+
+    if source_width <= 0:
+        raise ValueError(f"{label} source width must be positive")
+    if isinstance(delay_steps, int) and not isinstance(delay_steps, bool):
+        value = delay_steps
+        if value < 0:
+            raise ValueError(f"{label} delay_steps must be non-negative")
+        if value > _MAX_SYNTHESISABLE_DELAY_STEPS:
+            raise ValueError(
+                f"{label} has delay_steps={value}, above "
+                f"the synthesis guard {_MAX_SYNTHESISABLE_DELAY_STEPS}"
+            )
+        return tuple(value for _ in range(source_width))
+
+    raw = np.atleast_1d(np.asarray(delay_steps, dtype=np.int64)).reshape(-1)
+    if raw.size != source_width:
+        raise ValueError(
+            f"{label} delay_steps vector length {raw.size} does not match "
+            f"source width {source_width}"
+        )
+    if np.any(raw < 0):
+        raise ValueError(f"{label} delay_steps must be non-negative")
+    max_delay = int(np.max(raw)) if raw.size else 0
+    if max_delay > _MAX_SYNTHESISABLE_DELAY_STEPS:
+        raise ValueError(
+            f"{label} has delay_steps={max_delay}, above "
+            f"the synthesis guard {_MAX_SYNTHESISABLE_DELAY_STEPS}"
+        )
+    return tuple(int(value) for value in raw)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -475,18 +514,8 @@ def _build_top_direct(
 
     max_terms = external_width if pops else 1
     delayed_source_depths: dict[tuple[str, int], int] = {}
+    delay_vectors: dict[int, DelayVector] = {}
     for conn in conns:
-        delay_steps = getattr(conn, "delay_steps", 0)
-        if not isinstance(delay_steps, int) or delay_steps < 0:
-            raise ValueError(
-                f"Connection {conn.src}->{conn.dst} has invalid delay_steps={delay_steps}; "
-                "delay_steps must be a non-negative integer"
-            )
-        if delay_steps > _MAX_SYNTHESISABLE_DELAY_STEPS:
-            raise ValueError(
-                f"Connection {conn.src}->{conn.dst} has delay_steps={delay_steps}, above "
-                f"the synthesis guard {_MAX_SYNTHESISABLE_DELAY_STEPS}"
-            )
         weights = np.asarray(conn.weights)
         if weights.ndim != 2:
             raise ValueError(f"Connection {conn.src}->{conn.dst} weights must be a 2-D matrix")
@@ -499,19 +528,26 @@ def _build_top_direct(
                 f"destination rows for {dst_pop.n_neurons} destination neurons"
             )
         src_pop = pop_by_name.get(conn.src)
-        if delay_steps and src_pop is None:
-            raise ValueError(
-                f"Connection {conn.src}->{conn.dst} is delayed but does not originate from "
-                "a neuron population"
-            )
         expected_src = src_pop.n_neurons if src_pop is not None else external_width
         if weights.shape[1] != expected_src:
             raise ValueError(
                 f"Connection {conn.src}->{conn.dst} has {weights.shape[1]} "
                 f"source columns for {expected_src} source signals"
             )
-        if delay_steps and src_pop is not None:
+        delay_vector = _normalise_connection_delay_steps(
+            getattr(conn, "delay_steps", 0),
+            expected_src,
+            f"Connection {conn.src}->{conn.dst}",
+        )
+        delay_vectors[id(conn)] = delay_vector
+        if any(delay_vector) and src_pop is None:
+            raise ValueError(
+                f"Connection {conn.src}->{conn.dst} is delayed but does not originate from "
+                "a neuron population"
+            )
+        if any(delay_vector) and src_pop is not None:
             for src_idx in range(src_pop.n_neurons):
+                delay_steps = delay_vector[src_idx]
                 key = (src_pop.name, src_idx)
                 delayed_source_depths[key] = max(delayed_source_depths.get(key, 0), delay_steps)
         if conn.bias is not None and np.asarray(conn.bias).reshape(-1).size != dst_pop.n_neurons:
@@ -715,7 +751,7 @@ def _build_top_direct(
                         continue
 
                     src_prefix = neuron_prefix(src_pop, src_idx)
-                    delay_steps = getattr(conn, "delay_steps", 0)
+                    delay_steps = delay_vectors[id(conn)][src_idx]
                     if _connection_sources_are_analogue(src_pop):
                         src_value = (
                             f"{src_prefix}_v_d{delay_steps}"
@@ -1205,7 +1241,16 @@ def compile_network_to_fpga(
     # preserving dense affine accumulation semantics.
     total_neurons = graph.total_neurons
     interconnect = "direct"
-    has_delayed_connections = any(getattr(conn, "delay_steps", 0) for conn in qgraph.connections)
+    has_delayed_connections = any(
+        any(
+            _normalise_connection_delay_steps(
+                getattr(conn, "delay_steps", 0),
+                int(np.asarray(conn.weights).shape[1]),
+                f"Connection {conn.src}->{conn.dst}",
+            )
+        )
+        for conn in qgraph.connections
+    )
     has_threshold_connections = any(_connection_has_thresholds(conn) for conn in qgraph.connections)
     if total_neurons > _AER_THRESHOLD and not has_delayed_connections and not has_threshold_connections:
         interconnect = "aer"

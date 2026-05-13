@@ -126,7 +126,7 @@ def build_scnir_from_neuron_graph(
                 precision=_precision(config, signed=True),
                 source=_source(config, stream_index),
                 signal_kind="weight",
-                delay_steps=int(getattr(conn, "delay_steps", 0)),
+                delay_steps=_connection_delay_steps(conn),
                 transforms=_connection_transforms(conn),
                 correlation_constraints=(
                     SCNIRCorrelationConstraint(
@@ -169,6 +169,13 @@ def _connection_transforms(conn: Any) -> tuple[SCNIRStreamTransform, ...]:
             )
         )
     return tuple(transforms)
+
+
+def _connection_delay_steps(conn: Any) -> int | tuple[int, ...]:
+    delay_steps = getattr(conn, "delay_steps", 0)
+    if isinstance(delay_steps, int) and not isinstance(delay_steps, bool):
+        return delay_steps
+    return tuple(int(value) for value in delay_steps)
 
 
 def export_scnir_from_nir(

@@ -135,6 +135,41 @@ def _explicit_analogue_delay_graph() -> object:
     )
 
 
+def _heterogeneous_delay_graph() -> object:
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "aff": nir.Affine(
+                weight=np.eye(2, dtype=np.float32),
+                bias=np.zeros(2, dtype=np.float32),
+            ),
+            "lif0": nir.LIF(
+                tau=np.full(2, 20.0),
+                r=np.ones(2),
+                v_leak=np.zeros(2),
+                v_threshold=np.ones(2),
+            ),
+            "delay": nir.Delay(delay=np.array([1.0, 2.0])),
+            "readout": nir.Linear(weight=np.array([[0.25, -0.125]], dtype=np.float32)),
+            "lif1": nir.LIF(
+                tau=np.full(1, 20.0),
+                r=np.ones(1),
+                v_leak=np.zeros(1),
+                v_threshold=np.ones(1),
+            ),
+            "output": nir.Output(output_type={"output": np.array([1])}),
+        },
+        edges=[
+            ("input", "aff"),
+            ("aff", "lif0"),
+            ("lif0", "delay"),
+            ("delay", "readout"),
+            ("readout", "lif1"),
+            ("lif1", "output"),
+        ],
+    )
+
+
 def _integrator_graph() -> object:
     return nir.NIRGraph(
         nodes={
@@ -507,6 +542,34 @@ def test_fpga_compile_uses_delayed_voltage_for_explicit_analogue_delay() -> None
     assert delayed_stream["delay_steps"] == 2
     assert "reg signed [DATA_WIDTH - 1:0] p0_n0_v_d2;" in result.top_module
     assert "p0_n0_v_d2 * 16'sh0080" in result.top_module
+
+
+def test_fpga_compile_carries_heterogeneous_delay_vector_register_taps() -> None:
+    network = from_nir(_heterogeneous_delay_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    result = compile_network_to_fpga(
+        neuron_graph,
+        module_name="scnir_heterogeneous_delay",
+        bitstream_length=896,
+    )
+
+    payload = scnir_to_dict(result.scnir_document)
+    validate_scnir_dict(payload)
+    delayed_stream = next(
+        stream for stream in payload["streams"] if stream["stream_id"] == "conn.lif0_to_lif1.weight"
+    )
+    assert delayed_stream["delay_steps"] == [1, 2]
+    delayed_manifest = next(
+        entry
+        for entry in result.scnir_source_manifest
+        if entry.stream_id == "conn.lif0_to_lif1.weight"
+    )
+    assert delayed_manifest.delay_steps == (1, 2)
+    assert "reg p0_n0_spike_d1;" in result.top_module
+    assert "reg p0_n1_spike_d2;" in result.top_module
+    assert "(p0_n0_spike_d1 ? 34'sh000000040 : 34'sd0)" in result.top_module
+    assert "(p0_n1_spike_d2 ? 34'sh3ffffffe0 : 34'sd0)" in result.top_module
 
 
 def test_fpga_compile_emits_integrator_module_and_analogue_state_routes() -> None:

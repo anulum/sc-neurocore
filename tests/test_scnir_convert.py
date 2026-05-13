@@ -690,11 +690,28 @@ def test_scnir_export_preserves_explicit_nir_delay_weight_stream() -> None:
     assert delayed_stream["correlation_constraints"][0]["peer_stream_id"] == "pop.lif1.spike"
 
 
-def test_scnir_export_rejects_heterogeneous_explicit_nir_delay() -> None:
+def test_scnir_export_preserves_heterogeneous_explicit_nir_delay_vector() -> None:
     network = from_nir(_build_heterogeneous_delay_lif_graph(), dt=1.0)
 
-    with pytest.raises(ValueError, match="heterogeneous delay_steps"):
-        from_scnetwork(network, dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+    delayed_connections = [
+        conn for conn in neuron_graph.connections if conn.src == "lif0" and conn.dst == "lif1"
+    ]
+    assert len(delayed_connections) == 1
+    assert delayed_connections[0].delay_steps == (1, 2)
+
+    document = build_scnir_from_neuron_graph(
+        neuron_graph,
+        config=SCNIRConversionConfig(bitstream_length=896, base_seed=73),
+    )
+    payload = scnir_to_dict(document)
+    validate_scnir_dict(payload)
+
+    delayed_stream = next(
+        stream for stream in payload["streams"] if stream["stream_id"] == "conn.lif0_to_lif1.weight"
+    )
+    assert delayed_stream["delay_steps"] == [1, 2]
+    assert delayed_stream["correlation_constraints"][0]["peer_stream_id"] == "pop.lif1.spike"
 
 
 def test_scnir_export_marks_mixed_analogue_state_and_spike_streams() -> None:

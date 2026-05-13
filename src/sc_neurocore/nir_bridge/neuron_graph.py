@@ -64,6 +64,8 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+DelaySteps = int | tuple[int, ...]
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # Data Structures
@@ -114,10 +116,10 @@ class ConnectionSpec:
         destination neuron *i*.
     bias : np.ndarray | None
         Optional bias vector of shape ``(n_dst,)``.
-    delay_steps : int
-        Number of explicit unit-delay timesteps on this connection.  Recurrent
-        NIR edges broken by the parser currently use ``1``; feed-forward
-        connections use ``0``.
+    delay_steps : int | tuple[int, ...]
+        Number of explicit unit-delay timesteps on this connection.  A scalar
+        applies to all source columns; a tuple carries one delay per source
+        column for heterogeneous NIR ``Delay`` vectors.
     source_threshold : np.ndarray | None
         Optional threshold vector applied to source signals before the weight
         matrix.  Represents NIR ``Threshold`` on the source side.
@@ -130,7 +132,7 @@ class ConnectionSpec:
     dst: str
     weights: np.ndarray
     bias: np.ndarray | None = None
-    delay_steps: int = 0
+    delay_steps: DelaySteps = 0
     source_threshold: np.ndarray | None = None
     destination_threshold: np.ndarray | None = None
 
@@ -284,8 +286,8 @@ def _extract_neuron_params(node: Any, neuron_type: str) -> dict[str, np.ndarray]
     return params
 
 
-def _homogeneous_delay_steps(node: Any, node_name: str) -> int:
-    """Return a scalar delay for an explicit NIR Delay node or fail closed."""
+def _delay_steps(node: Any, node_name: str) -> DelaySteps:
+    """Return scalar or per-source delay metadata for an explicit NIR Delay node."""
 
     raw_steps = getattr(node, "delay_steps", None)
     if raw_steps is None:
@@ -295,12 +297,56 @@ def _homogeneous_delay_steps(node: Any, node_name: str) -> int:
         raise ValueError(f"Delay node {node_name!r} must contain at least one delay value")
     if np.any(steps < 0):
         raise ValueError(f"Delay node {node_name!r} contains negative delay_steps")
-    if not np.all(steps == steps[0]):
+    values = tuple(int(value) for value in steps)
+    if len(values) == 1 or all(value == values[0] for value in values):
+        return values[0]
+    return values
+
+
+def _delay_steps_array(delay_steps: DelaySteps) -> np.ndarray:
+    """Return delay metadata as a one-dimensional integer array."""
+
+    return np.atleast_1d(np.asarray(delay_steps, dtype=np.int64)).reshape(-1)
+
+
+def _compose_delay_steps(left: DelaySteps, right: DelaySteps) -> DelaySteps:
+    """Compose adjacent delay nodes with scalar/vector broadcasting."""
+
+    left_steps = _delay_steps_array(left)
+    right_steps = _delay_steps_array(right)
+    if left_steps.size == 1 and right_steps.size == 1:
+        return int(left_steps[0] + right_steps[0])
+    if left_steps.size == 1:
+        values = right_steps + int(left_steps[0])
+    elif right_steps.size == 1:
+        values = left_steps + int(right_steps[0])
+    elif left_steps.size == right_steps.size:
+        values = left_steps + right_steps
+    else:
         raise ValueError(
-            f"Delay node {node_name!r} has heterogeneous delay_steps; "
-            "split the delayed channels before FPGA lowering"
+            f"Incompatible delay vector lengths {left_steps.size} and {right_steps.size}; "
+            "split delayed channels before FPGA lowering"
         )
-    return int(steps[0])
+    result = tuple(int(value) for value in values)
+    if all(value == result[0] for value in result):
+        return result[0]
+    return result
+
+
+def _fit_delay_steps_to_width(delay_steps: DelaySteps, width: int, label: str) -> DelaySteps:
+    """Validate scalar/vector delay metadata against a source width."""
+
+    steps = _delay_steps_array(delay_steps)
+    if steps.size == 1:
+        return int(steps[0])
+    if steps.size != width:
+        raise ValueError(
+            f"{label} delay_steps length {steps.size} does not match source width {width}"
+        )
+    values = tuple(int(value) for value in steps)
+    if all(value == values[0] for value in values):
+        return values[0]
+    return values
 
 
 def _scale_vector(node: Any, node_name: str) -> np.ndarray:
@@ -675,13 +721,13 @@ def _resolve_weight_source(
     *,
     nodes: dict[str, Any],
     predecessors: dict[str, list[str]],
-    accumulated_delay_steps: int = 0,
+    accumulated_delay_steps: DelaySteps = 0,
     accumulated_scale: np.ndarray | None = None,
     accumulated_threshold: np.ndarray | None = None,
     required_source_width: int | None = None,
     flatten_output_width: int | None = None,
     seen: frozenset[str] = frozenset(),
-) -> tuple[str, int, np.ndarray | None, int | None, np.ndarray | None] | None:
+) -> tuple[str, DelaySteps, np.ndarray | None, int | None, np.ndarray | None] | None:
     """Resolve the population/input source feeding a weight node.
 
     Traverses pass-through nodes immediately upstream of ``Affine``/``Linear``
@@ -704,9 +750,17 @@ def _resolve_weight_source(
                 f"Flatten input width {required_source_width} does not match "
                 f"source {node_name!r} width {node_width}"
             )
+        width = node_width if node_width is not None else required_source_width
+        resolved_delay_steps = accumulated_delay_steps
+        if width is not None:
+            resolved_delay_steps = _fit_delay_steps_to_width(
+                accumulated_delay_steps,
+                width,
+                f"source {node_name!r}",
+            )
         return (
             node_name,
-            accumulated_delay_steps,
+            resolved_delay_steps,
             accumulated_scale,
             flatten_output_width,
             accumulated_threshold,
@@ -717,7 +771,7 @@ def _resolve_weight_source(
 
     delay_steps = accumulated_delay_steps
     if class_name == _DELAY_NODE_NAME:
-        delay_steps += _homogeneous_delay_steps(node, node_name)
+        delay_steps = _compose_delay_steps(delay_steps, _delay_steps(node, node_name))
     scale = accumulated_scale
     if class_name == _SCALE_NODE_NAME:
         scale = _compose_scale(scale, _scale_vector(node, node_name))
@@ -1029,7 +1083,7 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
         # weight node, preserving homogeneous explicit NIR Delay nodes along
         # the immediate source path as scalar connection delay metadata.
         src_name = ""
-        delay_steps = 0
+        delay_steps: DelaySteps = 0
         source_scale: np.ndarray | None = None
         source_flatten_width: int | None = None
         source_threshold: np.ndarray | None = None
