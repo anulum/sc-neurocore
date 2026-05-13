@@ -391,6 +391,9 @@ sc-neurocore compile-nir model.nir --target ice40 --module-name my_snn -o build/
 # Sobol source modules with deterministic seed allocation
 sc-neurocore compile-nir model.nir --source-kind sobol --base-seed 66 --T 1024 -o build/
 
+# Compile and emit a machine-checkable SC-NIR HDL handoff audit
+sc-neurocore compile-nir model.nir --audit-handoff -o build/
+
 # Validate the complete SC-NIR HDL handoff after compilation
 sc-neurocore scnir audit-hdl build/ --output build/scnir_handoff_audit.json
 ```
@@ -603,6 +606,7 @@ sc-neurocore compile-nir <model> [options]
 | `--T` | `256` | SC-NIR bitstream length |
 | `--source-kind` | `lfsr` | Source modules to emit: `lfsr` or `sobol` |
 | `--base-seed` | `1` | First deterministic source seed |
+| `--audit-handoff` | off | Write `scnir_handoff_audit.json` after validating the emitted HDL handoff |
 
 `compile-nir` writes `scnir_document.json`, the full validated SC-NIR document
 used during compilation, and `scnir_source_manifest.json` with schema version
@@ -628,7 +632,8 @@ or packaging jobs. The audit loads `scnir_document.json`, checks
 `scnir_source_manifest.json` against the typed SC-NIR streams, verifies aggregate
 signal-kind counts and route selections, verifies top-level SC-NIR localparams,
 and fails closed if any expected source module, top module, or weight ROM
-artefact is missing.
+artefact is missing. Use `compile-nir --audit-handoff` when the audit report
+should be generated atomically with the RTL bundle.
 
 The CLI regression suite co-simulates emitted source modules selected from
 `scnir_source_manifest.json` for direct/Sobol, AER/LFSR, and recurrent/LFSR
