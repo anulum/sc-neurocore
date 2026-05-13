@@ -36,7 +36,9 @@ from .scnir_convert import (
     export_scnir_from_nir,
 )
 from .scnir_compatibility import (
+    SCNIR_COMPATIBILITY_AUDIT_VERSION,
     SCNIRCompatibilityRow,
+    build_scnir_compatibility_audit,
     scnir_compatibility_matrix,
     scnir_compatibility_matrix_dicts,
     validate_scnir_compatibility_matrix,
@@ -57,6 +59,7 @@ from .scnir_handoff_audit import (
 __all__ = [
     "SCNIR_SCHEMA_VERSION",
     "SCNIR_PREVIOUS_SCHEMA_VERSION",
+    "SCNIR_COMPATIBILITY_AUDIT_VERSION",
     "SCNIRCorrelationConstraint",
     "SCNIRDocument",
     "SCNIRHierarchyInstance",
@@ -76,6 +79,7 @@ __all__ = [
     "SCNIRHDLHandoffAuditReport",
     "audit_scnir_hdl_handoff",
     "build_scnir_from_neuron_graph",
+    "build_scnir_compatibility_audit",
     "build_scnir_source_bundle",
     "export_scnir_from_nir",
     "load_scnir",

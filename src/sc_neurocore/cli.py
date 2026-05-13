@@ -666,6 +666,7 @@ def _cmd_scnir(args: Any) -> int:
     from sc_neurocore.ir import (
         SCNIRConversionConfig,
         SCNIRValidationError,
+        build_scnir_compatibility_audit,
         export_scnir_from_nir,
         load_scnir,
         scnir_compatibility_matrix_dicts,
@@ -675,14 +676,20 @@ def _cmd_scnir(args: Any) -> int:
 
     action = args.model
     path = args.scnir_path
-    if action not in {"validate", "upgrade", "export", "audit-hdl", "compatibility"} or (
-        action != "compatibility" and not path
-    ):
+    if action not in {
+        "validate",
+        "upgrade",
+        "export",
+        "audit-hdl",
+        "compatibility",
+        "closure-audit",
+    } or (action not in {"compatibility", "closure-audit"} and not path):
         print("Error: usage: sc-neurocore scnir validate model.scnir.json")
         print("       or: sc-neurocore scnir upgrade model.scnir.json --output upgraded.scnir.json")
         print("       or: sc-neurocore scnir export model.nir --output model.scnir.json")
         print("       or: sc-neurocore scnir audit-hdl build/ --output scnir_audit.json")
         print("       or: sc-neurocore scnir compatibility [repo-root]")
+        print("       or: sc-neurocore scnir closure-audit [repo-root] --output scnir_audit.json")
         return 1
 
     if action == "compatibility":
@@ -702,6 +709,29 @@ def _cmd_scnir(args: Any) -> int:
             f"; report written: {args.output}" if getattr(args, "output_supplied", False) else ""
         )
         print(f"SC-NIR compatibility matrix valid: {evidence_root}{suffix}")
+        return 0
+
+    if action == "closure-audit":
+        evidence_root = Path(path) if path else Path.cwd()
+        try:
+            report = build_scnir_compatibility_audit(evidence_root=evidence_root)
+            if getattr(args, "output_supplied", False):
+                Path(args.output).write_text(
+                    json.dumps(report, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+        except (OSError, ValueError, TypeError) as exc:
+            print(f"SC-NIR closure audit invalid: {exc}")
+            return 1
+
+        suffix = (
+            f"; report written: {args.output}" if getattr(args, "output_supplied", False) else ""
+        )
+        print(
+            "SC-NIR closure audit valid: "
+            f"{evidence_root} ({report['primitive_count']} primitive(s), "
+            f"{report['audit_evidence_file_count']} evidence file(s)){suffix}"
+        )
         return 0
 
     if action == "validate":

@@ -152,7 +152,10 @@ parser-only or only closed under a bounded shape/port contract.
 | nested `NIRGraph` | metadata and HDL for single-input/single-output subgraphs inlined into the parent graph; multi-port hierarchy fails closed | namespaced stream IDs from the inlined subgraph contents plus a top-level hierarchy instance whose ports reference those streams | namespaced inline fixed-point terms; standalone hierarchical submodule handoff remains open |
 
 Use `validate_scnir_compatibility_matrix()` in tests or release checks to fail
-when parser support changes without a corresponding compatibility row.
+when parser support changes without a corresponding compatibility row. Use
+`build_scnir_compatibility_audit()` for release evidence bundles that need the
+validated matrix, support-level counts, and the exact evidence file set in one
+versioned JSON object.
 
 ## Python API
 
@@ -161,6 +164,7 @@ from sc_neurocore.ir import (
     SCNIR_HDL_HANDOFF_MANIFEST_VERSION,
     SCNIR_PREVIOUS_SCHEMA_VERSION,
     SCNIR_SCHEMA_VERSION,
+    SCNIR_COMPATIBILITY_AUDIT_VERSION,
     SCNIRCompatibilityRow,
     SCNIRConversionConfig,
     SCNIRDocument,
@@ -170,6 +174,7 @@ from sc_neurocore.ir import (
     SCNIRSignalKind,
     SCNIRSource,
     SCNIRStream,
+    build_scnir_compatibility_audit,
     build_scnir_source_bundle,
     build_scnir_from_neuron_graph,
     export_scnir_from_nir,
@@ -218,8 +223,10 @@ from sc_neurocore.ir import (
       show_root_heading: true
       members:
         - SCNIRCompatibilityRow
+        - SCNIR_COMPATIBILITY_AUDIT_VERSION
         - scnir_compatibility_matrix
         - scnir_compatibility_matrix_dicts
+        - build_scnir_compatibility_audit
         - validate_scnir_compatibility_matrix
 
 ::: sc_neurocore.ir.scnir_hdl
