@@ -126,6 +126,16 @@ def audit_scnir_hdl_handoff(directory: str | Path) -> SCNIRHDLHandoffAuditReport
     )
     _expect_equal(manifest.get("scnir_signal_kinds"), signal_kinds, "scnir_signal_kinds")
     _expect_equal(manifest.get("scnir_signal_routes"), signal_routes, "scnir_signal_routes")
+    _expect_equal(
+        manifest.get("scnir_hierarchy_instance_count"),
+        len(hierarchy_instances),
+        "scnir_hierarchy_instance_count",
+    )
+    _expect_equal(
+        manifest.get("scnir_hierarchy_port_count"),
+        hierarchy_port_count,
+        "scnir_hierarchy_port_count",
+    )
 
     top_module = top_module_path.read_text(encoding="utf-8")
     _expect_top_localparam(top_module, "SCNIR_BITSTREAM_LENGTH", bitstream_length)
@@ -201,6 +211,8 @@ def _verify_manifest_header(manifest: Mapping[str, Any]) -> None:
         "scnir_stream_count",
         "scnir_signal_kinds",
         "scnir_signal_routes",
+        "scnir_hierarchy_instance_count",
+        "scnir_hierarchy_port_count",
         "sources",
     }
     actual_keys = set(manifest)
@@ -221,6 +233,8 @@ def _verify_manifest_header(manifest: Mapping[str, Any]) -> None:
     _expect_non_negative_int(manifest, "total_neurons")
     _expect_non_negative_int(manifest, "total_synapses")
     _expect_non_negative_int(manifest, "scnir_stream_count")
+    _expect_non_negative_int(manifest, "scnir_hierarchy_instance_count")
+    _expect_non_negative_int(manifest, "scnir_hierarchy_port_count")
 
 
 def _verify_source_rows(

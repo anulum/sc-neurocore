@@ -692,12 +692,15 @@ machine-checkable without parsing RTL comments. It also records
 records the route selected for each present stream role: analogue-state streams
 use direct fixed-point MAC terms, spike streams use either direct wiring or
 weighted AER event routing depending on the selected interconnect, and weight
-streams are materialised as stochastic source modules. The manifest rows record
-the stream identifier, emitted module name, source kind, seed, bitstream length,
-encoding, signal kind, explicit recurrent delay steps, precision, and LFSR/Sobol
-source metadata used to generate each module. Mixed analogue/spiking graphs use
-these row and aggregate fields to distinguish voltage-state population streams
-from spike population streams in downstream evidence manifests.
+streams are materialised as stochastic source modules. Nested-graph exports also
+record `scnir_hierarchy_instance_count` and `scnir_hierarchy_port_count`, so
+downstream tooling can detect preserved hierarchy boundaries from the manifest
+without reparsing the SC-NIR document. The manifest rows record the stream
+identifier, emitted module name, source kind, seed, bitstream length, encoding,
+signal kind, explicit recurrent delay steps, precision, and LFSR/Sobol source
+metadata used to generate each module. Mixed analogue/spiking graphs use these
+row and aggregate fields to distinguish voltage-state population streams from
+spike population streams in downstream evidence manifests.
 
 After generation, run `sc-neurocore scnir audit-hdl build/` to validate the
 handoff directory before passing artefacts to downstream simulation, synthesis,

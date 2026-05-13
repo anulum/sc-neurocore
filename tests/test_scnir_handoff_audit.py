@@ -124,6 +124,8 @@ def _write_valid_handoff(root: Path) -> None:
             "spike": "direct_wire",
             "weight": "stochastic_source_module",
         },
+        "scnir_hierarchy_instance_count": 1,
+        "scnir_hierarchy_port_count": 3,
         "sources": [
             {
                 "stream_id": "pop.li.state",

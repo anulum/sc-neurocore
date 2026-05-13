@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# © Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# © Code 2020-2026 Miroslav Sotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for sc_neurocore.cli
@@ -54,6 +54,35 @@ def _small_lif_nir_graph():
             "output": nir.Output(output_type={"output": np.array([2])}),
         },
         edges=[("input", "aff"), ("aff", "lif"), ("lif", "output")],
+    )
+
+
+def _nested_single_port_lif_nir_graph():
+    nir = pytest.importorskip("nir")
+    inner = nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "aff": nir.Affine(
+                weight=np.array([[0.25, -0.5], [0.75, 0.125]], dtype=np.float32),
+                bias=np.array([0.125, -0.25], dtype=np.float32),
+            ),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[("input", "aff"), ("aff", "output")],
+    )
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "subgraph": inner,
+            "lif": nir.LIF(
+                tau=np.full(2, 20.0),
+                r=np.ones(2),
+                v_leak=np.zeros(2),
+                v_threshold=np.ones(2),
+            ),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[("input", "subgraph"), ("subgraph", "lif"), ("lif", "output")],
     )
 
 
@@ -1843,6 +1872,65 @@ class TestCompileNirCommand:
         assert report["module_name"] == module_name
         assert report["stream_count"] == 2
         assert report["source_module_count"] == 2
+
+    def test_compile_nir_manifest_and_audit_report_generated_hierarchy(self, tmp_path):
+        nir = pytest.importorskip("nir")
+        model_path = tmp_path / "nested_hierarchy_fixture.nir"
+        nir.write(str(model_path), _nested_single_port_lif_nir_graph())
+        out_dir = tmp_path / "nested_hierarchy_compiled"
+
+        rc = _run_main(
+            "compile-nir",
+            str(model_path),
+            "--module-name",
+            "nested_hierarchy_net",
+            "--T",
+            "512",
+            "--source-kind",
+            "sobol",
+            "--base-seed",
+            "77",
+            "--audit-handoff",
+            "-o",
+            str(out_dir),
+        )
+
+        assert rc == 0
+        document = json.loads((out_dir / "scnir_document.json").read_text(encoding="utf-8"))
+        validate_scnir_dict(document)
+        assert document["hierarchy"] == [
+            {
+                "instance_id": "subgraph",
+                "module_name": "scnir_subgraph",
+                "ports": [
+                    {
+                        "port_name": "weight_0",
+                        "direction": "output",
+                        "stream_id": "conn.subgraph__input_to_lif.weight",
+                        "signal_kind": "weight",
+                        "bit_width": 16,
+                    }
+                ],
+            }
+        ]
+
+        manifest = json.loads((out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8"))
+        assert manifest["scnir_hierarchy_instance_count"] == 1
+        assert manifest["scnir_hierarchy_port_count"] == 1
+
+        report = json.loads((out_dir / "scnir_handoff_audit.json").read_text(encoding="utf-8"))
+        assert report["status"] == "valid"
+        assert report["hierarchy_instance_count"] == 1
+        assert report["hierarchy_port_count"] == 1
+        assert report["hierarchy_instances"]["subgraph"]["ports"] == [
+            {
+                "bit_width": 16,
+                "direction": "output",
+                "port_name": "weight_0",
+                "signal_kind": "weight",
+                "stream_id": "conn.subgraph__input_to_lif.weight",
+            }
+        ]
 
 
 # ---------------------------------------------------------------------------

@@ -364,6 +364,8 @@ def _cmd_compile_nir(args: Any) -> int:
                     result.scnir_document,
                     interconnect=result.interconnect,
                 ),
+                "scnir_hierarchy_instance_count": len(result.scnir_document.hierarchy),
+                "scnir_hierarchy_port_count": _scnir_hierarchy_port_count(result.scnir_document),
                 "sources": [entry.as_dict() for entry in result.scnir_source_manifest],
             },
             f,
@@ -414,6 +416,10 @@ def _scnir_signal_routes(document: Any, *, interconnect: str) -> dict[str, str]:
         "weight": "stochastic_source_module",
     }
     return {kind: routes[kind] for kind in routes if kind in present_kinds}
+
+
+def _scnir_hierarchy_port_count(document: Any) -> int:
+    return sum(len(instance.ports) for instance in document.hierarchy)
 
 
 def _cmd_compile(args: Any) -> int:
