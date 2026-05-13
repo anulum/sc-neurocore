@@ -20,6 +20,8 @@ import pytest
 from sc_neurocore.cli import main
 from sc_neurocore.ir import (
     SCNIRDocument,
+    SCNIRHierarchyInstance,
+    SCNIRHierarchyPort,
     SCNIRPrecision,
     SCNIRSource,
     SCNIRStream,
@@ -69,6 +71,35 @@ def _document() -> SCNIRDocument:
                 signal_kind="weight",
                 precision=precision,
                 source=SCNIRSource(kind="sobol", seed=93, sobol_dimension=3),
+            ),
+        ),
+        hierarchy=(
+            SCNIRHierarchyInstance(
+                instance_id="top.mixed",
+                module_name="mixed_audit_net_core",
+                ports=(
+                    SCNIRHierarchyPort(
+                        port_name="li_state_i",
+                        direction="input",
+                        stream_id="pop.li.state",
+                        signal_kind="analogue_state",
+                        bit_width=16,
+                    ),
+                    SCNIRHierarchyPort(
+                        port_name="lif_spike_o",
+                        direction="output",
+                        stream_id="pop.lif.spike",
+                        signal_kind="spike",
+                        bit_width=1,
+                    ),
+                    SCNIRHierarchyPort(
+                        port_name="weight_i",
+                        direction="input",
+                        stream_id="conn.li_to_lif.weight",
+                        signal_kind="weight",
+                        bit_width=16,
+                    ),
+                ),
             ),
         ),
     )
@@ -181,8 +212,39 @@ def test_audit_scnir_hdl_handoff_accepts_complete_compile_output(tmp_path: Path)
     assert report.module_name == "mixed_audit_net"
     assert report.stream_count == 3
     assert report.source_module_count == 3
+    assert report.hierarchy_instance_count == 1
+    assert report.hierarchy_port_count == 3
+    assert report.hierarchy_instances == {
+        "top.mixed": {
+            "module_name": "mixed_audit_net_core",
+            "ports": [
+                {
+                    "port_name": "li_state_i",
+                    "direction": "input",
+                    "stream_id": "pop.li.state",
+                    "signal_kind": "analogue_state",
+                    "bit_width": 16,
+                },
+                {
+                    "port_name": "lif_spike_o",
+                    "direction": "output",
+                    "stream_id": "pop.lif.spike",
+                    "signal_kind": "spike",
+                    "bit_width": 1,
+                },
+                {
+                    "port_name": "weight_i",
+                    "direction": "input",
+                    "stream_id": "conn.li_to_lif.weight",
+                    "signal_kind": "weight",
+                    "bit_width": 16,
+                },
+            ],
+        }
+    }
     assert report.signal_routes["analogue_state"] == "direct_mac"
     assert "scnir_document.json" in report.artefacts
+    assert report.as_dict()["hierarchy_port_count"] == 3
     assert report.as_dict()["status"] == "valid"
 
 
@@ -327,3 +389,5 @@ def test_audit_scnir_hdl_handoff_accepts_real_compile_nir_output(tmp_path: Path)
     assert report.module_name == "real_handoff_net"
     assert report.stream_count == 2
     assert report.source_module_count == 2
+    assert report.hierarchy_instance_count == 0
+    assert report.hierarchy_port_count == 0
