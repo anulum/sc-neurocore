@@ -46,6 +46,7 @@ except ImportError:
     def has_full_photonic_crosstalk_backend() -> bool:
         return False
 
+
 try:
     # py_ph_analyze_crosstalk is kept imported for backward-compatible
     # callers that access it via this module; analyze_bank / analyze_pairs

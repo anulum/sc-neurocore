@@ -254,7 +254,9 @@ class TestNativeBackendDispatch:
                 raise ImportError(name)
             return real_import_module(name)
 
-        monkeypatch.setattr(gamma_oscillation_module._importlib, "import_module", reject_rust_engine)
+        monkeypatch.setattr(
+            gamma_oscillation_module._importlib, "import_module", reject_rust_engine
+        )
         reloaded = importlib.reload(gamma_oscillation_module)
         try:
             assert reloaded._HAS_RUST_PING_STEP is False

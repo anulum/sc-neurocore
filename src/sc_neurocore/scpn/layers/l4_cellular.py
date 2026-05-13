@@ -226,7 +226,10 @@ class L4_CellularLayer:
         if (
             not isinstance(params.grid_size, tuple)
             or len(params.grid_size) != 2
-            or any(not isinstance(dim, int) or isinstance(dim, bool) or dim <= 0 for dim in params.grid_size)
+            or any(
+                not isinstance(dim, int) or isinstance(dim, bool) or dim <= 0
+                for dim in params.grid_size
+            )
         ):
             raise ValueError("grid_size must be a tuple of two positive integers")
         if (

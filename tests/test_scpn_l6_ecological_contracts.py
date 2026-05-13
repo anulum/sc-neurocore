@@ -54,7 +54,9 @@ def test_l6_symbolic_coupling_exports_l7_drive() -> None:
     result = layer.step(0.01, solar_activity=0.5, lunar_phase=0.0)
 
     assert result["symbolic_drive"].shape == (params.n_field_nodes,)
-    np.testing.assert_allclose(result["symbolic_drive"], params.symbolic_coupling * result["schumann_field"])
+    np.testing.assert_allclose(
+        result["symbolic_drive"], params.symbolic_coupling * result["schumann_field"]
+    )
 
 
 def test_l6_organismal_coupling_uses_validated_emotional_state() -> None:

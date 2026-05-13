@@ -56,7 +56,9 @@ def test_l3_ciss_and_cellular_drive_are_vectorized_and_wired() -> None:
 
     assert result["spin_polarization"].shape == (params.n_genes,)
     assert result["cellular_drive"].shape == (params.n_genes,)
-    np.testing.assert_allclose(result["cellular_drive"], params.cellular_coupling * result["protein_levels"])
+    np.testing.assert_allclose(
+        result["cellular_drive"], params.cellular_coupling * result["protein_levels"]
+    )
 
 
 def test_l3_neurochemical_and_bioelectric_inputs_are_validated_and_used() -> None:

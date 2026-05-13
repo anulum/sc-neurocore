@@ -266,9 +266,14 @@ class L6_EcologicalLayer:
         if (
             not isinstance(params.schumann_frequencies, tuple)
             or len(params.schumann_frequencies) == 0
-            or any(not math.isfinite(float(freq)) or float(freq) <= 0.0 for freq in params.schumann_frequencies)
+            or any(
+                not math.isfinite(float(freq)) or float(freq) <= 0.0
+                for freq in params.schumann_frequencies
+            )
         ):
-            raise ValueError("schumann_frequencies must be a non-empty tuple of positive finite values")
+            raise ValueError(
+                "schumann_frequencies must be a non-empty tuple of positive finite values"
+            )
         for field_name in (
             "schumann_amplitude",
             "schumann_noise",
@@ -305,11 +310,7 @@ class L6_EcologicalLayer:
     ) -> None:
         if not math.isfinite(float(dt)) or dt <= 0.0:
             raise ValueError("dt must be finite and positive")
-        if (
-            not math.isfinite(float(solar_activity))
-            or solar_activity < 0.0
-            or solar_activity > 1.0
-        ):
+        if not math.isfinite(float(solar_activity)) or solar_activity < 0.0 or solar_activity > 1.0:
             raise ValueError("solar_activity must be finite and within [0, 1]")
         if not math.isfinite(float(lunar_phase)):
             raise ValueError("lunar_phase must be finite")

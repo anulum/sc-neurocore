@@ -341,7 +341,9 @@ class L5_OrganismalLayer:
                 if not math.isfinite(float(value)):
                     raise ValueError("external_event dimension values must be finite")
                 continue
-            raise ValueError("external_event keys must be dimension indices, dimension names, or type/intensity")
+            raise ValueError(
+                "external_event keys must be dimension indices, dimension names, or type/intensity"
+            )
 
     def _apply_external_event(self, external_event: dict[str, Any]) -> None:
         event_type = str(external_event.get("type", ""))

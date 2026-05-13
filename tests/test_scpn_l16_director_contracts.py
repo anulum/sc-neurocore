@@ -97,7 +97,9 @@ def test_l16_rejects_invalid_parameters_and_inputs() -> None:
         with pytest.raises(ValueError):
             L16_DirectorLayer(L16_StochasticParameters(**kwargs))
 
-    layer = L16_DirectorLayer(L16_StochasticParameters(n_control_nodes=2, bitstream_length=8, rng_seed=1))
+    layer = L16_DirectorLayer(
+        L16_StochasticParameters(n_control_nodes=2, bitstream_length=8, rng_seed=1)
+    )
 
     invalid_steps = [
         (0.0, None),

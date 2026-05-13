@@ -27,12 +27,8 @@ def test_l12_morphic_coupling_parameter_controls_info_drive() -> None:
         dephasing_gamma=0.0,
         rng_seed=19,
     )
-    uncoupled = L12_QuantumInfoLayer(
-        L12_StochasticParameters(**common, morphic_coupling=0.0)
-    )
-    coupled = L12_QuantumInfoLayer(
-        L12_StochasticParameters(**common, morphic_coupling=0.25)
-    )
+    uncoupled = L12_QuantumInfoLayer(L12_StochasticParameters(**common, morphic_coupling=0.0))
+    coupled = L12_QuantumInfoLayer(L12_StochasticParameters(**common, morphic_coupling=0.25))
 
     np.testing.assert_allclose(uncoupled.coherence, coupled.coherence)
     base = uncoupled.step(0.5, {"info_saturation": 0.8})["coherence"]

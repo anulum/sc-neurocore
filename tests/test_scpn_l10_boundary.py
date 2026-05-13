@@ -25,12 +25,8 @@ def test_l10_memory_coupling_parameter_controls_l9_drive() -> None:
         steering_gain=0.2,
         rng_seed=10,
     )
-    uncoupled = L10_BoundaryLayer(
-        L10_StochasticParameters(**common, memory_coupling=0.0)
-    )
-    coupled = L10_BoundaryLayer(
-        L10_StochasticParameters(**common, memory_coupling=0.5)
-    )
+    uncoupled = L10_BoundaryLayer(L10_StochasticParameters(**common, memory_coupling=0.0))
+    coupled = L10_BoundaryLayer(L10_StochasticParameters(**common, memory_coupling=0.5))
 
     base = uncoupled.step(0.5, {"retrieval_quality": 0.8})["firewall_strength"]
     driven = coupled.step(0.5, {"retrieval_quality": 0.8})["firewall_strength"]
