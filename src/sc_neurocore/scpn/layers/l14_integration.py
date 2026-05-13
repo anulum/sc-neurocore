@@ -129,7 +129,7 @@ class L14_IntegrationLayer:
         )
 
         activation = np.full(self.params.n_dimensions, self.integrated_coherence)
-        activation = np.clip(activation, 0, 1).astype(np.float64, copy=False)
+        activation[...] = np.clip(activation, 0, 1).astype(np.float64, copy=False)
 
         rands = self._rng.random((self.params.n_dimensions, self.params.bitstream_length))
         output_bitstreams = (rands < activation[:, None]).astype(np.uint8)

@@ -87,7 +87,7 @@ class L13_TemporalLayer:
                 1.0,
             )
 
-        self.history = np.roll(self.history, -1, axis=1)
+        self.history[...] = np.roll(self.history, -1, axis=1)
         self.history[:, -1] = signal
 
         # Max-lag cross-correlation binding over the temporal window.

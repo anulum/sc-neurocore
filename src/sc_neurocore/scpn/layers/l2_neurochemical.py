@@ -146,7 +146,7 @@ class L2_NeurochemicalLayer:
         if l1_input is not None:
             quantum_mod = self._finite_mean(l1_input, "l1_input") * self.params.quantum_coupling
             self.receptor_states *= 1.0 + quantum_mod
-            self.receptor_states = np.clip(self.receptor_states, 0.0, 1.0).astype(
+            self.receptor_states[...] = np.clip(self.receptor_states, 0.0, 1.0).astype(
                 np.float32, copy=False
             )
 
