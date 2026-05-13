@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for causality
 
-pub fn _var_coefficients(trains_binned: f64, order: f64) -> f64 {
+pub fn _var_coefficients(_trains_binned: f64, _order: f64) -> f64 {
     // trains_binned: ndarray[Any, Any], order: int
     // ) -> tuple[ndarray[Any, Any], ndarray[Any, Any]] {
     // d, t = trains_binned.shape
@@ -23,7 +23,7 @@ pub fn _var_coefficients(trains_binned: f64, order: f64) -> f64 {
     0.0
 }
 
-pub fn pairwise_granger_causality(source: f64, target: f64, bin_size: f64, order: f64) -> f64 {
+pub fn pairwise_granger_causality(_source: f64, _target: f64, _bin_size: f64, _order: f64) -> f64 {
     // source: ndarray[Any, Any], target: ndarray[Any, Any], bin_size: int =
     // ) -> float {
     // cs = bin_spike_train(source, bin_size).astype(float64)
@@ -48,11 +48,11 @@ pub fn pairwise_granger_causality(source: f64, target: f64, bin_size: f64, order
 }
 
 pub fn conditional_granger_causality(
-    source: f64,
-    target: f64,
-    condition: f64,
-    bin_size: f64,
-    order: f64,
+    _source: f64,
+    _target: f64,
+    _condition: f64,
+    _bin_size: f64,
+    _order: f64,
 ) -> f64 {
     // source: ndarray[Any, Any],
     // target: ndarray[Any, Any],
@@ -77,7 +77,7 @@ pub fn conditional_granger_causality(
     0.0
 }
 
-pub fn spectral_granger_causality(trains: f64, bin_size: f64, order: f64, n_freqs: f64) -> f64 {
+pub fn spectral_granger_causality(_trains: f64, _bin_size: f64, _order: f64, _n_freqs: f64) -> f64 {
     // trains: list[ndarray[Any, Any]], bin_size: int = 10, order: int = 5, n
     // ) -> ndarray[Any, Any] {
     // binned = array([bin_spike_train(t, bin_size).astype(float64) for t in
@@ -101,7 +101,7 @@ pub fn spectral_granger_causality(trains: f64, bin_size: f64, order: f64, n_freq
     0.0
 }
 
-pub fn partial_directed_coherence(trains: f64, bin_size: f64, order: f64, n_freqs: f64) -> f64 {
+pub fn partial_directed_coherence(_trains: f64, _bin_size: f64, _order: f64, _n_freqs: f64) -> f64 {
     // trains: list[ndarray[Any, Any]], bin_size: int = 10, order: int = 5, n
     // ) -> ndarray[Any, Any] {
     // binned = array([bin_spike_train(t, bin_size).astype(float64) for t in
@@ -123,7 +123,7 @@ pub fn partial_directed_coherence(trains: f64, bin_size: f64, order: f64, n_freq
     0.0
 }
 
-pub fn directed_transfer_function(trains: f64, bin_size: f64, order: f64, n_freqs: f64) -> f64 {
+pub fn directed_transfer_function(_trains: f64, _bin_size: f64, _order: f64, _n_freqs: f64) -> f64 {
     // trains: list[ndarray[Any, Any]], bin_size: int = 10, order: int = 5, n
     // ) -> ndarray[Any, Any] {
     // binned = array([bin_spike_train(t, bin_size).astype(float64) for t in
@@ -147,7 +147,7 @@ pub fn directed_transfer_function(trains: f64, bin_size: f64, order: f64, n_freq
     0.0
 }
 
-pub fn _sse_alt(x: f64, yy: f64) -> f64 {
+pub fn _sse_alt(_x: f64, _yy: f64) -> f64 {
     // xtx = x.T @ x
     // reg = 1e-8 * eye(xtx.shape[0])
     // beta = linalg.solve(xtx + reg, x.T @ yy)
@@ -156,7 +156,7 @@ pub fn _sse_alt(x: f64, yy: f64) -> f64 {
     0.0
 }
 
-pub fn _sse(x: f64, yy: f64) -> f64 {
+pub fn _sse(_x: f64, _yy: f64) -> f64 {
     // reg = 1e-8 * eye(x.shape[1])
     // beta = linalg.solve(x.T @ x + reg, x.T @ yy)
     // return float(sum((yy - x @ beta) .powi 2))

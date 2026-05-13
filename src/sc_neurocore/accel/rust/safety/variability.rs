@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for variability
 
-pub fn cv_isi(binary_train: f64, dt: f64) -> f64 {
+pub fn cv_isi(_binary_train: f64, _dt: f64) -> f64 {
     // intervals = isi(binary_train, dt)
     // if intervals.size < 2 {
     // return float("nan")
@@ -17,7 +17,7 @@ pub fn cv_isi(binary_train: f64, dt: f64) -> f64 {
     0.0
 }
 
-pub fn cv2(binary_train: f64, dt: f64) -> f64 {
+pub fn cv2(_binary_train: f64, _dt: f64) -> f64 {
     // intervals = isi(binary_train, dt)
     // if intervals.size < 2 {
     // return float("nan")
@@ -30,7 +30,7 @@ pub fn cv2(binary_train: f64, dt: f64) -> f64 {
     0.0
 }
 
-pub fn local_variation(binary_train: f64, dt: f64) -> f64 {
+pub fn local_variation(_binary_train: f64, _dt: f64) -> f64 {
     // intervals = isi(binary_train, dt)
     // n = intervals.size
     // if n < 2 {
@@ -44,7 +44,7 @@ pub fn local_variation(binary_train: f64, dt: f64) -> f64 {
     0.0
 }
 
-pub fn lvr(binary_train: f64, dt: f64, refractoriness_ms: f64) -> f64 {
+pub fn lvr(_binary_train: f64, _dt: f64, _refractoriness_ms: f64) -> f64 {
     // binary_train: ndarray[Any, Any], dt: float = 0.001, refractoriness_ms:
     // ) -> float {
     // intervals = isi(binary_train, dt)
@@ -67,7 +67,7 @@ pub fn lvr(binary_train: f64, dt: f64, refractoriness_ms: f64) -> f64 {
     0.0
 }
 
-pub fn fano_factor(binary_train: f64, window_ms: f64, dt: f64) -> f64 {
+pub fn fano_factor(_binary_train: f64, _window_ms: f64, _dt: f64) -> f64 {
     // binary_train: ndarray[Any, Any], window_ms: float = 50.0, dt: float =
     // ) -> float {
     // window_steps = max(1, int(window_ms / (dt * 1000)))
@@ -83,7 +83,7 @@ pub fn fano_factor(binary_train: f64, window_ms: f64, dt: f64) -> f64 {
     0.0
 }
 
-pub fn isi_entropy(binary_train: f64, dt: f64, bins: f64) -> f64 {
+pub fn isi_entropy(_binary_train: f64, _dt: f64, _bins: f64) -> f64 {
     // intervals = isi(binary_train, dt)
     // if intervals.size < 2 {
     // return float("nan")
@@ -98,7 +98,7 @@ pub fn isi_entropy(binary_train: f64, dt: f64, bins: f64) -> f64 {
     0.0
 }
 
-pub fn lempel_ziv_complexity(binary_train: f64) -> f64 {
+pub fn lempel_ziv_complexity(_binary_train: f64) -> f64 {
     // n = binary_train.size
     // if n == 0 {
     // return 0.0
@@ -122,7 +122,7 @@ pub fn lempel_ziv_complexity(binary_train: f64) -> f64 {
     0.0
 }
 
-pub fn approximate_entropy(binary_train: f64, m: f64, r_factor: f64) -> f64 {
+pub fn approximate_entropy(_binary_train: f64, _m: f64, _r_factor: f64) -> f64 {
     // binary_train: ndarray[Any, Any], m: int = 2, r_factor: float = 0.2
     // ) -> float {
     // x = binary_train.astype(float64)
@@ -146,7 +146,7 @@ pub fn approximate_entropy(binary_train: f64, m: f64, r_factor: f64) -> f64 {
     0.0
 }
 
-pub fn sample_entropy(binary_train: f64, m: f64, r_factor: f64) -> f64 {
+pub fn sample_entropy(_binary_train: f64, _m: f64, _r_factor: f64) -> f64 {
     // x = binary_train.astype(float64)
     // n = x.size
     // if n < m + 2 {
@@ -170,7 +170,7 @@ pub fn sample_entropy(binary_train: f64, m: f64, r_factor: f64) -> f64 {
     0.0
 }
 
-pub fn permutation_entropy(binary_train: f64, order: f64, delay: f64) -> f64 {
+pub fn permutation_entropy(_binary_train: f64, _order: f64, _delay: f64) -> f64 {
     // binary_train: ndarray[Any, Any], order: int = 3, delay: int = 1
     // ) -> float {
     // x = binary_train.astype(float64)
@@ -194,7 +194,7 @@ pub fn permutation_entropy(binary_train: f64, order: f64, delay: f64) -> f64 {
     0.0
 }
 
-pub fn hurst_exponent(binary_train: f64, min_window: f64) -> f64 {
+pub fn hurst_exponent(_binary_train: f64, _min_window: f64) -> f64 {
     // x = binary_train.astype(float64)
     // n = x.size
     // if n < 4 * min_window {
@@ -218,7 +218,7 @@ pub fn hurst_exponent(binary_train: f64, min_window: f64) -> f64 {
     0.0
 }
 
-pub fn allan_factor(binary_train: f64, dt: f64, n_scales: f64) -> f64 {
+pub fn allan_factor(_binary_train: f64, _dt: f64, _n_scales: f64) -> f64 {
     // binary_train: ndarray[Any, Any], dt: float = 0.001, n_scales: int = 10
     // ) -> tuple[ndarray[Any, Any], ndarray[Any, Any]] {
     // n = binary_train.size
@@ -242,7 +242,7 @@ pub fn allan_factor(binary_train: f64, dt: f64, n_scales: f64) -> f64 {
     0.0
 }
 
-pub fn rescaled_range(binary_train: f64, min_window: f64) -> f64 {
+pub fn rescaled_range(_binary_train: f64, _min_window: f64) -> f64 {
     // x = binary_train.astype(float64)
     // n = x.size
     // if n < 4 * min_window {
@@ -266,7 +266,7 @@ pub fn rescaled_range(binary_train: f64, min_window: f64) -> f64 {
     0.0
 }
 
-pub fn complexity_pdf(binary_train: f64, dt: f64, bins: f64) -> f64 {
+pub fn complexity_pdf(_binary_train: f64, _dt: f64, _bins: f64) -> f64 {
     // binary_train: ndarray[Any, Any], dt: float = 0.001, bins: int = 20
     // ) -> ndarray[Any, Any] {
     // intervals = isi(binary_train, dt)
@@ -279,7 +279,7 @@ pub fn complexity_pdf(binary_train: f64, dt: f64, bins: f64) -> f64 {
     0.0
 }
 
-pub fn optimal_bin_width(binary_train: f64, dt: f64) -> f64 {
+pub fn optimal_bin_width(_binary_train: f64, _dt: f64) -> f64 {
     // times = spike_times(binary_train, dt)
     // n = times.size
     // if n < 2 {
@@ -303,7 +303,7 @@ pub fn optimal_bin_width(binary_train: f64, dt: f64) -> f64 {
     0.0
 }
 
-pub fn optimal_kernel_bandwidth(binary_train: f64, dt: f64) -> f64 {
+pub fn optimal_kernel_bandwidth(_binary_train: f64, _dt: f64) -> f64 {
     // intervals = isi(binary_train, dt)
     // n = intervals.size
     // if n < 2 {
@@ -318,7 +318,7 @@ pub fn optimal_kernel_bandwidth(binary_train: f64, dt: f64) -> f64 {
     0.0
 }
 
-pub fn _phi(dim: f64) -> f64 {
+pub fn _phi(_dim: f64) -> f64 {
     // if n - dim + 1 < 1 {
     // return 0.0
     // templates = array([x[i : i + dim] for i in range(n - dim + 1)])
@@ -331,7 +331,7 @@ pub fn _phi(dim: f64) -> f64 {
     0.0
 }
 
-pub fn _count_matches(dim: f64) -> f64 {
+pub fn _count_matches(_dim: f64) -> f64 {
     // templates = array([x[i : i + dim] for i in range(n - dim)])
     // total = 0
     // for i in range(len(templates)) {
