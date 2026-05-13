@@ -65,9 +65,9 @@ def test_scnir_compatibility_matrix_does_not_overclaim_parser_only_rows() -> Non
     assert "dense Toeplitz" in conv1d.hdl_support
 
     conv2d = rows["Conv2d"]
-    assert conv2d.support_level == "parser_only"
-    assert conv2d.scnir_stream_metadata == ()
-    assert conv2d.hdl_support != ""
+    assert conv2d.support_level == "metadata_and_hdl"
+    assert "convolution_lowered_weight" in conv2d.scnir_stream_metadata
+    assert "dense 2D convolution" in conv2d.hdl_support
 
     for primitive in ("SumPool2d", "AvgPool2d"):
         row = rows[primitive]

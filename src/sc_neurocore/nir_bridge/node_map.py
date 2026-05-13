@@ -761,6 +761,7 @@ class SCConv2dNode:
     dilation: tuple[int, int]
     groups: int
     input_shape: tuple[int, int] | None = None
+    output_shape: tuple[int, int, int] | None = None
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Conv2d) -> SCConv2dNode:
@@ -782,6 +783,7 @@ class SCConv2dNode:
             dilation=dilation,
             groups=node.groups,
             input_shape=getattr(node, "input_shape", None),
+            output_shape=_shape_tuple_from_type(getattr(node, "output_type", None), "output"),
         )
 
     def forward(self, x: np.ndarray) -> np.ndarray:
