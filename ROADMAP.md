@@ -237,6 +237,19 @@ dependabot PRs merged.
 
 ## v4.0 — Physical FPGA Demos + Production (target: Q3 2026)
 
+### Repository split and stable API freeze
+
+- Freeze the stable public API for the promoted runtime, compiler, hardware,
+  and bridge surfaces.
+- Split the current broad source tree into several focused repositories after
+  the ongoing experimental verification campaigns identify which modules are
+  production paths, retained research paths, or retired exploratory paths.
+- Keep the v3.x repository intentionally broad until that evidence is complete;
+  the current kitchen-sink shape is transitional, not the intended long-term
+  project layout.
+- Publish migration notes mapping v3.x modules to the v4.0 repository layout
+  before the split is completed.
+
 ### FPGA deployment proof ~~(P0 blocker)~~ PARTIALLY DONE
 
 - ~~Deploy on Zynq 7020~~ ✓ (SHD bitstream generated, 2.5% LUT)
