@@ -631,7 +631,10 @@ complete Verilog systems under reset, enable, external-input, and spike-bus
 traffic across the current interconnect families. The direct/Sobol fixture also
 has a cycle-level Q8.8 equivalence check against an independent integer
 reference for fixed-point MAC accumulation, signed saturation, LIF membrane
-updates, and spike/reset behaviour.
+updates, and spike/reset behaviour. The recurrent/LFSR fixture extends that
+cycle-level equivalence to one-step delayed feedback by checking pre-edge
+currents, post-edge delayed spike registers, LIF updates, and recurrent current
+contributions against the same integer reference style.
 
 ---
 
