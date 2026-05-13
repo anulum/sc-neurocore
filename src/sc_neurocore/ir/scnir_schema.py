@@ -10,24 +10,31 @@
 
 The SC-NIR layer records stochastic-computing semantics that plain NIR does
 not carry: stream length, encoding, fixed-point precision, random-source
-metadata, and correlation constraints.  Validation is intentionally fail-closed
-so unrecognised or under-specified metadata cannot silently reach hardware
-generation.
+metadata, deterministic stream transforms, and correlation constraints.
+Validation is intentionally fail-closed so unrecognised or under-specified
+metadata cannot silently reach hardware generation.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 import json
+import math
 from pathlib import Path
 import re
 from typing import Any, Literal, Mapping, Sequence, cast
 
-SCNIR_SCHEMA_VERSION = "sc-neurocore.scnir.v0.3"
-SCNIR_PREVIOUS_SCHEMA_VERSION = "sc-neurocore.scnir.v0.2"
+SCNIR_SCHEMA_VERSION = "sc-neurocore.scnir.v0.4"
+SCNIR_PREVIOUS_SCHEMA_VERSION = "sc-neurocore.scnir.v0.3"
+SCNIR_V02_SCHEMA_VERSION = "sc-neurocore.scnir.v0.2"
 SCNIR_LEGACY_SCHEMA_VERSION = "sc-neurocore.scnir.v0.1"
 SCNIR_SUPPORTED_SCHEMA_VERSIONS = frozenset(
-    {SCNIR_LEGACY_SCHEMA_VERSION, SCNIR_PREVIOUS_SCHEMA_VERSION, SCNIR_SCHEMA_VERSION}
+    {
+        SCNIR_LEGACY_SCHEMA_VERSION,
+        SCNIR_V02_SCHEMA_VERSION,
+        SCNIR_PREVIOUS_SCHEMA_VERSION,
+        SCNIR_SCHEMA_VERSION,
+    }
 )
 
 SCNIREncoding = Literal[
@@ -42,6 +49,9 @@ SCNIRRounding = Literal["nearest_even", "towards_zero", "stochastic", "floor", "
 SCNIROverflow = Literal["saturate", "wrap", "error"]
 SCNIRSourceKind = Literal["lfsr", "sobol", "halton", "replay", "hardware"]
 SCNIRSignalKind = Literal["spike", "analogue_state", "weight"]
+SCNIRTransformKind = Literal["threshold"]
+SCNIRTransformPosition = Literal["source", "destination"]
+SCNIRComparison = Literal["greater_than"]
 SCNIRCorrelationPolicy = Literal[
     "independent",
     "must_share_source",
@@ -64,6 +74,9 @@ _ROUNDING_MODES = frozenset({"nearest_even", "towards_zero", "stochastic", "floo
 _OVERFLOW_MODES = frozenset({"saturate", "wrap", "error"})
 _SOURCE_KINDS = frozenset({"lfsr", "sobol", "halton", "replay", "hardware"})
 _SIGNAL_KINDS = frozenset({"spike", "analogue_state", "weight"})
+_TRANSFORM_KINDS = frozenset({"threshold"})
+_TRANSFORM_POSITIONS = frozenset({"source", "destination"})
+_COMPARISONS = frozenset({"greater_than"})
 _CORRELATION_POLICIES = frozenset(
     {
         "independent",
@@ -118,6 +131,16 @@ class SCNIRCorrelationConstraint:
 
 
 @dataclass(frozen=True, slots=True)
+class SCNIRStreamTransform:
+    """Deterministic transform applied before a logical stochastic stream."""
+
+    kind: SCNIRTransformKind
+    position: SCNIRTransformPosition
+    comparison: SCNIRComparison
+    values: Sequence[float]
+
+
+@dataclass(frozen=True, slots=True)
 class SCNIRStream:
     """SC metadata for one logical stochastic bitstream."""
 
@@ -129,6 +152,7 @@ class SCNIRStream:
     source: SCNIRSource
     signal_kind: SCNIRSignalKind = "spike"
     delay_steps: int = 0
+    transforms: Sequence[SCNIRStreamTransform] = field(default_factory=tuple)
     correlation_constraints: Sequence[SCNIRCorrelationConstraint] = field(default_factory=tuple)
 
 
@@ -231,15 +255,20 @@ def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
 
     Version ``v0.1`` did not encode recurrent connection delay, and versions
     before ``v0.3`` did not distinguish spiking, analogue-state, and weight
-    streams.  Legacy upgrades insert the missing fields before validating
-    through the typed schema.  Current documents are canonicalised through the
-    same deterministic writer.
+    streams.  Version ``v0.4`` adds explicit stream transform metadata for
+    threshold comparators.  Legacy upgrades insert the missing fields before
+    validating through the typed schema.  Current documents are canonicalised
+    through the same deterministic writer.
     """
 
     version = payload.get("schema_version")
     if not isinstance(version, str) or version not in SCNIR_SUPPORTED_SCHEMA_VERSIONS:
         raise SCNIRValidationError(f"unsupported SC-NIR schema_version {version!r}")
-    if version in {SCNIR_LEGACY_SCHEMA_VERSION, SCNIR_PREVIOUS_SCHEMA_VERSION}:
+    if version in {
+        SCNIR_LEGACY_SCHEMA_VERSION,
+        SCNIR_V02_SCHEMA_VERSION,
+        SCNIR_PREVIOUS_SCHEMA_VERSION,
+    }:
         upgraded: dict[str, Any] = dict(payload)
         upgraded["schema_version"] = SCNIR_SCHEMA_VERSION
         streams = _expect_sequence(upgraded.get("streams"), "streams")
@@ -252,6 +281,8 @@ def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
                 stream_payload["signal_kind"] = _infer_legacy_signal_kind(
                     str(stream_payload.get("stream_id", ""))
                 )
+            if "transforms" not in stream_payload:
+                stream_payload["transforms"] = []
             upgraded_streams.append(stream_payload)
         upgraded["streams"] = upgraded_streams
         return scnir_to_dict(scnir_from_dict(upgraded))
@@ -270,6 +301,7 @@ def _validate_stream(stream: Mapping[str, Any], path: str) -> None:
             "precision",
             "source",
             "delay_steps",
+            "transforms",
             "correlation_constraints",
         },
         path,
@@ -282,6 +314,9 @@ def _validate_stream(stream: Mapping[str, Any], path: str) -> None:
     _validate_precision(_expect_mapping(stream["precision"], f"{path}.precision"), path)
     _validate_source(_expect_mapping(stream["source"], f"{path}.source"), path)
     _expect_non_negative_int(stream["delay_steps"], f"{path}.delay_steps")
+    transforms = _expect_sequence(stream["transforms"], f"{path}.transforms")
+    for index, item in enumerate(transforms):
+        _validate_transform(_expect_mapping(item, f"{path}.transforms[{index}]"), path)
     constraints = _expect_sequence(
         stream["correlation_constraints"], f"{path}.correlation_constraints"
     )
@@ -290,6 +325,22 @@ def _validate_stream(stream: Mapping[str, Any], path: str) -> None:
             _expect_mapping(item, f"{path}.correlation_constraints[{index}]"),
             f"{path}.correlation_constraints[{index}]",
         )
+
+
+def _validate_transform(transform: Mapping[str, Any], parent_path: str) -> None:
+    path = f"{parent_path}.transforms"
+    _expect_keys(transform, {"kind", "position", "comparison", "values"}, path)
+    _expect_enum(transform["kind"], _TRANSFORM_KINDS, f"{path}.kind")
+    _expect_enum(transform["position"], _TRANSFORM_POSITIONS, f"{path}.position")
+    _expect_enum(transform["comparison"], _COMPARISONS, f"{path}.comparison")
+    values = _expect_sequence(transform["values"], f"{path}.values")
+    if not values:
+        raise SCNIRValidationError(f"{path}.values must contain at least one threshold")
+    for index, value in enumerate(values):
+        if not isinstance(value, int | float) or isinstance(value, bool):
+            raise SCNIRValidationError(f"{path}.values[{index}] must be numeric")
+        if not math.isfinite(float(value)):
+            raise SCNIRValidationError(f"{path}.values[{index}] must be finite")
 
 
 def _validate_precision(precision: Mapping[str, Any], parent_path: str) -> None:
@@ -383,6 +434,7 @@ def _validate_correlation(constraint: Mapping[str, Any], path: str) -> None:
 def _stream_from_dict(stream: Mapping[str, Any]) -> SCNIRStream:
     precision = _expect_mapping(stream["precision"], "precision")
     source = _expect_mapping(stream["source"], "source")
+    transforms = _expect_sequence(stream["transforms"], "transforms")
     constraints = _expect_sequence(stream["correlation_constraints"], "correlation_constraints")
     return SCNIRStream(
         stream_id=cast(str, stream["stream_id"]),
@@ -409,10 +461,23 @@ def _stream_from_dict(stream: Mapping[str, Any]) -> SCNIRStream:
             hardware_id=cast(str | None, source["hardware_id"]),
         ),
         delay_steps=cast(int, stream["delay_steps"]),
+        transforms=tuple(
+            _transform_from_dict(_expect_mapping(item, "transform")) for item in transforms
+        ),
         correlation_constraints=tuple(
             _correlation_from_dict(_expect_mapping(item, "correlation_constraint"))
             for item in constraints
         ),
+    )
+
+
+def _transform_from_dict(transform: Mapping[str, Any]) -> SCNIRStreamTransform:
+    values = _expect_sequence(transform["values"], "transform.values")
+    return SCNIRStreamTransform(
+        kind=cast(SCNIRTransformKind, transform["kind"]),
+        position=cast(SCNIRTransformPosition, transform["position"]),
+        comparison=cast(SCNIRComparison, transform["comparison"]),
+        values=tuple(float(value) for value in values),
     )
 
 
@@ -451,6 +516,15 @@ def _stream_to_dict(stream: SCNIRStream) -> dict[str, Any]:
             "replay_uri": stream.source.replay_uri,
             "hardware_id": stream.source.hardware_id,
         },
+        "transforms": [
+            {
+                "kind": transform.kind,
+                "position": transform.position,
+                "comparison": transform.comparison,
+                "values": [float(value) for value in transform.values],
+            }
+            for transform in stream.transforms
+        ],
         "correlation_constraints": [
             {
                 "peer_stream_id": constraint.peer_stream_id,

@@ -15,6 +15,8 @@ from pathlib import Path
 import re
 from typing import Any, Literal
 
+import numpy as np
+
 from .scnir_schema import (
     SCNIRCorrelationConstraint,
     SCNIRDocument,
@@ -25,6 +27,7 @@ from .scnir_schema import (
     SCNIRSource,
     SCNIRSourceKind,
     SCNIRStream,
+    SCNIRStreamTransform,
     SCNIRSignalKind,
     write_scnir,
 )
@@ -124,6 +127,7 @@ def build_scnir_from_neuron_graph(
                 source=_source(config, stream_index),
                 signal_kind="weight",
                 delay_steps=int(getattr(conn, "delay_steps", 0)),
+                transforms=_connection_transforms(conn),
                 correlation_constraints=(
                     SCNIRCorrelationConstraint(
                         peer_stream_id=dst_stream_id,
@@ -136,6 +140,35 @@ def build_scnir_from_neuron_graph(
         )
 
     return SCNIRDocument(producer=config.producer, streams=tuple(streams))
+
+
+def _connection_transforms(conn: Any) -> tuple[SCNIRStreamTransform, ...]:
+    """Return explicit SC-NIR transform metadata for a weighted connection."""
+
+    transforms: list[SCNIRStreamTransform] = []
+    source_threshold = getattr(conn, "source_threshold", None)
+    if source_threshold is not None:
+        source_values = np.asarray(source_threshold, dtype=np.float64).reshape(-1)
+        transforms.append(
+            SCNIRStreamTransform(
+                kind="threshold",
+                position="source",
+                comparison="greater_than",
+                values=tuple(float(value) for value in source_values),
+            )
+        )
+    destination_threshold = getattr(conn, "destination_threshold", None)
+    if destination_threshold is not None:
+        destination_values = np.asarray(destination_threshold, dtype=np.float64).reshape(-1)
+        transforms.append(
+            SCNIRStreamTransform(
+                kind="threshold",
+                position="destination",
+                comparison="greater_than",
+                values=tuple(float(value) for value in destination_values),
+            )
+        )
+    return tuple(transforms)
 
 
 def export_scnir_from_nir(

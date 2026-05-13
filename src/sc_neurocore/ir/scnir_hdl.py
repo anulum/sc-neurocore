@@ -38,11 +38,12 @@ class SCNIRHDLSourceManifestEntry:
     delay_steps: int
     total_bits: int
     fractional_bits: int
+    transforms: tuple[dict[str, object], ...] = ()
     lfsr_polynomial: str | None = None
     tap_mask: int | None = None
     sobol_dimension: int | None = None
 
-    def as_dict(self) -> dict[str, int | str | None]:
+    def as_dict(self) -> dict[str, object]:
         """Return a deterministic JSON-ready representation."""
 
         return {
@@ -57,6 +58,7 @@ class SCNIRHDLSourceManifestEntry:
             "delay_steps": self.delay_steps,
             "total_bits": self.total_bits,
             "fractional_bits": self.fractional_bits,
+            "transforms": [dict(transform) for transform in self.transforms],
             "lfsr_polynomial": self.lfsr_polynomial,
             "tap_mask": self.tap_mask,
             "sobol_dimension": self.sobol_dimension,
@@ -70,7 +72,7 @@ class SCNIRHDLSourceBundle:
     modules: dict[str, str]
     manifest: tuple[SCNIRHDLSourceManifestEntry, ...]
 
-    def manifest_dicts(self) -> tuple[dict[str, int | str | None], ...]:
+    def manifest_dicts(self) -> tuple[dict[str, object], ...]:
         """Return deterministic JSON-ready manifest rows."""
 
         return tuple(entry.as_dict() for entry in self.manifest)
@@ -158,6 +160,15 @@ def _manifest_entry(
         delay_steps=stream.delay_steps,
         total_bits=stream.precision.total_bits,
         fractional_bits=stream.precision.fractional_bits,
+        transforms=tuple(
+            {
+                "kind": transform.kind,
+                "position": transform.position,
+                "comparison": transform.comparison,
+                "values": [float(value) for value in transform.values],
+            }
+            for transform in stream.transforms
+        ),
         lfsr_polynomial=lfsr_polynomial,
         tap_mask=tap_mask,
         sobol_dimension=sobol_dimension,

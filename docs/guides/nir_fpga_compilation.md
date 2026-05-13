@@ -170,6 +170,42 @@ neurons.  The new pipeline extends this to entire networks by:
   integrator population streams are `analogue_state`, while thresholding
   populations remain `spike` streams and connections remain `weight` streams
 
+### 2.4 Compatibility Boundary
+
+SC-NeuroCore intentionally separates NIR parser support from SC-NIR/FPGA
+handoff support. The executable matrix in
+`sc_neurocore.ir.scnir_compatibility` is the release gate for this boundary.
+It is checked against the parser's `NODE_MAP`, so adding parser support for a
+new NIR primitive must also add a compatibility row.
+
+Closed SC-NIR/HDL handoff currently covers `LIF`, `IF`, `LI`, `I`, `CubaLIF`,
+`CubaLI`, `Affine`, and `Linear` through population streams, weight streams,
+LFSR-16/Sobol-16 source metadata, fixed-point precision metadata, and
+direct/AER compile evidence. `I` lowers to a canonical pure-integrator
+state-update module for `dv/dt = I * r` and routes its state as an
+`analogue_state` stream. Adjacent `Scale` nodes on either side of `Affine` or
+`Linear` are folded into the connection weights: source-side scale multiplies
+connection columns, and post-weight scale multiplies connection rows and bias
+terms. Shape-known `Flatten` nodes adjacent to `Affine` or `Linear` are folded
+as structural indexing only when their input and output element counts exactly
+match the adjacent weight and destination widths. Unknown shapes or incompatible
+flattened widths fail closed before SC-NIR/HDL lowering. Homogeneous
+source-side or post-weight `Threshold` nodes adjacent to `Affine` or `Linear`
+are represented as explicit SC-NIR threshold transforms and emitted as
+fixed-point comparators. Source-side thresholds turn analogue/external source
+values into weighted event contributions; post-weight thresholds compare the
+connection accumulator before adding a unit fixed-point destination current.
+Threshold vectors must be scalar or exact-width, and multiple thresholds on one
+side of a connection fail closed until pre-lowered. Homogeneous
+source-side `Delay` nodes feeding `Affine` or `Linear`
+population connections are preserved as `delay_steps` on the downstream weight
+stream and emitted as direct interconnect register chains for both spike and
+analogue-state sources. Heterogeneous per-channel delay vectors fail closed
+until they are split into separate hardware streams. `Input` and `Output` are
+boundary nodes. Pooling, convolution, and nested
+`NIRGraph` nodes remain parser-only until their NeuronGraph and HDL semantics
+are explicitly lowered and audited.
+
 ---
 
 ## 3. Pipeline Position
@@ -266,8 +302,16 @@ neurons.  The new pipeline extends this to entire networks by:
 
 ### 4.3 Pass-Through Nodes
 
-Input, Output, Scale, Flatten, Threshold, and Delay nodes are folded
-into the graph metadata — they do not generate Verilog modules.
+Input and Output nodes are graph boundaries. Adjacent Scale nodes are folded
+into connection weights and bias terms when they sit immediately before or
+after Affine/Linear. Homogeneous source-side Delay nodes are preserved as
+connection `delay_steps`. Shape-known Flatten nodes are structural pass-through
+nodes for this pipeline when their flattened element count exactly matches the
+adjacent weight input/output width and the destination population width.
+Adjacent Threshold nodes are explicit comparators: source-side thresholds gate
+source values before weight contribution, and post-weight thresholds compare
+the connection accumulator before forwarding a unit current. Non-adjacent or
+ambiguous Threshold placement still requires explicit pre-lowering.
 
 ### 4.4 Quantisation Features
 

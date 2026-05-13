@@ -20,11 +20,13 @@ from sc_neurocore.cli import main
 from sc_neurocore.ir.scnir_schema import (
     SCNIR_PREVIOUS_SCHEMA_VERSION,
     SCNIR_SCHEMA_VERSION,
+    SCNIR_V02_SCHEMA_VERSION,
     SCNIRCorrelationConstraint,
     SCNIRDocument,
     SCNIRPrecision,
     SCNIRSource,
     SCNIRStream,
+    SCNIRStreamTransform,
     SCNIRValidationError,
     load_scnir,
     scnir_from_dict,
@@ -112,9 +114,10 @@ def test_scnir_upgrade_canonicalises_supported_current_payload() -> None:
 
 def test_scnir_upgrade_migrates_v02_documents_with_signal_kind() -> None:
     payload = scnir_to_dict(_valid_document())
-    payload["schema_version"] = SCNIR_PREVIOUS_SCHEMA_VERSION
+    payload["schema_version"] = SCNIR_V02_SCHEMA_VERSION
     for stream in payload["streams"]:
         stream.pop("signal_kind")
+        stream.pop("transforms")
 
     upgraded = upgrade_scnir_dict(payload)
 
@@ -122,6 +125,20 @@ def test_scnir_upgrade_migrates_v02_documents_with_signal_kind() -> None:
     streams = {stream["stream_id"]: stream for stream in upgraded["streams"]}
     assert streams["layer0_input"]["signal_kind"] == "spike"
     assert streams["layer0_weight"]["signal_kind"] == "weight"
+    assert {tuple(stream["transforms"]) for stream in upgraded["streams"]} == {()}
+    validate_scnir_dict(upgraded)
+
+
+def test_scnir_upgrade_migrates_v03_documents_with_transform_metadata() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["schema_version"] = SCNIR_PREVIOUS_SCHEMA_VERSION
+    for stream in payload["streams"]:
+        stream.pop("transforms")
+
+    upgraded = upgrade_scnir_dict(payload)
+
+    assert upgraded["schema_version"] == SCNIR_SCHEMA_VERSION
+    assert {tuple(stream["transforms"]) for stream in upgraded["streams"]} == {()}
     validate_scnir_dict(upgraded)
 
 
@@ -131,12 +148,14 @@ def test_scnir_upgrade_migrates_v01_documents_with_zero_delay_and_signal_kind() 
     for stream in payload["streams"]:
         stream.pop("delay_steps")
         stream.pop("signal_kind")
+        stream.pop("transforms")
 
     upgraded = upgrade_scnir_dict(payload)
 
     assert upgraded["schema_version"] == SCNIR_SCHEMA_VERSION
     assert {stream["delay_steps"] for stream in upgraded["streams"]} == {0}
     assert {stream["signal_kind"] for stream in upgraded["streams"]} == {"spike", "weight"}
+    assert {tuple(stream["transforms"]) for stream in upgraded["streams"]} == {()}
     validate_scnir_dict(upgraded)
 
 
@@ -173,6 +192,70 @@ def test_scnir_rejects_unknown_fields_fail_closed() -> None:
         validate_scnir_dict(payload)
 
 
+def test_scnir_records_threshold_stream_transform_metadata() -> None:
+    doc = SCNIRDocument(
+        producer="sc-neurocore-test",
+        streams=[
+            SCNIRStream(
+                stream_id="conn.li_to_lif.weight",
+                layer="lif",
+                bitstream_length=512,
+                encoding="bipolar",
+                signal_kind="weight",
+                precision=SCNIRPrecision(
+                    signed=True,
+                    total_bits=16,
+                    fractional_bits=8,
+                    accumulator_bits=34,
+                    rounding="nearest_even",
+                    overflow="saturate",
+                ),
+                source=SCNIRSource(
+                    kind="lfsr",
+                    seed=11,
+                    lfsr_polynomial="x^16 + x^14 + x^13 + x^11 + 1",
+                    tap_mask=0xB400,
+                ),
+                transforms=[
+                    SCNIRStreamTransform(
+                        kind="threshold",
+                        position="source",
+                        comparison="greater_than",
+                        values=(0.25, 0.5),
+                    )
+                ],
+            )
+        ],
+    )
+
+    payload = scnir_to_dict(doc)
+
+    assert payload["streams"][0]["transforms"] == [
+        {
+            "kind": "threshold",
+            "position": "source",
+            "comparison": "greater_than",
+            "values": [0.25, 0.5],
+        }
+    ]
+    validate_scnir_dict(payload)
+
+
+def test_scnir_rejects_invalid_threshold_transform_values() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["streams"][0]["transforms"] = [
+        {
+            "kind": "threshold",
+            "position": "source",
+            "comparison": "greater_than",
+            "values": [],
+        }
+    ]
+
+    with pytest.raises(SCNIRValidationError, match="transforms"):
+        validate_scnir_dict(payload)
+
+
 def test_scnir_rejects_invalid_precision() -> None:
     payload = scnir_to_dict(_valid_document())
     payload["streams"][0]["precision"]["fractional_bits"] = 16
@@ -206,7 +289,7 @@ def test_scnir_rejects_duplicate_stream_ids() -> None:
 
 
 def test_scnir_json_schema_resource_is_bundled() -> None:
-    schema_path = Path("schemas/scnir/scnir.schema.json")
+    schema_path = Path(__file__).resolve().parents[1] / "schemas/scnir/scnir.schema.json"
     payload = json.loads(schema_path.read_text(encoding="utf-8"))
 
     assert payload["$id"].endswith("/schemas/scnir/scnir.schema.json")
@@ -214,6 +297,7 @@ def test_scnir_json_schema_resource_is_bundled() -> None:
     assert "bitstream_length" in json.dumps(payload)
     assert "delay_steps" in json.dumps(payload)
     assert "signal_kind" in json.dumps(payload)
+    assert "transforms" in json.dumps(payload)
     assert "correlation_constraints" in json.dumps(payload)
 
 

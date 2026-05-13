@@ -254,6 +254,7 @@ def _verify_source_row_keys(row: Mapping[str, Any], index: int) -> None:
         "delay_steps",
         "total_bits",
         "fractional_bits",
+        "transforms",
         "lfsr_polynomial",
         "tap_mask",
         "sobol_dimension",
@@ -280,6 +281,7 @@ def _verify_source_row_matches_stream(
         "total_bits": stream.precision.total_bits,
         "fractional_bits": stream.precision.fractional_bits,
         "source_kind": f"{stream.source.kind}16",
+        "transforms": _stream_transform_rows(stream),
     }
     source = stream.source
     if source.seed is not None:
@@ -296,6 +298,18 @@ def _verify_source_row_matches_stream(
                 f"sources[{index}].{key} {row[key]!r} does not match stream "
                 f"{stream.stream_id!r} value {value!r}"
             )
+
+
+def _stream_transform_rows(stream: SCNIRStream) -> list[dict[str, object]]:
+    return [
+        {
+            "kind": transform.kind,
+            "position": transform.position,
+            "comparison": transform.comparison,
+            "values": [float(value) for value in transform.values],
+        }
+        for transform in stream.transforms
+    ]
 
 
 def _signal_kind_counts(document: SCNIRDocument) -> dict[str, int]:
