@@ -88,7 +88,6 @@ impl MorrisLecarNeuron {
         self.g_ca = 4.0_f64;
         self.g_k = 8.0_f64;
     }
-
 }
 
 pub fn validate_morris_lecar(state: &MorrisLecarNeuron) -> bool {

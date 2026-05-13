@@ -22,7 +22,7 @@ impl MPIRunner {
         }
     }
 
-    pub fn _partition_populations(&self, ) -> f64 {
+    pub fn _partition_populations(&self) -> f64 {
         // for i in range(len(self._populations)):
         // owner = i % self.size
         // self._rank_of[i] = owner
@@ -31,7 +31,7 @@ impl MPIRunner {
         0.0
     }
 
-    pub fn _identify_cross_rank_projections(&self, ) -> f64 {
+    pub fn _identify_cross_rank_projections(&self) -> f64 {
         // pop_id_to_idx = {id(p): i for i, p in enumerate(self._populations)}
         // for proj in self._projections:
         // src_idx = pop_id_to_idx.get(id(proj.source), -1)
@@ -97,7 +97,6 @@ impl MPIRunner {
         // current = proj.propagate(src_sp)
         0.0
     }
-
 }
 
 pub fn validate_mpi_runner(state: &MPIRunner) -> bool {
@@ -113,5 +112,4 @@ mod tests {
         let state = MPIRunner::new();
         assert!(validate_mpi_runner(&state));
     }
-
 }

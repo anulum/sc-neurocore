@@ -39,7 +39,6 @@ impl GapJunction {
         // return currents.sum(axis=1)
         0.0
     }
-
 }
 
 pub fn validate_gap_junction(state: &GapJunction) -> bool {
@@ -55,5 +54,4 @@ mod tests {
         let state = GapJunction::new();
         assert!(validate_gap_junction(&state));
     }
-
 }

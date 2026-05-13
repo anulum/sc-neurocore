@@ -39,7 +39,6 @@ impl PhysicalTwinBridge {
         // return hw_v_mem
         0.0
     }
-
 }
 
 pub fn validate_physical_twin(state: &PhysicalTwinBridge) -> bool {
@@ -55,5 +54,4 @@ mod tests {
         let state = PhysicalTwinBridge::new();
         assert!(validate_physical_twin(&state));
     }
-
 }

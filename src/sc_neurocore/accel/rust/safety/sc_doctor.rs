@@ -67,7 +67,6 @@ impl ScDoctor {
         // bit_positions = {1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1, 7: 0}
         0.0
     }
-
 }
 
 pub fn validate_sc_doctor(state: &ScDoctor) -> bool {
@@ -83,5 +82,4 @@ mod tests {
         let state = ScDoctor::new();
         assert!(validate_sc_doctor(&state));
     }
-
 }

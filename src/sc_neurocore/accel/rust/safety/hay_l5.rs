@@ -111,7 +111,6 @@ impl HayL5PyramidalNeuron {
         self.v_t = -75.0_f64;
         self.m_ca = 0.0_f64;
     }
-
 }
 
 pub fn validate_hay_l5(state: &HayL5PyramidalNeuron) -> bool {

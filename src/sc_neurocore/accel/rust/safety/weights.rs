@@ -34,7 +34,7 @@ impl LayerHeader {
         }
     }
 
-    pub fn to_bytes(&self, ) -> f64 {
+    pub fn to_bytes(&self) -> f64 {
         // return struct.pack("<IIII", self.magic, self.version, self.n_layers, s
         0.0
     }
@@ -45,20 +45,15 @@ impl LayerHeader {
         0.0
     }
 
-    pub fn validate(&self, ) -> f64 {
+    pub fn validate(&self) -> f64 {
         // return self.magic == WEIGHT_MAGIC && self.version <= WEIGHT_VERSION
         0.0
     }
 
-
-
-
-
-    pub fn words_per_row(&self, ) -> f64 {
+    pub fn words_per_row(&self) -> f64 {
         // return (self.n_inputs + 31) // 32
         0.0
     }
-
 }
 
 pub fn validate_weights(state: &LayerHeader) -> bool {
@@ -74,5 +69,4 @@ mod tests {
         let state = LayerHeader::new();
         assert!(validate_weights(&state));
     }
-
 }

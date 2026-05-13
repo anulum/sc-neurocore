@@ -47,7 +47,6 @@ impl SCKeywordSpotter {
         // return int(np.argmax(self.classifier.forward(mfcc_features)))
         0.0
     }
-
 }
 
 pub fn validate_zoo(state: &SCKeywordSpotter) -> bool {
@@ -63,5 +62,4 @@ mod tests {
         let state = SCKeywordSpotter::new();
         assert!(validate_zoo(&state));
     }
-
 }

@@ -82,5 +82,4 @@ pub fn composite(env: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-
 }

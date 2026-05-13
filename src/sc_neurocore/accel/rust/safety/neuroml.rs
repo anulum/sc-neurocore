@@ -25,7 +25,6 @@ impl ImportedCell {
             source_tag: 0.0_f64,
         }
     }
-
 }
 
 pub fn validate_neuroml(state: &ImportedCell) -> bool {
@@ -41,5 +40,4 @@ mod tests {
         let state = ImportedCell::new();
         assert!(validate_neuroml(&state));
     }
-
 }

@@ -68,7 +68,6 @@ impl PrescottNeuron {
         self.g_slow = 20.0_f64;
         self.g_l = 2.0_f64;
     }
-
 }
 
 pub fn validate_prescott(state: &PrescottNeuron) -> bool {

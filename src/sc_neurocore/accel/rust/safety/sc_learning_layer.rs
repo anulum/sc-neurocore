@@ -53,7 +53,7 @@ impl SCLearningLayer {
         0.0
     }
 
-    pub fn get_weights(&self, ) -> f64 {
+    pub fn get_weights(&self) -> f64 {
         // weights = np.zeros((self.n_neurons, self.n_inputs))
         // for i in range(self.n_neurons):
         // for j in range(self.n_inputs):
@@ -61,7 +61,6 @@ impl SCLearningLayer {
         // return weights
         0.0
     }
-
 }
 
 pub fn validate_sc_learning_layer(state: &SCLearningLayer) -> bool {
@@ -77,5 +76,4 @@ mod tests {
         let state = SCLearningLayer::new();
         assert!(validate_sc_learning_layer(&state));
     }
-
 }

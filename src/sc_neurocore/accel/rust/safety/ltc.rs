@@ -55,7 +55,6 @@ impl LiquidTimeConstantNeuron {
         self.w_x = 0.8_f64;
         self.w_in = 1.0_f64;
     }
-
 }
 
 pub fn validate_ltc(state: &LiquidTimeConstantNeuron) -> bool {

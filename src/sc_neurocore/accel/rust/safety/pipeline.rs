@@ -48,12 +48,12 @@ impl IRGraph {
         }
     }
 
-    pub fn success(&self, ) -> f64 {
+    pub fn success(&self) -> f64 {
         // return all(s.success for s in self.stages)
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = ["Export Pipeline Result"]
         // for s in self.stages:
         // status = "✓" if s.success else "✗"
@@ -62,7 +62,13 @@ impl IRGraph {
         0.0
     }
 
-    pub fn run(&self, neuron_name: f64, n_neurons: f64, bitstream_length: f64, module_name: f64) -> f64 {
+    pub fn run(
+        &self,
+        neuron_name: f64,
+        n_neurons: f64,
+        bitstream_length: f64,
+        module_name: f64,
+    ) -> f64 {
         // self,
         // neuron_name: str,
         // n_neurons: int = 64,
@@ -100,7 +106,13 @@ impl IRGraph {
         0.0
     }
 
-    pub fn _stage_verilog(&self, neuron_name: f64, n_neurons: f64, bitstream_length: f64, module_name: f64) -> f64 {
+    pub fn _stage_verilog(
+        &self,
+        neuron_name: f64,
+        n_neurons: f64,
+        bitstream_length: f64,
+        module_name: f64,
+    ) -> f64 {
         // self, neuron_name: str, n_neurons: int, bitstream_length: int,
         // module_name: str,
         // ) -> PipelineStageResult:
@@ -170,7 +182,6 @@ impl IRGraph {
         // )
         0.0
     }
-
 }
 
 pub fn validate_pipeline(state: &IRGraph) -> bool {
@@ -186,5 +197,4 @@ mod tests {
         let state = IRGraph::new();
         assert!(validate_pipeline(&state));
     }
-
 }

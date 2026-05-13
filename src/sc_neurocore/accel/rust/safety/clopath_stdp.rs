@@ -67,7 +67,6 @@ impl ClopathSTDP {
         self.tau_minus = 10.0_f64;
         self.tau_plus = 7.0_f64;
     }
-
 }
 
 pub fn validate_clopath_stdp(state: &ClopathSTDP) -> bool {

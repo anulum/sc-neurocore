@@ -53,11 +53,10 @@ impl L15_MetaLayer {
         0 // spike indicator
     }
 
-    pub fn get_global_metric(&self, ) -> f64 {
+    pub fn get_global_metric(&self) -> f64 {
         // return self.gci
         0.0
     }
-
 }
 
 pub fn validate_l15_meta(state: &L15_MetaLayer) -> bool {

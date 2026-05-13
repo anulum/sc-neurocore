@@ -53,14 +53,14 @@ impl IdentitySubstrate {
         0.0
     }
 
-    pub fn _build_monitors(&self, ) -> f64 {
+    pub fn _build_monitors(&self) -> f64 {
         // self.mon_cortical = SpikeMonitor(self.cortical)
         // self.mon_inhibitory = SpikeMonitor(self.inhibitory)
         // self.mon_memory = SpikeMonitor(self.memory)
         0.0
     }
 
-    pub fn _build_network(&self, ) -> f64 {
+    pub fn _build_network(&self) -> f64 {
         // self.network = Network(
         // self.cortical,
         // self.inhibitory,
@@ -124,7 +124,7 @@ impl IdentitySubstrate {
         0.0
     }
 
-    pub fn extract_state(&self, ) -> f64 {
+    pub fn extract_state(&self) -> f64 {
         // if len(self._spike_history) < 10:
         // return {
         // "firing_rates": np.zeros(self.n_cortical),
@@ -143,7 +143,7 @@ impl IdentitySubstrate {
         0.0
     }
 
-    pub fn health_check(&self, ) -> f64 {
+    pub fn health_check(&self) -> f64 {
         // if len(self._spike_history) < 100:
         // return {
         // "mean_rate": 0.0,
@@ -162,16 +162,15 @@ impl IdentitySubstrate {
         0.0
     }
 
-    pub fn spike_history(&self, ) -> f64 {
+    pub fn spike_history(&self) -> f64 {
         // return self._spike_history
         0.0
     }
 
-    pub fn ee_weights(&self, ) -> f64 {
+    pub fn ee_weights(&self) -> f64 {
         // return self.proj_ee.data.copy()
         0.0
     }
-
 }
 
 pub fn validate_substrate(state: &IdentitySubstrate) -> bool {

@@ -38,7 +38,6 @@ impl NeuroArtGenerator {
         // y = rng.integers(0, self.resolution)
         0.0
     }
-
 }
 
 pub fn validate_neuro_art(state: &NeuroArtGenerator) -> bool {
@@ -54,5 +53,4 @@ mod tests {
         let state = NeuroArtGenerator::new();
         assert!(validate_neuro_art(&state));
     }
-
 }

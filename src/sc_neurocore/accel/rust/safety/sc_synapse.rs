@@ -51,11 +51,10 @@ impl BitstreamSynapse {
         0.0
     }
 
-    pub fn effective_weight_probability(&self, ) -> f64 {
+    pub fn effective_weight_probability(&self) -> f64 {
         // return bitstream_to_probability(self.weight_bits)
         0.0
     }
-
 }
 
 pub fn validate_sc_synapse(state: &BitstreamSynapse) -> bool {
@@ -71,5 +70,4 @@ mod tests {
         let state = BitstreamSynapse::new();
         assert!(validate_sc_synapse(&state));
     }
-
 }

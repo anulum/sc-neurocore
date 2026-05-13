@@ -78,7 +78,7 @@ impl AuditLog {
         }
     }
 
-    pub fn flip_probability(&self, ) -> f64 {
+    pub fn flip_probability(&self) -> f64 {
         // e = self.epsilon / self.sensitivity
         // return 1.0 / (1.0 + math.exp(e))
         0.0
@@ -93,7 +93,7 @@ impl AuditLog {
         0.0
     }
 
-    pub fn per_bit_epsilon(&self, ) -> f64 {
+    pub fn per_bit_epsilon(&self) -> f64 {
         // p = self.flip_probability
         // if p <= 0 || p >= 1:
         // return float("inf")
@@ -124,19 +124,19 @@ impl AuditLog {
         0.0
     }
 
-    pub fn current_epsilon(&self, ) -> f64 {
+    pub fn current_epsilon(&self) -> f64 {
         // if self.rdp_budget <= 0:
         // return 0.0
         // return self.rdp_budget + math.log(1 / self.target_delta) / (self.alpha
         0.0
     }
 
-    pub fn remaining_epsilon(&self, ) -> f64 {
+    pub fn remaining_epsilon(&self) -> f64 {
         // return max(0.0, self.target_epsilon - self.current_epsilon())
         0.0
     }
 
-    pub fn is_exhausted(&self, ) -> f64 {
+    pub fn is_exhausted(&self) -> f64 {
         // return self.current_epsilon() >= self.target_epsilon
         0.0
     }
@@ -296,14 +296,14 @@ impl AuditLog {
         0.0
     }
 
-    pub fn converged(&self, ) -> f64 {
+    pub fn converged(&self) -> f64 {
         // if len(self.grad_norms) < 5:
         // return false
         // return all(g < 0.01 for g in self.grad_norms[-5:])
         0.0
     }
 
-    pub fn trend(&self, ) -> f64 {
+    pub fn trend(&self) -> f64 {
         // if len(self.grad_norms) < 2:
         // return "insufficient_data"
         // if self.grad_norms[-1] < self.grad_norms[-2]:
@@ -333,7 +333,7 @@ impl AuditLog {
         0.0
     }
 
-    pub fn status(&self, ) -> f64 {
+    pub fn status(&self) -> f64 {
         // return {
         // "round": self.round_number,
         // "epsilon_consumed": self.accountant.current_epsilon(),
@@ -365,7 +365,7 @@ impl AuditLog {
         0.0
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // return {
         // "mechanism": self.mechanism,
         // "epsilon": self.epsilon,
@@ -379,7 +379,7 @@ impl AuditLog {
         0.0
     }
 
-    pub fn is_compliant(&self, ) -> f64 {
+    pub fn is_compliant(&self) -> f64 {
         // return self.epsilon <= self.accountant_state.get("target_epsilon", flo
         0.0
     }
@@ -411,7 +411,13 @@ impl AuditLog {
         0.0
     }
 
-    pub fn log_round(&self, round_number: f64, num_active: f64, epsilon_consumed: f64, grad_norm: f64) -> f64 {
+    pub fn log_round(
+        &self,
+        round_number: f64,
+        num_active: f64,
+        epsilon_consumed: f64,
+        grad_norm: f64,
+    ) -> f64 {
         // self,
         // round_number: int,
         // num_active: int,
@@ -429,7 +435,7 @@ impl AuditLog {
         0.0
     }
 
-    pub fn to_list(&self, ) -> f64 {
+    pub fn to_list(&self) -> f64 {
         // return [
         // {
         // "round": e.round_number,
@@ -443,18 +449,17 @@ impl AuditLog {
         0.0
     }
 
-    pub fn total_rounds(&self, ) -> f64 {
+    pub fn total_rounds(&self) -> f64 {
         // return len(self.entries)
         0.0
     }
 
-    pub fn max_epsilon(&self, ) -> f64 {
+    pub fn max_epsilon(&self) -> f64 {
         // if not self.entries:
         // return 0.0
         // return max(e.epsilon_consumed for e in self.entries)
         0.0
     }
-
 }
 
 pub fn validate_federated_sc(state: &AuditLog) -> bool {

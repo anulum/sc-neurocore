@@ -57,7 +57,6 @@ impl InhibitoryLIFNeuron {
         self.tau_inh = 5.0_f64;
         self.v_threshold = 1.0_f64;
     }
-
 }
 
 pub fn validate_ilif(state: &InhibitoryLIFNeuron) -> bool {

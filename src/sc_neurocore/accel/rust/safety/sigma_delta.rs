@@ -39,7 +39,6 @@ impl SigmaDeltaNeuron {
         self.sigma = 0.0_f64;
         self.v_threshold = 1.0_f64;
     }
-
 }
 
 pub fn validate_sigma_delta(state: &SigmaDeltaNeuron) -> bool {

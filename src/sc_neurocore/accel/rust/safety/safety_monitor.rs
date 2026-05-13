@@ -47,7 +47,15 @@ impl SafetyMonitor {
         self.lif_v_max = 49152.0_f64;
     }
 
-    pub fn check(&self, current: f64, voltage: f64, coherence: f64, popcount_k: f64, sc_add_result: f64, membrane: f64) -> f64 {
+    pub fn check(
+        &self,
+        current: f64,
+        voltage: f64,
+        coherence: f64,
+        popcount_k: f64,
+        sc_add_result: f64,
+        membrane: f64,
+    ) -> f64 {
         // self,
         // current: int = 0,
         // voltage: int = 0,
@@ -66,7 +74,7 @@ impl SafetyMonitor {
         0.0
     }
 
-    pub fn property_names(&self, ) -> f64 {
+    pub fn property_names(&self) -> f64 {
         // names = []
         // if self.violation_flags & 0b000001:
         // names.append("P1:monitor_soundness")
@@ -83,7 +91,6 @@ impl SafetyMonitor {
         // return names
         0.0
     }
-
 }
 
 pub fn validate_safety_monitor(state: &SafetyMonitor) -> bool {
@@ -99,5 +106,4 @@ mod tests {
         let state = SafetyMonitor::new();
         assert!(validate_safety_monitor(&state));
     }
-
 }

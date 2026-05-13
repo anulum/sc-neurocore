@@ -49,7 +49,6 @@ impl BCMSynapse {
         self.w_min = 0.0_f64;
         self.w_max = 1.0_f64;
     }
-
 }
 
 pub fn validate_bcm(state: &BCMSynapse) -> bool {

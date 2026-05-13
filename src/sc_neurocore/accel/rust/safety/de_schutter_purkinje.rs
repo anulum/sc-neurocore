@@ -87,7 +87,6 @@ impl DeSchutterPurkinjeNeuron {
         self.m_cap = 0.0_f64;
         self.h_cap = 0.9_f64;
     }
-
 }
 
 pub fn validate_de_schutter_purkinje(state: &DeSchutterPurkinjeNeuron) -> bool {

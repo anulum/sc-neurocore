@@ -29,7 +29,6 @@ impl PruningReport {
             pruned_neurons: 0.0_f64,
         }
     }
-
 }
 
 pub fn validate_pruning(state: &PruningReport) -> bool {
@@ -45,5 +44,4 @@ mod tests {
         let state = PruningReport::new();
         assert!(validate_pruning(&state));
     }
-
 }

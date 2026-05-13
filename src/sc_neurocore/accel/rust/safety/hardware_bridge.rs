@@ -71,7 +71,6 @@ impl QuantumHardwareLayer {
         // return res
         0.0
     }
-
 }
 
 pub fn validate_hardware_bridge(state: &QuantumHardwareLayer) -> bool {
@@ -87,5 +86,4 @@ mod tests {
         let state = QuantumHardwareLayer::new();
         assert!(validate_hardware_bridge(&state));
     }
-
 }

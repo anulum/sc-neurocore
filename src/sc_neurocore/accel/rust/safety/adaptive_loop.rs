@@ -69,13 +69,13 @@ impl AdaptiveController {
         0 // spike indicator
     }
 
-    pub fn adaptation_rate(&self, ) -> f64 {
+    pub fn adaptation_rate(&self) -> f64 {
         // n = self.monitor._step_count if hasattr(self.monitor, '_step_count') e
         // return len(self.adaptation_log) / max(n, 1)
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [
         // f"AdaptiveController: {len(self.adaptation_log)} adaptations",
         // f"  Current accuracy: {self.current_report.mean_accuracy:.4f}" if self
@@ -85,7 +85,6 @@ impl AdaptiveController {
         // return "\n".join(lines)
         0.0
     }
-
 }
 
 pub fn validate_adaptive_loop(state: &AdaptiveController) -> bool {

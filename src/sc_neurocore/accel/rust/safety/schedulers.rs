@@ -50,19 +50,6 @@ impl WarmupCosineScheduler {
         self._count = 0.0_f64;
         self.lr_init = 0.0_f64;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 pub fn validate_schedulers(state: &WarmupCosineScheduler) -> bool {

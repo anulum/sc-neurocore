@@ -60,7 +60,6 @@ impl SleepReportGenerator {
         // # stage durations
         0.0
     }
-
 }
 
 pub fn validate_report_generator(state: &SleepReportGenerator) -> bool {
@@ -76,5 +75,4 @@ mod tests {
         let state = SleepReportGenerator::new();
         assert!(validate_report_generator(&state));
     }
-
 }

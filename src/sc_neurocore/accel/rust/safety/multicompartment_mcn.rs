@@ -77,7 +77,6 @@ impl MulticompartmentMCNNeuron {
         self.g_ratio = 1.0_f64;
         self.beta = 1.0_f64;
     }
-
 }
 
 pub fn validate_multicompartment_mcn(state: &MulticompartmentMCNNeuron) -> bool {

@@ -109,27 +109,27 @@ impl ArcaneNeuron {
         self.alpha_w = 0.3_f64;
     }
 
-    pub fn identity_state(&self, ) -> f64 {
+    pub fn identity_state(&self) -> f64 {
         // return self.v_deep
         0.0
     }
 
-    pub fn confidence(&self, ) -> f64 {
+    pub fn confidence(&self) -> f64 {
         // return self._confidence
         0.0
     }
 
-    pub fn novelty(&self, ) -> f64 {
+    pub fn novelty(&self) -> f64 {
         // return self._novelty
         0.0
     }
 
-    pub fn meta_learning_rate(&self, ) -> f64 {
+    pub fn meta_learning_rate(&self) -> f64 {
         // return self.lr_base * (1.0 + self.eta * self._novelty)
         0.0
     }
 
-    pub fn get_state(&self, ) -> f64 {
+    pub fn get_state(&self) -> f64 {
         // return {
         // "v_fast": self.v_fast,
         // "v_work": self.v_work,
@@ -143,7 +143,6 @@ impl ArcaneNeuron {
         // }
         0.0
     }
-
 }
 
 pub fn validate_arcane_neuron(state: &ArcaneNeuron) -> bool {

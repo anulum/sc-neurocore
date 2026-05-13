@@ -78,7 +78,7 @@ impl ScopeRenderer {
         }
     }
 
-    pub fn connect(&self, ) -> f64 {
+    pub fn connect(&self) -> f64 {
         // if self.config.transport_type == TransportType.SIMULATED:
         // self._sim_rng = np.random.default_rng(42)
         // self.is_connected = true
@@ -89,7 +89,7 @@ impl ScopeRenderer {
         0.0
     }
 
-    pub fn disconnect(&self, ) -> f64 {
+    pub fn disconnect(&self) -> f64 {
         // self.is_connected = false
         // self._sim_rng = 0.0
         // self._sim_step = 0
@@ -121,12 +121,12 @@ impl ScopeRenderer {
         0.0
     }
 
-    pub fn bit_length(&self, ) -> f64 {
+    pub fn bit_length(&self) -> f64 {
         // return len(self.words) * 32
         0.0
     }
 
-    pub fn popcount(&self, ) -> f64 {
+    pub fn popcount(&self) -> f64 {
         // total = 0
         // for w in self.words:
         // total += bin(int(w)).count('1')
@@ -134,13 +134,13 @@ impl ScopeRenderer {
         0.0
     }
 
-    pub fn density(&self, ) -> f64 {
+    pub fn density(&self) -> f64 {
         // bl = self.bit_length
         // return self.popcount / bl if bl > 0 else 0.0
         0.0
     }
 
-    pub fn effective_bits(&self, ) -> f64 {
+    pub fn effective_bits(&self) -> f64 {
         // p = self.density
         // if p <= 0.0 || p >= 1.0:
         // return 0.0
@@ -156,32 +156,32 @@ impl ScopeRenderer {
         0.0
     }
 
-    pub fn count(&self, ) -> f64 {
+    pub fn count(&self) -> f64 {
         // return len(self.densities)
         0.0
     }
 
-    pub fn mean_density(&self, ) -> f64 {
+    pub fn mean_density(&self) -> f64 {
         // return float(np.mean(self.densities)) if self.densities else 0.0
         0.0
     }
 
-    pub fn std_density(&self, ) -> f64 {
+    pub fn std_density(&self) -> f64 {
         // return float(np.std(self.densities)) if len(self.densities) > 1 else 0
         0.0
     }
 
-    pub fn mean_effective_bits(&self, ) -> f64 {
+    pub fn mean_effective_bits(&self) -> f64 {
         // return float(np.mean(self.effective_bits)) if self.effective_bits else
         0.0
     }
 
-    pub fn total_popcount(&self, ) -> f64 {
+    pub fn total_popcount(&self) -> f64 {
         // return sum(self.popcounts)
         0.0
     }
 
-    pub fn sample_rate_hz(&self, ) -> f64 {
+    pub fn sample_rate_hz(&self) -> f64 {
         // if len(self.timestamps) < 2:
         // return 0.0
         // dt_ns = self.timestamps[-1] - self.timestamps[0]
@@ -215,7 +215,7 @@ impl ScopeRenderer {
         0.0
     }
 
-    pub fn all_stats(&self, ) -> f64 {
+    pub fn all_stats(&self) -> f64 {
         // return {lid: self.layer_stats(lid) for lid in self.windows}
         0.0
     }
@@ -226,14 +226,14 @@ impl ScopeRenderer {
         0.0
     }
 
-    pub fn current_error(&self, ) -> f64 {
+    pub fn current_error(&self) -> f64 {
         // if not self.history:
         // return 0.0
         // return abs(self.history[-1] - self.expected_density)
         0.0
     }
 
-    pub fn mean_error(&self, ) -> f64 {
+    pub fn mean_error(&self) -> f64 {
         // if not self.history:
         // return 0.0
         // errors = [abs(h - self.expected_density) for h in self.history]
@@ -241,19 +241,19 @@ impl ScopeRenderer {
         0.0
     }
 
-    pub fn max_error(&self, ) -> f64 {
+    pub fn max_error(&self) -> f64 {
         // if not self.history:
         // return 0.0
         // return max(abs(h - self.expected_density) for h in self.history)
         0.0
     }
 
-    pub fn violations(&self, ) -> f64 {
+    pub fn violations(&self) -> f64 {
         // return sum(1 for h in self.history if abs(h - self.expected_density) >
         0.0
     }
 
-    pub fn pass_rate(&self, ) -> f64 {
+    pub fn pass_rate(&self) -> f64 {
         // if not self.history:
         // return 1.0
         // return 1.0 - self.violations / len(self.history)
@@ -284,17 +284,17 @@ impl ScopeRenderer {
         0.0
     }
 
-    pub fn event_count(&self, ) -> f64 {
+    pub fn event_count(&self) -> f64 {
         // return len(self.events)
         0.0
     }
 
-    pub fn clear(&self, ) -> f64 {
+    pub fn clear(&self) -> f64 {
         // self.events.clear()
         0.0
     }
 
-    pub fn start(&self, ) -> f64 {
+    pub fn start(&self) -> f64 {
         // if not self.transport.connect():
         // return false
         // self.is_running = true
@@ -303,7 +303,7 @@ impl ScopeRenderer {
         0.0
     }
 
-    pub fn stop(&self, ) -> f64 {
+    pub fn stop(&self) -> f64 {
         // self.is_running = false
         // self.transport.disconnect()
         0.0
@@ -343,7 +343,7 @@ impl ScopeRenderer {
         0.0
     }
 
-    pub fn status(&self, ) -> f64 {
+    pub fn status(&self) -> f64 {
         // elapsed = (time.time_ns() - self._start_time_ns) / 1e9 if self._start_
         // return {
         // "running": self.is_running,
@@ -391,7 +391,6 @@ impl ScopeRenderer {
         // f"  L{lid}: {status} err={eb.current_error:.4f} "
         0.0
     }
-
 }
 
 pub fn validate_sc_scope(state: &ScopeRenderer) -> bool {
@@ -407,5 +406,4 @@ mod tests {
         let state = ScopeRenderer::new();
         assert!(validate_sc_scope(&state));
     }
-
 }

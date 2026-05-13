@@ -15,9 +15,7 @@ pub struct InhomogeneousPoissonNeuron {
 
 impl InhomogeneousPoissonNeuron {
     pub fn new() -> Self {
-        Self {
-            dt_ms: 1.0_f64,
-        }
+        Self { dt_ms: 1.0_f64 }
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
@@ -30,7 +28,6 @@ impl InhomogeneousPoissonNeuron {
         // pass
         self.dt_ms = 1.0_f64;
     }
-
 }
 
 pub fn validate_inhomogeneous_poisson(state: &InhomogeneousPoissonNeuron) -> bool {

@@ -43,7 +43,6 @@ impl IRTypeError {
             message: 0.0_f64,
         }
     }
-
 }
 
 pub fn validate_ir_type_checker(state: &IRTypeError) -> bool {
@@ -59,5 +58,4 @@ mod tests {
         let state = IRTypeError::new();
         assert!(validate_ir_type_checker(&state));
     }
-
 }

@@ -24,14 +24,14 @@ impl TrainingJob {
         }
     }
 
-    pub fn start(&self, ) -> f64 {
+    pub fn start(&self) -> f64 {
         // self.status = "running"
         // self._thread = threading.Thread(target=self._run, daemon=true)
         // self._thread.start()
         0.0
     }
 
-    pub fn stop(&self, ) -> f64 {
+    pub fn stop(&self) -> f64 {
         // self._stop_event.set()
         0.0
     }
@@ -49,7 +49,7 @@ impl TrainingJob {
         0.0
     }
 
-    pub fn _run(&self, ) -> f64 {
+    pub fn _run(&self) -> f64 {
         // try:
         // self._train()
         // except Exception as e:
@@ -59,7 +59,7 @@ impl TrainingJob {
         0.0
     }
 
-    pub fn _train(&self, ) -> f64 {
+    pub fn _train(&self) -> f64 {
         // if not HAS_TORCH:
         // raise RuntimeError("PyTorch not installed. pip install sc-neurocore[re
         // from sc_neurocore.training import (
@@ -77,7 +77,6 @@ impl TrainingJob {
         // lr = cfg.get("lr", 1e-3)
         0.0
     }
-
 }
 
 pub fn validate_training(state: &TrainingJob) -> bool {
@@ -93,5 +92,4 @@ mod tests {
         let state = TrainingJob::new();
         assert!(validate_training(&state));
     }
-
 }

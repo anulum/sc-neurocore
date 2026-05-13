@@ -55,17 +55,17 @@ impl Projection {
         0.0
     }
 
-    pub fn n_synapses(&self, ) -> f64 {
+    pub fn n_synapses(&self) -> f64 {
         // return len(self.data)
         0.0
     }
 
-    pub fn delay_mode(&self, ) -> f64 {
+    pub fn delay_mode(&self) -> f64 {
         // return self._delay_mode
         0.0
     }
 
-    pub fn max_delay(&self, ) -> f64 {
+    pub fn max_delay(&self) -> f64 {
         // if self._delay_mode == "none":
         // return 0
         // if self._delay_mode == "uniform":
@@ -113,7 +113,15 @@ impl Projection {
         0.0
     }
 
-    pub fn update_plasticity(&self, src_spikes: f64, tgt_spikes: f64, a_plus: f64, a_minus: f64, tau: f64, directional_bias: f64) -> f64 {
+    pub fn update_plasticity(
+        &self,
+        src_spikes: f64,
+        tgt_spikes: f64,
+        a_plus: f64,
+        a_minus: f64,
+        tau: f64,
+        directional_bias: f64,
+    ) -> f64 {
         // self,
         // src_spikes: np.ndarray,
         // tgt_spikes: np.ndarray,
@@ -132,7 +140,7 @@ impl Projection {
         0.0
     }
 
-    pub fn _enforce_symmetry(&self, ) -> f64 {
+    pub fn _enforce_symmetry(&self) -> f64 {
         // n = self.source.n
         // for i in range(n):
         // for k in range(self.indptr[i], self.indptr[i + 1]):
@@ -148,7 +156,6 @@ impl Projection {
         // break
         0.0
     }
-
 }
 
 pub fn validate_projection(state: &Projection) -> bool {
@@ -164,5 +171,4 @@ mod tests {
         let state = Projection::new();
         assert!(validate_projection(&state));
     }
-
 }

@@ -99,7 +99,6 @@ impl BertramPhantomBurster {
         self.g_ca = 3.6_f64;
         self.g_k = 10.0_f64;
     }
-
 }
 
 pub fn validate_bertram_phantom(state: &BertramPhantomBurster) -> bool {

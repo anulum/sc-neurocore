@@ -41,7 +41,7 @@ impl WolframHypergraph {
         0.0
     }
 
-    pub fn dimension_estimate(&self, ) -> f64 {
+    pub fn dimension_estimate(&self) -> f64 {
         // if len(self.edges) < 3:
         // return 0.0
         // adj: dict[int, set[int]] = {}
@@ -59,7 +59,6 @@ impl WolframHypergraph {
         // visited = {start}
         0.0
     }
-
 }
 
 pub fn validate_wolfram_hypergraph(state: &WolframHypergraph) -> bool {
@@ -75,5 +74,4 @@ mod tests {
         let state = WolframHypergraph::new();
         assert!(validate_wolfram_hypergraph(&state));
     }
-
 }

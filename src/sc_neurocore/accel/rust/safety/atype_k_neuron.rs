@@ -85,7 +85,6 @@ impl ATypeKNeuron {
         self.a = 0.1_f64;
         self.b = 0.8_f64;
     }
-
 }
 
 pub fn validate_atype_k_neuron(state: &ATypeKNeuron) -> bool {

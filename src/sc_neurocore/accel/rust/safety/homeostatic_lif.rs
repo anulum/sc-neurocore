@@ -39,14 +39,13 @@ impl HomeostaticLIFNeuron {
         0 // spike indicator
     }
 
-    pub fn get_state(&self, ) -> f64 {
+    pub fn get_state(&self) -> f64 {
         // s = super().get_state()
         // s["threshold"] = float(self.v_threshold)
         // s["rate_trace"] = float(self.rate_trace)
         // return s
         0.0
     }
-
 }
 
 pub fn validate_homeostatic_lif(state: &HomeostaticLIFNeuron) -> bool {

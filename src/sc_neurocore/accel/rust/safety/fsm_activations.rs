@@ -34,11 +34,6 @@ impl ReLKFSM {
         // return output
         0.0
     }
-
-
-
-
-
 }
 
 pub fn validate_fsm_activations(state: &ReLKFSM) -> bool {

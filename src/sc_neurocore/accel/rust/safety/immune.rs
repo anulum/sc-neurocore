@@ -43,11 +43,10 @@ impl DigitalImmuneSystem {
         0.0
     }
 
-    pub fn _trigger_response(&self, ) -> f64 {
+    pub fn _trigger_response(&self) -> f64 {
         // logger.warning("Immune System: Initiating Quarantine Protocol...")
         0.0
     }
-
 }
 
 pub fn validate_immune(state: &DigitalImmuneSystem) -> bool {
@@ -63,5 +62,4 @@ mod tests {
         let state = DigitalImmuneSystem::new();
         assert!(validate_immune(&state));
     }
-
 }

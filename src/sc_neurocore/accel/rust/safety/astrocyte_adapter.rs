@@ -29,12 +29,12 @@ impl AstrocyteNeuron {
         0 // spike indicator
     }
 
-    pub fn ca(&self, ) -> f64 {
+    pub fn ca(&self) -> f64 {
         // return self._astro.ca
         0.0
     }
 
-    pub fn ip3(&self, ) -> f64 {
+    pub fn ip3(&self) -> f64 {
         // return self._astro.ip3
         0.0
     }
@@ -45,7 +45,6 @@ impl AstrocyteNeuron {
         self.ca_threshold = 0.3_f64;
         self.dt = 0.01_f64;
     }
-
 }
 
 pub fn validate_astrocyte_adapter(state: &AstrocyteNeuron) -> bool {

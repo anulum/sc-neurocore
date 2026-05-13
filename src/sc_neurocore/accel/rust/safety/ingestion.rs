@@ -43,7 +43,6 @@ impl DataIngestor {
         // )
         0.0
     }
-
 }
 
 pub fn validate_ingestion(state: &DataIngestor) -> bool {
@@ -59,5 +58,4 @@ mod tests {
         let state = DataIngestor::new();
         assert!(validate_ingestion(&state));
     }
-
 }

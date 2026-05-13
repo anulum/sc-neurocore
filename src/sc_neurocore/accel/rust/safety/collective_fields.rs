@@ -120,7 +120,6 @@ impl CollectiveFields {
         // agent.emotions = self.emotional_field[idx].copy()
         0.0
     }
-
 }
 
 pub fn validate_collective_fields(state: &CollectiveFields) -> bool {
@@ -136,5 +135,4 @@ mod tests {
         let state = CollectiveFields::new();
         assert!(validate_collective_fields(&state));
     }
-
 }

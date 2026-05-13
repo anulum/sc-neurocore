@@ -65,11 +65,10 @@ impl L16_DirectorLayer {
         0 // spike indicator
     }
 
-    pub fn get_global_metric(&self, ) -> f64 {
+    pub fn get_global_metric(&self) -> f64 {
         // return float(np.mean(self.will))
         0.0
     }
-
 }
 
 pub fn validate_l16_director(state: &L16_DirectorLayer) -> bool {

@@ -54,7 +54,6 @@ impl MultiModalFusion {
         // ratio = n_bins_in / max(n_output_bins, 1)
         0.0
     }
-
 }
 
 pub fn validate_multimodal(state: &MultiModalFusion) -> bool {
@@ -70,5 +69,4 @@ mod tests {
         let state = MultiModalFusion::new();
         assert!(validate_multimodal(&state));
     }
-
 }

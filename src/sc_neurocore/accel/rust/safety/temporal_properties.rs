@@ -34,7 +34,7 @@ impl VerificationResult {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // icon = {"verified": "PASS", "violated": "FAIL", "unknown": "?"}[self.r
         // line = f"[{icon}] {self.property_name}: {self.message}"
         // if self.counterexample:
@@ -42,7 +42,6 @@ impl VerificationResult {
         // return line
         0.0
     }
-
 }
 
 pub fn validate_temporal_properties(state: &VerificationResult) -> bool {
@@ -58,5 +57,4 @@ mod tests {
         let state = VerificationResult::new();
         assert!(validate_temporal_properties(&state));
     }
-
 }

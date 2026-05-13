@@ -116,17 +116,17 @@ impl CrosstalkModel {
         0.0
     }
 
-    pub fn lightmatter(&self, ) -> f64 {
+    pub fn lightmatter(&self) -> f64 {
         // return cls("Lightmatter", 1550.0, OpticalModulation.PHASE, "MZI", 2000
         0.0
     }
 
-    pub fn silicon_photonics(&self, ) -> f64 {
+    pub fn silicon_photonics(&self) -> f64 {
         // return cls("SiPh-Generic", 1310.0, OpticalModulation.AMPLITUDE, "Micro
         0.0
     }
 
-    pub fn two_d_waveguide(&self, ) -> f64 {
+    pub fn two_d_waveguide(&self) -> f64 {
         // return cls("2D-Material", 850.0, OpticalModulation.HYBRID, "MZI", 5000
         0.0
     }
@@ -188,7 +188,13 @@ impl CrosstalkModel {
         0.0
     }
 
-    pub fn inject_pulse(&self, position: f64, wavelength_nm: f64, amplitude: f64, phase: f64) -> f64 {
+    pub fn inject_pulse(
+        &self,
+        position: f64,
+        wavelength_nm: f64,
+        amplitude: f64,
+        phase: f64,
+    ) -> f64 {
         // self,
         // position: int,
         // wavelength_nm: float = 1550.0,
@@ -220,12 +226,12 @@ impl CrosstalkModel {
         0 // spike indicator
     }
 
-    pub fn field_energy(&self, ) -> f64 {
+    pub fn field_energy(&self) -> f64 {
         // return float(np.sum(self.ez.powi2) + np.sum(self.hy.powi2))
         0.0
     }
 
-    pub fn snapshot(&self, ) -> f64 {
+    pub fn snapshot(&self) -> f64 {
         // return self.ez.copy(), self.hy.copy()
         0.0
     }
@@ -259,7 +265,7 @@ impl CrosstalkModel {
         0.0
     }
 
-    pub fn _build_pml(&self, ) -> f64 {
+    pub fn _build_pml(&self) -> f64 {
         // self._damping = np.ones((self.nx, self.ny), dtype=np.float64)
         // p = self.pml_layers
         // for i in range(p):
@@ -271,7 +277,14 @@ impl CrosstalkModel {
         0.0
     }
 
-    pub fn set_waveguide(&self, y_center: f64, width_cells: f64, refractive_index: f64, x_start: f64, x_end: f64) -> f64 {
+    pub fn set_waveguide(
+        &self,
+        y_center: f64,
+        width_cells: f64,
+        refractive_index: f64,
+        x_start: f64,
+        x_end: f64,
+    ) -> f64 {
         // self,
         // y_center: int,
         // width_cells: int,
@@ -286,7 +299,14 @@ impl CrosstalkModel {
         0.0
     }
 
-    pub fn inject_source(&self, x: f64, y: f64, wavelength_nm: f64, amplitude: f64, sigma_cells: f64) -> f64 {
+    pub fn inject_source(
+        &self,
+        x: f64,
+        y: f64,
+        wavelength_nm: f64,
+        amplitude: f64,
+        sigma_cells: f64,
+    ) -> f64 {
         // self,
         // x: int,
         // y: int,
@@ -305,10 +325,6 @@ impl CrosstalkModel {
         0.0
     }
 
-
-
-
-
     pub fn field_at_point(&self, x: f64, y: f64) -> f64 {
         // return float(self.ez[x, y])
         0.0
@@ -319,9 +335,7 @@ impl CrosstalkModel {
         0.0
     }
 
-
-
-    pub fn is_available(&self, ) -> f64 {
+    pub fn is_available(&self) -> f64 {
         // try:
         // import meep  # noqa: F401
         // return true
@@ -330,7 +344,13 @@ impl CrosstalkModel {
         0.0
     }
 
-    pub fn build_waveguide_geometry(&self, target: f64, waveguide_width_um: f64, length_um: f64, substrate_index: f64) -> f64 {
+    pub fn build_waveguide_geometry(
+        &self,
+        target: f64,
+        waveguide_width_um: f64,
+        length_um: f64,
+        substrate_index: f64,
+    ) -> f64 {
         // target: PhotonicTarget,
         // waveguide_width_um: float = 0.5,
         // length_um: float = 10.0,
@@ -368,7 +388,7 @@ impl CrosstalkModel {
         0.0
     }
 
-    pub fn effective_index_diff(&self, ) -> f64 {
+    pub fn effective_index_diff(&self) -> f64 {
         // # Exponential evanescent decay model
         // decay_length_nm = self.wavelength_nm / (2 * math.pi * math.sqrt(
         // self.core_index.powi2 - self.cladding_index.powi2
@@ -377,19 +397,19 @@ impl CrosstalkModel {
         0.0
     }
 
-    pub fn coupling_coefficient(&self, ) -> f64 {
+    pub fn coupling_coefficient(&self) -> f64 {
         // dn = self.effective_index_diff
         // return math.pi * dn / (self.wavelength_nm * 1e-3)
         0.0
     }
 
-    pub fn coupling_ratio(&self, ) -> f64 {
+    pub fn coupling_ratio(&self) -> f64 {
         // kl = self.coupling_coefficient * self.coupling_length_um
         // return math.sin(kl) .powi 2
         0.0
     }
 
-    pub fn isolation_db(&self, ) -> f64 {
+    pub fn isolation_db(&self) -> f64 {
         // ratio = self.coupling_ratio
         // if ratio < 1e-15:
         // return 300.0
@@ -420,7 +440,7 @@ impl CrosstalkModel {
         0.0
     }
 
-    pub fn worst_case_isolation(&self, ) -> f64 {
+    pub fn worst_case_isolation(&self) -> f64 {
         // if not self.pairs:
         // return float("inf")
         // return min(p.isolation_db for p in self.pairs)
@@ -445,7 +465,6 @@ impl CrosstalkModel {
         // "worst_isolation_db": result.get("min_isolation_db", float("inf")),
         0.0
     }
-
 }
 
 pub fn validate_photonic_emitter(state: &CrosstalkModel) -> bool {

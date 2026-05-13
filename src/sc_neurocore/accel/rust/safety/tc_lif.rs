@@ -61,7 +61,6 @@ impl TwoCompartmentLIFNeuron {
         self.v_reset = 0.0_f64;
         self.theta = 1.0_f64;
     }
-
 }
 
 pub fn validate_tc_lif(state: &TwoCompartmentLIFNeuron) -> bool {

@@ -48,7 +48,6 @@ impl SCRecurrentLayer {
         self.input_strength = 0.0_f64;
         self.spectral_radius = 0.0_f64;
     }
-
 }
 
 pub fn validate_recurrent(state: &SCRecurrentLayer) -> bool {

@@ -43,7 +43,6 @@ impl SigmoidRateNeuron {
         self.theta = 0.0_f64;
         self.dt = 0.1_f64;
     }
-
 }
 
 pub fn validate_sigmoid_rate(state: &SigmoidRateNeuron) -> bool {

@@ -80,7 +80,6 @@ impl JansenRitUnit {
         self.y4 = 0.0_f64;
         self.y2 = 0.0_f64;
     }
-
 }
 
 pub fn validate_jansen_rit(state: &JansenRitUnit) -> bool {

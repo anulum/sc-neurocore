@@ -57,7 +57,7 @@ impl DeviceTelemetry {
         0.0
     }
 
-    pub fn mean(&self, ) -> f64 {
+    pub fn mean(&self) -> f64 {
         // with self._lock:
         // if self._count == 0:
         // return 0.0
@@ -70,7 +70,7 @@ impl DeviceTelemetry {
         0.0
     }
 
-    pub fn last(&self, ) -> f64 {
+    pub fn last(&self) -> f64 {
         // with self._lock:
         // if self._count == 0:
         // return 0
@@ -78,13 +78,13 @@ impl DeviceTelemetry {
         0.0
     }
 
-    pub fn count(&self, ) -> f64 {
+    pub fn count(&self) -> f64 {
         // with self._lock:
         // return self._count
         0.0
     }
 
-    pub fn capacity(&self, ) -> f64 {
+    pub fn capacity(&self) -> f64 {
         // return self._cap
         0.0
     }
@@ -99,17 +99,17 @@ impl DeviceTelemetry {
         0.0
     }
 
-    pub fn mean_spike_rate(&self, ) -> f64 {
+    pub fn mean_spike_rate(&self) -> f64 {
         // return self.spike_rate_ring.mean()
         0.0
     }
 
-    pub fn mean_utilization(&self, ) -> f64 {
+    pub fn mean_utilization(&self) -> f64 {
         // return self.utilization_ring.mean()
         0.0
     }
 
-    pub fn lifetime_spike_rate(&self, ) -> f64 {
+    pub fn lifetime_spike_rate(&self) -> f64 {
         // if self.tick_count == 0:
         // return 0.0
         // return self.spike_count / self.tick_count
@@ -130,7 +130,7 @@ impl DeviceTelemetry {
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // return {
         // "total_ticks": self.total_ticks,
         // "total_spikes": self.total_spikes,
@@ -147,7 +147,6 @@ impl DeviceTelemetry {
         // }
         0.0
     }
-
 }
 
 pub fn validate_telemetry(state: &DeviceTelemetry) -> bool {
@@ -163,5 +162,4 @@ mod tests {
         let state = DeviceTelemetry::new();
         assert!(validate_telemetry(&state));
     }
-
 }

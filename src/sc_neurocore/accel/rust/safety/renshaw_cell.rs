@@ -80,7 +80,6 @@ impl RenshawCell {
         self.adapt = 0.0_f64;
         self.g_na = 35.0_f64;
     }
-
 }
 
 pub fn validate_renshaw_cell(state: &RenshawCell) -> bool {

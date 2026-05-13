@@ -41,7 +41,6 @@ impl ModuleCost {
             description: 0.0_f64,
         }
     }
-
 }
 
 pub fn validate_fpga_models(state: &ModuleCost) -> bool {
@@ -57,5 +56,4 @@ mod tests {
         let state = ModuleCost::new();
         assert!(validate_fpga_models(&state));
     }
-
 }

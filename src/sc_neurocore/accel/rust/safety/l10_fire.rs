@@ -42,7 +42,14 @@ impl L10_FirewallAdapter {
         0.0
     }
 
-    pub fn _firewall_kernel(&self, strength: f64, intention: f64, noise_inputs: f64, gain: f64, dt: f64) -> f64 {
+    pub fn _firewall_kernel(
+        &self,
+        strength: f64,
+        intention: f64,
+        noise_inputs: f64,
+        gain: f64,
+        dt: f64,
+    ) -> f64 {
         // strength: jnp.ndarray,
         // intention: jnp.ndarray,
         // noise_inputs: jnp.ndarray,
@@ -82,14 +89,13 @@ impl L10_FirewallAdapter {
         0.0
     }
 
-    pub fn get_metrics(&self, ) -> f64 {
+    pub fn get_metrics(&self) -> f64 {
         // return {
         // "avg_shielding_potential": float(jnp.mean(self.firewall_strength)),
         // "topological_dissonance": float(jnp.std(self.firewall_strength)),
         // }
         0.0
     }
-
 }
 
 pub fn validate_l10_fire(state: &L10_FirewallAdapter) -> bool {
@@ -105,5 +111,4 @@ mod tests {
         let state = L10_FirewallAdapter::new();
         assert!(validate_l10_fire(&state));
     }
-
 }

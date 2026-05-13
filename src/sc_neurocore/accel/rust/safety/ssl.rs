@@ -65,7 +65,14 @@ impl CSDPRule {
         0.0
     }
 
-    pub fn contrastive_step(&self, weights: f64, pos_pre: f64, pos_post: f64, neg_pre: f64, neg_post: f64) -> f64 {
+    pub fn contrastive_step(
+        &self,
+        weights: f64,
+        pos_pre: f64,
+        pos_post: f64,
+        neg_pre: f64,
+        neg_post: f64,
+    ) -> f64 {
         // self,
         // weights: np.ndarray[Any, Any],
         // pos_pre: np.ndarray[Any, Any],
@@ -83,7 +90,6 @@ impl CSDPRule {
         // return float(np.sum(activations.powi2))
         0.0
     }
-
 }
 
 pub fn validate_ssl(state: &CSDPRule) -> bool {
@@ -99,5 +105,4 @@ mod tests {
         let state = CSDPRule::new();
         assert!(validate_ssl(&state));
     }
-
 }

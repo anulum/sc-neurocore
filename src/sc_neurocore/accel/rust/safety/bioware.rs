@@ -216,10 +216,6 @@ impl HomeostaticPlasticity {
         0.0
     }
 
-
-
-
-
     pub fn assess(&self, spike_counts: f64, duration_s: f64) -> f64 {
         // rates = spike_counts / duration_s if duration_s > 0 else spike_counts
         // active = np.sum(rates > self.min_firing_rate_hz)
@@ -295,17 +291,17 @@ impl HomeostaticPlasticity {
         0.0
     }
 
-    pub fn mean_latency_us(&self, ) -> f64 {
+    pub fn mean_latency_us(&self) -> f64 {
         // return float(np.mean(self.history)) if self.history else 0.0
         0.0
     }
 
-    pub fn p99_latency_us(&self, ) -> f64 {
+    pub fn p99_latency_us(&self) -> f64 {
         // return float(np.percentile(self.history, 99)) if self.history else 0.0
         0.0
     }
 
-    pub fn compliance_ratio(&self, ) -> f64 {
+    pub fn compliance_ratio(&self) -> f64 {
         // if not self.history:
         // return 1.0
         // return 1.0 - self.violations / len(self.history)
@@ -334,7 +330,7 @@ impl HomeostaticPlasticity {
         0.0
     }
 
-    pub fn label(&self, ) -> f64 {
+    pub fn label(&self) -> f64 {
         // return f"{self.well_id}_{self.culture_type}_P{self.passage_number}"
         0.0
     }
@@ -357,7 +353,7 @@ impl HomeostaticPlasticity {
         0.0
     }
 
-    pub fn num_wells(&self, ) -> f64 {
+    pub fn num_wells(&self) -> f64 {
         // return len(self.wells)
         0.0
     }
@@ -390,12 +386,12 @@ impl HomeostaticPlasticity {
         0.0
     }
 
-    pub fn total_rounds(&self, ) -> f64 {
+    pub fn total_rounds(&self) -> f64 {
         // return len(self.entries)
         0.0
     }
 
-    pub fn to_list(&self, ) -> f64 {
+    pub fn to_list(&self) -> f64 {
         // return [
         // {
         // "round": e.round_number,
@@ -411,7 +407,7 @@ impl HomeostaticPlasticity {
         0.0
     }
 
-    pub fn checksum(&self, ) -> f64 {
+    pub fn checksum(&self) -> f64 {
         // import json as _json
         // data = _json.dumps(self.to_list(), sort_keys=true)
         // return hashlib.sha256(data.encode()).hexdigest()
@@ -431,7 +427,6 @@ impl HomeostaticPlasticity {
         // return max(self.min_threshold_q88, min(self.max_threshold_q88, new_q88
         0.0
     }
-
 }
 
 pub fn validate_bioware(state: &HomeostaticPlasticity) -> bool {
@@ -447,5 +442,4 @@ mod tests {
         let state = HomeostaticPlasticity::new();
         assert!(validate_bioware(&state));
     }
-
 }

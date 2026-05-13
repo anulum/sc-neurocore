@@ -51,11 +51,10 @@ impl L14_IntegrationLayer {
         0 // spike indicator
     }
 
-    pub fn get_global_metric(&self, ) -> f64 {
+    pub fn get_global_metric(&self) -> f64 {
         // return self.integrated_coherence
         0.0
     }
-
 }
 
 pub fn validate_l14_integration(state: &L14_IntegrationLayer) -> bool {

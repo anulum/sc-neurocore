@@ -44,7 +44,6 @@ impl AsimovGovernor {
         // # We don't have context here, so we assume self-preservation default.
         0.0
     }
-
 }
 
 pub fn validate_ethics(state: &AsimovGovernor) -> bool {
@@ -60,5 +59,4 @@ mod tests {
         let state = AsimovGovernor::new();
         assert!(validate_ethics(&state));
     }
-
 }

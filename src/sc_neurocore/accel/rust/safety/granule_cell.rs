@@ -119,7 +119,6 @@ impl GranuleCell {
         self.n = 0.05_f64;
         self.a = 0.1_f64;
     }
-
 }
 
 pub fn validate_granule_cell(state: &GranuleCell) -> bool {

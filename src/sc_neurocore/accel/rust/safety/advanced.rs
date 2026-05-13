@@ -67,8 +67,6 @@ impl StructuralPlasticity {
         0.0
     }
 
-
-
     pub fn update(&self, pre_spike: f64, post_spike: f64, error_signal: f64) -> f64 {
         // self, pre_spike: np.ndarray, post_spike: np.ndarray, error_signal: np.
         // ) -> np.ndarray:
@@ -80,7 +78,7 @@ impl StructuralPlasticity {
         0.0
     }
 
-    pub fn _init_traces(&self, ) -> f64 {
+    pub fn _init_traces(&self) -> f64 {
         // for proj in self.network.projections:
         // pid = id(proj)
         // self._elig[pid] = np.zeros_like(proj.data)
@@ -108,7 +106,7 @@ impl StructuralPlasticity {
         0 // spike indicator
     }
 
-    pub fn _snapshot_weights(&self, ) -> f64 {
+    pub fn _snapshot_weights(&self) -> f64 {
         // return [proj.data.copy() for proj in self.network.projections]
         0.0
     }
@@ -152,13 +150,6 @@ impl StructuralPlasticity {
         // proj.data += self.outer_lr * meta_grad[idx] / max(len(tasks), 1)
         0.0
     }
-
-
-
-
-
-
-
 }
 
 pub fn validate_advanced(state: &StructuralPlasticity) -> bool {

@@ -82,7 +82,7 @@ impl BitstreamAverager {
         0.0
     }
 
-    pub fn estimate(&self, ) -> f64 {
+    pub fn estimate(&self) -> f64 {
         // if not self._filled:
         // # Estimate over the filled portion only
         // count = self._index
@@ -104,7 +104,6 @@ impl BitstreamAverager {
         self.seed = 0.0_f64;
         self.mode = 0.0_f64;
     }
-
 }
 
 pub fn validate_bitstreams(state: &BitstreamAverager) -> bool {
@@ -120,5 +119,4 @@ mod tests {
         let state = BitstreamAverager::new();
         assert!(validate_bitstreams(&state));
     }
-
 }

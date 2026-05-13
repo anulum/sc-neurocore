@@ -85,7 +85,6 @@ impl PlantR15Neuron {
         self.n = 0.3_f64;
         self.ca = 0.1_f64;
     }
-
 }
 
 pub fn validate_plant_r15(state: &PlantR15Neuron) -> bool {

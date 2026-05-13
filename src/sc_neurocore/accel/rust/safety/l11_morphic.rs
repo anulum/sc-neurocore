@@ -57,11 +57,10 @@ impl L11_MorphicLayer {
         0 // spike indicator
     }
 
-    pub fn get_global_metric(&self, ) -> f64 {
+    pub fn get_global_metric(&self) -> f64 {
         // return float(np.mean(self.spins))
         0.0
     }
-
 }
 
 pub fn validate_l11_morphic(state: &L11_MorphicLayer) -> bool {

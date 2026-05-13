@@ -35,7 +35,6 @@ impl FittedModel {
             model_features: 0.0_f64,
         }
     }
-
 }
 
 pub fn validate_fitter(state: &FittedModel) -> bool {
@@ -51,5 +50,4 @@ mod tests {
         let state = FittedModel::new();
         assert!(validate_fitter(&state));
     }
-
 }

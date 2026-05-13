@@ -47,7 +47,7 @@ impl RallDendrite {
         0 // spike indicator
     }
 
-    pub fn branch_voltages(&self, ) -> f64 {
+    pub fn branch_voltages(&self) -> f64 {
         // return self.v.copy()
         0.0
     }
@@ -61,7 +61,6 @@ impl RallDendrite {
         self.coupling = 0.5_f64;
         self.dt = 1.0_f64;
     }
-
 }
 
 pub fn validate_rall_dendrite(state: &RallDendrite) -> bool {

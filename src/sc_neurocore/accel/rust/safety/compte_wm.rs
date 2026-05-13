@@ -96,7 +96,6 @@ impl CompteWMNeuron {
         self.x_nmda = 0.0_f64;
         self.s_gaba = 0.0_f64;
     }
-
 }
 
 pub fn validate_compte_wm(state: &CompteWMNeuron) -> bool {

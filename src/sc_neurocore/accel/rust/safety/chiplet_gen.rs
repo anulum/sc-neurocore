@@ -97,12 +97,12 @@ impl PartitionAssignment {
         0.0
     }
 
-    pub fn latency_cycles(&self, ) -> f64 {
+    pub fn latency_cycles(&self) -> f64 {
         // return max(1, int(self.latency_ns / 5.0 + 0.5))
         0.0
     }
 
-    pub fn fifo_depth_log2(&self, ) -> f64 {
+    pub fn fifo_depth_log2(&self) -> f64 {
         // jitter_cycles = max(1, int(self.jitter_ns / 5.0 + 0.5))
         // depth = 1
         // while (1 << depth) < jitter_cycles * 4:
@@ -111,7 +111,7 @@ impl PartitionAssignment {
         0.0
     }
 
-    pub fn clock_period_ns(&self, ) -> f64 {
+    pub fn clock_period_ns(&self) -> f64 {
         // return 1000.0 / self.clock_mhz
         0.0
     }
@@ -187,7 +187,7 @@ impl PartitionAssignment {
         0.0
     }
 
-    pub fn num_dies(&self, ) -> f64 {
+    pub fn num_dies(&self) -> f64 {
         // return len(self.dies)
         0.0
     }
@@ -202,22 +202,22 @@ impl PartitionAssignment {
         0.0
     }
 
-    pub fn num_entries(&self, ) -> f64 {
+    pub fn num_entries(&self) -> f64 {
         // return len(self.entries)
         0.0
     }
 
-    pub fn target_dies(&self, ) -> f64 {
+    pub fn target_dies(&self) -> f64 {
         // return sorted(set(e.dst_die for e in self.entries))
         0.0
     }
 
-    pub fn total_nj(&self, ) -> f64 {
+    pub fn total_nj(&self) -> f64 {
         // return self.total_pj / 1000.0
         0.0
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // d = {"sc_chiplet_top.sv": self.top_sv}
         // for die_id, sv in self.die_modules.items():
         // d[f"sc_chiplet_die_{die_id}.sv"] = sv
@@ -324,19 +324,19 @@ impl PartitionAssignment {
         0.0
     }
 
-    pub fn ratio(&self, ) -> f64 {
+    pub fn ratio(&self) -> f64 {
         // if self.dst_clk_mhz == 0:
         // return 1.0
         // return self.src_clk_mhz / self.dst_clk_mhz
         0.0
     }
 
-    pub fn is_mesochronous(&self, ) -> f64 {
+    pub fn is_mesochronous(&self) -> f64 {
         // return abs(self.ratio - 1.0) < 0.01
         0.0
     }
 
-    pub fn is_throttled(&self, ) -> f64 {
+    pub fn is_throttled(&self) -> f64 {
         // return self.temperature_c >= self.max_temperature_c
         0.0
     }
@@ -347,29 +347,29 @@ impl PartitionAssignment {
         0 // spike indicator
     }
 
-    pub fn effective_bandwidth_ratio(&self, ) -> f64 {
+    pub fn effective_bandwidth_ratio(&self) -> f64 {
         // if self.overhead_bits == 0:
         // return 1.0
         // return 64.0 / (64.0 + self.overhead_bits)
         0.0
     }
 
-    pub fn buffer_flits(&self, ) -> f64 {
+    pub fn buffer_flits(&self) -> f64 {
         // return self.initial_credits * self.credit_granularity
         0.0
     }
 
-    pub fn latency_ns(&self, ) -> f64 {
+    pub fn latency_ns(&self) -> f64 {
         // return self.latency_ps / 1000.0
         0.0
     }
 
-    pub fn bandwidth_gbps(&self, ) -> f64 {
+    pub fn bandwidth_gbps(&self) -> f64 {
         // return self.tsv_count * 200e6 / 1e9
         0.0
     }
 
-    pub fn is_gated(&self, ) -> f64 {
+    pub fn is_gated(&self) -> f64 {
         // return not self.is_active
         0.0
     }
@@ -387,7 +387,7 @@ impl PartitionAssignment {
         0.0
     }
 
-    pub fn active_dies(&self, ) -> f64 {
+    pub fn active_dies(&self) -> f64 {
         // result = []
         // for d in self.domains:
         // if d.is_active:
@@ -396,7 +396,7 @@ impl PartitionAssignment {
         0.0
     }
 
-    pub fn gated_dies(&self, ) -> f64 {
+    pub fn gated_dies(&self) -> f64 {
         // result = []
         // for d in self.domains:
         // if not d.is_active:
@@ -433,7 +433,6 @@ impl PartitionAssignment {
         // if src_die not in tables:
         0.0
     }
-
 }
 
 pub fn validate_chiplet_gen(state: &PartitionAssignment) -> bool {

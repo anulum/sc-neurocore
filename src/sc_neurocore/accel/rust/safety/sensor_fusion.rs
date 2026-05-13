@@ -78,19 +78,19 @@ impl FusionEnergyEstimator {
         }
     }
 
-    pub fn num_events(&self, ) -> f64 {
+    pub fn num_events(&self) -> f64 {
         // return len(self.timestamps)
         0.0
     }
 
-    pub fn duration_us(&self, ) -> f64 {
+    pub fn duration_us(&self) -> f64 {
         // if self.num_events < 2:
         // return 0.0
         // return float(self.timestamps[-1] - self.timestamps[0])
         0.0
     }
 
-    pub fn event_rate(&self, ) -> f64 {
+    pub fn event_rate(&self) -> f64 {
         // dur = self.duration_us
         // return self.num_events / (dur * 1e-6) if dur > 0 else 0.0
         0.0
@@ -268,7 +268,14 @@ impl FusionEnergyEstimator {
         0.0
     }
 
-    pub fn encode_events(&self, timestamps: f64, x: f64, y: f64, polarities: f64, resolution: f64) -> f64 {
+    pub fn encode_events(
+        &self,
+        timestamps: f64,
+        x: f64,
+        y: f64,
+        polarities: f64,
+        resolution: f64,
+    ) -> f64 {
         // timestamps: np.ndarray,
         // x: np.ndarray,
         // y: np.ndarray,
@@ -310,7 +317,13 @@ impl FusionEnergyEstimator {
         0.0
     }
 
-    pub fn encode_pressure(&self, timestamps: f64, taxel_ids: f64, pressures: f64, threshold: f64) -> f64 {
+    pub fn encode_pressure(
+        &self,
+        timestamps: f64,
+        taxel_ids: f64,
+        pressures: f64,
+        threshold: f64,
+    ) -> f64 {
         // timestamps: np.ndarray,
         // taxel_ids: np.ndarray,
         // pressures: np.ndarray,
@@ -327,7 +340,13 @@ impl FusionEnergyEstimator {
         0.0
     }
 
-    pub fn encode_angular_rate(&self, timestamps: f64, axis_id: f64, rates_dps: f64, deadzone_dps: f64) -> f64 {
+    pub fn encode_angular_rate(
+        &self,
+        timestamps: f64,
+        axis_id: f64,
+        rates_dps: f64,
+        deadzone_dps: f64,
+    ) -> f64 {
         // timestamps: np.ndarray,
         // axis_id: np.ndarray,
         // rates_dps: np.ndarray,
@@ -383,7 +402,13 @@ impl FusionEnergyEstimator {
         0.0
     }
 
-    pub fn emit(&self, module_name: f64, num_streams: f64, bitstream_width: f64, use_attention: f64) -> f64 {
+    pub fn emit(
+        &self,
+        module_name: f64,
+        num_streams: f64,
+        bitstream_width: f64,
+        use_attention: f64,
+    ) -> f64 {
         // module_name: str = "sc_multimodal_fusion",
         // num_streams: int = 4,
         // bitstream_width: int = 16,
@@ -402,12 +427,19 @@ impl FusionEnergyEstimator {
         0.0
     }
 
-    pub fn total_mw(&self, ) -> f64 {
+    pub fn total_mw(&self) -> f64 {
         // return self.total_uw / 1000.0
         0.0
     }
 
-    pub fn estimate(&self, num_streams: f64, num_channels: f64, bitstream_length: f64, use_attention: f64, clock_mhz: f64) -> f64 {
+    pub fn estimate(
+        &self,
+        num_streams: f64,
+        num_channels: f64,
+        bitstream_length: f64,
+        use_attention: f64,
+        clock_mhz: f64,
+    ) -> f64 {
         // self,
         // num_streams: int,
         // num_channels: int,
@@ -425,7 +457,6 @@ impl FusionEnergyEstimator {
         // else:
         0.0
     }
-
 }
 
 pub fn validate_sensor_fusion(state: &FusionEnergyEstimator) -> bool {
@@ -441,5 +472,4 @@ mod tests {
         let state = FusionEnergyEstimator::new();
         assert!(validate_sensor_fusion(&state));
     }
-
 }

@@ -80,7 +80,6 @@ impl ConnorStevensNeuron {
         self.n = 0.1_f64;
         self.a = 0.5_f64;
     }
-
 }
 
 pub fn validate_connor_stevens(state: &ConnorStevensNeuron) -> bool {

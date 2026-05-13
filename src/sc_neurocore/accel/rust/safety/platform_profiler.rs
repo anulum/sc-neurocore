@@ -31,7 +31,6 @@ impl PlatformResult {
             notes: 0.0_f64,
         }
     }
-
 }
 
 pub fn validate_platform_profiler(state: &PlatformResult) -> bool {
@@ -47,5 +46,4 @@ mod tests {
         let state = PlatformResult::new();
         assert!(validate_platform_profiler(&state));
     }
-
 }

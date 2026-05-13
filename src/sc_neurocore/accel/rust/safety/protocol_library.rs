@@ -58,7 +58,7 @@ impl SleepProtocol {
         0.0
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // return {
         // "name": self.name,
         // "description": self.description,
@@ -76,7 +76,6 @@ impl SleepProtocol {
         // for s, a in self.stage_audio.items()
         0.0
     }
-
 }
 
 pub fn validate_protocol_library(state: &SleepProtocol) -> bool {
@@ -92,5 +91,4 @@ mod tests {
         let state = SleepProtocol::new();
         assert!(validate_protocol_library(&state));
     }
-
 }

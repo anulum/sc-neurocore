@@ -57,7 +57,6 @@ impl KilincBhattMapNeuron {
         self.beta = 0.95_f64;
         self.gamma = 0.3_f64;
     }
-
 }
 
 pub fn validate_kilinc_bhatt_map_neuron(state: &KilincBhattMapNeuron) -> bool {

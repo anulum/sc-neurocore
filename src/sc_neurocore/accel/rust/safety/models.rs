@@ -136,7 +136,14 @@ pub fn _try_rust_simulate(name: f64, n_steps: f64, current_trace: f64, actual_dt
     0.0
 }
 
-pub fn simulate_model(name: f64, param_overrides: f64, dt: f64, duration: f64, current: f64, protocol: f64) -> f64 {
+pub fn simulate_model(
+    name: f64,
+    param_overrides: f64,
+    dt: f64,
+    duration: f64,
+    current: f64,
+    protocol: f64,
+) -> f64 {
     // name: str,
     // param_overrides: dict[str, float] | 0 = 0,
     // dt: float | 0 = 0,

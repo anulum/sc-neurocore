@@ -32,17 +32,17 @@ impl CircadianOptimizer {
         }
     }
 
-    pub fn get_profile(&self, ) -> f64 {
+    pub fn get_profile(&self) -> f64 {
         // return self._profile
         0.0
     }
 
-    pub fn get_sleep_window(&self, ) -> f64 {
+    pub fn get_sleep_window(&self) -> f64 {
         // return (self._profile.bedtime_hour, self._profile.wake_hour)
         0.0
     }
 
-    pub fn get_recommended_protocol(&self, ) -> f64 {
+    pub fn get_recommended_protocol(&self) -> f64 {
         // return self._profile.default_protocol
         0.0
     }
@@ -67,7 +67,7 @@ impl CircadianOptimizer {
         0.0
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // p = self._profile
         // return {
         // "chronotype": self.chronotype.value,
@@ -79,7 +79,6 @@ impl CircadianOptimizer {
         // }
         0.0
     }
-
 }
 
 pub fn validate_circadian_optimizer(state: &CircadianOptimizer) -> bool {
@@ -95,5 +94,4 @@ mod tests {
         let state = CircadianOptimizer::new();
         assert!(validate_circadian_optimizer(&state));
     }
-
 }

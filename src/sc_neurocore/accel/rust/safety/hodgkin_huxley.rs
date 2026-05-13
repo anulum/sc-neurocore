@@ -108,7 +108,6 @@ impl HodgkinHuxleyNeuron {
         self.n = 0.32_f64;
         self.c_m = 1.0_f64;
     }
-
 }
 
 pub fn validate_hodgkin_huxley(state: &HodgkinHuxleyNeuron) -> bool {

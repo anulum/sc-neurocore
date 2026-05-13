@@ -93,5 +93,4 @@ pub fn backward(ctx: f64, grad_output: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-
 }

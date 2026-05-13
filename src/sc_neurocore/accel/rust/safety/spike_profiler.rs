@@ -78,7 +78,7 @@ impl _LayerAccumulator {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [
         // f"SpikeProfiler Report: {self.total_steps} steps, "
         // f"{self.total_neurons} neurons, {self.total_spikes} total spikes",
@@ -97,7 +97,7 @@ impl _LayerAccumulator {
         0.0
     }
 
-    pub fn has_critical(&self, ) -> f64 {
+    pub fn has_critical(&self) -> f64 {
         // return any(p.severity == Severity.CRITICAL for p in self.pathologies)
         0.0
     }
@@ -124,7 +124,7 @@ impl _LayerAccumulator {
         self.suggestion = 0.0_f64;
     }
 
-    pub fn report(&self, ) -> f64 {
+    pub fn report(&self) -> f64 {
         // report = ProfileReport()
         // for name, acc in self._layers.items():
         // stats = acc.compute_stats()
@@ -176,7 +176,7 @@ impl _LayerAccumulator {
         0.0
     }
 
-    pub fn compute_stats(&self, ) -> f64 {
+    pub fn compute_stats(&self) -> f64 {
         // n = max(self._n_steps, 1)
         // firing_rates = self._spike_sums / n if self._spike_sums is not 0.0 els
         // dead = int((firing_rates < 0.01).sum())
@@ -194,7 +194,6 @@ impl _LayerAccumulator {
         // total_spikes=self._total_spikes,
         0.0
     }
-
 }
 
 pub fn validate_spike_profiler(state: &_LayerAccumulator) -> bool {
@@ -210,5 +209,4 @@ mod tests {
         let state = _LayerAccumulator::new();
         assert!(validate_spike_profiler(&state));
     }
-
 }

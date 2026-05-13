@@ -32,7 +32,7 @@ impl ShortTermPlasticitySynapse {
         }
     }
 
-    pub fn new_depressing(&self, ) -> f64 {
+    pub fn new_depressing(&self) -> f64 {
         // return cls(
         // x=1.0,
         // u=0.5,
@@ -44,7 +44,7 @@ impl ShortTermPlasticitySynapse {
         0.0
     }
 
-    pub fn new_facilitating(&self, ) -> f64 {
+    pub fn new_facilitating(&self) -> f64 {
         // return cls(
         // x=1.0,
         // u=0.1,
@@ -82,7 +82,6 @@ impl ShortTermPlasticitySynapse {
         self.tau_d = 200.0_f64;
         self.tau_f = 20.0_f64;
     }
-
 }
 
 pub fn validate_short_term_plasticity(state: &ShortTermPlasticitySynapse) -> bool {

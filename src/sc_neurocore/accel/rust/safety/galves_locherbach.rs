@@ -30,7 +30,7 @@ impl GalvesLocherbachNeuron {
         }
     }
 
-    pub fn _firing_prob(&self, ) -> f64 {
+    pub fn _firing_prob(&self) -> f64 {
         // return 1.0 / (1.0 + (-self.steepness * (self.v - self.threshold_rate_f
         0.0
     }
@@ -53,7 +53,6 @@ impl GalvesLocherbachNeuron {
         self.threshold_rate = 0.5_f64;
         self.steepness = 5.0_f64;
     }
-
 }
 
 pub fn validate_galves_locherbach(state: &GalvesLocherbachNeuron) -> bool {

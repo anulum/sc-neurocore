@@ -36,7 +36,6 @@ impl BCIClosedLoopEngine {
         // return {"command": command, "latency_ms": latency, "spikes": int(np.su
         0.0
     }
-
 }
 
 pub fn validate_bci_primitives(state: &BCIClosedLoopEngine) -> bool {
@@ -52,5 +51,4 @@ mod tests {
         let state = BCIClosedLoopEngine::new();
         assert!(validate_bci_primitives(&state));
     }
-
 }

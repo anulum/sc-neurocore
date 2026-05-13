@@ -62,7 +62,7 @@ impl EnergyAccountant {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [
         // f"Energy Report [{self.hardware}]: {self.total_energy_nj:.2f} nJ total
         // "",
@@ -78,14 +78,14 @@ impl EnergyAccountant {
         0.0
     }
 
-    pub fn dominant_layer(&self, ) -> f64 {
+    pub fn dominant_layer(&self) -> f64 {
         // if not self.layers:
         // return 0.0
         // return max(self.layers, key=lambda l: l.total_pj).name
         0.0
     }
 
-    pub fn energy_per_spike_pj(&self, ) -> f64 {
+    pub fn energy_per_spike_pj(&self) -> f64 {
         // total_spikes = sum(l.n_spikes for l in self.layers)
         // if total_spikes == 0:
         // return 0.0
@@ -93,7 +93,13 @@ impl EnergyAccountant {
         0.0
     }
 
-    pub fn account(&self, layer_names: f64, layer_sizes: f64, spike_counts: f64, n_timesteps: f64) -> f64 {
+    pub fn account(
+        &self,
+        layer_names: f64,
+        layer_sizes: f64,
+        spike_counts: f64,
+        n_timesteps: f64,
+    ) -> f64 {
         // self,
         // layer_names: list[str],
         // layer_sizes: list[tuple[int, int]],
@@ -111,7 +117,6 @@ impl EnergyAccountant {
         // # Membrane updates: all neurons updated every timestep
         0.0
     }
-
 }
 
 pub fn validate_accountant(state: &EnergyAccountant) -> bool {
@@ -127,5 +132,4 @@ mod tests {
         let state = EnergyAccountant::new();
         assert!(validate_accountant(&state));
     }
-
 }

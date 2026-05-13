@@ -76,16 +76,15 @@ impl HeronR2NoiseModel {
         0.0
     }
 
-    pub fn gate_fidelity_1q(&self, ) -> f64 {
+    pub fn gate_fidelity_1q(&self) -> f64 {
         // return 1.0 - self.params.single_qubit_error
         0.0
     }
 
-    pub fn gate_fidelity_2q(&self, ) -> f64 {
+    pub fn gate_fidelity_2q(&self) -> f64 {
         // return 1.0 - self.params.cx_error
         0.0
     }
-
 }
 
 pub fn validate_noise_models(state: &HeronR2NoiseModel) -> bool {
@@ -101,5 +100,4 @@ mod tests {
         let state = HeronR2NoiseModel::new();
         assert!(validate_noise_models(&state));
     }
-
 }

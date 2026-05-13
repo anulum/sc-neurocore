@@ -43,7 +43,7 @@ impl EnergyMetrics {
         self.total_ops_and = 0.0_f64;
     }
 
-    pub fn estimate_energy(&self, ) -> f64 {
+    pub fn estimate_energy(&self) -> f64 {
         // e_logic = (self.total_ops_and * self.E_AND) + (self.total_ops_xor * se
         // e_mem = self.total_bits_mem * self.E_MEM
         // return e_logic + e_mem
@@ -57,7 +57,6 @@ impl EnergyMetrics {
         // return kwh * carbon_intensity_g_per_kwh
         0.0
     }
-
 }
 
 pub fn validate_energy(state: &EnergyMetrics) -> bool {
@@ -73,5 +72,4 @@ mod tests {
         let state = EnergyMetrics::new();
         assert!(validate_energy(&state));
     }
-
 }

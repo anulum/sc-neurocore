@@ -38,7 +38,7 @@ pub struct RuleConstraints {
     pub population_size: f64,
     pub mutation_rate: f64,
     pub mutation_scale: f64,
-    pub elite_count: f64,
+    pub survivor_count: f64,
     pub population: f64,
 }
 
@@ -73,12 +73,12 @@ impl RuleConstraints {
             population_size: 8.0_f64,
             mutation_rate: 0.1_f64,
             mutation_scale: 0.05_f64,
-            elite_count: 2.0_f64,
+            survivor_count: 2.0_f64,
             population: 0.0_f64,
         }
     }
 
-    pub fn to_vector(&self, ) -> f64 {
+    pub fn to_vector(&self) -> f64 {
         // return np.array([self.tau_plus, self.tau_minus, self.a_plus, self.a_mi
         0.0
     }
@@ -94,10 +94,6 @@ impl RuleConstraints {
         0.0
     }
 
-
-
-
-
     pub fn adapt(&self, measured_rate_hz: f64) -> f64 {
         // error = self.target_rate_hz - measured_rate_hz
         // self.current_gain += self.gain_adaptation_rate * error
@@ -106,16 +102,12 @@ impl RuleConstraints {
         0.0
     }
 
-
-
-
-
-    pub fn vector_dim(&self, ) -> f64 {
+    pub fn vector_dim(&self) -> f64 {
         // return len(self.to_vector())
         0.0
     }
 
-    pub fn copy(&self, ) -> f64 {
+    pub fn copy(&self) -> f64 {
         // return copy.deepcopy(self)
         0.0
     }
@@ -125,7 +117,7 @@ impl RuleConstraints {
         0.0
     }
 
-    pub fn decide(&self, ) -> f64 {
+    pub fn decide(&self) -> f64 {
         // if len(self.observation_window) < 5:
         // return [MetaControlSignal(MetaSignalType.NO_OP)]
         // recent = list(self.observation_window)[-10:]
@@ -175,7 +167,7 @@ impl RuleConstraints {
         0.0
     }
 
-    pub fn select_parents(&self, ) -> f64 {
+    pub fn select_parents(&self) -> f64 {
         // candidates = self.rng.choice(len(self.population), size=4, replace=fal
         // sorted_c = sorted(candidates, key=lambda i: self.population[i].fitness
         // return self.population[sorted_c[0]], self.population[sorted_c[1]]
@@ -200,11 +192,11 @@ impl RuleConstraints {
         0.0
     }
 
-    pub fn evolve(&self, ) -> f64 {
+    pub fn evolve(&self) -> f64 {
         // self.generation += 1
         // sorted_pop = sorted(self.population, key=lambda r: r.fitness, reverse=
-        // # Elitism
-        // new_pop = [r.copy() for r in sorted_pop[: self.elite_count]]
+        // # Survivor selection
+        // new_pop = [r.copy() for r in sorted_pop[: self.survivor_count]]
         // # Fill rest with crossover + mutation
         // while len(new_pop) < self.population_size:
         // p1, p2 = self.select_parents()
@@ -216,12 +208,12 @@ impl RuleConstraints {
         0.0
     }
 
-    pub fn best(&self, ) -> f64 {
+    pub fn best(&self) -> f64 {
         // return max(self.population, key=lambda r: r.fitness)
         0.0
     }
 
-    pub fn mean_fitness(&self, ) -> f64 {
+    pub fn mean_fitness(&self) -> f64 {
         // return float(np.mean([r.fitness for r in self.population]))
         0.0
     }
@@ -269,7 +261,7 @@ impl RuleConstraints {
         0 // spike indicator
     }
 
-    pub fn status(&self, ) -> f64 {
+    pub fn status(&self) -> f64 {
         // return {
         // "step": self.step_count,
         // "rule_changes": self.rule_changes,
@@ -285,7 +277,7 @@ impl RuleConstraints {
         0.0
     }
 
-    pub fn restore(&self, ) -> f64 {
+    pub fn restore(&self) -> f64 {
         // rs = PlasticityRuleSet.from_vector(self.vector, gen=self.generation)
         // rs.fitness = self.fitness
         // return rs
@@ -307,7 +299,7 @@ impl RuleConstraints {
         0.0
     }
 
-    pub fn restore_best(&self, ) -> f64 {
+    pub fn restore_best(&self) -> f64 {
         // if not self.checkpoints:
         // return 0.0
         // best = max(self.checkpoints, key=lambda c: c.fitness)
@@ -323,7 +315,7 @@ impl RuleConstraints {
         0.0
     }
 
-    pub fn count(&self, ) -> f64 {
+    pub fn count(&self) -> f64 {
         // return len(self.checkpoints)
         0.0
     }
@@ -355,10 +347,6 @@ impl RuleConstraints {
         0.0
     }
 
-
-
-
-
     pub fn record(&self, metrics: f64) -> f64 {
         // self.replay_buffer.append(metrics)
         0.0
@@ -376,12 +364,12 @@ impl RuleConstraints {
         0.0
     }
 
-    pub fn buffer_size(&self, ) -> f64 {
+    pub fn buffer_size(&self) -> f64 {
         // return len(self.replay_buffer)
         0.0
     }
 
-    pub fn is_expired(&self, ) -> f64 {
+    pub fn is_expired(&self) -> f64 {
         // return self.tag_strength < 0.01
         0.0
     }
@@ -400,16 +388,14 @@ impl RuleConstraints {
         0.0
     }
 
-
-
-    pub fn prune_expired(&self, ) -> f64 {
+    pub fn prune_expired(&self) -> f64 {
         // before = len(self.tags)
         // self.tags = [t for t in self.tags if not t.is_expired || t.captured]
         // return before - len(self.tags)
         0.0
     }
 
-    pub fn active_tags(&self, ) -> f64 {
+    pub fn active_tags(&self) -> f64 {
         // return sum(1 for t in self.tags if not t.captured && not t.is_expired)
         0.0
     }
@@ -427,19 +413,17 @@ impl RuleConstraints {
         0.0
     }
 
-    pub fn contexts(&self, ) -> f64 {
+    pub fn contexts(&self) -> f64 {
         // return list(self.bank.keys())
         0.0
     }
 
-    pub fn num_contexts(&self, ) -> f64 {
+    pub fn num_contexts(&self) -> f64 {
         // return len(self.bank)
         0.0
     }
 
-
-
-    pub fn trend(&self, ) -> f64 {
+    pub fn trend(&self) -> f64 {
         // if len(self.history) < 2:
         // return 0.0
         // recent = self.history[-self.window :]
@@ -452,12 +436,12 @@ impl RuleConstraints {
         0.0
     }
 
-    pub fn is_improving(&self, ) -> f64 {
+    pub fn is_improving(&self) -> f64 {
         // return self.trend() > 0
         0.0
     }
 
-    pub fn is_stagnant(&self, ) -> f64 {
+    pub fn is_stagnant(&self) -> f64 {
         // if len(self.history) < self.window:
         // return false
         // recent = self.history[-self.window :]
@@ -465,7 +449,7 @@ impl RuleConstraints {
         0.0
     }
 
-    pub fn best_ever(&self, ) -> f64 {
+    pub fn best_ever(&self) -> f64 {
         // return max(self.history) if self.history else 0.0
         0.0
     }
@@ -500,7 +484,6 @@ impl RuleConstraints {
         // return self.stp_u_range[0] <= u <= self.stp_u_range[1]
         0.0
     }
-
 }
 
 pub fn validate_meta_plasticity(state: &RuleConstraints) -> bool {

@@ -46,12 +46,12 @@ impl MotorUnit {
         }
     }
 
-    pub fn slow(&self, ) -> f64 {
+    pub fn slow(&self) -> f64 {
         // return cls()
         0.0
     }
 
-    pub fn fast(&self, ) -> f64 {
+    pub fn fast(&self) -> f64 {
         // return cls(
         // tau_m=6.0,
         // tau_adapt=50.0,
@@ -87,7 +87,6 @@ impl MotorUnit {
         self.v_threshold = -50.0_f64;
         self.tau_m = 10.0_f64;
     }
-
 }
 
 pub fn validate_motor_unit(state: &MotorUnit) -> bool {

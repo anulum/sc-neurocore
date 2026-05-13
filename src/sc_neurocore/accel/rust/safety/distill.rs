@@ -60,9 +60,6 @@ impl SelfDistiller {
         // return self._softmax(teacher_logits / self.temperature)
         0.0
     }
-
-
-
 }
 
 pub fn validate_distill(state: &SelfDistiller) -> bool {
@@ -78,5 +75,4 @@ mod tests {
         let state = SelfDistiller::new();
         assert!(validate_distill(&state));
     }
-
 }

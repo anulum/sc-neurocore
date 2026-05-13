@@ -95,7 +95,6 @@ impl AlphaMotorNeuron {
         self.m_pic = 0.0_f64;
         self.h_pic = 1.0_f64;
     }
-
 }
 
 pub fn validate_alpha_motor_neuron(state: &AlphaMotorNeuron) -> bool {

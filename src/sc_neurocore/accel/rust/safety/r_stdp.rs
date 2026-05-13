@@ -52,7 +52,6 @@ impl RewardModulatedSTDPSynapse {
         // self.update_weight(new_w)
         0.0
     }
-
 }
 
 pub fn validate_r_stdp(state: &RewardModulatedSTDPSynapse) -> bool {
@@ -68,5 +67,4 @@ mod tests {
         let state = RewardModulatedSTDPSynapse::new();
         assert!(validate_r_stdp(&state));
     }
-
 }

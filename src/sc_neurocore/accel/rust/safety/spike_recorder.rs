@@ -35,17 +35,17 @@ impl BitstreamSpikeRecorder {
         self.spikes = 0.0_f64;
     }
 
-    pub fn as_array(&self, ) -> f64 {
+    pub fn as_array(&self) -> f64 {
         // return np.array(self.spikes, dtype=np.uint8)
         0.0
     }
 
-    pub fn total_spikes(&self, ) -> f64 {
+    pub fn total_spikes(&self) -> f64 {
         // return int(np.sum(self.as_array()))
         0.0
     }
 
-    pub fn firing_rate_hz(&self, ) -> f64 {
+    pub fn firing_rate_hz(&self) -> f64 {
         // spikes = self.as_array()
         // T = spikes.size
         // if T == 0:
@@ -71,7 +71,6 @@ impl BitstreamSpikeRecorder {
         // return hist, bin_edges
         0.0
     }
-
 }
 
 pub fn validate_spike_recorder(state: &BitstreamSpikeRecorder) -> bool {
@@ -87,5 +86,4 @@ mod tests {
         let state = BitstreamSpikeRecorder::new();
         assert!(validate_spike_recorder(&state));
     }
-
 }

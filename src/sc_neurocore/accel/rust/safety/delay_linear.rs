@@ -61,26 +61,25 @@ impl DelayLinear {
         0 // spike indicator
     }
 
-    pub fn delays_int(&self, ) -> f64 {
+    pub fn delays_int(&self) -> f64 {
         // with torch.no_grad():
         // return self.delay.clamp(0, self.max_delay).round().long()
         0.0
     }
 
-    pub fn to_nir_delay_array(&self, ) -> f64 {
+    pub fn to_nir_delay_array(&self) -> f64 {
         // import numpy as np
         // return self.delays_int.detach().cpu().numpy().flatten().astype(np.floa
         0.0
     }
 
-    pub fn extra_repr(&self, ) -> f64 {
+    pub fn extra_repr(&self) -> f64 {
         // return (
         // f"in_features={self.in_features}, out_features={self.out_features}, "
         // f"max_delay={self.max_delay}, learn_delay={isinstance(self.delay, nn.P
         // )
         0.0
     }
-
 }
 
 pub fn validate_delay_linear(state: &DelayLinear) -> bool {

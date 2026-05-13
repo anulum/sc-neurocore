@@ -46,7 +46,7 @@ impl OptimizationResult {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [
         // f"Resource Optimization: {self.target}",
         // f"  Fits: {'YES' if self.fits else 'NO'}",
@@ -60,7 +60,6 @@ impl OptimizationResult {
         // return "\n".join(lines)
         0.0
     }
-
 }
 
 pub fn validate_resource_optimizer(state: &OptimizationResult) -> bool {
@@ -76,5 +75,4 @@ mod tests {
         let state = OptimizationResult::new();
         assert!(validate_resource_optimizer(&state));
     }
-
 }

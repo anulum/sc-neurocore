@@ -93,7 +93,6 @@ impl WendlingNeuron {
         self.y6 = 0.0_f64;
         self.y2 = 0.0_f64;
     }
-
 }
 
 pub fn validate_wendling(state: &WendlingNeuron) -> bool {

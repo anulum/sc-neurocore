@@ -28,14 +28,14 @@ impl SpikePredictor {
         }
     }
 
-    pub fn _features(&self, ) -> f64 {
+    pub fn _features(&self) -> f64 {
         // # Ordered: oldest first
         // indices = [(self._t + i) % self.history_len for i in range(self.histor
         // return self._history[indices].ravel()
         0.0
     }
 
-    pub fn predict_probs(&self, ) -> f64 {
+    pub fn predict_probs(&self) -> f64 {
         // features = self._features()
         // logits = self.W @ features + self.bias
         // # Sigmoid activation
@@ -44,7 +44,7 @@ impl SpikePredictor {
         0.0
     }
 
-    pub fn predict(&self, ) -> f64 {
+    pub fn predict(&self) -> f64 {
         // return (self.predict_probs() > self.threshold).astype(np.int8)
         0.0
     }
@@ -70,7 +70,6 @@ impl SpikePredictor {
         self.threshold = 0.5_f64;
         self.seed = 42.0_f64;
     }
-
 }
 
 pub fn validate_spike_predictor(state: &SpikePredictor) -> bool {
@@ -86,5 +85,4 @@ mod tests {
         let state = SpikePredictor::new();
         assert!(validate_spike_predictor(&state));
     }
-
 }

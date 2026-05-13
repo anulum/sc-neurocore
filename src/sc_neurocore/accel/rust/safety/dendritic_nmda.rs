@@ -69,7 +69,6 @@ impl DendriticNMDANeuron {
         self.g_coupling = 0.5_f64;
         self.tau_soma = 20.0_f64;
     }
-
 }
 
 pub fn validate_dendritic_nmda(state: &DendriticNMDANeuron) -> bool {

@@ -69,12 +69,12 @@ impl L2_NeurochemicalLayer {
         0.0
     }
 
-    pub fn get_global_metric(&self, ) -> f64 {
+    pub fn get_global_metric(&self) -> f64 {
         // return float(np.mean(self.receptor_states))
         0.0
     }
 
-    pub fn get_neuromodulation_state(&self, ) -> f64 {
+    pub fn get_neuromodulation_state(&self) -> f64 {
         // return {
         // "dopamine": float(self.nt_concentrations[self.DA]),
         // "serotonin": float(self.nt_concentrations[self.SEROTONIN]),
@@ -83,7 +83,6 @@ impl L2_NeurochemicalLayer {
         // }
         0.0
     }
-
 }
 
 pub fn validate_l2_neurochemical(state: &L2_NeurochemicalLayer) -> bool {

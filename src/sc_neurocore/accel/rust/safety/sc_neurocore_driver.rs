@@ -28,7 +28,7 @@ impl SC_NeuroCore_Driver {
         }
     }
 
-    pub fn _connect_to_fpga(&self, ) -> f64 {
+    pub fn _connect_to_fpga(&self) -> f64 {
         // try:
         // from pynq import Overlay, allocate  # type_val: ignore  # noqa: F401
         // if not os.path.exists(self.bitstream_path):
@@ -72,7 +72,6 @@ impl SC_NeuroCore_Driver {
         // )
         0.0
     }
-
 }
 
 pub fn validate_sc_neurocore_driver(state: &SC_NeuroCore_Driver) -> bool {
@@ -88,5 +87,4 @@ mod tests {
         let state = SC_NeuroCore_Driver::new();
         assert!(validate_sc_neurocore_driver(&state));
     }
-
 }

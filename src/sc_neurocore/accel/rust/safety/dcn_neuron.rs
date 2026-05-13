@@ -105,7 +105,6 @@ impl DCNNeuron {
         self.p = 0.01_f64;
         self.s = 0.8_f64;
     }
-
 }
 
 pub fn validate_dcn_neuron(state: &DCNNeuron) -> bool {

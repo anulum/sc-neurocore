@@ -55,7 +55,6 @@ impl TermanWangOscillator {
         self.beta = 0.2_f64;
         self.epsilon = 0.02_f64;
     }
-
 }
 
 pub fn validate_terman_wang(state: &TermanWangOscillator) -> bool {

@@ -112,7 +112,6 @@ impl MarderSTGNeuron {
         self.m_cat = 0.0_f64;
         self.h_cat = 0.9_f64;
     }
-
 }
 
 pub fn validate_marder_stg(state: &MarderSTGNeuron) -> bool {

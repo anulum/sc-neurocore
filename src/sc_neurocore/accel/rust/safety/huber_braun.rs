@@ -69,7 +69,6 @@ impl HuberBraunNeuron {
         self.g_sd = 1.5_f64;
         self.g_sr = 0.4_f64;
     }
-
 }
 
 pub fn validate_huber_braun(state: &HuberBraunNeuron) -> bool {

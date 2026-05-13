@@ -28,14 +28,13 @@ impl EquivResult {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // status = "PROVED" if self.passed else "FAILED"
         // return (
         // f"Equivalence [{self.module}]: {status} (BMC depth={self.depth}, engin
         // )
         0.0
     }
-
 }
 
 pub fn validate_equiv(state: &EquivResult) -> bool {
@@ -51,5 +50,4 @@ mod tests {
         let state = EquivResult::new();
         assert!(validate_equiv(&state));
     }
-
 }

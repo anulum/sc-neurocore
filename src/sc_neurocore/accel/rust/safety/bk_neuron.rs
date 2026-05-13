@@ -84,7 +84,6 @@ impl BKNeuron {
         self.ca = 0.0_f64;
         self.g_na = 35.0_f64;
     }
-
 }
 
 pub fn validate_bk_neuron(state: &BKNeuron) -> bool {

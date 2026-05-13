@@ -62,30 +62,25 @@ impl IzhikevichNeuron {
         self.a_q16 = 1311.0_f64;
     }
 
-
-
-
-
-    pub fn regular_spiking(&self, ) -> f64 {
+    pub fn regular_spiking(&self) -> f64 {
         // return cls(a_q16=1311, b_q16=13107, c_q16=-4259840, d_q16=524288)
         0.0
     }
 
-    pub fn fast_spiking(&self, ) -> f64 {
+    pub fn fast_spiking(&self) -> f64 {
         // return cls(a_q16=6554, b_q16=13107, c_q16=-4259840, d_q16=131072)
         0.0
     }
 
-    pub fn chattering(&self, ) -> f64 {
+    pub fn chattering(&self) -> f64 {
         // return cls(a_q16=1311, b_q16=13107, c_q16=-3276800, d_q16=131072)
         0.0
     }
 
-    pub fn intrinsic_burst(&self, ) -> f64 {
+    pub fn intrinsic_burst(&self) -> f64 {
         // return cls(a_q16=1311, b_q16=13107, c_q16=-3604480, d_q16=262144)
         0.0
     }
-
 }
 
 pub fn validate_neuron(state: &IzhikevichNeuron) -> bool {
@@ -101,5 +96,4 @@ mod tests {
         let state = IzhikevichNeuron::new();
         assert!(validate_neuron(&state));
     }
-
 }

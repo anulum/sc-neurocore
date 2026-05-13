@@ -52,7 +52,7 @@ impl AdaptiveAudioEngine {
         }
     }
 
-    pub fn to_dict(&self, ) -> f64 {
+    pub fn to_dict(&self) -> f64 {
         // return {
         // "total_ticks": self.total_ticks,
         // "avg_evs": round(self.avg_evs, 2),
@@ -66,7 +66,7 @@ impl AdaptiveAudioEngine {
         0.0
     }
 
-    pub fn _update_phase(&self, ) -> f64 {
+    pub fn _update_phase(&self) -> f64 {
         // if self._phase == SessionPhase.DISCOVERY && self._tick >= _DISCOVERY_T
         // self._phase = SessionPhase.LOCK_ON
         // self._phase_start_tick = self._tick
@@ -78,7 +78,7 @@ impl AdaptiveAudioEngine {
         0.0
     }
 
-    pub fn _evs_trend(&self, ) -> f64 {
+    pub fn _evs_trend(&self) -> f64 {
         // if len(self._recent_evs) < 3:
         // return 0.0
         // recent = np.array(self._recent_evs[-self._trend_window :])
@@ -191,7 +191,7 @@ impl AdaptiveAudioEngine {
         0.0
     }
 
-    pub fn get_session_report(&self, ) -> f64 {
+    pub fn get_session_report(&self) -> f64 {
         // total = len(self._evs_scores)
         // avg_evs = float(np.mean(self._evs_scores)) if self._evs_scores else 0.
         // peak_evs = float(np.max(self._evs_scores)) if self._evs_scores else 0.
@@ -210,12 +210,12 @@ impl AdaptiveAudioEngine {
         0.0
     }
 
-    pub fn current_phase(&self, ) -> f64 {
+    pub fn current_phase(&self) -> f64 {
         // return self._phase
         0.0
     }
 
-    pub fn tick(&self, ) -> f64 {
+    pub fn tick(&self) -> f64 {
         // return self._tick
         0.0
     }
@@ -236,7 +236,6 @@ impl AdaptiveAudioEngine {
         self.old_value = 0.0_f64;
         self.new_value = 0.0_f64;
     }
-
 }
 
 pub fn validate_adaptive_engine(state: &AdaptiveAudioEngine) -> bool {
@@ -252,5 +251,4 @@ mod tests {
         let state = AdaptiveAudioEngine::new();
         assert!(validate_adaptive_engine(&state));
     }
-
 }

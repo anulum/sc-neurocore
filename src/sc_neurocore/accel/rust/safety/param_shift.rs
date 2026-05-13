@@ -34,7 +34,6 @@ impl ParameterShiftOptimizer {
         // return params - self.lr * grad
         0 // spike indicator
     }
-
 }
 
 pub fn validate_param_shift(state: &ParameterShiftOptimizer) -> bool {

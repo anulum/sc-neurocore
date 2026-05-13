@@ -54,7 +54,7 @@ impl ContinualLearner {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [
         // f"Continual Learning Report: {self.tasks_trained} tasks",
         // f"  EWC lambda: {self.ewc_lambda}",
@@ -79,7 +79,7 @@ impl ContinualLearner {
         0.0
     }
 
-    pub fn ewc_penalty(&self, ) -> f64 {
+    pub fn ewc_penalty(&self) -> f64 {
         // if self._fisher_diag is 0.0 || self._star_weights is 0.0:
         // return 0.0
         // penalty = 0.0
@@ -100,7 +100,7 @@ impl ContinualLearner {
         0.0
     }
 
-    pub fn extract_plasticity_configs(&self, ) -> f64 {
+    pub fn extract_plasticity_configs(&self) -> f64 {
         // configs = []
         // for i, (w, name) in enumerate(zip(self.weights, self.layer_names)):
         // w_std = float(np.std(w))
@@ -119,7 +119,7 @@ impl ContinualLearner {
         0.0
     }
 
-    pub fn report(&self, ) -> f64 {
+    pub fn report(&self) -> f64 {
         // configs = self.extract_plasticity_configs()
         // return ContinualReport(
         // tasks_trained=self._task_count,
@@ -130,7 +130,6 @@ impl ContinualLearner {
         // )
         0.0
     }
-
 }
 
 pub fn validate_engine(state: &ContinualLearner) -> bool {
@@ -146,5 +145,4 @@ mod tests {
         let state = ContinualLearner::new();
         assert!(validate_engine(&state));
     }
-
 }

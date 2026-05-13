@@ -48,17 +48,17 @@ impl SONATANetwork {
         }
     }
 
-    pub fn n_nodes(&self, ) -> f64 {
+    pub fn n_nodes(&self) -> f64 {
         // return len(self.nodes)
         0.0
     }
 
-    pub fn n_edges(&self, ) -> f64 {
+    pub fn n_edges(&self) -> f64 {
         // return len(self.edges)
         0.0
     }
 
-    pub fn connectivity_matrix(&self, ) -> f64 {
+    pub fn connectivity_matrix(&self) -> f64 {
         // N = self.n_nodes
         // W = np.zeros((N, N))
         // id_map = {n.node_id: i for i, n in enumerate(self.nodes)}
@@ -70,7 +70,6 @@ impl SONATANetwork {
         // return W
         0.0
     }
-
 }
 
 pub fn validate_sonata(state: &SONATANetwork) -> bool {
@@ -86,5 +85,4 @@ mod tests {
         let state = SONATANetwork::new();
         assert!(validate_sonata(&state));
     }
-
 }

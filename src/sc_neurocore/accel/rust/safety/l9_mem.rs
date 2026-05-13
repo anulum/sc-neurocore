@@ -89,7 +89,7 @@ impl L9_MemoryAdapter {
         0.0
     }
 
-    pub fn get_metrics(&self, ) -> f64 {
+    pub fn get_metrics(&self) -> f64 {
         // return {
         // "holographic_overlap": float(
         // jnp.mean(
@@ -100,7 +100,6 @@ impl L9_MemoryAdapter {
         // }
         0.0
     }
-
 }
 
 pub fn validate_l9_mem(state: &L9_MemoryAdapter) -> bool {
@@ -116,5 +115,4 @@ mod tests {
         let state = L9_MemoryAdapter::new();
         assert!(validate_l9_mem(&state));
     }
-
 }

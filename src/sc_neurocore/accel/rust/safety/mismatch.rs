@@ -74,7 +74,6 @@ impl FPGAMismatchModel {
         // }
         0.0
     }
-
 }
 
 pub fn validate_mismatch(state: &FPGAMismatchModel) -> bool {
@@ -90,5 +89,4 @@ mod tests {
         let state = FPGAMismatchModel::new();
         assert!(validate_mismatch(&state));
     }
-
 }

@@ -117,7 +117,6 @@ impl GolgiCell {
         self.p_na = 0.01_f64;
         self.n = 0.05_f64;
     }
-
 }
 
 pub fn validate_golgi_cell(state: &GolgiCell) -> bool {

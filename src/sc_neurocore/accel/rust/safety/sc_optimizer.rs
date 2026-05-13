@@ -64,7 +64,7 @@ impl SCOptimizer {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [
         // f"LUTs: {self.total_luts}, Power: {self.total_power_mw:.2f} mW, "
         // f"Latency: {self.total_latency_cycles} cycles, "
@@ -258,7 +258,6 @@ impl SCOptimizer {
         // break
         0.0
     }
-
 }
 
 pub fn validate_sc_optimizer(state: &SCOptimizer) -> bool {
@@ -274,5 +273,4 @@ mod tests {
         let state = SCOptimizer::new();
         assert!(validate_sc_optimizer(&state));
     }
-
 }

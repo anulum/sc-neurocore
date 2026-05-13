@@ -72,7 +72,6 @@ impl WongWangUnit {
         self.gamma = 0.641_f64;
         self.j_n = 0.2609_f64;
     }
-
 }
 
 pub fn validate_wong_wang(state: &WongWangUnit) -> bool {

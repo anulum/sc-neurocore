@@ -80,7 +80,6 @@ impl StochasticAttention {
         // )  # (N, dk, L)
         0.0
     }
-
 }
 
 pub fn validate_attention(state: &StochasticAttention) -> bool {
@@ -96,5 +95,4 @@ mod tests {
         let state = StochasticAttention::new();
         assert!(validate_attention(&state));
     }
-
 }

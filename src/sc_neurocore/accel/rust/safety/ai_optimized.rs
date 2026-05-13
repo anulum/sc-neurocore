@@ -101,32 +101,12 @@ impl MetaPlasticNeuron {
         self.tau_medium = 200.0_f64;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    pub fn surrogate_grad(&self, ) -> f64 {
+    pub fn surrogate_grad(&self) -> f64 {
         // return 1.0 / (1.0 + self.beta * abs(self.v - self.theta)) .powi 2
         0.0
     }
 
-    pub fn _build_weights(&self, ) -> f64 {
+    pub fn _build_weights(&self) -> f64 {
         // n = self.n_units
         // self._weights = [[0.0] * n for _ in range(n)]
         // for i in range(n):
@@ -144,16 +124,10 @@ impl MetaPlasticNeuron {
         0.0
     }
 
-
-
-    pub fn bump_position(&self, ) -> f64 {
+    pub fn bump_position(&self) -> f64 {
         // return self.u.index(max(self.u))
         0.0
     }
-
-
-
-
 
     pub fn update_meta(&self, reward: f64) -> f64 {
         // error = abs(reward - self.expected_reward)
@@ -163,13 +137,10 @@ impl MetaPlasticNeuron {
         0.0
     }
 
-    pub fn meta_lr(&self, ) -> f64 {
+    pub fn meta_lr(&self) -> f64 {
         // return self.lr0 / (1.0 + math.exp(-self.kappa * (self.error_trace - se
         0.0
     }
-
-
-
 }
 
 pub fn validate_ai_optimized(state: &MetaPlasticNeuron) -> bool {

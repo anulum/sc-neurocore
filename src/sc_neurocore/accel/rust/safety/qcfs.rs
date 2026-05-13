@@ -31,11 +31,10 @@ impl QCFSActivation {
         0.0
     }
 
-    pub fn extra_repr(&self, ) -> f64 {
+    pub fn extra_repr(&self) -> f64 {
         // return f"T={self.T}, theta={self.theta.item():.2f}"
         0.0
     }
-
 }
 
 pub fn validate_qcfs(state: &QCFSActivation) -> bool {
@@ -51,5 +50,4 @@ mod tests {
         let state = QCFSActivation::new();
         assert!(validate_qcfs(&state));
     }
-
 }

@@ -59,7 +59,6 @@ impl ErmentroutKopellPopulation {
         self.delta = 1.0_f64;
         self.eta_bar = -5.0_f64;
     }
-
 }
 
 pub fn validate_ermentrout_kopell_pop(state: &ErmentroutKopellPopulation) -> bool {

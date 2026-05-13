@@ -88,7 +88,6 @@ impl PinskyRinzelNeuron {
         self.n = 0.1_f64;
         self.s = 0.0_f64;
     }
-
 }
 
 pub fn validate_pinsky_rinzel(state: &PinskyRinzelNeuron) -> bool {

@@ -73,7 +73,7 @@ impl PySCDenseModel {
         0.0
     }
 
-    pub fn run_spk(&self, ) -> f64 {
+    pub fn run_spk(&self) -> f64 {
         // spikes_in = self.s_in.recv()
         // current = self.weights @ spikes_in
         // self.v[:] = (self.v * self.decay[0]) // 256 + current
@@ -82,7 +82,6 @@ impl PySCDenseModel {
         // self.s_out.send(spikes_out)
         0.0
     }
-
 }
 
 pub fn validate_lava_bridge(state: &PySCDenseModel) -> bool {
@@ -99,5 +98,4 @@ mod tests {
         assert!(state.v.is_finite());
         assert!(validate_lava_bridge(&state));
     }
-
 }

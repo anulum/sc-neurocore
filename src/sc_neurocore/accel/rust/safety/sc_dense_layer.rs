@@ -65,7 +65,7 @@ impl SCDenseLayer {
         0.0
     }
 
-    pub fn get_spike_trains(&self, ) -> f64 {
+    pub fn get_spike_trains(&self) -> f64 {
         // if not self.recorders:
         // return np.zeros((0, 0), dtype=np.uint8)
         // T = len(self.recorders[0].spikes)
@@ -76,7 +76,7 @@ impl SCDenseLayer {
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // stats = []
         // for i, rec in enumerate(self.recorders):
         // stats.append(
@@ -94,7 +94,6 @@ impl SCDenseLayer {
         // ),
         0.0
     }
-
 }
 
 pub fn validate_sc_dense_layer(state: &SCDenseLayer) -> bool {
@@ -110,5 +109,4 @@ mod tests {
         let state = SCDenseLayer::new();
         assert!(validate_sc_dense_layer(&state));
     }
-
 }

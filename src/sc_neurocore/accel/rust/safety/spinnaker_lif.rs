@@ -58,7 +58,6 @@ impl SpiNNakerLIFNeuron {
         self.v_threshold = -50.0_f64;
         self.tau_m = 20.0_f64;
     }
-
 }
 
 pub fn validate_spinnaker_lif(state: &SpiNNakerLIFNeuron) -> bool {

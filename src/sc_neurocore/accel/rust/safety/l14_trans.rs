@@ -42,7 +42,13 @@ impl L14_TransdimensionalAdapter {
         0.0
     }
 
-    pub fn _resonance_kernel(&self, alignment: f64, pta_input: f64, keystone_f: f64, dt: f64) -> f64 {
+    pub fn _resonance_kernel(
+        &self,
+        alignment: f64,
+        pta_input: f64,
+        keystone_f: f64,
+        dt: f64,
+    ) -> f64 {
         // alignment: jnp.ndarray, pta_input: jnp.ndarray, keystone_f: float, dt:
         // ) -> Tuple[jnp.ndarray, jnp.ndarray]:
         // # Alignment increases when inputs match the keystone frequency proxy
@@ -77,14 +83,13 @@ impl L14_TransdimensionalAdapter {
         0.0
     }
 
-    pub fn get_metrics(&self, ) -> f64 {
+    pub fn get_metrics(&self) -> f64 {
         // return {
         // "avg_brane_alignment": float(jnp.mean(self.brane_alignment)),
         // "resonance_sharpness": float(jnp.mean(self.resonance_intensity)),
         // }
         0.0
     }
-
 }
 
 pub fn validate_l14_trans(state: &L14_TransdimensionalAdapter) -> bool {
@@ -100,5 +105,4 @@ mod tests {
         let state = L14_TransdimensionalAdapter::new();
         assert!(validate_l14_trans(&state));
     }
-
 }

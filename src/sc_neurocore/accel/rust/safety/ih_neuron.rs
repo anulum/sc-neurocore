@@ -84,7 +84,6 @@ impl IhNeuron {
         self.r = 0.1_f64;
         self.g_na = 35.0_f64;
     }
-
 }
 
 pub fn validate_ih_neuron(state: &IhNeuron) -> bool {

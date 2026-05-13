@@ -63,7 +63,6 @@ impl CochlearHairCell {
         self.e_l = -60.0_f64;
         self.cap = 10.0_f64;
     }
-
 }
 
 pub fn validate_cochlear_hair_cell(state: &CochlearHairCell) -> bool {

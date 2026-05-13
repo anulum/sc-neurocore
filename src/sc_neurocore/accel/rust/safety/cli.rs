@@ -126,7 +126,13 @@ pub fn _cmd_benchmark() -> f64 {
     0.0
 }
 
-pub fn _cmd_deploy(model_path: f64, target: f64, output_dir: f64, dt: f64, bitstream_length: f64) -> f64 {
+pub fn _cmd_deploy(
+    model_path: f64,
+    target: f64,
+    output_dir: f64,
+    dt: f64,
+    bitstream_length: f64,
+) -> f64 {
     // model_path: str, target: str, output_dir: str, dt: float, bitstream_le
     // ) -> int {
     // import os

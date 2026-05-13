@@ -107,7 +107,7 @@ impl EpropTrainer {
         0.0
     }
 
-    pub fn memory_per_step(&self, ) -> f64 {
+    pub fn memory_per_step(&self) -> f64 {
         // return (
         // self.n_neurons  # membrane voltages
         // + self.n_neurons  # spikes
@@ -116,7 +116,6 @@ impl EpropTrainer {
         // )
         0.0
     }
-
 }
 
 pub fn validate_eprop(state: &EpropTrainer) -> bool {

@@ -65,7 +65,7 @@ impl L9_MemoryLayer {
         0 // spike indicator
     }
 
-    pub fn _retrieval_quality(&self, ) -> f64 {
+    pub fn _retrieval_quality(&self) -> f64 {
         // if self.n_stored == 0:
         // return 0.0
         // h = self.patterns @ self.state
@@ -73,11 +73,10 @@ impl L9_MemoryLayer {
         0.0
     }
 
-    pub fn get_global_metric(&self, ) -> f64 {
+    pub fn get_global_metric(&self) -> f64 {
         // return self._retrieval_quality()
         0.0
     }
-
 }
 
 pub fn validate_l9_memory(state: &L9_MemoryLayer) -> bool {

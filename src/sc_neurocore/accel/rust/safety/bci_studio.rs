@@ -48,22 +48,22 @@ impl BCIStudio {
         }
     }
 
-    pub fn mean_latency_ms(&self, ) -> f64 {
+    pub fn mean_latency_ms(&self) -> f64 {
         // return float(np.mean(self.latency_history)) if self.latency_history el
         0.0
     }
 
-    pub fn p95_latency_ms(&self, ) -> f64 {
+    pub fn p95_latency_ms(&self) -> f64 {
         // return float(np.percentile(self.latency_history, 95)) if self.latency_
         0.0
     }
 
-    pub fn spike_rate(&self, ) -> f64 {
+    pub fn spike_rate(&self) -> f64 {
         // return self.total_spikes / max(1, self.total_frames)
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // return (
         // f"Frames: {self.total_frames}, "
         // f"Spikes: {self.total_spikes}, "
@@ -153,38 +153,38 @@ impl BCIStudio {
         0.0
     }
 
-    pub fn mean(&self, ) -> f64 {
+    pub fn mean(&self) -> f64 {
         // return float(np.mean(list(self.window))) if self.window else 0.0
         0.0
     }
 
-    pub fn p50(&self, ) -> f64 {
+    pub fn p50(&self) -> f64 {
         // return float(np.percentile(list(self.window), 50)) if self.window else
         0.0
     }
 
-    pub fn p95(&self, ) -> f64 {
+    pub fn p95(&self) -> f64 {
         // return float(np.percentile(list(self.window), 95)) if self.window else
         0.0
     }
 
-    pub fn p99(&self, ) -> f64 {
+    pub fn p99(&self) -> f64 {
         // return float(np.percentile(list(self.window), 99)) if self.window else
         0.0
     }
 
-    pub fn budget_met(&self, ) -> f64 {
+    pub fn budget_met(&self) -> f64 {
         // return self.p95 < 10.0
         0.0
     }
 
-    pub fn start_session(&self, ) -> f64 {
+    pub fn start_session(&self) -> f64 {
         // self._running = true
         // self.metrics = SessionMetrics()
         0.0
     }
 
-    pub fn stop_session(&self, ) -> f64 {
+    pub fn stop_session(&self) -> f64 {
         // self._running = false
         // return self.metrics
         0.0
@@ -208,7 +208,6 @@ impl BCIStudio {
         // self.learner.step(spikes, reward)
         0.0
     }
-
 }
 
 pub fn validate_bci_studio(state: &BCIStudio) -> bool {

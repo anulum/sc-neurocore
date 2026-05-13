@@ -47,7 +47,6 @@ impl FormalVerifier {
         // return false
         0.0
     }
-
 }
 
 pub fn validate_formal_proofs(state: &FormalVerifier) -> bool {
@@ -63,5 +62,4 @@ mod tests {
         let state = FormalVerifier::new();
         assert!(validate_formal_proofs(&state));
     }
-
 }

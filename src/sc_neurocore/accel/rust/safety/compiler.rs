@@ -46,7 +46,7 @@ impl CompilationResult {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // status = "SUCCESS" if self.success else "FAILED"
         // lines = [
         // f"Compilation [{self.chip}]: {status}",
@@ -61,7 +61,6 @@ impl CompilationResult {
         // return "\n".join(lines)
         0.0
     }
-
 }
 
 pub fn validate_compiler(state: &CompilationResult) -> bool {
@@ -77,5 +76,4 @@ mod tests {
         let state = CompilationResult::new();
         assert!(validate_compiler(&state));
     }
-
 }

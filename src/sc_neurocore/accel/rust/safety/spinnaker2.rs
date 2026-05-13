@@ -58,7 +58,6 @@ impl SpiNNaker2Neuron {
         self.v_threshold = 1024.0_f64;
         self.decay_mult = 243.0_f64;
     }
-
 }
 
 pub fn validate_spinnaker2(state: &SpiNNaker2Neuron) -> bool {

@@ -50,7 +50,6 @@ impl LapicqueNeuron {
         self.v_threshold = 1.0_f64;
         self.tau = 20.0_f64;
     }
-
 }
 
 pub fn validate_lapicque(state: &LapicqueNeuron) -> bool {

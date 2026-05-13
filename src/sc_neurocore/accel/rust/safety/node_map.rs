@@ -83,8 +83,6 @@ impl SCConv2dNode {
         0.0
     }
 
-
-
     pub fn from_nir(&self, name: f64, node: f64, dt: f64, reset_mode: f64) -> f64 {
         // cls,
         // name: str,
@@ -115,8 +113,6 @@ impl SCConv2dNode {
         0.0
     }
 
-
-
     pub fn reset(&mut self) {
         // self.v = self.v_leak.copy()
         self.name = 0.0_f64;
@@ -125,87 +121,6 @@ impl SCConv2dNode {
         self.n_neurons = 0.0_f64;
         self.tau = 0.0_f64;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 pub fn validate_node_map(state: &SCConv2dNode) -> bool {
@@ -222,5 +137,4 @@ mod tests {
         assert!(state.v.is_finite());
         assert!(validate_node_map(&state));
     }
-
 }

@@ -57,13 +57,13 @@ impl StochasticLIFNeuron {
         0 // spike indicator
     }
 
-    pub fn reset_state(&self, ) -> f64 {
+    pub fn reset_state(&self) -> f64 {
         // self.v = self.v_rest
         // self.refractory_counter = 0
         0.0
     }
 
-    pub fn get_state(&self, ) -> f64 {
+    pub fn get_state(&self) -> f64 {
         // return {"v": float(self.v), "refractory": self.refractory_counter}
         0.0
     }
@@ -79,7 +79,6 @@ impl StochasticLIFNeuron {
         // return spikes
         0.0
     }
-
 }
 
 pub fn validate_stochastic_lif(state: &StochasticLIFNeuron) -> bool {

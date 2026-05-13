@@ -30,7 +30,7 @@ impl VectorizedSCLayer {
         }
     }
 
-    pub fn _refresh_packed_weights(&self, ) -> f64 {
+    pub fn _refresh_packed_weights(&self) -> f64 {
         // w_probs = self.weights
         // bits = (
         // np.random.random((self.n_neurons, self.n_inputs, self.length)) < w_pro
@@ -45,7 +45,7 @@ impl VectorizedSCLayer {
         0.0
     }
 
-    pub fn _init_sparse(&self, ) -> f64 {
+    pub fn _init_sparse(&self) -> f64 {
         // sp = _get_scipy_sparse()
         // n_total = self.n_neurons * self.n_inputs
         // n_nonzero = max(1, int(round(n_total * self.connectivity)))
@@ -64,7 +64,7 @@ impl VectorizedSCLayer {
         0.0
     }
 
-    pub fn _pack_sparse_weights(&self, ) -> f64 {
+    pub fn _pack_sparse_weights(&self) -> f64 {
         // csr = self.weights_csr
         // n_words = (self.length + 63) // 64
         // self._sparse_packed = np.empty((csr.nnz, n_words), dtype=np.uint64)
@@ -146,7 +146,6 @@ impl VectorizedSCLayer {
         // in_gpu = cupy.asarray(in_probs_flat)
         0.0
     }
-
 }
 
 pub fn validate_vectorized_layer(state: &VectorizedSCLayer) -> bool {
@@ -162,5 +161,4 @@ mod tests {
         let state = VectorizedSCLayer::new();
         assert!(validate_vectorized_layer(&state));
     }
-
 }

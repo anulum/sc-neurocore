@@ -46,22 +46,22 @@ impl OptimizationReport {
         }
     }
 
-    pub fn n_params(&self, ) -> f64 {
+    pub fn n_params(&self) -> f64 {
         // return self.weights.size
         0.0
     }
 
-    pub fn total_params(&self, ) -> f64 {
+    pub fn total_params(&self) -> f64 {
         // return sum(layer.n_params for layer in self.layers)
         0.0
     }
 
-    pub fn total_neurons(&self, ) -> f64 {
+    pub fn total_neurons(&self) -> f64 {
         // return sum(layer.n_neurons for layer in self.layers)
         0.0
     }
 
-    pub fn copy(&self, ) -> f64 {
+    pub fn copy(&self) -> f64 {
         // return SNNGraph(
         // layers=[
         // LayerNode(
@@ -78,14 +78,14 @@ impl OptimizationReport {
         0.0
     }
 
-    pub fn compression_ratio(&self, ) -> f64 {
+    pub fn compression_ratio(&self) -> f64 {
         // if self.params_after == 0:  # pragma: no cover
         // return 0.0
         // return self.params_before / self.params_after
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [
         // f"SNN Optimizer: {self.params_before} -> {self.params_after} params "
         // f"({self.compression_ratio:.2f}x compression)",
@@ -99,7 +99,6 @@ impl OptimizationReport {
         // return "\n".join(lines)
         0.0
     }
-
 }
 
 pub fn validate_passes(state: &OptimizationReport) -> bool {
@@ -115,5 +114,4 @@ mod tests {
         let state = OptimizationReport::new();
         assert!(validate_passes(&state));
     }
-
 }

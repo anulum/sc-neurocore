@@ -73,7 +73,6 @@ impl LugaroCell {
         self.v_reset = -65.0_f64;
         self.v_threshold = -48.0_f64;
     }
-
 }
 
 pub fn validate_lugaro_cell(state: &LugaroCell) -> bool {

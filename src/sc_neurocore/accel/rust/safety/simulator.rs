@@ -56,7 +56,7 @@ impl EventDrivenSimulator {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // return (
         // f"EventDriven: {self.total_spikes_generated} spikes, "
         // f"{self.total_events_processed} events, "
@@ -116,7 +116,6 @@ impl EventDrivenSimulator {
         self.weight = 0.0_f64;
         self.delay = 0.0_f64;
     }
-
 }
 
 pub fn validate_simulator(state: &EventDrivenSimulator) -> bool {
@@ -132,5 +131,4 @@ mod tests {
         let state = EventDrivenSimulator::new();
         assert!(validate_simulator(&state));
     }
-
 }

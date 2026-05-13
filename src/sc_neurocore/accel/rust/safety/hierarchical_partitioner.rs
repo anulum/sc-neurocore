@@ -117,12 +117,12 @@ impl PartitionReport {
         0.0
     }
 
-    pub fn num_edges(&self, ) -> f64 {
+    pub fn num_edges(&self) -> f64 {
         // return len(self.indices) // 2
         0.0
     }
 
-    pub fn adjacency(&self, ) -> f64 {
+    pub fn adjacency(&self) -> f64 {
         // adj: Dict[int, List[int]] = {i: [] for i in range(self.num_vertices)}
         // for e in self.edges:
         // adj[e.u].append(e.v)
@@ -139,11 +139,7 @@ impl PartitionReport {
         0.0
     }
 
-
-
-
-
-    pub fn to_csr(&self, ) -> f64 {
+    pub fn to_csr(&self) -> f64 {
         // return CSRGraph.from_edge_list(
         // self.num_vertices, self.edges, self.vertex_weights || 0.0,
         // )
@@ -272,7 +268,14 @@ impl PartitionReport {
         0.0
     }
 
-    pub fn _boundary_cost(&self, v: f64, partition_id: f64, part_map: f64, adj: f64, graph: f64) -> f64 {
+    pub fn _boundary_cost(
+        &self,
+        v: f64,
+        partition_id: f64,
+        part_map: f64,
+        adj: f64,
+        graph: f64,
+    ) -> f64 {
         // self,
         // v: int,
         // partition_id: int,
@@ -368,7 +371,7 @@ impl PartitionReport {
         0.0
     }
 
-    pub fn num_buffers(&self, ) -> f64 {
+    pub fn num_buffers(&self) -> f64 {
         // return len(self.boundary_buffers)
         0.0
     }
@@ -392,7 +395,12 @@ impl PartitionReport {
         0.0
     }
 
-    pub fn recommend_migrations(&self, graph: f64, partitions: f64, max_recommendations: f64) -> f64 {
+    pub fn recommend_migrations(
+        &self,
+        graph: f64,
+        partitions: f64,
+        max_recommendations: f64,
+    ) -> f64 {
         // self,
         // graph: CorrelationAwareGraph,
         // partitions: List[List[int]],
@@ -447,7 +455,7 @@ impl PartitionReport {
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // return (
         // f"Partitions: {self.num_partitions}, "
         // f"Sizes: {self.partition_sizes}, "
@@ -459,7 +467,6 @@ impl PartitionReport {
         // )
         0.0
     }
-
 }
 
 pub fn validate_hierarchical_partitioner(state: &PartitionReport) -> bool {
@@ -476,5 +483,4 @@ mod tests {
         assert!(state.v.is_finite());
         assert!(validate_hierarchical_partitioner(&state));
     }
-
 }

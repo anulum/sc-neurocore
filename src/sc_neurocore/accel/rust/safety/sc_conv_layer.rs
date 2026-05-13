@@ -48,7 +48,6 @@ impl SCConv2DLayer {
         // for j in range(W_out):
         0.0
     }
-
 }
 
 pub fn validate_sc_conv_layer(state: &SCConv2DLayer) -> bool {
@@ -64,5 +63,4 @@ mod tests {
         let state = SCConv2DLayer::new();
         assert!(validate_sc_conv_layer(&state));
     }
-
 }

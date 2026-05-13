@@ -22,7 +22,7 @@ impl QuantumEntropySource {
         }
     }
 
-    pub fn _hadamard(&self, ) -> f64 {
+    pub fn _hadamard(&self) -> f64 {
         // H = np.array([[1, 1], [1, -1]], dtype=np.complex128) / (2_f64).sqrt()
         // result = self.state.copy()
         // n = self.n_qubits
@@ -41,7 +41,7 @@ impl QuantumEntropySource {
         0.0
     }
 
-    pub fn _measure(&self, ) -> f64 {
+    pub fn _measure(&self) -> f64 {
         // self._hadamard()
         // probs = (self.state_f64).abs() .powi 2
         // idx = self._rng.choice(len(probs), p=probs)
@@ -62,11 +62,10 @@ impl QuantumEntropySource {
         0.0
     }
 
-    pub fn sample(&self, ) -> f64 {
+    pub fn sample(&self) -> f64 {
         // return self.sample_normal()
         0.0
     }
-
 }
 
 pub fn validate_quantum_entropy(state: &QuantumEntropySource) -> bool {
@@ -82,5 +81,4 @@ mod tests {
         let state = QuantumEntropySource::new();
         assert!(validate_quantum_entropy(&state));
     }
-
 }

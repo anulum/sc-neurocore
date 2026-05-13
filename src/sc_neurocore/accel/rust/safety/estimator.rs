@@ -62,7 +62,7 @@ impl EnergyReport {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [
         // f"SC-NeuroCore Energy Estimate — {self.target}",
         // f"{'=' * 55}",
@@ -80,7 +80,6 @@ impl EnergyReport {
         // f"  Infrastructure: {self.infra_luts} LUTs",
         0.0
     }
-
 }
 
 pub fn validate_estimator(state: &EnergyReport) -> bool {
@@ -96,5 +95,4 @@ mod tests {
         let state = EnergyReport::new();
         assert!(validate_estimator(&state));
     }
-
 }

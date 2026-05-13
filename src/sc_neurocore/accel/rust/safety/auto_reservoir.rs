@@ -50,7 +50,7 @@ impl AutoCriticalReservoir {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // return (
         // f"Reservoir: firing={self.firing_fraction:.3f}, "
         // f"criticality_err={self.criticality_error:.4f}, "
@@ -60,7 +60,7 @@ impl AutoCriticalReservoir {
         0.0
     }
 
-    pub fn spectral_radius(&self, ) -> f64 {
+    pub fn spectral_radius(&self) -> f64 {
         // eigvals = (np.linalg.eigvals(self.W_res_f64).abs())
         // return float(eigvals.max()) if len(eigvals) > 0 else 0.0
         0.0
@@ -108,7 +108,12 @@ impl AutoCriticalReservoir {
         0.0
     }
 
-    pub fn train_and_predict(&self, train_inputs: f64, train_targets: f64, test_inputs: f64) -> f64 {
+    pub fn train_and_predict(
+        &self,
+        train_inputs: f64,
+        train_targets: f64,
+        test_inputs: f64,
+    ) -> f64 {
         // self, train_inputs: np.ndarray, train_targets: np.ndarray, test_inputs
         // ) -> np.ndarray:
         // train_states = self.run(train_inputs)
@@ -133,7 +138,6 @@ impl AutoCriticalReservoir {
         // )
         0.0
     }
-
 }
 
 pub fn validate_auto_reservoir(state: &AutoCriticalReservoir) -> bool {

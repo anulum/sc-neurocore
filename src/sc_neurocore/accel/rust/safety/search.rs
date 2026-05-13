@@ -26,21 +26,21 @@ impl NASResult {
         }
     }
 
-    pub fn best_accuracy(&self, ) -> f64 {
+    pub fn best_accuracy(&self) -> f64 {
         // if not self.pareto_front:
         // return 0.0
         // return max(self.pareto_front, key=lambda a: a.fitness_accuracy)
         0.0
     }
 
-    pub fn best_efficiency(&self, ) -> f64 {
+    pub fn best_efficiency(&self) -> f64 {
         // if not self.pareto_front:
         // return 0.0
         // return min(self.pareto_front, key=lambda a: a.fitness_energy_nj)
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [
         // f"NAS Result: {self.generations} generations, {self.total_evaluations}
         // f"Pareto front: {len(self.pareto_front)} architectures",
@@ -54,7 +54,6 @@ impl NASResult {
         // return "\n".join(lines)
         0.0
     }
-
 }
 
 pub fn validate_search(state: &NASResult) -> bool {
@@ -70,5 +69,4 @@ mod tests {
         let state = NASResult::new();
         assert!(validate_search(&state));
     }
-
 }

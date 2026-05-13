@@ -65,7 +65,6 @@ impl NeuroGridNeuron {
         self.tau_d = 50.0_f64;
         self.g_c = 0.5_f64;
     }
-
 }
 
 pub fn validate_neurogrid(state: &NeuroGridNeuron) -> bool {

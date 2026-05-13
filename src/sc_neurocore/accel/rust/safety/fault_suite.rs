@@ -47,7 +47,7 @@ impl FaultResilienceSuite {
         0.0
     }
 
-    pub fn most_vulnerable_layer(&self, ) -> f64 {
+    pub fn most_vulnerable_layer(&self) -> f64 {
         // layer_deg: dict[int, list[float]] = {}
         // for r in self.results:
         // if r.layer_index is not 0.0:
@@ -58,7 +58,7 @@ impl FaultResilienceSuite {
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [f"Fault Resilience Report: {len(self.results)} experiments"]
         // by_type: dict[str, list[FaultResult]] = {}
         // for r in self.results:
@@ -74,7 +74,7 @@ impl FaultResilienceSuite {
         0.0
     }
 
-    pub fn baseline_accuracy(&self, ) -> f64 {
+    pub fn baseline_accuracy(&self) -> f64 {
         // if self._baseline_accuracy is 0.0:
         // self._baseline_accuracy = self.eval_fn(self.weights)
         // return self._baseline_accuracy
@@ -133,7 +133,7 @@ impl FaultResilienceSuite {
         0.0
     }
 
-    pub fn full_audit(&self, ) -> f64 {
+    pub fn full_audit(&self) -> f64 {
         // report = ResilienceReport()
         // rates = [0.01, 0.05, 0.1, 0.2]
         // for ft in FaultType:
@@ -144,7 +144,6 @@ impl FaultResilienceSuite {
         // return report
         0.0
     }
-
 }
 
 pub fn validate_fault_suite(state: &FaultResilienceSuite) -> bool {
@@ -160,5 +159,4 @@ mod tests {
         let state = FaultResilienceSuite::new();
         assert!(validate_fault_suite(&state));
     }
-
 }

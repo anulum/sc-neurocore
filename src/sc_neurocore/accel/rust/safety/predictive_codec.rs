@@ -42,7 +42,7 @@ impl PredictiveSpikeCodec {
         }
     }
 
-    pub fn predict(&self, ) -> f64 {
+    pub fn predict(&self) -> f64 {
         // return (self.rates > self.threshold).astype(np.int8)
         0.0
     }
@@ -98,7 +98,6 @@ impl PredictiveSpikeCodec {
         // if magic == self.HEADER_MAGIC_CTX:
         0.0
     }
-
 }
 
 pub fn validate_predictive_codec(state: &PredictiveSpikeCodec) -> bool {
@@ -114,5 +113,4 @@ mod tests {
         let state = PredictiveSpikeCodec::new();
         assert!(validate_predictive_codec(&state));
     }
-
 }

@@ -20,7 +20,7 @@ impl EWC_SCLayer {
         }
     }
 
-    pub fn consolidate_task(&self, ) -> f64 {
+    pub fn consolidate_task(&self) -> f64 {
         // # In SC, Fisher Info approx ~ Activity * Plasticity
         // # Weights that changed a lot || are high are often important.
         // # Simplified: Importance = Current Weight Magnitude (Hebbian)
@@ -43,7 +43,6 @@ impl EWC_SCLayer {
         // return float(np.sum((penalty_grad_f64).abs()))
         0.0
     }
-
 }
 
 pub fn validate_lifelong(state: &EWC_SCLayer) -> bool {
@@ -59,5 +58,4 @@ mod tests {
         let state = EWC_SCLayer::new();
         assert!(validate_lifelong(&state));
     }
-
 }

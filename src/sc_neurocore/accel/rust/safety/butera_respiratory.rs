@@ -84,7 +84,6 @@ impl ButeraRespiratoryNeuron {
         self.g_na = 28.0_f64;
         self.g_nap = 2.8_f64;
     }
-
 }
 
 pub fn validate_butera_respiratory(state: &ButeraRespiratoryNeuron) -> bool {

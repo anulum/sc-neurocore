@@ -15,12 +15,10 @@ pub struct SpikeMonitor {
 
 impl SpikeMonitor {
     pub fn new() -> Self {
-        Self {
-            model: 0.0_f64,
-        }
+        Self { model: 0.0_f64 }
     }
 
-    pub fn _attach(&self, ) -> f64 {
+    pub fn _attach(&self) -> f64 {
         // for name, module in self.model.named_modules():
         // if hasattr(module, "surrogate_fn"):  # LIF-like cell
         // self._records[name] = []
@@ -44,7 +42,7 @@ impl SpikeMonitor {
         0.0
     }
 
-    pub fn layer_names(&self, ) -> f64 {
+    pub fn layer_names(&self) -> f64 {
         // return list(self._records.keys())
         0.0
     }
@@ -55,14 +53,13 @@ impl SpikeMonitor {
         self.model = 0.0_f64;
     }
 
-    pub fn remove(&self, ) -> f64 {
+    pub fn remove(&self) -> f64 {
         // for h in self._hooks:
         // h.remove()
         // self._hooks.clear()
         // self._records.clear()
         0.0
     }
-
 }
 
 pub fn validate_utils(state: &SpikeMonitor) -> bool {
@@ -78,5 +75,4 @@ mod tests {
         let state = SpikeMonitor::new();
         assert!(validate_utils(&state));
     }
-
 }

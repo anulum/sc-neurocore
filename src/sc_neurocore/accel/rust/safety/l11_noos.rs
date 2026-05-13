@@ -44,7 +44,14 @@ impl L11_NoosphericAdapter {
         0.0
     }
 
-    pub fn _nths_kernel(&self, spins: f64, field_input: f64, j_avg: f64, h_bias: f64, dt: f64) -> f64 {
+    pub fn _nths_kernel(
+        &self,
+        spins: f64,
+        field_input: f64,
+        j_avg: f64,
+        h_bias: f64,
+        dt: f64,
+    ) -> f64 {
         // spins: jnp.ndarray, field_input: jnp.ndarray, j_avg: float, h_bias: fl
         // ) -> jnp.ndarray:
         // mean_field = jnp.mean(spins)
@@ -83,7 +90,7 @@ impl L11_NoosphericAdapter {
         0.0
     }
 
-    pub fn get_metrics(&self, ) -> f64 {
+    pub fn get_metrics(&self) -> f64 {
         // return {
         // "avg_polarization": float(jnp.std(self.spins)),
         // "noospheric_entropy": float(-jnp.sum(self.spins * j(self.spins + 1e-6_
@@ -91,7 +98,6 @@ impl L11_NoosphericAdapter {
         // }
         0.0
     }
-
 }
 
 pub fn validate_l11_noos(state: &L11_NoosphericAdapter) -> bool {
@@ -107,5 +113,4 @@ mod tests {
         let state = L11_NoosphericAdapter::new();
         assert!(validate_l11_noos(&state));
     }
-
 }

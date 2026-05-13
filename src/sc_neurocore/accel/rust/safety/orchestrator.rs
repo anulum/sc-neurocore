@@ -15,9 +15,7 @@ pub struct EnsembleOrchestrator {
 
 impl EnsembleOrchestrator {
     pub fn new() -> Self {
-        Self {
-            agents: 0.0_f64,
-        }
+        Self { agents: 0.0_f64 }
     }
 
     pub fn add_agent(&self, name: f64, agent: f64) -> f64 {
@@ -42,7 +40,6 @@ impl EnsembleOrchestrator {
         // agent.active_goals = [f"{goal}_subtask"]
         0.0
     }
-
 }
 
 pub fn validate_orchestrator(state: &EnsembleOrchestrator) -> bool {
@@ -58,5 +55,4 @@ mod tests {
         let state = EnsembleOrchestrator::new();
         assert!(validate_orchestrator(&state));
     }
-
 }

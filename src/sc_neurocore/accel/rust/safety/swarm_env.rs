@@ -50,7 +50,7 @@ impl SwarmEnvironment {
         }
     }
 
-    pub fn _random_target_pos(&self, ) -> f64 {
+    pub fn _random_target_pos(&self) -> f64 {
         // return self.rng.uniform([5, 5], [self.cfg.width - 5, self.cfg.height -
         0.0
     }
@@ -65,17 +65,17 @@ impl SwarmEnvironment {
         0.0
     }
 
-    pub fn get_positions(&self, ) -> f64 {
+    pub fn get_positions(&self) -> f64 {
         // return np.array([a.position for a in self.agents])
         0.0
     }
 
-    pub fn get_headings(&self, ) -> f64 {
+    pub fn get_headings(&self) -> f64 {
         // return np.array([a.heading for a in self.agents])
         0.0
     }
 
-    pub fn get_pairwise_distances(&self, ) -> f64 {
+    pub fn get_pairwise_distances(&self) -> f64 {
         // pos = self.get_positions()
         // diff = pos[:, np.newaxis, :] - pos[np.newaxis, :, :]
         // return ((diff.powi2_f64).sqrt().sum(axis=-1))
@@ -138,7 +138,7 @@ impl SwarmEnvironment {
         0 // spike indicator
     }
 
-    pub fn get_state(&self, ) -> f64 {
+    pub fn get_state(&self) -> f64 {
         // return {
         // "step": self.step_count,
         // "positions": self.get_positions().tolist(),
@@ -149,7 +149,6 @@ impl SwarmEnvironment {
         // }
         0.0
     }
-
 }
 
 pub fn validate_swarm_env(state: &SwarmEnvironment) -> bool {

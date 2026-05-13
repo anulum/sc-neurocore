@@ -38,14 +38,13 @@ impl PointCloud {
         0.0
     }
 
-    pub fn normalize(&self, ) -> f64 {
+    pub fn normalize(&self) -> f64 {
         // self.points = (self.points - np.min(self.points)) / (
         // np.max(self.points) - np.min(self.points) + 1e-9
         // )
         // self.intensities = (self.intensities_f64).clamp(0, 1)
         0.0
     }
-
 }
 
 pub fn validate_representations(state: &PointCloud) -> bool {
@@ -61,5 +60,4 @@ mod tests {
         let state = PointCloud::new();
         assert!(validate_representations(&state));
     }
-
 }

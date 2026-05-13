@@ -92,7 +92,6 @@ impl LarterBreakspearNeuron {
         self.g_ca = 1.1_f64;
         self.g_na = 6.7_f64;
     }
-
 }
 
 pub fn validate_larter_breakspear(state: &LarterBreakspearNeuron) -> bool {

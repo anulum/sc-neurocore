@@ -40,7 +40,7 @@ impl AERRouter {
         }
     }
 
-    pub fn encode(&self, ) -> f64 {
+    pub fn encode(&self) -> f64 {
         // return struct.pack(PACKET_FORMAT,
         // self.source_id, self.target_id,
         // self.timestamp, self.spike_len, self.sequence)
@@ -68,7 +68,7 @@ impl AERRouter {
         0.0
     }
 
-    pub fn route_count(&self, ) -> f64 {
+    pub fn route_count(&self) -> f64 {
         // with self._lock:
         // return len(self._routes)
         0.0
@@ -95,19 +95,19 @@ impl AERRouter {
         0.0
     }
 
-    pub fn pending_count(&self, ) -> f64 {
+    pub fn pending_count(&self) -> f64 {
         // with self._lock:
         // return len(self._pending)
         0.0
     }
 
-    pub fn total_sent(&self, ) -> f64 {
+    pub fn total_sent(&self) -> f64 {
         // with self._lock:
         // return self._total_sent
         0.0
     }
 
-    pub fn total_acked(&self, ) -> f64 {
+    pub fn total_acked(&self) -> f64 {
         // with self._lock:
         // return self._total_acked
         0.0
@@ -119,7 +119,6 @@ impl AERRouter {
         // return RouteStats(s.dispatched, s.acked, s.dropped) if s else 0.0
         0.0
     }
-
 }
 
 pub fn validate_aer_router(state: &AERRouter) -> bool {
@@ -135,5 +134,4 @@ mod tests {
         let state = AERRouter::new();
         assert!(validate_aer_router(&state));
     }
-
 }

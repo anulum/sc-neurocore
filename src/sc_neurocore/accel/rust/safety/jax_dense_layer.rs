@@ -68,7 +68,6 @@ impl JaxSCDenseLayer {
         self.dt_ms = 0.0_f64;
         self.neuron_params = 0.0_f64;
     }
-
 }
 
 pub fn validate_jax_dense_layer(state: &JaxSCDenseLayer) -> bool {

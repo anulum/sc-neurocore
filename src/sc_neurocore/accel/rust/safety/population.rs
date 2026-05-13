@@ -30,7 +30,7 @@ impl Population {
         }
     }
 
-    pub fn _sync_voltages(&self, ) -> f64 {
+    pub fn _sync_voltages(&self) -> f64 {
         // for i, neuron in enumerate(self.neurons):
         // self._voltages[i] = getattr(neuron, "v", 0.0)
         0.0
@@ -55,7 +55,7 @@ impl Population {
         0.0
     }
 
-    pub fn reset_all(&self, ) -> f64 {
+    pub fn reset_all(&self) -> f64 {
         // for neuron in self.neurons:
         // if hasattr(neuron, "reset"):
         // neuron.reset()
@@ -65,7 +65,7 @@ impl Population {
         0.0
     }
 
-    pub fn get_states(&self, ) -> f64 {
+    pub fn get_states(&self) -> f64 {
         // if self.n == 0:
         // return {}
         // sample = self.neurons[0]
@@ -90,11 +90,10 @@ impl Population {
         0.0
     }
 
-    pub fn voltages(&self, ) -> f64 {
+    pub fn voltages(&self) -> f64 {
         // return self._voltages
         0.0
     }
-
 }
 
 pub fn validate_population(state: &Population) -> bool {
@@ -110,5 +109,4 @@ mod tests {
         let state = Population::new();
         assert!(validate_population(&state));
     }
-
 }

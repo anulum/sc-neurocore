@@ -93,7 +93,6 @@ impl SSTNeuron {
         self.n = 0.2_f64;
         self.p = 0.0_f64;
     }
-
 }
 
 pub fn validate_sst_neuron(state: &SSTNeuron) -> bool {

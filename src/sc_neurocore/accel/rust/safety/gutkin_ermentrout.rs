@@ -61,7 +61,6 @@ impl GutkinErmentroutNeuron {
         self.g_k = 10.0_f64;
         self.g_l = 8.0_f64;
     }
-
 }
 
 pub fn validate_gutkin_ermentrout(state: &GutkinErmentroutNeuron) -> bool {

@@ -30,7 +30,7 @@ impl HardwareAwareSCLayer {
         }
     }
 
-    pub fn _apply_defects(&self, ) -> f64 {
+    pub fn _apply_defects(&self) -> f64 {
         // self._layer.weights[self.stuck_mask] = self.stuck_values[self.stuck_ma
         // if self.variability > 0:
         // noise = np.random.RandomState(self.seed + 1).normal(
@@ -56,21 +56,20 @@ impl HardwareAwareSCLayer {
         0.0
     }
 
-    pub fn weights(&self, ) -> f64 {
+    pub fn weights(&self) -> f64 {
         // return self._layer.weights
         0.0
     }
 
-    pub fn n_stuck(&self, ) -> f64 {
+    pub fn n_stuck(&self) -> f64 {
         // return int(self.stuck_mask.sum())
         0.0
     }
 
-    pub fn stuck_fraction(&self, ) -> f64 {
+    pub fn stuck_fraction(&self) -> f64 {
         // return float(self.stuck_mask.mean())
         0.0
     }
-
 }
 
 pub fn validate_hardware_aware(state: &HardwareAwareSCLayer) -> bool {
@@ -86,5 +85,4 @@ mod tests {
         let state = HardwareAwareSCLayer::new();
         assert!(validate_hardware_aware(&state));
     }
-
 }

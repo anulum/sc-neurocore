@@ -65,7 +65,6 @@ impl AERSpikeCodec {
         // current_t = 0
         0.0
     }
-
 }
 
 pub fn validate_aer_codec(state: &AERSpikeCodec) -> bool {
@@ -81,5 +80,4 @@ mod tests {
         let state = AERSpikeCodec::new();
         assert!(validate_aer_codec(&state));
     }
-
 }

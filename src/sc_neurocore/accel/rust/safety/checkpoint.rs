@@ -30,16 +30,15 @@ impl SNNCheckpoint {
         }
     }
 
-    pub fn n_layers(&self, ) -> f64 {
+    pub fn n_layers(&self) -> f64 {
         // return len(self.weights)
         0.0
     }
 
-    pub fn total_params(&self, ) -> f64 {
+    pub fn total_params(&self) -> f64 {
         // return sum(w.size for w in self.weights)
         0.0
     }
-
 }
 
 pub fn validate_checkpoint(state: &SNNCheckpoint) -> bool {
@@ -55,5 +54,4 @@ mod tests {
         let state = SNNCheckpoint::new();
         assert!(validate_checkpoint(&state));
     }
-
 }

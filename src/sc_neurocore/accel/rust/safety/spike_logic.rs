@@ -32,7 +32,7 @@ impl SpikeALU {
         }
     }
 
-    pub fn lif_config(&self, ) -> f64 {
+    pub fn lif_config(&self) -> f64 {
         // configs = {
         // "AND": {"threshold": 2, "weights": [1, 1]},
         // "OR": {"threshold": 1, "weights": [1, 1]},
@@ -50,7 +50,7 @@ impl SpikeALU {
         0.0
     }
 
-    pub fn read(&self, ) -> f64 {
+    pub fn read(&self) -> f64 {
         // value = 0
         // for i in range(self.n_bits):
         // value |= int(self._state[i]) << i
@@ -63,12 +63,12 @@ impl SpikeALU {
         0.0
     }
 
-    pub fn read_bits(&self, ) -> f64 {
+    pub fn read_bits(&self) -> f64 {
         // return self._state.copy()
         0.0
     }
 
-    pub fn clear(&self, ) -> f64 {
+    pub fn clear(&self) -> f64 {
         // self._state[:] = 0
         0.0
     }
@@ -142,7 +142,6 @@ impl SpikeALU {
         // return a >> n
         0.0
     }
-
 }
 
 pub fn validate_spike_logic(state: &SpikeALU) -> bool {
@@ -158,5 +157,4 @@ mod tests {
         let state = SpikeALU::new();
         assert!(validate_spike_logic(&state));
     }
-
 }

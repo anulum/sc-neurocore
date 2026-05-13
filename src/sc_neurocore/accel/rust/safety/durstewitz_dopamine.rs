@@ -81,7 +81,6 @@ impl DurstewitzDopamineNeuron {
         self.g_na = 45.0_f64;
         self.g_k = 18.0_f64;
     }
-
 }
 
 pub fn validate_durstewitz_dopamine(state: &DurstewitzDopamineNeuron) -> bool {

@@ -83,7 +83,6 @@ impl ChandelierNeuron {
         self.d = 0.0_f64;
         self.p = 0.0_f64;
     }
-
 }
 
 pub fn validate_chandelier_neuron(state: &ChandelierNeuron) -> bool {

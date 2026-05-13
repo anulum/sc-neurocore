@@ -81,7 +81,6 @@ impl GLIFNeuron {
         self.i_asc1 = 0.0_f64;
         self.i_asc2 = 0.0_f64;
     }
-
 }
 
 pub fn validate_glif(state: &GLIFNeuron) -> bool {

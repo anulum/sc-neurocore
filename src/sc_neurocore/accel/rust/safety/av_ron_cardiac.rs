@@ -73,7 +73,6 @@ impl AvRonCardiacNeuron {
         self.s = 0.5_f64;
         self.g_na = 80.0_f64;
     }
-
 }
 
 pub fn validate_av_ron_cardiac(state: &AvRonCardiacNeuron) -> bool {

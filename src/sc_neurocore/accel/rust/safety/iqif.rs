@@ -45,7 +45,6 @@ impl IntegerQIFNeuron {
         self.v_reset = -1024.0_f64;
         self.v_min = -2048.0_f64;
     }
-
 }
 
 pub fn validate_iqif(state: &IntegerQIFNeuron) -> bool {

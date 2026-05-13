@@ -74,7 +74,6 @@ impl GolombFSNeuron {
         self.p = 0.0_f64;
         self.g_na = 112.5_f64;
     }
-
 }
 
 pub fn validate_golomb_fs(state: &GolombFSNeuron) -> bool {

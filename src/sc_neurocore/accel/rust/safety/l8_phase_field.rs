@@ -53,16 +53,15 @@ impl L8_PhaseFieldLayer {
         0 // spike indicator
     }
 
-    pub fn _order_parameter(&self, ) -> f64 {
+    pub fn _order_parameter(&self) -> f64 {
         // return float((np.mean((1j * self.phases_f64_f64).abs().exp())))
         0.0
     }
 
-    pub fn get_global_metric(&self, ) -> f64 {
+    pub fn get_global_metric(&self) -> f64 {
         // return self._order_parameter()
         0.0
     }
-
 }
 
 pub fn validate_l8_phase_field(state: &L8_PhaseFieldLayer) -> bool {

@@ -47,7 +47,13 @@ pub fn pairwise_granger_causality(source: f64, target: f64, bin_size: f64, order
     0.0
 }
 
-pub fn conditional_granger_causality(source: f64, target: f64, condition: f64, bin_size: f64, order: f64) -> f64 {
+pub fn conditional_granger_causality(
+    source: f64,
+    target: f64,
+    condition: f64,
+    bin_size: f64,
+    order: f64,
+) -> f64 {
     // source: ndarray[Any, Any],
     // target: ndarray[Any, Any],
     // condition: ndarray[Any, Any],

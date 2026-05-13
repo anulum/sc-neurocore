@@ -50,12 +50,12 @@ impl SearchSpace {
         }
     }
 
-    pub fn n_layers(&self, ) -> f64 {
+    pub fn n_layers(&self) -> f64 {
         // return len(self.layer_widths)
         0.0
     }
 
-    pub fn layer_sizes(&self, ) -> f64 {
+    pub fn layer_sizes(&self) -> f64 {
         // sizes = []
         // prev = self.n_inputs
         // for w in self.layer_widths:
@@ -65,7 +65,7 @@ impl SearchSpace {
         0.0
     }
 
-    pub fn total_params(&self, ) -> f64 {
+    pub fn total_params(&self) -> f64 {
         // return sum(n_in * n_out for n_in, n_out in self.layer_sizes)
         0.0
     }
@@ -125,7 +125,7 @@ impl SearchSpace {
         0.0
     }
 
-    pub fn space_size(&self, ) -> f64 {
+    pub fn space_size(&self) -> f64 {
         // per_layer = (
         // len(self.width_choices)
         // * len(self.neuron_choices)
@@ -138,7 +138,6 @@ impl SearchSpace {
         // return total
         0.0
     }
-
 }
 
 pub fn validate_search_space(state: &SearchSpace) -> bool {
@@ -154,5 +153,4 @@ mod tests {
         let state = SearchSpace::new();
         assert!(validate_search_space(&state));
     }
-
 }

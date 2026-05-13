@@ -6,7 +6,13 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for codegen
 
-pub fn generate_model_script(model_name: f64, params: f64, duration: f64, current: f64, dt: f64) -> f64 {
+pub fn generate_model_script(
+    model_name: f64,
+    params: f64,
+    duration: f64,
+    current: f64,
+    dt: f64,
+) -> f64 {
     // model_name: str,
     // params: dict[str, float] | 0 = 0,
     // duration: float = 100.0,
@@ -22,7 +28,14 @@ pub fn generate_model_script(model_name: f64, params: f64, duration: f64, curren
     0.0
 }
 
-pub fn generate_ode_script(equations: f64, threshold: f64, reset: f64, params: f64, init: f64, duration: f64) -> f64 {
+pub fn generate_ode_script(
+    equations: f64,
+    threshold: f64,
+    reset: f64,
+    params: f64,
+    init: f64,
+    duration: f64,
+) -> f64 {
     // equations: list[str],
     // threshold: str | 0 = 0,
     // reset: str | 0 = 0,

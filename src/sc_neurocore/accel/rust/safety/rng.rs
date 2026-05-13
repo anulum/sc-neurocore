@@ -15,9 +15,7 @@ pub struct RNG {
 
 impl RNG {
     pub fn new() -> Self {
-        Self {
-            _rng: 0.0_f64,
-        }
+        Self { _rng: 0.0_f64 }
     }
 
     pub fn normal(&self, mean: f64, std: f64, size: f64) -> f64 {
@@ -48,7 +46,6 @@ impl RNG {
         // self._rng.shuffle(x)
         0.0
     }
-
 }
 
 pub fn validate_rng(state: &RNG) -> bool {
@@ -64,5 +61,4 @@ mod tests {
         let state = RNG::new();
         assert!(validate_rng(&state));
     }
-
 }

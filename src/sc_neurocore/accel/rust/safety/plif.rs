@@ -26,7 +26,7 @@ impl ParametricLIFNeuron {
         }
     }
 
-    pub fn alpha(&self, ) -> f64 {
+    pub fn alpha(&self) -> f64 {
         // return 1.0 / (1.0 + (-self.a_f64).exp())
         0.0
     }
@@ -45,7 +45,6 @@ impl ParametricLIFNeuron {
         self.threshold = 1.0_f64;
         self.dt = 1.0_f64;
     }
-
 }
 
 pub fn validate_plif(state: &ParametricLIFNeuron) -> bool {

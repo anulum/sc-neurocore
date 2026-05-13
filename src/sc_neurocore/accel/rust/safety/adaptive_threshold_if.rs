@@ -56,7 +56,6 @@ impl AdaptiveThresholdIFNeuron {
         self.v_reset = -65.0_f64;
         self.theta_rest = -50.0_f64;
     }
-
 }
 
 pub fn validate_adaptive_threshold_if(state: &AdaptiveThresholdIFNeuron) -> bool {

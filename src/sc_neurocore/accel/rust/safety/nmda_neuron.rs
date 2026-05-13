@@ -90,7 +90,6 @@ impl NMDANeuron {
         self.s_nmda = 0.0_f64;
         self.g_na = 35.0_f64;
     }
-
 }
 
 pub fn validate_nmda_neuron(state: &NMDANeuron) -> bool {

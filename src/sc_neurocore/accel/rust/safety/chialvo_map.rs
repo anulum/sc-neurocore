@@ -50,7 +50,6 @@ impl ChialvoMapNeuron {
         self.b = 0.6_f64;
         self.c = 0.28_f64;
     }
-
 }
 
 pub fn validate_chialvo_map(state: &ChialvoMapNeuron) -> bool {

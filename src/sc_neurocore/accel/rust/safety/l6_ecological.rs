@@ -77,12 +77,12 @@ impl L6_EcologicalLayer {
         0 // spike indicator
     }
 
-    pub fn get_global_metric(&self, ) -> f64 {
+    pub fn get_global_metric(&self) -> f64 {
         // return self.planetary_coherence
         0.0
     }
 
-    pub fn get_schumann_spectrum(&self, ) -> f64 {
+    pub fn get_schumann_spectrum(&self) -> f64 {
         // return {
         // freq: float(amp * (phase_f64).cos())
         // for freq, amp, phase in zip(
@@ -92,11 +92,10 @@ impl L6_EcologicalLayer {
         0.0
     }
 
-    pub fn get_circadian_time(&self, ) -> f64 {
+    pub fn get_circadian_time(&self) -> f64 {
         // return (self.circadian_phase / (2 * std::f64::consts::PI)) * 24.0
         0.0
     }
-
 }
 
 pub fn validate_l6_ecological(state: &L6_EcologicalLayer) -> bool {

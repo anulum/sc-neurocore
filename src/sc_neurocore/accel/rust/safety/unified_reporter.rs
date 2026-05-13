@@ -38,7 +38,7 @@ impl UnifiedEnergyReporter {
         }
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // lines = [
         // "Unified Energy Report",
         // f"  Total power: {self.total_power_mw:.2f} mW",
@@ -69,7 +69,6 @@ impl UnifiedEnergyReporter {
         // return UnifiedEnergyReport(
         0.0
     }
-
 }
 
 pub fn validate_unified_reporter(state: &UnifiedEnergyReporter) -> bool {
@@ -85,5 +84,4 @@ mod tests {
         let state = UnifiedEnergyReporter::new();
         assert!(validate_unified_reporter(&state));
     }
-
 }

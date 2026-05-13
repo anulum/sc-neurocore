@@ -43,7 +43,7 @@ impl CausalImportance {
         0.0
     }
 
-    pub fn summary(&self, ) -> f64 {
+    pub fn summary(&self) -> f64 {
         // top = self.top_k(5)
         // lines = [f"Explanation ({self.method}):"]
         // for t, n, score in top:
@@ -89,9 +89,6 @@ impl CausalImportance {
         // perturbed = spikes.copy()
         0.0
     }
-
-
-
 }
 
 pub fn validate_spike_explain(state: &CausalImportance) -> bool {
@@ -107,5 +104,4 @@ mod tests {
         let state = CausalImportance::new();
         assert!(validate_spike_explain(&state));
     }
-
 }

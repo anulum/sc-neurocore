@@ -55,7 +55,6 @@ impl NonResettingLIFNeuron {
         self.theta_rest = -50.0_f64;
         self.delta_theta = 5.0_f64;
     }
-
 }
 
 pub fn validate_non_resetting_lif(state: &NonResettingLIFNeuron) -> bool {

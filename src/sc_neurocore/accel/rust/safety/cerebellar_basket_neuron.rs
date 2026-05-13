@@ -86,7 +86,6 @@ impl CerebellarBasketNeuron {
         self.a = 0.0_f64;
         self.b = 0.9_f64;
     }
-
 }
 
 pub fn validate_cerebellar_basket_neuron(state: &CerebellarBasketNeuron) -> bool {

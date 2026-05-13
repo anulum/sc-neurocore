@@ -34,7 +34,7 @@ impl QuantumInspiredLIFNeuron {
         }
     }
 
-    pub fn _xorshift64(&self, ) -> f64 {
+    pub fn _xorshift64(&self) -> f64 {
         // x = self._rng_state & 0xFFFFFFFFFFFFFFFF
         // x ^= (x << 13) & 0xFFFFFFFFFFFFFFFF
         // x ^= (x >> 7) & 0xFFFFFFFFFFFFFFFF
@@ -74,7 +74,6 @@ impl QuantumInspiredLIFNeuron {
         self.v_reset = 0.0_f64;
         self.seed = 12345.0_f64;
     }
-
 }
 
 pub fn validate_quantum_inspired_lif(state: &QuantumInspiredLIFNeuron) -> bool {

@@ -92,14 +92,13 @@ impl L2_NeurochemicalAdapter {
         0.0
     }
 
-    pub fn get_metrics(&self, ) -> f64 {
+    pub fn get_metrics(&self) -> f64 {
         // return {
         // "avg_field_potential": float(jnp.mean(self.phi_field)),
         // "system_coherence_r2": float(jnp.mean(self.concentrations)),
         // }
         0.0
     }
-
 }
 
 pub fn validate_l2_chem(state: &L2_NeurochemicalAdapter) -> bool {
@@ -115,5 +114,4 @@ mod tests {
         let state = L2_NeurochemicalAdapter::new();
         assert!(validate_l2_chem(&state));
     }
-
 }
