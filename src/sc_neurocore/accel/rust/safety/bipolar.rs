@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for bipolar
 
-pub fn bipolar_encode(value: f64, L: f64, rng: f64) -> f64 {
+pub fn bipolar_encode(_value: f64, _l: f64, _rng: f64) -> f64 {
     // p = clip((value + 1.0) / 2.0, 0.0, 1.0)
     // if rng is 0 {
     // rng = random.default_rng()
@@ -14,17 +14,17 @@ pub fn bipolar_encode(value: f64, L: f64, rng: f64) -> f64 {
     0.0
 }
 
-pub fn bipolar_decode(bits: f64) -> f64 {
+pub fn bipolar_decode(_bits: f64) -> f64 {
     // return 2.0 * bits.mean() - 1.0
     0.0
 }
 
-pub fn bipolar_multiply(a: f64, b: f64) -> f64 {
+pub fn bipolar_multiply(_a: f64, _b: f64) -> f64 {
     // return (a == b).astype(uint8)
     0.0
 }
 
-pub fn bipolar_mac(inputs: f64, weights: f64, L: f64, seed: f64) -> f64 {
+pub fn bipolar_mac(_inputs: f64, _weights: f64, _l: f64, _seed: f64) -> f64 {
     // inputs: ndarray,
     // weights: ndarray,
     // L: int,
@@ -49,12 +49,12 @@ pub fn bipolar_mac(inputs: f64, weights: f64, L: f64, seed: f64) -> f64 {
 }
 
 pub fn bipolar_sc_layer(
-    inputs: f64,
-    weights: f64,
-    bias: f64,
-    L: f64,
-    seed: f64,
-    activation: f64,
+    _inputs: f64,
+    _weights: f64,
+    _bias: f64,
+    _l: f64,
+    _seed: f64,
+    _activation: f64,
 ) -> f64 {
     // inputs: ndarray,
     // weights: ndarray,
@@ -75,7 +75,7 @@ pub fn bipolar_sc_layer(
     0.0
 }
 
-pub fn float_to_bipolar_weights(weight_tensor: f64) -> f64 {
+pub fn float_to_bipolar_weights(_weight_tensor: f64) -> f64 {
     // w = (
     // weight_tensor.detach().cpu().numpy()
     // if hasattr(weight_tensor, "detach")

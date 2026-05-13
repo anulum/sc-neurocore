@@ -6,14 +6,14 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for gpfa
 
-pub fn _gp_kernel(n_bins: f64, tau: f64, sigma: f64) -> f64 {
+pub fn _gp_kernel(_n_bins: f64, _tau: f64, _sigma: f64) -> f64 {
     // t = arange(n_bins, dtype=float64)
     // diff = t[:, 0] - t[0, :]
     // return sigma.powi2 * (-0.5 * diff.powi2 / (tau.powi2 + 1e-12 as f64).e
     0.0
 }
 
-pub fn _gpfa_e_step(Y: f64, C: f64, d: f64, R: f64, K_all: f64) -> f64 {
+pub fn _gpfa_e_step(_y: f64, _c: f64, _d: f64, _r: f64, _k_all: f64) -> f64 {
     // Y: ndarray, C: ndarray, d: ndarray, R: ndarray, K_all: list[ndarray]
     // ) -> tuple[ndarray, ndarray] {
     // n_neurons, n_bins = Y.shape
@@ -37,7 +37,7 @@ pub fn _gpfa_e_step(Y: f64, C: f64, d: f64, R: f64, K_all: f64) -> f64 {
     0.0
 }
 
-pub fn _gpfa_m_step(Y: f64, x_post: f64, xx_post: f64) -> f64 {
+pub fn _gpfa_m_step(_y: f64, _x_post: f64, _xx_post: f64) -> f64 {
     // Y: ndarray, x_post: ndarray, xx_post: ndarray
     // ) -> tuple[ndarray, ndarray, ndarray] {
     // n_neurons, n_bins = Y.shape
@@ -56,7 +56,14 @@ pub fn _gpfa_m_step(Y: f64, x_post: f64, xx_post: f64) -> f64 {
     0.0
 }
 
-pub fn gpfa(trains: f64, n_latents: f64, bin_ms: f64, dt: f64, max_iter: f64, tol: f64) -> f64 {
+pub fn gpfa(
+    _trains: f64,
+    _n_latents: f64,
+    _bin_ms: f64,
+    _dt: f64,
+    _max_iter: f64,
+    _tol: f64,
+) -> f64 {
     // trains: list[ndarray],
     // n_latents: int = 3,
     // bin_ms: float = 20.0,
@@ -80,7 +87,7 @@ pub fn gpfa(trains: f64, n_latents: f64, bin_ms: f64, dt: f64, max_iter: f64, to
     0.0
 }
 
-pub fn gpfa_transform(new_trains: f64, params: f64, bin_ms: f64, dt: f64) -> f64 {
+pub fn gpfa_transform(_new_trains: f64, _params: f64, _bin_ms: f64, _dt: f64) -> f64 {
     // new_trains: list[ndarray], params: dict[str, Any], bin_ms: float = 20.
     // ) -> ndarray {
     // C = params["C"]

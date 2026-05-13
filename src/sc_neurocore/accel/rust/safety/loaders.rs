@@ -7,12 +7,12 @@
 // SC-NeuroCore — Rust safety acceleration for loaders
 
 pub fn _synthetic_event_dataset(
-    n_samples: f64,
-    spatial_size: f64,
-    n_classes: f64,
-    T: f64,
-    dt_ms: f64,
-    seed: f64,
+    _n_samples: f64,
+    _spatial_size: f64,
+    _n_classes: f64,
+    _t: f64,
+    _dt_ms: f64,
+    _seed: f64,
 ) -> f64 {
     // n_samples: int,
     // spatial_size: int,
@@ -37,7 +37,7 @@ pub fn _synthetic_event_dataset(
     0.0
 }
 
-pub fn _check_root(root: f64, dataset_name: f64, url: f64) -> f64 {
+pub fn _check_root(_root: f64, _dataset_name: f64, _url: f64) -> f64 {
     // p = Path(root)
     // if p.exists() {
     // return p
@@ -46,12 +46,12 @@ pub fn _check_root(root: f64, dataset_name: f64, url: f64) -> f64 {
 }
 
 pub fn load_nmnist(
-    root: f64,
-    train: f64,
-    dt_ms: f64,
-    T: f64,
-    synthetic: f64,
-    n_samples: f64,
+    _root: f64,
+    _train: f64,
+    _dt_ms: f64,
+    _t: f64,
+    _synthetic: f64,
+    _n_samples: f64,
 ) -> f64 {
     // root: str | Path = "data/nmnist",
     // train: bool = true,
@@ -76,7 +76,7 @@ pub fn load_nmnist(
     0.0
 }
 
-pub fn _parse_nmnist_bin(path: f64, dt_ms: f64) -> f64 {
+pub fn _parse_nmnist_bin(_path: f64, _dt_ms: f64) -> f64 {
     // raw = fromfile(path, dtype=uint8)
     // # Each event is 5 bytes: [addr_high, addr_low, ts2, ts1, ts0]
     // n_events = len(raw) // 5
@@ -95,7 +95,14 @@ pub fn _parse_nmnist_bin(path: f64, dt_ms: f64) -> f64 {
     0.0
 }
 
-pub fn load_shd(root: f64, train: f64, dt_ms: f64, T: f64, synthetic: f64, n_samples: f64) -> f64 {
+pub fn load_shd(
+    _root: f64,
+    _train: f64,
+    _dt_ms: f64,
+    _t: f64,
+    _synthetic: f64,
+    _n_samples: f64,
+) -> f64 {
     // root: str | Path = "data/shd",
     // train: bool = true,
     // dt_ms: float = 1.0,
@@ -119,7 +126,7 @@ pub fn load_shd(root: f64, train: f64, dt_ms: f64, T: f64, synthetic: f64, n_sam
     0.0
 }
 
-pub fn _synthetic_shd(n_samples: f64, T: f64, dt_ms: f64, seed: f64) -> f64 {
+pub fn _synthetic_shd(_n_samples: f64, _t: f64, _dt_ms: f64, _seed: f64) -> f64 {
     // n_samples: int,
     // T: int,
     // dt_ms: float,
@@ -142,12 +149,12 @@ pub fn _synthetic_shd(n_samples: f64, T: f64, dt_ms: f64, seed: f64) -> f64 {
 }
 
 pub fn load_dvs_cifar10(
-    root: f64,
-    train: f64,
-    dt_ms: f64,
-    T: f64,
-    synthetic: f64,
-    n_samples: f64,
+    _root: f64,
+    _train: f64,
+    _dt_ms: f64,
+    _t: f64,
+    _synthetic: f64,
+    _n_samples: f64,
 ) -> f64 {
     // root: str | Path = "data/dvs_cifar10",
     // train: bool = true,
