@@ -37,6 +37,9 @@ class SCNIRHDLHandoffAuditReport:
     q_format: str
     stream_count: int
     source_module_count: int
+    hierarchy_instance_count: int
+    hierarchy_port_count: int
+    hierarchy_instances: dict[str, dict[str, object]]
     total_neurons: int
     total_synapses: int
     signal_kinds: dict[str, int]
@@ -57,6 +60,9 @@ class SCNIRHDLHandoffAuditReport:
             "q_format": self.q_format,
             "stream_count": self.stream_count,
             "source_module_count": self.source_module_count,
+            "hierarchy_instance_count": self.hierarchy_instance_count,
+            "hierarchy_port_count": self.hierarchy_port_count,
+            "hierarchy_instances": self.hierarchy_instances,
             "total_neurons": self.total_neurons,
             "total_synapses": self.total_synapses,
             "signal_kinds": self.signal_kinds,
@@ -114,6 +120,10 @@ def audit_scnir_hdl_handoff(directory: str | Path) -> SCNIRHDLHandoffAuditReport
     signal_routes = _signal_routes(
         document, interconnect=_expect_non_empty_string(manifest, "interconnect")
     )
+    hierarchy_instances = _hierarchy_instances(document)
+    hierarchy_port_count = sum(
+        len(cast(list[object], instance["ports"])) for instance in hierarchy_instances.values()
+    )
     _expect_equal(manifest.get("scnir_signal_kinds"), signal_kinds, "scnir_signal_kinds")
     _expect_equal(manifest.get("scnir_signal_routes"), signal_routes, "scnir_signal_routes")
 
@@ -143,6 +153,9 @@ def audit_scnir_hdl_handoff(directory: str | Path) -> SCNIRHDLHandoffAuditReport
         q_format=_expect_non_empty_string(manifest, "q_format"),
         stream_count=len(streams),
         source_module_count=len(sources),
+        hierarchy_instance_count=len(hierarchy_instances),
+        hierarchy_port_count=hierarchy_port_count,
+        hierarchy_instances=hierarchy_instances,
         total_neurons=_expect_int(manifest, "total_neurons"),
         total_synapses=_expect_int(manifest, "total_synapses"),
         signal_kinds=signal_kinds,
@@ -334,6 +347,26 @@ def _signal_routes(document: SCNIRDocument, *, interconnect: str) -> dict[str, s
         "weight": "stochastic_source_module",
     }
     return {kind: routes[kind] for kind in routes if kind in present_kinds}
+
+
+def _hierarchy_instances(document: SCNIRDocument) -> dict[str, dict[str, object]]:
+    scnir_to_dict(document)
+    rows: dict[str, dict[str, object]] = {}
+    for instance in sorted(document.hierarchy, key=lambda item: item.instance_id):
+        rows[instance.instance_id] = {
+            "module_name": instance.module_name,
+            "ports": [
+                {
+                    "port_name": port.port_name,
+                    "direction": port.direction,
+                    "stream_id": port.stream_id,
+                    "signal_kind": port.signal_kind,
+                    "bit_width": port.bit_width,
+                }
+                for port in instance.ports
+            ],
+        }
+    return rows
 
 
 def _expect_top_localparam(verilog: str, name: str, value: int) -> None:

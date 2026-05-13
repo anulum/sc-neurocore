@@ -291,6 +291,7 @@ hardware handoff defines port maps, submodule boundaries, and audit evidence.
 | `sc_nir_weight_rom.v` | Combined weight ROM artefact for all connections |
 | `result.scnir_source_modules` | Standalone LFSR-16/Sobol-16 source RTL keyed by module name |
 | `result.scnir_source_manifest` | Stream-to-source manifest for deterministic hardware handoff, including `signal_kind` and recurrent `delay_steps` |
+| `scnir_handoff_audit.json` | Optional audit report with stream/source counts, signal routes, and SC-NIR hierarchy instance/port summaries |
 
 ---
 
@@ -699,9 +700,10 @@ handoff directory before passing artefacts to downstream simulation, synthesis,
 or packaging jobs. The audit loads `scnir_document.json`, checks
 `scnir_source_manifest.json` against the typed SC-NIR streams, verifies aggregate
 signal-kind counts and route selections, verifies top-level SC-NIR localparams,
-and fails closed if any expected source module, top module, or weight ROM
-artefact is missing. Use `compile-nir --audit-handoff` when the audit report
-should be generated atomically with the RTL bundle.
+records hierarchy instance and port summaries from `scnir_document.json`, and
+fails closed if any expected source module, top module, or weight ROM artefact
+is missing. Use `compile-nir --audit-handoff` when the audit report should be
+generated atomically with the RTL bundle.
 
 The CLI regression suite co-simulates emitted source modules selected from
 `scnir_source_manifest.json` for direct/Sobol, AER/LFSR, and recurrent/LFSR
