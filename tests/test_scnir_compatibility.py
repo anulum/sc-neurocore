@@ -69,6 +69,12 @@ def test_scnir_compatibility_matrix_does_not_overclaim_parser_only_rows() -> Non
     assert conv2d.scnir_stream_metadata == ()
     assert conv2d.hdl_support != ""
 
+    for primitive in ("SumPool2d", "AvgPool2d"):
+        row = rows[primitive]
+        assert row.support_level == "metadata_and_hdl"
+        assert "pool2d_lowered_weight" in row.scnir_stream_metadata
+        assert "dense pooling" in row.hdl_support
+
     scale = rows["Scale"]
     assert scale.support_level == "metadata_and_hdl"
     assert "folded_weight_scale" in scale.scnir_stream_metadata

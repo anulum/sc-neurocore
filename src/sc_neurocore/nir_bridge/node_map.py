@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# © Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# © Code 2020-2026 Miroslav Sotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — NIR node type → SC-NeuroCore primitive factories
@@ -611,6 +611,8 @@ class SCSumPool2dNode:
     kernel_size: tuple[int, int]
     stride: tuple[int, int]
     padding: tuple[int, int]
+    input_shape: tuple[int, int, int] | None = None
+    output_shape: tuple[int, int, int] | None = None
 
     @classmethod
     def from_nir(cls, name: str, node: nir.SumPool2d) -> SCSumPool2dNode:
@@ -620,7 +622,14 @@ class SCSumPool2dNode:
         ks = (ks_raw[0], ks_raw[0]) if len(ks_raw) == 1 else (ks_raw[0], ks_raw[1])
         st = (st_raw[0], st_raw[0]) if len(st_raw) == 1 else (st_raw[0], st_raw[1])
         pad = (pad_raw[0], pad_raw[0]) if len(pad_raw) == 1 else (pad_raw[0], pad_raw[1])
-        return cls(name=name, kernel_size=ks, stride=st, padding=pad)
+        return cls(
+            name=name,
+            kernel_size=ks,
+            stride=st,
+            padding=pad,
+            input_shape=_shape_tuple_from_type(getattr(node, "input_type", None), "input"),
+            output_shape=_shape_tuple_from_type(getattr(node, "output_type", None), "output"),
+        )
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         if x.ndim < 2:
@@ -652,6 +661,8 @@ class SCAvgPool2dNode:
     kernel_size: tuple[int, int]
     stride: tuple[int, int]
     padding: tuple[int, int]
+    input_shape: tuple[int, int, int] | None = None
+    output_shape: tuple[int, int, int] | None = None
 
     @classmethod
     def from_nir(cls, name: str, node: nir.AvgPool2d) -> SCAvgPool2dNode:
@@ -661,7 +672,14 @@ class SCAvgPool2dNode:
         ks = (ks_raw[0], ks_raw[0]) if len(ks_raw) == 1 else (ks_raw[0], ks_raw[1])
         st = (st_raw[0], st_raw[0]) if len(st_raw) == 1 else (st_raw[0], st_raw[1])
         pad = (pad_raw[0], pad_raw[0]) if len(pad_raw) == 1 else (pad_raw[0], pad_raw[1])
-        return cls(name=name, kernel_size=ks, stride=st, padding=pad)
+        return cls(
+            name=name,
+            kernel_size=ks,
+            stride=st,
+            padding=pad,
+            input_shape=_shape_tuple_from_type(getattr(node, "input_type", None), "input"),
+            output_shape=_shape_tuple_from_type(getattr(node, "output_type", None), "output"),
+        )
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         sum_node = SCSumPool2dNode(

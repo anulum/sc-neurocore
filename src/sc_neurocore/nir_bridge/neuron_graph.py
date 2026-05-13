@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# © Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# © Code 2020-2026 Miroslav Sotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — NeuronGraph intermediate representation for FPGA compilation
@@ -219,6 +219,8 @@ _SC_WEIGHT_NODES: set[str] = {
     "SCAffineNode",
     "SCLinearNode",
     "SCConv1dNode",
+    "SCSumPool2dNode",
+    "SCAvgPool2dNode",
 }
 
 # Maps SC node class names to pass-through nodes (folded into graph)
@@ -465,12 +467,74 @@ def _conv1d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, np.n
     return dense, np.repeat(bias, output_length).astype(np.float32, copy=False)
 
 
+def _pool2d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, None]:
+    """Lower a shape-known NIR Pool2d node to an exact dense matrix."""
+
+    class_name = type(node).__name__
+    input_shape = getattr(node, "input_shape", None)
+    output_shape = getattr(node, "output_shape", None)
+    if input_shape is None or output_shape is None:
+        primitive = class_name.removeprefix("SC").removesuffix("Node")
+        raise ValueError(
+            f"{primitive} node {node_name!r} requires input/output shape metadata for FPGA lowering"
+        )
+    if len(input_shape) != 3 or len(output_shape) != 3:
+        raise ValueError(f"{class_name} {node_name!r} requires CHW input/output shape metadata")
+
+    channels, input_height, input_width = (int(value) for value in input_shape)
+    out_channels, output_height, output_width = (int(value) for value in output_shape)
+    if channels <= 0 or input_height <= 0 or input_width <= 0:
+        raise ValueError(f"{class_name} {node_name!r} has invalid input shape {input_shape}")
+    if out_channels != channels or output_height <= 0 or output_width <= 0:
+        raise ValueError(f"{class_name} {node_name!r} has invalid output shape {output_shape}")
+
+    kernel_height, kernel_width = (int(value) for value in node.kernel_size)
+    stride_height, stride_width = (int(value) for value in node.stride)
+    pad_height, pad_width = (int(value) for value in node.padding)
+    if (
+        kernel_height <= 0
+        or kernel_width <= 0
+        or stride_height <= 0
+        or stride_width <= 0
+        or pad_height < 0
+        or pad_width < 0
+    ):
+        raise ValueError(f"{class_name} {node_name!r} has invalid kernel/stride/padding")
+
+    dense = np.zeros(
+        (channels * output_height * output_width, channels * input_height * input_width),
+        dtype=np.float32,
+    )
+    coefficient = 1.0
+    if class_name == "SCAvgPool2dNode":
+        coefficient = 1.0 / float(kernel_height * kernel_width)
+
+    for channel in range(channels):
+        for out_y in range(output_height):
+            for out_x in range(output_width):
+                row = (channel * output_height + out_y) * output_width + out_x
+                for kernel_y in range(kernel_height):
+                    in_y = out_y * stride_height + kernel_y - pad_height
+                    if not 0 <= in_y < input_height:
+                        continue
+                    for kernel_x in range(kernel_width):
+                        in_x = out_x * stride_width + kernel_x - pad_width
+                        if not 0 <= in_x < input_width:
+                            continue
+                        col = (channel * input_height + in_y) * input_width + in_x
+                        dense[row, col] += coefficient
+
+    return dense, None
+
+
 def _weight_matrix_and_bias(node: Any, node_name: str) -> tuple[np.ndarray, np.ndarray | None]:
     """Return dense weight and bias arrays for a weight-carrying NIR node."""
 
     class_name = type(node).__name__
     if class_name == "SCConv1dNode":
         return _conv1d_to_dense_matrix(node, node_name)
+    if class_name in {"SCSumPool2dNode", "SCAvgPool2dNode"}:
+        return _pool2d_to_dense_matrix(node, node_name)
 
     weight = getattr(node, "weight", None)
     bias = getattr(node, "bias", None)
