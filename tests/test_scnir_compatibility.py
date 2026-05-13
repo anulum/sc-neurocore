@@ -100,6 +100,12 @@ def test_scnir_compatibility_matrix_does_not_overclaim_parser_only_rows() -> Non
     assert "signal_kind=analogue_state" in integrator.scnir_stream_metadata
     assert "integrator state-update module" in integrator.hdl_support
 
+    nested = rows["NIRGraph"]
+    assert nested.support_level == "metadata_and_hdl"
+    assert "inline_single_port_subgraph" in nested.scnir_stream_metadata
+    assert "namespaced inline fixed-point terms" in nested.hdl_support
+    assert "Multi-port" in nested.limitation
+
 
 def test_scnir_compatibility_matrix_records_weight_and_recurrent_delay_semantics() -> None:
     rows = {row.nir_primitive: row for row in scnir_compatibility_matrix()}

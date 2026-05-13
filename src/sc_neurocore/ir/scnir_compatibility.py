@@ -277,16 +277,17 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
     ),
     SCNIRCompatibilityRow(
         nir_primitive="NIRGraph",
-        support_level="parser_only",
+        support_level="metadata_and_hdl",
         parser_node="SCSubgraphNode or SCMultiPortSubgraphNode",
-        neuron_graph_lowering="nested executable parser network",
-        scnir_stream_metadata=(),
-        source_metadata=(),
-        hdl_support="not emitted as a standalone nested hardware hierarchy",
-        audit_evidence=("tests/test_nir_bridge.py",),
+        neuron_graph_lowering="single-port subgraphs are inlined with namespaced nodes",
+        scnir_stream_metadata=("inline_single_port_subgraph", "namespaced_stream_ids"),
+        source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
+        hdl_support="namespaced inline fixed-point terms; no standalone submodule boundary yet",
+        audit_evidence=("tests/test_scnir_convert.py", "tests/test_scnir_fpga_integration.py"),
         limitation=(
-            "Nested graph execution is supported in the parser; SC-NIR/FPGA "
-            "lowering fails closed until hierarchical hardware handoff is closed."
+            "Single-port nested graphs are inlined exactly into the parent hardware graph. "
+            "Multi-port nested NIRGraph nodes still fail closed until explicit hierarchical "
+            "hardware handoff is implemented."
         ),
     ),
 )

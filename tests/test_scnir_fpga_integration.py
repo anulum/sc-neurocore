@@ -170,6 +170,34 @@ def _heterogeneous_delay_graph() -> object:
     )
 
 
+def _single_port_nested_graph() -> object:
+    inner = nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "aff": nir.Affine(
+                weight=np.array([[0.25, -0.5], [0.75, 0.125]], dtype=np.float32),
+                bias=np.array([0.125, -0.25], dtype=np.float32),
+            ),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[("input", "aff"), ("aff", "output")],
+    )
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "subgraph": inner,
+            "lif": nir.LIF(
+                tau=np.full(2, 20.0),
+                r=np.ones(2),
+                v_leak=np.zeros(2),
+                v_threshold=np.ones(2),
+            ),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[("input", "subgraph"), ("subgraph", "lif"), ("lif", "output")],
+    )
+
+
 def _integrator_graph() -> object:
     return nir.NIRGraph(
         nodes={
@@ -570,6 +598,30 @@ def test_fpga_compile_carries_heterogeneous_delay_vector_register_taps() -> None
     assert "reg p0_n1_spike_d2;" in result.top_module
     assert "(p0_n0_spike_d1 ? 34'sh000000040 : 34'sd0)" in result.top_module
     assert "(p0_n1_spike_d2 ? 34'sh3ffffffe0 : 34'sd0)" in result.top_module
+
+
+def test_fpga_compile_inlines_single_port_nested_graph_weight_terms() -> None:
+    network = from_nir(_single_port_nested_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    result = compile_network_to_fpga(
+        neuron_graph,
+        module_name="scnir_nested_inline",
+        bitstream_length=896,
+    )
+
+    payload = scnir_to_dict(result.scnir_document)
+    validate_scnir_dict(payload)
+    weight_stream = next(
+        stream
+        for stream in payload["streams"]
+        if stream["stream_id"] == "conn.subgraph__input_to_lif.weight"
+    )
+    assert weight_stream["signal_kind"] == "weight"
+    assert "ext_input_0 * 16'sh0040" in result.top_module
+    assert "ext_input_1 * 16'shff80" in result.top_module
+    assert "ext_input_0 * 16'sh00c0" in result.top_module
+    assert "ext_input_1 * 16'sh0020" in result.top_module
 
 
 def test_fpga_compile_emits_integrator_module_and_analogue_state_routes() -> None:

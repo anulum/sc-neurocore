@@ -241,6 +241,8 @@ _DELAY_NODE_NAME = "SCDelayNode"
 _SCALE_NODE_NAME = "SCScaleNode"
 _FLATTEN_NODE_NAME = "SCFlattenNode"
 _THRESHOLD_NODE_NAME = "SCThresholdNode"
+_SINGLE_PORT_SUBGRAPH_NODE = "SCSubgraphNode"
+_MULTIPORT_SUBGRAPH_NODE = "SCMultiPortSubgraphNode"
 
 
 def _extract_neuron_params(node: Any, neuron_type: str) -> dict[str, np.ndarray]:
@@ -284,6 +286,106 @@ def _extract_neuron_params(node: Any, neuron_type: str) -> dict[str, np.ndarray]
             params.pop(attr, None)
 
     return params
+
+
+def _topological_order(nodes: dict[str, Any], edges: list[tuple[str, str]]) -> list[str]:
+    """Return a deterministic topological order for an already cycle-broken graph."""
+
+    successors: dict[str, list[str]] = {name: [] for name in nodes}
+    in_degree: dict[str, int] = {name: 0 for name in nodes}
+    for src, dst in edges:
+        if src not in nodes or dst not in nodes:
+            raise ValueError(f"Flattened nested NIRGraph edge references unknown node {src!r}->{dst!r}")
+        successors[src].append(dst)
+        in_degree[dst] += 1
+
+    ready = [name for name, degree in in_degree.items() if degree == 0]
+    order: list[str] = []
+    while ready:
+        name = ready.pop(0)
+        order.append(name)
+        for dst in successors[name]:
+            in_degree[dst] -= 1
+            if in_degree[dst] == 0:
+                ready.append(dst)
+
+    if len(order) != len(nodes):
+        raise ValueError("Flattened nested NIRGraph contains a cycle without an explicit delay node")
+    return order
+
+
+def _inline_single_port_subgraphs(
+    network: Any,
+) -> tuple[dict[str, Any], list[tuple[str, str]], list[str], set[str], set[str], dict[str, str]]:
+    """Inline parser-executable single-port subgraphs for SC-NIR/FPGA lowering.
+
+    The runtime parser keeps nested NIR graphs as executable wrapper nodes.  HDL
+    lowering needs a single explicit dataflow graph, so this helper namespaces
+    each single-input/single-output subgraph and rewires the outer edges through
+    the nested boundary nodes.  Multi-port subgraphs remain fail-closed until a
+    real hierarchical handoff contract exists.
+    """
+
+    nodes = dict(network.nodes)
+    edges = list(network.edges)
+    recurrent_map = dict(getattr(network, "_recurrent_map", {}))
+    boundary_inputs = set(getattr(network, "input_nodes", ()))
+    boundary_outputs = set(getattr(network, "output_nodes", ()))
+
+    changed = True
+    while changed:
+        changed = False
+        for name in _topological_order(nodes, edges):
+            node = nodes[name]
+            class_name = type(node).__name__
+            if class_name == _MULTIPORT_SUBGRAPH_NODE:
+                raise ValueError(
+                    f"Multi-port nested NIRGraph node {name!r} requires explicit hierarchical "
+                    "hardware handoff before SC-NIR/FPGA lowering"
+                )
+            if class_name != _SINGLE_PORT_SUBGRAPH_NODE:
+                continue
+
+            subnetwork = getattr(node, "network", None)
+            if subnetwork is None:
+                raise ValueError(f"Nested NIRGraph node {name!r} does not expose a parsed network")
+            if len(subnetwork.input_nodes) != 1 or len(subnetwork.output_nodes) != 1:
+                raise ValueError(
+                    f"Nested NIRGraph node {name!r} must expose exactly one input and one output "
+                    "for inline SC-NIR/FPGA lowering"
+                )
+
+            subnetwork.topo_order
+            prefix = f"{name}__"
+            prefixed_nodes = {f"{prefix}{inner_name}": inner_node for inner_name, inner_node in subnetwork.nodes.items()}
+            collisions = sorted(set(nodes).intersection(prefixed_nodes))
+            if collisions:
+                raise ValueError(
+                    f"Nested NIRGraph node {name!r} would collide with existing nodes: {collisions}"
+                )
+
+            incoming = [src for src, dst in edges if dst == name]
+            outgoing = [dst for src, dst in edges if src == name]
+            inner_input = f"{prefix}{subnetwork.input_nodes[0]}"
+            inner_output = f"{prefix}{subnetwork.output_nodes[0]}"
+
+            edges = [(src, dst) for src, dst in edges if src != name and dst != name]
+            edges.extend((src, inner_input) for src in incoming)
+            edges.extend((inner_output, dst) for dst in outgoing)
+            edges.extend((f"{prefix}{src}", f"{prefix}{dst}") for src, dst in subnetwork.edges)
+            nodes.pop(name)
+            nodes.update(prefixed_nodes)
+            recurrent_map.update(
+                {
+                    f"{prefix}{delay_name}": f"{prefix}{source_name}"
+                    for delay_name, source_name in getattr(subnetwork, "_recurrent_map", {}).items()
+                }
+            )
+            changed = True
+            break
+
+    topo_order = _topological_order(nodes, edges)
+    return nodes, edges, topo_order, boundary_inputs, boundary_outputs, recurrent_map
 
 
 def _delay_steps(node: Any, node_name: str) -> DelaySteps:
@@ -849,7 +951,9 @@ def _resolve_weight_destination(
             )
         return node_name, accumulated_scale, flatten_input_width, accumulated_threshold
 
-    if class_name not in _SC_PASSTHROUGH_NODES or class_name in {"SCInputNode", "SCOutputNode"}:
+    if class_name == "SCOutputNode" and not successors.get(node_name):
+        return None
+    if class_name not in _SC_PASSTHROUGH_NODES or class_name == "SCInputNode":
         return None
 
     scale = accumulated_scale
@@ -959,9 +1063,10 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
     ValueError
         If the network contains no neuron populations or no connections.
     """
-    topo_order = network.topo_order
-    nodes = network.nodes
-    edges = list(network.edges)
+    network.topo_order
+    nodes, edges, topo_order, boundary_inputs, boundary_outputs, flattened_recurrent_map = (
+        _inline_single_port_subgraphs(network)
+    )
 
     # Build adjacency: node_name → list of successor node names
     successors: dict[str, list[str]] = {}
@@ -991,12 +1096,12 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
 
         if class_name == "SCInputNode":
             # Input node: find the first neuron population downstream
-            if not input_pop:
+            if name in boundary_inputs or not input_pop:
                 input_pop = name
             continue
 
         if class_name == "SCOutputNode":
-            if not output_pop:
+            if name in boundary_outputs or not output_pop:
                 output_pop = name
             continue
 
@@ -1034,7 +1139,7 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
         # Neuron node
         neuron_type = _SC_NODE_TO_TYPE.get(class_name)
         if neuron_type is None:
-            if class_name in {"SCSubgraphNode", "SCMultiPortSubgraphNode"}:
+            if class_name in {_SINGLE_PORT_SUBGRAPH_NODE, _MULTIPORT_SUBGRAPH_NODE}:
                 raise ValueError(
                     f"Nested NIRGraph node {name!r} is parser-executable but is not "
                     "supported by SC-NIR/FPGA lowering; flatten or pre-lower the "
@@ -1155,7 +1260,7 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
     # If the delayed source is a weight-carrying node, rebuild the original
     # weighted recurrent connection with an explicit one-step delay marker so
     # SC-NIR and downstream HDL do not silently lose the feedback stream.
-    recurrent_map = getattr(network, "_recurrent_map", {})
+    recurrent_map = flattened_recurrent_map
     for delay_name, recurrent_src in recurrent_map.items():
         weight_data = pending_weights.get(recurrent_src)
         if weight_data is None:
