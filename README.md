@@ -26,7 +26,17 @@ Commercial Licensing: Available
 [![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
 
-> **Active Development** — SC-NeuroCore is under active development. The repository contains a large Python and Rust test surface, hardware-oriented compilers and emitters, and multiple research-tier modules. Public APIs, benchmark coverage, and deployment workflows are still being consolidated; use the committed tests and benchmark artefacts in `benchmarks/results/` as the evidence boundary for specific claims.
+> **Active Development and v4.0 Transition** — SC-NeuroCore is under active
+> development. Until v4.0 this checkout intentionally contains a broad,
+> kitchen-sink research surface: Python and Rust runtime code, hardware-oriented
+> compilers and emitters, experimental bridge modules, and verification
+> artefacts live together while the current experimental campaigns establish
+> which paths are promoted, split, or retired. The planned v4.0 transition will
+> split this source tree into several focused repositories and freeze the stable
+> public API. Until then, public APIs, benchmark coverage, and deployment
+> workflows are still being consolidated; use the committed tests and benchmark
+> artefacts in `benchmarks/results/` as the evidence boundary for specific
+> claims.
 
 **Version:** 3.14.0
 **Status:** 174 Python-facing neuron models (165 biological + 9 AI-oriented) | 174 Rust engine models | HDL generation + hardware guides | multi-backend training and benchmarking | research modules included in source checkout
@@ -93,6 +103,13 @@ spike outputs in gamma_oscillation), and (b) **honest wall-clock cost** under a
 common harness. The goal is to measure, not to guess, which implementation
 should win a given operation on real hardware. Without this layer, any claim
 like "Rust is faster than Julia here" is folklore.
+
+**Repository split path.** The present repository is deliberately wider than the
+long-term distribution layout. It keeps the runtime, hardware, SCPN bridge,
+benchmarking, Studio, and research backends in one checkout while larger
+experimental verifications are still in progress. v4.0 is the boundary where
+the stable API is frozen and the source tree is split into focused repositories
+with clearer ownership surfaces.
 
 **Production path.** The shipping product is the Python package, optional Rust
 engine hot paths, and generated hardware artefacts. The research-only polyglot
@@ -467,7 +484,8 @@ environment or run source-tree commands with `PYTHONPATH=src:bridge`.
 ### Visual SNN Design Studio (Experimental)
 
 > **Status:** Development preview. The Studio is functional but under active
-> development. API and UI may change between releases.
+> development. API and UI may change between releases until the v4.0 stable API
+> freeze.
 
 A web-based IDE for designing, training, compiling, and deploying spiking
 neural networks — from ODE equations to FPGA bitstream in a single browser tab.

@@ -105,7 +105,21 @@ Use these emitters when you need:
 - standalone RTL source blocks for FPGA or co-simulation
 - explicit parity testing between software, Rust, and Verilog
 - deterministic seed control for stochastic source generation
+- SC-NIR FPGA compile artefacts via `result.scnir_source_modules` and
+  `result.scnir_source_manifest`, including stream `signal_kind` and
+  recurrent stream `delay_steps`
+- `compile-nir` output directories that pair source modules with the validated
+  `scnir_document.json` used to generate them
+- machine-readable compile evidence in `scnir_source_manifest.json`, including
+  direct versus AER interconnect selection, graph size, and aggregate
+  `scnir_signal_kinds` plus `scnir_signal_routes` for mixed analogue/spiking
+  exports
+- CLI-level co-simulation of emitted source modules selected from
+  `scnir_source_manifest.json` across direct/Sobol, AER/LFSR, and
+  recurrent/LFSR exported networks
 
 Do **not** treat them as proof that every HDL path in the repository is now
 automatically sourced from these modules. They are explicit building blocks,
-not an implicit global rewiring.
+not an implicit global rewiring. The CLI co-simulation matrix proves the
+standalone source modules in those output directories follow the canonical
+advance-before-compare contract; it is not yet full-network HDL co-simulation.

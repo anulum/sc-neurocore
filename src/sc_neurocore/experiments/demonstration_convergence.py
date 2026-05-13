@@ -17,6 +17,7 @@ This experiment showcases:
 """
 
 import logging
+from typing import Literal
 
 from sc_neurocore.adapters.holonomic.l1_quantum import L1_QuantumAdapter, L1_HolonomicParameters
 from sc_neurocore.adapters.holonomic.l2_chem import L2_NeurochemicalAdapter, L2_HolonomicParameters
@@ -38,8 +39,9 @@ from sc_neurocore.adapters.holonomic.l14_trans import (
 from sc_neurocore.adapters.holonomic.l15_cons import L15_ConsiliumAdapter, L15_HolonomicParameters
 from sc_neurocore.adapters.holonomic.l16_meta import L16_MetaAdapter, L16_HolonomicParameters
 from sc_neurocore.quantum.qec import QecShield
-from sc_neurocore.compiler.mlir_emitter import MLIREmitter
+from sc_neurocore.compiler.mlir_emitter import MLIREmitter, generate_mlir_bundle
 from sc_neurocore.compiler.pipeline import CompilerPipeline
+from sc_neurocore.exceptions import SCCompilerError
 
 from sc_neurocore.accel.jax_backend import to_host
 
@@ -47,8 +49,49 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("OmniConvergence")
 
 
-def run_demonstration() -> None:
+def _emit_hardware_evidence(
+    mlir_str: str,
+    *,
+    emitter: MLIREmitter,
+    hardware_mode: Literal["auto", "require_verilog", "bundle"],
+    work_dir: str,
+    bundle_dir: str,
+) -> dict[str, object]:
+    if hardware_mode == "bundle":
+        bundle = generate_mlir_bundle(emitter, bundle_dir)
+        logger.info("Wrote CIRCT-ready MLIR bundle: %s", bundle.manifest_path)
+        return {"mode": "bundle", "verilog_path": None, "bundle": bundle.to_dict()}
+
+    pipeline = CompilerPipeline(work_dir=work_dir)
+    try:
+        v_path = pipeline.compile_mlir_to_verilog(mlir_str, "director_top")
+    except SCCompilerError:
+        if hardware_mode == "require_verilog":
+            raise
+        bundle = generate_mlir_bundle(emitter, bundle_dir)
+        logger.info(
+            "firtool unavailable; wrote evidence-only MLIR bundle instead: %s",
+            bundle.manifest_path,
+        )
+        return {"mode": "bundle", "verilog_path": None, "bundle": bundle.to_dict()}
+
+    logger.info("Lowered MLIR to Verilog: %s", v_path)
+    return {
+        "mode": "verilog",
+        "verilog_path": v_path,
+        "bundle": None,
+    }
+
+
+def run_demonstration(
+    *,
+    hardware_mode: Literal["auto", "require_verilog", "bundle"] = "auto",
+    work_dir: str = ".tmp/compiler",
+    bundle_dir: str = ".tmp/compiler/mlir_bundle",
+) -> dict[str, object]:
     logger.info("Initializing Phase 16 Omni-Substrate Convergence Demo...")
+    if hardware_mode not in {"auto", "require_verilog", "bundle"}:
+        raise ValueError("hardware_mode must be 'auto', 'require_verilog', or 'bundle'")
 
     # Setup Adapters
     l1 = L1_QuantumAdapter(L1_HolonomicParameters(n_qubits=10))
@@ -118,11 +161,28 @@ def run_demonstration() -> None:
     lfsr = emitter.emit_lfsr(16, 0xACE1)
     mlir_str = emitter.generate()
 
-    pipeline = CompilerPipeline()
-    v_path = pipeline.compile_mlir_to_verilog(mlir_str, "director_top")
-    logger.info(f"Lowered MLIR to Verilog: {v_path}")
+    hardware_evidence = _emit_hardware_evidence(
+        mlir_str,
+        emitter=emitter,
+        hardware_mode=hardware_mode,
+        work_dir=work_dir,
+        bundle_dir=bundle_dir,
+    )
 
     logger.info("Phase 16 Omni-Substrate Demonstration COMPLETE.")
+    return {
+        "l1_coherence": float(l1.get_metrics()["r1_global_coherence"]),
+        "l5_self_soliton": float(l5.get_metrics()["self_soliton_magnitude"]),
+        "l8_cosmic_lock": float(l8.get_metrics()["pta_locking_index"]),
+        "l12_gaian_sync": float(l12.get_metrics()["eco_system_coherence"]),
+        "l13_vacuum_potential": float(l13.get_metrics()["vacuum_potential"]),
+        "l14_brane_alignment": float(l14.get_metrics()["avg_brane_alignment"]),
+        "l15_gci_index": float(l15.get_metrics()["gci_index"]),
+        "l16_director_will": float(l16.get_metrics()["director_will"]),
+        "qec_physical_shape": tuple(int(axis) for axis in physical_bits.shape),
+        "mlir_node_count": len(emitter.nodes),
+        "hardware": hardware_evidence,
+    }
 
 
 if __name__ == "__main__":
