@@ -354,6 +354,7 @@ def _cmd_compile_nir(args: Any) -> int:
                 "total_neurons": result.total_neurons,
                 "total_synapses": result.total_synapses,
                 "scnir_stream_count": len(result.scnir_document.streams),
+                "scnir_signal_kinds": _scnir_signal_kind_counts(result.scnir_document),
                 "sources": [entry.as_dict() for entry in result.scnir_source_manifest],
             },
             f,
@@ -378,6 +379,14 @@ def _cmd_compile_nir(args: Any) -> int:
             print(f"    {w}")
 
     return 0
+
+
+def _scnir_signal_kind_counts(document: Any) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for stream in document.streams:
+        signal_kind = str(stream.signal_kind)
+        counts[signal_kind] = counts.get(signal_kind, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def _cmd_compile(args: Any) -> int:

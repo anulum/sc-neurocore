@@ -148,6 +148,39 @@ def _aer_lif_nir_graph():
     )
 
 
+def _mixed_li_lif_nir_graph():
+    nir = pytest.importorskip("nir")
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "aff": nir.Affine(
+                weight=np.eye(2, dtype=np.float32),
+                bias=np.zeros(2, dtype=np.float32),
+            ),
+            "li": nir.LI(
+                tau=np.full(2, 15.0),
+                r=np.ones(2),
+                v_leak=np.zeros(2),
+            ),
+            "readout": nir.Linear(weight=np.array([[0.5, -0.25]], dtype=np.float32)),
+            "lif": nir.LIF(
+                tau=np.full(1, 20.0),
+                r=np.ones(1),
+                v_leak=np.zeros(1),
+                v_threshold=np.ones(1),
+            ),
+            "output": nir.Output(output_type={"output": np.array([1])}),
+        },
+        edges=[
+            ("input", "aff"),
+            ("aff", "li"),
+            ("li", "readout"),
+            ("readout", "lif"),
+            ("lif", "output"),
+        ],
+    )
+
+
 def _sobol_source_smoke_testbench(module_name: str) -> str:
     return f"""
 module tb;
@@ -645,6 +678,48 @@ class TestCompileNirCommand:
             stream["stream_id"] for stream in payload["streams"]
         ]
         assert "Interconnect: aer" in capsys.readouterr().out
+
+    def test_compile_nir_records_mixed_signal_summary_in_manifest(self, tmp_path, capsys):
+        nir = pytest.importorskip("nir")
+        model_path = tmp_path / "mixed_signal_fixture.nir"
+        nir.write(str(model_path), _mixed_li_lif_nir_graph())
+
+        out_dir = tmp_path / "mixed_signal_compiled"
+        rc = _run_main(
+            "compile-nir",
+            str(model_path),
+            "--module-name",
+            "mixed_signal_fixture_net",
+            "--T",
+            "640",
+            "--source-kind",
+            "sobol",
+            "--base-seed",
+            "91",
+            "-o",
+            str(out_dir),
+        )
+
+        assert rc == 0
+        payload = json.loads((out_dir / "scnir_document.json").read_text(encoding="utf-8"))
+        validate_scnir_dict(payload)
+        assert {stream["stream_id"]: stream["signal_kind"] for stream in payload["streams"]} == {
+            "pop.li.state": "analogue_state",
+            "pop.lif.spike": "spike",
+            "conn.input_to_li.weight": "weight",
+            "conn.li_to_lif.weight": "weight",
+        }
+
+        manifest = json.loads((out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8"))
+        assert manifest["scnir_signal_kinds"] == {
+            "analogue_state": 1,
+            "spike": 1,
+            "weight": 2,
+        }
+        assert [row["signal_kind"] for row in manifest["sources"]] == [
+            stream["signal_kind"] for stream in payload["streams"]
+        ]
+        assert "Interconnect: direct" in capsys.readouterr().out
 
 
 # ---------------------------------------------------------------------------
