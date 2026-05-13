@@ -10,9 +10,9 @@
 
 SC-NIR is the SC-NeuroCore metadata layer for stochastic-computing semantics
 that plain NIR does not encode. It records bitstream length, stochastic
-encoding, fixed-point precision, random-source metadata, and stream correlation
-constraints before a model reaches hardware compilation or experiment
-handoff.
+encoding, stream signal kind, fixed-point precision, random-source metadata,
+and stream correlation constraints before a model reaches hardware compilation
+or experiment handoff.
 
 The schema is intentionally strict. Unknown fields, missing fields, duplicate
 stream identifiers, invalid random-source metadata, and dangling correlation
@@ -29,7 +29,7 @@ schemas/scnir/scnir.schema.json
 Current schema version:
 
 ```text
-sc-neurocore.scnir.v0.2
+sc-neurocore.scnir.v0.3
 ```
 
 Each stream entry must provide:
@@ -40,6 +40,7 @@ Each stream entry must provide:
 | `layer` | Producer layer or graph node name |
 | `bitstream_length` | Positive integer SC stream length |
 | `encoding` | `unipolar`, `bipolar`, low-discrepancy, replay, LFSR, or hardware-source encoding |
+| `signal_kind` | Logical stream role: `spike`, `analogue_state`, or `weight` |
 | `delay_steps` | Explicit unit-delay count for recurrent streams; feed-forward streams use `0` |
 | `precision` | Signedness, total bits, fractional bits, accumulator bits, rounding, overflow |
 | `source` | LFSR, Sobol, Halton, replay, or hardware source metadata |
@@ -60,9 +61,10 @@ sc-neurocore scnir upgrade model.scnir.json --output upgraded.scnir.json
 ```
 
 The `sc-neurocore.scnir.v0.1` upgrade path adds explicit `delay_steps=0` to
-legacy streams before the typed validator and deterministic JSON writer produce
-`sc-neurocore.scnir.v0.2`. Unknown schema versions fail closed so migration
-support must be added deliberately when the schema evolves.
+legacy streams, and every pre-`v0.3` upgrade adds `signal_kind` inferred from
+the stream identifier. The typed validator and deterministic JSON writer then
+produce `sc-neurocore.scnir.v0.3`. Unknown schema versions fail closed so
+migration support must be added deliberately when the schema evolves.
 
 Export SC-NIR metadata from a NIR graph:
 
@@ -90,11 +92,15 @@ localparam integer SCNIR_SOURCE_MODULE_COUNT = 2;
 `scnir_source_modules` is keyed by emitted Verilog module name and contains the
 standalone LFSR-16 or Sobol-16 source RTL generated from each SC-NIR stream.
 `scnir_source_manifest` records the stream identifier, module name, source
-family, seed, bitstream length, encoding, recurrent delay steps, precision, and
-source-specific metadata used for each module. FPGA compilation currently
-materialises LFSR-16 and Sobol-16 source families because both expose the standard
-`threshold[15:0]`/`bit_out` contract; unsupported source families fail closed
-instead of being emitted through an incompatible HDL interface.
+family, seed, bitstream length, encoding, signal kind, recurrent delay steps,
+precision, and source-specific metadata used for each module. FPGA compilation
+marks non-spiking LI/CubaLI/integrator population streams as
+`analogue_state`, so mixed analogue/spiking NIR graphs expose voltage-state
+handoff metadata instead of being mislabeled as spike streams. FPGA
+compilation currently materialises LFSR-16 and Sobol-16 source families
+because both expose the standard `threshold[15:0]`/`bit_out` contract;
+unsupported source families fail closed instead of being emitted through an
+incompatible HDL interface.
 
 ## Python API
 
@@ -105,6 +111,7 @@ from sc_neurocore.ir import (
     SCNIRConversionConfig,
     SCNIRDocument,
     SCNIRPrecision,
+    SCNIRSignalKind,
     SCNIRSource,
     SCNIRStream,
     build_scnir_source_bundle,
@@ -126,6 +133,7 @@ from sc_neurocore.ir import (
         - SCNIRValidationError
         - SCNIRPrecision
         - SCNIRSource
+        - SCNIRSignalKind
         - SCNIRCorrelationConstraint
         - SCNIRStream
         - SCNIRDocument

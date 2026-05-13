@@ -8,7 +8,7 @@
   "required": ["schema_version", "producer", "streams"],
   "properties": {
     "schema_version": {
-      "const": "sc-neurocore.scnir.v0.2"
+      "const": "sc-neurocore.scnir.v0.3"
     },
     "producer": {
       "type": "string",
@@ -31,6 +31,7 @@
         "layer",
         "bitstream_length",
         "encoding",
+        "signal_kind",
         "delay_steps",
         "precision",
         "source",
@@ -58,6 +59,9 @@
             "stochastic_lfsr",
             "hardware_source"
           ]
+        },
+        "signal_kind": {
+          "enum": ["spike", "analogue_state", "weight"]
         },
         "delay_steps": {
           "type": "integer",

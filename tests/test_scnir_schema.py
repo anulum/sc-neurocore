@@ -44,6 +44,7 @@ def _valid_document() -> SCNIRDocument:
                 layer="layer0",
                 bitstream_length=1024,
                 encoding="bipolar",
+                signal_kind="spike",
                 precision=SCNIRPrecision(
                     signed=True,
                     total_bits=16,
@@ -71,6 +72,7 @@ def _valid_document() -> SCNIRDocument:
                 layer="layer0",
                 bitstream_length=1024,
                 encoding="unipolar",
+                signal_kind="weight",
                 precision=SCNIRPrecision(
                     signed=False,
                     total_bits=12,
@@ -108,16 +110,33 @@ def test_scnir_upgrade_canonicalises_supported_current_payload() -> None:
     validate_scnir_dict(upgraded)
 
 
-def test_scnir_upgrade_migrates_v01_documents_with_zero_delay() -> None:
+def test_scnir_upgrade_migrates_v02_documents_with_signal_kind() -> None:
     payload = scnir_to_dict(_valid_document())
     payload["schema_version"] = SCNIR_PREVIOUS_SCHEMA_VERSION
     for stream in payload["streams"]:
+        stream.pop("signal_kind")
+
+    upgraded = upgrade_scnir_dict(payload)
+
+    assert upgraded["schema_version"] == SCNIR_SCHEMA_VERSION
+    streams = {stream["stream_id"]: stream for stream in upgraded["streams"]}
+    assert streams["layer0_input"]["signal_kind"] == "spike"
+    assert streams["layer0_weight"]["signal_kind"] == "weight"
+    validate_scnir_dict(upgraded)
+
+
+def test_scnir_upgrade_migrates_v01_documents_with_zero_delay_and_signal_kind() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["schema_version"] = "sc-neurocore.scnir.v0.1"
+    for stream in payload["streams"]:
         stream.pop("delay_steps")
+        stream.pop("signal_kind")
 
     upgraded = upgrade_scnir_dict(payload)
 
     assert upgraded["schema_version"] == SCNIR_SCHEMA_VERSION
     assert {stream["delay_steps"] for stream in upgraded["streams"]} == {0}
+    assert {stream["signal_kind"] for stream in upgraded["streams"]} == {"spike", "weight"}
     validate_scnir_dict(upgraded)
 
 
@@ -135,6 +154,7 @@ def test_scnir_upgrade_rejects_unknown_schema_version() -> None:
         ("bitstream_length", 0, "bitstream_length"),
         ("delay_steps", -1, "delay_steps"),
         ("encoding", "rate_only", "encoding"),
+        ("signal_kind", "voltageish", "signal_kind"),
     ],
 )
 def test_scnir_rejects_invalid_stream_core_fields(field: str, value: object, message: str) -> None:
@@ -193,6 +213,7 @@ def test_scnir_json_schema_resource_is_bundled() -> None:
     assert payload["properties"]["schema_version"]["const"] == SCNIR_SCHEMA_VERSION
     assert "bitstream_length" in json.dumps(payload)
     assert "delay_steps" in json.dumps(payload)
+    assert "signal_kind" in json.dumps(payload)
     assert "correlation_constraints" in json.dumps(payload)
 
 

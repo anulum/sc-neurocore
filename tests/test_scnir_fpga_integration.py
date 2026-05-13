@@ -66,6 +66,38 @@ def _recurrent_graph() -> object:
     )
 
 
+def _mixed_analogue_spiking_graph() -> object:
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([2])}),
+            "aff": nir.Affine(
+                weight=np.eye(2, dtype=np.float32),
+                bias=np.zeros(2, dtype=np.float32),
+            ),
+            "li": nir.LI(
+                tau=np.full(2, 15.0),
+                r=np.ones(2),
+                v_leak=np.zeros(2),
+            ),
+            "readout": nir.Linear(weight=np.array([[0.5, -0.25]], dtype=np.float32)),
+            "lif": nir.LIF(
+                tau=np.full(1, 20.0),
+                r=np.ones(1),
+                v_leak=np.zeros(1),
+                v_threshold=np.ones(1),
+            ),
+            "output": nir.Output(output_type={"output": np.array([1])}),
+        },
+        edges=[
+            ("input", "aff"),
+            ("aff", "li"),
+            ("li", "readout"),
+            ("readout", "lif"),
+            ("lif", "output"),
+        ],
+    )
+
+
 def test_fpga_compile_result_carries_valid_scnir_metadata() -> None:
     network = from_nir(_graph(), dt=1.0)
     neuron_graph = from_scnetwork(network, dt=1.0)
@@ -117,6 +149,31 @@ def test_fpga_compile_carries_recurrent_scnir_stream_and_delay_register() -> Non
         if entry.stream_id == "conn.lif_to_lif.weight"
     )
     assert recurrent_manifest.delay_steps == 1
+
+
+def test_fpga_compile_carries_mixed_signal_kinds_into_manifest() -> None:
+    network = from_nir(_mixed_analogue_spiking_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    result = compile_network_to_fpga(
+        neuron_graph,
+        module_name="scnir_mixed_signal",
+        bitstream_length=640,
+    )
+
+    payload = scnir_to_dict(result.scnir_document)
+    validate_scnir_dict(payload)
+    streams = {stream["stream_id"]: stream for stream in payload["streams"]}
+    assert streams["pop.li.state"]["signal_kind"] == "analogue_state"
+    assert streams["pop.lif.spike"]["signal_kind"] == "spike"
+    assert streams["conn.li_to_lif.weight"]["signal_kind"] == "weight"
+    assert "p0_n0_v * 16'sh0080" in result.top_module
+    assert "p0_n1_v * 16'shffc0" in result.top_module
+
+    manifest = {entry.stream_id: entry for entry in result.scnir_source_manifest}
+    assert manifest["pop.li.state"].signal_kind == "analogue_state"
+    assert manifest["pop.lif.spike"].signal_kind == "spike"
+    assert manifest["conn.li_to_lif.weight"].signal_kind == "weight"
 
 
 def test_fpga_compile_materialises_scnir_lfsr_source_modules() -> None:

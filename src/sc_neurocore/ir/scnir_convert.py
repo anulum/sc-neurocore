@@ -25,6 +25,7 @@ from .scnir_schema import (
     SCNIRSource,
     SCNIRSourceKind,
     SCNIRStream,
+    SCNIRSignalKind,
     write_scnir,
 )
 
@@ -88,16 +89,19 @@ def build_scnir_from_neuron_graph(
     pop_stream_ids: dict[str, str] = {}
 
     for pop in neuron_graph.populations:
-        stream_id = _population_stream_id(str(pop.name))
+        neuron_type = str(pop.neuron_type)
+        signal_kind = _population_signal_kind(neuron_type)
+        stream_id = _population_stream_id(str(pop.name), signal_kind=signal_kind)
         pop_stream_ids[str(pop.name)] = stream_id
         streams.append(
             SCNIRStream(
                 stream_id=stream_id,
                 layer=str(pop.name),
                 bitstream_length=config.bitstream_length,
-                encoding=_population_encoding(str(pop.neuron_type)),
+                encoding=_population_encoding(neuron_type),
                 precision=_precision(config, signed=False),
                 source=_source(config, len(streams)),
+                signal_kind=signal_kind,
                 delay_steps=0,
                 correlation_constraints=(),
             )
@@ -118,6 +122,7 @@ def build_scnir_from_neuron_graph(
                 encoding="bipolar",
                 precision=_precision(config, signed=True),
                 source=_source(config, stream_index),
+                signal_kind="weight",
                 delay_steps=int(getattr(conn, "delay_steps", 0)),
                 correlation_constraints=(
                     SCNIRCorrelationConstraint(
@@ -191,8 +196,15 @@ def _population_encoding(neuron_type: str) -> SCNIREncoding:
     return "bipolar"
 
 
-def _population_stream_id(name: str) -> str:
-    return f"pop.{_stream_fragment(name)}.spike"
+def _population_signal_kind(neuron_type: str) -> SCNIRSignalKind:
+    if neuron_type in {"li", "cuba_li", "integrator"}:
+        return "analogue_state"
+    return "spike"
+
+
+def _population_stream_id(name: str, *, signal_kind: SCNIRSignalKind) -> str:
+    suffix = "state" if signal_kind == "analogue_state" else "spike"
+    return f"pop.{_stream_fragment(name)}.{suffix}"
 
 
 def _connection_stream_id(src: str, dst: str) -> str:
