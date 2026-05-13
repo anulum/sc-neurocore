@@ -87,7 +87,7 @@ class L3_GenomicLayer:
 
         # Chromatin state: 0 = closed (silenced), 1 = open (active)
         self.chromatin_state = self._rng.random(self.params.n_genes) > 0.5
-        self.chromatin_openness = self.chromatin_state.astype(np.float32)
+        self.chromatin_openness = self.chromatin_state.astype(np.float64)
 
         # Methylation pattern (0-1, higher = more methylated = silenced)
         self.methylation = self._rng.random(self.params.n_genes) * 0.3
