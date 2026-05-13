@@ -59,11 +59,15 @@ def test_scnir_compatibility_matrix_marks_closed_hdl_population_rows() -> None:
 def test_scnir_compatibility_matrix_does_not_overclaim_parser_only_rows() -> None:
     rows = {row.nir_primitive: row for row in scnir_compatibility_matrix()}
 
-    for primitive in ("Conv1d", "Conv2d"):
-        row = rows[primitive]
-        assert row.support_level == "parser_only"
-        assert row.scnir_stream_metadata == ()
-        assert row.hdl_support != ""
+    conv1d = rows["Conv1d"]
+    assert conv1d.support_level == "metadata_and_hdl"
+    assert "convolution_lowered_weight" in conv1d.scnir_stream_metadata
+    assert "dense Toeplitz" in conv1d.hdl_support
+
+    conv2d = rows["Conv2d"]
+    assert conv2d.support_level == "parser_only"
+    assert conv2d.scnir_stream_metadata == ()
+    assert conv2d.hdl_support != ""
 
     scale = rows["Scale"]
     assert scale.support_level == "metadata_and_hdl"

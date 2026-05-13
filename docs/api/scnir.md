@@ -132,7 +132,8 @@ parser-only.
 | `Flatten` | metadata and HDL when exact shape metadata preserves element count adjacent to `Affine`/`Linear` | folded into the downstream weight stream as `shape_preserving_flatten` | fixed-point weight indexing with exact flattened width checks |
 | `Threshold` | metadata and HDL when adjacent to `Affine`/`Linear` with scalar or exact-width thresholds | weight stream carries a `threshold` transform with `source` or `destination` position | fixed-point comparator before weighted-event contribution or destination current |
 | `Delay` | metadata and HDL for homogeneous source-side delays feeding `Affine`/`Linear` population connections | downstream weight stream carries `delay_steps>=0` | direct-interconnect register chain for spike and analogue-state sources |
-| `SumPool2d`, `AvgPool2d`, `Conv1d`, `Conv2d` | parser only | none | parser execution exists; NeuronGraph and RTL lowering remain open |
+| `Conv1d` | metadata and HDL when `input_shape` is explicit and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `convolution_lowered_weight` | dense Toeplitz-style fixed-point MAC terms through the weight path |
+| `SumPool2d`, `AvgPool2d`, `Conv2d` | parser only | none | parser execution exists; NeuronGraph and RTL lowering remain open |
 | nested `NIRGraph` | parser only | none | nested execution exists; hierarchical SC-NIR/HDL handoff remains open |
 
 Use `validate_scnir_compatibility_matrix()` in tests or release checks to fail
