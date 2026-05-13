@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for topology
 
-pub fn winding_number(phases: f64) -> f64 {
+pub fn winding_number(_phases: f64) -> f64 {
     // diffs = diff(phases)
     // # Unwrap: large jumps indicate wrapping
     // diffs = where(diffs > pi, diffs - 2 * pi, diffs)
@@ -15,7 +15,7 @@ pub fn winding_number(phases: f64) -> f64 {
     0.0
 }
 
-pub fn ollivier_ricci_curvature(knm: f64, i: f64, j: f64) -> f64 {
+pub fn ollivier_ricci_curvature(_knm: f64, _i: f64, _j: f64) -> f64 {
     // N = knm.shape[0]
     // # Lazy random walk distribution from node i
     // row_i = (knm[i, :] as f64).abs().copy()
@@ -33,7 +33,7 @@ pub fn ollivier_ricci_curvature(knm: f64, i: f64, j: f64) -> f64 {
     0.0
 }
 
-pub fn sheaf_consistency_defect(phases: f64, knm: f64) -> f64 {
+pub fn sheaf_consistency_defect(_phases: f64, _knm: f64) -> f64 {
     // N = len(phases)
     // diffs = phases[newaxis, :] - phases[:, newaxis]
     // cost = (knm as f64).abs() * (1.0 - cos(diffs))
@@ -41,7 +41,7 @@ pub fn sheaf_consistency_defect(phases: f64, knm: f64) -> f64 {
     0.0
 }
 
-pub fn connection_curvature(phases: f64, knm: f64) -> f64 {
+pub fn connection_curvature(_phases: f64, _knm: f64) -> f64 {
     // diffs = phases[newaxis, :] - phases[:, newaxis]
     // return knm * cos(diffs)
     0.0

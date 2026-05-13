@@ -37,6 +37,4 @@ pub fn generate_scale_free(n_neurons: f64) -> f64 {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-}
+mod tests {}

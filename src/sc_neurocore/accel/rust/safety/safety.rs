@@ -37,6 +37,4 @@ pub fn verify_logic_invariant(func: f64, input_sample: f64, expected_condition: 
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-}
+mod tests {}

@@ -9,6 +9,4 @@
 #![allow(unused_variables, dead_code, non_snake_case)]
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-}
+mod tests {}

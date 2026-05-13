@@ -33,6 +33,4 @@ pub fn inject_stuck_at(bitstream: f64, fault_rate: f64, value: f64) -> f64 {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-}
+mod tests {}

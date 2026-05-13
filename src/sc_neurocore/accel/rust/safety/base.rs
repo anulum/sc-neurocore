@@ -24,6 +24,4 @@ pub fn get_state() -> f64 {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-}
+mod tests {}
