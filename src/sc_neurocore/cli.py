@@ -290,6 +290,7 @@ def _cmd_compile_nir(args: Any) -> int:
         module_name=args.module_name,
         data_width=data_width,
         fraction=fraction,
+        bitstream_length=args.T,
         target=args.target,
     )
     print(f"  Interconnect: {result.interconnect}")

@@ -44,6 +44,8 @@ import numpy as np
 
 from ..hdl_gen._ident import sanitize_ident
 from ..compiler.equation_compiler import Q88, compile_to_verilog
+from ..ir.scnir_convert import SCNIRConversionConfig, build_scnir_from_neuron_graph
+from ..ir.scnir_schema import SCNIRDocument
 from ..neurons.equation_builder import from_equations
 from .neuron_graph import NeuronGraph, NeuronSpec
 from .quantise_params import QuantisedGraph, quantise_graph
@@ -203,6 +205,8 @@ class NetworkCompilationResult:
         ``"direct"`` or ``"aer"``.
     warnings : list[str]
         Quantisation and compilation warnings.
+    scnir_document : SCNIRDocument
+        SC-aware metadata document consumed by the compilation artefacts.
     """
 
     neuron_modules: dict[str, str]
@@ -213,6 +217,7 @@ class NetworkCompilationResult:
     total_synapses: int
     q_format: str
     interconnect: str
+    scnir_document: SCNIRDocument
     warnings: list[str] = field(default_factory=list)
 
 
@@ -393,6 +398,8 @@ def _build_top_direct(
     *,
     data_width: int = 16,
     fraction: int = 8,
+    bitstream_length: int = 256,
+    scnir_stream_count: int = 0,
 ) -> str:
     """Generate direct-wired per-neuron top-level interconnect.
 
@@ -495,6 +502,8 @@ def _build_top_direct(
         "",
         f"    localparam integer DATA_WIDTH = {data_width};",
         f"    localparam integer ACC_WIDTH = {acc_width};",
+        f"    localparam integer SCNIR_BITSTREAM_LENGTH = {bitstream_length};",
+        f"    localparam integer SCNIR_STREAM_COUNT = {scnir_stream_count};",
         "    localparam signed [DATA_WIDTH - 1:0] Q_MAX = {1'b0, {(DATA_WIDTH - 1){1'b1}}};",
         "    localparam signed [DATA_WIDTH - 1:0] Q_MIN = {1'b1, {(DATA_WIDTH - 1){1'b0}}};",
         "",
@@ -627,6 +636,8 @@ def _build_top_aer(
     *,
     data_width: int = 16,
     fraction: int = 8,
+    bitstream_length: int = 256,
+    scnir_stream_count: int = 0,
 ) -> str:
     """Generate weighted event-bus top-level interconnect.
 
@@ -739,6 +750,8 @@ def _build_top_aer(
         "",
         f"    localparam integer DATA_WIDTH = {data_width};",
         f"    localparam integer ACC_WIDTH = {acc_width};",
+        f"    localparam integer SCNIR_BITSTREAM_LENGTH = {bitstream_length};",
+        f"    localparam integer SCNIR_STREAM_COUNT = {scnir_stream_count};",
         f"    localparam integer AER_SRC_COUNT = {aer_src_count};",
         f"    localparam integer AER_ADDR_WIDTH = {aer_addr_width};",
         "    localparam signed [DATA_WIDTH - 1:0] Q_MAX = {1'b0, {(DATA_WIDTH - 1){1'b1}}};",
@@ -918,6 +931,7 @@ def compile_network_to_fpga(
     module_name: str = "sc_nir_network",
     data_width: int = 16,
     fraction: int = 8,
+    bitstream_length: int = 256,
     target: str = "artix7",
 ) -> NetworkCompilationResult:
     """Compile a NeuronGraph to synthesisable Verilog RTL.
@@ -939,6 +953,8 @@ def compile_network_to_fpga(
         Fixed-point total width (16 for Q8.8, 32 for Q16.16).
     fraction : int
         Fractional bits.
+    bitstream_length : int
+        SC-NIR bitstream length metadata propagated into compilation artefacts.
     target : str
         FPGA target for resource estimation hints.
 
@@ -953,6 +969,12 @@ def compile_network_to_fpga(
         If the graph is empty or contains unsupported neuron types.
     """
     q = Q88(data_width=data_width, fraction=fraction)
+    scnir_config = SCNIRConversionConfig(
+        bitstream_length=bitstream_length,
+        data_width=data_width,
+        fraction=fraction,
+    )
+    scnir_document = build_scnir_from_neuron_graph(graph, config=scnir_config)
     warnings: list[str] = []
 
     # Step 1: Quantise
@@ -1008,6 +1030,8 @@ def compile_network_to_fpga(
             qgraph,
             data_width=data_width,
             fraction=fraction,
+            bitstream_length=bitstream_length,
+            scnir_stream_count=len(scnir_document.streams),
         )
     else:
         top_module = _build_top_direct(
@@ -1015,6 +1039,8 @@ def compile_network_to_fpga(
             qgraph,
             data_width=data_width,
             fraction=fraction,
+            bitstream_length=bitstream_length,
+            scnir_stream_count=len(scnir_document.streams),
         )
 
     q_label = f"Q{data_width - fraction}.{fraction}"
@@ -1028,6 +1054,7 @@ def compile_network_to_fpga(
         total_synapses=graph.total_synapses,
         q_format=q_label,
         interconnect=interconnect,
+        scnir_document=scnir_document,
         warnings=warnings,
     )
 
