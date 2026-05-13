@@ -5,10 +5,10 @@
   "title": "SC-NeuroCore SC-NIR Metadata",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "producer", "streams"],
+  "required": ["schema_version", "producer", "streams", "hierarchy"],
   "properties": {
     "schema_version": {
-      "const": "sc-neurocore.scnir.v0.5"
+      "const": "sc-neurocore.scnir.v0.6"
     },
     "producer": {
       "type": "string",
@@ -20,9 +20,62 @@
       "items": {
         "$ref": "#/$defs/stream"
       }
+    },
+    "hierarchy": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/hierarchy_instance"
+      }
     }
   },
   "$defs": {
+    "hierarchy_instance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instance_id", "module_name", "ports"],
+      "properties": {
+        "instance_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "module_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,127}$"
+        },
+        "ports": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/hierarchy_port"
+          }
+        }
+      }
+    },
+    "hierarchy_port": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["port_name", "direction", "stream_id", "signal_kind", "bit_width"],
+      "properties": {
+        "port_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,127}$"
+        },
+        "direction": {
+          "enum": ["input", "output", "inout"]
+        },
+        "stream_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "signal_kind": {
+          "enum": ["spike", "analogue_state", "weight"]
+        },
+        "bit_width": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
     "stream": {
       "type": "object",
       "additionalProperties": false,

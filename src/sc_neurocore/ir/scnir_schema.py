@@ -24,8 +24,9 @@ from pathlib import Path
 import re
 from typing import Any, Literal, Mapping, Sequence, cast
 
-SCNIR_SCHEMA_VERSION = "sc-neurocore.scnir.v0.5"
-SCNIR_PREVIOUS_SCHEMA_VERSION = "sc-neurocore.scnir.v0.4"
+SCNIR_SCHEMA_VERSION = "sc-neurocore.scnir.v0.6"
+SCNIR_PREVIOUS_SCHEMA_VERSION = "sc-neurocore.scnir.v0.5"
+SCNIR_V04_SCHEMA_VERSION = "sc-neurocore.scnir.v0.4"
 SCNIR_V03_SCHEMA_VERSION = "sc-neurocore.scnir.v0.3"
 SCNIR_V02_SCHEMA_VERSION = "sc-neurocore.scnir.v0.2"
 SCNIR_LEGACY_SCHEMA_VERSION = "sc-neurocore.scnir.v0.1"
@@ -34,6 +35,7 @@ SCNIR_SUPPORTED_SCHEMA_VERSIONS = frozenset(
         SCNIR_LEGACY_SCHEMA_VERSION,
         SCNIR_V02_SCHEMA_VERSION,
         SCNIR_V03_SCHEMA_VERSION,
+        SCNIR_V04_SCHEMA_VERSION,
         SCNIR_PREVIOUS_SCHEMA_VERSION,
         SCNIR_SCHEMA_VERSION,
     }
@@ -54,6 +56,7 @@ SCNIRSignalKind = Literal["spike", "analogue_state", "weight"]
 SCNIRTransformKind = Literal["threshold"]
 SCNIRTransformPosition = Literal["source", "destination"]
 SCNIRComparison = Literal["greater_than"]
+SCNIRHierarchyPortDirection = Literal["input", "output", "inout"]
 SCNIRCorrelationPolicy = Literal[
     "independent",
     "must_share_source",
@@ -80,6 +83,7 @@ _SIGNAL_KINDS = frozenset({"spike", "analogue_state", "weight"})
 _TRANSFORM_KINDS = frozenset({"threshold"})
 _TRANSFORM_POSITIONS = frozenset({"source", "destination"})
 _COMPARISONS = frozenset({"greater_than"})
+_HIERARCHY_DIRECTIONS = frozenset({"input", "output", "inout"})
 _CORRELATION_POLICIES = frozenset(
     {
         "independent",
@@ -90,6 +94,7 @@ _CORRELATION_POLICIES = frozenset(
     }
 )
 _STREAM_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.:-]{0,127}$")
+_HDL_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$")
 _MAX_SEED = (1 << 64) - 1
 
 
@@ -160,18 +165,39 @@ class SCNIRStream:
 
 
 @dataclass(frozen=True, slots=True)
+class SCNIRHierarchyPort:
+    """One typed port on a hierarchical SC-NIR hardware instance."""
+
+    port_name: str
+    direction: SCNIRHierarchyPortDirection
+    stream_id: str
+    signal_kind: SCNIRSignalKind
+    bit_width: int
+
+
+@dataclass(frozen=True, slots=True)
+class SCNIRHierarchyInstance:
+    """One hierarchy instance boundary for future nested hardware handoff."""
+
+    instance_id: str
+    module_name: str
+    ports: Sequence[SCNIRHierarchyPort]
+
+
+@dataclass(frozen=True, slots=True)
 class SCNIRDocument:
     """Top-level SC-NIR metadata document."""
 
     producer: str
     streams: Sequence[SCNIRStream]
+    hierarchy: Sequence[SCNIRHierarchyInstance] = field(default_factory=tuple)
     schema_version: str = SCNIR_SCHEMA_VERSION
 
 
 def validate_scnir_dict(payload: Mapping[str, Any]) -> None:
     """Validate a decoded SC-NIR payload or raise ``SCNIRValidationError``."""
 
-    _expect_keys(payload, {"schema_version", "producer", "streams"}, "document")
+    _expect_keys(payload, {"schema_version", "producer", "streams", "hierarchy"}, "document")
     if payload["schema_version"] != SCNIR_SCHEMA_VERSION:
         raise SCNIRValidationError(
             f"schema_version must be {SCNIR_SCHEMA_VERSION!r}, got {payload['schema_version']!r}"
@@ -182,6 +208,7 @@ def validate_scnir_dict(payload: Mapping[str, Any]) -> None:
         raise SCNIRValidationError("streams must contain at least one stream")
 
     stream_ids: set[str] = set()
+    stream_signal_kinds: dict[str, SCNIRSignalKind] = {}
     stream_payloads: list[Mapping[str, Any]] = []
     for index, item in enumerate(streams):
         stream = _expect_mapping(item, f"streams[{index}]")
@@ -190,6 +217,7 @@ def validate_scnir_dict(payload: Mapping[str, Any]) -> None:
         if stream_id in stream_ids:
             raise SCNIRValidationError(f"duplicate stream_id {stream_id!r}")
         stream_ids.add(stream_id)
+        stream_signal_kinds[stream_id] = cast(SCNIRSignalKind, stream["signal_kind"])
         stream_payloads.append(stream)
 
     for index, stream in enumerate(stream_payloads):
@@ -207,6 +235,11 @@ def validate_scnir_dict(payload: Mapping[str, Any]) -> None:
                     f"{peer!r} does not reference an existing stream"
                 )
 
+    _validate_hierarchy(
+        _expect_sequence(payload["hierarchy"], "hierarchy"),
+        stream_signal_kinds,
+    )
+
 
 def scnir_from_dict(payload: Mapping[str, Any]) -> SCNIRDocument:
     """Build a typed SC-NIR document from a decoded mapping."""
@@ -221,6 +254,10 @@ def scnir_from_dict(payload: Mapping[str, Any]) -> SCNIRDocument:
         schema_version=cast(str, payload["schema_version"]),
         producer=cast(str, payload["producer"]),
         streams=streams,
+        hierarchy=tuple(
+            _hierarchy_instance_from_dict(_expect_mapping(item, f"hierarchy[{index}]"))
+            for index, item in enumerate(_expect_sequence(payload["hierarchy"], "hierarchy"))
+        ),
     )
 
 
@@ -231,6 +268,7 @@ def scnir_to_dict(document: SCNIRDocument) -> dict[str, Any]:
         "schema_version": document.schema_version,
         "producer": document.producer,
         "streams": [_stream_to_dict(stream) for stream in document.streams],
+        "hierarchy": [_hierarchy_instance_to_dict(instance) for instance in document.hierarchy],
     }
     validate_scnir_dict(payload)
     return payload
@@ -260,7 +298,8 @@ def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
     before ``v0.3`` did not distinguish spiking, analogue-state, and weight
     streams.  Version ``v0.4`` added explicit stream transform metadata for
     threshold comparators.  Version ``v0.5`` permits ``delay_steps`` to be
-    either a scalar integer or a per-source-column integer vector.  Legacy
+    either a scalar integer or a per-source-column integer vector.  Version
+    ``v0.6`` adds top-level hierarchy instance and port metadata.  Legacy
     upgrades insert the missing fields before validating through the typed
     schema.  Current documents are canonicalised through the same deterministic
     writer.
@@ -273,6 +312,7 @@ def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
         SCNIR_LEGACY_SCHEMA_VERSION,
         SCNIR_V02_SCHEMA_VERSION,
         SCNIR_V03_SCHEMA_VERSION,
+        SCNIR_V04_SCHEMA_VERSION,
         SCNIR_PREVIOUS_SCHEMA_VERSION,
     }:
         upgraded: dict[str, Any] = dict(payload)
@@ -291,6 +331,8 @@ def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
                 stream_payload["transforms"] = []
             upgraded_streams.append(stream_payload)
         upgraded["streams"] = upgraded_streams
+        if "hierarchy" not in upgraded:
+            upgraded["hierarchy"] = []
         return scnir_to_dict(scnir_from_dict(upgraded))
     return scnir_to_dict(scnir_from_dict(payload))
 
@@ -437,6 +479,55 @@ def _validate_correlation(constraint: Mapping[str, Any], path: str) -> None:
         _expect_non_empty_string(seed_domain, f"{path}.seed_domain")
 
 
+def _validate_hierarchy(
+    hierarchy: Sequence[Any],
+    stream_signal_kinds: Mapping[str, SCNIRSignalKind],
+) -> None:
+    instance_ids: set[str] = set()
+    for index, item in enumerate(hierarchy):
+        path = f"hierarchy[{index}]"
+        instance = _expect_mapping(item, path)
+        _expect_keys(instance, {"instance_id", "module_name", "ports"}, path)
+        instance_id = _expect_stream_id(instance["instance_id"], f"{path}.instance_id")
+        if instance_id in instance_ids:
+            raise SCNIRValidationError(f"duplicate hierarchy instance_id {instance_id!r}")
+        instance_ids.add(instance_id)
+        _expect_hdl_identifier(instance["module_name"], f"{path}.module_name")
+
+        ports = _expect_sequence(instance["ports"], f"{path}.ports")
+        if not ports:
+            raise SCNIRValidationError(f"{path}.ports must contain at least one port")
+        port_names: set[str] = set()
+        for port_index, port_item in enumerate(ports):
+            port_path = f"{path}.ports[{port_index}]"
+            port = _expect_mapping(port_item, port_path)
+            _expect_keys(
+                port,
+                {"port_name", "direction", "stream_id", "signal_kind", "bit_width"},
+                port_path,
+            )
+            port_name = _expect_hdl_identifier(port["port_name"], f"{port_path}.port_name")
+            if port_name in port_names:
+                raise SCNIRValidationError(f"{path}.ports contains duplicate port_name {port_name!r}")
+            port_names.add(port_name)
+            _expect_enum(port["direction"], _HIERARCHY_DIRECTIONS, f"{port_path}.direction")
+            stream_id = _expect_stream_id(port["stream_id"], f"{port_path}.stream_id")
+            if stream_id not in stream_signal_kinds:
+                raise SCNIRValidationError(
+                    f"{port_path}.stream_id {stream_id!r} does not reference an existing stream"
+                )
+            signal_kind = cast(
+                SCNIRSignalKind,
+                _expect_enum(port["signal_kind"], _SIGNAL_KINDS, f"{port_path}.signal_kind"),
+            )
+            if signal_kind != stream_signal_kinds[stream_id]:
+                raise SCNIRValidationError(
+                    f"{port_path}.signal_kind {signal_kind!r} does not match stream "
+                    f"{stream_id!r} signal_kind {stream_signal_kinds[stream_id]!r}"
+                )
+            _expect_positive_int(port["bit_width"], f"{port_path}.bit_width")
+
+
 def _stream_from_dict(stream: Mapping[str, Any]) -> SCNIRStream:
     precision = _expect_mapping(stream["precision"], "precision")
     source = _expect_mapping(stream["source"], "source")
@@ -496,6 +587,25 @@ def _correlation_from_dict(constraint: Mapping[str, Any]) -> SCNIRCorrelationCon
     )
 
 
+def _hierarchy_instance_from_dict(instance: Mapping[str, Any]) -> SCNIRHierarchyInstance:
+    ports = _expect_sequence(instance["ports"], "hierarchy.ports")
+    return SCNIRHierarchyInstance(
+        instance_id=cast(str, instance["instance_id"]),
+        module_name=cast(str, instance["module_name"]),
+        ports=tuple(_hierarchy_port_from_dict(_expect_mapping(port, "hierarchy.port")) for port in ports),
+    )
+
+
+def _hierarchy_port_from_dict(port: Mapping[str, Any]) -> SCNIRHierarchyPort:
+    return SCNIRHierarchyPort(
+        port_name=cast(str, port["port_name"]),
+        direction=cast(SCNIRHierarchyPortDirection, port["direction"]),
+        stream_id=cast(str, port["stream_id"]),
+        signal_kind=cast(SCNIRSignalKind, port["signal_kind"]),
+        bit_width=cast(int, port["bit_width"]),
+    )
+
+
 def _stream_to_dict(stream: SCNIRStream) -> dict[str, Any]:
     return {
         "stream_id": stream.stream_id,
@@ -543,6 +653,24 @@ def _stream_to_dict(stream: SCNIRStream) -> dict[str, Any]:
     }
 
 
+def _hierarchy_instance_to_dict(instance: SCNIRHierarchyInstance) -> dict[str, Any]:
+    return {
+        "instance_id": instance.instance_id,
+        "module_name": instance.module_name,
+        "ports": [_hierarchy_port_to_dict(port) for port in instance.ports],
+    }
+
+
+def _hierarchy_port_to_dict(port: SCNIRHierarchyPort) -> dict[str, Any]:
+    return {
+        "port_name": port.port_name,
+        "direction": port.direction,
+        "stream_id": port.stream_id,
+        "signal_kind": port.signal_kind,
+        "bit_width": port.bit_width,
+    }
+
+
 def _infer_legacy_signal_kind(stream_id: str) -> SCNIRSignalKind:
     if stream_id.startswith("conn.") or stream_id.endswith((".weight", "_weight", "-weight")):
         return "weight"
@@ -584,6 +712,13 @@ def _expect_stream_id(value: Any, path: str) -> str:
     if _STREAM_ID_RE.fullmatch(stream_id) is None:
         raise SCNIRValidationError(f"{path} has invalid identifier syntax")
     return stream_id
+
+
+def _expect_hdl_identifier(value: Any, path: str) -> str:
+    identifier = _expect_non_empty_string(value, path)
+    if _HDL_IDENTIFIER_RE.fullmatch(identifier) is None:
+        raise SCNIRValidationError(f"{path} has invalid HDL identifier syntax")
+    return identifier
 
 
 def _expect_positive_int(value: Any, path: str) -> int:

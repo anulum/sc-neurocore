@@ -23,6 +23,8 @@ from sc_neurocore.ir.scnir_schema import (
     SCNIR_V02_SCHEMA_VERSION,
     SCNIRCorrelationConstraint,
     SCNIRDocument,
+    SCNIRHierarchyInstance,
+    SCNIRHierarchyPort,
     SCNIRPrecision,
     SCNIRSource,
     SCNIRStream,
@@ -169,6 +171,144 @@ def test_scnir_preserves_delay_step_vectors() -> None:
     assert round_tripped["streams"][1]["delay_steps"] == [1, 2]
 
 
+def test_scnir_records_hierarchy_instance_port_metadata() -> None:
+    base = _valid_document()
+    doc = SCNIRDocument(
+        producer=base.producer,
+        streams=base.streams,
+        hierarchy=(
+            SCNIRHierarchyInstance(
+                instance_id="top.subgraph0",
+                module_name="scnir_subgraph0",
+                ports=(
+                    SCNIRHierarchyPort(
+                        port_name="spike_in",
+                        direction="input",
+                        stream_id="layer0_input",
+                        signal_kind="spike",
+                        bit_width=16,
+                    ),
+                    SCNIRHierarchyPort(
+                        port_name="weight_out",
+                        direction="output",
+                        stream_id="layer0_weight",
+                        signal_kind="weight",
+                        bit_width=12,
+                    ),
+                ),
+            ),
+        ),
+    )
+
+    payload = scnir_to_dict(doc)
+
+    assert payload["schema_version"] == SCNIR_SCHEMA_VERSION
+    assert payload["hierarchy"] == [
+        {
+            "instance_id": "top.subgraph0",
+            "module_name": "scnir_subgraph0",
+            "ports": [
+                {
+                    "port_name": "spike_in",
+                    "direction": "input",
+                    "stream_id": "layer0_input",
+                    "signal_kind": "spike",
+                    "bit_width": 16,
+                },
+                {
+                    "port_name": "weight_out",
+                    "direction": "output",
+                    "stream_id": "layer0_weight",
+                    "signal_kind": "weight",
+                    "bit_width": 12,
+                },
+            ],
+        }
+    ]
+    assert scnir_to_dict(scnir_from_dict(payload)) == payload
+    validate_scnir_dict(payload)
+
+
+def test_scnir_upgrade_migrates_v05_documents_with_empty_hierarchy() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["schema_version"] = SCNIR_PREVIOUS_SCHEMA_VERSION
+    payload.pop("hierarchy")
+
+    upgraded = upgrade_scnir_dict(payload)
+
+    assert upgraded["schema_version"] == SCNIR_SCHEMA_VERSION
+    assert upgraded["hierarchy"] == []
+    validate_scnir_dict(upgraded)
+
+
+@pytest.mark.parametrize(
+    ("mutator", "message"),
+    [
+        (
+            lambda payload: payload["hierarchy"][0]["ports"].append(
+                dict(payload["hierarchy"][0]["ports"][0])
+            ),
+            "duplicate",
+        ),
+        (
+            lambda payload: payload["hierarchy"].append(dict(payload["hierarchy"][0])),
+            "duplicate",
+        ),
+        (
+            lambda payload: payload["hierarchy"][0]["ports"][0].update(
+                {"stream_id": "missing.stream"}
+            ),
+            "stream_id",
+        ),
+        (
+            lambda payload: payload["hierarchy"][0]["ports"][0].update(
+                {"signal_kind": "weight"}
+            ),
+            "signal_kind",
+        ),
+        (
+            lambda payload: payload["hierarchy"][0].update({"module_name": "bad-module"}),
+            "module_name",
+        ),
+        (
+            lambda payload: payload["hierarchy"][0]["ports"][0].update({"bit_width": 0}),
+            "bit_width",
+        ),
+        (
+            lambda payload: payload["hierarchy"][0].update({"ports": []}),
+            "ports",
+        ),
+    ],
+)
+def test_scnir_rejects_invalid_hierarchy_metadata(mutator: object, message: str) -> None:
+    base = _valid_document()
+    payload = scnir_to_dict(
+        SCNIRDocument(
+            producer=base.producer,
+            streams=base.streams,
+            hierarchy=(
+                SCNIRHierarchyInstance(
+                    instance_id="top.subgraph0",
+                    module_name="scnir_subgraph0",
+                    ports=(
+                        SCNIRHierarchyPort(
+                            port_name="spike_in",
+                            direction="input",
+                            stream_id="layer0_input",
+                            signal_kind="spike",
+                            bit_width=16,
+                        ),
+                    ),
+                ),
+            ),
+        )
+    )
+    mutator(payload)
+
+    with pytest.raises(SCNIRValidationError, match=message):
+        validate_scnir_dict(payload)
+
+
 def test_scnir_upgrade_rejects_unknown_schema_version() -> None:
     payload = scnir_to_dict(_valid_document())
     payload["schema_version"] = "sc-neurocore.scnir.v9.9"
@@ -310,6 +450,8 @@ def test_scnir_json_schema_resource_is_bundled() -> None:
     assert "delay_steps" in json.dumps(payload)
     assert "signal_kind" in json.dumps(payload)
     assert "transforms" in json.dumps(payload)
+    assert "hierarchy" in json.dumps(payload)
+    assert "module_name" in json.dumps(payload)
     assert "correlation_constraints" in json.dumps(payload)
 
 
