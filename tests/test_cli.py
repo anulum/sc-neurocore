@@ -569,6 +569,73 @@ endmodule
 """
 
 
+def _aer_equivalence_testbench(module_name: str) -> str:
+    return f"""
+module tb;
+    reg clk = 1'b0;
+    reg rst_n = 1'b0;
+    reg en = 1'b0;
+    reg signed [63:0] I_ext_flat = 64'h2000200020002000;
+    wire [66:0] spike_bus;
+    reg signed [15:0] h0_i_pre;
+    reg signed [15:0] out0_i_pre;
+    integer hidden_pre;
+    integer hidden_post;
+    integer cycle;
+
+    {module_name} uut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .en(en),
+        .I_ext_flat(I_ext_flat),
+        .spike_bus(spike_bus)
+    );
+
+    function integer count_hidden_spikes;
+        integer j;
+        begin
+            count_hidden_spikes = 0;
+            for (j = 0; j < 65; j = j + 1) begin
+                if (spike_bus[j]) begin
+                    count_hidden_spikes = count_hidden_spikes + 1;
+                end
+            end
+        end
+    endfunction
+
+    initial begin
+        #1 clk = 1'b1;
+        #1 clk = 1'b0;
+        rst_n = 1'b1;
+        en = 1'b1;
+        #1;
+        for (cycle = 0; cycle < 8; cycle = cycle + 1) begin
+            h0_i_pre = uut.p0_n0_I;
+            out0_i_pre = uut.p1_n0_I;
+            hidden_pre = count_hidden_spikes();
+            #1 clk = 1'b1;
+            #1 hidden_post = count_hidden_spikes();
+            #1 $display(
+                "cycle %0d hpre %0d hpost %0d h0_i %0d h0_v %0d h0_s %0d out_i_pre %0d out_i_post %0d out_v %0d out_s %0d",
+                cycle,
+                hidden_pre,
+                hidden_post,
+                h0_i_pre,
+                uut.p0_n0_v,
+                spike_bus[0],
+                out0_i_pre,
+                uut.p1_n0_I,
+                uut.p1_n0_v,
+                spike_bus[65]
+            );
+            #1 clk = 1'b0;
+        end
+        $finish;
+    end
+endmodule
+"""
+
+
 def _simulate_network_with_testbench(out_dir, *, module_name: str, testbench: str, tmp_path) -> str:
     iverilog = shutil.which("iverilog")
     vvp = shutil.which("vvp")
@@ -696,6 +763,48 @@ def _recurrent_fixed_point_reference(
     return rows
 
 
+def _aer_fixed_point_reference(
+    cycles: int,
+) -> list[tuple[int, int, int, int, int, int, int, int, int, int]]:
+    hidden_voltage = 0
+    output_voltage = 0
+    hidden_spike = 0
+    hidden_current = 4 * ((0x2000 * 0x0020) >> 8)
+    rows: list[tuple[int, int, int, int, int, int, int, int, int, int]] = []
+
+    for cycle in range(cycles):
+        hidden_pre = 65 if hidden_spike else 0
+        output_current_pre = -0x0010 * hidden_pre
+        observed_hidden, next_hidden_spike, next_hidden_voltage = _lif_q88_step(
+            hidden_voltage, hidden_current
+        )
+        observed_output, next_output_spike, next_output_voltage = _lif_q88_step(
+            output_voltage, output_current_pre
+        )
+        hidden_post = 65 if next_hidden_spike else 0
+        output_current_post = -0x0010 * hidden_post
+        rows.append(
+            (
+                cycle,
+                hidden_pre,
+                hidden_post,
+                hidden_current,
+                observed_hidden,
+                next_hidden_spike,
+                output_current_pre,
+                output_current_post,
+                observed_output,
+                next_output_spike,
+            )
+        )
+        hidden_voltage = next_hidden_voltage
+        hidden_spike = next_hidden_spike
+        output_voltage = next_output_voltage
+        assert next_output_spike in (0, 1)
+
+    return rows
+
+
 def _parse_direct_equivalence_stdout(stdout: str) -> list[tuple[int, int, int, int, int, int, int]]:
     rows: list[tuple[int, int, int, int, int, int, int]] = []
     for line in stdout.splitlines():
@@ -739,6 +848,31 @@ def _parse_recurrent_equivalence_stdout(
                 int(parts[21]),
                 int(parts[23]),
                 int(parts[25]),
+            )
+        )
+    return rows
+
+
+def _parse_aer_equivalence_stdout(
+    stdout: str,
+) -> list[tuple[int, int, int, int, int, int, int, int, int, int]]:
+    rows: list[tuple[int, int, int, int, int, int, int, int, int, int]] = []
+    for line in stdout.splitlines():
+        parts = line.split()
+        if not parts or parts[0] != "cycle":
+            continue
+        rows.append(
+            (
+                int(parts[1]),
+                int(parts[3]),
+                int(parts[5]),
+                int(parts[7]),
+                int(parts[9]),
+                int(parts[11]),
+                int(parts[13]),
+                int(parts[15]),
+                int(parts[17]),
+                int(parts[19]),
             )
         )
     return rows
@@ -1486,6 +1620,40 @@ class TestCompileNirCommand:
             tmp_path=tmp_path / "recurrent_equivalence_sim",
         )
         assert _parse_recurrent_equivalence_stdout(stdout) == _recurrent_fixed_point_reference(8)
+
+    def test_compile_nir_aer_network_matches_fixed_point_reference(self, tmp_path):
+        nir = pytest.importorskip("nir")
+        model_path = tmp_path / "aer_equivalence_fixture.nir"
+        nir.write(str(model_path), _aer_lif_nir_graph())
+        out_dir = tmp_path / "aer_equivalence_compiled"
+        module_name = "aer_equivalence_net"
+
+        rc = _run_main(
+            "compile-nir",
+            str(model_path),
+            "--module-name",
+            module_name,
+            "--T",
+            "512",
+            "--source-kind",
+            "lfsr",
+            "--base-seed",
+            "11",
+            "-o",
+            str(out_dir),
+        )
+
+        assert rc == 0
+        manifest = json.loads((out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8"))
+        assert manifest["interconnect"] == "aer"
+        assert manifest["total_neurons"] == 67
+        stdout = _simulate_network_with_testbench(
+            out_dir,
+            module_name=module_name,
+            testbench=_aer_equivalence_testbench(module_name),
+            tmp_path=tmp_path / "aer_equivalence_sim",
+        )
+        assert _parse_aer_equivalence_stdout(stdout) == _aer_fixed_point_reference(8)
 
 
 # ---------------------------------------------------------------------------
