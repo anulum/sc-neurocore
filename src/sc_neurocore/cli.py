@@ -544,23 +544,47 @@ def _cmd_collect_synthesis(args: Any) -> int:
 
 
 def _cmd_scnir(args: Any) -> int:
-    """Validate SC-aware NIR metadata documents."""
+    """Validate or export SC-aware NIR metadata documents."""
 
-    from sc_neurocore.ir import SCNIRValidationError, load_scnir
+    from sc_neurocore.ir import (
+        SCNIRConversionConfig,
+        SCNIRValidationError,
+        export_scnir_from_nir,
+        load_scnir,
+    )
 
     action = args.model
     path = args.scnir_path
-    if action != "validate" or not path:
+    if action not in {"validate", "export"} or not path:
         print("Error: usage: sc-neurocore scnir validate model.scnir.json")
+        print("       or: sc-neurocore scnir export model.nir --output model.scnir.json")
         return 1
 
+    if action == "validate":
+        try:
+            document = load_scnir(path)
+        except (OSError, SCNIRValidationError, ValueError) as exc:
+            print(f"SC-NIR invalid: {exc}")
+            return 1
+
+        print(f"SC-NIR valid: {path} ({len(document.streams)} stream(s))")
+        return 0
+
+    if not args.output:
+        print("Error: scnir export requires --output model.scnir.json")
+        return 1
     try:
-        document = load_scnir(path)
-    except (OSError, SCNIRValidationError, ValueError) as exc:
-        print(f"SC-NIR invalid: {exc}")
+        document = export_scnir_from_nir(
+            path,
+            output_path=args.output,
+            config=SCNIRConversionConfig(bitstream_length=args.T),
+            dt=args.dt,
+        )
+    except (OSError, SCNIRValidationError, ValueError, ImportError) as exc:
+        print(f"SC-NIR export failed: {exc}")
         return 1
 
-    print(f"SC-NIR valid: {path} ({len(document.streams)} stream(s))")
+    print(f"SC-NIR exported: {args.output} ({len(document.streams)} stream(s))")
     return 0
 
 

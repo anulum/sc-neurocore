@@ -59,7 +59,7 @@ depending on the command). All other parameters are keyword flags; running
 | `map-nir` | Generate deterministic silicon-mapping reports for neuromorphic targets | `.nir` file path | `0` on success, `1` on bad input |
 | `hub-init` | Generate an offline-first self-hosted Docker Compose hub bundle | — | `0` on success, `1` on invalid config |
 | `compile-nir` | Compile NIR/ONNX network files to FPGA artefacts | `.nir` or `.onnx` path | `0` on success, `1` on bad input |
-| `scnir` | Validate SC-aware NIR metadata documents | `validate model.scnir.json` | `0` on valid document, `1` on invalid document |
+| `scnir` | Validate or export SC-aware NIR metadata documents | `validate model.scnir.json` or `export model.nir --output model.scnir.json` | `0` on success, `1` on invalid input |
 | `studio` | Launch Visual SNN Design Studio (FastAPI + Uvicorn) | — | `0` on clean exit, `1` if FastAPI missing |
 | `collect-synthesis` | Convert real utilisation, timing, and power reports into optimiser evidence JSON | — | `0` on success, `1` on missing or invalid input |
 
@@ -86,7 +86,7 @@ engine wheel reports a different `__version__` than the Python package
 ### 2.2 `scnir`
 
 Validates SC-NIR JSON metadata with the fail-closed validator in
-`sc_neurocore.ir.scnir_schema`. The current minimal command is:
+`sc_neurocore.ir.scnir_schema`:
 
 ```bash
 sc-neurocore scnir validate model.scnir.json
@@ -96,6 +96,17 @@ The validator rejects unknown fields, duplicate stream identifiers, invalid
 bitstream lengths, unsupported encodings, invalid fixed-point precision,
 under-specified random sources, and correlation constraints that reference
 missing streams. The reference schema is `schemas/scnir/scnir.schema.json`.
+
+Exports deterministic SC-NIR metadata from a NIR graph by using the existing
+NIR import path and `NeuronGraph` lowering:
+
+```bash
+sc-neurocore scnir export model.nir --output model.scnir.json --T 1024
+```
+
+The export records population streams, weight streams, fixed-point precision,
+unique source seeds, and max-correlation constraints. It fails closed on invalid
+bitstream length or fixed-point precision configuration.
 
 ### 2.3 `benchmark`
 
