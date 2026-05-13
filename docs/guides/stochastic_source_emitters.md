@@ -108,6 +108,8 @@ Use these emitters when you need:
 - SC-NIR FPGA compile artefacts via `result.scnir_source_modules` and
   `result.scnir_source_manifest`, including stream `signal_kind` and
   recurrent stream `delay_steps`
+- `compile-nir` output directories that pair source modules with the validated
+  `scnir_document.json` used to generate them
 
 Do **not** treat them as proof that every HDL path in the repository is now
 automatically sourced from these modules. They are explicit building blocks,

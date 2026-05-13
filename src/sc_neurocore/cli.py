@@ -271,6 +271,7 @@ def _cmd_compile_nir(args: Any) -> int:
 
     import nir as nir_lib
 
+    from sc_neurocore.ir import write_scnir
     from sc_neurocore.nir_bridge import compile_network_to_fpga, from_nir, from_scnetwork
 
     ext = os.path.splitext(args.model)[1].lower()
@@ -337,6 +338,9 @@ def _cmd_compile_nir(args: Any) -> int:
         with open(source_path, "w", encoding="utf-8") as f:
             f.write(verilog)
 
+    scnir_document_path = os.path.join(out_dir, "scnir_document.json")
+    write_scnir(scnir_document_path, result.scnir_document)
+
     manifest_path = os.path.join(out_dir, "scnir_source_manifest.json")
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(
@@ -360,6 +364,7 @@ def _cmd_compile_nir(args: Any) -> int:
     print("  sc_nir_weight_rom.v — synaptic weight ROM")
     for module_name in result.scnir_source_modules:
         print(f"  {module_name}.v — SC-NIR stochastic source module")
+    print("  scnir_document.json — validated SC-NIR document")
     print("  scnir_source_manifest.json — SC-NIR source manifest")
 
     if result.warnings:

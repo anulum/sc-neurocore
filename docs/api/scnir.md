@@ -91,6 +91,9 @@ localparam integer SCNIR_SOURCE_MODULE_COUNT = 2;
 
 `scnir_source_modules` is keyed by emitted Verilog module name and contains the
 standalone LFSR-16 or Sobol-16 source RTL generated from each SC-NIR stream.
+The `compile-nir` CLI writes the full validated document as
+`scnir_document.json` in the output directory so dense exported-network runs
+can be reproduced from the same stream metadata that drove source generation.
 `scnir_source_manifest` records the stream identifier, module name, source
 family, seed, bitstream length, encoding, signal kind, recurrent delay steps,
 precision, and source-specific metadata used for each module. FPGA compilation

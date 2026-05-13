@@ -100,9 +100,12 @@ sc-neurocore compile-nir model.nir \
 
 The output directory contains the top module, per-neuron modules, combined
 weight ROM, one SC-NIR stochastic source module per stream, and
-`scnir_source_manifest.json`. `--source-kind` currently accepts `lfsr` and
-`sobol`; both map to source modules with the `threshold[15:0]`/`bit_out`
-interface. `--base-seed` controls deterministic stream seed allocation.
+`scnir_document.json` plus `scnir_source_manifest.json`. `scnir_document.json`
+is the full validated SC-NIR metadata document for the compiled network;
+`scnir_source_manifest.json` maps those streams to emitted source modules.
+`--source-kind` currently accepts `lfsr` and `sobol`; both map to source
+modules with the `threshold[15:0]`/`bit_out` interface. `--base-seed` controls
+deterministic stream seed allocation.
 
 ### 2.3 `scnir`
 

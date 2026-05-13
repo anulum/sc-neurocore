@@ -402,13 +402,16 @@ Output:
 [3/4] Compiling to Verilog (Q8.8)...
   Interconnect: direct
   Neuron modules: 1
-  SC-NIR source modules: 2
+  SC-NIR source modules: 4
 [4/4] Output written to build/
   my_snn.v — top-level network
   sc_nir_lif.v — lif neuron module
   sc_nir_weight_rom.v — synaptic weight ROM
-  scnir_src_000_pop_lif_spike.v — SC-NIR stochastic source module
-  scnir_src_001_conn_input_to_lif_weight.v — SC-NIR stochastic source module
+  scnir_src_000_pop_lif1_spike.v — SC-NIR stochastic source module
+  scnir_src_001_pop_lif2_spike.v — SC-NIR stochastic source module
+  scnir_src_002_conn_input_to_lif1_weight.v — SC-NIR stochastic source module
+  scnir_src_003_conn_lif1_to_lif2_weight.v — SC-NIR stochastic source module
+  scnir_document.json — validated SC-NIR document
   scnir_source_manifest.json — SC-NIR source manifest
 ```
 
@@ -598,7 +601,8 @@ sc-neurocore compile-nir <model> [options]
 | `--source-kind` | `lfsr` | Source modules to emit: `lfsr` or `sobol` |
 | `--base-seed` | `1` | First deterministic source seed |
 
-`compile-nir` writes `scnir_source_manifest.json` with schema version
+`compile-nir` writes `scnir_document.json`, the full validated SC-NIR document
+used during compilation, and `scnir_source_manifest.json` with schema version
 `sc-neurocore.scnir.hdl-sources.v0.1`. The manifest rows record the stream
 identifier, emitted module name, source kind, seed, bitstream length, encoding,
 signal kind, explicit recurrent delay steps, precision, and LFSR/Sobol source
