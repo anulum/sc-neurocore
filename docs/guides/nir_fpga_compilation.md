@@ -628,7 +628,10 @@ every emitted RTL file in the `compile-nir` output directory and runs the
 generated top-level module for direct, weighted-AER, and one-step recurrent NIR
 fixtures. That matrix proves the exported network bundles are executable as
 complete Verilog systems under reset, enable, external-input, and spike-bus
-traffic across the current interconnect families.
+traffic across the current interconnect families. The direct/Sobol fixture also
+has a cycle-level Q8.8 equivalence check against an independent integer
+reference for fixed-point MAC accumulation, signed saturation, LIF membrane
+updates, and spike/reset behaviour.
 
 ---
 
