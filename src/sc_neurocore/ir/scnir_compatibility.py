@@ -17,6 +17,7 @@ silently over-claim support.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Literal
 
 SCNIRSupportLevel = Literal[
@@ -321,8 +322,15 @@ def scnir_compatibility_matrix_dicts() -> tuple[dict[str, object], ...]:
     return tuple(row.as_dict() for row in _MATRIX)
 
 
-def validate_scnir_compatibility_matrix() -> None:
-    """Fail if the matrix drifts from parser-declared NIR primitive support."""
+def validate_scnir_compatibility_matrix(evidence_root: str | Path | None = None) -> None:
+    """Fail if the matrix drifts from parser-declared support or stale evidence paths.
+
+    Parameters
+    ----------
+    evidence_root:
+        Optional repository root used to verify that every ``audit_evidence``
+        path in the matrix resolves to an existing file.
+    """
 
     from sc_neurocore.nir_bridge.node_map import NODE_MAP
 
@@ -344,3 +352,14 @@ def validate_scnir_compatibility_matrix() -> None:
             raise ValueError(f"{row.nir_primitive} claims HDL support without stream metadata")
         if not row.audit_evidence:
             raise ValueError(f"{row.nir_primitive} has no audit evidence pointer")
+        if evidence_root is not None:
+            root = Path(evidence_root)
+            missing_evidence = [
+                evidence_path
+                for evidence_path in row.audit_evidence
+                if not (root / evidence_path).is_file()
+            ]
+            if missing_evidence:
+                raise ValueError(
+                    f"{row.nir_primitive} has missing audit evidence paths: {missing_evidence}"
+                )
