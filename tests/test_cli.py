@@ -21,6 +21,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.cli import _cmd_info, _cmd_studio, _format_engine_status, main
+from sc_neurocore.ir import SCNIR_SCHEMA_VERSION, validate_scnir_dict
 
 
 def _run_main(*argv: str) -> int:
@@ -53,6 +54,57 @@ def _small_lif_nir_graph():
             "output": nir.Output(output_type={"output": np.array([2])}),
         },
         edges=[("input", "aff"), ("aff", "lif"), ("lif", "output")],
+    )
+
+
+def _dense_lif_nir_graph():
+    nir = pytest.importorskip("nir")
+    return nir.NIRGraph(
+        nodes={
+            "input": nir.Input(input_type={"input": np.array([3])}),
+            "aff1": nir.Affine(
+                weight=np.array(
+                    [
+                        [0.25, -0.5, 0.125],
+                        [0.75, 0.125, -0.375],
+                        [-0.25, 0.5, 0.625],
+                        [0.0, -0.125, 0.25],
+                    ],
+                    dtype=np.float32,
+                ),
+                bias=np.zeros(4, dtype=np.float32),
+            ),
+            "lif1": nir.LIF(
+                tau=np.full(4, 20.0),
+                r=np.ones(4),
+                v_leak=np.zeros(4),
+                v_threshold=np.ones(4),
+            ),
+            "aff2": nir.Affine(
+                weight=np.array(
+                    [
+                        [0.5, -0.25, 0.125, 0.0],
+                        [-0.125, 0.375, -0.5, 0.25],
+                    ],
+                    dtype=np.float32,
+                ),
+                bias=np.zeros(2, dtype=np.float32),
+            ),
+            "lif2": nir.LIF(
+                tau=np.full(2, 20.0),
+                r=np.ones(2),
+                v_leak=np.zeros(2),
+                v_threshold=np.ones(2),
+            ),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[
+            ("input", "aff1"),
+            ("aff1", "lif1"),
+            ("lif1", "aff2"),
+            ("aff2", "lif2"),
+            ("lif2", "output"),
+        ],
     )
 
 
@@ -473,6 +525,46 @@ class TestCompileNirCommand:
         stdout = _simulate_single_source_module(first["module_name"], source_verilog, tmp_path)
         assert "sample0 8042 1 1" in stdout
         assert f"{first['module_name']}.v" in capsys.readouterr().out
+
+    def test_compile_nir_writes_valid_dense_scnir_document(self, tmp_path, capsys):
+        nir = pytest.importorskip("nir")
+        model_path = tmp_path / "dense_fixture.nir"
+        nir.write(str(model_path), _dense_lif_nir_graph())
+
+        out_dir = tmp_path / "dense_compiled"
+        rc = _run_main(
+            "compile-nir",
+            str(model_path),
+            "--module-name",
+            "dense_fixture_net",
+            "--T",
+            "768",
+            "--source-kind",
+            "lfsr",
+            "--base-seed",
+            "101",
+            "-o",
+            str(out_dir),
+        )
+
+        assert rc == 0
+        scnir_path = out_dir / "scnir_document.json"
+        payload = json.loads(scnir_path.read_text(encoding="utf-8"))
+        validate_scnir_dict(payload)
+        assert payload["schema_version"] == SCNIR_SCHEMA_VERSION
+        assert {stream["bitstream_length"] for stream in payload["streams"]} == {768}
+        assert {stream["stream_id"] for stream in payload["streams"]} == {
+            "pop.lif1.spike",
+            "pop.lif2.spike",
+            "conn.input_to_lif1.weight",
+            "conn.lif1_to_lif2.weight",
+        }
+        assert {stream["signal_kind"] for stream in payload["streams"]} == {"spike", "weight"}
+        manifest = json.loads((out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8"))
+        assert [row["stream_id"] for row in manifest["sources"]] == [
+            stream["stream_id"] for stream in payload["streams"]
+        ]
+        assert "scnir_document.json" in capsys.readouterr().out
 
 
 # ---------------------------------------------------------------------------
