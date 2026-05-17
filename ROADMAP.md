@@ -328,7 +328,9 @@ Built-in outer loop using Zenith’s mapping controlling internal thresholds ada
 - Conference lightning talk (NICE, ICONS, or Telluride)
 - ~~Lab outreach~~ templates ready in `docs/internal/`
 - GitHub Discussions with seeded categories
-- ~~Publish `sc_neurocore_engine` wheels (trusted publisher)~~ ✓
+- Publish `sc_neurocore_engine` wheels through the trusted-publisher release
+  path. This remains gated on current wheel publication and install-smoke
+  evidence in the internal TODO.
 
 ### Silicon partnerships
 
