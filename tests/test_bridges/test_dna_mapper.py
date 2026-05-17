@@ -28,6 +28,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+import sc_neurocore.bridges.dna_mapper as dna_mapper
 from sc_neurocore.bridges.dna_mapper import (
     BitstreamToDNA,
     CompilationMethod,
@@ -458,6 +459,24 @@ class TestNUPACKInterface:
         seq = "ACGTACGT"
         probs = nupack_interface.compute_pair_probabilities(seq)
         assert probs.shape == (8, 8)
+
+    def test_fallback_predicts_intramolecular_pairing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(dna_mapper, "_HAS_NUPACK", False)
+        interface = NUPACKInterface()
+        sequence = "GCGCAAAGCGC"
+
+        energy, structure = interface.compute_mfe(sequence)
+        probs = interface.compute_pair_probabilities(sequence)
+
+        assert energy < 0.0
+        assert "(" in structure and ")" in structure
+        assert probs.shape == (len(sequence), len(sequence))
+        assert probs[0, -1] > 0.0
+        assert probs[1, -2] > 0.0
+        assert np.allclose(probs, probs.T)
+        assert np.all((probs >= 0.0) & (probs <= 1.0))
 
     def test_validate_design(
         self,

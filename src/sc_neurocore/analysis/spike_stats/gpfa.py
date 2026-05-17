@@ -124,6 +124,39 @@ def _gpfa_m_step(
     return C_new, d_new, R_new
 
 
+def _gpfa_log_likelihood(
+    Y: np.ndarray, C: np.ndarray, d: np.ndarray, R: np.ndarray, K_all: list[np.ndarray]
+) -> np.float64:
+    """Exact marginal Gaussian log likelihood for the GPFA observation model."""
+    n_neurons, n_bins = Y.shape
+    n_latents = C.shape[1]
+    n_obs = n_neurons * n_bins
+    n_state = n_latents * n_bins
+
+    A = np.zeros((n_obs, n_state), dtype=np.float64)
+    for t_idx in range(n_bins):
+        row_start = t_idx * n_neurons
+        for j in range(n_latents):
+            col = j * n_bins + t_idx
+            A[row_start : row_start + n_neurons, col] = C[:, j]
+
+    K_big = np.zeros((n_state, n_state), dtype=np.float64)
+    for j, kernel in enumerate(K_all):
+        sl = slice(j * n_bins, (j + 1) * n_bins)
+        K_big[sl, sl] = kernel
+
+    R_big = np.kron(np.eye(n_bins, dtype=np.float64), R)
+    cov = A @ K_big @ A.T + R_big
+    cov = cov + 1e-8 * np.eye(n_obs, dtype=np.float64)
+
+    y_centered = (Y - d[:, None]).T.reshape(n_obs)
+    sign, logdet = np.linalg.slogdet(cov)
+    if sign <= 0:
+        raise np.linalg.LinAlgError("GPFA marginal covariance is not positive definite")
+    quad = y_centered @ np.linalg.solve(cov, y_centered)
+    return np.float64(-0.5 * (quad + logdet + n_obs * np.log(2.0 * np.pi)))
+
+
 def gpfa(
     trains: list[np.ndarray],
     n_latents: int = 3,
@@ -167,12 +200,7 @@ def gpfa(
         x_post, xx_post = _gpfa_e_step(Y, C, d, R, K_all)
         C, d, R = _gpfa_m_step(Y, x_post, xx_post)
 
-        # Log-likelihood (approximate: data term only)
-        Y_centered = Y - d[:, None]
-        residual = Y_centered - C @ x_post
-        R_diag = np.diag(R)
-        ll = -0.5 * np.sum(residual**2 / (R_diag[:, None] + 1e-10))
-        ll -= 0.5 * n_bins * np.sum(np.log(R_diag + 1e-10))
+        ll = _gpfa_log_likelihood(Y, C, d, R, K_all)
         log_liks.append(float(ll))
 
         if len(log_liks) > 1 and abs(log_liks[-1] - log_liks[-2]) < tol:

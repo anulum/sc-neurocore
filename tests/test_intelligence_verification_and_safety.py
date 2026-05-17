@@ -39,6 +39,11 @@ class TestAging(unittest.TestCase):
         r = predict_aging(250.0)
         self.assertIn(r.dominant_mechanism, ("NBTI", "HCI"))
 
+    def test_high_voltage_stress_can_make_hci_dominant(self):
+        r = predict_aging(250.0, voltage_v=1.4, temperature_c=25.0, years=10.0)
+        self.assertGreater(r.hci_degradation_pct, r.nbti_degradation_pct)
+        self.assertEqual(r.dominant_mechanism, "HCI")
+
     def test_predict_aging_rejects_invalid_inputs(self):
         invalid_cases = [
             ({"initial_fmax_mhz": 0.0}, "initial_fmax_mhz"),
@@ -67,6 +72,16 @@ class TestReliability(unittest.TestCase):
         nominal = predict_reliability(voltage_v=0.9, temperature_c=85.0)
         stressed = predict_reliability(voltage_v=1.05, temperature_c=105.0)
         self.assertLess(stressed.mttf_hours, nominal.mttf_hours)
+
+    def test_predict_reliability_reports_per_mechanism_mttf(self):
+        stressed = predict_reliability(voltage_v=1.3, temperature_c=105.0)
+        self.assertIn("NBTI", stressed.mechanism_mttf_hours)
+        self.assertIn("HCI", stressed.mechanism_mttf_hours)
+        self.assertIn("TDDB", stressed.mechanism_mttf_hours)
+        self.assertEqual(
+            stressed.failure_mode,
+            min(stressed.mechanism_mttf_hours, key=stressed.mechanism_mttf_hours.get),
+        )
 
 
 class TestFaultCampaign(unittest.TestCase):

@@ -26,6 +26,8 @@ class ThermalEstimate:
         Estimated temperature rise in °C.
     junction_temp_c : float
         Estimated junction temperature.
+    hotspot_delta_t_c : float
+        Local temperature rise from concentrated DSP power.
     derated_freq_mhz : float
         Frequency after thermal derating.
     thermal_safe : bool
@@ -37,6 +39,7 @@ class ThermalEstimate:
     power_mw: float
     delta_t_c: float
     junction_temp_c: float
+    hotspot_delta_t_c: float
     derated_freq_mhz: float
     thermal_safe: bool
     hotspot_risk: str
@@ -52,6 +55,8 @@ def thermal_analysis(
     process_nm: int = 28,
     mul_count: int = 0,
     dsp_columns: int = 1,
+    dsp_power_mw: float | None = None,
+    theta_spreading: float = 0.0,
 ) -> ThermalEstimate:
     """Estimate thermal impact and frequency derating.
 
@@ -77,6 +82,12 @@ def thermal_analysis(
         Number of DSP multipliers (affects hotspot risk).
     dsp_columns : int
         Number of DSP columns to spread across.
+    dsp_power_mw : float, optional
+        DSP-attributed dynamic power for local hotspot analysis. When omitted,
+        local spreading rise is not added.
+    theta_spreading : float
+        Local spreading resistance from a DSP column hotspot to the bulk
+        junction node (°C/W).
 
     Returns
     -------
@@ -94,13 +105,18 @@ def thermal_analysis(
         raise ValueError("mul_count must be a non-negative integer")
     if not isinstance(dsp_columns, int) or dsp_columns <= 0:
         raise ValueError("dsp_columns must be a positive integer")
+    if dsp_power_mw is not None:
+        _require_finite_non_negative(dsp_power_mw, "dsp_power_mw")
+    _require_finite_non_negative(theta_spreading, "theta_spreading")
 
-    # Temperature rise
+    # Package-level junction rise plus optional local hotspot spreading rise.
     power_w = estimated_power_mw / 1000.0
     delta_t = power_w * theta_ja
-    t_junction = t_ambient_c + delta_t
-
-    thermal_safe = t_junction < t_junction_max_c
+    hotspot_delta_t = 0.0
+    if dsp_power_mw is not None and mul_count > 0 and theta_spreading > 0.0:
+        dsp_power_per_column_w = (dsp_power_mw / 1000.0) / dsp_columns
+        hotspot_delta_t = dsp_power_per_column_w * theta_spreading
+    t_junction = t_ambient_c + delta_t + hotspot_delta_t
 
     # Frequency derating: ~0.1% per °C above 85°C for modern processes
     if t_junction > 85.0:
@@ -129,12 +145,14 @@ def thermal_analysis(
     else:
         hotspot = "none"
 
+    thermal_safe = t_junction < t_junction_max_c
     derated_freq = target_freq_mhz * derate_factor
 
     return ThermalEstimate(
         power_mw=estimated_power_mw,
         delta_t_c=round(delta_t, 2),
         junction_temp_c=round(t_junction, 1),
+        hotspot_delta_t_c=round(hotspot_delta_t, 2),
         derated_freq_mhz=round(derated_freq, 1),
         thermal_safe=thermal_safe,
         hotspot_risk=hotspot,

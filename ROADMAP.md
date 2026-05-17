@@ -93,12 +93,15 @@ L1-L16 latency, memory, throughput with/without JAX JIT.
 All 16 adapters registered in ComponentRegistry with factory
 function. Plugin discovery via `importlib.metadata` entry points.
 
-## v3.10 — JOSS Paper & FPGA Demo ✓
+## v3.10 — JOSS Paper & FPGA Demo
 
-### ~~JOSS paper~~ ✓
+### JOSS paper
 
-`paper/paper.md` — submission-ready. 12 references, MNIST results,
-Brian2 comparison, formal verification data.
+`paper/paper.md` is maintained as a JOSS-format pre-submission draft. Formal
+submission is postponed until the open production-hardening, validation,
+coverage, documentation, and hardware-evidence TODOs are completed and
+reverified. Numeric claims in the paper must be regenerated from current CI,
+release, benchmark, and artefact evidence before submission.
 
 ### ~~MNIST-on-FPGA demo~~ ✓
 
@@ -112,15 +115,17 @@ targeting Xilinx 7-series.
 
 ### ~~Documentation overhaul~~ ✓
 
-README benchmarks, all 10 HDL modules listed, Zenodo DOI corrected,
-test counts updated across all docs.
+README benchmark wording, HDL-module summaries, and Zenodo DOI references were
+updated historically. Public docs must now treat the current coverage gate,
+hardware measurements, and model-fidelity audit state as the evidence boundary.
 
 ## v3.12 — Competitive Sprint ✓
 
-122 Python + 111 Rust neuron models, PyO3 bindings for all extended
-model categories, JAX training support, CuPy sparse GPU paths, FMEA +
-traceability matrix, 3 376+ Python tests, 378 Rust tests, 13 CI
-workflows, conda-forge recipe ready.
+122 Python + 111 Rust neuron models were present in this release slice, with
+PyO3 bindings for extended model categories, JAX training support, CuPy sparse
+GPU paths, FMEA + traceability-matrix work, broad Python/Rust test coverage,
+13 CI workflows, and conda-forge recipe work. Treat exact test counts as
+release-time evidence that must be regenerated before public reuse.
 
 New in this release:
 
@@ -150,10 +155,11 @@ New in this release:
 
 ## v3.14 — SHD FPGA Deployment + GPU Backend ✓ (current)
 
-### ~~SHD end-to-end FPGA pipeline~~ ✓
+### SHD end-to-end FPGA pipeline
 
-Complete train → quantise → synthesise → bitstream flow for Spiking
-Heidelberg Digits (SHD) speech classification on Zynq XC7Z020 (PYNQ-Z2):
+Pre-silicon train → quantise → synthesise → bitstream flow for Spiking
+Heidelberg Digits (SHD) speech classification targeting Zynq XC7Z020
+(PYNQ-Z2). Physical board validation remains open:
 
 - **Training:** DCLS max (Hammouamri 2024) on Vertex AI T4. The historical
   75.2% `dcls_max` result is now treated as exploratory because it selected
@@ -168,7 +174,8 @@ Heidelberg Digits (SHD) speech classification on Zynq XC7Z020 (PYNQ-Z2):
 - **Vivado synthesis:** 1 317 LUT (2.5%), 848 FF (0.8%), 0 BRAM, 0 DSP,
   WNS +4.048 ns at 100 MHz (~168 MHz achievable)
 - **Bitstream generated** via Vivado v2025.2 (Zynq PS + AXI-Lite block design)
-- **PYNQ deployment package:** driver, demo, .bit, .hwh (98 KB ZIP)
+- **PYNQ deployment package:** driver, demo, .bit, .hwh generated for the
+  pre-silicon deployment package
 - **Q8.8 co-simulation:** bit-true Python reference matches Verilog, 4% gap vs PyTorch
 - **Collaboration:** Joint work with T. Masquelier, A. Queant, B. Cottereau (CNRS/CerCo)
 
@@ -250,9 +257,10 @@ dependabot PRs merged.
 - Publish migration notes mapping v3.x modules to the v4.0 repository layout
   before the split is completed.
 
-### FPGA deployment proof ~~(P0 blocker)~~ PARTIALLY DONE
+### FPGA deployment proof (P0 blocker) PARTIALLY DONE
 
-- ~~Deploy on Zynq 7020~~ ✓ (SHD bitstream generated, 2.5% LUT)
+- ~~Generate Zynq 7020 deployment artefacts~~ ✓ (SHD bitstream generated,
+  2.5% LUT in Vivado reports)
 - ~~Measure: LUT count, BRAM, DSP, Fmax~~ ✓ (Vivado reports committed)
 - Verify on physical PYNQ-Z2 board (on order)
 - Measure dynamic power on silicon

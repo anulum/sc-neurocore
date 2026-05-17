@@ -1,5 +1,5 @@
 ---
-title: "SC-NeuroCore: Bit-True Stochastic Computing Simulation and FPGA Synthesis for Spiking Neural Networks"
+title: "SC-NeuroCore: Stochastic Computing Simulation and Hardware-Oriented Compilation for Spiking Neural Networks"
 tags:
   - Python
   - Rust
@@ -16,181 +16,119 @@ authors:
 affiliations:
   - name: Anulum Research, Independent Researcher
     index: 1
-date: 17 March 2026
+date: 14 May 2026
 bibliography: paper.bib
 ---
 
 # Summary
 
-SC-NeuroCore is an open-source framework for designing, simulating, and
-deploying neuromorphic circuits based on stochastic computing (SC). It
-provides bit-true Python simulation that matches synthesisable Verilog RTL
-cycle-exactly, a high-performance Rust SIMD engine with PyO3 bindings, and
-an IR compiler that emits SystemVerilog for FPGA targets. The framework
-bridges GPU-based SNN training to hardware deployment: networks trained
-with surrogate gradients in PyTorch are quantised to Q8.8 fixed-point and
-exported to stochastic bitstream weights for FPGA synthesis (\autoref{fig:pipeline}).
+SC-NeuroCore is an open-source Python and Rust framework for research on
+stochastic-computing implementations of spiking neural networks. Stochastic
+computing represents values as bitstreams and replaces arithmetic operations
+with simple digital logic, which makes it attractive for low-area
+neuromorphic hardware. SC-NeuroCore provides deterministic bitstream
+simulation, fixed-point export utilities, hardware-oriented intermediate
+representations, and Verilog generation paths that help researchers compare
+software SNN behaviour with hardware-realistic execution.
 
-![SC-NeuroCore train-to-hardware pipeline. Float-domain surrogate gradient training produces SNN weights, which are quantised to Q8.8 fixed-point, simulated as SC bitstreams with bit-exact RTL correspondence, compiled to SystemVerilog via the IR compiler, and synthesised for FPGA targets. The Rust SIMD engine accelerates all simulation stages. A bidirectional co-simulation link verifies Python--Verilog equivalence at every timestep.\label{fig:pipeline}](figures/pipeline.png){ width=100% }
+![SC-NeuroCore train-to-hardware pipeline. Float-domain surrogate gradient training produces SNN weights, which are quantised to fixed-point values, simulated as stochastic bitstreams, lowered to RTL-oriented representations, and checked against hardware-facing artefacts.\label{fig:pipeline}](figures/pipeline.png){ width=100% }
 
 # Statement of Need
 
-Stochastic computing encodes values as random bit-streams and performs
-arithmetic with single logic gates---an AND gate multiplies two
-probabilities, a multiplexer adds them [@alaghi2013]. SC circuits are
-area-efficient and fault-tolerant, attractive for edge neuromorphic
-inference where power and silicon area are constrained [@smithson2019].
+Neuromorphic researchers typically work with simulators such as NEST
+[@gewaltig2007], Brian2 [@stimberg2019], Lava [@lava2021], snnTorch
+[@eshraghian2023], and Norse [@pehle2021norse]. These tools are effective for
+event-driven simulation, differentiable SNN training, and neuromorphic
+software workflows, but they do not provide an integrated path for reasoning
+about stochastic bitstream arithmetic and hardware-oriented SNN compilation.
+Hardware designers working with stochastic computing often have to maintain
+separate Python models, HDL implementations, and verification scripts, which
+makes it easy for stochastic encodings, fixed-point assumptions, and RTL
+behaviour to diverge.
 
-No existing open-source tool provides an integrated SC design flow.
-Researchers must manually translate SC algorithms into HDL, write ad-hoc
-testbenches, and hope the stochastic behaviour of their Python model
-matches the hardware. SC-NeuroCore closes this gap with bit-true
-simulation, SIMD-accelerated Rust kernels, an IR compiler targeting
-Xilinx and Intel FPGAs, and a surrogate gradient training module
-that exports directly to SC bitstream weights---a train-to-hardware path
-that snnTorch [@eshraghian2023], Norse [@pehle2021norse], Brian2
-[@stimberg2019], NEST [@gewaltig2007], and Lava [@lava2021] do not provide.
-
-The target audience is (a) hardware designers prototyping neuromorphic
-edge devices who need a bit-true simulation-to-synthesis path, and
-(b) SNN researchers who want cycle-accurate hardware models rather than
-abstract differential-equation solvers.
+SC-NeuroCore addresses this gap for researchers who need a reproducible bridge
+between SNN training, stochastic arithmetic, and hardware-facing artefacts. It
+targets two audiences: computational neuroscience and machine-learning
+researchers who need hardware-realistic SNN experiments, and digital hardware
+researchers who need bitstream-level test or synthesis artefacts for FPGA and
+ASIC exploration. The project is not yet being submitted to JOSS; this paper is
+being maintained as a pre-submission draft until the remaining production
+hardening, validation, and documentation items are complete.
 
 # State of the Field
 
-Neuromorphic simulators---NEST, Brian2, and Lava---target event-driven
-spiking network simulation at the differential-equation level. SNN
-training libraries snnTorch and Norse provide gradient-based training on
-GPU but operate on continuous-valued membrane potentials, not hardware
-bit-streams. None model stochastic bitstream-level computation or emit
-synthesisable RTL.
+Stochastic computing has a long history as a compact arithmetic model
+[@alaghi2013] and has been surveyed for neural-network hardware
+[@smithson2019]. Spiking-neuron simulation has a separate ecosystem centred on
+differential-equation solvers, event queues, and differentiable training. The
+research gap is at the boundary: a trained SNN can be simulated or exported in
+many formats, but few open tools expose the stochastic bitstream length,
+encoding, random-stream correlation, fixed-point precision, and HDL metadata
+that determine whether a design remains valid after hardware lowering.
 
-SC-NeuroCore operates at a different abstraction: individual AND/OR
-gates on bit-streams with direct correspondence to synthesised hardware.
-A Brunel balanced-network benchmark [@brunel2000] shows SC-NeuroCore's
-Numba JIT backend completes a 1 000-neuron simulation in 0.35 s versus
-Brian2's 1.38 s (4.0$\times$ speedup), with firing rates matching
-within 1% (\autoref{fig:raster}). At 10 000 neurons Brian2 is
-1.35$\times$ faster (5.9 s vs 4.4 s), as its compiled C++ codegen
-scales better for large sparse networks. SC-NeuroCore targets
-FPGA-scale networks ($\leq$5K neurons) where bit-exact RTL
-co-simulation matters.
+SC-NeuroCore is intentionally positioned as a hardware-facing complement to
+the existing SNN software ecosystem rather than a replacement for it. It
+includes Python reference paths, a Rust acceleration crate, NIR import/export
+work, RTL-oriented generators, and reproducible benchmark scripts. Current
+public claims are limited to committed artefacts and CI-verifiable behaviour;
+physical FPGA measurements, dynamic power, and unresolved model-fidelity audit
+items remain open validation work.
 
-![Spike raster from a 5-neuron LIF network driven by sinusoidal input, simulated with SC-NeuroCore's stochastic bitstream encoding. Each neuron uses a decorrelated 16-bit LFSR seed.\label{fig:raster}](figures/spike_raster.png){ width=90% }
-
-For surrogate gradient training, SC-NeuroCore's `training` module
-matches snnTorch on a standard FC-SNN benchmark (95.5% vs 95.8% MNIST,
-identical 784$\to$128$\to$128$\to$10 architecture, 10 epochs). With
-learnable membrane time constants [@fang2021] the FC-SNN reaches 97.7%;
-a convolutional SNN architecture reaches 99.49%. The `to_sc_weights()`
-method exports trained float weights normalised to [0, 1] for SC
-bitstream deployment.
+![Spike raster from a small LIF network driven by sinusoidal input, simulated with stochastic bitstream encoding.\label{fig:raster}](figures/spike_raster.png){ width=90% }
 
 # Software Design
 
-SC-NeuroCore is structured in five layers, each independently usable:
+The design separates four concerns that are often coupled in hardware SNN
+experiments. First, Python reference modules express stochastic encoders,
+spiking layers, neuron models, and export utilities in a form that can be
+tested without vendor tools. Second, a Rust crate provides accelerated
+bitstream and model kernels where the behaviour has parity tests against the
+Python implementation. Third, compiler and NIR-bridge modules preserve graph,
+precision, and hardware metadata so that model structure can be validated
+before HDL generation. Fourth, HDL and co-simulation collateral provide a
+hardware-facing evidence path for selected designs.
 
-**Python API** (`pip install sc-neurocore`): 38 public symbols including
-`BitstreamEncoder`, `StochasticLIFNeuron`, `SCDenseLayer`, and
-`VectorizedSCLayer`. All SC primitives use a 16-bit maximal-length LFSR
-(polynomial $x^{16}+x^{14}+x^{13}+x^{11}+1$, period 65 535) with
-decorrelated seed assignment [@golomb1967shift]. Fixed-point arithmetic
-uses Q8.8 signed two's complement. An optional `training` subpackage
-provides LIF, adaptive LIF [@bellec2020], and recurrent LIF cells with
-surrogate gradient backward passes and learnable membrane parameters.
-A library of 174 neuron models---from McCulloch-Pitts [@mcculloch1943]
-through Hodgkin-Huxley [@hodgkin1952], Izhikevich [@izhikevich2003],
-and 9 hardware chip emulators (Loihi, TrueNorth, BrainScaleS, SpiNNaker,
-Akida)---covers 82 years of computational neuroscience.
+This separation trades maximal speed for auditability. Researchers can inspect
+the same stochastic assumptions at Python, Rust, metadata, and HDL boundaries,
+and unsupported paths are expected to fail closed rather than silently emit
+unchecked artefacts. The project uses `pyproject.toml` packaging, AGPL-3.0-or-
+later licensing with a commercial licence option, a `CITATION.cff` file, and a
+Zenodo software DOI [@scneurocore_zenodo]. The current package version is
+3.14.0, and the current Python coverage gate is 96%; 100% remains a project
+target, not a present release claim.
 
-**Rust Engine** (`sc_neurocore_engine`): A PyO3-bound Rust crate
-providing SIMD-accelerated bitstream operations, 174 neuron model
-implementations, and a `NetworkRunner` with CSR-sparse projections and
-Rayon-parallel population stepping scaling to 100K+ neurons. Runtime
-feature detection selects AVX-512, AVX2, or NEON paths. A Criterion
-benchmark measures 113 Gbit/s bitstream packing on AVX-512.
-Cross-compiled wheels target Linux, macOS, and Windows across
-Python 3.10--3.14.
+# Research Impact Statement
 
-**Network Simulation** (`sc_neurocore.network`): A
-Population-Projection-Network engine with three backends (Python/NumPy,
-Rust NetworkRunner, MPI via mpi4py), six topology generators, a model
-zoo with 10 pre-built configurations, 3 pre-trained weight sets, and
-132 spike train analysis functions covering the combined scope of
-Elephant [@elephant2023] and PySpike.
+The near-term research value of SC-NeuroCore is its reproducible experimental
+surface for stochastic-computing SNN hardware studies. It provides a single
+repository where bitstream encoders, SNN training/export utilities, NIR
+adapters, Rust kernels, HDL generators, formal checks, benchmark scripts, and
+documentation can be inspected together. This makes it suitable for
+experiments that compare accuracy, bitstream length, fixed-point precision,
+area estimates, and hardware metadata under controlled assumptions.
 
-**Verilog RTL** (`hdl/`): 19 synthesisable modules including
-`sc_lif_neuron.v` (Q8.8 LIF), `sc_dense_matrix_layer.v`, and
-`sc_neurocore_top.v` (AXI-Lite wrapper). Yosys synthesis of
-`sc_neurocore_top` yields 3 673 LUTs on Xilinx 7-series. SymbiYosys
-formal verification covers 67 properties across 7 modules.
+The project has active collaboration work around SHD deployment evidence and
+stochastic SNN compression, but public claims will remain bounded until the
+current open validation queue is complete. In particular, physical PYNQ-Z2
+measurements, dynamic power, final deployable SHD artefacts, and unresolved
+model-fidelity audit items are treated as pre-submission blockers rather than
+completed JOSS evidence.
 
-**IR Compiler**: Parses a graph-based intermediate representation,
-verifies structural invariants, and emits synthesisable SystemVerilog
-targeting Xilinx and Intel FPGAs.
+# AI Usage Disclosure
 
-**NIR Bridge** (`sc_neurocore.nir_bridge`): Imports NIR
-(Neuromorphic Intermediate Representation) graphs, mapping all 18
-primitives (LIF, IF, LI, CubaLIF, CubaLI, Affine, Linear, Conv1d,
-Conv2d, Scale, Threshold, Flatten, Delay, SumPool2d, AvgPool2d,
-Integrator, Input, Output) to SC-NeuroCore equivalents with a
-recursive graph parser and topological execution. To our knowledge,
-SC-NeuroCore is the first NIR backend to combine 100\% primitive
-coverage with an FPGA synthesis path, enabling models from SpikingJelly,
-snnTorch, and Norse to target reconfigurable hardware.
-
-A minimal end-to-end example:
-
-```python
-from sc_neurocore import BitstreamEncoder, StochasticLIFNeuron
-enc = BitstreamEncoder(data_width=16, fraction=8)
-neuron = StochasticLIFNeuron()
-for t in range(100):
-    spike, v = neuron.step(leak_k=1, gain_k=256, i_t=50, noise_in=0)
-```
-
-The key design trade-off is determinism over speed: SC-NeuroCore
-maintains bit-exact correspondence between Python simulation and Verilog
-RTL at every timestep, enabling co-simulation workflows where a checker
-script verifies bit-exact equivalence across all LFSR seeds and neuron
-states.
-
-# Availability
-
-SC-NeuroCore is available on [PyPI](https://pypi.org/project/sc-neurocore/)
-(`pip install sc-neurocore`) and
-[GitHub](https://github.com/anulum/sc-neurocore) under
-AGPL-3.0-or-later with a commercial license option.
-[Documentation](https://anulum.github.io/sc-neurocore/) is hosted on
-GitHub Pages. The repository includes a
-[contributing guide](https://github.com/anulum/sc-neurocore/blob/main/CONTRIBUTING.md),
-51 tutorials, 22 examples, and 8 Jupyter notebooks including an
-interactive neuron model explorer and an NIR bridge walkthrough.
-A Zenodo-archived DOI is available [@scneurocore_zenodo].
-
-# Quality Assurance
-
-SC-NeuroCore maintains 2 155 Python and 373 Rust tests with 100% line
-coverage enforced by CI on every push. The test suite includes unit
-tests, integration tests, property-based tests (Hypothesis),
-cross-layer coupling tests, and hardware co-simulation checks.
-Static analysis comprises Ruff linting, Bandit security scanning,
-SPDX license header validation, and CodeQL. Thirteen CI workflows---all
-with SHA-pinned GitHub Actions---guard every merge. OpenSSF Scorecard
-monitors supply-chain security.
-
-# AI Disclosure
-
-This project uses LLMs for advanced control mechanisms and GitHub
-handling. All output is reviewed, tested, and verified by the project
-author.
+Generative AI tools have been used during software development, documentation
+drafting, code review, CI triage, and paper editing. AI-generated changes are
+not accepted as authoritative by themselves: the project requires human review,
+local or CI verification, source inspection, and evidence-backed documentation
+before claims are promoted to public release text.
 
 # Acknowledgements
 
-The SC primitives build on Alaghi and Hayes [-@alaghi2013] and Smithson
-et al. [-@smithson2019]. Neuron models follow Gerstner et al.
-[-@gerstner2014], Izhikevich [-@izhikevich2003], Bellec et al.
-[-@bellec2020], and Fang et al. [-@fang2021]. Benchmarks follow
-NeuroBench methodology [@yik2023neurobench]. This work was self-funded.
+The stochastic-computing primitives build on Alaghi and Hayes
+[-@alaghi2013] and Smithson et al. [-@smithson2019]. Neuron and SNN modelling
+context draws on McCulloch and Pitts [-@mcculloch1943], Hodgkin and Huxley
+[-@hodgkin1952], Izhikevich [-@izhikevich2003], Gerstner et al.
+[-@gerstner2014], Bellec et al. [-@bellec2020], Fang et al. [-@fang2021], and
+NeuroBench methodology [@yik2023neurobench]. This work is self-funded.
 
 # References

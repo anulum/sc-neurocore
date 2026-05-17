@@ -19,7 +19,8 @@ dist/
 .vscode/
 .idea/
 
-# Internal docs (not for public repo)
+# Internal planning, audits, session context, and backlog documents are not
+# part of the public repository surface.
 docs/internal/
 
 # OS
@@ -131,9 +132,13 @@ hardware_tests/
 CLAUDE.md
 .claude/
 
-# Local backups — never committed
+# Local backups and archives are never committed. Keep historical TODO
+# snapshots, generated scaffolds, retired experiments, and provenance dumps in
+# these directories rather than in tracked docs.
 BACKUP/
 ARCHIVE/
+archive/
+archives/
 
 # AutoResearch sandbox — local working copies, never committed
 .autoresearch-gemini/

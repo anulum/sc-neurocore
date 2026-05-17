@@ -3101,7 +3101,9 @@ Interface to NUPACK for thermodynamic validation.
 
 Provides minimum free energy (MFE) structure prediction, base-pair
 probability computation, and design validation. Falls back to
-internal nearest-neighbour estimates when NUPACK is not installed.
+internal nearest-neighbour estimates, Watson-Crick secondary-structure
+dynamic programming, and Boltzmann-style pair probabilities when NUPACK is
+not installed.
 
 Parameters
 ----------
@@ -6089,9 +6091,9 @@ str
 ### Function `thermal_analysis(estimated_power_mw, target_freq_mhz)`
 Estimate thermal impact and frequency derating.
 
-Uses a simplified thermal model: ``ΔT = P × θ_JA`` where θ_JA is
-the junction-to-ambient thermal resistance. DSP-heavy designs risk
-hotspots in DSP columns, which degrades timing.
+Combines package-level junction rise with an optional local DSP-column
+spreading-resistance term. DSP-heavy designs can therefore raise local
+junction temperature as well as derating timing.
 
 Parameters
 ----------
@@ -6112,6 +6114,11 @@ mul_count : int
     Number of DSP multipliers (affects hotspot risk).
 dsp_columns : int
     Number of DSP columns to spread across.
+dsp_power_mw : float, optional
+    DSP-attributed dynamic power for local hotspot analysis.
+theta_spreading : float
+    Local spreading resistance from DSP-column hotspot to the bulk junction
+    node (°C/W).
 
 Returns
 -------
@@ -7109,7 +7116,9 @@ PortabilityScore
 ### Function `predict_reliability()`
 Predict MTTF from voltage, temperature, and technology node.
 
-Uses simplified Arrhenius + voltage acceleration model.
+Evaluates NBTI, HCI, and TDDB mechanism-specific Arrhenius and voltage
+acceleration factors, then reports the shortest per-mechanism MTTF as the
+dominant failure mode.
 
 Parameters
 ----------
@@ -7518,7 +7527,8 @@ EnergyHarvestBudget
 ### Function `predict_aging(initial_fmax_mhz)`
 Predict end-of-life Fmax after transistor aging.
 
-Models NBTI and HCI degradation using simplified Arrhenius kinetics.
+Models NBTI and HCI degradation with separate activation energies, voltage
+exponents, and lifetime power-law terms.
 
 Parameters
 ----------
@@ -22847,7 +22857,7 @@ Configuration for a single spintronic device.
 - **from_tech**(cls, tech)
 - **area_nm2**()
 - **switching_energy_fj**()
-  - E = I² × R × t (approximate, R ≈ 10 kΩ for MTJ).
+  - Write-path switching energy, E = I² × R_write × t.
 - **thermal_stability**()
   - Thermal stability factor Δ = Ku × V / (kB × T).
 - **read_disturb_probability**()

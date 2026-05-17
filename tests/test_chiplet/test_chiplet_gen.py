@@ -8,6 +8,7 @@
 
 import numpy as np
 import pytest
+import subprocess
 
 from sc_neurocore.chiplet.chiplet_gen import (
     ChipletDie,
@@ -832,8 +833,99 @@ class TestCreditConfig:
         sv = emit_credit_controller_sv(cc, "bounded")
         assert "stub" not in sv.lower()
         assert "MAX_CREDITS" in sv
+        assert "MAX_FLITS" in sv
         assert "credits_available != 0" in sv
-        assert "credits_available != MAX_CREDITS" in sv
+        assert "next_credits > MAX_FLITS" in sv
+        assert "next_credits = MAX_FLITS" in sv
+
+    def test_credit_config_rejects_invalid_credit_geometry(self):
+        with pytest.raises(ValueError, match="initial_credits"):
+            CreditConfig(initial_credits=0)
+        with pytest.raises(ValueError, match="credit_granularity"):
+            CreditConfig(credit_granularity=0)
+
+    def test_credit_controller_rejects_unsafe_module_suffix(self):
+        cc = CreditConfig(initial_credits=8)
+        with pytest.raises(ValueError, match="link_name"):
+            emit_credit_controller_sv(cc, "bad-name; assign hacked = 1'b1")
+
+    def test_credit_controller_scales_counter_width_and_parses(self, tmp_path):
+        cc = CreditConfig(initial_credits=1024)
+        sv = emit_credit_controller_sv(cc, "wide_credit")
+        assert "parameter CREDIT_W = 11" in sv
+        assert "output reg  [CREDIT_W-1:0] credits_available" in sv
+        assert "[7:0]         credits_available" not in sv
+
+        sv_path = tmp_path / "wide_credit.sv"
+        sv_path.write_text(sv)
+        subprocess.run(
+            ["iverilog", "-g2012", "-tnull", str(sv_path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_credit_controller_honors_credit_granularity_in_simulation(self, tmp_path):
+        cc = CreditConfig(initial_credits=2, credit_granularity=3)
+        sv = emit_credit_controller_sv(cc, "granular_credit")
+        assert "parameter MAX_FLITS = 6" in sv
+
+        sv_path = tmp_path / "granular_credit.sv"
+        tb_path = tmp_path / "tb_granular_credit.sv"
+        out_path = tmp_path / "granular_credit.out"
+        sv_path.write_text(sv)
+        tb_path.write_text(
+            """
+module tb;
+    reg clk = 1'b0;
+    reg rst_n = 1'b0;
+    reg tx_valid = 1'b1;
+    reg credit_return = 1'b0;
+    wire tx_ready;
+    wire [2:0] credits_available;
+    integer accepted = 0;
+    integer i;
+
+    always #1 clk = ~clk;
+
+    sc_chiplet_credit_granular_credit dut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .tx_data(64'd0),
+        .tx_valid(tx_valid),
+        .tx_ready(tx_ready),
+        .credit_return(credit_return),
+        .credits_available(credits_available)
+    );
+
+    initial begin
+        repeat (2) @(posedge clk);
+        rst_n = 1'b1;
+        for (i = 0; i < 7; i = i + 1) begin
+            @(negedge clk);
+            if (tx_ready) accepted = accepted + 1;
+        end
+        if (accepted !== 6) begin
+            $display("accepted=%0d", accepted);
+            $fatal(1);
+        end
+        $finish;
+    end
+endmodule
+"""
+        )
+        subprocess.run(
+            ["iverilog", "-g2012", "-o", str(out_path), str(sv_path), str(tb_path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        subprocess.run(
+            ["vvp", str(out_path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
 
 
 # ── 3D Stacking Tests ────────────────────────────────────────────────
@@ -913,6 +1005,175 @@ class TestPowerDomain:
         assert "ISO_CYCLES" in sv
         assert "state <= PWR_ISOLATE" in sv
         assert "state <= PWR_OFF" in sv
+
+    def test_power_gating_sv_exports_domain_metadata_and_parses(self, tmp_path):
+        pd = PowerDomain(domain_id=3, die_ids=[0, 2, 5], voltage_mv=725)
+        sv = emit_power_gating_sv(pd)
+        assert "parameter DOMAIN_ID = 3" in sv
+        assert "parameter DIE_COUNT = 3" in sv
+        assert "parameter [63:0] DIE_MASK = 64'h0000000000000025" in sv
+        assert "parameter VOLTAGE_MV = 725" in sv
+
+        sv_path = tmp_path / "power_domain.sv"
+        sv_path.write_text(sv)
+        subprocess.run(
+            ["iverilog", "-g2012", "-tnull", str(sv_path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_power_gating_sv_enforces_exact_isolation_delay(self, tmp_path):
+        pd = PowerDomain(domain_id=4, die_ids=[1], voltage_mv=800)
+        sv = emit_power_gating_sv(pd)
+        sv_path = tmp_path / "power_domain_4.sv"
+        tb_path = tmp_path / "tb_power_domain_4.sv"
+        out_path = tmp_path / "power_domain_4.out"
+        sv_path.write_text(sv)
+        tb_path.write_text(
+            """
+module tb;
+    reg clk = 1'b0;
+    reg rst_n = 1'b0;
+    reg enable = 1'b0;
+    wire domain_active;
+    wire isolation_en;
+    wire power_switch_en;
+    integer isolated_cycles = 0;
+    integer i;
+    integer wait_cycles = 0;
+
+    always #1 clk = ~clk;
+
+    sc_chiplet_pwr_domain_4 dut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .enable(enable),
+        .domain_active(domain_active),
+        .isolation_en(isolation_en),
+        .power_switch_en(power_switch_en)
+    );
+
+    initial begin
+        repeat (2) @(posedge clk);
+        rst_n = 1'b1;
+        enable = 1'b1;
+        while (!domain_active && wait_cycles < 16) begin
+            @(posedge clk);
+            wait_cycles = wait_cycles + 1;
+        end
+        if (domain_active !== 1'b1 || isolation_en !== 1'b0 || power_switch_en !== 1'b1)
+            $fatal(1);
+        enable = 1'b0;
+        for (i = 0; i < 8; i = i + 1) begin
+            @(negedge clk);
+            if (isolation_en && power_switch_en)
+                isolated_cycles = isolated_cycles + 1;
+        end
+        if (isolated_cycles !== 4) begin
+            $display("isolated_cycles=%0d", isolated_cycles);
+            $fatal(1);
+        end
+        if (power_switch_en !== 1'b0 || domain_active !== 1'b0 || isolation_en !== 1'b1)
+            $fatal(1);
+        $finish;
+    end
+endmodule
+"""
+        )
+        subprocess.run(
+            ["iverilog", "-g2012", "-o", str(out_path), str(sv_path), str(tb_path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        subprocess.run(
+            ["vvp", str(out_path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_power_gating_sv_waits_for_restore_delay_before_active(self, tmp_path):
+        pd = PowerDomain(domain_id=5, die_ids=[3], voltage_mv=800)
+        sv = emit_power_gating_sv(pd)
+        assert "localparam RESTORE_CYCLES = 4" in sv
+
+        sv_path = tmp_path / "power_domain_5.sv"
+        tb_path = tmp_path / "tb_power_domain_5.sv"
+        out_path = tmp_path / "power_domain_5.out"
+        sv_path.write_text(sv)
+        tb_path.write_text(
+            """
+module tb;
+    reg clk = 1'b0;
+    reg rst_n = 1'b0;
+    reg enable = 1'b0;
+    wire domain_active;
+    wire isolation_en;
+    wire power_switch_en;
+    integer restore_cycles = 0;
+    integer i;
+
+    always #1 clk = ~clk;
+
+    sc_chiplet_pwr_domain_5 dut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .enable(enable),
+        .domain_active(domain_active),
+        .isolation_en(isolation_en),
+        .power_switch_en(power_switch_en)
+    );
+
+    initial begin
+        repeat (2) @(posedge clk);
+        rst_n = 1'b1;
+        enable = 1'b1;
+        for (i = 0; i < 8; i = i + 1) begin
+            @(negedge clk);
+            if (isolation_en && power_switch_en && !domain_active)
+                restore_cycles = restore_cycles + 1;
+        end
+        if (restore_cycles !== 4) begin
+            $display("restore_cycles=%0d", restore_cycles);
+            $fatal(1);
+        end
+        if (domain_active !== 1'b1 || isolation_en !== 1'b0 || power_switch_en !== 1'b1)
+            $fatal(1);
+        $finish;
+    end
+endmodule
+"""
+        )
+        subprocess.run(
+            ["iverilog", "-g2012", "-o", str(out_path), str(sv_path), str(tb_path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        subprocess.run(
+            ["vvp", str(out_path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_power_domain_rejects_invalid_electrical_contract(self):
+        with pytest.raises(ValueError, match="domain_id"):
+            PowerDomain(domain_id=-1, die_ids=[0])
+        with pytest.raises(ValueError, match="die_ids"):
+            PowerDomain(domain_id=0, die_ids=[])
+        with pytest.raises(ValueError, match="die_ids"):
+            PowerDomain(domain_id=0, die_ids=[64])
+        with pytest.raises(ValueError, match="voltage_mv"):
+            PowerDomain(domain_id=0, die_ids=[0], voltage_mv=0)
+
+    def test_power_domain_map_rejects_duplicate_die_ownership(self):
+        pdm = PowerDomainMap()
+        pdm.add_domain(PowerDomain(0, [0, 1]))
+        with pytest.raises(ValueError, match="already assigned"):
+            pdm.add_domain(PowerDomain(1, [1, 2]))
 
 
 # ── Auto-Partitioning Tests ──────────────────────────────────────────

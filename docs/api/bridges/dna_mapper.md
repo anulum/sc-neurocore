@@ -203,8 +203,11 @@ except ImportError:
     _HAS_NUPACK = False
 ```
 
-This ensures the module works without NUPACK installed, falling back
-to the internal nearest-neighbour model for thermodynamic calculations.
+This ensures the module works without NUPACK installed. The fallback uses
+the internal nearest-neighbour thermodynamic model plus deterministic
+Watson-Crick secondary-structure dynamic programming and Boltzmann-style
+base-pair probability estimates, so validation still detects likely
+intramolecular hairpins instead of assuming all strands are unstructured.
 
 ---
 
@@ -934,7 +937,7 @@ strands).
 | No mismatched base-pair model | Perfect-match only | Wobble pair penalties (v1.2) |
 | No enzyme kinetics (Michaelis-Menten) | Enzymatic gates use simplified kinetics | Km/kcat parameters (v1.2) |
 | No feedback loops | Can't compile recurrent SC networks | Cycle detection (v2.0) |
-| No NUPACK without manual installation | Fallback NN model is approximate | Docker image with NUPACK (v1.1) |
+| No NUPACK without manual installation | Fallback uses internal NN + Watson-Crick hairpin estimates | Docker image with NUPACK for full ensemble thermodynamics |
 | Euler integrator (O(dt)) | Low accuracy for stiff systems | RK4/scipy.integrate (v1.1) |
 
 ---
