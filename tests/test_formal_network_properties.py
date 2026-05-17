@@ -14,15 +14,27 @@ import pytest
 
 from sc_neurocore.formal.network_properties import (
     DenseLIFNetworkSpec,
+    NetworkAntagonisticOutputExclusion,
+    NetworkOutputTemporalSeparation,
+    NetworkPopulationCoactivationCap,
+    NetworkPopulationSilenceAfterCoactivation,
     NetworkRefractoryInvariant,
     NetworkRateBound,
 )
 from sc_neurocore.formal.property_compiler import (
     compile_dense_lif_fixture_rtl,
+    compile_network_antagonistic_exclusion_sva,
+    compile_network_population_coactivation_sva,
+    compile_network_population_silence_sva,
+    compile_network_temporal_separation_sva,
     compile_network_rate_bound_sva,
     compile_network_refractory_sva,
 )
 from sc_neurocore.formal.counterexample_replay import (
+    replay_antagonistic_counterexample,
+    replay_population_coactivation_counterexample,
+    replay_population_silence_counterexample,
+    replay_temporal_separation_counterexample,
     replay_rate_bound_counterexample,
     replay_refractory_counterexample,
 )
@@ -232,6 +244,281 @@ def test_compiler_rejects_refractory_outside_network_output_width() -> None:
         compile_network_refractory_sva(spec, prop)
 
 
+def test_compile_dense_lif_antagonistic_exclusion_sva_is_deterministic() -> None:
+    spec = DenseLIFNetworkSpec(
+        name="dense_lif_frontier_fixture",
+        input_width=3,
+        output_width=2,
+        state_width=16,
+        timestep_name="sample_valid",
+        output_signal="spike_out",
+    )
+    prop = NetworkAntagonisticOutputExclusion(
+        name="motor_left_right_exclusion",
+        output_a=0,
+        output_b=1,
+    )
+
+    sva = compile_network_antagonistic_exclusion_sva(spec, prop)
+
+    assert sva == compile_network_antagonistic_exclusion_sva(spec, prop)
+    assert "module dense_lif_frontier_fixture_antagonistic_sva" in sva
+    assert "wire scnc_antagonist_a = spike_out[0];" in sva
+    assert "wire scnc_antagonist_b = spike_out[1];" in sva
+    assert "a_motor_left_right_exclusion: assert (!(scnc_antagonist_a && scnc_antagonist_b));" in sva
+    assert "if (rst_n && sample_valid) begin" in sva
+    assert "\nbind dense_lif_frontier_fixture" in sva
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"name": "bad-name"}, "valid SystemVerilog identifier"),
+        ({"output_a": -1}, "output_a"),
+        ({"output_b": -1}, "output_b"),
+        ({"output_a": 1, "output_b": 1}, "distinct"),
+    ],
+)
+def test_antagonistic_exclusion_rejects_invalid_contracts(
+    kwargs: dict[str, object], match: str
+) -> None:
+    values: dict[str, object] = {
+        "name": "motor_left_right_exclusion",
+        "output_a": 0,
+        "output_b": 1,
+    }
+    values.update(kwargs)
+
+    with pytest.raises(ValueError, match=match):
+        NetworkAntagonisticOutputExclusion(**values)
+
+
+def test_compiler_rejects_antagonistic_exclusion_outside_network_output_width() -> None:
+    spec = DenseLIFNetworkSpec(
+        name="dense_lif_frontier_fixture",
+        input_width=3,
+        output_width=2,
+        state_width=16,
+    )
+    prop = NetworkAntagonisticOutputExclusion(
+        name="bad_exclusion",
+        output_a=0,
+        output_b=2,
+    )
+
+    with pytest.raises(ValueError, match="output_b"):
+        compile_network_antagonistic_exclusion_sva(spec, prop)
+
+
+def test_compile_dense_lif_temporal_separation_sva_is_deterministic() -> None:
+    spec = DenseLIFNetworkSpec(
+        name="dense_lif_frontier_fixture",
+        input_width=3,
+        output_width=2,
+        state_width=16,
+        timestep_name="sample_valid",
+        output_signal="spike_out",
+    )
+    prop = NetworkOutputTemporalSeparation(
+        name="motor_left_right_temporal_separation",
+        output_a=0,
+        output_b=1,
+        separation_cycles=2,
+    )
+
+    sva = compile_network_temporal_separation_sva(spec, prop)
+
+    assert sva == compile_network_temporal_separation_sva(spec, prop)
+    assert "module dense_lif_frontier_fixture_temporal_separation_sva" in sva
+    assert "parameter int unsigned SCNC_SEPARATION_CYCLES = 2;" in sva
+    assert "wire scnc_temporal_a = spike_out[0];" in sva
+    assert "wire scnc_temporal_b = spike_out[1];" in sva
+    assert "wire scnc_after_a_active = scnc_after_a_count != '0;" in sva
+    assert "wire scnc_after_b_active = scnc_after_b_count != '0;" in sva
+    assert "a_motor_left_right_temporal_separation: assert" in sva
+    assert "!(scnc_temporal_a && scnc_temporal_b)" in sva
+    assert "!(scnc_temporal_a && scnc_after_b_active)" in sva
+    assert "!(scnc_temporal_b && scnc_after_a_active)" in sva
+    assert "if (rst_n && sample_valid) begin" in sva
+    assert "\nbind dense_lif_frontier_fixture" in sva
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"name": "bad-name"}, "valid SystemVerilog identifier"),
+        ({"output_a": -1}, "output_a"),
+        ({"output_b": -1}, "output_b"),
+        ({"output_a": 1, "output_b": 1}, "distinct"),
+        ({"separation_cycles": 0}, "separation_cycles"),
+    ],
+)
+def test_temporal_separation_rejects_invalid_contracts(
+    kwargs: dict[str, object], match: str
+) -> None:
+    values: dict[str, object] = {
+        "name": "motor_left_right_temporal_separation",
+        "output_a": 0,
+        "output_b": 1,
+        "separation_cycles": 2,
+    }
+    values.update(kwargs)
+
+    with pytest.raises(ValueError, match=match):
+        NetworkOutputTemporalSeparation(**values)
+
+
+def test_compiler_rejects_temporal_separation_outside_network_output_width() -> None:
+    spec = DenseLIFNetworkSpec(
+        name="dense_lif_frontier_fixture",
+        input_width=3,
+        output_width=2,
+        state_width=16,
+    )
+    prop = NetworkOutputTemporalSeparation(
+        name="bad_temporal_separation",
+        output_a=0,
+        output_b=2,
+        separation_cycles=2,
+    )
+
+    with pytest.raises(ValueError, match="output_b"):
+        compile_network_temporal_separation_sva(spec, prop)
+
+
+def test_compile_dense_lif_population_coactivation_sva_is_deterministic() -> None:
+    spec = DenseLIFNetworkSpec(
+        name="dense_lif_frontier_fixture",
+        input_width=3,
+        output_width=3,
+        state_width=16,
+        timestep_name="sample_valid",
+        output_signal="spike_out",
+    )
+    prop = NetworkPopulationCoactivationCap(
+        name="population_coactivation_cap",
+        max_active_outputs=1,
+    )
+
+    sva = compile_network_population_coactivation_sva(spec, prop)
+
+    assert sva == compile_network_population_coactivation_sva(spec, prop)
+    assert "module dense_lif_frontier_fixture_population_coactivation_sva" in sva
+    assert "parameter int unsigned SCNC_MAX_ACTIVE_OUTPUTS = 1;" in sva
+    assert "logic [1:0] scnc_active_outputs;" in sva
+    assert "assign scnc_active_outputs = spike_out[0] + spike_out[1] + spike_out[2];" in sva
+    assert "a_population_coactivation_cap: assert" in sva
+    assert "scnc_active_outputs <= SCNC_MAX_ACTIVE_OUTPUTS" in sva
+    assert "if (rst_n && sample_valid) begin" in sva
+    assert "\nbind dense_lif_frontier_fixture" in sva
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"name": "bad-name"}, "valid SystemVerilog identifier"),
+        ({"max_active_outputs": -1}, "max_active_outputs"),
+        ({"max_active_outputs": True}, "max_active_outputs"),
+    ],
+)
+def test_population_coactivation_cap_rejects_invalid_contracts(
+    kwargs: dict[str, object], match: str
+) -> None:
+    values: dict[str, object] = {
+        "name": "population_coactivation_cap",
+        "max_active_outputs": 1,
+    }
+    values.update(kwargs)
+
+    with pytest.raises(ValueError, match=match):
+        NetworkPopulationCoactivationCap(**values)
+
+
+def test_compiler_rejects_population_coactivation_cap_above_output_width() -> None:
+    spec = DenseLIFNetworkSpec(
+        name="dense_lif_frontier_fixture",
+        input_width=3,
+        output_width=2,
+        state_width=16,
+    )
+    prop = NetworkPopulationCoactivationCap(
+        name="population_coactivation_cap",
+        max_active_outputs=3,
+    )
+
+    with pytest.raises(ValueError, match="max_active_outputs"):
+        compile_network_population_coactivation_sva(spec, prop)
+
+
+def test_compile_dense_lif_population_silence_sva_is_deterministic() -> None:
+    spec = DenseLIFNetworkSpec(
+        name="dense_lif_frontier_fixture",
+        input_width=3,
+        output_width=3,
+        state_width=16,
+        timestep_name="sample_valid",
+        output_signal="spike_out",
+    )
+    prop = NetworkPopulationSilenceAfterCoactivation(
+        name="population_silence_after_coactivation",
+        trigger_active_outputs=2,
+        silence_cycles=3,
+    )
+
+    sva = compile_network_population_silence_sva(spec, prop)
+
+    assert sva == compile_network_population_silence_sva(spec, prop)
+    assert "module dense_lif_frontier_fixture_population_silence_sva" in sva
+    assert "parameter int unsigned SCNC_TRIGGER_ACTIVE_OUTPUTS = 2;" in sva
+    assert "parameter int unsigned SCNC_SILENCE_CYCLES = 3;" in sva
+    assert "assign scnc_active_outputs = spike_out[0] + spike_out[1] + spike_out[2];" in sva
+    assert "wire scnc_coactivation_trigger" in sva
+    assert "wire scnc_silence_active = scnc_silence_count != '0;" in sva
+    assert "a_population_silence_after_coactivation: assert (scnc_active_outputs == '0);" in sva
+    assert "if (rst_n && sample_valid && scnc_silence_active) begin" in sva
+    assert "\nbind dense_lif_frontier_fixture" in sva
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"name": "bad-name"}, "valid SystemVerilog identifier"),
+        ({"trigger_active_outputs": 0}, "trigger_active_outputs"),
+        ({"trigger_active_outputs": True}, "trigger_active_outputs"),
+        ({"silence_cycles": 0}, "silence_cycles"),
+    ],
+)
+def test_population_silence_rejects_invalid_contracts(
+    kwargs: dict[str, object], match: str
+) -> None:
+    values: dict[str, object] = {
+        "name": "population_silence_after_coactivation",
+        "trigger_active_outputs": 2,
+        "silence_cycles": 3,
+    }
+    values.update(kwargs)
+
+    with pytest.raises(ValueError, match=match):
+        NetworkPopulationSilenceAfterCoactivation(**values)
+
+
+def test_compiler_rejects_population_silence_trigger_above_output_width() -> None:
+    spec = DenseLIFNetworkSpec(
+        name="dense_lif_frontier_fixture",
+        input_width=3,
+        output_width=2,
+        state_width=16,
+    )
+    prop = NetworkPopulationSilenceAfterCoactivation(
+        name="population_silence_after_coactivation",
+        trigger_active_outputs=3,
+        silence_cycles=2,
+    )
+
+    with pytest.raises(ValueError, match="trigger_active_outputs"):
+        compile_network_population_silence_sva(spec, prop)
+
+
 def test_counterexample_replay_detects_aligned_window_rate_violation() -> None:
     prop = NetworkRateBound(
         name="output0_rate_bound",
@@ -346,6 +633,175 @@ def test_refractory_replay_selects_monitored_output_index() -> None:
     assert replay.trigger_cycle == 0
 
 
+def test_antagonistic_replay_detects_simultaneous_outputs() -> None:
+    prop = NetworkAntagonisticOutputExclusion(
+        name="motor_left_right_exclusion",
+        output_a=0,
+        output_b=1,
+    )
+
+    replay = replay_antagonistic_counterexample(
+        [[True, False], [False, True], [True, True]],
+        prop,
+    )
+
+    assert replay.violated
+    assert replay.first_violation_cycle == 2
+    assert replay.output_a == 0
+    assert replay.output_b == 1
+    assert replay.cycles_checked == 3
+
+
+def test_antagonistic_replay_accepts_mutually_exclusive_outputs() -> None:
+    prop = NetworkAntagonisticOutputExclusion(
+        name="motor_left_right_exclusion",
+        output_a=0,
+        output_b=1,
+    )
+
+    replay = replay_antagonistic_counterexample(
+        [[True, False], [False, True], [False, False]],
+        prop,
+    )
+
+    assert not replay.violated
+    assert replay.first_violation_cycle is None
+    assert replay.cycles_checked == 3
+
+
+def test_temporal_separation_replay_detects_bounded_window_violation() -> None:
+    prop = NetworkOutputTemporalSeparation(
+        name="motor_left_right_temporal_separation",
+        output_a=0,
+        output_b=1,
+        separation_cycles=2,
+    )
+
+    replay = replay_temporal_separation_counterexample(
+        [[True, False], [False, True], [False, False]],
+        prop,
+    )
+
+    assert replay.violated
+    assert replay.first_violation_cycle == 1
+    assert replay.trigger_output == 0
+    assert replay.violating_output == 1
+    assert replay.remaining_separation_cycles == 2
+    assert replay.cycles_checked == 2
+
+
+def test_temporal_separation_replay_rejects_simultaneous_outputs() -> None:
+    prop = NetworkOutputTemporalSeparation(
+        name="motor_left_right_temporal_separation",
+        output_a=0,
+        output_b=1,
+        separation_cycles=2,
+    )
+
+    replay = replay_temporal_separation_counterexample([[True, True]], prop)
+
+    assert replay.violated
+    assert replay.first_violation_cycle == 0
+    assert replay.trigger_output is None
+    assert replay.violating_output is None
+
+
+def test_temporal_separation_replay_accepts_outputs_after_window() -> None:
+    prop = NetworkOutputTemporalSeparation(
+        name="motor_left_right_temporal_separation",
+        output_a=0,
+        output_b=1,
+        separation_cycles=2,
+    )
+
+    replay = replay_temporal_separation_counterexample(
+        [[True, False], [False, False], [False, False], [False, True]],
+        prop,
+    )
+
+    assert not replay.violated
+    assert replay.first_violation_cycle is None
+    assert replay.cycles_checked == 4
+
+
+def test_population_coactivation_replay_detects_too_many_simultaneous_outputs() -> None:
+    prop = NetworkPopulationCoactivationCap(
+        name="population_coactivation_cap",
+        max_active_outputs=1,
+    )
+
+    replay = replay_population_coactivation_counterexample(
+        [[True, False, True], [False, True, False]],
+        prop,
+    )
+
+    assert replay.violated
+    assert replay.first_violation_cycle == 0
+    assert replay.observed_active_outputs == 2
+    assert replay.max_active_outputs == 1
+    assert replay.cycles_checked == 1
+
+
+def test_population_coactivation_replay_accepts_outputs_within_cap() -> None:
+    prop = NetworkPopulationCoactivationCap(
+        name="population_coactivation_cap",
+        max_active_outputs=1,
+    )
+
+    replay = replay_population_coactivation_counterexample(
+        [[True, False, False], [False, True, False], [False, False, True]],
+        prop,
+    )
+
+    assert not replay.violated
+    assert replay.first_violation_cycle is None
+    assert replay.observed_active_outputs == 1
+    assert replay.max_active_outputs == 1
+    assert replay.cycles_checked == 3
+
+
+def test_population_silence_replay_detects_spike_after_coactivation() -> None:
+    prop = NetworkPopulationSilenceAfterCoactivation(
+        name="population_silence_after_coactivation",
+        trigger_active_outputs=2,
+        silence_cycles=2,
+    )
+
+    replay = replay_population_silence_counterexample(
+        [[True, True, False], [False, False, False], [False, True, False]],
+        prop,
+    )
+
+    assert replay.violated
+    assert replay.first_violation_cycle == 2
+    assert replay.trigger_cycle == 0
+    assert replay.observed_active_outputs == 1
+    assert replay.remaining_silence_cycles == 1
+    assert replay.trigger_active_outputs == 2
+    assert replay.silence_cycles == 2
+    assert replay.cycles_checked == 3
+
+
+def test_population_silence_replay_accepts_silent_window() -> None:
+    prop = NetworkPopulationSilenceAfterCoactivation(
+        name="population_silence_after_coactivation",
+        trigger_active_outputs=2,
+        silence_cycles=2,
+    )
+
+    replay = replay_population_silence_counterexample(
+        [[True, True, False], [False, False, False], [False, False, False], [True, False, False]],
+        prop,
+    )
+
+    assert not replay.violated
+    assert replay.first_violation_cycle is None
+    assert replay.trigger_cycle is None
+    assert replay.observed_active_outputs == 0
+    assert replay.remaining_silence_cycles == 0
+    assert replay.cycles_checked == 4
+
+
 def _valid_formal_report_payload() -> dict[str, object]:
     return {
         "schema_version": FORMAL_NETWORK_REPORT_SCHEMA_VERSION,
@@ -370,11 +826,35 @@ def _valid_formal_report_payload() -> dict[str, object]:
             "output_index": 0,
             "refractory_cycles": 2,
         },
+        "antagonistic_exclusion": {
+            "name": "motor_left_right_exclusion",
+            "output_a": 0,
+            "output_b": 1,
+        },
+        "temporal_separation": {
+            "name": "motor_left_right_temporal_separation",
+            "output_a": 0,
+            "output_b": 1,
+            "separation_cycles": 2,
+        },
+        "population_coactivation": {
+            "name": "population_coactivation_cap",
+            "max_active_outputs": 1,
+        },
+        "population_silence": {
+            "name": "population_silence_after_coactivation",
+            "trigger_active_outputs": 2,
+            "silence_cycles": 2,
+        },
         "artifacts": {
             "rtl": "/tmp/dense_lif_frontier_fixture.v",
             "sva": "/tmp/dense_lif_frontier_fixture_rate_bound.sv",
             "rate_sva": "/tmp/dense_lif_frontier_fixture_rate_bound.sv",
             "refractory_sva": "/tmp/dense_lif_frontier_fixture_refractory.sv",
+            "antagonistic_sva": "/tmp/dense_lif_frontier_fixture_antagonistic.sv",
+            "temporal_sva": "/tmp/dense_lif_frontier_fixture_temporal_separation.sv",
+            "population_sva": "/tmp/dense_lif_frontier_fixture_population_coactivation.sv",
+            "population_silence_sva": "/tmp/dense_lif_frontier_fixture_population_silence.sv",
             "formal_bundle": "/tmp/dense_lif_frontier_fixture_formal_bundle.sv",
             "sby": "/tmp/dense_lif_frontier_fixture.sby",
             "report": "/tmp/formal_rate_bound_report.json",
@@ -398,6 +878,38 @@ def _valid_formal_report_payload() -> dict[str, object]:
             "first_violation_cycle": None,
             "trigger_cycle": None,
             "remaining_refractory_cycles": 0,
+            "cycles_checked": 4,
+        },
+        "antagonistic_replay": {
+            "violated": False,
+            "first_violation_cycle": None,
+            "output_a": 0,
+            "output_b": 1,
+            "cycles_checked": 4,
+        },
+        "temporal_replay": {
+            "violated": False,
+            "first_violation_cycle": None,
+            "trigger_output": None,
+            "violating_output": None,
+            "remaining_separation_cycles": 0,
+            "cycles_checked": 4,
+        },
+        "population_replay": {
+            "violated": False,
+            "first_violation_cycle": None,
+            "observed_active_outputs": 1,
+            "max_active_outputs": 1,
+            "cycles_checked": 4,
+        },
+        "population_silence_replay": {
+            "violated": False,
+            "first_violation_cycle": None,
+            "trigger_cycle": None,
+            "observed_active_outputs": 0,
+            "remaining_silence_cycles": 0,
+            "trigger_active_outputs": 2,
+            "silence_cycles": 2,
             "cycles_checked": 4,
         },
         "symbiyosys": {
@@ -427,6 +939,83 @@ def test_validate_formal_network_report_accepts_complete_payload() -> None:
         (lambda payload: payload["rate_bound"].__setitem__("max_spikes", 9), "max_spikes"),
         (lambda payload: payload["symbiyosys"].__setitem__("status", "unknown"), "symbiyosys.status"),
         (lambda payload: payload.__setitem__("rate_replay", {"violated": False}), "rate_replay"),
+        (
+            lambda payload: payload["temporal_replay"].__setitem__("trigger_output", 9),
+            "temporal_replay.trigger_output",
+        ),
+        (
+            lambda payload: payload["temporal_replay"].__setitem__("violating_output", 9),
+            "temporal_replay.violating_output",
+        ),
+        (
+            lambda payload: (
+                payload["temporal_replay"].__setitem__("trigger_output", 0),
+                payload["temporal_replay"].__setitem__("violating_output", 0),
+            ),
+            "temporal_replay.violating_output",
+        ),
+        (
+            lambda payload: payload["population_coactivation"].__setitem__(
+                "max_active_outputs", 3
+            ),
+            "population_coactivation.max_active_outputs",
+        ),
+        (
+            lambda payload: payload["population_replay"].__setitem__(
+                "max_active_outputs", 2
+            ),
+            "population_replay.max_active_outputs",
+        ),
+        (
+            lambda payload: payload["population_replay"].__setitem__(
+                "observed_active_outputs", 3
+            ),
+            "population_replay.observed_active_outputs",
+        ),
+        (
+            lambda payload: (
+                payload["population_replay"].__setitem__("violated", True),
+                payload["population_replay"].__setitem__("first_violation_cycle", None),
+                payload["population_replay"].__setitem__("observed_active_outputs", 2),
+            ),
+            "population_replay.first_violation_cycle",
+        ),
+        (
+            lambda payload: payload["population_replay"].__setitem__(
+                "observed_active_outputs", 2
+            ),
+            "population_replay.observed_active_outputs",
+        ),
+        (
+            lambda payload: payload["population_silence"].__setitem__(
+                "trigger_active_outputs", 3
+            ),
+            "population_silence.trigger_active_outputs",
+        ),
+        (
+            lambda payload: payload["population_silence_replay"].__setitem__(
+                "trigger_active_outputs", 3
+            ),
+            "population_silence_replay.trigger_active_outputs",
+        ),
+        (
+            lambda payload: (
+                payload["population_silence_replay"].__setitem__("violated", True),
+                payload["population_silence_replay"].__setitem__(
+                    "first_violation_cycle", None
+                ),
+                payload["population_silence_replay"].__setitem__(
+                    "observed_active_outputs", 1
+                ),
+            ),
+            "population_silence_replay.first_violation_cycle",
+        ),
+        (
+            lambda payload: payload["population_silence_replay"].__setitem__(
+                "observed_active_outputs", 1
+            ),
+            "population_silence_replay.observed_active_outputs",
+        ),
     ],
 )
 def test_validate_formal_network_report_rejects_invalid_payloads(
@@ -452,6 +1041,12 @@ def test_formal_network_verification_docs_cover_cli_and_report_contract() -> Non
     assert "FORMAL_NETWORK_REPORT_SCHEMA_VERSION" in text
     assert "validate_formal_network_report" in text
     assert "tools/verify_formal_network_evidence.py" in text
+    assert "formal_network_coverage_manifest.json" in text
+    assert "covered_outputs" in text
     assert "artifacts.rtl" in text
     assert "rate_replay" in text
     assert "refractory_replay" in text
+    assert "antagonistic_exclusion" in text
+    assert "temporal_separation" in text
+    assert "population_coactivation" in text
+    assert "population_silence" in text

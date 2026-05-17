@@ -264,6 +264,30 @@ def main() -> int:
         help="Optional refractory window for formal verify-network monitored output",
     )
     parser.add_argument(
+        "--antagonistic-pair",
+        default=None,
+        help="Optional comma-separated output pair A,B for formal verify-network exclusion",
+    )
+    parser.add_argument(
+        "--temporal-separation",
+        default=None,
+        help="Optional comma-separated output pair and cycle gap A,B,CYCLES for formal verify-network",
+    )
+    parser.add_argument(
+        "--coactivation-cap",
+        type=int,
+        default=None,
+        help="Optional cap on simultaneously active outputs for formal verify-network",
+    )
+    parser.add_argument(
+        "--population-silence",
+        default=None,
+        help=(
+            "Optional post-coactivation silence contract TRIGGER_ACTIVE_OUTPUTS,SILENCE_CYCLES "
+            "for formal verify-network"
+        ),
+    )
+    parser.add_argument(
         "--spike-trace",
         default=None,
         help="Optional JSON spike trace replayed against formal verify-network rate bounds",
@@ -881,13 +905,25 @@ def _cmd_formal(args: Any) -> int:
 
     from sc_neurocore.formal import (
         DenseLIFNetworkSpec,
+        NetworkAntagonisticOutputExclusion,
+        NetworkOutputTemporalSeparation,
+        NetworkPopulationCoactivationCap,
+        NetworkPopulationSilenceAfterCoactivation,
         NetworkRefractoryInvariant,
         NetworkRateBound,
         compile_dense_lif_fixture_rtl,
+        compile_network_antagonistic_exclusion_sva,
+        compile_network_population_coactivation_sva,
+        compile_network_population_silence_sva,
         compile_network_rate_bound_sva,
         compile_network_refractory_sva,
+        compile_network_temporal_separation_sva,
+        replay_antagonistic_counterexample,
+        replay_population_coactivation_counterexample,
+        replay_population_silence_counterexample,
         replay_rate_bound_counterexample,
         replay_refractory_counterexample,
+        replay_temporal_separation_counterexample,
         validate_formal_network_report,
     )
     from sc_neurocore.formal.report_schema import FORMAL_NETWORK_REPORT_SCHEMA_VERSION
@@ -910,6 +946,21 @@ def _cmd_formal(args: Any) -> int:
             output_width=args.output_width,
             state_width=args.state_width,
         )
+        antagonistic_outputs = (
+            _parse_antagonistic_pair(args.antagonistic_pair)
+            if args.antagonistic_pair is not None
+            else None
+        )
+        temporal_outputs = (
+            _parse_temporal_separation(args.temporal_separation)
+            if args.temporal_separation is not None
+            else None
+        )
+        population_silence_values = (
+            _parse_population_silence(args.population_silence)
+            if args.population_silence is not None
+            else None
+        )
         rate_bound = NetworkRateBound(
             name=f"output{args.output_index}_rate_bound",
             output_index=args.output_index,
@@ -925,11 +976,70 @@ def _cmd_formal(args: Any) -> int:
             if args.refractory_cycles > 0
             else None
         )
+        antagonistic = (
+            NetworkAntagonisticOutputExclusion(
+                name=f"output{antagonistic_outputs[0]}_output{antagonistic_outputs[1]}_exclusion",
+                output_a=antagonistic_outputs[0],
+                output_b=antagonistic_outputs[1],
+            )
+            if antagonistic_outputs is not None
+            else None
+        )
+        temporal = (
+            NetworkOutputTemporalSeparation(
+                name=(
+                    f"output{temporal_outputs[0]}_output{temporal_outputs[1]}_"
+                    "temporal_separation"
+                ),
+                output_a=temporal_outputs[0],
+                output_b=temporal_outputs[1],
+                separation_cycles=temporal_outputs[2],
+            )
+            if temporal_outputs is not None
+            else None
+        )
+        population = (
+            NetworkPopulationCoactivationCap(
+                name="population_coactivation_cap",
+                max_active_outputs=args.coactivation_cap,
+            )
+            if args.coactivation_cap is not None
+            else None
+        )
+        population_silence = (
+            NetworkPopulationSilenceAfterCoactivation(
+                name="population_silence_after_coactivation",
+                trigger_active_outputs=population_silence_values[0],
+                silence_cycles=population_silence_values[1],
+            )
+            if population_silence_values is not None
+            else None
+        )
         rtl = compile_dense_lif_fixture_rtl(network)
         sva = compile_network_rate_bound_sva(network, rate_bound)
         refractory_sva = (
             compile_network_refractory_sva(network, refractory)
             if refractory is not None
+            else None
+        )
+        antagonistic_sva = (
+            compile_network_antagonistic_exclusion_sva(network, antagonistic)
+            if antagonistic is not None
+            else None
+        )
+        temporal_sva = (
+            compile_network_temporal_separation_sva(network, temporal)
+            if temporal is not None
+            else None
+        )
+        population_sva = (
+            compile_network_population_coactivation_sva(network, population)
+            if population is not None
+            else None
+        )
+        population_silence_sva = (
+            compile_network_population_silence_sva(network, population_silence)
+            if population_silence is not None
             else None
         )
     except ValueError as exc:
@@ -941,14 +1051,26 @@ def _cmd_formal(args: Any) -> int:
     rtl_path = out_dir / f"{network.name}.v"
     sva_path = out_dir / f"{network.name}_rate_bound.sv"
     refractory_sva_path = out_dir / f"{network.name}_refractory.sv"
+    antagonistic_sva_path = out_dir / f"{network.name}_antagonistic.sv"
+    temporal_sva_path = out_dir / f"{network.name}_temporal_separation.sv"
+    population_sva_path = out_dir / f"{network.name}_population_coactivation.sv"
+    population_silence_sva_path = out_dir / f"{network.name}_population_silence.sv"
     formal_bundle_path = out_dir / f"{network.name}_formal_bundle.sv"
     sby_path = out_dir / f"{network.name}.sby"
     report_path = Path(args.out) if args.out else out_dir / "formal_rate_bound_report.json"
 
     replay_report: dict[str, Any] | None = None
     refractory_replay_report: dict[str, Any] | None = None
+    antagonistic_replay_report: dict[str, Any] | None = None
+    temporal_replay_report: dict[str, Any] | None = None
+    population_replay_report: dict[str, Any] | None = None
+    population_silence_replay_report: dict[str, Any] | None = None
     replay_violated = False
     refractory_violated = False
+    antagonistic_violated = False
+    temporal_violated = False
+    population_violated = False
+    population_silence_violated = False
     if args.spike_trace:
         try:
             trace_payload = json.loads(Path(args.spike_trace).read_text(encoding="utf-8"))
@@ -958,6 +1080,26 @@ def _cmd_formal(args: Any) -> int:
             refractory_replay = (
                 replay_refractory_counterexample(trace_payload, refractory)
                 if refractory is not None
+                else None
+            )
+            antagonistic_replay = (
+                replay_antagonistic_counterexample(trace_payload, antagonistic)
+                if antagonistic is not None
+                else None
+            )
+            temporal_replay = (
+                replay_temporal_separation_counterexample(trace_payload, temporal)
+                if temporal is not None
+                else None
+            )
+            population_replay = (
+                replay_population_coactivation_counterexample(trace_payload, population)
+                if population is not None
+                else None
+            )
+            population_silence_replay = (
+                replay_population_silence_counterexample(trace_payload, population_silence)
+                if population_silence is not None
                 else None
             )
         except (OSError, TypeError, ValueError) as exc:
@@ -971,8 +1113,41 @@ def _cmd_formal(args: Any) -> int:
         refractory_violated = bool(
             refractory_replay is not None and refractory_replay.violated
         )
+        antagonistic_replay_report = (
+            asdict(antagonistic_replay) if antagonistic_replay is not None else None
+        )
+        antagonistic_violated = bool(
+            antagonistic_replay is not None and antagonistic_replay.violated
+        )
+        temporal_replay_report = asdict(temporal_replay) if temporal_replay is not None else None
+        temporal_violated = bool(temporal_replay is not None and temporal_replay.violated)
+        population_replay_report = (
+            asdict(population_replay) if population_replay is not None else None
+        )
+        population_violated = bool(
+            population_replay is not None and population_replay.violated
+        )
+        population_silence_replay_report = (
+            asdict(population_silence_replay)
+            if population_silence_replay is not None
+            else None
+        )
+        population_silence_violated = bool(
+            population_silence_replay is not None and population_silence_replay.violated
+        )
 
-    bundle_sva = sva if refractory_sva is None else f"{sva}\n{refractory_sva}"
+    bundle_parts = [sva]
+    if refractory_sva is not None:
+        bundle_parts.append(refractory_sva)
+    if antagonistic_sva is not None:
+        bundle_parts.append(antagonistic_sva)
+    if temporal_sva is not None:
+        bundle_parts.append(temporal_sva)
+    if population_sva is not None:
+        bundle_parts.append(population_sva)
+    if population_silence_sva is not None:
+        bundle_parts.append(population_silence_sva)
+    bundle_sva = "\n".join(bundle_parts)
     sby = generate_sby_script(
         network.name,
         sva_file=formal_bundle_path.name,
@@ -983,6 +1158,14 @@ def _cmd_formal(args: Any) -> int:
     sva_path.write_text(sva, encoding="utf-8")
     if refractory_sva is not None:
         refractory_sva_path.write_text(refractory_sva, encoding="utf-8")
+    if antagonistic_sva is not None:
+        antagonistic_sva_path.write_text(antagonistic_sva, encoding="utf-8")
+    if temporal_sva is not None:
+        temporal_sva_path.write_text(temporal_sva, encoding="utf-8")
+    if population_sva is not None:
+        population_sva_path.write_text(population_sva, encoding="utf-8")
+    if population_silence_sva is not None:
+        population_silence_sva_path.write_text(population_silence_sva, encoding="utf-8")
     formal_bundle_path.write_text(bundle_sva, encoding="utf-8")
     sby_path.write_text(sby, encoding="utf-8")
 
@@ -1017,11 +1200,27 @@ def _cmd_formal(args: Any) -> int:
         "network": asdict(network),
         "rate_bound": asdict(rate_bound),
         "refractory": asdict(refractory) if refractory is not None else None,
+        "antagonistic_exclusion": asdict(antagonistic) if antagonistic is not None else None,
+        "temporal_separation": asdict(temporal) if temporal is not None else None,
+        "population_coactivation": asdict(population) if population is not None else None,
+        "population_silence": (
+            asdict(population_silence) if population_silence is not None else None
+        ),
         "artifacts": {
             "rtl": str(rtl_path),
             "sva": str(sva_path),
             "rate_sva": str(sva_path),
             "refractory_sva": str(refractory_sva_path) if refractory_sva is not None else None,
+            "antagonistic_sva": (
+                str(antagonistic_sva_path) if antagonistic_sva is not None else None
+            ),
+            "temporal_sva": str(temporal_sva_path) if temporal_sva is not None else None,
+            "population_sva": str(population_sva_path) if population_sva is not None else None,
+            "population_silence_sva": (
+                str(population_silence_sva_path)
+                if population_silence_sva is not None
+                else None
+            ),
             "formal_bundle": str(formal_bundle_path),
             "sby": str(sby_path),
             "report": str(report_path),
@@ -1029,6 +1228,10 @@ def _cmd_formal(args: Any) -> int:
         "replay": replay_report,
         "rate_replay": replay_report,
         "refractory_replay": refractory_replay_report,
+        "antagonistic_replay": antagonistic_replay_report,
+        "temporal_replay": temporal_replay_report,
+        "population_replay": population_replay_report,
+        "population_silence_replay": population_silence_replay_report,
         "symbiyosys": symbiyosys_report,
     }
     try:
@@ -1044,6 +1247,14 @@ def _cmd_formal(args: Any) -> int:
     print(f"  SVA: {sva_path}")
     if refractory_sva is not None:
         print(f"  Refractory SVA: {refractory_sva_path}")
+    if antagonistic_sva is not None:
+        print(f"  Antagonistic SVA: {antagonistic_sva_path}")
+    if temporal_sva is not None:
+        print(f"  Temporal SVA: {temporal_sva_path}")
+    if population_sva is not None:
+        print(f"  Population SVA: {population_sva_path}")
+    if population_silence_sva is not None:
+        print(f"  Population silence SVA: {population_silence_sva_path}")
     print(f"  Bundle: {formal_bundle_path}")
     print(f"  SBY: {sby_path}")
     print(f"  Report: {report_path}")
@@ -1068,6 +1279,59 @@ def _cmd_formal(args: Any) -> int:
             "Refractory replay passed: "
             f"{refractory_replay_report['cycles_checked']} cycle(s) checked"
         )
+    if antagonistic_replay_report is not None:
+        if antagonistic_violated:
+            print(
+                "Antagonistic violation: "
+                f"cycle {antagonistic_replay_report['first_violation_cycle']}, "
+                f"output_a={antagonistic_replay_report['output_a']}, "
+                f"output_b={antagonistic_replay_report['output_b']}"
+            )
+            return 1
+        print(
+            "Antagonistic replay passed: "
+            f"{antagonistic_replay_report['cycles_checked']} cycle(s) checked"
+        )
+    if temporal_replay_report is not None:
+        if temporal_violated:
+            print(
+                "Temporal separation violation: "
+                f"cycle {temporal_replay_report['first_violation_cycle']}, "
+                f"trigger_output={temporal_replay_report['trigger_output']}, "
+                f"violating_output={temporal_replay_report['violating_output']}"
+            )
+            return 1
+        print(
+            "Temporal separation replay passed: "
+            f"{temporal_replay_report['cycles_checked']} cycle(s) checked"
+        )
+    if population_replay_report is not None:
+        if population_violated:
+            print(
+                "Population coactivation violation: "
+                f"cycle {population_replay_report['first_violation_cycle']}, "
+                f"observed_active_outputs={population_replay_report['observed_active_outputs']}, "
+                f"max_active_outputs={population_replay_report['max_active_outputs']}"
+            )
+            return 1
+        print(
+            "Population coactivation replay passed: "
+            f"{population_replay_report['cycles_checked']} cycle(s) checked"
+        )
+    if population_silence_replay_report is not None:
+        if population_silence_violated:
+            print(
+                "Population silence violation: "
+                f"cycle {population_silence_replay_report['first_violation_cycle']}, "
+                f"trigger_cycle={population_silence_replay_report['trigger_cycle']}, "
+                "observed_active_outputs="
+                f"{population_silence_replay_report['observed_active_outputs']}"
+            )
+            return 1
+        print(
+            "Population silence replay passed: "
+            f"{population_silence_replay_report['cycles_checked']} cycle(s) checked"
+        )
     if args.run_symbiyosys:
         if symbiyosys_report["status"] == "tool_unavailable":
             print("SymbiYosys unavailable: generated .sby but skipped external proof")
@@ -1077,6 +1341,39 @@ def _cmd_formal(args: Any) -> int:
         else:
             print("SymbiYosys passed")
     return 0
+
+
+def _parse_antagonistic_pair(value: str) -> tuple[int, int]:
+    parts = [part.strip() for part in value.split(",")]
+    if len(parts) != 2 or any(part == "" for part in parts):
+        raise ValueError("antagonistic-pair must be two comma-separated output indexes")
+    try:
+        output_a, output_b = (int(part, 10) for part in parts)
+    except ValueError as exc:
+        raise ValueError("antagonistic-pair must contain integer output indexes") from exc
+    return output_a, output_b
+
+
+def _parse_temporal_separation(value: str) -> tuple[int, int, int]:
+    parts = [part.strip() for part in value.split(",")]
+    if len(parts) != 3 or any(part == "" for part in parts):
+        raise ValueError("temporal-separation must be A,B,CYCLES")
+    try:
+        output_a, output_b, cycles = (int(part, 10) for part in parts)
+    except ValueError as exc:
+        raise ValueError("temporal-separation must contain integer values") from exc
+    return output_a, output_b, cycles
+
+
+def _parse_population_silence(value: str) -> tuple[int, int]:
+    parts = [part.strip() for part in value.split(",")]
+    if len(parts) != 2 or any(part == "" for part in parts):
+        raise ValueError("population-silence must be TRIGGER_ACTIVE_OUTPUTS,SILENCE_CYCLES")
+    try:
+        trigger_active_outputs, silence_cycles = (int(part, 10) for part in parts)
+    except ValueError as exc:
+        raise ValueError("population-silence must contain integer values") from exc
+    return trigger_active_outputs, silence_cycles
 
 
 def _print_optional_dependency_version(module_name: str, label: str) -> None:

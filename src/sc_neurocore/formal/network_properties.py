@@ -87,3 +87,66 @@ class NetworkRefractoryInvariant:
         validate_systemverilog_identifier(self.name, field_name="name")
         _validate_non_negative_int(self.output_index, field_name="output_index")
         _validate_positive_int(self.refractory_cycles, field_name="refractory_cycles")
+
+
+@dataclass(frozen=True, slots=True)
+class NetworkAntagonisticOutputExclusion:
+    """Forbid two antagonistic network outputs from spiking in the same cycle."""
+
+    name: str
+    output_a: int
+    output_b: int
+
+    def __post_init__(self) -> None:
+        validate_systemverilog_identifier(self.name, field_name="name")
+        _validate_non_negative_int(self.output_a, field_name="output_a")
+        _validate_non_negative_int(self.output_b, field_name="output_b")
+        if self.output_a == self.output_b:
+            raise ValueError("output_a and output_b must be distinct")
+
+
+@dataclass(frozen=True, slots=True)
+class NetworkOutputTemporalSeparation:
+    """Forbid two outputs from spiking within a bounded cycle window."""
+
+    name: str
+    output_a: int
+    output_b: int
+    separation_cycles: int
+
+    def __post_init__(self) -> None:
+        validate_systemverilog_identifier(self.name, field_name="name")
+        _validate_non_negative_int(self.output_a, field_name="output_a")
+        _validate_non_negative_int(self.output_b, field_name="output_b")
+        if self.output_a == self.output_b:
+            raise ValueError("output_a and output_b must be distinct")
+        _validate_positive_int(self.separation_cycles, field_name="separation_cycles")
+
+
+@dataclass(frozen=True, slots=True)
+class NetworkPopulationCoactivationCap:
+    """Bound the number of simultaneously active outputs in a sample cycle."""
+
+    name: str
+    max_active_outputs: int
+
+    def __post_init__(self) -> None:
+        validate_systemverilog_identifier(self.name, field_name="name")
+        _validate_non_negative_int(self.max_active_outputs, field_name="max_active_outputs")
+
+
+@dataclass(frozen=True, slots=True)
+class NetworkPopulationSilenceAfterCoactivation:
+    """Require global output silence after a population coactivation event."""
+
+    name: str
+    trigger_active_outputs: int
+    silence_cycles: int
+
+    def __post_init__(self) -> None:
+        validate_systemverilog_identifier(self.name, field_name="name")
+        _validate_positive_int(
+            self.trigger_active_outputs,
+            field_name="trigger_active_outputs",
+        )
+        _validate_positive_int(self.silence_cycles, field_name="silence_cycles")
