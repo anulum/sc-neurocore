@@ -69,6 +69,19 @@ class TestSpintronicDeviceConfig:
         cfg = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         assert cfg.switching_energy_fj > 0
 
+    def test_switching_energy_uses_device_write_resistance(self):
+        low_r = SpintronicDeviceConfig(
+            switching_current_ua=40.0,
+            switching_time_ns=2.0,
+            write_resistance_ohm=2_000.0,
+        )
+        high_r = SpintronicDeviceConfig(
+            switching_current_ua=40.0,
+            switching_time_ns=2.0,
+            write_resistance_ohm=8_000.0,
+        )
+        assert high_r.switching_energy_fj == 4.0 * low_r.switching_energy_fj
+
     def test_skyrmion_has_dmi(self):
         cfg = SpintronicDeviceConfig.from_tech(SpintronicTech.SKYRMION)
         assert cfg.material.dmi_strength_j_m2 > 0
@@ -170,7 +183,7 @@ class TestSpintronicCell:
         dev = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         cell = SpintronicCell(0, 0, dev, state=0)
         r_p = cell.resistance_ohm
-        assert r_p == 5000.0
+        assert r_p == dev.parallel_resistance_ohm
 
     def test_resistance_ap(self):
         dev = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
@@ -184,6 +197,16 @@ class TestSpintronicCell:
         ap = SpintronicCell(0, 0, dev, state=1)
         ratio = (ap.resistance_ohm - p.resistance_ohm) / p.resistance_ohm
         assert abs(ratio - dev.tmr_ratio) < 0.01
+
+    def test_resistance_uses_device_parallel_resistance(self):
+        dev = SpintronicDeviceConfig(
+            parallel_resistance_ohm=7_500.0,
+            tmr_ratio=2.0,
+        )
+        p = SpintronicCell(0, 0, dev, state=0)
+        ap = SpintronicCell(0, 0, dev, state=1)
+        assert p.resistance_ohm == 7_500.0
+        assert ap.resistance_ohm == 22_500.0
 
 
 # ── SpintronicMapper Tests ───────────────────────────────────────────

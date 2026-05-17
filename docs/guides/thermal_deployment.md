@@ -8,9 +8,9 @@
 
 Estimate thermal impact, apply frequency derating, and generate
 thermal-aware placement constraints for compiled neuron designs.
-This guide covers the thermal model ($\Delta T = P \times \theta_{JA}$),
-DSP hotspot avoidance via SLR-aware spreading, and XDC constraint
-generation for temperature-margined deployment.
+This guide covers package-level junction rise, optional local DSP hotspot
+spreading resistance, SLR-aware DSP spreading, and XDC constraint generation
+for temperature-margined deployment.
 
 ---
 
@@ -18,16 +18,21 @@ generation for temperature-margined deployment.
 
 ### 1.1 Junction Temperature Model
 
-The steady-state junction temperature is:
+The steady-state junction temperature uses the package-level junction rise plus
+an optional local spreading term for concentrated DSP columns:
 
 $$
-T_J = T_A + P \cdot \theta_{JA}
+T_J = T_A + P_{\text{total}} \cdot \theta_{JA}
+      + \frac{P_{\text{DSP}}}{N_{\text{DSP columns}}} \cdot \theta_{\text{spread}}
 $$
 
 where:
 - $T_A$ = ambient temperature (°C), typically 25–85°C
-- $P$ = total power dissipation (W)
+- $P_{\text{total}}$ = total package power dissipation (W)
 - $\theta_{JA}$ = junction-to-ambient thermal resistance (°C/W)
+- $P_{\text{DSP}}$ = DSP-attributed dynamic power (W), when available
+- $\theta_{\text{spread}}$ = local spreading resistance from a DSP-column
+  hotspot to the package junction node (°C/W)
 
 ### 1.2 Thermal Resistance by Package
 

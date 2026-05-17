@@ -30,6 +30,7 @@ Hooks into:
 
 from __future__ import annotations
 
+import re
 import textwrap
 from dataclasses import dataclass, field
 from enum import Enum
@@ -274,6 +275,15 @@ _ENERGY_PJ_PER_BIT: Dict[InterposerTech, float] = {
     InterposerTech.ORGANIC: 2.0,
     InterposerTech.CUSTOM: 0.5,
 }
+
+_SV_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _require_sv_identifier(value: str, field_name: str) -> str:
+    """Validate a generated SystemVerilog identifier fragment."""
+    if not _SV_IDENTIFIER_RE.fullmatch(value):
+        raise ValueError(f"{field_name} must be a valid SystemVerilog identifier")
+    return value
 
 
 def link_energy_pj(link: InterposerLink, bits: int) -> float:
@@ -1382,13 +1392,24 @@ class CreditConfig:
     initial_credits: int = 16
     credit_granularity: int = 1  # flits per credit
 
+    def __post_init__(self) -> None:
+        if self.initial_credits <= 0:
+            raise ValueError("initial_credits must be > 0")
+        if self.credit_granularity <= 0:
+            raise ValueError("credit_granularity must be > 0")
+
     @property
     def buffer_flits(self) -> int:
         return self.initial_credits * self.credit_granularity
 
+    @property
+    def credit_width(self) -> int:
+        return max(1, self.buffer_flits.bit_length())
+
 
 def emit_credit_controller_sv(config: CreditConfig, link_name: str = "link") -> str:
     """Emit saturating credit-based flow control for a die-to-die link."""
+    _require_sv_identifier(link_name, "link_name")
     return textwrap.dedent(f"""\
 {_SPDX}
 // SC-NeuroCore Chiplet — Credit controller for {link_name}
@@ -1397,6 +1418,8 @@ module sc_chiplet_credit_{link_name} #(
     parameter INIT_CREDITS = {config.initial_credits},
     parameter MAX_CREDITS = {config.initial_credits},
     parameter CREDIT_GRANULARITY = {config.credit_granularity},
+    parameter MAX_FLITS = {config.buffer_flits},
+    parameter CREDIT_W = {config.credit_width},
     parameter DATA_W = 64
 )(
     input  wire               clk,
@@ -1407,21 +1430,28 @@ module sc_chiplet_credit_{link_name} #(
     output wire               tx_ready,
     // RX credit return
     input  wire               credit_return,
-    output reg  [7:0]         credits_available
+    output reg  [CREDIT_W-1:0] credits_available
 );
 
     wire consume_credit = tx_valid && tx_ready;
     wire return_credit  = credit_return;
+    reg [CREDIT_W:0] next_credits;
+
+    always @* begin
+        next_credits = {{1'b0, credits_available}};
+        if (consume_credit && next_credits != 0)
+            next_credits = next_credits - 1'b1;
+        if (return_credit)
+            next_credits = next_credits + CREDIT_GRANULARITY;
+        if (next_credits > MAX_FLITS)
+            next_credits = MAX_FLITS;
+    end
 
     always @(posedge clk) begin
         if (!rst_n)
-            credits_available <= INIT_CREDITS;
-        else begin
-            if (consume_credit && !return_credit && credits_available != 0)
-                credits_available <= credits_available - 1;
-            else if (!consume_credit && return_credit && credits_available != MAX_CREDITS)
-                credits_available <= credits_available + 1;
-        end
+            credits_available <= MAX_FLITS;
+        else
+            credits_available <= next_credits[CREDIT_W-1:0];
     end
 
     assign tx_ready = (credits_available != 0);
@@ -1506,9 +1536,28 @@ class PowerDomain:
     voltage_mv: int = 800
     is_active: bool = True
 
+    def __post_init__(self) -> None:
+        if self.domain_id < 0:
+            raise ValueError("domain_id must be >= 0")
+        if not self.die_ids:
+            raise ValueError("die_ids must contain at least one die")
+        if any(die_id < 0 or die_id >= 64 for die_id in self.die_ids):
+            raise ValueError("die_ids must be in the range [0, 63]")
+        if len(set(self.die_ids)) != len(self.die_ids):
+            raise ValueError("die_ids must not contain duplicates")
+        if self.voltage_mv <= 0:
+            raise ValueError("voltage_mv must be > 0")
+
     @property
     def is_gated(self) -> bool:
         return not self.is_active
+
+    @property
+    def die_mask(self) -> int:
+        mask = 0
+        for die_id in self.die_ids:
+            mask |= 1 << die_id
+        return mask
 
 
 @dataclass
@@ -1518,6 +1567,11 @@ class PowerDomainMap:
     domains: List[PowerDomain] = field(default_factory=list)
 
     def add_domain(self, domain: PowerDomain) -> None:
+        assigned = {die_id for existing in self.domains for die_id in existing.die_ids}
+        overlap = assigned.intersection(domain.die_ids)
+        if overlap:
+            die_list = ", ".join(str(die_id) for die_id in sorted(overlap))
+            raise ValueError(f"die_ids already assigned to a power domain: {die_list}")
         self.domains.append(domain)
 
     def domain_for_die(self, die_id: int) -> Optional[PowerDomain]:
@@ -1550,7 +1604,12 @@ def emit_power_gating_sv(domain: PowerDomain) -> str:
 // Dies: [{die_list}]
 // Voltage: {domain.voltage_mv} mV
 
-module sc_chiplet_pwr_domain_{domain.domain_id} (
+module sc_chiplet_pwr_domain_{domain.domain_id} #(
+    parameter DOMAIN_ID = {domain.domain_id},
+    parameter DIE_COUNT = {len(domain.die_ids)},
+    parameter [63:0] DIE_MASK = 64'h{domain.die_mask:016X},
+    parameter VOLTAGE_MV = {domain.voltage_mv}
+)(
     input  wire clk,
     input  wire rst_n,
     input  wire enable,
@@ -1564,14 +1623,17 @@ module sc_chiplet_pwr_domain_{domain.domain_id} (
     localparam PWR_ISOLATE = 2'd2;
     localparam PWR_RESTORE = 2'd3;
     localparam ISO_CYCLES  = 4;
+    localparam RESTORE_CYCLES = 4;
 
     reg [1:0] state;
     reg [2:0] iso_count;
+    reg [2:0] restore_count;
 
     always @(posedge clk) begin
         if (!rst_n) begin
             state         <= PWR_OFF;
             iso_count     <= 0;
+            restore_count <= 0;
             domain_active <= 1'b0;
             isolation_en  <= 1'b1;
             power_switch_en <= 1'b0;
@@ -1582,6 +1644,7 @@ module sc_chiplet_pwr_domain_{domain.domain_id} (
                     isolation_en <= 1'b1;
                     power_switch_en <= 1'b0;
                     iso_count <= 0;
+                    restore_count <= 0;
                     if (enable)
                         state <= PWR_RESTORE;
                 end
@@ -1589,13 +1652,20 @@ module sc_chiplet_pwr_domain_{domain.domain_id} (
                     power_switch_en <= 1'b1;
                     isolation_en <= 1'b1;
                     domain_active <= 1'b0;
-                    state <= PWR_ON;
+                    iso_count <= 0;
+                    if (restore_count == RESTORE_CYCLES[2:0] - 1'b1) begin
+                        restore_count <= 0;
+                        state <= PWR_ON;
+                    end else begin
+                        restore_count <= restore_count + 1'b1;
+                    end
                 end
                 PWR_ON: begin
                     domain_active <= 1'b1;
                     isolation_en <= 1'b0;
                     power_switch_en <= 1'b1;
                     iso_count <= 0;
+                    restore_count <= 0;
                     if (!enable)
                         state <= PWR_ISOLATE;
                 end
@@ -1603,6 +1673,7 @@ module sc_chiplet_pwr_domain_{domain.domain_id} (
                     domain_active <= 1'b1;
                     isolation_en <= 1'b1;
                     power_switch_en <= 1'b1;
+                    restore_count <= 0;
                     if (iso_count == ISO_CYCLES[2:0]) begin
                         domain_active <= 1'b0;
                         power_switch_en <= 1'b0;

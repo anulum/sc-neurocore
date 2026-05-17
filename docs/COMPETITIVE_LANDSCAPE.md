@@ -6,7 +6,11 @@ An honest comparison of SC-NeuroCore with peer frameworks. Every claim
 is backed by measured data or cited literature. Unverified claims are
 marked explicitly.
 
-**Last updated**: 2026-04-13 (v3.14.0)
+**Last updated**: 2026-05-14 (v3.14.0 pre-submission claim audit)
+
+Performance and count entries below are retained as release-evidence
+snapshots. Rerun the cited benchmark or inventory command before reusing exact
+numbers in the JOSS paper, README headline, or external outreach.
 
 ---
 
@@ -34,7 +38,7 @@ marked explicitly.
 | IR compiler → SystemVerilog | **Yes** | — | — | — | — |
 | Equation → Verilog compiler | **Yes** | — | — | — | — |
 | IR compiler → MLIR/CIRCT | **Yes** | — | — | — | — |
-| Rust SIMD engine | **Yes** (113 Gbit/s pack) | — | — | — | — |
+| Rust SIMD engine | **Yes** (historical Criterion pack benchmark; rerun before citation) | — | — | — | — |
 | Surrogate gradient training | **Yes** (6 surrogates, 12 cells) | Yes | Yes | Yes | — |
 | PyTorch `nn.Module` SNN | **Yes** (+ SC export) | Yes | Yes | — | — |
 | GPU acceleration | PyTorch + CuPy | PyTorch | PyTorch | — | — |
@@ -131,7 +135,7 @@ Measured on Intel i5-11600K (AVX-512), Python 3.12.
 | Framework | Operation | Throughput | Source |
 |-----------|-----------|-----------|--------|
 | SC-NeuroCore (Rust) | LIF neuron step | 456 Mstep/s | Criterion bench |
-| SC-NeuroCore (Rust) | Pack 1M bits | 113 Gbit/s | Criterion bench |
+| SC-NeuroCore (Rust) | Pack 1M bits | Historical Criterion result; rerun before citation | Criterion bench |
 | SC-NeuroCore (Python) | LIF neuron step | 1.07 Mstep/s | benchmark_suite.py |
 | Brian2 | LIF neuron (compiled) | ~10 Mstep/s | Brian2 docs (estimate) |
 | snnTorch | LIF neuron (PyTorch) | ~5 Mstep/s | PyTorch CPU baseline |

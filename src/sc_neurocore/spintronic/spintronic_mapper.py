@@ -105,9 +105,29 @@ class SpintronicDeviceConfig:
     thickness_nm: float = 1.2
     switching_current_ua: float = 50.0
     switching_time_ns: float = 1.0
+    write_resistance_ohm: float = 10000.0
+    parallel_resistance_ohm: float = 5000.0
     retention_years: float = 10.0
     tmr_ratio: float = 1.5
     error_rate: float = 1e-6
+
+    def __post_init__(self) -> None:
+        if self.width_nm <= 0:
+            raise ValueError("width_nm must be positive")
+        if self.length_nm <= 0:
+            raise ValueError("length_nm must be positive")
+        if self.thickness_nm <= 0:
+            raise ValueError("thickness_nm must be positive")
+        if self.switching_current_ua <= 0:
+            raise ValueError("switching_current_ua must be positive")
+        if self.switching_time_ns <= 0:
+            raise ValueError("switching_time_ns must be positive")
+        if self.write_resistance_ohm <= 0:
+            raise ValueError("write_resistance_ohm must be positive")
+        if self.parallel_resistance_ohm <= 0:
+            raise ValueError("parallel_resistance_ohm must be positive")
+        if self.tmr_ratio < 0:
+            raise ValueError("tmr_ratio must be non-negative")
 
     @classmethod
     def from_tech(cls, tech: SpintronicTech) -> SpintronicDeviceConfig:
@@ -119,6 +139,8 @@ class SpintronicDeviceConfig:
                 thickness_nm=0.8,
                 switching_current_ua=100.0,
                 switching_time_ns=5.0,
+                write_resistance_ohm=12000.0,
+                parallel_resistance_ohm=8000.0,
             ),
             SpintronicTech.SKYRMION: dict(
                 material=MaterialParams.pt_co_multilayer(),
@@ -127,6 +149,8 @@ class SpintronicDeviceConfig:
                 thickness_nm=0.8,
                 switching_current_ua=30.0,
                 switching_time_ns=2.0,
+                write_resistance_ohm=9000.0,
+                parallel_resistance_ohm=7000.0,
             ),
             SpintronicTech.STT_MTJ: dict(
                 material=MaterialParams.cofeb_mgo(),
@@ -135,6 +159,8 @@ class SpintronicDeviceConfig:
                 thickness_nm=1.2,
                 switching_current_ua=80.0,
                 switching_time_ns=3.0,
+                write_resistance_ohm=10000.0,
+                parallel_resistance_ohm=5000.0,
             ),
             SpintronicTech.SOT_MRAM: dict(
                 material=MaterialParams.w_cofeb(),
@@ -143,6 +169,8 @@ class SpintronicDeviceConfig:
                 thickness_nm=1.0,
                 switching_current_ua=50.0,
                 switching_time_ns=0.5,
+                write_resistance_ohm=4000.0,
+                parallel_resistance_ohm=3000.0,
             ),
         }
         return cls(tech=tech, **presets[tech])
@@ -153,10 +181,9 @@ class SpintronicDeviceConfig:
 
     @property
     def switching_energy_fj(self) -> float:
-        """E = I² × R × t (approximate, R ≈ 10 kΩ for MTJ)."""
-        r_ohm = 10000.0
+        """Write-path switching energy, E = I² × R_write × t."""
         i_a = self.switching_current_ua * 1e-6
-        return i_a**2 * r_ohm * self.switching_time_ns * 1e6  # fJ
+        return i_a**2 * self.write_resistance_ohm * self.switching_time_ns * 1e6  # fJ
 
     @property
     def thermal_stability(self) -> float:
@@ -241,7 +268,7 @@ class SpintronicCell:
 
     @property
     def resistance_ohm(self) -> float:
-        r_p = 5000.0  # parallel resistance
+        r_p = self.device.parallel_resistance_ohm
         return r_p * (1 + self.state * self.device.tmr_ratio)
 
 

@@ -123,6 +123,30 @@ class TestThermalAnalysis:
         assert concentrated.hotspot_risk == "high"
         assert concentrated.derated_freq_mhz < spread.derated_freq_mhz
 
+    def test_dsp_hotspot_adds_local_junction_rise(self):
+        """DSP hotspot power should increase junction temperature, not only risk labels."""
+        from sc_neurocore.compiler.intelligence import thermal_analysis
+
+        spread = thermal_analysis(
+            1000.0,
+            500.0,
+            mul_count=32,
+            dsp_columns=8,
+            dsp_power_mw=320.0,
+            theta_spreading=12.0,
+        )
+        concentrated = thermal_analysis(
+            1000.0,
+            500.0,
+            mul_count=32,
+            dsp_columns=1,
+            dsp_power_mw=320.0,
+            theta_spreading=12.0,
+        )
+
+        assert concentrated.hotspot_delta_t_c > spread.hotspot_delta_t_c
+        assert concentrated.junction_temp_c > spread.junction_temp_c
+
     def test_dsp_spread(self):
         """DSPs spread across columns → lower risk."""
         from sc_neurocore.compiler.intelligence import thermal_analysis

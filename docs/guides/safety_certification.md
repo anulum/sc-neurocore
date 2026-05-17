@@ -31,6 +31,10 @@ where:
 - $\pi_E$ = environmental factor (ground, airborne, space)
 - $\pi_Q$ = quality factor
 
+`predict_reliability()` evaluates NBTI, HCI, and TDDB as separate mechanisms
+with mechanism-specific activation energies and voltage acceleration. The
+reported dominant failure mode is the shortest per-mechanism MTTF.
+
 ### 1.2 Mean Time To Failure
 
 $$
@@ -482,8 +486,8 @@ python -c "
 from sc_neurocore.compiler.intelligence import predict_reliability
 
 # Different process nodes should give different MTTF
-r28 = predict_reliability(0.9, 85.0, 28)
-r7 = predict_reliability(0.75, 85.0, 7)
+r28 = predict_reliability(voltage_v=0.9, temperature_c=85.0, node_nm=28)
+r7 = predict_reliability(voltage_v=0.75, temperature_c=85.0, node_nm=7)
 assert r28.mttf_years > r7.mttf_years  # Larger node = more reliable
 print(f'28nm MTTF: {r28.mttf_years:.1f} years')
 print(f'7nm MTTF:  {r7.mttf_years:.1f} years')

@@ -39,14 +39,14 @@ Commercial Licensing: Available
 > claims.
 
 **Version:** 3.14.0
-**Status:** 174 Python-facing neuron models (165 biological + 9 AI-oriented) | 174 Rust engine models | HDL generation + hardware guides | multi-backend training and benchmarking | research modules included in source checkout
+**Status:** 174 Python-facing neuron models (165 biological + 9 AI-oriented) | 174 Rust engine models | HDL generation + hardware guides | multi-backend training and benchmarking | research modules included in source checkout. Model-fidelity, physical-hardware, and coverage claims remain bounded by the current audit and CI evidence.
 
 <p align="center">
   <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
 </p>
 
 SC-NeuroCore is an open-source stochastic computing SNN framework
-with FPGA synthesis. 174 Python-facing neuron models (165 biophysical + 9 AI-optimised) spanning
+with FPGA-oriented synthesis paths. 174 Python-facing neuron models (165 biophysical + 9 AI-optimised) spanning
 82 years of computational neuroscience (McCulloch-Pitts 1943 through
 ArcaneNeuron 2026) run inside a deterministic stochastic computing engine
 with FPGA-oriented RTL generation, an equation-to-Verilog compiler
@@ -554,7 +554,7 @@ Research and Frontier modules are available from source (`pip install -e ".[dev]
 
 | Tier | Modules | Ships in wheel | Status |
 |------|---------|:--------------:|--------|
-| **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Production-ready. 100% coverage. |
+| **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Production path; current CI coverage gate is 96%, with 100% retained as the target. |
 | **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, profiling, models, math, spatial, verification, security | Yes | Stable. Import explicitly. |
 | **Industrial** | safety_cert, asic_flow, fault_injection, uvm_gen, hypervisor, digital_twin, chiplet, spintronic, memristor, analog_bridge | No | 1,173 tests. Available from source. |
 | **Frontier** | evo_substrate, meta_plasticity, bioware, federated, bci_studio, explainability, neuro_symbolic, stochastic_doctor, model_zoo | No | 1,173 tests. Available from source. |
