@@ -21,6 +21,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.cli import _cmd_info, _cmd_studio, _format_engine_status, main
+from sc_neurocore.formal import validate_formal_network_report
 from sc_neurocore.ir import SCNIR_SCHEMA_VERSION, validate_scnir_dict
 
 
@@ -1182,6 +1183,352 @@ def test_studio_command_via_main(capsys):
         rc = _run_main("studio")
     assert rc == 0
     m_studio.assert_called_once_with(8001)
+
+
+def test_formal_verify_network_writes_sva_and_report(tmp_path, capsys):
+    out_dir = tmp_path / "formal"
+
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "2",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "16",
+        "--max-spikes",
+        "3",
+        "--output",
+        str(out_dir),
+    )
+
+    assert rc == 0
+    sva_path = out_dir / "dense_lif_frontier_fixture_rate_bound.sv"
+    report_path = out_dir / "formal_rate_bound_report.json"
+    assert "Formal network verification artifacts written" in capsys.readouterr().out
+    assert "a_output0_rate_bound" in sva_path.read_text(encoding="utf-8")
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert report["schema_version"] == "sc-neurocore.formal-network-rate-bound.v0.1"
+    assert report["network"]["name"] == "dense_lif_frontier_fixture"
+    assert report["rate_bound"]["window_cycles"] == 16
+    assert report["replay"] is None
+    assert report["artifacts"]["sva"] == str(sva_path)
+    rtl_path = out_dir / "dense_lif_frontier_fixture.v"
+    assert report["artifacts"]["rtl"] == str(rtl_path)
+    validate_formal_network_report(report, artifact_root=out_dir)
+    assert "module dense_lif_frontier_fixture (" in rtl_path.read_text(encoding="utf-8")
+    assert "dense_lif_frontier_fixture.v" in (out_dir / "dense_lif_frontier_fixture.sby").read_text(
+        encoding="utf-8"
+    )
+
+
+def test_formal_verify_network_replays_safe_trace(tmp_path, capsys):
+    trace_path = tmp_path / "safe_trace.json"
+    trace_path.write_text("[1, 0, 1, 0, 1, 1]", encoding="utf-8")
+    out_dir = tmp_path / "formal"
+
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "1",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "4",
+        "--max-spikes",
+        "2",
+        "--spike-trace",
+        str(trace_path),
+        "--output",
+        str(out_dir),
+    )
+
+    assert rc == 0
+    report = json.loads((out_dir / "formal_rate_bound_report.json").read_text(encoding="utf-8"))
+    assert report["replay"]["violated"] is False
+    assert report["replay"]["cycles_checked"] == 6
+    assert "Replay passed" in capsys.readouterr().out
+
+
+def test_formal_verify_network_replays_unsafe_trace(tmp_path, capsys):
+    trace_path = tmp_path / "unsafe_trace.json"
+    trace_path.write_text("[1, 0, 1, 1]", encoding="utf-8")
+    out_dir = tmp_path / "formal"
+
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "1",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "4",
+        "--max-spikes",
+        "2",
+        "--spike-trace",
+        str(trace_path),
+        "--output",
+        str(out_dir),
+    )
+
+    assert rc == 1
+    report = json.loads((out_dir / "formal_rate_bound_report.json").read_text(encoding="utf-8"))
+    assert report["replay"]["violated"] is True
+    assert report["replay"]["first_violation_cycle"] == 3
+    assert report["replay"]["observed_spikes"] == 3
+    assert "Replay violation" in capsys.readouterr().out
+
+
+def test_formal_verify_network_replays_refractory_violation(tmp_path, capsys):
+    trace_path = tmp_path / "refractory_unsafe_trace.json"
+    trace_path.write_text("[1, 0, 1, 0]", encoding="utf-8")
+    out_dir = tmp_path / "formal"
+
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "1",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "4",
+        "--max-spikes",
+        "4",
+        "--refractory-cycles",
+        "3",
+        "--spike-trace",
+        str(trace_path),
+        "--output",
+        str(out_dir),
+    )
+
+    assert rc == 1
+    refractory_path = out_dir / "dense_lif_frontier_fixture_refractory.sv"
+    bundle_path = out_dir / "dense_lif_frontier_fixture_formal_bundle.sv"
+    assert "a_output0_refractory" in refractory_path.read_text(encoding="utf-8")
+    assert "dense_lif_frontier_fixture_refractory_sva" in bundle_path.read_text(encoding="utf-8")
+    report = json.loads((out_dir / "formal_rate_bound_report.json").read_text(encoding="utf-8"))
+    assert report["refractory"]["refractory_cycles"] == 3
+    assert report["refractory_replay"]["violated"] is True
+    assert report["refractory_replay"]["first_violation_cycle"] == 2
+    assert report["rate_replay"]["violated"] is False
+    assert report["artifacts"]["refractory_sva"] == str(refractory_path)
+    assert report["artifacts"]["formal_bundle"] == str(bundle_path)
+    assert "Refractory violation" in capsys.readouterr().out
+
+
+def test_formal_verify_network_rejects_missing_action(capsys):
+    rc = _run_main("formal")
+
+    assert rc == 1
+    assert "formal verify-network" in capsys.readouterr().out
+
+
+def test_formal_verify_network_records_missing_symbiyosys(tmp_path, capsys):
+    out_dir = tmp_path / "formal"
+
+    with mock.patch("sc_neurocore.cli.shutil.which", return_value=None):
+        rc = _run_main(
+            "formal",
+            "verify-network",
+            "--module-name",
+            "dense_lif_frontier_fixture",
+            "--input-width",
+            "3",
+            "--output-width",
+            "1",
+            "--state-width",
+            "16",
+            "--output-index",
+            "0",
+            "--window-cycles",
+            "4",
+            "--max-spikes",
+            "2",
+            "--run-symbiyosys",
+            "--output",
+            str(out_dir),
+        )
+
+    assert rc == 0
+    report = json.loads((out_dir / "formal_rate_bound_report.json").read_text(encoding="utf-8"))
+    assert report["symbiyosys"]["requested"] is True
+    assert report["symbiyosys"]["status"] == "tool_unavailable"
+    assert report["symbiyosys"]["returncode"] is None
+    assert "SymbiYosys unavailable" in capsys.readouterr().out
+    assert (out_dir / "dense_lif_frontier_fixture.sby").exists()
+
+
+def test_formal_verify_network_runs_symbiyosys_when_available(tmp_path, capsys):
+    out_dir = tmp_path / "formal"
+    completed = subprocess.CompletedProcess(
+        args=["/usr/bin/sby", "-f", str(out_dir / "dense_lif_frontier_fixture.sby")],
+        returncode=0,
+        stdout="PASS\n",
+        stderr="",
+    )
+
+    with (
+        mock.patch("sc_neurocore.cli.shutil.which", return_value="/usr/bin/sby"),
+        mock.patch("sc_neurocore.cli.subprocess.run", return_value=completed) as m_run,
+    ):
+        rc = _run_main(
+            "formal",
+            "verify-network",
+            "--module-name",
+            "dense_lif_frontier_fixture",
+            "--input-width",
+            "3",
+            "--output-width",
+            "1",
+            "--state-width",
+            "16",
+            "--output-index",
+            "0",
+            "--window-cycles",
+            "4",
+            "--max-spikes",
+            "2",
+            "--run-symbiyosys",
+            "--output",
+            str(out_dir),
+        )
+
+    assert rc == 0
+    m_run.assert_called_once()
+    assert m_run.call_args.args[0] == ["/usr/bin/sby", "-f", str(out_dir / "dense_lif_frontier_fixture.sby")]
+    report = json.loads((out_dir / "formal_rate_bound_report.json").read_text(encoding="utf-8"))
+    assert report["symbiyosys"]["status"] == "passed"
+    assert report["symbiyosys"]["returncode"] == 0
+    assert report["symbiyosys"]["stdout"] == "PASS\n"
+    assert "SymbiYosys passed" in capsys.readouterr().out
+
+
+def test_formal_verify_network_returns_nonzero_on_symbiyosys_failure(tmp_path, capsys):
+    out_dir = tmp_path / "formal"
+    completed = subprocess.CompletedProcess(
+        args=["/usr/bin/sby", "-f", str(out_dir / "dense_lif_frontier_fixture.sby")],
+        returncode=1,
+        stdout="FAIL\n",
+        stderr="assert failed\n",
+    )
+
+    with (
+        mock.patch("sc_neurocore.cli.shutil.which", return_value="/usr/bin/sby"),
+        mock.patch("sc_neurocore.cli.subprocess.run", return_value=completed),
+    ):
+        rc = _run_main(
+            "formal",
+            "verify-network",
+            "--module-name",
+            "dense_lif_frontier_fixture",
+            "--input-width",
+            "3",
+            "--output-width",
+            "1",
+            "--state-width",
+            "16",
+            "--output-index",
+            "0",
+            "--window-cycles",
+            "4",
+            "--max-spikes",
+            "2",
+            "--run-symbiyosys",
+            "--output",
+            str(out_dir),
+        )
+
+    assert rc == 1
+    report = json.loads((out_dir / "formal_rate_bound_report.json").read_text(encoding="utf-8"))
+    assert report["symbiyosys"]["status"] == "failed"
+    assert report["symbiyosys"]["returncode"] == 1
+    assert report["symbiyosys"]["stderr"] == "assert failed\n"
+    assert "SymbiYosys failed" in capsys.readouterr().out
+
+
+def test_formal_verify_network_rejects_invalid_formal_depth(tmp_path, capsys):
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "1",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "4",
+        "--max-spikes",
+        "2",
+        "--formal-depth",
+        "0",
+        "--output",
+        str(tmp_path / "formal"),
+    )
+
+    assert rc == 1
+    assert "formal-depth" in capsys.readouterr().out
+
+
+def test_formal_verify_network_rejects_negative_refractory_cycles(tmp_path, capsys):
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "1",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "4",
+        "--max-spikes",
+        "2",
+        "--refractory-cycles",
+        "-1",
+        "--output",
+        str(tmp_path / "formal"),
+    )
+
+    assert rc == 1
+    assert "refractory-cycles" in capsys.readouterr().out
 
 
 # ---------------------------------------------------------------------------

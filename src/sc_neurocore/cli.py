@@ -13,6 +13,8 @@ from __future__ import annotations
 import argparse
 import importlib.metadata
 import json
+import shutil
+import subprocess
 import sys
 from typing import Any, Sequence, cast
 
@@ -54,6 +56,7 @@ def main() -> int:
             "studio",
             "collect-synthesis",
             "scnir",
+            "formal",
         ],
         help="Command to run",
     )
@@ -218,6 +221,70 @@ def main() -> int:
         default=16,
         help="High-precision fractional bits for adaptive precision (default: 16)",
     )
+    parser.add_argument(
+        "--input-width",
+        type=int,
+        default=1,
+        help="Input width for formal verify-network dense LIF fixtures",
+    )
+    parser.add_argument(
+        "--output-width",
+        type=int,
+        default=1,
+        help="Output spike width for formal verify-network dense LIF fixtures",
+    )
+    parser.add_argument(
+        "--state-width",
+        type=int,
+        default=16,
+        help="State width for formal verify-network dense LIF fixtures",
+    )
+    parser.add_argument(
+        "--output-index",
+        type=int,
+        default=0,
+        help="Monitored output index for formal verify-network rate bounds",
+    )
+    parser.add_argument(
+        "--window-cycles",
+        type=int,
+        default=16,
+        help="Aligned rate-bound window length for formal verify-network",
+    )
+    parser.add_argument(
+        "--max-spikes",
+        type=int,
+        default=1,
+        help="Maximum spikes allowed inside each formal verify-network window",
+    )
+    parser.add_argument(
+        "--refractory-cycles",
+        type=int,
+        default=0,
+        help="Optional refractory window for formal verify-network monitored output",
+    )
+    parser.add_argument(
+        "--spike-trace",
+        default=None,
+        help="Optional JSON spike trace replayed against formal verify-network rate bounds",
+    )
+    parser.add_argument(
+        "--run-symbiyosys",
+        action="store_true",
+        help="Run SymbiYosys for formal verify-network when the sby executable is available",
+    )
+    parser.add_argument(
+        "--formal-depth",
+        type=int,
+        default=20,
+        help="SymbiYosys bounded depth for formal verify-network",
+    )
+    parser.add_argument(
+        "--formal-mode",
+        choices=["bmc", "prove", "cover"],
+        default="bmc",
+        help="SymbiYosys mode for formal verify-network",
+    )
     args = parser.parse_args()
 
     if args.version:
@@ -287,6 +354,8 @@ def main() -> int:
         return _cmd_collect_synthesis(args)
     if args.command == "scnir":
         return _cmd_scnir(args)
+    if args.command == "formal":
+        return _cmd_formal(args)
 
     parser.print_help()
     return 0
@@ -801,6 +870,212 @@ def _cmd_scnir(args: Any) -> int:
         return 1
 
     print(f"SC-NIR exported: {args.output} ({len(document.streams)} stream(s))")
+    return 0
+
+
+def _cmd_formal(args: Any) -> int:
+    """Compile and replay network-level formal verification artefacts."""
+
+    from dataclasses import asdict
+    from pathlib import Path
+
+    from sc_neurocore.formal import (
+        DenseLIFNetworkSpec,
+        NetworkRefractoryInvariant,
+        NetworkRateBound,
+        compile_dense_lif_fixture_rtl,
+        compile_network_rate_bound_sva,
+        compile_network_refractory_sva,
+        replay_rate_bound_counterexample,
+        replay_refractory_counterexample,
+        validate_formal_network_report,
+    )
+    from sc_neurocore.formal.report_schema import FORMAL_NETWORK_REPORT_SCHEMA_VERSION
+    from sc_neurocore.compiler.deployment import generate_sby_script
+
+    if args.model != "verify-network":
+        print("Error: usage: sc-neurocore formal verify-network --module-name dense_lif")
+        return 1
+    if args.formal_depth <= 0:
+        print("Formal network contract invalid: formal-depth must be a positive integer")
+        return 1
+    if args.refractory_cycles < 0:
+        print("Formal network contract invalid: refractory-cycles must be non-negative")
+        return 1
+
+    try:
+        network = DenseLIFNetworkSpec(
+            name=args.module_name,
+            input_width=args.input_width,
+            output_width=args.output_width,
+            state_width=args.state_width,
+        )
+        rate_bound = NetworkRateBound(
+            name=f"output{args.output_index}_rate_bound",
+            output_index=args.output_index,
+            window_cycles=args.window_cycles,
+            max_spikes=args.max_spikes,
+        )
+        refractory = (
+            NetworkRefractoryInvariant(
+                name=f"output{args.output_index}_refractory",
+                output_index=args.output_index,
+                refractory_cycles=args.refractory_cycles,
+            )
+            if args.refractory_cycles > 0
+            else None
+        )
+        rtl = compile_dense_lif_fixture_rtl(network)
+        sva = compile_network_rate_bound_sva(network, rate_bound)
+        refractory_sva = (
+            compile_network_refractory_sva(network, refractory)
+            if refractory is not None
+            else None
+        )
+    except ValueError as exc:
+        print(f"Formal network contract invalid: {exc}")
+        return 1
+
+    out_dir = Path(args.output)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    rtl_path = out_dir / f"{network.name}.v"
+    sva_path = out_dir / f"{network.name}_rate_bound.sv"
+    refractory_sva_path = out_dir / f"{network.name}_refractory.sv"
+    formal_bundle_path = out_dir / f"{network.name}_formal_bundle.sv"
+    sby_path = out_dir / f"{network.name}.sby"
+    report_path = Path(args.out) if args.out else out_dir / "formal_rate_bound_report.json"
+
+    replay_report: dict[str, Any] | None = None
+    refractory_replay_report: dict[str, Any] | None = None
+    replay_violated = False
+    refractory_violated = False
+    if args.spike_trace:
+        try:
+            trace_payload = json.loads(Path(args.spike_trace).read_text(encoding="utf-8"))
+            if not isinstance(trace_payload, list):
+                raise ValueError("spike trace JSON must be a list")
+            replay = replay_rate_bound_counterexample(trace_payload, rate_bound)
+            refractory_replay = (
+                replay_refractory_counterexample(trace_payload, refractory)
+                if refractory is not None
+                else None
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            print(f"Formal replay invalid: {exc}")
+            return 1
+        replay_report = asdict(replay)
+        replay_violated = replay.violated
+        refractory_replay_report = (
+            asdict(refractory_replay) if refractory_replay is not None else None
+        )
+        refractory_violated = bool(
+            refractory_replay is not None and refractory_replay.violated
+        )
+
+    bundle_sva = sva if refractory_sva is None else f"{sva}\n{refractory_sva}"
+    sby = generate_sby_script(
+        network.name,
+        sva_file=formal_bundle_path.name,
+        depth=args.formal_depth,
+        mode=args.formal_mode,
+    )
+    rtl_path.write_text(rtl, encoding="utf-8")
+    sva_path.write_text(sva, encoding="utf-8")
+    if refractory_sva is not None:
+        refractory_sva_path.write_text(refractory_sva, encoding="utf-8")
+    formal_bundle_path.write_text(bundle_sva, encoding="utf-8")
+    sby_path.write_text(sby, encoding="utf-8")
+
+    symbiyosys_report: dict[str, Any] = {
+        "requested": bool(args.run_symbiyosys),
+        "status": "not_requested",
+        "command": None,
+        "returncode": None,
+        "stdout": "",
+        "stderr": "",
+        "sby": str(sby_path),
+    }
+    if args.run_symbiyosys:
+        sby_bin = shutil.which("sby")
+        if sby_bin is None:
+            symbiyosys_report["status"] = "tool_unavailable"
+        else:
+            command = [sby_bin, "-f", str(sby_path)]
+            completed = subprocess.run(command, capture_output=True, text=True, check=False)
+            symbiyosys_report.update(
+                {
+                    "status": "passed" if completed.returncode == 0 else "failed",
+                    "command": command,
+                    "returncode": completed.returncode,
+                    "stdout": completed.stdout,
+                    "stderr": completed.stderr,
+                }
+            )
+
+    report = {
+        "schema_version": FORMAL_NETWORK_REPORT_SCHEMA_VERSION,
+        "network": asdict(network),
+        "rate_bound": asdict(rate_bound),
+        "refractory": asdict(refractory) if refractory is not None else None,
+        "artifacts": {
+            "rtl": str(rtl_path),
+            "sva": str(sva_path),
+            "rate_sva": str(sva_path),
+            "refractory_sva": str(refractory_sva_path) if refractory_sva is not None else None,
+            "formal_bundle": str(formal_bundle_path),
+            "sby": str(sby_path),
+            "report": str(report_path),
+        },
+        "replay": replay_report,
+        "rate_replay": replay_report,
+        "refractory_replay": refractory_replay_report,
+        "symbiyosys": symbiyosys_report,
+    }
+    try:
+        validate_formal_network_report(report)
+    except ValueError as exc:
+        print(f"Formal report invalid: {exc}")
+        return 1
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    print(f"Formal network verification artifacts written: {out_dir}")
+    print(f"  RTL: {rtl_path}")
+    print(f"  SVA: {sva_path}")
+    if refractory_sva is not None:
+        print(f"  Refractory SVA: {refractory_sva_path}")
+    print(f"  Bundle: {formal_bundle_path}")
+    print(f"  SBY: {sby_path}")
+    print(f"  Report: {report_path}")
+    if replay_report is not None:
+        if replay_violated:
+            print(
+                "Replay violation: "
+                f"cycle {replay_report['first_violation_cycle']}, "
+                f"observed_spikes={replay_report['observed_spikes']}"
+            )
+            return 1
+        print(f"Replay passed: {replay_report['cycles_checked']} cycle(s) checked")
+    if refractory_replay_report is not None:
+        if refractory_violated:
+            print(
+                "Refractory violation: "
+                f"cycle {refractory_replay_report['first_violation_cycle']}, "
+                f"trigger_cycle={refractory_replay_report['trigger_cycle']}"
+            )
+            return 1
+        print(
+            "Refractory replay passed: "
+            f"{refractory_replay_report['cycles_checked']} cycle(s) checked"
+        )
+    if args.run_symbiyosys:
+        if symbiyosys_report["status"] == "tool_unavailable":
+            print("SymbiYosys unavailable: generated .sby but skipped external proof")
+        elif symbiyosys_report["status"] == "failed":
+            print(f"SymbiYosys failed: returncode={symbiyosys_report['returncode']}")
+            return 1
+        else:
+            print("SymbiYosys passed")
     return 0
 
 

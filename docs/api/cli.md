@@ -3,7 +3,7 @@
 **Module:** `sc_neurocore.cli`
 **Entry point:** `sc-neurocore` (declared in `pyproject.toml` `[project.scripts]`)
 **Source:** `src/sc_neurocore/cli.py` — `argparse`-based, single-`main()` dispatch
-**Status (v3.14.0):** deployment, serving, hub bundle generation, compilation, and synthesis-evidence collection have focused tests.
+**Status (v3.14.0):** deployment, serving, hub bundle generation, compilation, formal verification, and synthesis-evidence collection have focused tests.
 
 ---
 
@@ -41,7 +41,7 @@ sc-neurocore = "sc_neurocore.cli:main"
 The CLI accepts a single positional `command` token chosen from:
 
 ```text
-{info, benchmark, preflight, deploy, serve, map-nir, hub-init, compile, compile-nir, scnir, studio, collect-synthesis}
+{info, benchmark, preflight, deploy, serve, map-nir, hub-init, compile, compile-nir, scnir, formal, studio, collect-synthesis}
 ```
 
 with an optional positional `model` argument (file path or ODE string,
@@ -60,6 +60,7 @@ depending on the command). All other parameters are keyword flags; running
 | `hub-init` | Generate an offline-first self-hosted Docker Compose hub bundle | — | `0` on success, `1` on invalid config |
 | `compile-nir` | Compile NIR/ONNX network files to FPGA artefacts | `.nir` or `.onnx` path | `0` on success, `1` on bad input |
 | `scnir` | Validate, upgrade, or export SC-aware NIR metadata documents | `validate model.scnir.json`, `upgrade model.scnir.json --output upgraded.scnir.json`, or `export model.nir --output model.scnir.json` | `0` on success, `1` on invalid input |
+| `formal` | Generate network formal-verification artefacts and reports | `verify-network` | `0` on valid artefacts/proofs, `1` on invalid input, replay violation, or failed proof |
 | `studio` | Launch Visual SNN Design Studio (FastAPI + Uvicorn) | — | `0` on clean exit, `1` if FastAPI missing |
 | `collect-synthesis` | Convert real utilisation, timing, and power reports into optimiser evidence JSON | — | `0` on success, `1` on missing or invalid input |
 
@@ -362,7 +363,32 @@ sc-neurocore collect-synthesis \
 The output is accepted by `sc_neurocore.optimizer.load_observations()` and by
 `tools/optimise_sc_design.py --evidence`.
 
-### 2.10 `studio`
+### 2.10 `formal verify-network`
+
+Generates a deterministic dense LIF fixture, rate-bound SystemVerilog
+assertions, optional refractory assertions, a combined formal bundle, a
+SymbiYosys job, and a validated JSON report:
+
+```bash
+sc-neurocore formal verify-network \
+    --module-name dense_lif_frontier_fixture \
+    --input-width 3 \
+    --output-width 2 \
+    --output-index 0 \
+    --window-cycles 8 \
+    --max-spikes 4 \
+    --refractory-cycles 2 \
+    --output build/formal
+```
+
+By default the report is written to
+`build/formal/formal_rate_bound_report.json`. `--run-symbiyosys` executes the
+generated `.sby` job when SymbiYosys is available; otherwise the report records
+`tool_unavailable` and keeps the generated artefacts for external execution.
+See [Network Formal Verification](formal_network_verification.md) for the full
+report contract and Python validation API.
+
+### 2.11 `studio`
 
 Launches the Visual SNN Design Studio (FastAPI + Uvicorn) and opens
 `http://127.0.0.1:{port}` in the default browser. Requires the `studio`
@@ -416,6 +442,7 @@ itself, not by every command's transitive dependency tree.
 | `_cmd_preflight` | preflight.py delegate |
 | `_cmd_deploy` | NIR/PyTorch → FPGA project |
 | `_cmd_collect_synthesis` | Report files → optimiser evidence JSON |
+| `_cmd_formal` | Network formal artefact and report generator |
 | `_cmd_studio` | FastAPI Studio launcher |
 | `_auto_synthesize` | Yosys + nextpnr + packing |
 | `_generate_project` | Makefile or project.tcl emitter |

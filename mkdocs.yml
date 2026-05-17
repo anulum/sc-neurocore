@@ -387,6 +387,7 @@ nav:
           - Native FFI Array Guards: api/array_guards.md
       - Formal + Safety:
           - Lean 4 Safety Proofs: api/formal.md
+          - Network Formal Verification: api/formal_network_verification.md
       - Edge + Wire Protocol:
           - AER Interconnect Router: api/edge.md
           - Protobuf Schemas: api/proto.md
