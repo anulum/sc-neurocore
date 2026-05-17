@@ -11,7 +11,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .network_properties import DenseLIFNetworkSpec, NetworkRateBound, NetworkRefractoryInvariant
+from .network_properties import (
+    DenseLIFNetworkSpec,
+    NetworkAntagonisticOutputExclusion,
+    NetworkOutputTemporalSeparation,
+    NetworkPopulationCoactivationCap,
+    NetworkPopulationSilenceAfterCoactivation,
+    NetworkRateBound,
+    NetworkRefractoryInvariant,
+)
 
 FORMAL_NETWORK_REPORT_SCHEMA_VERSION = "sc-neurocore.formal-network-rate-bound.v0.1"
 
@@ -55,8 +63,80 @@ def validate_formal_network_report(
         if refractory.output_index >= network.output_width:
             raise FormalReportValidationError("refractory.output_index must exist in network output")
 
+    antagonistic_payload = payload.get("antagonistic_exclusion")
+    antagonistic: NetworkAntagonisticOutputExclusion | None = None
+    if antagonistic_payload is not None:
+        try:
+            antagonistic = NetworkAntagonisticOutputExclusion(
+                **_expect_mapping(antagonistic_payload, "antagonistic_exclusion")
+            )
+        except ValueError as exc:
+            raise FormalReportValidationError(str(exc)) from exc
+        if antagonistic.output_a >= network.output_width:
+            raise FormalReportValidationError(
+                "antagonistic_exclusion.output_a must exist in network output"
+            )
+        if antagonistic.output_b >= network.output_width:
+            raise FormalReportValidationError(
+                "antagonistic_exclusion.output_b must exist in network output"
+            )
+
+    temporal_payload = payload.get("temporal_separation")
+    temporal: NetworkOutputTemporalSeparation | None = None
+    if temporal_payload is not None:
+        try:
+            temporal = NetworkOutputTemporalSeparation(
+                **_expect_mapping(temporal_payload, "temporal_separation")
+            )
+        except ValueError as exc:
+            raise FormalReportValidationError(str(exc)) from exc
+        if temporal.output_a >= network.output_width:
+            raise FormalReportValidationError(
+                "temporal_separation.output_a must exist in network output"
+            )
+        if temporal.output_b >= network.output_width:
+            raise FormalReportValidationError(
+                "temporal_separation.output_b must exist in network output"
+            )
+
+    population_payload = payload.get("population_coactivation")
+    population: NetworkPopulationCoactivationCap | None = None
+    if population_payload is not None:
+        try:
+            population = NetworkPopulationCoactivationCap(
+                **_expect_mapping(population_payload, "population_coactivation")
+            )
+        except ValueError as exc:
+            raise FormalReportValidationError(str(exc)) from exc
+        if population.max_active_outputs > network.output_width:
+            raise FormalReportValidationError(
+                "population_coactivation.max_active_outputs must be <= network output_width"
+            )
+
+    population_silence_payload = payload.get("population_silence")
+    population_silence: NetworkPopulationSilenceAfterCoactivation | None = None
+    if population_silence_payload is not None:
+        try:
+            population_silence = NetworkPopulationSilenceAfterCoactivation(
+                **_expect_mapping(population_silence_payload, "population_silence")
+            )
+        except ValueError as exc:
+            raise FormalReportValidationError(str(exc)) from exc
+        if population_silence.trigger_active_outputs > network.output_width:
+            raise FormalReportValidationError(
+                "population_silence.trigger_active_outputs must be <= network output_width"
+            )
+
     artifacts = _expect_mapping(payload.get("artifacts"), "artifacts")
-    _validate_artifacts(artifacts, refractory=refractory, artifact_root=artifact_root)
+    _validate_artifacts(
+        artifacts,
+        refractory=refractory,
+        antagonistic=antagonistic,
+        temporal=temporal,
+        population=population,
+        population_silence=population_silence,
+        artifact_root=artifact_root,
+    )
     _validate_rate_replay(payload.get("rate_replay"), "rate_replay")
     if payload.get("replay") != payload.get("rate_replay"):
         raise FormalReportValidationError("replay must match rate_replay")
@@ -67,6 +147,52 @@ def validate_formal_network_report(
             )
     else:
         _validate_refractory_replay(payload.get("refractory_replay"), "refractory_replay")
+    if antagonistic is None:
+        if payload.get("antagonistic_replay") is not None:
+            raise FormalReportValidationError(
+                "antagonistic_replay must be null when antagonistic_exclusion is null"
+            )
+    else:
+        _validate_antagonistic_replay(
+            payload.get("antagonistic_replay"),
+            "antagonistic_replay",
+            antagonistic=antagonistic,
+        )
+    if temporal is None:
+        if payload.get("temporal_replay") is not None:
+            raise FormalReportValidationError(
+                "temporal_replay must be null when temporal_separation is null"
+            )
+    else:
+        _validate_temporal_replay(
+            payload.get("temporal_replay"),
+            "temporal_replay",
+            temporal=temporal,
+        )
+    if population is None:
+        if payload.get("population_replay") is not None:
+            raise FormalReportValidationError(
+                "population_replay must be null when population_coactivation is null"
+            )
+    else:
+        _validate_population_replay(
+            payload.get("population_replay"),
+            "population_replay",
+            population=population,
+            network=network,
+        )
+    if population_silence is None:
+        if payload.get("population_silence_replay") is not None:
+            raise FormalReportValidationError(
+                "population_silence_replay must be null when population_silence is null"
+            )
+    else:
+        _validate_population_silence_replay(
+            payload.get("population_silence_replay"),
+            "population_silence_replay",
+            silence=population_silence,
+            network=network,
+        )
 
     symbiyosys = _expect_mapping(payload.get("symbiyosys"), "symbiyosys")
     status = _expect_str(symbiyosys.get("status"), "symbiyosys.status")
@@ -88,6 +214,10 @@ def _validate_artifacts(
     artifacts: dict[str, Any],
     *,
     refractory: NetworkRefractoryInvariant | None,
+    antagonistic: NetworkAntagonisticOutputExclusion | None,
+    temporal: NetworkOutputTemporalSeparation | None,
+    population: NetworkPopulationCoactivationCap | None,
+    population_silence: NetworkPopulationSilenceAfterCoactivation | None,
     artifact_root: str | Path | None,
 ) -> None:
     required = ("rtl", "sva", "rate_sva", "formal_bundle", "sby", "report")
@@ -103,6 +233,38 @@ def _validate_artifacts(
             )
     else:
         _expect_artifact_path(artifacts, "refractory_sva", artifact_root=artifact_root)
+    antagonistic_sva = artifacts.get("antagonistic_sva")
+    if antagonistic is None:
+        if antagonistic_sva is not None:
+            raise FormalReportValidationError(
+                "artifacts.antagonistic_sva must be null when antagonistic_exclusion is null"
+            )
+    else:
+        _expect_artifact_path(artifacts, "antagonistic_sva", artifact_root=artifact_root)
+    temporal_sva = artifacts.get("temporal_sva")
+    if temporal is None:
+        if temporal_sva is not None:
+            raise FormalReportValidationError(
+                "artifacts.temporal_sva must be null when temporal_separation is null"
+            )
+    else:
+        _expect_artifact_path(artifacts, "temporal_sva", artifact_root=artifact_root)
+    population_sva = artifacts.get("population_sva")
+    if population is None:
+        if population_sva is not None:
+            raise FormalReportValidationError(
+                "artifacts.population_sva must be null when population_coactivation is null"
+            )
+    else:
+        _expect_artifact_path(artifacts, "population_sva", artifact_root=artifact_root)
+    population_silence_sva = artifacts.get("population_silence_sva")
+    if population_silence is None:
+        if population_silence_sva is not None:
+            raise FormalReportValidationError(
+                "artifacts.population_silence_sva must be null when population_silence is null"
+            )
+    else:
+        _expect_artifact_path(artifacts, "population_silence_sva", artifact_root=artifact_root)
 
 
 def _validate_rate_replay(value: Any, field: str) -> None:
@@ -130,6 +292,172 @@ def _validate_refractory_replay(value: Any, field: str) -> None:
     _expect_non_negative_int(
         replay.get("remaining_refractory_cycles"), f"{field}.remaining_refractory_cycles"
     )
+    _expect_non_negative_int(replay.get("cycles_checked"), f"{field}.cycles_checked")
+
+
+def _validate_antagonistic_replay(
+    value: Any,
+    field: str,
+    *,
+    antagonistic: NetworkAntagonisticOutputExclusion,
+) -> None:
+    if value is None:
+        return
+    replay = _expect_mapping(value, field)
+    _expect_bool(replay.get("violated"), f"{field}.violated")
+    _expect_optional_non_negative_int(
+        replay.get("first_violation_cycle"), f"{field}.first_violation_cycle"
+    )
+    if _expect_non_negative_int(replay.get("output_a"), f"{field}.output_a") != antagonistic.output_a:
+        raise FormalReportValidationError(f"{field}.output_a must match antagonistic_exclusion")
+    if _expect_non_negative_int(replay.get("output_b"), f"{field}.output_b") != antagonistic.output_b:
+        raise FormalReportValidationError(f"{field}.output_b must match antagonistic_exclusion")
+    _expect_non_negative_int(replay.get("cycles_checked"), f"{field}.cycles_checked")
+
+
+def _validate_temporal_replay(
+    value: Any,
+    field: str,
+    *,
+    temporal: NetworkOutputTemporalSeparation,
+) -> None:
+    if value is None:
+        return
+    replay = _expect_mapping(value, field)
+    _expect_bool(replay.get("violated"), f"{field}.violated")
+    _expect_optional_non_negative_int(
+        replay.get("first_violation_cycle"), f"{field}.first_violation_cycle"
+    )
+    trigger_output = _expect_optional_non_negative_int(
+        replay.get("trigger_output"), f"{field}.trigger_output"
+    )
+    violating_output = _expect_optional_non_negative_int(
+        replay.get("violating_output"), f"{field}.violating_output"
+    )
+    temporal_outputs = {temporal.output_a, temporal.output_b}
+    if trigger_output is not None and trigger_output not in temporal_outputs:
+        raise FormalReportValidationError(
+            f"{field}.trigger_output must match temporal_separation outputs"
+        )
+    if violating_output is not None and violating_output not in temporal_outputs:
+        raise FormalReportValidationError(
+            f"{field}.violating_output must match temporal_separation outputs"
+        )
+    if (
+        trigger_output is not None
+        and violating_output is not None
+        and trigger_output == violating_output
+    ):
+        raise FormalReportValidationError(
+            f"{field}.violating_output must differ from trigger_output"
+        )
+    _expect_non_negative_int(
+        replay.get("remaining_separation_cycles"), f"{field}.remaining_separation_cycles"
+    )
+    _expect_non_negative_int(replay.get("cycles_checked"), f"{field}.cycles_checked")
+
+
+def _validate_population_replay(
+    value: Any,
+    field: str,
+    *,
+    population: NetworkPopulationCoactivationCap,
+    network: DenseLIFNetworkSpec,
+) -> None:
+    if value is None:
+        return
+    replay = _expect_mapping(value, field)
+    violated = _expect_bool(replay.get("violated"), f"{field}.violated")
+    first_violation_cycle = _expect_optional_non_negative_int(
+        replay.get("first_violation_cycle"), f"{field}.first_violation_cycle"
+    )
+    observed = _expect_non_negative_int(
+        replay.get("observed_active_outputs"), f"{field}.observed_active_outputs"
+    )
+    if observed > network.output_width:
+        raise FormalReportValidationError(
+            f"{field}.observed_active_outputs must be <= network output_width"
+        )
+    if (
+        _expect_non_negative_int(replay.get("max_active_outputs"), f"{field}.max_active_outputs")
+        != population.max_active_outputs
+    ):
+        raise FormalReportValidationError(
+            f"{field}.max_active_outputs must match population_coactivation"
+        )
+    if violated and observed <= population.max_active_outputs:
+        raise FormalReportValidationError(
+            f"{field}.observed_active_outputs must exceed max_active_outputs when violated"
+        )
+    if violated and first_violation_cycle is None:
+        raise FormalReportValidationError(
+            f"{field}.first_violation_cycle must be present when violated"
+        )
+    if not violated and first_violation_cycle is not None:
+        raise FormalReportValidationError(
+            f"{field}.first_violation_cycle must be null when not violated"
+        )
+    if not violated and observed > population.max_active_outputs:
+        raise FormalReportValidationError(
+            f"{field}.observed_active_outputs must be <= max_active_outputs when not violated"
+        )
+    _expect_non_negative_int(replay.get("cycles_checked"), f"{field}.cycles_checked")
+
+
+def _validate_population_silence_replay(
+    value: Any,
+    field: str,
+    *,
+    silence: NetworkPopulationSilenceAfterCoactivation,
+    network: DenseLIFNetworkSpec,
+) -> None:
+    if value is None:
+        return
+    replay = _expect_mapping(value, field)
+    violated = _expect_bool(replay.get("violated"), f"{field}.violated")
+    first_violation_cycle = _expect_optional_non_negative_int(
+        replay.get("first_violation_cycle"), f"{field}.first_violation_cycle"
+    )
+    _expect_optional_non_negative_int(replay.get("trigger_cycle"), f"{field}.trigger_cycle")
+    observed = _expect_non_negative_int(
+        replay.get("observed_active_outputs"), f"{field}.observed_active_outputs"
+    )
+    if observed > network.output_width:
+        raise FormalReportValidationError(
+            f"{field}.observed_active_outputs must be <= network output_width"
+        )
+    _expect_non_negative_int(
+        replay.get("remaining_silence_cycles"), f"{field}.remaining_silence_cycles"
+    )
+    if (
+        _expect_non_negative_int(
+            replay.get("trigger_active_outputs"), f"{field}.trigger_active_outputs"
+        )
+        != silence.trigger_active_outputs
+    ):
+        raise FormalReportValidationError(
+            f"{field}.trigger_active_outputs must match population_silence"
+        )
+    if _expect_non_negative_int(replay.get("silence_cycles"), f"{field}.silence_cycles") != (
+        silence.silence_cycles
+    ):
+        raise FormalReportValidationError(f"{field}.silence_cycles must match population_silence")
+    if violated and first_violation_cycle is None:
+        raise FormalReportValidationError(
+            f"{field}.first_violation_cycle must be present when violated"
+        )
+    if violated and observed == 0:
+        raise FormalReportValidationError(
+            f"{field}.observed_active_outputs must be positive when violated"
+        )
+    if not violated and first_violation_cycle is not None:
+        raise FormalReportValidationError(
+            f"{field}.first_violation_cycle must be null when not violated"
+        )
+    if not violated and observed != 0:
+        raise FormalReportValidationError(
+            f"{field}.observed_active_outputs must be zero when not violated"
+        )
     _expect_non_negative_int(replay.get("cycles_checked"), f"{field}.cycles_checked")
 
 

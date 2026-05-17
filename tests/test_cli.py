@@ -1345,6 +1345,198 @@ def test_formal_verify_network_replays_refractory_violation(tmp_path, capsys):
     assert "Refractory violation" in capsys.readouterr().out
 
 
+def test_formal_verify_network_replays_antagonistic_violation(tmp_path, capsys):
+    trace_path = tmp_path / "antagonistic_unsafe_trace.json"
+    trace_path.write_text("[[1, 0], [0, 1], [1, 1]]", encoding="utf-8")
+    out_dir = tmp_path / "formal"
+
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "2",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "4",
+        "--max-spikes",
+        "4",
+        "--antagonistic-pair",
+        "0,1",
+        "--spike-trace",
+        str(trace_path),
+        "--output",
+        str(out_dir),
+    )
+
+    assert rc == 1
+    antagonistic_path = out_dir / "dense_lif_frontier_fixture_antagonistic.sv"
+    bundle_path = out_dir / "dense_lif_frontier_fixture_formal_bundle.sv"
+    assert "a_output0_output1_exclusion" in antagonistic_path.read_text(encoding="utf-8")
+    assert "dense_lif_frontier_fixture_antagonistic_sva" in bundle_path.read_text(
+        encoding="utf-8"
+    )
+    report = json.loads((out_dir / "formal_rate_bound_report.json").read_text(encoding="utf-8"))
+    assert report["antagonistic_exclusion"]["output_a"] == 0
+    assert report["antagonistic_exclusion"]["output_b"] == 1
+    assert report["antagonistic_replay"]["violated"] is True
+    assert report["antagonistic_replay"]["first_violation_cycle"] == 2
+    assert report["rate_replay"]["violated"] is False
+    assert report["artifacts"]["antagonistic_sva"] == str(antagonistic_path)
+    assert "Antagonistic violation" in capsys.readouterr().out
+
+
+def test_formal_verify_network_replays_temporal_separation_violation(tmp_path, capsys):
+    trace_path = tmp_path / "temporal_unsafe_trace.json"
+    trace_path.write_text("[[1, 0], [0, 1], [0, 0]]", encoding="utf-8")
+    out_dir = tmp_path / "formal"
+
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "2",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "4",
+        "--max-spikes",
+        "4",
+        "--temporal-separation",
+        "0,1,2",
+        "--spike-trace",
+        str(trace_path),
+        "--output",
+        str(out_dir),
+    )
+
+    assert rc == 1
+    temporal_path = out_dir / "dense_lif_frontier_fixture_temporal_separation.sv"
+    bundle_path = out_dir / "dense_lif_frontier_fixture_formal_bundle.sv"
+    assert "a_output0_output1_temporal_separation" in temporal_path.read_text(
+        encoding="utf-8"
+    )
+    assert "dense_lif_frontier_fixture_temporal_separation_sva" in bundle_path.read_text(
+        encoding="utf-8"
+    )
+    report = json.loads((out_dir / "formal_rate_bound_report.json").read_text(encoding="utf-8"))
+    assert report["temporal_separation"]["output_a"] == 0
+    assert report["temporal_separation"]["output_b"] == 1
+    assert report["temporal_separation"]["separation_cycles"] == 2
+    assert report["temporal_replay"]["violated"] is True
+    assert report["temporal_replay"]["first_violation_cycle"] == 1
+    assert report["artifacts"]["temporal_sva"] == str(temporal_path)
+    assert "Temporal separation violation" in capsys.readouterr().out
+
+
+def test_formal_verify_network_replays_population_coactivation_violation(tmp_path, capsys):
+    trace_path = tmp_path / "population_unsafe_trace.json"
+    trace_path.write_text("[[1, 0, 1], [0, 1, 0]]", encoding="utf-8")
+    out_dir = tmp_path / "formal"
+
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "3",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "4",
+        "--max-spikes",
+        "4",
+        "--coactivation-cap",
+        "1",
+        "--spike-trace",
+        str(trace_path),
+        "--output",
+        str(out_dir),
+    )
+
+    assert rc == 1
+    population_path = out_dir / "dense_lif_frontier_fixture_population_coactivation.sv"
+    bundle_path = out_dir / "dense_lif_frontier_fixture_formal_bundle.sv"
+    assert "a_population_coactivation_cap" in population_path.read_text(encoding="utf-8")
+    assert "dense_lif_frontier_fixture_population_coactivation_sva" in bundle_path.read_text(
+        encoding="utf-8"
+    )
+    report = json.loads((out_dir / "formal_rate_bound_report.json").read_text(encoding="utf-8"))
+    assert report["population_coactivation"]["max_active_outputs"] == 1
+    assert report["population_replay"]["violated"] is True
+    assert report["population_replay"]["first_violation_cycle"] == 0
+    assert report["population_replay"]["observed_active_outputs"] == 2
+    assert report["rate_replay"]["violated"] is False
+    assert report["artifacts"]["population_sva"] == str(population_path)
+    assert "Population coactivation violation" in capsys.readouterr().out
+
+
+def test_formal_verify_network_replays_population_silence_violation(tmp_path, capsys):
+    trace_path = tmp_path / "population_silence_unsafe_trace.json"
+    trace_path.write_text("[[1, 1, 0], [0, 0, 0], [0, 1, 0]]", encoding="utf-8")
+    out_dir = tmp_path / "formal"
+
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "3",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "4",
+        "--max-spikes",
+        "4",
+        "--population-silence",
+        "2,2",
+        "--spike-trace",
+        str(trace_path),
+        "--output",
+        str(out_dir),
+    )
+
+    assert rc == 1
+    silence_path = out_dir / "dense_lif_frontier_fixture_population_silence.sv"
+    bundle_path = out_dir / "dense_lif_frontier_fixture_formal_bundle.sv"
+    assert "a_population_silence_after_coactivation" in silence_path.read_text(
+        encoding="utf-8"
+    )
+    assert "dense_lif_frontier_fixture_population_silence_sva" in bundle_path.read_text(
+        encoding="utf-8"
+    )
+    report = json.loads((out_dir / "formal_rate_bound_report.json").read_text(encoding="utf-8"))
+    assert report["population_silence"]["trigger_active_outputs"] == 2
+    assert report["population_silence"]["silence_cycles"] == 2
+    assert report["population_silence_replay"]["violated"] is True
+    assert report["population_silence_replay"]["first_violation_cycle"] == 2
+    assert report["population_silence_replay"]["trigger_cycle"] == 0
+    assert report["artifacts"]["population_silence_sva"] == str(silence_path)
+    assert "Population silence violation" in capsys.readouterr().out
+
+
 def test_formal_verify_network_rejects_missing_action(capsys):
     rc = _run_main("formal")
 

@@ -11,7 +11,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from collections.abc import Sequence
 
-from .network_properties import NetworkRateBound, NetworkRefractoryInvariant
+from .network_properties import (
+    NetworkAntagonisticOutputExclusion,
+    NetworkOutputTemporalSeparation,
+    NetworkPopulationCoactivationCap,
+    NetworkPopulationSilenceAfterCoactivation,
+    NetworkRateBound,
+    NetworkRefractoryInvariant,
+)
 
 SpikeSample = bool | int | Sequence[bool | int]
 
@@ -35,6 +42,54 @@ class RefractoryReplayResult:
     first_violation_cycle: int | None
     trigger_cycle: int | None
     remaining_refractory_cycles: int
+    cycles_checked: int
+
+
+@dataclass(frozen=True, slots=True)
+class AntagonisticReplayResult:
+    """Replay result for a mutually-exclusive output-pair invariant."""
+
+    violated: bool
+    first_violation_cycle: int | None
+    output_a: int
+    output_b: int
+    cycles_checked: int
+
+
+@dataclass(frozen=True, slots=True)
+class TemporalSeparationReplayResult:
+    """Replay result for a bidirectional temporal-separation invariant."""
+
+    violated: bool
+    first_violation_cycle: int | None
+    trigger_output: int | None
+    violating_output: int | None
+    remaining_separation_cycles: int
+    cycles_checked: int
+
+
+@dataclass(frozen=True, slots=True)
+class PopulationCoactivationReplayResult:
+    """Replay result for a population-level output coactivation cap."""
+
+    violated: bool
+    first_violation_cycle: int | None
+    observed_active_outputs: int
+    max_active_outputs: int
+    cycles_checked: int
+
+
+@dataclass(frozen=True, slots=True)
+class PopulationSilenceReplayResult:
+    """Replay result for post-coactivation global output silence."""
+
+    violated: bool
+    first_violation_cycle: int | None
+    trigger_cycle: int | None
+    observed_active_outputs: int
+    remaining_silence_cycles: int
+    trigger_active_outputs: int
+    silence_cycles: int
     cycles_checked: int
 
 
@@ -106,6 +161,158 @@ def replay_refractory_counterexample(
     )
 
 
+def replay_antagonistic_counterexample(
+    spike_trace: Sequence[SpikeSample],
+    exclusion: NetworkAntagonisticOutputExclusion,
+) -> AntagonisticReplayResult:
+    """Replay a spike trace against a mutually-exclusive output-pair invariant."""
+    for cycle, sample in enumerate(spike_trace):
+        spike_a = _select_binary_spike(sample, exclusion.output_a, cycle=cycle)
+        spike_b = _select_binary_spike(sample, exclusion.output_b, cycle=cycle)
+        if spike_a and spike_b:
+            return AntagonisticReplayResult(
+                violated=True,
+                first_violation_cycle=cycle,
+                output_a=exclusion.output_a,
+                output_b=exclusion.output_b,
+                cycles_checked=cycle + 1,
+            )
+
+    return AntagonisticReplayResult(
+        violated=False,
+        first_violation_cycle=None,
+        output_a=exclusion.output_a,
+        output_b=exclusion.output_b,
+        cycles_checked=len(spike_trace),
+    )
+
+
+def replay_temporal_separation_counterexample(
+    spike_trace: Sequence[SpikeSample],
+    separation: NetworkOutputTemporalSeparation,
+) -> TemporalSeparationReplayResult:
+    """Replay a spike trace against a bidirectional output temporal separation."""
+    remaining_after_a = 0
+    remaining_after_b = 0
+
+    for cycle, sample in enumerate(spike_trace):
+        spike_a = _select_binary_spike(sample, separation.output_a, cycle=cycle)
+        spike_b = _select_binary_spike(sample, separation.output_b, cycle=cycle)
+        if spike_a and spike_b:
+            return TemporalSeparationReplayResult(
+                violated=True,
+                first_violation_cycle=cycle,
+                trigger_output=None,
+                violating_output=None,
+                remaining_separation_cycles=0,
+                cycles_checked=cycle + 1,
+            )
+        if spike_a and remaining_after_b > 0:
+            return TemporalSeparationReplayResult(
+                violated=True,
+                first_violation_cycle=cycle,
+                trigger_output=separation.output_b,
+                violating_output=separation.output_a,
+                remaining_separation_cycles=remaining_after_b,
+                cycles_checked=cycle + 1,
+            )
+        if spike_b and remaining_after_a > 0:
+            return TemporalSeparationReplayResult(
+                violated=True,
+                first_violation_cycle=cycle,
+                trigger_output=separation.output_a,
+                violating_output=separation.output_b,
+                remaining_separation_cycles=remaining_after_a,
+                cycles_checked=cycle + 1,
+            )
+
+        if spike_a:
+            remaining_after_a = separation.separation_cycles
+        elif remaining_after_a > 0:
+            remaining_after_a -= 1
+        if spike_b:
+            remaining_after_b = separation.separation_cycles
+        elif remaining_after_b > 0:
+            remaining_after_b -= 1
+
+    return TemporalSeparationReplayResult(
+        violated=False,
+        first_violation_cycle=None,
+        trigger_output=None,
+        violating_output=None,
+        remaining_separation_cycles=max(remaining_after_a, remaining_after_b),
+        cycles_checked=len(spike_trace),
+    )
+
+
+def replay_population_coactivation_counterexample(
+    spike_trace: Sequence[SpikeSample],
+    population: NetworkPopulationCoactivationCap,
+) -> PopulationCoactivationReplayResult:
+    """Replay a spike trace against a population coactivation cap."""
+    max_observed = 0
+    for cycle, sample in enumerate(spike_trace):
+        active_outputs = _count_binary_spikes(sample, cycle=cycle)
+        max_observed = max(max_observed, active_outputs)
+        if active_outputs > population.max_active_outputs:
+            return PopulationCoactivationReplayResult(
+                violated=True,
+                first_violation_cycle=cycle,
+                observed_active_outputs=active_outputs,
+                max_active_outputs=population.max_active_outputs,
+                cycles_checked=cycle + 1,
+            )
+
+    return PopulationCoactivationReplayResult(
+        violated=False,
+        first_violation_cycle=None,
+        observed_active_outputs=max_observed,
+        max_active_outputs=population.max_active_outputs,
+        cycles_checked=len(spike_trace),
+    )
+
+
+def replay_population_silence_counterexample(
+    spike_trace: Sequence[SpikeSample],
+    silence: NetworkPopulationSilenceAfterCoactivation,
+) -> PopulationSilenceReplayResult:
+    """Replay a spike trace against a post-coactivation global silence contract."""
+    remaining = 0
+    trigger_cycle: int | None = None
+
+    for cycle, sample in enumerate(spike_trace):
+        active_outputs = _count_binary_spikes(sample, cycle=cycle)
+        if remaining > 0 and active_outputs > 0:
+            return PopulationSilenceReplayResult(
+                violated=True,
+                first_violation_cycle=cycle,
+                trigger_cycle=trigger_cycle,
+                observed_active_outputs=active_outputs,
+                remaining_silence_cycles=remaining,
+                trigger_active_outputs=silence.trigger_active_outputs,
+                silence_cycles=silence.silence_cycles,
+                cycles_checked=cycle + 1,
+            )
+        if active_outputs >= silence.trigger_active_outputs:
+            remaining = silence.silence_cycles
+            trigger_cycle = cycle
+        elif remaining > 0:
+            remaining -= 1
+            if remaining == 0:
+                trigger_cycle = None
+
+    return PopulationSilenceReplayResult(
+        violated=False,
+        first_violation_cycle=None,
+        trigger_cycle=trigger_cycle if remaining > 0 else None,
+        observed_active_outputs=0,
+        remaining_silence_cycles=remaining,
+        trigger_active_outputs=silence.trigger_active_outputs,
+        silence_cycles=silence.silence_cycles,
+        cycles_checked=len(spike_trace),
+    )
+
+
 def _select_binary_spike(sample: SpikeSample, output_index: int, *, cycle: int) -> bool:
     if isinstance(sample, (bool, int)):
         if output_index != 0:
@@ -117,6 +324,15 @@ def _select_binary_spike(sample: SpikeSample, output_index: int, *, cycle: int) 
     if output_index >= len(sample):
         raise ValueError(f"cycle {cycle} does not contain output_index {output_index}")
     return _as_binary_bool(sample[output_index], cycle=cycle)
+
+
+def _count_binary_spikes(sample: SpikeSample, *, cycle: int) -> int:
+    if isinstance(sample, (bool, int)):
+        return int(_as_binary_bool(sample, cycle=cycle))
+
+    if isinstance(sample, (str, bytes)) or not isinstance(sample, Sequence):
+        raise ValueError(f"cycle {cycle} must contain a binary spike sample")
+    return sum(int(_as_binary_bool(value, cycle=cycle)) for value in sample)
 
 
 def _as_binary_bool(value: bool | int, *, cycle: int) -> bool:
