@@ -48,6 +48,8 @@ def test_build_command_requests_symbiyosys_only_when_available(tmp_path: Path) -
     assert "1" in without_sby
     assert "--population-silence" in without_sby
     assert "2,2" in without_sby
+    assert "--population-inactivity" in without_sby
+    assert "3" in without_sby
     assert without_sby[0:3] == [sys.executable, "-m", "sc_neurocore.cli"]
     assert "--out" in without_sby
     assert str(config.report_path) in without_sby
@@ -83,11 +85,12 @@ def test_main_generates_and_validates_report_with_artifact_root(
         assert report["population_coactivation"]["max_active_outputs"] == 1
         assert report["population_silence"]["trigger_active_outputs"] == 2
         assert report["population_silence"]["silence_cycles"] == 2
+        assert report["population_inactivity"]["max_silent_cycles"] == 3
         assert report["symbiyosys"]["requested"] is False
         assert report["symbiyosys"]["status"] == "not_requested"
 
 
-def test_main_allows_single_output_fixture_without_default_antagonistic_pair(
+def test_main_keeps_population_inactivity_for_single_output_fixture(
     tmp_path: Path, monkeypatch: Any
 ) -> None:
     tool = _load_tool()
@@ -111,10 +114,14 @@ def test_main_allows_single_output_fixture_without_default_antagonistic_pair(
     assert report["temporal_separation"] is None
     assert report["population_coactivation"] is None
     assert report["population_silence"] is None
+    assert report["population_inactivity"]["max_silent_cycles"] == 3
     assert report["artifacts"]["antagonistic_sva"] is None
     assert report["artifacts"]["temporal_sva"] is None
     assert report["artifacts"]["population_sva"] is None
     assert report["artifacts"]["population_silence_sva"] is None
+    assert report["artifacts"]["population_inactivity_sva"].endswith(
+        "dense_lif_frontier_fixture_population_inactivity.sv"
+    )
 
 
 def test_main_fails_when_any_output_report_is_missing(
@@ -142,6 +149,8 @@ def test_main_fails_when_any_output_report_is_missing(
             / "dense_lif_frontier_fixture_population_coactivation.sv",
             "population_silence_sva": artifact_root
             / "dense_lif_frontier_fixture_population_silence.sv",
+            "population_inactivity_sva": artifact_root
+            / "dense_lif_frontier_fixture_population_inactivity.sv",
             "formal_bundle": artifact_root / "dense_lif_frontier_fixture_formal_bundle.sv",
             "sby": artifact_root / "dense_lif_frontier_fixture.sby",
             "report": report_path,
@@ -218,6 +227,7 @@ def test_main_fails_when_generated_report_fails_artifact_root_validation(
                         "temporal_sva": None,
                         "population_sva": None,
                         "population_silence_sva": None,
+                        "population_inactivity_sva": None,
                         "formal_bundle": str(tmp_path / "outside_bundle.sv"),
                         "sby": str(tmp_path / "outside.sby"),
                         "report": str(report_path),
@@ -281,6 +291,8 @@ def test_main_fails_when_report_antagonistic_metadata_exceeds_manifest_width(
             / "dense_lif_frontier_fixture_population_coactivation.sv",
             "population_silence_sva": artifact_root
             / "dense_lif_frontier_fixture_population_silence.sv",
+            "population_inactivity_sva": artifact_root
+            / "dense_lif_frontier_fixture_population_inactivity.sv",
             "formal_bundle": artifact_root / "dense_lif_frontier_fixture_formal_bundle.sv",
             "sby": artifact_root / "dense_lif_frontier_fixture.sby",
             "report": report_path,
@@ -339,6 +351,8 @@ def test_main_fails_when_report_temporal_metadata_differs_from_manifest(
             / "dense_lif_frontier_fixture_population_coactivation.sv",
             "population_silence_sva": artifact_root
             / "dense_lif_frontier_fixture_population_silence.sv",
+            "population_inactivity_sva": artifact_root
+            / "dense_lif_frontier_fixture_population_inactivity.sv",
             "formal_bundle": artifact_root / "dense_lif_frontier_fixture_formal_bundle.sv",
             "sby": artifact_root / "dense_lif_frontier_fixture.sby",
             "report": report_path,
@@ -389,6 +403,8 @@ def test_main_fails_when_report_population_metadata_differs_from_manifest(
             / "dense_lif_frontier_fixture_population_coactivation.sv",
             "population_silence_sva": artifact_root
             / "dense_lif_frontier_fixture_population_silence.sv",
+            "population_inactivity_sva": artifact_root
+            / "dense_lif_frontier_fixture_population_inactivity.sv",
             "formal_bundle": artifact_root / "dense_lif_frontier_fixture_formal_bundle.sv",
             "sby": artifact_root / "dense_lif_frontier_fixture.sby",
             "report": report_path,
@@ -439,6 +455,8 @@ def test_main_fails_when_report_population_silence_differs_from_manifest(
             / "dense_lif_frontier_fixture_population_coactivation.sv",
             "population_silence_sva": artifact_root
             / "dense_lif_frontier_fixture_population_silence.sv",
+            "population_inactivity_sva": artifact_root
+            / "dense_lif_frontier_fixture_population_inactivity.sv",
             "formal_bundle": artifact_root / "dense_lif_frontier_fixture_formal_bundle.sv",
             "sby": artifact_root / "dense_lif_frontier_fixture.sby",
             "report": report_path,
@@ -510,6 +528,10 @@ def _valid_report_payload(output_index: int, paths: dict[str, Path]) -> dict[str
             "trigger_active_outputs": 2,
             "silence_cycles": 2,
         },
+        "population_inactivity": {
+            "name": "population_inactivity_bound",
+            "max_silent_cycles": 3,
+        },
         "artifacts": {key: str(path) for key, path in paths.items()},
         "replay": None,
         "rate_replay": None,
@@ -518,6 +540,7 @@ def _valid_report_payload(output_index: int, paths: dict[str, Path]) -> dict[str
         "temporal_replay": None,
         "population_replay": None,
         "population_silence_replay": None,
+        "population_inactivity_replay": None,
         "symbiyosys": {
             "requested": False,
             "status": "not_requested",

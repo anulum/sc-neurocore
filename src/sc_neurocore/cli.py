@@ -288,6 +288,12 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--population-inactivity",
+        type=int,
+        default=None,
+        help="Optional maximum consecutive silent output cycles for formal verify-network",
+    )
+    parser.add_argument(
         "--spike-trace",
         default=None,
         help="Optional JSON spike trace replayed against formal verify-network rate bounds",
@@ -908,18 +914,21 @@ def _cmd_formal(args: Any) -> int:
         NetworkAntagonisticOutputExclusion,
         NetworkOutputTemporalSeparation,
         NetworkPopulationCoactivationCap,
+        NetworkPopulationInactivityBound,
         NetworkPopulationSilenceAfterCoactivation,
         NetworkRefractoryInvariant,
         NetworkRateBound,
         compile_dense_lif_fixture_rtl,
         compile_network_antagonistic_exclusion_sva,
         compile_network_population_coactivation_sva,
+        compile_network_population_inactivity_sva,
         compile_network_population_silence_sva,
         compile_network_rate_bound_sva,
         compile_network_refractory_sva,
         compile_network_temporal_separation_sva,
         replay_antagonistic_counterexample,
         replay_population_coactivation_counterexample,
+        replay_population_inactivity_counterexample,
         replay_population_silence_counterexample,
         replay_rate_bound_counterexample,
         replay_refractory_counterexample,
@@ -937,6 +946,12 @@ def _cmd_formal(args: Any) -> int:
         return 1
     if args.refractory_cycles < 0:
         print("Formal network contract invalid: refractory-cycles must be non-negative")
+        return 1
+    if args.coactivation_cap is not None and args.coactivation_cap < 0:
+        print("Formal network contract invalid: coactivation-cap must be non-negative")
+        return 1
+    if args.population_inactivity is not None and args.population_inactivity <= 0:
+        print("Formal network contract invalid: population-inactivity must be a positive integer")
         return 1
 
     try:
@@ -1015,6 +1030,14 @@ def _cmd_formal(args: Any) -> int:
             if population_silence_values is not None
             else None
         )
+        population_inactivity = (
+            NetworkPopulationInactivityBound(
+                name="population_inactivity_bound",
+                max_silent_cycles=args.population_inactivity,
+            )
+            if args.population_inactivity is not None
+            else None
+        )
         rtl = compile_dense_lif_fixture_rtl(network)
         sva = compile_network_rate_bound_sva(network, rate_bound)
         refractory_sva = (
@@ -1042,6 +1065,11 @@ def _cmd_formal(args: Any) -> int:
             if population_silence is not None
             else None
         )
+        population_inactivity_sva = (
+            compile_network_population_inactivity_sva(network, population_inactivity)
+            if population_inactivity is not None
+            else None
+        )
     except ValueError as exc:
         print(f"Formal network contract invalid: {exc}")
         return 1
@@ -1055,6 +1083,7 @@ def _cmd_formal(args: Any) -> int:
     temporal_sva_path = out_dir / f"{network.name}_temporal_separation.sv"
     population_sva_path = out_dir / f"{network.name}_population_coactivation.sv"
     population_silence_sva_path = out_dir / f"{network.name}_population_silence.sv"
+    population_inactivity_sva_path = out_dir / f"{network.name}_population_inactivity.sv"
     formal_bundle_path = out_dir / f"{network.name}_formal_bundle.sv"
     sby_path = out_dir / f"{network.name}.sby"
     report_path = Path(args.out) if args.out else out_dir / "formal_rate_bound_report.json"
@@ -1065,12 +1094,14 @@ def _cmd_formal(args: Any) -> int:
     temporal_replay_report: dict[str, Any] | None = None
     population_replay_report: dict[str, Any] | None = None
     population_silence_replay_report: dict[str, Any] | None = None
+    population_inactivity_replay_report: dict[str, Any] | None = None
     replay_violated = False
     refractory_violated = False
     antagonistic_violated = False
     temporal_violated = False
     population_violated = False
     population_silence_violated = False
+    population_inactivity_violated = False
     if args.spike_trace:
         try:
             trace_payload = json.loads(Path(args.spike_trace).read_text(encoding="utf-8"))
@@ -1100,6 +1131,11 @@ def _cmd_formal(args: Any) -> int:
             population_silence_replay = (
                 replay_population_silence_counterexample(trace_payload, population_silence)
                 if population_silence is not None
+                else None
+            )
+            population_inactivity_replay = (
+                replay_population_inactivity_counterexample(trace_payload, population_inactivity)
+                if population_inactivity is not None
                 else None
             )
         except (OSError, TypeError, ValueError) as exc:
@@ -1135,6 +1171,15 @@ def _cmd_formal(args: Any) -> int:
         population_silence_violated = bool(
             population_silence_replay is not None and population_silence_replay.violated
         )
+        population_inactivity_replay_report = (
+            asdict(population_inactivity_replay)
+            if population_inactivity_replay is not None
+            else None
+        )
+        population_inactivity_violated = bool(
+            population_inactivity_replay is not None
+            and population_inactivity_replay.violated
+        )
 
     bundle_parts = [sva]
     if refractory_sva is not None:
@@ -1147,6 +1192,8 @@ def _cmd_formal(args: Any) -> int:
         bundle_parts.append(population_sva)
     if population_silence_sva is not None:
         bundle_parts.append(population_silence_sva)
+    if population_inactivity_sva is not None:
+        bundle_parts.append(population_inactivity_sva)
     bundle_sva = "\n".join(bundle_parts)
     sby = generate_sby_script(
         network.name,
@@ -1166,6 +1213,8 @@ def _cmd_formal(args: Any) -> int:
         population_sva_path.write_text(population_sva, encoding="utf-8")
     if population_silence_sva is not None:
         population_silence_sva_path.write_text(population_silence_sva, encoding="utf-8")
+    if population_inactivity_sva is not None:
+        population_inactivity_sva_path.write_text(population_inactivity_sva, encoding="utf-8")
     formal_bundle_path.write_text(bundle_sva, encoding="utf-8")
     sby_path.write_text(sby, encoding="utf-8")
 
@@ -1206,6 +1255,9 @@ def _cmd_formal(args: Any) -> int:
         "population_silence": (
             asdict(population_silence) if population_silence is not None else None
         ),
+        "population_inactivity": (
+            asdict(population_inactivity) if population_inactivity is not None else None
+        ),
         "artifacts": {
             "rtl": str(rtl_path),
             "sva": str(sva_path),
@@ -1221,6 +1273,11 @@ def _cmd_formal(args: Any) -> int:
                 if population_silence_sva is not None
                 else None
             ),
+            "population_inactivity_sva": (
+                str(population_inactivity_sva_path)
+                if population_inactivity_sva is not None
+                else None
+            ),
             "formal_bundle": str(formal_bundle_path),
             "sby": str(sby_path),
             "report": str(report_path),
@@ -1232,6 +1289,7 @@ def _cmd_formal(args: Any) -> int:
         "temporal_replay": temporal_replay_report,
         "population_replay": population_replay_report,
         "population_silence_replay": population_silence_replay_report,
+        "population_inactivity_replay": population_inactivity_replay_report,
         "symbiyosys": symbiyosys_report,
     }
     try:
@@ -1255,6 +1313,8 @@ def _cmd_formal(args: Any) -> int:
         print(f"  Population SVA: {population_sva_path}")
     if population_silence_sva is not None:
         print(f"  Population silence SVA: {population_silence_sva_path}")
+    if population_inactivity_sva is not None:
+        print(f"  Population inactivity SVA: {population_inactivity_sva_path}")
     print(f"  Bundle: {formal_bundle_path}")
     print(f"  SBY: {sby_path}")
     print(f"  Report: {report_path}")
@@ -1332,6 +1392,21 @@ def _cmd_formal(args: Any) -> int:
             "Population silence replay passed: "
             f"{population_silence_replay_report['cycles_checked']} cycle(s) checked"
         )
+    if population_inactivity_replay_report is not None:
+        if population_inactivity_violated:
+            print(
+                "Population inactivity violation: "
+                f"cycle {population_inactivity_replay_report['first_violation_cycle']}, "
+                "observed_silent_cycles="
+                f"{population_inactivity_replay_report['observed_silent_cycles']}, "
+                "max_silent_cycles="
+                f"{population_inactivity_replay_report['max_silent_cycles']}"
+            )
+            return 1
+        print(
+            "Population inactivity replay passed: "
+            f"{population_inactivity_replay_report['cycles_checked']} cycle(s) checked"
+        )
     if args.run_symbiyosys:
         if symbiyosys_report["status"] == "tool_unavailable":
             print("SymbiYosys unavailable: generated .sby but skipped external proof")
@@ -1362,6 +1437,11 @@ def _parse_temporal_separation(value: str) -> tuple[int, int, int]:
         output_a, output_b, cycles = (int(part, 10) for part in parts)
     except ValueError as exc:
         raise ValueError("temporal-separation must contain integer values") from exc
+    if output_a < 0 or output_b < 0 or output_a == output_b or cycles <= 0:
+        raise ValueError(
+            "temporal-separation must contain two distinct non-negative outputs "
+            "and positive cycles"
+        )
     return output_a, output_b, cycles
 
 
@@ -1373,6 +1453,8 @@ def _parse_population_silence(value: str) -> tuple[int, int]:
         trigger_active_outputs, silence_cycles = (int(part, 10) for part in parts)
     except ValueError as exc:
         raise ValueError("population-silence must contain integer values") from exc
+    if trigger_active_outputs <= 0 or silence_cycles <= 0:
+        raise ValueError("population-silence must contain positive values")
     return trigger_active_outputs, silence_cycles
 
 

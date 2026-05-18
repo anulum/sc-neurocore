@@ -44,6 +44,7 @@ class FormalEvidenceConfig:
     temporal_separation: str | None = "0,1,2"
     coactivation_cap: int | None = 1
     population_silence: str | None = "2,2"
+    population_inactivity: int | None = 3
     formal_depth: int = 20
     formal_mode: str = "bmc"
 
@@ -117,6 +118,8 @@ def build_formal_verify_command(
         command.extend(["--coactivation-cap", str(config.coactivation_cap)])
     if config.population_silence is not None and config.output_width >= 2:
         command.extend(["--population-silence", config.population_silence])
+    if config.population_inactivity is not None:
+        command.extend(["--population-inactivity", str(config.population_inactivity)])
     if sby_available:
         command.append("--run-symbiyosys")
     return command
@@ -200,6 +203,7 @@ def run_formal_evidence_check(
                 "temporal_separation": payload.get("temporal_separation"),
                 "population_coactivation": payload.get("population_coactivation"),
                 "population_silence": payload.get("population_silence"),
+                "population_inactivity": payload.get("population_inactivity"),
                 "symbiyosys_status": (
                     symbiyosys.get("status") if isinstance(symbiyosys, dict) else None
                 ),
@@ -342,22 +346,39 @@ def _validate_report_matches_config(
             raise FormalReportValidationError(
                 "population_silence must be null when manifest has no population_silence"
             )
-        return
-    trigger_active_outputs, silence_cycles = expected_silence
-    if trigger_active_outputs > config.output_width:
+    else:
+        trigger_active_outputs, silence_cycles = expected_silence
+        if trigger_active_outputs > config.output_width:
+            raise FormalReportValidationError(
+                "population_silence references more outputs than manifest output_width"
+            )
+        if not isinstance(population_silence, dict):
+            raise FormalReportValidationError(
+                "population_silence must be present when manifest has population_silence"
+            )
+        if (
+            population_silence.get("trigger_active_outputs") != trigger_active_outputs
+            or population_silence.get("silence_cycles") != silence_cycles
+        ):
+            raise FormalReportValidationError(
+                "population_silence does not match manifest population_silence"
+            )
+
+    population_inactivity = payload.get("population_inactivity")
+    if config.population_inactivity is None:
+        if population_inactivity is not None:
+            raise FormalReportValidationError(
+                "population_inactivity must be null when manifest has no population_inactivity"
+            )
+    elif config.population_inactivity <= 0:
+        raise FormalReportValidationError("population_inactivity must be positive")
+    elif not isinstance(population_inactivity, dict):
         raise FormalReportValidationError(
-            "population_silence references more outputs than manifest output_width"
+            "population_inactivity must be present when manifest has population_inactivity"
         )
-    if not isinstance(population_silence, dict):
+    elif population_inactivity.get("max_silent_cycles") != config.population_inactivity:
         raise FormalReportValidationError(
-            "population_silence must be present when manifest has population_silence"
-        )
-    if (
-        population_silence.get("trigger_active_outputs") != trigger_active_outputs
-        or population_silence.get("silence_cycles") != silence_cycles
-    ):
-        raise FormalReportValidationError(
-            "population_silence does not match manifest population_silence"
+            "population_inactivity does not match manifest population_inactivity"
         )
 
 
@@ -443,6 +464,7 @@ def main(
     parser.add_argument("--temporal-separation", default=None)
     parser.add_argument("--coactivation-cap", type=int, default=None)
     parser.add_argument("--population-silence", default=None)
+    parser.add_argument("--population-inactivity", type=int, default=None)
     parser.add_argument("--formal-depth", type=int, default=20)
     parser.add_argument("--formal-mode", choices=["bmc", "prove", "cover"], default="bmc")
     args = parser.parse_args(argv)
@@ -476,6 +498,11 @@ def main(
             args.population_silence
             if args.population_silence is not None
             else ("2,2" if args.output_width >= 2 else None)
+        ),
+        population_inactivity=(
+            args.population_inactivity
+            if args.population_inactivity is not None
+            else 3
         ),
         formal_depth=args.formal_depth,
         formal_mode=args.formal_mode,

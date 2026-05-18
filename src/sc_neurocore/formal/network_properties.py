@@ -150,3 +150,15 @@ class NetworkPopulationSilenceAfterCoactivation:
             field_name="trigger_active_outputs",
         )
         _validate_positive_int(self.silence_cycles, field_name="silence_cycles")
+
+
+@dataclass(frozen=True, slots=True)
+class NetworkPopulationInactivityBound:
+    """Bound consecutive valid cycles with no active network outputs."""
+
+    name: str
+    max_silent_cycles: int
+
+    def __post_init__(self) -> None:
+        validate_systemverilog_identifier(self.name, field_name="name")
+        _validate_positive_int(self.max_silent_cycles, field_name="max_silent_cycles")

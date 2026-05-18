@@ -378,6 +378,7 @@ sc-neurocore formal verify-network \
     --window-cycles 8 \
     --max-spikes 4 \
     --refractory-cycles 2 \
+    --population-inactivity 3 \
     --output build/formal
 ```
 

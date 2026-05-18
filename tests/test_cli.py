@@ -1537,6 +1537,52 @@ def test_formal_verify_network_replays_population_silence_violation(tmp_path, ca
     assert "Population silence violation" in capsys.readouterr().out
 
 
+def test_formal_verify_network_replays_population_inactivity_violation(tmp_path, capsys):
+    trace_path = tmp_path / "population_inactivity_unsafe_trace.json"
+    trace_path.write_text("[[0, 0], [1, 0], [0, 0], [0, 0], [0, 0]]", encoding="utf-8")
+    out_dir = tmp_path / "formal"
+
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "2",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "8",
+        "--max-spikes",
+        "8",
+        "--population-inactivity",
+        "2",
+        "--spike-trace",
+        str(trace_path),
+        "--output",
+        str(out_dir),
+    )
+
+    assert rc == 1
+    inactivity_path = out_dir / "dense_lif_frontier_fixture_population_inactivity.sv"
+    bundle_path = out_dir / "dense_lif_frontier_fixture_formal_bundle.sv"
+    assert "a_population_inactivity_bound" in inactivity_path.read_text(encoding="utf-8")
+    assert "dense_lif_frontier_fixture_population_inactivity_sva" in bundle_path.read_text(
+        encoding="utf-8"
+    )
+    report = json.loads((out_dir / "formal_rate_bound_report.json").read_text(encoding="utf-8"))
+    assert report["population_inactivity"]["max_silent_cycles"] == 2
+    assert report["population_inactivity_replay"]["violated"] is True
+    assert report["population_inactivity_replay"]["first_violation_cycle"] == 4
+    assert report["population_inactivity_replay"]["observed_silent_cycles"] == 3
+    assert report["artifacts"]["population_inactivity_sva"] == str(inactivity_path)
+    assert "Population inactivity violation" in capsys.readouterr().out
+
+
 def test_formal_verify_network_rejects_missing_action(capsys):
     rc = _run_main("formal")
 
@@ -1721,6 +1767,128 @@ def test_formal_verify_network_rejects_negative_refractory_cycles(tmp_path, caps
 
     assert rc == 1
     assert "refractory-cycles" in capsys.readouterr().out
+
+
+def test_formal_verify_network_rejects_non_positive_population_inactivity(
+    tmp_path, capsys
+):
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "1",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "4",
+        "--max-spikes",
+        "2",
+        "--population-inactivity",
+        "0",
+        "--output",
+        str(tmp_path / "formal"),
+    )
+
+    assert rc == 1
+    assert "population-inactivity" in capsys.readouterr().out
+    assert not (tmp_path / "formal").exists()
+
+
+def test_formal_verify_network_rejects_negative_coactivation_cap(tmp_path, capsys):
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "2",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "4",
+        "--max-spikes",
+        "2",
+        "--coactivation-cap",
+        "-1",
+        "--output",
+        str(tmp_path / "formal"),
+    )
+
+    assert rc == 1
+    assert "coactivation-cap" in capsys.readouterr().out
+    assert not (tmp_path / "formal").exists()
+
+
+def test_formal_verify_network_rejects_non_positive_temporal_separation(
+    tmp_path, capsys
+):
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "2",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "4",
+        "--max-spikes",
+        "2",
+        "--temporal-separation",
+        "0,1,0",
+        "--output",
+        str(tmp_path / "formal"),
+    )
+
+    assert rc == 1
+    assert "temporal-separation" in capsys.readouterr().out
+    assert not (tmp_path / "formal").exists()
+
+
+def test_formal_verify_network_rejects_non_positive_population_silence(
+    tmp_path, capsys
+):
+    rc = _run_main(
+        "formal",
+        "verify-network",
+        "--module-name",
+        "dense_lif_frontier_fixture",
+        "--input-width",
+        "3",
+        "--output-width",
+        "2",
+        "--state-width",
+        "16",
+        "--output-index",
+        "0",
+        "--window-cycles",
+        "4",
+        "--max-spikes",
+        "2",
+        "--population-silence",
+        "0,2",
+        "--output",
+        str(tmp_path / "formal"),
+    )
+
+    assert rc == 1
+    assert "population-silence" in capsys.readouterr().out
+    assert not (tmp_path / "formal").exists()
 
 
 # ---------------------------------------------------------------------------
