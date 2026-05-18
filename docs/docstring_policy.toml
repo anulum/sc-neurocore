@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 13
+expected_file_count = 54
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -60,3 +60,167 @@ rationale = "Public hardware-profile package entry point that re-exports registr
 [[file]]
 path = "src/sc_neurocore/core/types.py"
 rationale = "Shared public core types for resource budgets, reports, and layer estimates."
+
+[[file]]
+path = "src/sc_neurocore/core/tensor_stream.py"
+rationale = "Public tensor stream conversion type used across probability, bitstream, and quantum domains."
+
+[[file]]
+path = "src/sc_neurocore/core/orchestrator.py"
+rationale = "Public pipeline orchestrator that wires TensorStream-aware modules together."
+
+[[file]]
+path = "src/sc_neurocore/core/bipolar.py"
+rationale = "Public bipolar stochastic-computing primitive module used for signed bitstream arithmetic."
+
+[[file]]
+path = "src/sc_neurocore/core/mdl_parser.py"
+rationale = "Public Mind Description Language parser for serialising orchestrator state."
+
+[[file]]
+path = "src/sc_neurocore/core/__init__.py"
+rationale = "Public core package entry point that re-exports TensorStream and core primitives."
+
+[[file]]
+path = "src/sc_neurocore/analysis/explainability.py"
+rationale = "Compact public explainability helper that maps spike activity to human-readable concepts."
+
+[[file]]
+path = "src/sc_neurocore/analysis/phi_estimation.py"
+rationale = "Public integrated-information estimators used by analysis workflows and generated API docs."
+
+[[file]]
+path = "src/sc_neurocore/analysis/__init__.py"
+rationale = "Public analysis package entry point that re-exports spike statistics and explainability helpers."
+
+[[file]]
+path = "src/sc_neurocore/plasticity.py"
+rationale = "Public plasticity facade that exposes the native learning-layer factory."
+
+[[file]]
+path = "src/sc_neurocore/spike_ode/__init__.py"
+rationale = "Public continuous-depth SNN package entry point that re-exports ODE layer APIs."
+
+[[file]]
+path = "src/sc_neurocore/generative/__init__.py"
+rationale = "Public generative package entry point that re-exports audio, text, and 3D generators."
+
+[[file]]
+path = "src/sc_neurocore/studio/__init__.py"
+rationale = "Public Visual SNN Studio package entry point."
+
+[[file]]
+path = "src/sc_neurocore/experiments/__init__.py"
+rationale = "Public experiments package entry point with an intentionally empty export surface."
+
+[[file]]
+path = "src/sc_neurocore/adapters/__init__.py"
+rationale = "Public adapter package entry point for stochastic adapter modules."
+
+[[file]]
+path = "src/sc_neurocore/_native/__init__.py"
+rationale = "Public native bridge entry point that exposes Rust bridge availability flags."
+
+[[file]]
+path = "src/sc_neurocore/explainability/__init__.py"
+rationale = "Public explainability package entry point for bitstream-level attribution utilities."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/__init__.py"
+rationale = "Public evolutionary-substrate package entry point."
+
+[[file]]
+path = "src/sc_neurocore/autofit/__init__.py"
+rationale = "Public automatic model-fitting package entry point."
+
+[[file]]
+path = "src/sc_neurocore/comm/__init__.py"
+rationale = "Public AER-over-UDP communication package entry point."
+
+[[file]]
+path = "src/sc_neurocore/control/__init__.py"
+rationale = "Public neuromorphic-control package entry point."
+
+[[file]]
+path = "src/sc_neurocore/energy/__init__.py"
+rationale = "Public pre-silicon energy-estimation package entry point."
+
+[[file]]
+path = "src/sc_neurocore/continual/__init__.py"
+rationale = "Public continual-learning package entry point."
+
+[[file]]
+path = "src/sc_neurocore/contrastive/__init__.py"
+rationale = "Public spike-domain contrastive-learning package entry point."
+
+[[file]]
+path = "src/sc_neurocore/digital_twin/__init__.py"
+rationale = "Public FPGA digital-twin package entry point."
+
+[[file]]
+path = "src/sc_neurocore/distillation/__init__.py"
+rationale = "Public SNN knowledge-distillation package entry point."
+
+[[file]]
+path = "src/sc_neurocore/energy_accounting/__init__.py"
+rationale = "Public per-spike energy-accounting package entry point."
+
+[[file]]
+path = "src/sc_neurocore/few_shot/__init__.py"
+rationale = "Public few-shot spike meta-learning package entry point."
+
+[[file]]
+path = "src/sc_neurocore/fusion/__init__.py"
+rationale = "Public multimodal spike-fusion package entry point."
+
+[[file]]
+path = "src/sc_neurocore/homeostasis/__init__.py"
+rationale = "Public network homeostasis package entry point."
+
+[[file]]
+path = "src/sc_neurocore/privacy/__init__.py"
+rationale = "Public spike-level differential-privacy package entry point."
+
+[[file]]
+path = "src/sc_neurocore/profiler/__init__.py"
+rationale = "Public cross-platform SNN profiler package entry point."
+
+[[file]]
+path = "src/sc_neurocore/recorders/__init__.py"
+rationale = "Public spike-recorder package entry point."
+
+[[file]]
+path = "src/sc_neurocore/reservoir/__init__.py"
+rationale = "Public auto-critical reservoir-computing package entry point."
+
+[[file]]
+path = "src/sc_neurocore/residual/__init__.py"
+rationale = "Public residual SNN block package entry point."
+
+[[file]]
+path = "src/sc_neurocore/resilience/__init__.py"
+rationale = "Public hardware fault-resilience package entry point."
+
+[[file]]
+path = "src/sc_neurocore/sensors/__init__.py"
+rationale = "Public neuromorphic-sensor interface package entry point."
+
+[[file]]
+path = "src/sc_neurocore/serve/__init__.py"
+rationale = "Public streaming SNN inference-server package entry point."
+
+[[file]]
+path = "src/sc_neurocore/sources/__init__.py"
+rationale = "Public spike-current source package entry point."
+
+[[file]]
+path = "src/sc_neurocore/spike_gnn/__init__.py"
+rationale = "Public spike-native graph neural network package entry point."
+
+[[file]]
+path = "src/sc_neurocore/symbolic/__init__.py"
+rationale = "Public neuromorphic symbolic-reasoning package entry point."
+
+[[file]]
+path = "src/sc_neurocore/temporal_hierarchy/__init__.py"
+rationale = "Public multi-timescale SNN package entry point."

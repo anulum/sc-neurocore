@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Parser for Mind Description Language (MDL)
 
+"""Mind Description Language helpers for serialising orchestrator state."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -19,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class MDLSpecification:
+    """Serializable MDL payload containing architecture and state sections."""
+
     version: str = "1.0"
     agent_name: str = "Unknown"
     architecture: Dict[str, Any] = field(default_factory=dict)

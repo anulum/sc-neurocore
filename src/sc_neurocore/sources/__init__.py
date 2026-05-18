@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Sources Package Init
 
+"""Package entry point for bitstream current-source utilities."""
+
 from .bitstream_current_source import BitstreamCurrentSource
 
 __all__ = [

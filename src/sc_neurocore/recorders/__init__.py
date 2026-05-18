@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Recorders Package Init
 
+"""Package entry point for bitstream spike-recording utilities."""
+
 from .spike_recorder import BitstreamSpikeRecorder
 
 __all__ = [

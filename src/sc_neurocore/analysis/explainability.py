@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — XAI Module: Maps spike patterns to semantic concepts
 
+"""Explain spike-vector activity through a configured neuron-to-concept map."""
+
 from typing import Any
 import numpy as np
 from typing import Dict
