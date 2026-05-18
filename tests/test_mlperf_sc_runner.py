@@ -50,9 +50,10 @@ def test_mlperf_sc_fixture_runner_writes_valid_result_and_raw_artifact(
     assert raw_path.is_file()
     assert environment_path.is_file()
     assert artifacts["raw_results"].sha256 == hashlib.sha256(raw_path.read_bytes()).hexdigest()
-    assert artifacts["environment_manifest"].sha256 == hashlib.sha256(
-        environment_path.read_bytes()
-    ).hexdigest()
+    assert (
+        artifacts["environment_manifest"].sha256
+        == hashlib.sha256(environment_path.read_bytes()).hexdigest()
+    )
 
 
 def test_mlperf_sc_fixture_runner_is_deterministic(tmp_path: Path) -> None:
@@ -75,9 +76,10 @@ def test_mlperf_sc_fixture_runner_is_deterministic(tmp_path: Path) -> None:
     second_payload = json.loads(second.read_text(encoding="utf-8"))
 
     assert first_payload["metrics"] == second_payload["metrics"]
-    assert first_payload["evidence"]["artifacts"][0]["sha256"] == second_payload[
-        "evidence"
-    ]["artifacts"][0]["sha256"]
+    assert (
+        first_payload["evidence"]["artifacts"][0]["sha256"]
+        == second_payload["evidence"]["artifacts"][0]["sha256"]
+    )
 
 
 def test_mlperf_sc_fixture_runner_writes_external_reference_boundary(

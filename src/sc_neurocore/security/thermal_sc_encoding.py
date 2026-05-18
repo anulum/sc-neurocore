@@ -134,15 +134,9 @@ def encode_activity_balanced_probabilities(
         summary=ActivityBalancedEncodingSummary(
             record_count=len(records),
             class_activity_proxy=proxy,
-            total_dummy_streams_inserted=sum(
-                record.dummy_streams_inserted for record in records
-            ),
-            max_dummy_streams_inserted=max(
-                record.dummy_streams_inserted for record in records
-            ),
-            dummy_stream_overhead_ratio=sum(
-                record.dummy_streams_inserted for record in records
-            )
+            total_dummy_streams_inserted=sum(record.dummy_streams_inserted for record in records),
+            max_dummy_streams_inserted=max(record.dummy_streams_inserted for record in records),
+            dummy_stream_overhead_ratio=sum(record.dummy_streams_inserted for record in records)
             / len(records),
         ),
     )
@@ -157,26 +151,17 @@ def _validate_config(config: ThermalSCEncodingConfig) -> ThermalSCEncodingConfig
         raise ThermalSCEncodingError("seed must be a non-negative integer")
     if not isinstance(config.rotation_stride, int) or config.rotation_stride <= 0:
         raise ThermalSCEncodingError("rotation_stride must be a positive integer")
-    if (
-        not isinstance(config.dummy_streams_per_record, int)
-        or config.dummy_streams_per_record < 0
-    ):
-        raise ThermalSCEncodingError(
-            "dummy_streams_per_record must be a non-negative integer"
-        )
+    if not isinstance(config.dummy_streams_per_record, int) or config.dummy_streams_per_record < 0:
+        raise ThermalSCEncodingError("dummy_streams_per_record must be a non-negative integer")
     if (
         isinstance(config.max_dummy_overhead_ratio, bool)
         or not isinstance(config.max_dummy_overhead_ratio, int | float)
         or not math.isfinite(float(config.max_dummy_overhead_ratio))
         or config.max_dummy_overhead_ratio < 0.0
     ):
-        raise ThermalSCEncodingError(
-            "max_dummy_overhead_ratio must be a finite non-negative value"
-        )
+        raise ThermalSCEncodingError("max_dummy_overhead_ratio must be a finite non-negative value")
     if config.dummy_streams_per_record > config.max_dummy_overhead_ratio:
-        raise ThermalSCEncodingError(
-            "dummy stream insertion exceeds max_dummy_overhead_ratio"
-        )
+        raise ThermalSCEncodingError("dummy stream insertion exceeds max_dummy_overhead_ratio")
     return config
 
 

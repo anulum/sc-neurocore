@@ -83,9 +83,7 @@ class SideChannelEncodingEmitter:
             "evidence_boundary": self.encoding.evidence_boundary,
             "bitstream_length": len(self.encoding.bitstream),
             "dummy_streams": len(self.encoding.dummy_bitstreams),
-            "payload_transitions": self.encoding.activity_summary.per_stream_transition_counts[
-                0
-            ],
+            "payload_transitions": self.encoding.activity_summary.per_stream_transition_counts[0],
             "dummy_transitions": list(
                 self.encoding.activity_summary.per_stream_transition_counts[1:]
             ),

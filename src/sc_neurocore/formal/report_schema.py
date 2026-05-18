@@ -62,7 +62,9 @@ def validate_formal_network_report(
         except ValueError as exc:
             raise FormalReportValidationError(str(exc)) from exc
         if refractory.output_index >= network.output_width:
-            raise FormalReportValidationError("refractory.output_index must exist in network output")
+            raise FormalReportValidationError(
+                "refractory.output_index must exist in network output"
+            )
 
     antagonistic_payload = payload.get("antagonistic_exclusion")
     antagonistic: NetworkAntagonisticOutputExclusion | None = None
@@ -311,7 +313,9 @@ def _validate_rate_replay(value: Any, field: str) -> None:
     _expect_optional_non_negative_int(
         replay.get("first_violation_cycle"), f"{field}.first_violation_cycle"
     )
-    _expect_optional_non_negative_int(replay.get("window_start_cycle"), f"{field}.window_start_cycle")
+    _expect_optional_non_negative_int(
+        replay.get("window_start_cycle"), f"{field}.window_start_cycle"
+    )
     _expect_non_negative_int(replay.get("observed_spikes"), f"{field}.observed_spikes")
     _expect_non_negative_int(replay.get("cycles_checked"), f"{field}.cycles_checked")
 
@@ -344,9 +348,15 @@ def _validate_antagonistic_replay(
     _expect_optional_non_negative_int(
         replay.get("first_violation_cycle"), f"{field}.first_violation_cycle"
     )
-    if _expect_non_negative_int(replay.get("output_a"), f"{field}.output_a") != antagonistic.output_a:
+    if (
+        _expect_non_negative_int(replay.get("output_a"), f"{field}.output_a")
+        != antagonistic.output_a
+    ):
         raise FormalReportValidationError(f"{field}.output_a must match antagonistic_exclusion")
-    if _expect_non_negative_int(replay.get("output_b"), f"{field}.output_b") != antagonistic.output_b:
+    if (
+        _expect_non_negative_int(replay.get("output_b"), f"{field}.output_b")
+        != antagonistic.output_b
+    ):
         raise FormalReportValidationError(f"{field}.output_b must match antagonistic_exclusion")
     _expect_non_negative_int(replay.get("cycles_checked"), f"{field}.cycles_checked")
 
@@ -500,7 +510,9 @@ def _validate_population_silence_replay(
         raise FormalReportValidationError(
             f"{field}.observed_active_outputs must be zero when not violated"
         )
-    cycles_checked = _expect_non_negative_int(replay.get("cycles_checked"), f"{field}.cycles_checked")
+    cycles_checked = _expect_non_negative_int(
+        replay.get("cycles_checked"), f"{field}.cycles_checked"
+    )
     if first_violation_cycle is not None and first_violation_cycle >= cycles_checked:
         raise FormalReportValidationError(
             f"{field}.first_violation_cycle must be less than cycles_checked"
@@ -534,9 +546,7 @@ def _validate_population_silence_replay(
         expected_remaining_silence_cycles = silence.silence_cycles - elapsed_silence_cycles
     else:
         elapsed_silence_cycles = cycles_checked - trigger_cycle - 1
-        expected_remaining_silence_cycles = max(
-            0, silence.silence_cycles - elapsed_silence_cycles
-        )
+        expected_remaining_silence_cycles = max(0, silence.silence_cycles - elapsed_silence_cycles)
     if remaining_silence_cycles != expected_remaining_silence_cycles:
         raise FormalReportValidationError(
             f"{field}.remaining_silence_cycles must match population_silence replay timing"
@@ -586,7 +596,9 @@ def _validate_population_inactivity_replay(
         raise FormalReportValidationError(
             f"{field}.observed_silent_cycles must be <= max_silent_cycles when not violated"
         )
-    cycles_checked = _expect_non_negative_int(replay.get("cycles_checked"), f"{field}.cycles_checked")
+    cycles_checked = _expect_non_negative_int(
+        replay.get("cycles_checked"), f"{field}.cycles_checked"
+    )
     if first_violation_cycle is not None and first_violation_cycle >= cycles_checked:
         raise FormalReportValidationError(
             f"{field}.first_violation_cycle must be less than cycles_checked"

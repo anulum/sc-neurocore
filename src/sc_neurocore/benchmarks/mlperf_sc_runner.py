@@ -44,8 +44,7 @@ def run_mlperf_sc_fixture(
         raise MLPerfSCValidationError("fixture runner currently supports synthetic_sc_xor")
     if model not in _FIXTURE_MODELS:
         raise MLPerfSCValidationError(
-            "fixture runner currently supports fixture_sc_linear and "
-            "fixture_external_majority"
+            "fixture runner currently supports fixture_sc_linear and fixture_external_majority"
         )
 
     output = Path(output_dir)

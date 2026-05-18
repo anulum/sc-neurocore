@@ -1435,9 +1435,7 @@ def test_formal_verify_network_replays_antagonistic_violation(tmp_path, capsys):
     antagonistic_path = out_dir / "dense_lif_frontier_fixture_antagonistic.sv"
     bundle_path = out_dir / "dense_lif_frontier_fixture_formal_bundle.sv"
     assert "a_output0_output1_exclusion" in antagonistic_path.read_text(encoding="utf-8")
-    assert "dense_lif_frontier_fixture_antagonistic_sva" in bundle_path.read_text(
-        encoding="utf-8"
-    )
+    assert "dense_lif_frontier_fixture_antagonistic_sva" in bundle_path.read_text(encoding="utf-8")
     report = json.loads((out_dir / "formal_rate_bound_report.json").read_text(encoding="utf-8"))
     assert report["antagonistic_exclusion"]["output_a"] == 0
     assert report["antagonistic_exclusion"]["output_b"] == 1
@@ -1481,9 +1479,7 @@ def test_formal_verify_network_replays_temporal_separation_violation(tmp_path, c
     assert rc == 1
     temporal_path = out_dir / "dense_lif_frontier_fixture_temporal_separation.sv"
     bundle_path = out_dir / "dense_lif_frontier_fixture_formal_bundle.sv"
-    assert "a_output0_output1_temporal_separation" in temporal_path.read_text(
-        encoding="utf-8"
-    )
+    assert "a_output0_output1_temporal_separation" in temporal_path.read_text(encoding="utf-8")
     assert "dense_lif_frontier_fixture_temporal_separation_sva" in bundle_path.read_text(
         encoding="utf-8"
     )
@@ -1577,9 +1573,7 @@ def test_formal_verify_network_replays_population_silence_violation(tmp_path, ca
     assert rc == 1
     silence_path = out_dir / "dense_lif_frontier_fixture_population_silence.sv"
     bundle_path = out_dir / "dense_lif_frontier_fixture_formal_bundle.sv"
-    assert "a_population_silence_after_coactivation" in silence_path.read_text(
-        encoding="utf-8"
-    )
+    assert "a_population_silence_after_coactivation" in silence_path.read_text(encoding="utf-8")
     assert "dense_lif_frontier_fixture_population_silence_sva" in bundle_path.read_text(
         encoding="utf-8"
     )
@@ -1718,7 +1712,11 @@ def test_formal_verify_network_runs_symbiyosys_when_available(tmp_path, capsys):
 
     assert rc == 0
     m_run.assert_called_once()
-    assert m_run.call_args.args[0] == ["/usr/bin/sby", "-f", str(out_dir / "dense_lif_frontier_fixture.sby")]
+    assert m_run.call_args.args[0] == [
+        "/usr/bin/sby",
+        "-f",
+        str(out_dir / "dense_lif_frontier_fixture.sby"),
+    ]
     report = json.loads((out_dir / "formal_rate_bound_report.json").read_text(encoding="utf-8"))
     assert report["symbiyosys"]["status"] == "passed"
     assert report["symbiyosys"]["returncode"] == 0
@@ -1825,9 +1823,7 @@ def test_formal_verify_network_rejects_negative_refractory_cycles(tmp_path, caps
     assert "refractory-cycles" in capsys.readouterr().out
 
 
-def test_formal_verify_network_rejects_non_positive_population_inactivity(
-    tmp_path, capsys
-):
+def test_formal_verify_network_rejects_non_positive_population_inactivity(tmp_path, capsys):
     rc = _run_main(
         "formal",
         "verify-network",
@@ -1885,9 +1881,7 @@ def test_formal_verify_network_rejects_negative_coactivation_cap(tmp_path, capsy
     assert not (tmp_path / "formal").exists()
 
 
-def test_formal_verify_network_rejects_non_positive_temporal_separation(
-    tmp_path, capsys
-):
+def test_formal_verify_network_rejects_non_positive_temporal_separation(tmp_path, capsys):
     rc = _run_main(
         "formal",
         "verify-network",
@@ -1916,9 +1910,7 @@ def test_formal_verify_network_rejects_non_positive_temporal_separation(
     assert not (tmp_path / "formal").exists()
 
 
-def test_formal_verify_network_rejects_non_positive_population_silence(
-    tmp_path, capsys
-):
+def test_formal_verify_network_rejects_non_positive_population_silence(tmp_path, capsys):
     rc = _run_main(
         "formal",
         "verify-network",
@@ -2765,9 +2757,7 @@ class TestCompileNirCommand:
             {"source": "subgraph__b", "offset": 1, "width": 1},
         ]
 
-        top_module = (out_dir / "nested_multiport_multioutput_net.v").read_text(
-            encoding="utf-8"
-        )
+        top_module = (out_dir / "nested_multiport_multioutput_net.v").read_text(encoding="utf-8")
         assert "ext_input_0 * 16'sh0080" in top_module
         assert "ext_input_1 * 16'shffc0" in top_module
 

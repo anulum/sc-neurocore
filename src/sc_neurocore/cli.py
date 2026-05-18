@@ -1006,8 +1006,7 @@ def _cmd_formal(args: Any) -> int:
         temporal = (
             NetworkOutputTemporalSeparation(
                 name=(
-                    f"output{temporal_outputs[0]}_output{temporal_outputs[1]}_"
-                    "temporal_separation"
+                    f"output{temporal_outputs[0]}_output{temporal_outputs[1]}_temporal_separation"
                 ),
                 output_a=temporal_outputs[0],
                 output_b=temporal_outputs[1],
@@ -1044,9 +1043,7 @@ def _cmd_formal(args: Any) -> int:
         rtl = compile_dense_lif_fixture_rtl(network)
         sva = compile_network_rate_bound_sva(network, rate_bound)
         refractory_sva = (
-            compile_network_refractory_sva(network, refractory)
-            if refractory is not None
-            else None
+            compile_network_refractory_sva(network, refractory) if refractory is not None else None
         )
         antagonistic_sva = (
             compile_network_antagonistic_exclusion_sva(network, antagonistic)
@@ -1149,9 +1146,7 @@ def _cmd_formal(args: Any) -> int:
         refractory_replay_report = (
             asdict(refractory_replay) if refractory_replay is not None else None
         )
-        refractory_violated = bool(
-            refractory_replay is not None and refractory_replay.violated
-        )
+        refractory_violated = bool(refractory_replay is not None and refractory_replay.violated)
         antagonistic_replay_report = (
             asdict(antagonistic_replay) if antagonistic_replay is not None else None
         )
@@ -1163,13 +1158,9 @@ def _cmd_formal(args: Any) -> int:
         population_replay_report = (
             asdict(population_replay) if population_replay is not None else None
         )
-        population_violated = bool(
-            population_replay is not None and population_replay.violated
-        )
+        population_violated = bool(population_replay is not None and population_replay.violated)
         population_silence_replay_report = (
-            asdict(population_silence_replay)
-            if population_silence_replay is not None
-            else None
+            asdict(population_silence_replay) if population_silence_replay is not None else None
         )
         population_silence_violated = bool(
             population_silence_replay is not None and population_silence_replay.violated
@@ -1180,8 +1171,7 @@ def _cmd_formal(args: Any) -> int:
             else None
         )
         population_inactivity_violated = bool(
-            population_inactivity_replay is not None
-            and population_inactivity_replay.violated
+            population_inactivity_replay is not None and population_inactivity_replay.violated
         )
 
     bundle_parts = [sva]
@@ -1272,9 +1262,7 @@ def _cmd_formal(args: Any) -> int:
             "temporal_sva": str(temporal_sva_path) if temporal_sva is not None else None,
             "population_sva": str(population_sva_path) if population_sva is not None else None,
             "population_silence_sva": (
-                str(population_silence_sva_path)
-                if population_silence_sva is not None
-                else None
+                str(population_silence_sva_path) if population_silence_sva is not None else None
             ),
             "population_inactivity_sva": (
                 str(population_inactivity_sva_path)
@@ -1442,8 +1430,7 @@ def _parse_temporal_separation(value: str) -> tuple[int, int, int]:
         raise ValueError("temporal-separation must contain integer values") from exc
     if output_a < 0 or output_b < 0 or output_a == output_b or cycles <= 0:
         raise ValueError(
-            "temporal-separation must contain two distinct non-negative outputs "
-            "and positive cycles"
+            "temporal-separation must contain two distinct non-negative outputs and positive cycles"
         )
     return output_a, output_b, cycles
 
