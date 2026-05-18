@@ -13,6 +13,7 @@ import os
 import time
 from typing import Any
 import logging
+from pathlib import Path
 
 from sc_neurocore.hdl_gen._ident import sanitize_ident
 
@@ -72,22 +73,44 @@ def _validate_hdl_identifiers(payload: Any) -> None:
 
 
 def _ensure_dir() -> None:
-    os.makedirs(_PROJECTS_DIR, exist_ok=True)
+    _projects_root().mkdir(parents=True, exist_ok=True)
+
+
+def _projects_root() -> Path:
+    """Return the resolved Studio project root."""
+    return Path(_PROJECTS_DIR).expanduser().resolve()
 
 
 def _safe_name(name: str) -> str:
-    """Sanitise project name to prevent path traversal."""
-    base = os.path.basename(name).replace("..", "").strip()
+    """Validate a project name that maps to one JSON file in the project root."""
+    if not isinstance(name, str):
+        raise ValueError("Invalid project name")
+    raw = name.strip()
+    if (
+        not raw
+        or raw in (".", "..")
+        or "/" in raw
+        or "\\" in raw
+        or Path(raw).is_absolute()
+        or ".." in Path(raw).parts
+    ):
+        raise ValueError("Invalid project name")
+    base = os.path.basename(raw)
     if not base or base in (".", ".."):
         raise ValueError("Invalid project name")
     return base
 
 
-def _safe_path(name: str) -> str:
-    """Build a project file path and verify it stays within _PROJECTS_DIR."""
+def _safe_path(name: str) -> Path:
+    """Build a resolved project file path confined to the Studio project root."""
     safe = _safe_name(name)
-    path = os.path.normpath(os.path.join(_PROJECTS_DIR, f"{safe}.json"))
-    if not path.startswith(os.path.normpath(_PROJECTS_DIR)):
+    root = _projects_root()
+    path = (root / f"{safe}.json").resolve()
+    try:
+        path.relative_to(root)
+    except ValueError:
+        raise ValueError("Invalid project name") from None
+    if path.parent != root:
         raise ValueError("Invalid project name")
     return path
 
@@ -105,7 +128,7 @@ def save_project(name: str, state: dict) -> dict:
     }
     with open(path, "w") as f:
         json.dump(payload, f, indent=2, default=str)
-    return {"name": name, "path": path, "saved_at": payload["saved_at"]}
+    return {"name": name, "path": str(path), "saved_at": payload["saved_at"]}
 
 
 def load_project(name: str) -> dict:
@@ -124,10 +147,10 @@ def list_projects() -> list[dict]:
     """List all saved projects."""
     _ensure_dir()
     projects = []
-    for fname in sorted(os.listdir(_PROJECTS_DIR)):
+    for fname in sorted(os.listdir(_projects_root())):
         if not fname.endswith(".json"):
             continue
-        path = os.path.join(_PROJECTS_DIR, fname)
+        path = _projects_root() / fname
         try:
             with open(path) as f:
                 data = json.load(f)

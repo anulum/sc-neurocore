@@ -75,6 +75,29 @@ class TestProjectSaveLoad:
         result = delete_project("nope")
         assert "error" in result
 
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "",
+            ".",
+            "..",
+            "../escape",
+            "..\\escape",
+            "/tmp/escape",
+            "nested/name",
+            "nested\\name",
+        ],
+    )
+    def test_project_names_reject_path_semantics(self, tmp_path, monkeypatch, name):
+        monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
+
+        with pytest.raises(ValueError, match="Invalid project name"):
+            save_project(name, {})
+        with pytest.raises(ValueError, match="Invalid project name"):
+            load_project(name)
+        with pytest.raises(ValueError, match="Invalid project name"):
+            delete_project(name)
+
 
 # --- Pipeline ---
 
