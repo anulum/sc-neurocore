@@ -1,0 +1,78 @@
+{
+  "bitstream_length": 256,
+  "interconnect": "direct",
+  "module_name": "stochastic_backprop_handoff",
+  "q_format": "Q1.15",
+  "schema_version": "sc-neurocore.scnir.hdl-sources.v0.2",
+  "scnir_external_inputs": [],
+  "scnir_hierarchy_instance_count": 0,
+  "scnir_hierarchy_port_count": 0,
+  "scnir_signal_kinds": {
+    "spike": 2,
+    "weight": 1
+  },
+  "scnir_signal_routes": {
+    "spike": "direct_wire",
+    "weight": "stochastic_source_module"
+  },
+  "scnir_stream_count": 3,
+  "source_kind": "stochastic_backprop_export",
+  "sources": [
+    {
+      "bitstream_length": 256,
+      "delay_steps": 0,
+      "encoding": "bipolar",
+      "fractional_bits": 15,
+      "layer": "fmoat1_stochastic_backprop",
+      "lfsr_polynomial": null,
+      "module_name": "scnir_src_000_fmoat1_input",
+      "online_learning": null,
+      "seed": 101,
+      "signal_kind": "spike",
+      "sobol_dimension": 1,
+      "source_kind": "sobol16",
+      "stream_id": "fmoat1.input",
+      "tap_mask": null,
+      "total_bits": 16,
+      "transforms": []
+    },
+    {
+      "bitstream_length": 256,
+      "delay_steps": 0,
+      "encoding": "bipolar",
+      "fractional_bits": 15,
+      "layer": "fmoat1_stochastic_backprop",
+      "lfsr_polynomial": null,
+      "module_name": "scnir_src_001_fmoat1_weight",
+      "online_learning": null,
+      "seed": 211,
+      "signal_kind": "weight",
+      "sobol_dimension": 2,
+      "source_kind": "sobol16",
+      "stream_id": "fmoat1.weight",
+      "tap_mask": null,
+      "total_bits": 16,
+      "transforms": []
+    },
+    {
+      "bitstream_length": 256,
+      "delay_steps": 0,
+      "encoding": "bipolar",
+      "fractional_bits": 15,
+      "layer": "fmoat1_stochastic_backprop",
+      "lfsr_polynomial": null,
+      "module_name": "scnir_src_002_fmoat1_product",
+      "online_learning": null,
+      "seed": null,
+      "signal_kind": "spike",
+      "sobol_dimension": null,
+      "source_kind": "replay16",
+      "stream_id": "fmoat1.product",
+      "tap_mask": null,
+      "total_bits": 16,
+      "transforms": []
+    }
+  ],
+  "total_neurons": 0,
+  "total_synapses": 1
+}

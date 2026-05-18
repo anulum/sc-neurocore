@@ -30,6 +30,36 @@ if HAS_TORCH:
         spike_rate_loss,
     )
     from .loops import auto_device, evaluate, train_epoch
+    from .sc_correlation_regularizers import (
+        correlation_matrix,
+        correlation_penalty,
+        pairwise_correlation_penalty,
+    )
+    from .sc_estimators import (
+        SCBitstreamSample,
+        SCBitstreamStatistics,
+        DifferentiableSCConfig,
+        RelaxedSCProduct,
+        SampledSCProduct,
+        estimate_bitstream_statistics,
+        finite_difference_gradients,
+        relaxed_sc_multiply,
+        sample_sc_bitstreams,
+        sampled_sc_multiply,
+    )
+    from .stochastic_backprop import (
+        SCObjectiveBreakdown,
+        SCResourceProxy,
+        SCTrainingObjectiveConfig,
+        relaxed_sc_linear,
+        stochastic_training_objective,
+    )
+    from .stochastic_backprop_export import (
+        STOCHASTIC_BACKPROP_EXPORT_SCHEMA_VERSION,
+        build_stochastic_backprop_export_manifest,
+        write_stochastic_backprop_handoff_bundle,
+        write_stochastic_backprop_export_manifest,
+    )
     from .utils import SpikeMonitor, model_info, population_decode, reset_states
     from .snn_modules import (
         AdExCell,
@@ -117,6 +147,29 @@ __all__ = [
     "spike_rate_loss",
     "spike_l1_loss",
     "spike_l2_loss",
+    # Differentiable stochastic-computing estimators
+    "DifferentiableSCConfig",
+    "RelaxedSCProduct",
+    "SCBitstreamSample",
+    "SCBitstreamStatistics",
+    "SampledSCProduct",
+    "relaxed_sc_multiply",
+    "sample_sc_bitstreams",
+    "sampled_sc_multiply",
+    "estimate_bitstream_statistics",
+    "finite_difference_gradients",
+    "correlation_matrix",
+    "correlation_penalty",
+    "pairwise_correlation_penalty",
+    "SCObjectiveBreakdown",
+    "SCResourceProxy",
+    "SCTrainingObjectiveConfig",
+    "relaxed_sc_linear",
+    "stochastic_training_objective",
+    "STOCHASTIC_BACKPROP_EXPORT_SCHEMA_VERSION",
+    "build_stochastic_backprop_export_manifest",
+    "write_stochastic_backprop_handoff_bundle",
+    "write_stochastic_backprop_export_manifest",
     # Training
     "auto_device",
     "train_epoch",

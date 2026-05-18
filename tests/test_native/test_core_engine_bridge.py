@@ -37,10 +37,14 @@ class _FakeCoreLib:
         a_ptr: ct.POINTER(ct.c_uint64),
         b_ptr: ct.POINTER(ct.c_uint64),
         size: ct.c_size_t,
+        bit_length: ct.c_size_t,
     ) -> float:
         n = int(size.value)
+        bits = int(bit_length.value)
         if n == 0:
             return 0.0
+        if bits != n * 64:
+            return 0.25
         same = 0
         total = 0
         for i in range(n):
@@ -49,6 +53,36 @@ class _FakeCoreLib:
             same += (~(a ^ b) & ((1 << 64) - 1)).bit_count()
             total += 64
         return same / total
+
+    def lfsr_create(self, seed: ct.c_uint16) -> ct.c_void_p:
+        return ct.c_void_p(int(seed.value) or 1)
+
+    def lfsr_encode(
+        self,
+        _ptr: ct.c_void_p,
+        threshold: ct.c_uint16,
+        length: ct.c_uint32,
+        out_ptr: ct.POINTER(ct.POINTER(ct.c_uint64)),
+        out_words: ct.POINTER(ct.c_size_t),
+    ) -> None:
+        bits = int(length.value)
+        words = (bits + 63) // 64
+        array_type = ct.c_uint64 * words
+        arr = array_type()
+        for index in range(bits):
+            if index < int(threshold.value):
+                arr[index // 64] |= 1 << (index % 64)
+        self._last_array = arr
+        out_ptr_cast = ct.cast(out_ptr, ct.POINTER(ct.POINTER(ct.c_uint64)))
+        out_words_cast = ct.cast(out_words, ct.POINTER(ct.c_size_t))
+        out_ptr_cast[0] = ct.cast(arr, ct.POINTER(ct.c_uint64))
+        out_words_cast[0] = words
+
+    def bitstream_free(self, _ptr: ct.POINTER(ct.c_uint64), _size: ct.c_size_t) -> None:
+        return None
+
+    def lfsr_destroy(self, _ptr: ct.c_void_p) -> None:
+        return None
 
 
 @pytest.fixture(autouse=True)
@@ -76,7 +110,19 @@ def test_scalar_fallbacks_when_native_absent() -> None:
     assert ceb.sc_popcount(0b101101) == 4
     assert ceb.sc_popcount64((1 << 63) | 0b101) == 3
     assert ceb.sc_popcount_packed([0b1010, 0b1111]) == 6
-    assert ceb.sc_scc_packed([0xF0F0], [0xF0F0]) == 0.0
+    assert ceb.sc_scc_packed([0xAAAAAAAAAAAAAAAA], [0xAAAAAAAAAAAAAAAA]) == pytest.approx(1.0)
+    assert ceb.sc_scc_packed([0xAAAAAAAAAAAAAAAA], [0x5555555555555555]) == pytest.approx(-1.0)
+    assert ceb.sc_scc_packed([0xFFFFFFFFFFFFFFFF], [0xFFFFFFFFFFFFFFFF]) == pytest.approx(0.0)
+
+
+def test_python_scc_fallback_honors_logical_bit_length() -> None:
+    ceb._HAS_CORE_ENGINE = False
+
+    assert ceb.sc_scc_packed([0b1010_1010], [0b1010_1010], bit_length=8) == pytest.approx(1.0)
+    assert ceb.sc_scc_packed([0b1010_1010], [0b0101_0101], bit_length=8) == pytest.approx(-1.0)
+
+    masked = ceb.sc_scc_packed([0xFFFF_FFFF_FFFF_FF0F], [0xFFFF_FFFF_FFFF_FF0F], bit_length=8)
+    assert masked == pytest.approx(1.0)
 
 
 def test_numpy_scc_empty_input_returns_zero() -> None:
@@ -102,8 +148,36 @@ def test_native_paths_delegate_to_loaded_library() -> None:
     scc = ceb.sc_scc_packed([0xFFFFFFFFFFFFFFFF], [0xFFFFFFFFFFFFFFFF])
     assert scc == pytest.approx(1.0)
 
+    masked_scc = ceb.sc_scc_packed(
+        [0xFFFFFFFFFFFFFFFF],
+        [0xFFFFFFFFFFFFFFFF],
+        bit_length=17,
+    )
+    assert masked_scc == pytest.approx(0.25)
+
     scc_np = ceb.sc_scc_packed_np(
         np.array([0xFFFFFFFFFFFFFFFF], dtype=np.uint64),
         np.array([0xFFFFFFFFFFFFFFFF], dtype=np.uint64),
     )
     assert scc_np == pytest.approx(1.0)
+
+
+def test_native_lfsr_encode_packed_delegates_to_loaded_library() -> None:
+    ceb._HAS_CORE_ENGINE = True
+    ceb._lib = _FakeCoreLib()
+
+    words = ceb.lfsr_encode_packed(seed=0xACE1, threshold=4, bit_length=8)
+
+    assert words.dtype == np.uint64
+    assert words.tolist() == [0b1111]
+
+
+def test_lfsr_encode_bits_rejects_invalid_contract_values() -> None:
+    with pytest.raises(ValueError, match="seed"):
+        ceb.lfsr_encode_bits(seed=0, threshold=1, bit_length=8)
+
+    with pytest.raises(ValueError, match="threshold"):
+        ceb.lfsr_encode_bits(seed=1, threshold=70000, bit_length=8)
+
+    with pytest.raises(ValueError, match="bit_length"):
+        ceb.lfsr_encode_bits(seed=1, threshold=1, bit_length=0)
