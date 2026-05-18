@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Unified Data Structure for sc-neurocore
 
+"""Tensor container with conversions between probability, bitstream, and quantum domains."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -25,9 +27,11 @@ class TensorStream:
 
     @classmethod
     def from_prob(cls, probs: np.ndarray[Any, Any]) -> TensorStream:
+        """Create a tensor stream whose data is already in probability form."""
         return cls(data=probs, domain="prob")
 
     def to_bitstream(self, length: int = 1024) -> np.ndarray[Any, Any]:
+        """Convert probability-domain data into Bernoulli bitstreams."""
         if self.domain == "bitstream":
             return self.data
         if self.domain == "prob":
@@ -37,6 +41,7 @@ class TensorStream:
         raise ValueError(f"Cannot convert {self.domain} to bitstream directly.")
 
     def to_prob(self) -> np.ndarray[Any, Any]:
+        """Convert supported domains into probability-domain tensors."""
         if self.domain == "prob":
             return self.data
         if self.domain == "bitstream":
@@ -48,6 +53,7 @@ class TensorStream:
         return self.data  # Fallback
 
     def to_quantum(self) -> np.ndarray[Any, Any]:
+        """Convert probability-domain data into two-amplitude quantum encoding."""
         if self.domain == "quantum":
             return self.data
         p = np.clip(self.to_prob(), 0.0, 1.0)

@@ -9729,6 +9729,8 @@ Preserves sign information (unlike unipolar to_sc_weights).
 ## Module `core.mdl_parser`
 
 ### Class `MDLSpecification`
+Serializable MDL payload containing architecture and state sections.
+
 
 ### Class `MindDescriptionLanguage`
 Parser for Mind Description Language (MDL).
@@ -9748,6 +9750,7 @@ Central Orchestrator for sc-neurocore Agents.
 Connects disparate modules into a functional pipeline.
 
 - **register_module**(name, module_obj)
+  - Register a named module object for later pipeline execution.
 - **set_attention**(module_name)
   - Focuses resources on a specific module.
 - **execute_pipeline**(pipeline, initial_input)
@@ -9762,9 +9765,13 @@ Unified Data Structure for sc-neurocore.
 Handles automatic conversion between domains.
 
 - **from_prob**(cls, probs)
+  - Create a tensor stream whose data is already in probability form.
 - **to_bitstream**(length)
+  - Convert probability-domain data into Bernoulli bitstreams.
 - **to_prob**()
+  - Convert supported domains into probability-domain tensors.
 - **to_quantum**()
+  - Convert probability-domain data into two-amplitude quantum encoding.
 
 ---
 

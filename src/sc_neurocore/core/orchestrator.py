@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Central Orchestrator for sc-neurocore Agents
 
+"""TensorStream-aware orchestrator for sequencing registered processing modules."""
+
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -30,6 +32,7 @@ class CognitiveOrchestrator:
     attention_focus: Optional[str] = None
 
     def register_module(self, name: str, module_obj: Any) -> None:
+        """Register a named module object for later pipeline execution."""
         self.modules[name] = module_obj
 
     def set_attention(self, module_name: str) -> None:

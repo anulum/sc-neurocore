@@ -6,4 +6,6 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Experiments Package Init
 
+"""Package entry point for experimental workflow helpers."""
+
 __all__: list[str] = []

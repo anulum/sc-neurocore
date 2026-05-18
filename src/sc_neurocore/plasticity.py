@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — plasticity
 
+"""Public facade for constructing native plasticity learning layers."""
+
 from sc_neurocore._native.learning_bridge import create_plasticity_layer
 
 __all__ = ["create_plasticity_layer"]
