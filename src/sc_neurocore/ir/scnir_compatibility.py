@@ -288,9 +288,13 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         nir_primitive="NIRGraph",
         support_level="metadata_and_hdl",
         parser_node="SCSubgraphNode or SCMultiPortSubgraphNode",
-        neuron_graph_lowering="single-port subgraphs are inlined with namespaced nodes",
+        neuron_graph_lowering=(
+            "single-port and exactly boundary-mapped multi-port subgraphs are "
+            "inlined with namespaced nodes, including exact multi-output mappings"
+        ),
         scnir_stream_metadata=(
             "inline_single_port_subgraph",
+            "inline_exact_multiport_subgraph",
             "namespaced_stream_ids",
             "hierarchy_instance_metadata",
         ),
@@ -301,8 +305,13 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
             "bitstream_length",
             "precision",
             "manifest_hierarchy_counts",
+            "manifest_external_input_layout",
         ),
-        hdl_support="namespaced inline fixed-point terms; no standalone submodule boundary yet",
+        hdl_support=(
+            "namespaced inline fixed-point terms with stable external input-bus "
+            "lanes for single-port and exact multi-port boundary mappings; no "
+            "standalone submodule boundary yet"
+        ),
         audit_evidence=(
             "tests/test_scnir_convert.py",
             "tests/test_scnir_fpga_integration.py",
@@ -310,9 +319,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
             "tests/test_scnir_handoff_audit.py",
         ),
         limitation=(
-            "Single-port nested graphs are inlined exactly into the parent hardware graph. "
-            "Multi-port nested NIRGraph nodes still fail closed until explicit hierarchical "
-            "hardware handoff is implemented."
+            "Single-port and exact one-edge-per-port nested graphs, including exact "
+            "multi-output boundaries, are inlined into the parent hardware graph. "
+            "Ambiguous multi-port nested NIRGraph boundary mappings still fail closed "
+            "until explicit hierarchical submodule handoff is implemented."
         ),
     ),
 )

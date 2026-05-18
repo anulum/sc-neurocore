@@ -216,12 +216,18 @@ window coefficient by the kernel area. `Input` and `Output` are boundary nodes.
 Single-input/single-output nested `NIRGraph` nodes are inlined into the parent
 hardware graph with namespaced node and stream identifiers, preserving the
 nested contents through the same SC-NIR/HDL paths as the equivalent flat graph.
+Multi-port nested graphs use the same inline path only when the parent graph has
+an exact ordered one-edge-per-input and one-edge-per-output boundary mapping,
+including exact multi-output mappings. Separate external source names receive
+stable flattened input-bus lanes, so independent nested inputs do not collapse
+onto the same `I_ext_flat` slice in generated RTL.
 The SC-NIR document also retains the inlined boundary as a hierarchy instance:
 generated hierarchy ports reference the exact stream identifiers emitted by the
 inlined subgraph and use the active fixed-point width. This preserves audit and
 future submodule handoff metadata without weakening the current flat RTL path.
-Multi-port nested graphs still fail closed until a standalone hierarchical
-hardware handoff defines port maps, submodule boundaries, and audit evidence.
+Ambiguous multi-port nested graphs still fail closed until a standalone
+hierarchical hardware handoff defines port maps, submodule boundaries, and audit
+evidence.
 
 ---
 
@@ -294,8 +300,8 @@ hardware handoff defines port maps, submodule boundaries, and audit evidence.
 | `sc_nir_<type>.v` | Per-type neuron Verilog (one per unique neuron type) |
 | `sc_nir_weight_rom.v` | Combined weight ROM artefact for all connections |
 | `result.scnir_source_modules` | Standalone LFSR-16/Sobol-16 source RTL keyed by module name |
-| `result.scnir_source_manifest` | Stream-to-source manifest for deterministic hardware handoff, including `signal_kind` and recurrent `delay_steps` |
-| `scnir_handoff_audit.json` | Optional audit report with stream/source counts, signal routes, and SC-NIR hierarchy instance/port summaries |
+| `result.scnir_source_manifest` | Stream-to-source manifest for deterministic hardware handoff, including `signal_kind`, recurrent `delay_steps`, and external input-bus layout |
+| `scnir_handoff_audit.json` | Optional audit report with stream/source counts, signal routes, external input-bus layout, and SC-NIR hierarchy instance/port summaries |
 
 ---
 
@@ -692,10 +698,13 @@ machine-checkable without parsing RTL comments. It also records
 records the route selected for each present stream role: analogue-state streams
 use direct fixed-point MAC terms, spike streams use either direct wiring or
 weighted AER event routing depending on the selected interconnect, and weight
-streams are materialised as stochastic source modules. Nested-graph exports also
-record `scnir_hierarchy_instance_count` and `scnir_hierarchy_port_count`, so
-downstream tooling can detect preserved hierarchy boundaries from the manifest
-without reparsing the SC-NIR document. The manifest rows record the stream
+streams are materialised as stochastic source modules. `scnir_external_inputs`
+records a contiguous source-name to `I_ext_flat` offset/width layout so
+downstream tooling can audit multi-port nested input boundaries without parsing
+RTL expressions. Nested-graph exports also record
+`scnir_hierarchy_instance_count` and `scnir_hierarchy_port_count`, so downstream
+tooling can detect preserved hierarchy boundaries from the manifest without
+reparsing the SC-NIR document. The manifest rows record the stream
 identifier, emitted module name, source kind, seed, bitstream length, encoding,
 signal kind, explicit recurrent delay steps, precision, and LFSR/Sobol source
 metadata used to generate each module. Mixed analogue/spiking graphs use these
@@ -707,9 +716,10 @@ handoff directory before passing artefacts to downstream simulation, synthesis,
 or packaging jobs. The audit loads `scnir_document.json`, checks
 `scnir_source_manifest.json` against the typed SC-NIR streams, verifies aggregate
 signal-kind counts and route selections, verifies top-level SC-NIR localparams,
-records hierarchy instance and port summaries from `scnir_document.json`, and
-fails closed if any expected source module, top module, or weight ROM artefact
-is missing. Use `compile-nir --audit-handoff` when the audit report should be
+records hierarchy instance and port summaries from `scnir_document.json`,
+verifies contiguous external input-bus layout rows, and fails closed if any
+expected source module, top module, or weight ROM artefact is missing. Use
+`compile-nir --audit-handoff` when the audit report should be
 generated atomically with the RTL bundle.
 
 The CLI regression suite co-simulates emitted source modules selected from

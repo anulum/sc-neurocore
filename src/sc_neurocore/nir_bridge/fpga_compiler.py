@@ -51,7 +51,7 @@ from ..ir.scnir_hdl import (
 )
 from ..ir.scnir_schema import SCNIRDocument
 from ..neurons.equation_builder import from_equations
-from .neuron_graph import NeuronGraph, NeuronSpec
+from .neuron_graph import ConnectionSpec, NeuronGraph, NeuronSpec
 from .quantise_params import QuantisedGraph, quantise_graph
 
 logger = logging.getLogger(__name__)
@@ -189,6 +189,52 @@ def _connection_sources_are_analogue(pop: NeuronSpec) -> bool:
     return pop.neuron_type in {"li", "cuba_li", "integrator"}
 
 
+def _external_input_layout(
+    conns: list[ConnectionSpec],
+    pop_by_name: dict[str, NeuronSpec],
+    pops: list[NeuronSpec],
+) -> tuple[int, dict[str, int], dict[str, int]]:
+    """Assign stable flattened input-bus lanes to each external source name."""
+
+    offsets: dict[str, int] = {}
+    widths: dict[str, int] = {}
+    cursor = 0
+    for conn in conns:
+        if conn.src in pop_by_name:
+            continue
+        width = int(np.asarray(conn.weights).shape[1])
+        if width <= 0:
+            raise ValueError(f"Connection {conn.src}->{conn.dst} has no external source columns")
+        existing = widths.get(conn.src)
+        if existing is not None:
+            if existing != width:
+                raise ValueError(
+                    f"External source {conn.src!r} is used with inconsistent widths "
+                    f"{existing} and {width}"
+                )
+            continue
+        offsets[conn.src] = cursor
+        widths[conn.src] = width
+        cursor += width
+
+    if offsets:
+        return cursor, offsets, widths
+    if pops:
+        return max(1, pops[0].n_neurons), {}, {}
+    return 1, {}, {}
+
+
+def _external_input_manifest(graph: QuantisedGraph) -> tuple[SCNIRExternalInputManifestEntry, ...]:
+    """Return the flattened input-bus layout used by generated top-level RTL."""
+
+    pop_by_name = {pop.name: pop for pop in graph.populations}
+    _, offsets, widths = _external_input_layout(graph.connections, pop_by_name, graph.populations)
+    return tuple(
+        SCNIRExternalInputManifestEntry(source=source, offset=offsets[source], width=widths[source])
+        for source in sorted(offsets, key=lambda item: offsets[item])
+    )
+
+
 def _connection_has_thresholds(conn: Any) -> bool:
     """Whether a connection carries explicit NIR Threshold metadata."""
 
@@ -241,6 +287,24 @@ def _normalise_connection_delay_steps(
 
 
 @dataclass
+class SCNIRExternalInputManifestEntry:
+    """Stable flattened input-bus layout entry for one external source."""
+
+    source: str
+    offset: int
+    width: int
+
+    def as_dict(self) -> dict[str, int | str]:
+        """Return deterministic JSON-ready external input metadata."""
+
+        return {
+            "source": self.source,
+            "offset": self.offset,
+            "width": self.width,
+        }
+
+
+@dataclass
 class NetworkCompilationResult:
     """All artefacts from a network-level FPGA compilation.
 
@@ -270,6 +334,8 @@ class NetworkCompilationResult:
         Concrete stochastic source HDL modules keyed by Verilog module name.
     scnir_source_manifest : tuple[SCNIRHDLSourceManifestEntry, ...]
         Deterministic manifest mapping SC-NIR streams to source modules.
+    scnir_external_inputs : tuple[SCNIRExternalInputManifestEntry, ...]
+        Deterministic flattened input-bus layout for external source names.
     """
 
     neuron_modules: dict[str, str]
@@ -283,6 +349,7 @@ class NetworkCompilationResult:
     scnir_document: SCNIRDocument
     scnir_source_modules: dict[str, str]
     scnir_source_manifest: tuple[SCNIRHDLSourceManifestEntry, ...]
+    scnir_external_inputs: tuple[SCNIRExternalInputManifestEntry, ...]
     warnings: list[str] = field(default_factory=list)
 
 
@@ -505,13 +572,11 @@ def _build_top_direct(
         pop_offsets[pop.name] = offset
         offset += pop.n_neurons
 
-    external_connections = [conn for conn in conns if conn.src not in pop_by_name]
-    if external_connections:
-        external_width = max(int(conn.weights.shape[1]) for conn in external_connections)
-    elif pops:
-        external_width = max(1, pops[0].n_neurons)
-    else:
-        external_width = 1
+    external_width, external_offsets, external_source_widths = _external_input_layout(
+        conns,
+        pop_by_name,
+        pops,
+    )
 
     max_terms = external_width if pops else 1
     delayed_source_depths: dict[tuple[str, int], int] = {}
@@ -529,7 +594,9 @@ def _build_top_direct(
                 f"destination rows for {dst_pop.n_neurons} destination neurons"
             )
         src_pop = pop_by_name.get(conn.src)
-        expected_src = src_pop.n_neurons if src_pop is not None else external_width
+        expected_src = (
+            src_pop.n_neurons if src_pop is not None else external_source_widths[conn.src]
+        )
         if weights.shape[1] != expected_src:
             raise ValueError(
                 f"Connection {conn.src}->{conn.dst} has {weights.shape[1]} "
@@ -734,10 +801,11 @@ def _build_top_direct(
                     term_base = f"{prefix}_c{conn_idx}_s{src_idx}"
 
                     if src_pop is None:
+                        external_idx = external_offsets[conn.src] + src_idx
                         if source_thresholds is not None:
                             threshold = int(source_thresholds[src_idx])
                             conn_terms.append(
-                                f"(ext_input_{src_idx} > {_signed_hex(threshold, data_width)} "
+                                f"(ext_input_{external_idx} > {_signed_hex(threshold, data_width)} "
                                 f"? {_signed_hex(weight, acc_width)} : {acc_width}'sd0)"
                             )
                         else:
@@ -746,7 +814,7 @@ def _build_top_direct(
                             term_defs.extend(
                                 [
                                     f"    wire signed [{product_width - 1}:0] {mul} = "
-                                    f"ext_input_{src_idx} * {_signed_hex(weight, data_width)};",
+                                    f"ext_input_{external_idx} * {_signed_hex(weight, data_width)};",
                                     f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};",
                                 ]
                             )
@@ -881,13 +949,11 @@ def _build_top_aer(
         pop_offsets[pop.name] = offset
         offset += pop.n_neurons
 
-    external_connections = [conn for conn in conns if conn.src not in pop_by_name]
-    if external_connections:
-        external_width = max(int(conn.weights.shape[1]) for conn in external_connections)
-    elif pops:
-        external_width = max(1, pops[0].n_neurons)
-    else:
-        external_width = 1
+    external_width, external_offsets, external_source_widths = _external_input_layout(
+        conns,
+        pop_by_name,
+        pops,
+    )
 
     max_terms = external_width if pops else 1
     for conn in conns:
@@ -903,7 +969,9 @@ def _build_top_aer(
                 f"destination rows for {dst_pop.n_neurons} destination neurons"
             )
         src_pop = pop_by_name.get(conn.src)
-        expected_src = src_pop.n_neurons if src_pop is not None else external_width
+        expected_src = (
+            src_pop.n_neurons if src_pop is not None else external_source_widths[conn.src]
+        )
         if weights.shape[1] != expected_src:
             raise ValueError(
                 f"Connection {conn.src}->{conn.dst} has {weights.shape[1]} "
@@ -1057,12 +1125,13 @@ def _build_top_aer(
                     term_base = f"{prefix}_c{conn_idx}_s{src_idx}"
 
                     if src_pop is None:
+                        external_idx = external_offsets[conn.src] + src_idx
                         mul = f"{term_base}_mul"
                         term = f"{term_base}_term"
                         term_defs.extend(
                             [
                                 f"    wire signed [{product_width - 1}:0] {mul} = "
-                                f"ext_input_{src_idx} * {_signed_hex(weight, data_width)};",
+                                f"ext_input_{external_idx} * {_signed_hex(weight, data_width)};",
                                 f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};",
                             ]
                         )
@@ -1303,6 +1372,7 @@ def compile_network_to_fpga(
         scnir_document=scnir_document,
         scnir_source_modules=dict(scnir_source_bundle.modules),
         scnir_source_manifest=scnir_source_bundle.manifest,
+        scnir_external_inputs=_external_input_manifest(qgraph),
         warnings=warnings,
     )
 

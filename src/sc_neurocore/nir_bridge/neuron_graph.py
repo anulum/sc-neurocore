@@ -360,9 +360,9 @@ def _inline_single_port_subgraphs(
 
     The runtime parser keeps nested NIR graphs as executable wrapper nodes.  HDL
     lowering needs a single explicit dataflow graph, so this helper namespaces
-    each single-input/single-output subgraph and rewires the outer edges through
-    the nested boundary nodes.  Multi-port subgraphs remain fail-closed until a
-    real hierarchical handoff contract exists.
+    each nested subgraph and rewires the outer edges through the nested boundary
+    nodes.  Multi-port subgraphs are accepted only when the parent graph supplies
+    an exact ordered one-edge-per-input and one-edge-per-output boundary mapping.
     """
 
     nodes = dict(network.nodes)
@@ -378,18 +378,22 @@ def _inline_single_port_subgraphs(
         for name in _topological_order(nodes, edges):
             node = nodes[name]
             class_name = type(node).__name__
-            if class_name == _MULTIPORT_SUBGRAPH_NODE:
-                raise ValueError(
-                    f"Multi-port nested NIRGraph node {name!r} requires explicit hierarchical "
-                    "hardware handoff before SC-NIR/FPGA lowering"
-                )
-            if class_name != _SINGLE_PORT_SUBGRAPH_NODE:
+            if class_name not in {_SINGLE_PORT_SUBGRAPH_NODE, _MULTIPORT_SUBGRAPH_NODE}:
                 continue
 
             subnetwork = getattr(node, "network", None)
             if subnetwork is None:
                 raise ValueError(f"Nested NIRGraph node {name!r} does not expose a parsed network")
-            if len(subnetwork.input_nodes) != 1 or len(subnetwork.output_nodes) != 1:
+            nested_inputs = tuple(str(item) for item in subnetwork.input_nodes)
+            nested_outputs = tuple(str(item) for item in subnetwork.output_nodes)
+            if not nested_inputs or not nested_outputs:
+                raise ValueError(
+                    f"Nested NIRGraph node {name!r} must expose at least one input and one output "
+                    "for SC-NIR/FPGA lowering"
+                )
+            if class_name == _SINGLE_PORT_SUBGRAPH_NODE and (
+                len(nested_inputs) != 1 or len(nested_outputs) != 1
+            ):
                 raise ValueError(
                     f"Nested NIRGraph node {name!r} must expose exactly one input and one output "
                     "for inline SC-NIR/FPGA lowering"
@@ -409,8 +413,12 @@ def _inline_single_port_subgraphs(
 
             incoming = [src for src, dst in edges if dst == name]
             outgoing = [dst for src, dst in edges if src == name]
-            inner_input = f"{prefix}{subnetwork.input_nodes[0]}"
-            inner_output = f"{prefix}{subnetwork.output_nodes[0]}"
+            if len(incoming) != len(nested_inputs) or len(outgoing) != len(nested_outputs):
+                raise ValueError(
+                    f"Multi-port nested NIRGraph node {name!r} boundary mapping requires "
+                    f"{len(nested_inputs)} incoming and {len(nested_outputs)} outgoing edges; "
+                    f"got {len(incoming)} incoming and {len(outgoing)} outgoing"
+                )
             hierarchy.append(
                 HierarchyInstanceSpec(
                     instance_id=name,
@@ -420,8 +428,14 @@ def _inline_single_port_subgraphs(
             )
 
             edges = [(src, dst) for src, dst in edges if src != name and dst != name]
-            edges.extend((src, inner_input) for src in incoming)
-            edges.extend((inner_output, dst) for dst in outgoing)
+            edges.extend(
+                (src, f"{prefix}{nested_input}")
+                for src, nested_input in zip(incoming, nested_inputs, strict=True)
+            )
+            edges.extend(
+                (f"{prefix}{nested_output}", dst)
+                for nested_output, dst in zip(nested_outputs, outgoing, strict=True)
+            )
             edges.extend((f"{prefix}{src}", f"{prefix}{dst}") for src, dst in subnetwork.edges)
             nodes.pop(name)
             nodes.update(prefixed_nodes)

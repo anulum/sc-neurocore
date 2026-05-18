@@ -115,8 +115,8 @@ family, seed, bitstream length, encoding, signal kind, recurrent delay steps,
 precision, transform metadata, and source-specific metadata used for each
 module. CLI manifests also record the selected interconnect, Q-format, total
 neuron count, total synapse count, SC-NIR stream count,
-`scnir_signal_kinds` counts, and `scnir_signal_routes` so AER/event-driven
-and mixed analogue/spiking output
+`scnir_signal_kinds` counts, `scnir_signal_routes`, and
+`scnir_external_inputs` so AER/event-driven and mixed analogue/spiking output
 directories carry machine-readable compile evidence. FPGA compilation
 marks non-spiking LI/CubaLI/integrator population streams as
 `analogue_state`, so mixed analogue/spiking NIR graphs expose voltage-state
@@ -149,7 +149,7 @@ parser-only or only closed under a bounded shape/port contract.
 | `Conv1d` | metadata and HDL when `input_shape` is explicit and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `convolution_lowered_weight` | dense Toeplitz-style fixed-point MAC terms through the weight path |
 | `Conv2d` | metadata and HDL when exact spatial input shape is explicit and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `convolution_lowered_weight` | dense 2D convolution fixed-point MAC terms through the weight path |
 | `SumPool2d`, `AvgPool2d` | metadata and HDL when exact CHW shape metadata is present and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `pool2d_lowered_weight` | dense pooling fixed-point MAC terms through the weight path |
-| nested `NIRGraph` | metadata and HDL for single-input/single-output subgraphs inlined into the parent graph; multi-port hierarchy fails closed | namespaced stream IDs from the inlined subgraph contents plus a top-level hierarchy instance whose ports reference those streams | namespaced inline fixed-point terms; standalone hierarchical submodule handoff remains open |
+| nested `NIRGraph` | metadata and HDL for single-input/single-output subgraphs and exact one-edge-per-port multi-port subgraphs, including exact multi-output boundaries, inlined into the parent graph; ambiguous multi-port hierarchy fails closed | namespaced stream IDs from the inlined subgraph contents plus a top-level hierarchy instance whose ports reference those streams | namespaced inline fixed-point terms with stable external input-bus lanes; standalone hierarchical submodule handoff remains open |
 
 Use `validate_scnir_compatibility_matrix()` in tests or release checks to fail
 when parser support changes without a corresponding compatibility row. Use

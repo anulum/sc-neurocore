@@ -485,6 +485,9 @@ def _cmd_compile_nir(args: Any) -> int:
                     result.scnir_document,
                     interconnect=result.interconnect,
                 ),
+                "scnir_external_inputs": [
+                    entry.as_dict() for entry in result.scnir_external_inputs
+                ],
                 "scnir_hierarchy_instance_count": len(result.scnir_document.hierarchy),
                 "scnir_hierarchy_port_count": _scnir_hierarchy_port_count(result.scnir_document),
                 "sources": [entry.as_dict() for entry in result.scnir_source_manifest],

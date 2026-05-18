@@ -198,6 +198,98 @@ def _single_port_nested_graph() -> object:
     )
 
 
+def _multiport_nested_graph() -> object:
+    inner = nir.NIRGraph(
+        nodes={
+            "a": nir.Input(input_type={"input": np.array([1])}),
+            "b": nir.Input(input_type={"input": np.array([1])}),
+            "aff": nir.Affine(
+                weight=np.array([[0.5, -0.25]], dtype=np.float32),
+                bias=np.zeros(1, dtype=np.float32),
+            ),
+            "output": nir.Output(output_type={"output": np.array([1])}),
+        },
+        edges=[("a", "aff"), ("b", "aff"), ("aff", "output")],
+        type_check=False,
+    )
+    return nir.NIRGraph(
+        nodes={
+            "left": nir.Input(input_type={"input": np.array([1])}),
+            "right": nir.Input(input_type={"input": np.array([1])}),
+            "subgraph": inner,
+            "lif": nir.LIF(
+                tau=np.full(1, 20.0),
+                r=np.ones(1),
+                v_leak=np.zeros(1),
+                v_threshold=np.ones(1),
+            ),
+            "output": nir.Output(output_type={"output": np.array([1])}),
+        },
+        edges=[
+            ("left", "subgraph"),
+            ("right", "subgraph"),
+            ("subgraph", "lif"),
+            ("lif", "output"),
+        ],
+        type_check=False,
+    )
+
+
+def _multiport_multioutput_nested_graph() -> object:
+    inner = nir.NIRGraph(
+        nodes={
+            "a": nir.Input(input_type={"input": np.array([1])}),
+            "b": nir.Input(input_type={"input": np.array([1])}),
+            "aff_a": nir.Affine(
+                weight=np.array([[0.5]], dtype=np.float32),
+                bias=np.zeros(1, dtype=np.float32),
+            ),
+            "aff_b": nir.Affine(
+                weight=np.array([[-0.25]], dtype=np.float32),
+                bias=np.zeros(1, dtype=np.float32),
+            ),
+            "out_a": nir.Output(output_type={"output": np.array([1])}),
+            "out_b": nir.Output(output_type={"output": np.array([1])}),
+        },
+        edges=[
+            ("a", "aff_a"),
+            ("aff_a", "out_a"),
+            ("b", "aff_b"),
+            ("aff_b", "out_b"),
+        ],
+        type_check=False,
+    )
+    return nir.NIRGraph(
+        nodes={
+            "left": nir.Input(input_type={"input": np.array([1])}),
+            "right": nir.Input(input_type={"input": np.array([1])}),
+            "subgraph": inner,
+            "lif_a": nir.LIF(
+                tau=np.full(1, 20.0),
+                r=np.ones(1),
+                v_leak=np.zeros(1),
+                v_threshold=np.ones(1),
+            ),
+            "lif_b": nir.LIF(
+                tau=np.full(1, 20.0),
+                r=np.ones(1),
+                v_leak=np.zeros(1),
+                v_threshold=np.ones(1),
+            ),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[
+            ("left", "subgraph"),
+            ("right", "subgraph"),
+            ("subgraph", "lif_a"),
+            ("subgraph", "lif_b"),
+            ("lif_a", "output"),
+            ("lif_b", "output"),
+        ],
+        type_check=False,
+    )
+
+
 def _integrator_graph() -> object:
     return nir.NIRGraph(
         nodes={
@@ -651,6 +743,71 @@ def test_fpga_compile_reports_inlined_single_port_hierarchy_metadata() -> None:
             ],
         }
     ]
+
+
+def test_fpga_compile_inlines_exact_multiport_nested_graph_weight_terms() -> None:
+    network = from_nir(_multiport_nested_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    result = compile_network_to_fpga(
+        neuron_graph,
+        module_name="scnir_multiport_nested_inline",
+        bitstream_length=896,
+    )
+
+    payload = scnir_to_dict(result.scnir_document)
+    validate_scnir_dict(payload)
+    assert payload["hierarchy"] == [
+        {
+            "instance_id": "subgraph",
+            "module_name": "scnir_subgraph",
+            "ports": [
+                {
+                    "port_name": "weight_0",
+                    "direction": "output",
+                    "stream_id": "conn.subgraph__a_to_lif.weight",
+                    "signal_kind": "weight",
+                    "bit_width": 16,
+                }
+            ],
+        }
+    ]
+    assert "ext_input_0 * 16'sh0080" in result.top_module
+    assert "ext_input_1 * 16'shffc0" in result.top_module
+
+
+def test_fpga_compile_inlines_exact_multiport_multioutput_nested_graph() -> None:
+    network = from_nir(_multiport_multioutput_nested_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    result = compile_network_to_fpga(
+        neuron_graph,
+        module_name="scnir_multiport_multioutput_inline",
+        bitstream_length=896,
+    )
+
+    payload = scnir_to_dict(result.scnir_document)
+    validate_scnir_dict(payload)
+    assert payload["hierarchy"][0]["ports"] == [
+        {
+            "port_name": "weight_0",
+            "direction": "output",
+            "stream_id": "conn.subgraph__a_to_lif_a.weight",
+            "signal_kind": "weight",
+            "bit_width": 16,
+        },
+        {
+            "port_name": "weight_1",
+            "direction": "output",
+            "stream_id": "conn.subgraph__b_to_lif_b.weight",
+            "signal_kind": "weight",
+            "bit_width": 16,
+        },
+    ]
+    assert "ext_input_0 * 16'sh0080" in result.top_module
+    assert "ext_input_1 * 16'shffc0" in result.top_module
+    assert "lif_a" in result.top_module
+    assert "lif_b" in result.top_module
 
 
 def test_fpga_compile_emits_integrator_module_and_analogue_state_routes() -> None:

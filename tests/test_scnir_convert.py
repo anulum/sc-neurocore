@@ -606,6 +606,98 @@ def _build_multiport_nested_subgraph_graph() -> object:
     )
 
 
+def _build_exact_multiport_nested_subgraph_graph() -> object:
+    inner = nir.NIRGraph(
+        nodes={
+            "a": nir.Input(input_type={"input": np.array([1])}),
+            "b": nir.Input(input_type={"input": np.array([1])}),
+            "aff": nir.Affine(
+                weight=np.array([[1.0, -1.0]], dtype=np.float32),
+                bias=np.zeros(1, dtype=np.float32),
+            ),
+            "output": nir.Output(output_type={"output": np.array([1])}),
+        },
+        edges=[("a", "aff"), ("b", "aff"), ("aff", "output")],
+        type_check=False,
+    )
+    return nir.NIRGraph(
+        nodes={
+            "left": nir.Input(input_type={"input": np.array([1])}),
+            "right": nir.Input(input_type={"input": np.array([1])}),
+            "subgraph": inner,
+            "lif": nir.LIF(
+                tau=np.full(1, 20.0),
+                r=np.ones(1),
+                v_leak=np.zeros(1),
+                v_threshold=np.ones(1),
+            ),
+            "output": nir.Output(output_type={"output": np.array([1])}),
+        },
+        edges=[
+            ("left", "subgraph"),
+            ("right", "subgraph"),
+            ("subgraph", "lif"),
+            ("lif", "output"),
+        ],
+        type_check=False,
+    )
+
+
+def _build_exact_multiport_multioutput_nested_subgraph_graph() -> object:
+    inner = nir.NIRGraph(
+        nodes={
+            "a": nir.Input(input_type={"input": np.array([1])}),
+            "b": nir.Input(input_type={"input": np.array([1])}),
+            "aff_a": nir.Affine(
+                weight=np.array([[0.5]], dtype=np.float32),
+                bias=np.zeros(1, dtype=np.float32),
+            ),
+            "aff_b": nir.Affine(
+                weight=np.array([[-0.25]], dtype=np.float32),
+                bias=np.zeros(1, dtype=np.float32),
+            ),
+            "out_a": nir.Output(output_type={"output": np.array([1])}),
+            "out_b": nir.Output(output_type={"output": np.array([1])}),
+        },
+        edges=[
+            ("a", "aff_a"),
+            ("aff_a", "out_a"),
+            ("b", "aff_b"),
+            ("aff_b", "out_b"),
+        ],
+        type_check=False,
+    )
+    return nir.NIRGraph(
+        nodes={
+            "left": nir.Input(input_type={"input": np.array([1])}),
+            "right": nir.Input(input_type={"input": np.array([1])}),
+            "subgraph": inner,
+            "lif_a": nir.LIF(
+                tau=np.full(1, 20.0),
+                r=np.ones(1),
+                v_leak=np.zeros(1),
+                v_threshold=np.ones(1),
+            ),
+            "lif_b": nir.LIF(
+                tau=np.full(1, 20.0),
+                r=np.ones(1),
+                v_leak=np.zeros(1),
+                v_threshold=np.ones(1),
+            ),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[
+            ("left", "subgraph"),
+            ("right", "subgraph"),
+            ("subgraph", "lif_a"),
+            ("subgraph", "lif_b"),
+            ("lif_a", "output"),
+            ("lif_b", "output"),
+        ],
+        type_check=False,
+    )
+
+
 def _neuron_graph() -> object:
     network = from_nir(_build_small_lif_graph(), dt=1.0)
     return from_scnetwork(network, dt=1.0)
@@ -1082,10 +1174,89 @@ def test_scnir_export_records_inlined_single_port_hierarchy_metadata() -> None:
     ]
 
 
-def test_neuron_graph_rejects_multiport_nested_nir_graph_hardware_lowering() -> None:
+def test_neuron_graph_inlines_exact_multiport_nested_nir_graph_for_hardware_lowering() -> None:
+    network = from_nir(_build_exact_multiport_nested_subgraph_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    assert [pop.name for pop in neuron_graph.populations] == ["lif"]
+    assert len(neuron_graph.connections) == 1
+    nested_connection = neuron_graph.connections[0]
+    assert nested_connection.src == "subgraph__a"
+    assert nested_connection.dst == "lif"
+    np.testing.assert_allclose(nested_connection.weights, [[1.0, -1.0]])
+
+    payload = scnir_to_dict(
+        build_scnir_from_neuron_graph(
+            neuron_graph,
+            config=SCNIRConversionConfig(bitstream_length=1024, base_seed=89),
+        )
+    )
+    validate_scnir_dict(payload)
+    assert payload["hierarchy"] == [
+        {
+            "instance_id": "subgraph",
+            "module_name": "scnir_subgraph",
+            "ports": [
+                {
+                    "port_name": "weight_0",
+                    "direction": "output",
+                    "stream_id": "conn.subgraph__a_to_lif.weight",
+                    "signal_kind": "weight",
+                    "bit_width": 16,
+                }
+            ],
+        }
+    ]
+
+
+def test_neuron_graph_inlines_exact_multiport_multioutput_nested_graph() -> None:
+    network = from_nir(_build_exact_multiport_multioutput_nested_subgraph_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    assert [pop.name for pop in neuron_graph.populations] == ["lif_a", "lif_b"]
+    connections = {(conn.src, conn.dst): conn for conn in neuron_graph.connections}
+    assert set(connections) == {
+        ("subgraph__a", "lif_a"),
+        ("subgraph__b", "lif_b"),
+    }
+    np.testing.assert_allclose(connections[("subgraph__a", "lif_a")].weights, [[0.5]])
+    np.testing.assert_allclose(connections[("subgraph__b", "lif_b")].weights, [[-0.25]])
+
+    payload = scnir_to_dict(
+        build_scnir_from_neuron_graph(
+            neuron_graph,
+            config=SCNIRConversionConfig(bitstream_length=1024, base_seed=93),
+        )
+    )
+    validate_scnir_dict(payload)
+    assert payload["hierarchy"] == [
+        {
+            "instance_id": "subgraph",
+            "module_name": "scnir_subgraph",
+            "ports": [
+                {
+                    "port_name": "weight_0",
+                    "direction": "output",
+                    "stream_id": "conn.subgraph__a_to_lif_a.weight",
+                    "signal_kind": "weight",
+                    "bit_width": 16,
+                },
+                {
+                    "port_name": "weight_1",
+                    "direction": "output",
+                    "stream_id": "conn.subgraph__b_to_lif_b.weight",
+                    "signal_kind": "weight",
+                    "bit_width": 16,
+                },
+            ],
+        }
+    ]
+
+
+def test_neuron_graph_rejects_unmapped_multiport_nested_nir_graph_hardware_lowering() -> None:
     network = from_nir(_build_multiport_nested_subgraph_graph(), dt=1.0)
 
-    with pytest.raises(ValueError, match="Multi-port nested NIRGraph.*hierarchical"):
+    with pytest.raises(ValueError, match="Multi-port nested NIRGraph.*boundary mapping"):
         from_scnetwork(network, dt=1.0)
 
 

@@ -87,6 +87,62 @@ def _nested_single_port_lif_nir_graph():
     )
 
 
+def _nested_multiport_multioutput_lif_nir_graph():
+    nir = pytest.importorskip("nir")
+    inner = nir.NIRGraph(
+        nodes={
+            "a": nir.Input(input_type={"input": np.array([1])}),
+            "b": nir.Input(input_type={"input": np.array([1])}),
+            "aff_a": nir.Affine(
+                weight=np.array([[0.5]], dtype=np.float32),
+                bias=np.zeros(1, dtype=np.float32),
+            ),
+            "aff_b": nir.Affine(
+                weight=np.array([[-0.25]], dtype=np.float32),
+                bias=np.zeros(1, dtype=np.float32),
+            ),
+            "out_a": nir.Output(output_type={"output": np.array([1])}),
+            "out_b": nir.Output(output_type={"output": np.array([1])}),
+        },
+        edges=[
+            ("a", "aff_a"),
+            ("aff_a", "out_a"),
+            ("b", "aff_b"),
+            ("aff_b", "out_b"),
+        ],
+        type_check=False,
+    )
+    return nir.NIRGraph(
+        nodes={
+            "left": nir.Input(input_type={"input": np.array([1])}),
+            "right": nir.Input(input_type={"input": np.array([1])}),
+            "subgraph": inner,
+            "lif_a": nir.LIF(
+                tau=np.full(1, 20.0),
+                r=np.ones(1),
+                v_leak=np.zeros(1),
+                v_threshold=np.ones(1),
+            ),
+            "lif_b": nir.LIF(
+                tau=np.full(1, 20.0),
+                r=np.ones(1),
+                v_leak=np.zeros(1),
+                v_threshold=np.ones(1),
+            ),
+            "output": nir.Output(output_type={"output": np.array([2])}),
+        },
+        edges=[
+            ("left", "subgraph"),
+            ("right", "subgraph"),
+            ("subgraph", "lif_a"),
+            ("subgraph", "lif_b"),
+            ("lif_a", "output"),
+            ("lif_b", "output"),
+        ],
+        type_check=False,
+    )
+
+
 def _dense_lif_nir_graph():
     nir = pytest.importorskip("nir")
     return nir.NIRGraph(
@@ -2640,6 +2696,90 @@ class TestCompileNirCommand:
                 "signal_kind": "weight",
                 "stream_id": "conn.subgraph__input_to_lif.weight",
             }
+        ]
+
+    def test_compile_nir_audits_exact_multiport_multioutput_hierarchy(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        nir = pytest.importorskip("nir")
+        model_path = tmp_path / "nested_multiport_multioutput_fixture.nir"
+        model_path.write_bytes(b"synthetic multi-port fixture")
+        monkeypatch.setattr(
+            nir,
+            "read",
+            lambda _path: _nested_multiport_multioutput_lif_nir_graph(),
+        )
+        out_dir = tmp_path / "nested_multiport_multioutput_compiled"
+
+        rc = _run_main(
+            "compile-nir",
+            str(model_path),
+            "--module-name",
+            "nested_multiport_multioutput_net",
+            "--T",
+            "512",
+            "--source-kind",
+            "sobol",
+            "--base-seed",
+            "81",
+            "--audit-handoff",
+            "-o",
+            str(out_dir),
+        )
+
+        assert rc == 0
+        document = json.loads((out_dir / "scnir_document.json").read_text(encoding="utf-8"))
+        validate_scnir_dict(document)
+        expected_ports = [
+            {
+                "port_name": "weight_0",
+                "direction": "output",
+                "stream_id": "conn.subgraph__a_to_lif_a.weight",
+                "signal_kind": "weight",
+                "bit_width": 16,
+            },
+            {
+                "port_name": "weight_1",
+                "direction": "output",
+                "stream_id": "conn.subgraph__b_to_lif_b.weight",
+                "signal_kind": "weight",
+                "bit_width": 16,
+            },
+        ]
+        assert document["hierarchy"] == [
+            {
+                "instance_id": "subgraph",
+                "module_name": "scnir_subgraph",
+                "ports": expected_ports,
+            }
+        ]
+
+        manifest = json.loads((out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8"))
+        assert manifest["scnir_hierarchy_instance_count"] == 1
+        assert manifest["scnir_hierarchy_port_count"] == 2
+        assert manifest["scnir_stream_count"] == 4
+        assert manifest["scnir_external_inputs"] == [
+            {"source": "subgraph__a", "offset": 0, "width": 1},
+            {"source": "subgraph__b", "offset": 1, "width": 1},
+        ]
+
+        top_module = (out_dir / "nested_multiport_multioutput_net.v").read_text(
+            encoding="utf-8"
+        )
+        assert "ext_input_0 * 16'sh0080" in top_module
+        assert "ext_input_1 * 16'shffc0" in top_module
+
+        report = json.loads((out_dir / "scnir_handoff_audit.json").read_text(encoding="utf-8"))
+        assert report["status"] == "valid"
+        assert report["hierarchy_instance_count"] == 1
+        assert report["hierarchy_port_count"] == 2
+        assert report["hierarchy_instances"]["subgraph"]["ports"] == expected_ports
+        assert report["external_input_count"] == 2
+        assert report["external_inputs"] == [
+            {"source": "subgraph__a", "offset": 0, "width": 1},
+            {"source": "subgraph__b", "offset": 1, "width": 1},
         ]
 
 
