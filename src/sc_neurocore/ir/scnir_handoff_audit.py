@@ -40,6 +40,8 @@ class SCNIRHDLHandoffAuditReport:
     hierarchy_instance_count: int
     hierarchy_port_count: int
     hierarchy_instances: dict[str, dict[str, object]]
+    external_input_count: int
+    external_inputs: tuple[dict[str, int | str], ...]
     total_neurons: int
     total_synapses: int
     signal_kinds: dict[str, int]
@@ -63,6 +65,8 @@ class SCNIRHDLHandoffAuditReport:
             "hierarchy_instance_count": self.hierarchy_instance_count,
             "hierarchy_port_count": self.hierarchy_port_count,
             "hierarchy_instances": self.hierarchy_instances,
+            "external_input_count": self.external_input_count,
+            "external_inputs": [dict(row) for row in self.external_inputs],
             "total_neurons": self.total_neurons,
             "total_synapses": self.total_synapses,
             "signal_kinds": self.signal_kinds,
@@ -136,6 +140,7 @@ def audit_scnir_hdl_handoff(directory: str | Path) -> SCNIRHDLHandoffAuditReport
         hierarchy_port_count,
         "scnir_hierarchy_port_count",
     )
+    external_inputs = _external_inputs(manifest)
 
     top_module = top_module_path.read_text(encoding="utf-8")
     _expect_top_localparam(top_module, "SCNIR_BITSTREAM_LENGTH", bitstream_length)
@@ -166,6 +171,8 @@ def audit_scnir_hdl_handoff(directory: str | Path) -> SCNIRHDLHandoffAuditReport
         hierarchy_instance_count=len(hierarchy_instances),
         hierarchy_port_count=hierarchy_port_count,
         hierarchy_instances=hierarchy_instances,
+        external_input_count=len(external_inputs),
+        external_inputs=external_inputs,
         total_neurons=_expect_int(manifest, "total_neurons"),
         total_synapses=_expect_int(manifest, "total_synapses"),
         signal_kinds=signal_kinds,
@@ -211,6 +218,7 @@ def _verify_manifest_header(manifest: Mapping[str, Any]) -> None:
         "scnir_stream_count",
         "scnir_signal_kinds",
         "scnir_signal_routes",
+        "scnir_external_inputs",
         "scnir_hierarchy_instance_count",
         "scnir_hierarchy_port_count",
         "sources",
@@ -235,6 +243,41 @@ def _verify_manifest_header(manifest: Mapping[str, Any]) -> None:
     _expect_non_negative_int(manifest, "scnir_stream_count")
     _expect_non_negative_int(manifest, "scnir_hierarchy_instance_count")
     _expect_non_negative_int(manifest, "scnir_hierarchy_port_count")
+
+
+def _external_inputs(manifest: Mapping[str, Any]) -> tuple[dict[str, int | str], ...]:
+    rows = _expect_mapping_sequence(manifest, "scnir_external_inputs")
+    result: list[dict[str, int | str]] = []
+    seen: set[str] = set()
+    cursor = 0
+    for index, row in enumerate(rows):
+        expected = {"source", "offset", "width"}
+        actual = set(row)
+        if actual != expected:
+            raise SCNIRHDLHandoffAuditError(
+                f"scnir_external_inputs[{index}] keys mismatch: "
+                f"missing={sorted(expected - actual)}, unknown={sorted(actual - expected)}"
+            )
+        source = _expect_non_empty_string(row, "source")
+        if source in seen:
+            raise SCNIRHDLHandoffAuditError(
+                f"scnir_external_inputs duplicate source {source!r}"
+            )
+        seen.add(source)
+        offset = _expect_int(row, "offset")
+        width = _expect_int(row, "width")
+        if offset != cursor:
+            raise SCNIRHDLHandoffAuditError(
+                f"scnir_external_inputs[{index}].offset {offset} does not match "
+                f"contiguous offset {cursor}"
+            )
+        if width <= 0:
+            raise SCNIRHDLHandoffAuditError(
+                f"scnir_external_inputs[{index}].width must be positive"
+            )
+        result.append({"source": source, "offset": offset, "width": width})
+        cursor += width
+    return tuple(result)
 
 
 def _verify_source_rows(

@@ -217,12 +217,16 @@ def test_scnir_compatibility_matrix_does_not_overclaim_parser_only_rows() -> Non
     nested = rows["NIRGraph"]
     assert nested.support_level == "metadata_and_hdl"
     assert "inline_single_port_subgraph" in nested.scnir_stream_metadata
+    assert "inline_exact_multiport_subgraph" in nested.scnir_stream_metadata
     assert "hierarchy_instance_metadata" in nested.scnir_stream_metadata
     assert "manifest_hierarchy_counts" in nested.source_metadata
+    assert "manifest_external_input_layout" in nested.source_metadata
     assert "namespaced inline fixed-point terms" in nested.hdl_support
+    assert "stable external input-bus lanes" in nested.hdl_support
     assert "tests/test_cli.py" in nested.audit_evidence
     assert "tests/test_scnir_handoff_audit.py" in nested.audit_evidence
-    assert "Multi-port" in nested.limitation
+    assert "multi-output" in nested.limitation
+    assert "Ambiguous" in nested.limitation
 
 
 def test_scnir_compatibility_matrix_records_weight_and_recurrent_delay_semantics() -> None:

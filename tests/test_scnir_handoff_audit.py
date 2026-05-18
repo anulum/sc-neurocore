@@ -124,6 +124,10 @@ def _write_valid_handoff(root: Path) -> None:
             "spike": "direct_wire",
             "weight": "stochastic_source_module",
         },
+        "scnir_external_inputs": [
+            {"source": "sensor_a", "offset": 0, "width": 2},
+            {"source": "sensor_b", "offset": 2, "width": 1},
+        ],
         "scnir_hierarchy_instance_count": 1,
         "scnir_hierarchy_port_count": 3,
         "sources": [
@@ -245,7 +249,16 @@ def test_audit_scnir_hdl_handoff_accepts_complete_compile_output(tmp_path: Path)
         }
     }
     assert report.signal_routes["analogue_state"] == "direct_mac"
+    assert report.external_input_count == 2
+    assert report.external_inputs == (
+        {"source": "sensor_a", "offset": 0, "width": 2},
+        {"source": "sensor_b", "offset": 2, "width": 1},
+    )
     assert "scnir_document.json" in report.artefacts
+    assert report.as_dict()["external_inputs"] == [
+        {"source": "sensor_a", "offset": 0, "width": 2},
+        {"source": "sensor_b", "offset": 2, "width": 1},
+    ]
     assert report.as_dict()["hierarchy_port_count"] == 3
     assert report.as_dict()["status"] == "valid"
 
@@ -268,6 +281,18 @@ def test_audit_scnir_hdl_handoff_rejects_route_mismatch(tmp_path: Path) -> None:
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
     with pytest.raises(SCNIRHDLHandoffAuditError, match="scnir_signal_routes"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_scnir_hdl_handoff_rejects_external_input_layout_gap(tmp_path: Path) -> None:
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    manifest_path = handoff / "scnir_source_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["scnir_external_inputs"][1]["offset"] = 3
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="scnir_external_inputs"):
         audit_scnir_hdl_handoff(handoff)
 
 
