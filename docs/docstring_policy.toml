@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 10
+expected_file_count = 12
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -48,3 +48,11 @@ rationale = "Public AER routing bridge with a compact API surface and generated 
 [[file]]
 path = "src/sc_neurocore/bridges/local_llm.py"
 rationale = "Public local-only LLM bridge documented as an opt-in loopback integration."
+
+[[file]]
+path = "src/sc_neurocore/compiler/__init__.py"
+rationale = "Public compiler package entry point that defines the exported compiler API."
+
+[[file]]
+path = "src/sc_neurocore/compiler/platforms/__init__.py"
+rationale = "Public hardware-profile package entry point that re-exports registry APIs."

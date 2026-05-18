@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Compiler Package Init
 
+"""Public compiler package exports for equation, IR, MLIR, and precision tooling."""
+
 from .equation_compiler import compile_to_verilog, equation_to_fpga, Q88
 from .pipeline import CompilerPipeline
 from .mlir_emitter import MLIRBundle, MLIREmitter, generate_mlir_bundle
