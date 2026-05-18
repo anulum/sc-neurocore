@@ -12,13 +12,61 @@ __tier__ = "research"
 
 from .ethics import AsimovGovernor, ActionRequest
 from .immune import DigitalImmuneSystem
+from .side_channel_metrics import (
+    ClassActivityProxy,
+    SideChannelMetricError,
+    SwitchingActivitySummary,
+    compute_class_activity_proxy,
+    compute_switching_activity,
+)
+from .side_channel_benchmark import (
+    SIDE_CHANNEL_BENCHMARK_SCHEMA_VERSION,
+    SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION,
+    SideChannelBenchmarkArm,
+    SideChannelBenchmarkError,
+    SideChannelBenchmarkRecord,
+    SideChannelBenchmarkReport,
+    SideChannelDeployManifest,
+    run_side_channel_leakage_benchmark,
+    write_side_channel_benchmark_report,
+)
+from .thermal_sc_encoding import (
+    ActivityBalancedEncoding,
+    ActivityBalancedEncodingBatch,
+    ActivityBalancedEncodingSummary,
+    ThermalSCEncodingConfig,
+    ThermalSCEncodingError,
+    encode_activity_balanced_probabilities,
+    encode_activity_balanced_probability,
+)
 from .watermark import WatermarkInjector
 from .zkp import ZKPVerifier
 
 __all__ = [
+    "ActivityBalancedEncoding",
+    "ActivityBalancedEncodingBatch",
+    "ActivityBalancedEncodingSummary",
     "AsimovGovernor",
     "ActionRequest",
+    "ClassActivityProxy",
     "DigitalImmuneSystem",
+    "SIDE_CHANNEL_BENCHMARK_SCHEMA_VERSION",
+    "SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION",
+    "SideChannelMetricError",
+    "SideChannelBenchmarkArm",
+    "SideChannelBenchmarkError",
+    "SideChannelBenchmarkRecord",
+    "SideChannelBenchmarkReport",
+    "SideChannelDeployManifest",
+    "SwitchingActivitySummary",
+    "ThermalSCEncodingConfig",
+    "ThermalSCEncodingError",
     "WatermarkInjector",
     "ZKPVerifier",
+    "encode_activity_balanced_probabilities",
+    "encode_activity_balanced_probability",
+    "compute_class_activity_proxy",
+    "compute_switching_activity",
+    "run_side_channel_leakage_benchmark",
+    "write_side_channel_benchmark_report",
 ]
