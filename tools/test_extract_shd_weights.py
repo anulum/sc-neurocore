@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — tests for tools/extract_shd_weights.py
+# SC-NeuroCore - tests for tools/extract_shd_weights.py
 import os
 import sys
+import hashlib
 
 import pytest
 
@@ -23,6 +24,7 @@ from extract_shd_weights import (  # noqa: E402
     write_int8_hex,
     write_delays_hex,
 )
+from sc_neurocore.security.checkpoint_loading import CheckpointTrustError  # noqa: E402
 
 
 # ----- Quantisation -----
@@ -148,17 +150,38 @@ class TestLayerSpec:
         assert SHD_LAYERS[2].delay_key is None  # output layer has no axonal delay
 
 
+class TestCheckpointTrustBoundary:
+    def test_extract_requires_matching_checkpoint_sha256(self, tmp_path):
+        checkpoint = tmp_path / "shd_metadata.pth"
+        torch.save({"net": {}, "acc": 0.0, "sigma": 0.23, "epoch": 0}, checkpoint)
+
+        with pytest.raises(CheckpointTrustError, match="SHA-256 mismatch"):
+            extract(str(checkpoint), str(tmp_path / "artifacts"), checkpoint_sha256="0" * 64)
+
+    def test_extract_rejects_missing_checkpoint_sha256(self, tmp_path):
+        checkpoint = tmp_path / "shd_metadata.pth"
+        torch.save({"net": {}, "acc": 0.0, "sigma": 0.23, "epoch": 0}, checkpoint)
+
+        with pytest.raises(CheckpointTrustError, match="No trusted SHA-256"):
+            extract(str(checkpoint), str(tmp_path / "artifacts"), checkpoint_sha256=None)
+
+
 # ----- End-to-end on real checkpoint (skipped if not available) -----
 
 REPO = "/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE"
 CKPT = f"{REPO}/data/masquelier_shd/cloud_results/dcls_max/dcls_max/last.pth"
 
 
+def _sha256(path: str) -> str:
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
 @pytest.mark.skipif(not os.path.exists(CKPT), reason="dcls_max checkpoint not present")
 class TestEndToEnd:
     def test_extraction_produces_all_files(self, tmp_path):
         out = str(tmp_path / "artifacts")
-        stats = extract(CKPT, out)
+        stats = extract(CKPT, out, checkpoint_sha256=_sha256(CKPT))
         files = set(os.listdir(out))
         for layer in SHD_LAYERS:
             assert f"weights_{layer.name}_int8.hex" in files
@@ -171,7 +194,7 @@ class TestEndToEnd:
 
     def test_dequant_error_bounded_for_real_weights(self, tmp_path):
         out = str(tmp_path / "artifacts")
-        stats = extract(CKPT, out)
+        stats = extract(CKPT, out, checkpoint_sha256=_sha256(CKPT))
         for layer in stats["layers"]:
             # Per-tensor symmetric int8 quantisation gives bounded error
             assert layer["max_quant_err"] <= layer["scale"] / 2 + 1e-6
@@ -179,7 +202,7 @@ class TestEndToEnd:
 
     def test_extracted_delays_are_integers(self, tmp_path):
         out = str(tmp_path / "artifacts")
-        extract(CKPT, out)
+        extract(CKPT, out, checkpoint_sha256=_sha256(CKPT))
         # delays_*.hex should only contain values that decode to [-15, 15]
         for fname in ["delays_layer1_input_to_h1.hex", "delays_layer2_h1_to_h2.hex"]:
             with open(os.path.join(out, fname)) as f:

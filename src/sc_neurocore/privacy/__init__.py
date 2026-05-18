@@ -8,6 +8,28 @@
 
 """Spike-level differential privacy: training and inference with privacy guarantees."""
 
-from .dp_snn import SpikeLevelDP, PrivacyAccountant, MembershipAudit
+from .dp_snn import PrivacyAccountant, MembershipAudit, SpikeLevelDP
+from .governance import (
+    ConsentBoundary,
+    GovernanceContract,
+    IntegratorResponsibility,
+    PrivacyFeatureFlags,
+    ProvenanceRecord,
+    RedactionPolicy,
+    RetentionPolicy,
+    TelemetryPolicy,
+)
 
-__all__ = ["SpikeLevelDP", "PrivacyAccountant", "MembershipAudit"]
+__all__ = [
+    "PrivacyAccountant",
+    "MembershipAudit",
+    "SpikeLevelDP",
+    "ConsentBoundary",
+    "GovernanceContract",
+    "IntegratorResponsibility",
+    "PrivacyFeatureFlags",
+    "ProvenanceRecord",
+    "RedactionPolicy",
+    "RetentionPolicy",
+    "TelemetryPolicy",
+]
