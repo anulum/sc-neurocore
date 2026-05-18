@@ -16,6 +16,7 @@ from .network_properties import (
     NetworkAntagonisticOutputExclusion,
     NetworkOutputTemporalSeparation,
     NetworkPopulationCoactivationCap,
+    NetworkPopulationInactivityBound,
     NetworkPopulationSilenceAfterCoactivation,
     NetworkRateBound,
     NetworkRefractoryInvariant,
@@ -127,6 +128,16 @@ def validate_formal_network_report(
                 "population_silence.trigger_active_outputs must be <= network output_width"
             )
 
+    population_inactivity_payload = payload.get("population_inactivity")
+    population_inactivity: NetworkPopulationInactivityBound | None = None
+    if population_inactivity_payload is not None:
+        try:
+            population_inactivity = NetworkPopulationInactivityBound(
+                **_expect_mapping(population_inactivity_payload, "population_inactivity")
+            )
+        except ValueError as exc:
+            raise FormalReportValidationError(f"population_inactivity.{exc}") from exc
+
     artifacts = _expect_mapping(payload.get("artifacts"), "artifacts")
     _validate_artifacts(
         artifacts,
@@ -135,6 +146,7 @@ def validate_formal_network_report(
         temporal=temporal,
         population=population,
         population_silence=population_silence,
+        population_inactivity=population_inactivity,
         artifact_root=artifact_root,
     )
     _validate_rate_replay(payload.get("rate_replay"), "rate_replay")
@@ -193,6 +205,17 @@ def validate_formal_network_report(
             silence=population_silence,
             network=network,
         )
+    if population_inactivity is None:
+        if payload.get("population_inactivity_replay") is not None:
+            raise FormalReportValidationError(
+                "population_inactivity_replay must be null when population_inactivity is null"
+            )
+    else:
+        _validate_population_inactivity_replay(
+            payload.get("population_inactivity_replay"),
+            "population_inactivity_replay",
+            inactivity=population_inactivity,
+        )
 
     symbiyosys = _expect_mapping(payload.get("symbiyosys"), "symbiyosys")
     status = _expect_str(symbiyosys.get("status"), "symbiyosys.status")
@@ -218,6 +241,7 @@ def _validate_artifacts(
     temporal: NetworkOutputTemporalSeparation | None,
     population: NetworkPopulationCoactivationCap | None,
     population_silence: NetworkPopulationSilenceAfterCoactivation | None,
+    population_inactivity: NetworkPopulationInactivityBound | None,
     artifact_root: str | Path | None,
 ) -> None:
     required = ("rtl", "sva", "rate_sva", "formal_bundle", "sby", "report")
@@ -265,6 +289,18 @@ def _validate_artifacts(
             )
     else:
         _expect_artifact_path(artifacts, "population_silence_sva", artifact_root=artifact_root)
+    population_inactivity_sva = artifacts.get("population_inactivity_sva")
+    if population_inactivity is None:
+        if population_inactivity_sva is not None:
+            raise FormalReportValidationError(
+                "artifacts.population_inactivity_sva must be null when population_inactivity is null"
+            )
+    else:
+        _expect_artifact_path(
+            artifacts,
+            "population_inactivity_sva",
+            artifact_root=artifact_root,
+        )
 
 
 def _validate_rate_replay(value: Any, field: str) -> None:
@@ -418,7 +454,9 @@ def _validate_population_silence_replay(
     first_violation_cycle = _expect_optional_non_negative_int(
         replay.get("first_violation_cycle"), f"{field}.first_violation_cycle"
     )
-    _expect_optional_non_negative_int(replay.get("trigger_cycle"), f"{field}.trigger_cycle")
+    trigger_cycle = _expect_optional_non_negative_int(
+        replay.get("trigger_cycle"), f"{field}.trigger_cycle"
+    )
     observed = _expect_non_negative_int(
         replay.get("observed_active_outputs"), f"{field}.observed_active_outputs"
     )
@@ -426,7 +464,7 @@ def _validate_population_silence_replay(
         raise FormalReportValidationError(
             f"{field}.observed_active_outputs must be <= network output_width"
         )
-    _expect_non_negative_int(
+    remaining_silence_cycles = _expect_non_negative_int(
         replay.get("remaining_silence_cycles"), f"{field}.remaining_silence_cycles"
     )
     if (
@@ -442,6 +480,10 @@ def _validate_population_silence_replay(
         silence.silence_cycles
     ):
         raise FormalReportValidationError(f"{field}.silence_cycles must match population_silence")
+    if remaining_silence_cycles > silence.silence_cycles:
+        raise FormalReportValidationError(
+            f"{field}.remaining_silence_cycles must be <= population_silence.silence_cycles"
+        )
     if violated and first_violation_cycle is None:
         raise FormalReportValidationError(
             f"{field}.first_violation_cycle must be present when violated"
@@ -458,7 +500,97 @@ def _validate_population_silence_replay(
         raise FormalReportValidationError(
             f"{field}.observed_active_outputs must be zero when not violated"
         )
-    _expect_non_negative_int(replay.get("cycles_checked"), f"{field}.cycles_checked")
+    cycles_checked = _expect_non_negative_int(replay.get("cycles_checked"), f"{field}.cycles_checked")
+    if first_violation_cycle is not None and first_violation_cycle >= cycles_checked:
+        raise FormalReportValidationError(
+            f"{field}.first_violation_cycle must be less than cycles_checked"
+        )
+    if trigger_cycle is not None and trigger_cycle >= cycles_checked:
+        raise FormalReportValidationError(f"{field}.trigger_cycle must be less than cycles_checked")
+    if violated and trigger_cycle is None:
+        raise FormalReportValidationError(f"{field}.trigger_cycle must be present when violated")
+    if (
+        violated
+        and trigger_cycle is not None
+        and first_violation_cycle is not None
+        and trigger_cycle >= first_violation_cycle
+    ):
+        raise FormalReportValidationError(
+            f"{field}.trigger_cycle must precede first_violation_cycle"
+        )
+    if (
+        violated
+        and trigger_cycle is not None
+        and first_violation_cycle is not None
+        and first_violation_cycle - trigger_cycle > silence.silence_cycles
+    ):
+        raise FormalReportValidationError(
+            f"{field}.first_violation_cycle must be within population_silence.silence_cycles"
+        )
+    if trigger_cycle is None:
+        expected_remaining_silence_cycles = 0
+    elif violated and first_violation_cycle is not None:
+        elapsed_silence_cycles = first_violation_cycle - trigger_cycle - 1
+        expected_remaining_silence_cycles = silence.silence_cycles - elapsed_silence_cycles
+    else:
+        elapsed_silence_cycles = cycles_checked - trigger_cycle - 1
+        expected_remaining_silence_cycles = max(
+            0, silence.silence_cycles - elapsed_silence_cycles
+        )
+    if remaining_silence_cycles != expected_remaining_silence_cycles:
+        raise FormalReportValidationError(
+            f"{field}.remaining_silence_cycles must match population_silence replay timing"
+        )
+
+
+def _validate_population_inactivity_replay(
+    value: Any,
+    field: str,
+    *,
+    inactivity: NetworkPopulationInactivityBound,
+) -> None:
+    if value is None:
+        return
+    replay = _expect_mapping(value, field)
+    violated = _expect_bool(replay.get("violated"), f"{field}.violated")
+    first_violation_cycle = _expect_optional_non_negative_int(
+        replay.get("first_violation_cycle"), f"{field}.first_violation_cycle"
+    )
+    observed_silent_cycles = _expect_non_negative_int(
+        replay.get("observed_silent_cycles"), f"{field}.observed_silent_cycles"
+    )
+    if (
+        _expect_non_negative_int(replay.get("max_silent_cycles"), f"{field}.max_silent_cycles")
+        != inactivity.max_silent_cycles
+    ):
+        raise FormalReportValidationError(
+            f"{field}.max_silent_cycles must match population_inactivity"
+        )
+    if violated and first_violation_cycle is None:
+        raise FormalReportValidationError(
+            f"{field}.first_violation_cycle must be present when violated"
+        )
+    if not violated and first_violation_cycle is not None:
+        raise FormalReportValidationError(
+            f"{field}.first_violation_cycle must be null when not violated"
+        )
+    if violated and observed_silent_cycles <= inactivity.max_silent_cycles:
+        raise FormalReportValidationError(
+            f"{field}.observed_silent_cycles must exceed max_silent_cycles when violated"
+        )
+    if violated and observed_silent_cycles != inactivity.max_silent_cycles + 1:
+        raise FormalReportValidationError(
+            f"{field}.observed_silent_cycles must match first violation timing"
+        )
+    if not violated and observed_silent_cycles > inactivity.max_silent_cycles:
+        raise FormalReportValidationError(
+            f"{field}.observed_silent_cycles must be <= max_silent_cycles when not violated"
+        )
+    cycles_checked = _expect_non_negative_int(replay.get("cycles_checked"), f"{field}.cycles_checked")
+    if first_violation_cycle is not None and first_violation_cycle >= cycles_checked:
+        raise FormalReportValidationError(
+            f"{field}.first_violation_cycle must be less than cycles_checked"
+        )
 
 
 def _expect_artifact_path(

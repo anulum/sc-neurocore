@@ -15,6 +15,7 @@ from .network_properties import (
     NetworkAntagonisticOutputExclusion,
     NetworkOutputTemporalSeparation,
     NetworkPopulationCoactivationCap,
+    NetworkPopulationInactivityBound,
     NetworkPopulationSilenceAfterCoactivation,
     NetworkRateBound,
     NetworkRefractoryInvariant,
@@ -90,6 +91,17 @@ class PopulationSilenceReplayResult:
     remaining_silence_cycles: int
     trigger_active_outputs: int
     silence_cycles: int
+    cycles_checked: int
+
+
+@dataclass(frozen=True, slots=True)
+class PopulationInactivityReplayResult:
+    """Replay result for bounded consecutive population inactivity."""
+
+    violated: bool
+    first_violation_cycle: int | None
+    observed_silent_cycles: int
+    max_silent_cycles: int
     cycles_checked: int
 
 
@@ -309,6 +321,39 @@ def replay_population_silence_counterexample(
         remaining_silence_cycles=remaining,
         trigger_active_outputs=silence.trigger_active_outputs,
         silence_cycles=silence.silence_cycles,
+        cycles_checked=len(spike_trace),
+    )
+
+
+def replay_population_inactivity_counterexample(
+    spike_trace: Sequence[SpikeSample],
+    inactivity: NetworkPopulationInactivityBound,
+) -> PopulationInactivityReplayResult:
+    """Replay a spike trace against a bounded consecutive-inactivity contract."""
+    silent_run = 0
+    max_observed_silent_run = 0
+
+    for cycle, sample in enumerate(spike_trace):
+        active_outputs = _count_binary_spikes(sample, cycle=cycle)
+        if active_outputs == 0:
+            silent_run += 1
+            max_observed_silent_run = max(max_observed_silent_run, silent_run)
+        else:
+            silent_run = 0
+        if silent_run > inactivity.max_silent_cycles:
+            return PopulationInactivityReplayResult(
+                violated=True,
+                first_violation_cycle=cycle,
+                observed_silent_cycles=silent_run,
+                max_silent_cycles=inactivity.max_silent_cycles,
+                cycles_checked=cycle + 1,
+            )
+
+    return PopulationInactivityReplayResult(
+        violated=False,
+        first_violation_cycle=None,
+        observed_silent_cycles=max_observed_silent_run,
+        max_silent_cycles=inactivity.max_silent_cycles,
         cycles_checked=len(spike_trace),
     )
 

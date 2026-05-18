@@ -10,7 +10,7 @@
 SystemVerilog assertions, a SymbiYosys job file, and a validated JSON report for
 network-level rate, refractory, antagonistic-output exclusion, temporal
 separation, population coactivation, and post-coactivation population-silence
-checks. The command is designed for CI and release evidence: invalid
+checks, plus bounded global inactivity checks. The command is designed for CI and release evidence: invalid
 contracts fail before artefacts are accepted, and counterexample traces are
 replayed against the same property parameters recorded in the report.
 
@@ -28,6 +28,7 @@ sc-neurocore formal verify-network \
   --temporal-separation 0,1,2 \
   --coactivation-cap 1 \
   --population-silence 2,2 \
+  --population-inactivity 3 \
   --output build/formal
 ```
 
@@ -48,6 +49,7 @@ For a module named `dense_lif_frontier_fixture`, the command writes:
 | `dense_lif_frontier_fixture_temporal_separation.sv` | Temporal-separation assertion module and executable `bind`, when `--temporal-separation` is set |
 | `dense_lif_frontier_fixture_population_coactivation.sv` | Population coactivation assertion module and executable `bind`, when `--coactivation-cap` is set |
 | `dense_lif_frontier_fixture_population_silence.sv` | Post-coactivation population-silence assertion module and executable `bind`, when `--population-silence` is set |
+| `dense_lif_frontier_fixture_population_inactivity.sv` | Bounded population-inactivity assertion module and executable `bind`, when `--population-inactivity` is set |
 | `dense_lif_frontier_fixture_formal_bundle.sv` | Combined assertion bundle used by Yosys/SymbiYosys |
 | `dense_lif_frontier_fixture.sby` | Bounded model checking job file |
 | `formal_rate_bound_report.json` | Machine-readable verification report |
@@ -73,6 +75,7 @@ fields are:
 | `temporal_separation` | Optional bidirectional temporal gap contract for a nominated output pair |
 | `population_coactivation` | Optional population-level cap on simultaneously active outputs |
 | `population_silence` | Optional global silence window after a population coactivation trigger |
+| `population_inactivity` | Optional bound on consecutive valid cycles with no active outputs |
 | `artifacts.rtl` | Generated RTL fixture path |
 | `artifacts.sva` | Compatibility alias for the rate-bound assertion path |
 | `artifacts.rate_sva` | Generated rate-bound assertion path |
@@ -81,6 +84,7 @@ fields are:
 | `artifacts.temporal_sva` | Generated temporal-separation assertion path or `null` |
 | `artifacts.population_sva` | Generated population coactivation assertion path or `null` |
 | `artifacts.population_silence_sva` | Generated population-silence assertion path or `null` |
+| `artifacts.population_inactivity_sva` | Generated population-inactivity assertion path or `null` |
 | `artifacts.formal_bundle` | Combined assertion bundle path |
 | `artifacts.sby` | SymbiYosys job path |
 | `artifacts.report` | Report path |
@@ -91,6 +95,7 @@ fields are:
 | `temporal_replay` | Counterexample replay result for the temporal-separation contract |
 | `population_replay` | Counterexample replay result for the population coactivation contract |
 | `population_silence_replay` | Counterexample replay result for the population-silence contract |
+| `population_inactivity_replay` | Counterexample replay result for the population-inactivity contract |
 | `symbiyosys` | Tool status, return code, stdout, and stderr |
 
 The validator rejects unknown schema versions, invalid network dimensions,
@@ -120,12 +125,14 @@ from sc_neurocore.formal import (
     NetworkAntagonisticOutputExclusion,
     NetworkOutputTemporalSeparation,
     NetworkPopulationCoactivationCap,
+    NetworkPopulationInactivityBound,
     NetworkPopulationSilenceAfterCoactivation,
     NetworkRateBound,
     NetworkRefractoryInvariant,
     compile_dense_lif_fixture_rtl,
     compile_network_antagonistic_exclusion_sva,
     compile_network_population_coactivation_sva,
+    compile_network_population_inactivity_sva,
     compile_network_population_silence_sva,
     compile_network_rate_bound_sva,
     compile_network_refractory_sva,
@@ -139,7 +146,8 @@ from sc_neurocore.formal import (
 `compile_network_antagonistic_exclusion_sva`, and
 `compile_network_temporal_separation_sva`, and
 `compile_network_population_coactivation_sva`, and
-`compile_network_population_silence_sva` emit Yosys-compatible SystemVerilog
+`compile_network_population_silence_sva`, and
+`compile_network_population_inactivity_sva` emit Yosys-compatible SystemVerilog
 assertion modules with executable `bind` statements. The report validator is
 intentionally independent of the CLI so CI jobs and downstream release tooling
 can validate archived evidence without regenerating artefacts.
@@ -173,7 +181,7 @@ fields are:
 |-------|---------|
 | `output_width` | Number of output bits that require formal evidence |
 | `required_outputs` | Complete output-index list expected by CI |
-| `covered_outputs` | Output indexes with validated rate/refractory/antagonistic/temporal/population/silence reports |
+| `covered_outputs` | Output indexes with validated rate/refractory/antagonistic/temporal/population/silence/inactivity reports |
 | `all_outputs_covered` | `true` only when every output has validated evidence |
 | `reports` | Per-output report paths, artefact roots, property metadata, and SymbiYosys status |
 
@@ -192,5 +200,5 @@ fixture. It does not claim whole-model biological correctness and does not
 replace model-specific validation, simulation parity, or hardware synthesis
 evidence. Its purpose is a strict, reproducible formal-evidence surface for
 network-level spike-rate, refractory, antagonistic-output, temporal
-separation, population coactivation, and post-coactivation population-silence
-invariants.
+separation, population coactivation, post-coactivation population-silence, and
+bounded population-inactivity invariants.

@@ -13,6 +13,7 @@ from .network_properties import (
     NetworkAntagonisticOutputExclusion,
     NetworkOutputTemporalSeparation,
     NetworkPopulationCoactivationCap,
+    NetworkPopulationInactivityBound,
     NetworkPopulationSilenceAfterCoactivation,
     NetworkRateBound,
     NetworkRefractoryInvariant,
@@ -463,6 +464,73 @@ def compile_network_population_silence_sva(
                 "&& scnc_silence_active) begin"
             ),
             f"            {assertion_name}: assert (scnc_active_outputs == '0);",
+            "        end",
+            "    end",
+            "endmodule",
+            "",
+            f"bind {network.name} {module_name} {module_name}_i ({bind_ports});",
+            "",
+        ]
+    )
+
+
+def compile_network_population_inactivity_sva(
+    network: DenseLIFNetworkSpec,
+    inactivity: NetworkPopulationInactivityBound,
+) -> str:
+    """Compile a bounded global-output inactivity contract into deterministic SVA."""
+    module_name = f"{network.name}_population_inactivity_sva"
+    assertion_name = f"a_{inactivity.name}"
+    count_width = max(1, network.output_width.bit_length())
+    silent_width = max(1, (inactivity.max_silent_cycles + 1).bit_length())
+    active_terms = " + ".join(
+        f"{network.output_signal}[{output_index}]" for output_index in range(network.output_width)
+    )
+    bind_ports = (
+        f".{network.clock_name}({network.clock_name}), "
+        f".{network.reset_name}({network.reset_name}), "
+        f".{network.timestep_name}({network.timestep_name}), "
+        f".{network.output_signal}({network.output_signal})"
+    )
+
+    return "\n".join(
+        [
+            "// SC-NeuroCore network population inactivity-bound SVA",
+            "// Generated from a validated DenseLIFNetworkSpec and NetworkPopulationInactivityBound.",
+            f"module {module_name} (",
+            f"    input logic {network.clock_name},",
+            f"    input logic {network.reset_name},",
+            f"    input logic {network.timestep_name},",
+            f"    input logic [{network.output_width - 1}:0] {network.output_signal}",
+            ");",
+            (
+                "    parameter int unsigned SCNC_MAX_SILENT_CYCLES = "
+                f"{inactivity.max_silent_cycles};"
+            ),
+            "",
+            f"    logic [{count_width - 1}:0] scnc_active_outputs;",
+            f"    logic [{silent_width - 1}:0] scnc_silent_count;",
+            f"    logic [{silent_width - 1}:0] scnc_next_silent_count;",
+            f"    assign scnc_active_outputs = {active_terms};",
+            "    wire scnc_no_active_outputs = scnc_active_outputs == '0;",
+            (
+                "    assign scnc_next_silent_count = scnc_no_active_outputs "
+                "? scnc_silent_count + 1'b1 : '0;"
+            ),
+            "",
+            f"    always_ff @(posedge {network.clock_name} or negedge {network.reset_name}) begin",
+            f"        if (!{network.reset_name}) begin",
+            "            scnc_silent_count <= '0;",
+            f"        end else if ({network.timestep_name}) begin",
+            "            scnc_silent_count <= scnc_next_silent_count;",
+            "        end",
+            "    end",
+            "",
+            f"    always_ff @(posedge {network.clock_name}) begin",
+            f"        if ({network.reset_name} && {network.timestep_name}) begin",
+            f"            {assertion_name}: assert (",
+            "                scnc_next_silent_count <= SCNC_MAX_SILENT_CYCLES",
+            "            );",
             "        end",
             "    end",
             "endmodule",

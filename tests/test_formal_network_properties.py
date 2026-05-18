@@ -17,6 +17,7 @@ from sc_neurocore.formal.network_properties import (
     NetworkAntagonisticOutputExclusion,
     NetworkOutputTemporalSeparation,
     NetworkPopulationCoactivationCap,
+    NetworkPopulationInactivityBound,
     NetworkPopulationSilenceAfterCoactivation,
     NetworkRefractoryInvariant,
     NetworkRateBound,
@@ -25,6 +26,7 @@ from sc_neurocore.formal.property_compiler import (
     compile_dense_lif_fixture_rtl,
     compile_network_antagonistic_exclusion_sva,
     compile_network_population_coactivation_sva,
+    compile_network_population_inactivity_sva,
     compile_network_population_silence_sva,
     compile_network_temporal_separation_sva,
     compile_network_rate_bound_sva,
@@ -33,6 +35,7 @@ from sc_neurocore.formal.property_compiler import (
 from sc_neurocore.formal.counterexample_replay import (
     replay_antagonistic_counterexample,
     replay_population_coactivation_counterexample,
+    replay_population_inactivity_counterexample,
     replay_population_silence_counterexample,
     replay_temporal_separation_counterexample,
     replay_rate_bound_counterexample,
@@ -519,6 +522,55 @@ def test_compiler_rejects_population_silence_trigger_above_output_width() -> Non
         compile_network_population_silence_sva(spec, prop)
 
 
+def test_compile_dense_lif_population_inactivity_sva_is_deterministic() -> None:
+    spec = DenseLIFNetworkSpec(
+        name="dense_lif_frontier_fixture",
+        input_width=3,
+        output_width=3,
+        state_width=16,
+        timestep_name="sample_valid",
+        output_signal="spike_out",
+    )
+    prop = NetworkPopulationInactivityBound(
+        name="population_inactivity_bound",
+        max_silent_cycles=2,
+    )
+
+    sva = compile_network_population_inactivity_sva(spec, prop)
+
+    assert sva == compile_network_population_inactivity_sva(spec, prop)
+    assert "module dense_lif_frontier_fixture_population_inactivity_sva" in sva
+    assert "parameter int unsigned SCNC_MAX_SILENT_CYCLES = 2;" in sva
+    assert "assign scnc_active_outputs = spike_out[0] + spike_out[1] + spike_out[2];" in sva
+    assert "wire scnc_no_active_outputs = scnc_active_outputs == '0;" in sva
+    assert "assign scnc_next_silent_count" in sva
+    assert "a_population_inactivity_bound: assert" in sva
+    assert "scnc_next_silent_count <= SCNC_MAX_SILENT_CYCLES" in sva
+    assert "if (rst_n && sample_valid) begin" in sva
+    assert "\nbind dense_lif_frontier_fixture" in sva
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"name": "bad-name"}, "valid SystemVerilog identifier"),
+        ({"max_silent_cycles": 0}, "max_silent_cycles"),
+        ({"max_silent_cycles": True}, "max_silent_cycles"),
+    ],
+)
+def test_population_inactivity_bound_rejects_invalid_contracts(
+    kwargs: dict[str, object], match: str
+) -> None:
+    values: dict[str, object] = {
+        "name": "population_inactivity_bound",
+        "max_silent_cycles": 2,
+    }
+    values.update(kwargs)
+
+    with pytest.raises(ValueError, match=match):
+        NetworkPopulationInactivityBound(**values)
+
+
 def test_counterexample_replay_detects_aligned_window_rate_violation() -> None:
     prop = NetworkRateBound(
         name="output0_rate_bound",
@@ -802,6 +854,42 @@ def test_population_silence_replay_accepts_silent_window() -> None:
     assert replay.cycles_checked == 4
 
 
+def test_population_inactivity_replay_detects_too_many_silent_cycles() -> None:
+    prop = NetworkPopulationInactivityBound(
+        name="population_inactivity_bound",
+        max_silent_cycles=2,
+    )
+
+    replay = replay_population_inactivity_counterexample(
+        [[False, False], [False, False], [True, False], [False, False], [False, False], [False, False]],
+        prop,
+    )
+
+    assert replay.violated
+    assert replay.first_violation_cycle == 5
+    assert replay.observed_silent_cycles == 3
+    assert replay.max_silent_cycles == 2
+    assert replay.cycles_checked == 6
+
+
+def test_population_inactivity_replay_accepts_bounded_silent_runs() -> None:
+    prop = NetworkPopulationInactivityBound(
+        name="population_inactivity_bound",
+        max_silent_cycles=2,
+    )
+
+    replay = replay_population_inactivity_counterexample(
+        [[False, False], [True, False], [False, False], [False, False]],
+        prop,
+    )
+
+    assert not replay.violated
+    assert replay.first_violation_cycle is None
+    assert replay.observed_silent_cycles == 2
+    assert replay.max_silent_cycles == 2
+    assert replay.cycles_checked == 4
+
+
 def _valid_formal_report_payload() -> dict[str, object]:
     return {
         "schema_version": FORMAL_NETWORK_REPORT_SCHEMA_VERSION,
@@ -846,6 +934,10 @@ def _valid_formal_report_payload() -> dict[str, object]:
             "trigger_active_outputs": 2,
             "silence_cycles": 2,
         },
+        "population_inactivity": {
+            "name": "population_inactivity_bound",
+            "max_silent_cycles": 2,
+        },
         "artifacts": {
             "rtl": "/tmp/dense_lif_frontier_fixture.v",
             "sva": "/tmp/dense_lif_frontier_fixture_rate_bound.sv",
@@ -855,6 +947,7 @@ def _valid_formal_report_payload() -> dict[str, object]:
             "temporal_sva": "/tmp/dense_lif_frontier_fixture_temporal_separation.sv",
             "population_sva": "/tmp/dense_lif_frontier_fixture_population_coactivation.sv",
             "population_silence_sva": "/tmp/dense_lif_frontier_fixture_population_silence.sv",
+            "population_inactivity_sva": "/tmp/dense_lif_frontier_fixture_population_inactivity.sv",
             "formal_bundle": "/tmp/dense_lif_frontier_fixture_formal_bundle.sv",
             "sby": "/tmp/dense_lif_frontier_fixture.sby",
             "report": "/tmp/formal_rate_bound_report.json",
@@ -910,6 +1003,13 @@ def _valid_formal_report_payload() -> dict[str, object]:
             "remaining_silence_cycles": 0,
             "trigger_active_outputs": 2,
             "silence_cycles": 2,
+            "cycles_checked": 4,
+        },
+        "population_inactivity_replay": {
+            "violated": False,
+            "first_violation_cycle": None,
+            "observed_silent_cycles": 2,
+            "max_silent_cycles": 2,
             "cycles_checked": 4,
         },
         "symbiyosys": {
@@ -1011,10 +1111,162 @@ def test_validate_formal_network_report_accepts_complete_payload() -> None:
             "population_silence_replay.first_violation_cycle",
         ),
         (
+            lambda payload: (
+                payload["population_silence_replay"].__setitem__("violated", True),
+                payload["population_silence_replay"].__setitem__("trigger_cycle", None),
+                payload["population_silence_replay"].__setitem__(
+                    "first_violation_cycle", 2
+                ),
+                payload["population_silence_replay"].__setitem__(
+                    "observed_active_outputs", 1
+                ),
+            ),
+            "population_silence_replay.trigger_cycle",
+        ),
+        (
+            lambda payload: (
+                payload["population_silence_replay"].__setitem__("violated", True),
+                payload["population_silence_replay"].__setitem__("trigger_cycle", 2),
+                payload["population_silence_replay"].__setitem__(
+                    "first_violation_cycle", 2
+                ),
+                payload["population_silence_replay"].__setitem__(
+                    "observed_active_outputs", 1
+                ),
+            ),
+            "population_silence_replay.trigger_cycle",
+        ),
+        (
+            lambda payload: (
+                payload["population_silence_replay"].__setitem__("violated", True),
+                payload["population_silence_replay"].__setitem__("trigger_cycle", 0),
+                payload["population_silence_replay"].__setitem__(
+                    "first_violation_cycle", 4
+                ),
+                payload["population_silence_replay"].__setitem__(
+                    "observed_active_outputs", 1
+                ),
+            ),
+            "population_silence_replay.first_violation_cycle",
+        ),
+        (
+            lambda payload: payload["population_silence_replay"].__setitem__(
+                "remaining_silence_cycles", 3
+            ),
+            "population_silence_replay.remaining_silence_cycles",
+        ),
+        (
+            lambda payload: (
+                payload["population_silence_replay"].__setitem__("violated", True),
+                payload["population_silence_replay"].__setitem__("trigger_cycle", 0),
+                payload["population_silence_replay"].__setitem__(
+                    "first_violation_cycle", 2
+                ),
+                payload["population_silence_replay"].__setitem__(
+                    "observed_active_outputs", 1
+                ),
+                payload["population_silence_replay"].__setitem__(
+                    "remaining_silence_cycles", 2
+                ),
+            ),
+            "population_silence_replay.remaining_silence_cycles",
+        ),
+        (
+            lambda payload: (
+                payload["population_silence_replay"].__setitem__("trigger_cycle", 0),
+                payload["population_silence_replay"].__setitem__("cycles_checked", 2),
+                payload["population_silence_replay"].__setitem__(
+                    "remaining_silence_cycles", 2
+                ),
+            ),
+            "population_silence_replay.remaining_silence_cycles",
+        ),
+        (
+            lambda payload: payload["population_silence_replay"].__setitem__(
+                "remaining_silence_cycles", 1
+            ),
+            "population_silence_replay.remaining_silence_cycles",
+        ),
+        (
+            lambda payload: (
+                payload["population_silence_replay"].__setitem__("violated", True),
+                payload["population_silence_replay"].__setitem__("trigger_cycle", 0),
+                payload["population_silence_replay"].__setitem__(
+                    "first_violation_cycle", 3
+                ),
+                payload["population_silence_replay"].__setitem__(
+                    "observed_active_outputs", 1
+                ),
+                payload["population_silence_replay"].__setitem__("cycles_checked", 5),
+            ),
+            "population_silence_replay.first_violation_cycle",
+        ),
+        (
             lambda payload: payload["population_silence_replay"].__setitem__(
                 "observed_active_outputs", 1
             ),
             "population_silence_replay.observed_active_outputs",
+        ),
+        (
+            lambda payload: payload["population_inactivity"].__setitem__(
+                "max_silent_cycles", 0
+            ),
+            "population_inactivity.max_silent_cycles",
+        ),
+        (
+            lambda payload: payload["population_inactivity_replay"].__setitem__(
+                "max_silent_cycles", 3
+            ),
+            "population_inactivity_replay.max_silent_cycles",
+        ),
+        (
+            lambda payload: (
+                payload["population_inactivity_replay"].__setitem__("violated", True),
+                payload["population_inactivity_replay"].__setitem__(
+                    "first_violation_cycle", None
+                ),
+                payload["population_inactivity_replay"].__setitem__(
+                    "observed_silent_cycles", 3
+                ),
+            ),
+            "population_inactivity_replay.first_violation_cycle",
+        ),
+        (
+            lambda payload: (
+                payload["population_inactivity_replay"].__setitem__("violated", True),
+                payload["population_inactivity_replay"].__setitem__(
+                    "first_violation_cycle", 4
+                ),
+                payload["population_inactivity_replay"].__setitem__(
+                    "observed_silent_cycles", 3
+                ),
+                payload["population_inactivity_replay"].__setitem__("cycles_checked", 4),
+            ),
+            "population_inactivity_replay.first_violation_cycle",
+        ),
+        (
+            lambda payload: (
+                payload["population_inactivity_replay"].__setitem__("violated", True),
+                payload["population_inactivity_replay"].__setitem__(
+                    "first_violation_cycle", 3
+                ),
+                payload["population_inactivity_replay"].__setitem__(
+                    "observed_silent_cycles", 4
+                ),
+            ),
+            "population_inactivity_replay.observed_silent_cycles",
+        ),
+        (
+            lambda payload: payload["population_inactivity_replay"].__setitem__(
+                "first_violation_cycle", 3
+            ),
+            "population_inactivity_replay.first_violation_cycle",
+        ),
+        (
+            lambda payload: payload["population_inactivity_replay"].__setitem__(
+                "observed_silent_cycles", 3
+            ),
+            "population_inactivity_replay.observed_silent_cycles",
         ),
     ],
 )
