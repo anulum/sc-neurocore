@@ -9,7 +9,7 @@
 SC-NeuroCore includes **59 compiler intelligence features** that transform the
 compiler from a passive code generator into an active decision-making system.
 This guide covers formal verification, target selection, deployment analysis,
-extensibility, security, reliability, and frontier co-design capabilities.
+extensibility, security, reliability, and advanced co-design capabilities.
 
 ## Table of Contents
 
@@ -183,7 +183,7 @@ for p, target in plan.assignments.items():
 ### §34. Auto-Target Recommender — `recommend_target()`
 
 Given a set of constraints (power budget, latency, cost), automatically
-recommends the optimal hardware platform from all 175 profiles.
+recommends the optimal hardware platform from the live registry of 194 profiles.
 
 ```python
 from sc_neurocore.compiler.intelligence import recommend_target
@@ -444,7 +444,7 @@ print(mmap.decoder_verilog)
 
 ### §48. Model Portability Scorer — `score_portability()`
 
-Scores 0–100 how portable a neuron model is across all 175 profiles,
+Scores 0–100 how portable a neuron model is across the live registry of 194 profiles,
 identifying blockers that limit cross-platform deployment.
 
 ```python
@@ -1241,8 +1241,8 @@ print(f"Optical fanout: {router.optical_fanout_per_beam}")
 
 ## Further Reading
 
-- [Hardware Profiles Guide](hardware_profiles.md) — all 191 profiles
-- [Frontier Platforms Guide](frontier_platforms.md) — 39 platform classes
+- [Hardware Profiles Guide](hardware_profiles.md) — all 194 profiles
+- [Research Platforms Guide](research_platforms.md) — 38 platform classes
 - [Platform Extensibility Guide](platform_extensibility.md) — TOML + hook + from_constraints
 - [Safety Certification Guide](safety_certification.md) — DO-254, IEC 61508, ISO 26262
 - [Carbon & Sustainability Guide](carbon_sustainability.md) — ESG features

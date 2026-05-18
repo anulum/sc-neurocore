@@ -256,6 +256,6 @@ The constructor uses power budget to select optimal data width:
 ## Further Reading
 
 - [Compiler Intelligence Guide](compiler_intelligence.md) — all 67 features
-- [Frontier Platforms Guide](frontier_platforms.md) — 31 platform classes
-- [Hardware Profiles Guide](hardware_profiles.md) — all 175 profiles
+- [Research Platforms Guide](research_platforms.md) — 38 platform classes
+- [Hardware Profiles Guide](hardware_profiles.md) — all 194 profiles
 - [Safety Certification Guide](safety_certification.md) — DO-254, IEC 61508

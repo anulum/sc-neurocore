@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Scoped public-docstring policy. This is intentionally incremental: files are
+# added when their public surface has been audited, documented, and made safe to
+# enforce. `tests/test_public_docstring_policy.py` prevents regressions inside
+# the maintained scope without pretending the whole legacy tree is clean.
+
+[quality]
+min_docstring_chars = 20
+expected_file_count = 10
+
+[[file]]
+path = "scripts/generate_docs.py"
+rationale = "Canonical API-reference generator; public helper functions are used by tests and maintenance workflows."
+
+[[file]]
+path = "src/sc_neurocore/spike_ode/ode_layer.py"
+rationale = "Public continuous-depth spiking layer included in generated API docs."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/de_schutter_purkinje.py"
+rationale = "Public neuron model whose documentation fidelity was corrected in the current audit slice."
+
+[[file]]
+path = "src/sc_neurocore/generative/three_d_gen.py"
+rationale = "Public mesh and point-cloud generation module included in generated API docs."
+
+[[file]]
+path = "src/sc_neurocore/compiler/platforms/registry.py"
+rationale = "Public hardware-profile registry that backs documented platform counts and lookup APIs."
+
+[[file]]
+path = "src/sc_neurocore/compiler/platforms/cmos_profiles.py"
+rationale = "Static CMOS and FPGA hardware-profile registrations included in the public registry."
+
+[[file]]
+path = "src/sc_neurocore/compiler/platforms/neuromorphic_profiles.py"
+rationale = "Static neuromorphic hardware-profile registrations included in the public registry."
+
+[[file]]
+path = "src/sc_neurocore/compiler/platforms/exotic_profiles.py"
+rationale = "Static non-CMOS hardware-profile registrations included in the public registry."
+
+[[file]]
+path = "src/sc_neurocore/bridges/aer_router.py"
+rationale = "Public AER routing bridge with a compact API surface and generated reference coverage."
+
+[[file]]
+path = "src/sc_neurocore/bridges/local_llm.py"
+rationale = "Public local-only LLM bridge documented as an opt-in loopback integration."

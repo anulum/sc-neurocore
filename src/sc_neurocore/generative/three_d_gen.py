@@ -26,7 +26,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# Marching Cubes lookup tables (simplified)
+# Marching Cubes lookup tables for voxel-to-mesh extraction.
 # Edge table: which edges are cut for each cube configuration
 EDGE_TABLE = [
     0x0,

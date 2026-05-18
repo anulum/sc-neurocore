@@ -6,9 +6,9 @@
 <!-- Contact: www.anulum.li | protoscience@anulum.li -->
 <!-- SC-NeuroCore -->
 
-# Frontier Paradigms API Reference
+# Research Paradigms API Reference
 
-This quick reference covers the frontier co-design APIs for speculative and
+This quick reference covers the advanced co-design APIs for speculative and
 deep-future platforms including wetware, reversible logic, molecular, and
 microfluidic paradigms.
 

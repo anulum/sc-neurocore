@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# MkDocs intentionally does not place every Markdown file in the public nav.
+# This policy classifies public Markdown files that are allowed to exist outside
+# `mkdocs.yml` navigation. `tests/test_docs_navigation_policy.py` enforces both
+# classification and expected counts so new unlisted docs require an explicit
+# navigation decision.
+
+[[classification]]
+name = "generated-root-api-reference"
+rationale = "Large generated package reference linked from the curated API index rather than placed directly in nav."
+patterns = ["API_REFERENCE.md"]
+expected_count = 1
+
+[[classification]]
+name = "rust-ffi-integration-note"
+rationale = "Supplemental Rust FFI integration note linked from developer-facing API and architecture material."
+patterns = ["RUST_FFI_INTEGRATION.md"]
+expected_count = 1
+
+[[classification]]
+name = "model-reference-pages"
+rationale = "Generated per-model API pages; the navigable entry point is the curated model catalogue."
+patterns = ["api/models/*.md"]
+expected_count = 173
+
+[[classification]]
+name = "supplemental-api-references"
+rationale = "Specialized API references linked from guides, tutorials, or the curated API index."
+patterns = [
+  "api/autonomous_learning.md",
+  "api/bridges/local_llm.md",
+  "api/compiler_service.md",
+  "api/model_zoo.md",
+  "api/quantum_cognition.md",
+  "api/rust-analysis-engine.md",
+  "api/rust-benchmarks.md",
+  "api/scpn_datastream.md",
+]
+expected_count = 8
+
+[[classification]]
+name = "supplemental-guides"
+rationale = "Specialized operational and reference guides linked from higher-level manuals or retained as direct references."
+patterns = ["guides/*.md"]
+expected_count = 38
+
+[[classification]]
+name = "supplemental-benchmark-references"
+rationale = "Long-form benchmark references linked from benchmark and validation material."
+patterns = [
+  "benchmarks/ZENITH_BENCHMARKS.md",
+  "benchmarks/ZENITH_BENCHMARKS_GPU.md",
+]
+expected_count = 2
+
+[[classification]]
+name = "supplemental-architecture-reference"
+rationale = "Long-form architecture reference linked from architecture documentation."
+patterns = ["architecture/AUTONOMOUS_LEARNING_ZENITH.md"]
+expected_count = 1
+
+[[classification]]
+name = "research-whitepaper"
+rationale = "Foundational research whitepaper kept outside task-oriented navigation."
+patterns = ["research/SC_NEUROCORE_FOUNDATIONAL_WHITEPAPER.md"]
+expected_count = 1

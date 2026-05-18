@@ -559,7 +559,7 @@ sva = generate_sva(["v", "u"], data_width=16, fraction=8,
 - [Deployment Guide](deployment_guide.md) — constraints, TCL, Cocotb, bitstream
 - [Co-Simulation Guide](cosimulation_guide.md) — Python↔Verilog verification
 - [Compiler Intelligence Guide](compiler_intelligence.md) — all 67 features (§26–§67)
-- [Frontier Platforms Guide](frontier_platforms.md) — 31 platform classes deep-dive
+- [Research Platforms Guide](research_platforms.md) — 38 platform classes deep-dive
 - [Platform Extensibility Guide](platform_extensibility.md) — TOML loader + discovery hook
 - [Safety Certification Guide](safety_certification.md) — DO-254, IEC 61508, ISO 26262
 - [Tutorial 33: Equation-to-Verilog](../tutorials/33_equation_to_verilog.md)

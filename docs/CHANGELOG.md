@@ -15,8 +15,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Added power, thermal, reliability, and sustainability analysis for thermal envelopes, power intent, power-domain wrappers, energy schedules, carbon estimates, reliability prediction, SEU scrubbing, and HIL calibration.
 - Added deployment and integration generators for AXI4-Lite, Wishbone, RISC-V drivers, RTOS templates, memory maps, DVS-to-AER bridges, debug probes, TCL projects, open-source FPGA flows, SymbiYosys scripts, IP-XACT packaging, and Cocotb/UVM testbenches.
 - Added numerical and representation support for mixed precision, microscaling FP formats, IEEE FP8, posit arithmetic, auto-quantisation sweeps, photonic MZI encoding, PIM/CXL layout planning, analog noise modelling, and bit-true software kernels.
-- Added frontier co-design helpers for NIR/ONNX-SNN import, photonic configuration export, chiplet/UCIe mapping, CXL mapping, on-chip learning parameter export, drift compensation, and digital-twin generation.
-- Added documentation for compiler intelligence, frontier platforms, deployment, platform extensibility, multi-target deployment, safety certification, verification/debug flows, carbon sustainability, static analysis, SoC integration, and equation-to-Verilog workflows.
+- Added advanced co-design helpers for NIR/ONNX-SNN import, photonic configuration export, chiplet/UCIe mapping, CXL mapping, on-chip learning parameter export, drift compensation, and digital-twin generation.
+- Added documentation for compiler intelligence, research platforms, deployment, platform extensibility, multi-target deployment, safety certification, verification/debug flows, carbon sustainability, static analysis, SoC integration, and equation-to-Verilog workflows.
 
 #### Removed
 - Removed monolithic compiler intelligence and platform profile modules in favour of responsibility-scoped packages.

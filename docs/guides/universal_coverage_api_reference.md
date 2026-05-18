@@ -553,8 +553,8 @@ graph TD
 ## Further Reading
 
 - [Compiler Intelligence Guide](compiler_intelligence.md) — all 67 features
-- [Hardware Profiles Guide](hardware_profiles.md) — all 175 profiles
-- [Frontier Platforms Guide](frontier_platforms.md) — 31 platform classes
+- [Hardware Profiles Guide](hardware_profiles.md) — all 194 profiles
+- [Research Platforms Guide](research_platforms.md) — 38 platform classes
 - [Platform Extensibility Guide](platform_extensibility.md) — TOML + hook + from_constraints
 - [Verification & Debug Guide](verification_debug.md) — 14 V&V features
 - [Security and Sovereignty API Reference](security_sovereignty_api_reference.md) — §60–§67 + 3 platform classes

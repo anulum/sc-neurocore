@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — De Schutter & Bower 1994 — cerebellar Purkinje cell
 
+"""Compact conductance-based Purkinje-cell model after De Schutter & Bower."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,9 +16,11 @@ import numpy as np
 
 @dataclass
 class DeSchutterPurkinjeNeuron:
-    """De Schutter & Bower 1994 — cerebellar Purkinje cell (simplified).
+    """Single-compartment Purkinje-cell conductance model after De Schutter & Bower.
 
-    5 gating variables: h_Na, n_K, m_CaP, h_CaP, q_KCa.
+    The maintained Python model exposes five active gating variables:
+    h_Na, n_K, m_CaP, h_CaP, and q_KCa. Use the audit index before treating this
+    compact implementation as a full multi-compartment reconstruction.
 
     Reference: De Schutter, E. & Bower, J.M. (1994). J. Neurophysiol. 71:375–400.
     """
@@ -43,6 +47,7 @@ class DeSchutterPurkinjeNeuron:
     v_threshold: float = -20.0
 
     def step(self, current: float) -> int:
+        """Advance the compact conductance model and return a spike indicator."""
         v_prev = self.v
         for _ in range(5):
             m_na_inf = 1.0 / (1.0 + np.exp(-(self.v + 35.0) / 7.5))
@@ -76,6 +81,7 @@ class DeSchutterPurkinjeNeuron:
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
     def reset(self) -> None:
+        """Restore voltage, gates, and calcium state to their defaults."""
         self.v = -68.0
         self.h_na, self.n_k, self.m_cap, self.h_cap, self.q_kca = 0.8, 0.1, 0.0, 0.9, 0.0
         self.ca = 0.0001

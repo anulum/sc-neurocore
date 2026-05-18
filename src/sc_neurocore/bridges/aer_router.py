@@ -95,6 +95,7 @@ class AERRouter:
 
     @property
     def route_count(self) -> int:
+        """Return the number of currently registered neuron routes."""
         with self._lock:
             return len(self._routes)
 
@@ -123,20 +124,24 @@ class AERRouter:
 
     @property
     def pending_count(self) -> int:
+        """Return the number of dispatched packets awaiting ACKs."""
         with self._lock:
             return len(self._pending)
 
     @property
     def total_sent(self) -> int:
+        """Return the total number of packets accepted for dispatch."""
         with self._lock:
             return self._total_sent
 
     @property
     def total_acked(self) -> int:
+        """Return the total number of ACKs processed by the router."""
         with self._lock:
             return self._total_acked
 
     def get_stats(self, neuron_id: int) -> RouteStats | None:
+        """Return a defensive copy of per-route statistics when present."""
         with self._lock:
             s = self._stats.get(neuron_id)
             return RouteStats(s.dispatched, s.acked, s.dropped) if s else None

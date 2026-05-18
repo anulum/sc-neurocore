@@ -34,8 +34,8 @@ module microtubule_neuron(
     // =========================================================================
     // 1. CHAOTIC NOISE GENERATOR (Pseudo-Quantum Fluctuation)
     // =========================================================================
-    // Implements a simplified Logistic Map: x[n+1] = r * x[n] * (1 - x[n])
-    // Fixed point arithmetic.
+    // Implements a fixed-point logistic-map approximation:
+    // x[n+1] = r * x[n] * (1 - x[n]).
 
     reg [15:0] chaos_state;
     reg [15:0] lfsr_state;
@@ -49,8 +49,7 @@ module microtubule_neuron(
             lfsr_state <= {lfsr_state[14:0], lfsr_state[15] ^ lfsr_state[13] ^ lfsr_state[12] ^ lfsr_state[10]};
 
             // 2. Chaotic Map Update (Slow, deep noise)
-            // Simplified for FPGA: x <= 4*x - 4*x^2 (approx)
-            // Ideally requires DSP slices, here using shift/add approximation
+            // FPGA form: x <= 4*x - 4*x^2, using the available fixed-point datapath.
             chaos_state <= (chaos_state << 2) - ((chaos_state * chaos_state) >> 14);
         end
     end
@@ -110,7 +109,7 @@ module microtubule_neuron(
             // Threshold Check (The "Collapse")
             if (potential_accumulator[19:4] > threshold_reg) begin
                 fire_event <= 1;
-                potential_accumulator <= 0; // Reset after fire (Refractory period simplified)
+                potential_accumulator <= 0; // Reset after fire for the refractory interval.
             end else begin
                 fire_event <= 0;
             end

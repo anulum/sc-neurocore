@@ -14,7 +14,7 @@ Use an alternative path when all of the following are true:
   replace the baseline
 - you want side-by-side benchmarking and output comparison before any promotion
 
-This is the right place for new math perspectives, frontier physical models, or
+This is the right place for new math perspectives, research physical models, or
 algorithmic rewrites that need empirical validation before they touch the
 stable path.
 

@@ -4,13 +4,14 @@
 <!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
 <!-- ORCID: 0009-0009-3560-0851 -->
 
-# Frontier Hardware Platforms Guide
+# Research Hardware Platforms Guide
 
-SC-NeuroCore supports **31 platform classes** spanning every known and
-speculative compute paradigm — from traditional FPGAs to living organoid
-co-processors, DNA-perovskite synapses, and trapped-ion quantum neurons.
+SC-NeuroCore currently registers **194 hardware profiles** across **38
+platform classes**. The registry spans stable deployment targets, research
+accelerators, and explicitly experimental substrate profiles, from FPGAs and
+ASICs to organoid, molecular, and quantum-neuromorphic research targets.
 
-This guide covers the frontier platform classes, their physical principles,
+This guide covers the research platform classes, their physical principles,
 compilation considerations, and code examples.
 
 ## Table of Contents
@@ -554,7 +555,7 @@ p = HardwareProfile.from_constraints(
 
 ---
 
-Summary of the 39 platform classes supported by SC-NeuroCore:
+Representative platform groups documented in this guide:
 
 | ID | Class Name | Profiles | Description | Target |
 |---|---|---|---|---|
