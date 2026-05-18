@@ -8,7 +8,14 @@ import struct
 
 import pytest
 
-from tools.validate_mnist_sc_checkpoint import load_mnist_idx, validate_checkpoint
+torch = pytest.importorskip("torch")
+
+from sc_neurocore.security.checkpoint_loading import CheckpointTrustError
+from tools.validate_mnist_sc_checkpoint import (
+    _state_dict_from_checkpoint,
+    load_mnist_idx,
+    validate_checkpoint,
+)
 
 
 def _write_idx_fixture(root, *, image_magic=2051, label_magic=2049) -> None:
@@ -61,3 +68,11 @@ def test_validate_checkpoint_rejects_invalid_numeric_contract(tmp_path, kwargs):
 
     with pytest.raises(ValueError):
         validate_checkpoint(**params)
+
+
+def test_state_dict_from_checkpoint_verifies_optional_sha256(tmp_path):
+    checkpoint = tmp_path / "conv.pt"
+    torch.save({"layer.weight": torch.tensor([1.0])}, checkpoint)
+
+    with pytest.raises(CheckpointTrustError, match="SHA-256 mismatch"):
+        _state_dict_from_checkpoint(checkpoint, trusted_sha256={checkpoint.name: "0" * 64})

@@ -32,6 +32,7 @@ import numpy as np
 import torch
 
 from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
+from sc_neurocore.security.checkpoint_loading import safe_load_checkpoint
 from sc_neurocore.training.snn_modules import ConvSpikingNet
 
 MNIST_IMAGE_MAGIC = 2051
@@ -132,8 +133,16 @@ def load_mnist_torchvision(
     return np.stack(images, axis=0), np.asarray(labels, dtype=np.int64)
 
 
-def _state_dict_from_checkpoint(path: Path) -> dict[str, torch.Tensor]:
-    checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+def _state_dict_from_checkpoint(
+    path: Path,
+    *,
+    trusted_sha256: dict[str, str] | None = None,
+) -> dict[str, torch.Tensor]:
+    checkpoint = (
+        safe_load_checkpoint(path, trusted_sha256=trusted_sha256, map_location="cpu")
+        if trusted_sha256 is not None
+        else torch.load(path, map_location="cpu", weights_only=True)
+    )
     if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
         state = checkpoint["model_state_dict"]
     else:
@@ -147,9 +156,13 @@ def _state_dict_from_checkpoint(path: Path) -> dict[str, torch.Tensor]:
     return {key: value for key, value in state.items()}
 
 
-def load_conv_checkpoint(path: Path) -> ConvSpikingNet:
+def load_conv_checkpoint(
+    path: Path,
+    *,
+    trusted_sha256: dict[str, str] | None = None,
+) -> ConvSpikingNet:
     """Load ``ConvSpikingNet`` while preserving learned dynamics flags."""
-    state = _state_dict_from_checkpoint(path)
+    state = _state_dict_from_checkpoint(path, trusted_sha256=trusted_sha256)
     learn_beta = any(key.endswith("._beta_logit") for key in state)
     learn_threshold = any(key.endswith("._threshold_log") for key in state)
     model = ConvSpikingNet(
@@ -193,6 +206,7 @@ def validate_checkpoint(
     min_agreement: float,
     dataset_loader: str = "torchvision",
     download: bool = False,
+    checkpoint_sha256: str | None = None,
 ) -> ValidationResult:
     """Run the real checkpoint/dataset SC final-readout validation."""
     if timesteps <= 0:
@@ -210,7 +224,8 @@ def validate_checkpoint(
         images, labels = load_mnist_idx(data_dir, samples)
     else:
         raise ValueError("dataset_loader must be 'torchvision' or 'idx'")
-    model = load_conv_checkpoint(checkpoint)
+    trusted_sha256 = {checkpoint.name: checkpoint_sha256} if checkpoint_sha256 else None
+    model = load_conv_checkpoint(checkpoint, trusted_sha256=trusted_sha256)
     sc_readout = VectorizedSCLayer.from_exported_weights(
         model.to_sc_weights(encoding="bipolar")[-1],
         length=bitstream_length,
@@ -271,6 +286,10 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=123)
     parser.add_argument("--min-sc-accuracy", type=float, default=0.70)
     parser.add_argument("--min-agreement", type=float, default=0.65)
+    parser.add_argument(
+        "--checkpoint-sha256",
+        help="Expected SHA-256 digest for the checkpoint before PyTorch deserialisation",
+    )
     parser.add_argument("--dataset-loader", choices=("torchvision", "idx"), default="torchvision")
     parser.add_argument(
         "--download", action="store_true", help="Allow torchvision to download MNIST"
@@ -289,6 +308,7 @@ def main() -> int:
         min_agreement=args.min_agreement,
         dataset_loader=args.dataset_loader,
         download=args.download,
+        checkpoint_sha256=args.checkpoint_sha256,
     )
     payload = asdict(result)
     print(json.dumps(payload, indent=2, sort_keys=True))
