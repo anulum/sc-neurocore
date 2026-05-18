@@ -1,0 +1,85 @@
+{
+  "evidence_class": "deterministic_training_simulation",
+  "hardware_measurement_claimed": false,
+  "initial_parameters": {
+    "bias": [
+      0.0
+    ],
+    "weight": [
+      [
+        0.04995837,
+        0.04995837
+      ]
+    ]
+  },
+  "loss": {
+    "best": 1.688708653091453e-05,
+    "final": 6.197052243805956e-06,
+    "initial": 0.4125083088874817
+  },
+  "objective_terms": {
+    "correlation_cost": 0.0033117777202278376,
+    "length_cost": 3.9062499126885086e-05,
+    "resource_cost": 5.525999949895777e-05,
+    "total": 0.0034191422164440155,
+    "variance_cost": 6.844997187727131e-06
+  },
+  "sc_config": {
+    "bitstream_length": 256,
+    "correlation": 0.0,
+    "encoding": "bipolar",
+    "estimator": "pathwise_relaxation",
+    "generator": "sobol",
+    "input_seed": 101,
+    "weight_seed": 211
+  },
+  "schema_version": "sc-neurocore.stochastic-backprop-benchmark.v1",
+  "stream_evidence": {
+    "input_max_abs_correlation": 0.0,
+    "input_rate": [
+      [
+        0.0
+      ],
+      [
+        0.0
+      ],
+      [
+        1.0
+      ],
+      [
+        1.0
+      ]
+    ],
+    "sampled_product_mae": 0.0006369352340698242,
+    "weight_max_abs_correlation": 0.8662487268447876,
+    "weight_rate": [
+      [
+        0.7734375
+      ],
+      [
+        0.7734375
+      ],
+      [
+        0.7734375
+      ],
+      [
+        0.7734375
+      ]
+    ]
+  },
+  "trained_parameters": {
+    "bias": [
+      0.04999985
+    ],
+    "weight": [
+      [
+        0.54751194,
+        -0.34991887
+      ]
+    ]
+  },
+  "training": {
+    "learning_rate": 0.4,
+    "steps": 8
+  }
+}

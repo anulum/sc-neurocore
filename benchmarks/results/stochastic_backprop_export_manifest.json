@@ -1,0 +1,147 @@
+{
+  "evidence": {
+    "benchmark_schema_version": "sc-neurocore.stochastic-backprop-benchmark.v1",
+    "evidence_class": "deterministic_training_simulation",
+    "final_loss": 6.197052243805956e-06,
+    "hardware_measurement_claimed": false,
+    "initial_loss": 0.4125083088874817,
+    "input_max_abs_correlation": 0.0,
+    "objective_total": 0.0034191422164440155,
+    "sampled_product_mae": 0.0006369352340698242,
+    "weight_max_abs_correlation": 0.8662487268447876
+  },
+  "schema_version": "sc-neurocore.stochastic-backprop-export.v1",
+  "scnir_document": {
+    "hierarchy": [],
+    "producer": "sc-neurocore.training.stochastic_backprop_export",
+    "schema_version": "sc-neurocore.scnir.v0.7",
+    "streams": [
+      {
+        "bitstream_length": 256,
+        "correlation_constraints": [
+          {
+            "max_abs_correlation": 0.0,
+            "peer_stream_id": "fmoat1.weight",
+            "policy": "max_correlation",
+            "seed_domain": "fmoat1_stochastic_backprop"
+          }
+        ],
+        "delay_steps": 0,
+        "encoding": "bipolar",
+        "layer": "fmoat1_stochastic_backprop",
+        "online_learning": null,
+        "precision": {
+          "accumulator_bits": 32,
+          "fractional_bits": 15,
+          "overflow": "saturate",
+          "rounding": "stochastic",
+          "signed": true,
+          "total_bits": 16
+        },
+        "signal_kind": "spike",
+        "source": {
+          "halton_base": null,
+          "hardware_id": null,
+          "kind": "sobol",
+          "lfsr_polynomial": null,
+          "replay_uri": null,
+          "seed": 101,
+          "sobol_dimension": 1,
+          "tap_mask": null
+        },
+        "stream_id": "fmoat1.input",
+        "transforms": []
+      },
+      {
+        "bitstream_length": 256,
+        "correlation_constraints": [
+          {
+            "max_abs_correlation": 0.0,
+            "peer_stream_id": "fmoat1.input",
+            "policy": "max_correlation",
+            "seed_domain": "fmoat1_stochastic_backprop"
+          }
+        ],
+        "delay_steps": 0,
+        "encoding": "bipolar",
+        "layer": "fmoat1_stochastic_backprop",
+        "online_learning": null,
+        "precision": {
+          "accumulator_bits": 32,
+          "fractional_bits": 15,
+          "overflow": "saturate",
+          "rounding": "stochastic",
+          "signed": true,
+          "total_bits": 16
+        },
+        "signal_kind": "weight",
+        "source": {
+          "halton_base": null,
+          "hardware_id": null,
+          "kind": "sobol",
+          "lfsr_polynomial": null,
+          "replay_uri": null,
+          "seed": 211,
+          "sobol_dimension": 2,
+          "tap_mask": null
+        },
+        "stream_id": "fmoat1.weight",
+        "transforms": []
+      },
+      {
+        "bitstream_length": 256,
+        "correlation_constraints": [
+          {
+            "max_abs_correlation": 1.0,
+            "peer_stream_id": "fmoat1.input",
+            "policy": "max_correlation",
+            "seed_domain": "fmoat1_stochastic_backprop"
+          },
+          {
+            "max_abs_correlation": 1.0,
+            "peer_stream_id": "fmoat1.weight",
+            "policy": "max_correlation",
+            "seed_domain": "fmoat1_stochastic_backprop"
+          }
+        ],
+        "delay_steps": 0,
+        "encoding": "bipolar",
+        "layer": "fmoat1_stochastic_backprop",
+        "online_learning": null,
+        "precision": {
+          "accumulator_bits": 32,
+          "fractional_bits": 15,
+          "overflow": "saturate",
+          "rounding": "stochastic",
+          "signed": true,
+          "total_bits": 16
+        },
+        "signal_kind": "spike",
+        "source": {
+          "halton_base": null,
+          "hardware_id": null,
+          "kind": "replay",
+          "lfsr_polynomial": null,
+          "replay_uri": "benchmarks/results/stochastic_backprop_benchmark.json",
+          "seed": null,
+          "sobol_dimension": null,
+          "tap_mask": null
+        },
+        "stream_id": "fmoat1.product",
+        "transforms": []
+      }
+    ]
+  },
+  "scnir_schema_version": "sc-neurocore.scnir.v0.7",
+  "training": {
+    "bitstream_length": 256,
+    "correlation": 0.0,
+    "encoding": "bipolar",
+    "estimator": "pathwise_relaxation",
+    "generator": "sobol",
+    "input_seed": 101,
+    "learning_rate": 0.4,
+    "steps": 8,
+    "weight_seed": 211
+  }
+}

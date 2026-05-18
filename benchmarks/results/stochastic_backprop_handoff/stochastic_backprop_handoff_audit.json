@@ -1,0 +1,36 @@
+{
+  "artefacts": [
+    "sc_nir_weight_rom.v",
+    "scnir_document.json",
+    "scnir_source_manifest.json",
+    "scnir_src_000_fmoat1_input.v",
+    "scnir_src_001_fmoat1_weight.v",
+    "scnir_src_002_fmoat1_product.v",
+    "stochastic_backprop_handoff.v"
+  ],
+  "bitstream_length": 256,
+  "directory": "benchmarks/results/stochastic_backprop_handoff",
+  "external_input_count": 0,
+  "external_inputs": [],
+  "hierarchy_instance_count": 0,
+  "hierarchy_instances": {},
+  "hierarchy_port_count": 0,
+  "interconnect": "direct",
+  "manifest_schema_version": "sc-neurocore.scnir.hdl-sources.v0.2",
+  "module_name": "stochastic_backprop_handoff",
+  "q_format": "Q1.15",
+  "schema_version": "sc-neurocore.scnir.v0.7",
+  "signal_kinds": {
+    "spike": 2,
+    "weight": 1
+  },
+  "signal_routes": {
+    "spike": "direct_wire",
+    "weight": "stochastic_source_module"
+  },
+  "source_module_count": 3,
+  "status": "valid",
+  "stream_count": 3,
+  "total_neurons": 0,
+  "total_synapses": 1
+}
