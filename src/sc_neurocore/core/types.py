@@ -59,6 +59,7 @@ class HardwareBudget:
     max_latency_cycles: int = 0
 
     def utilisation(self, luts: int, ffs: int = 0, bram: int = 0, dsp: int = 0) -> Dict[str, float]:
+        """Return resource utilisation fractions against this budget."""
         return {
             "luts": luts / self.max_luts if self.max_luts else 0,
             "ffs": ffs / self.max_ffs if self.max_ffs else 0,
@@ -80,6 +81,7 @@ class ResourceReport:
     mean_accuracy: float = 0.0
 
     def meets_budget(self, budget: HardwareBudget) -> bool:
+        """Return True when all tracked resources fit within a budget."""
         if self.total_luts > budget.max_luts:
             return False
         if self.total_power_mw > budget.max_power_mw:
@@ -93,6 +95,7 @@ class ResourceReport:
         return not self.total_bram_kb > budget.max_bram_kb
 
     def summary(self) -> str:
+        """Render the resource report as a compact human-readable string."""
         return (
             f"LUTs: {self.total_luts}, FFs: {self.total_ffs}, "
             f"DSP: {self.total_dsp}, BRAM: {self.total_bram_kb:.1f} KB, "
@@ -145,12 +148,14 @@ class LayerSpec:
         return int(luts * neuron_mult)
 
     def estimate_power_mw(self) -> float:
+        """Estimate layer power in milliwatts from mode and workload size."""
         if self.mode == ComputeMode.DETERMINISTIC:
             return max(self.mac_count, self.neurons) * 0.5
         base = max(self.mac_count, self.neurons)
         return base * 0.01 * (self.bitstream_length / 256.0)
 
     def estimate_accuracy(self) -> float:
+        """Estimate stochastic-computing accuracy from mode and bitstream length."""
         if self.mode == ComputeMode.DETERMINISTIC:
             return 1.0
         length = max(1, self.bitstream_length)

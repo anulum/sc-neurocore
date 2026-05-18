@@ -9786,12 +9786,15 @@ Supported neuron models.
 Unified FPGA resource budget (shared by Optimizer, NAS, Runtime).
 
 - **utilisation**(luts, ffs, bram, dsp)
+  - Return resource utilisation fractions against this budget.
 
 ### Class `ResourceReport`
 Unified resource consumption report.
 
 - **meets_budget**(budget)
+  - Return True when all tracked resources fit within a budget.
 - **summary**()
+  - Render the resource report as a compact human-readable string.
 
 ### Class `LayerSpec`
 Layer specification usable by Optimizer, NAS, and Runtime.
@@ -9802,7 +9805,9 @@ but all core resource estimation uses this base.
 - **estimate_luts**()
   - Unified LUT estimation shared across all subsystems.
 - **estimate_power_mw**()
+  - Estimate layer power in milliwatts from mode and workload size.
 - **estimate_accuracy**()
+  - Estimate stochastic-computing accuracy from mode and bitstream length.
 
 ### Function `estimate_network(layers)`
 Estimate total resources for a network of layers.
