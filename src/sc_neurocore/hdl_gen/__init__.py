@@ -14,6 +14,10 @@ from .spice_generator import SpiceGenerator
 from .aer_emitter import AEREmitter
 from .kuramoto_emitter import KuramotoEmitter
 from .lfsr16_emitter import Lfsr16Emitter
+from .side_channel_encoding_emitter import (
+    SIDE_CHANNEL_HDL_HOOK_SCHEMA_VERSION,
+    SideChannelEncodingEmitter,
+)
 from .sobol16_emitter import Sobol16Emitter
 from .quasirandom_emitter import QuasiRandomEmitter, Halton16Emitter
 from .tmr_wrapper import generate_tmr_wrapper
@@ -25,6 +29,8 @@ __all__ = [
     "AEREmitter",
     "KuramotoEmitter",
     "Lfsr16Emitter",
+    "SIDE_CHANNEL_HDL_HOOK_SCHEMA_VERSION",
+    "SideChannelEncodingEmitter",
     "Sobol16Emitter",
     "QuasiRandomEmitter",
     "Halton16Emitter",

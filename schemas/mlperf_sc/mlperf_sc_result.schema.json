@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sc-neurocore.mlperf-sc-result.v0.1",
+  "$comment": "SPDX-License-Identifier: AGPL-3.0-or-later; Commercial license available; © Concepts 1996-2026 Miroslav Sotek. All rights reserved.; © Code 2020-2026 Miroslav Sotek. All rights reserved.",
+  "title": "SC-NeuroCore MLPerf-SC Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run",
+    "execution",
+    "metrics",
+    "evidence"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "sc-neurocore.mlperf-sc-result.v0.1"
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "task",
+        "model",
+        "dataset",
+        "started_at",
+        "producer"
+      ],
+      "properties": {
+        "run_id": { "type": "string", "minLength": 1 },
+        "task": { "type": "string", "minLength": 1 },
+        "model": { "type": "string", "minLength": 1 },
+        "dataset": { "type": "string", "minLength": 1 },
+        "started_at": { "type": "string", "minLength": 1 },
+        "producer": { "type": "string", "minLength": 1 }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "backend",
+        "target",
+        "sc_mode",
+        "bitstream_length",
+        "seed"
+      ],
+      "properties": {
+        "backend": { "type": "string", "minLength": 1 },
+        "target": { "type": "string", "minLength": 1 },
+        "sc_mode": {
+          "enum": [
+            "unipolar",
+            "bipolar",
+            "low_discrepancy",
+            "deterministic_replay",
+            "mixed"
+          ]
+        },
+        "bitstream_length": { "type": "integer", "minimum": 1 },
+        "seed": {
+          "anyOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accuracy",
+        "latency_ms",
+        "throughput_inferences_per_s",
+        "energy_j_per_inference",
+        "power_w",
+        "area"
+      ],
+      "properties": {
+        "accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+        "latency_ms": { "type": "number", "minimum": 0 },
+        "throughput_inferences_per_s": {
+          "anyOf": [
+            { "type": "number", "exclusiveMinimum": 0 },
+            { "type": "null" }
+          ]
+        },
+        "energy_j_per_inference": {
+          "anyOf": [
+            { "type": "number", "exclusiveMinimum": 0 },
+            { "type": "null" }
+          ]
+        },
+        "power_w": {
+          "anyOf": [
+            { "type": "number", "exclusiveMinimum": 0 },
+            { "type": "null" }
+          ]
+        },
+        "area": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["luts", "ffs", "bram", "dsp"],
+          "properties": {
+            "luts": { "type": ["integer", "null"], "minimum": 0 },
+            "ffs": { "type": ["integer", "null"], "minimum": 0 },
+            "bram": { "type": ["integer", "null"], "minimum": 0 },
+            "dsp": { "type": ["integer", "null"], "minimum": 0 }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_class", "environment", "artifacts"],
+      "properties": {
+        "evidence_class": {
+          "enum": [
+            "simulation",
+            "synthesis_estimate",
+            "board_measurement",
+            "asic_estimate",
+            "analytical_estimate"
+          ]
+        },
+        "environment": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "path", "sha256"],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "raw_results",
+                  "environment_manifest",
+                  "synthesis_report",
+                  "timing_report",
+                  "power_report",
+                  "board_log",
+                  "power_trace",
+                  "thermal_trace",
+                  "asic_report",
+                  "analysis_notebook",
+                  "summary_report"
+                ]
+              },
+              "path": { "type": "string", "minLength": 1 },
+              "sha256": {
+                "anyOf": [
+                  { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                  { "type": "null" }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

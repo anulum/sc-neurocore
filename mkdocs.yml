@@ -77,6 +77,7 @@ nav:
       - NIR Integration: guides/nir_integration.md
       - Visual Studio: guides/studio.md
       - Encoding Guide: guides/encoding_guide.md
+      - Side-Channel Encoding: guides/side_channel_encoding.md
       - NeuroML Import: guides/neuroml_import.md
       - NAS Guide: guides/nas_guide.md
   - Validation:
