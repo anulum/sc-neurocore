@@ -173,3 +173,37 @@ class TestSpinPoolMPS:
             pool.evolve_exact([SpinCouplingTensor(0, 3, tensor)], time_us=0.0)
         with pytest.raises(ValueError, match="shape"):
             pool.evolve_exact([SpinCouplingTensor(0, 1, np.eye(2))], time_us=0.0)
+
+    def test_internal_heisenberg_same_site_is_noop(self) -> None:
+        pool = SpinPoolMPS(n_sites=3, bond_dim=4)
+        initial = pool.to_statevector()
+
+        pool._apply_heisenberg_between(1, 1, coupling=0.5)
+
+        np.testing.assert_allclose(pool.to_statevector(), initial, atol=1e-12)
+
+    def test_internal_heisenberg_adjacent_gate_preserves_state_norm(self) -> None:
+        pool = SpinPoolMPS(n_sites=2, bond_dim=4)
+        initial = np.array([1.0, 1.0j, -0.25, 0.5], dtype=np.complex128)
+        pool.set_statevector(initial)
+
+        pool._apply_heisenberg_between(0, 1, coupling=0.3)
+
+        evolved = pool.to_statevector()
+        assert np.linalg.norm(evolved) == pytest.approx(1.0)
+        assert np.all(np.isfinite(evolved))
+        assert not np.allclose(evolved, initial / np.linalg.norm(initial))
+
+    def test_internal_heisenberg_nonadjacent_swap_network_preserves_state_norm(self) -> None:
+        pool = SpinPoolMPS(n_sites=3, bond_dim=4)
+        initial = np.zeros(8, dtype=np.complex128)
+        initial[1] = 1.0 / np.sqrt(2.0)
+        initial[6] = 1.0j / np.sqrt(2.0)
+        pool.set_statevector(initial)
+
+        pool._apply_heisenberg_between(2, 0, coupling=0.25)
+
+        evolved = pool.to_statevector()
+        assert np.linalg.norm(evolved) == pytest.approx(1.0)
+        assert np.all(np.isfinite(evolved))
+        assert not np.allclose(evolved, initial)

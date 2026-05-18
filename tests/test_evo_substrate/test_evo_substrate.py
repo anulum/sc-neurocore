@@ -6,11 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Evolutionary Substrate Tests
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 
+import sc_neurocore.evo_substrate.evo_substrate as evo_mod
 from sc_neurocore.evo_substrate.evo_substrate import (
     AgeRegulator,
+    ActivationFunc,
     BloatPenalizer,
     CPPNGenome,
     CoevolutionArena,
@@ -51,6 +55,8 @@ from sc_neurocore.evo_substrate.evo_substrate import (
     population_diversity,
     shared_fitness,
 )
+from sc_neurocore.fault_injection.resilience_policy import SeededFaultObservation
+from sc_neurocore.stochastic_doctor.diagnostics import AuditSeverity, BitstreamAuditReport
 
 
 # ── Genome Tests ─────────────────────────────────────────────────────
@@ -169,6 +175,48 @@ class TestMutationEngine:
         assert g.neuron.theta >= 0.1
         assert g.topology.num_neurons >= 2
 
+    def test_duplication_mutation_expands_layers_and_neuron_budget(self):
+        me = MutationEngine(
+            MutationConfig(
+                point_rate=0.0,
+                structural_rate=0.0,
+                duplication_rate=1.0,
+                swap_rate=0.0,
+                max_neurons=30,
+            )
+        )
+        g = Genome()
+        g.topology.num_neurons = 20
+        g.topology.num_layers = 2
+        g.compute_id()
+
+        child, mutation_type = me.mutate(g)
+
+        assert mutation_type == MutationType.DUPLICATION
+        assert child.topology.num_layers == 3
+        assert child.topology.num_neurons == 30
+        assert child.parent_id == g.genome_id
+
+    def test_swap_mutation_exchanges_fast_and_work_time_constants(self):
+        me = MutationEngine(
+            MutationConfig(
+                point_rate=0.0,
+                structural_rate=0.0,
+                duplication_rate=0.0,
+                swap_rate=1.0,
+            )
+        )
+        g = Genome()
+        g.neuron.tau_fast = 3.0
+        g.neuron.tau_work = 41.0
+        g.compute_id()
+
+        child, mutation_type = me.mutate(g)
+
+        assert mutation_type == MutationType.SWAP
+        assert child.neuron.tau_fast == 41.0
+        assert child.neuron.tau_work == 3.0
+
 
 # ── FitnessEvaluator Tests ──────────────────────────────────────────
 
@@ -220,6 +268,7 @@ class TestReplicationEngine:
         re = ReplicationEngine()
         parent = re.seed(Genome())
         child = re.replicate(parent)
+        assert child is not None
         assert child.genome.parent_id == parent.genome.genome_id
         assert re.total_replications == 1
 
@@ -262,6 +311,141 @@ class TestReplicationEngine:
         re.evaluate_all(self._metrics_fn)
         assert re.mean_fitness > 0
 
+    def test_industrial_replicate_rejects_child_outside_safety_bounds(self):
+        re = ReplicationEngine()
+        re.safety_guard = FormalSafetyGuard(SafetyBounds(max_neurons=4))
+        parent_genome = Genome()
+        parent_genome.topology.num_neurons = 16
+        parent = re.seed(parent_genome)
+
+        child = re.replicate(parent)
+
+        assert child is None
+        assert re.total_replications == 0
+        assert re.safety_guard.rejected == 1
+
+    def test_replicate_crossover_records_child_lineage_when_safety_passes(self):
+        re = ReplicationEngine(max_population=4)
+        parent_a = re.seed(Genome())
+        parent_b_genome = Genome()
+        parent_b_genome.topology.num_neurons = 24
+        parent_b = re.seed(parent_b_genome)
+
+        child = re.replicate_crossover(parent_a, parent_b)
+
+        assert child is not None
+        assert child.genome.parent_id == (
+            f"{parent_a.genome.genome_id}x{parent_b.genome.genome_id}"
+        )
+        assert re.total_replications == 1
+        assert len(re.population) == 3
+
+    def test_industrial_replicate_crossover_rejects_child_outside_safety_bounds(self):
+        re = ReplicationEngine()
+        re.safety_guard = FormalSafetyGuard(SafetyBounds(max_neurons=4))
+        parent_a = re.seed(Genome())
+        parent_b = re.seed(Genome())
+
+        child = re.replicate_crossover(parent_a, parent_b)
+
+        assert child is None
+        assert re.total_replications == 0
+        assert re.safety_guard.rejected == 1
+
+    def test_runtime_fault_replay_plan_applies_replay_penalty(self):
+        class ReplayPolicy:
+            def evaluate(self, bitstreams, *, layer_id, fault_model, ber, seed):
+                audit = BitstreamAuditReport(
+                    layer=layer_id,
+                    stream_length=128,
+                    num_neurons=1,
+                    status=AuditSeverity.WARNING,
+                )
+                observation = SeededFaultObservation(
+                    layer_id=layer_id,
+                    seed=seed,
+                    fault_model=fault_model,
+                    ber=ber,
+                    affected_bits=2,
+                    bitstream_length=128,
+                    affected_ratio=0.01,
+                    audit=audit,
+                )
+                return evo_mod.DegradationPlan(
+                    action=evo_mod.DegradationAction.REPLAY_WITH_SEED,
+                    observation=observation,
+                    recommended_bitstream_length=256,
+                    replay_seed=seed,
+                    reason="seeded replay required",
+                )
+
+        g = Genome()
+        g.compute_id()
+        org = Organism(
+            genome=g,
+            fitness=FitnessResult(g.genome_id, composite=1.0),
+        )
+        config = evo_mod.RuntimeFaultConfig(fitness_penalty_on_replay=0.5)
+        re = ReplicationEngine(
+            runtime_fault_config=config,
+            degradation_policy=cast(Any, ReplayPolicy()),
+        )
+
+        check = re.verify_runtime_faults(org)
+
+        assert org.genome.topology.bitstream_length == 256
+        assert org.fitness is not None
+        assert org.fitness.composite == pytest.approx(0.5)
+        assert check.action == evo_mod.DegradationAction.REPLAY_WITH_SEED.value
+        assert org.runtime_fault_checks == [check]
+
+    def test_industrial_select_and_cull_applies_extinction_event(self):
+        re = ReplicationEngine(max_population=8)
+        re.extinction_detector = ExtinctionDetector(stagnation_gens=1, kill_fraction=0.5)
+        for _ in range(4):
+            org = re.seed(Genome())
+            org.fitness = FitnessResult(org.genome.genome_id, composite=0.5)
+
+        killed = re.select_and_cull(survival_fraction=1.0)
+
+        assert killed == 0
+        assert len(re.population) == 2
+        assert re.extinction_detector.extinction_count == 1
+
+    def test_non_industrial_generation_crosses_survivors_when_roll_is_low(self):
+        class AlwaysCrossoverRng:
+            def random(self):
+                return 0.0
+
+        re = ReplicationEngine(max_population=3, industrial_mode=False)
+        first = re.seed(Genome())
+        second_genome = Genome()
+        second_genome.topology.num_neurons = 32
+        second = re.seed(second_genome)
+        first.fitness = FitnessResult(first.genome.genome_id, composite=0.9)
+        second.fitness = FitnessResult(second.genome.genome_id, composite=0.8)
+        re.mutator.rng = AlwaysCrossoverRng()
+
+        result = re.evolve_generation(lambda genome: {"accuracy": 0.7})
+
+        assert result["children"] == 1
+        assert any("x" in org.genome.parent_id for org in re.population)
+
+    def test_industrial_generation_continues_when_tournament_returns_no_parent(self):
+        class NoParentTournament:
+            def select(self, population, rng):
+                return None
+
+        re = ReplicationEngine(max_population=4)
+        re.tournament = NoParentTournament()
+        for _ in range(2):
+            re.seed(Genome())
+
+        result = re.evolve_generation(lambda genome: {"accuracy": 0.7})
+
+        assert result["children"] == 0
+        assert result["population_size"] == 2
+
 
 # ── OrganismEmitter Tests ───────────────────────────────────────────
 
@@ -296,6 +480,21 @@ class TestOrganismEmitter:
         g.compute_id()
         v = OrganismEmitter.to_verilog(g, module_name="test_org")
         assert "module test_org" in v
+
+    def test_to_photonic_netlist_carries_geometry_and_waveguides(self):
+        g = Genome()
+        g.topology.num_neurons = 3
+        g.compute_id()
+
+        netlist = OrganismEmitter.to_photonic_netlist(g, pml_layers=16)
+
+        assert netlist["metadata"]["genome_id"] == g.genome_id
+        assert netlist["parameters"]["pml_layers"] == 16
+        assert [waveguide["id"] for waveguide in netlist["waveguides"]] == [
+            "wg_0",
+            "wg_1",
+            "wg_2",
+        ]
 
 
 # ── Crossover Tests ─────────────────────────────────────────────────
@@ -366,6 +565,16 @@ class TestSpeciation:
         b.topology.num_neurons = 100
         assert abs(genomic_distance(a, b) - genomic_distance(b, a)) < 1e-10
 
+    def test_genomic_distance_numpy_fallback_matches_reference_formula(self, monkeypatch):
+        monkeypatch.setattr(evo_mod, "_HAS_RUST_EVO", False)
+        a = Genome()
+        b = Genome()
+        b.topology.num_neurons = 100
+        va, vb = a.to_vector(), b.to_vector()
+        expected = float(np.mean(np.abs(va - vb) / (np.abs(va) + np.abs(vb) + 1e-10)))
+
+        assert genomic_distance(a, b) == pytest.approx(expected)
+
 
 # ── Diversity Tests ─────────────────────────────────────────────────
 
@@ -406,6 +615,7 @@ class TestLineage:
         re = ReplicationEngine()
         parent = re.seed(Genome())
         child = re.replicate(parent)
+        assert child is not None
         chain = re.lineage.get_ancestors(child.genome.genome_id)
         assert len(chain) >= 1
 
@@ -421,6 +631,7 @@ class TestElitism:
             g.topology.num_neurons = 10 + i * 10
             re.seed(g)
         re.evaluate_all(lambda g: {"accuracy": g.topology.num_neurons / 200.0})
+        assert re.best_organism is not None
         best_id = re.best_organism.genome.genome_id
         re.select_and_cull(survival_fraction=0.3)
         remaining_ids = [o.genome.genome_id for o in re.population]
@@ -516,6 +727,11 @@ class TestHallOfFame:
             hof.update(org)
         assert hof.size == 2
 
+    def test_update_rejects_unevaluated_organism(self):
+        hof = HallOfFame()
+        assert hof.update(Organism(genome=Genome())) is False
+        assert hof.size == 0
+
 
 # ── Island Model Tests (Gap 4) ────────────────────────────────────────
 
@@ -536,6 +752,15 @@ class TestIslandModel:
         rng = np.random.default_rng(42)
         im.migrate(rng)
         assert im.total_population >= 2  # original + migrant
+
+    def test_single_island_migration_is_noop(self):
+        im = IslandModel(num_islands=1, migration_rate=1.0)
+        g = Genome()
+        g.compute_id()
+        im.add_organism(0, Organism(genome=g))
+
+        assert im.migrate(np.random.default_rng(42)) == 0
+        assert im.total_migrations == 0
 
 
 # ── Genome Serialization Tests (Gap 5) ───────────────────────────────
@@ -595,6 +820,17 @@ class TestResourceBudget:
         assert not ok
         assert len(violations) > 0
 
+    def test_exceeds_area_budget(self):
+        rb = ResourceBudget(max_neurons=1024, max_area_um2=100.0)
+        g = Genome()
+        g.topology.num_neurons = 32
+        g.topology.bitstream_length = 64
+
+        ok, violations = rb.check(g)
+
+        assert not ok
+        assert any(violation.startswith("area=") for violation in violations)
+
 
 # ── Extinction Tests (Gap 8) ──────────────────────────────────────────
 
@@ -617,6 +853,14 @@ class TestExtinctionDetector:
         rng = np.random.default_rng(42)
         killed = ed.apply(pop, rng)
         assert killed == 5
+
+    def test_improving_history_does_not_trigger_extinction(self):
+        ed = ExtinctionDetector(stagnation_gens=3)
+
+        assert ed.check(0.1) is False
+        assert ed.check(0.2) is False
+        assert ed.check(0.3) is False
+        assert ed.extinction_count == 0
 
 
 # ── Co-Evolution Tests (Gap 9) ────────────────────────────────────────
@@ -680,6 +924,21 @@ class TestFormalSafetyGuard:
         g2.compute_id()
         guard.check(g2)  # passes
         assert guard.rejection_rate == 0.5
+
+    def test_rejects_connectivity_and_bitstream_violations(self):
+        guard = FormalSafetyGuard(SafetyBounds(max_connectivity=0.2, max_bitstream=64))
+        g = Genome()
+        g.topology.connectivity = 0.8
+        g.topology.bitstream_length = 128
+        g.compute_id()
+
+        result = guard.check(g)
+
+        assert not result.passed
+        assert not result.connectivity_ok
+        assert not result.bitstream_ok
+        assert "connectivity=0.8>0.2" in result.violations
+        assert "bitstream=128>64" in result.violations
 
 
 # ── Tournament Selection Tests (Gap 11) ──────────────────────────────
@@ -745,6 +1004,11 @@ class TestParetoFront:
         )
         assert not pf.update(org2)
 
+    def test_unevaluated_organism_is_not_added(self):
+        pf = ParetoFront()
+        assert pf.update(Organism(genome=Genome())) is False
+        assert pf.size == 0
+
 
 # ── Age Regulation Tests (Gap 13) ─────────────────────────────────────
 
@@ -784,6 +1048,13 @@ class TestBloatControl:
         g = Genome()
         assert bp.penalize(0.9, g) < 0.9
 
+    def test_bloat_metrics_marks_large_genome_bloated(self):
+        g = Genome()
+        g.topology.num_neurons = 512
+        g.topology.num_layers = 8
+        metrics = compute_bloat(g, baseline_neurons=4)
+        assert metrics.is_bloated
+
 
 # ── Fitness Sharing Tests (Gap 15) ────────────────────────────────────
 
@@ -810,6 +1081,9 @@ class TestFitnessSharing:
         sf = shared_fitness(org1, [org1, org2], sigma=0.0001)
         assert sf > 0.5  # only shares with itself
 
+    def test_unevaluated_organism_has_zero_shared_fitness(self):
+        assert shared_fitness(Organism(genome=Genome()), [Organism(genome=Genome())]) == 0.0
+
 
 # ── CPPN Tests (Gap 16) ───────────────────────────────────────────────
 
@@ -829,6 +1103,23 @@ class TestCPPN:
         cppn = CPPNGenome()
         assert cppn.num_nodes == 3
         assert cppn.num_edges == 2
+
+    @pytest.mark.parametrize(
+        ("activation", "value", "expected"),
+        [
+            (ActivationFunc.SIN, np.pi / 2.0, 1.0),
+            (ActivationFunc.GAUSS, 0.0, 1.0),
+            (ActivationFunc.STEP, -0.1, 0.0),
+            (ActivationFunc.LINEAR, 1.25, 1.25),
+        ],
+    )
+    def test_activation_functions(self, activation, value, expected):
+        cppn = CPPNGenome()
+        cppn.nodes[2].activation = activation
+        cppn.edges[1].enabled = False
+        cppn.edges[0].weight = 1.0
+
+        assert cppn.query(value, 0.0) == pytest.approx(expected)
 
 
 # ── HW Fitness Tests (Gap 17) ─────────────────────────────────────────
@@ -863,6 +1154,13 @@ class TestEvoStatistics:
         est.record(GenerationStats(2, 10, 0.8, 0.5, 0.3))
         assert est.fitness_trajectory == [0.5, 0.8]
         assert est.improvement_rate() == pytest.approx(0.3)
+
+    def test_single_record_has_diversity_trajectory_and_zero_improvement(self):
+        est = EvoStatisticsTracker()
+        est.record(GenerationStats(1, 10, 0.5, 0.3, 0.2))
+
+        assert est.diversity_trajectory == [0.2]
+        assert est.improvement_rate() == 0.0
 
 
 # ── Genome Diff Tests (Gap 19) ────────────────────────────────────────
@@ -906,3 +1204,24 @@ class TestComplexityMetric:
         ct.record(0, pop)
         ct.record(1, pop)
         assert len(ct.mean_trajectory) == 2
+
+    def test_tracker_ignores_empty_population(self):
+        ct = ComplexityTracker()
+        ct.record(0, [])
+        assert ct.mean_trajectory == []
+
+    def test_tracker_requires_three_records_before_complexifying(self):
+        ct = ComplexityTracker()
+        low = Genome()
+        low.topology.num_neurons = 4
+        mid = Genome()
+        mid.topology.num_neurons = 32
+        high = Genome()
+        high.topology.num_neurons = 128
+
+        ct.record(0, [Organism(genome=low)])
+        ct.record(1, [Organism(genome=mid)])
+        assert not ct.is_complexifying
+        ct.record(2, [Organism(genome=high)])
+
+        assert ct.is_complexifying

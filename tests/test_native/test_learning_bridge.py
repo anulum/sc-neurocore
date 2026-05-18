@@ -9,7 +9,9 @@
 from __future__ import annotations
 
 import ctypes as ct
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
@@ -79,7 +81,7 @@ class _FakeLearningLib:
     def step_rule_layer(self, *_args: object) -> None:
         return None
 
-    def get_rule_layer_weights(self, _ptr: int, out_ptr: ct.POINTER(ct.c_float)) -> None:
+    def get_rule_layer_weights(self, _ptr: int, out_ptr: Any) -> None:
         for i, value in enumerate((0.1, 0.2, 0.3)):
             out_ptr[i] = value
 
@@ -110,9 +112,9 @@ class _FakeLearningLib:
     def step_rule_layer_analog(
         self,
         _ptr: int,
-        _pre_ptr: ct.POINTER(ct.c_float),
-        _post_ptr: ct.POINTER(ct.c_float),
-        _rew_ptr: ct.POINTER(ct.c_float),
+        _pre_ptr: Any,
+        _post_ptr: Any,
+        _rew_ptr: Any,
         seed: ct.c_uint64,
         _dt: ct.c_float,
     ) -> None:
@@ -124,7 +126,7 @@ class _FakeLearningLib:
     def step_wgpu_layer(self, *_args: object) -> None:
         return None
 
-    def get_wgpu_weights(self, _ptr: int, out_ptr: ct.POINTER(ct.c_float)) -> None:
+    def get_wgpu_weights(self, _ptr: int, out_ptr: Any) -> None:
         for i, value in enumerate((0.4, 0.5, 0.6)):
             out_ptr[i] = value
 
@@ -138,8 +140,13 @@ class _FakeLearningLib:
         return None
 
 
+class _FakeLearningLibNoOnlineO1:
+    def create_rule(self, *_args: object) -> int:
+        return 101
+
+
 @pytest.fixture(autouse=True)
-def _restore_learning_bridge_state() -> None:
+def _restore_learning_bridge_state() -> Generator[None, None, None]:
     old_has = lb._HAS_LEARNING
     old_lib = lb._lib
     old_seed = lb._DETERMINISTIC_SEED
@@ -184,6 +191,8 @@ def test_load_native_library_returns_false_on_cdll_oserror(
 def test_rule_constructors_raise_when_native_unavailable() -> None:
     lb._HAS_LEARNING = False
     with pytest.raises(RuntimeError, match="not available"):
+        lb.RustOnlineO1Synapse()
+    with pytest.raises(RuntimeError, match="not available"):
         lb.RustPlasticityRule()
     with pytest.raises(RuntimeError, match="not available"):
         lb.RustEligentLearner()
@@ -191,6 +200,19 @@ def test_rule_constructors_raise_when_native_unavailable() -> None:
         lb.RustRuleLayer(count=3)
     with pytest.raises(RuntimeError, match="not loaded"):
         lb.RustWgpuRuleLayer(count=3)
+
+
+def test_online_o1_constructor_rejects_missing_symbols_and_null_handles() -> None:
+    lb._HAS_LEARNING = True
+    lb._lib = _FakeLearningLibNoOnlineO1()
+    with pytest.raises(RuntimeError, match="lacks online O\\(1\\) symbols"):
+        lb.RustOnlineO1Synapse()
+
+    fake = _FakeLearningLib()
+    fake.create_online_o1_synapse = lambda *_args: 0  # type: ignore[method-assign]
+    lb._lib = fake
+    with pytest.raises(ValueError, match="invalid online O\\(1\\)"):
+        lb.RustOnlineO1Synapse()
 
 
 def test_rule_and_learner_batched_length_guards() -> None:
@@ -212,6 +234,28 @@ def test_rule_and_learner_batched_length_guards() -> None:
             np.array([True]),
             np.array([0.1, 0.2], dtype=np.float32),
         )
+
+
+def test_rule_and_learner_valid_batched_paths_and_reset() -> None:
+    lb._HAS_LEARNING = True
+    lb._lib = _FakeLearningLib()
+
+    rule = lb.RustPlasticityRule()
+    learner = lb.RustEligentLearner()
+
+    rule.step_batched(
+        np.array([True, False]),
+        np.array([False, True]),
+        np.array([0.1, -0.2], dtype=np.float32),
+        dt=0.002,
+    )
+    learner.step_batched(
+        np.array([True, False]),
+        np.array([False, True]),
+        np.array([0.1, -0.2], dtype=np.float32),
+        dt=0.002,
+    )
+    rule.reset()
 
 
 def test_rule_destructors_release_handles() -> None:
@@ -256,7 +300,9 @@ def test_online_o1_bridge_wraps_bounded_rust_kernel() -> None:
     assert fake.destroyed_online_o1 == [404]
 
 
-def test_rule_layer_state_roundtrip_and_file_paths(tmp_path: Path) -> None:
+def test_rule_layer_state_roundtrip_and_file_paths(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     fake = _FakeLearningLib()
     lb._HAS_LEARNING = True
     lb._lib = fake
@@ -267,6 +313,9 @@ def test_rule_layer_state_roundtrip_and_file_paths(tmp_path: Path) -> None:
 
     restored = object.__new__(lb.RustRuleLayer)
     restored.__setstate__(state)
+    assert fake.saved_buffers[-1] == b"ABCD"
+
+    restored.load_state_dict(state)
     assert fake.saved_buffers[-1] == b"ABCD"
 
     weights = layer.get_weights()
@@ -284,7 +333,15 @@ def test_rule_layer_state_roundtrip_and_file_paths(tmp_path: Path) -> None:
         layer.load(str(tmp_path / "traits.bin"))
 
     layer.__del__()
+    restored.__del__()
     assert fake.destroyed_layers[-1] == 303
+
+    monkeypatch.setattr(lb, "_load_native_library", lambda: False)
+    lb._HAS_LEARNING = False
+    lb._lib = None
+    restored_missing = object.__new__(lb.RustRuleLayer)
+    with pytest.raises(RuntimeError, match="not available"):
+        restored_missing.__setstate__(state)
 
 
 def test_rule_layer_step_analog_seed_paths() -> None:
@@ -318,6 +375,10 @@ def test_wgpu_layer_paths_and_factory(monkeypatch: pytest.MonkeyPatch) -> None:
     layer.step(spikes, spikes, rewards=None)
     layer.step_analog(spikes, spikes, spikes)
     assert np.allclose(layer.get_weights(), np.array([0.4, 0.5, 0.6], dtype=np.float32))
+    assert np.allclose(
+        layer.get_state_dict()["weights"],
+        np.array([0.4, 0.5, 0.6], dtype=np.float32),
+    )
 
     with pytest.warns(UserWarning, match="load_state_dict"):
         layer.load_state_dict({"weights": np.array([1.0], dtype=np.float32)})
@@ -338,3 +399,62 @@ def test_wgpu_layer_paths_and_factory(monkeypatch: pytest.MonkeyPatch) -> None:
 
     with pytest.raises(ValueError, match="Unknown backend"):
         lb.create_plasticity_layer(count=2, backend="bogus")
+
+
+def test_torch_non_autograd_step_state_and_reward_warning() -> None:
+    torch = pytest.importorskip("torch")
+
+    layer = lb.create_plasticity_layer(
+        count=3,
+        rule_type=lb.RULE_REWARD_STDP,
+        backend="torch",
+        autograd=False,
+    )
+    pre = np.array([True, False, True])
+    post = np.array([False, True, True])
+    rewards = np.array([0.2, -0.1, 0.3], dtype=np.float32)
+
+    with pytest.warns(UserWarning, match="expects 'rewards'"):
+        _ = layer.forward(torch.tensor(pre), torch.tensor(post), rewards=None, dt=1.0)
+    layer.step(pre, post, rewards, dt=1.0)
+
+    state = layer.get_state_dict()
+    clone = lb.create_plasticity_layer(
+        count=3,
+        rule_type=lb.RULE_REWARD_STDP,
+        backend="torch",
+        autograd=False,
+    )
+    clone.load_state_dict(state)
+
+    assert np.all(np.isfinite(layer.get_weights()))
+    assert np.allclose(clone.get_weights(), layer.get_weights())
+
+
+@pytest.mark.parametrize(
+    "rule_type",
+    [lb.RULE_STDP, lb.RULE_REWARD_STDP, lb.RULE_ELIGENT, lb.RULE_BCM],
+)
+def test_torch_autograd_backward_routes_rule_specific_gradients(rule_type: int) -> None:
+    torch = pytest.importorskip("torch")
+
+    layer = lb.create_plasticity_layer(
+        count=3,
+        rule_type=rule_type,
+        backend="torch",
+        autograd=True,
+    )
+    pre = torch.tensor([1.0, 0.0, 1.0], requires_grad=True)
+    post = torch.tensor([0.0, 1.0, 1.0], requires_grad=True)
+    rewards = torch.tensor([0.2, -0.1, 0.3], requires_grad=True)
+
+    loss = layer.forward(pre, post, rewards, dt=1.0).sum()
+    loss.backward()
+
+    assert layer.weights.grad is not None
+    if rule_type in (lb.RULE_STDP, lb.RULE_REWARD_STDP, lb.RULE_ELIGENT, lb.RULE_BCM):
+        assert pre.grad is not None
+    if rule_type in (lb.RULE_STDP, lb.RULE_REWARD_STDP, lb.RULE_BCM):
+        assert post.grad is not None
+    if rule_type in (lb.RULE_REWARD_STDP, lb.RULE_ELIGENT):
+        assert rewards.grad is not None

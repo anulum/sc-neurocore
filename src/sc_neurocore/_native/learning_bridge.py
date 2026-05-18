@@ -740,8 +740,9 @@ try:
             torch.Tensor,
             torch.Tensor,
         ]:
-            ctx.rule_type = rule_type
-            ctx.dt = dt
+            if ctx is not None:
+                ctx.rule_type = rule_type
+                ctx.dt = dt
 
             p_a_plus, p_a_minus, p_b_tau1, p_b_tau2, p_tau_e = rule_params
 

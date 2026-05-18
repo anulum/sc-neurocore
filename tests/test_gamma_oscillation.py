@@ -16,7 +16,12 @@ new conductance-based API. The fidelity tests pin the published
 weak-PING gain-loop direction (raising w_ie suppresses E firing).
 """
 
+import ctypes
 import importlib
+import os
+import sys
+from types import SimpleNamespace
+from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -263,6 +268,61 @@ class TestNativeBackendDispatch:
             assert reloaded._rust_ping_step is None
             with pytest.raises(RuntimeError, match="sc_neurocore_engine.py_ping_step"):
                 reloaded.PINGCircuit(backend="rust")
+        finally:
+            monkeypatch.undo()
+            importlib.reload(gamma_oscillation_module)
+
+    def test_rust_kernel_discovery_uses_root_package_fallback(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        importlib_module = cast(Any, gamma_oscillation_module)._importlib
+        real_import_module = importlib_module.import_module
+
+        def fallback_root_engine(name: str) -> object:
+            if name == "sc_neurocore_engine.sc_neurocore_engine":
+                raise ImportError(name)
+            if name == "sc_neurocore_engine":
+                return SimpleNamespace(py_ping_step=lambda *args: (0, 0))
+            return real_import_module(name)
+
+        monkeypatch.setattr(importlib_module, "import_module", fallback_root_engine)
+        reloaded = importlib.reload(gamma_oscillation_module)
+        try:
+            assert reloaded._HAS_RUST_PING_STEP is True
+            assert reloaded._rust_ping_step is not None
+        finally:
+            monkeypatch.undo()
+            importlib.reload(gamma_oscillation_module)
+
+    def test_julia_discovery_failure_remains_optional(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setitem(sys.modules, "juliacall", None)
+        reloaded = importlib.reload(gamma_oscillation_module)
+        try:
+            assert reloaded._HAS_JULIA_PING_STEP is False
+            assert reloaded._julia_ping_step is None
+        finally:
+            monkeypatch.undo()
+            importlib.reload(gamma_oscillation_module)
+
+    def test_ctypes_backend_discovery_failures_remain_optional(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def fake_exists(path: str) -> bool:
+            return path.endswith("libgamma_oscillation.so")
+
+        def reject_cdll(path: str) -> object:
+            raise OSError(path)
+
+        monkeypatch.setattr(os.path, "exists", fake_exists)
+        monkeypatch.setattr(ctypes, "CDLL", reject_cdll)
+        reloaded = importlib.reload(gamma_oscillation_module)
+        try:
+            assert reloaded._HAS_GO_PING_STEP is False
+            assert reloaded._go_ping_step is None
+            assert reloaded._HAS_MOJO_PING_STEP is False
+            assert reloaded._mojo_ping_step is None
         finally:
             monkeypatch.undo()
             importlib.reload(gamma_oscillation_module)

@@ -16,9 +16,15 @@ tests against Potjans Table 4 require the published lower-bound
 can be filtered with `pytest -k 'not Fidelity'` for fast iteration.
 """
 
+import importlib
+import sys
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
+from scipy import sparse
 
+from sc_neurocore.network import cortical_column as cortical_column_module
 from sc_neurocore.network.cortical_column import (
     CONN_PROBS,
     CorticalColumn,
@@ -44,6 +50,36 @@ class TestCorticalColumn:
             CorticalColumn(scale=0.0)
         with pytest.raises(ValueError, match="scale"):
             CorticalColumn(scale=1.5)
+
+    def test_invalid_delay_bins_and_backend_raise(self):
+        with pytest.raises(ValueError, match="n_delay_bins"):
+            CorticalColumn(scale=0.02, n_delay_bins=0)
+        with pytest.raises(ValueError, match="backend must be"):
+            CorticalColumn(scale=0.02, backend="fortran")
+
+    @pytest.mark.parametrize(
+        "backend,availability_flag,match",
+        [
+            (
+                "rust",
+                "_HAS_RUST_CSR_MULTI_SPMV",
+                "sc_neurocore_engine.py_parallel_csr_multi_spmv_add",
+            ),
+            ("julia", "_HAS_JULIA_MULTI_SPMV", "Julia kernel"),
+            ("go", "_HAS_GO_MULTI_SPMV", "Go kernel"),
+            ("mojo", "_HAS_MOJO_MULTI_SPMV", "Mojo kernel"),
+        ],
+    )
+    def test_explicit_unavailable_backend_fails_closed(
+        self,
+        monkeypatch,
+        backend,
+        availability_flag,
+        match,
+    ):
+        monkeypatch.setattr(cortical_column_module, availability_flag, False)
+        with pytest.raises(RuntimeError, match=match):
+            CorticalColumn(scale=0.02, backend=backend)
 
     def test_full_scale_sizes(self):
         # At scale=1.0, sizes should match Potjans Table 5 exactly.
@@ -298,6 +334,313 @@ class TestConnectivity:
             assert set(spikes.keys()) == set(POPULATIONS)
             for p, sp in spikes.items():
                 assert sp.shape == (col.sizes[p],)
+
+    def test_empty_block_csr_preserves_shape(self):
+        block = CorticalColumn._stack_block([], n_rows=3, n_cols=5)
+        assert block.shape == (3, 5)
+        assert block.nnz == 0
+
+    def test_block_csr_python_fallback_injects_delayed_spikes(self, monkeypatch):
+        col = CorticalColumn(
+            scale=0.02,
+            scale_correction=False,
+            delay_distribution=True,
+            n_delay_bins=1,
+            use_block_csr=True,
+            bg_rate=0.0,
+            seed=42,
+            backend="auto",
+        )
+        col._init_buffers(dt=0.1)
+        excitatory = [p for p in POPULATIONS if not p.endswith("i")]
+        source = excitatory[0]
+        target = POPULATIONS[0]
+        row = col._target_offsets[target]
+        col._block_e = [
+            sparse.csr_matrix(([col.w_e], ([row], [0])), shape=(col.n_total, col._n_total_e))
+        ]
+        col._block_e_arrays = [
+            (
+                np.ascontiguousarray(col._block_e[0].indptr, dtype=np.int32),
+                np.ascontiguousarray(col._block_e[0].indices, dtype=np.int32),
+                np.ascontiguousarray(col._block_e[0].data, dtype=np.float64),
+            )
+        ]
+        col._block_i = [sparse.csr_matrix((col.n_total, col._n_total_i), dtype=np.float64)]
+        col._block_i_arrays = [
+            (
+                np.ascontiguousarray(col._block_i[0].indptr, dtype=np.int32),
+                np.ascontiguousarray(col._block_i[0].indices, dtype=np.int32),
+                np.ascontiguousarray(col._block_i[0].data, dtype=np.float64),
+            )
+        ]
+        delayed_idx = (col._buf_idx - col._global_e_bin_steps[0]) % col._buf_len_e
+        col._buf_e[source][delayed_idx, 0] = 1
+        before = {p: col.i_syn[p].copy() for p in POPULATIONS}
+
+        monkeypatch.setattr(cortical_column_module, "_HAS_RUST_CSR_SPMV", False)
+        monkeypatch.setattr(cortical_column_module, "_rust_csr_spmv_add", None)
+        monkeypatch.setattr(cortical_column_module, "_HAS_RUST_CSR_MULTI_SPMV", False)
+        monkeypatch.setattr(cortical_column_module, "_rust_csr_multi_spmv_add", None)
+        monkeypatch.setattr(cortical_column_module, "_HAS_MOJO_MULTI_SPMV", False)
+        monkeypatch.setattr(cortical_column_module, "_mojo_multi_spmv", None)
+        monkeypatch.setattr(cortical_column_module, "_HAS_GO_MULTI_SPMV", False)
+        monkeypatch.setattr(cortical_column_module, "_go_multi_spmv", None)
+        monkeypatch.setattr(cortical_column_module, "_HAS_JULIA_MULTI_SPMV", False)
+        monkeypatch.setattr(cortical_column_module, "_julia_multi_spmv", None)
+        col._inject_block(dt=0.1)
+
+        assert col.i_syn[target][0] == pytest.approx(before[target][0] + col.w_e)
+
+    def test_block_csr_single_rust_fallback_injects_delayed_spikes(self, monkeypatch):
+        col = CorticalColumn(
+            scale=0.02,
+            scale_correction=False,
+            delay_distribution=True,
+            n_delay_bins=1,
+            use_block_csr=True,
+            bg_rate=0.0,
+            seed=42,
+            backend="python",
+        )
+        col._init_buffers(dt=0.1)
+        target = POPULATIONS[0]
+        row = col._target_offsets[target]
+        col._block_e = [
+            sparse.csr_matrix(([col.w_e], ([row], [0])), shape=(col.n_total, col._n_total_e))
+        ]
+        col._block_e_arrays = [
+            (
+                np.ascontiguousarray(col._block_e[0].indptr, dtype=np.int32),
+                np.ascontiguousarray(col._block_e[0].indices, dtype=np.int32),
+                np.ascontiguousarray(col._block_e[0].data, dtype=np.float64),
+            )
+        ]
+        col._block_i = [sparse.csr_matrix((col.n_total, col._n_total_i), dtype=np.float64)]
+        col._block_i_arrays = [
+            (
+                np.ascontiguousarray(col._block_i[0].indptr, dtype=np.int32),
+                np.ascontiguousarray(col._block_i[0].indices, dtype=np.int32),
+                np.ascontiguousarray(col._block_i[0].data, dtype=np.float64),
+            )
+        ]
+        delayed_idx = (col._buf_idx - col._global_e_bin_steps[0]) % col._buf_len_e
+        col._buf_e[POPULATIONS[0]][delayed_idx, 0] = 1
+
+        def fake_spmv(indptr, indices, data, x, y):
+            y += sparse.csr_matrix((data, indices, indptr), shape=(y.size, x.size)).dot(x)
+
+        monkeypatch.setattr(cortical_column_module, "_HAS_RUST_CSR_SPMV", True)
+        monkeypatch.setattr(cortical_column_module, "_rust_csr_spmv_add", fake_spmv)
+        col._inject_block(dt=0.1)
+
+        assert col.i_syn[target][0] == pytest.approx(col.w_e)
+
+    def test_spmv_into_python_and_rust_paths(self, monkeypatch):
+        block = sparse.csr_matrix(([2.0], ([1], [0])), shape=(3, 2))
+        x = np.array([4.0, 0.0])
+        y_python = np.zeros(3)
+
+        monkeypatch.setattr(cortical_column_module, "_HAS_RUST_CSR_SPMV", False)
+        monkeypatch.setattr(cortical_column_module, "_rust_csr_spmv_add", None)
+        CorticalColumn._spmv_into(block, x, y_python)
+        np.testing.assert_allclose(y_python, [0.0, 8.0, 0.0])
+
+        calls = []
+        y_rust = np.zeros(3)
+
+        def fake_spmv(indptr, indices, data, x_arg, y_arg):
+            calls.append((indptr.dtype, indices.dtype, data.dtype))
+            y_arg += sparse.csr_matrix((data, indices, indptr), shape=(y_arg.size, x_arg.size)).dot(
+                x_arg
+            )
+
+        monkeypatch.setattr(cortical_column_module, "_HAS_RUST_CSR_SPMV", True)
+        monkeypatch.setattr(cortical_column_module, "_rust_csr_spmv_add", fake_spmv)
+        CorticalColumn._spmv_into(block, x, y_rust)
+
+        np.testing.assert_allclose(y_rust, y_python)
+        assert calls == [(np.dtype("int32"), np.dtype("int32"), np.dtype("float64"))]
+
+    @pytest.mark.parametrize(
+        ("native_name", "flag_name", "function_name"),
+        [
+            ("mojo", "_HAS_MOJO_MULTI_SPMV", "_mojo_multi_spmv"),
+            ("go", "_HAS_GO_MULTI_SPMV", "_go_multi_spmv"),
+            ("julia", "_HAS_JULIA_MULTI_SPMV", "_julia_multi_spmv"),
+        ],
+    )
+    def test_block_csr_auto_native_dispatch_marshals_pointers(
+        self,
+        monkeypatch,
+        native_name,
+        flag_name,
+        function_name,
+    ):
+        col = CorticalColumn(
+            scale=0.02,
+            scale_correction=False,
+            delay_distribution=True,
+            n_delay_bins=1,
+            use_block_csr=True,
+            bg_rate=0.0,
+            seed=42,
+            backend="auto",
+        )
+        col._init_buffers(dt=0.1)
+        target = POPULATIONS[0]
+        row = col._target_offsets[target]
+        col._block_e = [sparse.csr_matrix((col.n_total, col._n_total_e), dtype=np.float64)]
+        col._block_e_arrays = [
+            (
+                np.ascontiguousarray(col._block_e[0].indptr, dtype=np.int32),
+                np.ascontiguousarray(col._block_e[0].indices, dtype=np.int32),
+                np.ascontiguousarray(col._block_e[0].data, dtype=np.float64),
+            )
+        ]
+        col._block_i = [
+            sparse.csr_matrix(([col.w_i], ([row], [0])), shape=(col.n_total, col._n_total_i))
+        ]
+        col._block_i_arrays = [
+            (
+                np.ascontiguousarray(col._block_i[0].indptr, dtype=np.int32),
+                np.ascontiguousarray(col._block_i[0].indices, dtype=np.int32),
+                np.ascontiguousarray(col._block_i[0].data, dtype=np.float64),
+            )
+        ]
+        inhibitory = [p for p in POPULATIONS if p.endswith("i")]
+        delayed_idx = (col._buf_idx - col._global_i_bin_steps[0]) % col._buf_len_i
+        col._buf_i[inhibitory[0]][delayed_idx, 0] = 1
+
+        def fake_native(n_blocks, n_rows, _indptrs, _indices, _data, _xs, _x_lens, y_ptr):
+            assert n_blocks == 1
+            if native_name == "julia":
+                ptr = cortical_column_module.ctypes.cast(
+                    y_ptr,
+                    cortical_column_module.ctypes.POINTER(cortical_column_module.ctypes.c_double),
+                )
+                y = np.ctypeslib.as_array(ptr, shape=(n_rows,))
+            else:
+                y = np.ctypeslib.as_array(y_ptr, shape=(n_rows,))
+            y[row] += col.w_i
+
+        monkeypatch.setattr(cortical_column_module, "_HAS_RUST_CSR_MULTI_SPMV", False)
+        monkeypatch.setattr(cortical_column_module, "_rust_csr_multi_spmv_add", None)
+        monkeypatch.setattr(cortical_column_module, "_HAS_MOJO_MULTI_SPMV", True)
+        monkeypatch.setattr(cortical_column_module, "_mojo_multi_spmv", None)
+        monkeypatch.setattr(cortical_column_module, "_HAS_GO_MULTI_SPMV", False)
+        monkeypatch.setattr(cortical_column_module, "_go_multi_spmv", None)
+        monkeypatch.setattr(cortical_column_module, "_HAS_JULIA_MULTI_SPMV", False)
+        monkeypatch.setattr(cortical_column_module, "_julia_multi_spmv", None)
+        monkeypatch.setattr(cortical_column_module, flag_name, True)
+        monkeypatch.setattr(cortical_column_module, function_name, fake_native)
+
+        col._inject_block(dt=0.1)
+
+        assert col.i_syn[target][0] == pytest.approx(col.w_i)
+
+    def test_total_indegree_counts_multapses_from_csr_data(self):
+        col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
+        target = POPULATIONS[0]
+        assert col.total_indegree(target) == sum(
+            int(np.add.reduce(col._W[target, source].data))
+            for source in POPULATIONS
+            if (target, source) in col._W
+        ) // max(1, col.sizes[target])
+
+
+class TestNativeDiscovery:
+    def test_rust_discovery_uses_root_package_fallback(self, monkeypatch):
+        real_import_module = cortical_column_module._importlib.import_module
+
+        def root_only_engine(name):
+            if name == "sc_neurocore_engine.sc_neurocore_engine":
+                raise ImportError(name)
+            if name == "sc_neurocore_engine":
+                return SimpleNamespace(
+                    py_parallel_csr_spmv_add=lambda *args: None,
+                    py_parallel_csr_multi_spmv_add=lambda *args: None,
+                )
+            return real_import_module(name)
+
+        monkeypatch.setattr(cortical_column_module._importlib, "import_module", root_only_engine)
+        reloaded = importlib.reload(cortical_column_module)
+        try:
+            assert reloaded._HAS_RUST_CSR_SPMV is True
+            assert reloaded._HAS_RUST_CSR_MULTI_SPMV is True
+        finally:
+            monkeypatch.undo()
+            importlib.reload(cortical_column_module)
+
+    def test_rust_discovery_fails_closed_without_symbols(self, monkeypatch):
+        real_import_module = cortical_column_module._importlib.import_module
+
+        def missing_engine(name):
+            if name in {"sc_neurocore_engine.sc_neurocore_engine", "sc_neurocore_engine"}:
+                raise ImportError(name)
+            return real_import_module(name)
+
+        monkeypatch.setattr(cortical_column_module._importlib, "import_module", missing_engine)
+        reloaded = importlib.reload(cortical_column_module)
+        try:
+            assert reloaded._HAS_RUST_CSR_SPMV is False
+            assert reloaded._rust_csr_spmv_add is None
+            assert reloaded._HAS_RUST_CSR_MULTI_SPMV is False
+            assert reloaded._rust_csr_multi_spmv_add is None
+        finally:
+            monkeypatch.undo()
+            importlib.reload(cortical_column_module)
+
+    def test_julia_discovery_failure_remains_optional(self, monkeypatch):
+        monkeypatch.setitem(sys.modules, "juliacall", None)
+        reloaded = importlib.reload(cortical_column_module)
+        try:
+            assert reloaded._HAS_JULIA_MULTI_SPMV is False
+            assert reloaded._julia_multi_spmv is None
+        finally:
+            monkeypatch.undo()
+            importlib.reload(cortical_column_module)
+
+    def test_optional_ctypes_backend_load_failures_remain_optional(self, monkeypatch):
+        def fake_exists(path):
+            return path.endswith("libcortical_column.so")
+
+        def reject_cdll(path):
+            raise OSError(path)
+
+        monkeypatch.setattr(cortical_column_module.os.path, "exists", fake_exists)
+        monkeypatch.setattr(cortical_column_module.ctypes, "CDLL", reject_cdll)
+        reloaded = importlib.reload(cortical_column_module)
+        try:
+            assert reloaded._HAS_GO_MULTI_SPMV is False
+            assert reloaded._go_multi_spmv is None
+            assert reloaded._HAS_MOJO_MULTI_SPMV is False
+            assert reloaded._mojo_multi_spmv is None
+        finally:
+            monkeypatch.undo()
+            importlib.reload(cortical_column_module)
+
+    def test_mojo_ctypes_discovery_configures_symbol(self, monkeypatch):
+        class FakeFunction:
+            argtypes = None
+            restype = object()
+
+        fake_function = FakeFunction()
+        fake_lib = SimpleNamespace(py_parallel_csr_multi_spmv_add_c=fake_function)
+
+        def fake_exists(path):
+            return path.endswith("libcortical_column.so")
+
+        monkeypatch.setattr(cortical_column_module.os.path, "exists", fake_exists)
+        monkeypatch.setattr(cortical_column_module.ctypes, "CDLL", lambda _path: fake_lib)
+        reloaded = importlib.reload(cortical_column_module)
+        try:
+            assert reloaded._HAS_MOJO_MULTI_SPMV is True
+            assert fake_function.argtypes is not None
+            assert fake_function.restype is None
+        finally:
+            monkeypatch.undo()
+            importlib.reload(cortical_column_module)
 
 
 # ── Published fidelity (Potjans 2014 Table 4) ────────────────────────

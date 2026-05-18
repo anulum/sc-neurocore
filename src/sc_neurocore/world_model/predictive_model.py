@@ -52,27 +52,35 @@ This module provides:
 
 from __future__ import annotations
 
+import importlib as _importlib
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Callable, Mapping, Optional, Tuple, cast
 
 import numpy as np
 import numpy.typing as npt
 
-try:
-    from sc_neurocore_engine.world_model import get_lgssm_kalman_filter
-except ImportError:
-
-    def get_lgssm_kalman_filter() -> object:
-        raise ImportError("Rust LGSSM backend is not available")
+_RustKalmanFilter = Callable[..., object]
 
 
 def _missing_rust_kalman_filter(*_args: object, **_kwargs: object) -> object:
     raise RuntimeError("Rust LGSSM backend is not available")
 
 
+def _load_rust_kalman_filter() -> _RustKalmanFilter:
+    try:
+        world_model_module = _importlib.import_module("sc_neurocore_engine.world_model")
+        return cast(_RustKalmanFilter, world_model_module.get_lgssm_kalman_filter())
+    except (AttributeError, ImportError):
+        try:
+            engine_module = _importlib.import_module("sc_neurocore_engine")
+            return cast(_RustKalmanFilter, engine_module.py_lgssm_kalman_filter)
+        except (AttributeError, ImportError) as exc:
+            raise ImportError("Rust LGSSM backend is not available") from exc
+
+
 # Detect Rust acceleration backend
 try:
-    _rust_kalman_filter = get_lgssm_kalman_filter()
+    _rust_kalman_filter = _load_rust_kalman_filter()
 
     _HAS_RUST_LGSSM = True
 except (ImportError, AttributeError):
@@ -528,28 +536,31 @@ class KalmanFilter:
         Q, R = self.model.Q, self.model.R
 
         # Flatten to row-major Vec<f64> for the PyO3 marshalling.
-        result = _rust_kalman_filter(
-            obs_flat=observations.astype(np.float64).ravel(order="C").tolist(),
-            controls_flat=controls.astype(np.float64).ravel(order="C").tolist(),
-            t_len=T,
-            p_dim=p,
-            m_dim=m,
-            a_flat=A.ravel(order="C").tolist(),
-            b_flat=B.ravel(order="C").tolist(),
-            c_flat=C.ravel(order="C").tolist(),
-            d_flat=D.ravel(order="C").tolist(),
-            q_flat=Q.ravel(order="C").tolist(),
-            r_flat=R.ravel(order="C").tolist(),
-            mu_0=self.model.mu_0.tolist(),
-            sigma_0_flat=self.model.Sigma_0.ravel(order="C").tolist(),
-            d_dim=d,
+        result = cast(
+            Mapping[str, object],
+            _rust_kalman_filter(
+                obs_flat=observations.astype(np.float64).ravel(order="C").tolist(),
+                controls_flat=controls.astype(np.float64).ravel(order="C").tolist(),
+                t_len=T,
+                p_dim=p,
+                m_dim=m,
+                a_flat=A.ravel(order="C").tolist(),
+                b_flat=B.ravel(order="C").tolist(),
+                c_flat=C.ravel(order="C").tolist(),
+                d_flat=D.ravel(order="C").tolist(),
+                q_flat=Q.ravel(order="C").tolist(),
+                r_flat=R.ravel(order="C").tolist(),
+                mu_0=self.model.mu_0.tolist(),
+                sigma_0_flat=self.model.Sigma_0.ravel(order="C").tolist(),
+                d_dim=d,
+            ),
         )
         return FilterResult(
             means=np.array(result["means"], dtype=np.float64),
             covariances=np.array(result["covariances"], dtype=np.float64),
             pred_means=np.array(result["pred_means"], dtype=np.float64),
             pred_covariances=np.array(result["pred_covariances"], dtype=np.float64),
-            log_likelihood=float(result["log_likelihood"]),
+            log_likelihood=float(cast(float, result["log_likelihood"])),
         )
 
     def _filter_julia(
