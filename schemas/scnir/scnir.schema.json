@@ -8,7 +8,7 @@
   "required": ["schema_version", "producer", "streams", "hierarchy"],
   "properties": {
     "schema_version": {
-      "const": "sc-neurocore.scnir.v0.6"
+      "const": "sc-neurocore.scnir.v0.7"
     },
     "producer": {
       "type": "string",
@@ -89,7 +89,8 @@
         "transforms",
         "precision",
         "source",
-        "correlation_constraints"
+        "correlation_constraints",
+        "online_learning"
       ],
       "properties": {
         "stream_id": {
@@ -150,6 +151,83 @@
           "items": {
             "$ref": "#/$defs/correlation_constraint"
           }
+        },
+        "online_learning": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/online_learning"
+            }
+          ]
+        }
+      }
+    },
+    "online_learning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "rule_id",
+        "rule_family",
+        "state_fields",
+        "per_synapse_state_bits",
+        "weight_bits",
+        "trace_bits",
+        "reward_bits",
+        "learning_shift",
+        "trace_decay_shift",
+        "saturation_policy",
+        "hidden_history_fields",
+        "sequence_length_independent"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "sc-neurocore.online-o1.annotation.v1"
+        },
+        "rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rule_family": {
+          "const": "reward_modulated_stdp"
+        },
+        "state_fields": {
+          "const": ["weight", "pre_trace", "post_trace", "eligibility"]
+        },
+        "per_synapse_state_bits": {
+          "type": "integer",
+          "minimum": 4
+        },
+        "weight_bits": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "trace_bits": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "reward_bits": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "learning_shift": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "trace_decay_shift": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "saturation_policy": {
+          "const": "signed_eligibility_unsigned_weight"
+        },
+        "hidden_history_fields": {
+          "const": []
+        },
+        "sequence_length_independent": {
+          "const": true
         }
       }
     },

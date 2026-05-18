@@ -37,8 +37,9 @@ from __future__ import annotations
 
 import logging
 import math
+import re
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, Mapping, Sequence
 
 import numpy as np
 
@@ -49,7 +50,7 @@ from ..ir.scnir_hdl import (
     SCNIRHDLSourceManifestEntry,
     build_scnir_source_bundle,
 )
-from ..ir.scnir_schema import SCNIRDocument
+from ..ir.scnir_schema import SCNIRDocument, SCNIRHierarchyInstance, SCNIRHierarchyPort
 from ..neurons.equation_builder import from_equations
 from .neuron_graph import ConnectionSpec, NeuronGraph, NeuronSpec
 from .quantise_params import QuantisedGraph, quantise_graph
@@ -63,6 +64,7 @@ DelayVector = tuple[int, ...]
 # implemented and verified.
 _AER_THRESHOLD = 64
 _MAX_SYNTHESISABLE_DELAY_STEPS = 1024
+_SCNIR_STREAM_FRAGMENT_RE = re.compile(r"[^A-Za-z0-9_.:-]+")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -235,6 +237,78 @@ def _external_input_manifest(graph: QuantisedGraph) -> tuple[SCNIRExternalInputM
     )
 
 
+def _scnir_stream_fragment(value: str) -> str:
+    cleaned = _SCNIR_STREAM_FRAGMENT_RE.sub("_", value.strip())
+    cleaned = cleaned.strip("_.:-")
+    if not cleaned:
+        cleaned = "stream"
+    if not cleaned[0].isalpha():
+        cleaned = f"s_{cleaned}"
+    return cleaned[:96]
+
+
+def _scnir_connection_stream_id(src: str, dst: str) -> str:
+    return f"conn.{_scnir_stream_fragment(src)}_to_{_scnir_stream_fragment(dst)}.weight"
+
+
+def _hierarchy_weight_literals(
+    document: SCNIRDocument,
+    qgraph: QuantisedGraph,
+) -> dict[str, tuple[int, ...]]:
+    """Return flattened quantised weight literals owned by hierarchy output ports."""
+
+    weights_by_stream: dict[str, np.ndarray] = {
+        _scnir_connection_stream_id(str(conn.src), str(conn.dst)): np.asarray(
+            conn.weights,
+            dtype=np.int64,
+        )
+        for conn in qgraph.connections
+    }
+    literals: dict[str, tuple[int, ...]] = {}
+    for instance in document.hierarchy:
+        for port in instance.ports:
+            if port.direction != "output" or port.signal_kind != "weight":
+                continue
+            weights = weights_by_stream.get(port.stream_id)
+            if weights is None:
+                raise ValueError(
+                    f"SC-NIR hierarchy port {port.port_name!r} references unknown "
+                    f"weight stream {port.stream_id!r}"
+                )
+            flat = weights.reshape(-1)
+            if port.bit_width % int(flat.size) != 0:
+                raise ValueError(
+                    f"SC-NIR hierarchy weight port {port.port_name!r} bit width "
+                    f"{port.bit_width} is not divisible by flattened weight count {flat.size}"
+                )
+            literals[port.stream_id] = tuple(int(value) for value in flat)
+    return literals
+
+
+def _hierarchy_output_wires_by_stream(
+    hierarchy: Sequence[SCNIRHierarchyInstance],
+    *,
+    semantic_stream_ids: set[str],
+) -> dict[str, tuple[str, int]]:
+    """Return top-level hierarchy output wire names keyed by SC-NIR stream id."""
+
+    wires: dict[str, tuple[str, int]] = {}
+    for instance in hierarchy:
+        module_name = sanitize_ident(instance.module_name, context="hierarchy module name")
+        for port in instance.ports:
+            if port.direction != "output" or port.stream_id not in semantic_stream_ids:
+                continue
+            port_name = sanitize_ident(port.port_name, context="hierarchy port name")
+            wire_name = sanitize_ident(
+                f"{module_name}__{port_name}",
+                context="hierarchy top-level wire name",
+            )
+            if port.stream_id in wires:
+                raise ValueError(f"duplicate hierarchy output for stream {port.stream_id!r}")
+            wires[port.stream_id] = (wire_name, port.bit_width)
+    return wires
+
+
 def _connection_has_thresholds(conn: Any) -> bool:
     """Whether a connection carries explicit NIR Threshold metadata."""
 
@@ -336,6 +410,8 @@ class NetworkCompilationResult:
         Deterministic manifest mapping SC-NIR streams to source modules.
     scnir_external_inputs : tuple[SCNIRExternalInputManifestEntry, ...]
         Deterministic flattened input-bus layout for external source names.
+    scnir_hierarchy_modules : dict[str, str]
+        Standalone SC-NIR hierarchy boundary modules keyed by module name.
     """
 
     neuron_modules: dict[str, str]
@@ -350,7 +426,168 @@ class NetworkCompilationResult:
     scnir_source_modules: dict[str, str]
     scnir_source_manifest: tuple[SCNIRHDLSourceManifestEntry, ...]
     scnir_external_inputs: tuple[SCNIRExternalInputManifestEntry, ...]
+    scnir_hierarchy_modules: dict[str, str]
     warnings: list[str] = field(default_factory=list)
+
+
+def _build_scnir_hierarchy_modules(
+    document: SCNIRDocument,
+    *,
+    weight_literals: dict[str, tuple[int, ...]],
+) -> dict[str, str]:
+    """Emit standalone boundary modules for preserved SC-NIR hierarchy instances."""
+
+    modules: dict[str, str] = {}
+    for instance in document.hierarchy:
+        module_name = sanitize_ident(instance.module_name, context="hierarchy module name")
+        if module_name in modules:
+            raise ValueError(f"duplicate SC-NIR hierarchy module name {module_name!r}")
+        modules[module_name] = _build_scnir_hierarchy_module(
+            instance,
+            module_name=module_name,
+            weight_literals=weight_literals,
+        )
+    return modules
+
+
+def _build_scnir_hierarchy_module(
+    instance: SCNIRHierarchyInstance,
+    *,
+    module_name: str,
+    weight_literals: dict[str, tuple[int, ...]],
+) -> str:
+    """Emit one synthesisable hierarchy boundary module from typed SC-NIR ports."""
+
+    if not instance.ports:
+        raise ValueError(f"SC-NIR hierarchy instance {instance.instance_id!r} has no ports")
+    port_lines = [f"    {_hierarchy_port_declaration(port)}" for port in instance.ports]
+    lines = [
+        f"// Auto-generated SC-NIR hierarchy boundary: {module_name}",
+        "// Scalar weight outputs may feed the generated top-level MAC path.",
+        "`timescale 1ns / 1ps",
+        "",
+        f"module {module_name} (",
+        ",\n".join(port_lines),
+        ");",
+        "",
+    ]
+    for port in instance.ports:
+        lines.append(f"    // stream_id: {port.stream_id}")
+        lines.append(f"    // signal_kind: {port.signal_kind}")
+        if port.direction == "output":
+            port_name = sanitize_ident(port.port_name, context="hierarchy port name")
+            literals = weight_literals.get(port.stream_id)
+            if literals is None:
+                lines.append(f"    assign {port_name} = {_hierarchy_zero_literal(port)};")
+            elif len(literals) == 1:
+                lines.append(
+                    f"    assign {port_name} = {_signed_hex(literals[0], port.bit_width)};"
+                )
+            else:
+                if port.bit_width % len(literals) != 0:
+                    raise ValueError(
+                        f"SC-NIR hierarchy port {port.port_name!r} bit width "
+                        f"{port.bit_width} is not divisible by literal count {len(literals)}"
+                    )
+                element_width = port.bit_width // len(literals)
+                for index, literal in enumerate(literals):
+                    offset = index * element_width
+                    lines.append(
+                        f"    assign {port_name}[{offset} +: {element_width}] = "
+                        f"{_signed_hex(literal, element_width)};"
+                    )
+        lines.append("")
+    lines.append("endmodule")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _hierarchy_port_declaration(port: SCNIRHierarchyPort) -> str:
+    direction = port.direction
+    port_name = sanitize_ident(port.port_name, context="hierarchy port name")
+    if port.bit_width <= 0:
+        raise ValueError(f"SC-NIR hierarchy port {port.port_name!r} has non-positive bit width")
+    if port.bit_width == 1:
+        return f"{direction} wire {port_name}"
+    return f"{direction} wire signed [{port.bit_width - 1}:0] {port_name}"
+
+
+def _hierarchy_zero_literal(port: SCNIRHierarchyPort) -> str:
+    if port.bit_width == 1:
+        return "1'b0"
+    return f"{port.bit_width}'sd0"
+
+
+def _build_scnir_hierarchy_instance_block(
+    hierarchy: Sequence[SCNIRHierarchyInstance],
+    *,
+    data_width: int,
+) -> list[str]:
+    """Emit top-level hierarchy contract instances for preserved SC-NIR boundaries."""
+
+    if not hierarchy:
+        return []
+    lines = ["    // SC-NIR hierarchy contract instances"]
+    for instance in hierarchy:
+        module_name = sanitize_ident(instance.module_name, context="hierarchy module name")
+        instance_name = sanitize_ident(
+            f"{module_name}_hierarchy_inst",
+            context="hierarchy instance name",
+        )
+        port_bindings: list[str] = []
+        for port in instance.ports:
+            port_name = sanitize_ident(port.port_name, context="hierarchy port name")
+            wire_name = sanitize_ident(
+                f"{module_name}__{port_name}",
+                context="hierarchy top-level wire name",
+            )
+            lines.append(_hierarchy_top_wire_declaration(wire_name, port, data_width=data_width))
+            if port.direction == "input":
+                lines.append(f"    assign {wire_name} = {_hierarchy_zero_literal(port)};")
+            port_bindings.append(f"        .{port_name}({wire_name})")
+        lines.append(f"    {module_name} {instance_name} (")
+        lines.append(",\n".join(port_bindings))
+        lines.append("    );")
+        lines.append("")
+    return lines
+
+
+def _hierarchy_top_wire_declaration(
+    wire_name: str,
+    port: SCNIRHierarchyPort,
+    *,
+    data_width: int,
+) -> str:
+    if port.bit_width <= 0:
+        raise ValueError(f"SC-NIR hierarchy port {port.port_name!r} has non-positive bit width")
+    if port.bit_width == 1:
+        return f"    wire {wire_name};"
+    if port.bit_width == data_width:
+        return f"    wire signed [DATA_WIDTH - 1:0] {wire_name};"
+    return f"    wire signed [{port.bit_width - 1}:0] {wire_name};"
+
+
+def _hierarchy_weight_expr(
+    hierarchy_output_wires: Mapping[str, tuple[str, int]],
+    stream_id: str,
+    *,
+    weight: int,
+    data_width: int,
+    weight_index: int,
+) -> str:
+    wire = hierarchy_output_wires.get(stream_id)
+    if wire is None:
+        return _signed_hex(weight, data_width)
+    wire_name, bit_width = wire
+    if bit_width == data_width:
+        return wire_name
+    offset = weight_index * data_width
+    if offset + data_width > bit_width:
+        raise ValueError(
+            f"SC-NIR hierarchy stream {stream_id!r} width {bit_width} cannot provide "
+            f"weight index {weight_index}"
+        )
+    return f"{wire_name}[{offset} +: DATA_WIDTH]"
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -533,6 +770,8 @@ def _build_top_direct(
     bitstream_length: int = 256,
     scnir_stream_count: int = 0,
     scnir_source_module_count: int = 0,
+    scnir_hierarchy: Sequence[SCNIRHierarchyInstance] = (),
+    scnir_semantic_hierarchy_stream_ids: frozenset[str] = frozenset(),
 ) -> str:
     """Generate direct-wired per-neuron top-level interconnect.
 
@@ -576,6 +815,10 @@ def _build_top_direct(
         conns,
         pop_by_name,
         pops,
+    )
+    hierarchy_output_wires = _hierarchy_output_wires_by_stream(
+        scnir_hierarchy,
+        semantic_stream_ids=set(scnir_semantic_hierarchy_stream_ids),
     )
 
     max_terms = external_width if pops else 1
@@ -686,6 +929,7 @@ def _build_top_direct(
         "    endfunction",
         "",
     ]
+    lines.extend(_build_scnir_hierarchy_instance_block(scnir_hierarchy, data_width=data_width))
 
     lines.append("    // External analogue input vector")
     for idx in range(external_width):
@@ -799,6 +1043,14 @@ def _build_top_direct(
                     if weight == 0:
                         continue
                     term_base = f"{prefix}_c{conn_idx}_s{src_idx}"
+                    weight_stream_id = _scnir_connection_stream_id(str(conn.src), str(conn.dst))
+                    weight_expr = _hierarchy_weight_expr(
+                        hierarchy_output_wires,
+                        weight_stream_id,
+                        weight=weight,
+                        data_width=data_width,
+                        weight_index=(neuron_idx * weights.shape[1]) + src_idx,
+                    )
 
                     if src_pop is None:
                         external_idx = external_offsets[conn.src] + src_idx
@@ -814,7 +1066,7 @@ def _build_top_direct(
                             term_defs.extend(
                                 [
                                     f"    wire signed [{product_width - 1}:0] {mul} = "
-                                    f"ext_input_{external_idx} * {_signed_hex(weight, data_width)};",
+                                    f"ext_input_{external_idx} * {weight_expr};",
                                     f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};",
                                 ]
                             )
@@ -839,7 +1091,7 @@ def _build_top_direct(
                             term_defs.extend(
                                 [
                                     f"    wire signed [{product_width - 1}:0] {mul} = "
-                                    f"{src_value} * {_signed_hex(weight, data_width)};",
+                                    f"{src_value} * {weight_expr};",
                                     f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};",
                                 ]
                             )
@@ -910,6 +1162,8 @@ def _build_top_aer(
     bitstream_length: int = 256,
     scnir_stream_count: int = 0,
     scnir_source_module_count: int = 0,
+    scnir_hierarchy: Sequence[SCNIRHierarchyInstance] = (),
+    scnir_semantic_hierarchy_stream_ids: frozenset[str] = frozenset(),
 ) -> str:
     """Generate weighted event-bus top-level interconnect.
 
@@ -953,6 +1207,10 @@ def _build_top_aer(
         conns,
         pop_by_name,
         pops,
+    )
+    hierarchy_output_wires = _hierarchy_output_wires_by_stream(
+        scnir_hierarchy,
+        semantic_stream_ids=set(scnir_semantic_hierarchy_stream_ids),
     )
 
     max_terms = external_width if pops else 1
@@ -1043,6 +1301,7 @@ def _build_top_aer(
         "    endfunction",
         "",
     ]
+    lines.extend(_build_scnir_hierarchy_instance_block(scnir_hierarchy, data_width=data_width))
 
     lines.append("    // External analogue input vector")
     for idx in range(external_width):
@@ -1123,6 +1382,14 @@ def _build_top_aer(
                     if weight == 0:
                         continue
                     term_base = f"{prefix}_c{conn_idx}_s{src_idx}"
+                    weight_stream_id = _scnir_connection_stream_id(str(conn.src), str(conn.dst))
+                    weight_expr = _hierarchy_weight_expr(
+                        hierarchy_output_wires,
+                        weight_stream_id,
+                        weight=weight,
+                        data_width=data_width,
+                        weight_index=(neuron_idx * weights.shape[1]) + src_idx,
+                    )
 
                     if src_pop is None:
                         external_idx = external_offsets[conn.src] + src_idx
@@ -1131,7 +1398,7 @@ def _build_top_aer(
                         term_defs.extend(
                             [
                                 f"    wire signed [{product_width - 1}:0] {mul} = "
-                                f"ext_input_{external_idx} * {_signed_hex(weight, data_width)};",
+                                f"ext_input_{external_idx} * {weight_expr};",
                                 f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};",
                             ]
                         )
@@ -1145,7 +1412,7 @@ def _build_top_aer(
                         term_defs.extend(
                             [
                                 f"    wire signed [{product_width - 1}:0] {mul} = "
-                                f"{src_prefix}_v * {_signed_hex(weight, data_width)};",
+                                f"{src_prefix}_v * {weight_expr};",
                                 f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};",
                             ]
                         )
@@ -1209,6 +1476,7 @@ def compile_network_to_fpga(
     source_kind: Literal["lfsr", "sobol"] = "lfsr",
     base_seed: int = 1,
     target: str = "artix7",
+    online_learning: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> NetworkCompilationResult:
     """Compile a NeuronGraph to synthesisable Verilog RTL.
 
@@ -1237,6 +1505,9 @@ def compile_network_to_fpga(
         First deterministic source seed; stream index increments from this base.
     target : str
         FPGA target for resource estimation hints.
+    online_learning : Mapping[str, Mapping[str, Any]] | None
+        Optional validated per-weight-stream SC-NIR online-learning annotations,
+        keyed by deterministic stream id such as ``"conn.src_to_dst.weight"``.
 
     Returns
     -------
@@ -1260,6 +1531,7 @@ def compile_network_to_fpga(
         fraction=fraction,
         base_seed=base_seed,
         source_kind=resolved_source_kind,
+        online_learning=dict(online_learning or {}),
     )
     scnir_document = build_scnir_from_neuron_graph(graph, config=scnir_config)
     scnir_source_bundle = build_scnir_source_bundle(scnir_document)
@@ -1268,6 +1540,7 @@ def compile_network_to_fpga(
     # Step 1: Quantise
     qgraph = quantise_graph(graph, q)
     warnings.extend(qgraph.warnings)
+    hierarchy_weight_literals = _hierarchy_weight_literals(scnir_document, qgraph)
 
     # Step 2: Generate per-type neuron modules (cached by exact parameter set)
     neuron_modules: dict[str, str] = {}
@@ -1336,6 +1609,8 @@ def compile_network_to_fpga(
             bitstream_length=bitstream_length,
             scnir_stream_count=len(scnir_document.streams),
             scnir_source_module_count=len(scnir_source_bundle.manifest),
+            scnir_hierarchy=scnir_document.hierarchy,
+            scnir_semantic_hierarchy_stream_ids=frozenset(hierarchy_weight_literals),
         )
     else:
         if total_neurons > _AER_THRESHOLD and has_delayed_connections:
@@ -1356,6 +1631,8 @@ def compile_network_to_fpga(
             bitstream_length=bitstream_length,
             scnir_stream_count=len(scnir_document.streams),
             scnir_source_module_count=len(scnir_source_bundle.manifest),
+            scnir_hierarchy=scnir_document.hierarchy,
+            scnir_semantic_hierarchy_stream_ids=frozenset(hierarchy_weight_literals),
         )
 
     q_label = f"Q{data_width - fraction}.{fraction}"
@@ -1373,6 +1650,10 @@ def compile_network_to_fpga(
         scnir_source_modules=dict(scnir_source_bundle.modules),
         scnir_source_manifest=scnir_source_bundle.manifest,
         scnir_external_inputs=_external_input_manifest(qgraph),
+        scnir_hierarchy_modules=_build_scnir_hierarchy_modules(
+            scnir_document,
+            weight_literals=hierarchy_weight_literals,
+        ),
         warnings=warnings,
     )
 

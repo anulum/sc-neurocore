@@ -2666,7 +2666,7 @@ class TestCompileNirCommand:
                         "direction": "output",
                         "stream_id": "conn.subgraph__input_to_lif.weight",
                         "signal_kind": "weight",
-                        "bit_width": 16,
+                        "bit_width": 64,
                     }
                 ],
             }
@@ -2675,14 +2675,21 @@ class TestCompileNirCommand:
         manifest = json.loads((out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8"))
         assert manifest["scnir_hierarchy_instance_count"] == 1
         assert manifest["scnir_hierarchy_port_count"] == 1
+        hierarchy_module = (out_dir / "scnir_subgraph.v").read_text(encoding="utf-8")
+        assert "module scnir_subgraph (" in hierarchy_module
+        assert "output wire signed [63:0] weight_0" in hierarchy_module
+        assert "assign weight_0[0 +: 16] = 16'sh0040;" in hierarchy_module
+        assert "assign weight_0[48 +: 16] = 16'sh0020;" in hierarchy_module
+        assert "// stream_id: conn.subgraph__input_to_lif.weight" in hierarchy_module
 
         report = json.loads((out_dir / "scnir_handoff_audit.json").read_text(encoding="utf-8"))
         assert report["status"] == "valid"
         assert report["hierarchy_instance_count"] == 1
         assert report["hierarchy_port_count"] == 1
+        assert "scnir_subgraph.v" in report["artefacts"]
         assert report["hierarchy_instances"]["subgraph"]["ports"] == [
             {
-                "bit_width": 16,
+                "bit_width": 64,
                 "direction": "output",
                 "port_name": "weight_0",
                 "signal_kind": "weight",
@@ -2758,14 +2765,26 @@ class TestCompileNirCommand:
         ]
 
         top_module = (out_dir / "nested_multiport_multioutput_net.v").read_text(encoding="utf-8")
-        assert "ext_input_0 * 16'sh0080" in top_module
-        assert "ext_input_1 * 16'shffc0" in top_module
+        assert "ext_input_0 * scnir_subgraph__weight_0" in top_module
+        assert "ext_input_1 * scnir_subgraph__weight_1" in top_module
+        assert "scnir_subgraph scnir_subgraph_hierarchy_inst (" in top_module
+        assert ".weight_0(scnir_subgraph__weight_0)" in top_module
+        assert ".weight_1(scnir_subgraph__weight_1)" in top_module
+        hierarchy_module = (out_dir / "scnir_subgraph.v").read_text(encoding="utf-8")
+        assert "module scnir_subgraph (" in hierarchy_module
+        assert "output wire signed [15:0] weight_0" in hierarchy_module
+        assert "output wire signed [15:0] weight_1" in hierarchy_module
+        assert "assign weight_0 = 16'sh0080;" in hierarchy_module
+        assert "assign weight_1 = 16'shffc0;" in hierarchy_module
+        assert "// stream_id: conn.subgraph__a_to_lif_a.weight" in hierarchy_module
+        assert "// stream_id: conn.subgraph__b_to_lif_b.weight" in hierarchy_module
 
         report = json.loads((out_dir / "scnir_handoff_audit.json").read_text(encoding="utf-8"))
         assert report["status"] == "valid"
         assert report["hierarchy_instance_count"] == 1
         assert report["hierarchy_port_count"] == 2
         assert report["hierarchy_instances"]["subgraph"]["ports"] == expected_ports
+        assert "scnir_subgraph.v" in report["artefacts"]
         assert report["external_input_count"] == 2
         assert report["external_inputs"] == [
             {"source": "subgraph__a", "offset": 0, "width": 1},

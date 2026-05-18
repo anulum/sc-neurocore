@@ -140,9 +140,10 @@ def audit_scnir_hdl_handoff(directory: str | Path) -> SCNIRHDLHandoffAuditReport
         hierarchy_port_count,
         "scnir_hierarchy_port_count",
     )
-    external_inputs = _external_inputs(manifest)
-
+    hierarchy_modules = _verify_hierarchy_modules(root, document)
     top_module = top_module_path.read_text(encoding="utf-8")
+    _verify_hierarchy_top_instances(top_module, document)
+    external_inputs = _external_inputs(manifest)
     _expect_top_localparam(top_module, "SCNIR_BITSTREAM_LENGTH", bitstream_length)
     _expect_top_localparam(top_module, "SCNIR_STREAM_COUNT", len(streams))
     _expect_top_localparam(top_module, "SCNIR_SOURCE_MODULE_COUNT", len(sources))
@@ -155,6 +156,7 @@ def audit_scnir_hdl_handoff(directory: str | Path) -> SCNIRHDLHandoffAuditReport
                 "sc_nir_weight_rom.v",
                 f"{module_name}.v",
                 *source_modules,
+                *hierarchy_modules,
             }
         )
     )
@@ -309,6 +311,43 @@ def _verify_source_rows(
     return tuple(module_files)
 
 
+def _verify_hierarchy_modules(root: Path, document: SCNIRDocument) -> tuple[str, ...]:
+    module_files: list[str] = []
+    for instance in document.hierarchy:
+        module_name = instance.module_name
+        module_file = f"{module_name}.v"
+        module_path = root / module_file
+        _require_file(module_path, f"hierarchy module file {module_file}")
+        module_text = module_path.read_text(encoding="utf-8")
+        if f"module {module_name}" not in module_text:
+            raise SCNIRHDLHandoffAuditError(
+                f"hierarchy module file {module_file} does not declare module {module_name!r}"
+            )
+        for port in instance.ports:
+            if port.port_name not in module_text:
+                raise SCNIRHDLHandoffAuditError(
+                    f"hierarchy module file {module_file} is missing port {port.port_name!r}"
+                )
+        module_files.append(module_file)
+    return tuple(module_files)
+
+
+def _verify_hierarchy_top_instances(verilog: str, document: SCNIRDocument) -> None:
+    for instance in document.hierarchy:
+        module_name = instance.module_name
+        instance_name = f"{module_name}_hierarchy_inst"
+        if f"{module_name} {instance_name}" not in verilog:
+            raise SCNIRHDLHandoffAuditError(
+                f"top module missing hierarchy instance {instance_name!r} for {module_name!r}"
+            )
+        for port in instance.ports:
+            if f".{port.port_name}(" not in verilog:
+                raise SCNIRHDLHandoffAuditError(
+                    f"top module hierarchy instance {instance_name!r} missing port "
+                    f"{port.port_name!r}"
+                )
+
+
 def _verify_source_row_keys(row: Mapping[str, Any], index: int) -> None:
     expected = {
         "stream_id",
@@ -323,6 +362,7 @@ def _verify_source_row_keys(row: Mapping[str, Any], index: int) -> None:
         "total_bits",
         "fractional_bits",
         "transforms",
+        "online_learning",
         "lfsr_polynomial",
         "tap_mask",
         "sobol_dimension",
@@ -350,6 +390,9 @@ def _verify_source_row_matches_stream(
         "fractional_bits": stream.precision.fractional_bits,
         "source_kind": f"{stream.source.kind}16",
         "transforms": _stream_transform_rows(stream),
+        "online_learning": dict(stream.online_learning)
+        if stream.online_learning is not None
+        else None,
     }
     source = stream.source
     if source.seed is not None:

@@ -26,6 +26,7 @@ from sc_neurocore.ir.scnir_convert import (
     build_scnir_from_neuron_graph,
     export_scnir_from_nir,
 )
+from sc_neurocore.learning.online_o1 import OnlineO1Config
 from sc_neurocore.nir_bridge import from_nir, from_scnetwork
 
 
@@ -865,6 +866,30 @@ def test_scnir_export_marks_mixed_analogue_state_and_spike_streams() -> None:
     )
 
 
+def test_scnir_export_preserves_online_learning_annotation_on_weight_stream() -> None:
+    network = from_nir(_build_mixed_li_lif_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+    annotation = OnlineO1Config(weight_bits=9, trace_bits=5).to_scnir_annotation(
+        rule_id="li_to_lif_online"
+    )
+
+    document = build_scnir_from_neuron_graph(
+        neuron_graph,
+        config=SCNIRConversionConfig(
+            bitstream_length=640,
+            base_seed=61,
+            online_learning={"conn.li_to_lif.weight": annotation},
+        ),
+    )
+    payload = scnir_to_dict(document)
+    validate_scnir_dict(payload)
+
+    streams = {stream["stream_id"]: stream for stream in payload["streams"]}
+    assert streams["conn.li_to_lif.weight"]["online_learning"] == annotation
+    assert streams["conn.input_to_li.weight"]["online_learning"] is None
+    assert streams["pop.li.state"]["online_learning"] is None
+
+
 def test_neuron_graph_folds_source_side_scale_into_downstream_weights() -> None:
     network = from_nir(_build_source_scale_li_lif_graph(), dt=1.0)
     neuron_graph = from_scnetwork(network, dt=1.0)
@@ -1167,7 +1192,7 @@ def test_scnir_export_records_inlined_single_port_hierarchy_metadata() -> None:
                     "direction": "output",
                     "stream_id": "conn.subgraph__input_to_lif.weight",
                     "signal_kind": "weight",
-                    "bit_width": 18,
+                    "bit_width": 72,
                 }
             ],
         }
@@ -1202,7 +1227,7 @@ def test_neuron_graph_inlines_exact_multiport_nested_nir_graph_for_hardware_lowe
                     "direction": "output",
                     "stream_id": "conn.subgraph__a_to_lif.weight",
                     "signal_kind": "weight",
-                    "bit_width": 16,
+                    "bit_width": 32,
                 }
             ],
         }

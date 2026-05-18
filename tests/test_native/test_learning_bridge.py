@@ -20,6 +20,7 @@ from sc_neurocore._native import learning_bridge as lb
 class _FakeLearningLib:
     def __init__(self) -> None:
         self.destroyed_rules: list[int] = []
+        self.destroyed_online_o1: list[int] = []
         self.destroyed_learners: list[int] = []
         self.destroyed_layers: list[int] = []
         self.destroyed_wgpu_layers: list[int] = []
@@ -44,6 +45,18 @@ class _FakeLearningLib:
 
     def destroy_rule(self, ptr: int) -> None:
         self.destroyed_rules.append(int(ptr))
+
+    def create_online_o1_synapse(self, *_args: object) -> int:
+        return 404
+
+    def step_online_o1_synapse(self, *_args: object):
+        return lb.OnlineO1SnapshotFFI(weight=22, pre_trace=48, post_trace=63, eligibility=31)
+
+    def online_o1_per_synapse_state_bits(self, _ptr: int) -> int:
+        return 26
+
+    def destroy_online_o1_synapse(self, ptr: int) -> None:
+        self.destroyed_online_o1.append(int(ptr))
 
     def create_learner(self, *_args: object) -> int:
         return 202
@@ -215,6 +228,32 @@ def test_rule_destructors_release_handles() -> None:
 
     assert fake.destroyed_rules == [101]
     assert fake.destroyed_learners == [202]
+
+
+def test_online_o1_bridge_wraps_bounded_rust_kernel() -> None:
+    fake = _FakeLearningLib()
+    lb._HAS_LEARNING = True
+    lb._lib = fake
+
+    synapse = lb.RustOnlineO1Synapse(
+        weight_bits=8,
+        trace_bits=6,
+        reward_bits=4,
+        learning_shift=3,
+        trace_decay_shift=2,
+        initial_weight=0,
+    )
+
+    snapshot = synapse.step(pre_spike=False, post_spike=True, reward=-7)
+
+    assert snapshot.weight == 22
+    assert snapshot.pre_trace == 48
+    assert snapshot.post_trace == 63
+    assert snapshot.eligibility == 31
+    assert synapse.per_synapse_state_bits == 26
+
+    synapse.__del__()
+    assert fake.destroyed_online_o1 == [404]
 
 
 def test_rule_layer_state_roundtrip_and_file_paths(tmp_path: Path) -> None:

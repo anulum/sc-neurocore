@@ -10,10 +10,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 import re
-from typing import Any, Literal
+from typing import Any, Literal, Mapping
 
 import numpy as np
 
@@ -55,6 +55,7 @@ class SCNIRConversionConfig:
     seed_domain: str = "scnir-default"
     max_abs_correlation: float = 0.0
     producer: str = "sc-neurocore"
+    online_learning: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not isinstance(self.bitstream_length, int) or self.bitstream_length <= 0:
@@ -130,6 +131,9 @@ def build_scnir_from_neuron_graph(
                 signal_kind="weight",
                 delay_steps=_connection_delay_steps(conn),
                 transforms=_connection_transforms(conn),
+                online_learning=_online_learning_annotation(
+                    config, _connection_stream_id(str(conn.src), dst)
+                ),
                 correlation_constraints=(
                     SCNIRCorrelationConstraint(
                         peer_stream_id=dst_stream_id,
@@ -159,6 +163,10 @@ def _hierarchy_from_graph(
         return ()
 
     stream_by_id = {stream.stream_id: stream for stream in streams}
+    weight_widths_by_stream = {
+        _connection_stream_id(str(conn.src), str(conn.dst)): int(np.asarray(conn.weights).size)
+        for conn in neuron_graph.connections
+    }
     instances: list[SCNIRHierarchyInstance] = []
     for instance in hierarchy:
         stream_ids = _hierarchy_stream_ids(neuron_graph, instance)
@@ -179,7 +187,8 @@ def _hierarchy_from_graph(
                     direction="output",
                     stream_id=stream.stream_id,
                     signal_kind=signal_kind,
-                    bit_width=stream.precision.total_bits,
+                    bit_width=stream.precision.total_bits
+                    * weight_widths_by_stream.get(stream.stream_id, 1),
                 )
             )
         instances.append(
@@ -255,6 +264,15 @@ def _connection_transforms(conn: Any) -> tuple[SCNIRStreamTransform, ...]:
             )
         )
     return tuple(transforms)
+
+
+def _online_learning_annotation(
+    config: SCNIRConversionConfig, stream_id: str
+) -> Mapping[str, Any] | None:
+    annotation = config.online_learning.get(stream_id)
+    if annotation is None:
+        return None
+    return dict(annotation)
 
 
 def _connection_delay_steps(conn: Any) -> int | tuple[int, ...]:

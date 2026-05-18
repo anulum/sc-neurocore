@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
-from typing import Literal
+from typing import Any, Literal, Mapping
 
 from ..hdl_gen import Lfsr16Emitter, Sobol16Emitter
 from ..hdl_gen._ident import sanitize_ident
@@ -39,6 +39,7 @@ class SCNIRHDLSourceManifestEntry:
     total_bits: int
     fractional_bits: int
     transforms: tuple[dict[str, object], ...] = ()
+    online_learning: Mapping[str, Any] | None = None
     lfsr_polynomial: str | None = None
     tap_mask: int | None = None
     sobol_dimension: int | None = None
@@ -61,6 +62,9 @@ class SCNIRHDLSourceManifestEntry:
             "total_bits": self.total_bits,
             "fractional_bits": self.fractional_bits,
             "transforms": [dict(transform) for transform in self.transforms],
+            "online_learning": (
+                dict(self.online_learning) if self.online_learning is not None else None
+            ),
             "lfsr_polynomial": self.lfsr_polynomial,
             "tap_mask": self.tap_mask,
             "sobol_dimension": self.sobol_dimension,
@@ -175,6 +179,7 @@ def _manifest_entry(
             }
             for transform in stream.transforms
         ),
+        online_learning=stream.online_learning,
         lfsr_polynomial=lfsr_polynomial,
         tap_mask=tap_mask,
         sobol_dimension=sobol_dimension,

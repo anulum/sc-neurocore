@@ -26,6 +26,17 @@ _HAS_LEARNING = False
 _lib: _ct.CDLL | None = None
 
 
+class OnlineO1SnapshotFFI(_ct.Structure):
+    """ctypes representation of the Rust fixed-point online O(1) snapshot."""
+
+    _fields_ = [
+        ("weight", _ct.c_uint32),
+        ("pre_trace", _ct.c_uint32),
+        ("post_trace", _ct.c_uint32),
+        ("eligibility", _ct.c_int32),
+    ]
+
+
 def _get_lib() -> _ct.CDLL:
     """Return the loaded Rust learning library or raise if absent.
 
@@ -196,6 +207,30 @@ def _load_native_library() -> bool:
         _lib.reset_wgpu_layer.argtypes = [_ct.c_void_p]
         _lib.reset_wgpu_layer.restype = None
 
+        try:
+            _lib.create_online_o1_synapse.argtypes = [
+                _ct.c_uint8,
+                _ct.c_uint8,
+                _ct.c_uint8,
+                _ct.c_uint8,
+                _ct.c_uint8,
+                _ct.c_uint32,
+            ]
+            _lib.create_online_o1_synapse.restype = _ct.c_void_p
+            _lib.step_online_o1_synapse.argtypes = [
+                _ct.c_void_p,
+                _ct.c_bool,
+                _ct.c_bool,
+                _ct.c_int32,
+            ]
+            _lib.step_online_o1_synapse.restype = OnlineO1SnapshotFFI
+            _lib.online_o1_per_synapse_state_bits.argtypes = [_ct.c_void_p]
+            _lib.online_o1_per_synapse_state_bits.restype = _ct.c_uint32
+            _lib.destroy_online_o1_synapse.argtypes = [_ct.c_void_p]
+            _lib.destroy_online_o1_synapse.restype = None
+        except AttributeError:
+            pass
+
         _HAS_LEARNING = True
         return True
     except OSError:
@@ -225,6 +260,59 @@ def set_deterministic_mode(seed: int | None = None) -> None:
 def is_available() -> bool:
     """Return True if the Rust learning engine is loaded."""
     return _HAS_LEARNING
+
+
+class RustOnlineO1Synapse:
+    """RAII wrapper for the Rust bounded fixed-point online O(1) learner."""
+
+    __slots__ = ("_ptr",)
+
+    def __init__(
+        self,
+        *,
+        weight_bits: int = 16,
+        trace_bits: int = 12,
+        reward_bits: int = 8,
+        learning_shift: int = 4,
+        trace_decay_shift: int = 4,
+        initial_weight: int = 0,
+    ) -> None:
+        if not _HAS_LEARNING:
+            raise RuntimeError("libautonomous_learning.so not available")
+        lib = _get_lib()
+        if not hasattr(lib, "create_online_o1_synapse"):
+            raise RuntimeError("libautonomous_learning.so lacks online O(1) symbols")
+        self._ptr = lib.create_online_o1_synapse(
+            _ct.c_uint8(weight_bits),
+            _ct.c_uint8(trace_bits),
+            _ct.c_uint8(reward_bits),
+            _ct.c_uint8(learning_shift),
+            _ct.c_uint8(trace_decay_shift),
+            _ct.c_uint32(initial_weight),
+        )
+        if not self._ptr:
+            raise ValueError("invalid online O(1) fixed-point configuration")
+
+    def step(self, *, pre_spike: bool, post_spike: bool, reward: int) -> OnlineO1SnapshotFFI:
+        """Advance one timestep and return the bounded fixed-point state."""
+
+        return _get_lib().step_online_o1_synapse(
+            self._ptr,
+            pre_spike,
+            post_spike,
+            _ct.c_int32(reward),
+        )
+
+    @property
+    def per_synapse_state_bits(self) -> int:
+        return int(_get_lib().online_o1_per_synapse_state_bits(self._ptr))
+
+    def __del__(self) -> None:
+        if hasattr(self, "_ptr") and self._ptr and _HAS_LEARNING:
+            lib = _get_lib()
+            if hasattr(lib, "destroy_online_o1_synapse"):
+                lib.destroy_online_o1_synapse(self._ptr)
+            self._ptr = None
 
 
 class RustPlasticityRule:

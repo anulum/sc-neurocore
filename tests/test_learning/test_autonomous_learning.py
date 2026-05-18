@@ -9,6 +9,7 @@ try:
         RustPlasticityRule,
         RustEligentLearner,
         RustRuleLayer,
+        RustOnlineO1Synapse,
         RULE_ELIGENT,
         RULE_STDP,
         RULE_REWARD_STDP,
@@ -67,6 +68,53 @@ class TestAutonomousLearning:
         learner = RustEligentLearner(threshold=1.0, target_rate=0.1, weight=0.5)
         learner.step(fired=True, pre_spike=True, global_reward=1.0)
         # Should not crash and execute C-FFI correctly
+
+    def test_online_o1_matches_python_reference_trace(self):
+        from sc_neurocore.learning.online_o1 import OnlineO1Config, OnlineO1Synapse
+
+        config = OnlineO1Config(
+            weight_bits=8,
+            trace_bits=6,
+            reward_bits=4,
+            learning_shift=3,
+            trace_decay_shift=2,
+        )
+        events = [
+            (True, False, 0),
+            (False, True, 7),
+            (False, False, 7),
+            (False, False, 7),
+            (False, False, -7),
+            (True, False, 0),
+            (False, True, -7),
+        ]
+        python_synapse = OnlineO1Synapse(config=config, initial_weight=0)
+        rust_synapse = RustOnlineO1Synapse(
+            weight_bits=8,
+            trace_bits=6,
+            reward_bits=4,
+            learning_shift=3,
+            trace_decay_shift=2,
+            initial_weight=0,
+        )
+
+        for pre_spike, post_spike, reward in events:
+            expected = python_synapse.step(
+                pre_spike=pre_spike,
+                post_spike=post_spike,
+                reward=reward,
+            )
+            observed = rust_synapse.step(
+                pre_spike=pre_spike,
+                post_spike=post_spike,
+                reward=reward,
+            )
+            assert observed.weight == expected.weight
+            assert observed.pre_trace == expected.pre_trace
+            assert observed.post_trace == expected.post_trace
+            assert observed.eligibility == expected.eligibility
+
+        assert rust_synapse.per_synapse_state_bits == config.per_synapse_state_bits
 
 
 # Mock imports for MetaPlasticity integration testing

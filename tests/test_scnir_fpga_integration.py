@@ -16,6 +16,7 @@ import pytest
 nir = pytest.importorskip("nir")
 
 from sc_neurocore.ir import scnir_to_dict, validate_scnir_dict
+from sc_neurocore.learning.online_o1 import OnlineO1Config
 from sc_neurocore.nir_bridge import compile_network_to_fpga, from_nir, from_scnetwork
 
 
@@ -710,10 +711,23 @@ def test_fpga_compile_inlines_single_port_nested_graph_weight_terms() -> None:
         if stream["stream_id"] == "conn.subgraph__input_to_lif.weight"
     )
     assert weight_stream["signal_kind"] == "weight"
-    assert "ext_input_0 * 16'sh0040" in result.top_module
-    assert "ext_input_1 * 16'shff80" in result.top_module
-    assert "ext_input_0 * 16'sh00c0" in result.top_module
-    assert "ext_input_1 * 16'sh0020" in result.top_module
+    assert "output wire signed [63:0] weight_0" in result.scnir_hierarchy_modules["scnir_subgraph"]
+    assert (
+        "assign weight_0[0 +: 16] = 16'sh0040;" in result.scnir_hierarchy_modules["scnir_subgraph"]
+    )
+    assert (
+        "assign weight_0[16 +: 16] = 16'shff80;" in result.scnir_hierarchy_modules["scnir_subgraph"]
+    )
+    assert (
+        "assign weight_0[32 +: 16] = 16'sh00c0;" in result.scnir_hierarchy_modules["scnir_subgraph"]
+    )
+    assert (
+        "assign weight_0[48 +: 16] = 16'sh0020;" in result.scnir_hierarchy_modules["scnir_subgraph"]
+    )
+    assert "ext_input_0 * scnir_subgraph__weight_0[0 +: DATA_WIDTH]" in result.top_module
+    assert "ext_input_1 * scnir_subgraph__weight_0[16 +: DATA_WIDTH]" in result.top_module
+    assert "ext_input_0 * scnir_subgraph__weight_0[32 +: DATA_WIDTH]" in result.top_module
+    assert "ext_input_1 * scnir_subgraph__weight_0[48 +: DATA_WIDTH]" in result.top_module
 
 
 def test_fpga_compile_reports_inlined_single_port_hierarchy_metadata() -> None:
@@ -738,7 +752,7 @@ def test_fpga_compile_reports_inlined_single_port_hierarchy_metadata() -> None:
                     "direction": "output",
                     "stream_id": "conn.subgraph__input_to_lif.weight",
                     "signal_kind": "weight",
-                    "bit_width": 16,
+                    "bit_width": 64,
                 }
             ],
         }
@@ -767,13 +781,20 @@ def test_fpga_compile_inlines_exact_multiport_nested_graph_weight_terms() -> Non
                     "direction": "output",
                     "stream_id": "conn.subgraph__a_to_lif.weight",
                     "signal_kind": "weight",
-                    "bit_width": 16,
+                    "bit_width": 32,
                 }
             ],
         }
     ]
-    assert "ext_input_0 * 16'sh0080" in result.top_module
-    assert "ext_input_1 * 16'shffc0" in result.top_module
+    assert "output wire signed [31:0] weight_0" in result.scnir_hierarchy_modules["scnir_subgraph"]
+    assert (
+        "assign weight_0[0 +: 16] = 16'sh0080;" in result.scnir_hierarchy_modules["scnir_subgraph"]
+    )
+    assert (
+        "assign weight_0[16 +: 16] = 16'shffc0;" in result.scnir_hierarchy_modules["scnir_subgraph"]
+    )
+    assert "ext_input_0 * scnir_subgraph__weight_0[0 +: DATA_WIDTH]" in result.top_module
+    assert "ext_input_1 * scnir_subgraph__weight_0[16 +: DATA_WIDTH]" in result.top_module
 
 
 def test_fpga_compile_inlines_exact_multiport_multioutput_nested_graph() -> None:
@@ -804,10 +825,38 @@ def test_fpga_compile_inlines_exact_multiport_multioutput_nested_graph() -> None
             "bit_width": 16,
         },
     ]
-    assert "ext_input_0 * 16'sh0080" in result.top_module
-    assert "ext_input_1 * 16'shffc0" in result.top_module
+    assert "ext_input_0 * scnir_subgraph__weight_0" in result.top_module
+    assert "ext_input_1 * scnir_subgraph__weight_1" in result.top_module
     assert "lif_a" in result.top_module
     assert "lif_b" in result.top_module
+
+
+def test_fpga_compile_emits_standalone_hierarchy_boundary_module() -> None:
+    network = from_nir(_multiport_multioutput_nested_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+
+    result = compile_network_to_fpga(
+        neuron_graph,
+        module_name="scnir_hierarchy_boundary",
+        bitstream_length=896,
+    )
+
+    assert set(result.scnir_hierarchy_modules) == {"scnir_subgraph"}
+    hierarchy_module = result.scnir_hierarchy_modules["scnir_subgraph"]
+    assert "module scnir_subgraph (" in hierarchy_module
+    assert "output wire signed [15:0] weight_0" in hierarchy_module
+    assert "output wire signed [15:0] weight_1" in hierarchy_module
+    assert "assign weight_0 = 16'sh0080;" in hierarchy_module
+    assert "assign weight_1 = 16'shffc0;" in hierarchy_module
+    assert "// stream_id: conn.subgraph__a_to_lif_a.weight" in hierarchy_module
+    assert "// stream_id: conn.subgraph__b_to_lif_b.weight" in hierarchy_module
+    assert "wire signed [DATA_WIDTH - 1:0] scnir_subgraph__weight_0;" in result.top_module
+    assert "wire signed [DATA_WIDTH - 1:0] scnir_subgraph__weight_1;" in result.top_module
+    assert "scnir_subgraph scnir_subgraph_hierarchy_inst (" in result.top_module
+    assert ".weight_0(scnir_subgraph__weight_0)" in result.top_module
+    assert ".weight_1(scnir_subgraph__weight_1)" in result.top_module
+    assert "ext_input_0 * scnir_subgraph__weight_0" in result.top_module
+    assert "ext_input_1 * scnir_subgraph__weight_1" in result.top_module
 
 
 def test_fpga_compile_emits_integrator_module_and_analogue_state_routes() -> None:
@@ -1022,6 +1071,35 @@ def test_fpga_compile_carries_mixed_signal_kinds_into_manifest() -> None:
     assert manifest["pop.li.state"].signal_kind == "analogue_state"
     assert manifest["pop.lif.spike"].signal_kind == "spike"
     assert manifest["conn.li_to_lif.weight"].signal_kind == "weight"
+
+
+def test_fpga_compile_carries_online_learning_metadata_into_manifest() -> None:
+    network = from_nir(_mixed_analogue_spiking_graph(), dt=1.0)
+    neuron_graph = from_scnetwork(network, dt=1.0)
+    annotation = OnlineO1Config(
+        weight_bits=9,
+        trace_bits=5,
+        reward_bits=4,
+        learning_shift=3,
+        trace_decay_shift=2,
+    ).to_scnir_annotation(rule_id="li_to_lif_online")
+
+    result = compile_network_to_fpga(
+        neuron_graph,
+        module_name="scnir_online_learning_manifest",
+        bitstream_length=640,
+        online_learning={"conn.li_to_lif.weight": annotation},
+    )
+
+    payload = scnir_to_dict(result.scnir_document)
+    validate_scnir_dict(payload)
+    streams = {stream["stream_id"]: stream for stream in payload["streams"]}
+    assert streams["conn.li_to_lif.weight"]["online_learning"] == annotation
+    assert streams["pop.li.state"]["online_learning"] is None
+
+    manifest = {entry.stream_id: entry.as_dict() for entry in result.scnir_source_manifest}
+    assert manifest["conn.li_to_lif.weight"]["online_learning"] == annotation
+    assert manifest["pop.li.state"]["online_learning"] is None
 
 
 def test_fpga_compile_materialises_scnir_lfsr_source_modules() -> None:

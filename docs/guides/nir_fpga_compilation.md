@@ -300,8 +300,9 @@ evidence.
 | `sc_nir_<type>.v` | Per-type neuron Verilog (one per unique neuron type) |
 | `sc_nir_weight_rom.v` | Combined weight ROM artefact for all connections |
 | `result.scnir_source_modules` | Standalone LFSR-16/Sobol-16 source RTL keyed by module name |
+| `result.scnir_hierarchy_modules` | Standalone SC-NIR hierarchy boundary RTL keyed by module name |
 | `result.scnir_source_manifest` | Stream-to-source manifest for deterministic hardware handoff, including `signal_kind`, recurrent `delay_steps`, and external input-bus layout |
-| `scnir_handoff_audit.json` | Optional audit report with stream/source counts, signal routes, external input-bus layout, and SC-NIR hierarchy instance/port summaries |
+| `scnir_handoff_audit.json` | Optional audit report with stream/source counts, signal routes, external input-bus layout, SC-NIR hierarchy instance/port summaries, and required hierarchy boundary module artefacts |
 
 ---
 
@@ -653,6 +654,7 @@ values and accumulates warnings.
 | `interconnect` | `str` | `"direct"` or `"aer"` |
 | `scnir_document` | `SCNIRDocument` | Validated stochastic-computing metadata |
 | `scnir_source_modules` | `dict[str, str]` | Source module name → LFSR-16/Sobol-16 Verilog |
+| `scnir_hierarchy_modules` | `dict[str, str]` | Hierarchy module name → standalone SC-NIR hierarchy boundary Verilog |
 | `scnir_source_manifest` | `tuple[...]` | Stream-to-source module handoff manifest, including `signal_kind` and recurrent `delay_steps` |
 | `warnings` | `list[str]` | Accumulated warnings |
 
@@ -704,7 +706,12 @@ downstream tooling can audit multi-port nested input boundaries without parsing
 RTL expressions. Nested-graph exports also record
 `scnir_hierarchy_instance_count` and `scnir_hierarchy_port_count`, so downstream
 tooling can detect preserved hierarchy boundaries from the manifest without
-reparsing the SC-NIR document. The manifest rows record the stream
+reparsing the SC-NIR document. For each preserved hierarchy instance, the output
+directory also includes a standalone boundary module named by the typed SC-NIR
+hierarchy metadata, and the generated top module instantiates each boundary as
+a named hierarchy contract. Hierarchy weight ports own their flattened
+quantised constants in the boundary module and feed the generated top-level MAC
+through scalar or packed contract output wires. The manifest rows record the stream
 identifier, emitted module name, source kind, seed, bitstream length, encoding,
 signal kind, explicit recurrent delay steps, precision, and LFSR/Sobol source
 metadata used to generate each module. Mixed analogue/spiking graphs use these
@@ -717,10 +724,21 @@ or packaging jobs. The audit loads `scnir_document.json`, checks
 `scnir_source_manifest.json` against the typed SC-NIR streams, verifies aggregate
 signal-kind counts and route selections, verifies top-level SC-NIR localparams,
 records hierarchy instance and port summaries from `scnir_document.json`,
-verifies contiguous external input-bus layout rows, and fails closed if any
-expected source module, top module, or weight ROM artefact is missing. Use
-`compile-nir --audit-handoff` when the audit report should be
-generated atomically with the RTL bundle.
+verifies standalone hierarchy boundary modules and top-level contract instances
+for every preserved hierarchy instance, verifies contiguous external input-bus
+layout rows, and fails closed if any expected source module, hierarchy boundary
+module, top module, contract instance, or weight ROM artefact is missing. Use
+`compile-nir --audit-handoff` when the audit report should be generated
+atomically with the RTL bundle.
+
+For release closure, `sc-neurocore scnir closure-audit <repo-root>` writes a
+versioned compatibility report with explicit `parser_only_primitives`,
+`metadata_only_primitives`, `boundary_primitives`, `closed_handoff_primitives`,
+and `closure_status` fields. `closed_for_local_handoff` means the executable
+SC-NIR compatibility matrix has no parser-only or metadata-only blockers for
+the local SC-NIR/HDL software handoff; the report still marks external Vivado,
+PYNQ, and physical hardware evidence as not claimed until those runs are
+attached separately.
 
 The CLI regression suite co-simulates emitted source modules selected from
 `scnir_source_manifest.json` for direct/Sobol, AER/LFSR, and recurrent/LFSR
