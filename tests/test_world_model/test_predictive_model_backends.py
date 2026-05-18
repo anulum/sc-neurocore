@@ -42,17 +42,63 @@ def test_missing_rust_kalman_filter_raises() -> None:
 def test_import_time_rust_probe_falls_back_when_engine_symbol_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import sc_neurocore_engine.world_model as engine_world_model
+    real_import_module = pm._importlib.import_module
 
-    def failing_probe() -> object:
-        raise AttributeError("missing py_lgssm_kalman_filter")
+    def missing_rust_engine(name: str) -> object:
+        if name in {"sc_neurocore_engine.world_model", "sc_neurocore_engine"}:
+            raise ImportError(name)
+        return real_import_module(name)
 
-    monkeypatch.setattr(engine_world_model, "get_lgssm_kalman_filter", failing_probe)
+    monkeypatch.setattr(pm._importlib, "import_module", missing_rust_engine)
     try:
         reloaded = importlib.reload(pm)
         assert reloaded._HAS_RUST_LGSSM is False
         with pytest.raises(RuntimeError, match="Rust LGSSM backend requested"):
             reloaded.KalmanFilter(_model()).filter(np.zeros((3, 2)), backend="rust")
+    finally:
+        monkeypatch.undo()
+        importlib.reload(pm)
+
+
+def test_import_time_rust_probe_uses_world_model_submodule(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    real_import_module = pm._importlib.import_module
+    sentinel_filter = object()
+
+    def submodule_rust_engine(name: str) -> object:
+        if name == "sc_neurocore_engine.world_model":
+            return SimpleNamespace(get_lgssm_kalman_filter=lambda: sentinel_filter)
+        return real_import_module(name)
+
+    monkeypatch.setattr(pm._importlib, "import_module", submodule_rust_engine)
+    try:
+        reloaded = importlib.reload(pm)
+        assert reloaded._HAS_RUST_LGSSM is True
+        assert reloaded._rust_kalman_filter is sentinel_filter
+    finally:
+        monkeypatch.undo()
+        importlib.reload(pm)
+
+
+def test_import_time_rust_probe_uses_root_package_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    real_import_module = pm._importlib.import_module
+    sentinel_filter = object()
+
+    def root_only_rust_engine(name: str) -> object:
+        if name == "sc_neurocore_engine.world_model":
+            raise ImportError(name)
+        if name == "sc_neurocore_engine":
+            return SimpleNamespace(py_lgssm_kalman_filter=sentinel_filter)
+        return real_import_module(name)
+
+    monkeypatch.setattr(pm._importlib, "import_module", root_only_rust_engine)
+    try:
+        reloaded = importlib.reload(pm)
+        assert reloaded._HAS_RUST_LGSSM is True
+        assert reloaded._rust_kalman_filter is sentinel_filter
     finally:
         monkeypatch.undo()
         importlib.reload(pm)

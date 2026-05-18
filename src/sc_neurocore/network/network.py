@@ -15,8 +15,6 @@ from typing import Any
 
 import numpy as np
 
-from sc_neurocore_engine.network import get_network_runner_class
-
 from .population import Population
 from .projection import Projection
 from .monitor import SpikeMonitor, StateMonitor, RateMonitor
@@ -25,11 +23,23 @@ from .stimulus import TimedArray, PoissonInput, StepCurrent
 _RUST_ENGINE: Any = None
 
 
+def _load_network_runner_class() -> Any:
+    try:
+        from sc_neurocore_engine.network import get_network_runner_class
+    except ImportError:
+        try:
+            from sc_neurocore_engine import NetworkRunner
+        except (AttributeError, ImportError) as exc:
+            raise ImportError("sc_neurocore_engine NetworkRunner is unavailable") from exc
+        return NetworkRunner
+    return get_network_runner_class()
+
+
 def _get_rust_engine() -> Any:
     global _RUST_ENGINE
     if _RUST_ENGINE is None:
         try:
-            _RUST_ENGINE = get_network_runner_class()
+            _RUST_ENGINE = _load_network_runner_class()
         except ImportError:
             _RUST_ENGINE = False
     return _RUST_ENGINE

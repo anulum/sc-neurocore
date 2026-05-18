@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -35,6 +36,7 @@ from sc_neurocore.bridges.dna_mapper import (
     ConcentrationOptimizer,
     CrossHybridizationChecker,
     DNACircuitDesign,
+    DNAGate,
     DNAStrand,
     DegradationModel,
     DualRailEncoder,
@@ -189,6 +191,28 @@ class TestSequenceDesigner:
                 similarity = overlap / 20
                 assert similarity < 0.90, f"Sequences {i} and {j} too similar: {similarity:.2f}"
 
+    def test_sequence_scoring_penalizes_adverse_homopolymer_rng(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        class ConstantRng:
+            def integers(self, low: int, high: int) -> int:
+                return low
+
+            def choice(self, nucs: list[str], p: list[float]) -> str:
+                return "A"
+
+        monkeypatch.setattr(dna_mapper.np.random, "default_rng", lambda seed=None: ConstantRng())
+
+        seq = SequenceDesigner(seed=42).generate(4, "forced_homopolymer")
+
+        assert seq == "AAAA"
+
+    def test_sequence_generation_recovers_when_constraints_exhaust_weights(self) -> None:
+        seq = SequenceDesigner(seed=42, max_homopolymer=0).generate(4, "zero_run_budget")
+
+        assert len(seq) == 4
+        assert set(seq).issubset({"A", "C", "G", "T"})
+
 
 # ══════════════════════════════════════════════════════════════════════
 # 2. DNAStrand Properties
@@ -247,6 +271,13 @@ class TestDNAStrand:
         assert s.length == 0
         assert s.gc_content == 0.0
         assert s.max_homopolymer_run == 0
+
+    def test_short_strand_has_zero_delta_g_and_rejects_tm(self) -> None:
+        s = DNAStrand(name="short", sequence="A")
+
+        assert s.delta_g_37() == 0.0
+        with pytest.raises(ValueError, match="at least two nucleotides"):
+            s.melting_temperature()
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -353,6 +384,19 @@ class TestBitstreamToDNA:
         warnings = simple_and_circuit.validate()
         # Warnings are acceptable; critical failures would raise
         assert isinstance(warnings, list)
+
+    def test_design_validation_flags_gc_and_homopolymer_violations(self) -> None:
+        design = DNACircuitDesign(
+            input_strands=[
+                DNAStrand(name="at_rich", sequence="ATATATAT", role="signal"),
+                DNAStrand(name="poly_a", sequence="AAAACGTA", role="signal"),
+            ]
+        )
+
+        warnings = design.validate()
+
+        assert any("GC content" in warning for warning in warnings)
+        assert any("homopolymer run" in warning for warning in warnings)
 
     def test_reproducible_compilation(self) -> None:
         c1 = BitstreamToDNA(seed=42)
@@ -478,6 +522,47 @@ class TestNUPACKInterface:
         assert np.allclose(probs, probs.T)
         assert np.all((probs >= 0.0) & (probs <= 1.0))
 
+    def test_fallback_rejects_invalid_bases_and_handles_empty_or_unpairable_sequences(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(dna_mapper, "_HAS_NUPACK", False)
+        interface = NUPACKInterface()
+
+        assert interface.compute_mfe("") == (0.0, "")
+        assert not np.any(interface.compute_pair_probabilities("AAAA"))
+        with pytest.raises(ValueError, match="invalid bases"):
+            interface.compute_mfe("ACGX")
+
+    def test_nupack_backend_path_uses_module_contract(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        class FakeModel:
+            def __init__(self, **kwargs: object) -> None:
+                self.kwargs = kwargs
+
+        class FakeStrand:
+            def __init__(self, sequence: str, name: str) -> None:
+                self.sequence = sequence
+                self.name = name
+
+        class FakePairs:
+            def to_array(self) -> np.ndarray:
+                return np.array([[0.0, 0.25], [0.25, 0.0]])
+
+        fake_nupack = SimpleNamespace(
+            Model=FakeModel,
+            Strand=FakeStrand,
+            mfe=lambda strands, model: [SimpleNamespace(energy=-3.5, structure="()")],
+            pairs=lambda strands, model: FakePairs(),
+        )
+        monkeypatch.setattr(dna_mapper, "_HAS_NUPACK", True)
+        monkeypatch.setattr(dna_mapper, "nupack", fake_nupack)
+        interface = NUPACKInterface(temperature_c=25.0, na_concentration_M=0.5)
+
+        assert interface.has_nupack is True
+        assert interface.compute_mfe("AT") == (-3.5, "()")
+        assert np.allclose(interface.compute_pair_probabilities("AT"), [[0.0, 0.25], [0.25, 0.0]])
+
     def test_validate_design(
         self,
         nupack_interface: NUPACKInterface,
@@ -488,6 +573,17 @@ class TestNUPACKInterface:
         assert "strand_results" in report
         assert "warnings" in report
         assert isinstance(report["valid"], bool)
+
+    def test_validate_design_marks_design_rule_warnings_invalid(self) -> None:
+        design = DNACircuitDesign(
+            name="invalid_rules",
+            input_strands=[DNAStrand(name="poly_a", sequence="AAAAAAA", role="output")],
+        )
+
+        report = NUPACKInterface().validate_design(design)
+
+        assert report["valid"] is False
+        assert report["warnings"]
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -609,6 +705,20 @@ class TestEdgeCases:
             output_names=["B"],
         )
         assert design.gates[0].threshold == 1.0
+
+    def test_high_level_simulate_wrapper_returns_time_and_gate_trace(self) -> None:
+        c = BitstreamToDNA(seed=42)
+        design = c.compile_network(
+            gates=[{"type": "BUFFER", "inputs": ["A"], "output": "B"}],
+            input_names=["A"],
+            output_names=["B"],
+        )
+
+        result = c.simulate(design, {"A": 200.0}, duration_s=10.0, dt=1.0)
+
+        assert "time" in result
+        assert "B" in result
+        assert result["B"][-1] > 0.0
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -743,6 +853,59 @@ class TestNewGateTypes:
             output_names=["Z"],
         )
         assert design.total_gates == 3
+
+    @pytest.mark.parametrize(
+        ("gate_type", "inputs", "concentrations"),
+        [
+            (GateType.THRESHOLD, ["A"], {"A": 200.0}),
+            (GateType.MUX, ["S", "A", "B"], {"S": 200.0, "A": 200.0, "B": 0.0}),
+            (GateType.AMPLIFIER, ["A"], {"A": 50.0}),
+            (GateType.BUFFER, ["A"], {"A": 200.0}),
+        ],
+    )
+    def test_kinetic_simulator_dispatches_extended_gate_rates(
+        self,
+        gate_type: GateType,
+        inputs: list[str],
+        concentrations: dict[str, float],
+    ) -> None:
+        gate = DNAGate(
+            gate_id=0,
+            gate_type=gate_type,
+            input_names=inputs,
+            output_name="Y",
+            threshold=0.5,
+            leak_rate=0.0,
+        )
+        design = DNACircuitDesign(name="extended_gate", gates=[gate])
+
+        result = KineticSimulator().simulate(design, concentrations, duration_s=20.0, dt=1.0)
+
+        assert result["Y"][-1] > 0.0
+
+    def test_kinetic_simulator_unknown_gate_fails_closed_to_leak_only(self) -> None:
+        gate = DNAGate(
+            gate_id=0,
+            gate_type=GateType.CATALYTIC,
+            input_names=["A"],
+            output_name="Y",
+            leak_rate=0.0,
+        )
+        design = DNACircuitDesign(name="unknown_gate", gates=[gate])
+
+        result = KineticSimulator().simulate(design, {"A": 200.0}, duration_s=20.0, dt=1.0)
+
+        assert np.all(result["Y"] == 0.0)
+
+    def test_enzymatic_xor_network_compiles(self) -> None:
+        c = BitstreamToDNA(method="enzymatic", seed=42)
+        design = c.compile_network(
+            gates=[{"type": "XOR", "inputs": ["A", "B"], "output": "C"}],
+            input_names=["A", "B"],
+            output_names=["C"],
+        )
+
+        assert design.gates[0].gate_type == GateType.XOR
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -997,6 +1160,20 @@ class TestTopologicalAnalysis:
         assert result["has_feedback"] is False
         assert len(result["cycles"]) == 0
 
+    def test_feedback_cycle_is_reported_from_remaining_nodes(self) -> None:
+        design = DNACircuitDesign(
+            name="cycle",
+            gates=[
+                DNAGate(0, GateType.BUFFER, ["A"], "B"),
+                DNAGate(1, GateType.BUFFER, ["B"], "A"),
+            ],
+        )
+
+        result = TopologicalAnalyzer().analyze(design)
+
+        assert result["has_feedback"] is True
+        assert result["cycles"] == [["A", "B"]]
+
 
 # ══════════════════════════════════════════════════════════════════════
 # 19. Dual-Rail Encoding
@@ -1039,6 +1216,36 @@ class TestDualRailEncoder:
         assert len(faults) == 1
         assert faults[0]["fault_type"] == "stuck_high"
 
+    def test_fault_detection_ignores_incomplete_dual_rail_pair(self) -> None:
+        encoder = DualRailEncoder()
+        result = {
+            "time": np.array([0, 1]),
+            "X_T": np.array([0.0, 200.0]),
+        }
+
+        assert encoder.check_faults(result) == []
+
+
+class TestCostAndHybridizationEdges:
+    """Boundary contracts for synthesis cost and strand interaction helpers."""
+
+    def test_cross_hybridization_empty_substring_is_zero(self) -> None:
+        assert CrossHybridizationChecker._longest_common_substring("", "ACGT") == 0
+
+    def test_estimate_cost_counts_duplicate_sequences_once(self) -> None:
+        design = DNACircuitDesign(
+            name="duplicate_cost",
+            input_strands=[
+                DNAStrand(name="a", sequence="ACGTACGT"),
+                DNAStrand(name="b", sequence="ACGTACGT"),
+            ],
+        )
+
+        cost = estimate_cost(design, price_per_base_usd=1.0, fixed_per_oligo_usd=0.0)
+
+        assert cost["n_unique_oligos"] == 1
+        assert cost["total_cost_usd"] == 8.0
+
 
 # ══════════════════════════════════════════════════════════════════════
 # 20. Visualization
@@ -1053,6 +1260,21 @@ class TestVisualization:
         assert "Circuit:" in diagram
         assert "INPUTS:" in diagram
         assert "OUTPUTS:" in diagram
+
+    def test_circuit_diagram_renders_vertical_connector_for_multi_gate_cascade(self) -> None:
+        c = BitstreamToDNA(seed=42)
+        design = c.compile_network(
+            gates=[
+                {"type": "AND", "inputs": ["A", "B"], "output": "X"},
+                {"type": "BUFFER", "inputs": ["X"], "output": "Y"},
+            ],
+            input_names=["A", "B"],
+            output_names=["Y"],
+        )
+
+        diagram = visualize_circuit(design)
+
+        assert "\n    │\n" in diagram
         assert "AND" in diagram
 
     def test_kinetics_sparkline(self, simple_and_circuit: DNACircuitDesign) -> None:
@@ -1152,6 +1374,18 @@ class TestHairpinChecker:
         flags = checker.check_design(simple_and_circuit)
         assert isinstance(flags, list)
 
+    def test_check_design_flags_hairpin_strand(self) -> None:
+        checker = HairpinChecker(min_stem_length=4, min_loop_length=3)
+        design = DNACircuitDesign(
+            name="hairpin_design",
+            input_strands=[DNAStrand(name="hp", sequence="GCGCGCGCAAAGCGCGCGC", role="signal")],
+        )
+
+        flags = checker.check_design(design)
+
+        assert flags
+        assert flags[0]["strand_name"] == "hp"
+
     def test_flag_structure(self) -> None:
         checker = HairpinChecker(min_stem_length=4, min_loop_length=3)
         seq = "GCGCGCGCAAAGCGCGCGC"
@@ -1193,10 +1427,11 @@ class TestGateOptimizer:
         gates = [
             {"type": "AND", "inputs": ["A", "B"], "output": "C"},
             {"type": "BUFFER", "inputs": ["C"], "output": "D"},
+            {"type": "NOT", "inputs": ["D"], "output": "dead"},
         ]
         result = opt.optimize(gates, ["C"])
-        # D isn't a required output, so BUFFER is identity
-        assert result["removed_count"] >= 1
+        reasons = {removal["reason"] for removal in result["removals"]}
+        assert {"identity_buffer", "dead_output"}.issubset(reasons)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -1222,6 +1457,45 @@ class TestSCPrecisionAnalyzer:
             assert "effective_bits" in stats
             assert "resolution_nM" in stats
             assert "dynamic_range_db" in stats
+
+    def test_empty_design_reports_zero_effective_bits(self) -> None:
+        analyzer = SCPrecisionAnalyzer()
+        result = analyzer.analyze(DNACircuitDesign(name="empty"), {})
+
+        assert result["outputs"] == {}
+        assert result["total_effective_bits"] == 0.0
+
+
+class TestSCNetworkBridgeEdges:
+    """Adjacency-to-gate inference boundary cases."""
+
+    def test_from_adjacency_skips_non_input_nodes_without_sources(self) -> None:
+        design = SCNetworkBridge(seed=42).from_adjacency(
+            np.zeros((3, 3), dtype=float),
+            input_indices=[0],
+            output_indices=[2],
+            name="empty_graph",
+        )
+
+        assert design.total_gates == 0
+
+    def test_from_adjacency_uses_or_for_two_source_inhibitory_mix(self) -> None:
+        adjacency = np.array(
+            [
+                [0.0, 0.0, 1.0],
+                [0.0, 0.0, -1.0],
+                [0.0, 0.0, 0.0],
+            ]
+        )
+
+        design = SCNetworkBridge(seed=42).from_adjacency(
+            adjacency,
+            input_indices=[0, 1],
+            output_indices=[2],
+            name="mixed_sources",
+        )
+
+        assert design.gates[0].gate_type == GateType.OR
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -1281,3 +1555,24 @@ class TestPlateLayout:
         assert csv.startswith("Well,Name,Sequence,Length")
         lines = csv.strip().split("\n")
         assert len(lines) > 1
+
+    def test_layout_splits_across_multiple_plates(self) -> None:
+        design = DNACircuitDesign(
+            name="multi_plate",
+            input_strands=[
+                DNAStrand(name=f"s{i}", sequence=f"ACGTACGTACGT{i % 10}", role="signal")
+                for i in range(5)
+            ],
+        )
+        pl = PlateLayout(n_wells=2)
+
+        result = pl.layout(design)
+
+        assert result["n_plates"] == 3
+        assert [entry["well"] for plate in result["plates"] for entry in plate] == [
+            "A01",
+            "A02",
+            "A01",
+            "A02",
+            "A01",
+        ]

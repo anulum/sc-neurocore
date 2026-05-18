@@ -63,6 +63,15 @@ def _build_graph(n: int, avg_degree: int = 8, seed: int = 42) -> CorrelationAwar
     return CorrelationAwareGraph(num_vertices=n, edges=edges)
 
 
+def _refresh_package_reexports(module: object) -> None:
+    """Keep package-level identities coherent after explicit module reloads."""
+    import sc_neurocore.chiplet as chiplet_pkg
+
+    for name in chiplet_pkg.__all__:
+        if hasattr(module, name):
+            setattr(chiplet_pkg, name, getattr(module, name))
+
+
 class TestEdgeCacheCorrectness:
     """The cached lookup must agree with a linear scan, on every edge
     AND on absent vertex pairs."""
@@ -129,6 +138,7 @@ class TestEdgeCacheLifecycle:
         # Next lookup detects the size mismatch and rebuilds
         assert g.edge_scc(2, 3) == pytest.approx(0.5)
         after = g._edge_cache
+        assert after is not None
         assert after is not before
         assert len(after) == 3
 
@@ -826,7 +836,8 @@ class TestImportFallback:
                 sys.modules["sc_neurocore_engine"] = saved_engine
             else:
                 sys.modules.pop("sc_neurocore_engine", None)
-            importlib.reload(hp_mod)
+            restored = importlib.reload(hp_mod)
+            _refresh_package_reexports(restored)
 
 
 class TestPreExistingEdgeCases:
