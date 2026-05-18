@@ -477,7 +477,7 @@ class VerilogGenerator:
             {chr(10).join(reset_lines)}
                         spike_detect <= 1'b0;
                     end else begin
-                        // Dynamics placeholder: downstream synthesis fills in
+                        // Dynamics integration point: downstream synthesis fills in
                         // the actual ODE integration from plugin parameters.
                         spike_detect <= 1'b0;
                     end

@@ -25,7 +25,7 @@ inner loop is tracked as a separate follow-up under the
 implemented yet because the inner loop is a 64-way sparse mat-vec
 product whose proper acceleration requires a block-sparse
 restructure of the connectivity. Documenting that gap honestly is
-preferable to shipping a fake "accelerated" path.
+preferable to shipping a misleading "accelerated" path.
 
 Output: JSON file at `benchmarks/results/bench_cortical_column.json`
 with one record per (configuration, repetition) plus the published

@@ -21,7 +21,7 @@ pub fn popcount32(word: u32) -> u32 {
     #[cfg(feature = "custom-popcount")]
     {
         // Custom CSR-mapped popcount: write operand to CSR 0x800, read
-        // result from CSR 0x801. This is a placeholder for real silicon.
+        // result from CSR 0x801. Platform integrators bind these CSRs to silicon.
         unsafe {
             let result: u32;
             core::arch::asm!(

@@ -370,7 +370,7 @@ verification:
 - Boundedness: token counts within proven upper bounds
 - Deadlock freedom: compiler output is provably deadlock-free
 
-## Frontier Roadmap Intake — 2026-04-30
+## Research Roadmap Intake — 2026-04-30
 
 The following items are accepted as roadmap candidates. They require scoped
 design docs, milestone split, and evidence gates before claims move into the

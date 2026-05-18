@@ -211,7 +211,7 @@ The emitted `sc_chiplet_top` now declares and connects every generated
 AXI-Stream link between die wrappers and bridge modules. Per-die wrappers also
 drive outgoing stream payload/valid signals from their local AER router output
 and assert incoming ready, so generated port lists are connected rather than
-left as integration placeholders.
+left as integration points.
 
 **Acceleration paths.** Two distinct compute profiles in this
 package:

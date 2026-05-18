@@ -139,7 +139,7 @@ class PDKConfig:
         return self.pdk_type in (PDKType.SKY130, PDKType.GF180MCU)
 
     def with_pdk_root(self, pdk_root: str) -> PDKConfig:
-        """Return a copy with ``$PDK_ROOT`` placeholders bound to ``pdk_root``."""
+        """Return a copy with ``$PDK_ROOT`` variables bound to ``pdk_root``."""
         root = str(Path(pdk_root).expanduser())
         return PDKConfig(
             pdk_type=self.pdk_type,

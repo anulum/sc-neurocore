@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// SC-NeuroCore — Spike Stats Criterion Benchmarks (placeholder, populated after test pass)
+// SC-NeuroCore — Spike Stats Criterion Benchmarks
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use spike_stats_core::*;

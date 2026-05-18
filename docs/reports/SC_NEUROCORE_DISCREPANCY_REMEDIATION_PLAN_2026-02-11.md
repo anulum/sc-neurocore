@@ -76,7 +76,7 @@ CPU model, SIMD tier, OS, Python version, Rust version, thread count.
 - cycles/sample
 - max throughput at target clock
 - end-to-end latency in us at 100/200/300 MHz
-3. Add power estimate placeholder:
+3. Add provisional power estimate:
 toggle-rate based estimate + TODO hooks for vendor timing/power reports.
 4. Publish:
 `docs/HARDWARE_BENCHMARK_REPORT.md`.

@@ -1904,7 +1904,7 @@ Process Design Kit configuration.
 - **from_pdk_type**(cls, pdk)
 - **is_open_source**()
 - **with_pdk_root**(pdk_root)
-  - Return a copy with ``$PDK_ROOT`` placeholders bound to ``pdk_root``.
+  - Return a copy with ``$PDK_ROOT`` variables bound to ``pdk_root``.
 
 ### Class `ResolvedPDKFiles`
 Resolved file paths required by the open-source ASIC flow.
@@ -7188,7 +7188,7 @@ CDCReport
 Load custom hardware profiles from a TOML file.
 
 Allows users and vendors to define profiles without modifying
-SC-NeuroCore source code. This is the extensibility endgame.
+SC-NeuroCore source code. This is the profile-extension path.
 
 TOML format::
 
@@ -25628,7 +25628,7 @@ Probabilistic predictive world model based on a Linear Gaussian SSM.
 The legacy 65-LOC `predict_next_state` / `forecast` API is
 preserved as a thin wrapper on the proper `LinearGaussianSSM`
 + `KalmanFilter` infrastructure above. The previous
-deterministic linear matmul + clip placeholder was replaced
+deterministic linear matmul + clip implementation was replaced
 2026-04-17 per `feedback_sophisticated_from_start.md`.
 
 - **__post_init__**()

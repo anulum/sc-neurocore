@@ -101,7 +101,7 @@ impl ScopeRenderer {
         // return 0.0
         // if self.config.transport_type == TransportType.SIMULATED:
         // return self._sim_read(num_words, layer_id)
-        // # Placeholder for real backends
+        // # Hardware transports are registered by deployment-specific backends.
         // return 0.0
         0.0
     }

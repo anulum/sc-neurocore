@@ -71,7 +71,7 @@ def populated_result() -> CompilationResult:
 
 
 # ---------------------------------------------------------------------------
-# Empty-layout guard (must never silently write a placeholder).
+# Empty-layout guard (must never silently write a layout with no cells).
 # ---------------------------------------------------------------------------
 
 

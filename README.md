@@ -466,7 +466,7 @@ for the base install, optional extras, and source-build path.
 `pip install sc-neurocore` publishes the Python suite under the public
 `sc-neurocore` package name. The optional Rust engine remains part of the
 repository / release-asset / source-build flow rather than a separate PyPI
-runtime dependency. Source-only Frontier modules such as `analysis`, `viz`,
+runtime dependency. Source-only extended modules such as `analysis`, `viz`,
 `audio`, `dashboard`, and `swarm` still require a source checkout.
 
 ### Development Setup
@@ -550,14 +550,14 @@ docker run --rm -it ghcr.io/anulum/sc-neurocore:latest
 ### Module Tiers
 
 `pip install sc-neurocore` ships **Core + Simulation + Domain bridges** only.
-Research and Frontier modules are available from source (`pip install -e ".[dev]"`).
+Research and extended modules are available from source (`pip install -e ".[dev]"`).
 
 | Tier | Modules | Ships in wheel | Status |
 |------|---------|:--------------:|--------|
 | **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Production path; current CI coverage gate is 96%, with 100% retained as the target. |
 | **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, profiling, models, math, spatial, verification, security | Yes | Stable. Import explicitly. |
 | **Industrial** | safety_cert, asic_flow, fault_injection, uvm_gen, hypervisor, digital_twin, chiplet, spintronic, memristor, analog_bridge | No | 1,173 tests. Available from source. |
-| **Frontier** | evo_substrate, meta_plasticity, bioware, federated, bci_studio, explainability, neuro_symbolic, stochastic_doctor, model_zoo | No | 1,173 tests. Available from source. |
+| **Extended research** | evo_substrate, meta_plasticity, bioware, federated, bci_studio, explainability, neuro_symbolic, stochastic_doctor, model_zoo | No | 1,173 tests. Available from source. |
 | **Domain bridges** | quantum (Qiskit/PennyLane), adapters/holonomic (JAX), scpn (Petri nets) | Yes | Requires `pip install sc-neurocore[quantum]` or `[jax]` |
 | **Research** | robotics, physics, bio, optics, chaos, sleep, interfaces | No | Tested. Available from source. |
 | **Speculative** | `research/` (eschaton, exotic, meta, post_silicon, transcendent) | No | Theoretical. See `research/README.md`. |
@@ -842,7 +842,7 @@ pip install sc-neurocore[full]        # local research environment only; pulls h
 See [Install Profiles](docs/guides/install_profiles.md) before using `full`.
 The default package and FPGA scaffold flow do not require those heavy extras.
 
-For development (includes all modules + research/frontier code from source):
+For development (includes all modules and source-only research code):
 
 ```bash
 pip install -e ".[dev]"               # editable install with pytest, mypy, ruff, hypothesis

@@ -75,7 +75,7 @@ class TestTracesToSVG:
         assert ">v</text>" in svg
         assert ">w</text>" in svg
 
-    def test_empty_data_returns_placeholder(self):
+    def test_empty_data_returns_no_data_svg(self):
         svg = traces_to_svg([], {})
         assert "No data" in svg
         assert "<svg" in svg

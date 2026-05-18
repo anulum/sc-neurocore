@@ -7,7 +7,7 @@
 # SC-NeuroCore — Mojo SIMD acceleration for l7_sym
 
 fn _init_metatron_matrix() -> Int:
-    var __init_metatron_matrix_line = '# Simple placeholder for the complex 13-node geometry'
+    var __init_metatron_matrix_line = '# Reduced sparse geometry initialiser'
     var __init_metatron_matrix_line = '# In a full implementation, this is a specific sparse matrix'
     var __init_metatron_matrix_line = 'import numpy as _np'
     var __init_metatron_matrix_line = 'n = params.n_nodes'

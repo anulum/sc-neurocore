@@ -3,7 +3,7 @@
 **Status**: Synthesizable Source Code Ready
 
 ## Overview
-The Verilog hardware description for the `sc-neurocore` has been refined from skeletons/placeholders to a complete, synthesizable Register Transfer Level (RTL) design.
+The Verilog hardware description for the `sc-neurocore` has been refined from scaffolds to a complete, synthesizable Register Transfer Level (RTL) design.
 
 ## Components Implemented
 

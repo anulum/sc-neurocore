@@ -302,8 +302,8 @@ def _build_scnir_document(
 ) -> dict[str, Any]:
     source_kind = _source_kind(sc_config.generator)
     input_stream = _stream(
-        stream_id="fmoat1.input",
-        layer="fmoat1_stochastic_backprop",
+        stream_id="stochastic_backprop.input",
+        layer="stochastic_backprop_training",
         signal_kind="spike",
         bitstream_length=sc_config.bitstream_length,
         encoding=sc_config.encoding,
@@ -315,14 +315,14 @@ def _build_scnir_document(
         },
         constraints=[
             _constraint(
-                peer_stream_id="fmoat1.weight",
+                peer_stream_id="stochastic_backprop.weight",
                 max_abs_correlation=max(0.0, abs(float(sc_config.correlation))),
             )
         ],
     )
     weight_stream = _stream(
-        stream_id="fmoat1.weight",
-        layer="fmoat1_stochastic_backprop",
+        stream_id="stochastic_backprop.weight",
+        layer="stochastic_backprop_training",
         signal_kind="weight",
         bitstream_length=sc_config.bitstream_length,
         encoding=sc_config.encoding,
@@ -334,14 +334,14 @@ def _build_scnir_document(
         },
         constraints=[
             _constraint(
-                peer_stream_id="fmoat1.input",
+                peer_stream_id="stochastic_backprop.input",
                 max_abs_correlation=max(0.0, abs(float(sc_config.correlation))),
             )
         ],
     )
     product_stream = _stream(
-        stream_id="fmoat1.product",
-        layer="fmoat1_stochastic_backprop",
+        stream_id="stochastic_backprop.product",
+        layer="stochastic_backprop_training",
         signal_kind="spike",
         bitstream_length=sc_config.bitstream_length,
         encoding=sc_config.encoding,
@@ -351,8 +351,8 @@ def _build_scnir_document(
             "replay_uri": replay_uri,
         },
         constraints=[
-            _constraint(peer_stream_id="fmoat1.input", max_abs_correlation=1.0),
-            _constraint(peer_stream_id="fmoat1.weight", max_abs_correlation=1.0),
+            _constraint(peer_stream_id="stochastic_backprop.input", max_abs_correlation=1.0),
+            _constraint(peer_stream_id="stochastic_backprop.weight", max_abs_correlation=1.0),
         ],
     )
     return {
@@ -400,7 +400,7 @@ def _constraint(*, peer_stream_id: str, max_abs_correlation: float) -> dict[str,
         "peer_stream_id": peer_stream_id,
         "policy": "max_correlation",
         "max_abs_correlation": max_abs_correlation,
-        "seed_domain": "fmoat1_stochastic_backprop",
+        "seed_domain": "stochastic_backprop_training",
     }
 
 

@@ -17,7 +17,7 @@ from sc_neurocore.accel.mojo.runner import MojoKernelRunner
 
 
 def _make_runner(tmp_path: Path) -> MojoKernelRunner:
-    (tmp_path / "kernels.mojo").write_text("// fake kernel file\n", encoding="utf-8")
+    (tmp_path / "kernels.mojo").write_text("// test kernel file\n", encoding="utf-8")
     return MojoKernelRunner(_mojo_dir=tmp_path, _pixi_bin="/fake/pixi")
 
 

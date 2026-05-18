@@ -65,7 +65,7 @@ from sc_neurocore.analog_bridge import (
 
 The canonical import path is the package root, not the internal
 `sc_neurocore.analog_bridge.analog_bridge` module. Reaching into the
-inner file via a `sys.path` hack (as earlier tests did) bypasses the
+inner file via direct `sys.path` manipulation bypasses the
 package's `__init__.py` and causes coverage.py to miss attribution.
 
 | Symbol | Purpose | Section |
@@ -518,7 +518,7 @@ pattern.
   integral non-linearity; none of those are modelled here. A
   `CalibrationRoutine.with_noise` variant is on the to-do list but
   not implemented. The error budget from `max_quantization_error` is
-  therefore a lower bound on what real silicon will deliver.
+  therefore a lower bound on what deployed silicon will deliver.
 - **DynapSE-2 profile is approximate.** The 127 nS max-g figure and
   7-bit DAC reflect an early-revision envelope; silicon iterations
   since then reach higher g_max and 8-bit DAC in some variants.

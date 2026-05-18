@@ -12,7 +12,7 @@ possible, so historical audits remain reproducible.
 pages, matching tests, and benchmark artifacts. It is a triage tool, not a
 scientific approval gate: it can prove that required evidence exists, but model
 equations, references, biological interpretation, and numerical fidelity still
-need human review before a page is promoted to superior status.
+need human review before a page is promoted to verified status.
 
 Run the current audit:
 

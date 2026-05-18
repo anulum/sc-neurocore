@@ -49,7 +49,7 @@ _DEFAULT_SNN_DIR = os.path.join(_DEFAULT_GOTM_PATH, "04_ARCANE_SAPIENCE", "snn_s
 
 
 def _emit_snn_stimulus(snn_dir: str, chunk_summary: str, directive: str, step_index: int) -> None:
-    """Write an SNN stimulus JSON file (GEMINI_RULES.md compliance)."""
+    """Write an SNN stimulus JSON file for downstream orchestration."""
     os.makedirs(snn_dir, exist_ok=True)
     ts = int(time.time())
     payload = {

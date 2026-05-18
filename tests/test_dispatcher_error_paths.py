@@ -121,15 +121,15 @@ class TestCDLLOpenFailureSetsSentinelFalse:
     def test_missing_so_on_nonexistent_path_sets_false(self, monkeypatch, tmp_path):
         """Simulate a missing shared library by pointing CDLL at a
         nonexistent path and re-importing the module."""
-        fake_dir = tmp_path / "fake_accel"
-        fake_dir.mkdir()
-        # Patch Path.resolve().parent to point at the fake dir so the
-        # module's _LIB_PATH becomes fake_dir/libwilson_cowan.so.
+        missing_lib_dir = tmp_path / "missing_accel"
+        missing_lib_dir.mkdir()
+        # Patch Path.resolve().parent to point at the missing-lib directory so the
+        # module's _LIB_PATH becomes missing_lib_dir/libwilson_cowan.so.
         import sc_neurocore.accel.go.wilson_cowan as mod
 
         original_path = mod._LIB_PATH
 
-        monkeypatch.setattr(mod, "_LIB_PATH", fake_dir / "libwilson_cowan.so")
+        monkeypatch.setattr(mod, "_LIB_PATH", missing_lib_dir / "libwilson_cowan.so")
         # Re-exercise the try/except by re-importing:
         try:
             ctypes.CDLL(str(mod._LIB_PATH))

@@ -33,8 +33,7 @@ Provides `predict_next_state()` (deterministic mean),
 `forecast()` / `forecast_with_cov()` for multi-step rollouts.
 
 The previous "linear transition matrix + clip-to-[0,1]"
-implementation was a placeholder masquerading as a world
-model and was replaced 2026-04-17 per
+implementation was replaced 2026-04-17 per
 `feedback_sophisticated_from_start.md`. See [Predictive Model
 detailed page](world_model/predictive_model.md) for the full
 LGSSM + Kalman + RTS + EM derivations, performance numbers,
