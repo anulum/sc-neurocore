@@ -10,10 +10,15 @@ from __future__ import annotations
 
 from fnmatch import fnmatch
 from pathlib import Path
-import tomllib
+import sys
 from typing import TYPE_CHECKING, Any
 
 import yaml
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
