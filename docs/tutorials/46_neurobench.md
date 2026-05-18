@@ -126,11 +126,14 @@ Honest comparison (measured, not estimated):
 | Task | SC-NeuroCore | Best Published | Gap |
 |------|-------------|---------------|-----|
 | MNIST | 99.49% (ConvSNN) | 99.72% (SEW-ResNet) | -0.23% |
-| SHD | not yet measured | 95.1% (SpikFormer) | — |
-| DVS Gesture | not yet measured | 98.2% (TET) | — |
+| SHD | 79.28% (feedforward SpikingNet, Kaggle CPU, 2026-03-28) | 95.1% (SpikFormer) | -15.82% |
+| DVS Gesture | no committed current-checkout measurement | 98.2% (TET) | — |
 
-We publish measured numbers only. SHD and DVS Gesture benchmarks are
-pending — we'll update this table when results are available.
+We publish measured numbers only. The SHD number is documented in
+[`validation/neurobench_shd.md`](../validation/neurobench_shd.md) and backed by
+`benchmarks/results/neurobench_shd_results.json`. DVS Gesture remains outside
+the committed benchmark evidence set and should not be used in public
+performance claims until a reproducible artifact lands.
 
 ## References
 

@@ -240,7 +240,7 @@ assert wm.verifiable and len(wm.watermark_hash) == 16
 | `TestMagnonicPlatforms` | 3 | All magnonic profiles |
 | `TestOrganicBioelectronic` | 2 | All OECT profiles |
 | `TestRiscVSovereign` | 5 | All RISC-V profiles |
-| `TestTotalCoverage` | 2 | ≥175 profiles, ≥31 classes |
+| `TestTotalCoverage` | 2 | ≥194 profiles, ≥38 classes |
 | `TestFromConstraints` | 3 | Basic, low-power, explicit-width |
 | `TestTrojanLint` | 2 | Clean + conditional trigger |
 | `TestSBOM` | 2 | Basic + with dependencies |
@@ -268,5 +268,5 @@ python -m pytest \
 
 - [Universal Coverage API Reference](universal_coverage_api_reference.md) — §52–§59 + 4 platform classes
 - [Compiler Intelligence Guide](compiler_intelligence.md) — all 67 features
-- [Frontier Platforms Guide](frontier_platforms.md) — 31 platform classes
+- [Research Platforms Guide](research_platforms.md) — 38 platform classes
 - [Platform Extensibility Guide](platform_extensibility.md) — 3 extensibility mechanisms

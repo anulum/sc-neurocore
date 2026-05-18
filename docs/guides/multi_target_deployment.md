@@ -7,7 +7,7 @@
 # Multi-Target Deployment Guide
 
 SC-NeuroCore can deploy a single SNN model to **any combination** of 175
-hardware profiles across 31 platform classes.  This guide covers the
+hardware profiles across 38 platform classes.  This guide covers the
 complete multi-target deployment workflow from portability scoring through
 target recommendation, heterogeneous dispatch, multi-die floorplanning,
 and chiplet protocol mapping, with formal cost models for network
@@ -590,8 +590,8 @@ for e in mmap.entries[:5]:
 ## Further Reading
 
 - [Compiler Intelligence Guide](compiler_intelligence.md) — all 67 features
-- [Hardware Profiles Guide](hardware_profiles.md) — all 175 profiles
-- [Frontier Platforms Guide](frontier_platforms.md) — 31 platform classes
+- [Hardware Profiles Guide](hardware_profiles.md) — all 194 profiles
+- [Research Platforms Guide](research_platforms.md) — 38 platform classes
 - [Platform Extensibility Guide](platform_extensibility.md) — TOML + hook + from_constraints
 - [Verification & Debug Guide](verification_debug.md) — 14 V&V features
 - [Carbon & Sustainability Guide](carbon_sustainability.md) — ESG features

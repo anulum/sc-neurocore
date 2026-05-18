@@ -126,7 +126,7 @@ Steps:
 Optional packages can be installed as needed, but keep the core environment light. This allows tests and CI to remain fast.
 
 ### 2.3 Running tests
-The test suite uses pytest. Tests are organized by module, with separate directories for core layers, advanced layers, and frontier models. You can run the full suite or a subset.
+The test suite uses pytest. Tests are organized by module, with separate directories for core layers, advanced layers, and research models. You can run the full suite or a subset.
 
 Examples:
 - `python -m pytest 03_CODE/sc-neurocore/tests`
@@ -288,11 +288,22 @@ Recommended workflow for documentation updates:
 
 1. Update or add docstrings in code.
 2. Run the documentation generator:
-   `python -c "import os,sys; sys.path.append('03_CODE/sc-neurocore/scripts'); from generate_docs import generate_markdown; generate_markdown('03_CODE/sc-neurocore/src/sc_neurocore','03_CODE/sc-neurocore/docs/API_REFERENCE.md')"`
+   `PYTHONPATH=src:. python scripts/generate_docs.py`
 3. Review `docs/API_REFERENCE.md` for any missing descriptions.
-4. Update higher-level docs (this manual, EXAMPLES, HARDWARE_GUIDE, BENCHMARKS) as needed.
+4. Run `PYTHONPATH=src:. pytest -q tests/test_generate_docs.py tests/test_public_docstring_policy.py` after generator or docstring-policy changes.
+5. Update higher-level docs (this manual, EXAMPLES, HARDWARE_GUIDE, BENCHMARKS) as needed.
 
-### 4.3 Style guidelines
+### 4.3 Navigation policy
+MkDocs navigation is intentionally curated. Some public Markdown files are generated references, supplemental guides, or long-form research documents that should remain reachable through links without expanding the primary navigation.
+
+The tracked `docs/navigation_policy.toml` file classifies every public Markdown file that is allowed to remain outside `mkdocs.yml` navigation. After adding or moving public Markdown files, run `PYTHONPATH=src:. pytest -q tests/test_docs_navigation_policy.py`. If the test fails, either add the page to `mkdocs.yml` or update the policy bucket and expected count with the reason.
+
+### 4.4 Public docstring policy
+The tracked `docs/docstring_policy.toml` file defines the audited Python files whose public module, class, function, method, and property docstrings are enforced. This gate is intentionally scoped: add files only after their public surface has been reviewed and documented accurately.
+
+Run `PYTHONPATH=src:. pytest -q tests/test_public_docstring_policy.py` after changing docstrings in a policy-listed file. If the test fails for a newly cleaned file, add that file to the policy instead of weakening the gate.
+
+### 4.5 Style guidelines
 - Use plain ASCII in documentation to avoid rendering issues.
 - Use short code blocks for examples, and explain them in surrounding text.
 - Keep file paths project-relative.
@@ -388,10 +399,10 @@ The ONNX exporter writes a JSON representation of a network and stores weights a
 The profiling tools under `profiling/` and the performance tuning guide provide guidance on bitstream length, clock frequency, and resource usage. When optimizing, start with the smallest acceptable bitstream length and increase only if accuracy demands it. Use vectorized layers for CPU experiments and validate accuracy against bit-level results for critical runs.
 
 ### 6.10 Compiler intelligence features (Waves 6–11)
-SC-NeuroCore includes **76 compiler intelligence features** covering formal verification, safety certification, power management, carbon estimation, multi-target deployment, security hardening, supply chain compliance, platform extensibility, and frontier hardware paradigms. **183 hardware profiles** across **35 platform classes** support every known compute paradigm. These features are fully documented in dedicated guides:
+SC-NeuroCore includes compiler intelligence features covering formal verification, safety certification, power management, carbon estimation, multi-target deployment, security hardening, supply-chain compliance, platform extensibility, and research hardware paradigms. The live hardware registry currently exposes **194 hardware profiles** across **38 platform classes**. These features are documented in dedicated guides:
 
-- **[Compiler Intelligence Guide](compiler_intelligence.md)** — Complete reference for all 76 features (§26–§76) with code examples and usage patterns.
-- **[Frontier Platforms Guide](frontier_platforms.md)** — Deep-dive into all 20 frontier platform classes (superconducting, spintronic, biological, quantum, thermodynamic, probabilistic, polariton, metamaterial, etc.).
+- **[Compiler Intelligence Guide](compiler_intelligence.md)** — Reference for compiler-intelligence features with code examples and usage patterns.
+- **[Research Platforms Guide](research_platforms.md)** — Deep-dive into the research platform classes (superconducting, spintronic, biological, quantum, thermodynamic, probabilistic, polariton, metamaterial, etc.).
 - **[Platform Extensibility Guide](platform_extensibility.md)** — 3 mechanisms: TOML loader, runtime discovery hook, and `from_constraints()` auto-constructor.
 - **[Safety Certification Guide](safety_certification.md)** — Automated certification pipeline for DO-254, IEC 61508, and ISO 26262.
 - **[Carbon & Sustainability Guide](carbon_sustainability.md)** — Carbon footprint estimation, energy scheduling, and EU regulatory compliance.

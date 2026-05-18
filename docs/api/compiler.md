@@ -633,4 +633,4 @@ python -m pytest tests/e2e/test_e2e_pipeline.py -v
 - [Static Analysis Guide](../guides/static_analysis_guide.md) — Guard bits, SVA
 - [Formal Verification Guide](../guides/formal_verification.md) — SymbiYosys
 - [Deployment Guide](../guides/deployment_guide.md) — Constraints, drivers
-- [Multi-Target Deployment](../guides/multi_target_deployment.md) — 175 profiles
+- [Multi-Target Deployment](../guides/multi_target_deployment.md) — 194 profiles

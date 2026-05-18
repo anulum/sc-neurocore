@@ -570,4 +570,4 @@ python -m pytest tests/e2e/test_e2e_pipeline.py -v -k "safety or certification"
 - [Static Analysis Guide](static_analysis_guide.md) — guard bits, SVA
 - [Formal Verification Guide](formal_verification.md) — SymbiYosys, BMC
 - [Deployment Guide](deployment_guide.md) — constraints, bitstream
-- [Frontier Platforms Guide](frontier_platforms.md) — space-qualified profiles
+- [Research Platforms Guide](research_platforms.md) — space-qualified profiles

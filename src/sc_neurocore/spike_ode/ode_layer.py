@@ -12,8 +12,9 @@ Solves the LIF membrane ODE continuously, detects threshold crossings
 as events, emits spikes, resets, continues. Adaptive step-size Euler
 with event detection.
 
-The frontier intersection of Neural ODEs + SNNs. No library has this
-as a reusable layer.
+The implementation is an event-detected continuous-depth SNN layer for
+experiments that need ODE integration and spike-reset semantics in one
+component.
 
 Reference: EventProp (Wunderlich & Pehle 2021)
 """
@@ -176,8 +177,10 @@ class SpikingODELayer:
         return outputs
 
     def reset(self) -> None:
+        """Reset membrane voltages to the configured resting potential."""
         self._v = np.full(self.n_neurons, self.dynamics.v_rest)
 
     @property
     def voltage(self) -> np.ndarray:
+        """Return a defensive copy of the current membrane voltages."""
         return self._v.copy()

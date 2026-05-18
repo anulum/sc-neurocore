@@ -9,7 +9,7 @@
 # Adaptive Reliability API Reference
 
 This document provides the complete API reference for adaptive reliability
-compiler intelligence features and frontier platform classes.
+compiler intelligence features and research platform classes.
 
 ## Compiler Intelligence Features (§68–§76)
 
@@ -58,4 +58,4 @@ The platform registry includes 4 speculative compute paradigms (8 profiles):
 3.  **Polariton (`polariton`)**: Uses exciton-polariton Bose-Einstein condensates for ultrafast computation (`marvell_polariton`, `stanford_polariton`).
 4.  **Metamaterial (`metamaterial`)**: Uses acoustic or optical metamaterials for passive spatial computing (`mit_metamaterial`, `penn_acoustic_meta`).
 
-See the [Compiler Intelligence Guide](compiler_intelligence.md) and [Frontier Platforms Guide](frontier_platforms.md) for detailed usage examples and physics properties.
+See the [Compiler Intelligence Guide](compiler_intelligence.md) and [Research Platforms Guide](research_platforms.md) for detailed usage examples and physics properties.

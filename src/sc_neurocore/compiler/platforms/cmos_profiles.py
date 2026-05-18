@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore
 
+"""Register CMOS, FPGA, ASIC, MCU, and conventional accelerator profiles."""
+
 from __future__ import annotations
 from .registry import HardwareProfile, _reg
 

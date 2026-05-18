@@ -188,6 +188,6 @@ for all of these regulations.
 ## Further Reading
 
 - [Compiler Intelligence Guide](compiler_intelligence.md) — all 67 features
-- [Hardware Profiles Guide](hardware_profiles.md) — all 175 profiles
+- [Hardware Profiles Guide](hardware_profiles.md) — all 194 profiles
 - [Deployment Guide](deployment_guide.md) — constraints, bitstream
 - [Safety Certification Guide](safety_certification.md) — DO-254/ISO 26262

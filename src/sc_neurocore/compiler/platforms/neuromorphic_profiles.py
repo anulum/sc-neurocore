@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore
 
+"""Register neuromorphic and event-driven hardware profiles."""
+
 from __future__ import annotations
 from .registry import HardwareProfile, _reg
 

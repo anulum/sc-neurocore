@@ -1,11 +1,3 @@
-<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
-<!-- Commercial license available -->
-<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
-<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
-<!-- ORCID: 0009-0009-3560-0851 -->
-<!-- Contact: www.anulum.li | protoscience@anulum.li -->
-<!-- SC-NeuroCore -->
-
 # SC-NeuroCore API Reference
 
 ## Module `_native.array_guards`
@@ -47,9 +39,33 @@ Stochastic cross-correlation of packed u64 arrays (from Python list).
 ### Function `sc_scc_packed_np(a, b)`
 Stochastic cross-correlation of packed u64 numpy arrays (zero-copy).
 
+### Function `lfsr_encode_packed()`
+Encode an LFSR-16 stochastic bitstream as packed little-endian u64 words.
+
+### Function `lfsr_encode_bits()`
+Encode an LFSR-16 stochastic bitstream as a uint8 0/1 numpy array.
+
+### Function `_logical_bit_length(word_count, bit_length)`
+### Function `_mask_trailing_words(words, bit_length)`
+### Function `_validate_lfsr_contract()`
+### Function `_python_lfsr_encode_packed()`
+### Function `_python_scc_packed(a, b)`
 ---
 
 ## Module `_native.learning_bridge`
+
+### Class `OnlineO1SnapshotFFI`
+ctypes representation of the Rust fixed-point online O(1) snapshot.
+
+
+### Class `RustOnlineO1Synapse`
+RAII wrapper for the Rust bounded fixed-point online O(1) learner.
+
+- **__init__**()
+- **step**()
+  - Advance one timestep and return the bounded fixed-point state.
+- **per_synapse_state_bits**()
+- **__del__**()
 
 ### Class `RustPlasticityRule`
 RAII wrapper around a Rust plasticity rule handle.
@@ -204,7 +220,7 @@ packed_arr: (N//64,) uint64
 
 ### Function `jit_vec_mac(packed_weights, packed_inputs, outputs)`
 Vectorized Multiply-Accumulate (MAC).
-Simulates: Output[i] = Sum(Weights[i] AND Inputs)
+Simulates: Output&#91;i&#93; = Sum(Weights&#91;i&#93; AND Inputs)
 weights: (n_neurons, n_inputs, n_words)
 inputs: (n_inputs, n_words)
 outputs: (n_neurons,)
@@ -377,7 +393,7 @@ Create a PRNG key (JAX) or seed array (NumPy fallback).
 Split a PRNG key into two children.
 
 ### Function `uniform(key, shape, minval, maxval)`
-Uniform samples in [minval, maxval).
+Uniform samples in &#91;minval, maxval).
 
 ### Function `normal(key, shape)`
 Standard normal samples.
@@ -493,12 +509,15 @@ Parameters derived from Paper 13 and Vacuum Lattice specs.
 JAX-traceable adapter for the SCPN Source-Field layer.
 
 - **__init__**(params, seed)
+- **_validate_positive_int**(name, value)
+- **_validate_params**(cls, params)
 - **encode**(domain_state)
   - Maps vacuum potential to stochastic bitstreams.
 - **_vacuum_kernel**(state, coupling, bias, dt)
   - Advances local spin-like vacuum lattice dynamics.
 - **_vacuum_lattice_kernel**(state, coupling, bias, scission_rate, feedback_drive, dt)
   - Advances local spin-like vacuum lattice dynamics.
+- **_project_feedback**(inputs)
 - **step_jax**(dt, inputs)
   - Advances the L13 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -610,6 +629,8 @@ Parameters derived from Paper 2 and Monograph 28.
 JAX-traceable adapter for the SCPN Neurochemical layer.
 
 - **__init__**(params, seed)
+- **_validate_positive_int**(name, value)
+- **_validate_params**(cls, params)
 - **encode**(domain_state)
   - Maps neurochemical concentrations to stochastic bitstreams.
 - **_iiief_kernel**(phi, velocity, integrated_info, alpha, c_info, dt)
@@ -706,6 +727,7 @@ JAX-traceable adapter for the SCPN Planetary-Biospheric layer.
   - Maps planetary coherence to stochastic bitstreams.
 - **_gaia_kernel**(phi, sync_inputs, alpha, freq, q_factor, p_percolation, t, dt)
   - Solves the Planetary Gaia-field dynamics:
+- **_validate_params**(params)
 - **step_jax**(dt, inputs)
   - Advances the L6 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -727,6 +749,8 @@ JAX-traceable adapter for the SCPN Geometrical-Symbolic layer.
 - **__init__**(params, seed)
 - **_init_metatron_matrix**()
   - Initialise a symmetric bounded Metatron routing topology.
+- **_metatron_coordinates**(n_nodes)
+- **_validate_params**(params)
 - **encode**(domain_state)
   - Maps symbolic phases to stochastic bitstreams.
 - **_symbolic_kernel**(phases, metatron, inputs, dt)
@@ -938,7 +962,7 @@ np.ndarray
     Shape (n_timesteps, n_units), suitable for time-stepped simulation.
 
 ### Function `firing_rates_to_sc_probs(spike_times, duration_ms, max_rate_hz)`
-Convert firing rates to SC probabilities in [0, 1].
+Convert firing rates to SC probabilities in &#91;0, 1&#93;.
 
 Parameters
 ----------
@@ -950,7 +974,7 @@ max_rate_hz : float
 Returns
 -------
 np.ndarray
-    Shape (n_units,), probabilities in [0, 1].
+    Shape (n_units,), probabilities in &#91;0, 1&#93;.
 
 ### Function `from_sorting(sorting, dt)`
 Convert a SpikeInterface SortingExtractor to bitstream matrix.
@@ -1089,7 +1113,7 @@ Bin a binary spike train into spike counts per bin.
 ## Module `analysis.spike_stats.causality`
 
 ### Function `_var_coefficients(trains_binned, order)`
-Fit VAR(order) model. Returns (coefficients [order*d x d], residual covariance).
+Fit VAR(order) model. Returns (coefficients &#91;order*d x d&#93;, residual covariance).
 
 ### Function `pairwise_granger_causality(source, target, bin_size, order)`
 Pairwise Granger causality. Granger 1969.
@@ -1217,13 +1241,13 @@ Returns (projected, explained_variance_ratio).
 Demixed PCA. Kobak et al. 2016.
 
 Separates condition-dependent and condition-independent variance.
-trains_by_condition: {condition_id: [list of binary trains per neuron]}.
+trains_by_condition: {condition_id: &#91;list of binary trains per neuron&#93;}.
 Returns (projected, explained_variance_ratio).
 
 ### Function `factor_analysis(trains, n_factors, bin_size, n_iter)`
 Factor analysis via EM. Rubin & Thayer 1982.
 
-Returns (loading_matrix [n_neurons x n_factors], uniquenesses [n_neurons]).
+Returns (loading_matrix &#91;n_neurons x n_factors&#93;, uniquenesses &#91;n_neurons&#93;).
 
 ---
 
@@ -1299,6 +1323,9 @@ Posterior p(x|y) for each latent dimension jointly.
 ### Function `_gpfa_m_step(Y, x_post, xx_post)`
 Update C, d, R from sufficient statistics.
 
+### Function `_gpfa_log_likelihood(Y, C, d, R, K_all)`
+Exact marginal Gaussian log likelihood for the GPFA observation model.
+
 ### Function `gpfa(trains, n_latents, bin_ms, dt, max_iter, tol, seed)`
 Extract smooth latent trajectories from parallel spike trains via EM.
 
@@ -1361,7 +1388,7 @@ Returns (coherence, freqs_hz). SFC = |S_xy|^2 / (S_xx * S_yy).
 ### Function `spike_phase_histogram(binary_train, lfp_signal, n_bins)`
 Histogram of LFP phase at spike times.
 
-Returns (counts, bin_centers_rad) with bins spanning [-pi, pi].
+Returns (counts, bin_centers_rad) with bins spanning &#91;-pi, pi&#93;.
 
 ---
 
@@ -1502,8 +1529,8 @@ dt : timestep in ms.
 
 Returns
 -------
-unit_ids : int64 array [n_tokens].
-timestamps : float64 array [n_tokens] in ms.
+unit_ids : int64 array &#91;n_tokens&#93;.
+timestamps : float64 array &#91;n_tokens&#93; in ms.
 
 ### Function `sinusoidal_position_encode(timestamps, d_model)`
 Sinusoidal position encoding. Vaswani et al. (2017).
@@ -1523,7 +1550,7 @@ Attention(Q, K, V) = softmax(Q K^T / sqrt(d_k)) V
 ### Function `spike_directionality(times_a, times_b, t_start, t_end)`
 Spike directionality. Kreuz et al. 2015.
 
-Returns asymmetry measure in [-1, 1]. Positive: A leads B.
+Returns asymmetry measure in &#91;-1, 1&#93;. Positive: A leads B.
 
 ### Function `spike_train_order(times_list, t_start, t_end)`
 Spike train order matrix. Kreuz et al. 2017.
@@ -1865,7 +1892,7 @@ A self-improving cognitive primitive combining ArcaneNeuron and Zenith plasticit
 
 Rather than maintaining static deep-context parameters, the ArcaneZenith module
 deploys 4 synchronized Zenith meta-plasticity connections controlling physical limits.
-Zenith plasticity weights ∈ [0, 1] are smoothly mapped to safe biological ranges
+Zenith plasticity weights ∈ &#91;0, 1&#93; are smoothly mapped to safe biological ranges
 for each parameter using a sigmoid interpolator.
 
 Example:
@@ -2313,7 +2340,7 @@ warmup_fraction : float
     Fraction of epochs for linear warmup (0.0-1.0).
 
 - **_progress**(epoch)
-  - Compute curriculum progress in [0, 1].
+  - Compute curriculum progress in &#91;0, 1&#93;.
 - **timesteps**(epoch)
   - Sequence length for this epoch.
 - **rate_scale**(epoch)
@@ -2422,8 +2449,51 @@ list of FittedModel
 
 ## Module `bci_studio.bci_primitives`
 
+### Class `BCIPrimitiveConfig`
+Configuration for the deterministic closed-loop primitive.
+
+- **__post_init__**()
+
+### Class `BCIFrame`
+One raw neural signal frame.
+
+
+### Class `BCIFeedbackCommand`
+Feedback command emitted by the primitive.
+
+Packet layout is 24 bytes: `&#91;schema:u16, command:u8, flags:u8,
+channel:u16, reserved:u16, amplitude:f32, timestamp_us:u64, score:f32&#93;`.
+
+- **to_packet**()
+- **from_packet**(cls, packet)
+
+### Class `BCIClosedLoopTrace`
+Audit trace for one processed frame.
+
+- **as_dict**()
+
+### Class `BCIPrimitiveResult`
+Result from one closed-loop primitive step.
+
+- **as_legacy_dict**()
+
+### Class `BCIClosedLoopPrimitive`
+Deterministic raw-signal to feedback primitive with audit trace.
+
+- **__init__**(config)
+- **process_frame**(frame)
+- **_next_frame_id**(explicit)
+- **_validate_samples**(samples)
+- **_extract_spikes**(samples)
+- **_score**(channel_counts, n_samples)
+- **_build_command**(score, timestamp_us)
+- **_adapt**(channel_counts, command, reward)
+
 ### Class `BCIClosedLoopEngine`
+Backward-compatible wrapper around :class:`BCIClosedLoopPrimitive`.
+
 - **__init__**(channels)
+- **weights**()
 - **process_bci_frame**(raw_ephys, reward)
 
 ---
@@ -2521,6 +2591,110 @@ Returns
 -------
 BenchmarkResult
 
+---
+
+## Module `benchmarks.mlperf_sc_report`
+
+### Function `aggregate_mlperf_sc_results(result_paths)`
+Aggregate validated MLPerf-SC result files into a deterministic report.
+
+---
+
+## Module `benchmarks.mlperf_sc_runner`
+
+### Function `run_mlperf_sc_fixture()`
+Run the deterministic synthetic MLPerf-SC fixture and return result path.
+
+### Function `_synthetic_xor_raw_payload()`
+### Function `_fixture_baseline(model)`
+### Function `_environment_payload()`
+### Function `_write_canonical_json(path, payload)`
+### Function `_sha256_file(path)`
+---
+
+## Module `benchmarks.mlperf_sc_schema`
+
+### Class `MLPerfSCValidationError`
+Raised when an MLPerf-SC result violates the fail-closed schema.
+
+
+### Class `MLPerfSCRun`
+Benchmark run identity and dataset contract.
+
+
+### Class `MLPerfSCExecution`
+Execution target and stochastic-computing mode metadata.
+
+
+### Class `MLPerfSCArea`
+Hardware utilisation metrics when a synthesis or board path exists.
+
+
+### Class `MLPerfSCMetrics`
+Accuracy, latency, energy, power, and area metrics.
+
+
+### Class `MLPerfSCArtifact`
+One evidence artifact referenced by the result.
+
+
+### Class `MLPerfSCEvidence`
+Evidence class, environment manifest, and raw artifact references.
+
+
+### Class `MLPerfSCResult`
+Typed MLPerf-SC benchmark result.
+
+
+### Function `validate_mlperf_sc_result(payload)`
+Validate a decoded MLPerf-SC result and return a typed result.
+
+### Function `mlperf_sc_result_to_dict(result)`
+Serialise a typed MLPerf-SC result to the canonical dictionary shape.
+
+### Function `_run_from_mapping(payload)`
+### Function `_execution_from_mapping(payload)`
+### Function `_metrics_from_mapping(payload)`
+### Function `_area_from_mapping(payload)`
+### Function `_evidence_from_mapping(payload)`
+### Function `_artifact_from_mapping(payload)`
+### Function `_validate_relative_artifact_path(path)`
+### Function `_validate_evidence_metrics(evidence, metrics)`
+### Function `_expect_keys(payload, expected, label)`
+### Function `_expect_mapping(value, label)`
+### Function `_expect_sequence(value, label)`
+### Function `_expect_non_empty_string(value, label)`
+### Function `_expect_int(value, label)`
+### Function `_expect_optional_non_negative_int(value, label)`
+### Function `_expect_float(value, label)`
+### Function `_expect_optional_positive_float(value, label)`
+---
+
+## Module `benchmarks.online_o1_adaptation`
+
+### Class `_OnlineO1Runner`
+- **step**()
+
+### Function `build_online_o1_adaptation_benchmark()`
+Return a deterministic Python/Rust adaptation benchmark report.
+
+### Function `write_online_o1_adaptation_benchmark(path)`
+Write a canonical benchmark report and return the output path.
+
+### Function `_rust_pairing_protocol(config)`
+### Function `_run_pairing_protocol(runner)`
+---
+
+## Module `benchmarks.stochastic_backprop`
+
+### Function `build_stochastic_backprop_benchmark()`
+Return deterministic evidence for SC-aware backpropagation loss reduction.
+
+### Function `write_stochastic_backprop_benchmark(path)`
+Write a canonical stochastic backpropagation benchmark report.
+
+### Function `_task_loss(inputs, targets, weight, bias, sc_config)`
+### Function `_round_nested(value)`
 ---
 
 ## Module `benchmarks.tasks`
@@ -2636,8 +2810,8 @@ in the cell, scaled by inverse frequency across the corpus
 
 Parameters
 ----------
-expression : 1-D array [n_genes], raw counts or normalised expression.
-global_medians : 1-D array [n_genes], median expression per gene across
+expression : 1-D array &#91;n_genes&#93;, raw counts or normalised expression.
+global_medians : 1-D array &#91;n_genes&#93;, median expression per gene across
     the corpus.  If None, uniform weighting is used.
 
 Returns
@@ -2757,7 +2931,7 @@ Strictly typed output packet detailing a full closed-loop step.
 
 Behaves both as a dataclass (``result.round``) and, for backward
 compatibility with pre-dataclass callers, as a mapping view of its
-fields (``result["round"]``, ``"latency_us" in result``,
+fields (``result&#91;"round"&#93;``, ``"latency_us" in result``,
 ``dict(result)``). The mapping surface is read-only.
 
 - **__getitem__**(key)
@@ -2808,10 +2982,7 @@ as gain factors on firing rate.
 - **modulate_spikes**(spike_counts, t_current_s)
   - Modulate spike counts by pharmacological gain.
 - **modulate_spike_events**(spikes, t_current_s)
-  - Apply gain to detected spike events. Inhibitory gains thin events
-    across the observed response span; excitatory gains preserve
-    observed events and insert additional template-derived events
-    inside the observed temporal support.
+  - Apply pharmacological rate gain to spike events.
 
 ### Class `WellConfig`
 One well in a multi-well MEA plate.
@@ -2867,6 +3038,8 @@ Extract per-channel power in each LFP band.
 Uses FFT-based power spectral density estimation.
 Returns dict of band_name → per-channel power array.
 
+### Function `_quantile_indices(n_items, target_count)`
+### Function `_clone_spike(template)`
 ### Function `detect_network_bursts(spikes, bin_width_s, threshold_sigma, min_channels)`
 Detect network-wide synchronised bursts.
 
@@ -2879,7 +3052,7 @@ Decode SC bitstreams back to biological firing rates (Hz).
 Interprets popcount/length as probability, scales by SC clock
 to get equivalent biological firing rate.
 
-### Function `mea_fitness_hook(detected_spikes, target_rate, *, duration_s, stimulus_time_s, measured_latency_ms)`
+### Function `mea_fitness_hook(detected_spikes, target_rate)`
 Organism fitness metrics derived from MEA response dynamics.
 
 Designed to plug into the evo_substrate
@@ -2894,6 +3067,7 @@ supplied closed-loop measurement, the first response latency after
 ``stimulus_time_s``, or the first spike timestamp relative to frame
 start.
 
+### Function `_mea_response_latency_ms(detected_spikes)`
 ---
 
 ## Module `bridges.aer_router`
@@ -2922,14 +3096,19 @@ UDP routing, use the Go server (hil_debugger/interconnect).
 - **unregister_route**(neuron_id)
   - Remove a route for the given neuron ID.
 - **route_count**()
+  - Return the number of currently registered neuron routes.
 - **dispatch_spike**(packet)
   - Dispatch a spike packet to the registered target.
 - **ack_received**(seq)
   - Process an ACK for the given sequence number.
 - **pending_count**()
+  - Return the number of dispatched packets awaiting ACKs.
 - **total_sent**()
+  - Return the total number of packets accepted for dispatch.
 - **total_acked**()
+  - Return the total number of ACKs processed by the router.
 - **get_stats**(neuron_id)
+  - Return a defensive copy of per-route statistics when present.
 
 ---
 
@@ -2964,8 +3143,8 @@ concentration_nM : float
 - **max_homopolymer_run**()
 - **delta_g_37**()
   - Nearest-neighbour ΔG° at 37 °C (kcal/mol).
-- **melting_temperature**(na_conc_M)
-  - Estimated Tm using nearest-neighbour model (°C).
+- **melting_temperature**(na_conc_M, strand_conc_M)
+  - Return nearest-neighbour DNA duplex melting temperature in °C.
 
 ### Class `DNAGate`
 A logic gate implemented via DNA strand displacement.
@@ -2976,11 +3155,11 @@ gate_id : int
     Unique gate index in the circuit.
 gate_type : GateType
     Logic operation (AND, OR, NOT, etc.).
-input_names : list[str]
+input_names : list&#91;str&#93;
     Names of input signal strands.
 output_name : str
     Name of the output signal strand.
-strands : list[DNAStrand]
+strands : list&#91;DNAStrand&#93;
     All DNA strands participating in this gate (inputs, fuel,
     translator complexes, output, waste).
 threshold : float
@@ -3000,13 +3179,13 @@ Attributes
 ----------
 name : str
     Circuit identifier.
-gates : list[DNAGate]
+gates : list&#91;DNAGate&#93;
     Ordered list of compiled gates.
-input_strands : list[DNAStrand]
+input_strands : list&#91;DNAStrand&#93;
     Primary input signal strands.
-output_strands : list[DNAStrand]
+output_strands : list&#91;DNAStrand&#93;
     Primary output signal strands.
-fuel_strands : list[DNAStrand]
+fuel_strands : list&#91;DNAStrand&#93;
     Fuel/helper strands consumed during computation.
 method : CompilationMethod
     Compilation target used.
@@ -3032,7 +3211,7 @@ Parameters
 ----------
 seed : int
     Random seed for reproducible sequence generation.
-gc_target : tuple[float, float]
+gc_target : tuple&#91;float, float&#93;
     Acceptable GC content range (default 0.40–0.60).
 max_homopolymer : int
     Maximum consecutive identical nucleotides (default 3).
@@ -3077,6 +3256,8 @@ temperature_c : float
   - Compile a signal restoration buffer.
 - **_estimate_leak_rate**(strand, blocker)
   - Estimate spurious strand displacement rate.
+- **_strongest_blocker_delta_g**(strand, blocker)
+  - Return the most stable contiguous blocker-binding ΔG° at 37 °C.
 
 ### Class `EnzymaticGateCompiler`
 Compile SC gates into enzyme-mediated DNA logic circuits.
@@ -3168,12 +3349,12 @@ Examples
 --------
 >>> compiler = BitstreamToDNA(method="displacement", seed=42)
 >>> design = compiler.compile_network(
-...     gates=[
-...         {"type": "AND", "inputs": ["A", "B"], "output": "C"},
-...         {"type": "NOT", "inputs": ["C"], "output": "D"},
-...     ],
-...     input_names=["A", "B"],
-...     output_names=["D"],
+...     gates=&#91;
+...         {"type": "AND", "inputs": &#91;"A", "B"&#93;, "output": "C"},
+...         {"type": "NOT", "inputs": &#91;"C"&#93;, "output": "D"},
+...     &#93;,
+...     input_names=&#91;"A", "B"&#93;,
+...     output_names=&#91;"D"&#93;,
 ... )
 >>> print(design.total_gates)
 2
@@ -3361,7 +3542,7 @@ strand concentrations.
 
 In standard SC, a bitstream of length L encodes precision
 log2(L+1) bits. In DNA circuits, the analog concentration range
-[0, max_nM] plays the role of L.
+&#91;0, max_nM&#93; plays the role of L.
 
 - **analyze**(design, input_concentrations, max_conc_nM, duration_s)
   - Analyze SC precision of a compiled circuit.
@@ -3405,6 +3586,12 @@ n_wells : int
 - **layout**(design)
   - Generate plate layout for a circuit design.
 
+### Function `_canonical_sequence(sequence)`
+### Function `_can_pair(left, right)`
+### Function `_hairpin_loop_penalty(loop_nt)`
+### Function `_fallback_pair_energy(sequence, i, j)`
+### Function `_fallback_secondary_structure(sequence)`
+### Function `_fallback_pair_probability_matrix(sequence, temperature_c)`
 ### Function `export_genbank(design, path)`
 Export circuit design to GenBank format.
 
@@ -3560,6 +3747,52 @@ Thin client for local LLM chat endpoints.
 
 ---
 
+## Module `bridges.photonic_codesign`
+
+### Class `PhotonicCoDesignConfig`
+Configuration for a reproducible stochastic photonic design pass.
+
+- **__post_init__**()
+
+### Class `BitstreamEvidence`
+One encoded SC channel and its statistical evidence.
+
+- **to_json**()
+  - Return a compact JSON-ready evidence record.
+
+### Class `PhotonicCoDesignReport`
+Complete output of a stochastic photonic co-design pass.
+
+- **to_json**()
+  - Return a deterministic JSON-ready report.
+- **export_json**(path)
+  - Write the report to a JSON file.
+
+### Class `StochasticPhotonicCoDesignLoop`
+End-to-end stochastic bitstream, photonic NoC, and FDTD loop.
+
+- **__init__**(config)
+- **compile**(adjacency)
+  - Run the full co-design loop for one SC connectivity matrix.
+- **_collect_blockers**()
+
+### Function `_unpack_words(words, bit_length)`
+### Function `_transition_count(bits)`
+### Function `_density_tolerance(bitstream_length, alpha)`
+Two-sided Hoeffding density tolerance for a Bernoulli bitstream.
+
+### Function `derive_probabilities_from_adjacency(adjacency, floor, ceiling)`
+Derive per-node SC probabilities from inbound absolute weight mass.
+
+### Function `encode_bitstream_bank(probabilities)`
+Encode probabilities into deterministic LFSR-backed SC bitstreams.
+
+### Function `_scc_matrix(bitstreams)`
+### Function `_layout_manifest(design)`
+Create a PDA handoff manifest without claiming foundry DRC/LVS.
+
+---
+
 ## Module `bridges.photonic_noc`
 
 ### Class `WaveguideType`
@@ -3599,7 +3832,7 @@ gate_id : str
     Unique gate identifier.
 operation : str
     Gate operation type (AND, OR, NOT, MUL, ADD).
-input_ports : list[int]
+input_ports : list&#91;int&#93;
     Input waveguide port indices.
 output_port : int
     Output waveguide port index.
@@ -3637,15 +3870,15 @@ Attributes
 ----------
 name : str
     Design name.
-waveguides : list[WaveguideSegment]
+waveguides : list&#91;WaveguideSegment&#93;
     All waveguide segments.
-mzi_gates : list[MZIGate]
+mzi_gates : list&#91;MZIGate&#93;
     All MZI computing stages.
-wdm_channels : list[WDMChannel]
+wdm_channels : list&#91;WDMChannel&#93;
     WDM channel assignments.
 n_nodes : int
     Number of processing element nodes.
-routing_table : dict[tuple[int, int], list[int]]
+routing_table : dict&#91;tuple&#91;int, int&#93;, list&#91;int&#93;&#93;
     Hop-by-hop routing table.
 total_area_um2 : float
     Estimated chip area.
@@ -3825,13 +4058,13 @@ Ising spin-glass model: H = Σ h_i·s_i + Σ J_ij·s_i·s_j.
 
 Attributes
 ----------
-h : dict[int, float]
+h : dict&#91;int, float&#93;
     Linear biases (local fields). Key = qubit index.
-J : dict[tuple[int, int], float]
+J : dict&#91;tuple&#91;int, int&#93;, float&#93;
     Quadratic couplings. Key = (i, j) pair, i < j.
 offset : float
     Constant energy offset.
-qubit_labels : dict[int, str]
+qubit_labels : dict&#91;int, str&#93;
     Index → label mapping.
 n_qubits : int
     Total logical qubits.
@@ -3846,11 +4079,11 @@ QUBO model: min x^T Q x.
 
 Attributes
 ----------
-Q : dict[tuple[int, int], float]
+Q : dict&#91;tuple&#91;int, int&#93;, float&#93;
     QUBO matrix entries. Diagonal = linear, off-diagonal = quadratic.
 offset : float
     Constant energy offset.
-qubit_labels : dict[int, str]
+qubit_labels : dict&#91;int, str&#93;
     Index → label mapping.
 n_qubits : int
     Total logical qubits.
@@ -4007,7 +4240,7 @@ Custom annealing schedule builder for D-Wave.
 Supports linear, pause-and-quench, and reverse annealing
 protocols.
 
-The schedule is a list of (time_us, s) points where s ∈ [0, 1]
+The schedule is a list of (time_us, s) points where s ∈ &#91;0, 1&#93;
 is the anneal fraction (0 = transverse field dominant,
 1 = problem Hamiltonian dominant).
 
@@ -4019,7 +4252,7 @@ is the anneal fraction (0 = transverse field dominant,
 - **reverse**(initial_s, reverse_to_s, ramp_time_us, hold_time_us, forward_time_us)
   - Reverse annealing: start at s=1, go back, then forward.
 - **points**()
-  - Schedule points as [(time_us, s), ...].
+  - Schedule points as &#91;(time_us, s), ...&#93;.
 - **total_time_us**()
   - Total annealing time in microseconds.
 - **to_dict**()
@@ -4081,7 +4314,7 @@ Boltzmann-weighted statistics.
 ### Class `SCPrecisionEncoder`
 Encode SC probability values as qubit configurations.
 
-SC values are continuous probabilities in [0, 1]. Quantum
+SC values are continuous probabilities in &#91;0, 1&#93;. Quantum
 annealers operate on binary variables. This encoder provides
 three strategies for mapping SC precision to qubits:
 
@@ -4194,7 +4427,7 @@ The 100-step burn-in discards transients from the initial condition.
 Parameters
 ----------
 r : float
-    Bifurcation parameter. Must be in (3.57, 4.0] for chaos.
+    Bifurcation parameter. Must be in (3.57, 4.0&#93; for chaos.
     Default 4.0 gives maximal chaos.
 x : float
     Initial condition in (0, 1). Avoid 0.0, 0.5, 1.0 exactly
@@ -4239,7 +4472,7 @@ SC bitstream generation where uniform marginals are desired.
 Parameters
 ----------
 mu : float
-    Slope parameter. Must be in (1, 2] for chaos. Default 2.0.
+    Slope parameter. Must be in (1, 2&#93; for chaos. Default 2.0.
 x : float
     Initial condition in (0, 1).
 
@@ -4342,12 +4575,9 @@ CompilationResult
 ### Class `InterposerTech`
 
 ### Class `InterposerLink`
-Timing and thermal model for a die-to-die link.
+Timing model for a die-to-die link.
 
-`thermal_resistance_k_per_w`, when provided, overrides the
-technology-level bond thermal resistance used by `simulate_thermal`.
-The value must be strictly positive.
-
+- **__post_init__**()
 - **from_tech**(cls, src, dst, tech)
   - Create link with technology-specific defaults.
 - **latency_cycles**()
@@ -4383,7 +4613,7 @@ One routing table entry: source neuron → target die + neuron.
 ### Class `RoutingTable`
 Per-die AER routing table for inter-die communication.
 
-- **add_route**(`src`, `dst_die`, `dst_neuron`, `weight`)
+- **add_route**(src, dst_die, dst_neuron, weight)
 - **routes_to_die**(target_die)
 - **num_entries**()
 - **target_dies**()
@@ -4444,7 +4674,9 @@ ECC/CRC configuration for a die-to-die link.
 ### Class `CreditConfig`
 Per-link credit-based flow control parameters.
 
+- **__post_init__**()
 - **buffer_flits**()
+- **credit_width**()
 
 ### Class `StackingType`
 
@@ -4457,7 +4689,9 @@ Through-silicon via (TSV) link for 3D stacking.
 ### Class `PowerDomain`
 Voltage island / power domain for a subset of dies.
 
+- **__post_init__**()
 - **is_gated**()
+- **die_mask**()
 
 ### Class `PowerDomainMap`
 Maps dies to power domains for isolation/gating.
@@ -4480,6 +4714,9 @@ Assign independent LFSR seeds per link for bitstream decorrelation.
 
 Uses golden-ratio hashing to ensure maximal separation between
 LFSR sequences across dies (avoids correlated bitstreams).
+
+### Function `_require_sv_identifier(value, field_name)`
+Validate a generated SystemVerilog identifier fragment.
 
 ### Function `link_energy_pj(link, bits)`
 Estimate total energy (pJ) for transmitting 'bits' over a link.
@@ -4520,12 +4757,12 @@ die_id_order is the row → die_id mapping used by the solver.
 
 For each link (i, j) in `topology.links` with technology
 `tech`, the bond resistance is
-    R_bond(i,j) = R_THERMAL[tech] + R_spread(i) + R_spread(j)
+    R_bond(i,j) = R_THERMAL&#91;tech&#93; + R_spread(i) + R_spread(j)
 so the off-diagonal conductance is
-    G[i,j] = G[j,i] = 1 / R_bond(i,j)
+    G&#91;i,j&#93; = G&#91;j,i&#93; = 1 / R_bond(i,j)
 
 Per-die ambient conductance:
-    g_amb[i] = 1 / R_to_ambient(i)
+    g_amb&#91;i&#93; = 1 / R_to_ambient(i)
 
 ### Function `_solve_steady_state(G_off, g_amb, p_w, t_amb_c)`
 Solve `(D - G_off) · T = P + g_amb · T_amb` for T.
@@ -4586,21 +4823,19 @@ Uses BFS but excludes links with utilisation above the threshold.
 Falls back to shortest path if no uncongested route exists.
 
 ### Function `emit_crc32_sv(data_width)`
-Emit IEEE 802.3 CRC-32 link-protection RTL with reflected-input support,
-frame reset (`crc_init`), expected-frame-CRC comparison (`expected_crc` plus
-`crc_check`), and fail-fast validation of non-positive `DATA_W` values.
+Emit IEEE 802.3 CRC-32 feedback logic for link error detection.
 
 ### Function `bandwidth_aware_route(topology, src_die, dst_die, required_gbps)`
 Find a path where all links have bandwidth >= required_gbps.
 
 ### Function `emit_credit_controller_sv(config, link_name)`
-Emit saturating credit-based flow control RTL for a die-to-die link.
+Emit saturating credit-based flow control for a die-to-die link.
 
 ### Function `add_3d_stack(topology, bottom_die, top_die, stacking)`
 Add a vertical (3D) link between stacked dies.
 
 ### Function `emit_power_gating_sv(domain)`
-Emit sequenced isolation and switch-control RTL for a voltage island.
+Emit sequenced isolation and switch control for a voltage island.
 
 ---
 
@@ -4671,7 +4906,7 @@ Multi-level graph partitioner with correlation awareness.
 - **_encode_csr**(partitions, adj, graph)
   - Pack the per-partition state into the flat CSR-style buffers
 - **_decode_part_map**(part_map, n_parts)
-  - Decode flat part_map[V] back into List[List[int]].
+  - Decode flat part_map&#91;V&#93; back into List&#91;List&#91;int&#93;&#93;.
 - **_refine_rust**(partitions, adj, graph)
   - Rust dispatch for `_refine` — bit-exact parity with Python.
 - **_refine_julia**(partitions, adj, graph)
@@ -4683,7 +4918,7 @@ Multi-level graph partitioner with correlation awareness.
 - **_refine**(partitions, adj, graph)
   - Kernighan-Lin inspired local refinement.
 - **_per_partition_cost**(v, n_parts, part_map, adj, graph)
-  - Length-`n_parts` cost vector: `costs[p]` = cost of placing
+  - Length-`n_parts` cost vector: `costs&#91;p&#93;` = cost of placing
 - **_boundary_cost**(v, partition_id, part_map, adj, graph)
   - Cost of placing vertex v in partition_id (legacy single-target API).
 - **repartition_incremental**(graph, partitions, max_moves)
@@ -4788,9 +5023,34 @@ Build a complete partition report.
 
 ## Module `cli`
 
+### Class `_OutputAction`
+Track whether ``--output`` was supplied explicitly.
+
+- **__call__**(parser, namespace, values, option_string)
+
 ### Function `main()`
+### Function `_cmd_compile_nir(args)`
+Compile NIR/ONNX model to Verilog RTL artefacts.
+
+### Function `_scnir_signal_kind_counts(document)`
+### Function `_scnir_signal_routes(document)`
+### Function `_scnir_hierarchy_port_count(document)`
 ### Function `_cmd_compile(args)`
 Compile ODE equation string to Verilog RTL + optional synthesis.
+
+Supports three compilation modes via CLI flags:
+
+1. **Standard** (default): combinational datapath at the configured
+   precision (``--data-width`` / ``--fraction``).
+2. **Pipelined** (``--pipeline auto|N``): insert register stages at
+   multiply outputs for high-frequency targets.  ``auto`` uses
+   ``critical_path_depth()`` + ``pipeline_stages_needed()`` from
+   ``static_analysis.py``.  ``--pipeline-points`` selects individual
+   signals to register.
+3. **Adaptive precision** (``--adaptive-precision``): generate a
+   dual-datapath module with LP and HP sub-modules, hysteresis-based
+   precision switching, and clock gating.  Configure LP/HP widths via
+   ``--lp-width``, ``--lp-frac``, ``--hp-width``, ``--hp-frac``.
 
 ### Function `_cmd_serve(model_path, port, dt)`
 Start streaming inference server.
@@ -4799,6 +5059,15 @@ Start streaming inference server.
 ### Function `_cmd_collect_synthesis(args)`
 Collect synthesis reports into optimiser evidence JSON.
 
+### Function `_cmd_scnir(args)`
+Validate or export SC-aware NIR metadata documents.
+
+### Function `_cmd_formal(args)`
+Compile and replay network-level formal verification artefacts.
+
+### Function `_parse_antagonistic_pair(value)`
+### Function `_parse_temporal_separation(value)`
+### Function `_parse_population_silence(value)`
 ### Function `_print_optional_dependency_version(module_name, label)`
 ### Function `_format_engine_status(expected_version)`
 ### Function `_safe_simd_tier(engine)`
@@ -4809,7 +5078,7 @@ Deploy a model to FPGA or browser artefacts.
 ### Function `_cmd_map_nir(model_path, output_dir, hardware_targets, dt, bitstream_length)`
 Generate deterministic silicon-mapping reports for a NIR graph.
 
-### Function `_cmd_hub_init(output_dir, port)`
+### Function `_cmd_hub_init(output_dir, port, bind_host, image, offline)`
 Generate a local self-hosted hub Compose bundle.
 
 ### Function `_auto_synthesize(output_dir, target, top_module, cfg)`
@@ -4890,7 +5159,7 @@ Parameters
 layer_weights : list of ndarray
     Weight matrices for each layer.
 lengths : list of int
-    Bitstream lengths to sweep (default: [32, 64, 128, 256, 512, 1024]).
+    Bitstream lengths to sweep (default: &#91;32, 64, 128, 256, 512, 1024&#93;).
 n_trials : int
     Number of random input trials.
 seed : int
@@ -4941,2818 +5210,46 @@ list of LayerPrecision
 
 ---
 
-## Module `compiler.intelligence`
+## Module `compiler.adaptive_runtime_precision`
 
-### Class `PositConfig`
-Posit number format configuration.
+### Function `_validate_lp_hp(lp_width, lp_frac, hp_width, hp_frac)`
+Validate that the LP/HP pair is sensible.
 
-Attributes
-----------
-nbits : int
-    Total bit width (8 or 16).
-es : int
-    Exponent field size (0, 1, or 2).
+### Function `compile_adaptive_precision(neuron, module_name, lp_width, lp_frac, hp_width, hp_frac)`
+Compile an EquationNeuron to dual-datapath adaptive-precision Verilog.
 
-- **useed**()
-  - The useed value: 2^(2^es).
-- **max_value**()
-  - Maximum finite value.
-- **min_positive**()
-  - Smallest positive value.
-
-### Class `MXFPConfig`
-Microsoft Microscaling (MX) floating-point format.
-
-Based on OCP Microscaling Formats Specification v1.0 (2024).
-
-Attributes
-----------
-element_bits : int
-    Bits per element (4, 6, or 8).
-exp_bits : int
-    Exponent bits per element.
-mantissa_bits : int
-    Mantissa bits per element (including implicit 1).
-block_size : int
-    Elements per shared-exponent block.
-shared_exp_bits : int
-    Shared exponent width (typically 8).
-
-- **label**()
-  - Human-readable format label.
-- **bits_per_block**()
-  - Total bits for one block including shared exponent.
-
-### Class `StorageRecommendation`
-Storage recommendation for neuron array state.
-
-Attributes
-----------
-strategy : str
-    ``"registers"``, ``"bram"``, or ``"uram"``.
-neuron_count : int
-    Number of neurons in the array.
-total_bits : int
-    Total state bits.
-bram_18k_used : int
-    Estimated 18Kb BRAM tiles consumed.
-bram_36k_used : int
-    Estimated 36Kb BRAM tiles consumed.
-uram_used : int
-    Estimated URAM tiles consumed (UltraScale+ only).
-reason : str
-    Human-readable explanation.
-
-
-### Class `ThermalEstimate`
-Thermal analysis result for a compiled neuron.
-
-Attributes
-----------
-power_mw : float
-    Estimated total power in milliwatts.
-delta_t_c : float
-    Estimated temperature rise in °C.
-junction_temp_c : float
-    Estimated junction temperature.
-derated_freq_mhz : float
-    Frequency after thermal derating.
-thermal_safe : bool
-    True if junction temp is within limits.
-hotspot_risk : str
-    ``"none"``, ``"low"``, ``"medium"``, ``"high"``.
-
-
-### Class `QuantSweepResult`
-Result of a quantisation sweep for one (width, fraction) pair.
-
-Attributes
-----------
-data_width : int
-    Total bit width tested.
-fraction : int
-    Fractional bits tested.
-guard_bits : int
-    Guard bits required.
-estimated_luts : int
-    Estimated LUT usage.
-estimated_dsps : int
-    Estimated DSP usage.
-estimated_ffs : int
-    Estimated flip-flop usage.
-max_representable : float
-    Maximum representable value.
-min_step : float
-    Minimum step size (LSB resolution).
-
-
-### Class `MZIWeightEncoding`
-Encoded weights for a Mach-Zehnder interferometer photonic array.
-
-Attributes
-----------
-phases_theta : list[list[float]]
-    Phase-shift θ values (radians) for each MZI in the mesh.
-phases_phi : list[list[float]]
-    Phase-shift φ values (radians) for external phase shifters.
-transmission : list[list[float]]
-    Effective transmission coefficients.
-mesh_size : int
-    Number of MZI columns in the Clements mesh.
-
-
-### Class `PIMLayout`
-Memory layout plan for Processing-in-Memory targets.
-
-Attributes
-----------
-bank_count : int
-    Number of memory banks used.
-neurons_per_bank : int
-    Neurons assigned per bank.
-weights_per_bank : int
-    Weight entries per bank.
-bank_utilisation : float
-    Fraction of bank capacity used (0.0–1.0).
-parallel_factor : int
-    Number of banks that can compute in parallel.
-layout_map : dict[str, list[int]]
-    Mapping of data regions to bank IDs.
-
-
-### Class `UCIePartition`
-Partitioning plan for a neuron array across chiplet tiles.
-
-Attributes
-----------
-tile_count : int
-    Number of chiplet tiles used.
-neurons_per_tile : int
-    Neurons assigned per tile.
-inter_tile_spikes : int
-    Estimated spikes crossing tile boundaries per timestep.
-die_to_die_bandwidth_gbps : float
-    Required UCIe bandwidth (Gbps).
-latency_penalty_ns : float
-    Additional latency from die-to-die communication.
-partition_map : dict[int, list[int]]
-    Tile ID → list of neuron indices.
-
-
-### Class `CXLMapping`
-CXL.mem Type-3 mapping for neuron state.
-
-Attributes
-----------
-device_count : int
-    Number of CXL memory devices.
-state_device_ids : list[int]
-    Devices hosting neuron state.
-weight_device_ids : list[int]
-    Devices hosting synaptic weights.
-total_capacity_gb : float
-    Total CXL memory capacity.
-host_bandwidth_gbps : float
-    Required host→CXL bandwidth.
-coherence_protocol : str
-    CXL protocol used (``"CXL.mem"`` or ``"CXL.cache"``).
-
-
-### Class `OnChipLearningParams`
-Parameters for on-chip STDP / reward-modulated plasticity.
-
-Attributes
-----------
-learning_rule : str
-    ``"stdp"``, ``"rstdp"`` (reward-modulated), or ``"triplet"``.
-tau_plus_ms : float
-    Pre→post time constant (ms).
-tau_minus_ms : float
-    Post→pre time constant (ms).
-a_plus : float
-    Potentiation amplitude.
-a_minus : float
-    Depression amplitude.
-w_max : float
-    Maximum synaptic weight.
-w_min : float
-    Minimum synaptic weight.
-reward_tau_ms : float
-    Reward signal time constant (ms), for RSTDP.
-target_platform : str
-    Target neuromorphic platform.
-
-
-### Class `WeightNoiseProfile`
-Device-variation noise model for analog/memristive targets.
-
-Attributes
-----------
-noise_model : str
-    ``"gaussian"``, ``"uniform"``, or ``"lognormal"``.
-sigma : float
-    Standard deviation of noise (fraction of weight range).
-cycle_drift : float
-    Weight drift per program/erase cycle (fraction).
-retention_loss_per_day : float
-    Daily retention loss (fraction).
-target_platform : str
-    Target platform.
-
-
-### Class `TargetComparison`
-Compilation comparison for one target.
-
-Attributes
-----------
-target : str
-    Platform name.
-data_width : int
-    Selected data width.
-fraction : int
-    Fractional bits.
-overflow : str
-    Overflow mode.
-dsp_block : str
-    DSP block type.
-max_freq_mhz : int | None
-    Maximum frequency.
-estimated_luts : int
-    Estimated LUT usage.
-estimated_dsps : int
-    Estimated DSP usage.
-pipeline_stages : int
-    Required pipeline stages.
-critical_path_depth : int
-    DSP chain depth.
-
-
-### Class `EquivalenceSketch`
-Formal equivalence proof skeleton between ODE and RTL.
-
-Attributes
-----------
-module_name : str
-    Module under verification.
-equations : dict[str, str]
-    Source ODE equations.
-assertions : list[str]
-    SVA assertion strings for equivalence checking.
-proof_steps : list[str]
-    Human-readable proof argument steps.
-quantisation_bound : float
-    Maximum quantisation error bound.
-
-
-### Class `TimescalePartition`
-Partitioned ODE system by timescale.
-
-Attributes
-----------
-fast_equations : dict[str, str]
-    Fast dynamics (membrane, spikes).
-slow_equations : dict[str, str]
-    Slow dynamics (adaptation, homeostasis).
-fast_clock_div : int
-    Clock divider for fast domain (1 = full speed).
-slow_clock_div : int
-    Clock divider for slow domain.
-cdc_signals : list[str]
-    Signals requiring clock domain crossing.
-
-
-### Class `ProvenanceRecord`
-Cryptographic audit trail entry.
-
-Attributes
-----------
-stage : str
-    Pipeline stage name.
-input_hash : str
-    SHA-256 of input artefact.
-output_hash : str
-    SHA-256 of output artefact.
-timestamp : str
-    ISO 8601 timestamp.
-parameters : dict
-    Compilation parameters used.
-
-
-### Class `ComplianceEntry`
-Single compliance requirement mapping.
-
-Attributes
-----------
-req_id : str
-    Requirement identifier.
-standard : str
-    Safety standard name.
-description : str
-    Requirement description.
-verification : str
-    How it is verified.
-status : str
-    ``"covered"``, ``"partial"``, or ``"gap"``.
-artefact : str
-    File or test that provides evidence.
-
-
-### Class `EnergySchedule`
-Energy-aware neuron update schedule.
-
-Attributes
-----------
-total_neurons : int
-    Total neurons.
-energy_budget_uj : float
-    Energy budget per epoch (µJ).
-neurons_per_epoch : int
-    Neurons updatable within budget.
-update_order : list[int]
-    Priority-ordered neuron indices.
-epoch_duration_ms : float
-    Epoch duration.
-duty_cycle : float
-    Fraction of neurons updated per epoch.
-
-
-### Class `SideChannelFinding`
-Side-channel leakage finding.
-
-Attributes
-----------
-signal : str
-    Signal name.
-risk_level : str
-    ``"high"``, ``"medium"``, or ``"low"``.
-category : str
-    ``"timing"`` or ``"power"``.
-description : str
-    Explanation.
-recommendation : str
-    Mitigation suggestion.
-
-
-### Class `DriftCompensator`
-Analog drift compensation parameters.
-
-Attributes
-----------
-refresh_interval_ms : float
-    How often to re-calibrate (ms).
-drift_rate_per_day : float
-    Expected weight drift per day.
-compensation_method : str
-    ``"periodic_refresh"``, ``"adaptive"``, or ``"ecc"``.
-verilog_controller : str
-    Generated Verilog refresh controller.
-
-
-### Class `DispatchPlan`
-Multi-backend SNN dispatch plan.
-
-Attributes
-----------
-backends : dict[str, list[str]]
-    Backend name → list of assigned state variables.
-sync_barriers : list[str]
-    Synchronisation point descriptions.
-total_neurons_per_backend : dict[str, int]
-    Neuron count per backend.
-estimated_speedup : float
-    Estimated speedup vs single-backend.
-
-
-### Class `TargetRecommendation`
-Ranked hardware target recommendation.
-
-Attributes
-----------
-profile_name : str
-    Recommended profile.
-score : float
-    Fitness score (0-100).
-rationale : str
-    Why this target is recommended.
-
-
-### Class `ReconfigPartition`
-Partial reconfiguration partition plan.
-
-Attributes
-----------
-partitions : list[dict[str, list[str]]]
-    Each partition maps region name → assigned variables.
-schedule : list[str]
-    Time-ordered bitstream swap schedule.
-total_regions : int
-    Number of reconfigurable regions.
-bitstream_count : int
-    Total partial bitstreams needed.
-
-
-### Class `SupplyChainRisk`
-Supply chain risk assessment for a hardware profile.
-
-Attributes
-----------
-profile_name : str
-    Assessed profile.
-risk_score : float
-    Risk score 0-100 (higher = riskier).
-risk_factors : list[str]
-    Individual risk factor descriptions.
-alternatives : list[str]
-    Suggested alternative profiles.
-export_control : str
-    Export control classification.
-
-
-### Class `ModelComplexity`
-Model compute-profile classification.
-
-Attributes
-----------
-classification : str
-    ``"compute_bound"``, ``"memory_bound"``, or ``"comm_bound"``.
-compute_ops : int
-    Total arithmetic operations.
-memory_vars : int
-    State variables (memory footprint proxy).
-comm_ratio : float
-    Inter-variable coupling ratio.
-recommended_paradigm : str
-    Best platform class.
-
-
-### Class `CompilationCache`
-Memoized compilation result cache.
-
-Keyed by ``(equations_hash, target, data_width, fraction)``.
-Avoids redundant recompilation when re-targeting.
-
-- **__init__**()
-- **_key**(equations, target, data_width, fraction)
-- **get**(equations, target, data_width, fraction)
-  - Look up a cached compilation result.
-- **put**(equations, target, data_width, fraction, result)
-  - Store a compilation result in cache.
-- **size**()
-  - Number of cached entries.
-
-### Class `ThermalEnvelopeEstimate`
-Junction temperature estimate.
-
-Attributes
-----------
-power_mw : float
-    Estimated power dissipation (mW).
-theta_ja : float
-    Junction-to-ambient thermal resistance (°C/W).
-t_ambient : float
-    Ambient temperature (°C).
-t_junction : float
-    Estimated junction temperature (°C).
-thermal_margin : float
-    Margin to max T_j (°C).
-pass_fail : str
-    ``"PASS"`` or ``"FAIL"``.
-
-
-### Class `TopologyPlan`
-Multi-chip network topology optimisation result.
-
-Attributes
-----------
-chip_assignment : dict[int, int]
-    Neuron index → chip index.
-inter_chip_spikes : int
-    Estimated inter-chip spikes per timestep.
-intra_chip_spikes : int
-    Estimated intra-chip spikes per timestep.
-bandwidth_reduction : float
-    Reduction vs naive assignment.
-num_chips : int
-    Total chips used.
-
-
-### Class `NIRGraph`
-Imported NIR/ONNX-SNN graph representation.
-
-Attributes
-----------
-nodes : dict[str, dict]
-    Node name → parameters.
-edges : list[tuple[str, str]]
-    Directed edges (source, target).
-equations : dict[str, str]
-    Extracted ODE equations per node.
-framework : str
-    Source framework.
-
-
-### Class `StabilityResult`
-ODE discretization stability analysis.
-
-Attributes
-----------
-stable : bool
-    True if discretization is stable.
-max_eigenvalue : float
-    Largest eigenvalue magnitude.
-critical_dt : float
-    Maximum stable timestep.
-method : str
-    Analysis method used.
-
-
-### Class `CarbonEstimate`
-Carbon footprint estimate per compilation target.
-
-Attributes
-----------
-profile_name : str
-    Target profile.
-manufacturing_kg_co2 : float
-    Estimated manufacturing CO₂ (kg).
-operation_kg_co2_per_year : float
-    Estimated annual operation CO₂ (kg).
-total_5yr_kg_co2 : float
-    Total 5-year lifecycle CO₂ (kg).
-energy_mix : str
-    Assumed energy source.
-
-
-### Class `DebugProbeSpec`
-Auto-generated debug probe specification.
-
-Attributes
-----------
-probe_type : str
-    ``"ila"`` (Xilinx) or ``"signaltap"`` (Intel).
-signals : list[str]
-    Probed signal names.
-depth : int
-    Capture depth.
-tcl_commands : str
-    Vendor-specific TCL to insert probes.
-
-
-### Class `MemoryMap`
-Address decoder specification for neuron arrays.
-
-Attributes
-----------
-base_address : int
-    Base address of neuron array.
-entries : list[dict[str, int | str]]
-    Address map entries.
-total_bytes : int
-    Total address space consumed.
-decoder_verilog : str
-    Generated address decoder Verilog.
-
-
-### Class `PortabilityScore`
-Cross-platform portability assessment.
-
-Attributes
-----------
-score : float
-    Portability score 0-100.
-compatible_profiles : int
-    Number of compatible profiles.
-total_profiles : int
-    Total profiles checked.
-blockers : list[str]
-    Portability blockers.
-
-
-### Class `ReliabilityEstimate`
-Mean time to failure estimate.
-
-Attributes
-----------
-mttf_hours : float
-    Estimated MTTF in hours.
-mttf_years : float
-    Estimated MTTF in years.
-failure_mode : str
-    Dominant failure mechanism.
-voltage_stress : float
-    Normalised voltage stress factor.
-temp_accel : float
-    Arrhenius temperature acceleration factor.
-
-
-### Class `FaultTree`
-Fault Tree Analysis for safety certification.
-
-Attributes
-----------
-top_event : str
-    Top-level failure event.
-gates : list[dict]
-    Logic gates (AND/OR).
-basic_events : list[dict]
-    Leaf failure events with rates.
-mcs : list[list[str]]
-    Minimal cut sets.
-
-
-### Class `CDCReport`
-Clock domain crossing analysis result.
-
-Attributes
-----------
-crossings : list[dict]
-    Each crossing: signal, src_domain, dst_domain, sync_type.
-violations : list[str]
-    Unsynchronized crossings.
-total_crossings : int
-safe : bool
-
-
-### Class `FloorplanResult`
-Multi-die/chiplet floorplan assignment.
-
-Attributes
-----------
-die_assignment : dict[str, int]
-    Block name → die index.
-die_utilization : dict[int, float]
-    Die index → utilization (0-1).
-total_dies : int
-
-
-### Class `RegressionCheck`
-Compilation regression check result.
-
-Attributes
-----------
-metric : str
-baseline : float
-current : float
-delta_pct : float
-regression : bool
-
-
-### Class `LicenseCheck`
-IP core license compatibility result.
-
-Attributes
-----------
-compatible : bool
-conflicts : list[str]
-licenses_found : list[str]
-
-
-### Class `TrojanLintResult`
-Hardware trojan lint analysis result.
-
-Attributes
-----------
-suspicious_paths : list[str]
-risk_level : str
-total_checks : int
-
-
-### Class `SBOM`
-Software/Hardware Bill of Materials.
-
-Attributes
-----------
-format : str
-components : list[dict]
-total_components : int
-
-
-### Class `HILCalibration`
-Hardware-in-the-loop calibration protocol.
-
-Attributes
-----------
-protocol_steps : list[str]
-num_parameters : int
-sweep_ranges : dict[str, tuple[float, float]]
-design_matrix : list[dict[str, float]]
-sample_count : int
-repetitions : int
-settle_cycles : int
-acceptance_tolerance : float
-correction_model : str
-observables : tuple[str, ...]
-
-
-### Class `UCIeMapping`
-UCIe die-to-die protocol mapping result.
-
-Attributes
-----------
-lanes : dict[str, int]
-protocol_version : str
-total_bandwidth_gbps : float
-
-
-### Class `ScrubSchedule`
-Configuration memory scrubbing schedule.
-
-Attributes
-----------
-interval_ms : float
-strategy : str
-frames_per_cycle : int
-expected_seu_rate : float
-
-
-### Class `ObfuscationResult`
-IP obfuscation report.
-
-Attributes
-----------
-techniques_applied : list[str]
-key_bits : int
-original_signals : int
-obfuscated_signals : int
-
-
-### Class `WatermarkResult`
-Netlist watermark embedding result.
-
-Attributes
-----------
-watermark_hash : str
-embedding_method : str
-overhead_percent : float
-verifiable : bool
-
-
-### Class `ApproximationConfig`
-Approximate computing configuration.
-
-Attributes
-----------
-populations : dict[str, dict]
-total_energy_savings_pct : float
-max_output_error_pct : float
-
-
-### Class `EnergyHarvestBudget`
-Energy harvesting feasibility analysis.
-
-Attributes
-----------
-harvester_power_uw : float
-design_power_uw : float
-energy_positive : bool
-recommended_duty_cycle : float
-margin_pct : float
-
-
-### Class `AgingPrediction`
-Transistor aging prediction.
-
-Attributes
-----------
-initial_fmax_mhz : float
-degraded_fmax_mhz : float
-degradation_pct : float
-recommended_derating : float
-dominant_mechanism : str
-
-
-### Class `ParetoPoint`
-A single Pareto-optimal design point.
-
-Attributes
-----------
-config : dict
-power_mw : float
-area_luts : int
-latency_ns : float
-
-
-### Class `PQCProtection`
-Post-quantum cryptographic IP protection result.
-
-Attributes
-----------
-algorithm : str
-signature_hex : str
-key_size_bits : int
-quantum_safe : bool
-
-
-### Class `FaultCampaignResult`
-Fault injection campaign result.
-
-Attributes
-----------
-total_injections : int
-sdc_count : int
-sdc_rate : float
-critical_bits : list[int]
-recommended_tmr_bits : list[int]
-
-
-### Class `TimingReport`
-Static timing analysis report.
-
-Attributes
-----------
-critical_path : list[str]
-critical_delay_ns : float
-target_period_ns : float
-slack_ns : float
-timing_met : bool
-recommendations : list[str]
-
-
-### Class `TelemetryResult`
-Hardware telemetry comparison result.
-
-Attributes
-----------
-samples : int
-max_drift : float
-mean_drift : float
-alerts : list[str]
-healthy : bool
-
-
-### Class `OmniDispatchMap`
-Hyper-heterogeneous mapping across computing paradigms.
-
-Attributes
-----------
-cmos_variables : list[str]
-thermodynamic_variables : list[str]
-optical_variables : list[str]
-quantum_variables : list[str]
-
-
-### Class `ReversibleNetlist`
-Logically reversible circuit synthesis result.
-
-Attributes
-----------
-toffoli_gates : int
-fredkin_gates : int
-ancilla_bits : int
-landauer_dissipation_kt : float
-
-
-### Class `MEAMapping`
-Multi-Electrode Array mapping for biological organoids.
-
-Attributes
-----------
-electrode_count : int
-stimulation_freq_hz : float
-voltage_amplitude_mv : float
-spatial_density : str
-
-
-### Class `Morphology`
-Hardware topology co-designed to match SNN dynamics.
-
-Attributes
-----------
-topology : str
-bisection_bandwidth_gbps : float
-routing_latency_ns : float
-dimensions : int
-
-
-### Class `CognitiveBounds`
-Safety kill-switches injected into extreme-scale networks.
-
-Attributes
-----------
-safe_equations : dict[str, str]
-lyapunov_divergence_proxy : float
-switches_inserted : int
-
-
-### Class `AdiabaticPhase`
-Single phase in a trapezoidal resonant clock.
-
-Attributes
-----------
-name : str
-rise_ps : float
-hold_ps : float
-fall_ps : float
-sleep_ps : float
-
-
-### Class `HolographicRouter`
-Free-space optical holographic projection router.
-
-Attributes
-----------
-slm_grid_size : tuple[int, int]
-diffraction_limit_nm : float
-optical_fanout_per_beam : int
-phase_array_complexity : float
-
-
-### Function `verilog_to_vhdl_wrapper(module_name)`
-Generate a VHDL-2008 entity/architecture wrapper for a Verilog module.
-
-This produces a VHDL entity that matches the Verilog module's port list,
-enabling mixed-language simulation and synthesis (Vivado, Questa, GHDL).
-The VHDL wrapper instantiates the Verilog module as a component.
+Generates two complete neuron datapaths (LP and HP).  HP is emitted as
+the authoritative output path, while LP drives only precision telemetry.
 
 Parameters
 ----------
+neuron : EquationNeuron
+    The neuron defined by arbitrary ODE strings.
 module_name : str
-    Verilog module name.
-data_width : int
-    Fixed-point data width.
+    Name of the generated Verilog module.
+lp_width : int
+    Low-precision total bit width (default 16).
+lp_frac : int
+    Low-precision fractional bits (default 8).
+hp_width : int
+    High-precision total bit width (default 32).
+hp_frac : int
+    High-precision fractional bits (default 16).
+threshold_up_pct : float
+    Fraction of LP range at which to switch to HP (default 0.8).
+threshold_down_pct : float
+    Fraction of LP range at which to switch back to LP (default 0.5).
 signed : bool
-    Whether ports use signed types.
+    True for signed two's complement.
+overflow : str
+    Overflow mode for both datapaths.
+rounding : str
+    Rounding mode for both datapaths.
 
 Returns
 -------
 str
-    VHDL-2008 source code.
-
-### Function `posit_encode(value, config)`
-Encode a float to posit integer representation.
-
-Parameters
-----------
-value : float
-    Value to encode.
-config : PositConfig
-    Posit format.
-
-Returns
--------
-int
-    Posit-encoded integer (nbits wide).
-
-### Function `posit_decode(bits, config)`
-Decode a posit integer to float.
-
-Parameters
-----------
-bits : int
-    Posit-encoded integer.
-config : PositConfig
-    Posit format.
-
-Returns
--------
-float
-    Decoded value.
-
-### Function `generate_cdc_synchroniser(signal_name)`
-Generate a CDC (Clock Domain Crossing) synchroniser in Verilog.
-
-Uses a multi-stage register chain to safely transfer signals between
-clock domains. For multi-bit buses, use a gray-code converter or
-handshake protocol instead.
-
-Parameters
-----------
-signal_name : str
-    Name of the signal being synchronised.
-width : int
-    Bit width (1 for single-bit CDC).
-stages : int
-    Number of synchroniser stages (2 minimum, 3 for MTBF).
-src_clock : str
-    Source clock name.
-dst_clock : str
-    Destination clock name.
-
-Returns
--------
-str
-    Verilog CDC synchroniser module.
-
-### Function `generate_tcl_project(module_name)`
-Generate FPGA project TCL script.
-
-Parameters
-----------
-module_name : str
-    Top-level module name.
-tool : str
-    ``"vivado"`` or ``"quartus"``.
-part : str
-    Target FPGA part number.
-verilog_files : list, optional
-    Verilog source files.
-constraint_file : str, optional
-    Constraint file (XDC/SDC).
-
-Returns
--------
-str
-    Complete TCL script.
-
-### Function `_gen_vivado_tcl(module_name, part, verilog_files, constraint_file)`
-Generate Xilinx Vivado project TCL.
-
-### Function `_gen_quartus_tcl(module_name, part, verilog_files, constraint_file)`
-Generate Intel Quartus project TCL.
-
-### Function `generate_oss_makefile(module_name)`
-Generate a Makefile for open-source FPGA synthesis (Yosys + nextpnr).
-
-Parameters
-----------
-module_name : str
-    Top-level module name.
-target : str
-    ``"ice40"`` or ``"ecp5"``.
-device : str
-    Device string (e.g. ``"hx8k"``, ``"um5g-85k"``).
-package : str
-    Package (e.g. ``"ct256"``, ``"CABGA381"``).
-freq_mhz : float
-    Target frequency.
-verilog_files : list, optional
-    Verilog source files.
-pcf_file : str, optional
-    Pin constraint file.
-
-Returns
--------
-str
-    Complete Makefile content.
-
-### Function `generate_dvs_aer_bridge(module_name)`
-Generate a DVS (Dynamic Vision Sensor) to AER bridge in Verilog.
-
-Converts Prophesee / Metavision / Sony IMX636 event packets into
-the SC-NeuroCore AER address-event protocol for zero-copy sensor-
-to-spike-network interfacing on FPGA.
-
-Parameters
-----------
-module_name : str
-    Output module name.
-addr_width : int
-    Pixel address width (covers X*Y event space).
-polarity_bit : bool
-    Include ON/OFF polarity in the event word.
-timestamp_width : int
-    Timestamp field width in bits.
-fifo_depth : int
-    Input event FIFO depth (power of 2).
-
-Returns
--------
-str
-    Synthesisable Verilog module.
-
-### Function `mxfp_encode_block(values, config)`
-Encode a block of floats to MXFP format.
-
-Parameters
-----------
-values : list[float]
-    Block of float values (len must equal config.block_size).
-config : MXFPConfig
-    MXFP format configuration.
-
-Returns
--------
-tuple[int, list[int]]
-    (shared_exponent, list_of_encoded_elements).
-
-### Function `mxfp_decode_block(shared_exp, elements, config)`
-Decode a block of MXFP elements to floats.
-
-Parameters
-----------
-shared_exp : int
-    Shared exponent.
-elements : list[int]
-    Encoded element integers.
-config : MXFPConfig
-    MXFP format configuration.
-
-Returns
--------
-list[float]
-    Decoded float values.
-
-### Function `storage_recommendation(neuron_count, state_bits_per_neuron)`
-Determine optimal storage strategy for a neuron array.
-
-Decides between registers (small), BRAM (medium), and URAM (large)
-based on total state bits and target capabilities.
-
-Parameters
-----------
-neuron_count : int
-    Number of neurons in the array.
-state_bits_per_neuron : int
-    State bits per neuron (e.g. 16 for Q8.8, 32 for Q16.16).
-has_uram : bool
-    True if the target has UltraRAM (UltraScale+ / Versal only).
-register_threshold : int
-    Max neurons for register-based storage.
-uram_threshold : int
-    Min neurons for URAM migration.
-
-Returns
--------
-StorageRecommendation
-    Optimal storage strategy with resource estimates.
-
-### Function `generate_bram_array(module_name)`
-Generate a time-multiplexed BRAM-backed neuron array.
-
-A single compute pipeline is shared across N neurons with BRAM-backed
-state. The array processes one neuron per clock cycle.
-
-Parameters
-----------
-module_name : str
-    Module name.
-neuron_count : int
-    Number of neurons.
-data_width : int
-    Fixed-point data width.
-state_vars : int
-    State variables per neuron (e.g. 1 for LIF, 2 for Izhikevich).
-
-Returns
--------
-str
-    Verilog module with BRAM-backed time-multiplexed neuron array.
-
-### Function `thermal_analysis(estimated_power_mw, target_freq_mhz)`
-Estimate thermal impact and frequency derating.
-
-Combines package-level junction rise with an optional local DSP-column
-spreading-resistance term. DSP-heavy designs can therefore raise local
-junction temperature as well as derating timing.
-
-Parameters
-----------
-estimated_power_mw : float
-    Estimated power from ``estimate_power()`` or synthesis.
-target_freq_mhz : float
-    Nominal target frequency.
-theta_ja : float
-    Junction-to-ambient thermal resistance (°C/W).
-    Typical: ~11.5 for Artix-7 BGA, ~3.5 for Versal with heatsink.
-t_ambient_c : float
-    Ambient temperature.
-t_junction_max_c : float
-    Maximum junction temperature.
-process_nm : int
-    Process node (affects derating sensitivity).
-mul_count : int
-    Number of DSP multipliers (affects hotspot risk).
-dsp_columns : int
-    Number of DSP columns to spread across.
-dsp_power_mw : float, optional
-    DSP-attributed dynamic power for local hotspot analysis.
-theta_spreading : float
-    Local spreading resistance from DSP-column hotspot to the bulk junction
-    node (°C/W).
-
-Returns
--------
-ThermalEstimate
-    Thermal analysis with derating and hotspot risk.
-
-### Function `generate_thermal_constraints(module_name, analysis)`
-Generate XDC constraints for thermal-aware DSP placement.
-
-Spreads DSP blocks across multiple columns to reduce thermal hotspots
-and adds temperature-derated timing constraints.
-
-Parameters
-----------
-module_name : str
-    Module name.
-analysis : ThermalEstimate
-    Thermal analysis result.
-dsp_columns : int
-    Number of DSP columns to distribute across.
-
-Returns
--------
-str
-    XDC constraint snippet for thermal-aware placement.
-
-### Function `generate_weight_rom(weights, module_name)`
-Generate a weight ROM for synaptic connections.
-
-Produces either a Verilog ROM module or a Xilinx ``.coe`` / Intel
-``.mif`` memory initialisation file for BRAM-based weight storage.
-
-Parameters
-----------
-weights : list[list[int]]
-    2D weight matrix indexed as `weights[src_neuron][dst_neuron]` in Q-format integers.
-module_name : str
-    ROM module name.
-data_width : int
-    Weight bit width.
-output_format : str
-    ``"verilog"`` (synthesisable ROM), ``"coe"`` (Xilinx), ``"mif"`` (Intel).
-
-Returns
--------
-str
-    Weight ROM in the specified format.
-
-### Function `generate_tmr_wrapper(module_name)`
-Generate a Triple Modular Redundancy wrapper for any neuron module.
-
-Instantiates three copies of the target module and a majority voter
-to mask Single Event Upsets (SEUs) in aerospace/safety-critical
-deployments. Compliant with DO-254 DAL-A and IEC 61508 SIL-4.
-
-Parameters
-----------
-module_name : str
-    Name of the inner neuron module to wrap.
-data_width : int
-    Data width of the inner module.
-state_vars : list[str], optional
-    State variable names for output voting. Defaults to ``["v"]``.
-voter : str
-    Voter type: ``"majority"`` (2-of-3) or ``"median"`` (middle value).
-
-Returns
--------
-str
-    Synthesisable Verilog TMR wrapper module.
-
-### Function `embed_model_checksum(verilog)`
-Embed a SHA-256 checksum of the compiled model in the Verilog source.
-
-Enables bit-exact reproducibility verification — the hash of the
-source equations and parameters is embedded as a Verilog comment and
-a localparam, allowing downstream tools to verify that the RTL
-matches the expected model.
-
-Parameters
-----------
-verilog : str
-    Generated Verilog source code.
-equations : dict[str, str], optional
-    Original ODE equations (state_var → expression).
-params : dict[str, int | float], optional
-    Compilation parameters (data_width, fraction, etc.).
-
-Returns
--------
-str
-    Verilog with embedded checksum comment and localparam.
-
-### Function `auto_quantisation_sweep(equations, target)`
-Sweep data widths to find accuracy-vs-resource trade-offs.
-
-Compiles the same ODE equations at multiple quantisation levels
-(Q4.2 through Q32.16) and reports the resource cost and numerical
-precision for each. Enables rapid design-space exploration.
-
-Parameters
-----------
-equations : dict[str, str]
-    ODE equations mapping state variable names to expressions.
-target : str
-    Target platform name for resource estimation.
-widths : list[int], optional
-    Data widths to sweep. Defaults to ``[4, 8, 12, 16, 20, 24, 32]``.
-fraction_ratio : float
-    Fraction of data_width used for fractional bits (default 0.5).
-
-Returns
--------
-list[QuantSweepResult]
-    Sweep results sorted by data_width (ascending).
-
-### Function `format_quantisation_report(results)`
-Format a quantisation sweep into a readable markdown table.
-
-Parameters
-----------
-results : list[QuantSweepResult]
-    Results from ``auto_quantisation_sweep()``.
-
-Returns
--------
-str
-    Markdown table comparing all quantisation levels.
-
-### Function `encode_mzi_weights(weights)`
-Encode a weight matrix as MZI phase-shift parameters.
-
-Converts a real-valued weight matrix into the (θ, φ) phase-shift
-representation used by photonic Mach-Zehnder interferometer meshes
-(Lightmatter, iPronics, Xanadu). Uses the Clements decomposition
-to map an arbitrary unitary matrix to a cascade of 2×2 beam splitters.
-
-Parameters
-----------
-weights : list[list[float | int]]
-    Weight matrix (N×M). Values are normalised to [-1, 1].
-mesh_type : str
-    ``"clements"`` (triangular) or ``"reck"`` (rectangular).
-loss_db_per_mzi : float
-    Insertion loss per MZI in dB (for transmission estimation).
-
-Returns
--------
-MZIWeightEncoding
-    Phase-shift parameters and transmission coefficients.
-
-### Function `generate_mzi_config(encoding)`
-Generate a photonic chip configuration file from MZI weights.
-
-Parameters
-----------
-encoding : MZIWeightEncoding
-    Phase-shift encoding from ``encode_mzi_weights()``.
-output_format : str
-    ``"json"`` or ``"csv"``.
-
-Returns
--------
-str
-    Configuration file content.
-
-### Function `plan_pim_layout(neuron_count, synapse_count)`
-Plan data placement across PIM memory banks.
-
-Distributes neuron state and synaptic weights across memory banks
-to maximise bank-level parallelism on PIM (UPMEM, Samsung HBM-PIM)
-and CXL memory expander targets.
-
-Parameters
-----------
-neuron_count : int
-    Total neurons in the network.
-synapse_count : int
-    Total synaptic connections.
-data_width : int
-    Bits per value.
-bank_size_kb : int
-    Capacity of each memory bank in KB.
-num_banks : int
-    Number of available memory banks.
-target : str
-    Target platform name.
-
-Returns
--------
-PIMLayout
-    Optimised memory layout plan.
-
-### Function `generate_power_domain_wrapper(module_name)`
-Generate a clock/power gating wrapper for always-on edge deployment.
-
-Creates a wrapper module with:
-- ICG (Integrated Clock Gating) cell for dynamic power reduction
-- Power-down state retention latches
-- Configurable wakeup latency
-- Always-on domain for event detection (spike_detect)
-
-Targets ultra-low-power edge platforms (Syntiant NDP120, Innatera
-Pulsar, BrainChip Akida) where µW-level idle power is critical.
-
-Parameters
-----------
-module_name : str
-    Inner neuron module name.
-data_width : int
-    Data width.
-state_vars : list[str], optional
-    State variables to retain. Defaults to ``["v"]``.
-always_on_signals : list[str], optional
-    Signals kept in the always-on domain. Defaults to ``["spike_out"]``.
-wakeup_cycles : int
-    Clock cycles required to exit power-down.
-
-Returns
--------
-str
-    Synthesisable Verilog power domain wrapper.
-
-### Function `generate_hls_cpp(module_name, equations)`
-Translate compiled neuron equations to Vitis/Catapult HLS C++.
-
-Generates a synthesisable C++ function with ``#pragma HLS`` directives
-for Xilinx Vitis HLS or Siemens Catapult. Enables HW/SW co-design
-workflows where the neuron runs as an HLS IP block alongside a
-MicroBlaze or RISC-V soft processor.
-
-Parameters
-----------
-module_name : str
-    Function/module name.
-equations : dict[str, str]
-    ODE equations (state_var → C-style expression).
-data_width : int
-    Fixed-point total width.
-fraction : int
-    Fractional bits.
-hls_tool : str
-    ``"vitis"`` or ``"catapult"``.
-
-Returns
--------
-str
-    Complete HLS C++ source file.
-
-### Function `generate_bitstream_encryption(module_name)`
-Generate bitstream encryption TCL/constraints for secure boot.
-
-Produces the vendor-specific TCL commands and XDC constraints to
-enable AES-256 bitstream encryption, protecting the compiled neuron
-IP from reverse-engineering and tampering.
-
-Parameters
-----------
-module_name : str
-    Design module name.
-vendor : str
-    ``"xilinx"`` or ``"intel"``.
-key_length : int
-    AES key length: 128 or 256.
-key_source : str
-    Key storage: ``"efuse"`` (one-time programmable),
-    ``"bbram"`` (battery-backed RAM), or ``"external"``.
-
-Returns
--------
-str
-    TCL/Quartus script for bitstream encryption.
-
-### Function `advise_ucie_partition(neuron_count, connectivity)`
-Advise on neuron array partitioning across chiplet tiles.
-
-Analyses a neuron array's connectivity to estimate inter-tile
-spike traffic and UCIe bandwidth requirements when distributing
-a network across multi-die chiplet systems (AMD MI300X,
-Tenstorrent Galaxy, Intel Ponte Vecchio).
-
-Parameters
-----------
-neuron_count : int
-    Total neurons in the network.
-connectivity : float
-    Connection probability between any two neurons (0.0–1.0).
-tile_count : int
-    Number of chiplet tiles.
-spike_rate_hz : float
-    Average firing rate per neuron (Hz).
-timestep_us : float
-    Simulation timestep (µs).
-ucie_lane_gbps : float
-    UCIe lane bandwidth (Gbps per lane).
-ucie_latency_ns : float
-    UCIe die-to-die latency (ns).
-
-Returns
--------
-UCIePartition
-    Partitioning plan with bandwidth and latency estimates.
-
-### Function `advise_cxl_mapping(neuron_count, synapse_count)`
-Advise on CXL.mem Type-3 device mapping for neuron state.
-
-Plans the distribution of neuron state and synaptic weights
-across CXL 3.0 Type-3 memory expander devices for large-scale
-SNN simulations that exceed local DRAM capacity.
-
-Parameters
-----------
-neuron_count : int
-    Total neurons.
-synapse_count : int
-    Total synaptic connections.
-data_width : int
-    Bits per value.
-device_capacity_gb : float
-    Capacity per CXL device (GB).
-max_devices : int
-    Maximum CXL devices available.
-access_pattern : str
-    ``"streaming"`` (sequential) or ``"random"`` (scattered).
-
-Returns
--------
-CXLMapping
-    Device mapping plan.
-
-### Function `generate_learning_params()`
-Generate on-chip learning parameters for neuromorphic targets.
-
-Creates calibration parameters for platforms with in-situ
-plasticity (BrainChip Akida 2, BrainScaleS-2, SpiNNaker 2).
-
-Parameters
-----------
-learning_rule : str
-    ``"stdp"`` (spike-timing), ``"rstdp"`` (reward-modulated),
-    or ``"triplet"`` (triplet-based STDP).
-tau_plus_ms : float
-    LTP time constant.
-tau_minus_ms : float
-    LTD time constant.
-a_plus : float
-    Potentiation amplitude.
-a_minus : float
-    Depression amplitude.
-w_max : float
-    Weight ceiling.
-w_min : float
-    Weight floor.
-reward_tau_ms : float
-    Reward eligibility trace time constant.
-target : str
-    Target platform name.
-
-Returns
--------
-OnChipLearningParams
-    Complete learning parameter set.
-
-### Function `export_learning_config(params)`
-Export on-chip learning parameters as a configuration file.
-
-Parameters
-----------
-params : OnChipLearningParams
-    Learning parameters from ``generate_learning_params()``.
-output_format : str
-    ``"json"`` or ``"yaml"``.
-
-Returns
--------
-str
-    Configuration file content.
-
-### Function `inject_weight_noise(weights)`
-Inject device-variation noise into a weight matrix.
-
-Simulates manufacturing variations and read noise in analog
-compute-in-memory (Mythic, IBM PCM) and memristive crossbar
-(Rain AI) targets. Enables robustness validation before tapeout.
-
-Parameters
-----------
-weights : list[list[float | int]]
-    Original weight matrix.
-noise_model : str
-    ``"gaussian"``, ``"uniform"``, or ``"lognormal"``.
-sigma : float
-    Noise magnitude (fraction of weight range).
-seed : int, optional
-    Random seed for reproducibility.
-
-Returns
--------
-list[list[float]]
-    Weight matrix with injected noise.
-
-### Function `create_noise_profile()`
-Create a device-variation noise profile for analog targets.
-
-Parameters
-----------
-noise_model : str
-    Noise distribution type.
-sigma : float
-    Read noise standard deviation.
-cycle_drift : float
-    Weight drift per program/erase cycle.
-retention_loss_per_day : float
-    Daily state retention loss.
-target : str
-    Target platform.
-
-Returns
--------
-WeightNoiseProfile
-    Complete noise characterisation.
-
-### Function `generate_pipeline_wrapper(module_name, equations)`
-Generate a pipelined wrapper that inserts register stages.
-
-Auto-computes the critical path depth and required pipeline stages
-based on the target frequency, then wraps the neuron module with
-input/output pipeline registers and a valid-pipeline shift register.
-
-Parameters
-----------
-module_name : str
-    Inner neuron module name.
-equations : dict[str, str]
-    ODE equations (for depth analysis).
-data_width : int
-    Data width.
-target : str
-    Target platform name (used for frequency lookup).
-stages : int, optional
-    Override pipeline stages. If None, auto-computed.
-
-Returns
--------
-str
-    Synthesisable Verilog pipeline wrapper.
-
-### Function `compare_targets(equations, targets)`
-Compare compilation results across multiple hardware targets.
-
-Compiles the same ODE equations for each target and reports
-resource usage, precision, and pipeline requirements side-by-side.
-
-Parameters
-----------
-equations : dict[str, str]
-    ODE equations.
-targets : list[str]
-    List of target platform names.
-
-Returns
--------
-list[TargetComparison]
-    Comparison results for each target.
-
-### Function `format_comparison_report(results)`
-Format a multi-target comparison as a markdown table.
-
-Parameters
-----------
-results : list[TargetComparison]
-    Results from ``compare_targets()``.
-
-Returns
--------
-str
-    Markdown comparison table.
-
-### Function `generate_compilation_summary(module_name, equations, target)`
-Generate a comprehensive human-readable compilation summary.
-
-Produces a markdown document summarising all aspects of a
-compilation: equations, target, precision, resources, pipeline,
-guard bits, and applicable strategic features.
-
-Parameters
-----------
-module_name : str
-    Compiled module name.
-equations : dict[str, str]
-    ODE equations compiled.
-target : str
-    Target platform.
-data_width : int
-    Total bit width.
-fraction : int
-    Fractional bits.
-verilog_lines : int
-    Lines of generated Verilog (0 if not counted).
-
-Returns
--------
-str
-    Markdown compilation summary.
-
-### Function `generate_equivalence_sketch(module_name, equations)`
-Generate a formal equivalence proof sketch for ODE→RTL translation.
-
-Produces a structured argument that the compiled Verilog computes
-the same function as the source ODE within quantisation error.
-
-Parameters
-----------
-module_name : str
-    Module name.
-equations : dict[str, str]
-    ODE equations.
-data_width : int
-    Fixed-point total width.
-fraction : int
-    Fractional bits.
-
-Returns
--------
-EquivalenceSketch
-    Proof skeleton with SVA assertions.
-
-### Function `partition_timescales(equations, time_constants)`
-Partition ODE equations by timescale for multi-clock execution.
-
-Identifies fast vs slow dynamics and assigns them to different
-clock domains, inserting CDC synchronisers at domain boundaries.
-
-Parameters
-----------
-equations : dict[str, str]
-    ODE equations.
-time_constants : dict[str, float], optional
-    Known time constants per variable (ms). If None, estimated
-    from equation structure.
-threshold_ratio : float
-    Ratio above which a variable is considered "slow".
-
-Returns
--------
-TimescalePartition
-    Partitioned system with clock assignments.
-
-### Function `generate_provenance_chain(module_name, equations, verilog_source)`
-Generate a cryptographic provenance chain for compilation.
-
-Creates a full audit trail from source equations through
-compiled RTL, with SHA-256 hashes at every stage.
-
-Parameters
-----------
-module_name : str
-    Module name.
-equations : dict[str, str]
-    Source ODE equations.
-verilog_source : str
-    Generated Verilog (if available).
-target : str
-    Target platform.
-data_width : int
-    Fixed-point width.
-fraction : int
-    Fractional bits.
-
-Returns
--------
-list[ProvenanceRecord]
-    Ordered provenance records.
-
-### Function `format_provenance_json(chain)`
-Format provenance chain as JSON manifest.
-
-Parameters
-----------
-chain : list[ProvenanceRecord]
-    From ``generate_provenance_chain()``.
-
-Returns
--------
-str
-    JSON manifest.
-
-### Function `generate_compliance_matrix(module_name)`
-Generate safety compliance matrix for certification.
-
-Maps DO-254 / IEC 61508 / ISO 26262 requirements to SC-NeuroCore
-verification artefacts.
-
-Parameters
-----------
-module_name : str
-    Module under certification.
-standards : list[str], optional
-    Standards to cover. Default: all three.
-has_tmr : bool
-    TMR wrapper is present.
-has_checksum : bool
-    Model checksum is embedded.
-has_sva : bool
-    SVA assertions are generated.
-has_provenance : bool
-    Provenance chain exists.
-
-Returns
--------
-list[ComplianceEntry]
-    Compliance matrix entries.
-
-### Function `format_compliance_report(entries)`
-Format compliance matrix as markdown.
-
-Parameters
-----------
-entries : list[ComplianceEntry]
-    From ``generate_compliance_matrix()``.
-
-Returns
--------
-str
-    Markdown compliance table.
-
-### Function `generate_energy_schedule(neuron_count)`
-Generate energy-budget-aware neuron update schedule.
-
-For energy-harvesting edge devices (solar, vibration, RF),
-schedules neuron updates to fit within the available energy.
-
-Parameters
-----------
-neuron_count : int
-    Total neurons.
-energy_budget_uj : float
-    Available energy per epoch (µJ).
-energy_per_neuron_nj : float
-    Energy per neuron update (nJ).
-epoch_duration_ms : float
-    Epoch duration (ms).
-priority_neurons : list[int], optional
-    High-priority neuron indices (updated first).
-
-Returns
--------
-EnergySchedule
-    Update schedule.
-
-### Function `lint_side_channels(equations)`
-Analyse equations for power/timing side-channel vulnerabilities.
-
-Flags data-dependent timing paths and variable-activity patterns
-in the generated RTL.
-
-Parameters
-----------
-equations : dict[str, str]
-    ODE equations.
-module_name : str
-    Module name.
-data_width : int
-    Data width.
-
-Returns
--------
-list[SideChannelFinding]
-    List of findings.
-
-### Function `generate_drift_compensator(module_name)`
-Generate analog drift compensation controller.
-
-For analog/memristive targets, creates on-chip calibration
-circuits that periodically refresh weights to compensate
-for device aging and retention loss.
-
-Parameters
-----------
-module_name : str
-    Module name.
-drift_rate_per_day : float
-    Weight drift per day (fraction).
-max_drift_tolerance : float
-    Maximum acceptable drift before refresh.
-clock_freq_mhz : int
-    Clock frequency.
-compensation_method : str
-    Compensation strategy.
-
-Returns
--------
-DriftCompensator
-    Controller with Verilog.
-
-### Function `plan_heterogeneous_dispatch(equations, backends)`
-Plan multi-backend dispatch for an SNN model.
-
-Splits ODE variables across heterogeneous backends based on
-compute characteristics (fast dynamics → FPGA, slow → MCU,
-learning → GPU).
-
-Parameters
-----------
-equations : dict[str, str]
-    ODE equations.
-backends : list[str]
-    Available backend targets.
-neuron_count : int
-    Total neurons.
-time_constants : dict[str, float], optional
-    Time constants per variable.
-
-Returns
--------
-DispatchPlan
-    Multi-backend assignment.
-
-### Function `recommend_target(equations)`
-Recommend optimal hardware targets for a neuron model.
-
-Given ODE equations and constraints, ranks all registered
-profiles and returns the top N recommendations.
-
-Parameters
-----------
-equations : dict[str, str]
-    ODE equations.
-max_power_mw : float, optional
-    Maximum power budget.
-min_freq_mhz : float, optional
-    Minimum clock frequency.
-max_data_width : int, optional
-    Maximum data width.
-require_class : str, optional
-    Required platform class.
-top_n : int
-    Number of recommendations.
-
-Returns
--------
-list[TargetRecommendation]
-    Ranked recommendations.
-
-### Function `plan_partial_reconfiguration(equations)`
-Plan FPGA partial reconfiguration for SNN time-multiplexing.
-
-Splits neuron equations across reconfigurable regions and
-generates a swap schedule.
-
-Parameters
-----------
-equations : dict[str, str]
-    ODE equations.
-max_regions : int
-    Maximum reconfigurable regions.
-time_slots : int
-    Number of time-multiplexed slots.
-
-Returns
--------
-ReconfigPartition
-    Partition plan with schedule.
-
-### Function `score_supply_chain_risk(profile_name)`
-Assess supply chain risk for a hardware profile.
-
-Scores based on vendor geography, sole-source status,
-and export control classification.
-
-Parameters
-----------
-profile_name : str
-    Profile to assess.
-
-Returns
--------
-SupplyChainRisk
-    Risk assessment.
-
-### Function `generate_bittrue_kernel(module_name, equations)`
-Generate a bit-true simulation kernel matching RTL arithmetic.
-
-Produces C (or Rust) code that computes exactly the same
-fixed-point results as the generated Verilog — same truncation,
-overflow, and pipeline latency.
-
-Parameters
-----------
-module_name : str
-    Module name.
-equations : dict[str, str]
-    ODE equations.
-data_width : int
-    Fixed-point total width.
-fraction : int
-    Fractional bits.
-language : str
-    ``"c"`` or ``"rust"``.
-
-Returns
--------
-str
-    Bit-true source code.
-
-### Function `classify_model_complexity(equations)`
-Classify a model's compute profile.
-
-Determines whether the model is compute-bound, memory-bound,
-or communication-bound and recommends the best platform paradigm.
-
-Parameters
-----------
-equations : dict[str, str]
-    ODE equations.
-
-Returns
--------
-ModelComplexity
-    Classification with recommended paradigm.
-
-### Function `estimate_thermal_envelope()`
-Predict junction temperature from power dissipation.
-
-Uses simple thermal resistance model: T_j = T_a + P × θ_ja.
-
-Parameters
-----------
-power_mw : float
-    Power dissipation (mW).
-theta_ja : float
-    Junction-to-ambient thermal resistance (°C/W).
-t_ambient : float
-    Ambient temperature (°C).
-t_junction_max : float
-    Maximum allowed junction temperature (°C).
-
-Returns
--------
-ThermalEnvelopeEstimate
-    Temperature estimate with pass/fail.
-
-### Function `optimize_network_topology(adjacency)`
-Optimize SNN partitioning across multiple chips.
-
-Minimises inter-chip spike communication by grouping
-heavily-connected neurons onto the same chip.
-
-Parameters
-----------
-adjacency : dict[int, list[int]]
-    Neuron connectivity: source → list of targets.
-num_chips : int
-    Number of available chips.
-neurons_per_chip : int, optional
-    Max neurons per chip. Default: ceil(N / num_chips).
-
-Returns
--------
-TopologyPlan
-    Optimised chip assignment.
-
-### Function `import_nir_graph(nir_data)`
-Import a Neuromorphic Intermediate Representation graph.
-
-Converts NIR node definitions into ODE equations suitable
-for the SC-NeuroCore compilation pipeline.
-
-Parameters
-----------
-nir_data : dict
-    NIR graph as dictionary with 'nodes' and 'edges'.
-framework : str
-    Source framework name.
-
-Returns
--------
-NIRGraph
-    Imported graph with extracted equations.
-
-### Function `verify_ode_stability(equations)`
-Verify numerical stability of discretized ODE system.
-
-Uses eigenvalue analysis of the linearized system to determine
-if the forward-Euler discretization is stable.
-
-Parameters
-----------
-equations : dict[str, str]
-    ODE equations.
-dt : float
-    Timestep.
-time_constants : dict[str, float], optional
-    Time constants per variable.
-
-Returns
--------
-StabilityResult
-    Stability analysis result.
-
-### Function `generate_power_intent(module_name)`
-Generate IEEE 1801 UPF power intent for neuron arrays.
-
-Creates power domain definitions, isolation rules, and
-retention strategies for multi-voltage SNN designs.
-
-Parameters
-----------
-module_name : str
-    Top module name.
-num_domains : int
-    Number of power domains.
-always_on : bool
-    Whether to include always-on domain.
-
-Returns
--------
-str
-    UPF source text.
-
-### Function `estimate_carbon_footprint(profile_name)`
-Estimate carbon footprint for a compilation target.
-
-Parameters
-----------
-profile_name : str
-    Target profile name.
-power_mw : float
-    Operating power (mW).
-hours_per_day : float
-    Operating hours per day.
-grid_carbon_g_per_kwh : float
-    Grid carbon intensity (g CO₂/kWh).
-
-Returns
--------
-CarbonEstimate
-    Lifecycle carbon estimate.
-
-### Function `insert_debug_probes(module_name, equations)`
-Auto-insert ILA/SignalTap debug probes.
-
-Parameters
-----------
-module_name : str
-    Module name.
-equations : dict[str, str]
-    ODE equations (state variables become probed signals).
-vendor : str
-    ``"xilinx"`` or ``"intel"``.
-depth : int
-    Capture depth in samples.
-
-Returns
--------
-DebugProbeSpec
-    Probe specification with TCL commands.
-
-### Function `generate_memory_map(module_name, equations)`
-Generate address decoder for multi-neuron SoC arrays.
-
-Parameters
-----------
-module_name : str
-    Module name.
-equations : dict[str, str]
-    ODE equations (state variables define register set).
-num_neurons : int
-    Number of neuron instances.
-data_width : int
-    Register width in bits.
-base_address : int
-    Base address.
-
-Returns
--------
-MemoryMap
-    Address map with decoder Verilog.
-
-### Function `score_portability(equations)`
-Score how portable a model is across all profiles.
-
-Parameters
-----------
-equations : dict[str, str]
-    ODE equations.
-min_data_width : int
-    Minimum acceptable data width.
-
-Returns
--------
-PortabilityScore
-    Portability assessment.
-
-### Function `predict_reliability()`
-Predict MTTF from voltage, temperature, and technology node.
-
-Evaluates NBTI, HCI, and TDDB mechanism-specific Arrhenius and voltage
-acceleration factors, then reports the shortest per-mechanism MTTF as the
-dominant failure mode.
-
-Parameters
-----------
-voltage_v : float
-    Operating voltage.
-temperature_c : float
-    Junction temperature (°C).
-node_nm : int
-    Technology node (nm).
-base_mttf_hours : float
-    Baseline MTTF at nominal conditions.
-
-Returns
--------
-ReliabilityEstimate
-    MTTF prediction.
-
-### Function `generate_fault_tree(module_name, equations)`
-Generate FTA/FMEA for DO-254 Level A certification.
-
-Parameters
-----------
-module_name : str
-    Module name.
-equations : dict[str, str]
-    ODE state variables (each becomes a failure point).
-
-Returns
--------
-FaultTree
-    Fault tree with minimal cut sets.
-
-### Function `generate_testbench(module_name, equations)`
-Generate verification testbench for compiled neuron.
-
-Parameters
-----------
-module_name : str
-    Module name.
-equations : dict[str, str]
-    ODE equations.
-framework : str
-    ``"cocotb"`` or ``"uvm"``.
-num_cycles : int
-    Simulation cycles.
-
-Returns
--------
-str
-    Testbench source code.
-
-### Function `analyze_cdc(equations)`
-Analyze clock domain crossings in a neuron array.
-
-Parameters
-----------
-equations : dict[str, str]
-    ODE equations.
-clock_domains : dict[str, str], optional
-    Variable → clock domain mapping. Default: all in ``clk_main``.
-
-Returns
--------
-CDCReport
-
-### Function `load_profiles_from_toml(path)`
-Load custom hardware profiles from a TOML file.
-
-Allows users and vendors to define profiles without modifying
-SC-NeuroCore source code. This is the profile-extension path.
-
-TOML format::
-
-    [[profile]]
-    name = "my_custom_chip"
-    vendor = "MyVendor"
-    family = "CustomFamily"
-    platform_class = "custom"
-    data_width = 16
-    fraction = 8
-    overflow = "saturate"
-    rounding = "nearest"
-
-Parameters
-----------
-path : str
-    Path to TOML file.
-
-Returns
--------
-list[str]
-    Names of loaded profiles.
-
-### Function `plan_multi_die_floorplan(blocks)`
-Assign neuron blocks to chiplet/die positions.
-
-Uses first-fit-decreasing bin packing.
-
-Parameters
-----------
-blocks : dict[str, int]
-    Block name → neuron count.
-die_capacity : int
-    Max neurons per die.
-num_dies : int
-    Available dies.
-
-Returns
--------
-FloorplanResult
-
-### Function `check_regression(baseline, current)`
-Detect performance regressions between compilations.
-
-Parameters
-----------
-baseline : dict[str, float]
-    Baseline metrics.
-current : dict[str, float]
-    Current metrics.
-threshold_pct : float
-    Regression threshold (%).
-
-Returns
--------
-list[RegressionCheck]
-
-### Function `check_license_compliance(project_license, dependencies)`
-Verify IP core licensing compatibility.
-
-Parameters
-----------
-project_license : str
-    SPDX identifier of the project license.
-dependencies : dict[str, str]
-    Dependency name → SPDX license identifier.
-
-Returns
--------
-LicenseCheck
-
-### Function `generate_power_state_machine(module_name)`
-Generate sleep/wake/hibernate FSM for ultra-low-power.
-
-Parameters
-----------
-module_name : str
-    Module name.
-states : list[str], optional
-    FSM states. Default: ACTIVE, IDLE, SLEEP, HIBERNATE.
-
-Returns
--------
-str
-    Verilog FSM source.
-
-### Function `register_platform_hook(hook_fn)`
-Register a third-party platform discovery function.
-
-The hook function should return a list of HardwareProfile instances
-when called with no arguments. Profiles are registered at runtime.
-
-Parameters
-----------
-hook_fn : callable
-    Function returning list[HardwareProfile].
-
-### Function `discover_platforms()`
-Execute all registered discovery hooks.
-
-Returns
--------
-list[str]
-    Names of newly discovered profiles.
-
-### Function `generate_compilation_report(module_name, equations, profile_name)`
-Generate comprehensive compilation report.
-
-Consolidates Verilog, timing, power, carbon, risk,
-and reliability into a single markdown document.
-
-Parameters
-----------
-module_name : str
-    Module name.
-equations : dict[str, str]
-    ODE equations.
-profile_name : str
-    Target profile.
-include_carbon : bool
-    Include carbon footprint section.
-include_reliability : bool
-    Include reliability prediction.
-
-Returns
--------
-str
-    Markdown report.
-
-### Function `lint_hardware_trojans(equations)`
-Detect suspicious combinational paths that could hide trojans.
-
-Analyses the ODE dependency graph for dormant trigger conditions
-and rarely-activated payload paths that are classic trojan signatures.
-
-Parameters
-----------
-equations : dict[str, str]
-    State variable equations.
-check_dormant : bool
-    Check for rarely-activated trigger paths.
-check_payload : bool
-    Check for suspicious payload injection points.
-
-Returns
--------
-TrojanLintResult
-
-### Function `generate_sbom(module_name, profile_name)`
-Generate SBOM/HBOM for IP core compliance.
-
-Required by EU Cyber Resilience Act (2026). Generates a machine-
-readable component inventory in CycloneDX or SPDX format.
-
-Parameters
-----------
-module_name : str
-    Module name.
-profile_name : str
-    Target hardware profile.
-dependencies : dict[str, str], optional
-    External dependencies {name: version}.
-sbom_format : str
-    Output format: "CycloneDX" or "SPDX".
-
-Returns
--------
-SBOM
-
-### Function `generate_hil_calibration(module_name, equations, *, parameters=None, sample_points=10, repetitions=3, settle_cycles=32, acceptance_tolerance=1/256, correction_model="weighted_least_squares", observables=None)`
-Generate hardware-in-the-loop calibration protocol.
-
-Produces a step-by-step calibration procedure for compensating
-analog drift, mismatch, and process variation on real hardware.
-
-Parameters
-----------
-module_name : str
-    Module name.
-equations : dict[str, str]
-    State variable equations.
-parameters : dict[str, tuple[float, float]], optional
-    Parameter sweep ranges {name: (min, max)}.
-sample_points : int
-    Deterministic Latin-hypercube design points across the parameter space.
-repetitions : int
-    Repeated measurements per design point for variance estimation.
-settle_cycles : int
-    Hardware cycles to wait before sampling after each parameter update.
-acceptance_tolerance : float
-    Maximum absolute drift allowed for each observable.
-correction_model : str
-    Calibration model fitted to measured residuals.
-observables : tuple[str, ...], optional
-    State variables to compare against the software golden model.
-
-Returns
--------
-HILCalibration
-
-### Function `generate_digital_twin(module_name, equations, profile_name)`
-Generate a Python digital twin that mirrors deployed hardware.
-
-The twin tracks identical state transitions in software, enabling
-runtime comparison, anomaly detection, and predictive maintenance.
-
-Parameters
-----------
-module_name : str
-    Module name.
-equations : dict[str, str]
-    State variable equations.
-profile_name : str
-    Target hardware profile.
-
-Returns
--------
-str
-    Python source code for the digital twin class.
-
-### Function `map_ucie_protocol(blocks)`
-Map neuron array blocks to UCIe die-to-die protocol lanes.
-
-Parameters
-----------
-blocks : dict[str, int]
-    Block name → data width in bits per cycle.
-lane_bandwidth_gbps : float
-    Bandwidth per UCIe lane.
-protocol_version : str
-    UCIe protocol version.
-
-Returns
--------
-UCIeMapping
-
-### Function `schedule_seu_scrubbing(config_bits)`
-Generate scrubbing schedule for space-grade configuration memory.
-
-Uses orbital altitude and shielding to estimate SEU rate, then
-calculates optimal scrub interval for target reliability.
-
-Parameters
-----------
-config_bits : int
-    Total configuration memory bits.
-orbit_altitude_km : float
-    Orbital altitude (affects particle flux).
-shielding_mm_al : float
-    Aluminium shielding thickness.
-strategy : str
-    "blind" (full-chip) or "hybrid" (targeted + periodic full).
-
-Returns
--------
-ScrubSchedule
-
-### Function `obfuscate_ip(module_name, equations)`
-Apply logic locking and structural obfuscation for IP protection.
-
-Parameters
-----------
-module_name : str
-    Module name.
-equations : dict[str, str]
-    State variable equations.
-key_length : int
-    Obfuscation key length in bits.
-methods : list[str], optional
-    Techniques to apply. Default: logic_locking, constant_propagation_block,
-    structural_transform.
-
-Returns
--------
-ObfuscationResult
-
-### Function `embed_watermark(module_name, equations)`
-Embed a verifiable watermark into the compiled netlist.
-
-The watermark survives synthesis optimisation and can be verified
-without access to the original design.
-
-Parameters
-----------
-module_name : str
-    Module name.
-equations : dict[str, str]
-    State variable equations.
-owner_id : str
-    Owner identifier to embed.
-method : str
-    "constraint_based" or "don't_care_based".
-
-Returns
--------
-WatermarkResult
-
-### Function `configure_approximation(equations)`
-Configure precision-energy tradeoff knobs per state variable.
-
-Analyses each variable's dynamic range and recommends bit-width
-reduction and stochastic rounding to achieve target energy savings
-while bounding output error.
-
-Parameters
-----------
-equations : dict[str, str]
-    State variable equations.
-target_savings_pct : float
-    Target energy savings percentage.
-max_error_pct : float
-    Maximum acceptable output error percentage.
-
-Returns
--------
-ApproximationConfig
-
-### Function `model_energy_harvest(design_power_uw)`
-Model whether an energy harvester can sustain the neural workload.
-
-Parameters
-----------
-design_power_uw : float
-    Design power consumption in microwatts.
-harvester_type : str
-    "solar", "piezo", "thermal", or "rf".
-harvester_area_cm2 : float
-    Harvester active area.
-environment : str
-    "indoor", "outdoor", or "industrial".
-
-Returns
--------
-EnergyHarvestBudget
-
-### Function `predict_aging(initial_fmax_mhz)`
-Predict end-of-life Fmax after transistor aging.
-
-Models NBTI and HCI degradation with separate activation energies, voltage
-exponents, and lifetime power-law terms.
-
-Parameters
-----------
-initial_fmax_mhz : float
-    Initial maximum frequency.
-voltage_v : float
-    Operating voltage.
-temperature_c : float
-    Junction temperature in Celsius.
-years : float
-    Target lifetime in years.
-
-Returns
--------
-AgingPrediction
-
-### Function `generate_dvfs_controller(module_name)`
-Generate a Verilog DVFS controller FSM.
-
-Parameters
-----------
-module_name : str
-    Module name.
-operating_points : list[dict], optional
-    [{voltage_mv, freq_mhz}]. Default: 3 points.
-spike_rate_thresholds : list[float], optional
-    Spike rate thresholds for state transitions.
-
-Returns
--------
-str
-    Synthesisable Verilog source code.
-
-### Function `explore_pareto(equations)`
-Explore power/area/latency Pareto frontier.
-
-Parameters
-----------
-equations : dict[str, str]
-    State variable equations.
-widths : list[int], optional
-    Bit widths to sweep. Default: [8, 16, 24, 32].
-pipeline_depths : list[int], optional
-    Pipeline stages to sweep. Default: [1, 2, 4].
-
-Returns
--------
-list[ParetoPoint]
-    Non-dominated design points.
-
-### Function `protect_ip_pqc(module_name, equations)`
-Apply post-quantum cryptographic protection to IP core.
-
-Parameters
-----------
-module_name : str
-    Module name.
-equations : dict[str, str]
-    State variable equations.
-algorithm : str
-    PQC algorithm. Default: CRYSTALS-Dilithium.
-security_level : int
-    NIST security level (2, 3, or 5).
-
-Returns
--------
-PQCProtection
-
-### Function `run_fault_campaign(equations, data_width)`
-Run a fault injection campaign on the state register.
-
-Parameters
-----------
-equations : dict[str, str]
-    State variable equations.
-data_width : int
-    Total data width of state register.
-num_injections : int
-    Number of random bit-flip injections.
-seed : int
-    Random seed for reproducibility.
-
-Returns
--------
-FaultCampaignResult
-
-### Function `verify_timing_closure(equations)`
-Perform static timing analysis on the dataflow graph.
-
-Parameters
-----------
-equations : dict[str, str]
-    State variable equations.
-target_freq_mhz : float
-    Target clock frequency.
-data_width : int
-    Data width in bits.
-
-Returns
--------
-TimingReport
-
-### Function `ingest_telemetry(telemetry_data, twin_states)`
-Ingest hardware telemetry and compare against digital twin.
-
-Parameters
-----------
-telemetry_data : list[dict[str, float]]
-    List of hardware state snapshots {var: value}.
-twin_states : list[dict[str, float]]
-    Corresponding digital twin states.
-drift_threshold : float
-    Alert threshold for absolute drift.
-
-Returns
--------
-TelemetryResult
-
-### Function `dispatch_omni_paradigm(equations)`
-Partition a monolithic SNN across thermodynamic, optical, CMOS, and quantum.
-
-Analyzes equation ASTs to optimally route state integration.
-Stochastic components -> Thermodynamic.
-High fan-in linear -> Optical.
-Complex non-linear -> CMOS.
-
-Parameters
-----------
-equations : dict[str, str]
-    Differential equations.
-
-Returns
--------
-OmniDispatchMap
-
-### Function `synthesize_reversible_logic(equations, bits)`
-Compile ODE integration into Bennett-clocked reversible logic gates.
-
-Breaks down arithmetic into Toffoli (CCNOT) and Fredkin (CSWAP) gates
-to shatter the von Neumann energy barrier via Landauer-limit operations.
-
-Parameters
-----------
-equations : dict[str, str]
-bits : int
-
-Returns
--------
-ReversibleNetlist
-
-### Function `map_wetware_mea(populations, connectivity)`
-Translate topological network connections into living tissue stimulations.
-
-Outputs optimal stimulation/recording patterns for biological organoids
-running on Multi-Electrode Arrays (e.g., Cortical Labs DishBrain).
-
-Parameters
-----------
-populations : int
-connectivity : float
-
-Returns
--------
-MEAMapping
-
-### Function `synthesize_morphology(equations, max_generations)`
-Use evolutionary algorithms to co-design custom physical hardware topology.
-
-Bypasses standard ISAs/NOCs by generating a physical wiring morphology
-perfectly matched to the ODE variable interaction graph.
-
-Parameters
-----------
-equations : dict[str, str]
-max_generations : int
-
-Returns
--------
-Morphology
-
-### Function `enforce_cognitive_bounds(equations, state_bounds)`
-Analyze state-space criticality and insert hardware kill-switches.
-
-Prevents unconstrained dynamical divergence by automatically rewriting
-the ODEs to clip at absolute safety boundaries.
-
-Parameters
-----------
-equations : dict[str, str]
-state_bounds : dict[str, tuple[float, float]]
-
-Returns
--------
-CognitiveBounds
-
-### Function `generate_adiabatic_clocks(phases, freq_mhz)`
-Generate multi-phase trapezoidal resonant clocking required for adiabatic circuits.
-
-Calculates the exact picosecond timings to recover energy from logic
-gates instead of dissipating it as heat (AQFP/SCRL).
-
-Parameters
-----------
-phases : int
-freq_mhz : float
-
-Returns
--------
-list[AdiabaticPhase]
-
-### Function `route_holographic_interconnects(num_neurons, connections)`
-Map high-fanout neural pathways into 3D free-space optical holographic projections.
-
-Calculates Spatial Light Modulator (SLM) configurations to bypass
-2D planar wiring limits entirely.
-
-Parameters
-----------
-num_neurons : int
-connections : int
-
-Returns
--------
-HolographicRouter
+    Synthesisable Verilog source with HP-authoritative dual datapaths.
 
 ---
 
@@ -7836,8 +5333,8 @@ estimated_ffs : int
     Flip-flop estimate.
 guard_bits : int
     Required guard bits.
-max_freq_mhz : int
-    Target max frequency.
+max_freq_mhz : int | None
+    Target max frequency, or None when unknown.
 
 
 ### Function `estimate_resources(verilog)`
@@ -7891,7 +5388,7 @@ Parameters
 ----------
 module_name : str
     Neuron module name.
-params : dict[str, int]
+params : dict&#91;str, int&#93;
     Parameter names and bit widths.
 language : str
     ``"python"`` or ``"c"``.
@@ -7972,7 +5469,7 @@ Parameters
 ----------
 module_name : str
     Neuron module name.
-params : dict[str, int]
+params : dict&#91;str, int&#93;
     Parameter names and bit widths.
 base_address : int
     MMIO base address.
@@ -7996,7 +5493,7 @@ optionally adds inter-SLR pipeline register directives.
 
 Parameters
 ----------
-placements : list[SLRPlacement]
+placements : list&#91;SLRPlacement&#93;
     Module-to-SLR assignments.
 insert_pipeline_regs : bool
     Add register duplication directives for SLR crossings.
@@ -8019,7 +5516,7 @@ Parameters
 ----------
 module_name : str
     Design module under certification.
-items : list[CertificationItem]
+items : list&#91;CertificationItem&#93;
     Requirement-to-evidence mapping.
 standard : str
     ``"do254"``, ``"iec61508"``, or ``"iso26262"``.
@@ -8038,14 +5535,14 @@ Parameters
 ----------
 equations : dict
     Variable name → ODE RHS expression.
-targets : list[str]
+targets : list&#91;str&#93;
     Profile names to compile against.
 module_name : str
     Base module name.
 
 Returns
 -------
-list[CompilationResult]
+list&#91;CompilationResult&#93;
     Per-target compilation results.
 
 ### Function `format_comparison_table(results)`
@@ -8053,7 +5550,7 @@ Format multi-target results as a markdown comparison table.
 
 Parameters
 ----------
-results : list[CompilationResult]
+results : list&#91;CompilationResult&#93;
     Per-target compilation results.
 
 Returns
@@ -8074,15 +5571,15 @@ with configurable signedness, overflow handling, and rounding.
 ============  ==========  ===============  =================  ===============
 Mode          data_width  fraction         Integer range      Resolution
 ============  ==========  ===============  =================  ===============
-**Q8.8**      16          8                [-128, +127.996]   1/256 ≈ 0.004
-**Q4.12**     16          12               [-8, +7.9998]      1/4096 ≈ 0.0002
-**Q16.16**    32          16               [-32768, +32767]   1/65536 ≈ 1.5e-5
-**UQ8.8**     16          8  (unsigned)    [0, +255.996]      1/256 ≈ 0.004
+**Q8.8**      16          8                &#91;-128, +127.996&#93;   1/256 ≈ 0.004
+**Q4.12**     16          12               &#91;-8, +7.9998&#93;      1/4096 ≈ 0.0002
+**Q16.16**    32          16               &#91;-32768, +32767&#93;   1/65536 ≈ 1.5e-5
+**UQ8.8**     16          8  (unsigned)    &#91;0, +255.996&#93;      1/256 ≈ 0.004
 ============  ==========  ===============  =================  ===============
 
 Overflow Modes
 ~~~~~~~~~~~~~~
-- ``"saturate"`` — clamp to [min, max] (default, safest)
+- ``"saturate"`` — clamp to &#91;min, max&#93; (default, safest)
 - ``"wrap"``     — two's complement wrap-around (Loihi 2 hardware behaviour)
 - ``"trap"``     — emit ``$fatal`` assertion (DO-254 / IEC 61508 safety)
 
@@ -8135,24 +5632,26 @@ Multiplications emit wide product with arithmetic right shift.
 - **_emit_lut_call**(lut_name, arg, entries)
   - Emit a 16-entry LUT indexed by top 4 bits of the input.
 - **_exp_lut_entries**()
-  - exp(x) for x in [-8, +8) sampled at 16 points, Q8.8.
+  - exp(x) for x in &#91;-8, +8) sampled at 16 points, Q8.8.
 - **_log_lut_entries**()
-  - log(x) for x in [0.06, 8) sampled at 16 points, Q8.8.
+  - log(x) for x in &#91;0.06, 8) sampled at 16 points, Q8.8.
 - **_sqrt_lut_entries**()
-  - sqrt(x) for x in [0, 8) sampled at 16 points, Q8.8.
+  - sqrt(x) for x in &#91;0, 8) sampled at 16 points, Q8.8.
 - **_tanh_lut_entries**()
-  - tanh(x) for x in [-8, +8) sampled at 16 points, Q8.8.
+  - tanh(x) for x in &#91;-8, +8) sampled at 16 points, Q8.8.
 - **_sigmoid_lut_entries**()
-  - sigmoid(x) = 1/(1+exp(-x)) for x in [-8, +8), Q8.8.
+  - sigmoid(x) = 1/(1+exp(-x)) for x in &#91;-8, +8), Q8.8.
 - **_sin_lut_entries**()
-  - sin(x) for x in [-8, +8) sampled at 16 points, Q8.8.
+  - sin(x) for x in &#91;-8, +8) sampled at 16 points, Q8.8.
 - **_cos_lut_entries**()
-  - cos(x) for x in [-8, +8) sampled at 16 points, Q8.8.
+  - cos(x) for x in &#91;-8, +8) sampled at 16 points, Q8.8.
 - **generic_visit**(node)
   - Raise an error for any unsupported AST node type.
 
 ### Function `_emit_expr(expr_str, state_vars, param_map, q)`
-Parse a Python expression string and return (verilog_expr, intermediate_wires, mul_end, trunc_end).
+Parse a Python expression string and return Verilog.
+
+Returns (verilog_expr, intermediate_wires, mul_end, trunc_end, pipeline_regs).
 
 ### Function `compile_to_verilog(neuron, module_name, data_width, fraction)`
 Compile an EquationNeuron to synthesizable Verilog RTL.
@@ -8174,6 +5673,15 @@ overflow : str
 rounding : str
     Rounding mode: ``"truncate"`` (default), ``"nearest"``,
     ``"bankers"``, or ``"stochastic"``.
+pipeline_stages : int
+    Number of pipeline register stages to insert at multiply outputs.
+    0 = combinational (default). >0 = register every multiply output,
+    enabling higher clock frequencies at the cost of latency.
+pipeline_points : list&#91;str&#93;, optional
+    Explicit list of intermediate signal names (e.g. ``&#91;"_mul0", "_mul2"&#93;``)
+    where pipeline registers should be inserted.  When specified,
+    only the named multiplies are registered instead of all.
+    Ignored if ``pipeline_stages > 0`` (which registers all multiplies).
 
 Returns
 -------
@@ -8218,148 +5726,2641 @@ str
 
 ---
 
-## Module `compiler.platforms`
+## Module `compiler.intelligence.core`
 
-### Class `HardwareProfile`
-Complete hardware configuration for a target platform.
+### Class `PositConfig`
+Posit number format configuration.
 
 Attributes
 ----------
-name : str
-    Short machine-readable identifier (e.g. ``"loihi2"``).
-vendor : str
-    Chip vendor (e.g. ``"Intel"``, ``"Xilinx"``).
-family : str
-    Product family (e.g. ``"Arria 10"``, ``"ECP5"``).
-platform_class : str
-    One of ``"fpga"``, ``"neuromorphic"``, ``"asic"``, ``"simulation"``.
-data_width : int
-    Total bit width for fixed-point arithmetic.
-fraction : int
-    Number of fractional bits.
-signed : bool
-    True for signed (two's complement), False for unsigned Q-format.
-overflow : OverflowMode
-    How to handle arithmetic overflow in next-state logic.
-rounding : RoundingMode
-    How to round after fixed-point multiplication truncation.
-dsp_block : str
-    Name of the DSP hard macro (e.g. ``"DSP48E2"``).
-dsp_mult_a : int
-    Width of the DSP A-port (multiplier input A).
-dsp_mult_b : int
-    Width of the DSP B-port (multiplier input B).
-max_freq_mhz : int
-    Typical maximum clock frequency (0 = unknown).
-notes : str
-    Human-readable rationale for the configuration.
+nbits : int
+    Total bit width (8 or 16).
+es : int
+    Exponent field size (0, 1, or 2).
 
-- **int_bits**()
-  - Number of integer bits (excluding sign bit if signed).
-- **q_format_label**()
-  - Human-readable Q-format string (e.g. ``'Q9.9'`` or ``'UQ8.8'``).
+- **useed**()
+  - The useed value: 2^(2^es).
 - **max_value**()
-  - Maximum representable positive value.
-- **min_value**()
-  - Minimum representable value (most negative or zero).
-- **resolution**()
-  - Smallest representable step.
-- **from_constraints**(cls, name)
-  - Auto-construct an optimal profile from spec-sheet constraints.
+  - Maximum finite value.
+- **min_positive**()
+  - Smallest positive value.
 
-### Function `_reg(p)`
-Register a profile in the global registry.
+### Class `MXFPConfig`
+Microsoft Microscaling (MX) floating-point format.
 
-### Function `get_profile(name)`
-Look up a hardware profile by name.
+Based on OCP Microscaling Formats Specification v1.0 (2024).
+
+Attributes
+----------
+element_bits : int
+    Bits per element (4, 6, or 8).
+exp_bits : int
+    Exponent bits per element.
+mantissa_bits : int
+    Mantissa bits per element (including implicit 1).
+block_size : int
+    Elements per shared-exponent block.
+shared_exp_bits : int
+    Shared exponent width (typically 8).
+
+- **label**()
+  - Human-readable format label.
+- **bits_per_block**()
+  - Total bits for one block including shared exponent.
+
+### Class `QuantSweepResult`
+Result of a quantisation sweep for one (width, fraction) pair.
+
+Attributes
+----------
+data_width : int
+    Total bit width tested.
+fraction : int
+    Fractional bits tested.
+guard_bits : int
+    Guard bits required.
+estimated_luts : int
+    Estimated LUT usage.
+estimated_dsps : int
+    Estimated DSP usage.
+estimated_ffs : int
+    Estimated flip-flop usage.
+max_representable : float
+    Maximum representable value.
+min_step : float
+    Minimum step size (LSB resolution).
+
+
+### Class `OnChipLearningParams`
+Parameters for on-chip STDP / reward-modulated plasticity.
+
+Attributes
+----------
+learning_rule : str
+    ``"stdp"``, ``"rstdp"`` (reward-modulated), or ``"triplet"``.
+tau_plus_ms : float
+    Pre→post time constant (ms).
+tau_minus_ms : float
+    Post→pre time constant (ms).
+a_plus : float
+    Potentiation amplitude.
+a_minus : float
+    Depression amplitude.
+w_max : float
+    Maximum synaptic weight.
+w_min : float
+    Minimum synaptic weight.
+reward_tau_ms : float
+    Reward signal time constant (ms), for RSTDP.
+target_platform : str
+    Target neuromorphic platform.
+
+
+### Class `WeightNoiseProfile`
+Device-variation noise model for analog/memristive targets.
+
+Attributes
+----------
+noise_model : str
+    ``"gaussian"``, ``"uniform"``, or ``"lognormal"``.
+sigma : float
+    Standard deviation of noise (fraction of weight range).
+cycle_drift : float
+    Weight drift per program/erase cycle (fraction).
+retention_loss_per_day : float
+    Daily retention loss (fraction).
+target_platform : str
+    Target platform.
+
+
+### Class `TimescalePartition`
+Partitioned ODE system by timescale.
+
+Attributes
+----------
+fast_equations : dict&#91;str, str&#93;
+    Fast dynamics (membrane, spikes).
+slow_equations : dict&#91;str, str&#93;
+    Slow dynamics (adaptation, homeostasis).
+fast_clock_div : int
+    Clock divider for fast domain (1 = full speed).
+slow_clock_div : int
+    Clock divider for slow domain.
+cdc_signals : list&#91;str&#93;
+    Signals requiring clock domain crossing.
+
+
+### Class `DispatchPlan`
+Multi-backend SNN dispatch plan.
+
+Attributes
+----------
+backends : dict&#91;str, list&#91;str&#93;&#93;
+    Backend name → list of assigned state variables.
+sync_barriers : list&#91;str&#93;
+    Synchronisation point descriptions.
+total_neurons_per_backend : dict&#91;str, int&#93;
+    Neuron count per backend.
+estimated_speedup : float
+    Estimated speedup vs single-backend.
+
+
+### Class `TargetRecommendation`
+Ranked hardware target recommendation.
+
+Attributes
+----------
+profile_name : str
+    Recommended profile.
+score : float
+    Fitness score (0-100).
+rationale : str
+    Why this target is recommended.
+
+
+### Class `ReconfigPartition`
+Partial reconfiguration partition plan.
+
+Attributes
+----------
+partitions : list&#91;dict&#91;str, list&#91;str&#93;&#93;&#93;
+    Each partition maps region name → assigned variables.
+schedule : list&#91;str&#93;
+    Time-ordered bitstream swap schedule.
+total_regions : int
+    Number of reconfigurable regions.
+bitstream_count : int
+    Total partial bitstreams needed.
+
+
+### Class `CompilationCache`
+Memoized compilation result cache.
+
+Keyed by ``(equations_hash, target, data_width, fraction)``.
+Avoids redundant recompilation when re-targeting.
+
+- **__init__**()
+- **_key**(equations, target, data_width, fraction)
+- **get**(equations, target, data_width, fraction)
+  - Look up a cached compilation result.
+- **put**(equations, target, data_width, fraction, result)
+  - Store a compilation result in cache.
+- **size**()
+  - Number of cached entries.
+
+### Class `TopologyPlan`
+Multi-chip network topology optimisation result.
+
+Attributes
+----------
+chip_assignment : dict&#91;int, int&#93;
+    Neuron index → chip index.
+inter_chip_spikes : int
+    Estimated inter-chip spikes per timestep.
+intra_chip_spikes : int
+    Estimated intra-chip spikes per timestep.
+bandwidth_reduction : float
+    Reduction vs naive assignment.
+num_chips : int
+    Total chips used.
+
+
+### Class `NIRGraph`
+Imported NIR/ONNX-SNN graph representation.
+
+Attributes
+----------
+nodes : dict&#91;str, dict&#93;
+    Node name → parameters.
+edges : list&#91;tuple&#91;str, str&#93;&#93;
+    Directed edges (source, target).
+equations : dict&#91;str, str&#93;
+    Extracted ODE equations per node.
+framework : str
+    Source framework.
+
+
+### Class `DebugProbeSpec`
+Auto-generated debug probe specification.
+
+Attributes
+----------
+probe_type : str
+    ``"ila"`` (Xilinx) or ``"signaltap"`` (Intel).
+signals : list&#91;str&#93;
+    Probed signal names.
+depth : int
+    Capture depth.
+tcl_commands : str
+    Vendor-specific TCL to insert probes.
+
+
+### Function `verilog_to_vhdl_wrapper(module_name)`
+Generate a VHDL-2008 entity/architecture wrapper for a Verilog module.
+
+This produces a VHDL entity that matches the Verilog module's port list,
+enabling mixed-language simulation and synthesis (Vivado, Questa, GHDL).
+The VHDL wrapper instantiates the Verilog module as a component.
 
 Parameters
 ----------
-name : str
-    Case-insensitive profile name (e.g. ``"loihi2"``, ``"artix7"``).
+module_name : str
+    Verilog module name.
+data_width : int
+    Fixed-point data width.
+signed : bool
+    Whether ports use signed types.
 
 Returns
 -------
-HardwareProfile
-    The matching profile.
+str
+    VHDL-2008 source code.
 
-Raises
-------
-KeyError
-    If no profile matches.
-
-### Function `list_profiles()`
-List all registered hardware profiles, optionally filtered.
+### Function `posit_encode(value, config)`
+Encode a float to posit integer representation.
 
 Parameters
 ----------
-platform_class : str, optional
-    Filter by class: ``"fpga"``, ``"neuromorphic"``, ``"asic"``, ``"simulation"``
-    ``"accelerator"``, ``"dsp"``, ``"photonic"``, ``"in_memory"``, ``"emerging"``.
-vendor : str, optional
-    Filter by vendor name (case-insensitive substring match).
+value : float
+    Value to encode.
+config : PositConfig
+    Posit format.
 
 Returns
 -------
-list[HardwareProfile]
-    Matching profiles, sorted by (platform_class, vendor, name).
+int
+    Posit-encoded integer (nbits wide).
 
-### Function `list_profile_names()`
-Return all registered profile names, sorted.
-
-### Function `load_toml_profile(path)`
-Load a user-defined hardware profile from a TOML file.
-
-Enables users to register custom hardware targets without modifying
-the SC-NeuroCore source. TOML format::
-
-    [profile]
-    name = "my_chip"
-    vendor = "My Corp"
-    family = "ChipNet-1"
-    platform_class = "accelerator"
-    data_width = 16
-    fraction = 8
-    overflow = "saturate"
-    rounding = "nearest"
-    max_freq_mhz = 500
-    dsp_block = "MAC"
-    dsp_mult_a = 16
-    dsp_mult_b = 16
-    notes = "Custom chip description."
+### Function `posit_decode(bits, config)`
+Decode a posit integer to float.
 
 Parameters
 ----------
-path : str
-    Path to the TOML file.
+bits : int
+    Posit-encoded integer.
+config : PositConfig
+    Posit format.
 
 Returns
 -------
-HardwareProfile
-    The loaded and registered profile.
+float
+    Decoded value.
 
-Raises
-------
-FileNotFoundError
-    If the TOML file does not exist.
-ValueError
-    If required fields are missing.
-
-### Function `load_toml_profiles_dir(directory)`
-Load all TOML profiles from a directory.
-
-Scans the directory for ``*.toml`` files and loads each as a hardware
-profile. Useful for bulk-registering custom targets.
+### Function `generate_tcl_project(module_name)`
+Generate FPGA project TCL script.
 
 Parameters
 ----------
-directory : str
-    Path to the directory containing TOML profile files.
+module_name : str
+    Top-level module name.
+tool : str
+    ``"vivado"`` or ``"quartus"``.
+part : str
+    Target FPGA part number.
+verilog_files : list, optional
+    Verilog source files.
+constraint_file : str, optional
+    Constraint file (XDC/SDC).
 
 Returns
 -------
-list[HardwareProfile]
-    All loaded profiles.
+str
+    Complete TCL script.
+
+### Function `_gen_vivado_tcl(module_name, part, verilog_files, constraint_file)`
+Generate Xilinx Vivado project TCL.
+
+### Function `_gen_quartus_tcl(module_name, part, verilog_files, constraint_file)`
+Generate Intel Quartus project TCL.
+
+### Function `generate_oss_makefile(module_name)`
+Generate a Makefile for open-source FPGA synthesis (Yosys + nextpnr).
+
+Parameters
+----------
+module_name : str
+    Top-level module name.
+target : str
+    ``"ice40"`` or ``"ecp5"``.
+device : str
+    Device string (e.g. ``"hx8k"``, ``"um5g-85k"``).
+package : str
+    Package (e.g. ``"ct256"``, ``"CABGA381"``).
+freq_mhz : float
+    Target frequency.
+verilog_files : list, optional
+    Verilog source files.
+pcf_file : str, optional
+    Pin constraint file.
+
+Returns
+-------
+str
+    Complete Makefile content.
+
+### Function `generate_dvs_aer_bridge(module_name)`
+Generate a DVS (Dynamic Vision Sensor) to AER bridge in Verilog.
+
+Converts Prophesee / Metavision / Sony IMX636 event packets into
+the SC-NeuroCore AER address-event protocol for zero-copy sensor-
+to-spike-network interfacing on FPGA.
+
+Parameters
+----------
+module_name : str
+    Output module name.
+addr_width : int
+    Pixel address width (covers X*Y event space).
+polarity_bit : bool
+    Include ON/OFF polarity in the event word.
+timestamp_width : int
+    Timestamp field width in bits.
+fifo_depth : int
+    Input event FIFO depth (power of 2).
+
+Returns
+-------
+str
+    Synthesisable Verilog module.
+
+### Function `mxfp_encode_block(values, config)`
+Encode a block of floats to MXFP format.
+
+Parameters
+----------
+values : list&#91;float&#93;
+    Block of float values (len must equal config.block_size).
+config : MXFPConfig
+    MXFP format configuration.
+
+Returns
+-------
+tuple&#91;int, list&#91;int&#93;&#93;
+    (shared_exponent, list_of_encoded_elements).
+
+### Function `mxfp_decode_block(shared_exp, elements, config)`
+Decode a block of MXFP elements to floats.
+
+Parameters
+----------
+shared_exp : int
+    Shared exponent.
+elements : list&#91;int&#93;
+    Encoded element integers.
+config : MXFPConfig
+    MXFP format configuration.
+
+Returns
+-------
+list&#91;float&#93;
+    Decoded float values.
+
+### Function `generate_weight_rom(weights, module_name)`
+Generate a weight ROM for synaptic connections.
+
+Produces either a Verilog ROM module or a Xilinx ``.coe`` / Intel
+``.mif`` memory initialisation file for BRAM-based weight storage.
+
+Parameters
+----------
+weights : list&#91;list&#91;int&#93;&#93;
+    2D weight matrix &#91;src_neuron&#93;&#91;dst_neuron&#93; in Q-format integers.
+module_name : str
+    ROM module name.
+data_width : int
+    Weight bit width.
+output_format : str
+    ``"verilog"`` (synthesisable ROM), ``"coe"`` (Xilinx), ``"mif"`` (Intel).
+
+Returns
+-------
+str
+    Weight ROM in the specified format.
+
+### Function `auto_quantisation_sweep(equations, target)`
+Sweep data widths to find accuracy-vs-resource trade-offs.
+
+Compiles the same ODE equations at multiple quantisation levels
+(Q4.2 through Q32.16) and reports the resource cost and numerical
+precision for each. Enables rapid design-space exploration.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    ODE equations mapping state variable names to expressions.
+target : str
+    Target platform name for resource estimation.
+widths : list&#91;int&#93;, optional
+    Data widths to sweep. Defaults to ``&#91;4, 8, 12, 16, 20, 24, 32&#93;``.
+fraction_ratio : float
+    Fraction of data_width used for fractional bits (default 0.5).
+
+Returns
+-------
+list&#91;QuantSweepResult&#93;
+    Sweep results sorted by data_width (ascending).
+
+### Function `format_quantisation_report(results)`
+Format a quantisation sweep into a readable markdown table.
+
+Parameters
+----------
+results : list&#91;QuantSweepResult&#93;
+    Results from ``auto_quantisation_sweep()``.
+
+Returns
+-------
+str
+    Markdown table comparing all quantisation levels.
+
+### Function `generate_hls_cpp(module_name, equations)`
+Translate compiled neuron equations to Vitis/Catapult HLS C++.
+
+Generates a synthesisable C++ function with ``#pragma HLS`` directives
+for Xilinx Vitis HLS or Siemens Catapult. Enables HW/SW co-design
+workflows where the neuron runs as an HLS IP block alongside a
+MicroBlaze or RISC-V soft processor.
+
+Parameters
+----------
+module_name : str
+    Function/module name.
+equations : dict&#91;str, str&#93;
+    ODE equations (state_var → C-style expression).
+data_width : int
+    Fixed-point total width.
+fraction : int
+    Fractional bits.
+hls_tool : str
+    ``"vitis"`` or ``"catapult"``.
+
+Returns
+-------
+str
+    Complete HLS C++ source file.
+
+### Function `generate_learning_params()`
+Generate on-chip learning parameters for neuromorphic targets.
+
+Creates calibration parameters for platforms with in-situ
+plasticity (BrainChip Akida 2, BrainScaleS-2, SpiNNaker 2).
+
+Parameters
+----------
+learning_rule : str
+    ``"stdp"`` (spike-timing), ``"rstdp"`` (reward-modulated),
+    or ``"triplet"`` (triplet-based STDP).
+tau_plus_ms : float
+    LTP time constant.
+tau_minus_ms : float
+    LTD time constant.
+a_plus : float
+    Potentiation amplitude.
+a_minus : float
+    Depression amplitude.
+w_max : float
+    Weight ceiling.
+w_min : float
+    Weight floor.
+reward_tau_ms : float
+    Reward eligibility trace time constant.
+target : str
+    Target platform name.
+
+Returns
+-------
+OnChipLearningParams
+    Complete learning parameter set.
+
+### Function `export_learning_config(params)`
+Export on-chip learning parameters as a configuration file.
+
+Parameters
+----------
+params : OnChipLearningParams
+    Learning parameters from ``generate_learning_params()``.
+output_format : str
+    ``"json"`` or ``"yaml"``.
+
+Returns
+-------
+str
+    Configuration file content.
+
+### Function `inject_weight_noise(weights)`
+Inject device-variation noise into a weight matrix.
+
+Simulates manufacturing variations and read noise in analog
+compute-in-memory (Mythic, IBM PCM) and memristive crossbar
+(Rain AI) targets. Enables robustness validation before tapeout.
+
+Parameters
+----------
+weights : list&#91;list&#91;float | int&#93;&#93;
+    Original weight matrix.
+noise_model : str
+    ``"gaussian"``, ``"uniform"``, or ``"lognormal"``.
+sigma : float
+    Noise magnitude (fraction of weight range).
+seed : int, optional
+    Random seed for reproducibility.
+
+Returns
+-------
+list&#91;list&#91;float&#93;&#93;
+    Weight matrix with injected noise.
+
+### Function `create_noise_profile()`
+Create a device-variation noise profile for analog targets.
+
+Parameters
+----------
+noise_model : str
+    Noise distribution type.
+sigma : float
+    Read noise standard deviation.
+cycle_drift : float
+    Weight drift per program/erase cycle.
+retention_loss_per_day : float
+    Daily state retention loss.
+target : str
+    Target platform.
+
+Returns
+-------
+WeightNoiseProfile
+    Complete noise characterisation.
+
+### Function `partition_timescales(equations, time_constants)`
+Partition ODE equations by timescale for multi-clock execution.
+
+Identifies fast vs slow dynamics and assigns them to different
+clock domains, inserting CDC synchronisers at domain boundaries.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    ODE equations.
+time_constants : dict&#91;str, float&#93;, optional
+    Known time constants per variable (ms). If None, estimated
+    from equation structure.
+threshold_ratio : float
+    Ratio above which a variable is considered "slow".
+
+Returns
+-------
+TimescalePartition
+    Partitioned system with clock assignments.
+
+### Function `plan_heterogeneous_dispatch(equations, backends)`
+Plan multi-backend dispatch for an SNN model.
+
+Splits ODE variables across heterogeneous backends based on
+compute characteristics (fast dynamics → FPGA, slow → MCU,
+learning → GPU).
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    ODE equations.
+backends : list&#91;str&#93;
+    Available backend targets.
+neuron_count : int
+    Total neurons.
+time_constants : dict&#91;str, float&#93;, optional
+    Time constants per variable.
+
+Returns
+-------
+DispatchPlan
+    Multi-backend assignment.
+
+### Function `recommend_target(equations)`
+Recommend optimal hardware targets for a neuron model.
+
+Given ODE equations and constraints, ranks all registered
+profiles and returns the top N recommendations.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    ODE equations.
+max_power_mw : float, optional
+    Maximum power budget.
+min_freq_mhz : float, optional
+    Minimum clock frequency.
+max_data_width : int, optional
+    Maximum data width.
+require_class : str, optional
+    Required platform class.
+top_n : int
+    Number of recommendations.
+
+Returns
+-------
+list&#91;TargetRecommendation&#93;
+    Ranked recommendations.
+
+### Function `plan_partial_reconfiguration(equations)`
+Plan FPGA partial reconfiguration for SNN time-multiplexing.
+
+Splits neuron equations across reconfigurable regions and
+generates a swap schedule.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    ODE equations.
+max_regions : int
+    Maximum reconfigurable regions.
+time_slots : int
+    Number of time-multiplexed slots.
+
+Returns
+-------
+ReconfigPartition
+    Partition plan with schedule.
+
+### Function `optimize_network_topology(adjacency)`
+Optimize SNN partitioning across multiple chips.
+
+Minimises inter-chip spike communication by grouping
+heavily-connected neurons onto the same chip.
+
+Parameters
+----------
+adjacency : dict&#91;int, list&#91;int&#93;&#93;
+    Neuron connectivity: source → list of targets.
+num_chips : int
+    Number of available chips.
+neurons_per_chip : int, optional
+    Max neurons per chip. Default: ceil(N / num_chips).
+
+Returns
+-------
+TopologyPlan
+    Optimised chip assignment.
+
+### Function `import_nir_graph(nir_data)`
+Import a Neuromorphic Intermediate Representation graph.
+
+Converts NIR node definitions into ODE equations suitable
+for the SC-NeuroCore compilation pipeline.
+
+Parameters
+----------
+nir_data : dict
+    NIR graph as dictionary with 'nodes' and 'edges'.
+framework : str
+    Source framework name.
+
+Returns
+-------
+NIRGraph
+    Imported graph with extracted equations.
+
+### Function `insert_debug_probes(module_name, equations)`
+Auto-insert ILA/SignalTap debug probes.
+
+Parameters
+----------
+module_name : str
+    Module name.
+equations : dict&#91;str, str&#93;
+    ODE equations (state variables become probed signals).
+vendor : str
+    ``"xilinx"`` or ``"intel"``.
+depth : int
+    Capture depth in samples.
+
+Returns
+-------
+DebugProbeSpec
+    Probe specification with TCL commands.
+
+---
+
+## Module `compiler.intelligence.digital_twin`
+
+### Class `DriftCompensator`
+Analog drift compensation parameters.
+
+Attributes
+----------
+refresh_interval_ms : float
+    How often to re-calibrate (ms).
+drift_rate_per_day : float
+    Expected weight drift per day.
+compensation_method : str
+    ``"periodic_refresh"``, ``"adaptive"``, or ``"ecc"``.
+verilog_controller : str
+    Generated Verilog refresh controller.
+
+
+### Class `HILCalibration`
+Hardware-in-the-loop calibration protocol.
+
+Attributes
+----------
+protocol_steps : list&#91;str&#93;
+num_parameters : int
+sweep_ranges : dict&#91;str, tuple&#91;float, float&#93;&#93;
+
+
+### Class `ScrubSchedule`
+Configuration memory scrubbing schedule.
+
+Attributes
+----------
+interval_ms : float
+strategy : str
+frames_per_cycle : int
+expected_seu_rate : float
+
+
+### Class `TelemetryResult`
+Hardware telemetry comparison result.
+
+Attributes
+----------
+samples : int
+max_drift : float
+mean_drift : float
+alerts : list&#91;str&#93;
+healthy : bool
+
+
+### Function `generate_drift_compensator(module_name)`
+Generate analog drift compensation controller.
+
+For analog/memristive targets, creates on-chip calibration
+circuits that periodically refresh weights to compensate
+for device aging and retention loss.
+
+Parameters
+----------
+module_name : str
+    Module name.
+drift_rate_per_day : float
+    Weight drift per day (fraction).
+max_drift_tolerance : float
+    Maximum acceptable drift before refresh.
+clock_freq_mhz : int
+    Clock frequency.
+compensation_method : str
+    Compensation strategy.
+
+Returns
+-------
+DriftCompensator
+    Controller with Verilog.
+
+### Function `_validate_hil_contract(module_name, equations, parameters, sample_points, repetitions, settle_cycles, acceptance_tolerance)`
+### Function `_coprime_stride(sample_points, start)`
+### Function `_latin_hypercube_design(parameters, sample_points)`
+### Function `generate_hil_calibration(module_name, equations)`
+Generate hardware-in-the-loop calibration protocol.
+
+Produces a step-by-step calibration procedure for compensating
+analog drift, mismatch, and process variation on real hardware.
+
+Parameters
+----------
+module_name : str
+    Module name.
+equations : dict&#91;str, str&#93;
+    State variable equations.
+parameters : dict&#91;str, tuple&#91;float, float&#93;&#93;, optional
+    Parameter sweep ranges {name: (min, max)}.
+sample_points : int
+    Deterministic Latin-hypercube design points across the parameter space.
+repetitions : int
+    Repeated measurements per design point for variance estimation.
+settle_cycles : int
+    Hardware cycles to wait before sampling after each parameter update.
+acceptance_tolerance : float
+    Maximum absolute drift allowed for each observable.
+correction_model : str
+    Calibration model fitted to measured residuals.
+observables : tuple&#91;str, ...&#93;, optional
+    State variables to compare against the software golden model.
+
+Returns
+-------
+HILCalibration
+
+### Function `generate_digital_twin(module_name, equations, profile_name)`
+Generate a Python digital twin that mirrors deployed hardware.
+
+The twin tracks identical state transitions in software, enabling
+runtime comparison, anomaly detection, and predictive maintenance.
+
+Parameters
+----------
+module_name : str
+    Module name.
+equations : dict&#91;str, str&#93;
+    State variable equations.
+profile_name : str
+    Target hardware profile.
+
+Returns
+-------
+str
+    Python source code for the digital twin class.
+
+### Function `schedule_seu_scrubbing(config_bits)`
+Generate scrubbing schedule for space-grade configuration memory.
+
+Uses orbital altitude and shielding to estimate SEU rate, then
+calculates optimal scrub interval for target reliability.
+
+Parameters
+----------
+config_bits : int
+    Total configuration memory bits.
+orbit_altitude_km : float
+    Orbital altitude (affects particle flux).
+shielding_mm_al : float
+    Aluminium shielding thickness.
+strategy : str
+    "blind" (full-chip) or "hybrid" (targeted + periodic full).
+
+Returns
+-------
+ScrubSchedule
+
+### Function `ingest_telemetry(telemetry_data, twin_states)`
+Ingest hardware telemetry and compare against digital twin.
+
+Parameters
+----------
+telemetry_data : list&#91;dict&#91;str, float&#93;&#93;
+    List of hardware state snapshots {var: value}.
+twin_states : list&#91;dict&#91;str, float&#93;&#93;
+    Corresponding digital twin states.
+drift_threshold : float
+    Alert threshold for absolute drift.
+
+Returns
+-------
+TelemetryResult
+
+---
+
+## Module `compiler.intelligence.exotic_physics`
+
+### Class `MZIWeightEncoding`
+Encoded weights for a Mach-Zehnder interferometer photonic array.
+
+Attributes
+----------
+phases_theta : list&#91;list&#91;float&#93;&#93;
+    Phase-shift θ values (radians) for each MZI in the mesh.
+phases_phi : list&#91;list&#91;float&#93;&#93;
+    Phase-shift φ values (radians) for external phase shifters.
+transmission : list&#91;list&#91;float&#93;&#93;
+    Effective transmission coefficients.
+mesh_size : int
+    Number of MZI columns in the Clements mesh.
+
+
+### Class `OmniDispatchMap`
+
+### Class `ReversibleNetlist`
+
+### Class `MEAMapping`
+
+### Class `Morphology`
+
+### Class `CognitiveBounds`
+
+### Class `AdiabaticPhase`
+
+### Class `HolographicRouter`
+
+### Function `encode_mzi_weights(weights)`
+Encode a weight matrix as MZI phase-shift parameters.
+
+Converts a real-valued weight matrix into the (θ, φ) phase-shift
+representation used by photonic Mach-Zehnder interferometer meshes
+(Lightmatter, iPronics, Xanadu). Uses the Clements decomposition
+to map an arbitrary unitary matrix to a cascade of 2×2 beam splitters.
+
+Parameters
+----------
+weights : list&#91;list&#91;float | int&#93;&#93;
+    Weight matrix (N×M). Values are normalised to &#91;-1, 1&#93;.
+mesh_type : str
+    ``"clements"`` (triangular) or ``"reck"`` (rectangular).
+loss_db_per_mzi : float
+    Insertion loss per MZI in dB (for transmission estimation).
+
+Returns
+-------
+MZIWeightEncoding
+    Phase-shift parameters and transmission coefficients.
+
+### Function `generate_mzi_config(encoding)`
+Generate a photonic chip configuration file from MZI weights.
+
+Parameters
+----------
+encoding : MZIWeightEncoding
+    Phase-shift encoding from ``encode_mzi_weights()``.
+output_format : str
+    ``"json"`` or ``"csv"``.
+
+Returns
+-------
+str
+    Configuration file content.
+
+### Function `dispatch_omni_paradigm(equations)`
+### Function `synthesize_reversible_logic(equations, bits)`
+### Function `map_wetware_mea(populations, connectivity)`
+### Function `synthesize_morphology(equations, max_generations)`
+### Function `enforce_cognitive_bounds(equations, state_bounds)`
+### Function `generate_adiabatic_clocks(phases, freq_mhz)`
+### Function `route_holographic_interconnects(num_neurons, connections)`
+---
+
+## Module `compiler.intelligence.power_and_thermal`
+
+### Class `ThermalEstimate`
+Thermal analysis result for a compiled neuron.
+
+Attributes
+----------
+power_mw : float
+    Estimated total power in milliwatts.
+delta_t_c : float
+    Estimated temperature rise in °C.
+junction_temp_c : float
+    Estimated junction temperature.
+hotspot_delta_t_c : float
+    Local temperature rise from concentrated DSP power.
+derated_freq_mhz : float
+    Frequency after thermal derating.
+thermal_safe : bool
+    True if junction temp is within limits.
+hotspot_risk : str
+    ``"none"``, ``"low"``, ``"medium"``, ``"high"``.
+
+
+### Class `EnergySchedule`
+Energy-aware neuron update schedule.
+
+Attributes
+----------
+total_neurons : int
+    Total neurons.
+energy_budget_uj : float
+    Energy budget per epoch (µJ).
+neurons_per_epoch : int
+    Neurons updatable within budget.
+update_order : list&#91;int&#93;
+    Priority-ordered neuron indices.
+epoch_duration_ms : float
+    Epoch duration.
+duty_cycle : float
+    Fraction of neurons updated per epoch.
+
+
+### Class `ThermalEnvelopeEstimate`
+Junction temperature estimate.
+
+Attributes
+----------
+power_mw : float
+    Estimated power dissipation (mW).
+theta_ja : float
+    Junction-to-ambient thermal resistance (°C/W).
+t_ambient : float
+    Ambient temperature (°C).
+t_junction : float
+    Estimated junction temperature (°C).
+thermal_margin : float
+    Margin to max T_j (°C).
+pass_fail : str
+    ``"PASS"`` or ``"FAIL"``.
+
+
+### Class `ApproximationConfig`
+Approximate computing configuration.
+
+Attributes
+----------
+populations : dict&#91;str, dict&#93;
+total_energy_savings_pct : float
+max_output_error_pct : float
+
+
+### Class `EnergyHarvestBudget`
+Energy harvesting feasibility analysis.
+
+Attributes
+----------
+harvester_power_uw : float
+design_power_uw : float
+energy_positive : bool
+recommended_duty_cycle : float
+margin_pct : float
+
+
+### Function `thermal_analysis(estimated_power_mw, target_freq_mhz)`
+Estimate thermal impact and frequency derating.
+
+Estimates lumped junction rise from total power and applies timing
+derating from both die temperature and DSP-column concentration.
+
+Parameters
+----------
+estimated_power_mw : float
+    Estimated power from ``estimate_power()`` or synthesis.
+target_freq_mhz : float
+    Nominal target frequency.
+theta_ja : float
+    Junction-to-ambient thermal resistance (°C/W).
+    Typical: ~11.5 for Artix-7 BGA, ~3.5 for Versal with heatsink.
+t_ambient_c : float
+    Ambient temperature.
+t_junction_max_c : float
+    Maximum junction temperature.
+process_nm : int
+    Process node (affects derating sensitivity).
+mul_count : int
+    Number of DSP multipliers (affects hotspot risk).
+dsp_columns : int
+    Number of DSP columns to spread across.
+dsp_power_mw : float, optional
+    DSP-attributed dynamic power for local hotspot analysis. When omitted,
+    local spreading rise is not added.
+theta_spreading : float
+    Local spreading resistance from a DSP column hotspot to the bulk
+    junction node (°C/W).
+
+Returns
+-------
+ThermalEstimate
+    Thermal analysis with derating and hotspot risk.
+
+### Function `_require_finite(value, name)`
+### Function `_require_finite_positive(value, name)`
+### Function `_require_finite_non_negative(value, name)`
+### Function `generate_thermal_constraints(module_name, analysis)`
+Generate XDC constraints for thermal-aware DSP placement.
+
+Spreads DSP blocks across multiple columns to reduce thermal hotspots
+and adds temperature-derated timing constraints.
+
+Parameters
+----------
+module_name : str
+    Module name.
+analysis : ThermalEstimate
+    Thermal analysis result.
+dsp_columns : int
+    Number of DSP columns to distribute across.
+
+Returns
+-------
+str
+    XDC constraint snippet for thermal-aware placement.
+
+### Function `generate_energy_schedule(neuron_count)`
+Generate energy-budget-aware neuron update schedule.
+
+For energy-harvesting edge devices (solar, vibration, RF),
+schedules neuron updates to fit within the available energy.
+
+Parameters
+----------
+neuron_count : int
+    Total neurons.
+energy_budget_uj : float
+    Available energy per epoch (µJ).
+energy_per_neuron_nj : float
+    Energy per neuron update (nJ).
+epoch_duration_ms : float
+    Epoch duration (ms).
+priority_neurons : list&#91;int&#93;, optional
+    High-priority neuron indices (updated first).
+
+Returns
+-------
+EnergySchedule
+    Update schedule.
+
+### Function `estimate_thermal_envelope()`
+Predict junction temperature from power dissipation.
+
+Uses simple thermal resistance model: T_j = T_a + P × θ_ja.
+
+Parameters
+----------
+power_mw : float
+    Power dissipation (mW).
+theta_ja : float
+    Junction-to-ambient thermal resistance (°C/W).
+t_ambient : float
+    Ambient temperature (°C).
+t_junction_max : float
+    Maximum allowed junction temperature (°C).
+
+Returns
+-------
+ThermalEnvelopeEstimate
+    Temperature estimate with pass/fail.
+
+### Function `generate_power_intent(module_name)`
+Generate IEEE 1801 UPF power intent for neuron arrays.
+
+Creates power domain definitions, isolation rules, and
+retention strategies for multi-voltage SNN designs.
+
+Parameters
+----------
+module_name : str
+    Top module name.
+num_domains : int
+    Number of power domains.
+always_on : bool
+    Whether to include always-on domain.
+
+Returns
+-------
+str
+    UPF source text.
+
+### Function `generate_power_state_machine(module_name)`
+Generate sleep/wake/hibernate FSM for ultra-low-power.
+
+Parameters
+----------
+module_name : str
+    Module name.
+states : list&#91;str&#93;, optional
+    FSM states. Default: ACTIVE, IDLE, SLEEP, HIBERNATE.
+
+Returns
+-------
+str
+    Verilog FSM source.
+
+### Function `configure_approximation(equations)`
+Configure precision-energy tradeoff knobs per state variable.
+
+Analyses each variable's dynamic range and recommends bit-width
+reduction and stochastic rounding to achieve target energy savings
+while bounding output error.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    State variable equations.
+target_savings_pct : float
+    Target energy savings percentage.
+max_error_pct : float
+    Maximum acceptable output error percentage.
+
+Returns
+-------
+ApproximationConfig
+
+### Function `model_energy_harvest(design_power_uw)`
+Model whether an energy harvester can sustain the neural workload.
+
+Parameters
+----------
+design_power_uw : float
+    Design power consumption in microwatts.
+harvester_type : str
+    "solar", "piezo", "thermal", or "rf".
+harvester_area_cm2 : float
+    Harvester active area.
+environment : str
+    "indoor", "outdoor", or "industrial".
+
+Returns
+-------
+EnergyHarvestBudget
+
+### Function `generate_dvfs_controller(module_name)`
+Generate a Verilog DVFS controller FSM.
+
+Parameters
+----------
+module_name : str
+    Module name.
+operating_points : list&#91;dict&#93;, optional
+    &#91;{voltage_mv, freq_mhz}&#93;. Default: 3 points.
+spike_rate_thresholds : list&#91;float&#93;, optional
+    Spike rate thresholds for state transitions.
+
+Returns
+-------
+str
+    Synthesisable Verilog source code.
+
+---
+
+## Module `compiler.intelligence.reporting`
+
+### Class `TargetComparison`
+Compilation comparison for one target.
+
+Attributes
+----------
+target : str
+    Platform name.
+data_width : int
+    Selected data width.
+fraction : int
+    Fractional bits.
+overflow : str
+    Overflow mode.
+dsp_block : str
+    DSP block type.
+max_freq_mhz : int | None
+    Maximum frequency.
+estimated_luts : int
+    Estimated LUT usage.
+estimated_dsps : int
+    Estimated DSP usage.
+pipeline_stages : int
+    Required pipeline stages.
+critical_path_depth : int
+    DSP chain depth.
+
+
+### Class `ProvenanceRecord`
+Cryptographic audit trail entry.
+
+Attributes
+----------
+stage : str
+    Pipeline stage name.
+input_hash : str
+    SHA-256 of input artefact.
+output_hash : str
+    SHA-256 of output artefact.
+timestamp : str
+    ISO 8601 timestamp.
+parameters : dict
+    Compilation parameters used.
+
+
+### Class `ModelComplexity`
+Model compute-profile classification.
+
+Attributes
+----------
+classification : str
+    ``"compute_bound"``, ``"memory_bound"``, or ``"comm_bound"``.
+compute_ops : int
+    Total arithmetic operations.
+memory_vars : int
+    State variables (memory footprint proxy).
+comm_ratio : float
+    Inter-variable coupling ratio.
+recommended_paradigm : str
+    Best platform class.
+
+
+### Class `PortabilityScore`
+Cross-platform portability assessment.
+
+Attributes
+----------
+score : float
+    Portability score 0-100.
+compatible_profiles : int
+    Number of compatible profiles.
+total_profiles : int
+    Total profiles checked.
+blockers : list&#91;str&#93;
+    Portability blockers.
+
+
+### Class `ParetoPoint`
+A single Pareto-optimal design point.
+
+Attributes
+----------
+config : dict
+power_mw : float
+area_luts : int
+latency_ns : float
+
+
+### Function `compare_targets(equations, targets)`
+Compare compilation results across multiple hardware targets.
+
+Compiles the same ODE equations for each target and reports
+resource usage, precision, and pipeline requirements side-by-side.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    ODE equations.
+targets : list&#91;str&#93;
+    List of target platform names.
+
+Returns
+-------
+list&#91;TargetComparison&#93;
+    Comparison results for each target.
+
+### Function `format_comparison_report(results)`
+Format a multi-target comparison as a markdown table.
+
+Parameters
+----------
+results : list&#91;TargetComparison&#93;
+    Results from ``compare_targets()``.
+
+Returns
+-------
+str
+    Markdown comparison table.
+
+### Function `generate_compilation_summary(module_name, equations, target)`
+Generate a comprehensive human-readable compilation summary.
+
+Produces a markdown document summarising all aspects of a
+compilation: equations, target, precision, resources, pipeline,
+guard bits, and applicable strategic features.
+
+Parameters
+----------
+module_name : str
+    Compiled module name.
+equations : dict&#91;str, str&#93;
+    ODE equations compiled.
+target : str
+    Target platform.
+data_width : int
+    Total bit width.
+fraction : int
+    Fractional bits.
+verilog_lines : int
+    Lines of generated Verilog (0 if not counted).
+
+Returns
+-------
+str
+    Markdown compilation summary.
+
+### Function `generate_provenance_chain(module_name, equations, verilog_source)`
+Generate a cryptographic provenance chain for compilation.
+
+Creates a full audit trail from source equations through
+compiled RTL, with SHA-256 hashes at every stage.
+
+Parameters
+----------
+module_name : str
+    Module name.
+equations : dict&#91;str, str&#93;
+    Source ODE equations.
+verilog_source : str
+    Generated Verilog (if available).
+target : str
+    Target platform.
+data_width : int
+    Fixed-point width.
+fraction : int
+    Fractional bits.
+
+Returns
+-------
+list&#91;ProvenanceRecord&#93;
+    Ordered provenance records.
+
+### Function `format_provenance_json(chain)`
+Format provenance chain as JSON manifest.
+
+Parameters
+----------
+chain : list&#91;ProvenanceRecord&#93;
+    From ``generate_provenance_chain()``.
+
+Returns
+-------
+str
+    JSON manifest.
+
+### Function `classify_model_complexity(equations)`
+Classify a model's compute profile.
+
+Determines whether the model is compute-bound, memory-bound,
+or communication-bound and recommends the best platform paradigm.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    ODE equations.
+
+Returns
+-------
+ModelComplexity
+    Classification with recommended paradigm.
+
+### Function `score_portability(equations)`
+Score how portable a model is across all profiles.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    ODE equations.
+min_data_width : int
+    Minimum acceptable data width.
+
+Returns
+-------
+PortabilityScore
+    Portability assessment.
+
+### Function `generate_compilation_report(module_name, equations, profile_name)`
+Generate comprehensive compilation report.
+
+Consolidates Verilog, timing, power, carbon, risk,
+and reliability into a single markdown document.
+
+Parameters
+----------
+module_name : str
+    Module name.
+equations : dict&#91;str, str&#93;
+    ODE equations.
+profile_name : str
+    Target profile.
+include_carbon : bool
+    Include carbon footprint section.
+include_reliability : bool
+    Include reliability prediction.
+
+Returns
+-------
+str
+    Markdown report.
+
+### Function `explore_pareto(equations)`
+Explore power/area/latency Pareto frontier.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    State variable equations.
+widths : list&#91;int&#93;, optional
+    Bit widths to sweep. Default: &#91;8, 16, 24, 32&#93;.
+pipeline_depths : list&#91;int&#93;, optional
+    Pipeline stages to sweep. Default: &#91;1, 2, 4&#93;.
+
+Returns
+-------
+list&#91;ParetoPoint&#93;
+    Non-dominated design points.
+
+---
+
+## Module `compiler.intelligence.security_and_compliance`
+
+### Class `SideChannelFinding`
+Side-channel leakage finding.
+
+Attributes
+----------
+signal : str
+    Signal name.
+risk_level : str
+    ``"high"``, ``"medium"``, or ``"low"``.
+category : str
+    ``"timing"`` or ``"power"``.
+description : str
+    Explanation.
+recommendation : str
+    Mitigation suggestion.
+
+
+### Class `SupplyChainRisk`
+Supply chain risk assessment for a hardware profile.
+
+Attributes
+----------
+profile_name : str
+    Assessed profile.
+risk_score : float
+    Risk score 0-100 (higher = riskier).
+risk_factors : list&#91;str&#93;
+    Individual risk factor descriptions.
+alternatives : list&#91;str&#93;
+    Suggested alternative profiles.
+export_control : str
+    Export control classification.
+
+
+### Class `CarbonEstimate`
+Carbon footprint estimate per compilation target.
+
+Attributes
+----------
+profile_name : str
+    Target profile.
+manufacturing_kg_co2 : float
+    Estimated manufacturing CO₂ (kg).
+operation_kg_co2_per_year : float
+    Estimated annual operation CO₂ (kg).
+total_5yr_kg_co2 : float
+    Total 5-year lifecycle CO₂ (kg).
+energy_mix : str
+    Assumed energy source.
+
+
+### Class `LicenseCheck`
+IP core license compatibility result.
+
+Attributes
+----------
+compatible : bool
+conflicts : list&#91;str&#93;
+licenses_found : list&#91;str&#93;
+
+
+### Class `TrojanLintResult`
+Hardware trojan lint analysis result.
+
+Attributes
+----------
+suspicious_paths : list&#91;str&#93;
+risk_level : str
+total_checks : int
+
+
+### Class `SBOM`
+Software/Hardware Bill of Materials.
+
+Attributes
+----------
+format : str
+components : list&#91;dict&#93;
+total_components : int
+
+
+### Class `ObfuscationResult`
+IP obfuscation report.
+
+Attributes
+----------
+techniques_applied : list&#91;str&#93;
+key_bits : int
+original_signals : int
+obfuscated_signals : int
+
+
+### Class `WatermarkResult`
+Netlist watermark embedding result.
+
+Attributes
+----------
+watermark_hash : str
+embedding_method : str
+overhead_percent : float
+verifiable : bool
+
+
+### Class `PQCProtection`
+Post-quantum cryptographic IP protection result.
+
+Attributes
+----------
+algorithm : str
+signature_hex : str
+key_size_bits : int
+quantum_safe : bool
+
+
+### Function `embed_model_checksum(verilog)`
+Embed a SHA-256 checksum of the compiled model in the Verilog source.
+
+Enables bit-exact reproducibility verification — the hash of the
+source equations and parameters is embedded as a Verilog comment and
+a localparam, allowing downstream tools to verify that the RTL
+matches the expected model.
+
+Parameters
+----------
+verilog : str
+    Generated Verilog source code.
+equations : dict&#91;str, str&#93;, optional
+    Original ODE equations (state_var → expression).
+params : dict&#91;str, int | float&#93;, optional
+    Compilation parameters (data_width, fraction, etc.).
+
+Returns
+-------
+str
+    Verilog with embedded checksum comment and localparam.
+
+### Function `generate_bitstream_encryption(module_name)`
+Generate bitstream encryption TCL/constraints for secure boot.
+
+Produces the vendor-specific TCL commands and XDC constraints to
+enable AES-256 bitstream encryption, protecting the compiled neuron
+IP from reverse-engineering and tampering.
+
+Parameters
+----------
+module_name : str
+    Design module name.
+vendor : str
+    ``"xilinx"`` or ``"intel"``.
+key_length : int
+    AES key length: 128 or 256.
+key_source : str
+    Key storage: ``"efuse"`` (one-time programmable),
+    ``"bbram"`` (battery-backed RAM), or ``"external"``.
+
+Returns
+-------
+str
+    TCL/Quartus script for bitstream encryption.
+
+### Function `lint_side_channels(equations)`
+Analyse equations for power/timing side-channel vulnerabilities.
+
+Flags data-dependent timing paths and variable-activity patterns
+in the generated RTL.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    ODE equations.
+module_name : str
+    Module name.
+data_width : int
+    Data width.
+
+Returns
+-------
+list&#91;SideChannelFinding&#93;
+    List of findings.
+
+### Function `score_supply_chain_risk(profile_name)`
+Assess supply chain risk for a hardware profile.
+
+Scores based on vendor geography, sole-source status,
+and export control classification.
+
+Parameters
+----------
+profile_name : str
+    Profile to assess.
+
+Returns
+-------
+SupplyChainRisk
+    Risk assessment.
+
+### Function `estimate_carbon_footprint(profile_name)`
+Estimate carbon footprint for a compilation target.
+
+Parameters
+----------
+profile_name : str
+    Target profile name.
+power_mw : float
+    Operating power (mW).
+hours_per_day : float
+    Operating hours per day.
+grid_carbon_g_per_kwh : float
+    Grid carbon intensity (g CO₂/kWh).
+
+Returns
+-------
+CarbonEstimate
+    Lifecycle carbon estimate.
+
+### Function `check_license_compliance(project_license, dependencies)`
+Verify IP core licensing compatibility.
+
+Parameters
+----------
+project_license : str
+    SPDX identifier of the project license.
+dependencies : dict&#91;str, str&#93;
+    Dependency name → SPDX license identifier.
+
+Returns
+-------
+LicenseCheck
+
+### Function `lint_hardware_trojans(equations)`
+Detect suspicious combinational paths that could hide trojans.
+
+Analyses the ODE dependency graph for dormant trigger conditions
+and rarely-activated payload paths that are classic trojan signatures.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    State variable equations.
+check_dormant : bool
+    Check for rarely-activated trigger paths.
+check_payload : bool
+    Check for suspicious payload injection points.
+
+Returns
+-------
+TrojanLintResult
+
+### Function `generate_sbom(module_name, profile_name)`
+Generate SBOM/HBOM for IP core compliance.
+
+Required by EU Cyber Resilience Act (2026). Generates a machine-
+readable component inventory in CycloneDX or SPDX format.
+
+Parameters
+----------
+module_name : str
+    Module name.
+profile_name : str
+    Target hardware profile.
+dependencies : dict&#91;str, str&#93;, optional
+    External dependencies {name: version}.
+sbom_format : str
+    Output format: "CycloneDX" or "SPDX".
+
+Returns
+-------
+SBOM
+
+### Function `obfuscate_ip(module_name, equations)`
+Apply logic locking and structural obfuscation for IP protection.
+
+Parameters
+----------
+module_name : str
+    Module name.
+equations : dict&#91;str, str&#93;
+    State variable equations.
+key_length : int
+    Obfuscation key length in bits.
+methods : list&#91;str&#93;, optional
+    Techniques to apply. Default: logic_locking, constant_propagation_block,
+    structural_transform.
+
+Returns
+-------
+ObfuscationResult
+
+### Function `embed_watermark(module_name, equations)`
+Embed a verifiable watermark into the compiled netlist.
+
+The watermark survives synthesis optimisation and can be verified
+without access to the original design.
+
+Parameters
+----------
+module_name : str
+    Module name.
+equations : dict&#91;str, str&#93;
+    State variable equations.
+owner_id : str
+    Owner identifier to embed.
+method : str
+    "constraint_based" or "don't_care_based".
+
+Returns
+-------
+WatermarkResult
+
+### Function `protect_ip_pqc(module_name, equations)`
+Apply post-quantum cryptographic protection to IP core.
+
+Parameters
+----------
+module_name : str
+    Module name.
+equations : dict&#91;str, str&#93;
+    State variable equations.
+algorithm : str
+    PQC algorithm. Default: CRYSTALS-Dilithium.
+security_level : int
+    NIST security level (2, 3, or 5).
+
+Returns
+-------
+PQCProtection
+
+---
+
+## Module `compiler.intelligence.soc_and_chiplet`
+
+### Class `StorageRecommendation`
+Storage recommendation for neuron array state.
+
+Attributes
+----------
+strategy : str
+    ``"registers"``, ``"bram"``, or ``"uram"``.
+neuron_count : int
+    Number of neurons in the array.
+total_bits : int
+    Total state bits.
+bram_18k_used : int
+    Estimated 18Kb BRAM tiles consumed.
+bram_36k_used : int
+    Estimated 36Kb BRAM tiles consumed.
+uram_used : int
+    Estimated URAM tiles consumed (UltraScale+ only).
+reason : str
+    Human-readable explanation.
+
+
+### Class `PIMLayout`
+Memory layout plan for Processing-in-Memory targets.
+
+Attributes
+----------
+bank_count : int
+    Number of memory banks used.
+neurons_per_bank : int
+    Neurons assigned per bank.
+weights_per_bank : int
+    Weight entries per bank.
+bank_utilisation : float
+    Fraction of bank capacity used (0.0–1.0).
+parallel_factor : int
+    Number of banks that can compute in parallel.
+layout_map : dict&#91;str, list&#91;int&#93;&#93;
+    Mapping of data regions to bank IDs.
+
+
+### Class `UCIePartition`
+Partitioning plan for a neuron array across chiplet tiles.
+
+Attributes
+----------
+tile_count : int
+    Number of chiplet tiles used.
+neurons_per_tile : int
+    Neurons assigned per tile.
+inter_tile_spikes : int
+    Estimated spikes crossing tile boundaries per timestep.
+die_to_die_bandwidth_gbps : float
+    Required UCIe bandwidth (Gbps).
+latency_penalty_ns : float
+    Additional latency from die-to-die communication.
+partition_map : dict&#91;int, list&#91;int&#93;&#93;
+    Tile ID → list of neuron indices.
+
+
+### Class `CXLMapping`
+CXL.mem Type-3 mapping for neuron state.
+
+Attributes
+----------
+device_count : int
+    Number of CXL memory devices.
+state_device_ids : list&#91;int&#93;
+    Devices hosting neuron state.
+weight_device_ids : list&#91;int&#93;
+    Devices hosting synaptic weights.
+total_capacity_gb : float
+    Total CXL memory capacity.
+host_bandwidth_gbps : float
+    Required host→CXL bandwidth.
+coherence_protocol : str
+    CXL protocol used (``"CXL.mem"`` or ``"CXL.cache"``).
+
+
+### Class `MemoryMap`
+Address decoder specification for neuron arrays.
+
+Attributes
+----------
+base_address : int
+    Base address of neuron array.
+entries : list&#91;dict&#91;str, int | str&#93;&#93;
+    Address map entries.
+total_bytes : int
+    Total address space consumed.
+decoder_verilog : str
+    Generated address decoder Verilog.
+
+
+### Class `FloorplanResult`
+Multi-die/chiplet floorplan assignment.
+
+Attributes
+----------
+die_assignment : dict&#91;str, int&#93;
+    Block name → die index.
+die_utilization : dict&#91;int, float&#93;
+    Die index → utilization (0-1).
+total_dies : int
+
+
+### Class `UCIeMapping`
+UCIe die-to-die protocol mapping result.
+
+Attributes
+----------
+lanes : dict&#91;str, int&#93;
+protocol_version : str
+total_bandwidth_gbps : float
+
+
+### Function `generate_cdc_synchroniser(signal_name)`
+Generate a CDC (Clock Domain Crossing) synchroniser in Verilog.
+
+Uses a multi-stage register chain to safely transfer signals between
+clock domains. For multi-bit buses, use a gray-code converter or
+handshake protocol instead.
+
+Parameters
+----------
+signal_name : str
+    Name of the signal being synchronised.
+width : int
+    Bit width (1 for single-bit CDC).
+stages : int
+    Number of synchroniser stages (2 minimum, 3 for MTBF).
+src_clock : str
+    Source clock name.
+dst_clock : str
+    Destination clock name.
+
+Returns
+-------
+str
+    Verilog CDC synchroniser module.
+
+### Function `storage_recommendation(neuron_count, state_bits_per_neuron)`
+Determine optimal storage strategy for a neuron array.
+
+Decides between registers (small), BRAM (medium), and URAM (large)
+based on total state bits and target capabilities.
+
+Parameters
+----------
+neuron_count : int
+    Number of neurons in the array.
+state_bits_per_neuron : int
+    State bits per neuron (e.g. 16 for Q8.8, 32 for Q16.16).
+has_uram : bool
+    True if the target has UltraRAM (UltraScale+ / Versal only).
+register_threshold : int
+    Max neurons for register-based storage.
+uram_threshold : int
+    Min neurons for URAM migration.
+
+Returns
+-------
+StorageRecommendation
+    Optimal storage strategy with resource estimates.
+
+### Function `generate_bram_array(module_name)`
+Generate a time-multiplexed BRAM-backed neuron array.
+
+A single compute pipeline is shared across N neurons with BRAM-backed
+state. The array processes one neuron per clock cycle.
+
+Parameters
+----------
+module_name : str
+    Module name.
+neuron_count : int
+    Number of neurons.
+data_width : int
+    Fixed-point data width.
+state_vars : int
+    State variables per neuron (e.g. 1 for LIF, 2 for Izhikevich).
+
+Returns
+-------
+str
+    Verilog module with BRAM-backed time-multiplexed neuron array.
+
+### Function `generate_tmr_wrapper(module_name)`
+Generate a Triple Modular Redundancy wrapper for any neuron module.
+
+Instantiates three copies of the target module and a majority voter
+to mask Single Event Upsets (SEUs) in aerospace/safety-critical
+deployments. Compliant with DO-254 DAL-A and IEC 61508 SIL-4.
+
+Parameters
+----------
+module_name : str
+    Name of the inner neuron module to wrap.
+data_width : int
+    Data width of the inner module.
+state_vars : list&#91;str&#93;, optional
+    State variable names for output voting. Defaults to ``&#91;"v"&#93;``.
+voter : str
+    Voter type: ``"majority"`` (2-of-3) or ``"median"`` (middle value).
+
+Returns
+-------
+str
+    Synthesisable Verilog TMR wrapper module.
+
+### Function `plan_pim_layout(neuron_count, synapse_count)`
+Plan data placement across PIM memory banks.
+
+Distributes neuron state and synaptic weights across memory banks
+to maximise bank-level parallelism on PIM (UPMEM, Samsung HBM-PIM)
+and CXL memory expander targets.
+
+Parameters
+----------
+neuron_count : int
+    Total neurons in the network.
+synapse_count : int
+    Total synaptic connections.
+data_width : int
+    Bits per value.
+bank_size_kb : int
+    Capacity of each memory bank in KB.
+num_banks : int
+    Number of available memory banks.
+target : str
+    Target platform name.
+
+Returns
+-------
+PIMLayout
+    Optimised memory layout plan.
+
+### Function `generate_power_domain_wrapper(module_name)`
+Generate a clock/power gating wrapper for always-on edge deployment.
+
+Creates a wrapper module with:
+- ICG (Integrated Clock Gating) cell for dynamic power reduction
+- Power-down state retention latches
+- Configurable wakeup latency
+- Always-on domain for event detection (spike_detect)
+
+Targets ultra-low-power edge platforms (Syntiant NDP120, Innatera
+Pulsar, BrainChip Akida) where µW-level idle power is critical.
+
+Parameters
+----------
+module_name : str
+    Inner neuron module name.
+data_width : int
+    Data width.
+state_vars : list&#91;str&#93;, optional
+    State variables to retain. Defaults to ``&#91;"v"&#93;``.
+always_on_signals : list&#91;str&#93;, optional
+    Signals kept in the always-on domain. Defaults to ``&#91;"spike_out"&#93;``.
+wakeup_cycles : int
+    Clock cycles required to exit power-down.
+
+Returns
+-------
+str
+    Synthesisable Verilog power domain wrapper.
+
+### Function `advise_ucie_partition(neuron_count, connectivity)`
+Advise on neuron array partitioning across chiplet tiles.
+
+Analyses a neuron array's connectivity to estimate inter-tile
+spike traffic and UCIe bandwidth requirements when distributing
+a network across multi-die chiplet systems (AMD MI300X,
+Tenstorrent Galaxy, Intel Ponte Vecchio).
+
+Parameters
+----------
+neuron_count : int
+    Total neurons in the network.
+connectivity : float
+    Connection probability between any two neurons (0.0–1.0).
+tile_count : int
+    Number of chiplet tiles.
+spike_rate_hz : float
+    Average firing rate per neuron (Hz).
+timestep_us : float
+    Simulation timestep (µs).
+ucie_lane_gbps : float
+    UCIe lane bandwidth (Gbps per lane).
+ucie_latency_ns : float
+    UCIe die-to-die latency (ns).
+
+Returns
+-------
+UCIePartition
+    Partitioning plan with bandwidth and latency estimates.
+
+### Function `advise_cxl_mapping(neuron_count, synapse_count)`
+Advise on CXL.mem Type-3 device mapping for neuron state.
+
+Plans the distribution of neuron state and synaptic weights
+across CXL 3.0 Type-3 memory expander devices for large-scale
+SNN simulations that exceed local DRAM capacity.
+
+Parameters
+----------
+neuron_count : int
+    Total neurons.
+synapse_count : int
+    Total synaptic connections.
+data_width : int
+    Bits per value.
+device_capacity_gb : float
+    Capacity per CXL device (GB).
+max_devices : int
+    Maximum CXL devices available.
+access_pattern : str
+    ``"streaming"`` (sequential) or ``"random"`` (scattered).
+
+Returns
+-------
+CXLMapping
+    Device mapping plan.
+
+### Function `generate_pipeline_wrapper(module_name, equations)`
+Generate a pipelined wrapper that inserts register stages.
+
+Auto-computes the critical path depth and required pipeline stages
+based on the target frequency, then wraps the neuron module with
+input/output pipeline registers and a valid-pipeline shift register.
+
+Parameters
+----------
+module_name : str
+    Inner neuron module name.
+equations : dict&#91;str, str&#93;
+    ODE equations (for depth analysis).
+data_width : int
+    Data width.
+target : str
+    Target platform name (used for frequency lookup).
+stages : int, optional
+    Override pipeline stages. If None, auto-computed.
+
+Returns
+-------
+str
+    Synthesisable Verilog pipeline wrapper.
+
+### Function `generate_memory_map(module_name, equations)`
+Generate address decoder for multi-neuron SoC arrays.
+
+Parameters
+----------
+module_name : str
+    Module name.
+equations : dict&#91;str, str&#93;
+    ODE equations (state variables define register set).
+num_neurons : int
+    Number of neuron instances.
+data_width : int
+    Register width in bits.
+base_address : int
+    Base address.
+
+Returns
+-------
+MemoryMap
+    Address map with decoder Verilog.
+
+### Function `plan_multi_die_floorplan(blocks)`
+Assign neuron blocks to chiplet/die positions.
+
+Uses first-fit-decreasing bin packing.
+
+Parameters
+----------
+blocks : dict&#91;str, int&#93;
+    Block name → neuron count.
+die_capacity : int
+    Max neurons per die.
+num_dies : int
+    Available dies.
+
+Returns
+-------
+FloorplanResult
+
+### Function `map_ucie_protocol(blocks)`
+Map neuron array blocks to UCIe die-to-die protocol lanes.
+
+Parameters
+----------
+blocks : dict&#91;str, int&#93;
+    Block name → data width in bits per cycle.
+lane_bandwidth_gbps : float
+    Bandwidth per UCIe lane.
+protocol_version : str
+    UCIe protocol version.
+
+Returns
+-------
+UCIeMapping
+
+---
+
+## Module `compiler.intelligence.verification_and_safety`
+
+### Class `EquivalenceSketch`
+Formal equivalence proof skeleton between ODE and RTL.
+
+Attributes
+----------
+module_name : str
+    Module under verification.
+equations : dict&#91;str, str&#93;
+    Source ODE equations.
+assertions : list&#91;str&#93;
+    SVA assertion strings for equivalence checking.
+proof_steps : list&#91;str&#93;
+    Human-readable proof argument steps.
+quantisation_bound : float
+    Maximum quantisation error bound.
+
+
+### Class `ComplianceEntry`
+Single compliance requirement mapping.
+
+Attributes
+----------
+req_id : str
+    Requirement identifier.
+standard : str
+    Safety standard name.
+description : str
+    Requirement description.
+verification : str
+    How it is verified.
+status : str
+    ``"covered"``, ``"partial"``, or ``"gap"``.
+artefact : str
+    File or test that provides evidence.
+
+
+### Class `StabilityResult`
+ODE discretization stability analysis.
+
+Attributes
+----------
+stable : bool
+    True if discretization is stable.
+max_eigenvalue : float
+    Largest eigenvalue magnitude.
+critical_dt : float
+    Maximum stable timestep.
+method : str
+    Analysis method used.
+
+
+### Class `ReliabilityEstimate`
+Mean time to failure estimate.
+
+Attributes
+----------
+mttf_hours : float
+    Estimated MTTF in hours.
+mttf_years : float
+    Estimated MTTF in years.
+failure_mode : str
+    Dominant failure mechanism.
+voltage_stress : float
+    Normalised voltage stress factor.
+temp_accel : float
+    Arrhenius temperature acceleration factor.
+mechanism_mttf_hours : dict&#91;str, float&#93;
+    Per-mechanism MTTF estimates for NBTI, HCI, and TDDB.
+
+
+### Class `FaultTree`
+Fault Tree Analysis for safety certification.
+
+Attributes
+----------
+top_event : str
+    Top-level failure event.
+gates : list&#91;dict&#93;
+    Logic gates (AND/OR).
+basic_events : list&#91;dict&#93;
+    Leaf failure events with rates.
+mcs : list&#91;list&#91;str&#93;&#93;
+    Minimal cut sets.
+
+
+### Class `CDCReport`
+Clock domain crossing analysis result.
+
+Attributes
+----------
+crossings : list&#91;dict&#93;
+    Each crossing: signal, src_domain, dst_domain, sync_type.
+violations : list&#91;str&#93;
+    Unsynchronized crossings.
+total_crossings : int
+safe : bool
+
+
+### Class `RegressionCheck`
+Compilation regression check result.
+
+Attributes
+----------
+metric : str
+baseline : float
+current : float
+delta_pct : float
+regression : bool
+
+
+### Class `AgingPrediction`
+Transistor aging prediction.
+
+Attributes
+----------
+initial_fmax_mhz : float
+degraded_fmax_mhz : float
+degradation_pct : float
+recommended_derating : float
+dominant_mechanism : str
+nbti_degradation_pct : float
+hci_degradation_pct : float
+
+
+### Class `FaultCampaignResult`
+Fault injection campaign result.
+
+Attributes
+----------
+total_injections : int
+sdc_count : int
+sdc_rate : float
+critical_bits : list&#91;int&#93;
+recommended_tmr_bits : list&#91;int&#93;
+
+
+### Class `TimingReport`
+Static timing analysis report.
+
+Attributes
+----------
+critical_path : list&#91;str&#93;
+critical_delay_ns : float
+target_period_ns : float
+slack_ns : float
+timing_met : bool
+recommendations : list&#91;str&#93;
+
+
+### Function `generate_equivalence_sketch(module_name, equations)`
+Generate a formal equivalence proof sketch for ODE→RTL translation.
+
+Produces a structured argument that the compiled Verilog computes
+the same function as the source ODE within quantisation error.
+
+Parameters
+----------
+module_name : str
+    Module name.
+equations : dict&#91;str, str&#93;
+    ODE equations.
+data_width : int
+    Fixed-point total width.
+fraction : int
+    Fractional bits.
+
+Returns
+-------
+EquivalenceSketch
+    Proof skeleton with SVA assertions.
+
+### Function `generate_compliance_matrix(module_name)`
+Generate safety compliance matrix for certification.
+
+Maps DO-254 / IEC 61508 / ISO 26262 requirements to SC-NeuroCore
+verification artefacts.
+
+Parameters
+----------
+module_name : str
+    Module under certification.
+standards : list&#91;str&#93;, optional
+    Standards to cover. Default: all three.
+has_tmr : bool
+    TMR wrapper is present.
+has_checksum : bool
+    Model checksum is embedded.
+has_sva : bool
+    SVA assertions are generated.
+has_provenance : bool
+    Provenance chain exists.
+
+Returns
+-------
+list&#91;ComplianceEntry&#93;
+    Compliance matrix entries.
+
+### Function `format_compliance_report(entries)`
+Format compliance matrix as markdown.
+
+Parameters
+----------
+entries : list&#91;ComplianceEntry&#93;
+    From ``generate_compliance_matrix()``.
+
+Returns
+-------
+str
+    Markdown compliance table.
+
+### Function `generate_bittrue_kernel(module_name, equations)`
+Generate a bit-true simulation kernel matching RTL arithmetic.
+
+Produces C (or Rust) code that computes exactly the same
+fixed-point results as the generated Verilog — same truncation,
+overflow, and pipeline latency.
+
+Parameters
+----------
+module_name : str
+    Module name.
+equations : dict&#91;str, str&#93;
+    ODE equations.
+data_width : int
+    Fixed-point total width.
+fraction : int
+    Fractional bits.
+language : str
+    ``"c"`` or ``"rust"``.
+
+Returns
+-------
+str
+    Bit-true source code.
+
+### Function `verify_ode_stability(equations)`
+Verify numerical stability of discretized ODE system.
+
+Uses eigenvalue analysis of the linearized system to determine
+if the forward-Euler discretization is stable.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    ODE equations.
+dt : float
+    Timestep.
+time_constants : dict&#91;str, float&#93;, optional
+    Time constants per variable.
+
+Returns
+-------
+StabilityResult
+    Stability analysis result.
+
+### Function `predict_reliability()`
+Predict MTTF from voltage, temperature, and technology node.
+
+Uses Arrhenius temperature acceleration and voltage stress factors.
+
+Parameters
+----------
+voltage_v : float
+    Operating voltage.
+temperature_c : float
+    Junction temperature (°C).
+node_nm : int
+    Technology node (nm).
+base_mttf_hours : float
+    Baseline MTTF at nominal conditions.
+
+Returns
+-------
+ReliabilityEstimate
+    MTTF prediction.
+
+### Function `generate_fault_tree(module_name, equations)`
+Generate FTA/FMEA for DO-254 Level A certification.
+
+Parameters
+----------
+module_name : str
+    Module name.
+equations : dict&#91;str, str&#93;
+    ODE state variables (each becomes a failure point).
+
+Returns
+-------
+FaultTree
+    Fault tree with minimal cut sets.
+
+### Function `generate_testbench(module_name, equations)`
+Generate verification testbench for compiled neuron.
+
+Parameters
+----------
+module_name : str
+    Module name.
+equations : dict&#91;str, str&#93;
+    ODE equations.
+framework : str
+    ``"cocotb"`` or ``"uvm"``.
+num_cycles : int
+    Simulation cycles.
+
+Returns
+-------
+str
+    Testbench source code.
+
+### Function `analyze_cdc(equations)`
+Analyze clock domain crossings in a neuron array.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    ODE equations.
+clock_domains : dict&#91;str, str&#93;, optional
+    Variable → clock domain mapping. Default: all in ``clk_main``.
+
+Returns
+-------
+CDCReport
+
+### Function `check_regression(baseline, current)`
+Detect performance regressions between compilations.
+
+Parameters
+----------
+baseline : dict&#91;str, float&#93;
+    Baseline metrics.
+current : dict&#91;str, float&#93;
+    Current metrics.
+threshold_pct : float
+    Regression threshold (%).
+
+Returns
+-------
+list&#91;RegressionCheck&#93;
+
+### Function `predict_aging(initial_fmax_mhz)`
+Predict end-of-life Fmax after transistor aging.
+
+Models NBTI and HCI degradation from temperature, voltage, and lifetime stress.
+
+Parameters
+----------
+initial_fmax_mhz : float
+    Initial maximum frequency.
+voltage_v : float
+    Operating voltage.
+temperature_c : float
+    Junction temperature in Celsius.
+years : float
+    Target lifetime in years.
+
+Returns
+-------
+AgingPrediction
+
+### Function `_require_finite_positive(value, name)`
+### Function `_require_finite_non_negative(value, name)`
+### Function `_require_celsius_above_absolute_zero(value, name)`
+### Function `run_fault_campaign(equations, data_width)`
+Run a fault injection campaign on the state register.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    State variable equations.
+data_width : int
+    Total data width of state register.
+num_injections : int
+    Number of random bit-flip injections.
+seed : int
+    Random seed for reproducibility.
+
+Returns
+-------
+FaultCampaignResult
+
+### Function `verify_timing_closure(equations)`
+Perform static timing analysis on the dataflow graph.
+
+Parameters
+----------
+equations : dict&#91;str, str&#93;
+    State variable equations.
+target_freq_mhz : float
+    Target clock frequency.
+data_width : int
+    Data width in bits.
+
+Returns
+-------
+TimingReport
 
 ---
 
@@ -8431,7 +8432,7 @@ heterogeneous datapaths in a single Verilog module.
 
 Parameters
 ----------
-var_configs : dict[str, PrecisionConfig]
+var_configs : dict&#91;str, PrecisionConfig&#93;
     Per-variable precision configuration.
 
 - **total_bits**()
@@ -8504,7 +8505,7 @@ Create a MixedPrecisionSpec from named presets.
 
 Parameters
 ----------
-var_presets : dict[str, str]
+var_presets : dict&#91;str, str&#93;
     Mapping from variable name to preset name (e.g. ``{"v": "q88", "u": "q44"}``).
 
 Returns
@@ -8571,6 +8572,198 @@ Automated hardware synthesis pipeline.
 
 ---
 
+## Module `compiler.platforms.registry`
+
+### Class `HardwareProfile`
+Complete hardware configuration for a target platform.
+
+Attributes
+----------
+name : str
+    Short machine-readable identifier (e.g. ``"loihi2"``).
+vendor : str
+    Chip vendor (e.g. ``"Intel"``, ``"Xilinx"``).
+family : str
+    Product family (e.g. ``"Arria 10"``, ``"ECP5"``).
+platform_class : str
+    One of ``"fpga"``, ``"neuromorphic"``, ``"asic"``, ``"simulation"``.
+data_width : int
+    Total bit width for fixed-point arithmetic.
+fraction : int
+    Number of fractional bits.
+signed : bool
+    True for signed (two's complement), False for unsigned Q-format.
+overflow : OverflowMode
+    How to handle arithmetic overflow in next-state logic.
+rounding : RoundingMode
+    How to round after fixed-point multiplication truncation.
+dsp_block : str
+    Name of the DSP hard macro (e.g. ``"DSP48E2"``).
+dsp_mult_a : int
+    Width of the DSP A-port (multiplier input A).
+dsp_mult_b : int
+    Width of the DSP B-port (multiplier input B).
+max_freq_mhz : int | None
+    Typical maximum clock frequency (0 = unknown).
+notes : str
+    Human-readable rationale for the configuration.
+
+- **int_bits**()
+  - Number of integer bits (excluding sign bit if signed).
+- **q_format_label**()
+  - Human-readable Q-format string (e.g. ``'Q9.9'`` or ``'UQ8.8'``).
+- **max_value**()
+  - Maximum representable positive value.
+- **min_value**()
+  - Minimum representable value (most negative or zero).
+- **resolution**()
+  - Smallest representable step.
+- **from_constraints**(cls, name)
+  - Auto-construct an optimal profile from spec-sheet constraints.
+
+### Function `_reg(p)`
+Register a profile in the global registry.
+
+### Function `get_profile(name)`
+Look up a hardware profile by name.
+
+Parameters
+----------
+name : str
+    Case-insensitive profile name (e.g. ``"loihi2"``, ``"artix7"``).
+
+Returns
+-------
+HardwareProfile
+    The matching profile.
+
+Raises
+------
+KeyError
+    If no profile matches.
+
+### Function `list_profiles()`
+List all registered hardware profiles, optionally filtered.
+
+Parameters
+----------
+platform_class : str, optional
+    Filter by class: ``"fpga"``, ``"neuromorphic"``, ``"asic"``, ``"simulation"``
+    ``"accelerator"``, ``"dsp"``, ``"photonic"``, ``"in_memory"``, ``"emerging"``.
+vendor : str, optional
+    Filter by vendor name (case-insensitive substring match).
+
+Returns
+-------
+list&#91;HardwareProfile&#93;
+    Matching profiles, sorted by (platform_class, vendor, name).
+
+### Function `list_profile_names()`
+Return all registered profile names, sorted.
+
+### Function `load_toml_profile(path)`
+Load a user-defined hardware profile from a TOML file.
+
+Enables users to register custom hardware targets without modifying
+the SC-NeuroCore source. TOML format::
+
+    &#91;profile&#93;
+    name = "my_chip"
+    vendor = "My Corp"
+    family = "ChipNet-1"
+    platform_class = "accelerator"
+    data_width = 16
+    fraction = 8
+    overflow = "saturate"
+    rounding = "nearest"
+    max_freq_mhz = 500
+    dsp_block = "MAC"
+    dsp_mult_a = 16
+    dsp_mult_b = 16
+    notes = "Custom chip description."
+
+Parameters
+----------
+path : str
+    Path to the TOML file.
+
+Returns
+-------
+HardwareProfile
+    The loaded and registered profile.
+
+Raises
+------
+FileNotFoundError
+    If the TOML file does not exist.
+ValueError
+    If required fields are missing.
+
+### Function `load_toml_profiles_dir(directory)`
+Load all TOML profiles from a directory.
+
+Scans the directory for ``*.toml`` files and loads each as a hardware
+profile. Useful for bulk-registering custom targets.
+
+Parameters
+----------
+directory : str
+    Path to the directory containing TOML profile files.
+
+Returns
+-------
+list&#91;HardwareProfile&#93;
+    All loaded profiles.
+
+### Function `load_profiles_from_toml(path)`
+Load custom hardware profiles from a TOML file.
+
+Allows users and vendors to define profiles without modifying
+SC-NeuroCore source code. This is the profile-extension path.
+
+TOML format::
+
+    &#91;&#91;profile&#93;&#93;
+    name = "my_custom_chip"
+    vendor = "MyVendor"
+    family = "CustomFamily"
+    platform_class = "custom"
+    data_width = 16
+    fraction = 8
+    overflow = "saturate"
+    rounding = "nearest"
+
+Parameters
+----------
+path : str
+    Path to TOML file.
+
+Returns
+-------
+list&#91;str&#93;
+    Names of loaded profiles.
+
+### Function `register_platform_hook(hook_fn)`
+Register a third-party platform discovery function.
+
+The hook function should return a list of HardwareProfile instances
+when called with no arguments. Profiles are registered at runtime.
+
+Parameters
+----------
+hook_fn : callable
+    Function returning list&#91;HardwareProfile&#93;.
+
+### Function `discover_platforms()`
+Execute all registered discovery hooks.
+
+Returns
+-------
+list&#91;str&#93;
+    Names of newly discovered profiles.
+
+---
+
 ## Module `compiler.quantizer`
 
 ### Class `QFormat`
@@ -8608,9 +8801,9 @@ np.ndarray
 Convert quantized integer weights back to float.
 
 ### Function `q_weights_to_sc_probabilities(quantized, fmt)`
-Convert quantized weights to SC probabilities in [0, 1].
+Convert quantized weights to SC probabilities in &#91;0, 1&#93;.
 
-Maps the Q-format range [min, max] linearly to [0, 1] for
+Maps the Q-format range &#91;min, max&#93; linearly to &#91;0, 1&#93; for
 unipolar SC encoding.
 
 ### Function `quantization_error(weights, fmt, rounding)`
@@ -8625,20 +8818,20 @@ dict with keys: max_abs_error, mean_abs_error, rmse, snr_db
 ## Module `compiler.static_analysis`
 
 ### Class `Interval`
-A closed interval [lo, hi] for interval arithmetic.
+A closed interval &#91;lo, hi&#93; for interval arithmetic.
 
 - **__add__**(other)
-  - Add two intervals: [a,b] + [c,d] = [a+c, b+d].
+  - Add two intervals: &#91;a,b&#93; + &#91;c,d&#93; = &#91;a+c, b+d&#93;.
 - **__sub__**(other)
-  - Subtract intervals: [a,b] - [c,d] = [a-d, b-c].
+  - Subtract intervals: &#91;a,b&#93; - &#91;c,d&#93; = &#91;a-d, b-c&#93;.
 - **__mul__**(other)
   - Multiply intervals: all four products, take min/max.
 - **__truediv__**(other)
   - Divide intervals. Raises if divisor contains zero.
 - **__neg__**()
-  - Negate: -[a,b] = [-b, -a].
+  - Negate: -&#91;a,b&#93; = &#91;-b, -a&#93;.
 - **contains**(lo, hi)
-  - Check if this interval is contained within [lo, hi].
+  - Check if this interval is contained within &#91;lo, hi&#93;.
 
 ### Class `_IntervalEvaluator`
 Evaluate an AST expression using interval arithmetic.
@@ -8652,7 +8845,7 @@ Evaluate an AST expression using interval arithmetic.
 - **visit_Name**(node)
   - Look up the interval for a variable name.
 - **visit_Constant**(node)
-  - A constant is a point interval [c, c].
+  - A constant is a point interval &#91;c, c&#93;.
 - **generic_visit**(node)
   - Raise for unsupported nodes.
 
@@ -8781,8 +8974,8 @@ Produces three categories of formal properties:
 
 Parameters
 ----------
-state_vars : list[str]
-    Names of state variables (e.g. ``["v"]``).
+state_vars : list&#91;str&#93;
+    Names of state variables (e.g. ``&#91;"v"&#93;``).
 data_width : int
     Bit width of the fixed-point format.
 fraction : int
@@ -8875,7 +9068,12 @@ dict
     Per-variable analysis: ``{var: {"depth": int, "stages": int,
     "achievable_mhz": int}}``.
 
-### Function `estimate_power(verilog, *, data_width=16, freq_mhz=100.0, vdd=1.0, process_nm=28, spike_rate_hz=10.0, activity_vcd=None, vcd_time_units_per_cycle=1.0)`
+### Function `_load_vcd_text(activity_vcd)`
+### Function `_bit_toggle_count(previous, current, width)`
+### Function `_parse_vcd_activity(activity_vcd, time_units_per_cycle)`
+Return measured toggles per cycle and average bit toggle rate from VCD.
+
+### Function `estimate_power(verilog)`
 Estimate power consumption from generated Verilog.
 
 When a VCD trace is provided, dynamic power uses measured bit-level
@@ -9002,7 +9200,7 @@ connections). Reduces layer width, not just sparsity.
 Parameters
 ----------
 weights : list of ndarray
-    Weight matrices [W1, W2, ...] where W_i has shape (n_out, n_in).
+    Weight matrices &#91;W1, W2, ...&#93; where W_i has shape (n_out, n_in).
 firing_rates : list of ndarray, optional
     Per-neuron firing rates for each layer. If None, uses output
     weight magnitude as a proxy for importance.
@@ -9027,7 +9225,7 @@ constant 0/1 gates, saving AND+popcount hardware.
 Parameters
 ----------
 weights : list of ndarray
-    Weight matrices (values in [0, 1] for unipolar SC).
+    Weight matrices (values in &#91;0, 1&#93; for unipolar SC).
 bitstream_length : int
     Bitstream length (L). Longer streams = more bits per weight.
 min_popcount_bits : float
@@ -9050,7 +9248,7 @@ Parameters
 weights : list of ndarray
     Float weight matrices.
 bits : int
-    Target bit width (default 8). Range: [2, 16].
+    Target bit width (default 8). Range: &#91;2, 16&#93;.
 symmetric : bool
     Symmetric quantization around zero (default True).
 
@@ -9453,7 +9651,7 @@ QCFS activation: quantized clip-floor-shift ReLU replacement.
 For T timesteps and threshold theta:
     QCFS(x) = clip(floor(x * T / theta + 0.5), 0, T) * theta / T
 
-This quantizes activations to T+1 levels in [0, theta], matching
+This quantizes activations to T+1 levels in &#91;0, theta&#93;, matching
 the achievable spike rates of an IF neuron over T timesteps.
 
 Parameters
@@ -9473,13 +9671,16 @@ learn_theta : bool
 
 ## Module `core.bipolar`
 
+### Function `_validate_bitstream_length(length)`
+### Function `_as_float_array(values, name)`
+### Function `_as_bit_array(bits, name)`
 ### Function `bipolar_encode(value, L, rng)`
-Encode a bipolar value in [-1, 1] as a Bernoulli bitstream.
+Encode a bipolar value in &#91;-1, 1&#93; as a Bernoulli bitstream.
 
 p = (value + 1) / 2.  Bitstream has P(bit=1) = p.
 
 ### Function `bipolar_decode(bits)`
-Decode a bitstream back to bipolar value in [-1, 1].
+Decode a bitstream back to bipolar value in &#91;-1, 1&#93;.
 
 value = 2 * mean(bits) - 1.
 
@@ -9487,15 +9688,15 @@ value = 2 * mean(bits) - 1.
 XNOR gate: bipolar multiplication.
 
 XNOR(a, b) = NOT(XOR(a, b)) = 1 when a == b, 0 when a != b.
-E[XNOR] decodes to v_a * v_b in bipolar domain.
+E&#91;XNOR&#93; decodes to v_a * v_b in bipolar domain.
 
 ### Function `bipolar_mac(inputs, weights, L, seed)`
 Bipolar multiply-accumulate: weighted sum via XNOR + popcount.
 
 Parameters
 ----------
-inputs : (N,) float array, values in [-1, 1]
-weights : (M, N) float array, values in [-1, 1]
+inputs : (N,) float array, values in &#91;-1, 1&#93;
+weights : (M, N) float array, values in &#91;-1, 1&#93;
 L : int, bitstream length
 seed : int
 
@@ -9508,18 +9709,18 @@ Single SC layer: bipolar MAC + optional bias + activation.
 
 Parameters
 ----------
-inputs : (N,) float, normalised to [-1, 1]
-weights : (M, N) float, normalised to [-1, 1]
+inputs : (N,) float, normalised to &#91;-1, 1&#93;
+weights : (M, N) float, normalised to &#91;-1, 1&#93;
 bias : (M,) float or None
 L : bitstream length
 activation : "relu", "none", or "tanh"
 
 Returns
 -------
-(M,) float, layer output in [-1, 1]
+(M,) float, layer output in &#91;-1, 1&#93;
 
 ### Function `float_to_bipolar_weights(weight_tensor)`
-Normalise float weights to [-1, 1] for bipolar SC.
+Normalise float weights to &#91;-1, 1&#93; for bipolar SC.
 
 Preserves sign information (unlike unipolar to_sc_weights).
 
@@ -9627,7 +9828,7 @@ Convert firing-rate array to Poisson spike trains.
 Parameters
 ----------
 rates : array_like, shape (N,)
-    Firing probabilities per timestep, clipped to [0, 1].
+    Firing probabilities per timestep, clipped to &#91;0, 1&#93;.
 T : int
     Number of timesteps.
 dt_ms : float
@@ -9640,22 +9841,22 @@ Returns
 spikes : ndarray, shape (T, N), dtype bool
 
 ### Function `latency_encode(values, T, tau, strict)`
-Convert normalised values in [0, 1] to first-spike-time trains.
+Convert normalised values in &#91;0, 1&#93; to first-spike-time trains.
 
 Higher values spike earlier. Each neuron fires exactly once.
 
 Parameters
 ----------
 values : array_like, shape (N,)
-    Input values, expected in ``[0, 1]``.
+    Input values, expected in ``&#91;0, 1&#93;``.
 T : int
     Number of timesteps.
 tau : float
     Time constant controlling the spike-time spread.
 strict : bool
     If True (default), raise ``ValueError`` when any value lies
-    outside ``[0, 1]``. If False, silently clip the resulting
-    spike times to ``[0, T-1]`` (the legacy behaviour). The
+    outside ``&#91;0, 1&#93;``. If False, silently clip the resulting
+    spike times to ``&#91;0, T-1&#93;`` (the legacy behaviour). The
     clip happens regardless of ``strict``; this flag controls
     only whether the function raises before clipping.
 
@@ -9667,7 +9868,7 @@ Raises
 ------
 ValueError
     If ``strict=True`` (default) and any element of ``values``
-    is outside ``[0, 1]``.
+    is outside ``&#91;0, 1&#93;``.
 
 ---
 
@@ -9677,7 +9878,7 @@ ValueError
 Generate synthetic Poisson-encoded event samples.
 
 Each class gets a distinct random rate template. Events are returned
-as (N_events, 4) arrays with columns [x, y, polarity, timestamp_ms].
+as (N_events, 4) arrays with columns &#91;x, y, polarity, timestamp_ms&#93;.
 
 ### Function `_check_root(root, dataset_name, url)`
 Raise FileNotFoundError if *root* does not exist.
@@ -9711,7 +9912,7 @@ seed : int
 Returns
 -------
 samples : list of ndarray, each shape (N_events, 4)
-    Columns: [x, y, polarity, timestamp_ms].
+    Columns: &#91;x, y, polarity, timestamp_ms&#93;.
 labels : ndarray of int
 
 ### Function `_parse_nmnist_bin(path, dt_ms)`
@@ -9779,7 +9980,7 @@ seed : int
 Returns
 -------
 samples : list of ndarray, each shape (N_events, 4)
-    Columns: [x, y, polarity, timestamp_ms].
+    Columns: &#91;x, y, polarity, timestamp_ms&#93;.
 labels : ndarray of int
 
 ---
@@ -10588,7 +10789,7 @@ Estimated probability from a packed bitstream.
 ### Function `scc(a, b, bit_length)`
 SCC between two packed u32 bitstreams (Alaghi & Hayes, 2013).
 
-Returns a correlation coefficient in [-1, 1].
+Returns a correlation coefficient in &#91;-1, 1&#93;.
 
 ---
 
@@ -10616,7 +10817,7 @@ Uses u32-packed output for MCU word alignment.
 - **encode**(threshold, bit_length)
   - Encode probability (threshold/65535) into packed u32 words.
 - **encode_float**(p, bit_length)
-  - Encode a probability [0.0, 1.0] into a packed bitstream.
+  - Encode a probability &#91;0.0, 1.0&#93; into a packed bitstream.
 
 ---
 
@@ -10724,6 +10925,8 @@ Write report-derived FPGA power/thermal JSON beside deployable artefacts.
 Single dense SC layer: weights × inputs via AND + popcount threshold.
 
 - **__post_init__**()
+- **_validate_configuration**()
+- **_validate_weights**()
 - **words_per_input**()
 - **forward**(input_words, bit_length)
   - Run SC inference: AND each weight row with input, threshold popcount.
@@ -10736,8 +10939,9 @@ Usage::
     net = SCNetwork(bit_length=1024)
     net.add_layer(SCLayer(n_inputs=32, n_outputs=16))
     net.add_layer(SCLayer(n_inputs=16, n_outputs=8))
-    output = net.run([0.5] * 32)
+    output = net.run(&#91;0.5&#93; * 32)
 
+- **__post_init__**()
 - **add_layer**(layer)
 - **encode_inputs**(probabilities)
   - Encode float probabilities into per-input packed bitstreams.
@@ -10766,7 +10970,7 @@ so only one XOR per step.
 
 - **__init__**(seed)
 - **step**()
-  - Advance by one step, return the next Sobol value in [0, 65535].
+  - Advance by one step, return the next Sobol value in &#91;0, 65535&#93;.
 - **encode**(threshold, length)
   - Encode a probability into packed u64 words using Sobol sequence.
 - **reset**(seed)
@@ -10848,7 +11052,7 @@ Parameters
 ----------
 layers : list
     Each entry is (n_inputs, n_outputs, threshold, weight_rows).
-    weight_rows is list[list[int]] (n_outputs × words_per_row u32 values).
+    weight_rows is list&#91;list&#91;int&#93;&#93; (n_outputs × words_per_row u32 values).
 
 Returns
 -------
@@ -10860,7 +11064,7 @@ Deserialize a weight blob into layer headers + weight matrices.
 
 Returns
 -------
-list[tuple[LayerHeader, list[list[int]]]]
+list&#91;tuple&#91;LayerHeader, list&#91;list&#91;int&#93;&#93;&#93;&#93;
     Each entry is (header, weight_rows).
 
 ---
@@ -10873,7 +11077,7 @@ Rate coding: spike probability proportional to value.
 Parameters
 ----------
 values : ndarray of shape (N,)
-    Input values in [0, 1].
+    Input values in &#91;0, 1&#93;.
 T : int
     Number of timesteps.
 seed : int
@@ -10888,7 +11092,7 @@ Latency (Time-to-First-Spike) coding: higher value = earlier spike.
 Parameters
 ----------
 values : ndarray of shape (N,)
-    Input values in [0, 1].
+    Input values in &#91;0, 1&#93;.
 T : int
 
 Returns
@@ -10914,7 +11118,7 @@ Phase coding: value encoded as spike phase within oscillation cycle.
 Parameters
 ----------
 values : ndarray of shape (N,)
-    Input values in [0, 1].
+    Input values in &#91;0, 1&#93;.
 T : int
 n_phases : int
     Number of phase bins per cycle.
@@ -10929,7 +11133,7 @@ Burst coding: value encoded as burst length (consecutive spikes).
 Parameters
 ----------
 values : ndarray of shape (N,)
-    Input values in [0, 1].
+    Input values in &#91;0, 1&#93;.
 T : int
 max_burst : int
     Maximum burst length for value=1.
@@ -11836,6 +12040,7 @@ Route harmonic-oscillator integration against the symplectic solver.
 ### Function `_kuramoto_phase_velocity(phases, omegas, coupling)`
 ### Function `_kuramoto_order_parameter(phases)`
 ### Function `_kuramoto_interaction_energy(phases, coupling)`
+### Function `_validate_kuramoto_route_inputs(initial_phases, horizon, omegas, coupling, dt)`
 ### Function `_wrap_phases(phases)`
 ### Function `_kuramoto_euler_baseline(initial_phases, horizon)`
 ### Function `_kuramoto_xy_lift_candidate(initial_phases, horizon)`
@@ -11880,10 +12085,10 @@ Route subthreshold LIF integration against the analytical solution.
 Drive a StochasticLIFNeuron with a bitstream-encoded input current.
 
 Steps:
-1. Encode scalar input current x_input in [x_min, x_max] as a unipolar
+1. Encode scalar input current x_input in &#91;x_min, x_max&#93; as a unipolar
    bitstream of length `length`.
 2. At each time step t, set:
-   I_t = I_high if bitstream[t] == 1 else I_low
+   I_t = I_high if bitstream&#91;t&#93; == 1 else I_low
    or more simply, treat the bit directly as a scaled current.
 3. Run neuron for `length` steps, collect spike bitstream.
 4. Estimate:
@@ -11944,7 +12149,7 @@ Return matrix of shape (n_trials, n_neurons) with firing rates.
 
 ### Function `nearest_centroid_multi(sample, centroids)`
 Nearest-centroid classifier over K classes.
-centroids[k]: firing-rate centroid for class k.
+centroids&#91;k&#93;: firing-rate centroid for class k.
 
 ### Function `demo()`
 ---
@@ -11970,7 +12175,7 @@ Return matrix of shape (n_trials, n_neurons) with firing rates.
 
 ### Function `nearest_centroid_multi(sample, centroids)`
 Nearest-centroid classifier over K classes.
-centroids[k]: firing-rate centroid for class k.
+centroids&#91;k&#93;: firing-rate centroid for class k.
 
 ### Function `demo()`
 ---
@@ -12041,6 +12246,7 @@ Tiny ASCII bar chart helper.
 
 ## Module `experiments.demonstration_convergence`
 
+### Function `_emit_hardware_evidence(mlir_str)`
 ### Function `run_demonstration()`
 ---
 
@@ -12100,7 +12306,7 @@ Configurable Kuramoto oscillator network for synthetic EEG.
 - **apply_alpha_boost**(factor)
 - **apply_coupling_decay**(rate)
 - **step**(perturbation)
-  - One Kuramoto timestep. Returns phases in [0, 2pi).
+  - One Kuramoto timestep. Returns phases in &#91;0, 2pi).
 - **run**(n_steps)
   - Run n_steps, return (n_steps, N) history.
 - **get_order_parameter**()
@@ -12560,6 +12766,38 @@ Monte-Carlo resilience benchmarking harness.
 
 ---
 
+## Module `fault_injection.resilience_mode`
+
+### Class `ResilienceModeConfig`
+Configuration for a resilience-mode run over one bitstream layer.
+
+- **__post_init__**()
+
+### Class `ResilienceModeTrialReport`
+Aggregate measurements for one fault model.
+
+- **to_dict**()
+  - Return a JSON-ready report.
+
+### Class `ResilienceModeReport`
+Full resilience-mode output for one layer and radiation profile.
+
+- **requires_replay**()
+  - Whether any fault model requires deterministic replay.
+- **to_dict**()
+  - Return a JSON-ready report.
+
+### Class `FaultInjectionResilienceMode`
+Run seeded fault-injection trials and degradation policy together.
+
+- **__init__**(config)
+- **run**(bitstreams)
+  - Evaluate resilience for a binary ``(neurons, bits)`` layer.
+- **_run_fault_model**(streams, flat, fault_model, model_index)
+- **_validate_bitstreams**(bitstreams)
+
+---
+
 ## Module `fault_injection.resilience_policy`
 
 ### Class `DegradationAction`
@@ -12736,7 +12974,7 @@ Per-round provenance record for regulatory compliance.
 Single step of LFSR-16 (polynomial x^16+x^14+x^13+x^11+1).
 
 ### Function `lfsr_encode(value, seed, length)`
-Encode a probability [0,1] into a packed bitstream using LFSR-16.
+Encode a probability &#91;0,1&#93; into a packed bitstream using LFSR-16.
 
 ### Function `bitstream_probability(bits)`
 Estimate probability from a bitstream.
@@ -12763,7 +13001,7 @@ This provides privacy amplification by a factor of O(sampling_rate).
 Stochastic quantization to reduce communication bits.
 
 Quantizes each gradient to one of ``levels`` levels with
-unbiased randomized rounding. E[Q(g)] = g.
+unbiased randomized rounding. E&#91;Q(g)&#93; = g.
 
 ### Function `krum_select(client_vectors, num_byzantine)`
 Multi-Krum selection: find the vector closest to most others.
@@ -12834,6 +13072,62 @@ metric : str
 
 ---
 
+## Module `formal.counterexample_replay`
+
+### Class `RateBoundReplayResult`
+Replay result for an aligned-window network rate-bound property.
+
+
+### Class `RefractoryReplayResult`
+Replay result for a monitored-output refractory invariant.
+
+
+### Class `AntagonisticReplayResult`
+Replay result for a mutually-exclusive output-pair invariant.
+
+
+### Class `TemporalSeparationReplayResult`
+Replay result for a bidirectional temporal-separation invariant.
+
+
+### Class `PopulationCoactivationReplayResult`
+Replay result for a population-level output coactivation cap.
+
+
+### Class `PopulationSilenceReplayResult`
+Replay result for post-coactivation global output silence.
+
+
+### Class `PopulationInactivityReplayResult`
+Replay result for bounded consecutive population inactivity.
+
+
+### Function `replay_rate_bound_counterexample(spike_trace, rate_bound)`
+Replay a spike trace against the same aligned-window rate bound used by SVA.
+
+### Function `replay_refractory_counterexample(spike_trace, refractory)`
+Replay a spike trace against a monitored-output refractory invariant.
+
+### Function `replay_antagonistic_counterexample(spike_trace, exclusion)`
+Replay a spike trace against a mutually-exclusive output-pair invariant.
+
+### Function `replay_temporal_separation_counterexample(spike_trace, separation)`
+Replay a spike trace against a bidirectional output temporal separation.
+
+### Function `replay_population_coactivation_counterexample(spike_trace, population)`
+Replay a spike trace against a population coactivation cap.
+
+### Function `replay_population_silence_counterexample(spike_trace, silence)`
+Replay a spike trace against a post-coactivation global silence contract.
+
+### Function `replay_population_inactivity_counterexample(spike_trace, inactivity)`
+Replay a spike trace against a bounded consecutive-inactivity contract.
+
+### Function `_select_binary_spike(sample, output_index)`
+### Function `_count_binary_spikes(sample)`
+### Function `_as_binary_bool(value)`
+---
+
 ## Module `formal.lean_bridge`
 
 ### Class `FormalProofEngine`
@@ -12844,6 +13138,110 @@ Invokes Lean 4 `safety_bounds.lean` to formally verify mathematical parameters d
 - **check_proofs**()
   - Invokes the native `lean --check` verification boundary safely testing axioms.
 
+---
+
+## Module `formal.network_properties`
+
+### Class `DenseLIFNetworkSpec`
+Formal boundary contract for a dense LIF network HDL module.
+
+- **__post_init__**()
+
+### Class `NetworkRateBound`
+Bound a selected output neuron's spike count inside a fixed time window.
+
+- **__post_init__**()
+
+### Class `NetworkRefractoryInvariant`
+Forbid a selected output from spiking during its refractory window.
+
+- **__post_init__**()
+
+### Class `NetworkAntagonisticOutputExclusion`
+Forbid two antagonistic network outputs from spiking in the same cycle.
+
+- **__post_init__**()
+
+### Class `NetworkOutputTemporalSeparation`
+Forbid two outputs from spiking within a bounded cycle window.
+
+- **__post_init__**()
+
+### Class `NetworkPopulationCoactivationCap`
+Bound the number of simultaneously active outputs in a sample cycle.
+
+- **__post_init__**()
+
+### Class `NetworkPopulationSilenceAfterCoactivation`
+Require global output silence after a population coactivation event.
+
+- **__post_init__**()
+
+### Class `NetworkPopulationInactivityBound`
+Bound consecutive valid cycles with no active network outputs.
+
+- **__post_init__**()
+
+### Function `validate_systemverilog_identifier(value)`
+Return ``value`` after checking it is a plain SystemVerilog identifier.
+
+### Function `_validate_positive_int(value)`
+### Function `_validate_non_negative_int(value)`
+---
+
+## Module `formal.property_compiler`
+
+### Function `compile_dense_lif_fixture_rtl(network)`
+Compile a deterministic dense LIF fixture RTL module for formal runs.
+
+### Function `compile_network_rate_bound_sva(network, rate_bound)`
+Compile a network output spike-rate contract into deterministic SVA.
+
+### Function `compile_network_refractory_sva(network, refractory)`
+Compile a network output refractory contract into deterministic SVA.
+
+### Function `compile_network_antagonistic_exclusion_sva(network, exclusion)`
+Compile a mutually-exclusive output-pair contract into deterministic SVA.
+
+### Function `compile_network_temporal_separation_sva(network, separation)`
+Compile a bidirectional output temporal-separation contract into SVA.
+
+### Function `compile_network_population_coactivation_sva(network, population)`
+Compile a population-level output coactivation cap into deterministic SVA.
+
+### Function `compile_network_population_silence_sva(network, silence)`
+Compile a post-coactivation global silence contract into deterministic SVA.
+
+### Function `compile_network_population_inactivity_sva(network, inactivity)`
+Compile a bounded global-output inactivity contract into deterministic SVA.
+
+---
+
+## Module `formal.report_schema`
+
+### Class `FormalReportValidationError`
+Raised when a formal network verification report violates its schema.
+
+
+### Function `validate_formal_network_report(payload)`
+Validate a formal network verification report without external dependencies.
+
+### Function `_validate_artifacts(artifacts)`
+### Function `_validate_rate_replay(value, field)`
+### Function `_validate_refractory_replay(value, field)`
+### Function `_validate_antagonistic_replay(value, field)`
+### Function `_validate_temporal_replay(value, field)`
+### Function `_validate_population_replay(value, field)`
+### Function `_validate_population_silence_replay(value, field)`
+### Function `_validate_population_inactivity_replay(value, field)`
+### Function `_expect_artifact_path(artifacts, key)`
+### Function `_expect_mapping(value, field)`
+### Function `_expect_equal(value, expected, field)`
+### Function `_expect_str(value, field)`
+### Function `_expect_string(value, field)`
+### Function `_expect_bool(value, field)`
+### Function `_expect_non_negative_int(value, field)`
+### Function `_expect_optional_non_negative_int(value, field)`
 ---
 
 ## Module `fusion.multimodal`
@@ -13235,9 +13633,14 @@ This is intentionally conservative: the compute pipeline remains clocked
 and the output is wrapped in a 4-phase AER-style request/acknowledge
 interface. It is not a QDI async network replacement.
 
-- **__init__**(module_name)
+- **__init__**(module_name, bus_width)
 - **add_layer**(layer_type, name, params)
 - **generate**()
+- **_require_positive_int**(value, name)
+- **_validate_layers**()
+- **_dense_input_width**(params, previous_width)
+- **_dense_output_width**(params)
+- **_dense_layer_widths**()
 
 ---
 
@@ -13250,7 +13653,7 @@ Parameters
 ----------
 inner_module : str
     Name of the inner Verilog neuron module (e.g. ``"sc_lif"``).
-params : dict[str, int]
+params : dict&#91;str, int&#93;
     Mapping from Verilog parameter name to bit width.
 bus : str
     Bus protocol: ``"axi_lite"`` or ``"wishbone"``.
@@ -13273,14 +13676,14 @@ Return the register map for a neuron's parameters.
 
 Parameters
 ----------
-params : dict[str, int]
+params : dict&#91;str, int&#93;
     Parameter names and their bit widths.
 base_address : int
     Starting address.
 
 Returns
 -------
-dict[str, int]
+dict&#91;str, int&#93;
     Mapping from register name to byte address.
 
 ### Function `_generate_axi_lite(inner_module, params, data_width, addr_width, bus_data_width)`
@@ -13369,6 +13772,27 @@ Emit a synthesisable standalone LFSR-16 Verilog module.
 
 ---
 
+## Module `hdl_gen.online_learning_emitter`
+
+### Class `OnlineO1ResourceEstimate`
+Deterministic pre-synthesis resource estimate for one online-learning block.
+
+- **as_dict**()
+  - Return a deterministic JSON-ready estimate payload.
+
+### Class `OnlineO1LearningEmitter`
+Emit a synthesisable reward-modulated STDP state machine.
+
+- **__init__**()
+- **generate**()
+  - Return Verilog for one bounded online-learning synapse lane.
+- **estimate_resources**()
+  - Return a conservative pre-synthesis resource estimate.
+- **manifest**()
+  - Return deterministic metadata for the generated learning lane.
+
+---
+
 ## Module `hdl_gen.quasirandom_emitter`
 
 ### Class `Halton16Emitter`
@@ -13401,6 +13825,20 @@ seed : int, optional
 
 ---
 
+## Module `hdl_gen.side_channel_encoding_emitter`
+
+### Class `SideChannelEncodingEmitter`
+Emit a synthesisable ROM-style wrapper for one protected encoding record.
+
+- **__init__**()
+- **generate**()
+  - Return a Verilog module exposing payload and dummy stream bits.
+- **manifest**()
+  - Return transport metadata linking the HDL hook to analytic evidence.
+
+### Function `_bits_literal(bits)`
+---
+
 ## Module `hdl_gen.sobol16_emitter`
 
 ### Class `Sobol16Emitter`
@@ -13418,7 +13856,7 @@ Emit a synthesisable standalone Sobol-16 Verilog module.
 Generates SPICE netlists for Memristive Crossbars.
 
 - **generate_crossbar**(weights, filename)
-  - weights: (Rows, Cols) - Conductance values [0, 1] mapped to [G_off, G_on].
+  - weights: (Rows, Cols) - Conductance values &#91;0, 1&#93; mapped to &#91;G_off, G_on&#93;.
 
 ---
 
@@ -13450,12 +13888,20 @@ str
 ### Class `VerilogGenerator`
 Generates Top-Level Verilog for a defined SC Network.
 
-- **__init__**(module_name)
+- **__init__**(module_name, bus_width)
   - Initialise with a top-level module name.
 - **add_layer**(layer_type, name, params)
   - Add a layer definition to the network.
 - **generate**(mode)
   - Emits Verilog code.
+- **_validate_sync_layers**()
+  - Reject sync RTL configurations that cannot be emitted faithfully.
+- **_require_positive_int**(value, name)
+  - Return value as int after rejecting booleans and non-positive values.
+- **_dense_input_width**(params, previous_width)
+- **_dense_output_width**(params)
+- **_sync_layer_widths**()
+  - Return per-layer ``(input_width, output_width)`` and reject mismatches.
 - **emit_lfsr16_source**(module_name, seed)
   - Emit a standalone LFSR-16 stochastic source module.
 - **emit_sobol16_source**(module_name, seed)
@@ -13483,7 +13929,7 @@ Generates Top-Level Verilog for a defined SC Network.
 Emit LFSR-16 and Sobol-16 source modules from a lightweight IR payload.
 
 The helper accepts the mapping shapes already used by documentation,
-tests, and compiler-service payloads: ``{"nodes": [...]}``,
+tests, and compiler-service payloads: ``{"nodes": &#91;...&#93;}``,
 ``{"nodes": {"node_id": {...}}}``, or a direct iterable of node mappings.
 Non-source nodes are ignored. Source nodes must identify their generator
 through ``source_type``, ``decorrelator``, ``generator``, ``strategy``, or
@@ -13588,10 +14034,13 @@ Write a local Docker Compose hub bundle and return generated paths.
 ### Function `_env_example(config)`
 ### Function `_readme(config)`
 ### Function `_offline_environment(config)`
+### Function `_studio_container_command(config)`
+### Function `_ingress_scope(bind_host)`
 ### Function `_json(payload)`
 ### Function `_relative_repo_context(output_dir)`
 ### Function `_repo_root()`
 ### Function `_validate_relative_path(label, value)`
+### Function `_validate_bind_host(value)`
 ---
 
 ## Module `hypervisor.hypervisor`
@@ -13944,6 +14393,59 @@ Connectivity: small-world E->E with STDP, random E->I, I->E, E->M, M->E.
 
 ---
 
+## Module `industrial_applications`
+
+### Class `IndustrialDomain`
+Supported industrial application domains.
+
+
+### Class `EvidenceCategory`
+Evidence categories expected in an industrial readiness pack.
+
+
+### Class `EvidenceRequirement`
+One evidence requirement for an application profile.
+
+- **to_dict**()
+  - Return a JSON-ready requirement.
+
+### Class `IndustrialApplicationProfile`
+Readiness profile for one SC-NeuroCore industrial use case.
+
+- **to_dict**()
+  - Return a JSON-ready profile.
+
+### Class `IndustrialReadinessAssessment`
+Evidence coverage assessment for one industrial application profile.
+
+- **ready**()
+  - Whether all mandatory evidence categories are present.
+- **mandatory_coverage**()
+  - Mandatory evidence coverage ratio.
+- **to_dict**()
+  - Return a JSON-ready assessment.
+
+### Class `IndustrialApplicationRegistry`
+Registry of application profiles and evidence-readiness checks.
+
+- **__init__**(profiles)
+- **get**(domain)
+  - Return the profile for a domain.
+- **list_profiles**()
+  - Return all registered profiles in deterministic order.
+- **assess**(domain, evidence_bag)
+  - Assess whether the evidence bag covers a domain profile.
+
+### Function `default_industrial_profiles()`
+Return conservative built-in industrial application profiles.
+
+### Function `assess_industrial_readiness(domain, evidence_bag)`
+Assess readiness for a built-in industrial application domain.
+
+### Function `_requirements()`
+### Function `_normalise_evidence_categories(categories)`
+---
+
 ## Module `integrations.lava_bridge`
 
 ### Class `LoihiNetworkConfig`
@@ -13960,10 +14462,10 @@ Convert SC-NeuroCore layer stack to Lava Process network.
   - Convert a trained SpikingNet to a list of LoihiNetworkConfigs.
 
 ### Function `export_weights_loihi(weights, weight_bits, weight_exp)`
-Convert SC probability weights [0,1] to Loihi fixed-point format.
+Convert SC probability weights &#91;0,1&#93; to Loihi fixed-point format.
 
 Loihi uses signed integer weights with configurable precision.
-Maps [0,1] → [-128, 127] for 8-bit weights.
+Maps &#91;0,1&#93; → &#91;-128, 127&#93; for 8-bit weights.
 
 ### Function `loihi_threshold_from_sc(sc_threshold, weight_bits)`
 Convert SC normalised threshold to Loihi integer threshold.
@@ -13994,9 +14496,9 @@ seed : int
 - **encode_stream**(signal)
   - Encode a multi-window signal stream.
 - **_normalize**(values)
-  - Normalize to [0, 1] for probability encoding.
+  - Normalize to &#91;0, 1&#93; for probability encoding.
 - **normalize_signal**(signal)
-  - Normalize signal to [0, 1]. Legacy API — use _normalize().
+  - Normalize signal to &#91;0, 1&#93;. Legacy API — use _normalize().
 - **encode_to_bitstream**(signal, length)
   - Legacy API. Encodes (channels, time) → (channels, length).
 
@@ -14127,6 +14629,7 @@ Converts AER events (x, y, t, p) into SC Bitstreams.
 - **__post_init__**()
 - **process_events**(events)
   - Integrate a batch of events.
+- **_validate_events**(events)
 - **generate_bitstream_frame**(length)
   - Generate a HxWxLength bitstream cube from current surface state.
 
@@ -14153,6 +14656,248 @@ Publishes motor commands from sc-neurocore to robots.
 
 ---
 
+## Module `ir.scnir_compatibility`
+
+### Class `SCNIRCompatibilityRow`
+One compatibility row for a NIR primitive.
+
+- **as_dict**()
+  - Return a deterministic JSON-ready row.
+
+### Function `scnir_compatibility_matrix()`
+Return the deterministic SC-NIR compatibility matrix.
+
+### Function `scnir_compatibility_matrix_dicts()`
+Return the matrix as deterministic JSON-ready dictionaries.
+
+### Function `build_scnir_compatibility_audit(evidence_root)`
+Build a versioned closure-audit report for the SC-NIR compatibility matrix.
+
+The report is intentionally derived from the executable matrix after
+validation, so release automation consumes the same data that enforces
+parser coverage and evidence-path freshness.
+
+### Function `validate_scnir_compatibility_matrix(evidence_root)`
+Fail if the matrix drifts from parser-declared support or stale evidence paths.
+
+Parameters
+----------
+evidence_root:
+    Optional repository root used to verify that every ``audit_evidence``
+    path in the matrix resolves to an existing file.
+
+---
+
+## Module `ir.scnir_convert`
+
+### Class `SCNIRConversionConfig`
+Configuration for deterministic SC-NIR metadata export.
+
+- **__post_init__**()
+- **resolved_accumulator_bits**()
+  - Accumulator width used by exported precision metadata.
+
+### Function `build_scnir_from_neuron_graph(neuron_graph)`
+Build an SC-NIR document from an existing NIR-derived NeuronGraph.
+
+### Function `_hierarchy_from_graph(neuron_graph, streams)`
+Materialise SC-NIR hierarchy metadata from inlined NeuronGraph provenance.
+
+### Function `_hierarchy_stream_ids(neuron_graph, instance)`
+Return deterministic stream ids generated by one inlined hierarchy instance.
+
+### Function `_hierarchy_port_prefix(signal_kind)`
+### Function `_connection_transforms(conn)`
+Return explicit SC-NIR transform metadata for a weighted connection.
+
+### Function `_online_learning_annotation(config, stream_id)`
+### Function `_connection_delay_steps(conn)`
+### Function `export_scnir_from_nir(model_path)`
+Read a NIR model, export SC-NIR metadata, and write it to JSON.
+
+### Function `_precision(config)`
+### Function `_source(config, stream_index)`
+### Function `_population_encoding(neuron_type)`
+### Function `_population_signal_kind(neuron_type)`
+### Function `_population_stream_id(name)`
+### Function `_connection_stream_id(src, dst)`
+### Function `_stream_fragment(value)`
+### Function `_nth_prime(index)`
+---
+
+## Module `ir.scnir_handoff_audit`
+
+### Class `SCNIRHDLHandoffAuditError`
+Raised when a compile-nir HDL handoff directory is incomplete or inconsistent.
+
+
+### Class `SCNIRHDLHandoffAuditReport`
+Deterministic summary of a validated SC-NIR HDL handoff directory.
+
+- **as_dict**()
+  - Return a stable JSON-ready report.
+
+### Function `audit_scnir_hdl_handoff(directory)`
+Validate a ``compile-nir`` HDL output directory and return an audit report.
+
+The audit is intentionally structural and fail-closed: every SC-NIR stream
+must have exactly one matching source-manifest row and emitted source
+module, aggregate counts must match the typed document, and top-level
+SC-NIR localparams must agree with the JSON handoff metadata.
+
+### Function `write_scnir_hdl_handoff_audit(directory, output_path)`
+Validate a handoff directory and write the JSON audit report.
+
+### Function `_load_manifest(path)`
+### Function `_verify_manifest_header(manifest)`
+### Function `_external_inputs(manifest)`
+### Function `_verify_source_rows(root, document, sources)`
+### Function `_verify_hierarchy_modules(root, document)`
+### Function `_verify_hierarchy_top_instances(verilog, document)`
+### Function `_verify_source_row_keys(row, index)`
+### Function `_verify_source_row_matches_stream(row, stream, index)`
+### Function `_stream_transform_rows(stream)`
+### Function `_delay_steps_for_row(delay_steps)`
+### Function `_signal_kind_counts(document)`
+### Function `_signal_routes(document)`
+### Function `_hierarchy_instances(document)`
+### Function `_expect_top_localparam(verilog, name, value)`
+### Function `_expect_equal(actual, expected, field)`
+### Function `_require_file(path, label)`
+### Function `_expect_mapping_sequence(manifest, key)`
+### Function `_expect_non_empty_string(mapping, key)`
+### Function `_expect_int(mapping, key)`
+### Function `_expect_positive_int(mapping, key)`
+### Function `_expect_non_negative_int(mapping, key)`
+---
+
+## Module `ir.scnir_hdl`
+
+### Class `SCNIRHDLSourceManifestEntry`
+Serialisable manifest row for one emitted stochastic source module.
+
+- **as_dict**()
+  - Return a deterministic JSON-ready representation.
+
+### Class `SCNIRHDLSourceBundle`
+Concrete HDL source modules plus the manifest that explains them.
+
+- **manifest_dicts**()
+  - Return deterministic JSON-ready manifest rows.
+
+### Function `build_scnir_source_bundle(document)`
+Emit deterministic HDL source modules for every SC-NIR stream.
+
+Only source kinds with the standard threshold-bit output contract are
+materialised here. Unsupported SC-NIR source kinds fail closed instead of
+being lowered to semantically incompatible RTL.
+
+### Function `_emit_stream_source(stream)`
+### Function `_manifest_entry(stream)`
+### Function `_require_seed(stream)`
+### Function `_module_name_for_stream(stream, index)`
+---
+
+## Module `ir.scnir_schema`
+
+### Class `SCNIRValidationError`
+Raised when an SC-NIR payload violates the fail-closed contract.
+
+
+### Class `SCNIRPrecision`
+Fixed-point interpretation attached to one stochastic stream.
+
+
+### Class `SCNIRSource`
+Random or deterministic source metadata for a stochastic stream.
+
+
+### Class `SCNIRCorrelationConstraint`
+Correlation rule between two stochastic streams.
+
+
+### Class `SCNIRStreamTransform`
+Deterministic transform applied before a logical stochastic stream.
+
+
+### Class `SCNIRStream`
+SC metadata for one logical stochastic bitstream.
+
+
+### Class `SCNIRHierarchyPort`
+One typed port on a hierarchical SC-NIR hardware instance.
+
+
+### Class `SCNIRHierarchyInstance`
+One hierarchy instance boundary for future nested hardware handoff.
+
+
+### Class `SCNIRDocument`
+Top-level SC-NIR metadata document.
+
+
+### Function `validate_scnir_dict(payload)`
+Validate a decoded SC-NIR payload or raise ``SCNIRValidationError``.
+
+### Function `scnir_from_dict(payload)`
+Build a typed SC-NIR document from a decoded mapping.
+
+### Function `scnir_to_dict(document)`
+Convert a typed SC-NIR document to deterministic JSON-ready data.
+
+### Function `load_scnir(path)`
+Load and validate an SC-NIR JSON document.
+
+### Function `write_scnir(path, document)`
+Write an SC-NIR JSON document after validating it.
+
+### Function `upgrade_scnir_dict(payload)`
+Upgrade supported SC-NIR payloads to the current canonical schema.
+
+Version ``v0.1`` did not encode recurrent connection delay, and versions
+before ``v0.3`` did not distinguish spiking, analogue-state, and weight
+streams.  Version ``v0.4`` added explicit stream transform metadata for
+threshold comparators.  Version ``v0.5`` permits ``delay_steps`` to be
+either a scalar integer or a per-source-column integer vector.  Version
+``v0.6`` adds top-level hierarchy instance and port metadata.  Version
+``v0.7`` adds optional validated per-weight-stream online-learning
+annotations.  Legacy upgrades insert the missing fields before validating
+through the typed schema.  Current documents are canonicalised through the
+same deterministic writer.
+
+### Function `_validate_stream(stream, path)`
+### Function `_validate_online_learning_annotation(annotation, path)`
+### Function `_validate_transform(transform, parent_path)`
+### Function `_validate_precision(precision, parent_path)`
+### Function `_validate_source(source, parent_path)`
+### Function `_validate_correlation(constraint, path)`
+### Function `_validate_hierarchy(hierarchy, stream_signal_kinds)`
+### Function `_stream_from_dict(stream)`
+### Function `_transform_from_dict(transform)`
+### Function `_correlation_from_dict(constraint)`
+### Function `_hierarchy_instance_from_dict(instance)`
+### Function `_hierarchy_port_from_dict(port)`
+### Function `_stream_to_dict(stream)`
+### Function `_hierarchy_instance_to_dict(instance)`
+### Function `_hierarchy_port_to_dict(port)`
+### Function `_infer_legacy_signal_kind(stream_id)`
+### Function `_expect_keys(payload, allowed, path)`
+### Function `_expect_mapping(value, path)`
+### Function `_expect_sequence(value, path)`
+### Function `_expect_non_empty_string(value, path)`
+### Function `_expect_stream_id(value, path)`
+### Function `_expect_hdl_identifier(value, path)`
+### Function `_expect_positive_int(value, path)`
+### Function `_expect_non_negative_int(value, path)`
+### Function `_expect_delay_steps(value, path)`
+Validate scalar or per-source-column stream delay metadata.
+
+### Function `_delay_steps_from_value(value, path)`
+### Function `_delay_steps_to_json(value)`
+### Function `_expect_enum(value, allowed, path)`
+### Function `_is_prime(value)`
+---
+
 ## Module `layers.attention`
 
 ### Class `StochasticAttention`
@@ -14174,7 +14919,9 @@ Example
 >>> attn.forward_softmax(Q, K, V).shape
 (4, 5)
 
+- **__post_init__**()
 - **_ensure_2d**(Q, K, V)
+- **_validate_unipolar_bitstream_inputs**(Q, K, V, length)
 - **forward**(Q, K, V)
   - Row-sum normalised attention (SC-native, no exp).
 - **forward_softmax**(Q, K, V)
@@ -14234,7 +14981,7 @@ Example
 
 - **__post_init__**()
 - **forward**(inputs)
-  - inputs: {'modality': np.array([values])}
+  - inputs: {'modality': np.array(&#91;values&#93;)}
 
 ---
 
@@ -14283,6 +15030,15 @@ Example
 (10,)
 
 - **__post_init__**()
+- **_positive_int**(name, value)
+- **_finite_param**(name, value)
+- **_positive_param**(cls, name, value)
+- **_nonnegative_param**(cls, name, value)
+- **_validate_config**()
+- **_initialise_weights**()
+- **_validate_current_vector**(currents)
+- **_current_from_step_input**(values)
+- **_validate_current_sequence**(currents)
 - **step**(I_t)
   - Advance the entire layer by one time step.
 - **run**(currents)
@@ -14367,7 +15123,7 @@ Example
 -------
 >>> import numpy as np
 >>> res = SCRecurrentLayer(n_inputs=3, n_neurons=10, seed=0)
->>> state = res.step(np.array([0.5, 0.3, 0.8]))
+>>> state = res.step(np.array(&#91;0.5, 0.3, 0.8&#93;))
 >>> state.shape
 (10,)
 
@@ -14381,7 +15137,11 @@ Example
 ## Module `layers.sc_conv_layer`
 
 ### Class `SCConv2DLayer`
-SC 2D convolutional layer using unipolar probability multiplication.
+SC 2D convolutional layer using stochastic probability encodings.
+
+``sc_mode="unipolar"`` accepts probabilities in ``&#91;0, 1&#93;`` and uses
+probability-product accumulation. ``sc_mode="bipolar"`` accepts signed
+values in ``&#91;-1, 1&#93;`` and uses signed XNOR-equivalent products.
 
 Example
 -------
@@ -14393,6 +15153,9 @@ Example
 (2, 8, 8)
 
 - **__post_init__**()
+- **_validate_configuration**()
+- **_validate_input**(input_image)
+- **_output_shape**(height, width)
 - **forward**(input_image)
   - input_image: (in_channels, H, W)
 
@@ -14404,15 +15167,14 @@ Example
 Stochastic-computing dense layer of LIF neurons.
 
 Each neuron receives SC dot-product input current and produces independent
-spike trains. `weight_values` may be either a single
-shared vector of length `n_inputs` or a dense matrix shaped
-`(n_neurons, n_inputs)`. Software-only but fully SC-driven at the
-input/synapse level.
+spike trains. ``weight_values`` may be either a single shared vector of
+length ``n_inputs`` or a dense matrix shaped ``(n_neurons, n_inputs)``.
+Software-only but fully SC-driven at the input/synapse level.
 
 Example
 -------
 >>> layer = SCDenseLayer(
-...     n_neurons=4, x_inputs=[0.5, 0.3], weight_values=[0.8, 0.6],
+...     n_neurons=4, x_inputs=&#91;0.5, 0.3&#93;, weight_values=&#91;0.8, 0.6&#93;,
 ...     x_min=0.0, x_max=1.0, w_min=0.0, w_max=1.0, length=256,
 ... )
 >>> layer.run(T=100)
@@ -14421,12 +15183,10 @@ Example
 (4, 100)
 
 - **__post_init__**()
+- **_normalise_weight_values**()
 - **reset**()
 - **run**(T)
   - Run the layer for T time steps, updating all neurons.
-
-    A 1-D weight vector produces one shared SC current source for all neurons.
-    A 2-D weight matrix produces one SC current source per neuron.
 - **get_spike_trains**()
   - Return spike matrix of shape (n_neurons, T).
 - **summary**()
@@ -14468,6 +15228,12 @@ Example
 True
 
 - **__post_init__**()
+- **from_exported_weights**(cls, exported_layer)
+  - Build a packed SC inference layer from ``to_sc_weights()`` output.
+- **_random**(size)
+- **_uniform**(low, high, size)
+- **_choice**(n_items, size)
+- **_apply_bias**(outputs)
 - **_refresh_packed_weights**()
 - **_init_sparse**()
 - **_pack_sparse_weights**()
@@ -14484,6 +15250,9 @@ True
 ### Function `_popcount_rows(packed)`
 Vectorized Hamming-weight popcount across rows of a uint64 array.
 
+### Function `_bipolar_prob(values)`
+### Function `_mask_unused_tail_bits(packed, length)`
+### Function `_as_float_array(value, name)`
 ---
 
 ## Module `learning.advanced`
@@ -14649,6 +15418,54 @@ Genetic Algorithm for evolving SNN weights/parameters.
 
 ---
 
+## Module `learning.online_o1`
+
+### Class `OnlineO1Config`
+Hardware-bounded configuration for local reward-modulated STDP.
+
+- **__post_init__**()
+- **max_weight**()
+  - Maximum unsigned fixed-point weight.
+- **max_trace**()
+  - Maximum unsigned trace value.
+- **min_eligibility**()
+  - Minimum signed eligibility value.
+- **max_eligibility**()
+  - Maximum signed eligibility value.
+- **min_reward**()
+  - Minimum signed reward input.
+- **max_reward**()
+  - Maximum signed reward input.
+- **per_synapse_state_bits**()
+  - Stored bits per synapse: weight plus three bounded traces.
+- **to_scnir_annotation**()
+  - Return deterministic SC-NIR metadata for online-learning synapses.
+
+### Class `OnlineO1Snapshot`
+Immutable synapse state snapshot after one online update.
+
+
+### Class `OnlineO1Synapse`
+One fixed-point reward-modulated STDP synapse with O(1) state.
+
+- **__post_init__**()
+- **state_fields**()
+  - Names of state fields retained between timesteps.
+- **state_bit_count**()
+  - Stored state bits for one synapse.
+- **snapshot**()
+  - Return the current bounded state.
+- **step**()
+  - Advance one streamed timestep and return the bounded state.
+
+### Function `build_online_o1_memory_proof()`
+Return a sequence-length independent memory proof for the rule.
+
+### Function `_decay_unsigned(value, shift, max_value)`
+### Function `_decay_signed(value, shift)`
+### Function `_saturate(value, lower, upper)`
+---
+
 ## Module `learning.schedulers`
 
 ### Class `StepScheduler`
@@ -14696,7 +15513,7 @@ Stochastic <-> Quantum <-> Bio
 - **stochastic_to_quantum**(bitstream)
   - Map bitstream probability p to quantum amplitude sqrt(p).
 - **quantum_to_bio**(state_vector)
-  - Map quantum probability |beta|^2 to concentration [0, 10] uM.
+  - Map quantum probability |beta|^2 to concentration &#91;0, 10&#93; uM.
 - **bio_to_stochastic**(concentration, length)
   - Map concentration to bitstream.
 - **get_functor**(source, target)
@@ -14709,7 +15526,7 @@ Stochastic <-> Quantum <-> Bio
 Compute the winding number of a phase trajectory around S^1.
 
 The winding number counts how many times the phase wraps around
-the circle [0, 2*pi). It is a topological invariant — continuous
+the circle &#91;0, 2*pi). It is a topological invariant — continuous
 deformations of the trajectory cannot change it.
 
 Parameters
@@ -14746,7 +15563,7 @@ i, j : int
 Returns
 -------
 float
-    Estimated Ollivier-Ricci curvature in [-1, 1].
+    Estimated Ollivier-Ricci curvature in &#91;-1, 1&#93;.
 
 ### Function `sheaf_consistency_defect(phases, knm)`
 Compute the sheaf consistency defect for the SCPN phase state.
@@ -14907,7 +15724,7 @@ Injects fab-realistic conductance variability into weight matrices.
 
 - **__init__**(model, seed)
 - **quantize_weights**(weights)
-  - Map floating-point weights [0, 1] to conductance levels.
+  - Map floating-point weights &#91;0, 1&#93; to conductance levels.
 - **inject_d2d**(levels)
   - Apply device-to-device variability to quantised levels.
 - **inject_rw**(conductances)
@@ -15603,7 +16420,7 @@ max_luts : int, optional
     Hard LUT budget. Architectures exceeding this are penalized.
     If None, uses the target's total LUT count.
 accuracy_fn : callable, optional
-    Function(Architecture) -> float accuracy in [0, 1].
+    Function(Architecture) -> float accuracy in &#91;0, 1&#93;.
     If None, uses a proxy based on network capacity.
 seed : int
     Random seed.
@@ -15714,6 +16531,7 @@ Differentiable bridge for a bounded subset of declarative ``Network`` graphs.
 
 ### Function `_csr_to_dense(projection)`
 ### Function `_csr_mask(projection)`
+### Function `_validate_projection_csr(projection)`
 ### Function `_build_population_spec(population, surrogate_fn)`
 ---
 
@@ -15725,7 +16543,7 @@ Potjans & Diesmann 2014 8-population cortical microcircuit.
 Parameters
 ----------
 scale : float, optional
-    Population-size multiplier in (0, 1]. Default 0.1
+    Population-size multiplier in (0, 1&#93;. Default 0.1
     (≈ 7700 neurons), which is the smallest size where the
     published Table 4 firing rates are reproduced within
     tolerance. `scale=1.0` yields the full ~77 000-neuron model.
@@ -15884,6 +16702,8 @@ and ``fim_lambda`` are unsupported by this runner — the
 either is requested with ``backend='mpi'``.
 
 - **__init__**(network)
+- **_initialize_rust_dispatch**()
+  - Prepare a rank-local Rust runner when the installed engine supports it.
 - **_partition_populations**()
   - Round-robin assignment of populations to ranks.
 - **_identify_cross_rank_projections**()
@@ -15896,6 +16716,8 @@ either is requested with ``backend='mpi'``.
   - Run the distributed simulation for *n_steps* timesteps.
 
 ### Function `_require_mpi()`
+### Function `_get_rust_engine()`
+### Function `_rust_supports_model(model_name)`
 ---
 
 ## Module `network.network`
@@ -15987,16 +16809,19 @@ delay : float, array-like, or 0
   - Symmetrise CSR weight data: W_ij = W_ji = (W_ij + W_ji) / 2.
 
 ### Function `_csr_matvec(indptr, indices, data, x, n_out, weight_threshold)`
-CSR matrix-vector product: result[j] += data[k] * x[i] for each (i,j).
+CSR matrix-vector product: result&#91;j&#93; += data&#91;k&#93; * x&#91;i&#93; for each (i,j).
 
-Skips source neurons with x[i]==0 (spike-driven) and optionally
-skips synapses with |data[k]| <= weight_threshold (sparse weights).
+Skips source neurons with x&#91;i&#93;==0 (spike-driven) and optionally
+skips synapses with |data&#91;k&#93;| <= weight_threshold (sparse weights).
 
 ### Function `_csr_delayed_matvec(indptr, indices, data, delay_steps, spike_history, hist_idx, n_out)`
 CSR matrix-vector product with per-synapse delays.
 
 For each synapse k connecting source i to target j with delay d_k:
-    current[j] += data[k] * spike_history[(hist_idx - d_k) % max_delay, i]
+    current&#91;j&#93; += data&#91;k&#93; * spike_history&#91;(hist_idx - d_k) % max_delay, i&#93;
+
+### Function `validate_csr_topology(indptr, indices, data, n_source, n_target)`
+Validate and normalize CSR connectivity arrays.
 
 ---
 
@@ -16021,7 +16846,7 @@ Rectangular step current between onset and offset timesteps.
 
 - **__init__**(onset, offset, amplitude)
 - **get_current**(t_step, dt)
-  - Return amplitude if within [onset, offset), else 0.
+  - Return amplitude if within &#91;onset, offset), else 0.
 
 ---
 
@@ -16175,6 +17000,50 @@ Wraps prediction + HDC symbol matching with an auditable trace.
 
 ### Function `_unpack(hv)`
 ### Function `_pack(bits, length)`
+---
+
+## Module `neuro_symbolic.self_verification`
+
+### Class `VerificationStatus`
+Status of one self-verification obligation.
+
+
+### Class `VerificationObligation`
+One checked condition in a self-verification trace.
+
+- **to_dict**()
+  - Return a JSON-ready obligation.
+
+### Class `NeuroSymbolicSelfVerificationTrace`
+Machine-checkable summary of a neuro-symbolic inference result.
+
+- **passed**()
+  - Whether every obligation passed.
+- **failed_obligations**()
+  - Names of failed obligations.
+- **to_dict**()
+  - Return a JSON-ready trace.
+
+### Class `NeuroSymbolicSelfVerifier`
+Build checked self-verification traces for inference outputs.
+
+- **verify_result**(result)
+  - Verify a high-level hybrid inference result against its observation.
+- **verify_trace_only**(trace)
+  - Verify a trace when only symbolic evidence is available.
+- **_validate_vector**(values, name)
+- **_check_shape**(name, lhs, rhs)
+- **_check_prediction_error**(observation, prediction, error)
+- **_check_signature**(observation, prediction, signature)
+- **_check_reasoning_trace**(trace)
+- **_check_symbol_scores**(symbol_scores)
+- **_build_trace**(result, obligations)
+
+### Function `build_self_verification_trace(result)`
+Convenience wrapper for high-level neuro-symbolic inference results.
+
+### Function `_stable_digest(payload)`
+### Function `_json_default(value)`
 ---
 
 ## Module `neurons._units`
@@ -16361,7 +17230,7 @@ Taps (0-indexed): 15, 13, 12, 10
 Example
 -------
 >>> lfsr = FixedPointLFSR(seed=0xACE1)
->>> vals = [lfsr.step() for _ in range(10)]
+>>> vals = &#91;lfsr.step() for _ in range(10)&#93;
 >>> len(set(vals)) > 1  # produces varying pseudo-random values
 True
 
@@ -16379,7 +17248,7 @@ where P(bit=1) ~ x_value / (2^DATA_WIDTH - 1).
 Example
 -------
 >>> enc = FixedPointBitstreamEncoder(seed_init=0xACE1)
->>> bits = [enc.step(x_value=128) for _ in range(100)]
+>>> bits = &#91;enc.step(x_value=128) for _ in range(100)&#93;
 >>> all(b in (0, 1) for b in bits)
 True
 
@@ -16554,7 +17423,7 @@ Phase offset encodes relational structure.
 Spiking neuron with learnable surrogate gradient parameters.
 
 Forward: spike = int(v >= theta)
-Backward: surrogate = 1 / (1 + beta * |v - theta|)^2   [conceptual]
+Backward: surrogate = 1 / (1 + beta * |v - theta|)^2   &#91;conceptual&#93;
 v = alpha * v * (1 - spike) + I
 
 alpha (decay), beta (steepness), theta (threshold) all trainable.
@@ -16814,6 +17683,50 @@ Reference: Av-Ron, E. et al. (1991). Biol. Cybern. 65:487–500.
 
 ---
 
+## Module `neurons.models.balanced_resonate_and_fire`
+
+### Class `BalancedResonateAndFireNeuron`
+Balanced RF neuron with refractory threshold and smooth reset.
+
+State variables follow the paper notation ``u = x + i y`` and refractory
+state ``q``. One scalar update computes:
+
+``b_t = p(omega) - b_offset - q_{t-1}``
+
+``u_t = u_{t-1} + dt * ((b_t + i * omega) * u_{t-1} + current)``
+
+``theta_t = theta_c + q_{t-1}``
+
+``z_t = Heaviside(Re(u_t) - theta_t)``
+
+``q_t = gamma * q_{t-1} + z_t``
+
+Reference: Higuchi, Kairat, Bohte, and Otte (2024), "Balanced
+Resonate-and-Fire Neurons", Proceedings of ICML 2024, Algorithm 1.
+
+- **__post_init__**()
+- **p_omega**()
+  - Current divergence boundary for ``omega`` and ``dt``.
+- **damping**()
+  - Current smooth-reset damping ``b_t`` before the next step.
+- **dynamic_threshold**()
+  - Current refractory threshold ``theta_c + q``.
+- **step**(current)
+  - Advance one BRF timestep and return the binary spike ``z_t``.
+- **reset**()
+  - Reset membrane and refractory state to rest.
+- **state**()
+  - Return a compact state snapshot for reproducibility tests.
+- **_validate_parameters**()
+
+### Function `sustain_oscillation_boundary(omega, dt)`
+Return the BRF divergence boundary ``p(omega)``.
+
+``p(omega) = (-1 + sqrt(1 - (dt * omega)^2)) / dt``.
+The value is real only when ``0 < dt * omega <= 1``.
+
+---
+
 ## Module `neurons.models.benda_herz`
 
 ### Class `BendaHerzNeuron`
@@ -16867,12 +17780,12 @@ joint voltage–Ca²⁺ dependence means they open during the spike peak
 when Ca²⁺ influx is maximal, producing rapid repolarisation.
 
 C_m dv/dt = -g_Na m³∞ h (v - E_Na) - g_K n⁴ (v - E_K)
-            - g_BK BK∞(v, [Ca²⁺]) (v - E_K) - g_L (v - E_L) + I
+            - g_BK BK∞(v, &#91;Ca²⁺&#93;) (v - E_K) - g_L (v - E_L) + I
 
 BK∞ = 1 / (1 + exp(-(v - V_half_BK) / 15))
-V_half_BK = 10 - 30 · [Ca²⁺] / ([Ca²⁺] + 0.5)
+V_half_BK = 10 - 30 · &#91;Ca²⁺&#93; / (&#91;Ca²⁺&#93; + 0.5)
 
-d[Ca²⁺]/dt = -[Ca²⁺] / τ_Ca  (+ 0.3 on spike)
+d&#91;Ca²⁺&#93;/dt = -&#91;Ca²⁺&#93; / τ_Ca  (+ 0.3 on spike)
 
 Reference: Contreras et al. (2021) J Comput Neurosci;
 Wang & Bhatt (1996) BK biophysics; Wang & Buzsáki (1996) base model.
@@ -16931,7 +17844,7 @@ is the voltage-dependent NMDA conductance with Mg2+ block.
 
 - **__post_init__**()
 - **_nmda_voltage_dep**(v)
-  - Mg2+ block factor: 1 / (1 + [Mg2+]/3.57 * exp(-0.062 * V)).
+  - Mg2+ block factor: 1 / (1 + &#91;Mg2+&#93;/3.57 * exp(-0.062 * V)).
 - **step**(i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba)
   - Advance one timestep.
 - **reset**()
@@ -17052,8 +17965,8 @@ Reference: Chay, T.R. & Keizer, J. (1983). Biophys. J. 42:181–190.
 ### Class `ChialvoMapNeuron`
 Chialvo 1995 — 2D discrete map neuron.
 
-x[n+1] = x²·exp(y-x) + k + I
-y[n+1] = a·y - b·x + c
+x&#91;n+1&#93; = x²·exp(y-x) + k + I
+y&#91;n+1&#93; = a·y - b·x + c
 
 Reference: Chialvo, D.R. (1995). Chaos, Solitons & Fractals 5:461–479.
 
@@ -17134,7 +18047,7 @@ Compte et al. 2000 — NMDA-based working memory neuron.
 
 C dV/dt = -I_L - I_AMPA - I_NMDA - I_GABA + I_ext
 NMDA includes voltage-dependent Mg2+ block:
-  B(V) = 1 / (1 + [Mg]/3.57 * exp(-0.062*V))
+  B(V) = 1 / (1 + &#91;Mg&#93;/3.57 * exp(-0.062*V))
 ds_NMDA/dt = -s_NMDA/tau_NMDA + alpha*x*(1-s_NMDA)
 dx/dt      = -x/tau_x
 
@@ -17193,14 +18106,18 @@ Jahnsen (1986) J Physiol 372:129.
 ## Module `neurons.models.de_schutter_purkinje`
 
 ### Class `DeSchutterPurkinjeNeuron`
-De Schutter & Bower 1994 — cerebellar Purkinje cell (simplified).
+Single-compartment Purkinje-cell conductance model after De Schutter & Bower.
 
-5 gating variables: h_Na, n_K, m_CaP, h_CaP, q_KCa.
+The maintained Python model exposes five active gating variables:
+h_Na, n_K, m_CaP, h_CaP, and q_KCa. Use the audit index before treating this
+compact implementation as a full multi-compartment reconstruction.
 
 Reference: De Schutter, E. & Bower, J.M. (1994). J. Neurophysiol. 71:375–400.
 
 - **step**(current)
+  - Advance the compact conductance model and return a spike indicator.
 - **reset**()
+  - Restore voltage, gates, and calcium state to their defaults.
 
 ---
 
@@ -17245,7 +18162,7 @@ dt : float
     Integration timestep (ms). Default: 0.1.
 
 - **mg_block**(v)
-  - Mg2+ block factor: B(V) = 1/(1 + [Mg]/3.57 * exp(-0.062*V)).
+  - Mg2+ block factor: B(V) = 1/(1 + &#91;Mg&#93;/3.57 * exp(-0.062*V)).
 - **step**(i_soma, glutamate)
   - Step with somatic input current and dendritic glutamate.
 - **reset**()
@@ -17371,7 +18288,7 @@ Ermentrout-Kopell 1986 canonical Type I (theta neuron) map.
 The canonical model for Type I (saddle-node) excitability. Phase
 variable θ advances on a circle; spike occurs when θ crosses π.
 
-θ(n+1) = θ(n) + dt · [(1 - cos θ) + (1 + cos θ) · I]
+θ(n+1) = θ(n) + dt · &#91;(1 - cos θ) + (1 + cos θ) · I&#93;
 
 Reference: Ermentrout & Kopell (1986) SIAM J Appl Math 46:233–253.
 
@@ -17426,7 +18343,17 @@ dw/dt = ε(v + a - bw)
 
 Reference: FitzHugh, R. (1961). Biophys. J. 1:445–466.
 
+Integrator options:
+- ``baseline_euler`` preserves the historical explicit-Euler path
+- ``rk4`` is an explicit fourth-order path over the same two-state ODE
+- ``rosenbrock`` is a linearly implicit path for stiff slow-fast regimes
+
+- **__post_init__**()
 - **step**(current)
+- **_rhs**(_t, state, current)
+- **_step_baseline_euler**(current)
+- **_step_rk4**(current)
+- **_step_rosenbrock**(current)
 - **reset**()
 
 ---
@@ -17786,28 +18713,6 @@ Reference: Ibarz, B. et al. (2011). Phys. Rep. 501:1–74.
 
 ---
 
-## Module `neurons.models.izhikevich2007`
-
-### Class `Izhikevich2007Neuron`
-Izhikevich 2007 biophysical quadratic integrate-and-fire neuron.
-
-Equations from Izhikevich, E. M. (2007), *Dynamical Systems in
-Neuroscience*, using the NeuroML 2 ``izhikevich2007Cell`` parameterisation:
-
-``C dv/dt = k (v - vr) (v - vt) - u + I``
-``du/dt = a (b (v - vr) - u)``
-
-If ``v >= vpeak`` after integration, the neuron emits one spike and applies
-``v <- c`` and ``u <- u + d``. Units are the NeuroML base units used by the
-importer: pF, nS, mV, ms, and pA.
-
-- **__post_init__**()
-- **step**(input_current)
-- **reset_state**()
-- **get_state**()
-
----
-
 ## Module `neurons.models.ih_neuron`
 
 ### Class `IhNeuron`
@@ -17862,12 +18767,40 @@ Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press,
 ### Class `IntegerQIFNeuron`
 Lo et al. 2021 — fixed-point quadratic integrate-and-fire.
 
-V[t+1] = V[t] + (V[t]^2 >> k) + I, all integer arithmetic.
+V&#91;t+1&#93; = V&#91;t&#93; + (V&#91;t&#93;^2 >> k) + I, all integer arithmetic.
 
 Reference: Izhikevich, E.M. (2007). Dynamical Systems in Neuroscience. MIT Press, §4.1.
 
 - **step**(current)
 - **reset**()
+
+---
+
+## Module `neurons.models.izhikevich2007`
+
+### Class `Izhikevich2007Neuron`
+Izhikevich 2007 biophysical quadratic integrate-and-fire neuron.
+
+Equations from Izhikevich, E. M. (2007), *Dynamical Systems in
+Neuroscience*, using the NeuroML 2 ``izhikevich2007Cell`` parameterisation:
+
+``C dv/dt = k (v - vr) (v - vt) - u + I``
+``du/dt = a (b (v - vr) - u)``
+
+If ``v >= vpeak`` after integration, the neuron emits one spike and applies
+``v <- c`` and ``u <- u + d``. Units are the NeuroML base units used by the
+importer: pF, nS, mV, ms, and pA.
+
+- **__post_init__**()
+- **_require_finite**(name, value)
+- **_require_positive**(cls, name, value)
+- **_rhs**(v, u, input_current)
+- **step**(input_current)
+- **_step_euler**(input_current)
+- **_step_rk4**(input_current)
+- **_apply_threshold_reset**()
+- **reset_state**()
+- **get_state**()
 
 ---
 
@@ -17912,7 +18845,7 @@ Reference: Kilinc & Bhatt (2023).
 ### Class `KLIFNeuron`
 KLIF — LIF with learnable scaling factor k.
 
-V[t+1] = alpha * V[t] + k * I; spike when V >= threshold.
+V&#91;t+1&#93; = alpha * V&#91;t&#93; + k * I; spike when V >= threshold.
 The scaling factor k is a trainable parameter for SNN backprop.
 
 Reference: Eshraghian, J.K. et al. (2021). Proc. IEEE 109:935–950.
@@ -17974,7 +18907,7 @@ Reference: Oster, M. et al. (2009). Neural Comput. 21(9):2437–2465.
 ### Class `LearnableNeuronModel`
 Jahns et al. 2025 — fully parameterized learnable neuron.
 
-V[t+1] = alpha * V[t] + beta * I[t] + gamma * f(V[t])
+V&#91;t+1&#93; = alpha * V&#91;t&#93; + beta * I&#91;t&#93; + gamma * f(V&#91;t&#93;)
 where alpha, beta, gamma are trainable scalars and f is a
 learnable activation (here sigmoid).
 
@@ -18179,10 +19112,21 @@ dw/dt = λ(v)(w_∞(v) - w)
 
 Reference: Morris, C. & Lecar, H. (1981). Biophys. J. 35:193–213.
 
+Integrator options:
+- ``baseline_euler`` preserves the historical explicit-Euler path
+- ``rk4`` is an explicit fourth-order path over the same Morris-Lecar ODEs
+- ``rosenbrock`` is a linearly implicit stiff-system path over the same
+  conductance equations
+
+- **__post_init__**()
 - **_m_inf**(v)
 - **_w_inf**(v)
 - **_lam**(v)
 - **step**(current)
+- **_rhs**(_t, state, current)
+- **_step_baseline_euler**(current)
+- **_step_rk4**(current)
+- **_step_rosenbrock**(current)
 - **reset**()
 
 ---
@@ -18281,7 +19225,7 @@ NMDA receptors require both glutamate binding (modelled as input
 current) AND membrane depolarisation (Mg²⁺ block removal). The
 voltage-dependent Mg²⁺ block follows Jahr & Stevens (1990):
 
-B(V) = 1 / (1 + [Mg²⁺]/3.57 · exp(-0.062 · V))
+B(V) = 1 / (1 + &#91;Mg²⁺&#93;/3.57 · exp(-0.062 · V))
 
 I_NMDA = g_NMDA · s_NMDA · B(V) · (V - E_NMDA)
 
@@ -18525,7 +19469,7 @@ seed : int
 
 - **__post_init__**()
 - **_xorshift64**()
-  - Xorshift64 PRNG returning uniform in [0, 1).
+  - Xorshift64 PRNG returning uniform in &#91;0, 1).
 - **step_complex**(i_re, i_im)
   - Step with real and imaginary current components.
 - **step**(current)
@@ -18589,8 +19533,8 @@ Reference: Izhikevich, E.M. (2001). Neural Networks 14:883–894.
 ### Class `RulkovMapNeuron`
 Rulkov 2001 — discrete map-based neuron (no ODE, O(1) per step).
 
-x[n+1] = f(x[n], y[n]) + I
-y[n+1] = y[n] - μ(x[n] + 1) + μσ
+x&#91;n+1&#93; = f(x&#91;n&#93;, y&#91;n&#93;) + I
+y&#91;n+1&#93; = y&#91;n&#93; - μ(x&#91;n&#93; + 1) + μσ
 Fast iteration, exhibits spiking and bursting.
 
 Reference: Rulkov, N.F. (2002). Phys. Rev. E 65:041922.
@@ -18630,8 +19574,8 @@ Reference: Sherman, A. et al. (1988). Biophys. J. 54:411–425.
 Siegert 1951 — mean-field LIF firing rate.
 
 Analytical stationary firing rate of a LIF neuron driven by
-Gaussian white noise: r = [tau_rp + tau_m * sqrt(pi) *
-integral(exp(u^2)*(1+erf(u)), u_reset..u_thresh)]^{-1}
+Gaussian white noise: r = &#91;tau_rp + tau_m * sqrt(pi) *
+integral(exp(u^2)*(1+erf(u)), u_reset..u_thresh)&#93;^{-1}
 Uses Gauss-Hermite quadrature approximation.
 
 Reference: Siegert, A.J.F. (1951). Phys. Rev. 81:617–623.
@@ -18681,7 +19625,7 @@ solely on intracellular Ca²⁺ (no voltage dependence). SK channels
 have slower kinetics than BK and produce the medium
 afterhyperpolarisation (mAHP) lasting 50–200 ms.
 
-SK∞ = [Ca²⁺]² / ([Ca²⁺]² + 0.25)   (Hill function, n=2)
+SK∞ = &#91;Ca²⁺&#93;² / (&#91;Ca²⁺&#93;² + 0.25)   (Hill function, n=2)
 τ_Ca = 150 ms (slower than BK's 50 ms)
 
 Reference: Stocker (2004) Nat Rev Neurosci 5:758–770;
@@ -19104,7 +20048,7 @@ When v >= 30 mV: spike, then v <- c, u <- u + d.
 Example
 -------
 >>> neuron = SCIzhikevichNeuron(noise_std=0.0)
->>> spikes = [neuron.step(10.0) for _ in range(100)]
+>>> spikes = &#91;neuron.step(10.0) for _ in range(100)&#93;
 >>> sum(spikes) > 0  # regular spiking with I=10
 True
 
@@ -19113,6 +20057,9 @@ Integrator options:
 - ``rk4`` is an explicit higher-order alternative path
 
 - **__post_init__**()
+- **_require_finite**(name, value)
+- **_require_positive**(cls, name, value)
+- **_require_nonnegative**(cls, name, value)
 - **step**(input_current)
 - **_rhs**(v, u, input_current)
 - **_apply_noise_and_threshold**()
@@ -19155,13 +20102,13 @@ Discrete-time noisy leaky integrate-and-fire neuron.
 
 dv/dt = -(v - v_rest) / tau_mem + R * I + noise
 
-Parameters use normalised units (voltage [0,1], time in ms).
+Parameters use normalised units (voltage &#91;0,1&#93;, time in ms).
 Defaults from Gerstner & Kistler, *Spiking Neuron Models*, 2002.
 
 Example
 -------
 >>> neuron = StochasticLIFNeuron(v_threshold=1.0, tau_mem=20.0, noise_std=0.0)
->>> spikes = [neuron.step(1.5) for _ in range(50)]
+>>> spikes = &#91;neuron.step(1.5) for _ in range(50)&#93;
 >>> sum(spikes) > 0
 True
 >>> neuron.get_state()  # membrane voltage + refractory counter
@@ -19170,7 +20117,7 @@ True
 Process a bitstream as input current:
 
 >>> import numpy as np
->>> bits = np.array([1, 0, 1, 1, 0, 1, 0, 0], dtype=np.uint8)
+>>> bits = np.array(&#91;1, 0, 1, 1, 0, 1, 0, 0&#93;, dtype=np.uint8)
 >>> neuron.reset_state()
 >>> out = neuron.process_bitstream(bits, input_scale=2.0)
 >>> out.shape
@@ -19327,6 +20274,239 @@ nir.NIRGraph
 
 ---
 
+## Module `nir_bridge.fpga_compiler`
+
+### Class `SCNIRExternalInputManifestEntry`
+Stable flattened input-bus layout entry for one external source.
+
+- **as_dict**()
+  - Return deterministic JSON-ready external input metadata.
+
+### Class `NetworkCompilationResult`
+All artefacts from a network-level FPGA compilation.
+
+Attributes
+----------
+neuron_modules : dict&#91;str, str&#93;
+    Mapping from neuron type to Verilog source.
+weight_rom : str
+    Weight ROM Verilog source.
+top_module : str
+    Top-level interconnect Verilog source.
+module_name : str
+    Top-level module name.
+total_neurons : int
+    Total neuron count.
+total_synapses : int
+    Total synapse count.
+q_format : str
+    Q-format label (e.g. ``"Q8.8"``).
+interconnect : str
+    ``"direct"`` or ``"aer"``.
+warnings : list&#91;str&#93;
+    Quantisation and compilation warnings.
+scnir_document : SCNIRDocument
+    SC-aware metadata document consumed by the compilation artefacts.
+scnir_source_modules : dict&#91;str, str&#93;
+    Concrete stochastic source HDL modules keyed by Verilog module name.
+scnir_source_manifest : tuple&#91;SCNIRHDLSourceManifestEntry, ...&#93;
+    Deterministic manifest mapping SC-NIR streams to source modules.
+scnir_external_inputs : tuple&#91;SCNIRExternalInputManifestEntry, ...&#93;
+    Deterministic flattened input-bus layout for external source names.
+scnir_hierarchy_modules : dict&#91;str, str&#93;
+    Standalone SC-NIR hierarchy boundary modules keyed by module name.
+
+
+### Function `_require_homogeneous_param(values, label)`
+Return the scalar value of a per-neuron parameter or fail closed.
+
+### Function `_resolved_population_params(neuron_type, pop)`
+Resolve population parameters without averaging per-neuron values.
+
+### Function `_population_module_signature(pop)`
+Build the exact parameter signature for shared module reuse.
+
+### Function `_signed_hex(value, width)`
+Emit a width-limited signed Verilog literal.
+
+### Function `_ceil_log2_at_least_one(value)`
+Return ceil(log2(value)) with a lower bound of 1.
+
+### Function `_connection_sources_are_analogue(pop)`
+Whether a population output should be routed as an analogue state.
+
+### Function `_external_input_layout(conns, pop_by_name, pops)`
+Assign stable flattened input-bus lanes to each external source name.
+
+### Function `_external_input_manifest(graph)`
+Return the flattened input-bus layout used by generated top-level RTL.
+
+### Function `_scnir_stream_fragment(value)`
+### Function `_scnir_connection_stream_id(src, dst)`
+### Function `_hierarchy_weight_literals(document, qgraph)`
+Return flattened quantised weight literals owned by hierarchy output ports.
+
+### Function `_hierarchy_output_wires_by_stream(hierarchy)`
+Return top-level hierarchy output wire names keyed by SC-NIR stream id.
+
+### Function `_connection_has_thresholds(conn)`
+Whether a connection carries explicit NIR Threshold metadata.
+
+### Function `_normalise_connection_delay_steps(delay_steps, source_width, label)`
+Return one validated delay value per source column.
+
+### Function `_build_scnir_hierarchy_modules(document)`
+Emit standalone boundary modules for preserved SC-NIR hierarchy instances.
+
+### Function `_build_scnir_hierarchy_module(instance)`
+Emit one synthesisable hierarchy boundary module from typed SC-NIR ports.
+
+### Function `_hierarchy_port_declaration(port)`
+### Function `_hierarchy_zero_literal(port)`
+### Function `_build_scnir_hierarchy_instance_block(hierarchy)`
+Emit top-level hierarchy contract instances for preserved SC-NIR boundaries.
+
+### Function `_hierarchy_top_wire_declaration(wire_name, port)`
+### Function `_hierarchy_weight_expr(hierarchy_output_wires, stream_id)`
+### Function `_build_neuron_module(neuron_type, pop)`
+Build a Verilog module for one canonical neuron type.
+
+Uses the existing ``equation_compiler.compile_to_verilog()`` with
+canonical ODE templates.
+
+Parameters
+----------
+neuron_type : str
+    Canonical neuron type (``"lif"``, ``"if"``, etc.).
+pop : NeuronSpec
+    Representative population (for parameter defaults).
+data_width : int
+    Fixed-point data width.
+fraction : int
+    Fractional bits.
+
+Returns
+-------
+str
+    Synthesisable Verilog module source.
+
+### Function `_build_weight_rom(qgraph)`
+Generate a combined weight ROM for all connections.
+
+All connection weight matrices are flattened into a single ROM
+addressed by a global index.  Each connection gets a base address
+offset.
+
+Parameters
+----------
+qgraph : QuantisedGraph
+    Quantised graph with integer weight matrices.
+data_width : int
+    Weight data width.
+
+Returns
+-------
+str
+    Verilog weight ROM module source.
+
+### Function `_build_top_direct(module_name, qgraph)`
+Generate direct-wired per-neuron top-level interconnect.
+
+Every neuron gets its own instance of the type-specific module.  NIR
+affine weights are emitted explicitly in fixed-point arithmetic:
+
+* external analogue inputs use ``(input * weight) >>> fraction``;
+* analogue source populations use ``(v_out * weight) >>> fraction``;
+* spiking source populations contribute their fixed-point weight on
+  spikes and zero otherwise;
+* all fan-in terms and biases accumulate in a widened signed accumulator
+  before saturation back to the neuron input Q-format.
+
+Parameters
+----------
+module_name : str
+    Top-level module name.
+qgraph : QuantisedGraph
+    Quantised graph.
+data_width : int
+    Fixed-point data width.
+
+Returns
+-------
+str
+    Verilog top-level module source.
+
+### Function `_build_top_aer(module_name, qgraph)`
+Generate weighted event-bus top-level interconnect.
+
+The emitted datapath keeps the same population instances as the direct
+interconnect but routes spike-producing source populations through an
+address-event fan-out block.  All active source spikes in a cycle contribute
+their signed fixed-point weights to every destination accumulator, so
+simultaneous events preserve the dense affine semantics of the NIR graph.
+External analogue inputs and analogue source populations remain direct
+fixed-point multiply-accumulate terms because they are not sparse events.
+
+Parameters
+----------
+module_name : str
+    Top-level module name.
+qgraph : QuantisedGraph
+    Quantised graph.
+data_width : int
+    Fixed-point data width.
+fraction : int
+    Fractional bits for analogue multiply downshift.
+
+Returns
+-------
+str
+    Verilog top-level module source.
+
+### Function `compile_network_to_fpga(graph)`
+Compile a NeuronGraph to synthesisable Verilog RTL.
+
+End-to-end pipeline:
+
+1. Quantise all parameters to the target Q-format.
+2. Generate one Verilog module per unique neuron type.
+3. Generate a combined weight ROM.
+4. Generate a top-level interconnect module (direct or AER).
+
+Parameters
+----------
+graph : NeuronGraph
+    Network description (from ``from_scnetwork()``).
+module_name : str
+    Top-level Verilog module name.
+data_width : int
+    Fixed-point total width (16 for Q8.8, 32 for Q16.16).
+fraction : int
+    Fractional bits.
+bitstream_length : int
+    SC-NIR bitstream length metadata propagated into compilation artefacts.
+source_kind : {"lfsr", "sobol"}
+    Hardware stochastic source family materialised from SC-NIR metadata.
+base_seed : int
+    First deterministic source seed; stream index increments from this base.
+target : str
+    FPGA target for resource estimation hints.
+online_learning : Mapping&#91;str, Mapping&#91;str, Any&#93;&#93; | None
+    Optional validated per-weight-stream SC-NIR online-learning annotations,
+    keyed by deterministic stream id such as ``"conn.src_to_dst.weight"``.
+
+Returns
+-------
+NetworkCompilationResult
+    All generated Verilog sources and compilation metadata.
+
+Raises
+------
+ValueError
+    If the graph is empty or contains unsupported neuron types.
+
+---
+
 ## Module `nir_bridge.hardware_targets`
 
 ### Class `SCMappingConstraints`
@@ -19358,6 +20538,233 @@ Build a deterministic manifest for NIR hardware-extension planning.
 
 ### Function `build_noise_annotation(target_id, observations)`
 Validate measured hardware noise and prepare it for simulation replay.
+
+---
+
+## Module `nir_bridge.neuromorphic_adapters`
+
+### Class `NeuromorphicAdapterPackage`
+Deterministic handoff package for one neuromorphic hardware target.
+
+- **manifest**()
+  - Return a JSON-serialisable adapter manifest.
+- **files**()
+  - Return deterministic package files keyed by relative path.
+
+### Function `build_neuromorphic_adapter_package(source, target_id, config)`
+Build one Loihi 2 or SpiNNaker2 adapter handoff package.
+
+### Function `build_neuromorphic_adapter_bundle(source, targets, config)`
+Build deterministic adapter packages for multiple targets.
+
+### Function `write_neuromorphic_adapter_bundle(output_dir, source, targets, config)`
+Write Loihi 2/SpiNNaker2 adapter manifests and reports to disk.
+
+### Function `_normalise_adapter_target(target_id)`
+### Function `_target_config(target, config)`
+---
+
+## Module `nir_bridge.neuron_graph`
+
+### Class `NeuronSpec`
+One neuron population (layer) in the compiled graph.
+
+Attributes
+----------
+name : str
+    Unique population identifier (matches the NIR node name).
+neuron_type : str
+    Canonical neuron type: ``"lif"``, ``"if"``, ``"li"``,
+    ``"cuba_lif"``, ``"cuba_li"``.
+n_neurons : int
+    Number of neurons in this population.
+params : dict&#91;str, np.ndarray&#93;
+    Neuron parameters keyed by canonical names:
+    ``tau``, ``r``, ``v_leak``, ``v_threshold``, ``v_reset``,
+    ``tau_syn``, ``tau_mem``, ``w_in`` (type-dependent).
+dt : float
+    Simulation timestep used during NIR import.
+
+
+### Class `ConnectionSpec`
+Weighted edge between two neuron populations.
+
+Attributes
+----------
+src : str
+    Source population name.
+dst : str
+    Destination population name.
+weights : np.ndarray
+    Weight matrix of shape ``(n_dst, n_src)`` in float32.
+    Row *i* contains the weights from all source neurons to
+    destination neuron *i*.
+bias : np.ndarray | None
+    Optional bias vector of shape ``(n_dst,)``.
+delay_steps : int | tuple&#91;int, ...&#93;
+    Number of explicit unit-delay timesteps on this connection.  A scalar
+    applies to all source columns; a tuple carries one delay per source
+    column for heterogeneous NIR ``Delay`` vectors.
+source_threshold : np.ndarray | None
+    Optional threshold vector applied to source signals before the weight
+    matrix.  Represents NIR ``Threshold`` on the source side.
+destination_threshold : np.ndarray | None
+    Optional threshold vector applied after this connection's affine
+    accumulation and before the destination population input.
+
+
+### Class `HierarchyInstanceSpec`
+Flattened nested graph provenance preserved for SC-NIR hierarchy export.
+
+
+### Class `NeuronGraph`
+Complete network description ready for FPGA compilation.
+
+Attributes
+----------
+populations : list&#91;NeuronSpec&#93;
+    Ordered list of neuron populations (topological order).
+connections : list&#91;ConnectionSpec&#93;
+    Weighted connections between populations.
+input_pop : str
+    Name of the input population.
+output_pop : str
+    Name of the output population.
+dt : float
+    Global simulation timestep.
+hierarchy : tuple&#91;HierarchyInstanceSpec, ...&#93;
+    Nested NIR graph instances that were inlined for flat hardware lowering
+    but must remain visible in SC-NIR hierarchy metadata.
+
+- **total_neurons**()
+  - Total neuron count across all populations.
+- **total_synapses**()
+  - Total synapse count across all connections.
+- **neuron_types**()
+  - Set of unique neuron types in the graph.
+- **summary**()
+  - Human-readable summary of the network graph.
+
+### Function `_extract_neuron_params(node, neuron_type)`
+Extract canonical parameters from an SC neuron node.
+
+Parameters
+----------
+node : Any
+    SC node instance (e.g. ``SCLIFNode``, ``SCCubaLIFNode``).
+neuron_type : str
+    Canonical neuron type string.
+
+Returns
+-------
+dict&#91;str, np.ndarray&#93;
+    Parameter dictionary with type-appropriate keys.
+
+### Function `_topological_order(nodes, edges)`
+Return a deterministic topological order for an already cycle-broken graph.
+
+### Function `_hdl_identifier_fragment(value)`
+Return a conservative Verilog identifier fragment for generated metadata.
+
+### Function `_inline_single_port_subgraphs(network)`
+Inline parser-executable single-port subgraphs for SC-NIR/FPGA lowering.
+
+The runtime parser keeps nested NIR graphs as executable wrapper nodes.  HDL
+lowering needs a single explicit dataflow graph, so this helper namespaces
+each nested subgraph and rewires the outer edges through the nested boundary
+nodes.  Multi-port subgraphs are accepted only when the parent graph supplies
+an exact ordered one-edge-per-input and one-edge-per-output boundary mapping.
+
+### Function `_delay_steps(node, node_name)`
+Return scalar or per-source delay metadata for an explicit NIR Delay node.
+
+### Function `_delay_steps_array(delay_steps)`
+Return delay metadata as a one-dimensional integer array.
+
+### Function `_compose_delay_steps(left, right)`
+Compose adjacent delay nodes with scalar/vector broadcasting.
+
+### Function `_fit_delay_steps_to_width(delay_steps, width, label)`
+Validate scalar/vector delay metadata against a source width.
+
+### Function `_scale_vector(node, node_name)`
+Return a finite one-dimensional scale vector from an SCScaleNode.
+
+### Function `_threshold_vector(node, node_name)`
+Return a finite one-dimensional threshold vector from an SCThresholdNode.
+
+### Function `_compose_scale(left, right)`
+Compose adjacent scale vectors under NumPy broadcasting rules.
+
+### Function `_broadcast_scale(scale, size, label)`
+Broadcast a scalar/vector scale to ``size`` or fail closed.
+
+### Function `_broadcast_threshold(threshold, size, label)`
+Broadcast a scalar/vector threshold to ``size`` or fail closed.
+
+### Function `_shape_width(shape)`
+Return the element count for a finite NIR shape or fail closed.
+
+### Function `_flatten_widths(node, node_name)`
+Return input/output element counts for a shape-typed SCFlattenNode.
+
+### Function `_conv1d_to_dense_matrix(node, node_name)`
+Lower a shape-known NIR Conv1d node to an exact dense matrix.
+
+### Function `_conv2d_to_dense_matrix(node, node_name)`
+Lower a shape-known NIR Conv2d node to an exact dense matrix.
+
+### Function `_pool2d_to_dense_matrix(node, node_name)`
+Lower a shape-known NIR Pool2d node to an exact dense matrix.
+
+### Function `_weight_matrix_and_bias(node, node_name)`
+Return dense weight and bias arrays for a weight-carrying NIR node.
+
+### Function `_node_logical_width(node)`
+Return the flattened channel width for a source/destination node.
+
+### Function `_resolve_weight_source(node_name)`
+Resolve the population/input source feeding a weight node.
+
+Traverses pass-through nodes immediately upstream of ``Affine``/``Linear``
+nodes and accumulates explicit NIR Delay metadata.  Ambiguous fan-in fails
+closed so the compiler does not invent a source for hardware handoff.
+
+### Function `_resolve_weight_destination(node_name)`
+Resolve the neuron destination fed by a weight node.
+
+Traverses pass-through nodes immediately downstream of ``Affine``/``Linear``
+and accumulates post-weight Scale metadata.  The scale is later folded into
+connection rows and bias terms.
+
+### Function `_fold_connection_scales(weights, bias)`
+Fold adjacent Scale nodes into a connection's weights and bias.
+
+### Function `from_scnetwork(network, dt)`
+Convert a parsed SCNetwork to a NeuronGraph for FPGA compilation.
+
+Walks the topologically-sorted node list and partitions nodes into
+neuron populations and weighted connections.  Pass-through nodes
+(Input, Output, Scale, Flatten, Threshold) are folded into the
+adjacent edges.
+
+Parameters
+----------
+network : SCNetwork
+    A parsed SC-NeuroCore network (from ``from_nir()``).
+dt : float, optional
+    Override the simulation timestep.  If ``None``, uses the
+    timestep stored in the network's neuron nodes.
+
+Returns
+-------
+NeuronGraph
+    Network description ready for FPGA compilation.
+
+Raises
+------
+ValueError
+    If the network contains no neuron populations or no connections.
 
 ---
 
@@ -19427,7 +20834,7 @@ Element-wise scaling: y = s * x
 - **forward**(x)
 
 ### Class `SCThresholdNode`
-Spike threshold: y = 1 if x >= threshold else 0
+Spike threshold: y = 1 if x > threshold else 0
 
 - **from_nir**(cls, name, node)
 - **forward**(x)
@@ -19442,6 +20849,8 @@ Reshape tensor — flatten dimensions.
 Pure integrator: dv/dt = R*I (no leak, no threshold). Euler: v += R*I*dt
 
 - **from_nir**(cls, name, node, dt)
+- **n_neurons**()
+  - Number of integrator state channels.
 - **__post_init__**()
 - **forward**(x)
 - **reset**()
@@ -19506,6 +20915,12 @@ NIR CubaLI: tau_syn * dI_syn/dt = -I_syn + w_in * I
 
 - **from_nir**(cls, name, node)
 - **forward**(x)
+
+### Function `_shape_tuple_from_type(type_map, key)`
+Return a positive integer shape tuple from a NIR type map.
+
+### Function `_shape3_tuple_from_type(type_map, key)`
+Return a rank-3 positive integer shape tuple from a NIR type map.
 
 ### Function `map_node(name, node)`
 Convert a single NIR node to its SC-NeuroCore equivalent.
@@ -19595,6 +21010,81 @@ SCNetwork
 ### Function `_validate_nir_graph_boundary(graph, context)`
 ### Function `_parse_graph(graph, dt, reset_mode)`
 Recursively parse a NIR graph into an SCNetwork.
+
+---
+
+## Module `nir_bridge.quantise_params`
+
+### Class `QuantisedGraph`
+NeuronGraph with all parameters converted to Q-format integers.
+
+Attributes
+----------
+populations : list&#91;NeuronSpec&#93;
+    Populations with integer-valued parameters (Q-encoded).
+connections : list&#91;ConnectionSpec&#93;
+    Connections with integer-valued weight matrices (Q-encoded).
+q : Q88
+    The fixed-point format configuration used.
+input_pop : str
+    Input population name.
+output_pop : str
+    Output population name.
+dt : float
+    Global timestep.
+warnings : list&#91;str&#93;
+    Overflow/underflow warnings generated during quantisation.
+total_neurons : int
+    Total neuron count.
+total_synapses : int
+    Total synapse count.
+
+
+### Function `_quantise_array(arr, q, label, warnings)`
+Quantise a float array to Q-format integers with clamping.
+
+Parameters
+----------
+arr : np.ndarray
+    Float values to quantise.
+q : Q88
+    Fixed-point format.
+label : str
+    Label for warning messages.
+warnings : list&#91;str&#93;
+    Accumulator for overflow/underflow warnings.
+
+Returns
+-------
+np.ndarray
+    Integer array of Q-encoded values (dtype int64).
+
+### Function `_check_dt_quantisation(dt, q, warnings)`
+Verify that the timestep survives Q-format quantisation.
+
+Parameters
+----------
+dt : float
+    Simulation timestep.
+q : Q88
+    Fixed-point format.
+warnings : list&#91;str&#93;
+    Accumulator for warnings.
+
+### Function `quantise_graph(graph, q)`
+Convert all floating-point parameters to Q-format integers.
+
+Parameters
+----------
+graph : NeuronGraph
+    Network with float32 parameters.
+q : Q88
+    Target fixed-point format.
+
+Returns
+-------
+QuantisedGraph
+    Network with integer-valued parameters and quantisation warnings.
 
 ---
 
@@ -19696,7 +21186,7 @@ Feedforward online trainer: stacks OnlineLIFLayers with eligibility learning.
 Parameters
 ----------
 layer_sizes : list of int
-    [n_input, n_hidden1, ..., n_output]
+    &#91;n_input, n_hidden1, ..., n_output&#93;
 tau_mem : float
 threshold : float
 lr : float
@@ -20105,13 +21595,13 @@ Run the evidence collector.
 ### Class `FeynmanKacHeatSolver`
 Solve the 1D heat equation via Feynman-Kac path-integral expectation.
 
-PDE: ``∂u/∂t = α · ∂²u/∂x²`` on ``x ∈ [0, L]`` with
+PDE: ``∂u/∂t = α · ∂²u/∂x²`` on ``x ∈ &#91;0, L&#93;`` with
      reflective BC ``u'(0,t) = u'(L,t) = 0``
      and initial condition ``u(x, 0) = f(x)``.
 
 Solution (Feynman-Kac):
-    ``u(x_eval, T) = E[ f(X_T) | X_0 = x_eval ]``
-where ``X_t`` is reflected Brownian motion on ``[0, L]`` with
+    ``u(x_eval, T) = E&#91; f(X_T) | X_0 = x_eval &#93;``
+where ``X_t`` is reflected Brownian motion on ``&#91;0, L&#93;`` with
 variance ``2α t``.
 
 Parameters
@@ -20142,9 +21632,9 @@ seed : int
 - **evolve_to**(T)
   - Step walkers from current time to ``T`` (T > current t).
 - **get_density**(n_bins)
-  - Return the Monte Carlo histogram density over [0, L].
+  - Return the Monte Carlo histogram density over &#91;0, L&#93;.
 - **expectation**(observable)
-  - Compute the Feynman-Kac expectation `E[observable(X_T)]`.
+  - Compute the Feynman-Kac expectation `E&#91;observable(X_T)&#93;`.
 - **time**()
   - Current simulation time.
 
@@ -20443,7 +21933,7 @@ Example
 >>> x = torch.randn(25, 32, 784)  # (T, batch, features)
 >>> spikes, mem = net(x)
 >>> spikes.shape
-torch.Size([32, 10])
+torch.Size(&#91;32, 10&#93;)
 
 - **__init__**(n_input, n_hidden, n_output, n_layers, n_bits, beta, surrogate_fn)
 - **forward**(x)
@@ -20457,7 +21947,7 @@ torch.Size([32, 10])
 Linear layer with SC noise injection during training.
 
 During training: injects Gaussian noise with std = sqrt(p*(1-p)/L)
-to simulate bitstream variance. Weights clamped to [-1, 1].
+to simulate bitstream variance. Weights clamped to &#91;-1, 1&#93;.
 
 During eval: no noise, standard linear.
 
@@ -20468,7 +21958,7 @@ During eval: no noise, standard linear.
 SNN with SC-aware training: noise injection + weight clamping.
 
 Trains the model to be robust to stochastic computing bitstream
-variance. Weights are constrained to [-1, 1] (bipolar SC range).
+variance. Weights are constrained to &#91;-1, 1&#93; (bipolar SC range).
 
 Example
 -------
@@ -20480,7 +21970,7 @@ Example
 - **forward**(x)
   - x: (T, batch, n_input). Returns (spike_counts, membrane_acc).
 - **export_bipolar_weights**()
-  - Export weights clamped to [-1, 1] for bipolar SC deployment.
+  - Export weights clamped to &#91;-1, 1&#93; for bipolar SC deployment.
 
 ### Function `ste_quantize(x, n_bits, symmetric)`
 Quantize tensor with straight-through estimator.
@@ -20513,6 +22003,7 @@ Mapping: p_in -> theta = p_in * pi
 P_out = |<0|Ry(theta)|0>|^2 = cos^2(theta/2)
 This non-linearity is useful for classification.
 
+- **__post_init__**()
 - **forward**(input_bitstreams)
   - input_bitstreams: (n_qubits, length)
 
@@ -20570,7 +22061,7 @@ IBM Heron r2 calibration parameters (2024).
 ### Function `parameter_shift_gradient(circuit_fn, params, shift)`
 Gradient via parameter-shift rule.
 
-f'(θ_i) = [f(θ_i + s) - f(θ_i - s)] / (2 sin(s))
+f'(θ_i) = &#91;f(θ_i + s) - f(θ_i - s)&#93; / (2 sin(s))
 
 ---
 
@@ -20670,7 +22161,7 @@ Compile an SC dense layer to quantum gate descriptions.
 Parameters
 ----------
 weights : np.ndarray
-    Shape (n_neurons, n_inputs), values in [0, 1].
+    Shape (n_neurons, n_inputs), values in &#91;0, 1&#93;.
 input_probs : np.ndarray
     Shape (n_inputs,), SC input probabilities.
 
@@ -20681,6 +22172,793 @@ list of dicts, one per neuron, each containing:
     'ry_angles': list of (input_angle, weight_angle) pairs
     'expected_output': float — SC computation result
     'quantum_output': float — quantum simulation result
+
+---
+
+## Module `quantum_cognition.__main__`
+
+### Function `_emit_snn_stimulus(snn_dir, chunk_summary, directive, step_index)`
+Write an SNN stimulus JSON file for downstream orchestration.
+
+### Function `_make_llm_endpoint(model)`
+Create an agentic-shared Endpoint if model override requested.
+
+### Function `cmd_learn(args)`
+One-shot learning from a repository.
+
+### Function `cmd_daemon(args)`
+Continuous learning daemon — shuffles GOTM, learns in cycles.
+
+### Function `cmd_status(args)`
+Print saved learning state.
+
+### Function `main(argv)`
+CLI entry point.
+
+---
+
+## Module `quantum_cognition.bridge_adapter`
+
+### Class `FisherPosnerQuantumBridge`
+Bridge between SpinPoolMPS and quantum hardware / orchestrator.
+
+Supports three operational modes:
+
+1. **Emulated** (default): Pure NumPy phase optimisation via the
+   MPS emulator.  No external dependencies required.
+2. **PennyLane**: Gradient-based phase optimisation using PennyLane
+   autograd on simulated qubits.
+3. **Orchestrator**: Accepts global phase vectors from the
+   scpn-phase-orchestrator and combines them with local
+   optimisation.
+
+Parameters
+----------
+n_qubits : int
+    Number of qubits / spin sites.
+backend : str
+    Backend selection: ``"auto"``, ``"pennylane"``, ``"ibm_qiskit"``,
+    or ``"emulated"``.
+
+- **__init__**(n_qubits, backend)
+- **_init_ibm_backend**()
+  - Initialise IBM Quantum backend via qiskit-ibm-runtime.
+- **backend**()
+  - Active backend name.
+- **execute_non_local_sync**(entangle_pairs)
+  - Execute non-local synchronisation via entanglement.
+- **_sync_ibm_qiskit**(entangle_pairs, shots)
+  - Build and execute Bell pair circuit on IBM backend or AerSimulator.
+- **execute_posner_circuit**(shots)
+  - Dispatch an actual 8q Posner Hamiltonian circuit to IBM QPU.
+- **_extract_qiskit_counts**(pub_result)
+  - Extract counts from a SamplerV2 result regardless of register name.
+- **_dispatch_qiskit_circuit**(qc, shots)
+  - Dispatch a circuit and return ⟨Z⟩ expectation values.
+- **_dispatch_qiskit_circuit_raw**(qc, shots)
+  - Dispatch a circuit and return raw bitstring counts.
+- **_sync_ibm_aer**(qc, shots)
+  - Execute circuit on explicit local AerSimulator backend.
+- **_counts_to_expvals**(counts, shots)
+  - Convert bitstring counts to ⟨Z⟩ expectation values.
+- **_sync_pennylane**(entangle_pairs)
+  - PennyLane Bell pair circuit → PauliZ expectations.
+- **_sync_emulated**(entangle_pairs)
+  - Pure-numpy emulation of Bell pair correlations.
+- **optimize_phases**(target_coherence, learning_rate, n_steps)
+  - Optimise qubit phases towards target coherence.
+- **apply_orchestrator_bias**(global_phases, target_coherence, learning_rate)
+  - Combine global orchestrator phases with local optimisation.
+- **to_qpu_artifact_metadata**()
+  - Produce metadata for QPUBridgeArtifact integration.
+- **__repr__**()
+
+### Function `compute_max_qubits(safety_factor)`
+Compute maximum PennyLane qubits that fit in available RAM.
+
+PennyLane ``default.qubit`` uses a dense state vector of shape
+``(2**n_qubits,)`` with ``complex128`` (16 bytes per amplitude).
+This function reads available RAM and computes the largest qubit
+count that stays within the safety budget.
+
+Falls back to ``/proc/meminfo`` if ``psutil`` is unavailable
+(common on minimal containers).
+
+Parameters
+----------
+safety_factor : float
+    Fraction of available RAM to allow (0, 1&#93;.  Default 0.5.
+
+Returns
+-------
+int
+    Maximum qubit count, clamped to &#91;``_QUBIT_FLOOR``, ``_QUBIT_CEILING``&#93;.
+
+### Function `_get_available_ram()`
+Return available RAM in bytes.  psutil → /proc/meminfo fallback.
+
+---
+
+## Module `quantum_cognition.content_indexer`
+
+### Class `ContentChunk`
+A single indexed content chunk from a GOTM repository.
+
+Attributes
+----------
+repo_name : str
+    Repository name (e.g. ``"SC-NEUROCORE"``).
+file_path : str
+    Relative path within the repository.
+chunk_index : int
+    Sequential index within the file.
+text : str
+    Raw text content of the chunk.
+content_type : str
+    One of ``"docstring"``, ``"comment"``, ``"markdown"``, ``"code"``,
+    ``"metadata"``.
+weight : float
+    Priority weight based on file type.
+sha256 : str
+    SHA-256 hash of the chunk text (provenance).
+
+- **__post_init__**()
+- **summary**()
+  - First 200 characters of the chunk text.
+- **to_dict**()
+  - Serialise to JSON-compatible dict.
+
+### Function `_should_skip_dir(name)`
+Check if a directory should be skipped during indexing.
+
+### Function `_extract_python_docstrings(text)`
+Extract docstrings and significant comments from Python source.
+
+### Function `_extract_rust_doc_comments(text)`
+Extract /// and //! doc comments from Rust source.
+
+### Function `_chunk_text(text, target_size)`
+Split text into chunks of approximately target_size characters.
+
+### Function `index_file(file_path, repo_name, repo_root)`
+Index a single file into content chunks.
+
+Parameters
+----------
+file_path : Path
+    Absolute path to the file.
+repo_name : str
+    Name of the repository.
+repo_root : Path
+    Root directory of the repository.
+
+Returns
+-------
+list&#91;ContentChunk&#93;
+    Extracted content chunks with provenance metadata.
+
+### Function `index_gotm_repo(repo_path, repo_name)`
+Index an entire GOTM repository into content chunks.
+
+Parameters
+----------
+repo_path : str or Path
+    Path to the repository root.
+repo_name : str, optional
+    Override repository name (default: directory name).
+
+Returns
+-------
+list&#91;ContentChunk&#93;
+    All indexed chunks sorted by weight (descending).
+
+### Function `embed_chunks(chunks, n_dims, seed)`
+Convert content chunks to numerical vectors for neural input.
+
+Uses a lightweight deterministic hashing approach (not a neural
+embedding model) to produce fixed-size feature vectors.  Each
+dimension captures a different statistical property of the text:
+
+- Character frequency distribution (dims 0–25)
+- Text length features (dim 26–27)
+- Weight and content type (dim 28–29)
+- Hash-derived features (dim 30–31)
+
+Parameters
+----------
+chunks : list&#91;ContentChunk&#93;
+    Content chunks to embed.
+n_dims : int
+    Output vector dimensionality (default 32).
+seed : int
+    Random seed for hash-derived features.
+
+Returns
+-------
+np.ndarray
+    Shape ``(len(chunks), n_dims)``, values normalised to &#91;0, 1&#93;.
+
+### Function `embed_tfidf(chunks, n_dims, min_df, max_df_ratio)`
+Compute proper TF-IDF vectors from a corpus of chunks.
+
+Unlike ``embed_chunks()`` which uses character statistics, this
+computes true TF-IDF with corpus-wide Inverse Document Frequency:
+
+    TF(t,d) = log(1 + count(t,d))
+    IDF(t) = log(N / df(t))
+    TF-IDF(t,d) = TF(t,d) × IDF(t)
+
+Parameters
+----------
+chunks : list&#91;ContentChunk&#93;
+    Corpus of content chunks.
+n_dims : int
+    Number of top-IDF terms to use as feature dimensions.
+min_df : int
+    Minimum document frequency for a term to be included.
+max_df_ratio : float
+    Maximum document frequency ratio (terms in >85% of docs removed).
+
+Returns
+-------
+tuple&#91;np.ndarray, dict&#91;str, int&#93;&#93;
+    - TF-IDF matrix of shape ``(len(chunks), n_dims)``, L2-normalised.
+    - Vocabulary mapping {term: dimension_index}.
+
+---
+
+## Module `quantum_cognition.dashboard`
+
+### Class `TerminalDashboard`
+ANSI terminal dashboard for quantum cognition monitoring.
+
+Parameters
+----------
+max_raster_steps : int
+    Number of recent steps to show in the spike raster.
+clear_screen : bool
+    Whether to clear terminal before drawing.
+
+- **__init__**(max_raster_steps, clear_screen)
+- **draw**(brain)
+  - Render a single dashboard frame.
+- **__repr__**()
+
+### Function `_heat_char(value, max_val)`
+Map a value to a coloured block character.
+
+### Function `_bar(value, max_val, width)`
+Render a simple bar with fill fraction.
+
+### Function `_directive_colour(directive)`
+Return ANSI colour for a directive.
+
+---
+
+## Module `quantum_cognition.fisher_posner`
+
+### Class `HybridFisherPosnerLIF`
+LIF neuron with quantum-metabolic coupling via spin pool.
+
+Parameters
+----------
+neuron_id : int
+    Site index in the spin pool (determines entanglement location).
+spin_pool : SpinPoolMPS
+    Shared spin pool providing non-local ATP modulation.
+dt : float
+    Integration timestep in ms.
+v_rest : float
+    Resting membrane potential in mV.
+v_threshold : float
+    Spike threshold in mV.
+v_reset : float
+    Post-spike reset potential in mV.
+tau_m : float
+    Membrane time constant in ms.
+atp_initial : float
+    Initial ATP level (normalised, 0–1).
+atp_consumption : float
+    ATP consumed per spike.
+atp_basal_regeneration : float
+    First-order ATP recovery rate independent of Posner singlet yield.
+    Posner efficiency modulates this baseline rather than replacing
+    cellular metabolism.
+
+- **__init__**(neuron_id, spin_pool, dt, v_rest, v_threshold, v_reset, tau_m, atp_initial, atp_consumption, atp_basal_regeneration)
+- **step**(I_in)
+  - Advance the neuron by one timestep.
+- **get_state**()
+  - Return full neuron state for checkpointing.
+- **reset_state**()
+  - Reset to resting potential and full ATP.
+- **reset**()
+  - Alias for reset_state (NeuronProtocol compatibility).
+- **v**()
+  - Membrane voltage alias for Population compatibility.
+- **v**(value)
+- **__repr__**()
+
+### Class `HybridFisherPosnerLIFNeuron`
+Population-compatible wrapper for HybridFisherPosnerLIF.
+
+This class creates its own SpinPoolMPS and wraps ``step()`` to return
+``0`` or ``1`` (integer spike flag) instead of ``(Vm, bool)``, making it
+compatible with ``Population(model='HybridFisherPosnerLIFNeuron', n=N)``.
+
+The underlying SpinPoolMPS is shared among all neurons in the same
+Population via class-level pool management.
+
+- **__init__**(dt, v_rest, v_threshold, v_reset, tau_m, atp_initial, atp_consumption, atp_basal_regeneration, n_sites)
+- **step**(I_in)
+  - Advance one timestep, return 1 if spiked else 0.
+- **v**()
+- **v**(value)
+- **v_threshold**()
+- **v_rest**()
+- **get_state**()
+- **reset**()
+- **reset_state**()
+- **__repr__**()
+- **_reset_pools**(cls)
+  - Reset shared pool registry (for testing).
+
+---
+
+## Module `quantum_cognition.fs_watcher`
+
+### Class `GOTMWatcher`
+Watch the GOTM collection for new/modified files.
+
+Parameters
+----------
+watch_path : str or Path
+    Root directory to monitor.
+repo_name : str
+    Repository name for content chunks.
+debounce_s : float
+    Minimum seconds between re-processing the same file.
+poll_interval_s : float
+    Polling interval when using the fallback backend.
+use_polling : bool or None
+    Force polling mode.  ``None`` = auto-detect (use watchdog if
+    available, poll otherwise).
+
+- **__init__**(watch_path, repo_name, debounce_s, poll_interval_s, use_polling)
+- **start**()
+  - Start the watcher in a background daemon thread.
+- **stop**()
+  - Stop the watcher gracefully.
+- **get_chunks**(max_items)
+  - Drain the chunk queue (non-blocking).
+- **is_running**()
+  - Whether the watcher thread is active.
+- **_should_process**(file_path)
+  - Check debounce timer for a file.
+- **_process_file**(file_path)
+  - Index a single file and enqueue its chunks.
+- **_run**()
+  - Main watcher loop (runs in background thread).
+- **_run_polling**()
+  - Polling-based file watcher for NTFS compatibility.
+- **_run_watchdog**()
+  - Watchdog (inotify) based file watcher.
+- **__repr__**()
+
+---
+
+## Module `quantum_cognition.gotm_brain`
+
+### Class `LearningStep`
+Record of a single learning step for telemetry.
+
+- **to_dict**()
+  - Serialise to JSON-compatible dict.
+
+### Class `GOTMBrain`
+Self-learning brain for the God of the Math collection.
+
+Composes quantum cognition classes with a local LLM to create a
+neural system that learns from GOTM content.
+
+Parameters
+----------
+n_neurons : int
+    Number of neurons (also determines spin pool sites and qubit count).
+bridge_backend : str
+    Quantum bridge backend (``"emulated"``, ``"pennylane"``,
+    ``"ibm_aer"``, ``"ibm_qiskit"``, or ``"auto"``). The default is
+    explicit emulation so repository learning never silently switches to
+    an expensive simulator because an optional package is installed.
+seed : int or None
+    Random seed for reproducibility.
+
+- **__init__**(n_neurons, bridge_backend, seed, llm_endpoint)
+- **get_llm_guidance**(context_summary)
+  - Query the configured local LLM for a learning directive.
+- **process_content**(input_vector, directive)
+  - Process a content vector through the neural network.
+- **learn_step**(chunk, vector)
+  - Execute a single learning step on one content chunk.
+- **learn_from_repo**(repo_path, repo_name, max_chunks)
+  - Index and learn from an entire GOTM repository.
+- **get_learning_state**()
+  - Return full learning state for inspection and persistence.
+- **get_history**()
+  - Return learning history as a list of dicts.
+- **save_state**(path)
+  - Persist full brain state (v_deep) to a JSON file.
+- **load_state**(path)
+  - Restore brain state (v_deep) from a previously saved JSON file.
+- **reset**()
+  - Reset all neurons, spin pool, and history.
+- **__repr__**()
+
+---
+
+## Module `quantum_cognition.kane_mapper`
+
+### Class `KaneRegisterLayout`
+Physical layout of a Si:P qubit register.
+
+Attributes
+----------
+n_qubits : int
+    Number of ³¹P donor qubits.
+qubit_positions : np.ndarray
+    Shape ``(n_qubits, 2)`` — (x, y) coordinates in nanometres.
+coupling_matrix : np.ndarray
+    Shape ``(n_qubits, n_qubits)`` — exchange coupling J(d) in meV.
+    Symmetric, diagonal is zero.
+depth_nm : float
+    Implantation depth below Si surface.
+t2_budget_ms : float
+    T₂ decoherence budget for the register in milliseconds.
+max_gate_depth : int
+    Maximum circuit depth achievable within the T₂ budget.
+gate_schedule : list&#91;dict&#93;
+    Ordered list of gate operations with timing.
+
+- **to_dict**()
+  - Serialise to JSON-compatible dict.
+
+### Class `KaneSiliconMapper`
+Map SpinPoolMPS sites to a Kane-architecture Si:P register.
+
+Parameters
+----------
+spacing_nm : float
+    Target inter-donor spacing in nanometres (default 20 nm).
+depth_nm : float
+    Implantation depth below silicon surface (default 20 nm).
+topology : str
+    Layout topology: ``"linear"``, ``"grid"``, ``"triangular"``, or
+    ``"hexagonal"``.
+
+- **__init__**(spacing_nm, depth_nm, topology)
+- **map_pool_to_register**(n_sites)
+  - Compute physical qubit placement and coupling matrix.
+- **_compute_positions**(n)
+  - Compute qubit positions based on topology.
+- **_compute_coupling_matrix**(positions)
+  - Compute exchange coupling J(d) between all donor pairs.
+- **_exchange_coupling**(distance_nm)
+  - Compute exchange coupling J(d) in meV.
+- **_build_gate_schedule**(n, coupling)
+  - Build a gate schedule with DAG-based parallel scheduling.
+- **get_constraints**(n_sites)
+  - Return design constraints for a register of given size.
+- **__repr__**()
+
+---
+
+## Module `quantum_cognition.radical_pair`
+
+### Class `RadicalPairParams`
+Parameters for a radical pair system.
+
+Attributes
+----------
+hyperfine_a : float
+    Isotropic hyperfine coupling constant in MHz for the exact default
+    one-nucleus model.  Posner-specific calculations must pass explicit
+    tensors via ``hyperfine_tensors_1`` and/or ``hyperfine_tensors_2``.
+exchange_j : float
+    Exchange coupling in MHz.
+    Typical: 0–10 MHz for separated radicals in Posner molecules.
+recombination_rate : float
+    Radical pair recombination rate in µs⁻¹.
+    Typical: 0.01–1.0 µs⁻¹.
+lifetime_us : float
+    Radical pair lifetime in µs.
+    Posner molecules: ~1–1000 µs (protected by Ca₉(PO₄)₆ cage).
+hyperfine_tensors_1, hyperfine_tensors_2 : list&#91;np.ndarray&#93;
+    3×3 hyperfine tensors in MHz for nuclei coupled to electron 1 and
+    electron 2 respectively.
+quadrature_order : int
+    Gauss-Legendre points for finite-lifetime recombination integration.
+
+
+### Class `RadicalPairModel`
+Density-matrix radical pair mechanism for ATP hydrolysis gating.
+
+Computes singlet yield (probability of productive ATP hydrolysis)
+as a function of local magnetic field and radical pair parameters.
+
+Parameters
+----------
+params : RadicalPairParams, optional
+    RPM parameters.  Defaults are an exact one-nucleus isotropic RPM,
+    not a Posner molecule parameterization.
+
+- **__init__**(params)
+- **_isotropic_tensor**(a_mhz)
+- **from_hyperfine_tensors**(cls)
+  - Construct an exact RPM model from explicit 3×3 hyperfine tensors.
+- **_validated_tensors**()
+- **_spin_operator**(n_spins, target, component)
+- **_singlet_density_with_nuclear_bath**(n_nuclei)
+- **_hamiltonian**(b_local)
+- **singlet_yield**(b_local)
+  - Compute singlet yield Φ_S for the current parameters.
+- **singlet_yield_field_sweep**(b_range)
+  - Compute singlet yield over a range of magnetic fields.
+- **atp_efficiency**(b_local, entanglement_boost)
+  - Compute ATP hydrolysis efficiency from singlet yield.
+- **get_state**()
+  - Return parameters as a dict for serialisation.
+- **__repr__**()
+
+---
+
+## Module `quantum_cognition.spin_pool`
+
+### Class `SpinCouplingTensor`
+Two-spin coupling tensor in MHz.
+
+``tensor_mhz&#91;a, b&#93;`` multiplies ``S_i^a S_j^b`` for
+``a,b ∈ {x,y,z}``.  This supports isotropic exchange, anisotropic
+dipolar coupling, and off-diagonal tensor terms without adding hidden
+model constants.
+
+
+### Class `SpinPoolMPS`
+Non-local spin storage using true Matrix Product States.
+
+Simulates entangled :sup:`31`\ P nuclear spins in Posner molecules.
+Each site corresponds to a phosphorus nuclear spin represented as a
+rank-3 tensor A&#91;α, σ, β&#93; where:
+- α, β are bond indices (dimension ``bond_dim``)
+- σ is the physical index (0 = spin-up, 1 = spin-down)
+
+The full state |Ψ⟩ = Σ Tr(A¹&#91;σ₁&#93;·A²&#91;σ₂&#93;·…·Aⁿ&#91;σₙ&#93;) |σ₁…σₙ⟩
+
+Parameters
+----------
+n_sites : int
+    Number of nuclear spin sites.
+bond_dim : int
+    Maximum bond dimension (controls entanglement capacity).
+correlation_length : float
+    Initialisation parameter for inter-site correlation decay.
+update_rate : float
+    Mixing rate α for entanglement map updates on spike events.
+
+- **__init__**(n_sites, bond_dim, correlation_length, update_rate, seed)
+- **_init_product_state**()
+  - Initialise MPS as the pure product state |00…0⟩.
+- **to_statevector**()
+  - Return the exact statevector represented by this MPS.
+- **set_statevector**(statevector)
+  - Load a statevector into MPS form without silent truncation.
+- **_full_spin_operator**(n_sites, site, component)
+- **evolve_exact**(couplings, time_us)
+  - Evolve under explicit two-spin coupling tensors.
+- **_compute_rdm_single**(site)
+  - Compute single-site reduced density matrix by contracting MPS.
+- **_compute_rdm_two_site**(site)
+  - Compute two-site reduced density matrix for sites (site, site+1).
+- **_compute_entanglement_entropy**(site)
+  - Compute von Neumann entropy of bipartition at site.
+- **_update_entanglement_map**()
+  - Recompute entanglement map from MPS bond entropies.
+- **apply_measurement**(site_idx, intensity)
+  - Apply a Born-rule projective measurement at one spin site.
+- **_apply_adjacent_unitary**(i, unitary)
+  - Apply a two-site unitary to adjacent sites ``i`` and ``i + 1``.
+- **_swap_adjacent**(i)
+  - Apply an exact adjacent SWAP gate inside the MPS.
+- **_apply_heisenberg_between**(i, j, coupling)
+  - Apply the Heisenberg gate to arbitrary sites via an exact SWAP network.
+- **_apply_tebd_gate**(i, j, coupling)
+  - Apply a two-site TEBD gate between adjacent sites i and j.
+- **get_local_atp_efficiency**(site_idx)
+  - Return ATP hydrolysis probability at a given site.
+- **rho**()
+  - Return site-0 reduced density matrix (backward compat).
+- **get_status**()
+  - Return summary status for telemetry and visualisation.
+- **get_state**()
+  - Return full internal state for checkpointing.
+- **set_state**(state)
+  - Restore internal state from a checkpoint dictionary.
+- **reset**()
+  - Reset to product state.
+- **to_scpn_payload**()
+  - Produce metadata compatible with SCPNDatastream format.
+- **__repr__**()
+
+---
+
+## Module `quantum_cognition.studio_hook`
+
+### Class `QuantumCognitionLayerMetadata`
+Structured metadata for the quantum cognition visualisation layer.
+
+- **to_dict**()
+  - Serialise to a JSON-compatible dict.
+
+### Class `QuantumStudioHook`
+Telemetry endpoint for quantum cognition layer visualisation.
+
+Provides structured metadata and streaming data for SNN Visual Studio
+and SCPN Studio frontends.
+
+Parameters
+----------
+spin_pool : SpinPoolMPS
+    The spin pool to observe.
+bridge : FisherPosnerQuantumBridge
+    The quantum bridge to observe.
+
+- **__init__**(spin_pool, bridge)
+- **get_layer_metadata**()
+  - Return layer metadata for the Studio layer panel.
+- **get_layer_metadata_dict**()
+  - Return layer metadata as a plain dict (JSON-serialisable).
+- **get_realtime_data**()
+  - Return streaming data for live entanglement graph.
+- **get_entanglement_snapshot**()
+  - Return a timestamped snapshot of entanglement and ATP state.
+- **to_json_event**(event_type)
+  - Produce a JSON event string for external frontend streaming.
+- **__repr__**()
+
+---
+
+## Module `quantum_cognition.tests.test_fisher_posner`
+
+### Class `TestHybridFisherPosnerLIF`
+- **test_resting_state**(pool_and_neuron)
+- **test_subthreshold_no_spike**(pool_and_neuron)
+  - Small input should not trigger a spike.
+- **test_suprathreshold_spike**(pool_and_neuron)
+  - Large input should trigger a spike.
+- **test_metabolic_failure**(pool_and_neuron)
+  - Depleted ATP should prevent spiking (metabolic failure).
+- **test_atp_regeneration**(pool_and_neuron)
+  - ATP should regenerate over time via quantum efficiency.
+- **test_spike_feeds_back_to_pool**(pool_and_neuron)
+  - Spiking should call apply_measurement on the spin pool.
+- **test_v_property**(pool_and_neuron)
+  - v property should alias Vm.
+- **test_reset**(pool_and_neuron)
+- **test_get_state**(pool_and_neuron)
+- **test_invalid_neuron_id**()
+- **test_invalid_type**()
+
+### Class `TestHybridFisherPosnerLIFNeuron`
+- **test_wrapper_step**()
+  - Wrapper step should return int (0 or 1).
+- **test_wrapper_v_property**()
+
+### Function `pool_and_neuron()`
+---
+
+## Module `quantum_cognition.tests.test_gotm_brain_inline`
+
+### Class `TestGOTMBrainPersistence`
+- **test_save_load_roundtrip**(tmp_path)
+  - State should survive save → load cycle.
+- **test_load_mismatched_neurons**(tmp_path)
+  - Loading state with wrong neuron count should raise.
+
+### Class `TestGOTMBrainLLM`
+- **test_fallback_directive**()
+  - Without LLM, should return STABILIZE.
+- **test_process_content**()
+  - process_content should return list of spike indices.
+
+### Class `TestGOTMBrainMisc`
+- **test_reset**()
+- **test_get_learning_state**()
+- **test_repr**()
+- **test_learning_step_to_dict**()
+
+---
+
+## Module `quantum_cognition.tests.test_kane_mapper`
+
+### Class `TestKaneSiliconMapper`
+- **test_linear_positions**()
+  - Linear topology should place qubits in a line.
+- **test_grid_positions**()
+  - Grid topology should place qubits in a 2D arrangement.
+- **test_coupling_matrix_symmetry**()
+  - Coupling matrix must be symmetric with zero diagonal.
+- **test_coupling_decay**()
+  - Coupling should decay with distance.
+- **test_coupling_positive**()
+  - All coupling values should be non-negative.
+- **test_t2_budget**()
+  - T₂ budget must be positive.
+- **test_single_qubit**()
+  - Single qubit register should work.
+- **test_constraints**()
+  - Constraints dict should contain all expected fields.
+- **test_constraints_infeasible**()
+  - Wide spacing should be infeasible (coupling too weak).
+- **test_serialisation**()
+  - to_dict should produce JSON-compatible output.
+- **test_invalid_spacing**()
+- **test_invalid_topology**()
+- **test_repr**()
+
+---
+
+## Module `quantum_cognition.tests.test_radical_pair`
+
+### Class `TestRadicalPairParams`
+- **test_defaults**()
+- **test_custom**()
+
+### Class `TestRadicalPairModel`
+- **test_singlet_yield_zero_field**()
+  - At zero field, singlet yield depends only on exchange/hyperfine ratio.
+- **test_singlet_yield_range**()
+  - Singlet yield must be bounded &#91;0, 1&#93;.
+- **test_strong_exchange_preserves_singlet**()
+  - Strong exchange coupling should preserve singlet character.
+- **test_weak_exchange_reduces_singlet**()
+  - Weak exchange coupling leads to more mixing → lower singlet yield.
+- **test_field_sweep**()
+  - Field sweep should return array of correct length.
+- **test_atp_efficiency_rejects_entanglement_boost**()
+  - Classical boost is not a radical-pair Hamiltonian parameter.
+- **test_atp_efficiency_range**()
+  - ATP efficiency is singlet-yield-derived and bounded.
+- **test_get_state**()
+  - State dict should contain all params.
+- **test_repr**()
+
+---
+
+## Module `quantum_cognition.tests.test_spin_pool`
+
+### Class `TestSpinPoolMPS`
+- **test_init_defaults**()
+- **test_entanglement_map_normalised**()
+  - Entanglement map should sum to 1 after init.
+- **test_measurement_updates_map**()
+  - Measurement at a site should shift entanglement towards that site.
+- **test_normalisation_preserved**()
+  - Entanglement map should remain normalised after measurements.
+- **test_atp_efficiency_range**()
+  - ATP efficiency is a singlet probability in &#91;0, 1&#93;.
+- **test_invalid_site_index**()
+- **test_negative_intensity**()
+- **test_reset**()
+- **test_state_roundtrip**()
+  - get_state → set_state should preserve state.
+- **test_scpn_payload**()
+- **test_invalid_params**()
+- **test_singlet_statevector_roundtrip_preserves_atp_observable**()
+- **test_statevector_import_rejects_invalid_public_contracts**()
+- **test_statevector_import_rejects_silent_bond_truncation**()
+- **test_checkpoint_without_map_recomputes_quantum_diagnostics**()
+- **test_corrupted_checkpoint_zero_norm_fails_on_statevector_export**()
+- **test_single_site_pool_rejects_two_site_atp_observable**()
+- **test_exact_evolution_rejects_invalid_coupling_contracts**()
 
 ---
 
@@ -20779,7 +23057,7 @@ threshold : float
 
 - **__init__**(n_features, threshold, seed)
 - **forward**(x)
-  - Forward: spike(W@x) + x (element-wise, clamped to [0,1]).
+  - Forward: spike(W@x) + x (element-wise, clamped to &#91;0,1&#93;).
 - **reset**()
 
 ### Class `DeepSNNStack`
@@ -20828,7 +23106,7 @@ Parameters
 ----------
 eval_fn : callable
     Function(weights) -> accuracy. Takes list of weight matrices,
-    returns accuracy in [0, 1].
+    returns accuracy in &#91;0, 1&#93;.
 weights : list of ndarray
     Baseline (unfaulted) weight matrices.
 
@@ -21100,12 +23378,12 @@ Configurable safety thresholds matching SV parameters.
 Software mirror of the hardware neuro_safe_monitor.
 
 Enforces all 6 formally proven properties:
-  [P1] monitor_soundness — halt when current/voltage/coherence out of bounds
-  [P2] safe_transition — coherence must not decrease (monotone)
-  [P3] sc_precision_bound — popcount must be in [0, N]
-  [P4] sc_add_preserves_range — SC addition result ≤ denominator
-  [P5] lif_membrane_bounded — membrane ≤ v_max
-  [P6] correlation_range — |SCC numerator| ≤ denominator
+  &#91;P1&#93; monitor_soundness — halt when current/voltage/coherence out of bounds
+  &#91;P2&#93; safe_transition — coherence must not decrease (monotone)
+  &#91;P3&#93; sc_precision_bound — popcount must be in &#91;0, N&#93;
+  &#91;P4&#93; sc_add_preserves_range — SC addition result ≤ denominator
+  &#91;P5&#93; lif_membrane_bounded — membrane ≤ v_max
+  &#91;P6&#93; correlation_range — |SCC numerator| ≤ denominator
 
 - **reset**()
   - Reset monitor state (equivalent to rst_n pulse).
@@ -21130,7 +23408,7 @@ In-memory representation of one deterministic SCPN stream.
 - **rotation_angles_rad**()
   - ``Ry`` angles for quantum-control bridges: firing rate times pi.
 - **quantum_amplitudes**()
-  - Real amplitude encoding of firing rates as ``[alpha, beta]`` pairs.
+  - Real amplitude encoding of firing rates as ``&#91;alpha, beta&#93;`` pairs.
 - **to_json_dict**()
   - Serialise the datastream to a stable JSON-compatible mapping.
 - **from_json_dict**(cls, payload)
@@ -21173,6 +23451,13 @@ Topological firewall with dissonance rejection.
 - **step**(dt, l9_input, external_noise)
 - **_integrity**()
 - **get_global_metric**()
+- **_validate_params**(params)
+- **_retrieval_quality**(value)
+- **_qec_residual**(l9_input, n_boundary_nodes)
+- **_bounded_l9_vector**(value, n_boundary_nodes, name)
+- **_memory_complexity_flux**(l9_input)
+- **_boundary_context**(l9_input)
+- **_noise_vector**(external_noise, n_boundary_nodes)
 
 ---
 
@@ -21186,6 +23471,15 @@ Noospheric spin-glass with memetic spreading dynamics.
 - **__init__**(params)
 - **step**(dt, l10_input)
 - **get_global_metric**()
+- **_validate_params**(params)
+- **_integrity_signal**(value)
+- **_l10_boundary_effect**(cls, l10_input, n_nodes)
+- **_noospheric_context**(l10_input)
+- **_project_nonnegative_vector**(value, n_nodes, name)
+- **_project_rejection_mask**(value, n_nodes)
+- **_nonnegative_scalar**(value, name)
+- **_unit_scalar**(cls, value, name)
+- **_update_info_density**(dt, transmission)
 
 ---
 
@@ -21200,6 +23494,12 @@ ENAQT-inspired ecological coherence transport.
 - **step**(dt, l11_input)
 - **_von_neumann_entropy**()
 - **get_global_metric**()
+- **_validate_params**(params)
+- **_info_saturation**(value)
+- **_l11_noospheric_effect**(l11_input)
+- **_gaian_context**(l11_input)
+- **_nonnegative_scalar**(value, name)
+- **_unit_scalar**(cls, value, name)
 
 ---
 
@@ -21213,6 +23513,13 @@ Temporal binding via cross-correlation within a sliding window.
 - **__init__**(params)
 - **step**(dt, l12_input)
 - **get_global_metric**()
+- **_validate_params**(params)
+- **_coherence_signal**(coherence, n_channels)
+- **_l12_source_sampling_effect**(l12_input)
+- **_source_context**(l12_input)
+- **_scalar**(value, name)
+- **_pearson**(a, b)
+- **_max_lag_binding_matrix**(history)
 
 ---
 
@@ -21225,8 +23532,17 @@ Temporal binding via cross-correlation within a sliding window.
 Weighted integration across SCPN layer metrics.
 
 - **__init__**(params)
-- **step**(dt, layer_metrics)
+- **step**(dt, layer_metrics, l13_input)
 - **get_global_metric**()
+- **_validate_params**(params)
+- **_validate_step_inputs**(cls, dt, layer_metrics, l13_input)
+- **_normalised_weights**(weights)
+- **_metric_vector**(layer_metrics, limit)
+- **_finite_mean**(values, name)
+- **_l13_bridge_effect**(cls, l13_input)
+- **_bridge_context**(l13_input)
+- **_finite_scalar**(value, name)
+- **_unit_scalar**(cls, value, name)
 
 ---
 
@@ -21240,6 +23556,11 @@ Self-monitoring meta-cognitive layer with GCI computation.
 - **__init__**(params)
 - **step**(dt, l14_input)
 - **get_global_metric**()
+- **_validate_params**(params)
+- **_validate_step_inputs**(dt, l14_input, params)
+- **_consilium_context**(l14_input)
+- **_nonnegative_scalar**(value, name)
+- **_unit_scalar**(cls, value, name)
 
 ---
 
@@ -21247,12 +23568,19 @@ Self-monitoring meta-cognitive layer with GCI computation.
 
 ### Class `L16_StochasticParameters`
 
+### Class `_L16StepInputs`
+
 ### Class `L16_DirectorLayer`
 Cybernetic closure with PI control and Lyapunov monitoring.
 
 - **__init__**(params)
 - **step**(dt, l15_input)
 - **get_global_metric**()
+- **_validate_params**(params)
+- **_validate_step_inputs**(dt, l15_input, params)
+- **_validate_boundary_context**(l15_input)
+- **_nonnegative_scalar**(value, name)
+- **_unit_scalar**(cls, value, name)
 
 ---
 
@@ -21270,6 +23598,8 @@ Stochastic implementation of the Quantum Cellular Field.
   - Advance the layer by one time step.
 - **get_global_metric**()
   - Return the global coherence metric (Phi-like).
+- **_validate_params**(params)
+- **_validate_step_inputs**(dt, external_field, n_qubits)
 
 ---
 
@@ -21294,6 +23624,9 @@ second messenger cascades using bitstream representations.
   - Return the global neurochemical activity metric.
 - **get_neuromodulation_state**()
   - Return named neurotransmitter levels for external use.
+- **_validate_params**(params)
+- **_validate_step_inputs**(cls, dt, nt_release, l1_input, n_neurotransmitter_types)
+- **_finite_mean**(values, name)
 
 ---
 
@@ -21318,6 +23651,10 @@ pattern formation using bitstream representations.
   - Return the global genomic activity metric.
 - **get_ciss_coherence**()
   - Return CISS spin coherence metric.
+- **_validate_params**(params)
+- **_validate_step_inputs**(cls, dt, l2_input, bioelectric_signal, n_genes)
+- **_finite_mean**(values, name)
+- **_bioelectric_signal**(values, n_genes)
 
 ---
 
@@ -21344,6 +23681,9 @@ tissue-level pattern formation using bitstream representations.
   - Return the global synchronization metric (Kuramoto order parameter).
 - **get_tissue_pattern**()
   - Return 2D tissue activity pattern.
+- **_validate_params**(params)
+- **_validate_step_inputs**(cls, dt, l3_input, external_stimulus, n_cells)
+- **_finite_mean**(values, name)
 
 ---
 
@@ -21370,6 +23710,11 @@ emotional dynamics using bitstream representations.
   - Return the global organismal coherence metric.
 - **get_emotional_valence**()
   - Return current emotional valence.
+- **_validate_params**(params)
+- **_validate_step_inputs**(cls, dt, l4_input, external_event)
+- **_validate_external_event**(cls, external_event)
+- **_apply_external_event**(external_event)
+- **_dimension_names**(cls)
 
 ---
 
@@ -21394,6 +23739,11 @@ and biospheric network dynamics using bitstream representations.
   - Return current Schumann resonance spectrum.
 - **get_circadian_time**()
   - Return current circadian time (0-24 hours).
+- **_validate_params**(params)
+- **_validate_step_inputs**(cls, dt, l5_input, solar_activity, lunar_phase)
+- **_finite_mean**(values, name)
+- **_l5_organismal_effect**(cls, l5_input)
+- **_unit_mean**(cls, values, name)
 
 ---
 
@@ -21419,7 +23769,14 @@ acupuncture point dynamics using bitstream representations.
 - **stimulate_meridian**(meridian_id, intensity)
   - Stimulate a specific meridian.
 - **get_acupoint_map**()
-  - Return named acupoint activations (simplified set).
+  - Return clinically common named acupoint activations.
+- **_e8_roots**()
+- **_validate_params**(params)
+- **_symbol_input**(symbol_input)
+- **_finite_mean**(value, name)
+- **_l6_symbolic_effect**(cls, l6_input)
+- **_unit_mean**(value, name)
+- **_acupoint_stimulus**(stimulus)
 
 ---
 
@@ -21434,7 +23791,12 @@ Stochastic cosmic phase-locking via Kuramoto-coupled PTA oscillators.
 - **__init__**(params)
 - **step**(dt, l7_input)
 - **_order_parameter**()
+- **_memory_imprint_drive**()
 - **get_global_metric**()
+- **_validate_params**(params)
+- **_glyph_drive**(glyph_vector)
+- **_l7_phase_drive**(cls, l7_input)
+- **_nonnegative_scalar**(value, name)
 
 ---
 
@@ -21448,9 +23810,17 @@ Hopfield associative memory with stochastic bitstream encoding.
 - **__init__**(params)
 - **store**(pattern)
   - Hebbian imprint: W += pattern ⊗ pattern.
-- **step**(dt, l8_input)
+- **step**(dt, l8_input, boundary_cue, ebs_context)
 - **_retrieval_quality**()
 - **get_global_metric**()
+- **_validate_params**(params)
+- **_pattern_vector**(pattern)
+- **_cosmic_alignment**(value)
+- **_l8_phase_reference_drive**(cls, l8_input)
+- **_memory_imprint_drive**(payload)
+- **_boundary_cue_vector**(boundary_cue)
+- **_boundary_context**(ebs_context)
+- **_holographic_entropy**(activation)
 
 ---
 
@@ -21489,6 +23859,112 @@ Detects anomalies (Non-Self) and neutralizes threats.
   - Check if current state matches 'Self'.
 - **_trigger_response**()
 
+---
+
+## Module `security.side_channel_benchmark`
+
+### Class `SideChannelBenchmarkError`
+Raised when side-channel benchmark inputs or outputs are invalid.
+
+
+### Class `SideChannelBenchmarkArm`
+One benchmark arm with class-activity leakage proxy evidence.
+
+
+### Class `SideChannelBenchmarkRecord`
+Per-sample benchmark record with realised protected probability.
+
+
+### Class `SideChannelDeployManifest`
+Deploy/evidence manifest for an analytic side-channel benchmark.
+
+
+### Class `SideChannelBenchmarkReport`
+Analytic baseline-versus-protected side-channel benchmark report.
+
+
+### Function `run_side_channel_leakage_benchmark()`
+Compare correlated baseline streams against activity-balanced streams.
+
+### Function `write_side_channel_benchmark_report(output_path)`
+Run the analytic benchmark and write a canonical JSON artifact.
+
+### Function `_normalise_probabilities(probabilities)`
+### Function `_normalise_labels(labels)`
+### Function `_correlated_activity_fixture_stream(probability, bitstream_length)`
+### Function `_report_payload(report)`
+### Function `_with_artifact_path(report, path)`
+### Function `_deploy_manifest_payload(manifest)`
+### Function `_arm_payload(arm)`
+### Function `_class_proxy_payload(proxy)`
+---
+
+## Module `security.side_channel_metrics`
+
+### Class `SideChannelMetricError`
+Raised when side-channel metric inputs are malformed or unsupported.
+
+
+### Class `SwitchingActivitySummary`
+Transition-count summary for a rectangular binary bitstream matrix.
+
+
+### Class `ClassActivityProxy`
+Class-conditioned analytic proxy for activity-dependent leakage.
+
+``label_activity_correlation`` is Pearson correlation between numeric labels
+and per-sample mean switching rate. It is ``None`` when either side has zero
+variance, avoiding fabricated correlation claims.
+
+
+### Function `compute_switching_activity(bitstreams)`
+Compute per-stream switching activity for rows of binary bitstreams.
+
+### Function `compute_class_activity_proxy(bitstreams_by_sample, labels)`
+Summarise class-conditioned switching activity for simulated samples.
+
+### Function `_normalise_sample_collection(bitstreams_by_sample)`
+### Function `_normalise_bitstream_matrix(bitstreams)`
+### Function `_normalise_bit(value)`
+### Function `_normalise_labels(labels)`
+### Function `_pearson_correlation(labels, rates)`
+---
+
+## Module `security.thermal_sc_encoding`
+
+### Class `ThermalSCEncodingError`
+Raised when thermal side-channel encoder inputs violate the contract.
+
+
+### Class `ThermalSCEncodingConfig`
+Configuration for deterministic activity-balanced SC encoding.
+
+
+### Class `ActivityBalancedEncoding`
+A single activity-shaped stochastic-computing bitstream.
+
+
+### Class `ActivityBalancedEncodingSummary`
+Batch-level analytic evidence for activity-shaped encodings.
+
+
+### Class `ActivityBalancedEncodingBatch`
+Batch result for activity-shaped stochastic encodings.
+
+
+### Function `encode_activity_balanced_probability(probability, config)`
+Encode one probability with distributed ones and deterministic rotation.
+
+### Function `encode_activity_balanced_probabilities(probabilities, config)`
+Encode a probability batch and attach analytic class-activity evidence.
+
+### Function `_validate_config(config)`
+### Function `_validate_probability(probability)`
+### Function `_distribute_ones(ones, bitstream_length)`
+### Function `_activity_preserving_rotation_offset(bitstream, config, stream_index)`
+### Function `_build_dummy_bitstreams(config, stream_index)`
+### Function `_candidate_offsets(desired, distance, bitstream_length)`
+### Function `_rotate(bitstream, offset)`
 ---
 
 ## Module `security.watermark`
@@ -21552,7 +24028,7 @@ duration_us : float, optional
 Returns
 -------
 ndarray of shape (n_bins, width * height * 2)
-    Binary spike trains. Channels: [ON pixels, OFF pixels].
+    Binary spike trains. Channels: &#91;ON pixels, OFF pixels&#93;.
 
 ### Function `events_to_frames(events, width, height, dt_us, duration_us)`
 Convert DVS events to event count frames.
@@ -21666,7 +24142,7 @@ noise_color : str
 base_freq_hz : float
     Carrier / base tone frequency (Hz).
 volume : float
-    Relative volume in ``[0, 1]``.
+    Relative volume in ``&#91;0, 1&#93;``.
 isochronic_hz : float
     Isochronic pulse frequency (Hz); 0 disables.
 spatial_rotation : float
@@ -21682,9 +24158,9 @@ name : str
     Human-readable identifier (must match the registry key).
 description : str
     Short description of the protocol's therapeutic goal.
-stage_audio : Dict[SleepStage, StageAudioParams]
+stage_audio : Dict&#91;SleepStage, StageAudioParams&#93;
     Audio parameters keyed by target stage.
-stage_targets : Dict[SleepStage, float]
+stage_targets : Dict&#91;SleepStage, float&#93;
     Target fraction of total sleep time per stage (must sum to 1.0).
 total_duration_min : float
     Recommended session length in minutes.
@@ -21692,7 +24168,7 @@ total_duration_min : float
 - **get_audio_for_stage**(stage)
   - Return audio parameters for *stage*, falling back to WAKE params.
 - **get_target_stage**(progress)
-  - Return the ideal stage for a given session *progress* in [0, 1].
+  - Return the ideal stage for a given session *progress* in &#91;0, 1&#93;.
 - **to_dict**()
   - Serialise the protocol to a plain dict.
 
@@ -21724,20 +24200,20 @@ sleep_onset_latency_min : float
 sleep_efficiency_pct : float
     Percentage of total time spent asleep (non-WAKE).
 quality_score : float
-    Composite quality score in ``[0, 100]``.
-stage_durations_min : Dict[str, float]
+    Composite quality score in ``&#91;0, 100&#93;``.
+stage_durations_min : Dict&#91;str, float&#93;
     Time (minutes) per stage.
-stage_percentages : Dict[str, float]
+stage_percentages : Dict&#91;str, float&#93;
     Percentage of total time per stage.
-stage_targets : Dict[str, float]
+stage_targets : Dict&#91;str, float&#93;
     Protocol target percentages for comparison.
-hypnogram : List[int]
+hypnogram : List&#91;int&#93;
     Stage codes per epoch.
 wakeups : int
     Number of WAKE epochs that occurred after initial sleep onset.
 reinductions : int
     Number of re-induction sequences triggered.
-recommendations : List[str]
+recommendations : List&#91;str&#93;
     Plain-language suggestions.
 grade : str
     Letter grade (A-F).
@@ -21774,7 +24250,7 @@ stage_match : bool
     Whether current == target.
 audio_params : StageAudioParams
     Audio parameters being delivered.
-band_powers : Dict[str, float]
+band_powers : Dict&#91;str, float&#93;
     Most recent EEG band-power decomposition.
 reinduction_active : bool
     Whether a re-induction sequence is currently running.
@@ -22013,7 +24489,7 @@ Reference: Dormand, J.R. & Prince, P.J. (1980). J. Comput. Appl. Math. 6:19–26
 - **__init__**(atol, rtol, max_factor, min_factor, safety)
 - **step**(f, y, t, dt)
 - **integrate**(f, y0, t_span, dt0)
-  - Integrate over [t0, tf]. Returns (t_array, y_array).
+  - Integrate over &#91;t0, tf&#93;. Returns (t_array, y_array).
 
 ### Class `ExponentialEuler`
 Exponential Euler for linear ODEs: dy/dt = A*y + b.
@@ -22090,7 +24566,7 @@ For separable Hamiltonians H = T(p) + V(q):
     q_{n+1} = q_n + h * ∇T(p_{1/2})
     p_{n+1} = p_{1/2} - (h/2) * ∇V(q_{n+1})
 
-Here we split the state y = [q, p] where q are position-like (voltage)
+Here we split the state y = &#91;q, p&#93; where q are position-like (voltage)
 and p are momentum-like (recovery/gating) variables.
 
 Reference: Hairer, E. et al. (2006). Geometric Numerical Integration. Springer.
@@ -22105,7 +24581,7 @@ Equivalent to Störmer-Verlet but staggered:
     q_{n+1} = q_n + h * f_q(p_{n+1/2})
     p_{n+1} = p_{n+1/2} + (h/2) * f_p(q_{n+1})
 
-State vector: y = [q₀..q_{n-1}, p₀..p_{n-1}]
+State vector: y = &#91;q₀..q_{n-1}, p₀..p_{n-1}&#93;
 
 Reference: Yoshida, H. (1990). Phys. Lett. A 150:262–268.
 
@@ -22118,7 +24594,7 @@ Reference: Yoshida, H. (1990). Phys. Lett. A 150:262–268.
 ### Class `BitstreamCurrentSource`
 Multi-channel bitstream current source.
 
-- Takes scalar inputs x_i in [x_min, x_max]
+- Takes scalar inputs x_i in &#91;x_min, x_max&#93;
 - Encodes each into a bitstream via BitstreamEncoder
 - Passes them through BitstreamSynapses
 - Decodes the realised post-synaptic bitstreams into a per-cycle
@@ -22129,6 +24605,9 @@ The stochastic realisation is then fixed until a new source is
 constructed with different parameters or seeds.
 
 - **__post_init__**()
+- **_apply_bipolar_xnor**()
+- **_map_bipolar_to_current**(value)
+- **_decode_current_trace**()
 - **reset**()
 - **current_trace**()
   - Return the realised per-cycle decoded current trace.
@@ -22152,7 +24631,7 @@ Physics:
 
 - **__post_init__**()
 - **_hadamard**()
-  - Apply Hadamard gate H = (1/√2)[[1,1],[1,-1]] to each qubit.
+  - Apply Hadamard gate H = (1/√2)&#91;&#91;1,1&#93;,&#91;1,-1&#93;&#93; to each qubit.
 - **_measure**()
   - Apply Hadamard, measure via Born rule, collapse state.
 - **sample_normal**(mean, std)
@@ -22356,14 +24835,14 @@ Four predictor modes:
     'context': Markov context predictor. Hashes last K spike states
                per channel, predicts from accumulated statistics.
     'world_model': Learnable autoregressive predictor (LMS-trained).
-               Predicts spike[t] from spike[t-K:t] via linear model
+               Predicts spike&#91;t&#93; from spike&#91;t-K:t&#93; via linear model
                with sigmoid activation. Learns cross-channel correlations.
 
 Compression pipeline:
     1. For each timestep t:
-       a. predicted[t] = predictor.predict()
-       b. error[t] = actual[t] XOR predicted[t]
-       c. predictor.update(actual[t])
+       a. predicted&#91;t&#93; = predictor.predict()
+       b. error&#91;t&#93; = actual&#91;t&#93; XOR predicted&#91;t&#93;
+       c. predictor.update(actual&#91;t&#93;)
     2. ISI-compress the error matrix (sparser than raw spikes)
     3. Pack with header (predictor params for decoder sync)
 
@@ -22573,7 +25052,7 @@ mode : str
 Finite Impulse Response filter in spike domain.
 
 Computes weighted sum of delayed input spike trains.
-Output at time t = sum(coefficients[k] * input[t-k]) > threshold.
+Output at time t = sum(coefficients&#91;k&#93; * input&#91;t-k&#93;) > threshold.
 
 Parameters
 ----------
@@ -22698,7 +25177,7 @@ Multi-layer spike GNN for graph classification/regression.
 Parameters
 ----------
 layer_dims : list of int
-    [in_features, hidden1, ..., out_features]
+    &#91;in_features, hidden1, ..., out_features&#93;
 threshold : float
 T : int
     Simulation timesteps per layer.
@@ -22833,7 +25312,9 @@ seed : int
 - **forward**(inputs, interval)
   - Process a sequence of inputs.
 - **reset**()
+  - Reset membrane voltages to the configured resting potential.
 - **voltage**()
+  - Return a defensive copy of the current membrane voltages.
 
 ---
 
@@ -22854,6 +25335,7 @@ Micromagnetic material parameters.
 ### Class `SpintronicDeviceConfig`
 Configuration for a single spintronic device.
 
+- **__post_init__**()
 - **from_tech**(cls, tech)
 - **area_nm2**()
 - **switching_energy_fj**()
@@ -22951,7 +25433,7 @@ Multi-level cell configuration for spintronic devices.
 - **resistance_margins**()
   - Resistance levels evenly spaced between R_P and R_AP.
 - **quantize_weight**(weight_float)
-  - Quantize a [0, 1] weight to an MLC level.
+  - Quantize a &#91;0, 1&#93; weight to an MLC level.
 - **dequantize**(level)
 - **density_improvement**()
 
@@ -23102,7 +25584,7 @@ Set ``SC_NEUROCORE_NO_RUST=1`` to force Python path.
 ### Function `bifurcation_sweep(simulate_fn, base_config, param_name, param_min, param_max, n_values)`
 Sweep one parameter and extract voltage attractors at each value.
 
-Returns {param_values, attractors} where attractors[i] is a list
+Returns {param_values, attractors} where attractors&#91;i&#93; is a list
 of voltage extrema in the second half of the simulation (the attractor).
 
 ### Function `sensitivity_analysis(simulate_fn, base_config, param_names, perturbation)`
@@ -23279,7 +25761,7 @@ Returns ``None`` only when the backend is unavailable or the model is not
 implemented in Rust. Runtime failures in an available backend are raised so
 the caller does not silently degrade to Python.
 
-### Function `simulate_model(name, param_overrides, dt, duration, current, protocol)`
+### Function `simulate_model(name, param_overrides, dt, duration, current, protocol, frequency_hz)`
 Simulate a named model. Uses Rust engine when model has default params.
 
 ---
@@ -23319,9 +25801,9 @@ Validate a network graph. Returns list of error messages (empty = valid).
 Simulate a network graph using the E-I network backend.
 
 Maps populations and projections to the existing E-I simulation.
-For graphs with exactly 2 populations (1 exc + 1 inh), this
-directly uses simulate_ei_network. For other topologies, falls
-back to a simplified all-to-all simulation.
+Only graphs with exactly 2 populations (1 exc + 1 inh) are
+currently supported; other topologies fail closed instead of
+being collapsed into an unfaithful surrogate.
 
 ### Function `graph_to_nir(graph)`
 Export network graph to NIR-compatible format.
@@ -23388,10 +25870,10 @@ compile path.
 ### Function `_spike_stats(spike_indices, dt, n_steps)`
 Compute spike statistics from spike index list.
 
-### Function `_make_current_trace(protocol, current, n_steps, step_onset, step_offset, ramp_start, ramp_end)`
+### Function `_make_current_trace(protocol, current, n_steps, dt, frequency_hz, step_onset, step_offset, ramp_start, ramp_end)`
 Generate a current injection trace for the given protocol.
 
-### Function `simulate(equations, threshold, reset, params, init, dt, duration, current, protocol)`
+### Function `simulate(equations, threshold, reset, params, init, dt, duration, current, protocol, frequency_hz)`
 Run an ODE neuron simulation and return time series data.
 
 ### Function `fi_curve(equations, threshold, reset, params, init, dt, duration, i_min, i_max, i_steps)`
@@ -23821,8 +26303,8 @@ Example
 -------
 >>> import numpy as np
 >>> from sc_neurocore import BitstreamSynapse
->>> syns = [BitstreamSynapse(w_min=0.0, w_max=1.0, w=0.5, length=256)
-...         for _ in range(3)]
+>>> syns = &#91;BitstreamSynapse(w_min=0.0, w_max=1.0, w=0.5, length=256)
+...         for _ in range(3)&#93;
 >>> dp = BitstreamDotProduct(synapses=syns)
 >>> pre = np.ones((3, 256), dtype=np.uint8)
 >>> post_matrix, y_scalar = dp.apply(pre)
@@ -23847,7 +26329,7 @@ conductance : float
     Gap junction conductance g_c (nS). Typical: 0.01-1.0 nS.
     Bennett & Zukin, Neuron 2004.
 rectification : float
-    Rectification factor in [0, 1]. 0 = fully bidirectional (ohmic),
+    Rectification factor in &#91;0, 1&#93;. 0 = fully bidirectional (ohmic),
     1 = fully rectifying (current flows in one direction only).
     Default 0 (standard gap junction).
 
@@ -23886,7 +26368,7 @@ True
 ### Class `BitstreamSynapse`
 Stochastic-computing synapse using bitstreams.
 
-Each synapse has a weight w in [w_min, w_max].
+Each synapse has a weight w in &#91;w_min, w_max&#93;.
 SC multiplication via bitwise AND: P(out=1) ~ P(pre=1) * P(w=1).
 
 Example
@@ -24054,7 +26536,7 @@ Layer with heterogeneous per-synapse time constants.
 
 Each synapse has its own tau, initialized log-normally (mean=5ms, std=1ms).
 The synaptic trace at each synapse decays at its own rate:
-  trace[i,j] = exp(-dt/tau[i,j]) * trace[i,j] + input_spike[j]
+  trace&#91;i,j&#93; = exp(-dt/tau&#91;i,j&#93;) * trace&#91;i,j&#93; + input_spike&#91;j&#93;
 
 Parameters
 ----------
@@ -24158,7 +26640,7 @@ Forward pass
 Call ``step(input_spikes)`` at each timestep. The module maintains
 an internal spike history buffer. For each synapse (i, j):
 
-    delayed_input[j] = sum_i W[j,i] * interp(history, t - D[j,i])
+    delayed_input&#91;j&#93; = sum_i W&#91;j,i&#93; * interp(history, t - D&#91;j,i&#93;)
 
 where interp linearly interpolates between integer delay bins,
 making D differentiable.
@@ -24187,12 +26669,12 @@ Export
 ### Function `rate_encode(x, n_timesteps)`
 Poisson rate coding. Higher values spike more often.
 
-x: values in [0, 1], shape (*batch). Returns (T, *batch).
+x: values in &#91;0, 1&#93;, shape (*batch). Returns (T, *batch).
 
 ### Function `latency_encode(x, n_timesteps, tau)`
 Time-to-first-spike latency coding. Stronger input → earlier spike.
 
-x: values in [0, 1], shape (*batch). Returns (T, *batch).
+x: values in &#91;0, 1&#93;, shape (*batch). Returns (T, *batch).
 
 ### Function `delta_encode(x, threshold)`
 Delta coding: spike on temporal change exceeding threshold.
@@ -24235,6 +26717,9 @@ Derivative of hard-sigmoid.
 
 ## Module `training.loops`
 
+### Function `_device_usable(device)`
+Return whether a Torch device can execute a minimal tensor operation.
+
 ### Function `auto_device()`
 Select best available device: CUDA > MPS > CPU.
 
@@ -24271,6 +26756,74 @@ L2 penalty on mean spike rate. Penalizes high-firing neurons.
 
 ---
 
+## Module `training.sc_correlation_regularizers`
+
+### Function `_require_stream_bank(streams)`
+### Function `correlation_matrix(streams)`
+Return Pearson correlation matrix across bitstream rows.
+
+### Function `pairwise_correlation_penalty(streams)`
+Penalize off-diagonal stream correlations above ``threshold``.
+
+### Function `correlation_penalty(observed)`
+Differentiable mean-square penalty toward a target correlation.
+
+---
+
+## Module `training.sc_estimators`
+
+### Class `DifferentiableSCConfig`
+Validated contract for differentiable SC training operators.
+
+- **__post_init__**()
+
+### Class `RelaxedSCProduct`
+Result bundle for a differentiable relaxed SC product.
+
+- **length_cost**()
+
+### Class `SCBitstreamSample`
+Sampled SC bitstreams with decoded values.
+
+
+### Class `SCBitstreamStatistics`
+Rate, variance, and correlation evidence for sampled bitstreams.
+
+
+### Class `SampledSCProduct`
+Decoded sampled SC multiply result and stream statistics.
+
+
+### Function `_require_domain(name, value, lower, upper)`
+### Function `_bernoulli_product_expectation(p_input, p_weight, correlation)`
+### Function `_role_seed(config, role)`
+### Function `_probabilities_from_values(values, config)`
+### Function `_decode_probabilities(probabilities, config)`
+### Function `_sample_bernoulli_row(probability, length, seed)`
+### Function `_sample_sobol_row(probability, length, seed)`
+### Function `_radical_inverse_base2(index)`
+### Function `_sample_halton_row(probability, length, seed)`
+### Function `_lfsr16_step(state)`
+### Function `_sample_lfsr_row(probability, length, seed)`
+### Function `_sample_row(probability, length, seed, generator)`
+### Function `_sample_paired_sobol_rows(input_probability, weight_probability, length, seed)`
+### Function `sample_sc_bitstreams(values, config)`
+Sample deterministic SC bitstreams for training-time statistics.
+
+### Function `estimate_bitstream_statistics(streams)`
+Return rate, variance, and Pearson correlation evidence for bitstreams.
+
+### Function `relaxed_sc_multiply(input_value, weight_value, config)`
+Return differentiable expected SC multiplication under the config contract.
+
+### Function `sampled_sc_multiply(input_value, weight_value, config)`
+Sample SC bitstreams, multiply them, and decode the empirical product.
+
+### Function `finite_difference_gradients(input_value, weight_value, config)`
+Central finite-difference gradients for deterministic relaxed SC operators.
+
+---
+
 ## Module `training.snn_modules`
 
 ### Class `SCWeightNoiseModel`
@@ -24282,9 +26835,9 @@ Deterministic export-time noise model for SC weight probabilities.
 ### Class `LIFCell`
 Single-step Leaky Integrate-and-Fire with surrogate backward.
 
-v[t] = beta * v[t-1] + I[t]
-spike[t] = H(v[t] - threshold)
-v[t] -= spike[t] * threshold  (subtract reset)
+v&#91;t&#93; = beta * v&#91;t-1&#93; + I&#91;t&#93;
+spike&#91;t&#93; = H(v&#91;t&#93; - threshold)
+v&#91;t&#93; -= spike&#91;t&#93; * threshold  (subtract reset)
 
 - **__init__**(beta, threshold, surrogate_fn, learn_beta, learn_threshold)
 - **beta**()
@@ -24294,7 +26847,7 @@ v[t] -= spike[t] * threshold  (subtract reset)
 ### Class `IFCell`
 Integrate-and-Fire (no leak, beta=1).
 
-Simplest spiking model: v[t] = v[t-1] + I[t], fire when v >= threshold.
+Simplest spiking model: v&#91;t&#93; = v&#91;t-1&#93; + I&#91;t&#93;, fire when v >= threshold.
 
 - **__init__**(threshold, surrogate_fn, learn_threshold)
 - **threshold**()
@@ -24303,8 +26856,8 @@ Simplest spiking model: v[t] = v[t-1] + I[t], fire when v >= threshold.
 ### Class `SynapticCell`
 Dual-exponential synaptic LIF. Two state variables: synapse current + membrane.
 
-i_syn[t] = alpha * i_syn[t-1] + I[t]
-v[t] = beta * v[t-1] + i_syn[t]
+i_syn&#91;t&#93; = alpha * i_syn&#91;t-1&#93; + I&#91;t&#93;
+v&#91;t&#93; = beta * v&#91;t-1&#93; + i_syn&#91;t&#93;
 
 - **__init__**(alpha, beta, threshold, surrogate_fn, learn_beta, learn_threshold)
 - **beta**()
@@ -24315,8 +26868,8 @@ v[t] = beta * v[t-1] + i_syn[t]
 ### Class `ALIFCell`
 Adaptive LIF. Bellec et al. 2020.
 
-Threshold adapts based on recent spiking: theta[t] = theta_0 + beta_adapt * a[t]
-where a[t] = rho * a[t-1] + spike[t-1].
+Threshold adapts based on recent spiking: theta&#91;t&#93; = theta_0 + beta_adapt * a&#91;t&#93;
+where a&#91;t&#93; = rho * a&#91;t-1&#93; + spike&#91;t-1&#93;.
 
 - **__init__**(beta, threshold, rho, beta_adapt, surrogate_fn)
 - **forward**(current, v, a)
@@ -24325,7 +26878,7 @@ where a[t] = rho * a[t-1] + spike[t-1].
 ### Class `ExpIFCell`
 Exponential Integrate-and-Fire. Fourcaud-Trocmé et al. 2003.
 
-v[t] = beta * v[t-1] + delta_T * exp((v[t-1] - v_rh) / delta_T) + I[t]
+v&#91;t&#93; = beta * v&#91;t-1&#93; + delta_T * exp((v&#91;t-1&#93; - v_rh) / delta_T) + I&#91;t&#93;
 Exponential term creates sharp upstroke near threshold.
 
 - **__init__**(beta, threshold, delta_t, v_rh, surrogate_fn, learn_beta, learn_threshold)
@@ -24336,8 +26889,8 @@ Exponential term creates sharp upstroke near threshold.
 ### Class `AdExCell`
 Adaptive Exponential IF. Brette & Gerstner 2005.
 
-v[t] = beta * v[t-1] + delta_T * exp((v - v_rh) / delta_T) - w[t-1] + I[t]
-w[t] = rho * w[t-1] + a * (v[t-1] - v_rest) + b * spike[t]
+v&#91;t&#93; = beta * v&#91;t-1&#93; + delta_T * exp((v - v_rh) / delta_T) - w&#91;t-1&#93; + I&#91;t&#93;
+w&#91;t&#93; = rho * w&#91;t-1&#93; + a * (v&#91;t-1&#93; - v_rest) + b * spike&#91;t&#93;
 
 - **__init__**(beta, threshold, delta_t, v_rh, a, b, rho, v_rest, surrogate_fn, learn_beta, learn_threshold)
 - **beta**()
@@ -24348,7 +26901,7 @@ w[t] = rho * w[t-1] + a * (v[t-1] - v_rest) + b * spike[t]
 Lapicque IF with membrane resistance. Lapicque 1907.
 
 tau * dv/dt = -(v - v_rest) + R * I
-Discretised: v[t] = (1 - dt/tau) * v[t-1] + (R * dt / tau) * I[t]
+Discretised: v&#91;t&#93; = (1 - dt/tau) * v&#91;t-1&#93; + (R * dt / tau) * I&#91;t&#93;
 
 - **__init__**(tau, r, dt, threshold, v_rest, surrogate_fn, learn_threshold)
 - **threshold**()
@@ -24358,7 +26911,7 @@ Discretised: v[t] = (1 - dt/tau) * v[t-1] + (R * dt / tau) * I[t]
 Alpha synapse neuron. Rall 1967.
 
 Two-state alpha function: i_exc and i_inh with separate time constants.
-v[t] = beta * v[t-1] + i_exc[t] - i_inh[t]
+v&#91;t&#93; = beta * v&#91;t-1&#93; + i_exc&#91;t&#93; - i_inh&#91;t&#93;
 
 - **__init__**(alpha_exc, alpha_inh, beta, threshold, surrogate_fn, learn_beta, learn_threshold)
 - **beta**()
@@ -24369,8 +26922,8 @@ v[t] = beta * v[t-1] + i_exc[t] - i_inh[t]
 Second-order LIF with inertial term. Dayan & Abbott 2001.
 
 Adds a second state variable (acceleration) for smoother dynamics:
-a[t] = alpha * a[t-1] + I[t]
-v[t] = beta * v[t-1] + a[t]
+a&#91;t&#93; = alpha * a&#91;t-1&#93; + I&#91;t&#93;
+v&#91;t&#93; = beta * v&#91;t-1&#93; + a&#91;t&#93;
 
 - **__init__**(alpha, beta, threshold, surrogate_fn, learn_beta, learn_threshold)
 - **beta**()
@@ -24386,14 +26939,14 @@ LIF with trainable recurrent weights.
 ### Class `SpikingNet`
 Multi-layer feedforward SNN for classification.
 
-Architecture: [Linear -> LIF] x (n_layers+1)
+Architecture: &#91;Linear -> LIF&#93; x (n_layers+1)
 Readout: spike count and membrane accumulation over T timesteps.
 
 - **__init__**(n_input, n_hidden, n_output, n_layers, beta, surrogate_fn, learn_beta, learn_threshold)
 - **forward**(x)
   - x: (T, batch, n_input). Returns (spike_counts, membrane_acc).
-- **to_sc_weights**(include_bias, noise_model)
-  - Export weight matrices normalised to [0,1] for SC bitstream deployment.
+- **to_sc_weights**(include_bias, noise_model, encoding)
+  - Export weight matrices for SC bitstream deployment.
 
 ### Class `ConvSpikingNet`
 Convolutional SNN for image classification.
@@ -24403,15 +26956,72 @@ Conv2d(1,32,5)→LIF→AvgPool→Conv2d(32,64,5)→LIF→AvgPool→Flatten→Lin
 - **__init__**(n_output, beta, surrogate_fn, learn_beta, learn_threshold)
 - **forward**(x)
   - x: (T, batch, 1, 28, 28). Returns (spike_counts, membrane_acc).
-- **to_sc_weights**(include_bias, noise_model)
-  - Export weight matrices normalised to [0,1] for SC bitstream deployment.
+- **to_sc_weights**(include_bias, noise_model, encoding)
+  - Export weight matrices for SC bitstream deployment.
 
 ### Function `_coerce_sc_weight_noise_model(noise_model)`
-### Function `_normalise_sc_weight_tensor(weight)`
-### Function `_apply_sc_weight_noise(weight, model, layer_index)`
+### Function `_normalise_sc_weight_tensor(weight, encoding)`
+### Function `_sc_weight_scale(weight, encoding)`
+### Function `_normalise_sc_bias_tensor(bias, scale, encoding)`
+### Function `_apply_sc_weight_noise(weight, model, layer_index, encoding)`
 ### Function `_logit(p)`
 Inverse sigmoid: logit(p) = log(p / (1 - p)).
 
+---
+
+## Module `training.stochastic_backprop`
+
+### Class `SCTrainingObjectiveConfig`
+Weights and targets for SC-aware training objective components.
+
+- **__post_init__**()
+
+### Class `SCResourceProxy`
+Hardware proxy values used in SC-aware objective shaping.
+
+- **__post_init__**()
+- **normalized_cost**()
+  - Return a dimensionless bounded-scale resource proxy.
+
+### Class `SCObjectiveBreakdown`
+Named scalar components of an SC-aware training objective.
+
+
+### Function `_scalar_like(reference, value)`
+### Function `relaxed_sc_linear(input_value, weight, bias, sc_config)`
+Linear layer whose multiply-accumulate path uses relaxed SC products.
+
+### Function `stochastic_training_objective(task_loss)`
+Compose task loss with SC length, correlation, variance, and resource costs.
+
+---
+
+## Module `training.stochastic_backprop_export`
+
+### Function `build_stochastic_backprop_export_manifest(benchmark_report, sc_config)`
+Build a deterministic SC-NIR handoff manifest for stochastic backpropagation.
+
+### Function `write_stochastic_backprop_export_manifest(path, benchmark_report, sc_config)`
+Write a canonical stochastic backpropagation SC-NIR export manifest.
+
+### Function `write_stochastic_backprop_handoff_bundle(export_manifest, output_dir)`
+Materialise an auditable SC-NIR HDL handoff bundle from an export manifest.
+
+### Function `_validate_benchmark_matches_config(benchmark_report, sc_config)`
+### Function `_source_rows_from_scnir(scnir_document)`
+### Function `_source_module_name(index, stream_id)`
+### Function `_shared_bitstream_length(scnir_document)`
+### Function `_signal_kind_counts(scnir_document)`
+### Function `_write_top_module(path)`
+### Function `_write_source_module(path)`
+### Function `_build_scnir_document(sc_config)`
+### Function `_stream()`
+### Function `_constraint()`
+### Function `_empty_source()`
+### Function `_source_kind(generator)`
+### Function `_source_specific(source_kind, sc_config)`
+### Function `_validate_manifest(manifest)`
+### Function `_mapping(value, path)`
 ---
 
 ## Module `training.surrogate`
@@ -24685,15 +27295,18 @@ Returns
 
 ## Module `transformers.block`
 
+### Class `_AttentionHead`
+- **forward**(Q, K, V)
+
 ### Class `StochasticTransformerBlock`
 Spiking Transformer Block (S-Former).
 Structure:
 Input -> Multi-Head Attention -> Add & Norm -> Feed Forward -> Add & Norm -> Output
 
 - **__post_init__**()
-- **_multi_head_attention**(x)
 - **forward**(x)
   - x: (d_model,) or (Sequence_Length, d_model). Returns same shape.
+- **_multi_head_attention**(x)
 
 ---
 
@@ -24874,32 +27487,32 @@ Decode a unipolar bitstream back into a probability estimate.
 p_hat = (# of ones) / length
 
 ### Function `generate_bipolar_bitstream(x, length, rng)`
-Generate a bipolar SC bitstream encoding a value in [-1, +1].
+Generate a bipolar SC bitstream encoding a value in &#91;-1, +1&#93;.
 
-Bipolar encoding: value x in [-1, 1] maps to probability p = (x + 1) / 2.
+Bipolar encoding: value x in &#91;-1, 1&#93; maps to probability p = (x + 1) / 2.
 Bit=1 with probability p, bit=0 with probability 1-p.
 Decoding: x = 2 * mean(bits) - 1.
 
 Bipolar multiplication uses XNOR: P(A XNOR B) encodes A*B in bipolar.
 
 ### Function `bipolar_to_value(bitstream)`
-Decode a bipolar bitstream to a value in [-1, +1].
+Decode a bipolar bitstream to a value in &#91;-1, +1&#93;.
 
 x = 2 * mean(bits) - 1
 
 ### Function `value_to_bipolar_prob(x)`
-Map a value in [-1, 1] to the unipolar probability used in bipolar encoding.
+Map a value in &#91;-1, 1&#93; to the unipolar probability used in bipolar encoding.
 
 p = (x + 1) / 2. This p is then used with standard Bernoulli generation.
 
 ### Function `value_to_unipolar_prob(x, x_min, x_max, clip)`
-Map a scalar x from [x_min, x_max] into a unipolar probability [0,1].
+Map a scalar x from &#91;x_min, x_max&#93; into a unipolar probability &#91;0,1&#93;.
 Linear mapping:
     p = (x - x_min) / (x_max - x_min)
-If clip=True, x is clipped into [x_min, x_max].
+If clip=True, x is clipped into &#91;x_min, x_max&#93;.
 
 ### Function `unipolar_prob_to_value(p, x_min, x_max)`
-Map a unipolar probability p in [0,1] back to a scalar in [x_min, x_max].
+Map a unipolar probability p in &#91;0,1&#93; back to a scalar in &#91;x_min, x_max&#93;.
 Inverse of value_to_unipolar_prob.
 
 ### Function `adaptive_length(p, epsilon, confidence, method, min_length, max_length)`
@@ -24911,7 +27524,7 @@ such that |p_hat - p| < epsilon with the given confidence.
 Parameters
 ----------
 p : float
-    Encoded probability in [0, 1].
+    Encoded probability in &#91;0, 1&#93;.
 epsilon : float
     Maximum acceptable absolute error.
 confidence : float
@@ -24934,9 +27547,9 @@ Stochastic computing division via CORDIV circuit.
 Li, Qian, Riedel & Bazargan, IEEE Trans. Signal Process. 62(9), 2014.
 
 Sequential circuit: at each bit position t,
-  - x[t]=1         → z[t] = 1
-  - x[t]=0, y[t]=1 → z[t] = 0
-  - x[t]=0, y[t]=0 → z[t] = z[t-1] (hold)
+  - x&#91;t&#93;=1         → z&#91;t&#93; = 1
+  - x&#91;t&#93;=0, y&#91;t&#93;=1 → z&#91;t&#93; = 0
+  - x&#91;t&#93;=0, y&#91;t&#93;=0 → z&#91;t&#93; = z&#91;t-1&#93; (hold)
 
 Converges to P(z=1) ≈ P(x=1) / P(y=1) when P(x) ≤ P(y).
 
@@ -25068,7 +27681,7 @@ ensuring zero correlation between any pair of bitstreams.
 Parameters
 ----------
 probabilities : np.ndarray
-    Probability matrix, any shape. Values in [0, 1].
+    Probability matrix, any shape. Values in &#91;0, 1&#93;.
 length : int
     Bitstream length per element.
 method : str
@@ -25089,7 +27702,7 @@ Lower discrepancy → more uniform coverage → better SC precision.
 Parameters
 ----------
 samples : np.ndarray
-    Shape (n_samples, d), values in [0, 1].
+    Shape (n_samples, d), values in &#91;0, 1&#93;.
 n_test : int
     Number of random test points.
 
@@ -25132,20 +27745,20 @@ Bridge between standard DL frameworks (like PyTorch) and SC-NeuroCore.
   - Export SC weights back to numpy dictionary.
 
 ### Function `normalize_weights(weights)`
-Normalizes weights to [0, 1] range for unipolar SC.
+Normalizes weights to &#91;0, 1&#93; range for unipolar SC.
 
 ---
 
 ## Module `utils.numerics`
 
 ### Function `safe_exp(x)`
-exp() with argument clipped to [-500, 500] to prevent overflow.
+exp() with argument clipped to &#91;-500, 500&#93; to prevent overflow.
 
 ### Function `safe_cosh(x)`
-cosh() with argument clipped to [-500, 500] to prevent overflow.
+cosh() with argument clipped to &#91;-500, 500&#93; to prevent overflow.
 
 ### Function `safe_tanh(x)`
-tanh() with argument clipped to [-500, 500].
+tanh() with argument clipped to &#91;-500, 500&#93;.
 
 ### Function `boltzmann(v, v_half, k)`
 Boltzmann sigmoid: 1 / (1 + exp((v_half - v) / k)). Overflow-safe.
@@ -25154,10 +27767,10 @@ Boltzmann sigmoid: 1 / (1 + exp((v_half - v) / k)). Overflow-safe.
 Inverse Boltzmann: 1 / (1 + exp((v - v_half) / k)). Overflow-safe.
 
 ### Function `clip_gating(x)`
-Clip gating variable to physiological range [0, 1].
+Clip gating variable to physiological range &#91;0, 1&#93;.
 
 ### Function `clip_voltage(v, v_min, v_max)`
-Clip membrane voltage to safe range (default [-200, 100] mV).
+Clip membrane voltage to safe range (default &#91;-200, 100&#93; mV).
 
 ---
 
@@ -25171,10 +27784,10 @@ Example::
     from sc_neurocore import VectorizedSCLayer
     from sc_neurocore.utils.profiling import estimate_memory
 
-    layers = [
+    layers = &#91;
         VectorizedSCLayer(n_inputs=50, n_neurons=128, length=256),
         VectorizedSCLayer(n_inputs=128, n_neurons=10, length=256),
-    ]
+    &#93;
     print(estimate_memory(layers))
     # {'weights_bytes': 56320, 'packed_bytes': 112640, ...}
 
@@ -25226,7 +27839,7 @@ Example
 >>> vals.shape
 (5,)
 >>> RNG(seed=42).random(5) == vals  # deterministic
-array([ True,  True,  True,  True,  True])
+array(&#91; True,  True,  True,  True,  True&#93;)
 
 - **__init__**(seed)
 - **normal**(mean, std, size)
@@ -25330,7 +27943,7 @@ Interval arithmetic checker for stochastic probability bounds and
 energy safety constraints. Not an SMT solver.
 
 - **verify_probability_bounds**(input_interval, weight_interval)
-  - Prove that Output Probability is always in [0, 1].
+  - Prove that Output Probability is always in &#91;0, 1&#93;.
 - **verify_energy_safety**(energy, cost)
   - Prove that operation will not consume more energy than available.
 
@@ -25354,6 +27967,77 @@ Do not use as a security boundary without additional sandboxing.
   - Static analysis of source code for dangerous patterns.
 - **verify_logic_invariant**(func, input_sample, expected_condition)
   - Dynamic verification: run func and check output against condition.
+
+---
+
+## Module `verification.snn_standard`
+
+### Class `VerificationLevel`
+Evidence levels for SNN verification claims.
+
+
+### Class `VerificationEvidenceKind`
+Kinds of evidence accepted by the standard.
+
+
+### Class `VerificationClaimStatus`
+Status of one evidence item or standard requirement.
+
+
+### Class `SNNVerificationEvidence`
+One evidence item used in a formal SNN verification claim.
+
+- **__post_init__**()
+- **to_dict**()
+  - Return a JSON-ready evidence record.
+
+### Class `SNNVerificationRequirement`
+One mandatory or optional requirement in a standard profile.
+
+- **__post_init__**()
+- **to_dict**()
+  - Return a JSON-ready requirement.
+
+### Class `SNNVerificationStandardProfile`
+Named set of requirements for a formal SNN verification claim.
+
+- **__post_init__**()
+- **to_dict**()
+  - Return a JSON-ready profile.
+
+### Class `SNNVerificationRequirementResult`
+Evaluation of one profile requirement.
+
+- **to_dict**()
+  - Return a JSON-ready requirement result.
+
+### Class `SNNVerificationConformanceReport`
+Conformance report for a profile and evidence set.
+
+- **passed**()
+  - Whether all mandatory requirements passed.
+- **missing_mandatory**()
+  - Mandatory requirement ids with missing evidence.
+- **failed_mandatory**()
+  - Mandatory requirement ids with failing evidence.
+- **mandatory_coverage**()
+  - Coverage ratio for mandatory requirements.
+- **to_dict**()
+  - Return a JSON-ready conformance report.
+
+### Class `SNNVerificationStandard`
+Evaluate SNN verification evidence against a standard profile.
+
+- **__init__**(profile)
+- **assess**(evidence)
+  - Assess evidence against the configured profile.
+- **_assess_requirement**(requirement, evidence_items)
+
+### Function `publication_grade_snn_standard_profile()`
+Return the default formal SNN verification standard profile.
+
+### Function `assess_snn_verification_standard(evidence, profile)`
+Assess evidence against the default or supplied SNN verification profile.
 
 ---
 
@@ -25548,11 +28232,11 @@ Output of `KalmanFilter.filter()`.
 Attributes
 ----------
 means : np.ndarray, shape (T, d)
-    Filtered means E[x_t | y_{1:t}, u_{1:t}].
+    Filtered means E&#91;x_t | y_{1:t}, u_{1:t}&#93;.
 covariances : np.ndarray, shape (T, d, d)
-    Filtered covariances Cov[x_t | y_{1:t}, u_{1:t}].
+    Filtered covariances Cov&#91;x_t | y_{1:t}, u_{1:t}&#93;.
 pred_means : np.ndarray, shape (T, d)
-    One-step-ahead predicted means E[x_t | y_{1:t-1}, u_{1:t-1}].
+    One-step-ahead predicted means E&#91;x_t | y_{1:t-1}, u_{1:t-1}&#93;.
 pred_covariances : np.ndarray, shape (T, d, d)
     One-step-ahead predicted covariances.
 log_likelihood : float
@@ -25585,11 +28269,11 @@ Output of `RTSSmoother.smooth()`.
 Attributes
 ----------
 means : np.ndarray, shape (T, d)
-    Smoothed means E[x_t | y_{1:T}, u_{1:T}].
+    Smoothed means E&#91;x_t | y_{1:T}, u_{1:T}&#93;.
 covariances : np.ndarray, shape (T, d, d)
-    Smoothed covariances Cov[x_t | y_{1:T}, u_{1:T}].
+    Smoothed covariances Cov&#91;x_t | y_{1:T}, u_{1:T}&#93;.
 cross_covariances : np.ndarray, shape (T-1, d, d)
-    Lag-1 smoothed cross-covariances Cov[x_t, x_{t+1} | y_{1:T}].
+    Lag-1 smoothed cross-covariances Cov&#91;x_t, x_{t+1} | y_{1:T}&#93;.
     Required by the EM M-step.
 
 
@@ -25634,7 +28318,7 @@ deterministic linear matmul + clip implementation was replaced
 - **__post_init__**()
 - **reset**()
 - **predict_next_state**(current_state, action)
-  - Predict E[x_{t+1} | x_t, u_t] under the SSM dynamics.
+  - Predict E&#91;x_{t+1} | x_t, u_t&#93; under the SSM dynamics.
 - **predict_next_state_with_cov**(current_state, current_cov, action)
   - Predict mean + covariance of x_{t+1} given (x_t, Σ_t, u_t).
 - **forecast**(initial_state, actions)
@@ -25653,7 +28337,7 @@ Built once via:
 Per `feedback_mojo_026_ffi_pattern.md`, the @export signature
 accepts only non-parametric types — we pass every matrix as a
 raw `int64` address (numpy `arr.ctypes.data`) and the Mojo
-side reconstructs `UnsafePointer[Float64, MutAnyOrigin]`
+side reconstructs `UnsafePointer&#91;Float64, MutAnyOrigin&#93;`
 inside the function.
 
 ### Function `_ensure_go_loaded()`
@@ -25682,7 +28366,7 @@ is explicitly requested.
 ### Class `SpikePredictor`
 Online autoregressive spike pattern predictor.
 
-Learns to predict spike[t] from spike[t-K:t] per channel.
+Learns to predict spike&#91;t&#93; from spike&#91;t-K:t&#93; per channel.
 Weight matrix W of shape (N, N*K) maps flattened history to
 per-channel firing probabilities. Binary prediction via threshold.
 

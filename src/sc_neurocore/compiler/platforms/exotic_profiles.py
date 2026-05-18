@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore
 
+"""Register non-CMOS and research hardware-profile targets."""
+
 from __future__ import annotations
 from .registry import HardwareProfile, _reg
 

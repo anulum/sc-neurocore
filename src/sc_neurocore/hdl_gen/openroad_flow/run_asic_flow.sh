@@ -51,14 +51,14 @@ mkdir_safe() {
 }
 
 # ---------------------------------------------------------------------------
-# Step 1: Generate minimal Liberty stub (if real PDK not available)
+# Step 1: Generate a generic Liberty cell library when a foundry PDK is unavailable.
 # ---------------------------------------------------------------------------
-generate_liberty_stub() {
+generate_liberty_library() {
     if [ -f "$LIBERTY_FILE" ]; then
         log "Using existing Liberty: $LIBERTY_FILE"
         return
     fi
-    log "Generating minimal Liberty stub for generic synthesis..."
+    log "Generating generic Liberty cell library for synthesis..."
     cat > "$LIBERTY_FILE" << 'LIBERTY_EOF'
 /* Minimal Liberty for Yosys generic synthesis */
 library(generic_cmos) {
@@ -123,7 +123,7 @@ library(generic_cmos) {
   }
 }
 LIBERTY_EOF
-    log "Liberty stub written to $LIBERTY_FILE"
+    log "Generic Liberty cell library written to $LIBERTY_FILE"
 }
 
 # ---------------------------------------------------------------------------
@@ -216,7 +216,7 @@ main() {
 
     check_tools
     mkdir_safe
-    generate_liberty_stub
+    generate_liberty_library
     generate_sdc
     run_synthesis
 
