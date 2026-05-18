@@ -10,12 +10,28 @@
 Shared test configuration and fixtures for SC-NeuroCore.
 """
 
+import os
+from collections.abc import Iterator
+from pathlib import Path
+
 import numpy as np
 import pytest
 
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 @pytest.fixture(autouse=True)
-def seed_random():
+def restore_repo_cwd() -> Iterator[None]:
+    """Keep process-wide CWD changes from leaking across tests."""
+    os.chdir(_REPO_ROOT)
+    try:
+        yield
+    finally:
+        os.chdir(_REPO_ROOT)
+
+
+@pytest.fixture(autouse=True)
+def seed_random() -> Iterator[None]:
     """Seed numpy RNG before every test for deterministic results."""
     np.random.seed(42)
     yield

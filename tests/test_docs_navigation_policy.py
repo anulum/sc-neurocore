@@ -11,7 +11,7 @@ from __future__ import annotations
 from fnmatch import fnmatch
 from pathlib import Path
 import tomllib
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
@@ -20,6 +20,18 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DOCS_ROOT = REPO_ROOT / "docs"
 MKDOCS_CONFIG = REPO_ROOT / "mkdocs.yml"
 NAVIGATION_POLICY = REPO_ROOT / "docs" / "navigation_policy.toml"
+
+
+class _MkDocsConfigLoader(yaml.SafeLoader):
+    """Parse MkDocs metadata without importing extension callback objects."""
+
+
+def _ignore_python_name(loader: yaml.Loader, tag_suffix: str, node: yaml.Node) -> str:
+    return tag_suffix
+
+
+if not TYPE_CHECKING:
+    _MkDocsConfigLoader.add_multi_constructor("tag:yaml.org,2002:python/name:", _ignore_python_name)
 
 
 def _nav_paths(nav: list[Any]) -> set[str]:
@@ -48,7 +60,7 @@ def _public_markdown_paths() -> set[str]:
 
 def test_unlisted_docs_are_classified_by_navigation_policy() -> None:
     """Every public doc outside MkDocs nav must have an explicit policy bucket."""
-    config = yaml.load(MKDOCS_CONFIG.read_text(encoding="utf-8"), Loader=yaml.UnsafeLoader)
+    config = yaml.load(MKDOCS_CONFIG.read_text(encoding="utf-8"), Loader=_MkDocsConfigLoader)
     listed = _nav_paths(config["nav"])
     unlisted = _public_markdown_paths() - listed
 

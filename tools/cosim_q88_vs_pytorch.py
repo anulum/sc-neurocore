@@ -20,35 +20,26 @@ Output: classification accuracy comparison + per-sample agreement table.
 from __future__ import annotations
 
 import argparse
+import importlib
 import os
 import sys
 import time
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 
-REPO = "/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE"
-sys.path.insert(0, os.path.join(REPO, "tools"))
-sys.path.insert(0, os.path.join(REPO, "data/masquelier_shd/neuromorphic_training-main"))
-os.chdir(os.path.join(REPO, "data/masquelier_shd/neuromorphic_training-main"))
-
-from shd_q88_reference import load_artifacts, run_inference_q88  # noqa: E402
-
-import torch  # noqa: E402
+REPO = Path(__file__).resolve().parents[1]
+TRAINING_REPO = REPO / "data/masquelier_shd/neuromorphic_training-main"
+sys.path.insert(0, str(REPO / "tools"))
+sys.path.insert(0, str(TRAINING_REPO))
 
 os.environ["WANDB_MODE"] = "disabled"
 
-import wandb  # noqa: E402
 
-wandb.init(mode="disabled")
-
-from configs.config_SHD import Config  # noqa: E402
-from src.datasets import load_dataset  # noqa: E402
-from src.SHD.snn import SNN_axonal_feedforward_delays  # noqa: E402
-from src.SHD.trainer import test as trainer_test  # noqa: E402
-from src.utils import reset_states  # noqa: E402
-
-
-def get_pytorch_predictions(model, test_loader, device, stride: int):
+def get_pytorch_predictions(
+    model: Any, test_loader: Any, device: Any, stride: int
+) -> list[dict[str, Any]]:
     """Run PyTorch model on stride-sampled test set.
 
     Returns every `stride`-th sample (e.g. stride=75 gives ~30 samples spanning
@@ -58,6 +49,9 @@ def get_pytorch_predictions(model, test_loader, device, stride: int):
     MUST mirror trainer.test() exactly: model.eval() + round_pos() at start,
     reset_states (not functional.reset_net), identical input shape handling.
     """
+    torch = importlib.import_module("torch")
+    reset_states = importlib.import_module("src.utils").reset_states
+
     model.eval()
     if hasattr(model, "round_pos"):
         model.round_pos()  # CRITICAL: same as trainer.test() line 70-71
@@ -88,9 +82,28 @@ def get_pytorch_predictions(model, test_loader, device, stride: int):
     return results
 
 
-def main(checkpoint_path: str, artifacts_dir: str, stride: int):
+def main(checkpoint_path: str, artifacts_dir: str, stride: int) -> None:
+    torch = importlib.import_module("torch")
+    Config = importlib.import_module("configs.config_SHD").Config
+    shd_q88_reference = importlib.import_module("shd_q88_reference")
+    load_artifacts = shd_q88_reference.load_artifacts
+    run_inference_q88 = shd_q88_reference.run_inference_q88
+    load_dataset = importlib.import_module("src.datasets").load_dataset
+    SNN_axonal_feedforward_delays = importlib.import_module(
+        "src.SHD.snn"
+    ).SNN_axonal_feedforward_delays
+    trainer_test = importlib.import_module("src.SHD.trainer").test
+
+    try:
+        import wandb
+    except ModuleNotFoundError:
+        wandb = None
+    if wandb is not None:
+        wandb.init(mode="disabled")
+
     print(f"Loading checkpoint: {checkpoint_path}")
     config = Config()
+    config.datasets_path = str((TRAINING_REPO / config.datasets_path).resolve())
     config.hidden_layers = [128, 128]
     config.DCLSversion = "max"
 
@@ -106,7 +119,7 @@ def main(checkpoint_path: str, artifacts_dir: str, stride: int):
     # Do NOT round_pos() — at sigma=0.23 the trained delays already snap
     # to integers via the narrow kernel. The cloud eval that gave 75.2%
     # used `set_sigma(model, 0.23); test(...)` WITHOUT round_pos.
-    from src.modules import dcls_module
+    dcls_module = importlib.import_module("src.modules").dcls_module
 
     for m in model.modules():
         if isinstance(m, dcls_module) and hasattr(m, "SIG"):
@@ -136,7 +149,7 @@ def main(checkpoint_path: str, artifacts_dir: str, stride: int):
     pytorch_results = get_pytorch_predictions(model, test_loader, device, stride)
     pt_time = time.perf_counter() - t0
     print(f"  done in {pt_time:.1f}s, {len(pytorch_results)} samples kept")
-    label_dist = {}
+    label_dist: dict[int, int] = {}
     for r in pytorch_results:
         label_dist[r["label"]] = label_dist.get(r["label"], 0) + 1
     print(f"  label distribution: {dict(sorted(label_dist.items()))}")
