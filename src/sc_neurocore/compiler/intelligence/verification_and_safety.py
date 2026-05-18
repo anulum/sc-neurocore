@@ -595,7 +595,7 @@ def predict_reliability(
     mechanism_mttf = {
         name: base_mttf_hours / accel * node_factor for name, accel in mechanism_accels.items()
     }
-    failure = min(mechanism_mttf, key=mechanism_mttf.get)
+    failure = min(mechanism_mttf, key=lambda name: mechanism_mttf[name])
     mttf = mechanism_mttf[failure]
 
     return ReliabilityEstimate(
