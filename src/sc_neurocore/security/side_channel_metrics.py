@@ -60,8 +60,7 @@ def compute_switching_activity(
     matrix = _normalise_bitstream_matrix(bitstreams)
     cycles = len(matrix[0])
     transition_counts = tuple(
-        sum(1 for index in range(1, len(row)) if row[index - 1] != row[index])
-        for row in matrix
+        sum(1 for index in range(1, len(row)) if row[index - 1] != row[index]) for row in matrix
     )
     denominator = cycles - 1
     transition_rates = tuple(count / denominator for count in transition_counts)

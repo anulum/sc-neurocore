@@ -22,9 +22,7 @@ from .thermal_sc_encoding import (
 )
 
 SIDE_CHANNEL_BENCHMARK_SCHEMA_VERSION = "sc-neurocore.side-channel-benchmark.v0.1"
-SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION = (
-    "sc-neurocore.side-channel-deploy-manifest.v0.1"
-)
+SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION = "sc-neurocore.side-channel-deploy-manifest.v0.1"
 _EVIDENCE_BOUNDARY = "analytic_simulation_only"
 _EVIDENCE_CLASS = "analytic_simulation"
 _THREAT_MODEL = "class_activity_correlation_proxy"
@@ -117,13 +115,9 @@ def run_side_channel_leakage_benchmark(
     )
     baseline_proxy = compute_class_activity_proxy(baseline_samples, label_values)
     protected_proxy = protected_batch.summary.class_activity_proxy
-    reduction = (
-        baseline_proxy.max_class_mean_gap - protected_proxy.max_class_mean_gap
-    )
+    reduction = baseline_proxy.max_class_mean_gap - protected_proxy.max_class_mean_gap
 
-    total_dummy_streams = sum(
-        record.dummy_streams_inserted for record in protected_batch.records
-    )
+    total_dummy_streams = sum(record.dummy_streams_inserted for record in protected_batch.records)
 
     return SideChannelBenchmarkReport(
         schema_version=SIDE_CHANNEL_BENCHMARK_SCHEMA_VERSION,
@@ -138,9 +132,7 @@ def run_side_channel_leakage_benchmark(
         protected=SideChannelBenchmarkArm(
             name="activity_balanced",
             class_activity_proxy=protected_proxy,
-            dummy_stream_overhead_ratio=(
-                protected_batch.summary.dummy_stream_overhead_ratio
-            ),
+            dummy_stream_overhead_ratio=(protected_batch.summary.dummy_stream_overhead_ratio),
             bitstream_count=len(protected_batch.records),
         ),
         max_class_mean_gap_reduction=reduction,
@@ -151,9 +143,7 @@ def run_side_channel_leakage_benchmark(
             security_parameters={
                 "bitstream_length": protected_config.bitstream_length,
                 "dummy_streams_per_record": protected_config.dummy_streams_per_record,
-                "max_dummy_overhead_ratio": (
-                    protected_config.max_dummy_overhead_ratio
-                ),
+                "max_dummy_overhead_ratio": (protected_config.max_dummy_overhead_ratio),
                 "rotation_stride": protected_config.rotation_stride,
                 "seed": protected_config.seed,
             },
@@ -253,12 +243,8 @@ def _report_payload(report: SideChannelBenchmarkReport) -> dict[str, Any]:
                 {
                     "label": record.label,
                     "probability": record.probability,
-                    "protected_realised_probability": (
-                        record.protected_realised_probability
-                    ),
-                    "protected_dummy_streams_inserted": (
-                        record.protected_dummy_streams_inserted
-                    ),
+                    "protected_realised_probability": (record.protected_realised_probability),
+                    "protected_dummy_streams_inserted": (record.protected_dummy_streams_inserted),
                 }
                 for record in report.records
             ],

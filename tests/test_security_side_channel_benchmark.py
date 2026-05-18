@@ -41,9 +41,7 @@ def test_side_channel_benchmark_reports_protected_reduction_and_overhead() -> No
     )
     assert report.max_class_mean_gap_reduction > 0.0
     assert report.protected.dummy_stream_overhead_ratio == 1.0
-    assert report.deploy_manifest.schema_version == (
-        SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION
-    )
+    assert report.deploy_manifest.schema_version == (SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION)
     assert report.deploy_manifest.security_parameters == {
         "bitstream_length": 16,
         "dummy_streams_per_record": 1,
@@ -87,9 +85,7 @@ def test_side_channel_benchmark_report_writes_canonical_json(tmp_path) -> None:
     assert payload["deploy_manifest"]["benchmark_artifact"]["path"] == str(output)
     assert payload["deploy_manifest"]["evidence_class"] == "analytic_simulation"
     assert payload["deploy_manifest"]["security_parameters"]["bitstream_length"] == 16
-    assert payload["deploy_manifest"]["overhead_measurements"][
-        "dummy_stream_overhead_ratio"
-    ] == 0.0
+    assert payload["deploy_manifest"]["overhead_measurements"]["dummy_stream_overhead_ratio"] == 0.0
     assert payload["report"]["records"][0]["label"] == 10
     assert "measured_power" not in json.dumps(payload)
     assert "measured_thermal" not in json.dumps(payload)

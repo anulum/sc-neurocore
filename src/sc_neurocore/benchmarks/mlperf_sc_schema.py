@@ -158,9 +158,7 @@ def validate_mlperf_sc_result(
 
     _expect_keys(payload, {"schema_version", "run", "execution", "metrics", "evidence"}, "result")
     if payload["schema_version"] != MLPERF_SC_RESULT_SCHEMA_VERSION:
-        raise MLPerfSCValidationError(
-            f"schema_version must be {MLPERF_SC_RESULT_SCHEMA_VERSION!r}"
-        )
+        raise MLPerfSCValidationError(f"schema_version must be {MLPERF_SC_RESULT_SCHEMA_VERSION!r}")
 
     run = _run_from_mapping(_expect_mapping(payload["run"], "run"))
     execution = _execution_from_mapping(_expect_mapping(payload["execution"], "execution"))

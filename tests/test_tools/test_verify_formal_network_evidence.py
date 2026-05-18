@@ -124,9 +124,7 @@ def test_main_keeps_population_inactivity_for_single_output_fixture(
     )
 
 
-def test_main_fails_when_any_output_report_is_missing(
-    tmp_path: Path, monkeypatch: Any
-) -> None:
+def test_main_fails_when_any_output_report_is_missing(tmp_path: Path, monkeypatch: Any) -> None:
     tool = _load_tool()
     output = tmp_path / "formal"
     summary = tmp_path / "summary.json"

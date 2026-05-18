@@ -78,7 +78,9 @@ def build_formal_verify_command(
     artifact_root = (
         config.output if output_index is None else config.output_artifact_root(output_index)
     )
-    report_path = config.report_path if output_index is None else config.output_report_path(output_index)
+    report_path = (
+        config.report_path if output_index is None else config.output_report_path(output_index)
+    )
     command = [
         sys.executable,
         "-m",
@@ -164,8 +166,7 @@ def run_formal_evidence_check(
             cast_commands.append(command_record)
         if completed.returncode != 0:
             summary["error"] = (
-                f"output {output_index}: formal verify-network exited "
-                f"with {completed.returncode}"
+                f"output {output_index}: formal verify-network exited with {completed.returncode}"
             )
             summary["coverage_manifest"] = _coverage_manifest(
                 config,
@@ -266,9 +267,7 @@ def _validate_report_matches_config(
     }
     for key, expected in expected_network.items():
         if network.get(key) != expected:
-            raise FormalReportValidationError(
-                f"network.{key} does not match manifest {key}"
-            )
+            raise FormalReportValidationError(f"network.{key} does not match manifest {key}")
 
     expected_pair = _parse_antagonistic_pair(config.antagonistic_pair)
     antagonistic = payload.get("antagonistic_exclusion")
@@ -431,9 +430,7 @@ def _parse_population_silence(value: str | None) -> tuple[int, int] | None:
     try:
         trigger_active_outputs, silence_cycles = (int(part, 10) for part in parts)
     except ValueError as exc:
-        raise FormalReportValidationError(
-            "population_silence must contain integer values"
-        ) from exc
+        raise FormalReportValidationError("population_silence must contain integer values") from exc
     if trigger_active_outputs <= 0 or silence_cycles <= 0:
         raise FormalReportValidationError(
             "population_silence must contain positive trigger and silence values"
@@ -500,9 +497,7 @@ def main(
             else ("2,2" if args.output_width >= 2 else None)
         ),
         population_inactivity=(
-            args.population_inactivity
-            if args.population_inactivity is not None
-            else 3
+            args.population_inactivity if args.population_inactivity is not None else 3
         ),
         formal_depth=args.formal_depth,
         formal_mode=args.formal_mode,

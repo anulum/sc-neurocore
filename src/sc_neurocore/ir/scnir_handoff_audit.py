@@ -260,9 +260,7 @@ def _external_inputs(manifest: Mapping[str, Any]) -> tuple[dict[str, int | str],
             )
         source = _expect_non_empty_string(row, "source")
         if source in seen:
-            raise SCNIRHDLHandoffAuditError(
-                f"scnir_external_inputs duplicate source {source!r}"
-            )
+            raise SCNIRHDLHandoffAuditError(f"scnir_external_inputs duplicate source {source!r}")
         seen.add(source)
         offset = _expect_int(row, "offset")
         width = _expect_int(row, "width")
