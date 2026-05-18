@@ -1,0 +1,90 @@
+{
+  "schema_version": "sc-neurocore.release-security-artifact-index.v1",
+  "artifacts": [
+    {
+      "id": "actionlint",
+      "path": "security/actionlint.json",
+      "required": false
+    },
+    {
+      "id": "benchmark_regression",
+      "path": "security/benchmark_regression.json",
+      "required": false
+    },
+    {
+      "id": "cargo_audit",
+      "path": "security/cargo_audit.json",
+      "required": false
+    },
+    {
+      "id": "cargo_deny",
+      "path": "security/cargo_deny.json",
+      "required": false
+    },
+    {
+      "id": "cargo_fuzz_summary",
+      "path": "security/cargo_fuzz_summary.json",
+      "required": false
+    },
+    {
+      "id": "gitleaks",
+      "path": "security/gitleaks.json",
+      "required": false
+    },
+    {
+      "id": "model_data_license_matrix",
+      "path": "security/model_data_license_matrix.json",
+      "required": true
+    },
+    {
+      "id": "mypy",
+      "path": "security/mypy",
+      "required": false
+    },
+    {
+      "id": "osv_scanner",
+      "path": "security/osv_scanner.json",
+      "required": false
+    },
+    {
+      "id": "pip_audit",
+      "path": "security/pip_audit.json",
+      "required": false
+    },
+    {
+      "id": "pyright",
+      "path": "security/pyright.json",
+      "required": false
+    },
+    {
+      "id": "reuse",
+      "path": "security/reuse.json",
+      "required": false
+    },
+    {
+      "id": "ruff",
+      "path": "security/ruff.json",
+      "required": false
+    },
+    {
+      "id": "scanner_manifest",
+      "path": "security/security_scanner_manifest.json",
+      "required": true
+    },
+    {
+      "id": "semgrep",
+      "path": "security/semgrep.json",
+      "required": false
+    },
+    {
+      "id": "syft_cyclonedx",
+      "path": "security/sbom.cdx.json",
+      "required": false
+    },
+    {
+      "id": "trivy_fs",
+      "path": "security/trivy_fs.json",
+      "required": false
+    }
+  ]
+}

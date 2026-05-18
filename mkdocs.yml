@@ -425,6 +425,8 @@ nav:
   - Development:
       - Maintenance Tools: development/maintenance_tools.md
       - Security Hardening: development/security_hardening.md
+      - Licensing: development/licensing.md
+      - Security Scanner CI Packet: development/security_scanner_ci.md
       - V3 Migration: development/v3_migration.md
       - Release Notes v2.0.0: development/RELEASE_NOTES_v2.0.0.md
   - Changelog: CHANGELOG.md

@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Trusted checkpoint loading helpers
+# SC-NeuroCore - Trusted checkpoint loading helpers
 
 from __future__ import annotations
 
@@ -46,3 +46,29 @@ def safe_load_checkpoint(
     if digest.lower() != expected.lower():
         raise CheckpointTrustError(f"SHA-256 mismatch for checkpoint: {checkpoint_path.name}")
     return torch.load(io.BytesIO(data), map_location=map_location, weights_only=True)
+
+
+def safe_load_legacy_checkpoint(
+    path: str | Path,
+    *,
+    trusted_sha256: Mapping[str, str],
+    map_location: str | torch.device = "cpu",
+) -> Any:
+    """Load a metadata checkpoint through pickle only after SHA-256 verification.
+
+    Use this only for legacy internal checkpoints whose dictionaries contain
+    non-state-dict metadata and cannot yet be represented by ``weights_only``.
+    """
+    checkpoint_path = Path(path).expanduser().resolve()
+    data, digest = _checkpoint_digest(checkpoint_path)
+    expected = trusted_sha256.get(checkpoint_path.name) or trusted_sha256.get(str(checkpoint_path))
+    if expected is None:
+        raise CheckpointTrustError(
+            f"No trusted SHA-256 registered for checkpoint: {checkpoint_path.name}"
+        )
+    if digest.lower() != expected.lower():
+        raise CheckpointTrustError(f"SHA-256 mismatch for checkpoint: {checkpoint_path.name}")
+    # Legacy metadata checkpoints require pickle; SHA-256 is verified above.
+    return torch.load(  # nosec B614
+        io.BytesIO(data), map_location=map_location, weights_only=False
+    )

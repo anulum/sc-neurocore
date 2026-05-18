@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Cosim: Q8.8 fixed-point reference vs PyTorch float reference
+# SC-NeuroCore - Cosim: Q8.8 fixed-point reference vs PyTorch float reference
 """Compare the bit-true Q8.8 SHD reference (tools/shd_q88_reference.py)
 against the original PyTorch model on the SHD test set.
 
 This validates the entire fixed-point pipeline before we commit to writing
-Verilog modules — if Q8.8 + softplus LUT + sparse int8 weights match PyTorch
+Verilog modules - if Q8.8 + softplus LUT + sparse int8 weights match PyTorch
 within an acceptable accuracy gap (target: <2% absolute), the Verilog
 implementation has a high-quality reference for cosim.
 
@@ -30,9 +30,12 @@ from typing import Any
 import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "src"))
 TRAINING_REPO = REPO / "data/masquelier_shd/neuromorphic_training-main"
 sys.path.insert(0, str(REPO / "tools"))
 sys.path.insert(0, str(TRAINING_REPO))
+
+from sc_neurocore.security.checkpoint_loading import safe_load_legacy_checkpoint
 
 os.environ["WANDB_MODE"] = "disabled"
 
@@ -82,7 +85,7 @@ def get_pytorch_predictions(
     return results
 
 
-def main(checkpoint_path: str, artifacts_dir: str, stride: int) -> None:
+def main(checkpoint_path: str, artifacts_dir: str, stride: int, *, checkpoint_sha256: str) -> None:
     torch = importlib.import_module("torch")
     Config = importlib.import_module("configs.config_SHD").Config
     shd_q88_reference = importlib.import_module("shd_q88_reference")
@@ -111,12 +114,16 @@ def main(checkpoint_path: str, artifacts_dir: str, stride: int) -> None:
     print(f"Device: {device}")
 
     model = SNN_axonal_feedforward_delays(config).to(device)
-    ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    ckpt = safe_load_legacy_checkpoint(
+        checkpoint_path,
+        trusted_sha256={Path(checkpoint_path).name: checkpoint_sha256},
+        map_location=device,
+    )
     model.load_state_dict(ckpt["net"])
     print(f"  PyTorch val_acc={ckpt['acc']:.2f}%, sigma={ckpt.get('sigma', 'n/a')}")
 
     # Set sigma to native value from checkpoint (don't force change).
-    # Do NOT round_pos() — at sigma=0.23 the trained delays already snap
+    # Do NOT round_pos() - at sigma=0.23 the trained delays already snap
     # to integers via the narrow kernel. The cloud eval that gave 75.2%
     # used `set_sigma(model, 0.23); test(...)` WITHOUT round_pos.
     dcls_module = importlib.import_module("src.modules").dcls_module
@@ -130,7 +137,7 @@ def main(checkpoint_path: str, artifacts_dir: str, stride: int) -> None:
     _, _, test_loader = load_dataset(config)
     print(f"Test samples available: {len(test_loader.dataset)}")
 
-    # First: full test accuracy via the canonical trainer.test() — this MUST
+    # First: full test accuracy via the canonical trainer.test() - this MUST
     # match the cloud-reported number (75.21% for dcls_max last.pth at sigma=0.23).
     print("\n[1/3] Sanity check via trainer.test() (full test set)...")
     t0 = time.perf_counter()
@@ -140,7 +147,7 @@ def main(checkpoint_path: str, artifacts_dir: str, stride: int) -> None:
         f"in {time.perf_counter() - t0:.1f}s"
     )
     print(
-        f"  Cloud-reported number: 75.21% — {'MATCH' if abs(test_acc - 75.21) < 1.0 else 'MISMATCH'}"
+        f"  Cloud-reported number: 75.21% - {'MATCH' if abs(test_acc - 75.21) < 1.0 else 'MISMATCH'}"
     )
 
     # Now run per-sample (every `stride`th) to capture inputs for Q8.8 cosim
@@ -217,5 +224,15 @@ if __name__ == "__main__":
         default=75,
         help="Stride between sampled test items (75 -> ~30 samples spanning all classes)",
     )
+    parser.add_argument(
+        "--checkpoint-sha256",
+        required=True,
+        help="Expected SHA-256 digest for the legacy SHD metadata checkpoint",
+    )
     args = parser.parse_args()
-    main(args.checkpoint, args.artifacts, args.stride)
+    main(
+        args.checkpoint,
+        args.artifacts,
+        args.stride,
+        checkpoint_sha256=args.checkpoint_sha256,
+    )

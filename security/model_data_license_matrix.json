@@ -1,0 +1,67 @@
+{
+  "entries": [
+    {
+      "entry_id": "dataset/shd-external-reference",
+      "entry_type": "dataset",
+      "license_identifier": "source-specific-terms",
+      "source_uri": "https://zenkelab.org/datasets/",
+      "provenance": {
+        "source": "zenke-lab-shd-catalog",
+        "sha256": "79c9639806bf33956a7dd9e9988a3bcf1751c60bb23121686a09f0f3ed0af5a0",
+        "hash_type": "policy-category-digest",
+        "category": "external-dataset-reference"
+      },
+      "redistribution_status": "restricted",
+      "attribution_requirements": [
+        "include official dataset citation metadata when redistributing",
+        "keep source URI in derived documentation"
+      ],
+      "commercial_use": "prohibited",
+      "commercial_license_required": false
+    },
+    {
+      "entry_id": "model_weights/conv-spiking-net-mnist",
+      "entry_type": "model_weights",
+      "license_identifier": "AGPL-3.0-or-later",
+      "source_uri": "https://github.com/anulum/sc-neurocore/blob/main/weights/conv_spiking_net_mnist.pt",
+      "provenance": {
+        "source": "repository-artifacts/weights/conv_spiking_net_mnist.pt",
+        "sha256": "177dde9f60365ffcdb8b922f1692e6c08dc9ee483cc6c86173a06a4efa02c2cf",
+        "hash_type": "artifact-sha256"
+      },
+      "redistribution_status": "restricted",
+      "attribution_requirements": [
+        "retain SC-NeuroCore ownership notice",
+        "preserve upstream model provenance metadata"
+      ],
+      "commercial_use": "requires_license",
+      "commercial_license_required": true
+    },
+    {
+      "entry_id": "pretrained/mnist-convspikingnet",
+      "entry_type": "pretrained_model",
+      "license_identifier": "AGPL-3.0-or-later",
+      "source_uri": "https://github.com/anulum/sc-neurocore/blob/main/weights/conv_spiking_net_mnist.pt",
+      "provenance": {
+        "source": "project-owned-pretrained-category",
+        "sha256": "ab059808ec58e10bf1b64f89b1ef66cd21fbb3a28cd8955bea2417a42b8b20de",
+        "hash_type": "policy-category-digest",
+        "category": "project-pretrained-models"
+      },
+      "redistribution_status": "restricted",
+      "attribution_requirements": [
+        "cite project release for pretrained bundle lineage",
+        "retain ownership and license statement"
+      ],
+      "commercial_use": "requires_license",
+      "commercial_license_required": true
+    }
+  ],
+  "project": {
+    "license_identifier": "AGPL-3.0-or-later",
+    "commercial_license_available": true,
+    "ownership_notice": "Copyright 1996-2026 Miroslav Sotek. All rights reserved.",
+    "all_rights_reserved": true,
+    "commercial_use": "requires_license"
+  }
+}

@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore - Security Scanner Workflow
+
+name: Security Scanner Workflow
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/security-scanners.yml"
+      - "tools/security_scanner_manifest.py"
+      - "tools/security_scan/**"
+      - "security/**"
+      - "requirements/**"
+      - "tests/test_tools/test_security_scanner_workflow.py"
+  pull_request:
+    paths:
+      - ".github/workflows/security-scanners.yml"
+      - "tools/security_scan/**"
+      - "security/**"
+      - "requirements/**"
+      - "tests/test_tools/test_security_scanner_workflow.py"
+      - "tools/security_scanner_manifest.py"
+
+jobs:
+  security-scanner-manifest:
+    name: Build CI Security Packet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Generate CI security packet
+        run: |
+          mkdir -p security/ci-security-packet
+          python tools/security_scan/ci_security_packet.py \
+            --output-dir security/ci-security-packet
+          if [ -f security/ci-security-packet/security_scanner_manifest.json ]; then
+            python tools/security_scanner_manifest.py \
+              --validate security/ci-security-packet/security_scanner_manifest.json
+          fi
+
+      - name: Upload CI security packet artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: security-scanner-packet
+          path: security/ci-security-packet
+          retention-days: 30
