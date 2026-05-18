@@ -154,7 +154,7 @@ def test_analyse_spike_raster_forwards_summary(monkeypatch: pytest.MonkeyPatch) 
     ):
         del system_prompt, model, temperature, max_tokens
         captured_prompt["text"] = user_prompt
-        return original_chat("placeholder")
+        return original_chat("test-response")
 
     def fake_post(_payload: dict[str, object]) -> dict[str, object]:
         return {

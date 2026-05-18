@@ -3,9 +3,9 @@
     "sc_nir_weight_rom.v",
     "scnir_document.json",
     "scnir_source_manifest.json",
-    "scnir_src_000_fmoat1_input.v",
-    "scnir_src_001_fmoat1_weight.v",
-    "scnir_src_002_fmoat1_product.v",
+    "scnir_src_000_stochastic_backprop_input.v",
+    "scnir_src_001_stochastic_backprop_weight.v",
+    "scnir_src_002_stochastic_backprop_product.v",
     "stochastic_backprop_handoff.v"
   ],
   "bitstream_length": 256,

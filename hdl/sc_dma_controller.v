@@ -76,7 +76,7 @@ module sc_dma_controller #(
                 WRITE: begin
                     mem_addr <= addr_reg + count;
                     mem_we <= 1'b1;
-                    mem_wdata <= {DATA_WIDTH{1'b0}}; // placeholder: host fills via stream
+                    mem_wdata <= {DATA_WIDTH{1'b0}}; // host stream supplies payload data
                     count <= count + 1;
                     if (count >= transfer_len - 1) begin
                         mem_we <= 1'b0;

@@ -24,9 +24,8 @@ Implementation references:
 
 The previous implementation was a deterministic linear matmul
 on a randomly-initialised matrix that called itself "stochastic"
-and admitted "(simplified)" in a comment — that was a placeholder
-masquerading as a world model. Replaced 2026-04-17 per
-`feedback_sophisticated_from_start.md`.
+and admitted "(simplified)" in a comment. It was replaced
+2026-04-17 per `feedback_sophisticated_from_start.md`.
 
 Model
 -----
@@ -916,7 +915,7 @@ class PredictiveWorldModel:
     The legacy 65-LOC `predict_next_state` / `forecast` API is
     preserved as a thin wrapper on the proper `LinearGaussianSSM`
     + `KalmanFilter` infrastructure above. The previous
-    deterministic linear matmul + clip placeholder was replaced
+    deterministic linear matmul + clip implementation was replaced
     2026-04-17 per `feedback_sophisticated_from_start.md`.
     """
 

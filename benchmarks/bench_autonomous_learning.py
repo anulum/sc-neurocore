@@ -25,7 +25,7 @@ def run_benchmark(timesteps: int = 100_000):
         print("Rust FFI is not available. Skipping benchmark.")
         return
 
-    # Create dummy spike trains (10% firing rate uniformly distributed)
+    # Create deterministic synthetic spike trains (10% firing rate uniformly distributed)
     rng = np.random.default_rng(42)
     pre_spikes = rng.random(timesteps) < 0.1
     post_spikes = rng.random(timesteps) < 0.1

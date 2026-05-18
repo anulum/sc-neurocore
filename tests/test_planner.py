@@ -16,15 +16,14 @@ class TestPredictiveWorldModel:
     """Tests against the new sophisticated LGSSM-backed wrapper.
 
     Two prior tests (transition_matrix shape + row-normalisation)
-    enforced the `transition_matrix` placeholder design which was
-    replaced by a proper Linear Gaussian SSM. They are removed —
-    they were testing the wrong thing.
+    enforced a legacy `transition_matrix` design which was replaced
+    by a proper Linear Gaussian SSM. They are removed because they
+    were testing the wrong thing.
 
     Two more (`test_predict_next_state_bounded`) enforced the
-    clip-to-[0,1] hack that was hiding the deterministic-linear
-    placeholder. Predictions can take any real value depending on
-    the SSM dynamics, so the bounded-output assertion is also
-    removed.
+    clip-to-[0,1] wrapper on the deterministic-linear implementation.
+    Predictions can take any real value depending on the SSM dynamics,
+    so the bounded-output assertion is also removed.
     """
 
     def test_construction_exposes_lgssm(self) -> None:

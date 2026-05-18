@@ -4,7 +4,7 @@
 
 """End-to-end tests for the quantum cognition pipeline.
 
-These are NOT toy tests. Each scenario exercises multiple modules
+Each scenario exercises multiple modules
 in realistic conditions with production-scale parameters.
 """
 

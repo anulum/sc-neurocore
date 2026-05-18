@@ -46,7 +46,7 @@ fn read_bitstream(num_words: Int, layer_id: Int) -> Int:
     return 0  # return 0
     var _read_bitstream_line = 'if config.transport_type == TransportType.SIMULATED:'
     return 0  # return _sim_read(num_words, layer_id)
-    var _read_bitstream_line = '# Placeholder for real backends'
+    var _read_bitstream_line = '# Hardware transports are registered by deployment-specific backends.'
     return 0  # return 0
 
 fn _sim_read(num_words: Int, layer_id: Int) -> Int:

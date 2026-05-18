@@ -12,7 +12,7 @@ Consolidates Sobol-16 and Halton-16 into a single factory interface,
 allowing the compiler to select the optimal SNG backend based on
 area/quality tradeoffs:
 
-- **Sobol**: Superior discrepancy (O(1/N)), needs direction-number casez
+- **Sobol**: Lower discrepancy (O(1/N)), needs direction-number casez
 - **Halton**: Nearly as good (O(log N / N)), zero LUT cost (pure bit-reversal)
 
 Usage::

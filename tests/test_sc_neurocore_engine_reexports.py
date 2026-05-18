@@ -155,7 +155,7 @@ def test_qa_rust_available_flag_true() -> None:
 def test_qa_simulated_annealing_returns_dict_keys() -> None:
     """End-to-end smoke: run py_qa_simulated_annealing, check schema.
 
-    Uses a 4-qubit toy Ising (h=0, single FM bond). We don't assert
+    Uses a 4-qubit minimal Ising instance (h=0, single FM bond). We don't assert
     on exact ground state — the SA bug-fix tests live elsewhere —
     only on the result schema.
     """

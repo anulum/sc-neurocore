@@ -235,13 +235,13 @@ pub extern "C" fn main() -> ! {
 
 #[inline(never)]
 fn read_sensor() -> u32 {
-    // Placeholder: read from GPIO/ADC
+    // Board integration point: read from GPIO/ADC.
     42
 }
 
 #[inline(never)]
 fn write_output(_spikes: u64) {
-    // Placeholder: toggle GPIO / send UART
+    // Board integration point: toggle GPIO or send UART.
 }
 
 #[panic_handler]

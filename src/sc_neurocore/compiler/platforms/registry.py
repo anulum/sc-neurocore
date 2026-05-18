@@ -417,7 +417,7 @@ def load_profiles_from_toml(path: str) -> list[str]:
     """Load custom hardware profiles from a TOML file.
 
     Allows users and vendors to define profiles without modifying
-    SC-NeuroCore source code. This is the extensibility endgame.
+    SC-NeuroCore source code. This is the profile-extension path.
 
     TOML format::
 

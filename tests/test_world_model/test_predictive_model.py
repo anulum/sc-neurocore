@@ -9,7 +9,7 @@
 """Tests for `sc_neurocore.world_model.predictive_model`.
 
 The module was rewritten 2026-04-17 from a deterministic linear
-matmul placeholder to a proper Linear Gaussian State-Space Model
+matmul implementation to a proper Linear Gaussian State-Space Model
 (Kalman filter + RTS smoother + EM learner). These tests exercise
 the math invariants per Bishop 2006 §13.3 and Murphy 2023 §29.
 """

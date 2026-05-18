@@ -172,7 +172,7 @@ class TestNMNISTRealLoader:
         assert set(labels.tolist()) == {0, 1, 2}
 
     def test_load_nmnist_missing_split_raises(self, tmp_path):
-        (tmp_path / "placeholder").touch()
+        (tmp_path / "sentinel").touch()
         with pytest.raises(FileNotFoundError, match="Expected split directory"):
             load_nmnist(root=tmp_path, train=True, synthetic=False)
 
@@ -238,7 +238,7 @@ class TestSHDRealLoader:
         assert samples[0].shape[1] == 700
 
     def test_load_shd_missing_h5_raises(self, tmp_path):
-        (tmp_path / "placeholder").touch()
+        (tmp_path / "sentinel").touch()
         with pytest.raises(FileNotFoundError, match="not found"):
             load_shd(root=tmp_path, train=True, synthetic=False)
 
@@ -262,7 +262,7 @@ class TestDVSCIFAR10RealLoader:
         assert samples[0].dtype == np.float32
 
     def test_load_dvs_cifar10_missing_split_raises(self, tmp_path):
-        (tmp_path / "placeholder").touch()
+        (tmp_path / "sentinel").touch()
         with pytest.raises(FileNotFoundError, match="Expected split directory"):
             load_dvs_cifar10(root=tmp_path, train=True, synthetic=False)
 

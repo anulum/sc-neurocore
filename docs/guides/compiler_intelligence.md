@@ -540,7 +540,7 @@ for c in report.crossings:
 
 ### §53. TOML Profile Auto-Loader — `load_profiles_from_toml()`
 
-**The extensibility endgame.** Users and vendors can define custom hardware
+**Custom hardware profiles.** Users and vendors can define hardware
 profiles in a `.toml` file without modifying SC-NeuroCore source code.
 
 ```toml

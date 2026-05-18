@@ -4,7 +4,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
-### Wave 11: Beyond Complete — invisible moat & frontier paradigms (2026-05-01)
+### Wave 11: Hardware and compiler extensions (2026-05-01)
 
 #### Added — Hardware Profiles (8 new → 183 total, 35 platform classes)
 - **Thermodynamic** (2): `extropic_epu`, `normal_cn101`.
@@ -26,7 +26,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 #### Added — Tests
 - `test_wave11_features.py` — 35 tests, 0 failures.
 
-### Wave 10: Absolute endgame — security, sovereignty & extensibility (2026-05-01)
+### Wave 10: Security, sovereignty & extensibility (2026-05-01)
 
 #### Added — Hardware Profiles (10 new → 175 total, 31 platform classes)
 - **Magnonic** (3): `tum_skyrmion`, `kaist_spinwave`, `imec_mtj_reservoir`.
@@ -96,7 +96,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 #### Added — Tests
 - `tests/test_wave8_features.py` — 38 tests across 12 test classes.
 
-### Wave 7: Compiler intelligence & frontier paradigms (2026-05-01)
+### Wave 7: Compiler intelligence and platform coverage (2026-05-01)
 
 #### Added — Hardware Profiles (10 new → 144 total, 19 platform classes)
 - **Biological** (2): `finalspark_neuroplatform`, `cortical_labs_dishbrain`.

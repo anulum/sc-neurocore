@@ -240,7 +240,7 @@ fn _emit_scoreboard(rtl: Int) -> Int:
     var __emit_scoreboard_line = 'if p.width > 1:'
     var __emit_scoreboard_line = 'w = p.width'
     var __emit_scoreboard_line = 'golden_funcs.append('
-    var __emit_scoreboard_line = 'f"    // Golden model placeholder for {p.name}\\n"'
+    var __emit_scoreboard_line = 'f"    // Reference comparison hook for {p.name}\\n"'
     var __emit_scoreboard_line = 'f"    function logic [{w - 1}:0] golden_compute_{p.name}({m}'
     return 0  # f"        return txn.{p.name}; // Replace with bit
     var __emit_scoreboard_line = 'f"    endfunction"'

@@ -8,14 +8,14 @@
       "correlation_constraints": [
         {
           "max_abs_correlation": 0.0,
-          "peer_stream_id": "fmoat1.weight",
+          "peer_stream_id": "stochastic_backprop.weight",
           "policy": "max_correlation",
-          "seed_domain": "fmoat1_stochastic_backprop"
+          "seed_domain": "stochastic_backprop_training"
         }
       ],
       "delay_steps": 0,
       "encoding": "bipolar",
-      "layer": "fmoat1_stochastic_backprop",
+      "layer": "stochastic_backprop_training",
       "online_learning": null,
       "precision": {
         "accumulator_bits": 32,
@@ -36,7 +36,7 @@
         "sobol_dimension": 1,
         "tap_mask": null
       },
-      "stream_id": "fmoat1.input",
+      "stream_id": "stochastic_backprop.input",
       "transforms": []
     },
     {
@@ -44,14 +44,14 @@
       "correlation_constraints": [
         {
           "max_abs_correlation": 0.0,
-          "peer_stream_id": "fmoat1.input",
+          "peer_stream_id": "stochastic_backprop.input",
           "policy": "max_correlation",
-          "seed_domain": "fmoat1_stochastic_backprop"
+          "seed_domain": "stochastic_backprop_training"
         }
       ],
       "delay_steps": 0,
       "encoding": "bipolar",
-      "layer": "fmoat1_stochastic_backprop",
+      "layer": "stochastic_backprop_training",
       "online_learning": null,
       "precision": {
         "accumulator_bits": 32,
@@ -72,7 +72,7 @@
         "sobol_dimension": 2,
         "tap_mask": null
       },
-      "stream_id": "fmoat1.weight",
+      "stream_id": "stochastic_backprop.weight",
       "transforms": []
     },
     {
@@ -80,20 +80,20 @@
       "correlation_constraints": [
         {
           "max_abs_correlation": 1.0,
-          "peer_stream_id": "fmoat1.input",
+          "peer_stream_id": "stochastic_backprop.input",
           "policy": "max_correlation",
-          "seed_domain": "fmoat1_stochastic_backprop"
+          "seed_domain": "stochastic_backprop_training"
         },
         {
           "max_abs_correlation": 1.0,
-          "peer_stream_id": "fmoat1.weight",
+          "peer_stream_id": "stochastic_backprop.weight",
           "policy": "max_correlation",
-          "seed_domain": "fmoat1_stochastic_backprop"
+          "seed_domain": "stochastic_backprop_training"
         }
       ],
       "delay_steps": 0,
       "encoding": "bipolar",
-      "layer": "fmoat1_stochastic_backprop",
+      "layer": "stochastic_backprop_training",
       "online_learning": null,
       "precision": {
         "accumulator_bits": 32,
@@ -114,7 +114,7 @@
         "sobol_dimension": null,
         "tap_mask": null
       },
-      "stream_id": "fmoat1.product",
+      "stream_id": "stochastic_backprop.product",
       "transforms": []
     }
   ]

@@ -489,7 +489,7 @@ The spike trains consumed by these decoders can originate from:
 - **Pure numpy.** No external deep learning framework dependencies. All
   operations use numpy array operations only.
 - **Publication-exact.** Every equation matches the cited publication. No
-  approximations, no simplified variants, no toy versions.
+  approximations and no simplified variants.
 - **Deterministic.** All random initialisations use `np.random.default_rng()`
   with explicit seeds. Identical seeds produce identical results.
 - **Rust acceleration.** Every core operation has a Rust counterpart in

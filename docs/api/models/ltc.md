@@ -349,7 +349,7 @@ requiring extreme throughput, CfC could be added as a separate model.
 
 ### Time-series benchmarks (from Hasani et al.)
 
-LTC networks have demonstrated competitive or superior performance on:
+LTC networks have demonstrated competitive performance on:
 
 | Task | LTC accuracy | LSTM accuracy | GRU accuracy |
 |------|-------------|---------------|--------------|

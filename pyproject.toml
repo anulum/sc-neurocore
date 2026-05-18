@@ -189,7 +189,7 @@ omit = [
     "*/quantum_cognition/__main__.py",
     # --- Hardware/IP packaging tooling ---
     "*/hdl_gen/ip_xact.py",
-    # --- Research/frontier modules ---
+    # --- Research and extended source modules ---
     "*/experiments/*",
     "*/drivers/*",
     "*/quantum_cognition/fs_watcher.py",  # filesystem daemon, integration-tested outside unit CI

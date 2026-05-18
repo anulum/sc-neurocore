@@ -30,8 +30,7 @@ The previous implementation was a **deterministic linear
 matmul** on a randomly-initialised matrix that called itself
 "stochastic" and admitted "(simplified)" in a comment. It was
 replaced 2026-04-17 per
-`feedback_sophisticated_from_start.md` — a placeholder
-masquerading as a world model is unacceptable.
+`feedback_sophisticated_from_start.md`.
 
 ## 2. Model
 
@@ -169,7 +168,7 @@ The benchmark
 `benchmarks/bench_predictive_model.py` runs the workload on
 every available backend and records `unavailable_reason` for the
 ones not yet wired. The `accel/julia/world_model/predictive_model.jl`
-file that previously existed was a non-functional placeholder
+file that previously existed was non-functional
 (Python syntax inside a Julia `module`) and was deleted in the
 #68 commit; #69 (Mojo LGSSM) is now closed.
 
@@ -246,7 +245,7 @@ Captured run in
   tracking, high-noise prior reliance, EM held-out
   log-likelihood improvement, legacy wrapper compatibility.
 - `tests/test_planner.py` — updated: dropped the 3 tests that
-  enforced the placeholder `transition_matrix` design;
+  enforced the legacy `transition_matrix` design;
   added `test_predict_next_state_obeys_ssm_dynamics`
   asserting `output == A·x + B·u`.
 - `tests/test_interfaces_generative_worldmodel.py` — pre-existing

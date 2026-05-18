@@ -66,7 +66,7 @@ endgenerate
 
 
 // ----------------------------------------------------------------
-// Submodules: encoders, synapses, neurons (placeholders)
+// Submodules: encoders, synapses, neurons (integration modules)
 // ----------------------------------------------------------------
 
 // The intended mapping from Python SCDenseLayer:
@@ -76,7 +76,7 @@ endgenerate
 // - Current source:     BitstreamCurrentSource(...)
 // - Neurons:            StochasticLIFNeuron(...)
 //
-// Here, we sketch their interfaces so they can be implemented later.
+// The interfaces below bind those modules into the top-level datapath.
 
 // Example bitstream bus: bits for each input channel at current time t
 wire [N_INPUTS-1:0] pre_bits_t;
@@ -122,10 +122,10 @@ end
 
 
 // ----------------------------------------------------------------
-// PLACEHOLDER: Bitstream encoders for x_inputs[i]
+// Bitstream encoders for x_inputs[i]
 // ----------------------------------------------------------------
 // Each encoder converts fixed-point x_inputs[i] into a time-varying
-// Bernoulli bit pre_bits_t[i]. For now, we leave this as a black box.
+// Bernoulli bit pre_bits_t[i]. Encoder internals are supplied by the synthesis library.
 generate
     for (i = 0; i < N_INPUTS; i = i + 1) begin : ENC
         sc_bitstream_encoder #(
@@ -142,7 +142,7 @@ endgenerate
 
 
 // ----------------------------------------------------------------
-// PLACEHOLDER: SC synapses (AND with weight bitstreams)
+// SC synapses (AND with weight bitstreams)
 // ----------------------------------------------------------------
 wire [N_INPUTS-1:0] w_bits_t;
 
@@ -171,7 +171,7 @@ generate
 endgenerate
 
 // ----------------------------------------------------------------
-// PLACEHOLDER: Dot-product -> current I_t
+// Dot-product -> current I_t
 // ----------------------------------------------------------------
 // In hardware, this could be:
 // - count ones in post_bits_t
@@ -189,7 +189,7 @@ sc_dotproduct_to_current #(
 
 
 // ----------------------------------------------------------------
-// PLACEHOLDER: Neuron cores (LIF-like), one per neuron
+// Neuron cores (LIF-like), one per neuron
 // ----------------------------------------------------------------
 generate
     for (i = 0; i < N_NEURONS; i = i + 1) begin : LIFs

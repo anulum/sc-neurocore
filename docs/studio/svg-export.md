@@ -101,7 +101,7 @@ Parameters:
 | `width` | `int` | `800` | SVG width in pixels |
 | `height` | `int` | `400` | SVG height in pixels |
 
-Returns a complete SVG string. Empty data produces a placeholder
+Returns a complete SVG string. Empty data produces a no-data
 SVG with "No data" text.
 
 ## Editing in Inkscape

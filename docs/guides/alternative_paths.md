@@ -189,7 +189,7 @@ This route compares:
 Why this route is safe:
 
 - it uses production solver infrastructure already present in the codebase
-- it stays on a strict Hamiltonian toy problem where the symplectic claim is
+- it stays on a strict Hamiltonian reference problem where the symplectic claim is
   actually relevant
 - it does not force a symplectic method into dissipative neuron paths where the
   audit overreached

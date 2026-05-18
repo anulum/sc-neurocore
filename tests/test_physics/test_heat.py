@@ -8,7 +8,7 @@
 
 """Physics tests for `sc_neurocore.physics.heat.FeynmanKacHeatSolver`.
 
-The Antigravity placeholder (integer random walk that ignored the
+The prior heat-solver implementation (discrete lattice walk that ignored the
 diffusivity α) was replaced 2026-04-17 with a proper
 Brownian-motion-based Feynman-Kac solver. These tests pin the
 physics invariants — diffusivity must drive the spread, the

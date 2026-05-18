@@ -54,15 +54,19 @@ def test_export_manifest_contains_valid_scnir_stream_metadata() -> None:
     validate_scnir_dict(scnir_document)
 
     stream_by_id = {stream["stream_id"]: stream for stream in scnir_document["streams"]}
-    assert set(stream_by_id) == {"fmoat1.input", "fmoat1.weight", "fmoat1.product"}
-    assert stream_by_id["fmoat1.input"]["source"]["kind"] == "sobol"
-    assert stream_by_id["fmoat1.input"]["source"]["seed"] == 101
-    assert stream_by_id["fmoat1.weight"]["signal_kind"] == "weight"
-    assert stream_by_id["fmoat1.weight"]["source"]["seed"] == 211
-    assert stream_by_id["fmoat1.product"]["source"]["kind"] == "replay"
+    assert set(stream_by_id) == {
+        "stochastic_backprop.input",
+        "stochastic_backprop.weight",
+        "stochastic_backprop.product",
+    }
+    assert stream_by_id["stochastic_backprop.input"]["source"]["kind"] == "sobol"
+    assert stream_by_id["stochastic_backprop.input"]["source"]["seed"] == 101
+    assert stream_by_id["stochastic_backprop.weight"]["signal_kind"] == "weight"
+    assert stream_by_id["stochastic_backprop.weight"]["source"]["seed"] == 211
+    assert stream_by_id["stochastic_backprop.product"]["source"]["kind"] == "replay"
     assert (
-        stream_by_id["fmoat1.product"]["correlation_constraints"][0]["peer_stream_id"]
-        == "fmoat1.input"
+        stream_by_id["stochastic_backprop.product"]["correlation_constraints"][0]["peer_stream_id"]
+        == "stochastic_backprop.input"
     )
 
 
@@ -98,5 +102,5 @@ def test_write_handoff_bundle_materialises_auditable_scnir_hdl_directory(tmp_pat
     assert report.stream_count == 3
     assert report.source_module_count == 3
     assert report.signal_kinds == {"spike": 2, "weight": 1}
-    assert "scnir_src_002_fmoat1_product.v" in report.artefacts
+    assert "scnir_src_002_stochastic_backprop_product.v" in report.artefacts
     assert audit_scnir_hdl_handoff(output_dir).as_dict() == report.as_dict()

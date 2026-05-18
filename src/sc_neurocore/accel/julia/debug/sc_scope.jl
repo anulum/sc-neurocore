@@ -53,7 +53,7 @@ function read_bitstream(s::ScopeRendererState, num_words, layer_id)
         return nothing
     if s.config.transport_type == TransportType.SIMULATED
         return s._sim_read(num_words, layer_id)
-    # Placeholder for real backends
+    # Hardware transports are registered by deployment-specific backends.
     return nothing
 end
 

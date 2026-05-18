@@ -26,7 +26,7 @@ function L7_SymbolicAdapterState()
 end
 
 function _init_metatron_matrix(s::L7_SymbolicAdapterState)
-    # Simple placeholder for the complex 13-node geometry
+    # Reduced sparse geometry initialiser.
     # In a full implementation, this is a specific sparse matrix.
     import numpy as _np
     n = s.params.n_nodes

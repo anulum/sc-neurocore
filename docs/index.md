@@ -60,7 +60,7 @@ FPGA deployment.
 
 The default `pip install sc-neurocore` wheel ships the public
 core/simulation/domain-bridge package surface under the `sc-neurocore`
-product name. Frontier modules such as `analysis`, `viz`, `audio`,
+product name. Extended source modules such as `analysis`, `viz`, `audio`,
 `dashboard`, and `swarm` remain source-checkout features.
 
 ## Quick Start

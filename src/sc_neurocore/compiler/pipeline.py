@@ -62,7 +62,7 @@ class CompilerPipeline:
             if os.path.exists(v_path):
                 os.remove(v_path)
             raise SCCompilerError(
-                "firtool failed; refusing to emit placeholder Verilog. "
+                "firtool failed; refusing to emit fallback Verilog. "
                 "Install CIRCT firtool or run MLIR bundle generation for evidence-only output."
             ) from e
 

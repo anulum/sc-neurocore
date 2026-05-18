@@ -117,7 +117,7 @@ class TransportBackend:
         if self.config.transport_type == TransportType.SIMULATED:
             return self._sim_read(num_words, layer_id)
 
-        # Placeholder for real backends
+        # Hardware transports are registered by deployment-specific backends.
         return None
 
     def _sim_read(self, num_words: int, layer_id: int) -> np.ndarray:

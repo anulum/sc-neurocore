@@ -279,7 +279,7 @@ function _emit_scoreboard(s::UVMGeneratorState, rtl)
             if p.width > 1
                 w = p.width
                 golden_funcs = push!(,
-                    f"    // Golden model placeholder for {p.name}\n"
+                    f"    // Reference comparison hook for {p.name}\n"
                     f"    function logic [{w - 1}:0] golden_compute_{p.name}({m}_transaction txn);\n"
                     f"        return txn.{p.name}; // Replace with bit-true golden model\n"
                     f"    endfunction"

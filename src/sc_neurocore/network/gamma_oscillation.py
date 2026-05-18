@@ -11,7 +11,7 @@
 Conductance-based PING per **Börgers & Kopell 2003** (Neural Comp.
 15:509-538) — itself a refinement of **Whittington et al. 1995**
 (Nature 373:612-615). The previous implementation was a rate-coded
-toy that did not reproduce the published gamma-band peak; this
+reduced model that did not reproduce the published gamma-band peak; this
 rewrite ships the full conductance model so the spectral peak,
 phase-locking, and weak-PING-vs-strong-PING transition published in
 those papers are reproducible.

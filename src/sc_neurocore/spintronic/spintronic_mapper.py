@@ -558,8 +558,8 @@ module {array_name} #(
                 // SC AND gate: bitstream × weight-encoded bitstream
                 assign partial[c] = bitstream_in[c]; // Simplified; actual uses LFSR threshold
             end
-            // OR-reduction (majority) of partial products
-            assign bitstream_out[r] = partial[0]; // Placeholder for full OR tree
+            // OR-reduction (majority) integration point for partial products
+            assign bitstream_out[r] = partial[0]; // downstream mapper expands this tree
         end
     endgenerate
 

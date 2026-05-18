@@ -28,7 +28,7 @@ reflected at the boundaries ``0`` and ``L``.
 This is **not** the same as a discrete random walk on an integer
 lattice — the diffusion coefficient α MUST drive the per-step
 variance, otherwise the discretisation simulates a different PDE.
-The Antigravity placeholder previously here used integer steps
+The previous Antigravity implementation used integer steps
 with `p=[0.25, 0.5, 0.25]` and never read `self.alpha` — that was
 not Feynman-Kac and was replaced 2026-04-17 per
 `feedback_sophisticated_from_start.md`.

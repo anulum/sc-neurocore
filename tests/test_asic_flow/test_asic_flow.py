@@ -121,7 +121,7 @@ class TestOpenSourcePDKResolver:
         ]
         for path in paths:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("placeholder\n", encoding="utf-8")
+            path.write_text("test-pdk-file\n", encoding="utf-8")
 
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         resolution = OpenSourcePDKResolver.resolve(pdk, pdk_root=str(root), require_existing=True)
@@ -650,7 +650,7 @@ class TestPDKValidation:
         ]
         for path in paths:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("placeholder\n", encoding="utf-8")
+            path.write_text("test-pdk-file\n", encoding="utf-8")
 
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
         synth_only = validate_pdk_installation(pdk, pdk_root=str(root))

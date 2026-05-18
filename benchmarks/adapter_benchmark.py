@@ -28,9 +28,9 @@ def benchmark_adapter(adapter_cls, n_steps=100):
 
     # Warm up
     try:
-        dummy = np.zeros(16)
+        input_vector = np.zeros(16)
         if hasattr(adapter, "step_jax"):
-            adapter.step_jax(0.001, dummy)
+            adapter.step_jax(0.001, input_vector)
         elif hasattr(adapter, "step"):
             adapter.step(0.001)
     except Exception:

@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for MLPerf-SC result schema validation
 
-"""Contract tests for the FMOAT-6 MLPerf-SC result schema foundation."""
+"""Contract tests for the MLPerf-SC result schema foundation."""
 
 from __future__ import annotations
 

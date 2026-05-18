@@ -388,7 +388,7 @@ gen  10  pop=16  best=0.044  diversity=0.008
 gen  20  pop=16  best=0.044  diversity=0.007
 ```
 
-Low `best_fitness` values reflect the toy `metrics_fn` above (returns
+Low `best_fitness` values reflect the demonstration `metrics_fn` above (returns
 `0.5 + 0.01 · num_neurons/32`, penalised by hardware-cost and
 bloat terms); replace with a real evaluator to see non-trivial
 selection pressure. Population stays at 16 in this run because

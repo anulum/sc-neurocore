@@ -97,7 +97,7 @@ _reg(
         fraction=4,
         overflow="saturate",
         rounding="truncate",
-        notes="IBM ECRAM: electrochemical RAM. Superior linearity for on-chip "
+        notes="IBM ECRAM: electrochemical RAM. High linearity for on-chip "
         "learning. Multi-level analog weights.",
     )
 )

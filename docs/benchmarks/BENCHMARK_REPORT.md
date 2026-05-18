@@ -14,7 +14,7 @@ Commercial Licensing: Available
 ## Baseline Definition and Routing Note
 
 - `v2` in this report means the SC-NeuroCore v2 Python reference path measured by the same benchmark harness.
-- External framework baselines (Norse/Sinabs/Lava CPU) are not yet included in this file and must be added before claiming ecosystem-level superiority.
+- External framework baselines (Norse/Sinabs/Lava CPU) are not yet included in this file and must be added before making ecosystem-level claims.
 - For low-latency use (single sample or micro-batch), prefer `DenseLayer.forward_fast`.
 - For throughput use (batch >= 10), prefer `DenseLayer.forward_batch_numpy`.
 
