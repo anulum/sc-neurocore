@@ -326,6 +326,189 @@ impl PlasticityRule for RewardStdpRule {
 }
 
 // ---------------------------------------------------------------------------
+// Bounded fixed-point O(1) online learning rule
+// ---------------------------------------------------------------------------
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct OnlineO1Config {
+    pub weight_bits: u8,
+    pub trace_bits: u8,
+    pub reward_bits: u8,
+    pub learning_shift: u8,
+    pub trace_decay_shift: u8,
+}
+
+impl OnlineO1Config {
+    pub fn new(
+        weight_bits: u8,
+        trace_bits: u8,
+        reward_bits: u8,
+        learning_shift: u8,
+        trace_decay_shift: u8,
+    ) -> Result<Self, &'static str> {
+        if weight_bits == 0 || weight_bits > 31 {
+            return Err("weight_bits must be in 1..=31");
+        }
+        if trace_bits < 2 || trace_bits > 30 {
+            return Err("trace_bits must be in 2..=30");
+        }
+        if reward_bits == 0 || reward_bits > 30 {
+            return Err("reward_bits must be in 1..=30");
+        }
+        if learning_shift > 30 {
+            return Err("learning_shift must be <= 30");
+        }
+        if trace_decay_shift > 30 {
+            return Err("trace_decay_shift must be <= 30");
+        }
+        Ok(Self {
+            weight_bits,
+            trace_bits,
+            reward_bits,
+            learning_shift,
+            trace_decay_shift,
+        })
+    }
+
+    pub fn max_weight(&self) -> u32 {
+        (1_u32 << self.weight_bits) - 1
+    }
+
+    pub fn max_trace(&self) -> u32 {
+        (1_u32 << self.trace_bits) - 1
+    }
+
+    pub fn min_eligibility(&self) -> i32 {
+        -(1_i32 << (self.trace_bits - 1))
+    }
+
+    pub fn max_eligibility(&self) -> i32 {
+        (1_i32 << (self.trace_bits - 1)) - 1
+    }
+
+    pub fn min_reward(&self) -> i32 {
+        -(1_i32 << (self.reward_bits - 1))
+    }
+
+    pub fn max_reward(&self) -> i32 {
+        (1_i32 << (self.reward_bits - 1)) - 1
+    }
+
+    pub fn per_synapse_state_bits(&self) -> u32 {
+        self.weight_bits as u32 + 3 * self.trace_bits as u32
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct OnlineO1Snapshot {
+    pub weight: u32,
+    pub pre_trace: u32,
+    pub post_trace: u32,
+    pub eligibility: i32,
+}
+
+pub struct OnlineO1Synapse {
+    pub config: OnlineO1Config,
+    pub weight: u32,
+    pub pre_trace: u32,
+    pub post_trace: u32,
+    pub eligibility: i32,
+}
+
+impl OnlineO1Synapse {
+    pub fn new(config: OnlineO1Config, initial_weight: u32) -> Result<Self, &'static str> {
+        Ok(Self {
+            config,
+            weight: initial_weight.min(config.max_weight()),
+            pre_trace: 0,
+            post_trace: 0,
+            eligibility: 0,
+        })
+    }
+
+    pub fn snapshot(&self) -> OnlineO1Snapshot {
+        OnlineO1Snapshot {
+            weight: self.weight,
+            pre_trace: self.pre_trace,
+            post_trace: self.post_trace,
+            eligibility: self.eligibility,
+        }
+    }
+
+    pub fn step(&mut self, pre_spike: bool, post_spike: bool, reward: i32) -> OnlineO1Snapshot {
+        let reward = reward.clamp(self.config.min_reward(), self.config.max_reward());
+        let previous_pre_trace = self.pre_trace;
+        let previous_post_trace = self.post_trace;
+
+        self.pre_trace = decay_unsigned(
+            self.pre_trace,
+            self.config.trace_decay_shift,
+            self.config.max_trace(),
+        );
+        self.post_trace = decay_unsigned(
+            self.post_trace,
+            self.config.trace_decay_shift,
+            self.config.max_trace(),
+        );
+        if pre_spike {
+            self.pre_trace = self.config.max_trace();
+        }
+        if post_spike {
+            self.post_trace = self.config.max_trace();
+        }
+
+        let decayed_eligibility = decay_signed(self.eligibility, self.config.trace_decay_shift);
+        let potentiation = if post_spike {
+            if pre_spike {
+                self.config.max_trace() as i32
+            } else {
+                previous_pre_trace as i32
+            }
+        } else {
+            0
+        };
+        let depression = if pre_spike {
+            previous_post_trace as i32
+        } else {
+            0
+        };
+        self.eligibility = (decayed_eligibility + potentiation - depression)
+            .clamp(self.config.min_eligibility(), self.config.max_eligibility());
+
+        let weight_delta =
+            ((reward as i64 * self.eligibility as i64) >> self.config.learning_shift) as i64;
+        self.weight =
+            (self.weight as i64 + weight_delta).clamp(0, self.config.max_weight() as i64) as u32;
+        self.snapshot()
+    }
+
+    pub fn per_synapse_state_bits(&self) -> u32 {
+        self.config.per_synapse_state_bits()
+    }
+}
+
+fn decay_unsigned(value: u32, shift: u8, max_value: u32) -> u32 {
+    if shift == 0 {
+        return value.min(max_value);
+    }
+    value.saturating_sub(value >> shift).min(max_value)
+}
+
+fn decay_signed(value: i32, shift: u8) -> i32 {
+    if shift == 0 {
+        return value;
+    }
+    if value >= 0 {
+        value - (value >> shift)
+    } else {
+        let magnitude = -value;
+        -(magnitude - (magnitude >> shift))
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Rule 3: BCM (Bienenstock-Cooper-Munro) Metaplasticity
 // ---------------------------------------------------------------------------
 
@@ -556,6 +739,58 @@ pub unsafe extern "C" fn reset_rule(ptr: *mut RuleHandle) {
 /// `ptr` must have been returned by `create_rule`.
 #[no_mangle]
 pub unsafe extern "C" fn destroy_rule(ptr: *mut RuleHandle) {
+    if !ptr.is_null() {
+        let _ = unsafe { Box::from_raw(ptr) };
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn create_online_o1_synapse(
+    weight_bits: u8,
+    trace_bits: u8,
+    reward_bits: u8,
+    learning_shift: u8,
+    trace_decay_shift: u8,
+    initial_weight: u32,
+) -> *mut OnlineO1Synapse {
+    let Ok(config) = OnlineO1Config::new(
+        weight_bits,
+        trace_bits,
+        reward_bits,
+        learning_shift,
+        trace_decay_shift,
+    ) else {
+        return std::ptr::null_mut();
+    };
+    let Ok(synapse) = OnlineO1Synapse::new(config, initial_weight) else {
+        return std::ptr::null_mut();
+    };
+    Box::into_raw(Box::new(synapse))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn step_online_o1_synapse(
+    ptr: *mut OnlineO1Synapse,
+    pre_spike: bool,
+    post_spike: bool,
+    reward: i32,
+) -> OnlineO1Snapshot {
+    if ptr.is_null() {
+        return OnlineO1Snapshot::default();
+    }
+    unsafe { &mut *ptr }.step(pre_spike, post_spike, reward)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn online_o1_per_synapse_state_bits(ptr: *const OnlineO1Synapse) -> u32 {
+    if ptr.is_null() {
+        return 0;
+    }
+    unsafe { &*ptr }.per_synapse_state_bits()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn destroy_online_o1_synapse(ptr: *mut OnlineO1Synapse) {
     if !ptr.is_null() {
         let _ = unsafe { Box::from_raw(ptr) };
     }
@@ -1233,5 +1468,70 @@ mod tests {
         rule.reset();
         assert_eq!(rule.pre_trace, 0.0);
         assert_eq!(rule.post_trace, 0.0);
+    }
+
+    #[test]
+    fn online_o1_matches_python_reference_trace() {
+        let config = OnlineO1Config::new(8, 6, 4, 3, 2).expect("valid online O(1) config");
+        let mut synapse = OnlineO1Synapse::new(config, 0).expect("valid online O(1) synapse");
+        let events = [
+            (true, false, 0),
+            (false, true, 7),
+            (false, false, 7),
+            (false, false, 7),
+            (false, false, -7),
+            (true, false, 0),
+            (false, true, -7),
+        ];
+        let expected = [
+            OnlineO1Snapshot {
+                weight: 0,
+                pre_trace: 63,
+                post_trace: 0,
+                eligibility: 0,
+            },
+            OnlineO1Snapshot {
+                weight: 27,
+                pre_trace: 48,
+                post_trace: 63,
+                eligibility: 31,
+            },
+            OnlineO1Snapshot {
+                weight: 48,
+                pre_trace: 36,
+                post_trace: 48,
+                eligibility: 24,
+            },
+            OnlineO1Snapshot {
+                weight: 63,
+                pre_trace: 27,
+                post_trace: 36,
+                eligibility: 18,
+            },
+            OnlineO1Snapshot {
+                weight: 50,
+                pre_trace: 21,
+                post_trace: 27,
+                eligibility: 14,
+            },
+            OnlineO1Snapshot {
+                weight: 50,
+                pre_trace: 63,
+                post_trace: 21,
+                eligibility: -16,
+            },
+            OnlineO1Snapshot {
+                weight: 22,
+                pre_trace: 48,
+                post_trace: 63,
+                eligibility: 31,
+            },
+        ];
+
+        for ((pre, post, reward), expected_snapshot) in events.into_iter().zip(expected) {
+            let observed = synapse.step(pre, post, reward);
+            assert_eq!(observed, expected_snapshot);
+        }
+        assert_eq!(synapse.per_synapse_state_bits(), 26);
     }
 }

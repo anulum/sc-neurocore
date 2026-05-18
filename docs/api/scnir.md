@@ -11,9 +11,9 @@
 SC-NIR is the SC-NeuroCore metadata layer for stochastic-computing semantics
 that plain NIR does not encode. It records bitstream length, stochastic
 encoding, stream signal kind, fixed-point precision, deterministic transform
-metadata, random-source metadata, stream correlation constraints, and explicit
-hierarchy instance boundaries before a model reaches hardware compilation or
-experiment handoff.
+metadata, optional online-learning contracts for weight streams, random-source
+metadata, stream correlation constraints, and explicit hierarchy instance
+boundaries before a model reaches hardware compilation or experiment handoff.
 
 The schema is intentionally strict. Unknown fields, missing fields, duplicate
 stream identifiers, invalid random-source metadata, dangling correlation
@@ -31,7 +31,7 @@ schemas/scnir/scnir.schema.json
 Current schema version:
 
 ```text
-sc-neurocore.scnir.v0.6
+sc-neurocore.scnir.v0.7
 ```
 
 Each stream entry must provide:
@@ -48,6 +48,7 @@ Each stream entry must provide:
 | `precision` | Signedness, total bits, fractional bits, accumulator bits, rounding, overflow |
 | `source` | LFSR, Sobol, Halton, replay, or hardware source metadata |
 | `correlation_constraints` | Pairwise policy metadata between streams |
+| `online_learning` | `null` or a validated Online O(1) learning annotation on `weight` streams only |
 
 The top-level `hierarchy` array records bounded nested-hardware contracts. Each
 entry must provide a stable `instance_id`, synthesisable `module_name`, and at
@@ -78,8 +79,10 @@ stream identifier, and every pre-`v0.4` upgrade adds an explicit empty
 `transforms` list. Version `v0.5` keeps scalar delay metadata compatible and
 adds per-source delay vectors for heterogeneous NIR `Delay` lowering. Version
 `v0.6` adds top-level hierarchy instance and port metadata; legacy documents
-upgrade with an empty hierarchy list. The typed validator and deterministic JSON
-writer then produce `sc-neurocore.scnir.v0.6`. Unknown schema versions fail
+upgrade with an empty hierarchy list. Version `v0.7` adds optional
+`online_learning` annotations for weight streams and rejects those annotations
+on spike or analogue-state streams. The typed validator and deterministic JSON
+writer then produce `sc-neurocore.scnir.v0.7`. Unknown schema versions fail
 closed so migration support must be added deliberately when the schema evolves.
 
 Export SC-NIR metadata from a NIR graph:
@@ -112,8 +115,9 @@ The `compile-nir` CLI writes the full validated document as
 can be reproduced from the same stream metadata that drove source generation.
 `scnir_source_manifest` records the stream identifier, module name, source
 family, seed, bitstream length, encoding, signal kind, recurrent delay steps,
-precision, transform metadata, and source-specific metadata used for each
-module. CLI manifests also record the selected interconnect, Q-format, total
+precision, transform metadata, optional online-learning metadata, and
+source-specific metadata used for each module. CLI manifests also record the
+selected interconnect, Q-format, total
 neuron count, total synapse count, SC-NIR stream count,
 `scnir_signal_kinds` counts, `scnir_signal_routes`, and
 `scnir_external_inputs` so AER/event-driven and mixed analogue/spiking output
@@ -149,14 +153,18 @@ parser-only or only closed under a bounded shape/port contract.
 | `Conv1d` | metadata and HDL when `input_shape` is explicit and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `convolution_lowered_weight` | dense Toeplitz-style fixed-point MAC terms through the weight path |
 | `Conv2d` | metadata and HDL when exact spatial input shape is explicit and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `convolution_lowered_weight` | dense 2D convolution fixed-point MAC terms through the weight path |
 | `SumPool2d`, `AvgPool2d` | metadata and HDL when exact CHW shape metadata is present and output is flattened into a destination population | lowered to a `signal_kind=weight` stream as `pool2d_lowered_weight` | dense pooling fixed-point MAC terms through the weight path |
-| nested `NIRGraph` | metadata and HDL for single-input/single-output subgraphs and exact one-edge-per-port multi-port subgraphs, including exact multi-output boundaries, inlined into the parent graph; ambiguous multi-port hierarchy fails closed | namespaced stream IDs from the inlined subgraph contents plus a top-level hierarchy instance whose ports reference those streams | namespaced inline fixed-point terms with stable external input-bus lanes; standalone hierarchical submodule handoff remains open |
+| nested `NIRGraph` | metadata and HDL for single-input/single-output subgraphs and exact one-edge-per-port multi-port subgraphs, including exact multi-output boundaries, inlined into the parent graph; ambiguous multi-port hierarchy fails closed | namespaced stream IDs from the inlined subgraph contents plus a top-level hierarchy instance whose ports reference those streams | namespaced inline fixed-point terms with stable external input-bus lanes plus standalone hierarchy boundary module artefacts, top-level contract instances, and packed hierarchy weight outputs consumed by the top-level MAC |
 
 Use `validate_scnir_compatibility_matrix()` in tests or release checks to fail
 when parser support changes without a corresponding compatibility row. Use
 `build_scnir_compatibility_audit()` for release evidence bundles that need the
-validated matrix, support-level counts, the exact evidence file set, file
-sizes, per-evidence SHA-256 digests, and a canonical matrix SHA-256 digest in
-one versioned JSON object.
+validated matrix, support-level counts, explicit parser-only and metadata-only
+closure blocker lists, the locally closed handoff primitive list, the exact
+evidence file set, file sizes, per-evidence SHA-256 digests, and a canonical
+matrix SHA-256 digest in one versioned JSON object. A
+`closed_for_local_handoff` audit status is limited to the SC-NIR/HDL software
+handoff and is emitted with `external_hardware_evidence_status=not_claimed`
+until separate Vivado, PYNQ, or physical hardware evidence is attached.
 
 ## Python API
 

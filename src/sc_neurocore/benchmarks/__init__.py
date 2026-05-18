@@ -24,6 +24,11 @@ from .mlperf_sc_schema import (
 )
 from .mlperf_sc_runner import run_mlperf_sc_fixture
 from .mlperf_sc_report import MLPERF_SC_REPORT_SCHEMA_VERSION, aggregate_mlperf_sc_results
+from .online_o1_adaptation import (
+    ONLINE_O1_ADAPTATION_BENCHMARK_SCHEMA_VERSION,
+    build_online_o1_adaptation_benchmark,
+    write_online_o1_adaptation_benchmark,
+)
 from .tasks import TASKS
 
 __all__ = [
@@ -38,10 +43,13 @@ __all__ = [
     "MLPerfSCResult",
     "MLPerfSCRun",
     "MLPerfSCValidationError",
+    "ONLINE_O1_ADAPTATION_BENCHMARK_SCHEMA_VERSION",
     "TASKS",
     "aggregate_mlperf_sc_results",
+    "build_online_o1_adaptation_benchmark",
     "compute_metrics",
     "mlperf_sc_result_to_dict",
     "run_mlperf_sc_fixture",
     "validate_mlperf_sc_result",
+    "write_online_o1_adaptation_benchmark",
 ]

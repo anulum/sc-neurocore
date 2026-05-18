@@ -306,11 +306,16 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
             "precision",
             "manifest_hierarchy_counts",
             "manifest_external_input_layout",
+            "hierarchy_boundary_hdl_modules",
+            "top_module_hierarchy_contract_instances",
+            "scalar_hierarchy_weight_outputs",
+            "packed_vector_matrix_hierarchy_weight_outputs",
         ),
         hdl_support=(
             "namespaced inline fixed-point terms with stable external input-bus "
-            "lanes for single-port and exact multi-port boundary mappings; no "
-            "standalone submodule boundary yet"
+            "lanes for single-port and exact multi-port boundary mappings, plus "
+            "standalone hierarchy boundary module artefacts, top-level contract "
+            "instances, and packed hierarchy weight outputs consumed by the top-level MAC"
         ),
         audit_evidence=(
             "tests/test_scnir_convert.py",
@@ -321,8 +326,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         limitation=(
             "Single-port and exact one-edge-per-port nested graphs, including exact "
             "multi-output boundaries, are inlined into the parent hardware graph. "
-            "Ambiguous multi-port nested NIRGraph boundary mappings still fail closed "
-            "until explicit hierarchical submodule handoff is implemented."
+            "Ambiguous multi-port nested NIRGraph boundary mappings still fail closed."
         ),
     ),
 )
@@ -354,6 +358,19 @@ def build_scnir_compatibility_audit(evidence_root: str | Path) -> dict[str, obje
     support_level_counts: dict[str, int] = {}
     for row in _MATRIX:
         support_level_counts[row.support_level] = support_level_counts.get(row.support_level, 0) + 1
+    parser_only_primitives = sorted(
+        row.nir_primitive for row in _MATRIX if row.support_level == "parser_only"
+    )
+    metadata_only_primitives = sorted(
+        row.nir_primitive for row in _MATRIX if row.support_level == "metadata_only"
+    )
+    boundary_primitives = sorted(
+        row.nir_primitive for row in _MATRIX if row.support_level == "boundary"
+    )
+    closed_handoff_primitives = sorted(
+        row.nir_primitive for row in _MATRIX if row.support_level == "metadata_and_hdl"
+    )
+    closure_blocker_count = len(parser_only_primitives) + len(metadata_only_primitives)
     evidence_paths = sorted({path for row in _MATRIX for path in row.audit_evidence})
     evidence_files = []
     for path in evidence_paths:
@@ -377,6 +394,18 @@ def build_scnir_compatibility_audit(evidence_root: str | Path) -> dict[str, obje
         "evidence_root": str(root),
         "primitive_count": len(_MATRIX),
         "support_level_counts": dict(sorted(support_level_counts.items())),
+        "closure_status": ("closed_for_local_handoff" if closure_blocker_count == 0 else "blocked"),
+        "closure_blocker_count": closure_blocker_count,
+        "parser_only_primitives": parser_only_primitives,
+        "metadata_only_primitives": metadata_only_primitives,
+        "boundary_primitives": boundary_primitives,
+        "closed_handoff_primitives": closed_handoff_primitives,
+        "requires_external_hardware_evidence": True,
+        "external_hardware_evidence_status": "not_claimed",
+        "external_hardware_evidence_note": (
+            "Local SC-NIR/HDL handoff closure does not claim Vivado, PYNQ, "
+            "or physical hardware evidence."
+        ),
         "audit_evidence_file_count": len(evidence_paths),
         "audit_evidence_paths": evidence_paths,
         "audit_evidence_files": evidence_files,

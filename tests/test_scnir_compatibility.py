@@ -66,6 +66,18 @@ def test_scnir_compatibility_audit_report_summarises_evidence() -> None:
     assert report["evidence_root"] == str(REPO_ROOT.resolve())
     assert report["primitive_count"] == len(matrix)
     assert report["support_level_counts"]["metadata_and_hdl"] >= 1
+    assert report["closure_status"] == "closed_for_local_handoff"
+    assert report["closure_blocker_count"] == 0
+    assert report["parser_only_primitives"] == []
+    assert report["metadata_only_primitives"] == []
+    assert report["boundary_primitives"] == ["Input", "Output"]
+    assert report["closed_handoff_primitives"] == sorted(
+        row.nir_primitive
+        for row in scnir_compatibility_matrix()
+        if row.support_level == "metadata_and_hdl"
+    )
+    assert report["requires_external_hardware_evidence"] is True
+    assert report["external_hardware_evidence_status"] == "not_claimed"
     assert report["audit_evidence_file_count"] == len(evidence_paths)
     assert report["audit_evidence_paths"] == evidence_paths
     assert report["matrix_sha256"] == matrix_digest
@@ -126,6 +138,13 @@ def test_scnir_closure_audit_cli_writes_versioned_report(
     assert payload["schema_version"] == "sc-neurocore.scnir.compatibility-audit.v0.2"
     assert payload["status"] == "valid"
     assert payload["primitive_count"] == len(scnir_compatibility_matrix())
+    assert payload["closure_status"] == "closed_for_local_handoff"
+    assert payload["closure_blocker_count"] == 0
+    assert payload["parser_only_primitives"] == []
+    assert payload["metadata_only_primitives"] == []
+    assert payload["boundary_primitives"] == ["Input", "Output"]
+    assert payload["requires_external_hardware_evidence"] is True
+    assert payload["external_hardware_evidence_status"] == "not_claimed"
     assert payload["audit_evidence_file_count"] >= 1
     assert payload["matrix_sha256"]
     assert payload["audit_evidence_files"][0]["sha256"]
@@ -221,12 +240,23 @@ def test_scnir_compatibility_matrix_does_not_overclaim_parser_only_rows() -> Non
     assert "hierarchy_instance_metadata" in nested.scnir_stream_metadata
     assert "manifest_hierarchy_counts" in nested.source_metadata
     assert "manifest_external_input_layout" in nested.source_metadata
+    assert "hierarchy_boundary_hdl_modules" in nested.source_metadata
+    assert "top_module_hierarchy_contract_instances" in nested.source_metadata
+    assert "scalar_hierarchy_weight_outputs" in nested.source_metadata
+    assert "packed_vector_matrix_hierarchy_weight_outputs" in nested.source_metadata
     assert "namespaced inline fixed-point terms" in nested.hdl_support
     assert "stable external input-bus lanes" in nested.hdl_support
+    assert "standalone hierarchy boundary module artefacts" in nested.hdl_support
+    assert "top-level contract instances" in nested.hdl_support
+    assert "packed hierarchy weight outputs" in nested.hdl_support
     assert "tests/test_cli.py" in nested.audit_evidence
     assert "tests/test_scnir_handoff_audit.py" in nested.audit_evidence
     assert "multi-output" in nested.limitation
     assert "Ambiguous" in nested.limitation
+    assert (
+        "Ambiguous multi-port nested NIRGraph boundary mappings still fail closed"
+        in nested.limitation
+    )
 
 
 def test_scnir_compatibility_matrix_records_weight_and_recurrent_delay_semantics() -> None:

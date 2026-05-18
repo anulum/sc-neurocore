@@ -24,7 +24,8 @@ from pathlib import Path
 import re
 from typing import Any, Literal, Mapping, Sequence, cast
 
-SCNIR_SCHEMA_VERSION = "sc-neurocore.scnir.v0.6"
+SCNIR_SCHEMA_VERSION = "sc-neurocore.scnir.v0.7"
+SCNIR_V06_SCHEMA_VERSION = "sc-neurocore.scnir.v0.6"
 SCNIR_PREVIOUS_SCHEMA_VERSION = "sc-neurocore.scnir.v0.5"
 SCNIR_V04_SCHEMA_VERSION = "sc-neurocore.scnir.v0.4"
 SCNIR_V03_SCHEMA_VERSION = "sc-neurocore.scnir.v0.3"
@@ -37,6 +38,7 @@ SCNIR_SUPPORTED_SCHEMA_VERSIONS = frozenset(
         SCNIR_V03_SCHEMA_VERSION,
         SCNIR_V04_SCHEMA_VERSION,
         SCNIR_PREVIOUS_SCHEMA_VERSION,
+        SCNIR_V06_SCHEMA_VERSION,
         SCNIR_SCHEMA_VERSION,
     }
 )
@@ -162,6 +164,7 @@ class SCNIRStream:
     delay_steps: SCNIRDelaySteps = 0
     transforms: Sequence[SCNIRStreamTransform] = field(default_factory=tuple)
     correlation_constraints: Sequence[SCNIRCorrelationConstraint] = field(default_factory=tuple)
+    online_learning: Mapping[str, Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -299,10 +302,11 @@ def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
     streams.  Version ``v0.4`` added explicit stream transform metadata for
     threshold comparators.  Version ``v0.5`` permits ``delay_steps`` to be
     either a scalar integer or a per-source-column integer vector.  Version
-    ``v0.6`` adds top-level hierarchy instance and port metadata.  Legacy
-    upgrades insert the missing fields before validating through the typed
-    schema.  Current documents are canonicalised through the same deterministic
-    writer.
+    ``v0.6`` adds top-level hierarchy instance and port metadata.  Version
+    ``v0.7`` adds optional validated per-weight-stream online-learning
+    annotations.  Legacy upgrades insert the missing fields before validating
+    through the typed schema.  Current documents are canonicalised through the
+    same deterministic writer.
     """
 
     version = payload.get("schema_version")
@@ -314,6 +318,7 @@ def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
         SCNIR_V03_SCHEMA_VERSION,
         SCNIR_V04_SCHEMA_VERSION,
         SCNIR_PREVIOUS_SCHEMA_VERSION,
+        SCNIR_V06_SCHEMA_VERSION,
     }:
         upgraded: dict[str, Any] = dict(payload)
         upgraded["schema_version"] = SCNIR_SCHEMA_VERSION
@@ -329,6 +334,8 @@ def upgrade_scnir_dict(payload: Mapping[str, Any]) -> dict[str, Any]:
                 )
             if "transforms" not in stream_payload:
                 stream_payload["transforms"] = []
+            if "online_learning" not in stream_payload:
+                stream_payload["online_learning"] = None
             upgraded_streams.append(stream_payload)
         upgraded["streams"] = upgraded_streams
         if "hierarchy" not in upgraded:
@@ -351,6 +358,7 @@ def _validate_stream(stream: Mapping[str, Any], path: str) -> None:
             "delay_steps",
             "transforms",
             "correlation_constraints",
+            "online_learning",
         },
         path,
     )
@@ -373,6 +381,65 @@ def _validate_stream(stream: Mapping[str, Any], path: str) -> None:
             _expect_mapping(item, f"{path}.correlation_constraints[{index}]"),
             f"{path}.correlation_constraints[{index}]",
         )
+    online_learning = stream["online_learning"]
+    if online_learning is not None:
+        if stream["signal_kind"] != "weight":
+            raise SCNIRValidationError(f"{path}.online_learning is only valid on weight streams")
+        _validate_online_learning_annotation(
+            _expect_mapping(online_learning, f"{path}.online_learning"),
+            f"{path}.online_learning",
+        )
+
+
+def _validate_online_learning_annotation(annotation: Mapping[str, Any], path: str) -> None:
+    _expect_keys(
+        annotation,
+        {
+            "schema_version",
+            "rule_id",
+            "rule_family",
+            "state_fields",
+            "per_synapse_state_bits",
+            "weight_bits",
+            "trace_bits",
+            "reward_bits",
+            "learning_shift",
+            "trace_decay_shift",
+            "saturation_policy",
+            "hidden_history_fields",
+            "sequence_length_independent",
+        },
+        path,
+    )
+    if annotation["schema_version"] != "sc-neurocore.online-o1.annotation.v1":
+        raise SCNIRValidationError(f"{path}.schema_version is unsupported")
+    _expect_non_empty_string(annotation["rule_id"], f"{path}.rule_id")
+    if annotation["rule_family"] != "reward_modulated_stdp":
+        raise SCNIRValidationError(f"{path}.rule_family is unsupported")
+    state_fields = tuple(_expect_sequence(annotation["state_fields"], f"{path}.state_fields"))
+    if state_fields != ("weight", "pre_trace", "post_trace", "eligibility"):
+        raise SCNIRValidationError(f"{path}.state_fields must match the Online O(1) contract")
+    weight_bits = _expect_positive_int(annotation["weight_bits"], f"{path}.weight_bits")
+    trace_bits = _expect_positive_int(annotation["trace_bits"], f"{path}.trace_bits")
+    if trace_bits < 2:
+        raise SCNIRValidationError(f"{path}.trace_bits must be >= 2")
+    _expect_positive_int(annotation["reward_bits"], f"{path}.reward_bits")
+    _expect_non_negative_int(annotation["learning_shift"], f"{path}.learning_shift")
+    _expect_non_negative_int(annotation["trace_decay_shift"], f"{path}.trace_decay_shift")
+    expected_state_bits = weight_bits + 3 * trace_bits
+    if annotation["per_synapse_state_bits"] != expected_state_bits:
+        raise SCNIRValidationError(
+            f"{path}.per_synapse_state_bits must equal weight_bits + 3 * trace_bits"
+        )
+    if annotation["saturation_policy"] != "signed_eligibility_unsigned_weight":
+        raise SCNIRValidationError(f"{path}.saturation_policy is unsupported")
+    hidden_history_fields = _expect_sequence(
+        annotation["hidden_history_fields"], f"{path}.hidden_history_fields"
+    )
+    if hidden_history_fields:
+        raise SCNIRValidationError(f"{path}.hidden_history_fields must be empty")
+    if annotation["sequence_length_independent"] is not True:
+        raise SCNIRValidationError(f"{path}.sequence_length_independent must be true")
 
 
 def _validate_transform(transform: Mapping[str, Any], parent_path: str) -> None:
@@ -567,6 +634,11 @@ def _stream_from_dict(stream: Mapping[str, Any]) -> SCNIRStream:
             _correlation_from_dict(_expect_mapping(item, "correlation_constraint"))
             for item in constraints
         ),
+        online_learning=(
+            dict(_expect_mapping(stream["online_learning"], "stream.online_learning"))
+            if stream["online_learning"] is not None
+            else None
+        ),
     )
 
 
@@ -654,6 +726,9 @@ def _stream_to_dict(stream: SCNIRStream) -> dict[str, Any]:
             }
             for constraint in stream.correlation_constraints
         ],
+        "online_learning": dict(stream.online_learning)
+        if stream.online_learning is not None
+        else None,
     }
 
 

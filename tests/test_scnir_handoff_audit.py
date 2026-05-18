@@ -144,6 +144,7 @@ def _write_valid_handoff(root: Path) -> None:
                 "total_bits": 16,
                 "fractional_bits": 8,
                 "transforms": [],
+                "online_learning": None,
                 "lfsr_polynomial": None,
                 "tap_mask": None,
                 "sobol_dimension": 1,
@@ -161,6 +162,7 @@ def _write_valid_handoff(root: Path) -> None:
                 "total_bits": 16,
                 "fractional_bits": 8,
                 "transforms": [],
+                "online_learning": None,
                 "lfsr_polynomial": None,
                 "tap_mask": None,
                 "sobol_dimension": 2,
@@ -178,6 +180,7 @@ def _write_valid_handoff(root: Path) -> None:
                 "total_bits": 16,
                 "fractional_bits": 8,
                 "transforms": [],
+                "online_learning": None,
                 "lfsr_polynomial": None,
                 "tap_mask": None,
                 "sobol_dimension": 3,
@@ -195,6 +198,14 @@ def _write_valid_handoff(root: Path) -> None:
                 "localparam integer SCNIR_BITSTREAM_LENGTH = 512;",
                 "localparam integer SCNIR_STREAM_COUNT = 3;",
                 "localparam integer SCNIR_SOURCE_MODULE_COUNT = 3;",
+                "wire signed [15:0] mixed_audit_net_core__li_state_i;",
+                "wire mixed_audit_net_core__lif_spike_o;",
+                "wire signed [15:0] mixed_audit_net_core__weight_i;",
+                "mixed_audit_net_core mixed_audit_net_core_hierarchy_inst (",
+                "    .li_state_i(mixed_audit_net_core__li_state_i),",
+                "    .lif_spike_o(mixed_audit_net_core__lif_spike_o),",
+                "    .weight_i(mixed_audit_net_core__weight_i)",
+                ");",
                 "endmodule",
             ]
         )
@@ -207,6 +218,21 @@ def _write_valid_handoff(root: Path) -> None:
             f"module {row['module_name']}; endmodule\n",
             encoding="utf-8",
         )
+    (root / "mixed_audit_net_core.v").write_text(
+        "\n".join(
+            [
+                "module mixed_audit_net_core(",
+                "    input wire signed [15:0] li_state_i,",
+                "    output wire lif_spike_o,",
+                "    input wire signed [15:0] weight_i",
+                ");",
+                "assign lif_spike_o = 1'b0;",
+                "endmodule",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 def test_audit_scnir_hdl_handoff_accepts_complete_compile_output(tmp_path: Path) -> None:
@@ -261,6 +287,7 @@ def test_audit_scnir_hdl_handoff_accepts_complete_compile_output(tmp_path: Path)
     ]
     assert report.as_dict()["hierarchy_port_count"] == 3
     assert report.as_dict()["status"] == "valid"
+    assert "mixed_audit_net_core.v" in report.artefacts
 
 
 def test_audit_scnir_hdl_handoff_rejects_missing_source_module(tmp_path: Path) -> None:
@@ -269,6 +296,39 @@ def test_audit_scnir_hdl_handoff_rejects_missing_source_module(tmp_path: Path) -
     (handoff / "scnir_src_002_conn_li_to_lif_weight.v").unlink()
 
     with pytest.raises(SCNIRHDLHandoffAuditError, match="source module file"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_scnir_hdl_handoff_rejects_missing_hierarchy_module(tmp_path: Path) -> None:
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    (handoff / "mixed_audit_net_core.v").unlink()
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="hierarchy module"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_scnir_hdl_handoff_rejects_missing_hierarchy_top_instance(
+    tmp_path: Path,
+) -> None:
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    top_path = handoff / "mixed_audit_net.v"
+    top_path.write_text(
+        "\n".join(
+            [
+                "module mixed_audit_net;",
+                "localparam integer SCNIR_BITSTREAM_LENGTH = 512;",
+                "localparam integer SCNIR_STREAM_COUNT = 3;",
+                "localparam integer SCNIR_SOURCE_MODULE_COUNT = 3;",
+                "endmodule",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="hierarchy instance"):
         audit_scnir_hdl_handoff(handoff)
 
 

@@ -37,6 +37,7 @@ from sc_neurocore.ir.scnir_schema import (
     validate_scnir_dict,
     write_scnir,
 )
+from sc_neurocore.learning.online_o1 import OnlineO1Config
 
 
 def _valid_document() -> SCNIRDocument:
@@ -430,6 +431,51 @@ def test_scnir_rejects_invalid_correlation_reference() -> None:
         validate_scnir_dict(payload)
 
 
+def test_scnir_records_validated_online_learning_metadata() -> None:
+    annotation = OnlineO1Config(
+        weight_bits=10,
+        trace_bits=6,
+        reward_bits=5,
+        learning_shift=3,
+        trace_decay_shift=2,
+    ).to_scnir_annotation(rule_id="edge_reward_stdp")
+    doc = _valid_document()
+    stream = doc.streams[1]
+    annotated = SCNIRDocument(
+        producer=doc.producer,
+        streams=(
+            doc.streams[0],
+            SCNIRStream(
+                stream_id=stream.stream_id,
+                layer=stream.layer,
+                bitstream_length=stream.bitstream_length,
+                encoding=stream.encoding,
+                signal_kind=stream.signal_kind,
+                precision=stream.precision,
+                source=stream.source,
+                online_learning=annotation,
+            ),
+        ),
+    )
+
+    payload = scnir_to_dict(annotated)
+
+    assert payload["streams"][0]["online_learning"] is None
+    assert payload["streams"][1]["online_learning"] == annotation
+    assert scnir_to_dict(scnir_from_dict(payload)) == payload
+    validate_scnir_dict(payload)
+
+
+def test_scnir_rejects_online_learning_metadata_on_non_weight_stream() -> None:
+    payload = scnir_to_dict(_valid_document())
+    payload["streams"][0]["online_learning"] = OnlineO1Config().to_scnir_annotation(
+        rule_id="bad_spike_rule"
+    )
+
+    with pytest.raises(SCNIRValidationError, match="online_learning"):
+        validate_scnir_dict(payload)
+
+
 def test_scnir_rejects_duplicate_stream_ids() -> None:
     payload = scnir_to_dict(_valid_document())
     payload["streams"][1]["stream_id"] = payload["streams"][0]["stream_id"]
@@ -451,6 +497,7 @@ def test_scnir_json_schema_resource_is_bundled() -> None:
     assert "hierarchy" in json.dumps(payload)
     assert "module_name" in json.dumps(payload)
     assert "correlation_constraints" in json.dumps(payload)
+    assert "online_learning" in json.dumps(payload)
 
 
 def test_scnir_validate_cli_reports_valid_document(

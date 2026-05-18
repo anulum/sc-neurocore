@@ -23,6 +23,14 @@ from .advanced import (
 from .federated import FederatedAggregator
 from .lifelong import EWC_SCLayer
 from .neuroevolution import SNNGeneticEvolver
+from .online_o1 import (
+    ONLINE_O1_ANNOTATION_SCHEMA_VERSION,
+    ONLINE_O1_MEMORY_PROOF_SCHEMA_VERSION,
+    OnlineO1Config,
+    OnlineO1Snapshot,
+    OnlineO1Synapse,
+    build_online_o1_memory_proof,
+)
 
 __all__ = [
     "BPTTLearner",
@@ -32,8 +40,14 @@ __all__ = [
     "EWC_SCLayer",
     "HomeostaticPlasticity",
     "MetaLearner",
+    "ONLINE_O1_ANNOTATION_SCHEMA_VERSION",
+    "ONLINE_O1_MEMORY_PROOF_SCHEMA_VERSION",
+    "OnlineO1Config",
+    "OnlineO1Snapshot",
+    "OnlineO1Synapse",
     "RewardModulatedLearner",
     "ShortTermPlasticity",
     "SNNGeneticEvolver",
     "StructuralPlasticity",
+    "build_online_o1_memory_proof",
 ]

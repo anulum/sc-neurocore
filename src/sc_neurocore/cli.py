@@ -464,6 +464,11 @@ def _cmd_compile_nir(args: Any) -> int:
         with open(source_path, "w", encoding="utf-8") as f:
             f.write(verilog)
 
+    for module_name, verilog in result.scnir_hierarchy_modules.items():
+        hierarchy_path = os.path.join(out_dir, f"{module_name}.v")
+        with open(hierarchy_path, "w", encoding="utf-8") as f:
+            f.write(verilog)
+
     scnir_document_path = os.path.join(out_dir, "scnir_document.json")
     write_scnir(scnir_document_path, result.scnir_document)
 
@@ -511,6 +516,8 @@ def _cmd_compile_nir(args: Any) -> int:
     print("  sc_nir_weight_rom.v — synaptic weight ROM")
     for module_name in result.scnir_source_modules:
         print(f"  {module_name}.v — SC-NIR stochastic source module")
+    for module_name in result.scnir_hierarchy_modules:
+        print(f"  {module_name}.v — SC-NIR hierarchy boundary module")
     print("  scnir_document.json — validated SC-NIR document")
     print("  scnir_source_manifest.json — SC-NIR source manifest")
     if getattr(args, "audit_handoff", False):

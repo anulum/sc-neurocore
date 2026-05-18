@@ -18,6 +18,12 @@ from .side_channel_encoding_emitter import (
     SIDE_CHANNEL_HDL_HOOK_SCHEMA_VERSION,
     SideChannelEncodingEmitter,
 )
+from .online_learning_emitter import (
+    ONLINE_O1_HDL_MANIFEST_SCHEMA_VERSION,
+    ONLINE_O1_RESOURCE_ESTIMATE_SCHEMA_VERSION,
+    OnlineO1LearningEmitter,
+    OnlineO1ResourceEstimate,
+)
 from .sobol16_emitter import Sobol16Emitter
 from .quasirandom_emitter import QuasiRandomEmitter, Halton16Emitter
 from .tmr_wrapper import generate_tmr_wrapper
@@ -31,6 +37,10 @@ __all__ = [
     "Lfsr16Emitter",
     "SIDE_CHANNEL_HDL_HOOK_SCHEMA_VERSION",
     "SideChannelEncodingEmitter",
+    "ONLINE_O1_HDL_MANIFEST_SCHEMA_VERSION",
+    "ONLINE_O1_RESOURCE_ESTIMATE_SCHEMA_VERSION",
+    "OnlineO1LearningEmitter",
+    "OnlineO1ResourceEstimate",
     "Sobol16Emitter",
     "QuasiRandomEmitter",
     "Halton16Emitter",
