@@ -18,6 +18,10 @@ on:
         description: "New GHCR tag to create from alias_from."
         required: false
         type: string
+      image_tag:
+        description: "Optional GHCR tag to build and scan from the current workflow revision."
+        required: false
+        type: string
   push:
     tags: ["v*"]
 
@@ -89,6 +93,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
+            type=raw,value=${{ inputs.image_tag }},enable=${{ github.event_name == 'workflow_dispatch' && inputs.image_tag != '' }}
             type=ref,event=tag
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}

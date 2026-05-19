@@ -11,6 +11,7 @@ ARG RUST_VERSION
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl build-essential pkg-config \
+    && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
@@ -38,6 +39,7 @@ ARG INSTALL_EXTRAS=""
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
@@ -67,6 +69,10 @@ LABEL org.opencontainers.image.title="SC-NeuroCore" \
       org.opencontainers.image.source="https://github.com/anulum/sc-neurocore" \
       org.opencontainers.image.licenses="AGPL-3.0-or-later" \
       org.opencontainers.image.vendor="ANULUM"
+
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=py-builder /install /usr/local
 
