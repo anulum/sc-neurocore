@@ -27,8 +27,12 @@ on:
       - "src/**"
       - "tests/**"
       - "tools/**"
+      - "docs/_generated/**"
+      - "docs/internal/capability_manifest_adoption.md"
       - "hdl/**"
       - "Cargo.toml"
+      - "README.md"
+      - "mkdocs.yml"
       - "pyproject.toml"
       - "requirements/**"
   # Pull requests run CI unconditionally. Branch protection requires
@@ -58,11 +62,14 @@ jobs:
           pip install --require-hashes -r requirements/lint.txt
           pip install "numpy==2.2.6" "scipy==1.17.1" "fastapi==0.135.3" "pydantic==2.12.5" "uvicorn==0.43.0" "starlette==1.0.0" "types-PyYAML==6.0.12.20250915" "pint==0.23"
 
+      - name: Capability manifest drift
+        run: python tools/capability_manifest.py --check
+
       - name: ruff check
-        run: ruff check src/ tests/
+        run: ruff check src/ tests/ tools/capability_manifest.py
 
       - name: ruff format
-        run: ruff format --check src/ tests/
+        run: ruff format --check src/ tests/ tools/capability_manifest.py
 
       - name: bandit
         run: bandit -r src/sc_neurocore/ -c pyproject.toml -q
