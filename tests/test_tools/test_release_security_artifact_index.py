@@ -38,6 +38,13 @@ EXPECTED_ARTIFACT_IDS = {
     "trivy_fs",
 }
 
+EXPECTED_VULNERABILITY_STATUS_IDS = {
+    "cargo_audit",
+    "osv_scanner",
+    "pip_audit",
+    "trivy_fs",
+}
+
 
 def _load_tool() -> Any:
     tool_path = REPO_ROOT / "tools" / "security_scan" / "release_security_artifact_index.py"
@@ -64,6 +71,10 @@ def test_release_artifacts_manifest_exists_and_is_valid() -> None:
     artifact_ids = {entry["id"] for entry in payload["artifacts"]}
     assert artifact_ids == EXPECTED_ARTIFACT_IDS
 
+    vulnerability_status_ids = {entry["id"] for entry in payload["vulnerability_status"]}
+    assert vulnerability_status_ids == EXPECTED_VULNERABILITY_STATUS_IDS
+    assert all("scanner" in entry for entry in payload["vulnerability_status"])
+
     required_ids = {entry["id"] for entry in payload["artifacts"] if bool(entry["required"])}
     assert required_ids == {"scanner_manifest", "model_data_license_matrix"}
     required_paths = {
@@ -80,6 +91,20 @@ def _write_manifest(path: Path, entries: list[dict[str, object]]) -> None:
     payload = {
         "schema_version": tool.RELEASE_ARTIFACT_INDEX_SCHEMA_VERSION,
         "artifacts": entries,
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _write_manifest_with_vulnerability_status(
+    path: Path,
+    entries: list[dict[str, object]],
+    vulnerability_status: list[dict[str, object]],
+) -> None:
+    tool = _load_tool()
+    payload = {
+        "schema_version": tool.RELEASE_ARTIFACT_INDEX_SCHEMA_VERSION,
+        "artifacts": entries,
+        "vulnerability_status": vulnerability_status,
     }
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -184,6 +209,110 @@ def test_optional_missing_does_not_fail_without_required_miss(tmp_path: Path) ->
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["missing_required"] == []
     assert report["missing_optional"] == ["benchmark_regression"]
+
+
+def test_vulnerability_status_summarises_present_scanner_outputs(tmp_path: Path) -> None:
+    tool = _load_tool()
+    manifest = {
+        "schema_version": tool.RELEASE_ARTIFACT_INDEX_SCHEMA_VERSION,
+        "artifacts": [],
+        "vulnerability_status": [
+            {
+                "id": "trivy_fs",
+                "path": "security/trivy_fs.json",
+                "required": False,
+                "scanner": "trivy",
+            },
+            {
+                "id": "pip_audit",
+                "path": "security/pip_audit.json",
+                "required": False,
+                "scanner": "pip-audit",
+            },
+        ],
+    }
+    root = tmp_path / "release-root"
+    security = root / "security"
+    security.mkdir(parents=True)
+    (security / "trivy_fs.json").write_text(
+        json.dumps(
+            {
+                "Results": [
+                    {
+                        "Vulnerabilities": [
+                            {"VulnerabilityID": "CVE-1", "Severity": "HIGH"},
+                            {"VulnerabilityID": "CVE-2", "Severity": "MEDIUM"},
+                        ]
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (security / "pip_audit.json").write_text(
+        json.dumps(
+            {
+                "dependencies": [
+                    {
+                        "name": "demo",
+                        "vulns": [{"id": "PYSEC-1", "fix_versions": ["2.0"]}],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = tool.build_artifact_index(manifest, root=root)
+
+    assert report["missing_optional_vulnerability_status"] == []
+    assert report["vulnerability_summary"] == {
+        "present_status_count": 2,
+        "unresolved_count": 3,
+        "unresolved_by_severity": {"HIGH": 1, "MEDIUM": 1, "UNKNOWN": 1},
+    }
+    entries = {entry["id"]: entry for entry in report["vulnerability_status"]}
+    assert entries["trivy_fs"]["unresolved_count"] == 2
+    assert entries["pip_audit"]["unresolved_count"] == 1
+
+
+def test_required_vulnerability_status_failure_is_separate_from_artifacts(tmp_path: Path) -> None:
+    tool = _load_tool()
+    manifest = tmp_path / "manifest.json"
+    output = tmp_path / "index.json"
+    root = tmp_path / "release-root"
+    root.mkdir()
+
+    _write_manifest_with_vulnerability_status(
+        manifest,
+        [],
+        [
+            {
+                "id": "pip_audit",
+                "path": "security/pip_audit.json",
+                "required": True,
+                "scanner": "pip-audit",
+            }
+        ],
+    )
+
+    assert (
+        tool.main(
+            [
+                "--manifest",
+                str(manifest),
+                "--root",
+                str(root),
+                "--output",
+                str(output),
+                "--fail-on-missing-required",
+            ]
+        )
+        == 1
+    )
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["missing_required"] == []
+    assert report["missing_required_vulnerability_status"] == ["pip_audit"]
 
 
 def test_build_and_cli_output_are_deterministic_and_sorted(tmp_path: Path) -> None:

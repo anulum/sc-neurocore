@@ -1,5 +1,31 @@
 {
   "schema_version": "sc-neurocore.release-security-artifact-index.v1",
+  "vulnerability_status": [
+    {
+      "id": "cargo_audit",
+      "path": "security/cargo_audit.json",
+      "required": false,
+      "scanner": "cargo-audit"
+    },
+    {
+      "id": "osv_scanner",
+      "path": "security/osv_scanner.json",
+      "required": false,
+      "scanner": "osv-scanner"
+    },
+    {
+      "id": "pip_audit",
+      "path": "security/pip_audit.json",
+      "required": false,
+      "scanner": "pip-audit"
+    },
+    {
+      "id": "trivy_fs",
+      "path": "security/trivy_fs.json",
+      "required": false,
+      "scanner": "trivy"
+    }
+  ],
   "artifacts": [
     {
       "id": "actionlint",
