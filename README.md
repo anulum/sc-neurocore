@@ -40,7 +40,7 @@ Commercial Licensing: Available
 > artefacts in `benchmarks/results/` as the evidence boundary for specific
 > claims.
 
-**Version:** 3.14.0
+**Version:** 3.15.0
 **Status:** 174 Python-facing neuron models (165 biological + 9 AI-oriented) | 174 Rust engine models | HDL generation + hardware guides | multi-backend training and benchmarking | research modules included in source checkout. Model-fidelity, physical-hardware, and coverage claims remain bounded by the current audit and CI evidence.
 
 ## Capability Manifest
@@ -59,7 +59,7 @@ this README.
 
 | Surface | Current inventory |
 |---|---:|
-| Package version | 3.14.0 |
+| Package version | 3.15.0 |
 | Public API exports | 39 |
 | Python model source modules | 151 |
 | Python model classes | 157 |
@@ -932,7 +932,7 @@ If you use SC-NeuroCore in your research, please cite:
 @software{sotek2026scneurocore,
   author    = {Šotek, Miroslav},
   title     = {SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design},
-  version   = {3.14.0},
+  version   = {3.15.0},
   year      = {2026},
   doi       = {10.5281/zenodo.18906614},
   url       = {https://github.com/anulum/sc-neurocore},

@@ -4,6 +4,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.0] — 2026-05-19
+
 ### Wave 11: Hardware and compiler extensions (2026-05-01)
 
 #### Added — Hardware Profiles (8 new → 183 total, 35 platform classes)
