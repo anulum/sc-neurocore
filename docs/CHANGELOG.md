@@ -4,6 +4,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.0] — 2026-05-19
+
 ### Compiler Intelligence, Platform Registry, and Deployment (2026-05-01)
 
 #### Added
