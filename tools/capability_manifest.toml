@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore capability manifest configuration
+
+project_label = "SC-NeuroCore"
+schema_version = "capability-manifest.v1"
+exclude_doc_parts = ["internal", "_generated"]
+
+[paths]
+json_output = "docs/_generated/capability_manifest.json"
+markdown_output = "docs/_generated/capability_snapshot.md"
+package_root = "src/sc_neurocore"
+model_sources = "src/sc_neurocore/neurons/models"
+model_docs = "docs/api/models"
+tests_root = "tests"
+docs_root = "docs"
+workflows_root = ".github/workflows"
+rust_wrappers = "engine/src/pyo3_neurons.rs"
+
+[readme]
+path = "README.md"
+marker_start = "<!-- capability-snapshot:start -->"
+marker_end = "<!-- capability-snapshot:end -->"
+
+[labels]
+version = "Package version"
+public_api_exports = "Public API exports"
+python_model_source_modules = "Python model source modules"
+python_model_classes = "Python model classes"
+model_documentation_pages = "Model documentation pages"
+rust_pyo3_model_wrappers = "Rust PyO3 model wrappers"
+optional_extras = "Optional extras"
+test_files = "Python test files"
+public_documentation_pages = "Public documentation pages"
+github_workflows = "GitHub Actions workflows"
