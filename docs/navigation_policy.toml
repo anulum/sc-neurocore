@@ -13,6 +13,12 @@ patterns = ["API_REFERENCE.md"]
 expected_count = 1
 
 [[classification]]
+name = "generated-capability-snapshot"
+rationale = "Generated Markdown fragment consumed by README and release surfaces, not a standalone navigation page."
+patterns = ["_generated/capability_snapshot.md"]
+expected_count = 1
+
+[[classification]]
 name = "rust-ffi-integration-note"
 rationale = "Supplemental Rust FFI integration note linked from developer-facing API and architecture material."
 patterns = ["RUST_FFI_INTEGRATION.md"]
