@@ -9,6 +9,15 @@ name: Docker Image
 
 on:
   workflow_dispatch:
+    inputs:
+      alias_from:
+        description: "Existing GHCR tag to alias without rebuilding, for release repair workflows."
+        required: false
+        type: string
+      alias_to:
+        description: "New GHCR tag to create from alias_from."
+        required: false
+        type: string
   push:
     tags: ["v*"]
 
@@ -23,7 +32,42 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  alias-image:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.alias_from != '' && inputs.alias_to != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate alias tags
+        shell: bash
+        env:
+          ALIAS_FROM: ${{ inputs.alias_from }}
+          ALIAS_TO: ${{ inputs.alias_to }}
+        run: |
+          tag_pattern='^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$'
+          [[ "${ALIAS_FROM}" =~ ${tag_pattern} ]]
+          [[ "${ALIAS_TO}" =~ ${tag_pattern} ]]
+
+      - name: Create OCI tag alias
+        shell: bash
+        env:
+          ALIAS_FROM: ${{ inputs.alias_from }}
+          ALIAS_TO: ${{ inputs.alias_to }}
+        run: |
+          source_ref="${REGISTRY}/${IMAGE_NAME}:${ALIAS_FROM}"
+          target_ref="${REGISTRY}/${IMAGE_NAME}:${ALIAS_TO}"
+          docker buildx imagetools create -t "${target_ref}" "${source_ref}"
+          docker buildx imagetools inspect "${target_ref}"
+
   build-push:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.alias_from == '' || inputs.alias_to == '' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -45,6 +89,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
+            type=ref,event=tag
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha
@@ -58,10 +103,21 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Select scanned image tag
+        id: scan-image
+        shell: bash
+        run: |
+          first_tag="$(cat <<'EOF' | head -n 1
+          ${{ steps.meta.outputs.tags }}
+          EOF
+          )"
+          test -n "${first_tag}"
+          echo "image=${first_tag}" >> "${GITHUB_OUTPUT}"
+
       - name: Trivy fail on CRITICAL/HIGH
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+          image-ref: ${{ steps.scan-image.outputs.image }}
           format: table
           exit-code: "1"
           severity: CRITICAL,HIGH
@@ -70,7 +126,7 @@ jobs:
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # master
         if: always()
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+          image-ref: ${{ steps.scan-image.outputs.image }}
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
