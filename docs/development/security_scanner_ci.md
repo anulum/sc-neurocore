@@ -21,6 +21,9 @@ It does not execute heavyweight scanner binaries in CI yet.
 - A model/data licence matrix copy at `security/model_data_license_matrix.json`.
 - A release security artifact index from `security/release_artifacts_manifest.json` with
   `tools/security_scan/release_security_artifact_index.py`.
+- Machine-readable vulnerability-status fields in the release index:
+  `vulnerability_status`, `missing_required_vulnerability_status`,
+  `missing_optional_vulnerability_status`, and `vulnerability_summary`.
 
 ## What the packet is and is not
 
@@ -45,3 +48,7 @@ It is therefore a planning envelope only:
 
 The packet is used as a compliance aid for security and release workflows before
 heavyweight scanners are enabled in the normal runtime chain.
+On tagged releases, `.github/workflows/release.yml` builds the same packet with
+`--fail-on-missing-required` and attaches
+`security/ci-security-packet/release_security_artifact_index.json` to the
+GitHub Release assets.

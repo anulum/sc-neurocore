@@ -39,6 +39,13 @@ jobs:
       - name: Generate SBOM
         run: cyclonedx-py environment -o sbom.json --output-format json
 
+      - name: Generate release security packet
+        run: |
+          mkdir -p security/ci-security-packet
+          python tools/security_scan/ci_security_packet.py \
+            --output-dir security/ci-security-packet \
+            --fail-on-missing-required
+
       - name: Extract changelog for this tag
         id: changelog
         run: |
@@ -60,3 +67,4 @@ jobs:
           files: |
             dist/sc_neurocore-*
             sbom.json
+            security/ci-security-packet/release_security_artifact_index.json

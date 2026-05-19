@@ -162,6 +162,13 @@ def _build_summary(output_dir: Path, artifact_index_payload: dict[str, Any]) -> 
         "artifact_paths": _build_artifact_paths(artifact_index_payload, output_dir=output_dir),
         "missing_required": artifact_index_payload.get("missing_required", []),
         "missing_optional": artifact_index_payload.get("missing_optional", []),
+        "missing_required_vulnerability_status": artifact_index_payload.get(
+            "missing_required_vulnerability_status", []
+        ),
+        "missing_optional_vulnerability_status": artifact_index_payload.get(
+            "missing_optional_vulnerability_status", []
+        ),
+        "vulnerability_summary": artifact_index_payload.get("vulnerability_summary", {}),
     }
 
 
@@ -204,7 +211,9 @@ def main(argv: list[str] | None = None) -> int:
     summary = _build_summary(output_dir=output_dir, artifact_index_payload=artifact_index)
     print(json.dumps(summary, indent=2, sort_keys=True))
 
-    if args.fail_on_missing_required and summary["missing_required"]:
+    if args.fail_on_missing_required and (
+        summary["missing_required"] or summary["missing_required_vulnerability_status"]
+    ):
         return 1
     return 0
 
