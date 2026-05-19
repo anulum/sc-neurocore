@@ -12,7 +12,9 @@ Commercial Licensing: Available
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/anulum/sc-neurocore/actions/workflows/codeql.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/codeql.yml)
-[![Version](https://img.shields.io/badge/version-3.14.0-blue)](https://github.com/anulum/sc-neurocore/releases)
+[![PyPI](https://img.shields.io/pypi/v/sc-neurocore.svg)](https://pypi.org/project/sc-neurocore/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/sc-neurocore.svg)](https://pypi.org/project/sc-neurocore/)
+[![Total downloads](https://img.shields.io/pepy/dt/sc-neurocore.svg)](https://pepy.tech/project/sc-neurocore)
 [![mypy](https://img.shields.io/badge/mypy-strict-blue)](https://mypy-lang.org/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Typed](https://img.shields.io/badge/typed-py.typed-blue)](https://peps.python.org/pep-0561/)
