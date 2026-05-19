@@ -3,16 +3,20 @@
 
 ARG PYTHON_VERSION=3.12
 ARG RUST_VERSION=stable
+ARG PIP_VERSION=26.1.1
 
 # ── Stage 1: Rust engine build ───────────────────────────────────
 FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0 AS rust-builder
 
 ARG RUST_VERSION
+ARG PIP_VERSION
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl build-essential pkg-config \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
+
+RUN python -m pip install --no-cache-dir --upgrade "pip==${PIP_VERSION}"
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
     | sh -s -- -y --default-toolchain ${RUST_VERSION} --profile minimal  # pinned via RUST_VERSION ARG
@@ -36,11 +40,14 @@ RUN cd bridge && maturin build --release --interpreter python3 \
 FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0 AS py-builder
 
 ARG INSTALL_EXTRAS=""
+ARG PIP_VERSION
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
+
+RUN python -m pip install --no-cache-dir --upgrade "pip==${PIP_VERSION}"
 
 WORKDIR /build
 COPY requirements/build.txt ./requirements/build.txt
@@ -63,6 +70,8 @@ RUN python -m installer --prefix=/install /tmp/*.whl
 # ── Stage 3: Runtime ─────────────────────────────────────────────
 FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0 AS runtime
 
+ARG PIP_VERSION
+
 LABEL org.opencontainers.image.title="SC-NeuroCore" \
       org.opencontainers.image.description="Universal Stochastic Computing Framework for Neuromorphic Hardware" \
       org.opencontainers.image.url="https://github.com/anulum/sc-neurocore" \
@@ -75,6 +84,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=py-builder /install /usr/local
+
+RUN python -m pip install --no-cache-dir --upgrade "pip==${PIP_VERSION}"
 
 RUN useradd --create-home --shell /bin/bash scnc
 USER scnc

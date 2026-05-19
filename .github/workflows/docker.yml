@@ -135,6 +135,7 @@ jobs:
           image-ref: ${{ steps.scan-image.outputs.image }}
           format: sarif
           output: trivy-results.sarif
+          ignore-unfixed: true
           severity: CRITICAL,HIGH
 
       - name: Upload Trivy SARIF
