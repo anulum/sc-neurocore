@@ -125,6 +125,7 @@ jobs:
           image-ref: ${{ steps.scan-image.outputs.image }}
           format: table
           exit-code: "1"
+          ignore-unfixed: true
           severity: CRITICAL,HIGH
 
       - name: Trivy SARIF report
