@@ -40,7 +40,7 @@ click==8.3.3 \
 fastapi==0.136.1 \
     --hash=sha256:7af665ad7acfa0a3baf8983d393b6b471b9da10ede59c60045f49fbc89a0fa7f \
     --hash=sha256:a6e9d7eeada96c93a4d69cb03836b44fa34e2854accb7244a1ece36cd4781c3f
-    # via -r requirements/hub.in
+    # via -r hub.in
 h11==0.16.0 \
     --hash=sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1 \
     --hash=sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86
@@ -149,17 +149,17 @@ httptools==0.7.1 \
 httpx==0.28.1 \
     --hash=sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc \
     --hash=sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad
-    # via -r requirements/hub.in
-idna==3.13 \
-    --hash=sha256:585ea8fe5d69b9181ec1afba340451fba6ba764af97026f92a91d4eef164a242 \
-    --hash=sha256:892ea0cde124a99ce773decba204c5552b69c3c67ffd5f232eb7696135bc8bb3
+    # via -r hub.in
+idna==3.15 \
+    --hash=sha256:048adeaf8c2d788c40fee287673ccaa74c24ffd8dcf09ffa555a2fbb59f10ac8 \
+    --hash=sha256:ca962446ea538f7092a95e057da437618e886f4d349216d2b1e294abfdb65fdc
     # via
     #   anyio
     #   httpx
 nir==1.0.7 \
     --hash=sha256:a34e702ae2dbbc86d006e7fa094c62706c2b1a11bbd704edfdb49802f14f90b6 \
     --hash=sha256:e11ccc59328171da28c604c489e611f3bd1074b1e4e1f65e459d12d29782b0c6
-    # via -r requirements/hub.in
+    # via -r hub.in
 numpy==2.4.4 \
     --hash=sha256:07077278157d02f65c43b1b26a3886bce886f95d20aabd11f87932750dfb14ed \
     --hash=sha256:08f2e31ed5e6f04b118e49821397f12767934cfdd12a1ce86a058f91e004ee50 \
@@ -464,7 +464,7 @@ typing-inspection==0.4.2 \
 uvicorn[standard]==0.46.0 \
     --hash=sha256:bbebbcbed972d162afca128605223022bedd345b7bc7855ce66deb31487a9048 \
     --hash=sha256:fb9da0926999cc6cb22dc7cd71a94a632f078e6ae47ff683c5c420750fb7413d
-    # via -r requirements/hub.in
+    # via -r hub.in
 uvloop==0.22.1 \
     --hash=sha256:017bd46f9e7b78e81606329d07141d3da446f8798c6baeec124260e22c262772 \
     --hash=sha256:0530a5fbad9c9e4ee3f2b33b148c6a64d47bbad8000ea63704fa8260f4cf728e \
