@@ -7,6 +7,25 @@ repo_name: sc-neurocore
 exclude_docs: |
   internal/**
 
+not_in_nav: |
+  API_REFERENCE.md
+  _generated/capability_snapshot.md
+  RUST_FFI_INTEGRATION.md
+  api/models/*.md
+  api/autonomous_learning.md
+  api/bridges/local_llm.md
+  api/compiler_service.md
+  api/model_zoo.md
+  api/quantum_cognition.md
+  api/rust-analysis-engine.md
+  api/rust-benchmarks.md
+  api/scpn_datastream.md
+  guides/*.md
+  benchmarks/ZENITH_BENCHMARKS.md
+  benchmarks/ZENITH_BENCHMARKS_GPU.md
+  architecture/AUTONOMOUS_LEARNING_ZENITH.md
+  research/SC_NEUROCORE_FOUNDATIONAL_WHITEPAPER.md
+
 validation:
   anchors: ignore
   links:

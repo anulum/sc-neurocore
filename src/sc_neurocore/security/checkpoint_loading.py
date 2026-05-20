@@ -1,10 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Trusted checkpoint loading helpers
+# SC-NeuroCore — Trusted checkpoint loading helpers
+
+"""SHA-256-gated checkpoint loading helpers for trusted artefacts.
+
+This module separates the safe tensor/state-dict path, which uses
+``torch.load(..., weights_only=True)``, from the legacy metadata path that still
+requires pickle after an explicit digest match. Callers must provide the trusted
+digest map instead of accepting arbitrary downloaded checkpoints.
+"""
 
 from __future__ import annotations
 

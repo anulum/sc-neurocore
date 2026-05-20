@@ -6,27 +6,17 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — GPU/CPU dual-path array module for SC-NeuroCore
 
+"""CuPy/NumPy dual-path backend for stochastic-computing array kernels.
+
+The module exposes a runtime-switching array namespace plus helpers for moving
+arrays between host and device, packing bitstreams, popcounting packed words,
+and running stochastic vector operations with a deterministic NumPy fallback.
+"""
+
 from __future__ import annotations
 
 import warnings
 from typing import Any
-
-"""
-GPU/CPU dual-path array module for SC-NeuroCore.
-
-Uses CuPy when a CUDA GPU is available, falls back to NumPy transparently.
-Import ``xp`` as your array library — all standard NumPy operations work
-on either backend.
-
-Usage::
-
-    from sc_neurocore.accel.gpu_backend import xp, HAS_CUPY, to_device, to_host
-
-    a = xp.random.random((1024, 1024), dtype=xp.float32)
-    packed = gpu_pack_bitstream(bits)          # works on GPU or CPU
-    result = gpu_vec_mac(weights, inputs)      # same API, accelerated
-"""
-
 
 import numpy as np
 

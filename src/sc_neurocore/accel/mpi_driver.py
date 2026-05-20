@@ -6,6 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Distributed SC-NeuroCore Driver using MPI
 
+"""MPI scatter/gather driver for distributed stochastic-computing workloads.
+
+The driver keeps single-process execution deterministic when ``mpi4py`` is not
+available, while exposing the same workload partitioning, result collection, and
+barrier interface used by multi-node stochastic-computing deployments.
+"""
+
 from typing import Any
 import numpy as np
 import warnings

@@ -6,6 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Generates entropy based on simulated Quantum Measurement
 
+"""Simulated quantum-measurement entropy source for stochastic inputs.
+
+This module maintains a small classical state-vector simulation, applies
+Hadamard-style mixing before measurement, and converts seeded measurement
+outcomes into deterministic pseudo-random samples. It does not claim access to
+physical quantum hardware or certified quantum random numbers.
+"""
+
 import numpy as np
 from dataclasses import dataclass
 from typing import Optional
@@ -77,4 +85,5 @@ class QuantumEntropySource:
         return float(mean + z * std)
 
     def sample(self) -> float:
+        """Return one default normal sample from the simulated measurement source."""
         return self.sample_normal()

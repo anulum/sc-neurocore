@@ -63,6 +63,20 @@ def _public_markdown_paths() -> set[str]:
     }
 
 
+def _pathspec_patterns(raw: object) -> list[str]:
+    if raw is None:
+        return []
+    if isinstance(raw, str):
+        return [
+            line.strip()
+            for line in raw.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+    if isinstance(raw, list):
+        return [str(item).strip() for item in raw if str(item).strip()]
+    raise TypeError(f"Unsupported MkDocs pathspec type: {type(raw)!r}")
+
+
 def test_unlisted_docs_are_classified_by_navigation_policy() -> None:
     """Every public doc outside MkDocs nav must have an explicit policy bucket."""
     config = yaml.load(MKDOCS_CONFIG.read_text(encoding="utf-8"), Loader=_MkDocsConfigLoader)
@@ -88,3 +102,20 @@ def test_unlisted_docs_are_classified_by_navigation_policy() -> None:
     assert not unclassified
     for entry in classifications:
         assert len(matched[entry["name"]]) == entry["expected_count"], entry["name"]
+
+
+def test_classified_unlisted_docs_are_silenced_in_mkdocs_config() -> None:
+    """Classified unlisted docs should not emit MkDocs nav-omission INFO noise."""
+    config = yaml.load(MKDOCS_CONFIG.read_text(encoding="utf-8"), Loader=_MkDocsConfigLoader)
+    listed = _nav_paths(config["nav"])
+    unlisted = _public_markdown_paths() - listed
+    not_in_nav = _pathspec_patterns(config.get("not_in_nav"))
+
+    assert not_in_nav
+    unsilenced = [
+        doc_path
+        for doc_path in sorted(unlisted)
+        if not any(fnmatch(doc_path, pattern) for pattern in not_in_nav)
+    ]
+
+    assert not unsilenced

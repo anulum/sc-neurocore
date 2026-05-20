@@ -11,6 +11,10 @@
 
 import pytest
 import numpy as np
+import sys
+import types
+import sc_neurocore.drivers.sc_neurocore_driver as pynq_driver
+from sc_neurocore.drivers.physical_twin import PhysicalTwinBridge
 from sc_neurocore.drivers.sc_neurocore_driver import SC_NeuroCore_Driver, RealityHardwareError
 
 
@@ -35,6 +39,42 @@ def test_driver_write_layer_params():
     print("Driver write_layer_params verified.")
 
 
+def test_driver_write_layer_params_hardware_q16_16_encoding():
+    """HARDWARE mode writes gain/threshold as Q16.16 AXI-Lite registers."""
+
+    class FakeLayerIP:
+        def __init__(self):
+            self.writes: list[tuple[int, int]] = []
+
+        def write(self, offset: int, value: int) -> None:
+            self.writes.append((offset, value))
+
+    class FakeOverlay:
+        def __init__(self):
+            self.scpn_layer_3_0 = FakeLayerIP()
+
+    driver = SC_NeuroCore_Driver(mode="EMULATION")
+    driver.mode = "HARDWARE"
+    driver.overlay = FakeOverlay()
+
+    driver.write_layer_params(layer_id=3, params={"gain": 0.5, "threshold": 1.25})
+
+    assert driver.overlay.scpn_layer_3_0.writes == [
+        (0x10, 32768),
+        (0x14, 81920),
+    ]
+
+
+def test_driver_write_layer_params_hardware_rejects_missing_layer():
+    """HARDWARE mode fails closed when the target layer IP is absent."""
+    driver = SC_NeuroCore_Driver(mode="EMULATION")
+    driver.mode = "HARDWARE"
+    driver.overlay = object()
+
+    with pytest.raises(ValueError, match="Layer 9 not found in hardware"):
+        driver.write_layer_params(layer_id=9, params={"gain": 1.0})
+
+
 def test_driver_run_step():
     """Verify run_step returns output in emulation mode."""
     driver = SC_NeuroCore_Driver(mode="EMULATION")
@@ -53,6 +93,67 @@ def test_driver_hardware_mode_fails_without_fpga():
     """Verify hardware mode fails gracefully without FPGA."""
     with pytest.raises(RealityHardwareError):
         driver = SC_NeuroCore_Driver(mode="HARDWARE")
+
+
+def test_driver_hardware_mode_uses_install_fallback_bitstream(monkeypatch):
+    """HARDWARE mode resolves the installed overlay path when local bitstream is absent."""
+    loaded_paths: list[str] = []
+
+    class FakeOverlay:
+        def __init__(self, path: str):
+            loaded_paths.append(path)
+            self.scpn_layer_1_0 = object()
+
+    fake_pynq = types.ModuleType("pynq")
+    fake_pynq.Overlay = FakeOverlay
+    fake_pynq.allocate = object()
+    monkeypatch.setitem(sys.modules, "pynq", fake_pynq)
+
+    fallback = "/usr/local/lib/pynq/overlays/sc_neurocore/installed.bit"
+    monkeypatch.setattr(
+        pynq_driver.os.path,
+        "exists",
+        lambda path: path == fallback,
+    )
+
+    driver = SC_NeuroCore_Driver(bitstream_path="installed.bit", mode="HARDWARE")
+
+    assert driver.bitstream_path == fallback
+    assert loaded_paths == [fallback]
+
+
+def test_driver_hardware_mode_rejects_overlay_without_expected_ip(monkeypatch):
+    """Loaded overlays must expose the expected SCPN layer IP."""
+
+    class FakeOverlay:
+        def __init__(self, path: str):
+            self.path = path
+
+    fake_pynq = types.ModuleType("pynq")
+    fake_pynq.Overlay = FakeOverlay
+    fake_pynq.allocate = object()
+    monkeypatch.setitem(sys.modules, "pynq", fake_pynq)
+    monkeypatch.setattr(pynq_driver.os.path, "exists", lambda _path: True)
+
+    with pytest.raises(RealityHardwareError, match="does not contain SCPN Layer 1 IP"):
+        SC_NeuroCore_Driver(bitstream_path="wrong.bit", mode="HARDWARE")
+
+
+def test_driver_hardware_mode_wraps_overlay_runtime_errors(monkeypatch):
+    """Overlay loader runtime failures are reported as RealityHardwareError."""
+
+    class FailingOverlay:
+        def __init__(self, path: str):
+            raise RuntimeError(f"cannot load {path}")
+
+    fake_pynq = types.ModuleType("pynq")
+    fake_pynq.Overlay = FailingOverlay
+    fake_pynq.allocate = object()
+    monkeypatch.setitem(sys.modules, "pynq", fake_pynq)
+    monkeypatch.setattr(pynq_driver.os.path, "exists", lambda _path: True)
+
+    with pytest.raises(RealityHardwareError, match="cannot load broken.bit"):
+        SC_NeuroCore_Driver(bitstream_path="broken.bit", mode="HARDWARE")
 
 
 def test_driver_invalid_mode():
@@ -159,6 +260,89 @@ class TestVerifyHardwareLink:
         verify_link(extras=True)
         after = list(sys.path)
         assert before == after, "verify_link mutated sys.path"
+
+
+class TestPhysicalTwinBridge:
+    """PhysicalTwinBridge exposes honest emulation and explicit TCP modes."""
+
+    def test_default_bridge_is_emulation_without_stdout(self, capsys):
+        bridge = PhysicalTwinBridge(seed=7)
+
+        assert bridge.mode == "EMULATION"
+        assert bridge.connected is True
+        assert not hasattr(bridge, "_TODO" + "_HIL")
+        assert capsys.readouterr().out == ""
+
+    def test_emulation_mode_is_deterministic_and_uses_instance_rng(self):
+        a = PhysicalTwinBridge(seed=123)
+        b = PhysicalTwinBridge(seed=123)
+
+        seq_a = [a.sync_step(0.4, 1) for _ in range(8)]
+        seq_b = [b.sync_step(0.4, 1) for _ in range(8)]
+
+        assert seq_a == seq_b
+        assert all(np.isfinite(value) for value in seq_a)
+
+    def test_tcp_mode_uses_json_line_contract(self, monkeypatch):
+        writes: list[bytes] = []
+
+        class FakeSocket:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def sendall(self, data: bytes) -> None:
+                writes.append(data)
+
+            def makefile(self, mode: str, encoding: str):
+                assert mode == "r"
+                assert encoding == "utf-8"
+                return iter(['{"v_mem": 0.875}\n'])
+
+        def fake_create_connection(address, timeout):
+            assert address == ("192.168.2.99", 5000)
+            assert timeout == 0.25
+            return FakeSocket()
+
+        monkeypatch.setattr("socket.create_connection", fake_create_connection)
+        bridge = PhysicalTwinBridge(mode="TCP", timeout_s=0.25)
+
+        assert bridge.connected is False
+        assert bridge.sync_step(0.5, 1) == pytest.approx(0.875)
+        assert writes == [b'{"spike":1,"v_mem":0.5}\n']
+
+    def test_tcp_mode_rejects_malformed_hardware_reply(self, monkeypatch):
+        class FakeSocket:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def sendall(self, data: bytes) -> None:
+                pass
+
+            def makefile(self, mode: str, encoding: str):
+                return iter(["{}\n"])
+
+        monkeypatch.setattr("socket.create_connection", lambda *_args, **_kwargs: FakeSocket())
+        bridge = PhysicalTwinBridge(mode="TCP")
+
+        with pytest.raises(ValueError, match="missing numeric 'v_mem'"):
+            bridge.sync_step(0.5, 0)
+
+
+class TestDriverSourceHygiene:
+    """Driver source suppressions must stay narrow and documented."""
+
+    def test_pynq_optional_import_uses_narrow_type_ignore(self):
+        source = pynq_driver.__loader__.get_source(pynq_driver.__name__)
+
+        assert source is not None
+        assert "type: ignore[import-not-found]" in source
+        assert "type: ignore  # noqa" not in source
 
 
 if __name__ == "__main__":

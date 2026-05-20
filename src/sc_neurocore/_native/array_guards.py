@@ -6,6 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Array guards for native FFI boundaries
 
+"""Validate NumPy array layout before zero-copy native bridge calls.
+
+The native bridge, debugging tools, and stochastic-doctor diagnostics use this
+module to reject non-contiguous or misaligned arrays before passing buffers into
+Rust, C, Mojo, or other FFI-style paths.
+"""
+
 from __future__ import annotations
 
 from typing import Any

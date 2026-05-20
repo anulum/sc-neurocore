@@ -1,13 +1,14 @@
 # Hardware Drivers
 
 **Module:** `sc_neurocore.drivers`
-**Source:** `src/sc_neurocore/drivers/` — 4 files, 260 LOC,
+**Source:** `src/sc_neurocore/drivers/` — 4 files, 399 LOC,
 `__tier__ = "research"`
-**Status (v3.14.0):** PYNQ-Z2 FPGA driver works in EMULATION mode and
-correctly fails fast in HARDWARE mode without PYNQ; **the
-`PhysicalTwinBridge` claims TCP/Serial hardware-in-the-loop but is a
-mock** — see §3 honesty notice below; `verify_hardware_link` reaches
-outside the project tree to import optional sister-repo modules.
+**Status (v3.15.0):** PYNQ-Z2 FPGA driver works in EMULATION mode and
+correctly fails fast in HARDWARE mode without PYNQ. `PhysicalTwinBridge`
+now exposes an honest deterministic EMULATION backend and an explicit
+JSON-line TCP backend for hardware-twin services. `verify_hardware_link`
+uses normal `PYTHONPATH` resolution for optional sister-repo probes and
+does not mutate `sys.path`.
 
 This page covers the three public symbols that drivers expose, what
 each one actually does, and what each one only claims to do.
@@ -22,7 +23,7 @@ research tier:
 | Symbol | Source file | Role |
 |--------|-------------|------|
 | `SC_NeuroCore_Driver` | `sc_neurocore_driver.py` | PYNQ-Z2 FPGA overlay + AXI-Lite register access |
-| `PhysicalTwinBridge` | `physical_twin.py` | **Mocked** HIL bridge (see §3) |
+| `PhysicalTwinBridge` | `physical_twin.py` | Deterministic emulation bridge or explicit TCP hardware-twin client |
 | `verify_link` | `verify_hardware_link.py` | Diagnostic CLI that probes FPGA, Evo 2, Opentrons OT-2 |
 
 Module-level constants:
@@ -52,7 +53,7 @@ Driver for the sc-neurocore FPGA overlay on PYNQ-Z2. Two modes:
   - bitstream file not at the given path or at
     `/usr/local/lib/pynq/overlays/sc_neurocore/<bitstream>`
   - loaded overlay does not have the expected `scpn_layer_1_0` IP
-    (raises `SCHardwareError` from `sc_neurocore.exceptions`)
+    (wrapped as `RealityHardwareError`)
 - `mode="EMULATION"` — logs a warning and continues without touching
   any hardware. Used for development on x86 workstations.
 
@@ -97,67 +98,58 @@ sc_neurocore.drivers.sc_neurocore_driver` smoke test.
 
 ---
 
-## 3. `PhysicalTwinBridge` — MOCK, not a real bridge
+## 3. `PhysicalTwinBridge`
 
-**Honesty notice.** The class docstring at `physical_twin.py:11-15`
-says:
+`PhysicalTwinBridge` keeps the historical class name for API
+compatibility, but it no longer pretends a mock is physical hardware.
+It has two explicit modes:
 
-> Bridge for Hardware-In-the-Loop (HIL) Synchronization.
-> Connects a Python Neuron to a physical PYNQ-Z2/FPGA neuron via
-> TCP/Serial.
+- `mode="EMULATION"` (default) — deterministic local development mode.
+  It uses a per-instance `numpy.random.default_rng(seed)` noise source,
+  sets `connected=True` only for the local emulation backend, and writes
+  no stdout on construction or divergence.
+- `mode="TCP"` — real hardware-twin client mode. Each `sync_step(...)`
+  opens a bounded TCP connection to `(ip, port)`, sends one compact
+  JSON-line request, and requires a JSON-line reply containing numeric
+  `v_mem`.
 
-This is **not what the code does**. The constructor at
-`physical_twin.py:17-23` does no networking at all:
-
-```python
-def __init__(self, ip="192.168.2.99", port=5000) -> None:
-    self.ip = ip
-    self.port = port
-    self.connected = False
-    print(f"Twin: Connecting to hardware at {ip}:{port}...")
-    self.connected = True            # ← unconditionally set, no I/O
-```
-
-`sync_step` at `physical_twin.py:25-45` does no networking either:
+Constructor:
 
 ```python
-def sync_step(self, sw_v_mem: float, sw_spike: int) -> float:
-    if not self.connected:
-        return sw_v_mem
-    # Simulate network latency
-    # time.sleep(0.001)                                    ← commented out
-    # Simulate hardware response (Mock)
-    hw_v_mem = sw_v_mem + np.random.normal(0, 0.01)        ← Gaussian noise
-    diff = abs(sw_v_mem - hw_v_mem)
-    if diff > 0.1:
-        print(f"Twin Warning: Divergence detected! …")
-    return hw_v_mem
+class PhysicalTwinBridge:
+    def __init__(
+        self,
+        ip: str = "192.168.2.99",
+        port: int = 5000,
+        *,
+        mode: str = "EMULATION",
+        timeout_s: float = 1.0,
+        seed: int = 42,
+        noise_sigma: float = 0.01,
+        divergence_threshold: float = 0.1,
+    ) -> None: ...
 ```
 
-The "hardware response" is **`sw_v_mem + N(0, 0.01)`** — i.e. the
-software value plus a Gaussian draw. There is no socket, no serial
-port, no AXI-Lite read, no PYNQ call. The "divergence detector" can
-only fire when `|N(0, 0.01)| > 0.1` (roughly a 0.4σ event scaled to
-0.1 → essentially never).
+TCP request payload:
 
-Net effect: **`PhysicalTwinBridge` is a mock that misrepresents
-itself as a hardware bridge.** The 45-line file contains no actual
-`socket`, `serial`, `pynq`, `requests`, or any other I/O import.
+```python
+{"spike":1,"v_mem":0.5}
+```
 
-What to do (tracked as task #30):
+TCP reply payload:
 
-1. Implement the TCP path (the README, "192.168.2.99:5000", suggests
-   the intent), or
-2. Rename the class to `MockHILBridge` and update the docstring to
-   say "deterministic noise model for HIL prototyping", or
-3. Mark the class with a `_TODO_HIL = True` flag and document the
-   honest mock status in the docstring.
+```python
+{"v_mem": 0.875}
+```
 
-In any case, callers must not assume `sync_step` reflects FPGA state.
+Malformed replies raise `ValueError`. Connection failures raise
+`ConnectionError`. Divergence warnings go through module logging, not
+stdout, so library callers can silence or route them.
 
-`physical_twin.py:17` also carries `# type: ignore[no-untyped-def]`
-without rationale — the IP/port defaults need explicit `str` and
-`int` annotations.
+Regression coverage:
+`tests/test_pynq_driver.py::TestPhysicalTwinBridge` verifies no stdout
+side effects, deterministic emulation, the compact JSON-line TCP
+contract, and fail-closed malformed hardware replies.
 
 ---
 
@@ -169,7 +161,7 @@ that runs three sequential checks:
 | Step | Target | Mechanism | Failure mode |
 |------|--------|-----------|--------------|
 | 1/3 | PYNQ-Z2 / FPGA bitstream | `SC_NeuroCore_Driver(mode="HARDWARE")` | `RealityHardwareError` → "Simulation Mode" message |
-| 2/3 | Evo 2 genomic interface | `sys.path.append(...) → from scpn_evo2_real_interface import Evo2RealInterface` then `evo.connect()` | `ImportError` → "module not found"; `OSError`/`ConnectionError` → "Server unreachable" |
+| 2/3 | Evo 2 genomic interface | `from scpn_evo2_real_interface import Evo2RealInterface` then `evo.connect()` | `ImportError` → "module not found"; `OSError`/`ConnectionError` → "Server unreachable" |
 | 3/3 | Opentrons OT-2 robot | `from scpn_opentrions_verify import OpentronsVerifier` then `ot2.ping()` | `ImportError` → "module not found"; `OSError` → "ERROR" |
 
 ### 4.1 Cross-repo `sys.path.append` removed (FIXED by task #31)
@@ -225,15 +217,13 @@ EMULATION cleanly.
 | Surface | How it's wired | Verifier |
 |---------|---------------|----------|
 | `from sc_neurocore.drivers import SC_NeuroCore_Driver, ...` | `drivers/__init__.py:12-14` | `tests/test_pynq_driver.py` |
-| HARDWARE mode dispatch | `_connect_to_fpga` in `__init__` | `test_driver_hardware_mode_fails_without_fpga` |
+| HARDWARE mode dispatch | `_connect_to_fpga` in `__init__` | `test_driver_hardware_mode_fails_without_fpga`, `test_driver_hardware_mode_uses_install_fallback_bitstream`, `test_driver_hardware_mode_rejects_overlay_without_expected_ip`, `test_driver_hardware_mode_wraps_overlay_runtime_errors` |
 | EMULATION mode dispatch | logger warning + skip hardware path | `test_driver_emulation_mode` |
-| `write_layer_params` AXI-Lite path | `getattr(overlay, ...)` | `test_driver_write_layer_params` (EMULATION only) |
-| `run_step` EMULATION return | `np.random.rand(16)` | `test_driver_run_step` |
+| `write_layer_params` AXI-Lite path | `getattr(overlay, ...)`, Q16.16 register writes | `test_driver_write_layer_params`, `test_driver_write_layer_params_hardware_q16_16_encoding`, `test_driver_write_layer_params_hardware_rejects_missing_layer` |
+| `run_step` EMULATION return | per-instance `numpy.random.default_rng(seed)` | `test_driver_run_step`, `TestRunStepDeterminism` |
 | `RealityHardwareError` propagation | raised on PYNQ import / file / IP failures | `test_driver_hardware_mode_fails_without_fpga` |
-| `verify_link` CLI | `if __name__ == "__main__"` invokes it | not test-covered |
-
-`PhysicalTwinBridge` is **not test-covered** — `tests/test_pynq_driver.py`
-imports only `SC_NeuroCore_Driver`. Tracked as part of task #30.
+| `PhysicalTwinBridge` EMULATION/TCP boundary | deterministic local backend plus JSON-line TCP exchange | `TestPhysicalTwinBridge` |
+| `verify_link` CLI | `if __name__ == "__main__"` invokes it | `TestVerifyHardwareLink` covers callable behaviour |
 
 ---
 
@@ -242,27 +232,27 @@ imports only `SC_NeuroCore_Driver`. Tracked as part of task #30.
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | All 3 symbols re-exported; HARDWARE/EMULATION dispatch tested |
-| 2 | Multi-angle tests | ⚠️ WARN | 5 `SC_NeuroCore_Driver` tests pass (EMULATION mode + strict-fail). **`PhysicalTwinBridge` and `verify_link` have zero tests.** |
+| 2 | Multi-angle tests | ✅ PASS | `SC_NeuroCore_Driver`, `verify_link`, and `PhysicalTwinBridge` all have focused tests covering emulation, failure boundaries, deterministic behaviour, and TCP contract handling. |
 | 3 | Rust path | N/A | I/O + AXI-Lite shim; no compute kernel |
-| 4 | Benchmarks | N/A | Hardware register writes / mock RNG; no meaningful benchmark |
+| 4 | Benchmarks | N/A | Hardware register writes and bounded TCP I/O; no meaningful benchmark without physical hardware |
 | 5 | Performance docs | N/A | Same as above |
 | 6 | Documentation page | ✅ PASS | This page |
-| 7 | Rules followed | ❌ FAIL | **`PhysicalTwinBridge` misrepresents itself as a hardware bridge** (§3). **`run_step(EMULATION)` global-RNG anti-pattern FIXED by task #29** — driver now accepts `seed` parameter and uses per-instance RNG. **`verify_hardware_link.py` reaches outside the project tree via `sys.path.append`**. **3 undocumented `# type: ignore` / `# noqa` markers**. SPDX header on every file ✅. |
+| 7 | Rules followed | ✅ PASS | `PhysicalTwinBridge` now separates deterministic emulation from real TCP hardware-twin mode, `run_step(EMULATION)` uses a per-instance RNG, `verify_hardware_link.py` no longer mutates `sys.path`, the undocumented `physical_twin.py` type-ignore marker was removed, and the optional PYNQ import uses a narrow `type: ignore[import-not-found]`. SPDX header on every file ✅. |
 
-Net: **1 WARN, 1 FAIL.** The FAIL is honesty-driven, not
-correctness-driven for the FPGA driver itself — but the
-`PhysicalTwinBridge` claim is severe enough to fail the rule.
-Task #29 closed in this session; the remaining FAIL items
-(`PhysicalTwinBridge` mock, sys.path.append, type:ignore) stay
-open under tasks #30 / #31.
+Net: driver public-surface audit is now PASS for the locally testable
+x86 scope. HARDWARE-mode happy-path evidence still requires a physical
+PYNQ-Z2 board and remains part of the separate physical validation
+backlog.
 
 ---
 
 ## 8. Known issues (for the implementation)
 
-### 8.1 `PhysicalTwinBridge` is a mock pretending to be hardware
+### 8.1 `PhysicalTwinBridge` TCP contract (FIXED by task #30)
 
-See §3. Highest-priority fix in this module. Tracked as task #30.
+`PhysicalTwinBridge` no longer sets physical connection state without
+I/O. EMULATION mode is explicit and deterministic; TCP mode uses a
+bounded JSON-line contract with fail-closed malformed-reply handling.
 
 ### 8.2 `run_step` EMULATION RNG (FIXED by task #29)
 
@@ -285,18 +275,20 @@ differ, global numpy seed does not leak in, default seed is 42.
 the two sibling-repo probes and check only the FPGA subsystem.
 See §4.1.
 
-### 8.4 `# type: ignore` markers without rationale
+### 8.4 Optional PYNQ import typing boundary (FIXED)
 
-- `physical_twin.py:17` — `# type: ignore[no-untyped-def]` on the
-  `__init__` signature with un-annotated `ip` / `port` defaults.
-  Trivial fix: type as `str` / `int`.
-- `sc_neurocore_driver.py:52` — `# type: ignore  # noqa: F401` on
-  the `pynq` import. The `noqa: F401` is justified (the import is
-  for side-effect — loading the library), but the bare `# type:
-  ignore` (no error code) is too broad. Specify
-  `# type: ignore[import-not-found]`.
+`sc_neurocore_driver.py` imports optional PYNQ symbols only inside
+HARDWARE-mode connection setup. The import keeps `# noqa: F401`
+because `allocate` is intentionally imported with the PYNQ runtime
+surface, and now uses the narrow `# type: ignore[import-not-found]`
+marker required for hosts where PYNQ is unavailable.
 
-### 8.5 Q16.16 in the FPGA driver vs Q8.8 elsewhere
+Regression coverage:
+`tests/test_pynq_driver.py::TestDriverSourceHygiene` asserts that the
+driver source keeps the narrow marker and does not reintroduce the old
+broad `type: ignore` form.
+
+### 8.5 Q16.16 in the FPGA driver vs Q8.8 elsewhere (DOCUMENTED)
 
 `write_layer_params` encodes parameters as `int(value * 65536)`,
 which is Q16.16 (16 integer + 16 fractional bits). The compiler
@@ -304,45 +296,42 @@ which is Q16.16 (16 integer + 16 fractional bits). The compiler
 re-spun to Q8.8, this multiplication needs to change to `* 256`.
 Document the Q-format choice in the IP-block contract.
 
-### 8.6 `PhysicalTwinBridge` constructor prints to stdout
-
-`print(f"Twin: Connecting to hardware at {ip}:{port}...")` at
-`physical_twin.py:22` writes to stdout unconditionally on every
-construction. This is library code; should use `logging` to allow
-callers to silence it. Same pattern in
-`physical_twin.py:43` (divergence warning). Tracked under task #30.
-
----
+Regression coverage:
+`test_driver_write_layer_params_hardware_q16_16_encoding` constructs
+a fake overlay and verifies the HARDWARE path writes `gain` to offset
+`0x10` and `threshold` to offset `0x14` using Q16.16 integer values.
+`test_driver_write_layer_params_hardware_rejects_missing_layer`
+verifies that absent layer IPs fail closed.
 
 ## 9. Tests
 
 ```bash
 PYTHONPATH=src python3 -m pytest tests/test_pynq_driver.py -v
-# 5 passed in 1.51s (verified 2026-04-17)
 ```
 
-Coverage breakdown (5 tests, all in flat module — no test class):
+Coverage breakdown:
 
 | Test | What it checks |
 |------|----------------|
 | `test_driver_emulation_mode` | EMULATION mode constructs without raising |
 | `test_driver_write_layer_params` | EMULATION path no-ops cleanly with both `gain` and `threshold` |
+| `test_driver_write_layer_params_hardware_q16_16_encoding` | HARDWARE path writes Q16.16 `gain` and `threshold` values to the expected AXI-Lite offsets |
+| `test_driver_write_layer_params_hardware_rejects_missing_layer` | HARDWARE path raises when the target layer IP is absent |
 | `test_driver_run_step` | EMULATION returns shape-(16,) ndarray |
 | `test_driver_hardware_mode_fails_without_fpga` | HARDWARE on x86 raises `RealityHardwareError` |
+| `test_driver_hardware_mode_uses_install_fallback_bitstream` | Missing local bitstream resolves to installed PYNQ overlay path and loads that path |
+| `test_driver_hardware_mode_rejects_overlay_without_expected_ip` | Loaded overlays without `scpn_layer_1_0` fail closed as `RealityHardwareError` |
+| `test_driver_hardware_mode_wraps_overlay_runtime_errors` | Overlay loader runtime failures are wrapped as `RealityHardwareError` |
 | `test_driver_invalid_mode` | `mode="WHATEVER"` raises `ValueError` |
+| `TestRunStepDeterminism` | Same-seed reproducibility, sequence reproducibility, seed separation, global RNG isolation, default seed |
+| `TestVerifyHardwareLink` | FPGA-only probe mode, full probe mode, default extras behaviour, no `sys.path` mutation |
+| `TestPhysicalTwinBridge` | No stdout side effects, deterministic emulation, compact JSON-line TCP contract, malformed-reply failure |
 
 Not covered:
 
-- `PhysicalTwinBridge` — no test of constructor or `sync_step` (§3
-  honesty issue surfaces here)
-- `verify_link` — no test (§4 path-handling issue)
 - HARDWARE mode happy path — requires actual PYNQ-Z2; cannot be
   exercised on x86 (test_driver_hardware_mode_fails_without_fpga is
   the inverse)
-- Bitstream-IP-block missing branch — not exercised; would need
-  PYNQ + a bitstream lacking `scpn_layer_1_0`
-- Q16.16 encoding correctness — `write_layer_params` is a no-op in
-  EMULATION; the `int(value * 65536)` math is not asserted
 
 ---
 
