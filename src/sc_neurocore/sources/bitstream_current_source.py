@@ -6,6 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Multi-channel bitstream current source
 
+"""Multi-channel bitstream current source for neuron simulations.
+
+This module encodes scalar inputs and weights into stochastic bitstreams,
+combines them through SC synapse or bipolar XNOR semantics, and exposes the
+realised per-cycle current trace consumed by deterministic simulation tests.
+"""
+
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, List, Optional
@@ -140,6 +147,7 @@ class BitstreamCurrentSource:
         return (self.y_min + probs * (self.y_max - self.y_min)).astype(np.float64, copy=False)
 
     def reset(self) -> None:
+        """Reset the realised current trace cursor to its first timestep."""
         self._t = 0
 
     def current_trace(self) -> np.ndarray[Any, Any]:

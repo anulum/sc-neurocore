@@ -10,8 +10,8 @@
 
 ## Biological Context
 
-The LoihiCUBANeuron is not a biological neuron model — it is a **software emulator
-of the Intel Loihi 1 neuromorphic processor's CUBA (current-based) neuron model**.
+The LoihiCUBANeuron is not a biological neuron model — it is a **software reference
+emulator of the Intel Loihi 1 neuromorphic processor's CUBA (current-based) neuron model**.
 Its primary purpose is to enable algorithm development and verification for Loihi
 hardware without requiring access to the physical chip.
 
@@ -163,20 +163,28 @@ At I = 25 (just above threshold):
 - v_ss = 1250 (above threshold → fires periodically)
 - ISI ≈ τ_v × ln(v_ss / (v_ss - V_θ)) ≈ 10 × ln(1250/250) ≈ 10 × 1.61 = 16 steps
 
-### Spike rate at I = 5 (from STUB data)
+### Spike rate at low current
 
-STUB reports 1999 spikes in 10K steps at I = 5:
-- Rate ≈ 0.2 spikes/step = 1 spike every 5 steps
-- u_ss = 25, v_ss = 250 — **below threshold** (250 < 1000)
+Current repository evidence for the Python model and Rust/PyO3 contract is consistent:
+`weighted_input` is an integer, and `I = 5` produces **0 spikes** in 10,000 steps.
+That is expected because the steady-state membrane potential remains below threshold:
 
-Wait: at I = 5, v_ss = 250 < 1000, so the neuron shouldn't fire at steady state.
-However, the STUB uses **f64 input** converted to i32 (the PyO3 wrapper casts to i32).
-With I = 5.0 → weighted_input = 5 (i32), and with the two-stage accumulation over
-many steps, v can exceed threshold before reaching steady state if started from 0.
+- `u_ss = 25`
+- `v_ss = 250`
+- `V_θ = 1000`
 
-Actually — 1999 spikes in 10K steps requires periodic firing. Let me re-examine:
-the actual dynamics with integer division need step-by-step simulation. The division
-truncation creates non-linear behaviour that differs from the continuous approximation.
+Measured spot check from the current source:
+
+| Weighted input | Spikes in 10,000 steps | First spike |
+|----------------|------------------------|-------------|
+| 5 | 0 | none |
+| 20 | 199 | step 54 |
+| 25 | 624 | step 20 |
+| 50 | 1999 | step 9 |
+| 100 | 3332 | step 6 |
+
+The integer division dynamics still differ from the continuous approximation, but low
+current below rheobase does not create periodic spiking in the current implementation.
 
 ### Integer arithmetic example
 
@@ -189,13 +197,9 @@ truncation creates non-linear behaviour that differs from the continuous approxi
 | 5 | 16 | 16 - 3 + 5 = 18 | 40 | 40 - 4 + 18 = 54 | No |
 | ... | ~20 | stabilises near 20 | ... | grows toward ~200 | No |
 
-u converges to ~20 (since 20 - 20/5 + 5 = 20 - 4 + 5 = 21 ≈ 20). v converges to
-~200 (since 200 - 200/10 + 20 = 200 - 20 + 20 = 200). With v_ss ≈ 200 < 1000,
-the neuron should not fire at I = 5.
-
-The STUB's 1999 spikes at I = 5.0 likely comes from the PyO3 layer passing `5.0` as
-float that gets multiplied by some weight factor. The exact behaviour depends on
-the Python wrapper implementation.
+u converges to 25 (since 25 - 25/5 + 5 = 25). v converges to 250
+(since 250 - 250/10 + 25 = 250). With v_ss = 250 < 1000, the neuron does
+not fire at I = 5 in the current Python and Rust recurrence.
 
 ---
 
@@ -280,8 +284,9 @@ step(weighted_input: i32) → i32:
 
 ### Key implementation notes
 
-1. **All i32 arithmetic:** No floating-point operations anywhere. This exactly matches
-   the Loihi 1 hardware implementation.
+1. **All i32 arithmetic:** No floating-point operations anywhere in the software
+   recurrence.  This is a Loihi-inspired reference contract, not a Loihi 1 board
+   execution claim.
 
 2. **Integer division for leak:** `u/tau_u` and `v/tau_v` use Rust's integer division
    (truncation toward zero). This is equivalent to a right bit-shift when tau is a
@@ -362,6 +367,18 @@ In practice, inputs should be kept below ~1,000,000 to maintain safe margins.
 
 ## Loihi Hardware Mapping
 
+### Hardware validation boundary
+
+This page documents the SC-NeuroCore software reference model and its deterministic
+integer contract.  It is **not a Loihi 1 board execution claim**.  Exact Loihi 1
+hardware validation remains gated on Lava or the relevant Intel Loihi toolchain,
+Loihi 1 hardware access, exported register configuration, run logs, and board logs
+showing spike-train parity for the same stimulus schedule.
+
+The existing Loihi 2 / SpiNNaker2 adapter layer is a deterministic handoff package:
+it writes manifests and reports for downstream vendor-specific execution, but it does
+not replace a vendor SDK run or a physical-board validation artefact.
+
 ### How SC-NeuroCore maps to Loihi silicon
 
 | SC-NeuroCore | Loihi 1 hardware |
@@ -374,7 +391,7 @@ In practice, inputs should be kept below ~1,000,000 to maintain safe margins.
 | `step()` | 1 neurocore tick (~1 µs) |
 | Integer division | Barrel shifter (1 cycle) |
 
-**Differences from hardware:**
+**Known differences from Loihi 1 silicon until board evidence is attached:**
 - SC-NeuroCore uses arbitrary i32 tau values; Loihi uses power-of-2 only
 - SC-NeuroCore has full 32-bit precision; Loihi uses 24-bit compartments
 - SC-NeuroCore division is general; Loihi uses bit-shift (faster but coarser)
@@ -412,32 +429,36 @@ tau, processing at ~20 billion neuron-steps/s.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/hardware.rs:12` |
-| PyO3 wrapper | `pyo3_neurons.rs` |
+| Python implementation | `src/sc_neurocore/neurons/models/loihi_cuba.py` |
+| Rust implementation | `engine/src/neurons/hardware.rs:13` |
+| PyO3 wrapper | `engine/src/pyo3_neurons.rs` |
 | NetworkRunner wired | `NeuronVariant::LoihiCUBA` |
 | `create_neuron("LoihiCUBANeuron")` | Yes |
 | `supported_models()` | Includes "LoihiCUBANeuron" |
-| coverage tests | 12 (construction, step binary, silent, spikes, u accumulation, u decay, integer type, rate increase, reset, deterministic, population, spike_count) |
-| Benchmark | Python: ~445K steps/s |
+| coverage tests | Isolation, analytical recurrence, dynamics, performance, population, projection, network, and spike-count checks |
+| hardware boundary | Requires vendor SDK run and Loihi 1 board logs before public hardware-equivalence claims |
 
 ---
 
 ## Benchmark
 
-### Python (measured 2026-04-04)
+### Python spot check (measured 2026-05-20)
 
 | Metric | Value |
 |--------|-------|
-| Python throughput | ~445K steps/s |
-| Spikes (10K steps, I=5.0) | 1999 |
-| State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+| Spikes (10K steps, I=5) | 0 |
+| Spikes (10K steps, I=20) | 199 |
+| Spikes (10K steps, I=50) | 1999 |
+| State after I=5 run | `v=250`, `u=25` |
+| Rust/Python recurrence | Same integer update contract |
 
 **Context:** The integer arithmetic makes LoihiCUBA one of the fastest models in
 SC-NeuroCore. Throughput is limited by PyO3 call overhead, not the computation
 (2 integer additions + 2 integer divisions per step).
 
-Measured 2026-04-04 on i5-11600K @ 3.90 GHz.
+The table above is a deterministic source-level spot check, not a hardware benchmark.
+Loihi 1 throughput, power, and spike-train equivalence require vendor SDK execution
+and physical-board evidence.
 
 ---
 
@@ -496,8 +517,12 @@ println!("Spikes: {}, v: {}, u: {}", spike_count, neuron.v, neuron.u);
 5. **Integer type.** All state variables are i32 (not f64). Verified.
 6. **Rate increases with input.** Higher I → more spikes. Verified.
 7. **Reset.** v = 0, u = 0 after `reset()`. Verified.
-8. **Deterministic.** Integer arithmetic produces identical results across platforms. Verified.
-9. **Rust parity.** EXACT match (integer arithmetic is bit-exact). Verified.
+8. **Deterministic.** Integer arithmetic produces identical software traces for the
+   same implementation contract. Verified.
+9. **Rust parity.** The Rust and Python recurrence use the same integer update
+   contract. Verified by source inspection and focused tests.
+10. **Hardware boundary.** Board-level Loihi 1 equivalence remains unclaimed until
+    vendor SDK execution and board logs are attached.
 
 ---
 

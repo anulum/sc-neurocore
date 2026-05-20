@@ -247,4 +247,6 @@ wire signed [15:0] _dres0 = _div0[15:0];                    // extract Q result
 - [Precision Modes Guide](precision_modes.md) — Q8.8, Q4.12, Q16.16 details
 - [Tutorial 33: Equation-to-Verilog](../tutorials/33_equation_to_verilog.md)
 - [Tutorial 09: Hardware Co-simulation](../tutorials/09_hardware_cosimulation.md)
-- [Strategic Assessment Appendix A.4](../internal/STRATEGIC_ASSESSMENT_2026-04-30.md)
+- Strategic assessment evidence is maintained internally; public co-simulation
+  claims in this guide are bounded by the tests and compiler fixes documented
+  above.

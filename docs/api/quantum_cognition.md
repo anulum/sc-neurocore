@@ -559,9 +559,13 @@ The Mojo, Rust, and Julia kernels exist but have not been benchmarked against th
 
 `SpinPoolMPS` has an exact dense Hamiltonian path for bounded systems.  Larger Posner-scale sweeps need a validated sparse or tensor-network evolution path before they can replace the dense reference.
 
-### 10.3 GOTM Brain integration (P3 — separate project)
+### 10.3 GOTM Brain integration (P3 — experimental separate project)
 
-Lines 2448–5393 of the CROSSREPO BINDER MANUAL describe a self-learning brain using local LLM + GOTM content.  Extracted to `docs/internal/TODO_GOTM_BRAIN.md`.  Prerequisite: this module must stay behind explicit experimental-labelling until hardware validation evidence exists.
+`GOTMBrain` is an experimental research surface for local content indexing and
+local guidance-loop learning traces.  It is not hardware validation evidence,
+not a biological claim, and not a production decision system.  Future
+self-learning brain promotion remains gated on explicit hardware-validation
+evidence, reproducible run packs, and separate public release criteria.
 
 ### 10.4 Population integration (P2)
 
@@ -681,12 +685,13 @@ Cross-repo references:
 - SCPN-QUANTUM-CONTROL NB26-28: FIM alone synchronises at K=0, λ ≥ 8
 - SCPN-QUANTUM-CONTROL NB19: autonomic → cortical directional bias = 1.36
 
-Internal:
+Related public surfaces:
 
 - Quantum hardware layer: [`api/quantum.md`](quantum.md) (if exists)
 - Network integration: [`api/network.md`](network.md)
-- CROSSREPO BINDER MANUAL: [`internal/CROSSREPO BINDER MANUAL .md`](../internal/CROSSREPO%20BINDER%20MANUAL%20.md)
-- IBM Quantum Hardware Verification: [`internal/IBM_QUANTUM_VERIFICATION.md`](../internal/IBM_QUANTUM_VERIFICATION.md)
+- IBM hardware claims remain gated on ORCA-derived molecular inputs and live
+  backend calibration/run evidence; internal verification notes are intentionally
+  not linked from public API pages.
 
 ---
 

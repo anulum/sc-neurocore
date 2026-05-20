@@ -6,6 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Packs a uint8 bitstream (0s and 1s) into uint64 integers
 
+"""Packed-bitstream vector operations for stochastic-computing kernels.
+
+This module packs binary streams into ``uint64`` words and provides deterministic
+NumPy implementations of Boolean stochastic-computing primitives, unpacking,
+and popcount accumulation for tests, CPU execution, and parity checks.
+"""
+
 from __future__ import annotations
 
 from typing import Any, Optional

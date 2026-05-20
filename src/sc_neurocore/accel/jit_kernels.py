@@ -6,6 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Packs a uint8 bitstream into uint64 array
 
+"""Numba-accelerated kernels for packed stochastic-computing hot loops.
+
+The module exposes optional JIT implementations for bitstream packing and
+packed multiply-accumulate operations while preserving a pure-Python fallback
+when Numba is not installed.
+"""
+
 from __future__ import annotations
 
 from typing import Any, Callable, TypeVar

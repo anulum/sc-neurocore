@@ -402,5 +402,7 @@ All functions are single-threaded pure CPU. Benchmarks run via
 `cargo bench --bench analysis_bench`. Parallelisation is left to the
 Python caller via `concurrent.futures` or joblib.
 
-Full benchmark results with scaling analysis:
-see [Analysis Benchmarks](../internal/ANALYSIS_BENCHMARKS.md).
+Full benchmark results with scaling analysis are maintained as internal release
+evidence.  Public performance claims on this page are limited to the curated
+benchmark tables above until the corresponding public benchmark packet is
+published.
