@@ -27,6 +27,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -91,21 +92,22 @@ def _run_rust_benchmark(rs_file: str, opt: str = "-C opt-level=2") -> dict[str, 
     rs_path = _QC_DIR / rs_file
     if not rs_path.exists():
         return None
-    bin_path = f"/tmp/{rs_file.replace('.rs', '_bench')}"
-    result = subprocess.run(
-        ["rustc", str(rs_path), "-o", bin_path] + opt.split(),
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    if result.returncode != 0:
-        return None
-    result = subprocess.run(
-        [bin_path],
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
+    with tempfile.TemporaryDirectory(prefix="scn_rust_bench_") as tmpdir:
+        bin_path = Path(tmpdir) / rs_file.replace(".rs", "_bench")
+        result = subprocess.run(
+            ["rustc", str(rs_path), "-o", str(bin_path)] + opt.split(),
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            return None
+        result = subprocess.run(
+            [str(bin_path)],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
     if result.returncode != 0:
         return None
     return {"output": result.stdout}

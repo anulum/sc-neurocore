@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0436"
+ignoreUntil = "2026-08-31T23:59:59Z"
+reason = "Transitive wgpu -> metal dependency pulls paste on non-Linux target support; cargo audit classifies this as an unmaintained warning rather than a vulnerability. Review by 2026-08-31 and replace or upgrade the GPU backend dependency path if upstream still carries paste."

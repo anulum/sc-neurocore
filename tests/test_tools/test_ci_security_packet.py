@@ -249,3 +249,86 @@ def test_cli_include_heavy_and_fail_flag_forwards_to_missing_required_exit(
     summary = _read_summary(capsys.readouterr().out)
     assert summary["missing_required"] == ["required_missing"]
     assert call_log["include_heavy"] is True
+
+
+def test_fail_on_missing_required_includes_scanner_plan_input_failures(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    tool = _load_tool()
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+    _write_release_manifest(
+        repo_root,
+        [
+            {
+                "id": "scanner_manifest",
+                "path": "security/security_scanner_manifest.json",
+                "required": True,
+            },
+            {
+                "id": "model_data_license_matrix",
+                "path": "security/model_data_license_matrix.json",
+                "required": True,
+            },
+        ],
+    )
+    _write_model_data_matrix(repo_root)
+
+    python_plan = {
+        "schema_version": "sc-neurocore.python-code-scanner-plan.v1",
+        "scanner_count": 1,
+        "scanners": [
+            {
+                "name": "pip-audit",
+                "run_class": "missing_required_input",
+                "executable": "pip-audit",
+                "missing_required_inputs": ["requirements/release.txt"],
+            }
+        ],
+    }
+    rust_plan = {
+        "schema_version": "sc-neurocore.security-supply-chain-plan.v1",
+        "include_heavy": False,
+        "scanner_count": 1,
+        "scanners": [
+            {
+                "name": "cargo-audit",
+                "run_class": "missing_required_input",
+                "executable": "cargo",
+                "missing_required_inputs": ["Cargo.lock"],
+            }
+        ],
+    }
+
+    with pytest.MonkeyPatch().context() as monkeypatch:
+        monkeypatch.setattr(tool, "_project_root", lambda: repo_root)
+        monkeypatch.setattr(tool, "build_scanner_plan", lambda *_args, **_kwargs: python_plan)
+        monkeypatch.setattr(
+            tool,
+            "build_rust_supply_chain_plan",
+            lambda *_args, **_kwargs: rust_plan,
+        )
+
+        exit_code = tool.main(
+            [
+                "--output-dir",
+                str(tmp_path / "packet"),
+                "--fail-on-missing-required",
+            ]
+        )
+
+    assert exit_code == 1
+    summary = _read_summary(capsys.readouterr().out)
+    assert summary["missing_required_scanner_inputs"] == [
+        {
+            "inputs": ["requirements/release.txt"],
+            "plan": "python_code_scanner_plan",
+            "scanner": "pip-audit",
+        },
+        {
+            "inputs": ["Cargo.lock"],
+            "plan": "rust_supply_chain_scanner_plan",
+            "scanner": "cargo-audit",
+        },
+    ]

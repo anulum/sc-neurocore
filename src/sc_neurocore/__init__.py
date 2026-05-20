@@ -89,6 +89,13 @@ from .utils import (
 
 # ── Recorders ────────────────────────────────────────────────────────────────
 from .recorders import BitstreamSpikeRecorder
+from .license import (
+    CommercialLicenseStatus,
+    get_license_status,
+    load_license_from_env,
+    set_license_key,
+    validate_license_key,
+)
 
 from .exceptions import (
     SCNeuroError,
@@ -141,6 +148,12 @@ __all__ = [
     "estimate_memory",
     # Recorders
     "BitstreamSpikeRecorder",
+    # Licensing
+    "CommercialLicenseStatus",
+    "get_license_status",
+    "load_license_from_env",
+    "set_license_key",
+    "validate_license_key",
     # Exceptions
     "SCNeuroError",
     "SCEncodingError",

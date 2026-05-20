@@ -17,7 +17,7 @@ import pytest
 
 nir = pytest.importorskip("nir")
 
-from sc_neurocore.nir_bridge import from_nir
+from sc_neurocore.nir_bridge import SCNNetwork, from_nir
 from sc_neurocore.nir_bridge.node_map import (
     SCLIFNode,
     SCIFNode,
@@ -45,6 +45,31 @@ from sc_neurocore.nir_bridge.parser import (
     SCSubgraphNode,
     _UnitDelayNode,
 )
+
+
+def test_scnnetwork_alias_supports_from_nir_classmethod_and_hardware_compile() -> None:
+    graph = _make_lif_affine_graph(n_in=2, n_out=2)
+
+    network = SCNNetwork.from_nir(graph, dt=1.0)
+    result = network.to_hardware(
+        module_name="api_lif_network",
+        data_width=18,
+        fraction=10,
+        bitstream_length=512,
+    )
+
+    assert isinstance(network, SCNetwork)
+    assert result.module_name == "api_lif_network"
+    assert result.q_format == "Q8.10"
+    assert result.total_neurons == 2
+    assert "module api_lif_network" in result.top_module
+
+
+def test_to_hardware_preserves_existing_compiler_validation() -> None:
+    network = SCNetwork(nodes={}, edges=[], input_nodes=[], output_nodes=[])
+
+    with pytest.raises(ValueError, match="at least one neuron population"):
+        network.to_hardware(module_name="empty_network")
 
 
 @pytest.fixture

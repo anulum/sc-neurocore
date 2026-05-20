@@ -413,7 +413,8 @@ edges = [
 ]
 graph = nir.NIRGraph(nodes=nodes, edges=edges)
 
-# 2. Parse into SCNetwork
+# 2. Parse into SCNetwork. The one-object API is also available as
+#    SCNNetwork.from_nir(graph, dt=1.0).to_hardware(...)
 network = from_nir(graph, dt=1.0)
 
 # 3. Extract NeuronGraph

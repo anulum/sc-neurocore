@@ -148,7 +148,30 @@ not data arrays.
 | `run(inputs, steps=100)` | Run multiple timesteps. Returns dict of lists. |
 | `reset()` | Reset all stateful nodes to initial conditions. |
 | `summary()` | Print human-readable network topology. |
+| `to_hardware(...)` | Lower the parsed network through the production FPGA compiler and return generated RTL plus SC-NIR metadata. |
 | `topo_order` | Topologically sorted node execution order. |
+
+For a one-object import-to-hardware workflow, use the classmethod facade:
+
+```python
+from sc_neurocore.nir_bridge import SCNNetwork
+
+network = SCNNetwork.from_nir(graph, dt=1.0)
+result = network.to_hardware(
+    module_name="my_snn",
+    data_width=16,
+    fraction=8,
+    bitstream_length=1024,
+    target="artix7",
+)
+
+verilog = result.top_module
+```
+
+`SCNNetwork` is a public alias for the NIR bridge `SCNetwork`. The hardware
+method delegates to `from_scnetwork()` and `compile_network_to_fpga()`, so it
+preserves the same validation, quantisation, generated Verilog, and SC-NIR
+metadata as the lower-level compiler path.
 
 ### Fan-in
 

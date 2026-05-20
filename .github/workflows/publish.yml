@@ -79,10 +79,31 @@ jobs:
           name: engine-wheel-${{ matrix.os }}-py${{ matrix.python-version }}
           path: dist-engine/*.whl
 
-  publish-engine-pypi:
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
+  smoke-engine-wheels:
     needs: [build-engine-wheels]
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: engine-wheel-ubuntu-latest-py3.12
+          merge-multiple: true
+          path: dist-engine/
+      - name: Install and smoke test engine wheel
+        run: |
+          python -m pip install --upgrade pip
+          pip install dist-engine/*.whl
+          python -c "import sc_neurocore_engine; print(sc_neurocore_engine.__version__); print(sc_neurocore_engine.simd_tier())"
+
+  publish-engine-pypi:
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
+    needs: [smoke-engine-wheels]
+    runs-on: ubuntu-latest
+    environment: pypi-engine
+    permissions:
+      id-token: write
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
@@ -92,8 +113,6 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
         with:
           packages-dir: dist-engine/
-          password: ${{ secrets.PYPI_ENGINE_TOKEN }}
-          attestations: false
 
   publish-crate:
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'

@@ -64,10 +64,14 @@ _from_nir_impl: Any | None = None
 _to_nir_impl: Any | None = None
 
 try:
+    from .parser import SCNetwork as SCNNetwork
+    from .parser import SCNetwork
     from .parser import from_nir as _from_nir_impl
     from .export import to_nir as _to_nir_impl
 except (AttributeError, ImportError) as exc:
     _NIR_IMPORT_ERROR = exc
+    SCNetwork = None  # type: ignore[assignment]
+    SCNNetwork = None  # type: ignore[assignment]
 
 
 def from_nir(source: Any, dt: float = 1.0, reset_mode: str = "reset") -> Any:
@@ -93,6 +97,8 @@ def to_nir(network: Any, path: str | Path | None = None) -> Any:
 __all__ = [
     "from_nir",
     "to_nir",
+    "SCNetwork",
+    "SCNNetwork",
     "ConnectionSpec",
     "NeuronGraph",
     "NeuronSpec",

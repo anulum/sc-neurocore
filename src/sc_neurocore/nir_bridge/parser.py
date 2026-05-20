@@ -12,7 +12,7 @@ import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 
@@ -123,6 +123,46 @@ class SCNetwork:
     _topo_order: list[str] | None = None
     # Maps delay_node_name → source_node_name for recurrent connections
     _recurrent_map: dict[str, str] = field(default_factory=dict)
+
+    @classmethod
+    def from_nir(cls, source: Any, dt: float = 1.0, reset_mode: str = "reset") -> SCNetwork:
+        """Build an ``SCNetwork`` directly from a NIR graph or file path."""
+
+        network = from_nir(source, dt=dt, reset_mode=reset_mode)
+        if not isinstance(network, cls):
+            raise TypeError(f"Expected {cls.__name__}, got {type(network).__name__}")
+        return network
+
+    def to_hardware(
+        self,
+        *,
+        module_name: str = "sc_nir_network",
+        data_width: int = 16,
+        fraction: int = 8,
+        bitstream_length: int = 256,
+        source_kind: Literal["lfsr", "sobol"] = "lfsr",
+        base_seed: int = 1,
+        target: str = "artix7",
+        dt: float | None = None,
+        online_learning: Mapping[str, Mapping[str, Any]] | None = None,
+    ) -> Any:
+        """Compile this parsed network to the existing FPGA artefact bundle."""
+
+        from .fpga_compiler import compile_network_to_fpga
+        from .neuron_graph import from_scnetwork
+
+        neuron_graph = from_scnetwork(self, dt=dt)
+        return compile_network_to_fpga(
+            neuron_graph,
+            module_name=module_name,
+            data_width=data_width,
+            fraction=fraction,
+            bitstream_length=bitstream_length,
+            source_kind=source_kind,
+            base_seed=base_seed,
+            target=target,
+            online_learning=online_learning,
+        )
 
     def _find_back_edges(self) -> list[tuple[str, str]]:
         """DFS-based back-edge detection."""
