@@ -101,6 +101,7 @@ class AlternativePathCase:
     name: str
     args: tuple[Any, ...] = ()
     kwargs: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -430,6 +431,7 @@ class AlternativePathRoute(Generic[T]):
                 {
                     "case_name": case.name,
                     "route_name": result.route_name,
+                    "metadata": dict(case.metadata),
                     "returned_path": result.returned_path,
                     "baseline_runtime_ns": result.baseline_runtime_ns,
                     "candidate_runtime_ns": result.candidate_runtime_ns,

@@ -62,6 +62,9 @@ Current verification is limited to:
 
 - structural assertions in Python tests
 - HDL syntax smoke compile under `iverilog`
+- behavioural HDL simulation under `iverilog`/`vvp` that verifies stable
+  spike vectors are emitted once, changed vectors produce new AER events,
+  and a cleared vector permits a later repeat event
 
 It is not yet:
 

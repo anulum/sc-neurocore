@@ -97,12 +97,28 @@ Current verification is limited to:
 - structural assertions in Python tests
 - configuration validation in Python
 - HDL syntax smoke compile under `iverilog`
+- no-warning `iverilog` compilation for larger generated sine LUTs that
+  require more than 8 address bits
+- behavioural `iverilog`/`vvp` simulation for the no-coupling one-oscillator
+  fixed-point phase step and `update_done` pulse
+- behavioural `iverilog`/`vvp` simulation for a two-oscillator coupled
+  fixed-point step through the generated sine-LUT and coupling path
+- deterministic fixed-point reference helpers on the emitter are used by the
+  HDL simulations, keeping expected values tied to the emitted arithmetic
+- bounded fixed-point error summaries against the float Kuramoto Euler step,
+  including a higher-coupling four-oscillator regression case
+- a committed deterministic evidence report at
+  `benchmarks/results/kuramoto_rtl_fixed_point_error.json`, regenerated with
+  `tools/run_kuramoto_rtl_error_report.py`, gates higher-coupling,
+  low-coupling, and no-coupling fixed-point error thresholds against both the
+  float Euler reference and the maintained Rust `KuramotoSolver` baseline in
+  the bounded noiseless all-to-all scalar-coupling regime
 
 It is not yet:
 
-- a behavioural parity harness against the Rust solver
 - a timing-closed FPGA implementation report
-- a full fixed-point error characterisation across phase regimes
+- exhaustive fixed-point error characterisation across all phase regimes
+- parity evidence for SSGF geometry, PGBO, field-pressure, or noise extensions
 
 ## Recommendation
 

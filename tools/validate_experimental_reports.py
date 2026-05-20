@@ -135,6 +135,8 @@ def validate_report(
         if case.get("candidate_error") is not None:
             reasons.append(f"case {case.get('case_name', '<unknown>')} candidate_error present")
 
+    reasons.extend(_known_route_requirement_failures(route_name, cases))
+
     return ValidationResult(
         path=path,
         route_name=route_name,
@@ -146,6 +148,29 @@ def validate_report(
         total_cases=total_cases,
         candidate_failures=candidate_failures,
     )
+
+
+def _known_route_requirement_failures(route_name: str, cases: list[dict[str, Any]]) -> list[str]:
+    if route_name != "physics.kuramoto.noiseless-symplectic-lift":
+        return []
+
+    for case in cases:
+        metadata = case.get("metadata")
+        if not isinstance(metadata, dict):
+            continue
+        if (
+            metadata.get("regime") == "higher_coupling_noiseless"
+            and float(metadata.get("coupling", 0.0)) >= 1.0
+            and int(metadata.get("oscillator_count", 0)) >= 4
+        ):
+            return []
+
+    return [
+        (
+            "physics.kuramoto.noiseless-symplectic-lift requires a matched "
+            "higher_coupling_noiseless case with coupling>=1.0 and oscillator_count>=4"
+        )
+    ]
 
 
 def _format_text(results: list[ValidationResult]) -> str:

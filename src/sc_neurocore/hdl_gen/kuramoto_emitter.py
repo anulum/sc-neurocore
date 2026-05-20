@@ -48,6 +48,10 @@ class KuramotoEmitter:
             raise ValueError("fraction must satisfy 0 < fraction < data_width")
         if lut_size < 16 or lut_size & (lut_size - 1):
             raise ValueError("lut_size must be a power of two >= 16")
+        if not math.isfinite(dt) or dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+        if not math.isfinite(coupling):
+            raise ValueError("coupling must be finite")
 
         self.module_name = sanitize_ident(module_name, context="module name")
         self.n_oscillators = n_oscillators
@@ -65,9 +69,45 @@ class KuramotoEmitter:
             raise ValueError("omegas length must equal n_oscillators")
         if len(self.initial_phases) != n_oscillators:
             raise ValueError("initial_phases length must equal n_oscillators")
+        if not all(math.isfinite(omega) for omega in self.omegas):
+            raise ValueError("omegas must contain only finite values")
+        if not all(math.isfinite(phase) for phase in self.initial_phases):
+            raise ValueError("initial_phases must contain only finite values")
+        self._validate_fixed_point_format()
+        self._validate_single_step_wrap_bound()
 
     def _fixed_int(self, value: float) -> int:
         return int(round(value * (1 << self.fraction)))
+
+    def _require_representable_fixed(self, value: float, name: str) -> None:
+        fixed = self._fixed_int(value)
+        min_signed = -(1 << (self.data_width - 1))
+        max_signed = (1 << (self.data_width - 1)) - 1
+        if fixed < min_signed or fixed > max_signed:
+            raise ValueError(
+                f"{name} fixed-point value {fixed} exceeds signed Q{self.data_width - self.fraction}."
+                f"{self.fraction} range [{min_signed}, {max_signed}]"
+            )
+
+    def _validate_fixed_point_format(self) -> None:
+        try:
+            self._require_representable_fixed(2.0 * math.pi, "phase modulus")
+        except ValueError as exc:
+            raise ValueError("fixed-point format cannot represent 2pi") from exc
+        self._require_representable_fixed(math.pi, "half phase modulus")
+        self._require_representable_fixed(self.dt, "dt")
+        self._require_representable_fixed(self.coupling / self.n_oscillators, "coupling / N")
+        for idx, omega in enumerate(self.omegas):
+            self._require_representable_fixed(omega, f"omega[{idx}]")
+        for idx, phase in enumerate(self.initial_phases):
+            self._require_representable_fixed(phase % (2.0 * math.pi), f"initial_phases[{idx}]")
+
+    def _validate_single_step_wrap_bound(self) -> None:
+        max_omega = max(abs(omega) for omega in self.omegas)
+        max_coupling_term = abs(self.coupling) * max(0, self.n_oscillators - 1) / self.n_oscillators
+        max_phase_advance = self.dt * (max_omega + max_coupling_term)
+        if max_phase_advance >= 2.0 * math.pi:
+            raise ValueError("single-step phase advance must stay below 2pi")
 
     def _signed_literal(self, value: int) -> str:
         magnitude = abs(value)
@@ -75,12 +115,133 @@ class KuramotoEmitter:
             return f"-{self.data_width}'sd{magnitude}"
         return f"{self.data_width}'sd{magnitude}"
 
+    def initial_phase_state_fixed(self) -> list[int]:
+        """Return the emitted fixed-point reset state for each oscillator."""
+        return [self._fixed_int(phase % (2.0 * math.pi)) for phase in self.initial_phases]
+
+    def fixed_point_step(self, phase_state: list[int] | tuple[int, ...]) -> list[int]:
+        """Mirror one generated RTL phase step in integer fixed-point arithmetic."""
+        if len(phase_state) != self.n_oscillators:
+            raise ValueError("phase_state length must equal n_oscillators")
+        phases = [int(phase) for phase in phase_state]
+        phase_modulus = self._fixed_int(2.0 * math.pi)
+        half_phase_modulus = self._fixed_int(math.pi)
+        dt_fixed = self._fixed_int(self.dt)
+        coupling_fixed = self._fixed_int(self.coupling / self.n_oscillators)
+        omega_fixed = [self._fixed_int(omega) for omega in self.omegas]
+        next_phases: list[int] = []
+
+        for row, row_phase in enumerate(phases):
+            coupling_sum = 0
+            for col, col_phase in enumerate(phases):
+                if col == row:
+                    continue
+                phase_diff = self._wrap_delta_fixed(
+                    col_phase - row_phase,
+                    phase_modulus=phase_modulus,
+                    half_phase_modulus=half_phase_modulus,
+                )
+                coupling_sum += self._sin_lut_fixed(phase_diff, phase_modulus=phase_modulus)
+            coupling_term = (coupling_sum * coupling_fixed) >> self.fraction
+            phase_velocity = omega_fixed[row] + coupling_term
+            phase_delta = (phase_velocity * dt_fixed) >> self.fraction
+            next_phases.append(self._wrap_phase_fixed(row_phase + phase_delta, phase_modulus))
+
+        return next_phases
+
+    def fixed_point_error_summary(self, *, steps: int) -> dict[str, int | float | list[float]]:
+        """Characterise fixed-point drift against the float Kuramoto Euler step."""
+        if steps < 1:
+            raise ValueError("steps must be >= 1")
+
+        fixed_state = self.initial_phase_state_fixed()
+        float_state = [phase % (2.0 * math.pi) for phase in self.initial_phases]
+        max_abs_error = 0.0
+        sum_sq_error = 0.0
+        sample_count = 0
+
+        for _ in range(steps):
+            fixed_state = self.fixed_point_step(fixed_state)
+            float_state = self._float_step(float_state)
+            fixed_float = self.fixed_state_to_float(fixed_state)
+            errors = [
+                abs(self._circular_phase_error(fixed_phase, float_phase))
+                for fixed_phase, float_phase in zip(fixed_float, float_state)
+            ]
+            max_abs_error = max(max_abs_error, *errors)
+            sum_sq_error += sum(error * error for error in errors)
+            sample_count += len(errors)
+
+        rms_error = math.sqrt(sum_sq_error / sample_count)
+        return {
+            "steps": steps,
+            "oscillator_count": self.n_oscillators,
+            "data_width": self.data_width,
+            "fraction": self.fraction,
+            "lut_size": self.lut_size,
+            "dt": self.dt,
+            "coupling": self.coupling,
+            "max_abs_phase_error_rad": max_abs_error,
+            "rms_phase_error_rad": rms_error,
+            "final_fixed_phases_rad": self.fixed_state_to_float(fixed_state),
+            "final_float_phases_rad": float_state,
+        }
+
+    def fixed_state_to_float(self, phase_state: list[int] | tuple[int, ...]) -> list[float]:
+        """Convert integer fixed-point phase state to radians."""
+        if len(phase_state) != self.n_oscillators:
+            raise ValueError("phase_state length must equal n_oscillators")
+        scale = float(1 << self.fraction)
+        return [int(phase) / scale for phase in phase_state]
+
+    def _float_step(self, phases: list[float]) -> list[float]:
+        next_phases: list[float] = []
+        for row, row_phase in enumerate(phases):
+            coupling_sum = 0.0
+            for col, col_phase in enumerate(phases):
+                if col == row:
+                    continue
+                coupling_sum += math.sin(col_phase - row_phase)
+            velocity = self.omegas[row] + (self.coupling * coupling_sum / self.n_oscillators)
+            next_phases.append((row_phase + self.dt * velocity) % (2.0 * math.pi))
+        return next_phases
+
+    @staticmethod
+    def _circular_phase_error(actual: float, expected: float) -> float:
+        return ((actual - expected + math.pi) % (2.0 * math.pi)) - math.pi
+
+    @staticmethod
+    def _wrap_phase_fixed(phase_value: int, phase_modulus: int) -> int:
+        if phase_value >= phase_modulus:
+            return phase_value - phase_modulus
+        if phase_value < 0:
+            return phase_value + phase_modulus
+        return phase_value
+
+    @staticmethod
+    def _wrap_delta_fixed(
+        delta_value: int, *, phase_modulus: int, half_phase_modulus: int
+    ) -> int:
+        if delta_value > half_phase_modulus:
+            return delta_value - phase_modulus
+        if delta_value < -half_phase_modulus:
+            return delta_value + phase_modulus
+        return delta_value
+
+    def _sin_lut_fixed(self, phase_value: int, *, phase_modulus: int) -> int:
+        wrapped_phase = self._wrap_phase_fixed(phase_value, phase_modulus)
+        lut_index = (wrapped_phase * self.lut_size) // phase_modulus
+        if lut_index < 0 or lut_index >= self.lut_size:
+            return 0
+        return self._fixed_int(math.sin((2.0 * math.pi * lut_index) / self.lut_size))
+
     def _lut_lines(self) -> list[str]:
+        index_width = max(1, math.ceil(math.log2(self.lut_size)))
         lines = [
             "    function automatic signed [DATA_WIDTH-1:0] sin_lut;",
             "        input signed [DATA_WIDTH-1:0] phase_value;",
             "        reg signed [DATA_WIDTH-1:0] wrapped_phase;",
-            "        reg [7:0] lut_index;",
+            f"        reg [{index_width - 1}:0] lut_index;",
             "        begin",
             "            wrapped_phase = wrap_phase(phase_value);",
             "            lut_index = (wrapped_phase * LUT_SIZE) / PHASE_MODULUS;",
@@ -88,7 +249,9 @@ class KuramotoEmitter:
         ]
         for idx in range(self.lut_size):
             value = self._fixed_int(math.sin((2.0 * math.pi * idx) / self.lut_size))
-            lines.append(f"                8'd{idx}: sin_lut = {self._signed_literal(value)};")
+            lines.append(
+                f"                {index_width}'d{idx}: sin_lut = {self._signed_literal(value)};"
+            )
         lines.extend(
             [
                 "                default: sin_lut = 0;",
