@@ -131,8 +131,8 @@ def run_osv_scanner(
         ".",
     ]
     result = _run(command, repo_root=repo_root, run_command=run_command, timeout=360)
-    validation_errors, package_count, vulnerability_count, vulnerability_ids = (
-        _validate_osv_report(report_path)
+    validation_errors, package_count, vulnerability_count, vulnerability_ids = _validate_osv_report(
+        report_path
     )
     summary = {
         "schema_version": OSV_SCANNER_SCHEMA_VERSION,

@@ -61,7 +61,9 @@ def test_security_scanner_workflow_invokes_packet_builder() -> None:
         "--output-dir" in step and "security/ci-security-packet" in step for step in run_steps
     )
     assert any("--fail-on-missing-required" in step for step in run_steps)
-    packet_steps = [step for step in run_steps if "tools/security_scan/ci_security_packet.py" in step]
+    packet_steps = [
+        step for step in run_steps if "tools/security_scan/ci_security_packet.py" in step
+    ]
     assert not any("--output security/ci-security-packet" in step for step in packet_steps)
 
 
@@ -84,8 +86,8 @@ def test_security_scanner_workflow_runs_rust_scanner_lane() -> None:
 
     run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
 
-    assert "cargo install cargo-audit --version 0.20.0 --locked" in run_text
-    assert "cargo install cargo-deny --version 0.16.0 --locked" in run_text
+    assert "cargo install cargo-audit --version 0.22.1 --locked" in run_text
+    assert "cargo install cargo-deny --version 0.19.6 --locked" in run_text
     assert "tools/security_scan/run_rust_security_scanners.py" in run_text
     assert "security/ci-security-packet/security/rust_scanner_summary.json" in run_text
 
@@ -96,8 +98,9 @@ def test_security_scanner_workflow_runs_python_compliance_lane() -> None:
 
     run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
 
-    assert "pip-audit==2.10.0" in run_text
-    assert "reuse==6.2.0" in run_text
+    assert (
+        "python -m pip install --require-hashes -r requirements/security-scanners.txt" in run_text
+    )
     assert "tools/security_scan/run_python_compliance_scanners.py" in run_text
     assert "security/ci-security-packet/security/python_compliance_summary.json" in run_text
 
@@ -126,11 +129,22 @@ def test_security_scanner_workflow_runs_syft_cyclonedx_lane() -> None:
 
     run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
 
-    assert "anchore/syft/main/install.sh" in run_text
-    assert "v1.20.0" in run_text
+    assert "go install github.com/anchore/syft/cmd/syft@v1.20.0" in run_text
     assert "tools/security_scan/run_syft_cyclonedx_scanners.py" in run_text
     assert "security/ci-security-packet/security/sbom.cdx.json" in run_text
     assert "security/ci-security-packet/security/syft_cyclonedx_summary.json" in run_text
+
+
+def test_security_scanner_workflow_avoids_unpinned_pip_and_curl_installers() -> None:
+    workflow = _load_workflow()
+    steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
+
+    run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
+
+    assert "pip install --upgrade pip" not in run_text
+    assert "python -m pip install bandit" not in run_text
+    assert "curl -sSfL" not in run_text
+    assert "install.sh" not in run_text
 
 
 def test_security_scanner_workflow_runs_cargo_fuzz_only_on_nightly_or_manual() -> None:
@@ -171,10 +185,11 @@ def test_security_scanner_workflow_runs_benchmark_regression_only_on_nightly_or_
     assert "tools/security_scan/run_benchmark_regression_scanners.py" in run_text
     assert "--baseline benchmarks/baselines/security_side_channel_benchmark.json" in run_text
     assert "--current security/benchmark-current/security_side_channel_benchmark.json" in run_text
-    assert "--output security/benchmark-regression-packet/security/benchmark_regression.json" in run_text
     assert (
-        "security/benchmark-regression-packet/security/benchmark_regression.json" in run_text
+        "--output security/benchmark-regression-packet/security/benchmark_regression.json"
+        in run_text
     )
+    assert "security/benchmark-regression-packet/security/benchmark_regression.json" in run_text
 
 
 def test_security_scanner_workflow_checks_manifest_consistency_if_present() -> None:

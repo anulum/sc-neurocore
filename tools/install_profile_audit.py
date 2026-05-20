@@ -160,8 +160,7 @@ def _build_offline_hardware_profile(
         and conda_recipe["run_dependencies"] == list(EXPECTED_CONDA_RUN_DEPENDENCIES)
         and "sc_neurocore.hdl.resources" in conda_recipe["test_imports"]
         and any(
-            "list_baseline_primitive_rtl" in command
-            for command in conda_recipe["test_commands"]
+            "list_baseline_primitive_rtl" in command for command in conda_recipe["test_commands"]
         )
     )
     docker_wheel_build_covers_static_primitives = _docker_wheel_build_covers_static_primitives(repo)

@@ -17,9 +17,7 @@ from typing import Any, Literal
 
 from sc_neurocore.exceptions import SCDependencyError
 
-POLAR_LICENSE_VALIDATION_ENDPOINT = (
-    "https://api.polar.sh/v1/customer-portal/license-keys/validate"
-)
+POLAR_LICENSE_VALIDATION_ENDPOINT = "https://api.polar.sh/v1/customer-portal/license-keys/validate"
 LICENSE_KEY_ENV = "SC_NEUROCORE_LICENSE_KEY"
 POLAR_ORGANIZATION_ENV = "SC_NEUROCORE_POLAR_ORGANIZATION_ID"
 

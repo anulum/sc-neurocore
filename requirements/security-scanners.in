@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# (C) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# (C) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore security scanner CI requirements
+
+bandit==1.9.4
+pip-audit==2.10.0
+reuse==6.2.0
+ruff==0.15.12

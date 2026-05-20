@@ -93,9 +93,17 @@ jobs:
           path: dist-engine/
       - name: Install and smoke test engine wheel
         run: |
-          python -m pip install --upgrade pip
-          pip install dist-engine/*.whl
-          python -c "import sc_neurocore_engine; print(sc_neurocore_engine.__version__); print(sc_neurocore_engine.simd_tier())"
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          wheels = sorted(Path("dist-engine").glob("*.whl"))
+          if len(wheels) != 1:
+              raise SystemExit(f"Expected exactly one engine wheel, found {len(wheels)}")
+          with ZipFile(wheels[0]) as archive:
+              archive.extractall("dist-engine/smoke")
+          PY
+          PYTHONPATH=dist-engine/smoke python -c "import sc_neurocore_engine; print(sc_neurocore_engine.__version__); print(sc_neurocore_engine.simd_tier())"
 
   publish-engine-pypi:
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'

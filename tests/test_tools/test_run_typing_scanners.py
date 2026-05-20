@@ -124,9 +124,7 @@ def test_runner_records_invalid_pyright_json_as_raw_output(tmp_path: Path) -> No
     ) == {"raw_stdout": "not-json", "raw_stderr": "failed"}
 
 
-def test_runner_resolves_tools_next_to_active_python(
-    tmp_path: Path, monkeypatch: Any
-) -> None:
+def test_runner_resolves_tools_next_to_active_python(tmp_path: Path, monkeypatch: Any) -> None:
     tool = _load_tool()
     fake_python = tmp_path / "venv" / "bin" / "python"
     fake_tool = tmp_path / "venv" / "bin" / "pyright"

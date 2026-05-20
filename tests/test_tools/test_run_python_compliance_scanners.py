@@ -136,7 +136,9 @@ def test_reuse_failure_is_reported_without_failing_python_compliance_lane(
         if Path(command[0]).name == "pip-audit":
             Path(command[-1]).write_text('{"dependencies":[]}', encoding="utf-8")
             return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
-        return subprocess.CompletedProcess(command, 1, stdout='{"summary":{"compliant":false}}', stderr="")
+        return subprocess.CompletedProcess(
+            command, 1, stdout='{"summary":{"compliant":false}}', stderr=""
+        )
 
     summary = tool.run_python_compliance_scanners(
         repo_root=tmp_path,
@@ -149,9 +151,7 @@ def test_reuse_failure_is_reported_without_failing_python_compliance_lane(
     assert summary["non_blocking_failed_scanners"] == ["reuse"]
 
 
-def test_runner_resolves_tools_next_to_active_python(
-    tmp_path: Path, monkeypatch: Any
-) -> None:
+def test_runner_resolves_tools_next_to_active_python(tmp_path: Path, monkeypatch: Any) -> None:
     tool = _load_tool()
     fake_python = tmp_path / "venv" / "bin" / "python"
     fake_tool = tmp_path / "venv" / "bin" / "pip-audit"
