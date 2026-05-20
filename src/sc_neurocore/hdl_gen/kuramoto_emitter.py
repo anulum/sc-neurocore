@@ -219,9 +219,7 @@ class KuramotoEmitter:
         return phase_value
 
     @staticmethod
-    def _wrap_delta_fixed(
-        delta_value: int, *, phase_modulus: int, half_phase_modulus: int
-    ) -> int:
+    def _wrap_delta_fixed(delta_value: int, *, phase_modulus: int, half_phase_modulus: int) -> int:
         if delta_value > half_phase_modulus:
             return delta_value - phase_modulus
         if delta_value < -half_phase_modulus:

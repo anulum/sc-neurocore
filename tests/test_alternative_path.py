@@ -270,7 +270,8 @@ def test_builtin_kuramoto_cases_include_higher_coupling_evidence():
 
     assert max(couplings) >= 1.0
     assert any(
-        case.metadata == {
+        case.metadata
+        == {
             "oscillator_count": 4,
             "horizon": 0.008,
             "coupling": 1.0,

@@ -56,7 +56,9 @@ def _config_from_benchmark(benchmark: dict) -> DifferentiableSCConfig:
 def test_export_manifest_contains_valid_scnir_stream_metadata() -> None:
     benchmark = build_stochastic_backprop_benchmark(bitstream_length=256, steps=8)
 
-    manifest = build_stochastic_backprop_export_manifest(benchmark, _config_from_benchmark(benchmark))
+    manifest = build_stochastic_backprop_export_manifest(
+        benchmark, _config_from_benchmark(benchmark)
+    )
     scnir_document = manifest["scnir_document"]
 
     assert manifest["schema_version"] == STOCHASTIC_BACKPROP_EXPORT_SCHEMA_VERSION
@@ -72,12 +74,12 @@ def test_export_manifest_contains_valid_scnir_stream_metadata() -> None:
         manifest["evidence"]["sampled_product_mae"]
         == benchmark["stream_evidence"]["sampled_product_mae"]
     )
-    assert manifest["evidence"]["estimator_variance"]["sample_count"] == benchmark[
-        "estimator_variance"
-    ]["sample_count"]
     assert (
-        manifest["evidence"]["estimator_variance"]["estimators"]["score_function"]["variance"]
-        > 0.0
+        manifest["evidence"]["estimator_variance"]["sample_count"]
+        == benchmark["estimator_variance"]["sample_count"]
+    )
+    assert (
+        manifest["evidence"]["estimator_variance"]["estimators"]["score_function"]["variance"] > 0.0
     )
     validate_scnir_dict(scnir_document)
 
@@ -133,7 +135,9 @@ def test_write_handoff_bundle_materialises_auditable_scnir_hdl_directory(tmp_pat
     from sc_neurocore.ir.scnir_handoff_audit import audit_scnir_hdl_handoff
 
     benchmark = build_stochastic_backprop_benchmark(bitstream_length=256, steps=8)
-    manifest = build_stochastic_backprop_export_manifest(benchmark, _config_from_benchmark(benchmark))
+    manifest = build_stochastic_backprop_export_manifest(
+        benchmark, _config_from_benchmark(benchmark)
+    )
     output_dir = tmp_path / "handoff"
 
     report = write_stochastic_backprop_handoff_bundle(manifest, output_dir)
@@ -146,9 +150,7 @@ def test_write_handoff_bundle_materialises_auditable_scnir_hdl_directory(tmp_pat
     assert audit_scnir_hdl_handoff(output_dir).as_dict() == report.as_dict()
 
     parity = json.loads(
-        (output_dir / "stochastic_backprop_trained_design_parity.json").read_text(
-            encoding="utf-8"
-        )
+        (output_dir / "stochastic_backprop_trained_design_parity.json").read_text(encoding="utf-8")
     )
     assert parity["SPDX-License-Identifier"] == "AGPL-3.0-or-later"
     assert parity["hardware_measurement_claimed"] is False

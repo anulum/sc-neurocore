@@ -330,7 +330,9 @@ def stochastic_backprop_joint_objective(
         raise ValueError("encoding_logits size must match design_space.encodings")
 
     reference = weight
-    length_probs = torch.softmax(length_logits.to(dtype=reference.dtype, device=reference.device), dim=0)
+    length_probs = torch.softmax(
+        length_logits.to(dtype=reference.dtype, device=reference.device), dim=0
+    )
     length_values = _tensor_like(reference, space.bitstream_lengths)
     expected_length = (length_probs * length_values).sum()
     selected_length_index = int(torch.argmax(length_probs.detach()).item())
@@ -348,7 +350,9 @@ def stochastic_backprop_joint_objective(
     selected_encoding_index = int(torch.argmax(encoding_probs.detach()).item())
     selected_encoding = space.encodings[selected_encoding_index]
 
-    correlation_unit = torch.sigmoid(correlation_logit.to(dtype=reference.dtype, device=reference.device))
+    correlation_unit = torch.sigmoid(
+        correlation_logit.to(dtype=reference.dtype, device=reference.device)
+    )
     min_correlation = _scalar_like(reference, float(space.min_correlation))
     max_correlation = _scalar_like(reference, float(space.max_correlation))
     selected_correlation = min_correlation + correlation_unit.reshape(()) * (
