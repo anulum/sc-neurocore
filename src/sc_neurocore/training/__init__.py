@@ -48,10 +48,13 @@ if HAS_TORCH:
         sampled_sc_multiply,
     )
     from .stochastic_backprop import (
+        SCBackpropDesignSpace,
+        SCBackpropJointReport,
         SCObjectiveBreakdown,
         SCResourceProxy,
         SCTrainingObjectiveConfig,
         relaxed_sc_linear,
+        stochastic_backprop_joint_objective,
         stochastic_training_objective,
     )
     from .stochastic_backprop_export import (
@@ -162,9 +165,12 @@ __all__ = [
     "correlation_penalty",
     "pairwise_correlation_penalty",
     "SCObjectiveBreakdown",
+    "SCBackpropDesignSpace",
+    "SCBackpropJointReport",
     "SCResourceProxy",
     "SCTrainingObjectiveConfig",
     "relaxed_sc_linear",
+    "stochastic_backprop_joint_objective",
     "stochastic_training_objective",
     "STOCHASTIC_BACKPROP_EXPORT_SCHEMA_VERSION",
     "build_stochastic_backprop_export_manifest",

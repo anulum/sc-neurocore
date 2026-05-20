@@ -1,0 +1,131 @@
+{
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "acceptance": {
+    "all_variances_finite_nonnegative": true,
+    "pathwise_variance_zero": true,
+    "score_function_longest_variance_below_shortest": true
+  },
+  "bitstream_lengths": [
+    64,
+    128,
+    256
+  ],
+  "estimators": [
+    "pathwise_relaxation",
+    "straight_through",
+    "score_function"
+  ],
+  "evidence_boundary": "local_simulation_and_executable_hdl_parity",
+  "evidence_class": "deterministic_estimator_regression",
+  "hardware_measurement_claimed": false,
+  "results": [
+    {
+      "bitstream_length": 64,
+      "estimators": {
+        "pathwise_relaxation": {
+          "absolute_bias": 0.0,
+          "assumption": "differentiable relaxed Bernoulli expectation",
+          "max": 0.012031697668,
+          "mean": 0.012031697668,
+          "min": 0.012031697668,
+          "variance": 0.0
+        },
+        "score_function": {
+          "absolute_bias": 0.010659823202,
+          "assumption": "seeded REINFORCE likelihood-ratio estimate without baseline",
+          "max": 0.260636866093,
+          "mean": 0.02269152087,
+          "min": -0.018722860143,
+          "variance": 0.003399827207
+        },
+        "straight_through": {
+          "absolute_bias": 0.004723048376,
+          "assumption": "sampled forward pass with relaxed backward proxy",
+          "max": 0.062946557999,
+          "mean": 0.016754746044,
+          "min": -0.007440964226,
+          "variance": 0.000255046704
+        }
+      },
+      "reference": {
+        "estimator": "pathwise_relaxation",
+        "gradient": 0.012031697668,
+        "loss": 0.001398165361
+      },
+      "sample_count": 32
+    },
+    {
+      "bitstream_length": 128,
+      "estimators": {
+        "pathwise_relaxation": {
+          "absolute_bias": 0.0,
+          "assumption": "differentiable relaxed Bernoulli expectation",
+          "max": 0.012031697668,
+          "mean": 0.012031697668,
+          "min": 0.012031697668,
+          "variance": 0.0
+        },
+        "score_function": {
+          "absolute_bias": 0.008015572988,
+          "assumption": "seeded REINFORCE likelihood-ratio estimate without baseline",
+          "max": 0.046889327466,
+          "mean": 0.00401612468,
+          "min": -0.026828607544,
+          "variance": 0.000237207771
+        },
+        "straight_through": {
+          "absolute_bias": 0.000147516572,
+          "assumption": "sampled forward pass with relaxed backward proxy",
+          "max": 0.030266636983,
+          "mean": 0.011884181096,
+          "min": -0.014982485212,
+          "variance": 0.000141569189
+        }
+      },
+      "reference": {
+        "estimator": "pathwise_relaxation",
+        "gradient": 0.012031697668,
+        "loss": 0.001398165361
+      },
+      "sample_count": 32
+    },
+    {
+      "bitstream_length": 256,
+      "estimators": {
+        "pathwise_relaxation": {
+          "absolute_bias": 0.0,
+          "assumption": "differentiable relaxed Bernoulli expectation",
+          "max": 0.012031697668,
+          "mean": 0.012031697668,
+          "min": 0.012031697668,
+          "variance": 0.0
+        },
+        "score_function": {
+          "absolute_bias": 0.005157169351,
+          "assumption": "seeded REINFORCE likelihood-ratio estimate without baseline",
+          "max": 0.083633720875,
+          "mean": 0.006874528318,
+          "min": -0.008501149714,
+          "variance": 0.000319070961
+        },
+        "straight_through": {
+          "absolute_bias": 0.000186795149,
+          "assumption": "sampled forward pass with relaxed backward proxy",
+          "max": 0.027752796188,
+          "mean": 0.011844902519,
+          "min": -0.001156364218,
+          "variance": 5.0812786e-05
+        }
+      },
+      "reference": {
+        "estimator": "pathwise_relaxation",
+        "gradient": 0.012031697668,
+        "loss": 0.001398165361
+      },
+      "sample_count": 32
+    }
+  ],
+  "sample_count": 32,
+  "schema_version": "sc-neurocore.stochastic-backprop-estimator-regression.v1",
+  "status": "pass"
+}

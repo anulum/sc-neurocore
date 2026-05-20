@@ -31,8 +31,11 @@ from .online_o1_adaptation import (
 )
 from .stochastic_backprop import (
     STOCHASTIC_BACKPROP_BENCHMARK_SCHEMA_VERSION,
+    STOCHASTIC_BACKPROP_ESTIMATOR_REGRESSION_SCHEMA_VERSION,
     build_stochastic_backprop_benchmark,
+    build_stochastic_backprop_estimator_regression_manifest,
     write_stochastic_backprop_benchmark,
+    write_stochastic_backprop_estimator_regression_manifest,
 )
 from .tasks import TASKS
 
@@ -50,14 +53,17 @@ __all__ = [
     "MLPerfSCValidationError",
     "ONLINE_O1_ADAPTATION_BENCHMARK_SCHEMA_VERSION",
     "STOCHASTIC_BACKPROP_BENCHMARK_SCHEMA_VERSION",
+    "STOCHASTIC_BACKPROP_ESTIMATOR_REGRESSION_SCHEMA_VERSION",
     "TASKS",
     "aggregate_mlperf_sc_results",
     "build_online_o1_adaptation_benchmark",
     "build_stochastic_backprop_benchmark",
+    "build_stochastic_backprop_estimator_regression_manifest",
     "compute_metrics",
     "mlperf_sc_result_to_dict",
     "run_mlperf_sc_fixture",
     "validate_mlperf_sc_result",
     "write_online_o1_adaptation_benchmark",
     "write_stochastic_backprop_benchmark",
+    "write_stochastic_backprop_estimator_regression_manifest",
 ]

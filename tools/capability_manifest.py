@@ -234,7 +234,7 @@ def build_capability_manifest(
         "evidence_boundary": (
             "Counts are file-system and static-source inventory only; benchmark, "
             "coverage, hardware, and scientific-fidelity claims remain governed by "
-            "their dedicated evidence artifacts."
+            "their dedicated evidence artefacts."
         ),
     }
 
@@ -273,7 +273,7 @@ def render_markdown_snapshot(manifest: dict[str, Any]) -> str:
             (
                 "Evidence boundary: this snapshot is a static inventory. Performance, "
                 "coverage, hardware, and scientific-fidelity claims require their own "
-                "committed evidence artifacts."
+                "committed evidence artefacts."
             ),
             "",
         ]

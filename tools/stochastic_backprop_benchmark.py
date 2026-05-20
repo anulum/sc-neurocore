@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Stochastic backpropagation benchmark tool
+# SC-NeuroCore — Stochastic backpropagation benchmark tool
 
 """Generate a deterministic stochastic backpropagation benchmark JSON report."""
 
@@ -16,6 +16,9 @@ from pathlib import Path
 import sys
 
 from sc_neurocore.benchmarks import build_stochastic_backprop_benchmark
+from sc_neurocore.benchmarks.stochastic_backprop import (
+    write_stochastic_backprop_estimator_regression_manifest,
+)
 from sc_neurocore.training.sc_estimators import DifferentiableSCConfig
 from sc_neurocore.training.stochastic_backprop_export import (
     build_stochastic_backprop_export_manifest,
@@ -28,6 +31,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path, help="Output report JSON path")
     parser.add_argument("--export-manifest", type=Path, default=None)
+    parser.add_argument("--estimator-regression-manifest", type=Path, default=None)
     parser.add_argument("--handoff-dir", type=Path, default=None)
     parser.add_argument("--bitstream-length", type=int, default=256)
     parser.add_argument("--steps", type=int, default=32)
@@ -63,6 +67,12 @@ def main(argv: list[str] | None = None) -> int:
                 payload,
                 config,
             )
+        if args.estimator_regression_manifest is not None:
+            write_stochastic_backprop_estimator_regression_manifest(
+                args.estimator_regression_manifest,
+                bitstream_lengths=(64, 128, 256),
+                sample_count=32,
+            )
         if args.handoff_dir is not None:
             manifest = build_stochastic_backprop_export_manifest(payload, config)
             report = write_stochastic_backprop_handoff_bundle(manifest, args.handoff_dir)
@@ -77,6 +87,8 @@ def main(argv: list[str] | None = None) -> int:
     print(args.output)
     if args.export_manifest is not None:
         print(args.export_manifest)
+    if args.estimator_regression_manifest is not None:
+        print(args.estimator_regression_manifest)
     if args.handoff_dir is not None:
         print(args.handoff_dir)
     return 0

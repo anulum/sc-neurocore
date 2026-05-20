@@ -88,6 +88,7 @@ nav:
       - SC for Neuroscientists: guides/SC_FOR_NEUROSCIENTISTS.md
       - SC for Hardware Engineers: guides/SC_FOR_HARDWARE_ENGINEERS.md
       - SC for ML Engineers: guides/SC_FOR_ML_ENGINEERS.md
+      - Stochastic Backpropagation: guides/stochastic_backprop.md
       - Spike Codec Library: guides/bci_codec.md
       - FAQ: guides/faq.md
       - Glossary: guides/glossary.md

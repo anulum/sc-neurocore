@@ -7,7 +7,7 @@
       "bitstream_length": 256,
       "correlation_constraints": [
         {
-          "max_abs_correlation": 0.0,
+          "max_abs_correlation": 0.0074837952852249146,
           "peer_stream_id": "stochastic_backprop.weight",
           "policy": "max_correlation",
           "seed_domain": "stochastic_backprop_training"
@@ -43,7 +43,7 @@
       "bitstream_length": 256,
       "correlation_constraints": [
         {
-          "max_abs_correlation": 0.0,
+          "max_abs_correlation": 0.0074837952852249146,
           "peer_stream_id": "stochastic_backprop.input",
           "policy": "max_correlation",
           "seed_domain": "stochastic_backprop_training"

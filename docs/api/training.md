@@ -443,6 +443,51 @@ print(sc_layers[0]["noise_model"])
 These weights map directly to bitstream probabilities in `SCDenseLayer` and
 the equation compiler's Verilog RTL.
 
+## Stochastic Backpropagation
+
+The stochastic-backpropagation reference path trains stochastic-computing
+design variables together with model parameters. Use it when the training
+objective must expose gradients through bitstream length, encoding choice, and
+correlation metadata before export, instead of training a floating-point model
+and converting the weights afterwards.
+
+Primary public API:
+
+- `SCBackpropDesignSpace` defines the allowed bitstream lengths, encodings,
+  and correlation interval for differentiable design selection.
+- `SCBackpropJointReport` records the relaxed prediction, objective breakdown,
+  selected design, length probabilities, encoding probabilities, expected
+  bitstream length, selected encoding, selected length, and selected
+  correlation.
+- `SCTrainingObjectiveConfig` controls task loss, length cost, correlation
+  cost, and encoding cost.
+- `stochastic_backprop_joint_objective` evaluates the differentiable joint
+  objective and returns the report used for training, export, and audit
+  evidence.
+
+The reproducible evidence command is:
+
+```bash
+PYTHONPATH=src python tools/stochastic_backprop_benchmark.py \
+  --output benchmarks/results/stochastic_backprop_benchmark.json \
+  --export-manifest benchmarks/results/stochastic_backprop_export_manifest.json \
+  --estimator-regression-manifest benchmarks/results/stochastic_backprop_estimator_regression_manifest.json \
+  --handoff-dir benchmarks/results/stochastic_backprop_handoff \
+  --bitstream-length 256 \
+  --steps 32 \
+  --learning-rate 0.4
+```
+
+The current public evidence boundary is
+`local_simulation_and_executable_hdl_parity`: the generated artefacts prove the
+local benchmark, SC-NIR export metadata, estimator-regression manifest, and
+executable HDL parity path. They do not claim physical hardware measurement,
+Vivado timing closure, PYNQ deployment, or board-level power evidence.
+
+::: sc_neurocore.training.stochastic_backprop
+    options:
+      show_root_heading: true
+
 ### ConvSpikingNet
 
 Convolutional SNN for image classification:
