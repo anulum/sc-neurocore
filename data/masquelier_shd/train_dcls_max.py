@@ -42,6 +42,7 @@ Env:
   SHD_SIGMA_INIT      — cosine schedule start (default 15.0)
   SHD_SIGMA_FINAL     — cosine schedule end (default 0.0)
   SHD_ROUND_EACH_EPOCH — round train delays after every epoch (default 0)
+  SHD_HIDDEN_LAYERS   — comma-separated hidden-layer widths (default 128,128)
   SHD_OUTPUT_SUBDIR   — output subdirectory name
 
 Tim Masquelier corrections (email [22/22], 2026-04-13):
@@ -250,6 +251,28 @@ def parse_epsilon_schedule(text: str | None) -> list[float]:
         if values and value <= values[-1]:
             raise ValueError("SHD_PRUNE_EPSILONS must be strictly increasing")
         values.append(value)
+    return values
+
+
+def parse_hidden_layers(text: str | None, default: list[int] | None = None) -> list[int]:
+    """Parse positive hidden-layer widths from a comma-separated override."""
+    fallback = list(default or [128, 128])
+    if text is None or not text.strip():
+        return fallback
+    values: list[int] = []
+    for raw in text.split(","):
+        item = raw.strip()
+        if not item:
+            continue
+        try:
+            value = int(item)
+        except ValueError as exc:
+            raise ValueError("SHD_HIDDEN_LAYERS entries must be positive integers") from exc
+        if value <= 0:
+            raise ValueError("SHD_HIDDEN_LAYERS entries must be positive integers")
+        values.append(value)
+    if not values:
+        raise ValueError("SHD_HIDDEN_LAYERS must contain at least one width")
     return values
 
 
@@ -568,7 +591,7 @@ if __name__ == "__main__":
     if os.environ.get("SHD_EPOCHS"):
         config.epochs = int(os.environ["SHD_EPOCHS"])
     out_subdir = os.environ.get("SHD_OUTPUT_SUBDIR", "dcls_max")
-    config.hidden_layers = [128, 128]
+    config.hidden_layers = parse_hidden_layers(os.environ.get("SHD_HIDDEN_LAYERS"), [128, 128])
 
     neuron_module_name = os.environ.get("SHD_NEURON_MODULE", "vmin_lif").strip().lower()
     if neuron_module_name in {"vmin", "vmin_lif", "vmin_lifnode"}:
@@ -596,6 +619,7 @@ if __name__ == "__main__":
     print(f"SHD_PRUNE_MAX_STEPS = {config.prune_max_steps}")
     print(f"SHD_EPOCHS         = {config.epochs}")
     print(f"SHD_SEED           = {config.seed}")
+    print(f"SHD_HIDDEN_LAYERS  = {config.hidden_layers}")
     print(f"SHD_NEURON_MODULE  = {neuron_module_name}")
     print(f"SHD_SIGMA_INIT     = {SIG_INIT}")
     print(f"SHD_SIGMA_FINAL    = {SIG_FINAL}")

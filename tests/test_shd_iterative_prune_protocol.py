@@ -108,3 +108,17 @@ def test_iterative_epsilon_schedule_rejects_invalid_ladders() -> None:
             max_steps=20,
             explicit_schedule=[],
         )
+
+
+def test_hidden_layer_override_parser_requires_positive_integer_widths() -> None:
+    helpers = _load_training_helpers()
+
+    assert helpers.parse_hidden_layers(None, [128, 128]) == [128, 128]
+    assert helpers.parse_hidden_layers("256, 256") == [256, 256]
+    assert helpers.parse_hidden_layers("512") == [512]
+
+    with pytest.raises(ValueError, match="positive integers"):
+        helpers.parse_hidden_layers("256,0")
+
+    with pytest.raises(ValueError, match="positive integers"):
+        helpers.parse_hidden_layers("128,wide")
