@@ -66,7 +66,7 @@ this README.
 | Model documentation pages | 174 |
 | Rust PyO3 model wrappers | 175 |
 | Optional extras | 24 |
-| Python test files | 689 |
+| Python test files | 690 |
 | Public documentation pages | 536 |
 | GitHub Actions workflows | 14 |
 
@@ -789,7 +789,7 @@ bridge install. For source-tree runs against local bridge code, use
 
 ## CI/CD
 
-13 GitHub Actions workflows (`.github/workflows/`), all SHA-pinned:
+14 GitHub Actions workflows (`.github/workflows/`), all SHA-pinned:
 
 | Workflow | Purpose |
 |----------|---------|

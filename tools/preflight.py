@@ -51,9 +51,14 @@ GATES = [
             "warnings",
         ],
     ),
-    ("ruff-check", ["python", "-m", "ruff", "check", "src/", "tests/"]),
-    ("ruff-format", ["python", "-m", "ruff", "format", "--check", "src/", "tests/"]),
+    ("capability-manifest", ["python", "tools/capability_manifest.py", "--check"]),
+    ("ruff-check", ["python", "-m", "ruff", "check", "src/", "tests/", "tools/capability_manifest.py"]),
+    (
+        "ruff-format",
+        ["python", "-m", "ruff", "format", "--check", "src/", "tests/", "tools/capability_manifest.py"],
+    ),
     ("bandit", ["python", "-m", "bandit", "-r", "src/sc_neurocore/", "-c", "pyproject.toml", "-q"]),
+    ("mypy", ["python", "-m", "mypy", "src/sc_neurocore/"]),
     ("spdx-guard", None),
     (
         "pytest",
