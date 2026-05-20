@@ -60,13 +60,13 @@ this README.
 | Surface | Current inventory |
 |---|---:|
 | Package version | 3.15.0 |
-| Public API exports | 39 |
+| Public API exports | 44 |
 | Python model source modules | 151 |
 | Python model classes | 157 |
 | Model documentation pages | 174 |
 | Rust PyO3 model wrappers | 175 |
-| Optional extras | 23 |
-| Python test files | 671 |
+| Optional extras | 24 |
+| Python test files | 685 |
 | Public documentation pages | 535 |
 | GitHub Actions workflows | 14 |
 
@@ -561,6 +561,10 @@ The Docker image ships with the full Rust engine (39–202× faster than Brian2)
 # Build
 make docker-build
 # or: docker build -f deploy/Dockerfile -t sc-neurocore:latest .
+
+# Build the offline HDL shipping profile with packaged baseline RTL primitives
+# and the hash-locked HDL dependency set. Vivado is not required for this image.
+docker build -f deploy/Dockerfile --build-arg INSTALL_EXTRAS=hdl -t sc-neurocore:hdl .
 
 # Run interactive Python shell
 make docker-run

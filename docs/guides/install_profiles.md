@@ -38,6 +38,25 @@ The base path is enough for:
 - HDL generation and project scaffolding;
 - CPU-side report parsing and JSON planning tools.
 
+### Base install evidence
+
+The install-profile audit in `benchmarks/results/install_profile_audit.json`
+records the current base boundary. The latest measured run installed the local
+`sc-neurocore` wheel with its declared base dependencies, imported the public
+package, and verified that PyTorch, JAX, Qiskit, PennyLane, Lava, FastAPI, MPI,
+NIR, HTTP client, plotting, GPU, and Studio stacks were not pulled into the base
+environment.
+
+Current measured evidence:
+
+| Field | Value |
+| --- | --- |
+| Command | `python -m pip install <repo>` |
+| Elapsed time | 12.942 s |
+| Installed packages | `defusedxml`, `numpy`, `pip`, `sc-neurocore`, `scipy` |
+| Heavy optional packages installed | None |
+| Public import smoke | `sc_neurocore.__version__ == "3.15.0"` and 44 public exports |
+
 ## Rust engine
 
 The Rust engine is optional acceleration. If an engine wheel or local source
@@ -83,11 +102,47 @@ pip install "sc-neurocore[full]"
 ```
 
 The `hdl` and `full` profiles use the same wheel artefact set as the base
-package: source RTL primitives under `hardware/`, safety SystemVerilog under
+package: source RTL primitives under `hardware/`, baseline offline HDL
+primitives under `hdl/primitives/`, safety SystemVerilog under
 `hdl_gen/safety/`, and OpenROAD helper scripts under `hdl_gen/openroad_flow/`.
 Those files are bundled with the wheel so install-time extras only decide which
-Python dependencies are added; external synthesis tools still produce bitstreams
-or routed reports locally.
+Python dependencies are added; external synthesis tools still produce
+device-specific bitstreams or routed reports locally.
+
+## Offline HDL shipping profile
+
+The `hdl-offline` shipping profile is the audited baseline for machines where
+Vivado is unavailable or intentionally excluded from the install image. It
+ships the static primitive RTL used by the baseline stochastic-computing FPGA
+path:
+
+- `sc_bitstream_encoder.v`
+- `sc_bitstream_synapse.v`
+- `sc_dense_layer_core.v`
+- `sc_dotproduct_to_current.v`
+- `sc_firing_rate_bank.v`
+- `sc_lif_neuron.v`
+
+Python consumers can enumerate or read those files from the installed wheel:
+
+```python
+from sc_neurocore.hdl.resources import baseline_primitive_text, list_baseline_primitive_rtl
+
+for name in list_baseline_primitive_rtl():
+    rtl = baseline_primitive_text(name)
+```
+
+Docker and conda consume the same wheel-contained resources:
+
+```bash
+docker build -f deploy/Dockerfile --build-arg INSTALL_EXTRAS=hdl -t sc-neurocore:hdl .
+conda build conda/
+```
+
+The install-profile audit fails if the package-data pattern, static primitive
+files, Docker HDL profile hook, or conda base runtime dependencies drift from
+the release contract. Current audit evidence is recorded in
+`benchmarks/results/install_profile_audit.json`.
 
 The `full` profile is the CPU-side union for training, NIR, Studio, HDL, codec,
 bioware, and quantum workflows. It deliberately does not pull GPU-, MPI-,

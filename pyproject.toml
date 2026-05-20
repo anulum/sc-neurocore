@@ -69,6 +69,7 @@ dev-full = ["sc-neurocore[dev]", "jax", "jaxlib", "qiskit", "pennylane", "qiskit
 accel = ["numba>=0.56"]
 gpu = ["cupy-cuda12x>=12.0"]
 hdl = ["pint>=0.23"]
+license = ["httpx>=0.27"]
 full = [
   "numba>=0.56",
   "matplotlib>=3.5",
@@ -135,16 +136,8 @@ exclude = [
 sc_neurocore = [
   "py.typed",
   "model_zoo/weights/*.npz",
-  "accel/julia/_native/*.jl",
-  "accel/julia/chiplet/*.jl",
-  "accel/julia/fault_injection/*.jl",
-  "accel/julia/neurons/rk4_neurons.jl",
-  "accel/julia/neurons/wilson_cowan.jl",
-  "accel/julia/neurons/wong_wang.jl",
-  "accel/julia/world_model/*.jl",
-  "accel/go/rk4_neurons/*.go",
-  "accel/mojo/rk4_neurons/*.mojo",
   "hardware/*.v",
+  "hdl/primitives/*.v",
   "hdl_gen/safety/*.sv",
   "hdl_gen/openroad_flow/*.sh",
 ]

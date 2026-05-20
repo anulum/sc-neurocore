@@ -40,7 +40,7 @@ def test_version_string():
 
 
 def test_all_count():
-    assert len(sc_neurocore.__all__) == 39, f"Public API count changed: {len(sc_neurocore.__all__)}"
+    assert len(sc_neurocore.__all__) == 44, f"Public API count changed: {len(sc_neurocore.__all__)}"
 
 
 def test_project_does_not_require_separate_engine_pypi_package():
@@ -51,9 +51,16 @@ def test_project_does_not_require_separate_engine_pypi_package():
 
 def test_install_extras_cover_documented_workflow_groups():
     extras = _project_metadata()["project"]["optional-dependencies"]
+    dependencies = _project_metadata()["project"]["dependencies"]
 
     assert extras["core"] == []
     assert extras["hdl"] == ["pint>=0.23"]
+    assert extras["license"] == ["httpx>=0.27"]
+    assert all(
+        dep.split(">=", maxsplit=1)[0].split("==", maxsplit=1)[0]
+        not in {"torch", "jax", "jaxlib", "qiskit", "pennylane", "fastapi", "uvicorn", "httpx"}
+        for dep in dependencies
+    )
 
     full = set(extras["full"])
     assert set(extras["hdl"]) <= full
@@ -81,6 +88,7 @@ def test_hdl_install_profile_packages_source_artefacts():
     package_data = _project_metadata()["tool"]["setuptools"]["package-data"]["sc_neurocore"]
 
     assert "hardware/*.v" in package_data
+    assert "hdl/primitives/*.v" in package_data
     assert "hdl_gen/safety/*.sv" in package_data
     assert "hdl_gen/openroad_flow/*.sh" in package_data
 
@@ -92,5 +100,48 @@ def test_hdl_install_profile_packages_source_artefacts():
     }
 
     assert "hardware/microtubule_neuron.v" in matched
+    assert "hdl/primitives/sc_bitstream_encoder.v" in matched
+    assert "hdl/primitives/sc_bitstream_synapse.v" in matched
+    assert "hdl/primitives/sc_dense_layer_core.v" in matched
+    assert "hdl/primitives/sc_dotproduct_to_current.v" in matched
+    assert "hdl/primitives/sc_firing_rate_bank.v" in matched
+    assert "hdl/primitives/sc_lif_neuron.v" in matched
     assert "hdl_gen/safety/safety_monitor.sv" in matched
     assert "hdl_gen/openroad_flow/run_asic_flow.sh" in matched
+
+
+def test_hdl_resource_helper_rejects_unknown_primitive_names():
+    from sc_neurocore.hdl.resources import (
+        baseline_primitive_text,
+        list_baseline_primitive_rtl,
+    )
+
+    names = list_baseline_primitive_rtl()
+
+    assert names == (
+        "sc_bitstream_encoder.v",
+        "sc_bitstream_synapse.v",
+        "sc_dense_layer_core.v",
+        "sc_dotproduct_to_current.v",
+        "sc_firing_rate_bank.v",
+        "sc_lif_neuron.v",
+    )
+    assert "module sc_bitstream_encoder" in baseline_primitive_text("sc_bitstream_encoder.v")
+    try:
+        baseline_primitive_text("../sc_bitstream_encoder.v")
+    except ValueError as exc:
+        assert "Unknown baseline HDL primitive" in str(exc)
+    else:  # pragma: no cover - assertion guard.
+        raise AssertionError("path traversal primitive name was accepted")
+
+
+def test_base_wheel_does_not_package_polyglot_research_sources():
+    package_data = _project_metadata()["tool"]["setuptools"]["package-data"]["sc_neurocore"]
+
+    forbidden_prefixes = (
+        "accel/julia/",
+        "accel/go/",
+        "accel/mojo/",
+    )
+
+    assert not any(item.startswith(forbidden_prefixes) for item in package_data)
