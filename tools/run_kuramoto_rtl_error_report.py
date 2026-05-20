@@ -196,8 +196,7 @@ def _evaluate_case(case: dict[str, Any]) -> dict[str, Any]:
     passed = (
         summary["max_abs_phase_error_rad"] < thresholds["max_abs_phase_error_rad"]
         and summary["rms_phase_error_rad"] < thresholds["rms_phase_error_rad"]
-        and rust_parity["max_abs_phase_error_rad"]
-        < thresholds["rust_max_abs_phase_error_rad"]
+        and rust_parity["max_abs_phase_error_rad"] < thresholds["rust_max_abs_phase_error_rad"]
         and rust_parity["order_parameter_error"] < thresholds["rust_order_parameter_error"]
     )
     return {
