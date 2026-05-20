@@ -1,0 +1,74 @@
+{
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "base_dependencies": [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "defusedxml>=0.7.1",
+    "tomli>=2.0; python_version < '3.11'"
+  ],
+  "base_dependency_count": 4,
+  "heavy_dependencies_in_base": [],
+  "install_measurement": {
+    "measured": false
+  },
+  "offline_hardware_profile": {
+    "conda_recipe_aligned": true,
+    "docker_build_arg": "INSTALL_EXTRAS=hdl",
+    "docker_wheel_build_covers_static_primitives": true,
+    "expected_static_primitives": [
+      "hdl/primitives/sc_bitstream_encoder.v",
+      "hdl/primitives/sc_bitstream_synapse.v",
+      "hdl/primitives/sc_dense_layer_core.v",
+      "hdl/primitives/sc_dotproduct_to_current.v",
+      "hdl/primitives/sc_firing_rate_bank.v",
+      "hdl/primitives/sc_lif_neuron.v"
+    ],
+    "missing_static_primitives": [],
+    "pip_install": "pip install \"sc-neurocore[hdl]\"",
+    "profile": "hdl-offline",
+    "static_primitive_pattern": "hdl/primitives/*.v",
+    "vivado_required_for_baseline": false
+  },
+  "optional_extra_count": 24,
+  "optional_extras": [
+    "accel",
+    "bioware",
+    "chemistry",
+    "compression",
+    "core",
+    "dev",
+    "dev-full",
+    "docs",
+    "full",
+    "gpu",
+    "hdl",
+    "jax",
+    "julia",
+    "lava",
+    "license",
+    "mpi",
+    "nir",
+    "optics",
+    "quantum",
+    "quantum-cognition",
+    "research",
+    "studio",
+    "training",
+    "units"
+  ],
+  "packaged_data": [
+    "py.typed",
+    "model_zoo/weights/*.npz",
+    "hardware/*.v",
+    "hdl/primitives/*.v",
+    "hdl_gen/safety/*.sv",
+    "hdl_gen/openroad_flow/*.sh"
+  ],
+  "passed": true,
+  "polyglot_research_sources_in_wheel": [],
+  "project": {
+    "name": "sc-neurocore",
+    "version": "3.15.0"
+  },
+  "schema_version": "sc-neurocore.install-profile-audit.v1"
+}

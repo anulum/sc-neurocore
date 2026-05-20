@@ -3,13 +3,13 @@
   "counts": {
     "github_workflows": 14,
     "model_documentation_pages": 174,
-    "optional_extras": 23,
-    "public_api_exports": 39,
+    "optional_extras": 24,
+    "public_api_exports": 44,
     "public_documentation_pages": 535,
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 671
+    "test_files": 685
   },
   "documentation": {
     "public_pages": [
@@ -1713,6 +1713,7 @@
     "BitstreamEncoder",
     "BitstreamSpikeRecorder",
     "BitstreamSynapse",
+    "CommercialLicenseStatus",
     "FixedPointBitstreamEncoder",
     "FixedPointLFSR",
     "FixedPointLIFNeuron",
@@ -1744,7 +1745,11 @@
     "estimate_memory",
     "generate_bernoulli_bitstream",
     "generate_sobol_bitstream",
-    "plasticity"
+    "get_license_status",
+    "load_license_from_env",
+    "plasticity",
+    "set_license_key",
+    "validate_license_key"
   ],
   "packaging": {
     "optional_extras": [
@@ -1762,6 +1767,7 @@
       "jax",
       "julia",
       "lava",
+      "license",
       "mpi",
       "nir",
       "optics",
@@ -1775,16 +1781,8 @@
     "shipped_package_data": [
       "py.typed",
       "model_zoo/weights/*.npz",
-      "accel/julia/_native/*.jl",
-      "accel/julia/chiplet/*.jl",
-      "accel/julia/fault_injection/*.jl",
-      "accel/julia/neurons/rk4_neurons.jl",
-      "accel/julia/neurons/wilson_cowan.jl",
-      "accel/julia/neurons/wong_wang.jl",
-      "accel/julia/world_model/*.jl",
-      "accel/go/rk4_neurons/*.go",
-      "accel/mojo/rk4_neurons/*.mojo",
       "hardware/*.v",
+      "hdl/primitives/*.v",
       "hdl_gen/safety/*.sv",
       "hdl_gen/openroad_flow/*.sh"
     ]
@@ -2078,6 +2076,7 @@
       "tests/test_learning/test_learning_julia_parity.py",
       "tests/test_learning/test_lifelong.py",
       "tests/test_learning_advanced.py",
+      "tests/test_license.py",
       "tests/test_lif_fi_curve.py",
       "tests/test_lr_schedulers.py",
       "tests/test_memristor/test_memristor_mapper.py",
@@ -2283,6 +2282,7 @@
       "tests/test_profiling.py",
       "tests/test_public_api.py",
       "tests/test_public_docstring_policy.py",
+      "tests/test_publish_workflow.py",
       "tests/test_pynq_driver.py",
       "tests/test_qat.py",
       "tests/test_qat_torch.py",
@@ -2299,6 +2299,7 @@
       "tests/test_rall_dendrite.py",
       "tests/test_recorders/test_spike_recorder.py",
       "tests/test_registry.py",
+      "tests/test_release_surface_consistency.py",
       "tests/test_reservoir.py",
       "tests/test_residual.py",
       "tests/test_resilience.py",
@@ -2425,6 +2426,8 @@
       "tests/test_tools/test_ci_security_packet.py",
       "tests/test_tools/test_cosim_q88_import_contract.py",
       "tests/test_tools/test_eda_toolchain_versions.py",
+      "tests/test_tools/test_go_security_baseline.py",
+      "tests/test_tools/test_install_profile_audit.py",
       "tests/test_tools/test_license_matrix.py",
       "tests/test_tools/test_license_matrix_canonical.py",
       "tests/test_tools/test_mlperf_sc_report.py",
@@ -2432,6 +2435,15 @@
       "tests/test_tools/test_online_o1_adaptation_benchmark.py",
       "tests/test_tools/test_python_code_scanner_plan.py",
       "tests/test_tools/test_release_security_artifact_index.py",
+      "tests/test_tools/test_release_workflow_security_packet.py",
+      "tests/test_tools/test_run_benchmark_regression_scanners.py",
+      "tests/test_tools/test_run_cargo_fuzz_scanners.py",
+      "tests/test_tools/test_run_lightweight_security_scanners.py",
+      "tests/test_tools/test_run_osv_scanners.py",
+      "tests/test_tools/test_run_python_compliance_scanners.py",
+      "tests/test_tools/test_run_rust_security_scanners.py",
+      "tests/test_tools/test_run_syft_cyclonedx_scanners.py",
+      "tests/test_tools/test_run_typing_scanners.py",
       "tests/test_tools/test_rust_supply_chain_scanner_plan.py",
       "tests/test_tools/test_security_scanner_manifest.py",
       "tests/test_tools/test_security_scanner_workflow.py",

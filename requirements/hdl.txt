@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# (C) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# (C) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore HDL install-profile requirements
+#
+# Generated from requirements/hdl.in with hash-locked wheels for Docker builds.
+
+flexcache==0.3 \
+    --hash=sha256:d43c9fea82336af6e0115e308d9d33a185390b8346a017564611f1466dcd2e32
+    # via pint
+flexparser==0.4 \
+    --hash=sha256:3738b456192dcb3e15620f324c447721023c0293f6af9955b481e91d00179846
+    # via pint
+pint==0.25.3 \
+    --hash=sha256:27eb25143bd5de9fcc4d5a4b484f16faf6b4615aa93ece6b3373a8c1a3c1b97d
+    # via -r requirements/hdl.in
+platformdirs==4.9.6 \
+    --hash=sha256:e61adb1d5e5cb3441b4b7710bea7e4c12250ca49439228cc1021c00dcfac0917
+    # via pint
+typing-extensions==4.15.0 \
+    --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548
+    # via pint

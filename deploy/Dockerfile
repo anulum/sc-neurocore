@@ -51,6 +51,7 @@ RUN python -m pip install --no-cache-dir --upgrade "pip==${PIP_VERSION}"
 
 WORKDIR /build
 COPY requirements/build.txt ./requirements/build.txt
+COPY requirements/hdl.txt ./requirements/hdl.txt
 COPY requirements/hub.txt ./requirements/hub.txt
 COPY requirements/runtime.txt ./requirements/runtime.txt
 COPY pyproject.toml README.md LICENSE ./
@@ -58,8 +59,14 @@ COPY src/ ./src/
 
 RUN pip install --no-cache-dir --require-hashes -r requirements/build.txt \
     && pip install --no-cache-dir --require-hashes --prefix=/install -r requirements/runtime.txt
-RUN if [ -n "${INSTALL_EXTRAS}" ]; then \
-        pip install --no-cache-dir --require-hashes --prefix=/install -r requirements/hub.txt; \
+RUN case "${INSTALL_EXTRAS}" in \
+      ""|"core") true ;; \
+      "hdl") pip install --no-cache-dir --require-hashes --prefix=/install -r requirements/hdl.txt ;; \
+      "hub"|"studio") pip install --no-cache-dir --require-hashes --prefix=/install -r requirements/hub.txt ;; \
+      *) echo "Unsupported INSTALL_EXTRAS=${INSTALL_EXTRAS}; use core, hdl, hub, or studio" >&2; exit 64 ;; \
+    esac
+RUN if [ "${INSTALL_EXTRAS}" = "hdl" ]; then \
+        python -c "from pathlib import Path; import sys; sys.path.insert(0, 'src'); from sc_neurocore.hdl.resources import list_baseline_primitive_rtl; assert list_baseline_primitive_rtl(); assert Path('src/sc_neurocore/hdl/primitives/sc_bitstream_encoder.v').is_file()"; \
     fi
 RUN python -m build --wheel --no-isolation --outdir /tmp/sc-neurocore-wheel \
     && python -m installer --prefix=/install /tmp/sc-neurocore-wheel/*.whl

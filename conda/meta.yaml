@@ -1,4 +1,4 @@
-{% set version = "3.13.3" %}
+{% set version = "3.15.0" %}
 
 package:
   name: sc-neurocore
@@ -19,20 +19,24 @@ requirements:
   host:
     - python >=3.10
     - pip
-    - setuptools >=61.0
+    - setuptools >=78.0
   run:
     - python >=3.10
-    - numpy >=1.22
-    - scipy >=1.7
+    - numpy >=1.24
+    - scipy >=1.10
+    - defusedxml >=0.7.1
+    - tomli >=2.0  # [py<311]
 
 test:
   imports:
     - sc_neurocore
+    - sc_neurocore.hdl.resources
     - sc_neurocore.neurons
     - sc_neurocore.layers
     - sc_neurocore.nir_bridge
   commands:
     - sc-neurocore --help
+    - python -c "from sc_neurocore.hdl.resources import list_baseline_primitive_rtl; assert 'sc_bitstream_encoder.v' in list_baseline_primitive_rtl()"
 
 about:
   home: https://github.com/anulum/sc-neurocore

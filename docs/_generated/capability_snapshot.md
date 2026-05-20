@@ -6,13 +6,13 @@
 | Surface | Current inventory |
 |---|---:|
 | Package version | 3.15.0 |
-| Public API exports | 39 |
+| Public API exports | 44 |
 | Python model source modules | 151 |
 | Python model classes | 157 |
 | Model documentation pages | 174 |
 | Rust PyO3 model wrappers | 175 |
-| Optional extras | 23 |
-| Python test files | 671 |
+| Optional extras | 24 |
+| Python test files | 685 |
 | Public documentation pages | 535 |
 | GitHub Actions workflows | 14 |
 
