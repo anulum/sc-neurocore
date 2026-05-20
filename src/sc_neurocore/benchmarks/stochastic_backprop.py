@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import math
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import torch
 import torch.nn.functional as F
@@ -421,8 +421,11 @@ def _estimator_variance_evidence(
     target = torch.tensor(0.32, dtype=torch.float32)
     expected_product = input_probability * weight_probability
     reference_loss = (expected_product - target).square()
-    reference_loss.backward()
-    pathwise_gradient = float(raw_weight.grad.detach().item())
+    cast(Any, reference_loss).backward()
+    raw_weight_grad = raw_weight.grad
+    if raw_weight_grad is None:
+        raise RuntimeError("reference gradient was not populated")
+    pathwise_gradient = float(raw_weight_grad.detach().item())
 
     pathwise_estimates = [pathwise_gradient for _ in range(sample_count)]
     straight_through_estimates: list[float] = []
