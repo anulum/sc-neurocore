@@ -1,0 +1,66 @@
+{
+  "benchmark_id": "mnist_conv_spiking_net_99_49_2026_03_26",
+  "checkpoint": {
+    "format": "PyTorch state_dict",
+    "path": "examples/mnist_conv_train/results/conv_spiking_net_best.pt",
+    "sha256": "c95d74630399a695ce785ffbc977eb9a4aa02f3fa2868f96cf7b6ebc56aaa7d9"
+  },
+  "claim": "ConvSpikingNet reached 99.49% MNIST test accuracy in the committed training run.",
+  "dataset": {
+    "name": "MNIST",
+    "normalization": {
+      "mean": [
+        0.1307
+      ],
+      "std": [
+        0.3081
+      ]
+    },
+    "source": "torchvision.datasets.MNIST",
+    "split": "test",
+    "test_examples": 10000,
+    "training_augmentation": [
+      "RandomRotation(10)",
+      "RandomAffine(translate=(0.1, 0.1))"
+    ]
+  },
+  "model": {
+    "architecture": "Conv2d(1,32,5)->LIF->AvgPool2d->Conv2d(32,64,5)->LIF->AvgPool2d->Linear(1024,128)->LIF->Linear(128,10)->LIF",
+    "learn_beta": true,
+    "learn_threshold": true,
+    "n_parameters_from_log": 184594,
+    "name": "ConvSpikingNet",
+    "readout": "membrane accumulation",
+    "surrogate": "fast_sigmoid"
+  },
+  "reproduction": {
+    "fresh_rerun_required_for_new_release_claims": true,
+    "manifest_refresh_command": "python tools/mnist_reproducibility_manifest.py --output benchmarks/results/mnist_conv_accuracy_reproducibility.json",
+    "notes": "This manifest validates the committed 99.49% training-run evidence. A new release claim must attach a fresh rerun manifest instead of silently reusing this historical artefact.",
+    "requires_torchvision": true,
+    "training_command": "python examples/mnist_conv_train.py --epochs 30 --batch-size 128 --lr 0.005 --timesteps 25 --beta 0.95 --device cuda"
+  },
+  "result": {
+    "best_epoch": 30,
+    "best_test_accuracy_percent": 99.49,
+    "claim_boundary": "committed_training_log_and_checkpoint",
+    "final_epoch": 30,
+    "final_test_accuracy_percent": 99.49
+  },
+  "schema_version": 1,
+  "training": {
+    "batch_size": 128,
+    "device_from_log": "cuda",
+    "epochs": 30,
+    "learning_rate": 0.005,
+    "optimizer": "AdamW",
+    "scheduler": "CosineAnnealingLR",
+    "timesteps": 25,
+    "total_epoch_wall_time_s_from_log": 1507.6,
+    "weight_decay": 0.0001
+  },
+  "training_log": {
+    "path": "examples/mnist_conv_train/results/mnist_training.log",
+    "sha256": "23c0a156942b6c53f3d1d9fb3d72f53b7203f2eadd06dc641dbc8056fe9f16a7"
+  }
+}

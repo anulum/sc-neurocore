@@ -290,7 +290,7 @@ otherwise.
 | Phi* (IIT) estimation | **Yes** | — | — | — | — |
 | SpikeInterface adapter | **Yes** | — | — | — | — |
 | NIR primitives | **18/18** | — | 12 | 5 | — |
-| MNIST accuracy (SNN) | **99.49%** | ~95% | ~93% | — | — |
+| MNIST accuracy (SNN) | **99.49%** (`benchmarks/results/mnist_conv_accuracy_reproducibility.json`) | ~95% | ~93% | — | — |
 | Plasticity (STDP, R-STDP) | Yes | — | Yes | Yes | Yes |
 | Quantum hybrid (Qiskit/PennyLane) | **Yes** | — | — | — | — |
 | MLIR emitter (CIRCT) | **Yes** | — | — | — | — |
@@ -770,7 +770,7 @@ Runnable scripts in `examples/`:
 | `zenith_hybrid_resnet.py` | Train hybrid network with PyTorch autograd → save via Zenith exascale persistence |
 | `jax_training_demo.py` | JAX JIT surrogate-gradient SNN training on synthetic data |
 | `mnist_fpga/demo.py` | MNIST classifier: train → quantise Q8.8 → SC simulate → Verilog export |
-| `mnist_conv_train.py` | **ConvSpikingNet: 99.49% MNIST** (learnable beta/threshold, cosine LR) |
+| `mnist_conv_train.py` | **ConvSpikingNet: 99.49% MNIST** (learnable beta/threshold, cosine LR; evidence in `benchmarks/results/mnist_conv_accuracy_reproducibility.json`) |
 | `mnist_surrogate/train.py` | Surrogate gradient SNN training (FastSigmoid/SuperSpike/ATan, ~95% MNIST) |
 | `nir_roundtrip_demo.py` | NIR roundtrip: CubaLIF + recurrent connections, build → import → run → export |
 | `norse_nir_roundtrip.py` | Norse → NIR → SC-NeuroCore roundtrip with real Norse weights |

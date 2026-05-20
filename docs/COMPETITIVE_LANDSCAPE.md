@@ -205,14 +205,14 @@ competitor is Lava's Loihi compiler, which targets a fixed architecture
 | Float baseline (sklearn) | 94.2% | SC-NeuroCore | Verified (stored artifact) |
 | Quantized Q8.8 | 94.2% | SC-NeuroCore | Verified (stored artifact) |
 | Stochastic computing (L=1024) | 94.0% | SC-NeuroCore | Verified (stored artifact) |
-| ConvSpikingNet (learnable params) | **99.49%** | **SC-NeuroCore** | Verified (multiple runs) |
+| ConvSpikingNet (learnable params) | **99.49%** | **SC-NeuroCore** | Verified by `benchmarks/results/mnist_conv_accuracy_reproducibility.json` |
 | Surrogate gradient SNN | ~97% | snnTorch | Published |
 | Surrogate gradient SNN | ~96% | Norse | Published |
 
-SC-NeuroCore's ConvSpikingNet achieves 99.49% on MNIST with
-learnable beta/threshold, cosine LR, and data augmentation — the
-highest reported SNN accuracy among open-source frameworks.
-Verified across multiple training runs.
+SC-NeuroCore's ConvSpikingNet achieved 99.49% on MNIST with
+learnable beta/threshold, cosine LR, and data augmentation in the committed
+training run recorded by `benchmarks/results/mnist_conv_accuracy_reproducibility.json`.
+Use that manifest as the evidence boundary for the public claim.
 
 ---
 

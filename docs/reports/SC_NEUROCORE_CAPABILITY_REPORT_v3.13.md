@@ -22,7 +22,7 @@ compiler emitting SystemVerilog.
 |--------|-------|-------|
 | Neuron models | 122 Python, 111 Rust | Counted |
 | Test suite | 3 376+ Python + 373 Rust, 100% coverage | CI-enforced |
-| MNIST accuracy | 99.49% (conv SNN) | Measured |
+| MNIST accuracy | 99.49% (conv SNN) | `benchmarks/results/mnist_conv_accuracy_reproducibility.json` |
 | Brunel 1K speedup vs Brian2 | 4.0x | Benchmarked (Numba JIT) |
 | Bitstream packing | 41.3 Gbit/s (AVX-512) | Criterion benchmark |
 | Synthesis (sc_neurocore_top) | 3 673 LUTs (Xilinx 7-series) | Yosys report |
@@ -138,7 +138,7 @@ learnable membrane and threshold parameters.
 |-----------|-------------|----------|
 | MNIST (FC-SNN) | 784→128→128→10, 10 epochs | 95.5% |
 | MNIST (FC-SNN + learnable τ) | Same + Fang 2021 | 97.7% |
-| MNIST (Conv-SNN) | Conv→LIF→Pool→Conv→LIF→Pool→FC | 99.49% |
+| MNIST (Conv-SNN) | Conv→LIF→Pool→Conv→LIF→Pool→FC | 99.49% (`benchmarks/results/mnist_conv_accuracy_reproducibility.json`) |
 
 `to_sc_weights()` exports trained float weights normalised to [0,1]
 for SC bitstream deployment.

@@ -157,7 +157,9 @@ python examples/mnist_conv_train.py
 ```
 
 Achieves 99.49% MNIST accuracy with a ConvSpikingNet using learnable
-membrane time constants and threshold parameters.
+membrane time constants and threshold parameters. The public evidence boundary
+is `benchmarks/results/mnist_conv_accuracy_reproducibility.json`, which binds
+the claim to the committed training log and checkpoint hashes.
 
 ### Export to hardware
 

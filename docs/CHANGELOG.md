@@ -772,6 +772,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Techniques: FastSigmoid surrogate, cosine LR schedule, data augmentation, membrane readout
 - Trained on RTX 6000, 30 epochs, 25 minutes
 - Model checkpoint: `examples/mnist_conv_train/results/conv_spiking_net_best.pt`
+- Reproducibility manifest: `benchmarks/results/mnist_conv_accuracy_reproducibility.json`
 
 ### Intel Lava/Loihi Bridge
 - `integrations/lava_bridge.py` — SCtoLavaConverter, export_weights_loihi
