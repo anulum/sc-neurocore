@@ -1,0 +1,87 @@
+{
+  "deploy_manifest": {
+    "benchmark_artifact": {
+      "path": "benchmarks/baselines/security_side_channel_benchmark.json"
+    },
+    "boundary_notes": [
+      "no physical power measurement",
+      "no physical thermal measurement",
+      "no DPA-resistance claim",
+      "no silicon-security claim"
+    ],
+    "evidence_class": "analytic_simulation",
+    "overhead_measurements": {
+      "dummy_stream_overhead_ratio": 1.0,
+      "protected_bitstream_count": 3,
+      "total_dummy_streams_inserted": 3
+    },
+    "schema_version": "sc-neurocore.side-channel-deploy-manifest.v0.1",
+    "security_parameters": {
+      "bitstream_length": 64,
+      "dummy_streams_per_record": 1,
+      "max_dummy_overhead_ratio": 1.0,
+      "rotation_stride": 3,
+      "seed": 7
+    }
+  },
+  "evidence_boundary": "analytic_simulation_only",
+  "report": {
+    "baseline": {
+      "bitstream_count": 3,
+      "class_activity_proxy": {
+        "class_means": {
+          "0.0": 0.015873015873015872,
+          "1.0": 0.5079365079365079
+        },
+        "label_activity_correlation": 0.4999999999999999,
+        "max_class_mean_gap": 0.49206349206349204,
+        "sample_count": 3
+      },
+      "dummy_stream_overhead_ratio": 0.0,
+      "name": "correlated_activity_fixture"
+    },
+    "boundary_notes": [
+      "no physical power measurement",
+      "no physical thermal measurement",
+      "no DPA-resistance claim",
+      "no silicon-security claim"
+    ],
+    "max_class_mean_gap_reduction": -0.03174603174603169,
+    "protected": {
+      "bitstream_count": 3,
+      "class_activity_proxy": {
+        "class_means": {
+          "0.0": 0.19047619047619047,
+          "1.0": 0.7142857142857142
+        },
+        "label_activity_correlation": 0.9386522045811476,
+        "max_class_mean_gap": 0.5238095238095237,
+        "sample_count": 3
+      },
+      "dummy_stream_overhead_ratio": 1.0,
+      "name": "activity_balanced"
+    },
+    "records": [
+      {
+        "label": 0.0,
+        "probability": 0.1,
+        "protected_dummy_streams_inserted": 1,
+        "protected_realised_probability": 0.09375
+      },
+      {
+        "label": 1.0,
+        "probability": 0.4,
+        "protected_dummy_streams_inserted": 1,
+        "protected_realised_probability": 0.40625
+      },
+      {
+        "label": 1.0,
+        "probability": 0.7,
+        "protected_dummy_streams_inserted": 1,
+        "protected_realised_probability": 0.703125
+      }
+    ],
+    "threat_model": "class_activity_correlation_proxy"
+  },
+  "schema_version": "sc-neurocore.side-channel-benchmark.v0.1"
+}

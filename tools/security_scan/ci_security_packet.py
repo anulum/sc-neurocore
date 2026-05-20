@@ -156,6 +156,8 @@ def _build_artifact_paths(
 
 
 def _build_summary(output_dir: Path, artifact_index_payload: dict[str, Any]) -> dict[str, Any]:
+    python_plan = _load_packet_plan(output_dir / "python_code_scanner_plan.json")
+    rust_plan = _load_packet_plan(output_dir / "rust_supply_chain_scanner_plan.json")
     return {
         "schema_version": CI_SECURITY_PACKET_SCHEMA_VERSION,
         "output_dir": str(output_dir.resolve()),
@@ -168,8 +170,52 @@ def _build_summary(output_dir: Path, artifact_index_payload: dict[str, Any]) -> 
         "missing_optional_vulnerability_status": artifact_index_payload.get(
             "missing_optional_vulnerability_status", []
         ),
+        "missing_required_scanner_inputs": _missing_required_scanner_inputs(
+            {
+                "python_code_scanner_plan": python_plan,
+                "rust_supply_chain_scanner_plan": rust_plan,
+            }
+        ),
         "vulnerability_summary": artifact_index_payload.get("vulnerability_summary", {}),
     }
+
+
+def _load_packet_plan(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, OSError, json.JSONDecodeError):
+        return {}
+    if isinstance(payload, dict):
+        return payload
+    return {}
+
+
+def _missing_required_scanner_inputs(plans: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    missing: list[dict[str, Any]] = []
+    for plan_name, plan in plans.items():
+        scanners = plan.get("scanners", [])
+        if not isinstance(scanners, list):
+            continue
+        for scanner in scanners:
+            if not isinstance(scanner, dict):
+                continue
+            if scanner.get("run_class") != "missing_required_input":
+                continue
+            scanner_name = scanner.get("name")
+            missing_inputs = scanner.get("missing_required_inputs")
+            if not isinstance(scanner_name, str) or not isinstance(missing_inputs, list):
+                continue
+            inputs = sorted(item for item in missing_inputs if isinstance(item, str))
+            if not inputs:
+                continue
+            missing.append(
+                {
+                    "inputs": inputs,
+                    "plan": plan_name,
+                    "scanner": scanner_name,
+                }
+            )
+    return sorted(missing, key=lambda item: (item["plan"], item["scanner"], item["inputs"]))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -212,7 +258,9 @@ def main(argv: list[str] | None = None) -> int:
     print(json.dumps(summary, indent=2, sort_keys=True))
 
     if args.fail_on_missing_required and (
-        summary["missing_required"] or summary["missing_required_vulnerability_status"]
+        summary["missing_required"]
+        or summary["missing_required_vulnerability_status"]
+        or summary["missing_required_scanner_inputs"]
     ):
         return 1
     return 0

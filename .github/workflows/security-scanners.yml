@@ -13,6 +13,8 @@ permissions:
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * *"
   push:
     paths:
       - ".github/workflows/security-scanners.yml"
@@ -20,6 +22,9 @@ on:
       - "tools/security_scan/**"
       - "security/**"
       - "requirements/**"
+      - "tests/test_tools/test_run_lightweight_security_scanners.py"
+      - "tests/test_tools/test_run_cargo_fuzz_scanners.py"
+      - "tests/test_tools/test_run_benchmark_regression_scanners.py"
       - "tests/test_tools/test_security_scanner_workflow.py"
   pull_request:
     paths:
@@ -27,6 +32,9 @@ on:
       - "tools/security_scan/**"
       - "security/**"
       - "requirements/**"
+      - "tests/test_tools/test_run_lightweight_security_scanners.py"
+      - "tests/test_tools/test_run_cargo_fuzz_scanners.py"
+      - "tests/test_tools/test_run_benchmark_regression_scanners.py"
       - "tests/test_tools/test_security_scanner_workflow.py"
       - "tools/security_scanner_manifest.py"
 
@@ -41,19 +49,138 @@ jobs:
         with:
           python-version: "3.12"
 
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+        with:
+          go-version: "1.26.3"
+
+      - name: Install lightweight scanner tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install bandit==1.8.3 pip-audit==2.10.0 reuse==6.2.0 ruff==0.8.1
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8
+          cargo install cargo-audit --version 0.20.0 --locked
+          cargo install cargo-deny --version 0.16.0 --locked
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
+            | sh -s -- -b "$HOME/.local/bin" v1.20.0
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
       - name: Generate CI security packet
         run: |
           mkdir -p security/ci-security-packet
           python tools/security_scan/ci_security_packet.py \
-            --output-dir security/ci-security-packet
+            --output-dir security/ci-security-packet \
+            --fail-on-missing-required
           if [ -f security/ci-security-packet/security_scanner_manifest.json ]; then
             python tools/security_scanner_manifest.py \
               --validate security/ci-security-packet/security_scanner_manifest.json
           fi
+
+      - name: Run lightweight scanner lane
+        run: |
+          python tools/security_scan/run_lightweight_security_scanners.py \
+            --output-dir security/ci-security-packet
+          test -f security/ci-security-packet/security/lightweight_scanner_summary.json
+          python tools/security_scan/run_python_compliance_scanners.py \
+            --output-dir security/ci-security-packet
+          test -f security/ci-security-packet/security/python_compliance_summary.json
+          python tools/security_scan/run_osv_scanners.py \
+            --output-dir security/ci-security-packet
+          test -f security/ci-security-packet/security/osv_scanner.json
+          test -f security/ci-security-packet/security/osv_scanner_summary.json
+          python tools/security_scan/run_rust_security_scanners.py \
+            --output-dir security/ci-security-packet
+          test -f security/ci-security-packet/security/rust_scanner_summary.json
+          python tools/security_scan/run_syft_cyclonedx_scanners.py \
+            --output-dir security/ci-security-packet
+          test -f security/ci-security-packet/security/sbom.cdx.json
+          test -f security/ci-security-packet/security/syft_cyclonedx_summary.json
+          python tools/security_scan/release_security_artifact_index.py \
+            --manifest security/release_artifacts_manifest.json \
+            --root security/ci-security-packet \
+            --output security/ci-security-packet/release_security_artifact_index.json \
+            --fail-on-missing-required
 
       - name: Upload CI security packet artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: security-scanner-packet
           path: security/ci-security-packet
+          retention-days: 30
+
+  nightly-cargo-fuzz:
+    name: Nightly Cargo Fuzz
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --version 0.11.2 --locked
+
+      - name: Run bounded fuzz targets
+        run: |
+          mkdir -p security/cargo-fuzz-packet
+          python tools/security_scan/run_cargo_fuzz_scanners.py \
+            --output-dir security/cargo-fuzz-packet \
+            --target all \
+            --max-total-time 300
+          test -f security/cargo-fuzz-packet/security/cargo_fuzz_summary.json
+
+      - name: Upload cargo fuzz packet artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: cargo-fuzz-packet
+          path: security/cargo-fuzz-packet
+          retention-days: 30
+
+  nightly-benchmark-regression:
+    name: Nightly Benchmark Regression
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install benchmark dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Generate current side-channel benchmark
+        run: |
+          mkdir -p security/benchmark-current
+          PYTHONPATH=src python tools/side_channel_benchmark.py \
+            --output security/benchmark-current/security_side_channel_benchmark.json \
+            --probabilities 0.1,0.4,0.7 \
+            --labels 0,1,1 \
+            --bitstream-length 64 \
+            --seed 7 \
+            --rotation-stride 3 \
+            --dummy-streams-per-record 1 \
+            --max-dummy-overhead-ratio 1.0
+
+      - name: Run benchmark regression comparator
+        run: |
+          mkdir -p security/benchmark-regression-packet/security
+          python tools/security_scan/run_benchmark_regression_scanners.py \
+            --baseline benchmarks/baselines/security_side_channel_benchmark.json \
+            --current security/benchmark-current/security_side_channel_benchmark.json \
+            --output security/benchmark-regression-packet/security/benchmark_regression.json \
+            --max-regression-pct 5.0
+          test -f security/benchmark-regression-packet/security/benchmark_regression.json
+
+      - name: Upload benchmark regression packet artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: benchmark-regression-packet
+          path: security/benchmark-regression-packet
           retention-days: 30

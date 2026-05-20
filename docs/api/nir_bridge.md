@@ -36,6 +36,13 @@ must expose mapping-like nodes and sequence-like edges, all node names and edge
 endpoints must be non-empty strings, and every edge endpoint must reference an
 existing node before the graph is lowered.
 
+### High-Level Hardware Path
+
+`SCNNetwork` is the public alias for the parsed NIR `SCNetwork`. It supports
+`SCNNetwork.from_nir(...)` for import and `network.to_hardware(...)` for
+lowering through the same `from_scnetwork()` and `compile_network_to_fpga()`
+pipeline used by the lower-level compiler API.
+
 ## Node Map
 
 ::: sc_neurocore.nir_bridge.node_map

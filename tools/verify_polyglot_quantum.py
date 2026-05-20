@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -82,41 +83,42 @@ def _check_rust() -> tuple[str, bool, float]:
     t0 = time.monotonic()
     total_tests = 0
     try:
-        for rs_name in existing:
-            rs_path = _QC_DIR / rs_name
-            bin_name = rs_name.replace(".rs", "_test")
-            out_path = f"/tmp/{bin_name}"
+        with tempfile.TemporaryDirectory(prefix="scn_rust_quantum_tests_") as tmpdir:
+            for rs_name in existing:
+                rs_path = _QC_DIR / rs_name
+                bin_name = rs_name.replace(".rs", "_test")
+                out_path = Path(tmpdir) / bin_name
 
-            result = subprocess.run(
-                ["rustc", "--test", str(rs_path), "-o", out_path, "-C", "opt-level=2"],
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
-            if result.returncode != 0:
-                print(f"  Rust compile error ({rs_name}):\n{result.stderr[:300]}")
-                return "Rust", False, time.monotonic() - t0
+                result = subprocess.run(
+                    ["rustc", "--test", str(rs_path), "-o", str(out_path), "-C", "opt-level=2"],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                )
+                if result.returncode != 0:
+                    print(f"  Rust compile error ({rs_name}):\n{result.stderr[:300]}")
+                    return "Rust", False, time.monotonic() - t0
 
-            result = subprocess.run(
-                [out_path],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-            if result.returncode != 0:
-                print(f"  Rust test error ({rs_name}):\n{result.stdout[:300]}")
-                return "Rust", False, time.monotonic() - t0
+                result = subprocess.run(
+                    [str(out_path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                if result.returncode != 0:
+                    print(f"  Rust test error ({rs_name}):\n{result.stdout[:300]}")
+                    return "Rust", False, time.monotonic() - t0
 
-            # Extract test count
-            for line in result.stdout.strip().split("\n"):
-                if "test result" in line:
-                    print(f"  [{rs_name}] {line.strip()}")
-                    # Parse "X passed"
-                    import re
+                # Extract test count
+                for line in result.stdout.strip().split("\n"):
+                    if "test result" in line:
+                        print(f"  [{rs_name}] {line.strip()}")
+                        # Parse "X passed"
+                        import re
 
-                    m = re.search(r"(\d+) passed", line)
-                    if m:
-                        total_tests += int(m.group(1))
+                        m = re.search(r"(\d+) passed", line)
+                        if m:
+                            total_tests += int(m.group(1))
 
         dt = time.monotonic() - t0
         print(f"  Rust total: {total_tests} tests across {len(existing)} files")

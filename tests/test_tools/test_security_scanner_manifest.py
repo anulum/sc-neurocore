@@ -46,6 +46,7 @@ def test_manifest_contains_required_security_scanners() -> None:
         "actionlint",
         "pyright",
         "mypy",
+        "bandit",
         "ruff",
         "benchmark-regression",
         "cargo-fuzz-nightly",
@@ -90,6 +91,62 @@ def test_manifest_validation_and_deterministic_json() -> None:
     report = tool.validate_scanner_manifest(payload)
     assert report["passed"]
     assert not any(finding["level"] == "error" for finding in report["findings"])
+
+
+def test_required_scanner_contract_includes_every_manifest_scanner() -> None:
+    tool = _load_tool()
+
+    manifest = tool.build_scanner_manifest()
+    scanner_names = {scanner["name"] for scanner in manifest["scanners"]}
+
+    assert scanner_names == tool._required_scanner_names()
+
+
+def test_json_output_scanners_are_release_artifacts() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    tool = _load_tool()
+
+    release_manifest_path = repo_root / "security" / "release_artifacts_manifest.json"
+    release_manifest = json.loads(release_manifest_path.read_text(encoding="utf-8"))
+    artifact_paths = {
+        artifact["path"]
+        for artifact in release_manifest["artifacts"]
+        if isinstance(artifact, dict) and isinstance(artifact.get("path"), str)
+    }
+
+    for scanner in tool.build_scanner_manifest()["scanners"]:
+        command = scanner["command"]
+        if "security/" not in command:
+            continue
+        expected_paths = set()
+        tokens = command.replace("=", " ").split()
+        for index, token in enumerate(tokens):
+            if index > 0 and tokens[index - 1] in {
+                "--baseline",
+                "--cache-dir",
+                "--current",
+                "--output-dir",
+            }:
+                continue
+            if token.startswith("security/"):
+                expected_paths.add(token)
+            elif token in {"--output", "--output-file", "--report-path", "--file"}:
+                output_path = tokens[index + 1]
+                if output_path.startswith("security/"):
+                    expected_paths.add(output_path)
+
+        assert expected_paths <= artifact_paths, scanner["name"]
+
+
+def test_bandit_scanner_excludes_vendored_tool_environments() -> None:
+    tool = _load_tool()
+    manifest = tool.build_scanner_manifest()
+
+    bandit = next(scanner for scanner in manifest["scanners"] if scanner["name"] == "bandit")
+
+    assert "src/sc_neurocore/accel/mojo/.pixi" in bandit["command"]
+    assert "--severity-level medium" in bandit["command"]
+    assert "security/bandit.json" in bandit["command"]
 
 
 def test_cli_writes_manifest_and_can_validate() -> None:

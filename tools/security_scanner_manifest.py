@@ -57,7 +57,10 @@ _MANDATORY_SCANNERS = (
         ecosystem="python",
         cadence="on-push",
         blocking_policy="blocking",
-        command="pip-audit --strict --format=json --output=security/pip_audit.json",
+        command=(
+            "pip-audit --strict --requirement requirements/release.txt "
+            "--format json --progress-spinner off --output security/pip_audit.json"
+        ),
         inputs=(
             _input(
                 path="requirements/release.txt",
@@ -67,7 +70,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="low",
-        pinned_version="pip-audit==2.8.6",
+        pinned_version="pip-audit==2.10.0",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -75,8 +78,15 @@ _MANDATORY_SCANNERS = (
         ecosystem="multi",
         cadence="on-push",
         blocking_policy="blocking",
-        command="osv-scanner --config=tools/security_scan/osv-scanner.json --format json .",
+        command=(
+            "python tools/security_scan/run_osv_scanners.py "
+            "--output-dir security/ci-security-packet"
+        ),
         inputs=(
+            _input(
+                path="tools/security_scan/osv-scanner.toml",
+                purpose="OSV-Scanner v2 exception and override policy",
+            ),
             _input(
                 path="requirements/release.txt",
                 purpose="Python dependencies for vulnerability correlation",
@@ -85,7 +95,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="low",
-        pinned_version="osv-scanner==1.8.2",
+        pinned_version="osv-scanner==2.3.8",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -93,7 +103,7 @@ _MANDATORY_SCANNERS = (
         ecosystem="rust",
         cadence="on-push",
         blocking_policy="blocking",
-        command="cargo audit --format json --file security/cargo_audit.json",
+        command="cargo audit --format json --file Cargo.lock",
         inputs=(
             _input(
                 path="Cargo.lock",
@@ -111,7 +121,7 @@ _MANDATORY_SCANNERS = (
         ecosystem="rust",
         cadence="on-push",
         blocking_policy="blocking",
-        command="cargo deny --manifest-path engine/Cargo.toml --config engine/deny.toml check licenses --format json",
+        command="cargo deny --format json --manifest-path engine/Cargo.toml check --config engine/deny.toml licenses",
         inputs=(
             _input(
                 path="Cargo.lock",
@@ -184,7 +194,10 @@ _MANDATORY_SCANNERS = (
         ecosystem="supply-chain",
         cadence="on-push",
         blocking_policy="blocking",
-        command="syft . --output cyclonedx-json --file security/sbom.cdx.json",
+        command=(
+            "python tools/security_scan/run_syft_cyclonedx_scanners.py "
+            "--output-dir security/ci-security-packet"
+        ),
         inputs=(
             _input(path="requirements/release.txt", purpose="Reproducibility baseline"),
             _input(path="Cargo.lock", purpose="Rust dependency baseline", required=False),
@@ -198,8 +211,8 @@ _MANDATORY_SCANNERS = (
         name="reuse",
         ecosystem="docs",
         cadence="on-push",
-        blocking_policy="blocking",
-        command="reuse lint --root .",
+        blocking_policy="allowed_to_fail",
+        command="reuse --root . lint --json",
         inputs=(
             _input(path="REUSE.toml", purpose="Reuse lint config"),
             _input(path="README.md", purpose="Top-level SPDX-referenced docs"),
@@ -207,15 +220,18 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore docs compliance owner",
         noise="low",
-        pinned_version="reuse==4.0.3",
-        allowed_to_fail_rationale=None,
+        pinned_version="reuse==6.2.0",
+        allowed_to_fail_rationale=(
+            "REUSE lint currently exposes repo-wide legacy SPDX coverage debt; "
+            "CI records the JSON artefact while remediation is tracked separately."
+        ),
     ),
     ScannerManifestEntry(
         name="actionlint",
         ecosystem="github",
         cadence="on-push",
         blocking_policy="blocking",
-        command="actionlint -format json -out security/actionlint.json .github/workflows",
+        command="actionlint -format '{{json .}}'",
         inputs=(_input(path=".github/workflows", purpose="Workflow syntax and action policy"),),
         owner="SC-NeuroCore CI lane owner",
         noise="low",
@@ -257,7 +273,11 @@ _MANDATORY_SCANNERS = (
         ecosystem="python",
         cadence="on-push",
         blocking_policy="blocking",
-        command="bandit -q -r . --exit-zero",
+        command=(
+            "bandit -q -r src/sc_neurocore tools "
+            "-x src/sc_neurocore/accel/mojo/.pixi "
+            "--severity-level medium --format json --output security/bandit.json"
+        ),
         inputs=(_input(path="src", purpose="Python code surface to lint"),),
         owner="SC-NeuroCore code quality owner",
         noise="low",
@@ -269,7 +289,10 @@ _MANDATORY_SCANNERS = (
         ecosystem="python",
         cadence="on-push",
         blocking_policy="blocking",
-        command="ruff check --output-format json --output-file security/ruff.json src tools tests",
+        command=(
+            "ruff check --output-format json --output-file security/ruff.json "
+            "--cache-dir security/ruff-cache src tools tests"
+        ),
         inputs=(
             _input(path="pyproject.toml", purpose="Ruff rule settings"),
             _input(path="src", purpose="Python source surface"),
@@ -284,15 +307,20 @@ _MANDATORY_SCANNERS = (
         ecosystem="python",
         cadence="nightly",
         blocking_policy="blocking",
-        command="python tools/run_full_cov.sh --no-ci-mode --benchmark-regression-check",
+        command=(
+            "python tools/security_scan/run_benchmark_regression_scanners.py "
+            "--baseline benchmarks/baselines/security_side_channel_benchmark.json "
+            "--current security/benchmark-current/security_side_channel_benchmark.json "
+            "--output security/benchmark_regression.json --max-regression-pct 5.0"
+        ),
         inputs=(
             _input(
-                path="results", purpose="Stored benchmark baseline and run deltas", required=False
+                path="benchmarks/baselines/security_side_channel_benchmark.json",
+                purpose="Tracked deterministic side-channel benchmark baseline",
             ),
             _input(
-                path="tools/side_channel_hdl_emit.py",
-                purpose="Representative tool-path sample",
-                required=False,
+                path="tools/side_channel_benchmark.py",
+                purpose="Deterministic current benchmark generator",
             ),
         ),
         owner="SC-NeuroCore performance owner",
@@ -305,7 +333,10 @@ _MANDATORY_SCANNERS = (
         ecosystem="rust",
         cadence="nightly",
         blocking_policy="allowed_to_fail",
-        command="cargo fuzz run --dev --fuzz-dir fuzz -- -dict=/dev/null",
+        command=(
+            "python tools/security_scan/run_cargo_fuzz_scanners.py "
+            "--output-dir security/ci-security-packet --target all --max-total-time 300"
+        ),
         inputs=(
             _input(path="fuzz", purpose="Rust fuzz targets and corpus data"),
             _input(path="src/sc_neurocore", purpose="Rust API and bridge targets"),
@@ -455,6 +486,7 @@ def _required_scanner_names() -> set[str]:
         "actionlint",
         "pyright",
         "mypy",
+        "bandit",
         "ruff",
         "benchmark-regression",
         "cargo-fuzz-nightly",

@@ -20,22 +20,29 @@ CANONICAL_MANIFEST = REPO_ROOT / "security" / "release_artifacts_manifest.json"
 
 EXPECTED_ARTIFACT_IDS = {
     "actionlint",
+    "bandit",
     "benchmark_regression",
     "cargo_audit",
     "cargo_deny",
     "cargo_fuzz_summary",
     "gitleaks",
+    "lightweight_scanner_summary",
     "model_data_license_matrix",
     "mypy",
     "osv_scanner",
+    "osv_scanner_summary",
     "pip_audit",
+    "python_compliance_summary",
     "pyright",
     "reuse",
     "ruff",
+    "rust_scanner_summary",
     "scanner_manifest",
     "semgrep",
     "syft_cyclonedx",
+    "syft_cyclonedx_summary",
     "trivy_fs",
+    "typing_scanner_summary",
 }
 
 EXPECTED_VULNERABILITY_STATUS_IDS = {

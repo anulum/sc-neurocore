@@ -61,7 +61,34 @@ If any artefact has a different provenance or licence, follow that licence and k
 - Verify model-weight transfer rights and dataset usage terms before commercial embedding.
 - Keep audit evidence in the relevant project compliance trail.
 
-## 5) Practical compliance rule
+## 5) Optional commercial licence validation
+
+AGPL use remains the default and never requires a commercial key. Commercial
+licence validation is opt-in and runs only when a caller explicitly supplies a
+key through `sc_neurocore.set_license_key(...)` or sets
+`SC_NEUROCORE_LICENSE_KEY`.
+
+Install the optional HTTP dependency before validating keys:
+
+```bash
+pip install "sc-neurocore[license]"
+```
+
+Example:
+
+```python
+import sc_neurocore
+
+status = sc_neurocore.set_license_key("...")
+if status.commercial_enabled:
+    print("Commercial licence active")
+```
+
+The raw key is sent to the configured validation endpoint and is not stored in
+the returned process-local status object. Invalid or expired keys do not enable
+commercial mode.
+
+## 6) Practical compliance rule
 
 Treat this boundary as enforced at build time:
 

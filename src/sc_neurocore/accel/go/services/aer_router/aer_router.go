@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Go service acceleration for bridges/aer_router.py
 
-package aer_router
+package main
 
 // Source: bridges/aer_router.py (service score: 6)
 // 11 functions to accelerate
