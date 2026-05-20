@@ -22,6 +22,7 @@
           1.12
         ],
         "oscillator_count": 4,
+        "phase_regime": "nominal_higher_coupling",
         "steps": 32
       },
       "passed": true,
@@ -92,6 +93,7 @@
           1.3
         ],
         "oscillator_count": 4,
+        "phase_regime": "nominal_low_coupling",
         "steps": 32
       },
       "passed": true,
@@ -156,6 +158,7 @@
           1.0
         ],
         "oscillator_count": 1,
+        "phase_regime": "single_oscillator_no_coupling",
         "steps": 32
       },
       "passed": true,
@@ -195,14 +198,136 @@
         "rust_max_abs_phase_error_rad": 0.001,
         "rust_order_parameter_error": 0.001
       }
+    },
+    {
+      "case_name": "wrap_boundary_pair",
+      "config": {
+        "coupling": 0.4,
+        "data_width": 24,
+        "dt": 0.001,
+        "fraction": 16,
+        "initial_phases": [
+          6.27,
+          0.01
+        ],
+        "lut_size": 128,
+        "omegas": [
+          1.0,
+          0.9
+        ],
+        "oscillator_count": 2,
+        "phase_regime": "phase_modulus_wrap_boundary",
+        "steps": 32
+      },
+      "passed": true,
+      "rust_solver_parity": {
+        "available": true,
+        "engine": "sc_neurocore_engine.KuramotoSolver",
+        "final_rust_phases_rad": [
+          0.01895227143180588,
+          0.038662421388608106
+        ],
+        "max_abs_phase_error_rad": 0.0003476020526704815,
+        "order_parameter_error": 2.135689478266478e-06,
+        "order_parameter_fixed": 0.9999535748310946,
+        "order_parameter_rust": 0.9999514391416163,
+        "regime": "noiseless_all_to_all_scalar_coupling",
+        "rms_phase_error_rad": 0.0002540208559826494
+      },
+      "summary": {
+        "coupling": 0.4,
+        "data_width": 24,
+        "dt": 0.001,
+        "final_fixed_phases_rad": [
+          0.01904296875,
+          0.0383148193359375
+        ],
+        "final_float_phases_rad": [
+          0.01895227143180588,
+          0.038662421388608106
+        ],
+        "fraction": 16,
+        "lut_size": 128,
+        "max_abs_phase_error_rad": 0.0003476020526704815,
+        "oscillator_count": 2,
+        "rms_phase_error_rad": 0.00014996680799813286,
+        "steps": 32
+      },
+      "thresholds": {
+        "max_abs_phase_error_rad": 0.01,
+        "rms_phase_error_rad": 0.005,
+        "rust_max_abs_phase_error_rad": 0.01,
+        "rust_order_parameter_error": 0.001
+      }
+    },
+    {
+      "case_name": "near_antiphase_pair",
+      "config": {
+        "coupling": 0.8,
+        "data_width": 24,
+        "dt": 0.0005,
+        "fraction": 16,
+        "initial_phases": [
+          0.001,
+          3.140592653589793
+        ],
+        "lut_size": 128,
+        "omegas": [
+          1.05,
+          0.95
+        ],
+        "oscillator_count": 2,
+        "phase_regime": "near_antiphase_circular_error",
+        "steps": 32
+      },
+      "passed": true,
+      "rust_solver_parity": {
+        "available": true,
+        "engine": "sc_neurocore_engine.KuramotoSolver",
+        "final_rust_phases_rad": [
+          0.017817859550747366,
+          3.1557747940390457
+        ],
+        "max_abs_phase_error_rad": 0.0002790642773775609,
+        "order_parameter_error": 0.00016132828135353473,
+        "order_parameter_fixed": 0.001979186830880661,
+        "order_parameter_rust": 0.0018178585495271264,
+        "regime": "noiseless_all_to_all_scalar_coupling",
+        "rms_phase_error_rad": 0.00019972131706007623
+      },
+      "summary": {
+        "coupling": 0.8,
+        "data_width": 24,
+        "dt": 0.0005,
+        "final_fixed_phases_rad": [
+          0.018096923828125,
+          3.155731201171875
+        ],
+        "final_float_phases_rad": [
+          0.017817859550747366,
+          3.1557747940390457
+        ],
+        "fraction": 16,
+        "lut_size": 128,
+        "max_abs_phase_error_rad": 0.0002790642773775609,
+        "oscillator_count": 2,
+        "rms_phase_error_rad": 0.00011997495048140575,
+        "steps": 32
+      },
+      "thresholds": {
+        "max_abs_phase_error_rad": 0.01,
+        "rms_phase_error_rad": 0.005,
+        "rust_max_abs_phase_error_rad": 0.01,
+        "rust_order_parameter_error": 0.001
+      }
     }
   ],
   "evidence_boundary": "Compares the research Kuramoto RTL emitter fixed-point arithmetic against the float Kuramoto Euler step and the maintained Rust Kuramoto solver for the bounded noiseless all-to-all scalar-coupling regime. This is not FPGA timing or board evidence.",
   "evidence_class": "deterministic_fixed_point_reference",
   "failed_cases": 0,
   "hardware_measurement_claimed": false,
-  "passed_cases": 3,
+  "passed_cases": 5,
   "report_type": "kuramoto_rtl_fixed_point_error",
   "schema_version": 1,
-  "total_cases": 3
+  "total_cases": 5
 }

@@ -33,6 +33,7 @@ EVIDENCE_BOUNDARY = (
 def _case(
     *,
     case_name: str,
+    phase_regime: str,
     oscillator_count: int,
     omegas: list[float],
     initial_phases: list[float],
@@ -50,6 +51,7 @@ def _case(
     return {
         "case_name": case_name,
         "config": {
+            "phase_regime": phase_regime,
             "oscillator_count": oscillator_count,
             "omegas": omegas,
             "initial_phases": initial_phases,
@@ -72,6 +74,7 @@ def _case(
 DEFAULT_CASES: tuple[dict[str, Any], ...] = (
     _case(
         case_name="higher_coupling_quartet_short",
+        phase_regime="nominal_higher_coupling",
         oscillator_count=4,
         omegas=[0.88, 0.96, 1.04, 1.12],
         initial_phases=[0.05, 0.9, 1.7, 2.6],
@@ -88,6 +91,7 @@ DEFAULT_CASES: tuple[dict[str, Any], ...] = (
     ),
     _case(
         case_name="low_coupling_quartet_short",
+        phase_regime="nominal_low_coupling",
         oscillator_count=4,
         omegas=[0.8, 1.0, 1.1, 1.3],
         initial_phases=[0.0, 0.3, 0.6, 0.9],
@@ -104,6 +108,7 @@ DEFAULT_CASES: tuple[dict[str, Any], ...] = (
     ),
     _case(
         case_name="no_coupling_single_oscillator",
+        phase_regime="single_oscillator_no_coupling",
         oscillator_count=1,
         omegas=[1.0],
         initial_phases=[0.0],
@@ -116,6 +121,40 @@ DEFAULT_CASES: tuple[dict[str, Any], ...] = (
         max_abs_phase_error_rad=0.001,
         rms_phase_error_rad=0.001,
         rust_max_abs_phase_error_rad=0.001,
+        rust_order_parameter_error=0.001,
+    ),
+    _case(
+        case_name="wrap_boundary_pair",
+        phase_regime="phase_modulus_wrap_boundary",
+        oscillator_count=2,
+        omegas=[1.0, 0.9],
+        initial_phases=[6.27, 0.01],
+        coupling=0.4,
+        dt=1e-3,
+        data_width=24,
+        fraction=16,
+        lut_size=128,
+        steps=32,
+        max_abs_phase_error_rad=0.01,
+        rms_phase_error_rad=0.005,
+        rust_max_abs_phase_error_rad=0.01,
+        rust_order_parameter_error=0.001,
+    ),
+    _case(
+        case_name="near_antiphase_pair",
+        phase_regime="near_antiphase_circular_error",
+        oscillator_count=2,
+        omegas=[1.05, 0.95],
+        initial_phases=[0.001, 3.140592653589793],
+        coupling=0.8,
+        dt=5e-4,
+        data_width=24,
+        fraction=16,
+        lut_size=128,
+        steps=32,
+        max_abs_phase_error_rad=0.01,
+        rms_phase_error_rad=0.005,
+        rust_max_abs_phase_error_rad=0.01,
         rust_order_parameter_error=0.001,
     ),
 )

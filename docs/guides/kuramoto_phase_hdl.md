@@ -113,11 +113,15 @@ Current verification is limited to:
   low-coupling, and no-coupling fixed-point error thresholds against both the
   float Euler reference and the maintained Rust `KuramotoSolver` baseline in
   the bounded noiseless all-to-all scalar-coupling regime
+- the same report now includes explicit phase-regime metadata plus
+  wrap-boundary and near-antiphase cases so circular-error handling is covered
+  outside nominal phase layouts
 
 It is not yet:
 
 - a timing-closed FPGA implementation report
-- exhaustive fixed-point error characterisation across all phase regimes
+- exhaustive fixed-point error characterisation across all oscillator counts,
+  coupling strengths, frequencies, and phase layouts
 - parity evidence for SSGF geometry, PGBO, field-pressure, or noise extensions
 
 ## Recommendation
