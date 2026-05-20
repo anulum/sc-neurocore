@@ -153,9 +153,7 @@ def test_kuramoto_rtl_error_report_cli_writes_deterministic_gate(tmp_path) -> No
     assert payload["failed_cases"] == 0
     assert payload["passed_cases"] == payload["total_cases"]
     assert output.read_text(encoding="utf-8").endswith("\n")
-    assert {
-        case["case_name"] for case in payload["cases"]
-    } >= {
+    assert {case["case_name"] for case in payload["cases"]} >= {
         "higher_coupling_quartet_short",
         "low_coupling_quartet_short",
         "no_coupling_single_oscillator",

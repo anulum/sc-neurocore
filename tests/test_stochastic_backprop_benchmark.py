@@ -103,10 +103,7 @@ def test_estimator_regression_manifest_covers_multiple_lengths_and_acceptance_ga
         sample_count=32,
     )
 
-    assert (
-        manifest["schema_version"]
-        == STOCHASTIC_BACKPROP_ESTIMATOR_REGRESSION_SCHEMA_VERSION
-    )
+    assert manifest["schema_version"] == STOCHASTIC_BACKPROP_ESTIMATOR_REGRESSION_SCHEMA_VERSION
     assert manifest["SPDX-License-Identifier"] == "AGPL-3.0-or-later"
     assert manifest["evidence_class"] == "deterministic_estimator_regression"
     assert manifest["evidence_boundary"] == STOCHASTIC_BACKPROP_EVIDENCE_BOUNDARY

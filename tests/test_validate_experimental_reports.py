@@ -87,7 +87,9 @@ def test_validate_report_requires_kuramoto_higher_coupling_metadata():
 
     result = validate_report(
         report,
-        path=Path("benchmarks/results/experimental_physics_kuramoto_noiseless_symplectic_lift.json"),
+        path=Path(
+            "benchmarks/results/experimental_physics_kuramoto_noiseless_symplectic_lift.json"
+        ),
         max_abs_diff=1e-3,
         max_rel_diff=1e-2,
         require_mode="shadow",

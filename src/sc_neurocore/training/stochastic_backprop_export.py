@@ -247,8 +247,7 @@ def _validate_benchmark_matches_config(
         raise ValueError("benchmark_report must not claim hardware measurement")
     if benchmark_report["evidence_boundary"] != STOCHASTIC_BACKPROP_EVIDENCE_BOUNDARY:
         raise ValueError(
-            "benchmark_report evidence_boundary must be "
-            f"{STOCHASTIC_BACKPROP_EVIDENCE_BOUNDARY!r}"
+            f"benchmark_report evidence_boundary must be {STOCHASTIC_BACKPROP_EVIDENCE_BOUNDARY!r}"
         )
 
     report_config = _mapping(benchmark_report["sc_config"], "sc_config")

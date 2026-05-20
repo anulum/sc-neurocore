@@ -110,7 +110,9 @@ class AEREmitter:
         code += f"    wire [{addr_width - 1}:0] encoded_addr = first_hot_index(spike_vector);\n"
         code += f"    reg [{spike_width - 1}:0] event_vector;\n"
         code += f"    reg [{spike_width - 1}:0] acknowledged_vector;\n"
-        code += "    wire new_spike_vector = spike_valid && (spike_vector != acknowledged_vector);\n\n"
+        code += (
+            "    wire new_spike_vector = spike_valid && (spike_vector != acknowledged_vector);\n\n"
+        )
         code += "    always @(posedge clk or negedge rst_n) begin\n"
         code += "        if (!rst_n) begin\n"
         code += "            aer_req <= 1'b0;\n"
