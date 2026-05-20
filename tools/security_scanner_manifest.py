@@ -113,7 +113,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="Rust security maintainer",
         noise="low",
-        pinned_version="cargo-audit==0.20.0",
+        pinned_version="cargo-audit==0.22.1",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -131,7 +131,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="Rust security maintainer",
         noise="low",
-        pinned_version="cargo-deny==0.16.0",
+        pinned_version="cargo-deny==0.19.6",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -281,7 +281,7 @@ _MANDATORY_SCANNERS = (
         inputs=(_input(path="src", purpose="Python code surface to lint"),),
         owner="SC-NeuroCore code quality owner",
         noise="low",
-        pinned_version="bandit==1.8.3",
+        pinned_version="bandit==1.9.4",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(

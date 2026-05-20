@@ -50,8 +50,7 @@ def test_manifest_osv_command_uses_packet_runner_and_v2_pin() -> None:
 
     assert scanners["osv-scanner"]["pinned_version"] == "osv-scanner==2.3.8"
     assert scanners["osv-scanner"]["command"] == (
-        "python tools/security_scan/run_osv_scanners.py "
-        "--output-dir security/ci-security-packet"
+        "python tools/security_scan/run_osv_scanners.py --output-dir security/ci-security-packet"
     )
     input_paths = {entry["path"] for entry in scanners["osv-scanner"]["inputs"]}
     assert "tools/security_scan/osv-scanner.toml" in input_paths
@@ -59,9 +58,7 @@ def test_manifest_osv_command_uses_packet_runner_and_v2_pin() -> None:
 
 def test_osv_config_tracks_bounded_paste_unmaintained_exception() -> None:
     config = tomllib.loads(
-        (_repo_root() / "tools" / "security_scan" / "osv-scanner.toml").read_text(
-            encoding="utf-8"
-        )
+        (_repo_root() / "tools" / "security_scan" / "osv-scanner.toml").read_text(encoding="utf-8")
     )
 
     ignored = {entry["id"]: entry for entry in config["IgnoredVulns"]}
@@ -130,11 +127,14 @@ def test_runner_writes_osv_report_and_summary(tmp_path: Path) -> None:
     assert summary["passed"] is True
     assert summary["package_count"] == 1
     assert summary["vulnerability_count"] == 0
-    assert json.loads(
-        (tmp_path / "packet" / "security" / "osv_scanner_summary.json").read_text(
-            encoding="utf-8"
-        )
-    )["passed"] is True
+    assert (
+        json.loads(
+            (tmp_path / "packet" / "security" / "osv_scanner_summary.json").read_text(
+                encoding="utf-8"
+            )
+        )["passed"]
+        is True
+    )
 
 
 def test_runner_fails_when_osv_report_is_missing(tmp_path: Path) -> None:

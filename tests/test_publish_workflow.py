@@ -49,7 +49,10 @@ def test_publish_workflow_builds_and_smoke_tests_engine_wheels_before_upload() -
     smoke = jobs["smoke-engine-wheels"]
     assert smoke["needs"] == ["build-engine-wheels"]
     smoke_text = _run_text(smoke)
-    assert "pip install dist-engine/*.whl" in smoke_text
+    assert "ZipFile(wheels[0])" in smoke_text
+    assert "PYTHONPATH=dist-engine/smoke" in smoke_text
+    assert "pip install dist-engine/*.whl" not in smoke_text
+    assert "pip install --upgrade pip" not in smoke_text
     assert "import sc_neurocore_engine" in smoke_text
     assert "simd_tier()" in smoke_text
 

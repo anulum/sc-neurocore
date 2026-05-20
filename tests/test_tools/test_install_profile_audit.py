@@ -171,8 +171,12 @@ def test_install_measurement_uses_base_install_and_records_diagnostics(
     assert "--no-deps" not in install_command
     assert "--no-build-isolation" not in install_command
     assert measurement["command"] == "python -m pip install <repo>"
-    assert measurement["install_stdout_tail"] == [f"install stdout {index}" for index in range(8, 20)]
-    assert measurement["install_stderr_tail"] == [f"install stderr {index}" for index in range(8, 20)]
+    assert measurement["install_stdout_tail"] == [
+        f"install stdout {index}" for index in range(8, 20)
+    ]
+    assert measurement["install_stderr_tail"] == [
+        f"install stderr {index}" for index in range(8, 20)
+    ]
     assert measurement["smoke_stderr_tail"] == [f"smoke stderr {index}" for index in range(8, 20)]
     assert measurement["installed_package_count"] == 2
     assert measurement["heavy_optional_packages_installed"] == []

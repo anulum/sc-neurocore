@@ -104,11 +104,14 @@ def test_runner_writes_and_validates_cyclonedx_sbom(tmp_path: Path) -> None:
     ]
     assert summary["passed"] is True
     assert summary["component_count"] == 1
-    assert json.loads(
-        (tmp_path / "packet" / "security" / "syft_cyclonedx_summary.json").read_text(
-            encoding="utf-8"
-        )
-    )["passed"] is True
+    assert (
+        json.loads(
+            (tmp_path / "packet" / "security" / "syft_cyclonedx_summary.json").read_text(
+                encoding="utf-8"
+            )
+        )["passed"]
+        is True
+    )
 
 
 def test_runner_fails_when_syft_does_not_write_sbom(tmp_path: Path) -> None:

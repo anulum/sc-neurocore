@@ -55,15 +55,13 @@ jobs:
 
       - name: Install lightweight scanner tools
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install bandit==1.8.3 pip-audit==2.10.0 reuse==6.2.0 ruff==0.8.1
+          python -m pip install --require-hashes -r requirements/security-scanners.txt
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
           go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8
-          cargo install cargo-audit --version 0.20.0 --locked
-          cargo install cargo-deny --version 0.16.0 --locked
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
-            | sh -s -- -b "$HOME/.local/bin" v1.20.0
+          go install github.com/anchore/syft/cmd/syft@v1.20.0
+          cargo install cargo-audit --version 0.22.1 --locked
+          cargo install cargo-deny --version 0.19.6 --locked
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Generate CI security packet
@@ -152,8 +150,7 @@ jobs:
 
       - name: Install benchmark dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e .
+          python -m pip install --require-hashes -r requirements/runtime.txt
 
       - name: Generate current side-channel benchmark
         run: |

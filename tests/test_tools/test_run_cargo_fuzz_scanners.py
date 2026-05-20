@@ -98,11 +98,14 @@ def test_runner_executes_each_target_with_bounded_time_and_writes_summary(tmp_pa
     assert all("-runs=0" not in call for call in calls)
     assert summary["passed"] is True
     assert summary["target_count"] == 2
-    assert json.loads(
-        (tmp_path / "packet" / "security" / "cargo_fuzz_summary.json").read_text(
-            encoding="utf-8"
-        )
-    )["passed"] is True
+    assert (
+        json.loads(
+            (tmp_path / "packet" / "security" / "cargo_fuzz_summary.json").read_text(
+                encoding="utf-8"
+            )
+        )["passed"]
+        is True
+    )
 
 
 def test_runner_rejects_unknown_target(tmp_path: Path) -> None:
@@ -149,8 +152,6 @@ def test_runner_reports_target_failures_without_dropping_artifacts(tmp_path: Pat
     assert summary["passed"] is False
     assert summary["failed_targets"] == ["ir_parser"]
     report = json.loads(
-        (tmp_path / "packet" / "security" / "cargo_fuzz_ir_parser.json").read_text(
-            encoding="utf-8"
-        )
+        (tmp_path / "packet" / "security" / "cargo_fuzz_ir_parser.json").read_text(encoding="utf-8")
     )
     assert report["stderr_tail"] == ["crash"]
