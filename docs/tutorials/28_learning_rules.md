@@ -148,7 +148,8 @@ from sc_neurocore.learning.advanced import TBPTTLearner
 ### 7. PyTorch Surrogate Training
 
 6 surrogate gradient functions + learnable beta/threshold on all 10 SNN cell types.
-This is the path to 99.49% MNIST:
+The ConvSpikingNet MNIST 99.49% claim is backed by
+`benchmarks/results/mnist_conv_accuracy_reproducibility.json`:
 
 ```python
 from sc_neurocore.training.snn_modules import SpikingNet

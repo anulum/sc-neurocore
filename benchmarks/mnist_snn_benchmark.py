@@ -10,7 +10,8 @@
 
 Architecture: 784 → 128 → 128 → 10 (SpikingNet, 2 hidden layers)
 Training: 10 epochs, T=25 timesteps, Adam lr=2e-3, cosine annealing
-Target: >97% test accuracy (published: 99.49% with ConvSNN + tuning)
+Target: >97% test accuracy. The separate ConvSNN 99.49% public claim is
+bound to benchmarks/results/mnist_conv_accuracy_reproducibility.json.
 
 Usage:
     python benchmarks/mnist_snn_benchmark.py

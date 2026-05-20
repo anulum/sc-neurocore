@@ -26,7 +26,7 @@ networks (≤5K neurons) where bit-exact RTL co-simulation matters.
 |-------------|--------|----------|
 | FC 784→128→128→10 | Surrogate gradient (10 epochs) | 95.5% |
 | FC 784→128→128→10 | + learnable τ (Fang 2021) | 97.7% |
-| Conv→LIF→Pool→Conv→LIF→Pool→FC | Learnable β + threshold | **99.49%** |
+| Conv→LIF→Pool→Conv→LIF→Pool→FC | Learnable β + threshold | **99.49%** (`benchmarks/results/mnist_conv_accuracy_reproducibility.json`) |
 
 snnTorch achieves 95.8% on the same FC architecture (same setup,
 10 epochs). The value of SC-NeuroCore is not training performance — it's

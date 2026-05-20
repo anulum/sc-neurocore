@@ -125,7 +125,7 @@ Honest comparison (measured, not estimated):
 
 | Task | SC-NeuroCore | Best Published | Gap |
 |------|-------------|---------------|-----|
-| MNIST | 99.49% (ConvSNN) | 99.72% (SEW-ResNet) | -0.23% |
+| MNIST | 99.49% (ConvSNN; `benchmarks/results/mnist_conv_accuracy_reproducibility.json`) | 99.72% (SEW-ResNet) | -0.23% |
 | SHD | 79.28% (feedforward SpikingNet, Kaggle CPU, 2026-03-28) | 95.1% (SpikFormer) | -15.82% |
 | DVS Gesture | no committed current-checkout measurement | 98.2% (TET) | — |
 

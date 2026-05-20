@@ -117,7 +117,8 @@ that are planned but not yet implemented in this repository.
 *   **`training/`**
     *   Surrogate gradient training cells (LIF, ALIF, RecurrentLIF, EPropALIF)
     *   `DelayLinear`: trainable per-synapse delays with differentiable interpolation
-    *   ConvSpikingNet (99.49% MNIST)
+    *   ConvSpikingNet (99.49% MNIST; evidence manifest:
+        `benchmarks/results/mnist_conv_accuracy_reproducibility.json`)
 *   **`learning/`**
     *   13 plasticity rules: pair/triplet/voltage STDP, BCM, BPTT, TBPTT, EWC, e-prop, R-STDP, MAML, homeostatic, STP, structural
 *   **`adapters/`**

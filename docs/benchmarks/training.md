@@ -65,20 +65,25 @@ Pool → FC(1024,128) → LIF → FC(128,10) → LIF`
 | Config | T | Epochs | Test Accuracy | Parameters |
 |--------|:-:|:------:|:------------:|:----------:|
 | Default | 25 | 10 | ~98% | ~160K |
-| learn_beta + learn_threshold | 25 | 20 | 99.49% | ~160K |
+| learn_beta + learn_threshold | 25 | 30 | 99.49% | 184,594 |
 
 The 99.49% figure uses cosine LR schedule, data augmentation
-(random crop + rotation), and learnable beta/threshold. Run:
+(random affine translation + rotation), learnable beta/threshold, and the
+committed evidence manifest
+`benchmarks/results/mnist_conv_accuracy_reproducibility.json`. The manifest
+binds the claim to the exact training log and checkpoint SHA-256 digests; a new
+release claim must attach a fresh rerun manifest.
 
 ```bash
-python examples/train_mnist.py --conv --learn-beta --learn-threshold --epochs 20
+python examples/mnist_conv_train.py --epochs 30 --batch-size 128 \
+  --lr 0.005 --timesteps 25 --beta 0.95 --device cuda
 ```
 
 ### Comparison with other frameworks
 
 | Framework | Architecture | MNIST Accuracy | Source |
 |-----------|-------------|:-----------:|--------|
-| SC-NeuroCore ConvSpikingNet | Conv SNN | 99.49% | Own measurement |
+| SC-NeuroCore ConvSpikingNet | Conv SNN | 99.49% | `benchmarks/results/mnist_conv_accuracy_reproducibility.json` |
 | snnTorch | Conv SNN | ~97-98% | Eshraghian et al. 2023 |
 | Norse | Conv SNN | ~96% | Pehle & Pedersen 2021 |
 | SpikingJelly | Conv SNN | ~99.3% | Fang et al. 2023 |
