@@ -5,11 +5,11 @@
     "model_documentation_pages": 174,
     "optional_extras": 24,
     "public_api_exports": 44,
-    "public_documentation_pages": 535,
+    "public_documentation_pages": 536,
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 685
+    "test_files": 689
   },
   "documentation": {
     "public_pages": [
@@ -422,6 +422,7 @@
       "docs/guides/side_channel_encoding.md",
       "docs/guides/soc_integration_guide.md",
       "docs/guides/static_analysis_guide.md",
+      "docs/guides/stochastic_backprop.md",
       "docs/guides/stochastic_source_emitters.md",
       "docs/guides/studio.md",
       "docs/guides/surrogate_execution_paths.md",
@@ -550,7 +551,7 @@
       "docs/validation/neurobench_shd.md"
     ]
   },
-  "evidence_boundary": "Counts are file-system and static-source inventory only; benchmark, coverage, hardware, and scientific-fidelity claims remain governed by their dedicated evidence artifacts.",
+  "evidence_boundary": "Counts are file-system and static-source inventory only; benchmark, coverage, hardware, and scientific-fidelity claims remain governed by their dedicated evidence artefacts.",
   "generated_from": {
     "config": "tools/capability_manifest.toml",
     "generator": "tools/capability_manifest.py"
@@ -1930,6 +1931,7 @@
       "tests/test_distillation.py",
       "tests/test_docs/test_public_licensing_page.py",
       "tests/test_docs/test_security_scanner_ci_docs.py",
+      "tests/test_docs_internal_link_hygiene.py",
       "tests/test_docs_navigation_policy.py",
       "tests/test_doctor.py",
       "tests/test_dsl_to_verilog.py",
@@ -2078,6 +2080,7 @@
       "tests/test_learning_advanced.py",
       "tests/test_license.py",
       "tests/test_lif_fi_curve.py",
+      "tests/test_loihi_cuba_docs.py",
       "tests/test_lr_schedulers.py",
       "tests/test_memristor/test_memristor_mapper.py",
       "tests/test_meta_plasticity/test_meta_plasticity.py",
@@ -2293,6 +2296,7 @@
       "tests/test_quantum/test_hybrid.py",
       "tests/test_quantum_bridge.py",
       "tests/test_quantum_cognition.py",
+      "tests/test_quantum_cognition_docs.py",
       "tests/test_quantum_hybrid.py",
       "tests/test_quantum_stabilisation.py",
       "tests/test_quasirandom_emitter.py",
@@ -2389,6 +2393,7 @@
       "tests/test_spintronic/test_spintronic_mapper.py",
       "tests/test_static_analysis.py",
       "tests/test_stochastic_backprop_benchmark.py",
+      "tests/test_stochastic_backprop_docs.py",
       "tests/test_stochastic_doctor/test_diagnostics.py",
       "tests/test_stochastic_doctor/test_diagnostics_branches.py",
       "tests/test_streaming_spike_codec.py",

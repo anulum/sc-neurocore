@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 
@@ -168,7 +168,7 @@ class ConsentBoundary:
 
 @dataclass(frozen=True)
 class RetentionPolicy:
-    """Retention windows for neural telemetry and artifacts."""
+    """Retention windows for neural telemetry and artefacts."""
 
     raw_stream_days: int
     model_artifacts_days: int
@@ -305,7 +305,7 @@ class TelemetryPolicy:
 
 @dataclass(frozen=True)
 class ProvenanceRecord:
-    """Cryptographic provenance record for model and dataset artifacts."""
+    """Cryptographic provenance record for model and dataset artefacts."""
 
     artifact_type: str
     artifact_uri: str

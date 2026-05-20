@@ -1,15 +1,47 @@
 {
   "evidence": {
     "benchmark_schema_version": "sc-neurocore.stochastic-backprop-benchmark.v1",
+    "estimator_variance": {
+      "available": true,
+      "bitstream_length": 256,
+      "estimators": {
+        "pathwise_relaxation": {
+          "absolute_bias": 0.0,
+          "assumption": "differentiable relaxed Bernoulli expectation",
+          "mean": 0.012031697668,
+          "variance": 0.0
+        },
+        "score_function": {
+          "absolute_bias": 0.005157169351,
+          "assumption": "seeded REINFORCE likelihood-ratio estimate without baseline",
+          "mean": 0.006874528318,
+          "variance": 0.000319070961
+        },
+        "straight_through": {
+          "absolute_bias": 0.000186795149,
+          "assumption": "sampled forward pass with relaxed backward proxy",
+          "mean": 0.011844902519,
+          "variance": 5.0812786e-05
+        }
+      },
+      "reference": {
+        "estimator": "pathwise_relaxation",
+        "gradient": 0.012031697668,
+        "loss": 0.001398165361
+      },
+      "sample_count": 32
+    },
+    "evidence_boundary": "local_simulation_and_executable_hdl_parity",
     "evidence_class": "deterministic_training_simulation",
-    "final_loss": 6.197052243805956e-06,
+    "final_loss": 3.867139053426172e-09,
     "hardware_measurement_claimed": false,
-    "initial_loss": 0.4125083088874817,
+    "initial_loss": 0.4125062823295593,
     "input_max_abs_correlation": 0.0,
-    "objective_total": 0.0034191422164440155,
-    "sampled_product_mae": 0.0006369352340698242,
+    "objective_total": 0.0034129491541534662,
+    "sampled_product_mae": 0.0031250715255737305,
     "weight_max_abs_correlation": 0.8662487268447876
   },
+  "evidence_boundary": "local_simulation_and_executable_hdl_parity",
   "schema_version": "sc-neurocore.stochastic-backprop-export.v1",
   "scnir_document": {
     "hierarchy": [],
@@ -20,7 +52,7 @@
         "bitstream_length": 256,
         "correlation_constraints": [
           {
-            "max_abs_correlation": 0.0,
+            "max_abs_correlation": 0.0074837952852249146,
             "peer_stream_id": "stochastic_backprop.weight",
             "policy": "max_correlation",
             "seed_domain": "stochastic_backprop_training"
@@ -56,7 +88,7 @@
         "bitstream_length": 256,
         "correlation_constraints": [
           {
-            "max_abs_correlation": 0.0,
+            "max_abs_correlation": 0.0074837952852249146,
             "peer_stream_id": "stochastic_backprop.input",
             "policy": "max_correlation",
             "seed_domain": "stochastic_backprop_training"
@@ -135,13 +167,29 @@
   "scnir_schema_version": "sc-neurocore.scnir.v0.7",
   "training": {
     "bitstream_length": 256,
-    "correlation": 0.0,
+    "correlation": 0.0074837952852249146,
     "encoding": "bipolar",
     "estimator": "pathwise_relaxation",
     "generator": "sobol",
     "input_seed": 101,
+    "joint_design": {
+      "correlation": 0.0074837952852249146,
+      "enabled": true,
+      "encoding_probabilities": [
+        0.95309126,
+        0.04690874
+      ],
+      "expected_bitstream_length": 252.13824463,
+      "length_probabilities": [
+        0.11419145,
+        0.84379762,
+        0.04201085
+      ],
+      "selected_bitstream_length": 256,
+      "selected_encoding": "bipolar"
+    },
     "learning_rate": 0.4,
-    "steps": 8,
+    "steps": 32,
     "weight_seed": 211
   }
 }

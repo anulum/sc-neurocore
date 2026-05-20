@@ -2693,7 +2693,19 @@ Return deterministic evidence for SC-aware backpropagation loss reduction.
 ### Function `write_stochastic_backprop_benchmark(path)`
 Write a canonical stochastic backpropagation benchmark report.
 
+### Function `build_stochastic_backprop_estimator_regression_manifest()`
+Return seeded estimator-family variance evidence across bitstream lengths.
+
+### Function `write_stochastic_backprop_estimator_regression_manifest(path)`
+Write seeded estimator-family regression evidence to canonical JSON.
+
 ### Function `_task_loss(inputs, targets, weight, bias, sc_config)`
+### Function `_design_length_options(bitstream_length)`
+### Function `_validate_bitstream_length_grid(bitstream_lengths)`
+### Function `_joint_design_snapshot(report)`
+### Function `_estimator_variance_evidence()`
+### Function `_gradient_estimator_stats(estimates)`
+### Function `_all_estimator_variances_are_finite_nonnegative(row)`
 ### Function `_round_nested(value)`
 ---
 
@@ -10708,12 +10720,19 @@ DiagnosticReport
 ## Module `drivers.physical_twin`
 
 ### Class `PhysicalTwinBridge`
-Bridge for Hardware-In-the-Loop (HIL) Synchronization.
-Connects a Python Neuron to a physical PYNQ-Z2/FPGA neuron via TCP/Serial.
+Synchronise software neuron state with an explicit twin backend.
+
+``mode="EMULATION"`` is a deterministic local noise model for development
+and CI. ``mode="TCP"`` opens a JSON-line request/response connection for a
+real hardware-twin service. The class never marks itself connected to
+physical hardware unless a TCP exchange actually succeeds.
 
 - **__init__**(ip, port)
 - **sync_step**(sw_v_mem, sw_spike)
-  - Sends software state, receives hardware state.
+  - Send software state and return the twin membrane voltage.
+- **_sync_step_tcp**(sw_v_mem, sw_spike)
+- **_parse_reply**(response)
+- **_log_divergence**(sw_v_mem, hw_v_mem)
 
 ---
 
@@ -13629,6 +13648,19 @@ Stores (Key, Value) pairs or just prototypes.
 
 ---
 
+## Module `hdl.resources`
+
+### Function `list_baseline_primitive_rtl()`
+Return the static baseline Verilog primitives bundled with the wheel.
+
+### Function `baseline_primitive_path(name)`
+Return an importlib resource handle for a known baseline primitive.
+
+### Function `baseline_primitive_text(name)`
+Read a known baseline primitive as UTF-8 text.
+
+---
+
 ## Module `hdl_gen._ident`
 
 ### Function `sanitize_ident(name, context)`
@@ -15510,6 +15542,39 @@ Linear warmup followed by cosine decay.
 
 ---
 
+## Module `license`
+
+### Class `CommercialLicenseStatus`
+Current AGPL/commercial licence state.
+
+The raw licence key is intentionally never stored in this object.
+
+
+### Function `get_license_status()`
+Return the current local licence state without contacting a network.
+
+### Function `reset_license_status()`
+Reset process-local licence state to the default AGPL mode.
+
+### Function `set_license_key(key)`
+Validate and install an explicit commercial licence key for this process.
+
+### Function `load_license_from_env()`
+Validate ``SC_NEUROCORE_LICENSE_KEY`` when it is explicitly configured.
+
+### Function `validate_license_key(key)`
+Validate a Polar customer-portal licence key.
+
+Validation is opt-in. AGPL users who never call this function, never call
+``set_license_key()``, and do not set ``SC_NEUROCORE_LICENSE_KEY`` are not
+blocked and do not need the HTTP dependency.
+
+### Function `_status_from_polar_response(response)`
+### Function `_post_json_with_httpx(endpoint, payload)`
+### Function `_string_value(value)`
+### Function `_optional_string(value)`
+---
+
 ## Module `math.category_theory`
 
 ### Class `CategoryObject`
@@ -16759,6 +16824,7 @@ Declarative network: collects objects, runs the simulation loop.
 - **to_torch**(surrogate_fn)
   - Build an explicit differentiable bridge without altering NumPy/Rust execution.
 
+### Function `_load_network_runner_class()`
 ### Function `_get_rust_engine()`
 ### Function `_rust_supports_model(model_name)`
 ---
@@ -20983,6 +21049,10 @@ number of timesteps and returns the output node's accumulated result.
 Recurrent edges (cycles) are automatically handled by inserting
 unit-delay nodes that feed from the previous timestep.
 
+- **from_nir**(cls, source, dt, reset_mode)
+  - Build an ``SCNetwork`` directly from a NIR graph or file path.
+- **to_hardware**()
+  - Compile this parsed network to the existing FPGA artefact bundle.
 - **_find_back_edges**()
   - DFS-based back-edge detection.
 - **_break_cycles**()
@@ -21752,6 +21822,83 @@ run_fn : callable
 - **audit**(member_samples, non_member_samples)
   - Run membership inference audit.
 
+---
+
+## Module `privacy.governance`
+
+### Class `ConsentBoundary`
+Participant-level legal basis and telemetry permissions.
+
+- **__post_init__**()
+- **to_dict**()
+- **from_dict**(cls, data)
+
+### Class `RetentionPolicy`
+Retention windows for neural telemetry and artefacts.
+
+- **__post_init__**()
+- **to_dict**()
+- **from_dict**(cls, data)
+
+### Class `RedactionPolicy`
+Field-level redaction policy for protected telemetry and logs.
+
+- **__post_init__**()
+- **to_dict**()
+- **from_dict**(cls, data)
+
+### Class `TelemetryPolicy`
+Telemetry sink and sampling policy.
+
+- **__post_init__**()
+- **to_dict**()
+- **from_dict**(cls, data)
+
+### Class `ProvenanceRecord`
+Cryptographic provenance record for model and dataset artefacts.
+
+- **__post_init__**()
+- **to_dict**()
+- **from_dict**(cls, data)
+
+### Class `IntegratorResponsibility`
+Operational responsibilities for an integrator in a deployment pipeline.
+
+- **__post_init__**()
+- **to_dict**()
+- **from_dict**(cls, data)
+
+### Class `PrivacyFeatureFlags`
+Feature activation and audit flags for a governed workflow.
+
+- **__post_init__**()
+- **to_dict**()
+- **from_dict**(cls, data)
+
+### Class `GovernanceContract`
+Full privacy governance contract for BCI/neural workflows.
+
+- **__post_init__**()
+- **audit_required_features**()
+  - Return sorted feature keys that require audit flags.
+- **active_features**()
+  - Return names of enabled privacy features in deterministic order.
+- **to_dict**()
+  - Return a deterministic JSON-serialisable representation.
+- **from_dict**(cls, data)
+
+### Function `_expect_mapping(value)`
+Return ``value`` as dict or raise a typed ValueError.
+
+### Function `_require_fields(payload, section, required)`
+Raise when required fields are missing from a manifest section.
+
+### Function `_ensure_positive_days(value, name)`
+Validate a duration field.
+
+### Function `_ensure_non_empty_str(value, name)`
+### Function `_ensure_bool(value, name)`
+### Function `_to_str_tuple(values, name)`
 ---
 
 ## Module `profiler.platform_profiler`
@@ -22971,6 +23118,9 @@ bridge : FisherPosnerQuantumBridge
 - **test_corrupted_checkpoint_zero_norm_fails_on_statevector_export**()
 - **test_single_site_pool_rejects_two_site_atp_observable**()
 - **test_exact_evolution_rejects_invalid_coupling_contracts**()
+- **test_internal_heisenberg_same_site_is_noop**()
+- **test_internal_heisenberg_adjacent_gate_preserves_state_norm**()
+- **test_internal_heisenberg_nonadjacent_swap_network_preserves_state_norm**()
 
 ---
 
@@ -23846,6 +23996,27 @@ cross-hierarchy boosts, symmetrisation, zero diagonal.
 
 ---
 
+## Module `security.checkpoint_loading`
+
+### Class `CheckpointTrustError`
+Raised when a checkpoint is not present in the trusted digest set.
+
+
+### Function `_checkpoint_digest(path)`
+### Function `safe_load_checkpoint(path)`
+Load a tensor/state-dict checkpoint only after SHA-256 verification.
+
+The trust map accepts either the file name or the resolved full path as key.
+PyTorch is always invoked with ``weights_only=True`` after digest validation.
+
+### Function `safe_load_legacy_checkpoint(path)`
+Load a metadata checkpoint through pickle only after SHA-256 verification.
+
+Use this only for legacy internal checkpoints whose dictionaries contain
+non-state-dict metadata and cannot yet be represented by ``weights_only``.
+
+---
+
 ## Module `security.ethics`
 
 ### Class `ActionRequest`
@@ -24621,6 +24792,7 @@ constructed with different parameters or seeds.
 - **_map_bipolar_to_current**(value)
 - **_decode_current_trace**()
 - **reset**()
+  - Reset the realised current trace cursor to its first timestep.
 - **current_trace**()
   - Return the realised per-cycle decoded current trace.
 - **step**()
@@ -24649,6 +24821,7 @@ Physics:
 - **sample_normal**(mean, std)
   - Two independent measurements → Box-Muller → Gaussian sample.
 - **sample**()
+  - Return one default normal sample from the simulated measurement source.
 
 ---
 
@@ -25850,11 +26023,14 @@ Scan all models with progress updates.
 Reject workspace content that would later interpolate into HDL/MLIR source.
 
 ### Function `_ensure_dir()`
+### Function `_projects_root()`
+Return the resolved Studio project root.
+
 ### Function `_safe_name(name)`
-Sanitise project name to prevent path traversal.
+Validate a project name that maps to one JSON file in the project root.
 
 ### Function `_safe_path(name)`
-Build a project file path and verify it stays within _PROJECTS_DIR.
+Build a resolved project file path confined to the Studio project root.
 
 ### Function `save_project(name, state)`
 Save full studio state to a JSON file.
@@ -26999,12 +27175,33 @@ Hardware proxy values used in SC-aware objective shaping.
 Named scalar components of an SC-aware training objective.
 
 
+### Class `SCBackpropDesignSpace`
+Discrete SC architecture choices exposed to differentiable joint training.
+
+- **__post_init__**()
+
+### Class `SCBackpropJointReport`
+Joint stochastic-backpropagation result with exportable SC design metadata.
+
+
 ### Function `_scalar_like(reference, value)`
+### Function `_tensor_like(reference, values)`
+### Function `_require_tensor_domain(name, value, lower, upper)`
 ### Function `relaxed_sc_linear(input_value, weight, bias, sc_config)`
 Linear layer whose multiply-accumulate path uses relaxed SC products.
 
+### Function `_bernoulli_product_expectation_with_correlation_tensor(p_input, p_weight, correlation)`
+### Function `_relaxed_sc_linear_with_correlation_tensor(input_value, weight, bias, sc_config, correlation)`
 ### Function `stochastic_training_objective(task_loss)`
 Compose task loss with SC length, correlation, variance, and resource costs.
+
+### Function `stochastic_backprop_joint_objective(inputs, targets)`
+Train a relaxed SC layer jointly over weights and SC architecture variables.
+
+The selected config remains discrete and exportable, while length, encoding,
+and correlation costs are computed from differentiable proxies so one
+objective can update model parameters and stochastic-computing design
+variables in the same backward pass.
 
 ---
 
@@ -27013,6 +27210,8 @@ Compose task loss with SC length, correlation, variance, and resource costs.
 ### Function `build_stochastic_backprop_export_manifest(benchmark_report, sc_config)`
 Build a deterministic SC-NIR handoff manifest for stochastic backpropagation.
 
+### Function `_estimator_variance_export(benchmark_report)`
+### Function `_joint_design_export(benchmark_report, sc_config)`
 ### Function `write_stochastic_backprop_export_manifest(path, benchmark_report, sc_config)`
 Write a canonical stochastic backpropagation SC-NIR export manifest.
 
@@ -27026,6 +27225,9 @@ Materialise an auditable SC-NIR HDL handoff bundle from an export manifest.
 ### Function `_signal_kind_counts(scnir_document)`
 ### Function `_write_top_module(path)`
 ### Function `_write_source_module(path)`
+### Function `_write_trained_design_parity_bundle(export_manifest, root)`
+### Function `_write_trained_design_module(path)`
+### Function `_q16(value)`
 ### Function `_build_scnir_document(sc_config)`
 ### Function `_stream()`
 ### Function `_constraint()`
@@ -28339,6 +28541,7 @@ deterministic linear matmul + clip implementation was replaced
   - Multi-step probabilistic forecast (mean + cov trajectory).
 
 ### Function `_missing_rust_kalman_filter()`
+### Function `_load_rust_kalman_filter()`
 ### Function `_ensure_mojo_loaded()`
 Lazy-load the Mojo LGSSM shared library on first request.
 

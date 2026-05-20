@@ -1,0 +1,11 @@
+{
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "correlation_q16": 490,
+  "encoding_bipolar": true,
+  "expected_bitstream_length_q16": 16524132,
+  "hardware_measurement_claimed": false,
+  "module_name": "stochastic_backprop_trained_design",
+  "schema_version": "sc-neurocore.stochastic-backprop-trained-design-parity.v1",
+  "selected_bitstream_length": 256,
+  "selected_encoding": "bipolar"
+}
