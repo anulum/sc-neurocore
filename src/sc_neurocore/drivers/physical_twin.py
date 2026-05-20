@@ -59,6 +59,8 @@ class PhysicalTwinBridge:
 
     def sync_step(self, sw_v_mem: float, sw_spike: int) -> float:
         """Send software state and return the twin membrane voltage."""
+        if self.mode == "EMULATION" and not self.connected:
+            return float(sw_v_mem)
         if self.mode == "TCP":
             return self._sync_step_tcp(sw_v_mem, sw_spike)
 

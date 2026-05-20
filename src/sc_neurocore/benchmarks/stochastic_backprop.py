@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import math
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import torch
 import torch.nn.functional as F
@@ -267,7 +267,9 @@ def build_stochastic_backprop_benchmark(
                 final_sampled.weight_statistics.max_abs_off_diagonal_correlation.item()
             ),
         },
-        "estimator_variance": _estimator_variance_evidence(bitstream_length=sc_config.bitstream_length),
+        "estimator_variance": _estimator_variance_evidence(
+            bitstream_length=sc_config.bitstream_length
+        ),
     }
 
 
@@ -309,14 +311,8 @@ def build_stochastic_backprop_estimator_regression_manifest(
         )
         for bitstream_length in bitstream_lengths
     ]
-    score_variances = [
-        row["estimators"]["score_function"]["variance"]
-        for row in results
-    ]
-    pathwise_variances = [
-        row["estimators"]["pathwise_relaxation"]["variance"]
-        for row in results
-    ]
+    score_variances = [row["estimators"]["score_function"]["variance"] for row in results]
+    pathwise_variances = [row["estimators"]["pathwise_relaxation"]["variance"] for row in results]
     acceptance = {
         "score_function_longest_variance_below_shortest": (
             score_variances[0] > score_variances[-1]
@@ -404,9 +400,7 @@ def _joint_design_snapshot(report: SCBackpropJointReport) -> dict[str, Any]:
             float(report.expected_bitstream_length.detach().item()),
             8,
         ),
-        "length_probabilities": _round_nested(
-            report.length_probabilities.detach().cpu().tolist()
-        ),
+        "length_probabilities": _round_nested(report.length_probabilities.detach().cpu().tolist()),
         "selected_encoding": report.selected_encoding,
         "encoding_probabilities": _round_nested(
             report.encoding_probabilities.detach().cpu().tolist()
@@ -415,7 +409,9 @@ def _joint_design_snapshot(report: SCBackpropJointReport) -> dict[str, Any]:
     }
 
 
-def _estimator_variance_evidence(*, bitstream_length: int, sample_count: int = 32) -> dict[str, Any]:
+def _estimator_variance_evidence(
+    *, bitstream_length: int, sample_count: int = 32
+) -> dict[str, Any]:
     if sample_count < 2:
         raise ValueError("sample_count must be at least two")
 
@@ -425,8 +421,11 @@ def _estimator_variance_evidence(*, bitstream_length: int, sample_count: int = 3
     target = torch.tensor(0.32, dtype=torch.float32)
     expected_product = input_probability * weight_probability
     reference_loss = (expected_product - target).square()
-    reference_loss.backward()
-    pathwise_gradient = float(raw_weight.grad.detach().item())
+    cast(Any, reference_loss).backward()
+    raw_weight_grad = raw_weight.grad
+    if raw_weight_grad is None:
+        raise RuntimeError("reference gradient was not populated")
+    pathwise_gradient = float(raw_weight_grad.detach().item())
 
     pathwise_estimates = [pathwise_gradient for _ in range(sample_count)]
     straight_through_estimates: list[float] = []
@@ -447,10 +446,14 @@ def _estimator_variance_evidence(*, bitstream_length: int, sample_count: int = 3
         straight_through_gradient = (
             2.0 * (sampled_product - target) * input_probability * probability_gradient
         )
-        score_gradient = (sampled_product - target).square() * (
-            (weight_bits - weight_probability.detach())
-            / (weight_probability.detach() * (1.0 - weight_probability.detach()))
-        ).sum() * probability_gradient
+        score_gradient = (
+            (sampled_product - target).square()
+            * (
+                (weight_bits - weight_probability.detach())
+                / (weight_probability.detach() * (1.0 - weight_probability.detach()))
+            ).sum()
+            * probability_gradient
+        )
         straight_through_estimates.append(float(straight_through_gradient.item()))
         score_function_estimates.append(float(score_gradient.item()))
 

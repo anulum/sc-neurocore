@@ -58,16 +58,20 @@ def test_stochastic_backprop_benchmark_cli_writes_report(tmp_path, capsys) -> No
     assert audit_report["stream_count"] == 3
     joint_design = payload["joint_design"]
     assert joint_design["enabled"] is True
-    assert joint_design["final"]["selected_bitstream_length"] == payload["sc_config"]["bitstream_length"]
+    assert (
+        joint_design["final"]["selected_bitstream_length"]
+        == payload["sc_config"]["bitstream_length"]
+    )
     assert joint_design["final"]["selected_encoding"] == payload["sc_config"]["encoding"]
     assert joint_design["final"]["correlation"] == payload["sc_config"]["correlation"]
     assert (
         joint_design["final"]["expected_bitstream_length"]
         > joint_design["initial"]["expected_bitstream_length"]
     )
-    assert joint_design["final"]["length_probabilities"] != joint_design["initial"][
-        "length_probabilities"
-    ]
+    assert (
+        joint_design["final"]["length_probabilities"]
+        != joint_design["initial"]["length_probabilities"]
+    )
     assert manifest["training"]["joint_design"]["enabled"] is True
     assert manifest["training"]["joint_design"]["selected_bitstream_length"] == 128
     assert estimator_manifest["status"] == "pass"
