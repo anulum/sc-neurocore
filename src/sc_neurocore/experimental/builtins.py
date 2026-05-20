@@ -97,6 +97,13 @@ def builtin_cases_for_route(route_name: str) -> list[AlternativePathCase]:
                     "coupling": 0.18,
                     "dt": 5e-4,
                 },
+                metadata={
+                    "oscillator_count": 3,
+                    "horizon": 0.01,
+                    "coupling": 0.18,
+                    "dt": 5e-4,
+                    "regime": "low_coupling_noiseless",
+                },
             ),
             AlternativePathCase(
                 "quartet_short",
@@ -106,6 +113,13 @@ def builtin_cases_for_route(route_name: str) -> list[AlternativePathCase]:
                     "coupling": 0.12,
                     "dt": 4e-4,
                 },
+                metadata={
+                    "oscillator_count": 4,
+                    "horizon": 0.008,
+                    "coupling": 0.12,
+                    "dt": 4e-4,
+                    "regime": "low_coupling_noiseless",
+                },
             ),
             AlternativePathCase(
                 "quartet_higher_coupling_short",
@@ -114,6 +128,13 @@ def builtin_cases_for_route(route_name: str) -> list[AlternativePathCase]:
                     "omegas": np.array([0.88, 0.96, 1.04, 1.12], dtype=np.float64),
                     "coupling": 1.0,
                     "dt": 2.5e-4,
+                },
+                metadata={
+                    "oscillator_count": 4,
+                    "horizon": 0.008,
+                    "coupling": 1.0,
+                    "dt": 2.5e-4,
+                    "regime": "higher_coupling_noiseless",
                 },
             ),
         ]

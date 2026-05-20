@@ -79,6 +79,24 @@ def test_validate_report_passes_with_matching_cases():
     assert result.reasons == []
 
 
+def test_validate_report_requires_kuramoto_higher_coupling_metadata():
+    report = _report_template()
+    report["route_name"] = "physics.kuramoto.noiseless-symplectic-lift"
+    for case in report["cases"]:
+        case["route_name"] = report["route_name"]
+
+    result = validate_report(
+        report,
+        path=Path("benchmarks/results/experimental_physics_kuramoto_noiseless_symplectic_lift.json"),
+        max_abs_diff=1e-3,
+        max_rel_diff=1e-2,
+        require_mode="shadow",
+    )
+
+    assert not result.ok
+    assert any("higher_coupling_noiseless" in reason for reason in result.reasons)
+
+
 def test_validate_report_fails_on_candidate_failures_and_drift():
     report = _report_template()
     report["candidate_failures"] = 1
@@ -115,6 +133,7 @@ def test_validator_cli_passes_on_real_reports():
             "--max-rel-diff",
             "0.01",
             "benchmarks/results/experimental_physics_heat_cosine_mode.json",
+            "benchmarks/results/experimental_physics_kuramoto_noiseless_symplectic_lift.json",
             "benchmarks/results/experimental_physics_oscillator_harmonic_symplectic.json",
             "benchmarks/results/experimental_solver_lif_subthreshold_exact.json",
         ],

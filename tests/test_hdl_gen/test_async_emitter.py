@@ -102,3 +102,109 @@ def test_async_aer_emitter_smoke_compiles_with_iverilog(tmp_path) -> None:
         check=False,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_async_aer_emitter_does_not_replay_stable_spike_vector(tmp_path) -> None:
+    iverilog = shutil.which("iverilog")
+    vvp = shutil.which("vvp")
+    if iverilog is None or vvp is None:
+        raise AssertionError("iverilog and vvp must be available for HDL simulation tests")
+
+    emitter = AEREmitter(module_name="async_replay_gate", bus_width=8)
+    emitter.add_layer("Dense", "dense0", {"n_neurons": 8})
+    source = (
+        _stub_dense_layer()
+        + "\n"
+        + emitter.generate()
+        + r"""
+module tb;
+    reg clk = 1'b0;
+    reg rst_n = 1'b0;
+    reg [7:0] input_bus = 8'b0;
+    reg aer_ack = 1'b0;
+    wire aer_req;
+    wire [2:0] aer_addr;
+    wire [7:0] output_bus;
+
+    async_replay_gate dut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .input_bus(input_bus),
+        .aer_ack(aer_ack),
+        .aer_req(aer_req),
+        .aer_addr(aer_addr),
+        .output_bus(output_bus)
+    );
+
+    integer event_count = 0;
+    integer first_addr = -1;
+    integer second_addr = -1;
+    integer third_addr = -1;
+    reg prev_req = 1'b0;
+
+    always #5 clk = ~clk;
+
+    always @(negedge clk) begin
+        if (aer_req && !prev_req) begin
+            event_count = event_count + 1;
+            if (event_count == 1) first_addr = aer_addr;
+            if (event_count == 2) second_addr = aer_addr;
+            if (event_count == 3) third_addr = aer_addr;
+        end
+        prev_req = aer_req;
+        aer_ack = aer_req;
+    end
+
+    initial begin
+        repeat (2) @(posedge clk);
+        rst_n = 1'b1;
+
+        input_bus = 8'b00001000;
+        repeat (8) @(posedge clk);
+
+        input_bus = 8'b00010000;
+        repeat (8) @(posedge clk);
+
+        input_bus = 8'b00000000;
+        repeat (4) @(posedge clk);
+
+        input_bus = 8'b00001000;
+        repeat (8) @(posedge clk);
+
+        if (event_count != 3) begin
+            $fatal(1, "expected exactly 3 unique AER events, observed %0d", event_count);
+        end
+        if (first_addr != 3 || second_addr != 4 || third_addr != 3) begin
+            $fatal(
+                1,
+                "unexpected AER addresses: first=%0d second=%0d third=%0d",
+                first_addr,
+                second_addr,
+                third_addr
+            );
+        end
+        $finish(0);
+    end
+endmodule
+"""
+    )
+
+    rtl_path = tmp_path / "async_replay_gate.v"
+    sim_path = tmp_path / "async_replay_gate.out"
+    rtl_path.write_text(source)
+
+    compile_result = subprocess.run(
+        [iverilog, "-g2012", "-o", str(sim_path), str(rtl_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert compile_result.returncode == 0, compile_result.stderr
+
+    sim_result = subprocess.run(
+        [vvp, str(sim_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert sim_result.returncode == 0, sim_result.stdout + sim_result.stderr

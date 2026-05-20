@@ -269,6 +269,16 @@ def test_builtin_kuramoto_cases_include_higher_coupling_evidence():
     couplings = [case.kwargs["coupling"] for case in cases]
 
     assert max(couplings) >= 1.0
+    assert any(
+        case.metadata == {
+            "oscillator_count": 4,
+            "horizon": 0.008,
+            "coupling": 1.0,
+            "dt": 2.5e-4,
+            "regime": "higher_coupling_noiseless",
+        }
+        for case in cases
+    )
 
 
 def test_delayed_recall_shared_state_route_beats_local_baseline():
@@ -335,6 +345,34 @@ def test_kuramoto_noiseless_symplectic_lift_route_matches_at_higher_coupling():
     assert result.candidate_value is not None
     assert np.isfinite(result.candidate_value["order_parameter"])
     assert np.isfinite(result.candidate_value["interaction_energy_drift"])
+
+
+def test_kuramoto_noiseless_symplectic_lift_report_carries_regime_metadata():
+    route = make_kuramoto_noiseless_symplectic_lift_route()
+    cases = builtin_cases_for_route("physics.kuramoto.noiseless-symplectic-lift")
+
+    summary = route.evaluate_cases(
+        cases,
+        AlternativePathConfig(
+            enabled=True,
+            mode=AlternativePathMode.SHADOW,
+            absolute_tolerance=8e-2,
+            relative_tolerance=2e-1,
+        ),
+    )
+
+    higher_coupling_case = next(
+        case
+        for case in summary.to_report()["cases"]
+        if case["case_name"] == "quartet_higher_coupling_short"
+    )
+    assert higher_coupling_case["metadata"] == {
+        "oscillator_count": 4,
+        "horizon": 0.008,
+        "coupling": 1.0,
+        "dt": 2.5e-4,
+        "regime": "higher_coupling_noiseless",
+    }
 
 
 @pytest.mark.parametrize(
