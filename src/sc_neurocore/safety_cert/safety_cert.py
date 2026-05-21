@@ -515,6 +515,8 @@ class FormalProofCertificate:
         for prop in self.properties:
             if not isinstance(prop, FormalProperty):
                 raise ValueError("properties must contain FormalProperty entries")
+            if not isinstance(prop.module, str) or not prop.module.strip():
+                raise ValueError("properties modules must be non-empty strings")
         prop_ids = [p.prop_id for p in self.properties]
         if len(prop_ids) != len(set(prop_ids)):
             raise ValueError("properties must not contain duplicate prop_id values")
