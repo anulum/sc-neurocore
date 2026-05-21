@@ -18,6 +18,7 @@ from sc_neurocore.security.side_channel_benchmark import (
     SideChannelBenchmarkError,
     SideChannelBenchmarkRecord,
     SideChannelDeployManifest,
+    SideChannelBenchmarkReport,
     run_side_channel_leakage_benchmark,
     write_side_channel_benchmark_report,
 )
@@ -200,3 +201,39 @@ def test_side_channel_deploy_manifest_rejects_invalid_contracts(kwargs, match) -
     values.update(kwargs)
     with pytest.raises(SideChannelBenchmarkError, match=match):
         SideChannelDeployManifest(**values)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"schema_version": ""}, "schema_version"),
+        ({"evidence_boundary": ""}, "evidence_boundary"),
+        ({"threat_model": ""}, "threat_model"),
+        ({"baseline": "bad"}, "baseline"),
+        ({"protected": "bad"}, "protected"),
+        ({"max_class_mean_gap_reduction": float("nan")}, "max_class_mean_gap_reduction"),
+        ({"deploy_manifest": "bad"}, "deploy_manifest"),
+        ({"boundary_notes": ()}, "boundary_notes"),
+        ({"records": ("bad",)}, "records"),
+    ],
+)
+def test_side_channel_benchmark_report_rejects_invalid_contracts(kwargs, match) -> None:
+    report = run_side_channel_leakage_benchmark(
+        probabilities=(0.25, 0.5),
+        labels=(0, 1),
+        protected_config=ThermalSCEncodingConfig(bitstream_length=16, seed=3),
+    )
+    values = {
+        "schema_version": report.schema_version,
+        "evidence_boundary": report.evidence_boundary,
+        "threat_model": report.threat_model,
+        "baseline": report.baseline,
+        "protected": report.protected,
+        "max_class_mean_gap_reduction": report.max_class_mean_gap_reduction,
+        "deploy_manifest": report.deploy_manifest,
+        "boundary_notes": report.boundary_notes,
+        "records": report.records,
+    }
+    values.update(kwargs)
+    with pytest.raises(SideChannelBenchmarkError, match=match):
+        SideChannelBenchmarkReport(**values)

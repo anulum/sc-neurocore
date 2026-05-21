@@ -150,6 +150,38 @@ class SideChannelBenchmarkReport:
     boundary_notes: tuple[str, ...]
     records: tuple[SideChannelBenchmarkRecord, ...]
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.schema_version, str) or not self.schema_version.strip():
+            raise SideChannelBenchmarkError("schema_version must be a non-empty string")
+        if not isinstance(self.evidence_boundary, str) or not self.evidence_boundary.strip():
+            raise SideChannelBenchmarkError("evidence_boundary must be a non-empty string")
+        if not isinstance(self.threat_model, str) or not self.threat_model.strip():
+            raise SideChannelBenchmarkError("threat_model must be a non-empty string")
+        if not isinstance(self.baseline, SideChannelBenchmarkArm):
+            raise SideChannelBenchmarkError("baseline must be a SideChannelBenchmarkArm")
+        if not isinstance(self.protected, SideChannelBenchmarkArm):
+            raise SideChannelBenchmarkError("protected must be a SideChannelBenchmarkArm")
+        if isinstance(self.max_class_mean_gap_reduction, bool) or not isinstance(
+            self.max_class_mean_gap_reduction, int | float
+        ):
+            raise SideChannelBenchmarkError("max_class_mean_gap_reduction must be a finite value")
+        if not math.isfinite(float(self.max_class_mean_gap_reduction)):
+            raise SideChannelBenchmarkError("max_class_mean_gap_reduction must be a finite value")
+        if not isinstance(self.deploy_manifest, SideChannelDeployManifest):
+            raise SideChannelBenchmarkError("deploy_manifest must be a SideChannelDeployManifest")
+        if not isinstance(self.boundary_notes, tuple) or not self.boundary_notes:
+            raise SideChannelBenchmarkError("boundary_notes must be a non-empty tuple of strings")
+        for note in self.boundary_notes:
+            if not isinstance(note, str) or not note.strip():
+                raise SideChannelBenchmarkError("boundary_notes must contain non-empty strings")
+        if not isinstance(self.records, tuple):
+            raise SideChannelBenchmarkError("records must be a tuple of SideChannelBenchmarkRecord")
+        for record in self.records:
+            if not isinstance(record, SideChannelBenchmarkRecord):
+                raise SideChannelBenchmarkError(
+                    "records must contain SideChannelBenchmarkRecord entries"
+                )
+
 
 def run_side_channel_leakage_benchmark(
     *,
