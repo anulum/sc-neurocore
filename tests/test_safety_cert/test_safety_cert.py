@@ -86,6 +86,14 @@ class TestTraceabilityMatrix:
         with pytest.raises(ValueError, match="Requirement"):
             _ = tm.coverage
 
+    def test_coverage_rejects_corrupted_requirement_status(self):
+        tm = TraceabilityMatrix()
+        req = Requirement("R1", "Test", SafetyStandard.IEC_61508)
+        req.status = "bad"  # type: ignore[assignment]
+        tm.add_requirement(req)
+        with pytest.raises(ValueError, match="statuses"):
+            _ = tm.coverage
+
     def test_open_count(self):
         tm = TraceabilityMatrix()
         tm.add_requirement(Requirement("R1", "Test", SafetyStandard.IEC_61508))
