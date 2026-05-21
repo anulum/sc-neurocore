@@ -261,6 +261,8 @@ class FMEDA:
 
     def add_sc_standard_modes(self, component: str) -> None:
         """Add standard SC-specific failure modes for a component."""
+        if not isinstance(component, str) or not component.strip():
+            raise ValueError("component must be a non-empty string")
         modes = [
             FailureMode(
                 f"{component}_LFSR_STUCK",

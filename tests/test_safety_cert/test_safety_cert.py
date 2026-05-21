@@ -172,6 +172,11 @@ class TestFMEDA:
         fmeda.add_sc_standard_modes("sc_lif_neuron")
         assert len(fmeda.failure_modes) == 5
 
+    def test_add_sc_standard_modes_rejects_invalid_component(self):
+        fmeda = FMEDA()
+        with pytest.raises(ValueError, match="component"):
+            fmeda.add_sc_standard_modes("")
+
     def test_total_failure_rate(self):
         fmeda = FMEDA()
         fmeda.add_sc_standard_modes("neuron")
