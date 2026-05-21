@@ -245,11 +245,12 @@ Two test files cover this package:
 
 | File | Tests | LOC | What it covers |
 |---|---:|---:|---|
-| `tests/test_fault_injection/test_fault_injection.py` | 22 | 212 | Antigravity-authored unittest-style classes: `TestRadiationProfiles`, `TestFaultInjectionResult`, `TestFaultInjector`, `TestResilienceBenchmark` |
-| `tests/test_fault_injection/test_fault_injection_public_api.py` | 7 | new | Arcane Sapience: package re-exports identity, `__all__` membership, FaultModel enum 5-member completeness, RadiationProfile preset BER ordering and exact constants |
+| `tests/test_fault_injection/test_fault_injection.py` | 22 | 212 | Unittest-style classes covering baseline utility fault-injection behaviour |
+| `tests/test_fault_injection/test_fault_injection_public_api.py` | 7 | new | Package re-export identity, `__all__` membership, enum/preset surface contracts |
+| `tests/test_fault_injection_module.py` | 37 | new | Production contracts for `RadiationProfile`, `FaultInjectionResult`, `ResilienceReport`, `FaultInjector.inject`, deterministic position injection, benchmark run/sweep guards, finite aggregate checks, and zero-BER no-op guarantees |
 
-**Total: 29 tests.** Both files run in ~0.5 s combined; no
-skips, no failures.
+**Total: 66 tests** across fault-injection module surfaces and public API
+contracts.
 
 ## 9. Audit completeness — 7-point rule
 
@@ -277,12 +278,10 @@ mostly characterise NumPy + RNG performance.
 
 ### 10.2 Custom-profile validation
 
-`RadiationProfile(name=..., ber=...)` accepts any float for `ber`.
-A future refinement should reject `ber > 0.5` (physically
-impossible — at that point the bit is essentially random) and
-`ber < 0` (physically impossible — BER is a probability).
-Currently the user can construct nonsense profiles and the
-injector silently produces nonsense output.
+`RadiationProfile` now validates non-empty `name`, finite
+`ber` in `[0, 1]`, and string `description`. `FaultInjector.inject`,
+`ResilienceBenchmark.run`, and `ResilienceBenchmark.sweep_ber` now also
+fail closed on invalid BER/probability ranges and malformed inputs.
 
 ### 10.3 No correlation modelling
 
@@ -304,12 +303,13 @@ recovers within N cycles".
 
 ### 10.5 No bug found in this audit
 
-Audit found:
-- `__init__.py` did not re-export the 6 public symbols. Wired.
-- 1-line piped SPDX header in `__init__.py`. Fixed.
-- Pre-existing `docs/api/fault_injection.md` was a 14-line stub
-  with mkdocstrings auto-gen and no curated content. Replaced
-  with this page.
+Audit found and addressed:
+- contract hardening now enforces finite/bounded dataclass fields for
+  `RadiationProfile`, `FaultInjectionResult`, and `ResilienceReport`;
+- `FaultInjector.inject` rejects malformed arrays, invalid enums, invalid BER,
+  and non-binary streams for discrete models;
+- benchmark run/sweep surfaces now fail closed on malformed inputs and
+  non-finite aggregate-state generation.
 
 No semantic bugs (sign errors, wrong invariants, fabricated
 constants) found in `fault_injection.py`. The 22 Antigravity
