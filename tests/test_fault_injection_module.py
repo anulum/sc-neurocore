@@ -174,3 +174,11 @@ class TestFaultInjectorInjectContracts:
             injector.inject(np.zeros((4,), dtype=np.uint8), "bit_flip", 0.1)  # type: ignore[arg-type]
         with pytest.raises(ValueError, match="ber"):
             injector.inject(np.zeros((4,), dtype=np.uint8), FaultModel.BIT_FLIP, 1.1)
+
+    def test_discrete_models_reject_non_binary_streams(self):
+        import numpy as np
+
+        injector = FaultInjector(seed=1)
+        bad = np.array([0.0, 0.5, 1.0], dtype=np.float64)
+        with pytest.raises(ValueError, match="binary"):
+            injector.inject(bad, FaultModel.BIT_FLIP, 0.1)
