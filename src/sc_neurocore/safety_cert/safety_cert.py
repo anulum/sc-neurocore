@@ -982,6 +982,14 @@ class HFTAssessment:
     sff: float
     target_sil: SILLevel
 
+    def __post_init__(self) -> None:
+        if isinstance(self.sff, bool) or not isinstance(self.sff, int | float):
+            raise ValueError("sff must be a finite value in [0, 1]")
+        if not math.isfinite(float(self.sff)) or float(self.sff) < 0.0 or float(self.sff) > 1.0:
+            raise ValueError("sff must be a finite value in [0, 1]")
+        if not isinstance(self.target_sil, SILLevel):
+            raise ValueError("target_sil must be a SILLevel")
+
     @property
     def required_hft(self) -> HFTLevel:
         """Determine required HFT from SFF and target SIL."""
