@@ -1515,11 +1515,14 @@ def create_app() -> FastAPI:
 
     @app.post("/api/synth/estimate")
     def api_synth_estimate(data: dict[str, Any]) -> Any:
-        ir_op_count = data.get("ir_op_count", 0)
+        raw_ir_op_count = data.get("ir_op_count", 0)
         target = data.get("target", "ice40")
+        if not isinstance(raw_ir_op_count, int):
+            raise HTTPException(422, "ir_op_count must be an integer >= 1")
+        ir_op_count = raw_ir_op_count
         if ir_op_count < 1:
             raise HTTPException(422, "ir_op_count must be >= 1")
-        return estimate_resources(ir_op_count, target)
+        return _safe(lambda: estimate_resources(ir_op_count, target))
 
     @app.post("/api/synth/pnr")
     def api_synth_pnr(data: dict[str, Any]) -> Any:
@@ -1536,7 +1539,7 @@ def create_app() -> FastAPI:
         state = data.get("state", {})
         if not name:
             raise HTTPException(422, "Project name required")
-        return save_project(name, state)
+        return _safe(lambda: save_project(name, state))
 
     @app.get("/api/project/list")
     def api_project_list() -> Any:
@@ -1544,14 +1547,14 @@ def create_app() -> FastAPI:
 
     @app.get("/api/project/load/{name}")
     def api_project_load(name: str) -> Any:
-        result = load_project(name)
+        result = _safe(lambda: load_project(name))
         if "error" in result:
             raise HTTPException(404, result["error"])
         return result
 
     @app.delete("/api/project/{name}")
     def api_project_delete(name: str) -> Any:
-        result = delete_project(name)
+        result = _safe(lambda: delete_project(name))
         if "error" in result:
             raise HTTPException(404, result["error"])
         return result

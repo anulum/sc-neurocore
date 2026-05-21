@@ -120,12 +120,15 @@ def save_project(name: str, state: dict) -> dict:
     _ensure_dir()
     path = _safe_path(name)
     name = _safe_name(name)
+    if not isinstance(state, dict):
+        raise ValueError("Project state must be an object")
     payload = {
         "name": name,
         "saved_at": time.time(),
         "version": "0.3.0",
         "state": state,
     }
+    _validate_hdl_identifiers(payload)
     with open(path, "w") as f:
         json.dump(payload, f, indent=2, default=str)
     return {"name": name, "path": str(path), "saved_at": payload["saved_at"]}
@@ -139,6 +142,13 @@ def load_project(name: str) -> dict:
         return {"error": f"Project '{name}' not found"}
     with open(path) as f:
         data = json.load(f)
+    if not isinstance(data, dict):
+        raise ValueError("Invalid project payload: expected object")
+    if not isinstance(data.get("state"), dict):
+        raise ValueError("Invalid project payload: 'state' must be an object")
+    stored_name = data.get("name")
+    if not isinstance(stored_name, str) or _safe_name(stored_name) != name:
+        raise ValueError("Invalid project payload: inconsistent project name")
     _validate_hdl_identifiers(data)
     return data
 
