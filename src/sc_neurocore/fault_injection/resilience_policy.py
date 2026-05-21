@@ -239,7 +239,7 @@ class GracefulDegradationPolicy:
         return DegradationPlan(
             action=DegradationAction.NOMINAL,
             observation=observation,
-            recommended_bitstream_length=observation.bitstream_length,
+            recommended_bitstream_length=min(observation.bitstream_length, self.max_bitstream_length),
             replay_seed=observation.seed,
             reason="diagnostics within policy thresholds",
         )

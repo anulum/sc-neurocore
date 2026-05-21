@@ -221,6 +221,23 @@ def test_make_plan_rejects_invalid_helper_inputs() -> None:
         )
 
 
+def test_nominal_plan_respects_max_bitstream_length_cap() -> None:
+    policy = GracefulDegradationPolicy(max_bitstream_length=4)
+    observation = SeededFaultObservation(
+        layer_id="L0",
+        seed=1,
+        fault_model=FaultModel.BIT_FLIP,
+        ber=0.0,
+        affected_bits=0,
+        bitstream_length=8,
+        affected_ratio=0.0,
+        audit=BitstreamAuditReport(layer="L0", stream_length=8, num_neurons=1, status=AuditSeverity.OK),
+    )
+    plan = policy._plan(observation)  # type: ignore[attr-defined]
+    assert plan.action == DegradationAction.NOMINAL
+    assert plan.recommended_bitstream_length == 4
+
+
 @pytest.mark.parametrize(
     ("kwargs", "match"),
     [
