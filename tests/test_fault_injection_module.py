@@ -208,6 +208,25 @@ class TestFaultInjectorInjectContracts:
         with pytest.raises(ValueError, match="within"):
             injector.inject(np.array([0.0, 1.2, 1.0]), FaultModel.GAUSSIAN_NOISE, 0.1)
 
+    @pytest.mark.parametrize(
+        "model",
+        [
+            FaultModel.BIT_FLIP,
+            FaultModel.STUCK_AT_0,
+            FaultModel.STUCK_AT_1,
+            FaultModel.GAUSSIAN_NOISE,
+            FaultModel.DROPOUT,
+        ],
+    )
+    def test_zero_ber_is_deterministic_noop(self, model):
+        import numpy as np
+
+        injector = FaultInjector(seed=1)
+        bitstream = np.array([0, 1, 0, 1], dtype=np.uint8)
+        out, affected = injector.inject(bitstream, model, 0.0)
+        assert affected == 0
+        assert np.array_equal(out, bitstream)
+
 
 class TestInjectAtPositionsContracts:
     def test_flips_requested_positions(self):

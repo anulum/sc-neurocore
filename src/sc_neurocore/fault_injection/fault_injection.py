@@ -220,6 +220,8 @@ class FaultInjector:
                 raise ValueError("gaussian_noise requires finite bitstream values")
             if (values < 0.0).any() or (values > 1.0).any():
                 raise ValueError("gaussian_noise requires values within [0, 1]")
+        if ber == 0.0:
+            return bitstream.copy(), 0
 
         corrupted = bitstream.copy()
         n = len(bitstream)
