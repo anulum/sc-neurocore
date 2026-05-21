@@ -232,3 +232,34 @@ class TestBitstreamGenerationContracts:
         bench = ResilienceBenchmark(seed=3)
         with pytest.raises(ValueError, match=match):
             bench._generate_bitstream(length, probability)
+
+
+class TestBenchmarkRunContracts:
+    def test_run_returns_report_with_expected_fault_model(self):
+        bench = ResilienceBenchmark(seed=2)
+        report = bench.run(fault_model=FaultModel.BIT_FLIP, ber=1e-3, bitstream_length=32, num_trials=5)
+        assert report.fault_model == FaultModel.BIT_FLIP.value
+        assert report.num_trials == 5
+
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"fault_model": "bit_flip"}, "fault_model"),
+            ({"ber": 1.2}, "ber"),
+            ({"bitstream_length": 0}, "bitstream_length"),
+            ({"probability": -0.1}, "probability"),
+            ({"num_trials": 0}, "num_trials"),
+        ],
+    )
+    def test_run_rejects_invalid_inputs(self, kwargs, match):
+        bench = ResilienceBenchmark(seed=2)
+        values = {
+            "fault_model": FaultModel.BIT_FLIP,
+            "ber": 1e-3,
+            "bitstream_length": 32,
+            "probability": 0.5,
+            "num_trials": 5,
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            bench.run(**values)  # type: ignore[arg-type]
