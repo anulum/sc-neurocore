@@ -95,8 +95,8 @@ class Requirement:
             raise ValueError("standard must be a SafetyStandard")
         if not isinstance(self.sil_level, SILLevel):
             raise ValueError("sil_level must be a SILLevel")
-        if not isinstance(self.status, str) or not self.status.strip():
-            raise ValueError("status must be a non-empty string")
+        if not isinstance(self.status, str) or self.status not in {"open", "implemented", "verified"}:
+            raise ValueError("status must be one of: open, implemented, verified")
 
         for impl_ref in self.implementation_refs:
             if not isinstance(impl_ref, str) or not impl_ref.strip():
