@@ -200,6 +200,27 @@ def test_degradation_plan_rejects_invalid_contracts() -> None:
         )
 
 
+def test_make_plan_rejects_invalid_helper_inputs() -> None:
+    policy = GracefulDegradationPolicy()
+    observation = SeededFaultObservation(
+        layer_id="L0",
+        seed=1,
+        fault_model=FaultModel.BIT_FLIP,
+        ber=0.1,
+        affected_bits=1,
+        bitstream_length=8,
+        affected_ratio=0.125,
+        audit=BitstreamAuditReport(layer="L0", stream_length=8, num_neurons=1, status=AuditSeverity.OK),
+    )
+    with pytest.raises(ValueError, match="multiplier"):
+        policy._make_plan(  # type: ignore[attr-defined]
+            DegradationAction.EXTEND_BITSTREAM,
+            observation,
+            0,
+            "reason",
+        )
+
+
 @pytest.mark.parametrize(
     ("kwargs", "match"),
     [
