@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import json
 import pytest
 
 fastapi = pytest.importorskip("fastapi")
@@ -52,6 +53,13 @@ class TestProjectSaveLoad:
         result = load_project("nope")
         assert "error" in result
 
+    def test_load_rejects_malformed_project_payload(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
+        bad_path = tmp_path / "bad_payload.json"
+        bad_path.write_text(json.dumps({"name": "bad_payload", "state": []}), encoding="utf-8")
+        with pytest.raises(ValueError, match="'state' must be an object"):
+            load_project("bad_payload")
+
     def test_list_projects(self, tmp_path, monkeypatch):
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
         save_project("proj_a", {})
@@ -74,6 +82,16 @@ class TestProjectSaveLoad:
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
         result = delete_project("nope")
         assert "error" in result
+
+    def test_save_rejects_non_object_state(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
+        with pytest.raises(ValueError, match="Project state must be an object"):
+            save_project("bad_state", ["not", "an", "object"])  # type: ignore[arg-type]
+
+    def test_save_rejects_invalid_hdl_identifier(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
+        with pytest.raises(ValueError, match="Invalid HDL-facing identifiers"):
+            save_project("bad_ident", {"module_name": "bad-name"})
 
     @pytest.mark.parametrize(
         "name",
@@ -143,6 +161,20 @@ class TestEndpoints:
         r = client.post("/api/project/save", json={"state": {}})
         assert r.status_code == 422
 
+    def test_save_rejects_non_object_state_endpoint(self, client):
+        r = client.post(
+            "/api/project/save",
+            json={"name": "bad_state_endpoint", "state": ["not", "an", "object"]},
+        )
+        assert r.status_code == 422
+
+    def test_save_rejects_invalid_hdl_identifier_endpoint(self, client):
+        r = client.post(
+            "/api/project/save",
+            json={"name": "bad_ident_endpoint", "state": {"module_name": "bad-name"}},
+        )
+        assert r.status_code == 422
+
     def test_list_endpoint(self, client):
         r = client.get("/api/project/list")
         assert r.status_code == 200
@@ -151,6 +183,14 @@ class TestEndpoints:
     def test_load_nonexistent_endpoint(self, client):
         r = client.get("/api/project/load/nonexistent_xyz")
         assert r.status_code == 404
+
+    def test_load_invalid_name_endpoint(self, client):
+        r = client.get("/api/project/load/bad%5Cname")
+        assert r.status_code == 422
+
+    def test_delete_invalid_name_endpoint(self, client):
+        r = client.delete("/api/project/bad%5Cname")
+        assert r.status_code == 422
 
     def test_pipeline_endpoint(self, client):
         exc = create_population(count=20, neuron_type="excitatory")
