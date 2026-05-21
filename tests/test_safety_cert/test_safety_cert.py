@@ -608,6 +608,18 @@ class TestComplianceChecklist:
         finally:
             ComplianceChecklist.IEC_61508_CLAUSES = original
 
+    def test_generate_rejects_corrupted_clause_definition_shape(self):
+        original = ComplianceChecklist.IEC_61508_CLAUSES
+        try:
+            ComplianceChecklist.IEC_61508_CLAUSES = [
+                ("7.4.2", "A", "formal/"),
+                ("7.4.3", "B", ""),
+            ]
+            with pytest.raises(ValueError, match="clause definitions"):
+                ComplianceChecklist.generate(SafetyStandard.IEC_61508)
+        finally:
+            ComplianceChecklist.IEC_61508_CLAUSES = original
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
