@@ -1289,6 +1289,8 @@ class SafetyManualGenerator:
         for module in modules:
             if not isinstance(module, str) or not module.strip():
                 raise ValueError("modules must contain non-empty strings")
+        if len(modules) != len(set(modules)):
+            raise ValueError("modules must not contain duplicates")
         if isinstance(wcet_ns, bool) or not isinstance(wcet_ns, int | float):
             raise ValueError("wcet_ns must be a finite non-negative value")
         if not math.isfinite(float(wcet_ns)) or float(wcet_ns) < 0.0:
