@@ -75,6 +75,13 @@ class TestTraceabilityMatrix:
         assert tm.link_implementation(" REQ_001 ", " hdl/test.v ") is True
         assert tm.requirements["REQ_001"].implementation_refs == ["hdl/test.v"]
 
+    def test_link_implementation_is_idempotent_for_same_reference(self):
+        tm = TraceabilityMatrix()
+        tm.add_requirement(Requirement("REQ_001", "Test", SafetyStandard.IEC_61508))
+        tm.link_implementation("REQ_001", "hdl/test.v")
+        tm.link_implementation("REQ_001", "hdl/test.v")
+        assert tm.requirements["REQ_001"].implementation_refs == ["hdl/test.v"]
+
     def test_link_implementation_rejects_corrupted_requirement_entry(self):
         tm = TraceabilityMatrix()
         tm.requirements["REQ_001"] = "bad"  # type: ignore[assignment]
@@ -95,6 +102,15 @@ class TestTraceabilityMatrix:
         req.implementation_refs = ["hdl/test.v"]
         tm.add_requirement(req)
         tm.link_verification(" REQ_001 ", " formal/test.sby ")
+        assert tm.requirements["REQ_001"].verification_refs == ["formal/test.sby"]
+
+    def test_link_verification_is_idempotent_for_same_reference(self):
+        tm = TraceabilityMatrix()
+        req = Requirement("REQ_001", "Test", SafetyStandard.IEC_61508)
+        req.implementation_refs = ["hdl/test.v"]
+        tm.add_requirement(req)
+        tm.link_verification("REQ_001", "formal/test.sby")
+        tm.link_verification("REQ_001", "formal/test.sby")
         assert tm.requirements["REQ_001"].verification_refs == ["formal/test.sby"]
 
     def test_link_verification_rejects_corrupted_requirement_entry(self):

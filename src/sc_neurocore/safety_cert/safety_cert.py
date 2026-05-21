@@ -139,6 +139,9 @@ class TraceabilityMatrix:
             return False
         if not isinstance(req, Requirement):
             raise ValueError("requirements must contain Requirement entries")
+        if impl_ref in req.implementation_refs:
+            self._update_status(req)
+            return True
         req.implementation_refs.append(impl_ref)
         self._update_status(req)
         return True
@@ -155,6 +158,9 @@ class TraceabilityMatrix:
             return False
         if not isinstance(req, Requirement):
             raise ValueError("requirements must contain Requirement entries")
+        if verif_ref in req.verification_refs:
+            self._update_status(req)
+            return True
         req.verification_refs.append(verif_ref)
         self._update_status(req)
         return True
