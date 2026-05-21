@@ -158,11 +158,15 @@ class TestFMEDA:
             ({"fm_id": ""}, "fm_id"),
             ({"component": ""}, "component"),
             ({"description": ""}, "description"),
+            ({"category": "safe"}, "category"),
             ({"failure_rate_fit": -1.0}, "failure_rate_fit"),
             ({"failure_rate_fit": float("nan")}, "failure_rate_fit"),
+            ({"failure_rate_fit": True}, "failure_rate_fit"),
             ({"diagnostic_coverage": -0.1}, "diagnostic_coverage"),
             ({"diagnostic_coverage": 1.1}, "diagnostic_coverage"),
             ({"diagnostic_coverage": float("inf")}, "diagnostic_coverage"),
+            ({"diagnostic_coverage": False}, "diagnostic_coverage"),
+            ({"mitigation": None}, "mitigation"),
         ],
     )
     def test_failure_mode_rejects_invalid_contracts(self, kwargs, match):
