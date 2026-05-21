@@ -1422,6 +1422,12 @@ class TestEvidenceBag:
         with pytest.raises(ValueError, match="item"):
             bag.add("bad")  # type: ignore[arg-type]
 
+    def test_add_rejects_duplicate_filenames(self):
+        bag = EvidenceBag()
+        bag.add(EvidenceItem("x.md", "formal", "proof"))
+        with pytest.raises(ValueError, match="unique"):
+            bag.add(EvidenceItem("x.md", "report", "duplicate"))
+
     def test_add_from_package_rejects_invalid_package(self):
         bag = EvidenceBag()
         with pytest.raises(ValueError, match="pkg"):

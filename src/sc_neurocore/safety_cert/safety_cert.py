@@ -1483,6 +1483,8 @@ class EvidenceBag:
     def add(self, item: EvidenceItem) -> None:
         if not isinstance(item, EvidenceItem):
             raise ValueError("item must be an EvidenceItem")
+        if any(existing.filename == item.filename for existing in self.items):
+            raise ValueError("evidence filenames must be unique")
         self.items.append(item)
 
     def add_from_package(self, pkg: CertificationPackage) -> None:
