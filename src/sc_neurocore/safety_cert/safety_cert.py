@@ -892,6 +892,8 @@ class CCFDefence:
             raise ValueError("beta_reduction must be a finite non-negative value")
         if not math.isfinite(float(self.beta_reduction)) or float(self.beta_reduction) < 0.0:
             raise ValueError("beta_reduction must be a finite non-negative value")
+        if float(self.beta_reduction) > 1.0:
+            raise ValueError("beta_reduction must not exceed 1.0")
         if not isinstance(self.implemented, bool):
             raise ValueError("implemented must be a boolean")
 
