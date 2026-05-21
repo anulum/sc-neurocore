@@ -421,6 +421,8 @@ def _arm_payload(arm: SideChannelBenchmarkArm) -> dict[str, Any]:
 
 
 def _class_proxy_payload(proxy: ClassActivityProxy) -> dict[str, Any]:
+    if not isinstance(proxy, ClassActivityProxy):
+        raise SideChannelBenchmarkError("proxy must be a ClassActivityProxy")
     return {
         "class_means": {str(key): value for key, value in proxy.class_means.items()},
         "max_class_mean_gap": proxy.max_class_mean_gap,
