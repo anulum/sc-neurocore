@@ -42,6 +42,7 @@ from sc_neurocore.safety_cert.safety_cert import (
     TraceabilityMatrix,
     WCETPath,
     WCETAnalyzer,
+    CROSS_MAP,
 )
 
 
@@ -1643,6 +1644,16 @@ class TestCrossStandardMapper:
     def test_equivalent_clauses_rejects_invalid_contracts(self, standard, clause, match):
         with pytest.raises(ValueError, match=match):
             CrossStandardMapper.equivalent_clauses(standard, clause)
+
+    def test_equivalent_clauses_rejects_corrupted_mapping_state(self):
+        key = ("IEC 61508", "7.4.2")
+        original = CROSS_MAP[key]
+        try:
+            CROSS_MAP[key] = [("ISO 26262", ""), ("DO-254", "6.0")]  # type: ignore[list-item]
+            with pytest.raises(ValueError, match="mappings"):
+                CrossStandardMapper.equivalent_clauses("IEC 61508", "7.4.2")
+        finally:
+            CROSS_MAP[key] = original
 
     @pytest.mark.parametrize(
         ("left", "right", "match"),
