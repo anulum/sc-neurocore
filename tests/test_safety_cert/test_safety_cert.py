@@ -69,6 +69,12 @@ class TestTraceabilityMatrix:
         assert tm.link_implementation("REQ_001", "hdl/test.v") is True
         assert tm.requirements["REQ_001"].status == "implemented"
 
+    def test_link_implementation_normalises_whitespace_inputs(self):
+        tm = TraceabilityMatrix()
+        tm.add_requirement(Requirement("REQ_001", "Test", SafetyStandard.IEC_61508))
+        assert tm.link_implementation(" REQ_001 ", " hdl/test.v ") is True
+        assert tm.requirements["REQ_001"].implementation_refs == ["hdl/test.v"]
+
     def test_link_implementation_rejects_corrupted_requirement_entry(self):
         tm = TraceabilityMatrix()
         tm.requirements["REQ_001"] = "bad"  # type: ignore[assignment]
@@ -82,6 +88,14 @@ class TestTraceabilityMatrix:
         tm.add_requirement(req)
         tm.link_verification("REQ_001", "formal/test.sby")
         assert tm.requirements["REQ_001"].status == "verified"
+
+    def test_link_verification_normalises_whitespace_inputs(self):
+        tm = TraceabilityMatrix()
+        req = Requirement("REQ_001", "Test", SafetyStandard.IEC_61508)
+        req.implementation_refs = ["hdl/test.v"]
+        tm.add_requirement(req)
+        tm.link_verification(" REQ_001 ", " formal/test.sby ")
+        assert tm.requirements["REQ_001"].verification_refs == ["formal/test.sby"]
 
     def test_link_verification_rejects_corrupted_requirement_entry(self):
         tm = TraceabilityMatrix()

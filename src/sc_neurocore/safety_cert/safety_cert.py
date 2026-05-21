@@ -132,6 +132,8 @@ class TraceabilityMatrix:
             raise ValueError("req_id must be a non-empty string")
         if not isinstance(impl_ref, str) or not impl_ref.strip():
             raise ValueError("impl_ref must be a non-empty string")
+        req_id = req_id.strip()
+        impl_ref = impl_ref.strip()
         req = self.requirements.get(req_id)
         if req is None:
             return False
@@ -146,6 +148,8 @@ class TraceabilityMatrix:
             raise ValueError("req_id must be a non-empty string")
         if not isinstance(verif_ref, str) or not verif_ref.strip():
             raise ValueError("verif_ref must be a non-empty string")
+        req_id = req_id.strip()
+        verif_ref = verif_ref.strip()
         req = self.requirements.get(req_id)
         if req is None:
             return False
