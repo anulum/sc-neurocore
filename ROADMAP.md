@@ -32,6 +32,12 @@
   tuple integrity, strict evidence SHA-256 digest contracts, normalised module
   identifiers for uncovered/formal-gap/safety-manual flows, and compliance
   clause tuple shape constraints with targeted regression coverage updates.
+- Progress (2026-05-21, batch 4): continued certification-path hardening added
+  fail-closed checks for checklist clause integrity, change-impact risk-level
+  and change-id consistency, unique change identifiers, stricter formal
+  property identifier validation, and strict cross-standard mapping payload
+  integrity; regression coverage now also gates whitespace-normalised module
+  identifiers and compliance clause tuple shape constraints end-to-end.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
 
