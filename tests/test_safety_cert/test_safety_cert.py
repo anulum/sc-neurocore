@@ -1185,6 +1185,10 @@ class TestCrossStandardMapper:
         assert len(equiv) == 2
         assert ("ISO 26262", "6.7.4") in equiv
 
+    def test_equivalent_clauses_normalises_whitespace(self):
+        equiv = CrossStandardMapper.equivalent_clauses(" IEC 61508 ", " 7.4.2 ")
+        assert ("ISO 26262", "6.7.4") in equiv
+
     def test_no_mapping(self):
         equiv = CrossStandardMapper.equivalent_clauses("IEC 61508", "99.99")
         assert equiv == []
