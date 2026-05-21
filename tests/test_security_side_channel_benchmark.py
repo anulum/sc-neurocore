@@ -97,6 +97,10 @@ def test_side_channel_benchmark_report_writes_canonical_json(tmp_path) -> None:
         ((), ()),
         ((0.25,), (0, 1)),
         ((0.25, 0.5), (0,)),
+        ((0.25, float("nan")), (0, 1)),
+        ((0.25, 0.5), (0, float("nan"))),
+        ((0.25, 0.5), (0, True)),
+        ((0.25, True), (0, 1)),
     ],
 )
 def test_side_channel_benchmark_rejects_invalid_sample_contracts(
