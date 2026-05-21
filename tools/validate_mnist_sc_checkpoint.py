@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import struct
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -37,6 +38,7 @@ from sc_neurocore.training.snn_modules import ConvSpikingNet
 
 MNIST_IMAGE_MAGIC = 2051
 MNIST_LABEL_MAGIC = 2049
+_SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 
 
 @dataclass(frozen=True)
@@ -136,30 +138,32 @@ def load_mnist_torchvision(
 def _state_dict_from_checkpoint(
     path: Path,
     *,
-    trusted_sha256: dict[str, str] | None = None,
+    trusted_sha256: dict[str, str],
 ) -> dict[str, torch.Tensor]:
-    checkpoint = (
-        safe_load_checkpoint(path, trusted_sha256=trusted_sha256, map_location="cpu")
-        if trusted_sha256 is not None
-        else torch.load(path, map_location="cpu", weights_only=True)
-    )
+    checkpoint = safe_load_checkpoint(path, trusted_sha256=trusted_sha256, map_location="cpu")
     if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
         state = checkpoint["model_state_dict"]
     else:
         state = checkpoint
     if (
         not isinstance(state, dict)
-        or not all(isinstance(k, str) for k in state)
+        or not state
+        or not all(isinstance(k, str) and k for k in state)
         or not all(isinstance(v, torch.Tensor) for v in state.values())
     ):
         raise ValueError(f"checkpoint does not contain a state_dict: {path}")
+    for key, value in state.items():
+        if value.numel() == 0:
+            raise ValueError(f"checkpoint tensor '{key}' must be non-empty")
+        if torch.is_floating_point(value) and not torch.isfinite(value).all():
+            raise ValueError(f"checkpoint tensor '{key}' contains non-finite values")
     return {key: value for key, value in state.items()}
 
 
 def load_conv_checkpoint(
     path: Path,
     *,
-    trusted_sha256: dict[str, str] | None = None,
+    trusted_sha256: dict[str, str],
 ) -> ConvSpikingNet:
     """Load ``ConvSpikingNet`` while preserving learned dynamics flags."""
     state = _state_dict_from_checkpoint(path, trusted_sha256=trusted_sha256)
@@ -209,6 +213,8 @@ def validate_checkpoint(
     checkpoint_sha256: str | None = None,
 ) -> ValidationResult:
     """Run the real checkpoint/dataset SC final-readout validation."""
+    if samples <= 0:
+        raise ValueError("samples must be positive")
     if timesteps <= 0:
         raise ValueError("timesteps must be positive")
     if bitstream_length <= 0:
@@ -217,6 +223,10 @@ def validate_checkpoint(
         raise ValueError("min_sc_accuracy must be in [0, 1]")
     if not 0.0 <= min_agreement <= 1.0:
         raise ValueError("min_agreement must be in [0, 1]")
+    if not checkpoint_sha256:
+        raise ValueError("checkpoint_sha256 is required for trusted checkpoint loading")
+    if not _SHA256_RE.fullmatch(checkpoint_sha256):
+        raise ValueError("checkpoint_sha256 must be exactly 64 hexadecimal characters")
 
     if dataset_loader == "torchvision":
         images, labels = load_mnist_torchvision(data_dir, samples, download=download)
@@ -224,7 +234,7 @@ def validate_checkpoint(
         images, labels = load_mnist_idx(data_dir, samples)
     else:
         raise ValueError("dataset_loader must be 'torchvision' or 'idx'")
-    trusted_sha256 = {checkpoint.name: checkpoint_sha256} if checkpoint_sha256 else None
+    trusted_sha256 = {checkpoint.name: checkpoint_sha256}
     model = load_conv_checkpoint(checkpoint, trusted_sha256=trusted_sha256)
     sc_readout = VectorizedSCLayer.from_exported_weights(
         model.to_sc_weights(encoding="bipolar")[-1],
@@ -288,6 +298,7 @@ def main() -> int:
     parser.add_argument("--min-agreement", type=float, default=0.65)
     parser.add_argument(
         "--checkpoint-sha256",
+        required=True,
         help="Expected SHA-256 digest for the checkpoint before PyTorch deserialisation",
     )
     parser.add_argument("--dataset-loader", choices=("torchvision", "idx"), default="torchvision")

@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import struct
 
 import pytest
@@ -47,10 +48,13 @@ def test_load_mnist_idx_rejects_bad_magic(tmp_path):
 @pytest.mark.parametrize(
     "kwargs",
     [
+        {"samples": 0},
         {"timesteps": 0},
         {"bitstream_length": 0},
         {"min_sc_accuracy": -0.1},
         {"min_agreement": 1.1},
+        {"checkpoint_sha256": None},
+        {"checkpoint_sha256": "abc123"},
     ],
 )
 def test_validate_checkpoint_rejects_invalid_numeric_contract(tmp_path, kwargs):
@@ -63,6 +67,7 @@ def test_validate_checkpoint_rejects_invalid_numeric_contract(tmp_path, kwargs):
         "seed": 0,
         "min_sc_accuracy": 0.0,
         "min_agreement": 0.0,
+        "checkpoint_sha256": "0" * 64,
     }
     params.update(kwargs)
 
@@ -76,3 +81,30 @@ def test_state_dict_from_checkpoint_verifies_optional_sha256(tmp_path):
 
     with pytest.raises(CheckpointTrustError, match="SHA-256 mismatch"):
         _state_dict_from_checkpoint(checkpoint, trusted_sha256={checkpoint.name: "0" * 64})
+
+
+def test_state_dict_from_checkpoint_rejects_empty_mapping(tmp_path):
+    checkpoint = tmp_path / "empty.pt"
+    torch.save({}, checkpoint)
+    digest = hashlib.sha256(checkpoint.read_bytes()).hexdigest()
+
+    with pytest.raises(ValueError, match="state_dict"):
+        _state_dict_from_checkpoint(checkpoint, trusted_sha256={checkpoint.name: digest})
+
+
+def test_state_dict_from_checkpoint_rejects_empty_tensor(tmp_path):
+    checkpoint = tmp_path / "empty_tensor.pt"
+    torch.save({"layer.weight": torch.empty(0)}, checkpoint)
+    digest = hashlib.sha256(checkpoint.read_bytes()).hexdigest()
+
+    with pytest.raises(ValueError, match="must be non-empty"):
+        _state_dict_from_checkpoint(checkpoint, trusted_sha256={checkpoint.name: digest})
+
+
+def test_state_dict_from_checkpoint_rejects_non_finite_tensor(tmp_path):
+    checkpoint = tmp_path / "nan_tensor.pt"
+    torch.save({"layer.weight": torch.tensor([1.0, float("nan")])}, checkpoint)
+    digest = hashlib.sha256(checkpoint.read_bytes()).hexdigest()
+
+    with pytest.raises(ValueError, match="non-finite"):
+        _state_dict_from_checkpoint(checkpoint, trusted_sha256={checkpoint.name: digest})
