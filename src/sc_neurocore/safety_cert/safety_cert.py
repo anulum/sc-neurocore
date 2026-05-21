@@ -29,6 +29,7 @@ Compatible with:
 from __future__ import annotations
 
 import hashlib
+import math
 import textwrap
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -175,6 +176,34 @@ class FailureMode:
     failure_rate_fit: float  # FIT = failures per 10^9 hours
     diagnostic_coverage: float = 0.0  # 0.0 – 1.0
     mitigation: str = ""
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.fm_id, str) or not self.fm_id.strip():
+            raise ValueError("fm_id must be a non-empty string")
+        if not isinstance(self.component, str) or not self.component.strip():
+            raise ValueError("component must be a non-empty string")
+        if not isinstance(self.description, str) or not self.description.strip():
+            raise ValueError("description must be a non-empty string")
+        if not isinstance(self.category, FailureCategory):
+            raise ValueError("category must be a FailureCategory")
+        if isinstance(self.failure_rate_fit, bool) or not isinstance(
+            self.failure_rate_fit, int | float
+        ):
+            raise ValueError("failure_rate_fit must be a finite non-negative number")
+        if not math.isfinite(float(self.failure_rate_fit)) or float(self.failure_rate_fit) < 0.0:
+            raise ValueError("failure_rate_fit must be a finite non-negative number")
+        if isinstance(self.diagnostic_coverage, bool) or not isinstance(
+            self.diagnostic_coverage, int | float
+        ):
+            raise ValueError("diagnostic_coverage must be a finite value in [0, 1]")
+        if (
+            not math.isfinite(float(self.diagnostic_coverage))
+            or float(self.diagnostic_coverage) < 0.0
+            or float(self.diagnostic_coverage) > 1.0
+        ):
+            raise ValueError("diagnostic_coverage must be a finite value in [0, 1]")
+        if not isinstance(self.mitigation, str):
+            raise ValueError("mitigation must be a string")
 
     @property
     def safe_failure_fraction(self) -> float:
