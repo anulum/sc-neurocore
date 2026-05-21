@@ -204,6 +204,21 @@ class TestTraceabilityMatrix:
         with pytest.raises(ValueError, match="key mismatch"):
             tm.generate_report()
 
+    @pytest.mark.parametrize(
+        ("field_name", "bad_value", "match"),
+        [
+            ("standard", "IEC 61508", "SafetyStandard"),
+            ("sil_level", 2, "SILLevel"),
+        ],
+    )
+    def test_generate_report_rejects_invalid_requirement_types(self, field_name, bad_value, match):
+        tm = TraceabilityMatrix()
+        req = Requirement("R1", "Test", SafetyStandard.IEC_61508)
+        setattr(req, field_name, bad_value)
+        tm.add_requirement(req)
+        with pytest.raises(ValueError, match=match):
+            tm.generate_report()
+
     def test_add_requirement_rejects_invalid_contract(self):
         tm = TraceabilityMatrix()
         with pytest.raises(ValueError, match="req"):
