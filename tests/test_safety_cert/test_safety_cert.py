@@ -720,6 +720,7 @@ class TestCertificationGenerator:
             ({"formal_properties": "bad"}, "formal_properties"),
             ({"formal_properties": ["bad"]}, "formal_properties"),
             ({"network_config": "bad"}, "network_config"),
+            ({"network_config": {"unsupported": 1}}, "network_config"),
             ({"network_config": {"bitstream_length": 0}}, "bitstream_length"),
             ({"network_config": {"num_inputs": 0}}, "num_inputs"),
             ({"network_config": {"num_neurons": 0}}, "num_neurons"),
