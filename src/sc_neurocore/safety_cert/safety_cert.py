@@ -465,6 +465,9 @@ class FormalProofCertificate:
         return self.proven_count / self.total_count if self.total_count > 0 else 0.0
 
     def compute_hash(self) -> str:
+        prop_ids = [p.prop_id for p in self.properties]
+        if len(prop_ids) != len(set(prop_ids)):
+            raise ValueError("properties must not contain duplicate prop_id values")
         h = hashlib.sha256()
         for p in sorted(self.properties, key=lambda x: x.prop_id):
             h.update(f"{p.prop_id}:{p.status}:{p.module}".encode())

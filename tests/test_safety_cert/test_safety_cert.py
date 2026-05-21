@@ -286,6 +286,16 @@ class TestFormalProofCertificate:
         cert = FormalProofCertificate(properties=self._props())
         assert cert.compute_hash() == cert.compute_hash()
 
+    def test_compute_hash_rejects_duplicate_property_ids(self):
+        cert = FormalProofCertificate(
+            properties=[
+                FormalProperty("P1", "m1", "d1", "assert", "proven"),
+                FormalProperty("P1", "m2", "d2", "assert", "proven"),
+            ]
+        )
+        with pytest.raises(ValueError, match="duplicate"):
+            cert.compute_hash()
+
     def test_generate_report(self):
         cert = FormalProofCertificate(properties=self._props())
         report = cert.generate_report()
