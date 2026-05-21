@@ -740,6 +740,20 @@ class TestCertificationGenerator:
         with pytest.raises(ValueError, match="statuses"):
             _ = pkg.checklist_coverage
 
+    def test_package_rejects_corrupted_checklist_status_state(self):
+        item = ChecklistItem("id", "7.4.2", "desc", "formal/", "partial")
+        item.status = "bad"  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="statuses"):
+            CertificationPackage(
+                standard=SafetyStandard.IEC_61508,
+                sil_level=SILLevel.SIL_2,
+                traceability_report="t",
+                fmeda_report="f",
+                formal_cert_report="p",
+                wcet_report="w",
+                checklist=[item],
+            )
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
