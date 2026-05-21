@@ -15,7 +15,9 @@ from sc_neurocore.fault_injection import (
     DegradationAction,
     FaultModel,
     GracefulDegradationPolicy,
+    SeededFaultObservation,
 )
+from sc_neurocore.stochastic_doctor.diagnostics import AuditSeverity, BitstreamAuditReport
 
 
 def test_zero_ber_keeps_nominal_plan_and_replay_seed() -> None:
@@ -160,6 +162,20 @@ def test_observation_affected_bits_are_bounded_by_layer_size() -> None:
         seed=5,
     )
     assert 0 <= plan.observation.affected_bits <= bitstreams.size
+
+
+def test_seeded_fault_observation_rejects_invalid_contracts() -> None:
+    with pytest.raises(ValueError, match="affected_bits"):
+        SeededFaultObservation(
+            layer_id="L0",
+            seed=1,
+            fault_model=FaultModel.BIT_FLIP,
+            ber=0.1,
+            affected_bits=9,
+            bitstream_length=8,
+            affected_ratio=0.2,
+            audit=BitstreamAuditReport(layer="L0", stream_length=8, num_neurons=1, status=AuditSeverity.OK),
+        )
 
 
 @pytest.mark.parametrize(
