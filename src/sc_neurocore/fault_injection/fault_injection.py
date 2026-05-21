@@ -200,6 +200,15 @@ class FaultInjector:
             raise ValueError("ber must be a finite value in [0, 1]")
         if not np.isfinite(float(ber)) or float(ber) < 0.0 or float(ber) > 1.0:
             raise ValueError("ber must be a finite value in [0, 1]")
+        if model in (
+            FaultModel.BIT_FLIP,
+            FaultModel.STUCK_AT_0,
+            FaultModel.STUCK_AT_1,
+            FaultModel.DROPOUT,
+        ):
+            unique_values = np.unique(bitstream)
+            if not np.isin(unique_values, np.array([0, 1])).all():
+                raise ValueError("discrete fault models require binary bitstreams")
 
         corrupted = bitstream.copy()
         n = len(bitstream)
