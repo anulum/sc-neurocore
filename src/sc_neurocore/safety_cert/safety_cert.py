@@ -192,6 +192,10 @@ class TraceabilityMatrix:
                 raise ValueError("requirement key mismatch with req_id")
             if not isinstance(req.status, str) or req.status not in {"open", "implemented", "verified"}:
                 raise ValueError("requirements statuses must be one of: open, implemented, verified")
+            if not isinstance(req.standard, SafetyStandard):
+                raise ValueError("requirements must use SafetyStandard")
+            if not isinstance(req.sil_level, SILLevel):
+                raise ValueError("requirements must use SILLevel")
         verified = sum(1 for r in self.requirements.values() if r.status == "verified")
         return verified / len(self.requirements)
 
