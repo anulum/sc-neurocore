@@ -693,6 +693,11 @@ class TestCCFAnalysis:
         ccf = CCFAnalysis()
         assert ccf.mark_implemented("NOPE") is False
 
+    def test_mark_implemented_rejects_invalid_defence_id(self):
+        ccf = CCFAnalysis()
+        with pytest.raises(ValueError, match="defence_id"):
+            ccf.mark_implemented("")
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
@@ -1022,6 +1027,30 @@ class TestCrossStandardMapper:
     def test_no_mapping(self):
         equiv = CrossStandardMapper.equivalent_clauses("IEC 61508", "99.99")
         assert equiv == []
+
+    @pytest.mark.parametrize(
+        ("standard", "clause", "match"),
+        [
+            ("", "7.4.2", "standard"),
+            ("IEC 61508", "", "clause"),
+        ],
+    )
+    def test_equivalent_clauses_rejects_invalid_contracts(self, standard, clause, match):
+        with pytest.raises(ValueError, match=match):
+            CrossStandardMapper.equivalent_clauses(standard, clause)
+
+    @pytest.mark.parametrize(
+        ("left", "right", "match"),
+        [
+            ("invalid", [], "lists"),
+            ([], "invalid", "lists"),
+            (["bad"], [], "checklist_a"),
+            ([], ["bad"], "checklist_b"),
+        ],
+    )
+    def test_coverage_overlap_rejects_invalid_contracts(self, left, right, match):
+        with pytest.raises(ValueError, match=match):
+            CrossStandardMapper.coverage_overlap(left, right)  # type: ignore[arg-type]
 
 
 # ── Formal Property Gap Detector Tests (Gap 10) ───────────────────────
