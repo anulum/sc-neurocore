@@ -390,6 +390,28 @@ class FormalProperty:
     depth: int = 20
     sby_file: str = ""
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.prop_id, str) or not self.prop_id.strip():
+            raise ValueError("prop_id must be a non-empty string")
+        if not isinstance(self.module, str) or not self.module.strip():
+            raise ValueError("module must be a non-empty string")
+        if not isinstance(self.description, str) or not self.description.strip():
+            raise ValueError("description must be a non-empty string")
+        if not isinstance(self.property_type, str) or self.property_type not in {
+            "assert",
+            "cover",
+            "assume",
+        }:
+            raise ValueError("property_type must be one of: assert, cover, assume")
+        if not isinstance(self.status, str) or self.status not in {"proven", "failed", "unknown"}:
+            raise ValueError("status must be one of: proven, failed, unknown")
+        if not isinstance(self.engine, str) or not self.engine.strip():
+            raise ValueError("engine must be a non-empty string")
+        if isinstance(self.depth, bool) or not isinstance(self.depth, int) or self.depth < 0:
+            raise ValueError("depth must be a non-negative integer")
+        if not isinstance(self.sby_file, str):
+            raise ValueError("sby_file must be a string")
+
 
 @dataclass
 class FormalProofCertificate:

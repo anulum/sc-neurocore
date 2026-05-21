@@ -245,6 +245,35 @@ class TestFormalProofCertificate:
         assert "Formal Proof Certificate" in report
         assert "P1" in report
 
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"prop_id": ""}, "prop_id"),
+            ({"module": ""}, "module"),
+            ({"description": ""}, "description"),
+            ({"property_type": "prove"}, "property_type"),
+            ({"status": "ok"}, "status"),
+            ({"engine": ""}, "engine"),
+            ({"depth": -1}, "depth"),
+            ({"depth": True}, "depth"),
+            ({"sby_file": None}, "sby_file"),
+        ],
+    )
+    def test_formal_property_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "prop_id": "P1",
+            "module": "sc_lif_neuron",
+            "description": "desc",
+            "property_type": "assert",
+            "status": "proven",
+            "engine": "SymbiYosys",
+            "depth": 20,
+            "sby_file": "sc_lif_neuron.sby",
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            FormalProperty(**values)
+
 
 # ── WCET Tests ───────────────────────────────────────────────────────
 
