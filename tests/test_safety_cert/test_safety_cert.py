@@ -1209,6 +1209,12 @@ class TestEvidenceBag:
         bag.add(EvidenceItem("test.md", "report", "test"))
         assert bag.file_count == 1
 
+    def test_file_count_rejects_corrupted_internal_state(self):
+        bag = EvidenceBag()
+        bag.items.append("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="EvidenceItem"):
+            _ = bag.file_count
+
     def test_from_package(self):
         gen = CertificationGenerator()
         props = [FormalProperty("P1", "m", "d", "assert", "proven")]
