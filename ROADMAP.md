@@ -14,36 +14,13 @@
 - Cross-repository validation must confirm the SCPN datastream contract with
   SCPN-QUANTUM-CONTROL and SCPN-PHASE-ORCHESTRATOR before claiming bridge
   readiness.
-- Progress (2026-05-21): `safety_cert/safety_cert.py` hardening tranche
-  added fail-closed state-integrity validation across traceability, FMEDA,
-  formal-proof, certification-package, evidence-bag, cross-standard mapping,
-  WCET, change-impact, reliability, and proof-gap surfaces with paired tests
-  in `tests/test_safety_cert/test_safety_cert.py`. This closes a focused
-  validation-hardening slice while broader roadmap items remain open.
-- Progress (2026-05-21, batch 2): follow-on safety-cert hardening added
-  duplicate/consistency guards for certification modules, formal-property
-  identifiers, compliance-clause definitions, safety-manual module sets, and
-  evidence filename uniqueness; plus strengthened decision-time integrity checks
-  for HFT, SIL mapping, reliability PFHd, package/checklist invariants, and
-  cross-standard checklist status handling with matching regression coverage.
-- Progress (2026-05-21, batch 3): additional fail-closed certification-path
-  hardening now validates requirement status integrity in coverage/open-count
-  paths, change-impact identifier/state consistency, cross-standard mapping
-  tuple integrity, strict evidence SHA-256 digest contracts, normalised module
-  identifiers for uncovered/formal-gap/safety-manual flows, and compliance
-  clause tuple shape constraints with targeted regression coverage updates.
-- Progress (2026-05-21, batch 4): continued certification-path hardening added
-  fail-closed checks for checklist clause integrity, change-impact risk-level
-  and change-id consistency, unique change identifiers, stricter formal
-  property identifier validation, and strict cross-standard mapping payload
-  integrity; regression coverage now also gates whitespace-normalised module
-  identifiers and compliance clause tuple shape constraints end-to-end.
-- Progress (2026-05-21, batch 5): certification-path fail-closed hardening
-  extended with stricter formal-certificate state guards, finite FMEDA
-  aggregate enforcement (`total_failure_rate`, `diagnostic_coverage`,
-  `residual_risk_fit`, per-component aggregates), proof-coverage/uncovered-module
-  property identifier validation, cross-standard overlap de-duplication, and
-  constructor-time checklist identity invariants with matching regression tests.
+- 2026-05-21: Hardened `safety_cert/safety_cert.py` and
+  `tests/test_safety_cert/test_safety_cert.py` with consolidated fail-closed
+  validation updates across traceability, FMEDA aggregates, formal certificate
+  state guards, certification-package checklist identity/contracts, evidence
+  digest and uniqueness checks, cross-standard mapping/overlap integrity, WCET
+  and change-impact state checks, and proof-coverage/property-gap identifier
+  normalisation.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
 
