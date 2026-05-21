@@ -494,6 +494,8 @@ class FormalProofCertificate:
         for prop in self.properties:
             if not isinstance(prop, FormalProperty):
                 raise ValueError("properties must contain FormalProperty entries")
+            if not isinstance(prop.status, str) or prop.status not in {"proven", "failed", "unknown"}:
+                raise ValueError("properties statuses must be one of: proven, failed, unknown")
         return sum(1 for p in self.properties if p.status == "proven")
 
     @property

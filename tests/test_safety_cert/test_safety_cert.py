@@ -366,6 +366,14 @@ class TestFormalProofCertificate:
         with pytest.raises(ValueError, match="FormalProperty"):
             _ = cert.proven_count
 
+    def test_proven_count_rejects_corrupted_property_status(self):
+        cert = FormalProofCertificate()
+        prop = FormalProperty("P1", "m", "d", "assert", "proven")
+        prop.status = "bad"  # type: ignore[assignment]
+        cert.properties.append(prop)
+        with pytest.raises(ValueError, match="statuses"):
+            _ = cert.proven_count
+
     def test_pass_rate(self):
         cert = FormalProofCertificate(properties=self._props())
         assert abs(cert.pass_rate - 0.75) < 0.01
