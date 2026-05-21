@@ -422,6 +422,17 @@ class FormalProofCertificate:
     tool_version: str = "SymbiYosys"
     certificate_hash: str = ""
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.generation_timestamp, str):
+            raise ValueError("generation_timestamp must be a string")
+        if not isinstance(self.tool_version, str) or not self.tool_version.strip():
+            raise ValueError("tool_version must be a non-empty string")
+        if not isinstance(self.certificate_hash, str):
+            raise ValueError("certificate_hash must be a string")
+        for prop in self.properties:
+            if not isinstance(prop, FormalProperty):
+                raise ValueError("properties must contain FormalProperty entries")
+
     def add_property(self, prop: FormalProperty) -> None:
         self.properties.append(prop)
 
@@ -907,6 +918,11 @@ class ProofTestCoverage:
     @staticmethod
     def coverage_from_proofs(properties: List[FormalProperty]) -> float:
         """Formal proof coverage = proven / total asserts."""
+        if not isinstance(properties, list):
+            raise ValueError("properties must be a list")
+        for prop in properties:
+            if not isinstance(prop, FormalProperty):
+                raise ValueError("properties must contain FormalProperty entries")
         asserts = [p for p in properties if p.property_type == "assert"]
         if not asserts:
             return 0.0
@@ -929,6 +945,16 @@ class ProofTestCoverage:
     @staticmethod
     def uncovered_modules(properties: List[FormalProperty], all_modules: List[str]) -> List[str]:
         """Modules with no formal proofs."""
+        if not isinstance(properties, list):
+            raise ValueError("properties must be a list")
+        for prop in properties:
+            if not isinstance(prop, FormalProperty):
+                raise ValueError("properties must contain FormalProperty entries")
+        if not isinstance(all_modules, list):
+            raise ValueError("all_modules must be a list")
+        for module in all_modules:
+            if not isinstance(module, str) or not module.strip():
+                raise ValueError("all_modules must contain non-empty strings")
         covered = {p.module for p in properties}
         return [m for m in all_modules if m not in covered]
 

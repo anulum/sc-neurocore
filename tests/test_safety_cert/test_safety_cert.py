@@ -250,6 +250,26 @@ class TestFormalProofCertificate:
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
+            ({"generation_timestamp": None}, "generation_timestamp"),
+            ({"tool_version": ""}, "tool_version"),
+            ({"certificate_hash": None}, "certificate_hash"),
+            ({"properties": ["not-prop"]}, "properties"),
+        ],
+    )
+    def test_formal_proof_certificate_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "properties": self._props(),
+            "generation_timestamp": "",
+            "tool_version": "SymbiYosys",
+            "certificate_hash": "",
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            FormalProofCertificate(**values)
+
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
             ({"prop_id": ""}, "prop_id"),
             ({"module": ""}, "module"),
             ({"description": ""}, "description"),
@@ -719,6 +739,24 @@ class TestProofTestCoverage:
     def test_dc_to_sil(self):
         assert ProofTestCoverage.dc_to_sil(0.99).value >= 3
         assert ProofTestCoverage.dc_to_sil(0.50) == SILLevel.SIL_1
+
+    @pytest.mark.parametrize(
+        ("props", "modules", "match"),
+        [
+            ("invalid", ["neuron"], "properties"),
+            ([FormalProperty("P1", "n", "d", "assert", "proven"), "bad"], ["neuron"], "properties"),
+            ([FormalProperty("P1", "n", "d", "assert", "proven")], "invalid", "all_modules"),
+            ([FormalProperty("P1", "n", "d", "assert", "proven")], ["", "neuron"], "all_modules"),
+        ],
+    )
+    def test_uncovered_modules_rejects_invalid_contracts(self, props, modules, match):
+        with pytest.raises(ValueError, match=match):
+            ProofTestCoverage.uncovered_modules(props, modules)  # type: ignore[arg-type]
+
+    @pytest.mark.parametrize("props", ["invalid", [FormalProperty("P1", "n", "d", "assert", "proven"), "bad"]])
+    def test_coverage_from_proofs_rejects_invalid_contracts(self, props):
+        with pytest.raises(ValueError, match="properties"):
+            ProofTestCoverage.coverage_from_proofs(props)  # type: ignore[arg-type]
 
 
 # ── HFT Assessment Tests (Gap 3) ──────────────────────────────────────
