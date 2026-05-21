@@ -1370,6 +1370,19 @@ class TestEvidenceBag:
         with pytest.raises(ValueError, match="pkg"):
             bag.add_from_package("bad")  # type: ignore[arg-type]
 
+    def test_add_from_package_rejects_corrupted_package_checklist_state(self):
+        gen = CertificationGenerator()
+        pkg = gen.generate(
+            SafetyStandard.IEC_61508,
+            SILLevel.SIL_2,
+            ["sc_lif_neuron"],
+            [FormalProperty("P1", "sc_lif_neuron", "d", "assert", "proven")],
+        )
+        pkg.checklist.append("bad")  # type: ignore[arg-type]
+        bag = EvidenceBag()
+        with pytest.raises(ValueError, match="ChecklistItem"):
+            bag.add_from_package(pkg)
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
