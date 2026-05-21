@@ -155,6 +155,28 @@ class ResilienceModeReport:
     recommended_action: DegradationAction
     trial_reports: tuple[ResilienceModeTrialReport, ...]
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.layer_id, str) or not self.layer_id.strip():
+            raise ValueError("layer_id must be a non-empty string")
+        if not isinstance(self.radiation_profile, RadiationProfile):
+            raise ValueError("radiation_profile must be a RadiationProfile")
+        if isinstance(self.seed, bool) or not isinstance(self.seed, int):
+            raise ValueError("seed must be an integer")
+        if (
+            not isinstance(self.input_shape, tuple)
+            or len(self.input_shape) != 2
+            or any(isinstance(v, bool) or not isinstance(v, int) or v <= 0 for v in self.input_shape)
+        ):
+            raise ValueError("input_shape must be a 2-tuple of positive integers")
+        if not np.isfinite(float(self.nominal_probability)) or not (0.0 <= float(self.nominal_probability) <= 1.0):
+            raise ValueError("nominal_probability must be a finite value in [0, 1]")
+        if not isinstance(self.recommended_action, DegradationAction):
+            raise ValueError("recommended_action must be a DegradationAction")
+        if not isinstance(self.trial_reports, tuple) or not self.trial_reports:
+            raise ValueError("trial_reports must be a non-empty tuple")
+        if any(not isinstance(report, ResilienceModeTrialReport) for report in self.trial_reports):
+            raise ValueError("trial_reports must contain ResilienceModeTrialReport entries")
+
     @property
     def requires_replay(self) -> bool:
         """Whether any fault model requires deterministic replay."""
