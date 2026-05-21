@@ -119,6 +119,45 @@ class ResilienceReport:
     mean_bits_flipped: float
     wall_time_ms: float
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.fault_model, str) or not self.fault_model.strip():
+            raise ValueError("fault_model must be a non-empty string")
+        numeric_fields = (
+            "ber",
+            "mean_error",
+            "std_error",
+            "max_error",
+            "p95_error",
+            "p99_error",
+            "mean_bits_flipped",
+            "wall_time_ms",
+        )
+        for field_name in numeric_fields:
+            value = getattr(self, field_name)
+            if isinstance(value, bool) or not isinstance(value, int | float):
+                raise ValueError(f"{field_name} must be numeric")
+            if not np.isfinite(float(value)):
+                raise ValueError(f"{field_name} must be finite")
+        for field_name in ("bitstream_length", "num_trials"):
+            value = getattr(self, field_name)
+            if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+                raise ValueError(f"{field_name} must be a positive integer")
+        if self.ber < 0.0 or self.ber > 1.0:
+            raise ValueError("ber must be in [0, 1]")
+        for field_name in ("mean_error", "std_error", "max_error", "p95_error", "p99_error"):
+            if getattr(self, field_name) < 0.0:
+                raise ValueError(f"{field_name} must be non-negative")
+        if self.mean_bits_flipped < 0.0 or self.mean_bits_flipped > self.bitstream_length:
+            raise ValueError("mean_bits_flipped must be in [0, bitstream_length]")
+        if self.wall_time_ms < 0.0:
+            raise ValueError("wall_time_ms must be non-negative")
+        if self.p95_error < self.mean_error:
+            raise ValueError("p95_error must be >= mean_error")
+        if self.p99_error < self.p95_error:
+            raise ValueError("p99_error must be >= p95_error")
+        if self.max_error < self.p99_error:
+            raise ValueError("max_error must be >= p99_error")
+
     def summary(self) -> str:
         return (
             f"Fault: {self.fault_model}, BER: {self.ber:.2e}, "
