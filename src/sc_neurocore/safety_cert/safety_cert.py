@@ -1504,9 +1504,13 @@ class CrossStandardMapper:
         for item in checklist_a:
             if not isinstance(item, ChecklistItem):
                 raise ValueError("checklist_a must contain ChecklistItem entries")
+            if not isinstance(item.clause, str) or not item.clause.strip():
+                raise ValueError("checklist_a clauses must be non-empty strings")
         for item in checklist_b:
             if not isinstance(item, ChecklistItem):
                 raise ValueError("checklist_b must contain ChecklistItem entries")
+            if not isinstance(item.clause, str) or not item.clause.strip():
+                raise ValueError("checklist_b clauses must be non-empty strings")
         addressed_a = {i.clause for i in checklist_a if i.status != "not_addressed"}
         addressed_b = {i.clause for i in checklist_b if i.status != "not_addressed"}
         shared = 0
