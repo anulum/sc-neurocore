@@ -870,6 +870,8 @@ class CertificationGenerator:
         for prop in formal_properties:
             if not isinstance(prop, FormalProperty):
                 raise ValueError("formal_properties must contain FormalProperty entries")
+            if not isinstance(prop.prop_id, str) or not prop.prop_id.strip():
+                raise ValueError("formal_properties prop_id values must be non-empty strings")
             if not isinstance(prop.module, str) or not prop.module.strip():
                 raise ValueError("formal_properties modules must be non-empty strings")
             if not isinstance(prop.status, str) or prop.status not in {"proven", "failed", "unknown"}:

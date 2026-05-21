@@ -835,6 +835,13 @@ class TestCertificationGenerator:
         with pytest.raises(ValueError, match="formal_properties modules"):
             gen.generate(SafetyStandard.IEC_61508, SILLevel.SIL_2, ["sc_lif_neuron"], [prop])
 
+    def test_generate_rejects_corrupted_formal_property_id_state(self):
+        gen = CertificationGenerator()
+        prop = FormalProperty("P1", "sc_lif_neuron", "d", "assert", "proven")
+        prop.prop_id = ""  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="formal_properties prop_id"):
+            gen.generate(SafetyStandard.IEC_61508, SILLevel.SIL_2, ["sc_lif_neuron"], [prop])
+
     def test_generate_rejects_corrupted_formal_property_status_state(self):
         gen = CertificationGenerator()
         prop = FormalProperty("P1", "sc_lif_neuron", "d", "assert", "proven")
