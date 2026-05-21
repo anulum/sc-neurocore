@@ -255,6 +255,8 @@ class FMEDA:
         self.failure_modes: List[FailureMode] = []
 
     def add_failure_mode(self, fm: FailureMode) -> None:
+        if not isinstance(fm, FailureMode):
+            raise ValueError("fm must be a FailureMode")
         self.failure_modes.append(fm)
 
     def add_sc_standard_modes(self, component: str) -> None:
