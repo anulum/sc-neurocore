@@ -826,6 +826,7 @@ class TestProofTestCoverage:
 
     def test_dc_to_sil(self):
         assert ProofTestCoverage.dc_to_sil(0.99).value >= 3
+        assert ProofTestCoverage.dc_to_sil(0.97) == SILLevel.SIL_3
         assert ProofTestCoverage.dc_to_sil(0.50) == SILLevel.SIL_1
 
     @pytest.mark.parametrize("dc", [-0.1, 1.1, float("nan"), float("inf"), True, "0.9"])

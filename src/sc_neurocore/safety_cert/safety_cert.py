@@ -979,7 +979,7 @@ class ProofTestCoverage:
             raise ValueError("dc must be a finite value in [0, 1]")
         if value >= 0.99:
             return SILLevel.SIL_4
-        if value >= 0.99:
+        if value >= 0.97:
             return SILLevel.SIL_3
         if value >= 0.90:
             return SILLevel.SIL_2
