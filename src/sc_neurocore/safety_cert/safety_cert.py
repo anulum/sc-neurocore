@@ -325,6 +325,9 @@ class FMEDA:
 
     @property
     def total_failure_rate(self) -> float:
+        for fm in self.failure_modes:
+            if not isinstance(fm, FailureMode):
+                raise ValueError("failure_modes must contain FailureMode entries")
         return sum(fm.failure_rate_fit for fm in self.failure_modes)
 
     @property
