@@ -875,6 +875,29 @@ class TestSafetyManual:
         assert "sc_lif_neuron" in manual
         assert "2830.0" in manual
 
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"product_name": ""}, "product_name"),
+            ({"sil_level": "SIL_2"}, "sil_level"),
+            ({"modules": []}, "modules"),
+            ({"modules": ["", "m2"]}, "modules"),
+            ({"wcet_ns": -1.0}, "wcet_ns"),
+            ({"wcet_ns": float("nan")}, "wcet_ns"),
+            ({"wcet_ns": True}, "wcet_ns"),
+        ],
+    )
+    def test_generate_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "product_name": "SC-NeuroCore",
+            "sil_level": SILLevel.SIL_2,
+            "modules": ["sc_lif_neuron"],
+            "wcet_ns": 100.0,
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            SafetyManualGenerator.generate(**values)
+
 
 # ── IEC 62304 Tests (Gap 6) ───────────────────────────────────────────
 
