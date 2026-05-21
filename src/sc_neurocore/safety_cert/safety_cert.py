@@ -176,6 +176,9 @@ class TraceabilityMatrix:
 
     def generate_report(self) -> str:
         """Generate text traceability report."""
+        for req in self.requirements.values():
+            if not isinstance(req, Requirement):
+                raise ValueError("requirements must contain Requirement entries")
         lines = [
             "# Safety Traceability Matrix",
             f"Generated: {datetime.now().isoformat()}",
