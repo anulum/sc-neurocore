@@ -1425,6 +1425,8 @@ class ReliabilityMetrics:
     def pfh_sil(self) -> SILLevel:
         """Max SIL from PFHd per IEC 61508 Table 3."""
         pfh = self.pfh_d
+        if not math.isfinite(float(pfh)) or float(pfh) < 0.0:
+            raise ValueError("pfh_d must be a finite non-negative number")
         if pfh <= 1e-8:
             return SILLevel.SIL_4
         if pfh <= 1e-7:
