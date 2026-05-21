@@ -95,6 +95,7 @@ def test_side_channel_benchmark_report_writes_canonical_json(tmp_path) -> None:
     ("probabilities", "labels"),
     [
         ((), ()),
+        ((0.25,), (0,)),
         ((0.25,), (0, 1)),
         ((0.25, 0.5), (0,)),
         ((0.25, float("nan")), (0, 1)),
@@ -112,4 +113,17 @@ def test_side_channel_benchmark_rejects_invalid_sample_contracts(
             probabilities=probabilities,
             labels=labels,
             protected_config=ThermalSCEncodingConfig(bitstream_length=16),
+        )
+
+
+def test_side_channel_benchmark_maps_thermal_encoder_contract_errors() -> None:
+    with pytest.raises(SideChannelBenchmarkError, match="dummy stream insertion exceeds"):
+        run_side_channel_leakage_benchmark(
+            probabilities=(0.25, 0.5),
+            labels=(0, 1),
+            protected_config=ThermalSCEncodingConfig(
+                bitstream_length=16,
+                dummy_streams_per_record=2,
+                max_dummy_overhead_ratio=1.0,
+            ),
         )
