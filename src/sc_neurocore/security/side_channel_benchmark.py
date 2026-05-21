@@ -397,6 +397,8 @@ def _with_artifact_path(
 
 
 def _deploy_manifest_payload(manifest: SideChannelDeployManifest) -> dict[str, Any]:
+    if not isinstance(manifest, SideChannelDeployManifest):
+        raise SideChannelBenchmarkError("manifest must be a SideChannelDeployManifest")
     return {
         "schema_version": manifest.schema_version,
         "evidence_class": manifest.evidence_class,
