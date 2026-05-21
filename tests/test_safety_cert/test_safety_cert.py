@@ -384,6 +384,14 @@ class TestFormalProofCertificate:
         with pytest.raises(ValueError, match="FormalProperty"):
             _ = cert.total_count
 
+    def test_total_count_rejects_corrupted_property_id(self):
+        cert = FormalProofCertificate()
+        prop = FormalProperty("P1", "m", "d", "assert", "proven")
+        prop.prop_id = ""  # type: ignore[assignment]
+        cert.properties.append(prop)
+        with pytest.raises(ValueError, match="prop_id"):
+            _ = cert.total_count
+
     def test_compute_hash(self):
         cert = FormalProofCertificate(properties=self._props())
         h = cert.compute_hash()

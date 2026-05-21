@@ -503,6 +503,8 @@ class FormalProofCertificate:
         for prop in self.properties:
             if not isinstance(prop, FormalProperty):
                 raise ValueError("properties must contain FormalProperty entries")
+            if not isinstance(prop.prop_id, str) or not prop.prop_id.strip():
+                raise ValueError("properties prop_id values must be non-empty strings")
         return len(self.properties)
 
     @property
