@@ -410,6 +410,8 @@ def _deploy_manifest_payload(manifest: SideChannelDeployManifest) -> dict[str, A
 
 
 def _arm_payload(arm: SideChannelBenchmarkArm) -> dict[str, Any]:
+    if not isinstance(arm, SideChannelBenchmarkArm):
+        raise SideChannelBenchmarkError("arm must be a SideChannelBenchmarkArm")
     return {
         "name": arm.name,
         "class_activity_proxy": _class_proxy_payload(arm.class_activity_proxy),

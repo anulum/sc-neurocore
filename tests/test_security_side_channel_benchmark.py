@@ -19,6 +19,7 @@ from sc_neurocore.security.side_channel_benchmark import (
     SideChannelBenchmarkRecord,
     SideChannelDeployManifest,
     SideChannelBenchmarkReport,
+    _arm_payload,
     _deploy_manifest_payload,
     _with_artifact_path,
     run_side_channel_leakage_benchmark,
@@ -269,3 +270,8 @@ def test_with_artifact_path_rejects_invalid_contracts(tmp_path) -> None:
 def test_deploy_manifest_payload_rejects_invalid_manifest() -> None:
     with pytest.raises(SideChannelBenchmarkError, match="manifest"):
         _deploy_manifest_payload("bad")  # type: ignore[arg-type]
+
+
+def test_arm_payload_rejects_invalid_arm() -> None:
+    with pytest.raises(SideChannelBenchmarkError, match="arm"):
+        _arm_payload("bad")  # type: ignore[arg-type]
