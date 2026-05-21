@@ -91,6 +91,12 @@ class TestTraceabilityMatrix:
         tm.add_requirement(Requirement("R1", "Test", SafetyStandard.IEC_61508))
         assert tm.open_count == 1
 
+    def test_open_count_rejects_corrupted_internal_state(self):
+        tm = TraceabilityMatrix()
+        tm.requirements["R1"] = "bad"  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="Requirement"):
+            _ = tm.open_count
+
     def test_link_nonexistent(self):
         tm = TraceabilityMatrix()
         assert tm.link_implementation("NOPE", "x.v") is False
