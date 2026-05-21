@@ -343,6 +343,9 @@ class FMEDA:
 
     @property
     def diagnostic_coverage(self) -> float:
+        for fm in self.failure_modes:
+            if not isinstance(fm, FailureMode):
+                raise ValueError("failure_modes must contain FailureMode entries")
         dd = [fm for fm in self.failure_modes if fm.category == FailureCategory.DANGEROUS_DETECTED]
         if not dd:
             return 0.0
