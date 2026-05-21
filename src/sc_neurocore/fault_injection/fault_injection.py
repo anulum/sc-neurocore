@@ -341,6 +341,18 @@ class ResilienceBenchmark:
         wall_time = (time.perf_counter() - start) * 1000.0
         errors_arr = np.array(errors)
         flipped_arr = np.array(bits_flipped_list, dtype=np.float64)
+        if errors_arr.shape != (num_trials,):
+            raise ValueError("internal error: error vector shape mismatch")
+        if flipped_arr.shape != (num_trials,):
+            raise ValueError("internal error: flipped vector shape mismatch")
+        if not np.isfinite(errors_arr).all():
+            raise ValueError("internal error: non-finite error values produced")
+        if not np.isfinite(flipped_arr).all():
+            raise ValueError("internal error: non-finite flipped-count values produced")
+        if (errors_arr < 0.0).any():
+            raise ValueError("internal error: negative error values produced")
+        if (flipped_arr < 0.0).any() or (flipped_arr > bitstream_length).any():
+            raise ValueError("internal error: flipped-count values out of range")
 
         return ResilienceReport(
             fault_model=fault_model.value,
