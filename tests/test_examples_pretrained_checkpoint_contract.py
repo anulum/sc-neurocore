@@ -60,6 +60,58 @@ def test_pretrained_example_rejects_non_numeric_accuracy() -> None:
         )
 
 
+@pytest.mark.parametrize("bad_accuracy", [-0.1, 1.1])
+def test_pretrained_example_rejects_accuracy_outside_closed_interval(bad_accuracy: float) -> None:
+    module = _load_module()
+    with pytest.raises(ValueError, match="within \\[0, 1\\]"):
+        module._require_checkpoint_schema(
+            {
+                "model_state_dict": {"layer.weight": torch.zeros(1, dtype=torch.float32)},
+                "best_accuracy": bad_accuracy,
+                "n_params": 1,
+                "sc_weights": [torch.zeros(1, dtype=torch.float32)],
+            }
+        )
+
+
+def test_pretrained_example_rejects_missing_positive_n_params() -> None:
+    module = _load_module()
+    with pytest.raises(ValueError, match="n_params"):
+        module._require_checkpoint_schema(
+            {
+                "model_state_dict": {"layer.weight": torch.zeros(1, dtype=torch.float32)},
+                "best_accuracy": 0.5,
+                "sc_weights": [torch.zeros(1, dtype=torch.float32)],
+            }
+        )
+
+
+def test_pretrained_example_rejects_non_list_sc_weights() -> None:
+    module = _load_module()
+    with pytest.raises(ValueError, match="sc_weights"):
+        module._require_checkpoint_schema(
+            {
+                "model_state_dict": {"layer.weight": torch.zeros(1, dtype=torch.float32)},
+                "best_accuracy": 0.5,
+                "n_params": 1,
+                "sc_weights": "bad",
+            }
+        )
+
+
+def test_pretrained_example_rejects_non_tensor_sc_weight_entry() -> None:
+    module = _load_module()
+    with pytest.raises(ValueError, match="must be a torch.Tensor"):
+        module._require_checkpoint_schema(
+            {
+                "model_state_dict": {"layer.weight": torch.zeros(1, dtype=torch.float32)},
+                "best_accuracy": 0.5,
+                "n_params": 1,
+                "sc_weights": [object()],
+            }
+        )
+
+
 def test_pretrained_example_cli_requires_checkpoint_sha256(tmp_path: Path) -> None:
     env = os.environ.copy()
     env["PYTHONPATH"] = (
