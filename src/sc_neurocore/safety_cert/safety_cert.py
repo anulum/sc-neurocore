@@ -1175,6 +1175,8 @@ class ChangeRecord:
             raise ValueError("risk_level must be one of: low, medium, high")
         if not isinstance(self.re_verification_needed, bool):
             raise ValueError("re_verification_needed must be a boolean")
+        if not isinstance(self.affected_modules, list):
+            raise ValueError("affected_modules must be a list")
 
         for module in self.affected_modules:
             if not isinstance(module, str) or not module.strip():
