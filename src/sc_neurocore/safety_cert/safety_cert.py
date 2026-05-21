@@ -844,6 +844,14 @@ class CertificationGenerator:
                 raise ValueError("formal_properties modules must be non-empty strings")
             if not isinstance(prop.status, str) or prop.status not in {"proven", "failed", "unknown"}:
                 raise ValueError("formal_properties statuses must be one of: proven, failed, unknown")
+            if not isinstance(prop.property_type, str) or prop.property_type not in {
+                "assert",
+                "cover",
+                "assume",
+            }:
+                raise ValueError(
+                    "formal_properties property_type values must be one of: assert, cover, assume"
+                )
         if network_config is not None and not isinstance(network_config, dict):
             raise ValueError("network_config must be a dictionary when provided")
         if network_config is not None:
