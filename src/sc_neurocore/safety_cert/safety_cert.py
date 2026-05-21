@@ -1263,6 +1263,8 @@ class ChangeImpactTracker:
         for c in self.changes:
             if not isinstance(c, ChangeRecord):
                 raise ValueError("changes must contain ChangeRecord entries")
+            if not isinstance(c.change_id, str) or not c.change_id.strip():
+                raise ValueError("change_id values must be non-empty strings")
             if not isinstance(c.affected_reqs, list):
                 raise ValueError("affected_reqs must be a list")
             for req in c.affected_reqs:
