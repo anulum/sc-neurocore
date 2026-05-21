@@ -939,6 +939,10 @@ class TestReliabilityMetrics:
         assert rm.total_fit > 0
         assert rm.mtbf_years > 0
 
+    def test_from_fmeda_rejects_invalid_input(self):
+        with pytest.raises(ValueError, match="fmeda"):
+            ReliabilityMetrics.from_fmeda("bad")  # type: ignore[arg-type]
+
     def test_zero_fit(self):
         rm = ReliabilityMetrics(total_fit=0.0, dangerous_undetected_fit=0.0)
         assert rm.mtbf_hours == float("inf")
