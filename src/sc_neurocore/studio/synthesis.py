@@ -12,6 +12,7 @@ import json
 import os
 import subprocess
 import tempfile
+from pathlib import Path
 
 
 def check_tools() -> dict:
@@ -49,6 +50,12 @@ _DEVICE_CAPACITY = {
 
 def run_synthesis(verilog_source: str, target: str = "ice40") -> dict:
     """Run Yosys synthesis and return resource usage."""
+    if not isinstance(verilog_source, str):
+        raise ValueError("verilog_source must be a string")
+    if not verilog_source.strip():
+        raise ValueError("verilog_source must not be empty")
+    if len(verilog_source.encode("utf-8")) > 2 * 1024 * 1024:
+        raise ValueError("verilog_source exceeds 2 MiB size limit")
     if target not in _TARGETS:
         raise ValueError(f"Unknown target: {target}. Supported: {list(_TARGETS.keys())}")
 
@@ -112,13 +119,26 @@ def _parse_yosys_json(json_path: str) -> dict:
     """Extract resource counts from Yosys JSON output."""
     with open(json_path) as f:
         data = json.load(f)
+    if not isinstance(data, dict):
+        raise ValueError("Invalid Yosys JSON payload: expected top-level object")
+    modules = data.get("modules", {})
+    if not isinstance(modules, dict):
+        raise ValueError("Invalid Yosys JSON payload: 'modules' must be an object")
 
     resources = {"luts": 0, "ffs": 0, "brams": 0, "dsps": 0, "cells": 0, "wires": 0}
 
-    for mod_name, mod in data.get("modules", {}).items():
+    for mod_name, mod in modules.items():
+        if not isinstance(mod, dict):
+            raise ValueError(f"Invalid Yosys JSON payload: module '{mod_name}' must be an object")
         cells = mod.get("cells", {})
+        if not isinstance(cells, dict):
+            raise ValueError(f"Invalid Yosys JSON payload: module '{mod_name}.cells' must be an object")
         resources["cells"] += len(cells)
         for cell_name, cell in cells.items():
+            if not isinstance(cell, dict):
+                raise ValueError(
+                    f"Invalid Yosys JSON payload: module '{mod_name}.cells.{cell_name}' must be an object"
+                )
             ctype = cell.get("type", "")
             if "LUT" in ctype or "SB_LUT" in ctype:
                 resources["luts"] += 1
@@ -128,7 +148,12 @@ def _parse_yosys_json(json_path: str) -> dict:
                 resources["brams"] += 1
             elif "DSP" in ctype or "MUL" in ctype:
                 resources["dsps"] += 1
-        resources["wires"] += len(mod.get("netnames", {}))
+        netnames = mod.get("netnames", {})
+        if not isinstance(netnames, dict):
+            raise ValueError(
+                f"Invalid Yosys JSON payload: module '{mod_name}.netnames' must be an object"
+            )
+        resources["wires"] += len(netnames)
 
     return resources
 
@@ -139,6 +164,8 @@ def estimate_resources(ir_op_count: int, target: str = "ice40") -> dict:
     Heuristic: each IR op maps to ~2 LUTs + 1 FF on average.
     LIF step op maps to ~12 LUTs + 8 FFs + 1 DSP (multiplier).
     """
+    if target not in _TARGETS:
+        raise ValueError(f"Unknown target: {target}. Supported: {list(_TARGETS.keys())}")
     capacity = _DEVICE_CAPACITY.get(target, _DEVICE_CAPACITY["ice40"])
     est_luts = ir_op_count * 2 + 12
     est_ffs = ir_op_count + 8
@@ -159,6 +186,12 @@ def estimate_resources(ir_op_count: int, target: str = "ice40") -> dict:
 
 def multi_target_synthesis(verilog_source: str) -> dict:
     """Run synthesis on all supported targets, return comparison."""
+    if not isinstance(verilog_source, str):
+        raise ValueError("verilog_source must be a string")
+    if not verilog_source.strip():
+        raise ValueError("verilog_source must not be empty")
+    if len(verilog_source.encode("utf-8")) > 2 * 1024 * 1024:
+        raise ValueError("verilog_source exceeds 2 MiB size limit")
     results = {}
     for target in _TARGETS:
         results[target] = run_synthesis(verilog_source, target)
@@ -171,10 +204,30 @@ def run_pnr(json_path: str, target: str = "ice40") -> dict:
     if not cfg or not cfg["pnr"]:
         return {"success": False, "error": f"No PnR tool for target {target}"}
 
-    asc_path = json_path.replace(".json", ".asc")
+    raw_json_path = Path(json_path).expanduser()
+    if raw_json_path.suffix.lower() != ".json":
+        return {"success": False, "error": "PnR input must be a .json netlist file"}
+    if raw_json_path.is_symlink():
+        return {"success": False, "error": f"PnR input must not be a symlink: {raw_json_path}"}
+    resolved_json = raw_json_path.resolve()
+    if not resolved_json.exists():
+        return {"success": False, "error": f"PnR input does not exist: {resolved_json}"}
+    if not resolved_json.is_file():
+        return {"success": False, "error": f"PnR input is not a regular file: {resolved_json}"}
+    if resolved_json.stat().st_size > 16 * 1024 * 1024:
+        return {"success": False, "error": "PnR input exceeds 16 MiB size limit"}
+    try:
+        with resolved_json.open(encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return {"success": False, "error": "PnR input is not valid UTF-8 JSON"}
+    if not isinstance(payload, dict):
+        return {"success": False, "error": "PnR input JSON must be an object"}
+
+    asc_path = str(resolved_json.with_suffix(".asc"))
     try:
         result = subprocess.run(
-            [cfg["pnr"], f"--{cfg['device']}", "--json", json_path, "--asc", asc_path],
+            [cfg["pnr"], f"--{cfg['device']}", "--json", str(resolved_json), "--asc", asc_path],
             capture_output=True,
             text=True,
             timeout=120,
