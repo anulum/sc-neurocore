@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 
 import pytest
+from sc_neurocore.security import side_channel_benchmark as benchmark_mod
 
 from sc_neurocore.security.side_channel_benchmark import (
     SIDE_CHANNEL_BENCHMARK_SCHEMA_VERSION,
@@ -158,6 +159,29 @@ def test_side_channel_benchmark_rejects_invalid_protected_config() -> None:
             probabilities=(0.25, 0.5),
             labels=(0, 1),
             protected_config="bad",  # type: ignore[arg-type]
+        )
+
+
+def test_side_channel_benchmark_rejects_mismatched_encoder_batch_length(monkeypatch) -> None:
+    class _DummySummary:
+        dummy_stream_overhead_ratio = 0.0
+        class_activity_proxy = compute_class_activity_proxy((((0, 1),), ((1, 0),)), (0, 1))
+
+    class _DummyRecord:
+        realised_probability = 0.5
+        dummy_streams_inserted = 0
+
+    class _DummyBatch:
+        summary = _DummySummary()
+        records = (_DummyRecord(),)
+
+    monkeypatch.setattr(benchmark_mod, "encode_activity_balanced_probabilities", lambda *a, **k: _DummyBatch())
+
+    with pytest.raises(SideChannelBenchmarkError, match="output length"):
+        run_side_channel_leakage_benchmark(
+            probabilities=(0.25, 0.5),
+            labels=(0, 1),
+            protected_config=ThermalSCEncodingConfig(bitstream_length=16, seed=3),
         )
 
 

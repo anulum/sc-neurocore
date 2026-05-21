@@ -208,6 +208,10 @@ def run_side_channel_leakage_benchmark(
         )
     except ThermalSCEncodingError as exc:
         raise SideChannelBenchmarkError(str(exc)) from exc
+    if len(protected_batch.records) != len(probability_values):
+        raise SideChannelBenchmarkError(
+            "protected encoder output length must match probability sample length"
+        )
 
     baseline_samples = tuple(
         (_correlated_activity_fixture_stream(value, protected_config.bitstream_length),)
