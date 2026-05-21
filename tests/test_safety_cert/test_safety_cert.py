@@ -1230,6 +1230,12 @@ class TestEvidenceBag:
         assert "Evidence Bag" in m
         assert "x.md" in m
 
+    def test_manifest_rejects_corrupted_internal_state(self):
+        bag = EvidenceBag()
+        bag.items.append("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="EvidenceItem"):
+            bag.manifest()
+
     def test_hash(self):
         bag = EvidenceBag()
         bag.add(EvidenceItem("x.md", "formal", "proof"))
