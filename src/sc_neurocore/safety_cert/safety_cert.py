@@ -147,6 +147,8 @@ class TraceabilityMatrix:
         req = self.requirements.get(req_id)
         if req is None:
             return False
+        if not isinstance(req, Requirement):
+            raise ValueError("requirements must contain Requirement entries")
         req.verification_refs.append(verif_ref)
         self._update_status(req)
         return True
