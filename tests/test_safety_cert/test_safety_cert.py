@@ -472,6 +472,40 @@ class TestCertificationGenerator:
         )
         assert pkg.checklist_coverage > 0
 
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"standard": "IEC 61508"}, "standard"),
+            ({"sil_level": 2}, "sil_level"),
+            ({"traceability_report": None}, "traceability_report"),
+            ({"checklist": ["not-item"]}, "checklist"),
+            ({"generated": None}, "generated"),
+        ],
+    )
+    def test_certification_package_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "standard": SafetyStandard.IEC_61508,
+            "sil_level": SILLevel.SIL_2,
+            "traceability_report": "trace",
+            "fmeda_report": "fmeda",
+            "formal_cert_report": "formal",
+            "wcet_report": "wcet",
+            "checklist": [
+                ChecklistItem(
+                    item_id="IEC 61508_7.4.2",
+                    clause="7.4.2",
+                    description="Formal verification of safety functions",
+                    evidence="formal/",
+                    status="partial",
+                )
+            ],
+            "package_hash": "",
+            "generated": "",
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            CertificationPackage(**values)
+
 
 # ── Residual Risk Tests ─────────────────────────────────────────────
 
@@ -895,3 +929,25 @@ class TestFormalGapDetector:
     def test_gap_coverage(self):
         gap = PropertyGap("m", 4, 2, [])
         assert gap.coverage == 0.5
+
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"module": ""}, "module"),
+            ({"total_properties": -1}, "total_properties"),
+            ({"total_properties": True}, "total_properties"),
+            ({"proven_properties": -1}, "proven_properties"),
+            ({"proven_properties": 3, "total_properties": 2}, "proven_properties cannot exceed"),
+            ({"missing_types": ["", "cover"]}, "missing_types"),
+        ],
+    )
+    def test_property_gap_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "module": "neuron",
+            "total_properties": 2,
+            "proven_properties": 1,
+            "missing_types": ["assert"],
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            PropertyGap(**values)
