@@ -255,6 +255,12 @@ class TestFMEDA:
         fmeda.add_failure_mode(fm)
         assert fmeda.safe_failure_fraction == 0.0
 
+    def test_residual_risk_rejects_corrupted_internal_state(self):
+        fmeda = FMEDA()
+        fmeda.failure_modes.append("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="FailureMode"):
+            _ = fmeda.residual_risk_fit
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
