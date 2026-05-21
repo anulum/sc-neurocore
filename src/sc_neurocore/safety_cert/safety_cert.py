@@ -1080,6 +1080,8 @@ class ProofTestCoverage:
         for prop in properties:
             if not isinstance(prop, FormalProperty):
                 raise ValueError("properties must contain FormalProperty entries")
+            if not isinstance(prop.module, str) or not prop.module.strip():
+                raise ValueError("properties modules must be non-empty strings")
         if not isinstance(all_modules, list):
             raise ValueError("all_modules must be a list")
         for module in all_modules:
