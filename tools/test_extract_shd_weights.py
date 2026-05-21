@@ -162,8 +162,92 @@ class TestCheckpointTrustBoundary:
         checkpoint = tmp_path / "shd_metadata.pth"
         torch.save({"net": {}, "acc": 0.0, "sigma": 0.23, "epoch": 0}, checkpoint)
 
-        with pytest.raises(CheckpointTrustError, match="No trusted SHA-256"):
+        with pytest.raises(ValueError, match="checkpoint_sha256 is required"):
             extract(str(checkpoint), str(tmp_path / "artifacts"), checkpoint_sha256=None)
+
+    @pytest.mark.parametrize("bad_digest", ["abc123", "g" * 64])
+    def test_extract_rejects_invalid_checkpoint_sha256_format(self, tmp_path, bad_digest):
+        checkpoint = tmp_path / "shd_metadata.pth"
+        torch.save({"net": {}, "acc": 0.0, "sigma": 0.23, "epoch": 0}, checkpoint)
+
+        with pytest.raises(ValueError, match="64 hexadecimal characters"):
+            extract(str(checkpoint), str(tmp_path / "artifacts"), checkpoint_sha256=bad_digest)
+
+    def test_extract_rejects_missing_net_state_dict(self, tmp_path):
+        checkpoint = tmp_path / "missing_net.pth"
+        torch.save({"acc": 0.0, "sigma": 0.23, "epoch": 0}, checkpoint)
+
+        with pytest.raises(ValueError, match="must contain a dictionary 'net'"):
+            extract(
+                str(checkpoint),
+                str(tmp_path / "artifacts"),
+                checkpoint_sha256=_sha256(str(checkpoint)),
+            )
+
+    def test_extract_rejects_non_tensor_net_values(self, tmp_path):
+        checkpoint = tmp_path / "bad_net_values.pth"
+        torch.save({"net": {"layers.1.weight": [1, 2, 3]}, "acc": 0.0, "sigma": 0.23}, checkpoint)
+
+        with pytest.raises(ValueError, match="values must be tensors"):
+            extract(
+                str(checkpoint),
+                str(tmp_path / "artifacts"),
+                checkpoint_sha256=_sha256(str(checkpoint)),
+            )
+
+    def test_extract_rejects_non_finite_metadata(self, tmp_path):
+        net = {
+            "layers.1.weight": torch.zeros(128, 140),
+            "layers.6.weight": torch.zeros(128, 128),
+            "layers.10.weight": torch.zeros(20, 128),
+            "layers.0.P": torch.zeros(140),
+            "layers.5.P": torch.zeros(128),
+        }
+        checkpoint = tmp_path / "bad_meta.pth"
+        torch.save({"net": net, "acc": float("nan"), "sigma": 0.23, "epoch": 1}, checkpoint)
+
+        with pytest.raises(ValueError, match="metadata 'acc'"):
+            extract(
+                str(checkpoint),
+                str(tmp_path / "artifacts"),
+                checkpoint_sha256=_sha256(str(checkpoint)),
+            )
+
+    def test_extract_rejects_delay_length_mismatch(self, tmp_path):
+        net = {
+            "layers.1.weight": torch.zeros(128, 140),
+            "layers.6.weight": torch.zeros(128, 128),
+            "layers.10.weight": torch.zeros(20, 128),
+            "layers.0.P": torch.zeros(139),
+            "layers.5.P": torch.zeros(128),
+        }
+        checkpoint = tmp_path / "bad_delay_len.pth"
+        torch.save({"net": net, "acc": 0.0, "sigma": 0.23, "epoch": 1}, checkpoint)
+
+        with pytest.raises(ValueError, match="unexpected delay length"):
+            extract(
+                str(checkpoint),
+                str(tmp_path / "artifacts"),
+                checkpoint_sha256=_sha256(str(checkpoint)),
+            )
+
+    def test_extract_rejects_out_of_range_delays(self, tmp_path):
+        net = {
+            "layers.1.weight": torch.zeros(128, 140),
+            "layers.6.weight": torch.zeros(128, 128),
+            "layers.10.weight": torch.zeros(20, 128),
+            "layers.0.P": torch.full((140,), 16.0),
+            "layers.5.P": torch.zeros(128),
+        }
+        checkpoint = tmp_path / "bad_delay_range.pth"
+        torch.save({"net": net, "acc": 0.0, "sigma": 0.23, "epoch": 1}, checkpoint)
+
+        with pytest.raises(ValueError, match="must stay within \\[-15, 15\\]"):
+            extract(
+                str(checkpoint),
+                str(tmp_path / "artifacts"),
+                checkpoint_sha256=_sha256(str(checkpoint)),
+            )
 
 
 # ----- End-to-end on real checkpoint (skipped if not available) -----

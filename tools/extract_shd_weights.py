@@ -37,6 +37,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -72,6 +73,8 @@ SHD_LAYERS: tuple[LayerSpec, ...] = (
     LayerSpec("layer2_h1_to_h2", "layers.6.weight", "layers.5.P", 128, 128),
     LayerSpec("layer3_h2_output", "layers.10.weight", None, 128, 20),
 )
+
+_SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 
 
 def quantise_per_tensor_symmetric(w: Any) -> tuple[Any, float]:
@@ -162,19 +165,50 @@ def emit_params_vh(stats: dict[str, Any], path: str) -> None:
         out_file.write("\n".join(lines) + "\n")
 
 
-def extract(ckpt_path: str, out_dir: str, *, checkpoint_sha256: str | None) -> dict[str, Any]:
+def extract(ckpt_path: str, out_dir: str, *, checkpoint_sha256: str) -> dict[str, Any]:
     """Main extraction routine. Returns stats dictionary."""
+    if not checkpoint_sha256:
+        raise ValueError("checkpoint_sha256 is required for trusted checkpoint loading")
+    if not _SHA256_RE.fullmatch(checkpoint_sha256):
+        raise ValueError("checkpoint_sha256 must be exactly 64 hexadecimal characters")
     print(f"Loading checkpoint: {ckpt_path}")
-    trusted_sha256 = {os.path.basename(ckpt_path): checkpoint_sha256} if checkpoint_sha256 else {}
+    trusted_sha256 = {os.path.basename(ckpt_path): checkpoint_sha256}
     ckpt = safe_load_legacy_checkpoint(
         ckpt_path,
         trusted_sha256=trusted_sha256,
         map_location="cpu",
     )
+    if not isinstance(ckpt, dict):
+        raise ValueError("checkpoint payload must be a dictionary")
+    if "net" not in ckpt or not isinstance(ckpt["net"], dict):
+        raise ValueError("checkpoint payload must contain a dictionary 'net' state_dict")
     state_dict = ckpt["net"]
-    val_acc = float(ckpt.get("acc", float("nan")))
-    epoch = int(ckpt.get("epoch", -1))
-    native_sigma = float(ckpt.get("sigma", float("nan")))
+    if not all(isinstance(k, str) for k in state_dict):
+        raise ValueError("checkpoint 'net' keys must be strings")
+    if not all(torch.is_tensor(v) for v in state_dict.values()):
+        raise ValueError("checkpoint 'net' values must be tensors")
+
+    required_tensor_keys = [layer.state_dict_key for layer in SHD_LAYERS] + [
+        layer.delay_key for layer in SHD_LAYERS if layer.delay_key is not None
+    ]
+    missing_keys = [key for key in required_tensor_keys if key not in state_dict]
+    if missing_keys:
+        raise ValueError(
+            "checkpoint 'net' is missing required tensor keys: " + ", ".join(missing_keys)
+        )
+
+    raw_acc = ckpt.get("acc")
+    raw_epoch = ckpt.get("epoch")
+    raw_sigma = ckpt.get("sigma")
+    if not isinstance(raw_acc, (int, float)) or not torch.isfinite(torch.tensor(float(raw_acc))):
+        raise ValueError("checkpoint metadata 'acc' must be a finite numeric value")
+    if not isinstance(raw_sigma, (int, float)) or not torch.isfinite(torch.tensor(float(raw_sigma))):
+        raise ValueError("checkpoint metadata 'sigma' must be a finite numeric value")
+    if not isinstance(raw_epoch, int) or raw_epoch < 0:
+        raise ValueError("checkpoint metadata 'epoch' must be a non-negative integer")
+    val_acc = float(raw_acc)
+    epoch = int(raw_epoch)
+    native_sigma = float(raw_sigma)
     print(f"  val_acc={val_acc:.2f}%, epoch={epoch}, sigma={native_sigma:.4f}")
 
     os.makedirs(out_dir, exist_ok=True)
@@ -184,8 +218,12 @@ def extract(ckpt_path: str, out_dir: str, *, checkpoint_sha256: str | None) -> d
 
     for layer in SHD_LAYERS:
         w = state_dict[layer.state_dict_key].detach()
+        if not torch.is_floating_point(w):
+            raise ValueError(f"{layer.name} weights must be floating-point tensors")
+        if not torch.isfinite(w).all():
+            raise ValueError(f"{layer.name} weights contain non-finite values")
         if w.shape != (layer.out_features, layer.in_features):
-            raise SystemExit(
+            raise ValueError(
                 f"shape mismatch for {layer.name}: "
                 f"got {tuple(w.shape)}, expected ({layer.out_features},{layer.in_features})"
             )
@@ -234,7 +272,18 @@ def extract(ckpt_path: str, out_dir: str, *, checkpoint_sha256: str | None) -> d
         if layer.delay_key is not None:
             P = state_dict[layer.delay_key].detach().squeeze()
             if P.ndim != 1:
-                raise SystemExit(f"unexpected delay shape for {layer.name}: {P.shape}")
+                raise ValueError(f"unexpected delay shape for {layer.name}: {P.shape}")
+            if P.numel() != layer.in_features:
+                raise ValueError(
+                    f"unexpected delay length for {layer.name}: "
+                    f"got {P.numel()}, expected {layer.in_features}"
+                )
+            if not torch.is_floating_point(P):
+                raise ValueError(f"{layer.name} delays must be floating-point tensors")
+            if not torch.isfinite(P).all():
+                raise ValueError(f"{layer.name} delays contain non-finite values")
+            if not ((P >= -15.0) & (P <= 15.0)).all():
+                raise ValueError(f"{layer.name} delays must stay within [-15, 15]")
             P_int = P.round().to(torch.int8)
             frac = float((P - P.round()).abs().mean().item())
             d_path = os.path.join(out_dir, f"delays_{layer.name}.hex")
