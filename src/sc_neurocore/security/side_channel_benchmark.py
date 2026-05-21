@@ -339,8 +339,15 @@ def _correlated_activity_fixture_stream(
     probability: float,
     bitstream_length: int,
 ) -> tuple[int, ...]:
+    if isinstance(probability, bool) or not isinstance(probability, int | float):
+        raise SideChannelBenchmarkError("probability must be a finite value in [0, 1]")
+    probability_value = float(probability)
+    if not math.isfinite(probability_value) or probability_value < 0.0 or probability_value > 1.0:
+        raise SideChannelBenchmarkError("probability must be a finite value in [0, 1]")
+    if isinstance(bitstream_length, bool) or not isinstance(bitstream_length, int) or bitstream_length < 1:
+        raise SideChannelBenchmarkError("bitstream_length must be an integer >= 1")
     ones = round(probability * bitstream_length)
-    if probability >= 0.5:
+    if probability_value >= 0.5:
         return tuple(index % 2 for index in range(bitstream_length))
     return tuple(1 if index < ones else 0 for index in range(bitstream_length))
 
