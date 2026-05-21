@@ -364,6 +364,8 @@ class FMEDA:
         """Per-component safe failure fraction."""
         components: Dict[str, List[FailureMode]] = {}
         for fm in self.failure_modes:
+            if not isinstance(fm, FailureMode):
+                raise ValueError("failure_modes must contain FailureMode entries")
             components.setdefault(fm.component, []).append(fm)
         result = {}
         for comp, fms in components.items():
