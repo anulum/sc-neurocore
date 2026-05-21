@@ -133,6 +133,7 @@ class TestTraceabilityMatrix:
             ({"standard": "IEC 61508"}, "standard"),
             ({"sil_level": 2}, "sil_level"),
             ({"status": ""}, "status"),
+            ({"status": "done"}, "status"),
             ({"implementation_refs": ["", "hdl/top.sv"]}, "implementation_refs"),
             ({"verification_refs": ["", "formal/top.sby"]}, "verification_refs"),
         ],
