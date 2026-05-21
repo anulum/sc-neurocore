@@ -263,3 +263,34 @@ class TestBenchmarkRunContracts:
         values.update(kwargs)
         with pytest.raises(ValueError, match=match):
             bench.run(**values)  # type: ignore[arg-type]
+
+
+class TestBenchmarkSweepContracts:
+    def test_sweep_returns_reports_for_each_ber(self):
+        bench = ResilienceBenchmark(seed=2)
+        reports = bench.sweep_ber(
+            fault_model=FaultModel.BIT_FLIP,
+            ber_range=[1e-4, 1e-3, 1e-2],
+            bitstream_length=32,
+            num_trials=5,
+        )
+        assert len(reports) == 3
+        assert [r.ber for r in reports] == [1e-4, 1e-3, 1e-2]
+
+    @pytest.mark.parametrize(
+        ("ber_range", "match"),
+        [
+            ([], "non-empty"),
+            ([1e-3, 1e-4], "monotonically"),
+            ([1e-3, 1.2], "entries"),
+        ],
+    )
+    def test_sweep_rejects_invalid_ber_range(self, ber_range, match):
+        bench = ResilienceBenchmark(seed=2)
+        with pytest.raises(ValueError, match=match):
+            bench.sweep_ber(
+                fault_model=FaultModel.BIT_FLIP,
+                ber_range=ber_range,  # type: ignore[arg-type]
+                bitstream_length=32,
+                num_trials=5,
+            )
