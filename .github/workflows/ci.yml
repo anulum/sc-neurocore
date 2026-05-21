@@ -65,6 +65,9 @@ jobs:
       - name: Capability manifest drift
         run: python tools/capability_manifest.py --check
 
+      - name: GitHub App token format compatibility
+        run: python tools/check_github_app_token_compat.py
+
       - name: ruff check
         run: ruff check src/ tests/ tools/capability_manifest.py
 
