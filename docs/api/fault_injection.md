@@ -247,10 +247,12 @@ Two test files cover this package:
 |---|---:|---:|---|
 | `tests/test_fault_injection/test_fault_injection.py` | 22 | 212 | Unittest-style classes covering baseline utility fault-injection behaviour |
 | `tests/test_fault_injection/test_fault_injection_public_api.py` | 7 | new | Package re-export identity, `__all__` membership, enum/preset surface contracts |
-| `tests/test_fault_injection_module.py` | 37 | new | Production contracts for `RadiationProfile`, `FaultInjectionResult`, `ResilienceReport`, `FaultInjector.inject`, deterministic position injection, benchmark run/sweep guards, finite aggregate checks, and zero-BER no-op guarantees |
+| `tests/test_fault_injection_module.py` | 59 | new | Production contracts for `RadiationProfile`, `FaultInjectionResult`, `ResilienceReport`, `FaultInjector.inject`, deterministic position injection, benchmark run/sweep guards, finite aggregate checks, and zero-BER no-op guarantees |
+| `tests/test_fault_injection/test_resilience_mode.py` | 7 | updated | Config/report/trial contracts, deterministic seeded behaviour, aggregate bound checks, and fail-closed input validation for resilience mode |
+| `tests/test_fault_injection/test_resilience_policy.py` | 21 | updated | Policy configuration/evaluate helper contracts, seeded observation/plan invariants, and bounded recommendation semantics |
 
-**Total: 66 tests** across fault-injection module surfaces and public API
-contracts.
+**Total: 116 tests** across injector, benchmark, resilience mode, policy, and
+public API contract surfaces.
 
 ## 9. Audit completeness — 7-point rule
 
@@ -309,7 +311,11 @@ Audit found and addressed:
 - `FaultInjector.inject` rejects malformed arrays, invalid enums, invalid BER,
   and non-binary streams for discrete models;
 - benchmark run/sweep surfaces now fail closed on malformed inputs and
-  non-finite aggregate-state generation.
+  non-finite aggregate-state generation;
+- `ResilienceModeConfig`, `ResilienceModeTrialReport`, `ResilienceModeReport`,
+  `SeededFaultObservation`, `DegradationPlan`, and `GracefulDegradationPolicy`
+  now enforce strict contract bounds, finite metric checks, and deterministic
+  recommendation constraints.
 
 No semantic bugs (sign errors, wrong invariants, fabricated
 constants) found in `fault_injection.py`. The 22 Antigravity
