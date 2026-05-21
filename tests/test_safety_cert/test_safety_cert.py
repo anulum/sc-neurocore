@@ -746,6 +746,11 @@ class TestCCFAnalysis:
         assert ccf.implemented_count == 1
         assert ccf.beta_factor < 0.10
 
+    def test_mark_implemented_normalises_whitespace(self):
+        ccf = CCFAnalysis()
+        assert ccf.mark_implemented(" D1 ") is True
+        assert ccf.implemented_count == 1
+
     def test_all_implemented(self):
         ccf = CCFAnalysis()
         for d in ccf.defences:
