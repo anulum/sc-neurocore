@@ -797,6 +797,18 @@ class TestCCFAnalysis:
         ccf = CCFAnalysis()
         assert ccf.mark_implemented("NOPE") is False
 
+    def test_init_rejects_duplicate_default_defence_ids(self, monkeypatch):
+        monkeypatch.setattr(
+            CCFAnalysis,
+            "DEFAULT_DEFENCES",
+            [
+                CCFDefence("D1", "a", "separation", 0.01),
+                CCFDefence("D1", "b", "diversity", 0.01),
+            ],
+        )
+        with pytest.raises(ValueError, match="duplicate"):
+            CCFAnalysis()
+
     def test_mark_implemented_rejects_invalid_defence_id(self):
         ccf = CCFAnalysis()
         with pytest.raises(ValueError, match="defence_id"):

@@ -929,6 +929,12 @@ class CCFAnalysis:
     ]
 
     def __init__(self) -> None:
+        for defence in self.DEFAULT_DEFENCES:
+            if not isinstance(defence, CCFDefence):
+                raise ValueError("DEFAULT_DEFENCES must contain CCFDefence entries")
+        defence_ids = [defence.defence_id for defence in self.DEFAULT_DEFENCES]
+        if len(defence_ids) != len(set(defence_ids)):
+            raise ValueError("DEFAULT_DEFENCES must not contain duplicate defence_id values")
         self.defences: List[CCFDefence] = [
             CCFDefence(d.defence_id, d.description, d.category, d.beta_reduction, d.implemented)
             for d in self.DEFAULT_DEFENCES
