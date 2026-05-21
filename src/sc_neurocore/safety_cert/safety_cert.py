@@ -482,6 +482,9 @@ class FormalProofCertificate:
         return self.proven_count / self.total_count if self.total_count > 0 else 0.0
 
     def compute_hash(self) -> str:
+        for prop in self.properties:
+            if not isinstance(prop, FormalProperty):
+                raise ValueError("properties must contain FormalProperty entries")
         prop_ids = [p.prop_id for p in self.properties]
         if len(prop_ids) != len(set(prop_ids)):
             raise ValueError("properties must not contain duplicate prop_id values")
