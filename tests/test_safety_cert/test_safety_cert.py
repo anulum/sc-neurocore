@@ -336,6 +336,14 @@ class TestFMEDA:
         with pytest.raises(ValueError, match="FailureMode"):
             _ = fmeda.residual_risk_fit
 
+    def test_residual_risk_rejects_corrupted_aggregate_state(self):
+        fmeda = FMEDA()
+        fm = FailureMode("FM1", "n", "d", FailureCategory.DANGEROUS_DETECTED, 1.0, 0.5)
+        fm.diagnostic_coverage = float("nan")  # type: ignore[assignment]
+        fmeda.add_failure_mode(fm)
+        with pytest.raises(ValueError, match="residual_risk_fit"):
+            _ = fmeda.residual_risk_fit
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
