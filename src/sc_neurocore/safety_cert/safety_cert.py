@@ -953,8 +953,17 @@ class CCFAnalysis:
     @property
     def beta_factor(self) -> float:
         """Resulting β-factor (start at 0.10, reduce by implemented defences)."""
+        for defence in self.defences:
+            if not isinstance(defence, CCFDefence):
+                raise ValueError("defences must contain CCFDefence entries")
         base = 0.10
-        reduction = sum(d.beta_reduction for d in self.defences if d.implemented)
+        reduction = 0.0
+        for defence in self.defences:
+            beta_reduction = float(defence.beta_reduction)
+            if not math.isfinite(beta_reduction) or beta_reduction < 0.0 or beta_reduction > 1.0:
+                raise ValueError("defence beta_reduction values must be finite values in [0, 1]")
+            if defence.implemented:
+                reduction += beta_reduction
         return max(0.005, base - reduction)
 
     @property
