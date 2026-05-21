@@ -91,6 +91,40 @@ class ResilienceModeTrialReport:
     max_probability_error: float
     degradation_plan: DegradationPlan
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.fault_model, FaultModel):
+            raise ValueError("fault_model must be a FaultModel")
+        if isinstance(self.ber, bool) or not np.isfinite(float(self.ber)) or not (0.0 <= float(self.ber) <= 1.0):
+            raise ValueError("ber must be a finite value in [0, 1]")
+        for field_name in ("num_trials", "bit_count"):
+            value = getattr(self, field_name)
+            if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+                raise ValueError(f"{field_name} must be a positive integer")
+        for field_name in (
+            "expected_affected_bits",
+            "observed_mean_affected_bits",
+            "observed_std_affected_bits",
+            "mean_probability_error",
+            "p95_probability_error",
+            "p99_probability_error",
+            "max_probability_error",
+        ):
+            value = getattr(self, field_name)
+            if isinstance(value, bool) or not isinstance(value, int | float) or not np.isfinite(float(value)):
+                raise ValueError(f"{field_name} must be a finite numeric value")
+            if float(value) < 0.0:
+                raise ValueError(f"{field_name} must be non-negative")
+        if self.p95_probability_error < self.mean_probability_error:
+            raise ValueError("p95_probability_error must be >= mean_probability_error")
+        if self.p99_probability_error < self.p95_probability_error:
+            raise ValueError("p99_probability_error must be >= p95_probability_error")
+        if self.max_probability_error < self.p99_probability_error:
+            raise ValueError("max_probability_error must be >= p99_probability_error")
+        if self.observed_mean_affected_bits > self.bit_count:
+            raise ValueError("observed_mean_affected_bits cannot exceed bit_count")
+        if not isinstance(self.degradation_plan, DegradationPlan):
+            raise ValueError("degradation_plan must be a DegradationPlan")
+
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-ready report."""
         return {
