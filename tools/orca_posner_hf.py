@@ -650,15 +650,25 @@ def auto_a_ref(hf_list: list[dict], target_max: float = 0.5) -> float:
     This ensures rotation angles stay within ≈ target_max per Trotter
     step, preventing Trotter error blow-up.
     """
+    if not np.isfinite(target_max) or target_max <= 0.0:
+        raise ValueError(f"target_max must be finite and > 0, got {target_max!r}")
+
+    if not hf_list:
+        raise ValueError("cannot auto-calibrate a_ref from empty HF tensor list")
+
     all_components = []
     for hf in hf_list:
         for k in ("Axx", "Ayy", "Azz", "Axy", "Axz", "Ayz"):
             if k in hf:
                 all_components.append(abs(hf[k]))
     if not all_components:
-        return 7080.0  # fallback
+        raise ValueError("cannot auto-calibrate a_ref: no hyperfine tensor components found")
     max_component = max(all_components)
-    return max_component / target_max if max_component > 0 else 7080.0
+    if max_component <= 0.0:
+        raise ValueError(
+            "cannot auto-calibrate a_ref: all hyperfine tensor components are zero"
+        )
+    return max_component / target_max
 
 
 def convert_to_dimensionless(hf_list: list[dict], a_ref_MHz: float | None = None) -> list[dict]:
@@ -669,6 +679,8 @@ def convert_to_dimensionless(hf_list: list[dict], a_ref_MHz: float | None = None
     """
     if a_ref_MHz is None:
         a_ref_MHz = auto_a_ref(hf_list)
+    if not np.isfinite(a_ref_MHz) or a_ref_MHz <= 0.0:
+        raise ValueError(f"a_ref_MHz must be finite and > 0, got {a_ref_MHz!r}")
 
     out = []
     for hf in hf_list:
@@ -719,8 +731,11 @@ def run_full_pipeline(orca_output: str | Path | None = None) -> dict[str, Any]:
     result["orca_input_radical"] = generate_radical_input()
 
     # Parse output if available
-    if orca_output and Path(orca_output).exists():
-        raw_hf = parse_orca_hf_output(orca_output)
+    if orca_output is not None:
+        orca_path = Path(orca_output)
+        if not orca_path.exists():
+            raise ValueError(f"ORCA output path does not exist: {orca_path}")
+        raw_hf = parse_orca_hf_output(orca_path)
         a_ref = auto_a_ref(raw_hf)
         dimless = convert_to_dimensionless(raw_hf, a_ref)
         site1, site2 = group_by_site(dimless)
