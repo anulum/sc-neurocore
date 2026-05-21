@@ -1139,6 +1139,8 @@ class ProofTestCoverage:
         for prop in properties:
             if not isinstance(prop, FormalProperty):
                 raise ValueError("properties must contain FormalProperty entries")
+            if not isinstance(prop.prop_id, str) or not prop.prop_id.strip():
+                raise ValueError("properties prop_id values must be non-empty strings")
             if not isinstance(prop.status, str) or prop.status not in {"proven", "failed", "unknown"}:
                 raise ValueError("properties statuses must be one of: proven, failed, unknown")
             if not isinstance(prop.property_type, str) or prop.property_type not in {
