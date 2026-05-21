@@ -1419,6 +1419,9 @@ class EvidenceBag:
         return len(self.items)
 
     def manifest(self) -> str:
+        for item in self.items:
+            if not isinstance(item, EvidenceItem):
+                raise ValueError("items must contain EvidenceItem entries")
         lines = ["# Evidence Bag Manifest", f"Items: {self.file_count}", ""]
         for item in self.items:
             lines.append(f"- [{item.category}] {item.filename}: {item.description}")
