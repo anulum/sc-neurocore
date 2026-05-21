@@ -162,6 +162,11 @@ class TestFMEDA:
         fmeda.add_failure_mode(fm)
         assert len(fmeda.failure_modes) == 1
 
+    def test_add_failure_mode_rejects_invalid_contract(self):
+        fmeda = FMEDA()
+        with pytest.raises(ValueError, match="fm"):
+            fmeda.add_failure_mode("bad")  # type: ignore[arg-type]
+
     def test_add_sc_standard_modes(self):
         fmeda = FMEDA()
         fmeda.add_sc_standard_modes("sc_lif_neuron")
