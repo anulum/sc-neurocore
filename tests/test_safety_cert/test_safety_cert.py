@@ -1199,6 +1199,19 @@ class TestFormalGapDetector:
         assert gap.coverage == 0.5
 
     @pytest.mark.parametrize(
+        ("properties", "required_modules", "match"),
+        [
+            ("bad", ["neuron"], "properties"),
+            ([FormalProperty("P1", "n", "d", "assert", "proven"), "bad"], ["neuron"], "properties"),
+            ([FormalProperty("P1", "n", "d", "assert", "proven")], "bad", "required_modules"),
+            ([FormalProperty("P1", "n", "d", "assert", "proven")], [""], "required_modules"),
+        ],
+    )
+    def test_detect_rejects_invalid_contracts(self, properties, required_modules, match):
+        with pytest.raises(ValueError, match=match):
+            FormalPropertyGapDetector.detect(properties, required_modules)  # type: ignore[arg-type]
+
+    @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
             ({"module": ""}, "module"),
