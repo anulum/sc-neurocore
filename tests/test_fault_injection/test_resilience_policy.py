@@ -114,6 +114,28 @@ def test_rejects_non_binary_bitstreams() -> None:
 @pytest.mark.parametrize(
     ("kwargs", "match"),
     [
+        ({"layer_id": ""}, "layer_id"),
+        ({"fault_model": "bit_flip"}, "fault_model"),
+        ({"ber": 1.1}, "ber"),
+        ({"seed": 1.5}, "seed"),
+    ],
+)
+def test_evaluate_rejects_invalid_call_contracts(kwargs, match) -> None:
+    policy = GracefulDegradationPolicy()
+    values = {
+        "layer_id": "L0",
+        "fault_model": FaultModel.BIT_FLIP,
+        "ber": 0.0,
+        "seed": 1,
+    }
+    values.update(kwargs)
+    with pytest.raises(ValueError, match=match):
+        policy.evaluate(np.array([[0, 1]], dtype=np.uint8), **values)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
         ({"warning_affected_ratio": -0.1}, "warning_affected_ratio"),
         ({"critical_affected_ratio": 1.1}, "critical_affected_ratio"),
         ({"warning_affected_ratio": 0.5, "critical_affected_ratio": 0.1}, "cannot exceed"),
