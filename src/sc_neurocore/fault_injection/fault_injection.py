@@ -39,6 +39,16 @@ class RadiationProfile:
     ber: float  # bit error rate per bit per cycle
     description: str = ""
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise ValueError("name must be a non-empty string")
+        if isinstance(self.ber, bool) or not isinstance(self.ber, int | float):
+            raise ValueError("ber must be a finite value in [0, 1]")
+        if not np.isfinite(float(self.ber)) or float(self.ber) < 0.0 or float(self.ber) > 1.0:
+            raise ValueError("ber must be a finite value in [0, 1]")
+        if not isinstance(self.description, str):
+            raise ValueError("description must be a string")
+
     @classmethod
     def leo(cls) -> RadiationProfile:
         return cls("LEO", 1e-7, "Low Earth Orbit — moderate radiation belt exposure")
