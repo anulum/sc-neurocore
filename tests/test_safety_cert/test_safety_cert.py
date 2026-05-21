@@ -449,6 +449,14 @@ class TestFMEDA:
         assert "FMEDA" in report
         assert "FIT" in report
 
+    def test_generate_report_orders_rows_by_failure_mode_id(self):
+        fmeda = FMEDA()
+        fmeda.add_failure_mode(FailureMode("FM2", "n", "d", FailureCategory.SAFE, 1.0))
+        fmeda.add_failure_mode(FailureMode("FM1", "n", "d", FailureCategory.SAFE, 1.0))
+        lines = fmeda.generate_report().splitlines()
+        rows = [line for line in lines if line.startswith("| FM") and not line.startswith("| FM ID")]
+        assert rows == sorted(rows)
+
     def test_generate_report_rejects_corrupted_internal_state(self):
         fmeda = FMEDA()
         fmeda.failure_modes.append("bad")  # type: ignore[arg-type]
