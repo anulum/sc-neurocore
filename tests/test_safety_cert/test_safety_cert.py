@@ -1104,6 +1104,13 @@ class TestEvidenceBag:
         bag.add(EvidenceItem("x.md", "formal", "proof"))
         assert len(bag.compute_hashes()) == 32
 
+    def test_hash_changes_with_declared_sha256(self):
+        bag_a = EvidenceBag()
+        bag_a.add(EvidenceItem("x.md", "formal", "proof", sha256="a"))
+        bag_b = EvidenceBag()
+        bag_b.add(EvidenceItem("x.md", "formal", "proof", sha256="b"))
+        assert bag_a.compute_hashes() != bag_b.compute_hashes()
+
     def test_add_rejects_invalid_item(self):
         bag = EvidenceBag()
         with pytest.raises(ValueError, match="item"):
