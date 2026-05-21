@@ -846,6 +846,11 @@ class TestProofTestCoverage:
         uncovered = ProofTestCoverage.uncovered_modules(props, ["neuron", "encoder"])
         assert uncovered == ["encoder"]
 
+    def test_uncovered_modules_deduplicates_preserving_order(self):
+        props = [FormalProperty("P1", "neuron", "d", "assert", "proven")]
+        uncovered = ProofTestCoverage.uncovered_modules(props, ["encoder", "encoder", "decoder"])
+        assert uncovered == ["encoder", "decoder"]
+
     def test_dc_to_sil(self):
         assert ProofTestCoverage.dc_to_sil(0.99).value >= 3
         assert ProofTestCoverage.dc_to_sil(0.97) == SILLevel.SIL_3
