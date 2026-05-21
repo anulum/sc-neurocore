@@ -1349,7 +1349,7 @@ class EvidenceBag:
     def compute_hashes(self) -> str:
         h = hashlib.sha256()
         for item in sorted(self.items, key=lambda x: x.filename):
-            h.update(f"{item.filename}:{item.category}".encode())
+            h.update(f"{item.filename}:{item.category}:{item.sha256}".encode())
         return h.hexdigest()[:32]
 
 
