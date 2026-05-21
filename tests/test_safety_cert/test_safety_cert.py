@@ -994,6 +994,16 @@ class TestEvidenceBag:
         bag.add(EvidenceItem("x.md", "formal", "proof"))
         assert len(bag.compute_hashes()) == 32
 
+    def test_add_rejects_invalid_item(self):
+        bag = EvidenceBag()
+        with pytest.raises(ValueError, match="item"):
+            bag.add("bad")  # type: ignore[arg-type]
+
+    def test_add_from_package_rejects_invalid_package(self):
+        bag = EvidenceBag()
+        with pytest.raises(ValueError, match="pkg"):
+            bag.add_from_package("bad")  # type: ignore[arg-type]
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [

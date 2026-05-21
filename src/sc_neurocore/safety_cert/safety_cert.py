@@ -1270,9 +1270,13 @@ class EvidenceBag:
         self.items: List[EvidenceItem] = []
 
     def add(self, item: EvidenceItem) -> None:
+        if not isinstance(item, EvidenceItem):
+            raise ValueError("item must be an EvidenceItem")
         self.items.append(item)
 
     def add_from_package(self, pkg: CertificationPackage) -> None:
+        if not isinstance(pkg, CertificationPackage):
+            raise ValueError("pkg must be a CertificationPackage")
         self.add(EvidenceItem("traceability_matrix.md", "report", "Requirement traceability"))
         self.add(EvidenceItem("fmeda_report.md", "analysis", "FMEDA analysis"))
         self.add(EvidenceItem("formal_proof_cert.md", "formal", "Formal proof certificate"))
