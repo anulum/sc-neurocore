@@ -353,6 +353,9 @@ class FMEDA:
     @property
     def residual_risk_fit(self) -> float:
         """Dangerous-undetected failure rate (residual risk)."""
+        for fm in self.failure_modes:
+            if not isinstance(fm, FailureMode):
+                raise ValueError("failure_modes must contain FailureMode entries")
         return sum(
             fm.failure_rate_fit * (1.0 - fm.safe_failure_fraction) for fm in self.failure_modes
         )
