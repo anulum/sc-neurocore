@@ -256,6 +256,14 @@ class TestFMEDA:
         sil = fmeda.max_achievable_sil()
         assert sil.value >= 1
 
+    def test_max_sil_rejects_corrupted_coverage_state(self):
+        fmeda = FMEDA()
+        fm = FailureMode("FM1", "n", "d", FailureCategory.DANGEROUS_DETECTED, 1.0, 0.5)
+        fm.diagnostic_coverage = float("nan")  # type: ignore[assignment]
+        fmeda.add_failure_mode(fm)
+        with pytest.raises(ValueError, match="coverage|safe_failure_fraction"):
+            fmeda.max_achievable_sil()
+
     def test_generate_report(self):
         fmeda = FMEDA()
         fmeda.add_sc_standard_modes("neuron")
