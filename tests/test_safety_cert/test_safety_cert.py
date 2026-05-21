@@ -1225,6 +1225,14 @@ class TestChangeImpactTracker:
         with pytest.raises(ValueError, match="ChangeRecord"):
             _ = ct.high_risk_count
 
+    def test_high_risk_count_rejects_corrupted_risk_level_state(self):
+        ct = ChangeImpactTracker()
+        change = ChangeRecord("C1", "desc", ["neuron"], ["R1"], "low")
+        change.risk_level = "bad"  # type: ignore[assignment]
+        ct.add_change(change)
+        with pytest.raises(ValueError, match="risk_level"):
+            _ = ct.high_risk_count
+
     def test_affected_reqs(self):
         ct = ChangeImpactTracker()
         ct.add_change(ChangeRecord("C1", "a", [], ["R1", "R2"]))
