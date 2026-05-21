@@ -773,6 +773,12 @@ class TestCCFAnalysis:
         assert ccf.sil_compatible(SILLevel.SIL_1) is True
         assert ccf.sil_compatible(SILLevel.SIL_3) is False  # beta=0.10 too high
 
+    def test_sil_compatible_sil4_threshold(self):
+        ccf = CCFAnalysis()
+        for defence in ccf.defences:
+            ccf.mark_implemented(defence.defence_id)
+        assert ccf.sil_compatible(SILLevel.SIL_4) is True
+
     def test_sil_compatible_rejects_invalid_target_sil(self):
         ccf = CCFAnalysis()
         with pytest.raises(ValueError, match="target_sil"):

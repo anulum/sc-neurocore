@@ -951,7 +951,7 @@ class CCFAnalysis:
             SILLevel.SIL_3: 0.02,
             SILLevel.SIL_4: 0.01,
         }
-        return self.beta_factor <= thresholds.get(target_sil, 0.10)
+        return self.beta_factor <= thresholds[target_sil]
 
 
 # ── Proof-of-Test Coverage (Gap 2) ──────────────────────────────────
