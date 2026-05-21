@@ -863,6 +863,8 @@ class CertificationGenerator:
         for module in modules:
             if not isinstance(module, str) or not module.strip():
                 raise ValueError("modules must contain non-empty strings")
+            if module != module.strip():
+                raise ValueError("modules must not contain leading or trailing whitespace")
         if len(modules) != len(set(modules)):
             raise ValueError("modules must not contain duplicates")
         if not isinstance(formal_properties, list):
@@ -1320,6 +1322,8 @@ class SafetyManualGenerator:
         for module in modules:
             if not isinstance(module, str) or not module.strip():
                 raise ValueError("modules must contain non-empty strings")
+            if module != module.strip():
+                raise ValueError("modules must not contain leading or trailing whitespace")
         if len(modules) != len(set(modules)):
             raise ValueError("modules must not contain duplicates")
         if isinstance(wcet_ns, bool) or not isinstance(wcet_ns, int | float):
