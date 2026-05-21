@@ -1374,6 +1374,8 @@ class ReliabilityMetrics:
             or float(self.dangerous_undetected_fit) < 0.0
         ):
             raise ValueError("dangerous_undetected_fit must be a finite non-negative number")
+        if float(self.dangerous_undetected_fit) > float(self.total_fit):
+            raise ValueError("dangerous_undetected_fit cannot exceed total_fit")
 
     @property
     def mtbf_hours(self) -> float:

@@ -1285,6 +1285,7 @@ class TestReliabilityMetrics:
             ({"total_fit": float("nan")}, "total_fit"),
             ({"total_fit": True}, "total_fit"),
             ({"dangerous_undetected_fit": -0.1}, "dangerous_undetected_fit"),
+            ({"total_fit": 1.0, "dangerous_undetected_fit": 2.0}, "cannot exceed"),
             ({"dangerous_undetected_fit": float("inf")}, "dangerous_undetected_fit"),
             ({"dangerous_undetected_fit": False}, "dangerous_undetected_fit"),
         ],
