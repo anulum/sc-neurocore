@@ -855,6 +855,10 @@ class CertificationGenerator:
         if network_config is not None and not isinstance(network_config, dict):
             raise ValueError("network_config must be a dictionary when provided")
         if network_config is not None:
+            allowed_keys = {"bitstream_length", "num_inputs", "num_neurons", "clock_mhz"}
+            unknown_keys = [key for key in network_config if key not in allowed_keys]
+            if unknown_keys:
+                raise ValueError("network_config contains unsupported keys")
             for key in ("bitstream_length", "num_inputs", "num_neurons"):
                 if key in network_config:
                     value = network_config[key]
