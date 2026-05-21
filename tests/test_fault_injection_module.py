@@ -11,8 +11,11 @@ from __future__ import annotations
 import pytest
 
 from sc_neurocore.fault_injection.fault_injection import (
+    FaultModel,
+    FaultInjector,
     FaultInjectionResult,
     RadiationProfile,
+    ResilienceBenchmark,
     ResilienceReport,
 )
 
@@ -135,3 +138,22 @@ class TestResilienceReportContracts:
         values[field] = value
         with pytest.raises(ValueError, match=match):
             ResilienceReport(**values)
+
+
+class TestSeedContracts:
+    def test_fault_injector_reproducible_with_same_seed(self):
+        bits = [0, 1, 1, 0, 1, 0, 1, 1]
+        import numpy as np
+
+        bitstream = np.array(bits, dtype=np.uint8)
+        a, a_flipped = FaultInjector(seed=7).inject(bitstream, model=FaultModel.BIT_FLIP, ber=0.2)
+        b, b_flipped = FaultInjector(seed=7).inject(bitstream, model=FaultModel.BIT_FLIP, ber=0.2)
+        assert a_flipped == b_flipped
+        assert np.array_equal(a, b)
+
+    @pytest.mark.parametrize("seed", [1.5, "7", True])
+    def test_rejects_non_integer_seed(self, seed):
+        with pytest.raises(ValueError, match="seed"):
+            FaultInjector(seed=seed)  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="seed"):
+            ResilienceBenchmark(seed=seed)  # type: ignore[arg-type]

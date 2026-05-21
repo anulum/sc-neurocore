@@ -174,6 +174,8 @@ class FaultInjector:
     """Applies configurable faults to SC bitstreams."""
 
     def __init__(self, seed: int = 42):
+        if isinstance(seed, bool) or not isinstance(seed, int):
+            raise ValueError("seed must be an integer")
         self.rng = np.random.default_rng(seed)
 
     def inject(
@@ -239,6 +241,8 @@ class ResilienceBenchmark:
     """Monte-Carlo resilience benchmarking harness."""
 
     def __init__(self, seed: int = 42):
+        if isinstance(seed, bool) or not isinstance(seed, int):
+            raise ValueError("seed must be an integer")
         self.injector = FaultInjector(seed=seed)
         self.rng = np.random.default_rng(seed)
 
