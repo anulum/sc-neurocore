@@ -383,6 +383,10 @@ class FMEDA:
         for comp, fms in components.items():
             total = sum(f.failure_rate_fit for f in fms)
             safe = sum(f.failure_rate_fit * f.safe_failure_fraction for f in fms)
+            if not math.isfinite(float(total)) or total < 0.0:
+                raise ValueError("component failure-rate totals must be finite non-negative values")
+            if not math.isfinite(float(safe)) or safe < 0.0:
+                raise ValueError("component safe-failure totals must be finite non-negative values")
             result[comp] = safe / total if total > 0 else 0.0
         return result
 
