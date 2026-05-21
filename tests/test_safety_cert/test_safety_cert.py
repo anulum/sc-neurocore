@@ -1208,6 +1208,7 @@ class TestIEC62304:
         [
             ({"sw_class": "B"}, "sw_class"),
             ({"hazard_description": None}, "hazard_description"),
+            ({"risk_control_measures": "measure"}, "risk_control_measures"),
             ({"risk_control_measures": ["", "measure"]}, "risk_control_measures"),
         ],
     )
