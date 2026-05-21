@@ -363,7 +363,7 @@ class TestFMEDA:
         fm = FailureMode("FM1", "n", "d", FailureCategory.SAFE, 1.0)
         fm.failure_rate_fit = float("nan")  # type: ignore[assignment]
         fmeda.add_failure_mode(fm)
-        with pytest.raises(ValueError, match="total_failure_rate"):
+        with pytest.raises(ValueError, match="failure_rate_fit"):
             _ = fmeda.total_failure_rate
 
     def test_safe_failure_fraction(self):
