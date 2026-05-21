@@ -178,6 +178,8 @@ class TraceabilityMatrix:
             req.status = "verified"
         elif req.implementation_refs:
             req.status = "implemented"
+        else:
+            req.status = "open"
 
     @property
     def coverage(self) -> float:
