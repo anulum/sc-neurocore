@@ -787,6 +787,26 @@ class TestHFTAssessment:
         hft = HFTAssessment(sff=0.92, target_sil=SILLevel.SIL_3)
         assert hft.required_hft == HFTLevel.HFT_1
 
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"sff": -0.1}, "sff"),
+            ({"sff": 1.1}, "sff"),
+            ({"sff": float("nan")}, "sff"),
+            ({"sff": float("inf")}, "sff"),
+            ({"sff": True}, "sff"),
+            ({"target_sil": "SIL_2"}, "target_sil"),
+        ],
+    )
+    def test_hft_assessment_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "sff": 0.90,
+            "target_sil": SILLevel.SIL_2,
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            HFTAssessment(**values)
+
 
 # ── Change Impact Tests (Gap 4) ───────────────────────────────────────
 
