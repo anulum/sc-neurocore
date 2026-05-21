@@ -357,6 +357,8 @@ def _correlated_activity_fixture_stream(
 
 
 def _report_payload(report: SideChannelBenchmarkReport) -> dict[str, Any]:
+    if not isinstance(report, SideChannelBenchmarkReport):
+        raise SideChannelBenchmarkError("report must be a SideChannelBenchmarkReport")
     return {
         "schema_version": report.schema_version,
         "evidence_boundary": report.evidence_boundary,
