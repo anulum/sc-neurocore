@@ -560,6 +560,9 @@ class WCETPath:
 
     @property
     def total_cycles(self) -> int:
+        for cycles in self.cycles_per_stage:
+            if isinstance(cycles, bool) or not isinstance(cycles, int) or cycles < 0:
+                raise ValueError("cycles_per_stage must contain non-negative integers")
         return sum(self.cycles_per_stage)
 
     def wcet_ns(self, clock_mhz: float) -> float:

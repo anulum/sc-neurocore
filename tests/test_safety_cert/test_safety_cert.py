@@ -449,6 +449,12 @@ class TestWCETAnalyzer:
         ns = path.wcet_ns(100.0)
         assert ns > 0
 
+    def test_total_cycles_rejects_corrupted_internal_state(self):
+        path = WCETPath("p1", "path", ["A"], [1])
+        path.cycles_per_stage = ["bad"]  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="cycles_per_stage"):
+            _ = path.total_cycles
+
     def test_with_stp(self):
         path = WCETAnalyzer.analyze(256, 8, 16, has_stp=True)
         assert len(path.stages) == 5
