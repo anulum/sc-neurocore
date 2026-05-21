@@ -792,6 +792,19 @@ class TestCertificationGenerator:
         with pytest.raises(ValueError, match="formal_properties property_type"):
             gen.generate(SafetyStandard.IEC_61508, SILLevel.SIL_2, ["sc_lif_neuron"], [prop])
 
+    def test_generate_rejects_duplicate_formal_property_ids(self):
+        gen = CertificationGenerator()
+        with pytest.raises(ValueError, match="duplicate prop_id"):
+            gen.generate(
+                SafetyStandard.IEC_61508,
+                SILLevel.SIL_2,
+                ["sc_lif_neuron"],
+                [
+                    FormalProperty("P1", "sc_lif_neuron", "d1", "assert", "proven"),
+                    FormalProperty("P1", "sc_lif_neuron", "d2", "cover", "proven"),
+                ],
+            )
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [

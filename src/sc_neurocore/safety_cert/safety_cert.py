@@ -865,6 +865,9 @@ class CertificationGenerator:
                 raise ValueError(
                     "formal_properties property_type values must be one of: assert, cover, assume"
                 )
+        prop_ids = [prop.prop_id for prop in formal_properties]
+        if len(prop_ids) != len(set(prop_ids)):
+            raise ValueError("formal_properties must not contain duplicate prop_id values")
         if network_config is not None and not isinstance(network_config, dict):
             raise ValueError("network_config must be a dictionary when provided")
         if network_config is not None:
