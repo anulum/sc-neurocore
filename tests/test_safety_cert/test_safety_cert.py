@@ -276,6 +276,11 @@ class TestFormalProofCertificate:
         h = cert.compute_hash()
         assert len(h) == 32
 
+    def test_add_property_rejects_invalid_contract(self):
+        cert = FormalProofCertificate()
+        with pytest.raises(ValueError, match="prop"):
+            cert.add_property("bad")  # type: ignore[arg-type]
+
     def test_hash_deterministic(self):
         cert = FormalProofCertificate(properties=self._props())
         assert cert.compute_hash() == cert.compute_hash()
