@@ -1125,6 +1125,7 @@ class TestChangeImpactTracker:
             ({"re_verification_needed": "yes"}, "re_verification_needed"),
             ({"affected_modules": "mod1"}, "affected_modules"),
             ({"affected_modules": ["", "mod"]}, "affected_modules"),
+            ({"affected_reqs": "R1"}, "affected_reqs"),
             ({"affected_reqs": ["", "R1"]}, "affected_reqs"),
         ],
     )

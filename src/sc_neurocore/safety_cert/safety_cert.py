@@ -1177,6 +1177,8 @@ class ChangeRecord:
             raise ValueError("re_verification_needed must be a boolean")
         if not isinstance(self.affected_modules, list):
             raise ValueError("affected_modules must be a list")
+        if not isinstance(self.affected_reqs, list):
+            raise ValueError("affected_reqs must be a list")
 
         for module in self.affected_modules:
             if not isinstance(module, str) or not module.strip():
