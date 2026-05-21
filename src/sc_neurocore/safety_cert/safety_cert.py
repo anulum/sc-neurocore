@@ -1577,7 +1577,18 @@ class CrossStandardMapper:
             raise ValueError("standard must be a non-empty string")
         if not isinstance(clause, str) or not clause.strip():
             raise ValueError("clause must be a non-empty string")
-        return CROSS_MAP.get((standard.strip(), clause.strip()), [])
+        mappings = CROSS_MAP.get((standard.strip(), clause.strip()), [])
+        for mapping in mappings:
+            if (
+                not isinstance(mapping, tuple)
+                or len(mapping) != 2
+                or not isinstance(mapping[0], str)
+                or not mapping[0].strip()
+                or not isinstance(mapping[1], str)
+                or not mapping[1].strip()
+            ):
+                raise ValueError("cross-standard mappings must contain non-empty (standard, clause) tuples")
+        return mappings
 
     @staticmethod
     def coverage_overlap(checklist_a: List[ChecklistItem], checklist_b: List[ChecklistItem]) -> int:
