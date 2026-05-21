@@ -203,3 +203,20 @@ def test_resilience_mode_report_rejects_invalid_contracts() -> None:
             recommended_action=reference.recommended_action,
             trial_reports=reference.trial_reports,
         )
+
+
+def test_trial_aggregate_metrics_stay_within_valid_bounds() -> None:
+    bitstreams = np.array([[0, 1, 0, 1], [1, 0, 1, 0]], dtype=np.uint8)
+    mode = FaultInjectionResilienceMode(
+        ResilienceModeConfig(
+            layer_id="L0",
+            radiation_profile=RadiationProfile("test", 0.2),
+            fault_models=(FaultModel.BIT_FLIP,),
+            num_trials=8,
+            seed=4,
+        )
+    )
+    report = mode.run(bitstreams)
+    trial = report.trial_reports[0]
+    assert 0.0 <= trial.mean_probability_error <= 1.0
+    assert 0.0 <= trial.observed_mean_affected_bits <= trial.bit_count
