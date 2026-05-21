@@ -1569,6 +1569,12 @@ class FormalPropertyGapDetector:
         for prop in properties:
             if not isinstance(prop, FormalProperty):
                 raise ValueError("properties must contain FormalProperty entries")
+            if not isinstance(prop.property_type, str) or prop.property_type not in {
+                "assert",
+                "cover",
+                "assume",
+            }:
+                raise ValueError("properties property_type values must be one of: assert, cover, assume")
         if not isinstance(required_modules, list):
             raise ValueError("required_modules must be a list")
         for module in required_modules:
