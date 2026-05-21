@@ -114,6 +114,14 @@ class TestTraceabilityMatrix:
         with pytest.raises(ValueError, match="Requirement"):
             tm.generate_report()
 
+    def test_generate_report_rejects_corrupted_requirement_status(self):
+        tm = TraceabilityMatrix()
+        req = Requirement("R1", "Test", SafetyStandard.IEC_61508)
+        req.status = "bad"  # type: ignore[assignment]
+        tm.add_requirement(req)
+        with pytest.raises(ValueError, match="statuses"):
+            tm.generate_report()
+
     def test_add_requirement_rejects_invalid_contract(self):
         tm = TraceabilityMatrix()
         with pytest.raises(ValueError, match="req"):
