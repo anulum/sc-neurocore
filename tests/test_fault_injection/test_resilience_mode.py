@@ -12,13 +12,17 @@ import numpy as np
 import pytest
 
 from sc_neurocore.fault_injection import (
+    DegradationPlan,
     DegradationAction,
     FaultInjectionResilienceMode,
     FaultModel,
     RadiationProfile,
     ResilienceModeConfig,
+    ResilienceModeTrialReport,
+    SeededFaultObservation,
 )
 from sc_neurocore.fault_injection.resilience_policy import GracefulDegradationPolicy
+from sc_neurocore.stochastic_doctor.diagnostics import AuditSeverity, BitstreamAuditReport
 
 
 def test_resilience_mode_reports_seeded_probability_error_and_policy() -> None:
@@ -126,3 +130,44 @@ def test_resilience_mode_rejects_invalid_inputs_and_config() -> None:
     )
     with pytest.raises(ValueError, match="0/1"):
         mode.run(np.array([[0, 2]], dtype=np.uint8))
+
+
+def test_trial_report_rejects_invalid_contracts() -> None:
+    observation = SeededFaultObservation(
+        layer_id="L0",
+        seed=1,
+        fault_model=FaultModel.BIT_FLIP,
+        ber=0.1,
+        affected_bits=1,
+        bitstream_length=8,
+        affected_ratio=0.125,
+        audit=BitstreamAuditReport(
+            layer="L0",
+            stream_length=8,
+            num_neurons=1,
+            status=AuditSeverity.OK,
+            max_correlation=0.0,
+        ),
+    )
+    plan = DegradationPlan(
+        action=DegradationAction.NOMINAL,
+        observation=observation,
+        recommended_bitstream_length=8,
+        replay_seed=1,
+        reason="ok",
+    )
+    with pytest.raises(ValueError, match="mean_probability_error"):
+        ResilienceModeTrialReport(
+            fault_model=FaultModel.BIT_FLIP,
+            ber=0.1,
+            num_trials=4,
+            bit_count=8,
+            expected_affected_bits=1.0,
+            observed_mean_affected_bits=1.0,
+            observed_std_affected_bits=0.0,
+            mean_probability_error=-0.1,
+            p95_probability_error=0.1,
+            p99_probability_error=0.1,
+            max_probability_error=0.1,
+            degradation_plan=plan,
+        )
