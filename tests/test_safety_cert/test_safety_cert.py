@@ -963,6 +963,12 @@ class TestChangeImpactTracker:
         assert ct.needs_re_certification
         assert ct.high_risk_count == 1
 
+    def test_high_risk_count_rejects_corrupted_internal_state(self):
+        ct = ChangeImpactTracker()
+        ct.changes.append("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="ChangeRecord"):
+            _ = ct.high_risk_count
+
     def test_affected_reqs(self):
         ct = ChangeImpactTracker()
         ct.add_change(ChangeRecord("C1", "a", [], ["R1", "R2"]))
