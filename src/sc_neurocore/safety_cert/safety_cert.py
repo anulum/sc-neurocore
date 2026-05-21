@@ -1428,6 +1428,9 @@ class EvidenceBag:
         return "\n".join(lines)
 
     def compute_hashes(self) -> str:
+        for item in self.items:
+            if not isinstance(item, EvidenceItem):
+                raise ValueError("items must contain EvidenceItem entries")
         h = hashlib.sha256()
         for item in sorted(self.items, key=lambda x: x.filename):
             h.update(f"{item.filename}:{item.category}:{item.sha256}".encode())
