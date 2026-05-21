@@ -617,6 +617,10 @@ class TestCertificationGenerator:
             ({"formal_properties": "bad"}, "formal_properties"),
             ({"formal_properties": ["bad"]}, "formal_properties"),
             ({"network_config": "bad"}, "network_config"),
+            ({"network_config": {"bitstream_length": 0}}, "bitstream_length"),
+            ({"network_config": {"num_inputs": 0}}, "num_inputs"),
+            ({"network_config": {"num_neurons": 0}}, "num_neurons"),
+            ({"network_config": {"clock_mhz": 0.0}}, "clock_mhz"),
         ],
     )
     def test_generate_rejects_invalid_contracts(self, kwargs, match):
