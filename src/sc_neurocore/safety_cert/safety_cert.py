@@ -822,6 +822,8 @@ class CertificationPackage:
                 "not_addressed",
             }:
                 raise ValueError("checklist statuses must be one of: compliant, partial, not_addressed")
+            if not isinstance(item.clause, str) or not item.clause.strip():
+                raise ValueError("checklist clauses must be non-empty strings")
 
     @property
     def checklist_coverage(self) -> float:
