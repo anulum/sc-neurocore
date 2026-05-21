@@ -1124,6 +1124,8 @@ class HFTAssessment:
     @property
     def required_hft(self) -> HFTLevel:
         """Determine required HFT from SFF and target SIL."""
+        if not isinstance(self.target_sil, SILLevel):
+            raise ValueError("target_sil must be a SILLevel")
         if self.sff >= 0.99:
             if self.target_sil.value <= 3:
                 return HFTLevel.HFT_0

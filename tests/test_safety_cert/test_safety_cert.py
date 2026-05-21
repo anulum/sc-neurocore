@@ -1043,6 +1043,12 @@ class TestHFTAssessment:
         hft = HFTAssessment(sff=0.92, target_sil=SILLevel.SIL_3)
         assert hft.required_hft == HFTLevel.HFT_1
 
+    def test_required_hft_rejects_corrupted_target_sil(self):
+        hft = HFTAssessment(sff=0.92, target_sil=SILLevel.SIL_3)
+        hft.target_sil = "SIL_3"  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="target_sil"):
+            _ = hft.required_hft
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
