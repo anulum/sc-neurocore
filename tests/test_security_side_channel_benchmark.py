@@ -151,6 +151,15 @@ def test_side_channel_benchmark_maps_thermal_encoder_contract_errors() -> None:
         )
 
 
+def test_side_channel_benchmark_rejects_invalid_protected_config() -> None:
+    with pytest.raises(SideChannelBenchmarkError, match="protected_config"):
+        run_side_channel_leakage_benchmark(
+            probabilities=(0.25, 0.5),
+            labels=(0, 1),
+            protected_config="bad",  # type: ignore[arg-type]
+        )
+
+
 @pytest.mark.parametrize(
     ("kwargs", "match"),
     [
