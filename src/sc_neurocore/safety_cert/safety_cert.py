@@ -386,6 +386,9 @@ class FMEDA:
         """Determine max achievable SIL from SFF and DC."""
         sff = self.safe_failure_fraction
         dc = self.diagnostic_coverage
+        for value, name in ((sff, "safe_failure_fraction"), (dc, "diagnostic_coverage")):
+            if not math.isfinite(float(value)) or float(value) < 0.0 or float(value) > 1.0:
+                raise ValueError(f"{name} must be a finite value in [0, 1]")
         if sff >= 0.99 and dc >= 0.99:
             return SILLevel.SIL_4
         if sff >= 0.97 and dc >= 0.99:
