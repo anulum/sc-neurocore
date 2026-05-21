@@ -1739,6 +1739,14 @@ class TestCrossStandardMapper:
         with pytest.raises(ValueError, match="statuses"):
             CrossStandardMapper.coverage_overlap([left], [right])
 
+    def test_coverage_overlap_deduplicates_equivalent_mappings(self):
+        left = [
+            ChecklistItem("IEC 61508_7.4.2", "7.4.2", "desc", "formal/", "partial"),
+            ChecklistItem("IEC 61508_7.4.2_b", "7.4.2", "desc2", "formal/", "partial"),
+        ]
+        right = [ChecklistItem("ISO 26262_6.7.4", "6.7.4", "desc", "formal/", "partial")]
+        assert CrossStandardMapper.coverage_overlap(left, right) == 1
+
     @pytest.mark.parametrize(
         ("standard", "clause", "match"),
         [
