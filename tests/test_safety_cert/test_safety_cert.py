@@ -1539,6 +1539,13 @@ class TestCrossStandardMapper:
         with pytest.raises(ValueError, match="clauses"):
             CrossStandardMapper.coverage_overlap([left], [right])
 
+    def test_coverage_overlap_rejects_corrupted_status_state(self):
+        left = ChecklistItem("IEC 61508_7.4.2", "7.4.2", "desc", "formal/", "partial")
+        right = ChecklistItem("ISO 26262_6.7.4", "6.7.4", "desc", "formal/", "partial")
+        left.status = "bad"  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="statuses"):
+            CrossStandardMapper.coverage_overlap([left], [right])
+
     @pytest.mark.parametrize(
         ("standard", "clause", "match"),
         [
