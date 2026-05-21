@@ -237,6 +237,12 @@ class TestFMEDA:
         assert "FMEDA" in report
         assert "FIT" in report
 
+    def test_generate_report_rejects_corrupted_internal_state(self):
+        fmeda = FMEDA()
+        fmeda.failure_modes.append("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="FailureMode"):
+            fmeda.generate_report()
+
     def test_safe_failure_fraction_value(self):
         fmeda = FMEDA()
         fm = FailureMode("FM1", "x", "safe", FailureCategory.SAFE, 100.0)

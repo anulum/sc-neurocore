@@ -384,6 +384,9 @@ class FMEDA:
         return SILLevel.SIL_1
 
     def generate_report(self) -> str:
+        for fm in self.failure_modes:
+            if not isinstance(fm, FailureMode):
+                raise ValueError("failure_modes must contain FailureMode entries")
         lines = [
             "# FMEDA Report",
             f"Total failure rate: {self.total_failure_rate:.1f} FIT",
