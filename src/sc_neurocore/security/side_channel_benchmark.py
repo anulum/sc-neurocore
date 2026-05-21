@@ -371,6 +371,10 @@ def _with_artifact_path(
     report: SideChannelBenchmarkReport,
     path: Path,
 ) -> SideChannelBenchmarkReport:
+    if not isinstance(report, SideChannelBenchmarkReport):
+        raise SideChannelBenchmarkError("report must be a SideChannelBenchmarkReport")
+    if not isinstance(path, Path):
+        raise SideChannelBenchmarkError("path must be a pathlib.Path")
     manifest = SideChannelDeployManifest(
         schema_version=report.deploy_manifest.schema_version,
         evidence_class=report.deploy_manifest.evidence_class,
