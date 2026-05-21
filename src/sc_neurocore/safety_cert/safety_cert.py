@@ -1110,6 +1110,8 @@ class ChangeImpactTracker:
     def affected_requirements(self) -> List[str]:
         reqs: set = set()
         for c in self.changes:
+            if not isinstance(c, ChangeRecord):
+                raise ValueError("changes must contain ChangeRecord entries")
             reqs.update(c.affected_reqs)
         return sorted(reqs)
 
