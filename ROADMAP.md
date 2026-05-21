@@ -21,6 +21,13 @@
   digest and uniqueness checks, cross-standard mapping/overlap integrity, WCET
   and change-impact state checks, and proof-coverage/property-gap identifier
   normalisation.
+- 2026-05-21: Added 12 additional production hardening slices in
+  `safety_cert/safety_cert.py` with matched tests: traceability requirement
+  identity invariants, canonical/idempotent linking semantics, status downgrade
+  correctness, deterministic traceability report ordering, FMEDA duplicate-seed
+  prevention and guarded seed insertion, per-entry failure-rate and
+  diagnostic-coverage validation, component identity checks, and deterministic
+  FMEDA report ordering.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
 
