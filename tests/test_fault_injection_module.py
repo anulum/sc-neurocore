@@ -157,3 +157,20 @@ class TestSeedContracts:
             FaultInjector(seed=seed)  # type: ignore[arg-type]
         with pytest.raises(ValueError, match="seed"):
             ResilienceBenchmark(seed=seed)  # type: ignore[arg-type]
+
+
+class TestFaultInjectorInjectContracts:
+    def test_rejects_invalid_inputs(self):
+        import numpy as np
+
+        injector = FaultInjector(seed=1)
+        with pytest.raises(ValueError, match="numpy.ndarray"):
+            injector.inject([0, 1], FaultModel.BIT_FLIP, 0.1)  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="1-D"):
+            injector.inject(np.zeros((2, 2), dtype=np.uint8), FaultModel.BIT_FLIP, 0.1)
+        with pytest.raises(ValueError, match="non-empty"):
+            injector.inject(np.zeros((0,), dtype=np.uint8), FaultModel.BIT_FLIP, 0.1)
+        with pytest.raises(ValueError, match="FaultModel"):
+            injector.inject(np.zeros((4,), dtype=np.uint8), "bit_flip", 0.1)  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="ber"):
+            injector.inject(np.zeros((4,), dtype=np.uint8), FaultModel.BIT_FLIP, 1.1)
