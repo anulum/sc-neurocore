@@ -301,6 +301,12 @@ class TestFormalProofCertificate:
         cert = FormalProofCertificate(properties=self._props())
         assert abs(cert.pass_rate - 0.75) < 0.01
 
+    def test_total_count_rejects_corrupted_internal_state(self):
+        cert = FormalProofCertificate()
+        cert.properties.append("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="FormalProperty"):
+            _ = cert.total_count
+
     def test_compute_hash(self):
         cert = FormalProofCertificate(properties=self._props())
         h = cert.compute_hash()

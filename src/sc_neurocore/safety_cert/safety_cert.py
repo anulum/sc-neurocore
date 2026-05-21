@@ -472,6 +472,9 @@ class FormalProofCertificate:
 
     @property
     def total_count(self) -> int:
+        for prop in self.properties:
+            if not isinstance(prop, FormalProperty):
+                raise ValueError("properties must contain FormalProperty entries")
         return len(self.properties)
 
     @property
