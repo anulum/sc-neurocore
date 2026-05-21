@@ -772,6 +772,12 @@ class TestCCFAnalysis:
         assert ccf.implemented_count == 1
         assert ccf.beta_factor < 0.10
 
+    def test_implemented_count_rejects_corrupted_internal_state(self):
+        ccf = CCFAnalysis()
+        ccf.defences.append("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="CCFDefence"):
+            _ = ccf.implemented_count
+
     def test_mark_implemented_normalises_whitespace(self):
         ccf = CCFAnalysis()
         assert ccf.mark_implemented(" D1 ") is True
