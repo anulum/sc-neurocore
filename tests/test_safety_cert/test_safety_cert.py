@@ -1012,6 +1012,12 @@ class TestProofTestCoverage:
         with pytest.raises(ValueError, match="properties"):
             ProofTestCoverage.coverage_from_proofs(props)  # type: ignore[arg-type]
 
+    def test_coverage_from_proofs_rejects_corrupted_property_status(self):
+        prop = FormalProperty("P1", "m", "d", "assert", "proven")
+        prop.status = "bad"  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="statuses"):
+            ProofTestCoverage.coverage_from_proofs([prop])
+
 
 # ── HFT Assessment Tests (Gap 3) ──────────────────────────────────────
 
