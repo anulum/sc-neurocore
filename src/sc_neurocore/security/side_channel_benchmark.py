@@ -191,6 +191,8 @@ def run_side_channel_leakage_benchmark(
 ) -> SideChannelBenchmarkReport:
     """Compare correlated baseline streams against activity-balanced streams."""
 
+    if not isinstance(protected_config, ThermalSCEncodingConfig):
+        raise SideChannelBenchmarkError("protected_config must be a ThermalSCEncodingConfig")
     probability_values = _normalise_probabilities(probabilities)
     label_values = _normalise_labels(labels)
     if len(probability_values) != len(label_values):
