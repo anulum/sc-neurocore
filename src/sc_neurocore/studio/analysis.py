@@ -188,6 +188,7 @@ def heatmap_2d(
     x_vals = np.linspace(x_min, x_max, x_steps).tolist()
     y_vals = np.linspace(y_min, y_max, y_steps).tolist()
     rates = np.zeros((y_steps, x_steps))
+    failures: list[dict[str, Any]] = []
 
     for j, yv in enumerate(y_vals):
         for i, xv in enumerate(x_vals):
@@ -199,8 +200,28 @@ def heatmap_2d(
             try:
                 result = simulate_fn(**cfg)
                 rates[j, i] = result["stats"]["rate_hz"]
-            except Exception:
-                rates[j, i] = 0.0
+            except Exception as exc:
+                failures.append(
+                    {
+                        "grid_index": [j, i],
+                        "param_x_value": float(xv),
+                        "param_y_value": float(yv),
+                        "error_type": type(exc).__name__,
+                        "error_message": str(exc),
+                    }
+                )
+
+    total_points = x_steps * y_steps
+    if failures:
+        raise ValueError(
+            f"heatmap sweep failed for {len(failures)}/{total_points} points",
+            {
+                "failed_points": len(failures),
+                "total_points": total_points,
+                "failure_rate": float(len(failures)) / float(max(total_points, 1)),
+                "failures": failures,
+            },
+        )
 
     return {
         "param_x": param_x,
@@ -210,6 +231,9 @@ def heatmap_2d(
         "rates": rates.tolist(),
         "rate_min": float(np.min(rates)),
         "rate_max": float(np.max(rates)),
+        "failed_points": 0,
+        "total_points": total_points,
+        "failure_rate": 0.0,
     }
 
 
