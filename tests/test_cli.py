@@ -9,6 +9,7 @@
 """Tests for sc_neurocore.cli."""
 
 import builtins
+import hashlib
 import importlib.metadata
 import importlib.util
 import json
@@ -1978,9 +1979,17 @@ class TestDeployCommand:
         )
         ckpt = tmp_path / "tiny.pt"
         torch.save(model.state_dict(), ckpt)
+        checkpoint_sha256 = hashlib.sha256(ckpt.read_bytes()).hexdigest()
 
         out_dir = tmp_path / "deploy_out"
-        rc = _cmd_deploy(str(ckpt), "ice40", str(out_dir), dt=1.0, bitstream_length=64)
+        rc = _cmd_deploy(
+            str(ckpt),
+            "ice40",
+            str(out_dir),
+            dt=1.0,
+            bitstream_length=64,
+            checkpoint_sha256=checkpoint_sha256,
+        )
         assert rc == 0
 
         # Generated SystemVerilog
@@ -2006,9 +2015,17 @@ class TestDeployCommand:
         model = torch.nn.Sequential(torch.nn.Linear(4, 4))
         ckpt = tmp_path / "tiny.pt"
         torch.save(model.state_dict(), ckpt)
+        checkpoint_sha256 = hashlib.sha256(ckpt.read_bytes()).hexdigest()
 
         out_dir = tmp_path / "vivado_out"
-        rc = _cmd_deploy(str(ckpt), "artix7", str(out_dir), dt=1.0, bitstream_length=64)
+        rc = _cmd_deploy(
+            str(ckpt),
+            "artix7",
+            str(out_dir),
+            dt=1.0,
+            bitstream_length=64,
+            checkpoint_sha256=checkpoint_sha256,
+        )
         assert rc == 0
         assert (out_dir / "project.tcl").exists()
         assert not (out_dir / "Makefile").exists()
@@ -2022,11 +2039,201 @@ class TestDeployCommand:
         model = torch.nn.Sequential(torch.nn.Linear(2, 2))
         ckpt = tmp_path / "m.pt"
         torch.save(model.state_dict(), ckpt)
+        checkpoint_sha256 = hashlib.sha256(ckpt.read_bytes()).hexdigest()
 
         out = tmp_path / "deployed"
-        rc = _run_main("deploy", str(ckpt), "--target", "ice40", "-o", str(out))
+        rc = _run_main(
+            "deploy",
+            str(ckpt),
+            "--target",
+            "ice40",
+            "--checkpoint-sha256",
+            checkpoint_sha256,
+            "-o",
+            str(out),
+        )
         assert rc == 0
         assert (out / "sc_deploy_lif.sv").exists()
+
+    def test_deploy_pytorch_without_sha256_fails_closed(self, tmp_path, capsys):
+        """Deploy refuses PyTorch checkpoints without an explicit digest."""
+        torch = pytest.importorskip("torch")
+
+        from sc_neurocore.cli import _cmd_deploy
+
+        model = torch.nn.Sequential(torch.nn.Linear(2, 2))
+        ckpt = tmp_path / "nohash.pt"
+        torch.save(model.state_dict(), ckpt)
+
+        rc = _cmd_deploy(str(ckpt), "ice40", str(tmp_path / "out"), dt=1.0, bitstream_length=64)
+        assert rc == 1
+        assert "--checkpoint-sha256" in capsys.readouterr().out
+
+    @pytest.mark.parametrize("bad_digest", ["abc123", "g" * 64])
+    def test_deploy_pytorch_invalid_sha256_fails_closed(self, tmp_path, capsys, bad_digest):
+        torch = pytest.importorskip("torch")
+
+        from sc_neurocore.cli import _cmd_deploy
+
+        model = torch.nn.Sequential(torch.nn.Linear(2, 2))
+        ckpt = tmp_path / "badsha.pt"
+        torch.save(model.state_dict(), ckpt)
+
+        rc = _cmd_deploy(
+            str(ckpt),
+            "ice40",
+            str(tmp_path / "out"),
+            dt=1.0,
+            bitstream_length=64,
+            checkpoint_sha256=bad_digest,
+        )
+        assert rc == 1
+        assert "64 hexadecimal characters" in capsys.readouterr().out
+
+    def test_deploy_via_main_invalid_sha256_fails_closed(self, tmp_path, capsys):
+        torch = pytest.importorskip("torch")
+
+        model = torch.nn.Sequential(torch.nn.Linear(2, 2))
+        ckpt = tmp_path / "badsha_main.pt"
+        torch.save(model.state_dict(), ckpt)
+
+        rc = _run_main(
+            "deploy",
+            str(ckpt),
+            "--target",
+            "ice40",
+            "--checkpoint-sha256",
+            "abc123",
+            "-o",
+            str(tmp_path / "out"),
+        )
+        assert rc == 1
+        assert "64 hexadecimal characters" in capsys.readouterr().out
+
+    def test_deploy_rejects_non_tensor_state_entries(self, tmp_path, capsys):
+        torch = pytest.importorskip("torch")
+
+        from sc_neurocore.cli import _cmd_deploy
+
+        ckpt = tmp_path / "bad_state.pt"
+        torch.save({"layer.weight": [1, 2, 3]}, ckpt)
+        digest = hashlib.sha256(ckpt.read_bytes()).hexdigest()
+        rc = _cmd_deploy(
+            str(ckpt),
+            "ice40",
+            str(tmp_path / "out"),
+            dt=1.0,
+            bitstream_length=64,
+            checkpoint_sha256=digest,
+        )
+        assert rc == 1
+        assert "entries must be tensors" in capsys.readouterr().out
+
+    def test_deploy_rejects_checkpoint_without_dense_weights(self, tmp_path, capsys):
+        torch = pytest.importorskip("torch")
+
+        from sc_neurocore.cli import _cmd_deploy
+
+        ckpt = tmp_path / "conv_only.pt"
+        torch.save({"conv.weight": torch.randn(8, 1, 3, 3)}, ckpt)
+        digest = hashlib.sha256(ckpt.read_bytes()).hexdigest()
+        rc = _cmd_deploy(
+            str(ckpt),
+            "ice40",
+            str(tmp_path / "out"),
+            dt=1.0,
+            bitstream_length=64,
+            checkpoint_sha256=digest,
+        )
+        assert rc == 1
+        assert "does not contain any 2D dense '.weight' tensors" in capsys.readouterr().out
+
+    def test_deploy_rejects_non_floating_dense_weights(self, tmp_path, capsys):
+        torch = pytest.importorskip("torch")
+
+        from sc_neurocore.cli import _cmd_deploy
+
+        ckpt = tmp_path / "int_dense.pt"
+        torch.save({"layer.weight": torch.ones(4, 4, dtype=torch.int64)}, ckpt)
+        digest = hashlib.sha256(ckpt.read_bytes()).hexdigest()
+        rc = _cmd_deploy(
+            str(ckpt),
+            "ice40",
+            str(tmp_path / "out"),
+            dt=1.0,
+            bitstream_length=64,
+            checkpoint_sha256=digest,
+        )
+        assert rc == 1
+        assert "must use floating-point dtype" in capsys.readouterr().out
+
+    def test_deploy_rejects_non_finite_dense_weights(self, tmp_path, capsys):
+        torch = pytest.importorskip("torch")
+
+        from sc_neurocore.cli import _cmd_deploy
+
+        bad_weight = torch.randn(4, 4, dtype=torch.float32)
+        bad_weight[0, 0] = torch.nan
+        ckpt = tmp_path / "nan_dense.pt"
+        torch.save({"layer.weight": bad_weight}, ckpt)
+        digest = hashlib.sha256(ckpt.read_bytes()).hexdigest()
+        rc = _cmd_deploy(
+            str(ckpt),
+            "ice40",
+            str(tmp_path / "out"),
+            dt=1.0,
+            bitstream_length=64,
+            checkpoint_sha256=digest,
+        )
+        assert rc == 1
+        assert "contains non-finite values" in capsys.readouterr().out
+
+    def test_deploy_rejects_excessive_dense_parameter_count(self, tmp_path, capsys, monkeypatch):
+        torch = pytest.importorskip("torch")
+
+        from sc_neurocore import cli as cli_mod
+        from sc_neurocore.cli import _cmd_deploy
+
+        monkeypatch.setattr(cli_mod, "_MAX_DEPLOY_DENSE_PARAMS", 4)
+        ckpt = tmp_path / "too_many_dense_params.pt"
+        torch.save({"layer.weight": torch.randn(3, 3, dtype=torch.float32)}, ckpt)
+        digest = hashlib.sha256(ckpt.read_bytes()).hexdigest()
+        rc = _cmd_deploy(
+            str(ckpt),
+            "ice40",
+            str(tmp_path / "out"),
+            dt=1.0,
+            bitstream_length=64,
+            checkpoint_sha256=digest,
+        )
+        assert rc == 1
+        assert "dense parameter count exceeds safety limit" in capsys.readouterr().out
+
+    def test_deploy_rejects_incompatible_dense_weight_chain(self, tmp_path, capsys):
+        torch = pytest.importorskip("torch")
+
+        from sc_neurocore.cli import _cmd_deploy
+
+        ckpt = tmp_path / "bad_chain.pt"
+        # layer_b expects 5 inputs, but layer_a outputs 3 -> incompatible chain
+        torch.save(
+            {
+                "layer_a.weight": torch.randn(3, 4, dtype=torch.float32),
+                "layer_b.weight": torch.randn(2, 5, dtype=torch.float32),
+            },
+            ckpt,
+        )
+        digest = hashlib.sha256(ckpt.read_bytes()).hexdigest()
+        rc = _cmd_deploy(
+            str(ckpt),
+            "ice40",
+            str(tmp_path / "out"),
+            dt=1.0,
+            bitstream_length=64,
+            checkpoint_sha256=digest,
+        )
+        assert rc == 1
+        assert "not composition-compatible" in capsys.readouterr().out
 
 
 # ---------------------------------------------------------------------------

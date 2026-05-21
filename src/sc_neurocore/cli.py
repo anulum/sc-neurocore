@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import importlib.metadata
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -32,6 +33,14 @@ class _OutputAction(argparse.Action):
         del parser, option_string
         setattr(namespace, self.dest, values)
         namespace.output_supplied = True
+
+
+_SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
+_MAX_DEPLOY_DENSE_PARAMS = 20_000_000
+
+
+def _is_valid_sha256_digest(value: str) -> bool:
+    return bool(_SHA256_RE.fullmatch(value))
 
 
 def main() -> int:
@@ -87,6 +96,14 @@ def main() -> int:
         ),
     )
     parser.add_argument("--T", type=int, default=256, help="Bitstream length for SC layers")
+    parser.add_argument(
+        "--checkpoint-sha256",
+        default=None,
+        help=(
+            "Expected SHA-256 digest for deploy-time .pt/.pth checkpoint loading. "
+            "Required for deploy when model input is a PyTorch checkpoint."
+        ),
+    )
     parser.add_argument(
         "--source-kind",
         choices=["lfsr", "sobol"],
@@ -355,7 +372,14 @@ def main() -> int:
                 "Error: deploy requires a model file. Usage: sc-neurocore deploy model.nir --target artix7"
             )
             return 1
-        return _cmd_deploy(args.model, args.target, args.output, args.dt, args.T)
+        return _cmd_deploy(
+            args.model,
+            args.target,
+            args.output,
+            args.dt,
+            args.T,
+            checkpoint_sha256=args.checkpoint_sha256,
+        )
     if args.command == "serve":
         if not args.model:
             print(
@@ -1503,7 +1527,13 @@ def _cmd_benchmark() -> int:
 
 
 def _cmd_deploy(
-    model_path: str, target: str, output_dir: str, dt: float, bitstream_length: int
+    model_path: str,
+    target: str,
+    output_dir: str,
+    dt: float,
+    bitstream_length: int,
+    *,
+    checkpoint_sha256: str | None = None,
 ) -> int:
     """Deploy a model to FPGA or browser artefacts."""
     import os
@@ -1547,26 +1577,88 @@ def _cmd_deploy(
         print(f"  Loaded {len(network.topo_order)} nodes")
     elif ext in (".pt", ".pth"):
         print("[1/5] Loading PyTorch model and converting to SNN...")
-        import torch
+        from sc_neurocore.security.checkpoint_loading import CheckpointTrustError, safe_load_checkpoint
         from sc_neurocore.conversion import convert
 
-        state = torch.load(model_path, map_location="cpu", weights_only=True)
+        if not checkpoint_sha256:
+            print(
+                "Error: deploy requires --checkpoint-sha256 for .pt/.pth inputs "
+                "(fail-closed trusted checkpoint loading)."
+            )
+            return 1
+        if not _is_valid_sha256_digest(checkpoint_sha256):
+            print("Error: --checkpoint-sha256 must be exactly 64 hexadecimal characters.")
+            return 1
+        trusted_sha256 = {model_path: checkpoint_sha256}
+        try:
+            state = safe_load_checkpoint(
+                model_path,
+                trusted_sha256=trusted_sha256,
+                map_location="cpu",
+            )
+        except CheckpointTrustError as exc:
+            print(f"Error: {exc}")
+            return 1
+        import torch
+
+        if not isinstance(state, dict) or not all(isinstance(k, str) for k in state):
+            print("Error: checkpoint must contain a state_dict-like dictionary.")
+            return 1
+        if not all(torch.is_tensor(v) for v in state.values()):
+            print("Error: checkpoint state_dict entries must be tensors.")
+            return 1
+
         layers: list[torch.nn.Module] = []
-        weight_keys = [k for k in state if k.endswith(".weight") and state[k].dim() == 2]
+        weight_keys = sorted(k for k in state if k.endswith(".weight") and state[k].dim() == 2)
+        if not weight_keys:
+            print(
+                "Error: checkpoint does not contain any 2D dense '.weight' tensors required for deploy."
+            )
+            return 1
+        for key in weight_keys:
+            weight = state[key]
+            if not torch.is_floating_point(weight):
+                print(f"Error: deploy weight tensor '{key}' must use floating-point dtype.")
+                return 1
+            if weight.shape[0] <= 0 or weight.shape[1] <= 0:
+                print(f"Error: deploy weight tensor '{key}' must have non-zero 2D shape.")
+                return 1
+            if not torch.isfinite(weight).all().item():
+                print(f"Error: deploy weight tensor '{key}' contains non-finite values.")
+                return 1
+        total_dense_params = sum(int(state[key].numel()) for key in weight_keys)
+        if total_dense_params > _MAX_DEPLOY_DENSE_PARAMS:
+            print(
+                "Error: deploy checkpoint dense parameter count exceeds safety limit "
+                f"({_MAX_DEPLOY_DENSE_PARAMS:,}): {total_dense_params:,}"
+            )
+            return 1
         deployment_layer_sizes = [
             (int(state[k].shape[1]), int(state[k].shape[0])) for k in weight_keys
         ]
-        if not deployment_layer_sizes:
-            deployment_layer_sizes = [(1, 1)]
-        for k in weight_keys:
+        linear_layers: list[torch.nn.Linear] = []
+        for idx, k in enumerate(weight_keys):
             w = state[k]
-            layers.append(torch.nn.Linear(w.shape[1], w.shape[0]))
+            if idx > 0:
+                prev_key = weight_keys[idx - 1]
+                prev_out = int(state[prev_key].shape[0])
+                curr_in = int(w.shape[1])
+                if curr_in != prev_out:
+                    print(
+                        "Error: dense deploy weights are not composition-compatible "
+                        f"between '{prev_key}' (out={prev_out}) and '{k}' (in={curr_in})."
+                    )
+                    return 1
+            linear = torch.nn.Linear(w.shape[1], w.shape[0])
+            linear.weight.data.copy_(w.to(dtype=linear.weight.dtype))
+            linear.bias.data.zero_()
+            linear_layers.append(linear)
+            layers.append(linear)
             layers.append(torch.nn.ReLU())
         if layers and isinstance(layers[-1], torch.nn.ReLU):
             layers.pop()
         model = torch.nn.Sequential(*layers)
-        model.load_state_dict(state, strict=False)
-        in_dim = cast(int, layers[0].in_features) if layers else 1
+        in_dim = cast(int, linear_layers[0].in_features) if linear_layers else 1
         cal_data = torch.randn(64, in_dim)
         snn = convert(model, calibration_data=cal_data, T=bitstream_length)
         network = None
