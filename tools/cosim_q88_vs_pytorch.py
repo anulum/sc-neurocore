@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -38,6 +39,40 @@ sys.path.insert(0, str(TRAINING_REPO))
 from sc_neurocore.security.checkpoint_loading import safe_load_legacy_checkpoint
 
 os.environ["WANDB_MODE"] = "disabled"
+_SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
+
+
+def _require_valid_checkpoint_sha256(digest: str) -> str:
+    if not isinstance(digest, str) or not _SHA256_RE.fullmatch(digest):
+        raise ValueError("checkpoint_sha256 must be exactly 64 hexadecimal characters")
+    return digest
+
+
+def _require_legacy_checkpoint_contract(ckpt: Any) -> dict[str, Any]:
+    if not isinstance(ckpt, dict):
+        raise ValueError("checkpoint must be a dictionary payload")
+
+    net = ckpt.get("net")
+    if not isinstance(net, dict) or not net:
+        raise ValueError("checkpoint['net'] must be a non-empty dictionary")
+
+    torch = importlib.import_module("torch")
+    for key, value in net.items():
+        if not isinstance(key, str) or not key:
+            raise ValueError("checkpoint['net'] keys must be non-empty strings")
+        if not isinstance(value, torch.Tensor):
+            raise ValueError(f"checkpoint['net'][{key!r}] must be a torch.Tensor")
+
+    raw_acc = ckpt.get("acc")
+    if raw_acc is None:
+        raise ValueError("checkpoint must include 'acc' metadata")
+    try:
+        acc = float(raw_acc)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("checkpoint['acc'] must be numeric") from exc
+    if not np.isfinite(acc):
+        raise ValueError("checkpoint['acc'] must be finite")
+    return ckpt
 
 
 def get_pytorch_predictions(
@@ -114,11 +149,13 @@ def main(checkpoint_path: str, artifacts_dir: str, stride: int, *, checkpoint_sh
     print(f"Device: {device}")
 
     model = SNN_axonal_feedforward_delays(config).to(device)
+    trusted_digest = _require_valid_checkpoint_sha256(checkpoint_sha256)
     ckpt = safe_load_legacy_checkpoint(
         checkpoint_path,
-        trusted_sha256={Path(checkpoint_path).name: checkpoint_sha256},
+        trusted_sha256={Path(checkpoint_path).name: trusted_digest},
         map_location=device,
     )
+    ckpt = _require_legacy_checkpoint_contract(ckpt)
     model.load_state_dict(ckpt["net"])
     print(f"  PyTorch val_acc={ckpt['acc']:.2f}%, sigma={ckpt.get('sigma', 'n/a')}")
 
