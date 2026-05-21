@@ -303,6 +303,21 @@ class ResilienceBenchmark:
         num_trials: int = 1000,
     ) -> ResilienceReport:
         """Run Monte-Carlo fault injection trials."""
+        if not isinstance(fault_model, FaultModel):
+            raise ValueError("fault_model must be a FaultModel")
+        if isinstance(bitstream_length, bool) or not isinstance(bitstream_length, int) or bitstream_length <= 0:
+            raise ValueError("bitstream_length must be a positive integer")
+        if isinstance(num_trials, bool) or not isinstance(num_trials, int) or num_trials <= 0:
+            raise ValueError("num_trials must be a positive integer")
+        if isinstance(probability, bool) or not isinstance(probability, int | float):
+            raise ValueError("probability must be a finite value in [0, 1]")
+        if not np.isfinite(float(probability)) or float(probability) < 0.0 or float(probability) > 1.0:
+            raise ValueError("probability must be a finite value in [0, 1]")
+        if isinstance(ber, bool) or not isinstance(ber, int | float):
+            raise ValueError("ber must be a finite value in [0, 1]")
+        if not np.isfinite(float(ber)) or float(ber) < 0.0 or float(ber) > 1.0:
+            raise ValueError("ber must be a finite value in [0, 1]")
+
         errors = []
         bits_flipped_list = []
         start = time.perf_counter()
