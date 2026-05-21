@@ -684,6 +684,11 @@ class TestCCFAnalysis:
         assert ccf.sil_compatible(SILLevel.SIL_1) is True
         assert ccf.sil_compatible(SILLevel.SIL_3) is False  # beta=0.10 too high
 
+    def test_sil_compatible_rejects_invalid_target_sil(self):
+        ccf = CCFAnalysis()
+        with pytest.raises(ValueError, match="target_sil"):
+            ccf.sil_compatible("SIL_2")  # type: ignore[arg-type]
+
     def test_mark_invalid(self):
         ccf = CCFAnalysis()
         assert ccf.mark_implemented("NOPE") is False
@@ -739,6 +744,11 @@ class TestProofTestCoverage:
     def test_dc_to_sil(self):
         assert ProofTestCoverage.dc_to_sil(0.99).value >= 3
         assert ProofTestCoverage.dc_to_sil(0.50) == SILLevel.SIL_1
+
+    @pytest.mark.parametrize("dc", [-0.1, 1.1, float("nan"), float("inf"), True, "0.9"])
+    def test_dc_to_sil_rejects_invalid_contracts(self, dc):
+        with pytest.raises(ValueError, match="dc"):
+            ProofTestCoverage.dc_to_sil(dc)  # type: ignore[arg-type]
 
     @pytest.mark.parametrize(
         ("props", "modules", "match"),
