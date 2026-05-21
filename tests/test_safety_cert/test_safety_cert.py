@@ -442,6 +442,14 @@ class TestFormalProofCertificate:
         with pytest.raises(ValueError, match="FormalProperty"):
             cert.generate_report()
 
+    def test_generate_report_rejects_corrupted_property_fields(self):
+        cert = FormalProofCertificate()
+        prop = FormalProperty("P1", "m", "d", "assert", "proven")
+        prop.prop_id = ""  # type: ignore[assignment]
+        cert.properties.append(prop)
+        with pytest.raises(ValueError, match="prop_id"):
+            cert.generate_report()
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [

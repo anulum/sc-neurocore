@@ -531,6 +531,14 @@ class FormalProofCertificate:
         for prop in self.properties:
             if not isinstance(prop, FormalProperty):
                 raise ValueError("properties must contain FormalProperty entries")
+            if not isinstance(prop.prop_id, str) or not prop.prop_id.strip():
+                raise ValueError("properties prop_id values must be non-empty strings")
+            if not isinstance(prop.property_type, str) or prop.property_type not in {
+                "assert",
+                "cover",
+                "assume",
+            }:
+                raise ValueError("properties property_type values must be one of: assert, cover, assume")
         lines = [
             "# Formal Proof Certificate",
             f"Generated: {self.generation_timestamp or datetime.now().isoformat()}",
