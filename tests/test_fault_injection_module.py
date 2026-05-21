@@ -294,3 +294,18 @@ class TestBenchmarkSweepContracts:
                 bitstream_length=32,
                 num_trials=5,
             )
+
+
+class TestBenchmarkRunAggregateGuards:
+    def test_run_outputs_finite_statistics(self):
+        bench = ResilienceBenchmark(seed=5)
+        report = bench.run(
+            fault_model=FaultModel.BIT_FLIP,
+            ber=0.01,
+            bitstream_length=64,
+            probability=0.4,
+            num_trials=8,
+        )
+        assert report.mean_error >= 0.0
+        assert report.max_error >= report.p99_error >= report.p95_error
+        assert 0.0 <= report.mean_bits_flipped <= 64.0
