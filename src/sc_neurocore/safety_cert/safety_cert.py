@@ -361,9 +361,13 @@ class FMEDA:
         dd = [fm for fm in self.failure_modes if fm.category == FailureCategory.DANGEROUS_DETECTED]
         if not dd:
             return 0.0
-        return sum(fm.diagnostic_coverage * fm.failure_rate_fit for fm in dd) / sum(
-            fm.failure_rate_fit for fm in dd
-        )
+        weighted_sum = sum(fm.diagnostic_coverage * fm.failure_rate_fit for fm in dd)
+        denominator = sum(fm.failure_rate_fit for fm in dd)
+        if not math.isfinite(float(weighted_sum)) or weighted_sum < 0.0:
+            raise ValueError("diagnostic_coverage weighted sum must be a finite non-negative value")
+        if not math.isfinite(float(denominator)) or denominator <= 0.0:
+            raise ValueError("diagnostic_coverage denominator must be a finite positive value")
+        return weighted_sum / denominator
 
     @property
     def residual_risk_fit(self) -> float:
