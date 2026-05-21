@@ -185,6 +185,13 @@ class TestTraceabilityMatrix:
         with pytest.raises(ValueError, match="req"):
             tm._update_status("bad")  # type: ignore[arg-type]
 
+    def test_update_status_rejects_corrupted_reference_entries(self):
+        tm = TraceabilityMatrix()
+        req = Requirement("R1", "d", SafetyStandard.IEC_61508)
+        req.implementation_refs = [""]  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="implementation_refs"):
+            tm._update_status(req)
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [

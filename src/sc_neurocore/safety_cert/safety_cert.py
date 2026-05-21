@@ -156,6 +156,12 @@ class TraceabilityMatrix:
     def _update_status(self, req: Requirement) -> None:
         if not isinstance(req, Requirement):
             raise ValueError("req must be a Requirement")
+        for impl_ref in req.implementation_refs:
+            if not isinstance(impl_ref, str) or not impl_ref.strip():
+                raise ValueError("implementation_refs must contain non-empty strings")
+        for verif_ref in req.verification_refs:
+            if not isinstance(verif_ref, str) or not verif_ref.strip():
+                raise ValueError("verification_refs must contain non-empty strings")
         if req.implementation_refs and req.verification_refs:
             req.status = "verified"
         elif req.implementation_refs:
