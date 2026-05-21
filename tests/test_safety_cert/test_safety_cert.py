@@ -654,6 +654,20 @@ class TestCertificationGenerator:
         )
         assert pkg.checklist_coverage > 0
 
+    def test_checklist_coverage_rejects_corrupted_internal_state(self):
+        pkg = CertificationPackage(
+            standard=SafetyStandard.IEC_61508,
+            sil_level=SILLevel.SIL_2,
+            traceability_report="t",
+            fmeda_report="f",
+            formal_cert_report="p",
+            wcet_report="w",
+            checklist=[],
+        )
+        pkg.checklist.append("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="ChecklistItem"):
+            _ = pkg.checklist_coverage
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
