@@ -113,6 +113,7 @@ def test_write_side_channel_benchmark_report_rejects_invalid_output_path(output_
         ((), ()),
         ("invalid", (0, 1)),
         ((0.25,), (0,)),
+        ((0.25, 0.5), "invalid"),
         ((0.25,), (0, 1)),
         ((0.25, 0.5), (0,)),
         ((0.25, float("nan")), (0, 1)),
