@@ -924,6 +924,12 @@ class TestCCFAnalysis:
         with pytest.raises(ValueError, match="defence_id"):
             ccf.mark_implemented("")
 
+    def test_mark_implemented_rejects_corrupted_internal_state(self):
+        ccf = CCFAnalysis()
+        ccf.defences.insert(0, "bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="CCFDefence"):
+            ccf.mark_implemented("D1")
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [

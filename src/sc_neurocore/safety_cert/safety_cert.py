@@ -986,6 +986,8 @@ class CCFAnalysis:
             raise ValueError("defence_id must be a non-empty string")
         normalised_id = defence_id.strip()
         for d in self.defences:
+            if not isinstance(d, CCFDefence):
+                raise ValueError("defences must contain CCFDefence entries")
             if d.defence_id == normalised_id:
                 d.implemented = True
                 return True
