@@ -366,6 +366,18 @@ class ResilienceBenchmark:
         num_trials: int = 500,
     ) -> List[ResilienceReport]:
         """Sweep across multiple BER values to produce a degradation curve."""
+        if not isinstance(fault_model, FaultModel):
+            raise ValueError("fault_model must be a FaultModel")
+        if not isinstance(ber_range, list) or not ber_range:
+            raise ValueError("ber_range must be a non-empty list")
+        for ber in ber_range:
+            if isinstance(ber, bool) or not isinstance(ber, int | float):
+                raise ValueError("ber_range entries must be finite values in [0, 1]")
+            if not np.isfinite(float(ber)) or float(ber) < 0.0 or float(ber) > 1.0:
+                raise ValueError("ber_range entries must be finite values in [0, 1]")
+        if any(ber_range[i] > ber_range[i + 1] for i in range(len(ber_range) - 1)):
+            raise ValueError("ber_range must be monotonically non-decreasing")
+
         return [
             self.run(
                 fault_model=fault_model,
