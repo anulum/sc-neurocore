@@ -161,6 +161,9 @@ class TraceabilityMatrix:
     def coverage(self) -> float:
         if not self.requirements:
             return 0.0
+        for req in self.requirements.values():
+            if not isinstance(req, Requirement):
+                raise ValueError("requirements must contain Requirement entries")
         verified = sum(1 for r in self.requirements.values() if r.status == "verified")
         return verified / len(self.requirements)
 
