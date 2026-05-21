@@ -900,6 +900,8 @@ class CCFAnalysis:
 
     def sil_compatible(self, target_sil: SILLevel) -> bool:
         """Check if β is low enough for the target SIL."""
+        if not isinstance(target_sil, SILLevel):
+            raise ValueError("target_sil must be a SILLevel")
         thresholds = {
             SILLevel.SIL_1: 0.10,
             SILLevel.SIL_2: 0.05,
@@ -932,13 +934,18 @@ class ProofTestCoverage:
     @staticmethod
     def dc_to_sil(dc: float) -> SILLevel:
         """Map diagnostic coverage to max SIL per IEC 61508 Table 3."""
-        if dc >= 0.99:
+        if isinstance(dc, bool) or not isinstance(dc, int | float):
+            raise ValueError("dc must be a finite value in [0, 1]")
+        value = float(dc)
+        if not math.isfinite(value) or value < 0.0 or value > 1.0:
+            raise ValueError("dc must be a finite value in [0, 1]")
+        if value >= 0.99:
             return SILLevel.SIL_4
-        if dc >= 0.99:
+        if value >= 0.99:
             return SILLevel.SIL_3
-        if dc >= 0.90:
+        if value >= 0.90:
             return SILLevel.SIL_2
-        if dc >= 0.60:
+        if value >= 0.60:
             return SILLevel.SIL_1
         return SILLevel.SIL_1
 
