@@ -1121,6 +1121,12 @@ class TestHFTAssessment:
         with pytest.raises(ValueError, match="target_sil"):
             _ = hft.required_hft
 
+    def test_required_hft_rejects_corrupted_sff_state(self):
+        hft = HFTAssessment(sff=0.92, target_sil=SILLevel.SIL_3)
+        hft.sff = float("nan")  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="sff"):
+            _ = hft.required_hft
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
