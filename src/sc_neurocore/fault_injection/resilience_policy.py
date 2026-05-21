@@ -251,6 +251,14 @@ class GracefulDegradationPolicy:
         multiplier: int,
         reason: str,
     ) -> DegradationPlan:
+        if not isinstance(action, DegradationAction):
+            raise ValueError("action must be a DegradationAction")
+        if not isinstance(observation, SeededFaultObservation):
+            raise ValueError("observation must be a SeededFaultObservation")
+        if isinstance(multiplier, bool) or not isinstance(multiplier, int) or multiplier <= 0:
+            raise ValueError("multiplier must be a positive integer")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError("reason must be a non-empty string")
         recommended = min(
             self.max_bitstream_length,
             max(observation.bitstream_length, observation.bitstream_length * multiplier),
