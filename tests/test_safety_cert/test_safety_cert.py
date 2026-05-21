@@ -1261,6 +1261,14 @@ class TestChangeImpactTracker:
         with pytest.raises(ValueError, match="affected_reqs"):
             ct.affected_requirements()
 
+    def test_affected_requirements_rejects_corrupted_change_id_state(self):
+        ct = ChangeImpactTracker()
+        change = ChangeRecord("C1", "desc", ["neuron"], ["R1"], "low")
+        change.change_id = ""  # type: ignore[assignment]
+        ct.add_change(change)
+        with pytest.raises(ValueError, match="change_id"):
+            ct.affected_requirements()
+
     def test_add_change_rejects_invalid_contract(self):
         ct = ChangeImpactTracker()
         with pytest.raises(ValueError, match="change"):
