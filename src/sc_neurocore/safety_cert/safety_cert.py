@@ -372,6 +372,8 @@ class FMEDA:
         for fm in self.failure_modes:
             if not isinstance(fm, FailureMode):
                 raise ValueError("failure_modes must contain FailureMode entries")
+            if not math.isfinite(float(fm.failure_rate_fit)) or float(fm.failure_rate_fit) < 0.0:
+                raise ValueError("failure_rate_fit must be a finite non-negative value")
         total = sum(fm.failure_rate_fit for fm in self.failure_modes)
         if not math.isfinite(float(total)) or total < 0.0:
             raise ValueError("total_failure_rate must be a finite non-negative value")
