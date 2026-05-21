@@ -299,6 +299,8 @@ def write_side_channel_benchmark_report(
     path = Path(output_path)
     if path.name in {"", ".", ".."}:
         raise SideChannelBenchmarkError("output_path must resolve to a file path")
+    if path.exists() and path.is_dir():
+        raise SideChannelBenchmarkError("output_path must point to a file, not an existing directory")
     report = _with_artifact_path(report, path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(

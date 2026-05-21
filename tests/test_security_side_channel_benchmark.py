@@ -114,6 +114,16 @@ def test_write_side_channel_benchmark_report_rejects_invalid_output_path(output_
         )
 
 
+def test_write_side_channel_benchmark_report_rejects_directory_output_path(tmp_path) -> None:
+    with pytest.raises(SideChannelBenchmarkError, match="existing directory"):
+        write_side_channel_benchmark_report(
+            tmp_path,
+            probabilities=(0.25, 0.5),
+            labels=(0, 1),
+            protected_config=ThermalSCEncodingConfig(bitstream_length=16, seed=3),
+        )
+
+
 @pytest.mark.parametrize(
     ("probabilities", "labels"),
     [
