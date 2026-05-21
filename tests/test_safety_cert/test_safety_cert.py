@@ -97,6 +97,30 @@ class TestTraceabilityMatrix:
         assert "R1" in report
 
     @pytest.mark.parametrize(
+        ("req_id", "impl_ref", "match"),
+        [
+            ("", "hdl/a.v", "req_id"),
+            ("REQ_1", "", "impl_ref"),
+        ],
+    )
+    def test_link_implementation_rejects_invalid_contracts(self, req_id, impl_ref, match):
+        tm = TraceabilityMatrix()
+        with pytest.raises(ValueError, match=match):
+            tm.link_implementation(req_id, impl_ref)
+
+    @pytest.mark.parametrize(
+        ("req_id", "verif_ref", "match"),
+        [
+            ("", "formal/a.sby", "req_id"),
+            ("REQ_1", "", "verif_ref"),
+        ],
+    )
+    def test_link_verification_rejects_invalid_contracts(self, req_id, verif_ref, match):
+        tm = TraceabilityMatrix()
+        with pytest.raises(ValueError, match=match):
+            tm.link_verification(req_id, verif_ref)
+
+    @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
             ({"req_id": ""}, "req_id"),
