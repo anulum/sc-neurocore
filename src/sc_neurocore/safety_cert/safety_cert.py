@@ -1040,6 +1040,15 @@ class IEC62304Assessment:
     hazard_description: str = ""
     risk_control_measures: List[str] = field(default_factory=list)
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.sw_class, SWClass):
+            raise ValueError("sw_class must be a SWClass")
+        if not isinstance(self.hazard_description, str):
+            raise ValueError("hazard_description must be a string")
+        for measure in self.risk_control_measures:
+            if not isinstance(measure, str) or not measure.strip():
+                raise ValueError("risk_control_measures must contain non-empty strings")
+
     @property
     def requires_unit_testing(self) -> bool:
         return self.sw_class in (SWClass.CLASS_B, SWClass.CLASS_C)
@@ -1068,6 +1077,21 @@ class ReliabilityMetrics:
 
     total_fit: float
     dangerous_undetected_fit: float
+
+    def __post_init__(self) -> None:
+        if isinstance(self.total_fit, bool) or not isinstance(self.total_fit, int | float):
+            raise ValueError("total_fit must be a finite non-negative number")
+        if not math.isfinite(float(self.total_fit)) or float(self.total_fit) < 0.0:
+            raise ValueError("total_fit must be a finite non-negative number")
+        if isinstance(self.dangerous_undetected_fit, bool) or not isinstance(
+            self.dangerous_undetected_fit, int | float
+        ):
+            raise ValueError("dangerous_undetected_fit must be a finite non-negative number")
+        if (
+            not math.isfinite(float(self.dangerous_undetected_fit))
+            or float(self.dangerous_undetected_fit) < 0.0
+        ):
+            raise ValueError("dangerous_undetected_fit must be a finite non-negative number")
 
     @property
     def mtbf_hours(self) -> float:

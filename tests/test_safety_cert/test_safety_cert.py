@@ -733,6 +733,24 @@ class TestIEC62304:
         assert a.requires_unit_testing
         assert not a.requires_architectural_design
 
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"sw_class": "B"}, "sw_class"),
+            ({"hazard_description": None}, "hazard_description"),
+            ({"risk_control_measures": ["", "measure"]}, "risk_control_measures"),
+        ],
+    )
+    def test_iec62304_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "sw_class": SWClass.CLASS_B,
+            "hazard_description": "hazard",
+            "risk_control_measures": ["measure 1"],
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            IEC62304Assessment(**values)
+
 
 # ── Reliability / MTBF Tests (Gap 7) ──────────────────────────────────
 
@@ -762,6 +780,26 @@ class TestReliabilityMetrics:
         rm = ReliabilityMetrics(total_fit=0.0, dangerous_undetected_fit=0.0)
         assert rm.mtbf_hours == float("inf")
         assert rm.pfh_d == 0.0
+
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"total_fit": -1.0}, "total_fit"),
+            ({"total_fit": float("nan")}, "total_fit"),
+            ({"total_fit": True}, "total_fit"),
+            ({"dangerous_undetected_fit": -0.1}, "dangerous_undetected_fit"),
+            ({"dangerous_undetected_fit": float("inf")}, "dangerous_undetected_fit"),
+            ({"dangerous_undetected_fit": False}, "dangerous_undetected_fit"),
+        ],
+    )
+    def test_reliability_metrics_reject_invalid_contracts(self, kwargs, match):
+        values = {
+            "total_fit": 100.0,
+            "dangerous_undetected_fit": 5.0,
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            ReliabilityMetrics(**values)
 
 
 # ── Evidence Bag Tests (Gap 8) ─────────────────────────────────────────
