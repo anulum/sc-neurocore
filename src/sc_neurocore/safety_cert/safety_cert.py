@@ -881,6 +881,8 @@ class CCFAnalysis:
         ]
 
     def mark_implemented(self, defence_id: str) -> bool:
+        if not isinstance(defence_id, str) or not defence_id.strip():
+            raise ValueError("defence_id must be a non-empty string")
         for d in self.defences:
             if d.defence_id == defence_id:
                 d.implemented = True
@@ -1310,11 +1312,23 @@ class CrossStandardMapper:
 
     @staticmethod
     def equivalent_clauses(standard: str, clause: str) -> List[Tuple[str, str]]:
+        if not isinstance(standard, str) or not standard.strip():
+            raise ValueError("standard must be a non-empty string")
+        if not isinstance(clause, str) or not clause.strip():
+            raise ValueError("clause must be a non-empty string")
         return CROSS_MAP.get((standard, clause), [])
 
     @staticmethod
     def coverage_overlap(checklist_a: List[ChecklistItem], checklist_b: List[ChecklistItem]) -> int:
         """Count shared compliance coverage between two checklists."""
+        if not isinstance(checklist_a, list) or not isinstance(checklist_b, list):
+            raise ValueError("checklist_a and checklist_b must be lists")
+        for item in checklist_a:
+            if not isinstance(item, ChecklistItem):
+                raise ValueError("checklist_a must contain ChecklistItem entries")
+        for item in checklist_b:
+            if not isinstance(item, ChecklistItem):
+                raise ValueError("checklist_b must contain ChecklistItem entries")
         addressed_a = {i.clause for i in checklist_a if i.status != "not_addressed"}
         addressed_b = {i.clause for i in checklist_b if i.status != "not_addressed"}
         shared = 0
