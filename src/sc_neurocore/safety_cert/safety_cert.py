@@ -169,6 +169,9 @@ class TraceabilityMatrix:
 
     @property
     def open_count(self) -> int:
+        for req in self.requirements.values():
+            if not isinstance(req, Requirement):
+                raise ValueError("requirements must contain Requirement entries")
         return sum(1 for r in self.requirements.values() if r.status == "open")
 
     def generate_report(self) -> str:
