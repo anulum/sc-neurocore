@@ -1498,9 +1498,9 @@ class TestEvidenceBag:
 
     def test_hash_changes_with_declared_sha256(self):
         bag_a = EvidenceBag()
-        bag_a.add(EvidenceItem("x.md", "formal", "proof", sha256="a"))
+        bag_a.add(EvidenceItem("x.md", "formal", "proof", sha256="a" * 64))
         bag_b = EvidenceBag()
-        bag_b.add(EvidenceItem("x.md", "formal", "proof", sha256="b"))
+        bag_b.add(EvidenceItem("x.md", "formal", "proof", sha256="b" * 64))
         assert bag_a.compute_hashes() != bag_b.compute_hashes()
 
     def test_add_rejects_invalid_item(self):
@@ -1539,6 +1539,7 @@ class TestEvidenceBag:
             ({"category": "unsafe"}, "category"),
             ({"description": ""}, "description"),
             ({"sha256": None}, "sha256"),
+            ({"sha256": "not_hex"}, "hexadecimal"),
         ],
     )
     def test_evidence_item_rejects_invalid_contracts(self, kwargs, match):

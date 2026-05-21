@@ -1501,6 +1501,9 @@ class EvidenceItem:
             raise ValueError("description must be a non-empty string")
         if not isinstance(self.sha256, str):
             raise ValueError("sha256 must be a string")
+        if self.sha256:
+            if len(self.sha256) != 64 or any(c not in "0123456789abcdefABCDEF" for c in self.sha256):
+                raise ValueError("sha256 must be a 64-character hexadecimal digest when provided")
 
 
 class EvidenceBag:
