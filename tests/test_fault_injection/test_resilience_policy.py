@@ -133,6 +133,19 @@ def test_evaluate_rejects_invalid_call_contracts(kwargs, match) -> None:
         policy.evaluate(np.array([[0, 1]], dtype=np.uint8), **values)  # type: ignore[arg-type]
 
 
+def test_observation_affected_bits_are_bounded_by_layer_size() -> None:
+    policy = GracefulDegradationPolicy()
+    bitstreams = np.array([[0, 1, 0, 1], [1, 0, 1, 0]], dtype=np.uint8)
+    plan = policy.evaluate(
+        bitstreams,
+        layer_id="L0",
+        fault_model=FaultModel.BIT_FLIP,
+        ber=0.2,
+        seed=5,
+    )
+    assert 0 <= plan.observation.affected_bits <= bitstreams.size
+
+
 @pytest.mark.parametrize(
     ("kwargs", "match"),
     [
