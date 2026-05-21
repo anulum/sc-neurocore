@@ -123,6 +123,8 @@ class TraceabilityMatrix:
     def add_requirement(self, req: Requirement) -> None:
         if not isinstance(req, Requirement):
             raise ValueError("req must be a Requirement")
+        if req.req_id in self.requirements:
+            raise ValueError(f"requirement already exists: {req.req_id}")
         self.requirements[req.req_id] = req
 
     def link_implementation(self, req_id: str, impl_ref: str) -> bool:
@@ -171,9 +173,11 @@ class TraceabilityMatrix:
     def coverage(self) -> float:
         if not self.requirements:
             return 0.0
-        for req in self.requirements.values():
+        for req_key, req in self.requirements.items():
             if not isinstance(req, Requirement):
                 raise ValueError("requirements must contain Requirement entries")
+            if req.req_id != req_key:
+                raise ValueError("requirement key mismatch with req_id")
             if not isinstance(req.status, str) or req.status not in {"open", "implemented", "verified"}:
                 raise ValueError("requirements statuses must be one of: open, implemented, verified")
         verified = sum(1 for r in self.requirements.values() if r.status == "verified")
@@ -181,18 +185,22 @@ class TraceabilityMatrix:
 
     @property
     def open_count(self) -> int:
-        for req in self.requirements.values():
+        for req_key, req in self.requirements.items():
             if not isinstance(req, Requirement):
                 raise ValueError("requirements must contain Requirement entries")
+            if req.req_id != req_key:
+                raise ValueError("requirement key mismatch with req_id")
             if not isinstance(req.status, str) or req.status not in {"open", "implemented", "verified"}:
                 raise ValueError("requirements statuses must be one of: open, implemented, verified")
         return sum(1 for r in self.requirements.values() if r.status == "open")
 
     def generate_report(self) -> str:
         """Generate text traceability report."""
-        for req in self.requirements.values():
+        for req_key, req in self.requirements.items():
             if not isinstance(req, Requirement):
                 raise ValueError("requirements must contain Requirement entries")
+            if req.req_id != req_key:
+                raise ValueError("requirement key mismatch with req_id")
             if not isinstance(req.status, str) or req.status not in {"open", "implemented", "verified"}:
                 raise ValueError("requirements statuses must be one of: open, implemented, verified")
         lines = [
