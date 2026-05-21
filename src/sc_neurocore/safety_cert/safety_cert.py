@@ -1309,6 +1309,8 @@ class IEC62304Assessment:
             raise ValueError("sw_class must be a SWClass")
         if not isinstance(self.hazard_description, str):
             raise ValueError("hazard_description must be a string")
+        if not isinstance(self.risk_control_measures, list):
+            raise ValueError("risk_control_measures must be a list")
         for measure in self.risk_control_measures:
             if not isinstance(measure, str) or not measure.strip():
                 raise ValueError("risk_control_measures must contain non-empty strings")
