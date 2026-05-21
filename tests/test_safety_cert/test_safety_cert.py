@@ -94,6 +94,32 @@ class TestTraceabilityMatrix:
         assert "Traceability Matrix" in report
         assert "R1" in report
 
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"req_id": ""}, "req_id"),
+            ({"description": ""}, "description"),
+            ({"standard": "IEC 61508"}, "standard"),
+            ({"sil_level": 2}, "sil_level"),
+            ({"status": ""}, "status"),
+            ({"implementation_refs": ["", "hdl/top.sv"]}, "implementation_refs"),
+            ({"verification_refs": ["", "formal/top.sby"]}, "verification_refs"),
+        ],
+    )
+    def test_requirement_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "req_id": "REQ_100",
+            "description": "desc",
+            "standard": SafetyStandard.IEC_61508,
+            "sil_level": SILLevel.SIL_2,
+            "implementation_refs": ["hdl/top.sv"],
+            "verification_refs": ["formal/top.sby"],
+            "status": "open",
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            Requirement(**values)
+
 
 # ── FMEDA Tests ──────────────────────────────────────────────────────
 

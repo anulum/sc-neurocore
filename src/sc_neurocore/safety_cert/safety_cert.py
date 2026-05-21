@@ -86,6 +86,25 @@ class Requirement:
     verification_refs: List[str] = field(default_factory=list)
     status: str = "open"
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.req_id, str) or not self.req_id.strip():
+            raise ValueError("req_id must be a non-empty string")
+        if not isinstance(self.description, str) or not self.description.strip():
+            raise ValueError("description must be a non-empty string")
+        if not isinstance(self.standard, SafetyStandard):
+            raise ValueError("standard must be a SafetyStandard")
+        if not isinstance(self.sil_level, SILLevel):
+            raise ValueError("sil_level must be a SILLevel")
+        if not isinstance(self.status, str) or not self.status.strip():
+            raise ValueError("status must be a non-empty string")
+
+        for impl_ref in self.implementation_refs:
+            if not isinstance(impl_ref, str) or not impl_ref.strip():
+                raise ValueError("implementation_refs must contain non-empty strings")
+        for verif_ref in self.verification_refs:
+            if not isinstance(verif_ref, str) or not verif_ref.strip():
+                raise ValueError("verification_refs must contain non-empty strings")
+
 
 # ── Traceability Matrix ─────────────────────────────────────────────
 
