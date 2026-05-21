@@ -401,6 +401,11 @@ class FMEDA:
         dd = [fm for fm in self.failure_modes if fm.category == FailureCategory.DANGEROUS_DETECTED]
         if not dd:
             return 0.0
+        for fm in dd:
+            if not math.isfinite(float(fm.diagnostic_coverage)):
+                raise ValueError("diagnostic_coverage entries must be finite values")
+            if float(fm.diagnostic_coverage) < 0.0 or float(fm.diagnostic_coverage) > 1.0:
+                raise ValueError("diagnostic_coverage entries must be in [0, 1]")
         weighted_sum = sum(fm.diagnostic_coverage * fm.failure_rate_fit for fm in dd)
         denominator = sum(fm.failure_rate_fit for fm in dd)
         if not math.isfinite(float(weighted_sum)) or weighted_sum < 0.0:

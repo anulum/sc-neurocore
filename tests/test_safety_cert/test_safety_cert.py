@@ -398,6 +398,14 @@ class TestFMEDA:
         with pytest.raises(ValueError, match="denominator|weighted sum"):
             _ = fmeda.diagnostic_coverage
 
+    def test_diagnostic_coverage_rejects_corrupted_entry_coverage_value(self):
+        fmeda = FMEDA()
+        fm = FailureMode("FM1", "n", "d", FailureCategory.DANGEROUS_DETECTED, 1.0, 0.5)
+        fm.diagnostic_coverage = 1.5  # type: ignore[assignment]
+        fmeda.add_failure_mode(fm)
+        with pytest.raises(ValueError, match="entries must be in"):
+            _ = fmeda.diagnostic_coverage
+
     def test_sff_by_component_rejects_corrupted_internal_state(self):
         fmeda = FMEDA()
         fmeda.failure_modes.append("bad")  # type: ignore[arg-type]
