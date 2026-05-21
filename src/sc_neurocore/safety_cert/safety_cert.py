@@ -810,6 +810,12 @@ class CertificationPackage:
         for item in self.checklist:
             if not isinstance(item, ChecklistItem):
                 raise ValueError("checklist must contain ChecklistItem entries")
+            if not isinstance(item.status, str) or item.status not in {
+                "compliant",
+                "partial",
+                "not_addressed",
+            }:
+                raise ValueError("checklist statuses must be one of: compliant, partial, not_addressed")
         addressed = sum(1 for c in self.checklist if c.status != "not_addressed")
         return addressed / len(self.checklist)
 
