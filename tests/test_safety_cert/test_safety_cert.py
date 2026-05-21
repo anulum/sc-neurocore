@@ -62,6 +62,12 @@ class TestTraceabilityMatrix:
         assert tm.link_implementation("REQ_001", "hdl/test.v") is True
         assert tm.requirements["REQ_001"].status == "implemented"
 
+    def test_link_implementation_rejects_corrupted_requirement_entry(self):
+        tm = TraceabilityMatrix()
+        tm.requirements["REQ_001"] = "bad"  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="Requirement"):
+            tm.link_implementation("REQ_001", "hdl/test.v")
+
     def test_link_verification(self):
         tm = TraceabilityMatrix()
         req = Requirement("REQ_001", "Test", SafetyStandard.IEC_61508)
