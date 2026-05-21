@@ -100,6 +100,23 @@ def test_resilience_mode_rejects_invalid_inputs_and_config() -> None:
             radiation_profile=RadiationProfile("test", 0.0),
             num_trials=0,
         )
+    with pytest.raises(ValueError, match="layer_id"):
+        ResilienceModeConfig(
+            layer_id="",
+            radiation_profile=RadiationProfile("test", 0.0),
+        )
+    with pytest.raises(ValueError, match="fault_models"):
+        ResilienceModeConfig(
+            layer_id="bad",
+            radiation_profile=RadiationProfile("test", 0.0),
+            fault_models=(),  # type: ignore[arg-type]
+        )
+    with pytest.raises(ValueError, match="seed"):
+        ResilienceModeConfig(
+            layer_id="bad",
+            radiation_profile=RadiationProfile("test", 0.0),
+            seed=True,  # type: ignore[arg-type]
+        )
 
     mode = FaultInjectionResilienceMode(
         ResilienceModeConfig(

@@ -58,14 +58,20 @@ class ResilienceModeConfig:
     policy: GracefulDegradationPolicy = field(default_factory=GracefulDegradationPolicy)
 
     def __post_init__(self) -> None:
-        if not self.layer_id:
-            raise ValueError("layer_id must be non-empty")
-        if self.radiation_profile.ber < 0:
-            raise ValueError("radiation_profile.ber must be non-negative")
-        if not self.fault_models:
-            raise ValueError("fault_models must not be empty")
-        if self.num_trials <= 0:
-            raise ValueError("num_trials must be positive")
+        if not isinstance(self.layer_id, str) or not self.layer_id.strip():
+            raise ValueError("layer_id must be a non-empty string")
+        if not isinstance(self.radiation_profile, RadiationProfile):
+            raise ValueError("radiation_profile must be a RadiationProfile")
+        if not isinstance(self.fault_models, tuple) or not self.fault_models:
+            raise ValueError("fault_models must be a non-empty tuple")
+        if any(not isinstance(model, FaultModel) for model in self.fault_models):
+            raise ValueError("fault_models must contain FaultModel entries")
+        if isinstance(self.num_trials, bool) or not isinstance(self.num_trials, int) or self.num_trials <= 0:
+            raise ValueError("num_trials must be a positive integer")
+        if isinstance(self.seed, bool) or not isinstance(self.seed, int):
+            raise ValueError("seed must be an integer")
+        if not isinstance(self.policy, GracefulDegradationPolicy):
+            raise ValueError("policy must be a GracefulDegradationPolicy")
 
 
 @dataclass(frozen=True)
