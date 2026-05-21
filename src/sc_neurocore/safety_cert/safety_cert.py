@@ -1277,6 +1277,12 @@ class ChangeImpactTracker:
         for change in self.changes:
             if not isinstance(change, ChangeRecord):
                 raise ValueError("changes must contain ChangeRecord entries")
+            if not isinstance(change.risk_level, str) or change.risk_level not in {
+                "low",
+                "medium",
+                "high",
+            }:
+                raise ValueError("changes risk_level values must be one of: low, medium, high")
             if change.risk_level == "high":
                 count += 1
         return count
