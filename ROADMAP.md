@@ -14,6 +14,12 @@
 - Cross-repository validation must confirm the SCPN datastream contract with
   SCPN-QUANTUM-CONTROL and SCPN-PHASE-ORCHESTRATOR before claiming bridge
   readiness.
+- Progress (2026-05-21): `safety_cert/safety_cert.py` hardening tranche
+  added fail-closed state-integrity validation across traceability, FMEDA,
+  formal-proof, certification-package, evidence-bag, cross-standard mapping,
+  WCET, change-impact, reliability, and proof-gap surfaces with paired tests
+  in `tests/test_safety_cert/test_safety_cert.py`. This closes a focused
+  validation-hardening slice while broader roadmap items remain open.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
 
