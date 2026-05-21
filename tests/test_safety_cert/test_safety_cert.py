@@ -1454,6 +1454,11 @@ class TestFormalGapDetector:
         assert len(gaps) >= 1
         assert any(g.module == "encoder" for g in gaps)
 
+    def test_detect_deduplicates_required_modules(self):
+        props = [FormalProperty("P1", "neuron", "d", "assert", "proven")]
+        gaps = FormalPropertyGapDetector.detect(props, ["encoder", "encoder"])
+        assert [g.module for g in gaps] == ["encoder"]
+
     def test_failed_property(self):
         props = [
             FormalProperty("P1", "neuron", "d", "assert", "failed"),

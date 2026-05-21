@@ -1589,7 +1589,11 @@ class FormalPropertyGapDetector:
             by_module.setdefault(p.module, []).append(p)
 
         gaps = []
+        seen_required: set[str] = set()
         for mod in required_modules:
+            if mod in seen_required:
+                continue
+            seen_required.add(mod)
             props = by_module.get(mod, [])
             proven = [p for p in props if p.status == "proven"]
             types_present = {p.property_type for p in props}
