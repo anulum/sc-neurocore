@@ -1497,9 +1497,13 @@ class CrossStandardMapper:
         addressed_b = {i.clause for i in checklist_b if i.status != "not_addressed"}
         shared = 0
         addressed_items_a = [i for i in checklist_a if i.clause in addressed_a]
+        addressed_items_b = [i for i in checklist_b if i.clause in addressed_b]
         for item in addressed_items_a:
             if "_" not in item.item_id:
                 raise ValueError("checklist_a item_id must contain standard and clause separator")
+        for item in addressed_items_b:
+            if "_" not in item.item_id:
+                raise ValueError("checklist_b item_id must contain standard and clause separator")
         for std_a, clause_a in [
             (item.item_id.rsplit("_", 1)[0], item.clause) for item in addressed_items_a
         ]:
