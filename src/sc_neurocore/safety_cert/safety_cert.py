@@ -518,6 +518,9 @@ class FormalProofCertificate:
         return self.certificate_hash
 
     def generate_report(self) -> str:
+        for prop in self.properties:
+            if not isinstance(prop, FormalProperty):
+                raise ValueError("properties must contain FormalProperty entries")
         lines = [
             "# Formal Proof Certificate",
             f"Generated: {self.generation_timestamp or datetime.now().isoformat()}",
