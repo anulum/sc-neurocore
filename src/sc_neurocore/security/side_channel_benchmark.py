@@ -303,7 +303,11 @@ def write_side_channel_benchmark_report(
 
 
 def _normalise_probabilities(probabilities: Sequence[float]) -> tuple[float, ...]:
-    if not isinstance(probabilities, Sequence) or not probabilities:
+    if (
+        not isinstance(probabilities, Sequence)
+        or isinstance(probabilities, (bytes, str))
+        or not probabilities
+    ):
         raise SideChannelBenchmarkError("probabilities must be a non-empty sequence")
     values: list[float] = []
     for probability in probabilities:
