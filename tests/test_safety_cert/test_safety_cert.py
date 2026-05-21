@@ -125,6 +125,11 @@ class TestTraceabilityMatrix:
         with pytest.raises(ValueError, match=match):
             tm.link_verification(req_id, verif_ref)
 
+    def test_update_status_rejects_invalid_requirement_object(self):
+        tm = TraceabilityMatrix()
+        with pytest.raises(ValueError, match="req"):
+            tm._update_status("bad")  # type: ignore[arg-type]
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [

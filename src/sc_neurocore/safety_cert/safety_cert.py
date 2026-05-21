@@ -150,6 +150,8 @@ class TraceabilityMatrix:
         return True
 
     def _update_status(self, req: Requirement) -> None:
+        if not isinstance(req, Requirement):
+            raise ValueError("req must be a Requirement")
         if req.implementation_refs and req.verification_refs:
             req.status = "verified"
         elif req.implementation_refs:
