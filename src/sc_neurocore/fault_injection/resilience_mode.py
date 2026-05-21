@@ -204,6 +204,8 @@ class FaultInjectionResilienceMode:
     """Run seeded fault-injection trials and degradation policy together."""
 
     def __init__(self, config: ResilienceModeConfig) -> None:
+        if not isinstance(config, ResilienceModeConfig):
+            raise ValueError("config must be a ResilienceModeConfig")
         self.config = config
 
     def run(self, bitstreams: np.ndarray[Any, Any]) -> ResilienceModeReport:
