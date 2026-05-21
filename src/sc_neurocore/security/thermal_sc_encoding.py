@@ -86,7 +86,7 @@ def encode_activity_balanced_probability(
 
     cfg = _validate_config(config or ThermalSCEncodingConfig())
     probability_value = _validate_probability(probability)
-    if not isinstance(stream_index, int) or stream_index < 0:
+    if isinstance(stream_index, bool) or not isinstance(stream_index, int) or stream_index < 0:
         raise ThermalSCEncodingError("stream_index must be a non-negative integer")
 
     ones = round(probability_value * cfg.bitstream_length)
@@ -125,6 +125,13 @@ def encode_activity_balanced_probabilities(
     label_values = tuple(range(len(records))) if labels is None else tuple(labels)
     if len(label_values) != len(records):
         raise ThermalSCEncodingError("labels must have the same length as probabilities")
+    if any(
+        isinstance(label, bool)
+        or not isinstance(label, int | float)
+        or not math.isfinite(float(label))
+        for label in label_values
+    ):
+        raise ThermalSCEncodingError("labels must be finite numeric values")
     proxy = compute_class_activity_proxy(
         tuple((record.bitstream,) for record in records),
         label_values,
