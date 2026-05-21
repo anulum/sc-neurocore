@@ -476,7 +476,7 @@ class FMEDA:
             "| FM ID | Component | Category | Rate (FIT) | DC | Mitigation |",
             "|-------|-----------|----------|------------|-----|------------|",
         ]
-        for fm in self.failure_modes:
+        for fm in sorted(self.failure_modes, key=lambda mode: mode.fm_id):
             lines.append(
                 f"| {fm.fm_id} | {fm.component} | {fm.category.value} "
                 f"| {fm.failure_rate_fit:.1f} | {fm.diagnostic_coverage:.0%} | {fm.mitigation} |"
