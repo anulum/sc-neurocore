@@ -1339,6 +1339,7 @@ class TestSafetyManual:
             ({"modules": []}, "modules"),
             ({"modules": ["", "m2"]}, "modules"),
             ({"modules": ["m1", "m1"]}, "duplicates"),
+            ({"modules": [" m1", "m2"]}, "whitespace"),
             ({"wcet_ns": -1.0}, "wcet_ns"),
             ({"wcet_ns": float("nan")}, "wcet_ns"),
             ({"wcet_ns": True}, "wcet_ns"),
