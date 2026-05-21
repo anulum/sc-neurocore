@@ -237,6 +237,14 @@ class TestFMEDA:
         with pytest.raises(ValueError, match="FailureMode"):
             _ = fmeda.total_failure_rate
 
+    def test_total_failure_rate_rejects_corrupted_total_state(self):
+        fmeda = FMEDA()
+        fm = FailureMode("FM1", "n", "d", FailureCategory.SAFE, 1.0)
+        fm.failure_rate_fit = float("nan")  # type: ignore[assignment]
+        fmeda.add_failure_mode(fm)
+        with pytest.raises(ValueError, match="total_failure_rate"):
+            _ = fmeda.total_failure_rate
+
     def test_safe_failure_fraction(self):
         fmeda = FMEDA()
         fmeda.add_sc_standard_modes("neuron")
