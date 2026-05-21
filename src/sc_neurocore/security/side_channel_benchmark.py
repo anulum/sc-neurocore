@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
@@ -206,7 +207,7 @@ def _normalise_probabilities(probabilities: Sequence[float]) -> tuple[float, ...
         if isinstance(probability, bool) or not isinstance(probability, int | float):
             raise SideChannelBenchmarkError("probabilities must be finite values in [0, 1]")
         value = float(probability)
-        if value < 0.0 or value > 1.0:
+        if not math.isfinite(value) or value < 0.0 or value > 1.0:
             raise SideChannelBenchmarkError("probabilities must be finite values in [0, 1]")
         values.append(value)
     return tuple(values)
@@ -215,7 +216,14 @@ def _normalise_probabilities(probabilities: Sequence[float]) -> tuple[float, ...
 def _normalise_labels(labels: Sequence[int | float]) -> tuple[int | float, ...]:
     if not isinstance(labels, Sequence) or not labels:
         raise SideChannelBenchmarkError("labels must be a non-empty sequence")
-    return tuple(labels)
+    normalised: list[int | float] = []
+    for label in labels:
+        if isinstance(label, bool) or not isinstance(label, int | float):
+            raise SideChannelBenchmarkError("labels must be finite numeric values")
+        if not math.isfinite(float(label)):
+            raise SideChannelBenchmarkError("labels must be finite numeric values")
+        normalised.append(label)
+    return tuple(normalised)
 
 
 def _correlated_activity_fixture_stream(
