@@ -381,6 +381,9 @@ class FMEDA:
         return SILLevel.SIL_1
 
     def generate_report(self) -> str:
+        for prop in self.properties:
+            if not isinstance(prop, FormalProperty):
+                raise ValueError("properties must contain FormalProperty entries")
         lines = [
             "# FMEDA Report",
             f"Total failure rate: {self.total_failure_rate:.1f} FIT",

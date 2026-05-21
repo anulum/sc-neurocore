@@ -343,6 +343,12 @@ class TestFormalProofCertificate:
         assert "Formal Proof Certificate" in report
         assert "P1" in report
 
+    def test_generate_report_rejects_corrupted_internal_state(self):
+        cert = FormalProofCertificate()
+        cert.properties.append("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="FormalProperty"):
+            cert.generate_report()
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
