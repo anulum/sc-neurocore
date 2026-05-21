@@ -188,6 +188,19 @@ class FaultInjector:
 
         Returns (corrupted_bitstream, num_bits_affected).
         """
+        if not isinstance(bitstream, np.ndarray):
+            raise ValueError("bitstream must be a numpy.ndarray")
+        if bitstream.ndim != 1:
+            raise ValueError("bitstream must be a 1-D array")
+        if bitstream.size == 0:
+            raise ValueError("bitstream must be non-empty")
+        if not isinstance(model, FaultModel):
+            raise ValueError("model must be a FaultModel")
+        if isinstance(ber, bool) or not isinstance(ber, int | float):
+            raise ValueError("ber must be a finite value in [0, 1]")
+        if not np.isfinite(float(ber)) or float(ber) < 0.0 or float(ber) > 1.0:
+            raise ValueError("ber must be a finite value in [0, 1]")
+
         corrupted = bitstream.copy()
         n = len(bitstream)
 
@@ -222,7 +235,7 @@ class FaultInjector:
             affected = int(np.sum(mask & bitstream.astype(bool)))
             return corrupted, affected
 
-        return corrupted, 0
+        raise ValueError(f"unsupported fault model: {model}")
 
     def inject_at_positions(
         self,
