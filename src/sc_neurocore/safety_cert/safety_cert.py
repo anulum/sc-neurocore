@@ -1228,6 +1228,8 @@ class ReliabilityMetrics:
 
     @staticmethod
     def from_fmeda(fmeda: FMEDA) -> ReliabilityMetrics:
+        if not isinstance(fmeda, FMEDA):
+            raise ValueError("fmeda must be an FMEDA")
         return ReliabilityMetrics(
             total_fit=fmeda.total_failure_rate,
             dangerous_undetected_fit=fmeda.residual_risk_fit,
