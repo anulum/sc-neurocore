@@ -321,7 +321,7 @@ def _normalise_probabilities(probabilities: Sequence[float]) -> tuple[float, ...
 
 
 def _normalise_labels(labels: Sequence[int | float]) -> tuple[int | float, ...]:
-    if not isinstance(labels, Sequence) or not labels:
+    if not isinstance(labels, Sequence) or isinstance(labels, (bytes, str)) or not labels:
         raise SideChannelBenchmarkError("labels must be a non-empty sequence")
     normalised: list[int | float] = []
     for label in labels:
