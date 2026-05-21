@@ -918,8 +918,9 @@ class CCFAnalysis:
     def mark_implemented(self, defence_id: str) -> bool:
         if not isinstance(defence_id, str) or not defence_id.strip():
             raise ValueError("defence_id must be a non-empty string")
+        normalised_id = defence_id.strip()
         for d in self.defences:
-            if d.defence_id == defence_id:
+            if d.defence_id == normalised_id:
                 d.implemented = True
                 return True
         return False
