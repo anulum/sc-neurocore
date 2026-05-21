@@ -122,6 +122,9 @@ class ResilienceReport:
     def __post_init__(self) -> None:
         if not isinstance(self.fault_model, str) or not self.fault_model.strip():
             raise ValueError("fault_model must be a non-empty string")
+        valid_fault_models = {member.value for member in FaultModel}
+        if self.fault_model not in valid_fault_models:
+            raise ValueError("fault_model must reference a known FaultModel value")
         numeric_fields = (
             "ber",
             "mean_error",
