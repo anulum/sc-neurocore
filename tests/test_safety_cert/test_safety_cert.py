@@ -56,6 +56,13 @@ class TestTraceabilityMatrix:
         tm.add_requirement(req)
         assert "REQ_001" in tm.requirements
 
+    def test_add_requirement_rejects_duplicate_req_id(self):
+        tm = TraceabilityMatrix()
+        req = Requirement("REQ_001", "Test", SafetyStandard.IEC_61508)
+        tm.add_requirement(req)
+        with pytest.raises(ValueError, match="already exists"):
+            tm.add_requirement(req)
+
     def test_link_implementation(self):
         tm = TraceabilityMatrix()
         tm.add_requirement(Requirement("REQ_001", "Test", SafetyStandard.IEC_61508))
@@ -149,6 +156,22 @@ class TestTraceabilityMatrix:
         req.status = "bad"  # type: ignore[assignment]
         tm.add_requirement(req)
         with pytest.raises(ValueError, match="statuses"):
+            tm.generate_report()
+
+    @pytest.mark.parametrize(
+        "property_name",
+        ["coverage", "open_count"],
+    )
+    def test_traceability_properties_reject_requirement_key_mismatch(self, property_name):
+        tm = TraceabilityMatrix()
+        tm.requirements["R1"] = Requirement("R2", "Test", SafetyStandard.IEC_61508)
+        with pytest.raises(ValueError, match="key mismatch"):
+            _ = getattr(tm, property_name)
+
+    def test_generate_report_rejects_requirement_key_mismatch(self):
+        tm = TraceabilityMatrix()
+        tm.requirements["R1"] = Requirement("R2", "Test", SafetyStandard.IEC_61508)
+        with pytest.raises(ValueError, match="key mismatch"):
             tm.generate_report()
 
     def test_add_requirement_rejects_invalid_contract(self):
