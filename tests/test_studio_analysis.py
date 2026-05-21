@@ -16,7 +16,7 @@ from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.codegen import classify_firing_pattern, generate_model_script
-from sc_neurocore.studio.analysis import frequency_response
+from sc_neurocore.studio.analysis import frequency_response, heatmap_2d
 from sc_neurocore.studio.simulation import _make_current_trace, simulate
 
 
@@ -106,6 +106,65 @@ class TestSimulationProtocols:
         assert result["rates"] == pytest.approx([5.0, 10.0, 20.0])
         assert all(call["protocol"] == "sine" for call in calls)
         assert all(call["current"] == 4.0 for call in calls)
+
+    def test_heatmap_2d_returns_failure_metadata_on_success(self):
+        def fake_simulate(**cfg):
+            params = cfg["params"]
+            return {"stats": {"rate_hz": float(params["ix"] + params["iy"])}}
+
+        result = heatmap_2d(
+            fake_simulate,
+            base_config={"params": {"baseline": 1.0}},
+            param_x="ix",
+            x_min=1.0,
+            x_max=2.0,
+            x_steps=2,
+            param_y="iy",
+            y_min=10.0,
+            y_max=20.0,
+            y_steps=2,
+        )
+        assert result["failed_points"] == 0
+        assert result["total_points"] == 4
+        assert result["failure_rate"] == 0.0
+        assert result["rates"] == [[11.0, 12.0], [21.0, 22.0]]
+
+    def test_heatmap_2d_fails_closed_with_diagnostics(self):
+        def fake_simulate(**cfg):
+            params = cfg["params"]
+            if params["ix"] == 2.0 and params["iy"] == 20.0:
+                raise RuntimeError("synthetic failure")
+            return {"stats": {"rate_hz": 1.0}}
+
+        with pytest.raises(ValueError) as exc_info:
+            heatmap_2d(
+                fake_simulate,
+                base_config={"params": {}},
+                param_x="ix",
+                x_min=1.0,
+                x_max=2.0,
+                x_steps=2,
+                param_y="iy",
+                y_min=10.0,
+                y_max=20.0,
+                y_steps=2,
+            )
+
+        err = exc_info.value
+        assert "heatmap sweep failed for 1/4 points" in str(err)
+        diagnostics = err.args[1]
+        assert diagnostics["failed_points"] == 1
+        assert diagnostics["total_points"] == 4
+        assert diagnostics["failure_rate"] == pytest.approx(0.25)
+        assert diagnostics["failures"] == [
+            {
+                "grid_index": [1, 1],
+                "param_x_value": 2.0,
+                "param_y_value": 20.0,
+                "error_type": "RuntimeError",
+                "error_message": "synthetic failure",
+            }
+        ]
 
     def test_stats_have_isi_histogram(self):
         r = simulate(
