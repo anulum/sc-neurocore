@@ -218,6 +218,12 @@ class TestFMEDA:
         sff = fmeda.safe_failure_fraction
         assert 0.0 < sff <= 1.0
 
+    def test_safe_failure_fraction_rejects_corrupted_internal_state(self):
+        fmeda = FMEDA()
+        fmeda.failure_modes.append("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="FailureMode"):
+            _ = fmeda.safe_failure_fraction
+
     def test_diagnostic_coverage(self):
         fmeda = FMEDA()
         fmeda.add_sc_standard_modes("neuron")
