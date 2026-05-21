@@ -96,6 +96,11 @@ class TestTraceabilityMatrix:
         assert "Traceability Matrix" in report
         assert "R1" in report
 
+    def test_add_requirement_rejects_invalid_contract(self):
+        tm = TraceabilityMatrix()
+        with pytest.raises(ValueError, match="req"):
+            tm.add_requirement("bad")  # type: ignore[arg-type]
+
     @pytest.mark.parametrize(
         ("req_id", "impl_ref", "match"),
         [

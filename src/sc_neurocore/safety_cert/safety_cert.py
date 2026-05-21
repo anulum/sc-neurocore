@@ -121,6 +121,8 @@ class TraceabilityMatrix:
         self.requirements: Dict[str, Requirement] = {}
 
     def add_requirement(self, req: Requirement) -> None:
+        if not isinstance(req, Requirement):
+            raise ValueError("req must be a Requirement")
         self.requirements[req.req_id] = req
 
     def link_implementation(self, req_id: str, impl_ref: str) -> bool:
