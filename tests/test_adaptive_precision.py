@@ -10,15 +10,18 @@
 
 from __future__ import annotations
 
+import json
 import numpy as np
 
 from sc_neurocore.compiler.adaptive_precision import (
+    auto_tune_synapse_precisions,
     LayerPrecision,
     SynapsePrecision,
     analyze_sensitivity,
     assign_lengths,
     assign_synapse_precisions,
     precision_plan_manifest,
+    write_precision_formal_evidence_bundle,
 )
 
 
@@ -164,6 +167,11 @@ class TestSynapsePrecision:
         assert manifest["granularity"] == "synapse"
         assert manifest["num_synapses"] == 2
         assert manifest["max_total_error_bound"] >= 0
+        assert manifest["cost_summary"]["estimated_lut_cost"] > 0.0
+        assert manifest["cost_summary"]["uniform_length_reference_cost"] >= manifest["cost_summary"][
+            "estimated_lut_cost"
+        ]
+        assert manifest["cost_summary"]["estimated_lut_savings_vs_uniform_length"] >= 0.0
         assert list(manifest["assignments"][0]) == [
             "layer_index",
             "layer_name",
@@ -183,3 +191,63 @@ class TestSynapsePrecision:
                 [np.array([[0.5, 0.5]])],
                 sensitivity_maps=[np.array([[0.1], [1.0]])],
             )
+
+
+class TestAdaptivePrecisionAPISurface:
+    def test_auto_tune_manifest_binds_percent_target_contract(self):
+        manifest = auto_tune_synapse_precisions(
+            [np.array([[0.2, 0.8]])],
+            target_error_percent=0.1,
+            min_bits=2,
+            max_bits=8,
+            min_length=16,
+            max_length=512,
+        )
+
+        assert manifest["schema"] == "sc-neurocore.adaptive_precision_plan.v1"
+        assert manifest["api_surface"]["action_id"] == "auto_tune_adaptive_precision"
+        assert manifest["api_surface"]["target_error_percent"] == 0.1
+        assert manifest["api_surface"]["target_error_fraction"] == 0.001
+        assert manifest["api_surface"]["objective"] == "minimal_luts_under_error_target"
+        assert manifest["api_surface"]["cost_metric"] == "sum(bit_width * log2(bitstream_length))"
+        assert manifest["api_surface"]["estimated_lut_cost"] > 0.0
+        assert manifest["api_surface"]["uniform_length_reference_cost"] >= manifest["api_surface"][
+            "estimated_lut_cost"
+        ]
+        assert manifest["num_synapses"] == 2
+
+    def test_auto_tune_rejects_non_positive_percent_target(self):
+        with np.testing.assert_raises_regex(ValueError, "target_error_percent"):
+            auto_tune_synapse_precisions([np.array([[0.2]])], target_error_percent=0.0)
+
+    def test_write_formal_bundle_materialises_sva_sby_and_manifest(self, tmp_path):
+        assignments = assign_synapse_precisions(
+            [np.array([[0.25, 0.75]])],
+            target_error=0.01,
+            min_bits=2,
+            max_bits=8,
+            min_length=16,
+            max_length=256,
+        )
+        manifest = write_precision_formal_evidence_bundle(
+            tmp_path,
+            assignments,
+            module_name="adaptive_precision_plan",
+        )
+
+        assert manifest["schema_version"] == "sc-neurocore.adaptive-precision-formal-bundle.v1"
+        assert manifest["formal_claim"]["symbiyosys_executed"] is False
+        assert manifest["formal_claim"]["formal_proof_passed"] is False
+        assert manifest["formal_claim"]["hardware_measurement_claimed"] is False
+        assert (tmp_path / "adaptive_precision_plan_sva.sv").is_file()
+        assert (tmp_path / "adaptive_precision_plan.sby").is_file()
+        manifest_path = tmp_path / "adaptive_precision_plan_formal_manifest.json"
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        assert payload == manifest
+        assert "mode prove" in (tmp_path / "adaptive_precision_plan.sby").read_text(
+            encoding="utf-8"
+        )
+
+    def test_write_formal_bundle_rejects_empty_assignments(self, tmp_path):
+        with np.testing.assert_raises_regex(ValueError, "assignments must not be empty"):
+            write_precision_formal_evidence_bundle(tmp_path, [])

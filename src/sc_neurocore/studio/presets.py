@@ -111,6 +111,41 @@ PRESETS: list[dict] = [
         "current": 30.0,
         "protocol": "constant",
         "suggested_view": "precision",
+        "studio_actions": [
+            {
+                "id": "auto_tune_adaptive_precision",
+                "label": "Auto-Tune <0.1% Error",
+                "method": "POST",
+                "endpoint": "/api/adaptive-precision/auto-tune",
+                "objective": "minimal_luts_under_error_target",
+                "target_error_percent": 0.1,
+                "payload_template": {
+                    "layer_weights": [[[0.2, 0.4], [0.6, 0.8]], [0.3, 0.7]],
+                    "layer_names": ["input", "readout"],
+                    "target_error_percent": 0.1,
+                    "min_bits": 4,
+                    "max_bits": 16,
+                    "min_length": 32,
+                    "max_length": 4096,
+                    "confidence": 0.95,
+                },
+            },
+            {
+                "id": "generate_adaptive_precision_formal_bundle",
+                "label": "Generate Formal Bundle",
+                "method": "POST",
+                "endpoint": "/api/adaptive-precision/formal-bundle",
+                "evidence_boundary": (
+                    "bundle_generation_only_no_symbiyosys_execution_no_silicon_claim"
+                ),
+                "payload_template": {
+                    "layer_weights": [[[0.2, 0.4], [0.6, 0.8]], [0.3, 0.7]],
+                    "layer_names": ["input", "readout"],
+                    "target_error_percent": 0.1,
+                    "module_name": "adaptive_precision_plan",
+                },
+            },
+        ],
     },
     {
         "id": "chaos",
@@ -151,3 +186,46 @@ def list_presets() -> list[dict]:
 
 def get_preset(preset_id: str) -> dict | None:
     return next((p for p in PRESETS if p["id"] == preset_id), None)
+
+
+def get_preset_actions(preset_id: str) -> list[dict]:
+    preset = get_preset(preset_id)
+    if not preset:
+        return []
+    actions = preset.get("studio_actions", [])
+    if not isinstance(actions, list):
+        return []
+    return [action for action in actions if isinstance(action, dict)]
+
+
+def get_preset_action(preset_id: str, action_id: str) -> dict | None:
+    actions = get_preset_actions(preset_id)
+    return next((action for action in actions if action.get("id") == action_id), None)
+
+
+def list_preset_action_catalog() -> list[dict]:
+    rows: list[dict] = []
+    for preset in PRESETS:
+        preset_id = preset.get("id")
+        if not isinstance(preset_id, str):
+            continue
+        actions = preset.get("studio_actions", [])
+        if not isinstance(actions, list):
+            continue
+        for action in actions:
+            if not isinstance(action, dict):
+                continue
+            action_id = action.get("id")
+            endpoint = action.get("endpoint")
+            method = action.get("method")
+            if not isinstance(action_id, str) or not isinstance(endpoint, str):
+                continue
+            rows.append(
+                {
+                    "preset_id": preset_id,
+                    "action_id": action_id,
+                    "endpoint": endpoint,
+                    "method": method if isinstance(method, str) else None,
+                }
+            )
+    return rows

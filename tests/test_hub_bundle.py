@@ -64,6 +64,7 @@ def test_hub_manifest_is_offline_first_and_points_to_local_storage() -> None:
     assert manifest["storage"] == {
         "cache": "cache",
         "models": "models",
+        "dependency_mirrors": ["mirrors/wheelhouse", "mirrors/huggingface"],
         "benchmark_results": "benchmarks/results",
     }
     assert manifest["network_policy"]["external_egress_required"] is False
@@ -72,6 +73,10 @@ def test_hub_manifest_is_offline_first_and_points_to_local_storage() -> None:
         "SC_NEUROCORE_HUB_OFFLINE": "1",
         "HF_HUB_OFFLINE": "1",
         "TRANSFORMERS_OFFLINE": "1",
+    }
+    assert manifest["network_policy"]["air_gapped_contract"] == {
+        "requires_local_dependency_mirrors": True,
+        "dependency_mirror_dirs": ["mirrors/wheelhouse", "mirrors/huggingface"],
     }
     assert manifest["container_hardening"] == {
         "non_root_runtime_user": True,
@@ -90,6 +95,10 @@ def test_hub_manifest_records_non_loopback_ingress_scope() -> None:
         "SC_NEUROCORE_HUB_OFFLINE": "0",
         "HF_HUB_OFFLINE": "0",
         "TRANSFORMERS_OFFLINE": "0",
+    }
+    assert manifest["network_policy"]["air_gapped_contract"] == {
+        "requires_local_dependency_mirrors": False,
+        "dependency_mirror_dirs": ["mirrors/wheelhouse", "mirrors/huggingface"],
     }
 
 
@@ -119,6 +128,10 @@ def test_benchmark_plan_is_opt_in() -> None:
         ({"bind_host": "127.0.0.1:8001"}, "bind_host must be"),
         ({"bind_host": "10.0.0.0/24"}, "bind_host must be"),
         ({"compose_name": "nested/docker-compose.yml"}, "compose_name must be a file name"),
+        (
+            {"offline": True, "dependency_mirror_dirs": ()},
+            "offline mode requires at least one dependency_mirror_dirs entry",
+        ),
     ],
 )
 def test_hub_bundle_config_rejects_invalid_values(kwargs: dict[str, object], message: str) -> None:
@@ -142,6 +155,8 @@ def test_write_hub_bundle_creates_compose_manifests_and_directories(tmp_path: Pa
     }
     assert (tmp_path / "local-cache").is_dir()
     assert (tmp_path / "models").is_dir()
+    assert (tmp_path / "mirrors" / "wheelhouse").is_dir()
+    assert (tmp_path / "mirrors" / "huggingface").is_dir()
     assert (tmp_path / "bench" / "results").is_dir()
     compose = paths["compose"].read_text(encoding="utf-8")
     repo_context = os.path.relpath(Path(__file__).resolve().parents[1], tmp_path)

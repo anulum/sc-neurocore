@@ -91,3 +91,33 @@ def test_profiles_are_returned_in_deterministic_order() -> None:
     names = [profile.domain.value for profile in registry.list_profiles()]
 
     assert names == sorted(names)
+
+
+def test_robotics_profile_requires_timing_evidence() -> None:
+    assessment = assess_industrial_readiness(
+        IndustrialDomain.ROBOTICS,
+        _bag("design", "test", "analysis", "report"),
+    )
+
+    assert not assessment.ready
+    assert EvidenceCategory.TIMING in {item.category for item in assessment.missing_mandatory}
+
+
+def test_smart_grid_profile_accepts_latency_alias_for_timing() -> None:
+    assessment = assess_industrial_readiness(
+        IndustrialDomain.SMART_GRID,
+        _bag("design", "latency", "test", "analysis", "report"),
+    )
+
+    assert assessment.ready
+    assert EvidenceCategory.TIMING in assessment.present_categories
+
+
+def test_fusion_control_profile_requires_hil_and_timing() -> None:
+    assessment = assess_industrial_readiness(
+        IndustrialDomain.FUSION_CONTROL,
+        _bag("design", "timing", "test", "analysis", "report"),
+    )
+
+    assert not assessment.ready
+    assert EvidenceCategory.HIL in {item.category for item in assessment.missing_mandatory}

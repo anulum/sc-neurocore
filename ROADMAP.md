@@ -316,9 +316,13 @@ Recipe ready for distribution. Moved to v3.12.
 
 Allow per-rule or per-synapse bit-width selection inside the plasticity update (e.g., 8-bit traces for ELIGENT, 16-bit for BCM). Native support over verifying surfaces.
 
+Progress (2026-05-21): Torch plasticity backend now supports fail-closed mixed-precision controls with scalar or per-synapse bit-width vectors (`mixed_precision_bits`, `weight_bits`, `trace_bits`, `eligibility_bits`, `theta_bits`, `act_avg_bits`) and explicit clip bounds. Coverage includes quantisation-grid assertions and malformed-spec rejection in `tests/test_learning/test_autonomous_learning.py`.
+
 ### Online meta-learning loop (ArcaneNeuron)
 
 Built-in outer loop using Zenith’s mapping controlling internal thresholds adapting on dynamic environments continuously. Full demo notebook deployment scheduled.
+
+Progress (2026-05-21): `ArcaneZenithCognitiveCore` now exposes a built-in outer-loop API (`run_meta_learning_episode`) with deterministic per-step adaptation traces, bounded-parameter contract checks, fail-closed empty-input validation, and compact symbolic trace export (`export_reasoning_trace`) for downstream introspection.
 
 ## v4.1 — Community & Ecosystem (target: Q4 2026)
 
@@ -349,18 +353,23 @@ Built-in outer loop using Zenith’s mapping controlling internal thresholds ada
   dependency mirrors.
 - Reference compose profile for BCI/medical teams that need repeatable private
   validation runs.
+  Progress (2026-05-21): Hub bundle config now enforces fail-closed offline contracts: `offline=True` requires at least one local dependency mirror directory, manifests expose the air-gapped mirror contract, and bundle generation materialises mirror directories for operator provisioning.
 
 ### Zenith BCI & Neuro-symbolic Primitives
 
 - **BCI closed-loop primitive**: `ZenithBCILoop` module translating Neuralink/Neuropixels continuous streams dropping latency guarantees beneath 10 ms constraints via parallel GPU interfaces.
+  Progress (2026-05-21): Added `sc_neurocore.interfaces.ZenithBCILoop` with deterministic Neuropixels/Neuralink-style stream ingestion, closed-loop waveform→spike→feedback processing, explicit per-stage latency ledger (`ingest/codec/decode/feedback`), and budget verdict (`latency_budget_met`) against a configurable sub-10 ms target. Reproducibility evidence is now codified in `notebooks/40_zenith_bci_loop_evidence.ipynb` with executable guardrails in `tests/test_notebooks/test_zenith_bci_loop_notebook.py`.
 - **Online fault-injection + resilience mode**: Add radiation-hard bit-flip verification logic directly integrating across biological pathways for satellite deployment.
+  Progress (2026-05-21): `ArcaneZenithCognitiveCore` now exposes `evaluate_bio_pathway_resilience(...)`, which deterministically converts biological pathway firing-rate maps into pathway bitstreams, runs seeded resilience-mode fault-injection, and emits pathway-labelled replay-ready reports (`layer_id`, channels, radiation profile, recommended degradation action).
 - **Neuro-symbolic self-verification trace**: Leverage ArcaneNeuron identity compartments to export a short symbolic "reasoning log" capturing novelty/internal shift.
+  Progress (2026-05-21): `ArcaneZenithCognitiveCore` now emits a schema-stamped symbolic reasoning log (`export_symbolic_reasoning_log`) with deterministic labels for novelty level/shift, confidence trend, identity drift regime, and adaptation regime, including numeric evidence payloads and per-step embedding in `run_meta_learning_episode` traces.
 
 ### Industrial applications
 
 - Robotics: SNN-based reactive controllers with formal timing
 - Smart grids: stochastic load prediction with bounded latency
 - Fusion control: real-time plasma state estimation (SCPN-Fusion-Core bridge)
+  Progress (2026-05-21): Added first-class industrial readiness domains in `sc_neurocore.industrial_applications` for `robotics`, `smart_grid`, and `fusion_control`, including explicit timing-evidence gates (`EvidenceCategory.TIMING` with latency/timing alias normalisation) and domain-specific mandatory evidence coverage tests.
 
 ### Formal SNN verification standard
 
@@ -369,6 +378,7 @@ verification:
 - Liveness: every reachable marking can fire at least one transition
 - Boundedness: token counts within proven upper bounds
 - Deadlock freedom: compiler output is provably deadlock-free
+  Progress (2026-05-21): `sc_neurocore.verification.publication_grade_snn_standard_profile()` now encodes these three roadmap claims as explicit mandatory conformance requirements (`liveness_reachable_transition_fireability`, `boundedness_token_bounds`, `deadlock_freedom_compiler_output`) with fail-closed assessment alongside implementation-equivalence and external-proof gates.
 
 ## Research Roadmap Intake — 2026-04-30
 
@@ -465,6 +475,7 @@ manifests for distributed neuromorphic deployments.
   pre-built wheels with static primitive bitstreams so Vivado is not required
   for baseline FPGA targets.
 - Keep this as the default package path for standard users and CI validation.
+  Progress (2026-05-21): `tools/install_profile_audit.py` now fail-closes packaging readiness on the hub offline mirror contract, requiring the self-hosted hub manifest to expose local dependency mirrors (`mirrors/wheelhouse`, `mirrors/huggingface`) and `requires_local_dependency_mirrors=true` in addition to static primitive and wheel/conda checks.
 
 ### Full tape-out API and formal-aware precision flow
 
@@ -473,6 +484,7 @@ manifests for distributed neuromorphic deployments.
   - power and area reports,
   - formal evidence bundle.
 - Keep claims gated until manifests include full CIRCT/OpenROAD run evidence.
+  Progress (2026-05-21): ASIC flow manifests now encode formal-evidence attachment state (`formal_evidence_attached`, `formal_evidence_complete_for_claim`) with explicit required artefact types, keeping physical/tape-out claims fail-closed unless formal bundle evidence is attached alongside external EDA execution evidence.
 
 ### Adaptive precision optimiser as API surface
 
@@ -480,3 +492,5 @@ manifests for distributed neuromorphic deployments.
   `assign_synapse_precisions(...)` with an explicit UI action in Studio:
   “auto-tune for <0.1 % error at minimal LUTs”.
 - Generate and bundle SymbiYosys proof evidence for the bounded-error claims.
+  Progress (2026-05-21): Added `auto_tune_synapse_precisions(...)` as a first-class percent-target API (`target_error_percent`) that wraps the synapse planner and emits deterministic action metadata (`auto_tune_adaptive_precision`, target fraction, optimisation objective) for Studio/CI integration.
+  Progress (2026-05-21): Added `write_precision_formal_evidence_bundle(...)` to materialise deterministic SymbiYosys-ready artefacts (`.sva`, `.sby`, formal manifest) with fail-closed claim flags (`symbiyosys_executed=false`, `formal_proof_passed=false`, `hardware_measurement_claimed=false`) until external proof execution evidence is attached.

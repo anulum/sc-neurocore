@@ -58,6 +58,7 @@ class HubBundleConfig:
     offline: bool = True
     cache_dir: str = "cache"
     models_dir: str = "models"
+    dependency_mirror_dirs: tuple[str, ...] = ("mirrors/wheelhouse", "mirrors/huggingface")
     benchmarks_dir: str = "benchmarks"
     compose_name: str = "docker-compose.yml"
 
@@ -76,6 +77,10 @@ class HubBundleConfig:
             ("compose_name", self.compose_name),
         ):
             _validate_relative_path(label, value)
+        if self.offline and not self.dependency_mirror_dirs:
+            raise ValueError("offline mode requires at least one dependency_mirror_dirs entry")
+        for value in self.dependency_mirror_dirs:
+            _validate_relative_path("dependency_mirror_dirs", value)
         if PurePosixPath(self.compose_name).name != self.compose_name:
             raise ValueError("compose_name must be a file name, not a nested path")
 
@@ -206,6 +211,7 @@ def build_hub_manifest(config: HubBundleConfig | None = None) -> dict[str, Any]:
         "storage": {
             "cache": cfg.cache_dir,
             "models": cfg.models_dir,
+            "dependency_mirrors": list(cfg.dependency_mirror_dirs),
             "benchmark_results": f"{cfg.benchmarks_dir}/results",
         },
         "artefacts": {
@@ -222,6 +228,10 @@ def build_hub_manifest(config: HubBundleConfig | None = None) -> dict[str, Any]:
             "ingress_scope": _ingress_scope(cfg.bind_host),
             "external_egress_required": False,
             "offline_environment": _offline_environment(cfg),
+            "air_gapped_contract": {
+                "requires_local_dependency_mirrors": cfg.offline,
+                "dependency_mirror_dirs": list(cfg.dependency_mirror_dirs),
+            },
         },
         "container_hardening": {
             "non_root_runtime_user": True,
@@ -254,6 +264,7 @@ def write_hub_bundle(
         cfg.models_dir,
         cfg.benchmarks_dir,
         f"{cfg.benchmarks_dir}/results",
+        *cfg.dependency_mirror_dirs,
     ):
         (root / rel).mkdir(parents=True, exist_ok=True)
 

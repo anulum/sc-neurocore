@@ -25,6 +25,8 @@ Reference: Sim & Lee 2019 — "Adjustable Sequence Length for SC NNs"
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -246,6 +248,7 @@ def assign_synapse_precisions(
 def precision_plan_manifest(assignments: list[SynapsePrecision]) -> dict[str, Any]:
     """Build a deterministic manifest for a per-synapse precision plan."""
     rows = [assignment.to_dict() for assignment in assignments]
+    cost_summary = _precision_cost_summary(assignments)
     return {
         "schema": "sc-neurocore.adaptive_precision_plan.v1",
         "granularity": "synapse",
@@ -254,8 +257,145 @@ def precision_plan_manifest(assignments: list[SynapsePrecision]) -> dict[str, An
             (assignment.total_error_bound for assignment in assignments),
             default=0.0,
         ),
+        "cost_summary": cost_summary,
         "assignments": rows,
     }
+
+
+def auto_tune_synapse_precisions(
+    layer_weights: list[np.ndarray[Any, Any]],
+    *,
+    layer_names: list[str] | None = None,
+    target_error_percent: float = 0.1,
+    min_bits: int = 4,
+    max_bits: int = 16,
+    min_length: int = 32,
+    max_length: int = 4096,
+    confidence: float = 0.95,
+) -> dict[str, Any]:
+    """Auto-tune per-synapse precision for an explicit percent error target.
+
+    This is the first-class API surface for the Studio action:
+    ``auto-tune for <0.1 % error at minimal LUTs``.
+    """
+    if target_error_percent <= 0:
+        raise ValueError("target_error_percent must be positive")
+    target_error = target_error_percent / 100.0
+    assignments = assign_synapse_precisions(
+        layer_weights,
+        layer_names=layer_names,
+        target_error=target_error,
+        min_bits=min_bits,
+        max_bits=max_bits,
+        min_length=min_length,
+        max_length=max_length,
+        confidence=confidence,
+    )
+    manifest = precision_plan_manifest(assignments)
+    manifest["api_surface"] = {
+        "action_id": "auto_tune_adaptive_precision",
+        "target_error_percent": target_error_percent,
+        "target_error_fraction": target_error,
+        "objective": "minimal_luts_under_error_target",
+        "cost_metric": "sum(bit_width * log2(bitstream_length))",
+        "estimated_lut_cost": manifest["cost_summary"]["estimated_lut_cost"],
+        "uniform_length_reference_cost": manifest["cost_summary"]["uniform_length_reference_cost"],
+        "estimated_lut_savings_vs_uniform_length": manifest["cost_summary"][
+            "estimated_lut_savings_vs_uniform_length"
+        ],
+    }
+    return manifest
+
+
+def write_precision_formal_evidence_bundle(
+    output_dir: str | Path,
+    assignments: list[SynapsePrecision],
+    *,
+    module_name: str = "adaptive_precision_plan",
+) -> dict[str, Any]:
+    """Write a deterministic SymbiYosys evidence bundle for precision claims."""
+    if not assignments:
+        raise ValueError("assignments must not be empty")
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    max_error = max(item.total_error_bound for item in assignments)
+    max_bits = max(item.bit_width for item in assignments)
+    max_length = max(item.bitstream_length for item in assignments)
+
+    rtl_file = f"{module_name}.v"
+    sva_file = f"{module_name}_sva.sv"
+    sby_file = f"{module_name}.sby"
+    report_file = f"{module_name}_formal_report.json"
+
+    (out / sva_file).write_text(
+        _adaptive_precision_sva(
+            module_name=module_name,
+            max_total_error_bound=max_error,
+            max_bit_width=max_bits,
+            max_bitstream_length=max_length,
+        ),
+        encoding="utf-8",
+    )
+
+    from sc_neurocore.compiler.deployment import generate_sby_script
+
+    (out / sby_file).write_text(
+        generate_sby_script(module_name, sva_file=sva_file, mode="prove", depth=32),
+        encoding="utf-8",
+    )
+
+    manifest = {
+        "schema_version": "sc-neurocore.adaptive-precision-formal-bundle.v1",
+        "module_name": module_name,
+        "evidence_boundary": (
+            "bundle_generation_only_no_symbiyosys_execution_no_silicon_claim"
+        ),
+        "assignments_count": len(assignments),
+        "formal_claim": {
+            "max_total_error_bound": max_error,
+            "max_bit_width": max_bits,
+            "max_bitstream_length": max_length,
+            "symbiyosys_executed": False,
+            "formal_proof_passed": False,
+            "hardware_measurement_claimed": False,
+        },
+        "artifacts": {
+            "rtl": rtl_file,
+            "sva": sva_file,
+            "sby": sby_file,
+            "report": report_file,
+        },
+    }
+    (out / f"{module_name}_formal_manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return manifest
+
+
+def _adaptive_precision_sva(
+    *,
+    module_name: str,
+    max_total_error_bound: float,
+    max_bit_width: int,
+    max_bitstream_length: int,
+) -> str:
+    bound_q16 = int(round(max_total_error_bound * 65536.0))
+    return (
+        f"// Adaptive precision formal assertions for {module_name}\n"
+        f"// Auto-generated by SC-NeuroCore\n"
+        f"`timescale 1ns/1ps\n\n"
+        f"module {module_name}_sva;\n"
+        f"  localparam int MAX_TOTAL_ERROR_Q16 = {bound_q16};\n"
+        f"  localparam int MAX_BIT_WIDTH = {max_bit_width};\n"
+        f"  localparam int MAX_BITSTREAM_LENGTH = {max_bitstream_length};\n\n"
+        f"  // Placeholder proof obligations for external binding:\n"
+        f"  // 1) selected bit width shall not exceed MAX_BIT_WIDTH\n"
+        f"  // 2) selected bitstream length shall not exceed MAX_BITSTREAM_LENGTH\n"
+        f"  // 3) bounded-error accumulator shall stay <= MAX_TOTAL_ERROR_Q16\n"
+        f"endmodule\n"
+    )
 
 
 def _select_bit_width(sensitivity: float, target: float, min_bits: int, max_bits: int) -> int:
@@ -275,6 +415,30 @@ def _hoeffding_radius(length: int, confidence: float) -> float:
     if delta <= 0:
         raise ValueError("confidence must be < 1.0")
     return float(np.sqrt(-np.log(delta / 2.0) / (2.0 * length)))
+
+
+def _precision_cost_summary(assignments: list[SynapsePrecision]) -> dict[str, float]:
+    if not assignments:
+        return {
+            "estimated_lut_cost": 0.0,
+            "uniform_length_reference_cost": 0.0,
+            "estimated_lut_savings_vs_uniform_length": 0.0,
+            "estimated_lut_savings_fraction_vs_uniform_length": 0.0,
+        }
+    max_length = max(assignment.bitstream_length for assignment in assignments)
+    log2_max = float(np.log2(max_length))
+    estimated = float(
+        sum(assignment.bit_width * np.log2(assignment.bitstream_length) for assignment in assignments)
+    )
+    uniform_reference = float(sum(assignment.bit_width * log2_max for assignment in assignments))
+    savings = uniform_reference - estimated
+    savings_fraction = 0.0 if uniform_reference <= 0 else savings / uniform_reference
+    return {
+        "estimated_lut_cost": estimated,
+        "uniform_length_reference_cost": uniform_reference,
+        "estimated_lut_savings_vs_uniform_length": savings,
+        "estimated_lut_savings_fraction_vs_uniform_length": savings_fraction,
+    }
 
 
 def assign_lengths(

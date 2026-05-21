@@ -800,6 +800,7 @@ def generate_asic_flow_bundle(
     n_synapses: int = 256,
     bitstream_width: int = 256,
     n_aer_ports: int = 4,
+    formal_evidence_artifacts: Optional[List[str]] = None,
 ) -> ASICFlowBundle:
     """Write a complete ASIC flow deck and evidence manifest in one call.
 
@@ -840,6 +841,7 @@ def generate_asic_flow_bundle(
         estimate=estimate,
         file_paths=file_paths,
         require_pdk_files=require_pdk_files,
+        formal_evidence_artifacts=formal_evidence_artifacts or [],
     )
     manifest_path = out / "asic_flow_manifest.json"
     manifest_path.write_text(
@@ -888,13 +890,17 @@ def _build_asic_flow_manifest(
     estimate: DesignEstimate,
     file_paths: Dict[str, str],
     require_pdk_files: bool,
+    formal_evidence_artifacts: List[str],
 ) -> Dict[str, Any]:
+    formal_status = _formal_evidence_status(formal_evidence_artifacts)
     return {
         "schema": "sc-neurocore.asic_flow_manifest.v1",
         "claim_status": {
             "scripts_generated": True,
             "external_eda_executed": False,
             "physical_ppa_claim_allowed": False,
+            "formal_evidence_attached": formal_status["attached"],
+            "formal_evidence_complete_for_claim": formal_status["complete_for_claim"],
             "reason": (
                 "Generated decks and pre-synthesis estimates only; quote physical "
                 "area, power, timing, or GDSII claims only after attaching exact "
@@ -908,9 +914,25 @@ def _build_asic_flow_manifest(
         "missing_optional": list(pdk_resolution.missing_optional),
         "usable_for_synthesis": pdk_resolution.usable_for_synthesis,
         "usable_for_signoff": pdk_resolution.usable_for_signoff,
+        "formal_evidence": formal_status,
         "design": _design_to_manifest(design),
         "estimate": asdict(estimate),
         "generated_files": dict(sorted(file_paths.items())),
+    }
+
+
+def _formal_evidence_status(formal_evidence_artifacts: List[str]) -> Dict[str, Any]:
+    artifacts = sorted(str(Path(item)) for item in formal_evidence_artifacts)
+    has_proof_script = any(item.endswith((".sby", ".sv", ".sva")) for item in artifacts)
+    has_report = any(item.endswith((".json", ".txt", ".log")) for item in artifacts)
+    return {
+        "artifacts": artifacts,
+        "attached": bool(artifacts),
+        "complete_for_claim": bool(artifacts) and has_proof_script and has_report,
+        "required_types_for_claim": {
+            "proof_script": [".sby", ".sv", ".sva"],
+            "report_or_log": [".json", ".txt", ".log"],
+        },
     }
 
 

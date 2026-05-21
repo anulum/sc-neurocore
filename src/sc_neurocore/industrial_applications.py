@@ -25,6 +25,9 @@ class IndustrialDomain(Enum):
     MEDICAL = "medical"
     RAIL = "rail"
     INDUSTRIAL_CONTROL = "industrial_control"
+    ROBOTICS = "robotics"
+    SMART_GRID = "smart_grid"
+    FUSION_CONTROL = "fusion_control"
 
 
 class EvidenceCategory(Enum):
@@ -37,6 +40,7 @@ class EvidenceCategory(Enum):
     REPORT = "report"
     HIL = "hil"
     SECURITY = "security"
+    TIMING = "timing"
 
 
 @dataclass(frozen=True)
@@ -290,6 +294,79 @@ def default_industrial_profiles() -> tuple[IndustrialApplicationProfile, ...]:
                 EvidenceCategory.REPORT,
             ),
         ),
+        IndustrialApplicationProfile(
+            domain=IndustrialDomain.ROBOTICS,
+            name="Reactive robotics control loop with formal timing",
+            description=(
+                "SNN-based reactive controller profile with bounded command latency "
+                "and deterministic fallback requirements."
+            ),
+            safety_standards=(SafetyStandard.IEC_61508,),
+            target_sil=SILLevel.SIL_2,
+            target_asil=None,
+            hazards=(
+                "control command misses hard deadline",
+                "fallback command path unavailable during transient drift",
+                "sensor-to-actuator traceability gap across deployment revisions",
+            ),
+            required_modules=("control.adaptive_loop", "safety_cert", "verification"),
+            evidence_requirements=_requirements(
+                EvidenceCategory.DESIGN,
+                EvidenceCategory.TIMING,
+                EvidenceCategory.TEST,
+                EvidenceCategory.ANALYSIS,
+                EvidenceCategory.REPORT,
+            ),
+        ),
+        IndustrialApplicationProfile(
+            domain=IndustrialDomain.SMART_GRID,
+            name="Bounded-latency stochastic load prediction edge node",
+            description=(
+                "Stochastic load prediction profile for grid edge sensing with "
+                "bounded inference latency and anomaly-response evidence."
+            ),
+            safety_standards=(SafetyStandard.IEC_61508,),
+            target_sil=SILLevel.SIL_2,
+            target_asil=None,
+            hazards=(
+                "load forecast latency exceeds dispatch budget",
+                "prediction drift hides line-stress anomaly escalation",
+                "evidence gap between field telemetry and threshold calibration",
+            ),
+            required_modules=("stochastic_doctor", "fault_injection", "safety_cert"),
+            evidence_requirements=_requirements(
+                EvidenceCategory.DESIGN,
+                EvidenceCategory.TIMING,
+                EvidenceCategory.TEST,
+                EvidenceCategory.ANALYSIS,
+                EvidenceCategory.REPORT,
+            ),
+        ),
+        IndustrialApplicationProfile(
+            domain=IndustrialDomain.FUSION_CONTROL,
+            name="Real-time plasma-state estimator bridge",
+            description=(
+                "Real-time plasma state-estimation profile aligned to SCPN-Fusion-Core "
+                "integration with hard timing and HIL traceability requirements."
+            ),
+            safety_standards=(SafetyStandard.IEC_61508,),
+            target_sil=SILLevel.SIL_3,
+            target_asil=None,
+            hazards=(
+                "plasma-state estimate stale at control actuation time",
+                "diagnostic confidence collapse under correlated stream faults",
+                "cross-system bridge mismatch between NeuroCore and fusion twin",
+            ),
+            required_modules=("fusion", "digital_twin", "safety_cert"),
+            evidence_requirements=_requirements(
+                EvidenceCategory.DESIGN,
+                EvidenceCategory.TIMING,
+                EvidenceCategory.TEST,
+                EvidenceCategory.ANALYSIS,
+                EvidenceCategory.HIL,
+                EvidenceCategory.REPORT,
+            ),
+        ),
     )
 
 
@@ -323,6 +400,9 @@ def _normalise_evidence_categories(categories: Iterable[str]) -> set[EvidenceCat
         "hardware-in-loop": EvidenceCategory.HIL,
         "hardware_in_loop": EvidenceCategory.HIL,
         "security": EvidenceCategory.SECURITY,
+        "timing": EvidenceCategory.TIMING,
+        "latency": EvidenceCategory.TIMING,
+        "formal_timing": EvidenceCategory.TIMING,
     }
     for category in categories:
         key = category.strip().lower().replace(" ", "_")

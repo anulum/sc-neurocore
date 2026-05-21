@@ -6,6 +6,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — OpenROAD ASIC Tape-Out Flow Tests
 
+import json
+from pathlib import Path
+
 from sc_neurocore.asic_flow.asic_flow import (
     ASICFlowBundle,
     ASICFlowGenerator,
@@ -409,6 +412,8 @@ class TestASICFlowGenerator:
         assert '"schema": "sc-neurocore.asic_flow_manifest.v1"' in manifest
         assert '"external_eda_executed": false' in manifest
         assert '"physical_ppa_claim_allowed": false' in manifest
+        assert '"formal_evidence_attached": false' in manifest
+        assert '"formal_evidence_complete_for_claim": false' in manifest
         assert "edge_snn" in manifest
 
     def test_one_command_bundle_reports_missing_required_pdk_files(self, tmp_path):
@@ -426,6 +431,21 @@ class TestASICFlowGenerator:
             "lef_file",
             "tech_lef",
         }
+
+    def test_one_command_bundle_records_formal_evidence_status(self, tmp_path):
+        bundle = generate_asic_flow_bundle(
+            tmp_path / "out",
+            pdk_type=PDKType.SKY130,
+            formal_evidence_artifacts=["formal/sc_top.sby", "formal/report.json"],
+        )
+
+        manifest = json.loads(Path(bundle.manifest_path).read_text(encoding="utf-8"))
+        assert manifest["formal_evidence"]["attached"] is True
+        assert manifest["formal_evidence"]["complete_for_claim"] is True
+        assert manifest["formal_evidence"]["artifacts"] == [
+            "formal/report.json",
+            "formal/sc_top.sby",
+        ]
 
 
 # ── PreSynthEstimator Tests ──────────────────────────────────────────

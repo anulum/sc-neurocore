@@ -526,7 +526,7 @@ prog: $(TOP).bin
 clean:
 \trm -f $(TOP).json $(TOP).asc $(TOP).bin
 """
-    else:  # ecp5
+    if target == "ecp5":
         return f"""# Auto-generated Makefile for {module_name} (ECP5)
 # Tools: Yosys + nextpnr-ecp5 + ecppack
 
@@ -561,6 +561,7 @@ prog: $(TOP).bit
 clean:
 \trm -f $(TOP).json $(TOP).config $(TOP).bit
 """
+    raise ValueError(f"Unsupported open-source FPGA target: {target!r}")
 
 
 def generate_dvs_aer_bridge(
@@ -895,7 +896,7 @@ def generate_weight_rom(
         lines.append("END;")
         return "\n".join(lines)
 
-    else:  # verilog
+    elif output_format == "verilog":
         lines = [
             f"// Auto-generated weight ROM: {module_name}",
             f"// SC-NeuroCore: {n_src}×{n_dst} synaptic weights",
@@ -923,6 +924,7 @@ def generate_weight_rom(
             ]
         )
         return "\n".join(lines)
+    raise ValueError(f"Unsupported weight ROM format: {output_format!r}")
 
 
 @dataclass(frozen=True)
@@ -1341,7 +1343,7 @@ def export_learning_config(
 
     if output_format == "json":
         return json.dumps(data, indent=2)
-    else:  # YAML-like
+    if output_format == "yaml":
         lines = ["# SC-NeuroCore On-Chip Learning Configuration"]
         lines.append(f"learning_rule: {params.learning_rule}")
         lines.append("time_constants:")
@@ -1356,6 +1358,7 @@ def export_learning_config(
         lines.append(f"  w_min: {params.w_min}")
         lines.append(f"target_platform: {params.target_platform}")
         return "\n".join(lines)
+    raise ValueError(f"Unsupported learning config format: {output_format!r}")
 
 
 @dataclass(frozen=True)
@@ -1430,12 +1433,14 @@ def inject_weight_noise(
                 noise = rng.gauss(0, noise_scale)
             elif noise_model == "uniform":
                 noise = rng.uniform(-noise_scale, noise_scale)
-            else:  # lognormal
+            elif noise_model == "lognormal":
                 sign = 1 if w >= 0 else -1
                 log_noise = rng.gauss(0, sigma)
                 import math
 
                 noise = sign * abs(w) * (math.exp(log_noise) - 1.0)
+            else:
+                raise ValueError(f"Unsupported weight noise model: {noise_model!r}")
             noisy_row.append(round(w + noise, 8))
         noisy.append(noisy_row)
 
