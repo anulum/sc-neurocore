@@ -18,6 +18,7 @@ from sc_neurocore.fault_injection import (
     FaultModel,
     RadiationProfile,
     ResilienceModeConfig,
+    ResilienceModeReport,
     ResilienceModeTrialReport,
     SeededFaultObservation,
 )
@@ -170,4 +171,28 @@ def test_trial_report_rejects_invalid_contracts() -> None:
             p99_probability_error=0.1,
             max_probability_error=0.1,
             degradation_plan=plan,
+        )
+
+
+def test_resilience_mode_report_rejects_invalid_contracts() -> None:
+    bitstreams = np.array([[0, 1, 0, 1]], dtype=np.uint8)
+    mode = FaultInjectionResilienceMode(
+        ResilienceModeConfig(
+            layer_id="L0",
+            radiation_profile=RadiationProfile("test", 0.1),
+            fault_models=(FaultModel.BIT_FLIP,),
+            num_trials=2,
+            seed=3,
+        )
+    )
+    reference = mode.run(bitstreams)
+    with pytest.raises(ValueError, match="nominal_probability"):
+        ResilienceModeReport(
+            layer_id=reference.layer_id,
+            radiation_profile=reference.radiation_profile,
+            seed=reference.seed,
+            input_shape=reference.input_shape,
+            nominal_probability=1.5,
+            recommended_action=reference.recommended_action,
+            trial_reports=reference.trial_reports,
         )
