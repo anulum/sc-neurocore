@@ -1221,6 +1221,12 @@ class TestProofTestCoverage:
         with pytest.raises(ValueError, match="modules"):
             ProofTestCoverage.uncovered_modules([prop], ["m"])
 
+    def test_uncovered_modules_rejects_corrupted_property_id(self):
+        prop = FormalProperty("P1", "m", "d", "assert", "proven")
+        prop.prop_id = ""  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="prop_id"):
+            ProofTestCoverage.uncovered_modules([prop], ["m"])
+
     @pytest.mark.parametrize("props", ["invalid", [FormalProperty("P1", "n", "d", "assert", "proven"), "bad"]])
     def test_coverage_from_proofs_rejects_invalid_contracts(self, props):
         with pytest.raises(ValueError, match="properties"):
