@@ -1035,6 +1035,36 @@ def test_validate_formal_network_report_accepts_complete_payload() -> None:
     validate_formal_network_report(payload)
 
 
+def test_validate_formal_network_report_rejects_symlink_artifact_path(tmp_path: Path) -> None:
+    payload = _valid_formal_report_payload()
+    artifact_root = tmp_path / "artifacts"
+    artifact_root.mkdir(parents=True, exist_ok=True)
+    _materialise_formal_report_artifacts(payload, artifact_root)
+
+    target = artifact_root / "dense_lif_frontier_fixture_rate_bound.sv"
+    symlink = artifact_root / "symlink_rate_bound.sv"
+    symlink.symlink_to(target)
+    payload["artifacts"]["sva"] = str(symlink)
+    payload["artifacts"]["rate_sva"] = str(symlink)
+
+    with pytest.raises(FormalReportValidationError, match="must not be a symlink"):
+        validate_formal_network_report(payload, artifact_root=artifact_root)
+
+
+def test_validate_formal_network_report_rejects_directory_artifact_path(tmp_path: Path) -> None:
+    payload = _valid_formal_report_payload()
+    artifact_root = tmp_path / "artifacts"
+    artifact_root.mkdir(parents=True, exist_ok=True)
+    _materialise_formal_report_artifacts(payload, artifact_root)
+
+    directory = artifact_root / "fake_dir.sv"
+    directory.mkdir()
+    payload["artifacts"]["formal_bundle"] = str(directory)
+
+    with pytest.raises(FormalReportValidationError, match="must be a regular file"):
+        validate_formal_network_report(payload, artifact_root=artifact_root)
+
+
 @pytest.mark.parametrize(
     ("mutator", "match"),
     [
@@ -1232,6 +1262,18 @@ def test_validate_formal_network_report_rejects_invalid_payloads(mutator, match:
 
     with pytest.raises(FormalReportValidationError, match=match):
         validate_formal_network_report(payload)
+
+
+def _materialise_formal_report_artifacts(payload: dict[str, object], artifact_root: Path) -> None:
+    artifacts = payload["artifacts"]
+    assert isinstance(artifacts, dict)
+    for key, raw_path in artifacts.items():
+        if raw_path is None:
+            continue
+        assert isinstance(raw_path, str)
+        materialized = artifact_root / Path(raw_path).name
+        materialized.write_text(f"// {key}\n", encoding="utf-8")
+        artifacts[key] = str(materialized)
 
 
 def test_formal_network_verification_docs_cover_cli_and_report_contract() -> None:
