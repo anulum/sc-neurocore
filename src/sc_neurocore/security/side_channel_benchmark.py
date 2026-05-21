@@ -83,6 +83,29 @@ class SideChannelBenchmarkRecord:
     protected_realised_probability: float
     protected_dummy_streams_inserted: int
 
+    def __post_init__(self) -> None:
+        if isinstance(self.label, bool) or not isinstance(self.label, int | float):
+            raise SideChannelBenchmarkError("label must be a finite numeric value")
+        if not math.isfinite(float(self.label)):
+            raise SideChannelBenchmarkError("label must be a finite numeric value")
+        for value, field_name in (
+            (self.probability, "probability"),
+            (self.protected_realised_probability, "protected_realised_probability"),
+        ):
+            if isinstance(value, bool) or not isinstance(value, int | float):
+                raise SideChannelBenchmarkError(f"{field_name} must be a finite value in [0, 1]")
+            numeric_value = float(value)
+            if not math.isfinite(numeric_value) or numeric_value < 0.0 or numeric_value > 1.0:
+                raise SideChannelBenchmarkError(f"{field_name} must be a finite value in [0, 1]")
+        if (
+            isinstance(self.protected_dummy_streams_inserted, bool)
+            or not isinstance(self.protected_dummy_streams_inserted, int)
+            or self.protected_dummy_streams_inserted < 0
+        ):
+            raise SideChannelBenchmarkError(
+                "protected_dummy_streams_inserted must be a non-negative integer"
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class SideChannelDeployManifest:

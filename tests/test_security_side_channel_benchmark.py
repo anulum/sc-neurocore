@@ -16,6 +16,7 @@ from sc_neurocore.security.side_channel_benchmark import (
     SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION,
     SideChannelBenchmarkArm,
     SideChannelBenchmarkError,
+    SideChannelBenchmarkRecord,
     run_side_channel_leakage_benchmark,
     write_side_channel_benchmark_report,
 )
@@ -152,3 +153,24 @@ def test_side_channel_benchmark_arm_rejects_invalid_contracts(kwargs, match) -> 
     values.update(kwargs)
     with pytest.raises(SideChannelBenchmarkError, match=match):
         SideChannelBenchmarkArm(**values)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"label": True}, "label"),
+        ({"probability": 1.1}, "probability"),
+        ({"protected_realised_probability": -0.1}, "protected_realised_probability"),
+        ({"protected_dummy_streams_inserted": -1}, "protected_dummy_streams_inserted"),
+    ],
+)
+def test_side_channel_benchmark_record_rejects_invalid_contracts(kwargs, match) -> None:
+    values = {
+        "label": 0,
+        "probability": 0.5,
+        "protected_realised_probability": 0.5,
+        "protected_dummy_streams_inserted": 0,
+    }
+    values.update(kwargs)
+    with pytest.raises(SideChannelBenchmarkError, match=match):
+        SideChannelBenchmarkRecord(**values)
