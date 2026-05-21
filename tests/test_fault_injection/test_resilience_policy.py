@@ -101,6 +101,22 @@ def test_affected_ratio_can_extend_bitstream_without_critical_audit() -> None:
 def test_rejects_non_binary_bitstreams() -> None:
     policy = GracefulDegradationPolicy()
 
+    with pytest.raises(ValueError, match="numpy.ndarray"):
+        policy.evaluate(  # type: ignore[arg-type]
+            [[0, 1]],
+            layer_id="bad",
+            fault_model=FaultModel.BIT_FLIP,
+            ber=0.0,
+            seed=1,
+        )
+    with pytest.raises(ValueError, match="finite"):
+        policy.evaluate(
+            np.array([[0.0, np.nan]], dtype=np.float64),
+            layer_id="bad",
+            fault_model=FaultModel.BIT_FLIP,
+            ber=0.0,
+            seed=1,
+        )
     with pytest.raises(ValueError, match="0/1"):
         policy.evaluate(
             np.array([[0, 2]], dtype=np.uint8),
