@@ -914,8 +914,16 @@ class CertificationGenerator:
                 raise ValueError("formal_properties must contain FormalProperty entries")
             if not isinstance(prop.prop_id, str) or not prop.prop_id.strip():
                 raise ValueError("formal_properties prop_id values must be non-empty strings")
+            if prop.prop_id != prop.prop_id.strip():
+                raise ValueError(
+                    "formal_properties prop_id values must not contain leading or trailing whitespace"
+                )
             if not isinstance(prop.module, str) or not prop.module.strip():
                 raise ValueError("formal_properties modules must be non-empty strings")
+            if prop.module != prop.module.strip():
+                raise ValueError(
+                    "formal_properties modules must not contain leading or trailing whitespace"
+                )
             if not isinstance(prop.status, str) or prop.status not in {"proven", "failed", "unknown"}:
                 raise ValueError("formal_properties statuses must be one of: proven, failed, unknown")
             if not isinstance(prop.property_type, str) or prop.property_type not in {
