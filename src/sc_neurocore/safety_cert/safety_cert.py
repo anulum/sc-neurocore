@@ -431,6 +431,8 @@ class FMEDA:
         for fm in self.failure_modes:
             if not isinstance(fm, FailureMode):
                 raise ValueError("failure_modes must contain FailureMode entries")
+            if not isinstance(fm.component, str) or not fm.component.strip():
+                raise ValueError("failure modes must have non-empty component names")
             components.setdefault(fm.component, []).append(fm)
         result = {}
         for comp, fms in components.items():
