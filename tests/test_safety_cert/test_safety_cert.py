@@ -1148,6 +1148,24 @@ class TestCrossStandardMapper:
         equiv = CrossStandardMapper.equivalent_clauses("IEC 61508", "99.99")
         assert equiv == []
 
+    def test_coverage_overlap_rejects_malformed_item_id(self):
+        bad_item = ChecklistItem(
+            item_id="MALFORMED",
+            clause="7.4.2",
+            description="desc",
+            evidence="formal/",
+            status="partial",
+        )
+        good_item = ChecklistItem(
+            item_id="ISO 26262_6.7.4",
+            clause="6.7.4",
+            description="desc",
+            evidence="formal/",
+            status="partial",
+        )
+        with pytest.raises(ValueError, match="item_id"):
+            CrossStandardMapper.coverage_overlap([bad_item], [good_item])
+
     @pytest.mark.parametrize(
         ("standard", "clause", "match"),
         [
