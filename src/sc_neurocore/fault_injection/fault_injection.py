@@ -73,6 +73,25 @@ class FaultInjectionResult:
     bits_flipped: int
     bitstream_length: int
 
+    def __post_init__(self) -> None:
+        for field_name in (
+            "original_popcount",
+            "corrupted_popcount",
+            "bits_flipped",
+            "bitstream_length",
+        ):
+            value = getattr(self, field_name)
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise ValueError(f"{field_name} must be an integer")
+            if value < 0:
+                raise ValueError(f"{field_name} must be non-negative")
+        if self.original_popcount > self.bitstream_length:
+            raise ValueError("original_popcount cannot exceed bitstream_length")
+        if self.corrupted_popcount > self.bitstream_length:
+            raise ValueError("corrupted_popcount cannot exceed bitstream_length")
+        if self.bits_flipped > self.bitstream_length:
+            raise ValueError("bits_flipped cannot exceed bitstream_length")
+
     @property
     def probability_original(self) -> float:
         return self.original_popcount / self.bitstream_length if self.bitstream_length > 0 else 0.0
