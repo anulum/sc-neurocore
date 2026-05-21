@@ -760,6 +760,12 @@ class TestCCFAnalysis:
         ccf = CCFAnalysis()
         assert ccf.beta_factor == 0.10
 
+    def test_beta_factor_rejects_corrupted_internal_state(self):
+        ccf = CCFAnalysis()
+        ccf.defences.append("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="CCFDefence"):
+            _ = ccf.beta_factor
+
     def test_mark_implemented(self):
         ccf = CCFAnalysis()
         assert ccf.mark_implemented("D1") is True
