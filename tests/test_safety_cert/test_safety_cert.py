@@ -747,6 +747,7 @@ class TestCertificationGenerator:
             ({"target_sil": "SIL_2"}, "target_sil"),
             ({"modules": []}, "modules"),
             ({"modules": ["", "m2"]}, "modules"),
+            ({"modules": ["sc_lif_neuron", "sc_lif_neuron"]}, "duplicates"),
             ({"formal_properties": "bad"}, "formal_properties"),
             ({"formal_properties": ["bad"]}, "formal_properties"),
             ({"network_config": "bad"}, "network_config"),

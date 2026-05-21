@@ -846,6 +846,8 @@ class CertificationGenerator:
         for module in modules:
             if not isinstance(module, str) or not module.strip():
                 raise ValueError("modules must contain non-empty strings")
+        if len(modules) != len(set(modules)):
+            raise ValueError("modules must not contain duplicates")
         if not isinstance(formal_properties, list):
             raise ValueError("formal_properties must be a list")
         for prop in formal_properties:
