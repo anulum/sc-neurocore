@@ -20,6 +20,12 @@
   WCET, change-impact, reliability, and proof-gap surfaces with paired tests
   in `tests/test_safety_cert/test_safety_cert.py`. This closes a focused
   validation-hardening slice while broader roadmap items remain open.
+- Progress (2026-05-21, batch 2): follow-on safety-cert hardening added
+  duplicate/consistency guards for certification modules, formal-property
+  identifiers, compliance-clause definitions, safety-manual module sets, and
+  evidence filename uniqueness; plus strengthened decision-time integrity checks
+  for HFT, SIL mapping, reliability PFHd, package/checklist invariants, and
+  cross-standard checklist status handling with matching regression coverage.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
 
