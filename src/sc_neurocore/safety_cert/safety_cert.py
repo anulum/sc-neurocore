@@ -1440,6 +1440,16 @@ class FormalPropertyGapDetector:
     def detect(
         cls, properties: List[FormalProperty], required_modules: List[str]
     ) -> List[PropertyGap]:
+        if not isinstance(properties, list):
+            raise ValueError("properties must be a list")
+        for prop in properties:
+            if not isinstance(prop, FormalProperty):
+                raise ValueError("properties must contain FormalProperty entries")
+        if not isinstance(required_modules, list):
+            raise ValueError("required_modules must be a list")
+        for module in required_modules:
+            if not isinstance(module, str) or not module.strip():
+                raise ValueError("required_modules must contain non-empty strings")
         by_module: Dict[str, List[FormalProperty]] = {}
         for p in properties:
             by_module.setdefault(p.module, []).append(p)
