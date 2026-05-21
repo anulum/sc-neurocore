@@ -420,6 +420,14 @@ class TestFMEDA:
         with pytest.raises(ValueError, match="totals"):
             fmeda.sff_by_component()
 
+    def test_sff_by_component_rejects_empty_component_name(self):
+        fmeda = FMEDA()
+        fm = FailureMode("FM1", "n", "d", FailureCategory.SAFE, 1.0)
+        fm.component = ""  # type: ignore[assignment]
+        fmeda.add_failure_mode(fm)
+        with pytest.raises(ValueError, match="component names"):
+            fmeda.sff_by_component()
+
     def test_max_sil(self):
         fmeda = FMEDA()
         fmeda.add_sc_standard_modes("neuron")
