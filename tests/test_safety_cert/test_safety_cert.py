@@ -315,6 +315,12 @@ class TestFMEDA:
         fmeda.add_failure_mode(fm)
         assert len(fmeda.failure_modes) == 1
 
+    def test_add_failure_mode_rejects_duplicate_fm_id(self):
+        fmeda = FMEDA()
+        fmeda.add_failure_mode(FailureMode("FM1", "neuron", "stuck", FailureCategory.SAFE, 10.0))
+        with pytest.raises(ValueError, match="already exists"):
+            fmeda.add_failure_mode(FailureMode("FM1", "neuron", "other", FailureCategory.SAFE, 12.0))
+
     def test_add_failure_mode_rejects_invalid_contract(self):
         fmeda = FMEDA()
         with pytest.raises(ValueError, match="fm"):

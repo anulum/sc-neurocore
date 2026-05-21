@@ -308,6 +308,8 @@ class FMEDA:
     def add_failure_mode(self, fm: FailureMode) -> None:
         if not isinstance(fm, FailureMode):
             raise ValueError("fm must be a FailureMode")
+        if any(existing.fm_id == fm.fm_id for existing in self.failure_modes):
+            raise ValueError(f"failure mode already exists: {fm.fm_id}")
         self.failure_modes.append(fm)
 
     def add_sc_standard_modes(self, component: str) -> None:
