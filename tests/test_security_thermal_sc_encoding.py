@@ -136,6 +136,25 @@ def test_batch_encoder_rejects_mismatched_labels() -> None:
         )
 
 
+def test_activity_balanced_encoder_rejects_boolean_stream_index() -> None:
+    with pytest.raises(ThermalSCEncodingError, match="stream_index must be a non-negative integer"):
+        encode_activity_balanced_probability(
+            0.5,
+            ThermalSCEncodingConfig(bitstream_length=8),
+            stream_index=True,  # type: ignore[arg-type]
+        )
+
+
+@pytest.mark.parametrize("labels", [(0, True), (0, float("nan")), ("a", "b")])
+def test_batch_encoder_rejects_non_finite_or_non_numeric_labels(labels) -> None:
+    with pytest.raises(ThermalSCEncodingError, match="labels must be finite numeric values"):
+        encode_activity_balanced_probabilities(
+            (0.25, 0.5),
+            ThermalSCEncodingConfig(bitstream_length=8),
+            labels=labels,
+        )
+
+
 def _correlated_activity_stream(probability: float, bitstream_length: int) -> tuple[int, ...]:
     ones = round(probability * bitstream_length)
     if probability >= 0.5:
