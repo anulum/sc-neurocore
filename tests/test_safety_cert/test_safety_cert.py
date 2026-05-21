@@ -80,6 +80,12 @@ class TestTraceabilityMatrix:
             tm.add_requirement(req)
         assert abs(tm.coverage - 0.5) < 0.01
 
+    def test_coverage_rejects_corrupted_internal_state(self):
+        tm = TraceabilityMatrix()
+        tm.requirements["R1"] = "bad"  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="Requirement"):
+            _ = tm.coverage
+
     def test_open_count(self):
         tm = TraceabilityMatrix()
         tm.add_requirement(Requirement("R1", "Test", SafetyStandard.IEC_61508))
