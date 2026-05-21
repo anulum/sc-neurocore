@@ -267,6 +267,14 @@ class TestFMEDA:
         with pytest.raises(ValueError, match="FailureMode"):
             fmeda.sff_by_component()
 
+    def test_sff_by_component_rejects_corrupted_component_totals(self):
+        fmeda = FMEDA()
+        fm = FailureMode("FM1", "n", "d", FailureCategory.DANGEROUS_DETECTED, 1.0, 0.5)
+        fm.diagnostic_coverage = float("nan")  # type: ignore[assignment]
+        fmeda.add_failure_mode(fm)
+        with pytest.raises(ValueError, match="totals"):
+            fmeda.sff_by_component()
+
     def test_max_sil(self):
         fmeda = FMEDA()
         fmeda.add_sc_standard_modes("neuron")
