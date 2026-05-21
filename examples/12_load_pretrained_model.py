@@ -50,6 +50,19 @@ def _require_checkpoint_schema(payload: object) -> dict[str, object]:
         raise ValueError("checkpoint['best_accuracy'] must be numeric")
     if not torch.isfinite(torch.tensor(float(best_accuracy), dtype=torch.float64)):
         raise ValueError("checkpoint['best_accuracy'] must be finite")
+    if not 0.0 <= float(best_accuracy) <= 1.0:
+        raise ValueError("checkpoint['best_accuracy'] must be within [0, 1]")
+
+    n_params = payload.get("n_params")
+    if not isinstance(n_params, int) or n_params <= 0:
+        raise ValueError("checkpoint['n_params'] must be a positive integer")
+
+    sc_weights = payload.get("sc_weights")
+    if not isinstance(sc_weights, list):
+        raise ValueError("checkpoint['sc_weights'] must be a list")
+    for idx, item in enumerate(sc_weights):
+        if not isinstance(item, torch.Tensor):
+            raise ValueError(f"checkpoint['sc_weights'][{idx}] must be a torch.Tensor")
     return payload
 
 
