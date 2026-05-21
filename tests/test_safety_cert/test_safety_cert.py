@@ -422,6 +422,14 @@ class TestFormalProofCertificate:
         with pytest.raises(ValueError, match="FormalProperty"):
             cert.compute_hash()
 
+    def test_compute_hash_rejects_corrupted_property_module(self):
+        cert = FormalProofCertificate()
+        prop = FormalProperty("P1", "m", "d", "assert", "proven")
+        prop.module = ""  # type: ignore[assignment]
+        cert.properties.append(prop)
+        with pytest.raises(ValueError, match="modules"):
+            cert.compute_hash()
+
     def test_generate_report(self):
         cert = FormalProofCertificate(properties=self._props())
         report = cert.generate_report()
