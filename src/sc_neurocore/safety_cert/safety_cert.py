@@ -968,7 +968,13 @@ class CCFAnalysis:
 
     @property
     def implemented_count(self) -> int:
-        return sum(1 for d in self.defences if d.implemented)
+        count = 0
+        for defence in self.defences:
+            if not isinstance(defence, CCFDefence):
+                raise ValueError("defences must contain CCFDefence entries")
+            if defence.implemented:
+                count += 1
+        return count
 
     def sil_compatible(self, target_sil: SILLevel) -> bool:
         """Check if β is low enough for the target SIL."""
