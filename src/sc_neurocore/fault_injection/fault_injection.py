@@ -212,6 +212,14 @@ class FaultInjector:
             unique_values = np.unique(bitstream)
             if not np.isin(unique_values, np.array([0, 1])).all():
                 raise ValueError("discrete fault models require binary bitstreams")
+        if model == FaultModel.GAUSSIAN_NOISE:
+            if not np.issubdtype(bitstream.dtype, np.number):
+                raise ValueError("gaussian_noise requires numeric bitstreams")
+            values = bitstream.astype(np.float64)
+            if not np.isfinite(values).all():
+                raise ValueError("gaussian_noise requires finite bitstream values")
+            if (values < 0.0).any() or (values > 1.0).any():
+                raise ValueError("gaussian_noise requires values within [0, 1]")
 
         corrupted = bitstream.copy()
         n = len(bitstream)

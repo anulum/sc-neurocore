@@ -199,6 +199,15 @@ class TestFaultInjectorInjectContracts:
         with pytest.raises(ValueError, match="binary"):
             injector.inject(bad, FaultModel.BIT_FLIP, 0.1)
 
+    def test_gaussian_noise_rejects_non_finite_or_out_of_range_inputs(self):
+        import numpy as np
+
+        injector = FaultInjector(seed=1)
+        with pytest.raises(ValueError, match="finite"):
+            injector.inject(np.array([0.0, np.nan, 1.0]), FaultModel.GAUSSIAN_NOISE, 0.1)
+        with pytest.raises(ValueError, match="within"):
+            injector.inject(np.array([0.0, 1.2, 1.0]), FaultModel.GAUSSIAN_NOISE, 0.1)
+
 
 class TestInjectAtPositionsContracts:
     def test_flips_requested_positions(self):
