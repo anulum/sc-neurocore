@@ -118,6 +118,23 @@ class SideChannelDeployManifest:
     overhead_measurements: dict[str, int | float]
     boundary_notes: tuple[str, ...]
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.schema_version, str) or not self.schema_version.strip():
+            raise SideChannelBenchmarkError("schema_version must be a non-empty string")
+        if not isinstance(self.evidence_class, str) or not self.evidence_class.strip():
+            raise SideChannelBenchmarkError("evidence_class must be a non-empty string")
+        if not isinstance(self.benchmark_artifact, dict):
+            raise SideChannelBenchmarkError("benchmark_artifact must be a dictionary")
+        if not isinstance(self.security_parameters, dict):
+            raise SideChannelBenchmarkError("security_parameters must be a dictionary")
+        if not isinstance(self.overhead_measurements, dict):
+            raise SideChannelBenchmarkError("overhead_measurements must be a dictionary")
+        if not isinstance(self.boundary_notes, tuple) or not self.boundary_notes:
+            raise SideChannelBenchmarkError("boundary_notes must be a non-empty tuple of strings")
+        for note in self.boundary_notes:
+            if not isinstance(note, str) or not note.strip():
+                raise SideChannelBenchmarkError("boundary_notes must contain non-empty strings")
+
 
 @dataclass(frozen=True, slots=True)
 class SideChannelBenchmarkReport:

@@ -17,6 +17,7 @@ from sc_neurocore.security.side_channel_benchmark import (
     SideChannelBenchmarkArm,
     SideChannelBenchmarkError,
     SideChannelBenchmarkRecord,
+    SideChannelDeployManifest,
     run_side_channel_leakage_benchmark,
     write_side_channel_benchmark_report,
 )
@@ -174,3 +175,28 @@ def test_side_channel_benchmark_record_rejects_invalid_contracts(kwargs, match) 
     values.update(kwargs)
     with pytest.raises(SideChannelBenchmarkError, match=match):
         SideChannelBenchmarkRecord(**values)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"schema_version": ""}, "schema_version"),
+        ({"evidence_class": ""}, "evidence_class"),
+        ({"benchmark_artifact": "bad"}, "benchmark_artifact"),
+        ({"security_parameters": "bad"}, "security_parameters"),
+        ({"overhead_measurements": "bad"}, "overhead_measurements"),
+        ({"boundary_notes": ()}, "boundary_notes"),
+    ],
+)
+def test_side_channel_deploy_manifest_rejects_invalid_contracts(kwargs, match) -> None:
+    values = {
+        "schema_version": SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION,
+        "evidence_class": "analytic_simulation",
+        "benchmark_artifact": {"path": "x.json"},
+        "security_parameters": {"bitstream_length": 16},
+        "overhead_measurements": {"dummy_stream_overhead_ratio": 0.0},
+        "boundary_notes": ("note",),
+    }
+    values.update(kwargs)
+    with pytest.raises(SideChannelBenchmarkError, match=match):
+        SideChannelDeployManifest(**values)
