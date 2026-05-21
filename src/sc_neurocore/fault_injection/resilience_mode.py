@@ -275,6 +275,12 @@ class FaultInjectionResilienceMode:
 
     @staticmethod
     def _validate_bitstreams(bitstreams: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        if not isinstance(bitstreams, np.ndarray):
+            raise ValueError("bitstreams must be a numpy.ndarray")
+        if not np.issubdtype(bitstreams.dtype, np.number):
+            raise ValueError("bitstreams must have numeric dtype")
+        if not np.isfinite(bitstreams.astype(np.float64)).all():
+            raise ValueError("bitstreams must contain only finite values")
         streams = np.asarray(bitstreams, dtype=np.uint8)
         if streams.ndim != 2:
             raise ValueError("bitstreams must have shape (neurons, bits)")

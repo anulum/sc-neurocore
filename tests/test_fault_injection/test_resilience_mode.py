@@ -132,6 +132,10 @@ def test_resilience_mode_rejects_invalid_inputs_and_config() -> None:
             radiation_profile=RadiationProfile("test", 0.0),
         )
     )
+    with pytest.raises(ValueError, match="numpy.ndarray"):
+        mode.run([[0, 1]])  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="finite"):
+        mode.run(np.array([[0.0, np.nan]], dtype=np.float64))
     with pytest.raises(ValueError, match="0/1"):
         mode.run(np.array([[0, 2]], dtype=np.uint8))
 
