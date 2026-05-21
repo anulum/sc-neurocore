@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Safety Certification Generator Tests
 
+import pytest
+
 from sc_neurocore.safety_cert.safety_cert import (
     ASILLevel,
     CCFAnalysis,
@@ -149,6 +151,33 @@ class TestFMEDA:
         fm = FailureMode("FM1", "x", "bad", FailureCategory.DANGEROUS_UNDETECTED, 100.0)
         fmeda.add_failure_mode(fm)
         assert fmeda.safe_failure_fraction == 0.0
+
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"fm_id": ""}, "fm_id"),
+            ({"component": ""}, "component"),
+            ({"description": ""}, "description"),
+            ({"failure_rate_fit": -1.0}, "failure_rate_fit"),
+            ({"failure_rate_fit": float("nan")}, "failure_rate_fit"),
+            ({"diagnostic_coverage": -0.1}, "diagnostic_coverage"),
+            ({"diagnostic_coverage": 1.1}, "diagnostic_coverage"),
+            ({"diagnostic_coverage": float("inf")}, "diagnostic_coverage"),
+        ],
+    )
+    def test_failure_mode_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "fm_id": "FM1",
+            "component": "neuron",
+            "description": "desc",
+            "category": FailureCategory.SAFE,
+            "failure_rate_fit": 1.0,
+            "diagnostic_coverage": 0.5,
+            "mitigation": "mitigate",
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            FailureMode(**values)
 
 
 # ── FormalProofCertificate Tests ─────────────────────────────────────
