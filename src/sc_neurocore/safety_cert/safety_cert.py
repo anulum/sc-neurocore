@@ -671,6 +671,26 @@ class CertificationPackage:
     package_hash: str = ""
     generated: str = ""
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.standard, SafetyStandard):
+            raise ValueError("standard must be a SafetyStandard")
+        if not isinstance(self.sil_level, SILLevel):
+            raise ValueError("sil_level must be a SILLevel")
+        for field_name in (
+            "traceability_report",
+            "fmeda_report",
+            "formal_cert_report",
+            "wcet_report",
+            "package_hash",
+            "generated",
+        ):
+            value = getattr(self, field_name)
+            if not isinstance(value, str):
+                raise ValueError(f"{field_name} must be a string")
+        for item in self.checklist:
+            if not isinstance(item, ChecklistItem):
+                raise ValueError("checklist must contain ChecklistItem entries")
+
     @property
     def checklist_coverage(self) -> float:
         if not self.checklist:
@@ -1237,6 +1257,23 @@ class PropertyGap:
     total_properties: int
     proven_properties: int
     missing_types: List[str]  # property types not covered
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.module, str) or not self.module.strip():
+            raise ValueError("module must be a non-empty string")
+        if isinstance(self.total_properties, bool) or not isinstance(self.total_properties, int):
+            raise ValueError("total_properties must be a non-negative integer")
+        if self.total_properties < 0:
+            raise ValueError("total_properties must be a non-negative integer")
+        if isinstance(self.proven_properties, bool) or not isinstance(self.proven_properties, int):
+            raise ValueError("proven_properties must be a non-negative integer")
+        if self.proven_properties < 0:
+            raise ValueError("proven_properties must be a non-negative integer")
+        if self.proven_properties > self.total_properties:
+            raise ValueError("proven_properties cannot exceed total_properties")
+        for item in self.missing_types:
+            if not isinstance(item, str) or not item.strip():
+                raise ValueError("missing_types must contain non-empty strings")
 
     @property
     def coverage(self) -> float:
