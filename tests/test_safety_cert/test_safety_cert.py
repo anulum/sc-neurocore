@@ -552,6 +552,31 @@ class TestCertificationGenerator:
         ("kwargs", "match"),
         [
             ({"standard": "IEC 61508"}, "standard"),
+            ({"target_sil": "SIL_2"}, "target_sil"),
+            ({"modules": []}, "modules"),
+            ({"modules": ["", "m2"]}, "modules"),
+            ({"formal_properties": "bad"}, "formal_properties"),
+            ({"formal_properties": ["bad"]}, "formal_properties"),
+            ({"network_config": "bad"}, "network_config"),
+        ],
+    )
+    def test_generate_rejects_invalid_contracts(self, kwargs, match):
+        gen = CertificationGenerator()
+        values = {
+            "standard": SafetyStandard.IEC_61508,
+            "target_sil": SILLevel.SIL_2,
+            "modules": ["sc_lif_neuron"],
+            "formal_properties": self._props(),
+            "network_config": None,
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            gen.generate(**values)
+
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"standard": "IEC 61508"}, "standard"),
             ({"sil_level": 2}, "sil_level"),
             ({"traceability_report": None}, "traceability_report"),
             ({"checklist": ["not-item"]}, "checklist"),

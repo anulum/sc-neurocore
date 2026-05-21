@@ -762,6 +762,23 @@ class CertificationGenerator:
         network_config: Optional[Dict[str, int]] = None,
     ) -> CertificationPackage:
         """Generate a complete certification package."""
+        if not isinstance(standard, SafetyStandard):
+            raise ValueError("standard must be a SafetyStandard")
+        if not isinstance(target_sil, SILLevel):
+            raise ValueError("target_sil must be a SILLevel")
+        if not isinstance(modules, list) or not modules:
+            raise ValueError("modules must be a non-empty list")
+        for module in modules:
+            if not isinstance(module, str) or not module.strip():
+                raise ValueError("modules must contain non-empty strings")
+        if not isinstance(formal_properties, list):
+            raise ValueError("formal_properties must be a list")
+        for prop in formal_properties:
+            if not isinstance(prop, FormalProperty):
+                raise ValueError("formal_properties must contain FormalProperty entries")
+        if network_config is not None and not isinstance(network_config, dict):
+            raise ValueError("network_config must be a dictionary when provided")
+
         # 1. Traceability
         tm = TraceabilityMatrix()
         for i, mod in enumerate(modules):
