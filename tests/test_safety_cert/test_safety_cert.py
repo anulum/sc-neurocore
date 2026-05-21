@@ -1274,6 +1274,12 @@ class TestChangeImpactTracker:
         with pytest.raises(ValueError, match="change"):
             ct.add_change("bad")  # type: ignore[arg-type]
 
+    def test_add_change_rejects_duplicate_change_ids(self):
+        ct = ChangeImpactTracker()
+        ct.add_change(ChangeRecord("C1", "a", ["n"], ["R1"], "low"))
+        with pytest.raises(ValueError, match="unique"):
+            ct.add_change(ChangeRecord("C1", "b", ["n"], ["R2"], "medium"))
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
