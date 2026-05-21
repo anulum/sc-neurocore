@@ -764,6 +764,28 @@ class CCFDefence:
     beta_reduction: float = 0.0  # Reduction in β-factor
     implemented: bool = False
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.defence_id, str) or not self.defence_id.strip():
+            raise ValueError("defence_id must be a non-empty string")
+        if not isinstance(self.description, str) or not self.description.strip():
+            raise ValueError("description must be a non-empty string")
+        if not isinstance(self.category, str) or self.category not in {
+            "separation",
+            "diversity",
+            "complexity",
+            "assessment",
+            "competence",
+        }:
+            raise ValueError(
+                "category must be one of: separation, diversity, complexity, assessment, competence"
+            )
+        if isinstance(self.beta_reduction, bool) or not isinstance(self.beta_reduction, int | float):
+            raise ValueError("beta_reduction must be a finite non-negative value")
+        if not math.isfinite(float(self.beta_reduction)) or float(self.beta_reduction) < 0.0:
+            raise ValueError("beta_reduction must be a finite non-negative value")
+        if not isinstance(self.implemented, bool):
+            raise ValueError("implemented must be a boolean")
+
 
 class CCFAnalysis:
     """IEC 61508 Annex D — β-factor estimation for common cause failures.
@@ -909,6 +931,23 @@ class ChangeRecord:
     affected_reqs: List[str]
     risk_level: str = "low"  # "low", "medium", "high"
     re_verification_needed: bool = False
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.change_id, str) or not self.change_id.strip():
+            raise ValueError("change_id must be a non-empty string")
+        if not isinstance(self.description, str) or not self.description.strip():
+            raise ValueError("description must be a non-empty string")
+        if not isinstance(self.risk_level, str) or self.risk_level not in {"low", "medium", "high"}:
+            raise ValueError("risk_level must be one of: low, medium, high")
+        if not isinstance(self.re_verification_needed, bool):
+            raise ValueError("re_verification_needed must be a boolean")
+
+        for module in self.affected_modules:
+            if not isinstance(module, str) or not module.strip():
+                raise ValueError("affected_modules must contain non-empty strings")
+        for req in self.affected_reqs:
+            if not isinstance(req, str) or not req.strip():
+                raise ValueError("affected_reqs must contain non-empty strings")
 
 
 class ChangeImpactTracker:

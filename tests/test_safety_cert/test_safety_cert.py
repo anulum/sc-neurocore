@@ -11,6 +11,7 @@ import pytest
 from sc_neurocore.safety_cert.safety_cert import (
     ASILLevel,
     CCFAnalysis,
+    CCFDefence,
     CertificationGenerator,
     CertificationPackage,
     ChangeImpactTracker,
@@ -577,6 +578,30 @@ class TestCCFAnalysis:
         ccf = CCFAnalysis()
         assert ccf.mark_implemented("NOPE") is False
 
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"defence_id": ""}, "defence_id"),
+            ({"description": ""}, "description"),
+            ({"category": "other"}, "category"),
+            ({"beta_reduction": -0.1}, "beta_reduction"),
+            ({"beta_reduction": float("nan")}, "beta_reduction"),
+            ({"beta_reduction": True}, "beta_reduction"),
+            ({"implemented": "yes"}, "implemented"),
+        ],
+    )
+    def test_ccf_defence_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "defence_id": "D1",
+            "description": "Physical separation",
+            "category": "separation",
+            "beta_reduction": 0.01,
+            "implemented": False,
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            CCFDefence(**values)
+
 
 # ── Proof-of-Test Coverage Tests (Gap 2) ──────────────────────────────
 
@@ -645,6 +670,30 @@ class TestChangeImpactTracker:
         ct.add_change(ChangeRecord("C1", "a", [], ["R1", "R2"]))
         ct.add_change(ChangeRecord("C2", "b", [], ["R2", "R3"]))
         assert ct.affected_requirements() == ["R1", "R2", "R3"]
+
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"change_id": ""}, "change_id"),
+            ({"description": ""}, "description"),
+            ({"risk_level": "critical"}, "risk_level"),
+            ({"re_verification_needed": "yes"}, "re_verification_needed"),
+            ({"affected_modules": ["", "mod"]}, "affected_modules"),
+            ({"affected_reqs": ["", "R1"]}, "affected_reqs"),
+        ],
+    )
+    def test_change_record_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "change_id": "C1",
+            "description": "desc",
+            "affected_modules": ["mod1"],
+            "affected_reqs": ["R1"],
+            "risk_level": "low",
+            "re_verification_needed": False,
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            ChangeRecord(**values)
 
 
 # ── Safety Manual Tests (Gap 5) ───────────────────────────────────────
