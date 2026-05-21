@@ -115,9 +115,18 @@ def compute_class_activity_proxy(
 def _normalise_sample_collection(
     bitstreams_by_sample: Sequence[Sequence[Sequence[int]]],
 ) -> tuple[tuple[tuple[int, ...], ...], ...]:
-    if not isinstance(bitstreams_by_sample, Sequence) or not bitstreams_by_sample:
+    if (
+        not isinstance(bitstreams_by_sample, Sequence)
+        or isinstance(bitstreams_by_sample, (bytes, str))
+        or not bitstreams_by_sample
+    ):
         raise SideChannelMetricError("bitstreams_by_sample must not be empty")
-    return tuple(_normalise_bitstream_matrix(sample) for sample in bitstreams_by_sample)
+    normalised: list[tuple[tuple[int, ...], ...]] = []
+    for sample in bitstreams_by_sample:
+        if not isinstance(sample, Sequence) or isinstance(sample, (bytes, str)):
+            raise SideChannelMetricError("each sample must be a non-empty bitstream matrix")
+        normalised.append(_normalise_bitstream_matrix(sample))
+    return tuple(normalised)
 
 
 def _normalise_bitstream_matrix(
@@ -150,7 +159,7 @@ def _normalise_bit(value: int) -> int:
 
 
 def _normalise_labels(labels: Sequence[int | float]) -> tuple[int | float, ...]:
-    if not isinstance(labels, Sequence) or not labels:
+    if not isinstance(labels, Sequence) or isinstance(labels, (bytes, str)) or not labels:
         raise SideChannelMetricError("labels must not be empty")
 
     normalised: list[int | float] = []

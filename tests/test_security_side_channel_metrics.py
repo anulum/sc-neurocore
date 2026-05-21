@@ -87,9 +87,37 @@ def test_class_activity_proxy_handles_zero_variance_without_fabricated_correlati
     assert proxy.label_activity_correlation is None
 
 
+def test_class_activity_proxy_handles_constant_labels_without_fabricated_correlation() -> None:
+    proxy = compute_class_activity_proxy(
+        (
+            ((0, 0, 0, 1),),
+            ((0, 1, 0, 1),),
+            ((1, 1, 0, 1),),
+        ),
+        (7, 7, 7),
+    )
+
+    assert proxy.class_means == {7: pytest.approx(2.0 / 3.0)}
+    assert proxy.max_class_mean_gap == 0.0
+    assert proxy.label_activity_correlation is None
+
+
 def test_class_activity_proxy_rejects_mismatched_or_nonfinite_inputs() -> None:
     with pytest.raises(SideChannelMetricError):
         compute_class_activity_proxy((((0, 1),),), (0, 1))
 
     with pytest.raises(SideChannelMetricError):
         compute_class_activity_proxy((((0, 1),),), (math.nan,))
+
+
+@pytest.mark.parametrize(
+    ("samples", "labels"),
+    [
+        ("invalid", (0,)),
+        ((((0, 1),),), "invalid"),
+        (((("not-a-row",),),), (0,)),
+    ],
+)
+def test_class_activity_proxy_rejects_string_like_contract_inputs(samples, labels) -> None:
+    with pytest.raises(SideChannelMetricError):
+        compute_class_activity_proxy(samples, labels)  # type: ignore[arg-type]
