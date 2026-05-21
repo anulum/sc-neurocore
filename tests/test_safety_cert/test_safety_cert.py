@@ -794,6 +794,7 @@ class TestCCFAnalysis:
             ({"description": ""}, "description"),
             ({"category": "other"}, "category"),
             ({"beta_reduction": -0.1}, "beta_reduction"),
+            ({"beta_reduction": 1.1}, "beta_reduction"),
             ({"beta_reduction": float("nan")}, "beta_reduction"),
             ({"beta_reduction": True}, "beta_reduction"),
             ({"implemented": "yes"}, "implemented"),
