@@ -24,6 +24,7 @@ from sc_neurocore.security.side_channel_benchmark import (
     _arm_payload,
     _class_proxy_payload,
     _deploy_manifest_payload,
+    _report_payload,
     _with_artifact_path,
     run_side_channel_leakage_benchmark,
     write_side_channel_benchmark_report,
@@ -315,6 +316,11 @@ def test_arm_payload_rejects_invalid_arm() -> None:
 def test_class_proxy_payload_rejects_invalid_proxy() -> None:
     with pytest.raises(SideChannelBenchmarkError, match="proxy"):
         _class_proxy_payload("bad")  # type: ignore[arg-type]
+
+
+def test_report_payload_rejects_invalid_report() -> None:
+    with pytest.raises(SideChannelBenchmarkError, match="report"):
+        _report_payload("bad")  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(
