@@ -174,6 +174,14 @@ class TestTraceabilityMatrix:
         assert "Traceability Matrix" in report
         assert "R1" in report
 
+    def test_generate_report_orders_rows_by_requirement_id(self):
+        tm = TraceabilityMatrix()
+        tm.add_requirement(Requirement("R2", "Test", SafetyStandard.IEC_61508))
+        tm.add_requirement(Requirement("R1", "Test", SafetyStandard.IEC_61508))
+        lines = tm.generate_report().splitlines()
+        req_rows = [line for line in lines if line.startswith("| R") and not line.startswith("| Req ID")]
+        assert req_rows == sorted(req_rows)
+
     def test_generate_report_rejects_corrupted_internal_state(self):
         tm = TraceabilityMatrix()
         tm.requirements["R1"] = "bad"  # type: ignore[assignment]

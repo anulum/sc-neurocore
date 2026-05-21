@@ -227,7 +227,7 @@ class TraceabilityMatrix:
             "| Req ID | Standard | SIL | Status | Impl | Verif |",
             "|--------|----------|-----|--------|------|-------|",
         ]
-        for req in self.requirements.values():
+        for req in sorted(self.requirements.values(), key=lambda r: r.req_id):
             lines.append(
                 f"| {req.req_id} | {req.standard.value} | SIL {req.sil_level.value} "
                 f"| {req.status} | {len(req.implementation_refs)} | {len(req.verification_refs)} |"
