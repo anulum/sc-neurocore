@@ -1714,6 +1714,10 @@ class FormalPropertyGapDetector:
         for module in required_modules:
             if not isinstance(module, str) or not module.strip():
                 raise ValueError("required_modules must contain non-empty strings")
+            if module != module.strip():
+                raise ValueError(
+                    "required_modules entries must not contain leading or trailing whitespace"
+                )
         by_module: Dict[str, List[FormalProperty]] = {}
         for p in properties:
             by_module.setdefault(p.module, []).append(p)

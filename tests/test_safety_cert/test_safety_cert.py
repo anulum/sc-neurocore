@@ -1721,6 +1721,7 @@ class TestFormalGapDetector:
             ([FormalProperty("P1", "n", "d", "assert", "proven"), "bad"], ["neuron"], "properties"),
             ([FormalProperty("P1", "n", "d", "assert", "proven")], "bad", "required_modules"),
             ([FormalProperty("P1", "n", "d", "assert", "proven")], [""], "required_modules"),
+            ([FormalProperty("P1", "n", "d", "assert", "proven")], [" neuron"], "whitespace"),
         ],
     )
     def test_detect_rejects_invalid_contracts(self, properties, required_modules, match):
