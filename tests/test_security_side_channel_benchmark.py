@@ -14,10 +14,12 @@ import pytest
 from sc_neurocore.security.side_channel_benchmark import (
     SIDE_CHANNEL_BENCHMARK_SCHEMA_VERSION,
     SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION,
+    SideChannelBenchmarkArm,
     SideChannelBenchmarkError,
     run_side_channel_leakage_benchmark,
     write_side_channel_benchmark_report,
 )
+from sc_neurocore.security.side_channel_metrics import compute_class_activity_proxy
 from sc_neurocore.security.thermal_sc_encoding import ThermalSCEncodingConfig
 
 
@@ -127,3 +129,26 @@ def test_side_channel_benchmark_maps_thermal_encoder_contract_errors() -> None:
                 max_dummy_overhead_ratio=1.0,
             ),
         )
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"name": ""}, "name"),
+        ({"class_activity_proxy": "bad"}, "class_activity_proxy"),
+        ({"dummy_stream_overhead_ratio": -0.1}, "dummy_stream_overhead_ratio"),
+        ({"dummy_stream_overhead_ratio": float("nan")}, "dummy_stream_overhead_ratio"),
+        ({"bitstream_count": -1}, "bitstream_count"),
+    ],
+)
+def test_side_channel_benchmark_arm_rejects_invalid_contracts(kwargs, match) -> None:
+    proxy = compute_class_activity_proxy((((0, 1),), ((1, 0),)), (0, 1))
+    values = {
+        "name": "baseline",
+        "class_activity_proxy": proxy,
+        "dummy_stream_overhead_ratio": 0.0,
+        "bitstream_count": 2,
+    }
+    values.update(kwargs)
+    with pytest.raises(SideChannelBenchmarkError, match=match):
+        SideChannelBenchmarkArm(**values)
