@@ -85,6 +85,31 @@ class GracefulDegradationPolicy:
     critical_length_multiplier: int = 4
     max_bitstream_length: int = 8192
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.doctor, StochasticDoctor):
+            raise ValueError("doctor must be a StochasticDoctor")
+        for field_name in ("warning_affected_ratio", "critical_affected_ratio"):
+            value = getattr(self, field_name)
+            if isinstance(value, bool) or not isinstance(value, int | float):
+                raise ValueError(f"{field_name} must be numeric")
+            value_f = float(value)
+            if not np.isfinite(value_f) or value_f < 0.0 or value_f > 1.0:
+                raise ValueError(f"{field_name} must be a finite value in [0, 1]")
+        if self.warning_affected_ratio > self.critical_affected_ratio:
+            raise ValueError("warning_affected_ratio cannot exceed critical_affected_ratio")
+        for field_name in ("warning_length_multiplier", "critical_length_multiplier"):
+            value = getattr(self, field_name)
+            if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+                raise ValueError(f"{field_name} must be a positive integer")
+        if self.warning_length_multiplier > self.critical_length_multiplier:
+            raise ValueError("warning_length_multiplier cannot exceed critical_length_multiplier")
+        if (
+            isinstance(self.max_bitstream_length, bool)
+            or not isinstance(self.max_bitstream_length, int)
+            or self.max_bitstream_length <= 0
+        ):
+            raise ValueError("max_bitstream_length must be a positive integer")
+
     def evaluate(
         self,
         bitstreams: np.ndarray[Any, Any],

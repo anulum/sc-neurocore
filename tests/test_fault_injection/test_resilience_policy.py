@@ -109,3 +109,20 @@ def test_rejects_non_binary_bitstreams() -> None:
             ber=0.0,
             seed=1,
         )
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"warning_affected_ratio": -0.1}, "warning_affected_ratio"),
+        ({"critical_affected_ratio": 1.1}, "critical_affected_ratio"),
+        ({"warning_affected_ratio": 0.5, "critical_affected_ratio": 0.1}, "cannot exceed"),
+        ({"warning_length_multiplier": 0}, "warning_length_multiplier"),
+        ({"critical_length_multiplier": 0}, "critical_length_multiplier"),
+        ({"warning_length_multiplier": 4, "critical_length_multiplier": 2}, "cannot exceed"),
+        ({"max_bitstream_length": 0}, "max_bitstream_length"),
+    ],
+)
+def test_rejects_invalid_policy_contracts(kwargs, match) -> None:
+    with pytest.raises(ValueError, match=match):
+        GracefulDegradationPolicy(**kwargs)  # type: ignore[arg-type]
