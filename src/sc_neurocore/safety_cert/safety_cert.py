@@ -1164,6 +1164,8 @@ class HFTAssessment:
         """Determine required HFT from SFF and target SIL."""
         if not isinstance(self.target_sil, SILLevel):
             raise ValueError("target_sil must be a SILLevel")
+        if not math.isfinite(float(self.sff)) or float(self.sff) < 0.0 or float(self.sff) > 1.0:
+            raise ValueError("sff must be a finite value in [0, 1]")
         if self.sff >= 0.99:
             if self.target_sil.value <= 3:
                 return HFTLevel.HFT_0
