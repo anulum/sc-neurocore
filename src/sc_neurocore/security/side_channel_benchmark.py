@@ -281,12 +281,18 @@ def write_side_channel_benchmark_report(
 ) -> SideChannelBenchmarkReport:
     """Run the analytic benchmark and write a canonical JSON artifact."""
 
+    if not isinstance(output_path, (str, Path)):
+        raise SideChannelBenchmarkError("output_path must be a string or Path")
+    if isinstance(output_path, str) and not output_path.strip():
+        raise SideChannelBenchmarkError("output_path must be a non-empty path")
     report = run_side_channel_leakage_benchmark(
         probabilities=probabilities,
         labels=labels,
         protected_config=protected_config,
     )
     path = Path(output_path)
+    if path.name in {"", ".", ".."}:
+        raise SideChannelBenchmarkError("output_path must resolve to a file path")
     report = _with_artifact_path(report, path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
