@@ -381,9 +381,6 @@ class FMEDA:
         return SILLevel.SIL_1
 
     def generate_report(self) -> str:
-        for prop in self.properties:
-            if not isinstance(prop, FormalProperty):
-                raise ValueError("properties must contain FormalProperty entries")
         lines = [
             "# FMEDA Report",
             f"Total failure rate: {self.total_failure_rate:.1f} FIT",
@@ -790,6 +787,9 @@ class CertificationPackage:
     def checklist_coverage(self) -> float:
         if not self.checklist:
             return 0.0
+        for item in self.checklist:
+            if not isinstance(item, ChecklistItem):
+                raise ValueError("checklist must contain ChecklistItem entries")
         addressed = sum(1 for c in self.checklist if c.status != "not_addressed")
         return addressed / len(self.checklist)
 
