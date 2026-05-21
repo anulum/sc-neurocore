@@ -760,6 +760,8 @@ class ComplianceChecklist:
             SafetyStandard.EN_50129: cls.EN_50129_CLAUSES,
         }
         clauses = clause_map.get(standard, [])
+        if len({clause for clause, _, _ in clauses}) != len(clauses):
+            raise ValueError("clause definitions must not contain duplicates")
         items = []
         for clause, desc, evidence in clauses:
             items.append(

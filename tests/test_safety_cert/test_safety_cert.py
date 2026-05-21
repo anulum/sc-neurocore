@@ -579,6 +579,18 @@ class TestComplianceChecklist:
         with pytest.raises(ValueError, match="standard"):
             ComplianceChecklist.generate("IEC 61508")  # type: ignore[arg-type]
 
+    def test_generate_rejects_duplicate_clause_definitions(self):
+        original = ComplianceChecklist.IEC_61508_CLAUSES
+        try:
+            ComplianceChecklist.IEC_61508_CLAUSES = [
+                ("7.4.2", "A", "formal/"),
+                ("7.4.2", "B", "formal/"),
+            ]
+            with pytest.raises(ValueError, match="duplicates"):
+                ComplianceChecklist.generate(SafetyStandard.IEC_61508)
+        finally:
+            ComplianceChecklist.IEC_61508_CLAUSES = original
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
