@@ -1095,6 +1095,8 @@ class ChangeImpactTracker:
         self.changes: List[ChangeRecord] = []
 
     def add_change(self, change: ChangeRecord) -> None:
+        if not isinstance(change, ChangeRecord):
+            raise ValueError("change must be a ChangeRecord")
         if change.risk_level in ("medium", "high"):
             change.re_verification_needed = True
         self.changes.append(change)
