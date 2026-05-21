@@ -614,9 +614,13 @@ def _expect_artifact_path(
     value = _expect_str(artifacts.get(key), f"artifacts.{key}")
     if artifact_root is None:
         return
-    path = Path(value)
+    path = Path(value).expanduser()
+    if path.is_symlink():
+        raise FormalReportValidationError(f"artifacts.{key} must not be a symlink: {path}")
     if not path.exists():
         raise FormalReportValidationError(f"artifacts.{key} does not exist: {path}")
+    if not path.is_file():
+        raise FormalReportValidationError(f"artifacts.{key} must be a regular file: {path}")
     root = Path(artifact_root).resolve()
     try:
         path.resolve().relative_to(root)
