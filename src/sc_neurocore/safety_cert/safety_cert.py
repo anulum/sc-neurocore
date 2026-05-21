@@ -1413,6 +1413,9 @@ class EvidenceBag:
 
     @property
     def file_count(self) -> int:
+        for item in self.items:
+            if not isinstance(item, EvidenceItem):
+                raise ValueError("items must contain EvidenceItem entries")
         return len(self.items)
 
     def manifest(self) -> str:
