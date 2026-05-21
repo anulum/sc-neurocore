@@ -28,6 +28,7 @@ from .bci_hil_manifest import (
 )
 from .dvs_input import DVSInputLayer
 from .real_world import LSLBridge, ROS2Node
+from .zenith_bci_loop import ZenithBCILoop, ZenithBCILoopConfig, ZenithBCILoopResult
 
 __all__ = [
     "BCIEncoder",
@@ -46,4 +47,7 @@ __all__ = [
     "DVSInputLayer",
     "LSLBridge",
     "ROS2Node",
+    "ZenithBCILoop",
+    "ZenithBCILoopConfig",
+    "ZenithBCILoopResult",
 ]

@@ -43,6 +43,7 @@ from sc_neurocore.arcane_zenith import (
     ArcaneZenithCognitiveCore,
     create_arcane_neuron_with_zenith_plasticity,
 )
+from sc_neurocore.fault_injection import RadiationProfile
 from sc_neurocore.neurons.models.arcane_neuron import ArcaneNeuron
 
 
@@ -200,6 +201,64 @@ class TestStepFromBioRates:
         assert 0.001 <= core.neuron.lr_base <= 0.1
 
 
+class TestBioPathwayResilience:
+    @pytest.fixture
+    def core(self) -> ArcaneZenithCognitiveCore:
+        return create_arcane_neuron_with_zenith_plasticity(backend="torch")
+
+    def test_resilience_payload_contains_pathway_identity(self, core):
+        payload = core.evaluate_bio_pathway_resilience(
+            {2: 20.0, 0: 5.0, 1: 10.0},
+            pathway_name="visual-cortex",
+            bitstream_length=64,
+            radiation_profile=RadiationProfile("test", 0.01, "pathway stress"),
+            seed=12,
+        )
+
+        assert payload["layer_id"] == "bio:visual-cortex"
+        assert payload["pathway_name"] == "visual-cortex"
+        assert payload["pathway_channels"] == [0, 1, 2]
+        assert payload["input_shape"] == [3, 64]
+        assert payload["seed"] == 12
+
+    def test_resilience_is_deterministic_for_same_seed(self, core):
+        rates = {0: 8.0, 1: 16.0}
+        first = core.evaluate_bio_pathway_resilience(
+            rates,
+            pathway_name="motor",
+            bitstream_length=32,
+            seed=99,
+        )
+        second = core.evaluate_bio_pathway_resilience(
+            rates,
+            pathway_name="motor",
+            bitstream_length=32,
+            seed=99,
+        )
+
+        assert first == second
+
+    def test_resilience_empty_rates_falls_back_to_single_channel(self, core):
+        payload = core.evaluate_bio_pathway_resilience(
+            {},
+            pathway_name="silent",
+            bitstream_length=16,
+            seed=7,
+        )
+        assert payload["input_shape"] == [1, 16]
+        assert payload["nominal_probability"] == 0.0
+
+    def test_resilience_rejects_invalid_arguments(self, core):
+        with pytest.raises(ValueError, match="pathway_name"):
+            core.evaluate_bio_pathway_resilience({0: 1.0}, pathway_name="")
+        with pytest.raises(ValueError, match="bitstream_length"):
+            core.evaluate_bio_pathway_resilience(
+                {0: 1.0},
+                pathway_name="ok",
+                bitstream_length=0,
+            )
+
+
 # ---------------------------------------------------------------------------
 # reset — spike compartments clear, identity persists.
 # ---------------------------------------------------------------------------
@@ -354,3 +413,96 @@ class TestStepFromGenome:
         assert 0.01 <= core.neuron.surprise_baseline <= 0.5
         assert 0.0 <= core.neuron.delta_conf <= 1.0
         assert 0.001 <= core.neuron.lr_base <= 0.1
+
+
+class TestMetaLearningEpisode:
+    def test_episode_returns_deterministic_summary_and_trace(self):
+        core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
+        currents = [0.0, 1.0, 2.0, 3.0, 2.0, 1.0]
+        result = core.run_meta_learning_episode(currents, reset_before=True)
+
+        assert result["steps"] == len(currents)
+        assert 0 <= result["spike_count"] <= len(currents)
+        assert 0.0 <= result["spike_rate"] <= 1.0
+        assert len(result["trace"]) == len(currents)
+        assert result["trace"][0]["current"] == pytest.approx(currents[0])
+        assert result["trace"][-1]["current"] == pytest.approx(currents[-1])
+
+    def test_episode_trace_contains_required_contract_fields(self):
+        core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
+        result = core.run_meta_learning_episode([0.25, 0.5, 0.75], reset_before=True)
+
+        required = {
+            "current",
+            "spike",
+            "tau_deep",
+            "surprise_baseline",
+            "delta_conf",
+            "lr_base",
+            "novelty",
+            "confidence",
+            "identity_drift",
+        }
+        for item in result["trace"]:
+            assert required.issubset(item.keys())
+            assert 1000.0 <= float(item["tau_deep"]) <= 50000.0
+            assert 0.01 <= float(item["surprise_baseline"]) <= 0.5
+            assert 0.0 <= float(item["delta_conf"]) <= 1.0
+            assert 0.001 <= float(item["lr_base"]) <= 0.1
+
+    def test_episode_rejects_empty_currents(self):
+        core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
+        with pytest.raises(ValueError, match="currents must be non-empty"):
+            core.run_meta_learning_episode([])
+
+    def test_compact_reasoning_trace_export(self):
+        core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
+        core.run_meta_learning_episode([1.0, 2.0, 3.0], reset_before=True)
+        trace = core.export_reasoning_trace()
+
+        assert set(trace.keys()) == {
+            "novelty",
+            "confidence",
+            "identity_drift",
+            "tau_deep",
+            "surprise_baseline",
+            "delta_conf",
+            "lr_base",
+        }
+        assert 1000.0 <= trace["tau_deep"] <= 50000.0
+        assert 0.01 <= trace["surprise_baseline"] <= 0.5
+        assert 0.0 <= trace["delta_conf"] <= 1.0
+        assert 0.001 <= trace["lr_base"] <= 0.1
+
+
+class TestSymbolicReasoningLog:
+    def test_reasoning_log_has_stable_schema_and_fields(self):
+        core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
+        core.step(1.5)
+        log = core.export_symbolic_reasoning_log()
+
+        assert log["schema_version"] == "sc-neurocore.arcane-zenith.symbolic-reasoning-log.v1"
+        assert isinstance(log["tick"], int)
+        assert log["novelty_level"] in {"low", "medium", "high"}
+        assert log["novelty_shift"] in {"rising", "falling", "steady"}
+        assert log["confidence_trend"] in {"rising", "falling", "steady"}
+        assert log["identity_shift"] in {"stable", "drifting"}
+        assert log["adaptation_regime"] in {"conservative", "aggressive"}
+
+    def test_reasoning_log_tick_progresses_after_steps(self):
+        core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
+        core.step(0.5)
+        first = core.export_symbolic_reasoning_log()
+        core.step(0.5)
+        second = core.export_symbolic_reasoning_log()
+        assert second["tick"] > first["tick"]
+
+    def test_episode_trace_embeds_symbolic_log(self):
+        core = create_arcane_neuron_with_zenith_plasticity(backend="torch")
+        result = core.run_meta_learning_episode([0.2, 0.4, 0.6], reset_before=True)
+        for row in result["trace"]:
+            assert "symbolic_log" in row
+            embedded = row["symbolic_log"]
+            assert (
+                embedded["schema_version"] == "sc-neurocore.arcane-zenith.symbolic-reasoning-log.v1"
+            )

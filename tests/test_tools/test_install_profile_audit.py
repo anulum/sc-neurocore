@@ -65,6 +65,12 @@ def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
         "missing_static_primitives": [],
         "conda_recipe_aligned": True,
         "docker_wheel_build_covers_static_primitives": True,
+        "hub_dependency_mirrors": ["mirrors/wheelhouse", "mirrors/huggingface"],
+        "hub_air_gapped_contract": {
+            "requires_local_dependency_mirrors": True,
+            "dependency_mirror_dirs": ["mirrors/wheelhouse", "mirrors/huggingface"],
+        },
+        "hub_offline_mirror_gate": True,
     }
     assert report["passed"] is True
 

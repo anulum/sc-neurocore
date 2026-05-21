@@ -246,3 +246,69 @@ class TestTorchRuleLayerReset:
         layer = self._drive(RULE_ELIGENT)
         layer.reset()
         assert torch.all(layer.eligibility == 0.0)
+
+    def test_scalar_mixed_precision_quantises_weights_and_traces(self):
+        import torch
+
+        layer = create_plasticity_layer(
+            count=4,
+            rule_type=RULE_STDP,
+            backend="torch",
+            autograd=False,
+            weight=0.37,
+            weight_bits=3,
+            trace_bits=4,
+            weight_clip=1.0,
+            trace_clip=1.0,
+        )
+
+        pre = torch.tensor([1.0, 1.0, 1.0, 1.0])
+        post = torch.tensor([0.0, 1.0, 0.0, 1.0])
+        rewards = torch.zeros(4)
+        for _ in range(8):
+            layer.forward(pre, post, rewards, dt=1.0)
+
+        w_step = 1.0 / ((2 ** (3 - 1)) - 1)  # 3-bit signed grid in [-1,1]
+        t_step = 1.0 / ((2 ** (4 - 1)) - 1)  # 4-bit signed grid in [-1,1]
+        scaled_w = layer.weights.detach() / w_step
+        scaled_pre = layer.pre_trace.detach() / t_step
+        scaled_post = layer.post_trace.detach() / t_step
+
+        assert torch.allclose(scaled_w, torch.round(scaled_w), atol=1e-5)
+        assert torch.allclose(scaled_pre, torch.round(scaled_pre), atol=1e-5)
+        assert torch.allclose(scaled_post, torch.round(scaled_post), atol=1e-5)
+
+    def test_per_synapse_weight_bits_accept_vector_spec(self):
+        import torch
+
+        bits = [2, 3, 4, 5]
+        layer = create_plasticity_layer(
+            count=4,
+            rule_type=RULE_STDP,
+            backend="torch",
+            autograd=False,
+            weight=0.49,
+            weight_bits=bits,
+            weight_clip=1.0,
+        )
+
+        pre = torch.ones(4)
+        post = torch.tensor([1.0, 0.0, 1.0, 0.0])
+        rewards = torch.zeros(4)
+        layer.forward(pre, post, rewards, dt=1.0)
+
+        weights = layer.weights.detach()
+        for idx, bit_width in enumerate(bits):
+            step = 1.0 / ((2 ** (bit_width - 1)) - 1)
+            scaled = weights[idx] / step
+            assert torch.allclose(scaled, torch.round(scaled), atol=1e-5)
+
+    def test_rejects_malformed_weight_bits_vector_length(self):
+        with pytest.raises(ValueError, match="weight_bits must be scalar or have length 4"):
+            create_plasticity_layer(
+                count=4,
+                rule_type=RULE_STDP,
+                backend="torch",
+                autograd=False,
+                weight_bits=[4, 4, 4],
+            )

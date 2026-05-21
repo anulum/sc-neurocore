@@ -13,13 +13,18 @@ plasticity hardware ecosystem. The neuron's own meta-parameters (tau, thresholds
 are fully controlled by dynamically adapting synaptic plasticity traces driven by structural novelty.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Sequence
 
 import numpy as np
 
 from sc_neurocore.neurons.models.arcane_neuron import ArcaneNeuron
 from sc_neurocore.plasticity import create_plasticity_layer
 from sc_neurocore.evo_substrate.evo_substrate import Genome
+from sc_neurocore.fault_injection import (
+    FaultInjectionResilienceMode,
+    RadiationProfile,
+    ResilienceModeConfig,
+)
 
 
 class ArcaneZenithCognitiveCore:
@@ -39,6 +44,8 @@ class ArcaneZenithCognitiveCore:
 
     def __init__(self, backend: str = "torch", **kwargs: Any) -> None:
         self.neuron = ArcaneNeuron()
+        self._reasoning_tick = 0
+        self._last_reasoning_state: dict[str, float] | None = None
 
         # RULE_REWARD_STDP seamlessly interpolates weights bounded [0, 1] mapped dynamically to limits
         self.tau_rule = create_plasticity_layer(
@@ -87,8 +94,25 @@ class ArcaneZenithCognitiveCore:
         self.neuron.surprise_baseline = self._map_to_range(w_nov, 0.01, 0.5)
         self.neuron.delta_conf = self._map_to_range(w_conf, 0.0, 1.0)
         self.neuron.lr_base = self._map_to_range(w_lr, 0.001, 0.1)
+        self._reasoning_tick += 1
 
         return spike
+
+    @staticmethod
+    def _level(value: float, *, low: float, high: float) -> str:
+        if value < low:
+            return "low"
+        if value > high:
+            return "high"
+        return "medium"
+
+    @staticmethod
+    def _trend(delta: float, *, eps: float = 1e-6) -> str:
+        if delta > eps:
+            return "rising"
+        if delta < -eps:
+            return "falling"
+        return "steady"
 
     def step_from_bio_rates(self, rates: Dict[int, float]) -> None:
         """Modulate phenomenological bounds leveraging a multi-channel biological firing rate map.
@@ -100,6 +124,161 @@ class ArcaneZenithCognitiveCore:
 
         # Step the unified physical simulation one tick forward mapped to the mean bio rate
         self.step(float(mean_rate))
+
+    def evaluate_bio_pathway_resilience(
+        self,
+        rates: Dict[int, float],
+        *,
+        pathway_name: str,
+        bitstream_length: int = 256,
+        radiation_profile: RadiationProfile | None = None,
+        seed: int = 0,
+    ) -> Dict[str, Any]:
+        """Run deterministic fault-injection resilience over biological pathways.
+
+        Converts each pathway-rate channel into a reproducible stochastic bitstream and
+        evaluates it through the seeded resilience mode.
+        """
+        if not pathway_name:
+            raise ValueError("pathway_name must be non-empty")
+        if bitstream_length <= 0:
+            raise ValueError("bitstream_length must be positive")
+
+        profile = radiation_profile or RadiationProfile(
+            "zenith-bio-default",
+            1e-4,
+            "Default biological pathway resilience stress",
+        )
+        bitstreams = self._pathway_bitstreams(rates, bitstream_length=bitstream_length, seed=seed)
+        config = ResilienceModeConfig(
+            layer_id=f"bio:{pathway_name}",
+            radiation_profile=profile,
+            seed=seed,
+        )
+        report = FaultInjectionResilienceMode(config).run(bitstreams)
+        payload = report.to_dict()
+        payload["pathway_name"] = pathway_name
+        payload["pathway_channels"] = sorted(int(key) for key in rates)
+        return payload
+
+    @staticmethod
+    def _pathway_bitstreams(
+        rates: Dict[int, float],
+        *,
+        bitstream_length: int,
+        seed: int,
+    ) -> np.ndarray[Any, Any]:
+        channels = sorted(int(key) for key in rates)
+        if not channels:
+            return np.zeros((1, bitstream_length), dtype=np.uint8)
+
+        values = np.array([max(0.0, float(rates[channel])) for channel in channels], dtype=np.float64)
+        max_rate = float(np.max(values))
+        if max_rate <= 0.0:
+            probs = np.zeros_like(values)
+        else:
+            probs = np.clip(values / max_rate, 0.0, 1.0)
+
+        rng = np.random.default_rng(seed)
+        draws = rng.random((len(channels), bitstream_length))
+        return (draws < probs[:, None]).astype(np.uint8)
+
+    def run_meta_learning_episode(
+        self,
+        currents: Sequence[float],
+        *,
+        reset_before: bool = False,
+    ) -> Dict[str, Any]:
+        """Run a full outer-loop adaptation episode over a current sequence.
+
+        This is the production-facing built-in meta-learning loop for ArcaneZenith:
+        each input current advances neuron state, updates four Zenith plasticity
+        rules, remaps bounded meta-parameters, and records a deterministic trace.
+        """
+        if reset_before:
+            self.reset()
+        if not currents:
+            raise ValueError("currents must be non-empty")
+
+        trace: list[dict[str, float | int]] = []
+        spikes = 0
+
+        for current in currents:
+            spike = int(self.step(float(current)))
+            spikes += spike
+            state = self.get_state()
+            trace.append(
+                {
+                    "current": float(current),
+                    "spike": spike,
+                    "tau_deep": float(self.neuron.tau_deep),
+                    "surprise_baseline": float(self.neuron.surprise_baseline),
+                    "delta_conf": float(self.neuron.delta_conf),
+                    "lr_base": float(self.neuron.lr_base),
+                    "novelty": float(state["novelty"]),
+                    "confidence": float(state["confidence"]),
+                    "identity_drift": float(state["identity_drift"]),
+                    "symbolic_log": self.export_symbolic_reasoning_log(),
+                }
+            )
+
+        return {
+            "steps": len(currents),
+            "spike_count": spikes,
+            "spike_rate": float(spikes / len(currents)),
+            "final_state": self.get_state(),
+            "trace": trace,
+        }
+
+    def export_reasoning_trace(self) -> Dict[str, float]:
+        """Export a compact symbolic trace for outer-loop introspection."""
+        state = self.get_state()
+        return {
+            "novelty": float(state["novelty"]),
+            "confidence": float(state["confidence"]),
+            "identity_drift": float(state["identity_drift"]),
+            "tau_deep": float(self.neuron.tau_deep),
+            "surprise_baseline": float(self.neuron.surprise_baseline),
+            "delta_conf": float(self.neuron.delta_conf),
+            "lr_base": float(self.neuron.lr_base),
+        }
+
+    def export_symbolic_reasoning_log(self) -> Dict[str, Any]:
+        """Export a short symbolic self-verification log for downstream audit."""
+        current = self.export_reasoning_trace()
+        previous = self._last_reasoning_state
+
+        novelty = current["novelty"]
+        confidence = current["confidence"]
+        drift = current["identity_drift"]
+        if previous is None:
+            confidence_delta = 0.0
+            drift_delta = 0.0
+            novelty_delta = 0.0
+        else:
+            confidence_delta = confidence - previous["confidence"]
+            drift_delta = drift - previous["identity_drift"]
+            novelty_delta = novelty - previous["novelty"]
+
+        self._last_reasoning_state = dict(current)
+
+        return {
+            "schema_version": "sc-neurocore.arcane-zenith.symbolic-reasoning-log.v1",
+            "tick": self._reasoning_tick,
+            "novelty_level": self._level(novelty, low=0.33, high=0.66),
+            "novelty_shift": self._trend(novelty_delta, eps=1e-3),
+            "confidence_trend": self._trend(confidence_delta, eps=1e-4),
+            "identity_shift": "drifting" if drift_delta > 1e-6 else "stable",
+            "adaptation_regime": ("aggressive" if current["lr_base"] > 0.05 else "conservative"),
+            "evidence": {
+                "novelty": novelty,
+                "confidence": confidence,
+                "identity_drift": drift,
+                "tau_deep": current["tau_deep"],
+                "delta_conf": current["delta_conf"],
+                "lr_base": current["lr_base"],
+            },
+        }
 
     def step_from_genome(self, genome: Genome) -> None:
         """Modulate phenomenological bounds leveraging a generated Evo Substrate Genome.

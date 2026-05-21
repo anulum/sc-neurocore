@@ -210,6 +210,16 @@ class TestOnChipLearning:
         assert "brainscales2" in cfg
         assert "tau_plus_ms:" in cfg
 
+    def test_rejects_unknown_export_format(self):
+        from sc_neurocore.compiler.intelligence import (
+            generate_learning_params,
+            export_learning_config,
+        )
+
+        params = generate_learning_params()
+        with pytest.raises(ValueError, match="Unsupported learning config format"):
+            export_learning_config(params, output_format="toml")
+
     def test_custom_weight_bounds(self):
         from sc_neurocore.compiler.intelligence import (
             generate_learning_params,
@@ -383,6 +393,30 @@ class TestDVSBridge:
         v = generate_dvs_aer_bridge()
         assert "fifo_overflow" in v
         assert "overflow_r" in v
+
+
+class TestOpenSourceMakefile:
+    """Open-source FPGA build recipe generation."""
+
+    def test_ice40_recipe_uses_icepack_flow(self):
+        from sc_neurocore.compiler.intelligence import generate_oss_makefile
+
+        makefile = generate_oss_makefile("sc_lif", target="ice40")
+        assert "nextpnr-ice40" in makefile
+        assert "icepack" in makefile
+
+    def test_ecp5_recipe_uses_ecppack_flow(self):
+        from sc_neurocore.compiler.intelligence import generate_oss_makefile
+
+        makefile = generate_oss_makefile("sc_lif", target="ecp5", device="um5g-85k")
+        assert "nextpnr-ecp5 --um5g-85k" in makefile
+        assert "ecppack" in makefile
+
+    def test_rejects_unknown_open_source_target(self):
+        from sc_neurocore.compiler.intelligence import generate_oss_makefile
+
+        with pytest.raises(ValueError, match="Unsupported open-source FPGA target"):
+            generate_oss_makefile("sc_lif", target="gowin")  # type: ignore[arg-type]
 
 
 class TestSLRPlacement:
@@ -980,6 +1014,50 @@ class TestWeightROM:
         w = [[1]]
         mif = generate_weight_rom(w, data_width=8, output_format="mif")
         assert "WIDTH=8" in mif
+
+    def test_rejects_unknown_output_format(self):
+        """Unknown memory formats must not silently emit Verilog."""
+        from sc_neurocore.compiler.intelligence import generate_weight_rom
+
+        with pytest.raises(ValueError, match="Unsupported weight ROM format"):
+            generate_weight_rom([[1]], output_format="hex")
+
+
+class TestWeightNoise:
+    """Analog device-variation weight-noise injection."""
+
+    def test_gaussian_noise_is_seeded_and_shape_preserving(self):
+        from sc_neurocore.compiler.intelligence import inject_weight_noise
+
+        weights = [[0.25, -0.5], [1.0, 0.0]]
+        first = inject_weight_noise(weights, noise_model="gaussian", sigma=0.1, seed=7)
+        second = inject_weight_noise(weights, noise_model="gaussian", sigma=0.1, seed=7)
+
+        assert first == second
+        assert len(first) == len(weights)
+        assert all(len(row) == len(src) for row, src in zip(first, weights, strict=True))
+
+    def test_uniform_noise_is_bounded_by_sigma_scale(self):
+        from sc_neurocore.compiler.intelligence import inject_weight_noise
+
+        weights = [[-2.0, 0.0, 2.0]]
+        noisy = inject_weight_noise(weights, noise_model="uniform", sigma=0.25, seed=11)
+
+        for original, perturbed in zip(weights[0], noisy[0], strict=True):
+            assert abs(perturbed - original) <= 0.5
+
+    def test_zero_matrix_has_absolute_noise_scale_fallback(self):
+        from sc_neurocore.compiler.intelligence import inject_weight_noise
+
+        noisy = inject_weight_noise([[0.0, 0.0]], noise_model="uniform", sigma=0.1, seed=3)
+
+        assert all(-0.1 <= value <= 0.1 for value in noisy[0])
+
+    def test_rejects_unknown_noise_model(self):
+        from sc_neurocore.compiler.intelligence import inject_weight_noise
+
+        with pytest.raises(ValueError, match="Unsupported weight noise model"):
+            inject_weight_noise([[1.0]], noise_model="triangular")
 
 
 class TestTimescalePartitioner:

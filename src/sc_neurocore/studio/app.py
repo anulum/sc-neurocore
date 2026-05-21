@@ -11,13 +11,23 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import time
+import tempfile
 from collections import OrderedDict
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+import numpy as np
+from pydantic import BaseModel, Field, StringConstraints
+from typing import Annotated
+from sc_neurocore.compiler import (
+    auto_tune_synapse_precisions,
+    assign_synapse_precisions,
+    write_precision_formal_evidence_bundle,
+)
 
 from sc_neurocore.studio.analysis import (
     bifurcation_sweep,
@@ -76,7 +86,13 @@ from sc_neurocore.studio.training import (
     stream_metrics,
 )
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
-from sc_neurocore.studio.presets import get_preset, list_presets
+from sc_neurocore.studio.presets import (
+    get_preset,
+    get_preset_action,
+    get_preset_actions,
+    list_preset_action_catalog,
+    list_presets,
+)
 from sc_neurocore.studio.simulation import simulate
 from sc_neurocore.studio.templates import get_template, list_templates
 
@@ -176,6 +192,61 @@ class PrecisionRequest(BaseModel):
     dt: float = 0.1
     duration: float = 200.0
     current: float = 10.0
+
+
+class AdaptivePrecisionAutoTuneRequest(BaseModel):
+    layer_weights: list[list[list[float]] | list[float]]
+    layer_names: list[str] | None = None
+    target_error_percent: float = Field(default=0.1, gt=0.0, le=10.0)
+    min_bits: int = Field(default=4, ge=1, le=32)
+    max_bits: int = Field(default=16, ge=1, le=32)
+    min_length: int = Field(default=32, ge=1, le=65536)
+    max_length: int = Field(default=4096, ge=1, le=262144)
+    confidence: float = Field(default=0.95, gt=0.0, lt=1.0)
+
+
+class AdaptivePrecisionFormalBundleRequest(BaseModel):
+    layer_weights: list[list[list[float]] | list[float]]
+    layer_names: list[str] | None = None
+    target_error_percent: float = Field(default=0.1, gt=0.0, le=10.0)
+    min_bits: int = Field(default=4, ge=1, le=32)
+    max_bits: int = Field(default=16, ge=1, le=32)
+    min_length: int = Field(default=32, ge=1, le=65536)
+    max_length: int = Field(default=4096, ge=1, le=262144)
+    confidence: float = Field(default=0.95, gt=0.0, lt=1.0)
+    module_name: str = Field(default="adaptive_precision_plan", min_length=1, max_length=128)
+
+
+class PresetActionResolveRequest(BaseModel):
+    overrides: dict[str, Any] = Field(default_factory=dict)
+
+
+class PresetActionsExecuteAllRequest(BaseModel):
+    action_overrides: dict[str, dict[str, Any]] = Field(default_factory=dict)
+
+
+class PresetDefaultFlowRunRequest(BaseModel):
+    action_overrides: dict[str, dict[str, Any]] = Field(default_factory=dict)
+
+
+class PresetDefaultFlowVerifyRequest(BaseModel):
+    action_order: list[str]
+    template_fingerprints: dict[str, Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]]
+    plan_fingerprint_sha256: Annotated[
+        str | None, StringConstraints(pattern=r"^[0-9a-f]{64}$")
+    ] = None
+
+
+class PresetDefaultFlowGuardedRunRequest(BaseModel):
+    action_order: list[str]
+    template_fingerprints: dict[str, Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]]
+    plan_fingerprint_sha256: Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
+    action_overrides: dict[str, dict[str, Any]] = Field(default_factory=dict)
+
+
+class PresetDefaultFlowRunFromContractRequest(BaseModel):
+    contract: dict[str, Any]
+    action_overrides: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 
 class CompareRequest(BaseModel):
@@ -325,6 +396,247 @@ def _make_simulate_fn(req_dict: dict[str, Any]) -> Callable[..., dict[str, Any]]
         return fn
 
 
+def _parse_layer_weight_arrays(
+    layer_weights: list[list[list[float]] | list[float]],
+) -> list[np.ndarray[Any, Any]]:
+    arrays: list[np.ndarray[Any, Any]] = []
+    for idx, layer in enumerate(layer_weights):
+        array = np.asarray(layer, dtype=float)
+        if array.ndim not in {1, 2}:
+            raise ValueError(f"layer {idx} must be 1D or 2D")
+        if array.size == 0:
+            raise ValueError(f"layer {idx} must not be empty")
+        if not np.all(np.isfinite(array)):
+            raise ValueError(f"layer {idx} contains non-finite values")
+        arrays.append(array)
+    return arrays
+
+
+def _resolve_action_payload(
+    preset_id: str,
+    action_id: str,
+    action: dict[str, Any],
+    payload_template: dict[str, Any],
+    overrides: dict[str, Any],
+) -> dict[str, Any]:
+    if not isinstance(overrides, dict):
+        raise ValueError("overrides must be an object")
+    unknown = set(overrides) - set(payload_template)
+    if unknown:
+        bad = ", ".join(sorted(unknown))
+        raise ValueError(f"unknown override keys: {bad}")
+
+    resolved = dict(payload_template)
+    for key, value in overrides.items():
+        template_value = payload_template[key]
+        if template_value is not None and not isinstance(value, type(template_value)):
+            raise ValueError(f"override type mismatch for key '{key}'")
+        resolved[key] = value
+
+    return {
+        "preset_id": preset_id,
+        "action_id": action_id,
+        "method": action.get("method"),
+        "endpoint": action.get("endpoint"),
+        "payload": resolved,
+    }
+
+
+def _run_adaptive_precision_auto_tune_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    layer_arrays = _parse_layer_weight_arrays(payload["layer_weights"])
+    return auto_tune_synapse_precisions(
+        layer_arrays,
+        layer_names=payload.get("layer_names"),
+        target_error_percent=float(payload.get("target_error_percent", 0.1)),
+        min_bits=int(payload.get("min_bits", 4)),
+        max_bits=int(payload.get("max_bits", 16)),
+        min_length=int(payload.get("min_length", 32)),
+        max_length=int(payload.get("max_length", 4096)),
+        confidence=float(payload.get("confidence", 0.95)),
+    )
+
+
+def _run_adaptive_precision_formal_bundle_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    layer_arrays = _parse_layer_weight_arrays(payload["layer_weights"])
+    assignments = assign_synapse_precisions(
+        layer_arrays,
+        layer_names=payload.get("layer_names"),
+        target_error=float(payload.get("target_error_percent", 0.1)) / 100.0,
+        min_bits=int(payload.get("min_bits", 4)),
+        max_bits=int(payload.get("max_bits", 16)),
+        min_length=int(payload.get("min_length", 32)),
+        max_length=int(payload.get("max_length", 4096)),
+        confidence=float(payload.get("confidence", 0.95)),
+    )
+    module_name = str(payload.get("module_name", "adaptive_precision_plan"))
+    with tempfile.TemporaryDirectory(prefix="scnc_precision_bundle_") as tmp_dir:
+        bundle_manifest = write_precision_formal_evidence_bundle(
+            tmp_dir, assignments, module_name=module_name
+        )
+        root = Path(tmp_dir)
+        artifact_texts: dict[str, str] = {}
+        for key, rel_path in bundle_manifest["artifacts"].items():
+            artifact_path = root / rel_path
+            if artifact_path.exists():
+                artifact_texts[key] = artifact_path.read_text(encoding="utf-8")
+            else:
+                artifact_texts[key] = ""
+        formal_manifest_path = root / f"{module_name}_formal_manifest.json"
+        return {
+            "bundle_manifest": bundle_manifest,
+            "formal_manifest_json": formal_manifest_path.read_text(encoding="utf-8"),
+            "artifacts_text": artifact_texts,
+        }
+
+
+def _execute_resolved_preset_action(resolved: dict[str, Any]) -> dict[str, Any]:
+    endpoint = resolved.get("endpoint")
+    payload = resolved.get("payload")
+    if not isinstance(payload, dict):
+        raise ValueError("resolved payload must be an object")
+    if endpoint == "/api/adaptive-precision/auto-tune":
+        return _run_adaptive_precision_auto_tune_payload(payload)
+    if endpoint == "/api/adaptive-precision/formal-bundle":
+        return _run_adaptive_precision_formal_bundle_payload(payload)
+    raise ValueError(f"preset action endpoint is not executable: {endpoint}")
+
+
+def _is_executable_preset_action_endpoint(endpoint: Any) -> bool:
+    return endpoint in {
+        "/api/adaptive-precision/auto-tune",
+        "/api/adaptive-precision/formal-bundle",
+    }
+
+
+def _sha256_json(payload: dict[str, Any]) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode(
+        "utf-8"
+    )
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _default_flow_actions(preset_id: str) -> list[dict[str, Any]]:
+    actions = get_preset_actions(preset_id)
+    return [
+        action
+        for action in actions
+        if _is_executable_preset_action_endpoint(action.get("endpoint"))
+    ]
+
+
+def _build_default_flow_plan_payload(preset_id: str) -> dict[str, Any]:
+    actions = _default_flow_actions(preset_id)
+    plan_actions: list[dict[str, Any]] = []
+    for action in actions:
+        action_id = action.get("id")
+        endpoint = action.get("endpoint")
+        method = action.get("method")
+        template = action.get("payload_template")
+        if not isinstance(action_id, str) or not isinstance(endpoint, str):
+            continue
+        if not isinstance(template, dict):
+            raise ValueError(f"action '{action_id}' does not define a payload template")
+        plan_actions.append(
+            {
+                "action_id": action_id,
+                "endpoint": endpoint,
+                "method": method if isinstance(method, str) else None,
+                "template_keys": sorted(template.keys()),
+                "template_fingerprint_sha256": _sha256_json(template),
+            }
+        )
+    base_payload = {
+        "schema_version": "sc-neurocore.studio.default-flow-plan.v1",
+        "preset_id": preset_id,
+        "flow_id": "studio_default_adaptive_precision_v1",
+        "action_order": [row["action_id"] for row in plan_actions],
+        "actions": plan_actions,
+        "count": len(plan_actions),
+    }
+    plan_contract = {
+        "preset_id": base_payload["preset_id"],
+        "flow_id": base_payload["flow_id"],
+        "action_order": base_payload["action_order"],
+        "actions": [
+            {
+                "action_id": row["action_id"],
+                "endpoint": row["endpoint"],
+                "method": row["method"],
+                "template_fingerprint_sha256": row["template_fingerprint_sha256"],
+            }
+            for row in plan_actions
+        ],
+    }
+    base_payload["plan_fingerprint_sha256"] = _sha256_json(plan_contract)
+    return base_payload
+
+
+def _execute_default_flow_with_overrides(
+    preset_id: str, action_overrides: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
+    started = time.perf_counter()
+    actions = _default_flow_actions(preset_id)
+    results: list[dict[str, Any]] = []
+    action_order: list[str] = []
+    for action in actions:
+        action_id = action.get("id")
+        if not isinstance(action_id, str):
+            continue
+        template = action.get("payload_template")
+        if not isinstance(template, dict):
+            raise ValueError(f"action '{action_id}' does not define a payload template")
+        overrides = action_overrides.get(action_id, {})
+        if not isinstance(overrides, dict):
+            raise ValueError(f"action_overrides['{action_id}'] must be an object")
+        resolved = _resolve_action_payload(
+            preset_id, action_id, action, template, overrides
+        )
+        result = _execute_resolved_preset_action(resolved)
+        action_order.append(action_id)
+        results.append(
+            {
+                "action_id": action_id,
+                "resolved_action": resolved,
+                "result": result,
+            }
+        )
+    elapsed_ms = (time.perf_counter() - started) * 1000.0
+    deterministic_results = [
+        {
+            "action_id": row["action_id"],
+            "resolved_action": row["resolved_action"],
+            "result": row["result"],
+        }
+        for row in results
+    ]
+    reproducibility_inputs = {
+        "preset_id": preset_id,
+        "flow_id": "studio_default_adaptive_precision_v1",
+        "action_order": action_order,
+        "resolved_actions": [row["resolved_action"] for row in deterministic_results],
+    }
+    reproducibility_run = {
+        "preset_id": preset_id,
+        "flow_id": "studio_default_adaptive_precision_v1",
+        "action_order": action_order,
+        "results": deterministic_results,
+    }
+    return {
+        "schema_version": "sc-neurocore.studio.default-flow-run.v1",
+        "preset_id": preset_id,
+        "flow_id": "studio_default_adaptive_precision_v1",
+        "action_order": action_order,
+        "executed_count": len(results),
+        "execution_time_ms": elapsed_ms,
+        "results": results,
+        "reproducibility_manifest": {
+            "hash_algorithm": "sha256",
+            "inputs_fingerprint_sha256": _sha256_json(reproducibility_inputs),
+            "run_fingerprint_sha256": _sha256_json(reproducibility_run),
+        },
+    }
+
+
 def create_app() -> FastAPI:
     app = FastAPI(title="SC-NeuroCore Studio", version="1.0.0")
     app.add_middleware(
@@ -371,12 +683,288 @@ def create_app() -> FastAPI:
     def api_presets() -> Any:
         return list_presets()
 
+    @app.get("/api/presets/actions/catalog")
+    def api_preset_actions_catalog() -> Any:
+        catalog = list_preset_action_catalog()
+        executable = [
+            row for row in catalog if _is_executable_preset_action_endpoint(row.get("endpoint"))
+        ]
+        return {"actions": executable, "count": len(executable)}
+
     @app.get("/api/presets/{preset_id}")
     def api_preset(preset_id: str) -> Any:
         p = get_preset(preset_id)
         if not p:
             raise HTTPException(404, f"Preset '{preset_id}' not found")
         return p
+
+    @app.get("/api/presets/{preset_id}/actions")
+    def api_preset_actions(preset_id: str) -> Any:
+        p = get_preset(preset_id)
+        if not p:
+            raise HTTPException(404, f"Preset '{preset_id}' not found")
+        return {
+            "preset_id": preset_id,
+            "actions": get_preset_actions(preset_id),
+        }
+
+    @app.post("/api/presets/{preset_id}/actions/{action_id}/resolve")
+    def api_preset_action_resolve(
+        preset_id: str, action_id: str, req: PresetActionResolveRequest
+    ) -> Any:
+        p = get_preset(preset_id)
+        if not p:
+            raise HTTPException(404, f"Preset '{preset_id}' not found")
+        action = get_preset_action(preset_id, action_id)
+        if not action:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Action '{action_id}' not found for preset '{preset_id}'",
+            )
+        template = action.get("payload_template")
+        if not isinstance(template, dict):
+            raise HTTPException(
+                status_code=422,
+                detail=f"Action '{action_id}' does not define a payload template",
+            )
+        return _safe(lambda: _resolve_action_payload(preset_id, action_id, action, template, req.overrides))
+
+    @app.post("/api/presets/{preset_id}/actions/{action_id}/execute")
+    def api_preset_action_execute(
+        preset_id: str, action_id: str, req: PresetActionResolveRequest
+    ) -> Any:
+        p = get_preset(preset_id)
+        if not p:
+            raise HTTPException(404, f"Preset '{preset_id}' not found")
+        action = get_preset_action(preset_id, action_id)
+        if not action:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Action '{action_id}' not found for preset '{preset_id}'",
+            )
+        template = action.get("payload_template")
+        if not isinstance(template, dict):
+            raise HTTPException(
+                status_code=422,
+                detail=f"Action '{action_id}' does not define a payload template",
+            )
+
+        def fn() -> dict[str, Any]:
+            resolved = _resolve_action_payload(preset_id, action_id, action, template, req.overrides)
+            result = _execute_resolved_preset_action(resolved)
+            return {"resolved_action": resolved, "result": result}
+
+        return _safe(fn)
+
+    @app.post("/api/presets/{preset_id}/actions/execute-all")
+    def api_preset_actions_execute_all(preset_id: str, req: PresetActionsExecuteAllRequest) -> Any:
+        p = get_preset(preset_id)
+        if not p:
+            raise HTTPException(404, f"Preset '{preset_id}' not found")
+
+        def fn() -> dict[str, Any]:
+            actions = get_preset_actions(preset_id)
+            executable_actions = [
+                action
+                for action in actions
+                if _is_executable_preset_action_endpoint(action.get("endpoint"))
+            ]
+            results: list[dict[str, Any]] = []
+            for action in executable_actions:
+                action_id = action.get("id")
+                if not isinstance(action_id, str):
+                    continue
+                template = action.get("payload_template")
+                if not isinstance(template, dict):
+                    raise ValueError(f"action '{action_id}' does not define a payload template")
+                overrides = req.action_overrides.get(action_id, {})
+                if not isinstance(overrides, dict):
+                    raise ValueError(f"action_overrides['{action_id}'] must be an object")
+                resolved = _resolve_action_payload(
+                    preset_id, action_id, action, template, overrides
+                )
+                result = _execute_resolved_preset_action(resolved)
+                results.append(
+                    {
+                        "action_id": action_id,
+                        "resolved_action": resolved,
+                        "result": result,
+                    }
+                )
+            return {
+                "preset_id": preset_id,
+                "executed_count": len(results),
+                "results": results,
+            }
+
+        return _safe(fn)
+
+    @app.post("/api/presets/{preset_id}/default-flow/run")
+    def api_preset_default_flow_run(preset_id: str, req: PresetDefaultFlowRunRequest) -> Any:
+        p = get_preset(preset_id)
+        if not p:
+            raise HTTPException(404, f"Preset '{preset_id}' not found")
+
+        def fn() -> dict[str, Any]:
+            return _execute_default_flow_with_overrides(preset_id, req.action_overrides)
+
+        return _safe(fn)
+
+    @app.get("/api/presets/{preset_id}/default-flow/plan")
+    def api_preset_default_flow_plan(preset_id: str) -> Any:
+        p = get_preset(preset_id)
+        if not p:
+            raise HTTPException(404, f"Preset '{preset_id}' not found")
+
+        return _safe(lambda: _build_default_flow_plan_payload(preset_id))
+
+    @app.get("/api/presets/{preset_id}/default-flow/contract")
+    def api_preset_default_flow_contract(preset_id: str) -> Any:
+        p = get_preset(preset_id)
+        if not p:
+            raise HTTPException(404, f"Preset '{preset_id}' not found")
+
+        def fn() -> dict[str, Any]:
+            plan = _build_default_flow_plan_payload(preset_id)
+            template_fingerprints = {
+                row["action_id"]: row["template_fingerprint_sha256"] for row in plan["actions"]
+            }
+            return {
+                "schema_version": "sc-neurocore.studio.default-flow-contract.v1",
+                "preset_id": preset_id,
+                "flow_id": plan["flow_id"],
+                "plan": plan,
+                "guarded_run_request_template": {
+                    "action_order": plan["action_order"],
+                    "template_fingerprints": template_fingerprints,
+                    "plan_fingerprint_sha256": plan["plan_fingerprint_sha256"],
+                    "action_overrides": {},
+                },
+            }
+
+        return _safe(fn)
+
+    @app.post("/api/presets/{preset_id}/default-flow/verify")
+    def api_preset_default_flow_verify(preset_id: str, req: PresetDefaultFlowVerifyRequest) -> Any:
+        p = get_preset(preset_id)
+        if not p:
+            raise HTTPException(404, f"Preset '{preset_id}' not found")
+
+        def fn() -> dict[str, Any]:
+            plan = _build_default_flow_plan_payload(preset_id)
+            expected_order = plan["action_order"]
+            expected_fingerprints = {
+                row["action_id"]: row["template_fingerprint_sha256"] for row in plan["actions"]
+            }
+            expected_plan_fingerprint = plan["plan_fingerprint_sha256"]
+            order_match = req.action_order == expected_order
+            fingerprints_match = req.template_fingerprints == expected_fingerprints
+            plan_fingerprint_match = req.plan_fingerprint_sha256 == expected_plan_fingerprint
+            return {
+                "schema_version": "sc-neurocore.studio.default-flow-verify.v1",
+                "preset_id": preset_id,
+                "flow_id": plan["flow_id"],
+                "order_match": order_match,
+                "fingerprints_match": fingerprints_match,
+                "plan_fingerprint_match": plan_fingerprint_match,
+                "verified": order_match and fingerprints_match and plan_fingerprint_match,
+                "expected_action_order": expected_order,
+                "expected_template_fingerprints": expected_fingerprints,
+                "expected_plan_fingerprint_sha256": expected_plan_fingerprint,
+            }
+
+        return _safe(fn)
+
+    @app.post("/api/presets/{preset_id}/default-flow/run-guarded")
+    def api_preset_default_flow_run_guarded(
+        preset_id: str, req: PresetDefaultFlowGuardedRunRequest
+    ) -> Any:
+        p = get_preset(preset_id)
+        if not p:
+            raise HTTPException(404, f"Preset '{preset_id}' not found")
+
+        def fn() -> dict[str, Any]:
+            plan = _build_default_flow_plan_payload(preset_id)
+            expected_order = plan["action_order"]
+            expected_fingerprints = {
+                row["action_id"]: row["template_fingerprint_sha256"] for row in plan["actions"]
+            }
+            expected_plan_fingerprint = plan["plan_fingerprint_sha256"]
+            order_match = req.action_order == expected_order
+            fingerprints_match = req.template_fingerprints == expected_fingerprints
+            plan_fingerprint_match = (
+                req.plan_fingerprint_sha256 is None
+                or req.plan_fingerprint_sha256 == expected_plan_fingerprint
+            )
+            if not (order_match and fingerprints_match and plan_fingerprint_match):
+                raise ValueError("default-flow plan verification failed; refresh plan before run")
+            run_payload = _execute_default_flow_with_overrides(preset_id, req.action_overrides)
+            run_payload["verification_gate"] = {
+                "order_match": order_match,
+                "fingerprints_match": fingerprints_match,
+                "plan_fingerprint_match": plan_fingerprint_match,
+                "verified": True,
+            }
+            return run_payload
+
+        return _safe(fn)
+
+    @app.post("/api/presets/{preset_id}/default-flow/run-from-contract")
+    def api_preset_default_flow_run_from_contract(
+        preset_id: str, req: PresetDefaultFlowRunFromContractRequest
+    ) -> Any:
+        p = get_preset(preset_id)
+        if not p:
+            raise HTTPException(404, f"Preset '{preset_id}' not found")
+
+        def fn() -> dict[str, Any]:
+            contract = req.contract
+            if not isinstance(contract, dict):
+                raise ValueError("contract must be an object")
+            if contract.get("schema_version") != "sc-neurocore.studio.default-flow-contract.v1":
+                raise ValueError("unsupported contract schema version")
+            if contract.get("preset_id") != preset_id:
+                raise ValueError("contract preset_id mismatch")
+
+            guarded = contract.get("guarded_run_request_template")
+            if not isinstance(guarded, dict):
+                raise ValueError("contract missing guarded_run_request_template")
+            action_order = guarded.get("action_order")
+            template_fingerprints = guarded.get("template_fingerprints")
+            plan_fingerprint = guarded.get("plan_fingerprint_sha256")
+            if not isinstance(action_order, list) or not isinstance(template_fingerprints, dict):
+                raise ValueError("invalid guarded run template contract")
+            if not isinstance(plan_fingerprint, str):
+                raise ValueError("invalid plan fingerprint in contract")
+
+            plan = _build_default_flow_plan_payload(preset_id)
+            expected_order = plan["action_order"]
+            expected_fingerprints = {
+                row["action_id"]: row["template_fingerprint_sha256"] for row in plan["actions"]
+            }
+            expected_plan_fingerprint = plan["plan_fingerprint_sha256"]
+
+            order_match = action_order == expected_order
+            fingerprints_match = template_fingerprints == expected_fingerprints
+            plan_fingerprint_match = plan_fingerprint == expected_plan_fingerprint
+            if not (order_match and fingerprints_match and plan_fingerprint_match):
+                raise ValueError("contract drift detected; refresh contract before run")
+
+            run_payload = _execute_default_flow_with_overrides(preset_id, req.action_overrides)
+            run_payload["verification_gate"] = {
+                "order_match": order_match,
+                "fingerprints_match": fingerprints_match,
+                "plan_fingerprint_match": plan_fingerprint_match,
+                "verified": True,
+            }
+            run_payload["contract_verification"] = {
+                "schema_version": "sc-neurocore.studio.default-flow-contract-verify.v1",
+                "contract_schema_version": contract["schema_version"],
+                "verified": True,
+            }
+            return run_payload
+
+        return _safe(fn)
 
     # --- Simulation (with auto-classification + cache) ---
     @app.post("/api/simulate")
@@ -518,6 +1106,17 @@ def create_app() -> FastAPI:
                 current=req.current,
             )
         )
+
+    # --- Adaptive Precision Auto-Tune ---
+    @app.post("/api/adaptive-precision/auto-tune")
+    def api_adaptive_precision_auto_tune(req: AdaptivePrecisionAutoTuneRequest) -> Any:
+        payload = req.model_dump()
+        return _safe(lambda: _run_adaptive_precision_auto_tune_payload(payload))
+
+    @app.post("/api/adaptive-precision/formal-bundle")
+    def api_adaptive_precision_formal_bundle(req: AdaptivePrecisionFormalBundleRequest) -> Any:
+        payload = req.model_dump()
+        return _safe(lambda: _run_adaptive_precision_formal_bundle_payload(payload))
 
     # --- Compile (#5 adjacent) ---
     @app.post("/api/compile")

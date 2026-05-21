@@ -18,7 +18,7 @@ from __future__ import annotations
 import ctypes as _ct
 import os
 import pathlib as _pl
-from typing import Any
+from typing import Any, Sequence
 
 import numpy as np
 
@@ -866,6 +866,16 @@ try:
         eligibility: torch.Tensor
         theta_m: torch.Tensor
         act_avg: torch.Tensor
+        _weight_bits: torch.Tensor | None
+        _trace_bits: torch.Tensor | None
+        _eligibility_bits: torch.Tensor | None
+        _theta_bits: torch.Tensor | None
+        _act_avg_bits: torch.Tensor | None
+        _weight_clip: float
+        _trace_clip: float
+        _eligibility_clip: float
+        _theta_clip: float
+        _act_avg_clip: float
 
         def __init__(
             self,
@@ -939,6 +949,111 @@ try:
                 else torch.zeros(count, dtype=torch.float32),
             )
 
+            # Mixed-precision controls (roadmap v4.0: per-rule / per-synapse).
+            default_bits = kwargs.get("mixed_precision_bits")
+            self._weight_bits = self._normalise_bit_spec(
+                kwargs.get("weight_bits", default_bits),
+                "weight_bits",
+            )
+            self._trace_bits = self._normalise_bit_spec(
+                kwargs.get("trace_bits", default_bits),
+                "trace_bits",
+            )
+            self._eligibility_bits = self._normalise_bit_spec(
+                kwargs.get("eligibility_bits", default_bits),
+                "eligibility_bits",
+            )
+            self._theta_bits = self._normalise_bit_spec(
+                kwargs.get("theta_bits", default_bits),
+                "theta_bits",
+            )
+            self._act_avg_bits = self._normalise_bit_spec(
+                kwargs.get("act_avg_bits", default_bits),
+                "act_avg_bits",
+            )
+            self._weight_clip = self._normalise_clip(kwargs.get("weight_clip", 1.0), "weight_clip")
+            self._trace_clip = self._normalise_clip(kwargs.get("trace_clip", 1.0), "trace_clip")
+            self._eligibility_clip = self._normalise_clip(
+                kwargs.get("eligibility_clip", 1.0), "eligibility_clip"
+            )
+            self._theta_clip = self._normalise_clip(kwargs.get("theta_clip", 1.0), "theta_clip")
+            self._act_avg_clip = self._normalise_clip(
+                kwargs.get("act_avg_clip", 1.0), "act_avg_clip"
+            )
+
+        def _normalise_bit_spec(
+            self,
+            spec: int | Sequence[int] | np.ndarray | torch.Tensor | None,
+            field: str,
+        ) -> torch.Tensor | None:
+            if spec is None:
+                return None
+            if isinstance(spec, torch.Tensor):
+                bits = spec.detach().to(dtype=torch.int64, device=self.weights.device).flatten()
+            elif isinstance(spec, np.ndarray):
+                bits = torch.tensor(spec, dtype=torch.int64, device=self.weights.device).flatten()
+            elif isinstance(spec, Sequence) and not isinstance(spec, (str, bytes)):
+                bits = torch.tensor(
+                    list(spec), dtype=torch.int64, device=self.weights.device
+                ).flatten()
+            else:
+                bits = torch.tensor([int(spec)], dtype=torch.int64, device=self.weights.device)
+
+            if bits.numel() == 1:
+                bits = bits.expand(self.count)
+            if bits.numel() != self.count:
+                raise ValueError(
+                    f"{field} must be scalar or have length {self.count}, got {bits.numel()}."
+                )
+            if torch.any(bits < 2):
+                raise ValueError(f"{field} entries must be >= 2 bits.")
+            return bits
+
+        @staticmethod
+        def _normalise_clip(value: float | int, field: str) -> float:
+            clip = float(value)
+            if not np.isfinite(clip) or clip <= 0.0:
+                raise ValueError(f"{field} must be finite and > 0.")
+            return clip
+
+        @staticmethod
+        def _quantise_tensor(
+            values: torch.Tensor,
+            bits: torch.Tensor | None,
+            clip: float,
+        ) -> torch.Tensor:
+            if bits is None:
+                return values
+            levels = torch.pow(2.0, bits.to(dtype=values.dtype) - 1.0) - 1.0
+            clipped = torch.clamp(values, min=-clip, max=clip)
+            scaled = clipped * (levels / clip)
+            rounded = torch.round(scaled)
+            return rounded * (clip / levels)
+
+        def _apply_precision_constraints(self) -> None:
+            self.weights.copy_(
+                self._quantise_tensor(self.weights, self._weight_bits, self._weight_clip)
+            )
+            self.pre_trace.copy_(
+                self._quantise_tensor(self.pre_trace, self._trace_bits, self._trace_clip)
+            )
+            self.post_trace.copy_(
+                self._quantise_tensor(self.post_trace, self._trace_bits, self._trace_clip)
+            )
+            self.eligibility.copy_(
+                self._quantise_tensor(
+                    self.eligibility,
+                    self._eligibility_bits,
+                    self._eligibility_clip,
+                )
+            )
+            self.theta_m.copy_(
+                self._quantise_tensor(self.theta_m, self._theta_bits, self._theta_clip)
+            )
+            self.act_avg.copy_(
+                self._quantise_tensor(self.act_avg, self._act_avg_bits, self._act_avg_clip)
+            )
+
         def reset(self) -> None:
             """Zero the plasticity traces; learned weights preserved.
 
@@ -1008,6 +1123,8 @@ try:
                 self.eligibility = new_e.detach()
                 self.theta_m = new_tm.detach()
                 self.act_avg = new_avg.detach()
+                with torch.no_grad():
+                    self._apply_precision_constraints()
                 return new_w
             else:
                 with torch.no_grad():
@@ -1032,6 +1149,7 @@ try:
                     self.eligibility.copy_(n_e)
                     self.theta_m.copy_(n_t)
                     self.act_avg.copy_(n_a)
+                    self._apply_precision_constraints()
                     return self.weights
 
         def step(

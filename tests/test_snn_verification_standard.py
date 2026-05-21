@@ -42,8 +42,9 @@ def test_publication_grade_profile_has_required_boundaries() -> None:
     requirement_ids = {item.requirement_id for item in profile.requirements}
 
     assert profile.profile_id == "publication-grade-snn-v1"
-    assert "bounded_temporal_properties" in requirement_ids
-    assert "probability_interval_bounds" in requirement_ids
+    assert "liveness_reachable_transition_fireability" in requirement_ids
+    assert "boundedness_token_bounds" in requirement_ids
+    assert "deadlock_freedom_compiler_output" in requirement_ids
     assert "implementation_equivalence" in requirement_ids
     assert "external_formal_proof" in requirement_ids
     assert any(not item.mandatory for item in profile.requirements)
@@ -105,7 +106,7 @@ def test_standard_fails_closed_when_external_proof_is_missing() -> None:
 
     assert not report.passed
     assert "external_formal_proof" in report.missing_mandatory
-    assert report.mandatory_coverage == 0.75
+    assert report.mandatory_coverage == 0.8
 
 
 def test_standard_fails_when_any_matching_mandatory_evidence_fails() -> None:

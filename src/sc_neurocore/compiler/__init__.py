@@ -31,7 +31,9 @@ from .adaptive_precision import (
     analyze_sensitivity,
     assign_lengths,
     assign_synapse_precisions,
+    auto_tune_synapse_precisions,
     precision_plan_manifest,
+    write_precision_formal_evidence_bundle,
 )
 
 __all__ = [
@@ -57,5 +59,7 @@ __all__ = [
     "analyze_sensitivity",
     "assign_lengths",
     "assign_synapse_precisions",
+    "auto_tune_synapse_precisions",
     "precision_plan_manifest",
+    "write_precision_formal_evidence_bundle",
 ]

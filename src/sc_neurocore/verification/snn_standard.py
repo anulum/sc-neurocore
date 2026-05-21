@@ -282,24 +282,43 @@ def publication_grade_snn_standard_profile() -> SNNVerificationStandardProfile:
         profile_id="publication-grade-snn-v1",
         description=(
             "Minimum evidence profile for a scientifically defensible SNN verification claim: "
-            "bounded temporal properties, interval bounds, implementation equivalence, and "
-            "external formal proof evidence."
+            "liveness, boundedness, deadlock-freedom, implementation equivalence, and "
+            "external formal-proof evidence."
         ),
         requirements=(
             SNNVerificationRequirement(
-                requirement_id="bounded_temporal_properties",
+                requirement_id="liveness_reachable_transition_fireability",
                 level=VerificationLevel.TEMPORAL_PROPERTIES,
                 accepted_kinds=(
                     VerificationEvidenceKind.TEMPORAL_RESULT,
                     VerificationEvidenceKind.TRACE,
                 ),
-                description="Temporal safety/liveness properties evaluated over declared bounds.",
+                description=(
+                    "Liveness claim evidence: every reachable marking can fire at least one "
+                    "transition under declared bounded assumptions."
+                ),
             ),
             SNNVerificationRequirement(
-                requirement_id="probability_interval_bounds",
+                requirement_id="boundedness_token_bounds",
                 level=VerificationLevel.INTERVAL_PROOF,
                 accepted_kinds=(VerificationEvidenceKind.INTERVAL_BOUND,),
-                description="Interval arithmetic or equivalent proof of probability/state bounds.",
+                description=(
+                    "Boundedness claim evidence: token/state bounds proven within declared "
+                    "interval or equivalent proof framework."
+                ),
+            ),
+            SNNVerificationRequirement(
+                requirement_id="deadlock_freedom_compiler_output",
+                level=VerificationLevel.TEMPORAL_PROPERTIES,
+                accepted_kinds=(
+                    VerificationEvidenceKind.TEMPORAL_RESULT,
+                    VerificationEvidenceKind.TRACE,
+                    VerificationEvidenceKind.FORMAL_TOOL_LOG,
+                ),
+                description=(
+                    "Deadlock-freedom claim evidence for compiler output under the stated "
+                    "formal boundary."
+                ),
             ),
             SNNVerificationRequirement(
                 requirement_id="implementation_equivalence",

@@ -210,3 +210,69 @@ class TestAnalysisEndpoints:
         d = r.json()
         assert len(d) == 2
         assert d[0]["spike_count"] >= 0
+
+    def test_adaptive_precision_auto_tune(self, client):
+        response = client.post(
+            "/api/adaptive-precision/auto-tune",
+            json={
+                "layer_weights": [
+                    [[0.2, 0.4], [0.6, 0.8]],
+                    [0.3, 0.7],
+                ],
+                "layer_names": ["input", "readout"],
+                "target_error_percent": 0.1,
+                "min_bits": 4,
+                "max_bits": 8,
+                "min_length": 32,
+                "max_length": 256,
+            },
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["schema"] == "sc-neurocore.adaptive_precision_plan.v1"
+        assert payload["api_surface"]["action_id"] == "auto_tune_adaptive_precision"
+        assert payload["api_surface"]["target_error_percent"] == pytest.approx(0.1)
+        assert payload["api_surface"]["estimated_lut_cost"] > 0.0
+        assert payload["api_surface"]["uniform_length_reference_cost"] >= payload["api_surface"][
+            "estimated_lut_cost"
+        ]
+        assert payload["num_synapses"] == 6
+
+    def test_adaptive_precision_auto_tune_rejects_invalid_layer(self, client):
+        response = client.post(
+            "/api/adaptive-precision/auto-tune",
+            json={
+                "layer_weights": [
+                    [[[0.1]]],
+                ]
+            },
+        )
+        assert response.status_code == 422
+
+    def test_adaptive_precision_formal_bundle(self, client):
+        response = client.post(
+            "/api/adaptive-precision/formal-bundle",
+            json={
+                "layer_weights": [[[0.2, 0.3], [0.4, 0.6]]],
+                "layer_names": ["dense0"],
+                "target_error_percent": 0.1,
+                "module_name": "precision_plan_demo",
+            },
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        bundle_manifest = payload["bundle_manifest"]
+        assert bundle_manifest["schema_version"] == "sc-neurocore.adaptive-precision-formal-bundle.v1"
+        assert bundle_manifest["module_name"] == "precision_plan_demo"
+        assert payload["artifacts_text"]["sby"]
+        assert payload["artifacts_text"]["sva"]
+        assert bundle_manifest["artifacts"]["report"].endswith("_formal_report.json")
+        assert payload["artifacts_text"]["report"] == ""
+        assert "symbiyosys_executed" in payload["formal_manifest_json"]
+
+    def test_adaptive_precision_formal_bundle_rejects_bad_layer_shape(self, client):
+        response = client.post(
+            "/api/adaptive-precision/formal-bundle",
+            json={"layer_weights": [[[[0.2]]]]},
+        )
+        assert response.status_code == 422
