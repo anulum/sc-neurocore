@@ -1018,7 +1018,13 @@ class ProofTestCoverage:
             if not isinstance(module, str) or not module.strip():
                 raise ValueError("all_modules must contain non-empty strings")
         covered = {p.module for p in properties}
-        return [m for m in all_modules if m not in covered]
+        uncovered: list[str] = []
+        seen: set[str] = set()
+        for module in all_modules:
+            if module not in covered and module not in seen:
+                uncovered.append(module)
+                seen.add(module)
+        return uncovered
 
 
 # ── Hardware Fault Tolerance (Gap 3) ────────────────────────────────
