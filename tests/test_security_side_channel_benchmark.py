@@ -96,6 +96,17 @@ def test_side_channel_benchmark_report_writes_canonical_json(tmp_path) -> None:
     assert "measured_thermal" not in json.dumps(payload)
 
 
+@pytest.mark.parametrize("output_path", ["", "."])
+def test_write_side_channel_benchmark_report_rejects_invalid_output_path(output_path) -> None:
+    with pytest.raises(SideChannelBenchmarkError, match="output_path"):
+        write_side_channel_benchmark_report(
+            output_path,
+            probabilities=(0.25, 0.5),
+            labels=(0, 1),
+            protected_config=ThermalSCEncodingConfig(bitstream_length=16, seed=3),
+        )
+
+
 @pytest.mark.parametrize(
     ("probabilities", "labels"),
     [
