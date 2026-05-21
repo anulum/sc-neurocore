@@ -459,6 +459,10 @@ class TestComplianceChecklist:
         items = ComplianceChecklist.generate(SafetyStandard.IEC_61508)
         assert all(i.evidence for i in items)
 
+    def test_generate_rejects_invalid_standard(self):
+        with pytest.raises(ValueError, match="standard"):
+            ComplianceChecklist.generate("IEC 61508")  # type: ignore[arg-type]
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [

@@ -699,6 +699,8 @@ class ComplianceChecklist:
 
     @classmethod
     def generate(cls, standard: SafetyStandard) -> List[ChecklistItem]:
+        if not isinstance(standard, SafetyStandard):
+            raise ValueError("standard must be a SafetyStandard")
         clause_map = {
             SafetyStandard.IEC_61508: cls.IEC_61508_CLAUSES,
             SafetyStandard.ISO_26262: cls.ISO_26262_CLAUSES,
