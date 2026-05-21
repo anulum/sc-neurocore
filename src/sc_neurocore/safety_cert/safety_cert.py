@@ -375,9 +375,10 @@ class FMEDA:
         for fm in self.failure_modes:
             if not isinstance(fm, FailureMode):
                 raise ValueError("failure_modes must contain FailureMode entries")
-        return sum(
-            fm.failure_rate_fit * (1.0 - fm.safe_failure_fraction) for fm in self.failure_modes
-        )
+        residual = sum(fm.failure_rate_fit * (1.0 - fm.safe_failure_fraction) for fm in self.failure_modes)
+        if not math.isfinite(float(residual)) or residual < 0.0:
+            raise ValueError("residual_risk_fit must be a finite non-negative value")
+        return residual
 
     def sff_by_component(self) -> Dict[str, float]:
         """Per-component safe failure fraction."""
