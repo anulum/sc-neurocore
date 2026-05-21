@@ -76,6 +76,12 @@ class TestTraceabilityMatrix:
         tm.link_verification("REQ_001", "formal/test.sby")
         assert tm.requirements["REQ_001"].status == "verified"
 
+    def test_link_verification_rejects_corrupted_requirement_entry(self):
+        tm = TraceabilityMatrix()
+        tm.requirements["REQ_001"] = "bad"  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="Requirement"):
+            tm.link_verification("REQ_001", "formal/test.sby")
+
     def test_coverage(self):
         tm = TraceabilityMatrix()
         for i in range(4):
