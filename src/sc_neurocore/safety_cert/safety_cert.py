@@ -1683,7 +1683,7 @@ class CrossStandardMapper:
                 )
         addressed_a = {i.clause for i in checklist_a if i.status != "not_addressed"}
         addressed_b = {i.clause for i in checklist_b if i.status != "not_addressed"}
-        shared = 0
+        shared_pairs: set[tuple[str, str]] = set()
         addressed_items_a = [i for i in checklist_a if i.clause in addressed_a]
         addressed_items_b = [i for i in checklist_b if i.clause in addressed_b]
         for item in addressed_items_a:
@@ -1697,8 +1697,8 @@ class CrossStandardMapper:
         ]:
             for mapping in CROSS_MAP.get((std_a, clause_a), []):
                 if mapping[1] in addressed_b:
-                    shared += 1
-        return shared
+                    shared_pairs.add((clause_a, mapping[1]))
+        return len(shared_pairs)
 
 
 # ── Formal Property Gap Detector (Gap 10) ───────────────────────────
