@@ -19,6 +19,7 @@ from sc_neurocore.security.side_channel_benchmark import (
     SideChannelBenchmarkRecord,
     SideChannelDeployManifest,
     SideChannelBenchmarkReport,
+    _correlated_activity_fixture_stream,
     _arm_payload,
     _class_proxy_payload,
     _deploy_manifest_payload,
@@ -290,3 +291,18 @@ def test_arm_payload_rejects_invalid_arm() -> None:
 def test_class_proxy_payload_rejects_invalid_proxy() -> None:
     with pytest.raises(SideChannelBenchmarkError, match="proxy"):
         _class_proxy_payload("bad")  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("probability", "bitstream_length", "match"),
+    [
+        (1.1, 16, "probability"),
+        (float("nan"), 16, "probability"),
+        (0.5, 0, "bitstream_length"),
+    ],
+)
+def test_correlated_activity_fixture_stream_rejects_invalid_contracts(
+    probability, bitstream_length, match
+) -> None:
+    with pytest.raises(SideChannelBenchmarkError, match=match):
+        _correlated_activity_fixture_stream(probability, bitstream_length)
