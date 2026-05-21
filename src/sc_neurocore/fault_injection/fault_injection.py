@@ -252,10 +252,25 @@ class FaultInjector:
         positions: List[int],
     ) -> np.ndarray:
         """Flip specific bit positions (deterministic injection)."""
+        if not isinstance(bitstream, np.ndarray):
+            raise ValueError("bitstream must be a numpy.ndarray")
+        if bitstream.ndim != 1:
+            raise ValueError("bitstream must be a 1-D array")
+        if not isinstance(positions, list):
+            raise ValueError("positions must be a list of integers")
+        seen_positions = set()
+        for pos in positions:
+            if isinstance(pos, bool) or not isinstance(pos, int):
+                raise ValueError("positions must contain integers")
+            if pos in seen_positions:
+                raise ValueError("positions must be unique")
+            seen_positions.add(pos)
+            if pos < 0 or pos >= len(bitstream):
+                raise ValueError("positions must be within bitstream bounds")
+
         corrupted = bitstream.copy()
         for pos in positions:
-            if 0 <= pos < len(corrupted):
-                corrupted[pos] = 1 - corrupted[pos]
+            corrupted[pos] = 1 - corrupted[pos]
         return corrupted
 
 

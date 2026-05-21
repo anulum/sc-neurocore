@@ -182,3 +182,31 @@ class TestFaultInjectorInjectContracts:
         bad = np.array([0.0, 0.5, 1.0], dtype=np.float64)
         with pytest.raises(ValueError, match="binary"):
             injector.inject(bad, FaultModel.BIT_FLIP, 0.1)
+
+
+class TestInjectAtPositionsContracts:
+    def test_flips_requested_positions(self):
+        import numpy as np
+
+        injector = FaultInjector(seed=1)
+        bitstream = np.array([0, 1, 0, 1], dtype=np.uint8)
+        out = injector.inject_at_positions(bitstream, [0, 2])
+        assert out.tolist() == [1, 1, 1, 1]
+
+    @pytest.mark.parametrize(
+        ("positions", "match"),
+        [
+            ("0,1", "list"),
+            ([0, 0], "unique"),
+            ([-1], "bounds"),
+            ([10], "bounds"),
+            ([1.5], "integers"),
+        ],
+    )
+    def test_rejects_invalid_positions(self, positions, match):
+        import numpy as np
+
+        injector = FaultInjector(seed=1)
+        bitstream = np.array([0, 1, 0, 1], dtype=np.uint8)
+        with pytest.raises(ValueError, match=match):
+            injector.inject_at_positions(bitstream, positions)  # type: ignore[arg-type]
