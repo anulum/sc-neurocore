@@ -1319,6 +1319,12 @@ class TestReliabilityMetrics:
         rm = ReliabilityMetrics(total_fit=100.0, dangerous_undetected_fit=5.0)
         assert rm.pfh_sil.value >= 1
 
+    def test_pfh_sil_rejects_corrupted_pfh_state(self):
+        rm = ReliabilityMetrics(total_fit=100.0, dangerous_undetected_fit=5.0)
+        rm.dangerous_undetected_fit = float("nan")  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="pfh_d"):
+            _ = rm.pfh_sil
+
     def test_from_fmeda(self):
         fmeda = FMEDA()
         fmeda.add_sc_standard_modes("neuron")
