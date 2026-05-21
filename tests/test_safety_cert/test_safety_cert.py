@@ -1492,6 +1492,12 @@ class TestFormalGapDetector:
         with pytest.raises(ValueError, match="statuses"):
             FormalPropertyGapDetector.detect([prop], ["neuron"])
 
+    def test_detect_rejects_corrupted_property_module_state(self):
+        prop = FormalProperty("P1", "neuron", "d", "assert", "proven")
+        prop.module = ""  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="modules"):
+            FormalPropertyGapDetector.detect([prop], ["neuron"])
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
