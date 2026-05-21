@@ -120,6 +120,16 @@ class GracefulDegradationPolicy:
         seed: int,
     ) -> DegradationPlan:
         """Inject seeded faults, audit the layer, and recommend degradation."""
+        if not isinstance(layer_id, str) or not layer_id.strip():
+            raise ValueError("layer_id must be a non-empty string")
+        if not isinstance(fault_model, FaultModel):
+            raise ValueError("fault_model must be a FaultModel")
+        if isinstance(ber, bool) or not isinstance(ber, int | float):
+            raise ValueError("ber must be a finite value in [0, 1]")
+        if not np.isfinite(float(ber)) or float(ber) < 0.0 or float(ber) > 1.0:
+            raise ValueError("ber must be a finite value in [0, 1]")
+        if isinstance(seed, bool) or not isinstance(seed, int):
+            raise ValueError("seed must be an integer")
         streams = self._validate_bitstreams(bitstreams)
         corrupted, affected = self._inject_layer(streams, fault_model, ber, seed)
         audit = self.doctor.audit_layer(layer_id, corrupted)
