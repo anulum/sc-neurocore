@@ -245,6 +245,15 @@ class TestTraceabilityMatrix:
         with pytest.raises(ValueError, match="implementation_refs"):
             tm._update_status(req)
 
+    def test_update_status_downgrades_to_open_when_implementation_removed(self):
+        tm = TraceabilityMatrix()
+        req = Requirement("R1", "d", SafetyStandard.IEC_61508)
+        req.status = "verified"
+        req.implementation_refs = []
+        req.verification_refs = ["formal/test.sby"]
+        tm._update_status(req)
+        assert req.status == "open"
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
