@@ -856,6 +856,10 @@ class CertificationPackage:
         for item in self.checklist:
             if not isinstance(item, ChecklistItem):
                 raise ValueError("checklist must contain ChecklistItem entries")
+            if not isinstance(item.item_id, str) or not item.item_id.strip():
+                raise ValueError("checklist item_id values must be non-empty strings")
+            if not isinstance(item.clause, str) or not item.clause.strip():
+                raise ValueError("checklist clauses must be non-empty strings")
             if not isinstance(item.status, str) or item.status not in {
                 "compliant",
                 "partial",
