@@ -48,6 +48,31 @@ class SideChannelBenchmarkArm:
     dummy_stream_overhead_ratio: float
     bitstream_count: int
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise SideChannelBenchmarkError("arm name must be a non-empty string")
+        if not isinstance(self.class_activity_proxy, ClassActivityProxy):
+            raise SideChannelBenchmarkError("class_activity_proxy must be a ClassActivityProxy")
+        if isinstance(self.dummy_stream_overhead_ratio, bool) or not isinstance(
+            self.dummy_stream_overhead_ratio, int | float
+        ):
+            raise SideChannelBenchmarkError(
+                "dummy_stream_overhead_ratio must be a finite non-negative value"
+            )
+        if (
+            not math.isfinite(float(self.dummy_stream_overhead_ratio))
+            or float(self.dummy_stream_overhead_ratio) < 0.0
+        ):
+            raise SideChannelBenchmarkError(
+                "dummy_stream_overhead_ratio must be a finite non-negative value"
+            )
+        if (
+            isinstance(self.bitstream_count, bool)
+            or not isinstance(self.bitstream_count, int)
+            or self.bitstream_count < 0
+        ):
+            raise SideChannelBenchmarkError("bitstream_count must be a non-negative integer")
+
 
 @dataclass(frozen=True, slots=True)
 class SideChannelBenchmarkRecord:
