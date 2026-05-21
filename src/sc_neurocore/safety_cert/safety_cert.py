@@ -335,6 +335,9 @@ class FMEDA:
         """SFF = (safe + no_effect + DC*dangerous_detected) / total."""
         if not self.failure_modes:
             return 0.0
+        for fm in self.failure_modes:
+            if not isinstance(fm, FailureMode):
+                raise ValueError("failure_modes must contain FailureMode entries")
         total = self.total_failure_rate
         if total == 0:
             return 0.0
