@@ -925,6 +925,12 @@ class TestChangeImpactTracker:
         ct.add_change(ChangeRecord("C2", "b", [], ["R2", "R3"]))
         assert ct.affected_requirements() == ["R1", "R2", "R3"]
 
+    def test_affected_requirements_rejects_corrupted_internal_state(self):
+        ct = ChangeImpactTracker()
+        ct.changes.append("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="ChangeRecord"):
+            ct.affected_requirements()
+
     def test_add_change_rejects_invalid_contract(self):
         ct = ChangeImpactTracker()
         with pytest.raises(ValueError, match="change"):
