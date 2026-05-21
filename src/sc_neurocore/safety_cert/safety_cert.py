@@ -799,6 +799,18 @@ class CertificationGenerator:
                 raise ValueError("formal_properties must contain FormalProperty entries")
         if network_config is not None and not isinstance(network_config, dict):
             raise ValueError("network_config must be a dictionary when provided")
+        if network_config is not None:
+            for key in ("bitstream_length", "num_inputs", "num_neurons"):
+                if key in network_config:
+                    value = network_config[key]
+                    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+                        raise ValueError(f"network_config[{key}] must be an integer >= 1")
+            if "clock_mhz" in network_config:
+                clock = network_config["clock_mhz"]
+                if isinstance(clock, bool) or not isinstance(clock, int | float):
+                    raise ValueError("network_config[clock_mhz] must be a finite positive number")
+                if not math.isfinite(float(clock)) or float(clock) <= 0.0:
+                    raise ValueError("network_config[clock_mhz] must be a finite positive number")
 
         # 1. Traceability
         tm = TraceabilityMatrix()
