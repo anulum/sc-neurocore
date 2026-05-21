@@ -285,6 +285,12 @@ class ResilienceBenchmark:
 
     def _generate_bitstream(self, length: int, probability: float) -> np.ndarray:
         """Generate a random SC bitstream encoding a given probability."""
+        if isinstance(length, bool) or not isinstance(length, int) or length <= 0:
+            raise ValueError("length must be a positive integer")
+        if isinstance(probability, bool) or not isinstance(probability, int | float):
+            raise ValueError("probability must be a finite value in [0, 1]")
+        if not np.isfinite(float(probability)) or float(probability) < 0.0 or float(probability) > 1.0:
+            raise ValueError("probability must be a finite value in [0, 1]")
         return (self.rng.random(length) < probability).astype(np.uint8)
 
     def run(
