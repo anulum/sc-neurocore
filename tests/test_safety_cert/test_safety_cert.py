@@ -1241,6 +1241,12 @@ class TestEvidenceBag:
         bag.add(EvidenceItem("x.md", "formal", "proof"))
         assert len(bag.compute_hashes()) == 32
 
+    def test_hash_rejects_corrupted_internal_state(self):
+        bag = EvidenceBag()
+        bag.items.append("bad")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="EvidenceItem"):
+            bag.compute_hashes()
+
     def test_hash_changes_with_declared_sha256(self):
         bag_a = EvidenceBag()
         bag_a.add(EvidenceItem("x.md", "formal", "proof", sha256="a"))
