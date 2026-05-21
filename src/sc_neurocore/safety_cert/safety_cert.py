@@ -1092,6 +1092,19 @@ class SafetyManualGenerator:
         modules: List[str],
         wcet_ns: float,
     ) -> str:
+        if not isinstance(product_name, str) or not product_name.strip():
+            raise ValueError("product_name must be a non-empty string")
+        if not isinstance(sil_level, SILLevel):
+            raise ValueError("sil_level must be a SILLevel")
+        if not isinstance(modules, list) or not modules:
+            raise ValueError("modules must be a non-empty list")
+        for module in modules:
+            if not isinstance(module, str) or not module.strip():
+                raise ValueError("modules must contain non-empty strings")
+        if isinstance(wcet_ns, bool) or not isinstance(wcet_ns, int | float):
+            raise ValueError("wcet_ns must be a finite non-negative value")
+        if not math.isfinite(float(wcet_ns)) or float(wcet_ns) < 0.0:
+            raise ValueError("wcet_ns must be a finite non-negative value")
         return textwrap.dedent(f"""\
 # Safety Manual — {product_name}
 ## SIL {sil_level.value} — {datetime.now().strftime("%Y-%m-%d")}
