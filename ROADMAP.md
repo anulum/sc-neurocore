@@ -26,6 +26,12 @@
   evidence filename uniqueness; plus strengthened decision-time integrity checks
   for HFT, SIL mapping, reliability PFHd, package/checklist invariants, and
   cross-standard checklist status handling with matching regression coverage.
+- Progress (2026-05-21, batch 3): additional fail-closed certification-path
+  hardening now validates requirement status integrity in coverage/open-count
+  paths, change-impact identifier/state consistency, cross-standard mapping
+  tuple integrity, strict evidence SHA-256 digest contracts, normalised module
+  identifiers for uncovered/formal-gap/safety-manual flows, and compliance
+  clause tuple shape constraints with targeted regression coverage updates.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
 
