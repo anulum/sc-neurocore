@@ -805,6 +805,7 @@ class TestCertificationGenerator:
             ({"modules": []}, "modules"),
             ({"modules": ["", "m2"]}, "modules"),
             ({"modules": ["sc_lif_neuron", "sc_lif_neuron"]}, "duplicates"),
+            ({"modules": [" sc_lif_neuron", "m2"]}, "whitespace"),
             ({"formal_properties": "bad"}, "formal_properties"),
             ({"formal_properties": ["bad"]}, "formal_properties"),
             ({"network_config": "bad"}, "network_config"),
