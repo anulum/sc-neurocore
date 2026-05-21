@@ -764,6 +764,20 @@ class ComplianceChecklist:
             SafetyStandard.EN_50129: cls.EN_50129_CLAUSES,
         }
         clauses = clause_map.get(standard, [])
+        for entry in clauses:
+            if (
+                not isinstance(entry, tuple)
+                or len(entry) != 3
+                or not isinstance(entry[0], str)
+                or not entry[0].strip()
+                or not isinstance(entry[1], str)
+                or not entry[1].strip()
+                or not isinstance(entry[2], str)
+                or not entry[2].strip()
+            ):
+                raise ValueError(
+                    "clause definitions must contain non-empty (clause, description, evidence) tuples"
+                )
         if len({clause for clause, _, _ in clauses}) != len(clauses):
             raise ValueError("clause definitions must not contain duplicates")
         items = []
