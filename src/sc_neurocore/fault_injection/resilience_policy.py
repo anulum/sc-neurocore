@@ -158,8 +158,16 @@ class GracefulDegradationPolicy:
         for row_index, stream in enumerate(bitstreams):
             injector = FaultInjector(seed=seed + row_index)
             corrupted_row, affected = injector.inject(stream, fault_model, ber)
+            if corrupted_row.shape != stream.shape:
+                raise ValueError("internal error: corrupted row shape mismatch")
+            if corrupted_row.dtype != bitstreams.dtype:
+                raise ValueError("internal error: corrupted row dtype mismatch")
+            if affected < 0 or affected > stream.size:
+                raise ValueError("internal error: affected bits out of bounds")
             corrupted[row_index] = corrupted_row
             affected_total += affected
+        if affected_total < 0 or affected_total > bitstreams.size:
+            raise ValueError("internal error: affected bit total out of bounds")
         return corrupted, affected_total
 
     def _plan(self, observation: SeededFaultObservation) -> DegradationPlan:
