@@ -139,6 +139,22 @@ class TestResilienceReportContracts:
         with pytest.raises(ValueError, match=match):
             ResilienceReport(**values)
 
+    def test_rejects_unknown_fault_model_value(self):
+        with pytest.raises(ValueError, match="known FaultModel"):
+            ResilienceReport(
+                fault_model="unknown_fault",
+                ber=1e-3,
+                bitstream_length=128,
+                num_trials=10,
+                mean_error=0.01,
+                std_error=0.005,
+                max_error=0.03,
+                p95_error=0.02,
+                p99_error=0.025,
+                mean_bits_flipped=1.5,
+                wall_time_ms=2.5,
+            )
+
 
 class TestSeedContracts:
     def test_fault_injector_reproducible_with_same_seed(self):
