@@ -331,6 +331,17 @@ class TestFMEDA:
         fmeda.add_sc_standard_modes("sc_lif_neuron")
         assert len(fmeda.failure_modes) == 5
 
+    def test_add_sc_standard_modes_normalises_component_whitespace(self):
+        fmeda = FMEDA()
+        fmeda.add_sc_standard_modes(" sc_lif_neuron ")
+        assert all(fm.component == "sc_lif_neuron" for fm in fmeda.failure_modes)
+
+    def test_add_sc_standard_modes_rejects_duplicate_component_seed(self):
+        fmeda = FMEDA()
+        fmeda.add_sc_standard_modes("neuron")
+        with pytest.raises(ValueError, match="already exists"):
+            fmeda.add_sc_standard_modes("neuron")
+
     def test_add_sc_standard_modes_rejects_invalid_component(self):
         fmeda = FMEDA()
         with pytest.raises(ValueError, match="component"):
