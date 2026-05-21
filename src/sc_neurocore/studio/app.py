@@ -249,6 +249,15 @@ class PresetDefaultFlowRunFromContractRequest(BaseModel):
     action_overrides: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 
+class PresetDefaultFlowAttestRequest(BaseModel):
+    run_result: dict[str, Any]
+
+
+class PresetDefaultFlowAttestationVerifyRequest(BaseModel):
+    run_result: dict[str, Any]
+    attestation: dict[str, Any]
+
+
 class CompareRequest(BaseModel):
     config_a: dict
     config_b: dict
@@ -892,10 +901,7 @@ def create_app() -> FastAPI:
             expected_plan_fingerprint = plan["plan_fingerprint_sha256"]
             order_match = req.action_order == expected_order
             fingerprints_match = req.template_fingerprints == expected_fingerprints
-            plan_fingerprint_match = (
-                req.plan_fingerprint_sha256 is None
-                or req.plan_fingerprint_sha256 == expected_plan_fingerprint
-            )
+            plan_fingerprint_match = req.plan_fingerprint_sha256 == expected_plan_fingerprint
             if not (order_match and fingerprints_match and plan_fingerprint_match):
                 raise ValueError("default-flow plan verification failed; refresh plan before run")
             run_payload = _execute_default_flow_with_overrides(preset_id, req.action_overrides)
@@ -963,6 +969,119 @@ def create_app() -> FastAPI:
                 "verified": True,
             }
             return run_payload
+
+        return _safe(fn)
+
+    @app.post("/api/presets/{preset_id}/default-flow/attest")
+    def api_preset_default_flow_attest(
+        preset_id: str, req: PresetDefaultFlowAttestRequest
+    ) -> Any:
+        p = get_preset(preset_id)
+        if not p:
+            raise HTTPException(404, f"Preset '{preset_id}' not found")
+
+        def fn() -> dict[str, Any]:
+            run_result = req.run_result
+            if run_result.get("preset_id") != preset_id:
+                raise ValueError("run_result preset_id mismatch")
+            if run_result.get("flow_id") != "studio_default_adaptive_precision_v1":
+                raise ValueError("unsupported flow_id for attestation")
+            repro = run_result.get("reproducibility_manifest")
+            if not isinstance(repro, dict):
+                raise ValueError("run_result missing reproducibility_manifest")
+            run_fingerprint = repro.get("run_fingerprint_sha256")
+            inputs_fingerprint = repro.get("inputs_fingerprint_sha256")
+            if not isinstance(run_fingerprint, str) or not isinstance(inputs_fingerprint, str):
+                raise ValueError("run_result reproducibility fingerprint missing")
+            if len(run_fingerprint) != 64 or len(inputs_fingerprint) != 64:
+                raise ValueError("run_result reproducibility fingerprint must be sha256 hex")
+
+            plan = _build_default_flow_plan_payload(preset_id)
+            attestation_payload = {
+                "schema_version": "sc-neurocore.studio.default-flow-attestation.v1",
+                "preset_id": preset_id,
+                "flow_id": "studio_default_adaptive_precision_v1",
+                "plan_fingerprint_sha256": plan["plan_fingerprint_sha256"],
+                "inputs_fingerprint_sha256": inputs_fingerprint,
+                "run_fingerprint_sha256": run_fingerprint,
+            }
+            attestation_payload["attestation_fingerprint_sha256"] = _sha256_json(attestation_payload)
+            return attestation_payload
+
+        return _safe(fn)
+
+    @app.post("/api/presets/{preset_id}/default-flow/attest/verify")
+    def api_preset_default_flow_attest_verify(
+        preset_id: str, req: PresetDefaultFlowAttestationVerifyRequest
+    ) -> Any:
+        p = get_preset(preset_id)
+        if not p:
+            raise HTTPException(404, f"Preset '{preset_id}' not found")
+
+        def fn() -> dict[str, Any]:
+            run_result = req.run_result
+            attestation = req.attestation
+            if run_result.get("preset_id") != preset_id:
+                raise ValueError("run_result preset_id mismatch")
+            if run_result.get("flow_id") != "studio_default_adaptive_precision_v1":
+                raise ValueError("unsupported flow_id for attestation verification")
+            repro = run_result.get("reproducibility_manifest")
+            if not isinstance(repro, dict):
+                raise ValueError("run_result missing reproducibility_manifest")
+            run_fingerprint = repro.get("run_fingerprint_sha256")
+            inputs_fingerprint = repro.get("inputs_fingerprint_sha256")
+            if not isinstance(run_fingerprint, str) or not isinstance(inputs_fingerprint, str):
+                raise ValueError("run_result reproducibility fingerprint missing")
+            if len(run_fingerprint) != 64 or len(inputs_fingerprint) != 64:
+                raise ValueError("run_result reproducibility fingerprint must be sha256 hex")
+
+            plan = _build_default_flow_plan_payload(preset_id)
+            expected_attestation_base = {
+                "schema_version": "sc-neurocore.studio.default-flow-attestation.v1",
+                "preset_id": preset_id,
+                "flow_id": "studio_default_adaptive_precision_v1",
+                "plan_fingerprint_sha256": plan["plan_fingerprint_sha256"],
+                "inputs_fingerprint_sha256": inputs_fingerprint,
+                "run_fingerprint_sha256": run_fingerprint,
+            }
+            expected_attestation_fingerprint = _sha256_json(expected_attestation_base)
+
+            schema_match = (
+                isinstance(attestation, dict)
+                and attestation.get("schema_version")
+                == "sc-neurocore.studio.default-flow-attestation.v1"
+            )
+            plan_match = schema_match and attestation.get("plan_fingerprint_sha256") == plan[
+                "plan_fingerprint_sha256"
+            ]
+            inputs_match = schema_match and attestation.get("inputs_fingerprint_sha256") == inputs_fingerprint
+            run_match = schema_match and attestation.get("run_fingerprint_sha256") == run_fingerprint
+            attestation_fingerprint_match = (
+                schema_match
+                and attestation.get("attestation_fingerprint_sha256")
+                == expected_attestation_fingerprint
+            )
+
+            return {
+                "schema_version": "sc-neurocore.studio.default-flow-attestation-verify.v1",
+                "preset_id": preset_id,
+                "verified": bool(
+                    schema_match
+                    and plan_match
+                    and inputs_match
+                    and run_match
+                    and attestation_fingerprint_match
+                ),
+                "checks": {
+                    "schema_match": bool(schema_match),
+                    "plan_fingerprint_match": bool(plan_match),
+                    "inputs_fingerprint_match": bool(inputs_match),
+                    "run_fingerprint_match": bool(run_match),
+                    "attestation_fingerprint_match": bool(attestation_fingerprint_match),
+                },
+                "expected_plan_fingerprint_sha256": plan["plan_fingerprint_sha256"],
+                "expected_attestation_fingerprint_sha256": expected_attestation_fingerprint,
+            }
 
         return _safe(fn)
 

@@ -354,6 +354,41 @@ class TestPresetsEndpoint:
         )
         assert response.status_code == 422
 
+    def test_default_flow_attest_rejects_missing_repro_manifest(self, client):
+        response = client.post(
+            "/api/presets/fpga_precision/default-flow/attest",
+            json={
+                "run_result": {
+                    "preset_id": "fpga_precision",
+                    "flow_id": "studio_default_adaptive_precision_v1",
+                }
+            },
+        )
+        assert response.status_code == 422
+
+    def test_default_flow_attest_verify_detects_tampered_attestation(self, client):
+        run = client.post(
+            "/api/presets/fpga_precision/default-flow/run",
+            json={"action_overrides": {"auto_tune_adaptive_precision": {"target_error_percent": 0.05}}},
+        )
+        assert run.status_code == 200
+        run_payload = run.json()
+        attest = client.post(
+            "/api/presets/fpga_precision/default-flow/attest",
+            json={"run_result": run_payload},
+        )
+        assert attest.status_code == 200
+        attest_payload = attest.json()
+        attest_payload["attestation_fingerprint_sha256"] = "0" * 64
+        verify = client.post(
+            "/api/presets/fpga_precision/default-flow/attest/verify",
+            json={"run_result": run_payload, "attestation": attest_payload},
+        )
+        assert verify.status_code == 200
+        verify_payload = verify.json()
+        assert verify_payload["verified"] is False
+        assert verify_payload["checks"]["attestation_fingerprint_match"] is False
+
 
 class TestBifurcationEndpoint:
     def test_bifurcation_model(self, client):

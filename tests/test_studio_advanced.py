@@ -492,6 +492,45 @@ class TestPresets:
         assert payload["contract_verification"]["verified"] is True
         assert payload["verification_gate"]["verified"] is True
 
+    def test_fpga_precision_default_flow_attest_endpoint(self, client):
+        run = client.post(
+            "/api/presets/fpga_precision/default-flow/run",
+            json={"action_overrides": {"auto_tune_adaptive_precision": {"target_error_percent": 0.05}}},
+        )
+        assert run.status_code == 200
+        run_payload = run.json()
+        response = client.post(
+            "/api/presets/fpga_precision/default-flow/attest",
+            json={"run_result": run_payload},
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["schema_version"] == "sc-neurocore.studio.default-flow-attestation.v1"
+        assert payload["preset_id"] == "fpga_precision"
+        assert len(payload["attestation_fingerprint_sha256"]) == 64
+
+    def test_fpga_precision_default_flow_attest_verify_endpoint(self, client):
+        run = client.post(
+            "/api/presets/fpga_precision/default-flow/run",
+            json={"action_overrides": {"auto_tune_adaptive_precision": {"target_error_percent": 0.05}}},
+        )
+        assert run.status_code == 200
+        run_payload = run.json()
+        attest = client.post(
+            "/api/presets/fpga_precision/default-flow/attest",
+            json={"run_result": run_payload},
+        )
+        assert attest.status_code == 200
+        attest_payload = attest.json()
+        verify = client.post(
+            "/api/presets/fpga_precision/default-flow/attest/verify",
+            json={"run_result": run_payload, "attestation": attest_payload},
+        )
+        assert verify.status_code == 200
+        verify_payload = verify.json()
+        assert verify_payload["schema_version"] == "sc-neurocore.studio.default-flow-attestation-verify.v1"
+        assert verify_payload["verified"] is True
+
     def test_preset_not_found(self, client):
         r = client.get("/api/presets/nonexistent")
         assert r.status_code == 404
