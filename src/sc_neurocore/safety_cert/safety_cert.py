@@ -562,6 +562,22 @@ class ChecklistItem:
     evidence: str = ""
     status: str = "not_addressed"  # "compliant" | "partial" | "not_addressed"
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.item_id, str) or not self.item_id.strip():
+            raise ValueError("item_id must be a non-empty string")
+        if not isinstance(self.clause, str) or not self.clause.strip():
+            raise ValueError("clause must be a non-empty string")
+        if not isinstance(self.description, str) or not self.description.strip():
+            raise ValueError("description must be a non-empty string")
+        if not isinstance(self.evidence, str):
+            raise ValueError("evidence must be a string")
+        if not isinstance(self.status, str) or self.status not in {
+            "compliant",
+            "partial",
+            "not_addressed",
+        }:
+            raise ValueError("status must be one of: compliant, partial, not_addressed")
+
 
 class ComplianceChecklist:
     """Standard-specific compliance checklist generator."""
@@ -1063,6 +1079,22 @@ class EvidenceItem:
     category: str  # "formal", "test", "analysis", "design", "report"
     description: str
     sha256: str = ""
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.filename, str) or not self.filename.strip():
+            raise ValueError("filename must be a non-empty string")
+        if not isinstance(self.category, str) or self.category not in {
+            "formal",
+            "test",
+            "analysis",
+            "design",
+            "report",
+        }:
+            raise ValueError("category must be one of: formal, test, analysis, design, report")
+        if not isinstance(self.description, str) or not self.description.strip():
+            raise ValueError("description must be a non-empty string")
+        if not isinstance(self.sha256, str):
+            raise ValueError("sha256 must be a string")
 
 
 class EvidenceBag:

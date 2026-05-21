@@ -338,6 +338,28 @@ class TestComplianceChecklist:
         items = ComplianceChecklist.generate(SafetyStandard.IEC_61508)
         assert all(i.evidence for i in items)
 
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"item_id": ""}, "item_id"),
+            ({"clause": ""}, "clause"),
+            ({"description": ""}, "description"),
+            ({"evidence": None}, "evidence"),
+            ({"status": "ok"}, "status"),
+        ],
+    )
+    def test_checklist_item_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "item_id": "IEC 61508_7.4.2",
+            "clause": "7.4.2",
+            "description": "Formal verification of safety functions",
+            "evidence": "formal/",
+            "status": "partial",
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            ChecklistItem(**values)
+
 
 # ── SIL/ASIL Mapping Tests ──────────────────────────────────────────
 
@@ -721,6 +743,26 @@ class TestEvidenceBag:
         bag = EvidenceBag()
         bag.add(EvidenceItem("x.md", "formal", "proof"))
         assert len(bag.compute_hashes()) == 32
+
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"filename": ""}, "filename"),
+            ({"category": "unsafe"}, "category"),
+            ({"description": ""}, "description"),
+            ({"sha256": None}, "sha256"),
+        ],
+    )
+    def test_evidence_item_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "filename": "formal_proof_cert.md",
+            "category": "formal",
+            "description": "Formal proof certificate",
+            "sha256": "",
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            EvidenceItem(**values)
 
 
 # ── Cross-Standard Mapping Tests (Gap 9) ──────────────────────────────
