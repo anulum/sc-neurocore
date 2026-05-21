@@ -13,6 +13,7 @@ import pytest
 
 from sc_neurocore.fault_injection import (
     DegradationAction,
+    DegradationPlan,
     FaultModel,
     GracefulDegradationPolicy,
     SeededFaultObservation,
@@ -175,6 +176,27 @@ def test_seeded_fault_observation_rejects_invalid_contracts() -> None:
             bitstream_length=8,
             affected_ratio=0.2,
             audit=BitstreamAuditReport(layer="L0", stream_length=8, num_neurons=1, status=AuditSeverity.OK),
+        )
+
+
+def test_degradation_plan_rejects_invalid_contracts() -> None:
+    observation = SeededFaultObservation(
+        layer_id="L0",
+        seed=1,
+        fault_model=FaultModel.BIT_FLIP,
+        ber=0.1,
+        affected_bits=1,
+        bitstream_length=8,
+        affected_ratio=0.125,
+        audit=BitstreamAuditReport(layer="L0", stream_length=8, num_neurons=1, status=AuditSeverity.OK),
+    )
+    with pytest.raises(ValueError, match="recommended_bitstream_length"):
+        DegradationPlan(
+            action=DegradationAction.NOMINAL,
+            observation=observation,
+            recommended_bitstream_length=0,
+            replay_seed=1,
+            reason="ok",
         )
 
 

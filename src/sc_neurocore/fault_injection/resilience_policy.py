@@ -84,6 +84,22 @@ class DegradationPlan:
     replay_seed: int
     reason: str
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.action, DegradationAction):
+            raise ValueError("action must be a DegradationAction")
+        if not isinstance(self.observation, SeededFaultObservation):
+            raise ValueError("observation must be a SeededFaultObservation")
+        if (
+            isinstance(self.recommended_bitstream_length, bool)
+            or not isinstance(self.recommended_bitstream_length, int)
+            or self.recommended_bitstream_length <= 0
+        ):
+            raise ValueError("recommended_bitstream_length must be a positive integer")
+        if isinstance(self.replay_seed, bool) or not isinstance(self.replay_seed, int):
+            raise ValueError("replay_seed must be an integer")
+        if not isinstance(self.reason, str) or not self.reason.strip():
+            raise ValueError("reason must be a non-empty string")
+
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-ready summary without expanding full bitstreams."""
         return {
