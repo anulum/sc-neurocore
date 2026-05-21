@@ -1611,6 +1611,9 @@ class EvidenceBag:
         for item in self.items:
             if not isinstance(item, EvidenceItem):
                 raise ValueError("items must contain EvidenceItem entries")
+        filenames = [item.filename for item in self.items]
+        if len(filenames) != len(set(filenames)):
+            raise ValueError("evidence filenames must be unique")
         h = hashlib.sha256()
         for item in sorted(self.items, key=lambda x: x.filename):
             h.update(f"{item.filename}:{item.category}:{item.sha256}".encode())

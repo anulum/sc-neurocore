@@ -1602,6 +1602,15 @@ class TestEvidenceBag:
         with pytest.raises(ValueError, match="EvidenceItem"):
             bag.compute_hashes()
 
+    def test_hash_rejects_corrupted_duplicate_filenames_state(self):
+        bag = EvidenceBag()
+        bag.items = [  # type: ignore[assignment]
+            EvidenceItem("x.md", "formal", "a"),
+            EvidenceItem("x.md", "report", "b"),
+        ]
+        with pytest.raises(ValueError, match="unique"):
+            bag.compute_hashes()
+
     def test_hash_changes_with_declared_sha256(self):
         bag_a = EvidenceBag()
         bag_a.add(EvidenceItem("x.md", "formal", "proof", sha256="a" * 64))
