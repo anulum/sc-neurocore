@@ -174,6 +174,8 @@ class TraceabilityMatrix:
         for req in self.requirements.values():
             if not isinstance(req, Requirement):
                 raise ValueError("requirements must contain Requirement entries")
+            if not isinstance(req.status, str) or req.status not in {"open", "implemented", "verified"}:
+                raise ValueError("requirements statuses must be one of: open, implemented, verified")
         return sum(1 for r in self.requirements.values() if r.status == "open")
 
     def generate_report(self) -> str:
