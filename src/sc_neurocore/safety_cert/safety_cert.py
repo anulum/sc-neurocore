@@ -448,6 +448,8 @@ class FormalProofCertificate:
                 raise ValueError("properties must contain FormalProperty entries")
 
     def add_property(self, prop: FormalProperty) -> None:
+        if not isinstance(prop, FormalProperty):
+            raise ValueError("prop must be a FormalProperty")
         self.properties.append(prop)
 
     @property
