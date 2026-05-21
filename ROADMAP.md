@@ -38,6 +38,12 @@
   property identifier validation, and strict cross-standard mapping payload
   integrity; regression coverage now also gates whitespace-normalised module
   identifiers and compliance clause tuple shape constraints end-to-end.
+- Progress (2026-05-21, batch 5): certification-path fail-closed hardening
+  extended with stricter formal-certificate state guards, finite FMEDA
+  aggregate enforcement (`total_failure_rate`, `diagnostic_coverage`,
+  `residual_risk_fit`, per-component aggregates), proof-coverage/uncovered-module
+  property identifier validation, cross-standard overlap de-duplication, and
+  constructor-time checklist identity invariants with matching regression tests.
 
 ## v3.8 — Hardening & Edge AI Readiness ✓
 
