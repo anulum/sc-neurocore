@@ -1132,6 +1132,7 @@ class TestProofTestCoverage:
             ([FormalProperty("P1", "n", "d", "assert", "proven"), "bad"], ["neuron"], "properties"),
             ([FormalProperty("P1", "n", "d", "assert", "proven")], "invalid", "all_modules"),
             ([FormalProperty("P1", "n", "d", "assert", "proven")], ["", "neuron"], "all_modules"),
+            ([FormalProperty("P1", "n", "d", "assert", "proven")], [" neuron"], "whitespace"),
         ],
     )
     def test_uncovered_modules_rejects_invalid_contracts(self, props, modules, match):

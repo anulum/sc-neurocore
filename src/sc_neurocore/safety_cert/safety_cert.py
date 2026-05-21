@@ -1146,6 +1146,8 @@ class ProofTestCoverage:
         for module in all_modules:
             if not isinstance(module, str) or not module.strip():
                 raise ValueError("all_modules must contain non-empty strings")
+            if module != module.strip():
+                raise ValueError("all_modules entries must not contain leading or trailing whitespace")
         covered = {p.module for p in properties}
         uncovered: list[str] = []
         seen: set[str] = set()
