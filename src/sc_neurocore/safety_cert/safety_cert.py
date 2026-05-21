@@ -1158,7 +1158,13 @@ class ChangeImpactTracker:
 
     @property
     def high_risk_count(self) -> int:
-        return sum(1 for c in self.changes if c.risk_level == "high")
+        count = 0
+        for change in self.changes:
+            if not isinstance(change, ChangeRecord):
+                raise ValueError("changes must contain ChangeRecord entries")
+            if change.risk_level == "high":
+                count += 1
+        return count
 
     @property
     def needs_re_certification(self) -> bool:
