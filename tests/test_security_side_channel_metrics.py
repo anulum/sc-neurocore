@@ -45,9 +45,11 @@ def test_switching_activity_reports_per_stream_rates_and_histogram() -> None:
     "bitstreams",
     [
         (),
+        b"\x00\x01",
         ((0, 1), (1,)),
         ((0, 1, 2),),
         ((0, 1.0),),
+        ((0, True),),
         ((0,),),
     ],
 )
@@ -109,13 +111,18 @@ def test_class_activity_proxy_rejects_mismatched_or_nonfinite_inputs() -> None:
     with pytest.raises(SideChannelMetricError):
         compute_class_activity_proxy((((0, 1),),), (math.nan,))
 
+    with pytest.raises(SideChannelMetricError):
+        compute_class_activity_proxy((((0, 1),),), (False,))
+
 
 @pytest.mark.parametrize(
     ("samples", "labels"),
     [
         ("invalid", (0,)),
+        (b"invalid", (0,)),
         ((((0, 1),),), "invalid"),
         (((("not-a-row",),),), (0,)),
+        (((b"\x00\x01",),), (0,)),
     ],
 )
 def test_class_activity_proxy_rejects_string_like_contract_inputs(samples, labels) -> None:
