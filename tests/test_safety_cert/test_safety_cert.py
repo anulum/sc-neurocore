@@ -40,6 +40,7 @@ from sc_neurocore.safety_cert.safety_cert import (
     SIL_TO_ASIL,
     SWClass,
     TraceabilityMatrix,
+    WCETPath,
     WCETAnalyzer,
 )
 
@@ -308,6 +309,61 @@ class TestWCETAnalyzer:
         path = WCETAnalyzer.analyze_multistage(layers)
         assert len(path.stages) == 8
         assert path.total_cycles > 0
+
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"path_id": ""}, "path_id"),
+            ({"description": ""}, "description"),
+            ({"stages": [], "cycles_per_stage": []}, "stages must not be empty"),
+            ({"stages": ["A", ""], "cycles_per_stage": [1, 2]}, "stages"),
+            ({"stages": ["A"], "cycles_per_stage": [1, 2]}, "same length"),
+            ({"cycles_per_stage": [1, -1]}, "cycles_per_stage"),
+        ],
+    )
+    def test_wcet_path_rejects_invalid_contracts(self, kwargs, match):
+        values = {
+            "path_id": "p1",
+            "description": "path",
+            "stages": ["A", "B"],
+            "cycles_per_stage": [1, 2],
+        }
+        values.update(kwargs)
+        with pytest.raises(ValueError, match=match):
+            WCETPath(**values)
+
+    @pytest.mark.parametrize("clock_mhz", [0.0, -1.0, float("inf"), float("nan"), True])
+    def test_wcet_ns_rejects_invalid_clock(self, clock_mhz):
+        path = WCETPath("p1", "path", ["A"], [1])
+        with pytest.raises(ValueError, match="clock_mhz"):
+            path.wcet_ns(clock_mhz)
+
+    @pytest.mark.parametrize(
+        ("args", "match"),
+        [
+            ((0, 8, 16, False), "bitstream_length"),
+            ((256, 0, 16, False), "num_inputs"),
+            ((256, 8, 0, False), "num_neurons"),
+            ((256, 8, 16, "yes"), "has_stp"),
+        ],
+    )
+    def test_analyze_rejects_invalid_contracts(self, args, match):
+        with pytest.raises(ValueError, match=match):
+            WCETAnalyzer.analyze(*args)
+
+    @pytest.mark.parametrize(
+        ("layers", "match"),
+        [
+            ([], "non-empty list"),
+            ([None], "dictionary"),
+            ([{"bitstream_length": 0}], "bitstream_length"),
+            ([{"num_inputs": 0}], "num_inputs"),
+            ([{"num_neurons": 0}], "num_neurons"),
+        ],
+    )
+    def test_analyze_multistage_rejects_invalid_contracts(self, layers, match):
+        with pytest.raises(ValueError, match=match):
+            WCETAnalyzer.analyze_multistage(layers)
 
 
 # ── ComplianceChecklist Tests ────────────────────────────────────────
