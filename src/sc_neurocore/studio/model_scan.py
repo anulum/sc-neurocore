@@ -26,6 +26,7 @@ def scan_all_models(current: float = 10.0, duration: float = 100.0) -> list[dict
         return list(_CACHE.values())
 
     results: dict[str, dict] = {}
+    failures: list[dict[str, str]] = []
     models = list_models()
 
     with warnings.catch_warnings():
@@ -42,15 +43,27 @@ def scan_all_models(current: float = 10.0, duration: float = 100.0) -> list[dict
                     "rate_hz": pattern.get("rate_hz", 0),
                     "spike_count": r["spike_count"],
                 }
-            except Exception:
-                results[m["name"]] = {
-                    "name": m["name"],
-                    "category": m.get("category", "Other"),
-                    "pattern": "error",
-                    "description": "Simulation failed",
-                    "rate_hz": 0,
-                    "spike_count": 0,
-                }
+            except Exception as exc:
+                failures.append(
+                    {
+                        "name": str(m.get("name", "")),
+                        "category": str(m.get("category", "Other")),
+                        "error_type": type(exc).__name__,
+                        "error_message": str(exc),
+                    }
+                )
+
+    if failures:
+        total = len(models)
+        raise ValueError(
+            f"model scan failed for {len(failures)}/{total} models",
+            {
+                "failed_models": failures,
+                "failed_count": len(failures),
+                "total_models": total,
+                "failure_rate": float(len(failures)) / float(max(total, 1)),
+            },
+        )
 
     _CACHE = results
     return list(results.values())
