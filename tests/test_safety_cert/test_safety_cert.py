@@ -907,6 +907,11 @@ class TestChangeImpactTracker:
         ct.add_change(ChangeRecord("C2", "b", [], ["R2", "R3"]))
         assert ct.affected_requirements() == ["R1", "R2", "R3"]
 
+    def test_add_change_rejects_invalid_contract(self):
+        ct = ChangeImpactTracker()
+        with pytest.raises(ValueError, match="change"):
+            ct.add_change("bad")  # type: ignore[arg-type]
+
     @pytest.mark.parametrize(
         ("kwargs", "match"),
         [
