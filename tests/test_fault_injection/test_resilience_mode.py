@@ -99,6 +99,9 @@ def test_resilience_mode_recommends_replay_for_correlated_streams() -> None:
 
 
 def test_resilience_mode_rejects_invalid_inputs_and_config() -> None:
+    with pytest.raises(ValueError, match="config"):
+        FaultInjectionResilienceMode(config="bad")  # type: ignore[arg-type]
+
     with pytest.raises(ValueError, match="num_trials"):
         ResilienceModeConfig(
             layer_id="bad",
