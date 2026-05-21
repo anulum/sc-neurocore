@@ -1575,6 +1575,8 @@ class FormalPropertyGapDetector:
                 "assume",
             }:
                 raise ValueError("properties property_type values must be one of: assert, cover, assume")
+            if not isinstance(prop.status, str) or prop.status not in {"proven", "failed", "unknown"}:
+                raise ValueError("properties statuses must be one of: proven, failed, unknown")
         if not isinstance(required_modules, list):
             raise ValueError("required_modules must be a list")
         for module in required_modules:
