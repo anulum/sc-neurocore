@@ -45,6 +45,34 @@ class SeededFaultObservation:
     affected_ratio: float
     audit: BitstreamAuditReport
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.layer_id, str) or not self.layer_id.strip():
+            raise ValueError("layer_id must be a non-empty string")
+        if isinstance(self.seed, bool) or not isinstance(self.seed, int):
+            raise ValueError("seed must be an integer")
+        if not isinstance(self.fault_model, FaultModel):
+            raise ValueError("fault_model must be a FaultModel")
+        if isinstance(self.ber, bool) or not isinstance(self.ber, int | float):
+            raise ValueError("ber must be numeric")
+        if not np.isfinite(float(self.ber)) or float(self.ber) < 0.0 or float(self.ber) > 1.0:
+            raise ValueError("ber must be a finite value in [0, 1]")
+        for field_name in ("affected_bits", "bitstream_length"):
+            value = getattr(self, field_name)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError(f"{field_name} must be a non-negative integer")
+        if self.affected_bits > self.bitstream_length:
+            raise ValueError("affected_bits cannot exceed bitstream_length")
+        if isinstance(self.affected_ratio, bool) or not isinstance(self.affected_ratio, int | float):
+            raise ValueError("affected_ratio must be numeric")
+        if (
+            not np.isfinite(float(self.affected_ratio))
+            or float(self.affected_ratio) < 0.0
+            or float(self.affected_ratio) > 1.0
+        ):
+            raise ValueError("affected_ratio must be a finite value in [0, 1]")
+        if not isinstance(self.audit, BitstreamAuditReport):
+            raise ValueError("audit must be a BitstreamAuditReport")
+
 
 @dataclass(frozen=True)
 class DegradationPlan:
