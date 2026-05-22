@@ -118,6 +118,7 @@ def _run(
 def _target_command(target: str, seconds: int) -> list[str]:
     return [
         "cargo",
+        "+nightly",
         "fuzz",
         "run",
         target,

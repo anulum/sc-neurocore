@@ -118,6 +118,10 @@ jobs:
         with:
           python-version: "3.12"
 
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # nightly
+        with:
+          toolchain: nightly
+
       - name: Install cargo-fuzz
         run: cargo install cargo-fuzz --version 0.11.2 --locked
 
