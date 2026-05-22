@@ -234,6 +234,20 @@ def test_ensure_go_loaded_false_without_symbol(monkeypatch: pytest.MonkeyPatch) 
     assert pm._ensure_go_loaded() is False
 
 
+def test_ensure_go_loaded_returns_true_when_already_cached() -> None:
+    old_lib = pm._go_lib
+    old_flag = pm._HAS_GO_LGSSM
+    sentinel = object()
+    try:
+        pm._go_lib = sentinel
+        pm._HAS_GO_LGSSM = True
+        assert pm._ensure_go_loaded() is True
+        assert pm._go_lib is sentinel
+    finally:
+        pm._go_lib = old_lib
+        pm._HAS_GO_LGSSM = old_flag
+
+
 def test_ensure_julia_loaded_false_without_juliacall(monkeypatch: pytest.MonkeyPatch) -> None:
     pm._julia_module = None
     pm._HAS_JULIA_LGSSM = False
@@ -271,6 +285,20 @@ def test_ensure_julia_loaded_false_when_module_file_missing(
     monkeypatch.setattr("os.path.isfile", lambda _path: False)
     try:
         assert pm._ensure_julia_loaded() is False
+    finally:
+        pm._julia_module = old_module
+        pm._HAS_JULIA_LGSSM = old_flag
+
+
+def test_ensure_julia_loaded_returns_true_when_already_cached() -> None:
+    old_module = pm._julia_module
+    old_flag = pm._HAS_JULIA_LGSSM
+    sentinel = object()
+    try:
+        pm._julia_module = sentinel
+        pm._HAS_JULIA_LGSSM = True
+        assert pm._ensure_julia_loaded() is True
+        assert pm._julia_module is sentinel
     finally:
         pm._julia_module = old_module
         pm._HAS_JULIA_LGSSM = old_flag

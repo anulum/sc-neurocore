@@ -75,3 +75,136 @@ def test_collect_synthesis_command_reports_missing_required_args(
 
     assert rc == 1
     assert "--design" in capsys.readouterr().out
+
+
+def test_collect_synthesis_rejects_non_object_design_json(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    design = tmp_path / "design.json"
+    utilisation = tmp_path / "utilisation.rpt"
+    power = tmp_path / "power.rpt"
+    design.write_text("[]", encoding="utf-8")
+    utilisation.write_text("CLB LUTs | 512\nLatency: 64 cycles\n", encoding="utf-8")
+    power.write_text("Total On-Chip Power (mW): 25.0\n", encoding="utf-8")
+
+    rc = _run_main(
+        "collect-synthesis",
+        "--design",
+        str(design),
+        "--utilisation",
+        str(utilisation),
+        "--power",
+        str(power),
+        "--accuracy-score",
+        "0.99",
+    )
+
+    assert rc == 1
+    assert "must be a JSON object" in capsys.readouterr().out
+
+
+def test_collect_synthesis_accepts_utilization_alias(tmp_path: Path) -> None:
+    design = tmp_path / "design.json"
+    utilisation = tmp_path / "utilisation.rpt"
+    power = tmp_path / "power.rpt"
+    output = tmp_path / "evidence.json"
+    _write_design(design)
+    utilisation.write_text("CLB LUTs | 256\nLatency: 32 cycles\n", encoding="utf-8")
+    power.write_text("Total On-Chip Power (mW): 12.5\n", encoding="utf-8")
+
+    rc = _run_main(
+        "collect-synthesis",
+        "--design",
+        str(design),
+        "--utilization",
+        str(utilisation),
+        "--power",
+        str(power),
+        "--accuracy-score",
+        "0.97",
+        "--out",
+        str(output),
+    )
+
+    observations = load_observations(output)
+    assert rc == 0
+    assert observations[0].luts_used == 256
+
+
+def test_collect_synthesis_rejects_partial_energy_metadata(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    design = tmp_path / "design.json"
+    utilisation = tmp_path / "utilisation.rpt"
+    power = tmp_path / "power.rpt"
+    _write_design(design)
+    utilisation.write_text("CLB LUTs | 256\nLatency: 32 cycles\n", encoding="utf-8")
+    power.write_text("Total On-Chip Power (mW): 12.5\n", encoding="utf-8")
+
+    rc = _run_main(
+        "collect-synthesis",
+        "--design",
+        str(design),
+        "--utilisation",
+        str(utilisation),
+        "--power",
+        str(power),
+        "--accuracy-score",
+        "0.97",
+        "--clock-mhz",
+        "100.0",
+    )
+
+    assert rc == 1
+    assert "energy requires both --clock-mhz and --inferences-per-run" in capsys.readouterr().out
+
+
+def test_collect_synthesis_rejects_non_positive_energy_parameters(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    design = tmp_path / "design.json"
+    utilisation = tmp_path / "utilisation.rpt"
+    power = tmp_path / "power.rpt"
+    _write_design(design)
+    utilisation.write_text("CLB LUTs | 256\nLatency: 32 cycles\n", encoding="utf-8")
+    power.write_text("Total On-Chip Power (mW): 12.5\n", encoding="utf-8")
+
+    rc_clock = _run_main(
+        "collect-synthesis",
+        "--design",
+        str(design),
+        "--utilisation",
+        str(utilisation),
+        "--power",
+        str(power),
+        "--accuracy-score",
+        "0.97",
+        "--clock-mhz",
+        "0",
+        "--inferences-per-run",
+        "1",
+    )
+    rc_inf = _run_main(
+        "collect-synthesis",
+        "--design",
+        str(design),
+        "--utilisation",
+        str(utilisation),
+        "--power",
+        str(power),
+        "--accuracy-score",
+        "0.97",
+        "--clock-mhz",
+        "100.0",
+        "--inferences-per-run",
+        "0",
+    )
+
+    output = capsys.readouterr().out
+    assert rc_clock == 1
+    assert rc_inf == 1
+    assert "clock_mhz must be positive" in output
+    assert "inferences_per_run must be positive" in output

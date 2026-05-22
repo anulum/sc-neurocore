@@ -98,6 +98,29 @@ class TestTrainingRLWithRSTDP:
             generations=2,
         )
 
+    def test_train_multimodal_fusion_uses_labels_length_fallback(self):
+        """Hit n_samples fallback path when dataset has labels but no n_samples."""
+        from sc_neurocore.pipeline.training import SCTrainingLoop
+
+        class _FusionLayer:
+            def __init__(self):
+                self.calls = 0
+
+            def train_step(self, sample):
+                self.calls += 1
+                # Alternate None/non-None to hit both accumulation branches.
+                return None if self.calls % 2 == 0 else sample
+
+        class _Dataset:
+            labels = [0, 1, 2]
+
+            def get_sample(self, idx: int):
+                return np.array([float(idx + 1)], dtype=np.float32)
+
+        layer = _FusionLayer()
+        SCTrainingLoop.train_multimodal_fusion(layer, _Dataset(), epochs=2)
+        assert layer.calls == 6
+
 
 # ── utils/model_bridge.py — load with synapses (lines 54-56) ────────
 class TestModelBridgeSynapses:

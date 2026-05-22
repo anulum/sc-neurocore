@@ -175,6 +175,24 @@ def test_require_pint_raises_dependency_error_when_backend_is_missing(monkeypatc
         units.require_pint()
 
 
+def test_require_quantity_rejects_non_quantity_under_strict_units() -> None:
+    with pytest.raises(ValueError, match="must be a pint Quantity"):
+        units.require_quantity(1.0, "current")
+
+
+def test_numeric_helper_paths_return_dimensionless_quantities() -> None:
+    namespace = units.build_quantity_namespace()
+
+    sigmoid_hi = namespace["sigmoid"](1000.0)
+    sigmoid_lo = namespace["sigmoid"](-1000.0)
+    clipped = namespace["clip"](3.0, 0.0, 1.0)
+
+    assert 0.99 <= float(sigmoid_hi.magnitude) <= 1.0
+    assert 0.0 <= float(sigmoid_lo.magnitude) <= 0.01
+    assert float(clipped.magnitude) == 1.0
+    assert str(clipped.units) == "dimensionless"
+
+
 def test_equation_to_fpga_accepts_strict_unit_checked_equation() -> None:
     neuron, verilog = equation_to_fpga(
         "dx/dt = -x / tau",

@@ -84,6 +84,36 @@ def test_web_deployment_config_validates_positive_values() -> None:
         WebDeploymentConfig(bitstream_length=0)
 
 
+def test_build_web_deployment_uses_default_config_when_not_provided(tmp_path: Path) -> None:
+    model = tmp_path / "baseline.json"
+    model.write_text('{"layers": []}\n', encoding="utf-8")
+    manifest = build_web_deployment(model, tmp_path / "web")
+    assert manifest.dt == 1.0
+    assert manifest.bitstream_length == 256
+    assert manifest.capabilities["webgpu"] is True
+    assert manifest.capabilities["wasm_threads"] is False
+
+
+def test_build_web_deployment_accepts_uppercase_supported_suffix(tmp_path: Path) -> None:
+    model = tmp_path / "weights.PTH"
+    model.write_bytes(b"pt-model")
+    manifest = build_web_deployment(model, tmp_path / "web")
+    assert manifest.model_format == "pth"
+    assert manifest.model_name == "weights.PTH"
+
+
+def test_build_web_deployment_can_disable_webgpu_capability(tmp_path: Path) -> None:
+    model = tmp_path / "model.nir"
+    model.write_bytes(b"nir-model")
+    manifest = build_web_deployment(
+        model,
+        tmp_path / "web",
+        WebDeploymentConfig(enable_webgpu=False, enable_wasm_threads=False),
+    )
+    assert manifest.capabilities["webgpu"] is False
+    assert manifest.capabilities["wasm_threads"] is False
+
+
 def test_cli_deploy_web_generates_scaffold(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

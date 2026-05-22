@@ -89,6 +89,14 @@ class TestSCOps:
         out = mux_packed(a, b, s)
         assert out[0] == 0x0000_FFFF
 
+    def test_and_packed_rejects_length_mismatch(self):
+        with pytest.raises(AssertionError):
+            and_packed([0x1, 0x2], [0x1])
+
+    def test_mux_packed_rejects_length_mismatch(self):
+        with pytest.raises(AssertionError):
+            mux_packed([0x1], [0x0, 0x1], [0x1])
+
 
 class TestProbability:
     def test_all_ones(self):
@@ -193,6 +201,12 @@ class TestIzhikevichNeuron:
         fs = IzhikevichNeuron.fast_spiking()
         assert rs.a_q16 != fs.a_q16
 
+    def test_tick_without_strong_input_does_not_immediately_spike(self):
+        n = IzhikevichNeuron.regular_spiking()
+        spiked = n.tick(0)
+        assert spiked is False
+        assert n.spike_count == 0
+
 
 # ===== Network Tests =====
 
@@ -248,6 +262,13 @@ class TestSCNetwork:
         with pytest.raises(ValueError, match="n_inputs"):
             net.run([0.5])
 
+    def test_add_layer_rejects_sc_mode_mismatch(self):
+        net = SCNetwork(bit_length=256, sc_mode="unipolar")
+        layer = SCLayer(n_inputs=1, n_outputs=1, sc_mode="unipolar")
+        layer.sc_mode = "bipolar"  # force mismatch branch post-init
+        with pytest.raises(ValueError, match="sc_mode"):
+            net.add_layer(layer)
+
     def test_empty_network(self):
         net = SCNetwork(bit_length=256)
         assert net.run([]) == []
@@ -265,11 +286,37 @@ class TestSCNetwork:
         assert net.layer_count == 2
         assert net.total_neurons == 3
 
+    def test_from_weights_roundtrip(self):
+        class LayerHeader:
+            def __init__(self, n_inputs: int, n_outputs: int, threshold: int) -> None:
+                self.n_inputs = n_inputs
+                self.n_outputs = n_outputs
+                self.threshold = threshold
+
+        source = SCNetwork(bit_length=256)
+        source.add_layer(SCLayer(n_inputs=2, n_outputs=1, threshold=2, weights=[[0xFFFF_FFFF]]))
+        exported = source.export_weights()
+        layers_data = [
+            (LayerHeader(n_inputs, n_outputs, threshold), rows)
+            for n_inputs, n_outputs, threshold, rows in exported
+        ]
+        restored = SCNetwork.from_weights(layers_data, bit_length=256, lfsr_seed=0x1234)
+        assert restored.layer_count == 1
+        assert restored.layers[0].weights == [[0xFFFF_FFFF]]
+        assert restored.lfsr_seed == 0x1234
+
 
 # ===== Telemetry Tests =====
 
 
 class TestTelemetryRing:
+    def test_empty_ring_defaults(self):
+        ring = TelemetryRing(0)
+        assert ring.capacity == 1
+        assert ring.count == 0
+        assert ring.mean() == 0.0
+        assert ring.last() == 0
+
     def test_push_and_mean(self):
         ring = TelemetryRing(4)
         for v in [10, 20, 30, 40]:
@@ -305,6 +352,24 @@ class TestDeviceTelemetry:
         s = dt.summary()
         assert s["total_spikes"] == 10
         assert "L0" in s["layers"]
+
+    def test_layer_rate_and_zero_neuron_utilization_path(self):
+        dt = DeviceTelemetry()
+        dt.record("L0", 6, 0)   # should not push utilization sample
+        dt.record("L0", 2, 10)  # should push one utilization sample (20%)
+        layer = dt.get_layer("L0")
+        assert layer.lifetime_spike_rate == pytest.approx(4.0)
+        assert layer.mean_spike_rate == pytest.approx(4.0)
+        assert layer.mean_utilization == pytest.approx(20.0)
+
+    def test_get_layer_is_idempotent_and_initialises_zero_rates(self):
+        dt = DeviceTelemetry()
+        first = dt.get_layer("L-new")
+        second = dt.get_layer("L-new")
+        assert first is second
+        assert first.lifetime_spike_rate == 0.0
+        assert first.mean_spike_rate == 0.0
+        assert first.mean_utilization == 0.0
 
 
 # ===== Weights Tests =====

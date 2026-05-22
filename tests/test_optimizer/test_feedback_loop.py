@@ -81,10 +81,91 @@ def test_synthesis_feedback_loop_parses_reports_and_updates_plan(tmp_path: Path)
     assert chosen.accuracy_score >= 0.9
 
 
+def test_synthesis_feedback_loop_without_energy_metadata_omits_energy_payload(
+    tmp_path: Path,
+) -> None:
+    design = tmp_path / "design.json"
+    utilisation = tmp_path / "utilisation.rpt"
+    power = tmp_path / "power.rpt"
+    _write_design(design)
+    utilisation.write_text("CLB LUTs | 300\nLatency: 80 cycles\n", encoding="utf-8")
+    power.write_text("Total On-Chip Power (mW): 8.0\n", encoding="utf-8")
+
+    result = optimise_from_synthesis_reports(
+        network=_network(),
+        target=_target(),
+        design_path=design,
+        utilisation_path=utilisation,
+        power_path=power,
+        accuracy_score=0.991,
+    )
+    assert "energy" not in result.evidence_payload
+    assert result.observations[0].latency_cycles == 80
+
+
+def test_synthesis_feedback_loop_latency_cycles_override_is_honoured(
+    tmp_path: Path,
+) -> None:
+    design = tmp_path / "design.json"
+    utilisation = tmp_path / "utilisation.rpt"
+    power = tmp_path / "power.rpt"
+    _write_design(design)
+    utilisation.write_text("CLB LUTs | 300\nLatency: 80 cycles\n", encoding="utf-8")
+    power.write_text("Total On-Chip Power (mW): 8.0\n", encoding="utf-8")
+
+    result = optimise_from_synthesis_reports(
+        network=_network(),
+        target=_target(),
+        design_path=design,
+        utilisation_path=utilisation,
+        power_path=power,
+        accuracy_score=0.991,
+        latency_cycles=55,
+    )
+    assert result.observations[0].latency_cycles == 55
+
+
 def test_feedback_payload_rejects_incomplete_evidence() -> None:
     with pytest.raises(ObservationLoadError, match="missing"):
         optimise_from_evidence_payload(
             network=_network(),
             target=_target(),
             payload={"observations": [{"mac_count": 128}]},
+        )
+
+
+def test_feedback_loop_fails_closed_when_surrogate_returns_no_report(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import sc_neurocore.optimizer.feedback_loop as feedback_loop_mod
+
+    class _NullOptimiser:
+        def __init__(self, *args, **kwargs) -> None:
+            pass
+
+        def optimise(self, network: object) -> None:
+            return None
+
+    monkeypatch.setattr(feedback_loop_mod, "SurrogateSCOptimizer", _NullOptimiser)
+    with pytest.raises(RuntimeError, match="returned no report"):
+        optimise_from_evidence_payload(
+            network=_network(),
+            target=_target(),
+            payload={
+                "observations": [
+                    {
+                        "mac_count": 128,
+                        "bitstream_length": 64,
+                        "decorrelator": "SCC_Decorrelator",
+                        "mode": "SC",
+                        "precision_bits": 8,
+                        "lfsr_polynomial": "none",
+                        "luts_used": 320,
+                        "power_mw": 7.5,
+                        "latency_cycles": 64,
+                        "accuracy_score": 0.99,
+                        "is_critical_path": True,
+                    }
+                ]
+            },
         )

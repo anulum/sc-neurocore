@@ -245,6 +245,89 @@ class TestMPIDriverBranches:
         result = d.gather_results(np.array([42.0]))
         assert isinstance(result, np.ndarray)
 
+    def test_gather_non_root_returns_empty_array(self, monkeypatch):
+        from sc_neurocore.accel.mpi_driver import MPIDriver
+        import sc_neurocore.accel.mpi_driver as mod
+
+        class _FakeComm:
+            def Gather(self, local_results, global_results, root=0):
+                # On non-root ranks global_results is None by design.
+                assert global_results is None
+
+        monkeypatch.setattr(mod, "HAS_MPI", True)
+        d = MPIDriver()
+        d.size = 2
+        d.rank = 1
+        d.comm = _FakeComm()
+        out = d.gather_results(np.array([1, 2, 3], dtype=np.int32))
+        assert out.size == 0
+
+    def test_scatter_with_missing_comm_falls_back(self, monkeypatch):
+        from sc_neurocore.accel.mpi_driver import MPIDriver
+        import sc_neurocore.accel.mpi_driver as mod
+
+        monkeypatch.setattr(mod, "HAS_MPI", True)
+        d = MPIDriver()
+        d.size = 2
+        d.comm = None
+        src = np.array([10, 11, 12, 13], dtype=np.int32)
+        assert np.array_equal(d.scatter_workload(src), src)
+
+    def test_barrier_calls_comm_when_mpi_enabled(self, monkeypatch):
+        from sc_neurocore.accel.mpi_driver import MPIDriver
+        import sc_neurocore.accel.mpi_driver as mod
+
+        class _FakeComm:
+            def __init__(self):
+                self.called = False
+
+            def Barrier(self):
+                self.called = True
+
+        monkeypatch.setattr(mod, "HAS_MPI", True)
+        d = MPIDriver()
+        fake = _FakeComm()
+        d.comm = fake
+        d.barrier()
+        assert fake.called is True
+
+    def test_gather_with_missing_comm_falls_back(self, monkeypatch):
+        from sc_neurocore.accel.mpi_driver import MPIDriver
+        import sc_neurocore.accel.mpi_driver as mod
+
+        monkeypatch.setattr(mod, "HAS_MPI", True)
+        d = MPIDriver()
+        d.size = 2
+        d.comm = None
+        local = np.array([7, 8], dtype=np.int32)
+        out = d.gather_results(local)
+        assert np.array_equal(out, local)
+
+    def test_scatter_uses_mpi_comm_and_returns_chunk(self, monkeypatch):
+        from sc_neurocore.accel.mpi_driver import MPIDriver
+        import sc_neurocore.accel.mpi_driver as mod
+
+        class _FakeComm:
+            def __init__(self):
+                self.called = False
+                self.seen_len = 0
+
+            def Scatter(self, global_inputs, local_input, root=0):
+                self.called = True
+                self.seen_len = len(global_inputs)
+                local_input[:] = global_inputs[: len(local_input)]
+
+        monkeypatch.setattr(mod, "HAS_MPI", True)
+        d = MPIDriver()
+        d.size = 3
+        d.comm = _FakeComm()
+        src = np.array([1, 2, 3, 4, 5, 6], dtype=np.int32)
+        out = d.scatter_workload(src)
+        assert d.comm.called is True
+        assert d.comm.seen_len == 6
+        assert out.shape == (2,)
+        assert np.array_equal(out, np.array([1, 2], dtype=np.int32))
+
 
 # ── accel/gpu_backend — padding branches ─────────────────────────────
 class TestGPUBackendBranches:

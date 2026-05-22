@@ -18,6 +18,7 @@ from sc_neurocore.accel.mojo import (
     AUTHORITATIVE_MOJO_ENTRYPOINTS,
     NON_AUTHORITATIVE_MOJO_MIRROR_GLOBS,
 )
+import sc_neurocore.accel.mojo as mojo_module
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -44,3 +45,12 @@ def test_authoritative_mojo_entrypoints_exist() -> None:
 def test_non_authoritative_mojo_patterns_declared() -> None:
     assert "kernels/*.mojo" in NON_AUTHORITATIVE_MOJO_MIRROR_GLOBS
     assert "kernels/app.mojo" in NON_AUTHORITATIVE_MOJO_MIRROR_GLOBS
+
+
+def test_mojo_module_public_contract_shape() -> None:
+    assert isinstance(mojo_module._HAS_MOJO, bool)
+    assert "AUTHORITATIVE_MOJO_ENTRYPOINTS" in mojo_module.__all__
+    assert "_HAS_MOJO" in mojo_module.__all__
+    if not mojo_module._HAS_MOJO:
+        assert isinstance(mojo_module._mojo_import_reason, str)
+        assert mojo_module._mojo_import_reason

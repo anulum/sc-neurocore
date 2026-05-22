@@ -127,3 +127,45 @@ def test_tool_exits_with_error_for_invalid_network(tmp_path: Path) -> None:
         )
 
     assert exc.value.code == 2
+
+
+def test_load_network_rejects_missing_required_layer_fields(tmp_path: Path) -> None:
+    tool = _tool()
+    missing_id = tmp_path / "missing_id.json"
+    missing_mac = tmp_path / "missing_mac.json"
+    missing_id.write_text(json.dumps({"layers": [{"mac_count": 1}]}), encoding="utf-8")
+    missing_mac.write_text(json.dumps({"layers": [{"id": "encoder"}]}), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="missing id"):
+        tool.load_network(missing_id)
+    with pytest.raises(ValueError, match="missing mac_count"):
+        tool.load_network(missing_mac)
+
+
+def test_tool_writes_plan_to_stdout_when_out_not_provided(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    tool = _tool()
+    network = tmp_path / "network.json"
+    evidence = tmp_path / "evidence.json"
+    _write_network(network)
+    _write_evidence(evidence)
+
+    rc = tool.main(
+        [
+            "--network",
+            str(network),
+            "--evidence",
+            str(evidence),
+            "--max-luts",
+            "10000",
+            "--max-power-mw",
+            "100",
+        ]
+    )
+
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert '"layers"' in out
+    assert '"target_name"' in out

@@ -4,7 +4,9 @@
 
 from __future__ import annotations
 import numpy as np
+import pytest
 from sc_neurocore.spike_codec import SpikeCodec, CompressionResult
+import sc_neurocore.spike_codec as spike_codec_module
 
 
 class TestSpikeCodec:
@@ -64,6 +66,27 @@ class TestSpikeCodec:
         data, _ = codec.compress(spikes)
         rec = codec.decompress(data, 50, 1)
         np.testing.assert_array_equal(rec, spikes)
+
+    def test_auto_entropy_threshold_selection(self):
+        codec = SpikeCodec(entropy="auto")
+        assert codec._pick_entropy(n_spikes=3, total_bins=100) == "varint"
+        assert codec._pick_entropy(n_spikes=4, total_bins=100) == "huffman"
+
+    def test_explicit_entropy_selection_is_respected(self):
+        assert SpikeCodec(entropy="varint")._pick_entropy(100, 1000) == "varint"
+        assert SpikeCodec(entropy="huffman")._pick_entropy(1, 100000) == "huffman"
+
+    def test_lossy_quantization_reduces_time_dimension(self):
+        spikes = np.zeros((12, 2), dtype=np.int8)
+        spikes[1, 0] = 1
+        spikes[7, 1] = 1
+        codec = SpikeCodec(mode="lossy", timing_precision=4, entropy="varint")
+        data, result = codec.compress(spikes)
+        reconstructed = codec.decompress(data, 12, 2)
+        assert result.lossless is False
+        assert reconstructed.shape == (12, 2)
+        assert reconstructed[:, 0].sum() == 1
+        assert reconstructed[:, 1].sum() == 1
 
 
 class TestSpikeCodecHuffman:
@@ -133,3 +156,14 @@ class TestHuffmanEncoder:
         data = enc.encode(values)
         decoded, _ = enc.decode(data, 4)
         assert decoded == values
+
+
+class TestSpikeCodecModuleExports:
+    def test_lazy_predictive_exports_are_available(self):
+        assert spike_codec_module.PredictiveSpikeCodec is not None
+        assert spike_codec_module.PredictiveCompressionResult is not None
+        assert "SpikeCodec" in spike_codec_module.__all__
+
+    def test_unknown_lazy_export_raises_attribute_error(self):
+        with pytest.raises(AttributeError):
+            spike_codec_module.__getattr__("not_an_export")

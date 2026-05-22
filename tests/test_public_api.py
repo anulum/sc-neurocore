@@ -16,6 +16,7 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
+import pytest
 import sc_neurocore
 
 
@@ -133,6 +134,28 @@ def test_hdl_resource_helper_rejects_unknown_primitive_names():
         assert "Unknown baseline HDL primitive" in str(exc)
     else:  # pragma: no cover - assertion guard.
         raise AssertionError("path traversal primitive name was accepted")
+
+
+def test_hdl_resource_helper_contract_and_missing_packaged_file(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from sc_neurocore.hdl import resources as hdl_resources
+
+    names = hdl_resources.list_baseline_primitive_rtl()
+    assert isinstance(names, tuple)
+    assert len(set(names)) == len(names)
+
+    class _MissingResource:
+        def joinpath(self, _name: str):
+            class _File:
+                def is_file(self) -> bool:
+                    return False
+
+            return _File()
+
+    monkeypatch.setattr(hdl_resources, "files", lambda _pkg: _MissingResource())
+    with pytest.raises(FileNotFoundError, match="Missing packaged HDL primitive"):
+        hdl_resources.baseline_primitive_path("sc_lif_neuron.v")
 
 
 def test_base_wheel_does_not_package_polyglot_research_sources():
