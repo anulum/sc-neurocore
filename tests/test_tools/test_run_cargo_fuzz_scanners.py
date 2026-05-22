@@ -91,9 +91,10 @@ def test_runner_executes_each_target_with_bounded_time_and_writes_summary(tmp_pa
     )
 
     assert [call[:5] for call in calls] == [
-        ["cargo", "fuzz", "run", "bitstream_ops", "--fuzz-dir"],
-        ["cargo", "fuzz", "run", "ir_parser", "--fuzz-dir"],
+        ["cargo", "+nightly", "fuzz", "run", "bitstream_ops"],
+        ["cargo", "+nightly", "fuzz", "run", "ir_parser"],
     ]
+    assert all("--fuzz-dir" in call for call in calls)
     assert all("-max_total_time=20" in call for call in calls)
     assert all("-runs=0" not in call for call in calls)
     assert summary["passed"] is True
