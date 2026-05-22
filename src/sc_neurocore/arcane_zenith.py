@@ -172,7 +172,9 @@ class ArcaneZenithCognitiveCore:
         if not channels:
             return np.zeros((1, bitstream_length), dtype=np.uint8)
 
-        values = np.array([max(0.0, float(rates[channel])) for channel in channels], dtype=np.float64)
+        values = np.array(
+            [max(0.0, float(rates[channel])) for channel in channels], dtype=np.float64
+        )
         max_rate = float(np.max(values))
         if max_rate <= 0.0:
             probs = np.zeros_like(values)

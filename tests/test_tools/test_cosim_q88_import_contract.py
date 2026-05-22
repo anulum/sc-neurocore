@@ -113,4 +113,6 @@ def test_cosim_q88_checkpoint_contract_requires_numeric_finite_acc() -> None:
         _require_legacy_checkpoint_contract({"net": {"w": torch.tensor([1.0])}, "acc": "bad"})
 
     with pytest.raises(ValueError, match="checkpoint\\['acc'\\] must be finite"):
-        _require_legacy_checkpoint_contract({"net": {"w": torch.tensor([1.0])}, "acc": float("nan")})
+        _require_legacy_checkpoint_contract(
+            {"net": {"w": torch.tensor([1.0])}, "acc": float("nan")}
+        )

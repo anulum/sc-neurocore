@@ -114,9 +114,7 @@ def test_pretrained_example_rejects_non_tensor_sc_weight_entry() -> None:
 
 def test_pretrained_example_cli_requires_checkpoint_sha256(tmp_path: Path) -> None:
     env = os.environ.copy()
-    env["PYTHONPATH"] = (
-        f"{REPO_ROOT / 'src'}:{REPO_ROOT}:{env.get('PYTHONPATH', '')}".rstrip(":")
-    )
+    env["PYTHONPATH"] = f"{REPO_ROOT / 'src'}:{REPO_ROOT}:{env.get('PYTHONPATH', '')}".rstrip(":")
     result = subprocess.run(
         [sys.executable, str(MODULE_PATH)],
         cwd=tmp_path,

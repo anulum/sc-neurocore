@@ -181,6 +181,47 @@ def test_trial_report_rejects_invalid_contracts() -> None:
         )
 
 
+def test_trial_report_allows_mean_probability_error_above_p95_when_sparse() -> None:
+    observation = SeededFaultObservation(
+        layer_id="L0",
+        seed=1,
+        fault_model=FaultModel.BIT_FLIP,
+        ber=0.1,
+        affected_bits=1,
+        bitstream_length=8,
+        affected_ratio=0.125,
+        audit=BitstreamAuditReport(
+            layer="L0",
+            stream_length=8,
+            num_neurons=1,
+            status=AuditSeverity.OK,
+            max_correlation=0.0,
+        ),
+    )
+    plan = DegradationPlan(
+        action=DegradationAction.NOMINAL,
+        observation=observation,
+        recommended_bitstream_length=8,
+        replay_seed=1,
+        reason="ok",
+    )
+    report = ResilienceModeTrialReport(
+        fault_model=FaultModel.BIT_FLIP,
+        ber=0.1,
+        num_trials=8,
+        bit_count=64,
+        expected_affected_bits=6.4,
+        observed_mean_affected_bits=2.5,
+        observed_std_affected_bits=4.0,
+        mean_probability_error=0.2,
+        p95_probability_error=0.05,
+        p99_probability_error=0.4,
+        max_probability_error=0.6,
+        degradation_plan=plan,
+    )
+    assert report.mean_probability_error > report.p95_probability_error
+
+
 def test_resilience_mode_report_rejects_invalid_contracts() -> None:
     bitstreams = np.array([[0, 1, 0, 1]], dtype=np.uint8)
     mode = FaultInjectionResilienceMode(

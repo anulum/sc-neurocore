@@ -168,9 +168,10 @@ class TestSynapsePrecision:
         assert manifest["num_synapses"] == 2
         assert manifest["max_total_error_bound"] >= 0
         assert manifest["cost_summary"]["estimated_lut_cost"] > 0.0
-        assert manifest["cost_summary"]["uniform_length_reference_cost"] >= manifest["cost_summary"][
-            "estimated_lut_cost"
-        ]
+        assert (
+            manifest["cost_summary"]["uniform_length_reference_cost"]
+            >= manifest["cost_summary"]["estimated_lut_cost"]
+        )
         assert manifest["cost_summary"]["estimated_lut_savings_vs_uniform_length"] >= 0.0
         assert list(manifest["assignments"][0]) == [
             "layer_index",
@@ -211,9 +212,10 @@ class TestAdaptivePrecisionAPISurface:
         assert manifest["api_surface"]["objective"] == "minimal_luts_under_error_target"
         assert manifest["api_surface"]["cost_metric"] == "sum(bit_width * log2(bitstream_length))"
         assert manifest["api_surface"]["estimated_lut_cost"] > 0.0
-        assert manifest["api_surface"]["uniform_length_reference_cost"] >= manifest["api_surface"][
-            "estimated_lut_cost"
-        ]
+        assert (
+            manifest["api_surface"]["uniform_length_reference_cost"]
+            >= manifest["api_surface"]["estimated_lut_cost"]
+        )
         assert manifest["num_synapses"] == 2
 
     def test_auto_tune_rejects_non_positive_percent_target(self):

@@ -132,7 +132,9 @@ def _parse_yosys_json(json_path: str) -> dict:
             raise ValueError(f"Invalid Yosys JSON payload: module '{mod_name}' must be an object")
         cells = mod.get("cells", {})
         if not isinstance(cells, dict):
-            raise ValueError(f"Invalid Yosys JSON payload: module '{mod_name}.cells' must be an object")
+            raise ValueError(
+                f"Invalid Yosys JSON payload: module '{mod_name}.cells' must be an object"
+            )
         resources["cells"] += len(cells)
         for cell_name, cell in cells.items():
             if not isinstance(cell, dict):

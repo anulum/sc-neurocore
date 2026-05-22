@@ -186,7 +186,9 @@ def test_side_channel_benchmark_rejects_mismatched_encoder_batch_length(monkeypa
         summary = _DummySummary()
         records = (_DummyRecord(),)
 
-    monkeypatch.setattr(benchmark_mod, "encode_activity_balanced_probabilities", lambda *a, **k: _DummyBatch())
+    monkeypatch.setattr(
+        benchmark_mod, "encode_activity_balanced_probabilities", lambda *a, **k: _DummyBatch()
+    )
 
     with pytest.raises(SideChannelBenchmarkError, match="output length"):
         run_side_channel_leakage_benchmark(

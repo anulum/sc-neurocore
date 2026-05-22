@@ -232,9 +232,9 @@ class PresetDefaultFlowRunRequest(BaseModel):
 class PresetDefaultFlowVerifyRequest(BaseModel):
     action_order: list[str]
     template_fingerprints: dict[str, Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]]
-    plan_fingerprint_sha256: Annotated[
-        str | None, StringConstraints(pattern=r"^[0-9a-f]{64}$")
-    ] = None
+    plan_fingerprint_sha256: Annotated[str | None, StringConstraints(pattern=r"^[0-9a-f]{64}$")] = (
+        None
+    )
 
 
 class PresetDefaultFlowGuardedRunRequest(BaseModel):
@@ -597,9 +597,7 @@ def _execute_default_flow_with_overrides(
         overrides = action_overrides.get(action_id, {})
         if not isinstance(overrides, dict):
             raise ValueError(f"action_overrides['{action_id}'] must be an object")
-        resolved = _resolve_action_payload(
-            preset_id, action_id, action, template, overrides
-        )
+        resolved = _resolve_action_payload(preset_id, action_id, action, template, overrides)
         result = _execute_resolved_preset_action(resolved)
         action_order.append(action_id)
         results.append(
@@ -736,7 +734,9 @@ def create_app() -> FastAPI:
                 status_code=422,
                 detail=f"Action '{action_id}' does not define a payload template",
             )
-        return _safe(lambda: _resolve_action_payload(preset_id, action_id, action, template, req.overrides))
+        return _safe(
+            lambda: _resolve_action_payload(preset_id, action_id, action, template, req.overrides)
+        )
 
     @app.post("/api/presets/{preset_id}/actions/{action_id}/execute")
     def api_preset_action_execute(
@@ -759,7 +759,9 @@ def create_app() -> FastAPI:
             )
 
         def fn() -> dict[str, Any]:
-            resolved = _resolve_action_payload(preset_id, action_id, action, template, req.overrides)
+            resolved = _resolve_action_payload(
+                preset_id, action_id, action, template, req.overrides
+            )
             result = _execute_resolved_preset_action(resolved)
             return {"resolved_action": resolved, "result": result}
 
@@ -973,9 +975,7 @@ def create_app() -> FastAPI:
         return _safe(fn)
 
     @app.post("/api/presets/{preset_id}/default-flow/attest")
-    def api_preset_default_flow_attest(
-        preset_id: str, req: PresetDefaultFlowAttestRequest
-    ) -> Any:
+    def api_preset_default_flow_attest(preset_id: str, req: PresetDefaultFlowAttestRequest) -> Any:
         p = get_preset(preset_id)
         if not p:
             raise HTTPException(404, f"Preset '{preset_id}' not found")
@@ -1005,7 +1005,9 @@ def create_app() -> FastAPI:
                 "inputs_fingerprint_sha256": inputs_fingerprint,
                 "run_fingerprint_sha256": run_fingerprint,
             }
-            attestation_payload["attestation_fingerprint_sha256"] = _sha256_json(attestation_payload)
+            attestation_payload["attestation_fingerprint_sha256"] = _sha256_json(
+                attestation_payload
+            )
             return attestation_payload
 
         return _safe(fn)
@@ -1051,11 +1053,16 @@ def create_app() -> FastAPI:
                 and attestation.get("schema_version")
                 == "sc-neurocore.studio.default-flow-attestation.v1"
             )
-            plan_match = schema_match and attestation.get("plan_fingerprint_sha256") == plan[
-                "plan_fingerprint_sha256"
-            ]
-            inputs_match = schema_match and attestation.get("inputs_fingerprint_sha256") == inputs_fingerprint
-            run_match = schema_match and attestation.get("run_fingerprint_sha256") == run_fingerprint
+            plan_match = (
+                schema_match
+                and attestation.get("plan_fingerprint_sha256") == plan["plan_fingerprint_sha256"]
+            )
+            inputs_match = (
+                schema_match and attestation.get("inputs_fingerprint_sha256") == inputs_fingerprint
+            )
+            run_match = (
+                schema_match and attestation.get("run_fingerprint_sha256") == run_fingerprint
+            )
             attestation_fingerprint_match = (
                 schema_match
                 and attestation.get("attestation_fingerprint_sha256")

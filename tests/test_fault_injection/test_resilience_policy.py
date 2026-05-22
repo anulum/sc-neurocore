@@ -175,7 +175,9 @@ def test_seeded_fault_observation_rejects_invalid_contracts() -> None:
             affected_bits=9,
             bitstream_length=8,
             affected_ratio=0.2,
-            audit=BitstreamAuditReport(layer="L0", stream_length=8, num_neurons=1, status=AuditSeverity.OK),
+            audit=BitstreamAuditReport(
+                layer="L0", stream_length=8, num_neurons=1, status=AuditSeverity.OK
+            ),
         )
 
 
@@ -188,7 +190,9 @@ def test_degradation_plan_rejects_invalid_contracts() -> None:
         affected_bits=1,
         bitstream_length=8,
         affected_ratio=0.125,
-        audit=BitstreamAuditReport(layer="L0", stream_length=8, num_neurons=1, status=AuditSeverity.OK),
+        audit=BitstreamAuditReport(
+            layer="L0", stream_length=8, num_neurons=1, status=AuditSeverity.OK
+        ),
     )
     with pytest.raises(ValueError, match="recommended_bitstream_length"):
         DegradationPlan(
@@ -210,7 +214,9 @@ def test_make_plan_rejects_invalid_helper_inputs() -> None:
         affected_bits=1,
         bitstream_length=8,
         affected_ratio=0.125,
-        audit=BitstreamAuditReport(layer="L0", stream_length=8, num_neurons=1, status=AuditSeverity.OK),
+        audit=BitstreamAuditReport(
+            layer="L0", stream_length=8, num_neurons=1, status=AuditSeverity.OK
+        ),
     )
     with pytest.raises(ValueError, match="multiplier"):
         policy._make_plan(  # type: ignore[attr-defined]
@@ -231,7 +237,9 @@ def test_nominal_plan_respects_max_bitstream_length_cap() -> None:
         affected_bits=0,
         bitstream_length=8,
         affected_ratio=0.0,
-        audit=BitstreamAuditReport(layer="L0", stream_length=8, num_neurons=1, status=AuditSeverity.OK),
+        audit=BitstreamAuditReport(
+            layer="L0", stream_length=8, num_neurons=1, status=AuditSeverity.OK
+        ),
     )
     plan = policy._plan(observation)  # type: ignore[attr-defined]
     assert plan.action == DegradationAction.NOMINAL

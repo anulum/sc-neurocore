@@ -281,7 +281,9 @@ class TestBitstreamGenerationContracts:
 class TestBenchmarkRunContracts:
     def test_run_returns_report_with_expected_fault_model(self):
         bench = ResilienceBenchmark(seed=2)
-        report = bench.run(fault_model=FaultModel.BIT_FLIP, ber=1e-3, bitstream_length=32, num_trials=5)
+        report = bench.run(
+            fault_model=FaultModel.BIT_FLIP, ber=1e-3, bitstream_length=32, num_trials=5
+        )
         assert report.fault_model == FaultModel.BIT_FLIP.value
         assert report.num_trials == 5
 

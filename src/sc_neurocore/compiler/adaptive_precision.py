@@ -348,9 +348,7 @@ def write_precision_formal_evidence_bundle(
     manifest = {
         "schema_version": "sc-neurocore.adaptive-precision-formal-bundle.v1",
         "module_name": module_name,
-        "evidence_boundary": (
-            "bundle_generation_only_no_symbiyosys_execution_no_silicon_claim"
-        ),
+        "evidence_boundary": ("bundle_generation_only_no_symbiyosys_execution_no_silicon_claim"),
         "assignments_count": len(assignments),
         "formal_claim": {
             "max_total_error_bound": max_error,
@@ -428,7 +426,10 @@ def _precision_cost_summary(assignments: list[SynapsePrecision]) -> dict[str, fl
     max_length = max(assignment.bitstream_length for assignment in assignments)
     log2_max = float(np.log2(max_length))
     estimated = float(
-        sum(assignment.bit_width * np.log2(assignment.bitstream_length) for assignment in assignments)
+        sum(
+            assignment.bit_width * np.log2(assignment.bitstream_length)
+            for assignment in assignments
+        )
     )
     uniform_reference = float(sum(assignment.bit_width * log2_max for assignment in assignments))
     savings = uniform_reference - estimated

@@ -5,7 +5,10 @@ from __future__ import annotations
 import pytest
 from sc_neurocore.energy_accounting import EnergyAccountant, HardwareCostModel
 from sc_neurocore.energy_accounting.accountant import HARDWARE_COSTS, EnergyReport
-from sc_neurocore.energy_accounting.unified_reporter import UnifiedEnergyReport, UnifiedEnergyReporter
+from sc_neurocore.energy_accounting.unified_reporter import (
+    UnifiedEnergyReport,
+    UnifiedEnergyReporter,
+)
 
 
 class TestHardwareCosts:

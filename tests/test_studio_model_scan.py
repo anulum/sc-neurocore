@@ -70,7 +70,11 @@ def test_scan_all_models_fails_closed_with_structured_diagnostics(
     monkeypatch.setattr(
         model_scan,
         "classify_firing_pattern",
-        lambda spikes, n_steps, dt: {"pattern": "single_spike", "description": "ok", "rate_hz": 1.0},
+        lambda spikes, n_steps, dt: {
+            "pattern": "single_spike",
+            "description": "ok",
+            "rate_hz": 1.0,
+        },
     )
 
     with pytest.raises(ValueError) as exc_info:

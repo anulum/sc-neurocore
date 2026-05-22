@@ -240,9 +240,7 @@ class TestPresetsEndpoint:
 
     def test_fpga_precision_default_flow_fingerprint_stable_for_same_input(self, client):
         payload = {
-            "action_overrides": {
-                "auto_tune_adaptive_precision": {"target_error_percent": 0.05}
-            }
+            "action_overrides": {"auto_tune_adaptive_precision": {"target_error_percent": 0.05}}
         }
         first = client.post("/api/presets/fpga_precision/default-flow/run", json=payload)
         second = client.post("/api/presets/fpga_precision/default-flow/run", json=payload)
@@ -369,7 +367,9 @@ class TestPresetsEndpoint:
     def test_default_flow_attest_verify_detects_tampered_attestation(self, client):
         run = client.post(
             "/api/presets/fpga_precision/default-flow/run",
-            json={"action_overrides": {"auto_tune_adaptive_precision": {"target_error_percent": 0.05}}},
+            json={
+                "action_overrides": {"auto_tune_adaptive_precision": {"target_error_percent": 0.05}}
+            },
         )
         assert run.status_code == 200
         run_payload = run.json()

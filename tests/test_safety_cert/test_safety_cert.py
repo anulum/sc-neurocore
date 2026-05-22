@@ -179,7 +179,9 @@ class TestTraceabilityMatrix:
         tm.add_requirement(Requirement("R2", "Test", SafetyStandard.IEC_61508))
         tm.add_requirement(Requirement("R1", "Test", SafetyStandard.IEC_61508))
         lines = tm.generate_report().splitlines()
-        req_rows = [line for line in lines if line.startswith("| R") and not line.startswith("| Req ID")]
+        req_rows = [
+            line for line in lines if line.startswith("| R") and not line.startswith("| Req ID")
+        ]
         assert req_rows == sorted(req_rows)
 
     def test_generate_report_rejects_corrupted_internal_state(self):
@@ -319,7 +321,9 @@ class TestFMEDA:
         fmeda = FMEDA()
         fmeda.add_failure_mode(FailureMode("FM1", "neuron", "stuck", FailureCategory.SAFE, 10.0))
         with pytest.raises(ValueError, match="already exists"):
-            fmeda.add_failure_mode(FailureMode("FM1", "neuron", "other", FailureCategory.SAFE, 12.0))
+            fmeda.add_failure_mode(
+                FailureMode("FM1", "neuron", "other", FailureCategory.SAFE, 12.0)
+            )
 
     def test_add_failure_mode_rejects_invalid_contract(self):
         fmeda = FMEDA()
@@ -454,7 +458,9 @@ class TestFMEDA:
         fmeda.add_failure_mode(FailureMode("FM2", "n", "d", FailureCategory.SAFE, 1.0))
         fmeda.add_failure_mode(FailureMode("FM1", "n", "d", FailureCategory.SAFE, 1.0))
         lines = fmeda.generate_report().splitlines()
-        rows = [line for line in lines if line.startswith("| FM") and not line.startswith("| FM ID")]
+        rows = [
+            line for line in lines if line.startswith("| FM") and not line.startswith("| FM ID")
+        ]
         assert rows == sorted(rows)
 
     def test_generate_report_rejects_corrupted_internal_state(self):
@@ -1393,7 +1399,9 @@ class TestProofTestCoverage:
         with pytest.raises(ValueError, match="prop_id"):
             ProofTestCoverage.uncovered_modules([prop], ["m"])
 
-    @pytest.mark.parametrize("props", ["invalid", [FormalProperty("P1", "n", "d", "assert", "proven"), "bad"]])
+    @pytest.mark.parametrize(
+        "props", ["invalid", [FormalProperty("P1", "n", "d", "assert", "proven"), "bad"]]
+    )
     def test_coverage_from_proofs_rejects_invalid_contracts(self, props):
         with pytest.raises(ValueError, match="properties"):
             ProofTestCoverage.coverage_from_proofs(props)  # type: ignore[arg-type]

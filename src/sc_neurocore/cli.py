@@ -1577,7 +1577,10 @@ def _cmd_deploy(
         print(f"  Loaded {len(network.topo_order)} nodes")
     elif ext in (".pt", ".pth"):
         print("[1/5] Loading PyTorch model and converting to SNN...")
-        from sc_neurocore.security.checkpoint_loading import CheckpointTrustError, safe_load_checkpoint
+        from sc_neurocore.security.checkpoint_loading import (
+            CheckpointTrustError,
+            safe_load_checkpoint,
+        )
         from sc_neurocore.conversion import convert
 
         if not checkpoint_sha256:
