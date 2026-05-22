@@ -301,6 +301,23 @@ def test_rejects_non_numeric_measurement_values() -> None:
         observations_from_payload(payload, source="bad.json")
 
 
+def test_rejects_boolean_integer_fields() -> None:
+    payload = {
+        "observations": [
+            {
+                **_design(),
+                "luts_used": True,
+                "power_mw": 1.0,
+                "latency_cycles": 128,
+                "accuracy_score": 0.99,
+            }
+        ]
+    }
+
+    with pytest.raises(ObservationLoadError, match="luts_used must be an int"):
+        observations_from_payload(payload, source="bad.json")
+
+
 def test_rejects_invalid_design_and_negative_measurements() -> None:
     with pytest.raises(ObservationLoadError, match="decorrelator must be a string"):
         observations_from_payload(
@@ -334,6 +351,23 @@ def test_rejects_invalid_design_and_negative_measurements() -> None:
             },
             source="bad.json",
         )
+
+
+def test_rejects_non_finite_float_measurements() -> None:
+    payload = {
+        "observations": [
+            {
+                **_design(),
+                "luts_used": 300,
+                "power_mw": float("nan"),
+                "latency_cycles": 128,
+                "accuracy_score": 0.99,
+            }
+        ]
+    }
+
+    with pytest.raises(ObservationLoadError, match="power_mw must be finite"):
+        observations_from_payload(payload, source="bad.json")
 
 
 def test_loaded_observation_feeds_surrogate_optimizer() -> None:

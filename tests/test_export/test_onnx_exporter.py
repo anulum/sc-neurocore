@@ -11,6 +11,7 @@
 import json
 import os
 import time
+import builtins
 
 import numpy as np
 import pytest
@@ -30,6 +31,13 @@ class DummyLayer:
         self.n_inputs = n_inputs
         self.n_neurons = 3
         self.length = 8
+
+
+class BareLayer:
+    """Layer exposing only n_inputs for default-attribute branch coverage."""
+
+    def __init__(self, n_inputs: int):
+        self.n_inputs = n_inputs
 
 
 def _make_layers():
@@ -112,6 +120,17 @@ def test_onnx_export_custom_op_type(tmp_path):
     assert data["nodes"][0]["op_type"] == "SC_Custom"
 
 
+def test_onnx_export_uses_default_attributes_when_layer_fields_missing(tmp_path):
+    bare = BareLayer(n_inputs=2)
+    path = tmp_path / "model.json"
+    SCOnnxExporter.export([bare], str(path))
+    data = json.loads(path.read_text())
+    attrs = data["nodes"][0]["attributes"]
+    assert attrs["n_neurons"] == -1
+    assert attrs["length"] == 256
+    assert "has_weights" not in attrs
+
+
 def test_onnx_export_json_schema_fields(tmp_path):
     """Export should include expected top-level fields."""
     layers = _make_layers()
@@ -185,6 +204,16 @@ def test_protobuf_op_type_custom(tmp_path):
     assert model.graph.node[0].op_type == "SC_Custom"
 
 
+def test_protobuf_uses_default_attributes_when_layer_fields_missing(tmp_path):
+    bare = BareLayer(n_inputs=2)
+    path = tmp_path / "model.onnx"
+    SCOnnxExporter.export([bare], str(path))
+    model = onnx.load(str(path))
+    attrs = {a.name: getattr(a, "i", None) for a in model.graph.node[0].attribute}
+    assert attrs["n_neurons"] == -1
+    assert attrs["length"] == 256
+
+
 def test_protobuf_embeds_weights(tmp_path):
     layers = _make_layers()
     path = tmp_path / "model.onnx"
@@ -201,3 +230,30 @@ def test_protobuf_input_output_names(tmp_path):
     model = onnx.load(str(path))
     assert model.graph.input[0].name == "input_0"
     assert model.graph.output[0].name == "output_1"
+
+
+def test_protobuf_export_raises_dependency_error_when_onnx_missing(monkeypatch, tmp_path):
+    layers = _make_layers()
+    out = tmp_path / "missing.onnx"
+    real_import = builtins.__import__
+
+    def _fake_import(name, *args, **kwargs):
+        if name == "onnx":
+            raise ImportError("onnx not available")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", _fake_import)
+    with pytest.raises(Exception, match="requires onnx"):
+        SCOnnxExporter._export_protobuf(layers, str(out))
+
+
+def test_json_export_surfaces_oserror(monkeypatch, tmp_path):
+    layers = _make_layers()
+    out = tmp_path / "denied.json"
+
+    def _failing_open(*args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(builtins, "open", _failing_open)
+    with pytest.raises(OSError, match="disk full"):
+        SCOnnxExporter._export_json(layers, str(out))

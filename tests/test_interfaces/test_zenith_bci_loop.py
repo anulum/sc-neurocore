@@ -74,9 +74,41 @@ def test_zenith_loop_flags_budget_violation_with_tight_budget() -> None:
 
 
 def test_zenith_loop_rejects_invalid_arguments() -> None:
+    with pytest.raises(ValueError, match="n_channels"):
+        ZenithBCILoopConfig(n_channels=0)
+    with pytest.raises(ValueError, match="sampling_rate_hz"):
+        ZenithBCILoopConfig(n_channels=4, sampling_rate_hz=0)
     with pytest.raises(ValueError, match="gpu_lanes"):
         ZenithBCILoopConfig(n_channels=4, gpu_lanes=0)
+    with pytest.raises(ValueError, match="latency_budget_ms"):
+        ZenithBCILoopConfig(n_channels=4, latency_budget_ms=0.0)
 
     loop = ZenithBCILoop(ZenithBCILoopConfig(n_channels=4))
     with pytest.raises(ValueError, match="pathway_name"):
         loop.process_stream(_waveform(), pathway_name="")
+    with pytest.raises(ValueError, match="shape"):
+        loop.process_stream(np.zeros((32,), dtype=np.float32))
+    with pytest.raises(ValueError, match="expected 4"):
+        loop.process_stream(np.zeros((32, 3), dtype=np.float32))
+    with pytest.raises(ValueError, match="at least one sample"):
+        loop.process_stream(np.zeros((0, 4), dtype=np.float32))
+
+
+def test_zenith_loop_propagates_window_timestamp_into_feedback_frame() -> None:
+    loop = ZenithBCILoop(ZenithBCILoopConfig(n_channels=4, snippet_samples=16))
+    start_us = 123_456
+    result = loop.process_stream(_waveform(), window_start_us=start_us)
+    last_feedback = loop.template.feedback_sink.frames[-1]
+    assert last_feedback.timestamp_us == start_us
+    assert result.feedback_active_channels == last_feedback.active_count
+
+
+def test_zenith_latency_estimate_improves_with_more_gpu_lanes() -> None:
+    waveform = np.zeros((512, 32), dtype=np.float32)
+    slow = ZenithBCILoop(ZenithBCILoopConfig(n_channels=32, gpu_lanes=1))
+    fast = ZenithBCILoop(ZenithBCILoopConfig(n_channels=32, gpu_lanes=8))
+    slow_result = slow.process_stream(waveform)
+    fast_result = fast.process_stream(waveform)
+    assert fast_result.latency_breakdown_ms["codec"] < slow_result.latency_breakdown_ms["codec"]
+    assert fast_result.latency_breakdown_ms["decode"] < slow_result.latency_breakdown_ms["decode"]
+    assert fast_result.total_latency_ms < slow_result.total_latency_ms

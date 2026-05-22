@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -80,6 +81,8 @@ def test_power_thermal_model_uses_explicit_report_power() -> None:
         ({"layer_sizes": ((0, 1),)}, "layer_sizes entries must be positive"),
         ({"bitstream_length": 0}, "bitstream_length must be positive"),
         ({"clock_mhz": 0.0}, "clock_mhz must be finite and positive"),
+        ({"clock_mhz": math.inf}, "clock_mhz must be finite and positive"),
+        ({"ambient_c": math.nan}, "ambient_c must be finite"),
         ({"theta_ja_c_per_w": -1.0}, "theta_ja_c_per_w must be finite and positive"),
         ({"measured_power_mw": -1.0}, "measured_power_mw must be finite and non-negative"),
     ],
@@ -102,6 +105,20 @@ def test_write_power_thermal_model_writes_sorted_json(tmp_path: Path) -> None:
     assert path == output / "power_thermal_model.json"
     assert payload["target"]["family"] == "ecp5"
     assert path.read_text(encoding="utf-8").endswith("\n")
+
+
+def test_write_power_thermal_model_honours_custom_artefact_name(tmp_path: Path) -> None:
+    output = tmp_path / "deploy"
+    path = write_power_thermal_model(
+        output,
+        PowerThermalConfig(
+            target="ecp5",
+            layer_sizes=((2, 2),),
+            bitstream_length=64,
+            artefact_name="custom_power.json",
+        ),
+    )
+    assert path == output / "custom_power.json"
 
 
 def test_parse_vivado_power_report_extracts_routed_pynq_values() -> None:

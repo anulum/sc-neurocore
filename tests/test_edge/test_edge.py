@@ -50,6 +50,12 @@ class TestMemoryFootprint:
         n_gd = MemoryFootprint.max_neurons(Board.GD32VF103)
         assert n_esp > n_gd > 0
 
+    def test_max_neurons_returns_zero_when_ram_not_above_overhead(self):
+        class TinyBoard:
+            ram_kb = 0
+
+        assert MemoryFootprint.max_neurons(TinyBoard()) == 0
+
 
 class TestSobolGenerator:
     def test_deterministic(self):
@@ -99,3 +105,24 @@ class TestDeploy:
     def test_k210_is_rv64(self):
         cfg = generate_cargo_config(Board.K210)
         assert "riscv64" in cfg
+
+    def test_esp32_h2_reuses_esp32_c3_cargo_profile(self):
+        h2_cfg = generate_cargo_config(Board.ESP32_H2)
+        c3_cfg = generate_cargo_config(Board.ESP32_C3)
+        assert h2_cfg == c3_cfg
+
+    def test_esp32_c6_and_h2_use_esp32_c3_memory_layout(self):
+        c3_mem = generate_memory_x(Board.ESP32_C3)
+        c6_mem = generate_memory_x(Board.ESP32_C6)
+        h2_mem = generate_memory_x(Board.ESP32_H2)
+        assert c6_mem == c3_mem
+        assert h2_mem == c3_mem
+
+    def test_generic_board_uses_default_cargo_fallback(self):
+        cfg = generate_cargo_config(Board.GENERIC)
+        assert 'target = "riscv32imac-unknown-none-elf"' in cfg
+
+    def test_unknown_memory_board_uses_generic_memory_layout(self):
+        mem = generate_memory_x(Board.CH32V307)
+        assert "LENGTH = 256K" in mem
+        assert "LENGTH = 64K" in mem

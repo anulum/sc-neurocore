@@ -89,3 +89,18 @@ class TestFitToTarget:
         result = fit_to_target(layers, weights, target="ecp5")
         assert len(result.optimized_weights) == 1
         assert result.optimized_weights[0].shape == (4, 8)
+
+    def test_prune_and_quantize_path_when_l_reduction_disabled(self):
+        layers = [(64, 32), (32, 16)]
+        weights = [np.random.randn(32, 64), np.random.randn(16, 32)]
+        result = fit_to_target(
+            layers,
+            weights,
+            target="ice40",
+            max_iterations=3,
+            min_bitstream_length=256,
+            initial_bitstream_length=256,
+        )
+        actions = [step.action for step in result.steps]
+        assert any(action.startswith("Prune threshold=") for action in actions)
+        assert any(action.startswith("Quantize to ") for action in actions)

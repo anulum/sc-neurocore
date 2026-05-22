@@ -111,6 +111,32 @@ class TestScDoctor:
         d.error_correction_enabled = True
         assert d.encode_ecc(0b0000) == 0b0000000
 
+    def test_rust_dispatch_paths(self, monkeypatch: pytest.MonkeyPatch):
+        import sc_neurocore.debug.sc_doctor as sc_doctor_mod
+
+        class _FakeRustDoctor:
+            @staticmethod
+            def py_sc_doctor_adapt(length: int, ecc: bool, corr: float):
+                return (length + 16, True)
+
+            @staticmethod
+            def py_hamming74_encode(data: int):
+                return data ^ 0b1111111
+
+            @staticmethod
+            def py_hamming74_decode(encoded: int):
+                return encoded ^ 0b1111111
+
+        monkeypatch.setattr(sc_doctor_mod, "_HAS_RUST_DOCTOR", True)
+        monkeypatch.setattr(sc_doctor_mod, "_sdc", _FakeRustDoctor())
+
+        d = sc_doctor_mod.ScDoctor(256)
+        d.adapt(0.1)
+        assert d.current_bitstream_length == 272
+        assert d.error_correction_enabled is True
+        d.error_correction_enabled = True
+        assert d.decode_ecc(d.encode_ecc(0b0110)) == 0b0110
+
 
 # ===== HIL Client Tests (mirror Go hil_debugger tests) =====
 

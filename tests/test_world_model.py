@@ -7,12 +7,14 @@
 # SC-NeuroCore — Tests for world model spike predictor
 
 import numpy as np
+import pytest
 
 from sc_neurocore.world_model.spike_predictor import (
     SpikePredictor,
     predict_and_xor_world_model,
     xor_and_recover_world_model,
 )
+import sc_neurocore.world_model as world_model_module
 
 
 class TestSpikePredictor:
@@ -71,6 +73,23 @@ class TestSpikePredictor:
         # After training on the pattern, errors should decrease
         assert errors_last_10 <= errors_first_10
 
+    def test_predict_uses_strict_greater_than_threshold(self):
+        p = SpikePredictor(n_channels=3, history_len=2, threshold=0.5, seed=7)
+        p.W[:] = 0.0
+        p.bias[:] = 0.0  # sigmoid(0) == 0.5 exactly
+        pred = p.predict()
+        np.testing.assert_array_equal(pred, np.zeros(3, dtype=np.int8))
+
+    def test_reset_clears_history_and_time_counter(self):
+        p = SpikePredictor(n_channels=2, history_len=3, seed=11)
+        p.update(np.array([1, 0], dtype=np.int8))
+        p.update(np.array([0, 1], dtype=np.int8))
+        assert p._t == 2
+        assert np.any(p._history != 0.0)
+        p.reset()
+        assert p._t == 0
+        assert np.all(p._history == 0.0)
+
 
 class TestCodecRoundtrip:
     def test_lossless_roundtrip(self):
@@ -98,3 +117,14 @@ class TestCodecRoundtrip:
         spikes[::2, 0] = 1
         errors, _ = predict_and_xor_world_model(spikes, n_channels=n_ch)
         assert set(np.unique(errors)).issubset({0, 1})
+
+
+class TestWorldModelModuleExports:
+    def test_lazy_exports_are_available(self):
+        assert world_model_module.SCPlanner is not None
+        assert world_model_module.PredictiveWorldModel is not None
+        assert "SpikePredictor" in world_model_module.__all__
+
+    def test_unknown_lazy_export_raises_attribute_error(self):
+        with pytest.raises(AttributeError):
+            world_model_module.__getattr__("not_an_export")
