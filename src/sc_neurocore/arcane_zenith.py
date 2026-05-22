@@ -202,7 +202,7 @@ class ArcaneZenithCognitiveCore:
         if not currents:
             raise ValueError("currents must be non-empty")
 
-        trace: list[dict[str, float | int]] = []
+        trace: list[dict[str, Any]] = []
         spikes = 0
 
         for current in currents:
