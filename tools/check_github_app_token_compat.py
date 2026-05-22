@@ -42,7 +42,9 @@ SKIP_SUBSTRINGS = (
 # High-signal anti-patterns for legacy token assumptions.
 RULES: tuple[tuple[re.Pattern[str], str], ...] = (
     (
-        re.compile(r"len\(\s*[A-Za-z0-9_]*token[A-Za-z0-9_]*\s*\)\s*([=!]=|<=|>=|<|>)\s*(40|41|42)\b"),
+        re.compile(
+            r"len\(\s*[A-Za-z0-9_]*token[A-Za-z0-9_]*\s*\)\s*([=!]=|<=|>=|<|>)\s*(40|41|42)\b"
+        ),
         "Token length guard around 40 chars may break with stateless installation tokens.",
     ),
     (
