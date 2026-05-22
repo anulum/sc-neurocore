@@ -1643,7 +1643,7 @@ class EvidenceItem:
     """One item in the evidence bag."""
 
     filename: str
-    category: str  # "formal", "test", "analysis", "design", "report"
+    category: str
     description: str
     sha256: str = ""
 
@@ -1656,8 +1656,18 @@ class EvidenceItem:
             "analysis",
             "design",
             "report",
+            "hil",
+            "hardware-in-loop",
+            "hardware_in_loop",
+            "security",
+            "timing",
+            "latency",
+            "formal_timing",
         }:
-            raise ValueError("category must be one of: formal, test, analysis, design, report")
+            raise ValueError(
+                "category must be one of: formal, test, analysis, design, report, "
+                "hil, hardware-in-loop, hardware_in_loop, security, timing, latency, formal_timing"
+            )
         if not isinstance(self.description, str) or not self.description.strip():
             raise ValueError("description must be a non-empty string")
         if not isinstance(self.sha256, str):

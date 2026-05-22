@@ -1118,13 +1118,21 @@ try:
                     self.rule_type,
                     dt,
                 )
-                self.pre_trace = new_pre.detach()
-                self.post_trace = new_post.detach()
-                self.eligibility = new_e.detach()
-                self.theta_m = new_tm.detach()
-                self.act_avg = new_avg.detach()
-                with torch.no_grad():
-                    self._apply_precision_constraints()
+                self.pre_trace = self._quantise_tensor(
+                    new_pre.detach().clone(), self._trace_bits, self._trace_clip
+                )
+                self.post_trace = self._quantise_tensor(
+                    new_post.detach().clone(), self._trace_bits, self._trace_clip
+                )
+                self.eligibility = self._quantise_tensor(
+                    new_e.detach().clone(), self._eligibility_bits, self._eligibility_clip
+                )
+                self.theta_m = self._quantise_tensor(
+                    new_tm.detach().clone(), self._theta_bits, self._theta_clip
+                )
+                self.act_avg = self._quantise_tensor(
+                    new_avg.detach().clone(), self._act_avg_bits, self._act_avg_clip
+                )
                 return new_w
             else:
                 with torch.no_grad():

@@ -22,6 +22,7 @@ try:
 
     HAS_MPI = True  # pragma: no cover
 except ImportError:
+    MPI = None  # type: ignore[assignment]
     HAS_MPI = False
     warnings.warn("mpi4py not found. Distributed computing disabled. Install 'mpi4py'.")
 
@@ -34,7 +35,7 @@ class MPIDriver:
 
     def __init__(self) -> None:
         self.comm: Any | None
-        if HAS_MPI:  # pragma: no cover
+        if HAS_MPI and MPI is not None:  # pragma: no cover
             self.comm = MPI.COMM_WORLD
             self.rank = self.comm.Get_rank()
             self.size = self.comm.Get_size()
