@@ -11,6 +11,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from sc_neurocore.industrial_applications import IndustrialDomain
+
 
 REPO = Path(__file__).resolve().parents[2]
 NOTEBOOK = REPO / "notebooks/34_industrial_readiness_evidence.ipynb"
@@ -50,7 +52,9 @@ def test_industrial_readiness_notebook_code_executes() -> None:
 
     manifest = namespace["manifest"]
     assert manifest["schema_version"] == "sc-neurocore.industrial-readiness-evidence.v1"
-    assert len(manifest["profile_summary"]) == 5
+    assert {item["domain"] for item in manifest["profile_summary"]} == {
+        domain.value for domain in IndustrialDomain
+    }
     assert manifest["partial_aerospace"]["ready"] is False
     assert "hil" in manifest["partial_aerospace"]["missing_categories"]
     assert manifest["complete_examples"]["industrial_control_ready"] is True
