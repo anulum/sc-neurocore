@@ -62,7 +62,9 @@ class SeededFaultObservation:
                 raise ValueError(f"{field_name} must be a non-negative integer")
         if self.affected_bits > self.bitstream_length:
             raise ValueError("affected_bits cannot exceed bitstream_length")
-        if isinstance(self.affected_ratio, bool) or not isinstance(self.affected_ratio, int | float):
+        if isinstance(self.affected_ratio, bool) or not isinstance(
+            self.affected_ratio, int | float
+        ):
             raise ValueError("affected_ratio must be numeric")
         if (
             not np.isfinite(float(self.affected_ratio))
@@ -239,7 +241,9 @@ class GracefulDegradationPolicy:
         return DegradationPlan(
             action=DegradationAction.NOMINAL,
             observation=observation,
-            recommended_bitstream_length=min(observation.bitstream_length, self.max_bitstream_length),
+            recommended_bitstream_length=min(
+                observation.bitstream_length, self.max_bitstream_length
+            ),
             replay_seed=observation.seed,
             reason="diagnostics within policy thresholds",
         )

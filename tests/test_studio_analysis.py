@@ -292,9 +292,10 @@ class TestAnalysisEndpoints:
         assert payload["api_surface"]["action_id"] == "auto_tune_adaptive_precision"
         assert payload["api_surface"]["target_error_percent"] == pytest.approx(0.1)
         assert payload["api_surface"]["estimated_lut_cost"] > 0.0
-        assert payload["api_surface"]["uniform_length_reference_cost"] >= payload["api_surface"][
-            "estimated_lut_cost"
-        ]
+        assert (
+            payload["api_surface"]["uniform_length_reference_cost"]
+            >= payload["api_surface"]["estimated_lut_cost"]
+        )
         assert payload["num_synapses"] == 6
 
     def test_adaptive_precision_auto_tune_rejects_invalid_layer(self, client):
@@ -321,7 +322,9 @@ class TestAnalysisEndpoints:
         assert response.status_code == 200
         payload = response.json()
         bundle_manifest = payload["bundle_manifest"]
-        assert bundle_manifest["schema_version"] == "sc-neurocore.adaptive-precision-formal-bundle.v1"
+        assert (
+            bundle_manifest["schema_version"] == "sc-neurocore.adaptive-precision-formal-bundle.v1"
+        )
         assert bundle_manifest["module_name"] == "precision_plan_demo"
         assert payload["artifacts_text"]["sby"]
         assert payload["artifacts_text"]["sva"]

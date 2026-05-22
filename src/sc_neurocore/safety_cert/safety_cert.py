@@ -95,7 +95,11 @@ class Requirement:
             raise ValueError("standard must be a SafetyStandard")
         if not isinstance(self.sil_level, SILLevel):
             raise ValueError("sil_level must be a SILLevel")
-        if not isinstance(self.status, str) or self.status not in {"open", "implemented", "verified"}:
+        if not isinstance(self.status, str) or self.status not in {
+            "open",
+            "implemented",
+            "verified",
+        }:
             raise ValueError("status must be one of: open, implemented, verified")
 
         for impl_ref in self.implementation_refs:
@@ -190,8 +194,14 @@ class TraceabilityMatrix:
                 raise ValueError("requirements must contain Requirement entries")
             if req.req_id != req_key:
                 raise ValueError("requirement key mismatch with req_id")
-            if not isinstance(req.status, str) or req.status not in {"open", "implemented", "verified"}:
-                raise ValueError("requirements statuses must be one of: open, implemented, verified")
+            if not isinstance(req.status, str) or req.status not in {
+                "open",
+                "implemented",
+                "verified",
+            }:
+                raise ValueError(
+                    "requirements statuses must be one of: open, implemented, verified"
+                )
             if not isinstance(req.standard, SafetyStandard):
                 raise ValueError("requirements must use SafetyStandard")
             if not isinstance(req.sil_level, SILLevel):
@@ -206,8 +216,14 @@ class TraceabilityMatrix:
                 raise ValueError("requirements must contain Requirement entries")
             if req.req_id != req_key:
                 raise ValueError("requirement key mismatch with req_id")
-            if not isinstance(req.status, str) or req.status not in {"open", "implemented", "verified"}:
-                raise ValueError("requirements statuses must be one of: open, implemented, verified")
+            if not isinstance(req.status, str) or req.status not in {
+                "open",
+                "implemented",
+                "verified",
+            }:
+                raise ValueError(
+                    "requirements statuses must be one of: open, implemented, verified"
+                )
         return sum(1 for r in self.requirements.values() if r.status == "open")
 
     def generate_report(self) -> str:
@@ -217,8 +233,14 @@ class TraceabilityMatrix:
                 raise ValueError("requirements must contain Requirement entries")
             if req.req_id != req_key:
                 raise ValueError("requirement key mismatch with req_id")
-            if not isinstance(req.status, str) or req.status not in {"open", "implemented", "verified"}:
-                raise ValueError("requirements statuses must be one of: open, implemented, verified")
+            if not isinstance(req.status, str) or req.status not in {
+                "open",
+                "implemented",
+                "verified",
+            }:
+                raise ValueError(
+                    "requirements statuses must be one of: open, implemented, verified"
+                )
         lines = [
             "# Safety Traceability Matrix",
             f"Generated: {datetime.now().isoformat()}",
@@ -420,7 +442,9 @@ class FMEDA:
         for fm in self.failure_modes:
             if not isinstance(fm, FailureMode):
                 raise ValueError("failure_modes must contain FailureMode entries")
-        residual = sum(fm.failure_rate_fit * (1.0 - fm.safe_failure_fraction) for fm in self.failure_modes)
+        residual = sum(
+            fm.failure_rate_fit * (1.0 - fm.safe_failure_fraction) for fm in self.failure_modes
+        )
         if not math.isfinite(float(residual)) or residual < 0.0:
             raise ValueError("residual_risk_fit must be a finite non-negative value")
         return residual
@@ -553,7 +577,11 @@ class FormalProofCertificate:
         for prop in self.properties:
             if not isinstance(prop, FormalProperty):
                 raise ValueError("properties must contain FormalProperty entries")
-            if not isinstance(prop.status, str) or prop.status not in {"proven", "failed", "unknown"}:
+            if not isinstance(prop.status, str) or prop.status not in {
+                "proven",
+                "failed",
+                "unknown",
+            }:
                 raise ValueError("properties statuses must be one of: proven, failed, unknown")
         return sum(1 for p in self.properties if p.status == "proven")
 
@@ -597,7 +625,9 @@ class FormalProofCertificate:
                 "cover",
                 "assume",
             }:
-                raise ValueError("properties property_type values must be one of: assert, cover, assume")
+                raise ValueError(
+                    "properties property_type values must be one of: assert, cover, assume"
+                )
         lines = [
             "# Formal Proof Certificate",
             f"Generated: {self.generation_timestamp or datetime.now().isoformat()}",
@@ -912,7 +942,9 @@ class CertificationPackage:
                 "partial",
                 "not_addressed",
             }:
-                raise ValueError("checklist statuses must be one of: compliant, partial, not_addressed")
+                raise ValueError(
+                    "checklist statuses must be one of: compliant, partial, not_addressed"
+                )
             if not isinstance(item.clause, str) or not item.clause.strip():
                 raise ValueError("checklist clauses must be non-empty strings")
 
@@ -928,7 +960,9 @@ class CertificationPackage:
                 "partial",
                 "not_addressed",
             }:
-                raise ValueError("checklist statuses must be one of: compliant, partial, not_addressed")
+                raise ValueError(
+                    "checklist statuses must be one of: compliant, partial, not_addressed"
+                )
         addressed = sum(1 for c in self.checklist if c.status != "not_addressed")
         return addressed / len(self.checklist)
 
@@ -975,8 +1009,14 @@ class CertificationGenerator:
                 raise ValueError(
                     "formal_properties modules must not contain leading or trailing whitespace"
                 )
-            if not isinstance(prop.status, str) or prop.status not in {"proven", "failed", "unknown"}:
-                raise ValueError("formal_properties statuses must be one of: proven, failed, unknown")
+            if not isinstance(prop.status, str) or prop.status not in {
+                "proven",
+                "failed",
+                "unknown",
+            }:
+                raise ValueError(
+                    "formal_properties statuses must be one of: proven, failed, unknown"
+                )
             if not isinstance(prop.property_type, str) or prop.property_type not in {
                 "assert",
                 "cover",
@@ -1095,7 +1135,9 @@ class CCFDefence:
             raise ValueError(
                 "category must be one of: separation, diversity, complexity, assessment, competence"
             )
-        if isinstance(self.beta_reduction, bool) or not isinstance(self.beta_reduction, int | float):
+        if isinstance(self.beta_reduction, bool) or not isinstance(
+            self.beta_reduction, int | float
+        ):
             raise ValueError("beta_reduction must be a finite non-negative value")
         if not math.isfinite(float(self.beta_reduction)) or float(self.beta_reduction) < 0.0:
             raise ValueError("beta_reduction must be a finite non-negative value")
@@ -1200,14 +1242,20 @@ class ProofTestCoverage:
                 raise ValueError("properties must contain FormalProperty entries")
             if not isinstance(prop.prop_id, str) or not prop.prop_id.strip():
                 raise ValueError("properties prop_id values must be non-empty strings")
-            if not isinstance(prop.status, str) or prop.status not in {"proven", "failed", "unknown"}:
+            if not isinstance(prop.status, str) or prop.status not in {
+                "proven",
+                "failed",
+                "unknown",
+            }:
                 raise ValueError("properties statuses must be one of: proven, failed, unknown")
             if not isinstance(prop.property_type, str) or prop.property_type not in {
                 "assert",
                 "cover",
                 "assume",
             }:
-                raise ValueError("properties property_type values must be one of: assert, cover, assume")
+                raise ValueError(
+                    "properties property_type values must be one of: assert, cover, assume"
+                )
         asserts = [p for p in properties if p.property_type == "assert"]
         if not asserts:
             return 0.0
@@ -1250,7 +1298,9 @@ class ProofTestCoverage:
             if not isinstance(module, str) or not module.strip():
                 raise ValueError("all_modules must contain non-empty strings")
             if module != module.strip():
-                raise ValueError("all_modules entries must not contain leading or trailing whitespace")
+                raise ValueError(
+                    "all_modules entries must not contain leading or trailing whitespace"
+                )
         covered = {p.module for p in properties}
         uncovered: list[str] = []
         seen: set[str] = set()
@@ -1613,7 +1663,9 @@ class EvidenceItem:
         if not isinstance(self.sha256, str):
             raise ValueError("sha256 must be a string")
         if self.sha256:
-            if len(self.sha256) != 64 or any(c not in "0123456789abcdefABCDEF" for c in self.sha256):
+            if len(self.sha256) != 64 or any(
+                c not in "0123456789abcdefABCDEF" for c in self.sha256
+            ):
                 raise ValueError("sha256 must be a 64-character hexadecimal digest when provided")
 
 
@@ -1701,7 +1753,9 @@ class CrossStandardMapper:
                 or not isinstance(mapping[1], str)
                 or not mapping[1].strip()
             ):
-                raise ValueError("cross-standard mappings must contain non-empty (standard, clause) tuples")
+                raise ValueError(
+                    "cross-standard mappings must contain non-empty (standard, clause) tuples"
+                )
         return mappings
 
     @staticmethod
@@ -1810,8 +1864,14 @@ class FormalPropertyGapDetector:
                 "cover",
                 "assume",
             }:
-                raise ValueError("properties property_type values must be one of: assert, cover, assume")
-            if not isinstance(prop.status, str) or prop.status not in {"proven", "failed", "unknown"}:
+                raise ValueError(
+                    "properties property_type values must be one of: assert, cover, assume"
+                )
+            if not isinstance(prop.status, str) or prop.status not in {
+                "proven",
+                "failed",
+                "unknown",
+            }:
                 raise ValueError("properties statuses must be one of: proven, failed, unknown")
             if not isinstance(prop.module, str) or not prop.module.strip():
                 raise ValueError("properties modules must be non-empty strings")

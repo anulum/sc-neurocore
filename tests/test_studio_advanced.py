@@ -314,7 +314,8 @@ class TestPresets:
         payload = response.json()
         assert payload["count"] >= 2
         assert all(
-            row["endpoint"] in {"/api/adaptive-precision/auto-tune", "/api/adaptive-precision/formal-bundle"}
+            row["endpoint"]
+            in {"/api/adaptive-precision/auto-tune", "/api/adaptive-precision/formal-bundle"}
             for row in payload["actions"]
         )
 
@@ -390,9 +391,7 @@ class TestPresets:
         response = client.post(
             "/api/presets/fpga_precision/default-flow/run",
             json={
-                "action_overrides": {
-                    "auto_tune_adaptive_precision": {"target_error_percent": 0.05}
-                }
+                "action_overrides": {"auto_tune_adaptive_precision": {"target_error_percent": 0.05}}
             },
         )
         assert response.status_code == 200
@@ -495,7 +494,9 @@ class TestPresets:
     def test_fpga_precision_default_flow_attest_endpoint(self, client):
         run = client.post(
             "/api/presets/fpga_precision/default-flow/run",
-            json={"action_overrides": {"auto_tune_adaptive_precision": {"target_error_percent": 0.05}}},
+            json={
+                "action_overrides": {"auto_tune_adaptive_precision": {"target_error_percent": 0.05}}
+            },
         )
         assert run.status_code == 200
         run_payload = run.json()
@@ -512,7 +513,9 @@ class TestPresets:
     def test_fpga_precision_default_flow_attest_verify_endpoint(self, client):
         run = client.post(
             "/api/presets/fpga_precision/default-flow/run",
-            json={"action_overrides": {"auto_tune_adaptive_precision": {"target_error_percent": 0.05}}},
+            json={
+                "action_overrides": {"auto_tune_adaptive_precision": {"target_error_percent": 0.05}}
+            },
         )
         assert run.status_code == 200
         run_payload = run.json()
@@ -528,7 +531,10 @@ class TestPresets:
         )
         assert verify.status_code == 200
         verify_payload = verify.json()
-        assert verify_payload["schema_version"] == "sc-neurocore.studio.default-flow-attestation-verify.v1"
+        assert (
+            verify_payload["schema_version"]
+            == "sc-neurocore.studio.default-flow-attestation-verify.v1"
+        )
         assert verify_payload["verified"] is True
 
     def test_preset_not_found(self, client):

@@ -355,7 +355,7 @@ class TestDeviceTelemetry:
 
     def test_layer_rate_and_zero_neuron_utilization_path(self):
         dt = DeviceTelemetry()
-        dt.record("L0", 6, 0)   # should not push utilization sample
+        dt.record("L0", 6, 0)  # should not push utilization sample
         dt.record("L0", 2, 10)  # should push one utilization sample (20%)
         layer = dt.get_layer("L0")
         assert layer.lifetime_spike_rate == pytest.approx(4.0)

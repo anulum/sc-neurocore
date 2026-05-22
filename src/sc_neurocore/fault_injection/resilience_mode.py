@@ -66,7 +66,11 @@ class ResilienceModeConfig:
             raise ValueError("fault_models must be a non-empty tuple")
         if any(not isinstance(model, FaultModel) for model in self.fault_models):
             raise ValueError("fault_models must contain FaultModel entries")
-        if isinstance(self.num_trials, bool) or not isinstance(self.num_trials, int) or self.num_trials <= 0:
+        if (
+            isinstance(self.num_trials, bool)
+            or not isinstance(self.num_trials, int)
+            or self.num_trials <= 0
+        ):
             raise ValueError("num_trials must be a positive integer")
         if isinstance(self.seed, bool) or not isinstance(self.seed, int):
             raise ValueError("seed must be an integer")
@@ -94,7 +98,11 @@ class ResilienceModeTrialReport:
     def __post_init__(self) -> None:
         if not isinstance(self.fault_model, FaultModel):
             raise ValueError("fault_model must be a FaultModel")
-        if isinstance(self.ber, bool) or not np.isfinite(float(self.ber)) or not (0.0 <= float(self.ber) <= 1.0):
+        if (
+            isinstance(self.ber, bool)
+            or not np.isfinite(float(self.ber))
+            or not (0.0 <= float(self.ber) <= 1.0)
+        ):
             raise ValueError("ber must be a finite value in [0, 1]")
         for field_name in ("num_trials", "bit_count"):
             value = getattr(self, field_name)
@@ -110,16 +118,20 @@ class ResilienceModeTrialReport:
             "max_probability_error",
         ):
             value = getattr(self, field_name)
-            if isinstance(value, bool) or not isinstance(value, int | float) or not np.isfinite(float(value)):
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, int | float)
+                or not np.isfinite(float(value))
+            ):
                 raise ValueError(f"{field_name} must be a finite numeric value")
             if float(value) < 0.0:
                 raise ValueError(f"{field_name} must be non-negative")
-        if self.p95_probability_error < self.mean_probability_error:
-            raise ValueError("p95_probability_error must be >= mean_probability_error")
         if self.p99_probability_error < self.p95_probability_error:
             raise ValueError("p99_probability_error must be >= p95_probability_error")
         if self.max_probability_error < self.p99_probability_error:
             raise ValueError("max_probability_error must be >= p99_probability_error")
+        if self.max_probability_error < self.mean_probability_error:
+            raise ValueError("max_probability_error must be >= mean_probability_error")
         if self.observed_mean_affected_bits > self.bit_count:
             raise ValueError("observed_mean_affected_bits cannot exceed bit_count")
         if not isinstance(self.degradation_plan, DegradationPlan):
@@ -165,10 +177,14 @@ class ResilienceModeReport:
         if (
             not isinstance(self.input_shape, tuple)
             or len(self.input_shape) != 2
-            or any(isinstance(v, bool) or not isinstance(v, int) or v <= 0 for v in self.input_shape)
+            or any(
+                isinstance(v, bool) or not isinstance(v, int) or v <= 0 for v in self.input_shape
+            )
         ):
             raise ValueError("input_shape must be a 2-tuple of positive integers")
-        if not np.isfinite(float(self.nominal_probability)) or not (0.0 <= float(self.nominal_probability) <= 1.0):
+        if not np.isfinite(float(self.nominal_probability)) or not (
+            0.0 <= float(self.nominal_probability) <= 1.0
+        ):
             raise ValueError("nominal_probability must be a finite value in [0, 1]")
         if not isinstance(self.recommended_action, DegradationAction):
             raise ValueError("recommended_action must be a DegradationAction")
@@ -256,7 +272,11 @@ class FaultInjectionResilienceMode:
             raise ValueError("internal error: affected-bit vector shape mismatch")
         if not np.isfinite(errors).all() or (errors < 0.0).any():
             raise ValueError("internal error: invalid probability-error values produced")
-        if not np.isfinite(affected).all() or (affected < 0.0).any() or (affected > flat.size).any():
+        if (
+            not np.isfinite(affected).all()
+            or (affected < 0.0).any()
+            or (affected > flat.size).any()
+        ):
             raise ValueError("internal error: invalid affected-bit values produced")
 
         plan = self.config.policy.evaluate(

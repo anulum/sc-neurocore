@@ -265,7 +265,9 @@ class TestMultiTarget:
         assert r.status_code == 422
 
     def test_multi_target_rejects_non_string_verilog(self, client):
-        r = client.post("/api/synth/multi-target", json={"verilog": {"rtl": "module x();endmodule"}})
+        r = client.post(
+            "/api/synth/multi-target", json={"verilog": {"rtl": "module x();endmodule"}}
+        )
         assert r.status_code == 422
 
     def test_multi_target_rejects_oversized_verilog(self, client):

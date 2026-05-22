@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 690
+    "test_files": 696
   },
   "documentation": {
     "public_pages": [
@@ -1956,6 +1956,7 @@
       "tests/test_evo_substrate/test_mojo_runner.py",
       "tests/test_evo_substrate/test_multilang_parity.py",
       "tests/test_evo_substrate/test_runtime_fault_checks.py",
+      "tests/test_examples_pretrained_checkpoint_contract.py",
       "tests/test_examples_smoke.py",
       "tests/test_exceptions.py",
       "tests/test_experimental_runner.py",
@@ -1973,6 +1974,7 @@
       "tests/test_fault_injection/test_resilience_mode.py",
       "tests/test_fault_injection/test_resilience_policy.py",
       "tests/test_fault_injection.py",
+      "tests/test_fault_injection_module.py",
       "tests/test_fault_tolerance.py",
       "tests/test_federated/test_federated_sc.py",
       "tests/test_few_shot.py",
@@ -2050,6 +2052,7 @@
       "tests/test_interfaces/test_bci_closed_loop.py",
       "tests/test_interfaces/test_bci_hil_manifest.py",
       "tests/test_interfaces/test_dvs_input.py",
+      "tests/test_interfaces/test_zenith_bci_loop.py",
       "tests/test_interfaces_generative_worldmodel.py",
       "tests/test_ir_python.py",
       "tests/test_ir_type_checker.py",
@@ -2248,6 +2251,7 @@
       "tests/test_notebooks/test_posner_ibm_readiness_notebook.py",
       "tests/test_notebooks/test_self_hosted_hub_notebook.py",
       "tests/test_notebooks/test_shd_vertex_notebook.py",
+      "tests/test_notebooks/test_zenith_bci_loop_notebook.py",
       "tests/test_numpy_interop.py",
       "tests/test_online_learning.py",
       "tests/test_online_o1_adaptation_benchmark.py",
@@ -2268,6 +2272,7 @@
       "tests/test_optimizer/test_synthesis_evidence_cli.py",
       "tests/test_optimizer_resource.py",
       "tests/test_optional_adapter_coverage.py",
+      "tests/test_orca_posner_hf.py",
       "tests/test_petri_net.py",
       "tests/test_phi_estimation.py",
       "tests/test_physical_twin.py",
@@ -2404,6 +2409,7 @@
       "tests/test_studio_compiler.py",
       "tests/test_studio_endpoints.py",
       "tests/test_studio_integration.py",
+      "tests/test_studio_model_scan.py",
       "tests/test_studio_network_canvas.py",
       "tests/test_studio_progress.py",
       "tests/test_studio_rust_integration.py",

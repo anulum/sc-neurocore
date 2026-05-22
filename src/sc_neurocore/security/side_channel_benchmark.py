@@ -300,7 +300,9 @@ def write_side_channel_benchmark_report(
     if path.name in {"", ".", ".."}:
         raise SideChannelBenchmarkError("output_path must resolve to a file path")
     if path.exists() and path.is_dir():
-        raise SideChannelBenchmarkError("output_path must point to a file, not an existing directory")
+        raise SideChannelBenchmarkError(
+            "output_path must point to a file, not an existing directory"
+        )
     report = _with_artifact_path(report, path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -350,7 +352,11 @@ def _correlated_activity_fixture_stream(
     probability_value = float(probability)
     if not math.isfinite(probability_value) or probability_value < 0.0 or probability_value > 1.0:
         raise SideChannelBenchmarkError("probability must be a finite value in [0, 1]")
-    if isinstance(bitstream_length, bool) or not isinstance(bitstream_length, int) or bitstream_length < 1:
+    if (
+        isinstance(bitstream_length, bool)
+        or not isinstance(bitstream_length, int)
+        or bitstream_length < 1
+    ):
         raise SideChannelBenchmarkError("bitstream_length must be an integer >= 1")
     ones = round(probability * bitstream_length)
     if probability_value >= 0.5:
