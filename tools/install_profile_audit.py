@@ -197,11 +197,16 @@ def _read_hub_airgap_profile(repo: Path) -> dict[str, Any]:
     manifest = module.build_hub_manifest(cfg)
     contract = manifest["network_policy"]["air_gapped_contract"]
     mirrors = tuple(manifest["storage"]["dependency_mirrors"])
-    gate = bool(contract["requires_local_dependency_mirrors"]) and mirrors == EXPECTED_HUB_DEPENDENCY_MIRRORS
+    gate = (
+        bool(contract["requires_local_dependency_mirrors"])
+        and mirrors == EXPECTED_HUB_DEPENDENCY_MIRRORS
+    )
     return {
         "hub_dependency_mirrors": list(mirrors),
         "hub_air_gapped_contract": {
-            "requires_local_dependency_mirrors": bool(contract["requires_local_dependency_mirrors"]),
+            "requires_local_dependency_mirrors": bool(
+                contract["requires_local_dependency_mirrors"]
+            ),
             "dependency_mirror_dirs": list(contract["dependency_mirror_dirs"]),
         },
         "hub_offline_mirror_gate": gate,

@@ -202,7 +202,9 @@ def extract(ckpt_path: str, out_dir: str, *, checkpoint_sha256: str) -> dict[str
     raw_sigma = ckpt.get("sigma")
     if not isinstance(raw_acc, (int, float)) or not torch.isfinite(torch.tensor(float(raw_acc))):
         raise ValueError("checkpoint metadata 'acc' must be a finite numeric value")
-    if not isinstance(raw_sigma, (int, float)) or not torch.isfinite(torch.tensor(float(raw_sigma))):
+    if not isinstance(raw_sigma, (int, float)) or not torch.isfinite(
+        torch.tensor(float(raw_sigma))
+    ):
         raise ValueError("checkpoint metadata 'sigma' must be a finite numeric value")
     if not isinstance(raw_epoch, int) or raw_epoch < 0:
         raise ValueError("checkpoint metadata 'epoch' must be a non-negative integer")

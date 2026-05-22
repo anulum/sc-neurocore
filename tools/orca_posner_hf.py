@@ -665,9 +665,7 @@ def auto_a_ref(hf_list: list[dict], target_max: float = 0.5) -> float:
         raise ValueError("cannot auto-calibrate a_ref: no hyperfine tensor components found")
     max_component = max(all_components)
     if max_component <= 0.0:
-        raise ValueError(
-            "cannot auto-calibrate a_ref: all hyperfine tensor components are zero"
-        )
+        raise ValueError("cannot auto-calibrate a_ref: all hyperfine tensor components are zero")
     return max_component / target_max
 
 
