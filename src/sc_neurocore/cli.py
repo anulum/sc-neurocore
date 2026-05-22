@@ -17,7 +17,7 @@ import re
 import shutil
 import subprocess
 import sys
-from typing import Any, Sequence, cast
+from typing import Any, Sequence
 
 
 class _OutputAction(argparse.Action):
@@ -1661,7 +1661,7 @@ def _cmd_deploy(
         if layers and isinstance(layers[-1], torch.nn.ReLU):
             layers.pop()
         model = torch.nn.Sequential(*layers)
-        in_dim = cast(int, linear_layers[0].in_features) if linear_layers else 1
+        in_dim = linear_layers[0].in_features if linear_layers else 1
         cal_data = torch.randn(64, in_dim)
         snn = convert(model, calibration_data=cal_data, T=bitstream_length)
         network = None
