@@ -8,7 +8,7 @@
 
 module StochasticLifAccel
 
-export step!, simulate, StochasticLIFState
+export step!, simulate, validate_stochastic_lif, StochasticLIFState
 
 mutable struct StochasticLIFState
     v_rest::Float64
@@ -27,24 +27,32 @@ function StochasticLIFState()
 end
 
 function step!(s::StochasticLIFState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        if s.ref_count > 0
-            s.ref_count -= 1
-            return 0
-        end
-        sqrt_dt = sqrt(s.dt)
-        dv_det = (-(s.v - s.v_rest) + I_ext) / s.tau_mem * s.dt
-        dv_noise = s.noise_std * sqrt_dt * randn()
-        s.v += dv_det + dv_noise
-        if s.v >= s.v_threshold
-            s.v = s.v_reset
-            s.ref_count = s.refractory_period
-            return 1
-        end
-        return 0
-    catch _e
+    if !validate_stochastic_lif(s) || !isfinite(I_ext)
         return 0
     end
+    if s.ref_count > 0
+        s.ref_count -= 1
+        s.v = s.v_rest
+        return 0
+    end
+
+    sqrt_dt = sqrt(s.dt)
+    dv_det = (-(s.v - s.v_rest) + I_ext) / s.tau_mem * s.dt
+    dv_noise = s.noise_std * sqrt_dt * randn()
+    s.v += dv_det + dv_noise
+    if s.v >= s.v_threshold
+        s.v = s.v_reset
+        s.ref_count = s.refractory_period
+        return 1
+    end
+    return 0
+end
+
+function validate_stochastic_lif(s::StochasticLIFState)
+    return isfinite(s.v_rest) && isfinite(s.v_reset) && isfinite(s.v_threshold) &&
+           isfinite(s.tau_mem) && s.tau_mem > 0.0 && isfinite(s.dt) && s.dt > 0.0 &&
+           isfinite(s.noise_std) && s.noise_std >= 0.0 && isfinite(s.v) &&
+           s.ref_count >= 0 && s.refractory_period >= 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
