@@ -31,18 +31,27 @@ impl GalvesLocherbachNeuron {
     }
 
     pub fn _firing_prob(&self) -> f64 {
-        // return 1.0 / (1.0 + (-self.steepness * (self.v - self.threshold_rate_f
-        0.0
+        let z = self.steepness * (self.v - self.threshold_rate);
+        if z >= 0.0 {
+            let tail = (-z).exp();
+            1.0 / (1.0 + tail)
+        } else {
+            let tail = z.exp();
+            tail / (1.0 + tail)
+        }
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // self.v = self.decay * self.v + weighted_input
-        // p = self._firing_prob()
-        // spike = 1 if np.random.random() < p * self.dt else 0
-        // if spike:
-        // self.v = self.v_rest
-        // return spike
-        0 // spike indicator
+        if !validate_galves_locherbach(self) || !i_ext.is_finite() {
+            return 0;
+        }
+        self.v = self.decay * self.v + i_ext;
+        let p = self._firing_prob() * self.dt;
+        if p >= 1.0 {
+            self.v = self.v_rest;
+            return 1;
+        }
+        0
     }
 
     pub fn reset(&mut self) {
@@ -57,6 +66,15 @@ impl GalvesLocherbachNeuron {
 
 pub fn validate_galves_locherbach(state: &GalvesLocherbachNeuron) -> bool {
     state.v.is_finite()
+        && state.v_rest.is_finite()
+        && state.threshold_rate.is_finite()
+        && state.decay.is_finite()
+        && (0.0..=1.0).contains(&state.decay)
+        && state.steepness.is_finite()
+        && state.steepness > 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
+        && state.dt <= 1.0
 }
 
 #[cfg(test)]
