@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -30,7 +31,25 @@ class EnergyLIFNeuron:
     resistance: float = 1.0
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        for field in ("v", "v_rest", "v_reset", "v_threshold"):
+            if not math.isfinite(getattr(self, field)):
+                raise ValueError(f"{field} must be finite")
+        for field in ("epsilon", "epsilon_0"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"{field} must be finite and non-negative")
+        for field in ("tau_m", "tau_e", "resistance", "dt"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field} must be finite and positive")
+        if not math.isfinite(self.alpha) or self.alpha < 0.0:
+            raise ValueError("alpha must be finite and non-negative")
+
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         effective_r = self.resistance * self.epsilon
         self.v += (-(self.v - self.v_rest) + effective_r * current) / self.tau_m * self.dt
         self.epsilon += (self.epsilon_0 - self.epsilon) / self.tau_e * self.dt
