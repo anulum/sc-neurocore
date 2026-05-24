@@ -98,8 +98,22 @@ The public contract is tested as follows:
 
 ## Rall Branching Dendrite
 
-Compartmental dendritic tree with Rall's 3/2 power rule for impedance matching.
-Distal-to-proximal propagation with inter-compartment coupling.
+`RallDendrite` represents each branch as a fixed-length compartment chain.
+Inputs are injected at the distal compartment, coupled toward the proximal
+compartment, and accumulated at the soma through attenuation factors derived
+from Rall's 3/2 branch-diameter rule.
+
+The public contract is tested as follows:
+
+- the initial and reset states have zero compartment and soma voltages;
+- distal input reaches the soma after repeated steps;
+- activating more branches increases somatic voltage relative to a single
+  active branch under the same parameters;
+- soma voltage decays when input is removed;
+- `branch_voltages` returns a copy shaped `(n_branches, branch_length)`;
+- Rall attenuation factors remain normalised;
+- distal compartments remain higher than proximal compartments during
+  sustained distal injection.
 
 ::: sc_neurocore.layers.rall_dendrite.RallDendrite
 
