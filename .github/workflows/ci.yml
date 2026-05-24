@@ -119,7 +119,7 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.python-version }}" == "3.12" ]]; then
-            pytest tests/ -q \
+            pytest -n auto --dist loadfile tests/ -q \
               --cov=sc_neurocore \
               --cov-report=term-missing \
               --cov-report=html:htmlcov \
@@ -128,7 +128,7 @@ jobs:
           else
             # Full behavioral compatibility matrix, without repeating
             # coverage instrumentation on every Python interpreter.
-            pytest tests/ -q --junitxml=test-results.xml
+            pytest -n auto --dist loadfile tests/ -q --junitxml=test-results.xml
           fi
 
       - name: Upload test results
