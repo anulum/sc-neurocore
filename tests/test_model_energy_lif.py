@@ -13,6 +13,7 @@ LIF with metabolic energy constraint ε. Spike cost depletes ε."""
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.energy_lif import EnergyLIFNeuron
 from sc_neurocore.network.population import Population
@@ -74,6 +75,39 @@ class TestEnergyLIFIsolation:
         n.reset()
         assert n.v == n.v_rest
         assert n.epsilon == n.epsilon_0
+
+
+class TestEnergyLIFValidation:
+    @pytest.mark.parametrize("field", ["v", "v_rest", "v_reset", "v_threshold"])
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            EnergyLIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["epsilon", "epsilon_0"])
+    @pytest.mark.parametrize("value", [-1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_negative_or_non_finite_energy_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            EnergyLIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["tau_m", "tau_e", "resistance", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            EnergyLIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("alpha", [-1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_negative_or_non_finite_spike_cost(self, alpha: float):
+        with pytest.raises(ValueError, match="alpha"):
+            EnergyLIFNeuron(alpha=alpha)
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = EnergyLIFNeuron(v=-65.0, epsilon=0.5)
+        before = (n.v, n.epsilon)
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert (n.v, n.epsilon) == before
 
 
 class TestEnergyLIFNetwork:
