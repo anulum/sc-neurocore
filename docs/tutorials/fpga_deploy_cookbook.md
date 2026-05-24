@@ -19,6 +19,16 @@ to a generated FPGA project. It deliberately separates three stages:
 
 You can complete stages 1-2 without Vivado, Quartus, Yosys, or an FPGA board.
 
+## Cookbook entries
+
+| Entry | Use when | Evidence boundary |
+| --- | --- | --- |
+| MNIST quick scaffold | You need a deterministic toy classifier that trains locally and exports Q8.8 constants | Commit the command output or generated metadata before quoting accuracy |
+| NIR export handoff | The model comes from a NIR-capable frontend such as SpikingJelly, snnTorch, or Norse | Keep the `.nir` graph and frontend export command with the scaffold |
+| FPGA deployment scaffold | You need generated RTL/project files without requiring local synthesis tools | The scaffold proves handoff only; it is not a resource or power report |
+| Power/utilisation report ingestion | Vivado, Quartus, or Yosys has produced real reports for a named target | Use only tool-generated reports plus `collect-synthesis` JSON as optimiser input |
+| Benchmark evidence boundary | You want to publish performance, resource, power, or latency numbers | Cite committed `benchmarks/results/` JSON/CSV, named tool reports, or companion paper artefacts |
+
 ## 1. Install the minimum environment
 
 ```bash
@@ -200,6 +210,10 @@ training, NAS, or hardware-aware deployment loops.
 
 - Base package installed before optional extras.
 - Model artefact exists (`.nir`, `.pt`, or generated Verilog weights).
+- If the model came from an external training frontend, the NIR export command
+  and generated `.nir` graph are kept beside the scaffold.
 - FPGA scaffold generated under `build/`.
 - Tool-generated synthesis reports kept separate from estimates.
 - Optimiser evidence includes measured accuracy and design metadata.
+- Public benchmark or hardware claims cite committed raw artefacts rather than
+  local console output.
