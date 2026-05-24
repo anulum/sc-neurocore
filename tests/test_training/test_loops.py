@@ -14,7 +14,7 @@ torch = pytest.importorskip("torch")
 
 from torch.utils.data import DataLoader, TensorDataset
 
-from sc_neurocore.training.loops import evaluate, train_epoch
+from sc_neurocore.training.loops import auto_device, evaluate, train_epoch
 from sc_neurocore.training.losses import membrane_loss, spike_rate_loss
 from sc_neurocore.training.snn_modules import ConvSpikingNet, SpikingNet
 
@@ -89,3 +89,10 @@ def test_conv_spiking_net_evaluate():
     loss, acc = evaluate(model, loader, n_timesteps=3, flatten_input=False)
     assert loss > 0
     assert 0 <= acc <= 1
+
+
+def test_auto_device_returns_supported_torch_device() -> None:
+    device = auto_device()
+
+    assert isinstance(device, torch.device)
+    assert device.type in ("cpu", "cuda", "mps")

@@ -115,3 +115,12 @@ class TestPipeline:
         assert sc >= 5
         rate = firing_rate(train, dt=0.001)
         assert rate > 0
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestGIFPopulation:
+    def test_stochastic_firing(self):
+        from sc_neurocore.neurons.models.gif_population import GIFPopulationNeuron
+
+        n = GIFPopulationNeuron()
+        assert sum(n.step(30.0) for _ in range(500)) > 0

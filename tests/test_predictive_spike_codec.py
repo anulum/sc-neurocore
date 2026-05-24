@@ -348,7 +348,7 @@ class TestPythonFallbackFunctions:
     """Direct tests for Python fallback functions.
 
     These are never hit when the Rust engine is available (CI builds Rust).
-    Testing them directly ensures 100% coverage regardless of Rust availability.
+    Testing them directly validates Python fallback behaviour regardless of Rust availability.
     """
 
     def test_predict_and_xor_roundtrip(self):

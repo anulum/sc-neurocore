@@ -160,3 +160,15 @@ class TestAstrocytePipeline:
             trace = [n.step(0.5) for _ in range(200)]
             traces.append(trace)
         assert traces[0] == traces[1]
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestAstrocyte:
+    def test_calcium_dynamics(self):
+        from sc_neurocore.neurons.models.astrocyte import AstrocyteModel
+
+        n = AstrocyteModel()
+        for _ in range(200):
+            ca = n.step(1.0)
+        assert isinstance(ca, float)
+        assert ca > 0.0

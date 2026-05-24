@@ -177,3 +177,14 @@ class TestLTCPipeline:
         train = np.array([float(n.step(5.0)) for _ in range(5000)])
         assert spike_count(train) >= 5
         assert firing_rate(train, dt=0.001) > 0
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestLiquidTimeConstant:
+    def test_dynamics(self):
+        from sc_neurocore.neurons.models.ltc import LiquidTimeConstantNeuron
+
+        n = LiquidTimeConstantNeuron()
+        for _ in range(50):
+            n.step(2.0)
+        assert n.x != 0.0

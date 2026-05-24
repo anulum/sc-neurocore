@@ -495,7 +495,7 @@ for scalar draws.
 | TestPipeline | `test_projection_wiring` | Projection src→tgt fires |
 | TestPipeline | `test_analysis` | spike_count ≥ 5, firing_rate > 0 |
 
-**File:** `tests/test_final_neuron_batch.py` (1 test)
+**File:** `tests/test_model_gif_population.py` (dedicated model tests)
 
 | Test | What is verified |
 |------|-----------------|

@@ -162,3 +162,14 @@ class TestCFCPipeline:
             trace = [(n.step(5.0), n.x) for _ in range(200)]
             traces.append(trace)
         assert traces[0] == traces[1]
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestClosedFormContinuous:
+    def test_dynamics(self):
+        from sc_neurocore.neurons.models.cfc import ClosedFormContinuousNeuron
+
+        n = ClosedFormContinuousNeuron()
+        for _ in range(20):
+            n.step(1.0)
+        assert n.x != 0.0

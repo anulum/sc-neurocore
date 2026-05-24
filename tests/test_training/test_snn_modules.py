@@ -234,6 +234,70 @@ class TestSpikingNet:
         assert first[0]["weight"].min() >= 0.0
         assert first[0]["weight"].max() <= 1.0
 
+
+class TestIFCellContracts:
+    def test_no_leak_preserves_subthreshold_voltage(self):
+        cell = IFCell(threshold=10.0)
+
+        spike, voltage = cell(torch.tensor([0.0]), torch.tensor([5.0]))
+
+        assert spike.item() == 0.0
+        assert voltage.item() == pytest.approx(5.0)
+
+    def test_spike_resets_by_threshold_subtraction(self):
+        cell = IFCell(threshold=1.0)
+
+        spike, voltage = cell(torch.tensor([2.0]), torch.zeros(1))
+
+        assert spike.item() == 1.0
+        assert voltage.item() == pytest.approx(1.0)
+
+    def test_surrogate_allows_input_gradient_flow(self):
+        cell = IFCell()
+        current = torch.randn(8, requires_grad=True)
+
+        spike, _ = cell(current, torch.zeros(8))
+        spike.sum().backward()
+
+        assert current.grad is not None
+
+
+class TestSynapticCellContracts:
+    def test_dual_exponential_state_update(self):
+        cell = SynapticCell(alpha=0.5, beta=0.5, threshold=100.0)
+
+        spike, synaptic_current, voltage = cell(
+            torch.ones(4),
+            torch.zeros(4),
+            torch.zeros(4),
+        )
+
+        assert spike.sum().item() == 0.0
+        assert synaptic_current.mean().item() == pytest.approx(1.0, abs=0.01)
+        assert voltage.mean().item() == pytest.approx(1.0, abs=0.01)
+
+    def test_spike_path_crosses_threshold_for_all_units(self):
+        cell = SynapticCell(alpha=0.0, beta=0.0, threshold=0.5)
+
+        spike, _, _ = cell(torch.ones(4), torch.zeros(4), torch.zeros(4))
+
+        assert spike.sum().item() == 4.0
+
+    def test_learnable_beta_is_bounded_parameter(self):
+        cell = SynapticCell(beta=0.8, learn_beta=True)
+
+        assert any("beta_logit" in name for name, _ in cell.named_parameters())
+        assert 0 < cell.beta.item() < 1
+
+    def test_surrogate_allows_synaptic_input_gradient_flow(self):
+        cell = SynapticCell()
+        current = torch.randn(8, requires_grad=True)
+
+        spike, _, _ = cell(current, torch.zeros(8), torch.zeros(8))
+        spike.sum().backward()
+
+        assert current.grad is not None
+
     def test_to_sc_weights_gaussian_noise_uses_sigma(self):
         net = SpikingNet(n_input=5, n_hidden=8, n_output=3, n_layers=1)
         base = net.to_sc_weights(noise_model="none")

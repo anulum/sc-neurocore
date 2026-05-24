@@ -262,3 +262,21 @@ class TestILIFPipeline:
         train = np.array([float(n.step(5.0)) for _ in range(5000)])
         rate = firing_rate(train, dt=0.001)
         assert rate > 0
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestInhibitoryLIF:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.ilif import InhibitoryLIFNeuron
+
+        n = InhibitoryLIFNeuron()
+        assert sum(n.step(30.0) for _ in range(200)) > 0
+
+    def test_inhibition_trace(self):
+        from sc_neurocore.neurons.models.ilif import InhibitoryLIFNeuron
+
+        n = InhibitoryLIFNeuron()
+        for _ in range(50):
+            if n.step(50.0):
+                break
+        assert n.inh_trace > 0.0

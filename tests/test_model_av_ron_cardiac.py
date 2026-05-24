@@ -131,3 +131,12 @@ class TestAvRonPipeline:
             trace = [(n.step(0.0), n.v) for _ in range(200)]
             traces.append(trace)
         assert traces[0] == traces[1]
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestAvRonCardiac:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.av_ron_cardiac import AvRonCardiacNeuron
+
+        n = AvRonCardiacNeuron()
+        assert sum(n.step(5.0) for _ in range(300)) > 0

@@ -200,3 +200,12 @@ class TestYamadaPipeline:
         assert sc >= 10
         rate = firing_rate(train, dt=0.00005)  # dt=0.05ms per step
         assert rate > 0
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestYamada:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.yamada import YamadaNeuron
+
+        n = YamadaNeuron()
+        assert sum(n.step(5.0) for _ in range(300)) > 0

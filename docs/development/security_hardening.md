@@ -22,12 +22,12 @@ Python fuzz coverage exists for the current high-risk structured input surface:
 | Equation-to-MLIR lowering | `tests/test_fuzz_equation_mlir_lowering_inputs.py` |
 | HDL-source lowering | `tests/test_fuzz_hdl_source_lowering_inputs.py` |
 | Transfer-checkpoint input handling | `tests/test_fuzz_transfer_checkpoint_inputs.py` |
-| General property suite | `tests/test_hypothesis_properties.py` |
+| Fuzz/property suites | Dedicated `tests/test_fuzz_*.py` files |
 
 Run the focused Python fuzz/property suite:
 
 ```bash
-pytest tests/test_fuzz_*.py tests/test_hypothesis_properties.py -q
+pytest tests/test_fuzz_*.py -q
 ```
 
 Dedicated Rust `cargo-fuzz` targets now start under `fuzz/` for the SC IR

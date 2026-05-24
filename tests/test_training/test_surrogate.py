@@ -15,7 +15,10 @@ torch = pytest.importorskip("torch")
 from sc_neurocore.training.surrogate import (
     atan_surrogate,
     fast_sigmoid,
+    sigmoid_surrogate,
     superspike,
+    straight_through,
+    triangular,
 )
 
 
@@ -60,3 +63,43 @@ def test_fast_sigmoid_slope_effect():
     grad_gentle = x2.grad.item()
 
     assert grad_steep > grad_gentle
+
+
+@pytest.mark.parametrize("fn", [sigmoid_surrogate, straight_through, triangular])
+class TestAdditionalSurrogateContracts:
+    def test_forward_is_heaviside(self, fn):
+        x = torch.tensor([-1.0, -0.1, 0.0, 0.1, 1.0])
+        out = fn(x)
+        expected = torch.tensor([0.0, 0.0, 0.0, 1.0, 1.0])
+        assert torch.equal(out, expected)
+
+    def test_backward_has_gradient_support(self, fn):
+        x = torch.tensor([-0.5, 0.0, 0.5], requires_grad=True)
+        fn(x).sum().backward()
+        assert x.grad is not None
+        assert (x.grad.abs() > 0).all()
+
+    def test_batch_shape_is_preserved(self, fn):
+        x = torch.randn(16, 64, requires_grad=True)
+        out = fn(x)
+        assert out.shape == x.shape
+        out.sum().backward()
+        assert x.grad.shape == x.shape
+
+
+def test_sigmoid_surrogate_slope_controls_threshold_gradient() -> None:
+    x_steep = torch.tensor([0.01], requires_grad=True)
+    sigmoid_surrogate(x_steep, slope=20.0).backward()
+    x_gentle = torch.tensor([0.01], requires_grad=True)
+    sigmoid_surrogate(x_gentle, slope=2.0).backward()
+
+    assert x_steep.grad.abs().item() > x_gentle.grad.abs().item()
+
+
+def test_triangular_surrogate_width_controls_gradient_support() -> None:
+    x_narrow = torch.tensor([0.8], requires_grad=True)
+    triangular(x_narrow, width=0.5).backward()
+    x_wide = torch.tensor([0.8], requires_grad=True)
+    triangular(x_wide, width=2.0).backward()
+
+    assert x_wide.grad.abs().item() > x_narrow.grad.abs().item()

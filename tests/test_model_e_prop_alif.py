@@ -220,3 +220,20 @@ class TestEPropALIFPipeline:
         assert sc >= 50
         rate = firing_rate(train, dt=0.001)
         assert rate > 0
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestEPropALIF:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.e_prop_alif import EPropALIFNeuron
+
+        n = EPropALIFNeuron()
+        assert sum(n.step(30.0) for _ in range(200)) > 0
+
+    def test_adaptation(self):
+        from sc_neurocore.neurons.models.e_prop_alif import EPropALIFNeuron
+
+        n = EPropALIFNeuron()
+        for _ in range(100):
+            n.step(30.0)
+        assert n.a != 0.0, "adaptation variable must change after spikes"

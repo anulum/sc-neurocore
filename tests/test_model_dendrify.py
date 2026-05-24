@@ -99,3 +99,14 @@ class TestDendrifyPipeline:
         n = DendrifyNeuron()
         train = np.array([float(n.step(50.0)) for _ in range(10000)])
         assert spike_count(train) >= 10
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestDendrify:
+    def test_dynamics(self):
+        from sc_neurocore.neurons.models.dendrify import DendrifyNeuron
+
+        n = DendrifyNeuron()
+        for _ in range(200):
+            n.step(10.0)
+        assert n.v_s != -65.0 or n.v_d != -65.0

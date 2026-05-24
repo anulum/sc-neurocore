@@ -161,6 +161,16 @@ def test_vectorized_rejects_unknown_sc_mode():
         VectorizedSCLayer(n_inputs=2, n_neurons=1, sc_mode="ternary")
 
 
+def test_vectorized_sparse_mode_requires_scipy_sparse_support():
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setattr(
+            "sc_neurocore.layers.vectorized_layer._has_scipy_sparse",
+            lambda: False,
+        )
+        with pytest.raises(ImportError, match="scipy"):
+            VectorizedSCLayer(n_inputs=4, n_neurons=8, sparse=True)
+
+
 def test_vectorized_from_exported_bipolar_weights_preserves_classifier_accuracy():
     """Exported signed trained weights should run through packed bipolar SC inference."""
     torch = pytest.importorskip("torch")

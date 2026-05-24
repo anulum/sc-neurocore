@@ -120,3 +120,11 @@ def test_l10_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.001, {"retrieval_quality": np.array([0.1, 0.2])})
     with pytest.raises(ValueError, match="external_noise"):
         layer.step(0.001, external_noise=np.array([0.0, np.nan]))
+
+
+def test_l10_short_external_noise_is_padded_before_step() -> None:
+    layer = L10_BoundaryLayer()
+
+    layer.step(0.01, external_noise=np.array([0.1]))
+
+    assert layer.time > 0

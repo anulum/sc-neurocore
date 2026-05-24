@@ -515,7 +515,7 @@ functions (exp, powf) that limit vectorisation gains.
 | TestPipeline | 4 | Population, projection wiring, network spikes, spike analysis |
 | TestParametric | 3 | g_t sweep, g_h sweep, g_kna sweep |
 
-**File:** `tests/test_final_neuron_batch.py` (2 tests)
+**File:** `tests/test_model_hill_tononi.py` (dedicated model tests)
 
 | Test | What is verified |
 |------|-----------------|

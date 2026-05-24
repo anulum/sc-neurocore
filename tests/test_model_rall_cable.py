@@ -237,3 +237,23 @@ class TestRallCableAnalysis:
         if sc > 0:
             expected = sc / duration
             assert abs(rate - expected) < expected * 0.1
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestRallCable:
+    def test_propagation(self):
+        from sc_neurocore.neurons.models.rall_cable import RallCableNeuron
+
+        n = RallCableNeuron()
+        for _ in range(100):
+            n.step(5.0)
+        assert n.v[0] != n.v[-1], "voltage should differ across compartments"
+
+    def test_reset(self):
+        from sc_neurocore.neurons.models.rall_cable import RallCableNeuron
+
+        n = RallCableNeuron()
+        for _ in range(50):
+            n.step(5.0)
+        n.reset()
+        assert all(abs(vi - n.v_rest) < 1e-10 for vi in n.v)

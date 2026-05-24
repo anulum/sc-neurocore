@@ -203,3 +203,19 @@ class TestIQIFPipeline:
         train = np.array([float(n.step(100)) for _ in range(5000)])
         sc = spike_count(train)
         assert sc >= 5
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestIntegerQIF:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.iqif import IntegerQIFNeuron
+
+        n = IntegerQIFNeuron()
+        assert sum(n.step(10) for _ in range(200)) > 0
+
+    def test_integer_arithmetic(self):
+        from sc_neurocore.neurons.models.iqif import IntegerQIFNeuron
+
+        n = IntegerQIFNeuron()
+        n.step(5)
+        assert isinstance(n.v, int)

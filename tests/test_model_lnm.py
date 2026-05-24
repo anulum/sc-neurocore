@@ -193,3 +193,12 @@ class TestLNMPipeline:
         train = np.array([float(n.step(5.0)) for _ in range(5000)])
         assert spike_count(train) >= 20
         assert firing_rate(train, dt=0.001) > 0
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestLearnableNeuronModel:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.lnm import LearnableNeuronModel
+
+        n = LearnableNeuronModel()
+        assert sum(n.step(2.0) for _ in range(50)) > 0

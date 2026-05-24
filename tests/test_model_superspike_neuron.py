@@ -229,3 +229,12 @@ class TestSuperSpikePipeline:
             trace = [(n.step(0.2), n.v, n.trace) for _ in range(200)]
             traces.append(trace)
         assert traces[0] == traces[1]
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestSuperSpikeNeuron:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.superspike_neuron import SuperSpikeNeuron
+
+        n = SuperSpikeNeuron()
+        assert sum(n.step(30.0) for _ in range(200)) > 0

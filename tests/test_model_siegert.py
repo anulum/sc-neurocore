@@ -149,3 +149,22 @@ class TestSiegertPipeline:
         n1 = SiegertTransferFunction()
         n2 = SiegertTransferFunction()
         assert n1.step(20.0) == n2.step(20.0)
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestSiegertTransfer:
+    def test_returns_rate(self):
+        from sc_neurocore.neurons.models.siegert import SiegertTransferFunction
+
+        n = SiegertTransferFunction()
+        rate = n.step(5.0)
+        assert isinstance(rate, float)
+        assert rate >= 0.0
+
+    def test_higher_input_higher_rate(self):
+        from sc_neurocore.neurons.models.siegert import SiegertTransferFunction
+
+        n = SiegertTransferFunction()
+        r_low = n.step(1.0)
+        r_high = n.step(30.0)
+        assert r_high >= r_low

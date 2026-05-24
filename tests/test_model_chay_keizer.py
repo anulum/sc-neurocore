@@ -172,3 +172,20 @@ class TestChayKeizerPipeline:
         train = np.array([float(n.step(0.0)) for _ in range(50000)])
         sc = spike_count(train)
         assert sc >= 1  # at least the transient spike
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestChayKeizer:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.chay_keizer import ChayKeizerNeuron
+
+        n = ChayKeizerNeuron()
+        assert sum(n.step(5.0) for _ in range(500)) > 0
+
+    def test_calcium(self):
+        from sc_neurocore.neurons.models.chay_keizer import ChayKeizerNeuron
+
+        n = ChayKeizerNeuron()
+        for _ in range(200):
+            n.step(5.0)
+        assert n.ca != 0.1
