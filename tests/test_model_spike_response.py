@@ -318,3 +318,30 @@ class TestSRMPipeline:
         assert rate > 0
         duration = 10000 * 0.001
         assert abs(rate - sc / duration) < 1.0
+
+
+class TestSpikeResponseValidation:
+    @pytest.mark.parametrize("field", ["v", "v_threshold", "eta_reset"])
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            SpikeResponseNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["tau_eta", "tau_kappa", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_time_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            SpikeResponseNeuron(**{field: value})
+
+    @pytest.mark.parametrize("time_since_spike", [-1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_negative_or_non_finite_refractory_clock(self, time_since_spike: float):
+        with pytest.raises(ValueError, match="time_since_spike"):
+            SpikeResponseNeuron(time_since_spike=time_since_spike)
+
+    @pytest.mark.parametrize("weighted_input", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_input_before_state_mutation(self, weighted_input: float):
+        n = SpikeResponseNeuron(v=0.25, time_since_spike=3.0)
+        before = (n.v, n.time_since_spike)
+        with pytest.raises(ValueError, match="weighted_input"):
+            n.step(weighted_input)
+        assert (n.v, n.time_since_spike) == before
