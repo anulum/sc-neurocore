@@ -35,13 +35,17 @@ impl StochasticIFNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // noise = self.sigma * (self.dt / self.tau_m_f64).sqrt() * np.random.ran
-        // self.v += (-(self.v - self.v_rest) + self.mu + current) / self.tau_m *
-        // if self.v >= self.v_threshold:
-        // self.v = self.v_reset
-        // return 1
-        // return 0
-        0 // spike indicator
+        if !validate_stochastic_if(self) || !i_ext.is_finite() {
+            return 0;
+        }
+
+        let noise = 0.0_f64;
+        self.v += (-(self.v - self.v_rest) + self.mu + i_ext) / self.tau_m * self.dt + noise;
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            return 1;
+        }
+        0
     }
 
     pub fn reset(&mut self) {
@@ -56,6 +60,16 @@ impl StochasticIFNeuron {
 
 pub fn validate_stochastic_if(state: &StochasticIFNeuron) -> bool {
     state.v.is_finite()
+        && state.v_rest.is_finite()
+        && state.v_reset.is_finite()
+        && state.v_threshold.is_finite()
+        && state.tau_m.is_finite()
+        && state.tau_m > 0.0
+        && state.mu.is_finite()
+        && state.sigma.is_finite()
+        && state.sigma >= 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
 }
 
 #[cfg(test)]

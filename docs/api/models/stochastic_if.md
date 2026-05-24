@@ -28,6 +28,8 @@ $$V \geq V_{threshold}: \quad V \leftarrow V_{reset}, \quad \text{return } 1$$
 
 ```python
 def step(self, current: float) -> int:
+    if not math.isfinite(current):
+        raise ValueError("current must be finite")
     noise = self.sigma * np.sqrt(self.dt / self.tau_m) * np.random.randn()
     self.v += (-(self.v - self.v_rest) + self.mu + current) / self.tau_m * self.dt + noise
     if self.v >= self.v_threshold:
@@ -53,6 +55,14 @@ Forward Euler-Maruyama, single step per call. The noise term uses
 | `mu` | 0.0 | mV | Constant mean drive (DC offset) |
 | `sigma` | 3.0 | mV | Noise amplitude (diffusion coefficient) |
 | `dt` | 1.0 | ms | Integration timestep |
+
+### Validation contract
+
+Construction rejects non-finite voltage, reset, threshold, and mean-drive parameters; non-finite or non-positive `tau_m` and `dt`; and non-finite or negative `sigma`. `sigma=0` remains valid and recovers the deterministic LIF limit.
+
+`step(current)` rejects non-finite input current before state mutation. This prevents NaN/Inf contamination from entering the stochastic recurrence or reset branch.
+
+Polyglot safety mirrors enforce the same parameter and input boundary. Rust and Go safety mirrors execute the deterministic mean path (`noise = 0`) for health-check execution, while stochastic sampling remains in runtime engines that own random-number generation.
 
 ### Key parameter relationships
 
@@ -184,17 +194,19 @@ descriptions.
   for per-instance reproducibility.
 - **No sub-stepping:** Single Euler step per call. Adequate for linear
   LIF at dt=1ms.
+- **Fail-closed boundaries:** Invalid parameters and non-finite input current
+  are rejected before recurrence evaluation or state mutation.
 
 ---
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/stochastic_if.py` — 37 lines.
+- **Source:** `src/sc_neurocore/neurons/models/stochastic_if.py`.
 - **One state variable:** v (membrane potential).
 - **Dataclass:** Uses `@dataclass` for parameter storage.
 - **Global RNG:** `np.random.randn()` — not per-instance.
-- **Rust wiring:** Compatible with `step(f64) → i32`. One f64 state variable.
-  Rust implementation would need to handle the random number generation.
+- **Rust/Go wiring:** Compatible with scalar `step` calls and deterministic
+  mean-path safety execution. Runtime stochastic engines own random sampling.
 
 ---
 
@@ -208,7 +220,7 @@ StochasticIFNeuron
 │   PoissonInput(weight=20, rate=500Hz)
 ├── Projection: tested src→tgt wiring
 ├── Analysis: spike_count, isi, firing_rate verified
-└── Rust: compatible (1 f64 state var, needs RNG)
+└── Rust/Go/Julia/Mojo: compatible validation contract and scalar step surface
 ```
 
 ---

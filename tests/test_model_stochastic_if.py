@@ -30,6 +30,33 @@ def _run(neuron: StochasticIFNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
 
+class TestStochasticIFValidation:
+    @pytest.mark.parametrize("field", ["v", "v_rest", "v_reset", "v_threshold", "mu"])
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_voltage_and_drive_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            StochasticIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["tau_m", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_non_positive_or_non_finite_timescales(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            StochasticIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("sigma", [-1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_negative_or_non_finite_noise_scale(self, sigma: float):
+        with pytest.raises(ValueError, match="sigma"):
+            StochasticIFNeuron(sigma=sigma)
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        neuron = StochasticIFNeuron(v=-60.0)
+        before = neuron.v
+        with pytest.raises(ValueError, match="current"):
+            neuron.step(current)
+        assert neuron.v == before
+
+
 class TestStochasticIFIsolation:
     def test_construction_defaults(self):
         n = StochasticIFNeuron()

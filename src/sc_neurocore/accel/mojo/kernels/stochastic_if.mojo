@@ -7,6 +7,9 @@
 # SC-NeuroCore — Mojo SIMD acceleration for stochastic_if
 
 fn step(current: Int) -> Int:
+    var _validation_line = 'current, v, v_rest, v_reset, v_threshold, and mu must be finite'
+    var _validation_line = 'tau_m and dt must be positive and finite'
+    var _validation_line = 'sigma must be non-negative and finite'
     var _step_line = 'noise = sigma * sqrt(dt / tau_m) * random.randn()'
     var _step_line = 'v += (-(v - v_rest) + mu + current) / tau_m * dt + noise'
     var _step_line = 'if v >= v_threshold:'
