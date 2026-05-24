@@ -381,6 +381,15 @@ print(f"Spikes: {spikes}, v={state['v']:.4f}, w={state['w']:.4f}")
 | `v_peak` | 0.8 | — | Spike detection threshold |
 | `dt` | 0.1 | ms | Integration timestep |
 
+### 6.1.1 Validation contract
+
+The Python model and acceleration mirrors reject non-finite `v`, `w`,
+`v_peak`, and runtime input before state mutation.  The piecewise
+breakpoint parameter `a` must be finite and satisfy `0 < a < 1`, preserving
+the three ordered McKean branches at `a/2` and `(1+a)/2`.  The scale
+parameters `epsilon`, `gamma`, and `dt` must be finite and strictly
+positive.
+
 ### 6.2 Python/Rust Implementation Comparison
 
 | Aspect | Python | Rust |
@@ -470,6 +479,7 @@ pipeline. FHN's smooth cubic compiles to straight-line arithmetic.
 | Singular perturbation | 3 |
 | Performance | 2 |
 | Pipeline | 4 |
+| Validation | 34 |
 
 ### 8.2 Rust Tests (5 total)
 
@@ -481,7 +491,12 @@ pipeline. FHN's smooth cubic compiles to straight-line arithmetic.
 | `mckean_nan` | NaN safe |
 | `mckean_negative` | Negative I stable |
 
-### 8.3 Summary: 35 Python + 5 Rust = **40 total**
+### 8.3 Summary
+
+The module-specific Python suite covers the original behavioural and
+pipeline contracts plus fail-closed validation of state, geometry,
+timescale, and runtime input contracts. Rust/Go/Julia safety mirrors
+now use the same McKean piecewise update rather than placeholder stubs.
 
 ---
 

@@ -24,6 +24,16 @@ function McKeanNeuronState()
     McKeanNeuronState(0.0, 0.0, 0.25, 0.01, 0.5, 0.1, 0.8)
 end
 
+function validate(s::McKeanNeuronState)::Bool
+    isfinite(s.v) &&
+    isfinite(s.w) &&
+    isfinite(s.a) && 0.0 < s.a < 1.0 &&
+    isfinite(s.epsilon) && s.epsilon > 0.0 &&
+    isfinite(s.gamma) && s.gamma > 0.0 &&
+    isfinite(s.dt) && s.dt > 0.0 &&
+    isfinite(s.v_peak)
+end
+
 function _f(s::McKeanNeuronState, v)
     mid1 = s.a / 2.0
     mid2 = (1.0 + s.a) / 2.0
@@ -37,16 +47,16 @@ function _f(s::McKeanNeuronState, v)
 end
 
 function step!(s::McKeanNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        dv = (s._f(s.v) - s.w + I_ext) * s.dt
-        dw = s.epsilon * (s.v - s.gamma * s.w) * s.dt
-        v_prev = s.v
-        s.v += dv
-        s.w += dw
-        return (s.v >= s.v_peak && v_prev < s.v_peak) ? 1 : 0
-    catch _e
+    if !validate(s) || !isfinite(I_ext)
         return 0
     end
+
+    dv = (_f(s, s.v) - s.w + I_ext) * s.dt
+    dw = s.epsilon * (s.v - s.gamma * s.w) * s.dt
+    v_prev = s.v
+    s.v += dv
+    s.w += dw
+    return (s.v >= s.v_peak && v_prev < s.v_peak) ? 1 : 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
