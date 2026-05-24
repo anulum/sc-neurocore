@@ -25,6 +25,7 @@ network-wide oscillatory coupling.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 import numpy as np
 
@@ -47,6 +48,12 @@ class GapJunction:
     conductance: float = 0.1
     rectification: float = 0.0
 
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.conductance) or self.conductance < 0.0:
+            raise ValueError("conductance must be finite and non-negative")
+        if not math.isfinite(self.rectification) or not 0.0 <= self.rectification <= 1.0:
+            raise ValueError("rectification must be finite and within [0, 1]")
+
     def current(self, v_pre: float, v_post: float) -> float:
         """Compute gap junction current flowing INTO v_post.
 
@@ -55,6 +62,9 @@ class GapJunction:
         Positive current depolarizes post. The same junction produces
         equal and opposite current for the pre-synaptic neuron.
         """
+        if not math.isfinite(v_pre) or not math.isfinite(v_post):
+            raise ValueError("voltage inputs must be finite")
+
         dv = v_pre - v_post
         if self.rectification > 0:
             # Rectification: reduce current in one direction
@@ -78,7 +88,26 @@ class GapJunction:
         np.ndarray, shape (N,)
             Net gap junction current for each neuron.
         """
+        self._validate_current_matrix_inputs(voltages, adjacency)
+
         N = len(voltages)
         dv_matrix = voltages[np.newaxis, :] - voltages[:, np.newaxis]  # dv[i,j] = V[j] - V[i]
         currents = self.conductance * dv_matrix * adjacency
         return currents.sum(axis=1)
+
+    @staticmethod
+    def _validate_current_matrix_inputs(voltages: np.ndarray, adjacency: np.ndarray) -> None:
+        if not isinstance(voltages, np.ndarray) or voltages.ndim != 1:
+            raise ValueError("current_matrix voltages must be a one-dimensional array")
+        if not np.all(np.isfinite(voltages)):
+            raise ValueError("current_matrix voltages must be finite")
+        if not isinstance(adjacency, np.ndarray) or adjacency.ndim != 2:
+            raise ValueError("current_matrix adjacency must be a two-dimensional array")
+        if adjacency.shape != (voltages.shape[0], voltages.shape[0]):
+            raise ValueError("current_matrix adjacency must be square with one row per voltage")
+        if not np.all(np.isfinite(adjacency)):
+            raise ValueError("current_matrix adjacency must be finite")
+        if np.any(adjacency < 0.0):
+            raise ValueError("current_matrix adjacency must be non-negative")
+        if not np.allclose(adjacency, adjacency.T):
+            raise ValueError("current_matrix adjacency must be symmetric for reciprocal coupling")
