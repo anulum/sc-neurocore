@@ -33,6 +33,12 @@ class LapicqueNeuron:
         for field in ("v", "v_rest", "v_reset", "v_threshold"):
             if not math.isfinite(getattr(self, field)):
                 raise ValueError(f"{field} must be finite")
+        if self.v_threshold <= self.v_rest:
+            raise ValueError("v_threshold must be greater than v_rest")
+        if self.v_threshold <= self.v_reset:
+            raise ValueError("v_threshold must be greater than v_reset")
+        if self.v >= self.v_threshold:
+            raise ValueError("v must be below v_threshold")
         for field in ("tau", "resistance", "dt"):
             value = getattr(self, field)
             if not math.isfinite(value) or value <= 0.0:
@@ -42,7 +48,10 @@ class LapicqueNeuron:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         dv = (-(self.v - self.v_rest) + self.resistance * current) / self.tau * self.dt
-        self.v += dv
+        next_v = self.v + dv
+        if not math.isfinite(dv) or not math.isfinite(next_v):
+            raise ValueError("voltage increment must be finite")
+        self.v = next_v
 
         if self.v >= self.v_threshold:
             self.v = self.v_reset

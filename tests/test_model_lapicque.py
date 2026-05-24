@@ -92,12 +92,36 @@ class TestLapicqueValidation:
         with pytest.raises(ValueError, match=field):
             LapicqueNeuron(**{field: value})
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"v_threshold": 0.0, "v_rest": 0.0},
+            {"v_threshold": -1.0, "v_rest": 0.0},
+            {"v_threshold": 0.0, "v_reset": 0.0},
+            {"v_threshold": -1.0, "v_reset": 0.0},
+        ],
+    )
+    def test_rejects_invalid_threshold_geometry(self, kwargs):
+        with pytest.raises(ValueError, match="v_threshold"):
+            LapicqueNeuron(**kwargs)
+
+    def test_rejects_initial_voltage_at_or_above_threshold(self):
+        with pytest.raises(ValueError, match="v must be below v_threshold"):
+            LapicqueNeuron(v=1.0)
+
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
     def test_rejects_non_finite_current_before_state_mutation(self, current: float):
         n = LapicqueNeuron(v=0.25)
         before = n.v
         with pytest.raises(ValueError, match="current"):
             n.step(current)
+        assert n.v == before
+
+    def test_rejects_non_finite_voltage_increment_before_state_mutation(self):
+        n = LapicqueNeuron(v=0.25, v_threshold=1.0e308, tau=1.0e-308)
+        before = n.v
+        with pytest.raises(ValueError, match="voltage increment"):
+            n.step(1.0e308)
         assert n.v == before
 
 
