@@ -25,6 +25,14 @@ from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate
 
 
+class FixedRng:
+    def __init__(self, value: float):
+        self.value = value
+
+    def random(self) -> float:
+        return self.value
+
+
 def _run(neuron: GammaRenewalNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
@@ -65,6 +73,14 @@ class TestDynamics:
         t1 = [n1.step(100.0) for _ in range(1000)]
         t2 = [n2.step(100.0) for _ in range(1000)]
         assert t1 != t2
+
+    def test_gamma_hazard_uses_bounded_interval_probability(self):
+        """For k=1 the gamma renewal hazard is constant, so p=1-exp(-rate*dt)."""
+        n = GammaRenewalNeuron(rate_hz=100.0, shape_k=1, dt_ms=1.0)
+        n._rng = FixedRng(0.098)
+
+        assert n.step(rate_override=100.0) == 0
+        assert n._time_since_spike == pytest.approx(0.001)
 
 
 class TestValidation:

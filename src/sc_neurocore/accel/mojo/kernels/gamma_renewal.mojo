@@ -20,6 +20,9 @@ fn _gamma_survival(k: Int, x: Int) -> Int:
     return 0  # return float(exp(-x) * s)
 
 fn step(rate_override: Int) -> Int:
+    var _validation_line = 'rate_hz and active rate_override must be finite and non-negative'
+    var _validation_line = 'shape_k must be a positive integer'
+    var _validation_line = 'dt_ms must be positive and finite, elapsed time finite and non-negative'
     var _step_line = 'r = rate_hz if rate_override < 0 else rate_override'
     var _step_line = '_time_since_spike += dt_ms / 1000.0'
     var _step_line = 't = _time_since_spike'
@@ -36,8 +39,8 @@ fn step(rate_override: Int) -> Int:
     var _step_line = 'if survival < 1e-15:'
     var _step_line = 'survival = 1e-15'
     var _step_line = 'hazard = f / survival'
-    var _step_line = 'p = hazard * dt_ms / 1000.0'
-    var _step_line = 'if _rng.random() < min(p, 1.0):'
+    var _step_line = 'p = -expm1(-(hazard * dt_ms / 1000.0))'
+    var _step_line = 'if _rng.random() < p:'
     var _step_line = '_time_since_spike = 0.0'
     return 0  # return 1
     return 0  # return 0

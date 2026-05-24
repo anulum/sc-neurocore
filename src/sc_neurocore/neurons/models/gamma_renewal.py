@@ -19,7 +19,7 @@ class GammaRenewalNeuron:
     """Gamma renewal process neuron. Keat et al. 2001.
 
     ISI ~ Gamma(k, k/rate). Hazard h(t) evaluated at elapsed time
-    since last spike. P(spike in dt) = h(t)*dt.
+    since last spike. P(spike in dt) = 1 - exp(-h(t)*dt).
 
     Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §7.4.
     """
@@ -62,8 +62,8 @@ class GammaRenewalNeuron:
         if survival < 1e-15:
             survival = 1e-15
         hazard = f / survival
-        p = hazard * self.dt_ms / 1000.0
-        if self._rng.random() < min(p, 1.0):
+        p = -math.expm1(-(hazard * self.dt_ms / 1000.0))
+        if self._rng.random() < p:
             self._time_since_spike = 0.0
             return 1
         return 0
