@@ -73,8 +73,27 @@ class DendriticNMDANeuron:
     v_soma: float = -65.0
     v_dend: float = -65.0
 
+    def __post_init__(self) -> None:
+        for name in ("tau_soma", "tau_dend", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+
+        for name in ("g_nmda", "mg_conc", "g_coupling"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"{name} must be finite and non-negative")
+
+        for name in ("e_nmda", "theta", "v_soma", "v_dend"):
+            value = getattr(self, name)
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+
     def mg_block(self, v: float) -> float:
         """Mg2+ block factor: B(V) = 1/(1 + [Mg]/3.57 * exp(-0.062*V))."""
+        if not math.isfinite(v):
+            raise ValueError("voltage must be finite")
+
         return 1.0 / (1.0 + (self.mg_conc / 3.57) * math.exp(-0.062 * v))
 
     def step(self, i_soma: float, glutamate: float) -> int:
@@ -82,6 +101,11 @@ class DendriticNMDANeuron:
 
         Returns 1 if spike, 0 otherwise.
         """
+        if not math.isfinite(i_soma):
+            raise ValueError("i_soma must be finite")
+        if not math.isfinite(glutamate) or glutamate < 0.0:
+            raise ValueError("glutamate must be finite and non-negative")
+
         b = self.mg_block(self.v_dend)
         i_nmda = self.g_nmda * glutamate * b * (self.v_dend - self.e_nmda)
 
