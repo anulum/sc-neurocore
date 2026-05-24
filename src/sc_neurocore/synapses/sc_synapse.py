@@ -9,6 +9,7 @@
 from __future__ import annotations
 from typing import Any, Optional
 from dataclasses import dataclass
+import math
 import numpy as np
 
 from ..utils.bitstreams import (
@@ -44,8 +45,16 @@ class BitstreamSynapse:
     seed: Optional[int] = None
 
     def __post_init__(self) -> None:
+        if not math.isfinite(self.w_min):
+            raise ValueError("w_min must be finite")
+        if not math.isfinite(self.w_max):
+            raise ValueError("w_max must be finite")
         if self.w_min >= self.w_max:
             raise ValueError("w_min must be < w_max.")
+        if type(self.length) is not int or self.length <= 0:
+            raise ValueError("length must be a positive integer")
+        self._validate_weight(self.w)
+
         self._rng = RNG(self.seed)
         self._weight_encoder = BitstreamEncoder(
             x_min=self.w_min,
@@ -65,6 +74,7 @@ class BitstreamSynapse:
         """
         Change synaptic weight and recompute its bitstream.
         """
+        self._validate_weight(new_w)
         self.w = new_w
         self.weight_bits = self.encode_weight(new_w)
 
@@ -82,11 +92,18 @@ class BitstreamSynapse:
         np.ndarray
             Post-synaptic bitstream of shape (length,).
         """
+        if not isinstance(pre_bits, np.ndarray):
+            raise ValueError("pre_bits must be a numpy array")
+        if pre_bits.ndim != 1:
+            raise ValueError("pre_bits must be a one-dimensional bitstream")
         if pre_bits.shape[0] != self.weight_bits.shape[0]:
             raise ValueError(
                 f"Bitstream length mismatch: pre={pre_bits.shape[0]}, "
                 f"weight={self.weight_bits.shape[0]}"
             )
+        if not np.all((pre_bits == 0) | (pre_bits == 1)):
+            raise ValueError("pre_bits must contain only binary values 0 or 1")
+
         # Logical AND implements multiplication in SC domain
         result: np.ndarray[Any, Any] = (pre_bits & self.weight_bits).astype(np.uint8)
         return result
@@ -97,3 +114,9 @@ class BitstreamSynapse:
         This is the effective unipolar probability representation.
         """
         return bitstream_to_probability(self.weight_bits)
+
+    def _validate_weight(self, w: float) -> None:
+        if not math.isfinite(w):
+            raise ValueError("w must be finite")
+        if not self.w_min <= w <= self.w_max:
+            raise ValueError("w must be within [w_min, w_max]")

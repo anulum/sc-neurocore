@@ -7,8 +7,33 @@
 # SC-NeuroCore — Tests for Synapses
 
 import numpy as np
+import pytest
 from sc_neurocore.synapses.sc_synapse import BitstreamSynapse
 from sc_neurocore.utils.bitstreams import bitstream_to_probability
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("w_min", float("nan")),
+        ("w_max", float("inf")),
+        ("length", 0),
+        ("length", True),
+        ("w", float("nan")),
+        ("w", -0.1),
+        ("w", 1.1),
+    ],
+)
+def test_invalid_synapse_parameters_fail_closed(field, value):
+    kwargs = {"w_min": 0.0, "w_max": 1.0, "length": 1024, "w": 0.5, "seed": 42}
+    kwargs[field] = value
+    with pytest.raises(ValueError, match=field):
+        BitstreamSynapse(**kwargs)
+
+
+def test_invalid_synapse_weight_bounds_fail_closed():
+    with pytest.raises(ValueError, match="w_min"):
+        BitstreamSynapse(w_min=1.0, w_max=1.0, length=1024, w=1.0)
 
 
 def test_synapse_encoding():
@@ -48,3 +73,31 @@ def test_synapse_update():
 
     assert not np.isclose(initial_p, new_p, atol=0.15)
     assert np.isclose(new_p, 0.8, atol=0.15)
+
+
+@pytest.mark.parametrize("new_w", [float("nan"), -0.1, 1.1])
+def test_invalid_weight_update_fails_closed_without_mutation(new_w):
+    syn = BitstreamSynapse(w_min=0.0, w_max=1.0, length=1024, w=0.5, seed=42)
+    old_w = syn.w
+    old_bits = syn.weight_bits.copy()
+
+    with pytest.raises(ValueError, match="w"):
+        syn.update_weight(new_w)
+
+    assert syn.w == old_w
+    assert np.array_equal(syn.weight_bits, old_bits)
+
+
+@pytest.mark.parametrize(
+    "pre_bits",
+    [
+        np.array([0, 1, 2, 1], dtype=np.uint8),
+        np.ones((4, 1), dtype=np.uint8),
+        [0, 1, 0, 1],
+    ],
+)
+def test_invalid_pre_bitstream_fails_closed(pre_bits):
+    syn = BitstreamSynapse(w_min=0.0, w_max=1.0, length=4, w=0.5, seed=42)
+
+    with pytest.raises(ValueError, match="pre_bits"):
+        syn.apply(pre_bits)
