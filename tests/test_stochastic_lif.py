@@ -47,6 +47,32 @@ def test_non_finite_entropy_sample_fails_closed_before_state_mutation():
     assert neuron.v == old_v
 
 
+@pytest.mark.parametrize("voltage", [float("nan"), float("inf"), -float("inf")])
+def test_non_finite_runtime_voltage_fails_closed_before_recurrence(voltage):
+    neuron = StochasticLIFNeuron(noise_std=0.0)
+    neuron.v = voltage
+
+    with pytest.raises(ValueError, match="v"):
+        neuron.step(0.0)
+
+    if np.isnan(voltage):
+        assert np.isnan(neuron.v)
+    else:
+        assert neuron.v == voltage
+
+
+@pytest.mark.parametrize("counter", [-1, 1.5, True])
+def test_invalid_refractory_counter_fails_closed_before_recurrence(counter):
+    neuron = StochasticLIFNeuron(noise_std=0.0)
+    neuron.refractory_counter = counter
+    old_v = neuron.v
+
+    with pytest.raises(ValueError, match="refractory_counter"):
+        neuron.step(0.0)
+
+    assert neuron.v == old_v
+
+
 def test_refractory_period_holds_voltage_at_rest_for_integer_duration():
     neuron = StochasticLIFNeuron(
         v_threshold=0.5,

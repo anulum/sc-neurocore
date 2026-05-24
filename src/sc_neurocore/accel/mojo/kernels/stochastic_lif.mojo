@@ -7,6 +7,10 @@
 # SC-NeuroCore — Mojo SIMD acceleration for stochastic_lif
 
 fn step(input_current: Int) -> Int:
+    var _validation_line = 'input_current, v, v_rest, v_reset, and v_threshold must be finite'
+    var _validation_line = 'tau_mem and dt must be positive and finite'
+    var _validation_line = 'noise_std and resistance must be finite and non-negative'
+    var _validation_line = 'refractory_counter and refractory_period must be non-negative integers'
     var _step_line = 'if refractory_counter > 0:'
     var _step_line = 'refractory_counter -= 1'
     var _step_line = 'v = v_rest'

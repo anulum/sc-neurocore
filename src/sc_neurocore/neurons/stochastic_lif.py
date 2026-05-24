@@ -90,6 +90,7 @@ class StochasticLIFNeuron(BaseNeuron):
         self.reset_state()
 
     def step(self, input_current: float) -> int:
+        self._validate_runtime_state()
         if not np.isfinite(input_current):
             raise ValueError("input_current must be finite")
         if self.refractory_counter > 0:
@@ -131,7 +132,14 @@ class StochasticLIFNeuron(BaseNeuron):
         self.refractory_counter = 0
 
     def get_state(self) -> dict[str, Any]:
+        self._validate_runtime_state()
         return {"v": float(self.v), "refractory": self.refractory_counter}
+
+    def _validate_runtime_state(self) -> None:
+        if not np.isfinite(self.v):
+            raise ValueError("v must be finite")
+        if type(self.refractory_counter) is not int or self.refractory_counter < 0:
+            raise ValueError("refractory_counter must be a non-negative integer")
 
     def process_bitstream(
         self, input_bits: npt.ArrayLike, input_scale: float = 1.0
