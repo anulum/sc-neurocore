@@ -18,6 +18,7 @@ from __future__ import annotations
 import time
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.astrocyte import AstrocyteModel
 from sc_neurocore.network.population import Population
@@ -54,6 +55,41 @@ class TestAstrocyteIsolation:
             n.step(1.0)
         n.reset()
         assert n.ca == 0.05 and n.h == 0.8 and n.ip3 == 0.5
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"ca": -0.01},
+            {"h": -0.1},
+            {"h": 1.1},
+            {"ip3": -0.1},
+            {"v_er": 0.0},
+            {"k_er": 0.0},
+            {"v_serca": 0.0},
+            {"d1": 0.0},
+            {"d2": 0.0},
+            {"d3": 0.0},
+            {"d5": 0.0},
+            {"a2": 0.0},
+            {"c0": 0.0},
+            {"c1": 0.0},
+            {"leak": -0.01},
+            {"ip3_prod": -0.01},
+            {"ip3_decay": -0.01},
+            {"dt": 0.0},
+        ],
+    )
+    def test_rejects_non_physical_configuration(self, kwargs):
+        """Li-Rinzel calcium/IP3 parameters must be finite and physical."""
+        with pytest.raises(ValueError):
+            AstrocyteModel(**kwargs)
+
+    @pytest.mark.parametrize("current", [-0.1, float("nan"), float("inf")])
+    def test_rejects_non_physical_ip3_drive(self, current):
+        """Glutamate-driven IP3 production must be finite and non-negative."""
+        n = AstrocyteModel()
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
 
 
 class TestAstrocyteCaDynamics:
