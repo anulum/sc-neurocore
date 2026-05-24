@@ -79,11 +79,52 @@ class DopamineStdpSynapse:
     trace_pre: float = 0.0
     trace_post: float = 0.0
 
+    def __post_init__(self) -> None:
+        for name in ("tau_e", "tau_da", "tau_pre", "tau_post", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+
+        for name in (
+            "weight",
+            "w_min",
+            "w_max",
+            "a_plus",
+            "a_minus",
+            "lr",
+            "eligibility",
+            "dopamine",
+            "trace_pre",
+            "trace_post",
+        ):
+            value = getattr(self, name)
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+
+        if self.w_min > self.w_max:
+            raise ValueError("w_min must be less than or equal to w_max")
+        if not (self.w_min <= self.weight <= self.w_max):
+            raise ValueError("weight must be within [w_min, w_max]")
+        if self.a_plus < 0.0:
+            raise ValueError("a_plus must be non-negative")
+        if self.a_minus > 0.0:
+            raise ValueError("a_minus must be non-positive")
+        if self.lr < 0.0:
+            raise ValueError("lr must be non-negative")
+        for name in ("dopamine", "trace_pre", "trace_post"):
+            if getattr(self, name) < 0.0:
+                raise ValueError(f"{name} must be non-negative")
+
     def step(self, pre_spike: bool, post_spike: bool, reward: float) -> float:
         """Advance one timestep with spike indicators and reward signal.
 
         Returns the current weight after update.
         """
+        if type(pre_spike) is not bool or type(post_spike) is not bool:
+            raise TypeError("pre_spike and post_spike must be bool")
+        if not math.isfinite(reward):
+            raise ValueError("reward must be finite")
+
         # Decay traces.
         self.trace_pre *= math.exp(-self.dt / self.tau_pre)
         self.trace_post *= math.exp(-self.dt / self.tau_post)
