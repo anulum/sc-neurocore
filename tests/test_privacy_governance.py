@@ -12,7 +12,15 @@ from typing import Any, Dict
 
 import pytest
 
-from sc_neurocore.privacy import GovernanceContract
+from sc_neurocore.privacy.governance import (
+    ConsentBoundary,
+    GovernanceContract,
+    IntegratorResponsibility,
+    PrivacyFeatureFlags,
+    RedactionPolicy,
+    RetentionPolicy,
+    TelemetryPolicy,
+)
 
 
 def _minimal_contract_payload() -> Dict[str, Any]:
@@ -153,3 +161,90 @@ def test_constructor_roundtrip_for_all_components() -> None:
 
     rebuilt = GovernanceContract.from_dict(contract.to_dict())
     assert rebuilt.to_dict() == contract.to_dict()
+
+
+def test_consent_boundary_rejects_invalid_legal_basis_and_field_types() -> None:
+    base = _minimal_contract_payload()["consent_boundary"]
+
+    with pytest.raises(ValueError, match="consent_basis"):
+        ConsentBoundary(**{**base, "consent_basis": "verbal_only"})
+    with pytest.raises(ValueError, match="allow_telemetry"):
+        ConsentBoundary(**{**base, "allow_telemetry": "yes"})  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="allowed_purposes"):
+        ConsentBoundary(**{**base, "allowed_purposes": "training"})  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="issued_at_unix"):
+        ConsentBoundary(**{**base, "issued_at_unix": 0})
+
+
+def test_retention_policy_rejects_non_integer_and_over_max_windows() -> None:
+    with pytest.raises(ValueError, match="raw_stream_days must be an int"):
+        RetentionPolicy(
+            raw_stream_days=1.5,  # type: ignore[arg-type]
+            model_artifacts_days=10,
+            audit_log_days=10,
+            max_days=10,
+        )
+    with pytest.raises(ValueError, match="retention windows"):
+        RetentionPolicy(
+            raw_stream_days=11,
+            model_artifacts_days=10,
+            audit_log_days=10,
+            max_days=10,
+        )
+
+
+def test_redaction_and_telemetry_policies_fail_closed_on_malformed_contracts() -> None:
+    with pytest.raises(ValueError, match="redaction enabled"):
+        RedactionPolicy(enabled=True, fields=(), replacement="***")
+    with pytest.raises(ValueError, match="replacement"):
+        RedactionPolicy(enabled=False, fields=(), replacement=None)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="sampling_interval_ms"):
+        TelemetryPolicy(enabled=True, sink="local", sampling_interval_ms=None)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="sink"):
+        TelemetryPolicy(enabled=False, sink="", sampling_interval_ms=100)
+
+
+def test_integrator_and_feature_flags_reject_missing_audit_contracts() -> None:
+    with pytest.raises(ValueError, match="release_approval_required"):
+        IntegratorResponsibility(
+            name="integrator",
+            contact="ops@example.test",
+            responsibilities=("redact",),
+            release_approval_required="yes",  # type: ignore[arg-type]
+        )
+    with pytest.raises(ValueError, match="audit_enabled requires audit_flags"):
+        PrivacyFeatureFlags(
+            enable_differential_privacy=False,
+            enable_federated_learning=False,
+            enable_telemetry_logging=False,
+            audit_enabled=True,
+            audit_flags=(),
+        )
+    with pytest.raises(ValueError, match="differential_privacy"):
+        GovernanceContract.from_dict(
+            {
+                **_minimal_contract_payload(),
+                "features": {
+                    **_minimal_contract_payload()["features"],
+                    "enable_differential_privacy": True,
+                },
+            }
+        )
+    with pytest.raises(ValueError, match="telemetry_logging requires audit flag"):
+        GovernanceContract.from_dict(
+            {
+                **_minimal_contract_payload(),
+                "features": {
+                    **_minimal_contract_payload()["features"],
+                    "audit_flags": ["non_matching_flag"],
+                },
+            }
+        )
+
+
+def test_contract_rejects_non_list_provenance_section() -> None:
+    payload = _minimal_contract_payload()
+    payload["provenance"] = {"artifact_type": "model"}
+
+    with pytest.raises(ValueError, match="provenance must be a list"):
+        GovernanceContract.from_dict(payload)

@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 715
+    "test_files": 721
   },
   "documentation": {
     "public_pages": [
@@ -1988,6 +1988,7 @@
       "tests/test_few_shot.py",
       "tests/test_fim_symmetry_dynamics.py",
       "tests/test_formal_network_properties.py",
+      "tests/test_formal_proofs.py",
       "tests/test_frontiers.py",
       "tests/test_fusion/test_sensor_fusion.py",
       "tests/test_fusion.py",
@@ -2261,6 +2262,7 @@
       "tests/test_notebooks/test_self_hosted_hub_notebook.py",
       "tests/test_notebooks/test_shd_vertex_notebook.py",
       "tests/test_notebooks/test_zenith_bci_loop_notebook.py",
+      "tests/test_numerics.py",
       "tests/test_numpy_interop.py",
       "tests/test_online_learning.py",
       "tests/test_online_o1_adaptation_benchmark.py",
@@ -2289,6 +2291,7 @@
       "tests/test_physics.py",
       "tests/test_pipeline_ingestion_contracts.py",
       "tests/test_pipeline_stages.py",
+      "tests/test_pipeline_training.py",
       "tests/test_planner.py",
       "tests/test_platforms.py",
       "tests/test_predictive_coding.py",
@@ -2500,6 +2503,7 @@
       "tests/test_training/test_utils.py",
       "tests/test_transcriptomic.py",
       "tests/test_transfer.py",
+      "tests/test_transformer_block.py",
       "tests/test_transformers/test_block.py",
       "tests/test_tripartite.py",
       "tests/test_triplet_stdp.py",
@@ -2513,7 +2517,9 @@
       "tests/test_verification_safety_contracts.py",
       "tests/test_verify_hardware_link.py",
       "tests/test_verilog_integration.py",
+      "tests/test_viz_neuro_art.py",
       "tests/test_viz_plots.py",
+      "tests/test_viz_web_viz.py",
       "tests/test_waveform_codec.py",
       "tests/test_wilson_cowan_dynamics.py",
       "tests/test_wilson_cowan_go_parity.py",

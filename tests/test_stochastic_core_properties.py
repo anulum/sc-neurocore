@@ -115,7 +115,7 @@ def test_fixed_point_lif_no_crash(current_int):
         n.step(leak_k=240, gain_k=16, I_t=current_int)
 
 
-@given(rate=st.floats(min_value=0.1, max_value=100.0))
+@given(rate=st.floats(min_value=0.0, max_value=1.0))
 @settings(max_examples=20)
 def test_homeostatic_lif_adapts(rate):
     n = HomeostaticLIFNeuron(target_rate=rate)
