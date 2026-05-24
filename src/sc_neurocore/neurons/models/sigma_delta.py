@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -21,7 +22,16 @@ class SigmaDeltaNeuron:
     sigma: float = 0.0
     v_threshold: float = 1.0
 
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.sigma):
+            raise ValueError("sigma must be finite")
+        if not math.isfinite(self.v_threshold) or self.v_threshold <= 0:
+            raise ValueError("v_threshold must be finite and positive")
+
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         self.sigma += current
         if self.sigma >= self.v_threshold:
             self.sigma -= self.v_threshold
