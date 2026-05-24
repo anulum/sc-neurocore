@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import numpy as np
+import math
 
 
 @dataclass
@@ -32,8 +32,28 @@ class LearnableNeuronModel:
     f_slope: float = 5.0  # sigmoid steepness
     f_shift: float = 0.5  # sigmoid center
 
+    def __post_init__(self) -> None:
+        for name in ("v", "alpha", "beta", "gamma", "v_reset", "f_shift"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite")
+        for name in ("v_threshold", "f_slope"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0:
+                raise ValueError(f"{name} must be finite and positive")
+
+    @staticmethod
+    def _sigmoid(value: float) -> float:
+        if value >= 0.0:
+            z = math.exp(-value)
+            return 1.0 / (1.0 + z)
+        z = math.exp(value)
+        return z / (1.0 + z)
+
     def step(self, current: float) -> int:
-        f_v = 1.0 / (1.0 + np.exp(-self.f_slope * (self.v - self.f_shift)))
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
+        f_v = self._sigmoid(self.f_slope * (self.v - self.f_shift))
         self.v = self.alpha * self.v + self.beta * current + self.gamma * f_v
         if self.v >= self.v_threshold:
             self.v = self.v_reset
