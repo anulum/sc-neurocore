@@ -198,6 +198,39 @@ class TestQuantumInspiredLIFNeuron:
         assert neuron.z_re == 0.0
         assert neuron.z_im == 0.0
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"tau": 0.0},
+            {"theta": 0.0},
+            {"dt": 0.0},
+            {"v_reset": float("nan")},
+            {"seed": 0},
+            {"seed": -1},
+            {"seed": 2**64},
+            {"seed": 1.5},
+            {"z_re": float("nan")},
+            {"z_im": float("inf")},
+        ],
+    )
+    def test_rejects_non_physical_quantum_lif_parameters(self, kwargs):
+        """Stochastic amplitude dynamics require finite parameters and valid PRNG seed."""
+        from sc_neurocore.neurons.models import QuantumInspiredLIFNeuron
+
+        with pytest.raises(ValueError):
+            QuantumInspiredLIFNeuron(**kwargs)
+
+    @pytest.mark.parametrize(
+        ("i_re", "i_im"),
+        [(float("nan"), 0.0), (0.0, float("inf"))],
+    )
+    def test_rejects_non_finite_complex_drive(self, i_re, i_im):
+        """Complex amplitude integration must fail closed on non-finite drive."""
+        from sc_neurocore.neurons.models import QuantumInspiredLIFNeuron
+
+        with pytest.raises(ValueError, match="current"):
+            QuantumInspiredLIFNeuron().step_complex(i_re, i_im)
+
     def test_step_returns_binary(self, neuron):
         s = neuron.step(0.5)
         assert s in (0, 1)
