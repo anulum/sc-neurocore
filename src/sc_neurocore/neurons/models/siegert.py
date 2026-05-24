@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 import numpy as np
 
 
@@ -30,8 +31,22 @@ class SiegertTransferFunction:
     v_reset: float = -70.0  # mV
     v_rest: float = -65.0  # mV
 
+    def __post_init__(self) -> None:
+        for field in ("v_threshold", "v_reset", "v_rest"):
+            value = getattr(self, field)
+            if not math.isfinite(value):
+                raise ValueError(f"{field} must be finite")
+        for field in ("tau_m", "tau_rp"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field} must be positive and finite")
+        if self.v_threshold <= self.v_reset:
+            raise ValueError("v_threshold must be greater than v_reset")
+
     def step(self, current: float) -> float:
         """Return instantaneous firing rate (Hz) for given mean input current."""
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
         mu = self.v_rest + current
         sigma = max(abs(current) * 0.1, 1e-6)
         u_th = (self.v_threshold - mu) / sigma

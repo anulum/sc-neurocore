@@ -17,6 +17,7 @@ from __future__ import annotations
 import time
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.siegert import SiegertTransferFunction, _erf_approx
 from sc_neurocore.network.population import Population
@@ -121,6 +122,30 @@ class TestSiegertAnalytical:
         r_fast = n_fast.step(20.0)
         r_slow = n_slow.step(20.0)
         assert r_fast != r_slow
+
+
+class TestSiegertValidation:
+    @pytest.mark.parametrize("field", ["v_threshold", "v_reset", "v_rest"])
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            SiegertTransferFunction(**{field: value})
+
+    @pytest.mark.parametrize("field", ["tau_m", "tau_rp"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_non_positive_or_non_finite_time_constants(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            SiegertTransferFunction(**{field: value})
+
+    def test_rejects_reset_not_below_threshold(self):
+        with pytest.raises(ValueError, match="v_threshold"):
+            SiegertTransferFunction(v_reset=-50.0, v_threshold=-50.0)
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current(self, current: float):
+        n = SiegertTransferFunction()
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
 
 
 class TestSiegertPerformance:

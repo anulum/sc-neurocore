@@ -84,6 +84,12 @@ function, not a dynamical model.
 | `v_reset` | −70.0 | mV | Reset potential |
 | `v_rest` | −65.0 | mV | Resting potential |
 
+### Validation contract
+
+Construction rejects non-finite voltages, non-finite or non-positive `tau_m` and `tau_rp`, and configurations where `v_threshold <= v_reset`. `step(current)` rejects non-finite current before evaluating the first-passage integral. These guards preserve the physical boundary ordering required by the Siegert formula and avoid hiding invalid intervals behind the numerical `t_ISI` floor.
+
+Polyglot mirrors enforce the same parameter/input boundary. Rust and Go safety mirrors expose the validation contract through their integer safety surface; Julia keeps the scalar rate calculation with explicit 40-point quadrature constants and validation.
+
 ---
 
 ## Analytical Properties
@@ -241,13 +247,15 @@ analytical rate is needed directly, without simulating individual spikes.
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/siegert.py` — 60 lines.
+- **Source:** `src/sc_neurocore/neurons/models/siegert.py`.
 - **No state variables:** The model is a pure function of its input.
 - **Dataclass:** Uses `@dataclass` for parameter storage.
 - **Private helper:** `_erf_approx()` — module-level function for the
   error function approximation.
-- **Rust wiring:** Not in the Rust NeuronVariant enum (float return,
-  numpy dependency for quadrature).
+- **Rust/Go wiring:** Validation-only safety mirrors because their generated
+  scalar service surface returns integer spike indicators rather than rates.
+- **Julia wiring:** Scalar rate mirror with explicit 40-point quadrature constants
+  and the same fail-closed parameter/input boundary.
 
 ---
 

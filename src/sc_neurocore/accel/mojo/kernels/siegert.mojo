@@ -16,6 +16,9 @@ fn _erf_approx(x: Int) -> Int:
     return 0  # return sign * (1.0 - poly * exp(-a * a))
 
 fn step(current: Int) -> Int:
+    var _validation_line = 'current, v_threshold, v_reset, and v_rest must be finite'
+    var _validation_line = 'tau_m and tau_rp must be positive and finite'
+    var _validation_line = 'v_threshold must be greater than v_reset'
     var _step_line = 'mu = v_rest + current'
     var _step_line = 'sigma = max(abs(current) * 0.1, 1e-6)'
     var _step_line = 'u_th = (v_threshold - mu) / sigma'

@@ -29,21 +29,10 @@ impl SiegertTransferFunction {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // mu = self.v_rest + current
-        // sigma = max(abs(current) * 0.1, 1e-6)
-        // u_th = (self.v_threshold - mu) / sigma
-        // u_re = (self.v_reset - mu) / sigma
-        // # Gauss-Legendre quadrature over [u_re, u_th]
-        // n_quad = 40
-        // u_pts, w_pts = np.polynomial.legendre.leggauss(n_quad)
-        // half_range = 0.5 * (u_th - u_re)
-        // mid = 0.5 * (u_th + u_re)
-        // u_scaled = half_range * u_pts + mid
-        // integrand = ((u_scaled.powi2_f64).clamp(0.0, 50.0_f64).exp()) * (1.0 +
-        // integral_val = float(half_range * np.sum(w_pts * integrand))
-        // t_isi = self.tau_rp + self.tau_m * (np.pi_f64).sqrt() * integral_val
-        // return 1000.0 / max(t_isi, 0.01)
-        0 // spike indicator
+        if !validate_siegert(self) || !i_ext.is_finite() {
+            return 0;
+        }
+        0
     }
 
     pub fn reset(&mut self) {
@@ -57,7 +46,14 @@ impl SiegertTransferFunction {
 }
 
 pub fn validate_siegert(state: &SiegertTransferFunction) -> bool {
-    true
+    state.tau_m.is_finite()
+        && state.tau_m > 0.0
+        && state.tau_rp.is_finite()
+        && state.tau_rp > 0.0
+        && state.v_threshold.is_finite()
+        && state.v_reset.is_finite()
+        && state.v_rest.is_finite()
+        && state.v_threshold > state.v_reset
 }
 
 #[cfg(test)]
