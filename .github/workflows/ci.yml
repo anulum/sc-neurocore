@@ -116,13 +116,20 @@ jobs:
              src/sc_neurocore/_native/libautonomous_learning.so
 
       - name: Test + coverage
+        shell: bash
         run: |
-          pytest tests/ -v \
-            --cov=sc_neurocore \
-            --cov-report=term-missing \
-            --cov-report=html:htmlcov \
-            --cov-fail-under=96 \
-            --junitxml=test-results.xml
+          if [[ "${{ matrix.python-version }}" == "3.12" ]]; then
+            pytest tests/ -v \
+              --cov=sc_neurocore \
+              --cov-report=term-missing \
+              --cov-report=html:htmlcov \
+              --cov-fail-under=96 \
+              --junitxml=test-results.xml
+          else
+            # Full behavioral compatibility matrix, without repeating
+            # coverage instrumentation on every Python interpreter.
+            pytest tests/ -v --junitxml=test-results.xml
+          fi
 
       - name: Upload test results
         if: always()
