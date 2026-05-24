@@ -55,10 +55,10 @@ Spike train regularity, complexity, and fractal measures.
 | `lvr(train, dt, refractoriness_ms)` | Revised local variation LvR corrected for refractoriness (Shinomoto et al. 2009) |
 | `fano_factor(train, window_ms, dt)` | Fano factor: variance/mean of windowed spike counts |
 | `isi_entropy(train, dt, bins)` | Shannon entropy of ISI distribution (bits) |
-| `lempel_ziv_complexity(train)` | Lempel-Ziv 1976 complexity, normalized by N/log2(N) |
+| `lempel_ziv_complexity(train)` | Lempel-Ziv 1976 complexity, normalised by N/log2(N) |
 | `approximate_entropy(train, m, r_factor)` | Approximate entropy ApEn (Pincus 1991) |
 | `sample_entropy(train, m, r_factor)` | Sample entropy SampEn, lower bias (Richman & Moorman 2000) |
-| `permutation_entropy(train, order, delay)` | Bandt-Pompe permutation entropy, normalized to [0,1] |
+| `permutation_entropy(train, order, delay)` | Bandt-Pompe permutation entropy, normalised to [0,1] |
 | `hurst_exponent(train, min_window)` | Hurst exponent via detrended fluctuation analysis (Peng et al. 1994) |
 | `allan_factor(train, dt, n_scales)` | Allan factor vs window size for fractal clustering detection |
 | `rescaled_range(train, min_window)` | Hurst exponent via R/S analysis (Hurst 1951) |
@@ -86,7 +86,7 @@ Spike train distance and similarity measures.
 | `victor_purpura_distance(times_a, times_b, cost_per_s)` | Victor-Purpura 1996 edit distance |
 | `isi_distance(a, b, dt)` | ISI-distance ratio comparison (Kreuz et al. 2007) |
 | `spike_distance(times_a, times_b, t_start, t_end)` | SPIKE-distance (Kreuz et al. 2013) |
-| `spike_sync(times_a, times_b, t_start, t_end)` | SPIKE-synchronization, normalized to [0,1] (Kreuz et al. 2015) |
+| `spike_sync(times_a, times_b, t_start, t_end)` | SPIKE-synchronization, normalised to [0,1] (Kreuz et al. 2015) |
 | `spike_sync_profile(times_a, times_b, n_bins, ...)` | Binned SPIKE-synchronization profile |
 | `spike_profile(times_a, times_b, n_bins, ...)` | Binned SPIKE-distance profile |
 | `isi_profile(a, b, dt, n_bins)` | Binned ISI-distance profile |
@@ -198,8 +198,8 @@ Granger causality and directed connectivity.
 | `pairwise_granger_causality(source, target, ...)` | Pairwise Granger causality log-likelihood ratio (Granger 1969) |
 | `conditional_granger_causality(source, target, cond, ...)` | Conditional GC controlling for a third signal (Geweke 1984) |
 | `spectral_granger_causality(trains, bin_size, order, ...)` | Frequency-domain GC via VAR model (Geweke 1982) |
-| `partial_directed_coherence(trains, ...)` | PDC: normalized directed connectivity (Baccala & Sameshima 2001) |
-| `directed_transfer_function(trains, ...)` | DTF: normalized transfer function (Kaminski & Blinowska 1991) |
+| `partial_directed_coherence(trains, ...)` | PDC: normalised directed connectivity (Baccala & Sameshima 2001) |
+| `directed_transfer_function(trains, ...)` | DTF: normalised transfer function (Kaminski & Blinowska 1991) |
 
 ### Dimensionality Reduction (`spike_stats.dimensionality`)
 
@@ -243,7 +243,7 @@ Point process models and hazard functions.
 | `conditional_intensity(train, dt, window_ms)` | Moving-window MLE conditional intensity (Brown et al. 2004) |
 | `isi_hazard_function(train, dt, bins)` | ISI hazard function h(t) = f(t)/S(t) (Tuckwell 1988) |
 | `isi_survivor_function(train, dt, bins)` | ISI survivor function S(t) = P(ISI > t) |
-| `renewal_density(train, dt, bins)` | Renewal density normalized by mean rate (Cox 1962) |
+| `renewal_density(train, dt, bins)` | Renewal density normalised by mean rate (Cox 1962) |
 
 ### Sorting Quality (`spike_stats.sorting_quality`)
 
@@ -316,8 +316,27 @@ Gaussian Process Factor Analysis (Yu et al. 2009).
 
 ## Integrated Information (Phi*)
 
-Approximate Phi (Barrett & Seth 2011) measures how much a system exceeds
-the sum of its parts — the consciousness-relevant integrated information.
+`phi_star(...)` estimates geometric integrated information following
+Barrett and Seth (2011). It compares Gaussian mutual information between
+past and future whole-system states against contiguous bipartitions and
+returns a non-negative reducibility estimate in bits. This is a tractable
+analysis metric, not a claim about consciousness or intrinsic causal power.
+
+`phi_from_spike_trains(...)` bins binary spike trains into spike counts and
+then applies `phi_star(...)` at the requested lag. The estimator is suitable
+for small analysis windows and coarse-grained spike-train diagnostics; it is
+not a full IIT minimum-information-partition search.
+
+The public contract is tested as follows:
+
+- independent continuous channels produce near-zero Phi* within finite-sample
+  tolerance;
+- correlated channels produce positive Phi*;
+- two-channel results are invariant to channel ordering;
+- single-channel and too-short inputs return `0.0`;
+- Phi* is always non-negative;
+- correlated spike trains pass through the binning adapter;
+- independent random spike trains remain low-Phi under the maintained bound.
 
 ::: sc_neurocore.analysis.phi_estimation.phi_star
 
