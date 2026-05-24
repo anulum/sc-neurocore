@@ -82,10 +82,11 @@ class TestCorticalColumn:
             CorticalColumn(scale=0.02, backend=backend)
 
     def test_full_scale_sizes(self):
-        # At scale=1.0, sizes should match Potjans Table 5 exactly.
-        col = CorticalColumn(scale=1.0, scale_correction=False, seed=42)
+        # At scale=1.0, sizes should match Potjans Table 5 exactly
+        # without materialising the full synapse graph.
+        sizes = CorticalColumn.population_sizes(scale=1.0)
         for pop, expected in FULL_SIZES.items():
-            assert col.sizes[pop] == expected
+            assert sizes[pop] == expected
 
     def test_step_returns_per_pop_spike_dict(self):
         col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)
