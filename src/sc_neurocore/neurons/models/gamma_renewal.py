@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 
 import numpy as np
 
@@ -30,11 +31,23 @@ class GammaRenewalNeuron:
     _rng: np.random.Generator = field(init=False)
 
     def __post_init__(self) -> None:
+        if not math.isfinite(self.rate_hz) or self.rate_hz < 0.0:
+            raise ValueError("rate_hz must be finite and non-negative")
+        if not isinstance(self.shape_k, int) or self.shape_k <= 0:
+            raise ValueError("shape_k must be a positive integer")
+        if not math.isfinite(self.dt_ms) or self.dt_ms <= 0.0:
+            raise ValueError("dt_ms must be finite and positive")
+        if not math.isfinite(self._time_since_spike) or self._time_since_spike < 0.0:
+            raise ValueError("time_since_spike must be finite and non-negative")
         self._rng = np.random.default_rng()
 
     def step(self, rate_override: float = -1.0) -> int:
+        if not math.isfinite(rate_override):
+            raise ValueError("rate_override must be finite")
         r = self.rate_hz if rate_override < 0 else rate_override
         self._time_since_spike += self.dt_ms / 1000.0
+        if r == 0.0:
+            return 0
         t = self._time_since_spike
         k = self.shape_k
         lam = k * r

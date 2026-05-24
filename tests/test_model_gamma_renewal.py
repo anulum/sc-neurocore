@@ -11,8 +11,10 @@
 from __future__ import annotations
 
 import time
+import warnings
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.gamma_renewal import GammaRenewalNeuron
 from sc_neurocore.network.population import Population
@@ -63,6 +65,44 @@ class TestDynamics:
         t1 = [n1.step(100.0) for _ in range(1000)]
         t2 = [n2.step(100.0) for _ in range(1000)]
         assert t1 != t2
+
+
+class TestValidation:
+    @pytest.mark.parametrize("rate_hz", [-1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_negative_or_non_finite_baseline_rate(self, rate_hz: float):
+        with pytest.raises(ValueError, match="rate_hz"):
+            GammaRenewalNeuron(rate_hz=rate_hz)
+
+    @pytest.mark.parametrize("shape_k", [0, -1, 1.5])
+    def test_rejects_non_positive_or_non_integer_shape(self, shape_k):
+        with pytest.raises(ValueError, match="shape_k"):
+            GammaRenewalNeuron(shape_k=shape_k)
+
+    @pytest.mark.parametrize("dt_ms", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_dt(self, dt_ms: float):
+        with pytest.raises(ValueError, match="dt_ms"):
+            GammaRenewalNeuron(dt_ms=dt_ms)
+
+    @pytest.mark.parametrize("_time_since_spike", [-1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_negative_or_non_finite_elapsed_state(self, _time_since_spike: float):
+        with pytest.raises(ValueError, match="time_since_spike"):
+            GammaRenewalNeuron(_time_since_spike=_time_since_spike)
+
+    @pytest.mark.parametrize("rate_override", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_rate_override_before_elapsed_mutation(self, rate_override: float):
+        n = GammaRenewalNeuron(_time_since_spike=0.125)
+        before = n._time_since_spike
+        with pytest.raises(ValueError, match="rate_override"):
+            n.step(rate_override=rate_override)
+        assert n._time_since_spike == before
+
+    def test_zero_rate_path_is_silent_and_never_spikes(self):
+        n = GammaRenewalNeuron(rate_hz=50.0)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            spikes = [n.step(rate_override=0.0) for _ in range(8)]
+        assert spikes == [0] * 8
+        assert n._time_since_spike > 0.0
 
 
 class TestPerformance:
