@@ -93,6 +93,34 @@ class TestPerfectIntegratorIsolation:
         assert n.v == v_charged, "Voltage decayed — leak detected in integrator"
 
 
+class TestPerfectIntegratorValidation:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("v", np.nan),
+            ("v_threshold", np.inf),
+            ("v_reset", -np.inf),
+        ],
+    )
+    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            PerfectIntegratorNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["c_m", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            PerfectIntegratorNeuron(**{field: value})
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = PerfectIntegratorNeuron(v=0.25)
+        before = n.v
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert n.v == before
+
+
 class TestPerfectIntegratorThreshold:
     """Threshold, reset, and spike timing."""
 

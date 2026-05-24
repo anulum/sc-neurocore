@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -26,7 +27,18 @@ class PerfectIntegratorNeuron:
     v_reset: float = 0.0
     dt: float = 0.1
 
+    def __post_init__(self) -> None:
+        for field in ("v", "v_threshold", "v_reset"):
+            if not math.isfinite(getattr(self, field)):
+                raise ValueError(f"{field} must be finite")
+        for field in ("c_m", "dt"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field} must be finite and positive")
+
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
         self.v += current / self.c_m * self.dt
         if self.v >= self.v_threshold:
             self.v = self.v_reset
