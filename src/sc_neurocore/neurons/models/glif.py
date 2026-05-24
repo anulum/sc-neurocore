@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 import numpy as np
 
 
@@ -40,7 +41,33 @@ class GLIFNeuron:
     resistance: float = 1.0
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        for field in (
+            "v",
+            "theta",
+            "theta_inf",
+            "i_asc1",
+            "i_asc2",
+            "v_rest",
+            "v_reset",
+            "a_theta",
+            "r_asc1",
+            "r_asc2",
+        ):
+            if not math.isfinite(getattr(self, field)):
+                raise ValueError(f"{field} must be finite")
+        for field in ("tau_m", "tau_theta", "tau_asc1", "tau_asc2", "dt"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field} must be finite and positive")
+        for field in ("delta_theta", "resistance"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"{field} must be finite and non-negative")
+
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
         dv = (
             (-(self.v - self.v_rest) + self.resistance * current + self.i_asc1 + self.i_asc2)
             / self.tau_m
