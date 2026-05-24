@@ -70,8 +70,20 @@ keys, and JAX PRNG seed range before backend execution.
 
 ## Hardware-Aware SC Layer
 
-Trains around memristive defects (stuck-at faults) by masking gradients
-on defective synapses.
+`HardwareAwareSCLayer` wraps `VectorizedSCLayer` with deterministic
+memristive-defect injection. A seeded `stuck_mask` selects defective
+synapses, each defective synapse is forced to a sampled stuck-at value
+(`0.0` or `1.0`), and `update_weights(...)` masks gradients at those
+locations so training can only adapt the remaining synapses.
+
+The public contract is tested as follows:
+
+- `forward(...)` preserves the vectorised layer output shape;
+- non-zero `stuck_rate` creates observable stuck synapses;
+- stuck weights remain unchanged after gradient updates;
+- non-stuck weights update when gradients are applied;
+- all weights stay clipped to `[0, 1]`;
+- `stuck_rate=0.0` produces no stuck synapses.
 
 ::: sc_neurocore.layers.hardware_aware.HardwareAwareSCLayer
 
