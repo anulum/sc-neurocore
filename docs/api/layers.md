@@ -77,8 +77,22 @@ on defective synapses.
 
 ## Predictive Coding SC Layer (Conjecture C9)
 
-Zero-multiplication predictive coding: XOR = error, popcount = magnitude,
-STDP = precision. First SC implementation of Bayesian prediction error minimization.
+`PredictiveCodingSCLayer` models prediction error in the stochastic-computing
+domain: predicted and actual Bernoulli bitstreams are compared with XOR, and
+the popcount of the error stream gives the per-neuron surprise magnitude.
+Learning moves each prediction weight toward the observed input probability,
+so repeated exposure to a stable pattern should lower mean prediction error
+while a switched pattern should raise surprise.
+
+The public contract is tested as follows:
+
+- `forward(...)` returns `prediction_error`, per-neuron `surprises`, and
+  `(n_neurons, n_inputs)` `predictions`;
+- prediction error and surprise values remain in `[0, 1]`;
+- learned weights remain clipped to `[0, 1]`;
+- repeated inputs reduce prediction error on average;
+- novel inputs after training produce larger surprise than familiar inputs;
+- `reset()` restores the seeded initial weights.
 
 ::: sc_neurocore.layers.predictive_coding.PredictiveCodingSCLayer
 
