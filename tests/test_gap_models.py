@@ -1101,6 +1101,44 @@ class TestDopamineStdpSynapse:
         assert synapse.a_plus == 1.0
         assert synapse.a_minus == -1.0
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"w_min": 1.0, "w_max": 0.0},
+            {"weight": -0.01},
+            {"weight": 1.01},
+            {"tau_e": 0.0},
+            {"tau_da": 0.0},
+            {"tau_pre": 0.0},
+            {"tau_post": 0.0},
+            {"a_plus": -0.01},
+            {"a_minus": 0.01},
+            {"lr": -0.01},
+            {"dt": 0.0},
+            {"eligibility": float("nan")},
+            {"dopamine": float("inf")},
+            {"trace_pre": float("nan")},
+            {"trace_post": float("inf")},
+        ],
+    )
+    def test_rejects_non_physical_dopamine_stdp_parameters(self, kwargs):
+        """Dopamine-gated STDP constants, traces, and bounds must be physical."""
+        from sc_neurocore.synapses import DopamineStdpSynapse
+
+        with pytest.raises(ValueError):
+            DopamineStdpSynapse(**kwargs)
+
+    @pytest.mark.parametrize(
+        ("pre_spike", "post_spike", "reward"),
+        [(1, False, 0.0), (False, 0, 0.0), (False, False, float("nan"))],
+    )
+    def test_rejects_invalid_dopamine_stdp_step_inputs(self, pre_spike, post_spike, reward):
+        """Spike flags must be boolean and reward must be finite."""
+        from sc_neurocore.synapses import DopamineStdpSynapse
+
+        with pytest.raises((TypeError, ValueError)):
+            DopamineStdpSynapse().step(pre_spike, post_spike, reward)
+
     def test_step_returns_float(self, synapse):
         w = synapse.step(True, False, 0.0)
         assert isinstance(w, float)
