@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
+import math
 from .stochastic_stdp import StochasticSTDPSynapse
 from ..constants import RSTDP_TRACE_DECAY, RSTDP_ANTI_HEBBIAN_SCALE
 
@@ -34,7 +35,19 @@ class RewardModulatedSTDPSynapse(StochasticSTDPSynapse):
     trace_decay: float = RSTDP_TRACE_DECAY
     anti_hebbian_scale: float = RSTDP_ANTI_HEBBIAN_SCALE
 
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        if not math.isfinite(self.eligibility_trace):
+            raise ValueError("eligibility_trace must be finite")
+        if not math.isfinite(self.trace_decay) or not 0.0 <= self.trace_decay <= 1.0:
+            raise ValueError("trace_decay must be finite and within [0, 1]")
+        if not math.isfinite(self.anti_hebbian_scale) or self.anti_hebbian_scale < 0.0:
+            raise ValueError("anti_hebbian_scale must be finite and non-negative")
+
     def process_step(self, pre_bit: int, post_bit: int) -> int:
+        self._validate_bit("pre_bit", pre_bit)
+        self._validate_bit("post_bit", post_bit)
+
         # 1. Compute Output (Same as standard)
         w_prob = self.effective_weight_probability()
         weight_bit = 1 if self._rng.random() < w_prob else 0
@@ -62,6 +75,9 @@ class RewardModulatedSTDPSynapse(StochasticSTDPSynapse):
         """
         Global reward signal triggers weight update.
         """
+        if not math.isfinite(reward):
+            raise ValueError("reward must be finite")
+
         # Delta W ~ Reward * Trace
         update = self.learning_rate * reward * self.eligibility_trace
 
@@ -73,3 +89,8 @@ class RewardModulatedSTDPSynapse(StochasticSTDPSynapse):
 
         # Optionally reset trace? Usually trace decays naturally.
         # self.eligibility_trace = 0
+
+    @staticmethod
+    def _validate_bit(name: str, value: int) -> None:
+        if type(value) is not int or value not in (0, 1):
+            raise ValueError(f"{name} must be an integer bit, 0 or 1")
