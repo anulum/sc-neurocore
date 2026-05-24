@@ -13,6 +13,12 @@ $$s(t) = \Theta(V(t) - \theta)$$
 
 Return value: $\Theta(V(t+1) - \theta)$ (spike based on **updated** V).
 
+The implementation rejects non-physical configurations before integration:
+`v` and `a` must be finite, `threshold` must be finite and positive, `dt`
+must be finite and positive, and runtime current must be finite before state
+mutation. The sigmoid is evaluated in a branch-stable form so very large
+negative learnable parameters saturate to `alpha=0` without overflow.
+
 ## Parameters
 
 | Parameter | Default | Description |
@@ -58,14 +64,14 @@ ParametricLIFNeuron
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 7 | defaults, binary, sigmoid correctness, a=0 midpoint, monotonicity, bounds, saturation |
+| Isolation | 19 parametrized/behavioral checks | defaults, binary, sigmoid correctness, a=0 midpoint, monotonicity, bounds, stable saturation, fail-closed parameter/current validation |
 | Dynamics | 5 | geometric accumulation, steady-state V, convergence rate, alpha≈1 no-leak, alpha≈0 fast-decay |
 | Threshold | 5 | spike-on-updated-V, suprathreshold every-step, exact threshold, critical current, soft reset |
 | Learnable rate | 8 | alpha effect on rate, 5-point suprathreshold sweep, subcritical (3 alpha values) |
 | Edge cases | 4 | zero input, negative input, reset, determinism |
 | Network | 2 | population, spikes |
 | Analysis | 2 | spike_count, consistency |
-| **Total** | **32** | |
+| **Total** | **44** | scoped module validation |
 
 Key finding: spike return is based on **updated** V (post-step), not pre-step V.
 The pre-step check only controls the reset mechanism. This is a subtle but
@@ -120,5 +126,5 @@ State returns to initial values after `reset()`.
 
 1. Throughput: ~200K steps/s (Python, single-thread)
 2. All pipeline stages verified green
-3. Rust parity: EXACT
+3. Rust safety surface validates the same PLIF update and stable-sigmoid contract
 4. Numerical stability confirmed over 20K steps

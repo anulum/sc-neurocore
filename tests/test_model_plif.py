@@ -73,6 +73,35 @@ class TestPLIFIsolation:
         assert ParametricLIFNeuron(a=100.0).alpha == 1.0
         assert ParametricLIFNeuron(a=-100.0).alpha < 1e-40
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"v": np.nan},
+            {"v": np.inf},
+            {"a": np.nan},
+            {"a": np.inf},
+            {"threshold": 0.0},
+            {"threshold": np.nan},
+            {"dt": 0.0},
+            {"dt": np.inf},
+        ],
+    )
+    def test_rejects_non_physical_configuration(self, kwargs):
+        with pytest.raises(ValueError):
+            ParametricLIFNeuron(**kwargs)
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = ParametricLIFNeuron(v=0.25)
+        before = n.v
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert n.v == before
+
+    def test_alpha_is_stable_for_large_negative_parameter(self):
+        n = ParametricLIFNeuron(a=-1000.0)
+        assert n.alpha == 0.0
+
 
 # ---------------------------------------------------------------------------
 # 2. Voltage dynamics — geometric accumulation

@@ -8,7 +8,7 @@
 
 module PlifAccel
 
-export step!, simulate, ParametricLIFNeuronState
+export step!, simulate, alpha, valid, reset!, ParametricLIFNeuronState
 
 mutable struct ParametricLIFNeuronState
     v::Float64
@@ -22,17 +22,35 @@ function ParametricLIFNeuronState()
 end
 
 function alpha(s::ParametricLIFNeuronState)
-    return 1.0 / (1.0 + exp(-s.a))
+    if s.a >= 0.0
+        z = exp(-s.a)
+        return 1.0 / (1.0 + z)
+    end
+    z = exp(s.a)
+    return z / (1.0 + z)
 end
 
 function step!(s::ParametricLIFNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        spike = (s.v >= s.threshold) ? 1 : 0
-        s.v = s.alpha * s.v * (1 - spike) + I_ext
-        return (s.v >= s.threshold) ? 1 : 0
-    catch _e
+    if !valid(s) || !isfinite(I_ext)
         return 0
     end
+    spike = (s.v >= s.threshold) ? 1.0 : 0.0
+    s.v = alpha(s) * s.v * (1.0 - spike) + I_ext
+    return (s.v >= s.threshold) ? 1 : 0
+end
+
+function valid(s::ParametricLIFNeuronState)
+    return isfinite(s.v) &&
+        isfinite(s.a) &&
+        isfinite(s.threshold) &&
+        s.threshold > 0.0 &&
+        isfinite(s.dt) &&
+        s.dt > 0.0
+end
+
+function reset!(s::ParametricLIFNeuronState)
+    s.v = 0.0
+    return nothing
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
