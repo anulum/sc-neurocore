@@ -43,8 +43,36 @@ class TestEPropALIFIsolation:
         assert abs(n.alpha_m - np.exp(-1.0 / 20.0)) < 1e-12
         assert abs(n.alpha_a - np.exp(-1.0 / 200.0)) < 1e-12
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"v": float("nan")},
+            {"a": float("inf")},
+            {"e_trace": float("nan")},
+            {"tau_m": 0.0},
+            {"tau_m": float("inf")},
+            {"tau_a": 0.0},
+            {"tau_a": float("nan")},
+            {"v_threshold_base": float("inf")},
+            {"beta": -0.01},
+            {"beta": float("nan")},
+            {"v_reset": float("inf")},
+            {"dt": 0.0},
+            {"dt": float("nan")},
+        ],
+    )
+    def test_rejects_non_physical_configuration(self, kwargs):
+        with pytest.raises(ValueError):
+            EPropALIFNeuron(**kwargs)
+
     def test_step_returns_binary(self):
         assert EPropALIFNeuron().step(0.0) in (0, 1)
+
+    @pytest.mark.parametrize("current", [float("nan"), float("inf"), -float("inf")])
+    def test_rejects_non_finite_current(self, current):
+        n = EPropALIFNeuron()
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
 
     def test_state_finite(self):
         n = EPropALIFNeuron()
