@@ -117,6 +117,15 @@ class TestBendaHerzValidation:
             n.step(100.0)
         assert n.a == before
 
+    def test_rejects_non_finite_adaptation_update_before_state_mutation(self):
+        n = BendaHerzNeuron(f_max=1.0e-306, delta_a=1.0e308, dt=1.0e308, a=0.5)
+        before = n.a
+
+        with pytest.raises(ValueError, match="adaptation update"):
+            n.step(100.0)
+
+        assert n.a == before
+
 
 class TestBendaHerzNetwork:
     def test_population(self):

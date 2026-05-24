@@ -10,8 +10,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import math
-from typing import Any
-
 import numpy as np
 
 
@@ -48,11 +46,11 @@ class BendaHerzNeuron:
             raise ValueError("delta_a must be finite and non-negative")
         self._rng = np.random.default_rng()
 
-    def _f_onset(self, x: float) -> Any:
+    def _f_onset(self, x: float) -> float:
         z = self.beta * (x - self.i_half)
         if z >= 0.0:
-            return self.f_max / (1.0 + np.exp(-z))
-        exp_z = np.exp(z)
+            return self.f_max / (1.0 + math.exp(-z))
+        exp_z = math.exp(z)
         return self.f_max * exp_z / (1.0 + exp_z)
 
     def step(self, current: float) -> int:
@@ -61,9 +59,14 @@ class BendaHerzNeuron:
 
         rate = self._f_onset(current - self.a)
         p = rate * self.dt / 1000.0
+        if not math.isfinite(rate) or not math.isfinite(p):
+            raise ValueError("spike probability must be finite")
         if p > 1.0:
             raise ValueError("spike probability must not exceed one")
-        self.a += (-self.a / self.tau_a + self.delta_a * rate) * self.dt
+        next_a = self.a + (-self.a / self.tau_a + self.delta_a * rate) * self.dt
+        if not math.isfinite(next_a) or next_a < 0.0:
+            raise ValueError("adaptation update must be finite and non-negative")
+        self.a = next_a
         return 1 if self._rng.random() < p else 0
 
     def reset(self) -> None:

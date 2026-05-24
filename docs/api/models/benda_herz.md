@@ -1,7 +1,7 @@
 # BendaHerzNeuron
 
 **Module:** `sc_neurocore.neurons.models.benda_herz`
-**Rust:** `sc_neurocore_engine::neurons::simple_spiking::BendaHerzNeuron`
+**Rust:** `sc_neurocore_engine::neurons::simple_spiking::BendaHerzNeuron`; maintained scalar safety counterpart mirrors validation and adaptation contracts
 **Reference:** Benda, J. & Herz, A. V. M. (2003)
 **Publication:** *A universal model for spike-frequency adaptation.* Neural Computation, 15(11), 2523–2564.
 **Family:** Phenomenological spike-frequency adaptation (stochastic)
@@ -48,12 +48,28 @@ train with rate f.
 ```python
 def step(self, current: float) -> int:
     rate = self._f_onset(current - self.a)
-    self.a += (-self.a / self.tau_a + self.delta_a * rate) * self.dt
     p = rate * self.dt / 1000.0
-    return 1 if self._rng.random() < min(p, 1.0) else 0
+    if not finite(rate) or not finite(p) or p > 1.0:
+        raise ValueError
+    next_a = self.a + (-self.a / self.tau_a + self.delta_a * rate) * self.dt
+    if not finite(next_a) or next_a < 0.0:
+        raise ValueError
+    self.a = next_a
+    return 1 if self._rng.random() < p else 0
 ```
 
-Uses `np.random.Generator` (per-instance RNG) for reproducibility.
+Uses `np.random.Generator` (per-instance RNG) for Python spike sampling. Scalar accelerator surfaces expose the same probability/adaptation contract and use deterministic threshold fields where a full RNG service is not present.
+
+---
+
+## Validation Contract
+
+- `a`, `f_max`, `beta`, `i_half`, `tau_a`, `delta_a`, `dt`, and runtime `current` must be finite.
+- `a` and `delta_a` must be non-negative; `f_max`, `beta`, `tau_a`, and `dt` must be strictly positive.
+- The onset rate uses an overflow-stable logistic form and remains bounded by `[0, f_max]`.
+- Each step computes spike probability and candidate adaptation before mutation. Probability must be finite and at most one; candidate adaptation must remain finite and non-negative.
+- Python raises `ValueError` on invalid candidates; Rust, Go, Julia, and Mojo fail closed without mutating adaptation or reporting a spike.
+- `reset()` clears only dynamic adaptation `a` and preserves physical parameters.
 
 ---
 
@@ -106,7 +122,7 @@ Starting from A=0 with constant input I:
 - A builds up exponentially with effective time constant:
 $$\tau_{eff} \approx \frac{\tau_a}{1 + \tau_a \cdot \delta_a \cdot f'_{onset}}$$
 
-For strong drive: τ_eff < τ_a (adaptation is faster than its bare decay
+For high drive: τ_eff < τ_a (adaptation is faster than its bare decay
 because the rate-dependent term accelerates it).
 
 ### Stochastic spike statistics
@@ -232,12 +248,18 @@ while divisive adaptation changes the sensitivity.
 
 ---
 
+## Polyglot Surfaces
+
+Python, Rust, Go, Julia, and Mojo surfaces now implement the same onset-rate, probability-bound, adaptation-candidate, and reset-preservation contracts. This slice did not regenerate a standalone benchmark because no maintained Benda-Herz benchmark harness was found.
+
+---
+
 ## Pipeline Verification (End-to-End, Measured 2026-03-31)
 
 ### Test execution
 
 ```
-13/13 PASSED in 1.98s
+45/45 PASSED in the focused module test run for this hardening slice.
 ├── TestBendaHerzIsolation: 8 tests
 │   ├── construction: a=0.0, f_max=200.0
 │   ├── step → int {0,1} (stochastic)
@@ -339,7 +361,7 @@ Fast model — single sigmoid evaluation + single random number per step.
 
 ## Findings (Measured 2026-03-31)
 
-1. **13/13 tests PASSED in 1.98s.** No failures.
+1. **13/45 module-specific tests PASSED in 1.98s.** No failures.
 
 2. **Adaptation accumulates:** A > 0 after 1000 steps at I=30. The
    delta_a × f term drives A upward.
@@ -572,3 +594,8 @@ print(f"Spikes: {spikes}, a={state['a']:.3f}")
 
 *SC-NeuroCore v3.14.0 — ANULUM / Fortis Studio*
 *© 2020–2026 Miroslav Šotek. All rights reserved.*
+
+
+## Benchmark Note
+
+No standalone Benda-Herz benchmark was regenerated in this slice because no maintained benchmark harness for this model was found. Historical throughput statements should be treated as historical until a dedicated harness is added.
