@@ -173,3 +173,25 @@ class TestClosedFormContinuous:
         for _ in range(20):
             n.step(1.0)
         assert n.x != 0.0
+
+
+class TestCFCValidation:
+    @pytest.mark.parametrize("field", ["x", "w_tau", "w_x", "w_in", "bias"])
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_state_and_weights(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            ClosedFormContinuousNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["tau_base", "v_threshold", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_non_positive_or_non_finite_scales(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            ClosedFormContinuousNeuron(**{field: value})
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = ClosedFormContinuousNeuron(x=0.25)
+        before = n.x
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert n.x == before

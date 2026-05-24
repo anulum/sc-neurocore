@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import numpy as np
+import math
 
 
 @dataclass
@@ -32,11 +32,31 @@ class ClosedFormContinuousNeuron:
     v_threshold: float = 1.0
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        for name in ("x", "w_tau", "w_x", "w_in", "bias"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite")
+        for name in ("tau_base", "v_threshold", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0:
+                raise ValueError(f"{name} must be finite and positive")
+
+    @staticmethod
+    def _sigmoid(value: float) -> float:
+        if value >= 0.0:
+            z = math.exp(-value)
+            return 1.0 / (1.0 + z)
+        z = math.exp(value)
+        return z / (1.0 + z)
+
     def step(self, current: float) -> int:
-        sigma_tau = 1.0 / (1.0 + np.exp(-(self.w_tau * current + self.bias)))
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
+        sigma_tau = self._sigmoid(self.w_tau * current + self.bias)
         tau_eff = max(self.tau_base * sigma_tau, 0.1)
-        f_target = np.tanh(self.w_x * self.x + self.w_in * current)
-        decay = np.exp(-self.dt / tau_eff)
+        f_target = math.tanh(self.w_x * self.x + self.w_in * current)
+        decay = math.exp(-self.dt / tau_eff)
         self.x = self.x * decay + f_target * (1.0 - decay)
         if self.x >= self.v_threshold:
             self.x = 0.0

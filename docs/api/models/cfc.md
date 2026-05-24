@@ -76,6 +76,14 @@ def step(self, current: float) -> int:
 | `v_threshold` | 1.0 | — | Spike threshold |
 | `dt` | 1.0 | ms | Timestep |
 
+### Validation contract
+
+The Python model and acceleration mirrors reject non-finite state,
+weights, bias, timestep, threshold, and base time constant.  The physical
+scale parameters `tau_base`, `v_threshold`, and `dt` must also be strictly
+positive.  Runtime input must be finite and is checked before `x` mutates,
+so invalid input cannot poison the hidden state.
+
 ### w_tau = −0.5 (negative)
 
 The negative w_tau means that **higher input → lower σ_τ → lower τ_eff
@@ -242,6 +250,8 @@ SpikeMonitor, PoissonInput, Projection all work.
 - **Exact solution:** No Euler error, unconditionally stable for any dt.
 - **τ_eff floor:** max(τ_base × σ_τ, 0.1) prevents exp(-dt/0) overflow.
 - **tanh bounds:** f_target ∈ [-1, 1] keeps x bounded.
+- **Fail-closed inputs:** non-finite current is rejected before state
+  mutation; invalid physical scales are rejected at construction.
 
 ---
 
@@ -275,7 +285,8 @@ due to the additional exp() for the exact solution.
 | Dynamics | 4 | fires with drive, subthreshold silent, rate monotonic, self-feedback accelerates |
 | Parameters | 3 | w_tau sweep, tau_base sweep, deterministic |
 | Pipeline | 4 | Population, Network+drive, Projection, analysis |
-| **Total** | **21** | |
+| Validation | 33 | finite state/weights, positive scales, finite current before mutation |
+| **Total** | **54** | |
 
 See `tests/test_model_cfc.py`. No bugs found.
 
@@ -338,4 +349,5 @@ See `tests/test_model_cfc.py`. No bugs found.
 | Network.run() | ✓ PASS | Spikes or no crash |
 | Deterministic | ✓ PASS | Bit-exact |
 
-**ALL 20 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
+The current module-specific test suite also verifies fail-closed
+parameter and runtime-input validation.
