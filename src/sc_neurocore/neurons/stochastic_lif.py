@@ -80,10 +80,10 @@ class StochasticLIFNeuron(BaseNeuron):
             raise ValueError(f"dt must be > 0, got {self.dt}")
         if not np.isfinite(self.noise_std) or self.noise_std < 0:
             raise ValueError(f"noise_std must be >= 0, got {self.noise_std}")
-        if not np.isfinite(self.resistance):
-            raise ValueError("resistance must be finite")
-        if self.refractory_period < 0:
-            raise ValueError("refractory_period must be non-negative")
+        if not np.isfinite(self.resistance) or self.resistance < 0.0:
+            raise ValueError("resistance must be finite and non-negative")
+        if type(self.refractory_period) is not int or self.refractory_period < 0:
+            raise ValueError("refractory_period must be a non-negative integer")
         self._rng = RNG(self.seed)
         self.v = self.v_rest
         self.refractory_counter = 0
@@ -111,6 +111,8 @@ class StochasticLIFNeuron(BaseNeuron):
                 dv_noise = float(self.entropy_source.sample_normal(0.0, self.noise_std * sqrt_dt))
             else:
                 dv_noise = float(self._rng.normal(0.0, self.noise_std * sqrt_dt))
+            if not np.isfinite(dv_noise):
+                raise ValueError("noise sample must be finite")
 
         # Update membrane potential
         self.v += dv_leak + dv_input + dv_noise
@@ -147,8 +149,8 @@ class StochasticLIFNeuron(BaseNeuron):
             raise ValueError("input_bits must contain only finite values")
         if np.any((bits != 0) & (bits != 1)):
             raise ValueError("input_bits must contain only binary 0/1 values")
-        if not np.isfinite(input_scale):
-            raise ValueError("input_scale must be finite")
+        if not np.isfinite(input_scale) or input_scale < 0.0:
+            raise ValueError("input_scale must be finite and non-negative")
 
         spikes = np.zeros_like(bits, dtype=np.uint8)
         for i, bit in enumerate(bits):
