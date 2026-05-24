@@ -402,9 +402,7 @@ class CorticalColumn:
 
         # Per-population scaled sizes (at least 1 cell per pop to
         # keep matrix shapes well-defined at very low scale).
-        self.sizes: dict[str, int] = {
-            pop: max(1, int(round(FULL_SIZES[pop] * scale))) for pop in POPULATIONS
-        }
+        self.sizes = self.population_sizes(scale)
         self.n_total = sum(self.sizes.values())
 
         # Per-source-type weight (pA). With `scale_correction=True`
@@ -748,6 +746,19 @@ class CorticalColumn:
         # populated in `_init_buffers(dt)` once `dt` is known.
         self._global_e_bin_steps: list[int] = []
         self._global_i_bin_steps: list[int] = []
+
+    @staticmethod
+    def population_sizes(scale: float) -> dict[str, int]:
+        """Return Potjans population sizes at ``scale`` without building connectivity.
+
+        The full published column has roughly 77k neurons and hundreds of
+        millions of synapses. Size contracts must therefore be observable without
+        materialising the full synapse graph.
+        """
+
+        if not (0.0 < scale <= 1.0):
+            raise ValueError(f"scale must be in (0, 1], got {scale}")
+        return {pop: max(1, int(round(FULL_SIZES[pop] * scale))) for pop in POPULATIONS}
 
     # ── Block-CSR assembly helper ────────────────────────────────
 
