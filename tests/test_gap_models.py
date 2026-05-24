@@ -418,6 +418,46 @@ class TestAstrocyteLIFNeuron:
         assert neuron.ca_thresh == 0.5
         assert neuron.g_glio == 2.0
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"tau_m": 0.0},
+            {"tau_ca": 0.0},
+            {"e_l": float("nan")},
+            {"theta": float("nan")},
+            {"theta": -70.0},
+            {"v_reset": float("inf")},
+            {"ca_delta": -0.01},
+            {"ca_thresh": -0.01},
+            {"g_glio": -0.01},
+            {"dt": 0.0},
+            {"v": float("nan")},
+            {"ca": -0.01},
+        ],
+    )
+    def test_rejects_non_physical_tripartite_parameters(self, kwargs):
+        """Tripartite LIF parameters must be finite and physically bounded."""
+        from sc_neurocore.neurons.models import AstrocyteLIFNeuron
+
+        with pytest.raises(ValueError):
+            AstrocyteLIFNeuron(**kwargs)
+
+    @pytest.mark.parametrize("current", [float("nan"), float("inf")])
+    def test_rejects_non_finite_external_current(self, current):
+        """Membrane integration must fail closed on non-finite drive."""
+        from sc_neurocore.neurons.models import AstrocyteLIFNeuron
+
+        with pytest.raises(ValueError, match="i_ext"):
+            AstrocyteLIFNeuron().step_with_pre(current, pre_spike=False)
+
+    @pytest.mark.parametrize("pre_spike", [0, 1, "yes", None])
+    def test_rejects_non_boolean_presynaptic_spike_flag(self, pre_spike):
+        """Presynaptic event input must be an explicit boolean contract."""
+        from sc_neurocore.neurons.models import AstrocyteLIFNeuron
+
+        with pytest.raises(TypeError, match="pre_spike"):
+            AstrocyteLIFNeuron().step_with_pre(0.0, pre_spike=pre_spike)
+
     def test_step_returns_binary(self, neuron):
         s = neuron.step(5.0)
         assert s in (0, 1)

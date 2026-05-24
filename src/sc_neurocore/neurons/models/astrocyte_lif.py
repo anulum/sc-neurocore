@@ -27,6 +27,7 @@ Reference: Perea, Navarrete & Araque, "Tripartite synapses" (2009).
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -68,11 +69,35 @@ class AstrocyteLIFNeuron:
     v: float = -65.0
     ca: float = 0.0
 
+    def __post_init__(self) -> None:
+        for name in ("tau_m", "tau_ca", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+
+        for name in ("e_l", "theta", "v_reset", "v"):
+            value = getattr(self, name)
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+
+        if self.theta <= self.v_reset:
+            raise ValueError("theta must be greater than v_reset")
+
+        for name in ("ca_delta", "ca_thresh", "g_glio", "ca"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"{name} must be finite and non-negative")
+
     def step_with_pre(self, i_ext: float, pre_spike: bool) -> int:
         """Step with external current and presynaptic spike indicator.
 
         Returns 1 if spike, 0 otherwise.
         """
+        if not math.isfinite(i_ext):
+            raise ValueError("i_ext must be finite")
+        if type(pre_spike) is not bool:
+            raise TypeError("pre_spike must be bool")
+
         # Astrocyte calcium dynamics.
         dca = -self.ca / self.tau_ca
         if pre_spike:
