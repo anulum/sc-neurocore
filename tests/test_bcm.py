@@ -8,6 +8,8 @@
 
 """Tests for BCM synapse with sliding threshold."""
 
+import pytest
+
 from sc_neurocore.synapses.bcm import BCMSynapse
 
 
@@ -16,6 +18,38 @@ class TestBCMSynapse:
         syn = BCMSynapse(theta_init=0.1)
         assert syn.theta_m == 0.1
         assert syn.weight == 0.5
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"eta": -0.01},
+            {"eta": float("nan")},
+            {"tau_theta": 0.0},
+            {"theta_init": -0.01},
+            {"w_min": 1.0, "w_max": 0.0},
+            {"weight": -0.01},
+            {"weight": 1.01},
+        ],
+    )
+    def test_rejects_non_physical_bcm_parameters(self, kwargs):
+        """BCM learning constants, threshold, and weight bounds must be physical."""
+        with pytest.raises(ValueError):
+            BCMSynapse(**kwargs)
+
+    @pytest.mark.parametrize(
+        ("pre_rate", "post_rate", "dt"),
+        [
+            (float("nan"), 0.5, 1.0),
+            (0.5, float("inf"), 1.0),
+            (-0.01, 0.5, 1.0),
+            (0.5, -0.01, 1.0),
+            (0.5, 0.5, 0.0),
+        ],
+    )
+    def test_rejects_non_physical_bcm_step_inputs(self, pre_rate, post_rate, dt):
+        """Firing rates must be finite non-negative and timestep must be positive."""
+        with pytest.raises(ValueError):
+            BCMSynapse().step(pre_rate=pre_rate, post_rate=post_rate, dt=dt)
 
     def test_ltp_above_threshold(self):
         """High post rate above theta → potentiation."""

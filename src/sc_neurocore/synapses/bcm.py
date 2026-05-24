@@ -28,6 +28,7 @@ The threshold slides so high-rate neurons become harder to potentiate.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -54,6 +55,21 @@ class BCMSynapse:
     weight: float = 0.5
 
     def __post_init__(self) -> None:
+        if not math.isfinite(self.eta) or self.eta < 0.0:
+            raise ValueError("eta must be finite and non-negative")
+        if not math.isfinite(self.tau_theta) or self.tau_theta <= 0.0:
+            raise ValueError("tau_theta must be finite and positive")
+        if not math.isfinite(self.theta_init) or self.theta_init < 0.0:
+            raise ValueError("theta_init must be finite and non-negative")
+        for name in ("w_min", "w_max", "weight"):
+            value = getattr(self, name)
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+        if self.w_min > self.w_max:
+            raise ValueError("w_min must be less than or equal to w_max")
+        if not (self.w_min <= self.weight <= self.w_max):
+            raise ValueError("weight must be within [w_min, w_max]")
+
         self.theta_m = self.theta_init
 
     def step(self, pre_rate: float, post_rate: float, dt: float = 1.0) -> float:
@@ -73,6 +89,13 @@ class BCMSynapse:
         float
             Updated weight.
         """
+        if not math.isfinite(pre_rate) or pre_rate < 0.0:
+            raise ValueError("pre_rate must be finite and non-negative")
+        if not math.isfinite(post_rate) or post_rate < 0.0:
+            raise ValueError("post_rate must be finite and non-negative")
+        if not math.isfinite(dt) or dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+
         # BCM update: dw = eta * y * (y - theta_M) * x
         dw = self.eta * post_rate * (post_rate - self.theta_m) * pre_rate * dt
         self.weight += dw
