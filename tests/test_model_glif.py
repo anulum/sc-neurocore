@@ -78,6 +78,43 @@ class TestGLIFIsolation:
         assert traces[0] == traces[1]
 
 
+class TestGLIFValidation:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("v", np.nan),
+            ("theta", np.inf),
+            ("theta_inf", -np.inf),
+            ("i_asc1", np.nan),
+            ("i_asc2", np.inf),
+            ("v_rest", np.nan),
+            ("v_reset", np.inf),
+            ("a_theta", np.nan),
+            ("delta_theta", -1.0),
+            ("r_asc1", np.nan),
+            ("r_asc2", np.inf),
+            ("resistance", -1.0),
+        ],
+    )
+    def test_rejects_invalid_finite_or_non_negative_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            GLIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["tau_m", "tau_theta", "tau_asc1", "tau_asc2", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_time_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            GLIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = GLIFNeuron(v=-65.0, theta=-45.0, i_asc1=0.25, i_asc2=0.5)
+        before = (n.v, n.theta, n.i_asc1, n.i_asc2)
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert (n.v, n.theta, n.i_asc1, n.i_asc2) == before
+
+
 # ---------------------------------------------------------------------------
 # 2. ANALYTICAL — dV, dθ, after-spike currents, spike mechanism
 # ---------------------------------------------------------------------------
