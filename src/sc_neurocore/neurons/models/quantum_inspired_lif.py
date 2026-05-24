@@ -27,6 +27,7 @@ Reference: Quantum-neural hybrid models, IBM Heron r2 noise models.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 
 
 @dataclass
@@ -58,6 +59,19 @@ class QuantumInspiredLIFNeuron:
     _rng_state: int = field(default=0, repr=False)
 
     def __post_init__(self) -> None:
+        for name in ("tau", "theta", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+
+        for name in ("v_reset", "z_re", "z_im"):
+            value = getattr(self, name)
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+
+        if type(self.seed) is not int or not (0 < self.seed < 2**64):
+            raise ValueError("seed must be an integer in [1, 2**64)")
+
         self._rng_state = self.seed
 
     def _xorshift64(self) -> float:
@@ -74,6 +88,9 @@ class QuantumInspiredLIFNeuron:
 
         Returns 1 if stochastic spike, 0 otherwise.
         """
+        if not math.isfinite(i_re) or not math.isfinite(i_im):
+            raise ValueError("current components must be finite")
+
         dz_re = (-self.z_re + i_re) / self.tau
         dz_im = (-self.z_im + i_im) / self.tau
         self.z_re += dz_re * self.dt
