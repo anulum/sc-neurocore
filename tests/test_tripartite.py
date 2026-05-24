@@ -8,6 +8,8 @@
 
 """Tests for TripartiteSynapse (astrocyte ↔ synapse coupling)."""
 
+import pytest
+
 from sc_neurocore.synapses.tripartite import TripartiteSynapse
 
 
@@ -81,3 +83,35 @@ class TestTripartiteSynapse:
         assert syn.weight == 0.5
         assert syn.astrocyte.ca == 0.05
         assert syn._glut_current == 0.0
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"w_min": 1.0, "w_max": 0.0},
+            {"base_weight": -0.1},
+            {"base_weight": 1.1},
+            {"glut_per_spike": -1.0},
+            {"ca_threshold": -0.1},
+            {"facilitation": -1.0},
+            {"depression_rate": -0.1},
+        ],
+    )
+    def test_rejects_non_physical_configuration(self, kwargs):
+        """Invalid astrocyte-synapse coupling parameters fail closed."""
+        with pytest.raises(ValueError):
+            TripartiteSynapse(**kwargs)
+
+    @pytest.mark.parametrize("dt", [0.0, -0.01, float("nan"), float("inf")])
+    def test_rejects_non_physical_timestep(self, dt):
+        """Time integration must reject non-finite or non-positive timesteps."""
+        syn = TripartiteSynapse()
+        with pytest.raises(ValueError, match="dt"):
+            syn.step(pre_spike=True, post_spike=False, dt=dt)
+
+    def test_rejects_non_boolean_spike_flags(self):
+        """Spike flags are discrete events, not arbitrary numeric amplitudes."""
+        syn = TripartiteSynapse()
+        with pytest.raises(TypeError, match="pre_spike"):
+            syn.step(pre_spike=1, post_spike=False, dt=0.01)
+        with pytest.raises(TypeError, match="post_spike"):
+            syn.step(pre_spike=True, post_spike=0, dt=0.01)

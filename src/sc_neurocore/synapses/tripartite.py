@@ -62,6 +62,23 @@ class TripartiteSynapse:
     w_max: float = 1.0
 
     def __post_init__(self) -> None:
+        if not math.isfinite(self.w_min) or not math.isfinite(self.w_max):
+            raise ValueError("w_min and w_max must be finite")
+        if self.w_min > self.w_max:
+            raise ValueError("w_min must be <= w_max")
+        if not math.isfinite(self.base_weight) or not (
+            self.w_min <= self.base_weight <= self.w_max
+        ):
+            raise ValueError("base_weight must be finite and within [w_min, w_max]")
+        if not math.isfinite(self.glut_per_spike) or self.glut_per_spike < 0.0:
+            raise ValueError("glut_per_spike must be finite and non-negative")
+        if not math.isfinite(self.ca_threshold) or self.ca_threshold < 0.0:
+            raise ValueError("ca_threshold must be finite and non-negative")
+        if not math.isfinite(self.facilitation) or self.facilitation < 0.0:
+            raise ValueError("facilitation must be finite and non-negative")
+        if not math.isfinite(self.depression_rate) or self.depression_rate < 0.0:
+            raise ValueError("depression_rate must be finite and non-negative")
+
         self.weight = self.base_weight
         self.astrocyte = AstrocyteModel()
         self._glut_current = 0.0  # accumulated glutamate signal
@@ -83,6 +100,13 @@ class TripartiteSynapse:
         float
             Effective synaptic weight (base_weight * astrocyte modulation).
         """
+        if type(pre_spike) is not bool:
+            raise TypeError("pre_spike must be a bool")
+        if type(post_spike) is not bool:
+            raise TypeError("post_spike must be a bool")
+        if not math.isfinite(dt) or dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+
         # Pre-synaptic activity → glutamate → IP3
         if pre_spike:
             self._glut_current += self.glut_per_spike
