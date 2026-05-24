@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 import numpy as np
 
 
@@ -30,7 +31,19 @@ class ResonateAndFireNeuron:
     threshold: float = 1.0
     dt: float = 0.05
 
+    def __post_init__(self) -> None:
+        for name in ("x", "y", "b", "omega"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite")
+        for name in ("threshold", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0:
+                raise ValueError(f"{name} must be finite and positive")
+
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         dx = (self.b * self.x - self.omega * self.y + current) * self.dt
         dy = (self.omega * self.x + self.b * self.y) * self.dt
         self.x += dx
