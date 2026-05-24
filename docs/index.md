@@ -89,7 +89,7 @@ print(output)  # array of firing-rate probabilities
 |------|---------|:--------------:|
 | **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware | Yes |
 | **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, training | Yes |
-| **Domain bridges** | quantum API guards, adapters/holonomic, scpn | API guards ship; Qiskit/PennyLane/JAX extras are opt-in |
+| **Domain bridges** | quantum API guards, adapters/holonomic, scpn | API guards ship; Qiskit/PennyLane/JAX extras are research-grade opt-ins |
 | **Research** | robotics, physics, bio, optics, chaos, sleep, interfaces | Source only |
 | **Frontier** | analysis, viz, audio, dashboard, generative, world_model, swarm | Source only |
 
