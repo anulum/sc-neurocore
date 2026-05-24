@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 import numpy as np
 
 
@@ -28,11 +29,26 @@ class ParametricLIFNeuron:
     threshold: float = 1.0
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        for name in ("v", "a"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite")
+        if not math.isfinite(self.threshold) or self.threshold <= 0.0:
+            raise ValueError("threshold must be finite and positive")
+        if not math.isfinite(self.dt) or self.dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+
     @property
     def alpha(self) -> float:
-        return 1.0 / (1.0 + np.exp(-self.a))
+        if self.a >= 0.0:
+            z = np.exp(-self.a)
+            return 1.0 / (1.0 + z)
+        z = np.exp(self.a)
+        return z / (1.0 + z)
 
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
         spike = 1 if self.v >= self.threshold else 0
         self.v = self.alpha * self.v * (1 - spike) + current
         return 1 if self.v >= self.threshold else 0

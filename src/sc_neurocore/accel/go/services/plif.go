@@ -14,26 +14,65 @@ import (
 
 // ParametricLIFNeuronState holds the neuron state
 type ParametricLIFNeuronState struct {
-	V float64
-	A float64
+	V         float64
+	A         float64
 	Threshold float64
-	Dt float64
+	Dt        float64
 }
 
 // NewParametricLIFNeuron creates a new ParametricLIFNeuron neuron with default parameters
 func NewParametricLIFNeuron() *ParametricLIFNeuronState {
 	return &ParametricLIFNeuronState{
-		V: 0.0,
-		A: 0.0,
+		V:         0.0,
+		A:         0.0,
 		Threshold: 1.0,
-		Dt: 1.0,
+		Dt:        1.0,
 	}
 }
 
 // Step advances the neuron by one timestep
 func (s *ParametricLIFNeuronState) Step(iExt float64) int {
-	_ = iExt
+	if !s.Valid() || !isFinitePLIF(iExt) {
+		return 0
+	}
+
+	spike := 0.0
+	if s.V >= s.Threshold {
+		spike = 1.0
+	}
+	s.V = s.Alpha()*s.V*(1.0-spike) + iExt
+	if s.V >= s.Threshold {
+		return 1
+	}
 	return 0
+}
+
+// Alpha returns the stable sigmoid of the learnable decay parameter.
+func (s *ParametricLIFNeuronState) Alpha() float64 {
+	if s.A >= 0.0 {
+		z := math.Exp(-s.A)
+		return 1.0 / (1.0 + z)
+	}
+	z := math.Exp(s.A)
+	return z / (1.0 + z)
+}
+
+// Valid returns true when the state satisfies the PLIF physics contract.
+func (s *ParametricLIFNeuronState) Valid() bool {
+	return isFinitePLIF(s.V) &&
+		isFinitePLIF(s.A) &&
+		isFinitePLIF(s.Threshold) &&
+		s.Threshold > 0.0 &&
+		isFinitePLIF(s.Dt) &&
+		s.Dt > 0.0
+}
+
+func (s *ParametricLIFNeuronState) Reset() {
+	s.V = 0.0
+}
+
+func isFinitePLIF(x float64) bool {
+	return !math.IsNaN(x) && !math.IsInf(x, 0)
 }
 
 // SimulateParametricLIFNeuron runs the neuron for n steps
@@ -50,5 +89,3 @@ func SimulateParametricLIFNeuron(nSteps int, iExt float64) ([]float64, int) {
 	}
 	return trace, spikes
 }
-
-var _ = math.Exp
