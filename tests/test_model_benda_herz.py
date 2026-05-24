@@ -14,6 +14,7 @@ from instantaneous f-I curve with adaptation variable A."""
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.benda_herz import BendaHerzNeuron
 from sc_neurocore.network.population import Population
@@ -77,6 +78,44 @@ class TestBendaHerzIsolation:
             n.step(30.0)
         n.reset()
         assert n.a == 0.0
+
+
+class TestBendaHerzValidation:
+    @pytest.mark.parametrize("a", [-1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_negative_or_non_finite_adaptation_state(self, a: float):
+        with pytest.raises(ValueError, match="a"):
+            BendaHerzNeuron(a=a)
+
+    @pytest.mark.parametrize("field", ["f_max", "beta", "tau_a", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            BendaHerzNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["i_half", "delta_a"])
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_threshold_and_adaptation_gain(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            BendaHerzNeuron(**{field: value})
+
+    def test_rejects_negative_adaptation_gain(self):
+        with pytest.raises(ValueError, match="delta_a"):
+            BendaHerzNeuron(delta_a=-1.0)
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = BendaHerzNeuron(a=0.5)
+        before = n.a
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert n.a == before
+
+    def test_rejects_spike_probability_above_one_before_state_mutation(self):
+        n = BendaHerzNeuron(f_max=2000.0, a=0.5)
+        before = n.a
+        with pytest.raises(ValueError, match="probability"):
+            n.step(100.0)
+        assert n.a == before
 
 
 class TestBendaHerzNetwork:
