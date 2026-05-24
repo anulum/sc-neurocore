@@ -8,10 +8,6 @@
 
 package services
 
-import (
-	"math"
-)
-
 // StochasticIFNeuronState holds the neuron state
 type StochasticIFNeuronState struct {
 	V          float64
@@ -62,10 +58,6 @@ func ValidateStochasticIF(s *StochasticIFNeuronState) bool {
 		finite(s.TauM) && s.TauM > 0.0 &&
 		finite(s.Mu) && finite(s.Sigma) && s.Sigma >= 0.0 &&
 		finite(s.Dt) && s.Dt > 0.0
-}
-
-func finite(v float64) bool {
-	return !math.IsNaN(v) && !math.IsInf(v, 0)
 }
 
 // SimulateStochasticIFNeuron runs the neuron for n steps

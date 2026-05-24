@@ -70,10 +70,6 @@ func ValidateGalvesLocherbach(s *GalvesLocherbachNeuronState) bool {
 		finite(s.Dt) && s.Dt > 0.0 && s.Dt <= 1.0
 }
 
-func finite(v float64) bool {
-	return !math.IsNaN(v) && !math.IsInf(v, 0)
-}
-
 // SimulateGalvesLocherbachNeuron runs the neuron for n steps
 func SimulateGalvesLocherbachNeuron(nSteps int, iExt float64) ([]float64, int) {
 	s := NewGalvesLocherbachNeuron()

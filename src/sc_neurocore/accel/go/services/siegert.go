@@ -8,10 +8,6 @@
 
 package services
 
-import (
-	"math"
-)
-
 // SiegertTransferFunctionState holds the neuron state
 type SiegertTransferFunctionState struct {
 	TauM       float64
@@ -47,10 +43,6 @@ func ValidateSiegert(s *SiegertTransferFunctionState) bool {
 	}
 	return finite(s.TauM) && s.TauM > 0.0 && finite(s.TauRp) && s.TauRp > 0.0 &&
 		finite(s.VThreshold) && finite(s.VReset) && finite(s.VRest) && s.VThreshold > s.VReset
-}
-
-func finite(v float64) bool {
-	return !math.IsNaN(v) && !math.IsInf(v, 0)
 }
 
 // SimulateSiegertTransferFunction runs the neuron for n steps

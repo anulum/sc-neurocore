@@ -55,10 +55,6 @@ func ValidatePoisson(s *PoissonNeuronState) bool {
 	return finite(s.RateHz) && s.RateHz >= 0.0 && finite(s.DtMs) && s.DtMs > 0.0
 }
 
-func finite(v float64) bool {
-	return !math.IsNaN(v) && !math.IsInf(v, 0)
-}
-
 // SimulatePoissonNeuron runs the neuron for n steps
 func SimulatePoissonNeuron(nSteps int, iExt float64) ([]float64, int) {
 	s := NewPoissonNeuron()

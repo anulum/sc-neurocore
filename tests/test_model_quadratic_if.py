@@ -88,12 +88,23 @@ class TestQIFValidation:
         with pytest.raises(ValueError, match="v_peak"):
             QuadraticIFNeuron(v_reset=v_reset, v_peak=v_peak)
 
+    def test_rejects_initial_voltage_at_or_above_peak(self):
+        with pytest.raises(ValueError, match="v must be below v_peak"):
+            QuadraticIFNeuron(v=1.0)
+
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
     def test_rejects_non_finite_current_before_state_mutation(self, current: float):
         n = QuadraticIFNeuron(v=-0.25)
         before = n.v
         with pytest.raises(ValueError, match="current"):
             n.step(current)
+        assert n.v == before
+
+    def test_rejects_non_finite_euler_increment_before_state_mutation(self):
+        n = QuadraticIFNeuron(v=-1.0e200)
+        before = n.v
+        with pytest.raises(ValueError, match="Euler increment"):
+            n.step(0.0)
         assert n.v == before
 
 
