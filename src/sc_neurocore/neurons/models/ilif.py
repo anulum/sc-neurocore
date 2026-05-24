@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 import numpy as np
 
 
@@ -34,10 +35,25 @@ class InhibitoryLIFNeuron:
     alpha_inh: float = field(init=False)
 
     def __post_init__(self) -> None:
+        for field_name in ("v", "v_reset"):
+            if not math.isfinite(getattr(self, field_name)):
+                raise ValueError(f"{field_name} must be finite")
+        for field_name in ("inh_trace", "inh_strength"):
+            value = getattr(self, field_name)
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"{field_name} must be finite and non-negative")
+        for field_name in ("tau_m", "tau_inh", "v_threshold", "dt"):
+            value = getattr(self, field_name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field_name} must be finite and positive")
         self.alpha_m = np.exp(-self.dt / self.tau_m)
         self.alpha_inh = np.exp(-self.dt / self.tau_inh)
 
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+        if not math.isfinite(self.inh_trace) or self.inh_trace < 0.0:
+            raise ValueError("inh_trace must be finite and non-negative")
         self.inh_trace *= self.alpha_inh
         self.v = self.alpha_m * self.v + current - self.inh_strength * self.inh_trace
         if self.v >= self.v_threshold:
