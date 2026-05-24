@@ -112,12 +112,34 @@ class TestPerfectIntegratorValidation:
         with pytest.raises(ValueError, match=field):
             PerfectIntegratorNeuron(**{field: value})
 
+    @pytest.mark.parametrize(
+        ("v_threshold", "v_reset"),
+        [
+            (0.0, 0.0),
+            (-1.0, 0.0),
+        ],
+    )
+    def test_rejects_non_positive_threshold_excursion(self, v_threshold: float, v_reset: float):
+        with pytest.raises(ValueError, match="v_threshold"):
+            PerfectIntegratorNeuron(v_threshold=v_threshold, v_reset=v_reset)
+
+    def test_rejects_initial_voltage_at_or_above_threshold(self):
+        with pytest.raises(ValueError, match="v must be below v_threshold"):
+            PerfectIntegratorNeuron(v=1.0)
+
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
     def test_rejects_non_finite_current_before_state_mutation(self, current: float):
         n = PerfectIntegratorNeuron(v=0.25)
         before = n.v
         with pytest.raises(ValueError, match="current"):
             n.step(current)
+        assert n.v == before
+
+    def test_rejects_non_finite_voltage_increment_before_state_mutation(self):
+        n = PerfectIntegratorNeuron(v=0.25, v_threshold=1.0e308, c_m=1.0e-308)
+        before = n.v
+        with pytest.raises(ValueError, match="voltage increment"):
+            n.step(1.0e308)
         assert n.v == before
 
 
@@ -276,11 +298,10 @@ class TestPerfectIntegratorEdgeCases:
         # dV = 5.0 * 1.0 = 5.0 >= 1.0
         assert n.step(5.0) == 1
 
-    def test_threshold_equals_reset_always_fires(self):
-        """If θ == v_reset, every step with I>0 should spike."""
-        n = PerfectIntegratorNeuron(v_threshold=0.0, v_reset=0.0)
-        spikes = sum(n.step(1.0) for _ in range(100))
-        assert spikes == 100
+    def test_threshold_must_exceed_reset(self):
+        """Zero threshold excursion is a degenerate no-distance ISI."""
+        with pytest.raises(ValueError, match="v_threshold"):
+            PerfectIntegratorNeuron(v_threshold=0.0, v_reset=0.0)
 
     def test_floating_point_accumulation(self):
         """Document fp rounding: 10 additions of 0.1 ≠ 1.0 exactly.
@@ -369,16 +390,16 @@ class TestPerfectIntegratorNetwork:
     def test_two_populations_different_drive(self):
         """Stronger drive → more spikes across a population."""
         pop_weak = Population(PerfectIntegratorNeuron, n=10, label="weak")
-        pop_strong = Population(PerfectIntegratorNeuron, n=10, label="strong")
+        pop_high_drive = Population(PerfectIntegratorNeuron, n=10, label="high_drive")
         drive_weak = PoissonInput(n=10, rate_hz=100.0, weight=2.0, dt=0.001, seed=42)
-        drive_strong = PoissonInput(n=10, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
+        drive_high_drive = PoissonInput(n=10, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
         mon_weak = SpikeMonitor(pop_weak)
-        mon_strong = SpikeMonitor(pop_strong)
+        mon_high_drive = SpikeMonitor(pop_high_drive)
         net_weak = Network(pop_weak, drive_weak, mon_weak)
-        net_strong = Network(pop_strong, drive_strong, mon_strong)
+        net_high_drive = Network(pop_high_drive, drive_high_drive, mon_high_drive)
         net_weak.run(duration=0.5, dt=0.001, backend="python")
-        net_strong.run(duration=0.5, dt=0.001, backend="python")
-        assert mon_strong.count > mon_weak.count
+        net_high_drive.run(duration=0.5, dt=0.001, backend="python")
+        assert mon_high_drive.count > mon_weak.count
 
 
 # ---------------------------------------------------------------------------

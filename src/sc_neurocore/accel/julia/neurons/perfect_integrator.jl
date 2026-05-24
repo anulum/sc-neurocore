@@ -8,7 +8,7 @@
 
 module PerfectIntegratorAccel
 
-export step!, simulate, PerfectIntegratorNeuronState
+export step!, simulate, PerfectIntegratorNeuronState, valid, reset!
 
 mutable struct PerfectIntegratorNeuronState
     v::Float64
@@ -22,17 +22,38 @@ function PerfectIntegratorNeuronState()
     PerfectIntegratorNeuronState(0.0, 1.0, 1.0, 0.0, 0.1)
 end
 
-function step!(s::PerfectIntegratorNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        s.v += I_ext / s.c_m * s.dt
-        if s.v >= s.v_threshold
-            s.v = s.v_reset
-            return 1
-        end
-        return 0
-    catch _e
+function valid(s::PerfectIntegratorNeuronState)::Bool
+    return isfinite(s.v) &&
+        isfinite(s.c_m) && s.c_m > 0.0 &&
+        isfinite(s.v_threshold) &&
+        isfinite(s.v_reset) && s.v_threshold > s.v_reset &&
+        s.v < s.v_threshold &&
+        isfinite(s.dt) && s.dt > 0.0
+end
+
+function step!(s::PerfectIntegratorNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
+    s.dt = dt
+    if !isfinite(I_ext) || !valid(s)
         return 0
     end
+
+    voltage_increment = I_ext / s.c_m * s.dt
+    next_v = s.v + voltage_increment
+    if !isfinite(voltage_increment) || !isfinite(next_v)
+        return 0
+    end
+
+    s.v = next_v
+    if s.v >= s.v_threshold
+        s.v = s.v_reset
+        return 1
+    end
+    return 0
+end
+
+function reset!(s::PerfectIntegratorNeuronState)::Nothing
+    s.v = s.v_reset
+    return nothing
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
@@ -42,7 +63,7 @@ function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
     for t in 1:n_steps
         result = step!(s, I_ext; dt=dt)
         trace[t] = s.v
-        if result isa Number && result > 0
+        if result > 0
             spikes += 1
         end
     end
