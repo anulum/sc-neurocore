@@ -13,6 +13,7 @@ from __future__ import annotations
 import time
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.gated_lif import GatedLIFNeuron
 from sc_neurocore.network.population import Population
@@ -42,6 +43,38 @@ class TestIsolation:
         for _ in range(100):
             n.step(5.0)
         n.reset()
+
+
+class TestValidation:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("v", np.nan),
+            ("gate_i", np.inf),
+        ],
+    )
+    def test_rejects_non_finite_state_or_input_gate(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            GatedLIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("gate_v", [-0.1, 1.1, np.nan, np.inf])
+    def test_rejects_leak_gate_outside_closed_unit_interval(self, gate_v: float):
+        with pytest.raises(ValueError, match="gate_v"):
+            GatedLIFNeuron(gate_v=gate_v)
+
+    @pytest.mark.parametrize("field", ["v_threshold", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            GatedLIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = GatedLIFNeuron(v=0.25)
+        before = n.v
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert n.v == before
 
 
 class TestDynamics:
