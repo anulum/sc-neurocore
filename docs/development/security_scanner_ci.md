@@ -52,7 +52,8 @@ It does not execute heavyweight scanner binaries in CI yet.
   the output with `security/syft_cyclonedx_summary.json`.
 - The nightly/manual cargo-fuzz lane writes `security/cargo_fuzz_summary.json`
   plus per-target reports such as `security/cargo_fuzz_ir_parser.json`; it runs
-  outside push and pull-request CI with a bounded total time budget.
+  outside push and pull-request CI with a bounded total time budget and installs
+  the maintained `cargo-fuzz` release pinned in the workflow.
 - The nightly/manual benchmark-regression lane writes
   `security/benchmark_regression.json` by regenerating the deterministic
   side-channel benchmark and comparing all numeric metrics against the tracked
