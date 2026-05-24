@@ -83,7 +83,7 @@ impl GammaRenewalNeuron {
         let density = log_f.clamp(-50.0, 50.0).exp();
         let survival = gamma_survival(k, x)?.max(1.0e-15);
         let hazard = density / survival;
-        Ok((hazard * self.dt_ms / 1000.0).clamp(0.0, 1.0))
+        Ok(-(-(hazard * self.dt_ms / 1000.0)).exp_m1())
     }
 
     pub fn reset(&mut self) {

@@ -11,7 +11,9 @@ ISI distribution: $\text{ISI} \sim \text{Gamma}(k, k/\lambda)$ where $\lambda$ =
 
 Hazard function: $h(t) = f(t) / S(t)$ where $f$ = Gamma PDF, $S$ = survival.
 
-$$P(\text{spike in } dt) = h(t) \cdot dt$$
+$$P(\text{spike in } dt) = 1 - \exp\!\left(-h(t) \cdot dt\right)$$
+
+For small timesteps this reduces to $h(t)dt$, but the bounded interval transform is the correct probability of at least one event over a finite bin.
 
 ## Parameters
 
@@ -41,6 +43,8 @@ GammaRenewalNeuron
 ├── Helpers: _log_gamma_int, _gamma_survival (scipy-free)
 └── Rust: supported via NeuronVariant
 ```
+
+Polyglot mirrors enforce the same renewal-boundary contract. Rust, Go, and Julia compute the bounded interval probability from the gamma hazard; Mojo records the same kernel contract. Deterministic safety mirrors only emit guaranteed saturated-probability spikes, while Python and Julia retain stochastic sampling.
 
 ## Test Coverage
 
