@@ -9,6 +9,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
+
 import numpy as np
 
 
@@ -21,8 +23,20 @@ class InhomogeneousPoissonNeuron:
 
     dt_ms: float = 1.0
 
-    def step(self, rate_hz: float) -> int:
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.dt_ms) or self.dt_ms <= 0.0:
+            raise ValueError("dt_ms must be finite and positive")
+
+    def _probability(self, rate_hz: float) -> float:
+        if not math.isfinite(rate_hz):
+            raise ValueError("rate_hz must be finite")
         p = max(0.0, rate_hz) * self.dt_ms / 1000.0
+        if p > 1.0:
+            raise ValueError("spike probability must not exceed one")
+        return p
+
+    def step(self, rate_hz: float) -> int:
+        p = self._probability(rate_hz)
         return 1 if np.random.random() < p else 0
 
     def reset(self) -> None:
