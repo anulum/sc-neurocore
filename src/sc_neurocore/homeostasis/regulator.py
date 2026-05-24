@@ -72,6 +72,15 @@ class NetworkRegulator:
         threshold_step: float = 0.01,
         lr_scale_factor: float = 0.95,
     ):
+        if not np.isfinite(target_rate) or target_rate < 0.0:
+            raise ValueError("target_rate must be finite and non-negative")
+        if not np.isfinite(rate_tolerance) or not 0.0 <= rate_tolerance <= 1.0:
+            raise ValueError("rate_tolerance must be finite and within [0, 1]")
+        if not np.isfinite(threshold_step) or threshold_step < 0.0:
+            raise ValueError("threshold_step must be finite and non-negative")
+        if not np.isfinite(lr_scale_factor) or not 0.0 < lr_scale_factor <= 1.0:
+            raise ValueError("lr_scale_factor must be finite and within (0, 1]")
+
         self.target_rate = target_rate
         self.rate_tolerance = rate_tolerance
         self.threshold_step = threshold_step
@@ -101,6 +110,8 @@ class NetworkRegulator:
         -------
         (new_thresholds, new_lr, StabilityMetrics)
         """
+        self._validate_regulate_inputs(firing_rates, thresholds, learning_rate, weights)
+
         mean_rate = float(firing_rates.mean())
         rate_var = float(firing_rates.var())
         metrics = StabilityMetrics(
@@ -135,6 +146,30 @@ class NetworkRegulator:
             metrics.adjustments_made.append(f"lr *{self.lr_scale_factor}")
 
         return new_thresholds, new_lr, metrics
+
+    @staticmethod
+    def _validate_regulate_inputs(
+        firing_rates: np.ndarray,
+        thresholds: np.ndarray,
+        learning_rate: float,
+        weights: list[np.ndarray] | None,
+    ) -> None:
+        if not isinstance(firing_rates, np.ndarray) or firing_rates.ndim != 1:
+            raise ValueError("regulate firing_rates must be a one-dimensional array")
+        if not np.all(np.isfinite(firing_rates)) or np.any(firing_rates < 0.0):
+            raise ValueError("regulate firing_rates must be finite and non-negative")
+        if not isinstance(thresholds, np.ndarray) or thresholds.ndim != 1:
+            raise ValueError("regulate thresholds must be a one-dimensional array")
+        if thresholds.shape != firing_rates.shape:
+            raise ValueError("regulate thresholds must match firing_rates shape")
+        if not np.all(np.isfinite(thresholds)):
+            raise ValueError("regulate thresholds must be finite")
+        if not np.isfinite(learning_rate) or learning_rate < 0.0:
+            raise ValueError("regulate learning_rate must be finite and non-negative")
+        if weights is not None:
+            for weight in weights:
+                if not isinstance(weight, np.ndarray) or not np.all(np.isfinite(weight)):
+                    raise ValueError("weights must be finite numpy arrays")
 
 
 class SleepConsolidation:

@@ -5,11 +5,36 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from sc_neurocore.homeostasis import NetworkRegulator, SleepConsolidation, StabilityMetrics
 
 
 class TestNetworkRegulator:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("target_rate", -0.1),
+            ("target_rate", float("nan")),
+            ("rate_tolerance", -0.1),
+            ("rate_tolerance", 1.1),
+            ("threshold_step", -0.01),
+            ("lr_scale_factor", 0.0),
+            ("lr_scale_factor", 1.1),
+            ("lr_scale_factor", float("inf")),
+        ],
+    )
+    def test_invalid_regulator_parameters_fail_closed(self, field, value):
+        kwargs = {
+            "target_rate": 0.1,
+            "rate_tolerance": 0.5,
+            "threshold_step": 0.01,
+            "lr_scale_factor": 0.95,
+        }
+        kwargs[field] = value
+        with pytest.raises(ValueError, match=field):
+            NetworkRegulator(**kwargs)
+
     def test_stable(self):
         reg = NetworkRegulator(target_rate=0.1)
         rates = np.full(20, 0.1)
@@ -47,6 +72,29 @@ class TestNetworkRegulator:
         weights = [np.random.randn(10, 10)]
         _, _, m = reg.regulate(rates, thresholds, 0.01, weights=weights)
         assert m.weight_norm > 0
+
+    @pytest.mark.parametrize(
+        ("rates", "thresholds", "learning_rate"),
+        [
+            (np.array([0.1, float("nan")]), np.ones(2), 0.01),
+            (np.array([[0.1, 0.1]]), np.ones(2), 0.01),
+            (np.array([0.1, 0.1]), np.ones((2, 1)), 0.01),
+            (np.array([0.1, 0.1]), np.ones(3), 0.01),
+            (np.array([0.1, 0.1]), np.ones(2), -0.01),
+            (np.array([0.1, 0.1]), np.ones(2), float("inf")),
+        ],
+    )
+    def test_invalid_regulation_inputs_fail_closed(self, rates, thresholds, learning_rate):
+        reg = NetworkRegulator(target_rate=0.1)
+        with pytest.raises(ValueError, match="regulate"):
+            reg.regulate(rates, thresholds, learning_rate)
+
+    def test_invalid_weight_matrix_fails_closed(self):
+        reg = NetworkRegulator(target_rate=0.1)
+        rates = np.full(2, 0.1)
+        thresholds = np.ones(2)
+        with pytest.raises(ValueError, match="weights"):
+            reg.regulate(rates, thresholds, 0.01, weights=[np.array([[1.0, float("nan")]])])
 
     def test_summary(self):
         m = StabilityMetrics(mean_firing_rate=0.15, is_stable=True)
