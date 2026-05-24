@@ -25,21 +25,41 @@ function ClosedFormContinuousNeuronState()
     ClosedFormContinuousNeuronState(0.0, -0.5, 0.8, 1.0, 10.0, 0.0, 1.0, 1.0)
 end
 
+function validate(s::ClosedFormContinuousNeuronState)::Bool
+    isfinite(s.x) &&
+    isfinite(s.w_tau) &&
+    isfinite(s.w_x) &&
+    isfinite(s.w_in) &&
+    isfinite(s.tau_base) && s.tau_base > 0.0 &&
+    isfinite(s.bias) &&
+    isfinite(s.v_threshold) && s.v_threshold > 0.0 &&
+    isfinite(s.dt) && s.dt > 0.0
+end
+
+function _sigmoid(value::Float64)::Float64
+    if value >= 0.0
+        z = exp(-value)
+        return 1.0 / (1.0 + z)
+    end
+    z = exp(value)
+    return z / (1.0 + z)
+end
+
 function step!(s::ClosedFormContinuousNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        sigma_tau = 1.0 / (1.0 + exp(-(s.w_tau * I_ext + s.bias)))
-        tau_eff = max(s.tau_base * sigma_tau, 0.1)
-        f_target = tanh(s.w_x * s.x + s.w_in * I_ext)
-        decay = exp(-s.dt / tau_eff)
-        s.x = s.x * decay + f_target * (1.0 - decay)
-        if s.x >= s.v_threshold
-            s.x = 0.0
-            return 1
-        end
-        return 0
-    catch _e
+    if !validate(s) || !isfinite(I_ext)
         return 0
     end
+
+    sigma_tau = _sigmoid(s.w_tau * I_ext + s.bias)
+    tau_eff = max(s.tau_base * sigma_tau, 0.1)
+    f_target = tanh(s.w_x * s.x + s.w_in * I_ext)
+    decay = exp(-s.dt / tau_eff)
+    s.x = s.x * decay + f_target * (1.0 - decay)
+    if s.x >= s.v_threshold
+        s.x = 0.0
+        return 1
+    end
+    return 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)

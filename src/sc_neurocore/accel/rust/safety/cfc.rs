@@ -35,16 +35,27 @@ impl ClosedFormContinuousNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // sigma_tau = 1.0 / (1.0 + (-(self.w_tau * current + self.bias_f64).exp(
-        // tau_eff = max(self.tau_base * sigma_tau, 0.1)
-        // f_target = (self.w_x * self.x + self.w_in * current_f64).tanh()
-        // decay = (-self.dt / tau_eff_f64).exp()
-        // self.x = self.x * decay + f_target * (1.0 - decay)
-        // if self.x >= self.v_threshold:
-        // self.x = 0.0
-        // return 1
-        // return 0
-        0 // spike indicator
+        if !validate_cfc(self) || !i_ext.is_finite() {
+            return 0;
+        }
+
+        let gate = self.w_tau * i_ext + self.bias;
+        let sigma_tau = if gate >= 0.0 {
+            let z = (-gate).exp();
+            1.0 / (1.0 + z)
+        } else {
+            let z = gate.exp();
+            z / (1.0 + z)
+        };
+        let tau_eff = (self.tau_base * sigma_tau).max(0.1);
+        let f_target = (self.w_x * self.x + self.w_in * i_ext).tanh();
+        let decay = (-self.dt / tau_eff).exp();
+        self.x = self.x * decay + f_target * (1.0 - decay);
+        if self.x >= self.v_threshold {
+            self.x = 0.0;
+            return 1;
+        }
+        0
     }
 
     pub fn reset(&mut self) {
@@ -58,7 +69,17 @@ impl ClosedFormContinuousNeuron {
 }
 
 pub fn validate_cfc(state: &ClosedFormContinuousNeuron) -> bool {
-    true
+    state.x.is_finite()
+        && state.w_tau.is_finite()
+        && state.w_x.is_finite()
+        && state.w_in.is_finite()
+        && state.tau_base.is_finite()
+        && state.tau_base > 0.0
+        && state.bias.is_finite()
+        && state.v_threshold.is_finite()
+        && state.v_threshold > 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
 }
 
 #[cfg(test)]

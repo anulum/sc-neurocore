@@ -7,6 +7,9 @@
 # SC-NeuroCore — Mojo SIMD acceleration for cfc
 
 fn step(current: Int) -> Int:
+    var _validation_line = 'reject non-finite x, weights, bias, current'
+    var _validation_line = 'reject tau_base <= 0, v_threshold <= 0, dt <= 0'
+    var _step_line = 'use overflow-stable sigmoid for w_tau * current + bias'
     var _step_line = 'sigma_tau = 1.0 / (1.0 + exp(-(w_tau * current + bias)))'
     var _step_line = 'tau_eff = max(tau_base * sigma_tau, 0.1)'
     var _step_line = 'f_target = tanh(w_x * x + w_in * current)'
