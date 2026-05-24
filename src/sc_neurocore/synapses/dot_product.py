@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 from dataclasses import dataclass
 from typing import List, Tuple
+import math
 import numpy as np
 
 from .sc_synapse import BitstreamSynapse
@@ -43,8 +44,13 @@ class BitstreamDotProduct:
     synapses: List[BitstreamSynapse]
 
     def __post_init__(self) -> None:
-        if len(self.synapses) == 0:
-            raise ValueError("Need at least one synapse.")
+        if not isinstance(self.synapses, list) or len(self.synapses) == 0:
+            raise ValueError("synapses must be a non-empty list")
+        if not all(isinstance(synapse, BitstreamSynapse) for synapse in self.synapses):
+            raise ValueError("synapses must contain only BitstreamSynapse instances")
+        length = self.synapses[0].length
+        if any(synapse.length != length for synapse in self.synapses):
+            raise ValueError("synapses must share a common bitstream length")
 
     @property
     def n_inputs(self) -> int:
@@ -75,10 +81,23 @@ class BitstreamDotProduct:
         y_scalar : float
             Scalar result representing sum_i P(post_i=1) mapped into [y_min, y_max].
         """
+        if not math.isfinite(y_min) or not math.isfinite(y_max) or y_min >= y_max:
+            raise ValueError("y_min and y_max must be finite with y_min < y_max")
+        if not isinstance(pre_matrix, np.ndarray):
+            raise ValueError("pre_matrix must be a numpy array")
+        if pre_matrix.ndim != 2:
+            raise ValueError("pre_matrix must be a two-dimensional bitstream matrix")
         if pre_matrix.shape[0] != self.n_inputs:
             raise ValueError(
-                f"Expected {self.n_inputs} input bitstreams, got {pre_matrix.shape[0]}"
+                f"pre_matrix expected {self.n_inputs} input bitstreams, got {pre_matrix.shape[0]}"
             )
+        expected_length = self.synapses[0].length
+        if pre_matrix.shape[1] != expected_length:
+            raise ValueError(
+                f"pre_matrix expected bitstream length {expected_length}, got {pre_matrix.shape[1]}"
+            )
+        if not np.all((pre_matrix == 0) | (pre_matrix == 1)):
+            raise ValueError("pre_matrix must contain only binary values 0 or 1")
 
         post_matrix = np.zeros_like(pre_matrix, dtype=np.uint8)
         probs = []
