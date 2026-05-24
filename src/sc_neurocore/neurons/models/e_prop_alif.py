@@ -36,10 +36,25 @@ class EPropALIFNeuron:
     alpha_a: float = field(init=False)
 
     def __post_init__(self) -> None:
+        for name in ("v", "a", "e_trace", "v_threshold_base", "v_reset"):
+            if not np.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite")
+        if not np.isfinite(self.tau_m) or self.tau_m <= 0.0:
+            raise ValueError("tau_m must be finite and positive")
+        if not np.isfinite(self.tau_a) or self.tau_a <= 0.0:
+            raise ValueError("tau_a must be finite and positive")
+        if not np.isfinite(self.beta) or self.beta < 0.0:
+            raise ValueError("beta must be finite and non-negative")
+        if not np.isfinite(self.dt) or self.dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+
         self.alpha_m = np.exp(-self.dt / self.tau_m)
         self.alpha_a = np.exp(-self.dt / self.tau_a)
 
     def step(self, current: float) -> int:
+        if not np.isfinite(current):
+            raise ValueError("current must be finite")
+
         self.v = self.alpha_m * self.v + current
         threshold = self.v_threshold_base + self.beta * self.a
         # Bellec 2020 Eq. 4: pseudo-derivative for eligibility
