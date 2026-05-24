@@ -32,6 +32,7 @@ Reference: SpikingBrain-1.0, arXiv:2509.05276v2, September 2025.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 
 
 @dataclass
@@ -54,11 +55,26 @@ class AdaptiveThresholdMoENeuron:
     v_th: float = field(default=1.0, repr=False)
     _mean_abs_x: float = field(default=0.0, repr=False)
 
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.k) or self.k <= 0.0:
+            raise ValueError("k must be finite and positive")
+        if not math.isfinite(self.ema_alpha) or not (0.0 < self.ema_alpha <= 1.0):
+            raise ValueError("ema_alpha must be finite and in (0, 1]")
+        if not math.isfinite(self.v):
+            raise ValueError("v must be finite")
+        if not math.isfinite(self.v_th) or self.v_th <= 0.0:
+            raise ValueError("v_th must be finite and positive")
+        if not math.isfinite(self._mean_abs_x) or self._mean_abs_x < 0.0:
+            raise ValueError("_mean_abs_x must be finite and non-negative")
+
     def step(self, current: float) -> int:
         """Advance one timestep. Returns integer spike count (>= 0).
 
         Implements: V_th = mean(|x|)/k, v += x, s = round(v/V_th), v -= V_th*s.
         """
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         self._mean_abs_x = (1.0 - self.ema_alpha) * self._mean_abs_x + self.ema_alpha * abs(current)
         self.v_th = self._mean_abs_x / self.k if self._mean_abs_x > 1e-12 else 1.0
         self.v += current
@@ -69,6 +85,9 @@ class AdaptiveThresholdMoENeuron:
 
     def step_collapsed(self, activation: float) -> int:
         """Time-collapsed single-step: s_INT = round(x / V_th)."""
+        if not math.isfinite(activation):
+            raise ValueError("activation must be finite")
+
         self._mean_abs_x = (1.0 - self.ema_alpha) * self._mean_abs_x + self.ema_alpha * abs(
             activation
         )
