@@ -14,35 +14,61 @@ import (
 
 // LearnableNeuronModelState holds the neuron state
 type LearnableNeuronModelState struct {
-	V float64
-	Alpha float64
-	Beta float64
-	Gamma float64
+	V          float64
+	Alpha      float64
+	Beta       float64
+	Gamma      float64
 	VThreshold float64
-	VReset float64
-	FSlope float64
-	FShift float64
+	VReset     float64
+	FSlope     float64
+	FShift     float64
 }
 
 // NewLearnableNeuronModel creates a new LearnableNeuronModel neuron with default parameters
 func NewLearnableNeuronModel() *LearnableNeuronModelState {
 	return &LearnableNeuronModelState{
-		V: 0.0,
-		Alpha: 0.9,
-		Beta: 0.1,
-		Gamma: 0.05,
+		V:          0.0,
+		Alpha:      0.9,
+		Beta:       0.1,
+		Gamma:      0.05,
 		VThreshold: 1.0,
-		VReset: 0.0,
-		FSlope: 5.0,
-		FShift: 0.5,
+		VReset:     0.0,
+		FSlope:     5.0,
+		FShift:     0.5,
 	}
+}
+
+// ValidateLearnableNeuronModel checks that the learnable neuron parameters are finite.
+func ValidateLearnableNeuronModel(s *LearnableNeuronModelState) bool {
+	return s != nil &&
+		!math.IsNaN(s.V) && !math.IsInf(s.V, 0) &&
+		!math.IsNaN(s.Alpha) && !math.IsInf(s.Alpha, 0) &&
+		!math.IsNaN(s.Beta) && !math.IsInf(s.Beta, 0) &&
+		!math.IsNaN(s.Gamma) && !math.IsInf(s.Gamma, 0) &&
+		!math.IsNaN(s.VThreshold) && !math.IsInf(s.VThreshold, 0) && s.VThreshold > 0 &&
+		!math.IsNaN(s.VReset) && !math.IsInf(s.VReset, 0) &&
+		!math.IsNaN(s.FSlope) && !math.IsInf(s.FSlope, 0) && s.FSlope > 0 &&
+		!math.IsNaN(s.FShift) && !math.IsInf(s.FShift, 0)
+}
+
+func lnmSigmoid(value float64) float64 {
+	if value >= 0 {
+		z := math.Exp(-value)
+		return 1.0 / (1.0 + z)
+	}
+	z := math.Exp(value)
+	return z / (1.0 + z)
 }
 
 // Step advances the neuron by one timestep
 func (s *LearnableNeuronModelState) Step(iExt float64) int {
-	vPrev := s.V
-	s.V += iExt * 0.01
-	if s.V >= s.VThreshold && vPrev < s.VThreshold {
+	if !ValidateLearnableNeuronModel(s) || math.IsNaN(iExt) || math.IsInf(iExt, 0) {
+		return 0
+	}
+
+	fV := lnmSigmoid(s.FSlope * (s.V - s.FShift))
+	s.V = s.Alpha*s.V + s.Beta*iExt + s.Gamma*fV
+	if s.V >= s.VThreshold {
 		s.V = s.VReset
 		return 1
 	}

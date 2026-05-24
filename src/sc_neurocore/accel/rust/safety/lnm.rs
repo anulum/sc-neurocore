@@ -35,13 +35,24 @@ impl LearnableNeuronModel {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // f_v = 1.0 / (1.0 + (-self.f_slope * (self.v - self.f_shift_f64).exp())
-        // self.v = self.alpha * self.v + self.beta * current + self.gamma * f_v
-        // if self.v >= self.v_threshold:
-        // self.v = self.v_reset
-        // return 1
-        // return 0
-        0 // spike indicator
+        if !validate_lnm(self) || !i_ext.is_finite() {
+            return 0;
+        }
+
+        let gate = self.f_slope * (self.v - self.f_shift);
+        let f_v = if gate >= 0.0 {
+            let z = (-gate).exp();
+            1.0 / (1.0 + z)
+        } else {
+            let z = gate.exp();
+            z / (1.0 + z)
+        };
+        self.v = self.alpha * self.v + self.beta * i_ext + self.gamma * f_v;
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            return 1;
+        }
+        0
     }
 
     pub fn reset(&mut self) {
@@ -56,6 +67,15 @@ impl LearnableNeuronModel {
 
 pub fn validate_lnm(state: &LearnableNeuronModel) -> bool {
     state.v.is_finite()
+        && state.alpha.is_finite()
+        && state.beta.is_finite()
+        && state.gamma.is_finite()
+        && state.v_threshold.is_finite()
+        && state.v_threshold > 0.0
+        && state.v_reset.is_finite()
+        && state.f_slope.is_finite()
+        && state.f_slope > 0.0
+        && state.f_shift.is_finite()
 }
 
 #[cfg(test)]

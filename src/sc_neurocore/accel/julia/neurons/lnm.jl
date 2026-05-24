@@ -25,18 +25,38 @@ function LearnableNeuronModelState()
     LearnableNeuronModelState(0.0, 0.9, 0.1, 0.05, 1.0, 0.0, 5.0, 0.5)
 end
 
+function validate(s::LearnableNeuronModelState)::Bool
+    isfinite(s.v) &&
+    isfinite(s.alpha) &&
+    isfinite(s.beta) &&
+    isfinite(s.gamma) &&
+    isfinite(s.v_threshold) && s.v_threshold > 0.0 &&
+    isfinite(s.v_reset) &&
+    isfinite(s.f_slope) && s.f_slope > 0.0 &&
+    isfinite(s.f_shift)
+end
+
+function _sigmoid(value::Float64)::Float64
+    if value >= 0.0
+        z = exp(-value)
+        return 1.0 / (1.0 + z)
+    end
+    z = exp(value)
+    return z / (1.0 + z)
+end
+
 function step!(s::LearnableNeuronModelState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        f_v = 1.0 / (1.0 + exp(-s.f_slope * (s.v - s.f_shift)))
-        s.v = s.alpha * s.v + s.beta * I_ext + s.gamma * f_v
-        if s.v >= s.v_threshold
-            s.v = s.v_reset
-            return 1
-        end
-        return 0
-    catch _e
+    if !validate(s) || !isfinite(I_ext)
         return 0
     end
+
+    f_v = _sigmoid(s.f_slope * (s.v - s.f_shift))
+    s.v = s.alpha * s.v + s.beta * I_ext + s.gamma * f_v
+    if s.v >= s.v_threshold
+        s.v = s.v_reset
+        return 1
+    end
+    return 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
