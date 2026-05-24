@@ -48,7 +48,7 @@ def test_manifest_cargo_fuzz_command_uses_packet_runner() -> None:
         "python tools/security_scan/run_cargo_fuzz_scanners.py "
         "--output-dir security/ci-security-packet --target all --max-total-time 300"
     )
-    assert scanners["cargo-fuzz-nightly"]["pinned_version"] == "cargo-fuzz==0.11.2"
+    assert scanners["cargo-fuzz-nightly"]["pinned_version"] == "cargo-fuzz==0.13.1"
 
 
 def test_discovers_fuzz_targets_from_cargo_manifest() -> None:
@@ -78,7 +78,7 @@ def test_runner_executes_each_target_with_bounded_time_and_writes_summary(tmp_pa
         assert capture_output is True
         assert text is True
         assert check is False
-        assert timeout == 50
+        assert timeout == 320
         calls.append(command)
         return subprocess.CompletedProcess(command, 0, stdout="ok", stderr="")
 
@@ -156,3 +156,37 @@ def test_runner_reports_target_failures_without_dropping_artifacts(tmp_path: Pat
         (tmp_path / "packet" / "security" / "cargo_fuzz_ir_parser.json").read_text(encoding="utf-8")
     )
     assert report["stderr_tail"] == ["crash"]
+
+
+def test_runner_records_timeout_as_target_failure(tmp_path: Path) -> None:
+    tool = _load_tool()
+    repo_root = Path(__file__).resolve().parents[2]
+
+    def fake_run(
+        command: list[str],
+        *,
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        timeout: int,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, capture_output, text, check
+        raise subprocess.TimeoutExpired(command, timeout, output="partial", stderr="still running")
+
+    summary = tool.run_cargo_fuzz_scanners(
+        repo_root=repo_root,
+        output_dir=tmp_path / "packet",
+        selected_targets=("ir_parser",),
+        max_total_time=5,
+        run_command=fake_run,
+    )
+
+    assert summary["passed"] is False
+    assert summary["failed_targets"] == ["ir_parser"]
+    report = json.loads(
+        (tmp_path / "packet" / "security" / "cargo_fuzz_ir_parser.json").read_text(encoding="utf-8")
+    )
+    assert report["returncode"] == 124
+    assert report["stdout_tail"] == ["partial"]
+    assert report["stderr_tail"] == ["still running", "command timed out after 305 seconds"]
