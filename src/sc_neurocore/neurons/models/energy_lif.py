@@ -45,6 +45,14 @@ class EnergyLIFNeuron:
                 raise ValueError(f"{field} must be finite and positive")
         if not math.isfinite(self.alpha) or self.alpha < 0.0:
             raise ValueError("alpha must be finite and non-negative")
+        if self.epsilon > self.epsilon_0:
+            raise ValueError("epsilon must not exceed epsilon_0")
+        if self.dt > self.tau_m or self.dt > self.tau_e:
+            raise ValueError("dt must not exceed tau_m or tau_e")
+        if self.v_threshold <= self.v_rest:
+            raise ValueError("v_threshold must be greater than v_rest")
+        if self.v_threshold <= self.v_reset:
+            raise ValueError("v_threshold must be greater than v_reset")
 
     def step(self, current: float) -> int:
         if not math.isfinite(current):

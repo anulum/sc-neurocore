@@ -90,6 +90,29 @@ class TestEnergyLIFValidation:
         with pytest.raises(ValueError, match=field):
             EnergyLIFNeuron(**{field: value})
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"epsilon": 1.1},
+            {"epsilon": 0.2, "epsilon_0": 0.1},
+            {"v_threshold": -75.0},
+            {"v_reset": -45.0},
+            {"dt": 11.0},
+            {"dt": 501.0},
+        ],
+    )
+    def test_rejects_non_physical_energy_geometry_or_timestep(self, kwargs):
+        with pytest.raises(ValueError):
+            EnergyLIFNeuron(**kwargs)
+
+    def test_energy_recovery_is_monotone_and_bounded_without_spike(self):
+        n = EnergyLIFNeuron(epsilon=0.2)
+        before = n.epsilon
+
+        assert n.step(0.0) == 0
+
+        assert before < n.epsilon < n.epsilon_0
+
     @pytest.mark.parametrize("field", ["tau_m", "tau_e", "resistance", "dt"])
     @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
     def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
