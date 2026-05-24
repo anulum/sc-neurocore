@@ -9,13 +9,14 @@
 """Full pipeline test for AstrocyteNeuron (adapter wrapping AstrocyteModel).
 
 Converts Ca²⁺ → spike: fires when Ca > ca_threshold. Population-compatible.
-step() returns int {0,1}. Performance: ~86K steps/s. FULL PIPELINE WIRED."""
+step() returns int {0,1}. Performance: ~86K steps/s."""
 
 from __future__ import annotations
 
 import time
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.astrocyte_adapter import AstrocyteNeuron
 from sc_neurocore.network.population import Population
@@ -69,6 +70,29 @@ class TestAstrocyteAdapterIsolation:
             n.step(1.0)
         n.reset()
         assert n.v == 0.05  # ca initial
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"ca_threshold": -0.01},
+            {"ca_threshold": float("nan")},
+            {"ca_threshold": float("inf")},
+            {"dt": 0.0},
+            {"dt": -0.01},
+            {"dt": float("nan")},
+            {"dt": float("inf")},
+        ],
+    )
+    def test_rejects_non_physical_adapter_parameters(self, kwargs):
+        """Adapter threshold and timestep must be finite physical parameters."""
+        with pytest.raises(ValueError):
+            AstrocyteNeuron(**kwargs)
+
+    @pytest.mark.parametrize("current", [-0.01, float("nan"), float("inf")])
+    def test_rejects_non_physical_adapter_drive(self, current):
+        """Adapter must preserve the finite non-negative IP3 drive contract."""
+        with pytest.raises(ValueError, match="current"):
+            AstrocyteNeuron().step(current)
 
 
 class TestAstrocyteAdapterSpikeConversion:

@@ -26,6 +26,7 @@ Reference: De Pittà, M. et al. (2011). J. Biol. Phys. 37:195–230.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 from .astrocyte import AstrocyteModel
 
@@ -47,6 +48,8 @@ class AstrocyteNeuron:
     dt: float = 0.01
 
     def __post_init__(self) -> None:
+        if not math.isfinite(self.ca_threshold) or self.ca_threshold < 0.0:
+            raise ValueError("ca_threshold must be finite and non-negative")
         self._astro = AstrocyteModel(dt=self.dt)
         self.v = self._astro.ca
 
