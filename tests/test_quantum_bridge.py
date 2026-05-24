@@ -48,3 +48,15 @@ def test_pennylane_backend():
     assert out_bits.shape == (2, 100)
     assert np.mean(out_bits[0, :]) > 0.9
     assert np.mean(out_bits[1, :]) < 0.1
+
+
+def test_quantum_hardware_bridge_rejects_unknown_backend():
+    layer = QuantumHardwareLayer.__new__(QuantumHardwareLayer)
+    layer.n_qubits = 2
+    layer.length = 64
+    layer.backend_type = "unknown"
+    layer._qiskit_simulator = None
+    layer._pennylane_dev = None
+
+    with pytest.raises(ValueError, match="Unknown backend"):
+        layer.forward(np.zeros((2, 64), dtype=np.uint8))

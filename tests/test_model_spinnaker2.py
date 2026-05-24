@@ -174,3 +174,19 @@ class TestSpiNNaker2Pipeline:
             trace = [(n.step(500), n.v) for _ in range(200)]
             traces.append(trace)
         assert traces[0] == traces[1]
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestSpiNNaker2:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.spinnaker2 import SpiNNaker2Neuron
+
+        n = SpiNNaker2Neuron()
+        assert sum(n.step(200) for _ in range(100)) > 0
+
+    def test_fixed_point(self):
+        from sc_neurocore.neurons.models.spinnaker2 import SpiNNaker2Neuron
+
+        n = SpiNNaker2Neuron()
+        n.step(100)
+        assert isinstance(n.v, int)

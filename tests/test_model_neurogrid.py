@@ -338,3 +338,23 @@ class TestNGPipeline:
         if sc > 0:
             expected = sc / duration
             assert abs(rate - expected) < expected * 0.1
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestNeuroGrid:
+    def test_dynamics(self):
+        from sc_neurocore.neurons.models.neurogrid import NeuroGridNeuron
+
+        n = NeuroGridNeuron()
+        for _ in range(200):
+            n.step(10.0)
+        assert n.v_s != n.v_d, "soma and dendrite should differ"
+
+    def test_reset(self):
+        from sc_neurocore.neurons.models.neurogrid import NeuroGridNeuron
+
+        n = NeuroGridNeuron()
+        for _ in range(50):
+            n.step(5.0)
+        n.reset()
+        assert abs(n.v_s - n.v_rest) < 1e-10

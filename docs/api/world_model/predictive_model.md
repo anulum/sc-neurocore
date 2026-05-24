@@ -131,8 +131,8 @@ agreement.
 - `sc_neurocore.world_model.planner.SCPlanner` — calls
   `predict_next_state` / `forecast` to evaluate candidate
   action sequences.
-- `tests/test_interfaces_generative_worldmodel.py` — exercises
-  the legacy API with `state_dim=4, action_dim=2`.
+- `tests/test_world_model/test_predictive_model.py` — exercises
+  predictive-model contracts, likelihood behaviour, and legacy API compatibility.
 
 Re-exported via `sc_neurocore.world_model.__init__`:
 
@@ -248,9 +248,9 @@ Captured run in
   enforced the legacy `transition_matrix` design;
   added `test_predict_next_state_obeys_ssm_dynamics`
   asserting `output == A·x + B·u`.
-- `tests/test_interfaces_generative_worldmodel.py` — pre-existing
-  4 tests for the legacy API; pass unchanged after the rewrite
-  (API preserved for backwards compatibility).
+- `tests/test_world_model/test_predictive_model.py` — dedicated predictive-model
+  tests for the legacy API and LGSSM behaviour; API preserved for backwards
+  compatibility.
 - `src/sc_neurocore/accel/rust/safety/predictive_model.rs` —
   Rust safety mirror for the LGSSM Kalman contract, including
   shape validation, positive-definite covariance validation,

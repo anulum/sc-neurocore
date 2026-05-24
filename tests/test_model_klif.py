@@ -240,3 +240,12 @@ class TestKLIFPipeline:
         train = np.array([float(n.step(1.0)) for _ in range(5000)])
         rate = firing_rate(train, dt=0.001)
         assert rate > 0
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestKLIF:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.klif import KLIFNeuron
+
+        n = KLIFNeuron()
+        assert sum(n.step(0.5) for _ in range(50)) > 0

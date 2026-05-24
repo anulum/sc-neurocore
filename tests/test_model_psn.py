@@ -221,3 +221,13 @@ class TestPSNPipeline:
         if sc > 0:
             expected = sc / duration
             assert abs(rate - expected) < expected * 0.1
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestParallelSpikingNeuron:
+    def test_dynamics(self):
+        from sc_neurocore.neurons.models.psn import ParallelSpikingNeuron
+
+        n = ParallelSpikingNeuron()
+        results = [n.step(0.3) for _ in range(20)]
+        assert any(r != 0 for r in results) or any(b != 0.0 for b in n.buffer)

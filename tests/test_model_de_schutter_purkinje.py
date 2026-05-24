@@ -103,3 +103,23 @@ class TestDeSchutterPipeline:
         net = Network(pop, drive, mon)
         net.run(duration=1.0, dt=0.001, backend="python")
         assert isinstance(mon.count, int)
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestDeSchutterPurkinje:
+    def test_dynamics(self):
+        from sc_neurocore.neurons.models.de_schutter_purkinje import DeSchutterPurkinjeNeuron
+
+        n = DeSchutterPurkinjeNeuron()
+        for _ in range(200):
+            n.step(20.0)
+        assert n.ca != 0.0001, "calcium must evolve"
+
+    def test_gating_bounded(self):
+        from sc_neurocore.neurons.models.de_schutter_purkinje import DeSchutterPurkinjeNeuron
+
+        n = DeSchutterPurkinjeNeuron()
+        for _ in range(100):
+            n.step(15.0)
+        assert 0.0 <= n.h_na <= 1.0
+        assert 0.0 <= n.n_k <= 1.0

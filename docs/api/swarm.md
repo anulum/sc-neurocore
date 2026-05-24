@@ -438,8 +438,8 @@ the same effort would extend naturally to swarm.
 | `from sc_neurocore.swarm import SwarmAgent, ...` | `swarm/__init__.py:23-27` | `tests/test_swarm.py` |
 | `SwarmEvolver` injects weights into every agent | `evaluate_individual` (`neuroevolution_swarm.py:107`) | `tests/test_swarm_control.py::test_evolver_*` |
 | `SwarmEnvironment.step` builds sensory vector + calls agent.think + boundary | `swarm_env.py:153` | `tests/test_swarm.py` |
-| `CollectiveFields.update` runs diffusion + emotion sync + symbolic decay | `collective_fields.py:195` | `tests/test_swarm_coverage.py` |
-| `SwarmFitness.composite` reads positions / headings / targets / obstacles | `fitness.py:114` | `tests/test_swarm_coverage.py` |
+| `CollectiveFields.update` runs diffusion + emotion sync + symbolic decay | `collective_fields.py:195` | `tests/test_swarm_fitness_contracts.py` |
+| `SwarmFitness.composite` reads positions / headings / targets / obstacles | `fitness.py:114` | `tests/test_swarm_fitness_contracts.py` |
 
 Every public symbol terminates in a tested call site; no orphan
 helpers.
@@ -451,7 +451,7 @@ helpers.
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | All 9 symbols re-exported and used by the tests |
-| 2 | Multi-angle tests | ✅ PASS | 73 tests across 3 files (test_swarm 52L, test_swarm_control 291L, test_swarm_coverage 184L) |
+| 2 | Multi-angle tests | ✅ PASS | 73 tests across 3 files (test_swarm 52L, test_swarm_control 291L, test_swarm_fitness_contracts 184L) |
 | 3 | Rust path | ❌ FAIL | Pure Python; `_apply_laplacian` and `get_pairwise_distances` dominate at n ≥ 100 (§8) |
 | 4 | Benchmarks | ✅ PASS | §8.1 + §8.2 measured this session |
 | 5 | Performance docs | ✅ PASS | §8 |
@@ -521,7 +521,7 @@ generation count, or add a fixed-seed evaluation pass at the end.
 PYTHONPATH=src python3 -m pytest \
     tests/test_swarm.py \
     tests/test_swarm_control.py \
-    tests/test_swarm_coverage.py -q
+    tests/test_swarm_fitness_contracts.py -q
 # 73 passed in 6.32s (verified 2026-04-17)
 ```
 
@@ -534,7 +534,7 @@ What the existing tests cover:
   capture, boundary modes (wrap + clamp), field deposit / decay,
   emotional sync, symbolic field, `evolve_generation` return type,
   evolver `get_best_weights` correctness, fitness composite weights
-- **`test_swarm_coverage.py`** (184L): individual fitness scorer
+- **`test_swarm_fitness_contracts.py`** (184L): individual fitness scorer
   edge cases (empty positions, single agent, all-same heading, etc.),
   symbolic field deposit + decay, obstacle penalty for agent on
   exact boundary

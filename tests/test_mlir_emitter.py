@@ -36,6 +36,23 @@ def test_mlir_emitter_basic():
     # print(mlir)
 
 
+def test_mlir_emitter_emits_xor_operation():
+    emitter = MLIREmitter("test_xor")
+    lhs_and_rhs = emitter.emit_and("in1", "in2")
+
+    emitter.emit_xor(lhs_and_rhs, "in1")
+
+    assert "comb.xor" in emitter.generate()
+
+
+def test_mlir_emitter_emits_mux_operation():
+    emitter = MLIREmitter("test_mux")
+
+    emitter.emit_mux("cond", "t", "f")
+
+    assert "comb.mux" in emitter.generate()
+
+
 def test_mlir_bundle_writes_manifest(tmp_path):
     emitter = MLIREmitter("native_sc_top")
     lhs = emitter.emit_lfsr(8, 0x5A)

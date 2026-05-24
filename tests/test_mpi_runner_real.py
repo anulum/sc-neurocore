@@ -40,7 +40,7 @@ mpi4py = pytest.importorskip("mpi4py")
 # Worker script that each MPI rank executes. Path is resolved relative
 # to this test file so the test is hermetic (works regardless of CWD).
 HERE = Path(__file__).parent
-WORKER = HERE / "_mpi_helpers" / "mpi_smoke_runner.py"
+WORKER = HERE / "_mpi_helpers" / "mpi_runner_worker.py"
 
 
 def _mpirun_available() -> bool:

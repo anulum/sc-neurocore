@@ -553,8 +553,8 @@ SHARED_CONTEXT.md. Not blocking; future cleanup.
 ```bash
 PYTHONPATH=src python3 -m pytest \
     tests/test_network_basic.py \
-    tests/test_network_coverage.py \
     tests/test_network_monitors_stimulus.py \
+    tests/test_network/test_to_torch_bridge.py \
     tests/test_cortical_column.py \
     tests/test_cortical_column_dynamics.py \
     tests/test_gamma_oscillation.py \
@@ -567,8 +567,8 @@ What the existing tests cover:
 
 - `test_network_basic.py` — Network construction, add(), run() with each
   backend dispatch path, all monitor types, stimuli, plasticity flag
-- `test_network_coverage.py` — edge cases on `_can_use_rust`, FIM feedback,
-  spike gating, `_apply_plasticity`/`_apply_fim` correctness
+- `test_network/test_to_torch_bridge.py` — Network-to-Torch projection
+  contracts, malformed connectivity rejection, and bridge parity checks
 - `test_network_monitors_stimulus.py` — Spike/State/Rate monitor
   determinism, Poisson seed reproducibility, TimedArray clamping
 - `test_topology.py`, `test_topology_generators.py` — every generator's

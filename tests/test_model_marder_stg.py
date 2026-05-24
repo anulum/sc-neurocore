@@ -513,3 +513,20 @@ class TestSTGPipeline:
         if sc > 0:
             expected = sc / duration
             assert abs(rate - expected) < expected * 0.1
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestMarderSTG:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.marder_stg import MarderSTGNeuron
+
+        n = MarderSTGNeuron()
+        assert sum(n.step(3.0) for _ in range(500)) > 0
+
+    def test_calcium(self):
+        from sc_neurocore.neurons.models.marder_stg import MarderSTGNeuron
+
+        n = MarderSTGNeuron()
+        for _ in range(100):
+            n.step(3.0)
+        assert n.ca != 0.0

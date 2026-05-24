@@ -118,3 +118,20 @@ class TestDurstewitzPipeline:
         assert sc >= 10
         rate = firing_rate(train, dt=0.001)
         assert rate > 0
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestDurstewitzDopamine:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.durstewitz_dopamine import DurstewitzDopamineNeuron
+
+        n = DurstewitzDopamineNeuron()
+        assert sum(n.step(10.0) for _ in range(300)) > 0
+
+    def test_d1_modulation(self):
+        from sc_neurocore.neurons.models.durstewitz_dopamine import DurstewitzDopamineNeuron
+
+        n = DurstewitzDopamineNeuron(d1_level=0.8)
+        for _ in range(100):
+            n.step(8.0)
+        assert n.v != -65.0

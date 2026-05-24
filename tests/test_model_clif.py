@@ -255,3 +255,21 @@ class TestCLIFPipeline:
         assert rate > 0
         duration = 10000 * 0.001
         assert abs(rate - sc / duration) < 10.0
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestComplementaryLIF:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.clif import ComplementaryLIFNeuron
+
+        n = ComplementaryLIFNeuron()
+        spikes = [n.step(0.5) for _ in range(50)]
+        assert any(s != 0 for s in spikes)
+
+    def test_paths_diverge(self):
+        from sc_neurocore.neurons.models.clif import ComplementaryLIFNeuron
+
+        n = ComplementaryLIFNeuron()
+        for _ in range(20):
+            n.step(0.5)
+        assert n.v_pos > 0.0 or n.v_neg > 0.0

@@ -172,3 +172,19 @@ class TestLoihi2Pipeline:
 
         train = np.array([float(n.step(200)) for _ in range(5000)])
         assert spike_count(train) >= 20
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestLoihi2:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.loihi2 import Loihi2Neuron
+
+        n = Loihi2Neuron()
+        assert sum(n.step(200) for _ in range(100)) > 0
+
+    def test_integer_state(self):
+        from sc_neurocore.neurons.models.loihi2 import Loihi2Neuron
+
+        n = Loihi2Neuron()
+        n.step(100)
+        assert isinstance(n.s1, int)

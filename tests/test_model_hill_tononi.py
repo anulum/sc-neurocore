@@ -255,3 +255,20 @@ class TestHTPipeline:
         train = np.array([float(n.step(0.0)) for _ in range(10_000)])
         rate = firing_rate(train, dt=0.00005)
         assert rate > 0
+
+
+# Salvaged model-specific behavioural contracts from retired aggregate test file.
+class TestHillTononi:
+    def test_fires(self):
+        from sc_neurocore.neurons.models.hill_tononi import HillTononiNeuron
+
+        n = HillTononiNeuron()
+        assert sum(n.step(5.0) for _ in range(300)) > 0
+
+    def test_h_current_evolves(self):
+        from sc_neurocore.neurons.models.hill_tononi import HillTononiNeuron
+
+        n = HillTononiNeuron()
+        for _ in range(100):
+            n.step(3.0)
+        assert n.m_h != 0.0
