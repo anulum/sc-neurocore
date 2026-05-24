@@ -2,6 +2,18 @@
 
 Backend modules for high-performance SC operations.
 
+The shipped acceleration contract is the Python package plus maintained
+optional Rust engine paths and explicitly documented optional backends. The
+Julia, Go, Mojo, and WGSL sources in the repository form a research-only
+polyglot benchmark layer: they are used for parity checks, timing studies, and
+future backend evaluation, but they are not installed by default and are not
+required for deployment.
+
+Do not treat the presence of a language mirror under `src/sc_neurocore/accel/`
+as a shipped runtime guarantee. A backend becomes part of the supported user
+surface only when a maintained Python entrypoint, install profile, tests, and
+documentation all name that path explicitly.
+
 | Module | Purpose |
 |--------|---------|
 | `vector_ops` | Packed uint64 bitwise AND, popcount, pack/unpack |
