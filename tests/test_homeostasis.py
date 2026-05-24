@@ -103,6 +103,28 @@ class TestNetworkRegulator:
 
 
 class TestSleepConsolidation:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("decay_exponent", -0.1),
+            ("decay_exponent", float("nan")),
+            ("noise_amplitude", -0.01),
+            ("noise_amplitude", float("inf")),
+            ("duration_fraction", 0.0),
+            ("duration_fraction", 1.1),
+            ("duration_fraction", float("nan")),
+        ],
+    )
+    def test_invalid_sleep_parameters_fail_closed(self, field, value):
+        kwargs = {
+            "decay_exponent": 0.5,
+            "noise_amplitude": 0.01,
+            "duration_fraction": 0.1,
+        }
+        kwargs[field] = value
+        with pytest.raises(ValueError, match=field):
+            SleepConsolidation(**kwargs)
+
     def test_apply(self):
         sleep = SleepConsolidation(decay_exponent=0.5, noise_amplitude=0.001)
         weights = [np.random.randn(10, 10)]
@@ -125,3 +147,26 @@ class TestSleepConsolidation:
         assert sleep.should_sleep(10, 100)
         assert sleep.should_sleep(20, 100)
         assert not sleep.should_sleep(5, 100)
+
+    @pytest.mark.parametrize(
+        "weights",
+        [
+            [],
+            [np.array([[1.0, float("nan")]])],
+            [np.array([[1.0, float("inf")]])],
+            [[1.0, 2.0]],
+        ],
+    )
+    def test_invalid_sleep_weights_fail_closed(self, weights):
+        sleep = SleepConsolidation()
+        with pytest.raises(ValueError, match="weights"):
+            sleep.apply(weights)
+
+    @pytest.mark.parametrize(
+        ("epoch", "total_epochs"),
+        [(-1, 10), (1, 0), (1, -10), (float("nan"), 10)],
+    )
+    def test_invalid_sleep_schedule_fails_closed(self, epoch, total_epochs):
+        sleep = SleepConsolidation()
+        with pytest.raises(ValueError, match="epoch"):
+            sleep.should_sleep(epoch, total_epochs)
