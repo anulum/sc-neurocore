@@ -8,7 +8,7 @@
 
 module PoissonAccel
 
-export step!, simulate, PoissonNeuronState
+export step!, simulate, validate_poisson, PoissonNeuronState
 
 mutable struct PoissonNeuronState
     rate_hz::Float64
@@ -21,13 +21,20 @@ function PoissonNeuronState()
 end
 
 function step!(s::PoissonNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        r = (rate_override < 0) ? s.rate_hz : rate_override
-        p = r * s.dt_ms / 1000.0
-        return (s._rng.random() < p) ? 1 : 0
-    catch _e
+    if !validate_poisson(s) || !isfinite(I_ext)
         return 0
     end
+
+    rate_hz = I_ext < 0.0 ? s.rate_hz : I_ext
+    if !isfinite(rate_hz) || rate_hz < 0.0
+        return 0
+    end
+    p_spike = -expm1(-(rate_hz * s.dt_ms / 1000.0))
+    return rand() < p_spike ? 1 : 0
+end
+
+function validate_poisson(s::PoissonNeuronState)
+    return isfinite(s.rate_hz) && s.rate_hz >= 0.0 && isfinite(s.dt_ms) && s.dt_ms > 0.0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)

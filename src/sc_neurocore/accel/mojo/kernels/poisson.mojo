@@ -7,8 +7,10 @@
 # SC-NeuroCore — Mojo SIMD acceleration for poisson
 
 fn step(rate_override: Int) -> Int:
+    var _validation_line = 'rate_hz and rate_override must be finite and non-negative when active'
+    var _validation_line = 'dt_ms must be positive and finite'
     var _step_line = 'r = rate_hz if rate_override < 0 else rate_override'
-    var _step_line = 'p = r * dt_ms / 1000.0'
+    var _step_line = 'p = -expm1(-(r * dt_ms / 1000.0))'
     return 0  # return 1 if _rng.random() < p else 0
 
 fn reset() -> Int:

@@ -25,10 +25,19 @@ impl PoissonNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // r = self.rate_hz if rate_override < 0 else rate_override
-        // p = r * self.dt_ms / 1000.0
-        // return 1 if self._rng.random() < p else 0
-        0 // spike indicator
+        if !validate_poisson(self) || !i_ext.is_finite() {
+            return 0;
+        }
+
+        let rate_hz = if i_ext < 0.0 { self.rate_hz } else { i_ext };
+        if !rate_hz.is_finite() || rate_hz < 0.0 {
+            return 0;
+        }
+        let p_spike = -(-(rate_hz * self.dt_ms / 1000.0)).exp_m1();
+        if p_spike >= 1.0 {
+            return 1;
+        }
+        0
     }
 
     pub fn reset(&mut self) {
@@ -40,7 +49,10 @@ impl PoissonNeuron {
 }
 
 pub fn validate_poisson(state: &PoissonNeuron) -> bool {
-    true
+    state.rate_hz.is_finite()
+        && state.rate_hz >= 0.0
+        && state.dt_ms.is_finite()
+        && state.dt_ms > 0.0
 }
 
 #[cfg(test)]

@@ -7,7 +7,7 @@
 
 ## Equations
 
-$$P(\text{spike in } dt) = \lambda \cdot dt / 1000$$
+$$P(\text{spike in } dt) = 1 - \exp\!\left(-\lambda \cdot dt / 1000\right)$$
 
 No membrane dynamics. Pure Bernoulli trial each step.
 
@@ -21,7 +21,7 @@ No membrane dynamics. Pure Bernoulli trial each step.
 ## Behaviour
 
 - **Stateless:** No voltage, no memory. Each step is an independent Bernoulli trial.
-- **Rate-coded:** Spike probability = λ·dt/1000. At rate=100Hz, dt=1ms: P=0.1.
+- **Rate-coded:** Spike probability = 1 − exp(−λ·dt/1000). At rate=100Hz, dt=1ms: P≈0.09516.
 - **rate_override:** `step(rate_override=X)` overrides stored rate. Negative value
   uses stored rate_hz (API convention).
 - **No refractory period:** Consecutive spikes (ISI=1) are allowed.
@@ -34,10 +34,10 @@ No membrane dynamics. Pure Bernoulli trial each step.
 
 | Property | Value |
 |----------|-------|
-| Mean spike count | $N \cdot \lambda \cdot dt / 1000$ |
+| Mean spike count | $N \cdot (1 - \exp(-\lambda \cdot dt / 1000))$ |
 | Variance | $N \cdot p(1-p)$ |
 | CV(ISI) | $\sqrt{1-p}/p \cdot p = \sqrt{1-p} \approx 1$ for small p |
-| Mean ISI | $1000 / (\lambda \cdot dt)$ steps |
+| Mean ISI | $1 / (1 - \exp(-\lambda \cdot dt / 1000))$ steps |
 
 ## Infrastructure Pipeline
 
@@ -46,7 +46,7 @@ PoissonNeuron
 ├── step(rate_override?) → int {0,1} (stochastic)
 ├── Population: PoissonInput ignored (fires at own rate)
 ├── Verilog: LFSR comparator, ~15 LUTs
-└── Rust: supported (stateless)
+└── Rust/Go/Julia/Mojo: bounded interval probability contract
 ```
 
 ## Test Coverage
@@ -54,13 +54,13 @@ PoissonNeuron
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
 | Isolation | 4 | defaults, binary, RNG init, reset no-op |
-| Rate | 8 | mean matches λ, 4-point proportionality, monotonicity, zero rate, rate_override, negative override |
+| Rate | 8 | mean matches finite-step Poisson probability, 4-point proportionality, monotonicity, zero rate, rate_override, negative override |
 | ISI | 3 | geometric mean ISI, CV≈1, no refractory (ISI=1 exists) |
 | dt scaling | 2 | dt doubles probability, small dt rare spikes |
 | Stochasticity | 2 | different neurons differ, stateless (history-independent) |
 | Network | 2 | population, spikes |
 | Analysis | 2 | spike_count, consistency |
-| **Total** | **24** | |
+| **Total** | **module-specific** | |
 
 
 ---
@@ -102,8 +102,8 @@ State returns to initial values after `reset()`.
 `Population(PoissonNeuron, n=10)` creates correct instances.
 **Status: PASS**
 
-### 7. Rust parity
-**N/A** — stochastic model, exact parity not applicable.
+### 7. Polyglot mirrors
+Rust and Go safety mirrors validate parameters and deterministically emit only saturated-probability spikes. Julia uses the bounded probability with stochastic Bernoulli sampling. Exact random-trace parity is not applicable to stochastic sampling.
 
 ---
 
@@ -111,5 +111,5 @@ State returns to initial values after `reset()`.
 
 1. Throughput: ~402K steps/s (Python, single-thread)
 2. All pipeline stages verified green
-3. Rust parity: N/A
+3. Polyglot mirrors: bounded probability contract aligned; exact random-trace parity is not applicable
 4. Numerical stability confirmed over 20K steps

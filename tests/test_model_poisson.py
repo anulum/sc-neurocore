@@ -8,10 +8,12 @@
 
 """Full pipeline test for PoissonNeuron (Poisson spike generator).
 
-Stateless process: P(spike in dt) = λ·dt/1000.
+Stateless process: P(spike in dt) = 1 - exp(-λ·dt/1000).
 No membrane dynamics — pure stochastic rate coding."""
 
 from __future__ import annotations
+
+import math
 
 import numpy as np
 import pytest
@@ -22,6 +24,10 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
+
+
+def _poisson_step_probability(rate_hz: float, dt_ms: float) -> float:
+    return -math.expm1(-rate_hz * dt_ms / 1000.0)
 
 
 # ---------------------------------------------------------------------------
@@ -57,17 +63,17 @@ class TestPoissonIsolation:
 
 class TestPoissonRate:
     def test_mean_rate_matches_lambda(self):
-        """Over many trials, spike rate ≈ λ·dt/1000.
+        """Over many trials, spike rate ≈ 1 - exp(-λ·dt/1000).
 
-        At rate=100Hz, dt=1ms: P(spike) = 0.1.
-        Over 100k steps: expected ≈ 10000 ± ~100 (3σ).
+        At rate=100Hz, dt=1ms: P(spike) ≈ 0.09516.
         """
         n = PoissonNeuron(rate_hz=100.0, dt_ms=1.0)
         N = 100000
         spikes = sum(n.step() for _ in range(N))
-        expected = N * 100.0 * 1.0 / 1000.0  # 10000
+        p = _poisson_step_probability(100.0, 1.0)
+        expected = N * p
         # 5σ tolerance for statistical test
-        sigma = np.sqrt(N * 0.1 * 0.9)
+        sigma = np.sqrt(N * p * (1.0 - p))
         assert abs(spikes - expected) < 5 * sigma, (
             f"spikes={spikes}, expected={expected:.0f}, 5σ={5 * sigma:.0f}"
         )
@@ -78,8 +84,9 @@ class TestPoissonRate:
         n = PoissonNeuron(rate_hz=rate_hz, dt_ms=1.0)
         N = 50000
         spikes = sum(n.step() for _ in range(N))
-        expected = N * rate_hz / 1000.0
-        sigma = np.sqrt(N * rate_hz / 1000.0 * (1 - rate_hz / 1000.0))
+        p = _poisson_step_probability(rate_hz, 1.0)
+        expected = N * p
+        sigma = np.sqrt(N * p * (1.0 - p))
         assert abs(spikes - expected) < 5 * sigma
 
     def test_higher_rate_more_spikes(self):
@@ -122,7 +129,7 @@ class TestPoissonISI:
         """For Poisson process, ISI follows geometric distribution.
 
         Mean ISI = 1/p where p = λ·dt/1000.
-        For rate=200Hz, dt=1ms: p=0.2, mean ISI=5 steps.
+        For rate=200Hz, dt=1ms: p=1-exp(-0.2), mean ISI=1/p steps.
         """
         n = PoissonNeuron(rate_hz=200.0, dt_ms=1.0)
         spike_times = []
@@ -132,7 +139,7 @@ class TestPoissonISI:
         isis = np.diff(spike_times).astype(float)
         assert len(isis) >= 1000
         mean_isi = np.mean(isis)
-        expected_mean = 1000.0 / (200.0 * 1.0)  # 5.0
+        expected_mean = 1.0 / _poisson_step_probability(200.0, 1.0)
         assert abs(mean_isi - expected_mean) < 0.5, (
             f"mean ISI={mean_isi:.2f}, expected ≈{expected_mean:.1f}"
         )
@@ -196,9 +203,9 @@ class TestPoissonValidation:
         with pytest.raises(ValueError, match="dt_ms"):
             PoissonNeuron(dt_ms=dt_ms)
 
-    def test_rejects_baseline_probability_above_one(self):
-        with pytest.raises(ValueError, match="probability"):
-            PoissonNeuron(rate_hz=2000.0, dt_ms=1.0)
+    def test_probability_uses_bounded_poisson_interval_transform(self):
+        neuron = PoissonNeuron(rate_hz=2000.0, dt_ms=1.0)
+        assert neuron._probability(neuron.rate_hz) == pytest.approx(1.0 - math.exp(-2.0))
 
     @pytest.mark.parametrize("rate_override", [np.nan, np.inf, -np.inf])
     def test_rejects_non_finite_rate_override(self, rate_override: float):
@@ -206,10 +213,10 @@ class TestPoissonValidation:
         with pytest.raises(ValueError, match="rate_override"):
             n.step(rate_override=rate_override)
 
-    def test_rejects_override_probability_above_one_before_sampling(self):
+    def test_high_rate_override_saturates_without_invalid_probability(self):
         n = PoissonNeuron(rate_hz=100.0, dt_ms=1.0)
-        with pytest.raises(ValueError, match="probability"):
-            n.step(rate_override=2000.0)
+        spikes = sum(n.step(rate_override=1.0e9) for _ in range(100))
+        assert spikes == 100
 
 
 # ---------------------------------------------------------------------------
@@ -234,8 +241,9 @@ class TestPoissonStochasticity:
         for _ in range(10000):
             n.step()
         spikes_after = sum(n.step() for _ in range(50000))
-        expected = 50000 * 0.2
-        sigma = np.sqrt(50000 * 0.2 * 0.8)
+        p = _poisson_step_probability(200.0, 1.0)
+        expected = 50000 * p
+        sigma = np.sqrt(50000 * p * (1.0 - p))
         assert abs(spikes_after - expected) < 5 * sigma
 
 

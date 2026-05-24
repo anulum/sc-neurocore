@@ -18,7 +18,7 @@ import numpy as np
 class PoissonNeuron:
     """Poisson spike generator — stochastic firing at rate λ.
 
-    P(spike in dt) = λ · dt. Essential for input layer generation.
+    P(spike in dt) = 1 - exp(-λ · dt). Essential for input layer generation.
 
     Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §7.2.
     """
@@ -36,10 +36,10 @@ class PoissonNeuron:
         self._rng = np.random.default_rng()
 
     def _probability(self, rate_hz: float) -> float:
-        p = rate_hz * self.dt_ms / 1000.0
-        if p > 1.0:
-            raise ValueError("spike probability must not exceed one")
-        return p
+        if not math.isfinite(rate_hz) or rate_hz < 0.0:
+            raise ValueError("rate_hz must be finite and non-negative")
+        hazard = rate_hz * self.dt_ms / 1000.0
+        return -math.expm1(-hazard)
 
     def step(self, rate_override: float = -1.0) -> int:
         if not math.isfinite(rate_override):
