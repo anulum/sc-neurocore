@@ -1,15 +1,7 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
-// Commercial license available
-// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-// © Code 2020–2026 Miroslav Šotek. All rights reserved.
-// ORCID: 0009-0009-3560-0851
-// Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for nlif
+//! Safety surface for the nonlinear leaky integrate-and-fire neuron.
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
-#[derive(Debug, Clone)]
-pub struct NonlinearLIFNeuron {
+#[derive(Clone, Copy, Debug)]
+pub struct NonlinearLifState {
     pub v: f64,
     pub w: f64,
     pub v_rest: f64,
@@ -23,49 +15,69 @@ pub struct NonlinearLIFNeuron {
     pub dt: f64,
 }
 
-impl NonlinearLIFNeuron {
-    pub fn new() -> Self {
+impl Default for NonlinearLifState {
+    fn default() -> Self {
         Self {
-            v: -65.0_f64,
-            w: 0.0_f64,
-            v_rest: -65.0_f64,
-            v_crit: -40.0_f64,
-            v_threshold: -20.0_f64,
-            v_reset: -65.0_f64,
-            a: 0.04_f64,
-            b: 0.5_f64,
-            tau_w: 100.0_f64,
-            c_m: 1.0_f64,
-            dt: 0.1_f64,
+            v: -65.0,
+            w: 0.0,
+            v_rest: -65.0,
+            v_crit: -40.0,
+            v_threshold: -20.0,
+            v_reset: -65.0,
+            a: 0.04,
+            b: 0.5,
+            tau_w: 100.0,
+            c_m: 1.0,
+            dt: 0.1,
         }
-    }
-
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // cubic = self.a * (self.v - self.v_rest) * (self.v - self.v_crit)
-        // dv = (cubic - self.w + current) / self.c_m * self.dt
-        // dw = (self.b * (self.v - self.v_rest) - self.w) / self.tau_w * self.dt
-        // self.v += dv
-        // self.w += dw
-        // if self.v >= self.v_threshold:
-        // self.v = self.v_reset
-        // return 1
-        // return 0
-        0 // spike indicator
-    }
-
-    pub fn reset(&mut self) {
-        // self.v = self.v_rest
-        // self.w = 0.0
-        self.v = -65.0_f64;
-        self.w = 0.0_f64;
-        self.v_rest = -65.0_f64;
-        self.v_crit = -40.0_f64;
-        self.v_threshold = -20.0_f64;
     }
 }
 
-pub fn validate_nlif(state: &NonlinearLIFNeuron) -> bool {
+pub fn validate_nlif(state: &NonlinearLifState) -> bool {
     state.v.is_finite()
+        && state.w.is_finite()
+        && state.v_rest.is_finite()
+        && state.v_crit.is_finite()
+        && state.v_threshold.is_finite()
+        && state.v_reset.is_finite()
+        && state.a.is_finite()
+        && state.b.is_finite()
+        && state.tau_w.is_finite()
+        && state.c_m.is_finite()
+        && state.dt.is_finite()
+        && state.v_rest < state.v_crit
+        && state.v_crit < state.v_threshold
+        && state.v_reset < state.v_threshold
+        && state.a >= 0.0
+        && state.b >= 0.0
+        && state.tau_w > 0.0
+        && state.c_m > 0.0
+        && state.dt > 0.0
+        && state.dt <= state.tau_w
+}
+
+pub fn step(state: &mut NonlinearLifState, current: f64) -> i32 {
+    if !current.is_finite() || !validate_nlif(state) {
+        return 0;
+    }
+
+    let cubic = state.a * (state.v - state.v_rest) * (state.v - state.v_crit);
+    let dv = (cubic - state.w + current) / state.c_m * state.dt;
+    let dw = (state.b * (state.v - state.v_rest) - state.w) / state.tau_w * state.dt;
+    state.v += dv;
+    state.w += dw;
+
+    if state.v >= state.v_threshold {
+        state.v = state.v_reset;
+        1
+    } else {
+        0
+    }
+}
+
+pub fn reset(state: &mut NonlinearLifState) {
+    state.v = state.v_rest;
+    state.w = 0.0;
 }
 
 #[cfg(test)]
@@ -73,16 +85,35 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_nlif_new() {
-        let state = NonlinearLIFNeuron::new();
-        assert!(state.v.is_finite());
+    fn validates_voltage_geometry() {
+        let mut state = NonlinearLifState::default();
         assert!(validate_nlif(&state));
+        state.v_crit = -70.0;
+        assert!(!validate_nlif(&state));
     }
 
     #[test]
-    fn test_nlif_step() {
-        let mut state = NonlinearLIFNeuron::new();
-        let spike = state.step(10.0);
-        assert!(spike == 0 || spike == 1);
+    fn rejects_non_finite_current_before_mutation() {
+        let mut state = NonlinearLifState::default();
+        state.v = -60.0;
+        state.w = 0.5;
+        assert_eq!(step(&mut state, f64::NAN), 0);
+        assert_eq!(state.v, -60.0);
+        assert_eq!(state.w, 0.5);
+    }
+
+    #[test]
+    fn reset_preserves_parameters() {
+        let mut state = NonlinearLifState {
+            v: -40.0,
+            w: 2.0,
+            v_rest: -62.0,
+            v_reset: -58.0,
+            ..NonlinearLifState::default()
+        };
+        reset(&mut state);
+        assert_eq!(state.v, -62.0);
+        assert_eq!(state.w, 0.0);
+        assert_eq!(state.v_reset, -58.0);
     }
 }

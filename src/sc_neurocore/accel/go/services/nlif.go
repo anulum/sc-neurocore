@@ -1,73 +1,82 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
-// Commercial license available
-// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-// © Code 2020–2026 Miroslav Šotek. All rights reserved.
-// ORCID: 0009-0009-3560-0851
-// Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go service for nlif
-
 package services
 
-import (
-	"math"
-)
+import "math"
 
-// NonlinearLIFNeuronState holds the neuron state
-type NonlinearLIFNeuronState struct {
-	V float64
-	W float64
-	VRest float64
-	VCrit float64
+// NonlinearLIFState mirrors the production nonlinear LIF state contract.
+type NonlinearLIFState struct {
+	V          float64
+	W          float64
+	VRest      float64
+	VCrit      float64
 	VThreshold float64
-	VReset float64
-	A float64
-	B float64
-	TauW float64
-	CM float64
-	Dt float64
+	VReset     float64
+	A          float64
+	B          float64
+	TauW       float64
+	CM         float64
+	DT         float64
 }
 
-// NewNonlinearLIFNeuron creates a new NonlinearLIFNeuron neuron with default parameters
-func NewNonlinearLIFNeuron() *NonlinearLIFNeuronState {
-	return &NonlinearLIFNeuronState{
-		V: -65.0,
-		W: 0.0,
-		VRest: -65.0,
-		VCrit: -40.0,
+// DefaultNonlinearLIFState returns the canonical NLIF parameters.
+func DefaultNonlinearLIFState() NonlinearLIFState {
+	return NonlinearLIFState{
+		V:          -65.0,
+		W:          0.0,
+		VRest:      -65.0,
+		VCrit:      -40.0,
 		VThreshold: -20.0,
-		VReset: -65.0,
-		A: 0.04,
-		B: 0.5,
-		TauW: 100.0,
-		CM: 1.0,
-		Dt: 0.1,
+		VReset:     -65.0,
+		A:          0.04,
+		B:          0.5,
+		TauW:       100.0,
+		CM:         1.0,
+		DT:         0.1,
 	}
 }
 
-// Step advances the neuron by one timestep
-func (s *NonlinearLIFNeuronState) Step(iExt float64) int {
-	vPrev := s.V
-	s.V += iExt * 0.01
-	if s.V >= s.VThreshold && vPrev < s.VThreshold {
+func nlifFinite(values ...float64) bool {
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
+	}
+	return true
+}
+
+// Valid reports whether the state satisfies the production NLIF contract.
+func (s NonlinearLIFState) Valid() bool {
+	return nlifFinite(s.V, s.W, s.VRest, s.VCrit, s.VThreshold, s.VReset, s.A, s.B, s.TauW, s.CM, s.DT) &&
+		s.VRest < s.VCrit &&
+		s.VCrit < s.VThreshold &&
+		s.VReset < s.VThreshold &&
+		s.A >= 0.0 &&
+		s.B >= 0.0 &&
+		s.TauW > 0.0 &&
+		s.CM > 0.0 &&
+		s.DT > 0.0 &&
+		s.DT <= s.TauW
+}
+
+// Step advances one Euler step and returns 1 on spike. Invalid inputs do not mutate state.
+func (s *NonlinearLIFState) Step(current float64) int {
+	if !nlifFinite(current) || !s.Valid() {
+		return 0
+	}
+
+	cubic := s.A * (s.V - s.VRest) * (s.V - s.VCrit)
+	dv := (cubic - s.W + current) / s.CM * s.DT
+	dw := (s.B*(s.V-s.VRest) - s.W) / s.TauW * s.DT
+	s.V += dv
+	s.W += dw
+	if s.V >= s.VThreshold {
 		s.V = s.VReset
 		return 1
 	}
 	return 0
 }
 
-// SimulateNonlinearLIFNeuron runs the neuron for n steps
-func SimulateNonlinearLIFNeuron(nSteps int, iExt float64) ([]float64, int) {
-	s := NewNonlinearLIFNeuron()
-	trace := make([]float64, nSteps)
-	spikes := 0
-	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
-		trace[t] = s.V
-		if result > 0 {
-			spikes++
-		}
-	}
-	return trace, spikes
+// Reset restores dynamic state without changing parameters.
+func (s *NonlinearLIFState) Reset() {
+	s.V = s.VRest
+	s.W = 0.0
 }
-
-var _ = math.Exp
