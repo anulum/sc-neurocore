@@ -69,13 +69,14 @@ Biological spike trains deviate from Poisson in several ways:
 
 At each timestep, the probability of emitting a spike is:
 
-$$P(\text{spike in } [t, t+dt]) = \max(0, \lambda(t)) \cdot \frac{dt}{1000}$$
+$$P(\text{spike in } [t, t+dt]) = 1 - \exp\!\left(-\max(0, \lambda(t)) \cdot \frac{dt}{1000}\right)$$
 
 where:
 - $\lambda(t)$ is the instantaneous firing rate in Hz (passed as argument to `step()`)
 - $dt$ is the timestep in ms (default: 1.0 ms)
 - The factor 1/1000 converts from Hz (spikes/s) to spikes/ms
 - $\max(0, \cdot)$ clamps negative rates to zero
+- The exponential transform is the exact finite-interval probability for at least one event in a Poisson process with constant rate across the timestep.
 
 ### Spike decision
 
@@ -83,24 +84,22 @@ A uniform random number $U \sim \text{Uniform}(0, 1)$ is drawn. A spike is emitt
 
 $$U < P(\text{spike})$$
 
-This is the standard Bernoulli trial approximation of a Poisson process, valid when
-$P(\text{spike}) \ll 1$ (i.e., λ × dt ≪ 1000 Hz).
+This is a Bernoulli draw from the exact finite-interval probability of at least one Poisson event. For small timesteps it reduces to the familiar approximation $P \approx \lambda dt / 1000$.
 
-### Validity of the approximation
+### Single-spike timestep representation
 
-The Bernoulli trial approximation produces at most 1 spike per timestep. For the
-approximation to be accurate:
+The finite-interval probability correctly saturates in $[0,1]$, but the neuron still represents at most one spike per timestep. For high rates, reduce `dt_ms` if multiple within-bin events matter:
 
 $$\lambda \cdot dt / 1000 \ll 1$$
 
-| Rate (Hz) | dt (ms) | P(spike) | Accuracy |
+| Rate (Hz) | dt (ms) | P(at least one spike) | Bin adequacy |
 |-----------|---------|----------|----------|
-| 10 | 1.0 | 0.01 | Excellent |
-| 50 | 1.0 | 0.05 | Good |
-| 100 | 1.0 | 0.10 | Acceptable |
-| 500 | 1.0 | 0.50 | Poor (many missed double-spikes) |
-| 1000 | 1.0 | 1.00 | Invalid (saturated at 1 spike/step) |
-| 100 | 0.1 | 0.01 | Excellent (reduce dt for high rates) |
+| 10 | 1.0 | 0.00995 | high |
+| 50 | 1.0 | 0.0488 | high |
+| 100 | 1.0 | 0.0952 | moderate |
+| 500 | 1.0 | 0.393 | low if multi-spike bins matter |
+| 1000 | 1.0 | 0.632 | low if multi-spike bins matter |
+| 100 | 0.1 | 0.00995 | high |
 
 For rates above ~200 Hz, reduce dt below 1.0 ms to maintain accuracy.
 
@@ -108,10 +107,10 @@ For rates above ~200 Hz, reduce dt below 1.0 ms to maintain accuracy.
 
 For constant rate λ over N steps:
 
-$$E[\text{spikes}] = N \cdot \lambda \cdot dt / 1000$$
+$$E[\text{spikes}] = N \cdot \left(1 - \exp(-\lambda \cdot dt / 1000)\right)$$
 
 At λ = 5 Hz (from STUB data, I=5.0 interpreted as rate_hz):
-$$E[\text{spikes}] = 10000 \times 5 \times 1 / 1000 = 50$$
+$$E[\text{spikes}] = 10000 \times (1 - \exp(-5 \times 1 / 1000)) \approx 49.9$$
 
 The STUB measured 56 spikes (within 1 standard deviation: σ = √50 ≈ 7.1).
 
@@ -119,9 +118,9 @@ The STUB measured 56 spikes (within 1 standard deviation: σ = √50 ≈ 7.1).
 
 For a Poisson process, the variance of the spike count equals the mean:
 
-$$\text{Var}[\text{spikes}] = E[\text{spikes}] = N \cdot \lambda \cdot dt / 1000$$
+$$\text{Var}[\text{spikes}] = Np(1-p), \quad p = 1 - \exp(-\lambda \cdot dt / 1000)$$
 
-This means the Fano factor (variance/mean) = 1, the classic Poisson signature.
+For small bins this approaches the classic Poisson count variance because $p$ is small and $Np \approx N\lambda dt/1000$.
 
 ---
 
@@ -243,7 +242,7 @@ without specifying the seed.
 
 ```
 step(rate_hz) → i32:
-    p = max(rate_hz, 0) × dt_ms / 1000
+    p = 1 - exp(-max(rate_hz, 0) × dt_ms / 1000)
     if rng.random() < p:
         return 1
     return 0
@@ -258,6 +257,7 @@ step(rate_hz) → i32:
    Each `step()` call is independent of all previous calls.
 
 3. **Rate clamped:** `rate_hz.max(0.0)` prevents negative probabilities.
+4. **Polyglot mirrors:** Rust and Go safety mirrors validate `dt_ms` and deterministically emit only saturated-probability spikes; Julia uses the bounded probability with stochastic Bernoulli sampling.
 
 4. **No spike count limit:** P > 1 is possible if rate × dt > 1000, producing
    spikes every step (effective rate cap at 1/dt spikes/step).

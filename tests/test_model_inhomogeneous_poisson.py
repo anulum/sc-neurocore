@@ -17,6 +17,7 @@ FULL PIPELINE WIRED + PERFORMANCE."""
 
 from __future__ import annotations
 
+import math
 import time
 
 import numpy as np
@@ -29,6 +30,10 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
+
+
+def _poisson_interval_probability(rate_hz: float, dt_ms: float) -> float:
+    return -math.expm1(-max(0.0, rate_hz) * dt_ms / 1000.0)
 
 
 def _run(neuron: InhomogeneousPoissonNeuron, rate: float, steps: int) -> list[int]:
@@ -72,20 +77,19 @@ class TestIPIsolation:
 # ---------------------------------------------------------------------------
 class TestIPAnalytical:
     def test_probability_formula(self):
-        """P(spike) = rate_hz · dt_ms / 1000."""
+        """P(spike) = 1 - exp(-rate_hz · dt_ms / 1000)."""
         n = InhomogeneousPoissonNeuron(dt_ms=1.0)
-        # At rate=100 Hz, dt=1ms: P = 100/1000 = 0.1
-        expected_p = 100.0 * 1.0 / 1000.0
-        assert abs(expected_p - 0.1) < 1e-12
+        assert n._probability(100.0) == pytest.approx(1.0 - math.exp(-0.1))
 
     def test_expected_spike_count(self):
-        """E[spikes] = N · rate · dt/1000. Statistical test (5σ tolerance)."""
+        """E[spikes] = N · (1 - exp(-rate · dt/1000)). Statistical test."""
         n = InhomogeneousPoissonNeuron(dt_ms=1.0)
         N = 100_000
         rate = 100.0
         spikes = sum(n.step(rate) for _ in range(N))
-        expected = N * rate * 1.0 / 1000.0  # = 10000
-        std = np.sqrt(N * (rate / 1000.0) * (1 - rate / 1000.0))
+        p = _poisson_interval_probability(rate, 1.0)
+        expected = N * p
+        std = np.sqrt(N * p * (1.0 - p))
         assert abs(spikes - expected) < 5 * std
 
     def test_negative_rate_no_spikes(self):
@@ -99,11 +103,11 @@ class TestIPAnalytical:
         spikes = sum(n.step(0.0) for _ in range(10_000))
         assert spikes == 0
 
-    def test_rejects_probability_above_one(self):
-        """rate=10000, dt=1ms would make P=10, not a valid Bernoulli probability."""
+    def test_high_rate_saturates_without_invalid_probability(self):
+        """High finite rates saturate to one spike per interval without invalid probabilities."""
         n = InhomogeneousPoissonNeuron()
-        with pytest.raises(ValueError, match="probability"):
-            n.step(10000.0)
+        spikes = sum(n.step(1.0e9) for _ in range(100))
+        assert spikes == 100
 
     def test_rate_proportional(self):
         """Double rate → double expected spikes."""

@@ -30,10 +30,8 @@ class InhomogeneousPoissonNeuron:
     def _probability(self, rate_hz: float) -> float:
         if not math.isfinite(rate_hz):
             raise ValueError("rate_hz must be finite")
-        p = max(0.0, rate_hz) * self.dt_ms / 1000.0
-        if p > 1.0:
-            raise ValueError("spike probability must not exceed one")
-        return p
+        hazard = max(0.0, rate_hz) * self.dt_ms / 1000.0
+        return -math.expm1(-hazard)
 
     def step(self, rate_hz: float) -> int:
         p = self._probability(rate_hz)
