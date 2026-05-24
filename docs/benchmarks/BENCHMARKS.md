@@ -5,6 +5,19 @@ and v3.14.0 (FPGA synthesis). All Python numbers are CPU-only (NumPy
 backend). Rust numbers use Criterion with AVX-512 SIMD. Core engine
 performance is unchanged between v3.13.3 and v3.14.0.
 
+## Evidence boundary
+
+This page is a curated benchmark report, not an authority for untracked local
+measurements. Every quoted performance, power, utilisation, timing, or
+hardware-efficiency number must remain traceable to a committed raw artefact:
+JSON or CSV under `benchmarks/results/`, a named tool report under `hdl/` or
+`build/`, or a companion paper artefact with command and environment
+provenance.
+
+When a newer local run exists but its raw output is not committed, cite it only
+as local exploratory evidence. Do not promote it to README, roadmap, release,
+or paper claims until the raw artefact and environment record are committed.
+
 > **v3.14.0 additions:** SHD FPGA synthesis on Zynq XC7Z020 — 1 317 LUT
 > (2.5%), 848 FF (0.8%), WNS +4.048 ns at 100 MHz. See
 > `hdl/reports/vivado_util_xc7z020_100mhz.rpt` for full Vivado report.

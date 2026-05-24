@@ -17,6 +17,10 @@ Commercial Licensing: Available
 - External framework baselines (Norse/Sinabs/Lava CPU) are not yet included in this file and must be added before making ecosystem-level claims.
 - For low-latency use (single sample or micro-batch), prefer `DenseLayer.forward_fast`.
 - For throughput use (batch >= 10), prefer `DenseLayer.forward_batch_numpy`.
+- This report is release evidence only for rows backed by committed benchmark
+  artefacts or named tool reports. New local benchmark numbers must not be
+  promoted into public claims until the raw JSON, CSV, or companion paper
+  artefact plus environment provenance is committed.
 
 ## Fused Dense, Fast PRNG, and Batch Forward Results
 
