@@ -380,6 +380,47 @@ class TestDendriticNMDANeuron:
         assert neuron.v_dend == -65.0
         assert neuron.mg_conc == 1.0
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"g_nmda": -0.01},
+            {"e_nmda": float("nan")},
+            {"mg_conc": -0.01},
+            {"g_coupling": -0.01},
+            {"tau_soma": 0.0},
+            {"tau_dend": 0.0},
+            {"theta": float("inf")},
+            {"dt": 0.0},
+            {"v_soma": float("nan")},
+            {"v_dend": float("inf")},
+        ],
+    )
+    def test_rejects_non_physical_nmda_parameters(self, kwargs):
+        """NMDA compartment parameters must be finite and biophysically bounded."""
+        from sc_neurocore.neurons.models import DendriticNMDANeuron
+
+        with pytest.raises(ValueError):
+            DendriticNMDANeuron(**kwargs)
+
+    @pytest.mark.parametrize("voltage", [float("nan"), float("inf")])
+    def test_rejects_non_finite_mg_block_voltage(self, voltage):
+        """Voltage-dependent magnesium block must reject non-finite voltage."""
+        from sc_neurocore.neurons.models import DendriticNMDANeuron
+
+        with pytest.raises(ValueError, match="voltage"):
+            DendriticNMDANeuron().mg_block(voltage)
+
+    @pytest.mark.parametrize(
+        ("i_soma", "glutamate"),
+        [(float("nan"), 0.0), (0.0, float("inf")), (0.0, -0.01)],
+    )
+    def test_rejects_non_physical_nmda_drive(self, i_soma, glutamate):
+        """Somatic current must be finite and glutamate must be finite non-negative."""
+        from sc_neurocore.neurons.models import DendriticNMDANeuron
+
+        with pytest.raises(ValueError):
+            DendriticNMDANeuron().step(i_soma, glutamate)
+
     def test_step_returns_binary(self, neuron):
         s = neuron.step(10.0, 0.5)
         assert s in (0, 1)
