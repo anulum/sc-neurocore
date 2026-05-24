@@ -9,6 +9,7 @@
 """Tests for Rall branching dendritic tree."""
 
 import numpy as np
+import pytest
 
 from sc_neurocore.layers.rall_dendrite import RallDendrite
 
@@ -70,3 +71,39 @@ class TestRallDendrite:
         bv = d.branch_voltages[0]
         # Distal tip (last) should have higher voltage than proximal (first)
         assert bv[-1] > bv[0]
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"n_branches": 0},
+            {"branch_length": 0},
+            {"tau": 0.0},
+            {"dt": 0.0},
+            {"coupling": -0.1},
+            {"coupling": 1.1},
+        ],
+    )
+    def test_rejects_non_physical_configuration(self, kwargs):
+        """Invalid dendritic geometry or integration constants fail closed."""
+        with pytest.raises(ValueError):
+            RallDendrite(**kwargs)
+
+    @pytest.mark.parametrize(
+        "branch_inputs",
+        [
+            np.array([1.0]),
+            np.array([1.0, 2.0, 3.0]),
+            np.array([[1.0, 2.0]]),
+        ],
+    )
+    def test_rejects_branch_input_shape_mismatch(self, branch_inputs):
+        """Each branch must receive exactly one distal current value."""
+        d = RallDendrite(n_branches=2, branch_length=3)
+        with pytest.raises(ValueError, match="branch_inputs"):
+            d.step(branch_inputs)
+
+    def test_rejects_non_finite_branch_input(self):
+        """Non-finite branch currents must not poison compartment voltages."""
+        d = RallDendrite(n_branches=2, branch_length=3)
+        with pytest.raises(ValueError, match="finite"):
+            d.step(np.array([1.0, np.nan]))
