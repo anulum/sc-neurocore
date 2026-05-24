@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 import numpy as np
 
 
@@ -31,7 +32,21 @@ class SpikeResponseNeuron:
     time_since_spike: float = 1000.0
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        for name in ("v", "v_threshold", "eta_reset"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite")
+        for name in ("tau_eta", "tau_kappa", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0:
+                raise ValueError(f"{name} must be finite and positive")
+        if not math.isfinite(self.time_since_spike) or self.time_since_spike < 0:
+            raise ValueError("time_since_spike must be finite and non-negative")
+
     def step(self, weighted_input: float) -> int:
+        if not math.isfinite(weighted_input):
+            raise ValueError("weighted_input must be finite")
+
         # Refractory kernel (spike afterpotential)
         eta = (
             self.eta_reset * np.exp(-self.time_since_spike / self.tau_eta)
