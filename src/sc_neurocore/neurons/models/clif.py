@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 import numpy as np
 
 
@@ -30,9 +31,18 @@ class ComplementaryLIFNeuron:
     alpha: float = field(init=False)
 
     def __post_init__(self) -> None:
+        for field_name in ("v_pos", "v_neg"):
+            if not math.isfinite(getattr(self, field_name)):
+                raise ValueError(f"{field_name} must be finite")
+        for field_name in ("tau", "dt", "v_threshold"):
+            value = getattr(self, field_name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field_name} must be finite and positive")
         self.alpha = np.exp(-self.dt / self.tau)
 
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
         inp_pos = max(current, 0.0)
         inp_neg = max(-current, 0.0)
         self.v_pos = self.alpha * self.v_pos + inp_pos
