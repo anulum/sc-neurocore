@@ -1013,6 +1013,36 @@ class TestShortTermPlasticitySynapse:
         assert facilitating.u_base == 0.1
         assert facilitating.tau_f == 500.0
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"x": -0.01},
+            {"x": 1.01},
+            {"u": -0.01},
+            {"u": 1.01},
+            {"u_base": 0.0},
+            {"u_base": 1.01},
+            {"tau_d": 0.0},
+            {"tau_f": 0.0},
+            {"amplitude": -0.01},
+            {"dt": 0.0},
+        ],
+    )
+    def test_rejects_non_physical_stp_parameters(self, kwargs):
+        """Tsodyks-Markram resources, utilisation, and constants must be physical."""
+        from sc_neurocore.synapses import ShortTermPlasticitySynapse
+
+        with pytest.raises(ValueError):
+            ShortTermPlasticitySynapse(**kwargs)
+
+    @pytest.mark.parametrize("pre_spike", [1, 0, "yes", None])
+    def test_rejects_non_boolean_stp_spike_flag(self, pre_spike):
+        """Presynaptic event input must be an explicit boolean."""
+        from sc_neurocore.synapses import ShortTermPlasticitySynapse
+
+        with pytest.raises(TypeError, match="pre_spike"):
+            ShortTermPlasticitySynapse().step(pre_spike)
+
     def test_depression_successive_spikes(self, depressing):
         """Depressing synapse: PSC decreases with rapid pre_spikes."""
         pscs = [depressing.step(True) for _ in range(5)]
