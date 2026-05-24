@@ -14,6 +14,7 @@ SpikeMonitor → analysis toolkit → reset. No shortcuts."""
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.adaptive_threshold_if import AdaptiveThresholdIFNeuron
 from sc_neurocore.network.population import Population
@@ -32,10 +33,38 @@ class TestAdaptiveThresholdIFIsolation:
         assert n.v == -65.0
         assert n.theta == -50.0
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"v": float("nan")},
+            {"theta": float("inf")},
+            {"v_rest": float("nan")},
+            {"v_reset": float("inf")},
+            {"theta_rest": float("nan")},
+            {"delta_theta": -0.1},
+            {"delta_theta": float("inf")},
+            {"tau_m": 0.0},
+            {"tau_m": float("nan")},
+            {"tau_theta": 0.0},
+            {"tau_theta": float("inf")},
+            {"dt": 0.0},
+            {"dt": float("nan")},
+        ],
+    )
+    def test_rejects_non_physical_configuration(self, kwargs):
+        with pytest.raises(ValueError):
+            AdaptiveThresholdIFNeuron(**kwargs)
+
     def test_step_returns_binary(self):
         n = AdaptiveThresholdIFNeuron()
         result = n.step(0.0)
         assert result in (0, 1)
+
+    @pytest.mark.parametrize("current", [float("nan"), float("inf"), -float("inf")])
+    def test_rejects_non_finite_current(self, current):
+        n = AdaptiveThresholdIFNeuron()
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
 
     def test_spikes_under_drive(self):
         n = AdaptiveThresholdIFNeuron()
