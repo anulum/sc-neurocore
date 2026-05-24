@@ -40,6 +40,48 @@ class TestStochasticSTDPSynapse:
         assert syn._pre_trace.shape == (5,)
         assert np.all(syn._pre_trace == 0)
 
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("learning_rate", -0.1),
+            ("learning_rate", 1.1),
+            ("learning_rate", float("nan")),
+            ("window_size", 0),
+            ("window_size", -1),
+            ("window_size", True),
+            ("ltd_ratio", -0.1),
+            ("ltd_ratio", float("inf")),
+        ],
+    )
+    def test_invalid_stdp_parameters_fail_closed(self, field, value):
+        kwargs = {
+            "w_min": 0.0,
+            "w_max": 1.0,
+            "length": 256,
+            "w": 0.5,
+            "learning_rate": 0.01,
+            "window_size": 5,
+            "seed": 42,
+        }
+        kwargs[field] = value
+        with pytest.raises(ValueError, match=field):
+            StochasticSTDPSynapse(**kwargs)
+
+    @pytest.mark.parametrize(
+        ("pre_bit", "post_bit"),
+        [
+            (2, 0),
+            (-1, 1),
+            (1, 2),
+            (True, 0),
+            (1, False),
+        ],
+    )
+    def test_invalid_stdp_step_bits_fail_closed(self, pre_bit, post_bit):
+        syn = self._make()
+        with pytest.raises(ValueError, match="bit"):
+            syn.process_step(pre_bit=pre_bit, post_bit=post_bit)
+
     def test_process_step_returns_binary(self):
         syn = self._make()
         for _ in range(100):

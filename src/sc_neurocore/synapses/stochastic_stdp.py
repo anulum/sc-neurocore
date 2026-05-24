@@ -9,6 +9,7 @@
 from __future__ import annotations
 from typing import Any
 from dataclasses import dataclass, field
+import math
 import numpy as np
 
 from .sc_synapse import BitstreamSynapse
@@ -40,11 +41,21 @@ class StochasticSTDPSynapse(BitstreamSynapse):
 
     def __post_init__(self) -> None:
         super().__post_init__()
+        if not math.isfinite(self.learning_rate) or not 0.0 <= self.learning_rate <= 1.0:
+            raise ValueError("learning_rate must be finite and within [0, 1]")
+        if type(self.window_size) is not int or self.window_size <= 0:
+            raise ValueError("window_size must be a positive integer")
+        if not math.isfinite(self.ltd_ratio) or self.ltd_ratio < 0.0:
+            raise ValueError("ltd_ratio must be finite and non-negative")
+
         # Buffer to store recent pre-synaptic bits
         self._pre_trace = np.zeros(self.window_size, dtype=np.uint8)
 
     def process_step(self, pre_bit: int, post_bit: int) -> int:
         """Process one timestep: compute output, update trace, apply STDP."""
+        self._validate_bit("pre_bit", pre_bit)
+        self._validate_bit("post_bit", post_bit)
+
         weight_bit = 1 if self._rng.random() < self.effective_weight_probability() else 0
         output_bit = pre_bit & weight_bit
 
@@ -69,3 +80,8 @@ class StochasticSTDPSynapse(BitstreamSynapse):
     def _depress(self) -> None:
         new_w = max(self.w_min, self.w - self.learning_rate * (self.w_max - self.w_min))
         self.update_weight(new_w)
+
+    @staticmethod
+    def _validate_bit(name: str, value: int) -> None:
+        if type(value) is not int or value not in (0, 1):
+            raise ValueError(f"{name} must be an integer bit, 0 or 1")
