@@ -8,6 +8,8 @@
 
 """Tests for ClopathSTDP (Clopath et al. 2010)."""
 
+import pytest
+
 from sc_neurocore.synapses.clopath_stdp import ClopathSTDP
 
 
@@ -18,6 +20,35 @@ class TestClopathSTDP:
         assert syn.u_bar_minus == 0.0
         assert syn.u_bar_plus == 0.0
         assert syn.weight == 0.5
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"a_ltd": -0.01},
+            {"a_ltp": -0.01},
+            {"tau_x": 0.0},
+            {"tau_minus": 0.0},
+            {"tau_plus": 0.0},
+            {"theta_minus": float("nan")},
+            {"theta_plus": -80.0},
+            {"w_min": 1.0, "w_max": 0.0},
+            {"weight": -0.01},
+            {"weight": 1.01},
+        ],
+    )
+    def test_rejects_non_physical_clopath_parameters(self, kwargs):
+        """Clopath STDP constants, thresholds, and weight bounds must be physical."""
+        with pytest.raises(ValueError):
+            ClopathSTDP(**kwargs)
+
+    @pytest.mark.parametrize(
+        ("pre_spike", "u_post", "dt"),
+        [(1, -60.0, 1.0), (False, float("nan"), 1.0), (False, -60.0, 0.0)],
+    )
+    def test_rejects_invalid_clopath_step_inputs(self, pre_spike, u_post, dt):
+        """Spike events must be boolean and voltage/timestep must be finite."""
+        with pytest.raises((TypeError, ValueError)):
+            ClopathSTDP().step(pre_spike=pre_spike, u_post=u_post, dt=dt)
 
     def test_ltp_with_depolarization(self):
         """Pre spike during strong depolarization → LTP."""

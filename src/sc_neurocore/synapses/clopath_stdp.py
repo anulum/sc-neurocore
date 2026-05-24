@@ -66,6 +66,25 @@ class ClopathSTDP:
     weight: float = 0.5
 
     def __post_init__(self) -> None:
+        for name in ("a_ltd", "a_ltp"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"{name} must be finite and non-negative")
+        for name in ("tau_x", "tau_minus", "tau_plus"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+        for name in ("theta_minus", "theta_plus", "w_min", "w_max", "weight"):
+            value = getattr(self, name)
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+        if self.theta_plus <= self.theta_minus:
+            raise ValueError("theta_plus must be greater than theta_minus")
+        if self.w_min > self.w_max:
+            raise ValueError("w_min must be less than or equal to w_max")
+        if not (self.w_min <= self.weight <= self.w_max):
+            raise ValueError("weight must be within [w_min, w_max]")
+
         self.x_bar = 0.0  # low-pass filtered pre-synaptic trace
         self.u_bar_minus = 0.0  # slow voltage trace (LTD)
         self.u_bar_plus = 0.0  # fast voltage trace (LTP)
@@ -87,6 +106,13 @@ class ClopathSTDP:
         float
             Updated weight.
         """
+        if type(pre_spike) is not bool:
+            raise TypeError("pre_spike must be bool")
+        if not math.isfinite(u_post):
+            raise ValueError("u_post must be finite")
+        if not math.isfinite(dt) or dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+
         decay_x = math.exp(-dt / self.tau_x)
         decay_minus = math.exp(-dt / self.tau_minus)
         decay_plus = math.exp(-dt / self.tau_plus)
