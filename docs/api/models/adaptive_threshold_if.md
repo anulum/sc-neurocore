@@ -37,6 +37,14 @@ def step(self, current: float) -> int:
 Forward Euler, single step per call. Two coupled linear ODEs with
 spike-triggered threshold jump. No transcendental functions.
 
+The implementation rejects non-physical configurations before integration:
+all state and parameter values must be finite, `delta_theta` must be
+non-negative, `tau_m` and `tau_theta` must be positive, `dt` must be
+positive and no larger than either time constant, and the resting threshold
+must sit above both the resting and reset voltages. These constraints keep
+the subthreshold Euler relaxation monotone and prevent a neuron at rest from
+being initialized above threshold.
+
 ---
 
 ## Parameters
@@ -88,7 +96,7 @@ $$\theta \approx \theta_{rest} + n \cdot \Delta\theta = -50 + 5n$$
 | 10 | 0 | 65 | 4.33× |
 
 After 10 rapid spikes, the threshold has risen to 0 mV — the neuron
-requires 4.3× more current than at rest. This is strong adaptation.
+requires 4.3× more current than at rest. This is substantial adaptation.
 
 ### Threshold recovery after spike
 
@@ -152,7 +160,7 @@ Although there is no explicit refractory mechanism, the θ jump creates
 an effective relative refractory period:
 - Immediately after spike: θ = θ_before + 5 mV → harder to fire
 - Duration: ~3τ_theta ≈ 150ms to full recovery
-- Not absolute: sufficiently strong input can overcome the elevated θ
+- Not absolute: sufficiently large input can overcome the elevated θ
 
 ### Comparison with standard LIF
 
@@ -188,8 +196,8 @@ harder to trigger" rather than "an inhibitory current opposes firing."
 ### Test execution
 
 ```
-12/12 PASSED in 0.97s
-├── TestIsolation: 6 tests (construction, binary, spikes, adaptation, finite, reset)
+33/33 PASSED in scoped validation
+├── TestIsolation: 21 parametrized/behavioral checks (construction, validation, monotone relaxation, binary, current rejection, spikes, adaptation, finite, reset)
 ├── TestNetwork: 3 tests (Population, Network+spikes, spike_trains)
 └── TestAnalysis: 3 tests (firing_rate, spike_count, isi)
 ```

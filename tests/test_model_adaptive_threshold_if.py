@@ -41,6 +41,8 @@ class TestAdaptiveThresholdIFIsolation:
             {"v_rest": float("nan")},
             {"v_reset": float("inf")},
             {"theta_rest": float("nan")},
+            {"theta_rest": -70.0},
+            {"v_reset": -45.0},
             {"delta_theta": -0.1},
             {"delta_theta": float("inf")},
             {"tau_m": 0.0},
@@ -49,11 +51,23 @@ class TestAdaptiveThresholdIFIsolation:
             {"tau_theta": float("inf")},
             {"dt": 0.0},
             {"dt": float("nan")},
+            {"tau_m": 0.05},
+            {"tau_theta": 0.05},
         ],
     )
     def test_rejects_non_physical_configuration(self, kwargs):
         with pytest.raises(ValueError):
             AdaptiveThresholdIFNeuron(**kwargs)
+
+    def test_subthreshold_relaxation_is_monotone_toward_rest(self):
+        n = AdaptiveThresholdIFNeuron(v=-70.0, theta=-40.0)
+        v_before = n.v
+        theta_before = n.theta
+
+        assert n.step(0.0) == 0
+
+        assert v_before < n.v < n.v_rest
+        assert n.theta_rest < n.theta < theta_before
 
     def test_step_returns_binary(self):
         n = AdaptiveThresholdIFNeuron()

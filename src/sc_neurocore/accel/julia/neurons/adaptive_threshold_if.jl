@@ -8,7 +8,7 @@
 
 module AdaptiveThresholdIfAccel
 
-export step!, simulate, AdaptiveThresholdIFNeuronState
+export step!, simulate, valid, AdaptiveThresholdIFNeuronState
 
 mutable struct AdaptiveThresholdIFNeuronState
     v::Float64
@@ -27,18 +27,37 @@ function AdaptiveThresholdIFNeuronState()
 end
 
 function step!(s::AdaptiveThresholdIFNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        s.v += (-(s.v - s.v_rest) + I_ext) / s.tau_m * s.dt
-        s.theta += -(s.theta - s.theta_rest) / s.tau_theta * s.dt
-        if s.v >= s.theta
-            s.v = s.v_reset
-            s.theta += s.delta_theta
-            return 1
-        end
-        return 0
-    catch _e
+    if !valid(s) || !isfinite(I_ext)
         return 0
     end
+    s.v += (-(s.v - s.v_rest) + I_ext) / s.tau_m * s.dt
+    s.theta += -(s.theta - s.theta_rest) / s.tau_theta * s.dt
+    if s.v >= s.theta
+        s.v = s.v_reset
+        s.theta += s.delta_theta
+        return 1
+    end
+    return 0
+end
+
+function valid(s::AdaptiveThresholdIFNeuronState)
+    return isfinite(s.v) &&
+        isfinite(s.theta) &&
+        isfinite(s.v_rest) &&
+        isfinite(s.v_reset) &&
+        isfinite(s.theta_rest) &&
+        isfinite(s.delta_theta) &&
+        s.delta_theta >= 0.0 &&
+        isfinite(s.tau_m) &&
+        s.tau_m > 0.0 &&
+        isfinite(s.tau_theta) &&
+        s.tau_theta > 0.0 &&
+        isfinite(s.dt) &&
+        s.dt > 0.0 &&
+        s.dt <= s.tau_m &&
+        s.dt <= s.tau_theta &&
+        s.theta_rest > s.v_rest &&
+        s.theta_rest > s.v_reset
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
