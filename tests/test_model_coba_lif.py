@@ -13,6 +13,7 @@ Conductance-based LIF with excitatory/inhibitory synaptic conductances."""
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.coba_lif import COBALIFNeuron
 from sc_neurocore.network.population import Population
@@ -77,6 +78,54 @@ class TestCOBAIsolation:
         assert n.v == n.e_l
         assert n.g_e == 0.0
         assert n.g_i == 0.0
+
+
+class TestCOBAValidation:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("v", np.nan),
+            ("e_l", np.inf),
+            ("e_e", -np.inf),
+            ("e_i", np.nan),
+            ("v_threshold", np.inf),
+            ("v_reset", -np.inf),
+        ],
+    )
+    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            COBALIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["g_e", "g_i"])
+    @pytest.mark.parametrize("value", [-1.0, np.nan, np.inf])
+    def test_rejects_negative_or_non_finite_conductance_state(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            COBALIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["c_m", "g_l", "tau_e", "tau_i", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            COBALIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize(
+        ("current", "delta_ge", "delta_gi"),
+        [
+            (np.nan, 0.0, 0.0),
+            (0.0, np.inf, 0.0),
+            (0.0, 0.0, -1.0),
+            (0.0, np.nan, 0.0),
+            (0.0, 0.0, np.nan),
+        ],
+    )
+    def test_rejects_invalid_step_inputs_before_state_mutation(
+        self, current: float, delta_ge: float, delta_gi: float
+    ):
+        n = COBALIFNeuron(v=-60.0, g_e=1.0, g_i=2.0)
+        before = (n.v, n.g_e, n.g_i)
+        with pytest.raises(ValueError, match="current|delta_ge|delta_gi"):
+            n.step(current, delta_ge=delta_ge, delta_gi=delta_gi)
+        assert (n.v, n.g_e, n.g_i) == before
 
 
 class TestCOBANetwork:
