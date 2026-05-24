@@ -58,6 +58,22 @@ depolarisation and the LTP path under strong depolarisation.
 
 ## Tripartite Synapse (Astrocyte Coupling)
 
+`TripartiteSynapse` couples presynaptic activity to an internal
+astrocyte model before applying the effective synaptic weight:
+
+- presynaptic spikes accumulate a glutamate signal that drives astrocyte
+  IP3 production;
+- astrocyte calcium above `ca_threshold` facilitates the synaptic
+  weight through the configured `facilitation` gain;
+- calcium below threshold relaxes the weight back toward `base_weight`
+  through `depression_rate`;
+- `w_min` and `w_max` bound the effective weight in both regimes.
+
+The public contract is therefore stateful across synapse and astrocyte
+state. Tests should preserve IP3 accumulation from sustained presynaptic
+activity, calcium-gated facilitation, baseline recovery, and bounded
+effective weights.
+
 ::: sc_neurocore.synapses.tripartite.TripartiteSynapse
 
 ## Gap Junction (Electrical Synapse)
