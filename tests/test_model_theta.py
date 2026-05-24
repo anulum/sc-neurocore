@@ -84,6 +84,18 @@ class TestThetaValidation:
             n.step(current)
         assert n.theta == before
 
+    def test_initial_phase_is_wrapped_to_compact_circle(self):
+        n = ThetaNeuron(theta=4.0 * np.pi + 0.5)
+        assert -np.pi <= n.theta <= np.pi
+        assert abs(n.theta - 0.5) < 1e-12
+
+    def test_rejects_non_finite_phase_increment_before_state_mutation(self):
+        n = ThetaNeuron(theta=0.25, dt=1.0e308)
+        before = n.theta
+        with pytest.raises(ValueError, match="phase increment"):
+            n.step(1.0e308)
+        assert n.theta == before
+
 
 class TestThetaBifurcation:
     """Saddle-node bifurcation at I=0 — same as QIF."""

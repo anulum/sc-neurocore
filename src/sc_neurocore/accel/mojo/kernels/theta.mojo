@@ -6,14 +6,32 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo SIMD acceleration for theta
 
-fn step(current: Int) -> Int:
-    var _step_line = 'theta_prev = theta'
-    var _step_line = 'dtheta = ((1.0 - cos(theta)) + (1.0 + cos(theta)) * current)'
-    var _step_line = 'theta += dtheta'
-    var _step_line = 'spike = 1 if (theta_prev < pi * 0.99 and theta >= pi * 0.99)'
-    var _step_line = 'theta = ((theta + pi) % (2 * pi)) - pi'
-    return 0  # return spike
+from std.math import cos
 
-fn reset() -> Int:
-    var _reset_line = 'theta = 0.0'
+comptime PI = 3.14159265358979323846
+
+
+fn _finite(x: Float64) -> Bool:
+    return (
+        x == x and x <= 1.7976931348623157e308 and x >= -1.7976931348623157e308
+    )
+
+
+fn theta_valid(theta: Float64, dt: Float64) -> Bool:
+    return _finite(theta) and _finite(dt) and dt > 0.0
+
+
+fn theta_step_spike(theta: Float64, current: Float64, dt: Float64) -> Int:
+    if not _finite(current):
+        return 0
+    if not theta_valid(theta, dt):
+        return 0
+
+    var cos_theta = cos(theta)
+    var dtheta = ((1.0 - cos_theta) + (1.0 + cos_theta) * current) * dt
+    var next_theta = theta + dtheta
+    if not _finite(dtheta) or not _finite(next_theta):
+        return 0
+    if theta < PI * 0.99 and next_theta >= PI * 0.99:
+        return 1
     return 0

@@ -11,8 +11,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
-import numpy as np
-
 
 @dataclass
 class ThetaNeuron:
@@ -33,16 +31,24 @@ class ThetaNeuron:
             raise ValueError("theta must be finite")
         if not math.isfinite(self.dt) or self.dt <= 0.0:
             raise ValueError("dt must be finite and positive")
+        self.theta = self._wrap_phase(self.theta)
+
+    @staticmethod
+    def _wrap_phase(theta: float) -> float:
+        return ((theta + math.pi) % (2.0 * math.pi)) - math.pi
 
     def step(self, current: float) -> int:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
 
         theta_prev = self.theta
-        dtheta = ((1.0 - np.cos(self.theta)) + (1.0 + np.cos(self.theta)) * current) * self.dt
-        self.theta += dtheta
-        spike = 1 if (theta_prev < np.pi * 0.99 and self.theta >= np.pi * 0.99) else 0
-        self.theta = ((self.theta + np.pi) % (2 * np.pi)) - np.pi
+        cos_theta = math.cos(self.theta)
+        dtheta = ((1.0 - cos_theta) + (1.0 + cos_theta) * current) * self.dt
+        next_theta = self.theta + dtheta
+        if not math.isfinite(dtheta) or not math.isfinite(next_theta):
+            raise ValueError("phase increment must be finite")
+        spike = 1 if (theta_prev < math.pi * 0.99 and next_theta >= math.pi * 0.99) else 0
+        self.theta = self._wrap_phase(next_theta)
         return spike
 
     def reset(self) -> None:

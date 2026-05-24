@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for theta
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct ThetaNeuron {
     pub theta: f64,
@@ -23,24 +21,46 @@ impl ThetaNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // theta_prev = self.theta
-        // dtheta = ((1.0 - (self.theta_f64).cos()) + (1.0 + (self.theta_f64).cos
-        // self.theta += dtheta
-        // spike = 1 if (theta_prev < std::f64::consts::PI * 0.99 && self.theta >
-        // self.theta = ((self.theta + std::f64::consts::PI) % (2 * std::f64::con
-        // return spike
-        0 // spike indicator
+        if !i_ext.is_finite() || !validate_theta(self) {
+            return 0;
+        }
+
+        let theta_prev = self.theta;
+        let cos_theta = self.theta.cos();
+        let dtheta = ((1.0 - cos_theta) + (1.0 + cos_theta) * i_ext) * self.dt;
+        let next_theta = self.theta + dtheta;
+        if !dtheta.is_finite() || !next_theta.is_finite() {
+            return 0;
+        }
+
+        let spike = if theta_prev < std::f64::consts::PI * 0.99
+            && next_theta >= std::f64::consts::PI * 0.99
+        {
+            1
+        } else {
+            0
+        };
+        self.theta = wrap_phase(next_theta);
+        spike
     }
 
     pub fn reset(&mut self) {
-        // self.theta = 0.0
         self.theta = 0.0_f64;
-        self.dt = 0.01_f64;
+    }
+}
+
+impl Default for ThetaNeuron {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 pub fn validate_theta(state: &ThetaNeuron) -> bool {
-    true
+    state.theta.is_finite() && state.dt.is_finite() && state.dt > 0.0
+}
+
+pub fn wrap_phase(theta: f64) -> f64 {
+    (theta + std::f64::consts::PI).rem_euclid(2.0 * std::f64::consts::PI) - std::f64::consts::PI
 }
 
 #[cfg(test)]
@@ -58,5 +78,45 @@ mod tests {
         let mut state = ThetaNeuron::new();
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_positive_current_spikes_and_wraps() {
+        let mut state = ThetaNeuron::new();
+        let mut spikes = 0;
+        for _ in 0..50_000 {
+            spikes += state.step(1.0);
+        }
+        assert!(spikes >= 100);
+        assert!(state.theta >= -std::f64::consts::PI);
+        assert!(state.theta <= std::f64::consts::PI);
+    }
+
+    #[test]
+    fn test_invalid_current_does_not_mutate_state() {
+        let mut state = ThetaNeuron::new();
+        state.theta = 0.25;
+        assert_eq!(state.step(f64::NAN), 0);
+        assert_eq!(state.theta, 0.25);
+    }
+
+    #[test]
+    fn test_invalid_phase_increment_does_not_mutate_state() {
+        let mut state = ThetaNeuron::new();
+        state.theta = 0.25;
+        state.dt = 1.0e308;
+        assert_eq!(state.step(1.0e308), 0);
+        assert_eq!(state.theta, 0.25);
+    }
+
+    #[test]
+    fn test_reset_preserves_dt() {
+        let mut state = ThetaNeuron {
+            theta: 2.0,
+            dt: 0.005,
+        };
+        state.reset();
+        assert_eq!(state.theta, 0.0);
+        assert_eq!(state.dt, 0.005);
     }
 }

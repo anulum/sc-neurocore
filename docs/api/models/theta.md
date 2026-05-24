@@ -43,6 +43,18 @@ The dynamics, bifurcation structure, and f–I curve are mathematically identica
 
 ---
 
+### Validation contract
+
+The implementation preserves the compact-circle state contract before mutation:
+
+- initial `theta`, `dt`, and input current must be finite;
+- `dt` must be positive;
+- initial `theta` is normalised into `[-pi, pi]`;
+- each Euler phase increment and candidate phase must remain finite before assignment.
+
+These guards prevent finite but numerically explosive inputs from turning the
+phase state into `NaN` while preserving the theta/QIF phase-map semantics.
+
 ## Behaviour
 
 ### Saddle-node bifurcation at I=0
@@ -125,7 +137,7 @@ bounded (no divergence risk) and the phase space is compact (S¹).
 ## Numerical Considerations
 
 - **Phase wrapping ensures boundedness:** theta never diverges because it's
-  wrapped to [−π, π] every step. No numerical overflow possible.
+  wrapped to [−π, π] at construction and after every accepted step. Overflowing Euler increments are rejected before state mutation.
 - **0.99π detection threshold:** The spike detection uses 0.99π instead of
   exact π to avoid missing spikes due to discrete stepping. This introduces
   ±1 step ISI jitter.
@@ -139,8 +151,7 @@ bounded (no divergence risk) and the phase space is compact (S¹).
 
 - **Source:** `src/sc_neurocore/neurons/models/theta.py` — 36 lines.
 - **NumPy dependency:** `np.cos` and `np.pi` for phase dynamics.
-- **Rust wiring:** Compatible with `step(f64) → i32` dispatch.
-  Single f64 state variable (theta).
+- **Polyglot surfaces:** Rust, Go, Julia, and Mojo theta surfaces use the same finite-state, compact-phase, positive-`dt`, finite-increment, and spike-crossing contract as the Python model.
 
 ---
 
@@ -155,7 +166,8 @@ bounded (no divergence risk) and the phase space is compact (S¹).
 | Parameters | 4 | dt stability (3 values), dt invariance of ISI_time |
 | Edge cases | 2 | wrapping under large dt, deterministic |
 | **Pipeline** | 4 | **Population, Network+PoissonInput, Projection src→tgt propagation, full analysis (spike_count + isi + firing_rate cross-validated)** |
-| **Total** | **30** | |
+| Validation | 10 | finite phase/current/dt, compact initial phase, finite phase increment before mutation |
+| **Total** | **42** | |
 
 ---
 
@@ -186,7 +198,7 @@ bounded (no divergence risk) and the phase space is compact (S¹).
 | Python throughput | ~131K steps/s |
 | Spikes (10K steps, I=5.0) | 71 |
 | State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+| Rust safety surface | Same spike-crossing and compact-phase contract |
 
 ---
 
@@ -216,8 +228,8 @@ State returns to initial values after `reset()`.
 `Population(ThetaNeuron, n=10)` creates correct instances.
 **Status: PASS**
 
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
+### 7. Polyglot safety surfaces
+Rust, Go, Julia, and Mojo carry the same spike-crossing and compact-phase validation contract.
 
 ---
 
@@ -225,5 +237,5 @@ State returns to initial values after `reset()`.
 
 1. Throughput: ~131K steps/s (Python, single-thread)
 2. All pipeline stages verified green
-3. Rust parity: EXACT
+3. Polyglot contract aligned for Rust, Go, Julia, and Mojo
 4. Numerical stability confirmed over 20K steps
