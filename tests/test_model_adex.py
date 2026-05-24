@@ -70,6 +70,42 @@ class TestAdExIsolation:
         assert np.isfinite(n.v)
 
 
+class TestAdExValidation:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("v", np.nan),
+            ("w", np.inf),
+            ("v_rest", -np.inf),
+            ("v_reset", np.nan),
+            ("v_threshold", np.inf),
+            ("v_rh", -np.inf),
+            ("a", np.nan),
+            ("b", np.inf),
+        ],
+    )
+    def test_rejects_non_finite_state_or_voltage_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            AdExNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["delta_t", "tau", "tau_w", "c_m", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            AdExNeuron(**{field: value})
+
+    @pytest.mark.parametrize("integrator", ["baseline_euler", "rk4", "rosenbrock"])
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(
+        self, integrator: str, current: float
+    ):
+        n = AdExNeuron(v=-60.0, w=3.0, integrator=integrator)
+        before = (n.v, n.w)
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert (n.v, n.w) == before
+
+
 class TestAdExAdaptation:
     def test_w_increments_on_spike(self):
         """Each spike adds b to w."""
