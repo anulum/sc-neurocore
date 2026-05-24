@@ -9,6 +9,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
+
 import numpy as np
 
 
@@ -31,7 +33,23 @@ class SFANeuron:
     resistance: float = 1.0
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        for field in ("v", "v_rest", "v_reset", "v_threshold", "e_k"):
+            if not math.isfinite(getattr(self, field)):
+                raise ValueError(f"{field} must be finite")
+        if not math.isfinite(self.g_sfa) or self.g_sfa < 0.0:
+            raise ValueError("g_sfa must be finite and non-negative")
+        for field in ("tau_m", "tau_sfa", "resistance", "dt"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field} must be finite and positive")
+        if not math.isfinite(self.delta_g) or self.delta_g < 0.0:
+            raise ValueError("delta_g must be finite and non-negative")
+
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         self.v += (
             (-(self.v - self.v_rest) - self.g_sfa * (self.v - self.e_k) + self.resistance * current)
             / self.tau_m
