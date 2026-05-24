@@ -121,6 +121,28 @@ class TestSigmoidRateParameters:
         assert traces[0] == traces[1]
 
 
+class TestSigmoidRateValidation:
+    @pytest.mark.parametrize("field", ["r", "beta", "theta"])
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_state_and_transfer_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            SigmoidRateNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["tau", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_time_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            SigmoidRateNeuron(**{field: value})
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_rate_mutation(self, current: float):
+        n = SigmoidRateNeuron(r=0.25)
+        before = n.r
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert n.r == before
+
+
 class TestSigmoidRatePerformance:
     def test_isolation_throughput(self):
         n = SigmoidRateNeuron()

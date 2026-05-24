@@ -9,6 +9,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
+
 import numpy as np
 
 
@@ -27,7 +29,19 @@ class SigmoidRateNeuron:
     theta: float = 0.0
     dt: float = 0.1
 
+    def __post_init__(self) -> None:
+        for field in ("r", "beta", "theta"):
+            if not math.isfinite(getattr(self, field)):
+                raise ValueError(f"{field} must be finite")
+        for field in ("tau", "dt"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field} must be finite and positive")
+
     def step(self, current: float) -> float:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         sigma = 1.0 / (1.0 + np.exp(-self.beta * (current - self.theta)))
         self.r += (-self.r + sigma) / self.tau * self.dt
         return self.r
