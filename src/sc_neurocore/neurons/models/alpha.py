@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -30,7 +31,19 @@ class AlphaNeuron:
     tau_inh: float = 10.0
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        for field in ("v", "i_exc", "i_inh", "v_rest", "v_threshold"):
+            if not math.isfinite(getattr(self, field)):
+                raise ValueError(f"{field} must be finite")
+        for field in ("tau_v", "tau_exc", "tau_inh", "dt"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field} must be finite and positive")
+
     def step(self, exc_current: float, inh_current: float = 0.0) -> int:
+        if not math.isfinite(exc_current) or not math.isfinite(inh_current):
+            raise ValueError("current values must be finite")
+
         self.i_exc += (-self.i_exc / self.tau_exc + exc_current) * self.dt
         self.i_inh += (-self.i_inh / self.tau_inh + inh_current) * self.dt
         dv = (-(self.v - self.v_rest) + self.i_exc - self.i_inh) / self.tau_v * self.dt
