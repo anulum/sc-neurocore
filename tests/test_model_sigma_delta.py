@@ -265,3 +265,23 @@ class TestSigmaDeltaAnalysis:
         n = SigmaDeltaNeuron()
         train = np.array([float(max(0, n.step(0.3))) for _ in range(10000)])
         assert spike_count(train) == int(train.sum())
+
+
+class TestSigmaDeltaValidation:
+    @pytest.mark.parametrize("sigma", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_accumulator(self, sigma: float):
+        with pytest.raises(ValueError, match="sigma"):
+            SigmaDeltaNeuron(sigma=sigma)
+
+    @pytest.mark.parametrize("v_threshold", [0.0, -1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_non_positive_or_non_finite_threshold(self, v_threshold: float):
+        with pytest.raises(ValueError, match="v_threshold"):
+            SigmaDeltaNeuron(v_threshold=v_threshold)
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_accumulator_mutation(self, current: float):
+        n = SigmaDeltaNeuron(sigma=0.25)
+        before = n.sigma
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert n.sigma == before
