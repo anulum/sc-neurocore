@@ -66,8 +66,25 @@ class MulticompartmentMCNNeuron:
     v_basal: float = 0.0
     v_apical: float = 0.0
 
+    def __post_init__(self) -> None:
+        for name in ("tau", "tau_b", "tau_a", "beta", "v_th", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+
+        if not math.isfinite(self.g_ratio) or self.g_ratio < 0.0:
+            raise ValueError("g_ratio must be finite and non-negative")
+
+        for name in ("u", "v_basal", "v_apical"):
+            value = getattr(self, name)
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+
     def _sigma(self, x: float) -> float:
         """Sigmoid gating: sigma(x) = 1/(1 + exp(-beta*x))."""
+        if not math.isfinite(x):
+            raise ValueError("x must be finite")
+
         return 1.0 / (1.0 + math.exp(-self.beta * x))
 
     def step_compartments(
@@ -80,6 +97,9 @@ class MulticompartmentMCNNeuron:
 
         Returns 1 if spike, 0 otherwise.
         """
+        if not math.isfinite(x_basal) or not math.isfinite(x_apical) or not math.isfinite(i_soma):
+            raise ValueError("compartment drives must be finite")
+
         # Basal dendrite: tau_b * dV_b/dt = -V_b + x_b.
         dv_b = (-self.v_basal + x_basal) / self.tau_b
         self.v_basal += dv_b * self.dt

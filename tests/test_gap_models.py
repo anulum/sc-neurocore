@@ -494,6 +494,47 @@ class TestMulticompartmentMCNNeuron:
         assert neuron.beta == 1.0
         assert neuron.v_th == 1.0
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"tau": 0.0},
+            {"tau_b": 0.0},
+            {"tau_a": 0.0},
+            {"g_ratio": -0.01},
+            {"beta": 0.0},
+            {"v_th": 0.0},
+            {"dt": 0.0},
+            {"u": float("nan")},
+            {"v_basal": float("inf")},
+            {"v_apical": float("-inf")},
+        ],
+    )
+    def test_rejects_non_physical_multicompartment_parameters(self, kwargs):
+        """Compartment dynamics require finite positive constants and finite state."""
+        from sc_neurocore.neurons.models import MulticompartmentMCNNeuron
+
+        with pytest.raises(ValueError):
+            MulticompartmentMCNNeuron(**kwargs)
+
+    @pytest.mark.parametrize("apical_voltage", [float("nan"), float("inf")])
+    def test_rejects_non_finite_sigma_input(self, apical_voltage):
+        """Apical sigmoid gate must fail closed on non-finite voltages."""
+        from sc_neurocore.neurons.models import MulticompartmentMCNNeuron
+
+        with pytest.raises(ValueError, match="x"):
+            MulticompartmentMCNNeuron()._sigma(apical_voltage)
+
+    @pytest.mark.parametrize(
+        ("x_basal", "x_apical", "i_soma"),
+        [(float("nan"), 0.0, 0.0), (0.0, float("inf"), 0.0), (0.0, 0.0, float("nan"))],
+    )
+    def test_rejects_non_finite_compartment_drive(self, x_basal, x_apical, i_soma):
+        """Basal, apical, and somatic drives must be finite."""
+        from sc_neurocore.neurons.models import MulticompartmentMCNNeuron
+
+        with pytest.raises(ValueError, match="finite"):
+            MulticompartmentMCNNeuron().step_compartments(x_basal, x_apical, i_soma)
+
     def test_step_returns_binary(self, neuron):
         s = neuron.step(0.5)
         assert s in (0, 1)
