@@ -92,6 +92,31 @@ class TestThresholdLinearReLU:
         assert abs(r - 1.0) < 1e-10
 
 
+class TestThresholdLinearValidation:
+    @pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf"), -1.0])
+    def test_rejects_negative_or_non_finite_initial_rate(self, value: float):
+        with pytest.raises(ValueError, match="r"):
+            ThresholdLinearRateNeuron(r=value)
+
+    @pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf")])
+    def test_rejects_non_finite_threshold(self, value: float):
+        with pytest.raises(ValueError, match="theta"):
+            ThresholdLinearRateNeuron(theta=value)
+
+    @pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf"), -1.0])
+    def test_rejects_negative_or_non_finite_gain(self, value: float):
+        with pytest.raises(ValueError, match="gain"):
+            ThresholdLinearRateNeuron(gain=value)
+
+    @pytest.mark.parametrize("current", [float("nan"), float("inf"), -float("inf")])
+    def test_rejects_non_finite_current_before_rate_mutation(self, current: float):
+        n = ThresholdLinearRateNeuron(r=0.25)
+        before = n.r
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert n.r == before
+
+
 class TestThresholdLinearPerformance:
     def test_isolation_throughput(self):
         """ReLU is the fastest possible — no exp, no ODE."""

@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -24,7 +25,18 @@ class ThresholdLinearRateNeuron:
     theta: float = 0.0
     gain: float = 1.0
 
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.r) or self.r < 0.0:
+            raise ValueError("r must be finite and non-negative")
+        if not math.isfinite(self.theta):
+            raise ValueError("theta must be finite")
+        if not math.isfinite(self.gain) or self.gain < 0.0:
+            raise ValueError("gain must be finite and non-negative")
+
     def step(self, current: float) -> float:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         self.r = self.gain * max(0.0, current - self.theta)
         return self.r
 
