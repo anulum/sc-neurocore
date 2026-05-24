@@ -2,7 +2,20 @@
 
 Quantum-classical hybrid spiking layers: hardware backend bridge,
 hybrid quantum-spiking circuits, quantum error correction, noise
-modelling, and parameter-shift gradient optimization.
+modelling, and parameter-shift gradient optimisation.
+
+## Research-grade optional backend boundary
+
+The quantum stack is an opt-in research-grade backend. The default
+`pip install sc-neurocore` path does not install Qiskit, PennyLane, Aer, IBM
+Runtime, or quantum hardware credentials. Use `pip install
+"sc-neurocore[quantum]"` only when a local experiment explicitly needs those
+packages.
+
+Simulator results, noisy emulation, and QPU dispatch artefacts are different
+evidence classes. Do not promote simulator or PennyLane results as hardware
+claims unless the run cites committed hardware provenance, backend name,
+credentials-free metadata, and result artefacts.
 
 ## Hardware Bridge
 
@@ -14,20 +27,20 @@ modelling, and parameter-shift gradient optimization.
 
 ## Noise Models
 
-IBM Heron r2 noise model with depolarizing, amplitude damping,
+IBM Heron r2 noise model with depolarising, amplitude damping,
 phase damping channels, and asymmetric readout error.
 
 ::: sc_neurocore.quantum.noise_models
 
 ## Parameter-Shift Gradient
 
-Exact gradient computation for parameterized quantum circuits.
+Exact gradient computation for parameterised quantum circuits.
 
 ::: sc_neurocore.quantum.param_shift
 
 ## Hybrid Pipeline
 
-VQE-style quantum-classical optimization pipeline.
+VQE-style quantum-classical optimisation pipeline.
 
 ::: sc_neurocore.quantum.hybrid_pipeline
 

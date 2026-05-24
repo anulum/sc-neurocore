@@ -86,9 +86,9 @@ sc-neurocore info
 | `pip install "sc-neurocore[training]"` | Training PyTorch-backed models | `torch` |
 | `pip install "sc-neurocore[nir]"` | Importing/exporting Neuromorphic Intermediate Representation graphs | `nir` |
 | `pip install "sc-neurocore[hdl]"` | Equation-to-HDL workflows, unit-checked equations, packaged HDL primitives | `pint`; bundled `.v` / `.sv` / OpenROAD helper artefacts |
-| `pip install "sc-neurocore[gpu]"` | CuPy CUDA experiments | `cupy-cuda12x` |
-| `pip install "sc-neurocore[jax]"` | JAX-backed experiments | `jax`, `jaxlib` |
-| `pip install "sc-neurocore[quantum]"` | Quantum-circuit experiments | `qiskit`, `pennylane`, `qiskit-aer` |
+| `pip install "sc-neurocore[gpu]"` | Research-grade CuPy CUDA experiments; requires local CUDA compatibility | `cupy-cuda12x` |
+| `pip install "sc-neurocore[jax]"` | Research-grade JAX experiments; requires local accelerator/runtime compatibility | `jax`, `jaxlib` |
+| `pip install "sc-neurocore[quantum]"` | Research-grade quantum-circuit experiments; Qiskit/PennyLane are optional and never installed by default | `qiskit`, `pennylane`, `qiskit-aer` |
 | `pip install "sc-neurocore[studio]"` | Web studio / local design UI | `fastapi`, `uvicorn`, `httpx` |
 | `pip install "sc-neurocore[bioware]"` | Biological closed-loop and spike-sorting prototypes | `scikit-learn` |
 | `pip install "sc-neurocore[docs]"` | Building this documentation locally | `mkdocs`, `mkdocs-material`, `mkdocstrings` |
@@ -145,9 +145,15 @@ the release contract. Current audit evidence is recorded in
 `benchmarks/results/install_profile_audit.json`.
 
 The `full` profile is the CPU-side union for training, NIR, Studio, HDL, codec,
-bioware, and quantum workflows. It deliberately does not pull GPU-, MPI-,
-Lava-, Julia-, or JAX-specific stacks because those depend on local hardware,
-drivers, or external runtimes.
+bioware, and quantum workflows. It is a local research environment profile, not
+the standard user install. It deliberately does not pull GPU-, MPI-, Lava-,
+Julia-, or JAX-specific stacks because those depend on local hardware, drivers,
+or external runtimes.
+
+Heavy backends are always opt-in. Qiskit, PennyLane, CuPy, JAX, Lava, MPI,
+Julia, Go, Mojo, and WGSL tooling are research-grade integration surfaces until
+their target environment, install profile, and verification artefacts are named
+explicitly in the relevant docs. A default installation must not require them.
 
 ## Research-only polyglot layer
 

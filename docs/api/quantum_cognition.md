@@ -84,6 +84,12 @@ The module re-exports the quantum cognition public surface from `sc_neurocore.qu
 
 Install: `pip install sc-neurocore[quantum-cognition]`
 
+This extra is research-grade and opt-in. It inherits the `[quantum]`
+dependency set, including Qiskit and PennyLane, and is not part of the default
+wheel install. Use the emulated backend for deterministic local development;
+use PennyLane, Aer, or IBM Quantum backends only when the experiment explicitly
+requires those optional runtimes and records the corresponding provenance.
+
 ---
 
 ## 3. `SpinPoolMPS` — Non-local spin storage
