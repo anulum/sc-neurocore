@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Literal
 
 import numpy as np
@@ -51,8 +52,17 @@ class AdExNeuron:
     def __post_init__(self) -> None:
         if self.integrator not in {"baseline_euler", "rk4", "rosenbrock"}:
             raise ValueError(f"Unsupported integrator for AdExNeuron: {self.integrator}")
+        for field in ("v", "w", "v_rest", "v_reset", "v_threshold", "v_rh", "a", "b"):
+            if not math.isfinite(getattr(self, field)):
+                raise ValueError(f"{field} must be finite")
+        for field in ("delta_t", "tau", "tau_w", "c_m", "dt"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field} must be finite and positive")
 
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
         if self.integrator == "baseline_euler":
             self._step_baseline_euler(current)
         elif self.integrator == "rk4":
