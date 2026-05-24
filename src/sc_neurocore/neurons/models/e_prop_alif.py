@@ -47,6 +47,10 @@ class EPropALIFNeuron:
             raise ValueError("beta must be finite and non-negative")
         if not np.isfinite(self.dt) or self.dt <= 0.0:
             raise ValueError("dt must be finite and positive")
+        if self.dt > self.tau_m or self.dt > self.tau_a:
+            raise ValueError("dt must not exceed tau_m or tau_a")
+        if self.v_threshold_base <= self.v_reset:
+            raise ValueError("v_threshold_base must be greater than v_reset")
 
         self.alpha_m = np.exp(-self.dt / self.tau_m)
         self.alpha_a = np.exp(-self.dt / self.tau_a)
@@ -68,4 +72,4 @@ class EPropALIFNeuron:
         return 0
 
     def reset(self) -> None:
-        self.v, self.a, self.e_trace = 0.0, 0.0, 0.0
+        self.v, self.a, self.e_trace = self.v_reset, 0.0, 0.0

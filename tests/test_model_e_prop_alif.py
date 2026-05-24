@@ -54,11 +54,15 @@ class TestEPropALIFIsolation:
             {"tau_a": 0.0},
             {"tau_a": float("nan")},
             {"v_threshold_base": float("inf")},
+            {"v_threshold_base": -0.1},
             {"beta": -0.01},
             {"beta": float("nan")},
             {"v_reset": float("inf")},
+            {"v_reset": 1.1},
             {"dt": 0.0},
             {"dt": float("nan")},
+            {"dt": 21.0},
+            {"dt": 201.0},
         ],
     )
     def test_rejects_non_physical_configuration(self, kwargs):
@@ -81,11 +85,13 @@ class TestEPropALIFIsolation:
         assert all(np.isfinite(v) for v in [n.v, n.a, n.e_trace])
 
     def test_reset(self):
-        n = EPropALIFNeuron()
+        n = EPropALIFNeuron(v_reset=-0.25)
         for _ in range(100):
             n.step(0.5)
         n.reset()
-        assert n.v == 0.0 and n.a == 0.0 and n.e_trace == 0.0
+        assert n.v == n.v_reset
+        assert n.a == 0.0
+        assert n.e_trace == 0.0
 
 
 class TestEPropALIFAdaptiveThreshold:

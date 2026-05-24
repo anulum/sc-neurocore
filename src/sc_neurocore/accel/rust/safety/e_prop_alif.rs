@@ -35,38 +35,60 @@ impl EPropALIFNeuron {
             beta: 0.07_f64,
             v_reset: 0.0_f64,
             dt: 1.0_f64,
-            alpha_m: 0.0_f64,
-            alpha_a: 0.0_f64,
+            alpha_m: (-1.0_f64 / 20.0_f64).exp(),
+            alpha_a: (-1.0_f64 / 200.0_f64).exp(),
         }
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // self.v = self.alpha_m * self.v + current
-        // threshold = self.v_threshold_base + self.beta * self.a
-        // # Bellec 2020 Eq. 4: pseudo-derivative for eligibility
-        // psi = max(0.0, 1.0 - abs(self.v - threshold)) * 0.3
-        // self.e_trace = self.alpha_a * self.e_trace + psi
-        // if self.v >= threshold:
-        // self.v = self.v_reset
-        // self.a = self.alpha_a * self.a + 1.0
-        // return 1
-        // self.a *= self.alpha_a
-        // return 0
-        0 // spike indicator
+        if !validate_e_prop_alif(self) || !i_ext.is_finite() {
+            return 0;
+        }
+
+        self.v = self.alpha_m * self.v + i_ext;
+        let threshold = self.v_threshold_base + self.beta * self.a;
+        let psi = (1.0 - (self.v - threshold).abs()).max(0.0) * 0.3;
+        self.e_trace = self.alpha_a * self.e_trace + psi;
+        if self.v >= threshold {
+            self.v = self.v_reset;
+            self.a = self.alpha_a * self.a + 1.0;
+            return 1;
+        }
+        self.a *= self.alpha_a;
+        0
     }
 
     pub fn reset(&mut self) {
-        // self.v, self.a, self.e_trace = 0.0, 0.0, 0.0
-        self.v = 0.0_f64;
+        self.v = self.v_reset;
         self.a = 0.0_f64;
         self.e_trace = 0.0_f64;
-        self.tau_m = 20.0_f64;
-        self.tau_a = 200.0_f64;
     }
 }
 
 pub fn validate_e_prop_alif(state: &EPropALIFNeuron) -> bool {
     state.v.is_finite()
+        && state.a.is_finite()
+        && state.a >= 0.0
+        && state.e_trace.is_finite()
+        && state.tau_m.is_finite()
+        && state.tau_m > 0.0
+        && state.tau_a.is_finite()
+        && state.tau_a > 0.0
+        && state.v_threshold_base.is_finite()
+        && state.beta.is_finite()
+        && state.beta >= 0.0
+        && state.v_reset.is_finite()
+        && state.dt.is_finite()
+        && state.dt > 0.0
+        && state.dt <= state.tau_m
+        && state.dt <= state.tau_a
+        && state.v_threshold_base > state.v_reset
+        && state.alpha_m.is_finite()
+        && state.alpha_m > 0.0
+        && state.alpha_m < 1.0
+        && state.alpha_a.is_finite()
+        && state.alpha_a > 0.0
+        && state.alpha_a < 1.0
 }
 
 #[cfg(test)]
@@ -85,5 +107,18 @@ mod tests {
         let mut state = EPropALIFNeuron::new();
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_e_prop_alif_reset_uses_v_reset() {
+        let mut state = EPropALIFNeuron::new();
+        state.v_reset = -0.25;
+        state.v = 2.0;
+        state.a = 3.0;
+        state.e_trace = 4.0;
+        state.reset();
+        assert_eq!(state.v, -0.25);
+        assert_eq!(state.a, 0.0);
+        assert_eq!(state.e_trace, 0.0);
     }
 }
