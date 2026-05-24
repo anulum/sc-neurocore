@@ -339,3 +339,30 @@ class TestMcKeanPipeline:
         if sc > 0:
             expected = sc / duration
             assert abs(rate - expected) < expected * 0.1
+
+
+class TestMcKeanValidation:
+    @pytest.mark.parametrize("field", ["v", "w", "v_peak"])
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_state_and_threshold(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            McKeanNeuron(**{field: value})
+
+    @pytest.mark.parametrize("a", [0.0, -0.1, 1.0, 1.1, np.nan, np.inf, -np.inf])
+    def test_rejects_invalid_piecewise_breakpoint_parameter(self, a: float):
+        with pytest.raises(ValueError, match="a"):
+            McKeanNeuron(a=a)
+
+    @pytest.mark.parametrize("field", ["epsilon", "gamma", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_non_positive_or_non_finite_scales(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            McKeanNeuron(**{field: value})
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = McKeanNeuron(v=0.25, w=-0.1)
+        before = (n.v, n.w)
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert (n.v, n.w) == before

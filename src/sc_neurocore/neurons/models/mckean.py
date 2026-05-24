@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -33,6 +34,17 @@ class McKeanNeuron:
     dt: float = 0.1
     v_peak: float = 0.8
 
+    def __post_init__(self) -> None:
+        for name in ("v", "w", "v_peak"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite")
+        if not math.isfinite(self.a) or not 0.0 < self.a < 1.0:
+            raise ValueError("a must be finite and in the open interval (0, 1)")
+        for name in ("epsilon", "gamma", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0:
+                raise ValueError(f"{name} must be finite and positive")
+
     def _f(self, v: float) -> float:
         mid1 = self.a / 2.0
         mid2 = (1.0 + self.a) / 2.0
@@ -44,6 +56,9 @@ class McKeanNeuron:
             return 1.0 - v
 
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         dv = (self._f(self.v) - self.w + current) * self.dt
         dw = self.epsilon * (self.v - self.gamma * self.w) * self.dt
         v_prev = self.v

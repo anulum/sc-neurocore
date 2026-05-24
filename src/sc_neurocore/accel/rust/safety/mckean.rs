@@ -33,25 +33,32 @@ impl McKeanNeuron {
     }
 
     pub fn _f(&self, v: f64) -> f64 {
-        // mid1 = self.a / 2.0
-        // mid2 = (1.0 + self.a) / 2.0
-        // if v < mid1:
-        // return -v
-        // elif v < mid2:
-        // return v - self.a
-        // else:
-        // return 1.0 - v
-        0.0
+        let mid1 = self.a / 2.0;
+        let mid2 = (1.0 + self.a) / 2.0;
+        if v < mid1 {
+            -v
+        } else if v < mid2 {
+            v - self.a
+        } else {
+            1.0 - v
+        }
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // dv = (self._f(self.v) - self.w + current) * self.dt
-        // dw = self.epsilon * (self.v - self.gamma * self.w) * self.dt
-        // v_prev = self.v
-        // self.v += dv
-        // self.w += dw
-        // return 1 if (self.v >= self.v_peak && v_prev < self.v_peak) else 0
-        0 // spike indicator
+        if !validate_mckean(self) || !i_ext.is_finite() {
+            return 0;
+        }
+
+        let dv = (self._f(self.v) - self.w + i_ext) * self.dt;
+        let dw = self.epsilon * (self.v - self.gamma * self.w) * self.dt;
+        let v_prev = self.v;
+        self.v += dv;
+        self.w += dw;
+        if self.v >= self.v_peak && v_prev < self.v_peak {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
@@ -67,6 +74,17 @@ impl McKeanNeuron {
 
 pub fn validate_mckean(state: &McKeanNeuron) -> bool {
     state.v.is_finite()
+        && state.w.is_finite()
+        && state.a.is_finite()
+        && state.a > 0.0
+        && state.a < 1.0
+        && state.epsilon.is_finite()
+        && state.epsilon > 0.0
+        && state.gamma.is_finite()
+        && state.gamma > 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
+        && state.v_peak.is_finite()
 }
 
 #[cfg(test)]
