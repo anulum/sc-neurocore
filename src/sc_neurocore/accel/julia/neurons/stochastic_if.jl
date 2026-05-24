@@ -8,7 +8,7 @@
 
 module StochasticIfAccel
 
-export step!, simulate, StochasticIFNeuronState
+export step!, simulate, validate_stochastic_if, StochasticIFNeuronState
 
 mutable struct StochasticIFNeuronState
     v::Float64
@@ -26,17 +26,24 @@ function StochasticIFNeuronState()
 end
 
 function step!(s::StochasticIFNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        noise = s.sigma * sqrt(s.dt / s.tau_m) * randn()
-        s.v += (-(s.v - s.v_rest) + s.mu + I_ext) / s.tau_m * s.dt + noise
-        if s.v >= s.v_threshold
-            s.v = s.v_reset
-            return 1
-        end
-        return 0
-    catch _e
+    if !validate_stochastic_if(s) || !isfinite(I_ext)
         return 0
     end
+
+    noise = s.sigma * sqrt(s.dt / s.tau_m) * randn()
+    s.v += (-(s.v - s.v_rest) + s.mu + I_ext) / s.tau_m * s.dt + noise
+    if s.v >= s.v_threshold
+        s.v = s.v_reset
+        return 1
+    end
+    return 0
+end
+
+function validate_stochastic_if(s::StochasticIFNeuronState)
+    return isfinite(s.v) && isfinite(s.v_rest) && isfinite(s.v_reset) &&
+           isfinite(s.v_threshold) && isfinite(s.tau_m) && s.tau_m > 0.0 &&
+           isfinite(s.mu) && isfinite(s.sigma) && s.sigma >= 0.0 &&
+           isfinite(s.dt) && s.dt > 0.0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
