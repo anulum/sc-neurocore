@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -26,7 +27,18 @@ class QuadraticIFNeuron:
     v_peak: float = 1.0
     dt: float = 0.01
 
+    def __post_init__(self) -> None:
+        for field in ("v", "v_reset", "v_peak"):
+            if not math.isfinite(getattr(self, field)):
+                raise ValueError(f"{field} must be finite")
+        if self.v_reset >= self.v_peak:
+            raise ValueError("v_peak must be greater than v_reset")
+        if not math.isfinite(self.dt) or self.dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
         self.v += (self.v**2 + current) * self.dt
         if self.v >= self.v_peak:
             self.v = self.v_reset
