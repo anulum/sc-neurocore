@@ -19,6 +19,19 @@ from typing import Any
 
 OSV_SCANNER_SCHEMA_VERSION = "sc-neurocore.osv-scanner.v1"
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
+OSV_LOCKFILE_INPUTS = (
+    "requirements.txt",
+    "Cargo.lock",
+    "fuzz/Cargo.lock",
+    "crates/tinysc_riscv/Cargo.lock",
+    "crates/evo_substrate_core/Cargo.lock",
+    "crates/stochastic_doctor_core/Cargo.lock",
+    "crates/autonomous_learning/Cargo.lock",
+    "crates/core_engine/Cargo.lock",
+    "crates/neuro_symbolic/Cargo.lock",
+    "src/sc_neurocore/accel/rust/Cargo.lock",
+    "studio/frontend/package-lock.json",
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -108,6 +121,14 @@ def _validate_osv_report(path: Path) -> tuple[list[str], int, int, list[str]]:
     return [], len(packages), len(vulnerability_ids), vulnerability_ids
 
 
+def _lockfile_arguments(repo_root: Path) -> list[str]:
+    args: list[str] = []
+    for relative_path in OSV_LOCKFILE_INPUTS:
+        if (repo_root / relative_path).exists():
+            args.extend(("--lockfile", relative_path))
+    return args
+
+
 def run_osv_scanner(
     *,
     repo_root: Path,
@@ -125,10 +146,13 @@ def run_osv_scanner(
         "tools/security_scan/osv-scanner.toml",
         "--format",
         "json",
+        "--all-packages",
         "--output-file",
         str(report_path),
-        "--recursive",
-        ".",
+        "--experimental-no-default-plugins",
+        "--experimental-plugins",
+        "lockfile",
+        *_lockfile_arguments(repo_root),
     ]
     result = _run(command, repo_root=repo_root, run_command=run_command, timeout=360)
     validation_errors, package_count, vulnerability_count, vulnerability_ids = _validate_osv_report(
