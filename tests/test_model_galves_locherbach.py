@@ -11,8 +11,10 @@
 from __future__ import annotations
 
 import time
+import warnings
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.galves_locherbach import GalvesLocherbachNeuron
 from sc_neurocore.network.population import Population
@@ -63,6 +65,44 @@ class TestDynamics:
         t1 = [n1.step(0.5) for _ in range(1000)]
         t2 = [n2.step(0.5) for _ in range(1000)]
         assert t1 != t2
+
+    def test_logistic_probability_is_bounded_without_overflow_warning(self):
+        n = GalvesLocherbachNeuron(v=-1.0e9, steepness=50.0)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            probability = n._firing_prob()
+        assert probability == pytest.approx(0.0)
+
+
+class TestValidation:
+    @pytest.mark.parametrize("field", ["v", "v_rest", "threshold_rate"])
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            GalvesLocherbachNeuron(**{field: value})
+
+    @pytest.mark.parametrize("decay", [-0.1, 1.1, np.nan, np.inf, -np.inf])
+    def test_rejects_decay_outside_unit_interval(self, decay: float):
+        with pytest.raises(ValueError, match="decay"):
+            GalvesLocherbachNeuron(decay=decay)
+
+    @pytest.mark.parametrize("steepness", [0.0, -1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_non_positive_or_non_finite_steepness(self, steepness: float):
+        with pytest.raises(ValueError, match="steepness"):
+            GalvesLocherbachNeuron(steepness=steepness)
+
+    @pytest.mark.parametrize("dt", [0.0, -1.0, 1.1, np.nan, np.inf, -np.inf])
+    def test_rejects_invalid_probability_timestep(self, dt: float):
+        with pytest.raises(ValueError, match="dt"):
+            GalvesLocherbachNeuron(dt=dt)
+
+    @pytest.mark.parametrize("weighted_input", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_weighted_input_before_state_mutation(self, weighted_input: float):
+        n = GalvesLocherbachNeuron(v=0.25)
+        before = n.v
+        with pytest.raises(ValueError, match="weighted_input"):
+            n.step(weighted_input)
+        assert n.v == before
 
 
 class TestPerformance:

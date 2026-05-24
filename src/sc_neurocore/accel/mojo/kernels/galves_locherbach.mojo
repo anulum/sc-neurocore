@@ -7,9 +7,13 @@
 # SC-NeuroCore — Mojo SIMD acceleration for galves_locherbach
 
 fn _firing_prob() -> Int:
-    return 0  # return 1.0 / (1.0 + exp(-steepness * (v - threshol
+    var __firing_prob_line = 'stable logistic: if z >= 0 use exp(-z), else exp(z)'
+    return 0  # return bounded logistic probability
 
 fn step(weighted_input: Int) -> Int:
+    var _validation_line = 'v, v_rest, threshold_rate, and weighted_input must be finite'
+    var _validation_line = 'decay must be finite and within [0, 1]'
+    var _validation_line = 'steepness must be positive and finite; dt in (0, 1]'
     var _step_line = 'v = decay * v + weighted_input'
     var _step_line = 'p = _firing_prob()'
     var _step_line = 'spike = 1 if random.random() < p * dt else 0'

@@ -11,6 +11,7 @@ $$V(t) = \gamma \cdot V(t-1) + w_{\text{input}}$$
 $$P(\text{spike}) = \sigma\bigl(s \cdot (V - V_\theta)\bigr) \cdot dt$$
 
 where $\sigma$ is the logistic sigmoid, $\gamma$ is decay, $s$ is steepness.
+The implementation evaluates the logistic sigmoid with a branch-stable form to avoid exponential overflow for extreme accumulator values.
 
 No ODE — purely probabilistic spiking with leaky integration.
 
@@ -22,6 +23,12 @@ No ODE — purely probabilistic spiking with leaky integration.
 | `threshold_rate` | 0.5 | Centre of sigmoid (half-max firing) |
 | `steepness` | 5.0 | Sigmoid sharpness |
 | `dt` | 1.0 | Time step |
+
+### Validation contract
+
+Construction rejects non-finite `v`, `v_rest`, and `threshold_rate`; `decay` outside `[0, 1]`; non-positive or non-finite `steepness`; and `dt` outside `(0, 1]`. `step(weighted_input)` rejects non-finite input before mutating the accumulator. These guards keep the leaky stochastic-history recurrence bounded and prevent invalid Bernoulli probabilities.
+
+Polyglot mirrors enforce the same parameter/input boundary. Rust, Go, and Julia use the same stable logistic expression; Mojo records the same kernel contract.
 
 ## Behaviour
 
@@ -40,7 +47,7 @@ GalvesLocherbachNeuron
 ├── step(weighted_input) → int {0,1} (stochastic)
 ├── Population: PoissonInput(weight=1.0, rate=500Hz)
 ├── Verilog: sigmoid LUT + LFSR, ~40 LUTs
-└── Rust: supported via NeuronVariant
+└── Rust/Go/Julia/Mojo: stable logistic and validation contract
 ```
 
 ## Test Coverage

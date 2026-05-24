@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+import math
 
 import numpy as np
 
@@ -32,10 +32,29 @@ class GalvesLocherbachNeuron:
     steepness: float = 5.0
     dt: float = 1.0
 
-    def _firing_prob(self) -> Any:
-        return 1.0 / (1.0 + np.exp(-self.steepness * (self.v - self.threshold_rate)))
+    def __post_init__(self) -> None:
+        for field in ("v", "v_rest", "threshold_rate"):
+            value = getattr(self, field)
+            if not math.isfinite(value):
+                raise ValueError(f"{field} must be finite")
+        if not math.isfinite(self.decay) or not 0.0 <= self.decay <= 1.0:
+            raise ValueError("decay must be finite and within [0, 1]")
+        if not math.isfinite(self.steepness) or self.steepness <= 0.0:
+            raise ValueError("steepness must be positive and finite")
+        if not math.isfinite(self.dt) or not 0.0 < self.dt <= 1.0:
+            raise ValueError("dt must be finite and within (0, 1]")
+
+    def _firing_prob(self) -> float:
+        z = self.steepness * (self.v - self.threshold_rate)
+        if z >= 0.0:
+            tail = math.exp(-z)
+            return 1.0 / (1.0 + tail)
+        tail = math.exp(z)
+        return tail / (1.0 + tail)
 
     def step(self, weighted_input: float) -> int:
+        if not math.isfinite(weighted_input):
+            raise ValueError("weighted_input must be finite")
         self.v = self.decay * self.v + weighted_input
         p = self._firing_prob()
         spike = 1 if np.random.random() < p * self.dt else 0
