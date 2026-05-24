@@ -76,6 +76,41 @@ class TestNRLIFIsolation:
         assert traces[0] == traces[1]
 
 
+class TestNRLIFValidation:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("v", np.nan),
+            ("theta", np.inf),
+            ("v_rest", -np.inf),
+            ("theta_rest", np.nan),
+        ],
+    )
+    def test_rejects_non_finite_voltage_or_threshold_state(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            NonResettingLIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["delta_theta", "r_m"])
+    @pytest.mark.parametrize("value", [-1.0, np.nan, np.inf])
+    def test_rejects_negative_or_non_finite_non_negative_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            NonResettingLIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["tau_m", "tau_theta", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            NonResettingLIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = NonResettingLIFNeuron(v=-60.0, theta=-45.0)
+        before = (n.v, n.theta)
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert (n.v, n.theta) == before
+
+
 # ---------------------------------------------------------------------------
 # 2. ANALYTICAL — dV, dθ, no-reset, spike mechanism
 # ---------------------------------------------------------------------------
