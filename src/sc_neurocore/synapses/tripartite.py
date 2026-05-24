@@ -123,7 +123,7 @@ class TripartiteSynapse:
             self.weight += self.facilitation * (ca - self.ca_threshold) * dt
         else:
             # Slow depression toward baseline without astrocyte support
-            self.weight += (self.base_weight - self.weight) * self.depression_rate
+            self.weight += (self.base_weight - self.weight) * self.depression_rate * dt
 
         self.weight = max(self.w_min, min(self.w_max, self.weight))
         return self.weight
