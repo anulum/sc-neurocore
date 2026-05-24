@@ -99,12 +99,11 @@ class TestIPAnalytical:
         spikes = sum(n.step(0.0) for _ in range(10_000))
         assert spikes == 0
 
-    def test_high_rate_near_certain(self):
-        """rate=10000, dt=1ms → P=10 → clipped to P<1 in random() < p."""
+    def test_rejects_probability_above_one(self):
+        """rate=10000, dt=1ms would make P=10, not a valid Bernoulli probability."""
         n = InhomogeneousPoissonNeuron()
-        # P = 10000 * 1 / 1000 = 10 > 1 → fires every step
-        spikes = sum(n.step(10000.0) for _ in range(100))
-        assert spikes == 100
+        with pytest.raises(ValueError, match="probability"):
+            n.step(10000.0)
 
     def test_rate_proportional(self):
         """Double rate → double expected spikes."""
@@ -122,6 +121,19 @@ class TestIPAnalytical:
         n = InhomogeneousPoissonNeuron(dt_ms=dt_ms)
         spikes = sum(n.step(100.0) for _ in range(10_000))
         assert isinstance(spikes, int)
+
+
+class TestIPValidation:
+    @pytest.mark.parametrize("dt_ms", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_dt(self, dt_ms: float):
+        with pytest.raises(ValueError, match="dt_ms"):
+            InhomogeneousPoissonNeuron(dt_ms=dt_ms)
+
+    @pytest.mark.parametrize("rate_hz", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_rate_before_sampling(self, rate_hz: float):
+        n = InhomogeneousPoissonNeuron()
+        with pytest.raises(ValueError, match="rate_hz"):
+            n.step(rate_hz)
 
 
 # ---------------------------------------------------------------------------
