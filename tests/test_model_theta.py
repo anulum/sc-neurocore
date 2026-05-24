@@ -65,6 +65,26 @@ class TestThetaIsolation:
         assert n.theta == 0.0
 
 
+class TestThetaValidation:
+    @pytest.mark.parametrize("theta", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_initial_phase(self, theta: float):
+        with pytest.raises(ValueError, match="theta"):
+            ThetaNeuron(theta=theta)
+
+    @pytest.mark.parametrize("dt", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_dt(self, dt: float):
+        with pytest.raises(ValueError, match="dt"):
+            ThetaNeuron(dt=dt)
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_phase_mutation(self, current: float):
+        n = ThetaNeuron(theta=0.25)
+        before = n.theta
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert n.theta == before
+
+
 class TestThetaBifurcation:
     """Saddle-node bifurcation at I=0 — same as QIF."""
 

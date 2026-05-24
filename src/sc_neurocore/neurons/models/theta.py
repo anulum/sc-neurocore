@@ -9,6 +9,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
+
 import numpy as np
 
 
@@ -26,7 +28,16 @@ class ThetaNeuron:
     theta: float = 0.0
     dt: float = 0.01
 
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.theta):
+            raise ValueError("theta must be finite")
+        if not math.isfinite(self.dt) or self.dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         theta_prev = self.theta
         dtheta = ((1.0 - np.cos(self.theta)) + (1.0 + np.cos(self.theta)) * current) * self.dt
         self.theta += dtheta
