@@ -811,6 +811,36 @@ class TestCochlearHairCell:
         assert cell.g_max == 10.0
         assert cell.delta == 0.1
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"g_max": -0.01},
+            {"e_met": float("nan")},
+            {"g_l": 0.0},
+            {"e_l": float("inf")},
+            {"cap": 0.0},
+            {"x0": float("nan")},
+            {"delta": 0.0},
+            {"dt": 0.0},
+            {"v": float("nan")},
+            {"glutamate_release": -0.01},
+        ],
+    )
+    def test_rejects_non_physical_hair_cell_parameters(self, kwargs):
+        """MET channel and membrane parameters must be finite and physically bounded."""
+        from sc_neurocore.neurons.models import CochlearHairCell
+
+        with pytest.raises(ValueError):
+            CochlearHairCell(**kwargs)
+
+    @pytest.mark.parametrize("displacement", [float("nan"), float("inf")])
+    def test_rejects_non_finite_met_displacement(self, displacement):
+        """Boltzmann MET activation must fail closed on non-finite displacement."""
+        from sc_neurocore.neurons.models import CochlearHairCell
+
+        with pytest.raises(ValueError, match="displacement"):
+            CochlearHairCell().p_open(displacement)
+
     def test_p_open_boltzmann(self, cell):
         """P_open(x) = 1/(1 + exp(-(x - x0)/delta))."""
         # At x = x0: P_open = 0.5.

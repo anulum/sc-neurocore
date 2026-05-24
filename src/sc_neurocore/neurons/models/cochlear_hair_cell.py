@@ -64,8 +64,28 @@ class CochlearHairCell:
     v: float = -60.0
     glutamate_release: float = 0.0
 
+    def __post_init__(self) -> None:
+        for name in ("g_l", "cap", "delta", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+
+        if not math.isfinite(self.g_max) or self.g_max < 0.0:
+            raise ValueError("g_max must be finite and non-negative")
+
+        for name in ("e_met", "e_l", "x0", "v"):
+            value = getattr(self, name)
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+
+        if not math.isfinite(self.glutamate_release) or self.glutamate_release < 0.0:
+            raise ValueError("glutamate_release must be finite and non-negative")
+
     def p_open(self, displacement: float) -> float:
         """Boltzmann activation of MET channels."""
+        if not math.isfinite(displacement):
+            raise ValueError("displacement must be finite")
+
         return 1.0 / (1.0 + math.exp(-(displacement - self.x0) / self.delta))
 
     def step(self, displacement: float) -> int:
