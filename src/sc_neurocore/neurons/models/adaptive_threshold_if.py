@@ -45,6 +45,12 @@ class AdaptiveThresholdIFNeuron:
             raise ValueError("tau_theta must be finite and positive")
         if not math.isfinite(self.dt) or self.dt <= 0.0:
             raise ValueError("dt must be finite and positive")
+        if self.dt > self.tau_m or self.dt > self.tau_theta:
+            raise ValueError("dt must not exceed tau_m or tau_theta")
+        if self.theta_rest <= self.v_rest:
+            raise ValueError("theta_rest must be greater than v_rest")
+        if self.theta_rest <= self.v_reset:
+            raise ValueError("theta_rest must be greater than v_reset")
 
     def step(self, current: float) -> int:
         if not math.isfinite(current):

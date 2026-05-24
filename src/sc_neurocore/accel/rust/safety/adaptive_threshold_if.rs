@@ -37,29 +37,44 @@ impl AdaptiveThresholdIFNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // self.v += (-(self.v - self.v_rest) + current) / self.tau_m * self.dt
-        // self.theta += (-(self.theta - self.theta_rest)) / self.tau_theta * sel
-        // if self.v >= self.theta:
-        // self.v = self.v_reset
-        // self.theta += self.delta_theta
-        // return 1
-        // return 0
-        0 // spike indicator
+        if !validate_adaptive_threshold_if(self) || !i_ext.is_finite() {
+            return 0;
+        }
+
+        self.v += (-(self.v - self.v_rest) + i_ext) / self.tau_m * self.dt;
+        self.theta += -(self.theta - self.theta_rest) / self.tau_theta * self.dt;
+        if self.v >= self.theta {
+            self.v = self.v_reset;
+            self.theta += self.delta_theta;
+            return 1;
+        }
+        0
     }
 
     pub fn reset(&mut self) {
-        // self.v = self.v_rest
-        // self.theta = self.theta_rest
-        self.v = -65.0_f64;
-        self.theta = -50.0_f64;
-        self.v_rest = -65.0_f64;
-        self.v_reset = -65.0_f64;
-        self.theta_rest = -50.0_f64;
+        self.v = self.v_rest;
+        self.theta = self.theta_rest;
     }
 }
 
 pub fn validate_adaptive_threshold_if(state: &AdaptiveThresholdIFNeuron) -> bool {
     state.v.is_finite()
+        && state.theta.is_finite()
+        && state.v_rest.is_finite()
+        && state.v_reset.is_finite()
+        && state.theta_rest.is_finite()
+        && state.delta_theta.is_finite()
+        && state.delta_theta >= 0.0
+        && state.tau_m.is_finite()
+        && state.tau_m > 0.0
+        && state.tau_theta.is_finite()
+        && state.tau_theta > 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
+        && state.dt <= state.tau_m
+        && state.dt <= state.tau_theta
+        && state.theta_rest > state.v_rest
+        && state.theta_rest > state.v_reset
 }
 
 #[cfg(test)]
@@ -76,7 +91,14 @@ mod tests {
     #[test]
     fn test_adaptive_threshold_if_step() {
         let mut state = AdaptiveThresholdIFNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(100.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_adaptive_threshold_if_rejects_nonphysical_geometry() {
+        let mut state = AdaptiveThresholdIFNeuron::new();
+        state.theta_rest = -70.0;
+        assert!(!validate_adaptive_threshold_if(&state));
     }
 }
