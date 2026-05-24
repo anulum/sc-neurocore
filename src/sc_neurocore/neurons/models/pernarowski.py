@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -32,7 +33,19 @@ class PernarowskiNeuron:
     dt: float = 0.1
     v_threshold: float = 0.5
 
+    def __post_init__(self) -> None:
+        for name in ("v", "w", "z", "alpha", "beta", "v_threshold"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite")
+        for name in ("eps1", "eps2", "gamma", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0:
+                raise ValueError(f"{name} must be finite and positive")
+
     def step(self, current: float = 0.0) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         v_prev = self.v
         f_v = self.v - self.v**3 / 3.0
         dv = (f_v - self.w - self.z + current) * self.dt

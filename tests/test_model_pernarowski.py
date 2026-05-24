@@ -312,3 +312,25 @@ class TestPernarowskiAnalysis:
         n = PernarowskiNeuron()
         train = np.array([float(n.step(0.5)) for _ in range(5000)])
         assert spike_count(train) == int(train.sum())
+
+
+class TestPernarowskiValidation:
+    @pytest.mark.parametrize("field", ["v", "w", "z", "alpha", "beta", "v_threshold"])
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_state_offsets_and_threshold(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            PernarowskiNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["eps1", "eps2", "gamma", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_non_positive_or_non_finite_scales(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            PernarowskiNeuron(**{field: value})
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = PernarowskiNeuron(v=-0.5, w=0.1, z=-0.2)
+        before = (n.v, n.w, n.z)
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert (n.v, n.w, n.z) == before

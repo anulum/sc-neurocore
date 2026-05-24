@@ -39,16 +39,23 @@ impl PernarowskiNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // v_prev = self.v
-        // f_v = self.v - self.v.powi3 / 3.0
-        // dv = (f_v - self.w - self.z + current) * self.dt
-        // dw = self.eps1 * (self.v - self.gamma * self.w + self.alpha) * self.dt
-        // dz = self.eps2 * (self.beta * (self.v + 0.7) - self.z) * self.dt
-        // self.v += dv
-        // self.w += dw
-        // self.z += dz
-        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold)
-        0 // spike indicator
+        if !validate_pernarowski(self) || !i_ext.is_finite() {
+            return 0;
+        }
+
+        let v_prev = self.v;
+        let f_v = self.v - self.v.powi(3) / 3.0;
+        let dv = (f_v - self.w - self.z + i_ext) * self.dt;
+        let dw = self.eps1 * (self.v - self.gamma * self.w + self.alpha) * self.dt;
+        let dz = self.eps2 * (self.beta * (self.v + 0.7) - self.z) * self.dt;
+        self.v += dv;
+        self.w += dw;
+        self.z += dz;
+        if self.v >= self.v_threshold && v_prev < self.v_threshold {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
@@ -63,6 +70,19 @@ impl PernarowskiNeuron {
 
 pub fn validate_pernarowski(state: &PernarowskiNeuron) -> bool {
     state.v.is_finite()
+        && state.w.is_finite()
+        && state.z.is_finite()
+        && state.alpha.is_finite()
+        && state.beta.is_finite()
+        && state.eps1.is_finite()
+        && state.eps1 > 0.0
+        && state.eps2.is_finite()
+        && state.eps2 > 0.0
+        && state.gamma.is_finite()
+        && state.gamma > 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
+        && state.v_threshold.is_finite()
 }
 
 #[cfg(test)]
