@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -33,6 +34,17 @@ class FractionalLIFNeuron:
     _max_history: int = 100
 
     def __post_init__(self) -> None:
+        for field in ("v", "v_rest", "v_reset", "v_threshold"):
+            if not math.isfinite(getattr(self, field)):
+                raise ValueError(f"{field} must be finite")
+        if not math.isfinite(self.alpha) or not 0.0 < self.alpha <= 1.0:
+            raise ValueError("alpha must be finite and in (0, 1]")
+        for field in ("resistance", "dt"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field} must be finite and positive")
+        if not isinstance(self._max_history, int) or self._max_history <= 0:
+            raise ValueError("max_history must be a positive integer")
         self._history: list[float] = [0.0] * self._max_history
         self._gl_coeffs: list[float] = self._compute_gl_coefficients()
 
@@ -43,6 +55,9 @@ class FractionalLIFNeuron:
         return coeffs
 
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         rhs = -(self.v - self.v_rest) + self.resistance * current
         history = self._history
         gl_sum = sum(
