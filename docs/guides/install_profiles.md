@@ -155,10 +155,18 @@ The source tree contains Julia, Go, Mojo, and WGSL implementations for selected
 kernels. Treat this as a research and benchmarking layer, not as the shipped
 runtime shape.
 
+This layer exists to compare implementation strategies under controlled parity
+and timing harnesses. It supports internal acceleration research only; it is
+not a user-facing install profile, not part of the default wheel contract, and
+not a prerequisite for standard simulation, training, NIR export, HDL
+generation, or FPGA deployment.
+
 Rules of thumb:
 
 - A base `pip install sc-neurocore` does not require Julia, Go, Mojo, or WGSL
   tooling.
+- `pip install "sc-neurocore[full]"` still does not imply a Julia, Go, Mojo, or
+  WGSL toolchain; those runtimes remain source-checkout research dependencies.
 - FPGA deployment emits SystemVerilog and tool scripts; it does not ship the
   polyglot benchmark matrix to the device.
 - A polyglot file is authoritative only when a maintained Python loader uses it
