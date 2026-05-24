@@ -41,6 +41,19 @@ neurons using bitstream multiplication (AND gates).
 
 ## Voltage-Based STDP (Clopath et al. 2010)
 
+`ClopathSTDP` implements the two voltage-gated pathways from Clopath
+et al.:
+
+- LTD is applied on presynaptic spikes when the slow postsynaptic
+  voltage trace is above `theta_minus`.
+- LTP is applied when the current postsynaptic voltage is above
+  `theta_plus` and the fast postsynaptic voltage trace is above
+  `theta_minus`.
+
+This makes the public contract trace-dependent rather than spike-pair
+only: regression tests should preserve both the LTD path under moderate
+depolarisation and the LTP path under strong depolarisation.
+
 ::: sc_neurocore.synapses.clopath_stdp.ClopathSTDP
 
 ## Tripartite Synapse (Astrocyte Coupling)
