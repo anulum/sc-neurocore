@@ -45,7 +45,7 @@ class FractionalLIFNeuron:
                 raise ValueError(f"{field} must be finite and positive")
         if not isinstance(self._max_history, int) or self._max_history <= 0:
             raise ValueError("max_history must be a positive integer")
-        self._history: list[float] = [0.0] * self._max_history
+        self._history: list[float] = [self.v_rest] * (self._max_history - 1) + [self.v]
         self._gl_coeffs: list[float] = self._compute_gl_coefficients()
 
     def _compute_gl_coefficients(self) -> list[float]:
@@ -61,7 +61,7 @@ class FractionalLIFNeuron:
         rhs = -(self.v - self.v_rest) + self.resistance * current
         history = self._history
         gl_sum = sum(
-            self._gl_coeffs[k] * history[-(k + 1)]
+            self._gl_coeffs[k] * history[-k]
             for k in range(1, min(len(history), self._max_history))
             if len(history) > k
         )
@@ -78,4 +78,4 @@ class FractionalLIFNeuron:
 
     def reset(self) -> None:
         self.v = self.v_rest
-        self._history = [0.0] * self._max_history
+        self._history = [self.v_rest] * self._max_history

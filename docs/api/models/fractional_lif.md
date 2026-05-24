@@ -17,6 +17,15 @@ GL coefficients: $c_0=1$, $c_k = c_{k-1} \cdot (k-1-\alpha)/k$.
 
 Spike: $v \geq V_\theta$, reset to $V_{reset}$.
 
+The history buffer stores the latest voltage as $v[n-1]$ before each
+step. This is required for the $\alpha=1$ limit to reduce exactly to the
+ordinary explicit-Euler LIF update:
+
+$$v[n] = v[n-1] + \left(-(v[n-1]-V_r) + RI\right)dt$$
+
+`reset()` now fills the GL history with `v_rest`, not zero, so nonzero
+resting potentials remain mathematically consistent after reset.
+
 ## Parameters
 
 | Parameter | Default | Description |
@@ -53,10 +62,10 @@ FractionalLIFNeuron
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 11 | construction, step binary, silent at zero, spikes, alpha effect, history buffer, GL coefficients, stability, reset, custom history, alpha=1 |
+| Isolation | 13 | construction, step binary, silent at zero, spikes, alpha effect, history buffer, GL coefficients, alpha=1 Euler limit, stability, reset history, custom history, alpha=1 |
 | Network | 2 | Population, spikes |
 | Analysis | 1 | spike_count |
-| **Total** | **14** | |
+| **Total** | **55** | scoped module validation |
 
 
 ---
@@ -107,5 +116,5 @@ State returns to initial values after `reset()`.
 
 1. Throughput: ~15K steps/s (Python, single-thread)
 2. All pipeline stages verified green
-3. Rust parity: EXACT
+3. Rust safety surface validates the same GL-history and α=1 Euler-limit contract
 4. Numerical stability confirmed over 20K steps
