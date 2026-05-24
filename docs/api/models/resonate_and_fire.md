@@ -37,10 +37,14 @@ On spike: $x \leftarrow 0,\; y \leftarrow 0$ (reset to origin).
 def step(self, current: float) -> int:
     dx = (self.b * self.x - self.omega * self.y + current) * self.dt
     dy = (self.omega * self.x + self.b * self.y) * self.dt
-    self.x += dx
-    self.y += dy
-    r = np.sqrt(self.x**2 + self.y**2)
-    if r >= self.threshold:
+    next_x = self.x + dx
+    next_y = self.y + dy
+    radius = math.hypot(next_x, next_y)
+    if not all(math.isfinite(value) for value in (dx, dy, next_x, next_y, radius)):
+        raise ValueError("Euler update must be finite")
+    self.x = next_x
+    self.y = next_y
+    if radius >= self.threshold:
         self.x = 0.0
         self.y = 0.0
         return 1
@@ -180,7 +184,7 @@ on every step → spike rate = 1/dt.
 | b | Spikes (50k) | Description |
 |---|-------------|-------------|
 | −0.05 | many | Weak damping, lower effective I_crit |
-| −0.5 | fewer | Strong damping, higher effective I_crit |
+| −0.5 | fewer | Heavier damping, higher effective I_crit |
 | +0.1 | spikes even at I=0 | Unstable spiral |
 
 ---
@@ -206,21 +210,40 @@ for modelling neurons in sensory systems that exhibit band-pass filtering.
 
 - **dt stability:** Tested at dt = 0.02, 0.05, 0.1. All produce finite
   states after 50k steps at I=2.0.
-- **Euler integration:** The linear ODE system is unconditionally stable
-  for b < 0 at any dt (eigenvalues have negative real part). However,
-  for b > 0, the Euler scheme can amplify numerical errors — dt must be
-  small relative to 1/b.
-- **Radius computation:** Uses `np.sqrt(x² + y²)` each step. This is
-  the dominant cost per step.
+- **Euler integration:** The continuous damped oscillator is stable for
+  b < 0, but the maintained implementation uses explicit Euler. For the
+  homogeneous oscillator, numerical decay requires
+  `sqrt((1 + b*dt)^2 + (omega*dt)^2) < 1`. The runtime therefore
+  rejects non-finite Euler increments, candidate coordinates, and radius
+  before mutating state; it does not claim arbitrary-timestep accuracy.
+- **Radius computation:** Uses `math.hypot(x, y)` each step to avoid
+  avoidable overflow in the Euclidean norm.
+
+---
+
+## Validation Contract
+
+- `x`, `y`, `b`, `omega`, `threshold`, `dt`, and runtime `current` must
+  be finite.
+- `omega`, `threshold`, and `dt` must be strictly positive. Zero natural
+  frequency is rejected because this model is a damped resonator, not a
+  plain integrator.
+- Each step computes `dx`, `dy`, candidate coordinates, and candidate
+  radius before mutation. Python raises `ValueError` for non-finite
+  candidates; Rust, Go, Julia, and Mojo fail closed without mutating state
+  or reporting a spike.
+- `reset()` clears only dynamic oscillator coordinates and preserves
+  physical parameters.
 
 ---
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/resonate_and_fire.py` — 45 lines.
+- **Source:** `src/sc_neurocore/neurons/models/resonate_and_fire.py` — 57 lines.
 - **Two real state variables:** x and y, representing Re(z) and Im(z).
-- **Rust wiring:** Compatible with `step(f64) → i32` dispatch. Two f64
-  state variables. Supported via NeuronVariant.
+- **Polyglot surfaces:** Python, Rust, Go, Julia, and Mojo implement the
+  same finite-state, positive-frequency, positive-threshold,
+  positive-timestep, spike-reset, and parameter-preserving reset contract.
 
 ---
 
@@ -238,7 +261,8 @@ for modelling neurons in sensory systems that exhibit band-pass filtering.
 | ISI | 1 | constant ISI (CV<0.05) |
 | Network | 2 | Population(n=10), Network spikes |
 | Analysis | 2 | spike_count ≥ 100, consistency |
-| **Total** | **29** | |
+| Validation | 27 | non-finite parameters, positive threshold/dt, positive omega, finite current, finite candidate update |
+| **Total** | **56** | |
 
 ---
 
@@ -253,7 +277,7 @@ for modelling neurons in sensory systems that exhibit band-pass filtering.
 3. **b > 0 unstable confirmed:** With b=0.1 and x_0=0.01, the expanding
    spiral reaches threshold and fires even with zero input.
 4. **Damping controls effective threshold:** More negative b raises the
-   effective I_crit (stronger damping attenuates the state more).
+   effective I_crit (heavier damping attenuates the state more).
    Measured at I=1.5: b=−0.05 fires more than b=−0.5.
 5. **Omega sets oscillation frequency:** Higher omega produces more
    zero-crossings in the subthreshold x trace, confirming the
@@ -301,8 +325,10 @@ State returns to initial values after `reset()`.
 `Population(ResonateAndFireNeuron, n=10)` creates correct instances.
 **Status: PASS**
 
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
+### 7. Rust safety counterpart
+The maintained Rust safety surface now implements the same scalar
+validation, spike reset, and parameter-preserving reset contracts. This
+slice did not rerun a standalone benchmark for this model.
 
 ---
 
@@ -310,7 +336,7 @@ State returns to initial values after `reset()`.
 
 1. Throughput: ~105K steps/s (Python, single-thread)
 2. All pipeline stages verified green
-3. Rust parity: EXACT
+3. Rust safety counterpart: scalar contract aligned
 4. Numerical stability confirmed over 20K steps
 
 ---

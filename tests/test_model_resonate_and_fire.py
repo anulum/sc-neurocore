@@ -226,13 +226,13 @@ class TestResonateAndFireParameters:
         assert spikes > 0, "b>0 with perturbation should cause spikes"
 
     def test_b_more_negative_higher_threshold(self):
-        """Stronger damping (more negative b) → higher effective I_crit."""
+        """Heavier damping (more negative b) → higher effective I_crit."""
         n_weak = ResonateAndFireNeuron(b=-0.05)
-        n_strong = ResonateAndFireNeuron(b=-0.5)
+        n_heavy_damping = ResonateAndFireNeuron(b=-0.5)
         I = 1.5
         s_weak = len(_run(n_weak, current=I, steps=50000))
-        s_strong = len(_run(n_strong, current=I, steps=50000))
-        assert s_weak > s_strong
+        s_heavy_damping = len(_run(n_heavy_damping, current=I, steps=50000))
+        assert s_weak > s_heavy_damping
 
     @pytest.mark.parametrize("dt", [0.02, 0.05, 0.1])
     def test_dt_stability(self, dt: float):
@@ -307,4 +307,23 @@ class TestResonateAndFireValidation:
         before = (n.x, n.y)
         with pytest.raises(ValueError, match="current"):
             n.step(current)
+        assert (n.x, n.y) == before
+
+    def test_rejects_zero_omega(self):
+        with pytest.raises(ValueError, match="omega"):
+            ResonateAndFireNeuron(omega=0.0)
+
+    def test_rejects_non_finite_euler_update_before_state_mutation(self):
+        n = ResonateAndFireNeuron(
+            x=0.25,
+            y=-0.5,
+            b=1.0e308,
+            threshold=1.0e308,
+            dt=1.0e308,
+        )
+        before = (n.x, n.y)
+
+        with pytest.raises(ValueError, match="Euler update"):
+            n.step(1.0e308)
+
         assert (n.x, n.y) == before

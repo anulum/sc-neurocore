@@ -4,26 +4,16 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Resonate-and-Fire — subthreshold oscillation + threshold
+# SC-NeuroCore — Resonate-and-fire neuron model
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 import math
-import numpy as np
 
 
 @dataclass
 class ResonateAndFireNeuron:
-    """Resonate-and-Fire — subthreshold oscillation + threshold.
-
-    Izhikevich 2001. Complex dynamics: z = x + i*y,
-    dz/dt = (b + iω)z + I, fire when |z| > threshold.
-    Implemented as 2 real ODEs.
-
-    Reference: Izhikevich, E.M. (2001). Neural Networks 14:883–894.
-    """
-
     x: float = 0.0
     y: float = 0.0
     b: float = -0.1
@@ -32,9 +22,11 @@ class ResonateAndFireNeuron:
     dt: float = 0.05
 
     def __post_init__(self) -> None:
-        for name in ("x", "y", "b", "omega"):
+        for name in ("x", "y", "b"):
             if not math.isfinite(getattr(self, name)):
                 raise ValueError(f"{name} must be finite")
+        if not math.isfinite(self.omega) or self.omega <= 0.0:
+            raise ValueError("omega must be finite and positive")
         for name in ("threshold", "dt"):
             value = getattr(self, name)
             if not math.isfinite(value) or value <= 0:
@@ -46,10 +38,15 @@ class ResonateAndFireNeuron:
 
         dx = (self.b * self.x - self.omega * self.y + current) * self.dt
         dy = (self.omega * self.x + self.b * self.y) * self.dt
-        self.x += dx
-        self.y += dy
-        r = np.sqrt(self.x**2 + self.y**2)
-        if r >= self.threshold:
+        next_x = self.x + dx
+        next_y = self.y + dy
+        radius = math.hypot(next_x, next_y)
+        if not all(math.isfinite(value) for value in (dx, dy, next_x, next_y, radius)):
+            raise ValueError("Euler update must be finite")
+
+        self.x = next_x
+        self.y = next_y
+        if radius >= self.threshold:
             self.x = 0.0
             self.y = 0.0
             return 1
