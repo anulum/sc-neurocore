@@ -78,7 +78,11 @@ class AstrocyteModel:
         dh = (h_inf - self.h) / max(tau_h, 1e-6)
         dip3 = current + self.ip3_prod - self.ip3_decay * self.ip3
 
-        self.ca = max(0.0, self.ca + dca * self.dt)
+        ca_next = self.ca + dca * self.dt
+        if not np.isfinite(ca_next) or ca_next > self.c0:
+            raise ValueError("calcium update must remain finite and within the total calcium pool")
+
+        self.ca = max(0.0, ca_next)
         self.h = np.clip(self.h + dh * self.dt, 0.0, 1.0)
         self.ip3 = max(0.0, self.ip3 + dip3 * self.dt)
         return self.ca

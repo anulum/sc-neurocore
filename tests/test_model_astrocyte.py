@@ -124,7 +124,7 @@ class TestAstrocyteCaDynamics:
         """Higher IP3 → more IP3R opening → more Ca release."""
         n = AstrocyteModel()
         for _ in range(10000):
-            n.step(2.0)  # strong IP3 production
+            n.step(2.0)  # high IP3 production
         assert n.ip3 > 1.0  # IP3 has accumulated
         assert n.ca > 0.5  # Ca elevated from ER release
 
@@ -146,6 +146,12 @@ class TestAstrocyteCaDynamics:
         ca_er = (n.c0 - n.ca) / n.c1
         total = n.ca + n.c1 * ca_er
         assert abs(total - n.c0) < 1e-10
+
+    def test_rejects_timestep_that_exits_total_calcium_pool(self):
+        """Integrator must not accept cytosolic Ca above conserved total calcium."""
+        n = AstrocyteModel(dt=100.0)
+        with pytest.raises(ValueError, match="calcium"):
+            n.step(0.0)
 
 
 class TestAstrocyteIP3Dynamics:
