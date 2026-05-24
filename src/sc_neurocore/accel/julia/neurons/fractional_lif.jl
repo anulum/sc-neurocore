@@ -8,7 +8,7 @@
 
 module FractionalLifAccel
 
-export step!, simulate, FractionalLIFNeuronState
+export step!, simulate, valid, FractionalLIFNeuronState
 
 mutable struct FractionalLIFNeuronState
     v::Float64
@@ -18,40 +18,75 @@ mutable struct FractionalLIFNeuronState
     alpha::Float64
     resistance::Float64
     dt::Float64
-    _max_history::Float64
+    max_history::Int
+    history::Vector{Float64}
+    gl_coeffs::Vector{Float64}
 end
 
 function FractionalLIFNeuronState()
-    FractionalLIFNeuronState(0.0, 0.0, 0.0, 1.0, 0.8, 1.0, 1.0, 100.0)
+    max_history = 100
+    FractionalLIFNeuronState(
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.8,
+        1.0,
+        1.0,
+        max_history,
+        zeros(max_history),
+        compute_gl_coefficients(0.8, max_history),
+    )
 end
 
-function _compute_gl_coefficients(s::FractionalLIFNeuronState)
-    coeffs = [1.0]
-    for k in 1:s._max_history
-        coeffs.append(coeffs[-1] * (k - 1 - s.alpha) / k)
+function compute_gl_coefficients(alpha::Float64, max_history::Int)
+    coeffs = ones(Float64, max_history)
+    for k in 2:max_history
+        coeffs[k] = coeffs[k - 1] * ((k - 1) - 1 - alpha) / (k - 1)
     end
     return coeffs
 end
 
 function step!(s::FractionalLIFNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        rhs = -(s.v - s.v_rest) + s.resistance * I_ext
-        history = s._history
-        gl_sum = sum((s._gl_coeffs[k] * history[-(k + 1)] for k in range(1, min(length(history), s._max_history)) if length(history) > k))
-        s.v = rhs * s.dt ^ s.alpha - gl_sum
-        history.append(s.v)
-        if length(history) > s._max_history
-            history.pop(0)
-        end
-        if s.v >= s.v_threshold
-            s.v = s.v_reset
-            history[-1] = s.v_reset
-            return 1
-        end
-        return 0
-    catch _e
+    if !valid(s) || !isfinite(I_ext)
         return 0
     end
+    rhs = -(s.v - s.v_rest) + s.resistance * I_ext
+    terms = min(length(s.history), s.max_history, length(s.gl_coeffs))
+    gl_sum = 0.0
+    for k in 2:terms
+        gl_sum += s.gl_coeffs[k] * s.history[end - (k - 2)]
+    end
+    s.v = rhs * s.dt ^ s.alpha - gl_sum
+    push!(s.history, s.v)
+    if length(s.history) > s.max_history
+        popfirst!(s.history)
+    end
+    if s.v >= s.v_threshold
+        s.v = s.v_reset
+        s.history[end] = s.v_reset
+        return 1
+    end
+    return 0
+end
+
+function valid(s::FractionalLIFNeuronState)
+    return isfinite(s.v) &&
+        isfinite(s.v_rest) &&
+        isfinite(s.v_reset) &&
+        isfinite(s.v_threshold) &&
+        isfinite(s.alpha) &&
+        s.alpha > 0.0 &&
+        s.alpha <= 1.0 &&
+        isfinite(s.resistance) &&
+        s.resistance > 0.0 &&
+        isfinite(s.dt) &&
+        s.dt > 0.0 &&
+        s.max_history > 1 &&
+        length(s.history) == s.max_history &&
+        length(s.gl_coeffs) == s.max_history &&
+        all(isfinite, s.history) &&
+        all(isfinite, s.gl_coeffs)
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)

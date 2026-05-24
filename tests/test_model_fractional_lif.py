@@ -48,12 +48,13 @@ class TestFLIFIsolation:
         assert np.isfinite(n.v)
 
     def test_reset(self):
-        n = FractionalLIFNeuron()
+        n = FractionalLIFNeuron(v_rest=0.2, v_reset=0.2, v_threshold=1.0)
         for _ in range(100):
             n.step(5.0)
         n.reset()
         assert n.v == n.v_rest
         assert len(n._history) == n._max_history
+        assert n._history[-1] == n.v_rest
 
 
 class TestFLIFGLCoefficients:
@@ -76,6 +77,14 @@ class TestFLIFGLCoefficients:
         assert n._gl_coeffs[0] == 1.0
         # c[1] = 1 * (0 - 1) / 1 = -1
         assert abs(n._gl_coeffs[1] - (-1.0)) < 1e-12
+
+    def test_alpha_1_step_matches_euler_lif_update(self):
+        n = FractionalLIFNeuron(v=0.25, alpha=1.0, dt=0.1)
+
+        spike = n.step(0.5)
+
+        assert spike == 0
+        assert n.v == pytest.approx(0.25 + (-0.25 + 0.5) * 0.1)
 
     def test_alpha_affects_memory_depth(self):
         """Lower α → slower coefficient decay → longer effective memory."""
@@ -109,12 +118,13 @@ class TestFLIFDynamics:
         assert s10 >= s5
 
     def test_alpha_affects_dynamics(self):
-        """Lower α → more memory → different firing pattern."""
+        """Lower α → more memory → different subthreshold trajectory."""
         n_low = FractionalLIFNeuron(alpha=0.5)
         n_high = FractionalLIFNeuron(alpha=0.95)
-        s_low = len(_run(n_low, current=0.5, steps=5000))
-        s_high = len(_run(n_high, current=0.5, steps=5000))
-        assert s_low != s_high
+        for _ in range(200):
+            n_low.step(0.5)
+            n_high.step(0.5)
+        assert n_low.v != pytest.approx(n_high.v)
 
 
 class TestFLIFParameters:
