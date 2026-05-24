@@ -20,6 +20,7 @@ from __future__ import annotations
 import time
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.escape_rate import EscapeRateNeuron
 from sc_neurocore.network.population import Population
@@ -53,7 +54,7 @@ class TestEscapeRateIsolation:
     def test_state_finite_long_run(self):
         n = EscapeRateNeuron()
         for _ in range(100000):
-            n.step(50.0)
+            n.step(40.0)
         assert np.isfinite(n.v)
 
     def test_reset(self):
@@ -69,22 +70,22 @@ class TestEscapeRateStochasticMechanism:
 
     def test_stochastic_spiking(self):
         n = EscapeRateNeuron()
-        spikes = sum(n.step(50.0) for _ in range(50000))
+        spikes = sum(n.step(40.0) for _ in range(50000))
         assert spikes > 100
 
     def test_two_runs_differ(self):
         """Stochastic → different spike trains across runs."""
         n1 = EscapeRateNeuron()
         n2 = EscapeRateNeuron()
-        t1 = [n1.step(50.0) for _ in range(1000)]
-        t2 = [n2.step(50.0) for _ in range(1000)]
+        t1 = [n1.step(40.0) for _ in range(1000)]
+        t2 = [n2.step(40.0) for _ in range(1000)]
         assert t1 != t2
 
     def test_rate_increases_with_input(self):
         n_low = EscapeRateNeuron()
         n_high = EscapeRateNeuron()
         s_low = sum(n_low.step(20.0) for _ in range(50000))
-        s_high = sum(n_high.step(50.0) for _ in range(50000))
+        s_high = sum(n_high.step(40.0) for _ in range(50000))
         assert s_high > s_low
 
     def test_zero_input_silent(self):
@@ -93,12 +94,11 @@ class TestEscapeRateStochasticMechanism:
         spikes = sum(n.step(0.0) for _ in range(50000))
         assert spikes == 0
 
-    def test_safe_exp_no_overflow(self):
+    def test_rejects_impossible_spike_probability(self):
         n = EscapeRateNeuron()
         n.v = 1000.0
-        result = n.step(0.0)
-        assert result in (0, 1)
-        assert np.isfinite(n.v)
+        with pytest.raises(ValueError, match="probability"):
+            n.step(0.0)
 
 
 class TestEscapeRateAnalytical:
@@ -145,7 +145,7 @@ class TestEscapeRateISI:
     def test_isi_variability(self):
         """Stochastic → CV(ISI) > 0."""
         n = EscapeRateNeuron()
-        spikes = _run(n, current=50.0, steps=100000)
+        spikes = _run(n, current=40.0, steps=100000)
         if len(spikes) >= 50:
             isis = np.diff(spikes).astype(float)
             cv = np.std(isis) / np.mean(isis)
@@ -153,11 +153,11 @@ class TestEscapeRateISI:
 
     def test_higher_current_shorter_isi(self):
         n30 = EscapeRateNeuron()
-        n100 = EscapeRateNeuron()
+        n40 = EscapeRateNeuron()
         s30 = _run(n30, current=30.0, steps=50000)
-        s100 = _run(n100, current=100.0, steps=50000)
-        if len(s30) > 10 and len(s100) > 10:
-            assert np.mean(np.diff(s100)) < np.mean(np.diff(s30))
+        s40 = _run(n40, current=40.0, steps=50000)
+        if len(s30) > 10 and len(s40) > 10:
+            assert np.mean(np.diff(s40)) < np.mean(np.diff(s30))
 
 
 class TestEscapeRateParameters:
@@ -174,6 +174,28 @@ class TestEscapeRateParameters:
         n_low.step(20.0)
         n_high.step(20.0)
         assert abs(n_high.v - (-70.0)) > abs(n_low.v - (-70.0))
+
+
+class TestEscapeRateValidation:
+    @pytest.mark.parametrize("field", ["v", "v_rest", "v_reset", "v_threshold"])
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            EscapeRateNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["tau_m", "rho_0", "delta_u", "resistance", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            EscapeRateNeuron(**{field: value})
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_voltage_mutation(self, current: float):
+        n = EscapeRateNeuron(v=-65.0)
+        before = n.v
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert n.v == before
 
 
 class TestEscapeRatePerformance:
@@ -222,7 +244,7 @@ class TestEscapeRatePipeline:
 
     def test_analysis_pipeline(self):
         n = EscapeRateNeuron()
-        train = np.array([float(n.step(50.0)) for _ in range(50000)])
+        train = np.array([float(n.step(40.0)) for _ in range(50000)])
         sc = spike_count(train)
         assert sc >= 50
         isis = isi(train, dt=0.001)
