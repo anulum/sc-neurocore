@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 from typing import Any
 
 import numpy as np
@@ -35,16 +36,35 @@ class BendaHerzNeuron:
     _rng: np.random.Generator = field(init=False)
 
     def __post_init__(self) -> None:
+        if not math.isfinite(self.a) or self.a < 0.0:
+            raise ValueError("a must be finite and non-negative")
+        for name in ("f_max", "beta", "tau_a", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+        if not math.isfinite(self.i_half):
+            raise ValueError("i_half must be finite")
+        if not math.isfinite(self.delta_a) or self.delta_a < 0.0:
+            raise ValueError("delta_a must be finite and non-negative")
         self._rng = np.random.default_rng()
 
     def _f_onset(self, x: float) -> Any:
-        return self.f_max / (1.0 + np.exp(-self.beta * (x - self.i_half)))
+        z = self.beta * (x - self.i_half)
+        if z >= 0.0:
+            return self.f_max / (1.0 + np.exp(-z))
+        exp_z = np.exp(z)
+        return self.f_max * exp_z / (1.0 + exp_z)
 
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         rate = self._f_onset(current - self.a)
-        self.a += (-self.a / self.tau_a + self.delta_a * rate) * self.dt
         p = rate * self.dt / 1000.0
-        return 1 if self._rng.random() < min(p, 1.0) else 0
+        if p > 1.0:
+            raise ValueError("spike probability must not exceed one")
+        self.a += (-self.a / self.tau_a + self.delta_a * rate) * self.dt
+        return 1 if self._rng.random() < p else 0
 
     def reset(self) -> None:
         self.a = 0.0
