@@ -17,6 +17,14 @@ Build:
 
 The `.so` is platform-specific and gitignored; the `.mojo` source is
 tracked.
+
+The Wilson-Cowan transfer function evaluates exponentials in the same
+numerical regime as the Python reference. Public asymptote tests keep input
+magnitudes near +/-500 because scalar libm `exp` implementations are not
+required to accept arguments above the usual overflow boundary near 709 for
+IEEE-754 binary64. That bound is part of the portability contract: parity is
+asserted inside the finite domain where the scientific sigmoid asymptotes are
+already saturated, not by depending on platform-specific overflow behaviour.
 """
 
 from __future__ import annotations
