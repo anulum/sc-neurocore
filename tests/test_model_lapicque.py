@@ -72,6 +72,35 @@ class TestLapicqueIsolation:
         assert traces[0] == traces[1]
 
 
+class TestLapicqueValidation:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("v", np.nan),
+            ("v_rest", np.inf),
+            ("v_reset", -np.inf),
+            ("v_threshold", np.nan),
+        ],
+    )
+    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            LapicqueNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["tau", "resistance", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_rc_scale_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            LapicqueNeuron(**{field: value})
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = LapicqueNeuron(v=0.25)
+        before = n.v
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert n.v == before
+
+
 # ---------------------------------------------------------------------------
 # 2. ANALYTICAL — dV formula, steady state, rheobase
 # ---------------------------------------------------------------------------
