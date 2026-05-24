@@ -26,8 +26,27 @@ func NewInhomogeneousPoissonNeuron() *InhomogeneousPoissonNeuronState {
 
 // Step advances the neuron by one timestep
 func (s *InhomogeneousPoissonNeuronState) Step(iExt float64) int {
-	_ = iExt
+	if !ValidateInhomogeneousPoisson(s) || !finite(iExt) {
+		return 0
+	}
+	rateHz := math.Max(0.0, iExt)
+	pSpike := -math.Expm1(-(rateHz * s.DtMs / 1000.0))
+	if pSpike >= 1.0 {
+		return 1
+	}
 	return 0
+}
+
+// ValidateInhomogeneousPoisson enforces finite, physically valid timestep parameters.
+func ValidateInhomogeneousPoisson(s *InhomogeneousPoissonNeuronState) bool {
+	if s == nil {
+		return false
+	}
+	return finite(s.DtMs) && s.DtMs > 0.0
+}
+
+func finite(v float64) bool {
+	return !math.IsNaN(v) && !math.IsInf(v, 0)
 }
 
 // SimulateInhomogeneousPoissonNeuron runs the neuron for n steps
@@ -44,5 +63,3 @@ func SimulateInhomogeneousPoissonNeuron(nSteps int, iExt float64) ([]float64, in
 	}
 	return trace, spikes
 }
-
-var _ = math.Exp

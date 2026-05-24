@@ -19,9 +19,16 @@ impl InhomogeneousPoissonNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // p = max(0.0, rate_hz) * self.dt_ms / 1000.0
-        // return 1 if np.random.random() < p else 0
-        0 // spike indicator
+        if !validate_inhomogeneous_poisson(self) || !i_ext.is_finite() {
+            return 0;
+        }
+
+        let rate_hz = i_ext.max(0.0);
+        let p_spike = -(-(rate_hz * self.dt_ms / 1000.0)).exp_m1();
+        if p_spike >= 1.0 {
+            return 1;
+        }
+        0
     }
 
     pub fn reset(&mut self) {
@@ -31,7 +38,7 @@ impl InhomogeneousPoissonNeuron {
 }
 
 pub fn validate_inhomogeneous_poisson(state: &InhomogeneousPoissonNeuron) -> bool {
-    true
+    state.dt_ms.is_finite() && state.dt_ms > 0.0
 }
 
 #[cfg(test)]

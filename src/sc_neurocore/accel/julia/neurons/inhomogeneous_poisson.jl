@@ -8,7 +8,7 @@
 
 module InhomogeneousPoissonAccel
 
-export step!, simulate, InhomogeneousPoissonNeuronState
+export step!, simulate, validate_inhomogeneous_poisson, InhomogeneousPoissonNeuronState
 
 mutable struct InhomogeneousPoissonNeuronState
     dt_ms::Float64
@@ -19,12 +19,16 @@ function InhomogeneousPoissonNeuronState()
 end
 
 function step!(s::InhomogeneousPoissonNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        p = max(0.0, rate_hz) * s.dt_ms / 1000.0
-        return (np.random.random() < p) ? 1 : 0
-    catch _e
+    if !validate_inhomogeneous_poisson(s) || !isfinite(I_ext)
         return 0
     end
+
+    p_spike = -expm1(-(max(0.0, I_ext) * s.dt_ms / 1000.0))
+    return rand() < p_spike ? 1 : 0
+end
+
+function validate_inhomogeneous_poisson(s::InhomogeneousPoissonNeuronState)
+    return isfinite(s.dt_ms) && s.dt_ms > 0.0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
