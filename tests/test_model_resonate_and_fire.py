@@ -286,3 +286,25 @@ class TestResonateAndFireAnalysis:
         n = ResonateAndFireNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(50000)])
         assert spike_count(train) == int(train.sum())
+
+
+class TestResonateAndFireValidation:
+    @pytest.mark.parametrize("field", ["x", "y", "b", "omega"])
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_state_and_oscillator_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            ResonateAndFireNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["threshold", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_non_positive_or_non_finite_threshold_and_step(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            ResonateAndFireNeuron(**{field: value})
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = ResonateAndFireNeuron(x=0.25, y=-0.5)
+        before = (n.x, n.y)
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert (n.x, n.y) == before
