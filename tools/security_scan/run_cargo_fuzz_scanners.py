@@ -23,6 +23,7 @@ except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib  # type: ignore[no-redef]
 
 CARGO_FUZZ_SCHEMA_VERSION = "sc-neurocore.cargo-fuzz-scanners.v1"
+CARGO_FUZZ_PROCESS_TIMEOUT_OVERHEAD_SECONDS = 300
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -105,14 +106,33 @@ def _run(
     run_command: RunCommand,
     timeout: int,
 ) -> subprocess.CompletedProcess[str]:
-    return run_command(
-        command,
-        cwd=repo_root,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        check=False,
-    )
+    try:
+        return run_command(
+            command,
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        stdout = (
+            exc.stdout.decode("utf-8", errors="replace")
+            if isinstance(exc.stdout, bytes)
+            else exc.stdout
+        )
+        stderr = (
+            exc.stderr.decode("utf-8", errors="replace")
+            if isinstance(exc.stderr, bytes)
+            else exc.stderr
+        )
+        timeout_message = f"command timed out after {timeout} seconds"
+        return subprocess.CompletedProcess(
+            command,
+            124,
+            stdout=stdout or "",
+            stderr="\n".join(part for part in (stderr, timeout_message) if part),
+        )
 
 
 def _target_command(target: str, seconds: int) -> list[str]:
@@ -154,7 +174,7 @@ def run_cargo_fuzz_scanners(
             command,
             repo_root=repo_root,
             run_command=run_command,
-            timeout=seconds_per_target + 30,
+            timeout=seconds_per_target + CARGO_FUZZ_PROCESS_TIMEOUT_OVERHEAD_SECONDS,
         )
         target_report = {
             "target": target,

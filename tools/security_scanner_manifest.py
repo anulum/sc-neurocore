@@ -343,7 +343,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore Rust resilience owner",
         noise="high",
-        pinned_version="cargo-fuzz==0.11.2",
+        pinned_version="cargo-fuzz==0.13.1",
         allowed_to_fail_rationale="Nightly fuzzing has known environment-specific flake risk from toolchain and sanitizer noise.",
     ),
 )

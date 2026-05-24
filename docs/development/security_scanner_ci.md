@@ -54,7 +54,9 @@ It does not execute heavyweight scanner binaries in CI yet.
   plus per-target reports such as `security/cargo_fuzz_ir_parser.json`; it runs
   outside push and pull-request CI with a bounded total time budget and installs
   the maintained `cargo-fuzz` release pinned in the workflow using stable Cargo
-  before executing the fuzz lane on the configured nightly toolchain.
+  before executing the fuzz lane on the configured nightly toolchain. The Python
+  runner keeps a separate process watchdog above libFuzzer's own per-target
+  budget so CI compile/startup overhead does not interrupt a valid bounded run.
 - The nightly/manual benchmark-regression lane writes
   `security/benchmark_regression.json` by regenerating the deterministic
   side-channel benchmark and comparing all numeric metrics against the tracked
