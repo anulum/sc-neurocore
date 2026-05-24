@@ -46,7 +46,9 @@ It does not execute heavyweight scanner binaries in CI yet.
   vulnerability status from module metadata. The runner scans explicit
   lockfile/requirements inputs with OSV's lockfile plugin rather than recursive
   source discovery so optional development manifests cannot mask the tracked
-  dependency surfaces with resolver-side extraction failures.
+  dependency surfaces with resolver-side extraction failures. Transient OSV
+  resolver service errors are retried before the lane reports failure; any
+  remaining validation error or unresolved vulnerability still fails closed.
 - Optional typing artefact slots include `security/pyright.json`,
   `security/mypy`, and `security/typing_scanner_summary.json`; the executable
   runner is available for baseline refreshes without enabling the lane in the

@@ -152,6 +152,7 @@ def test_runner_writes_osv_report_and_summary(tmp_path: Path) -> None:
         ]
     ]
     assert summary["passed"] is True
+    assert summary["attempts"] == 1
     assert summary["package_count"] == 1
     assert summary["vulnerability_count"] == 0
     assert (
@@ -232,3 +233,61 @@ def test_runner_counts_vulnerabilities_as_blocking(tmp_path: Path) -> None:
     assert summary["package_count"] == 1
     assert summary["vulnerability_count"] == 1
     assert summary["validation_errors"] == []
+
+
+def test_runner_retries_transient_osv_resolver_failure(tmp_path: Path) -> None:
+    tool = _load_tool()
+    calls = 0
+    sleeps: list[float] = []
+
+    def fake_run(
+        command: list[str],
+        *,
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        timeout: int,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, capture_output, text, timeout, check
+        nonlocal calls
+        calls += 1
+        output_path = Path(command[command.index("--output-file") + 1])
+        if calls == 1:
+            output_path.write_text(json.dumps({"results": []}), encoding="utf-8")
+            return subprocess.CompletedProcess(
+                command,
+                127,
+                stdout="",
+                stderr="rpc error: code = Unavailable desc = service unavailable",
+            )
+        output_path.write_text(
+            json.dumps(
+                {
+                    "results": [
+                        {
+                            "packages": [
+                                {
+                                    "package": {"name": "example", "ecosystem": "PyPI"},
+                                    "vulnerabilities": [],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    summary = tool.run_osv_scanner(
+        repo_root=_repo_root(),
+        output_dir=tmp_path / "packet",
+        run_command=fake_run,
+        sleep=sleeps.append,
+    )
+
+    assert summary["passed"] is True
+    assert summary["attempts"] == 2
+    assert summary["package_count"] == 1
+    assert sleeps == [5]
