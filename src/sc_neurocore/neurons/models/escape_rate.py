@@ -9,6 +9,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
+
 import numpy as np
 
 from sc_neurocore.utils.numerics import safe_exp
@@ -31,13 +33,34 @@ class EscapeRateNeuron:
     resistance: float = 1.0
     dt: float = 1.0
 
-    def step(self, current: float) -> int:
-        self.v += (-(self.v - self.v_rest) + self.resistance * current) / self.tau_m * self.dt
-        rate = self.rho_0 * safe_exp((self.v - self.v_threshold) / self.delta_u)
+    def __post_init__(self) -> None:
+        for field in ("v", "v_rest", "v_reset", "v_threshold"):
+            if not math.isfinite(getattr(self, field)):
+                raise ValueError(f"{field} must be finite")
+        for field in ("tau_m", "rho_0", "delta_u", "resistance", "dt"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field} must be finite and positive")
+
+    def _spike_probability(self, voltage: float) -> float:
+        rate = self.rho_0 * safe_exp((voltage - self.v_threshold) / self.delta_u)
         p_spike = rate * self.dt
+        if p_spike > 1.0:
+            raise ValueError("spike probability must not exceed one")
+        return p_spike
+
+    def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
+        voltage = (
+            self.v + (-(self.v - self.v_rest) + self.resistance * current) / self.tau_m * self.dt
+        )
+        p_spike = self._spike_probability(voltage)
         if np.random.random() < p_spike:
             self.v = self.v_reset
             return 1
+        self.v = voltage
         return 0
 
     def reset(self) -> None:
