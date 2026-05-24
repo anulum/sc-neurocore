@@ -1,24 +1,26 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
-# ORCID: 0009-0009-3560-0851
-# Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Nonlinear LIF with cubic term. Touboul & Brette 2008
+"""Nonlinear leaky integrate-and-fire neuron model."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
 class NonlinearLIFNeuron:
-    """Nonlinear LIF with cubic term. Touboul & Brette 2008.
+    """Quadratic nonlinear LIF neuron with slow adaptation.
 
-    C dV/dt = a*(V - V_rest)*(V - V_crit) - w + I
-    dw/dt = (b*(V - V_rest) - w) / tau_w
+    The membrane follows
 
-    Reference: Brette, R. (2004). Neural Comput. 16:2263–2278.
+    ``c_m dV/dt = a(V - v_rest)(V - v_crit) - w + I``
+
+    and the adaptation current follows
+
+    ``tau_w dw/dt = b(V - v_rest) - w``.
+
+    The parameter validation is intentionally fail-closed: invalid geometry,
+    non-finite state, or unstable integration constants are rejected before any
+    state mutation can occur.
     """
 
     v: float = -65.0
@@ -33,7 +35,50 @@ class NonlinearLIFNeuron:
     c_m: float = 1.0
     dt: float = 0.1
 
+    def __post_init__(self) -> None:
+        self._validate_configuration()
+
+    def _validate_configuration(self) -> None:
+        finite_fields = {
+            "v": self.v,
+            "w": self.w,
+            "v_rest": self.v_rest,
+            "v_crit": self.v_crit,
+            "v_threshold": self.v_threshold,
+            "v_reset": self.v_reset,
+            "a": self.a,
+            "b": self.b,
+            "tau_w": self.tau_w,
+            "c_m": self.c_m,
+            "dt": self.dt,
+        }
+        for name, value in finite_fields.items():
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+
+        if not self.v_rest < self.v_crit < self.v_threshold:
+            raise ValueError("voltage geometry must satisfy v_rest < v_crit < v_threshold")
+        if not self.v_reset < self.v_threshold:
+            raise ValueError("v_reset must be below v_threshold")
+        if self.a < 0.0:
+            raise ValueError("a must be non-negative")
+        if self.b < 0.0:
+            raise ValueError("b must be non-negative")
+        if self.tau_w <= 0.0:
+            raise ValueError("tau_w must be positive")
+        if self.c_m <= 0.0:
+            raise ValueError("c_m must be positive")
+        if self.dt <= 0.0:
+            raise ValueError("dt must be positive")
+        if self.dt > self.tau_w:
+            raise ValueError("dt must not exceed tau_w")
+
     def step(self, current: float) -> int:
+        """Advance one Euler step and return ``1`` when the neuron spikes."""
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+        self._validate_configuration()
+
         cubic = self.a * (self.v - self.v_rest) * (self.v - self.v_crit)
         dv = (cubic - self.w + current) / self.c_m * self.dt
         dw = (self.b * (self.v - self.v_rest) - self.w) / self.tau_w * self.dt
@@ -45,5 +90,6 @@ class NonlinearLIFNeuron:
         return 0
 
     def reset(self) -> None:
+        """Restore dynamic state without changing model parameters."""
         self.v = self.v_rest
         self.w = 0.0

@@ -69,11 +69,44 @@ class TestNLIFIsolation:
         assert np.isfinite(n.v) and np.isfinite(n.w)
 
     def test_reset_restores_defaults(self):
-        n = NonlinearLIFNeuron()
+        n = NonlinearLIFNeuron(v_rest=-62.0, v_reset=-58.0, v_crit=-40.0, v_threshold=-20.0)
         for _ in range(5000):
             n.step(20.0)
         n.reset()
         assert n.v == n.v_rest and n.w == 0.0
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"v": np.nan},
+            {"w": np.inf},
+            {"v_rest": np.nan},
+            {"v_crit": np.inf},
+            {"v_threshold": np.nan},
+            {"v_reset": np.inf},
+            {"v_crit": -70.0},
+            {"v_threshold": -45.0},
+            {"v_reset": -10.0},
+            {"a": -0.01},
+            {"a": np.nan},
+            {"b": -0.1},
+            {"tau_w": 0.0},
+            {"c_m": 0.0},
+            {"dt": 0.0},
+            {"dt": 101.0},
+        ],
+    )
+    def test_rejects_non_physical_configuration(self, kwargs):
+        with pytest.raises(ValueError):
+            NonlinearLIFNeuron(**kwargs)
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = NonlinearLIFNeuron(v=-60.0, w=0.5)
+        before = (n.v, n.w)
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert (n.v, n.w) == before
 
     def test_deterministic(self):
         traces = []

@@ -1,14 +1,6 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
-# ORCID: 0009-0009-3560-0851
-# Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for nlif
-
 module NlifAccel
 
-export step!, simulate, NonlinearLIFNeuronState
+export NonlinearLIFNeuronState, valid, step!, reset!
 
 mutable struct NonlinearLIFNeuronState
     v::Float64
@@ -24,39 +16,47 @@ mutable struct NonlinearLIFNeuronState
     dt::Float64
 end
 
-function NonlinearLIFNeuronState()
-    NonlinearLIFNeuronState(-65.0, 0.0, -65.0, -40.0, -20.0, -65.0, 0.04, 0.5, 100.0, 1.0, 0.1)
+function NonlinearLIFNeuronState(; v=-65.0, w=0.0, v_rest=-65.0, v_crit=-40.0,
+    v_threshold=-20.0, v_reset=-65.0, a=0.04, b=0.5, tau_w=100.0, c_m=1.0, dt=0.1)
+    return NonlinearLIFNeuronState(v, w, v_rest, v_crit, v_threshold, v_reset, a, b, tau_w, c_m, dt)
 end
 
-function step!(s::NonlinearLIFNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        cubic = s.a * (s.v - s.v_rest) * (s.v - s.v_crit)
-        dv = (cubic - s.w + I_ext) / s.c_m * s.dt
-        dw = (s.b * (s.v - s.v_rest) - s.w) / s.tau_w * s.dt
-        s.v += dv
-        s.w += dw
-        if s.v >= s.v_threshold
-            s.v = s.v_reset
-            return 1
-        end
-        return 0
-    catch _e
+function valid(s::NonlinearLIFNeuronState)::Bool
+    return all(isfinite, (s.v, s.w, s.v_rest, s.v_crit, s.v_threshold, s.v_reset,
+        s.a, s.b, s.tau_w, s.c_m, s.dt)) &&
+        s.v_rest < s.v_crit &&
+        s.v_crit < s.v_threshold &&
+        s.v_reset < s.v_threshold &&
+        s.a >= 0.0 &&
+        s.b >= 0.0 &&
+        s.tau_w > 0.0 &&
+        s.c_m > 0.0 &&
+        s.dt > 0.0 &&
+        s.dt <= s.tau_w
+end
+
+function step!(s::NonlinearLIFNeuronState, current::Float64)::Int
+    if !isfinite(current) || !valid(s)
         return 0
     end
-end
 
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
-    s = NonlinearLIFNeuronState()
-    trace = zeros(n_steps)
-    spikes = 0
-    for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
-        trace[t] = s.v
-        if result isa Number && result > 0
-            spikes += 1
-        end
+    cubic = s.a * (s.v - s.v_rest) * (s.v - s.v_crit)
+    dv = (cubic - s.w + current) / s.c_m * s.dt
+    dw = (s.b * (s.v - s.v_rest) - s.w) / s.tau_w * s.dt
+    s.v += dv
+    s.w += dw
+
+    if s.v >= s.v_threshold
+        s.v = s.v_reset
+        return 1
     end
-    return trace, spikes
+    return 0
 end
 
-end # module NlifAccel
+function reset!(s::NonlinearLIFNeuronState)::Nothing
+    s.v = s.v_rest
+    s.w = 0.0
+    return nothing
+end
+
+end
