@@ -71,6 +71,13 @@ def step(self, current: float) -> int:
     return 0
 ```
 
+The implementation rejects non-physical configurations before integration:
+all state variables and voltage parameters must be finite, `tau_m` and
+`tau_a` must be positive, `dt` must be positive and no larger than either
+time constant, `beta` must be non-negative, and `v_threshold_base` must
+remain above `v_reset`. `reset()` restores the membrane potential to
+`v_reset` while clearing adaptation and eligibility state.
+
 ---
 
 ## Parameters
@@ -119,7 +126,8 @@ $$a \approx n, \quad \theta \approx \theta_{base} + \beta \cdot n = 1.0 + 0.07n$
 | 10 | 1.70 | 70% |
 | 20 | 2.40 | 140% |
 
-The threshold nearly triples after 20 rapid spikes — strong adaptation.
+The threshold nearly triples after 20 rapid spikes, producing substantial
+adaptation.
 
 ### Pseudo-derivative ψ
 
@@ -286,14 +294,14 @@ and comparisons. Comparable to standard LIF speed.
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 5 | defaults, alpha precomputed, binary output, state finite, reset |
+| Isolation | 27 parametrized/behavioral checks | defaults, alpha precomputed, binary output, state finite, reset to `v_reset`, fail-closed parameter and current validation |
 | Adaptive threshold | 5 | a increments on spike, a decays between spikes, threshold increases with a, ISI lengthens, β=0 no adaptation |
 | Eligibility trace | 3 | e_trace accumulates, e_trace decays, pseudo-derivative peaks near threshold |
 | F-I curve | 2 | zero input silent, monotonic f-I |
 | Parameters | 5 | tau_a controls speed, dt stability [0.5,1.0,2.0] (parametrised), deterministic |
 | Performance | 2 | isolation throughput, network throughput |
 | Pipeline | 4 | Population, Network spikes, Projection wiring, analysis |
-| **Total** | **26** | **ALL PASSED (2.27s)** |
+| **Total** | **48** | **PASSED in scoped validation** |
 
 See `tests/test_model_e_prop_alif.py`.
 
