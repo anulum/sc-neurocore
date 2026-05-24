@@ -8,35 +8,69 @@
 
 package services
 
-import (
-	"math"
-)
+import "math"
 
-// QuadraticIFNeuronState holds the neuron state
+// QuadraticIFNeuronState holds the neuron state.
 type QuadraticIFNeuronState struct {
-	V float64
+	V      float64
 	VReset float64
-	VPeak float64
-	Dt float64
+	VPeak  float64
+	Dt     float64
 }
 
-// NewQuadraticIFNeuron creates a new QuadraticIFNeuron neuron with default parameters
+// NewQuadraticIFNeuron creates a new QuadraticIFNeuron neuron with default parameters.
 func NewQuadraticIFNeuron() *QuadraticIFNeuronState {
 	return &QuadraticIFNeuronState{
-		V: -1.0,
+		V:      -1.0,
 		VReset: -1.0,
-		VPeak: 1.0,
-		Dt: 0.01,
+		VPeak:  1.0,
+		Dt:     0.01,
 	}
 }
 
-// Step advances the neuron by one timestep
+func quadraticIFFinite(values ...float64) bool {
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
+	}
+	return true
+}
+
+// Valid reports whether the state satisfies the QIF integration contract.
+func (s QuadraticIFNeuronState) Valid() bool {
+	return quadraticIFFinite(s.V, s.VReset, s.VPeak, s.Dt) &&
+		s.V < s.VPeak &&
+		s.VReset < s.VPeak &&
+		s.Dt > 0.0
+}
+
+// Step advances the neuron by one timestep. Invalid inputs do not mutate state.
 func (s *QuadraticIFNeuronState) Step(iExt float64) int {
-	_ = iExt
+	if !quadraticIFFinite(iExt) || !s.Valid() {
+		return 0
+	}
+
+	increment := (s.V*s.V + iExt) * s.Dt
+	nextV := s.V + increment
+	if !quadraticIFFinite(increment, nextV) {
+		return 0
+	}
+
+	s.V = nextV
+	if s.V >= s.VPeak {
+		s.V = s.VReset
+		return 1
+	}
 	return 0
 }
 
-// SimulateQuadraticIFNeuron runs the neuron for n steps
+// Reset restores dynamic state without changing parameters.
+func (s *QuadraticIFNeuronState) Reset() {
+	s.V = s.VReset
+}
+
+// SimulateQuadraticIFNeuron runs the neuron for n steps.
 func SimulateQuadraticIFNeuron(nSteps int, iExt float64) ([]float64, int) {
 	s := NewQuadraticIFNeuron()
 	trace := make([]float64, nSteps)
@@ -50,5 +84,3 @@ func SimulateQuadraticIFNeuron(nSteps int, iExt float64) ([]float64, int) {
 	}
 	return trace, spikes
 }
-
-var _ = math.Exp

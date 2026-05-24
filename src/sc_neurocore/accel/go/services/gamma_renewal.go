@@ -83,10 +83,6 @@ func ValidateGammaRenewal(s *GammaRenewalNeuronState) bool {
 		finite(s.TimeSinceSpike) && s.TimeSinceSpike >= 0.0
 }
 
-func finite(v float64) bool {
-	return !math.IsNaN(v) && !math.IsInf(v, 0)
-}
-
 func logGammaInt(k int) float64 {
 	if k <= 1 {
 		return 0.0

@@ -31,6 +31,8 @@ class QuadraticIFNeuron:
         for field in ("v", "v_reset", "v_peak"):
             if not math.isfinite(getattr(self, field)):
                 raise ValueError(f"{field} must be finite")
+        if self.v >= self.v_peak:
+            raise ValueError("v must be below v_peak")
         if self.v_reset >= self.v_peak:
             raise ValueError("v_peak must be greater than v_reset")
         if not math.isfinite(self.dt) or self.dt <= 0.0:
@@ -39,7 +41,14 @@ class QuadraticIFNeuron:
     def step(self, current: float) -> int:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
-        self.v += (self.v**2 + current) * self.dt
+        derivative = self.v * self.v + current
+        increment = derivative * self.dt
+        if not math.isfinite(increment):
+            raise ValueError("Euler increment must be finite")
+        next_v = self.v + increment
+        if not math.isfinite(next_v):
+            raise ValueError("Euler increment must be finite")
+        self.v = next_v
         if self.v >= self.v_peak:
             self.v = self.v_reset
             return 1

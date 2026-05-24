@@ -45,10 +45,6 @@ func ValidateInhomogeneousPoisson(s *InhomogeneousPoissonNeuronState) bool {
 	return finite(s.DtMs) && s.DtMs > 0.0
 }
 
-func finite(v float64) bool {
-	return !math.IsNaN(v) && !math.IsInf(v, 0)
-}
-
 // SimulateInhomogeneousPoissonNeuron runs the neuron for n steps
 func SimulateInhomogeneousPoissonNeuron(nSteps int, iExt float64) ([]float64, int) {
 	s := NewInhomogeneousPoissonNeuron()

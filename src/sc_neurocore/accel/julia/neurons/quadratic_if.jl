@@ -8,7 +8,7 @@
 
 module QuadraticIfAccel
 
-export step!, simulate, QuadraticIFNeuronState
+export step!, simulate, QuadraticIFNeuronState, valid, reset!
 
 mutable struct QuadraticIFNeuronState
     v::Float64
@@ -21,27 +21,46 @@ function QuadraticIFNeuronState()
     QuadraticIFNeuronState(-1.0, -1.0, 1.0, 0.01)
 end
 
-function step!(s::QuadraticIFNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        s.v += (s.v ^ 2 + I_ext) * s.dt
-        if s.v >= s.v_peak
-            s.v = s.v_reset
-            return 1
-        end
-        return 0
-    catch _e
-        return 0
-    end
+function valid(s::QuadraticIFNeuronState)::Bool
+    return all(isfinite, (s.v, s.v_reset, s.v_peak, s.dt)) &&
+        s.v < s.v_peak &&
+        s.v_reset < s.v_peak &&
+        s.dt > 0.0
 end
 
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
+function step!(s::QuadraticIFNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
+    s.dt = dt
+    if !isfinite(I_ext) || !valid(s)
+        return 0
+    end
+
+    increment = (s.v * s.v + I_ext) * s.dt
+    next_v = s.v + increment
+    if !isfinite(increment) || !isfinite(next_v)
+        return 0
+    end
+
+    s.v = next_v
+    if s.v >= s.v_peak
+        s.v = s.v_reset
+        return 1
+    end
+    return 0
+end
+
+function reset!(s::QuadraticIFNeuronState)::Nothing
+    s.v = s.v_reset
+    return nothing
+end
+
+function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.01)
     s = QuadraticIFNeuronState()
     trace = zeros(n_steps)
     spikes = 0
     for t in 1:n_steps
         result = step!(s, I_ext; dt=dt)
         trace[t] = s.v
-        if result isa Number && result > 0
+        if result > 0
             spikes += 1
         end
     end

@@ -28,7 +28,7 @@ if self.v >= self.v_peak:
 return 0
 ```
 
-Forward Euler, single step per call. No sub-stepping.
+Forward Euler, single step per call. No sub-stepping. Euler increments that overflow are rejected before state mutation.
 
 ### Phase-plane structure
 
@@ -55,6 +55,18 @@ All quantities are dimensionless. To map to biophysical units, rescale
 V and I according to the parent conductance model's parameters.
 
 ---
+
+### Validation contract
+
+The implementation rejects invalid state before mutation:
+
+- `v`, `v_reset`, `v_peak`, `dt`, and input current must be finite;
+- initial `v` and `v_reset` must be below `v_peak`;
+- `dt` must be positive;
+- Euler increments and candidate voltages must remain finite before assignment.
+
+These guards prevent a finite but numerically explosive quadratic term from
+poisoning the membrane state.
 
 ## Behaviour
 
@@ -155,8 +167,7 @@ $V_{\text{reset}} = -1$), corrections scale as $O(1/\sqrt{I})$.
 - **Source:** `src/sc_neurocore/neurons/models/quadratic_if.py` — 35 lines.
 - **No sub-stepping:** Single Euler step per `step()` call. Sufficient because
   the V² nonlinearity is mild at the default dt=0.01.
-- **Rust wiring:** Supported via `NeuronVariant::QuadraticIF` in
-  `engine/src/network_runner.rs`. Single f64 state, `step(f64) → i32` dispatch.
+- **Polyglot surfaces:** Rust, Go, Julia, and Mojo QIF surfaces use the same finite-state, reset-below-peak, positive-`dt`, finite-Euler-increment, and spike/reset contract as the Python model.
 
 ---
 
@@ -172,7 +183,8 @@ $V_{\text{reset}} = -1$), corrections scale as $O(1/\sqrt{I})$.
 | Determinism | 1 | bit-exact reproducibility across 2 independent runs (200 steps each) |
 | Network | 2 | Population(n=10) construction, Network produces spikes with PoissonInput(rate=500Hz, weight=2.0) |
 | Analysis | 2 | spike_count ≥ 100 in 50k steps at I=1.0, spike_count matches manual np.sum |
-| **Total** | **23** | |
+| Validation | 6 | finite parameters, peak/reset geometry, initial voltage below peak, finite current, finite Euler increment before mutation |
+| **Total** | **37** | |
 
 ---
 
