@@ -84,12 +84,12 @@ class TestYamadaSlowDynamics:
         assert n_high.q > n_low.q
 
     def test_q_modulates_excitability(self):
-        """Higher g_q → stronger q current → different firing."""
+        """Higher g_q → heavier q current → different firing."""
         n_weak = YamadaNeuron(g_q=1.0)
-        n_strong = YamadaNeuron(g_q=10.0)
+        n_heavy_q = YamadaNeuron(g_q=10.0)
         s_weak = len(_run(n_weak, current=50.0, steps=200000))
-        s_strong = len(_run(n_strong, current=50.0, steps=200000))
-        assert s_weak != s_strong
+        s_heavy_q = len(_run(n_heavy_q, current=50.0, steps=200000))
+        assert s_weak != s_heavy_q
 
     def test_tau_q_controls_convergence_speed(self):
         """Faster tau_q → q converges to q_inf faster."""
@@ -174,11 +174,11 @@ class TestYamadaPipeline:
         assert mon.count > 0
 
     def test_projection_wiring(self):
-        """Projection from strong source adds current to target population.
+        """Projection from active source adds current to target population.
 
         Yamada needs high sustained current to fire, so we verify the
         projection is wired by checking the source fires and using
-        strong enough drive + projection weight.
+        sufficient drive + projection weight.
         """
         src = Population(YamadaNeuron, n=10, label="src")
         tgt = Population(YamadaNeuron, n=10, label="tgt")
@@ -200,6 +200,69 @@ class TestYamadaPipeline:
         assert sc >= 10
         rate = firing_rate(train, dt=0.00005)  # dt=0.05ms per step
         assert rate > 0
+
+
+class TestYamadaValidation:
+    @pytest.mark.parametrize(
+        "field",
+        [
+            "v",
+            "n",
+            "q",
+            "g_na",
+            "g_k",
+            "g_q",
+            "g_l",
+            "e_na",
+            "e_k",
+            "e_q",
+            "e_l",
+            "tau_q",
+            "dt",
+            "v_threshold",
+        ],
+    )
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            YamadaNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["g_na", "g_k", "g_q", "g_l"])
+    def test_rejects_negative_conductance(self, field: str):
+        with pytest.raises(ValueError, match=field):
+            YamadaNeuron(**{field: -0.1})
+
+    @pytest.mark.parametrize("field", ["tau_q", "dt"])
+    @pytest.mark.parametrize("value", [0.0, -1.0])
+    def test_rejects_non_positive_timescale(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            YamadaNeuron(**{field: value})
+
+    @pytest.mark.parametrize(
+        ("field", "value"), [("n", -0.01), ("n", 1.01), ("q", -0.01), ("q", 1.01)]
+    )
+    def test_rejects_gates_outside_unit_interval(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            YamadaNeuron(**{field: value})
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = YamadaNeuron(v=-55.0, n=0.2, q=0.1)
+        before = (n.v, n.n, n.q)
+
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+
+        assert (n.v, n.n, n.q) == before
+
+    def test_rejects_non_finite_candidate_update_before_state_mutation(self):
+        n = YamadaNeuron(v=-55.0, n=0.2, q=0.1, dt=1.0e308)
+        before = (n.v, n.n, n.q)
+
+        with pytest.raises(ValueError, match="Euler update"):
+            n.step(1.0e308)
+
+        assert (n.v, n.n, n.q) == before
 
 
 # Salvaged model-specific behavioural contracts from retired aggregate test file.

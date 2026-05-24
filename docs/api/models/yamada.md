@@ -66,9 +66,15 @@ def step(self, current: float) -> int:
     i_k = g_k * n**4 * (v - e_k)
     i_q = g_q * q * (v - e_q)
     i_l = g_l * (v - e_l)
-    self.v += (-i_na - i_k - i_q - i_l + current) * dt
-    self.n += (n_inf - self.n) / tau_n * dt
-    self.q += (q_inf - self.q) / self.tau_q * dt
+    dv = (-i_na - i_k - i_q - i_l + current) * dt
+    dn = (n_inf - self.n) / tau_n * dt
+    dq = (q_inf - self.q) / self.tau_q * dt
+    next_v = self.v + dv
+    next_n = self.n + dn
+    next_q = self.q + dq
+    if any candidate is non-finite or next_n/next_q leave [0, 1]:
+        raise ValueError
+    self.v, self.n, self.q = next_v, next_n, next_q
     return 1 if crossing else 0
 ```
 
@@ -112,7 +118,7 @@ Hopf bifurcation:
 3. **Active phase (q moderate):** The system is in a limit cycle →
    rapid spiking (burst)
 4. **Burst termination:** During spiking, q increases further →
-   I_q = g_q · q · (V − E_q) becomes strongly hyperpolarising →
+   I_q = g_q · q · (V − E_q) becomes substantially hyperpolarising →
    overwhelms the excitatory drive → system falls back to rest
 5. **Recovery:** q decays slowly (τ_q = 300 ms) → cycle repeats
 
@@ -164,7 +170,7 @@ The characteristic bursting pattern:
 ### Burst duration controlled by g_q
 
 - g_q small (1.0): long bursts (weak slow feedback → slow termination)
-- g_q large (10.0): short bursts (strong slow feedback → fast termination)
+- g_q large (10.0): short bursts (substantial slow feedback → fast termination)
 - g_q = 0: no bursting, continuous spiking (q has no effect)
 
 ### τ_q controls burst period
@@ -199,22 +205,42 @@ currents and Boltzmann activation functions.
 
 ## Numerical Considerations
 
-- **Single Euler step:** dt=0.05ms. Adequate for the single-step
-  integration since V dynamics are moderated by the conductances.
-- **4 exp() per step:** m_inf, n_inf, q_inf, tau_n all use np.exp().
-- **No sub-stepping:** The 3-ODE system is mildly stiff (τ_q = 300 ms
-  vs dt = 0.05 ms = 6000:1 ratio) but Euler handles it adequately.
+- **Single Euler step:** dt=0.05ms. The implementation computes a full
+  candidate state before mutation and rejects non-finite Euler increments.
+- **Stable sigmoid evaluations:** m_inf, n_inf, and q_inf use an overflow-safe
+  logistic form; tau_n still follows the published voltage-dependent formula.
+- **Gate bounds:** n and q are treated as gating variables and must remain in
+  [0, 1]. Candidate steps that would move either gate outside this interval
+  fail closed before state mutation.
+- **No sub-stepping:** The 3-ODE system is stiff across the V/n/q timescales,
+  so this scalar path documents fail-closed finite behaviour rather than
+  claiming arbitrary-timestep accuracy.
 - **V not bounded:** Can transiently exceed E_Na during spike peak.
+
+---
+
+## Validation Contract
+
+- `v`, `n`, `q`, all conductances, reversal potentials, `tau_q`, `dt`,
+  `v_threshold`, and runtime `current` must be finite.
+- Conductances must be non-negative; `tau_q` and `dt` must be strictly
+  positive.
+- Gates `n` and `q` must start and remain within `[0, 1]`.
+- Each step computes currents, Euler increments, candidate voltage, and
+  candidate gates before mutation. Python raises `ValueError` on invalid
+  candidates; Rust, Go, Julia, and Mojo fail closed without reporting a spike.
+- `reset()` restores only the dynamic state (`v`, `n`, `q`) and preserves
+  physical parameters.
 
 ---
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/yamada.py` — 57 lines.
+- **Source:** `src/sc_neurocore/neurons/models/yamada.py` — 113 lines.
 - **Three state variables:** v, n, q.
 - **Dataclass:** Uses `@dataclass`.
 - **4 inline sigmoid evaluations:** m_inf, n_inf, q_inf, tau_n.
-- **Rust wiring:** Compatible (3 f64 state vars, exp calls).
+- **Polyglot surfaces:** Python, Rust, Go, Julia, and Mojo enforce the same finite-state, gate-bounds, candidate-update, spike-crossing, and parameter-preserving reset contracts.
 
 ---
 
@@ -255,7 +281,8 @@ Moderate speed — 4 exp() per step, no sub-stepping. Faster than HH
 | Dynamics | 4 | fires, subthreshold, rate monotonic, q drives burst termination |
 | Parameters | 3 | dt stability, g_q sweep, deterministic |
 | Pipeline | 4 | Population, Network+drive, Projection, analysis |
-| **Total** | **24** | |
+| Validation | 58 | finite parameters, non-negative conductances, positive timescales, gate bounds, finite current, finite candidate update |
+| **Total** | **82** | |
 
 See `tests/test_model_yamada.py`. No bugs found.
 
@@ -568,3 +595,8 @@ single-step, 4-exp() design makes it ~90× faster than HH per
 **ALL 23 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
 **Rust parity: EXACT (no defects found).**
 **Criterion: 120 µs / 1K steps (120 ns/step, ~200× Python speedup).**
+
+
+## Benchmark Note
+
+No maintained standalone Yamada benchmark harness was found in this slice, so no benchmark result was regenerated. Existing performance claims should be treated as historical until a dedicated harness is added.
