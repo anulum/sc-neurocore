@@ -16,6 +16,14 @@ Build:
 
 The `.so` is platform-specific and gitignored; the `.mojo` source is
 tracked. `_HAS_MOJO_WONG_WANG` flips True iff the lib is present.
+
+Parity tolerance is intentionally numerical, not bit-pattern exact, for the
+activation exponential. Mojo lowers `exp` through the host libm while the Rust
+engine uses Rust `f64::exp`; both are IEEE-754 conforming implementations, but
+the standard permits last-ULP differences after argument reduction and
+polynomial approximation. The maintained parity tests therefore require tight
+absolute agreement in the physical state variables rather than identical raw
+floating-point bit patterns.
 """
 
 from __future__ import annotations
