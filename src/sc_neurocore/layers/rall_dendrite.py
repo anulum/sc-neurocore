@@ -54,13 +54,24 @@ class RallDendrite:
     dt: float = 1.0
 
     def __post_init__(self) -> None:
+        if self.n_branches <= 0:
+            raise ValueError("n_branches must be positive")
+        if self.branch_length <= 0:
+            raise ValueError("branch_length must be positive")
+        if not np.isfinite(self.tau) or self.tau <= 0.0:
+            raise ValueError("tau must be finite and positive")
+        if not np.isfinite(self.dt) or self.dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+        if not np.isfinite(self.coupling) or not (0.0 <= self.coupling <= 1.0):
+            raise ValueError("coupling must be finite and in [0, 1]")
+
         # Each branch has branch_length compartments
         # Compartment voltages: shape (n_branches, branch_length)
         self.v = np.zeros((self.n_branches, self.branch_length))
         self.soma_v = 0.0
         self._decay = np.exp(-self.dt / self.tau)
         # Rall 3/2 rule: branch diameters for impedance matching
-        # Daughter diameters normalized so d_parent^1.5 = sum(d_i^1.5)
+        # Daughter diameters normalised so d_parent^1.5 = sum(d_i^1.5)
         self.diameters = np.ones(self.n_branches)
         parent_d = (self.n_branches) ** (2.0 / 3.0)
         self.attenuation = (self.diameters / parent_d) ** 1.5
@@ -78,13 +89,19 @@ class RallDendrite:
         float
             Somatic voltage.
         """
-        branch_inputs = np.atleast_1d(np.asarray(branch_inputs, dtype=np.float64))
+        branch_inputs = np.asarray(branch_inputs, dtype=np.float64)
+        if branch_inputs.shape != (self.n_branches,):
+            raise ValueError(
+                f"branch_inputs must have shape ({self.n_branches},), got {branch_inputs.shape}"
+            )
+        if not np.all(np.isfinite(branch_inputs)):
+            raise ValueError("branch_inputs must contain only finite values")
 
         # Decay all compartments
         self.v *= self._decay
 
         # Inject input at distal tip (last compartment)
-        self.v[:, -1] += branch_inputs[: self.n_branches] * self.dt / self.tau
+        self.v[:, -1] += branch_inputs * self.dt / self.tau
 
         # Propagate along branch: distal → proximal (toward soma)
         for k in range(self.branch_length - 1, 0, -1):
