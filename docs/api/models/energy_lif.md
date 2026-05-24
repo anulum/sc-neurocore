@@ -40,6 +40,15 @@ Forward Euler. Two key mechanisms:
 1. **Energy scales input:** R_eff = R × ε. Low energy → weak input response.
 2. **Energy gates spikes:** Must have ε > 0.1 to fire.
 
+The implementation rejects non-physical configurations before integration:
+voltage state and parameters must be finite, `epsilon` and `epsilon_0`
+must be finite and non-negative, `epsilon` must not exceed `epsilon_0`,
+`alpha` must be finite and non-negative, `tau_m`, `tau_e`, `resistance`,
+and `dt` must be positive finite values, `dt` must not exceed either time
+constant, and `v_threshold` must be above both `v_rest` and `v_reset`.
+These constraints preserve bounded monotone energy recovery and avoid
+reset states that are already above threshold.
+
 ---
 
 ## Parameters
@@ -149,7 +158,7 @@ timescale (τ_e=500 ms) is much longer than typical w-based adaptation
 
 ### Energy depletion under drive
 
-At I=50 (strong drive), ε decreases below 1.0 after sustained spiking.
+At I=50 (high drive), ε decreases below 1.0 after sustained spiking.
 Verified by test: after 5000 steps at I=50, ε < 1.0.
 
 ### Energy recovery without drive
@@ -187,8 +196,9 @@ constraint — biologically motivated by ATP consumption during spiking.
 - **ε ≥ 0 clamp.** Prevents negative energy (unphysical).
 - **ε > 0.1 gate.** Hard threshold on spiking — discontinuous but
   numerically trivial (comparison).
-- **Single Euler step.** dt=1.0 ms — large but adequate for the
-  simple linear dynamics.
+- **Single Euler step.** dt=1.0 ms with validation that `dt <= tau_m`
+  and `dt <= tau_e`, preserving monotone relaxation for the linear
+  membrane and energy dynamics.
 - **Two state variables.** V and ε. Both bounded by natural dynamics
   (V by spike-reset, ε by [0, ε₀]).
 
@@ -220,10 +230,10 @@ pure arithmetic.
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 9 | construction, binary output, subthreshold (I=10), spikes (I=30), energy depletes (I=50), energy recovers (from ε=0.1), energy gates spiking (ε=0.05), energy non-negative (10K at I=50), reset |
+| Isolation | 58 parametrized/behavioral checks | construction, binary output, subthreshold (I=10), spikes (I=30), energy depletes (I=50), energy recovers (from ε=0.1), bounded monotone recovery, energy gates spiking (ε=0.05), energy non-negative (10K at I=50), reset, fail-closed parameter and current validation |
 | Network | 3 | Population(n=10/20), Network+PoissonInput spikes, Projection+spike_trains |
 | Analysis | 2 | firing_rate >0, spike_count >10 |
-| **Total** | **14** | **ALL PASSED (1.01s)** |
+| **Total** | **64** | **PASSED in scoped validation** |
 
 See `tests/test_model_energy_lif.py`.
 
@@ -231,7 +241,7 @@ See `tests/test_model_energy_lif.py`.
 
 ## Findings (Measured 2026-03-31)
 
-1. **14/14 tests PASSED in 1.01s.** No failures.
+1. **64/64 tests PASSED in scoped validation.** No failures.
 
 2. **Subthreshold at I=10.** Zero spikes in 5000 steps.
 
@@ -242,7 +252,7 @@ See `tests/test_model_energy_lif.py`.
 5. **Energy recovers without drive.** From ε=0.1, after 5000 steps at
    I=0, ε > 0.1.
 
-6. **Energy gates spiking absolutely.** At ε=0.05 (< 0.1), even strong
+6. **Energy gates spiking absolutely.** At ε=0.05 (< 0.1), even high
    drive (I=50) produces zero spikes in 100 steps.
 
 7. **Energy non-negative.** After 10K steps at I=50, ε ≥ 0.
@@ -453,7 +463,7 @@ reflects local metabolic demand:
 
 The EnergyLIF's ε trajectory provides a proxy for the neural component
 of the BOLD signal — high ε means low activity (weak BOLD), low ε
-means high activity (strong BOLD). This connection enables the model
+means high activity (large BOLD). This connection enables the model
 to bridge between spiking dynamics and neuroimaging observables.
 
 ### Energy-efficient sparse coding

@@ -41,31 +41,51 @@ impl EnergyLIFNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // effective_r = self.resistance * self.epsilon
-        // self.v += (-(self.v - self.v_rest) + effective_r * current) / self.tau
-        // self.epsilon += (self.epsilon_0 - self.epsilon) / self.tau_e * self.dt
-        // if self.v >= self.v_threshold && self.epsilon > 0.1:
-        // self.v = self.v_reset
-        // self.epsilon -= self.alpha
-        // self.epsilon = max(0.0, self.epsilon)
-        // return 1
-        // return 0
-        0 // spike indicator
+        if !validate_energy_lif(self) || !i_ext.is_finite() {
+            return 0;
+        }
+
+        let effective_r = self.resistance * self.epsilon;
+        self.v += (-(self.v - self.v_rest) + effective_r * i_ext) / self.tau_m * self.dt;
+        self.epsilon += (self.epsilon_0 - self.epsilon) / self.tau_e * self.dt;
+        if self.v >= self.v_threshold && self.epsilon > 0.1 {
+            self.v = self.v_reset;
+            self.epsilon = (self.epsilon - self.alpha).max(0.0);
+            return 1;
+        }
+        0
     }
 
     pub fn reset(&mut self) {
-        // self.v = self.v_rest
-        // self.epsilon = self.epsilon_0
-        self.v = -70.0_f64;
-        self.epsilon = 1.0_f64;
-        self.v_rest = -70.0_f64;
-        self.v_reset = -70.0_f64;
-        self.v_threshold = -50.0_f64;
+        self.v = self.v_rest;
+        self.epsilon = self.epsilon_0;
     }
 }
 
 pub fn validate_energy_lif(state: &EnergyLIFNeuron) -> bool {
     state.v.is_finite()
+        && state.epsilon.is_finite()
+        && state.epsilon >= 0.0
+        && state.v_rest.is_finite()
+        && state.v_reset.is_finite()
+        && state.v_threshold.is_finite()
+        && state.tau_m.is_finite()
+        && state.tau_m > 0.0
+        && state.tau_e.is_finite()
+        && state.tau_e > 0.0
+        && state.alpha.is_finite()
+        && state.alpha >= 0.0
+        && state.epsilon_0.is_finite()
+        && state.epsilon_0 >= 0.0
+        && state.resistance.is_finite()
+        && state.resistance > 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
+        && state.epsilon <= state.epsilon_0
+        && state.dt <= state.tau_m
+        && state.dt <= state.tau_e
+        && state.v_threshold > state.v_rest
+        && state.v_threshold > state.v_reset
 }
 
 #[cfg(test)]
@@ -82,7 +102,14 @@ mod tests {
     #[test]
     fn test_energy_lif_step() {
         let mut state = EnergyLIFNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(30.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_energy_lif_rejects_overfilled_reserve() {
+        let mut state = EnergyLIFNeuron::new();
+        state.epsilon = 1.1;
+        assert!(!validate_energy_lif(&state));
     }
 }
