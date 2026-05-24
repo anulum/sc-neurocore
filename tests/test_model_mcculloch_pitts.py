@@ -187,6 +187,18 @@ class TestMPLogicGates:
         assert results != expected_xor  # Cannot implement XOR
 
 
+class TestMPValidation:
+    @pytest.mark.parametrize("theta", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_threshold(self, theta: float):
+        with pytest.raises(ValueError, match="theta"):
+            McCullochPittsNeuron(theta=theta)
+
+    @pytest.mark.parametrize("weighted_input", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_weighted_input(self, weighted_input: float):
+        with pytest.raises(ValueError, match="weighted_input"):
+            McCullochPittsNeuron().step(weighted_input)
+
+
 # ---------------------------------------------------------------------------
 # 4. DYNAMICS — firing rate under constant/varying input
 # ---------------------------------------------------------------------------
