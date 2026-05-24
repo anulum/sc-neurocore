@@ -58,6 +58,20 @@ class TestTripartiteSynapse:
             syn.step(pre_spike=False, post_spike=False, dt=0.01)
         assert syn.weight < 0.8
 
+    def test_depression_rate_depends_on_elapsed_time_not_step_count(self):
+        """Passive baseline relaxation should be stable under timestep refinement."""
+        fine = TripartiteSynapse(base_weight=0.5, depression_rate=0.01, ca_threshold=5.0)
+        coarse = TripartiteSynapse(base_weight=0.5, depression_rate=0.01, ca_threshold=5.0)
+        fine.weight = 0.9
+        coarse.weight = 0.9
+
+        for _ in range(100):
+            fine.step(pre_spike=False, post_spike=False, dt=0.01)
+        for _ in range(10):
+            coarse.step(pre_spike=False, post_spike=False, dt=0.1)
+
+        assert fine.weight == pytest.approx(coarse.weight, abs=1e-3)
+
     def test_weight_bounds(self):
         """Weight should stay in [w_min, w_max]."""
         syn = TripartiteSynapse(
