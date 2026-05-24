@@ -196,6 +196,13 @@ class SleepConsolidation:
         noise_amplitude: float = 0.01,
         duration_fraction: float = 0.1,
     ):
+        if not np.isfinite(decay_exponent) or decay_exponent < 0.0:
+            raise ValueError("decay_exponent must be finite and non-negative")
+        if not np.isfinite(noise_amplitude) or noise_amplitude < 0.0:
+            raise ValueError("noise_amplitude must be finite and non-negative")
+        if not np.isfinite(duration_fraction) or not 0.0 < duration_fraction <= 1.0:
+            raise ValueError("duration_fraction must be finite and within (0, 1]")
+
         self.decay_exponent = decay_exponent
         self.noise_amplitude = noise_amplitude
         self.duration_fraction = duration_fraction
@@ -219,6 +226,8 @@ class SleepConsolidation:
         list of ndarray
             Renormalized weights.
         """
+        self._validate_weights(weights)
+
         rng = np.random.RandomState(seed)
         consolidated = []
         for w in weights:
@@ -240,5 +249,20 @@ class SleepConsolidation:
 
     def should_sleep(self, epoch: int, total_epochs: int) -> bool:
         """Determine if this epoch should include a sleep phase."""
+        if type(epoch) is not int or epoch < 0:
+            raise ValueError("epoch must be a non-negative integer")
+        if type(total_epochs) is not int or total_epochs <= 0:
+            raise ValueError("epoch total_epochs must be a positive integer")
+
         interval = max(1, int(1.0 / self.duration_fraction))
         return epoch > 0 and epoch % interval == 0
+
+    @staticmethod
+    def _validate_weights(weights: list[np.ndarray]) -> None:
+        if not isinstance(weights, list) or len(weights) == 0:
+            raise ValueError("weights must be a non-empty list of numpy arrays")
+        for weight in weights:
+            if not isinstance(weight, np.ndarray):
+                raise ValueError("weights must contain only numpy arrays")
+            if not np.all(np.isfinite(weight)):
+                raise ValueError("weights must be finite")
