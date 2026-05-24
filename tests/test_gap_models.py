@@ -41,6 +41,42 @@ class TestAdaptiveThresholdMoENeuron:
         assert neuron.v == 0.0
         assert neuron.v_th == 1.0
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"k": 0.0},
+            {"k": float("nan")},
+            {"ema_alpha": 0.0},
+            {"ema_alpha": 1.1},
+            {"ema_alpha": float("inf")},
+            {"v": float("nan")},
+            {"v_th": 0.0},
+            {"_mean_abs_x": -0.01},
+        ],
+    )
+    def test_rejects_non_physical_adaptive_threshold_parameters(self, kwargs):
+        """Adaptive threshold dynamics require finite positive scaling and state."""
+        from sc_neurocore.neurons.models import AdaptiveThresholdMoENeuron
+
+        with pytest.raises(ValueError):
+            AdaptiveThresholdMoENeuron(**kwargs)
+
+    @pytest.mark.parametrize("current", [float("nan"), float("inf")])
+    def test_rejects_non_finite_current(self, current):
+        """Threshold adaptation must fail closed on non-finite current."""
+        from sc_neurocore.neurons.models import AdaptiveThresholdMoENeuron
+
+        with pytest.raises(ValueError, match="current"):
+            AdaptiveThresholdMoENeuron().step(current)
+
+    @pytest.mark.parametrize("activation", [float("nan"), float("-inf")])
+    def test_rejects_non_finite_collapsed_activation(self, activation):
+        """Collapsed inference must fail closed on non-finite activation."""
+        from sc_neurocore.neurons.models import AdaptiveThresholdMoENeuron
+
+        with pytest.raises(ValueError, match="activation"):
+            AdaptiveThresholdMoENeuron().step_collapsed(activation)
+
     def test_step_returns_int(self, neuron):
         result = neuron.step(1.0)
         assert isinstance(result, int)
