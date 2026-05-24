@@ -25,6 +25,7 @@ Masland (2012) "The neuronal organization of the retina".
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -61,6 +62,25 @@ class DirectionSelectiveRGC:
     _prev_intensity: float = 0.0
     _surround: float = 0.0
 
+    def __post_init__(self) -> None:
+        for name in ("tau", "theta", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+
+        if type(self.is_on_centre) is not bool:
+            raise ValueError("is_on_centre must be bool")
+
+        for name in ("w_centre", "w_surround", "_prev_intensity", "_surround"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"{name} must be finite and non-negative")
+
+        for name in ("direction_pref", "v"):
+            value = getattr(self, name)
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+
     @classmethod
     def new_on(cls) -> DirectionSelectiveRGC:
         """Create an On-centre cell."""
@@ -76,6 +96,11 @@ class DirectionSelectiveRGC:
 
         Returns 1 if spike, 0 otherwise.
         """
+        if not math.isfinite(intensity) or intensity < 0.0:
+            raise ValueError("intensity must be finite and non-negative")
+        if not math.isfinite(surround_mean) or surround_mean < 0.0:
+            raise ValueError("surround_mean must be finite and non-negative")
+
         temporal_diff = intensity - self._prev_intensity
         self._prev_intensity = intensity
 

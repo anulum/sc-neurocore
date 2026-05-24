@@ -714,6 +714,39 @@ class TestDirectionSelectiveRGC:
         assert on_cell.is_on_centre is True
         assert off_cell.is_on_centre is False
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"tau": 0.0},
+            {"theta": 0.0},
+            {"is_on_centre": 1},
+            {"w_centre": -0.01},
+            {"w_surround": -0.01},
+            {"direction_pref": float("nan")},
+            {"dt": 0.0},
+            {"v": float("inf")},
+            {"_prev_intensity": -0.01},
+            {"_surround": -0.01},
+        ],
+    )
+    def test_rejects_non_physical_direction_selective_parameters(self, kwargs):
+        """Retinal direction-selective state and tuning parameters must be physical."""
+        from sc_neurocore.neurons.models import DirectionSelectiveRGC
+
+        with pytest.raises(ValueError):
+            DirectionSelectiveRGC(**kwargs)
+
+    @pytest.mark.parametrize(
+        ("intensity", "surround_mean"),
+        [(float("nan"), 0.0), (0.0, float("inf")), (-0.01, 0.0), (0.0, -0.01)],
+    )
+    def test_rejects_non_physical_receptive_field_drive(self, intensity, surround_mean):
+        """Optical centre and surround drives must be finite non-negative intensities."""
+        from sc_neurocore.neurons.models import DirectionSelectiveRGC
+
+        with pytest.raises(ValueError):
+            DirectionSelectiveRGC.new_on().step_rf(intensity, surround_mean)
+
     def test_on_responds_to_light_increase(self, on_cell):
         """On-centre must respond to light onset (positive dI/dt)."""
         for _ in range(10):
