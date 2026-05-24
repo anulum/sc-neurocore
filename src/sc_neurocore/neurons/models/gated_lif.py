@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -24,7 +25,21 @@ class GatedLIFNeuron:
     v_threshold: float = 1.0
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.v):
+            raise ValueError("v must be finite")
+        if not math.isfinite(self.gate_i):
+            raise ValueError("gate_i must be finite")
+        if not math.isfinite(self.gate_v) or not 0.0 <= self.gate_v <= 1.0:
+            raise ValueError("gate_v must be finite and within [0, 1]")
+        for field in ("v_threshold", "dt"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field} must be finite and positive")
+
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
         self.v = self.gate_v * self.v + self.gate_i * current
         if self.v >= self.v_threshold:
             self.v -= self.v_threshold
