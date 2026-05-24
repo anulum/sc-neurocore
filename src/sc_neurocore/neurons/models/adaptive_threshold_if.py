@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -32,7 +33,23 @@ class AdaptiveThresholdIFNeuron:
     tau_theta: float = 50.0
     dt: float = 0.1
 
+    def __post_init__(self) -> None:
+        for name in ("v", "theta", "v_rest", "v_reset", "theta_rest"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite")
+        if not math.isfinite(self.delta_theta) or self.delta_theta < 0.0:
+            raise ValueError("delta_theta must be finite and non-negative")
+        if not math.isfinite(self.tau_m) or self.tau_m <= 0.0:
+            raise ValueError("tau_m must be finite and positive")
+        if not math.isfinite(self.tau_theta) or self.tau_theta <= 0.0:
+            raise ValueError("tau_theta must be finite and positive")
+        if not math.isfinite(self.dt) or self.dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         self.v += (-(self.v - self.v_rest) + current) / self.tau_m * self.dt
         self.theta += (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt
         if self.v >= self.theta:
