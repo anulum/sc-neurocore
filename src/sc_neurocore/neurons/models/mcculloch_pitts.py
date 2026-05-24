@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -22,7 +23,14 @@ class McCullochPittsNeuron:
 
     theta: float = 1.0
 
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.theta):
+            raise ValueError("theta must be finite")
+
     def step(self, weighted_input: float) -> int:
+        if not math.isfinite(weighted_input):
+            raise ValueError("weighted_input must be finite")
+
         return 1 if weighted_input >= self.theta else 0
 
     def reset(self) -> None:
