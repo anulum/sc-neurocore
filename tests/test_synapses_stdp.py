@@ -123,6 +123,54 @@ class TestRewardModulatedSTDPSynapse:
         assert syn.eligibility_trace == 0.0
         assert syn.trace_decay == 0.9
 
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("eligibility_trace", float("nan")),
+            ("trace_decay", -0.1),
+            ("trace_decay", 1.1),
+            ("trace_decay", float("nan")),
+            ("anti_hebbian_scale", -0.1),
+            ("anti_hebbian_scale", float("inf")),
+        ],
+    )
+    def test_invalid_reward_stdp_parameters_fail_closed(self, field, value):
+        kwargs = {
+            "w_min": 0.0,
+            "w_max": 1.0,
+            "length": 256,
+            "w": 0.5,
+            "learning_rate": 0.01,
+            "window_size": 5,
+            "seed": 42,
+            "trace_decay": 0.9,
+        }
+        kwargs[field] = value
+        with pytest.raises(ValueError, match=field):
+            RewardModulatedSTDPSynapse(**kwargs)
+
+    @pytest.mark.parametrize(
+        ("pre_bit", "post_bit"),
+        [
+            (2, 0),
+            (-1, 1),
+            (1, 2),
+            (True, 0),
+            (1, False),
+        ],
+    )
+    def test_invalid_reward_stdp_step_bits_fail_closed(self, pre_bit, post_bit):
+        syn = self._make()
+        with pytest.raises(ValueError, match="bit"):
+            syn.process_step(pre_bit=pre_bit, post_bit=post_bit)
+
+    @pytest.mark.parametrize("reward", [float("nan"), float("inf"), -float("inf")])
+    def test_invalid_reward_signal_fails_closed(self, reward):
+        syn = self._make()
+        syn.process_step(pre_bit=1, post_bit=1)
+        with pytest.raises(ValueError, match="reward"):
+            syn.apply_reward(reward=reward)
+
     def test_process_step_returns_binary(self):
         syn = self._make()
         for _ in range(50):
