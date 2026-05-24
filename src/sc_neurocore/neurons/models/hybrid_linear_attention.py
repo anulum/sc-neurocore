@@ -54,10 +54,30 @@ class HybridLinearAttentionNeuron:
     _window_idx: int = field(default=0, repr=False)
 
     def __post_init__(self) -> None:
+        if type(self.dim) is not int or self.dim <= 0:
+            raise ValueError("dim must be a positive integer")
+        if type(self.window_size) is not int or self.window_size <= 0:
+            raise ValueError("window_size must be a positive integer")
+        if not math.isfinite(self.lambda_decay) or not (0.0 <= self.lambda_decay <= 1.0):
+            raise ValueError("lambda_decay must be finite and in [0, 1]")
+        if not math.isfinite(self.dt) or self.dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+        if not math.isfinite(self.v):
+            raise ValueError("v must be finite")
+
         if not self._state_kv:
             self._state_kv = [0.0] * self.dim
+        elif len(self._state_kv) != self.dim or not all(
+            math.isfinite(value) for value in self._state_kv
+        ):
+            raise ValueError("_state_kv must match dim and contain finite values")
+
         if not self._window_buf:
             self._window_buf = [0.0] * self.window_size
+        elif len(self._window_buf) != self.window_size or not all(
+            math.isfinite(value) for value in self._window_buf
+        ):
+            raise ValueError("_window_buf must match window_size and contain finite values")
 
     @staticmethod
     def _phi(x: float) -> float:
@@ -69,6 +89,9 @@ class HybridLinearAttentionNeuron:
 
         Returns combined global + local attention output.
         """
+        if not math.isfinite(query) or not math.isfinite(key) or not math.isfinite(value):
+            raise ValueError("query, key, and value must be finite")
+
         phi_q = self._phi(query)
         phi_k = self._phi(key)
 
