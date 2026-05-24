@@ -70,6 +70,33 @@ class TestCLIFIsolation:
         assert n.v_pos == 0.0 and n.v_neg == 0.0
 
 
+class TestCLIFValidation:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("v_pos", np.nan),
+            ("v_neg", np.inf),
+        ],
+    )
+    def test_rejects_non_finite_dual_path_state(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            ComplementaryLIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["tau", "dt", "v_threshold"])
+    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_decay_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            ComplementaryLIFNeuron(**{field: value})
+
+    @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+        n = ComplementaryLIFNeuron(v_pos=0.25, v_neg=0.5)
+        before = (n.v_pos, n.v_neg)
+        with pytest.raises(ValueError, match="current"):
+            n.step(current)
+        assert (n.v_pos, n.v_neg) == before
+
+
 class TestCLIFDualPathMechanism:
     """Core: separate v_pos and v_neg accumulation with leaky decay."""
 
