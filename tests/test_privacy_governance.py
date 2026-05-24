@@ -248,3 +248,58 @@ def test_contract_rejects_non_list_provenance_section() -> None:
 
     with pytest.raises(ValueError, match="provenance must be a list"):
         GovernanceContract.from_dict(payload)
+
+
+def test_contract_sections_reject_non_mappings_and_missing_fields() -> None:
+    with pytest.raises(ValueError, match="consent_boundary must be a mapping"):
+        ConsentBoundary.from_dict([])  # type: ignore[arg-type]
+    payload = dict(_minimal_contract_payload()["consent_boundary"])
+    payload.pop("participant_id")
+    with pytest.raises(ValueError, match="consent_boundary.participant_id"):
+        ConsentBoundary.from_dict(payload)
+
+
+def test_sequence_fields_accept_none_for_disabled_policy_and_reject_non_iterables() -> None:
+    assert RedactionPolicy(enabled=False, fields=None, replacement="").fields == ()  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="fields"):
+        RedactionPolicy(enabled=False, fields=7, replacement="")  # type: ignore[arg-type]
+
+
+def test_telemetry_and_provenance_validate_numeric_and_hash_contracts() -> None:
+    with pytest.raises(ValueError, match="sampling_interval_ms must be an int"):
+        TelemetryPolicy(enabled=True, sink="local", sampling_interval_ms=1.5)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="sampling_interval_ms must be positive"):
+        TelemetryPolicy(enabled=True, sink="local", sampling_interval_ms=0)
+
+    payload = _minimal_contract_payload()["provenance"][0]
+    with pytest.raises(ValueError, match="artifact_hash"):
+        GovernanceContract.from_dict(
+            {**_minimal_contract_payload(), "provenance": [{**payload, "artifact_hash": ""}]}
+        )
+    with pytest.raises(ValueError, match="hash_algorithm"):
+        GovernanceContract.from_dict(
+            {**_minimal_contract_payload(), "provenance": [{**payload, "hash_algorithm": ""}]}
+        )
+
+
+def test_active_features_and_audit_required_features_are_deterministic() -> None:
+    payload = _minimal_contract_payload()
+    payload["features"] = {
+        **payload["features"],
+        "enable_differential_privacy": True,
+        "enable_federated_learning": True,
+        "audit_flags": ["telemetry", "differential_privacy", "federated_learning"],
+    }
+
+    contract = GovernanceContract.from_dict(payload)
+
+    assert contract.active_features() == (
+        "differential_privacy",
+        "federated_learning",
+        "telemetry_logging",
+    )
+    assert contract.audit_required_features == (
+        "enable_differential_privacy",
+        "enable_federated_learning",
+        "enable_telemetry_logging",
+    )
