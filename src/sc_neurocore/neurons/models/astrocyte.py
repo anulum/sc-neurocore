@@ -40,8 +40,29 @@ class AstrocyteModel:
     ip3_decay: float = 0.14  # s^-1
     dt: float = 0.01  # s
 
+    def __post_init__(self) -> None:
+        if not np.isfinite(self.ca) or self.ca < 0.0:
+            raise ValueError("ca must be finite and non-negative")
+        if not np.isfinite(self.h) or not (0.0 <= self.h <= 1.0):
+            raise ValueError("h must be finite and in [0, 1]")
+        if not np.isfinite(self.ip3) or self.ip3 < 0.0:
+            raise ValueError("ip3 must be finite and non-negative")
+        for name in ("v_er", "k_er", "v_serca", "d1", "d2", "d3", "d5", "a2", "c0", "c1", "dt"):
+            value = getattr(self, name)
+            if not np.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+        for name in ("leak", "ip3_prod", "ip3_decay"):
+            value = getattr(self, name)
+            if not np.isfinite(value) or value < 0.0:
+                raise ValueError(f"{name} must be finite and non-negative")
+        if self.ca >= self.c0:
+            raise ValueError("ca must be below total cell calcium c0")
+
     def step(self, current: float) -> float:
         """Return cytosolic Ca concentration (uM). current = glutamate-driven IP3 production."""
+        if not np.isfinite(current) or current < 0.0:
+            raise ValueError("current must be finite and non-negative")
+
         # Li-Rinzel IP3R open probability
         m_inf = self.ip3 / (self.ip3 + self.d1)
         n_inf = self.ca / (self.ca + self.d5)
