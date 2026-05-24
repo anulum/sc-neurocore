@@ -51,6 +51,34 @@ per output neuron.
 
 ## Attention Layer
 
+`StochasticAttention` exposes three attention paths:
+
+- `forward(...)` uses SC-native row-sum normalisation without exponentials;
+- `forward_softmax(...)` uses temperature-scaled softmax with stable
+  max-subtraction;
+- `forward_bitstream(...)` encodes `Q`, `K`, and `V` as unipolar
+  probabilities, computes dot products with bitstream AND gates, and decodes
+  the row-normalised result by popcount.
+
+Bitstream mode accepts Bernoulli streams by default. Passing
+`use_sobol=True` uses Sobol low-discrepancy streams for lower deterministic
+variance at the same bitstream length. All bitstream inputs must be finite
+probabilities in `[0, 1]`, and `length` must be positive.
+
+The public contract is tested as follows:
+
+- invalid `dim_k`, temperature, and unsupported `sc_mode` fail closed;
+- 1-D and 2-D `Q`, `K`, and `V` inputs produce finite outputs with the
+  expected `(n_queries, value_dim)` shape;
+- single-key attention returns the value row for both row-sum and softmax
+  modes;
+- softmax remains finite on large scores and sharp temperatures select the
+  best-matching key;
+- bitstream mode rejects invalid lengths and out-of-range probabilities;
+- Bernoulli bitstream attention approximates row-sum attention within its
+  stochastic tolerance;
+- Sobol bitstream attention returns finite bounded probabilities.
+
 ::: sc_neurocore.layers.attention.StochasticAttention
 
 ## Memristive Layer
