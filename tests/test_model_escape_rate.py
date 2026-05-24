@@ -18,6 +18,7 @@ Performance: ~52K isolation steps/s."""
 from __future__ import annotations
 
 import time
+import math
 
 import numpy as np
 import pytest
@@ -94,11 +95,16 @@ class TestEscapeRateStochasticMechanism:
         spikes = sum(n.step(0.0) for _ in range(50000))
         assert spikes == 0
 
-    def test_rejects_impossible_spike_probability(self):
-        n = EscapeRateNeuron()
-        n.v = 1000.0
-        with pytest.raises(ValueError, match="probability"):
-            n.step(0.0)
+    def test_escape_probability_uses_bounded_hazard_transform(self):
+        """Finite-step escape probability is 1 - exp(-rho(V) dt), not clipped rho dt."""
+        n = EscapeRateNeuron(v=-50.0, v_threshold=-50.0, rho_0=0.2, dt=2.0)
+        expected = 1.0 - math.exp(-0.4)
+        assert n._spike_probability(n.v_threshold) == pytest.approx(expected)
+
+    def test_high_escape_rate_saturates_without_invalid_probability(self):
+        n = EscapeRateNeuron(v=1000.0)
+        assert n.step(0.0) == 1
+        assert n.v == n.v_reset
 
 
 class TestEscapeRateAnalytical:

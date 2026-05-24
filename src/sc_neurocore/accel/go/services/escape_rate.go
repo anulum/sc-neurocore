@@ -14,41 +14,67 @@ import (
 
 // EscapeRateNeuronState holds the neuron state
 type EscapeRateNeuronState struct {
-	V float64
-	VRest float64
-	VReset float64
+	V          float64
+	VRest      float64
+	VReset     float64
 	VThreshold float64
-	TauM float64
-	Rho0 float64
-	DeltaU float64
+	TauM       float64
+	Rho0       float64
+	DeltaU     float64
 	Resistance float64
-	Dt float64
+	Dt         float64
 }
 
 // NewEscapeRateNeuron creates a new EscapeRateNeuron neuron with default parameters
 func NewEscapeRateNeuron() *EscapeRateNeuronState {
 	return &EscapeRateNeuronState{
-		V: -70.0,
-		VRest: -70.0,
-		VReset: -70.0,
+		V:          -70.0,
+		VRest:      -70.0,
+		VReset:     -70.0,
 		VThreshold: -50.0,
-		TauM: 10.0,
-		Rho0: 0.001,
-		DeltaU: 3.0,
+		TauM:       10.0,
+		Rho0:       0.001,
+		DeltaU:     3.0,
 		Resistance: 1.0,
-		Dt: 1.0,
+		Dt:         1.0,
 	}
 }
 
 // Step advances the neuron by one timestep
 func (s *EscapeRateNeuronState) Step(iExt float64) int {
-	vPrev := s.V
-	s.V += iExt * 0.01
-	if s.V >= s.VThreshold && vPrev < s.VThreshold {
+	if !ValidateEscapeRate(s) || !finite(iExt) {
+		return 0
+	}
+
+	s.V += (-(s.V - s.VRest) + s.Resistance*iExt) / s.TauM * s.Dt
+	hazard := s.Rho0 * safeExp((s.V-s.VThreshold)/s.DeltaU) * s.Dt
+	pSpike := -math.Expm1(-hazard)
+	if pSpike >= 1.0 {
 		s.V = s.VReset
 		return 1
 	}
 	return 0
+}
+
+// ValidateEscapeRate enforces finite, physically valid state parameters.
+func ValidateEscapeRate(s *EscapeRateNeuronState) bool {
+	if s == nil {
+		return false
+	}
+	return finite(s.V) && finite(s.VRest) && finite(s.VReset) && finite(s.VThreshold) &&
+		finite(s.TauM) && s.TauM > 0.0 &&
+		finite(s.Rho0) && s.Rho0 > 0.0 &&
+		finite(s.DeltaU) && s.DeltaU > 0.0 &&
+		finite(s.Resistance) && s.Resistance > 0.0 &&
+		finite(s.Dt) && s.Dt > 0.0
+}
+
+func finite(v float64) bool {
+	return !math.IsNaN(v) && !math.IsInf(v, 0)
+}
+
+func safeExp(x float64) float64 {
+	return math.Exp(math.Max(-700.0, math.Min(700.0, x)))
 }
 
 // SimulateEscapeRateNeuron runs the neuron for n steps
@@ -65,5 +91,3 @@ func SimulateEscapeRateNeuron(nSteps int, iExt float64) ([]float64, int) {
 	}
 	return trace, spikes
 }
-
-var _ = math.Exp

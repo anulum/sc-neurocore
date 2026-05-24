@@ -44,10 +44,8 @@ class EscapeRateNeuron:
 
     def _spike_probability(self, voltage: float) -> float:
         rate = self.rho_0 * safe_exp((voltage - self.v_threshold) / self.delta_u)
-        p_spike = rate * self.dt
-        if p_spike > 1.0:
-            raise ValueError("spike probability must not exceed one")
-        return p_spike
+        hazard = rate * self.dt
+        return -math.expm1(-hazard)
 
     def step(self, current: float) -> int:
         if not math.isfinite(current):
