@@ -132,6 +132,40 @@ class TestHybridLinearAttentionNeuron:
         assert neuron.lambda_decay == 0.95
         assert neuron.window_size == 16
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"dim": 0},
+            {"dim": 1.5},
+            {"lambda_decay": -0.01},
+            {"lambda_decay": 1.01},
+            {"lambda_decay": float("nan")},
+            {"window_size": 0},
+            {"window_size": 2.5},
+            {"dt": 0.0},
+            {"v": float("inf")},
+            {"_state_kv": [0.0, float("nan")]},
+            {"_window_buf": [0.0, float("inf")]},
+        ],
+    )
+    def test_rejects_non_physical_attention_parameters(self, kwargs):
+        """Hybrid attention state must be finite, bounded, and dimensionally valid."""
+        from sc_neurocore.neurons.models import HybridLinearAttentionNeuron
+
+        with pytest.raises(ValueError):
+            HybridLinearAttentionNeuron(**kwargs)
+
+    @pytest.mark.parametrize(
+        ("query", "key", "value"),
+        [(float("nan"), 0.0, 0.0), (0.0, float("inf"), 0.0), (0.0, 0.0, float("nan"))],
+    )
+    def test_rejects_non_finite_qkv_drive(self, query, key, value):
+        """Attention update must fail closed on non-finite projections."""
+        from sc_neurocore.neurons.models import HybridLinearAttentionNeuron
+
+        with pytest.raises(ValueError, match="query, key, and value"):
+            HybridLinearAttentionNeuron().step_qkv(query, key, value)
+
     def test_step_qkv_returns_float(self, neuron):
         out = neuron.step_qkv(1.0, 0.5, 2.0)
         assert isinstance(out, float)
