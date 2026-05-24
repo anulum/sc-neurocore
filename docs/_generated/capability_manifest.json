@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 712
+    "test_files": 715
   },
   "documentation": {
     "public_pages": [
@@ -1939,6 +1939,7 @@
       "tests/test_docs_internal_link_hygiene.py",
       "tests/test_docs_navigation_policy.py",
       "tests/test_doctor.py",
+      "tests/test_dot_product.py",
       "tests/test_dsl_to_verilog.py",
       "tests/test_eda_toolchain_versions.py",
       "tests/test_edge/test_aer_router_daemon.py",
@@ -2035,6 +2036,7 @@
       "tests/test_hh_validation.py",
       "tests/test_holonomic_adapter_stack_contract.py",
       "tests/test_homeostasis.py",
+      "tests/test_homeostatic_lif.py",
       "tests/test_hub_bundle.py",
       "tests/test_hypervisor/test_hypervisor.py",
       "tests/test_hypothesis_fuzz.py",
@@ -2415,6 +2417,7 @@
       "tests/test_stochastic_core_properties.py",
       "tests/test_stochastic_doctor/test_diagnostics.py",
       "tests/test_stochastic_doctor/test_diagnostics_branches.py",
+      "tests/test_stochastic_lif.py",
       "tests/test_streaming_spike_codec.py",
       "tests/test_structured_logging.py",
       "tests/test_studio_advanced.py",
