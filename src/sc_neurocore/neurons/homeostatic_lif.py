@@ -8,6 +8,7 @@
 
 from dataclasses import dataclass
 from typing import Dict, Any
+import math
 from .stochastic_lif import StochasticLIFNeuron
 from ..constants import (
     HOMEOSTATIC_TARGET_RATE,
@@ -45,6 +46,15 @@ class HomeostaticLIFNeuron(StochasticLIFNeuron):
 
     def __post_init__(self) -> None:
         super().__post_init__()
+        if not math.isfinite(self.target_rate) or not 0.0 <= self.target_rate <= 1.0:
+            raise ValueError("target_rate must be finite and within [0, 1]")
+        if not math.isfinite(self.adaptation_rate) or self.adaptation_rate < 0.0:
+            raise ValueError("adaptation_rate must be finite and non-negative")
+        if not math.isfinite(self.rate_trace) or not 0.0 <= self.rate_trace <= 1.0:
+            raise ValueError("rate_trace must be finite and within [0, 1]")
+        if not math.isfinite(self.trace_decay) or not 0.0 <= self.trace_decay <= 1.0:
+            raise ValueError("trace_decay must be finite and within [0, 1]")
+
         self.initial_threshold: float = self.v_threshold
 
     def step(self, input_current: float) -> int:
