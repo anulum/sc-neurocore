@@ -28,6 +28,15 @@ Spike: upward crossing of $V_\theta$ ($V_{t} \geq \theta$ and $V_{t-1} < \theta$
 | `v_threshold` | 0.5 | Detection threshold |
 | `dt` | 0.1 | Time step |
 
+### Validation contract
+
+The Python model and acceleration mirrors reject non-finite `v`, `w`,
+`z`, `alpha`, `beta`, `v_threshold`, and runtime input before state
+mutation. The timescale and coupling parameters `eps1`, `eps2`, `gamma`,
+and `dt` must be finite and strictly positive. This preserves the
+three-dimensional fast/intermediate/ultra-slow burster geometry and
+prevents NaN or infinite currents from poisoning state.
+
 ## Behaviour
 
 - **Spontaneous oscillation:** Model bursts even at I=0 (relaxation oscillator).
@@ -70,7 +79,8 @@ PernarowskiNeuron
 | Determinism | 1 | bit-exact reproducibility |
 | Network | 2 | population, spikes |
 | Analysis | 2 | spike_count, consistency |
-| **Total** | **27** | |
+| Validation | 41 | finite state/offsets/threshold, positive scales, finite input before mutation |
+| **Total** | **68** | |
 
 Key finding: eps2 controls ultra-slow z dynamics. At eps2=0.001 (default),
 z evolves ~100× slower than w, shaping the burst envelope.
@@ -126,3 +136,5 @@ State returns to initial values after `reset()`.
 2. All pipeline stages verified green
 3. Rust parity: EXACT
 4. Numerical stability confirmed over 20K steps
+5. Rust/Go/Julia safety mirrors use the same three-state update and
+   fail-closed validation contract as the Python model.
