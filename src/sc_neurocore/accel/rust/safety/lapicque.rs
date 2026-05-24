@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for lapicque
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct LapicqueNeuron {
     pub v: f64,
@@ -33,27 +31,50 @@ impl LapicqueNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // dv = (-(self.v - self.v_rest) + self.resistance * current) / self.tau
-        // self.v += dv
-        // if self.v >= self.v_threshold:
-        // self.v = self.v_reset
-        // return 1
-        // return 0
-        0 // spike indicator
+        if !i_ext.is_finite() || !validate_lapicque(self) {
+            return 0;
+        }
+
+        let dv = (-(self.v - self.v_rest) + self.resistance * i_ext) / self.tau * self.dt;
+        let next_v = self.v + dv;
+        if !dv.is_finite() || !next_v.is_finite() {
+            return 0;
+        }
+
+        self.v = next_v;
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
-        // self.v = self.v_rest
-        self.v = 0.0_f64;
-        self.v_rest = 0.0_f64;
-        self.v_reset = 0.0_f64;
-        self.v_threshold = 1.0_f64;
-        self.tau = 20.0_f64;
+        self.v = self.v_rest;
+    }
+}
+
+impl Default for LapicqueNeuron {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 pub fn validate_lapicque(state: &LapicqueNeuron) -> bool {
     state.v.is_finite()
+        && state.v_rest.is_finite()
+        && state.v_reset.is_finite()
+        && state.v_threshold.is_finite()
+        && state.v_threshold > state.v_rest
+        && state.v_threshold > state.v_reset
+        && state.v < state.v_threshold
+        && state.tau.is_finite()
+        && state.tau > 0.0
+        && state.resistance.is_finite()
+        && state.resistance > 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
 }
 
 #[cfg(test)]
@@ -72,5 +93,54 @@ mod tests {
         let mut state = LapicqueNeuron::new();
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_positive_current_spikes_and_resets() {
+        let mut state = LapicqueNeuron::new();
+        let mut spikes = 0;
+        for _ in 0..5_000 {
+            spikes += state.step(20.0);
+        }
+        assert!(spikes >= 100);
+        assert!(state.v < state.v_threshold);
+    }
+
+    #[test]
+    fn test_invalid_current_does_not_mutate_state() {
+        let mut state = LapicqueNeuron::new();
+        state.v = 0.25;
+        assert_eq!(state.step(f64::NAN), 0);
+        assert_eq!(state.v, 0.25);
+    }
+
+    #[test]
+    fn test_invalid_increment_does_not_mutate_state() {
+        let mut state = LapicqueNeuron::new();
+        state.v = 0.25;
+        state.v_threshold = 1.0e308;
+        state.tau = 1.0e-308;
+        assert_eq!(state.step(1.0e308), 0);
+        assert_eq!(state.v, 0.25);
+    }
+
+    #[test]
+    fn test_reset_preserves_parameters() {
+        let mut state = LapicqueNeuron {
+            v: 0.5,
+            v_rest: -0.25,
+            v_reset: -0.5,
+            v_threshold: 2.0,
+            tau: 10.0,
+            resistance: 2.0,
+            dt: 0.25,
+        };
+        state.reset();
+        assert_eq!(state.v, -0.25);
+        assert_eq!(state.v_reset, -0.5);
+        assert_eq!(state.v_threshold, 2.0);
+        assert_eq!(state.tau, 10.0);
+        assert_eq!(state.resistance, 2.0);
+        assert_eq!(state.dt, 0.25);
     }
 }
