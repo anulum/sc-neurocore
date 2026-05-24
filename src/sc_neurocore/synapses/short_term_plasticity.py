@@ -29,6 +29,7 @@ Reference: Tsodyks & Markram (1997), Markram et al. (1998).
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -61,6 +62,22 @@ class ShortTermPlasticitySynapse:
     amplitude: float = 1.0
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        for name in ("x", "u", "u_base"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or not (0.0 <= value <= 1.0):
+                raise ValueError(f"{name} must be finite and in [0, 1]")
+        if self.u_base == 0.0:
+            raise ValueError("u_base must be positive")
+
+        for name in ("tau_d", "tau_f", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+
+        if not math.isfinite(self.amplitude) or self.amplitude < 0.0:
+            raise ValueError("amplitude must be finite and non-negative")
+
     @classmethod
     def new_depressing(cls) -> ShortTermPlasticitySynapse:
         """Create a depressing synapse (cortical pyr-pyr)."""
@@ -91,6 +108,9 @@ class ShortTermPlasticitySynapse:
         Between spikes, x recovers toward 1 and u decays toward U.
         On a presynaptic spike: u is facilitated, PSC = A*u*x, then x is depressed.
         """
+        if type(pre_spike) is not bool:
+            raise TypeError("pre_spike must be bool")
+
         # Recover between spikes.
         self.x += (1.0 - self.x) / self.tau_d * self.dt
         self.u += (self.u_base - self.u) / self.tau_f * self.dt
