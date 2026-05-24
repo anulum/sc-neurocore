@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import os
 import struct
 import time
 
@@ -275,4 +276,5 @@ class TestAERRouterBenchmark:
             router.register_route(neuron_id=i, addr=f"h:{5000 + i}")
         elapsed = time.perf_counter() - t0
         assert router.route_count == 10_000
-        assert elapsed < 0.5, f"10k registrations took {elapsed:.2f}s"
+        max_elapsed = 1.0 if os.environ.get("CI") else 0.5
+        assert elapsed < max_elapsed, f"10k registrations took {elapsed:.2f}s"
