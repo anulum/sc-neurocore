@@ -13,12 +13,14 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 OSV_SCANNER_SCHEMA_VERSION = "sc-neurocore.osv-scanner.v1"
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
+SleepCommand = Callable[[float], None]
 OSV_LOCKFILE_INPUTS = (
     "requirements.txt",
     "Cargo.lock",
@@ -129,11 +131,23 @@ def _lockfile_arguments(repo_root: Path) -> list[str]:
     return args
 
 
+def _is_transient_osv_failure(result: subprocess.CompletedProcess[str]) -> bool:
+    if result.returncode == 0:
+        return False
+    stderr = result.stderr.lower()
+    return "rpc error" in stderr and (
+        "service unavailable" in stderr
+        or "code = unavailable" in stderr
+        or "code = internal" in stderr
+    )
+
+
 def run_osv_scanner(
     *,
     repo_root: Path,
     output_dir: Path,
     run_command: RunCommand = subprocess.run,
+    sleep: SleepCommand = time.sleep,
 ) -> dict[str, Any]:
     security_dir = output_dir / "security"
     security_dir.mkdir(parents=True, exist_ok=True)
@@ -154,7 +168,14 @@ def run_osv_scanner(
         "lockfile",
         *_lockfile_arguments(repo_root),
     ]
-    result = _run(command, repo_root=repo_root, run_command=run_command, timeout=360)
+    attempts = 0
+    result: subprocess.CompletedProcess[str] | None = None
+    for attempts in range(1, 4):
+        result = _run(command, repo_root=repo_root, run_command=run_command, timeout=360)
+        if not _is_transient_osv_failure(result):
+            break
+        sleep(5 * attempts)
+    assert result is not None
     validation_errors, package_count, vulnerability_count, vulnerability_ids = _validate_osv_report(
         report_path
     )
@@ -162,6 +183,7 @@ def run_osv_scanner(
         "schema_version": OSV_SCANNER_SCHEMA_VERSION,
         "passed": result.returncode == 0 and not validation_errors and vulnerability_count == 0,
         "command": command,
+        "attempts": attempts,
         "artifact": str(report_path),
         "returncode": result.returncode,
         "stdout_tail": _tail_lines(result.stdout),
