@@ -23,6 +23,19 @@ Spike when $V \geq V_\theta$, then $V \leftarrow V_{\text{reset}}$.
 | `v_reset` | 0.0 | Reset potential |
 | `dt` | 0.1 | Time step |
 
+## Validation contract
+
+The implementation rejects invalid state before mutation:
+
+- `v`, `v_threshold`, `v_reset`, `c_m`, `dt`, and input current must be finite;
+- `c_m` and `dt` must be positive;
+- `v_threshold` must be greater than `v_reset`;
+- initial `v` must be below `v_threshold`;
+- each voltage increment and candidate voltage must remain finite before assignment.
+
+These guards preserve the analytical positive-excursion ISI contract and prevent
+overflowing currents or capacitance scales from poisoning the state.
+
 ## Behaviour
 
 - **No leak:** Voltage accumulates indefinitely — zero-input steps leave V unchanged.
@@ -52,7 +65,7 @@ PerfectIntegratorNeuron
 ├── step(current) → int {0,1} (deterministic)
 ├── Population: PoissonInput(weight=5, rate=500Hz)
 ├── Verilog: accumulator + comparator, ~20 LUTs
-└── Rust: supported (single f64 state)
+└── Rust/Go/Julia/Mojo: same finite-increment spike/reset contract
 ```
 
 ## Test Coverage
@@ -63,11 +76,12 @@ PerfectIntegratorNeuron
 | Threshold | 4 | exact threshold, reset, custom reset, superthreshold |
 | Analytical f–I | 7 | 5-point f–I curve, linearity ratio, threshold/capacitance dependence |
 | ISI analysis | 3 | constant ISI, analytical match, CV=0 |
-| Edge cases | 10 | negative current, large negative, small/large dt, θ=reset, FP accumulation, alternating I, reset(), determinism |
+| Edge cases | 10 | negative current, large negative, small/large dt, threshold-reset rejection, FP accumulation, alternating I, reset(), determinism |
 | Parameter sweep | 8 | 4 C_m values, 4 threshold values (rate ∝ 1/param) |
 | Network | 3 | population, spikes, two-population drive comparison |
 | Analysis | 2 | spike_count manual match, long-run analytical match |
-| **Total** | **42** | |
+| Validation | 19 | finite parameters/current, positive scales, positive threshold excursion, initial voltage below threshold, finite increment before mutation |
+| **Total** | **60** | |
 
 Finding: floating-point accumulation of 0.1 can delay spike by 1 step when
 the analytical ISI is exactly N steps. Documented in test and behaviour section.
@@ -82,7 +96,7 @@ the analytical ISI is exactly N steps. Documented in test and behaviour section.
 | Python throughput | ~572K steps/s |
 | Spikes (10K steps, I=5.0) | 5000 |
 | State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+| Polyglot contract | Rust, Go, Julia, and Mojo finite-increment surfaces aligned |
 
 ---
 
@@ -112,8 +126,8 @@ State returns to initial values after `reset()`.
 `Population(PerfectIntegratorNeuron, n=10)` creates correct instances.
 **Status: PASS**
 
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
+### 7. Polyglot safety surfaces
+Rust, Go, Julia, and Mojo carry the same finite-increment spike/reset contract.
 
 ---
 
@@ -121,5 +135,5 @@ State returns to initial values after `reset()`.
 
 1. Throughput: ~572K steps/s (Python, single-thread)
 2. All pipeline stages verified green
-3. Rust parity: EXACT
+3. Polyglot contract aligned for Rust, Go, Julia, and Mojo
 4. Numerical stability confirmed over 20K steps
