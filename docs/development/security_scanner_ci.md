@@ -43,7 +43,10 @@ It does not execute heavyweight scanner binaries in CI yet.
 - OSV-Scanner v2 writes `security/osv_scanner.json` and
   `security/osv_scanner_summary.json`; the lane is blocking and runs with the
   pinned Go `1.26.3` toolchain because OSV also evaluates Go standard-library
-  vulnerability status from module metadata.
+  vulnerability status from module metadata. The runner scans explicit
+  lockfile/requirements inputs with OSV's lockfile plugin rather than recursive
+  source discovery so optional development manifests cannot mask the tracked
+  dependency surfaces with resolver-side extraction failures.
 - Optional typing artefact slots include `security/pyright.json`,
   `security/mypy`, and `security/typing_scanner_summary.json`; the executable
   runner is available for baseline refreshes without enabling the lane in the
