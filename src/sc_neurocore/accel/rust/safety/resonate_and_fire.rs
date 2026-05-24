@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for resonate_and_fire
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct ResonateAndFireNeuron {
     pub x: f64,
@@ -31,32 +29,50 @@ impl ResonateAndFireNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // dx = (self.b * self.x - self.omega * self.y + current) * self.dt
-        // dy = (self.omega * self.x + self.b * self.y) * self.dt
-        // self.x += dx
-        // self.y += dy
-        // r = (self.x.powi2 + self.y.powi2_f64).sqrt()
-        // if r >= self.threshold:
-        // self.x = 0.0
-        // self.y = 0.0
-        // return 1
-        // return 0
-        0 // spike indicator
+        if !i_ext.is_finite() || !validate_resonate_and_fire(self) {
+            return 0;
+        }
+
+        let dx = (self.b * self.x - self.omega * self.y + i_ext) * self.dt;
+        let dy = (self.omega * self.x + self.b * self.y) * self.dt;
+        let next_x = self.x + dx;
+        let next_y = self.y + dy;
+        let radius = next_x.hypot(next_y);
+        if !dx.is_finite()
+            || !dy.is_finite()
+            || !next_x.is_finite()
+            || !next_y.is_finite()
+            || !radius.is_finite()
+        {
+            return 0;
+        }
+
+        self.x = next_x;
+        self.y = next_y;
+        if radius >= self.threshold {
+            self.x = 0.0_f64;
+            self.y = 0.0_f64;
+            return 1;
+        }
+        0
     }
 
     pub fn reset(&mut self) {
-        // self.x = 0.0
-        // self.y = 0.0
         self.x = 0.0_f64;
         self.y = 0.0_f64;
-        self.b = -0.1_f64;
-        self.omega = 1.0_f64;
-        self.threshold = 1.0_f64;
     }
 }
 
 pub fn validate_resonate_and_fire(state: &ResonateAndFireNeuron) -> bool {
-    true
+    state.x.is_finite()
+        && state.y.is_finite()
+        && state.b.is_finite()
+        && state.omega.is_finite()
+        && state.omega > 0.0_f64
+        && state.threshold.is_finite()
+        && state.threshold > 0.0_f64
+        && state.dt.is_finite()
+        && state.dt > 0.0_f64
 }
 
 #[cfg(test)]
@@ -74,5 +90,64 @@ mod tests {
         let mut state = ResonateAndFireNeuron::new();
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn positive_current_spikes_and_resets() {
+        let mut state = ResonateAndFireNeuron::new();
+        for _ in 0..50_000 {
+            if state.step(2.0) == 1 {
+                assert_eq!(state.x, 0.0);
+                assert_eq!(state.y, 0.0);
+                return;
+            }
+        }
+        panic!("positive current should produce at least one spike");
+    }
+
+    #[test]
+    fn invalid_current_does_not_mutate_state() {
+        let mut state = ResonateAndFireNeuron::new();
+        state.x = 0.25;
+        state.y = -0.5;
+
+        assert_eq!(state.step(f64::NAN), 0);
+        assert_eq!(state.x, 0.25);
+        assert_eq!(state.y, -0.5);
+    }
+
+    #[test]
+    fn invalid_euler_update_does_not_mutate_state() {
+        let mut state = ResonateAndFireNeuron::new();
+        state.x = 0.25;
+        state.y = -0.5;
+        state.threshold = 1.0e308;
+        state.b = 1.0e308;
+        state.dt = 1.0e308;
+
+        assert_eq!(state.step(1.0e308), 0);
+        assert_eq!(state.x, 0.25);
+        assert_eq!(state.y, -0.5);
+    }
+
+    #[test]
+    fn reset_preserves_parameters() {
+        let mut state = ResonateAndFireNeuron {
+            x: 0.5,
+            y: -0.25,
+            b: -0.5,
+            omega: 2.0,
+            threshold: 3.0,
+            dt: 0.02,
+        };
+
+        state.reset();
+
+        assert_eq!(state.x, 0.0);
+        assert_eq!(state.y, 0.0);
+        assert_eq!(state.b, -0.5);
+        assert_eq!(state.omega, 2.0);
+        assert_eq!(state.threshold, 3.0);
+        assert_eq!(state.dt, 0.02);
     }
 }
