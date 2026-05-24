@@ -8,7 +8,7 @@
 
 module EscapeRateAccel
 
-export step!, simulate, EscapeRateNeuronState
+export step!, simulate, validate_escape_rate, EscapeRateNeuronState
 
 mutable struct EscapeRateNeuronState
     v::Float64
@@ -27,16 +27,32 @@ function EscapeRateNeuronState()
 end
 
 function step!(s::EscapeRateNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        s.v += (-(s.v - s.v_rest) + s.resistance * I_ext) / s.tau_m * s.dt
-        rate = s.rho_0 * safe_exp((s.v - s.v_threshold) / s.delta_u)
-        p_spike = rate * s.dt
-        if np.random.random() < p_spike
-            s.v = s.v_reset
-            return 1
-        end
+    if !validate_escape_rate(s) || !isfinite(I_ext)
         return 0
-    catch _e
+    end
+
+    s.v += (-(s.v - s.v_rest) + s.resistance * I_ext) / s.tau_m * s.dt
+    rate = s.rho_0 * safe_exp((s.v - s.v_threshold) / s.delta_u)
+    p_spike = -expm1(-rate * s.dt)
+    if rand() < p_spike
+        s.v = s.v_reset
+        return 1
+    end
+    return 0
+end
+
+function validate_escape_rate(s::EscapeRateNeuronState)
+    return isfinite(s.v) && isfinite(s.v_rest) && isfinite(s.v_reset) &&
+           isfinite(s.v_threshold) && isfinite(s.tau_m) && s.tau_m > 0.0 &&
+           isfinite(s.rho_0) && s.rho_0 > 0.0 &&
+           isfinite(s.delta_u) && s.delta_u > 0.0 &&
+           isfinite(s.resistance) && s.resistance > 0.0 &&
+           isfinite(s.dt) && s.dt > 0.0
+end
+
+function safe_exp(x::Float64)
+    return exp(clamp(x, -700.0, 700.0))
+end
         return 0
     end
 end

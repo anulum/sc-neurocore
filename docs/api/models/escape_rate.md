@@ -19,7 +19,9 @@ $$\rho(V) = \rho_0 \exp\!\left(\frac{V - V_{threshold}}{\Delta u}\right)$$
 
 ### Spike probability (per timestep)
 
-$$p_{spike} = \rho(V) \cdot dt$$
+$$p_{spike} = 1 - \exp\!\left(-\rho(V) \cdot dt\right)$$
+
+For small timesteps this reduces to $p_{spike} \approx \rho(V) \cdot dt$, but the finite-step hazard transform remains bounded in $[0,1]$ for high escape rates.
 
 ### Stochastic spike generation
 
@@ -29,12 +31,13 @@ $$\text{Bernoulli}(p_{spike}): \quad \text{if } U(0,1) < p_{spike}: \text{spike,
 
 ```python
 def step(self, current: float) -> int:
-    self.v += (-(self.v - self.v_rest) + self.resistance * current) / self.tau_m * self.dt
-    rate = self.rho_0 * safe_exp((self.v - self.v_threshold) / self.delta_u)
-    p_spike = rate * self.dt
+    voltage = self.v + (-(self.v - self.v_rest) + self.resistance * current) / self.tau_m * self.dt
+    rate = self.rho_0 * safe_exp((voltage - self.v_threshold) / self.delta_u)
+    p_spike = -math.expm1(-rate * self.dt)
     if np.random.random() < p_spike:
         self.v = self.v_reset
         return 1
+    self.v = voltage
     return 0
 ```
 
@@ -62,8 +65,8 @@ V_threshold, there is a small but nonzero probability of firing.
 ### ρ₀ = 0.001 (base rate)
 
 The base escape rate at V = V_threshold: ρ(V_θ) = 0.001 kHz. This gives
-p_spike = 0.001 × 1.0 = 0.001 (0.1%) per timestep at threshold. Well
-below threshold, p_spike is exponentially smaller.
+p_spike = 1 − exp(−0.001 × 1.0) ≈ 0.001 (0.1%) per timestep at threshold.
+Well below threshold, p_spike is exponentially smaller.
 
 ### Δu = 3.0 mV (noise width)
 
@@ -188,20 +191,24 @@ produce inf for V >> V_θ.
 - **1 np.random.random() per step:** RNG call is the performance
   bottleneck (much slower than arithmetic).
 - **Bernoulli approximation:** p_spike = ρ·dt assumes dt is small
-  enough that p_spike << 1. For very high rates, p_spike > 1 is
-  possible but the Bernoulli still works (clipped to 1.0 probability).
+  enough that p_spike << 1. The implementation uses the bounded hazard
+  transform 1 − exp(−ρ·dt), so high escape rates saturate without invalid
+  probabilities.
 - **safe_exp overflow protection:** Clips exp argument to prevent inf.
 
 ---
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/escape_rate.py` — 41 lines.
+- **Source:** `src/sc_neurocore/neurons/models/escape_rate.py`.
 - **One state variable:** v (membrane potential).
 - **Dataclass:** Uses `@dataclass`.
 - **Uses safe_exp:** From `sc_neurocore.utils.numerics`.
 - **Uses np.random:** Per-step RNG call (not seedable via constructor).
-- **Rust wiring:** Compatible (1 f64 state var, safe_exp, RNG needed).
+- **Rust/Go/Julia wiring:** Compatible scalar state surface with bounded
+  finite-step hazard probability and fail-closed parameter validation. Rust
+  and Go safety mirrors deterministically emit only saturated-probability
+  spikes; Julia keeps stochastic Bernoulli sampling.
 
 ---
 
@@ -222,13 +229,13 @@ The RNG call dominates per-step cost (not the exp).
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
 | Isolation | 5 | construction, binary output, state evolves, state finite (10K), reset |
-| Stochastic | 5 | stochastic spiking (produces spikes), two runs differ, rate increases with input, zero input silent, safe_exp no overflow |
+| Stochastic | 6 | stochastic spiking, two runs differ, rate increases with input, zero input silent, bounded hazard transform, high-rate saturation |
 | Analytical | 4 | V steady-state, membrane equation 1-step, ρ₀ scales rate, Δu controls sensitivity |
 | ISI | 2 | ISI variability (CV > 0), higher current shorter ISI |
 | Parameters | 2 | τ_m controls V dynamics, resistance scales input |
 | Performance | 2 | isolation throughput, network throughput |
 | Pipeline | 4 | Population, Network spikes, Projection wiring, analysis pipeline |
-| **Total** | **24** | **ALL PASSED (14.80s)** |
+| **Total** | **25** | dedicated module checks |
 
 See `tests/test_model_escape_rate.py`.
 

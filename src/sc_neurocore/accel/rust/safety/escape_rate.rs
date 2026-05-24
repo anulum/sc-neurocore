@@ -37,14 +37,18 @@ impl EscapeRateNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // self.v += (-(self.v - self.v_rest) + self.resistance * current) / self
-        // rate = self.rho_0 * safe_exp((self.v - self.v_threshold) / self.delta_
-        // p_spike = rate * self.dt
-        // if np.random.random() < p_spike:
-        // self.v = self.v_reset
-        // return 1
-        // return 0
-        0 // spike indicator
+        if !validate_escape_rate(self) || !i_ext.is_finite() {
+            return 0;
+        }
+
+        self.v += (-(self.v - self.v_rest) + self.resistance * i_ext) / self.tau_m * self.dt;
+        let hazard = self.rho_0 * safe_exp((self.v - self.v_threshold) / self.delta_u) * self.dt;
+        let p_spike = -(-hazard).exp_m1();
+        if p_spike >= 1.0 {
+            self.v = self.v_reset;
+            return 1;
+        }
+        0
     }
 
     pub fn reset(&mut self) {
@@ -59,6 +63,23 @@ impl EscapeRateNeuron {
 
 pub fn validate_escape_rate(state: &EscapeRateNeuron) -> bool {
     state.v.is_finite()
+        && state.v_rest.is_finite()
+        && state.v_reset.is_finite()
+        && state.v_threshold.is_finite()
+        && state.tau_m.is_finite()
+        && state.tau_m > 0.0
+        && state.rho_0.is_finite()
+        && state.rho_0 > 0.0
+        && state.delta_u.is_finite()
+        && state.delta_u > 0.0
+        && state.resistance.is_finite()
+        && state.resistance > 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
+}
+
+fn safe_exp(x: f64) -> f64 {
+    x.clamp(-700.0, 700.0).exp()
 }
 
 #[cfg(test)]
