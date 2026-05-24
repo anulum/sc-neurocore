@@ -185,6 +185,33 @@ class TestPoissonDtScaling:
         assert spikes < 500  # expected ~100
 
 
+class TestPoissonValidation:
+    @pytest.mark.parametrize("rate_hz", [-1.0, np.nan, np.inf, -np.inf])
+    def test_rejects_negative_or_non_finite_baseline_rate(self, rate_hz: float):
+        with pytest.raises(ValueError, match="rate_hz"):
+            PoissonNeuron(rate_hz=rate_hz)
+
+    @pytest.mark.parametrize("dt_ms", [0.0, -1.0, np.nan, np.inf])
+    def test_rejects_non_positive_or_non_finite_dt(self, dt_ms: float):
+        with pytest.raises(ValueError, match="dt_ms"):
+            PoissonNeuron(dt_ms=dt_ms)
+
+    def test_rejects_baseline_probability_above_one(self):
+        with pytest.raises(ValueError, match="probability"):
+            PoissonNeuron(rate_hz=2000.0, dt_ms=1.0)
+
+    @pytest.mark.parametrize("rate_override", [np.nan, np.inf, -np.inf])
+    def test_rejects_non_finite_rate_override(self, rate_override: float):
+        n = PoissonNeuron(rate_hz=100.0)
+        with pytest.raises(ValueError, match="rate_override"):
+            n.step(rate_override=rate_override)
+
+    def test_rejects_override_probability_above_one_before_sampling(self):
+        n = PoissonNeuron(rate_hz=100.0, dt_ms=1.0)
+        with pytest.raises(ValueError, match="probability"):
+            n.step(rate_override=2000.0)
+
+
 # ---------------------------------------------------------------------------
 # 5. Stochasticity
 # ---------------------------------------------------------------------------
