@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 import numpy as np
 
 
@@ -28,7 +29,18 @@ class ExpIFNeuron:
     tau: float = 20.0
     dt: float = 0.1
 
+    def __post_init__(self) -> None:
+        for field in ("v", "v_rest", "v_reset", "v_threshold", "v_rh"):
+            if not math.isfinite(getattr(self, field)):
+                raise ValueError(f"{field} must be finite")
+        for field in ("delta_t", "tau", "dt"):
+            value = getattr(self, field)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{field} must be finite and positive")
+
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
         exp_term = self.delta_t * np.exp(np.clip((self.v - self.v_rh) / self.delta_t, -20.0, 20.0))
         dv = (-(self.v - self.v_rest) + exp_term + current) / self.tau * self.dt
         self.v += dv
