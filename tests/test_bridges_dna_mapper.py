@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 
 import numpy as np
@@ -301,7 +302,8 @@ class TestDNAMapperBenchmark:
         for _ in range(500):
             designer.generate(length=20)
         elapsed = time.perf_counter() - t0
-        assert elapsed < 5.0, f"500 sequences took {elapsed:.2f}s"
+        max_elapsed = 10.0 if os.environ.get("CI") else 5.0
+        assert elapsed < max_elapsed, f"500 sequences took {elapsed:.2f}s"
 
     def test_gate_compilation_throughput(self):
         """Compile 100 AND gates."""
@@ -310,4 +312,5 @@ class TestDNAMapperBenchmark:
         for i in range(100):
             compiler.compile_and(f"a_{i}", f"b_{i}", f"out_{i}")
         elapsed = time.perf_counter() - t0
-        assert elapsed < 10.0, f"100 AND gates took {elapsed:.2f}s"
+        max_elapsed = 20.0 if os.environ.get("CI") else 10.0
+        assert elapsed < max_elapsed, f"100 AND gates took {elapsed:.2f}s"
