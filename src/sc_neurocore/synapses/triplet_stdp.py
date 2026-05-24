@@ -27,6 +27,7 @@ pre-post-post and pre-pre-post interactions. This explains:
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -70,6 +71,25 @@ class TripletSTDP:
     weight: float = 0.5
 
     def __post_init__(self) -> None:
+        for name in ("tau_plus", "tau_minus", "tau_x", "tau_y"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+
+        for name in ("a2_plus", "a3_plus", "a2_minus", "a3_minus", "w_min", "w_max", "weight"):
+            value = getattr(self, name)
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+
+        for name in ("a2_plus", "a3_plus", "a2_minus", "a3_minus"):
+            if getattr(self, name) < 0.0:
+                raise ValueError(f"{name} must be non-negative")
+
+        if self.w_min > self.w_max:
+            raise ValueError("w_min must be less than or equal to w_max")
+        if not (self.w_min <= self.weight <= self.w_max):
+            raise ValueError("weight must be within [w_min, w_max]")
+
         self.r1 = 0.0  # fast pre-synaptic trace
         self.r2 = 0.0  # slow pre-synaptic trace
         self.o1 = 0.0  # fast post-synaptic trace
@@ -80,7 +100,10 @@ class TripletSTDP:
 
         Returns the current weight after update.
         """
-        import math
+        if type(pre_spike) is not bool or type(post_spike) is not bool:
+            raise TypeError("pre_spike and post_spike must be bool")
+        if not math.isfinite(dt) or dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
 
         # Decay traces
         self.r1 *= math.exp(-dt / self.tau_plus)
