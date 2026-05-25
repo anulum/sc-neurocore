@@ -84,7 +84,10 @@ All three derivatives are computed from the old state before any
 variable is updated.
 
 All runtime surfaces reject non-finite input current and non-physical
-time-step or slow-adaptation parameters before updating state.
+time-step or slow-adaptation parameters before updating state. The
+Python RK4 and Euler paths also fail closed if the cubic derivative
+overflows or an intermediate RK4 stage becomes non-finite; the previous
+state is preserved in that case.
 
 ---
 
