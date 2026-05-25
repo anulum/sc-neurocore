@@ -105,6 +105,29 @@ class TestAdExValidation:
             n.step(current)
         assert (n.v, n.w) == before
 
+    @pytest.mark.parametrize("integrator", ["baseline_euler", "rk4", "rosenbrock"])
+    def test_rejects_non_finite_runtime_state_before_update(self, integrator: str):
+        n = AdExNeuron(v=-60.0, w=3.0, integrator=integrator)
+        n.w = float("nan")
+        with pytest.raises(ValueError, match="runtime adaptation state"):
+            n.step(0.0)
+        assert np.isnan(n.w)
+
+    @pytest.mark.parametrize("integrator", ["baseline_euler", "rk4", "rosenbrock"])
+    def test_rejects_non_finite_integrator_update_before_state_mutation(self, integrator: str):
+        n = AdExNeuron(v=-60.0, w=3.0, dt=1.0e308, integrator=integrator)
+        before = (n.v, n.w)
+        with pytest.raises(ValueError, match="integrator update"):
+            n.step(1.0e308)
+        assert (n.v, n.w) == before
+
+    def test_rejects_non_finite_spike_adaptation_before_mutation(self):
+        n = AdExNeuron(v=-49.0, w=0.0, a=6.25e306, b=1.0e308, tau_w=1.0, dt=1.0)
+        before = (n.v, n.w)
+        with pytest.raises(ValueError, match="spike adaptation"):
+            n.step(0.0)
+        assert (n.v, n.w) == before
+
 
 class TestAdExAdaptation:
     def test_w_increments_on_spike(self):
