@@ -18,14 +18,11 @@ useful Python operating points:
 | `scale=0.05, scale_correction=True`            | Mid-scale fidelity.  |
 | `scale=0.1,  scale_correction=True`            | Published-fidelity.  |
 
-Single backend (Python + scipy.sparse) — the multi-language
-acceleration chain (Rust + Julia + Go + Mojo) for the per-step
-inner loop is tracked as a separate follow-up under the
-`feedback_module_standard_attnres` policy. The chain has not been
-implemented yet because the inner loop is a 64-way sparse mat-vec
-product whose proper acceleration requires a block-sparse
-restructure of the connectivity. Documenting that gap honestly is
-preferable to shipping a misleading "accelerated" path.
+Backends: explicit `python` uses scipy.sparse only; `rust`,
+`julia`, `go`, and `mojo` request the corresponding block-CSR
+multi-SpMV native kernel. `auto` may use a native backend when
+available, but explicit `python` is reserved for the reference
+SciPy contract.
 
 Output: JSON file at `benchmarks/results/bench_cortical_column.json`
 with one record per (configuration, repetition) plus the published
