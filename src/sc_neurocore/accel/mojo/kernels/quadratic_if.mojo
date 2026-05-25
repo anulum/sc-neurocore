@@ -31,14 +31,14 @@ fn quadratic_if_step_spike(
     v: Float64, current: Float64, v_reset: Float64, v_peak: Float64, dt: Float64
 ) -> Int:
     if not _finite(current):
-        return 0
+        return -1
     if not quadratic_if_valid(v, v_reset, v_peak, dt):
-        return 0
+        return -1
 
     var increment = (v * v + current) * dt
     var next_v = v + increment
     if not _finite(increment) or not _finite(next_v):
-        return 0
+        return -1
     if next_v >= v_peak:
         return 1
     return 0

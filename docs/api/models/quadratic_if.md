@@ -167,7 +167,7 @@ $V_{\text{reset}} = -1$), corrections scale as $O(1/\sqrt{I})$.
 - **Source:** `src/sc_neurocore/neurons/models/quadratic_if.py` — 35 lines.
 - **No sub-stepping:** Single Euler step per `step()` call. Sufficient because
   the V² nonlinearity is mild at the default dt=0.01.
-- **Polyglot surfaces:** Rust, Go, Julia, and Mojo QIF surfaces use the same finite-state, reset-below-peak, positive-`dt`, finite-Euler-increment, and spike/reset contract as the Python model.
+- **Polyglot surfaces:** Rust, Go, Julia, and Mojo QIF surfaces use the same finite-state, reset-below-peak, positive-`dt`, finite-Euler-increment, and spike/reset contract as the Python model. Invalid native scalar paths return explicit errors or a dedicated invalid sentinel rather than silently converting numerical corruption into a no-spike event.
 
 ---
 
