@@ -8,6 +8,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Hardened the Rust/PyO3 Kuramoto solver boundary to fail closed on non-finite frequencies, coupling matrices, initial/runtime phases, field pressure, SSGF geometry/PGBO matrices, invalid `dt`, and negative/non-finite noise amplitudes.
 - Extended Kuramoto `run()` and `run_ssgf()` validation so invalid timesteps and non-finite SSGF gains/matrices are rejected even for zero-step dry runs.
 - Added PyO3 SSGF shape guards so malformed `W` and `h_munu` matrices raise `ValueError` before entering the Rust solver.
+- Corrected the `PINGCircuit` Python reference step to consume one excitatory and one inhibitory Wiener-noise vector per timestep, matching the Rust, Julia, Go, and Mojo backend stochastic contract; benchmark metadata now reports the selected backend directly.
 
 ### Repository hygiene
 - Purged obsolete completed failed/cancelled GitHub Actions repair-sequence runs after later successful replacement runs were verified on `main`.

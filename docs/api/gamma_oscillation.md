@@ -1,9 +1,9 @@
 # Gamma Oscillation Circuit (PINGCircuit)
 
 **Module:** `sc_neurocore.network.gamma_oscillation`
-**Source:** `src/sc_neurocore/network/gamma_oscillation.py` — 120 LOC,
-single `PINGCircuit` dataclass
-**Status (**updated**):** full conductance-based implementation matching Börgers & Kopell 2003. This page originally documented a simplified mean-field-rate sketch (v3.14.0) that failed to reproduce the cited mechanisms. As of task #11, the implementation has been completely rebuilt with explicit `tau_ampa`, `tau_gaba`, absolute refractory periods, and 5-language bit-parity across Python, Rust, Julia, Go, and Mojo backends.
+**Source:** `src/sc_neurocore/network/gamma_oscillation.py` — single
+`PINGCircuit` dataclass
+**Status (**updated**):** full conductance-based implementation matching Börgers & Kopell 2003. This page originally documented a simplified mean-field-rate sketch (v3.14.0) that failed to reproduce the cited mechanisms. As of task #11, the implementation has been completely rebuilt with explicit `tau_ampa`, `tau_gaba`, absolute refractory periods, and backend parity across Python, Rust, Julia, Go, and Mojo implementations. The Python reference consumes exactly one excitatory and one inhibitory Wiener-noise vector per timestep, matching the native backend contract.
 
 > **Resolution notice.** The previous fidelity violations documented in [§4 Gap Analysis](#4-gap-analysis-vs-cited-papers) and the unphysiological firing rates in [§5 Empirical Dynamics](#5-empirical-dynamics-of-the-current-implementation) have been **resolved**. The circuit now reliably produces robust 41.2 Hz gamma oscillations explicitly paced by the `tau_gaba` time constant, accurately reflecting the mathematical ground truth. The historical breakdown of the v3.14.0 failure mode remains below for scientific accountability.
 

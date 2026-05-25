@@ -18,11 +18,10 @@ the conductance-based weak-PING circuit. Three workloads:
 |       400    |       100    |  1000 ms | Mid-scale pin.           |
 |      4000    |      1000    |  1000 ms | Big-circuit pin.         |
 
-Single backend (Python + NumPy) — multi-language acceleration of
-the per-step LIF integrator is tracked under
-`feedback_module_standard_attnres`. The kernel is a per-cell
-conductance update (4 exponential decays + 2 mat-vec / sums per
-step) and is a clean Rust + Mojo target; not yet implemented.
+Backends: Python + NumPy reference plus Rust, Julia, Go, and Mojo
+accelerators when their native artefacts are present. Each native
+backend consumes Wiener noise pre-drawn by Python so the stochastic
+trajectory uses the same per-instance RNG stream as the reference.
 
 Output: JSON file at `benchmarks/results/bench_gamma_oscillation.json`
 with one record per workload plus the measured dominant frequency
@@ -77,7 +76,7 @@ def _bench_one(
     rate_hz = float(np.mean(ping.population_rate(spikes_e, dt=dt, bin_ms=1.0)))
     n_steps = n_burn + n_record
     return {
-        "backend": ping._use_rust and "rust" or "python",
+        "backend": backend,
         "n_excitatory": n_excitatory,
         "n_inhibitory": n_inhibitory,
         "duration_ms": duration_ms,
