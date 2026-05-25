@@ -27,16 +27,29 @@ function AdaptiveThresholdIFNeuronState()
 end
 
 function step!(s::AdaptiveThresholdIFNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    if !valid(s) || !isfinite(I_ext)
-        return 0
+    s.dt = dt
+    if !isfinite(I_ext)
+        throw(DomainError(I_ext, "AdaptiveThresholdIF input current must be finite"))
     end
-    s.v += (-(s.v - s.v_rest) + I_ext) / s.tau_m * s.dt
-    s.theta += -(s.theta - s.theta_rest) / s.tau_theta * s.dt
-    if s.v >= s.theta
+    if !valid(s)
+        throw(DomainError(s.v, "AdaptiveThresholdIF state parameters must be finite and physically ordered"))
+    end
+    next_v = s.v + (-(s.v - s.v_rest) + I_ext) / s.tau_m * s.dt
+    next_theta = s.theta + (-(s.theta - s.theta_rest)) / s.tau_theta * s.dt
+    if !all(isfinite, (next_v, next_theta))
+        throw(DomainError(next_v, "AdaptiveThresholdIF Euler update must remain finite"))
+    end
+    if next_v >= next_theta
+        spike_theta = next_theta + s.delta_theta
+        if !isfinite(spike_theta)
+            throw(DomainError(spike_theta, "AdaptiveThresholdIF threshold jump update must remain finite"))
+        end
         s.v = s.v_reset
-        s.theta += s.delta_theta
+        s.theta = spike_theta
         return 1
     end
+    s.v = next_v
+    s.theta = next_theta
     return 0
 end
 

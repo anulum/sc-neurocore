@@ -55,14 +55,32 @@ class AdaptiveThresholdIFNeuron:
     def step(self, current: float) -> int:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
+        self._validate_runtime_state()
 
-        self.v += (-(self.v - self.v_rest) + current) / self.tau_m * self.dt
-        self.theta += (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt
-        if self.v >= self.theta:
+        try:
+            next_v = self.v + (-(self.v - self.v_rest) + current) / self.tau_m * self.dt
+            next_theta = self.theta + (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt
+        except OverflowError as exc:
+            raise ValueError("Euler update must remain finite") from exc
+        if not math.isfinite(next_v) or not math.isfinite(next_theta):
+            raise ValueError("Euler update must remain finite")
+
+        if next_v >= next_theta:
+            spike_theta = next_theta + self.delta_theta
+            if not math.isfinite(spike_theta):
+                raise ValueError("threshold jump update must remain finite")
             self.v = self.v_reset
-            self.theta += self.delta_theta
+            self.theta = spike_theta
             return 1
+        self.v = next_v
+        self.theta = next_theta
         return 0
+
+    def _validate_runtime_state(self) -> None:
+        if not math.isfinite(self.v):
+            raise ValueError("runtime voltage state must be finite")
+        if not math.isfinite(self.theta):
+            raise ValueError("runtime threshold state must be finite")
 
     def reset(self) -> None:
         self.v = self.v_rest

@@ -80,6 +80,36 @@ class TestAdaptiveThresholdIFIsolation:
         with pytest.raises(ValueError, match="current"):
             n.step(current)
 
+    def test_rejects_non_finite_runtime_voltage_before_update(self):
+        n = AdaptiveThresholdIFNeuron(v=-60.0, theta=-45.0)
+        n.v = float("nan")
+        with pytest.raises(ValueError, match="runtime voltage state"):
+            n.step(0.0)
+        assert np.isnan(n.v)
+
+    def test_rejects_non_finite_runtime_threshold_before_update(self):
+        n = AdaptiveThresholdIFNeuron(v=-60.0, theta=-45.0)
+        n.theta = float("nan")
+        with pytest.raises(ValueError, match="runtime threshold state"):
+            n.step(0.0)
+        assert np.isnan(n.theta)
+
+    def test_rejects_non_finite_euler_update_before_state_mutation(self):
+        n = AdaptiveThresholdIFNeuron(v=-60.0, theta=-45.0, tau_m=1.0e-308, dt=1.0e-308)
+        before = (n.v, n.theta)
+        with pytest.raises(ValueError, match="Euler update"):
+            n.step(1.0e308)
+        assert (n.v, n.theta) == before
+
+    def test_rejects_non_finite_threshold_jump_before_state_mutation(self):
+        n = AdaptiveThresholdIFNeuron(v=-49.0, theta=-50.0, delta_theta=1.0e308)
+        n.theta = 1.0e308
+        n.v = 1.7e308
+        before = (n.v, n.theta)
+        with pytest.raises(ValueError, match="threshold jump"):
+            n.step(0.0)
+        assert (n.v, n.theta) == before
+
     def test_spikes_under_drive(self):
         n = AdaptiveThresholdIFNeuron()
         spikes = sum(n.step(100.0) for _ in range(2000))
