@@ -46,9 +46,9 @@ fn resonate_and_fire_step_spike(
     dt: Float64,
 ) -> Int:
     if not _finite(current):
-        return 0
+        return -1
     if not resonate_and_fire_valid(x, y, b, omega, threshold, dt):
-        return 0
+        return -1
 
     var dx = (b * x - omega * y + current) * dt
     var dy = (omega * x + b * y) * dt
@@ -64,7 +64,7 @@ fn resonate_and_fire_step_spike(
         or not _finite(radius_squared)
         or not _finite(radius)
     ):
-        return 0
+        return -1
     if radius >= threshold:
         return 1
     return 0

@@ -35,7 +35,7 @@ end
 function step!(s::ResonateAndFireNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
     s.dt = dt
     if !isfinite(I_ext) || !valid(s)
-        return 0
+        throw(DomainError((s.x, s.y, I_ext), "Resonate-and-fire state/current must be finite and well-formed"))
     end
 
     dx = (s.b * s.x - s.omega * s.y + I_ext) * s.dt
@@ -44,7 +44,7 @@ function step!(s::ResonateAndFireNeuronState, I_ext::Float64=0.0; dt::Float64=s.
     next_y = s.y + dy
     radius = hypot(next_x, next_y)
     if !isfinite(dx) || !isfinite(dy) || !isfinite(next_x) || !isfinite(next_y) || !isfinite(radius)
-        return 0
+        throw(DomainError((next_x, next_y, radius), "Resonate-and-fire Euler update became non-finite"))
     end
 
     s.x = next_x
