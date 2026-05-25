@@ -51,9 +51,18 @@ class HindmarshRoseNeuron:
     def _derivatives(
         self, x: float, y: float, z: float, current: float
     ) -> tuple[float, float, float]:
-        dx = y - x**3 + self.b * x**2 - z + current
-        dy = 1.0 - 5.0 * x**2 - y
-        dz = self.r * (self.s * (x - self.x_rest) - z)
+        if not (
+            math.isfinite(x) and math.isfinite(y) and math.isfinite(z) and math.isfinite(current)
+        ):
+            raise FloatingPointError("Hindmarsh-Rose derivative input became non-finite")
+        try:
+            dx = y - x**3 + self.b * x**2 - z + current
+            dy = 1.0 - 5.0 * x**2 - y
+            dz = self.r * (self.s * (x - self.x_rest) - z)
+        except OverflowError as exc:
+            raise FloatingPointError("Hindmarsh-Rose derivative overflowed") from exc
+        if not (math.isfinite(dx) and math.isfinite(dy) and math.isfinite(dz)):
+            raise FloatingPointError("Hindmarsh-Rose derivative became non-finite")
         return dx, dy, dz
 
     def _set_state(self, x: float, y: float, z: float) -> None:

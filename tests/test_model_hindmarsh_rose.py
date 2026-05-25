@@ -86,6 +86,24 @@ class TestHRIsolation:
         with pytest.raises(ValueError, match="current"):
             n.step(float("nan"))
 
+    def test_rk4_overflow_fails_closed_without_mutating_state(self):
+        n = HindmarshRoseNeuron(x=1e103, y=0.0, z=0.0, integrator="rk4")
+        before = (n.x, n.y, n.z)
+
+        with pytest.raises(FloatingPointError, match="overflowed|non-finite"):
+            n.step(0.0)
+
+        assert (n.x, n.y, n.z) == before
+
+    def test_euler_overflow_fails_closed_without_mutating_state(self):
+        n = HindmarshRoseNeuron(x=1e103, y=0.0, z=0.0, integrator="euler")
+        before = (n.x, n.y, n.z)
+
+        with pytest.raises(FloatingPointError, match="overflowed|non-finite"):
+            n.step(0.0)
+
+        assert (n.x, n.y, n.z) == before
+
 
 # ---------------------------------------------------------------------------
 # 2. ANALYTICAL — dx, dy, dz formulas, cubic term, slow z
