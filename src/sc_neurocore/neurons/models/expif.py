@@ -39,11 +39,20 @@ class ExpIFNeuron:
                 raise ValueError(f"{field} must be finite and positive")
 
     def step(self, current: float) -> int:
+        if not math.isfinite(self.v):
+            raise ValueError("runtime voltage state must be finite")
         if not math.isfinite(current):
             raise ValueError("current must be finite")
-        exp_term = self.delta_t * np.exp(np.clip((self.v - self.v_rh) / self.delta_t, -20.0, 20.0))
-        dv = (-(self.v - self.v_rest) + exp_term + current) / self.tau * self.dt
-        self.v += dv
+        with np.errstate(over="ignore", invalid="ignore"):
+            exp_term = self.delta_t * np.exp(
+                np.clip((self.v - self.v_rh) / self.delta_t, -20.0, 20.0)
+            )
+            dv = (-(self.v - self.v_rest) + exp_term + current) / self.tau * self.dt
+            next_v = self.v + dv
+        if not math.isfinite(next_v):
+            raise ValueError("Euler update must remain finite")
+
+        self.v = next_v
 
         if self.v >= self.v_threshold:
             self.v = self.v_reset

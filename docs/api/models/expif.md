@@ -21,9 +21,16 @@ $$V \geq V_{threshold}: \quad V \leftarrow V_{reset}$$
 
 ```python
 def step(self, current: float) -> int:
+    if not math.isfinite(self.v):
+        raise ValueError("runtime voltage state must be finite")
+    if not math.isfinite(current):
+        raise ValueError("current must be finite")
     exp_term = self.delta_t * np.exp(np.clip((self.v - self.v_rh) / self.delta_t, -20, 20))
     dv = (-(self.v - self.v_rest) + exp_term + current) / self.tau * self.dt
-    self.v += dv
+    next_v = self.v + dv
+    if not math.isfinite(next_v):
+        raise ValueError("Euler update must remain finite")
+    self.v = next_v
     if self.v >= self.v_threshold:
         self.v = self.v_reset
         return 1
@@ -31,8 +38,12 @@ def step(self, current: float) -> int:
 ```
 
 Forward Euler, single step. The exp() argument is clipped to [−20, 20]
-to prevent IEEE overflow. This is the **Exponential Integrate-and-Fire**
-(EIF) — the AdEx without the adaptation current w.
+to prevent IEEE overflow. Runtime validation is fail-closed across the
+maintained Python reference and native safety entry points: non-finite current,
+corrupted voltage state, invalid time constants, and non-finite Euler
+candidates are rejected before membrane state mutation. This is the
+**Exponential Integrate-and-Fire** (EIF) — the AdEx without the adaptation
+current w.
 
 ---
 

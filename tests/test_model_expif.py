@@ -93,6 +93,20 @@ class TestExpIFValidation:
             n.step(current)
         assert n.v == before
 
+    def test_rejects_runtime_non_finite_voltage_before_update(self):
+        n = ExpIFNeuron(v=-60.0)
+        n.v = float("nan")
+        with pytest.raises(ValueError, match="runtime voltage state"):
+            n.step(0.0)
+        assert np.isnan(n.v)
+
+    def test_rejects_non_finite_euler_update_before_state_mutation(self):
+        n = ExpIFNeuron(v=-60.0, dt=1.0e308, tau=1.0)
+        before = n.v
+        with pytest.raises(ValueError, match="Euler update"):
+            n.step(1.0e308)
+        assert n.v == before
+
 
 class TestExpIFExponentialEscape:
     """Core: exp term drives runaway near v_rh."""
