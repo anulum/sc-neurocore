@@ -154,6 +154,7 @@ impl KuramotoSolver {
 
     /// Advance N baseline steps and return `R` after each step.
     pub fn run(&mut self, n_steps: usize, dt: f64, seed: u64) -> Vec<f64> {
+        assert_dt(dt);
         let mut order_values = Vec::with_capacity(n_steps);
         for step_idx in 0..n_steps {
             let step_seed = if seed == 0 {
@@ -309,6 +310,29 @@ impl KuramotoSolver {
         h_flat: &[f64],
         pgbo_weight: f64,
     ) -> Vec<f64> {
+        assert_dt(dt);
+        assert!(sigma_g.is_finite(), "sigma_g must be finite");
+        assert!(pgbo_weight.is_finite(), "pgbo_weight must be finite");
+        if !w_flat.is_empty() {
+            assert_eq!(
+                w_flat.len(),
+                self.n * self.n,
+                "w_flat length mismatch: got {}, expected {}",
+                w_flat.len(),
+                self.n * self.n
+            );
+            assert_all_finite("w_flat", w_flat);
+        }
+        if !h_flat.is_empty() {
+            assert_eq!(
+                h_flat.len(),
+                self.n * self.n,
+                "h_flat length mismatch: got {}, expected {}",
+                h_flat.len(),
+                self.n * self.n
+            );
+            assert_all_finite("h_flat", h_flat);
+        }
         let mut order_values = Vec::with_capacity(n_steps);
         for step_idx in 0..n_steps {
             let step_seed = if seed == 0 {
