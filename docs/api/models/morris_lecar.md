@@ -65,8 +65,8 @@ $$
 
 ### 1.6 Euler Integration (Implementation)
 
-Both Python and Rust compute $m_\infty$, $w_\infty$, $\lambda$ from the
-old voltage, then update V, then update w:
+The baseline Euler implementation computes $m_\infty$, $w_\infty$, and
+$\lambda$ from the old voltage, then updates V and w:
 
 ```
 m_inf = 0.5 * (1 + tanh((V - V1) / V2))
@@ -82,6 +82,12 @@ w    += lam * (w_inf - w) * dt
 Note: $w_\infty$ and $\lambda$ are computed from old $V$ before the
 voltage update, so the sequential update is equivalent to simultaneous
 Euler for this particular coupling structure.
+
+The Python model also exposes `rk4` and `rosenbrock` integrators for the
+same Morris-Lecar ODEs. The Go service, Rust safety surface, and Julia
+counterpart preserve the documented baseline Euler state equation for
+cross-runtime current-balance checks and fail-closed invalid-state
+behaviour.
 
 ---
 
@@ -256,8 +262,8 @@ sc_neurocore Pipeline
 
 | Parameter | Effect | Typical Range |
 |-----------|--------|---------------|
-| `g_ca` ↑ | More Ca current → stronger depolarisation | 2–8 mS/cm² |
-| `g_k` ↑ | Stronger repolarisation → narrower spikes | 4–16 mS/cm² |
+| `g_ca` ↑ | More Ca current → larger depolarisation | 2–8 mS/cm² |
+| `g_k` ↑ | Greater repolarisation → narrower spikes | 4–16 mS/cm² |
 | `phi` ↑ | Faster w kinetics → shorter interspike interval | 0.02–0.2 |
 | `V3` | Shifts w activation → changes excitability type | -10 to 20 mV |
 | `V4` | w slope → steepness of activation | 10–35 mV |
@@ -275,7 +281,7 @@ from sc_neurocore.neurons.models.morris_lecar import MorrisLecarNeuron
 neuron = MorrisLecarNeuron()
 spikes = []
 for t in range(50000):
-    spike = neuron.step(current=200.0)  # needs strong drive
+    spike = neuron.step(current=200.0)  # needs high drive
     if spike:
         spikes.append(t)
 
@@ -369,16 +375,19 @@ for _ in range(10000):
 | `new` | `() → Self` | — | Rust constructor with defaults |
 | `get_state` | `() → dict` | v, w | PyO3 only: state inspection |
 
-### 6.3 Python/Rust Implementation Comparison
+### 6.3 Runtime Implementation Comparison
 
-| Aspect | Python | Rust |
-|--------|--------|------|
-| Source | `morris_lecar.py` (67 lines) | `simple_spiking.rs:59-127` |
-| m_inf | math.tanh | f64::tanh |
-| w_inf | math.tanh | f64::tanh |
-| lambda | math.cosh | f64::cosh |
-| Integration | Sequential (w_inf from old V) | Sequential (w_inf from old V) |
-| **Parity** | **EXACT** (same transcendentals, same order) | |
+| Aspect | Python | Rust safety | Go service | Julia |
+|--------|--------|-------------|------------|-------|
+| m_inf | math.tanh | f64::tanh | math.Tanh | tanh |
+| w_inf | math.tanh | f64::tanh | math.Tanh | tanh |
+| lambda | math.cosh | f64::cosh | math.Cosh | cosh |
+| Baseline integration | old-V Euler | old-V Euler | old-V Euler | old-V Euler |
+| Invalid state | ValueError at construction/step | NaN fail-closed state | NaN fail-closed state | NaN fail-closed state |
+
+The runtime surfaces are verified against the same one-step current-balance
+invariant. Published parity claims should cite the exact verification run
+or benchmark artefact used for that release.
 
 ### 6.4 NeuronVariant Wiring
 
@@ -430,7 +439,7 @@ the speedup achievable through Rust compilation alone.
 | Test | Duration | Result |
 |------|----------|--------|
 | 20,000 steps at I=200 | 2 s sim time | All state variables finite |
-| Strong drive I=5000 | 200 steps | v finite |
+| High drive I=5000 | 200 steps | v finite |
 | Negative drive I=-30 | 200 steps | v finite |
 
 ---

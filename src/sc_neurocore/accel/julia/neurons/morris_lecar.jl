@@ -30,7 +30,7 @@ mutable struct MorrisLecarNeuronState
 end
 
 function MorrisLecarNeuronState()
-    MorrisLecarNeuronState(-60.0, 0.0, 20.0, 4.0, 8.0, 2.0, 120.0, -84.0, -60.0, -1.2, 18.0, 12.0, 17.4, 0.0, 0.1, 0.0)
+    MorrisLecarNeuronState(-60.0, 0.0, 20.0, 4.0, 8.0, 2.0, 120.0, -84.0, -60.0, -1.2, 18.0, 12.0, 17.4, 1.0 / 15.0, 0.1, 0.0)
 end
 
 function _m_inf(s::MorrisLecarNeuronState, v)
@@ -45,21 +45,44 @@ function _lam(s::MorrisLecarNeuronState, v)
     return s.phi * cosh((v - s.v3) / (2.0 * s.v4))
 end
 
-function step!(s::MorrisLecarNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        v_prev = s.v
-        m_inf = s._m_inf(s.v)
-        w_inf = s._w_inf(s.v)
-        lam = s._lam(s.v)
-        i_ca = s.g_ca * m_inf * (s.v - s.e_ca)
-        i_k = s.g_k * s.w * (s.v - s.e_k)
-        i_l = s.g_l * (s.v - s.e_l)
-        s.v += (-i_ca - i_k - i_l + I_ext) / s.c_m * s.dt
-        s.w += lam * (w_inf - s.w) * s.dt
-        return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
-    catch _e
+function _valid(s::MorrisLecarNeuronState)
+    values = (
+        s.v, s.w, s.c_m, s.g_ca, s.g_k, s.g_l, s.e_ca, s.e_k, s.e_l,
+        s.v1, s.v2, s.v3, s.v4, s.phi, s.dt, s.v_threshold
+    )
+    return all(isfinite, values) &&
+        s.c_m > 0.0 &&
+        s.g_ca > 0.0 &&
+        s.g_k > 0.0 &&
+        s.g_l > 0.0 &&
+        s.v2 > 0.0 &&
+        s.v4 > 0.0 &&
+        s.phi > 0.0 &&
+        s.dt > 0.0
+end
+
+function step!(s::MorrisLecarNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
+    if !_valid(s) || !isfinite(I_ext) || !isfinite(dt) || dt <= 0.0
+        s.v = NaN
+        s.w = NaN
         return 0
     end
+
+    v_prev = s.v
+    m_inf = _m_inf(s, s.v)
+    w_inf = _w_inf(s, s.v)
+    lam = _lam(s, s.v)
+    i_ca = s.g_ca * m_inf * (s.v - s.e_ca)
+    i_k = s.g_k * s.w * (s.v - s.e_k)
+    i_l = s.g_l * (s.v - s.e_l)
+    s.v += (-i_ca - i_k - i_l + I_ext) / s.c_m * dt
+    s.w += lam * (w_inf - s.w) * dt
+    if !_valid(s)
+        s.v = NaN
+        s.w = NaN
+        return 0
+    end
+    return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
