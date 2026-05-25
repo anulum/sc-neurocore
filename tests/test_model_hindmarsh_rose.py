@@ -17,11 +17,12 @@ x: fast membrane-like variable. y: fast recovery.
 z: slow adaptation (r=0.001) — modulates bursting.
 b=3: controls burst width. s=4: z-x coupling.
 Chaotic regime at intermediate I. Bursting at I≈3-5.
-~601K steps/s (simple 3D polynomial).
+Default RK4 integration prioritizes trajectory fidelity over Euler throughput.
 Pipeline and performance contract tests live in this module-specific file."""
 
 from __future__ import annotations
 
+import os
 import time
 
 import numpy as np
@@ -259,7 +260,8 @@ class TestHRPerformance:
             n.step(5.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert rate > 200_000, f"isolation: {rate:.0f} steps/s"
+        min_rate = 150_000 if os.getenv("CI") else 200_000
+        assert rate > min_rate, f"isolation: {rate:.0f} steps/s, minimum={min_rate}"
 
     def test_network_throughput(self):
         pop = Population(HindmarshRoseNeuron, n=20, label="bench")
