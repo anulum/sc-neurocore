@@ -334,6 +334,68 @@ class TestNativeBackendDispatch:
 class TestPublishedFidelity:
     """Pin the qualitative features the publication highlights."""
 
+    def test_python_step_consumes_one_noise_vector_per_population(self):
+        """The Python reference must consume the same Wiener increments as
+        native backends: one E vector and one I vector per timestep.
+
+        A second hidden draw changes the stochastic trajectory and breaks
+        backend parity even when all deterministic biophysics match.
+        """
+
+        class SequenceRng:
+            def __init__(self):
+                self.calls = []
+
+            def standard_normal(self, size):
+                self.calls.append(size)
+                if len(self.calls) == 1:
+                    return np.array([2.0, -4.0])
+                if len(self.calls) == 2:
+                    return np.array([6.0])
+                raise AssertionError("unexpected extra stochastic draw")
+
+        ping = PINGCircuit(
+            n_excitatory=2,
+            n_inhibitory=1,
+            c_m=1.0,
+            g_l=0.0,
+            e_l=0.0,
+            e_ampa=0.0,
+            e_gaba=0.0,
+            v_threshold=999.0,
+            v_reset=0.0,
+            tau_ampa=3.0,
+            tau_gaba=9.0,
+            i_drive_e_mean=0.0,
+            i_drive_e_sigma=0.0,
+            i_drive_i_mean=0.0,
+            i_drive_i_sigma=0.0,
+            sigma_e=1.0,
+            sigma_i=1.0,
+            backend="python",
+            seed=5,
+        )
+        ping.v_e[:] = 0.0
+        ping.v_i[:] = 0.0
+        ping.g_ampa_e[:] = 0.0
+        ping.g_ampa_i[:] = 0.0
+        ping.g_gaba_e[:] = 0.0
+        ping.g_gaba_i[:] = 0.0
+        ping.refrac_e[:] = 0.0
+        ping.refrac_i[:] = 0.0
+        ping.i_drive_e[:] = 0.0
+        ping.i_drive_i[:] = 0.0
+        fake_rng = SequenceRng()
+        ping._rng = fake_rng
+
+        spikes_e, spikes_i = ping.step(dt=0.25)
+
+        assert fake_rng.calls == [2, 1]
+        np.testing.assert_allclose(ping.v_e, np.array([1.0, -2.0]))
+        np.testing.assert_allclose(ping.v_i, np.array([3.0]))
+        assert not np.any(spikes_e)
+        assert not np.any(spikes_i)
+
     def test_gamma_frequency_is_30_to_80_hz(self):
         """Default parameters reproduce Fig 2A's gamma-band peak."""
         ping = PINGCircuit(seed=42)

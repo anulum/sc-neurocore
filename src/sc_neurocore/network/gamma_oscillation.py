@@ -667,22 +667,6 @@ class PINGCircuit:
             + self.i_drive_i
         )
 
-        # Stochastic membrane noise (Wiener increment).
-        noise_e = (
-            self.sigma_e
-            * np.sqrt(dt)
-            * self._rng.standard_normal(
-                self.n_excitatory,
-            )
-        )
-        noise_i = (
-            self.sigma_i
-            * np.sqrt(dt)
-            * self._rng.standard_normal(
-                self.n_inhibitory,
-            )
-        )
-
         # Update voltages — only for non-refractory neurons.
         not_refrac_e = self.refrac_e <= 0.0
         not_refrac_i = self.refrac_i <= 0.0
