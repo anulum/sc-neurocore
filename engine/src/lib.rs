@@ -2491,6 +2491,26 @@ fn validate_kuramoto_dt(dt: f64) -> PyResult<()> {
     }
 }
 
+fn validate_kuramoto_matrix_shape(
+    name: &str,
+    values_len: usize,
+    rows: usize,
+    cols: usize,
+    n: usize,
+) -> PyResult<()> {
+    let is_absent = rows == 0 && cols == 0 && values_len == 0;
+    let is_flat = rows == 1 && values_len == n * n;
+    let is_square = rows == n && cols == n;
+    if is_absent || is_flat || is_square {
+        Ok(())
+    } else {
+        Err(PyValueError::new_err(format!(
+            "{name} must be shape ({n}, {n}) or flat length {}",
+            n * n
+        )))
+    }
+}
+
 #[pymethods]
 impl PyKuramotoSolver {
     #[getter]
@@ -2595,14 +2615,16 @@ impl PyKuramotoSolver {
         if !pgbo_weight.is_finite() {
             return Err(PyValueError::new_err("pgbo_weight must be finite"));
         }
-        let (w_flat, _, _) = match W {
+        let (w_flat, w_rows, w_cols) = match W {
             Some(w) => extract_matrix_f64(w, "W")?,
             None => (vec![], 0, 0),
         };
-        let (h_flat, _, _) = match h_munu {
+        let (h_flat, h_rows, h_cols) = match h_munu {
             Some(h) => extract_matrix_f64(h, "h_munu")?,
             None => (vec![], 0, 0),
         };
+        validate_kuramoto_matrix_shape("W", w_flat.len(), w_rows, w_cols, self.inner.n)?;
+        validate_kuramoto_matrix_shape("h_munu", h_flat.len(), h_rows, h_cols, self.inner.n)?;
         validate_kuramoto_finite("w_flat", &w_flat)?;
         validate_kuramoto_finite("h_flat", &h_flat)?;
         Ok(self
@@ -2637,14 +2659,16 @@ impl PyKuramotoSolver {
         if !pgbo_weight.is_finite() {
             return Err(PyValueError::new_err("pgbo_weight must be finite"));
         }
-        let (w_flat, _, _) = match W {
+        let (w_flat, w_rows, w_cols) = match W {
             Some(w) => extract_matrix_f64(w, "W")?,
             None => (vec![], 0, 0),
         };
-        let (h_flat, _, _) = match h_munu {
+        let (h_flat, h_rows, h_cols) = match h_munu {
             Some(h) => extract_matrix_f64(h, "h_munu")?,
             None => (vec![], 0, 0),
         };
+        validate_kuramoto_matrix_shape("W", w_flat.len(), w_rows, w_cols, self.inner.n)?;
+        validate_kuramoto_matrix_shape("h_munu", h_flat.len(), h_rows, h_cols, self.inner.n)?;
         validate_kuramoto_finite("w_flat", &w_flat)?;
         validate_kuramoto_finite("h_flat", &h_flat)?;
         Ok(self
