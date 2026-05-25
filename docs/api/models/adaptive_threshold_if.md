@@ -25,12 +25,23 @@ $$V \geq \theta: \quad V \leftarrow V_{reset}, \quad \theta \leftarrow \theta + 
 
 ```python
 def step(self, current: float) -> int:
-    self.v += (-(self.v - self.v_rest) + current) / self.tau_m * self.dt
-    self.theta += (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt
-    if self.v >= self.theta:
+    if not math.isfinite(current):
+        raise ValueError("current must be finite")
+    if not math.isfinite(self.v) or not math.isfinite(self.theta):
+        raise ValueError("runtime state must be finite")
+    next_v = self.v + (-(self.v - self.v_rest) + current) / self.tau_m * self.dt
+    next_theta = self.theta + (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt
+    if not math.isfinite(next_v) or not math.isfinite(next_theta):
+        raise ValueError("Euler update must remain finite")
+    if next_v >= next_theta:
+        spike_theta = next_theta + self.delta_theta
+        if not math.isfinite(spike_theta):
+            raise ValueError("threshold jump update must remain finite")
         self.v = self.v_reset
-        self.theta += self.delta_theta
+        self.theta = spike_theta
         return 1
+    self.v = next_v
+    self.theta = next_theta
     return 0
 ```
 
@@ -44,6 +55,11 @@ positive and no larger than either time constant, and the resting threshold
 must sit above both the resting and reset voltages. These constraints keep
 the subthreshold Euler relaxation monotone and prevent a neuron at rest from
 being initialized above threshold.
+
+Runtime updates are also fail-closed across the maintained Python reference and
+native safety entry points: corrupted voltage or threshold state, non-finite
+input current, non-finite Euler candidates, and non-finite spike-triggered
+threshold jumps are rejected before state mutation.
 
 ---
 

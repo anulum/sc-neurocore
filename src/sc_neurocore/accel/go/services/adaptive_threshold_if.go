@@ -9,7 +9,14 @@
 package services
 
 import (
+	"errors"
 	"math"
+)
+
+var (
+	ErrAdaptiveThresholdIFInvalidInput    = errors.New("adaptive threshold if input current must be finite")
+	ErrAdaptiveThresholdIFInvalidState    = errors.New("adaptive threshold if state parameters must be finite and physically ordered")
+	ErrAdaptiveThresholdIFNonFiniteUpdate = errors.New("adaptive threshold if euler update must remain finite")
 )
 
 // AdaptiveThresholdIFNeuronState holds the neuron state
@@ -41,35 +48,48 @@ func NewAdaptiveThresholdIFNeuron() *AdaptiveThresholdIFNeuronState {
 }
 
 // Step advances the neuron by one timestep
-func (s *AdaptiveThresholdIFNeuronState) Step(iExt float64) int {
-	if !s.Valid() || !isFinite(iExt) {
-		return 0
+func (s *AdaptiveThresholdIFNeuronState) Step(iExt float64) (int, error) {
+	if !adaptiveThresholdIFFinite(iExt) {
+		return 0, ErrAdaptiveThresholdIFInvalidInput
+	}
+	if !s.Valid() {
+		return 0, ErrAdaptiveThresholdIFInvalidState
 	}
 
-	s.V += (-(s.V - s.VRest) + iExt) / s.TauM * s.Dt
-	s.Theta += -(s.Theta - s.ThetaRest) / s.TauTheta * s.Dt
-	if s.V >= s.Theta {
-		s.V = s.VReset
-		s.Theta += s.DeltaTheta
-		return 1
+	nextV := s.V + (-(s.V-s.VRest)+iExt)/s.TauM*s.Dt
+	nextTheta := s.Theta + (-(s.Theta - s.ThetaRest))/s.TauTheta*s.Dt
+	if !adaptiveThresholdIFFinite(nextV, nextTheta) {
+		return 0, ErrAdaptiveThresholdIFNonFiniteUpdate
 	}
-	return 0
+
+	if nextV >= nextTheta {
+		spikeTheta := nextTheta + s.DeltaTheta
+		if !adaptiveThresholdIFFinite(spikeTheta) {
+			return 0, ErrAdaptiveThresholdIFNonFiniteUpdate
+		}
+		s.V = s.VReset
+		s.Theta = spikeTheta
+		return 1, nil
+	}
+	s.V = nextV
+	s.Theta = nextTheta
+	return 0, nil
 }
 
 // Valid returns true when the state satisfies the adaptive-threshold IF physics contract.
 func (s *AdaptiveThresholdIFNeuronState) Valid() bool {
-	return isFinite(s.V) &&
-		isFinite(s.Theta) &&
-		isFinite(s.VRest) &&
-		isFinite(s.VReset) &&
-		isFinite(s.ThetaRest) &&
-		isFinite(s.DeltaTheta) &&
+	return adaptiveThresholdIFFinite(s.V) &&
+		adaptiveThresholdIFFinite(s.Theta) &&
+		adaptiveThresholdIFFinite(s.VRest) &&
+		adaptiveThresholdIFFinite(s.VReset) &&
+		adaptiveThresholdIFFinite(s.ThetaRest) &&
+		adaptiveThresholdIFFinite(s.DeltaTheta) &&
 		s.DeltaTheta >= 0.0 &&
-		isFinite(s.TauM) &&
+		adaptiveThresholdIFFinite(s.TauM) &&
 		s.TauM > 0.0 &&
-		isFinite(s.TauTheta) &&
+		adaptiveThresholdIFFinite(s.TauTheta) &&
 		s.TauTheta > 0.0 &&
-		isFinite(s.Dt) &&
+		adaptiveThresholdIFFinite(s.Dt) &&
 		s.Dt > 0.0 &&
 		s.Dt <= s.TauM &&
 		s.Dt <= s.TauTheta &&
@@ -77,8 +97,13 @@ func (s *AdaptiveThresholdIFNeuronState) Valid() bool {
 		s.ThetaRest > s.VReset
 }
 
-func isFinite(x float64) bool {
-	return !math.IsNaN(x) && !math.IsInf(x, 0)
+func adaptiveThresholdIFFinite(values ...float64) bool {
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
+	}
+	return true
 }
 
 // SimulateAdaptiveThresholdIFNeuron runs the neuron for n steps
@@ -87,7 +112,10 @@ func SimulateAdaptiveThresholdIFNeuron(nSteps int, iExt float64) ([]float64, int
 	trace := make([]float64, nSteps)
 	spikes := 0
 	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
+		result, err := s.Step(iExt)
+		if err != nil {
+			panic(err)
+		}
 		trace[t] = s.V
 		if result > 0 {
 			spikes++
@@ -95,5 +123,3 @@ func SimulateAdaptiveThresholdIFNeuron(nSteps int, iExt float64) ([]float64, int
 	}
 	return trace, spikes
 }
-
-var _ = math.Exp
