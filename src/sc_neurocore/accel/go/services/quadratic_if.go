@@ -8,7 +8,10 @@
 
 package services
 
-import "math"
+import (
+	"errors"
+	"math"
+)
 
 // QuadraticIFNeuronState holds the neuron state.
 type QuadraticIFNeuronState struct {
@@ -46,23 +49,23 @@ func (s QuadraticIFNeuronState) Valid() bool {
 }
 
 // Step advances the neuron by one timestep. Invalid inputs do not mutate state.
-func (s *QuadraticIFNeuronState) Step(iExt float64) int {
+func (s *QuadraticIFNeuronState) Step(iExt float64) (int, error) {
 	if !quadraticIFFinite(iExt) || !s.Valid() {
-		return 0
+		return 0, ErrQuadraticIFInvalidState
 	}
 
 	increment := (s.V*s.V + iExt) * s.Dt
 	nextV := s.V + increment
 	if !quadraticIFFinite(increment, nextV) {
-		return 0
+		return 0, ErrQuadraticIFNonFiniteUpdate
 	}
 
 	s.V = nextV
 	if s.V >= s.VPeak {
 		s.V = s.VReset
-		return 1
+		return 1, nil
 	}
-	return 0
+	return 0, nil
 }
 
 // Reset restores dynamic state without changing parameters.
@@ -76,7 +79,10 @@ func SimulateQuadraticIFNeuron(nSteps int, iExt float64) ([]float64, int) {
 	trace := make([]float64, nSteps)
 	spikes := 0
 	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
+		result, err := s.Step(iExt)
+		if err != nil {
+			panic(err)
+		}
 		trace[t] = s.V
 		if result > 0 {
 			spikes++
@@ -84,3 +90,8 @@ func SimulateQuadraticIFNeuron(nSteps int, iExt float64) ([]float64, int) {
 	}
 	return trace, spikes
 }
+
+var (
+	ErrQuadraticIFInvalidState    = errors.New("quadratic-if state/current must be finite and well-formed")
+	ErrQuadraticIFNonFiniteUpdate = errors.New("quadratic-if Euler update became non-finite")
+)

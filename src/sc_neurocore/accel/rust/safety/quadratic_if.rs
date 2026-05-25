@@ -24,24 +24,24 @@ impl QuadraticIFNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
         if !i_ext.is_finite() || !validate_quadratic_if(self) {
-            return 0;
+            return Err("quadratic-if state/current must be finite and well-formed");
         }
 
         let derivative = self.v * self.v + i_ext;
         let increment = derivative * self.dt;
         let next_v = self.v + increment;
         if !increment.is_finite() || !next_v.is_finite() {
-            return 0;
+            return Err("quadratic-if Euler update became non-finite");
         }
 
         self.v = next_v;
         if self.v >= self.v_peak {
             self.v = self.v_reset;
-            1
+            Ok(1)
         } else {
-            0
+            Ok(0)
         }
     }
 
@@ -80,7 +80,7 @@ mod tests {
     #[test]
     fn test_quadratic_if_step() {
         let mut state = QuadraticIFNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).unwrap();
         assert!(spike == 0 || spike == 1);
     }
 
@@ -89,7 +89,7 @@ mod tests {
         let mut state = QuadraticIFNeuron::new();
         let mut spikes = 0;
         for _ in 0..50_000 {
-            spikes += state.step(1.0);
+            spikes += state.step(1.0).unwrap();
         }
         assert!(spikes >= 100);
         assert!(state.v < state.v_peak);
@@ -99,7 +99,7 @@ mod tests {
     fn test_invalid_current_does_not_mutate_state() {
         let mut state = QuadraticIFNeuron::new();
         state.v = -0.25;
-        assert_eq!(state.step(f64::NAN), 0);
+        assert!(state.step(f64::NAN).is_err());
         assert_eq!(state.v, -0.25);
     }
 
@@ -107,7 +107,7 @@ mod tests {
     fn test_invalid_euler_increment_does_not_mutate_state() {
         let mut state = QuadraticIFNeuron::new();
         state.v = -1.0e200;
-        assert_eq!(state.step(0.0), 0);
+        assert!(state.step(0.0).is_err());
         assert_eq!(state.v, -1.0e200);
     }
 
