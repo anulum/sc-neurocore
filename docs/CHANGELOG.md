@@ -5,6 +5,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened the `BrainScaleSAdExNeuron` Python, Julia, Go, Mojo, and Rust safety
+  surfaces to reject invalid runtime state and non-finite hardware-scaled
+  integrator or adaptation updates before state mutation.
 - Hardened the `AdExNeuron` Python, Julia, Go, Mojo, and Rust safety surfaces
   to reject invalid runtime state and non-finite integrator or adaptation
   updates before state mutation.

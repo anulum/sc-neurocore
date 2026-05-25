@@ -25,6 +25,13 @@ pub struct BrainScaleSAdExNeuron {
     pub dt: f64,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BrainScaleSAdExError {
+    InvalidInput,
+    InvalidState,
+    NonFiniteUpdate,
+}
+
 impl BrainScaleSAdExNeuron {
     pub fn new() -> Self {
         Self {
@@ -44,38 +51,71 @@ impl BrainScaleSAdExNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // dt_hw = self.dt * self.hw_speedup
-        // exp_arg = ((self.v - self.v_rh) / self.delta_t_f64).clamp(-20.0, 20.0)
-        // exp_term = self.delta_t * (exp_arg_f64).exp()
-        // dv = (
-        // (-(self.v - self.v_rest) + exp_term - self.w + current)
-        // / self.tau
-        // * (dt_hw / self.hw_speedup)
-        // )
-        // dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w * (dt_hw
-        // self.v += dv
-        // self.w += dw
-        // if self.v >= self.v_threshold:
-        // self.v = self.v_reset
-        // self.w += self.b
-        // return 1
-        0 // spike indicator
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, BrainScaleSAdExError> {
+        if !i_ext.is_finite() {
+            return Err(BrainScaleSAdExError::InvalidInput);
+        }
+        if !validate_brainscales_adex(self) {
+            return Err(BrainScaleSAdExError::InvalidState);
+        }
+
+        let dt_hw = self.dt * self.hw_speedup;
+        let dt_bio = dt_hw / self.hw_speedup;
+        let exp_arg = ((self.v - self.v_rh) / self.delta_t).clamp(-20.0, 20.0);
+        let exp_term = self.delta_t * exp_arg.exp();
+        let dv = (-(self.v - self.v_rest) + exp_term - self.w + i_ext) / self.tau * dt_bio;
+        let dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w * dt_bio;
+        let next_v = self.v + dv;
+        let next_w = self.w + dw;
+        if !dt_hw.is_finite()
+            || !dt_bio.is_finite()
+            || !exp_term.is_finite()
+            || !dv.is_finite()
+            || !dw.is_finite()
+            || !next_v.is_finite()
+            || !next_w.is_finite()
+        {
+            return Err(BrainScaleSAdExError::NonFiniteUpdate);
+        }
+        if next_v >= self.v_threshold {
+            let spike_w = next_w + self.b;
+            if !spike_w.is_finite() {
+                return Err(BrainScaleSAdExError::NonFiniteUpdate);
+            }
+            self.v = self.v_reset;
+            self.w = spike_w;
+            return Ok(1);
+        }
+        self.v = next_v;
+        self.w = next_w;
+        Ok(0)
     }
 
     pub fn reset(&mut self) {
-        // self.v = self.v_rest
-        // self.w = 0.0
-        self.v = -65.0_f64;
+        self.v = self.v_rest;
         self.w = 0.0_f64;
-        self.v_rest = -65.0_f64;
-        self.v_reset = -68.0_f64;
-        self.v_threshold = -50.0_f64;
     }
 }
 
 pub fn validate_brainscales_adex(state: &BrainScaleSAdExNeuron) -> bool {
     state.v.is_finite()
+        && state.w.is_finite()
+        && state.v_rest.is_finite()
+        && state.v_reset.is_finite()
+        && state.v_threshold.is_finite()
+        && state.delta_t.is_finite()
+        && state.v_rh.is_finite()
+        && state.tau.is_finite()
+        && state.tau_w.is_finite()
+        && state.a.is_finite()
+        && state.b.is_finite()
+        && state.hw_speedup.is_finite()
+        && state.dt.is_finite()
+        && state.delta_t > 0.0
+        && state.tau > 0.0
+        && state.tau_w > 0.0
+        && state.hw_speedup > 0.0
+        && state.dt > 0.0
 }
 
 #[cfg(test)]
@@ -92,7 +132,30 @@ mod tests {
     #[test]
     fn test_brainscales_adex_step() {
         let mut state = BrainScaleSAdExNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).unwrap();
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_brainscales_adex_rejects_invalid_input_without_mutation() {
+        let mut state = BrainScaleSAdExNeuron::new();
+        let before = (state.v, state.w);
+        assert_eq!(
+            state.step(f64::INFINITY),
+            Err(BrainScaleSAdExError::InvalidInput)
+        );
+        assert_eq!((state.v, state.w), before);
+    }
+
+    #[test]
+    fn test_brainscales_adex_rejects_nonfinite_update_without_mutation() {
+        let mut state = BrainScaleSAdExNeuron::new();
+        state.dt = 1.0e308;
+        let before = (state.v, state.w);
+        assert_eq!(
+            state.step(1.0e308),
+            Err(BrainScaleSAdExError::NonFiniteUpdate)
+        );
+        assert_eq!((state.v, state.w), before);
     }
 }
