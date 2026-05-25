@@ -20,6 +20,13 @@ pub struct ExpIFNeuron {
     pub dt: f64,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExpIFError {
+    InvalidInput,
+    InvalidState,
+    NonFiniteUpdate,
+}
+
 impl ExpIFNeuron {
     pub fn new() -> Self {
         Self {
@@ -34,29 +41,48 @@ impl ExpIFNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // exp_term = self.delta_t * (((self.v - self.v_rh_f64).exp() / self.delt
-        // dv = (-(self.v - self.v_rest) + exp_term + current) / self.tau * self.
-        // self.v += dv
-        // if self.v >= self.v_threshold:
-        // self.v = self.v_reset
-        // return 1
-        // return 0
-        0 // spike indicator
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, ExpIFError> {
+        if !i_ext.is_finite() {
+            return Err(ExpIFError::InvalidInput);
+        }
+        if !validate_expif(self) {
+            return Err(ExpIFError::InvalidState);
+        }
+
+        let arg = ((self.v - self.v_rh) / self.delta_t).clamp(-20.0, 20.0);
+        let exp_term = self.delta_t * arg.exp();
+        let dv = (-(self.v - self.v_rest) + exp_term + i_ext) / self.tau * self.dt;
+        let next_v = self.v + dv;
+        if !exp_term.is_finite() || !dv.is_finite() || !next_v.is_finite() {
+            return Err(ExpIFError::NonFiniteUpdate);
+        }
+
+        let v_prev = self.v;
+        self.v = next_v;
+        if v_prev < self.v_threshold && self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            return Ok(1);
+        }
+        Ok(0)
     }
 
     pub fn reset(&mut self) {
-        // self.v = self.v_rest
-        self.v = -65.0_f64;
-        self.v_rest = -65.0_f64;
-        self.v_reset = -68.0_f64;
-        self.v_threshold = -50.0_f64;
-        self.v_rh = -55.0_f64;
+        self.v = self.v_rest;
     }
 }
 
 pub fn validate_expif(state: &ExpIFNeuron) -> bool {
     state.v.is_finite()
+        && state.v_rest.is_finite()
+        && state.v_reset.is_finite()
+        && state.v_threshold.is_finite()
+        && state.v_rh.is_finite()
+        && state.delta_t.is_finite()
+        && state.tau.is_finite()
+        && state.dt.is_finite()
+        && state.delta_t > 0.0
+        && state.tau > 0.0
+        && state.dt > 0.0
 }
 
 #[cfg(test)]
@@ -73,7 +99,24 @@ mod tests {
     #[test]
     fn test_expif_step() {
         let mut state = ExpIFNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).unwrap();
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_expif_rejects_invalid_input_without_mutation() {
+        let mut state = ExpIFNeuron::new();
+        let before = state.v;
+        assert_eq!(state.step(f64::INFINITY), Err(ExpIFError::InvalidInput));
+        assert_eq!(state.v, before);
+    }
+
+    #[test]
+    fn test_expif_rejects_nonfinite_update_without_mutation() {
+        let mut state = ExpIFNeuron::new();
+        state.dt = 1.0e308;
+        let before = state.v;
+        assert_eq!(state.step(1.0e308), Err(ExpIFError::NonFiniteUpdate));
+        assert_eq!(state.v, before);
     }
 }

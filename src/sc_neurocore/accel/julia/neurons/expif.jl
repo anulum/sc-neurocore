@@ -26,18 +26,30 @@ function ExpIFNeuronState()
 end
 
 function step!(s::ExpIFNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        exp_term = s.delta_t * exp(clamp((s.v - s.v_rh) / s.delta_t, -20.0, 20.0))
-        dv = (-(s.v - s.v_rest) + exp_term + I_ext) / s.tau * s.dt
-        s.v += dv
-        if s.v >= s.v_threshold
-            s.v = s.v_reset
-            return 1
-        end
-        return 0
-    catch _e
-        return 0
+    s.dt = dt
+    if !all(isfinite, (s.v, s.v_rest, s.v_reset, s.v_threshold, s.v_rh, s.delta_t, s.tau, s.dt))
+        throw(DomainError(s.v, "ExpIF state parameters must be finite"))
     end
+    if s.delta_t <= 0.0 || s.tau <= 0.0 || s.dt <= 0.0
+        throw(DomainError(s.delta_t, "ExpIF delta_t, tau, and dt must be positive"))
+    end
+    if !isfinite(I_ext)
+        throw(DomainError(I_ext, "ExpIF input current must be finite"))
+    end
+
+    exp_term = s.delta_t * exp(clamp((s.v - s.v_rh) / s.delta_t, -20.0, 20.0))
+    dv = (-(s.v - s.v_rest) + exp_term + I_ext) / s.tau * s.dt
+    next_v = s.v + dv
+    if !all(isfinite, (exp_term, dv, next_v))
+        throw(DomainError(next_v, "ExpIF Euler update must remain finite"))
+    end
+
+    s.v = next_v
+    if s.v >= s.v_threshold
+        s.v = s.v_reset
+        return 1
+    end
+    return 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
