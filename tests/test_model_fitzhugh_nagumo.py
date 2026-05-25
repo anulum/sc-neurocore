@@ -188,8 +188,7 @@ class TestFHNPerformance:
         minimum_throughput = 60000 if os.environ.get("CI") else 100000
         assert np.isfinite(n.v) and np.isfinite(n.w)
         assert throughput > minimum_throughput, (
-            f"FHN isolation throughput regressed: "
-            f"{throughput:.0f}/s <= {minimum_throughput}/s"
+            f"FHN isolation throughput regressed: {throughput:.0f}/s <= {minimum_throughput}/s"
         )
 
     def test_network_throughput(self):
