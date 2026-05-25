@@ -70,6 +70,10 @@ computing layers via surrogate gradients:
 - SSGF-compatible extended solver with geometry + PGBO terms
 - Pre-allocated scratch arrays, rayon parallelism
 - Box-Muller noise generation with ChaCha8Rng
+- Fail-closed numerical contract: Rust core and PyO3 bridge reject non-finite
+  frequencies, coupling matrices, phases, SSGF matrices, field pressure,
+  invalid `dt`, and negative/non-finite noise amplitudes before stepping
+
 
 ## SSGF Integration and Property Testing (February 2026)
 

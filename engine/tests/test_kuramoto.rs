@@ -58,3 +58,79 @@ fn step_preserves_phase_count() {
     solver.step(0.01, 0);
     assert_eq!(solver.get_phases().len(), n);
 }
+
+#[test]
+#[should_panic(expected = "omega values must be finite")]
+fn constructor_rejects_non_finite_omega() {
+    let omega = vec![1.0, f64::NAN];
+    let coupling = vec![0.0; 4];
+    let phases = vec![0.1, 0.2];
+    let _ = KuramotoSolver::new(omega, coupling, phases, 0.0);
+}
+
+#[test]
+#[should_panic(expected = "coupling values must be finite")]
+fn constructor_rejects_non_finite_coupling() {
+    let omega = vec![1.0, 1.1];
+    let coupling = vec![0.0, f64::INFINITY, 0.0, 0.0];
+    let phases = vec![0.1, 0.2];
+    let _ = KuramotoSolver::new(omega, coupling, phases, 0.0);
+}
+
+#[test]
+#[should_panic(expected = "initial_phases values must be finite")]
+fn constructor_rejects_non_finite_initial_phases() {
+    let omega = vec![1.0, 1.1];
+    let coupling = vec![0.0; 4];
+    let phases = vec![0.1, f64::NAN];
+    let _ = KuramotoSolver::new(omega, coupling, phases, 0.0);
+}
+
+#[test]
+#[should_panic(expected = "noise_amp must be finite and non-negative")]
+fn constructor_rejects_negative_noise() {
+    let omega = vec![1.0, 1.1];
+    let coupling = vec![0.0; 4];
+    let phases = vec![0.1, 0.2];
+    let _ = KuramotoSolver::new(omega, coupling, phases, -0.1);
+}
+
+#[test]
+#[should_panic(expected = "dt must be finite and positive")]
+fn step_rejects_non_positive_dt() {
+    let omega = vec![1.0, 1.1];
+    let coupling = vec![0.0; 4];
+    let phases = vec![0.1, 0.2];
+    let mut solver = KuramotoSolver::new(omega, coupling, phases, 0.0);
+    solver.step(0.0, 0);
+}
+
+#[test]
+#[should_panic(expected = "phases values must be finite")]
+fn set_phases_rejects_non_finite_values() {
+    let omega = vec![1.0, 1.1];
+    let coupling = vec![0.0; 4];
+    let phases = vec![0.1, 0.2];
+    let mut solver = KuramotoSolver::new(omega, coupling, phases, 0.0);
+    solver.set_phases(vec![0.3, f64::NAN]);
+}
+
+#[test]
+#[should_panic(expected = "field_pressure must be finite")]
+fn field_pressure_rejects_non_finite_values() {
+    let omega = vec![1.0, 1.1];
+    let coupling = vec![0.0; 4];
+    let phases = vec![0.1, 0.2];
+    let mut solver = KuramotoSolver::new(omega, coupling, phases, 0.0);
+    solver.set_field_pressure(f64::NAN);
+}
+
+#[test]
+#[should_panic(expected = "w_flat values must be finite")]
+fn step_ssgf_rejects_non_finite_geometry_matrix() {
+    let omega = vec![1.0, 1.1];
+    let coupling = vec![0.0; 4];
+    let phases = vec![0.1, 0.2];
+    let mut solver = KuramotoSolver::new(omega, coupling, phases, 0.0);
+    solver.step_ssgf(0.01, 0, &[0.0, f64::NAN, 0.0, 0.0], 1.0, &[], 0.0);
+}

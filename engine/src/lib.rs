@@ -2473,6 +2473,24 @@ pub struct PyKuramotoSolver {
     inner: scpn::KuramotoSolver,
 }
 
+fn validate_kuramoto_finite(name: &str, values: &[f64]) -> PyResult<()> {
+    if values.iter().all(|value| value.is_finite()) {
+        Ok(())
+    } else {
+        Err(PyValueError::new_err(format!(
+            "{name} values must be finite"
+        )))
+    }
+}
+
+fn validate_kuramoto_dt(dt: f64) -> PyResult<()> {
+    if dt.is_finite() && dt > 0.0 {
+        Ok(())
+    } else {
+        Err(PyValueError::new_err("dt must be finite and positive"))
+    }
+}
+
 #[pymethods]
 impl PyKuramotoSolver {
     #[getter]
@@ -2498,6 +2516,13 @@ impl PyKuramotoSolver {
                 n
             )));
         }
+        validate_kuramoto_finite("omega", &omega)?;
+        validate_kuramoto_finite("initial_phases", &phases)?;
+        if !(noise_amp.is_finite() && noise_amp >= 0.0) {
+            return Err(PyValueError::new_err(
+                "noise_amp must be finite and non-negative",
+            ));
+        }
 
         let (coupling_flat, rows, cols) = extract_matrix_f64(coupling, "coupling")?;
         if rows == 1 {
@@ -2518,6 +2543,7 @@ impl PyKuramotoSolver {
                 cols
             )));
         }
+        validate_kuramoto_finite("coupling", &coupling_flat)?;
 
         Ok(Self {
             inner: scpn::KuramotoSolver::new(omega, coupling_flat, phases, noise_amp),
@@ -2525,17 +2551,23 @@ impl PyKuramotoSolver {
     }
 
     #[pyo3(signature = (dt, seed=0))]
-    fn step(&mut self, dt: f64, seed: u64) -> f64 {
-        self.inner.step(dt, seed)
+    fn step(&mut self, dt: f64, seed: u64) -> PyResult<f64> {
+        validate_kuramoto_dt(dt)?;
+        Ok(self.inner.step(dt, seed))
     }
 
     #[pyo3(signature = (n_steps, dt, seed=0))]
-    fn run(&mut self, n_steps: usize, dt: f64, seed: u64) -> Vec<f64> {
-        self.inner.run(n_steps, dt, seed)
+    fn run(&mut self, n_steps: usize, dt: f64, seed: u64) -> PyResult<Vec<f64>> {
+        validate_kuramoto_dt(dt)?;
+        Ok(self.inner.run(n_steps, dt, seed))
     }
 
-    fn set_field_pressure(&mut self, f: f64) {
+    fn set_field_pressure(&mut self, f: f64) -> PyResult<()> {
+        if !f.is_finite() {
+            return Err(PyValueError::new_err("field_pressure must be finite"));
+        }
         self.inner.set_field_pressure(f);
+        Ok(())
     }
 
     #[pyo3(signature = (
@@ -2556,6 +2588,13 @@ impl PyKuramotoSolver {
         h_munu: Option<&Bound<'_, PyAny>>,
         pgbo_weight: f64,
     ) -> PyResult<f64> {
+        validate_kuramoto_dt(dt)?;
+        if !sigma_g.is_finite() {
+            return Err(PyValueError::new_err("sigma_g must be finite"));
+        }
+        if !pgbo_weight.is_finite() {
+            return Err(PyValueError::new_err("pgbo_weight must be finite"));
+        }
         let (w_flat, _, _) = match W {
             Some(w) => extract_matrix_f64(w, "W")?,
             None => (vec![], 0, 0),
@@ -2564,6 +2603,8 @@ impl PyKuramotoSolver {
             Some(h) => extract_matrix_f64(h, "h_munu")?,
             None => (vec![], 0, 0),
         };
+        validate_kuramoto_finite("w_flat", &w_flat)?;
+        validate_kuramoto_finite("h_flat", &h_flat)?;
         Ok(self
             .inner
             .step_ssgf(dt, seed, &w_flat, sigma_g, &h_flat, pgbo_weight))
@@ -2589,6 +2630,13 @@ impl PyKuramotoSolver {
         h_munu: Option<&Bound<'_, PyAny>>,
         pgbo_weight: f64,
     ) -> PyResult<Vec<f64>> {
+        validate_kuramoto_dt(dt)?;
+        if !sigma_g.is_finite() {
+            return Err(PyValueError::new_err("sigma_g must be finite"));
+        }
+        if !pgbo_weight.is_finite() {
+            return Err(PyValueError::new_err("pgbo_weight must be finite"));
+        }
         let (w_flat, _, _) = match W {
             Some(w) => extract_matrix_f64(w, "W")?,
             None => (vec![], 0, 0),
@@ -2597,6 +2645,8 @@ impl PyKuramotoSolver {
             Some(h) => extract_matrix_f64(h, "h_munu")?,
             None => (vec![], 0, 0),
         };
+        validate_kuramoto_finite("w_flat", &w_flat)?;
+        validate_kuramoto_finite("h_flat", &h_flat)?;
         Ok(self
             .inner
             .run_ssgf(n_steps, dt, seed, &w_flat, sigma_g, &h_flat, pgbo_weight))
@@ -2606,6 +2656,7 @@ impl PyKuramotoSolver {
         self.inner.order_parameter()
     }
 
+    #[setter]
     fn set_phases(&mut self, phases: Vec<f64>) -> PyResult<()> {
         if phases.len() != self.inner.n {
             return Err(PyValueError::new_err(format!(
@@ -2614,6 +2665,7 @@ impl PyKuramotoSolver {
                 self.inner.n
             )));
         }
+        validate_kuramoto_finite("phases", &phases)?;
         self.inner.set_phases(phases);
         Ok(())
     }
@@ -2639,6 +2691,7 @@ impl PyKuramotoSolver {
                 cols
             )));
         }
+        validate_kuramoto_finite("coupling", &coupling_flat)?;
         self.inner.set_coupling(coupling_flat);
         Ok(())
     }

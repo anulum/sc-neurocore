@@ -47,3 +47,33 @@ class TestKuramotoSolver:
         updated = phases + 0.5
         solver.phases = updated
         np.testing.assert_allclose(solver.phases, updated, atol=1e-12)
+
+
+def test_python_bridge_rejects_non_finite_inputs():
+    with pytest.raises(ValueError, match="omega values must be finite"):
+        KuramotoSolver([1.0, np.nan], np.zeros((2, 2)), [0.1, 0.2], noise_amp=0.0)
+
+    with pytest.raises(ValueError, match="coupling values must be finite"):
+        KuramotoSolver([1.0, 1.1], [[0.0, np.inf], [0.0, 0.0]], [0.1, 0.2], noise_amp=0.0)
+
+    with pytest.raises(ValueError, match="initial_phases values must be finite"):
+        KuramotoSolver([1.0, 1.1], np.zeros((2, 2)), [0.1, np.nan], noise_amp=0.0)
+
+    with pytest.raises(ValueError, match="noise_amp must be finite and non-negative"):
+        KuramotoSolver([1.0, 1.1], np.zeros((2, 2)), [0.1, 0.2], noise_amp=-0.1)
+
+
+def test_python_bridge_rejects_invalid_runtime_values():
+    solver = KuramotoSolver([1.0, 1.1], np.zeros((2, 2)), [0.1, 0.2], noise_amp=0.0)
+
+    with pytest.raises(ValueError, match="dt must be finite and positive"):
+        solver.step(0.0)
+
+    with pytest.raises(ValueError, match="phases values must be finite"):
+        solver.phases = [0.1, np.nan]
+
+    with pytest.raises(ValueError, match="field_pressure must be finite"):
+        solver.set_field_pressure(np.nan)
+
+    with pytest.raises(ValueError, match="w_flat values must be finite"):
+        solver.step_ssgf(0.01, W=[[0.0, np.nan], [0.0, 0.0]], sigma_g=1.0)
