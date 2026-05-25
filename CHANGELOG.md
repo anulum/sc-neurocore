@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `SigmoidRateNeuron` Python, Julia, Go, Mojo, and Rust safety
+  surfaces to enforce the continuous-rate `[0, 1]` invariant, reject unstable
+  Euler ratios and corrupted runtime state before mutation, and use saturated
+  finite-drive logistic evaluation for extreme inputs.
 - Hardened `AdaptiveThresholdMoENeuron` Python, Julia, Go, Mojo, and Rust safety
   surfaces to reject invalid runtime state and non-finite adaptive-threshold,
   quotient, or soft-reset candidates before state mutation, while preserving

@@ -27,12 +27,16 @@ $$\sigma(\beta(I - \theta)) = \frac{1}{1 + \exp(-\beta(I - \theta))}$$
 
 ```python
 def step(self, current: float) -> float:
-    sigma = 1.0 / (1.0 + np.exp(-self.beta * (current - self.theta)))
-    self.r += (-self.r + sigma) / self.tau * self.dt
-    return self.r
+    sigma = stable_sigmoid(self.beta * (current - self.theta))
+    next_r = self.r + (-self.r + sigma) / self.tau * self.dt
+    validate_rate_candidate(next_r)
+    self.r = next_r
+    return next_r
 ```
 
 Forward Euler, single step per call. **Returns float (rate), not binary spike.**
+The implementation rejects non-finite inputs, invalid runtime state, `dt > tau`
+Euler ratios, and candidate rates outside `[0, 1]` before mutating `r`.
 
 ---
 
@@ -172,11 +176,15 @@ and external drive.
 ## Numerical Considerations
 
 - **Single Euler step:** No sub-stepping. The linear ODE is unconditionally
-  stable for dt < 2τ.
-- **dt/τ ratio:** With defaults, dt/τ = 0.01 — well within stability.
-  For dt/τ > 2: Euler oscillation. For dt/τ > 1: overshoot possible.
-- **Sigmoid overflow:** For β(I−θ) < −700: exp → ∞, σ → 0 (safe).
-  For β(I−θ) > 700: exp → 0, σ → 1 (safe). No overflow at float64.
+  stable for dt < 2τ, but the production rate-state invariant is stricter:
+  `dt <= tau` makes each step a convex combination of the previous rate and the
+  sigmoid target.
+- **dt/τ ratio:** With defaults, dt/τ = 0.01 — well within the invariant.
+  Values with `dt > tau` are rejected because they can overshoot the physical
+  `[0, 1]` firing-rate interval in one Euler step.
+- **Sigmoid overflow:** Extreme finite `β(I−θ)` values use a branch-stable
+  logistic form and saturate to 0 or 1 when floating-point multiplication reaches
+  signed infinity. Non-saturating non-finite arguments fail closed.
 - **No stiffness:** The single-variable linear system has one eigenvalue
   (-1/τ), always stable.
 
@@ -184,10 +192,12 @@ and external drive.
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/sigmoid_rate.py` — 34 lines.
+- **Source:** `src/sc_neurocore/neurons/models/sigmoid_rate.py`.
 - **One state variable:** r (firing rate).
 - **Dataclass:** Uses `@dataclass` for parameter storage.
-- **Simplest model in the library:** 34 lines total, 3 lines of step() logic.
+- **Polyglot surfaces:** Python, Go, Julia, Mojo, and Rust safety surfaces share
+  the finite-state, `dt <= tau`, bounded-rate, stable-logistic, candidate-before-
+  mutation contract.
 - **Rust wiring:** Compatible but pipeline-limited (float return).
 
 ---
