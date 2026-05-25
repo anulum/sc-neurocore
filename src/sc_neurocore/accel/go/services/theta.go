@@ -8,7 +8,10 @@
 
 package services
 
-import "math"
+import (
+	"errors"
+	"math"
+)
 
 // ThetaNeuronState holds the neuron state.
 type ThetaNeuronState struct {
@@ -34,9 +37,9 @@ func wrapTheta(theta float64) float64 {
 }
 
 // Step advances the neuron by one timestep. Invalid inputs do not mutate state.
-func (s *ThetaNeuronState) Step(iExt float64) int {
+func (s *ThetaNeuronState) Step(iExt float64) (int, error) {
 	if !finite(iExt) || !s.Valid() {
-		return 0
+		return 0, ErrThetaInvalidState
 	}
 
 	previous := s.Theta
@@ -44,7 +47,7 @@ func (s *ThetaNeuronState) Step(iExt float64) int {
 	dtheta := ((1.0 - cosTheta) + (1.0+cosTheta)*iExt) * s.Dt
 	nextTheta := s.Theta + dtheta
 	if !finite(dtheta) || !finite(nextTheta) {
-		return 0
+		return 0, ErrThetaNonFiniteUpdate
 	}
 
 	spike := 0
@@ -52,7 +55,7 @@ func (s *ThetaNeuronState) Step(iExt float64) int {
 		spike = 1
 	}
 	s.Theta = wrapTheta(nextTheta)
-	return spike
+	return spike, nil
 }
 
 // Reset restores dynamic state without changing parameters.
@@ -66,7 +69,10 @@ func SimulateThetaNeuron(nSteps int, iExt float64) ([]float64, int) {
 	trace := make([]float64, nSteps)
 	spikes := 0
 	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
+		result, err := s.Step(iExt)
+		if err != nil {
+			panic(err)
+		}
 		trace[t] = s.Theta
 		if result > 0 {
 			spikes++
@@ -74,3 +80,8 @@ func SimulateThetaNeuron(nSteps int, iExt float64) ([]float64, int) {
 	}
 	return trace, spikes
 }
+
+var (
+	ErrThetaInvalidState    = errors.New("theta state/current must be finite with positive dt")
+	ErrThetaNonFiniteUpdate = errors.New("theta phase increment became non-finite")
+)

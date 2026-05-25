@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `ThetaNeuron` Python, Julia, Go, Mojo, and Rust safety surfaces to
+  reject corrupted runtime phase or timestep state before cosine/Euler
+  evaluation and to report non-finite phase increments explicitly without
+  mutating the compact-circle state.
 - Hardened `SiegertTransferFunction` Python, Julia, Go, Mojo, and Rust safety
   surfaces to revalidate first-passage parameters at runtime, reject non-finite
   quadrature bounds, integrals, and inter-spike intervals, and keep rates

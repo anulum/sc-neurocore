@@ -20,9 +20,9 @@ impl ThetaNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
         if !i_ext.is_finite() || !validate_theta(self) {
-            return 0;
+            return Err("theta state/current must be finite with positive dt");
         }
 
         let theta_prev = self.theta;
@@ -30,7 +30,7 @@ impl ThetaNeuron {
         let dtheta = ((1.0 - cos_theta) + (1.0 + cos_theta) * i_ext) * self.dt;
         let next_theta = self.theta + dtheta;
         if !dtheta.is_finite() || !next_theta.is_finite() {
-            return 0;
+            return Err("theta phase increment became non-finite");
         }
 
         let spike = if theta_prev < std::f64::consts::PI * 0.99
@@ -41,7 +41,7 @@ impl ThetaNeuron {
             0
         };
         self.theta = wrap_phase(next_theta);
-        spike
+        Ok(spike)
     }
 
     pub fn reset(&mut self) {
@@ -85,7 +85,7 @@ mod tests {
         let mut state = ThetaNeuron::new();
         let mut spikes = 0;
         for _ in 0..50_000 {
-            spikes += state.step(1.0);
+            spikes += state.step(1.0).unwrap();
         }
         assert!(spikes >= 100);
         assert!(state.theta >= -std::f64::consts::PI);
@@ -96,7 +96,7 @@ mod tests {
     fn test_invalid_current_does_not_mutate_state() {
         let mut state = ThetaNeuron::new();
         state.theta = 0.25;
-        assert_eq!(state.step(f64::NAN), 0);
+        assert!(state.step(f64::NAN).is_err());
         assert_eq!(state.theta, 0.25);
     }
 
@@ -105,7 +105,7 @@ mod tests {
         let mut state = ThetaNeuron::new();
         state.theta = 0.25;
         state.dt = 1.0e308;
-        assert_eq!(state.step(1.0e308), 0);
+        assert!(state.step(1.0e308).is_err());
         assert_eq!(state.theta, 0.25);
     }
 
