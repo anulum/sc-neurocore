@@ -30,7 +30,7 @@ end
 function step!(s::ThetaNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
     s.dt = dt
     if !isfinite(I_ext) || !valid(s)
-        return 0
+        throw(DomainError((s.theta, s.dt, I_ext), "Theta state/current must be finite with positive dt"))
     end
 
     theta_prev = s.theta
@@ -38,7 +38,7 @@ function step!(s::ThetaNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
     dtheta = ((1.0 - cos_theta) + (1.0 + cos_theta) * I_ext) * s.dt
     next_theta = s.theta + dtheta
     if !isfinite(dtheta) || !isfinite(next_theta)
-        return 0
+        throw(DomainError((dtheta, next_theta), "Theta phase increment must remain finite"))
     end
 
     spike = (theta_prev < pi * 0.99 && next_theta >= pi * 0.99) ? 1 : 0

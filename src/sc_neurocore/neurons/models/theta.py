@@ -40,6 +40,7 @@ class ThetaNeuron:
     def step(self, current: float) -> int:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
+        self._validate_runtime_state()
 
         theta_prev = self.theta
         cos_theta = math.cos(self.theta)
@@ -53,3 +54,9 @@ class ThetaNeuron:
 
     def reset(self) -> None:
         self.theta = 0.0
+
+    def _validate_runtime_state(self) -> None:
+        if not math.isfinite(self.theta):
+            raise ValueError("runtime phase state must be finite")
+        if not math.isfinite(self.dt) or self.dt <= 0.0:
+            raise ValueError("runtime dt must be finite and positive")

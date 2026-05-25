@@ -51,9 +51,13 @@ The implementation preserves the compact-circle state contract before mutation:
 - `dt` must be positive;
 - initial `theta` is normalised into `[-pi, pi]`;
 - each Euler phase increment and candidate phase must remain finite before assignment.
+- runtime `theta` and `dt` are revalidated before `cos(theta)` and Euler
+  evaluation so corrupted objects fail closed without mutating phase.
 
 These guards prevent finite but numerically explosive inputs from turning the
 phase state into `NaN` while preserving the theta/QIF phase-map semantics.
+Native Go and Rust mirrors return explicit errors for invalid scalar state,
+Julia throws `DomainError`, and Mojo returns `-1` as the invalid sentinel.
 
 ## Behaviour
 

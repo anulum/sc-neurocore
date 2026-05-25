@@ -96,6 +96,24 @@ class TestThetaValidation:
             n.step(1.0e308)
         assert n.theta == before
 
+    @pytest.mark.parametrize("field", ["theta", "dt"])
+    def test_rejects_corrupted_runtime_state_before_phase_mutation(self, field: str):
+        n = ThetaNeuron(theta=0.25)
+        before = n.theta
+        setattr(n, field, np.nan)
+        with pytest.raises(ValueError, match="runtime"):
+            n.step(1.0)
+        if field != "theta":
+            assert n.theta == before
+
+    def test_rejects_runtime_dt_that_is_no_longer_positive(self):
+        n = ThetaNeuron(theta=0.25)
+        before = n.theta
+        n.dt = 0.0
+        with pytest.raises(ValueError, match="runtime"):
+            n.step(1.0)
+        assert n.theta == before
+
 
 class TestThetaBifurcation:
     """Saddle-node bifurcation at I=0 — same as QIF."""
@@ -246,6 +264,13 @@ class TestThetaEdgeCases:
         n = ThetaNeuron(theta=3.0, dt=0.5)
         n.step(10.0)  # large jump
         assert -np.pi <= n.theta <= np.pi
+
+    def test_candidate_phase_is_validated_before_assignment(self):
+        n = ThetaNeuron(theta=0.25, dt=1.0e308)
+        before = n.theta
+        with pytest.raises(ValueError, match="phase increment"):
+            n.step(1.0e308)
+        assert n.theta == before
 
     def test_deterministic(self):
         traces = []

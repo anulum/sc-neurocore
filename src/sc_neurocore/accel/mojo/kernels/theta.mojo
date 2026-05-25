@@ -23,15 +23,15 @@ fn theta_valid(theta: Float64, dt: Float64) -> Bool:
 
 fn theta_step_spike(theta: Float64, current: Float64, dt: Float64) -> Int:
     if not _finite(current):
-        return 0
+        return -1
     if not theta_valid(theta, dt):
-        return 0
+        return -1
 
     var cos_theta = cos(theta)
     var dtheta = ((1.0 - cos_theta) + (1.0 + cos_theta) * current) * dt
     var next_theta = theta + dtheta
     if not _finite(dtheta) or not _finite(next_theta):
-        return 0
+        return -1
     if theta < PI * 0.99 and next_theta >= PI * 0.99:
         return 1
     return 0
