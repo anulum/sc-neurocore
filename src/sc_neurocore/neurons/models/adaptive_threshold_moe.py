@@ -74,28 +74,47 @@ class AdaptiveThresholdMoENeuron:
         """
         if not math.isfinite(current):
             raise ValueError("current must be finite")
+        self._validate_runtime_state()
 
-        self._mean_abs_x = (1.0 - self.ema_alpha) * self._mean_abs_x + self.ema_alpha * abs(current)
-        self.v_th = self._mean_abs_x / self.k if self._mean_abs_x > 1e-12 else 1.0
-        self.v += current
-        s_int = round(self.v / self.v_th) if self.v_th > 1e-12 else 0
-        if s_int != 0:
-            self.v -= self.v_th * s_int
-        return max(s_int, 0)
+        next_mean_abs_x = (1.0 - self.ema_alpha) * self._mean_abs_x + self.ema_alpha * abs(current)
+        next_v_th = self._threshold_from_mean(next_mean_abs_x)
+        next_v = self.v + current
+        if not math.isfinite(next_v):
+            raise ValueError("soft reset residual must remain finite")
+        ratio = next_v / next_v_th if next_v_th > 1e-12 else 0.0
+        if not math.isfinite(ratio):
+            raise ValueError("adaptive threshold ratio must remain finite")
+        s_int = max(round(ratio), 0)
+        residual = next_v - next_v_th * s_int if s_int != 0 else next_v
+        if not math.isfinite(residual):
+            raise ValueError("soft reset residual must remain finite")
+
+        self._mean_abs_x = next_mean_abs_x
+        self.v_th = next_v_th
+        self.v = residual
+        return s_int
 
     def step_collapsed(self, activation: float) -> int:
         """Time-collapsed single-step: s_INT = round(x / V_th)."""
         if not math.isfinite(activation):
             raise ValueError("activation must be finite")
+        self._validate_runtime_state()
 
-        self._mean_abs_x = (1.0 - self.ema_alpha) * self._mean_abs_x + self.ema_alpha * abs(
+        next_mean_abs_x = (1.0 - self.ema_alpha) * self._mean_abs_x + self.ema_alpha * abs(
             activation
         )
-        self.v_th = self._mean_abs_x / self.k if self._mean_abs_x > 1e-12 else 1.0
-        return max(round(activation / self.v_th), 0)
+        next_v_th = self._threshold_from_mean(next_mean_abs_x)
+        ratio = activation / next_v_th
+        if not math.isfinite(ratio):
+            raise ValueError("adaptive threshold ratio must remain finite")
+        spike_count = max(round(ratio), 0)
+        self._mean_abs_x = next_mean_abs_x
+        self.v_th = next_v_th
+        return spike_count
 
     def sparsity(self) -> float:
         """Current activation sparsity (1.0 if below threshold, 0.0 if firing)."""
+        self._validate_runtime_state()
         return 1.0 if abs(self.v) < self.v_th else 0.0
 
     def reset(self) -> None:
@@ -103,3 +122,19 @@ class AdaptiveThresholdMoENeuron:
         self.v = 0.0
         self._mean_abs_x = 0.0
         self.v_th = 1.0
+
+    def _validate_runtime_state(self) -> None:
+        if not math.isfinite(self.v):
+            raise ValueError("runtime membrane state must be finite")
+        if not math.isfinite(self.v_th) or self.v_th <= 0.0:
+            raise ValueError("runtime threshold state must be finite and positive")
+        if not math.isfinite(self._mean_abs_x) or self._mean_abs_x < 0.0:
+            raise ValueError("runtime mean absolute input state must be finite and non-negative")
+
+    def _threshold_from_mean(self, mean_abs_x: float) -> float:
+        if not math.isfinite(mean_abs_x) or mean_abs_x < 0.0:
+            raise ValueError("adaptive threshold mean must remain finite and non-negative")
+        threshold = mean_abs_x / self.k if mean_abs_x > 1e-12 else 1.0
+        if not math.isfinite(threshold) or threshold <= 0.0:
+            raise ValueError("adaptive threshold must remain finite and positive")
+        return threshold
