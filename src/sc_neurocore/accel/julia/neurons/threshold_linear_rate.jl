@@ -8,7 +8,7 @@
 
 module ThresholdLinearRateAccel
 
-export step!, simulate, ThresholdLinearRateNeuronState
+export step!, simulate, valid, ThresholdLinearRateNeuronState
 
 mutable struct ThresholdLinearRateNeuronState
     r::Float64
@@ -21,12 +21,22 @@ function ThresholdLinearRateNeuronState()
 end
 
 function step!(s::ThresholdLinearRateNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        s.r = s.gain * max(0.0, I_ext - s.theta)
-        return s.r
-    catch _e
-        return 0
+    if !isfinite(I_ext)
+        throw(DomainError(I_ext, "ThresholdLinearRate input current must be finite"))
     end
+    if !valid(s)
+        throw(DomainError(s.r, "ThresholdLinearRate state parameters must be finite with non-negative rate and gain"))
+    end
+    next_r = s.gain * max(0.0, I_ext - s.theta)
+    if !isfinite(next_r) || next_r < 0.0
+        throw(DomainError(next_r, "ThresholdLinearRate output must remain finite and non-negative"))
+    end
+    s.r = next_r
+    return s.r
+end
+
+function valid(s::ThresholdLinearRateNeuronState)
+    return isfinite(s.r) && s.r >= 0.0 && isfinite(s.theta) && isfinite(s.gain) && s.gain >= 0.0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)

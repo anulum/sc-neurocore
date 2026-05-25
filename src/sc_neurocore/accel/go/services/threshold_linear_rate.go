@@ -9,29 +9,66 @@
 package services
 
 import (
+	"errors"
 	"math"
+)
+
+var (
+	ErrThresholdLinearRateInvalidInput    = errors.New("threshold linear rate input current must be finite")
+	ErrThresholdLinearRateInvalidState    = errors.New("threshold linear rate state parameters must be finite with non-negative rate and gain")
+	ErrThresholdLinearRateNonFiniteOutput = errors.New("threshold linear rate output must remain finite and non-negative")
 )
 
 // ThresholdLinearRateNeuronState holds the neuron state
 type ThresholdLinearRateNeuronState struct {
-	R float64
+	R     float64
 	Theta float64
-	Gain float64
+	Gain  float64
 }
 
 // NewThresholdLinearRateNeuron creates a new ThresholdLinearRateNeuron neuron with default parameters
 func NewThresholdLinearRateNeuron() *ThresholdLinearRateNeuronState {
 	return &ThresholdLinearRateNeuronState{
-		R: 0.0,
+		R:     0.0,
 		Theta: 0.0,
-		Gain: 1.0,
+		Gain:  1.0,
 	}
 }
 
+func thresholdLinearRateFinite(values ...float64) bool {
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *ThresholdLinearRateNeuronState) Valid() bool {
+	return thresholdLinearRateFinite(s.R, s.Theta, s.Gain) &&
+		s.R >= 0.0 &&
+		s.Gain >= 0.0
+}
+
 // Step advances the neuron by one timestep
-func (s *ThresholdLinearRateNeuronState) Step(iExt float64) int {
-	_ = iExt
-	return 0
+func (s *ThresholdLinearRateNeuronState) Step(iExt float64) (float64, error) {
+	if !thresholdLinearRateFinite(iExt) {
+		return s.R, ErrThresholdLinearRateInvalidInput
+	}
+	if !s.Valid() {
+		return s.R, ErrThresholdLinearRateInvalidState
+	}
+
+	drive := iExt - s.Theta
+	if drive < 0.0 {
+		drive = 0.0
+	}
+	nextR := s.Gain * drive
+	if !thresholdLinearRateFinite(nextR) || nextR < 0.0 {
+		return s.R, ErrThresholdLinearRateNonFiniteOutput
+	}
+	s.R = nextR
+	return nextR, nil
 }
 
 // SimulateThresholdLinearRateNeuron runs the neuron for n steps
@@ -40,7 +77,10 @@ func SimulateThresholdLinearRateNeuron(nSteps int, iExt float64) ([]float64, int
 	trace := make([]float64, nSteps)
 	spikes := 0
 	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
+		result, err := s.Step(iExt)
+		if err != nil {
+			panic(err)
+		}
 		trace[t] = s.R
 		if result > 0 {
 			spikes++
@@ -48,5 +88,3 @@ func SimulateThresholdLinearRateNeuron(nSteps int, iExt float64) ([]float64, int
 	}
 	return trace, spikes
 }
-
-var _ = math.Exp

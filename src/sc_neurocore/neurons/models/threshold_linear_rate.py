@@ -34,11 +34,19 @@ class ThresholdLinearRateNeuron:
             raise ValueError("gain must be finite and non-negative")
 
     def step(self, current: float) -> float:
+        if not math.isfinite(self.r) or self.r < 0.0:
+            raise ValueError("runtime rate state must be finite and non-negative")
         if not math.isfinite(current):
             raise ValueError("current must be finite")
 
-        self.r = self.gain * max(0.0, current - self.theta)
-        return self.r
+        try:
+            next_r = self.gain * max(0.0, current - self.theta)
+        except OverflowError as exc:
+            raise ValueError("rate output must remain finite") from exc
+        if not math.isfinite(next_r) or next_r < 0.0:
+            raise ValueError("rate output must remain finite and non-negative")
+        self.r = next_r
+        return next_r
 
     def reset(self) -> None:
         self.r = 0.0
