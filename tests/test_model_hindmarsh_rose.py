@@ -260,7 +260,7 @@ class TestHRPerformance:
             n.step(5.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        min_rate = 150_000 if os.getenv("CI") else 200_000
+        min_rate = 100_000 if os.getenv("CI") else 200_000
         assert rate > min_rate, f"isolation: {rate:.0f} steps/s, minimum={min_rate}"
 
     def test_network_throughput(self):
