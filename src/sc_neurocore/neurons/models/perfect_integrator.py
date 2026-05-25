@@ -43,6 +43,7 @@ class PerfectIntegratorNeuron:
     def step(self, current: float) -> int:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
+        self._validate_runtime_state()
         voltage_increment = current / self.c_m * self.dt
         next_v = self.v + voltage_increment
         if not math.isfinite(voltage_increment) or not math.isfinite(next_v):
@@ -55,3 +56,14 @@ class PerfectIntegratorNeuron:
 
     def reset(self) -> None:
         self.v = self.v_reset
+
+    def _validate_runtime_state(self) -> None:
+        for field in ("v", "v_threshold", "v_reset", "c_m", "dt"):
+            if not math.isfinite(getattr(self, field)):
+                raise ValueError(f"runtime {field} must be finite")
+        if self.c_m <= 0.0 or self.dt <= 0.0:
+            raise ValueError("runtime c_m and dt must be positive")
+        if self.v_threshold <= self.v_reset:
+            raise ValueError("runtime v_threshold must be greater than v_reset")
+        if self.v >= self.v_threshold:
+            raise ValueError("runtime v must be below v_threshold before integration")

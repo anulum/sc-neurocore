@@ -42,14 +42,14 @@ fn perfect_integrator_step_spike(
     dt: Float64,
 ) -> Int:
     if not _finite(current):
-        return 0
+        return -1
     if not perfect_integrator_valid(v, c_m, v_threshold, v_reset, dt):
-        return 0
+        return -1
 
     var voltage_increment = current / c_m * dt
     var next_v = v + voltage_increment
     if not _finite(voltage_increment) or not _finite(next_v):
-        return 0
+        return -1
     if next_v >= v_threshold:
         return 1
     return 0

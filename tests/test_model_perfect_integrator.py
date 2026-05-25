@@ -142,6 +142,34 @@ class TestPerfectIntegratorValidation:
             n.step(1.0e308)
         assert n.v == before
 
+    @pytest.mark.parametrize("field", ["v", "c_m", "dt", "v_threshold", "v_reset"])
+    def test_rejects_corrupted_runtime_state_before_voltage_mutation(self, field: str):
+        n = PerfectIntegratorNeuron(v=0.25)
+        before = n.v
+        setattr(n, field, np.nan)
+        with pytest.raises(ValueError, match="runtime"):
+            n.step(1.0)
+        if field != "v":
+            assert n.v == before
+
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("c_m", 0.0),
+            ("dt", 0.0),
+            ("v_threshold", 0.0),
+        ],
+    )
+    def test_rejects_invalid_runtime_geometry_before_voltage_mutation(
+        self, field: str, value: float
+    ):
+        n = PerfectIntegratorNeuron(v=0.25)
+        before = n.v
+        setattr(n, field, value)
+        with pytest.raises(ValueError, match="runtime"):
+            n.step(1.0)
+        assert n.v == before
+
 
 class TestPerfectIntegratorThreshold:
     """Threshold, reset, and spike timing."""

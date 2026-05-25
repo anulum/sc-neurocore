@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `PerfectIntegratorNeuron` Python, Julia, Go, Mojo, and Rust safety
+  surfaces to revalidate runtime membrane geometry before division/integration
+  and to report invalid or non-finite voltage increments explicitly before
+  state mutation.
 - Hardened `ThetaNeuron` Python, Julia, Go, Mojo, and Rust safety surfaces to
   reject corrupted runtime phase or timestep state before cosine/Euler
   evaluation and to report non-finite phase increments explicitly without
