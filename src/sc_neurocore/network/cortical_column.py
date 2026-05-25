@@ -1010,7 +1010,11 @@ class CorticalColumn:
                     xs,
                     strict=True,
                 ):
-                    if _HAS_RUST_CSR_SPMV and _rust_csr_spmv_add is not None:
+                    if (
+                        self.backend != "python"
+                        and _HAS_RUST_CSR_SPMV
+                        and _rust_csr_spmv_add is not None
+                    ):
                         _rust_csr_spmv_add(
                             indptr_b,
                             indices_b,

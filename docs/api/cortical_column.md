@@ -218,6 +218,14 @@ Return-shape conventions:
 |--------|-------------|
 | `step` | `dict[str, np.ndarray]` keyed by `POPULATIONS`, each `(n_p,)` boolean. |
 | `simulate` | `dict[str, np.ndarray]` keyed by `POPULATIONS`, each `(n_steps, n_p)` boolean. |
+
+Backend contract:
+
+| Backend | Contract |
+|---------|----------|
+| `python` | Reference scipy.sparse path only; it does not call native Rust/Julia/Go/Mojo fallbacks. |
+| `auto` | Uses the first available native block-CSR multi-SpMV backend, otherwise the Python reference path. |
+| `rust`, `julia`, `go`, `mojo` | Require the corresponding native multi-SpMV artefact at construction and fail closed if unavailable. |
 | `population_rates` | `dict[str, float]` keyed by `POPULATIONS`, each rate in Hz. |
 | `total_indegree` | `int` — mean per-cell synaptic in-degree of the target. |
 

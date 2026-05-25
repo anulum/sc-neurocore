@@ -437,6 +437,60 @@ class TestConnectivity:
 
         assert col.i_syn[target][0] == pytest.approx(col.w_e)
 
+    def test_explicit_python_block_csr_does_not_call_single_rust_fallback(self, monkeypatch):
+        col = CorticalColumn(
+            scale=0.02,
+            scale_correction=False,
+            delay_distribution=True,
+            n_delay_bins=1,
+            use_block_csr=True,
+            bg_rate=0.0,
+            seed=42,
+            backend="python",
+        )
+        col._init_buffers(dt=0.1)
+        target = POPULATIONS[0]
+        source = POPULATIONS[0]
+        row = col._target_offsets[target]
+        col._block_e = [
+            sparse.csr_matrix(([col.w_e], ([row], [0])), shape=(col.n_total, col._n_total_e))
+        ]
+        col._block_e_arrays = [
+            (
+                np.ascontiguousarray(col._block_e[0].indptr, dtype=np.int32),
+                np.ascontiguousarray(col._block_e[0].indices, dtype=np.int32),
+                np.ascontiguousarray(col._block_e[0].data, dtype=np.float64),
+            )
+        ]
+        col._block_i = [sparse.csr_matrix((col.n_total, col._n_total_i), dtype=np.float64)]
+        col._block_i_arrays = [
+            (
+                np.ascontiguousarray(col._block_i[0].indptr, dtype=np.int32),
+                np.ascontiguousarray(col._block_i[0].indices, dtype=np.int32),
+                np.ascontiguousarray(col._block_i[0].data, dtype=np.float64),
+            )
+        ]
+        delayed_idx = (col._buf_idx - col._global_e_bin_steps[0]) % col._buf_len_e
+        col._buf_e[source][delayed_idx, 0] = 1
+
+        def forbidden_single_rust(*_args):
+            raise AssertionError("backend='python' must not call native Rust fallback")
+
+        monkeypatch.setattr(cortical_column_module, "_HAS_RUST_CSR_SPMV", True)
+        monkeypatch.setattr(cortical_column_module, "_rust_csr_spmv_add", forbidden_single_rust)
+        monkeypatch.setattr(cortical_column_module, "_HAS_RUST_CSR_MULTI_SPMV", False)
+        monkeypatch.setattr(cortical_column_module, "_rust_csr_multi_spmv_add", None)
+        monkeypatch.setattr(cortical_column_module, "_HAS_MOJO_MULTI_SPMV", False)
+        monkeypatch.setattr(cortical_column_module, "_mojo_multi_spmv", None)
+        monkeypatch.setattr(cortical_column_module, "_HAS_GO_MULTI_SPMV", False)
+        monkeypatch.setattr(cortical_column_module, "_go_multi_spmv", None)
+        monkeypatch.setattr(cortical_column_module, "_HAS_JULIA_MULTI_SPMV", False)
+        monkeypatch.setattr(cortical_column_module, "_julia_multi_spmv", None)
+
+        col._inject_block(dt=0.1)
+
+        assert col.i_syn[target][0] == pytest.approx(col.w_e)
+
     def test_spmv_into_python_and_rust_paths(self, monkeypatch):
         block = sparse.csr_matrix(([2.0], ([1], [0])), shape=(3, 2))
         x = np.array([4.0, 0.0])
