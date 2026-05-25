@@ -8,8 +8,11 @@
 
 package services
 
-import (
-	"math"
+import "errors"
+
+var (
+	ErrMcCullochPittsInvalidInput = errors.New("mcculloch pitts weighted input must be finite")
+	ErrMcCullochPittsInvalidState = errors.New("mcculloch pitts threshold must be finite")
 )
 
 // McCullochPittsNeuronState holds the neuron state
@@ -24,10 +27,23 @@ func NewMcCullochPittsNeuron() *McCullochPittsNeuronState {
 	}
 }
 
-// Step advances the neuron by one timestep
-func (s *McCullochPittsNeuronState) Step(iExt float64) int {
-	_ = iExt
-	return 0
+// Step advances the stateless threshold unit by one timestep.
+func (s *McCullochPittsNeuronState) Step(weightedInput float64) (int, error) {
+	if !finite(weightedInput) {
+		return 0, ErrMcCullochPittsInvalidInput
+	}
+	if !ValidateMcCullochPitts(s) {
+		return 0, ErrMcCullochPittsInvalidState
+	}
+	if weightedInput >= s.Theta {
+		return 1, nil
+	}
+	return 0, nil
+}
+
+// ValidateMcCullochPitts enforces the finite Heaviside threshold contract.
+func ValidateMcCullochPitts(s *McCullochPittsNeuronState) bool {
+	return s != nil && finite(s.Theta)
 }
 
 // SimulateMcCullochPittsNeuron runs the neuron for n steps
@@ -36,7 +52,10 @@ func SimulateMcCullochPittsNeuron(nSteps int, iExt float64) ([]float64, int) {
 	trace := make([]float64, nSteps)
 	spikes := 0
 	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
+		result, err := s.Step(iExt)
+		if err != nil {
+			panic(err)
+		}
 		trace[t] = s.Theta
 		if result > 0 {
 			spikes++
@@ -44,5 +63,3 @@ func SimulateMcCullochPittsNeuron(nSteps int, iExt float64) ([]float64, int) {
 	}
 	return trace, spikes
 }
-
-var _ = math.Exp

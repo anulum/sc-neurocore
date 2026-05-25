@@ -24,12 +24,16 @@ class McCullochPittsNeuron:
     theta: float = 1.0
 
     def __post_init__(self) -> None:
+        self._validate_runtime_state()
+
+    def _validate_runtime_state(self) -> None:
         if not math.isfinite(self.theta):
             raise ValueError("theta must be finite")
 
     def step(self, weighted_input: float) -> int:
         if not math.isfinite(weighted_input):
             raise ValueError("weighted_input must be finite")
+        self._validate_runtime_state()
 
         return 1 if weighted_input >= self.theta else 0
 

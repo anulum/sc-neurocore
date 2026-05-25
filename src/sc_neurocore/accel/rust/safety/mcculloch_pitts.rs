@@ -18,19 +18,23 @@ impl McCullochPittsNeuron {
         Self { theta: 1.0_f64 }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // return 1 if weighted_input >= self.theta else 0
-        0 // spike indicator
+    pub fn step(&mut self, weighted_input: f64) -> Result<i32, &'static str> {
+        if !weighted_input.is_finite() {
+            return Err("mcculloch pitts weighted input must be finite");
+        }
+        if !validate_mcculloch_pitts(self) {
+            return Err("mcculloch pitts threshold must be finite");
+        }
+        Ok(if weighted_input >= self.theta { 1 } else { 0 })
     }
 
     pub fn reset(&mut self) {
-        // pass
-        self.theta = 1.0_f64;
+        // Stateless model: reset is intentionally a no-op.
     }
 }
 
 pub fn validate_mcculloch_pitts(state: &McCullochPittsNeuron) -> bool {
-    true
+    state.theta.is_finite()
 }
 
 #[cfg(test)]
@@ -46,7 +50,26 @@ mod tests {
     #[test]
     fn test_mcculloch_pitts_step() {
         let mut state = McCullochPittsNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).expect("valid step must succeed");
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_heaviside_boundary() {
+        let mut state = McCullochPittsNeuron { theta: 2.0 };
+        assert_eq!(state.step(1.999999999999999), Ok(0));
+        assert_eq!(state.step(2.0), Ok(1));
+    }
+
+    #[test]
+    fn test_invalid_runtime_threshold_fails() {
+        let mut state = McCullochPittsNeuron { theta: f64::NAN };
+        assert!(state.step(1.0).is_err());
+    }
+
+    #[test]
+    fn test_non_finite_input_fails() {
+        let mut state = McCullochPittsNeuron::new();
+        assert!(state.step(f64::INFINITY).is_err());
     }
 }

@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `McCullochPittsNeuron` Python, Julia, Go, Mojo, and Rust safety
+  surfaces to enforce finite weighted-input and mutable-threshold contracts,
+  preserve equality-at-threshold Heaviside semantics, and keep reset as a
+  stateless no-op.
 - Hardened `EscapeRateNeuron` Python, Julia, Go, and Rust safety surfaces to
   revalidate mutable point-process state before membrane integration,
   exponentiation, hazard evaluation, or random sampling; non-finite voltage

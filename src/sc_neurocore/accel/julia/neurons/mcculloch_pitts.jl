@@ -8,7 +8,7 @@
 
 module MccullochPittsAccel
 
-export step!, simulate, McCullochPittsNeuronState
+export step!, simulate, validate_mcculloch_pitts, McCullochPittsNeuronState
 
 mutable struct McCullochPittsNeuronState
     theta::Float64
@@ -18,12 +18,18 @@ function McCullochPittsNeuronState()
     McCullochPittsNeuronState(1.0)
 end
 
-function step!(s::McCullochPittsNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        return (weighted_input >= s.theta) ? 1 : 0
-    catch _e
-        return 0
+function validate_mcculloch_pitts(s::McCullochPittsNeuronState)::Bool
+    return isfinite(s.theta)
+end
+
+function step!(s::McCullochPittsNeuronState, weighted_input::Float64=0.0; dt::Float64=0.1)::Int
+    if !isfinite(weighted_input)
+        throw(DomainError(weighted_input, "McCullochPitts weighted input must be finite"))
     end
+    if !validate_mcculloch_pitts(s)
+        throw(DomainError(s.theta, "McCullochPitts threshold must be finite"))
+    end
+    return weighted_input >= s.theta ? 1 : 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
