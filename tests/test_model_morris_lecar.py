@@ -93,6 +93,16 @@ class TestMLIsolation:
             traces.append(trace)
         assert traces[0] == traces[1]
 
+    @pytest.mark.parametrize("integrator", ["baseline_euler", "rk4", "rosenbrock"])
+    def test_extreme_voltage_rate_overflow_fails_closed(self, integrator: str):
+        n = MorrisLecarNeuron(v=1e6, w=0.25, integrator=integrator)
+        before = (n.v, n.w)
+
+        with pytest.raises(FloatingPointError, match="overflowed|non-finite"):
+            n.step(0.0)
+
+        assert (n.v, n.w) == before
+
 
 # ---------------------------------------------------------------------------
 # 2. ANALYTICAL — m_inf, w_inf, lambda, dV, dw formulas

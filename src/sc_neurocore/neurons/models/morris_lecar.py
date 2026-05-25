@@ -85,13 +85,37 @@ class MorrisLecarNeuron:
                 raise ValueError(f"{name} must be positive")
 
     def _m_inf(self, v: float) -> float:
-        return 0.5 * (1.0 + math.tanh((v - self.v1) / self.v2))
+        if not math.isfinite(v):
+            raise FloatingPointError("Morris-Lecar voltage became non-finite")
+        out = 0.5 * (1.0 + math.tanh((v - self.v1) / self.v2))
+        if not math.isfinite(out):
+            raise FloatingPointError("Morris-Lecar calcium activation became non-finite")
+        return out
 
     def _w_inf(self, v: float) -> float:
-        return 0.5 * (1.0 + math.tanh((v - self.v3) / self.v4))
+        if not math.isfinite(v):
+            raise FloatingPointError("Morris-Lecar voltage became non-finite")
+        out = 0.5 * (1.0 + math.tanh((v - self.v3) / self.v4))
+        if not math.isfinite(out):
+            raise FloatingPointError("Morris-Lecar potassium activation became non-finite")
+        return out
 
     def _lam(self, v: float) -> float:
-        return self.phi * math.cosh((v - self.v3) / (2.0 * self.v4))
+        if not math.isfinite(v):
+            raise FloatingPointError("Morris-Lecar voltage became non-finite")
+        try:
+            out = self.phi * math.cosh((v - self.v3) / (2.0 * self.v4))
+        except OverflowError as exc:
+            raise FloatingPointError("Morris-Lecar potassium rate overflowed") from exc
+        if not math.isfinite(out):
+            raise FloatingPointError("Morris-Lecar potassium rate became non-finite")
+        return out
+
+    @staticmethod
+    def _validate_state(v: float, w: float) -> tuple[float, float]:
+        if not (math.isfinite(v) and math.isfinite(w)):
+            raise FloatingPointError("Morris-Lecar state became non-finite")
+        return float(v), float(w)
 
     def step(self, current: float) -> int:
         if not isinstance(current, int | float) or not math.isfinite(float(current)):
@@ -118,7 +142,10 @@ class MorrisLecarNeuron:
         i_l = self.g_l * (v - self.e_l)
         dv = (-i_ca - i_k - i_l + current) / self.c_m
         dw = lam * (w_inf - w)
-        return np.array([dv, dw], dtype=np.float64)
+        out = np.array([dv, dw], dtype=np.float64)
+        if not np.all(np.isfinite(out)):
+            raise FloatingPointError("Morris-Lecar derivative became non-finite")
+        return out
 
     def _step_baseline_euler(self, current: float) -> None:
         m_inf = self._m_inf(self.v)
@@ -127,8 +154,9 @@ class MorrisLecarNeuron:
         i_ca = self.g_ca * m_inf * (self.v - self.e_ca)
         i_k = self.g_k * self.w * (self.v - self.e_k)
         i_l = self.g_l * (self.v - self.e_l)
-        self.v += (-i_ca - i_k - i_l + current) / self.c_m * self.dt
-        self.w += lam * (w_inf - self.w) * self.dt
+        new_v = self.v + (-i_ca - i_k - i_l + current) / self.c_m * self.dt
+        new_w = self.w + lam * (w_inf - self.w) * self.dt
+        self.v, self.w = self._validate_state(new_v, new_w)
 
     def _step_rk4(self, current: float) -> None:
         solver = RK4Solver()
@@ -139,8 +167,7 @@ class MorrisLecarNeuron:
             0.0,
             self.dt,
         )
-        self.v = float(state[0])
-        self.w = float(state[1])
+        self.v, self.w = self._validate_state(float(state[0]), float(state[1]))
 
     def _step_rosenbrock(self, current: float) -> None:
         solver = RosenbrockEuler()
@@ -151,8 +178,7 @@ class MorrisLecarNeuron:
             0.0,
             self.dt,
         )
-        self.v = float(state[0])
-        self.w = float(state[1])
+        self.v, self.w = self._validate_state(float(state[0]), float(state[1]))
 
     def reset(self) -> None:
         self.v = -60.0
