@@ -4,6 +4,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Repository hygiene
+- Purged obsolete completed failed/cancelled GitHub Actions repair-sequence runs after later successful replacement runs were verified on `main`.
+- Removed inactive stale GitHub Pages deployment records while retaining the current successful Pages deployment and successful package-release deployment evidence.
+- Rechecked Dependabot, code-scanning, and secret-scanning alert surfaces; all reported zero open alerts.
+
 ## [3.15.0] — 2026-05-19
 
 ### Compiler Intelligence, Platform Registry, and Deployment (2026-05-01)
