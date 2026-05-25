@@ -116,7 +116,11 @@ class TestHRAnalytical:
             coarse_rk4.step(current)
             coarse_euler.step(current)
 
-        rk4_error = abs(coarse_rk4.x - reference.x) + abs(coarse_rk4.y - reference.y) + abs(coarse_rk4.z - reference.z)
+        rk4_error = (
+            abs(coarse_rk4.x - reference.x)
+            + abs(coarse_rk4.y - reference.y)
+            + abs(coarse_rk4.z - reference.z)
+        )
         euler_error = (
             abs(coarse_euler.x - reference.x)
             + abs(coarse_euler.y - reference.y)

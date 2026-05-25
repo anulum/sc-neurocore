@@ -87,7 +87,9 @@ class LarterBreakspearNeuron:
     def _m_k(self, v: float) -> Any:
         return 0.5 * (1.0 + np.tanh((v - self.v0) / 0.3))
 
-    def _derivatives(self, v: float, w: float, z: float, coupling: float) -> tuple[float, float, float]:
+    def _derivatives(
+        self, v: float, w: float, z: float, coupling: float
+    ) -> tuple[float, float, float]:
         i_ca = self.g_ca * self._m_ca(v) * (v - self.v_ca)
         i_na = self.g_na * self._m_na(v) * (v - self.v_na)
         i_k = self.g_k * w * (v - self.v_k)

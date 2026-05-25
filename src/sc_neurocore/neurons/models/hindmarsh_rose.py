@@ -48,7 +48,9 @@ class HindmarshRoseNeuron:
             if getattr(self, name) <= 0.0:
                 raise ValueError(f"{name} must be positive")
 
-    def _derivatives(self, x: float, y: float, z: float, current: float) -> tuple[float, float, float]:
+    def _derivatives(
+        self, x: float, y: float, z: float, current: float
+    ) -> tuple[float, float, float]:
         dx = y - x**3 + self.b * x**2 - z + current
         dy = 1.0 - 5.0 * x**2 - y
         dz = self.r * (self.s * (x - self.x_rest) - z)
