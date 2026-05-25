@@ -1,12 +1,18 @@
 # Roadmap
 
-> Last updated: 2026-05-07. Priorities may shift based on
+> Last updated: 2026-05-25. Priorities may shift based on
 > validation results and community feedback.
 
-## Current Maintenance Snapshot — 2026-05-07
+## Current Maintenance Snapshot — 2026-05-25
 
-- Mainline CI was verified green on 2026-05-07 after the historical
-  non-green GitHub Actions cleanup.
+- Mainline CI was verified green on 2026-05-25 at `edc35c11934f`;
+  obsolete completed failed/cancelled repair-sequence Actions runs were purged
+  only after replacement green evidence was present.
+- GitHub deployment hygiene was refreshed on 2026-05-25: inactive stale Pages
+  deployment records were removed, while current successful Pages and package
+  release deployments were retained as evidence.
+- Dependabot, code-scanning, and secret-scanning alert surfaces were rechecked
+  on 2026-05-25 and reported zero open alerts.
 - Coverage is being recovered in staged slices. The active branch raises the
   Python gate to 96%; 100% remains the target, not the current release claim.
 - Open production blockers are tracked in internal audit and roadmap files.
