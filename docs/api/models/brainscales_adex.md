@@ -37,6 +37,10 @@ and to enable future integration where the actual hardware clock is used.
 
 ```python
 def step(self, current: float) -> int:
+    if not math.isfinite(current):
+        raise ValueError("current must be finite")
+    if not math.isfinite(self.v) or not math.isfinite(self.w):
+        raise ValueError("runtime state must be finite")
     dt_hw = self.dt * self.hw_speedup        # = 0.1 * 1000 = 100
     exp_arg = np.clip((self.v - self.v_rh) / self.delta_t, -20.0, 20.0)
     exp_term = self.delta_t * np.exp(exp_arg)
@@ -53,7 +57,11 @@ def step(self, current: float) -> int:
 
 Note: `dt_hw / hw_speedup = dt` — the speedup is a documentation parameter,
 not a dynamical one in software emulation. The actual dynamics are
-identical to the standard AdExNeuron.
+identical to the standard AdExNeuron. Runtime validation is fail-closed across
+the maintained Python reference and native safety entry points: non-finite
+current, corrupted voltage/adaptation state, invalid time constants or hardware
+speedup, and non-finite integrator or spike-adaptation candidates are rejected
+before membrane or adaptation state mutation.
 
 ---
 
