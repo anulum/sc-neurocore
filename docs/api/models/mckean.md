@@ -56,6 +56,11 @@ dw = epsilon * (v - gamma * w) * dt
 v += dv;  w += dw
 ```
 
+Runtime surfaces reject non-finite current and fail closed if a
+corrupted runtime state or state update becomes non-finite. Python,
+Julia, Go, and Rust safety counterparts preserve the previous `(v, w)`
+state on rejected updates instead of silently reporting no spike.
+
 ### 1.5 Spike Detection
 
 Upward crossing of $v_{\text{peak}} = 0.8$. Note this uses a peak

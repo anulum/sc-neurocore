@@ -46,6 +46,8 @@ class McKeanNeuron:
                 raise ValueError(f"{name} must be finite and positive")
 
     def _f(self, v: float) -> float:
+        if not math.isfinite(v):
+            raise FloatingPointError("McKean voltage became non-finite")
         mid1 = self.a / 2.0
         mid2 = (1.0 + self.a) / 2.0
         if v < mid1:
@@ -55,6 +57,12 @@ class McKeanNeuron:
         else:
             return 1.0 - v
 
+    @staticmethod
+    def _validate_state(v: float, w: float) -> tuple[float, float]:
+        if not (math.isfinite(v) and math.isfinite(w)):
+            raise FloatingPointError("McKean state became non-finite")
+        return float(v), float(w)
+
     def step(self, current: float) -> int:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
@@ -62,8 +70,7 @@ class McKeanNeuron:
         dv = (self._f(self.v) - self.w + current) * self.dt
         dw = self.epsilon * (self.v - self.gamma * self.w) * self.dt
         v_prev = self.v
-        self.v += dv
-        self.w += dw
+        self.v, self.w = self._validate_state(self.v + dv, self.w + dw)
         return 1 if (self.v >= self.v_peak and v_prev < self.v_peak) else 0
 
     def reset(self) -> None:
