@@ -47,23 +47,48 @@ class SiegertTransferFunction:
         """Return instantaneous firing rate (Hz) for given mean input current."""
         if not math.isfinite(current):
             raise ValueError("current must be finite")
+        self._validate_runtime_state()
         mu = self.v_rest + current
+        if not math.isfinite(mu):
+            raise ValueError("Siegert runtime mean voltage must remain finite")
         sigma = max(abs(current) * 0.1, 1e-6)
+        if not math.isfinite(sigma) or sigma <= 0.0:
+            raise ValueError("Siegert runtime diffusion scale must remain finite and positive")
         u_th = (self.v_threshold - mu) / sigma
         u_re = (self.v_reset - mu) / sigma
+        if not math.isfinite(u_th) or not math.isfinite(u_re) or u_th <= u_re:
+            raise ValueError("Siegert runtime first-passage bounds must be finite and ordered")
         # Gauss-Legendre quadrature over [u_re, u_th]
         n_quad = 40
         u_pts, w_pts = np.polynomial.legendre.leggauss(n_quad)
         half_range = 0.5 * (u_th - u_re)
         mid = 0.5 * (u_th + u_re)
+        if not math.isfinite(half_range) or not math.isfinite(mid) or half_range <= 0.0:
+            raise ValueError("Siegert runtime quadrature interval must remain finite")
         u_scaled = half_range * u_pts + mid
         integrand = np.exp(np.clip(u_scaled**2, None, 50.0)) * (1.0 + _erf_approx(u_scaled))
+        if not np.all(np.isfinite(integrand)):
+            raise ValueError("Siegert runtime integrand must remain finite")
         integral_val = float(half_range * np.sum(w_pts * integrand))
+        if not math.isfinite(integral_val) or integral_val < 0.0:
+            raise ValueError("Siegert runtime integral must remain finite and non-negative")
         t_isi = self.tau_rp + self.tau_m * np.sqrt(np.pi) * integral_val
-        return 1000.0 / max(t_isi, 0.01)  # Hz
+        if not math.isfinite(t_isi) or t_isi < self.tau_rp:
+            raise ValueError("Siegert runtime inter-spike interval must remain finite")
+        rate = 1000.0 / t_isi
+        max_rate = 1000.0 / self.tau_rp
+        if not math.isfinite(rate) or rate < 0.0 or rate > max_rate:
+            raise ValueError("Siegert runtime rate must remain finite and refractory-bounded")
+        return rate  # Hz
 
     def reset(self) -> None:
         pass
+
+    def _validate_runtime_state(self) -> None:
+        try:
+            self.__post_init__()
+        except ValueError as exc:
+            raise ValueError(f"Siegert runtime parameters invalid: {exc}") from exc
 
 
 def _erf_approx(x: np.ndarray) -> np.ndarray:

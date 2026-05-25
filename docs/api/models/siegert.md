@@ -88,7 +88,16 @@ function, not a dynamical model.
 
 Construction rejects non-finite voltages, non-finite or non-positive `tau_m` and `tau_rp`, and configurations where `v_threshold <= v_reset`. `step(current)` rejects non-finite current before evaluating the first-passage integral. These guards preserve the physical boundary ordering required by the Siegert formula and avoid hiding invalid intervals behind the numerical `t_ISI` floor.
 
-Polyglot mirrors enforce the same parameter/input boundary. Rust and Go safety mirrors expose the validation contract through their integer safety surface; Julia keeps the scalar rate calculation with explicit 40-point quadrature constants and validation.
+Runtime evaluation revalidates all parameters before quadrature so corrupted
+instances cannot turn invalid first-passage intervals into plausible rates. The
+mean voltage, diffusion scale, transformed reset/threshold bounds, quadrature
+interval, integrand, integral, inter-spike interval, and returned rate must stay
+finite. Returned rates are constrained to `[0, 1000/tau_rp]` Hz.
+
+Polyglot mirrors enforce the same parameter/input boundary and rate contract.
+Go and Rust safety mirrors return explicit errors, Julia throws `DomainError`,
+and Mojo returns `-1.0` as the invalid scalar sentinel instead of silently
+converting numerical corruption into a zero-rate result.
 
 ---
 

@@ -24,26 +24,52 @@ end
 
 function step!(s::SiegertTransferFunctionState, I_ext::Float64=0.0; dt::Float64=0.1)
     if !validate_siegert(s) || !isfinite(I_ext)
-        return 0
+        throw(DomainError((s.tau_m, s.tau_rp, I_ext), "Siegert state/current must be finite and physically ordered"))
     end
 
     mu = s.v_rest + I_ext
+    if !isfinite(mu)
+        throw(DomainError(mu, "Siegert mean voltage must remain finite"))
+    end
     sigma = max(abs(I_ext) * 0.1, 1e-06)
+    if !isfinite(sigma) || sigma <= 0.0
+        throw(DomainError(sigma, "Siegert diffusion scale must remain finite and positive"))
+    end
     u_th = (s.v_threshold - mu) / sigma
     u_re = (s.v_reset - mu) / sigma
+    if !isfinite(u_th) || !isfinite(u_re) || u_th <= u_re
+        throw(DomainError((u_re, u_th), "Siegert first-passage bounds must remain finite and ordered"))
+    end
     n_quad = 40
     (u_pts, w_pts) = legendre_nodes_weights(n_quad)
     half_range = 0.5 * (u_th - u_re)
     mid = 0.5 * (u_th + u_re)
+    if !isfinite(half_range) || !isfinite(mid) || half_range <= 0.0
+        throw(DomainError((half_range, mid), "Siegert quadrature interval must remain finite"))
+    end
     integral_val = 0.0
     for i in eachindex(u_pts)
         u_scaled = half_range * u_pts[i] + mid
         integrand = exp(clamp(u_scaled ^ 2, -Inf, 50.0)) * (1.0 + erf_approx(u_scaled))
+        if !isfinite(integrand)
+            throw(DomainError(integrand, "Siegert integrand must remain finite"))
+        end
         integral_val += w_pts[i] * integrand
     end
     integral_val *= half_range
+    if !isfinite(integral_val) || integral_val < 0.0
+        throw(DomainError(integral_val, "Siegert integral must remain finite and non-negative"))
+    end
     t_isi = s.tau_rp + s.tau_m * sqrt(pi) * integral_val
-    return 1000.0 / max(t_isi, 0.01)
+    if !isfinite(t_isi) || t_isi < s.tau_rp
+        throw(DomainError(t_isi, "Siegert inter-spike interval must remain finite and refractory bounded"))
+    end
+    rate = 1000.0 / t_isi
+    max_rate = 1000.0 / s.tau_rp
+    if !isfinite(rate) || rate < 0.0 || rate > max_rate
+        throw(DomainError(rate, "Siegert rate must remain finite and refractory bounded"))
+    end
+    return rate
 end
 
 function validate_siegert(s::SiegertTransferFunctionState)
@@ -76,7 +102,7 @@ function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
     spikes = 0
     for t in 1:n_steps
         result = step!(s, I_ext; dt=dt)
-        trace[t] = s.tau_m
+        trace[t] = result
         if result isa Number && result > 0
             spikes += 1
         end

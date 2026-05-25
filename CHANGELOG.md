@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `SiegertTransferFunction` Python, Julia, Go, Mojo, and Rust safety
+  surfaces to revalidate first-passage parameters at runtime, reject non-finite
+  quadrature bounds, integrals, and inter-spike intervals, and keep rates
+  finite, non-negative, and refractory bounded.
 - Hardened `SigmoidRateNeuron` Python, Julia, Go, Mojo, and Rust safety
   surfaces to enforce the continuous-rate `[0, 1]` invariant, reject unstable
   Euler ratios and corrupted runtime state before mutation, and use saturated
