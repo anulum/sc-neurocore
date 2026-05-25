@@ -14,6 +14,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Hardened `MorrisLecarNeuron` Euler/RK4/Rosenbrock paths to fail closed on potassium-rate overflow or non-finite derivative/state updates without mutating state.
 - Hardened `FitzHughNagumoNeuron` Euler/RK4/Rosenbrock paths to fail closed on cubic overflow or non-finite derivative/state updates without mutating state, and aligned the Julia, Go, and Rust safety counterparts with the documented no-reset state equation.
 - Hardened `McKeanNeuron` runtime updates across Python, Julia, Go, and Rust safety surfaces to fail closed on non-finite state/current or non-finite post-update state instead of silently reporting no spike.
+- Hardened `ResonateAndFireNeuron` Julia, Go, Mojo, and Rust safety counterparts so invalid current/state and non-finite Euler updates report explicit errors/sentinels instead of silently returning no spike.
 
 ### Repository hygiene
 - Purged obsolete completed failed/cancelled GitHub Actions repair-sequence runs after later successful replacement runs were verified on `main`.

@@ -28,9 +28,9 @@ impl ResonateAndFireNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
         if !i_ext.is_finite() || !validate_resonate_and_fire(self) {
-            return 0;
+            return Err("resonate-and-fire state/current must be finite and well-formed");
         }
 
         let dx = (self.b * self.x - self.omega * self.y + i_ext) * self.dt;
@@ -44,7 +44,7 @@ impl ResonateAndFireNeuron {
             || !next_y.is_finite()
             || !radius.is_finite()
         {
-            return 0;
+            return Err("resonate-and-fire Euler update became non-finite");
         }
 
         self.x = next_x;
@@ -52,9 +52,9 @@ impl ResonateAndFireNeuron {
         if radius >= self.threshold {
             self.x = 0.0_f64;
             self.y = 0.0_f64;
-            return 1;
+            return Ok(1);
         }
-        0
+        Ok(0)
     }
 
     pub fn reset(&mut self) {
@@ -88,7 +88,7 @@ mod tests {
     #[test]
     fn test_resonate_and_fire_step() {
         let mut state = ResonateAndFireNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).unwrap();
         assert!(spike == 0 || spike == 1);
     }
 
@@ -96,7 +96,7 @@ mod tests {
     fn positive_current_spikes_and_resets() {
         let mut state = ResonateAndFireNeuron::new();
         for _ in 0..50_000 {
-            if state.step(2.0) == 1 {
+            if state.step(2.0).unwrap() == 1 {
                 assert_eq!(state.x, 0.0);
                 assert_eq!(state.y, 0.0);
                 return;
@@ -111,7 +111,7 @@ mod tests {
         state.x = 0.25;
         state.y = -0.5;
 
-        assert_eq!(state.step(f64::NAN), 0);
+        assert!(state.step(f64::NAN).is_err());
         assert_eq!(state.x, 0.25);
         assert_eq!(state.y, -0.5);
     }
@@ -125,7 +125,7 @@ mod tests {
         state.b = 1.0e308;
         state.dt = 1.0e308;
 
-        assert_eq!(state.step(1.0e308), 0);
+        assert!(state.step(1.0e308).is_err());
         assert_eq!(state.x, 0.25);
         assert_eq!(state.y, -0.5);
     }

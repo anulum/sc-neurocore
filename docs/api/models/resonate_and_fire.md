@@ -53,6 +53,12 @@ def step(self, current: float) -> int:
 
 Forward Euler, single step per call. No sub-stepping.
 
+Runtime contract: all maintained Python, Julia, Go, Mojo, and Rust
+safety surfaces reject non-finite current/state and non-finite Euler
+updates before mutating oscillator state. Rejected native scalar paths
+return an explicit error/sentinel rather than silently converting
+numerical corruption into a no-spike event.
+
 ---
 
 ## Parameters

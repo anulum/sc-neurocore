@@ -8,7 +8,10 @@
 
 package services
 
-import "math"
+import (
+	"errors"
+	"math"
+)
 
 // ResonateAndFireNeuronState holds the damped oscillator state.
 type ResonateAndFireNeuronState struct {
@@ -43,9 +46,9 @@ func (s ResonateAndFireNeuronState) Valid() bool {
 }
 
 // Step advances the resonator by one explicit Euler step. Invalid inputs do not mutate state.
-func (s *ResonateAndFireNeuronState) Step(iExt float64) int {
+func (s *ResonateAndFireNeuronState) Step(iExt float64) (int, error) {
 	if !finite(iExt) || !s.Valid() {
-		return 0
+		return 0, ErrResonateAndFireInvalidState
 	}
 
 	dx := (s.B*s.X - s.Omega*s.Y + iExt) * s.Dt
@@ -54,7 +57,7 @@ func (s *ResonateAndFireNeuronState) Step(iExt float64) int {
 	nextY := s.Y + dy
 	radius := math.Hypot(nextX, nextY)
 	if !finite(dx) || !finite(dy) || !finite(nextX) || !finite(nextY) || !finite(radius) {
-		return 0
+		return 0, ErrResonateAndFireNonFiniteUpdate
 	}
 
 	s.X = nextX
@@ -62,9 +65,9 @@ func (s *ResonateAndFireNeuronState) Step(iExt float64) int {
 	if radius >= s.Threshold {
 		s.X = 0.0
 		s.Y = 0.0
-		return 1
+		return 1, nil
 	}
-	return 0
+	return 0, nil
 }
 
 // Reset clears dynamic oscillator state without changing parameters.
@@ -79,7 +82,10 @@ func SimulateResonateAndFireNeuron(nSteps int, iExt float64) ([]float64, int) {
 	trace := make([]float64, nSteps)
 	spikes := 0
 	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
+		result, err := s.Step(iExt)
+		if err != nil {
+			panic(err)
+		}
 		trace[t] = math.Hypot(s.X, s.Y)
 		if result > 0 {
 			spikes++
@@ -87,3 +93,8 @@ func SimulateResonateAndFireNeuron(nSteps int, iExt float64) ([]float64, int) {
 	}
 	return trace, spikes
 }
+
+var (
+	ErrResonateAndFireInvalidState    = errors.New("resonate-and-fire state/current must be finite and well-formed")
+	ErrResonateAndFireNonFiniteUpdate = errors.New("resonate-and-fire Euler update became non-finite")
+)
