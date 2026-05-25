@@ -38,7 +38,12 @@ def step(self, current: float) -> int:
     return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 ```
 
-Forward Euler. No transcendental functions — pure polynomial.
+The baseline path is explicit Euler. The Python model also exposes
+`rk4` and `rosenbrock` integrators over the same two-state ODE. Runtime
+surfaces reject non-finite current and fail closed if the cubic term
+overflows or a derivative/state update becomes non-finite; the previous
+state is preserved on rejection. Julia, Go, and Rust safety counterparts
+use the same documented state equation and no-reset threshold crossing.
 
 ---
 
