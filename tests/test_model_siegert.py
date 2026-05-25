@@ -147,6 +147,31 @@ class TestSiegertValidation:
         with pytest.raises(ValueError, match="current"):
             n.step(current)
 
+    @pytest.mark.parametrize("field", ["tau_m", "tau_rp", "v_threshold", "v_reset", "v_rest"])
+    def test_rejects_corrupted_runtime_parameters(self, field: str):
+        n = SiegertTransferFunction()
+        setattr(n, field, np.nan)
+        with pytest.raises(ValueError, match="runtime"):
+            n.step(20.0)
+
+    def test_rejects_corrupted_runtime_boundary_ordering(self):
+        n = SiegertTransferFunction()
+        n.v_reset = n.v_threshold
+        with pytest.raises(ValueError, match="runtime"):
+            n.step(20.0)
+
+    def test_rejects_non_finite_diffusion_scale_before_rate_floor(self):
+        n = SiegertTransferFunction()
+        n.v_rest = -np.inf
+        with pytest.raises(ValueError, match="runtime"):
+            n.step(20.0)
+
+    def test_rate_is_finite_non_negative_and_refractory_bounded(self):
+        n = SiegertTransferFunction(tau_rp=2.0)
+        rates = [n.step(current) for current in [-20.0, 0.0, 20.0, 50.0, 1.0e6]]
+        assert all(np.isfinite(rate) for rate in rates)
+        assert all(0.0 <= rate <= 500.0 for rate in rates)
+
 
 class TestSiegertPerformance:
     def test_isolation_throughput(self):
