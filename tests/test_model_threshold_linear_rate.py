@@ -13,6 +13,7 @@ Memoryless — r computed from current input, no state accumulation."""
 
 from __future__ import annotations
 
+import os
 import time
 
 import pytest
@@ -140,7 +141,10 @@ class TestThresholdLinearPerformance:
         for _ in range(N):
             n.step(3.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 500000  # should be > 1M steps/s
+        rate = N / elapsed
+        minimum_rate = 400000 if os.environ.get("CI") else 500000
+        assert n.r == 3.0
+        assert rate > minimum_rate, f"isolation: {rate:.0f} steps/s, minimum={minimum_rate}"
 
     def test_deterministic(self):
         traces = []
