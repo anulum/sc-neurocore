@@ -62,6 +62,16 @@ class TestFHNIsolation:
         n.reset()
         assert n.v == -1.0 and n.w == -0.5
 
+    @pytest.mark.parametrize("integrator", ["baseline_euler", "rk4", "rosenbrock"])
+    def test_cubic_overflow_fails_closed_without_mutating_state(self, integrator: str):
+        n = FitzHughNagumoNeuron(v=1e103, w=0.0, integrator=integrator)
+        before = (n.v, n.w)
+
+        with pytest.raises(FloatingPointError, match="overflowed|non-finite"):
+            n.step(0.0)
+
+        assert (n.v, n.w) == before
+
 
 class TestFHNDynamicsEquations:
     def test_dv_formula(self):

@@ -67,18 +67,32 @@ class FitzHughNagumoNeuron:
             self._step_rosenbrock(current)
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
+    @staticmethod
+    def _validate_state(v: float, w: float) -> tuple[float, float]:
+        if not (math.isfinite(v) and math.isfinite(w)):
+            raise FloatingPointError("FitzHugh-Nagumo state became non-finite")
+        return float(v), float(w)
+
     def _rhs(self, _t: float, state: np.ndarray, current: float) -> np.ndarray:
         v = float(state[0])
         w = float(state[1])
-        dv = v - v**3 / 3.0 - w + current
-        dw = self.epsilon * (v + self.a - self.b * w)
-        return np.array([dv, dw], dtype=np.float64)
+        if not (math.isfinite(v) and math.isfinite(w) and math.isfinite(current)):
+            raise FloatingPointError("FitzHugh-Nagumo derivative input became non-finite")
+        try:
+            dv = v - v**3 / 3.0 - w + current
+            dw = self.epsilon * (v + self.a - self.b * w)
+        except OverflowError as exc:
+            raise FloatingPointError("FitzHugh-Nagumo derivative overflowed") from exc
+        out = np.array([dv, dw], dtype=np.float64)
+        if not np.all(np.isfinite(out)):
+            raise FloatingPointError("FitzHugh-Nagumo derivative became non-finite")
+        return out
 
     def _step_baseline_euler(self, current: float) -> None:
-        dv = (self.v - self.v**3 / 3.0 - self.w + current) * self.dt
-        dw = self.epsilon * (self.v + self.a - self.b * self.w) * self.dt
-        self.v += dv
-        self.w += dw
+        dv, dw = self._rhs(0.0, np.array([self.v, self.w], dtype=np.float64), current)
+        new_v = self.v + dv * self.dt
+        new_w = self.w + dw * self.dt
+        self.v, self.w = self._validate_state(new_v, new_w)
 
     def _step_rk4(self, current: float) -> None:
         solver = RK4Solver()
@@ -89,8 +103,7 @@ class FitzHughNagumoNeuron:
             0.0,
             self.dt,
         )
-        self.v = float(state[0])
-        self.w = float(state[1])
+        self.v, self.w = self._validate_state(float(state[0]), float(state[1]))
 
     def _step_rosenbrock(self, current: float) -> None:
         solver = RosenbrockEuler()
@@ -101,8 +114,7 @@ class FitzHughNagumoNeuron:
             0.0,
             self.dt,
         )
-        self.v = float(state[0])
-        self.w = float(state[1])
+        self.v, self.w = self._validate_state(float(state[0]), float(state[1]))
 
     def reset(self) -> None:
         self.v = -1.0

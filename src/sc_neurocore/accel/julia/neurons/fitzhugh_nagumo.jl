@@ -25,16 +25,20 @@ function FitzHughNagumoNeuronState()
 end
 
 function step!(s::FitzHughNagumoNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        v_prev = s.v
-        dv = (s.v - s.v ^ 3 / 3.0 - s.w + I_ext) * s.dt
-        dw = s.epsilon * (s.v + s.a - s.b * s.w) * s.dt
-        s.v += dv
-        s.w += dw
-        return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
-    catch _e
-        return 0
+    if !(isfinite(s.v) && isfinite(s.w) && isfinite(I_ext))
+        throw(DomainError((s.v, s.w, I_ext), "FitzHugh-Nagumo state/current must be finite"))
     end
+    v_prev = s.v
+    dv = (s.v - s.v ^ 3 / 3.0 - s.w + I_ext) * s.dt
+    dw = s.epsilon * (s.v + s.a - s.b * s.w) * s.dt
+    new_v = s.v + dv
+    new_w = s.w + dw
+    if !(isfinite(new_v) && isfinite(new_w))
+        throw(DomainError((new_v, new_w), "FitzHugh-Nagumo state became non-finite"))
+    end
+    s.v = new_v
+    s.w = new_w
+    return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)

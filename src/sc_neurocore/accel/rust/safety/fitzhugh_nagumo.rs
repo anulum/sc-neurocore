@@ -33,13 +33,24 @@ impl FitzHughNagumoNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // v_prev = self.v
-        // dv = (self.v - self.v.powi3 / 3.0 - self.w + current) * self.dt
-        // dw = self.epsilon * (self.v + self.a - self.b * self.w) * self.dt
-        // self.v += dv
-        // self.w += dw
-        // return 1 if (self.v >= self.v_threshold && v_prev < self.v_threshold)
-        0 // spike indicator
+        if !(self.v.is_finite() && self.w.is_finite() && i_ext.is_finite()) {
+            panic!("FitzHugh-Nagumo state/current must be finite");
+        }
+        let v_prev = self.v;
+        let dv = (self.v - self.v.powi(3) / 3.0 - self.w + i_ext) * self.dt;
+        let dw = self.epsilon * (self.v + self.a - self.b * self.w) * self.dt;
+        let new_v = self.v + dv;
+        let new_w = self.w + dw;
+        if !(new_v.is_finite() && new_w.is_finite()) {
+            panic!("FitzHugh-Nagumo state became non-finite");
+        }
+        self.v = new_v;
+        self.w = new_w;
+        if self.v >= self.v_threshold && v_prev < self.v_threshold {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
@@ -55,6 +66,15 @@ impl FitzHughNagumoNeuron {
 
 pub fn validate_fitzhugh_nagumo(state: &FitzHughNagumoNeuron) -> bool {
     state.v.is_finite()
+        && state.w.is_finite()
+        && state.a.is_finite()
+        && state.b.is_finite()
+        && state.epsilon.is_finite()
+        && state.dt.is_finite()
+        && state.v_threshold.is_finite()
+        && state.b > 0.0
+        && state.epsilon > 0.0
+        && state.dt > 0.0
 }
 
 #[cfg(test)]
