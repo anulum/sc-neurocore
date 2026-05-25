@@ -2680,8 +2680,7 @@ impl PyKuramotoSolver {
         self.inner.order_parameter()
     }
 
-    #[setter]
-    fn set_phases(&mut self, phases: Vec<f64>) -> PyResult<()> {
+    fn apply_phases(&mut self, phases: Vec<f64>) -> PyResult<()> {
         if phases.len() != self.inner.n {
             return Err(PyValueError::new_err(format!(
                 "phases length mismatch: got {}, expected {}.",
@@ -2692,6 +2691,15 @@ impl PyKuramotoSolver {
         validate_kuramoto_finite("phases", &phases)?;
         self.inner.set_phases(phases);
         Ok(())
+    }
+
+    fn set_phases(&mut self, phases: Vec<f64>) -> PyResult<()> {
+        self.apply_phases(phases)
+    }
+
+    #[setter(phases)]
+    fn set_phases_attr(&mut self, phases: Vec<f64>) -> PyResult<()> {
+        self.apply_phases(phases)
     }
 
     fn set_coupling(&mut self, coupling: &Bound<'_, PyAny>) -> PyResult<()> {
