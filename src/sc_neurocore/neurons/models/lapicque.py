@@ -30,6 +30,9 @@ class LapicqueNeuron:
     dt: float = 1.0
 
     def __post_init__(self) -> None:
+        self._validate_runtime_state()
+
+    def _validate_runtime_state(self) -> None:
         for field in ("v", "v_rest", "v_reset", "v_threshold"):
             if not math.isfinite(getattr(self, field)):
                 raise ValueError(f"{field} must be finite")
@@ -47,6 +50,7 @@ class LapicqueNeuron:
     def step(self, current: float) -> int:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
+        self._validate_runtime_state()
         dv = (-(self.v - self.v_rest) + self.resistance * current) / self.tau * self.dt
         next_v = self.v + dv
         if not math.isfinite(dv) or not math.isfinite(next_v):

@@ -76,7 +76,7 @@ mod tests {
     #[test]
     fn test_theta_step() {
         let mut state = ThetaNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).expect("valid step must succeed");
         assert!(spike == 0 || spike == 1);
     }
 

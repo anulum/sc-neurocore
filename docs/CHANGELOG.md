@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `LapicqueNeuron` Python, Julia, Go, and Rust safety surfaces to
+  revalidate mutable RC state before division/integration and report invalid
+  current, corrupted state, or non-finite Euler increments explicitly before
+  membrane mutation; documented the Mojo fail-closed spike-flag boundary.
 - Hardened `NonResettingLIFNeuron` Python, Julia, Go, and Rust safety surfaces
   to revalidate runtime membrane and adaptive-threshold state before
   integration, compute both candidates before mutation, and report non-finite
