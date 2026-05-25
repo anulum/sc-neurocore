@@ -46,14 +46,19 @@ impl McKeanNeuron {
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
         if !validate_mckean(self) || !i_ext.is_finite() {
-            return 0;
+            panic!("McKean state/current must be finite and well-formed");
         }
 
         let dv = (self._f(self.v) - self.w + i_ext) * self.dt;
         let dw = self.epsilon * (self.v - self.gamma * self.w) * self.dt;
         let v_prev = self.v;
-        self.v += dv;
-        self.w += dw;
+        let new_v = self.v + dv;
+        let new_w = self.w + dw;
+        if !(new_v.is_finite() && new_w.is_finite()) {
+            panic!("McKean state became non-finite");
+        }
+        self.v = new_v;
+        self.w = new_w;
         if self.v >= self.v_peak && v_prev < self.v_peak {
             1
         } else {

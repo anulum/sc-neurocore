@@ -83,6 +83,26 @@ class TestMcKeanIsolation:
             traces.append(trace)
         assert traces[0] == traces[1]
 
+    def test_runtime_non_finite_state_fails_closed_without_mutating_w(self):
+        n = McKeanNeuron()
+        n.v = float("nan")
+        before_w = n.w
+
+        with pytest.raises(FloatingPointError, match="non-finite"):
+            n.step(0.5)
+
+        assert np.isnan(n.v)
+        assert n.w == before_w
+
+    def test_runtime_update_overflow_fails_closed_without_mutating_state(self):
+        n = McKeanNeuron(v=1e308, w=-1.7e308)
+        before = (n.v, n.w)
+
+        with pytest.raises(FloatingPointError, match="non-finite"):
+            n.step(1.7e308)
+
+        assert (n.v, n.w) == before
+
 
 # ---------------------------------------------------------------------------
 # 2. ANALYTICAL — piecewise f(v), dv, dw formulas

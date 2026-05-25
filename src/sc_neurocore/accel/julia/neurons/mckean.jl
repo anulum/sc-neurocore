@@ -48,14 +48,19 @@ end
 
 function step!(s::McKeanNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
     if !validate(s) || !isfinite(I_ext)
-        return 0
+        throw(DomainError((s.v, s.w, I_ext), "McKean state/current must be finite and well-formed"))
     end
 
     dv = (_f(s, s.v) - s.w + I_ext) * s.dt
     dw = s.epsilon * (s.v - s.gamma * s.w) * s.dt
     v_prev = s.v
-    s.v += dv
-    s.w += dw
+    new_v = s.v + dv
+    new_w = s.w + dw
+    if !(isfinite(new_v) && isfinite(new_w))
+        throw(DomainError((new_v, new_w), "McKean state became non-finite"))
+    end
+    s.v = new_v
+    s.w = new_w
     return (s.v >= s.v_peak && v_prev < s.v_peak) ? 1 : 0
 end
 
