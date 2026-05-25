@@ -198,6 +198,19 @@ class TestMPValidation:
         with pytest.raises(ValueError, match="weighted_input"):
             McCullochPittsNeuron().step(weighted_input)
 
+    @pytest.mark.parametrize("theta", [np.nan, np.inf, -np.inf])
+    def test_rejects_corrupted_runtime_threshold_before_comparison(self, theta: float):
+        n = McCullochPittsNeuron(theta=1.0)
+        n.theta = theta
+        with pytest.raises(ValueError, match="theta"):
+            n.step(2.0)
+
+    def test_runtime_threshold_comparison_matches_heaviside_boundary_after_mutation(self):
+        n = McCullochPittsNeuron(theta=1.0)
+        n.theta = 2.0
+        assert n.step(1.999999999999999) == 0
+        assert n.step(2.0) == 1
+
 
 # ---------------------------------------------------------------------------
 # 4. DYNAMICS — firing rate under constant/varying input

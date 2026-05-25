@@ -17,6 +17,8 @@ $$y = \begin{cases} 1 & \text{if } \sum w_i x_i \geq \theta \\ 0 & \text{otherwi
 
 ```python
 def step(self, weighted_input: float) -> int:
+    if not math.isfinite(weighted_input) or not math.isfinite(self.theta):
+        raise ValueError
     return 1 if weighted_input >= self.theta else 0
 ```
 
@@ -72,6 +74,22 @@ The activation is a Heaviside step function H(x − θ):
   with negative weight → NOT.
 - **Deterministic:** Identical input → identical output, always.
 - **reset() is no-op:** No state to reset.
+
+## Validation contract
+
+The reference implementation revalidates the mutable threshold at every
+`step()` before the Heaviside comparison:
+
+- `theta` must be finite at construction time and at runtime;
+- `weighted_input` must be finite;
+- equality at the boundary fires, preserving the McCulloch-Pitts
+  \(y = 1 \iff x \geq \theta\) convention;
+- `reset()` is a no-op because the model is stateless and must not rewrite the
+  threshold parameter.
+
+Go, Julia, Rust, and Mojo now expose the same finite-threshold and finite-input
+contract. Go and Rust return explicit errors, Julia raises `DomainError`, and
+the Mojo kernel returns `-1` for invalid finite-contract inputs.
 
 ### Biological relevance
 
@@ -241,6 +259,8 @@ McCullochPittsNeuron(theta=1.0)
 - **No overflow risk:** No state variables
 - **No stability concerns:** Stateless model
 - **Exact reproducibility:** Deterministic for identical inputs
+- **Finite comparison contract:** Non-finite thresholds or weighted inputs are
+  rejected before the comparison, avoiding undefined Boolean semantics.
 
 ---
 
@@ -249,9 +269,10 @@ McCullochPittsNeuron(theta=1.0)
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
 | Isolation | 12 | construction, step binary, below/at/above threshold, negative input, stateless, custom theta, reset noop, deterministic, AND gate, OR gate |
+| Validation | 8 | finite threshold and weighted input, runtime threshold revalidation, Heaviside boundary after threshold mutation |
 | Network | 1 | Population |
 | Pipeline | 10 | End-to-end verification (this document) |
-| **Total** | **23** | |
+| **Total** | **46** | dedicated module checks |
 
 ---
 
@@ -263,3 +284,5 @@ McCullochPittsNeuron(theta=1.0)
 3. All 10 pipeline stages verified green
 4. Logic gate semantics (AND, OR) confirmed with theta parameterisation
 5. Model serves as performance ceiling baseline for the pipeline
+6. Polyglot finite-input and finite-threshold contracts aligned across Go,
+   Julia, Rust, and Mojo
