@@ -20,16 +20,32 @@ function PoissonNeuronState()
     PoissonNeuronState(100.0, 1.0, 0.0)
 end
 
-function step!(s::PoissonNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    if !validate_poisson(s) || !isfinite(I_ext)
-        return 0
+function step!(s::PoissonNeuronState, I_ext::Float64=-1.0; dt::Float64=s.dt_ms)::Int
+    if !isfinite(I_ext)
+        throw(DomainError(I_ext, "Poisson rate override must be finite"))
+    end
+    if !isfinite(dt) || dt <= 0.0
+        throw(DomainError(dt, "Poisson dt_ms must be finite and positive"))
+    end
+    previous_dt = s.dt_ms
+    s.dt_ms = dt
+    if !validate_poisson(s)
+        s.dt_ms = previous_dt
+        throw(DomainError(s.rate_hz, "Poisson rate and timestep must be finite with non-negative rate and positive timestep"))
     end
 
     rate_hz = I_ext < 0.0 ? s.rate_hz : I_ext
     if !isfinite(rate_hz) || rate_hz < 0.0
-        return 0
+        throw(DomainError(rate_hz, "Poisson active rate must be finite and non-negative"))
     end
-    p_spike = -expm1(-(rate_hz * s.dt_ms / 1000.0))
+    hazard = rate_hz * s.dt_ms / 1000.0
+    if !isfinite(hazard) || hazard < 0.0
+        throw(DomainError(hazard, "Poisson interval hazard must remain finite and non-negative"))
+    end
+    p_spike = -expm1(-hazard)
+    if !isfinite(p_spike) || p_spike < 0.0 || p_spike > 1.0
+        throw(DomainError(p_spike, "Poisson spike probability must remain finite and bounded"))
+    end
     return rand() < p_spike ? 1 : 0
 end
 

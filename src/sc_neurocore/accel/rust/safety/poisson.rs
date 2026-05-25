@@ -24,27 +24,34 @@ impl PoissonNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        if !validate_poisson(self) || !i_ext.is_finite() {
-            return 0;
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
+        if !i_ext.is_finite() {
+            return Err("poisson rate override must be finite");
+        }
+        if !validate_poisson(self) {
+            return Err("poisson rate and timestep must be finite with non-negative rate and positive timestep");
         }
 
         let rate_hz = if i_ext < 0.0 { self.rate_hz } else { i_ext };
         if !rate_hz.is_finite() || rate_hz < 0.0 {
-            return 0;
+            return Err("poisson active rate must be finite and non-negative");
         }
-        let p_spike = -(-(rate_hz * self.dt_ms / 1000.0)).exp_m1();
+        let hazard = rate_hz * self.dt_ms / 1000.0;
+        if !hazard.is_finite() || hazard < 0.0 {
+            return Err("poisson interval hazard must remain finite and non-negative");
+        }
+        let p_spike = -(-hazard).exp_m1();
+        if !p_spike.is_finite() || !(0.0..=1.0).contains(&p_spike) {
+            return Err("poisson spike probability must remain finite and bounded");
+        }
         if p_spike >= 1.0 {
-            return 1;
+            return Ok(1);
         }
-        0
+        Ok(0)
     }
 
     pub fn reset(&mut self) {
-        // pass
-        self.rate_hz = 100.0_f64;
-        self.dt_ms = 1.0_f64;
-        self._rng = 0.0_f64;
+        // Stateless model: reset is intentionally a no-op.
     }
 }
 
@@ -68,7 +75,34 @@ mod tests {
     #[test]
     fn test_poisson_step() {
         let mut state = PoissonNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).expect("valid step must succeed");
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_high_rate_saturates() {
+        let mut state = PoissonNeuron::new();
+        assert_eq!(state.step(1.0e9), Ok(1));
+    }
+
+    #[test]
+    fn test_invalid_runtime_state_fails() {
+        let mut state = PoissonNeuron::new();
+        state.dt_ms = 0.0;
+        assert!(state.step(-1.0).is_err());
+    }
+
+    #[test]
+    fn test_non_finite_rate_override_fails() {
+        let mut state = PoissonNeuron::new();
+        assert!(state.step(f64::INFINITY).is_err());
+    }
+
+    #[test]
+    fn test_non_finite_interval_hazard_fails() {
+        let mut state = PoissonNeuron::new();
+        state.rate_hz = 1.0e308;
+        state.dt_ms = 1.0e308;
+        assert!(state.step(-1.0).is_err());
     }
 }

@@ -9,7 +9,15 @@
 package services
 
 import (
+	"errors"
 	"math"
+)
+
+var (
+	ErrPoissonInvalidInput       = errors.New("poisson rate override must be finite")
+	ErrPoissonInvalidState       = errors.New("poisson rate and timestep must be finite with non-negative rate and positive timestep")
+	ErrPoissonNonFiniteHazard    = errors.New("poisson interval hazard must remain finite and non-negative")
+	ErrPoissonInvalidProbability = errors.New("poisson spike probability must remain finite and bounded")
 )
 
 // PoissonNeuronState holds the neuron state
@@ -28,23 +36,33 @@ func NewPoissonNeuron() *PoissonNeuronState {
 	}
 }
 
-// Step advances the neuron by one timestep
-func (s *PoissonNeuronState) Step(iExt float64) int {
-	if !ValidatePoisson(s) || !finite(iExt) {
-		return 0
+// Step advances the neuron by one timestep.
+func (s *PoissonNeuronState) Step(iExt float64) (int, error) {
+	if !finite(iExt) {
+		return 0, ErrPoissonInvalidInput
+	}
+	if !ValidatePoisson(s) {
+		return 0, ErrPoissonInvalidState
 	}
 	rateHz := s.RateHz
 	if iExt >= 0.0 {
 		rateHz = iExt
 	}
 	if !finite(rateHz) || rateHz < 0.0 {
-		return 0
+		return 0, ErrPoissonInvalidInput
 	}
-	pSpike := -math.Expm1(-(rateHz * s.DtMs / 1000.0))
+	hazard := rateHz * s.DtMs / 1000.0
+	if !finite(hazard) || hazard < 0.0 {
+		return 0, ErrPoissonNonFiniteHazard
+	}
+	pSpike := -math.Expm1(-hazard)
+	if !finite(pSpike) || pSpike < 0.0 || pSpike > 1.0 {
+		return 0, ErrPoissonInvalidProbability
+	}
 	if pSpike >= 1.0 {
-		return 1
+		return 1, nil
 	}
-	return 0
+	return 0, nil
 }
 
 // ValidatePoisson enforces finite, physically valid rate parameters.
@@ -61,7 +79,10 @@ func SimulatePoissonNeuron(nSteps int, iExt float64) ([]float64, int) {
 	trace := make([]float64, nSteps)
 	spikes := 0
 	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
+		result, err := s.Step(iExt)
+		if err != nil {
+			panic(err)
+		}
 		trace[t] = s.RateHz
 		if result > 0 {
 			spikes++

@@ -30,6 +30,22 @@ No membrane dynamics. Pure Bernoulli trial each step.
 - **dt scaling:** Doubling dt doubles spike probability.
 - **reset() is no-op:** Stateless — nothing to reset.
 
+## Validation contract
+
+The implementation revalidates mutable runtime parameters before every
+Bernoulli sample:
+
+- `rate_hz` must be finite and non-negative;
+- `dt_ms` must be finite and positive;
+- `rate_override` must be finite, with negative values selecting stored
+  `rate_hz`;
+- the interval hazard `rate_hz * dt_ms / 1000` must remain finite and
+  non-negative before evaluating the finite-step probability;
+- the resulting spike probability must remain finite and bounded in `[0, 1]`.
+
+These guards preserve the Poisson-process interval law and prevent corrupted
+mutable rate or timestep state from silently saturating to always-spike output.
+
 ## Statistical Properties
 
 | Property | Value |
@@ -57,10 +73,11 @@ PoissonNeuron
 | Rate | 8 | mean matches finite-step Poisson probability, 4-point proportionality, monotonicity, zero rate, rate_override, negative override |
 | ISI | 3 | geometric mean ISI, CV≈1, no refractory (ISI=1 exists) |
 | dt scaling | 2 | dt doubles probability, small dt rare spikes |
+| Validation | 18 | finite baseline rate, finite timestep, finite override, corrupted runtime state, finite interval hazard, bounded high-rate saturation |
 | Stochasticity | 2 | different neurons differ, stateless (history-independent) |
 | Network | 2 | population, spikes |
 | Analysis | 2 | spike_count, consistency |
-| **Total** | **module-specific** | |
+| **Total** | **42** | dedicated module checks |
 
 
 ---
@@ -103,7 +120,12 @@ State returns to initial values after `reset()`.
 **Status: PASS**
 
 ### 7. Polyglot mirrors
-Rust and Go safety mirrors validate parameters and deterministically emit only saturated-probability spikes. Julia uses the bounded probability with stochastic Bernoulli sampling. Exact random-trace parity is not applicable to stochastic sampling.
+Rust and Go safety mirrors validate parameters and deterministically emit only
+saturated-probability spikes with explicit errors for invalid state or
+non-finite interval hazards. Julia uses the bounded probability with stochastic
+Bernoulli sampling and raises `DomainError` for invalid contracts. Mojo exposes
+the same finite-contract saturated-spike boundary with `-1` for invalid inputs.
+Exact random-trace parity is not applicable to stochastic sampling.
 
 ---
 
@@ -111,5 +133,5 @@ Rust and Go safety mirrors validate parameters and deterministically emit only s
 
 1. Throughput: ~402K steps/s (Python, single-thread)
 2. All pipeline stages verified green
-3. Polyglot mirrors: bounded probability contract aligned; exact random-trace parity is not applicable
+3. Polyglot mirrors: bounded probability contract aligned with explicit invalid-contract signalling
 4. Numerical stability confirmed over 20K steps
