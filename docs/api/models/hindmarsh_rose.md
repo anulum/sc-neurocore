@@ -63,9 +63,15 @@ The parameter $r = 0.001$ sets the timescale separation: $z$ evolves
 Upward threshold crossing: spike when $x(t) \geq x_\theta$ and
 $x(t - \Delta t) < x_\theta$, with $x_\theta = 1.0$.
 
-### 1.5 Euler Integration (Implementation)
+### 1.5 Integration
 
-Both Python and Rust use simultaneous forward Euler:
+The Python model defaults to fourth-order Runge-Kutta for the continuous
+Hindmarsh-Rose ODE. The explicit Euler baseline remains available with
+`integrator="euler"` for regression comparisons and cross-runtime current
+balance checks.
+
+Go, Rust safety, and Julia counterpart surfaces preserve the simultaneous
+Euler baseline:
 
 ```
 dx = (y - x³ + b·x² - z + I) * dt
@@ -76,6 +82,9 @@ x += dx;  y += dy;  z += dz
 
 All three derivatives are computed from the old state before any
 variable is updated.
+
+All runtime surfaces reject non-finite input current and non-physical
+time-step or slow-adaptation parameters before updating state.
 
 ---
 
@@ -101,7 +110,7 @@ The model exhibits three qualitatively different regimes as $I$ varies:
    inter-burst intervals (z slowly drifts). This is the signature
    behaviour of the HR model.
 
-3. **Tonic spiking** ($I \gtrsim 5$): The external drive is strong
+3. **Tonic spiking** ($I \gtrsim 5$): The external drive is large
    enough that the slow variable $z$ cannot suppress spiking. The
    model fires continuously.
 
@@ -158,8 +167,8 @@ conditions is the origin of chaos in the HR model.
   makes the system more excitable (lower spiking threshold).
 - **$r = 0.001$:** Timescale separation. Smaller $r$ → longer bursts
   and longer silences. $r = 0$ freezes $z$, reducing to 2D.
-- **$s = 4$:** Coupling strength between fast and slow subsystems.
-  Larger $s$ → stronger adaptation → shorter bursts.
+- **$s = 4$:** Coupling gain between fast and slow subsystems.
+  Larger $s$ → greater adaptation → shorter bursts.
 - **$x_r = -1.6$:** Resting potential analogue. The equilibrium
   of $z$ when $x = x_r$.
 
@@ -228,7 +237,7 @@ sc_neurocore Pipeline
 |-----------|--------|---------------|
 | `b` ↑ | More excitable, lower spiking threshold | 2.5–4.0 |
 | `r` ↓ | Longer bursts, longer silences | 0.0005–0.01 |
-| `s` ↑ | Stronger adaptation, shorter bursts | 2–6 |
+| `s` ↑ | Greater adaptation, shorter bursts | 2–6 |
 | `x_rest` | Shifts z equilibrium, affects burst threshold | -2 to -1 |
 | `I` | 0→2: silent, 2→5: bursting, >5: tonic | 0–10 |
 

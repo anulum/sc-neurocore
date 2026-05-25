@@ -36,16 +36,31 @@ impl HindmarshRoseNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // x_prev = self.x
-        // dx = (self.y - self.x.powi3 + self.b * self.x.powi2 - self.z + current
-        // dy = (1.0 - 5.0 * self.x.powi2 - self.y) * self.dt
-        // dz = self.r * (self.s * (self.x - self.x_rest) - self.z) * self.dt
-        // self.x += dx
-        // self.y += dy
-        // self.z += dz
-        // return 1 if (self.x >= self.x_threshold && x_prev < self.x_threshold)
-        0 // spike indicator
+    pub fn step(&mut self, current: f64) -> i32 {
+        if !validate_hindmarsh_rose(self) || !current.is_finite() {
+            self.x = f64::NAN;
+            self.y = f64::NAN;
+            self.z = f64::NAN;
+            return 0;
+        }
+        let x_prev = self.x;
+        let dx = self.y - self.x.powi(3) + self.b * self.x.powi(2) - self.z + current;
+        let dy = 1.0 - 5.0 * self.x.powi(2) - self.y;
+        let dz = self.r * (self.s * (self.x - self.x_rest) - self.z);
+        self.x += dx * self.dt;
+        self.y += dy * self.dt;
+        self.z += dz * self.dt;
+        if !validate_hindmarsh_rose(self) {
+            self.x = f64::NAN;
+            self.y = f64::NAN;
+            self.z = f64::NAN;
+            return 0;
+        }
+        if self.x >= self.x_threshold && x_prev < self.x_threshold {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
@@ -61,7 +76,18 @@ impl HindmarshRoseNeuron {
 }
 
 pub fn validate_hindmarsh_rose(state: &HindmarshRoseNeuron) -> bool {
-    true
+    state.x.is_finite()
+        && state.y.is_finite()
+        && state.z.is_finite()
+        && state.b.is_finite()
+        && state.r.is_finite()
+        && state.s.is_finite()
+        && state.x_rest.is_finite()
+        && state.dt.is_finite()
+        && state.x_threshold.is_finite()
+        && state.r > 0.0
+        && state.s > 0.0
+        && state.dt > 0.0
 }
 
 #[cfg(test)]
@@ -77,7 +103,27 @@ mod tests {
     #[test]
     fn test_hindmarsh_rose_step() {
         let mut state = HindmarshRoseNeuron::new();
-        let spike = state.step(10.0);
+        let x0 = state.x;
+        let y0 = state.y;
+        let z0 = state.z;
+        let current = 3.0;
+        let expected_x = x0 + (y0 - x0.powi(3) + state.b * x0.powi(2) - z0 + current) * state.dt;
+        let expected_y = y0 + (1.0 - 5.0 * x0.powi(2) - y0) * state.dt;
+        let expected_z = z0 + state.r * (state.s * (x0 - state.x_rest) - z0) * state.dt;
+
+        let spike = state.step(current);
+
         assert!(spike == 0 || spike == 1);
+        assert!((state.x - expected_x).abs() < 1e-12);
+        assert!((state.y - expected_y).abs() < 1e-12);
+        assert!((state.z - expected_z).abs() < 1e-12);
+    }
+
+    #[test]
+    fn test_hindmarsh_rose_rejects_invalid_state() {
+        let mut state = HindmarshRoseNeuron::new();
+        state.dt = 0.0;
+        assert_eq!(state.step(3.0), 0);
+        assert!(state.x.is_nan());
     }
 }

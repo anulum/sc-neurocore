@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — End-to-end test: HindmarshRoseNeuron
 
-"""Full pipeline test for HindmarshRoseNeuron (Hindmarsh & Rose 1984).
+"""Pipeline test for HindmarshRoseNeuron (Hindmarsh & Rose 1984).
 
 3D chaotic bursting model:
 dx/dt = y - x³ + b·x² - z + I
@@ -18,7 +18,7 @@ z: slow adaptation (r=0.001) — modulates bursting.
 b=3: controls burst width. s=4: z-x coupling.
 Chaotic regime at intermediate I. Bursting at I≈3-5.
 ~601K steps/s (simple 3D polynomial).
-FULL PIPELINE WIRED + PERFORMANCE."""
+Pipeline and performance contract tests live in this module-specific file."""
 
 from __future__ import annotations
 
@@ -49,6 +49,7 @@ class TestHRIsolation:
         assert n.x == -1.6 and n.y == -10.0 and n.z == 2.0
         assert n.b == 3.0 and n.r == 0.001 and n.s == 4.0
         assert n.x_rest == -1.6 and n.dt == 0.1
+        assert n.integrator == "rk4"
 
     def test_three_state_variables(self):
         n = HindmarshRoseNeuron()
@@ -79,6 +80,11 @@ class TestHRIsolation:
             traces.append(trace)
         assert traces[0] == traces[1]
 
+    def test_rejects_nonfinite_current(self):
+        n = HindmarshRoseNeuron()
+        with pytest.raises(ValueError, match="current"):
+            n.step(float("nan"))
+
 
 # ---------------------------------------------------------------------------
 # 2. ANALYTICAL — dx, dy, dz formulas, cubic term, slow z
@@ -86,7 +92,7 @@ class TestHRIsolation:
 class TestHRAnalytical:
     def test_dx_formula_one_step(self):
         """dx = (y - x³ + b·x² - z + I) · dt."""
-        n = HindmarshRoseNeuron()
+        n = HindmarshRoseNeuron(integrator="euler")
         x0, y0, z0 = n.x, n.y, n.z
         I = 3.0
         expected_dx = (y0 - x0**3 + n.b * x0**2 - z0 + I) * n.dt
@@ -96,6 +102,29 @@ class TestHRAnalytical:
         assert abs((n.x - x0) - expected_dx) < 1e-12
         assert abs((n.y - y0) - expected_dy) < 1e-12
         assert abs((n.z - z0) - expected_dz) < 1e-14
+
+    def test_runge_kutta_tracks_substepped_reference_better_than_euler(self):
+        horizon = 1.0
+        current = 3.5
+        reference = HindmarshRoseNeuron(dt=0.001, integrator="rk4")
+        coarse_rk4 = HindmarshRoseNeuron(dt=0.1, integrator="rk4")
+        coarse_euler = HindmarshRoseNeuron(dt=0.1, integrator="euler")
+
+        for _ in range(int(horizon / reference.dt)):
+            reference.step(current)
+        for _ in range(int(horizon / coarse_rk4.dt)):
+            coarse_rk4.step(current)
+            coarse_euler.step(current)
+
+        rk4_error = abs(coarse_rk4.x - reference.x) + abs(coarse_rk4.y - reference.y) + abs(coarse_rk4.z - reference.z)
+        euler_error = (
+            abs(coarse_euler.x - reference.x)
+            + abs(coarse_euler.y - reference.y)
+            + abs(coarse_euler.z - reference.z)
+        )
+
+        assert rk4_error < euler_error
+        assert rk4_error < 5e-3
 
     def test_cubic_nonlinearity(self):
         """-x³ creates the excitable dynamics."""
@@ -174,6 +203,24 @@ class TestHRBursting:
 # 4. PARAMETERS
 # ---------------------------------------------------------------------------
 class TestHRParameters:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("dt", 0.0),
+            ("dt", float("nan")),
+            ("r", -0.001),
+            ("s", 0.0),
+            ("b", float("inf")),
+        ],
+    )
+    def test_rejects_nonphysical_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            HindmarshRoseNeuron(**{field: value})
+
+    def test_rejects_unknown_integrator(self):
+        with pytest.raises(ValueError, match="integrator"):
+            HindmarshRoseNeuron(integrator="verlet")
+
     @pytest.mark.parametrize("b", [2.0, 3.0, 4.0])
     def test_b_sweep(self, b: float):
         n = HindmarshRoseNeuron(b=b)
@@ -224,7 +271,7 @@ class TestHRPerformance:
 
 
 # ---------------------------------------------------------------------------
-# 6. FULL PIPELINE
+# 6. PIPELINE
 # ---------------------------------------------------------------------------
 class TestHRPipeline:
     def test_population(self):

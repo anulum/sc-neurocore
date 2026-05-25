@@ -26,19 +26,32 @@ function HindmarshRoseNeuronState()
     HindmarshRoseNeuronState(-1.6, -10.0, 2.0, 3.0, 0.001, 4.0, -1.6, 0.1, 1.0)
 end
 
-function step!(s::HindmarshRoseNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        x_prev = s.x
-        dx = (s.y - s.x ^ 3 + s.b * s.x ^ 2 - s.z + I_ext) * s.dt
-        dy = (1.0 - 5.0 * s.x ^ 2 - s.y) * s.dt
-        dz = s.r * (s.s * (s.x - s.x_rest) - s.z) * s.dt
-        s.x += dx
-        s.y += dy
-        s.z += dz
-        return (s.x >= s.x_threshold && x_prev < s.x_threshold) ? 1 : 0
-    catch _e
+function _valid(s::HindmarshRoseNeuronState)
+    values = (s.x, s.y, s.z, s.b, s.r, s.s, s.x_rest, s.dt, s.x_threshold)
+    return all(isfinite, values) && s.r > 0.0 && s.s > 0.0 && s.dt > 0.0
+end
+
+function step!(s::HindmarshRoseNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
+    if !_valid(s) || !isfinite(I_ext) || !isfinite(dt) || dt <= 0.0
+        s.x = NaN
+        s.y = NaN
+        s.z = NaN
         return 0
     end
+    x_prev = s.x
+    dx = s.y - s.x ^ 3 + s.b * s.x ^ 2 - s.z + I_ext
+    dy = 1.0 - 5.0 * s.x ^ 2 - s.y
+    dz = s.r * (s.s * (s.x - s.x_rest) - s.z)
+    s.x += dx * dt
+    s.y += dy * dt
+    s.z += dz * dt
+    if !_valid(s)
+        s.x = NaN
+        s.y = NaN
+        s.z = NaN
+        return 0
+    end
+    return (s.x >= s.x_threshold && x_prev < s.x_threshold) ? 1 : 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
