@@ -77,6 +77,13 @@ impl KuramotoSolver {
             coupling_flat.len(),
             n * n
         );
+        assert_all_finite("omega", &omega);
+        assert_all_finite("coupling", &coupling_flat);
+        assert_all_finite("initial_phases", &initial_phases);
+        assert!(
+            noise_amp.is_finite() && noise_amp >= 0.0,
+            "noise_amp must be finite and non-negative"
+        );
 
         Self {
             n,
@@ -97,6 +104,7 @@ impl KuramotoSolver {
 
     /// Set external field pressure `F` for SSGF mode.
     pub fn set_field_pressure(&mut self, f: f64) {
+        assert!(f.is_finite(), "field_pressure must be finite");
         self.field_pressure = f;
     }
 
@@ -104,6 +112,7 @@ impl KuramotoSolver {
     ///
     /// Returns Kuramoto order parameter `R ∈ [0, 1]`.
     pub fn step(&mut self, dt: f64, seed: u64) -> f64 {
+        assert_dt(dt);
         let n = self.n;
         let phases = &self.phases;
 
@@ -175,6 +184,9 @@ impl KuramotoSolver {
         h_flat: &[f64],
         pgbo_weight: f64,
     ) -> f64 {
+        assert_dt(dt);
+        assert!(sigma_g.is_finite(), "sigma_g must be finite");
+        assert!(pgbo_weight.is_finite(), "pgbo_weight must be finite");
         let n = self.n;
         let phases = &self.phases;
 
@@ -206,6 +218,7 @@ impl KuramotoSolver {
                 w_flat.len(),
                 n * n
             );
+            assert_all_finite("w_flat", w_flat);
             self.geo_coupling
                 .par_iter_mut()
                 .enumerate()
@@ -233,6 +246,7 @@ impl KuramotoSolver {
                 h_flat.len(),
                 n * n
             );
+            assert_all_finite("h_flat", h_flat);
             self.pgbo_coupling
                 .par_iter_mut()
                 .enumerate()
@@ -334,6 +348,7 @@ impl KuramotoSolver {
             phases.len(),
             self.n
         );
+        assert_all_finite("phases", &phases);
         self.phases = phases;
     }
 
@@ -346,8 +361,20 @@ impl KuramotoSolver {
             coupling_flat.len(),
             self.n * self.n
         );
+        assert_all_finite("coupling", &coupling_flat);
         self.coupling = coupling_flat;
     }
+}
+
+fn assert_dt(dt: f64) {
+    assert!(dt.is_finite() && dt > 0.0, "dt must be finite and positive");
+}
+
+fn assert_all_finite(name: &str, values: &[f64]) {
+    assert!(
+        values.iter().all(|value| value.is_finite()),
+        "{name} values must be finite"
+    );
 }
 
 fn fill_standard_normals(out: &mut [f64], seed: u64) {
