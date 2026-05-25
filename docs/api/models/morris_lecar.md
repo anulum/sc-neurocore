@@ -87,7 +87,10 @@ The Python model also exposes `rk4` and `rosenbrock` integrators for the
 same Morris-Lecar ODEs. The Go service, Rust safety surface, and Julia
 counterpart preserve the documented baseline Euler state equation for
 cross-runtime current-balance checks and fail-closed invalid-state
-behaviour.
+behaviour. All Python integrator paths reject non-finite runtime current
+and fail closed if the `cosh` potassium-rate term overflows or any
+derivative/state update becomes non-finite; the previous `(V, w)` state
+is preserved on rejection.
 
 ---
 
