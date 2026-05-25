@@ -73,7 +73,8 @@ computing layers via surrogate gradients:
 - Fail-closed numerical contract: Rust core and PyO3 bridge reject non-finite
   frequencies, coupling matrices, phases, SSGF matrices, field pressure,
   invalid `dt`, and negative/non-finite noise amplitudes before stepping or
-  before zero-step dry-run calls
+  before zero-step dry-run calls; PyO3 rejects malformed SSGF matrix shapes
+  before entering Rust
 
 
 ## SSGF Integration and Property Testing (February 2026)
