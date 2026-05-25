@@ -25,13 +25,25 @@ ganglion cells.
 
 ```python
 def step(self, current: float) -> float:
-    self.r = self.gain * max(0.0, current - self.theta)
-    return self.r
+    if not math.isfinite(self.r) or self.r < 0.0:
+        raise ValueError("runtime rate state must be finite and non-negative")
+    if not math.isfinite(current):
+        raise ValueError("current must be finite")
+    next_r = self.gain * max(0.0, current - self.theta)
+    if not math.isfinite(next_r) or next_r < 0.0:
+        raise ValueError("rate output must remain finite and non-negative")
+    self.r = next_r
+    return next_r
 ```
 
 **Instantaneous (no dynamics).** The output at time t depends only on the
 input at time t — no ODE, no time constant, no memory. **Returns float
 (rate), not binary spike.**
+
+Runtime validation is fail-closed across the maintained Python reference and
+native safety entry points: corrupted stored rate, non-finite current, invalid
+gain/threshold state, and non-finite rate outputs are rejected before `r` is
+mutated.
 
 ---
 

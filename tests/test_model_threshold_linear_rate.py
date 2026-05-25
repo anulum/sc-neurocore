@@ -116,6 +116,20 @@ class TestThresholdLinearValidation:
             n.step(current)
         assert n.r == before
 
+    def test_rejects_non_finite_runtime_rate_before_update(self):
+        n = ThresholdLinearRateNeuron(r=0.25)
+        n.r = float("nan")
+        with pytest.raises(ValueError, match="runtime rate state"):
+            n.step(1.0)
+        assert n.r != n.r
+
+    def test_rejects_non_finite_rate_output_before_mutation(self):
+        n = ThresholdLinearRateNeuron(r=0.25, gain=1.0e308)
+        before = n.r
+        with pytest.raises(ValueError, match="rate output"):
+            n.step(1.0e308)
+        assert n.r == before
+
 
 class TestThresholdLinearPerformance:
     def test_isolation_throughput(self):
