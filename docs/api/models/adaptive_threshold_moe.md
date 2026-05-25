@@ -49,6 +49,10 @@ $$s_{INT} = \max\left(\text{round}\left(\frac{v}{V_{th}}\right), 0\right)$$
 
 The `round()` function uses banker's rounding (round-half-to-even). The `max(·, 0)` ensures
 non-negative counts — negative $v$ produces no spike (the neuron does not emit inhibitory spikes).
+Runtime implementations validate the membrane state, adaptive threshold state, running mean,
+candidate threshold, quotient, and soft-reset residual before mutating state. The non-negative
+spike count is applied before soft reset so negative drive preserves the subthreshold residual
+instead of applying a signed reset.
 
 The spike count can exceed 1. For example, if $v = 3.0$ and $V_{th} = 1.0$, then
 $s_{INT} = 3$. This multi-valued output is the fundamental difference from standard LIF.

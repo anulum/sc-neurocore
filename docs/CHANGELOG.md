@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `AdaptiveThresholdMoENeuron` Python, Julia, Go, Mojo, and Rust safety
+  surfaces to reject invalid runtime state and non-finite adaptive-threshold,
+  quotient, or soft-reset candidates before state mutation, while preserving
+  non-negative integer spike-count residual semantics.
 - Hardened the `ThresholdLinearRateNeuron` Python, Julia, Go, Mojo, and Rust
   safety surfaces to reject invalid runtime rate state and non-finite rate
   outputs before state mutation.
