@@ -1,8 +1,8 @@
 # LarterBreakspearNeuron
 
 **Module:** `sc_neurocore.neurons.models.larter_breakspear`
-**Reference:** Breakspear, Terry & Friston 2003
-**Family:** Neural mass (ion-channel-based)
+**Reference:** Larter et al. 1999; Breakspear, Terry & Friston 2003
+**Family:** Neural mass with ion-channel kinetics
 **State variables:** `v` (voltage), `w` (K recovery), `z` (slow adaptation)
 
 ## Equations
@@ -11,7 +11,11 @@ $$\frac{dV}{dt} = -I_{Ca} - I_{Na} - I_K - I_L + I_{ext} + C_{coupling} + a_{ee}
 $$\frac{dW}{dt} = \phi \frac{m_K(V) - W}{\tau_K}$$
 $$\frac{dZ}{dt} = b(V + 0.5 - Z)$$
 
-Ion currents use tanh-based sigmoidal activation (not Boltzmann).
+Ion currents use the tanh sigmoidal gates from the Larter-Breakspear neural-mass formulation:
+
+$$m_{Ca}(V)=0.5(1+\tanh((V+0.01)/0.15))$$
+$$m_{Na}(V)=0.5(1+\tanh((V-0.12)/0.15))$$
+$$m_K(V)=0.5(1+\tanh((V-v_0)/0.3))$$
 
 ## Parameters
 
@@ -21,77 +25,42 @@ Ion currents use tanh-based sigmoidal activation (not Boltzmann).
 | `g_na` | 6.7 | Na conductance |
 | `g_k` | 2.0 | K conductance |
 | `g_l` | 0.5 | Leak conductance |
-| `phi` | 0.7 | K time-scale |
+| `phi` | 0.7 | K recovery rate |
+| `tau_k` | 1.0 | K recovery time constant |
 | `b` | 0.1 | Slow adaptation rate |
 | `a_ee` | 0.36 | Self-excitation |
 | `i_ext` | 0.3 | External drive |
 | `dt` | 0.01 | Integration step |
+| `integrator` | `rk4` | Time integrator; `euler` is retained as an explicit baseline |
 
 ## Behaviour
 
-- **Whole-brain modelling:** Designed for The Virtual Brain (TVB) —
-  each node represents a cortical region, not a single neuron.
-- **Continuous output:** Returns voltage (float), not binary spikes.
-- **Ion-channel kinetics:** Ca, Na, K, leak with tanh sigmoidal gating.
-- **3 time-scales:** Fast (v), medium (w), slow (z).
-- **Bounded oscillation:** v ∈ [-0.5, 0.5] for default params.
+- Whole-brain modelling: each node represents a cortical-region neural mass, not a single spiking neuron.
+- Continuous output: `step()` returns voltage as a `float`, not a binary spike indicator.
+- Default integration: fourth-order Runge-Kutta for the coupled conductance ODEs.
+- Baseline integration: explicit Euler remains available with `integrator="euler"` for regression comparisons.
+- Fail-closed validation: construction rejects non-finite and non-physical time-step, conductance, and rate parameters; `step()` rejects non-finite coupling.
+- State safety: Python, Go, Rust, and Julia surfaces apply the same tanh gates and RK4 state equations for this model surface.
 
-## Test Coverage
+## Test coverage
 
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 10 | construction, step returns float, oscillation, bounded, 3 state vars, coupling, sigmoid gates, stability, reset, deterministic |
-| Network | 1 | Population |
-| **Total** | **11** | |
+The module-specific test file is `tests/test_model_larter_breakspear.py`.
 
+| Category | What is verified |
+|----------|------------------|
+| Isolation | defaults, reset, deterministic traces, finite long-run state, continuous voltage output |
+| Analytical gates | exact tanh midpoint contracts for Ca, Na, and K gates |
+| Dynamics | oscillatory voltage, coupling response, RK4 accuracy against a substepped reference, finite coupling sweep |
+| Parameters | conductance, drive, and self-excitation sweeps plus fail-closed invalid-parameter boundaries |
+| Pipeline | population, projection wiring, network execution, monitor contract |
+| Performance guard | module-owned throughput thresholds for isolation and network execution |
 
----
+## Counterpart surfaces
 
-## Measured Performance (2026-04-04)
+- Python: `src/sc_neurocore/neurons/models/larter_breakspear.py`
+- Go: `src/sc_neurocore/accel/go/services/larter_breakspear.go`
+- Rust safety: `src/sc_neurocore/accel/rust/safety/larter_breakspear.rs`
+- Julia: `src/sc_neurocore/accel/julia/neurons/larter_breakspear.jl`
+- Mojo descriptor: `src/sc_neurocore/accel/mojo/kernels/larter_breakspear.mojo`
 
-| Metric | Value |
-|--------|-------|
-| Python throughput | ~83K steps/s |
-| Spikes (10K steps, I=5.0) | 10000 |
-| State stability (20K steps) | PASS |
-| Rust parity | EXACT |
-
----
-
-## Pipeline Verification (End-to-End)
-
-### 1. Construction
-`LarterBreakspearNeuron()` instantiates with documented defaults.
-**Status: PASS**
-
-### 2. step() → correct type
-Returns `int` (spike indicator) or `float` (rate/potential).
-**Status: PASS**
-
-### 3. Spiking behaviour
-10000 spikes in 10,000 steps at I=5.0.
-**Status: PASS**
-
-### 4. State stability (20,000 steps)
-All state variables remain finite after extended simulation.
-**Status: PASS**
-
-### 5. reset()
-State returns to initial values after `reset()`.
-**Status: PASS**
-
-### 6. Population
-`Population(LarterBreakspearNeuron, n=10)` creates correct instances.
-**Status: PASS**
-
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
-
----
-
-## Findings (measured 2026-04-04)
-
-1. Throughput: ~83K steps/s (Python, single-thread)
-2. All pipeline stages verified green
-3. Rust parity: EXACT
-4. Numerical stability confirmed over 20K steps
+Historical benchmark artefacts from the Euler/stub era are not valid evidence for the RK4 surface. Regenerate benchmark artefacts before publishing throughput claims for this model revision.

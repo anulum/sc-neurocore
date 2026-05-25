@@ -55,33 +55,58 @@ impl LarterBreakspearNeuron {
     }
 
     pub fn _m_ca(&self, v: f64) -> f64 {
-        // return 0.5 * (1.0 + ((v - (-0.01_f64).tanh()) / 0.15))
-        0.0
+        0.5 * (1.0 + ((v - (-0.01_f64)) / 0.15).tanh())
     }
 
     pub fn _m_na(&self, v: f64) -> f64 {
-        // return 0.5 * (1.0 + ((v - 0.12_f64).tanh() / 0.15))
-        0.0
+        0.5 * (1.0 + ((v - 0.12_f64) / 0.15).tanh())
     }
 
     pub fn _m_k(&self, v: f64) -> f64 {
-        // return 0.5 * (1.0 + ((v - self.v0_f64).tanh() / 0.3))
-        0.0
+        0.5 * (1.0 + ((v - self.v0) / 0.3).tanh())
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // i_ca = self.g_ca * self._m_ca(self.v) * (self.v - self.v_ca)
-        // i_na = self.g_na * self._m_na(self.v) * (self.v - self.v_na)
-        // i_k = self.g_k * self.w * (self.v - self.v_k)
-        // i_l = self.g_l * (self.v - self.v_l)
-        // dv = -i_ca - i_na - i_k - i_l + self.i_ext + coupling + self.a_ee * se
-        // dw = self.phi * (self._m_k(self.v) - self.w) / self.tau_k
-        // dz = self.b * (self.v + 0.5 - self.z)
-        // self.v += dv * self.dt
-        // self.w += dw * self.dt
-        // self.z += dz * self.dt
-        // return self.v
-        0 // spike indicator
+    fn derivatives(&self, v: f64, w: f64, z: f64, coupling: f64) -> (f64, f64, f64) {
+        let i_ca = self.g_ca * self._m_ca(v) * (v - self.v_ca);
+        let i_na = self.g_na * self._m_na(v) * (v - self.v_na);
+        let i_k = self.g_k * w * (v - self.v_k);
+        let i_l = self.g_l * (v - self.v_l);
+        let dv = -i_ca - i_na - i_k - i_l + self.i_ext + coupling + self.a_ee * v;
+        let dw = self.phi * (self._m_k(v) - w) / self.tau_k;
+        let dz = self.b * (v + 0.5 - z);
+        (dv, dw, dz)
+    }
+
+    pub fn step(&mut self, coupling: f64) -> f64 {
+        if !validate_larter_breakspear(self) || !coupling.is_finite() {
+            return f64::NAN;
+        }
+
+        let (v0, w0, z0) = (self.v, self.w, self.z);
+        let dt = self.dt;
+        let k1 = self.derivatives(v0, w0, z0, coupling);
+        let k2 = self.derivatives(
+            v0 + 0.5 * dt * k1.0,
+            w0 + 0.5 * dt * k1.1,
+            z0 + 0.5 * dt * k1.2,
+            coupling,
+        );
+        let k3 = self.derivatives(
+            v0 + 0.5 * dt * k2.0,
+            w0 + 0.5 * dt * k2.1,
+            z0 + 0.5 * dt * k2.2,
+            coupling,
+        );
+        let k4 = self.derivatives(v0 + dt * k3.0, w0 + dt * k3.1, z0 + dt * k3.2, coupling);
+
+        self.v = v0 + (dt / 6.0) * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0);
+        self.w = w0 + (dt / 6.0) * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1);
+        self.z = z0 + (dt / 6.0) * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2);
+        if validate_larter_breakspear(self) {
+            self.v
+        } else {
+            f64::NAN
+        }
     }
 
     pub fn reset(&mut self) {
@@ -96,6 +121,31 @@ impl LarterBreakspearNeuron {
 
 pub fn validate_larter_breakspear(state: &LarterBreakspearNeuron) -> bool {
     state.v.is_finite()
+        && state.w.is_finite()
+        && state.z.is_finite()
+        && state.g_ca.is_finite()
+        && state.g_na.is_finite()
+        && state.g_k.is_finite()
+        && state.v_ca.is_finite()
+        && state.v_na.is_finite()
+        && state.v_k.is_finite()
+        && state.v_l.is_finite()
+        && state.g_l.is_finite()
+        && state.phi.is_finite()
+        && state.tau_k.is_finite()
+        && state.b.is_finite()
+        && state.a_ee.is_finite()
+        && state.v0.is_finite()
+        && state.i_ext.is_finite()
+        && state.dt.is_finite()
+        && state.dt > 0.0
+        && state.tau_k > 0.0
+        && state.phi > 0.0
+        && state.b > 0.0
+        && state.g_ca > 0.0
+        && state.g_na > 0.0
+        && state.g_k > 0.0
+        && state.g_l > 0.0
 }
 
 #[cfg(test)]
@@ -112,7 +162,16 @@ mod tests {
     #[test]
     fn test_larter_breakspear_step() {
         let mut state = LarterBreakspearNeuron::new();
-        let spike = state.step(10.0);
-        assert!(spike == 0 || spike == 1);
+        let initial = state.v;
+        let voltage = state.step(0.15);
+        assert!(voltage.is_finite());
+        assert_ne!(state.v, initial);
+    }
+
+    #[test]
+    fn test_larter_breakspear_rejects_invalid_dt() {
+        let mut state = LarterBreakspearNeuron::new();
+        state.dt = 0.0;
+        assert!(state.step(0.0).is_nan());
     }
 }
