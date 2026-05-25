@@ -8,6 +8,8 @@
 
 package services
 
+import "errors"
+
 // PerfectIntegratorNeuronState holds the neuron state.
 type PerfectIntegratorNeuronState struct {
 	V          float64
@@ -39,23 +41,23 @@ func (s PerfectIntegratorNeuronState) Valid() bool {
 }
 
 // Step advances the neuron by one timestep. Invalid inputs do not mutate state.
-func (s *PerfectIntegratorNeuronState) Step(iExt float64) int {
+func (s *PerfectIntegratorNeuronState) Step(iExt float64) (int, error) {
 	if !finite(iExt) || !s.Valid() {
-		return 0
+		return 0, ErrPerfectIntegratorInvalidState
 	}
 
 	voltageIncrement := iExt / s.CM * s.Dt
 	nextV := s.V + voltageIncrement
 	if !finite(voltageIncrement) || !finite(nextV) {
-		return 0
+		return 0, ErrPerfectIntegratorNonFiniteUpdate
 	}
 
 	s.V = nextV
 	if s.V >= s.VThreshold {
 		s.V = s.VReset
-		return 1
+		return 1, nil
 	}
-	return 0
+	return 0, nil
 }
 
 // Reset restores dynamic state without changing parameters.
@@ -69,7 +71,10 @@ func SimulatePerfectIntegratorNeuron(nSteps int, iExt float64) ([]float64, int) 
 	trace := make([]float64, nSteps)
 	spikes := 0
 	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
+		result, err := s.Step(iExt)
+		if err != nil {
+			panic(err)
+		}
 		trace[t] = s.V
 		if result > 0 {
 			spikes++
@@ -77,3 +82,8 @@ func SimulatePerfectIntegratorNeuron(nSteps int, iExt float64) ([]float64, int) 
 	}
 	return trace, spikes
 }
+
+var (
+	ErrPerfectIntegratorInvalidState    = errors.New("perfect-integrator state/current must be finite and physically ordered")
+	ErrPerfectIntegratorNonFiniteUpdate = errors.New("perfect-integrator voltage increment became non-finite")
+)

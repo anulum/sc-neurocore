@@ -32,9 +32,14 @@ The implementation rejects invalid state before mutation:
 - `v_threshold` must be greater than `v_reset`;
 - initial `v` must be below `v_threshold`;
 - each voltage increment and candidate voltage must remain finite before assignment.
+- runtime `v`, `c_m`, `dt`, `v_threshold`, and `v_reset` are revalidated before
+  the `I / C_m` division so corrupted objects fail closed without mutating
+  voltage.
 
 These guards preserve the analytical positive-excursion ISI contract and prevent
 overflowing currents or capacitance scales from poisoning the state.
+Native Go and Rust mirrors return explicit errors for invalid scalar state,
+Julia throws `DomainError`, and Mojo returns `-1` as the invalid scalar sentinel.
 
 ## Behaviour
 

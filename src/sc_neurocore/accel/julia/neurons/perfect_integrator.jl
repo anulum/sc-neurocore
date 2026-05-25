@@ -34,13 +34,13 @@ end
 function step!(s::PerfectIntegratorNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
     s.dt = dt
     if !isfinite(I_ext) || !valid(s)
-        return 0
+        throw(DomainError((s.v, s.c_m, s.v_threshold, s.v_reset, s.dt, I_ext), "PerfectIntegrator state/current must be finite and physically ordered"))
     end
 
     voltage_increment = I_ext / s.c_m * s.dt
     next_v = s.v + voltage_increment
     if !isfinite(voltage_increment) || !isfinite(next_v)
-        return 0
+        throw(DomainError((voltage_increment, next_v), "PerfectIntegrator voltage increment must remain finite"))
     end
 
     s.v = next_v
