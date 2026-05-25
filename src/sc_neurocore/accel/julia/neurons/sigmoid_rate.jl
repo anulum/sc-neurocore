@@ -8,7 +8,7 @@
 
 module SigmoidRateAccel
 
-export step!, simulate, SigmoidRateNeuronState
+export step!, simulate, SigmoidRateNeuronState, valid, reset!
 
 mutable struct SigmoidRateNeuronState
     r::Float64
@@ -22,14 +22,45 @@ function SigmoidRateNeuronState()
     SigmoidRateNeuronState(0.0, 10.0, 1.0, 0.0, 0.1)
 end
 
-function step!(s::SigmoidRateNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        sigma = 1.0 / (1.0 + exp(-s.beta * (I_ext - s.theta)))
-        s.r += (-s.r + sigma) / s.tau * s.dt
-        return s.r
-    catch _e
-        return 0
+function valid(s::SigmoidRateNeuronState)::Bool
+    return all(isfinite, (s.r, s.tau, s.beta, s.theta, s.dt)) &&
+        0.0 <= s.r <= 1.0 &&
+        s.tau > 0.0 &&
+        s.dt > 0.0 &&
+        s.dt <= s.tau
+end
+
+function sigmoid_transfer(beta::Float64, I_ext::Float64, theta::Float64)::Float64
+    z = beta * (I_ext - theta)
+    if isinf(z)
+        return z > 0.0 ? 1.0 : 0.0
     end
+    if !isfinite(z)
+        throw(DomainError(z, "SigmoidRate transfer argument must be finite or saturating"))
+    end
+    if z >= 0.0
+        return 1.0 / (1.0 + exp(-z))
+    end
+    exp_z = exp(z)
+    return exp_z / (1.0 + exp_z)
+end
+
+function step!(s::SigmoidRateNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
+    if !isfinite(I_ext) || !valid(s)
+        throw(DomainError((s.r, I_ext), "SigmoidRate state/current must be finite and well-formed"))
+    end
+    sigma = sigmoid_transfer(s.beta, I_ext, s.theta)
+    next_r = s.r + (-s.r + sigma) / s.tau * s.dt
+    if !isfinite(next_r) || next_r < 0.0 || next_r > 1.0
+        throw(DomainError(next_r, "SigmoidRate update must remain finite and in [0,1]"))
+    end
+    s.r = next_r
+    return next_r
+end
+
+function reset!(s::SigmoidRateNeuronState)::Nothing
+    s.r = 0.0
+    return nothing
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)

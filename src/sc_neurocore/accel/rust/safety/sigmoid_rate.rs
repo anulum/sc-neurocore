@@ -28,11 +28,17 @@ impl SigmoidRateNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // sigma = 1.0 / (1.0 + (-self.beta * (current - self.theta_f64).exp()))
-        // self.r += (-self.r + sigma) / self.tau * self.dt
-        // return self.r
-        0 // spike indicator
+    pub fn step(&mut self, i_ext: f64) -> Result<f64, &'static str> {
+        if !i_ext.is_finite() || !validate_sigmoid_rate(self) {
+            return Err("sigmoid-rate state/current must be finite and well-formed");
+        }
+        let sigma = sigmoid_rate_transfer(self.beta, i_ext, self.theta)?;
+        let next_r = self.r + (-self.r + sigma) / self.tau * self.dt;
+        if !next_r.is_finite() || !(0.0..=1.0).contains(&next_r) {
+            return Err("sigmoid-rate update became non-finite or left [0,1]");
+        }
+        self.r = next_r;
+        Ok(next_r)
     }
 
     pub fn reset(&mut self) {
@@ -46,7 +52,31 @@ impl SigmoidRateNeuron {
 }
 
 pub fn validate_sigmoid_rate(state: &SigmoidRateNeuron) -> bool {
-    true
+    state.r.is_finite()
+        && state.tau.is_finite()
+        && state.beta.is_finite()
+        && state.theta.is_finite()
+        && state.dt.is_finite()
+        && (0.0..=1.0).contains(&state.r)
+        && state.tau > 0.0
+        && state.dt > 0.0
+        && state.dt <= state.tau
+}
+
+fn sigmoid_rate_transfer(beta: f64, current: f64, theta: f64) -> Result<f64, &'static str> {
+    let z = beta * (current - theta);
+    if z.is_infinite() {
+        return Ok(if z > 0.0 { 1.0 } else { 0.0 });
+    }
+    if !z.is_finite() {
+        return Err("sigmoid-rate transfer argument must be finite or saturating");
+    }
+    if z >= 0.0 {
+        Ok(1.0 / (1.0 + (-z).exp()))
+    } else {
+        let exp_z = z.exp();
+        Ok(exp_z / (1.0 + exp_z))
+    }
 }
 
 #[cfg(test)]
@@ -62,7 +92,30 @@ mod tests {
     #[test]
     fn test_sigmoid_rate_step() {
         let mut state = SigmoidRateNeuron::new();
-        let spike = state.step(10.0);
-        assert!(spike == 0 || spike == 1);
+        let rate = state.step(10.0).unwrap();
+        assert!(rate > 0.0 && rate <= 1.0);
+    }
+
+    #[test]
+    fn test_sigmoid_rate_rejects_invalid_state_without_mutation() {
+        let mut state = SigmoidRateNeuron::new();
+        state.r = 0.5;
+        state.dt = 2.0 * state.tau;
+        assert!(state.step(1.0).is_err());
+        assert_eq!(state.r, 0.5);
+    }
+
+    #[test]
+    fn test_sigmoid_rate_extreme_drive_saturates() {
+        let mut state = SigmoidRateNeuron {
+            beta: 1.0e308,
+            ..SigmoidRateNeuron::new()
+        };
+        let high = state.step(1.0e308).unwrap();
+        state.reset();
+        let low = state.step(-1.0e308).unwrap();
+        assert!(high > low);
+        assert!((0.0..=1.0).contains(&high));
+        assert!((0.0..=1.0).contains(&low));
     }
 }

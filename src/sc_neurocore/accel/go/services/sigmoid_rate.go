@@ -9,33 +9,63 @@
 package services
 
 import (
+	"errors"
 	"math"
 )
 
 // SigmoidRateNeuronState holds the neuron state
 type SigmoidRateNeuronState struct {
-	R float64
-	Tau float64
-	Beta float64
+	R     float64
+	Tau   float64
+	Beta  float64
 	Theta float64
-	Dt float64
+	Dt    float64
 }
 
 // NewSigmoidRateNeuron creates a new SigmoidRateNeuron neuron with default parameters
 func NewSigmoidRateNeuron() *SigmoidRateNeuronState {
 	return &SigmoidRateNeuronState{
-		R: 0.0,
-		Tau: 10.0,
-		Beta: 1.0,
+		R:     0.0,
+		Tau:   10.0,
+		Beta:  1.0,
 		Theta: 0.0,
-		Dt: 0.1,
+		Dt:    0.1,
 	}
 }
 
 // Step advances the neuron by one timestep
-func (s *SigmoidRateNeuronState) Step(iExt float64) int {
-	_ = iExt
-	return 0
+func (s SigmoidRateNeuronState) Valid() bool {
+	return sigmoidRateFinite(s.R) &&
+		sigmoidRateFinite(s.Tau) &&
+		sigmoidRateFinite(s.Beta) &&
+		sigmoidRateFinite(s.Theta) &&
+		sigmoidRateFinite(s.Dt) &&
+		s.R >= 0.0 &&
+		s.R <= 1.0 &&
+		s.Tau > 0.0 &&
+		s.Dt > 0.0 &&
+		s.Dt <= s.Tau
+}
+
+// Step advances the neuron by one timestep. Invalid inputs do not mutate state.
+func (s *SigmoidRateNeuronState) Step(iExt float64) (float64, error) {
+	if !sigmoidRateFinite(iExt) || !s.Valid() {
+		return s.R, ErrSigmoidRateInvalidState
+	}
+	sigma, err := sigmoidRateTransfer(s.Beta, iExt, s.Theta)
+	if err != nil {
+		return s.R, err
+	}
+	nextR := s.R + (-s.R+sigma)/s.Tau*s.Dt
+	if !sigmoidRateFinite(nextR) || nextR < 0.0 || nextR > 1.0 {
+		return s.R, ErrSigmoidRateNonFiniteUpdate
+	}
+	s.R = nextR
+	return nextR, nil
+}
+
+func (s *SigmoidRateNeuronState) Reset() {
+	s.R = 0.0
 }
 
 // SimulateSigmoidRateNeuron runs the neuron for n steps
@@ -44,7 +74,10 @@ func SimulateSigmoidRateNeuron(nSteps int, iExt float64) ([]float64, int) {
 	trace := make([]float64, nSteps)
 	spikes := 0
 	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
+		result, err := s.Step(iExt)
+		if err != nil {
+			panic(err)
+		}
 		trace[t] = s.R
 		if result > 0 {
 			spikes++
@@ -53,4 +86,29 @@ func SimulateSigmoidRateNeuron(nSteps int, iExt float64) ([]float64, int) {
 	return trace, spikes
 }
 
-var _ = math.Exp
+var (
+	ErrSigmoidRateInvalidState    = errors.New("sigmoid-rate state/current must be finite and well-formed")
+	ErrSigmoidRateNonFiniteUpdate = errors.New("sigmoid-rate update became non-finite or left [0,1]")
+)
+
+func sigmoidRateFinite(x float64) bool {
+	return !math.IsNaN(x) && !math.IsInf(x, 0)
+}
+
+func sigmoidRateTransfer(beta float64, current float64, theta float64) (float64, error) {
+	z := beta * (current - theta)
+	if math.IsInf(z, 0) {
+		if z > 0.0 {
+			return 1.0, nil
+		}
+		return 0.0, nil
+	}
+	if !sigmoidRateFinite(z) {
+		return 0.0, ErrSigmoidRateNonFiniteUpdate
+	}
+	if z >= 0.0 {
+		return 1.0 / (1.0 + math.Exp(-z)), nil
+	}
+	expZ := math.Exp(z)
+	return expZ / (1.0 + expZ), nil
+}

@@ -128,11 +128,20 @@ class TestSigmoidRateValidation:
         with pytest.raises(ValueError, match=field):
             SigmoidRateNeuron(**{field: value})
 
+    @pytest.mark.parametrize("r", [-1.0e-12, 1.0 + 1.0e-12])
+    def test_rejects_initial_rate_outside_unit_interval(self, r: float):
+        with pytest.raises(ValueError, match="r must be in \\[0, 1\\]"):
+            SigmoidRateNeuron(r=r)
+
     @pytest.mark.parametrize("field", ["tau", "dt"])
     @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
     def test_rejects_non_positive_or_non_finite_time_parameters(self, field: str, value: float):
         with pytest.raises(ValueError, match=field):
             SigmoidRateNeuron(**{field: value})
+
+    def test_rejects_euler_ratio_that_can_leave_unit_interval(self):
+        with pytest.raises(ValueError, match="dt must not exceed tau"):
+            SigmoidRateNeuron(tau=0.1, dt=0.2)
 
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
     def test_rejects_non_finite_current_before_rate_mutation(self, current: float):
@@ -141,6 +150,33 @@ class TestSigmoidRateValidation:
         with pytest.raises(ValueError, match="current"):
             n.step(current)
         assert n.r == before
+
+    @pytest.mark.parametrize("field", ["r", "tau", "dt"])
+    def test_rejects_corrupted_runtime_state_before_rate_mutation(self, field: str):
+        n = SigmoidRateNeuron(r=0.25)
+        before = n.r
+        setattr(n, field, np.nan)
+        with pytest.raises(ValueError, match="runtime"):
+            n.step(1.0)
+        if field != "r":
+            assert n.r == before
+
+    def test_rejects_non_finite_rate_candidate_before_mutation(self):
+        n = SigmoidRateNeuron(r=1.0, tau=1.0e308, dt=1.0e308)
+        before = n.r
+        n.tau = 1.0e-308
+        with pytest.raises(ValueError, match="runtime"):
+            n.step(-1.0e308)
+        assert n.r == before
+
+    def test_extreme_finite_drive_saturates_without_overflow_warning(self):
+        n = SigmoidRateNeuron(beta=1.0e308, theta=0.0)
+        with np.errstate(over="raise", invalid="raise"):
+            high = n.step(1.0e308)
+            n.reset()
+            low = n.step(-1.0e308)
+        assert 0.0 < high <= 1.0
+        assert 0.0 <= low < high
 
 
 class TestSigmoidRatePerformance:
