@@ -15,7 +15,7 @@ dz = b·(V + 0.5 - z)
 
 4 currents with tanh activations: m_Ca, m_Na, m_K.
 Returns V (float), not binary spike. Used in whole-brain modelling.
-FULL PIPELINE WIRED + PERFORMANCE."""
+Pipeline and performance contract tests live in this module-specific file."""
 
 from __future__ import annotations
 
@@ -41,6 +41,7 @@ class TestLBIsolation:
         assert n.v == -0.5 and n.w == 0.0 and n.z == 0.0
         assert n.g_ca == 1.1 and n.g_na == 6.7
         assert n.dt == 0.01
+        assert n.integrator == "rk4"
 
     def test_step_returns_float(self):
         n = LarterBreakspearNeuron()
@@ -67,6 +68,11 @@ class TestLBIsolation:
             trace = [n.step(0.0) for _ in range(500)]
             traces.append(trace)
         assert traces[0] == traces[1]
+
+    def test_rejects_nonfinite_coupling(self):
+        n = LarterBreakspearNeuron()
+        with pytest.raises(ValueError, match="coupling"):
+            n.step(float("inf"))
 
 
 # ---------------------------------------------------------------------------
@@ -119,6 +125,25 @@ class TestLBDynamics:
         vs = [n.step(0.0) for _ in range(10_000)]
         assert np.std(vs) > 0.01
 
+    def test_runge_kutta_tracks_substepped_reference_better_than_euler(self):
+        horizon = 0.5
+        coupling = 0.15
+        reference = LarterBreakspearNeuron(dt=0.0005, integrator="rk4")
+        coarse_rk4 = LarterBreakspearNeuron(dt=0.05, integrator="rk4")
+        coarse_euler = LarterBreakspearNeuron(dt=0.05, integrator="euler")
+
+        for _ in range(int(horizon / reference.dt)):
+            reference.step(coupling)
+        for _ in range(int(horizon / coarse_rk4.dt)):
+            coarse_rk4.step(coupling)
+            coarse_euler.step(coupling)
+
+        rk4_error = abs(coarse_rk4.v - reference.v)
+        euler_error = abs(coarse_euler.v - reference.v)
+
+        assert rk4_error < euler_error
+        assert rk4_error < 1e-3
+
     def test_coupling_affects_dynamics(self):
         n1 = LarterBreakspearNeuron()
         n2 = LarterBreakspearNeuron()
@@ -139,6 +164,24 @@ class TestLBDynamics:
 # 4. PARAMETERS
 # ---------------------------------------------------------------------------
 class TestLBParameters:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("dt", 0.0),
+            ("dt", float("nan")),
+            ("tau_k", 0.0),
+            ("phi", -0.1),
+            ("b", -0.1),
+        ],
+    )
+    def test_rejects_nonphysical_parameters(self, field: str, value: float):
+        with pytest.raises(ValueError, match=field):
+            LarterBreakspearNeuron(**{field: value})
+
+    def test_rejects_unknown_integrator(self):
+        with pytest.raises(ValueError, match="integrator"):
+            LarterBreakspearNeuron(integrator="verlet")
+
     @pytest.mark.parametrize("g_ca", [0.5, 1.1, 2.0])
     def test_g_ca_sweep(self, g_ca: float):
         n = LarterBreakspearNeuron(g_ca=g_ca)
@@ -189,7 +232,7 @@ class TestLBPerformance:
 
 
 # ---------------------------------------------------------------------------
-# 6. FULL PIPELINE
+# 6. PIPELINE
 # ---------------------------------------------------------------------------
 class TestLBPipeline:
     def test_population(self):

@@ -47,33 +47,59 @@ function _m_k(s::LarterBreakspearNeuronState, v)
     return 0.5 * (1.0 + tanh((v - s.v0) / 0.3))
 end
 
-function step!(s::LarterBreakspearNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        i_ca = s.g_ca * s._m_ca(s.v) * (s.v - s.v_ca)
-        i_na = s.g_na * s._m_na(s.v) * (s.v - s.v_na)
-        i_k = s.g_k * s.w * (s.v - s.v_k)
-        i_l = s.g_l * (s.v - s.v_l)
-        dv = -i_ca - i_na - i_k - i_l + s.i_ext + coupling + s.a_ee * s.v
-        dw = s.phi * (s._m_k(s.v) - s.w) / s.tau_k
-        dz = s.b * (s.v + 0.5 - s.z)
-        s.v += dv * s.dt
-        s.w += dw * s.dt
-        s.z += dz * s.dt
-        return s.v
-    catch _e
-        return 0
-    end
+function _valid(s::LarterBreakspearNeuronState)
+    values = (
+        s.v, s.w, s.z, s.g_ca, s.g_na, s.g_k, s.v_ca, s.v_na, s.v_k,
+        s.v_l, s.g_l, s.phi, s.tau_k, s.b, s.a_ee, s.v0, s.i_ext, s.dt
+    )
+    return all(isfinite, values) &&
+        s.dt > 0.0 &&
+        s.tau_k > 0.0 &&
+        s.phi > 0.0 &&
+        s.b > 0.0 &&
+        s.g_ca > 0.0 &&
+        s.g_na > 0.0 &&
+        s.g_k > 0.0 &&
+        s.g_l > 0.0
 end
 
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
+function _derivatives(s::LarterBreakspearNeuronState, v::Float64, w::Float64, z::Float64, coupling::Float64)
+    i_ca = s.g_ca * _m_ca(s, v) * (v - s.v_ca)
+    i_na = s.g_na * _m_na(s, v) * (v - s.v_na)
+    i_k = s.g_k * w * (v - s.v_k)
+    i_l = s.g_l * (v - s.v_l)
+    dv = -i_ca - i_na - i_k - i_l + s.i_ext + coupling + s.a_ee * v
+    dw = s.phi * (_m_k(s, v) - w) / s.tau_k
+    dz = s.b * (v + 0.5 - z)
+    return dv, dw, dz
+end
+
+function step!(s::LarterBreakspearNeuronState, coupling::Float64=0.0; dt::Float64=s.dt)
+    if !_valid(s) || !isfinite(coupling) || !isfinite(dt) || dt <= 0.0
+        return NaN
+    end
+
+    v0, w0, z0 = s.v, s.w, s.z
+    k1 = _derivatives(s, v0, w0, z0, coupling)
+    k2 = _derivatives(s, v0 + 0.5 * dt * k1[1], w0 + 0.5 * dt * k1[2], z0 + 0.5 * dt * k1[3], coupling)
+    k3 = _derivatives(s, v0 + 0.5 * dt * k2[1], w0 + 0.5 * dt * k2[2], z0 + 0.5 * dt * k2[3], coupling)
+    k4 = _derivatives(s, v0 + dt * k3[1], w0 + dt * k3[2], z0 + dt * k3[3], coupling)
+
+    s.v = v0 + (dt / 6.0) * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1])
+    s.w = w0 + (dt / 6.0) * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2])
+    s.z = z0 + (dt / 6.0) * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3])
+    return _valid(s) ? s.v : NaN
+end
+
+function simulate(n_steps::Int=1000; coupling::Float64=0.0, dt::Float64=0.01)
     s = LarterBreakspearNeuronState()
     trace = zeros(n_steps)
     spikes = 0
     for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
+        result = step!(s, coupling; dt=dt)
         trace[t] = s.v
-        if result isa Number && result > 0
-            spikes += 1
+        if isnan(result)
+            break
         end
     end
     return trace, spikes
