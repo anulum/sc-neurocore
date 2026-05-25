@@ -213,6 +213,30 @@ class TestPoissonValidation:
         with pytest.raises(ValueError, match="rate_override"):
             n.step(rate_override=rate_override)
 
+    @pytest.mark.parametrize(
+        ("field", "value", "message"),
+        [
+            ("rate_hz", -1.0, "rate_hz"),
+            ("rate_hz", np.nan, "rate_hz"),
+            ("dt_ms", 0.0, "dt_ms"),
+            ("dt_ms", np.inf, "dt_ms"),
+        ],
+    )
+    def test_rejects_corrupted_runtime_rate_state_before_probability(
+        self, field: str, value: float, message: str
+    ):
+        n = PoissonNeuron(rate_hz=100.0, dt_ms=1.0)
+        setattr(n, field, value)
+        with pytest.raises(ValueError, match=message):
+            n.step()
+
+    def test_rejects_non_finite_interval_hazard_before_sampling(self):
+        n = PoissonNeuron(rate_hz=100.0, dt_ms=1.0)
+        n.rate_hz = 1.0e308
+        n.dt_ms = 1.0e308
+        with pytest.raises(ValueError, match="interval hazard"):
+            n.step()
+
     def test_high_rate_override_saturates_without_invalid_probability(self):
         n = PoissonNeuron(rate_hz=100.0, dt_ms=1.0)
         spikes = sum(n.step(rate_override=1.0e9) for _ in range(100))

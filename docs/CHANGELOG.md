@@ -5,6 +5,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `PoissonNeuron` Python, Julia, Go, Mojo, and Rust safety surfaces to
+  revalidate mutable rate and timestep state before sampling, reject non-finite
+  interval hazards, and keep the finite-step Poisson probability bounded.
 - Hardened `McCullochPittsNeuron` Python, Julia, Go, Mojo, and Rust safety
   surfaces to enforce finite weighted-input and mutable-threshold contracts,
   preserve equality-at-threshold Heaviside semantics, and keep reset as a
