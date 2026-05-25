@@ -21,6 +21,7 @@ FULL PIPELINE WIRED + PERFORMANCE."""
 
 from __future__ import annotations
 
+import os
 import time
 
 import numpy as np
@@ -345,7 +346,9 @@ class TestNRLIFPerformance:
             n.step(20.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert rate > 200_000, f"isolation: {rate:.0f} steps/s"
+        min_rate = 120_000 if os.environ.get("CI") else 200_000
+        assert np.isfinite(n.v) and np.isfinite(n.theta)
+        assert rate > min_rate, f"isolation: {rate:.0f} steps/s, minimum={min_rate}"
 
     def test_network_throughput(self):
         pop = Population(NonResettingLIFNeuron, n=20, label="bench")
