@@ -72,7 +72,8 @@ computing layers via surrogate gradients:
 - Box-Muller noise generation with ChaCha8Rng
 - Fail-closed numerical contract: Rust core and PyO3 bridge reject non-finite
   frequencies, coupling matrices, phases, SSGF matrices, field pressure,
-  invalid `dt`, and negative/non-finite noise amplitudes before stepping
+  invalid `dt`, and negative/non-finite noise amplitudes before stepping or
+  before zero-step dry-run calls
 
 
 ## SSGF Integration and Property Testing (February 2026)

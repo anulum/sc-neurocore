@@ -134,3 +134,33 @@ fn step_ssgf_rejects_non_finite_geometry_matrix() {
     let mut solver = KuramotoSolver::new(omega, coupling, phases, 0.0);
     solver.step_ssgf(0.01, 0, &[0.0, f64::NAN, 0.0, 0.0], 1.0, &[], 0.0);
 }
+
+#[test]
+#[should_panic(expected = "dt must be finite and positive")]
+fn run_rejects_invalid_dt_even_without_steps() {
+    let omega = vec![1.0, 1.1];
+    let coupling = vec![0.0; 4];
+    let phases = vec![0.1, 0.2];
+    let mut solver = KuramotoSolver::new(omega, coupling, phases, 0.0);
+    let _ = solver.run(0, f64::NAN, 0);
+}
+
+#[test]
+#[should_panic(expected = "sigma_g must be finite")]
+fn run_ssgf_rejects_non_finite_geometry_gain_even_without_steps() {
+    let omega = vec![1.0, 1.1];
+    let coupling = vec![0.0; 4];
+    let phases = vec![0.1, 0.2];
+    let mut solver = KuramotoSolver::new(omega, coupling, phases, 0.0);
+    let _ = solver.run_ssgf(0, 0.01, 0, &[0.0; 4], f64::NAN, &[], 0.0);
+}
+
+#[test]
+#[should_panic(expected = "h_flat values must be finite")]
+fn run_ssgf_rejects_non_finite_pgbo_matrix_even_without_steps() {
+    let omega = vec![1.0, 1.1];
+    let coupling = vec![0.0; 4];
+    let phases = vec![0.1, 0.2];
+    let mut solver = KuramotoSolver::new(omega, coupling, phases, 0.0);
+    let _ = solver.run_ssgf(0, 0.01, 0, &[], 0.0, &[0.0, f64::NAN, 0.0, 0.0], 1.0);
+}

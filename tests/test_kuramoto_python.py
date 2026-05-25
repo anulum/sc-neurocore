@@ -77,3 +77,16 @@ def test_python_bridge_rejects_invalid_runtime_values():
 
     with pytest.raises(ValueError, match="w_flat values must be finite"):
         solver.step_ssgf(0.01, W=[[0.0, np.nan], [0.0, 0.0]], sigma_g=1.0)
+
+
+def test_python_bridge_rejects_invalid_run_contracts_without_steps():
+    solver = KuramotoSolver([1.0, 1.1], np.zeros((2, 2)), [0.1, 0.2], noise_amp=0.0)
+
+    with pytest.raises(ValueError, match="dt must be finite and positive"):
+        solver.run(0, np.nan)
+
+    with pytest.raises(ValueError, match="sigma_g must be finite"):
+        solver.run_ssgf(0, 0.01, W=np.zeros((2, 2)), sigma_g=np.nan)
+
+    with pytest.raises(ValueError, match="h_flat values must be finite"):
+        solver.run_ssgf(0, 0.01, h_munu=[[0.0, np.nan], [0.0, 0.0]], pgbo_weight=1.0)
