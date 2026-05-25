@@ -30,23 +30,26 @@ impl LapicqueNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        if !i_ext.is_finite() || !validate_lapicque(self) {
-            return 0;
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
+        if !i_ext.is_finite() {
+            return Err("lapicque input current must be finite");
+        }
+        if !validate_lapicque(self) {
+            return Err("lapicque state must satisfy finite positive-RC threshold contract");
         }
 
         let dv = (-(self.v - self.v_rest) + self.resistance * i_ext) / self.tau * self.dt;
         let next_v = self.v + dv;
         if !dv.is_finite() || !next_v.is_finite() {
-            return 0;
+            return Err("lapicque voltage increment must remain finite");
         }
 
         self.v = next_v;
         if self.v >= self.v_threshold {
             self.v = self.v_reset;
-            1
+            Ok(1)
         } else {
-            0
+            Ok(0)
         }
     }
 
@@ -91,7 +94,7 @@ mod tests {
     #[test]
     fn test_lapicque_step() {
         let mut state = LapicqueNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).expect("valid step must succeed");
         assert!(spike == 0 || spike == 1);
     }
 
@@ -100,7 +103,7 @@ mod tests {
         let mut state = LapicqueNeuron::new();
         let mut spikes = 0;
         for _ in 0..5_000 {
-            spikes += state.step(20.0);
+            spikes += state.step(20.0).expect("valid step must succeed");
         }
         assert!(spikes >= 100);
         assert!(state.v < state.v_threshold);
@@ -110,7 +113,16 @@ mod tests {
     fn test_invalid_current_does_not_mutate_state() {
         let mut state = LapicqueNeuron::new();
         state.v = 0.25;
-        assert_eq!(state.step(f64::NAN), 0);
+        assert!(state.step(f64::NAN).is_err());
+        assert_eq!(state.v, 0.25);
+    }
+
+    #[test]
+    fn test_invalid_runtime_state_does_not_mutate_state() {
+        let mut state = LapicqueNeuron::new();
+        state.v = 0.25;
+        state.tau = 0.0;
+        assert!(state.step(1.0).is_err());
         assert_eq!(state.v, 0.25);
     }
 
@@ -120,7 +132,7 @@ mod tests {
         state.v = 0.25;
         state.v_threshold = 1.0e308;
         state.tau = 1.0e-308;
-        assert_eq!(state.step(1.0e308), 0);
+        assert!(state.step(1.0e308).is_err());
         assert_eq!(state.v, 0.25);
     }
 

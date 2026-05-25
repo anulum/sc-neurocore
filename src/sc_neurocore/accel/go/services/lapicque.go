@@ -8,6 +8,8 @@
 
 package services
 
+import "errors"
+
 // LapicqueNeuronState holds the neuron state.
 type LapicqueNeuronState struct {
 	V          float64
@@ -45,23 +47,26 @@ func (s LapicqueNeuronState) Valid() bool {
 }
 
 // Step advances the neuron by one timestep. Invalid inputs do not mutate state.
-func (s *LapicqueNeuronState) Step(iExt float64) int {
-	if !finite(iExt) || !s.Valid() {
-		return 0
+func (s *LapicqueNeuronState) Step(iExt float64) (int, error) {
+	if !finite(iExt) {
+		return 0, errors.New("lapicque input current must be finite")
+	}
+	if !s.Valid() {
+		return 0, errors.New("lapicque state must satisfy finite positive-RC threshold contract")
 	}
 
 	dv := (-(s.V - s.VRest) + s.Resistance*iExt) / s.Tau * s.Dt
 	nextV := s.V + dv
 	if !finite(dv) || !finite(nextV) {
-		return 0
+		return 0, errors.New("lapicque voltage increment must remain finite")
 	}
 
 	s.V = nextV
 	if s.V >= s.VThreshold {
 		s.V = s.VReset
-		return 1
+		return 1, nil
 	}
-	return 0
+	return 0, nil
 }
 
 // Reset restores dynamic state without changing parameters.
@@ -75,7 +80,10 @@ func SimulateLapicqueNeuron(nSteps int, iExt float64) ([]float64, int) {
 	trace := make([]float64, nSteps)
 	spikes := 0
 	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
+		result, err := s.Step(iExt)
+		if err != nil {
+			panic(err)
+		}
 		trace[t] = s.V
 		if result > 0 {
 			spikes++

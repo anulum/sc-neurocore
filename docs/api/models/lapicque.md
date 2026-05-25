@@ -34,6 +34,12 @@ The implementation rejects invalid state before mutation:
 These guards preserve the positive-rheobase RC contract and prevent overflowing
 inputs or time constants from poisoning membrane state.
 
+Python re-validates mutable runtime state on every `step()` call. Rust and Go
+return explicit errors for invalid currents, corrupted state, or non-finite Euler
+increments; Julia raises `DomainError` for the same contract. The Mojo kernel
+surface remains a pure spike-flag function and fails closed with `0` for invalid
+inputs.
+
 ## Behaviour
 
 - **The original IF:** Lapicque 1907 — the first mathematical neuron model.
@@ -51,7 +57,7 @@ LapicqueNeuron
 ├── step(current) → int {0,1}
 ├── Population: PoissonInput(weight=2.0, rate=500Hz)
 ├── Verilog: MAC + compare, ~10 LUTs
-└── Rust/Go/Julia/Mojo: same finite-increment spike/reset contract
+└── Rust/Go/Julia/Mojo: finite-increment spike/reset contract with explicit errors where supported
 ```
 
 ## Test Coverage
@@ -61,8 +67,8 @@ LapicqueNeuron
 | Isolation | 12 | construction, step binary, subthreshold, spikes, rheobase, rate increase, voltage clamp, hard reset, stability, reset, deterministic, custom tau |
 | Network | 2 | Population, spikes |
 | Analysis | 4 | spike_count, ISI, firing-rate, cross-validation |
-| Validation | 22 | finite parameters/current, positive RC scales, threshold geometry, initial voltage below threshold, finite increment before mutation |
-| **Total** | **62** | |
+| Validation | 27 | finite parameters/current, positive RC scales, threshold geometry, corrupted runtime state, initial voltage below threshold, finite increment before mutation |
+| **Total** | **67** | |
 
 
 ---
@@ -74,7 +80,7 @@ LapicqueNeuron
 | Python throughput | ~758K steps/s |
 | Spikes (10K steps, I=5.0) | 2000 |
 | State stability (20K steps) | PASS |
-| Polyglot contract | Rust, Go, Julia, and Mojo finite-increment surfaces aligned |
+| Polyglot contract | Rust, Go, Julia, and Mojo finite-increment surfaces aligned, with explicit errors where supported |
 
 ---
 

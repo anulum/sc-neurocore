@@ -36,15 +36,23 @@ function valid(s::LapicqueNeuronState)::Bool
 end
 
 function step!(s::LapicqueNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
+    if !isfinite(I_ext)
+        throw(DomainError(I_ext, "Lapicque input current must be finite"))
+    end
+    if !isfinite(dt) || dt <= 0.0
+        throw(DomainError(dt, "Lapicque dt must be finite and positive"))
+    end
+    previous_dt = s.dt
     s.dt = dt
-    if !isfinite(I_ext) || !valid(s)
-        return 0
+    if !valid(s)
+        s.dt = previous_dt
+        throw(DomainError(s.v, "Lapicque state must satisfy finite positive-RC threshold contract"))
     end
 
     dv = (-(s.v - s.v_rest) + s.resistance * I_ext) / s.tau * s.dt
     next_v = s.v + dv
     if !isfinite(dv) || !isfinite(next_v)
-        return 0
+        throw(DomainError(next_v, "Lapicque voltage increment must remain finite"))
     end
 
     s.v = next_v

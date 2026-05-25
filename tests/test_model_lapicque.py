@@ -109,6 +109,26 @@ class TestLapicqueValidation:
         with pytest.raises(ValueError, match="v must be below v_threshold"):
             LapicqueNeuron(v=1.0)
 
+    @pytest.mark.parametrize(
+        ("field", "value", "message"),
+        [
+            ("tau", 0.0, "tau"),
+            ("resistance", -1.0, "resistance"),
+            ("dt", np.nan, "dt"),
+            ("v_threshold", 0.0, "v_threshold"),
+            ("v", 1.0, "v must be below v_threshold"),
+        ],
+    )
+    def test_rejects_corrupted_runtime_state_before_integration(
+        self, field: str, value: float, message: str
+    ):
+        n = LapicqueNeuron(v=0.25)
+        setattr(n, field, value)
+        before = n.v
+        with pytest.raises(ValueError, match=message):
+            n.step(1.0)
+        assert n.v == before
+
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
     def test_rejects_non_finite_current_before_state_mutation(self, current: float):
         n = LapicqueNeuron(v=0.25)
