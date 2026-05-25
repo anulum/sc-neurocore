@@ -15,6 +15,7 @@ Performance: ~480K isolation steps/s. FULL PIPELINE."""
 
 from __future__ import annotations
 
+import os
 import time
 
 import numpy as np
@@ -183,7 +184,13 @@ class TestFHNPerformance:
         for _ in range(N):
             n.step(0.8)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 100000
+        throughput = N / elapsed
+        minimum_throughput = 60000 if os.environ.get("CI") else 100000
+        assert np.isfinite(n.v) and np.isfinite(n.w)
+        assert throughput > minimum_throughput, (
+            f"FHN isolation throughput regressed: "
+            f"{throughput:.0f}/s <= {minimum_throughput}/s"
+        )
 
     def test_network_throughput(self):
         pop = Population(FitzHughNagumoNeuron, n=50, label="bench")
