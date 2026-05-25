@@ -63,18 +63,35 @@ class AdExNeuron:
     def step(self, current: float) -> int:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
+        self._validate_runtime_state()
         if self.integrator == "baseline_euler":
-            self._step_baseline_euler(current)
+            next_v, next_w = self._step_baseline_euler(current)
         elif self.integrator == "rk4":
-            self._step_rk4(current)
+            next_v, next_w = self._step_rk4(current)
         else:
-            self._step_rosenbrock(current)
+            next_v, next_w = self._step_rosenbrock(current)
 
-        if self.v >= self.v_threshold:
+        self._validate_update(next_v, next_w)
+        if next_v >= self.v_threshold:
+            spike_w = next_w + self.b
+            if not math.isfinite(spike_w):
+                raise ValueError("spike adaptation update must remain finite")
             self.v = self.v_reset
-            self.w += self.b
+            self.w = spike_w
             return 1
+        self.v = next_v
+        self.w = next_w
         return 0
+
+    def _validate_runtime_state(self) -> None:
+        if not math.isfinite(self.v):
+            raise ValueError("runtime voltage state must be finite")
+        if not math.isfinite(self.w):
+            raise ValueError("runtime adaptation state must be finite")
+
+    def _validate_update(self, next_v: float, next_w: float) -> None:
+        if not math.isfinite(next_v) or not math.isfinite(next_w):
+            raise ValueError("AdEx integrator update must remain finite")
 
     def _rhs(self, _t: float, state: np.ndarray, current: float) -> np.ndarray:
         v = float(state[0])
@@ -84,36 +101,38 @@ class AdExNeuron:
         dw = (self.a * (v - self.v_rest) - w) / self.tau_w
         return np.array([dv, dw], dtype=np.float64)
 
-    def _step_baseline_euler(self, current: float) -> None:
-        exp_term = self.delta_t * np.exp(np.clip((self.v - self.v_rh) / self.delta_t, -20.0, 20.0))
-        dv = (-(self.v - self.v_rest) + exp_term) / self.tau + (-self.w + current) / self.c_m
-        dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w
-        self.v += dv * self.dt
-        self.w += dw * self.dt
+    def _step_baseline_euler(self, current: float) -> tuple[float, float]:
+        with np.errstate(over="ignore", invalid="ignore"):
+            exp_term = self.delta_t * np.exp(
+                np.clip((self.v - self.v_rh) / self.delta_t, -20.0, 20.0)
+            )
+            dv = (-(self.v - self.v_rest) + exp_term) / self.tau + (-self.w + current) / self.c_m
+            dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w
+            return self.v + dv * self.dt, self.w + dw * self.dt
 
-    def _step_rk4(self, current: float) -> None:
+    def _step_rk4(self, current: float) -> tuple[float, float]:
         solver = RK4Solver()
         state = np.array([self.v, self.w], dtype=np.float64)
-        state, _ = solver.step(
-            lambda time, y: self._rhs(time, y, current),
-            state,
-            0.0,
-            self.dt,
-        )
-        self.v = float(state[0])
-        self.w = float(state[1])
+        with np.errstate(over="ignore", invalid="ignore"):
+            state, _ = solver.step(
+                lambda time, y: self._rhs(time, y, current),
+                state,
+                0.0,
+                self.dt,
+            )
+        return float(state[0]), float(state[1])
 
-    def _step_rosenbrock(self, current: float) -> None:
+    def _step_rosenbrock(self, current: float) -> tuple[float, float]:
         solver = RosenbrockEuler()
         state = np.array([self.v, self.w], dtype=np.float64)
-        state, _ = solver.step(
-            lambda time, y: self._rhs(time, y, current),
-            state,
-            0.0,
-            self.dt,
-        )
-        self.v = float(state[0])
-        self.w = float(state[1])
+        with np.errstate(over="ignore", invalid="ignore"):
+            state, _ = solver.step(
+                lambda time, y: self._rhs(time, y, current),
+                state,
+                0.0,
+                self.dt,
+            )
+        return float(state[0]), float(state[1])
 
     def reset(self) -> None:
         self.v = self.v_rest

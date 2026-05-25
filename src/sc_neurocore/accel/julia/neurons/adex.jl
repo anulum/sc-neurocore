@@ -31,21 +31,37 @@ function AdExNeuronState()
 end
 
 function step!(s::AdExNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        exp_term = s.delta_t * exp(clamp((s.v - s.v_rh) / s.delta_t, -20.0, 20.0))
-        dv = ((-(s.v - s.v_rest) + exp_term) / s.tau + (-s.w + I_ext) / s.c_m) * s.dt
-        dw = (s.a * (s.v - s.v_rest) - s.w) / s.tau_w * s.dt
-        s.v += dv
-        s.w += dw
-        if s.v >= s.v_threshold
-            s.v = s.v_reset
-            s.w += s.b
-            return 1
-        end
-        return 0
-    catch _e
-        return 0
+    s.dt = dt
+    if !all(isfinite, (s.v, s.w, s.v_rest, s.v_reset, s.v_threshold, s.v_rh, s.delta_t, s.tau, s.tau_w, s.a, s.b, s.c_m, s.dt))
+        throw(DomainError(s.v, "AdEx state parameters must be finite"))
     end
+    if s.delta_t <= 0.0 || s.tau <= 0.0 || s.tau_w <= 0.0 || s.c_m <= 0.0 || s.dt <= 0.0
+        throw(DomainError(s.delta_t, "AdEx delta_t, tau, tau_w, c_m, and dt must be positive"))
+    end
+    if !isfinite(I_ext)
+        throw(DomainError(I_ext, "AdEx input current must be finite"))
+    end
+
+    exp_term = s.delta_t * exp(clamp((s.v - s.v_rh) / s.delta_t, -20.0, 20.0))
+    dv = ((-(s.v - s.v_rest) + exp_term) / s.tau + (-s.w + I_ext) / s.c_m) * s.dt
+    dw = (s.a * (s.v - s.v_rest) - s.w) / s.tau_w * s.dt
+    next_v = s.v + dv
+    next_w = s.w + dw
+    if !all(isfinite, (exp_term, dv, dw, next_v, next_w))
+        throw(DomainError(next_v, "AdEx integrator update must remain finite"))
+    end
+    if next_v >= s.v_threshold
+        spike_w = next_w + s.b
+        if !isfinite(spike_w)
+            throw(DomainError(spike_w, "AdEx spike adaptation update must remain finite"))
+        end
+        s.v = s.v_reset
+        s.w = spike_w
+        return 1
+    end
+    s.v = next_v
+    s.w = next_w
+    return 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)

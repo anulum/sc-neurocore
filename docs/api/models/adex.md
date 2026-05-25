@@ -33,6 +33,10 @@ $$V \geq V_{threshold}: \quad V \leftarrow V_{reset}, \quad w \leftarrow w + b$$
 
 ```python
 def step(self, current: float) -> int:
+    if not math.isfinite(current):
+        raise ValueError("current must be finite")
+    if not math.isfinite(self.v) or not math.isfinite(self.w):
+        raise ValueError("runtime state must be finite")
     exp_term = self.delta_t * np.exp(
         np.clip((self.v - self.v_rh) / self.delta_t, -20.0, 20.0)
     )
@@ -53,7 +57,11 @@ def step(self, current: float) -> int:
 ```
 
 Forward Euler, single step per call. Exponential argument clipped to
-[-20, 20] to prevent overflow.
+[-20, 20] to prevent overflow. Runtime validation is fail-closed across the
+maintained Python reference and native safety entry points: non-finite current,
+corrupted voltage/adaptation state, invalid time constants/capacitance, and
+non-finite integrator or spike-adaptation candidates are rejected before
+membrane or adaptation state mutation.
 
 ---
 
