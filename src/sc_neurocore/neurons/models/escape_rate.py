@@ -34,6 +34,9 @@ class EscapeRateNeuron:
     dt: float = 1.0
 
     def __post_init__(self) -> None:
+        self._validate_runtime_state()
+
+    def _validate_runtime_state(self) -> None:
         for field in ("v", "v_rest", "v_reset", "v_threshold"):
             if not math.isfinite(getattr(self, field)):
                 raise ValueError(f"{field} must be finite")
@@ -43,13 +46,21 @@ class EscapeRateNeuron:
                 raise ValueError(f"{field} must be finite and positive")
 
     def _spike_probability(self, voltage: float) -> float:
+        if not math.isfinite(voltage):
+            raise ValueError("voltage update must be finite")
         rate = self.rho_0 * safe_exp((voltage - self.v_threshold) / self.delta_u)
         hazard = rate * self.dt
-        return -math.expm1(-hazard)
+        if not math.isfinite(hazard) or hazard < 0.0:
+            raise ValueError("escape hazard must be finite and non-negative")
+        probability = -math.expm1(-hazard)
+        if not math.isfinite(probability) or not 0.0 <= probability <= 1.0:
+            raise ValueError("spike probability must remain finite and bounded")
+        return probability
 
     def step(self, current: float) -> int:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
+        self._validate_runtime_state()
 
         voltage = (
             self.v + (-(self.v - self.v_rest) + self.resistance * current) / self.tau_m * self.dt

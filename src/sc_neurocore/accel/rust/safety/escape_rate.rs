@@ -36,28 +36,37 @@ impl EscapeRateNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        if !validate_escape_rate(self) || !i_ext.is_finite() {
-            return 0;
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
+        if !i_ext.is_finite() {
+            return Err("escape rate input current must be finite");
+        }
+        if !validate_escape_rate(self) {
+            return Err("escape rate state parameters must be finite and positive");
         }
 
-        self.v += (-(self.v - self.v_rest) + self.resistance * i_ext) / self.tau_m * self.dt;
-        let hazard = self.rho_0 * safe_exp((self.v - self.v_threshold) / self.delta_u) * self.dt;
+        let next_v =
+            self.v + (-(self.v - self.v_rest) + self.resistance * i_ext) / self.tau_m * self.dt;
+        if !next_v.is_finite() {
+            return Err("escape rate membrane update must remain finite");
+        }
+        let hazard = self.rho_0 * safe_exp((next_v - self.v_threshold) / self.delta_u) * self.dt;
+        if !hazard.is_finite() || hazard < 0.0 {
+            return Err("escape rate hazard must remain finite and non-negative");
+        }
         let p_spike = -(-hazard).exp_m1();
+        if !p_spike.is_finite() || !(0.0..=1.0).contains(&p_spike) {
+            return Err("escape rate spike probability must remain finite and bounded");
+        }
         if p_spike >= 1.0 {
             self.v = self.v_reset;
-            return 1;
+            return Ok(1);
         }
-        0
+        self.v = next_v;
+        Ok(0)
     }
 
     pub fn reset(&mut self) {
-        // self.v = self.v_rest
-        self.v = -70.0_f64;
-        self.v_rest = -70.0_f64;
-        self.v_reset = -70.0_f64;
-        self.v_threshold = -50.0_f64;
-        self.tau_m = 10.0_f64;
+        self.v = self.v_rest;
     }
 }
 
@@ -96,7 +105,39 @@ mod tests {
     #[test]
     fn test_escape_rate_step() {
         let mut state = EscapeRateNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).expect("valid step must succeed");
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_invalid_runtime_state_does_not_mutate_voltage() {
+        let mut state = EscapeRateNeuron::new();
+        state.v = -65.0;
+        state.delta_u = 0.0;
+
+        assert!(state.step(1.0).is_err());
+        assert_eq!(state.v, -65.0);
+    }
+
+    #[test]
+    fn test_non_finite_update_does_not_mutate_voltage() {
+        let mut state = EscapeRateNeuron::new();
+        state.v = -65.0;
+        state.v_threshold = 1.0e308;
+        state.tau_m = 1.0e-308;
+
+        assert!(state.step(1.0e308).is_err());
+        assert_eq!(state.v, -65.0);
+    }
+
+    #[test]
+    fn test_non_finite_hazard_does_not_mutate_voltage() {
+        let mut state = EscapeRateNeuron::new();
+        state.v = -50.0;
+        state.rho_0 = 1.0e308;
+        state.dt = 1.0e308;
+
+        assert!(state.step(0.0).is_err());
+        assert_eq!(state.v, -50.0);
     }
 }
