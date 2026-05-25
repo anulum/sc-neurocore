@@ -110,6 +110,53 @@ class TestNRLIFValidation:
             n.step(current)
         assert (n.v, n.theta) == before
 
+    @pytest.mark.parametrize(
+        "field",
+        [
+            "v",
+            "theta",
+            "v_rest",
+            "theta_rest",
+            "delta_theta",
+            "tau_m",
+            "tau_theta",
+            "r_m",
+            "dt",
+        ],
+    )
+    def test_rejects_corrupted_runtime_state_before_mutation(self, field: str):
+        n = NonResettingLIFNeuron(v=-60.0, theta=-45.0)
+        before = (n.v, n.theta)
+        setattr(n, field, np.nan)
+        with pytest.raises(ValueError, match="runtime"):
+            n.step(20.0)
+        if field not in {"v", "theta"}:
+            assert (n.v, n.theta) == before
+
+    @pytest.mark.parametrize("field", ["tau_m", "tau_theta", "dt"])
+    def test_rejects_non_positive_runtime_time_constants_before_mutation(self, field: str):
+        n = NonResettingLIFNeuron(v=-60.0, theta=-45.0)
+        before = (n.v, n.theta)
+        setattr(n, field, 0.0)
+        with pytest.raises(ValueError, match="runtime"):
+            n.step(20.0)
+        assert (n.v, n.theta) == before
+
+    def test_rejects_non_finite_membrane_candidate_before_mutation(self):
+        n = NonResettingLIFNeuron(v=-60.0, theta=-45.0, tau_m=1.0e-308)
+        before = (n.v, n.theta)
+        with pytest.raises(ValueError, match="membrane update"):
+            n.step(1.0e308)
+        assert (n.v, n.theta) == before
+
+    def test_rejects_non_finite_threshold_candidate_before_mutation(self):
+        n = NonResettingLIFNeuron(v=-60.0, theta=1.0e308, tau_theta=1.0e-308)
+        before = (n.v, n.theta)
+        n.theta_rest = 0.0
+        with pytest.raises(ValueError, match="threshold update"):
+            n.step(0.0)
+        assert (n.v, n.theta) == before
+
 
 # ---------------------------------------------------------------------------
 # 2. ANALYTICAL — dV, dθ, no-reset, spike mechanism
