@@ -44,12 +44,25 @@ impl HindmarshRoseNeuron {
             return 0;
         }
         let x_prev = self.x;
-        let dx = self.y - self.x.powi(3) + self.b * self.x.powi(2) - self.z + current;
-        let dy = 1.0 - 5.0 * self.x.powi(2) - self.y;
-        let dz = self.r * (self.s * (self.x - self.x_rest) - self.z);
-        self.x += dx * self.dt;
-        self.y += dy * self.dt;
-        self.z += dz * self.dt;
+        let (x0, y0, z0) = (self.x, self.y, self.z);
+        let dt = self.dt;
+        let k1 = self.derivatives(x0, y0, z0, current);
+        let k2 = self.derivatives(
+            x0 + 0.5 * dt * k1.0,
+            y0 + 0.5 * dt * k1.1,
+            z0 + 0.5 * dt * k1.2,
+            current,
+        );
+        let k3 = self.derivatives(
+            x0 + 0.5 * dt * k2.0,
+            y0 + 0.5 * dt * k2.1,
+            z0 + 0.5 * dt * k2.2,
+            current,
+        );
+        let k4 = self.derivatives(x0 + dt * k3.0, y0 + dt * k3.1, z0 + dt * k3.2, current);
+        self.x = x0 + (dt / 6.0) * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0);
+        self.y = y0 + (dt / 6.0) * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1);
+        self.z = z0 + (dt / 6.0) * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2);
         if !validate_hindmarsh_rose(self) {
             self.x = f64::NAN;
             self.y = f64::NAN;
@@ -61,6 +74,14 @@ impl HindmarshRoseNeuron {
         } else {
             0
         }
+    }
+
+    fn derivatives(&self, x: f64, y: f64, z: f64, current: f64) -> (f64, f64, f64) {
+        (
+            y - x.powi(3) + self.b * x.powi(2) - z + current,
+            1.0 - 5.0 * x.powi(2) - y,
+            self.r * (self.s * (x - self.x_rest) - z),
+        )
     }
 
     pub fn reset(&mut self) {
@@ -107,9 +128,24 @@ mod tests {
         let y0 = state.y;
         let z0 = state.z;
         let current = 3.0;
-        let expected_x = x0 + (y0 - x0.powi(3) + state.b * x0.powi(2) - z0 + current) * state.dt;
-        let expected_y = y0 + (1.0 - 5.0 * x0.powi(2) - y0) * state.dt;
-        let expected_z = z0 + state.r * (state.s * (x0 - state.x_rest) - z0) * state.dt;
+        let dt = state.dt;
+        let k1 = state.derivatives(x0, y0, z0, current);
+        let k2 = state.derivatives(
+            x0 + 0.5 * dt * k1.0,
+            y0 + 0.5 * dt * k1.1,
+            z0 + 0.5 * dt * k1.2,
+            current,
+        );
+        let k3 = state.derivatives(
+            x0 + 0.5 * dt * k2.0,
+            y0 + 0.5 * dt * k2.1,
+            z0 + 0.5 * dt * k2.2,
+            current,
+        );
+        let k4 = state.derivatives(x0 + dt * k3.0, y0 + dt * k3.1, z0 + dt * k3.2, current);
+        let expected_x = x0 + (dt / 6.0) * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0);
+        let expected_y = y0 + (dt / 6.0) * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1);
+        let expected_z = z0 + (dt / 6.0) * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2);
 
         let spike = state.step(current);
 
