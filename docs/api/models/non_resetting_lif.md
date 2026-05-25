@@ -39,6 +39,18 @@ Spike: $V \geq \theta$, then $\theta \leftarrow \theta + \Delta_\theta$.
   Differs in the absence of voltage reset — preserves voltage information
   across spikes.
 
+## Validation contract
+
+The implementation revalidates runtime `v`, `theta`, rests, `delta_theta`,
+`tau_m`, `tau_theta`, `r_m`, `dt`, and input current before integration. The
+membrane and threshold candidates are both computed and checked for finite
+values before either state variable is assigned. If a spike occurs, the
+threshold jump is also checked before mutation, preserving the defining
+non-resetting voltage contract without allowing partial updates.
+
+Go and Rust mirrors return explicit errors for invalid scalar state, and Julia
+throws `DomainError`. This surface currently has no Mojo kernel counterpart.
+
 ## Infrastructure Pipeline
 
 ```
@@ -46,7 +58,7 @@ NonResettingLIFNeuron
 ├── step(current) → int {0,1}
 ├── Population: works
 ├── Verilog: LIF + threshold register, ~20 LUTs
-└── Rust: supported via NeuronVariant
+└── Rust/Go/Julia: finite candidate-before-mutation safety mirrors
 ```
 
 ## Test Coverage
@@ -68,7 +80,7 @@ NonResettingLIFNeuron
 | Python throughput | ~231K steps/s |
 | Spikes (10K steps, I=5.0) | 0 |
 | State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+| Native safety mirrors | Rust / Go / Julia |
 
 ---
 
@@ -98,8 +110,8 @@ State returns to initial values after `reset()`.
 `Population(NonResettingLIFNeuron, n=10)` creates correct instances.
 **Status: PASS**
 
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
+### 7. Native safety mirrors
+Rust, Go, and Julia expose the same fail-closed scalar update contract.
 
 ---
 
@@ -107,5 +119,5 @@ State returns to initial values after `reset()`.
 
 1. Throughput: ~231K steps/s (Python, single-thread)
 2. All pipeline stages verified green
-3. Rust parity: EXACT
+3. Native safety mirrors aligned for Rust, Go, and Julia
 4. Numerical stability confirmed over 20K steps

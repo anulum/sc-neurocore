@@ -51,13 +51,47 @@ class NonResettingLIFNeuron:
     def step(self, current: float) -> int:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
-        self.v += (-(self.v - self.v_rest) + self.r_m * current) / self.tau_m * self.dt
-        self.theta += (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt
-        if self.v >= self.theta:
-            self.theta += self.delta_theta
+        self._validate_runtime_state()
+        membrane_update = (-(self.v - self.v_rest) + self.r_m * current) / self.tau_m * self.dt
+        next_v = self.v + membrane_update
+        if not math.isfinite(membrane_update) or not math.isfinite(next_v):
+            raise ValueError("membrane update must remain finite")
+        threshold_update = (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt
+        next_theta = self.theta + threshold_update
+        if not math.isfinite(threshold_update) or not math.isfinite(next_theta):
+            raise ValueError("threshold update must remain finite")
+
+        spike = next_v >= next_theta
+        if spike:
+            next_theta += self.delta_theta
+            if not math.isfinite(next_theta):
+                raise ValueError("threshold update must remain finite")
+
+        self.v = next_v
+        self.theta = next_theta
+        if spike:
             return 1
         return 0
 
     def reset(self) -> None:
         self.v = self.v_rest
         self.theta = self.theta_rest
+
+    def _validate_runtime_state(self) -> None:
+        for field in (
+            "v",
+            "theta",
+            "v_rest",
+            "theta_rest",
+            "delta_theta",
+            "tau_m",
+            "tau_theta",
+            "r_m",
+            "dt",
+        ):
+            if not math.isfinite(getattr(self, field)):
+                raise ValueError(f"runtime {field} must be finite")
+        if self.delta_theta < 0.0 or self.r_m < 0.0:
+            raise ValueError("runtime delta_theta and r_m must be non-negative")
+        if self.tau_m <= 0.0 or self.tau_theta <= 0.0 or self.dt <= 0.0:
+            raise ValueError("runtime tau_m, tau_theta, and dt must be positive")

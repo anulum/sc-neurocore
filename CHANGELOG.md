@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `NonResettingLIFNeuron` Python, Julia, Go, and Rust safety surfaces
+  to revalidate runtime membrane and adaptive-threshold state before
+  integration, compute both candidates before mutation, and report non-finite
+  updates explicitly while preserving the no-voltage-reset spike contract.
 - Hardened `PerfectIntegratorNeuron` Python, Julia, Go, Mojo, and Rust safety
   surfaces to revalidate runtime membrane geometry before division/integration
   and to report invalid or non-finite voltage increments explicitly before
