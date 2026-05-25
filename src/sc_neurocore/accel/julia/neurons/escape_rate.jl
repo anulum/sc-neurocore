@@ -8,7 +8,7 @@
 
 module EscapeRateAccel
 
-export step!, simulate, validate_escape_rate, EscapeRateNeuronState
+export step!, simulate, validate_escape_rate, EscapeRateNeuronState, reset!
 
 mutable struct EscapeRateNeuronState
     v::Float64
@@ -26,18 +26,39 @@ function EscapeRateNeuronState()
     EscapeRateNeuronState(-70.0, -70.0, -70.0, -50.0, 10.0, 0.001, 3.0, 1.0, 1.0)
 end
 
-function step!(s::EscapeRateNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    if !validate_escape_rate(s) || !isfinite(I_ext)
-        return 0
+function step!(s::EscapeRateNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
+    if !isfinite(I_ext)
+        throw(DomainError(I_ext, "EscapeRate input current must be finite"))
+    end
+    if !isfinite(dt) || dt <= 0.0
+        throw(DomainError(dt, "EscapeRate dt must be finite and positive"))
     end
 
-    s.v += (-(s.v - s.v_rest) + s.resistance * I_ext) / s.tau_m * s.dt
-    rate = s.rho_0 * safe_exp((s.v - s.v_threshold) / s.delta_u)
+    previous_dt = s.dt
+    s.dt = dt
+    if !validate_escape_rate(s)
+        s.dt = previous_dt
+        throw(DomainError(s.v, "EscapeRate state parameters must be finite and positive"))
+    end
+
+    next_v = s.v + (-(s.v - s.v_rest) + s.resistance * I_ext) / s.tau_m * s.dt
+    if !isfinite(next_v)
+        throw(DomainError(next_v, "EscapeRate membrane update must remain finite"))
+    end
+    rate = s.rho_0 * safe_exp((next_v - s.v_threshold) / s.delta_u)
+    hazard = rate * s.dt
+    if !isfinite(hazard) || hazard < 0.0
+        throw(DomainError(hazard, "EscapeRate hazard must remain finite and non-negative"))
+    end
     p_spike = -expm1(-rate * s.dt)
+    if !isfinite(p_spike) || p_spike < 0.0 || p_spike > 1.0
+        throw(DomainError(p_spike, "EscapeRate spike probability must remain finite and bounded"))
+    end
     if rand() < p_spike
         s.v = s.v_reset
         return 1
     end
+    s.v = next_v
     return 0
 end
 
@@ -53,8 +74,10 @@ end
 function safe_exp(x::Float64)
     return exp(clamp(x, -700.0, 700.0))
 end
-        return 0
-    end
+
+function reset!(s::EscapeRateNeuronState)::Nothing
+    s.v = s.v_rest
+    return nothing
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)

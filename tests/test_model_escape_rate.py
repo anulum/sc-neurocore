@@ -203,6 +203,41 @@ class TestEscapeRateValidation:
             n.step(current)
         assert n.v == before
 
+    @pytest.mark.parametrize(
+        ("field", "value", "message"),
+        [
+            ("tau_m", 0.0, "tau_m"),
+            ("rho_0", -1.0, "rho_0"),
+            ("delta_u", 0.0, "delta_u"),
+            ("resistance", np.nan, "resistance"),
+            ("dt", np.inf, "dt"),
+            ("v_rest", np.nan, "v_rest"),
+        ],
+    )
+    def test_rejects_corrupted_runtime_state_before_voltage_mutation(
+        self, field: str, value: float, message: str
+    ):
+        n = EscapeRateNeuron(v=-65.0)
+        setattr(n, field, value)
+        before = -65.0
+        with pytest.raises(ValueError, match=message):
+            n.step(1.0)
+        assert n.v == before
+
+    def test_rejects_non_finite_voltage_candidate_before_reset_mutation(self):
+        n = EscapeRateNeuron(v=-65.0, v_threshold=1.0e308, tau_m=1.0e-308)
+        before = n.v
+        with pytest.raises(ValueError, match="voltage update"):
+            n.step(1.0e308)
+        assert n.v == before
+
+    def test_rejects_non_finite_hazard_before_random_draw(self):
+        n = EscapeRateNeuron(v=-50.0, rho_0=1.0e308, dt=10.0)
+        before = n.v
+        with pytest.raises(ValueError, match="escape hazard"):
+            n.step(20.0)
+        assert n.v == before
+
 
 class TestEscapeRatePerformance:
     def test_isolation_throughput(self):

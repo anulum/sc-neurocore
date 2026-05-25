@@ -9,7 +9,16 @@
 package services
 
 import (
+	"errors"
 	"math"
+)
+
+var (
+	ErrEscapeRateInvalidInput       = errors.New("escape rate input current must be finite")
+	ErrEscapeRateInvalidState       = errors.New("escape rate state parameters must be finite and positive")
+	ErrEscapeRateNonFiniteUpdate    = errors.New("escape rate membrane update must remain finite")
+	ErrEscapeRateNonFiniteHazard    = errors.New("escape rate hazard must remain finite and non-negative")
+	ErrEscapeRateInvalidProbability = errors.New("escape rate spike probability must remain finite and bounded")
 )
 
 // EscapeRateNeuronState holds the neuron state
@@ -40,20 +49,33 @@ func NewEscapeRateNeuron() *EscapeRateNeuronState {
 	}
 }
 
-// Step advances the neuron by one timestep
-func (s *EscapeRateNeuronState) Step(iExt float64) int {
-	if !ValidateEscapeRate(s) || !finite(iExt) {
-		return 0
+// Step advances the neuron by one timestep. Invalid inputs do not mutate state.
+func (s *EscapeRateNeuronState) Step(iExt float64) (int, error) {
+	if !finite(iExt) {
+		return 0, ErrEscapeRateInvalidInput
+	}
+	if !ValidateEscapeRate(s) {
+		return 0, ErrEscapeRateInvalidState
 	}
 
-	s.V += (-(s.V - s.VRest) + s.Resistance*iExt) / s.TauM * s.Dt
-	hazard := s.Rho0 * safeExp((s.V-s.VThreshold)/s.DeltaU) * s.Dt
+	nextV := s.V + (-(s.V-s.VRest)+s.Resistance*iExt)/s.TauM*s.Dt
+	if !finite(nextV) {
+		return 0, ErrEscapeRateNonFiniteUpdate
+	}
+	hazard := s.Rho0 * safeExp((nextV-s.VThreshold)/s.DeltaU) * s.Dt
+	if !finite(hazard) || hazard < 0.0 {
+		return 0, ErrEscapeRateNonFiniteHazard
+	}
 	pSpike := -math.Expm1(-hazard)
+	if !finite(pSpike) || pSpike < 0.0 || pSpike > 1.0 {
+		return 0, ErrEscapeRateInvalidProbability
+	}
 	if pSpike >= 1.0 {
 		s.V = s.VReset
-		return 1
+		return 1, nil
 	}
-	return 0
+	s.V = nextV
+	return 0, nil
 }
 
 // ValidateEscapeRate enforces finite, physically valid state parameters.
@@ -83,7 +105,10 @@ func SimulateEscapeRateNeuron(nSteps int, iExt float64) ([]float64, int) {
 	trace := make([]float64, nSteps)
 	spikes := 0
 	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
+		result, err := s.Step(iExt)
+		if err != nil {
+			panic(err)
+		}
 		trace[t] = s.V
 		if result > 0 {
 			spikes++

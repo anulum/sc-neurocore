@@ -196,6 +196,22 @@ produce inf for V >> V_θ.
   probabilities.
 - **safe_exp overflow protection:** Clips exp argument to prevent inf.
 
+## Validation contract
+
+The reference implementation validates mutable runtime state on every
+`step()` before division, exponentiation, random sampling, or membrane
+assignment:
+
+- `v`, `v_rest`, `v_reset`, `v_threshold`, and input current must be finite;
+- `tau_m`, `rho_0`, `delta_u`, `resistance`, and `dt` must be finite and positive;
+- the candidate membrane update must remain finite before spike-probability evaluation;
+- the finite-step escape hazard must remain finite and non-negative;
+- the Bernoulli probability must remain finite and bounded in `[0, 1]`.
+
+These guards preserve the Gerstner escape-rate point-process contract while
+preventing corrupted mutable parameters from converting a numerical overflow
+into a silent reset or poisoned membrane state.
+
 ---
 
 ## Implementation Notes
@@ -206,9 +222,9 @@ produce inf for V >> V_θ.
 - **Uses safe_exp:** From `sc_neurocore.utils.numerics`.
 - **Uses np.random:** Per-step RNG call (not seedable via constructor).
 - **Rust/Go/Julia wiring:** Compatible scalar state surface with bounded
-  finite-step hazard probability and fail-closed parameter validation. Rust
-  and Go safety mirrors deterministically emit only saturated-probability
-  spikes; Julia keeps stochastic Bernoulli sampling.
+  finite-step hazard probability and explicit invalid-state or non-finite
+  hazard errors. Rust and Go safety mirrors deterministically emit only
+  saturated-probability spikes; Julia keeps stochastic Bernoulli sampling.
 
 ---
 
@@ -233,9 +249,10 @@ The RNG call dominates per-step cost (not the exp).
 | Analytical | 4 | V steady-state, membrane equation 1-step, ρ₀ scales rate, Δu controls sensitivity |
 | ISI | 2 | ISI variability (CV > 0), higher current shorter ISI |
 | Parameters | 2 | τ_m controls V dynamics, resistance scales input |
+| Validation | 43 | finite parameters/current, positive scales, corrupted runtime state, finite voltage candidates, finite bounded hazards |
 | Performance | 2 | isolation throughput, network throughput |
 | Pipeline | 4 | Population, Network spikes, Projection wiring, analysis pipeline |
-| **Total** | **25** | dedicated module checks |
+| **Total** | **68** | dedicated module checks |
 
 See `tests/test_model_escape_rate.py`.
 
@@ -495,7 +512,7 @@ for du in [1.0, 3.0, 10.0]:
 |------|-------|-------------|
 | `src/sc_neurocore/neurons/models/escape_rate.py` | ~41 | Python reference |
 | `engine/src/neurons/trivial.rs` | (shared) | Rust implementation |
-| `tests/test_model_escape_rate.py` | ~260 | 24 tests |
+| `tests/test_model_escape_rate.py` | ~270 | 68 tests |
 
 ---
 
