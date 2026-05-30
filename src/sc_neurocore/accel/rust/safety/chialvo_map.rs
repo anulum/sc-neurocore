@@ -32,14 +32,27 @@ impl ChialvoMapNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // x_prev = self.x
-        // x_new = self.x.powi2 * safe_exp(self.y - self.x) + self.k + current
-        // y_new = self.a * self.y - self.b * self.x + self.c
-        // self.x = x_new
-        // self.y = y_new
-        // return 1 if (self.x >= self.x_threshold && x_prev < self.x_threshold)
-        0 // spike indicator
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
+        if !validate_chialvo_map(self) {
+            return Err("invalid Chialvo map runtime state");
+        }
+        if !i_ext.is_finite() {
+            return Err("invalid Chialvo map current");
+        }
+
+        let x_prev = self.x;
+        let x_new = self.x.powi(2) * safe_exp(self.y - self.x) + self.k + i_ext;
+        let y_new = self.a * self.y - self.b * self.x + self.c;
+        if !x_new.is_finite() || !y_new.is_finite() {
+            return Err("invalid Chialvo map candidate state");
+        }
+        self.x = x_new;
+        self.y = y_new;
+        Ok(if self.x >= self.x_threshold && x_prev < self.x_threshold {
+            1
+        } else {
+            0
+        })
     }
 
     pub fn reset(&mut self) {
@@ -53,7 +66,17 @@ impl ChialvoMapNeuron {
 }
 
 pub fn validate_chialvo_map(state: &ChialvoMapNeuron) -> bool {
-    true
+    state.x.is_finite()
+        && state.y.is_finite()
+        && state.a.is_finite()
+        && state.b.is_finite()
+        && state.c.is_finite()
+        && state.k.is_finite()
+        && state.x_threshold.is_finite()
+}
+
+fn safe_exp(value: f64) -> f64 {
+    value.clamp(-745.0, 709.0).exp()
 }
 
 #[cfg(test)]
@@ -69,7 +92,14 @@ mod tests {
     #[test]
     fn test_chialvo_map_step() {
         let mut state = ChialvoMapNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).unwrap();
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_chialvo_map_rejects_invalid_runtime_state() {
+        let mut state = ChialvoMapNeuron::new();
+        state.y = f64::INFINITY;
+        assert!(state.step(0.0).is_err());
     }
 }
