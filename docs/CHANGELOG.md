@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `TraubMilesNeuron` Python, Julia, Go, Mojo, and Rust safety
+  surfaces to reject invalid HH gate probabilities, non-physical
+  conductances, non-finite rate constants, and non-finite ten-substep
+  voltage candidates before state mutation.
 - Hardened `TermanWangOscillator` Python, Julia, Go, Mojo, and Rust safety
   surfaces to reject invalid relaxation-oscillator state, non-positive
   timescale parameters, non-finite drive, and non-finite cubic recovery
