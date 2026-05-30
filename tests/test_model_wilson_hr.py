@@ -162,6 +162,42 @@ class TestWilsonHRISI:
 
 
 class TestWilsonHRParameters:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("v", np.nan),
+            ("r", np.inf),
+            ("tau_r", 0.0),
+            ("v_peak", np.inf),
+            ("dt", 0.0),
+        ],
+    )
+    def test_rejects_invalid_numerical_configuration(self, field: str, value: float):
+        with pytest.raises(ValueError):
+            WilsonHRNeuron(**{field: value})
+
+    def test_rejects_non_finite_current_before_state_mutation(self):
+        n = WilsonHRNeuron()
+        before = (n.v, n.r)
+        with pytest.raises(ValueError, match="current"):
+            n.step(np.nan)
+        assert (n.v, n.r) == before
+
+    def test_rejects_corrupted_runtime_state_before_mutation(self):
+        n = WilsonHRNeuron()
+        n.r = np.inf
+        before = (n.v, n.r)
+        with pytest.raises(FloatingPointError, match="runtime state"):
+            n.step(0.3)
+        assert (n.v, n.r) == before
+
+    def test_rejects_polynomial_overflow_before_state_mutation(self):
+        n = WilsonHRNeuron(v=1.0e308)
+        before = (n.v, n.r)
+        with pytest.raises(FloatingPointError, match="polynomial|candidate"):
+            n.step(0.3)
+        assert (n.v, n.r) == before
+
     def test_tau_r_affects_recovery(self):
         n_fast = WilsonHRNeuron(tau_r=1.0)
         n_slow = WilsonHRNeuron(tau_r=5.0)

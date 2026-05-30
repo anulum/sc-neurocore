@@ -8,7 +8,7 @@
 
 module WilsonHrAccel
 
-export step!, simulate, WilsonHRNeuronState
+export step!, simulate, validate, WilsonHRNeuronState
 
 mutable struct WilsonHRNeuronState
     v::Float64
@@ -22,22 +22,38 @@ function WilsonHRNeuronState()
     WilsonHRNeuronState(-0.7, 0.1, 1.9, 0.4, 0.05)
 end
 
+function validate(s::WilsonHRNeuronState)::Bool
+    return isfinite(s.v) &&
+        isfinite(s.r) &&
+        isfinite(s.tau_r) &&
+        s.tau_r > 0.0 &&
+        isfinite(s.v_peak) &&
+        isfinite(s.dt) &&
+        s.dt > 0.0
+end
+
 function step!(s::WilsonHRNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        poly = -(17.81 + 47.71 * s.v + 32.63 * s.v ^ 2) * (s.v - 0.55)
-        syn = -26.0 * s.r * (s.v + 0.92)
-        dv = (poly + syn + I_ext) * s.dt
-        dr = (-s.r + 1.35 * s.v + 1.03) / s.tau_r * s.dt
-        s.v += dv
-        s.r += dr
-        if s.v >= s.v_peak
-            s.v = -0.7
-            return 1
-        end
-        return 0
-    catch _e
-        return 0
+    if !validate(s) || !isfinite(I_ext)
+        return -1
     end
+
+    poly = -(17.81 + 47.71 * s.v + 32.63 * s.v ^ 2) * (s.v - 0.55)
+    syn = -26.0 * s.r * (s.v + 0.92)
+    dv = (poly + syn + I_ext) * s.dt
+    dr = (-s.r + 1.35 * s.v + 1.03) / s.tau_r * s.dt
+    next_v = s.v + dv
+    next_r = s.r + dr
+    if !all(isfinite, (poly, syn, dv, dr, next_v, next_r))
+        return -1
+    end
+
+    s.v = next_v
+    s.r = next_r
+    if s.v >= s.v_peak
+        s.v = -0.7
+        return 1
+    end
+    return 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
