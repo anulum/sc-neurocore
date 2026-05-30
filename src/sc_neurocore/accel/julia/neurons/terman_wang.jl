@@ -8,7 +8,7 @@
 
 module TermanWangAccel
 
-export step!, simulate, TermanWangOscillatorState
+export step!, simulate, validate, TermanWangOscillatorState
 
 mutable struct TermanWangOscillatorState
     v::Float64
@@ -25,19 +25,39 @@ function TermanWangOscillatorState()
     TermanWangOscillatorState(-1.5, -0.5, 3.0, 0.2, 0.02, 0.0, 0.05, 1.5)
 end
 
+function validate(s::TermanWangOscillatorState)::Bool
+    return isfinite(s.v) &&
+        isfinite(s.w) &&
+        isfinite(s.alpha) &&
+        isfinite(s.beta) &&
+        s.beta > 0.0 &&
+        isfinite(s.epsilon) &&
+        s.epsilon > 0.0 &&
+        isfinite(s.rho) &&
+        isfinite(s.dt) &&
+        s.dt > 0.0 &&
+        isfinite(s.v_peak)
+end
+
 function step!(s::TermanWangOscillatorState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        f = 3.0 * s.v - s.v ^ 3 + 2.0
-        g = s.alpha * (1.0 + tanh(s.v / s.beta))
-        dv = (f - s.w + I_ext + s.rho) * s.dt
-        dw = s.epsilon * (g - s.w) * s.dt
-        v_prev = s.v
-        s.v += dv
-        s.w += dw
-        return (s.v >= s.v_peak && v_prev < s.v_peak) ? 1 : 0
-    catch _e
-        return 0
+    if !validate(s) || !isfinite(I_ext)
+        return -1
     end
+
+    f = 3.0 * s.v - s.v ^ 3 + 2.0
+    g = s.alpha * (1.0 + tanh(s.v / s.beta))
+    dv = (f - s.w + I_ext + s.rho) * s.dt
+    dw = s.epsilon * (g - s.w) * s.dt
+    next_v = s.v + dv
+    next_w = s.w + dw
+    if !isfinite(dv) || !isfinite(dw) || !isfinite(next_v) || !isfinite(next_w)
+        return -1
+    end
+
+    v_prev = s.v
+    s.v = next_v
+    s.w = next_w
+    return (s.v >= s.v_peak && v_prev < s.v_peak) ? 1 : 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
