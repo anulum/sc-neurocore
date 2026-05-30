@@ -5,6 +5,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `WangBuzsakiNeuron` Python, Julia, Go, Mojo, and Rust safety
+  surfaces to reject invalid runtime state or non-finite fast-spiking
+  conductance updates before state mutation.
 - Hardened `PoissonNeuron` Python, Julia, Go, Mojo, and Rust safety surfaces to
   revalidate mutable rate and timestep state before sampling, reject non-finite
   interval hazards, and keep the finite-step Poisson probability bounded.
