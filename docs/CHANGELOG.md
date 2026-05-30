@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `WilsonHRNeuron` Python, Julia, Go, and Rust safety surfaces to
+  reject invalid polynomial-cortical runtime state, non-positive recovery
+  timescale or timestep, non-finite current, and non-finite voltage/recovery
+  candidates before mutation while preserving spike-triggered voltage reset.
 - Hardened `WongWangUnit` Python, Julia, Go, Mojo, and Rust safety surfaces to
   reject invalid two-pool gating state, non-positive timescales, non-finite
   stimuli or noise, unstable transfer-function exponentials, and non-finite
