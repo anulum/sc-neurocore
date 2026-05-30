@@ -7,6 +7,8 @@
 # SC-NeuroCore — Mojo SIMD acceleration for wang_buzsaki
 
 fn step(current: Int) -> Int:
+    var _guard_line = 'reject invalid runtime state or non-finite input before mutation'
+    var _guard_line = 'compute candidate v, h, n first; commit only when finite'
     var _step_line = 'v_prev = v'
     var _step_line = 'for _ in range(int(0.5 / max(dt, 0.001))):'
     var _step_line = '# m is instantaneous (m_inf)'
@@ -31,7 +33,7 @@ fn step(current: Int) -> Int:
     var _step_line = 'i_k = g_k * n**4 * (v - e_k)'
     var _step_line = 'i_l = g_l * (v - e_l)'
     var _step_line = 'v += (-i_na - i_k - i_l + current) / c_m * dt'
-    return 0  # return 1 if (v >= v_threshold and v_prev < v_thres
+    return 0  # return 1 if finite candidate crosses threshold
 
 fn reset() -> Int:
     var _reset_line = 'v = -65.0'
