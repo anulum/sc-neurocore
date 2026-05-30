@@ -15,6 +15,7 @@ Exhibits spiking and bursting depending on parameters."""
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.rulkov_map import RulkovMapNeuron
 from sc_neurocore.network.population import Population
@@ -167,6 +168,43 @@ class TestRulkovBursting:
 
 
 class TestRulkovParameters:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("x", np.nan),
+            ("y", np.inf),
+            ("alpha", 0.0),
+            ("sigma", np.nan),
+            ("mu", 0.0),
+            ("x_threshold", np.inf),
+        ],
+    )
+    def test_rejects_invalid_numerical_configuration(self, field: str, value: float):
+        with pytest.raises(ValueError):
+            RulkovMapNeuron(**{field: value})
+
+    def test_rejects_non_finite_current_before_state_mutation(self):
+        n = RulkovMapNeuron()
+        before = (n.x, n.y)
+        with pytest.raises(ValueError, match="current"):
+            n.step(np.nan)
+        assert (n.x, n.y) == before
+
+    def test_rejects_corrupted_runtime_state_before_mutation(self):
+        n = RulkovMapNeuron()
+        n.y = np.inf
+        before = (n.x, n.y)
+        with pytest.raises(FloatingPointError, match="state"):
+            n.step(1.0)
+        assert (n.x, n.y) == before
+
+    def test_rejects_non_finite_branch_boundary_before_state_mutation(self):
+        n = RulkovMapNeuron(x=0.5, y=1.0e308, alpha=1.0e308)
+        before = (n.x, n.y)
+        with pytest.raises(FloatingPointError, match="branch boundary"):
+            n.step(1.0e308)
+        assert (n.x, n.y) == before
+
     def test_sigma_controls_excitability(self):
         """sigma=1.0 fires spontaneously, sigma=-1.6 is silent at I=0."""
         n_excitable = RulkovMapNeuron(sigma=1.0)

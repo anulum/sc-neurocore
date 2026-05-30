@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `RulkovMapNeuron` Python, Julia, Go, and Rust safety surfaces to
+  reject invalid discrete-map state, non-positive map gain/timescale
+  parameters, non-finite drive, non-finite branch boundaries, and non-finite
+  map candidates before mutation.
 - Hardened `BrunelWangNeuron` Python, Julia, Go, Mojo, and Rust safety surfaces
   to reject invalid conductance/timescale/capacitance contracts, malformed
   synaptic gates, non-finite refractory or voltage state, unstable NMDA
