@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `TermanWangOscillator` Python, Julia, Go, Mojo, and Rust safety
+  surfaces to reject invalid relaxation-oscillator state, non-positive
+  timescale parameters, non-finite drive, and non-finite cubic recovery
+  updates before mutation.
 - Hardened `WangBuzsakiNeuron` Python, Julia, Go, Mojo, and Rust safety
   surfaces to reject invalid runtime state or non-finite fast-spiking
   conductance updates before state mutation.
