@@ -5,6 +5,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `ChialvoMapNeuron` Python, Julia, Go, and Rust safety surfaces to
+  reject invalid discrete-map state, non-finite drive, unstable exponential
+  map terms, and non-finite two-dimensional map candidates before mutation.
 - Hardened `RulkovMapNeuron` Python, Julia, Go, and Rust safety surfaces to
   reject invalid discrete-map state, non-positive map gain/timescale
   parameters, non-finite drive, non-finite branch boundaries, and non-finite
