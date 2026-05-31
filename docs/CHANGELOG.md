@@ -7,6 +7,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `BertramPhantomBurster` across Python, Julia, Go, and Rust safety
+  surfaces by replacing raw Euler state mutation with bounded RK4 integration
+  over the published three-state ODE, adding finite physical-parameter and
+  candidate-state validation, updating module-owned tests and model
+  documentation, and adding refreshed local benchmark evidence.
 - Replaced proxy `ollivier_ricci_curvature` evaluation with graph-metric
   lazy-random-walk Wasserstein transport, added fail-closed coupling graph and
   node-index validation, aligned topology tests, and documented the exact

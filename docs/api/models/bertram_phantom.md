@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # BertramPhantomBurster
 
 **Module:** `sc_neurocore.neurons.models.bertram_phantom`
@@ -50,24 +51,21 @@ operates on the **minute** timescale.
 
 ```python
 def step(self, current: float) -> int:
+    current = _finite_float("current", current)
+    self._validate_state()
     v_prev = self.v
-    m_inf = self._boltz(self.v, self.v_m, self.s_m)
-    n_inf = self._boltz(self.v, self.v_n, self.s_n)
-    s1_inf = self._boltz(self.v, self.v_s1, self.s_s1)
-    s2_inf = self._boltz(self.v, self.v_s2, self.s_s2)
-    i_ca = self.g_ca * m_inf * (self.v - self.e_ca)
-    i_k = self.g_k * n_inf * (self.v - self.e_k)
-    i_s1 = self.g_s1 * self.s1 * (self.v - self.e_k)
-    i_s2 = self.g_s2 * self.s2 * (self.v - self.e_k)
-    i_l = self.g_l * (self.v - self.e_l)
-    self.v += (-i_ca - i_k - i_s1 - i_s2 - i_l + current) / self.c_m * self.dt
-    self.s1 += (s1_inf - self.s1) / self.tau_s1 * self.dt
-    self.s2 += (s2_inf - self.s2) / self.tau_s2 * self.dt
+    v, s1, s2 = self._validate_candidate(*self._rk4_candidate(current))
+    self.v = v
+    self.s1 = s1
+    self.s2 = s2
     return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 ```
 
-Forward Euler, single step per call. 4 Boltzmann evaluations (4 exp()),
-5 ionic current computations, 3 state updates.
+The production step uses classical RK4 over the three-state ODE
+`(V, s1, s2)` with current held constant during the call. Parameters and
+runtime state fail closed before integration; candidate voltage and gate
+states are checked before mutation. The Boltzmann activation is evaluated in
+overflow-stable form, which is required for the steep `s2` switch.
 
 ---
 
@@ -165,30 +163,39 @@ activity.
 
 ## Behaviour
 
-### Compound bursting pattern
+### Validated RK4 runtime contract
 
-The BertramPhantomBurster produces a distinctive compound pattern:
-- **Fast spikes** at ~10 ms intervals within bursts
-- **Bursts** of 5–50 spikes, separated by ~5–20 s silences (s1-controlled)
-- **Episodes** of 3–10 bursts, separated by ~50–100 s silences (s2-controlled)
+The production implementation advances the Bertram phantom-burster ODE with
+classical RK4 over `(V, s1, s2)`. The default state is not documented as an
+endogenous compound-bursting fixture; the validated runtime contract is:
 
-This three-level temporal hierarchy matches the experimentally observed
-"compound bursting" in pancreatic beta cells.
+- finite, bounded RK4 evolution for the published three-state conductance ODE;
+- fail-closed validation for non-finite parameters, invalid gates, invalid
+  capacitance/timescales, invalid current, and non-physical candidate states;
+- deterministic upward-threshold spike detection from `v_threshold`;
+- parity of the Python reference, Julia accelerator mirror, Go service mirror,
+  and Rust safety mirror for the same ODE and validation envelope.
+
+The module-owned test suite validates driven threshold-crossing regimes,
+including one upward crossing for `current=200.0` over 50,000 steps from the
+default state and monotone non-reduction of the crossing count in the tested
+high-current sweep.
 
 ### Biological context: insulin secretion
 
-Pancreatic beta cells exhibit compound bursting in response to glucose:
-- **Individual bursts** → Ca²⁺ oscillations → pulsatile insulin release
-- **Episodes** → slow metabolic oscillations → ultradian insulin rhythm
-- The BertramPhantomBurster is the standard model for this phenomenon
+Pancreatic beta cells can exhibit compound bursting in response to glucose:
+
+- individual bursts -> calcium oscillations -> pulsatile insulin release;
+- episodes -> slow metabolic oscillations -> ultradian insulin rhythm;
+- the Bertram phantom-burster equations provide a mechanistic model for this
+  phenomenon when parameterized into the appropriate bifurcation regime.
 
 ### s_s2 = 0.4 creates ultrasensitive switching
 
-The extreme steepness of s2_∞ means that a 1 mV change around V = −42 mV
+The extreme steepness of s2_inf means that a 1 mV change around V = -42 mV
 switches s2 from fully off to fully on. This binary-like behaviour creates
-sharp transitions between episodes — the system is either in "episode mode"
-(s2 high, strong hyperpolarisation) or "inter-episode mode" (s2 low, no
-extra suppression).
+sharp transitions between episodes in parameter regimes that traverse the
+phantom slow manifold.
 
 ---
 
@@ -197,159 +204,96 @@ extra suppression).
 | Property | BertramPhantom | Chay | ChayKeizer | ShermanRinzelKeizer |
 |----------|---------------|------|-----------|-------------------|
 | ODEs | 3 | 3 | 3 | 3 |
-| Slow variables | 2 (s1, s2) | 1 (Ca²⁺) | 1 (Ca²⁺) | 2 (n, s) |
-| Ultra-slow | Yes (τ_s2=100s) | No | No | Yes (τ_s) |
+| Slow variables | 2 (s1, s2) | 1 (Ca2+) | 1 (Ca2+) | 2 (n, s) |
+| Ultra-slow | Yes (tau_s2=100s) | No | No | Yes (tau_s) |
 | Phantom manifold | Yes | No | No | Related |
-| Compound bursting | Yes | No | No | Yes |
-| s_s2 steepness | 0.4 mV | — | — | ~5 mV |
+| s_s2 steepness | 0.4 mV | n/a | n/a | about 5 mV |
 | Reference | Bertram 2004/2008 | Chay 1985 | Chay-Keizer 1983 | Sherman 1988 |
 
-The BertramPhantomBurster is the most temporally complex beta-cell model
-in SC-NeuroCore — the only one producing compound (episodic) bursting.
+The BertramPhantomBurster remains the temporally widest beta-cell model in
+SC-NeuroCore because it contains both slow and ultra-slow gates. Runtime
+documentation distinguishes that mathematical capability from the specific
+default parameter regime validated in the current tests.
 
 ---
 
-## Pipeline Verification (End-to-End, Measured 2026-03-31)
+## Verification Evidence (Measured 2026-05-31)
 
-### Test execution
+### Module-specific test execution
 
-```
-56/56 PASSED in 43s (after threshold fix: 50K→20K for isolation throughput)
-├── TestBertramIsolation: 7 tests (defaults, binary, 3-var evolve, finite, reset,
-│   dual slow timescales, s2 steepness)
-├── TestBertramBoltzmann: 6 tests (m/n/s1/s2 midpoints, s2 near-binary, slope signs)
-├── TestBertramCurrentBalance: 5 tests (I_Ca inward, I_K outward, I_s1/I_s2 outward,
-│   current sum, reversal ordering)
-├── TestBertramBursting: 8 tests (produces spikes, compound pattern, s1 controls burst,
-│   s2 controls episode, g_s1=0 no bursting, g_s2=0 no episodes)
-├── TestBertramFI: 4 tests (subthreshold, suprathreshold, monotonic, sweep ×4)
-├── TestBertramParameters: 6 tests (dt stability ×3, tau_s1 sweep, tau_s2 sweep,
-│   deterministic)
-├── TestBertramPerformance: 2 tests (isolation >20K steps/s, network throughput)
-└── TestBertramPipeline: 9 tests (Population, Projection, Network, SpikeMonitor,
-    spike_trains, spike_count, isi, firing_rate, cross_validation)
+```text
+PYTHONPATH=src .venv/bin/python -m pytest tests/test_model_bertram_phantom.py -q
+76 passed in 217.33s
 ```
 
-### Pipeline stages verified
+### Pipeline and invariant coverage
 
 | Stage | Status | Notes |
 |-------|--------|-------|
-| Import + construction | ✓ PASS | v=-50, s1=0.1, s2=0.1 |
-| step() → int {0,1} | ✓ PASS | Upward-crossing detection |
-| 3 variables evolve | ✓ PASS | V, s1, s2 all change |
-| State finite (50k steps) | ✓ PASS | All 3 finite |
-| reset() | ✓ PASS | All 3 restored |
-| Boltzmann functions | ✓ PASS | All 4 midpoints verified |
-| Current balance | ✓ PASS | I_Ca inward, I_K/I_s1/I_s2 outward |
-| Bursting | ✓ PASS | Compound pattern produced |
-| Population(n=20) | ✓ PASS | 20 instances |
-| Projection(src→tgt) | ✓ PASS | Accepted |
-| Network + PoissonInput | ✓ PASS | Spikes produced |
-| SpikeMonitor | ✓ PASS | count, spike_trains, spike_times |
-| Analysis (5 functions) | ✓ PASS | spike_count, isi, firing_rate, cross_validation |
-| Deterministic | ✓ PASS | Bit-exact |
-| Isolation throughput | ✓ PASS | >20K steps/s (measured ~31K) |
-| Network throughput | ✓ PASS | 20 neurons functional |
+| Import + construction | PASS | default `v=-50`, `s1=0.1`, `s2=0.1` |
+| `step()` return contract | PASS | integer upward-threshold crossing flag |
+| RK4 derivative contract | PASS | independent reference RK4 candidate matches production |
+| State validation | PASS | invalid parameters and corrupted runtime state rejected |
+| Candidate validation | PASS | non-finite and out-of-envelope candidates preserve state |
+| Boltzmann functions | PASS | midpoint, monotonicity, and steep `s2` switch verified |
+| Current balance | PASS | ionic current signs and reversal ordering verified |
+| Population/network path | PASS | population, projection, monitor, and analysis surfaces exercised |
+| Determinism | PASS | identical initial conditions produce identical trajectories |
 
-### Performance note
+### Polyglot parity checks
 
-The original isolation threshold was 50K steps/s, which failed under
-system load (measured 30.8K). Threshold reduced to 20K — reflects the
-realistic per-step cost of 4 Boltzmann evaluations + 5 current
-computations. The model is moderately expensive but no sub-stepping
-is needed.
+| Surface | Verification |
+|---------|--------------|
+| Python reference | module-owned pytest suite, 76 passed |
+| Julia accelerator mirror | `include(...)`; one RK4 step validates finite state |
+| Go service mirror | `go test src/sc_neurocore/accel/go/services/bertram_phantom.go` |
+| Rust safety mirror | `rustc --test .../bertram_phantom.rs`; 3 tests passed |
 
-### Network configuration tested
+### Local benchmark artifact
 
-- Population: 20 BertramPhantomBursters
-- PoissonInput: n=20, rate=1000Hz, weight=200.0, dt=0.001, seed=42
-- Projection: recurrent, weight and probability configured
-- SpikeMonitor: count, spike_trains, spike_times verified
-- Analysis: spike_count, isi, firing_rate, cross-validation all verified
+`benchmarks/results/local_i5_11600k_python_2026-05-31_bertram_phantom.json`
+records the Python RK4 reference benchmark on a local Intel i5-11600K host:
 
-**ALL 56 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
+| Metric | Value |
+|--------|------:|
+| Workload | 50,000 RK4 steps, 5 repeats |
+| Median | 861,425,040 ns |
+| Per-step median | 17,228.5008 ns |
+| Throughput median | 58,043.3557 steps/s |
+| Spikes per repeat | `[1, 1, 1, 1, 1]` |
+
+The benchmark should be rerun whenever the Bertram phantom ODE, validation
+envelope, or polyglot mirrors change.
 
 ---
 
 ## Numerical Considerations
 
-- **dt = 0.5 ms:** Relatively large timestep. Adequate because the fast
-  variable (V) has effective τ ≈ C_m/g ≈ 0.5 ms, and dt/τ ≈ 1 — at the
-  stability boundary. The Boltzmann activations are instantaneous, which
-  helps stability.
-- **4 exp() per step:** m_∞, n_∞, s1_∞, s2_∞ all require np.exp().
-- **τ_s2 = 100,000 ms:** dt/τ_s2 = 5×10⁻⁶ — negligible update per step
-  for s2. Requires ~200,000 steps to see significant s2 change.
-- **No clipping:** V, s1, s2 not bounded. Rely on conductance-based
-  stability and reversal potential limits.
+- **RK4 timestep:** `dt = 0.5 ms` is integrated through four ODE stages before
+  any state mutation. This removes the single-stage truncation path from the
+  production reference.
+- **Candidate validation:** `V` must remain finite and within the model
+  envelope; `s1` and `s2` must remain finite gates in `[0, 1]` up to roundoff
+  tolerance. Invalid candidates fail before mutating state.
+- **Boltzmann stability:** activation functions use an overflow-stable sigmoid
+  form, required by the steep `s2` slope.
+- **Stage cost:** each RK4 call evaluates four derivative stages, so the Python
+  path performs 16 Boltzmann evaluations and 20 ionic-current evaluations per
+  committed step.
+- **Ultra-slow gate:** `tau_s2 = 100,000 ms`; at `dt = 0.5 ms`, substantial
+  `s2` movement requires long simulations.
 
 ---
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/bertram_phantom.py` — 77 lines.
-- **Three state variables:** v, s1, s2.
-- **Private method:** _boltz(v, vh, k) — shared Boltzmann sigmoid.
-- **Dataclass:** Uses `@dataclass` with 23 parameters.
-- **Rust wiring:** Compatible (3 f64 state vars, 4 exp calls).
-
----
-
-## Performance
-
-| Metric | Python | Notes |
-|--------|--------|-------|
-| Isolation | ~31K steps/s | 4 exp + 5 currents per step |
-| Network (20n) | functional | Moderate speed |
-
----
-
-## Test Coverage Summary
-
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 7 | defaults, binary, evolve, finite, reset, dual timescales, s2 steepness |
-| Boltzmann | 6 | midpoints, near-binary s2, slopes |
-| Current balance | 5 | I_Ca inward, I_K/I_s1/I_s2 outward, sum, ordering |
-| Bursting | 8 | spikes, compound pattern, s1/s2 control, g_s1=0/g_s2=0 |
-| f–I | 4 | subthreshold, suprathreshold, monotonic, sweep |
-| Parameters | 6 | dt ×3, tau sweeps, deterministic |
-| Performance | 2 | isolation, network |
-| Pipeline | 9 | Population, Projection, Network, Monitor, 5 analysis functions |
-| **Total** | **56** | **ALL PASSED (43s)** |
-
----
-
-## Findings (Measured 2026-03-31)
-
-1. **56/56 tests PASSED** (after performance threshold correction 50K→20K).
-
-2. **Compound bursting verified:** Three-level hierarchy: spikes within
-   bursts within episodes. Both s1 and s2 required — g_s1=0 or g_s2=0
-   eliminates the compound pattern.
-
-3. **s2_∞ is near-binary:** s_s2=0.4 mV creates a 0.8 mV transition
-   zone — the steepest Boltzmann in the library.
-
-4. **Current balance verified:** I_Ca inward (depolarising), I_K/I_s1/I_s2
-   outward (hyperpolarising), I_L near balance.
-
-5. **Dual slow timescales:** τ_s1=20s and τ_s2=100s — both verified to
-   change on their respective timescales.
-
-6. **Isolation throughput ~31K steps/s:** Consistent with 4 exp() + 5
-   current computations per step. Threshold corrected from 50K to 20K.
-
-7. **All 5 analysis functions work:** spike_count, isi, firing_rate,
-   cross_validation — full analysis toolkit compatible.
-
-8. **spike_trains extractable:** Per-neuron spike times recorded and
-   retrievable from SpikeMonitor.
-
-9. **Deterministic:** Two identical runs produce bit-exact results.
-
-10. **Most temporally complex burster:** Only model in SC-NeuroCore
-    with nested oscillations across 3 timescales.
+- **Python reference:** `src/sc_neurocore/neurons/models/bertram_phantom.py`
+- **Julia accelerator mirror:** `src/sc_neurocore/accel/julia/neurons/bertram_phantom.jl`
+- **Go service mirror:** `src/sc_neurocore/accel/go/services/bertram_phantom.go`
+- **Rust safety mirror:** `src/sc_neurocore/accel/rust/safety/bertram_phantom.rs`
+- **Three state variables:** `v`, `s1`, `s2`
+- **Mutation policy:** validate parameters and current, compute RK4 candidate,
+  validate candidate, then commit state and detect upward threshold crossing
 
 ---
 
@@ -423,7 +367,7 @@ as an almost digital gate on the bursting mechanism.
 
 ## Usage Examples
 
-### Example 1: Compound bursting pattern
+### Example 1: Driven RK4 threshold crossing
 
 ```python
 from sc_neurocore.neurons.models.bertram_phantom import (
@@ -433,8 +377,8 @@ from sc_neurocore.neurons.models.bertram_phantom import (
 neuron = BertramPhantomBurster()
 spike_times = []
 
-for t in range(400000):  # 200 seconds at 0.5 ms/step
-    spike = neuron.step(0.0)  # endogenous bursting
+for t in range(50000):  # 25 seconds at 0.5 ms/step
+    spike = neuron.step(200.0)  # driven RK4 regime
     if spike:
         spike_times.append(t * 0.5)  # ms
 
@@ -444,9 +388,7 @@ if len(spike_times) > 2:
         spike_times[i + 1] - spike_times[i]
         for i in range(len(spike_times) - 1)
     ]
-    # Detect burst boundaries (ISI > 500 ms)
-    burst_gaps = [i for i, isi_val in enumerate(isis) if isi_val > 500]
-    print(f"Bursts: {len(burst_gaps) + 1}")
+    print(f"Mean ISI: {sum(isis) / len(isis):.3f} ms")
 ```
 
 ### Example 2: Slow variable dynamics
@@ -490,44 +432,47 @@ print(f"Total spikes: {spike_count(mon)}")
 
 ## Technical Reference
 
-### Rust parity
+### Polyglot parity
 
-| Aspect | Python | Rust | Status |
-|--------|--------|------|--------|
-| State variables | v, s1, s2 | same | **EXACT** |
-| v_s1 | −40.0 | −40.0 | **EXACT** (fixed from −35.0) |
-| v_s2 | −42.0 | −42.0 | **EXACT** (fixed from −35.0) |
-| s_s2 | 0.4 | 0.4 | **EXACT** (fixed from 10.0) |
-| tau_s1 | 20000 | self.tau_s1 | **EXACT** |
-| tau_s2 | 100000 | self.tau_s2 | **EXACT** |
-| Boltzmann | _boltz(v,vh,k) | 1/(1+exp(-(v-vh)/k)) | **EXACT** |
-| 5 currents | I_Ca, I_K, I_s1, I_s2, I_L | same | **EXACT** |
+| Aspect | Python | Julia | Go | Rust safety |
+|--------|--------|-------|----|-------------|
+| State variables | `v`, `s1`, `s2` | same | same | same |
+| Integrator | RK4 | RK4 | RK4 | RK4 |
+| Boltzmann | overflow-stable sigmoid | same | same | same |
+| Validation | parameters, state, candidate | same envelope | same envelope | same envelope |
+| Mutation | candidate validated before commit | same | same | same |
 
-**Parity verified:** commit 2ccb452f corrected 3 default parameters.
+Parity is maintained across the Python reference and the accelerator/safety
+mirrors for the ODE, default parameters, validation envelope, and spike flag
+contract.
 
 ### Source files
 
-| File | Lines | Description |
-|------|-------|-------------|
-| `src/sc_neurocore/neurons/models/bertram_phantom.py` | 77 | Python reference |
-| `engine/src/neurons/biophysical.rs` | (shared) | Rust implementation |
-| `tests/test_model_bertram_phantom.py` | 462 | 56 tests |
+| File | Description |
+|------|-------------|
+| `src/sc_neurocore/neurons/models/bertram_phantom.py` | Python reference |
+| `src/sc_neurocore/accel/julia/neurons/bertram_phantom.jl` | Julia accelerator mirror |
+| `src/sc_neurocore/accel/go/services/bertram_phantom.go` | Go service mirror |
+| `src/sc_neurocore/accel/rust/safety/bertram_phantom.rs` | Rust safety mirror |
+| `tests/test_model_bertram_phantom.py` | Module-owned behavioural and numerical tests |
 
 ---
 
 ## Performance Benchmarks
 
-### Criterion benchmarks (local i5-11600K, measured 2026-04-05)
+### Local Python RK4 benchmark (i5-11600K, measured 2026-05-31)
 
 | Metric | Value |
-|--------|-------|
-| Test | `bertram_phantom_1k_steps` |
-| Median | 154 µs |
-| Per-step | 0.154 µs (154 ns) |
-| Throughput | ~6.5 Mstep/s |
+|--------|------:|
+| Workload | `bertram_phantom_rk4_50k_steps` |
+| Repeats | 5 |
+| Median | 861,425,040 ns |
+| Per-step median | 17,228.5008 ns |
+| Throughput median | 58,043.3557 steps/s |
 
-Single Euler step with 4 Boltzmann exp() + 5 currents. Moderate
-speed — similar to Yamada and DurstewitzDopamine.
+The stored benchmark artifact is
+`benchmarks/results/local_i5_11600k_python_2026-05-31_bertram_phantom.json`.
+It measures the Python reference RK4 path, not the Rust engine Criterion path.
 
 ---
 
@@ -559,10 +504,3 @@ speed — similar to Yamada and DurstewitzDopamine.
    activity and insulin secretion: of mice and men. *Physiol Rev*
    98(1):117–214.
    DOI: [10.1152/physrev.00008.2017](https://doi.org/10.1152/physrev.00008.2017)
-
----
-
-**ALL 56 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
-**Rust parity: EXACT (verified commit 2ccb452f, 3 defects fixed).**
-**Criterion: 154 µs / 1K steps (154 ns/step, ~6.5 Mstep/s).**
-    with compound (episodic) bursting from dual slow variables.

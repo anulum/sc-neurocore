@@ -1,0 +1,39 @@
+{
+  "schema": "sc-neurocore.local_python_neuron_benchmark.v1",
+  "date": "2026-05-31",
+  "host": {
+    "architecture": "x86_64",
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "logical_cpus": 12,
+    "threads_per_core": 2,
+    "cores_per_socket": 6,
+    "sockets": 1,
+    "cpu_max_mhz": 4900.0,
+    "cpu_min_mhz": 800.0
+  },
+  "command": "PYTHONPATH=src .venv/bin/python inline BertramPhantomBurster 50000-step RK4 benchmark",
+  "benchmark": {
+    "name": "bertram_phantom_rk4_50k_steps",
+    "steps_per_iteration": 50000,
+    "repeats": 5,
+    "samples_ns": [
+      851446890,
+      846595811,
+      925924405,
+      861425040,
+      871717672
+    ],
+    "mean_ns": 871421963.6,
+    "median_ns": 861425040,
+    "median_ns_per_step": 17228.5008,
+    "median_steps_per_second": 58043.355693491336,
+    "spikes_per_repeat": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "implementation_note": "BertramPhantomBurster uses RK4 over the published three-state phantom-burster ODE on Python, Julia, Go, and Rust safety surfaces, with finite parameter checks and candidate-state validation before mutation."
+}
