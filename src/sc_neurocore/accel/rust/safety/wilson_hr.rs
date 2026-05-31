@@ -28,18 +28,37 @@ impl WilsonHRNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // poly = -(17.81 + 47.71 * self.v + 32.63 * self.v.powi2) * (self.v - 0.
-        // syn = -26.0 * self.r * (self.v + 0.92)
-        // dv = (poly + syn + current) * self.dt
-        // dr = (-self.r + 1.35 * self.v + 1.03) / self.tau_r * self.dt
-        // self.v += dv
-        // self.r += dr
-        // if self.v >= self.v_peak:
-        // self.v = -0.7
-        // return 1
-        // return 0
-        0 // spike indicator
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
+        if !validate_wilson_hr(self) {
+            return Err("invalid Wilson-HR runtime state");
+        }
+        if !i_ext.is_finite() {
+            return Err("invalid Wilson-HR external current");
+        }
+
+        let poly = -(17.81 + 47.71 * self.v + 32.63 * self.v.powi(2)) * (self.v - 0.55);
+        let syn = -26.0 * self.r * (self.v + 0.92);
+        let dv = (poly + syn + i_ext) * self.dt;
+        let dr = (-self.r + 1.35 * self.v + 1.03) / self.tau_r * self.dt;
+        let next_v = self.v + dv;
+        let next_r = self.r + dr;
+        if !poly.is_finite()
+            || !syn.is_finite()
+            || !dv.is_finite()
+            || !dr.is_finite()
+            || !next_v.is_finite()
+            || !next_r.is_finite()
+        {
+            return Err("invalid Wilson-HR candidate state");
+        }
+
+        self.v = next_v;
+        self.r = next_r;
+        if self.v >= self.v_peak {
+            self.v = -0.7;
+            return Ok(1);
+        }
+        Ok(0)
     }
 
     pub fn reset(&mut self) {
@@ -55,6 +74,12 @@ impl WilsonHRNeuron {
 
 pub fn validate_wilson_hr(state: &WilsonHRNeuron) -> bool {
     state.v.is_finite()
+        && state.r.is_finite()
+        && state.tau_r.is_finite()
+        && state.tau_r > 0.0
+        && state.v_peak.is_finite()
+        && state.dt.is_finite()
+        && state.dt > 0.0
 }
 
 #[cfg(test)]
@@ -71,7 +96,14 @@ mod tests {
     #[test]
     fn test_wilson_hr_step() {
         let mut state = WilsonHRNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).unwrap();
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_wilson_hr_rejects_invalid_runtime_state() {
+        let mut state = WilsonHRNeuron::new();
+        state.r = f64::INFINITY;
+        assert!(state.step(0.3).is_err());
     }
 }

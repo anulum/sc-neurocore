@@ -146,6 +146,46 @@ class TestTraubMilesHHProperties:
 
 
 class TestTraubMilesParameters:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("v", np.nan),
+            ("m", np.inf),
+            ("h", -0.1),
+            ("n", 1.1),
+            ("g_na", -1.0),
+            ("g_k", -1.0),
+            ("g_l", -1.0),
+            ("dt", 0.0),
+            ("v_threshold", np.inf),
+        ],
+    )
+    def test_rejects_invalid_numerical_configuration(self, field: str, value: float):
+        with pytest.raises((ValueError, FloatingPointError)):
+            TraubMilesNeuron(**{field: value})
+
+    def test_rejects_non_finite_current_before_state_mutation(self):
+        n = TraubMilesNeuron()
+        before = (n.v, n.m, n.h, n.n)
+        with pytest.raises(ValueError, match="current"):
+            n.step(np.nan)
+        assert (n.v, n.m, n.h, n.n) == before
+
+    def test_rejects_corrupted_gate_before_state_mutation(self):
+        n = TraubMilesNeuron()
+        n.m = 1.5
+        before = (n.v, n.m, n.h, n.n)
+        with pytest.raises(FloatingPointError, match="m gate"):
+            n.step(5.0)
+        assert (n.v, n.m, n.h, n.n) == before
+
+    def test_rejects_rate_overflow_before_state_mutation(self):
+        n = TraubMilesNeuron(v=-1.0e6)
+        before = (n.v, n.m, n.h, n.n)
+        with pytest.raises(FloatingPointError, match="rate evaluation"):
+            n.step(5.0)
+        assert (n.v, n.m, n.h, n.n) == before
+
     @pytest.mark.parametrize("dt", [0.005, 0.01, 0.02])
     def test_dt_stability(self, dt: float):
         n = TraubMilesNeuron(dt=dt)

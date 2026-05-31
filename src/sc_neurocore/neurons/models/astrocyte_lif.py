@@ -30,30 +30,31 @@ from dataclasses import dataclass
 import math
 
 
+def _finite(name: str, value: float) -> None:
+    if not math.isfinite(value):
+        raise ValueError(f"{name} must be finite")
+
+
+def _positive(name: str, value: float) -> None:
+    _finite(name, value)
+    if value <= 0.0:
+        raise ValueError(f"{name} must be finite and positive")
+
+
+def _non_negative(name: str, value: float) -> None:
+    _finite(name, value)
+    if value < 0.0:
+        raise ValueError(f"{name} must be finite and non-negative")
+
+
 @dataclass
 class AstrocyteLIFNeuron:
-    """Astrocyte-LIF hybrid with tripartite synapse (Perea et al. 2009).
+    """Astrocyte-LIF hybrid with tripartite synapse feedback.
 
-    Parameters
-    ----------
-    tau_m : float
-        Membrane time constant (ms). Default: 20.0.
-    tau_ca : float
-        Calcium decay time constant (ms). Default: 500.0.
-    e_l : float
-        Leak reversal potential (mV). Default: -65.0.
-    theta : float
-        Spike threshold (mV). Default: -50.0.
-    v_reset : float
-        Post-spike reset potential (mV). Default: -65.0.
-    ca_delta : float
-        Calcium increment per presynaptic spike. Default: 0.1.
-    ca_thresh : float
-        Calcium threshold for gliotransmitter release. Default: 0.5.
-    g_glio : float
-        Gliotransmitter current amplitude. Default: 2.0.
-    dt : float
-        Integration timestep (ms). Default: 0.1.
+    Runtime state is revalidated before every step. Calcium and membrane
+    candidates are computed locally and committed only after both are finite
+    and physiologically admissible, preventing corrupted glial state from
+    leaking into downstream membrane dynamics.
     """
 
     tau_m: float = 20.0
@@ -70,55 +71,44 @@ class AstrocyteLIFNeuron:
     ca: float = 0.0
 
     def __post_init__(self) -> None:
+        self._validate()
+
+    def _validate(self) -> None:
         for name in ("tau_m", "tau_ca", "dt"):
-            value = getattr(self, name)
-            if not math.isfinite(value) or value <= 0.0:
-                raise ValueError(f"{name} must be finite and positive")
-
+            _positive(name, getattr(self, name))
         for name in ("e_l", "theta", "v_reset", "v"):
-            value = getattr(self, name)
-            if not math.isfinite(value):
-                raise ValueError(f"{name} must be finite")
-
+            _finite(name, getattr(self, name))
         if self.theta <= self.v_reset:
             raise ValueError("theta must be greater than v_reset")
-
         for name in ("ca_delta", "ca_thresh", "g_glio", "ca"):
-            value = getattr(self, name)
-            if not math.isfinite(value) or value < 0.0:
-                raise ValueError(f"{name} must be finite and non-negative")
+            _non_negative(name, getattr(self, name))
 
     def step_with_pre(self, i_ext: float, pre_spike: bool) -> int:
-        """Step with external current and presynaptic spike indicator.
-
-        Returns 1 if spike, 0 otherwise.
-        """
-        if not math.isfinite(i_ext):
-            raise ValueError("i_ext must be finite")
+        """Step with external current and presynaptic spike indicator."""
+        self._validate()
+        _finite("i_ext", i_ext)
         if type(pre_spike) is not bool:
             raise TypeError("pre_spike must be bool")
 
-        # Astrocyte calcium dynamics.
         dca = -self.ca / self.tau_ca
         if pre_spike:
             dca += self.ca_delta / self.dt
-        self.ca += dca * self.dt
-        self.ca = max(self.ca, 0.0)
+        ca_next = max(self.ca + dca * self.dt, 0.0)
+        _non_negative("ca candidate", ca_next)
 
-        # Gliotransmitter release (Heaviside on calcium).
-        i_glio = self.g_glio if self.ca > self.ca_thresh else 0.0
-
-        # LIF membrane dynamics with glial feedback.
+        i_glio = self.g_glio if ca_next > self.ca_thresh else 0.0
+        _finite("gliotransmitter current", i_glio)
         dv = (-(self.v - self.e_l) + i_ext + i_glio) / self.tau_m
-        self.v += dv * self.dt
+        v_next = self.v + dv * self.dt
+        _finite("membrane candidate", v_next)
 
-        if self.v >= self.theta:
-            self.v = self.v_reset
-            return 1
-        return 0
+        spike = v_next >= self.theta
+        self.ca = ca_next
+        self.v = self.v_reset if spike else v_next
+        return 1 if spike else 0
 
     def step(self, current: float) -> int:
-        """Step without presynaptic spike info (no glial feedback)."""
+        """Step without presynaptic spike info (no glial calcium increment)."""
         return self.step_with_pre(current, pre_spike=False)
 
     def reset(self) -> None:

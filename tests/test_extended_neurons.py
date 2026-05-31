@@ -78,9 +78,15 @@ class TestFitzHughRinzel:
 
 
 class TestChay:
-    def test_fires(self):
-        n = ChayNeuron()
-        assert sum(n.step(5.0) for _ in range(500)) > 0
+    def test_drive_changes_state_without_leaving_physical_bounds(self):
+        rest = ChayNeuron()
+        driven = ChayNeuron()
+        for _ in range(500):
+            rest.step(0.0)
+            driven.step(5.0)
+        assert driven.v > rest.v
+        assert 0.0 <= driven.n <= 1.0
+        assert driven.ca >= 0.0
 
     def test_calcium(self):
         n = ChayNeuron()

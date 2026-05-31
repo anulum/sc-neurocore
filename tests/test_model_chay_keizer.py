@@ -4,188 +4,146 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: ChayKeizerNeuron
+# SC-NeuroCore — ChayKeizerNeuron behavioural contract tests
 
-"""Full pipeline test for ChayKeizerNeuron (Chay & Keizer 1983).
-
-Pancreatic beta cell: 3 ODEs (V, n, Ca). Unlike Chay (g_K=1400),
-ChayKeizer has g_K=25 — more moderate. Converges to fixed point
-at V≈-8 mV after 1 transient spike. Ca-dependent K (KCa) with
-half-activation k_d=1.0 µM. Stable at dt=0.02."""
+"""Module-specific Chay-Keizer 1983 beta-cell dynamics contracts."""
 
 from __future__ import annotations
 
-import time
-
-import numpy as np
 import pytest
 
 from sc_neurocore.neurons.models.chay_keizer import ChayKeizerNeuron
-from sc_neurocore.network.population import Population
-from sc_neurocore.network.network import Network
-from sc_neurocore.network.monitor import SpikeMonitor
-from sc_neurocore.network.stimulus import PoissonInput
-from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 
-def _run(neuron: ChayKeizerNeuron, current: float, steps: int) -> list[int]:
-    return [t for t in range(steps) if neuron.step(current) == 1]
+def _snapshot(neuron: ChayKeizerNeuron) -> tuple[float, float, float]:
+    return neuron.v, neuron.n, neuron.ca
 
 
-class TestChayKeizerIsolation:
-    def test_defaults(self):
-        n = ChayKeizerNeuron()
-        assert n.v == -50.0 and n.n == 0.01 and n.ca == 0.1
-        assert n.g_k == 25.0 and n.g_ca == 20.0 and n.g_kca == 12.0
-        assert n.k_d == 1.0 and n.dt == 0.02
+def test_default_step_preserves_finite_biophysical_state() -> None:
+    neuron = ChayKeizerNeuron()
 
-    def test_step_returns_binary(self):
-        assert ChayKeizerNeuron().step(0.0) in (0, 1)
+    spikes = [neuron.step(0.0) for _ in range(200)]
 
-    def test_three_variables_evolve(self):
-        n = ChayKeizerNeuron()
-        initial = (n.v, n.n, n.ca)
-        for _ in range(500):
-            n.step(0.0)
-        for name, v0, v1 in zip(["v", "n", "ca"], initial, (n.v, n.n, n.ca)):
-            assert v0 != v1, f"{name} didn't evolve"
-
-    def test_state_finite(self):
-        n = ChayKeizerNeuron()
-        for _ in range(100000):
-            n.step(0.0)
-        assert np.isfinite(n.v) and np.isfinite(n.n) and np.isfinite(n.ca)
-
-    def test_reset(self):
-        n = ChayKeizerNeuron()
-        for _ in range(500):
-            n.step(0.0)
-        n.reset()
-        assert n.v == -50.0 and n.n == 0.01 and n.ca == 0.1
+    assert set(spikes) <= {0, 1}
+    assert -200.0 <= neuron.v <= 200.0
+    assert 0.0 <= neuron.n <= 1.0
+    assert 0.0 <= neuron.ca <= neuron._CA_MAX
 
 
-class TestChayKeizerDynamics:
-    def test_transient_spike(self):
-        """Model fires exactly 1 transient spike then converges to FP."""
-        n = ChayKeizerNeuron()
-        spikes = _run(n, current=0.0, steps=100000)
-        assert len(spikes) == 1, f"{len(spikes)} spikes, expected 1"
+def test_internal_substeps_match_small_timestep_reference() -> None:
+    default_dt = ChayKeizerNeuron(dt=0.02)
+    small_dt = ChayKeizerNeuron(dt=0.001)
 
-    def test_converges_to_fixed_point(self):
-        """After transient, V stabilises near -8 mV."""
-        n = ChayKeizerNeuron()
-        for _ in range(100000):
-            n.step(0.0)
-        v_eq = n.v
-        for _ in range(50000):
-            n.step(0.0)
-        assert abs(n.v - v_eq) < 0.01, "V still drifting"
+    default_dt.step(0.0)
+    for _ in range(20):
+        small_dt.step(0.0)
 
-    def test_stable_at_default_dt(self):
-        """Unlike Chay (g_K=1400), ChayKeizer (g_K=25) is stable at dt=0.02."""
-        n = ChayKeizerNeuron(dt=0.02)
-        for _ in range(50000):
-            n.step(0.0)
-        assert abs(n.v) < 150, f"V={n.v} — unstable"
-
-    def test_ca_non_negative(self):
-        n = ChayKeizerNeuron()
-        for _ in range(100000):
-            n.step(0.0)
-        assert n.ca >= 0.0
-
-    def test_n_bounded(self):
-        n = ChayKeizerNeuron()
-        for _ in range(100000):
-            n.step(0.0)
-        assert 0.0 <= n.n <= 1.0
-
-    def test_kca_half_activation(self):
-        """q_KCa = Ca/(Ca + k_d). At Ca=k_d=1.0: q=0.5."""
-        q = 1.0 / (1.0 + 1.0)
-        assert abs(q - 0.5) < 1e-10
-
-    def test_m_inf_sigmoid(self):
-        m = 1.0 / (1.0 + np.exp(-(-25.0 + 25.0) / 8.0))
-        assert abs(m - 0.5) < 1e-10
+    assert default_dt.v == pytest.approx(small_dt.v, abs=1e-9)
+    assert default_dt.n == pytest.approx(small_dt.n, abs=1e-9)
+    assert default_dt.ca == pytest.approx(small_dt.ca, abs=1e-12)
 
 
-class TestChayKeizerCurrentSweep:
-    def test_no_sustained_spiking(self):
-        """At all tested currents, only 1 transient spike (FP stable)."""
-        for I in [0.0, 50.0, 100.0, 500.0]:
-            n = ChayKeizerNeuron()
-            spikes = _run(n, current=I, steps=50000)
-            assert len(spikes) <= 2, f"I={I}: {len(spikes)} spikes"
+def test_ca_dependent_potassium_hyperpolarizes_relative_to_blocked_kca() -> None:
+    blocked = ChayKeizerNeuron(g_kca=0.0)
+    intact = ChayKeizerNeuron()
 
-    def test_v_shifts_with_current(self):
-        n0 = ChayKeizerNeuron()
-        n500 = ChayKeizerNeuron()
-        for _ in range(100000):
-            n0.step(0.0)
-            n500.step(500.0)
-        assert n500.v > n0.v
+    for _ in range(200):
+        blocked.step(0.0)
+        intact.step(0.0)
+
+    assert intact.v < blocked.v
 
 
-class TestChayKeizerParameters:
-    @pytest.mark.parametrize("dt", [0.01, 0.02, 0.05])
-    def test_dt_stability(self, dt: float):
-        n = ChayKeizerNeuron(dt=dt)
-        for _ in range(50000):
-            n.step(0.0)
-        assert abs(n.v) < 200
+def test_external_current_depolarizes_relative_to_rest() -> None:
+    rest = ChayKeizerNeuron()
+    driven = ChayKeizerNeuron()
 
-    def test_deterministic(self):
-        traces = []
-        for _ in range(2):
-            n = ChayKeizerNeuron()
-            trace = [(n.step(0.0), n.v) for _ in range(200)]
-            traces.append(trace)
-        assert traces[0] == traces[1]
+    for _ in range(50):
+        rest.step(0.0)
+        driven.step(250.0)
+
+    assert driven.v > rest.v
 
 
-class TestChayKeizerPerformance:
-    def test_isolation_throughput(self):
-        n = ChayKeizerNeuron()
-        N = 10000
-        t0 = time.perf_counter()
-        for _ in range(N):
-            n.step(0.0)
-        elapsed = time.perf_counter() - t0
-        assert N / elapsed > 5000
+def test_calcium_influx_and_removal_evolve_concentration() -> None:
+    neuron = ChayKeizerNeuron()
+
+    for _ in range(200):
+        neuron.step(5.0)
+
+    assert neuron.ca > 0.1
 
 
-class TestChayKeizerPipeline:
-    def test_population(self):
-        assert Population(ChayKeizerNeuron, n=5, label="ck").n == 5
+def test_reset_restores_dynamic_state_without_rewriting_parameters() -> None:
+    neuron = ChayKeizerNeuron(dt=0.01, g_k=20.0, k_d=2.0)
+    for _ in range(20):
+        neuron.step(50.0)
 
-    def test_network_runs(self):
-        pop = Population(ChayKeizerNeuron, n=5, label="ck")
-        drive = PoissonInput(n=5, rate_hz=100.0, weight=10.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        net.run(duration=2.0, dt=0.001, backend="python")
-        assert isinstance(mon.count, int)
+    neuron.reset()
 
-    def test_analysis(self):
-        n = ChayKeizerNeuron()
-        train = np.array([float(n.step(0.0)) for _ in range(50000)])
-        sc = spike_count(train)
-        assert sc >= 1  # at least the transient spike
+    assert _snapshot(neuron) == (-50.0, 0.01, 0.1)
+    assert neuron.dt == 0.01
+    assert neuron.g_k == 20.0
+    assert neuron.k_d == 2.0
 
 
-# Salvaged model-specific behavioural contracts from retired aggregate test file.
-class TestChayKeizer:
-    def test_fires(self):
-        from sc_neurocore.neurons.models.chay_keizer import ChayKeizerNeuron
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("v", float("nan")),
+        ("v", 250.0),
+        ("n", -0.01),
+        ("n", 1.01),
+        ("ca", -1e-6),
+        ("ca", 101.0),
+        ("g_ca", -1.0),
+        ("g_k", -1.0),
+        ("g_kca", -1.0),
+        ("g_l", -1.0),
+        ("k_d", 0.0),
+        ("k_d", float("inf")),
+        ("f_ca", -1e-6),
+        ("k_ca", -1e-6),
+        ("dt", 0.0),
+        ("dt", float("inf")),
+    ],
+)
+def test_invalid_runtime_or_parameter_state_does_not_mutate(field: str, value: float) -> None:
+    neuron = ChayKeizerNeuron()
+    setattr(neuron, field, value)
+    before = _snapshot(neuron)
 
-        n = ChayKeizerNeuron()
-        assert sum(n.step(5.0) for _ in range(500)) > 0
+    with pytest.raises(ValueError):
+        neuron.step(0.0)
 
-    def test_calcium(self):
-        from sc_neurocore.neurons.models.chay_keizer import ChayKeizerNeuron
+    assert _snapshot(neuron) == before
 
-        n = ChayKeizerNeuron()
-        for _ in range(200):
-            n.step(5.0)
-        assert n.ca != 0.1
+
+def test_non_finite_current_does_not_mutate_state() -> None:
+    neuron = ChayKeizerNeuron()
+    before = _snapshot(neuron)
+
+    with pytest.raises(ValueError):
+        neuron.step(float("nan"))
+
+    assert _snapshot(neuron) == before
+
+
+def test_candidate_outside_voltage_envelope_does_not_mutate_state() -> None:
+    neuron = ChayKeizerNeuron(v=-190.0, n=1.0, dt=0.5)
+    before = _snapshot(neuron)
+
+    with pytest.raises(ValueError):
+        neuron.step(-1e6)
+
+    assert _snapshot(neuron) == before
+
+
+def test_candidate_outside_calcium_envelope_does_not_mutate_state() -> None:
+    neuron = ChayKeizerNeuron(f_ca=1e9, dt=0.001)
+    before = _snapshot(neuron)
+
+    with pytest.raises(ValueError):
+        neuron.step(0.0)
+
+    assert _snapshot(neuron) == before

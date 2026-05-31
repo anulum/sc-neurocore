@@ -35,10 +35,12 @@ suppressed oscillations.
 
 ```python
 def step(self, ext_input: float = 0.0) -> float:
+    validate_state_and_parameters()
     se = self._sigmoid(self.w_ee * self.e - self.w_ei * self.i + ext_input)
     si = self._sigmoid(self.w_ie * self.e - self.w_ii * self.i)
-    self.e += (-self.e + se) / self.tau_e * self.dt
-    self.i += (-self.i + si) / self.tau_i * self.dt
+    next_e = self.e + (-self.e + se) / self.tau_e * self.dt
+    next_i = self.i + (-self.i + si) / self.tau_i * self.dt
+    self.e, self.i = validate_candidate(next_e, next_i)
     return self.e
 ```
 
@@ -69,8 +71,11 @@ spike.** This is a rate model, not a spiking model.
 
 ### Sigmoid properties
 
-- **At threshold:** $S(\theta) = 0.5$ (exact, verified by test)
-- **Range:** $S(x) \in (0, 1)$ for all finite $x$
+- **At threshold:** $S(\theta) = 0.5 - \beta$, where
+  $\beta = 1/(1 + \exp(a\theta))$ (verified by test).
+- **At zero drive:** $S(0) = 0$ exactly because the baseline term is
+  subtracted.
+- **Range:** $S(x) \in [-\beta, 1-\beta]$ for all finite $x$.
 - **Monotonic:** $S'(x) > 0$ — sigmoid is always increasing
 - **Maximum slope:** $S'(\theta) = a/4$ — steepest at the midpoint
 - **Gain controls transition:** Higher $a$ → sharper on/off switch.
@@ -228,13 +233,17 @@ The model predicts several key phenomena:
 
 - **Single Euler step:** No sub-stepping. The model is not stiff — the
   sigmoid saturates naturally, preventing blowup.
+- **Fail-closed candidate updates:** Python, Go, Julia, and Rust
+  surfaces validate finite E/I state, non-negative coupling weights,
+  positive time constants, positive sigmoid gain, positive timestep, and
+  the Wilson-Cowan sigmoid range before mutation. Invalid runtime
+  parameter mutation or non-finite external drive leaves the previous
+  state intact and returns or raises the surface-specific failure signal.
 - **dt stability:** Tested at dt = 0.05, 0.1, 0.2. All stable for 10,000
   steps. For dt > tau_e (>1.0), the Euler scheme may overshoot.
-- **Sigmoid overflow:** np.exp() can overflow for very large negative
-  arguments. With a=1.2 and θ=4.0, the argument is -1.2×(x-4.0). For
-  x > 500, the exp argument exceeds -600 → underflow to 0 (safe). For
-  x < -500, exp argument > 600 → overflow to inf → S → 0 (safe via
-  1/(1+inf) = 0).
+- **Sigmoid overflow:** the scalar logistic implementation uses a
+  sign-split form, so extreme finite drives saturate to the asymptotes
+  without relying on platform overflow behaviour.
 
 ---
 

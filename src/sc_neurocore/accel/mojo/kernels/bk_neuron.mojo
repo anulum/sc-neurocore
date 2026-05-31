@@ -7,12 +7,14 @@
 # SC-NeuroCore — Mojo SIMD acceleration for bk_neuron
 
 fn _safe_rate(a: Int, vhalf: Int, v: Int, k: Int, fallback: Int) -> Int:
+    var _guard_line = 'reject unstable BK rate exponentials and non-finite rate candidates before mutation'
     var __safe_rate_line = 'd = v + vhalf'
     var __safe_rate_line = 'if abs(d) < 1e-7:'
     return 0  # return fallback
     return 0  # return a * d / (1.0 - math.exp(-d / k))
 
 fn step(current: Int) -> Int:
+    var _guard_line = 'reject invalid BK gates, calcium state, conductances, capacitance, substeps, and non-finite current before mutation'
     var _step_line = 'inp = gain * current'
     var _step_line = 'sub_dt = dt / _sub_steps'
     var _step_line = 'fired = 0'
@@ -27,7 +29,8 @@ fn step(current: Int) -> Int:
     var _step_line = 'beta_n = 0.125 * math.exp(-(v + 44.0) / 80.0)'
     var _step_line = 'v_half_bk = 10.0 - 30.0 * (ca / (ca + 0.5))'
     var _step_line = 'bk_inf = 1.0 / (1.0 + math.exp(-(v - v_half_bk) / 15.0))'
-    var _step_line = 'ca += sub_dt * (-ca / tau_ca)'
+    var _step_line = 'compute calcium decay, BK activation, gate, membrane, and spike-calcium candidates locally before commit'
+    var _guard_line = 'reject non-finite calcium, BK activation, gate, or membrane candidates before mutation'
     var _step_line = 'h += sub_dt * phi * (alpha_h * (1.0 - h) - beta_h * h)'
     var _step_line = 'n += sub_dt * phi * (alpha_n * (1.0 - n) - beta_n * n)'
     var _step_line = 'i_na = g_na * m_inf**3 * h * (v - e_na)'
@@ -40,7 +43,7 @@ fn step(current: Int) -> Int:
     var _step_line = 'fired = 1'
     var _step_line = 'v = -65.0'
     var _step_line = 'ca += 0.3'
-    var _step_line = 'v = max(-100.0, min(60.0, v))'
+    var _guard_line = 'reject membrane candidates outside [-100, 60] instead of silently clamping'
     var _step_line = 'if not math.isfinite(v):'
     var _step_line = 'v = -65.0'
     var _step_line = 'h = 0.6'

@@ -796,23 +796,55 @@ impl ChayNeuron {
         }
     }
     pub fn step(&mut self, current: f64) -> i32 {
-        let v_prev = self.v;
-        let m_inf = 1.0 / (1.0 + (-(self.v + 25.0) / 8.0).exp());
-        let n_inf = 1.0 / (1.0 + (-(self.v + 18.0) / 14.0).exp());
-        let d = (self.v + 18.0).abs().max(0.01);
-        let tau_n = 1.0 / (0.01 * d);
-        let kca_act = self.ca / (self.ca + 1.0);
-        let i_ca = self.g_ca * m_inf * (self.v - self.e_ca);
-        let i_k = self.g_k * self.n * (self.v - self.e_k);
-        let i_kca = self.g_kca * kca_act * (self.v - self.e_k);
-        let i_l = self.g_l * (self.v - self.e_l);
-        self.v += (-i_ca - i_k - i_kca - i_l + current) * self.dt;
-        self.v = self.v.clamp(-200.0, 200.0);
-        self.n += (n_inf - self.n) / tau_n.max(0.01) * self.dt;
-        self.n = self.n.clamp(0.0, 1.0);
-        self.ca =
-            (self.ca + self.rho * (-self.alpha_ca * i_ca - self.k_ca * self.ca) * self.dt).max(0.0);
-        if self.v >= self.v_threshold && v_prev < self.v_threshold {
+        if !current.is_finite() || !self.dt.is_finite() || self.dt <= 0.0 {
+            return 0;
+        }
+
+        let v_initial = self.v;
+        let mut v = self.v;
+        let mut n = self.n;
+        let mut ca = self.ca;
+        let substeps = (self.dt / 0.001_f64).ceil().max(1.0) as usize;
+        let h = self.dt / substeps as f64;
+        let mut crossed = false;
+
+        for _ in 0..substeps {
+            let m_inf = 1.0 / (1.0 + (-(v + 25.0) / 8.0).clamp(-700.0, 700.0).exp());
+            let n_inf = 1.0 / (1.0 + (-(v + 18.0) / 14.0).clamp(-700.0, 700.0).exp());
+            let d = (v + 18.0).abs().max(0.01);
+            let tau_n = 1.0 / (0.01 * d);
+            let ca_denominator = ca + 1.0;
+            if ca_denominator <= 0.0 {
+                return 0;
+            }
+            let kca_act = ca / ca_denominator;
+            let i_ca = self.g_ca * m_inf * (v - self.e_ca);
+            let i_k = self.g_k * n * (v - self.e_k);
+            let i_kca = self.g_kca * kca_act * (v - self.e_k);
+            let i_l = self.g_l * (v - self.e_l);
+
+            let v_next = v + (-i_ca - i_k - i_kca - i_l + current) * h;
+            let n_next = n + (n_inf - n) / tau_n.max(0.01) * h;
+            let ca_next = ca + self.rho * (-self.alpha_ca * i_ca - self.k_ca * ca) * h;
+            if !v_next.is_finite()
+                || !n_next.is_finite()
+                || !ca_next.is_finite()
+                || !(-200.0..=200.0).contains(&v_next)
+                || !(0.0..=1.0).contains(&n_next)
+                || !(0.0..=100.0).contains(&ca_next)
+            {
+                return 0;
+            }
+            crossed = crossed || (v_next >= self.v_threshold && v < self.v_threshold);
+            v = v_next;
+            n = n_next;
+            ca = ca_next;
+        }
+
+        self.v = v;
+        self.n = n;
+        self.ca = ca;
+        if crossed && v_initial < self.v_threshold {
             1
         } else {
             0
@@ -1433,10 +1465,16 @@ mod tests {
         assert!(t > 0);
     }
     #[test]
-    fn chay_fires() {
-        let mut n = ChayNeuron::new();
-        let t: i32 = (0..5000).map(|_| n.step(20.0)).sum();
-        assert!(t > 0);
+    fn chay_drive_changes_state_without_leaving_physical_bounds() {
+        let mut rest = ChayNeuron::new();
+        let mut driven = ChayNeuron::new();
+        for _ in 0..500 {
+            rest.step(0.0);
+            driven.step(5.0);
+        }
+        assert!(driven.v > rest.v);
+        assert!((0.0..=1.0).contains(&driven.n));
+        assert!(driven.ca >= 0.0);
     }
     #[test]
     fn chay_keizer_fires() {

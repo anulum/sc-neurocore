@@ -58,14 +58,13 @@ function _valid(s::MorrisLecarNeuronState)
         s.v2 > 0.0 &&
         s.v4 > 0.0 &&
         s.phi > 0.0 &&
-        s.dt > 0.0
+        s.dt > 0.0 &&
+        0.0 <= s.w <= 1.0
 end
 
 function step!(s::MorrisLecarNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
     if !_valid(s) || !isfinite(I_ext) || !isfinite(dt) || dt <= 0.0
-        s.v = NaN
-        s.w = NaN
-        return 0
+        return -1
     end
 
     v_prev = s.v
@@ -75,13 +74,18 @@ function step!(s::MorrisLecarNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
     i_ca = s.g_ca * m_inf * (s.v - s.e_ca)
     i_k = s.g_k * s.w * (s.v - s.e_k)
     i_l = s.g_l * (s.v - s.e_l)
-    s.v += (-i_ca - i_k - i_l + I_ext) / s.c_m * dt
-    s.w += lam * (w_inf - s.w) * dt
-    if !_valid(s)
-        s.v = NaN
-        s.w = NaN
-        return 0
+    candidate = MorrisLecarNeuronState(
+        s.v + (-i_ca - i_k - i_l + I_ext) / s.c_m * dt,
+        s.w + lam * (w_inf - s.w) * dt,
+        s.c_m, s.g_ca, s.g_k, s.g_l, s.e_ca, s.e_k, s.e_l,
+        s.v1, s.v2, s.v3, s.v4, s.phi, dt, s.v_threshold,
+    )
+    if !_valid(candidate)
+        return -1
     end
+    s.v = candidate.v
+    s.w = candidate.w
+    s.dt = candidate.dt
     return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
 end
 

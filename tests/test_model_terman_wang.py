@@ -103,6 +103,44 @@ class TestTermanWangDynamics:
 
 
 class TestTermanWangParameters:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("v", np.nan),
+            ("w", np.inf),
+            ("alpha", np.nan),
+            ("beta", 0.0),
+            ("epsilon", 0.0),
+            ("dt", 0.0),
+            ("v_peak", np.inf),
+        ],
+    )
+    def test_rejects_invalid_numerical_configuration(self, field: str, value: float):
+        with pytest.raises(ValueError):
+            TermanWangOscillator(**{field: value})
+
+    def test_rejects_non_finite_current_before_state_mutation(self):
+        n = TermanWangOscillator()
+        before = (n.v, n.w)
+        with pytest.raises(ValueError, match="current"):
+            n.step(np.nan)
+        assert (n.v, n.w) == before
+
+    def test_rejects_corrupted_runtime_state_before_mutation(self):
+        n = TermanWangOscillator()
+        n.v = np.inf
+        before = (n.v, n.w)
+        with pytest.raises(FloatingPointError, match="runtime state"):
+            n.step(1.0)
+        assert (n.v, n.w) == before
+
+    def test_rejects_cubic_overflow_before_state_mutation(self):
+        n = TermanWangOscillator(v=1.0e308, w=-0.5)
+        before = (n.v, n.w)
+        with pytest.raises(FloatingPointError, match="cubic nullcline"):
+            n.step(1.0)
+        assert (n.v, n.w) == before
+
     def test_epsilon_controls_timescale(self):
         n_fast = TermanWangOscillator(epsilon=0.1)
         n_slow = TermanWangOscillator(epsilon=0.005)

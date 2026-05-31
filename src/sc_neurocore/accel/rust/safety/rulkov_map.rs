@@ -30,19 +30,42 @@ impl RulkovMapNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // x_prev = self.x
-        // if self.x <= 0:
-        // x_new = self.alpha / (1.0 - self.x) + self.y + current
-        // elif self.x < self.alpha + self.y + current:
-        // x_new = self.alpha + self.y + current
-        // else:
-        // x_new = -1.0
-        // y_new = self.y - self.mu * (self.x + 1.0) + self.mu * self.sigma
-        // self.x = x_new
-        // self.y = y_new
-        // return 1 if (self.x >= self.x_threshold && x_prev < self.x_threshold)
-        0 // spike indicator
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
+        if !validate_rulkov_map(self) {
+            return Err("invalid Rulkov map runtime state");
+        }
+        if !i_ext.is_finite() {
+            return Err("invalid Rulkov map current");
+        }
+
+        let x_prev = self.x;
+        let branch_boundary = self.alpha + self.y + i_ext;
+        if !branch_boundary.is_finite() {
+            return Err("invalid Rulkov map branch boundary");
+        }
+        let x_new = if self.x <= 0.0 {
+            let denominator = 1.0 - self.x;
+            if denominator <= 0.0 || !denominator.is_finite() {
+                return Err("invalid Rulkov map branch denominator");
+            }
+            self.alpha / denominator + self.y + i_ext
+        } else if self.x < branch_boundary {
+            branch_boundary
+        } else {
+            -1.0
+        };
+        let y_new = self.y - self.mu * (self.x + 1.0) + self.mu * self.sigma;
+        if !x_new.is_finite() || !y_new.is_finite() {
+            return Err("invalid Rulkov map candidate state");
+        }
+
+        self.x = x_new;
+        self.y = y_new;
+        Ok(if self.x >= self.x_threshold && x_prev < self.x_threshold {
+            1
+        } else {
+            0
+        })
     }
 
     pub fn reset(&mut self) {
@@ -56,7 +79,14 @@ impl RulkovMapNeuron {
 }
 
 pub fn validate_rulkov_map(state: &RulkovMapNeuron) -> bool {
-    true
+    state.x.is_finite()
+        && state.y.is_finite()
+        && state.alpha.is_finite()
+        && state.alpha > 0.0
+        && state.sigma.is_finite()
+        && state.mu.is_finite()
+        && state.mu > 0.0
+        && state.x_threshold.is_finite()
 }
 
 #[cfg(test)]
@@ -72,7 +102,14 @@ mod tests {
     #[test]
     fn test_rulkov_map_step() {
         let mut state = RulkovMapNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).unwrap();
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_rulkov_map_rejects_invalid_runtime_state() {
+        let mut state = RulkovMapNeuron::new();
+        state.y = f64::INFINITY;
+        assert!(state.step(1.0).is_err());
     }
 }

@@ -1,33 +1,31 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Commercial license available
-// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-// © Code 2020–2026 Miroslav Šotek. All rights reserved.
+// Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+// Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for booth_rinzel
+// SC-NeuroCore - Booth-Rinzel Rust safety surface
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
-#[derive(Debug, Clone)]
-pub struct BoothRinzelNeuron {
+#[derive(Debug, Clone, Copy)]
+pub struct BoothRinzelState {
     pub vs: f64,
     pub vd: f64,
     pub h: f64,
     pub n: f64,
     pub q: f64,
     pub ca: f64,
-    pub p: f64,
-    pub gc: f64,
     pub g_na: f64,
     pub g_k: f64,
     pub g_ca: f64,
     pub g_kca: f64,
     pub g_l: f64,
+    pub g_c: f64,
+    pub p: f64,
+    pub c_m: f64,
     pub e_na: f64,
     pub e_k: f64,
     pub e_ca: f64,
     pub e_l: f64,
-    pub c_m: f64,
     pub alpha_ca: f64,
     pub k_ca: f64,
     pub f_ca: f64,
@@ -35,74 +33,151 @@ pub struct BoothRinzelNeuron {
     pub v_threshold: f64,
 }
 
-impl BoothRinzelNeuron {
-    pub fn new() -> Self {
+impl Default for BoothRinzelState {
+    fn default() -> Self {
         Self {
-            vs: -65.0_f64,
-            vd: -65.0_f64,
-            h: 0.9_f64,
-            n: 0.0_f64,
-            q: 0.0_f64,
-            ca: 0.0_f64,
-            p: 0.5_f64,
-            gc: 0.1_f64,
-            g_na: 120.0_f64,
-            g_k: 20.0_f64,
-            g_ca: 14.0_f64,
-            g_kca: 5.0_f64,
-            g_l: 0.51_f64,
-            e_na: 55.0_f64,
-            e_k: -80.0_f64,
-            e_ca: 80.0_f64,
-            e_l: -60.0_f64,
-            c_m: 1.0_f64,
-            alpha_ca: 0.009_f64,
-            k_ca: 0.18_f64,
-            f_ca: 0.0025_f64,
-            dt: 0.025_f64,
-            v_threshold: -20.0_f64,
+            vs: -60.0,
+            vd: -60.0,
+            h: 0.6,
+            n: 0.1,
+            q: 0.1,
+            ca: 0.1,
+            g_na: 120.0,
+            g_k: 36.0,
+            g_ca: 2.0,
+            g_kca: 5.0,
+            g_l: 0.3,
+            g_c: 1.0,
+            p: 0.5,
+            c_m: 1.0,
+            e_na: 50.0,
+            e_k: -77.0,
+            e_ca: 120.0,
+            e_l: -54.4,
+            alpha_ca: 0.002,
+            k_ca: 0.01,
+            f_ca: 0.01,
+            dt: 0.01,
+            v_threshold: 0.0,
         }
-    }
-
-    pub fn _safe_exp(&self, x: f64) -> f64 {
-        // return float(((x_f64).clamp(-500, 500_f64).exp()))
-        0.0
-    }
-
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // vs_prev = self.vs
-        // for _ in range(4):
-        // # Soma: fast Na + delayed-rectifier K
-        // m_inf = 1.0 / (1.0 + self._safe_exp(-(self.vs + 35.0) / 7.8))
-        // h_inf = 1.0 / (1.0 + self._safe_exp((self.vs + 55.0) / 7.0))
-        // tau_h = 30.0 / (
-        // self._safe_exp((self.vs + 50.0) / 15.0)
-        // + self._safe_exp(-(self.vs + 50.0) / 16.0)
-        // + 1e-12
-        // )
-        // n_inf = 1.0 / (1.0 + self._safe_exp(-(self.vs + 28.0) / 15.0))
-        // tau_n = 7.0 / (
-        // self._safe_exp((self.vs + 40.0) / 40.0)
-        // + self._safe_exp(-(self.vs + 40.0) / 50.0)
-        // + 1e-12
-        0 // spike indicator
-    }
-
-    pub fn reset(&mut self) {
-        // self.vs = -65.0
-        // self.vd = -65.0
-        // self.h, self.n, self.q = 0.9, 0.0, 0.0
-        // self.ca = 0.0
-        self.vs = -65.0_f64;
-        self.vd = -65.0_f64;
-        self.h = 0.9_f64;
-        self.n = 0.0_f64;
-        self.q = 0.0_f64;
     }
 }
 
-pub fn validate_booth_rinzel(state: &BoothRinzelNeuron) -> bool {
-    true
+fn gate(x: f64) -> bool {
+    x.is_finite() && (0.0..=1.0).contains(&x)
+}
+
+fn clip(x: f64, lo: f64, hi: f64) -> f64 {
+    x.max(lo).min(hi)
+}
+
+fn safe_exp(x: f64) -> f64 {
+    clip(x, -100.0, 100.0).exp()
+}
+
+fn valid_config(s: &BoothRinzelState) -> bool {
+    [
+        s.g_na, s.g_k, s.g_ca, s.g_kca, s.g_l, s.g_c, s.c_m, s.alpha_ca, s.k_ca, s.f_ca, s.dt,
+    ]
+    .iter()
+    .all(|x| x.is_finite() && *x > 0.0)
+        && s.p.is_finite()
+        && s.p > 0.0
+        && s.p < 1.0
+        && [s.e_na, s.e_k, s.e_ca, s.e_l, s.v_threshold]
+            .iter()
+            .all(|x| x.is_finite())
+}
+
+fn valid_state(vs: f64, vd: f64, h: f64, n: f64, q: f64, ca: f64) -> bool {
+    vs.is_finite()
+        && vd.is_finite()
+        && ca.is_finite()
+        && ca >= 0.0
+        && gate(h)
+        && gate(n)
+        && gate(q)
+        && (-200.0..=100.0).contains(&vs)
+        && (-200.0..=100.0).contains(&vd)
+}
+
+fn substep(
+    s: &BoothRinzelState,
+    mut vs: f64,
+    mut vd: f64,
+    mut h: f64,
+    mut n: f64,
+    mut q: f64,
+    mut ca: f64,
+    current: f64,
+    dt: f64,
+) -> Option<(f64, f64, f64, f64, f64, f64)> {
+    if !current.is_finite() || !dt.is_finite() || dt <= 0.0 {
+        return None;
+    }
+    let m_inf = 1.0 / (1.0 + safe_exp(-(vs + 30.0) / 9.5));
+    let h_inf = 1.0 / (1.0 + safe_exp((vs + 53.0) / 7.0));
+    let n_inf = 1.0 / (1.0 + safe_exp(-(vs + 30.0) / 10.0));
+    let q_inf = 1.0 / (1.0 + safe_exp(-(vd + 25.0) / 5.0));
+
+    let tau_h = 1.0 + 7.0 / (safe_exp((vs + 40.0) / 5.0) + safe_exp(-(vs + 40.0) / 5.0));
+    let tau_n = 1.0 + 5.0 / (safe_exp((vs + 35.0) / 10.0) + safe_exp(-(vs + 35.0) / 10.0));
+    let tau_q = 10.0;
+
+    h = clip(h + dt * (h_inf - h) / tau_h, 0.0, 1.0);
+    n = clip(n + dt * (n_inf - n) / tau_n, 0.0, 1.0);
+    q = clip(q + dt * (q_inf - q) / tau_q, 0.0, 1.0);
+
+    let i_na = s.g_na * m_inf.powi(3) * h * (vs - s.e_na);
+    let i_k = s.g_k * n.powi(4) * (vs - s.e_k);
+    let i_l = s.g_l * (vs - s.e_l);
+    let i_c = s.g_c * (vs - vd);
+    let i_ca = s.g_ca * q.powi(2) * (vd - s.e_ca);
+    let i_kca = s.g_kca * (ca / (ca + s.k_ca)) * (vd - s.e_k);
+
+    let d_vs = (current - i_na - i_k - i_l - i_c) / (s.c_m * s.p);
+    let d_vd = (-i_ca - i_kca - i_l + i_c) / (s.c_m * (1.0 - s.p));
+    let d_ca = -s.alpha_ca * i_ca - s.f_ca * ca;
+
+    vs = clip(vs + dt * d_vs, -200.0, 100.0);
+    vd = clip(vd + dt * d_vd, -200.0, 100.0);
+    ca = (ca + dt * d_ca).max(0.0);
+
+    valid_state(vs, vd, h, n, q, ca).then_some((vs, vd, h, n, q, ca))
+}
+
+pub fn validate_booth_rinzel(s: &BoothRinzelState) -> bool {
+    valid_config(s) && valid_state(s.vs, s.vd, s.h, s.n, s.q, s.ca)
+}
+
+pub fn booth_rinzel_step(s: &mut BoothRinzelState, current: f64) -> i32 {
+    if !validate_booth_rinzel(s) || !current.is_finite() {
+        return -1;
+    }
+    let old_vs = s.vs;
+    let (mut vs, mut vd, mut h, mut n, mut q, mut ca) = (s.vs, s.vd, s.h, s.n, s.q, s.ca);
+    let dt = s.dt / 4.0;
+    for _ in 0..4 {
+        match substep(s, vs, vd, h, n, q, ca, current, dt) {
+            Some(next) => (vs, vd, h, n, q, ca) = next,
+            None => return -1,
+        }
+    }
+    (s.vs, s.vd, s.h, s.n, s.q, s.ca) = (vs, vd, h, n, q, ca);
+    if old_vs < s.v_threshold && s.vs >= s.v_threshold {
+        1
+    } else {
+        0
+    }
+}
+
+pub fn reset_booth_rinzel(s: &mut BoothRinzelState) {
+    s.vs = -60.0;
+    s.vd = -60.0;
+    s.h = 0.6;
+    s.n = 0.1;
+    s.q = 0.1;
+    s.ca = 0.1;
 }
 
 #[cfg(test)]
@@ -110,15 +185,27 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_booth_rinzel_new() {
-        let state = BoothRinzelNeuron::new();
-        assert!(validate_booth_rinzel(&state));
+    fn booth_rinzel_rejects_invalid_probability_without_mutation() {
+        let mut state = BoothRinzelState {
+            p: 1.0,
+            ..Default::default()
+        };
+        let before = state;
+        assert_eq!(booth_rinzel_step(&mut state, 10.0), -1);
+        assert_eq!(state.vs, before.vs);
+        assert_eq!(state.vd, before.vd);
+        assert_eq!(state.h, before.h);
+        assert_eq!(state.n, before.n);
+        assert_eq!(state.q, before.q);
+        assert_eq!(state.ca, before.ca);
     }
 
     #[test]
-    fn test_booth_rinzel_step() {
-        let mut state = BoothRinzelNeuron::new();
-        let spike = state.step(10.0);
-        assert!(spike == 0 || spike == 1);
+    fn booth_rinzel_keeps_state_physical_under_drive() {
+        let mut state = BoothRinzelState::default();
+        for _ in 0..100 {
+            assert!(booth_rinzel_step(&mut state, 8.0) >= 0);
+            assert!(validate_booth_rinzel(&state));
+        }
     }
 }
