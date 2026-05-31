@@ -7,6 +7,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `PernarowskiNeuron` to candidate-first RK4 integration across the
+  Python reference, Rust engine, Julia mirror, Go mirror, and Rust safety
+  surface; module-owned tests now cover the Python model at 100%, public docs
+  state the finite-domain and continuous threshold-crossing contracts, and
+  refreshed Python/Rust benchmark artefacts document the RK4 runtime cost.
 - Promoted `FitzHughRinzelNeuron` to candidate-first RK4 integration across
   the Python reference, Rust engine, Julia mirror, Go mirror, and Rust safety
   surface; module-owned tests now cover the Python model at 100%, public docs

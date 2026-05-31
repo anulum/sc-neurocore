@@ -1,140 +1,139 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # PernarowskiNeuron
 
 **Module:** `sc_neurocore.neurons.models.pernarowski`
-**Reference:** Pernarowski 1994
-**Family:** Burster (FHN-like, 3D)
-**State variables:** `v`, `w`, `z`
+**Rust engine:** `sc_neurocore_engine::neurons::simple_spiking::PernarowskiNeuron`
+**Polyglot mirrors:** Julia `PernarowskiAccel`, Go `PernarowskiNeuronState`, Rust safety `PernarowskiNeuron`
+**Reference:** Pernarowski, M. (1994). SIAM Journal on Applied Mathematics, 54, 814-832.
+**Family:** three-state beta-cell burster with fast cubic voltage and two slower recovery/adaptation variables.
+
+---
 
 ## Equations
 
-$$\frac{dV}{dt} = V - \frac{V^3}{3} - w - z + I$$
-$$\frac{dw}{dt} = \epsilon_1 (V - \gamma w + \alpha)$$
-$$\frac{dz}{dt} = \epsilon_2 (\beta (V + 0.7) - z)$$
+The maintained model evolves three continuous state variables:
 
-Spike: upward crossing of $V_\theta$ ($V_{t} \geq \theta$ and $V_{t-1} < \theta$).
+| Variable | Role |
+|----------|------|
+| `v` | fast voltage-like cubic state |
+| `w` | intermediate recovery variable |
+| `z` | ultra-slow adaptation variable |
+
+The ODE contract is:
+
+$$\frac{dv}{dt} = v - \frac{v^3}{3} - w - z + I$$
+
+$$\frac{dw}{dt} = \epsilon_1(v - \gamma w + \alpha)$$
+
+$$\frac{dz}{dt} = \epsilon_2(\beta(v + 0.7) - z)$$
+
+The public spike output is an upward threshold-crossing event:
+
+$$v_{new} \geq v_{threshold} \land v_{old} < v_{threshold}$$
+
+`step()` does not reset the state after a spike. The trajectory remains the continuous Pernarowski flow; `reset()` is an explicit caller action only.
+
+---
+
+## Numerical integration contract
+
+Python, Rust engine, Julia, Go, and Rust safety surfaces now use the same candidate-first RK4 update over the coupled `(v, w, z)` system:
+
+1. Validate finite state, finite offsets, finite threshold, positive timescale/coupling parameters, and finite current.
+2. Evaluate all four RK4 derivative stages against the same coupled ODE.
+3. Reject derivative overflow, non-finite derivative output, and non-finite candidate state before mutation.
+4. Commit `(v, w, z)` only after candidate validation.
+5. Emit a spike only for upward threshold crossings, without artificial reset.
+
+Invalid runtime input fails closed:
+
+| Condition | Python behavior | Julia / Go / Rust safety behavior | Rust engine behavior |
+|-----------|-----------------|------------------------------------|----------------------|
+| non-finite current | raises `FloatingPointError` before mutation | returns `0` and preserves state | returns `0` and preserves state |
+| non-scalar current | raises `TypeError` before mutation | adapter type boundary rejects non-float input | Rust type boundary rejects non-float input |
+| corrupted non-finite state | raises `FloatingPointError` before mutation | returns `0` and preserves state | returns `0` and preserves state |
+| non-positive timescale/coupling | raises `ValueError` before mutation | returns `0` and preserves state | returns `0` and preserves state |
+| derivative overflow or non-finite candidate | raises `FloatingPointError` before mutation | returns `0` and preserves state | returns `0` and preserves state |
+
+---
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `v` | −1.0 | Membrane voltage |
-| `w` | 0.0 | Fast recovery variable |
-| `z` | 0.0 | Ultra-slow adaptation |
-| `alpha` | 0.1 | w-nullcline offset |
-| `beta` | 0.5 | z-nullcline slope |
-| `eps1` | 0.1 | Time-scale ratio for w |
-| `eps2` | 0.001 | Time-scale ratio for z (100× slower than w) |
-| `gamma` | 0.5 | w self-coupling |
-| `v_threshold` | 0.5 | Detection threshold |
-| `dt` | 0.1 | Time step |
+| Parameter | Default | Contract | Description |
+|-----------|---------|----------|-------------|
+| `v` | `-1.0` | finite | fast voltage-like state |
+| `w` | `0.0` | finite | intermediate recovery state |
+| `z` | `0.0` | finite | ultra-slow adaptation state |
+| `alpha` | `0.1` | finite | recovery nullcline offset |
+| `beta` | `0.5` | finite | adaptation nullcline slope |
+| `eps1` | `0.1` | finite, positive | intermediate timescale ratio |
+| `eps2` | `0.001` | finite, positive | ultra-slow timescale ratio |
+| `gamma` | `0.5` | finite, positive | recovery self-coupling |
+| `dt` | `0.1` | finite, positive | integration timestep |
+| `v_threshold` | `0.5` | finite | spike event threshold |
 
-### Validation contract
+The default hierarchy keeps `z` about 100 times slower than `w`, so `z` modulates the burst envelope rather than the individual spike timescale.
 
-The Python model and acceleration mirrors reject non-finite `v`, `w`,
-`z`, `alpha`, `beta`, `v_threshold`, and runtime input before state
-mutation. The timescale and coupling parameters `eps1`, `eps2`, `gamma`,
-and `dt` must be finite and strictly positive. This preserves the
-three-dimensional fast/intermediate/ultra-slow burster geometry and
-prevents NaN or infinite currents from poisoning state.
+---
 
-## Behaviour
+## Behavioural evidence
 
-- **Spontaneous oscillation:** Model bursts even at I=0 (relaxation oscillator).
-  ISI ≈ 290–300 steps at default parameters.
-- **Depolarisation block:** At I≥2.0, oscillation ceases — V converges to a
-  stable high fixed point. Only 0–1 spikes in 10k steps.
-- **Three time scales:** V (fast, ~dt), w (intermediate, eps1=0.1),
-  z (ultra-slow, eps2=0.001). The z variable modulates burst envelope.
-- **Voltage bounded:** V stays within approximately [−2, 2] (cubic nullcline).
-- **Near-constant ISI:** CV(ISI) < 0.05 for constant input in oscillatory regime.
-- **Deterministic:** No stochastic element.
+Module-specific tests in `tests/test_model_pernarowski.py` assert:
 
-## Dynamic Regimes
+| Contract | Evidence |
+|----------|----------|
+| ODE formula | derivative helper equals the documented three-state RHS |
+| RK4 fidelity | one-step update matches an independent RK4 reference |
+| continuous threshold semantics | spikes occur only on upward threshold crossings, without implicit reset |
+| bounded voltage | long-horizon traces remain finite and inside broad cubic-nullcline envelopes |
+| slow-variable separation | `z` evolves much more slowly than `w`; changing `eps2` changes dynamics |
+| current regimes | moderate current sustains oscillation; high drive enters depolarisation block |
+| finite-domain safety | invalid construction, invalid current, corrupted state, invalid runtime scales, derivative overflow, and non-finite candidates fail before mutation |
+| public integration | population, network, monitor, Poisson input, and spike-count analysis contracts remain wired |
 
-| Current range | Regime | Description |
-|---------------|--------|-------------|
-| I ∈ [0, 1.0] | Oscillatory | Sustained bursting, 30+ spikes/10k steps |
-| I ∈ [1.0, 1.5] | Transitional | Reduced rate, lengthening ISI |
-| I ≥ 2.0 | Depolarisation block | ≤1 spike, V converges to fixed point |
+Focused evidence from 2026-05-31:
 
-## Infrastructure Pipeline
-
+```text
+PYTHONPATH=src .venv/bin/python -m coverage run --rcfile=/dev/null --source=src/sc_neurocore/neurons/models -m pytest tests/test_model_pernarowski.py -q
+87 passed
+src/sc_neurocore/neurons/models/pernarowski.py: 100% statement coverage
 ```
+
+Polyglot and engine checks from the same pass:
+
+```text
+julia --project=. -e 'include("src/sc_neurocore/accel/julia/neurons/pernarowski.jl"); ...'
+go test src/sc_neurocore/accel/go/services/pernarowski.go
+rustc --test src/sc_neurocore/accel/rust/safety/pernarowski.rs -o "$tmp/pernarowski_safety_test" && "$tmp/pernarowski_safety_test"
+cargo test --manifest-path engine/Cargo.toml pernarowski -- --nocapture
+```
+
+Observed results: Julia valid-step check passed, Go compile/test passed, Rust safety tests passed with 5 tests, and Rust engine Pernarowski tests passed with 9 tests.
+
+---
+
+## Benchmark evidence
+
+Benchmark artefacts are stored under `benchmarks/results/`.
+
+| Surface | Command | Result |
+|---------|---------|--------|
+| Python reference | `PernarowskiNeuron.step(0.5)`, 7 repeats of 100,000 steps | median `1.0787754809716717e-05` seconds per step, deterministic 343 spikes per repeat |
+| Rust engine | `cargo bench --manifest-path engine/Cargo.toml --bench full_bench pernarowski_10k_steps -- --sample-size 10` | Criterion estimate `632.87 µs` per 10k steps, `63.287 ns` per step |
+
+The RK4 path is slower than the prior Euler table value because each step evaluates the coupled ODE four times and validates the candidate before mutation.
+
+---
+
+## Infrastructure pipeline
+
+```text
 PernarowskiNeuron
-├── step(current) → int {0,1} (deterministic)
-├── Population: PoissonInput(weight=0.5, rate=200Hz)
-├── Verilog: 3 Euler accumulators + cubic LUT, ~120 LUTs
-└── Rust: supported (3 f64 state variables)
+├── Python reference: candidate-first RK4, continuous threshold-crossing event
+├── Rust engine: candidate-first RK4 benchmark and production path
+├── Julia mirror: candidate-first RK4 adapter path
+├── Go mirror: candidate-first RK4 service path
+├── Rust safety mirror: candidate-first RK4 fail-closed path
+├── Population / Network / Monitor integration
+└── Spike-count analysis integration
 ```
-
-## Test Coverage
-
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 5 | defaults, binary, 3-var evolution, finite 50k, reset |
-| Oscillations | 5 | spontaneous, V bounded, ISI regularity, ISI range, upward-only |
-| f–I curve | 3 | sustained oscillation, depolarisation block, rate modulation |
-| Slow variables | 3 | z slower than w, eps2 effect, z bounded |
-| Parameters | 5 | custom threshold, gamma/beta sensitivity, dt stability (3 values) |
-| Determinism | 1 | bit-exact reproducibility |
-| Network | 2 | population, spikes |
-| Analysis | 2 | spike_count, consistency |
-| Validation | 41 | finite state/offsets/threshold, positive scales, finite input before mutation |
-| **Total** | **68** | |
-
-Key finding: eps2 controls ultra-slow z dynamics. At eps2=0.001 (default),
-z evolves ~100× slower than w, shaping the burst envelope.
-
-
----
-
-## Measured Performance (2026-04-04)
-
-| Metric | Value |
-|--------|-------|
-| Python throughput | ~277K steps/s |
-| Spikes (10K steps, I=5.0) | 1 |
-| State stability (20K steps) | PASS |
-| Rust parity | EXACT |
-
----
-
-## Pipeline Verification (End-to-End)
-
-### 1. Construction
-`PernarowskiNeuron()` instantiates with documented defaults.
-**Status: PASS**
-
-### 2. step() → correct type
-Returns `int` (spike indicator) or `float` (rate/potential).
-**Status: PASS**
-
-### 3. Spiking behaviour
-1 spikes in 10,000 steps at I=5.0.
-**Status: PASS**
-
-### 4. State stability (20,000 steps)
-All state variables remain finite after extended simulation.
-**Status: PASS**
-
-### 5. reset()
-State returns to initial values after `reset()`.
-**Status: PASS**
-
-### 6. Population
-`Population(PernarowskiNeuron, n=10)` creates correct instances.
-**Status: PASS**
-
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
-
----
-
-## Findings (measured 2026-04-04)
-
-1. Throughput: ~277K steps/s (Python, single-thread)
-2. All pipeline stages verified green
-3. Rust parity: EXACT
-4. Numerical stability confirmed over 20K steps
-5. Rust/Go/Julia safety mirrors use the same three-state update and
-   fail-closed validation contract as the Python model.

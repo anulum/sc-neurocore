@@ -4,11 +4,11 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for pernarowski
+# SC-NeuroCore — Julia for Pernarowski
 
 module PernarowskiAccel
 
-export step!, simulate, PernarowskiNeuronState
+export step!, simulate, PernarowskiNeuronState, validate
 
 mutable struct PernarowskiNeuronState
     v::Float64
@@ -40,19 +40,54 @@ function validate(s::PernarowskiNeuronState)::Bool
     isfinite(s.v_threshold)
 end
 
-function step!(s::PernarowskiNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    if !validate(s) || !isfinite(I_ext)
+function derivatives(s::PernarowskiNeuronState, v::Float64, w::Float64, z::Float64, current::Float64)
+    if !all(isfinite, (v, w, z, current))
+        return nothing
+    end
+    dv = v - v^3 / 3.0 - w - z + current
+    dw = s.eps1 * (v - s.gamma * w + s.alpha)
+    dz = s.eps2 * (s.beta * (v + 0.7) - z)
+    all(isfinite, (dv, dw, dz)) ? (dv, dw, dz) : nothing
+end
+
+function rk4_candidate(s::PernarowskiNeuronState, current::Float64, dt::Float64)
+    k1 = derivatives(s, s.v, s.w, s.z, current)
+    k1 === nothing && return nothing
+    k2 = derivatives(
+        s,
+        s.v + 0.5 * dt * k1[1],
+        s.w + 0.5 * dt * k1[2],
+        s.z + 0.5 * dt * k1[3],
+        current,
+    )
+    k2 === nothing && return nothing
+    k3 = derivatives(
+        s,
+        s.v + 0.5 * dt * k2[1],
+        s.w + 0.5 * dt * k2[2],
+        s.z + 0.5 * dt * k2[3],
+        current,
+    )
+    k3 === nothing && return nothing
+    k4 = derivatives(s, s.v + dt * k3[1], s.w + dt * k3[2], s.z + dt * k3[3], current)
+    k4 === nothing && return nothing
+    candidate = (
+        s.v + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+        s.w + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
+        s.z + dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0,
+    )
+    all(isfinite, candidate) ? candidate : nothing
+end
+
+function step!(s::PernarowskiNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
+    if !validate(s) || !isfinite(I_ext) || !isfinite(dt) || dt <= 0.0
         return 0
     end
 
     v_prev = s.v
-    f_v = s.v - s.v ^ 3 / 3.0
-    dv = (f_v - s.w - s.z + I_ext) * s.dt
-    dw = s.eps1 * (s.v - s.gamma * s.w + s.alpha) * s.dt
-    dz = s.eps2 * (s.beta * (s.v + 0.7) - s.z) * s.dt
-    s.v += dv
-    s.w += dw
-    s.z += dz
+    candidate = rk4_candidate(s, I_ext, dt)
+    candidate === nothing && return 0
+    s.v, s.w, s.z = candidate
     return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
 end
 

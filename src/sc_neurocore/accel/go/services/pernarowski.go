@@ -4,15 +4,13 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go service for pernarowski
+// SC-NeuroCore — Go service for Pernarowski
 
 package services
 
-import (
-	"math"
-)
+import "math"
 
-// PernarowskiNeuronState holds the neuron state
+// PernarowskiNeuronState holds the neuron state.
 type PernarowskiNeuronState struct {
 	V          float64
 	W          float64
@@ -26,7 +24,7 @@ type PernarowskiNeuronState struct {
 	VThreshold float64
 }
 
-// NewPernarowskiNeuron creates a new PernarowskiNeuron neuron with default parameters
+// NewPernarowskiNeuron creates a new Pernarowski neuron with default parameters.
 func NewPernarowskiNeuron() *PernarowskiNeuronState {
 	return &PernarowskiNeuronState{
 		V:          -1.0,
@@ -42,42 +40,84 @@ func NewPernarowskiNeuron() *PernarowskiNeuronState {
 	}
 }
 
+func isFinitePernarowski(value float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0)
+}
+
 // ValidatePernarowskiNeuron checks that the three-state burster contract is finite.
 func ValidatePernarowskiNeuron(s *PernarowskiNeuronState) bool {
 	return s != nil &&
-		!math.IsNaN(s.V) && !math.IsInf(s.V, 0) &&
-		!math.IsNaN(s.W) && !math.IsInf(s.W, 0) &&
-		!math.IsNaN(s.Z) && !math.IsInf(s.Z, 0) &&
-		!math.IsNaN(s.Alpha) && !math.IsInf(s.Alpha, 0) &&
-		!math.IsNaN(s.Beta) && !math.IsInf(s.Beta, 0) &&
-		!math.IsNaN(s.Eps1) && !math.IsInf(s.Eps1, 0) && s.Eps1 > 0 &&
-		!math.IsNaN(s.Eps2) && !math.IsInf(s.Eps2, 0) && s.Eps2 > 0 &&
-		!math.IsNaN(s.Gamma) && !math.IsInf(s.Gamma, 0) && s.Gamma > 0 &&
-		!math.IsNaN(s.Dt) && !math.IsInf(s.Dt, 0) && s.Dt > 0 &&
-		!math.IsNaN(s.VThreshold) && !math.IsInf(s.VThreshold, 0)
+		isFinitePernarowski(s.V) &&
+		isFinitePernarowski(s.W) &&
+		isFinitePernarowski(s.Z) &&
+		isFinitePernarowski(s.Alpha) &&
+		isFinitePernarowski(s.Beta) &&
+		isFinitePernarowski(s.Eps1) && s.Eps1 > 0 &&
+		isFinitePernarowski(s.Eps2) && s.Eps2 > 0 &&
+		isFinitePernarowski(s.Gamma) && s.Gamma > 0 &&
+		isFinitePernarowski(s.Dt) && s.Dt > 0 &&
+		isFinitePernarowski(s.VThreshold)
 }
 
-// Step advances the neuron by one timestep
+func (s *PernarowskiNeuronState) derivatives(v, w, z, current float64) (float64, float64, float64, bool) {
+	if !isFinitePernarowski(v) || !isFinitePernarowski(w) || !isFinitePernarowski(z) || !isFinitePernarowski(current) {
+		return 0, 0, 0, false
+	}
+	dv := v - math.Pow(v, 3)/3.0 - w - z + current
+	dw := s.Eps1 * (v - s.Gamma*w + s.Alpha)
+	dz := s.Eps2 * (s.Beta*(v+0.7) - z)
+	if !isFinitePernarowski(dv) || !isFinitePernarowski(dw) || !isFinitePernarowski(dz) {
+		return 0, 0, 0, false
+	}
+	return dv, dw, dz, true
+}
+
+func (s *PernarowskiNeuronState) rk4Candidate(current float64) (float64, float64, float64, bool) {
+	dt := s.Dt
+	k1v, k1w, k1z, ok := s.derivatives(s.V, s.W, s.Z, current)
+	if !ok {
+		return 0, 0, 0, false
+	}
+	k2v, k2w, k2z, ok := s.derivatives(s.V+0.5*dt*k1v, s.W+0.5*dt*k1w, s.Z+0.5*dt*k1z, current)
+	if !ok {
+		return 0, 0, 0, false
+	}
+	k3v, k3w, k3z, ok := s.derivatives(s.V+0.5*dt*k2v, s.W+0.5*dt*k2w, s.Z+0.5*dt*k2z, current)
+	if !ok {
+		return 0, 0, 0, false
+	}
+	k4v, k4w, k4z, ok := s.derivatives(s.V+dt*k3v, s.W+dt*k3w, s.Z+dt*k3z, current)
+	if !ok {
+		return 0, 0, 0, false
+	}
+	v := s.V + dt*(k1v+2*k2v+2*k3v+k4v)/6.0
+	w := s.W + dt*(k1w+2*k2w+2*k3w+k4w)/6.0
+	z := s.Z + dt*(k1z+2*k2z+2*k3z+k4z)/6.0
+	if !isFinitePernarowski(v) || !isFinitePernarowski(w) || !isFinitePernarowski(z) {
+		return 0, 0, 0, false
+	}
+	return v, w, z, true
+}
+
+// Step advances the neuron by one timestep.
 func (s *PernarowskiNeuronState) Step(iExt float64) int {
-	if !ValidatePernarowskiNeuron(s) || math.IsNaN(iExt) || math.IsInf(iExt, 0) {
+	if !ValidatePernarowskiNeuron(s) || !isFinitePernarowski(iExt) {
 		return 0
 	}
 
 	vPrev := s.V
-	fV := s.V - math.Pow(s.V, 3)/3.0
-	dv := (fV - s.W - s.Z + iExt) * s.Dt
-	dw := s.Eps1 * (s.V - s.Gamma*s.W + s.Alpha) * s.Dt
-	dz := s.Eps2 * (s.Beta*(s.V+0.7) - s.Z) * s.Dt
-	s.V += dv
-	s.W += dw
-	s.Z += dz
+	v, w, z, ok := s.rk4Candidate(iExt)
+	if !ok {
+		return 0
+	}
+	s.V, s.W, s.Z = v, w, z
 	if s.V >= s.VThreshold && vPrev < s.VThreshold {
 		return 1
 	}
 	return 0
 }
 
-// SimulatePernarowskiNeuron runs the neuron for n steps
+// SimulatePernarowskiNeuron runs the neuron for n steps.
 func SimulatePernarowskiNeuron(nSteps int, iExt float64) ([]float64, int) {
 	s := NewPernarowskiNeuron()
 	trace := make([]float64, nSteps)
@@ -91,5 +131,3 @@ func SimulatePernarowskiNeuron(nSteps int, iExt float64) ([]float64, int) {
 	}
 	return trace, spikes
 }
-
-var _ = math.Exp

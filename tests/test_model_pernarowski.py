@@ -4,15 +4,17 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: PernarowskiNeuron
+# SC-NeuroCore — Module-specific tests: PernarowskiNeuron
 
-"""Full pipeline test for PernarowskiNeuron (Pernarowski 1994).
+"""Module-specific behavioural tests for PernarowskiNeuron.
 
-3D FHN-like burster (V, w, z). Two slow variables: w (eps1=0.1)
-and z (eps2=0.001). Exhibits square-wave / parabolic bursting.
-Depolarisation block at high current (I≥2.0)."""
+The tests verify the three-state ODE, RK4 integration, slow-variable
+modulation, finite-domain rejection, and the module's public network and
+analysis integration contracts without bucket-style coverage assertions."""
 
 from __future__ import annotations
+
+import math
 
 import numpy as np
 import pytest
@@ -42,6 +44,43 @@ def _run_and_collect(
             spike_times.append(t)
         voltages.append(neuron.v)
     return spike_times, voltages
+
+
+def _rhs(
+    neuron: PernarowskiNeuron, v: float, w: float, z: float, current: float
+) -> tuple[float, float, float]:
+    return (
+        v - v**3 / 3.0 - w - z + current,
+        neuron.eps1 * (v - neuron.gamma * w + neuron.alpha),
+        neuron.eps2 * (neuron.beta * (v + 0.7) - z),
+    )
+
+
+def _rk4_reference(
+    neuron: PernarowskiNeuron, v: float, w: float, z: float, current: float
+) -> tuple[float, float, float]:
+    dt = neuron.dt
+    k1 = _rhs(neuron, v, w, z, current)
+    k2 = _rhs(
+        neuron,
+        v + 0.5 * dt * k1[0],
+        w + 0.5 * dt * k1[1],
+        z + 0.5 * dt * k1[2],
+        current,
+    )
+    k3 = _rhs(
+        neuron,
+        v + 0.5 * dt * k2[0],
+        w + 0.5 * dt * k2[1],
+        z + 0.5 * dt * k2[2],
+        current,
+    )
+    k4 = _rhs(neuron, v + dt * k3[0], w + dt * k3[1], z + dt * k3[2], current)
+    return (
+        v + dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
+        w + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+        z + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -98,6 +137,18 @@ class TestPernarowskiIsolation:
 
 
 class TestPernarowskiOscillations:
+    def test_derivative_formula(self):
+        """Derivative helper matches the documented three-state ODE."""
+        n = PernarowskiNeuron(v=-0.8, w=0.2, z=-0.1)
+        assert n._derivatives(n.v, n.w, n.z, 0.5) == pytest.approx(_rhs(n, n.v, n.w, n.z, 0.5))
+
+    def test_step_matches_independent_rk4_reference(self):
+        """One step matches an independent coupled RK4 calculation."""
+        n = PernarowskiNeuron(v=-0.8, w=0.2, z=-0.1)
+        expected = _rk4_reference(n, n.v, n.w, n.z, 0.5)
+        assert n.step(0.5) == 0
+        assert (n.v, n.w, n.z) == pytest.approx(expected, abs=1.0e-15)
+
     def test_spontaneous_oscillation(self):
         """Model oscillates even with zero input (relaxation oscillator)."""
         n = PernarowskiNeuron()
@@ -316,10 +367,20 @@ class TestPernarowskiAnalysis:
 
 class TestPernarowskiValidation:
     @pytest.mark.parametrize("field", ["v", "w", "z", "alpha", "beta", "v_threshold"])
+    def test_rejects_non_numeric_state_offsets_and_threshold(self, field: str):
+        with pytest.raises(TypeError, match=field):
+            PernarowskiNeuron(**{field: object()})
+
+    @pytest.mark.parametrize("field", ["v", "w", "z", "alpha", "beta", "v_threshold"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
     def test_rejects_non_finite_state_offsets_and_threshold(self, field: str, value: float):
         with pytest.raises(ValueError, match=field):
             PernarowskiNeuron(**{field: value})
+
+    @pytest.mark.parametrize("field", ["eps1", "eps2", "gamma", "dt"])
+    def test_rejects_non_numeric_scales(self, field: str):
+        with pytest.raises(TypeError, match=field):
+            PernarowskiNeuron(**{field: object()})
 
     @pytest.mark.parametrize("field", ["eps1", "eps2", "gamma", "dt"])
     @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf, -np.inf])
@@ -331,6 +392,53 @@ class TestPernarowskiValidation:
     def test_rejects_non_finite_current_before_state_mutation(self, current: float):
         n = PernarowskiNeuron(v=-0.5, w=0.1, z=-0.2)
         before = (n.v, n.w, n.z)
-        with pytest.raises(ValueError, match="current"):
+        with pytest.raises(FloatingPointError, match="current"):
             n.step(current)
         assert (n.v, n.w, n.z) == before
+
+    def test_rejects_non_numeric_runtime_current_before_mutation(self):
+        n = PernarowskiNeuron(v=-0.5, w=0.1, z=-0.2)
+        before = (n.v, n.w, n.z)
+        with pytest.raises(TypeError, match="current"):
+            n.step(object())
+        assert (n.v, n.w, n.z) == before
+
+    def test_rejects_corrupted_positive_runtime_scale_before_mutation(self):
+        n = PernarowskiNeuron(v=-0.5, w=0.1, z=-0.2)
+        n.eps1 = 0.0
+        before = (n.v, n.w, n.z)
+        with pytest.raises(ValueError, match="eps1"):
+            n.step(0.5)
+        assert (n.v, n.w, n.z) == before
+
+    def test_rejects_corrupted_runtime_state_before_mutation(self):
+        n = PernarowskiNeuron(v=-0.5, w=0.1, z=-0.2)
+        n.w = math.nan
+        before = (n.v, n.w, n.z)
+        with pytest.raises(FloatingPointError, match="w"):
+            n.step(0.5)
+        assert n.v == before[0]
+        assert math.isnan(n.w)
+        assert n.z == before[2]
+
+    def test_rejects_nonfinite_derivative_without_mutation(self):
+        n = PernarowskiNeuron(v=1.0e160, w=0.1, z=-0.2)
+        before = (n.v, n.w, n.z)
+        with pytest.raises(FloatingPointError, match="derivative"):
+            n.step(0.5)
+        assert (n.v, n.w, n.z) == before
+
+    def test_derivative_rejects_nonfinite_runtime_inputs(self):
+        n = PernarowskiNeuron()
+        with pytest.raises(FloatingPointError, match="state and current must be finite"):
+            n._derivatives(math.nan, n.w, n.z, 0.5)
+
+    def test_derivative_rejects_nonfinite_output(self):
+        n = PernarowskiNeuron()
+        n.eps1 = math.inf
+        with pytest.raises(FloatingPointError, match="derivative"):
+            n._derivatives(n.v, n.w, n.z, 0.5)
+
+    def test_rejects_nonfinite_candidate_directly(self):
+        with pytest.raises(FloatingPointError, match="candidate"):
+            PernarowskiNeuron._validate_candidate(math.nan, 0.0, 0.0)
