@@ -23,6 +23,134 @@ from __future__ import annotations
 import numpy as np
 
 
+def _validate_coupling_graph(knm: np.ndarray) -> np.ndarray:
+    graph = np.asarray(knm, dtype=np.float64)
+    if graph.ndim != 2 or graph.shape[0] != graph.shape[1]:
+        raise ValueError("knm must be a square coupling matrix")
+    if graph.shape[0] == 0:
+        raise ValueError("knm must contain at least one node")
+    if not np.all(np.isfinite(graph)):
+        raise ValueError("knm must contain only finite values")
+    if np.any(graph < 0.0):
+        raise ValueError("knm must be non-negative for Ollivier-Ricci curvature")
+    return graph.copy()
+
+
+def _validate_node_index(name: str, index: int, n_nodes: int) -> int:
+    if isinstance(index, bool) or not isinstance(index, (int, np.integer)):
+        raise ValueError(f"{name} must be an integer node index")
+    index = int(index)
+    if index < 0 or index >= n_nodes:
+        raise ValueError(f"{name} out of range for coupling graph")
+    return index
+
+
+def _shortest_path_distances(graph: np.ndarray) -> np.ndarray:
+    adjacency = graph > 0.0
+    np.fill_diagonal(adjacency, False)
+    n_nodes = graph.shape[0]
+    distances = np.full((n_nodes, n_nodes), np.inf, dtype=np.float64)
+    for source in range(n_nodes):
+        distances[source, source] = 0.0
+        frontier = [source]
+        while frontier:
+            current = frontier.pop(0)
+            next_distance = distances[source, current] + 1.0
+            for target in np.flatnonzero(adjacency[current]):
+                if next_distance < distances[source, target]:
+                    distances[source, target] = next_distance
+                    frontier.append(int(target))
+    return distances
+
+
+def _lazy_random_walk(graph: np.ndarray, node: int, *, idleness: float = 0.5) -> np.ndarray:
+    distribution = np.zeros(graph.shape[0], dtype=np.float64)
+    distribution[node] = idleness
+    row = graph[node].copy()
+    row[node] = 0.0
+    row_sum = float(row.sum())
+    if row_sum == 0.0:
+        distribution[node] = 1.0
+        return distribution
+    distribution += (1.0 - idleness) * row / row_sum
+    return distribution
+
+
+def _minimum_transport_cost(source: np.ndarray, target: np.ndarray, distances: np.ndarray) -> float:
+    source_nodes = np.flatnonzero(source > 0.0)
+    target_nodes = np.flatnonzero(target > 0.0)
+    if source_nodes.size == 0 or target_nodes.size == 0:
+        return 0.0
+
+    supply = source[source_nodes].astype(np.float64)
+    demand = target[target_nodes].astype(np.float64)
+    costs = distances[np.ix_(source_nodes, target_nodes)]
+    if not np.all(np.isfinite(costs)):
+        return float("inf")
+
+    total_supply = supply.size
+    total_demand = demand.size
+    source_id = total_supply + total_demand
+    sink_id = source_id + 1
+    node_count = sink_id + 1
+    residual = [[0.0 for _ in range(node_count)] for _ in range(node_count)]
+    edge_cost = [[0.0 for _ in range(node_count)] for _ in range(node_count)]
+
+    for idx, amount in enumerate(supply):
+        residual[source_id][idx] = float(amount)
+    for idx, amount in enumerate(demand):
+        residual[total_supply + idx][sink_id] = float(amount)
+    for s_idx in range(total_supply):
+        for d_idx in range(total_demand):
+            u = s_idx
+            v = total_supply + d_idx
+            residual[u][v] = float("inf")
+            edge_cost[u][v] = float(costs[s_idx, d_idx])
+            edge_cost[v][u] = -float(costs[s_idx, d_idx])
+
+    required = float(source.sum())
+    transported = 0.0
+    total_cost = 0.0
+    tolerance = 1e-12
+    while transported + tolerance < required:
+        dist = [float("inf")] * node_count
+        parent = [-1] * node_count
+        dist[source_id] = 0.0
+        for _ in range(node_count - 1):
+            updated = False
+            for u in range(node_count):
+                if not np.isfinite(dist[u]):
+                    continue
+                for v in range(node_count):
+                    if residual[u][v] <= tolerance:
+                        continue
+                    candidate = dist[u] + edge_cost[u][v]
+                    if candidate < dist[v] - tolerance:
+                        dist[v] = candidate
+                        parent[v] = u
+                        updated = True
+            if not updated:
+                break
+        if parent[sink_id] == -1:
+            raise ValueError("transport problem is infeasible")
+
+        increment = required - transported
+        v = sink_id
+        while v != source_id:
+            u = parent[v]
+            increment = min(increment, residual[u][v])
+            v = u
+        v = sink_id
+        while v != source_id:
+            u = parent[v]
+            residual[u][v] -= increment
+            residual[v][u] += increment
+            total_cost += increment * edge_cost[u][v]
+            v = u
+        transported += increment
+    return float(total_cost)
+
+
 def winding_number(phases: np.ndarray) -> int:
     """Compute the winding number of a phase trajectory around S^1.
 
@@ -55,11 +183,9 @@ def ollivier_ricci_curvature(knm: np.ndarray, i: int, j: int) -> float:
     overlap. Positive curvature = neighborhoods converge (community structure).
     Negative curvature = neighborhoods diverge (bottleneck).
 
-    Approximation: kappa(i,j) = 1 - W1(mu_i, mu_j) / d(i,j)
+    kappa(i,j) = 1 - W1(mu_i, mu_j) / d(i,j)
     where mu_i is the lazy random walk distribution from node i,
-    and W1 is the Wasserstein-1 distance on the graph.
-
-    Simplified version: uses the coupling strength ratio as a proxy.
+    and W1 is the Wasserstein-1 distance on the unweighted support graph.
 
     Parameters
     ----------
@@ -71,26 +197,23 @@ def ollivier_ricci_curvature(knm: np.ndarray, i: int, j: int) -> float:
     Returns
     -------
     float
-        Estimated Ollivier-Ricci curvature in [-1, 1].
+        Ollivier-Ricci curvature. Returns 0.0 for self or disconnected pairs.
     """
-    N = knm.shape[0]
-    # Lazy random walk distribution from node i
-    row_i = np.abs(knm[i, :]).copy()
-    row_j = np.abs(knm[j, :]).copy()
-
-    sum_i = row_i.sum()
-    sum_j = row_j.sum()
-    if sum_i == 0 or sum_j == 0:
+    graph = _validate_coupling_graph(knm)
+    n_nodes = graph.shape[0]
+    i = _validate_node_index("i", i, n_nodes)
+    j = _validate_node_index("j", j, n_nodes)
+    if i == j:
         return 0.0
 
-    mu_i = row_i / sum_i
-    mu_j = row_j / sum_j
-
-    # L1 distance as Wasserstein proxy on the discrete metric
-    w1 = 0.5 * np.sum(np.abs(mu_i - mu_j))
-
-    # Curvature: 1 - W1 (since graph distance d(i,j) = 1 for neighbors)
-    return float(1.0 - w1)
+    distances = _shortest_path_distances(graph)
+    graph_distance = distances[i, j]
+    if not np.isfinite(graph_distance) or graph_distance <= 0.0:
+        return 0.0
+    mu_i = _lazy_random_walk(graph, i)
+    mu_j = _lazy_random_walk(graph, j)
+    w1 = _minimum_transport_cost(mu_i, mu_j, distances)
+    return float(1.0 - w1 / graph_distance)
 
 
 def sheaf_consistency_defect(phases: np.ndarray, knm: np.ndarray) -> float:

@@ -7,6 +7,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Replaced proxy `ollivier_ricci_curvature` evaluation with graph-metric
+  lazy-random-walk Wasserstein transport, added fail-closed coupling graph and
+  node-index validation, aligned topology tests, and documented the exact
+  topological observable contract.
 - Hardened `ExactLIFSolver` and the `solver.lif.subthreshold-exact`
   alternative route with finite physical-parameter validation, non-negative
   runtime-time contracts, reset/threshold ordering, fail-closed subthreshold
