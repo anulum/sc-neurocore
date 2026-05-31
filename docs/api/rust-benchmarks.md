@@ -205,7 +205,7 @@ cargo bench --bench analysis_bench -- --quick
 |-------|-------|--------|----------|-----------|-------|
 | Hodgkin-Huxley 1952 | 1k | 13.3 ms | **13.3 µs** | 100 | Full 4-ODE HH with safe_rate kinetics |
 | Wang-Buzsáki 1996 | 1k | 6.94 ms | **6.94 µs** | 50 | FS interneuron, m_inf (no m state) |
-| Connor-Stevens 1977 | 1k | 3.56 ms | **3.56 µs** | 10 | A-type K+ for delay tuning |
+| Connor-Stevens 1977 | 1k | 71.13 ms | **71.13 µs** | 100 | Candidate-first RK4 A-type K+ model |
 | Traub-Miles 1991 | 1k | 1.80 ms | **1.80 µs** | 10 | CA3 pyramidal + M-current |
 | Mainen-Sejnowski 1996 | 1k | 1.86 ms | **1.86 µs** | 20 | Two-compartment (soma+axon) |
 | Plant R15 1976 | 1k | 1.11 ms | **1.11 µs** | 5 | Aplysia parabolic burster + Ca²⁺/KCa |

@@ -1,5 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
-- Hardened `BoothRinzelNeuron` Python, Julia, Go, and Rust safety surfaces with finite-domain validation, fail-closed candidate updates, physical gate/calcium bounds, and module-owned regression tests.
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 # Changelog
 
 All notable changes to the `sc-neurocore` project will be documented in this file.
@@ -7,6 +6,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `BoothRinzelNeuron` Python, Julia, Go, and Rust safety surfaces with finite-domain validation, fail-closed candidate updates, physical gate/calcium bounds, and module-owned regression tests.
+- Promoted `ConnorStevensNeuron` to candidate-first RK4 integration across the Python reference, Rust engine, Julia mirror, Go service, Mojo parity notes, and Rust safety surface; module-owned tests now cover RK4 parity, finite-domain validation, fail-closed state preservation, and refreshed Python/Rust benchmark artefacts document the RK4 runtime cost.
 - Promoted `TermanWangOscillator` to candidate-first RK4 integration across
   the Python reference, Rust engine, Julia mirror, Go mirror, Mojo kernel
   notes, and Rust safety surface; module-owned tests now cover the Python
