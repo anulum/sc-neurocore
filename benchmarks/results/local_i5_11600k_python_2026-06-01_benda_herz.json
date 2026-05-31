@@ -1,0 +1,46 @@
+{
+  "benchmark": "BendaHerzNeuron Python RK4 hazard step",
+  "date": "2026-06-01",
+  "command": "PYTHONPATH=src .venv/bin/python - <<PY ...",
+  "python": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "results": [
+    {
+      "current": 5.0,
+      "steps": 50000,
+      "warmup_steps": 1000,
+      "elapsed_seconds": 0.19006300100591034,
+      "seconds_per_step": 3.8012600201182066e-06,
+      "steps_per_second": 263070.66465000814,
+      "spikes": 57,
+      "final_state": {
+        "a": 52.45185651860714
+      }
+    },
+    {
+      "current": 12.5,
+      "steps": 50000,
+      "warmup_steps": 1000,
+      "elapsed_seconds": 0.20955115603283048,
+      "seconds_per_step": 4.191023120656609e-06,
+      "steps_per_second": 238605.2214962082,
+      "spikes": 63,
+      "final_state": {
+        "a": 58.80257168015676
+      }
+    },
+    {
+      "current": 50.0,
+      "steps": 50000,
+      "warmup_steps": 1000,
+      "elapsed_seconds": 0.2163023289758712,
+      "seconds_per_step": 4.326046579517424e-06,
+      "steps_per_second": 231157.93637884298,
+      "spikes": 99,
+      "final_state": {
+        "a": 91.81356548156853
+      }
+    }
+  ]
+}

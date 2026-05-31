@@ -8,7 +8,7 @@
 
 module BendaHerzAccel
 
-export step!, simulate, BendaHerzNeuronState, valid, reset!, f_onset
+export step!, simulate, BendaHerzNeuronState, valid, reset!, f_onset, rk4_candidate
 
 mutable struct BendaHerzNeuronState
     a::Float64
@@ -38,6 +38,13 @@ end
 
 function f_onset(s::BendaHerzNeuronState, x::Float64)::Float64
     z = s.beta * (x - s.i_half)
+    if z == Inf
+        return s.f_max
+    elseif z == -Inf
+        return 0.0
+    elseif !isfinite(z)
+        return NaN
+    end
     if z >= 0.0
         return s.f_max / (1.0 + exp(-z))
     end
@@ -45,24 +52,53 @@ function f_onset(s::BendaHerzNeuronState, x::Float64)::Float64
     return s.f_max * exp_z / (1.0 + exp_z)
 end
 
+function adaptation_rhs(s::BendaHerzNeuronState, a::Float64, I_ext::Float64)
+    if !isfinite(a) || a < 0.0
+        return 0.0, 0.0, false
+    end
+    rate = f_onset(s, I_ext - a)
+    if !isfinite(rate) || rate < 0.0 || rate > s.f_max
+        return 0.0, 0.0, false
+    end
+    return -a / s.tau_a + s.delta_a * rate, rate, true
+end
+
+function rk4_candidate(s::BendaHerzNeuronState, I_ext::Float64, dt::Float64=s.dt)
+    k1, r1, ok = adaptation_rhs(s, s.a, I_ext)
+    ok || return 0.0, 0.0, false
+    k2, r2, ok = adaptation_rhs(s, s.a + 0.5 * dt * k1, I_ext)
+    ok || return 0.0, 0.0, false
+    k3, r3, ok = adaptation_rhs(s, s.a + 0.5 * dt * k2, I_ext)
+    ok || return 0.0, 0.0, false
+    k4, r4, ok = adaptation_rhs(s, s.a + dt * k3, I_ext)
+    ok || return 0.0, 0.0, false
+
+    next_a = s.a + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+    average_rate = (r1 + 2.0 * r2 + 2.0 * r3 + r4) / 6.0
+    hazard = average_rate * dt / 1000.0
+    if !isfinite(next_a) || next_a < 0.0 || !isfinite(hazard) || hazard < 0.0
+        return 0.0, 0.0, false
+    end
+    probability = -expm1(-hazard)
+    if !isfinite(probability) || probability < 0.0 || probability > 1.0
+        return 0.0, 0.0, false
+    end
+    return next_a, probability, true
+end
+
 function step!(s::BendaHerzNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
     if !isfinite(I_ext) || !isfinite(dt) || dt <= 0.0 || !valid(s)
         return 0
     end
 
-    rate = f_onset(s, I_ext - s.a)
-    p = rate * dt / 1000.0
-    if !isfinite(rate) || !isfinite(p) || p > 1.0
-        return 0
-    end
-    next_a = s.a + (-s.a / s.tau_a + s.delta_a * rate) * dt
-    if !isfinite(next_a) || next_a < 0.0
+    next_a, probability, ok = rk4_candidate(s, I_ext, dt)
+    if !ok
         return 0
     end
 
     s.dt = dt
     s.a = next_a
-    return s.rng_threshold < p ? 1 : 0
+    return s.rng_threshold < probability ? 1 : 0
 end
 
 function reset!(s::BendaHerzNeuronState)::Nothing
