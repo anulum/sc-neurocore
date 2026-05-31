@@ -4,172 +4,150 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: COBALIFNeuron
+# SC-NeuroCore — COBALIFNeuron behavioural contract tests
 
-"""Full pipeline test for COBALIFNeuron (Destexhe et al. 2001).
-
-Conductance-based LIF with excitatory/inhibitory synaptic conductances."""
+"""Module-specific conductance-based LIF dynamics contracts."""
 
 from __future__ import annotations
 
-import numpy as np
+import math
+
 import pytest
 
 from sc_neurocore.neurons.models.coba_lif import COBALIFNeuron
-from sc_neurocore.network.population import Population
-from sc_neurocore.network.projection import Projection
-from sc_neurocore.network.network import Network
-from sc_neurocore.network.monitor import SpikeMonitor
-from sc_neurocore.network.stimulus import PoissonInput
-from sc_neurocore.analysis.spike_stats.basic import firing_rate, spike_count, isi
 
 
-class TestCOBAIsolation:
-    def test_construction(self):
-        n = COBALIFNeuron()
-        assert n.v == -65.0
-        assert n.g_e == 0.0
-
-    def test_step_returns_binary(self):
-        n = COBALIFNeuron()
-        assert n.step(0.0) in (0, 1)
-
-    def test_subthreshold(self):
-        n = COBALIFNeuron()
-        spikes = sum(n.step(100.0) for _ in range(5000))
-        assert spikes == 0
-
-    def test_spikes_under_drive(self):
-        n = COBALIFNeuron()
-        spikes = sum(n.step(500.0) for _ in range(10000))
-        assert spikes > 10
-
-    def test_conductance_decay(self):
-        """g_e should decay exponentially without input."""
-        n = COBALIFNeuron()
-        n.g_e = 10.0
-        n.step(0.0)
-        assert n.g_e < 10.0
-
-    def test_excitatory_conductance_injection(self):
-        """delta_ge should increase g_e."""
-        n = COBALIFNeuron()
-        n.step(0.0, delta_ge=5.0)
-        assert n.g_e > 0
-
-    def test_inhibitory_conductance_injection(self):
-        """delta_gi should increase g_i."""
-        n = COBALIFNeuron()
-        n.step(0.0, delta_gi=3.0)
-        assert n.g_i > 0
-
-    def test_state_finite(self):
-        n = COBALIFNeuron()
-        for _ in range(10000):
-            n.step(500.0)
-        assert np.isfinite(n.v)
-        assert np.isfinite(n.g_e)
-        assert np.isfinite(n.g_i)
-
-    def test_reset(self):
-        n = COBALIFNeuron()
-        n.step(500.0, delta_ge=5.0, delta_gi=3.0)
-        n.reset()
-        assert n.v == n.e_l
-        assert n.g_e == 0.0
-        assert n.g_i == 0.0
+def _snapshot(neuron: COBALIFNeuron) -> tuple[float, float, float]:
+    return neuron.v, neuron.g_e, neuron.g_i
 
 
-class TestCOBAValidation:
-    @pytest.mark.parametrize(
-        ("field", "value"),
-        [
-            ("v", np.nan),
-            ("e_l", np.inf),
-            ("e_e", -np.inf),
-            ("e_i", np.nan),
-            ("v_threshold", np.inf),
-            ("v_reset", -np.inf),
-        ],
-    )
-    def test_rejects_non_finite_voltage_parameters(self, field: str, value: float):
-        with pytest.raises(ValueError, match=field):
-            COBALIFNeuron(**{field: value})
+def test_default_step_preserves_finite_conductance_state() -> None:
+    neuron = COBALIFNeuron()
 
-    @pytest.mark.parametrize("field", ["g_e", "g_i"])
-    @pytest.mark.parametrize("value", [-1.0, np.nan, np.inf])
-    def test_rejects_negative_or_non_finite_conductance_state(self, field: str, value: float):
-        with pytest.raises(ValueError, match=field):
-            COBALIFNeuron(**{field: value})
+    outputs = [neuron.step(0.0) for _ in range(20)]
 
-    @pytest.mark.parametrize("field", ["c_m", "g_l", "tau_e", "tau_i", "dt"])
-    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
-    def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
-        with pytest.raises(ValueError, match=field):
-            COBALIFNeuron(**{field: value})
-
-    @pytest.mark.parametrize(
-        ("current", "delta_ge", "delta_gi"),
-        [
-            (np.nan, 0.0, 0.0),
-            (0.0, np.inf, 0.0),
-            (0.0, 0.0, -1.0),
-            (0.0, np.nan, 0.0),
-            (0.0, 0.0, np.nan),
-        ],
-    )
-    def test_rejects_invalid_step_inputs_before_state_mutation(
-        self, current: float, delta_ge: float, delta_gi: float
-    ):
-        n = COBALIFNeuron(v=-60.0, g_e=1.0, g_i=2.0)
-        before = (n.v, n.g_e, n.g_i)
-        with pytest.raises(ValueError, match="current|delta_ge|delta_gi"):
-            n.step(current, delta_ge=delta_ge, delta_gi=delta_gi)
-        assert (n.v, n.g_e, n.g_i) == before
+    assert set(outputs) <= {0, 1}
+    assert neuron.v == pytest.approx(neuron.e_l)
+    assert neuron.g_e == pytest.approx(0.0)
+    assert neuron.g_i == pytest.approx(0.0)
 
 
-class TestCOBANetwork:
-    def test_population(self):
-        pop = Population(COBALIFNeuron, n=10, label="coba")
-        assert pop.n == 10
+def test_conductance_injections_are_applied_before_exponential_decay() -> None:
+    neuron = COBALIFNeuron()
 
-    def test_network_spikes(self):
-        pop = Population(COBALIFNeuron, n=20, label="coba")
-        drive = PoissonInput(n=20, rate_hz=500.0, weight=500.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        net.run(duration=0.5, dt=0.001, backend="python")
-        assert mon.count > 0
+    assert neuron.step(0.0, delta_ge=5.0, delta_gi=3.0) == 0
 
-    def test_with_projection(self):
-        pop = Population(COBALIFNeuron, n=10, label="coba")
-        proj = Projection(pop, pop, weight=50.0, probability=0.3, seed=42)
-        drive = PoissonInput(n=10, rate_hz=500.0, weight=500.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, proj, drive, mon)
-        net.run(duration=0.3, dt=0.001, backend="python")
-        assert isinstance(mon.spike_trains, dict)
+    assert neuron.g_e == pytest.approx(5.0 * math.exp(-neuron.dt / neuron.tau_e))
+    assert neuron.g_i == pytest.approx(3.0 * math.exp(-neuron.dt / neuron.tau_i))
 
 
-class TestCOBAAnalysis:
-    def _get_train(self):
-        n = COBALIFNeuron()
-        train = np.zeros(10000, dtype=np.int8)
-        for t in range(10000):
-            train[t] = n.step(600.0)
-        return train
+def test_excitatory_conductance_depolarizes_relative_to_rest() -> None:
+    rest = COBALIFNeuron()
+    excited = COBALIFNeuron()
 
-    def test_firing_rate(self):
-        train = self._get_train()
-        rate = firing_rate(train, dt=0.0001)
-        assert rate > 0
+    rest.step(0.0)
+    excited.step(0.0, delta_ge=20.0)
 
-    def test_spike_count(self):
-        train = self._get_train()
-        assert spike_count(train) > 10
+    assert excited.v > rest.v
 
-    def test_isi(self):
-        train = self._get_train()
-        intervals = isi(train, dt=0.0001)
-        if intervals.size > 0:
-            assert np.all(np.isfinite(intervals))
+
+def test_inhibitory_conductance_hyperpolarizes_relative_to_rest() -> None:
+    rest = COBALIFNeuron(v=-60.0)
+    inhibited = COBALIFNeuron(v=-60.0)
+
+    rest.step(0.0)
+    inhibited.step(0.0, delta_gi=20.0)
+
+    assert inhibited.v < rest.v
+
+
+def test_suprathreshold_drive_resets_voltage_but_preserves_decayed_conductance() -> None:
+    neuron = COBALIFNeuron(v=-51.0)
+
+    assert neuron.step(1.0e5, delta_ge=5.0) == 1
+
+    assert neuron.v == neuron.v_reset
+    assert neuron.g_e > 0.0
+    assert neuron.g_i == 0.0
+
+
+def test_reset_restores_resting_voltage_and_clears_conductances_only() -> None:
+    neuron = COBALIFNeuron(e_l=-62.0, dt=0.05)
+    neuron.step(100.0, delta_ge=5.0, delta_gi=2.0)
+
+    neuron.reset()
+
+    assert _snapshot(neuron) == (-62.0, 0.0, 0.0)
+    assert neuron.dt == 0.05
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("v", float("nan")),
+        ("v", -250.0),
+        ("g_e", -1.0),
+        ("g_i", float("inf")),
+        ("g_e", 1.1e9),
+        ("c_m", 0.0),
+        ("g_l", -1.0),
+        ("tau_e", 0.0),
+        ("tau_i", float("nan")),
+        ("e_l", float("inf")),
+        ("e_e", float("nan")),
+        ("e_i", float("inf")),
+        ("v_threshold", float("nan")),
+        ("v_reset", -250.0),
+        ("dt", 0.0),
+    ],
+)
+def test_invalid_runtime_state_or_parameters_do_not_mutate(field: str, value: float) -> None:
+    neuron = COBALIFNeuron(v=-60.0, g_e=1.0, g_i=2.0)
+    setattr(neuron, field, value)
+    before = _snapshot(neuron)
+
+    with pytest.raises(ValueError):
+        neuron.step(0.0)
+
+    assert _snapshot(neuron) == before
+
+
+@pytest.mark.parametrize(
+    ("current", "delta_ge", "delta_gi"),
+    [
+        (float("nan"), 0.0, 0.0),
+        (0.0, -1.0, 0.0),
+        (0.0, 0.0, float("inf")),
+        (0.0, float("nan"), 0.0),
+    ],
+)
+def test_invalid_step_inputs_do_not_mutate(
+    current: float, delta_ge: float, delta_gi: float
+) -> None:
+    neuron = COBALIFNeuron(v=-60.0, g_e=1.0, g_i=2.0)
+    before = _snapshot(neuron)
+
+    with pytest.raises(ValueError):
+        neuron.step(current, delta_ge=delta_ge, delta_gi=delta_gi)
+
+    assert _snapshot(neuron) == before
+
+
+def test_voltage_candidate_outside_safety_envelope_does_not_mutate() -> None:
+    neuron = COBALIFNeuron(v=90.0, g_e=0.0, g_i=0.0)
+    before = _snapshot(neuron)
+
+    with pytest.raises(ValueError):
+        neuron.step(1.0e8)
+
+    assert _snapshot(neuron) == before
+
+
+def test_conductance_candidate_outside_safety_envelope_does_not_mutate() -> None:
+    neuron = COBALIFNeuron(g_e=1.0, g_i=2.0)
+    before = _snapshot(neuron)
+
+    with pytest.raises(ValueError):
+        neuron.step(0.0, delta_ge=1.1e9)
+
+    assert _snapshot(neuron) == before

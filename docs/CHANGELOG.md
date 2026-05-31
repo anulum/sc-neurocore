@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `COBALIFNeuron` Python, Julia, Go, and Rust safety surfaces
+  to validate mutable conductance state, membrane geometry, synaptic
+  deltas, and exponential decay contracts before each update; compute
+  voltage and conductance candidates before mutation; and reject
+  non-finite or out-of-envelope candidates while preserving spike reset
+  semantics.
 - Hardened `ComplementaryLIFNeuron` Python, Julia, Go, and Rust safety
   surfaces to revalidate mutable dual-path state, threshold, timestep,
   and membrane timescale before each update; recompute the decay
