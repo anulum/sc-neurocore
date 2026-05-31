@@ -43,11 +43,12 @@ func TestMorrisLecarStepMatchesEulerCurrentBalance(t *testing.T) {
 func TestMorrisLecarRejectsInvalidState(t *testing.T) {
 	state := NewMorrisLecarNeuron()
 	state.CM = 0.0
+	v0, w0 := state.V, state.W
 
-	if got := state.Step(50.0); got != 0 {
-		t.Fatalf("invalid state must not emit a spike, got %d", got)
+	if got := state.Step(50.0); got != -1 {
+		t.Fatalf("invalid state must fail closed, got %d", got)
 	}
-	if !math.IsNaN(state.V) {
-		t.Fatalf("invalid state must fail closed with NaN voltage, got %v", state.V)
+	if state.V != v0 || state.W != w0 {
+		t.Fatalf("invalid state mutated: got (%v, %v)", state.V, state.W)
 	}
 }

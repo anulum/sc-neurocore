@@ -22,6 +22,7 @@ FULL PIPELINE WIRED + PERFORMANCE."""
 
 from __future__ import annotations
 
+import math
 import time
 
 import numpy as np
@@ -100,6 +101,48 @@ class TestMLIsolation:
 
         with pytest.raises(FloatingPointError, match="overflowed|non-finite"):
             n.step(0.0)
+
+        assert (n.v, n.w) == before
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"v": math.nan},
+            {"w": -0.01},
+            {"w": 1.01},
+            {"c_m": 0.0},
+            {"g_ca": 0.0},
+            {"g_k": 0.0},
+            {"g_l": 0.0},
+            {"v2": 0.0},
+            {"v4": 0.0},
+            {"phi": 0.0},
+            {"dt": 0.0},
+            {"v_threshold": math.inf},
+        ],
+    )
+    def test_invalid_physical_configuration_is_rejected(self, kwargs: dict[str, float]):
+        with pytest.raises(ValueError):
+            MorrisLecarNeuron(**kwargs)
+
+    @pytest.mark.parametrize("integrator", ["baseline_euler", "rk4", "rosenbrock"])
+    def test_runtime_parameter_corruption_fails_before_mutation(self, integrator: str):
+        n = MorrisLecarNeuron(integrator=integrator)
+        n.phi = math.nan
+        before = (n.v, n.w)
+
+        with pytest.raises(ValueError):
+            n.step(100.0)
+
+        assert (n.v, n.w) == before
+
+    @pytest.mark.parametrize("integrator", ["baseline_euler", "rk4", "rosenbrock"])
+    def test_potassium_activation_bounds_fail_before_mutation(self, integrator: str):
+        n = MorrisLecarNeuron(w=1.0, dt=10.0, integrator=integrator)
+        before = (n.v, n.w)
+
+        with pytest.raises(FloatingPointError, match="potassium (activation|rate)"):
+            n.step(-1_000.0)
 
         assert (n.v, n.w) == before
 

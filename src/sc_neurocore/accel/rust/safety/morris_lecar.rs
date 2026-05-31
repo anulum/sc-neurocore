@@ -64,9 +64,7 @@ impl MorrisLecarNeuron {
 
     pub fn step(&mut self, current: f64) -> i32 {
         if !validate_morris_lecar(self) || !current.is_finite() {
-            self.v = f64::NAN;
-            self.w = f64::NAN;
-            return 0;
+            return -1;
         }
         let v_prev = self.v;
         let m_inf = self._m_inf(self.v);
@@ -75,13 +73,13 @@ impl MorrisLecarNeuron {
         let i_ca = self.g_ca * m_inf * (self.v - self.e_ca);
         let i_k = self.g_k * self.w * (self.v - self.e_k);
         let i_l = self.g_l * (self.v - self.e_l);
-        self.v += (-i_ca - i_k - i_l + current) / self.c_m * self.dt;
-        self.w += lam * (w_inf - self.w) * self.dt;
-        if !validate_morris_lecar(self) {
-            self.v = f64::NAN;
-            self.w = f64::NAN;
-            return 0;
+        let mut next = self.clone();
+        next.v += (-i_ca - i_k - i_l + current) / self.c_m * self.dt;
+        next.w += lam * (w_inf - self.w) * self.dt;
+        if !validate_morris_lecar(&next) {
+            return -1;
         }
+        *self = next;
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
@@ -97,6 +95,17 @@ impl MorrisLecarNeuron {
         self.c_m = 20.0_f64;
         self.g_ca = 4.0_f64;
         self.g_k = 8.0_f64;
+        self.g_l = 2.0_f64;
+        self.e_ca = 120.0_f64;
+        self.e_k = -84.0_f64;
+        self.e_l = -60.0_f64;
+        self.v1 = -1.2_f64;
+        self.v2 = 18.0_f64;
+        self.v3 = 12.0_f64;
+        self.v4 = 17.4_f64;
+        self.phi = 1.0_f64 / 15.0_f64;
+        self.dt = 0.1_f64;
+        self.v_threshold = 0.0_f64;
     }
 }
 
@@ -125,6 +134,7 @@ pub fn validate_morris_lecar(state: &MorrisLecarNeuron) -> bool {
         && state.v4 > 0.0
         && state.phi > 0.0
         && state.dt > 0.0
+        && (0.0..=1.0).contains(&state.w)
 }
 
 #[cfg(test)]
@@ -164,7 +174,9 @@ mod tests {
     fn test_morris_lecar_rejects_invalid_state() {
         let mut state = MorrisLecarNeuron::new();
         state.c_m = 0.0;
-        assert_eq!(state.step(50.0), 0);
-        assert!(state.v.is_nan());
+        let before = state.clone();
+        assert_eq!(state.step(50.0), -1);
+        assert_eq!(state.v, before.v);
+        assert_eq!(state.w, before.w);
     }
 }
