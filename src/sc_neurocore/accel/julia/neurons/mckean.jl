@@ -24,13 +24,13 @@ function McKeanNeuronState()
     McKeanNeuronState(0.0, 0.0, 0.25, 0.01, 0.5, 0.1, 0.8)
 end
 
-function validate(s::McKeanNeuronState)::Bool
+function validate(s::McKeanNeuronState, dt::Float64=s.dt)::Bool
     isfinite(s.v) &&
     isfinite(s.w) &&
     isfinite(s.a) && 0.0 < s.a < 1.0 &&
     isfinite(s.epsilon) && s.epsilon > 0.0 &&
     isfinite(s.gamma) && s.gamma > 0.0 &&
-    isfinite(s.dt) && s.dt > 0.0 &&
+    isfinite(dt) && dt > 0.0 &&
     isfinite(s.v_peak)
 end
 
@@ -46,18 +46,18 @@ function _f(s::McKeanNeuronState, v)
     end
 end
 
-function step!(s::McKeanNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    if !validate(s) || !isfinite(I_ext)
-        throw(DomainError((s.v, s.w, I_ext), "McKean state/current must be finite and well-formed"))
+function step!(s::McKeanNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
+    if !validate(s, dt) || !isfinite(I_ext)
+        return 0
     end
 
-    dv = (_f(s, s.v) - s.w + I_ext) * s.dt
-    dw = s.epsilon * (s.v - s.gamma * s.w) * s.dt
+    dv = (_f(s, s.v) - s.w + I_ext) * dt
+    dw = s.epsilon * (s.v - s.gamma * s.w) * dt
     v_prev = s.v
     new_v = s.v + dv
     new_w = s.w + dw
     if !(isfinite(new_v) && isfinite(new_w))
-        throw(DomainError((new_v, new_w), "McKean state became non-finite"))
+        return 0
     end
     s.v = new_v
     s.w = new_w

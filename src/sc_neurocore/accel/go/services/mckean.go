@@ -63,7 +63,7 @@ func (s *McKeanNeuronState) f(v float64) float64 {
 // Step advances the neuron by one timestep
 func (s *McKeanNeuronState) Step(iExt float64) int {
 	if !ValidateMcKeanNeuron(s) || math.IsNaN(iExt) || math.IsInf(iExt, 0) {
-		panic("McKean state/current must be finite and well-formed")
+		return 0
 	}
 
 	dv := (s.f(s.V) - s.W + iExt) * s.Dt
@@ -72,7 +72,7 @@ func (s *McKeanNeuronState) Step(iExt float64) int {
 	newV := s.V + dv
 	newW := s.W + dw
 	if math.IsNaN(newV) || math.IsInf(newV, 0) || math.IsNaN(newW) || math.IsInf(newW, 0) {
-		panic("McKean state became non-finite")
+		return 0
 	}
 	s.V = newV
 	s.W = newW

@@ -46,7 +46,7 @@ impl McKeanNeuron {
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
         if !validate_mckean(self) || !i_ext.is_finite() {
-            panic!("McKean state/current must be finite and well-formed");
+            return 0;
         }
 
         let dv = (self._f(self.v) - self.w + i_ext) * self.dt;
@@ -55,7 +55,7 @@ impl McKeanNeuron {
         let new_v = self.v + dv;
         let new_w = self.w + dw;
         if !(new_v.is_finite() && new_w.is_finite()) {
-            panic!("McKean state became non-finite");
+            return 0;
         }
         self.v = new_v;
         self.w = new_w;
@@ -108,5 +108,32 @@ mod tests {
         let mut state = McKeanNeuron::new();
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_mckean_current_balance() {
+        let mut state = McKeanNeuron::new();
+        let spike = state.step(0.5);
+        assert_eq!(spike, 0);
+        assert!((state.v - 0.05).abs() < 1.0e-12);
+        assert!(state.w.abs() < 1.0e-12);
+    }
+
+    #[test]
+    fn test_mckean_invalid_current_preserves_state() {
+        let mut state = McKeanNeuron::new();
+        let before = (state.v, state.w);
+        assert_eq!(state.step(f64::NAN), 0);
+        assert_eq!((state.v, state.w), before);
+    }
+
+    #[test]
+    fn test_mckean_overflow_candidate_preserves_state() {
+        let mut state = McKeanNeuron::new();
+        state.v = 1.0e308;
+        state.w = -1.7e308;
+        let before = (state.v, state.w);
+        assert_eq!(state.step(1.7e308), 0);
+        assert_eq!((state.v, state.w), before);
     }
 }
