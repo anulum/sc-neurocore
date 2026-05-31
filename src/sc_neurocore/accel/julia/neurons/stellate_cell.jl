@@ -27,65 +27,119 @@ mutable struct StellateCellState
     dt::Float64
     v_threshold::Float64
     gain::Float64
-    _sub_steps::Float64
+    sub_steps::Int64
 end
 
 function StellateCellState()
-    StellateCellState(-65.0, 0.6, 0.32, 0.0, 35.0, 9.0, 3.0, 0.1, 55.0, -90.0, -65.0, 0.5, 5.0, 0.5, -20.0, 1.0, 0.0)
+    return StellateCellState(-65.0, 0.6, 0.32, 0.0, 35.0, 9.0, 3.0, 0.1, 55.0, -90.0, -65.0, 0.5, 5.0, 0.5, -20.0, 1.0, 50)
 end
 
-function step!(s::StellateCellState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        inp = s.gain * I_ext
-        sub_dt = s.dt / s._sub_steps
-        fired = 0
-        for _ in 1:s._sub_steps
-            v = s.v
-            alpha_m = _safe_rate(0.1, 35.0, v, 10.0, 1.0)
-            beta_m = 4.0 * exp(-(v + 60.0) / 18.0)
-            m_inf = alpha_m / (alpha_m + beta_m)
-            alpha_h = 0.07 * exp(-(v + 58.0) / 20.0)
-            beta_h = 1.0 / (1.0 + exp(-(v + 28.0) / 10.0))
-            alpha_n = _safe_rate(0.01, 34.0, v, 10.0, 0.1)
-            beta_n = 0.125 * exp(-(v + 44.0) / 80.0)
-            p_inf = 1.0 / (1.0 + exp(-(v + 10.0) / 10.0))
-            tau_p = 1.0 + 4.0 / (1.0 + exp((v + 20.0) / 15.0))
-            s.h += sub_dt * s.phi * (alpha_h * (1.0 - s.h) - beta_h * s.h)
-            s.n += sub_dt * s.phi * (alpha_n * (1.0 - s.n) - beta_n * s.n)
-            s.p += sub_dt * (p_inf - s.p) / tau_p
-            i_na = s.g_na * m_inf ^ 3 * s.h * (v - s.e_na)
-            i_k = s.g_k * s.n ^ 4 * (v - s.e_k)
-            i_kv3 = s.g_kv3 * s.p ^ 2 * (v - s.e_k)
-            i_l = s.g_l * (v - s.e_l)
-            s.v += sub_dt * (-i_na - i_k - i_kv3 - i_l + inp) / s.c_m
-            if s.v >= s.v_threshold
-                fired = 1
-                s.v = -65.0
-            end
-        end
-        s.v = max(-100.0, min(60.0, s.v))
-        if ! isfinite(s.v)
-            s.v = -65.0
-            s.h = 0.6
-            s.n = 0.32
-        end
-        s.h = max(0.0, min(1.0, s.h))
-        s.n = max(0.0, min(1.0, s.n))
-        s.p = max(0.0, min(1.0, s.p))
-        return fired
-    catch _e
-        return 0
+function _safe_exp(value::Float64)
+    return exp(max(-60.0, min(60.0, value)))
+end
+
+function _safe_rate(a::Float64, vhalf::Float64, v::Float64, k::Float64, fallback::Float64)
+    d = v + vhalf
+    if abs(d) < 1e-7
+        return fallback
     end
+    z = -d / k
+    if z > 60.0
+        return 0.0
+    elseif z < -60.0
+        return a * d
+    end
+    return a * d / (1.0 - exp(z))
 end
 
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
+function _boltz(v::Float64, vh::Float64, k::Float64)
+    z = -(v - vh) / k
+    if z > 60.0
+        return 0.0
+    elseif z < -60.0
+        return 1.0
+    end
+    return 1.0 / (1.0 + exp(z))
+end
+
+_clamp01(x::Float64) = max(0.0, min(1.0, x))
+
+function _validate(s::StellateCellState)
+    finite_values = (
+        s.v, s.h, s.n, s.p, s.g_na, s.g_k, s.g_kv3, s.g_l,
+        s.e_na, s.e_k, s.e_l, s.c_m, s.phi, s.dt, s.v_threshold, s.gain,
+    )
+    all(isfinite, finite_values) || throw(ArgumentError("stellate cell state and parameters must be finite"))
+    all(x -> 0.0 <= x <= 1.0, (s.h, s.n, s.p)) ||
+        throw(ArgumentError("stellate cell gates must stay in [0, 1]"))
+    all(x -> x >= 0.0, (s.g_na, s.g_k, s.g_kv3, s.g_l)) ||
+        throw(ArgumentError("stellate cell conductances must be non-negative"))
+    (s.c_m > 0.0 && s.phi > 0.0 && s.dt > 0.0) ||
+        throw(ArgumentError("stellate cell capacitance, rate scale, and timestep must be positive"))
+    s.sub_steps > 0 || throw(ArgumentError("stellate cell sub-step count must be positive"))
+    s.gain >= 0.0 || throw(ArgumentError("stellate cell gain must be non-negative"))
+    return nothing
+end
+
+function step!(s::StellateCellState, I_ext::Float64=0.0; dt::Float64=s.dt)
+    _validate(s)
+    isfinite(I_ext) || throw(ArgumentError("current must be finite"))
+    (isfinite(dt) && dt > 0.0) || throw(ArgumentError("dt must be finite and positive"))
+
+    inp = s.gain * I_ext
+    sub_dt = dt / Float64(s.sub_steps)
+    fired = 0
+    v = s.v
+    h = s.h
+    n = s.n
+    p = s.p
+
+    for _ in 1:s.sub_steps
+        alpha_m = _safe_rate(0.1, 35.0, v, 10.0, 1.0)
+        beta_m = 4.0 * _safe_exp(-(v + 60.0) / 18.0)
+        m_inf = alpha_m / (alpha_m + beta_m)
+        alpha_h = 0.07 * _safe_exp(-(v + 58.0) / 20.0)
+        beta_h = _boltz(v, -28.0, 10.0)
+        alpha_n = _safe_rate(0.01, 34.0, v, 10.0, 0.1)
+        beta_n = 0.125 * _safe_exp(-(v + 44.0) / 80.0)
+        p_inf = _boltz(v, -10.0, 10.0)
+        tau_p = 1.0 + 4.0 / (1.0 + _safe_exp((v + 20.0) / 15.0))
+
+        h = _clamp01(h + sub_dt * s.phi * (alpha_h * (1.0 - h) - beta_h * h))
+        n = _clamp01(n + sub_dt * s.phi * (alpha_n * (1.0 - n) - beta_n * n))
+        p = _clamp01(p + sub_dt * (p_inf - p) / tau_p)
+
+        i_na = s.g_na * m_inf^3 * h * (v - s.e_na)
+        i_k = s.g_k * n^4 * (v - s.e_k)
+        i_kv3 = s.g_kv3 * p^2 * (v - s.e_k)
+        i_l = s.g_l * (v - s.e_l)
+
+        v = max(-100.0, min(60.0, v + sub_dt * (-i_na - i_k - i_kv3 - i_l + inp) / s.c_m))
+        all(isfinite, (v, h, n, p)) || throw(ArgumentError("stellate cell integration produced non-finite state"))
+        if v >= s.v_threshold
+            fired = 1
+            v = -65.0
+        end
+    end
+
+    s.v = v
+    s.h = h
+    s.n = n
+    s.p = p
+    return fired
+end
+
+function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.5)
+    n_steps >= 0 || throw(ArgumentError("n_steps must be non-negative"))
     s = StellateCellState()
+    s.dt = dt
+    _validate(s)
     trace = zeros(n_steps)
     spikes = 0
     for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
+        result = step!(s, I_ext)
         trace[t] = s.v
-        if result isa Number && result > 0
+        if result > 0
             spikes += 1
         end
     end

@@ -628,60 +628,113 @@ impl StellateCell {
         }
     }
 
+    #[inline]
+    fn safe_exp(value: f64) -> f64 {
+        value.clamp(-60.0, 60.0).exp()
+    }
+
+    #[inline]
+    fn boltz(v: f64, vh: f64, k: f64) -> f64 {
+        let z = -(v - vh) / k;
+        if z > 60.0 {
+            0.0
+        } else if z < -60.0 {
+            1.0
+        } else {
+            1.0 / (1.0 + z.exp())
+        }
+    }
+
+    fn is_valid(&self) -> bool {
+        [
+            self.v,
+            self.h,
+            self.n,
+            self.p,
+            self.g_na,
+            self.g_k,
+            self.g_kv3,
+            self.g_l,
+            self.e_na,
+            self.e_k,
+            self.e_l,
+            self.c_m,
+            self.phi,
+            self.dt,
+            self.v_threshold,
+            self.gain,
+        ]
+        .iter()
+        .all(|value| value.is_finite())
+            && [self.h, self.n, self.p]
+                .iter()
+                .all(|gate| (0.0..=1.0).contains(gate))
+            && [self.g_na, self.g_k, self.g_kv3, self.g_l]
+                .iter()
+                .all(|conductance| *conductance >= 0.0)
+            && self.c_m > 0.0
+            && self.phi > 0.0
+            && self.dt > 0.0
+            && self.gain >= 0.0
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
+        if !self.is_valid() || !current.is_finite() {
+            return 0;
+        }
+
         let input = self.gain * current;
         let sub_steps = 50;
         let sub_dt = self.dt / sub_steps as f64;
         let mut fired = 0i32;
+        let mut v = self.v;
+        let mut h = self.h;
+        let mut n = self.n;
+        let mut p = self.p;
 
         for _ in 0..sub_steps {
-            let v = self.v;
-
             // WB alpha/beta rates
             let alpha_m = safe_rate(0.1, 35.0, v, 10.0, 1.0);
-            let beta_m = 4.0 * (-(v + 60.0) / 18.0).exp();
+            let beta_m = 4.0 * Self::safe_exp(-(v + 60.0) / 18.0);
             let m_inf = alpha_m / (alpha_m + beta_m);
 
-            let alpha_h = 0.07 * (-(v + 58.0) / 20.0).exp();
-            let beta_h = 1.0 / (1.0 + (-(v + 28.0) / 10.0).exp());
+            let alpha_h = 0.07 * Self::safe_exp(-(v + 58.0) / 20.0);
+            let beta_h = Self::boltz(v, -28.0, 10.0);
 
             let alpha_n = safe_rate(0.01, 34.0, v, 10.0, 0.1);
-            let beta_n = 0.125 * (-(v + 44.0) / 80.0).exp();
+            let beta_n = 0.125 * Self::safe_exp(-(v + 44.0) / 80.0);
 
             // Kv3.1 gating (fast activation, no inactivation)
-            let p_inf = 1.0 / (1.0 + (-(v + 10.0) / 10.0).exp());
-            let tau_p = 1.0 + 4.0 / (1.0 + ((v + 20.0) / 15.0).exp());
+            let p_inf = Self::boltz(v, -10.0, 10.0);
+            let tau_p = 1.0 + 4.0 / (1.0 + Self::safe_exp((v + 20.0) / 15.0));
 
             // Gate updates
-            self.h += sub_dt * self.phi * (alpha_h * (1.0 - self.h) - beta_h * self.h);
-            self.n += sub_dt * self.phi * (alpha_n * (1.0 - self.n) - beta_n * self.n);
-            self.p += sub_dt * (p_inf - self.p) / tau_p;
+            h = (h + sub_dt * self.phi * (alpha_h * (1.0 - h) - beta_h * h)).clamp(0.0, 1.0);
+            n = (n + sub_dt * self.phi * (alpha_n * (1.0 - n) - beta_n * n)).clamp(0.0, 1.0);
+            p = (p + sub_dt * (p_inf - p) / tau_p).clamp(0.0, 1.0);
 
             // Currents (m uses steady-state for speed)
-            let i_na = self.g_na * m_inf.powi(3) * self.h * (v - self.e_na);
-            let i_k = self.g_k * self.n.powi(4) * (v - self.e_k);
-            let i_kv3 = self.g_kv3 * self.p.powi(2) * (v - self.e_k);
+            let i_na = self.g_na * m_inf.powi(3) * h * (v - self.e_na);
+            let i_k = self.g_k * n.powi(4) * (v - self.e_k);
+            let i_kv3 = self.g_kv3 * p.powi(2) * (v - self.e_k);
             let i_l = self.g_l * (v - self.e_l);
 
             let dv = (-i_na - i_k - i_kv3 - i_l + input) / self.c_m;
-            self.v += sub_dt * dv;
+            v = (v + sub_dt * dv).clamp(-100.0, 60.0);
+            if ![v, h, n, p].iter().all(|value| value.is_finite()) {
+                return 0;
+            }
 
-            if self.v >= self.v_threshold {
+            if v >= self.v_threshold {
                 fired = 1;
-                self.v = -65.0;
+                v = -65.0;
             }
         }
 
-        // Safety bounds
-        self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() {
-            self.v = -65.0;
-            self.h = 0.6;
-            self.n = 0.32;
-        }
-        self.h = self.h.clamp(0.0, 1.0);
-        self.n = self.n.clamp(0.0, 1.0);
-        self.p = self.p.clamp(0.0, 1.0);
+        self.v = v;
+        self.h = h;
+        self.n = n;
+        self.p = p;
 
         fired
     }
@@ -1683,8 +1736,25 @@ mod tests {
     #[test]
     fn stellate_nan_input_stays_finite() {
         let mut n = StellateCell::new();
+        let before = n.clone();
         n.step(f64::NAN);
         assert!(n.v.is_finite());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.h, before.h);
+        assert_eq!(n.n, before.n);
+        assert_eq!(n.p, before.p);
+    }
+
+    #[test]
+    fn stellate_corrupted_state_preserved_on_step() {
+        let mut n = StellateCell::new();
+        n.h = -0.1;
+        let before = n.clone();
+        assert_eq!(n.step(8.0), 0);
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.h, before.h);
+        assert_eq!(n.n, before.n);
+        assert_eq!(n.p, before.p);
     }
 
     #[test]
