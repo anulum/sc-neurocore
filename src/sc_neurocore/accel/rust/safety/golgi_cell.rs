@@ -40,6 +40,12 @@ pub struct GolgiCell {
     pub e_h: f64,
     pub e_l: f64,
     pub c_m: f64,
+    pub tau_ca: f64,
+    pub kd_bk: f64,
+    pub kd_sk: f64,
+    pub dt: f64,
+    pub sub_steps: usize,
+    pub gain: f64,
 }
 
 impl GolgiCell {
@@ -75,52 +81,253 @@ impl GolgiCell {
             e_h: -40.0_f64,
             e_l: -55.0_f64,
             c_m: 1.0_f64,
+            tau_ca: 200.0_f64,
+            kd_bk: 1.0_f64,
+            kd_sk: 0.5_f64,
+            dt: 0.5_f64,
+            sub_steps: 10,
+            gain: 1.0_f64,
         }
     }
 
+    fn safe_rate(a: f64, vhalf: f64, v: f64, k: f64, fallback: f64) -> f64 {
+        let d = v + vhalf;
+        if d.abs() < 1e-7 {
+            fallback
+        } else {
+            a * d / (1.0 - (-d / k).exp())
+        }
+    }
+
+    fn boltz(v: f64, vh: f64, k: f64) -> f64 {
+        let x = (v - vh) / k;
+        if x >= 0.0 {
+            1.0 / (1.0 + (-x).exp())
+        } else {
+            let ex = x.exp();
+            ex / (1.0 + ex)
+        }
+    }
+
+    fn voltage_valid(value: f64) -> bool {
+        value.is_finite() && (-100.0..=60.0).contains(&value)
+    }
+
+    fn probability(value: f64) -> bool {
+        value.is_finite() && (0.0..=1.0).contains(&value)
+    }
+
+    fn gate_alpha_beta(previous: f64, alpha: f64, beta: f64, phi: f64, dt: f64) -> Option<f64> {
+        let total = phi * (alpha + beta);
+        if !previous.is_finite()
+            || !alpha.is_finite()
+            || !beta.is_finite()
+            || !total.is_finite()
+            || !dt.is_finite()
+            || total <= 0.0
+        {
+            return None;
+        }
+        let steady = alpha / (alpha + beta);
+        Some((steady + (previous - steady) * (-total * dt).exp()).clamp(0.0, 1.0))
+    }
+
+    fn gate_inf(previous: f64, steady: f64, tau: f64, dt: f64) -> Option<f64> {
+        if !previous.is_finite()
+            || !steady.is_finite()
+            || !tau.is_finite()
+            || !dt.is_finite()
+            || tau <= 0.0
+        {
+            return None;
+        }
+        Some((steady + (previous - steady) * (-dt / tau).exp()).clamp(0.0, 1.0))
+    }
+
+    fn calcium_exact(previous: f64, entry: f64, tau: f64, dt: f64) -> Option<f64> {
+        if !previous.is_finite()
+            || !entry.is_finite()
+            || !tau.is_finite()
+            || !dt.is_finite()
+            || tau <= 0.0
+            || previous < 0.0
+        {
+            return None;
+        }
+        let steady = entry * tau;
+        let value = steady + (previous - steady) * (-dt / tau).exp();
+        value.is_finite().then_some(value.max(0.0))
+    }
+
+    fn valid_state(&self) -> bool {
+        Self::voltage_valid(self.v)
+            && [
+                self.m, self.h, self.p_na, self.n, self.a, self.b, self.w, self.m_t, self.s,
+                self.c_n, self.r,
+            ]
+            .iter()
+            .all(|value| Self::probability(*value))
+            && [
+                self.g_na_t,
+                self.g_na_p,
+                self.g_kdr,
+                self.g_ka,
+                self.g_km,
+                self.g_cat,
+                self.g_can,
+                self.g_bk,
+                self.g_sk,
+                self.g_h,
+                self.g_l,
+            ]
+            .iter()
+            .all(|g| g.is_finite() && *g >= 0.0)
+            && self.ca.is_finite()
+            && self.ca >= 0.0
+            && self.e_na.is_finite()
+            && self.e_k.is_finite()
+            && self.e_ca.is_finite()
+            && self.e_h.is_finite()
+            && self.e_l.is_finite()
+            && self.c_m.is_finite()
+            && self.tau_ca.is_finite()
+            && self.kd_bk.is_finite()
+            && self.kd_sk.is_finite()
+            && self.dt.is_finite()
+            && self.gain.is_finite()
+            && self.c_m > 0.0
+            && self.tau_ca > 0.0
+            && self.kd_bk > 0.0
+            && self.kd_sk > 0.0
+            && self.dt > 0.0
+            && self.sub_steps > 0
+            && self.gain >= 0.0
+    }
+
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // inp = self.gain * current
-        // dt_sub = self.dt / self.sub_steps
-        // v_prev = self.v
-        // for _ in range(self.sub_steps):
-        // v = self.v
-        // alpha_m = _safe_rate(0.1, 35.0, v, 10.0, 1.0)
-        // beta_m = 4.0 * math.exp(-(v + 60.0) / 18.0)
-        // alpha_h = 0.07 * math.exp(-(v + 58.0) / 20.0)
-        // beta_h = 1.0 / (1.0 + math.exp(-(v + 28.0) / 10.0))
-        // self.m += dt_sub * 5.0 * (alpha_m * (1.0 - self.m) - beta_m * self.m)
-        // self.h += dt_sub * 5.0 * (alpha_h * (1.0 - self.h) - beta_h * self.h)
-        // pna_inf = _boltz(v, -48.0, 5.0)
-        // tau_pna = 5.0 + 20.0 / max(0.01, 1.0 + ((v + 48.0) / 10.0) .powi 2)
-        // self.p_na += dt_sub * (pna_inf - self.p_na) / tau_pna
-        // alpha_n = _safe_rate(0.01, 34.0, v, 10.0, 0.1)
-        0 // spike indicator
+        if !i_ext.is_finite() || !self.valid_state() {
+            return 0;
+        }
+
+        let input = self.gain * i_ext;
+        let dt_sub = self.dt / self.sub_steps as f64;
+        let v_prev = self.v;
+        let mut next = self.clone();
+        for _ in 0..self.sub_steps {
+            let v = next.v;
+            let alpha_m = Self::safe_rate(0.1, 35.0, v, 10.0, 1.0);
+            let beta_m = 4.0 * (-(v + 60.0) / 18.0).exp();
+            let alpha_h = 0.07 * (-(v + 58.0) / 20.0).exp();
+            let beta_h = 1.0 / (1.0 + (-(v + 28.0) / 10.0).exp());
+            let Some(m) = Self::gate_alpha_beta(next.m, alpha_m, beta_m, 5.0, dt_sub) else {
+                return 0;
+            };
+            let Some(h) = Self::gate_alpha_beta(next.h, alpha_h, beta_h, 5.0, dt_sub) else {
+                return 0;
+            };
+            let tau_pna = 5.0 + 20.0 / (1.0 + ((v + 48.0) / 10.0).powi(2)).max(0.01);
+            let Some(p_na) = Self::gate_inf(next.p_na, Self::boltz(v, -48.0, 5.0), tau_pna, dt_sub)
+            else {
+                return 0;
+            };
+            let alpha_n = Self::safe_rate(0.01, 34.0, v, 10.0, 0.1);
+            let beta_n = 0.125 * (-(v + 44.0) / 80.0).exp();
+            let Some(n) = Self::gate_alpha_beta(next.n, alpha_n, beta_n, 5.0, dt_sub) else {
+                return 0;
+            };
+            let Some(a) = Self::gate_inf(next.a, Self::boltz(v, -27.0, 16.0), 2.0, dt_sub) else {
+                return 0;
+            };
+            let Some(b) = Self::gate_inf(next.b, Self::boltz(v, -80.0, -6.0), 15.0, dt_sub) else {
+                return 0;
+            };
+            let tau_w = 100.0 / (3.3 * ((v + 35.0) / 20.0).exp() + (-(v + 35.0) / 20.0).exp());
+            let Some(w) = Self::gate_inf(next.w, Self::boltz(v, -35.0, 10.0), tau_w, dt_sub) else {
+                return 0;
+            };
+            let Some(m_t) = Self::gate_inf(next.m_t, Self::boltz(v, -52.0, 5.0), 1.0, dt_sub)
+            else {
+                return 0;
+            };
+            let tau_s = 20.0 + 50.0 / (1.0 + ((v + 65.0) / 10.0).powi(2)).max(0.01);
+            let Some(s) = Self::gate_inf(next.s, Self::boltz(v, -60.0, -6.5), tau_s, dt_sub) else {
+                return 0;
+            };
+            let tau_cn = 2.0 + 10.0 / (1.0 + ((v + 20.0) / 10.0).powi(2)).max(0.01);
+            let Some(c_n) = Self::gate_inf(next.c_n, Self::boltz(v, -20.0, 5.0), tau_cn, dt_sub)
+            else {
+                return 0;
+            };
+            let tau_r = 50.0 + 200.0 / (1.0 + ((v + 80.0) / 20.0).powi(2)).max(0.01);
+            let Some(r) = Self::gate_inf(next.r, Self::boltz(v, -80.0, -10.0), tau_r, dt_sub)
+            else {
+                return 0;
+            };
+
+            let g_cat = self.g_cat * m_t.powi(2) * s;
+            let g_can = self.g_can * c_n.powi(2);
+            let i_ca = g_cat * (v - self.e_ca) + g_can * (v - self.e_ca);
+            let ca_entry = if i_ca < 0.0 { -i_ca * 0.001 } else { 0.0 };
+            let Some(ca) = Self::calcium_exact(next.ca, ca_entry, self.tau_ca, dt_sub) else {
+                return 0;
+            };
+            let ca2 = ca * ca;
+            let bk_v = Self::boltz(v, 100.0 - 120.0 * ca2 / (ca2 + self.kd_bk.powi(2)), 15.0);
+            let sk_inf = ca2 / (ca2 + self.kd_sk.powi(2));
+            let g_na = self.g_na_t * m.powi(3) * h + self.g_na_p * p_na;
+            let g_k = self.g_kdr * n.powi(4)
+                + self.g_ka * a.powi(3) * b
+                + self.g_km * w
+                + self.g_bk * bk_v
+                + self.g_sk * sk_inf;
+            let g_ca = g_cat + g_can;
+            let g_h = self.g_h * r;
+            let g_total = g_na + g_k + g_ca + g_h + self.g_l;
+            if !g_total.is_finite() || g_total <= 0.0 {
+                return 0;
+            }
+            let steady_v = (input
+                + g_na * self.e_na
+                + g_k * self.e_k
+                + g_ca * self.e_ca
+                + g_h * self.e_h
+                + self.g_l * self.e_l)
+                / g_total;
+            let v_next = steady_v + (v - steady_v) * (-(g_total / self.c_m) * dt_sub).exp();
+            if !Self::voltage_valid(v_next) || !ca.is_finite() || ca < 0.0 {
+                return 0;
+            }
+
+            next.v = v_next;
+            next.m = m;
+            next.h = h;
+            next.p_na = p_na;
+            next.n = n;
+            next.a = a;
+            next.b = b;
+            next.w = w;
+            next.m_t = m_t;
+            next.s = s;
+            next.c_n = c_n;
+            next.r = r;
+            next.ca = ca;
+        }
+
+        *self = next;
+        if self.v >= 0.0 && v_prev < 0.0 {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
-        // self.v = -60.0
-        // self.m = 0.02
-        // self.h = 0.85
-        // self.p_na = 0.01
-        // self.n = 0.05
-        // self.a = 0.1
-        // self.b = 0.8
-        // self.w = 0.01
-        // self.m_t = 0.01
-        // self.s = 0.9
-        // self.c_n = 0.01
-        // self.r = 0.1
-        // self.ca = 0.05
-        self.v = -60.0_f64;
-        self.m = 0.02_f64;
-        self.h = 0.85_f64;
-        self.p_na = 0.01_f64;
-        self.n = 0.05_f64;
+        *self = Self::new();
     }
 }
 
 pub fn validate_golgi_cell(state: &GolgiCell) -> bool {
-    state.v.is_finite()
+    state.valid_state()
 }
 
 #[cfg(test)]
@@ -139,5 +346,44 @@ mod tests {
         let mut state = GolgiCell::new();
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    fn snapshot(state: &GolgiCell) -> (f64, f64, f64, f64, f64, f64) {
+        (state.v, state.m, state.h, state.p_na, state.n, state.ca)
+    }
+
+    #[test]
+    fn test_golgi_cell_invalid_current_preserves_state() {
+        let mut state = GolgiCell::new();
+        for _ in 0..10 {
+            state.step(5.0);
+        }
+        let before = snapshot(&state);
+
+        assert_eq!(state.step(f64::NAN), 0);
+        assert_eq!(snapshot(&state), before);
+        assert_eq!(state.step(f64::INFINITY), 0);
+        assert_eq!(snapshot(&state), before);
+    }
+
+    #[test]
+    fn test_golgi_cell_excess_current_preserves_state() {
+        let mut state = GolgiCell::new();
+        let before = snapshot(&state);
+
+        assert_eq!(state.step(1.0e8), 0);
+
+        assert_eq!(snapshot(&state), before);
+    }
+
+    #[test]
+    fn test_golgi_cell_all_currents_bounded_and_calcium_active() {
+        let mut state = GolgiCell::new();
+        let baseline_ca = state.ca;
+        let spikes: i32 = (0..2000).map(|_| state.step(10.0)).sum();
+
+        assert!(spikes > 0);
+        assert!(state.ca > baseline_ca);
+        assert!(validate_golgi_cell(&state));
     }
 }

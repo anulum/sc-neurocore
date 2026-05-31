@@ -1,8 +1,16 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- (C) Concepts 1996-2026 Miroslav Sotek. All rights reserved. -->
+<!-- (C) Code 2020-2026 Miroslav Sotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore GolgiCell model reference -->
+
 # GolgiCell
 
 **Module:** `engine/src/neurons/cerebellar.rs`
 **Reference:** Solinas et al., Front Cell Neurosci 1:2, 2007
-**Family:** Full Hodgkin-Huxley with 11 ionic currents
+**Family:** Full Hodgkin-Huxley with 11 ionic currents, exact first-order gates, exact calcium relaxation, and conductance-form membrane integration
 **State variables:** `v`, `m`, `h`, `p_na`, `n`, `a`, `b`, `w`, `m_t`, `s`, `c_n`, `r`, `ca`
 
 ---
@@ -24,6 +32,10 @@ Key features:
 ## Equations
 
 $$C_m \frac{dV}{dt} = -(I_{Na_t} + I_{Na_p} + I_{K_{dr}} + I_{K_A} + I_{K_M} + I_{Ca_T} + I_{Ca_N} + I_{BK} + I_{SK} + I_h + I_L) + I_{ext}$$
+
+### Exact numerical update
+
+Each runtime advances every first-order gate with the closed-form relaxation solution for the fixed sub-step voltage, updates Ca2+ with the exact linear relaxation toward inward Ca-current entry, and advances membrane voltage with the exact conductance-form solution for fixed sub-step conductances. Candidate state is committed only when voltage, gates, calcium, conductances, capacitance, calcium constants, timestep, sub-step count, and gain remain finite and physiological; invalid or excess current returns no spike and preserves pre-step state.
 
 ### Ionic Currents
 
@@ -89,8 +101,8 @@ $$\frac{d[Ca]}{dt} = -\frac{(I_{Ca_T} + I_{Ca_N})_{inward} \cdot 0.001}{\text{vo
 | NetworkRunner wired | `NeuronVariant::Golgi` |
 | `create_neuron("GolgiCell")` | Yes |
 | `supported_models()` | Includes "GolgiCell" |
-| coverage tests | 17 (fire, spontaneous, 11-currents, NaP depolarises, KM slows, KA transient, Ih sag, BK fast AHP, SK slow AHP, Ca²⁺ accumulates, gates bounded, reset, negative, NaN, extreme, AHP rate, performance) |
-| Benchmark | `golgi_1k_steps`: **1.39 ms** (1.39 µs/step), i5-11600K |
+| Behavior tests | Rust engine 21; Python model 4; Go service 3; Rust safety 5 |
+| Benchmark | `golgi_1k_steps`: **2.96 ms** median (2.96 µs/step), i5-11600K |
 
 ---
 
@@ -98,10 +110,10 @@ $$\frac{d[Ca]}{dt} = -\frac{(I_{Ca_T} + I_{Ca_N})_{inward} \cdot 0.001}{\text{vo
 
 | Benchmark | Median |
 |-----------|-------:|
-| golgi_1k_steps | 1.39 ms |
-| Per step | **1.39 µs** |
+| golgi_1k_steps | 2.96 ms |
+| Per step | **2.96 µs** |
 
-11 ionic currents, 13 gating variables, 10 sub-steps (dt_sub=0.05 ms). Measured 2026-04-05.
+11 ionic currents, 11 first-order gates, Ca2+ relaxation, and 10 exact sub-steps (dt_sub=0.05 ms). Measured 2026-05-31 on local i5-11600K.
 
 ---
 
@@ -117,4 +129,5 @@ $$\frac{d[Ca]}{dt} = -\frac{(I_{Ca_T} + I_{Ca_N})_{inward} \cdot 0.001}{\text{vo
 8. **BK fast AHP.** BK channels activate during spikes, contribute to repolarisation. Verified.
 9. **SK slow adaptation.** Removing SK increases firing rate (Ca²⁺-dependent slow AHP). Verified.
 10. **Ca²⁺ accumulates during spiking.** Ca²⁺ entry via Ca_T + Ca_N. Verified.
-11. **All gates bounded [0,1].** 11 gating variables + Ca²⁺ non-negative. Verified.
+11. **All gates bounded [0,1].** 11 gating variables + Ca2+ non-negative. Verified.
+12. **Invalid-input fail-closed behaviour.** NaN, infinite, excess-current, and corrupted-state paths preserve pre-step state and return no spike. Verified.

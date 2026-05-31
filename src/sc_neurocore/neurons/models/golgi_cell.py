@@ -20,7 +20,49 @@ def _safe_rate(a: float, vhalf: float, v: float, k: float, fallback: float) -> f
 
 
 def _boltz(v: float, vh: float, k: float) -> float:
-    return 1.0 / (1.0 + math.exp(-(v - vh) / k))
+    x = (v - vh) / k
+    if x >= 0.0:
+        return 1.0 / (1.0 + math.exp(-x))
+    ex = math.exp(x)
+    return ex / (1.0 + ex)
+
+
+def _all_finite(*values: float) -> bool:
+    return all(math.isfinite(value) for value in values)
+
+
+def _probability(value: float) -> bool:
+    return math.isfinite(value) and 0.0 <= value <= 1.0
+
+
+def _voltage(value: float) -> bool:
+    return math.isfinite(value) and -100.0 <= value <= 60.0
+
+
+def _gate_alpha_beta(
+    previous: float, alpha: float, beta: float, phi: float, dt: float
+) -> float | None:
+    total = phi * (alpha + beta)
+    if not _all_finite(previous, alpha, beta, total, dt) or total <= 0.0:
+        return None
+    steady = alpha / (alpha + beta)
+    return min(1.0, max(0.0, steady + (previous - steady) * math.exp(-total * dt)))
+
+
+def _gate_inf(previous: float, steady: float, tau: float, dt: float) -> float | None:
+    if not _all_finite(previous, steady, tau, dt) or tau <= 0.0:
+        return None
+    return min(1.0, max(0.0, steady + (previous - steady) * math.exp(-dt / tau)))
+
+
+def _calcium_exact(previous: float, entry: float, tau: float, dt: float) -> float | None:
+    if not _all_finite(previous, entry, tau, dt) or tau <= 0.0 or previous < 0.0:
+        return None
+    steady = entry * tau
+    value = steady + (previous - steady) * math.exp(-dt / tau)
+    if not math.isfinite(value):
+        return None
+    return max(0.0, value)
 
 
 @dataclass
@@ -71,87 +113,203 @@ class GolgiCell:
     sub_steps: int = 10
     gain: float = 1.0
 
+    def _valid_state(self) -> bool:
+        gates = (
+            self.m,
+            self.h,
+            self.p_na,
+            self.n,
+            self.a,
+            self.b,
+            self.w,
+            self.m_t,
+            self.s,
+            self.c_n,
+            self.r,
+        )
+        conductances = (
+            self.g_na_t,
+            self.g_na_p,
+            self.g_kdr,
+            self.g_ka,
+            self.g_km,
+            self.g_cat,
+            self.g_can,
+            self.g_bk,
+            self.g_sk,
+            self.g_h,
+            self.g_l,
+        )
+        return (
+            _voltage(self.v)
+            and all(_probability(gate) for gate in gates)
+            and all(math.isfinite(g) and g >= 0.0 for g in conductances)
+            and _all_finite(
+                self.ca,
+                self.e_na,
+                self.e_k,
+                self.e_ca,
+                self.e_h,
+                self.e_l,
+                self.c_m,
+                self.tau_ca,
+                self.kd_bk,
+                self.kd_sk,
+                self.dt,
+                self.gain,
+            )
+            and self.ca >= 0.0
+            and self.c_m > 0.0
+            and self.tau_ca > 0.0
+            and self.kd_bk > 0.0
+            and self.kd_sk > 0.0
+            and self.dt > 0.0
+            and self.sub_steps > 0
+            and self.gain >= 0.0
+        )
+
     def step(self, current: float = 0.0) -> int:
-        inp = self.gain * current
+        if not math.isfinite(current) or not self._valid_state():
+            return 0
+
+        input_current = self.gain * current
         dt_sub = self.dt / self.sub_steps
         v_prev = self.v
+        v = self.v
+        m = self.m
+        h = self.h
+        p_na = self.p_na
+        n = self.n
+        a = self.a
+        b = self.b
+        w = self.w
+        m_t = self.m_t
+        s = self.s
+        c_n = self.c_n
+        r = self.r
+        ca = self.ca
 
         for _ in range(self.sub_steps):
-            v = self.v
-
             alpha_m = _safe_rate(0.1, 35.0, v, 10.0, 1.0)
             beta_m = 4.0 * math.exp(-(v + 60.0) / 18.0)
             alpha_h = 0.07 * math.exp(-(v + 58.0) / 20.0)
             beta_h = 1.0 / (1.0 + math.exp(-(v + 28.0) / 10.0))
-            self.m += dt_sub * 5.0 * (alpha_m * (1.0 - self.m) - beta_m * self.m)
-            self.h += dt_sub * 5.0 * (alpha_h * (1.0 - self.h) - beta_h * self.h)
+            m_next = _gate_alpha_beta(m, alpha_m, beta_m, 5.0, dt_sub)
+            h_next = _gate_alpha_beta(h, alpha_h, beta_h, 5.0, dt_sub)
+            if m_next is None or h_next is None:
+                return 0
 
             pna_inf = _boltz(v, -48.0, 5.0)
             tau_pna = 5.0 + 20.0 / max(0.01, 1.0 + ((v + 48.0) / 10.0) ** 2)
-            self.p_na += dt_sub * (pna_inf - self.p_na) / tau_pna
+            p_na_next = _gate_inf(p_na, pna_inf, tau_pna, dt_sub)
+            if p_na_next is None:
+                return 0
 
             alpha_n = _safe_rate(0.01, 34.0, v, 10.0, 0.1)
             beta_n = 0.125 * math.exp(-(v + 44.0) / 80.0)
-            self.n += dt_sub * 5.0 * (alpha_n * (1.0 - self.n) - beta_n * self.n)
+            n_next = _gate_alpha_beta(n, alpha_n, beta_n, 5.0, dt_sub)
+            if n_next is None:
+                return 0
 
             a_inf = _boltz(v, -27.0, 16.0)
-            self.a += dt_sub * (a_inf - self.a) / 2.0
             b_inf = _boltz(v, -80.0, -6.0)
-            self.b += dt_sub * (b_inf - self.b) / 15.0
+            a_next = _gate_inf(a, a_inf, 2.0, dt_sub)
+            b_next = _gate_inf(b, b_inf, 15.0, dt_sub)
+            if a_next is None or b_next is None:
+                return 0
 
             w_inf = _boltz(v, -35.0, 10.0)
             tau_w = 100.0 / (3.3 * math.exp((v + 35.0) / 20.0) + math.exp(-(v + 35.0) / 20.0))
-            self.w += dt_sub * (w_inf - self.w) / tau_w
+            w_next = _gate_inf(w, w_inf, tau_w, dt_sub)
+            if w_next is None:
+                return 0
 
             mt_inf = _boltz(v, -52.0, 5.0)
-            self.m_t += dt_sub * (mt_inf - self.m_t) / 1.0
             s_inf = _boltz(v, -60.0, -6.5)
             tau_s = 20.0 + 50.0 / max(0.01, 1.0 + ((v + 65.0) / 10.0) ** 2)
-            self.s += dt_sub * (s_inf - self.s) / tau_s
+            m_t_next = _gate_inf(m_t, mt_inf, 1.0, dt_sub)
+            s_next = _gate_inf(s, s_inf, tau_s, dt_sub)
+            if m_t_next is None or s_next is None:
+                return 0
 
             cn_inf = _boltz(v, -20.0, 5.0)
             tau_cn = 2.0 + 10.0 / max(0.01, 1.0 + ((v + 20.0) / 10.0) ** 2)
-            self.c_n += dt_sub * (cn_inf - self.c_n) / tau_cn
+            c_n_next = _gate_inf(c_n, cn_inf, tau_cn, dt_sub)
+            if c_n_next is None:
+                return 0
 
             r_inf = _boltz(v, -80.0, -10.0)
             tau_r = 50.0 + 200.0 / max(0.01, 1.0 + ((v + 80.0) / 20.0) ** 2)
-            self.r += dt_sub * (r_inf - self.r) / tau_r
+            r_next = _gate_inf(r, r_inf, tau_r, dt_sub)
+            if r_next is None:
+                return 0
 
-            for attr in ("m", "h", "p_na", "n", "a", "b", "w", "m_t", "s", "c_n", "r"):
-                setattr(self, attr, max(0.0, min(1.0, getattr(self, attr))))
-
-            i_cat = self.g_cat * self.m_t**2 * self.s * (v - self.e_ca)
-            i_can = self.g_can * self.c_n**2 * (v - self.e_ca)
+            g_cat = self.g_cat * m_t_next**2 * s_next
+            g_can = self.g_can * c_n_next**2
+            i_cat = g_cat * (v - self.e_ca)
+            i_can = g_can * (v - self.e_ca)
             ca_entry = -(i_cat + i_can) * 0.001 if (i_cat + i_can) < 0.0 else 0.0
-            self.ca += dt_sub * (ca_entry - self.ca / self.tau_ca)
-            self.ca = max(0.0, self.ca)
+            ca_next = _calcium_exact(ca, ca_entry, self.tau_ca, dt_sub)
+            if ca_next is None:
+                return 0
 
-            ca2 = self.ca**2
+            ca2 = ca_next**2
             kd2 = self.kd_bk**2
             bk_v = _boltz(v, 100.0 - 120.0 * ca2 / (ca2 + kd2), 15.0)
             sk_inf = ca2 / (ca2 + self.kd_sk**2)
 
-            i_na_t = self.g_na_t * self.m**3 * self.h * (v - self.e_na)
-            i_na_p = self.g_na_p * self.p_na * (v - self.e_na)
-            i_kdr = self.g_kdr * self.n**4 * (v - self.e_k)
-            i_ka = self.g_ka * self.a**3 * self.b * (v - self.e_k)
-            i_km = self.g_km * self.w * (v - self.e_k)
-            i_bk = self.g_bk * bk_v * (v - self.e_k)
-            i_sk = self.g_sk * sk_inf * (v - self.e_k)
-            i_h = self.g_h * self.r * (v - self.e_h)
-            i_l = self.g_l * (v - self.e_l)
+            g_na = self.g_na_t * m_next**3 * h_next + self.g_na_p * p_na_next
+            g_k = (
+                self.g_kdr * n_next**4
+                + self.g_ka * a_next**3 * b_next
+                + self.g_km * w_next
+                + self.g_bk * bk_v
+                + self.g_sk * sk_inf
+            )
+            g_ca = g_cat + g_can
+            g_h = self.g_h * r_next
+            g_total = g_na + g_k + g_ca + g_h + self.g_l
+            if not math.isfinite(g_total) or g_total <= 0.0:
+                return 0
+            steady_v = (
+                input_current
+                + g_na * self.e_na
+                + g_k * self.e_k
+                + g_ca * self.e_ca
+                + g_h * self.e_h
+                + self.g_l * self.e_l
+            ) / g_total
+            v_next = steady_v + (v - steady_v) * math.exp(-(g_total / self.c_m) * dt_sub)
+            if not (_voltage(v_next) and _all_finite(ca_next) and ca_next >= 0.0):
+                return 0
 
-            dv_val = (
-                -(i_na_t + i_na_p + i_kdr + i_ka + i_km + i_cat + i_can + i_bk + i_sk + i_h + i_l)
-                + inp
-            ) / self.c_m
-            self.v += dt_sub * dv_val
+            v = v_next
+            m = m_next
+            h = h_next
+            p_na = p_na_next
+            n = n_next
+            a = a_next
+            b = b_next
+            w = w_next
+            m_t = m_t_next
+            s = s_next
+            c_n = c_n_next
+            r = r_next
+            ca = ca_next
 
-        self.v = max(-100.0, min(60.0, self.v))
-        if not math.isfinite(self.v):
-            self.v = -60.0
-        if not math.isfinite(self.ca):
-            self.ca = 0.05
+        self.v = v
+        self.m = m
+        self.h = h
+        self.p_na = p_na
+        self.n = n
+        self.a = a
+        self.b = b
+        self.w = w
+        self.m_t = m_t
+        self.s = s
+        self.c_n = c_n
+        self.r = r
+        self.ca = ca
 
         return 1 if self.v >= 0.0 and v_prev < 0.0 else 0
 

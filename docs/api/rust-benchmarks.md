@@ -128,7 +128,9 @@ cargo bench --bench analysis_bench -- --quick
 | Model | Steps | Median | Per step | Sub-steps | Notes |
 |-------|-------|--------|----------|-----------|-------|
 | Granule cell (D'Angelo 2001) | 10k | 4.92 ms | **492 ns** | 4 | Full HH: 7 currents (Na, K_dr, K_A, Ca_T, K_Ca, Ih, leak) |
-| Golgi cell (Solinas 2007) | 1k | 2.57 ms | **2.57 µs** | 10 | 11 currents: Na_t, Na_p, K_dr, K_A, K_M, Ca_T, Ca_N, BK, SK, Ih, leak |
+| Golgi cell (Solinas 2007) | 1k | 2.96 ms | **2.96 µs** | 10 | exact gates + 11 currents: Na_t, Na_p, K_dr, K_A, K_M, Ca_T, Ca_N, BK, SK, Ih, leak |
+
+> Golgi cell remeasured 2026-05-31 after exact gate, calcium, conductance integration, full polyglot parity, and fail-closed state guards.
 | Stellate cell | 1k | 5.15 ms | **5.15 µs** | 50 | WB + Kv3.1 |
 | Lugaro cell | 10k | 196 µs | **19.6 ns** | 1 | LIF + adaptation + 5-HT |
 | Unipolar brush cell | 10k | 211.47 µs | **21.15 ns** | 1 | LIF + persistent NMDA-like, exact relaxation |
