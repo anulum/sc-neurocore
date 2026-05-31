@@ -41,36 +41,60 @@ impl GammaMotorNeuron {
     }
 
     pub fn static_type(&self) -> f64 {
-        // return cls(tau=12.0, tau_adapt=200.0, a_adapt=0.5, dynamic=false)
         0.0
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // inp = self.gain * max(0.0, drive) - self.adapt
-        // self.v += (-(self.v - self.v_rest) + inp) / self.tau * self.dt
-        // self.adapt += (
-        // (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt
-        // )
-        // if self.v >= self.v_threshold:
-        // self.v = self.v_reset
-        // return 1
-        // return 0
-        0 // spike indicator
+        if !validate_gamma_motor_neuron(self) || !i_ext.is_finite() {
+            return 0;
+        }
+        let v_old = self.v;
+        let adapt_old = self.adapt;
+        let input = self.gain * i_ext.max(0.0) - adapt_old;
+        let v_target = self.v_rest + input;
+        let v_candidate = v_target + (v_old - v_target) * (-self.dt / self.tau).exp();
+        let adapt_target = self.a_adapt * (v_candidate - self.v_rest);
+        let adapt_candidate =
+            adapt_target + (adapt_old - adapt_target) * (-self.dt / self.tau_adapt).exp();
+        if !v_candidate.is_finite() || !adapt_candidate.is_finite() {
+            return 0;
+        }
+        self.v = v_candidate;
+        self.adapt = adapt_candidate;
+        if self.v >= self.v_threshold {
+            self.v = self.v_reset;
+            return 1;
+        }
+        0
     }
 
     pub fn reset(&mut self) {
-        // self.v = self.v_rest
-        // self.adapt = 0.0
-        self.v = -65.0_f64;
-        self.v_rest = -65.0_f64;
-        self.v_reset = -70.0_f64;
-        self.v_threshold = -50.0_f64;
-        self.tau = 8.0_f64;
+        self.v = self.v_rest;
+        self.adapt = 0.0_f64;
     }
 }
 
 pub fn validate_gamma_motor_neuron(state: &GammaMotorNeuron) -> bool {
-    state.v.is_finite()
+    [
+        state.v,
+        state.v_rest,
+        state.v_reset,
+        state.v_threshold,
+        state.tau,
+        state.adapt,
+        state.tau_adapt,
+        state.a_adapt,
+        state.gain,
+        state.dynamic,
+        state.dt,
+    ]
+    .iter()
+    .all(|value| value.is_finite())
+        && state.tau > 0.0
+        && state.tau_adapt > 0.0
+        && state.dt > 0.0
+        && state.gain >= 0.0
+        && state.v_reset < state.v_threshold
 }
 
 #[cfg(test)]
@@ -87,7 +111,18 @@ mod tests {
     #[test]
     fn test_gamma_motor_neuron_step() {
         let mut state = GammaMotorNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(20.0);
         assert!(spike == 0 || spike == 1);
+        assert!(state.v.is_finite());
+        assert!(state.adapt.is_finite());
+    }
+
+    #[test]
+    fn test_gamma_motor_neuron_invalid_drive_preserves_state() {
+        let mut state = GammaMotorNeuron::new();
+        let before = state.clone();
+        assert_eq!(state.step(f64::NAN), 0);
+        assert_eq!(state.v, before.v);
+        assert_eq!(state.adapt, before.adapt);
     }
 }

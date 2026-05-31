@@ -8,7 +8,7 @@
 
 module GammaMotorNeuronAccel
 
-export step!, simulate, GammaMotorNeuronState
+export step!, simulate, GammaMotorNeuronState, static_type!
 
 mutable struct GammaMotorNeuronState
     v::Float64
@@ -28,31 +28,58 @@ function GammaMotorNeuronState()
     GammaMotorNeuronState(-65.0, -65.0, -70.0, -50.0, 8.0, 0.0, 100.0, 0.3, 1.0, 1.0, 0.5)
 end
 
-function static_type(s::GammaMotorNeuronState)
-    return cls(tau=12.0, tau_adapt=200.0, a_adapt=0.5, dynamic=false)
+function static_type!(s::GammaMotorNeuronState)
+    s.tau = 12.0
+    s.tau_adapt = 200.0
+    s.a_adapt = 0.5
+    s.dynamic = 0.0
+    validate!(s)
+    return s
 end
 
-function step!(s::GammaMotorNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        inp = s.gain * max(0.0, drive) - s.adapt
-        s.v += (-(s.v - s.v_rest) + inp) / s.tau * s.dt
-        s.adapt += (s.a_adapt * (s.v - s.v_rest) - s.adapt) / s.tau_adapt * s.dt
-        if s.v >= s.v_threshold
-            s.v = s.v_reset
-            return 1
-        end
-        return 0
-    catch _e
-        return 0
+function validate!(s::GammaMotorNeuronState)
+    values = (s.v, s.v_rest, s.v_reset, s.v_threshold, s.tau, s.adapt,
+        s.tau_adapt, s.a_adapt, s.gain, s.dynamic, s.dt)
+    all(isfinite, values) || throw(ArgumentError("gamma motor state and parameters must be finite"))
+    s.tau > 0.0 || throw(ArgumentError("tau must be positive"))
+    s.tau_adapt > 0.0 || throw(ArgumentError("tau_adapt must be positive"))
+    s.dt > 0.0 || throw(ArgumentError("dt must be positive"))
+    s.gain >= 0.0 || throw(ArgumentError("gain must be non-negative"))
+    s.v_reset < s.v_threshold || throw(ArgumentError("v_reset must be below v_threshold"))
+    return nothing
+end
+
+function step!(s::GammaMotorNeuronState, drive::Float64=0.0)
+    validate!(s)
+    isfinite(drive) || throw(ArgumentError("drive must be finite"))
+    v_old = s.v
+    adapt_old = s.adapt
+    inp = s.gain * max(0.0, drive) - adapt_old
+    v_target = s.v_rest + inp
+    v_candidate = v_target + (v_old - v_target) * exp(-s.dt / s.tau)
+    adapt_target = s.a_adapt * (v_candidate - s.v_rest)
+    adapt_candidate = adapt_target + (adapt_old - adapt_target) * exp(-s.dt / s.tau_adapt)
+    if !isfinite(v_candidate) || !isfinite(adapt_candidate)
+        throw(ArgumentError("gamma motor candidate state must be finite"))
     end
+    s.v = v_candidate
+    s.adapt = adapt_candidate
+    if s.v >= s.v_threshold
+        s.v = s.v_reset
+        return 1
+    end
+    return 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
+    n_steps >= 0 || throw(ArgumentError("n_steps must be non-negative"))
     s = GammaMotorNeuronState()
+    s.dt = dt
+    validate!(s)
     trace = zeros(n_steps)
     spikes = 0
     for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
+        result = step!(s, I_ext)
         trace[t] = s.v
         if result isa Number && result > 0
             spikes += 1

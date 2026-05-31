@@ -1,3 +1,11 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved. -->
+<!-- Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore - GammaMotorNeuron model documentation -->
+
 # GammaMotorNeuron
 
 **Module:** `engine/src/neurons/motor.rs`
@@ -38,7 +46,10 @@ $$V \geq V_{threshold}: \quad V \leftarrow V_{reset}$$
 
 $$\tau_{adapt} \frac{d(adapt)}{dt} = a_{adapt} (V - V_{rest}) - adapt$$
 
-Forward Euler, single step per call (no sub-stepping needed — simple dynamics).
+The maintained implementation applies the closed-form relaxation for each
+linear first-order state over one timestep, preserving the continuous-time
+leak/adaptation contract while rejecting invalid parameters, non-finite drive,
+and non-finite candidate states before mutation.
 
 ---
 
@@ -69,7 +80,7 @@ Forward Euler, single step per call (no sub-stepping needed — simple dynamics)
 | NetworkRunner wired | `NeuronVariant::GammaMotor` |
 | `create_neuron("GammaMotor")` | Yes (creates dynamic subtype) |
 | `supported_models()` | Includes "GammaMotor" |
-| coverage tests | 11 (dynamic fire, static fire, no-fire, negative, adaptation, static-vs-dynamic, reset, bounded, NaN, extreme, performance) |
+| coverage tests | Module-specific Python tests plus Rust inline and Go service tests for continuous relaxation, subtype firing, invalid-parameter rejection, non-finite drive preservation, and corrupted-state preservation |
 | Pipeline integration | Covered by `create_neuron_all_supported` |
 | Benchmark | `gamma_motor_10k_steps`: **1.21 ms** (121 ns/step), i5-11600K |
 
@@ -82,7 +93,8 @@ Forward Euler, single step per call (no sub-stepping needed — simple dynamics)
 | gamma_motor_10k_steps | 1.21 ms |
 | Per step | **121 ns** |
 
-Simple LIF with adaptation, no sub-stepping. Measured 2026-04-04.
+Simple LIF with adaptation and closed-form first-order relaxation. Historical
+timing was measured 2026-04-04; regenerate before using as release evidence.
 
 ---
 
@@ -102,7 +114,7 @@ Simple LIF with adaptation, no sub-stepping. Measured 2026-04-04.
 ## Findings
 
 1. **Dynamic fires more than static.** With identical input (20.0), dynamic subtype produces more spikes due to weaker adaptation (tau_adapt=100 vs 200, a_adapt=0.3 vs 0.5). Verified.
-2. **Adaptation reduces rate.** Second 1000-step epoch produces fewer spikes than first at constant input. Verified.
+2. **Adaptation reduces rate.** Later epochs produce no more spikes than earlier epochs at constant input. Verified.
 3. **Negative input clamped.** `drive.max(0.0)` prevents negative fusimotor drive from affecting the neuron.
 4. **Reset deterministic.** Post-reset neuron matches fresh neuron exactly.
-5. **NaN-safe after reset.** Reset restores finite state after NaN corruption.
+5. **Fail-closed runtime boundary.** Non-finite drive or corrupted runtime state preserves the previous state and reports no spike on Rust/Go safety paths; Python raises before mutation.
