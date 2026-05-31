@@ -202,14 +202,20 @@ def _validate_kuramoto_route_inputs(
         raise ValueError("initial_phases must contain only finite values")
     if not np.all(np.isfinite(omega_arr)):
         raise ValueError("omegas must contain only finite values")
-    if not math.isfinite(horizon) or horizon <= 0.0:
+    if isinstance(horizon, bool) or not isinstance(horizon, int | float):
         raise ValueError("horizon must be finite and positive")
-    if not math.isfinite(coupling) or coupling < 0.0:
+    if not math.isfinite(float(horizon)) or float(horizon) <= 0.0:
+        raise ValueError("horizon must be finite and positive")
+    if isinstance(coupling, bool) or not isinstance(coupling, int | float):
         raise ValueError("coupling must be finite and non-negative")
-    if not math.isfinite(dt) or dt <= 0.0:
+    if not math.isfinite(float(coupling)) or float(coupling) < 0.0:
+        raise ValueError("coupling must be finite and non-negative")
+    if isinstance(dt, bool) or not isinstance(dt, int | float):
+        raise ValueError("dt must be finite and positive")
+    if not math.isfinite(float(dt)) or float(dt) <= 0.0:
         raise ValueError("dt must be finite and positive")
 
-    steps = max(1, int(round(horizon / dt)))
+    steps = max(1, int(round(float(horizon) / float(dt))))
     return phases.copy(), omega_arr.copy(), float(horizon), float(coupling), float(dt), steps
 
 
