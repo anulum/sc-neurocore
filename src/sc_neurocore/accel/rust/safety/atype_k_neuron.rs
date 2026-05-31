@@ -6,7 +6,10 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for atype_k_neuron
 
-#![allow(unused_variables, dead_code, non_snake_case)]
+#![allow(dead_code, non_snake_case)]
+
+const EXP_MAX: f64 = 709.0;
+const EXP_MIN: f64 = -745.0;
 
 #[derive(Debug, Clone)]
 pub struct ATypeKNeuron {
@@ -27,68 +30,159 @@ pub struct ATypeKNeuron {
     pub dt: f64,
     pub v_threshold: f64,
     pub gain: f64,
-    pub _sub_steps: f64,
+    pub sub_steps: usize,
+}
+
+fn probability(x: f64) -> bool {
+    x.is_finite() && (0.0..=1.0).contains(&x)
+}
+
+fn checked_exp(x: f64) -> Result<f64, &'static str> {
+    if !x.is_finite() || x > EXP_MAX {
+        Err("unstable exponential argument")
+    } else if x < EXP_MIN {
+        Ok(0.0)
+    } else {
+        Ok(x.exp())
+    }
+}
+
+fn safe_rate(a: f64, vhalf: f64, v: f64, k: f64, fallback: f64) -> Result<f64, &'static str> {
+    let d = v + vhalf;
+    if d.abs() < 1e-7 {
+        return Ok(fallback);
+    }
+    let rate = a * d / (1.0 - checked_exp(-d / k)?);
+    if rate.is_finite() {
+        Ok(rate)
+    } else {
+        Err("non-finite rate candidate")
+    }
 }
 
 impl ATypeKNeuron {
     pub fn new() -> Self {
         Self {
-            v: -65.0_f64,
-            h: 0.6_f64,
-            n: 0.32_f64,
-            a: 0.1_f64,
-            b: 0.8_f64,
-            g_na: 35.0_f64,
-            g_k: 9.0_f64,
-            g_a: 8.0_f64,
-            g_l: 0.1_f64,
-            e_na: 55.0_f64,
-            e_k: -90.0_f64,
-            e_l: -65.0_f64,
-            c_m: 1.0_f64,
-            phi: 5.0_f64,
-            dt: 0.5_f64,
-            v_threshold: -20.0_f64,
-            gain: 1.0_f64,
-            _sub_steps: 0.0_f64,
+            v: -65.0,
+            h: 0.6,
+            n: 0.32,
+            a: 0.1,
+            b: 0.8,
+            g_na: 35.0,
+            g_k: 9.0,
+            g_a: 8.0,
+            g_l: 0.1,
+            e_na: 55.0,
+            e_k: -90.0,
+            e_l: -65.0,
+            c_m: 1.0,
+            phi: 5.0,
+            dt: 0.5,
+            v_threshold: -20.0,
+            gain: 1.0,
+            sub_steps: 50,
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // inp = self.gain * current
-        // sub_dt = self.dt / self._sub_steps
-        // fired = 0
-        // for _ in range(self._sub_steps):
-        // v = self.v
-        // alpha_m = _safe_rate(0.1, 35.0, v, 10.0, 1.0)
-        // beta_m = 4.0 * math.exp(-(v + 60.0) / 18.0)
-        // m_inf = alpha_m / (alpha_m + beta_m)
-        // alpha_h = 0.07 * math.exp(-(v + 58.0) / 20.0)
-        // beta_h = 1.0 / (1.0 + math.exp(-(v + 28.0) / 10.0))
-        // alpha_n = _safe_rate(0.01, 34.0, v, 10.0, 0.1)
-        // beta_n = 0.125 * math.exp(-(v + 44.0) / 80.0)
-        // a_inf = 1.0 / (1.0 + math.exp(-(v + 50.0) / 20.0))
-        // b_inf = 1.0 / (1.0 + math.exp((v + 70.0) / 6.0))
-        // self.h += sub_dt * self.phi * (alpha_h * (1.0 - self.h) - beta_h * sel
-        0 // spike indicator
+    pub fn validate(&self) -> bool {
+        [
+            self.v,
+            self.e_na,
+            self.e_k,
+            self.e_l,
+            self.v_threshold,
+            self.gain,
+        ]
+        .iter()
+        .all(|x| x.is_finite())
+            && [self.h, self.n, self.a, self.b]
+                .iter()
+                .all(|x| probability(*x))
+            && [self.g_na, self.g_k, self.g_a, self.g_l]
+                .iter()
+                .all(|x| x.is_finite() && *x >= 0.0)
+            && [self.c_m, self.phi, self.dt]
+                .iter()
+                .all(|x| x.is_finite() && *x > 0.0)
+            && self.sub_steps > 0
+    }
+
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
+        if !self.validate() || !i_ext.is_finite() {
+            return Err("invalid A-type K neuron state or input");
+        }
+        let inp = self.gain * i_ext;
+        if !inp.is_finite() {
+            return Err("invalid A-type K input drive");
+        }
+        let sub_dt = self.dt / self.sub_steps as f64;
+        if !sub_dt.is_finite() || sub_dt <= 0.0 {
+            return Err("invalid A-type K substep");
+        }
+        let mut v = self.v;
+        let mut h = self.h;
+        let mut n = self.n;
+        let mut a_gate = self.a;
+        let mut b_gate = self.b;
+        let mut fired = 0;
+        for _ in 0..self.sub_steps {
+            let alpha_m = safe_rate(0.1, 35.0, v, 10.0, 1.0)?;
+            let beta_m = 4.0 * checked_exp(-(v + 60.0) / 18.0)?;
+            let m_inf = alpha_m / (alpha_m + beta_m);
+            let alpha_h = 0.07 * checked_exp(-(v + 58.0) / 20.0)?;
+            let beta_h = 1.0 / (1.0 + checked_exp(-(v + 28.0) / 10.0)?);
+            let alpha_n = safe_rate(0.01, 34.0, v, 10.0, 0.1)?;
+            let beta_n = 0.125 * checked_exp(-(v + 44.0) / 80.0)?;
+            let a_inf = 1.0 / (1.0 + checked_exp(-(v + 50.0) / 20.0)?);
+            let b_inf = 1.0 / (1.0 + checked_exp((v + 70.0) / 6.0)?);
+            let h_next = h + sub_dt * self.phi * (alpha_h * (1.0 - h) - beta_h * h);
+            let n_next = n + sub_dt * self.phi * (alpha_n * (1.0 - n) - beta_n * n);
+            let a_next = a_gate + sub_dt * (a_inf - a_gate) / 2.0;
+            let b_next = b_gate + sub_dt * (b_inf - b_gate) / 50.0;
+            let i_na = self.g_na * m_inf.powi(3) * h_next * (v - self.e_na);
+            let i_k = self.g_k * n_next.powi(4) * (v - self.e_k);
+            let i_a = self.g_a * a_next.powi(3) * b_next * (v - self.e_k);
+            let i_l = self.g_l * (v - self.e_l);
+            let dv = (-i_na - i_k - i_a - i_l + inp) / self.c_m;
+            let mut v_next = v + sub_dt * dv;
+            if v_next >= self.v_threshold {
+                fired = 1;
+                v_next = -65.0;
+            }
+            if !(v_next.is_finite()
+                && (-100.0..=60.0).contains(&v_next)
+                && probability(h_next)
+                && probability(n_next)
+                && probability(a_next)
+                && probability(b_next))
+            {
+                return Err("invalid A-type K candidate state");
+            }
+            v = v_next;
+            h = h_next;
+            n = n_next;
+            a_gate = a_next;
+            b_gate = b_next;
+        }
+        self.v = v;
+        self.h = h;
+        self.n = n;
+        self.a = a_gate;
+        self.b = b_gate;
+        Ok(fired)
     }
 
     pub fn reset(&mut self) {
-        // self.v = -65.0
-        // self.h = 0.6
-        // self.n = 0.32
-        // self.a = 0.1
-        // self.b = 0.8
-        self.v = -65.0_f64;
-        self.h = 0.6_f64;
-        self.n = 0.32_f64;
-        self.a = 0.1_f64;
-        self.b = 0.8_f64;
+        self.v = -65.0;
+        self.h = 0.6;
+        self.n = 0.32;
+        self.a = 0.1;
+        self.b = 0.8;
     }
 }
 
 pub fn validate_atype_k_neuron(state: &ATypeKNeuron) -> bool {
-    state.v.is_finite()
+    state.validate()
 }
 
 #[cfg(test)]
@@ -98,14 +192,25 @@ mod tests {
     #[test]
     fn test_atype_k_neuron_new() {
         let state = ATypeKNeuron::new();
-        assert!(state.v.is_finite());
         assert!(validate_atype_k_neuron(&state));
     }
 
     #[test]
     fn test_atype_k_neuron_step() {
         let mut state = ATypeKNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).unwrap();
         assert!(spike == 0 || spike == 1);
+        assert!(state.v.is_finite());
+        assert!(probability(state.a));
+        assert!(probability(state.b));
+    }
+
+    #[test]
+    fn test_atype_k_neuron_rejects_invalid_runtime_state() {
+        let mut state = ATypeKNeuron::new();
+        state.a = 1.5;
+        let before = state.v;
+        assert!(state.step(1.0).is_err());
+        assert_eq!(state.v, before);
     }
 }
