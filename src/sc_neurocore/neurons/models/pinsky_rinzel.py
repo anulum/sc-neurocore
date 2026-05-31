@@ -105,7 +105,9 @@ class PinskyRinzelNeuron:
         return exp_pos / (1.0 + exp_pos)
 
     @staticmethod
-    def _validate_candidate(values: tuple[float, float, float, float, float, float, float]) -> tuple[float, ...]:
+    def _validate_candidate(
+        values: tuple[float, float, float, float, float, float, float],
+    ) -> tuple[float, ...]:
         if not all(math.isfinite(value) for value in values):
             raise FloatingPointError("Pinsky-Rinzel candidate state became non-finite")
         v_s, v_d, h, n, s, c, q = values
@@ -162,7 +164,9 @@ class PinskyRinzelNeuron:
         i_sd = (self.gc / (1 - self.p)) * (self.v_d - self.v_s)
 
         next_v_s = self.v_s + (-i_na - i_kdr - i_ls - i_ds + current_soma / self.p) * self.dt
-        next_v_d = self.v_d + (-i_ca - i_kahp - i_kc - i_ld - i_sd + current_dend / (1 - self.p)) * self.dt
+        next_v_d = (
+            self.v_d + (-i_ca - i_kahp - i_kc - i_ld - i_sd + current_dend / (1 - self.p)) * self.dt
+        )
         next_h = self.h + (ah * (1 - self.h) - bh * self.h) * self.dt
         next_n = self.n + (an * (1 - self.n) - bn * self.n) * self.dt
         next_s = self.s + ((s_inf - self.s) / 5.0) * self.dt
