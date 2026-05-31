@@ -23,6 +23,7 @@ FULL PIPELINE WIRED + PERFORMANCE."""
 from __future__ import annotations
 
 import math
+import os
 import time
 
 import numpy as np
@@ -364,8 +365,12 @@ class TestMLPerformance:
             n.step(100.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        # 2 tanh + 1 cosh + 3 currents + 2 state updates
-        assert rate > 50_000, f"isolation: {rate:.0f} steps/s"
+        # 2 tanh + 1 cosh + 3 currents + 2 state updates.
+        # Hosted runners share CPUs and can transiently drop below the
+        # workstation floor; keep the local contract strict and use a
+        # CI floor that still catches order-of-magnitude regressions.
+        min_rate = 35_000 if os.getenv("CI") else 50_000
+        assert rate > min_rate, f"isolation: {rate:.0f} steps/s"
 
     def test_network_throughput(self):
         pop = Population(MorrisLecarNeuron, n=20, label="bench")
