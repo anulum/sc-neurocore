@@ -2052,3 +2052,212 @@ class TestFormalGapDetector:
         values.update(kwargs)
         with pytest.raises(ValueError, match=match):
             PropertyGap(**values)
+
+
+class TestSafetyCertificationBoundaryContracts:
+    def test_traceability_unknown_verification_link_is_rejected_without_mutation(self):
+        tm = TraceabilityMatrix()
+        assert tm.link_verification("REQ_MISSING", "formal/proof.sby") is False
+        assert tm.requirements == {}
+
+    def test_traceability_rejects_corrupted_verification_reference_state(self):
+        tm = TraceabilityMatrix()
+        req = Requirement("REQ_001", "Test", SafetyStandard.IEC_61508)
+        tm.add_requirement(req)
+        req.verification_refs.append("")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="verification_refs"):
+            tm.link_implementation("REQ_001", "hdl/test.v")
+
+    def test_traceability_empty_matrix_reports_zero_fraction(self):
+        assert TraceabilityMatrix().coverage == 0.0
+
+    def test_fmeda_rejects_nonfinite_aggregate_total(self):
+        fmeda = FMEDA()
+        fmeda.add_failure_mode(FailureMode("F1", "core", "desc", FailureCategory.SAFE, 1e308, 1.0))
+        fmeda.add_failure_mode(FailureMode("F2", "core", "desc", FailureCategory.SAFE, 1e308, 1.0))
+        with pytest.raises(ValueError, match="total_failure_rate"):
+            _ = fmeda.total_failure_rate
+
+    def test_fmeda_empty_and_zero_rate_paths_are_bounded(self):
+        empty = FMEDA()
+        assert empty.safe_failure_fraction == 0.0
+
+        zero = FMEDA()
+        zero.add_failure_mode(FailureMode("F1", "core", "desc", FailureCategory.SAFE, 0.0, 1.0))
+        assert zero.safe_failure_fraction == 0.0
+
+        detected_zero = FMEDA()
+        detected_zero.add_failure_mode(
+            FailureMode("F2", "core", "desc", FailureCategory.DANGEROUS_DETECTED, 0.0, 0.9)
+        )
+        with pytest.raises(ValueError, match="denominator"):
+            _ = detected_zero.diagnostic_coverage
+
+    def test_fmeda_component_sff_rejects_nonfinite_component_total(self):
+        fmeda = FMEDA()
+        fmeda.add_failure_mode(FailureMode("F1", "core", "desc", FailureCategory.SAFE, 1e308, 1.0))
+        fmeda.add_failure_mode(FailureMode("F2", "core", "desc", FailureCategory.SAFE, 1e308, 1.0))
+        with pytest.raises(ValueError, match="component failure-rate totals"):
+            fmeda.sff_by_component()
+
+    def test_fmeda_sil_threshold_boundaries(self, monkeypatch):
+        sil4 = FMEDA()
+        sil4.add_failure_mode(
+            FailureMode("F1", "core", "desc", FailureCategory.DANGEROUS_DETECTED, 1.0, 0.99)
+        )
+        assert sil4.max_achievable_sil() == SILLevel.SIL_4
+
+        sil3 = FMEDA()
+        sil3.add_failure_mode(
+            FailureMode("F2", "core", "desc", FailureCategory.DANGEROUS_DETECTED, 1.0, 0.99)
+        )
+        sil3.add_failure_mode(
+            FailureMode("F3", "core", "desc", FailureCategory.DANGEROUS_UNDETECTED, 0.0102, 0.0)
+        )
+        assert sil3.max_achievable_sil() == SILLevel.SIL_3
+
+        sil1 = FMEDA()
+        sil1.add_failure_mode(
+            FailureMode("F4", "core", "desc", FailureCategory.DANGEROUS_UNDETECTED, 1.0, 0.0)
+        )
+        assert sil1.max_achievable_sil() == SILLevel.SIL_1
+
+        monkeypatch.setattr(FMEDA, "safe_failure_fraction", property(lambda self: float("nan")))
+        with pytest.raises(ValueError, match="safe_failure_fraction"):
+            sil4.max_achievable_sil()
+
+    def test_formal_certificate_add_property_and_report_validation(self):
+        cert = FormalProofCertificate()
+        prop = FormalProperty("P1", "neuron", "desc", "assert", "proven")
+        cert.add_property(prop)
+        assert cert.total_count == 1
+
+        prop.property_type = "invalid"  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="property_type"):
+            cert.generate_report()
+
+    def test_empty_checklist_package_reports_zero_fraction(self):
+        pkg = CertificationPackage(
+            standard=SafetyStandard.IEC_61508,
+            sil_level=SILLevel.SIL_2,
+            traceability_report="trace",
+            fmeda_report="fmeda",
+            formal_cert_report="formal",
+            wcet_report="wcet",
+            checklist=[],
+        )
+        assert pkg.checklist_coverage == 0.0
+
+    def test_package_revalidates_clause_after_status_contract(self):
+        class FlakyClause(str):
+            calls = 0
+
+            def strip(self, chars=None):  # noqa: ANN001
+                self.calls += 1
+                return "7.4.2" if self.calls == 1 else ""
+
+        item = ChecklistItem("IEC 61508_7.4.2", "7.4.2", "desc", "formal/", "partial")
+        item.clause = FlakyClause("7.4.2")  # type: ignore[assignment]
+
+        with pytest.raises(ValueError, match="checklist clauses"):
+            CertificationPackage(
+                standard=SafetyStandard.IEC_61508,
+                sil_level=SILLevel.SIL_2,
+                traceability_report="trace",
+                fmeda_report="fmeda",
+                formal_cert_report="formal",
+                wcet_report="wcet",
+                checklist=[item],
+            )
+
+    def test_certification_generator_rejects_formal_property_id_whitespace(self):
+        prop = FormalProperty(" P1", "neuron", "desc", "assert", "proven")
+        with pytest.raises(ValueError, match="prop_id"):
+            CertificationGenerator().generate(
+                SafetyStandard.IEC_61508,
+                SILLevel.SIL_2,
+                ["neuron"],
+                [prop],
+            )
+
+    def test_certification_generator_rejects_boolean_clock_configuration(self):
+        prop = FormalProperty("P1", "neuron", "desc", "assert", "proven")
+        with pytest.raises(ValueError, match="clock_mhz"):
+            CertificationGenerator().generate(
+                SafetyStandard.IEC_61508,
+                SILLevel.SIL_2,
+                ["neuron"],
+                [prop],
+                network_config={"clock_mhz": True},
+            )
+
+    def test_common_cause_default_defence_contracts(self, monkeypatch):
+        original = CCFAnalysis.DEFAULT_DEFENCES
+        monkeypatch.setattr(CCFAnalysis, "DEFAULT_DEFENCES", ["bad"])
+        with pytest.raises(ValueError, match="DEFAULT_DEFENCES"):
+            CCFAnalysis()
+        monkeypatch.setattr(CCFAnalysis, "DEFAULT_DEFENCES", original)
+
+        ccf = CCFAnalysis()
+        ccf.defences[0].beta_reduction = float("nan")  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="beta_reduction"):
+            _ = ccf.beta_factor
+
+    def test_proof_test_assessment_boundaries(self):
+        assert (
+            ProofTestCoverage.coverage_from_proofs(
+                [FormalProperty("P1", "m", "desc", "cover", "proven")]
+            )
+            == 0.0
+        )
+        assert ProofTestCoverage.dc_to_sil(0.90) == SILLevel.SIL_2
+        assert ProofTestCoverage.dc_to_sil(0.60) == SILLevel.SIL_1
+
+    @pytest.mark.parametrize(
+        ("sff", "target", "expected"),
+        [
+            (0.99, SILLevel.SIL_4, HFTLevel.HFT_1),
+            (0.90, SILLevel.SIL_2, HFTLevel.HFT_0),
+            (0.90, SILLevel.SIL_3, HFTLevel.HFT_1),
+            (0.90, SILLevel.SIL_4, HFTLevel.HFT_2),
+            (0.60, SILLevel.SIL_1, HFTLevel.HFT_0),
+            (0.60, SILLevel.SIL_2, HFTLevel.HFT_1),
+            (0.60, SILLevel.SIL_3, HFTLevel.HFT_2),
+            (0.59, SILLevel.SIL_1, HFTLevel.HFT_1),
+        ],
+    )
+    def test_hft_threshold_boundaries(self, sff, target, expected):
+        assert HFTAssessment(sff=sff, target_sil=target).required_hft == expected
+
+    @pytest.mark.parametrize(
+        ("dangerous_undetected_fit", "expected"),
+        [
+            (10.0, SILLevel.SIL_4),
+            (100.0, SILLevel.SIL_3),
+            (1000.0, SILLevel.SIL_2),
+            (2000.0, SILLevel.SIL_1),
+        ],
+    )
+    def test_reliability_pfh_sil_thresholds(self, dangerous_undetected_fit, expected):
+        metrics = ReliabilityMetrics(
+            total_fit=dangerous_undetected_fit,
+            dangerous_undetected_fit=dangerous_undetected_fit,
+        )
+        assert metrics.pfh_sil == expected
+
+    def test_cross_standard_overlap_rejects_empty_clauses_on_each_side(self):
+        left = ChecklistItem("IEC 61508_7.4.2", "7.4.2", "desc", "formal/", "partial")
+        right = ChecklistItem("ISO 26262_6.7.4", "6.7.4", "desc", "formal/", "partial")
+
+        left.clause = ""  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="checklist_a clauses"):
+            CrossStandardMapper.coverage_overlap([left], [right])
+
+        left.clause = "7.4.2"  # type: ignore[assignment]
+        right.status = "invalid"  # type: ignore[assignment]
+        with pytest.raises(ValueError, match="checklist_b statuses"):
+            CrossStandardMapper.coverage_overlap([left], [right])
+
+    def test_property_gap_rejects_boolean_proven_count(self):
+        with pytest.raises(ValueError, match="proven_properties"):
+            PropertyGap("module", 2, True, ["assert"])
