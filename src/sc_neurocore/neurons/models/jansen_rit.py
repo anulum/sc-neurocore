@@ -62,8 +62,12 @@ class JansenRitUnit:
         return out
 
     def _validate_state(self, values: tuple[float, ...] | None = None) -> tuple[float, ...]:
-        state = values if values is not None else tuple(getattr(self, name) for name in _STATE_NAMES)
-        checked = tuple(self._require_finite(name, value) for name, value in zip(_STATE_NAMES, state))
+        state = (
+            values if values is not None else tuple(getattr(self, name) for name in _STATE_NAMES)
+        )
+        checked = tuple(
+            self._require_finite(name, value) for name, value in zip(_STATE_NAMES, state)
+        )
         if len(checked) != len(_STATE_NAMES):
             raise ValueError("Jansen-Rit state vector has invalid dimension")
         return checked
@@ -105,9 +109,7 @@ class JansenRitUnit:
             y2 + dy2 * self.dt,
             y5 + dy5 * self.dt,
         )
-        self.y0, self.y3, self.y1, self.y4, self.y2, self.y5 = self._validate_state(
-            candidate
-        )
+        self.y0, self.y3, self.y1, self.y4, self.y2, self.y5 = self._validate_state(candidate)
         return self.y1 - self.y2
 
     def reset(self) -> None:

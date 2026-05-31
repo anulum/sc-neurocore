@@ -93,7 +93,9 @@ class MorrisLecarNeuron:
         if not all(math.isfinite(getattr(self, name)) for name in (*_STATE_NAMES, *_PARAM_NAMES)):
             raise ValueError("Morris-Lecar state and parameters must be finite")
         if any(getattr(self, name) <= 0.0 for name in _STRICTLY_POSITIVE_PARAMS):
-            raise ValueError("Morris-Lecar conductance, scale, timestep, and rate parameters must be positive")
+            raise ValueError(
+                "Morris-Lecar conductance, scale, timestep, and rate parameters must be positive"
+            )
         if not 0.0 <= self.w <= 1.0:
             raise ValueError("w must remain in [0, 1]")
 

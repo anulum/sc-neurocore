@@ -114,7 +114,9 @@ class BoothRinzelNeuron:
         return max(lower, min(upper, value))
 
     @staticmethod
-    def _validate_candidate(values: tuple[float, float, float, float, float, float]) -> tuple[float, ...]:
+    def _validate_candidate(
+        values: tuple[float, float, float, float, float, float],
+    ) -> tuple[float, ...]:
         if not all(math.isfinite(value) for value in values):
             raise FloatingPointError("Booth-Rinzel candidate state became non-finite")
         vs, vd, h, n, q, ca = values
@@ -127,19 +129,17 @@ class BoothRinzelNeuron:
             raise FloatingPointError("Booth-Rinzel voltage left safety envelope")
         return values
 
-    def _substep(self, vs: float, vd: float, h: float, n: float, q: float, ca: float, current: float) -> tuple[float, ...]:
+    def _substep(
+        self, vs: float, vd: float, h: float, n: float, q: float, ca: float, current: float
+    ) -> tuple[float, ...]:
         m_inf = 1.0 / (1.0 + self._safe_exp(-(vs + 35.0) / 7.8))
         h_inf = 1.0 / (1.0 + self._safe_exp((vs + 55.0) / 7.0))
         tau_h = 30.0 / (
-            self._safe_exp((vs + 50.0) / 15.0)
-            + self._safe_exp(-(vs + 50.0) / 16.0)
-            + 1e-12
+            self._safe_exp((vs + 50.0) / 15.0) + self._safe_exp(-(vs + 50.0) / 16.0) + 1e-12
         )
         n_inf = 1.0 / (1.0 + self._safe_exp(-(vs + 28.0) / 15.0))
         tau_n = 7.0 / (
-            self._safe_exp((vs + 40.0) / 40.0)
-            + self._safe_exp(-(vs + 40.0) / 50.0)
-            + 1e-12
+            self._safe_exp((vs + 40.0) / 40.0) + self._safe_exp(-(vs + 40.0) / 50.0) + 1e-12
         )
 
         next_h = self._clip(h + (h_inf - h) / tau_h * self.dt, 0.0, 1.0)
@@ -163,14 +163,16 @@ class BoothRinzelNeuron:
         dvd = (-i_ca - i_kca - i_ld - i_coup_d) / self.c_m * self.dt
         next_ca = max(0.0, ca + self.f_ca * (-self.alpha_ca * i_ca - self.k_ca * ca) * self.dt)
 
-        return self._validate_candidate((
-            self._clip(vs + dvs, -200.0, 100.0),
-            self._clip(vd + dvd, -200.0, 100.0),
-            next_h,
-            next_n,
-            next_q,
-            next_ca,
-        ))
+        return self._validate_candidate(
+            (
+                self._clip(vs + dvs, -200.0, 100.0),
+                self._clip(vd + dvd, -200.0, 100.0),
+                next_h,
+                next_n,
+                next_q,
+                next_ca,
+            )
+        )
 
     def step(self, current: float) -> int:
         current = float(current)

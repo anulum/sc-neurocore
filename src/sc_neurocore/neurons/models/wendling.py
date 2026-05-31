@@ -93,8 +93,12 @@ class WendlingNeuron:
         return out
 
     def _validate_state(self, values: tuple[float, ...] | None = None) -> tuple[float, ...]:
-        state = values if values is not None else tuple(getattr(self, name) for name in _STATE_NAMES)
-        checked = tuple(self._require_finite(name, value) for name, value in zip(_STATE_NAMES, state))
+        state = (
+            values if values is not None else tuple(getattr(self, name) for name in _STATE_NAMES)
+        )
+        checked = tuple(
+            self._require_finite(name, value) for name, value in zip(_STATE_NAMES, state)
+        )
         if len(checked) != len(_STATE_NAMES):
             raise ValueError("Wendling state vector has invalid dimension")
         return checked
@@ -117,11 +121,7 @@ class WendlingNeuron:
         sig_slow = self._sigmoid(self.c * 0.1 * y0)
 
         dy0 = y5
-        dy5 = (
-            self.a_exc * self.a_rate * sig_1_2_3_4
-            - 2 * self.a_rate * y5
-            - self.a_rate**2 * y0
-        )
+        dy5 = self.a_exc * self.a_rate * sig_1_2_3_4 - 2 * self.a_rate * y5 - self.a_rate**2 * y0
         dy1 = y6
         dy6 = (
             self.a_exc * self.a_rate * (p_ext + self.c * 0.8 * sig_0)
