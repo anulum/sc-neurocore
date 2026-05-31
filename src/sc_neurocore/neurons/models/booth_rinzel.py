@@ -116,7 +116,7 @@ class BoothRinzelNeuron:
     @staticmethod
     def _validate_candidate(
         values: tuple[float, float, float, float, float, float],
-    ) -> tuple[float, ...]:
+    ) -> tuple[float, float, float, float, float, float]:
         if not all(math.isfinite(value) for value in values):
             raise FloatingPointError("Booth-Rinzel candidate state became non-finite")
         vs, vd, h, n, q, ca = values
@@ -131,7 +131,7 @@ class BoothRinzelNeuron:
 
     def _substep(
         self, vs: float, vd: float, h: float, n: float, q: float, ca: float, current: float
-    ) -> tuple[float, ...]:
+    ) -> tuple[float, float, float, float, float, float]:
         m_inf = 1.0 / (1.0 + self._safe_exp(-(vs + 35.0) / 7.8))
         h_inf = 1.0 / (1.0 + self._safe_exp((vs + 55.0) / 7.0))
         tau_h = 30.0 / (
@@ -181,7 +181,14 @@ class BoothRinzelNeuron:
         self._validate_configuration()
 
         vs_prev = self.vs
-        candidate = (self.vs, self.vd, self.h, self.n, self.q, self.ca)
+        candidate: tuple[float, float, float, float, float, float] = (
+            self.vs,
+            self.vd,
+            self.h,
+            self.n,
+            self.q,
+            self.ca,
+        )
         for _ in range(4):
             candidate = self._substep(*candidate, current)
         self.vs, self.vd, self.h, self.n, self.q, self.ca = candidate
