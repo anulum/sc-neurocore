@@ -804,34 +804,64 @@ impl LugaroCell {
         n
     }
 
+    fn is_valid(&self) -> bool {
+        [
+            self.v,
+            self.adapt,
+            self.v_rest,
+            self.v_reset,
+            self.v_threshold,
+            self.tau_m,
+            self.tau_adapt,
+            self.a_adapt,
+            self.gain,
+            self.serotonin,
+            self.dt,
+        ]
+        .iter()
+        .all(|value| value.is_finite())
+            && self.tau_m > 0.0
+            && self.tau_adapt > 0.0
+            && self.dt > 0.0
+            && self.a_adapt >= 0.0
+            && self.gain >= 0.0
+            && (0.0..=1.0).contains(&self.serotonin)
+            && self.adapt >= 0.0
+            && self.v_threshold > self.v_reset
+            && self.v_threshold > self.v_rest
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
+        if !self.is_valid() || !current.is_finite() {
+            return 0;
+        }
+
         // 5-HT modulation: increases effective gain
         let effective_gain = self.gain * (1.0 + 0.5 * self.serotonin);
         let input = effective_gain * current;
 
-        // LIF dynamics with adaptation
-        let dv = (-(self.v - self.v_rest) - self.adapt + input) / self.tau_m;
-        self.v += self.dt * dv;
+        // LIF dynamics with closed-form first-order relaxation.
+        let v_inf = self.v_rest + input - self.adapt;
+        let v_next = v_inf + (self.v - v_inf) * (-self.dt / self.tau_m).exp();
 
-        // Adaptation dynamics
-        let da = (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt;
-        self.adapt += self.dt * da;
+        // Adaptation dynamics with non-negative hyperpolarising current.
+        let adapt_inf = (self.a_adapt * (v_next - self.v_rest).max(0.0)).max(0.0);
+        let adapt_next =
+            (adapt_inf + (self.adapt - adapt_inf) * (-self.dt / self.tau_adapt).exp()).max(0.0);
+        if !v_next.is_finite() || !adapt_next.is_finite() {
+            return 0;
+        }
 
         // Spike detection
-        if self.v >= self.v_threshold {
+        if v_next >= self.v_threshold {
             self.v = self.v_reset;
-            self.adapt += 1.0; // Spike-triggered adaptation increment
+            self.adapt = adapt_next + 1.0; // Spike-triggered adaptation increment
             return 1;
         }
 
         // Safety bounds
-        self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() {
-            self.v = self.v_reset;
-        }
-        if !self.adapt.is_finite() {
-            self.adapt = 0.0;
-        }
+        self.v = v_next.clamp(-100.0, 60.0);
+        self.adapt = adapt_next;
 
         0
     }
@@ -1881,8 +1911,21 @@ mod tests {
     #[test]
     fn lugaro_nan_input_stays_finite() {
         let mut n = LugaroCell::new();
+        let before = n.clone();
         n.step(f64::NAN);
         assert!(n.v.is_finite());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.adapt, before.adapt);
+    }
+
+    #[test]
+    fn lugaro_corrupted_state_preserved_on_step() {
+        let mut n = LugaroCell::new();
+        n.adapt = f64::NAN;
+        let before = n.clone();
+        assert_eq!(n.step(5.0), 0);
+        assert_eq!(n.v, before.v);
+        assert!(n.adapt.is_nan());
     }
 
     #[test]
