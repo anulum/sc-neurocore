@@ -12,6 +12,12 @@ import math
 from dataclasses import dataclass
 
 
+_STATE_NAMES = ("e", "i")
+_PARAM_NAMES = ("w_ee", "w_ei", "w_ie", "w_ii", "tau_e", "tau_i", "a", "theta", "dt")
+_NON_NEGATIVE_PARAMS = ("w_ee", "w_ei", "w_ie", "w_ii")
+_STRICTLY_POSITIVE_PARAMS = ("tau_e", "tau_i", "a", "dt")
+
+
 @dataclass
 class WilsonCowanUnit:
     """Wilson-Cowan 1972 — excitatory/inhibitory population rate model.
@@ -36,27 +42,19 @@ class WilsonCowanUnit:
     dt: float = 0.1
 
     def __post_init__(self) -> None:
-        for name in (
-            "e",
-            "i",
-            "w_ee",
-            "w_ei",
-            "w_ie",
-            "w_ii",
-            "tau_e",
-            "tau_i",
-            "a",
-            "theta",
-            "dt",
-        ):
+        self._validate_configuration(coerce=True)
+
+    def _validate_configuration(self, *, coerce: bool = False) -> None:
+        for name in (*_STATE_NAMES, *_PARAM_NAMES):
             value = float(getattr(self, name))
             if not math.isfinite(value):
                 raise ValueError(f"{name} must be finite")
-            setattr(self, name, value)
-        for name in ("w_ee", "w_ei", "w_ie", "w_ii"):
+            if coerce:
+                setattr(self, name, value)
+        for name in _NON_NEGATIVE_PARAMS:
             if getattr(self, name) < 0.0:
                 raise ValueError(f"{name} must be non-negative")
-        for name in ("tau_e", "tau_i", "a", "dt"):
+        for name in _STRICTLY_POSITIVE_PARAMS:
             if getattr(self, name) <= 0.0:
                 raise ValueError(f"{name} must be positive")
         self._validate_state(self.e, self.i)
@@ -98,6 +96,7 @@ class WilsonCowanUnit:
         if not math.isfinite(drive):
             raise ValueError("external input must be finite")
 
+        self._validate_configuration()
         e, i = self._validate_state(self.e, self.i)
         se = self._sigmoid(self.w_ee * e - self.w_ei * i + drive)
         si = self._sigmoid(self.w_ie * e - self.w_ii * i)

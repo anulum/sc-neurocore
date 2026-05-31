@@ -75,6 +75,12 @@ impl WilsonCowanUnit {
         self.w_ee = 10.0_f64;
         self.w_ei = 6.0_f64;
         self.w_ie = 10.0_f64;
+        self.w_ii = 1.0_f64;
+        self.tau_e = 1.0_f64;
+        self.tau_i = 2.0_f64;
+        self.a = 1.2_f64;
+        self.theta = 4.0_f64;
+        self.dt = 0.1_f64;
     }
 }
 
@@ -135,6 +141,9 @@ mod tests {
     fn test_wilson_cowan_rejects_invalid_runtime_state() {
         let mut state = WilsonCowanUnit::new();
         state.e = 1.5;
+        let before = state.clone();
         assert!(state.step(1.0).is_err());
+        assert_eq!(state.e, before.e);
+        assert_eq!(state.i, before.i);
     }
 }
