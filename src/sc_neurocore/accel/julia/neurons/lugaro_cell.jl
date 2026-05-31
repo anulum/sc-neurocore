@@ -44,6 +44,7 @@ function _validate(s::LugaroCellState)
         throw(ArgumentError("lugaro cell time constants and timestep must be positive"))
     s.a_adapt >= 0.0 || throw(ArgumentError("lugaro cell adaptation coupling must be non-negative"))
     s.gain >= 0.0 || throw(ArgumentError("lugaro cell gain must be non-negative"))
+    -100.0 <= s.v <= 60.0 || throw(ArgumentError("lugaro cell membrane potential must stay in [-100, 60] mV"))
     0.0 <= s.serotonin <= 1.0 || throw(ArgumentError("lugaro cell serotonin must stay in [0, 1]"))
     s.adapt >= 0.0 || throw(ArgumentError("lugaro cell adaptation current must be non-negative"))
     (s.v_threshold > s.v_reset && s.v_threshold > s.v_rest) ||

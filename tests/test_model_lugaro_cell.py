@@ -19,6 +19,10 @@ def _snapshot(cell: LugaroCell) -> tuple[float, float]:
     return cell.v, cell.adapt
 
 
+def _exact_relax(value: float, target: float, tau: float, dt: float) -> float:
+    return target + (value - target) * math.exp(-dt / tau)
+
+
 def test_default_step_preserves_bounds_and_adaptation() -> None:
     cell = LugaroCell()
 
@@ -55,6 +59,8 @@ def test_serotonin_reduces_current_needed_for_firing() -> None:
         {"serotonin": 1.1},
         {"dt": 0.0},
         {"v_threshold": -70.0},
+        {"v": -100.1},
+        {"v": 60.1},
         {"v": math.inf},
         {"adapt": math.nan},
     ],
@@ -72,6 +78,19 @@ def test_nonfinite_current_does_not_mutate_state() -> None:
         cell.step(math.nan)
 
     assert _snapshot(cell) == before
+
+
+def test_closed_form_membrane_and_adaptation_relaxation() -> None:
+    cell = LugaroCell(v=-56.0, adapt=0.2, gain=0.0)
+
+    v_inf = cell.v_rest - cell.adapt
+    expected_v = _exact_relax(cell.v, v_inf, cell.tau_m, cell.dt)
+    adapt_inf = max(0.0, cell.a_adapt * max(0.0, expected_v - cell.v_rest))
+    expected_adapt = max(0.0, _exact_relax(cell.adapt, adapt_inf, cell.tau_adapt, cell.dt))
+
+    assert cell.step(0.0) == 0
+    assert cell.v == pytest.approx(expected_v)
+    assert cell.adapt == pytest.approx(expected_adapt)
 
 
 def test_corrupted_runtime_state_does_not_mutate_state() -> None:

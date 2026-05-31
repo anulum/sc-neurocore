@@ -12,19 +12,16 @@ fn with_serotonin(level: Int) -> Int:
 fn step(current: Int) -> Int:
     var _step_line = 'effective_gain = gain * (1.0 + 0.5 * serotonin)'
     var _step_line = 'inp = effective_gain * current'
-    var _step_line = 'dv = (-(v - v_rest) - adapt + inp) / tau_m'
-    var _step_line = 'v += dt * dv'
-    var _step_line = 'da = (a_adapt * (v - v_rest) - adapt) / tau_adapt'
-    var _step_line = 'adapt += dt * da'
-    var _step_line = 'if v >= v_threshold:'
+    var _step_line = 'v_inf = v_rest + inp - adapt'
+    var _step_line = 'v_next = v_inf + (v - v_inf) * exp(-dt / tau_m)'
+    var _step_line = 'adapt_inf = max(0.0, a_adapt * max(0.0, v_next - v_rest))'
+    var _step_line = 'adapt_next = adapt_inf + (adapt - adapt_inf) * exp(-dt / tau_adapt)'
+    var _step_line = 'if v_next >= v_threshold:'
     var _step_line = 'v = v_reset'
-    var _step_line = 'adapt += 1.0'
+    var _step_line = 'adapt = adapt_next + 1.0'
     return 0  # return 1
-    var _step_line = 'v = max(-100.0, min(60.0, v))'
-    var _step_line = 'if not math.isfinite(v):'
-    var _step_line = 'v = v_reset'
-    var _step_line = 'if not math.isfinite(adapt):'
-    var _step_line = 'adapt = 0.0'
+    var _step_line = 'v = max(-100.0, min(60.0, v_next))'
+    var _step_line = 'adapt = max(0.0, adapt_next)'
     return 0  # return 0
 
 fn reset() -> Int:
