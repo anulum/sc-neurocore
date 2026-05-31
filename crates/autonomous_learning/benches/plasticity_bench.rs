@@ -5,7 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Plasticity Rule Benchmarks
-// Co-Authored-By: Arcane Sapience <protoscience@anulum.li>
+// Authored by Anulum Fortis & Arcane Sapience (protoscience@anulum.li)
 
 use autonomous_learning::{BcmRule, EligentRule, PlasticityRule, RewardStdpRule, StdpRule};
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};

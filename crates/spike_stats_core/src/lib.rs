@@ -5,7 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Spike Stats Core (Rust)
-// Co-Authored-By: Arcane Sapience <protoscience@anulum.li>
+// Authored by Anulum Fortis & Arcane Sapience (protoscience@anulum.li)
 
 //! High-performance spike train distance and correlation metrics.
 //!

@@ -34,6 +34,15 @@ impl BendaHerzNeuron {
 
     pub fn _f_onset(&self, x: f64) -> f64 {
         let z = self.beta * (x - self.i_half);
+        if z == f64::INFINITY {
+            return self.f_max;
+        }
+        if z == f64::NEG_INFINITY {
+            return 0.0;
+        }
+        if !z.is_finite() {
+            return f64::NAN;
+        }
         if z >= 0.0 {
             self.f_max / (1.0 + (-z).exp())
         } else {
@@ -42,20 +51,43 @@ impl BendaHerzNeuron {
         }
     }
 
+    fn adaptation_rhs(&self, a: f64, i_ext: f64) -> Option<(f64, f64)> {
+        if !a.is_finite() || a < 0.0 {
+            return None;
+        }
+        let rate = self._f_onset(i_ext - a);
+        if !rate.is_finite() || rate < 0.0 || rate > self.f_max {
+            return None;
+        }
+        Some((-a / self.tau_a + self.delta_a * rate, rate))
+    }
+
+    pub fn rk4_candidate(&self, i_ext: f64) -> Option<(f64, f64)> {
+        let (k1, r1) = self.adaptation_rhs(self.a, i_ext)?;
+        let (k2, r2) = self.adaptation_rhs(self.a + 0.5 * self.dt * k1, i_ext)?;
+        let (k3, r3) = self.adaptation_rhs(self.a + 0.5 * self.dt * k2, i_ext)?;
+        let (k4, r4) = self.adaptation_rhs(self.a + self.dt * k3, i_ext)?;
+        let next_a = self.a + (self.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
+        let average_rate = (r1 + 2.0 * r2 + 2.0 * r3 + r4) / 6.0;
+        let hazard = average_rate * self.dt / 1000.0;
+        if !next_a.is_finite() || next_a < 0.0 || !hazard.is_finite() || hazard < 0.0 {
+            return None;
+        }
+        let probability = -(-hazard).exp_m1();
+        if !probability.is_finite() || probability < 0.0 || probability > 1.0 {
+            return None;
+        }
+        Some((next_a, probability))
+    }
+
     pub fn step(&mut self, i_ext: f64) -> i32 {
         if !i_ext.is_finite() || !validate_benda_herz(self) {
             return 0;
         }
 
-        let rate = self._f_onset(i_ext - self.a);
-        let p = rate * self.dt / 1000.0;
-        if !rate.is_finite() || !p.is_finite() || p > 1.0 {
+        let Some((next_a, p)) = self.rk4_candidate(i_ext) else {
             return 0;
-        }
-        let next_a = self.a + (-self.a / self.tau_a + self.delta_a * rate) * self.dt;
-        if !next_a.is_finite() || next_a < 0.0 {
-            return 0;
-        }
+        };
 
         self.a = next_a;
         if self._rng < p {
@@ -68,6 +100,22 @@ impl BendaHerzNeuron {
     pub fn reset(&mut self) {
         self.a = 0.0_f64;
     }
+}
+
+#[cfg(test)]
+fn rk4_reference(n: &BendaHerzNeuron, i_ext: f64) -> (f64, f64) {
+    let rhs = |a: f64| {
+        let rate = n._f_onset(i_ext - a);
+        (-a / n.tau_a + n.delta_a * rate, rate)
+    };
+    let (k1, r1) = rhs(n.a);
+    let (k2, r2) = rhs(n.a + 0.5 * n.dt * k1);
+    let (k3, r3) = rhs(n.a + 0.5 * n.dt * k2);
+    let (k4, r4) = rhs(n.a + n.dt * k3);
+    let next_a = n.a + (n.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
+    let average_rate = (r1 + 2.0 * r2 + 2.0 * r3 + r4) / 6.0;
+    let probability = -(-(average_rate * n.dt / 1000.0)).exp_m1();
+    (next_a, probability)
 }
 
 pub fn validate_benda_herz(state: &BendaHerzNeuron) -> bool {
@@ -92,6 +140,36 @@ pub fn validate_benda_herz(state: &BendaHerzNeuron) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rk4_candidate_matches_reference() {
+        let state = BendaHerzNeuron {
+            a: 0.35,
+            dt: 0.25,
+            _rng: 0.5,
+            ..BendaHerzNeuron::new()
+        };
+        let expected = rk4_reference(&state, 12.5);
+        let candidate = state.rk4_candidate(12.5).expect("valid RK4 candidate");
+
+        assert!((candidate.0 - expected.0).abs() < 1.0e-12);
+        assert!((candidate.1 - expected.1).abs() < 1.0e-15);
+    }
+
+    #[test]
+    fn step_commits_rk4_candidate() {
+        let mut state = BendaHerzNeuron {
+            a: 0.25,
+            dt: 0.5,
+            _rng: 0.5,
+            ..BendaHerzNeuron::new()
+        };
+        let expected = rk4_reference(&state, 15.0);
+
+        state.step(15.0);
+
+        assert!((state.a - expected.0).abs() < 1.0e-12);
+    }
 
     #[test]
     fn test_benda_herz_new() {

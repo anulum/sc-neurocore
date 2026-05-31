@@ -1,7 +1,7 @@
 # BendaHerzNeuron
 
 **Module:** `sc_neurocore.neurons.models.benda_herz`
-**Rust:** `sc_neurocore_engine::neurons::simple_spiking::BendaHerzNeuron`; maintained scalar safety counterpart mirrors validation and adaptation contracts
+**Rust:** maintained scalar safety counterpart mirrors validation and adaptation contracts
 **Reference:** Benda, J. & Herz, A. V. M. (2003)
 **Publication:** *A universal model for spike-frequency adaptation.* Neural Computation, 15(11), 2523–2564.
 **Family:** Phenomenological spike-frequency adaptation (stochastic)
@@ -34,40 +34,46 @@ increases A → A reduces effective drive → rate decreases.
 
 ### Stochastic spike generation
 
-$$p = f \cdot dt / 1000$$
+The continuous rate is integrated over the same RK4 stages used for the
+adaptation state and converted to a bounded Bernoulli probability:
 
-$$\text{spike} = \begin{cases} 1 & \text{with probability } \min(p, 1) \\ 0 & \text{otherwise} \end{cases}$$
+$$p = 1 - \exp\left(-\frac{dt}{1000}\,\bar f_{RK4}\right)$$
 
-The model converts the continuous rate f into binary spikes via Bernoulli
-sampling. Each step, a random number is drawn from a uniform distribution;
-if it is less than p, the neuron fires. This creates a Poisson-like spike
-train with rate f.
+where
+
+$$\bar f_{RK4} = \frac{f_1 + 2f_2 + 2f_3 + f_4}{6}$$
+
+with each stage rate evaluated at the corresponding adaptation RK4 stage.
+This keeps the rate-to-spike conversion bounded without clipping while the
+adaptation ODE is integrated as a candidate-first fourth-order step.
+
+$$\text{spike} = \begin{cases} 1 & \text{with probability } p \\ 0 & \text{otherwise} \end{cases}$$
 
 ### Implementation
 
 ```python
 def step(self, current: float) -> int:
-    rate = self._f_onset(current - self.a)
-    p = rate * self.dt / 1000.0
-    if not finite(rate) or not finite(p) or p > 1.0:
-        raise ValueError
-    next_a = self.a + (-self.a / self.tau_a + self.delta_a * rate) * self.dt
-    if not finite(next_a) or next_a < 0.0:
-        raise ValueError
+    next_a, p = self._rk4_candidate(current)
     self.a = next_a
     return 1 if self._rng.random() < p else 0
 ```
 
-Uses `np.random.Generator` (per-instance RNG) for Python spike sampling. Scalar accelerator surfaces expose the same probability/adaptation contract and use deterministic threshold fields where a full RNG service is not present.
+The candidate helper computes all RK4 adaptation stages and the exponential
+hazard probability before mutating state. Python uses per-instance
+`np.random.Generator`, optionally seeded by `seed`; scalar accelerator
+surfaces use deterministic threshold fields where a full RNG service is not
+present.
 
 ---
 
 ## Validation Contract
 
 - `a`, `f_max`, `beta`, `i_half`, `tau_a`, `delta_a`, `dt`, and runtime `current` must be finite.
+- `seed` must be `None` or a uint64-compatible integer; boolean seeds are rejected.
 - `a` and `delta_a` must be non-negative; `f_max`, `beta`, `tau_a`, and `dt` must be strictly positive.
 - The onset rate uses an overflow-stable logistic form and remains bounded by `[0, f_max]`.
-- Each step computes spike probability and candidate adaptation before mutation. Probability must be finite and at most one; candidate adaptation must remain finite and non-negative.
+- Each step computes all RK4 adaptation stages, an exponential hazard probability, and the candidate adaptation state before mutation.
+- Probability must remain finite and within `[0, 1]`; every RK4 stage and the final candidate adaptation must remain finite and non-negative.
 - Python raises `ValueError` on invalid candidates; Rust, Go, Julia, and Mojo fail closed without mutating adaptation or reporting a spike.
 - `reset()` clears only dynamic adaptation `a` and preserves physical parameters.
 
@@ -188,8 +194,8 @@ paradigms:
 - Rate models: analytical, fast, but no spike timing
 - Spiking models: spike timing, but computationally expensive
 
-The BendaHerz model gives you analytical rate computation with biologically
-realistic spike output — the best of both worlds.
+The BendaHerz model combines analytical rate computation with biologically
+realistic stochastic spike output.
 
 ### Adaptation reduces firing rate
 
@@ -250,68 +256,63 @@ while divisive adaptation changes the sensitivity.
 
 ## Polyglot Surfaces
 
-Python, Rust, Go, Julia, and Mojo surfaces now implement the same onset-rate, probability-bound, adaptation-candidate, and reset-preservation contracts. This slice did not regenerate a standalone benchmark because no maintained Benda-Herz benchmark harness was found.
+Python, Go, Julia, Mojo, and the Rust safety surface now implement the same
+Benda-Herz contract: overflow-stable onset rate, candidate-first RK4
+adaptation integration, exponential hazard probability, fail-closed invalid
+input handling, and reset-preserving parameter semantics.
+
+Fresh evidence for this slice:
+
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_model_benda_herz.py -q` → `53 passed`.
+- `GO111MODULE=off go test ./src/sc_neurocore/accel/go/services -run 'BendaHerz' -bench 'BenchmarkBendaHerzStep' -benchmem` → Benda-Herz tests passed; `235.7 ns/op`, `0 B/op`, `0 allocs/op`.
+- `rustc --test src/sc_neurocore/accel/rust/safety/benda_herz.rs ...` → `10 passed`.
+- `benchmarks/results/local_i5_11600k_python_2026-06-01_benda_herz.json` records the refreshed Python RK4 hazard benchmark.
 
 ---
 
-## Pipeline Verification (End-to-End, Measured 2026-03-31)
+## Pipeline Verification (End-to-End, Measured 2026-06-01)
 
-### Test execution
+Focused module verification passed with the repository virtual environment:
 
+```text
+PYTHONPATH=src .venv/bin/python -m pytest tests/test_model_benda_herz.py -q
+53 passed in 20.07s
 ```
-45/45 PASSED in the focused module test run for this hardening slice.
-├── TestBendaHerzIsolation: 8 tests
-│   ├── construction: a=0.0, f_max=200.0
-│   ├── step → int {0,1} (stochastic)
-│   ├── spikes under drive: I=50 over 10K steps → spikes > 0
-│   ├── adaptation increases: A > A_init after 1K steps at I=30
-│   ├── adaptation reduces rate: A > 0 after 4K steps
-│   ├── f_onset sigmoid: f_onset(0) < f_onset(50)
-│   ├── state finite: A finite after 5K steps at I=100
-│   └── reset: A → 0
-├── TestBendaHerzNetwork: 3 tests
-│   ├── Population(n=10): creates correctly
-│   ├── Network(20 neurons, PoissonInput, 2s): spikes > 0
-│   └── Projection(pop→pop, w=5, p=0.2): accepted, spike_trains extractable
-└── TestBendaHerzAnalysis: 2 tests
-    ├── firing_rate ≥ 0 (stochastic — may be low)
-    └── spike_count ≥ 0
-```
+
+The module-specific suite covers construction, finite-domain validation,
+overflow-stable onset rates, RK4 candidate parity against an independent
+reference, exponential hazard probability bounds, seeded stochastic
+reproducibility, fail-closed state preservation, reset semantics, population
+wiring, projection wiring, network execution, and spike-statistics analysis.
 
 ### Pipeline stages verified
 
 | Stage | Status | Notes |
 |-------|--------|-------|
-| Import + construction | ✓ PASS | a=0.0, f_max=200 |
-| step() → int {0,1} | ✓ PASS | Stochastic Bernoulli output |
-| Adaptation accumulates | ✓ PASS | A increases under drive |
-| f_onset sigmoid | ✓ PASS | Monotonic, bounded [0, f_max] |
-| State finite (5k steps) | ✓ PASS | A remains finite |
-| reset() | ✓ PASS | A → 0 |
-| Population(n=10) | ✓ PASS | model_name = "BendaHerzNeuron" |
-| Network(20n, 2s) | ✓ PASS | PoissonInput(500Hz, w=50) → spikes |
-| Projection(pop→pop) | ✓ PASS | Recurrent, spike_trains extractable |
-| firing_rate | ✓ PASS | ≥ 0 (stochastic model) |
-| spike_count | ✓ PASS | ≥ 0 |
+| Import + construction | PASS | Validates finite physical parameters and optional seed |
+| `step()` → int `{0,1}` | PASS | Bernoulli output from bounded exponential hazard |
+| RK4 adaptation candidate | PASS | Independent reference parity at `1e-14` Python tolerance |
+| Adaptation accumulates | PASS | `a` increases under sustained drive |
+| f-onset sigmoid | PASS | Monotonic, bounded `[0, f_max]` |
+| Invalid runtime input | PASS | Raises before mutating Python state |
+| Reset | PASS | Clears only `a` |
+| Population/network wiring | PASS | `Population`, `Projection`, `PoissonInput`, `Network`, `SpikeMonitor` |
+| Analysis wiring | PASS | `firing_rate` and `spike_count` consume generated spike trains |
 
-### Network configuration tested
+Go service verification and benchmark:
 
-- Population: 20 BendaHerzNeurons
-- PoissonInput: n=20, rate=500Hz, weight=50.0, dt=0.001, seed=42
-- Projection: self-recurrent, weight=5.0, probability=0.2
-- SpikeMonitor: records all spikes
-- Duration: 2.0s (2000 timesteps)
-- Result: mon.count > 0 (stochastic — spikes confirmed)
+```text
+GO111MODULE=off go test ./src/sc_neurocore/accel/go/services -run 'BendaHerz' -bench 'BenchmarkBendaHerzStep' -benchmem
+BenchmarkBendaHerzStep-12  4556997  235.7 ns/op  0 B/op  0 allocs/op
+PASS
+```
 
-### Stochastic test note
+Rust safety verification:
 
-Because the model is stochastic (Bernoulli spike generation), test
-assertions use ≥ 0 rather than > 0 for single-neuron analysis. Network
-tests with 20 neurons over 2s are reliable (law of large numbers).
-
-**ALL 13 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
-
----
+```text
+rustc --test src/sc_neurocore/accel/rust/safety/benda_herz.rs -o /tmp/sc_neurocore_benda_herz_safety_test && /tmp/sc_neurocore_benda_herz_safety_test
+10 passed
+```
 
 ## Numerical Considerations
 
@@ -328,12 +329,11 @@ tests with 20 neurons over 2s are reliable (law of large numbers).
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/benda_herz.py` — 48 lines.
-- **One state variable:** a (adaptation).
-- **__post_init__:** Creates per-instance RNG via np.random.default_rng().
-- **Private method:** _f_onset() computes the sigmoid f–I curve.
-- **Dataclass:** Uses `@dataclass` with `field(init=False)` for RNG.
-- **Rust wiring:** Compatible (1 f64 state var, 1 exp, 1 random per step).
+- **Source:** `src/sc_neurocore/neurons/models/benda_herz.py`.
+- **One state variable:** `a` (adaptation).
+- **`__post_init__`:** validates finite parameters and creates a per-instance RNG via `np.random.default_rng(seed)`.
+- **Private helpers:** `_f_onset()` computes the stable sigmoid; `_rk4_candidate()` computes the adaptation candidate and exponential hazard probability.
+- **Dataclass:** Uses `@dataclass` with `field(init=False)` for RNG state.
 
 ---
 
@@ -348,220 +348,39 @@ Fast model — single sigmoid evaluation + single random number per step.
 
 ---
 
-## Test Coverage Summary
-
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 8 | construction, binary, spikes, adaptation grows, adaptation reduces rate, sigmoid shape, finite, reset |
-| Network | 3 | Population, Network+PoissonInput (2s), Projection+spike_trains |
-| Analysis | 2 | firing_rate ≥ 0, spike_count ≥ 0 |
-| **Total** | **13** | **ALL PASSED (1.98s)** |
-
----
-
-## Findings (Measured 2026-03-31)
-
-1. **13/45 module-specific tests PASSED in 1.98s.** No failures.
-
-2. **Adaptation accumulates:** A > 0 after 1000 steps at I=30. The
-   delta_a × f term drives A upward.
-
-3. **f_onset is sigmoid-shaped:** f_onset(0) < f_onset(50). Monotonic
-   with saturation at f_max=200 Hz.
-
-4. **Stochastic spiking works:** Over 10K steps at I=50, total spikes > 0.
-   Individual steps are random but the ensemble produces spikes.
-
-5. **Network produces spikes:** 20 neurons + PoissonInput(500Hz, w=50)
-   over 2s → mon.count > 0. Full pipeline functional.
-
-6. **Projection accepted:** Self-recurrent Projection(pop→pop, w=5, p=0.2)
-   runs without error. spike_trains extractable from SpikeMonitor.
-
-7. **State finite:** A remains finite after 5000 steps at I=100.
-   The self-limiting steady state prevents divergence.
-
-8. **reset() clears A:** A → 0.0. The adaptation memory is erased.
-
-9. **Per-instance RNG:** Each neuron has its own Generator. Spike trains
-   are independent across neurons (no shared noise).
-
-10. **Rate-to-spike bridge:** The model uniquely bridges rate coding
-    (internal sigmoid f–I) and spike coding (Bernoulli output) — useful
-    for mixed rate/spike network architectures.
-
----
-
-## Pipeline Position
-
-```
-sc_neurocore Pipeline
-├── Python layer
-│   └── sc_neurocore.neurons.models.benda_herz.BendaHerzNeuron
-│       ├── step(current) → int {0, 1}  (stochastic Bernoulli)
-│       ├── reset() → None  (a=0)
-│       ├── _f_onset(x) → float  (sigmoidal f-I curve)
-│       ├── Population(BendaHerzNeuron, n=N)
-│       ├── Network(pop, drive, monitor)
-│       └── Analysis: spike_count(), firing_rate()
-│
-├── Rust engine
-│   └── sc_neurocore_engine::neurons::simple_spiking::BendaHerzNeuron
-│       ├── new(seed: u64) → Self
-│       ├── step(&mut self, current: f64) → i32
-│       └── reset(&mut self)
-│
-├── PyO3 binding
-│   └── sc_neurocore_engine.BendaHerzNeuron (Python class)
-│       ├── __init__(seed=42)
-│       ├── step(current) → int
-│       ├── reset()
-│       └── get_state() → dict {a}
-│
-└── Network runner
-    └── NeuronVariant::BendaHerz(BendaHerzNeuron)
-        ├── Wired in network_runner.rs
-        ├── Factory: "BendaHerz" | "BendaHerzNeuron" → new(42)
-        └── Stochastic: seed-based, exact cross-backend parity N/A
-```
-
----
-
-## Technical Reference
-
-### Python/Rust Implementation Comparison
-
-| Aspect | Python | Rust |
-|--------|--------|------|
-| Source | `benda_herz.py` (47 lines) | `simple_spiking.rs` |
-| RNG | numpy PCG64 | Xoshiro256PlusPlus |
-| f_onset sigmoid | `f_max / (1 + exp(-β(x - I_half)))` | identical |
-| Adaptation ODE | `da = (-a/τ_a + δ_a·f) · dt` | identical |
-| Spike probability | `p = f·dt/1000, clamp(0,1)` | `p = f·dt/1000` (no clamp, functionally same) |
-| **Parity** | **Formulae identical** (stochastic, no exact match) | |
-
-### NeuronVariant Wiring
-
-```rust
-// network_runner.rs
-BendaHerz(BendaHerzNeuron),
-
-// Factory
-"BendaHerz" | "BendaHerzNeuron" => {
-    Ok(NeuronVariant::BendaHerz(BendaHerzNeuron::new(42)))
-}
-```
-
-### Methods
-
-| Method | Signature | Returns | Description |
-|--------|-----------|---------|-------------|
-| `step` | `(current: f64) → i32` | 0 or 1 | Stochastic spike via Bernoulli(f·dt/1000) |
-| `reset` | `() → ()` | — | Reset a=0 |
-| `new` | `(seed: u64) → Self` | — | Constructor with RNG seed |
-
----
-
-## Performance Benchmarks
-
-### Rust (Criterion 0.8)
-
-Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
-
-| Benchmark | Iterations | Median | Per-step | Notes |
-|-----------|-----------|--------|----------|-------|
-| `benda_herz_10k_steps` | 10,000 | 363 µs | **36.3 ns** | 1 exp (sigmoid) + RNG per step |
-
-### Python
-
-| Metric | Value |
-|--------|-------|
-| Isolation throughput | ~142K steps/s (~7.0 µs/step) |
-
-### Speedup
-
-| Metric | Python | Rust | Speedup |
-|--------|--------|------|---------|
-| Per-step latency | ~7,000 ns | 36.3 ns | **~193×** |
-
----
-
-## Usage Examples
-
-### Basic Adaptation (Python)
-
-```python
-from sc_neurocore.neurons.models.benda_herz import BendaHerzNeuron
-
-neuron = BendaHerzNeuron()
-spikes = sum(neuron.step(current=10.0) for _ in range(5000))
-print(f"Spikes: {spikes}, Final adaptation: {neuron.a:.2f}")
-```
-
-### Adaptation Build-Up
-
-```python
-from sc_neurocore.neurons.models.benda_herz import BendaHerzNeuron
-
-neuron = BendaHerzNeuron()
-a_trace = []
-for _ in range(2000):
-    neuron.step(current=10.0)
-    a_trace.append(neuron.a)
-# a grows during sustained firing, reducing effective input → rate decreases
-```
-
-### Rust Backend (via PyO3)
-
-```python
-from sc_neurocore_engine import BendaHerzNeuron as RustBH
-
-neuron = RustBH(seed=42)
-spikes = sum(neuron.step(10.0) for _ in range(10000))
-state = neuron.get_state()
-print(f"Spikes: {spikes}, a={state['a']:.3f}")
-```
-
----
-
 ## Test Coverage
 
-### Python Tests (13 total)
+### Python Tests
 
 **File:** `tests/test_model_benda_herz.py`
 
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 3 | Construction, binary output, reset |
-| Adaptation | 4 | a increases during firing, rate decreases over time, sigmoid shape, tau_a effect |
-| Stochastic | 2 | Two seeds differ, rate increases with I |
-| Pipeline | 3 | Population, network spikes, analysis |
-| Performance | 1 | Isolation throughput |
+| Category | What is verified |
+|----------|------------------|
+| Isolation | Construction, binary spike result, sustained-drive spikes, reset |
+| RK4 and probability | Independent RK4 candidate parity, RK4 commit semantics, exponential hazard bounds |
+| Stochastic reproducibility | Optional seed produces reproducible spike sequences |
+| Validation | Parameter, seed, current, stage, probability, and candidate-state fail-closed boundaries |
+| Pipeline | Population, projection, network, monitor, firing-rate and spike-count analysis |
 
-### Rust Tests (6 total)
+### Go Tests and Benchmark
+
+**File:** `src/sc_neurocore/accel/go/services/benda_herz_test.go`
 
 | Test | What is verified |
-|------|-----------------|
-| `bh_fires` | Fires under drive |
-| `bh_adaptation_increases` | a increases during sustained firing |
-| `bh_reset_clears_state` | a=0 after reset |
-| `bh_stochastic_variability` | Different seeds → different spike counts |
-| `bh_nan_no_panic` | NaN safe |
-| `bh_negative_no_crash` | Negative I stable |
+|------|------------------|
+| `TestBendaHerzRK4CandidateMatchesReference` | Go RK4 candidate and hazard match independent reference |
+| `TestBendaHerzStepCommitsRK4Candidate` | Step commits the RK4 candidate |
+| `TestBendaHerzInvalidRuntimeInputPreservesState` | Invalid current preserves adaptation |
+| `TestBendaHerzInvalidCandidatePreservesState` | Invalid RK4 candidate preserves adaptation |
+| `BenchmarkBendaHerzStep` | Scalar service step latency and allocations |
 
-### Coverage Summary
+### Rust Safety Tests
 
-| Category | Python | Rust | Total |
-|----------|--------|------|-------|
-| Construction/reset | 2 | 1 | 3 |
-| Adaptation dynamics | 4 | 1 | 5 |
-| Stochastic properties | 2 | 1 | 3 |
-| Numerical stability | 0 | 2 | 2 |
-| Performance | 1 | 0 | 1 |
-| Pipeline | 3 | 0 | 3 |
-| **Total** | **13** | **6** | **19** |
+**File:** `src/sc_neurocore/accel/rust/safety/benda_herz.rs`
 
----
+The Rust safety module has 10 focused tests covering construction, RK4
+candidate parity, step commit semantics, onset-rate bounds, adaptation growth,
+invalid input preservation, invalid candidate preservation, and reset semantics.
 
 ## Citations
 
@@ -598,4 +417,6 @@ print(f"Spikes: {spikes}, a={state['a']:.3f}")
 
 ## Benchmark Note
 
-No standalone Benda-Herz benchmark was regenerated in this slice because no maintained benchmark harness for this model was found. Historical throughput statements should be treated as historical until a dedicated harness is added.
+The 2026-06-01 RK4 hazard benchmark supersedes older Benda-Herz throughput
+notes for the Python and Go scalar paths. Historical Criterion artefacts remain
+available for provenance but predate the current integration contract.

@@ -42,11 +42,59 @@ func (s BendaHerzNeuronState) Valid() bool {
 // FOnset evaluates the overflow-stable Benda-Herz onset f-I curve.
 func (s BendaHerzNeuronState) FOnset(x float64) float64 {
 	z := s.Beta * (x - s.IHalf)
+	if math.IsInf(z, 1) {
+		return s.FMax
+	}
+	if math.IsInf(z, -1) {
+		return 0.0
+	}
 	if z >= 0.0 {
 		return s.FMax / (1.0 + math.Exp(-z))
 	}
 	expZ := math.Exp(z)
 	return s.FMax * expZ / (1.0 + expZ)
+}
+
+func (s BendaHerzNeuronState) adaptationRHS(a, iExt float64) (float64, float64, bool) {
+	if !finite(a) || a < 0.0 {
+		return 0.0, 0.0, false
+	}
+	rate := s.FOnset(iExt - a)
+	if !finite(rate) || rate < 0.0 || rate > s.FMax {
+		return 0.0, 0.0, false
+	}
+	return -a/s.TauA + s.DeltaA*rate, rate, true
+}
+
+// RK4Candidate returns the next adaptation value and Bernoulli spike probability.
+func (s BendaHerzNeuronState) RK4Candidate(iExt float64) (float64, float64, bool) {
+	k1, r1, ok := s.adaptationRHS(s.A, iExt)
+	if !ok {
+		return 0.0, 0.0, false
+	}
+	k2, r2, ok := s.adaptationRHS(s.A+0.5*s.Dt*k1, iExt)
+	if !ok {
+		return 0.0, 0.0, false
+	}
+	k3, r3, ok := s.adaptationRHS(s.A+0.5*s.Dt*k2, iExt)
+	if !ok {
+		return 0.0, 0.0, false
+	}
+	k4, r4, ok := s.adaptationRHS(s.A+s.Dt*k3, iExt)
+	if !ok {
+		return 0.0, 0.0, false
+	}
+	nextA := s.A + (s.Dt/6.0)*(k1+2.0*k2+2.0*k3+k4)
+	averageRate := (r1 + 2.0*r2 + 2.0*r3 + r4) / 6.0
+	hazard := averageRate * s.Dt / 1000.0
+	if !finite(nextA) || nextA < 0.0 || !finite(hazard) || hazard < 0.0 {
+		return 0.0, 0.0, false
+	}
+	p := -math.Expm1(-hazard)
+	if !finite(p) || p < 0.0 || p > 1.0 {
+		return 0.0, 0.0, false
+	}
+	return nextA, p, true
 }
 
 // Step advances the neuron by one timestep. Invalid inputs do not mutate state.
@@ -55,13 +103,8 @@ func (s *BendaHerzNeuronState) Step(iExt float64) int {
 		return 0
 	}
 
-	rate := s.FOnset(iExt - s.A)
-	p := rate * s.Dt / 1000.0
-	if !finite(rate) || !finite(p) || p > 1.0 {
-		return 0
-	}
-	nextA := s.A + (-s.A/s.TauA+s.DeltaA*rate)*s.Dt
-	if !finite(nextA) || nextA < 0.0 {
+	nextA, p, ok := s.RK4Candidate(iExt)
+	if !ok {
 		return 0
 	}
 

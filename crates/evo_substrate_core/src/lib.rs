@@ -5,7 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Evolutionary Substrate Core (Rust FFI)
-// Co-Authored-By: Arcane Sapience <protoscience@anulum.li>
+// Authored by Anulum Fortis & Arcane Sapience (protoscience@anulum.li)
 
 //! # Evolutionary Substrate Core
 //!

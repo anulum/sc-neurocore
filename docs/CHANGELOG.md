@@ -6,6 +6,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `BendaHerzNeuron` to candidate-first RK4 adaptation integration
+  with exponential hazard spike probability across the Python reference, Go
+  service, Julia mirror, Mojo kernel notes, and Rust safety surface; module
+  tests now cover RK4 parity, seeded stochastic reproducibility, fail-closed
+  state preservation, and refreshed Python/Go benchmark evidence.
 - Hardened `CochlearHairCell` across the Python reference, Rust engine, Go
   service, Julia mirror, and Rust safety surface by replacing the raw membrane
   Euler voltage increment with exact conductance-form relaxation, adding stable

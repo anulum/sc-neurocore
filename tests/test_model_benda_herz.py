@@ -25,6 +25,21 @@ from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import firing_rate, spike_count
 
 
+def _rk4_reference(neuron: BendaHerzNeuron, current: float) -> tuple[float, float]:
+    def rhs(a: float) -> tuple[float, float]:
+        rate = neuron._f_onset(current - a)
+        return -a / neuron.tau_a + neuron.delta_a * rate, rate
+
+    k1, r1 = rhs(neuron.a)
+    k2, r2 = rhs(neuron.a + 0.5 * neuron.dt * k1)
+    k3, r3 = rhs(neuron.a + 0.5 * neuron.dt * k2)
+    k4, r4 = rhs(neuron.a + neuron.dt * k3)
+    next_a = neuron.a + (neuron.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+    average_rate = (r1 + 2.0 * r2 + 2.0 * r3 + r4) / 6.0
+    probability = -np.expm1(-(average_rate * neuron.dt / 1000.0))
+    return next_a, probability
+
+
 class TestBendaHerzIsolation:
     def test_construction(self):
         n = BendaHerzNeuron()
@@ -32,19 +47,19 @@ class TestBendaHerzIsolation:
         assert n.f_max == 200.0
 
     def test_step_returns_binary(self):
-        n = BendaHerzNeuron()
+        n = BendaHerzNeuron(seed=1)
         result = n.step(10.0)
         assert result in (0, 1)
 
     def test_spikes_under_drive(self):
         """Stochastic model — needs many steps for reliable spiking."""
-        n = BendaHerzNeuron()
+        n = BendaHerzNeuron(seed=2)
         spikes = sum(n.step(50.0) for _ in range(10000))
         assert spikes > 0, "no spikes at I=50 over 10K steps"
 
     def test_adaptation_increases(self):
         """Adaptation variable A should increase under sustained drive."""
-        n = BendaHerzNeuron()
+        n = BendaHerzNeuron(seed=3)
         a_init = n.a
         for _ in range(1000):
             n.step(30.0)
@@ -52,12 +67,43 @@ class TestBendaHerzIsolation:
 
     def test_adaptation_reduces_rate(self):
         """Rate should decrease over time due to SFA."""
-        n = BendaHerzNeuron()
+        n = BendaHerzNeuron(seed=4)
         early_spikes = sum(n.step(50.0) for _ in range(2000))
         late_spikes = sum(n.step(50.0) for _ in range(2000))
         # Early should have more spikes than late (adaptation kicks in)
         # Stochastic — allow for noise; just check adaptation is nonzero
         assert n.a > 0, "no adaptation after 4K steps"
+
+    def test_adaptation_candidate_matches_rk4_reference(self):
+        n = BendaHerzNeuron(a=0.35, dt=0.25, seed=5)
+        expected_a, expected_p = _rk4_reference(n, 12.5)
+
+        candidate_a, candidate_p = n._rk4_candidate(12.5)
+
+        assert candidate_a == pytest.approx(expected_a, rel=1e-14, abs=1e-14)
+        assert candidate_p == pytest.approx(expected_p, rel=1e-14, abs=1e-14)
+
+    def test_step_commits_rk4_candidate_before_sampling(self):
+        n = BendaHerzNeuron(a=0.25, dt=0.5, seed=6)
+        expected_a, _ = _rk4_reference(n, 15.0)
+
+        n.step(15.0)
+
+        assert n.a == pytest.approx(expected_a, rel=1e-14, abs=1e-14)
+
+    def test_exponential_hazard_keeps_probability_bounded(self):
+        n = BendaHerzNeuron(f_max=1.0e6, dt=1.0, seed=7)
+
+        _, probability = n._rk4_candidate(1.0e6)
+
+        assert 0.0 <= probability <= 1.0
+        assert probability == pytest.approx(1.0, rel=0.0, abs=1e-12)
+
+    def test_seeded_sequences_are_reproducible(self):
+        left = BendaHerzNeuron(seed=123)
+        right = BendaHerzNeuron(seed=123)
+
+        assert [left.step(25.0) for _ in range(50)] == [right.step(25.0) for _ in range(50)]
 
     def test_f_onset_sigmoid(self):
         """f_onset should be sigmoid-shaped: low at I=0, high at I>>i_half."""
@@ -110,21 +156,19 @@ class TestBendaHerzValidation:
             n.step(current)
         assert n.a == before
 
-    def test_rejects_spike_probability_above_one_before_state_mutation(self):
-        n = BendaHerzNeuron(f_max=2000.0, a=0.5)
-        before = n.a
-        with pytest.raises(ValueError, match="probability"):
-            n.step(100.0)
-        assert n.a == before
-
     def test_rejects_non_finite_adaptation_update_before_state_mutation(self):
         n = BendaHerzNeuron(f_max=1.0e-306, delta_a=1.0e308, dt=1.0e308, a=0.5)
         before = n.a
 
-        with pytest.raises(ValueError, match="adaptation update"):
+        with pytest.raises(ValueError, match="adaptation RK4"):
             n.step(100.0)
 
         assert n.a == before
+
+    @pytest.mark.parametrize("seed", [np.nan, np.inf, -1, True, 2**64])
+    def test_rejects_invalid_seed(self, seed):
+        with pytest.raises(ValueError, match="seed"):
+            BendaHerzNeuron(seed=seed)
 
 
 class TestBendaHerzNetwork:
