@@ -99,14 +99,15 @@ impl LarterBreakspearNeuron {
         );
         let k4 = self.derivatives(v0 + dt * k3.0, w0 + dt * k3.1, z0 + dt * k3.2, coupling);
 
-        self.v = v0 + (dt / 6.0) * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0);
-        self.w = w0 + (dt / 6.0) * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1);
-        self.z = z0 + (dt / 6.0) * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2);
-        if validate_larter_breakspear(self) {
-            self.v
-        } else {
-            f64::NAN
+        let mut next = self.clone();
+        next.v = v0 + (dt / 6.0) * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0);
+        next.w = w0 + (dt / 6.0) * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1);
+        next.z = z0 + (dt / 6.0) * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2);
+        if !validate_larter_breakspear(&next) {
+            return f64::NAN;
         }
+        *self = next;
+        self.v
     }
 
     pub fn reset(&mut self) {
@@ -116,6 +117,19 @@ impl LarterBreakspearNeuron {
         self.z = 0.0_f64;
         self.g_ca = 1.1_f64;
         self.g_na = 6.7_f64;
+        self.g_k = 2.0_f64;
+        self.v_ca = 1.0_f64;
+        self.v_na = 0.53_f64;
+        self.v_k = -0.7_f64;
+        self.v_l = -0.5_f64;
+        self.g_l = 0.5_f64;
+        self.phi = 0.7_f64;
+        self.tau_k = 1.0_f64;
+        self.b = 0.1_f64;
+        self.a_ee = 0.36_f64;
+        self.v0 = 0.0_f64;
+        self.i_ext = 0.3_f64;
+        self.dt = 0.01_f64;
     }
 }
 
@@ -146,6 +160,7 @@ pub fn validate_larter_breakspear(state: &LarterBreakspearNeuron) -> bool {
         && state.g_na > 0.0
         && state.g_k > 0.0
         && state.g_l > 0.0
+        && (0.0..=1.0).contains(&state.w)
 }
 
 #[cfg(test)]
@@ -172,6 +187,10 @@ mod tests {
     fn test_larter_breakspear_rejects_invalid_dt() {
         let mut state = LarterBreakspearNeuron::new();
         state.dt = 0.0;
+        let before = state.clone();
         assert!(state.step(0.0).is_nan());
+        assert_eq!(state.v, before.v);
+        assert_eq!(state.w, before.w);
+        assert_eq!(state.z, before.z);
     }
 }

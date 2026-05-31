@@ -8,7 +8,7 @@
 
 module RulkovMapAccel
 
-export step!, simulate, RulkovMapNeuronState
+export step!, simulate, validate, RulkovMapNeuronState
 
 mutable struct RulkovMapNeuronState
     x::Float64
@@ -23,23 +23,45 @@ function RulkovMapNeuronState()
     RulkovMapNeuronState(-1.0, -3.0, 4.0, -1.6, 0.001, 0.0)
 end
 
+function validate(s::RulkovMapNeuronState)::Bool
+    return isfinite(s.x) &&
+        isfinite(s.y) &&
+        isfinite(s.alpha) &&
+        s.alpha > 0.0 &&
+        isfinite(s.sigma) &&
+        isfinite(s.mu) &&
+        s.mu > 0.0 &&
+        isfinite(s.x_threshold)
+end
+
 function step!(s::RulkovMapNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        x_prev = s.x
-        if s.x <= 0
-            x_new = s.alpha / (1.0 - s.x) + s.y + I_ext
-        elseif s.x < s.alpha + s.y + I_ext
-            x_new = s.alpha + s.y + I_ext
-        else
-            x_new = -1.0
-        end
-        y_new = s.y - s.mu * (s.x + 1.0) + s.mu * s.sigma
-        s.x = x_new
-        s.y = y_new
-        return (s.x >= s.x_threshold && x_prev < s.x_threshold) ? 1 : 0
-    catch _e
-        return 0
+    if !validate(s) || !isfinite(I_ext)
+        return -1
     end
+
+    x_prev = s.x
+    branch_boundary = s.alpha + s.y + I_ext
+    if !isfinite(branch_boundary)
+        return -1
+    end
+    if s.x <= 0
+        denominator = 1.0 - s.x
+        if denominator <= 0.0 || !isfinite(denominator)
+            return -1
+        end
+        x_new = s.alpha / denominator + s.y + I_ext
+    elseif s.x < branch_boundary
+        x_new = branch_boundary
+    else
+        x_new = -1.0
+    end
+    y_new = s.y - s.mu * (s.x + 1.0) + s.mu * s.sigma
+    if !isfinite(x_new) || !isfinite(y_new)
+        return -1
+    end
+    s.x = x_new
+    s.y = y_new
+    return (s.x >= s.x_threshold && x_prev < s.x_threshold) ? 1 : 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)

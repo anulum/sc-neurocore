@@ -8,7 +8,7 @@
 
 module AiharaMapNeuronAccel
 
-export step!, simulate, AiharaMapNeuronState
+export step!, simulate, validate, AiharaMapNeuronState
 
 mutable struct AiharaMapNeuronState
     x::Float64
@@ -24,24 +24,41 @@ function AiharaMapNeuronState()
     AiharaMapNeuronState(0.0, 0.0, 0.7, 0.95, 2.0, 0.05, 0.5)
 end
 
-function step!(s::AiharaMapNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        x_prev = s.x
-        sigmoid = 1.0 / (1.0 + exp(-(s.x + s.alpha)))
-        x_new = s.k_f * s.x * sigmoid - s.y + I_ext
-        y_new = s.k_s * s.y + s.delta * s.x
-        s.x = max(-10.0, min(10.0, x_new))
-        s.y = max(-10.0, min(10.0, y_new))
-        if ! isfinite(s.x)
-            s.x = 0.0
-        end
-        if ! isfinite(s.y)
-            s.y = 0.0
-        end
-        return (s.x >= s.x_threshold && x_prev < s.x_threshold) ? 1 : 0
-    catch _e
-        return 0
+function validate(s::AiharaMapNeuronState)::Bool
+    return isfinite(s.x) &&
+        isfinite(s.y) &&
+        isfinite(s.k_f) &&
+        s.k_f >= 0.0 &&
+        isfinite(s.k_s) &&
+        isfinite(s.alpha) &&
+        isfinite(s.delta) &&
+        s.delta >= 0.0 &&
+        isfinite(s.x_threshold)
+end
+
+function logistic(z::Float64)::Float64
+    if z >= 0.0
+        return 1.0 / (1.0 + exp(-z))
     end
+    exp_z = exp(z)
+    return exp_z / (1.0 + exp_z)
+end
+
+function step!(s::AiharaMapNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
+    if !validate(s) || !isfinite(I_ext)
+        return -1
+    end
+
+    x_prev = s.x
+    sigmoid = logistic(s.x + s.alpha)
+    x_new = s.k_f * s.x * sigmoid - s.y + I_ext
+    y_new = s.k_s * s.y + s.delta * s.x
+    if !isfinite(x_new) || !isfinite(y_new)
+        return -1
+    end
+    s.x = max(-10.0, min(10.0, x_new))
+    s.y = max(-10.0, min(10.0, y_new))
+    return (s.x >= s.x_threshold && x_prev < s.x_threshold) ? 1 : 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)

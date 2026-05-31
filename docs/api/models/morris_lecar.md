@@ -87,10 +87,12 @@ The Python model also exposes `rk4` and `rosenbrock` integrators for the
 same Morris-Lecar ODEs. The Go service, Rust safety surface, and Julia
 counterpart preserve the documented baseline Euler state equation for
 cross-runtime current-balance checks and fail-closed invalid-state
-behaviour. All Python integrator paths reject non-finite runtime current
-and fail closed if the `cosh` potassium-rate term overflows or any
-derivative/state update becomes non-finite; the previous `(V, w)` state
-is preserved on rejection.
+behaviour. All runtime surfaces validate finite conductance parameters,
+positive membrane capacitance, positive activation slopes and timestep,
+and the potassium activation envelope `w in [0, 1]` before integration.
+They reject non-finite runtime current and fail closed if the `cosh`
+potassium-rate term overflows or any derivative/state update becomes
+non-finite; the previous `(V, w)` state is preserved on rejection.
 
 ---
 
@@ -236,6 +238,13 @@ sc_neurocore Pipeline
         ├── Voltage access: network_runner.rs:477
         └── Factory: "MorrisLecar" | "MorrisLecarNeuron" → new()
 ```
+
+Numerical safety contract: candidate `(V, w)` updates are validated
+before mutation in Python, Go, Julia, and Rust. Invalid conductance
+configuration, non-finite external drive, non-finite potassium-rate
+evaluation, or a candidate activation outside `[0, 1]` leaves the
+previous state intact and returns or raises the surface-specific
+fail-closed signal.
 
 ---
 

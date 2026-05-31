@@ -42,23 +42,49 @@ impl TraubMilesNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // v_prev = self.v
-        // for _ in range(10):
-        // d = self.v + 54.0
-        // am = 0.32 * d / (1.0 - (-d / 4.0_f64).exp()) if abs(d) > 1e-6 else 8.0
-        // d2 = self.v + 27.0
-        // bm = 0.28 * d2 / ((d2 / 5.0_f64).exp() - 1.0) if abs(d2) > 1e-6 else 5
-        // ah = 0.128 * (-(self.v + 50.0_f64).exp() / 18.0)
-        // bh = 4.0 / (1.0 + (-(self.v + 27.0_f64).exp() / 5.0))
-        // d3 = self.v + 52.0
-        // an = 0.032 * d3 / (1.0 - (-d3 / 5.0_f64).exp()) if abs(d3) > 1e-6 else
-        // bn = 0.5 * (-(self.v + 57.0_f64).exp() / 40.0)
-        // self.m += (am * (1 - self.m) - bm * self.m) * self.dt
-        // self.h += (ah * (1 - self.h) - bh * self.h) * self.dt
-        // self.n += (an * (1 - self.n) - bn * self.n) * self.dt
-        // i_na = self.g_na * self.m.powi3 * self.h * (self.v - self.e_na)
-        0 // spike indicator
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
+        if !validate_traub_miles(self) {
+            return Err("invalid Traub-Miles runtime state");
+        }
+        if !i_ext.is_finite() {
+            return Err("invalid Traub-Miles external current");
+        }
+
+        let v_prev = self.v;
+        let mut v = self.v;
+        let mut m = self.m;
+        let mut h = self.h;
+        let mut n = self.n;
+        for _ in 0..10 {
+            let (am, bm, ah, bh, an, bn) = rates(v)?;
+            let next_m = m + (am * (1.0 - m) - bm * m) * self.dt;
+            let next_h = h + (ah * (1.0 - h) - bh * h) * self.dt;
+            let next_n = n + (an * (1.0 - n) - bn * n) * self.dt;
+            if !finite_gate(next_m) || !finite_gate(next_h) || !finite_gate(next_n) {
+                return Err("invalid Traub-Miles gate candidate");
+            }
+            let i_na = self.g_na * next_m.powi(3) * next_h * (v - self.e_na);
+            let i_k = self.g_k * next_n.powi(4) * (v - self.e_k);
+            let i_l = self.g_l * (v - self.e_l);
+            let next_v = v + (-i_na - i_k - i_l + i_ext) * self.dt;
+            if !next_v.is_finite() {
+                return Err("invalid Traub-Miles voltage candidate");
+            }
+            v = next_v;
+            m = next_m;
+            h = next_h;
+            n = next_n;
+        }
+
+        self.v = v;
+        self.m = m;
+        self.h = h;
+        self.n = n;
+        Ok(if self.v >= self.v_threshold && v_prev < self.v_threshold {
+            1
+        } else {
+            0
+        })
     }
 
     pub fn reset(&mut self) {
@@ -73,6 +99,55 @@ impl TraubMilesNeuron {
 
 pub fn validate_traub_miles(state: &TraubMilesNeuron) -> bool {
     state.v.is_finite()
+        && finite_gate(state.m)
+        && finite_gate(state.h)
+        && finite_gate(state.n)
+        && state.g_na.is_finite()
+        && state.g_na >= 0.0
+        && state.g_k.is_finite()
+        && state.g_k >= 0.0
+        && state.g_l.is_finite()
+        && state.g_l >= 0.0
+        && state.e_na.is_finite()
+        && state.e_k.is_finite()
+        && state.e_l.is_finite()
+        && state.dt.is_finite()
+        && state.dt > 0.0
+        && state.v_threshold.is_finite()
+}
+
+fn finite_gate(value: f64) -> bool {
+    value.is_finite() && (0.0..=1.0).contains(&value)
+}
+
+fn rates(v: f64) -> Result<(f64, f64, f64, f64, f64, f64), &'static str> {
+    let d = v + 54.0;
+    let am = if d.abs() > 1e-6 {
+        0.32 * d / (1.0 - (-d / 4.0).exp())
+    } else {
+        8.0
+    };
+    let d2 = v + 27.0;
+    let bm = if d2.abs() > 1e-6 {
+        0.28 * d2 / ((d2 / 5.0).exp() - 1.0)
+    } else {
+        5.6
+    };
+    let ah = 0.128 * (-(v + 50.0) / 18.0).exp();
+    let bh = 4.0 / (1.0 + (-(v + 27.0) / 5.0).exp());
+    let d3 = v + 52.0;
+    let an = if d3.abs() > 1e-6 {
+        0.032 * d3 / (1.0 - (-d3 / 5.0).exp())
+    } else {
+        0.32
+    };
+    let bn = 0.5 * (-(v + 57.0) / 40.0).exp();
+    for rate in [am, bm, ah, bh, an, bn] {
+        if !rate.is_finite() || rate < 0.0 {
+            return Err("invalid Traub-Miles rate");
+        }
+    }
+    Ok((am, bm, ah, bh, an, bn))
 }
 
 #[cfg(test)]
@@ -89,7 +164,14 @@ mod tests {
     #[test]
     fn test_traub_miles_step() {
         let mut state = TraubMilesNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).unwrap();
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_traub_miles_rejects_invalid_runtime_state() {
+        let mut state = TraubMilesNeuron::new();
+        state.m = 1.5;
+        assert!(state.step(1.0).is_err());
     }
 }

@@ -8,9 +8,17 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import pytest
 
+TOOLS = Path(__file__).resolve().parents[1] / "tools"
+if str(TOOLS) not in sys.path:
+    sys.path.insert(0, str(TOOLS))
+
 orca = pytest.importorskip("orca_posner_hf")
+acquire = pytest.importorskip("acquire_posner_external_data")
 
 
 def test_auto_a_ref_calibrates_from_max_component() -> None:
@@ -50,3 +58,66 @@ def test_run_full_pipeline_rejects_missing_explicit_orca_path(tmp_path) -> None:
     missing = tmp_path / "missing_orca.out"
     with pytest.raises(ValueError, match="ORCA output path does not exist"):
         orca.run_full_pipeline(missing)
+
+
+def test_neutral_optimization_parser_refuses_normal_but_unconverged_endpoint(tmp_path) -> None:
+    out = tmp_path / "neutral.out"
+    out.write_text(
+        """
+GEOMETRY OPTIMIZATION CYCLE 117
+FINAL SINGLE POINT ENERGY     -9954.015112995519
+SCF CONVERGED AFTER 17 CYCLES
+          ----------------------|Geometry convergence|-------------------------
+          Item                value                   Tolerance       Converged
+          ---------------------------------------------------------------------
+          Energy change      -0.0000590901            0.0000050000      NO
+          RMS gradient        0.0001032437            0.0001000000      NO
+          MAX gradient        0.0010178376            0.0003000000      NO
+          RMS step            0.0045728307            0.0020000000      NO
+          MAX step            0.0470340637            0.0040000000      NO
+          -------------------------------------------------------------------------
+The optimization has not yet converged - more geometry cycles are needed
+                             ****ORCA TERMINATED NORMALLY****
+TOTAL RUN TIME: 22 days 16 hours 52 minutes 5 seconds 565 msec
+""",
+        encoding="utf-8",
+    )
+
+    status = acquire.parse_neutral_optimization_status(out, exit_status=0)
+
+    assert status["accepted_neutral_geometry"] is False
+    assert status["markers"]["orca_terminated_normally"] is True
+    assert status["markers"]["the_optimization_has_converged"] is False
+    assert status["markers"]["last_geometry_optimization_cycle"] == 117
+    assert status["final_energy_Eh"] == pytest.approx(-9954.015112995519)
+    assert status["final_geometry_convergence"]["all_items_converged"] is False
+
+
+def test_neutral_optimization_parser_accepts_converged_normal_endpoint(tmp_path) -> None:
+    out = tmp_path / "neutral.out"
+    out.write_text(
+        """
+GEOMETRY OPTIMIZATION CYCLE 12
+FINAL SINGLE POINT ENERGY     -123.5
+SCF CONVERGED AFTER 8 CYCLES
+          ----------------------|Geometry convergence|-------------------------
+          Item                value                   Tolerance       Converged
+          ---------------------------------------------------------------------
+          Energy change      -0.0000000100            0.0000050000      YES
+          RMS gradient        0.0000200000            0.0001000000      YES
+          MAX gradient        0.0001000000            0.0003000000      YES
+          RMS step            0.0002000000            0.0020000000      YES
+          MAX step            0.0010000000            0.0040000000      YES
+          -------------------------------------------------------------------------
+THE OPTIMIZATION HAS CONVERGED
+                             ****ORCA TERMINATED NORMALLY****
+TOTAL RUN TIME: 1 days 0 hours 0 minutes 0 seconds 0 msec
+""",
+        encoding="utf-8",
+    )
+
+    status = acquire.parse_neutral_optimization_status(out, exit_status=0)
+
+    assert status["accepted_neutral_geometry"] is True
+    assert status["markers"]["the_optimization_has_converged"] is True
+    assert status["final_geometry_convergence"]["all_items_converged"] is True

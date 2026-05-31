@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -29,14 +30,53 @@ class WilsonHRNeuron:
     v_peak: float = 0.4
     dt: float = 0.05
 
+    def __post_init__(self) -> None:
+        for name in ("v", "r", "tau_r", "v_peak", "dt"):
+            value = float(getattr(self, name))
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+            setattr(self, name, value)
+        if self.tau_r <= 0.0:
+            raise ValueError("tau_r must be positive")
+        if self.dt <= 0.0:
+            raise ValueError("dt must be positive")
+
+    @staticmethod
+    def _validate_state(v: float, r: float) -> tuple[float, float]:
+        voltage = float(v)
+        recovery = float(r)
+        if not math.isfinite(voltage) or not math.isfinite(recovery):
+            raise FloatingPointError("Wilson-HR runtime state must be finite")
+        return voltage, recovery
+
     def step(self, current: float) -> int:
-        poly = -(17.81 + 47.71 * self.v + 32.63 * self.v**2) * (self.v - 0.55)
-        syn = -26.0 * self.r * (self.v + 0.92)
-        dv = (poly + syn + current) * self.dt
-        dr = (-self.r + 1.35 * self.v + 1.03) / self.tau_r * self.dt
-        self.v += dv
-        self.r += dr
-        if self.v >= self.v_peak:
+        drive = float(current)
+        if not math.isfinite(drive):
+            raise ValueError("current must be finite")
+
+        v, r = self._validate_state(self.v, self.r)
+        try:
+            poly = -(17.81 + 47.71 * v + 32.63 * v**2) * (v - 0.55)
+        except OverflowError as exc:
+            raise FloatingPointError("Wilson-HR polynomial overflowed") from exc
+        syn = -26.0 * r * (v + 0.92)
+        dv = (poly + syn + drive) * self.dt
+        dr = (-r + 1.35 * v + 1.03) / self.tau_r * self.dt
+        next_v = v + dv
+        next_r = r + dr
+        if (
+            not math.isfinite(poly)
+            or not math.isfinite(syn)
+            or not math.isfinite(dv)
+            or not math.isfinite(dr)
+            or not math.isfinite(next_v)
+            or not math.isfinite(next_r)
+        ):
+            raise FloatingPointError("Wilson-HR candidate state became non-finite")
+
+        self.v = next_v
+        self.r = next_r
+        if next_v >= self.v_peak:
             self.v = -0.7
             return 1
         return 0

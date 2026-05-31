@@ -10,6 +10,19 @@ this directory have been regenerated with `VeryTightSCF`; publication/runtime
 data must come from a captured ORCA output with both `ORCA TERMINATED NORMALLY`
 and `THE OPTIMIZATION HAS CONVERGED` present.
 
+The completed ML350 r6 seeded neutral endpoint has now been processed under
+`../ml350/20260507_r6_seeded/`. It printed `ORCA TERMINATED NORMALLY` with
+exit status `0`, but it did not print `THE OPTIMIZATION HAS CONVERGED`; the
+last geometry convergence table still failed energy, gradient, and step
+criteria. Treat that endpoint as continuation evidence, not accepted runtime
+molecular data.
+
+The r7 continuation launched from that endpoint is recorded under
+`../ml350/20260531_r7_continuation/`. It uses the r6 endpoint `.xyz` and
+`.gbw`, `MOREAD`, single-worker execution, and `%geom MaxIter 300 end`.
+Do not run cation-radical EPR/HFC until the r7 neutral geometry satisfies the
+convergence and normal-termination gate.
+
 The built-in coordinates are an initial guess only; publication runs require
 the completed geometry optimisation output and a documented radical state.
 

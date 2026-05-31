@@ -36,19 +36,46 @@ class AiharaMapNeuron:
     delta: float = 0.05
     x_threshold: float = 0.5
 
+    def __post_init__(self) -> None:
+        for name in ("x", "y", "k_f", "k_s", "alpha", "delta", "x_threshold"):
+            value = float(getattr(self, name))
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+            setattr(self, name, value)
+        for name in ("k_f", "delta"):
+            if getattr(self, name) < 0.0:
+                raise ValueError(f"{name} must be non-negative")
+
+    @staticmethod
+    def _validate_state(x: float, y: float) -> tuple[float, float]:
+        x_value = float(x)
+        y_value = float(y)
+        if not math.isfinite(x_value) or not math.isfinite(y_value):
+            raise FloatingPointError("Aihara map state must be finite")
+        return x_value, y_value
+
+    @staticmethod
+    def _sigmoid(z: float) -> float:
+        if z >= 0.0:
+            return 1.0 / (1.0 + math.exp(-z))
+        exp_z = math.exp(z)
+        return exp_z / (1.0 + exp_z)
+
     def step(self, current: float = 0.0) -> int:
-        x_prev = self.x
-        sigmoid = 1.0 / (1.0 + math.exp(-(self.x + self.alpha)))
-        x_new = self.k_f * self.x * sigmoid - self.y + current
-        y_new = self.k_s * self.y + self.delta * self.x
+        drive = float(current)
+        if not math.isfinite(drive):
+            raise ValueError("current must be finite")
+
+        x, y = self._validate_state(self.x, self.y)
+        x_prev = x
+        sigmoid = self._sigmoid(x + self.alpha)
+        x_new = self.k_f * x * sigmoid - y + drive
+        y_new = self.k_s * y + self.delta * x
+        if not math.isfinite(x_new) or not math.isfinite(y_new):
+            raise FloatingPointError("Aihara map candidate state became non-finite")
 
         self.x = max(-10.0, min(10.0, x_new))
         self.y = max(-10.0, min(10.0, y_new))
-
-        if not math.isfinite(self.x):
-            self.x = 0.0
-        if not math.isfinite(self.y):
-            self.y = 0.0
 
         return 1 if self.x >= self.x_threshold and x_prev < self.x_threshold else 0
 

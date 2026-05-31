@@ -4,23 +4,20 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Complementary LIF — ICML 2024, dual positive/negative
+# SC-NeuroCore — Complementary LIF — dual positive/negative paths
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 import math
-import numpy as np
 
 
 @dataclass
 class ComplementaryLIFNeuron:
-    """Complementary LIF — ICML 2024, dual positive/negative spike paths.
+    """Complementary LIF with separate positive and negative leaky paths.
 
-    Maintains separate excitatory/inhibitory membrane potentials; spike
-    emitted when their difference exceeds threshold.
-
-    Reference: Hunsberger, E. & Eliasmith, C. (2015). Neural Comput. 27(12):2548–2586.
+    The public spike contract is ternary: +1 for positive-threshold crossing,
+    -1 for negative-threshold crossing, and 0 for no spike.
     """
 
     v_pos: float = 0.0
@@ -30,24 +27,65 @@ class ComplementaryLIFNeuron:
     dt: float = 1.0
     alpha: float = field(init=False)
 
+    _V_MAX: float = 1.0e12
+
     def __post_init__(self) -> None:
-        for field_name in ("v_pos", "v_neg"):
-            if not math.isfinite(getattr(self, field_name)):
-                raise ValueError(f"{field_name} must be finite")
-        for field_name in ("tau", "dt", "v_threshold"):
-            value = getattr(self, field_name)
-            if not math.isfinite(value) or value <= 0.0:
-                raise ValueError(f"{field_name} must be finite and positive")
-        self.alpha = np.exp(-self.dt / self.tau)
+        self.alpha = self._validated_alpha()
+
+    @staticmethod
+    def _finite(value: float, name: str) -> float:
+        value = float(value)
+        if not math.isfinite(value):
+            raise ValueError(f"{name} must be finite")
+        return value
+
+    @classmethod
+    def _positive(cls, value: float, name: str) -> float:
+        value = cls._finite(value, name)
+        if value <= 0.0:
+            raise ValueError(f"{name} must be positive")
+        return value
+
+    def _validated_alpha(self) -> float:
+        tau = self._positive(self.tau, "tau")
+        dt = self._positive(self.dt, "dt")
+        ratio = -dt / tau
+        if ratio < -700.0:
+            return 0.0
+        alpha = math.exp(ratio)
+        if not 0.0 <= alpha < 1.0:
+            raise ValueError("alpha must be in [0, 1)")
+        return alpha
+
+    def _validated_state(self) -> tuple[float, float, float]:
+        v_pos = self._finite(self.v_pos, "v_pos")
+        v_neg = self._finite(self.v_neg, "v_neg")
+        if abs(v_pos) > self._V_MAX or abs(v_neg) > self._V_MAX:
+            raise ValueError("CLIF membrane paths outside safety envelope")
+        self._positive(self.v_threshold, "v_threshold")
+        alpha = self._validated_alpha()
+        return v_pos, v_neg, alpha
 
     def step(self, current: float) -> int:
-        if not math.isfinite(current):
-            raise ValueError("current must be finite")
+        current = self._finite(current, "current")
+        v_pos, v_neg, alpha = self._validated_state()
         inp_pos = max(current, 0.0)
         inp_neg = max(-current, 0.0)
-        self.v_pos = self.alpha * self.v_pos + inp_pos
-        self.v_neg = self.alpha * self.v_neg + inp_neg
-        diff = self.v_pos - self.v_neg
+        v_pos_next = alpha * v_pos + inp_pos
+        v_neg_next = alpha * v_neg + inp_neg
+        diff = v_pos_next - v_neg_next
+
+        for value, name in (
+            (v_pos_next, "v_pos candidate"),
+            (v_neg_next, "v_neg candidate"),
+            (diff, "difference candidate"),
+        ):
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+        if abs(v_pos_next) > self._V_MAX or abs(v_neg_next) > self._V_MAX:
+            raise ValueError("CLIF membrane candidate outside safety envelope")
+
+        self.alpha = alpha
         if diff >= self.v_threshold:
             self.v_pos = 0.0
             self.v_neg = 0.0
@@ -56,6 +94,8 @@ class ComplementaryLIFNeuron:
             self.v_pos = 0.0
             self.v_neg = 0.0
             return -1
+        self.v_pos = v_pos_next
+        self.v_neg = v_neg_next
         return 0
 
     def reset(self) -> None:

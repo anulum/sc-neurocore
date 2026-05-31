@@ -220,23 +220,30 @@ models in SC-NeuroCore, specifically designed for epilepsy research.
 - **dt = 0.001 s (1 ms):** Matches the typical EEG sampling period.
   The fast inhibitory rate (500 s⁻¹ → τ = 2 ms) requires dt < ~1 ms
   for stability.
-- **Single Euler step:** No sub-stepping. Adequate at dt=0.001s for the
-  rate constants used.
+- **Single Euler step with fail-closed commit:** No sub-stepping. Adequate at
+  dt=0.001s for the rate constants used; the implementation validates
+  parameters, runtime input, current state, and candidate next state before
+  mutating the neural-mass state vector.
 - **8 coupled ODEs:** More expensive per step than simple models, but
   still fast (no sub-stepping, no exp() except in sigmoid).
-- **4 sigmoid evaluations per step:** 4 exp() calls total.
+- **4 sigmoid evaluations per step:** 4 scalar sigmoid calls total. The
+  sigmoid is evaluated in overflow-stable form so extreme finite drives remain
+  bounded in `[0, 2e0]`.
 
 ---
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/wendling.py` — 96 lines.
+- **Source:** `src/sc_neurocore/neurons/models/wendling.py`.
 - **8 state variables:** y0, y1, y2, y3 (positions) + y5, y6, y7, y8 (velocities).
   Note: y4 and y9 are not used (the class has y4 and y9 attributes but they
-  are not updated in step()).
+  are carried for interface compatibility and reset with the rest of the
+  state vector).
 - **Dataclass:** Uses `@dataclass` for parameter storage.
-- **Rust wiring:** Not in the Rust NeuronVariant enum (float return,
-  complex connectivity structure).
+- **Companion safety surfaces:** Rust safety and Go service mirrors validate
+  finite states/parameters and use the same bounded sigmoid and candidate-step
+  semantics. The model is still not in the Rust NeuronVariant enum because it
+  returns a continuous EEG proxy rather than a spike.
 
 ---
 
@@ -259,10 +266,10 @@ updates, no sub-stepping.
 | Isolation | 5 | defaults, float return, state evolution, finite 100k, reset |
 | Sigmoid | 3 | S(v0)=e0, monotonic, bounded |
 | EEG dynamics | 5 | oscillation present (zero crossings), output bounded, p_ext affects activity, steady state convergence |
-| Parameters | 4 | a_exc/b_fast/g_slow sweeps, dt stability |
+| Parameters | 7 | a_exc/b_fast/g_slow sweeps, dt stability, invalid parameter rejection, non-finite input/state no-mutation guards |
 | Analytical | 3 | dual inhibition timescale, extension from JR, EEG proxy formula |
 | Pipeline | 2 | Population creates, float return documented |
-| **Total** | **22** | |
+| **Total** | **25** | |
 
 See `tests/test_model_wendling.py`. No bugs found.
 
@@ -287,7 +294,7 @@ See `tests/test_model_wendling.py`. No bugs found.
    the regime — higher p_ext increases excitatory drive, shifting the
    model toward more active states.
 
-6. **State fully resettable:** reset() zeros all 8 state variables,
+6. **State fully resettable:** reset() zeros all state variables,
    returning to the initial condition.
 
 7. **Float return limitation:** The model outputs a continuous EEG proxy
@@ -300,7 +307,11 @@ See `tests/test_model_wendling.py`. No bugs found.
 9. **Deterministic:** No stochastic component. Two identical runs produce
    identical output trajectories.
 
-10. **Clinically relevant:** The model's primary application is simulating
+10. **Fail-closed numerical boundary:** non-finite configuration values,
+    non-positive gains/time constants/timestep, non-finite external input, and
+    corrupted runtime state are rejected before mutation.
+
+11. **Clinically relevant:** The model's primary application is simulating
     and classifying epileptiform EEG patterns — a direct clinical use case
     in computational epilepsy research.
 

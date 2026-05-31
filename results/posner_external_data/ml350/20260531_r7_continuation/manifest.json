@@ -1,0 +1,17 @@
+{
+  "schema": "sc-neurocore.ml350-posner-orca-continuation.v1",
+  "job_name": "posner_ml350_neutral_opt_20260531_r7_continue",
+  "run_root": "/home/anulum/sc-neurocore-orca-runs/ml350_r6_continuation_20260531",
+  "source_run_root": "/home/anulum/sc-neurocore-orca-runs/ml350_r6_seeded_20260507",
+  "source_output": "/home/anulum/sc-neurocore-orca-runs/ml350_r6_seeded_20260507/run/posner_ml350_neutral_opt_20260507_r6_seeded.out",
+  "source_xyz": "/home/anulum/sc-neurocore-orca-runs/ml350_r6_seeded_20260507/run/posner_ml350_neutral_opt_20260507_r6_seeded.xyz",
+  "source_gbw": "/home/anulum/sc-neurocore-orca-runs/ml350_r6_seeded_20260507/run/posner_ml350_neutral_opt_20260507_r6_seeded.gbw",
+  "method": "B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 Opt Freq MOREAD",
+  "charge": 0,
+  "multiplicity": 1,
+  "nprocs": 1,
+  "maxcore_mb": 12000,
+  "geom_maxiter": 300,
+  "acceptance_markers": ["THE OPTIMIZATION HAS CONVERGED", "ORCA TERMINATED NORMALLY"],
+  "created_utc": "2026-05-31T01:22:00Z"
+}
