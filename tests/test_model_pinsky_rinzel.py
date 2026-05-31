@@ -243,6 +243,58 @@ class TestPinskyRinzelGating:
 
 
 class TestPinskyRinzelParameters:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("dt", 0.0),
+            ("gc", 0.0),
+            ("p", 0.0),
+            ("p", 1.0),
+            ("g_na", 0.0),
+            ("g_kdr", 0.0),
+            ("g_ca", 0.0),
+            ("g_kahp", 0.0),
+            ("g_kc", 0.0),
+            ("g_l", 0.0),
+            ("h", -0.01),
+            ("n", 1.01),
+            ("s", float("nan")),
+            ("c", -0.01),
+            ("q", 1.01),
+        ],
+    )
+    def test_rejects_invalid_physical_configuration(self, field: str, value: float):
+        with pytest.raises(ValueError):
+            PinskyRinzelNeuron(**{field: value})
+
+    def test_rejects_runtime_parameter_corruption_before_mutation(self):
+        n = PinskyRinzelNeuron()
+        n.p = 1.0
+        before = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q)
+
+        with pytest.raises(ValueError):
+            n.step(30.0)
+
+        assert (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q) == before
+
+    def test_rejects_non_finite_input_before_mutation(self):
+        n = PinskyRinzelNeuron()
+        before = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q)
+
+        with pytest.raises(ValueError):
+            n.step(float("nan"))
+
+        assert (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q) == before
+
+    def test_gate_candidate_excursion_fails_before_mutation(self):
+        n = PinskyRinzelNeuron(dt=10.0)
+        before = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q)
+
+        with pytest.raises(FloatingPointError, match="gate"):
+            n.step(30.0)
+
+        assert (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q) == before
+
     def test_gc_coupling_strength(self):
         """Stronger coupling (gc) should synchronise compartments better."""
         n_weak = PinskyRinzelNeuron(gc=0.5)

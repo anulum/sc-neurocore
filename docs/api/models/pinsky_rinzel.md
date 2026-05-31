@@ -41,6 +41,12 @@ Spike: upward crossing of $V_s$ through $V_\theta = -20$ mV.
   and KC currents (spike-frequency adaptation). Ca clamped ≥ 0.
 - **Warm-up transient:** First ~10 ISIs are longer than steady-state.
 - **Deterministic:** No stochastic element.
+- **Fail-closed integration:** Python, Go, Julia, and Rust validate finite
+  soma/dendrite state, positive conductances, compartment fraction
+  `p in (0, 1)`, timestep, calcium non-negativity, and gate envelopes before
+  mutation. Candidate updates that would leave `h`, `n`, `s`, or `q` outside
+  `[0, 1]`, make calcium negative, or produce non-finite state are rejected
+  without poisoning the stored state.
 
 ## Dynamic Regimes
 
@@ -58,7 +64,9 @@ PinskyRinzelNeuron
 ├── step(I_soma, I_dend) → int {0,1} (deterministic)
 ├── Population: PoissonInput(weight=30, rate=500Hz)
 ├── Verilog: 7 Euler integrators + HH rate functions, ~300 LUTs
-└── Rust: multi-arg adapter needed
+├── Go service: two-input-safe StepDend plus single-input Step adapter
+├── Julia kernel: two-input-safe step! with dendritic keyword drive
+└── Rust safety: two-input-safe step_dend plus single-input step adapter
 ```
 
 ## Test Coverage
@@ -70,11 +78,11 @@ PinskyRinzelNeuron
 | f–I curve | 4 | subthreshold, oscillation, non-monotonic peak, depolarisation block |
 | ISI | 2 | steady-state regularity (CV<0.05), transient shortening |
 | Gating | 2 | bounded [0,1], Na inactivation at high I |
-| Parameters | 4 | gc coupling strength, dt stability (3 values) |
+| Parameters | 8 | invalid physical configuration, runtime corruption no-mutation, non-finite input no-mutation, gate candidate rejection, gc coupling strength, dt stability |
 | Determinism | 1 | bit-exact reproducibility |
 | Network | 2 | population, spikes |
 | Analysis | 2 | spike_count, consistency |
-| **Total** | **27** | |
+| **Total** | **31** | |
 
 Key finding: non-monotonic f–I curve confirmed — f(50) > f(200) due to
 Na inactivation. Dendritic K currents hyperpolarise v_d despite somatic
@@ -129,5 +137,8 @@ State returns to initial values after `reset()`.
 
 1. Throughput: ~23K steps/s (Python, single-thread)
 2. All pipeline stages verified green
-3. Rust parity: PASS
-4. Numerical stability confirmed over 20K steps
+3. Go, Julia, and Rust safety companions implement the same candidate-state
+   validation contract for finite state, gate envelopes, calcium
+   non-negativity, compartment fraction, conductances, and timestep.
+4. Numerical stability confirmed over 20K steps; invalid candidate updates
+   fail before mutation.
