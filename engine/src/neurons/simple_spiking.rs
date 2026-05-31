@@ -624,19 +624,43 @@ impl McKeanNeuron {
             && self.gamma > 0.0
             && self.dt > 0.0
     }
+    fn derivatives(&self, v: f64, w: f64, current: f64) -> Option<(f64, f64)> {
+        if !(v.is_finite() && w.is_finite() && current.is_finite()) {
+            return None;
+        }
+        let dv = self.f_v(v) - w + current;
+        let dw = self.epsilon * (v - self.gamma * w);
+        if dv.is_finite() && dw.is_finite() {
+            Some((dv, dw))
+        } else {
+            None
+        }
+    }
+    fn rk4_candidate(&self, current: f64) -> Option<(f64, f64)> {
+        let v0 = self.v;
+        let w0 = self.w;
+        let dt = self.dt;
+        let k1 = self.derivatives(v0, w0, current)?;
+        let k2 = self.derivatives(v0 + 0.5 * dt * k1.0, w0 + 0.5 * dt * k1.1, current)?;
+        let k3 = self.derivatives(v0 + 0.5 * dt * k2.0, w0 + 0.5 * dt * k2.1, current)?;
+        let k4 = self.derivatives(v0 + dt * k3.0, w0 + dt * k3.1, current)?;
+        let next_v = v0 + dt * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0) / 6.0;
+        let next_w = w0 + dt * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1) / 6.0;
+        if next_v.is_finite() && next_w.is_finite() {
+            Some((next_v, next_w))
+        } else {
+            None
+        }
+    }
     pub fn step(&mut self, current: f64) -> i32 {
         if !self.valid_numeric_contract() || !current.is_finite() {
             return 0;
         }
         let v_prev = self.v;
-        // McKean: simultaneous Euler (both derivatives use old state)
-        let dv = (self.f_v(self.v) - self.w + current) * self.dt;
-        let dw = self.epsilon * (self.v - self.gamma * self.w) * self.dt;
-        let next_v = self.v + dv;
-        let next_w = self.w + dw;
-        if !(next_v.is_finite() && next_w.is_finite()) {
-            return 0;
-        }
+        let (next_v, next_w) = match self.rk4_candidate(current) {
+            Some(candidate) => candidate,
+            None => return 0,
+        };
         self.v = next_v;
         self.w = next_w;
         if self.v >= self.v_peak && v_prev < self.v_peak {
@@ -2158,6 +2182,43 @@ mod tests {
             n.step(50.0);
         }
         assert!(n.v.is_finite());
+    }
+    #[test]
+    fn mckean_matches_rk4_candidate() {
+        fn f(v: f64, a: f64) -> f64 {
+            let half_a = a / 2.0;
+            let mid = (1.0 + a) / 2.0;
+            if v < half_a {
+                -v
+            } else if v < mid {
+                v - a
+            } else {
+                1.0 - v
+            }
+        }
+        fn rhs(n: &McKeanNeuron, v: f64, w: f64, current: f64) -> (f64, f64) {
+            (f(v, n.a) - w + current, n.epsilon * (v - n.gamma * w))
+        }
+
+        let mut n = McKeanNeuron {
+            v: 0.2,
+            w: -0.1,
+            ..Default::default()
+        };
+        let current = 0.5;
+        let v0 = n.v;
+        let w0 = n.w;
+        let dt = n.dt;
+        let k1 = rhs(&n, v0, w0, current);
+        let k2 = rhs(&n, v0 + 0.5 * dt * k1.0, w0 + 0.5 * dt * k1.1, current);
+        let k3 = rhs(&n, v0 + 0.5 * dt * k2.0, w0 + 0.5 * dt * k2.1, current);
+        let k4 = rhs(&n, v0 + dt * k3.0, w0 + dt * k3.1, current);
+        let expected_v = v0 + dt * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0) / 6.0;
+        let expected_w = w0 + dt * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1) / 6.0;
+
+        assert_eq!(n.step(current), 0);
+        assert!((n.v - expected_v).abs() < 1e-14);
+        assert!((n.w - expected_w).abs() < 1e-14);
     }
     #[test]
     fn mckean_nan_no_panic() {

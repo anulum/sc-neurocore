@@ -4,11 +4,11 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for mckean
+# SC-NeuroCore — Julia for McKean
 
 module MckeanAccel
 
-export step!, simulate, McKeanNeuronState
+export step!, simulate, validate, McKeanNeuronState
 
 mutable struct McKeanNeuronState
     v::Float64
@@ -30,11 +30,15 @@ function validate(s::McKeanNeuronState, dt::Float64=s.dt)::Bool
     isfinite(s.a) && 0.0 < s.a < 1.0 &&
     isfinite(s.epsilon) && s.epsilon > 0.0 &&
     isfinite(s.gamma) && s.gamma > 0.0 &&
+    isfinite(s.dt) && s.dt > 0.0 &&
     isfinite(dt) && dt > 0.0 &&
     isfinite(s.v_peak)
 end
 
-function _f(s::McKeanNeuronState, v)
+function _f(s::McKeanNeuronState, v::Float64)
+    if !isfinite(v)
+        return NaN
+    end
     mid1 = s.a / 2.0
     mid2 = (1.0 + s.a) / 2.0
     if v < mid1
@@ -46,21 +50,40 @@ function _f(s::McKeanNeuronState, v)
     end
 end
 
+function derivatives(s::McKeanNeuronState, v::Float64, w::Float64, current::Float64)
+    if !all(isfinite, (v, w, current))
+        return nothing
+    end
+    dv = _f(s, v) - w + current
+    dw = s.epsilon * (v - s.gamma * w)
+    all(isfinite, (dv, dw)) ? (dv, dw) : nothing
+end
+
+function rk4_candidate(s::McKeanNeuronState, current::Float64, dt::Float64)
+    k1 = derivatives(s, s.v, s.w, current)
+    k1 === nothing && return nothing
+    k2 = derivatives(s, s.v + 0.5 * dt * k1[1], s.w + 0.5 * dt * k1[2], current)
+    k2 === nothing && return nothing
+    k3 = derivatives(s, s.v + 0.5 * dt * k2[1], s.w + 0.5 * dt * k2[2], current)
+    k3 === nothing && return nothing
+    k4 = derivatives(s, s.v + dt * k3[1], s.w + dt * k3[2], current)
+    k4 === nothing && return nothing
+    candidate = (
+        s.v + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+        s.w + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
+    )
+    all(isfinite, candidate) ? candidate : nothing
+end
+
 function step!(s::McKeanNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
     if !validate(s, dt) || !isfinite(I_ext)
         return 0
     end
 
-    dv = (_f(s, s.v) - s.w + I_ext) * dt
-    dw = s.epsilon * (s.v - s.gamma * s.w) * dt
     v_prev = s.v
-    new_v = s.v + dv
-    new_w = s.w + dw
-    if !(isfinite(new_v) && isfinite(new_w))
-        return 0
-    end
-    s.v = new_v
-    s.w = new_w
+    candidate = rk4_candidate(s, I_ext, dt)
+    candidate === nothing && return 0
+    s.v, s.w = candidate
     return (s.v >= s.v_peak && v_prev < s.v_peak) ? 1 : 0
 end
 
