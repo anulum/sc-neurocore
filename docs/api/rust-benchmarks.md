@@ -252,10 +252,13 @@ cargo bench --bench analysis_bench -- --quick
 | Chay-Keizer | 1k | 30.5 µs | **30.5 ns** | Beta cell with KCa |
 | Chay | 1k | 32.8 µs | **32.8 ns** | Beta cell 3-variable |
 | Morris-Lecar | 10k | 561 µs | **56.1 ns** | Ca/K 2D model |
-| Butera respiratory | 1k | 73.3 µs | **73.3 ns** | Pre-Bötzinger + INaP |
+| Butera respiratory | 1k | 341.62 µs | **341.62 ns** | bounded RK4 Pre-Bötzinger + INaP |
 
-> Simple spiking models use Euler integration without sub-stepping.
-> Measured 2026-04-05 on i5-11600K @ 3.90 GHz.
+> Most simple spiking models in this table retain their previously documented
+> integration contract. Butera respiratory was remeasured on 2026-05-31 after
+> bounded RK4 hardening across Python, Rust, Go, Julia, and Rust safety
+> surfaces. Older rows in this section retain their 2026-04-05 measurement
+> date until their own model-specific hardening pass is completed.
 
 ### Rate / Mean-Field (`neurons/rate.rs`)
 

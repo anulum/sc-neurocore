@@ -1,0 +1,52 @@
+{
+  "benchmark": "ButeraRespiratoryNeuron Python RK4 step",
+  "date": "2026-05-31",
+  "command": "PYTHONPATH=src .venv/bin/python - <<PY ...",
+  "python": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "results": [
+    {
+      "current": 0.0,
+      "steps": 50000,
+      "warmup_steps": 1000,
+      "elapsed_seconds": 1.5040395628893748,
+      "seconds_per_step": 3.0080791257787495e-05,
+      "steps_per_second": 33243.8063689935,
+      "spikes": 0,
+      "final_state": {
+        "v": -63.22246699815373,
+        "n": 0.00019242272892787374,
+        "h_nap": 0.7686823187051283
+      }
+    },
+    {
+      "current": 50.0,
+      "steps": 50000,
+      "warmup_steps": 1000,
+      "elapsed_seconds": 1.4572456980822608,
+      "seconds_per_step": 2.9144913961645214e-05,
+      "steps_per_second": 34311.30389734561,
+      "spikes": 63,
+      "final_state": {
+        "v": -47.485548787167225,
+        "n": 0.1991910535988717,
+        "h_nap": 0.16144587285161338
+      }
+    },
+    {
+      "current": 100.0,
+      "steps": 50000,
+      "warmup_steps": 1000,
+      "elapsed_seconds": 1.4347591580590233,
+      "seconds_per_step": 2.8695183161180466e-05,
+      "steps_per_second": 34849.05443478138,
+      "spikes": 4697,
+      "final_state": {
+        "v": -22.13710175204999,
+        "n": 1.0,
+        "h_nap": 0.06794404337577524
+      }
+    }
+  ]
+}

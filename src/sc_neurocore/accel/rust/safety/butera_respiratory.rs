@@ -6,9 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for butera_respiratory
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ButeraRespiratoryNeuron {
     pub v: f64,
     pub n: f64,
@@ -26,68 +24,175 @@ pub struct ButeraRespiratoryNeuron {
     pub v_threshold: f64,
 }
 
+#[derive(Debug, Clone, Copy)]
+struct Deriv {
+    v: f64,
+    n: f64,
+    h_nap: f64,
+}
+
 impl ButeraRespiratoryNeuron {
     pub fn new() -> Self {
         Self {
-            v: -50.0_f64,
-            n: 0.01_f64,
-            h_nap: 0.5_f64,
-            g_na: 28.0_f64,
-            g_nap: 2.8_f64,
-            g_k: 11.2_f64,
-            g_l: 2.8_f64,
-            e_na: 50.0_f64,
-            e_k: -85.0_f64,
-            e_l: -65.0_f64,
-            e_syn: -10.0_f64,
-            tau_h: 10000.0_f64,
-            dt: 0.1_f64,
-            v_threshold: -20.0_f64,
+            v: -50.0,
+            n: 0.01,
+            h_nap: 0.5,
+            g_na: 28.0,
+            g_nap: 2.8,
+            g_k: 11.2,
+            g_l: 2.8,
+            e_na: 50.0,
+            e_k: -85.0,
+            e_l: -65.0,
+            e_syn: -10.0,
+            tau_h: 10000.0,
+            dt: 0.1,
+            v_threshold: -20.0,
         }
     }
 
-    pub fn _sexp(&self, x: f64) -> f64 {
-        // return float(((x_f64).clamp(-500, 500_f64).exp()))
-        0.0
+    fn valid_state(v: f64, n: f64, h_nap: f64) -> bool {
+        [v, n, h_nap].iter().all(|x| x.is_finite())
+            && (-200.0..=100.0).contains(&v)
+            && (-0.05..=1.05).contains(&n)
+            && (-0.05..=1.05).contains(&h_nap)
     }
 
-    pub fn _scosh(&self, x: f64) -> f64 {
-        // cx = (x_f64).clamp(-500, 500)
-        // return float(np.cosh(cx))
-        0.0
+    fn valid_static(&self) -> bool {
+        [
+            self.g_na,
+            self.g_nap,
+            self.g_k,
+            self.g_l,
+            self.e_na,
+            self.e_k,
+            self.e_l,
+            self.e_syn,
+            self.tau_h,
+            self.dt,
+            self.v_threshold,
+        ]
+        .iter()
+        .all(|x| x.is_finite())
+            && self.g_na >= 0.0
+            && self.g_nap >= 0.0
+            && self.g_k >= 0.0
+            && self.g_l >= 0.0
+            && self.tau_h > 0.0
+            && self.dt > 0.0
+    }
+
+    fn derivatives(&self, state: Deriv, current: f64) -> Option<Deriv> {
+        let mut state = state;
+        if !(state.v.is_finite()
+            && state.n.is_finite()
+            && state.h_nap.is_finite()
+            && current.is_finite())
+        {
+            return None;
+        }
+        state.v = state.v.clamp(-200.0, 100.0);
+        state.n = state.n.clamp(0.0, 1.0);
+        state.h_nap = state.h_nap.clamp(0.0, 1.0);
+        let m_na = 1.0 / (1.0 + (-(state.v + 34.0) / 5.0).exp());
+        let m_nap = 1.0 / (1.0 + (-(state.v + 40.0) / 6.0).exp());
+        let h_inf = 1.0 / (1.0 + ((state.v + 48.0) / 6.0).exp());
+        let n_inf = 1.0 / (1.0 + (-(state.v + 29.0) / 4.0).exp());
+        let tau_n = (10.0 / ((state.v + 29.0) / 8.0).cosh().max(1e-12)).max(0.01);
+        let tau_h = (self.tau_h / ((state.v + 48.0) / 12.0).cosh().max(1e-12)).max(0.1);
+        let i_na = self.g_na * m_na.powi(3) * (1.0 - state.n) * (state.v - self.e_na);
+        let i_nap = self.g_nap * m_nap * state.h_nap * (state.v - self.e_na);
+        let i_k = self.g_k * state.n.powi(4) * (state.v - self.e_k);
+        let i_l = self.g_l * (state.v - self.e_l);
+        let deriv = Deriv {
+            v: -i_na - i_nap - i_k - i_l + current,
+            n: (n_inf - state.n) / tau_n,
+            h_nap: (h_inf - state.h_nap) / tau_h,
+        };
+        [deriv.v, deriv.n, deriv.h_nap]
+            .iter()
+            .all(|x| x.is_finite())
+            .then_some(deriv)
+    }
+
+    fn rk4_candidate(&self, current: f64) -> Option<Deriv> {
+        if !self.valid_static()
+            || !current.is_finite()
+            || !Self::valid_state(self.v, self.n, self.h_nap)
+        {
+            return None;
+        }
+        let state = Deriv {
+            v: self.v,
+            n: self.n,
+            h_nap: self.h_nap,
+        };
+        let k1 = self.derivatives(state, current)?;
+        let k2 = self.derivatives(
+            Deriv {
+                v: state.v + 0.5 * self.dt * k1.v,
+                n: state.n + 0.5 * self.dt * k1.n,
+                h_nap: state.h_nap + 0.5 * self.dt * k1.h_nap,
+            },
+            current,
+        )?;
+        let k3 = self.derivatives(
+            Deriv {
+                v: state.v + 0.5 * self.dt * k2.v,
+                n: state.n + 0.5 * self.dt * k2.n,
+                h_nap: state.h_nap + 0.5 * self.dt * k2.h_nap,
+            },
+            current,
+        )?;
+        let k4 = self.derivatives(
+            Deriv {
+                v: state.v + self.dt * k3.v,
+                n: state.n + self.dt * k3.n,
+                h_nap: state.h_nap + self.dt * k3.h_nap,
+            },
+            current,
+        )?;
+        let candidate = Deriv {
+            v: state.v + self.dt * (k1.v + 2.0 * k2.v + 2.0 * k3.v + k4.v) / 6.0,
+            n: state.n + self.dt * (k1.n + 2.0 * k2.n + 2.0 * k3.n + k4.n) / 6.0,
+            h_nap: state.h_nap
+                + self.dt * (k1.h_nap + 2.0 * k2.h_nap + 2.0 * k3.h_nap + k4.h_nap) / 6.0,
+        };
+        if candidate.v.is_finite() && candidate.n.is_finite() && candidate.h_nap.is_finite() {
+            Some(Deriv {
+                v: candidate.v.clamp(-200.0, 100.0),
+                n: candidate.n.clamp(0.0, 1.0),
+                h_nap: candidate.h_nap.clamp(0.0, 1.0),
+            })
+        } else {
+            None
+        }
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // v_prev = self.v
-        // m_na_inf = 1.0 / (1.0 + self._sexp(-(self.v + 34.0) / 5.0))
-        // m_nap_inf = 1.0 / (1.0 + self._sexp(-(self.v + 40.0) / 6.0))
-        // h_nap_inf = 1.0 / (1.0 + self._sexp((self.v + 48.0) / 6.0))
-        // n_inf = 1.0 / (1.0 + self._sexp(-(self.v + 29.0) / 4.0))
-        // tau_n = 10.0 / max(self._scosh((self.v + 29.0) / 8.0), 1e-12)
-        // tau_h = self.tau_h / max(self._scosh((self.v + 48.0) / 12.0), 1e-12)
-        // i_na = self.g_na * m_na_inf.powi3 * (1.0 - self.n) * (self.v - self.e_
-        // i_nap = self.g_nap * m_nap_inf * self.h_nap * (self.v - self.e_na)
-        // i_k = self.g_k * self.n.powi4 * (self.v - self.e_k)
-        // i_l = self.g_l * (self.v - self.e_l)
-        // self.v += (-i_na - i_nap - i_k - i_l + current) * self.dt
-        // self.v = float((self.v_f64).clamp(-200, 100))
-        // self.n += (n_inf - self.n) / max(tau_n, 0.01) * self.dt
-        // self.n = float((self.n_f64).clamp(0, 1))
-        0 // spike indicator
+        let v_prev = self.v;
+        let Some(next) = self.rk4_candidate(i_ext) else {
+            return 0;
+        };
+        self.v = next.v;
+        self.n = next.n;
+        self.h_nap = next.h_nap;
+        if self.v >= self.v_threshold && v_prev < self.v_threshold {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
-        // self.v, self.n, self.h_nap = -50.0, 0.01, 0.5
-        self.v = -50.0_f64;
-        self.n = 0.01_f64;
-        self.h_nap = 0.5_f64;
-        self.g_na = 28.0_f64;
-        self.g_nap = 2.8_f64;
+        self.v = -50.0;
+        self.n = 0.01;
+        self.h_nap = 0.5;
     }
 }
 
 pub fn validate_butera_respiratory(state: &ButeraRespiratoryNeuron) -> bool {
-    state.v.is_finite()
+    state.valid_static() && ButeraRespiratoryNeuron::valid_state(state.v, state.n, state.h_nap)
 }
 
 #[cfg(test)]
@@ -97,7 +202,6 @@ mod tests {
     #[test]
     fn test_butera_respiratory_new() {
         let state = ButeraRespiratoryNeuron::new();
-        assert!(state.v.is_finite());
         assert!(validate_butera_respiratory(&state));
     }
 
@@ -106,5 +210,14 @@ mod tests {
         let mut state = ButeraRespiratoryNeuron::new();
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
+        assert!(validate_butera_respiratory(&state));
+    }
+
+    #[test]
+    fn invalid_current_preserves_state() {
+        let mut state = ButeraRespiratoryNeuron::new();
+        let before = state.clone();
+        assert_eq!(state.step(f64::NAN), 0);
+        assert_eq!(state, before);
     }
 }
