@@ -1,5 +1,11 @@
 {
   "schema": "sc-neurocore.ml350-posner-orca-continuation.v1",
+  "spdx_license_identifier": "AGPL-3.0-or-later",
+  "commercial_license": "available",
+  "concepts_copyright": "Concepts 1996-2026 Miroslav Sotek. All rights reserved.",
+  "code_copyright": "Code 2020-2026 Miroslav Sotek. All rights reserved.",
+  "orcid": "0009-0009-3560-0851",
+  "contact": "www.anulum.li | protoscience@anulum.li",
   "job_name": "posner_ml350_neutral_opt_20260531_r7_continue",
   "run_root": "/home/anulum/sc-neurocore-orca-runs/ml350_r6_continuation_20260531",
   "source_run_root": "/home/anulum/sc-neurocore-orca-runs/ml350_r6_seeded_20260507",
@@ -12,6 +18,9 @@
   "nprocs": 1,
   "maxcore_mb": 12000,
   "geom_maxiter": 300,
-  "acceptance_markers": ["THE OPTIMIZATION HAS CONVERGED", "ORCA TERMINATED NORMALLY"],
+  "acceptance_markers": [
+    "THE OPTIMIZATION HAS CONVERGED",
+    "ORCA TERMINATED NORMALLY"
+  ],
   "created_utc": "2026-05-31T01:22:00Z"
 }

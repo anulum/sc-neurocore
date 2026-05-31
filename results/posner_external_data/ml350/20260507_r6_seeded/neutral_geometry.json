@@ -1,5 +1,11 @@
 {
   "schema": "sc-neurocore.posner-neutral-optimization.v1",
+  "spdx_license_identifier": "AGPL-3.0-or-later",
+  "commercial_license": "available",
+  "concepts_copyright": "Concepts 1996-2026 Miroslav Sotek. All rights reserved.",
+  "code_copyright": "Code 2020-2026 Miroslav Sotek. All rights reserved.",
+  "orcid": "0009-0009-3560-0851",
+  "contact": "www.anulum.li | protoscience@anulum.li",
   "created_utc": "20260531T011815Z",
   "source": "ORCA neutral closed-shell geometry optimization",
   "not_runtime_hyperfine_data": true,
