@@ -134,6 +134,32 @@ class TestAnalyzeBank:
         r = model.analyze_bank(waveguides=4, gap_nm=200.0, coupling_length_um=10.0)
         assert r["adjacent_coupling_ratio"] >= r["next_nearest_coupling_ratio"]
 
+    def test_python_fallback_bank_preserves_physical_accounting(self, monkeypatch):
+        import sc_neurocore.optics.photonic_emitter as mod
+
+        monkeypatch.setattr(mod, "_HAS_RUST_PH", False)
+        r = mod.CrosstalkModel().analyze_bank(
+            waveguides=6,
+            gap_nm=250.0,
+            coupling_length_um=12.0,
+            wavelength_nm=1550.0,
+            core_index=3.48,
+            cladding_index=1.45,
+        )
+
+        near = mod.WaveguidePair(gap_nm=250.0, coupling_length_um=12.0)
+        far = mod.WaveguidePair(gap_nm=500.0, coupling_length_um=12.0)
+        expected_mean = (5 * near.coupling_ratio + 4 * far.coupling_ratio) / 9
+
+        assert r["backend"] == "python"
+        assert r["num_near_pairs"] == 5
+        assert r["num_far_pairs"] == 4
+        assert r["worst_isolation_db"] == pytest.approx(min(near.isolation_db, far.isolation_db))
+        assert r["mean_coupling_ratio"] == pytest.approx(expected_mean)
+        assert r["max_coupling_ratio"] == pytest.approx(
+            max(near.coupling_ratio, far.coupling_ratio)
+        )
+
 
 # ---------------------------------------------------------------------------
 # analyze_pairs — per-pair O(N²) path.
@@ -174,6 +200,33 @@ class TestAnalyzePairs:
     def test_empty_input_returns_zero_pairs(self, model):
         r = model.analyze_pairs(pair_indices=[], gaps_nm=[], coupling_lengths_um=[])
         assert r["num_pairs"] == 0
+
+    def test_python_fallback_pairs_preserves_per_pair_geometry(self, monkeypatch):
+        import sc_neurocore.optics.photonic_emitter as mod
+
+        monkeypatch.setattr(mod, "_HAS_RUST_PH", False)
+        pair_indices = [(0, 1), (1, 3), (2, 4)]
+        gaps = [180.0, 260.0, 520.0]
+        lengths = [8.0, 12.0, 16.0]
+
+        r = mod.CrosstalkModel().analyze_pairs(pair_indices, gaps, lengths)
+
+        expected = [
+            mod.WaveguidePair(gap_nm=gap, coupling_length_um=length)
+            for gap, length in zip(gaps, lengths)
+        ]
+        assert r["backend"] == "python"
+        assert r["pair_a"] == [0, 1, 2]
+        assert r["pair_b"] == [1, 3, 4]
+        assert r["gap_nm"] == gaps
+        assert r["coupling_length_um"] == lengths
+        assert r["num_pairs"] == len(pair_indices)
+        np.testing.assert_allclose(
+            r["coupling_coefficient_per_um"],
+            [pair.coupling_coefficient for pair in expected],
+        )
+        np.testing.assert_allclose(r["coupling_ratio"], [pair.coupling_ratio for pair in expected])
+        np.testing.assert_allclose(r["isolation_db"], [pair.isolation_db for pair in expected])
 
 
 # ---------------------------------------------------------------------------
