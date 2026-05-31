@@ -1,0 +1,8 @@
+! B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 Opt Freq MOREAD
+
+%maxcore 12000
+%moinp "seed.gbw"
+%geom
+  MaxIter 300
+end
+* xyzfile 0 1 input.xyz

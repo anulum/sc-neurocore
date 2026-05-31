@@ -19,6 +19,7 @@ NPROCS="${NPROCS:-6}"
 MAXCORE_MB="${MAXCORE_MB:-3500}"
 ORCA_ARCHIVE_SHA1="${ORCA_ARCHIVE_SHA1:-98490e09ad999792bd23ed7a06a6799aef01fb5a}"
 SEED_GBW="${SEED_GBW:-}"
+GEOM_MAXITER="${GEOM_MAXITER:-}"
 
 mkdir -p "$RUN_ROOT"/{input,run,output,logs} "$INSTALL_ROOT"
 
@@ -64,11 +65,23 @@ else
     pal_block=""
 fi
 
+if [[ -n "$GEOM_MAXITER" ]]; then
+    geom_block=$(cat <<EOF
+%geom
+  MaxIter ${GEOM_MAXITER}
+end
+EOF
+)
+else
+    geom_block=""
+fi
+
 cat >"$RUN_ROOT/run/${JOB_NAME}.inp" <<EOF
 ! B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 Opt Freq${moread}
 ${pal_block}
 %maxcore ${MAXCORE_MB}
 ${moinp}
+${geom_block}
 * xyzfile 0 1 input.xyz
 EOF
 
@@ -84,6 +97,7 @@ cat >"$RUN_ROOT/manifest.json" <<EOF
   "method": "B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 Opt Freq",
   "charge": 0,
   "multiplicity": 1,
+  "geom_maxiter": $(if [[ -n "$GEOM_MAXITER" ]]; then echo "$GEOM_MAXITER"; else echo null; fi),
   "seeded_from_gbw": $(if [[ -f "$RUN_ROOT/run/seed.gbw" ]]; then echo true; else echo false; fi)
 }
 EOF

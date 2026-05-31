@@ -109,6 +109,32 @@ as runtime molecular data. The original promotion gate remains fail-closed:
 neutral geometry requires both `THE OPTIMIZATION HAS CONVERGED` and
 `ORCA TERMINATED NORMALLY` with exit status `0`.
 
+## ML350 r7 Neutral Continuation
+
+The next neutral optimisation continuation was launched from the r6 endpoint:
+
+- Run root:
+  `/home/anulum/sc-neurocore-orca-runs/ml350_r6_continuation_20260531`
+- Job name: `posner_ml350_neutral_opt_20260531_r7_continue`
+- tmux session: `scn_orca_r7_ml350`
+- Compute lock: active SC-NeuroCore ORCA lock under
+  `/home/anulum/compute-queue/`
+- Method:
+  `B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 Opt Freq MOREAD`
+- Resource limit: single ORCA worker with `%maxcore 12000`
+- Geometry continuation limit: `%geom MaxIter 300 end`
+
+Launch provenance is tracked in `ml350/20260531_r7_continuation/`, including
+the exact continuation input deck, manifest, and SHA-256 hashes for the copied
+endpoint `.xyz` and `.gbw`.
+
+Status probe:
+
+```bash
+ssh anulum@192.168.1.30 \
+  /home/anulum/sc-neurocore-orca-runs/ml350_r6_continuation_20260531/status_probe.sh
+```
+
 ## Vertex Run History
 
 The previous molecular acquisition lane was Vertex r6:
@@ -260,8 +286,7 @@ Detailed internal tracking is in
 
 ## Follow-Up Tasks After ML350 r6 Endpoint Processing
 
-1. Continue the neutral optimization from the ML350 endpoint `.gbw`/`.xyz`
-   rather than restarting from the original generated geometry.
+1. Monitor the r7 continuation until it exits.
 2. Accept the neutral geometry only if both markers are present:
 
    - `ORCA TERMINATED NORMALLY`
