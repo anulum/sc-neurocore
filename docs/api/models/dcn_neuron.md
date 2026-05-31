@@ -71,11 +71,15 @@ $$\frac{d[Ca]}{dt} = -(I_{Ca_T})_{inward} \cdot 0.001 - \frac{[Ca]}{\tau_{Ca}} +
 ## Runtime Safety Contract
 
 The maintained Python, Rust-engine, Go, Julia, and Rust safety surfaces now use
-the same seven-current sub-stepped update. Each step validates finite state,
-finite input current, gate bounds, non-negative conductances, positive
-capacitance, positive calcium and timestep constants, and non-negative gain
-before integration. Candidate state is computed locally and committed only when
-all state variables remain finite; invalid runtime input or corrupted state
+the same seven-current sub-stepped update. First-order Hodgkin-Huxley gates,
+persistent-sodium activation, T-type calcium inactivation, Ih activation, and
+calcium concentration advance with closed-form exponential relaxation. Voltage
+uses the exact ohmic conductance solution over each voltage-frozen sub-step
+rather than a raw Euler increment. Each step validates finite state, finite
+input current, physical voltage bounds, gate bounds, non-negative conductances,
+positive capacitance, positive calcium and timestep constants, and non-negative
+gain before integration. Candidate state is computed locally and committed only
+when all state variables remain finite; invalid runtime input or corrupted state
 preserves the previous state on non-throwing runtimes, while the Python surface
 raises before mutation.
 
@@ -90,8 +94,8 @@ raises before mutation.
 | NetworkRunner wired | `NeuronVariant::DCN` |
 | `create_neuron("DCNNeuron")` | Yes |
 | `supported_models()` | Includes "DCNNeuron" |
-| coverage tests | Rust engine tests plus module-specific Python and Go tests for seven-current surface, gate/Ca²⁺ bounds, T-type de-inactivation, Ih depolarisation, invalid configuration rejection, non-finite input preservation, and invalid candidate preservation |
-| Benchmark | `dcn_1k_steps`: **2.14 ms** (2.14 µs/step), i5-11600K |
+| Behavioural tests | Rust engine tests plus module-specific Python, Go, Julia parity assertion, and Rust safety tests for seven-current surface, closed-form gate/calcium kinetics, gate/Ca²⁺ bounds, T-type de-inactivation, Ih depolarisation, invalid configuration rejection, non-finite input preservation, and invalid candidate preservation |
+| Benchmark | `dcn_1k_steps`: **2.71 ms** (2.71 µs/step), i5-11600K |
 
 ---
 
@@ -99,11 +103,13 @@ raises before mutation.
 
 | Benchmark | Median |
 |-----------|-------:|
-| dcn_1k_steps | 2.14 ms |
-| Per step | **2.14 µs** |
+| dcn_1k_steps | 2.71 ms |
+| Per step | **2.71 µs** |
 
-7 currents, 20 sub-steps (dt_sub=0.025 ms). Historical timing was measured
-2026-04-05; regenerate before using as release evidence.
+7 currents, 20 sub-steps (dt_sub=0.025 ms). Remeasured 2026-05-31 on local
+i5-11600K after replacing Euler gate/calcium updates with closed-form
+relaxation and voltage with conductance-form exponential integration. Artifact:
+`benchmarks/results/local_i5_11600k_criterion_2026-05-31_dcn_neuron.json`.
 
 ---
 

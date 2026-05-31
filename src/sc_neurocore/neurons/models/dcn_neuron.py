@@ -19,6 +19,31 @@ def _safe_rate(a: float, vhalf: float, v: float, k: float, fallback: float) -> f
     return a * d / (1.0 - math.exp(-d / k))
 
 
+def _exact_relax(value: float, target: float, tau: float, dt: float) -> float:
+    return target + (value - target) * math.exp(-dt / tau)
+
+
+def _exact_hh_gate(value: float, alpha: float, beta: float, phi: float, dt: float) -> float:
+    rate = phi * (alpha + beta)
+    target = alpha / (alpha + beta)
+    return target + (value - target) * math.exp(-rate * dt)
+
+
+def _exact_voltage_step(
+    v: float,
+    input_current: float,
+    conductances: tuple[tuple[float, float], ...],
+    c_m: float,
+    dt: float,
+) -> float:
+    g_total = sum(g for g, _ in conductances)
+    if g_total <= 0.0:
+        return v + dt * input_current / c_m
+    reversal_drive = sum(g * e_rev for g, e_rev in conductances)
+    v_inf = (input_current + reversal_drive) / g_total
+    return v_inf + (v - v_inf) * math.exp(-dt * g_total / c_m)
+
+
 @dataclass
 class DCNNeuron:
     """Deep cerebellar nuclei neuron — main output of the cerebellum.
@@ -96,28 +121,40 @@ class DCNNeuron:
             r_inf = 1.0 / (1.0 + math.exp((v + 80.0) / 10.0))
             tau_r = 100.0 + 200.0 / (1.0 + math.exp((v + 70.0) / 10.0))
 
-            h += sub_dt * self.phi * (alpha_h * (1.0 - h) - beta_h * h)
-            n += sub_dt * self.phi * (alpha_n * (1.0 - n) - beta_n * n)
-            p += sub_dt * (p_inf - p) / tau_p
-            s += sub_dt * (s_inf - s) / tau_s
-            r += sub_dt * (r_inf - r) / tau_r
+            h = _exact_hh_gate(h, alpha_h, beta_h, self.phi, sub_dt)
+            n = _exact_hh_gate(n, alpha_n, beta_n, self.phi, sub_dt)
+            p = _exact_relax(p, p_inf, tau_p, sub_dt)
+            s = _exact_relax(s, s_inf, tau_s, sub_dt)
+            r = _exact_relax(r, r_inf, tau_r, sub_dt)
 
             i_t = self.g_t * m_t_inf**2 * s * (v - self.e_ca)
             ca_entry = -i_t * 0.001 if i_t < 0.0 else 0.0
-            ca += sub_dt * (ca_entry - ca / self.tau_ca)
+            ca = _exact_relax(ca, ca_entry * self.tau_ca, self.tau_ca, sub_dt)
             ca = max(0.0, ca)
 
             ahp_inf = ca**2 / (ca**2 + self.kd_ahp**2)
 
-            i_na = self.g_na * m_inf**3 * h * (v - self.e_na)
-            i_nap = self.g_nap * p * (v - self.e_na)
-            i_k = self.g_k * n**4 * (v - self.e_k)
-            i_ahp = self.g_ahp * ahp_inf * (v - self.e_k)
-            i_h = self.g_h * r * (v - self.e_h)
-            i_l = self.g_l * (v - self.e_l)
-
-            dv_val = (-i_na - i_nap - i_k - i_t - i_ahp - i_h - i_l + inp) / self.c_m
-            v += sub_dt * dv_val
+            g_na_eff = self.g_na * m_inf**3 * h
+            g_nap_eff = self.g_nap * p
+            g_k_eff = self.g_k * n**4
+            g_t_eff = self.g_t * m_t_inf**2 * s
+            g_ahp_eff = self.g_ahp * ahp_inf
+            g_h_eff = self.g_h * r
+            v = _exact_voltage_step(
+                v,
+                inp,
+                (
+                    (g_na_eff, self.e_na),
+                    (g_nap_eff, self.e_na),
+                    (g_k_eff, self.e_k),
+                    (g_t_eff, self.e_ca),
+                    (g_ahp_eff, self.e_k),
+                    (g_h_eff, self.e_h),
+                    (self.g_l, self.e_l),
+                ),
+                self.c_m,
+                sub_dt,
+            )
 
             if v >= self.v_threshold:
                 fired = 1
@@ -179,6 +216,8 @@ class DCNNeuron:
         )
         if not all(math.isfinite(value) for value in values):
             raise ValueError("DCN state and parameters must be finite")
+        if not -100.0 <= self.v <= 60.0:
+            raise ValueError("v must be in the physical clamp interval [-100, 60]")
         for name in ("h", "n", "p", "s", "r"):
             value = getattr(self, name)
             if not 0.0 <= value <= 1.0:

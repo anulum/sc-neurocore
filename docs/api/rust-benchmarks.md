@@ -134,7 +134,9 @@ cargo bench --bench analysis_bench -- --quick
 | Stellate cell | 1k | 5.15 ms | **5.15 µs** | 50 | WB + Kv3.1 |
 | Lugaro cell | 10k | 196 µs | **19.6 ns** | 1 | LIF + adaptation + 5-HT |
 | Unipolar brush cell | 10k | 211.47 µs | **21.15 ns** | 1 | LIF + persistent NMDA-like, exact relaxation |
-| DCN neuron | 1k | 2.68 ms | **2.68 µs** | 20 | 7 currents: Na_t, Na_p, K_dr, Ca_T, AHP, Ih, leak |
+| DCN neuron | 1k | 2.71 ms | **2.71 µs** | 20 | exact gates + 7 currents: Na_t, Na_p, K_dr, Ca_T, AHP, Ih, leak |
+
+> DCN neuron remeasured 2026-05-31 after exact gate, calcium, conductance integration, full polyglot parity, and fail-closed state guards.
 
 > Granule cell uses simple Euler integration with T-type Ca2+ gating for
 > rebound bursting. No sub-stepping needed.
