@@ -6,20 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Direction-Selective Retinal Ganglion Cell
 
-"""Direction-selective retinal ganglion cell (RGC) with temporal derivative.
+"""Direction-selective retinal ganglion cell with exact membrane relaxation.
 
-Implements On- and Off-centre receptive field with centre-surround
-antagonism and temporal derivative-based direction selectivity:
-
-    response = w_c * (I - I_prev) +/- w_s * surround_inhibition
-    dV/dt = (-V + drive) / tau
-    spike if V >= theta
-
-On-centre cells respond to light increase (positive dI/dt),
-Off-centre cells respond to light decrease (negative dI/dt).
-
-Reference: Gollisch & Meister (2010) "Eye smarter than scientists believed",
-Masland (2012) "The neuronal organization of the retina".
+The model implements On/Off centre response, low-pass surround inhibition, and
+an exact first-order membrane update for the drive held constant over one step.
+Invalid optical drive or corrupted runtime state fails before mutation.
 """
 
 from __future__ import annotations
@@ -32,22 +23,8 @@ import math
 class DirectionSelectiveRGC:
     """Direction-selective retinal ganglion cell.
 
-    Parameters
-    ----------
-    tau : float
-        Membrane time constant (ms). Default: 10.0.
-    theta : float
-        Spike threshold. Default: 0.5.
-    is_on_centre : bool
-        True for On-centre, False for Off-centre. Default: True.
-    w_centre : float
-        Centre weight. Default: 1.0.
-    w_surround : float
-        Surround inhibition weight. Default: 0.3.
-    direction_pref : float
-        Preferred direction angle (radians). Default: 0.0.
-    dt : float
-        Integration timestep. Default: 1.0.
+    Parameters are finite and physical: positive ``tau``, ``theta`` and ``dt``;
+    non-negative centre/surround weights; finite preferred direction and state.
     """
 
     tau: float = 10.0
@@ -65,21 +42,24 @@ class DirectionSelectiveRGC:
     def __post_init__(self) -> None:
         for name in ("tau", "theta", "dt"):
             value = getattr(self, name)
-            if not math.isfinite(value) or value <= 0.0:
+            if isinstance(value, bool) or not math.isfinite(float(value)) or float(value) <= 0.0:
                 raise ValueError(f"{name} must be finite and positive")
+            setattr(self, name, float(value))
 
         if type(self.is_on_centre) is not bool:
             raise ValueError("is_on_centre must be bool")
 
         for name in ("w_centre", "w_surround", "_prev_intensity", "_surround"):
             value = getattr(self, name)
-            if not math.isfinite(value) or value < 0.0:
+            if isinstance(value, bool) or not math.isfinite(float(value)) or float(value) < 0.0:
                 raise ValueError(f"{name} must be finite and non-negative")
+            setattr(self, name, float(value))
 
         for name in ("direction_pref", "v"):
             value = getattr(self, name)
-            if not math.isfinite(value):
+            if isinstance(value, bool) or not math.isfinite(float(value)):
                 raise ValueError(f"{name} must be finite")
+            setattr(self, name, float(value))
 
     @classmethod
     def new_on(cls) -> DirectionSelectiveRGC:
@@ -91,37 +71,61 @@ class DirectionSelectiveRGC:
         """Create an Off-centre cell."""
         return cls(is_on_centre=False)
 
+    @staticmethod
+    def _finite_non_negative(name: str, value: float) -> float:
+        if isinstance(value, bool):
+            raise ValueError(f"{name} must be finite and non-negative")
+        value = float(value)
+        if not math.isfinite(value) or value < 0.0:
+            raise ValueError(f"{name} must be finite and non-negative")
+        return value
+
+    def _validate_runtime(self) -> None:
+        if not math.isfinite(self.v):
+            raise ValueError("v must be finite")
+        for name in ("tau", "theta", "dt"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+        for name in ("w_centre", "w_surround", "_prev_intensity", "_surround"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"{name} must be finite and non-negative")
+        if type(self.is_on_centre) is not bool:
+            raise ValueError("is_on_centre must be bool")
+
     def step_rf(self, intensity: float, surround_mean: float) -> int:
         """Step with local intensity and surround mean intensity.
 
-        Returns 1 if spike, 0 otherwise.
+        Returns 1 if the exact membrane candidate crosses threshold, otherwise
+        0. The temporal buffers are committed only after all candidate state is
+        finite and physically valid.
         """
-        if not math.isfinite(intensity) or intensity < 0.0:
-            raise ValueError("intensity must be finite and non-negative")
-        if not math.isfinite(surround_mean) or surround_mean < 0.0:
-            raise ValueError("surround_mean must be finite and non-negative")
+        intensity = self._finite_non_negative("intensity", intensity)
+        surround_mean = self._finite_non_negative("surround_mean", surround_mean)
+        self._validate_runtime()
 
         temporal_diff = intensity - self._prev_intensity
-        self._prev_intensity = intensity
-
-        if self.is_on_centre:
-            centre_response = self.w_centre * temporal_diff
-        else:
-            centre_response = -self.w_centre * temporal_diff
-
-        self._surround = 0.9 * self._surround + 0.1 * surround_mean
-        surround_inhib = self.w_surround * self._surround
-
+        centre_response = self.w_centre * temporal_diff if self.is_on_centre else -self.w_centre * temporal_diff
+        next_surround = 0.9 * self._surround + 0.1 * surround_mean
+        surround_inhib = self.w_surround * next_surround
         drive = centre_response - surround_inhib
-        self.v += (-self.v + drive) / self.tau * self.dt
+        decay = math.exp(-self.dt / self.tau)
+        next_v = drive + (self.v - drive) * decay
 
-        if self.v >= self.theta:
+        if not all(math.isfinite(value) for value in (next_surround, drive, decay, next_v)) or next_surround < 0.0:
+            raise ValueError("DirectionSelectiveRGC candidate state must be finite and physical")
+
+        self._prev_intensity = intensity
+        self._surround = next_surround
+        if next_v >= self.theta:
             self.v = 0.0
             return 1
+        self.v = next_v
         return 0
 
     def step(self, current: float) -> int:
-        """Simple step (no surround)."""
+        """Simple step with no surround input."""
         return self.step_rf(current, 0.0)
 
     def reset(self) -> None:

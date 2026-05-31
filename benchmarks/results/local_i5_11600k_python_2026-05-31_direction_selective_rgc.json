@@ -1,0 +1,57 @@
+{
+  "benchmark": "direction_selective_rgc_python_exact_100k_steps",
+  "command": "PYTHONPATH=src .venv/bin/python <inline direction_selective_rgc benchmark>",
+  "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+  "date": "2026-05-31",
+  "elapsed_ns": [
+    189134356,
+    215254059,
+    188399924,
+    179568287,
+    175139803
+  ],
+  "final_states": [
+    {
+      "prev_intensity": 0.0,
+      "spikes": 1,
+      "surround": 0.4999999999999997,
+      "v": -0.1886231937939795
+    },
+    {
+      "prev_intensity": 0.0,
+      "spikes": 1,
+      "surround": 0.4999999999999997,
+      "v": -0.1886231937939795
+    },
+    {
+      "prev_intensity": 0.0,
+      "spikes": 1,
+      "surround": 0.4999999999999997,
+      "v": -0.1886231937939795
+    },
+    {
+      "prev_intensity": 0.0,
+      "spikes": 1,
+      "surround": 0.4999999999999997,
+      "v": -0.1886231937939795
+    },
+    {
+      "prev_intensity": 0.0,
+      "spikes": 1,
+      "surround": 0.4999999999999997,
+      "v": -0.1886231937939795
+    }
+  ],
+  "host": "aaarthuus",
+  "integrator": "exact first-order membrane relaxation",
+  "macro_steps_per_repeat": 100000,
+  "mean_ns_per_100k_steps": 189499285.8,
+  "mean_ns_per_step": 1894.992858,
+  "median_ns_per_100k_steps": 188399924,
+  "median_ns_per_step": 1883.99924,
+  "median_steps_per_second": 530785.776750101,
+  "model": "sc_neurocore.neurons.models.direction_selective_rgc.DirectionSelectiveRGC",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "repeats": 5
+}

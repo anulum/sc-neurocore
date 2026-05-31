@@ -2134,27 +2134,67 @@ impl DirectionSelectiveRGC {
         cell
     }
 
+    fn valid_runtime(&self) -> bool {
+        [
+            self.v,
+            self.tau,
+            self.theta,
+            self.dt,
+            self.prev_intensity,
+            self.surround,
+            self.w_centre,
+            self.w_surround,
+            self.direction_pref,
+        ]
+        .iter()
+        .all(|x| x.is_finite())
+            && self.tau > 0.0
+            && self.theta > 0.0
+            && self.dt > 0.0
+            && self.prev_intensity >= 0.0
+            && self.surround >= 0.0
+            && self.w_centre >= 0.0
+            && self.w_surround >= 0.0
+    }
+
     /// Step with local intensity and surround mean intensity.
     pub fn step_rf(&mut self, intensity: f64, surround_mean: f64) -> i32 {
+        if !intensity.is_finite()
+            || !surround_mean.is_finite()
+            || intensity < 0.0
+            || surround_mean < 0.0
+            || !self.valid_runtime()
+        {
+            return 0;
+        }
         let temporal_diff = intensity - self.prev_intensity;
-        self.prev_intensity = intensity;
-
         let centre_response = if self.is_on_centre {
             self.w_centre * temporal_diff
         } else {
             -self.w_centre * temporal_diff
         };
 
-        self.surround = 0.9 * self.surround + 0.1 * surround_mean;
-        let surround_inhib = self.w_surround * self.surround;
-
+        let next_surround = 0.9 * self.surround + 0.1 * surround_mean;
+        let surround_inhib = self.w_surround * next_surround;
         let drive = centre_response - surround_inhib;
-        self.v += (-self.v + drive) / self.tau * self.dt;
+        let decay = (-self.dt / self.tau).exp();
+        let next_v = drive + (self.v - drive) * decay;
+        if !next_surround.is_finite()
+            || !drive.is_finite()
+            || !decay.is_finite()
+            || !next_v.is_finite()
+            || next_surround < 0.0
+        {
+            return 0;
+        }
 
-        if self.v >= self.theta {
+        self.prev_intensity = intensity;
+        self.surround = next_surround;
+        if next_v >= self.theta {
             self.v = 0.0;
             1
         } else {
+            self.v = next_v;
             0
         }
     }
@@ -2263,7 +2303,7 @@ mod gap_sensory_tests {
         }
         let mut spikes = 0;
         for _ in 0..20 {
-            spikes += cell.step_rf(5.0, 0.0);
+            spikes += cell.step_rf(6.0, 0.0);
         }
         assert!(spikes > 0, "On-centre must respond to light increase");
     }
@@ -2297,6 +2337,41 @@ mod gap_sensory_tests {
             spikes_surr <= spikes_no,
             "Surround should inhibit: surr={spikes_surr} <= no={spikes_no}"
         );
+    }
+
+    #[test]
+    fn rgc_exact_membrane_relaxation() {
+        let mut cell = DirectionSelectiveRGC::new_on();
+        cell.tau = 7.0;
+        cell.theta = 100.0;
+        cell.dt = 1.25;
+        cell.w_centre = 1.4;
+        cell.w_surround = 0.2;
+        cell.v = 0.35;
+        let expected_surround = 0.9 * cell.surround + 0.1 * 0.5;
+        let expected_drive =
+            cell.w_centre * (2.0 - cell.prev_intensity) - cell.w_surround * expected_surround;
+        let expected_v = expected_drive + (cell.v - expected_drive) * (-cell.dt / cell.tau).exp();
+        assert_eq!(cell.step_rf(2.0, 0.5), 0);
+        assert!((cell.v - expected_v).abs() < 1e-12);
+        assert!((cell.surround - expected_surround).abs() < 1e-12);
+    }
+
+    #[test]
+    fn rgc_invalid_drive_preserves_state() {
+        let mut cell = DirectionSelectiveRGC::new_on();
+        let before = (cell.v, cell.prev_intensity, cell.surround);
+        assert_eq!(cell.step_rf(f64::NAN, 0.0), 0);
+        assert_eq!((cell.v, cell.prev_intensity, cell.surround), before);
+    }
+
+    #[test]
+    fn rgc_corrupt_runtime_state_preserves_state() {
+        let mut cell = DirectionSelectiveRGC::new_on();
+        cell.surround = f64::INFINITY;
+        let before = (cell.v, cell.prev_intensity, cell.surround);
+        assert_eq!(cell.step_rf(1.0, 0.0), 0);
+        assert_eq!((cell.v, cell.prev_intensity, cell.surround), before);
     }
 
     #[test]
