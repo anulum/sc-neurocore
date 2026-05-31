@@ -1356,24 +1356,116 @@ impl ButeraRespiratoryNeuron {
             v_threshold: -20.0,
         }
     }
+    fn butera_valid_state(v: f64, n: f64, h_nap: f64) -> bool {
+        [v, n, h_nap].iter().all(|x| x.is_finite())
+            && (-200.0..=100.0).contains(&v)
+            && (-0.05..=1.05).contains(&n)
+            && (-0.05..=1.05).contains(&h_nap)
+    }
+
+    fn butera_valid_static(&self) -> bool {
+        [
+            self.g_na,
+            self.g_nap,
+            self.g_k,
+            self.g_l,
+            self.e_na,
+            self.e_k,
+            self.e_l,
+            self.tau_h,
+            self.dt,
+            self.v_threshold,
+        ]
+        .iter()
+        .all(|x| x.is_finite())
+            && self.g_na >= 0.0
+            && self.g_nap >= 0.0
+            && self.g_k >= 0.0
+            && self.g_l >= 0.0
+            && self.tau_h > 0.0
+            && self.dt > 0.0
+    }
+
+    fn butera_derivatives(&self, state: (f64, f64, f64), current: f64) -> Option<(f64, f64, f64)> {
+        let (mut v, mut n, mut h_nap) = state;
+        if !(v.is_finite() && n.is_finite() && h_nap.is_finite() && current.is_finite()) {
+            return None;
+        }
+        v = v.clamp(-200.0, 100.0);
+        n = n.clamp(0.0, 1.0);
+        h_nap = h_nap.clamp(0.0, 1.0);
+        let m_na = 1.0 / (1.0 + (-(v + 34.0) / 5.0).exp());
+        let n_inf = 1.0 / (1.0 + (-(v + 29.0) / 4.0).exp());
+        let m_nap = 1.0 / (1.0 + (-(v + 40.0) / 6.0).exp());
+        let h_nap_inf = 1.0 / (1.0 + ((v + 48.0) / 6.0).exp());
+        let tau_n = (10.0 / ((v + 29.0) / 8.0).cosh().max(1e-12)).max(0.01);
+        let tau_h_eff = (self.tau_h / ((v + 48.0) / 12.0).cosh().max(1e-12)).max(0.1);
+        let i_na = self.g_na * m_na.powi(3) * (1.0 - n) * (v - self.e_na);
+        let i_nap = self.g_nap * m_nap * h_nap * (v - self.e_na);
+        let i_k = self.g_k * n.powi(4) * (v - self.e_k);
+        let i_l = self.g_l * (v - self.e_l);
+        let deriv = (
+            -i_na - i_nap - i_k - i_l + current,
+            (n_inf - n) / tau_n,
+            (h_nap_inf - h_nap) / tau_h_eff,
+        );
+        [deriv.0, deriv.1, deriv.2]
+            .iter()
+            .all(|x| x.is_finite())
+            .then_some(deriv)
+    }
+
+    fn butera_rk4_candidate(&self, current: f64) -> Option<(f64, f64, f64)> {
+        if !self.butera_valid_static()
+            || !current.is_finite()
+            || !Self::butera_valid_state(self.v, self.n, self.h_nap)
+        {
+            return None;
+        }
+        let state = (self.v, self.n, self.h_nap);
+        let k1 = self.butera_derivatives(state, current)?;
+        let k2_state = (
+            state.0 + 0.5 * self.dt * k1.0,
+            state.1 + 0.5 * self.dt * k1.1,
+            state.2 + 0.5 * self.dt * k1.2,
+        );
+        let k2 = self.butera_derivatives(k2_state, current)?;
+        let k3_state = (
+            state.0 + 0.5 * self.dt * k2.0,
+            state.1 + 0.5 * self.dt * k2.1,
+            state.2 + 0.5 * self.dt * k2.2,
+        );
+        let k3 = self.butera_derivatives(k3_state, current)?;
+        let k4_state = (
+            state.0 + self.dt * k3.0,
+            state.1 + self.dt * k3.1,
+            state.2 + self.dt * k3.2,
+        );
+        let k4 = self.butera_derivatives(k4_state, current)?;
+        let candidate = (
+            state.0 + self.dt * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0) / 6.0,
+            state.1 + self.dt * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1) / 6.0,
+            state.2 + self.dt * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2) / 6.0,
+        );
+        if candidate.0.is_finite() && candidate.1.is_finite() && candidate.2.is_finite() {
+            Some((
+                candidate.0.clamp(-200.0, 100.0),
+                candidate.1.clamp(0.0, 1.0),
+                candidate.2.clamp(0.0, 1.0),
+            ))
+        } else {
+            None
+        }
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
-        let m_na = 1.0 / (1.0 + (-(self.v + 34.0) / 5.0).exp());
-        let n_inf = 1.0 / (1.0 + (-(self.v + 29.0) / 4.0).exp());
-        let m_nap = 1.0 / (1.0 + (-(self.v + 40.0) / 6.0).exp());
-        let h_nap_inf = 1.0 / (1.0 + ((self.v + 48.0) / 6.0).exp());
-        // Butera et al. 1999 Model I: tau_n = 10/cosh((V+29)/8)
-        let tau_n = (10.0 / ((self.v + 29.0) / 8.0).cosh().max(1e-12)).max(0.01);
-        // Model I uses (1-n) for fast Na inactivation, not a separate h gate
-        let i_na = self.g_na * m_na.powi(3) * (1.0 - self.n) * (self.v - self.e_na);
-        let i_nap = self.g_nap * m_nap * self.h_nap * (self.v - self.e_na);
-        let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
-        let i_l = self.g_l * (self.v - self.e_l);
-        // tau_h_nap = tau_h / cosh((V+48)/12) (Butera 1999)
-        let tau_h_eff = (self.tau_h / ((self.v + 48.0) / 12.0).cosh().max(1e-12)).max(0.1);
-        self.v = (self.v + (-i_na - i_nap - i_k - i_l + current) * self.dt).clamp(-200.0, 100.0);
-        self.n = (self.n + (n_inf - self.n) / tau_n * self.dt).clamp(0.0, 1.0);
-        self.h_nap = (self.h_nap + (h_nap_inf - self.h_nap) / tau_h_eff * self.dt).clamp(0.0, 1.0);
+        let Some((v, n, h_nap)) = self.butera_rk4_candidate(current) else {
+            return 0;
+        };
+        self.v = v;
+        self.n = n;
+        self.h_nap = h_nap;
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
@@ -2704,6 +2796,13 @@ mod tests {
     #[test]
     fn butera_nan_no_panic() {
         ButeraRespiratoryNeuron::new().step(f64::NAN);
+    }
+    #[test]
+    fn butera_nan_preserves_state() {
+        let mut n = ButeraRespiratoryNeuron::new();
+        let before = (n.v, n.n, n.h_nap);
+        assert_eq!(n.step(f64::NAN), 0);
+        assert_eq!((n.v, n.n, n.h_nap), before);
     }
     #[test]
     fn butera_negative_no_crash() {
