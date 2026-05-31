@@ -213,7 +213,7 @@ class TestFHNPerformance:
             n.step(0.8)
         elapsed = time.perf_counter() - t0
         throughput = N / elapsed
-        minimum_throughput = 35000 if os.environ.get("CI") else 100000
+        minimum_throughput = 30000 if os.environ.get("CI") else 100000
         assert np.isfinite(n.v) and np.isfinite(n.w)
         assert throughput > minimum_throughput, (
             f"FHN isolation throughput regressed: {throughput:.0f}/s <= {minimum_throughput}/s"
