@@ -1458,3 +1458,4 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Hardened McKean Rust engine, Rust safety, Go, and Julia paths with candidate-first simultaneous-Euler commits and no-spike state preservation for invalid currents, corrupted runtime contracts, and overflow candidates.
 - Hardened Morris-Lecar Rust engine finite-state commits and extended Go/Rust safety coverage for invalid-current and potassium-rate overflow rejection without changing the documented conductance equations.
 - Hardened Terman-Wang Rust engine finite-state commits, Julia timestep semantics, and Go/Rust safety state-preservation tests for invalid drive and cubic-overflow candidates.
+- Hardened Quadratic IF Rust engine finite-update commits, Julia timestep semantics, and Go service tests for invalid current and non-finite Euler increments.

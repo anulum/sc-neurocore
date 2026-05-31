@@ -30,8 +30,26 @@ impl QuadraticIFNeuron {
         }
     }
 
+    fn valid_numeric_contract(&self) -> bool {
+        self.v.is_finite()
+            && self.v_reset.is_finite()
+            && self.v_peak.is_finite()
+            && self.dt.is_finite()
+            && self.v < self.v_peak
+            && self.v_reset < self.v_peak
+            && self.dt > 0.0
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
-        self.v += (self.v * self.v + current) * self.dt;
+        if !self.valid_numeric_contract() || !current.is_finite() {
+            return 0;
+        }
+        let increment = (self.v * self.v + current) * self.dt;
+        let next_v = self.v + increment;
+        if !(increment.is_finite() && next_v.is_finite()) {
+            return 0;
+        }
+        self.v = next_v;
         if self.v >= self.v_peak {
             self.v = self.v_reset;
             1
@@ -1040,7 +1058,20 @@ mod tests {
     }
     #[test]
     fn qif_nan_no_panic() {
-        QuadraticIFNeuron::default().step(f64::NAN);
+        let mut n = QuadraticIFNeuron::default();
+        let before = n.v;
+        assert_eq!(n.step(f64::NAN), 0);
+        assert_eq!(n.v, before);
+    }
+    #[test]
+    fn qif_nonfinite_increment_preserves_state() {
+        let mut n = QuadraticIFNeuron {
+            v: -1.0e200,
+            ..Default::default()
+        };
+        let before = n.v;
+        assert_eq!(n.step(0.0), 0);
+        assert_eq!(n.v, before);
     }
     #[test]
     fn qif_negative_no_crash() {
