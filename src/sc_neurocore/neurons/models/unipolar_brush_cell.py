@@ -34,26 +34,84 @@ class UnipolarBrushCell:
     gain: float = 2.5
     dt: float = 0.5
 
+    def __post_init__(self) -> None:
+        self._validate_configuration()
+        self._validate_state()
+
+    @staticmethod
+    def _first_order_relaxation(
+        previous: float, steady_state: float, dt: float, tau: float
+    ) -> float:
+        return previous + (steady_state - previous) * (-math.expm1(-dt / tau))
+
+    def _validate_configuration(self) -> None:
+        for name in (
+            "v_rest",
+            "v_reset",
+            "v_threshold",
+            "tau_m",
+            "tau_persistent",
+            "persistent_gain",
+            "gain",
+            "dt",
+        ):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite")
+        if self.tau_m <= 0.0:
+            raise ValueError("tau_m must be positive")
+        if self.tau_persistent <= 0.0:
+            raise ValueError("tau_persistent must be positive")
+        if self.dt <= 0.0:
+            raise ValueError("dt must be positive")
+        if self.persistent_gain < 0.0:
+            raise ValueError("persistent_gain must be non-negative")
+        if self.gain < 0.0:
+            raise ValueError("gain must be non-negative")
+        if self.v_reset >= self.v_threshold:
+            raise ValueError("v_reset must be below v_threshold")
+
+    def _validate_state(self) -> None:
+        if not math.isfinite(self.v):
+            raise ValueError("v state must be finite")
+        if not -100.0 <= self.v <= 60.0:
+            raise ValueError("v state must remain within [-100, 60] mV")
+        if not math.isfinite(self.persistent):
+            raise ValueError("persistent state must be finite")
+        if self.persistent < 0.0:
+            raise ValueError("persistent state must be non-negative")
+
     def step(self, current: float = 0.0) -> int:
+        self._validate_configuration()
+        self._validate_state()
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         inp = self.gain * max(0.0, current)
-        dp = (self.persistent_gain * inp - self.persistent) / self.tau_persistent
-        self.persistent += self.dt * dp
-        self.persistent = max(0.0, self.persistent)
+        if not math.isfinite(inp):
+            raise ValueError("input drive must be finite")
 
-        dv = (-(self.v - self.v_rest) + inp + self.persistent) / self.tau_m
-        self.v += self.dt * dv
+        next_persistent = self._first_order_relaxation(
+            self.persistent,
+            self.persistent_gain * inp,
+            self.dt,
+            self.tau_persistent,
+        )
+        next_persistent = max(0.0, next_persistent)
+        voltage_steady_state = self.v_rest + inp + next_persistent
+        next_v = self._first_order_relaxation(self.v, voltage_steady_state, self.dt, self.tau_m)
 
-        if self.v >= self.v_threshold:
+        if not math.isfinite(next_persistent) or not math.isfinite(next_v):
+            raise ValueError("candidate state must be finite")
+
+        self.persistent = next_persistent
+        if next_v >= self.v_threshold:
             self.v = self.v_reset
             return 1
 
-        self.v = max(-100.0, min(60.0, self.v))
-        if not math.isfinite(self.v):
-            self.v = self.v_reset
-        if not math.isfinite(self.persistent):
-            self.persistent = 0.0
+        self.v = max(-100.0, min(60.0, next_v))
         return 0
 
     def reset(self) -> None:
+        self._validate_configuration()
         self.v = self.v_rest
         self.persistent = 0.0

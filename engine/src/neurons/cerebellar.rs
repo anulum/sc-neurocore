@@ -923,40 +923,74 @@ impl UnipolarBrushCell {
         }
     }
 
+    fn finite(values: &[f64]) -> bool {
+        values.iter().all(|value| value.is_finite())
+    }
+
+    fn valid_configuration(&self) -> bool {
+        Self::finite(&[
+            self.v_rest,
+            self.v_reset,
+            self.v_threshold,
+            self.tau_m,
+            self.tau_persistent,
+            self.persistent_gain,
+            self.gain,
+            self.dt,
+        ]) && self.tau_m > 0.0
+            && self.tau_persistent > 0.0
+            && self.persistent_gain >= 0.0
+            && self.gain >= 0.0
+            && self.dt > 0.0
+            && self.v_reset < self.v_threshold
+    }
+
+    fn valid_state(&self) -> bool {
+        Self::finite(&[self.v, self.persistent])
+            && (-100.0..=60.0).contains(&self.v)
+            && self.persistent >= 0.0
+    }
+
+    fn first_order_relaxation(previous: f64, steady_state: f64, dt: f64, tau: f64) -> f64 {
+        previous + (steady_state - previous) * (-(-dt / tau).exp_m1())
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
-        let input = self.gain * current.max(0.0);
-
-        // Persistent current dynamics: driven by input, decays slowly
-        let dp = (self.persistent_gain * input - self.persistent) / self.tau_persistent;
-        self.persistent += self.dt * dp;
-        if self.persistent < 0.0 {
-            self.persistent = 0.0;
+        if !self.valid_configuration() || !self.valid_state() || !current.is_finite() {
+            return 0;
         }
-
-        // LIF with persistent current
-        let dv = (-(self.v - self.v_rest) + input + self.persistent) / self.tau_m;
-        self.v += self.dt * dv;
-
-        // Spike detection
-        if self.v >= self.v_threshold {
+        let input = self.gain * current.max(0.0);
+        if !input.is_finite() {
+            return 0;
+        }
+        let next_persistent = Self::first_order_relaxation(
+            self.persistent,
+            self.persistent_gain * input,
+            self.dt,
+            self.tau_persistent,
+        )
+        .max(0.0);
+        let next_v = Self::first_order_relaxation(
+            self.v,
+            self.v_rest + input + next_persistent,
+            self.dt,
+            self.tau_m,
+        );
+        if !Self::finite(&[next_persistent, next_v]) {
+            return 0;
+        }
+        self.persistent = next_persistent;
+        if next_v >= self.v_threshold {
             self.v = self.v_reset;
             return 1;
         }
-
-        // Safety bounds
-        self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() {
-            self.v = self.v_reset;
-        }
-        if !self.persistent.is_finite() {
-            self.persistent = 0.0;
-        }
-
+        self.v = next_v.clamp(-100.0, 60.0);
         0
     }
 
     pub fn reset(&mut self) {
-        *self = Self::new();
+        self.v = self.v_rest;
+        self.persistent = 0.0;
     }
 }
 
@@ -2001,6 +2035,52 @@ mod tests {
             spikes += n.step(0.0);
         }
         assert_eq!(spikes, 0, "UBC must be silent without input");
+    }
+
+    fn ubc_exact_relaxation(previous: f64, steady_state: f64, dt: f64, tau: f64) -> f64 {
+        previous + (steady_state - previous) * (-(-dt / tau).exp_m1())
+    }
+
+    #[test]
+    fn ubc_uses_closed_form_persistent_and_membrane_relaxation() {
+        let mut n = UnipolarBrushCell::new();
+
+        let spike = n.step(1.0);
+
+        let input_drive = n.gain;
+        let expected_persistent =
+            ubc_exact_relaxation(0.0, n.persistent_gain * input_drive, n.dt, n.tau_persistent);
+        let expected_v = ubc_exact_relaxation(
+            n.v_rest,
+            n.v_rest + input_drive + expected_persistent,
+            n.dt,
+            n.tau_m,
+        );
+        assert_eq!(spike, 0);
+        assert!(
+            (n.persistent - expected_persistent).abs() <= 1e-12,
+            "persistent={} expected={}",
+            n.persistent,
+            expected_persistent
+        );
+        assert!(
+            (n.v - expected_v).abs() <= 1e-12,
+            "v={} expected={}",
+            n.v,
+            expected_v
+        );
+    }
+
+    #[test]
+    fn ubc_corrupted_state_is_preserved_on_step() {
+        let mut n = UnipolarBrushCell::new();
+        n.v = f64::NAN;
+        n.persistent = 2.0;
+
+        assert_eq!(n.step(10.0), 0);
+
+        assert!(n.v.is_nan());
+        assert_eq!(n.persistent, 2.0);
     }
 
     #[test]
