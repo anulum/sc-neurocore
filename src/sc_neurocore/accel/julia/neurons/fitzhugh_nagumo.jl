@@ -8,7 +8,7 @@
 
 module FitzhughNagumoAccel
 
-export step!, simulate, FitzHughNagumoNeuronState
+export step!, simulate, validate_state, FitzHughNagumoNeuronState
 
 mutable struct FitzHughNagumoNeuronState
     v::Float64
@@ -24,32 +24,57 @@ function FitzHughNagumoNeuronState()
     FitzHughNagumoNeuronState(-1.0, -0.5, 0.7, 0.8, 0.08, 0.1, 1.0)
 end
 
-function _valid(s::FitzHughNagumoNeuronState)
+function validate_state(s::FitzHughNagumoNeuronState)
     return all(isfinite, (s.v, s.w, s.a, s.b, s.epsilon, s.dt, s.v_threshold)) &&
         s.b > 0.0 &&
         s.epsilon > 0.0 &&
         s.dt > 0.0
 end
 
-function step!(s::FitzHughNagumoNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
+function _rhs(s::FitzHughNagumoNeuronState, v::Float64, w::Float64, i_ext::Float64)
+    if !(isfinite(v) && isfinite(w) && isfinite(i_ext))
+        throw(DomainError((v, w, i_ext), "FitzHugh-Nagumo derivative input must be finite"))
+    end
+    dv = v - v^3 / 3.0 - w + i_ext
+    dw = s.epsilon * (v + s.a - s.b * w)
+    if !(isfinite(dv) && isfinite(dw))
+        throw(DomainError((dv, dw), "FitzHugh-Nagumo derivative became non-finite"))
+    end
+    return dv, dw
+end
+
+function _rk4_candidate(s::FitzHughNagumoNeuronState, i_ext::Float64)
+    dt = s.dt
+    v0 = s.v
+    w0 = s.w
+    k1v, k1w = _rhs(s, v0, w0, i_ext)
+    k2v, k2w = _rhs(s, v0 + 0.5 * dt * k1v, w0 + 0.5 * dt * k1w, i_ext)
+    k3v, k3w = _rhs(s, v0 + 0.5 * dt * k2v, w0 + 0.5 * dt * k2w, i_ext)
+    k4v, k4w = _rhs(s, v0 + dt * k3v, w0 + dt * k3w, i_ext)
+    return (
+        v0 + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0,
+        w0 + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0,
+    )
+end
+
+function step!(s::FitzHughNagumoNeuronState, i_ext::Float64=0.0; dt::Float64=s.dt)
     if !isfinite(dt) || dt <= 0.0
         throw(ArgumentError("dt must be finite and positive"))
     end
+    old_dt = s.dt
     s.dt = dt
-    if !(isfinite(I_ext) && _valid(s))
-        throw(DomainError((s.v, s.w, I_ext), "FitzHugh-Nagumo state/current must be finite"))
+    if !(isfinite(i_ext) && validate_state(s))
+        s.dt = old_dt
+        throw(DomainError((s.v, s.w, i_ext), "FitzHugh-Nagumo state/current must be finite"))
     end
     v_prev = s.v
-    dv = (s.v - s.v ^ 3 / 3.0 - s.w + I_ext) * s.dt
-    dw = s.epsilon * (s.v + s.a - s.b * s.w) * s.dt
-    new_v = s.v + dv
-    new_w = s.w + dw
-    candidate = FitzHughNagumoNeuronState(new_v, new_w, s.a, s.b, s.epsilon, s.dt, s.v_threshold)
-    if !_valid(candidate)
-        throw(DomainError((new_v, new_w), "FitzHugh-Nagumo state became non-finite"))
+    new_v, new_w = _rk4_candidate(s, i_ext)
+    if !(isfinite(new_v) && isfinite(new_w))
+        s.dt = old_dt
+        throw(DomainError((new_v, new_w), "FitzHugh-Nagumo candidate became non-finite"))
     end
-    s.v = candidate.v
-    s.w = candidate.w
+    s.v = new_v
+    s.w = new_w
     return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
 end
 
