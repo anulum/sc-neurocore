@@ -793,27 +793,91 @@ impl MotorUnit {
         }
     }
 
+    fn voltage_valid(value: f64) -> bool {
+        value.is_finite() && (-150.0..=100.0).contains(&value)
+    }
+
+    fn force_valid(value: f64) -> bool {
+        value.is_finite() && (0.0..=1.0).contains(&value)
+    }
+
+    fn exact_relax(previous: f64, steady: f64, tau: f64, dt: f64) -> Option<f64> {
+        if !previous.is_finite()
+            || !steady.is_finite()
+            || !tau.is_finite()
+            || !dt.is_finite()
+            || tau <= 0.0
+            || dt <= 0.0
+        {
+            return None;
+        }
+        Some(steady + (previous - steady) * (-dt / tau).exp())
+    }
+
+    fn valid_state(&self) -> bool {
+        Self::voltage_valid(self.v)
+            && Self::voltage_valid(self.v_rest)
+            && Self::voltage_valid(self.v_reset)
+            && Self::voltage_valid(self.v_threshold)
+            && Self::force_valid(self.force)
+            && self.tau_m.is_finite()
+            && self.adapt.is_finite()
+            && self.tau_adapt.is_finite()
+            && self.a_adapt.is_finite()
+            && self.gain.is_finite()
+            && self.twitch_amp.is_finite()
+            && self.tau_twitch.is_finite()
+            && self.force_decay.is_finite()
+            && self.dt.is_finite()
+            && self.tau_m > 0.0
+            && self.tau_adapt > 0.0
+            && self.tau_twitch > 0.0
+            && self.dt > 0.0
+            && self.gain >= 0.0
+            && self.twitch_amp >= 0.0
+            && self.v_reset < self.v_threshold
+    }
+
     /// Step with descending drive (≥ 0). Returns spike (1/0). Force accessible via `.force`.
     pub fn step(&mut self, drive: f64) -> i32 {
-        let input = self.gain * drive.max(0.0) - self.adapt;
-        self.v += (-(self.v - self.v_rest) + input) / self.tau_m * self.dt;
-        self.adapt +=
-            (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt;
-
-        // Force decay: exponential relaxation
-        self.force *= (-self.dt / self.tau_twitch).exp();
-
-        if self.v >= self.v_threshold {
-            self.v = self.v_reset;
-            // Spike → muscle twitch (add to force)
-            self.force += self.twitch_amp;
-            if self.force > 1.0 {
-                self.force = 1.0;
-            }
-            1
-        } else {
-            0
+        if !drive.is_finite() || !self.valid_state() {
+            return 0;
         }
+
+        let mut force = self.force * (-self.dt / self.tau_twitch).exp();
+        let input = self.gain * drive.max(0.0) - self.adapt;
+        let v_target = self.v_rest + input;
+        let Some(mut v_candidate) = Self::exact_relax(self.v, v_target, self.tau_m, self.dt) else {
+            return 0;
+        };
+        if !Self::voltage_valid(v_candidate) {
+            return 0;
+        }
+
+        let adapt_target = self.a_adapt * (v_candidate - self.v_rest);
+        let Some(adapt_candidate) =
+            Self::exact_relax(self.adapt, adapt_target, self.tau_adapt, self.dt)
+        else {
+            return 0;
+        };
+        if !adapt_candidate.is_finite() {
+            return 0;
+        }
+
+        let mut spike = 0;
+        if v_candidate >= self.v_threshold {
+            v_candidate = self.v_reset;
+            force = (force + self.twitch_amp).min(1.0);
+            spike = 1;
+        }
+        if !Self::voltage_valid(v_candidate) || !Self::force_valid(force) {
+            return 0;
+        }
+
+        self.v = v_candidate;
+        self.adapt = adapt_candidate;
+        self.force = force;
+        spike
     }
 
     pub fn reset(&mut self) {
