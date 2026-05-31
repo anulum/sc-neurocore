@@ -38,21 +38,19 @@ func NewFitzHughNagumoNeuron() *FitzHughNagumoNeuronState {
 
 // Step advances the neuron by one timestep
 func (s *FitzHughNagumoNeuronState) Step(iExt float64) int {
-	if !math.IsInf(s.V, 0) && !math.IsNaN(s.V) && !math.IsInf(s.W, 0) && !math.IsNaN(s.W) && !math.IsInf(iExt, 0) && !math.IsNaN(iExt) {
-		// valid
-	} else {
-		panic("FitzHugh-Nagumo state/current must be finite")
+	if !finiteFitzHughNagumo(iExt) || !ValidateFitzHughNagumoNeuron(s) {
+		return -1
 	}
 	vPrev := s.V
 	dv := (s.V - math.Pow(s.V, 3.0)/3.0 - s.W + iExt) * s.Dt
 	dw := s.Epsilon * (s.V + s.A - s.B*s.W) * s.Dt
-	newV := s.V + dv
-	newW := s.W + dw
-	if math.IsInf(newV, 0) || math.IsNaN(newV) || math.IsInf(newW, 0) || math.IsNaN(newW) {
-		panic("FitzHugh-Nagumo state became non-finite")
+	next := *s
+	next.V += dv
+	next.W += dw
+	if !ValidateFitzHughNagumoNeuron(&next) {
+		return -1
 	}
-	s.V = newV
-	s.W = newW
+	*s = next
 	if s.V >= s.VThreshold && vPrev < s.VThreshold {
 		return 1
 	}
@@ -72,4 +70,23 @@ func SimulateFitzHughNagumoNeuron(nSteps int, iExt float64) ([]float64, int) {
 		}
 	}
 	return trace, spikes
+}
+
+func finiteFitzHughNagumo(values ...float64) bool {
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
+	}
+	return true
+}
+
+func ValidateFitzHughNagumoNeuron(s *FitzHughNagumoNeuronState) bool {
+	if s == nil {
+		return false
+	}
+	return finiteFitzHughNagumo(s.V, s.W, s.A, s.B, s.Epsilon, s.Dt, s.VThreshold) &&
+		s.B > 0.0 &&
+		s.Epsilon > 0.0 &&
+		s.Dt > 0.0
 }
