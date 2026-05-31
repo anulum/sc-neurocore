@@ -898,14 +898,17 @@ impl DCNNeuron {
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
+        if !self.is_valid() || !current.is_finite() {
+            return 0;
+        }
         let input = self.gain * current;
         let sub_steps = 20;
         let sub_dt = self.dt / sub_steps as f64;
         let mut fired = 0i32;
+        let (mut v, mut h, mut n, mut p, mut s, mut r, mut ca) =
+            (self.v, self.h, self.n, self.p, self.s, self.r, self.ca);
 
         for _ in 0..sub_steps {
-            let v = self.v;
-
             // Na_t: WB alpha/beta rates (m³h, m quasi-static)
             let alpha_m = safe_rate(0.1, 35.0, v, 10.0, 1.0);
             let beta_m = 4.0 * (-(v + 60.0) / 18.0).exp();
@@ -932,58 +935,103 @@ impl DCNNeuron {
             let tau_r = 100.0 + 200.0 / (1.0 + ((v + 70.0) / 10.0).exp());
 
             // Gate updates
-            self.h += sub_dt * self.phi * (alpha_h * (1.0 - self.h) - beta_h * self.h);
-            self.n += sub_dt * self.phi * (alpha_n * (1.0 - self.n) - beta_n * self.n);
-            self.p += sub_dt * (p_inf - self.p) / tau_p;
-            self.s += sub_dt * (s_inf - self.s) / tau_s;
-            self.r += sub_dt * (r_inf - self.r) / tau_r;
+            h += sub_dt * self.phi * (alpha_h * (1.0 - h) - beta_h * h);
+            n += sub_dt * self.phi * (alpha_n * (1.0 - n) - beta_n * n);
+            p += sub_dt * (p_inf - p) / tau_p;
+            s += sub_dt * (s_inf - s) / tau_s;
+            r += sub_dt * (r_inf - r) / tau_r;
 
             // Ca²⁺ dynamics: entry via T-type, decay
-            let i_t = self.g_t * m_t_inf.powi(2) * self.s * (v - self.e_ca);
+            let i_t = self.g_t * m_t_inf.powi(2) * s * (v - self.e_ca);
             let ca_entry = if i_t < 0.0 { -i_t * 0.001 } else { 0.0 };
-            self.ca += sub_dt * (ca_entry - self.ca / self.tau_ca);
-            self.ca = self.ca.max(0.0);
+            ca = (ca + sub_dt * (ca_entry - ca / self.tau_ca)).max(0.0);
 
             // AHP: Ca²⁺-dependent K (Hill n=2)
-            let ahp_inf = self.ca.powi(2) / (self.ca.powi(2) + self.kd_ahp.powi(2));
+            let ahp_inf = ca.powi(2) / (ca.powi(2) + self.kd_ahp.powi(2));
 
             // Currents
-            let i_na = self.g_na * m_inf.powi(3) * self.h * (v - self.e_na);
-            let i_nap = self.g_nap * self.p * (v - self.e_na);
-            let i_k = self.g_k * self.n.powi(4) * (v - self.e_k);
+            let i_na = self.g_na * m_inf.powi(3) * h * (v - self.e_na);
+            let i_nap = self.g_nap * p * (v - self.e_na);
+            let i_k = self.g_k * n.powi(4) * (v - self.e_k);
             let i_ahp = self.g_ahp * ahp_inf * (v - self.e_k);
-            let i_h = self.g_h * self.r * (v - self.e_h);
+            let i_h = self.g_h * r * (v - self.e_h);
             let i_l = self.g_l * (v - self.e_l);
 
             let dv = (-i_na - i_nap - i_k - i_t - i_ahp - i_h - i_l + input) / self.c_m;
-            self.v += sub_dt * dv;
+            v += sub_dt * dv;
 
-            if self.v >= self.v_threshold {
+            if v >= self.v_threshold {
                 fired = 1;
-                self.v = -60.0;
-                self.s *= 0.5; // T-type inactivation on spike
-                self.ca += 0.5; // Ca²⁺ entry on spike
+                v = -60.0;
+                s *= 0.5; // T-type inactivation on spike
+                ca += 0.5; // Ca²⁺ entry on spike
             }
         }
 
-        // Safety bounds
-        self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() {
-            self.v = -60.0;
-            self.h = 0.6;
-            self.n = 0.32;
+        if ![v, h, n, p, s, r, ca].iter().all(|value| value.is_finite()) {
+            return 0;
         }
-        self.h = self.h.clamp(0.0, 1.0);
-        self.n = self.n.clamp(0.0, 1.0);
-        self.p = self.p.clamp(0.0, 1.0);
-        self.s = self.s.clamp(0.0, 1.0);
-        self.r = self.r.clamp(0.0, 1.0);
+        self.v = v.clamp(-100.0, 60.0);
+        self.h = h.clamp(0.0, 1.0);
+        self.n = n.clamp(0.0, 1.0);
+        self.p = p.clamp(0.0, 1.0);
+        self.s = s.clamp(0.0, 1.0);
+        self.r = r.clamp(0.0, 1.0);
+        self.ca = ca.max(0.0);
 
         fired
     }
 
     pub fn reset(&mut self) {
         *self = Self::new();
+    }
+
+    fn is_valid(&self) -> bool {
+        [
+            self.v,
+            self.h,
+            self.n,
+            self.p,
+            self.s,
+            self.r,
+            self.ca,
+            self.g_na,
+            self.g_nap,
+            self.g_k,
+            self.g_t,
+            self.g_ahp,
+            self.g_h,
+            self.g_l,
+            self.e_na,
+            self.e_k,
+            self.e_ca,
+            self.e_h,
+            self.e_l,
+            self.c_m,
+            self.phi,
+            self.tau_ca,
+            self.kd_ahp,
+            self.dt,
+            self.v_threshold,
+            self.gain,
+        ]
+        .iter()
+        .all(|value| value.is_finite())
+            && [self.h, self.n, self.p, self.s, self.r]
+                .iter()
+                .all(|gate| (0.0..=1.0).contains(gate))
+            && self.ca >= 0.0
+            && [
+                self.g_na, self.g_nap, self.g_k, self.g_t, self.g_ahp, self.g_h, self.g_l,
+            ]
+            .iter()
+            .all(|g| *g >= 0.0)
+            && self.c_m > 0.0
+            && self.phi > 0.0
+            && self.tau_ca > 0.0
+            && self.kd_ahp > 0.0
+            && self.dt > 0.0
+            && self.gain >= 0.0
     }
 }
 
@@ -1953,8 +2001,11 @@ mod tests {
     #[test]
     fn dcn_nan_input_stays_finite() {
         let mut n = DCNNeuron::new();
+        let before = n.clone();
         n.step(f64::NAN);
         assert!(n.v.is_finite());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.ca, before.ca);
     }
 
     #[test]
@@ -1964,6 +2015,17 @@ mod tests {
             n.step(1e6);
         }
         assert!(n.v.is_finite() && n.v <= 60.0);
+    }
+
+    #[test]
+    fn dcn_corrupted_state_preserved_on_step() {
+        let mut n = DCNNeuron::new();
+        n.h = -0.1;
+        let before_v = n.v;
+        let before_ca = n.ca;
+        assert_eq!(n.step(10.0), 0);
+        assert_eq!(n.v, before_v);
+        assert_eq!(n.ca, before_ca);
     }
 
     #[test]
