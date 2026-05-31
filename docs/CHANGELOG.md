@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `FitzHughNagumoNeuron` Python, Julia, Go, and Rust safety
+  surfaces to validate finite state, recovery-nullcline slope, slow
+  timescale, timestep, threshold, and external-drive contracts before
+  integration; candidate updates now fail before mutation on cubic
+  overflow or non-finite state while preserving no-reset threshold
+  crossing semantics.
 - Hardened `JansenRitUnit` Python, Julia, Go, and Rust safety surfaces to
   validate neural-mass state, excitatory/inhibitory gain and rate contracts,
   timestep and external-drive boundaries, overflow-stable sigmoid bounds, and
