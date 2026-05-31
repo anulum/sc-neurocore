@@ -1,3 +1,10 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — MerkelCell model reference -->
 # MerkelCell
 
 **Module:** `engine/src/neurons/sensory.rs`
@@ -99,8 +106,12 @@ where:
 - $w$ is the adaptation variable
 - gain = 1.5 is the pressure-to-current conversion
 
-Discretised (forward Euler):
-$$V(t+dt) = V(t) + \frac{-(V - V_{rest}) + \text{gain} \cdot \max(P, 0) - w}{\tau} \cdot dt$$
+The maintained Rust engine uses exact first-order relaxation over each
+timestep under constant pressure and adaptation state:
+
+$$V_\infty = V_{rest} + \text{gain} \cdot \max(P, 0) - w$$
+
+$$V(t+dt) = V_\infty + (V(t)-V_\infty)\exp(-dt/\tau)$$
 
 ### Slow adaptation dynamics
 
@@ -110,11 +121,15 @@ where:
 - $\tau_{adapt} = 200.0$ ms is the adaptation time constant (very slow)
 - $a_{adapt} = 0.3$ is the adaptation coupling strength
 
-Discretised:
-$$w(t+dt) = w(t) + \frac{a_{adapt} \cdot (V(t+dt) - V_{rest}) - w(t)}{\tau_{adapt}} \cdot dt$$
+The adaptation target is non-negative and uses the membrane candidate:
 
-**Important:** The adaptation update uses the **already-updated** V (post-dV), not the
-previous V. This creates slightly tighter coupling than a fully explicit scheme.
+$$w_\infty = \max(0, a_{adapt}\max(0,V(t+dt)-V_{rest}))$$
+
+$$w(t+dt) = w_\infty + (w(t)-w_\infty)\exp(-dt/\tau_{adapt})$$
+
+**Important:** The adaptation update uses the **candidate** membrane state, not
+the previous membrane state. This preserves the intended tight coupling while
+removing finite-timestep drift from the older raw-Euler update.
 
 ### Adaptation mechanism
 
@@ -273,13 +288,19 @@ All defaults from `MerkelCell::new()` in `sensory.rs:666`:
 
 ```
 step(pressure) → i32:
-    drive = gain × max(pressure, 0) - adapt
-    V += (-(V - V_rest) + drive) / τ × dt
-    adapt += (a_adapt × (V - V_rest) - adapt) / τ_adapt × dt
+    if state or pressure is invalid:
+        return 0 without mutation
+    V_inf = V_rest + gain × max(pressure, 0) - adapt
+    V_next = V_inf + (V - V_inf) × exp(-dt / τ)
+    adapt_inf = max(0, a_adapt × max(0, V_next - V_rest))
+    adapt_next = adapt_inf + (adapt - adapt_inf) × exp(-dt / τ_adapt)
 
-    if V ≥ V_threshold:
+    if V_next ≥ V_threshold:
         V = V_reset
+        adapt = adapt_next
         return 1
+    V = clamp(V_next, -100, 60)
+    adapt = adapt_next
     return 0
 ```
 
@@ -287,10 +308,11 @@ step(pressure) → i32:
 
 1. **Pressure rectification:** `pressure.max(0.0)` ensures only compressive forces
    drive the receptor.
-2. **Adaptation uses updated V:** The adaptation ODE uses V after the voltage update,
-   not the pre-update value. This is a forward Euler artefact.
-3. **No NaN safety:** No explicit NaN checks. The linear dynamics are inherently stable
-   for positive τ values.
+2. **Adaptation uses candidate V:** The adaptation ODE uses the candidate voltage
+   after exact membrane relaxation, not the pre-update value.
+3. **Fail-closed numerical boundary:** Non-finite pressure, non-finite state,
+   nonphysical finite voltage, invalid time constants, negative adaptation/gain
+   parameters, and invalid threshold ordering return no spike without mutation.
 4. **No spike-triggered adaptation increment:** Unlike some adaptation models (e.g.,
    LugaroCell where adapt += 1.0 on spike), MerkelCell uses only subthreshold
    adaptation. The adaptation grows continuously with depolarisation.
@@ -456,8 +478,8 @@ somatosensory arrays (e.g., robotic skin with 1000+ touch sensors).
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` |
 | NetworkRunner wired | `NeuronVariant::Merkel` |
 | `create_neuron("MerkelCell")` | Yes |
-| coverage tests | 4 (fires sustained, slow adaptation, no-fire, reset) |
-| Benchmark | `merkel_10k_steps`: **239 µs** (23.9 ns/step), i5-11600K |
+| coverage tests | 8 (firing, slow adaptation, no-fire, reset, exact relaxation, invalid input, corrupted state, invalid voltage) |
+| Benchmark | `merkel_10k_steps`: **312.93 µs** (31.29 ns/step), i5-11600K |
 
 ---
 
@@ -465,10 +487,12 @@ somatosensory arrays (e.g., robotic skin with 1000+ touch sensors).
 
 | Benchmark | Median |
 |-----------|-------:|
-| merkel_10k_steps | 239 µs |
-| Per step | **23.9 ns** |
+| merkel_10k_steps | 312.93 µs |
+| Per step | **31.29 ns** |
 
-Two linear ODEs + one comparison per step. No transcendental functions.
+Two exact first-order relaxations, state validation, and one comparison per
+step. Artifact:
+`benchmarks/results/local_i5_11600k_criterion_2026-05-31_merkel_cell.json`.
 
 Measured 2026-04-04 on i5-11600K @ 3.90 GHz, Criterion.rs, 100 iterations.
 

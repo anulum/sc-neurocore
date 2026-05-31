@@ -679,17 +679,59 @@ impl MerkelCell {
         }
     }
 
+    #[inline]
+    fn exact_relax(value: f64, target: f64, tau: f64, dt: f64) -> f64 {
+        target + (value - target) * (-dt / tau).exp()
+    }
+
+    fn is_valid(&self) -> bool {
+        [
+            self.v,
+            self.v_rest,
+            self.v_reset,
+            self.v_threshold,
+            self.tau,
+            self.adapt,
+            self.tau_adapt,
+            self.a_adapt,
+            self.gain,
+            self.dt,
+        ]
+        .iter()
+        .all(|value| value.is_finite())
+            && (-100.0..=60.0).contains(&self.v)
+            && self.tau > 0.0
+            && self.tau_adapt > 0.0
+            && self.a_adapt >= 0.0
+            && self.gain >= 0.0
+            && self.dt > 0.0
+            && self.adapt >= 0.0
+            && self.v_threshold > self.v_reset
+            && self.v_threshold > self.v_rest
+    }
+
     /// Step with pressure (arbitrary units, ≥ 0). Returns spike (1/0).
     pub fn step(&mut self, pressure: f64) -> i32 {
-        let drive = self.gain * pressure.max(0.0) - self.adapt;
-        self.v += (-(self.v - self.v_rest) + drive) / self.tau * self.dt;
-        self.adapt +=
-            (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt;
+        if !self.is_valid() || !pressure.is_finite() {
+            return 0;
+        }
 
-        if self.v >= self.v_threshold {
+        let rectified_pressure = pressure.max(0.0);
+        let v_inf = self.v_rest + self.gain * rectified_pressure - self.adapt;
+        let v_next = Self::exact_relax(self.v, v_inf, self.tau, self.dt);
+        let adapt_inf = (self.a_adapt * (v_next - self.v_rest).max(0.0)).max(0.0);
+        let adapt_next = Self::exact_relax(self.adapt, adapt_inf, self.tau_adapt, self.dt).max(0.0);
+        if !v_next.is_finite() || !adapt_next.is_finite() {
+            return 0;
+        }
+
+        if v_next >= self.v_threshold {
             self.v = self.v_reset;
+            self.adapt = adapt_next;
             1
         } else {
+            self.v = v_next.clamp(-100.0, 60.0);
+            self.adapt = adapt_next;
             0
         }
     }
@@ -1507,6 +1549,66 @@ mod tests {
         let mut m = MerkelCell::new();
         let spikes: i32 = (0..1000).map(|_| m.step(0.0)).sum();
         assert_eq!(spikes, 0);
+    }
+
+    #[test]
+    fn merkel_closed_form_membrane_and_adaptation_relaxation() {
+        let mut m = MerkelCell::new();
+        m.v = -66.0;
+        m.adapt = 0.2;
+        m.gain = 0.0;
+
+        let v_inf = m.v_rest - m.adapt;
+        let expected_v = exact_relax_merkel(m.v, v_inf, m.tau, m.dt);
+        let adapt_inf = (m.a_adapt * (expected_v - m.v_rest).max(0.0)).max(0.0);
+        let expected_adapt = exact_relax_merkel(m.adapt, adapt_inf, m.tau_adapt, m.dt).max(0.0);
+
+        assert_eq!(m.step(0.0), 0);
+        assert_close_merkel(m.v, expected_v, 1e-12);
+        assert_close_merkel(m.adapt, expected_adapt, 1e-12);
+    }
+
+    #[test]
+    fn merkel_invalid_input_preserves_state() {
+        let mut m = MerkelCell::new();
+        let before = m.clone();
+        assert_eq!(m.step(f64::NAN), 0);
+        assert_eq!(m.v, before.v);
+        assert_eq!(m.adapt, before.adapt);
+    }
+
+    #[test]
+    fn merkel_corrupted_state_preserved_on_step() {
+        let mut m = MerkelCell::new();
+        m.adapt = f64::NAN;
+        let before = m.clone();
+        assert_eq!(m.step(20.0), 0);
+        assert_eq!(m.v, before.v);
+        assert!(m.adapt.is_nan());
+    }
+
+    #[test]
+    fn merkel_invalid_voltage_preserved_on_step() {
+        let mut m = MerkelCell::new();
+        m.v = 60.1;
+        let before = m.clone();
+        assert_eq!(m.step(20.0), 0);
+        assert_eq!(m.v, before.v);
+        assert_eq!(m.adapt, before.adapt);
+    }
+
+    fn exact_relax_merkel(value: f64, target: f64, tau: f64, dt: f64) -> f64 {
+        target + (value - target) * (-dt / tau).exp()
+    }
+
+    fn assert_close_merkel(actual: f64, expected: f64, tolerance: f64) {
+        assert!(
+            (actual - expected).abs() <= tolerance,
+            "actual={:.16e} expected={:.16e} tolerance={:.3e}",
+            actual,
+            expected,
+            tolerance
+        );
     }
 
     #[test]
