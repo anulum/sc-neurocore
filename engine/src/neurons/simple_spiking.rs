@@ -612,15 +612,40 @@ impl TermanWangOscillator {
             v_peak: 1.5,
         }
     }
+    fn valid_numeric_contract(&self) -> bool {
+        self.v.is_finite()
+            && self.w.is_finite()
+            && self.alpha.is_finite()
+            && self.beta.is_finite()
+            && self.epsilon.is_finite()
+            && self.rho.is_finite()
+            && self.dt.is_finite()
+            && self.v_peak.is_finite()
+            && self.beta > 0.0
+            && self.epsilon > 0.0
+            && self.dt > 0.0
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
+        if !self.valid_numeric_contract() || !current.is_finite() {
+            return 0;
+        }
         let v_prev = self.v;
         let f = 3.0 * self.v - self.v.powi(3) + 2.0;
         let g = self.alpha * (1.0 + (self.v / self.beta).tanh());
+        if !(f.is_finite() && g.is_finite()) {
+            return 0;
+        }
         // TermanWang: simultaneous Euler (both derivatives use old state)
         let dv = (f - self.w + current + self.rho) * self.dt;
         let dw = self.epsilon * (g - self.w) * self.dt;
-        self.v += dv;
-        self.w += dw;
+        let next_v = self.v + dv;
+        let next_w = self.w + dw;
+        if !(dv.is_finite() && dw.is_finite() && next_v.is_finite() && next_w.is_finite()) {
+            return 0;
+        }
+        self.v = next_v;
+        self.w = next_w;
         if self.v >= self.v_peak && v_prev < self.v_peak {
             1
         } else {
@@ -2006,7 +2031,20 @@ mod tests {
     }
     #[test]
     fn tw_nan_no_panic() {
-        TermanWangOscillator::new().step(f64::NAN);
+        let mut n = TermanWangOscillator::new();
+        let before = (n.v, n.w);
+        assert_eq!(n.step(f64::NAN), 0);
+        assert_eq!((n.v, n.w), before);
+    }
+    #[test]
+    fn tw_overflow_candidate_preserves_state() {
+        let mut n = TermanWangOscillator {
+            v: 1.0e308,
+            ..Default::default()
+        };
+        let before = (n.v, n.w);
+        assert_eq!(n.step(1.0), 0);
+        assert_eq!((n.v, n.w), before);
     }
     #[test]
     fn tw_negative_no_crash() {

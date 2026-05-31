@@ -25,7 +25,7 @@ function TermanWangOscillatorState()
     TermanWangOscillatorState(-1.5, -0.5, 3.0, 0.2, 0.02, 0.0, 0.05, 1.5)
 end
 
-function validate(s::TermanWangOscillatorState)::Bool
+function validate(s::TermanWangOscillatorState, dt::Float64=s.dt)::Bool
     return isfinite(s.v) &&
         isfinite(s.w) &&
         isfinite(s.alpha) &&
@@ -34,20 +34,20 @@ function validate(s::TermanWangOscillatorState)::Bool
         isfinite(s.epsilon) &&
         s.epsilon > 0.0 &&
         isfinite(s.rho) &&
-        isfinite(s.dt) &&
-        s.dt > 0.0 &&
+        isfinite(dt) &&
+        dt > 0.0 &&
         isfinite(s.v_peak)
 end
 
-function step!(s::TermanWangOscillatorState, I_ext::Float64=0.0; dt::Float64=0.1)
-    if !validate(s) || !isfinite(I_ext)
+function step!(s::TermanWangOscillatorState, I_ext::Float64=0.0; dt::Float64=s.dt)
+    if !validate(s, dt) || !isfinite(I_ext)
         return -1
     end
 
     f = 3.0 * s.v - s.v ^ 3 + 2.0
     g = s.alpha * (1.0 + tanh(s.v / s.beta))
-    dv = (f - s.w + I_ext + s.rho) * s.dt
-    dw = s.epsilon * (g - s.w) * s.dt
+    dv = (f - s.w + I_ext + s.rho) * dt
+    dw = s.epsilon * (g - s.w) * dt
     next_v = s.v + dv
     next_w = s.w + dw
     if !isfinite(dv) || !isfinite(dw) || !isfinite(next_v) || !isfinite(next_w)

@@ -113,6 +113,28 @@ mod tests {
     fn test_terman_wang_rejects_invalid_runtime_state() {
         let mut state = TermanWangOscillator::new();
         state.v = f64::INFINITY;
+        let before = state.clone();
         assert!(state.step(1.0).is_err());
+        assert_eq!(state.v, before.v);
+        assert_eq!(state.w, before.w);
+    }
+
+    #[test]
+    fn test_terman_wang_rejects_invalid_current_without_mutation() {
+        let mut state = TermanWangOscillator::new();
+        let before = state.clone();
+        assert!(state.step(f64::NAN).is_err());
+        assert_eq!(state.v, before.v);
+        assert_eq!(state.w, before.w);
+    }
+
+    #[test]
+    fn test_terman_wang_rejects_overflow_candidate_without_mutation() {
+        let mut state = TermanWangOscillator::new();
+        state.v = 1.0e308;
+        let before = state.clone();
+        assert!(state.step(1.0).is_err());
+        assert_eq!(state.v, before.v);
+        assert_eq!(state.w, before.w);
     }
 }
