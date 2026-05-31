@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `PinskyRinzelNeuron` Python, Julia, Go, and Rust safety
+  surfaces to validate two-compartment state, compartment fraction,
+  positive conductances, timestep, calcium non-negativity, gate bounds,
+  and dual-input currents before integration; candidate updates now fail
+  before mutation on non-finite state or gate-envelope excursions while
+  preserving somatic threshold-crossing semantics.
 - Hardened `LarterBreakspearNeuron` Python, Julia, Go, and Rust safety
   surfaces to revalidate conductance, ion-rate, timestep, coupling, and
   potassium-gate bounds before integration; RK4 candidates now fail
