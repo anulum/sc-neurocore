@@ -8,7 +8,7 @@
 
 module FitzhughRinzelAccel
 
-export step!, simulate, FitzHughRinzelNeuronState
+export step!, simulate, validate_state, FitzHughRinzelNeuronState
 
 mutable struct FitzHughRinzelNeuronState
     v::Float64
@@ -28,43 +28,61 @@ function FitzHughRinzelNeuronState()
     FitzHughRinzelNeuronState(-1.0, -0.5, 0.0, 0.7, 0.8, -0.775, 1.0, 0.08, 0.0001, 0.1, 1.0)
 end
 
-function _valid(s::FitzHughRinzelNeuronState, dt::Float64)::Bool
-    return all(isfinite, (s.v, s.w, s.y, s.a, s.b, s.c, s.d, s.delta, s.mu, s.v_threshold, dt)) &&
-        s.delta > 0.0 && s.mu > 0.0 && dt > 0.0
+function validate_state(s::FitzHughRinzelNeuronState)
+    return all(isfinite, (s.v, s.w, s.y, s.a, s.b, s.c, s.d, s.delta, s.mu, s.dt, s.v_threshold)) &&
+        s.b > 0.0 && s.d > 0.0 && s.delta > 0.0 && s.mu > 0.0 && s.dt > 0.0
 end
 
-function _derivatives(s::FitzHughRinzelNeuronState, I_ext::Float64)
-    if !isfinite(I_ext)
+function _derivatives(s::FitzHughRinzelNeuronState, v::Float64, w::Float64, y::Float64, i_ext::Float64)
+    if !all(isfinite, (v, w, y, i_ext))
         return nothing
     end
-    dv = s.v - s.v^3 / 3.0 - s.w + s.y + I_ext
-    dw = s.delta * (s.a + s.v - s.b * s.w)
-    dy = s.mu * (s.c - s.v - s.d * s.y)
+    dv = v - v^3 / 3.0 - w + y + i_ext
+    dw = s.delta * (s.a + v - s.b * w)
+    dy = s.mu * (s.c - v - s.d * y)
     if all(isfinite, (dv, dw, dy))
         return (dv, dw, dy)
     end
     return nothing
 end
 
+function _rk4_candidate(s::FitzHughRinzelNeuronState, i_ext::Float64)
+    dt = s.dt
+    v0 = s.v
+    w0 = s.w
+    y0 = s.y
+    k1 = _derivatives(s, v0, w0, y0, i_ext)
+    k1 === nothing && return nothing
+    k2 = _derivatives(s, v0 + 0.5 * dt * k1[1], w0 + 0.5 * dt * k1[2], y0 + 0.5 * dt * k1[3], i_ext)
+    k2 === nothing && return nothing
+    k3 = _derivatives(s, v0 + 0.5 * dt * k2[1], w0 + 0.5 * dt * k2[2], y0 + 0.5 * dt * k2[3], i_ext)
+    k3 === nothing && return nothing
+    k4 = _derivatives(s, v0 + dt * k3[1], w0 + dt * k3[2], y0 + dt * k3[3], i_ext)
+    k4 === nothing && return nothing
+    return (
+        v0 + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+        w0 + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
+        y0 + dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0,
+    )
+end
+
 function step!(s::FitzHughRinzelNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
-    if !_valid(s, dt)
+    if !isfinite(dt) || dt <= 0.0
+        return 0
+    end
+    old_dt = s.dt
+    s.dt = dt
+    if !(isfinite(I_ext) && validate_state(s))
+        s.dt = old_dt
         return 0
     end
     v_prev = s.v
-    derivatives = _derivatives(s, I_ext)
-    if derivatives === nothing
+    candidate = _rk4_candidate(s, I_ext)
+    if candidate === nothing || !all(isfinite, candidate)
+        s.dt = old_dt
         return 0
     end
-    dv, dw, dy = derivatives
-    next_v = s.v + dv * dt
-    next_w = s.w + dw * dt
-    next_y = s.y + dy * dt
-    if !all(isfinite, (next_v, next_w, next_y))
-        return 0
-    end
-    s.v = next_v
-    s.w = next_w
-    s.y = next_y
+    s.v, s.w, s.y = candidate
     return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
 end
 

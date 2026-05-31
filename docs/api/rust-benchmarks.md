@@ -241,7 +241,7 @@ cargo bench --bench analysis_bench -- --quick
 | Hindmarsh-Rose | 10k | 77.4 µs | **7.7 ns** | 3D burster (x,y,z) |
 | COBA LIF | 10k | 104 µs | **10.4 ns** | Conductance-based with g_e, g_i |
 | FitzHugh-Nagumo | 10k | 508.24 µs | **50.824 ns** | RK4 two-state qualitative spike model |
-| FitzHugh-Rinzel | 10k | 110 µs | **11.0 ns** | 3D extension with slow y |
+| FitzHugh-Rinzel | 10k | 572.65 µs | **57.265 ns** | RK4 three-state burster with slow y |
 | Wilson HR | 10k | 151 µs | **15.1 ns** | Simplified cortical |
 | Benda-Herz | 10k | 218 µs | **21.8 ns** | Stochastic rate + adaptation |
 | Learnable neuron | 10k | 224 µs | **22.4 ns** | Learnable parameters (tau, beta) |

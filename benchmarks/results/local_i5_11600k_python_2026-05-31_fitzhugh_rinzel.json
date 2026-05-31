@@ -1,0 +1,21 @@
+{
+  "benchmark": "fitzhugh_rinzel_python_reference_100k_steps",
+  "date": "2026-05-31",
+  "host_class": "local_i5_11600k",
+  "python": "3.12.3",
+  "steps_per_repeat": 100000,
+  "repeats": 7,
+  "seconds_per_step_min": 1.0690814170520752e-05,
+  "seconds_per_step_median": 1.1091808029450476e-05,
+  "seconds_per_step_mean": 1.1322354801398303e-05,
+  "spikes_per_repeat": [
+    228,
+    228,
+    228,
+    228,
+    228,
+    228,
+    228
+  ],
+  "contract": "RK4 FitzHugh-Rinzel reference path with finite-state validation and reset semantics"
+}

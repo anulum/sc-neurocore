@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — FitzHugh 1976 / Rinzel 1987 — FHN + slow variable for
+# SC-NeuroCore — FitzHugh 1976 / Rinzel 1987 — FHN + slow variable
 
 from __future__ import annotations
 
@@ -12,11 +12,21 @@ import math
 from dataclasses import dataclass
 
 
+_STATE_NAMES = ("v", "w", "y")
+_PARAMETER_NAMES = ("a", "b", "c", "d", "delta", "mu", "dt", "v_threshold")
+_POSITIVE_PARAMETERS = ("b", "d", "delta", "mu", "dt")
+
+
 @dataclass
 class FitzHughRinzelNeuron:
-    """FitzHugh 1976 / Rinzel 1987 — FHN + slow variable for bursting.
+    """FitzHugh-Rinzel three-state qualitative bursting model.
 
-    Reference: Rinzel, J. (1987). In: Mathematical Topics in Population Biology. Springer, pp. 267–281.
+    dv/dt = v - v^3/3 - w + y + I
+    dw/dt = delta * (a + v - b*w)
+    dy/dt = mu * (c - v - d*y)
+
+    Runtime integration uses RK4 over the published three-state ODE with
+    current held constant for one step.
     """
 
     v: float = -1.0
@@ -34,27 +44,26 @@ class FitzHughRinzelNeuron:
     def __post_init__(self) -> None:
         self._validate_numeric_contract()
 
+    @staticmethod
+    def _finite_float(name: str, value: float) -> float:
+        if isinstance(value, bool):
+            raise ValueError(f"FitzHugh-Rinzel parameter {name} must be finite")
+        try:
+            result = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"FitzHugh-Rinzel parameter {name} must be finite") from exc
+        if not math.isfinite(result):
+            raise ValueError(f"FitzHugh-Rinzel parameter {name} must be finite")
+        return result
+
     def _numeric_fields(self) -> tuple[tuple[str, float], ...]:
-        return (
-            ("v", self.v),
-            ("w", self.w),
-            ("y", self.y),
-            ("a", self.a),
-            ("b", self.b),
-            ("c", self.c),
-            ("d", self.d),
-            ("delta", self.delta),
-            ("mu", self.mu),
-            ("dt", self.dt),
-            ("v_threshold", self.v_threshold),
-        )
+        return tuple((name, getattr(self, name)) for name in (*_STATE_NAMES, *_PARAMETER_NAMES))
 
     def _validate_numeric_contract(self) -> None:
         for name, value in self._numeric_fields():
-            if not math.isfinite(value):
-                raise ValueError(f"FitzHugh-Rinzel parameter {name} must be finite")
-        for name, value in (("delta", self.delta), ("mu", self.mu), ("dt", self.dt)):
-            if value <= 0.0:
+            setattr(self, name, self._finite_float(name, value))
+        for name in _POSITIVE_PARAMETERS:
+            if getattr(self, name) <= 0.0:
                 raise ValueError(f"FitzHugh-Rinzel parameter {name} must be positive")
 
     def _derivatives(
@@ -72,20 +81,46 @@ class FitzHughRinzelNeuron:
             raise FloatingPointError("FitzHugh-Rinzel derivative must be finite")
         return dv, dw, dy
 
+    def _rk4_candidate(self, current: float) -> tuple[float, float, float]:
+        v0, w0, y0, dt = self.v, self.w, self.y, self.dt
+        k1 = self._derivatives(v0, w0, y0, current)
+        k2 = self._derivatives(
+            v0 + 0.5 * dt * k1[0],
+            w0 + 0.5 * dt * k1[1],
+            y0 + 0.5 * dt * k1[2],
+            current,
+        )
+        k3 = self._derivatives(
+            v0 + 0.5 * dt * k2[0],
+            w0 + 0.5 * dt * k2[1],
+            y0 + 0.5 * dt * k2[2],
+            current,
+        )
+        k4 = self._derivatives(
+            v0 + dt * k3[0],
+            w0 + dt * k3[1],
+            y0 + dt * k3[2],
+            current,
+        )
+        return (
+            v0 + dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
+            w0 + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+            y0 + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
+        )
+
+    @staticmethod
+    def _validate_candidate(v: float, w: float, y: float) -> tuple[float, float, float]:
+        if not all(math.isfinite(value) for value in (v, w, y)):
+            raise FloatingPointError("FitzHugh-Rinzel candidate state must be finite")
+        return float(v), float(w), float(y)
+
     def step(self, current: float) -> int:
-        """Advance the model by one simultaneous-Euler step."""
+        """Advance the model by one RK4 step."""
 
         self._validate_numeric_contract()
+        current = self._finite_float("current", current)
         v_prev = self.v
-        dv, dw, dy = self._derivatives(self.v, self.w, self.y, float(current))
-        next_v = self.v + dv * self.dt
-        next_w = self.w + dw * self.dt
-        next_y = self.y + dy * self.dt
-        if not all(math.isfinite(value) for value in (next_v, next_w, next_y)):
-            raise FloatingPointError("FitzHugh-Rinzel candidate state must be finite")
-        self.v = next_v
-        self.w = next_w
-        self.y = next_y
+        self.v, self.w, self.y = self._validate_candidate(*self._rk4_candidate(current))
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
     def reset(self) -> None:

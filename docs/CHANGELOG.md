@@ -7,6 +7,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `FitzHughRinzelNeuron` to candidate-first RK4 integration across
+  the Python reference, Rust engine, Julia mirror, Go mirror, and Rust safety
+  surface; module-owned tests now cover the Python model at 100%, public docs
+  state the finite-domain and reset contracts, and refreshed Python/Rust
+  benchmark artefacts document the RK4 runtime cost.
 - Hardened `BertramPhantomBurster` across Python, Julia, Go, and Rust safety
   surfaces by replacing raw Euler state mutation with bounded RK4 integration
   over the published three-state ODE, adding finite physical-parameter and
@@ -1489,7 +1494,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [1.0.0] - 2025-12-03
 - Initial Release: Stochastic Neurons, Synapses, and Basic Bitstream Utilities.
 
-- Hardened FitzHugh-Rinzel Python, Rust engine, Rust safety, Go, and Julia paths with finite-parameter validation plus candidate-first simultaneous-Euler commits that preserve state on invalid currents, corrupted runtime contracts, and overflow candidates.
+- Hardened FitzHugh-Rinzel Python, Rust engine, Rust safety, Go, and Julia paths with finite-parameter validation plus candidate-first RK4 commits that preserve state on invalid currents, corrupted runtime contracts, and overflow candidates.
 - Hardened McKean Rust engine, Rust safety, Go, and Julia paths with candidate-first simultaneous-Euler commits and no-spike state preservation for invalid currents, corrupted runtime contracts, and overflow candidates.
 - Hardened Morris-Lecar Rust engine finite-state commits and extended Go/Rust safety coverage for invalid-current and potassium-rate overflow rejection without changing the documented conductance equations.
 - Hardened Terman-Wang Rust engine finite-state commits, Julia timestep semantics, and Go/Rust safety state-preservation tests for invalid drive and cubic-overflow candidates.
