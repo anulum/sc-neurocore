@@ -18,6 +18,26 @@ import numpy as np
 from sc_neurocore.solvers import RK4Solver, RosenbrockEuler
 
 
+_STATE_NAMES = ("v", "w")
+_PARAM_NAMES = (
+    "c_m",
+    "g_ca",
+    "g_k",
+    "g_l",
+    "e_ca",
+    "e_k",
+    "e_l",
+    "v1",
+    "v2",
+    "v3",
+    "v4",
+    "phi",
+    "dt",
+    "v_threshold",
+)
+_STRICTLY_POSITIVE_PARAMS = ("c_m", "g_ca", "g_k", "g_l", "v2", "v4", "phi", "dt")
+
+
 @dataclass
 class MorrisLecarNeuron:
     """Morris-Lecar 1981 — calcium-potassium oscillator.
@@ -55,34 +75,27 @@ class MorrisLecarNeuron:
     def __post_init__(self) -> None:
         if self.integrator not in {"baseline_euler", "rk4", "rosenbrock"}:
             raise ValueError(f"Unsupported integrator for MorrisLecarNeuron: {self.integrator}")
-        for name in (
-            "v",
-            "w",
-            "c_m",
-            "g_ca",
-            "g_k",
-            "g_l",
-            "e_ca",
-            "e_k",
-            "e_l",
-            "v1",
-            "v2",
-            "v3",
-            "v4",
-            "phi",
-            "dt",
-            "v_threshold",
-        ):
+        self._validate_configuration()
+
+    def _validate_configuration(self) -> None:
+        for name in (*_STATE_NAMES, *_PARAM_NAMES):
             value = getattr(self, name)
             if not isinstance(value, int | float) or not math.isfinite(float(value)):
                 raise ValueError(f"{name} must be finite")
             setattr(self, name, float(value))
-        for name in ("c_m", "dt", "phi"):
+        for name in _STRICTLY_POSITIVE_PARAMS:
             if getattr(self, name) <= 0.0:
                 raise ValueError(f"{name} must be positive")
-        for name in ("g_ca", "g_k", "g_l", "v2", "v4"):
-            if getattr(self, name) <= 0.0:
-                raise ValueError(f"{name} must be positive")
+        if not 0.0 <= self.w <= 1.0:
+            raise ValueError("w must remain in [0, 1]")
+
+    def _validate_runtime_configuration(self) -> None:
+        if not all(math.isfinite(getattr(self, name)) for name in (*_STATE_NAMES, *_PARAM_NAMES)):
+            raise ValueError("Morris-Lecar state and parameters must be finite")
+        if any(getattr(self, name) <= 0.0 for name in _STRICTLY_POSITIVE_PARAMS):
+            raise ValueError("Morris-Lecar conductance, scale, timestep, and rate parameters must be positive")
+        if not 0.0 <= self.w <= 1.0:
+            raise ValueError("w must remain in [0, 1]")
 
     def _m_inf(self, v: float) -> float:
         if not math.isfinite(v):
@@ -115,12 +128,15 @@ class MorrisLecarNeuron:
     def _validate_state(v: float, w: float) -> tuple[float, float]:
         if not (math.isfinite(v) and math.isfinite(w)):
             raise FloatingPointError("Morris-Lecar state became non-finite")
+        if not 0.0 <= w <= 1.0:
+            raise FloatingPointError("Morris-Lecar potassium activation left [0, 1]")
         return float(v), float(w)
 
     def step(self, current: float) -> int:
         if not isinstance(current, int | float) or not math.isfinite(float(current)):
             raise ValueError("current must be finite")
         current = float(current)
+        self._validate_runtime_configuration()
         v_prev = self.v
         if self.integrator == "baseline_euler":
             self._step_baseline_euler(current)

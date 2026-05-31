@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `MorrisLecarNeuron` Python, Julia, Go, and Rust safety
+  surfaces to validate finite conductance state, membrane capacitance,
+  activation slopes, potassium activation bounds, timestep, threshold,
+  and runtime drive before integration; candidate updates now fail
+  before mutation on potassium-rate overflow or non-finite state while
+  preserving no-reset threshold crossing semantics.
 - Hardened `FitzHughNagumoNeuron` Python, Julia, Go, and Rust safety
   surfaces to validate finite state, recovery-nullcline slope, slow
   timescale, timestep, threshold, and external-drive contracts before
