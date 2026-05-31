@@ -222,6 +222,32 @@ The third route is solver-focused rather than a broad physics claim:
 
 This route compares:
 
+- baseline: `RK4Solver` integration of the constant-current LIF ODE
+- candidate: `ExactLIFSolver` closed-form membrane evolution for the same
+  subthreshold constant-current case
+
+Why this route is safe:
+
+- it is restricted to finite, positive time constants, resistances, horizons,
+  and timesteps
+- it requires `v_rest < v_thresh`, `v0 < v_thresh`, and
+  `v_rest + r_m * current <= v_thresh`, so the route cannot silently evaluate a
+  spiking regime under a subthreshold label
+- it rejects non-finite voltages, currents, steady-state voltages, and solver
+  outputs before they can enter benchmark evidence
+
+What to expect:
+
+- the exact candidate should match the RK4 baseline within the configured
+  tolerance
+- `predicted_spike_time` must stay `None`
+- the reported voltage must remain below threshold, with distance-to-threshold
+  positive for finite horizons in the benchmark cases
+
+- `solver.lif.subthreshold-exact`
+
+This route compares:
+
 - baseline: existing `RK4Solver` integration of the constant-current LIF ODE
 - candidate: existing `ExactLIFSolver` analytical solution
 
