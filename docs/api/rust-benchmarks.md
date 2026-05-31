@@ -116,7 +116,9 @@ cargo bench --bench analysis_bench -- --quick
 | Renshaw cell | 4.92 ms | **4.92 µs** | 50 | exact WB gates + adaptation |
 
 > Renshaw cell remeasured 2026-05-31 after exact gate, adaptation, conductance integration, and fail-closed state guards.
-| Motor unit | 180 µs (10k) | **18.0 ns** | 1 | LIF + force model |
+| Motor unit | 327 µs (10k) | **32.7 ns** | 1 | exact LIF + force model |
+
+> Motor unit remeasured 2026-05-31 after exact membrane, adaptation, force-decay, subtype-parity, and fail-closed state guards.
 
 > Alpha motor is the most expensive per-step model due to WB gating (50 sub-steps),
 > PIC evaluation, Ca2+ dynamics, and AHP computation at each sub-step.

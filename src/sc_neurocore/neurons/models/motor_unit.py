@@ -12,6 +12,24 @@ import math
 from dataclasses import dataclass
 
 
+def _all_finite(*values: float) -> bool:
+    return all(math.isfinite(value) for value in values)
+
+
+def _relax(previous: float, steady: float, tau: float, dt: float) -> float | None:
+    if not _all_finite(previous, steady, tau, dt) or tau <= 0.0 or dt <= 0.0:
+        return None
+    return steady + (previous - steady) * math.exp(-dt / tau)
+
+
+def _valid_voltage(value: float) -> bool:
+    return math.isfinite(value) and -150.0 <= value <= 100.0
+
+
+def _valid_force(value: float) -> bool:
+    return math.isfinite(value) and 0.0 <= value <= 1.0
+
+
 @dataclass
 class MotorUnit:
     """Motor unit — alpha motor neuron + muscle fibre.
@@ -39,6 +57,33 @@ class MotorUnit:
     force_decay: float = 0.0
     dt: float = 0.5
 
+    def _valid_state(self) -> bool:
+        return (
+            _valid_voltage(self.v)
+            and _valid_voltage(self.v_rest)
+            and _valid_voltage(self.v_reset)
+            and _valid_voltage(self.v_threshold)
+            and _valid_force(self.force)
+            and _all_finite(
+                self.tau_m,
+                self.adapt,
+                self.tau_adapt,
+                self.a_adapt,
+                self.gain,
+                self.twitch_amp,
+                self.tau_twitch,
+                self.force_decay,
+                self.dt,
+            )
+            and self.tau_m > 0.0
+            and self.tau_adapt > 0.0
+            and self.tau_twitch > 0.0
+            and self.dt > 0.0
+            and self.gain >= 0.0
+            and self.twitch_amp >= 0.0
+            and self.v_reset < self.v_threshold
+        )
+
     @classmethod
     def slow(cls) -> MotorUnit:
         """Slow motor unit (type S): small, fatigue-resistant, low force."""
@@ -56,17 +101,34 @@ class MotorUnit:
         )
 
     def step(self, drive: float = 0.0) -> int:
-        inp = self.gain * max(0.0, drive) - self.adapt
-        self.v += (-(self.v - self.v_rest) + inp) / self.tau_m * self.dt
-        self.adapt += (
-            (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt
-        )
+        if not math.isfinite(drive) or not self._valid_state():
+            return 0
 
-        self.force *= math.exp(-self.dt / self.tau_twitch)
+        force = self.force * math.exp(-self.dt / self.tau_twitch)
+        input_drive = self.gain * max(0.0, drive) - self.adapt
+        v_target = self.v_rest + input_drive
+        v_candidate = _relax(self.v, v_target, self.tau_m, self.dt)
+        if v_candidate is None or not _valid_voltage(v_candidate):
+            return 0
 
-        if self.v >= self.v_threshold:
-            self.v = self.v_reset
-            self.force = min(1.0, self.force + self.twitch_amp)
+        adapt_target = self.a_adapt * (v_candidate - self.v_rest)
+        adapt_candidate = _relax(self.adapt, adapt_target, self.tau_adapt, self.dt)
+        if adapt_candidate is None or not math.isfinite(adapt_candidate):
+            return 0
+
+        spike = 0
+        if v_candidate >= self.v_threshold:
+            v_candidate = self.v_reset
+            force = min(1.0, force + self.twitch_amp)
+            spike = 1
+
+        if not (_valid_voltage(v_candidate) and _valid_force(force)):
+            return 0
+
+        self.v = v_candidate
+        self.adapt = adapt_candidate
+        self.force = force
+        if spike:
             return 1
         return 0
 
