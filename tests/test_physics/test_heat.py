@@ -35,6 +35,46 @@ def test_walkers_must_be_initialised_before_step() -> None:
         s.step()
 
 
+def test_density_and_expectation_require_initialised_walkers() -> None:
+    s = FeynmanKacHeatSolver(num_walkers=100)
+    with pytest.raises(RuntimeError, match="walkers not initialised"):
+        s.get_density()
+    with pytest.raises(RuntimeError, match="walkers not initialised"):
+        s.expectation(lambda x: x)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"length": 0.0}, "length"),
+        ({"length": float("nan")}, "length"),
+        ({"length": True}, "length"),
+        ({"diffusivity": -1e-9}, "diffusivity"),
+        ({"diffusivity": float("inf")}, "diffusivity"),
+        ({"diffusivity": False}, "diffusivity"),
+        ({"num_walkers": 0}, "num_walkers"),
+        ({"num_walkers": 1.5}, "num_walkers"),
+        ({"num_walkers": True}, "num_walkers"),
+        ({"dt": 0.0}, "dt"),
+        ({"dt": float("nan")}, "dt"),
+        ({"dt": False}, "dt"),
+        ({"seed": 1.2}, "seed"),
+        ({"seed": True}, "seed"),
+    ],
+)
+def test_solver_rejects_nonphysical_configuration(kwargs: dict[str, object], match: str) -> None:
+    values = {
+        "length": 1.0,
+        "diffusivity": 1.0,
+        "num_walkers": 10,
+        "dt": 1e-3,
+        "seed": 42,
+    }
+    values.update(kwargs)
+    with pytest.raises(ValueError, match=match):
+        FeynmanKacHeatSolver(**values)
+
+
 def test_delta_initial_condition_places_all_walkers_at_x0() -> None:
     s = FeynmanKacHeatSolver(length=2.0, num_walkers=500, seed=7)
     s.set_initial_delta(0.5)
@@ -141,6 +181,21 @@ def test_reflective_boundaries_keep_walkers_in_domain() -> None:
     assert s.walkers.max() <= s.length
 
 
+def test_exact_reflection_handles_arbitrarily_large_overshoot() -> None:
+    x = np.array([-4.2, -0.25, 0.25, 1.25, 4.2])
+    folded = FeynmanKacHeatSolver._reflect_into_interval(x, 1.0)
+    assert np.allclose(folded, [0.2, 0.25, 0.25, 0.75, 0.2])
+    assert np.all((folded >= 0.0) & (folded <= 1.0))
+
+
+def test_zero_diffusivity_preserves_delta_position() -> None:
+    s = FeynmanKacHeatSolver(diffusivity=0.0, num_walkers=128, seed=8)
+    s.set_initial_delta(0.37)
+    s.step(50)
+    assert np.all(s.walkers == 0.37)
+    assert s.time == pytest.approx(0.05)
+
+
 def test_long_time_converges_to_uniform_on_reflective_domain() -> None:
     """For pure diffusion with reflective BC, density → 1/L as t → ∞.
 
@@ -182,6 +237,16 @@ def test_set_initial_distribution_zero_density_raises() -> None:
         s.set_initial_distribution(lambda x: np.zeros_like(x))
 
 
+def test_set_initial_distribution_rejects_invalid_grid_and_density_contract() -> None:
+    s = FeynmanKacHeatSolver(num_walkers=10)
+    with pytest.raises(ValueError, match="n_grid"):
+        s.set_initial_distribution(lambda x: np.ones_like(x), n_grid=0)
+    with pytest.raises(ValueError, match="matching x"):
+        s.set_initial_distribution(lambda x: np.ones(x.size + 1), n_grid=8)
+    with pytest.raises(ValueError, match="finite"):
+        s.set_initial_distribution(lambda x: np.full_like(x, np.nan), n_grid=8)
+
+
 def test_set_initial_distribution_uniform_is_uniform() -> None:
     """A uniform initial PDF should produce a uniform initial histogram."""
     s = FeynmanKacHeatSolver(length=2.0, num_walkers=50_000, seed=22)
@@ -198,6 +263,15 @@ def test_evolve_to_advances_clock() -> None:
     s.evolve_to(0.05)
     # Allow rounding tolerance from int(round((T-t)/dt))
     assert abs(s.time - 0.05) < 1.5e-3
+
+
+def test_evolve_to_rejects_nonfinite_time_and_density_bins() -> None:
+    s = FeynmanKacHeatSolver(num_walkers=10, seed=5)
+    s.set_initial_delta(0.5)
+    with pytest.raises(ValueError, match="T"):
+        s.evolve_to(float("nan"))
+    with pytest.raises(ValueError, match="n_bins"):
+        s.get_density(n_bins=0)
 
 
 def test_evolve_to_backwards_raises() -> None:

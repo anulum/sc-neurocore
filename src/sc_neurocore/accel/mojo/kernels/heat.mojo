@@ -7,11 +7,11 @@
 # SC-NeuroCore — Mojo SIMD acceleration for heat
 
 fn step() -> Int:
-    var _step_line = '# Random step -1, 0, 1'
-    var _step_line = 'steps = random.choice([-1, 0, 1], size=len(walkers), p=[0.25'
-    var _step_line = 'walkers += steps'
-    var _step_line = '# Boundary conditions (Reflective)'
-    var _step_line = 'walkers = clip(walkers, 0, length - 1)'
+    var _step_line = 'sigma = sqrt(2.0 * diffusivity * dt)'
+    var _step_line = 'walkers += normal(0.0, sigma, size=len(walkers))'
+    var _step_line = '# Reflective Neumann boundaries by triangle-wave folding'
+    var _step_line = 'folded = mod(walkers, 2.0 * length)'
+    var _step_line = 'walkers = where(folded <= length, folded, 2.0 * length - folded)'
     return 0
 
 fn get_temperature_profile() -> Int:

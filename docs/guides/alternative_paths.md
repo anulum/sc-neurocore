@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Alternative Paths
 
 SC-NeuroCore already contains research-tier and experimental modules, but that
@@ -167,6 +168,11 @@ This route compares:
 - baseline: Monte Carlo Feynman-Kac evolution from `sc_neurocore.physics.heat`
 - candidate: exact Neumann cosine-mode solution for cases where the initial
   observable is a single cosine eigenmode
+
+The baseline uses reflected Brownian Feynman-Kac paths with per-step variance
+`2 * diffusivity * dt` and exact triangle-wave boundary folding on
+`[0, length]`. That boundary model is part of the route contract: replacing it
+with clipping or a fixed lattice walk changes the PDE being benchmarked.
 
 Why this route is safe:
 

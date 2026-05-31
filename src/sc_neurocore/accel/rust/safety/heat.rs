@@ -12,7 +12,8 @@
 pub struct StochasticHeatSolver {
     pub length: f64,
     pub walkers: f64,
-    pub alpha: f64,
+    pub diffusivity: f64,
+    pub dt: f64,
 }
 
 impl StochasticHeatSolver {
@@ -20,16 +21,20 @@ impl StochasticHeatSolver {
         Self {
             length: 0.0_f64,
             walkers: 0.0_f64,
-            alpha: 0.0_f64,
+            diffusivity: 0.0_f64,
+            dt: 0.0_f64,
         }
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        // # Random step -1, 0, 1
-        // steps = np.random.choice([-1, 0, 1], size=len(self.walkers), p=[0.25,
-        // self.walkers += steps
-        // # Boundary conditions (Reflective)
-        // self.walkers = (self.walkers_f64).clamp(0, self.length - 1)
+        // Python reference semantics:
+        // sigma = sqrt(2.0 * diffusivity * dt)
+        // walkers += Normal(0.0, sigma)
+        // walkers = reflect_into_interval(walkers, length)
+        //
+        // Reflective Neumann boundaries are triangle-wave folding with period
+        // 2 * length, not clipping. Clipping changes the reflected Brownian
+        // transition kernel at large increments.
         0 // spike indicator
     }
 
@@ -41,7 +46,15 @@ impl StochasticHeatSolver {
 }
 
 pub fn validate_heat(state: &StochasticHeatSolver) -> bool {
-    true
+    state.length.is_finite()
+        && state.length > 0.0
+        && state.diffusivity.is_finite()
+        && state.diffusivity >= 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
+        && state.walkers.is_finite()
+        && state.walkers >= 0.0
+        && state.walkers <= state.length
 }
 
 #[cfg(test)]
@@ -51,7 +64,7 @@ mod tests {
     #[test]
     fn test_heat_new() {
         let state = StochasticHeatSolver::new();
-        assert!(validate_heat(&state));
+        assert!(!validate_heat(&state));
     }
 
     #[test]

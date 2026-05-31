@@ -36,6 +36,7 @@ not Feynman-Kac and was replaced 2026-04-17 per
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -81,11 +82,45 @@ class FeynmanKacHeatSolver:
     seed: int = 42
 
     def __post_init__(self) -> None:
+        if isinstance(self.length, bool) or not isinstance(self.length, int | float):
+            raise ValueError("length must be a finite positive number")
+        if not math.isfinite(float(self.length)) or float(self.length) <= 0.0:
+            raise ValueError("length must be a finite positive number")
+        if isinstance(self.diffusivity, bool) or not isinstance(self.diffusivity, int | float):
+            raise ValueError("diffusivity must be a finite non-negative number")
+        if not math.isfinite(float(self.diffusivity)) or float(self.diffusivity) < 0.0:
+            raise ValueError("diffusivity must be a finite non-negative number")
+        if isinstance(self.num_walkers, bool) or not isinstance(self.num_walkers, int):
+            raise ValueError("num_walkers must be a positive integer")
+        if self.num_walkers < 1:
+            raise ValueError("num_walkers must be a positive integer")
+        if isinstance(self.dt, bool) or not isinstance(self.dt, int | float):
+            raise ValueError("dt must be a finite positive number")
+        if not math.isfinite(float(self.dt)) or float(self.dt) <= 0.0:
+            raise ValueError("dt must be a finite positive number")
+        if isinstance(self.seed, bool) or not isinstance(self.seed, int):
+            raise ValueError("seed must be an integer")
+        self.length = float(self.length)
+        self.diffusivity = float(self.diffusivity)
+        self.dt = float(self.dt)
         self._rng = np.random.default_rng(self.seed)
         # Caller calls `set_initial_distribution` to seed the
         # walker positions; we leave them empty until then.
         self.walkers: np.ndarray = np.empty(0, dtype=np.float64)
         self._t: float = 0.0
+
+    @staticmethod
+    def _reflect_into_interval(x: np.ndarray, length: float) -> np.ndarray:
+        """Reflect arbitrary real positions into ``[0, length]`` exactly.
+
+        Reflection at both Neumann boundaries is equivalent to folding
+        the real line into a triangle wave with period ``2 * length``.
+        Unlike iterative mirror correction, this handles arbitrarily
+        large Brownian increments without a hidden iteration cap.
+        """
+        period = 2.0 * length
+        folded = np.mod(x, period)
+        return np.where(folded <= length, folded, period - folded)
 
     # ─────────────────────── walker initialisation ───────────────────────
 
@@ -103,11 +138,18 @@ class FeynmanKacHeatSolver:
         each cell's width, so a uniform PDF in maps to a uniform
         sample out (no boundary bias).
         """
+        if isinstance(n_grid, bool) or not isinstance(n_grid, int) or n_grid < 1:
+            raise ValueError("n_grid must be a positive integer")
         cell_w = self.length / n_grid
         # Use cell CENTRES for the f(x) evaluation so the Riemann sum
         # is the midpoint rule (second-order accurate).
         x_centres = (np.arange(n_grid) + 0.5) * cell_w
-        pmf = np.maximum(f(x_centres), 0.0)
+        raw = np.asarray(f(x_centres), dtype=np.float64)
+        if raw.shape != x_centres.shape:
+            raise ValueError("initial distribution f(x) must return an array matching x")
+        if not np.all(np.isfinite(raw)):
+            raise ValueError("initial distribution f(x) must contain only finite values")
+        pmf = np.maximum(raw, 0.0)
         total = pmf.sum()
         if total <= 0.0:
             raise ValueError("initial distribution f(x) must integrate to > 0")
@@ -148,20 +190,14 @@ class FeynmanKacHeatSolver:
         for _ in range(n_substeps):
             increments = self._rng.standard_normal(self.walkers.size) * sigma
             self.walkers += increments
-            # Reflect at boundaries (mirror image)
-            # Repeat until all walkers are in [0, L] — usually one
-            # iteration suffices for σ << L.
-            for _safety in range(64):
-                under = self.walkers < 0.0
-                over = self.walkers > self.length
-                if not (under.any() or over.any()):
-                    break
-                self.walkers[under] = -self.walkers[under]
-                self.walkers[over] = 2.0 * self.length - self.walkers[over]
+            # Reflective Neumann boundaries by exact triangle-wave folding.
+            self.walkers = self._reflect_into_interval(self.walkers, self.length)
         self._t += n_substeps * self.dt
 
     def evolve_to(self, T: float) -> None:
         """Step walkers from current time to ``T`` (T > current t)."""
+        if isinstance(T, bool) or not isinstance(T, int | float) or not math.isfinite(float(T)):
+            raise ValueError("T must be a finite number")
         if self._t > T:
             raise ValueError(f"T={T} < current t={self._t}; cannot run backwards")
         n = int(round((T - self._t) / self.dt))
@@ -179,6 +215,8 @@ class FeynmanKacHeatSolver:
         """
         if self.walkers.size == 0:
             raise RuntimeError("walkers not initialised")
+        if isinstance(n_bins, bool) or not isinstance(n_bins, int) or n_bins < 1:
+            raise ValueError("n_bins must be a positive integer")
         counts, _ = np.histogram(self.walkers, bins=n_bins, range=(0.0, self.length))
         bin_width = self.length / n_bins
         return counts.astype(np.float64) / (self.walkers.size * bin_width)
