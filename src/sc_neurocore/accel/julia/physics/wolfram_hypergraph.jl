@@ -4,97 +4,91 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia acceleration for physics/wolfram_hypergraph
+# SC-NeuroCore — Julia mirror for physics/wolfram_hypergraph contracts
 
 module WolframHypergraphAccel
 
-using Statistics, LinearAlgebra
-
 mutable struct WolframHypergraphState
-    edges::Float64
-    max_node_id::Float64
+    edges::Vector{Tuple{Vararg{Int}}}
+    max_node_id::Int
 end
 
-function WolframHypergraphState()
-    WolframHypergraphState(0.0, 0.0)
+function _validate_edges(edges)
+    if !(edges isa Vector)
+        throw(ArgumentError("edges must be a vector of integer tuples"))
+    end
+    for edge in edges
+        if !(edge isa Tuple) || length(edge) == 0
+            throw(ArgumentError("edges must contain non-empty integer tuples"))
+        end
+        if any(node -> !(node isa Int) || node < 0, edge)
+            throw(ArgumentError("edge nodes must be non-negative integers"))
+        end
+        if length(unique(edge)) != length(edge)
+            throw(ArgumentError("hyperedges must not repeat nodes"))
+        end
+    end
+    return edges
 end
 
-function evolve(s::WolframHypergraphState, steps)
+function _validate_max_node_id(max_node_id::Int, edges)
+    if max_node_id < 0
+        throw(ArgumentError("max_node_id must be a non-negative integer"))
+    end
+    observed = isempty(edges) ? -1 : maximum(node for edge in edges for node in edge)
+    if observed > max_node_id
+        throw(ArgumentError("max_node_id must be at least the largest node in edges"))
+    end
+    return max_node_id
+end
+
+function WolframHypergraphState(edges::Vector{Tuple{Vararg{Int}}}, max_node_id::Int)
+    clean_edges = _validate_edges(edges)
+    clean_max = _validate_max_node_id(max_node_id, clean_edges)
+    return WolframHypergraphState(copy(clean_edges), clean_max)
+end
+
+function evolve!(s::WolframHypergraphState, steps::Int=1)
+    if steps < 0
+        throw(ArgumentError("steps must be a non-negative integer"))
+    end
+    _validate_edges(s.edges)
+    _validate_max_node_id(s.max_node_id, s.edges)
+
     for _ in 1:steps
-        new_edges = []
-        matched_indices = set()
-        # Naive pattern matching O(E^2)
-        # Find (x, y) && (y, z)
-        for i, e1 in enumerate(s.edges)
-            if i in matched_indices
+        new_edges = Tuple{Vararg{Int}}[]
+        matched = Set{Int}()
+        for (i, e1) in enumerate(s.edges)
+            if i in matched || length(e1) != 2
                 continue
-            if length(e1) != 2
-                continue
+            end
             x, y = e1
-            for j, e2 in enumerate(s.edges)
-                if i == j || j in matched_indices
+            for (j, e2) in enumerate(s.edges)
+                if i == j || j in matched || length(e2) != 2
                     continue
-                if length(e2) != 2
-                    continue
-                if e2[0] == y:  # Found chain x->y->z
-                    z = e2[1]
-                    # Apply Rule
+                end
+                if e2[1] == y
+                    z = e2[2]
                     w = s.max_node_id + 1
-                    s.max_node_id += 1
-                    # New edges: {x,z}, {x,w}, {y,w}
-                    new_edges = push!(, (x, z))
-                    new_edges = push!(, (x, w))
-                    new_edges = push!(, (y, w))
-                    matched_indices.add(i)
-                    matched_indices.add(j)
+                    s.max_node_id = w
+                    push!(new_edges, (x, z))
+                    push!(new_edges, (x, w))
+                    push!(new_edges, (y, w))
+                    push!(matched, i)
+                    push!(matched, j)
                     break
-        # Keep unmatched edges
-        for k, e in enumerate(s.edges)
-            if k ! in matched_indices
-                new_edges = push!(, e)  # type: ignore[arg-type]
-        s.edges = new_edges
-end
-
-function dimension_estimate(s::WolframHypergraphState)
-    if length(s.edges) < 3
-        return 0.0
-    adj: dict[int, set[int]] = {}
-    for edge in s.edges
-        for node in edge
-            adj.setdefault(node, set())
-        for i in 1:length(edge)
-            for j in 1:i + 1, length(edge)
-                adj[edge[i]].add(edge[j])
-                adj[edge[j]].add(edge[i])
-    nodes = list(adj.keys())
-    if length(nodes) < 4
-        return 0.0
-    start = nodes[length(nodes) // 2]
-    visited = {start}
-    frontier = {start}
-    volumes = []
-    for _ in 1:min(10, length(nodes))
-        next_frontier: set[int] = set()
-        for n in frontier
-            for nb in adj.get(n, set())
-                if nb ! in visited
-                    visited.add(nb)
-                    next_frontier.add(nb)
-        if ! next_frontier
-            break
-        frontier = next_frontier
-        volumes = push!(, length(visited))
-    if length(volumes) < 2
-        return 0.0
-    import numpy as np
-    r_vals = collect(1, length(volumes) + 1, dtype=np.float64)
-    v_vals = collect(volumes, dtype=np.float64)
-    log_r = log(r_vals)
-    log_v = log(clamp(v_vals, 1, nothing))
-    if log_r[-1] - log_r[0] < 1e-10:  # pragma: no cover
-        return 0.0
-    slope = (log_v[-1] - log_v[0]) / (log_r[-1] - log_r[0])
-    return float(max(slope, 0.0))
+                end
+            end
+        end
+        for (k, edge) in enumerate(s.edges)
+            if !(k in matched)
+                push!(new_edges, edge)
+            end
+        end
+        s.edges = _validate_edges(new_edges)
+        _validate_max_node_id(s.max_node_id, s.edges)
+    end
+    return s
 end
 
 end # module WolframHypergraphAccel

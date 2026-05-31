@@ -46,13 +46,18 @@ This is triangle completion with a new node w. The graph grows at each step, and
 
 | Parameter | Meaning |
 |-----------|---------|
-| `edges` | Initial hyperedge list (list of int tuples) |
-| `max_node_id` | Highest existing node ID |
+| `edges` | Initial hyperedge list; each edge must be a non-empty tuple of unique non-negative integers |
+| `max_node_id` | Non-negative integer at least as large as every node appearing in `edges` |
 
 Methods:
 
-- `evolve(steps)` — Apply rewrite rule for N steps
+- `evolve(steps)` — Apply rewrite rule for a non-negative integer number of steps
 - `dimension_estimate()` — Estimate effective dimension via BFS neighborhood growth: measures how |B(r)| scales with r, fits d from V(r) ~ r^d
+
+The implementation validates the hypergraph before rewrite and before
+dimension estimation. Malformed edges, repeated nodes inside one hyperedge,
+negative node identifiers, or stale `max_node_id` values are rejected rather
+than silently corrupting the emergent topology.
 
 ## Usage
 
