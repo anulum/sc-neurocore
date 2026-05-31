@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `ChandelierNeuron` Python, Julia, Go, and Rust safety surfaces
+  to reject invalid Kv1/Kv3 gate state, non-physical conductance and
+  capacitance contracts, unstable rate and gate exponentials, non-finite
+  drive, and out-of-bounds membrane or gate candidates before mutation while
+  preserving axo-axonic Kv1 delay and Kv3 sharpening dynamics.
 - Hardened `CerebellarBasketNeuron` Python, Julia, Go, and Rust safety
   surfaces to reject invalid A-type/KCa gate state, calcium state,
   non-physical conductance and capacitance contracts, unstable rate
