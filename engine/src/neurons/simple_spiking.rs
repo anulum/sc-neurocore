@@ -156,34 +156,74 @@ impl HindmarshRoseNeuron {
             x_threshold: 1.0,
         }
     }
-    fn derivatives(&self, x: f64, y: f64, z: f64, current: f64) -> (f64, f64, f64) {
-        (
+    fn valid_state(&self) -> bool {
+        self.x.is_finite()
+            && self.y.is_finite()
+            && self.z.is_finite()
+            && self.b.is_finite()
+            && self.r.is_finite()
+            && self.s.is_finite()
+            && self.x_rest.is_finite()
+            && self.dt.is_finite()
+            && self.x_threshold.is_finite()
+            && self.r > 0.0
+            && self.s > 0.0
+            && self.dt > 0.0
+    }
+    fn derivatives(&self, x: f64, y: f64, z: f64, current: f64) -> Option<(f64, f64, f64)> {
+        if !(x.is_finite() && y.is_finite() && z.is_finite() && current.is_finite()) {
+            return None;
+        }
+        let derivative = (
             y - x.powi(3) + self.b * x.powi(2) - z + current,
             1.0 - 5.0 * x.powi(2) - y,
             self.r * (self.s * (x - self.x_rest) - z),
-        )
+        );
+        if derivative.0.is_finite() && derivative.1.is_finite() && derivative.2.is_finite() {
+            Some(derivative)
+        } else {
+            None
+        }
     }
     pub fn step(&mut self, current: f64) -> i32 {
+        if !self.valid_state() || !current.is_finite() {
+            return 0;
+        }
         let x_prev = self.x;
         let (x0, y0, z0) = (self.x, self.y, self.z);
         let dt = self.dt;
-        let k1 = self.derivatives(x0, y0, z0, current);
-        let k2 = self.derivatives(
+        let Some(k1) = self.derivatives(x0, y0, z0, current) else {
+            return 0;
+        };
+        let Some(k2) = self.derivatives(
             x0 + 0.5 * dt * k1.0,
             y0 + 0.5 * dt * k1.1,
             z0 + 0.5 * dt * k1.2,
             current,
-        );
-        let k3 = self.derivatives(
+        ) else {
+            return 0;
+        };
+        let Some(k3) = self.derivatives(
             x0 + 0.5 * dt * k2.0,
             y0 + 0.5 * dt * k2.1,
             z0 + 0.5 * dt * k2.2,
             current,
-        );
-        let k4 = self.derivatives(x0 + dt * k3.0, y0 + dt * k3.1, z0 + dt * k3.2, current);
-        self.x = x0 + (dt / 6.0) * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0);
-        self.y = y0 + (dt / 6.0) * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1);
-        self.z = z0 + (dt / 6.0) * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2);
+        ) else {
+            return 0;
+        };
+        let Some(k4) = self.derivatives(x0 + dt * k3.0, y0 + dt * k3.1, z0 + dt * k3.2, current)
+        else {
+            return 0;
+        };
+        let next_x = x0 + (dt / 6.0) * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0);
+        let next_y = y0 + (dt / 6.0) * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1);
+        let next_z = z0 + (dt / 6.0) * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2);
+        if !(next_x.is_finite() && next_y.is_finite() && next_z.is_finite()) {
+            return 0;
+        }
+        self.x = next_x;
+        self.y = next_y;
+        self.z = next_z;
         if self.x >= self.x_threshold && x_prev < self.x_threshold {
             1
         } else {

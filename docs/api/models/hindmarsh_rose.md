@@ -70,24 +70,27 @@ Hindmarsh-Rose ODE. The explicit Euler baseline remains available with
 `integrator="euler"` for regression comparisons and cross-runtime current
 balance checks.
 
-Go, Rust safety, and Julia counterpart surfaces preserve the simultaneous
-Euler baseline:
+Go, Rust safety, and Julia counterpart surfaces use the same candidate-first
+fourth-order Runge-Kutta update as the default Python path:
 
 ```
-dx = (y - x³ + b·x² - z + I) * dt
-dy = (1 - 5·x² - y) * dt
-dz = r · (s·(x - x_rest) - z) * dt
-x += dx;  y += dy;  z += dz
+k1 = f(x, y, z, I)
+k2 = f(x + 0.5dt·k1x, y + 0.5dt·k1y, z + 0.5dt·k1z, I)
+k3 = f(x + 0.5dt·k2x, y + 0.5dt·k2y, z + 0.5dt·k2z, I)
+k4 = f(x + dt·k3x,     y + dt·k3y,     z + dt·k3z,     I)
+state_next = state + dt/6 · (k1 + 2k2 + 2k3 + k4)
 ```
 
 All three derivatives are computed from the old state before any
-variable is updated.
+variable is updated. State is committed only after every RK4 stage and
+the final candidate are finite.
 
 All runtime surfaces reject non-finite input current and non-physical
 time-step or slow-adaptation parameters before updating state. The
-Python RK4 and Euler paths also fail closed if the cubic derivative
-overflows or an intermediate RK4 stage becomes non-finite; the previous
-state is preserved in that case.
+Python RK4/Euler paths, Rust engine, Rust safety surface, Go service, and
+Julia surface also fail closed if the cubic derivative overflows or an
+intermediate RK4 stage becomes non-finite; the previous state is preserved
+in that case.
 
 ---
 
@@ -360,7 +363,7 @@ print(f"Bursts: {len(bursts)}, Mean spikes/burst: {sum(len(b) for b in bursts)/l
 | Aspect | Python | Rust |
 |--------|--------|------|
 | Source | `hindmarsh_rose.py` (45 lines) | `simple_spiking.rs:130-179` |
-| Integration | Simultaneous Euler | Simultaneous Euler |
+| Integration | RK4 default, Euler regression option | RK4 |
 | Exp per step | 0 | 0 |
 | Dependencies | None (pure arithmetic) | None (pure arithmetic) |
 | **Parity** | **EXACT** (pure polynomial, no RNG) | |

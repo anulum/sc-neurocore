@@ -104,6 +104,16 @@ class TestHRIsolation:
 
         assert (n.x, n.y, n.z) == before
 
+    def test_runtime_parameter_corruption_fails_before_mutation(self):
+        n = HindmarshRoseNeuron()
+        n.dt = float("nan")
+        before = (n.x, n.y, n.z)
+
+        with pytest.raises(FloatingPointError, match="non-finite"):
+            n.step(3.0)
+
+        assert (n.x, n.y, n.z) == before
+
 
 # ---------------------------------------------------------------------------
 # 2. ANALYTICAL — dx, dy, dz formulas, cubic term, slow z
