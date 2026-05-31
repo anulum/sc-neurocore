@@ -135,6 +135,41 @@ ssh anulum@192.168.1.30 \
   /home/anulum/sc-neurocore-orca-runs/ml350_r6_continuation_20260531/status_probe.sh
 ```
 
+## What a Converged Neutral ORCA Result Means
+
+The r7 continuation is the current molecular-data keystone for the Posner
+verification stack. The useful completion condition is not ORCA process exit
+alone; the accepted condition is exit status `0`, `ORCA TERMINATED NORMALLY`,
+and `THE OPTIMIZATION HAS CONVERGED` in the final output.
+
+If that gate passes, SC-NeuroCore can promote the neutral Posner geometry from
+an initial/generated model to a reproducible first-principles endpoint. That
+unlocks:
+
+- geometry-derived P-P distance matrices and orientation-specific 31P-31P
+  dipolar tensors from the accepted `Ca9(PO4)6` structure;
+- structural comparison against high-symmetry Posner assumptions and
+  low-symmetry critiques in the published literature;
+- cation-radical doublet ORCA EPR/HFC jobs launched from an accepted neutral
+  geometry rather than from an unconverged endpoint;
+- validated `hf.json` and `extended.json` generation after the radical HFC
+  outputs exist and pass tensor/runtime checks;
+- simulator and IBM verification run packs whose molecular parameters are
+  externally derived instead of silently estimated.
+
+The novelty is the full-chain discipline: molecular quantum chemistry feeds
+spin Hamiltonian parameters, those parameters feed quantum circuits, and
+backend-calibrated execution remains blocked until the molecular and hardware
+inputs are present and validated. This is stronger than a Posner-like circuit
+demo because the verification target becomes a concrete, traceable molecular
+model.
+
+A converged neutral ORCA result does not prove the biological Posner
+hypothesis, quantum cognition, or long-lived entanglement in brain tissue. It
+does establish the reproducible molecular geometry needed to test those claims
+seriously and to compare SC-NeuroCore's spin/circuit behavior against the
+published Posner literature.
+
 ## Vertex Run History
 
 The previous molecular acquisition lane was Vertex r6:
