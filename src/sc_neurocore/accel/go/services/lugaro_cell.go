@@ -58,6 +58,7 @@ func (s *LugaroCellState) valid() bool {
 	) &&
 		s.TauM > 0.0 && s.TauAdapt > 0.0 && s.Dt > 0.0 &&
 		s.AAdapt >= 0.0 && s.Gain >= 0.0 && s.Serotonin >= 0.0 && s.Serotonin <= 1.0 &&
+		s.V >= -100.0 && s.V <= 60.0 &&
 		s.Adapt >= 0.0 && s.VThreshold > s.VReset && s.VThreshold > s.VRest
 }
 

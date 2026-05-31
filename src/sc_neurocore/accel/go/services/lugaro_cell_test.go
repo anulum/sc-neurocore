@@ -13,6 +13,17 @@ import (
 	"testing"
 )
 
+func exactRelaxLugaro(value float64, target float64, tau float64, dt float64) float64 {
+	return target + (value-target)*math.Exp(-dt/tau)
+}
+
+func assertLugaroClose(t *testing.T, name string, got float64, want float64) {
+	t.Helper()
+	if math.Abs(got-want) > 1e-12 {
+		t.Fatalf("%s mismatch: got %.16e want %.16e", name, got, want)
+	}
+}
+
 func TestLugaroCellStepPreservesBoundsAndAdaptation(t *testing.T) {
 	cell := NewLugaroCell()
 
@@ -73,4 +84,36 @@ func TestLugaroCellCorruptedStatePreservesState(t *testing.T) {
 	if cell.V != beforeV || !math.IsNaN(beforeAdapt) || !math.IsNaN(cell.Adapt) {
 		t.Fatalf("corrupted state mutated during fail-closed step")
 	}
+}
+
+func TestLugaroCellInvalidVoltagePreservesState(t *testing.T) {
+	cell := NewLugaroCell()
+	cell.V = 60.1
+	beforeV := cell.V
+	beforeAdapt := cell.Adapt
+
+	if spike := cell.Step(5.0); spike != 0 {
+		t.Fatalf("invalid voltage must not spike, got %d", spike)
+	}
+	if cell.V != beforeV || cell.Adapt != beforeAdapt {
+		t.Fatalf("invalid voltage mutated state")
+	}
+}
+
+func TestLugaroCellClosedFormMembraneAndAdaptationRelaxation(t *testing.T) {
+	cell := NewLugaroCell()
+	cell.V = -56.0
+	cell.Adapt = 0.2
+	cell.Gain = 0.0
+
+	vInf := cell.VRest - cell.Adapt
+	expectedV := exactRelaxLugaro(cell.V, vInf, cell.TauM, cell.Dt)
+	adaptInf := math.Max(0.0, cell.AAdapt*math.Max(0.0, expectedV-cell.VRest))
+	expectedAdapt := math.Max(0.0, exactRelaxLugaro(cell.Adapt, adaptInf, cell.TauAdapt, cell.Dt))
+
+	if spike := cell.Step(0.0); spike != 0 {
+		t.Fatalf("subthreshold exact relaxation must not spike, got %d", spike)
+	}
+	assertLugaroClose(t, "v", cell.V, expectedV)
+	assertLugaroClose(t, "adapt", cell.Adapt, expectedAdapt)
 }

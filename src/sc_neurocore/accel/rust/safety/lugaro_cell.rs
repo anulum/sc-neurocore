@@ -104,6 +104,7 @@ pub fn validate_lugaro_cell(state: &LugaroCell) -> bool {
         && state.dt > 0.0
         && state.a_adapt >= 0.0
         && state.gain >= 0.0
+        && (-100.0..=60.0).contains(&state.v)
         && (0.0..=1.0).contains(&state.serotonin)
         && state.adapt >= 0.0
         && state.v_threshold > state.v_reset
@@ -158,5 +159,47 @@ mod tests {
         assert_eq!(state.step(5.0), 0);
         assert_eq!(state.v, before.v);
         assert!(state.adapt.is_nan());
+    }
+
+    #[test]
+    fn test_lugaro_cell_invalid_voltage_preserves_state() {
+        let mut state = LugaroCell::new();
+        state.v = 60.1;
+        let before = state.clone();
+        assert_eq!(state.step(5.0), 0);
+        assert_eq!(state.v, before.v);
+        assert_eq!(state.adapt, before.adapt);
+    }
+
+    #[test]
+    fn test_lugaro_cell_closed_form_membrane_and_adaptation_relaxation() {
+        let mut state = LugaroCell::new();
+        state.v = -56.0;
+        state.adapt = 0.2;
+        state.gain = 0.0;
+
+        let v_inf = state.v_rest - state.adapt;
+        let expected_v = exact_relax_lugaro(state.v, v_inf, state.tau_m, state.dt);
+        let adapt_inf = (state.a_adapt * (expected_v - state.v_rest).max(0.0)).max(0.0);
+        let expected_adapt =
+            exact_relax_lugaro(state.adapt, adapt_inf, state.tau_adapt, state.dt).max(0.0);
+
+        assert_eq!(state.step(0.0), 0);
+        assert_close_lugaro(state.v, expected_v, 1e-12);
+        assert_close_lugaro(state.adapt, expected_adapt, 1e-12);
+    }
+
+    fn exact_relax_lugaro(value: f64, target: f64, tau: f64, dt: f64) -> f64 {
+        target + (value - target) * (-dt / tau).exp()
+    }
+
+    fn assert_close_lugaro(actual: f64, expected: f64, tolerance: f64) {
+        assert!(
+            (actual - expected).abs() <= tolerance,
+            "actual={:.16e} expected={:.16e} tolerance={:.3e}",
+            actual,
+            expected,
+            tolerance
+        );
     }
 }

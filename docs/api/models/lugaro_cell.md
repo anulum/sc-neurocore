@@ -102,10 +102,13 @@ share the same runtime boundary:
 - positive membrane and adaptation time constants
 - positive timestep
 - non-negative adaptation coupling and gain
+- membrane voltage constrained to the physical `[-100, 60] mV` operating range
 - serotonin constrained to `[0, 1]`
 - non-negative adaptation current
 - threshold above reset and rest potentials
 - finite runtime input current
+- exact first-order membrane relaxation under constant drive
+- exact first-order adaptation relaxation against the non-negative candidate target
 - local candidate-state integration with no partial mutation on invalid input
 
 Invalid state or input raises `ValueError` on throwing Python/Julia surfaces and
@@ -117,13 +120,19 @@ returns no spike without mutation on non-throwing Go/Rust safety surfaces.
 
 Module-specific tests cover bounded state evolution, serotonin firing relation,
 invalid-configuration rejection, non-finite-drive preservation, and corrupted
-state preservation. The Rust engine carries matching Lugaro-specific checks in
-the cerebellar test module.
+state preservation. Python, Go, Rust safety, Julia, and Rust engine checks also
+assert the closed-form membrane/adaptation relaxation contract and fail-closed
+nonphysical-voltage boundary.
 
 ---
 
 ## Benchmark status
 
-Historical timing was tied to the older raw-Euler implementation. Regenerate
-LugaroCell Python and Rust timing evidence before using this model in release
-performance claims.
+The maintained Rust engine path was remeasured on 2026-05-31 after the
+closed-form relaxation and fail-closed voltage-boundary hardening:
+
+- command: `cargo bench --manifest-path engine/Cargo.toml --bench full_bench lugaro_10k_steps`
+- hardware: Intel Core i5-11600K @ 3.90 GHz, 6C/12T, verified with `lscpu`
+- Criterion median: `0.23055588627787307 ms` per 10k steps (`23.05558862778731 ns` per step)
+- artifact:
+  `benchmarks/results/local_i5_11600k_criterion_2026-05-31_lugaro_cell.json`

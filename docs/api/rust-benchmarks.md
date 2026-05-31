@@ -134,9 +134,13 @@ cargo bench --bench analysis_bench -- --quick
 
 > Golgi cell remeasured 2026-05-31 after exact gate, calcium, conductance integration, full polyglot parity, and fail-closed state guards.
 | Stellate cell | 1k | 6.08 ms | **6.08 µs** | 50 | exact WB gates + exact Kv3.1 + conductance membrane |
-| Lugaro cell | 10k | 196 µs | **19.6 ns** | 1 | LIF + adaptation + 5-HT |
+| Lugaro cell | 10k | 230.56 µs | **23.06 ns** | 1 | exact LIF + adaptation + 5-HT |
 | Unipolar brush cell | 10k | 211.47 µs | **21.15 ns** | 1 | LIF + persistent NMDA-like, exact relaxation |
 | DCN neuron | 1k | 2.71 ms | **2.71 µs** | 20 | exact gates + 7 currents: Na_t, Na_p, K_dr, Ca_T, AHP, Ih, leak |
+
+> Lugaro cell remeasured 2026-05-31 after exact membrane/adaptation relaxation,
+> Python/Rust/Go/Julia/Rust-safety parity, Mojo metadata alignment, and
+> fail-closed state guards.
 
 > Stellate cell remeasured 2026-05-31 after exact Wang-Buzsáki h/n gates,
 > exact Kv3.1 p-gate relaxation, exact conductance-form membrane integration,

@@ -93,6 +93,8 @@ class LugaroCell:
             raise ValueError("lugaro cell adaptation coupling must be non-negative")
         if self.gain < 0.0:
             raise ValueError("lugaro cell gain must be non-negative")
+        if not -100.0 <= self.v <= 60.0:
+            raise ValueError("lugaro cell membrane potential must stay in [-100, 60] mV")
         if not 0.0 <= self.serotonin <= 1.0:
             raise ValueError("lugaro cell serotonin must stay in [0, 1]")
         if self.adapt < 0.0:
