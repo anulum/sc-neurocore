@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `WendlingNeuron` Python, Go, and Rust safety surfaces to validate
+  neural-mass state, physiological gain/rate/timestep contracts, non-finite
+  external drive, overflow-stable sigmoid bounds, and finite candidate updates
+  before mutation while preserving continuous EEG-proxy output semantics.
 - Hardened `CompteWMNeuron` Python, Julia, Go, and Rust safety surfaces
   to validate NMDA/AMPA/GABA gate state, Mg2+-block denominators,
   conductance and timescale contracts, non-finite drive, and bounded
