@@ -399,15 +399,55 @@ impl FitzHughRinzelNeuron {
             v_threshold: 1.0,
         }
     }
+    fn valid_numeric_contract(&self) -> bool {
+        self.v.is_finite()
+            && self.w.is_finite()
+            && self.y.is_finite()
+            && self.a.is_finite()
+            && self.b.is_finite()
+            && self.c.is_finite()
+            && self.d.is_finite()
+            && self.delta.is_finite()
+            && self.mu.is_finite()
+            && self.dt.is_finite()
+            && self.v_threshold.is_finite()
+            && self.delta > 0.0
+            && self.mu > 0.0
+            && self.dt > 0.0
+    }
+
+    fn derivatives(&self, v: f64, w: f64, y: f64, current: f64) -> Option<(f64, f64, f64)> {
+        if !(v.is_finite() && w.is_finite() && y.is_finite() && current.is_finite()) {
+            return None;
+        }
+        let dv = v - v.powi(3) / 3.0 - w + y + current;
+        let dw = self.delta * (self.a + v - self.b * w);
+        let dy = self.mu * (self.c - v - self.d * y);
+        if dv.is_finite() && dw.is_finite() && dy.is_finite() {
+            Some((dv, dw, dy))
+        } else {
+            None
+        }
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
+        if !self.valid_numeric_contract() {
+            return 0;
+        }
         let v_prev = self.v;
         // FitzHugh-Rinzel: simultaneous Euler (all derivatives use old state)
-        let dv = (self.v - self.v.powi(3) / 3.0 - self.w + self.y + current) * self.dt;
-        let dw = self.delta * (self.a + self.v - self.b * self.w) * self.dt;
-        let dy = self.mu * (self.c - self.v - self.d * self.y) * self.dt;
-        self.v += dv;
-        self.w += dw;
-        self.y += dy;
+        let Some((dv, dw, dy)) = self.derivatives(self.v, self.w, self.y, current) else {
+            return 0;
+        };
+        let next_v = self.v + dv * self.dt;
+        let next_w = self.w + dw * self.dt;
+        let next_y = self.y + dy * self.dt;
+        if !(next_v.is_finite() && next_w.is_finite() && next_y.is_finite()) {
+            return 0;
+        }
+        self.v = next_v;
+        self.w = next_w;
+        self.y = next_y;
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
@@ -1793,7 +1833,20 @@ mod tests {
     }
     #[test]
     fn fhr_nan_no_panic() {
-        FitzHughRinzelNeuron::new().step(f64::NAN);
+        let mut n = FitzHughRinzelNeuron::new();
+        let before = (n.v, n.w, n.y);
+        assert_eq!(n.step(f64::NAN), 0);
+        assert_eq!((n.v, n.w, n.y), before);
+    }
+    #[test]
+    fn fhr_overflow_candidate_preserves_state() {
+        let mut n = FitzHughRinzelNeuron {
+            v: 1.0e155,
+            ..Default::default()
+        };
+        let before = (n.v, n.w, n.y);
+        assert_eq!(n.step(0.5), 0);
+        assert_eq!((n.v, n.w, n.y), before);
     }
     #[test]
     fn fhr_negative_no_crash() {
