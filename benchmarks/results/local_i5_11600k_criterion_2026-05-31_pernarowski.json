@@ -1,0 +1,12 @@
+{
+  "benchmark": "pernarowski_10k_steps",
+  "date": "2026-05-31",
+  "host_class": "local_i5_11600k",
+  "command": "cargo bench --manifest-path engine/Cargo.toml --bench full_bench pernarowski_10k_steps -- --sample-size 10",
+  "sample_size": 10,
+  "time_per_10k_steps_us_low": 623.61,
+  "time_per_10k_steps_us_estimate": 632.87,
+  "time_per_10k_steps_us_high": 640.77,
+  "time_per_step_ns_estimate": 63.287,
+  "contract": "Rust engine RK4 Pernarowski three-state burster with finite-state validation and continuous threshold-crossing semantics"
+}

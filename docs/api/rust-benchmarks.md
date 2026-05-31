@@ -245,7 +245,7 @@ cargo bench --bench analysis_bench -- --quick
 | Wilson HR | 10k | 151 µs | **15.1 ns** | Simplified cortical |
 | Benda-Herz | 10k | 218 µs | **21.8 ns** | Stochastic rate + adaptation |
 | Learnable neuron | 10k | 224 µs | **22.4 ns** | Learnable parameters (tau, beta) |
-| Pernarowski | 10k | 232 µs | **23.2 ns** | Coupled oscillator burster |
+| Pernarowski | 10k | 632.87 µs | **63.287 ns** | RK4 three-state beta-cell burster |
 | Terman-Wang | 10k | 247 µs | **24.7 ns** | Oscillatory segmentation |
 | Gutkin-Ermentrout | 10k | 289 µs | **28.9 ns** | Type I excitability |
 | Sherman-Rinzel-Keizer | 1k | 29.0 µs | **29.0 ns** | Beta cell burster |

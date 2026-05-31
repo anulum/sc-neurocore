@@ -1476,16 +1476,76 @@ impl PernarowskiNeuron {
             v_threshold: 0.5,
         }
     }
+    fn is_valid(&self) -> bool {
+        self.v.is_finite()
+            && self.w.is_finite()
+            && self.z.is_finite()
+            && self.alpha.is_finite()
+            && self.beta.is_finite()
+            && self.eps1.is_finite()
+            && self.eps1 > 0.0
+            && self.eps2.is_finite()
+            && self.eps2 > 0.0
+            && self.gamma.is_finite()
+            && self.gamma > 0.0
+            && self.dt.is_finite()
+            && self.dt > 0.0
+            && self.v_threshold.is_finite()
+    }
+    fn derivatives(&self, v: f64, w: f64, z: f64, current: f64) -> Option<(f64, f64, f64)> {
+        if !(v.is_finite() && w.is_finite() && z.is_finite() && current.is_finite()) {
+            return None;
+        }
+        let dv = v - v.powi(3) / 3.0 - w - z + current;
+        let dw = self.eps1 * (v - self.gamma * w + self.alpha);
+        let dz = self.eps2 * (self.beta * (v + 0.7) - z);
+        if dv.is_finite() && dw.is_finite() && dz.is_finite() {
+            Some((dv, dw, dz))
+        } else {
+            None
+        }
+    }
+    fn rk4_candidate(&self, current: f64) -> Option<(f64, f64, f64)> {
+        let dt = self.dt;
+        let (k1v, k1w, k1z) = self.derivatives(self.v, self.w, self.z, current)?;
+        let (k2v, k2w, k2z) = self.derivatives(
+            self.v + 0.5 * dt * k1v,
+            self.w + 0.5 * dt * k1w,
+            self.z + 0.5 * dt * k1z,
+            current,
+        )?;
+        let (k3v, k3w, k3z) = self.derivatives(
+            self.v + 0.5 * dt * k2v,
+            self.w + 0.5 * dt * k2w,
+            self.z + 0.5 * dt * k2z,
+            current,
+        )?;
+        let (k4v, k4w, k4z) = self.derivatives(
+            self.v + dt * k3v,
+            self.w + dt * k3w,
+            self.z + dt * k3z,
+            current,
+        )?;
+        let v = self.v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0;
+        let w = self.w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0;
+        let z = self.z + dt * (k1z + 2.0 * k2z + 2.0 * k3z + k4z) / 6.0;
+        if v.is_finite() && w.is_finite() && z.is_finite() {
+            Some((v, w, z))
+        } else {
+            None
+        }
+    }
     pub fn step(&mut self, current: f64) -> i32 {
+        if !self.is_valid() || !current.is_finite() {
+            return 0;
+        }
         let v_prev = self.v;
-        let f_v = self.v - self.v.powi(3) / 3.0;
-        // Pernarowski: simultaneous Euler (all derivatives use old state)
-        let dv = (f_v - self.w - self.z + current) * self.dt;
-        let dw = self.eps1 * (self.v - self.gamma * self.w + self.alpha) * self.dt;
-        let dz = self.eps2 * (self.beta * (self.v + 0.7) - self.z) * self.dt;
-        self.v += dv;
-        self.w += dw;
-        self.z += dz;
+        let Some((v, w, z)) = self.rk4_candidate(current) else {
+            return 0;
+        };
+        self.v = v;
+        self.w = w;
+        self.z = z;
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
@@ -2574,6 +2634,59 @@ mod tests {
             n.step(1.0);
         }
         assert!((n.z - z0).abs() > 1e-6, "slow z should evolve");
+    }
+    #[test]
+    fn pernarowski_matches_rk4_candidate() {
+        let mut n = PernarowskiNeuron::new();
+        n.v = -0.8;
+        n.w = 0.2;
+        n.z = -0.1;
+        let current = 0.5;
+        let dt = n.dt;
+        let rhs = |v: f64, w: f64, z: f64| {
+            (
+                v - v.powi(3) / 3.0 - w - z + current,
+                n.eps1 * (v - n.gamma * w + n.alpha),
+                n.eps2 * (n.beta * (v + 0.7) - z),
+            )
+        };
+        let (k1v, k1w, k1z) = rhs(n.v, n.w, n.z);
+        let (k2v, k2w, k2z) = rhs(
+            n.v + 0.5 * dt * k1v,
+            n.w + 0.5 * dt * k1w,
+            n.z + 0.5 * dt * k1z,
+        );
+        let (k3v, k3w, k3z) = rhs(
+            n.v + 0.5 * dt * k2v,
+            n.w + 0.5 * dt * k2w,
+            n.z + 0.5 * dt * k2z,
+        );
+        let (k4v, k4w, k4z) = rhs(n.v + dt * k3v, n.w + dt * k3w, n.z + dt * k3z);
+        let expected = (
+            n.v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0,
+            n.w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0,
+            n.z + dt * (k1z + 2.0 * k2z + 2.0 * k3z + k4z) / 6.0,
+        );
+
+        assert_eq!(n.step(current), 0);
+        assert!((n.v - expected.0).abs() < 1e-14);
+        assert!((n.w - expected.1).abs() < 1e-14);
+        assert!((n.z - expected.2).abs() < 1e-14);
+    }
+    #[test]
+    fn pernarowski_invalid_input_preserves_state() {
+        let mut n = PernarowskiNeuron::new();
+        let before = (n.v, n.w, n.z);
+        assert_eq!(n.step(f64::NAN), 0);
+        assert_eq!((n.v, n.w, n.z), before);
+    }
+    #[test]
+    fn pernarowski_overflow_candidate_preserves_state() {
+        let mut n = PernarowskiNeuron::new();
+        n.v = 1.0e160;
+        let before = (n.v, n.w, n.z);
+        assert_eq!(n.step(0.5), 0);
+        assert_eq!((n.v, n.w, n.z), before);
     }
     #[test]
     fn pernarowski_nan_no_panic() {
