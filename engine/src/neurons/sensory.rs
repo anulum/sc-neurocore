@@ -901,23 +901,62 @@ impl Nociceptor {
         }
     }
 
+    fn exact_relax(value: f64, target: f64, tau: f64, dt: f64) -> f64 {
+        target + (value - target) * (-dt / tau).exp()
+    }
+
+    fn biological_voltage(value: f64) -> bool {
+        value.is_finite() && (-100.0..=60.0).contains(&value)
+    }
+
+    fn is_valid(&self) -> bool {
+        Self::biological_voltage(self.v)
+            && Self::biological_voltage(self.v_rest)
+            && Self::biological_voltage(self.v_reset)
+            && Self::biological_voltage(self.v_threshold)
+            && self.tau.is_finite()
+            && self.tau > 0.0
+            && self.sensitisation.is_finite()
+            && (0.0..=10.0).contains(&self.sensitisation)
+            && self.tau_sens.is_finite()
+            && self.tau_sens > 0.0
+            && self.sens_rate.is_finite()
+            && self.sens_rate >= 0.0
+            && self.gain.is_finite()
+            && self.gain >= 0.0
+            && self.dt.is_finite()
+            && self.dt > 0.0
+            && self.v_threshold > self.v_reset
+            && self.v_threshold > self.v_rest
+    }
+
     /// Step with noxious stimulus intensity (≥ 0). Returns spike (1/0).
     pub fn step(&mut self, stimulus: f64) -> i32 {
+        if !self.is_valid() || !stimulus.is_finite() {
+            return 0;
+        }
+
         let drive = self.gain * stimulus.max(0.0);
-        self.v += (-(self.v - self.v_rest) + drive) / self.tau * self.dt;
+        let v_next = Self::exact_relax(self.v, self.v_rest + drive, self.tau, self.dt);
+        if !drive.is_finite() || !v_next.is_finite() {
+            return 0;
+        }
 
         let effective_threshold = self.v_threshold - self.sensitisation;
-        if self.v >= effective_threshold {
+        if v_next >= effective_threshold {
             self.v = self.v_reset;
             // Spike causes sensitisation buildup (capped at 10 mV)
             self.sensitisation = (self.sensitisation + self.sens_rate).min(10.0);
             1
         } else {
             // Sensitisation slowly decays
-            self.sensitisation += -self.sensitisation / self.tau_sens * self.dt;
-            if self.sensitisation < 0.0 {
-                self.sensitisation = 0.0;
+            let sensitisation_next =
+                Self::exact_relax(self.sensitisation, 0.0, self.tau_sens, self.dt).max(0.0);
+            if !sensitisation_next.is_finite() {
+                return 0;
             }
+            self.v = v_next.clamp(-100.0, 60.0);
+            self.sensitisation = sensitisation_next;
             0
         }
     }
@@ -1784,6 +1823,83 @@ mod tests {
         n.reset();
         let high: i32 = (0..500).map(|_| n.step(50.0)).sum();
         assert!(high > 0, "nociceptor should fire at high stimulus");
+    }
+
+    #[test]
+    fn nociceptor_closed_form_membrane_and_sensitisation_decay() {
+        let mut n = Nociceptor::new();
+        n.v = -60.0;
+        n.sensitisation = 4.0;
+        n.gain = 0.5;
+
+        let stimulus = 8.0;
+        let drive = n.gain * stimulus;
+        let expected_v = exact_relax_nociceptor(n.v, n.v_rest + drive, n.tau, n.dt);
+        let expected_sensitisation =
+            exact_relax_nociceptor(n.sensitisation, 0.0, n.tau_sens, n.dt).max(0.0);
+
+        assert_eq!(n.step(stimulus), 0);
+        assert_close_nociceptor(n.v, expected_v, 1e-12);
+        assert_close_nociceptor(n.sensitisation, expected_sensitisation, 1e-12);
+    }
+
+    #[test]
+    fn nociceptor_invalid_input_preserves_state() {
+        let mut n = Nociceptor::new();
+        n.v = -60.0;
+        n.sensitisation = 2.0;
+        let before = n.clone();
+
+        assert_eq!(n.step(f64::NAN), 0);
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.sensitisation, before.sensitisation);
+    }
+
+    #[test]
+    fn nociceptor_corrupted_state_preserved_on_step() {
+        let mut n = Nociceptor::new();
+        n.sensitisation = f64::NAN;
+        let before = n.clone();
+
+        assert_eq!(n.step(50.0), 0);
+        assert_eq!(n.v, before.v);
+        assert!(n.sensitisation.is_nan());
+    }
+
+    #[test]
+    fn nociceptor_invalid_voltage_preserved_on_step() {
+        let mut n = Nociceptor::new();
+        n.v = -100.1;
+        let before = n.clone();
+
+        assert_eq!(n.step(50.0), 0);
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.sensitisation, before.sensitisation);
+    }
+
+    #[test]
+    fn nociceptor_overflowing_drive_preserves_state() {
+        let mut n = Nociceptor::new();
+        n.gain = f64::MAX;
+        let before = n.clone();
+
+        assert_eq!(n.step(2.0), 0);
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.sensitisation, before.sensitisation);
+    }
+
+    fn exact_relax_nociceptor(value: f64, target: f64, tau: f64, dt: f64) -> f64 {
+        target + (value - target) * (-dt / tau).exp()
+    }
+
+    fn assert_close_nociceptor(actual: f64, expected: f64, tolerance: f64) {
+        assert!(
+            (actual - expected).abs() <= tolerance,
+            "actual={:.16e} expected={:.16e} tolerance={:.3e}",
+            actual,
+            expected,
+            tolerance
+        );
     }
 
     #[test]
