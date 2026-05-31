@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `ChayKeizerNeuron` Python, Julia, Go, and Rust safety
+  surfaces to reject invalid beta-cell gate/calcium state,
+  non-physical Ca-dependent potassium and calcium-buffer contracts,
+  unstable logistic/timescale exponentials, non-finite drive, and
+  out-of-bounds membrane, gate, or calcium candidates before mutation.
 - Hardened `ChayNeuron` Python, Julia, Go, and Rust safety surfaces to
   reject invalid beta-cell gate/calcium state, non-physical conductance
   and calcium-buffer contracts, unstable logistic exponentials,
