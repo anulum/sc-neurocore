@@ -47,6 +47,37 @@ func TestStellateCellKv3GateActivatesWithDepolarisation(t *testing.T) {
 	}
 }
 
+func TestStellateCellGateKineticsUseClosedFormRelaxation(t *testing.T) {
+	cell := NewStellateCell()
+	cell.GNa = 0.0
+	cell.GK = 0.0
+	cell.GKv3 = 0.0
+	cell.GL = 0.0
+	cell.Gain = 0.0
+	cell.SubSteps = 1
+	v0, h0, n0, p0 := cell.V, cell.H, cell.N, cell.P
+	alphaH := 0.07 * safeExpStellate(-(v0+58.0)/20.0)
+	betaH := boltzStellate(v0, -28.0, 10.0)
+	alphaN := safeRateStellate(0.01, 34.0, v0, 10.0, 0.1)
+	betaN := 0.125 * safeExpStellate(-(v0+44.0)/80.0)
+	pInf := boltzStellate(v0, -10.0, 10.0)
+	tauP := 1.0 + 4.0/(1.0+safeExpStellate((v0+20.0)/15.0))
+
+	cell.Step(0.0)
+
+	expectCloseStellate(t, cell.V, v0, "V")
+	expectCloseStellate(t, cell.H, exactHHGateStellate(h0, alphaH, betaH, cell.Phi, cell.Dt), "H")
+	expectCloseStellate(t, cell.N, exactHHGateStellate(n0, alphaN, betaN, cell.Phi, cell.Dt), "N")
+	expectCloseStellate(t, cell.P, exactRelaxStellate(p0, pInf, tauP, cell.Dt), "P")
+}
+
+func expectCloseStellate(t *testing.T, observed, expected float64, name string) {
+	t.Helper()
+	if math.Abs(observed-expected) > 1e-12 {
+		t.Fatalf("%s mismatch: observed %.17g expected %.17g", name, observed, expected)
+	}
+}
+
 func TestStellateCellInvalidDrivePreservesState(t *testing.T) {
 	cell := NewStellateCell()
 	beforeV := cell.V

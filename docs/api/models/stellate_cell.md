@@ -97,8 +97,12 @@ share the same operational boundary:
 - gates constrained to `[0, 1]`
 - non-negative conductances
 - positive capacitance, rate scale, timestep, and sub-step count
+- membrane voltage constrained to the physical `[-100, 60] mV` operating range
 - finite runtime input current
 - overflow-bounded exponentials in rate and Boltzmann calculations
+- exact closed-form relaxation for Wang-Buzsáki `h` and `n` gates
+- exact first-order relaxation for the Kv3.1 `p` gate
+- exact conductance-form membrane integration over each voltage-frozen sub-step
 - local candidate-state integration with no partial mutation on invalid input
 - spike reporting when the membrane candidate crosses `v_threshold`, followed
   by reset to `-65 mV`
@@ -112,14 +116,20 @@ swallowing numerical errors, or silently normalising corrupted state.
 
 Module-specific Python tests cover bounded state evolution, Kv3.1 activation
 under depolarisation, invalid-configuration rejection, non-finite-drive
-preservation, and corrupted-state preservation. The Go service and Rust safety
-shim carry matching module-owned checks. The Rust engine test suite includes
-stellate-specific behaviour and fail-closed runtime guards.
+preservation, corrupted-state preservation, and closed-form gate kinetics. The
+Go service, Julia kernel, Rust safety shim, and Rust engine carry matching
+module-owned checks for the exact gate-relaxation contract and fail-closed
+runtime guards.
 
 ---
 
 ## Benchmark status
 
-Historical timing in this repository was attached to the older unvalidated
-implementation. Regenerate StellateCell Python and Rust timing evidence before
-using this model in release performance claims.
+The maintained Rust engine path was remeasured on 2026-05-31 after the exact
+gate and conductance integration hardening:
+
+- command: `cargo bench --manifest-path engine/Cargo.toml --bench full_bench stellate_1k_steps`
+- hardware: Intel Core i5-11600K @ 3.90 GHz, 6C/12T, verified with `lscpu`
+- Criterion median: `6.075846375 ms` per 1k steps (`6.075846375 µs` per step)
+- artifact:
+  `benchmarks/results/local_i5_11600k_criterion_2026-05-31_stellate_cell.json`

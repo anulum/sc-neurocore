@@ -15,6 +15,41 @@ import pytest
 from sc_neurocore.neurons.models.stellate_cell import StellateCell
 
 
+def _safe_rate(a: float, vhalf: float, v: float, k: float, fallback: float) -> float:
+    d = v + vhalf
+    if abs(d) < 1e-7:
+        return fallback
+    z = -d / k
+    if z > 60.0:
+        return 0.0
+    if z < -60.0:
+        return a * d
+    return a * d / (1.0 - math.exp(z))
+
+
+def _boltz(v: float, vh: float, k: float) -> float:
+    z = -(v - vh) / k
+    if z > 60.0:
+        return 0.0
+    if z < -60.0:
+        return 1.0
+    return 1.0 / (1.0 + math.exp(z))
+
+
+def _safe_exp(value: float) -> float:
+    return math.exp(max(-60.0, min(60.0, value)))
+
+
+def _exact_hh_gate(value: float, alpha: float, beta: float, phi: float, dt: float) -> float:
+    rate = phi * (alpha + beta)
+    target = alpha / (alpha + beta)
+    return target + (value - target) * math.exp(-rate * dt)
+
+
+def _exact_relax(value: float, target: float, tau: float, dt: float) -> float:
+    return target + (value - target) * math.exp(-dt / tau)
+
+
 def _snapshot(cell: StellateCell) -> tuple[float, float, float, float]:
     return cell.v, cell.h, cell.n, cell.p
 
@@ -41,9 +76,36 @@ def test_kv3_gate_activates_more_during_depolarisation_than_rest() -> None:
     assert depolarised.p > resting.p
 
 
+def test_gate_kinetics_use_closed_form_relaxation() -> None:
+    cell = StellateCell(g_na=0.0, g_k=0.0, g_kv3=0.0, g_l=0.0, gain=0.0, _sub_steps=1)
+    before = _snapshot(cell)
+    v0 = cell.v
+
+    alpha_h = 0.07 * _safe_exp(-(v0 + 58.0) / 20.0)
+    beta_h = _boltz(v0, -28.0, 10.0)
+    alpha_n = _safe_rate(0.01, 34.0, v0, 10.0, 0.1)
+    beta_n = 0.125 * _safe_exp(-(v0 + 44.0) / 80.0)
+    p_inf = _boltz(v0, -10.0, 10.0)
+    tau_p = 1.0 + 4.0 / (1.0 + _safe_exp((v0 + 20.0) / 15.0))
+
+    expected = (
+        v0,
+        _exact_hh_gate(before[1], alpha_h, beta_h, cell.phi, cell.dt),
+        _exact_hh_gate(before[2], alpha_n, beta_n, cell.phi, cell.dt),
+        _exact_relax(before[3], p_inf, tau_p, cell.dt),
+    )
+
+    cell.step(0.0)
+
+    for observed, expected_value in zip(_snapshot(cell), expected, strict=True):
+        assert observed == pytest.approx(expected_value, rel=1e-12, abs=1e-12)
+
+
 @pytest.mark.parametrize(
     "kwargs",
     [
+        {"v": -100.1},
+        {"v": 60.1},
         {"h": -0.1},
         {"n": 1.1},
         {"p": -0.1},
