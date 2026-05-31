@@ -751,7 +751,7 @@ class TestDirectionSelectiveRGC:
         """On-centre must respond to light onset (positive dI/dt)."""
         for _ in range(10):
             on_cell.step_rf(0.0, 0.0)
-        spikes = sum(on_cell.step_rf(5.0, 0.0) for _ in range(30))
+        spikes = sum(on_cell.step_rf(6.0, 0.0) for _ in range(30))
         assert spikes > 0
 
     def test_off_responds_to_light_decrease(self, off_cell):

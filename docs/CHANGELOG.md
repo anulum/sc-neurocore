@@ -6,6 +6,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `DirectionSelectiveRGC` across the Python reference, Rust engine, Go service, Julia mirror, and Rust safety surface by replacing raw Euler membrane drift with exact first-order relaxation, preserving state on invalid optical drive or corrupted runtime buffers, adding module-specific tests, and recording a refreshed Python benchmark artefact.
 - Hardened `BoothRinzelNeuron` Python, Julia, Go, and Rust safety surfaces with finite-domain validation, fail-closed candidate updates, physical gate/calcium bounds, and module-owned regression tests.
 - Promoted `ConnorStevensNeuron` to candidate-first RK4 integration across the Python reference, Rust engine, Julia mirror, Go service, Mojo parity notes, and Rust safety surface; module-owned tests now cover RK4 parity, finite-domain validation, fail-closed state preservation, and refreshed Python/Rust benchmark artefacts document the RK4 runtime cost.
 - Promoted `TermanWangOscillator` to candidate-first RK4 integration across
