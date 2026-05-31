@@ -9,12 +9,17 @@
 
 from __future__ import annotations
 
+import builtins
+import importlib
 import json
 import os
+import sys
+import types
 
 import numpy as np
 import pytest
 
+import sc_neurocore.bridges.quantum_annealing as qa
 from sc_neurocore.bridges.quantum_annealing import (
     AnnealingSchedule,
     ChainBreakResolver,
@@ -81,6 +86,63 @@ def simple_ising() -> IsingModel:
 class TestDataTypes:
     """Ising/QUBO data class tests."""
 
+    def test_optional_dependency_import_fallbacks_preserve_unavailable_state(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        real_import = builtins.__import__
+
+        def guarded_import(name: str, *args: object, **kwargs: object) -> object:
+            if name == "dimod" or name == "dwave.system" or name.startswith("dwave."):
+                raise ImportError(name)
+            return real_import(name, *args, **kwargs)
+
+        try:
+            monkeypatch.setattr(builtins, "__import__", guarded_import)
+            module = importlib.reload(qa)
+
+            assert module._HAS_DIMOD is False
+            assert module.dimod is None
+            assert module._HAS_DWAVE is False
+            assert module.DWaveSampler is None
+            assert module.EmbeddingComposite is None
+        finally:
+            monkeypatch.setattr(builtins, "__import__", real_import)
+            importlib.reload(qa)
+
+    def test_optional_dependency_import_success_sets_available_state(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        fake_dimod = types.ModuleType("dimod")
+        fake_dwave = types.ModuleType("dwave")
+        fake_dwave_system = types.ModuleType("dwave.system")
+
+        class FakeSampler:
+            pass
+
+        class FakeEmbeddingComposite:
+            pass
+
+        fake_dwave_system.DWaveSampler = FakeSampler
+        fake_dwave_system.EmbeddingComposite = FakeEmbeddingComposite
+        fake_dwave.system = fake_dwave_system
+
+        try:
+            monkeypatch.setitem(sys.modules, "dimod", fake_dimod)
+            monkeypatch.setitem(sys.modules, "dwave", fake_dwave)
+            monkeypatch.setitem(sys.modules, "dwave.system", fake_dwave_system)
+            module = importlib.reload(qa)
+
+            assert module._HAS_DIMOD is True
+            assert module.dimod is fake_dimod
+            assert module._HAS_DWAVE is True
+            assert module.DWaveSampler is FakeSampler
+            assert module.EmbeddingComposite is FakeEmbeddingComposite
+        finally:
+            sys.modules.pop("dimod", None)
+            sys.modules.pop("dwave", None)
+            sys.modules.pop("dwave.system", None)
+            importlib.reload(qa)
+
     def test_qubit_spec(self) -> None:
         q = QubitSpec(index=0, label="neuron_0", bias=0.5)
         assert q.index == 0
@@ -117,6 +179,52 @@ class TestDataTypes:
         ising = qubo.to_ising()
         assert ising.n_qubits == 2
         assert "QUBO→Ising" in ising.source
+
+    def test_large_ising_delegates_to_native_energy_contract(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        captured: dict[str, object] = {}
+
+        def fake_energy(
+            h_indices: list[int],
+            h_values: list[float],
+            j_i: list[int],
+            j_j: list[int],
+            j_values: list[float],
+            spin_arr: list[int],
+            offset: float,
+        ) -> float:
+            captured["h_indices"] = h_indices
+            captured["h_values"] = h_values
+            captured["j_i"] = j_i
+            captured["j_j"] = j_j
+            captured["j_values"] = j_values
+            captured["spin_arr"] = spin_arr
+            captured["offset"] = offset
+            return -7.5
+
+        monkeypatch.setattr(qa, "_HAS_RUST_QA", True)
+        monkeypatch.setattr(qa, "_rust_ising_energy", fake_energy)
+
+        model = IsingModel(
+            h={0: 0.25, 20: -0.5},
+            J={(0, 20): -1.25},
+            offset=1.0,
+            n_qubits=21,
+            source="native_contract",
+        )
+        energy = model.energy({0: -1, 20: 1})
+
+        assert energy == -7.5
+        assert captured == {
+            "h_indices": [0, 20],
+            "h_values": [0.25, -0.5],
+            "j_i": [0],
+            "j_j": [20],
+            "j_values": [-1.25],
+            "spin_arr": [-1] + [1] * 20,
+            "offset": 1.0,
+        }
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -224,6 +332,54 @@ class TestSimulatedAnnealer:
         # Ground state energy = -1.0 (both aligned)
         assert result["best_energy"] <= -0.99
 
+    def test_native_solver_result_preserves_sample_contract(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        captured: dict[str, object] = {}
+
+        def fake_solver(*args: object) -> dict[str, object]:
+            captured["args"] = args
+            return {
+                "best_spins": [1, -1, 1] + [1] * 9,
+                "best_energy": -3.0,
+                "energies": [-3.0, -2.0],
+                "samples": [[1, -1, 1] + [1] * 9, [-1, -1, 1] + [1] * 9],
+            }
+
+        monkeypatch.setattr(qa, "_HAS_RUST_QA", True)
+        monkeypatch.setattr(qa, "_rust_sa", fake_solver)
+
+        model = IsingModel(
+            h={0: 0.5, 2: -0.25},
+            J={(0, 1): -1.0, (1, 2): 0.75},
+            offset=0.5,
+            n_qubits=12,
+            source="native_sa_contract",
+        )
+        result = SimulatedAnnealer(n_sweeps=17, beta_start=0.2, beta_end=3.0).solve_ising(
+            model, num_reads=2
+        )
+
+        assert result["backend"] == "rust"
+        assert result["best_spins"][0] == 1
+        assert result["best_spins"][1] == -1
+        assert result["samples"][1][0] == -1
+        assert result["energies"] == [-3.0, -2.0]
+        assert captured["args"] == (
+            [0, 2],
+            [0.5, -0.25],
+            [0, 1],
+            [1, 2],
+            [-1.0, 0.75],
+            12,
+            0.5,
+            17,
+            2,
+            0.2,
+            3.0,
+            42,
+        )
+
 
 # ══════════════════════════════════════════════════════════════════════
 # 5. D-Wave Interface
@@ -252,6 +408,76 @@ class TestDWaveInterface:
         assert "best_spins" in result
         assert result.get("backend") in ("simulated_annealing_fallback", "dwave_qpu")
 
+    def test_qpu_path_submits_bqm_and_reports_timing(
+        self, simple_ising: IsingModel, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        captured: dict[str, object] = {}
+
+        class FakeDimod:
+            class BinaryQuadraticModel:
+                def __init__(
+                    self,
+                    h: dict[int, float],
+                    j_couplings: dict[tuple[int, int], float],
+                    offset: float,
+                    vartype: str,
+                ) -> None:
+                    captured["bqm"] = {
+                        "h": h,
+                        "J": j_couplings,
+                        "offset": offset,
+                        "vartype": vartype,
+                    }
+
+        class FakeSampler:
+            pass
+
+        class FakeBest:
+            sample = {0: 1, 1: -1, 2: 1}
+            energy = -1.25
+
+        class FakeResponse:
+            first = FakeBest()
+            info = {"timing": {"qpu_access_time": 123}}
+
+        class FakeEmbeddingComposite:
+            def __init__(self, sampler: FakeSampler) -> None:
+                captured["sampler"] = sampler
+
+            def sample(self, bqm: object, **kwargs: object) -> FakeResponse:
+                captured["sample_kwargs"] = kwargs
+                captured["sample_bqm"] = bqm
+                return FakeResponse()
+
+        monkeypatch.setattr(qa, "_HAS_DWAVE", True)
+        monkeypatch.setattr(qa, "_HAS_DIMOD", True)
+        monkeypatch.setattr(qa, "dimod", FakeDimod)
+        monkeypatch.setattr(qa, "DWaveSampler", FakeSampler)
+        monkeypatch.setattr(qa, "EmbeddingComposite", FakeEmbeddingComposite)
+
+        result = DWaveInterface(
+            chain_strength=1.7, num_reads=31, annealing_time_us=23.0
+        ).solve_ising(simple_ising)
+
+        assert result == {
+            "best_spins": {0: 1, 1: -1, 2: 1},
+            "best_energy": -1.25,
+            "num_reads": 31,
+            "backend": "dwave_qpu",
+            "timing": {"qpu_access_time": 123},
+        }
+        assert captured["bqm"] == {
+            "h": simple_ising.h,
+            "J": simple_ising.J,
+            "offset": simple_ising.offset,
+            "vartype": "SPIN",
+        }
+        assert captured["sample_kwargs"] == {
+            "num_reads": 31,
+            "chain_strength": 1.7,
+            "annealing_time": 23.0,
+        }
+
 
 # ══════════════════════════════════════════════════════════════════════
 # 6. Energy Landscape
@@ -277,6 +503,54 @@ class TestEnergyLandscape:
         samples = [{0: 1, 1: 1, 2: 1}, {0: -1, 1: -1, 2: -1}]
         result = EnergyLandscape().analyze(simple_ising, samples=samples)
         assert result["n_samples"] == 2
+
+    def test_large_python_sampling_reports_finite_landscape(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(qa, "_HAS_RUST_QA", False)
+        model = IsingModel(h={0: -1.0}, J={}, n_qubits=21, source="large_python")
+
+        result = EnergyLandscape().analyze(model)
+
+        assert result["n_samples"] == 10000
+        assert result["min_energy"] == -1.0
+        assert result["max_energy"] == 1.0
+        assert result["spectral_gap"] == 2.0
+        assert result["degeneracy"] > 0
+
+    def test_native_vector_energy_contract(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        captured: dict[str, object] = {}
+
+        def fake_vector_energy(*args: object) -> list[float]:
+            captured["args"] = args
+            return [-1.0, -1.0, 0.5] + [1.0] * 98
+
+        monkeypatch.setattr(qa, "_HAS_RUST_QA", True)
+        monkeypatch.setattr(qa, "_rust_batch_energy", fake_vector_energy)
+        samples = [{0: 1 if idx % 2 == 0 else -1, 1: -1, 2: 1} for idx in range(101)]
+        model = IsingModel(
+            h={0: 0.5},
+            J={(1, 2): -0.25},
+            offset=0.0,
+            n_qubits=3,
+            source="native_vector_contract",
+        )
+
+        result = EnergyLandscape().analyze(model, samples=samples)
+
+        assert result["min_energy"] == -1.0
+        assert result["degeneracy"] == 2
+        assert result["spectral_gap"] == 1.5
+        assert result["n_unique_energies"] == 3
+        assert captured["args"] == (
+            [0],
+            [0.5],
+            [1],
+            [2],
+            [-0.25],
+            [[s.get(i, 1) for i in range(3)] for s in samples],
+            0.0,
+        )
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -330,6 +604,38 @@ class TestExportFunctions:
         result = export_bqm(simple_ising)
         # Returns None if dimod not installed, BQM otherwise
         assert result is None or hasattr(result, "to_ising")
+
+    def test_export_bqm_preserves_spin_model_contract(
+        self, simple_ising: IsingModel, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        captured: dict[str, object] = {}
+
+        class FakeDimod:
+            class BinaryQuadraticModel:
+                def __init__(
+                    self,
+                    h: dict[int, float],
+                    j_couplings: dict[tuple[int, int], float],
+                    offset: float,
+                    vartype: str,
+                ) -> None:
+                    captured["h"] = h
+                    captured["J"] = j_couplings
+                    captured["offset"] = offset
+                    captured["vartype"] = vartype
+
+        monkeypatch.setattr(qa, "_HAS_DIMOD", True)
+        monkeypatch.setattr(qa, "dimod", FakeDimod)
+
+        bqm = export_bqm(simple_ising)
+
+        assert bqm is not None
+        assert captured == {
+            "h": simple_ising.h,
+            "J": simple_ising.J,
+            "offset": simple_ising.offset,
+            "vartype": "SPIN",
+        }
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -412,6 +718,16 @@ class TestChainBreakResolver:
         result = ChainBreakResolver().analyze_breaks(samples, chains)
         assert result["total_breaks"] == 2
         assert result["n_chains"] == 2
+
+    def test_single_physical_qubit_chain_has_zero_break_rate(self) -> None:
+        chains = {0: [10], 1: [20, 21]}
+        samples = [{10: -1, 20: 1, 21: -1}]
+
+        result = ChainBreakResolver().analyze_breaks(samples, chains)
+
+        assert result["per_chain"][0] == 0.0
+        assert result["per_chain"][1] == 1.0
+        assert result["break_rate"] == 1.0
 
     def test_invalid_method(self) -> None:
         with pytest.raises(ValueError):
@@ -574,6 +890,10 @@ class TestSCPrecisionEncoder:
         decoded = enc.decode(qubits)
         assert abs(decoded) < 0.01
 
+    def test_one_hot_empty_vector_decodes_to_zero(self) -> None:
+        enc = SCPrecisionEncoder(encoding="one_hot", n_bits=4)
+        assert enc.decode({}) == 0.0
+
     def test_n_levels(self) -> None:
         assert SCPrecisionEncoder("binary", 8).n_levels == 256
         assert SCPrecisionEncoder("unary", 8).n_levels == 9
@@ -614,6 +934,26 @@ class TestProblemDecomposer:
         assert len(subs) >= 3  # 10 qubits / 4 max = at least 3
         for sub in subs:
             assert sub.n_qubits <= 4
+
+    def test_decompose_disconnected_model_preserves_all_qubits(self) -> None:
+        model = IsingModel(
+            h={i: float(i) for i in range(5)},
+            J={},
+            qubit_labels={i: f"q{i}" for i in range(5)},
+            n_qubits=5,
+            source="disconnected",
+        )
+
+        subs = ProblemDecomposer(max_subproblem_size=2).decompose(model)
+
+        assert [sub.n_qubits for sub in subs] == [2, 2, 1]
+        assert [label for sub in subs for label in sub.qubit_labels.values()] == [
+            "q0",
+            "q1",
+            "q2",
+            "q3",
+            "q4",
+        ]
 
     def test_solve_decomposed(self, simple_ising: IsingModel) -> None:
         pd = ProblemDecomposer(max_subproblem_size=100, n_iterations=2)
