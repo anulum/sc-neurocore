@@ -52,3 +52,29 @@ func TestMorrisLecarRejectsInvalidState(t *testing.T) {
 		t.Fatalf("invalid state mutated: got (%v, %v)", state.V, state.W)
 	}
 }
+
+func TestMorrisLecarRejectsInvalidCurrentWithoutMutation(t *testing.T) {
+	state := NewMorrisLecarNeuron()
+	v0, w0 := state.V, state.W
+
+	if got := state.Step(math.NaN()); got != -1 {
+		t.Fatalf("invalid current must fail closed, got %d", got)
+	}
+	if state.V != v0 || state.W != w0 {
+		t.Fatalf("invalid current mutated: got (%v, %v)", state.V, state.W)
+	}
+}
+
+func TestMorrisLecarRejectsOverflowCandidateWithoutMutation(t *testing.T) {
+	state := NewMorrisLecarNeuron()
+	state.V = 1.0e6
+	state.W = 0.25
+	v0, w0 := state.V, state.W
+
+	if got := state.Step(0.0); got != -1 {
+		t.Fatalf("overflow candidate must fail closed, got %d", got)
+	}
+	if state.V != v0 || state.W != w0 {
+		t.Fatalf("overflow candidate mutated: got (%v, %v)", state.V, state.W)
+	}
+}

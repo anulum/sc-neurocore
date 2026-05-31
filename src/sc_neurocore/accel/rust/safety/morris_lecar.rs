@@ -179,4 +179,24 @@ mod tests {
         assert_eq!(state.v, before.v);
         assert_eq!(state.w, before.w);
     }
+
+    #[test]
+    fn test_morris_lecar_rejects_invalid_current_without_mutation() {
+        let mut state = MorrisLecarNeuron::new();
+        let before = state.clone();
+        assert_eq!(state.step(f64::NAN), -1);
+        assert_eq!(state.v, before.v);
+        assert_eq!(state.w, before.w);
+    }
+
+    #[test]
+    fn test_morris_lecar_rejects_overflow_candidate_without_mutation() {
+        let mut state = MorrisLecarNeuron::new();
+        state.v = 1.0e6;
+        state.w = 0.25;
+        let before = state.clone();
+        assert_eq!(state.step(0.0), -1);
+        assert_eq!(state.v, before.v);
+        assert_eq!(state.w, before.w);
+    }
 }

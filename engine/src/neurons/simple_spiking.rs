@@ -101,16 +101,55 @@ impl MorrisLecarNeuron {
             v_threshold: 0.0,
         }
     }
+    fn valid_numeric_contract(&self) -> bool {
+        self.v.is_finite()
+            && self.w.is_finite()
+            && self.c_m.is_finite()
+            && self.g_ca.is_finite()
+            && self.g_k.is_finite()
+            && self.g_l.is_finite()
+            && self.e_ca.is_finite()
+            && self.e_k.is_finite()
+            && self.e_l.is_finite()
+            && self.v1.is_finite()
+            && self.v2.is_finite()
+            && self.v3.is_finite()
+            && self.v4.is_finite()
+            && self.phi.is_finite()
+            && self.dt.is_finite()
+            && self.v_threshold.is_finite()
+            && self.c_m > 0.0
+            && self.g_ca > 0.0
+            && self.g_k > 0.0
+            && self.g_l > 0.0
+            && self.v2 > 0.0
+            && self.v4 > 0.0
+            && self.phi > 0.0
+            && self.dt > 0.0
+            && (0.0..=1.0).contains(&self.w)
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
+        if !self.valid_numeric_contract() || !current.is_finite() {
+            return 0;
+        }
         let v_prev = self.v;
         let m_inf = 0.5 * (1.0 + ((self.v - self.v1) / self.v2).tanh());
         let w_inf = 0.5 * (1.0 + ((self.v - self.v3) / self.v4).tanh());
         let lam = self.phi * ((self.v - self.v3) / (2.0 * self.v4)).cosh();
+        if !(m_inf.is_finite() && w_inf.is_finite() && lam.is_finite()) {
+            return 0;
+        }
         let i_ca = self.g_ca * m_inf * (self.v - self.e_ca);
         let i_k = self.g_k * self.w * (self.v - self.e_k);
         let i_l = self.g_l * (self.v - self.e_l);
-        self.v += (-i_ca - i_k - i_l + current) / self.c_m * self.dt;
-        self.w += lam * (w_inf - self.w) * self.dt;
+        let next_v = self.v + (-i_ca - i_k - i_l + current) / self.c_m * self.dt;
+        let next_w = self.w + lam * (w_inf - self.w) * self.dt;
+        if !(next_v.is_finite() && next_w.is_finite() && (0.0..=1.0).contains(&next_w)) {
+            return 0;
+        }
+        self.v = next_v;
+        self.w = next_w;
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
@@ -1696,7 +1735,21 @@ mod tests {
     }
     #[test]
     fn ml_nan_no_panic() {
-        MorrisLecarNeuron::new().step(f64::NAN);
+        let mut n = MorrisLecarNeuron::new();
+        let before = (n.v, n.w);
+        assert_eq!(n.step(f64::NAN), 0);
+        assert_eq!((n.v, n.w), before);
+    }
+    #[test]
+    fn ml_overflow_candidate_preserves_state() {
+        let mut n = MorrisLecarNeuron {
+            v: 1.0e6,
+            w: 0.25,
+            ..Default::default()
+        };
+        let before = (n.v, n.w);
+        assert_eq!(n.step(0.0), 0);
+        assert_eq!((n.v, n.w), before);
     }
     #[test]
     fn ml_negative_no_crash() {
