@@ -3,7 +3,7 @@
 -r requirements.txt
 pytest>=9.0.3
 pytest-cov>=7.1.0
-hypothesis>=6.152.9
+hypothesis>=6.153.2
 mypy>=2.1.0
 ruff>=0.15.14
 bandit>=1.7
