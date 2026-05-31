@@ -55,7 +55,7 @@ class TestWindingNumber:
 
 class TestOllivierRicciCurvature:
     def test_complete_graph_positive(self):
-        """Complete graph → all nodes share all neighbours → positive curvature."""
+        """Complete graph has positive lazy Ollivier-Ricci curvature."""
         N = 8
         K = np.ones((N, N)) * 0.5
         np.fill_diagonal(K, 0)
@@ -89,6 +89,24 @@ class TestOllivierRicciCurvature:
         kappa_ring = ollivier_ricci_curvature(K_ring, 0, 1)
         kappa_complete = ollivier_ricci_curvature(K_complete, 0, 1)
         assert kappa_ring < kappa_complete
+
+    def test_path_bridge_uses_graph_metric_transport(self):
+        K = np.zeros((5, 5))
+        for node in range(4):
+            K[node, node + 1] = 1.0
+            K[node + 1, node] = 1.0
+
+        endpoint_edge = ollivier_ricci_curvature(K, 0, 1)
+        middle_edge = ollivier_ricci_curvature(K, 2, 3)
+
+        np.testing.assert_allclose(middle_edge, 0.0, atol=1e-12)
+        assert 0.0 < endpoint_edge < 1.0
+
+    def test_rejects_boolean_node_index(self):
+        K = np.ones((3, 3)) - np.eye(3)
+
+        with np.testing.assert_raises_regex(ValueError, "integer"):
+            ollivier_ricci_curvature(K, True, 1)
 
 
 class TestSheafConsistencyDefect:
