@@ -21,7 +21,7 @@ $$\tau_\theta \frac{d\theta}{dt} = -(\theta - \theta_{rest})$$
 
 $$V \geq \theta: \quad V \leftarrow V_{reset}, \quad \theta \leftarrow \theta + \Delta\theta$$
 
-### Euler discretisation (as implemented)
+### Exact subthreshold relaxation (as implemented)
 
 ```python
 def step(self, current: float) -> int:
@@ -29,10 +29,11 @@ def step(self, current: float) -> int:
         raise ValueError("current must be finite")
     if not math.isfinite(self.v) or not math.isfinite(self.theta):
         raise ValueError("runtime state must be finite")
-    next_v = self.v + (-(self.v - self.v_rest) + current) / self.tau_m * self.dt
-    next_theta = self.theta + (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt
+    v_inf = self.v_rest + current
+    next_v = v_inf + (self.v - v_inf) * exp(-self.dt / self.tau_m)
+    next_theta = self.theta_rest + (self.theta - self.theta_rest) * exp(-self.dt / self.tau_theta)
     if not math.isfinite(next_v) or not math.isfinite(next_theta):
-        raise ValueError("Euler update must remain finite")
+        raise ValueError("exact relaxation update must remain finite")
     if next_v >= next_theta:
         spike_theta = next_theta + self.delta_theta
         if not math.isfinite(spike_theta):
@@ -45,20 +46,22 @@ def step(self, current: float) -> int:
     return 0
 ```
 
-Forward Euler, single step per call. Two coupled linear ODEs with
-spike-triggered threshold jump. No transcendental functions.
+Closed-form first-order relaxation, single step per call. The membrane voltage
+relaxes exactly toward `V_rest + current`, the threshold relaxes exactly toward
+`theta_rest`, and the spike-triggered threshold jump is applied only after both
+subthreshold candidates are finite.
 
 The implementation rejects non-physical configurations before integration:
 all state and parameter values must be finite, `delta_theta` must be
 non-negative, `tau_m` and `tau_theta` must be positive, `dt` must be
-positive and no larger than either time constant, and the resting threshold
+positive, and the resting threshold
 must sit above both the resting and reset voltages. These constraints keep
-the subthreshold Euler relaxation monotone and prevent a neuron at rest from
+the subthreshold exact relaxation monotone and prevent a neuron at rest from
 being initialized above threshold.
 
 Runtime updates are also fail-closed across the maintained Python reference and
 native safety entry points: corrupted voltage or threshold state, non-finite
-input current, non-finite Euler candidates, and non-finite spike-triggered
+input current, non-finite exact-relaxation candidates, and non-finite spike-triggered
 threshold jumps are rejected before state mutation.
 
 ---
@@ -220,8 +223,19 @@ harder to trigger" rather than "an inhibitory current opposes firing."
 
 ### Isolation throughput
 
-Model has no exp() calls, no sub-stepping — pure linear Euler.
-Expected throughput: ~2M steps/s (dominated by Python interpreter overhead).
+The maintained implementation uses two exponentials per step and no
+sub-stepping. The committed local benchmark artifact is
+`benchmarks/results/local_python_2026-06-01_adaptive_threshold_if.json`.
+
+Command:
+
+```bash
+PYTHONPATH=src .venv/bin/python benchmarks/bench_model_adaptive_threshold_if.py
+```
+
+Result summary from the committed artifact: 200,000 steps, five repeats,
+80.0 current drive, median 675.001225 ns/step, 2,504 spikes per repeat, and
+identical ending `(v, theta)` state across repeats.
 
 ### Network throughput
 

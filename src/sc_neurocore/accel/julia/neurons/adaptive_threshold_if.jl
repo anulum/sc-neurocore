@@ -34,10 +34,10 @@ function step!(s::AdaptiveThresholdIFNeuronState, I_ext::Float64=0.0; dt::Float6
     if !valid(s)
         throw(DomainError(s.v, "AdaptiveThresholdIF state parameters must be finite and physically ordered"))
     end
-    next_v = s.v + (-(s.v - s.v_rest) + I_ext) / s.tau_m * s.dt
-    next_theta = s.theta + (-(s.theta - s.theta_rest)) / s.tau_theta * s.dt
+    next_v = _exact_relaxation(s, s.v, s.v_rest + I_ext, s.tau_m)
+    next_theta = _exact_relaxation(s, s.theta, s.theta_rest, s.tau_theta)
     if !all(isfinite, (next_v, next_theta))
-        throw(DomainError(next_v, "AdaptiveThresholdIF Euler update must remain finite"))
+        throw(DomainError(next_v, "AdaptiveThresholdIF exact relaxation update must remain finite"))
     end
     if next_v >= next_theta
         spike_theta = next_theta + s.delta_theta
@@ -67,10 +67,12 @@ function valid(s::AdaptiveThresholdIFNeuronState)
         s.tau_theta > 0.0 &&
         isfinite(s.dt) &&
         s.dt > 0.0 &&
-        s.dt <= s.tau_m &&
-        s.dt <= s.tau_theta &&
         s.theta_rest > s.v_rest &&
         s.theta_rest > s.v_reset
+end
+
+function _exact_relaxation(s::AdaptiveThresholdIFNeuronState, state::Float64, steady_state::Float64, tau::Float64)::Float64
+    return steady_state + (state - steady_state) * exp(-s.dt / tau)
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)

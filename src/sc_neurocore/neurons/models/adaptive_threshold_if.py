@@ -45,8 +45,6 @@ class AdaptiveThresholdIFNeuron:
             raise ValueError("tau_theta must be finite and positive")
         if not math.isfinite(self.dt) or self.dt <= 0.0:
             raise ValueError("dt must be finite and positive")
-        if self.dt > self.tau_m or self.dt > self.tau_theta:
-            raise ValueError("dt must not exceed tau_m or tau_theta")
         if self.theta_rest <= self.v_rest:
             raise ValueError("theta_rest must be greater than v_rest")
         if self.theta_rest <= self.v_reset:
@@ -58,12 +56,12 @@ class AdaptiveThresholdIFNeuron:
         self._validate_runtime_state()
 
         try:
-            next_v = self.v + (-(self.v - self.v_rest) + current) / self.tau_m * self.dt
-            next_theta = self.theta + (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt
+            next_v = self._exact_relaxation(self.v, self.v_rest + current, self.tau_m)
+            next_theta = self._exact_relaxation(self.theta, self.theta_rest, self.tau_theta)
         except OverflowError as exc:
-            raise ValueError("Euler update must remain finite") from exc
+            raise ValueError("exact relaxation update must remain finite") from exc
         if not math.isfinite(next_v) or not math.isfinite(next_theta):
-            raise ValueError("Euler update must remain finite")
+            raise ValueError("exact relaxation update must remain finite")
 
         if next_v >= next_theta:
             spike_theta = next_theta + self.delta_theta
@@ -75,6 +73,13 @@ class AdaptiveThresholdIFNeuron:
         self.v = next_v
         self.theta = next_theta
         return 0
+
+    def _exact_relaxation(self, state: float, steady_state: float, tau: float) -> float:
+        decay = math.exp(-self.dt / tau)
+        candidate = steady_state + (state - steady_state) * decay
+        if not math.isfinite(candidate):
+            raise ValueError("exact relaxation update must remain finite")
+        return candidate
 
     def _validate_runtime_state(self) -> None:
         if not math.isfinite(self.v):

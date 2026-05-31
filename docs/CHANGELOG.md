@@ -6,6 +6,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `AdaptiveThresholdIFNeuron` from guarded Euler mutation to exact
+  first-order relaxation across the Python reference, Go service, Julia mirror,
+  Mojo spike kernel, and Rust safety surface; module-owned tests now cover
+  exact trajectory parity, large-timestep boundedness, fail-closed state
+  preservation, and refreshed Python benchmark evidence.
 - Promoted `YamadaNeuron` to candidate-first RK4 integration across the Python
   reference, Go service, Julia mirror, Mojo spike kernel, and Rust safety
   surface; module-owned tests now cover RK4 parity, finite-stage validation,
