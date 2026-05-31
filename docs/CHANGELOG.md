@@ -7,6 +7,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `WolframHypergraph` with hyperedge, node-id, and rewrite-step
+  validation; rewrites now revalidate graph invariants after each evolution
+  pass, dimension estimation fails closed on corrupted topology, the Julia
+  mirror was corrected, and physics docs now state the topology contract.
 - Hardened `FeynmanKacHeatSolver` with finite-domain validation for
   length, diffusivity, walker count, timestep, seed, density grids, target
   time, and histogram bins; replaced bounded iterative boundary correction

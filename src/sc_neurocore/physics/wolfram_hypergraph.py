@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Simulates the Wolfram Physics Project Hypergraph
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import List, Tuple
 
@@ -20,12 +22,55 @@ class WolframHypergraph:
     edges: List[Tuple[int, ...]]
     max_node_id: int
 
+    def __post_init__(self) -> None:
+        self.edges = self._validated_edges(self.edges)
+        self.max_node_id = self._validated_max_node_id(self.max_node_id, self.edges)
+
+    @staticmethod
+    def _validated_edges(edges: List[Tuple[int, ...]]) -> List[Tuple[int, ...]]:
+        if not isinstance(edges, list):
+            raise ValueError("edges must be a list of integer tuples")
+        validated: list[tuple[int, ...]] = []
+        for edge in edges:
+            if not isinstance(edge, tuple) or len(edge) == 0:
+                raise ValueError("edges must contain non-empty integer tuples")
+            if any(isinstance(node, bool) or not isinstance(node, int) for node in edge):
+                raise ValueError("edge nodes must be integers")
+            if any(node < 0 for node in edge):
+                raise ValueError("edge nodes must be non-negative")
+            if len(set(edge)) != len(edge):
+                raise ValueError("hyperedges must not repeat nodes")
+            validated.append(edge)
+        return validated
+
+    @staticmethod
+    def _validated_max_node_id(max_node_id: int, edges: List[Tuple[int, ...]]) -> int:
+        if isinstance(max_node_id, bool) or not isinstance(max_node_id, int):
+            raise ValueError("max_node_id must be a non-negative integer")
+        if max_node_id < 0:
+            raise ValueError("max_node_id must be a non-negative integer")
+        observed = max((node for edge in edges for node in edge), default=-1)
+        if observed > max_node_id:
+            raise ValueError("max_node_id must be at least the largest node in edges")
+        return max_node_id
+
+    @staticmethod
+    def _validated_steps(steps: int) -> int:
+        if isinstance(steps, bool) or not isinstance(steps, int):
+            raise ValueError("steps must be a non-negative integer")
+        if steps < 0:
+            raise ValueError("steps must be a non-negative integer")
+        return steps
+
     def evolve(self, steps: int = 1) -> None:
         """
         Applies a rewrite rule.
         Rule: {{x, y}, {y, z}} -> {{x, z}, {x, w}, {y, w}}
         (Triangle completion with new node w)
         """
+        steps = self._validated_steps(steps)
+        self.edges = self._validated_edges(self.edges)
+        self.max_node_id = self._validated_max_node_id(self.max_node_id, self.edges)
         for _ in range(steps):
             new_edges = []
             matched_indices = set()
@@ -67,7 +112,8 @@ class WolframHypergraph:
                 if k not in matched_indices:
                     new_edges.append(e)  # type: ignore[arg-type]
 
-            self.edges = new_edges  # type: ignore[assignment]
+            self.edges = self._validated_edges(new_edges)  # type: ignore[arg-type]
+            self.max_node_id = self._validated_max_node_id(self.max_node_id, self.edges)
 
     def dimension_estimate(self) -> float:
         """Estimate effective dimension via BFS neighborhood growth.
@@ -76,6 +122,8 @@ class WolframHypergraph:
         measures how |B(r)| grows with r. Fits d from V(r) ~ r^d.
         Returns 0.0 if the graph is too small for meaningful estimation.
         """
+        self.edges = self._validated_edges(self.edges)
+        self.max_node_id = self._validated_max_node_id(self.max_node_id, self.edges)
         if len(self.edges) < 3:
             return 0.0
 
