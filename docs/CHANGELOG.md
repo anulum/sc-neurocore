@@ -5,7 +5,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
-- Hardened `AlphaMotorNeuron` Python, Julia, Go, and Rust safety surfaces
+- Hardened `AlphaMotorNeuron` Python, Julia, Go, Mojo, and Rust safety surfaces
   to reject invalid HH/PIC gate state, non-physical calcium buffers,
   non-positive timestep/capacitance/timescale contracts, unstable rate
   exponentials, and non-finite membrane/calcium candidates before mutation.
