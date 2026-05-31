@@ -8,15 +8,12 @@
 
 package services
 
-import (
-	"math"
-)
+import "math"
 
-func isFinite(value float64) bool {
+func isFiniteFitzHughRinzel(value float64) bool {
 	return !math.IsNaN(value) && !math.IsInf(value, 0)
 }
 
-// FitzHughRinzelNeuronState holds the neuron state
 type FitzHughRinzelNeuronState struct {
 	V          float64
 	W          float64
@@ -31,54 +28,58 @@ type FitzHughRinzelNeuronState struct {
 	VThreshold float64
 }
 
-// NewFitzHughRinzelNeuron creates a new FitzHughRinzelNeuron neuron with default parameters
 func NewFitzHughRinzelNeuron() *FitzHughRinzelNeuronState {
-	return &FitzHughRinzelNeuronState{
-		V:          -1.0,
-		W:          -0.5,
-		Y:          0.0,
-		A:          0.7,
-		B:          0.8,
-		C:          -0.775,
-		D:          1.0,
-		Delta:      0.08,
-		Mu:         0.0001,
-		Dt:         0.1,
-		VThreshold: 1.0,
-	}
+	return &FitzHughRinzelNeuronState{V: -1.0, W: -0.5, Y: 0.0, A: 0.7, B: 0.8, C: -0.775, D: 1.0, Delta: 0.08, Mu: 0.0001, Dt: 0.1, VThreshold: 1.0}
 }
 
 func (s *FitzHughRinzelNeuronState) valid() bool {
-	return isFinite(s.V) && isFinite(s.W) && isFinite(s.Y) &&
-		isFinite(s.A) && isFinite(s.B) && isFinite(s.C) && isFinite(s.D) &&
-		isFinite(s.Delta) && isFinite(s.Mu) && isFinite(s.Dt) && isFinite(s.VThreshold) &&
-		s.Delta > 0 && s.Mu > 0 && s.Dt > 0
+	return isFiniteFitzHughRinzel(s.V) && isFiniteFitzHughRinzel(s.W) && isFiniteFitzHughRinzel(s.Y) &&
+		isFiniteFitzHughRinzel(s.A) && isFiniteFitzHughRinzel(s.B) && isFiniteFitzHughRinzel(s.C) && isFiniteFitzHughRinzel(s.D) &&
+		isFiniteFitzHughRinzel(s.Delta) && isFiniteFitzHughRinzel(s.Mu) && isFiniteFitzHughRinzel(s.Dt) && isFiniteFitzHughRinzel(s.VThreshold) &&
+		s.B > 0.0 && s.D > 0.0 && s.Delta > 0.0 && s.Mu > 0.0 && s.Dt > 0.0
 }
 
-func (s *FitzHughRinzelNeuronState) derivatives(iExt float64) (float64, float64, float64, bool) {
-	if !isFinite(iExt) {
+func (s *FitzHughRinzelNeuronState) derivatives(v, w, y, iExt float64) (float64, float64, float64, bool) {
+	if !(isFiniteFitzHughRinzel(v) && isFiniteFitzHughRinzel(w) && isFiniteFitzHughRinzel(y) && isFiniteFitzHughRinzel(iExt)) {
 		return 0, 0, 0, false
 	}
-	dv := s.V - s.V*s.V*s.V/3.0 - s.W + s.Y + iExt
-	dw := s.Delta * (s.A + s.V - s.B*s.W)
-	dy := s.Mu * (s.C - s.V - s.D*s.Y)
-	return dv, dw, dy, isFinite(dv) && isFinite(dw) && isFinite(dy)
+	dv := v - v*v*v/3.0 - w + y + iExt
+	dw := s.Delta * (s.A + v - s.B*w)
+	dy := s.Mu * (s.C - v - s.D*y)
+	return dv, dw, dy, isFiniteFitzHughRinzel(dv) && isFiniteFitzHughRinzel(dw) && isFiniteFitzHughRinzel(dy)
 }
 
-// Step advances the neuron by one timestep.
+func (s *FitzHughRinzelNeuronState) rk4Candidate(iExt float64) (float64, float64, float64, bool) {
+	v0, w0, y0, dt := s.V, s.W, s.Y, s.Dt
+	k1v, k1w, k1y, ok := s.derivatives(v0, w0, y0, iExt)
+	if !ok {
+		return 0, 0, 0, false
+	}
+	k2v, k2w, k2y, ok := s.derivatives(v0+0.5*dt*k1v, w0+0.5*dt*k1w, y0+0.5*dt*k1y, iExt)
+	if !ok {
+		return 0, 0, 0, false
+	}
+	k3v, k3w, k3y, ok := s.derivatives(v0+0.5*dt*k2v, w0+0.5*dt*k2w, y0+0.5*dt*k2y, iExt)
+	if !ok {
+		return 0, 0, 0, false
+	}
+	k4v, k4w, k4y, ok := s.derivatives(v0+dt*k3v, w0+dt*k3w, y0+dt*k3y, iExt)
+	if !ok {
+		return 0, 0, 0, false
+	}
+	return v0 + dt*(k1v+2.0*k2v+2.0*k3v+k4v)/6.0,
+		w0 + dt*(k1w+2.0*k2w+2.0*k3w+k4w)/6.0,
+		y0 + dt*(k1y+2.0*k2y+2.0*k3y+k4y)/6.0,
+		true
+}
+
 func (s *FitzHughRinzelNeuronState) Step(iExt float64) int {
-	if !s.valid() {
+	if !s.valid() || !isFiniteFitzHughRinzel(iExt) {
 		return 0
 	}
 	vPrev := s.V
-	dv, dw, dy, ok := s.derivatives(iExt)
-	if !ok {
-		return 0
-	}
-	nextV := s.V + dv*s.Dt
-	nextW := s.W + dw*s.Dt
-	nextY := s.Y + dy*s.Dt
-	if !(isFinite(nextV) && isFinite(nextW) && isFinite(nextY)) {
+	nextV, nextW, nextY, ok := s.rk4Candidate(iExt)
+	if !(ok && isFiniteFitzHughRinzel(nextV) && isFiniteFitzHughRinzel(nextW) && isFiniteFitzHughRinzel(nextY)) {
 		return 0
 	}
 	s.V = nextV
@@ -90,7 +91,6 @@ func (s *FitzHughRinzelNeuronState) Step(iExt float64) int {
 	return 0
 }
 
-// SimulateFitzHughRinzelNeuron runs the neuron for n steps
 func SimulateFitzHughRinzelNeuron(nSteps int, iExt float64) ([]float64, int) {
 	s := NewFitzHughRinzelNeuron()
 	trace := make([]float64, nSteps)

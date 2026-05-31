@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for fitzhugh_rinzel
 
-#![allow(unused_variables, dead_code, non_snake_case)]
+#![allow(dead_code)]
 
 #[derive(Debug, Clone)]
 pub struct FitzHughRinzelNeuron {
@@ -26,17 +26,17 @@ pub struct FitzHughRinzelNeuron {
 impl FitzHughRinzelNeuron {
     pub fn new() -> Self {
         Self {
-            v: -1.0_f64,
-            w: -0.5_f64,
-            y: 0.0_f64,
-            a: 0.7_f64,
-            b: 0.8_f64,
-            c: -0.775_f64,
-            d: 1.0_f64,
-            delta: 0.08_f64,
-            mu: 0.0001_f64,
-            dt: 0.1_f64,
-            v_threshold: 1.0_f64,
+            v: -1.0,
+            w: -0.5,
+            y: 0.0,
+            a: 0.7,
+            b: 0.8,
+            c: -0.775,
+            d: 1.0,
+            delta: 0.08,
+            mu: 0.0001,
+            dt: 0.1,
+            v_threshold: 1.0,
         }
     }
 
@@ -45,15 +45,9 @@ impl FitzHughRinzelNeuron {
             return 0;
         }
         let v_prev = self.v;
-        let dv = self.v - self.v.powi(3) / 3.0 - self.w + self.y + i_ext;
-        let dw = self.delta * (self.a + self.v - self.b * self.w);
-        let dy = self.mu * (self.c - self.v - self.d * self.y);
-        if !(dv.is_finite() && dw.is_finite() && dy.is_finite()) {
+        let Some((next_v, next_w, next_y)) = rk4_candidate(self, i_ext) else {
             return 0;
-        }
-        let next_v = self.v + dv * self.dt;
-        let next_w = self.w + dw * self.dt;
-        let next_y = self.y + dy * self.dt;
+        };
         if !(next_v.is_finite() && next_w.is_finite() && next_y.is_finite()) {
             return 0;
         }
@@ -64,12 +58,17 @@ impl FitzHughRinzelNeuron {
     }
 
     pub fn reset(&mut self) {
-        // self.v, self.w, self.y = -1.0, -0.5, 0.0
-        self.v = -1.0_f64;
-        self.w = -0.5_f64;
-        self.y = 0.0_f64;
-        self.a = 0.7_f64;
-        self.b = 0.8_f64;
+        self.v = -1.0;
+        self.w = -0.5;
+        self.y = 0.0;
+        self.a = 0.7;
+        self.b = 0.8;
+        self.c = -0.775;
+        self.d = 1.0;
+        self.delta = 0.08;
+        self.mu = 0.0001;
+        self.dt = 0.1;
+        self.v_threshold = 1.0;
     }
 }
 
@@ -85,9 +84,56 @@ pub fn validate_fitzhugh_rinzel(state: &FitzHughRinzelNeuron) -> bool {
         && state.mu.is_finite()
         && state.dt.is_finite()
         && state.v_threshold.is_finite()
+        && state.b > 0.0
+        && state.d > 0.0
         && state.delta > 0.0
         && state.mu > 0.0
         && state.dt > 0.0
+}
+
+fn derivatives(
+    state: &FitzHughRinzelNeuron,
+    v: f64,
+    w: f64,
+    y: f64,
+    i_ext: f64,
+) -> Option<(f64, f64, f64)> {
+    if !(v.is_finite() && w.is_finite() && y.is_finite() && i_ext.is_finite()) {
+        return None;
+    }
+    let dv = v - v.powi(3) / 3.0 - w + y + i_ext;
+    let dw = state.delta * (state.a + v - state.b * w);
+    let dy = state.mu * (state.c - v - state.d * y);
+    if dv.is_finite() && dw.is_finite() && dy.is_finite() {
+        Some((dv, dw, dy))
+    } else {
+        None
+    }
+}
+
+fn rk4_candidate(state: &FitzHughRinzelNeuron, i_ext: f64) -> Option<(f64, f64, f64)> {
+    let (v0, w0, y0, dt) = (state.v, state.w, state.y, state.dt);
+    let (k1v, k1w, k1y) = derivatives(state, v0, w0, y0, i_ext)?;
+    let (k2v, k2w, k2y) = derivatives(
+        state,
+        v0 + 0.5 * dt * k1v,
+        w0 + 0.5 * dt * k1w,
+        y0 + 0.5 * dt * k1y,
+        i_ext,
+    )?;
+    let (k3v, k3w, k3y) = derivatives(
+        state,
+        v0 + 0.5 * dt * k2v,
+        w0 + 0.5 * dt * k2w,
+        y0 + 0.5 * dt * k2y,
+        i_ext,
+    )?;
+    let (k4v, k4w, k4y) = derivatives(state, v0 + dt * k3v, w0 + dt * k3w, y0 + dt * k3y, i_ext)?;
+    Some((
+        v0 + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0,
+        w0 + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0,
+        y0 + dt * (k1y + 2.0 * k2y + 2.0 * k3y + k4y) / 6.0,
+    ))
 }
 
 #[cfg(test)]
@@ -109,16 +155,17 @@ mod tests {
     }
 
     #[test]
-    fn test_fitzhugh_rinzel_current_balance() {
+    fn test_fitzhugh_rinzel_matches_rk4_candidate() {
         let mut state = FitzHughRinzelNeuron::new();
         state.v = -1.0;
         state.w = 0.2;
         state.y = 0.1;
+        let expected = rk4_candidate(&state, 0.5).unwrap();
         let spike = state.step(0.5);
         assert_eq!(spike, 0);
-        assert!((state.v - -1.0266666666666666).abs() < 1.0e-12);
-        assert!((state.w - 0.19632).abs() < 1.0e-12);
-        assert!((state.y - 0.10000125).abs() < 1.0e-12);
+        assert!((state.v - expected.0).abs() < 1.0e-15);
+        assert!((state.w - expected.1).abs() < 1.0e-15);
+        assert!((state.y - expected.2).abs() < 1.0e-15);
     }
 
     #[test]

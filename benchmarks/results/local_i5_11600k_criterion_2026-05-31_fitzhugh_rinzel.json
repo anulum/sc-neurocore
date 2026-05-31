@@ -1,0 +1,13 @@
+{
+  "benchmark": "fitzhugh_rinzel_10k_steps",
+  "date": "2026-05-31",
+  "host_class": "local_i5_11600k",
+  "command": "cargo bench --manifest-path engine/Cargo.toml --bench full_bench fitzhugh_rinzel_10k_steps -- --sample-size 10",
+  "sample_size": 10,
+  "time_per_10k_steps_us_low": 562.55,
+  "time_per_10k_steps_us_estimate": 572.65,
+  "time_per_10k_steps_us_high": 583.80,
+  "time_per_step_ns_estimate": 57.265,
+  "outliers": "1 high mild outlier among 10 measurements",
+  "contract": "Rust engine RK4 FitzHugh-Rinzel path with finite-state validation and reset semantics"
+}
