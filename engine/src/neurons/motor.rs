@@ -224,7 +224,7 @@ impl GammaMotorNeuron {
     pub fn static_type() -> Self {
         Self {
             tau: 12.0,        // Slower membrane
-            tau_adapt: 200.0, // Stronger adaptation (lower steady-state rate)
+            tau_adapt: 200.0, // Larger adaptation time constant
             a_adapt: 0.5,
             dynamic: false,
             ..Self::dynamic()
@@ -233,12 +233,24 @@ impl GammaMotorNeuron {
 
     /// Step with fusimotor drive (arbitrary units, ≥ 0). Returns spike (1/0).
     pub fn step(&mut self, drive: f64) -> i32 {
-        let input = self.gain * drive.max(0.0) - self.adapt;
-        self.v += (-(self.v - self.v_rest) + input) / self.tau * self.dt;
-        self.adapt +=
-            (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt;
+        if !self.is_valid() || !drive.is_finite() {
+            return 0;
+        }
+        let v_old = self.v;
+        let adapt_old = self.adapt;
+        let input = self.gain * drive.max(0.0) - adapt_old;
+        let v_target = self.v_rest + input;
+        let v_candidate = v_target + (v_old - v_target) * (-self.dt / self.tau).exp();
+        let adapt_target = self.a_adapt * (v_candidate - self.v_rest);
+        let adapt_candidate =
+            adapt_target + (adapt_old - adapt_target) * (-self.dt / self.tau_adapt).exp();
+        if !v_candidate.is_finite() || !adapt_candidate.is_finite() {
+            return 0;
+        }
+        self.v = v_candidate;
+        self.adapt = adapt_candidate;
 
-        if self.v >= self.v_threshold {
+        if v_candidate >= self.v_threshold {
             self.v = self.v_reset;
             1
         } else {
@@ -249,6 +261,28 @@ impl GammaMotorNeuron {
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.adapt = 0.0;
+    }
+
+    fn is_valid(&self) -> bool {
+        [
+            self.v,
+            self.v_rest,
+            self.v_reset,
+            self.v_threshold,
+            self.tau,
+            self.adapt,
+            self.tau_adapt,
+            self.a_adapt,
+            self.gain,
+            self.dt,
+        ]
+        .iter()
+        .all(|value| value.is_finite())
+            && self.tau > 0.0
+            && self.tau_adapt > 0.0
+            && self.dt > 0.0
+            && self.gain >= 0.0
+            && self.v_reset < self.v_threshold
     }
 }
 
@@ -795,7 +829,7 @@ mod tests {
         let mut stat = GammaMotorNeuron::static_type();
         let dyn_spikes: i32 = (0..2000).map(|_| dyn_.step(20.0)).sum();
         let stat_spikes: i32 = (0..2000).map(|_| stat.step(20.0)).sum();
-        // Static has stronger adaptation → fewer spikes
+        // Static uses larger adaptation coupling and lower excitability.
         assert!(
             stat_spikes <= dyn_spikes + 5,
             "static ({stat_spikes}) should fire <= dynamic ({dyn_spikes})"
@@ -831,9 +865,13 @@ mod tests {
         for _ in 0..50 {
             n.step(20.0);
         }
+        let before_v = n.v;
+        let before_adapt = n.adapt;
         for _ in 0..10 {
             let _ = n.step(f64::NAN);
         }
+        assert_eq!(n.v, before_v);
+        assert_eq!(n.adapt, before_adapt);
         n.reset();
         assert!(n.v.is_finite());
         assert_eq!(n.adapt, 0.0);
@@ -847,6 +885,17 @@ mod tests {
         }
         n.reset();
         assert!(n.v.is_finite());
+    }
+
+    #[test]
+    fn gamma_corrupted_state_preserved_on_step() {
+        let mut n = GammaMotorNeuron::new();
+        n.tau = 0.0;
+        let before_v = n.v;
+        let before_adapt = n.adapt;
+        assert_eq!(n.step(20.0), 0);
+        assert_eq!(n.v, before_v);
+        assert_eq!(n.adapt, before_adapt);
     }
 
     #[test]

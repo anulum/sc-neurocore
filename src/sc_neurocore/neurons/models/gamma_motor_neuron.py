@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -34,19 +35,36 @@ class GammaMotorNeuron:
     dynamic: bool = True
     dt: float = 0.5
 
+    def __post_init__(self) -> None:
+        self._validate_state()
+
     @classmethod
     def static_type(cls) -> GammaMotorNeuron:
         """Static gamma — bag2/chain intrafusal fibres (length-sensitive)."""
         return cls(tau=12.0, tau_adapt=200.0, a_adapt=0.5, dynamic=False)
 
     def step(self, drive: float = 0.0) -> int:
-        inp = self.gain * max(0.0, drive) - self.adapt
-        self.v += (-(self.v - self.v_rest) + inp) / self.tau * self.dt
-        self.adapt += (
-            (self.a_adapt * (self.v - self.v_rest) - self.adapt) / self.tau_adapt * self.dt
+        self._validate_state()
+        if not math.isfinite(drive):
+            raise ValueError("drive must be finite")
+
+        v_old = self.v
+        adapt_old = self.adapt
+        inp = self.gain * max(0.0, drive) - adapt_old
+        v_target = self.v_rest + inp
+        v_candidate = v_target + (v_old - v_target) * math.exp(-self.dt / self.tau)
+        adapt_target = self.a_adapt * (v_candidate - self.v_rest)
+        adapt_candidate = adapt_target + (adapt_old - adapt_target) * math.exp(
+            -self.dt / self.tau_adapt
         )
 
-        if self.v >= self.v_threshold:
+        if not math.isfinite(v_candidate) or not math.isfinite(adapt_candidate):
+            raise ValueError("gamma motor candidate state must be finite")
+
+        self.v = v_candidate
+        self.adapt = adapt_candidate
+
+        if v_candidate >= self.v_threshold:
             self.v = self.v_reset
             return 1
         return 0
@@ -54,3 +72,30 @@ class GammaMotorNeuron:
     def reset(self) -> None:
         self.v = self.v_rest
         self.adapt = 0.0
+        self._validate_state()
+
+    def _validate_state(self) -> None:
+        values = (
+            self.v,
+            self.v_rest,
+            self.v_reset,
+            self.v_threshold,
+            self.tau,
+            self.adapt,
+            self.tau_adapt,
+            self.a_adapt,
+            self.gain,
+            self.dt,
+        )
+        if not all(math.isfinite(value) for value in values):
+            raise ValueError("gamma motor state and parameters must be finite")
+        if self.tau <= 0.0:
+            raise ValueError("tau must be positive")
+        if self.tau_adapt <= 0.0:
+            raise ValueError("tau_adapt must be positive")
+        if self.dt <= 0.0:
+            raise ValueError("dt must be positive")
+        if self.gain < 0.0:
+            raise ValueError("gain must be non-negative")
+        if self.v_reset >= self.v_threshold:
+            raise ValueError("v_reset must be below v_threshold")
