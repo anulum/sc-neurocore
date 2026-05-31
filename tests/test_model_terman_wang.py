@@ -4,13 +4,13 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: TermanWangOscillator
+# SC-NeuroCore — Module-specific tests: TermanWangOscillator
 
-"""Full pipeline test for TermanWangOscillator (Terman & Wang 1995).
+"""Module-specific behavioural tests for TermanWangOscillator.
 
-Relaxation oscillator for LEGION networks. Cubic f(v) + sigmoid g(v)
-recovery. Slow dynamics (epsilon=0.02). Upward crossing at v_peak=1.5.
-Performance: ~277K isolation steps/s."""
+The tests verify the two-state ODE, coupled RK4 integration, slow recovery,
+finite-domain rejection, and public network/analysis wiring without
+bucket-style coverage assertions."""
 
 from __future__ import annotations
 
@@ -30,6 +30,26 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 def _run(neuron: TermanWangOscillator, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
+def _rhs(neuron: TermanWangOscillator, v: float, w: float, current: float) -> tuple[float, float]:
+    f = 3.0 * v - v**3 + 2.0
+    g = neuron.alpha * (1.0 + np.tanh(v / neuron.beta))
+    return f - w + current + neuron.rho, neuron.epsilon * (g - w)
+
+
+def _rk4_reference(
+    neuron: TermanWangOscillator, v: float, w: float, current: float
+) -> tuple[float, float]:
+    dt = neuron.dt
+    k1 = _rhs(neuron, v, w, current)
+    k2 = _rhs(neuron, v + 0.5 * dt * k1[0], w + 0.5 * dt * k1[1], current)
+    k3 = _rhs(neuron, v + 0.5 * dt * k2[0], w + 0.5 * dt * k2[1], current)
+    k4 = _rhs(neuron, v + dt * k3[0], w + dt * k3[1], current)
+    return (
+        v + dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
+        w + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+    )
 
 
 class TestTermanWangIsolation:
@@ -75,6 +95,18 @@ class TestTermanWangDynamics:
         g_at_0 = n.alpha * (1.0 + np.tanh(0.0 / n.beta))
         assert abs(g_at_0 - n.alpha) < 1e-10  # tanh(0) = 0 → g = alpha
 
+    def test_derivative_formula(self):
+        """Derivative helper matches the documented two-state ODE."""
+        n = TermanWangOscillator(v=-1.2, w=-0.25)
+        assert n._derivatives(n.v, n.w, 1.0) == pytest.approx(_rhs(n, n.v, n.w, 1.0))
+
+    def test_step_matches_independent_rk4_reference(self):
+        """One step matches an independent coupled RK4 calculation."""
+        n = TermanWangOscillator(v=-1.2, w=-0.25)
+        expected = _rk4_reference(n, n.v, n.w, 1.0)
+        assert n.step(1.0) == 0
+        assert (n.v, n.w) == pytest.approx(expected, abs=1.0e-15)
+
     def test_slow_w_dynamics(self):
         """epsilon=0.02 → w evolves 50× slower than v."""
         n = TermanWangOscillator()
@@ -103,6 +135,16 @@ class TestTermanWangDynamics:
 
 
 class TestTermanWangParameters:
+    @pytest.mark.parametrize("field", ["v", "w", "alpha", "rho", "v_peak"])
+    def test_rejects_non_numeric_state_offsets_and_threshold(self, field: str):
+        with pytest.raises(TypeError, match=field):
+            TermanWangOscillator(**{field: object()})
+
+    @pytest.mark.parametrize("field", ["beta", "epsilon", "dt"])
+    def test_rejects_non_numeric_positive_parameters(self, field: str):
+        with pytest.raises(TypeError, match=field):
+            TermanWangOscillator(**{field: object()})
+
     @pytest.mark.parametrize(
         ("field", "value"),
         [
@@ -122,24 +164,54 @@ class TestTermanWangParameters:
     def test_rejects_non_finite_current_before_state_mutation(self):
         n = TermanWangOscillator()
         before = (n.v, n.w)
-        with pytest.raises(ValueError, match="current"):
+        with pytest.raises(FloatingPointError, match="current"):
             n.step(np.nan)
+        assert (n.v, n.w) == before
+
+    def test_rejects_non_numeric_current_before_state_mutation(self):
+        n = TermanWangOscillator()
+        before = (n.v, n.w)
+        with pytest.raises(TypeError, match="current"):
+            n.step(object())
+        assert (n.v, n.w) == before
+
+    def test_rejects_corrupted_runtime_scale_before_state_mutation(self):
+        n = TermanWangOscillator()
+        n.beta = 0.0
+        before = (n.v, n.w)
+        with pytest.raises(ValueError, match="beta"):
+            n.step(1.0)
         assert (n.v, n.w) == before
 
     def test_rejects_corrupted_runtime_state_before_mutation(self):
         n = TermanWangOscillator()
         n.v = np.inf
         before = (n.v, n.w)
-        with pytest.raises(FloatingPointError, match="runtime state"):
+        with pytest.raises(FloatingPointError, match="v must be finite"):
             n.step(1.0)
         assert (n.v, n.w) == before
 
     def test_rejects_cubic_overflow_before_state_mutation(self):
         n = TermanWangOscillator(v=1.0e308, w=-0.5)
         before = (n.v, n.w)
-        with pytest.raises(FloatingPointError, match="cubic nullcline"):
+        with pytest.raises(FloatingPointError, match="derivative"):
             n.step(1.0)
         assert (n.v, n.w) == before
+
+    def test_derivative_rejects_nonfinite_runtime_inputs(self):
+        n = TermanWangOscillator()
+        with pytest.raises(FloatingPointError, match="state and current must be finite"):
+            n._derivatives(np.nan, n.w, 1.0)
+
+    def test_derivative_rejects_nonfinite_output(self):
+        n = TermanWangOscillator()
+        n.alpha = np.inf
+        with pytest.raises(FloatingPointError, match="derivative"):
+            n._derivatives(n.v, n.w, 1.0)
+
+    def test_rejects_nonfinite_candidate_directly(self):
+        with pytest.raises(FloatingPointError, match="candidate"):
+            TermanWangOscillator._validate_candidate(np.nan, -0.5)
 
     def test_epsilon_controls_timescale(self):
         n_fast = TermanWangOscillator(epsilon=0.1)
@@ -172,7 +244,7 @@ class TestTermanWangPerformance:
         for _ in range(N):
             n.step(1.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 50000
+        assert N / elapsed > 10000
 
     def test_network_throughput(self):
         pop = Population(TermanWangOscillator, n=50, label="bench")

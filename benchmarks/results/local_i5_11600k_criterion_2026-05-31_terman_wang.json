@@ -1,0 +1,13 @@
+{
+  "benchmark": "terman_wang_10k_steps",
+  "date": "2026-05-31",
+  "host_class": "local_i5_11600k",
+  "command": "cargo bench --manifest-path engine/Cargo.toml --bench full_bench terman_wang_10k_steps -- --sample-size 10",
+  "sample_size": 10,
+  "time_per_10k_steps_ms_low": 1.2095,
+  "time_per_10k_steps_ms_estimate": 1.2380,
+  "time_per_10k_steps_ms_high": 1.2670,
+  "time_per_step_ns_estimate": 123.80,
+  "outliers": "1 low mild outlier among 10 measurements",
+  "contract": "Rust engine RK4 Terman-Wang two-state LEGION oscillator with finite-state validation and continuous threshold-crossing semantics"
+}

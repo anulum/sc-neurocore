@@ -695,25 +695,45 @@ impl TermanWangOscillator {
             && self.epsilon > 0.0
             && self.dt > 0.0
     }
+    fn derivatives(&self, v: f64, w: f64, current: f64) -> Option<(f64, f64)> {
+        if !(v.is_finite() && w.is_finite() && current.is_finite()) {
+            return None;
+        }
+        let f = 3.0 * v - v.powi(3) + 2.0;
+        let g = self.alpha * (1.0 + (v / self.beta).tanh());
+        let dv = f - w + current + self.rho;
+        let dw = self.epsilon * (g - w);
+        if dv.is_finite() && dw.is_finite() {
+            Some((dv, dw))
+        } else {
+            None
+        }
+    }
+    fn rk4_candidate(&self, current: f64) -> Option<(f64, f64)> {
+        let dt = self.dt;
+        let (k1v, k1w) = self.derivatives(self.v, self.w, current)?;
+        let (k2v, k2w) =
+            self.derivatives(self.v + 0.5 * dt * k1v, self.w + 0.5 * dt * k1w, current)?;
+        let (k3v, k3w) =
+            self.derivatives(self.v + 0.5 * dt * k2v, self.w + 0.5 * dt * k2w, current)?;
+        let (k4v, k4w) = self.derivatives(self.v + dt * k3v, self.w + dt * k3w, current)?;
+        let v = self.v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0;
+        let w = self.w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0;
+        if v.is_finite() && w.is_finite() {
+            Some((v, w))
+        } else {
+            None
+        }
+    }
 
     pub fn step(&mut self, current: f64) -> i32 {
         if !self.valid_numeric_contract() || !current.is_finite() {
             return 0;
         }
         let v_prev = self.v;
-        let f = 3.0 * self.v - self.v.powi(3) + 2.0;
-        let g = self.alpha * (1.0 + (self.v / self.beta).tanh());
-        if !(f.is_finite() && g.is_finite()) {
+        let Some((next_v, next_w)) = self.rk4_candidate(current) else {
             return 0;
-        }
-        // TermanWang: simultaneous Euler (both derivatives use old state)
-        let dv = (f - self.w + current + self.rho) * self.dt;
-        let dw = self.epsilon * (g - self.w) * self.dt;
-        let next_v = self.v + dv;
-        let next_w = self.w + dw;
-        if !(dv.is_finite() && dw.is_finite() && next_v.is_finite() && next_w.is_finite()) {
-            return 0;
-        }
+        };
         self.v = next_v;
         self.w = next_w;
         if self.v >= self.v_peak && v_prev < self.v_peak {
@@ -2183,6 +2203,31 @@ mod tests {
             n.step(50.0);
         }
         assert!(n.v.is_finite());
+    }
+    #[test]
+    fn tw_matches_rk4_candidate() {
+        let mut n = TermanWangOscillator::new();
+        n.v = -1.2;
+        n.w = -0.25;
+        let current = 1.0;
+        let dt = n.dt;
+        let rhs = |v: f64, w: f64| {
+            let f = 3.0 * v - v.powi(3) + 2.0;
+            let g = n.alpha * (1.0 + (v / n.beta).tanh());
+            (f - w + current + n.rho, n.epsilon * (g - w))
+        };
+        let (k1v, k1w) = rhs(n.v, n.w);
+        let (k2v, k2w) = rhs(n.v + 0.5 * dt * k1v, n.w + 0.5 * dt * k1w);
+        let (k3v, k3w) = rhs(n.v + 0.5 * dt * k2v, n.w + 0.5 * dt * k2w);
+        let (k4v, k4w) = rhs(n.v + dt * k3v, n.w + dt * k3w);
+        let expected = (
+            n.v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0,
+            n.w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0,
+        );
+
+        assert_eq!(n.step(current), 0);
+        assert!((n.v - expected.0).abs() < 1e-14);
+        assert!((n.w - expected.1).abs() < 1e-14);
     }
     #[test]
     fn tw_nan_no_panic() {

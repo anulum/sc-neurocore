@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for terman_wang
+// SC-NeuroCore — Rust safety for Terman-Wang
 
 #![allow(unused_variables, dead_code, non_snake_case)]
 
@@ -23,14 +23,46 @@ pub struct TermanWangOscillator {
 impl TermanWangOscillator {
     pub fn new() -> Self {
         Self {
-            v: -1.5_f64,
-            w: -0.5_f64,
-            alpha: 3.0_f64,
-            beta: 0.2_f64,
-            epsilon: 0.02_f64,
-            rho: 0.0_f64,
-            dt: 0.05_f64,
-            v_peak: 1.5_f64,
+            v: -1.5,
+            w: -0.5,
+            alpha: 3.0,
+            beta: 0.2,
+            epsilon: 0.02,
+            rho: 0.0,
+            dt: 0.05,
+            v_peak: 1.5,
+        }
+    }
+
+    fn derivatives(&self, v: f64, w: f64, current: f64) -> Option<(f64, f64)> {
+        if !(v.is_finite() && w.is_finite() && current.is_finite()) {
+            return None;
+        }
+        let f = 3.0 * v - v.powi(3) + 2.0;
+        let g = self.alpha * (1.0 + (v / self.beta).tanh());
+        let dv = f - w + current + self.rho;
+        let dw = self.epsilon * (g - w);
+        if dv.is_finite() && dw.is_finite() {
+            Some((dv, dw))
+        } else {
+            None
+        }
+    }
+
+    fn rk4_candidate(&self, current: f64) -> Option<(f64, f64)> {
+        let dt = self.dt;
+        let (k1v, k1w) = self.derivatives(self.v, self.w, current)?;
+        let (k2v, k2w) =
+            self.derivatives(self.v + 0.5 * dt * k1v, self.w + 0.5 * dt * k1w, current)?;
+        let (k3v, k3w) =
+            self.derivatives(self.v + 0.5 * dt * k2v, self.w + 0.5 * dt * k2w, current)?;
+        let (k4v, k4w) = self.derivatives(self.v + dt * k3v, self.w + dt * k3w, current)?;
+        let v = self.v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0;
+        let w = self.w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0;
+        if v.is_finite() && w.is_finite() {
+            Some((v, w))
+        } else {
+            None
         }
     }
 
@@ -41,24 +73,12 @@ impl TermanWangOscillator {
         if !i_ext.is_finite() {
             return Err("invalid Terman-Wang external current");
         }
-
-        let f = 3.0 * self.v - self.v.powi(3) + 2.0;
-        let g = self.alpha * (1.0 + (self.v / self.beta).tanh());
-        let dv = (f - self.w + i_ext + self.rho) * self.dt;
-        let dw = self.epsilon * (g - self.w) * self.dt;
-        if !dv.is_finite() || !dw.is_finite() {
-            return Err("non-finite Terman-Wang update");
-        }
-
         let v_prev = self.v;
-        let next_v = self.v + dv;
-        let next_w = self.w + dw;
-        if !next_v.is_finite() || !next_w.is_finite() {
-            return Err("non-finite Terman-Wang candidate state");
-        }
-
-        self.v = next_v;
-        self.w = next_w;
+        let Some((v, w)) = self.rk4_candidate(i_ext) else {
+            return Err("non-finite Terman-Wang RK4 candidate");
+        };
+        self.v = v;
+        self.w = w;
         Ok(if self.v >= self.v_peak && v_prev < self.v_peak {
             1
         } else {
@@ -67,13 +87,11 @@ impl TermanWangOscillator {
     }
 
     pub fn reset(&mut self) {
-        // self.v = -1.5
-        // self.w = -0.5
-        self.v = -1.5_f64;
-        self.w = -0.5_f64;
-        self.alpha = 3.0_f64;
-        self.beta = 0.2_f64;
-        self.epsilon = 0.02_f64;
+        self.v = -1.5;
+        self.w = -0.5;
+        self.alpha = 3.0;
+        self.beta = 0.2;
+        self.epsilon = 0.02;
     }
 }
 
@@ -95,6 +113,23 @@ pub fn validate_terman_wang(state: &TermanWangOscillator) -> bool {
 mod tests {
     use super::*;
 
+    fn rk4_reference(n: &TermanWangOscillator, current: f64) -> (f64, f64) {
+        let rhs = |v: f64, w: f64| {
+            let f = 3.0 * v - v.powi(3) + 2.0;
+            let g = n.alpha * (1.0 + (v / n.beta).tanh());
+            (f - w + current + n.rho, n.epsilon * (g - w))
+        };
+        let dt = n.dt;
+        let (k1v, k1w) = rhs(n.v, n.w);
+        let (k2v, k2w) = rhs(n.v + 0.5 * dt * k1v, n.w + 0.5 * dt * k1w);
+        let (k3v, k3w) = rhs(n.v + 0.5 * dt * k2v, n.w + 0.5 * dt * k2w);
+        let (k4v, k4w) = rhs(n.v + dt * k3v, n.w + dt * k3w);
+        (
+            n.v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0,
+            n.w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0,
+        )
+    }
+
     #[test]
     fn test_terman_wang_new() {
         let state = TermanWangOscillator::new();
@@ -107,6 +142,17 @@ mod tests {
         let mut state = TermanWangOscillator::new();
         let spike = state.step(10.0).unwrap();
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_terman_wang_matches_rk4_candidate() {
+        let mut state = TermanWangOscillator::new();
+        state.v = -1.2;
+        state.w = -0.25;
+        let expected = rk4_reference(&state, 1.0);
+        assert_eq!(state.step(1.0).unwrap(), 0);
+        assert!((state.v - expected.0).abs() < 1e-14);
+        assert!((state.w - expected.1).abs() < 1e-14);
     }
 
     #[test]

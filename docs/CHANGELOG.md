@@ -7,6 +7,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `TermanWangOscillator` to candidate-first RK4 integration across
+  the Python reference, Rust engine, Julia mirror, Go mirror, Mojo kernel
+  notes, and Rust safety surface; module-owned tests now cover the Python
+  model at 100%, public docs state the finite-domain and continuous
+  threshold-crossing contracts, and refreshed Python/Rust benchmark artefacts
+  document the RK4 runtime cost.
 - Promoted `PernarowskiNeuron` to candidate-first RK4 integration across the
   Python reference, Rust engine, Julia mirror, Go mirror, and Rust safety
   surface; module-owned tests now cover the Python model at 100%, public docs
@@ -1502,5 +1508,5 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Hardened FitzHugh-Rinzel Python, Rust engine, Rust safety, Go, and Julia paths with finite-parameter validation plus candidate-first RK4 commits that preserve state on invalid currents, corrupted runtime contracts, and overflow candidates.
 - Hardened McKean Rust engine, Rust safety, Go, and Julia paths with candidate-first simultaneous-Euler commits and no-spike state preservation for invalid currents, corrupted runtime contracts, and overflow candidates.
 - Hardened Morris-Lecar Rust engine finite-state commits and extended Go/Rust safety coverage for invalid-current and potassium-rate overflow rejection without changing the documented conductance equations.
-- Hardened Terman-Wang Rust engine finite-state commits, Julia timestep semantics, and Go/Rust safety state-preservation tests for invalid drive and cubic-overflow candidates.
+- Hardened Terman-Wang Rust engine finite-state commits, Julia timestep semantics, and Go/Rust safety state-preservation tests for invalid drive and cubic-overflow candidates; later promoted the maintained Terman-Wang chain to candidate-first RK4 integration.
 - Hardened Quadratic IF Rust engine finite-update commits, Julia timestep semantics, and Go service tests for invalid current and non-finite Euler increments.

@@ -8,14 +8,16 @@
 
 fn step(current: Int) -> Int:
     var _guard_line = 'reject invalid runtime state or non-finite input before mutation'
-    var _step_line = 'f = 3.0 * v - v**3 + 2.0'
-    var _step_line = 'g = alpha * (1.0 + tanh(v / beta))'
-    var _step_line = 'dv = (f - w + current + rho) * dt'
-    var _step_line = 'dw = epsilon * (g - w) * dt'
+    var _rhs_line = 'dv = 3.0 * v - v**3 + 2.0 - w + current + rho'
+    var _rhs_line = 'dw = epsilon * (alpha * (1.0 + tanh(v / beta)) - w)'
+    var _step_line = 'k1 = rhs(v, w)'
+    var _step_line = 'k2 = rhs(v + 0.5 * dt * k1_v, w + 0.5 * dt * k1_w)'
+    var _step_line = 'k3 = rhs(v + 0.5 * dt * k2_v, w + 0.5 * dt * k2_w)'
+    var _step_line = 'k4 = rhs(v + dt * k3_v, w + dt * k3_w)'
+    var _step_line = 'next_v = v + dt * (k1_v + 2*k2_v + 2*k3_v + k4_v) / 6'
+    var _step_line = 'next_w = w + dt * (k1_w + 2*k2_w + 2*k3_w + k4_w) / 6'
+    var _guard_line = 'reject non-finite RK4 candidate state before mutation'
     var _step_line = 'v_prev = v'
-    var _step_line = 'next_v = v + dv'
-    var _step_line = 'next_w = w + dw'
-    var _guard_line = 'reject non-finite candidate state before mutation'
     var _step_line = 'v = next_v'
     var _step_line = 'w = next_w'
     return 0  # return 1 if (v >= v_peak and v_prev < v_peak) else
