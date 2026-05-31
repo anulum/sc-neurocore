@@ -100,11 +100,13 @@ cargo bench --bench analysis_bench -- --quick
 | Merkel cell | 312.93 µs | **31.29 ns** | spiking | exact slow adaptation |
 | Rod photoreceptor | 663 µs | **66.3 ns** | graded | cGMP cascade + Ca²⁺-GC feedback |
 | Nociceptor | 68.6 µs | **6.9 ns** | spiking | Sensitisation |
-| Pacinian corpuscle | 240 µs | **24.0 ns** | spiking | sin() input, fast adapting |
+| Pacinian corpuscle | 489.26 µs | **48.93 ns** | spiking | exact derivative-pressure adaptation |
 | Olfactory receptor | 411 µs | **41.1 ns** | spiking | cAMP + Ca²⁺/CaM + PDE4 |
 
 > Merkel cell remeasured 2026-05-31 after exact membrane/adaptation relaxation
 > and fail-closed state guards.
+> Pacinian corpuscle remeasured 2026-05-31 after exact derivative-pressure
+> membrane/adaptation relaxation and fail-closed state guards.
 > Remaining sensory rows retain their previously documented measurement date
 > until each model is remeasured after its own hardening pass.
 
