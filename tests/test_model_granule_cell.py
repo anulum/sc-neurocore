@@ -15,6 +15,10 @@ import pytest
 from sc_neurocore.neurons.models.granule_cell import GranuleCell
 
 
+def _exact_relax(value: float, target: float, tau: float, dt: float) -> float:
+    return target + (value - target) * math.exp(-dt / tau)
+
+
 def _snapshot(cell: GranuleCell) -> tuple[float, ...]:
     return (
         cell.v,
@@ -38,7 +42,10 @@ def test_default_step_preserves_physical_bounds() -> None:
 
     assert spike in (0, 1)
     assert -100.0 <= cell.v <= 60.0
-    assert all(0.0 <= gate <= 1.0 for gate in (cell.m, cell.h, cell.n, cell.a, cell.b, cell.m_t, cell.s, cell.r))
+    assert all(
+        0.0 <= gate <= 1.0
+        for gate in (cell.m, cell.h, cell.n, cell.a, cell.b, cell.m_t, cell.s, cell.r)
+    )
     assert cell.ca >= 0.0
 
 
@@ -85,9 +92,60 @@ def test_t_type_gate_remains_deinactivated_at_rest() -> None:
     assert cell.s > 0.5
 
 
+def test_gate_and_calcium_kinetics_use_closed_form_relaxation() -> None:
+    cell = GranuleCell(
+        g_na=0.0,
+        g_kdr=0.0,
+        g_ka=0.0,
+        g_t=0.0,
+        g_kca=0.0,
+        g_h=0.0,
+        g_l=0.0,
+        g_tonic=0.0,
+        gain=0.0,
+        sub_steps=1,
+    )
+    before = _snapshot(cell)
+    v0 = cell.v
+
+    m_inf = cell._boltz(v0, -30.0, 7.0)
+    tau_m = 0.1 + 0.3 / max(0.01, 1.0 + ((v0 + 30.0) / 10.0) ** 2)
+    h_inf = cell._boltz(v0, -52.0, -6.0)
+    tau_h = 0.5 + 5.0 / max(0.01, 1.0 + ((v0 + 50.0) / 15.0) ** 2)
+    n_inf = cell._boltz(v0, -35.0, 8.0)
+    tau_n = 1.0 + 5.0 / max(0.01, 1.0 + ((v0 + 35.0) / 15.0) ** 2)
+    a_inf = cell._boltz(v0, -50.0, 20.0)
+    b_inf = cell._boltz(v0, -70.0, -6.0)
+    mt_inf = cell._boltz(v0, -52.0, 5.0)
+    s_inf = cell._boltz(v0, -60.0, -6.5)
+    tau_s = 20.0 + 50.0 / max(0.01, 1.0 + ((v0 + 65.0) / 10.0) ** 2)
+    r_inf = cell._boltz(v0, -80.0, -10.0)
+    tau_r = 50.0 + 200.0 / max(0.01, 1.0 + ((v0 + 80.0) / 20.0) ** 2)
+
+    expected = (
+        v0,
+        _exact_relax(before[1], m_inf, tau_m, cell.dt),
+        _exact_relax(before[2], h_inf, tau_h, cell.dt),
+        _exact_relax(before[3], n_inf, tau_n, cell.dt),
+        _exact_relax(before[4], a_inf, 2.0, cell.dt),
+        _exact_relax(before[5], b_inf, 50.0, cell.dt),
+        _exact_relax(before[6], mt_inf, 1.0, cell.dt),
+        _exact_relax(before[7], s_inf, tau_s, cell.dt),
+        _exact_relax(before[8], 0.0, cell.tau_ca, cell.dt),
+        _exact_relax(before[9], r_inf, tau_r, cell.dt),
+    )
+
+    cell.step(0.0)
+
+    for observed, expected_value in zip(_snapshot(cell), expected, strict=True):
+        assert observed == pytest.approx(expected_value, rel=1e-12, abs=1e-12)
+
+
 @pytest.mark.parametrize(
     "kwargs",
     [
+        {"v": -100.1},
+        {"v": 60.1},
         {"m": -0.1},
         {"h": 1.1},
         {"ca": -1e-6},

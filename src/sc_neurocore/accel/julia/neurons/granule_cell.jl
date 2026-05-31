@@ -63,6 +63,20 @@ end
 
 _clamp01(x::Float64) = max(0.0, min(1.0, x))
 
+function _exact_relax(value::Float64, target::Float64, tau::Float64, dt::Float64)
+    return target + (value - target) * exp(-dt / tau)
+end
+
+function _exact_voltage_step(v::Float64, input_current::Float64, c_m::Float64, dt::Float64, conductances)
+    g_total = sum(pair[1] for pair in conductances)
+    if g_total <= 0.0
+        return v + dt * input_current / c_m
+    end
+    reversal_drive = sum(pair[1] * pair[2] for pair in conductances)
+    v_inf = (input_current + reversal_drive) / g_total
+    return v_inf + (v - v_inf) * exp(-dt * g_total / c_m)
+end
+
 function _validate(s::GranuleCellState)
     finite_values = (
         s.v, s.m, s.h, s.n, s.a, s.b, s.m_t, s.s, s.ca, s.r,
@@ -70,6 +84,7 @@ function _validate(s::GranuleCellState)
         s.e_na, s.e_k, s.e_ca, s.e_h, s.e_l, s.e_gaba, s.tau_ca, s.kd_kca, s.dt, s.gain,
     )
     all(isfinite, finite_values) || throw(ArgumentError("granule cell state and parameters must be finite"))
+    -100.0 <= s.v <= 60.0 || throw(ArgumentError("granule cell v must stay in [-100, 60]"))
     all(x -> 0.0 <= x <= 1.0, (s.m, s.h, s.n, s.a, s.b, s.m_t, s.s, s.r)) ||
         throw(ArgumentError("granule cell gates must stay in [0, 1]"))
     s.ca >= 0.0 || throw(ArgumentError("granule cell calcium concentration must be non-negative"))
@@ -104,48 +119,54 @@ function step!(s::GranuleCellState, I_ext::Float64=0.0; dt::Float64=s.dt)
     for _ in 1:s.sub_steps
         m_inf = _boltz(v, -30.0, 7.0)
         tau_m = 0.1 + 0.3 / max(0.01, 1.0 + ((v + 30.0) / 10.0)^2)
-        m = _clamp01(m + dt_sub * (m_inf - m) / tau_m)
+        m = _clamp01(_exact_relax(m, m_inf, tau_m, dt_sub))
 
         h_inf = _boltz(v, -52.0, -6.0)
         tau_h = 0.5 + 5.0 / max(0.01, 1.0 + ((v + 50.0) / 15.0)^2)
-        h = _clamp01(h + dt_sub * (h_inf - h) / tau_h)
+        h = _clamp01(_exact_relax(h, h_inf, tau_h, dt_sub))
 
         n_inf = _boltz(v, -35.0, 8.0)
         tau_n = 1.0 + 5.0 / max(0.01, 1.0 + ((v + 35.0) / 15.0)^2)
-        n = _clamp01(n + dt_sub * (n_inf - n) / tau_n)
+        n = _clamp01(_exact_relax(n, n_inf, tau_n, dt_sub))
 
         a_inf = _boltz(v, -50.0, 20.0)
-        a = _clamp01(a + dt_sub * (a_inf - a) / 2.0)
+        a = _clamp01(_exact_relax(a, a_inf, 2.0, dt_sub))
 
         b_inf = _boltz(v, -70.0, -6.0)
-        b = _clamp01(b + dt_sub * (b_inf - b) / 50.0)
+        b = _clamp01(_exact_relax(b, b_inf, 50.0, dt_sub))
 
         mt_inf = _boltz(v, -52.0, 5.0)
-        m_t = _clamp01(m_t + dt_sub * (mt_inf - m_t))
+        m_t = _clamp01(_exact_relax(m_t, mt_inf, 1.0, dt_sub))
 
         s_inf = _boltz(v, -60.0, -6.5)
         tau_s = 20.0 + 50.0 / max(0.01, 1.0 + ((v + 65.0) / 10.0)^2)
-        gate_s = _clamp01(gate_s + dt_sub * (s_inf - gate_s) / tau_s)
+        gate_s = _clamp01(_exact_relax(gate_s, s_inf, tau_s, dt_sub))
 
         r_inf = _boltz(v, -80.0, -10.0)
         tau_r = 50.0 + 200.0 / max(0.01, 1.0 + ((v + 80.0) / 20.0)^2)
-        r = _clamp01(r + dt_sub * (r_inf - r) / tau_r)
+        r = _clamp01(_exact_relax(r, r_inf, tau_r, dt_sub))
 
         i_ca_t = s.g_t * m_t^2 * gate_s * (v - s.e_ca)
         ca_entry = i_ca_t < 0.0 ? -i_ca_t * 0.001 : 0.0
-        ca = max(0.0, ca + dt_sub * (-ca / s.tau_ca + ca_entry))
+        ca = max(0.0, _exact_relax(ca, ca_entry * s.tau_ca, s.tau_ca, dt_sub))
 
         kca_inf = ca^2 / (ca^2 + s.kd_kca^2)
-        i_na = s.g_na * m^3 * h * (v - s.e_na)
-        i_kdr = s.g_kdr * n^4 * (v - s.e_k)
-        i_ka = s.g_ka * a^3 * b * (v - s.e_k)
-        i_kca = s.g_kca * kca_inf * (v - s.e_k)
-        i_h = s.g_h * r * (v - s.e_h)
-        i_l = s.g_l * (v - s.e_l)
-        i_gaba = s.g_tonic * (v - s.e_gaba)
-
-        dv_val = (-(i_na + i_kdr + i_ka + i_ca_t + i_kca + i_h + i_l + i_gaba) + inp) / s.c_m
-        v = max(-100.0, min(60.0, v + dt_sub * dv_val))
+        g_na_eff = s.g_na * m^3 * h
+        g_kdr_eff = s.g_kdr * n^4
+        g_ka_eff = s.g_ka * a^3 * b
+        g_t_eff = s.g_t * m_t^2 * gate_s
+        g_kca_eff = s.g_kca * kca_inf
+        g_h_eff = s.g_h * r
+        v = max(-100.0, min(60.0, _exact_voltage_step(v, inp, s.c_m, dt_sub, (
+            (g_na_eff, s.e_na),
+            (g_kdr_eff, s.e_k),
+            (g_ka_eff, s.e_k),
+            (g_t_eff, s.e_ca),
+            (g_kca_eff, s.e_k),
+            (g_h_eff, s.e_h),
+            (s.g_l, s.e_l),
+            (s.g_tonic, s.e_gaba),
+        ))))
 
         all(isfinite, (v, m, h, n, a, b, m_t, gate_s, ca, r)) ||
             throw(ArgumentError("granule cell integration produced non-finite state"))

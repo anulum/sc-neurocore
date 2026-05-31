@@ -127,8 +127,10 @@ cargo bench --bench analysis_bench -- --quick
 
 | Model | Steps | Median | Per step | Sub-steps | Notes |
 |-------|-------|--------|----------|-----------|-------|
-| Granule cell (D'Angelo 2001) | 10k | 4.92 ms | **492 ns** | 4 | Full HH: 7 currents (Na, K_dr, K_A, Ca_T, K_Ca, Ih, leak) |
+| Granule cell (D'Angelo 2001) | 10k | 7.64 ms | **764 ns** | 4 | exact gates + 8 conductances: Na, K_dr, K_A, Ca_T, K_Ca, Ih, leak, tonic GABA |
 | Golgi cell (Solinas 2007) | 1k | 2.96 ms | **2.96 µs** | 10 | exact gates + 11 currents: Na_t, Na_p, K_dr, K_A, K_M, Ca_T, Ca_N, BK, SK, Ih, leak |
+
+> Granule cell remeasured 2026-05-31 after exact gate, calcium, conductance integration, full polyglot parity, and fail-closed state guards.
 
 > Golgi cell remeasured 2026-05-31 after exact gate, calcium, conductance integration, full polyglot parity, and fail-closed state guards.
 | Stellate cell | 1k | 5.15 ms | **5.15 µs** | 50 | WB + Kv3.1 |
@@ -138,8 +140,8 @@ cargo bench --bench analysis_bench -- --quick
 
 > DCN neuron remeasured 2026-05-31 after exact gate, calcium, conductance integration, full polyglot parity, and fail-closed state guards.
 
-> Granule cell uses simple Euler integration with T-type Ca2+ gating for
-> rebound bursting. No sub-stepping needed.
+> Granule cell uses four exact-integration sub-steps for D'Angelo-style
+> conductance dynamics and tonic GABA inhibition.
 
 ### Ion Channel Variant Neurons (`neurons/channels.rs`) — Ion-channel variant group
 

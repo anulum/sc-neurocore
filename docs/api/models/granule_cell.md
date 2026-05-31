@@ -65,8 +65,10 @@ with the maintained current definitions:
 | Leak | \(I_L=g_L(V-E_L)\) |
 | Tonic GABA | \(I_{GABA}=g_{tonic}(V-E_{GABA})\) |
 
-Gates use overflow-stable Boltzmann steady states and first-order relaxation.
-The default Python/Rust/Go/Julia paths use four sub-steps per model step.
+Gates use overflow-stable Boltzmann steady states and closed-form first-order
+relaxation. The membrane potential advances with the exact ohmic conductance
+solution over each voltage-frozen sub-step. The default Python/Rust/Go/Julia
+paths use four sub-steps per model step.
 
 ---
 
@@ -103,11 +105,13 @@ The maintained Python, Rust engine, Go service, Julia kernel, and Rust safety
 shim now share the same runtime boundary:
 
 - finite state and parameter validation before integration
+- physical voltage bounds before integration
 - gates constrained to `[0, 1]`
 - non-negative calcium and conductances
 - positive capacitance, calcium constants, timestep, and sub-step count
 - finite runtime input current
-- local candidate-state integration with no partial mutation on invalid input
+- exact gate, calcium, and conductance-form voltage integration with local
+  candidate state and no partial mutation on invalid input
 - spike reporting on upward crossing of 0 mV
 
 This keeps optional acceleration surfaces aligned with the production dynamics
@@ -118,8 +122,10 @@ instead of returning placeholders or normalising corrupted state silently.
 ## Verification surfaces
 
 Module-specific tests cover the Python model and Go service. The Rust engine and
-Rust safety shim carry granule-specific tests in their respective crates/files.
-The checks exercise bounded state evolution, D'Angelo current-surface presence,
+Rust safety shim carry granule-specific tests in their respective crates/files,
+and the Julia kernel is covered by the same closed-form kinetics parity
+assertion used during release verification. The checks exercise bounded state
+evolution, D'Angelo current-surface presence, closed-form gate/calcium kinetics,
 tonic GABA suppression, T-type de-inactivation at rest, invalid-configuration
 rejection, non-finite drive preservation, and corrupted-state preservation.
 
@@ -127,7 +133,13 @@ rejection, non-finite drive preservation, and corrupted-state preservation.
 
 ## Benchmark status
 
-Earlier public timing numbers were tied to a stale LIF-style description and are
-not carried forward as current release evidence. Regenerate granule-cell timing
-evidence for the Python and Rust paths before using this model in release
-performance claims.
+Remeasured locally with Criterion on 2026-05-31 after exact gate, calcium, and
+conductance-form voltage integration:
+
+| Benchmark | Median |
+|-----------|-------:|
+| `granule_10k_steps` | 7.64 ms |
+| Per step | **0.764 µs** |
+
+Artifact:
+`benchmarks/results/local_i5_11600k_criterion_2026-05-31_granule_cell.json`.
