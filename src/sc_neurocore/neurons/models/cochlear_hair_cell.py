@@ -65,6 +65,9 @@ class CochlearHairCell:
     glutamate_release: float = 0.0
 
     def __post_init__(self) -> None:
+        self._validate_runtime_state()
+
+    def _validate_runtime_state(self) -> None:
         for name in ("g_l", "cap", "delta", "dt"):
             value = getattr(self, name)
             if not math.isfinite(value) or value <= 0.0:
@@ -85,24 +88,58 @@ class CochlearHairCell:
         """Boltzmann activation of MET channels."""
         if not math.isfinite(displacement):
             raise ValueError("displacement must be finite")
+        if not math.isfinite(self.x0):
+            raise ValueError("x0 must be finite")
+        if not math.isfinite(self.delta) or self.delta <= 0.0:
+            raise ValueError("delta must be finite and positive")
 
-        return 1.0 / (1.0 + math.exp(-(displacement - self.x0) / self.delta))
+        z = (displacement - self.x0) / self.delta
+        if z >= 0.0:
+            return 1.0 / (1.0 + math.exp(-z))
+        ez = math.exp(z)
+        return ez / (1.0 + ez)
 
     def step(self, displacement: float) -> int:
         """Step with basilar membrane displacement.
 
         Returns 1 if glutamate_release > 0.5, else 0.
         """
+        self._validate_runtime_state()
         po = self.p_open(displacement)
-        i_met = self.g_max * po * (self.v - self.e_met)
-        dv = (-self.g_l * (self.v - self.e_l) - i_met) / self.cap
-        self.v += dv * self.dt
+        g_met = self.g_max * po
+        g_total = self.g_l + g_met
+        if not math.isfinite(g_total) or g_total <= 0.0:
+            raise FloatingPointError("total cochlear conductance must be finite and positive")
+        v_inf = (self.g_l * self.e_l + g_met * self.e_met) / g_total
+        candidate_v = v_inf + (self.v - v_inf) * math.exp(-(g_total / self.cap) * self.dt)
+        if not math.isfinite(candidate_v):
+            raise FloatingPointError("cochlear voltage candidate must be finite")
+        candidate_release = max(candidate_v + 60.0, 0.0) / 40.0
+        if not math.isfinite(candidate_release):
+            raise FloatingPointError("cochlear glutamate release candidate must be finite")
+
+        self.v = candidate_v
 
         # Graded glutamate release proportional to depolarisation.
-        self.glutamate_release = max((self.v + 60.0), 0.0) / 40.0
+        self.glutamate_release = candidate_release
         return 1 if self.glutamate_release > 0.5 else 0
 
     def reset(self) -> None:
         """Reset state to resting potential."""
         self.v = self.e_l
         self.glutamate_release = 0.0
+
+    def state(self) -> dict[str, float]:
+        """Return a compact state and parameter snapshot for reproducibility."""
+        return {
+            "g_max": self.g_max,
+            "e_met": self.e_met,
+            "g_l": self.g_l,
+            "e_l": self.e_l,
+            "cap": self.cap,
+            "x0": self.x0,
+            "delta": self.delta,
+            "dt": self.dt,
+            "v": self.v,
+            "glutamate_release": self.glutamate_release,
+        }

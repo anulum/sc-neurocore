@@ -56,6 +56,23 @@ where:
 - $g_L = 1.0$ is the leak conductance
 - $E_L = -60$ mV is the resting potential
 
+For a fixed displacement over one timestep, $P_{open}$ is constant and the
+membrane ODE is linear.  The maintained Python reference, Rust engine, Go
+service, Julia mirror, and Rust safety surface therefore use the exact
+conductance-form relaxation rather than a raw Euler voltage increment:
+
+$$g_{total} = g_L + g_{max}P_{open}$$
+
+$$V_{\infty} = \frac{g_LE_L + g_{max}P_{open}E_{MET}}{g_{total}}$$
+
+$$V(t+\Delta t) = V_{\infty} + (V(t)-V_{\infty})e^{-g_{total}\Delta t/C}$$
+
+All maintained surfaces validate finite displacement, positive capacitance,
+positive leak conductance, positive Boltzmann slope, positive timestep, finite
+state, and non-negative glutamate release before mutation.  Invalid runtime
+state preserves the previous state; Python raises an exception, while
+non-throwing mirrors return an invalid sentinel.
+
 **Graded glutamate release:**
 
 $$\text{glutamate} = \frac{\max(V + 60, 0)}{40}$$
@@ -481,22 +498,29 @@ Decorated with `@dataclass`. Defined in
 
 | Test | What it verifies | Status |
 |------|-----------------|--------|
-| `test_defaults` | v=-60, g_max=10, delta=0.1 | PASS |
-| `test_p_open_boltzmann` | P(0)=0.5, P(1)>0.99, P(-1)<0.01 | PASS |
-| `test_step_returns_binary` | Output in {0, 1} | PASS |
-| `test_graded_glutamate_release` | glutamate >= 0 | PASS |
-| `test_positive_displacement_depolarises` | V changes from rest | PASS |
-| `test_negative_displacement_stays_near_rest` | V near E_L | PASS |
-| `test_reset` | v=E_L, glutamate=0 | PASS |
+| `tests/test_model_cochlear_hair_cell.py` | closed-form voltage relaxation, stable Boltzmann saturation, invalid runtime preservation, reset | PASS |
+| `tests/test_gap_models.py::TestCochlearHairCell` | legacy gap-model compatibility for defaults, displacement response, graded release, and reset | PASS |
+| Go service `TestCochlearHairCell*` | exact voltage update and invalid sentinel state preservation | PASS |
+| Rust engine `cochlear_*` tests | exact voltage update, displacement response, graded release, reset, and invalid-state preservation | PASS |
+| Rust safety `cochlear_hair_cell.rs` tests | exact voltage update and invalid sentinel state preservation | PASS |
+| Julia mirror command check | simulation trace and invalid sentinel contract | PASS |
 
 ### Equation-to-code traceability
 
-| Equation | Python | Rust |
-|----------|--------|------|
-| $P_{open} = 1/(1 + e^{-(x-x_0)/\delta})$ | `cochlear_hair_cell.py:76` | `sensory.rs:1894` |
-| $I_{MET} = g \cdot P \cdot (V-E)$ | `cochlear_hair_cell.py:82` | `sensory.rs:1900` |
-| $C \, dV/dt = -g_L(V-E_L) - I_{MET}$ | `cochlear_hair_cell.py:83` | `sensory.rs:1901` |
-| $\text{glut} = \max(V+60, 0)/40$ | `cochlear_hair_cell.py:87` | `sensory.rs:1905` |
+| Equation | Python | Rust engine | Go | Julia | Rust safety |
+|----------|--------|-------------|----|-------|-------------|
+| stable Boltzmann $P_{open}$ | `cochlear_hair_cell.py` | `sensory.rs` | `cochlear_hair_cell.go` | `cochlear_hair_cell.jl` | `cochlear_hair_cell.rs` |
+| exact membrane relaxation | `cochlear_hair_cell.py` | `sensory.rs` | `cochlear_hair_cell.go` | `cochlear_hair_cell.jl` | `cochlear_hair_cell.rs` |
+| graded release $\max(V+60,0)/40$ | `cochlear_hair_cell.py` | `sensory.rs` | `cochlear_hair_cell.go` | `cochlear_hair_cell.jl` | `cochlear_hair_cell.rs` |
+
+### Benchmark Evidence
+
+Fresh local Python artefact generated on 2026-05-31 after the exact-relaxation
+hardening:
+
+| Surface | Artefact | Result |
+|---|---|---:|
+| Python reference | `benchmarks/results/local_i5_11600k_python_2026-05-31_cochlear_hair_cell.json` | 542,508 steps/s at `displacement=0.5` over 200,000 measured steps |
 
 ---
 
