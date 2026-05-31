@@ -20,6 +20,7 @@ FULL PIPELINE WIRED (isolation only) + PERFORMANCE."""
 from __future__ import annotations
 
 import time
+import os
 
 import numpy as np
 import pytest
@@ -179,7 +180,8 @@ class TestIQIFPerformance:
             n.step(100)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert rate > 500_000, f"isolation: {rate:.0f} steps/s"
+        min_rate = 400_000 if os.getenv("CI") else 500_000
+        assert rate > min_rate, f"isolation: {rate:.0f} steps/s, minimum={min_rate}"
 
 
 # ---------------------------------------------------------------------------
