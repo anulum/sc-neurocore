@@ -38,37 +38,43 @@ impl HindmarshRoseNeuron {
 
     pub fn step(&mut self, current: f64) -> i32 {
         if !validate_hindmarsh_rose(self) || !current.is_finite() {
-            self.x = f64::NAN;
-            self.y = f64::NAN;
-            self.z = f64::NAN;
             return 0;
         }
         let x_prev = self.x;
         let (x0, y0, z0) = (self.x, self.y, self.z);
         let dt = self.dt;
-        let k1 = self.derivatives(x0, y0, z0, current);
-        let k2 = self.derivatives(
+        let Some(k1) = self.derivatives(x0, y0, z0, current) else {
+            return 0;
+        };
+        let Some(k2) = self.derivatives(
             x0 + 0.5 * dt * k1.0,
             y0 + 0.5 * dt * k1.1,
             z0 + 0.5 * dt * k1.2,
             current,
-        );
-        let k3 = self.derivatives(
+        ) else {
+            return 0;
+        };
+        let Some(k3) = self.derivatives(
             x0 + 0.5 * dt * k2.0,
             y0 + 0.5 * dt * k2.1,
             z0 + 0.5 * dt * k2.2,
             current,
-        );
-        let k4 = self.derivatives(x0 + dt * k3.0, y0 + dt * k3.1, z0 + dt * k3.2, current);
-        self.x = x0 + (dt / 6.0) * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0);
-        self.y = y0 + (dt / 6.0) * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1);
-        self.z = z0 + (dt / 6.0) * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2);
-        if !validate_hindmarsh_rose(self) {
-            self.x = f64::NAN;
-            self.y = f64::NAN;
-            self.z = f64::NAN;
+        ) else {
+            return 0;
+        };
+        let Some(k4) = self.derivatives(x0 + dt * k3.0, y0 + dt * k3.1, z0 + dt * k3.2, current)
+        else {
+            return 0;
+        };
+        let next_x = x0 + (dt / 6.0) * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0);
+        let next_y = y0 + (dt / 6.0) * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1);
+        let next_z = z0 + (dt / 6.0) * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2);
+        if !(next_x.is_finite() && next_y.is_finite() && next_z.is_finite()) {
             return 0;
         }
+        self.x = next_x;
+        self.y = next_y;
+        self.z = next_z;
         if self.x >= self.x_threshold && x_prev < self.x_threshold {
             1
         } else {
@@ -76,12 +82,20 @@ impl HindmarshRoseNeuron {
         }
     }
 
-    fn derivatives(&self, x: f64, y: f64, z: f64, current: f64) -> (f64, f64, f64) {
-        (
+    fn derivatives(&self, x: f64, y: f64, z: f64, current: f64) -> Option<(f64, f64, f64)> {
+        if !(x.is_finite() && y.is_finite() && z.is_finite() && current.is_finite()) {
+            return None;
+        }
+        let derivative = (
             y - x.powi(3) + self.b * x.powi(2) - z + current,
             1.0 - 5.0 * x.powi(2) - y,
             self.r * (self.s * (x - self.x_rest) - z),
-        )
+        );
+        if derivative.0.is_finite() && derivative.1.is_finite() && derivative.2.is_finite() {
+            Some(derivative)
+        } else {
+            None
+        }
     }
 
     pub fn reset(&mut self) {
@@ -129,20 +143,26 @@ mod tests {
         let z0 = state.z;
         let current = 3.0;
         let dt = state.dt;
-        let k1 = state.derivatives(x0, y0, z0, current);
-        let k2 = state.derivatives(
-            x0 + 0.5 * dt * k1.0,
-            y0 + 0.5 * dt * k1.1,
-            z0 + 0.5 * dt * k1.2,
-            current,
-        );
-        let k3 = state.derivatives(
-            x0 + 0.5 * dt * k2.0,
-            y0 + 0.5 * dt * k2.1,
-            z0 + 0.5 * dt * k2.2,
-            current,
-        );
-        let k4 = state.derivatives(x0 + dt * k3.0, y0 + dt * k3.1, z0 + dt * k3.2, current);
+        let k1 = state.derivatives(x0, y0, z0, current).unwrap();
+        let k2 = state
+            .derivatives(
+                x0 + 0.5 * dt * k1.0,
+                y0 + 0.5 * dt * k1.1,
+                z0 + 0.5 * dt * k1.2,
+                current,
+            )
+            .unwrap();
+        let k3 = state
+            .derivatives(
+                x0 + 0.5 * dt * k2.0,
+                y0 + 0.5 * dt * k2.1,
+                z0 + 0.5 * dt * k2.2,
+                current,
+            )
+            .unwrap();
+        let k4 = state
+            .derivatives(x0 + dt * k3.0, y0 + dt * k3.1, z0 + dt * k3.2, current)
+            .unwrap();
         let expected_x = x0 + (dt / 6.0) * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0);
         let expected_y = y0 + (dt / 6.0) * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1);
         let expected_z = z0 + (dt / 6.0) * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2);
@@ -160,6 +180,15 @@ mod tests {
         let mut state = HindmarshRoseNeuron::new();
         state.dt = 0.0;
         assert_eq!(state.step(3.0), 0);
-        assert!(state.x.is_nan());
+        assert_eq!(state.x, -1.6);
+    }
+
+    #[test]
+    fn test_hindmarsh_rose_rejects_non_finite_candidate_without_mutation() {
+        let mut state = HindmarshRoseNeuron::new();
+        state.x = 1.0e103;
+        let before = (state.x, state.y, state.z);
+        assert_eq!(state.step(3.0), 0);
+        assert_eq!((state.x, state.y, state.z), before);
     }
 }

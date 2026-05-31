@@ -33,25 +33,40 @@ end
 
 function step!(s::HindmarshRoseNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
     if !_valid(s) || !isfinite(I_ext) || !isfinite(dt) || dt <= 0.0
-        s.x = NaN
-        s.y = NaN
-        s.z = NaN
         return 0
     end
     x_prev = s.x
-    dx = s.y - s.x ^ 3 + s.b * s.x ^ 2 - s.z + I_ext
-    dy = 1.0 - 5.0 * s.x ^ 2 - s.y
-    dz = s.r * (s.s * (s.x - s.x_rest) - s.z)
-    s.x += dx * dt
-    s.y += dy * dt
-    s.z += dz * dt
-    if !_valid(s)
-        s.x = NaN
-        s.y = NaN
-        s.z = NaN
+    x0, y0, z0 = s.x, s.y, s.z
+    k1 = _derivatives(s, x0, y0, z0, I_ext)
+    k1 === nothing && return 0
+    k2 = _derivatives(s, x0 + 0.5 * dt * k1[1], y0 + 0.5 * dt * k1[2], z0 + 0.5 * dt * k1[3], I_ext)
+    k2 === nothing && return 0
+    k3 = _derivatives(s, x0 + 0.5 * dt * k2[1], y0 + 0.5 * dt * k2[2], z0 + 0.5 * dt * k2[3], I_ext)
+    k3 === nothing && return 0
+    k4 = _derivatives(s, x0 + dt * k3[1], y0 + dt * k3[2], z0 + dt * k3[3], I_ext)
+    k4 === nothing && return 0
+    next_x = x0 + (dt / 6.0) * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1])
+    next_y = y0 + (dt / 6.0) * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2])
+    next_z = z0 + (dt / 6.0) * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3])
+    if !(isfinite(next_x) && isfinite(next_y) && isfinite(next_z))
         return 0
     end
+    s.x = next_x
+    s.y = next_y
+    s.z = next_z
     return (s.x >= s.x_threshold && x_prev < s.x_threshold) ? 1 : 0
+end
+
+function _derivatives(s::HindmarshRoseNeuronState, x::Float64, y::Float64, z::Float64, I_ext::Float64)
+    if !(isfinite(x) && isfinite(y) && isfinite(z) && isfinite(I_ext))
+        return nothing
+    end
+    derivative = (
+        y - x ^ 3 + s.b * x ^ 2 - z + I_ext,
+        1.0 - 5.0 * x ^ 2 - y,
+        s.r * (s.s * (x - s.x_rest) - z),
+    )
+    return all(isfinite, derivative) ? derivative : nothing
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)

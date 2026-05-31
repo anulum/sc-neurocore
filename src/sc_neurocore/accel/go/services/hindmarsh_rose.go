@@ -43,28 +43,54 @@ func NewHindmarshRoseNeuron() *HindmarshRoseNeuronState {
 // Step advances the neuron by one timestep
 func (s *HindmarshRoseNeuronState) Step(current float64) int {
 	if !validateHindmarshRoseState(s) || !finiteHindmarshRose(current) {
-		s.X = math.NaN()
-		s.Y = math.NaN()
-		s.Z = math.NaN()
 		return 0
 	}
 	xPrev := s.X
-	dx := s.Y - s.X*s.X*s.X + s.B*s.X*s.X - s.Z + current
-	dy := 1.0 - 5.0*s.X*s.X - s.Y
-	dz := s.R * (s.S*(s.X-s.XRest) - s.Z)
-	s.X += dx * s.Dt
-	s.Y += dy * s.Dt
-	s.Z += dz * s.Dt
-	if !validateHindmarshRoseState(s) {
-		s.X = math.NaN()
-		s.Y = math.NaN()
-		s.Z = math.NaN()
+	x0, y0, z0 := s.X, s.Y, s.Z
+	dt := s.Dt
+	k1, ok := s.derivatives(x0, y0, z0, current)
+	if !ok {
 		return 0
 	}
+	k2, ok := s.derivatives(x0+0.5*dt*k1[0], y0+0.5*dt*k1[1], z0+0.5*dt*k1[2], current)
+	if !ok {
+		return 0
+	}
+	k3, ok := s.derivatives(x0+0.5*dt*k2[0], y0+0.5*dt*k2[1], z0+0.5*dt*k2[2], current)
+	if !ok {
+		return 0
+	}
+	k4, ok := s.derivatives(x0+dt*k3[0], y0+dt*k3[1], z0+dt*k3[2], current)
+	if !ok {
+		return 0
+	}
+	nextX := x0 + (dt/6.0)*(k1[0]+2.0*k2[0]+2.0*k3[0]+k4[0])
+	nextY := y0 + (dt/6.0)*(k1[1]+2.0*k2[1]+2.0*k3[1]+k4[1])
+	nextZ := z0 + (dt/6.0)*(k1[2]+2.0*k2[2]+2.0*k3[2]+k4[2])
+	if !(finiteHindmarshRose(nextX) && finiteHindmarshRose(nextY) && finiteHindmarshRose(nextZ)) {
+		return 0
+	}
+	s.X = nextX
+	s.Y = nextY
+	s.Z = nextZ
 	if s.X >= s.XThreshold && xPrev < s.XThreshold {
 		return 1
 	}
 	return 0
+}
+
+func (s *HindmarshRoseNeuronState) derivatives(x, y, z, current float64) ([3]float64, bool) {
+	if !(finiteHindmarshRose(x) && finiteHindmarshRose(y) && finiteHindmarshRose(z) && finiteHindmarshRose(current)) {
+		return [3]float64{}, false
+	}
+	derivative := [3]float64{
+		y - x*x*x + s.B*x*x - z + current,
+		1.0 - 5.0*x*x - y,
+		s.R * (s.S*(x-s.XRest) - z),
+	}
+	return derivative, finiteHindmarshRose(derivative[0]) &&
+		finiteHindmarshRose(derivative[1]) &&
+		finiteHindmarshRose(derivative[2])
 }
 
 // SimulateHindmarshRoseNeuron runs the neuron for n steps

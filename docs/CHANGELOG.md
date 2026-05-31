@@ -203,6 +203,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Corrected the `PINGCircuit` Python reference step to consume one excitatory and one inhibitory Wiener-noise vector per timestep, matching the Rust, Julia, Go, and Mojo backend stochastic contract; benchmark metadata now reports the selected backend directly.
 - Hardened `CorticalColumn(backend="python", use_block_csr=True)` so it remains on the scipy.sparse reference path and does not call the Rust single-block fallback when native symbols are present.
 - Hardened `HindmarshRoseNeuron` RK4/Euler derivative evaluation to fail closed on cubic overflow or non-finite intermediate stages without mutating state.
+- Aligned `HindmarshRoseNeuron` Rust engine, Rust safety, Go, and Julia
+  counterparts with the Python RK4 trajectory and fail-closed candidate-state
+  contract.
 - Hardened `MorrisLecarNeuron` Euler/RK4/Rosenbrock paths to fail closed on potassium-rate overflow or non-finite derivative/state updates without mutating state.
 - Hardened `FitzHughNagumoNeuron` Euler/RK4/Rosenbrock paths to fail closed on cubic overflow or non-finite derivative/state updates without mutating state, and aligned the Julia, Go, and Rust safety counterparts with the documented no-reset state equation.
 - Hardened `McKeanNeuron` runtime updates across Python, Julia, Go, and Rust safety surfaces to fail closed on non-finite state/current or non-finite post-update state instead of silently reporting no spike.
