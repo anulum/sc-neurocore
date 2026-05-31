@@ -566,3 +566,9 @@ faster than Python (~250 steps/s).
 **Rust parity: EXACT (verified commit b7134296, 12 defects fixed).**
 **Criterion: 256 µs / 1K steps (256 ns/step, ~3.9 Mstep/s).**
     currents (PICs) relevant to motor control and spinal cord injury.
+
+## Industrial hardening note
+
+The Booth-Rinzel surface now uses the same fail-closed candidate-update contract across the Python reference implementation and the Go, Rust, and Julia companion kernels. Physical configuration is rejected before integration when conductances, capacitance, coupling fraction, calcium scales, timestep, or gate/calcium state leave their mathematical domains. Candidate substeps are validated before mutation, so invalid runtime inputs or non-finite intermediate states cannot partially corrupt the neuron state.
+
+The historical performance figures in this page predate the candidate-validation hardening and should be treated as archival until the Booth-Rinzel benchmark is regenerated on the current code.

@@ -34,16 +34,36 @@ impl TermanWangOscillator {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // f = 3.0 * self.v - self.v.powi3 + 2.0
-        // g = self.alpha * (1.0 + (self.v / self.beta_f64).tanh())
-        // dv = (f - self.w + current + self.rho) * self.dt
-        // dw = self.epsilon * (g - self.w) * self.dt
-        // v_prev = self.v
-        // self.v += dv
-        // self.w += dw
-        // return 1 if (self.v >= self.v_peak && v_prev < self.v_peak) else 0
-        0 // spike indicator
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
+        if !validate_terman_wang(self) {
+            return Err("invalid Terman-Wang runtime state");
+        }
+        if !i_ext.is_finite() {
+            return Err("invalid Terman-Wang external current");
+        }
+
+        let f = 3.0 * self.v - self.v.powi(3) + 2.0;
+        let g = self.alpha * (1.0 + (self.v / self.beta).tanh());
+        let dv = (f - self.w + i_ext + self.rho) * self.dt;
+        let dw = self.epsilon * (g - self.w) * self.dt;
+        if !dv.is_finite() || !dw.is_finite() {
+            return Err("non-finite Terman-Wang update");
+        }
+
+        let v_prev = self.v;
+        let next_v = self.v + dv;
+        let next_w = self.w + dw;
+        if !next_v.is_finite() || !next_w.is_finite() {
+            return Err("non-finite Terman-Wang candidate state");
+        }
+
+        self.v = next_v;
+        self.w = next_w;
+        Ok(if self.v >= self.v_peak && v_prev < self.v_peak {
+            1
+        } else {
+            0
+        })
     }
 
     pub fn reset(&mut self) {
@@ -59,6 +79,16 @@ impl TermanWangOscillator {
 
 pub fn validate_terman_wang(state: &TermanWangOscillator) -> bool {
     state.v.is_finite()
+        && state.w.is_finite()
+        && state.alpha.is_finite()
+        && state.beta.is_finite()
+        && state.beta > 0.0
+        && state.epsilon.is_finite()
+        && state.epsilon > 0.0
+        && state.rho.is_finite()
+        && state.dt.is_finite()
+        && state.dt > 0.0
+        && state.v_peak.is_finite()
 }
 
 #[cfg(test)]
@@ -75,7 +105,14 @@ mod tests {
     #[test]
     fn test_terman_wang_step() {
         let mut state = TermanWangOscillator::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).unwrap();
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_terman_wang_rejects_invalid_runtime_state() {
+        let mut state = TermanWangOscillator::new();
+        state.v = f64::INFINITY;
+        assert!(state.step(1.0).is_err());
     }
 }

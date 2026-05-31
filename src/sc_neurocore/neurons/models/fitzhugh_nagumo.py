@@ -18,6 +18,11 @@ import numpy as np
 from sc_neurocore.solvers import RK4Solver, RosenbrockEuler
 
 
+_STATE_NAMES = ("v", "w")
+_PARAM_NAMES = ("a", "b", "epsilon", "dt", "v_threshold")
+_STRICTLY_POSITIVE_PARAMS = ("b", "epsilon", "dt")
+
+
 @dataclass
 class FitzHughNagumoNeuron:
     """FitzHugh-Nagumo 1961 — 2D qualitative spike model.
@@ -45,19 +50,37 @@ class FitzHughNagumoNeuron:
     def __post_init__(self) -> None:
         if self.integrator not in {"baseline_euler", "rk4", "rosenbrock"}:
             raise ValueError(f"Unsupported integrator for FitzHughNagumoNeuron: {self.integrator}")
-        for name in ("v", "w", "a", "b", "epsilon", "dt", "v_threshold"):
+        self._validate_configuration()
+
+    def _validate_configuration(self) -> None:
+        for name in (*_STATE_NAMES, *_PARAM_NAMES):
             value = getattr(self, name)
             if not isinstance(value, int | float) or not math.isfinite(float(value)):
                 raise ValueError(f"{name} must be finite")
             setattr(self, name, float(value))
-        for name in ("b", "epsilon", "dt"):
+        for name in _STRICTLY_POSITIVE_PARAMS:
             if getattr(self, name) <= 0.0:
                 raise ValueError(f"{name} must be positive")
+
+    def _validate_runtime_configuration(self) -> None:
+        if not (
+            math.isfinite(self.v)
+            and math.isfinite(self.w)
+            and math.isfinite(self.a)
+            and math.isfinite(self.b)
+            and math.isfinite(self.epsilon)
+            and math.isfinite(self.dt)
+            and math.isfinite(self.v_threshold)
+        ):
+            raise ValueError("FitzHugh-Nagumo state and parameters must be finite")
+        if self.b <= 0.0 or self.epsilon <= 0.0 or self.dt <= 0.0:
+            raise ValueError("b, epsilon, and dt must be positive")
 
     def step(self, current: float) -> int:
         if not isinstance(current, int | float) or not math.isfinite(float(current)):
             raise ValueError("current must be finite")
         current = float(current)
+        self._validate_runtime_configuration()
         v_prev = self.v
         if self.integrator == "baseline_euler":
             self._step_baseline_euler(current)

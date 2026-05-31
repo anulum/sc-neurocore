@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import numpy as np
+import math
 
 
 @dataclass
@@ -34,14 +34,53 @@ class TermanWangOscillator:
     dt: float = 0.05
     v_peak: float = 1.5
 
+    def __post_init__(self) -> None:
+        for name in (
+            "v",
+            "w",
+            "alpha",
+            "beta",
+            "epsilon",
+            "rho",
+            "dt",
+            "v_peak",
+        ):
+            value = float(getattr(self, name))
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+            setattr(self, name, value)
+        for name in ("beta", "epsilon", "dt"):
+            if getattr(self, name) <= 0.0:
+                raise ValueError(f"{name} must be positive")
+
+    @staticmethod
+    def _validate_state(v: float, w: float) -> tuple[float, float]:
+        v_value = float(v)
+        w_value = float(w)
+        if not math.isfinite(v_value) or not math.isfinite(w_value):
+            raise FloatingPointError("Terman-Wang runtime state must be finite")
+        return v_value, w_value
+
     def step(self, current: float) -> int:
-        f = 3.0 * self.v - self.v**3 + 2.0
-        g = self.alpha * (1.0 + np.tanh(self.v / self.beta))
-        dv = (f - self.w + current + self.rho) * self.dt
-        dw = self.epsilon * (g - self.w) * self.dt
-        v_prev = self.v
-        self.v += dv
-        self.w += dw
+        drive = float(current)
+        if not math.isfinite(drive):
+            raise ValueError("current must be finite")
+
+        v, w = self._validate_state(self.v, self.w)
+        v_prev = v
+        try:
+            f = 3.0 * v - v**3 + 2.0
+        except OverflowError as exc:
+            raise FloatingPointError("Terman-Wang cubic nullcline overflowed") from exc
+        g = self.alpha * (1.0 + math.tanh(v / self.beta))
+        dv = (f - w + drive + self.rho) * self.dt
+        dw = self.epsilon * (g - w) * self.dt
+        if not math.isfinite(dv) or not math.isfinite(dw):
+            raise FloatingPointError("Terman-Wang update became non-finite")
+
+        next_v = v + dv
+        next_w = w + dw
+        self.v, self.w = self._validate_state(next_v, next_w)
         return 1 if (self.v >= self.v_peak and v_prev < self.v_peak) else 0
 
     def reset(self) -> None:

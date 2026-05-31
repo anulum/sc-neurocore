@@ -24,18 +24,52 @@ trajectory is bit-exact with the Python `numpy.random.randn()` order
 """
 module WongWangAccel
 
-export simulate_wong_wang!, phi_wong_wang
+export simulate_wong_wang!, phi_wong_wang, validate_wong_wang
 
 const A = 270.0
 const B = 108.0
 const D = 0.154
 
 @inline function phi_wong_wang(i_syn::Real)::Float64
-    x = A * i_syn - B
+    i_value = Float64(i_syn)
+    isfinite(i_value) || throw(ArgumentError("synaptic current must be finite"))
+    x = A * i_value - B
     if abs(x) < 1e-6
         return 1.0 / D
     end
-    return x / (1.0 - exp(-D * x))
+    exponent = -D * x
+    if exponent > 700.0
+        return 0.0
+    end
+    response = x / (1.0 - exp(exponent))
+    isfinite(response) && response >= 0.0 ||
+        throw(ArgumentError("invalid Wong-Wang transfer response"))
+    return response
+end
+
+@inline finite_gate(x::Real)::Bool = isfinite(Float64(x)) && 0.0 <= Float64(x) <= 1.0
+
+function validate_wong_wang(
+    s1::Real,
+    s2::Real,
+    tau_s::Real,
+    gamma::Real,
+    j_n::Real,
+    j_cross::Real,
+    i_0::Real,
+    sigma::Real,
+    dt::Real,
+)::Bool
+    values = Float64.((tau_s, gamma, j_n, j_cross, i_0, sigma, dt))
+    return finite_gate(s1) &&
+        finite_gate(s2) &&
+        all(isfinite, values) &&
+        values[1] > 0.0 &&
+        values[2] > 0.0 &&
+        values[3] >= 0.0 &&
+        values[4] >= 0.0 &&
+        values[6] >= 0.0 &&
+        values[7] > 0.0
 end
 
 """
@@ -80,18 +114,26 @@ function simulate_wong_wang!(
     i0 = Float64(i_0)
     σ = Float64(sigma)
     δt = Float64(dt)
+    validate_wong_wang(s1, s2, τs, γ, jn, jx, i0, σ, δt) ||
+        throw(ArgumentError("invalid Wong-Wang numerical configuration"))
 
     @inbounds for t in 1:n
         xi1 = Float64(xi[2 * t - 1])
         xi2 = Float64(xi[2 * t])
-        i1 = jn * s1 - jx * s2 + i0 + Float64(stim1[t]) + σ * xi1
-        i2 = jn * s2 - jx * s1 + i0 + Float64(stim2[t]) + σ * xi2
+        drive1 = Float64(stim1[t])
+        drive2 = Float64(stim2[t])
+        all(isfinite, (xi1, xi2, drive1, drive2)) ||
+            throw(ArgumentError("stimuli and noise must be finite"))
+        i1 = jn * s1 - jx * s2 + i0 + drive1 + σ * xi1
+        i2 = jn * s2 - jx * s1 + i0 + drive2 + σ * xi2
         r1 = phi_wong_wang(i1)
         r2 = phi_wong_wang(i2)
-        s1 += (-s1 / τs + (1.0 - s1) * γ * r1) * δt
-        s2 += (-s2 / τs + (1.0 - s2) * γ * r2) * δt
-        s1 = clamp(s1, 0.0, 1.0)
-        s2 = clamp(s2, 0.0, 1.0)
+        next_s1 = s1 + (-s1 / τs + (1.0 - s1) * γ * r1) * δt
+        next_s2 = s2 + (-s2 / τs + (1.0 - s2) * γ * r2) * δt
+        isfinite(next_s1) && isfinite(next_s2) ||
+            throw(ArgumentError("invalid Wong-Wang candidate state"))
+        s1 = clamp(next_s1, 0.0, 1.0)
+        s2 = clamp(next_s2, 0.0, 1.0)
         s1_out[t] = s1
         s2_out[t] = s2
         r1_out[t] = r1

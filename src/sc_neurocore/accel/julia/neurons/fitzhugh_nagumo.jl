@@ -24,8 +24,19 @@ function FitzHughNagumoNeuronState()
     FitzHughNagumoNeuronState(-1.0, -0.5, 0.7, 0.8, 0.08, 0.1, 1.0)
 end
 
+function _valid(s::FitzHughNagumoNeuronState)
+    return all(isfinite, (s.v, s.w, s.a, s.b, s.epsilon, s.dt, s.v_threshold)) &&
+        s.b > 0.0 &&
+        s.epsilon > 0.0 &&
+        s.dt > 0.0
+end
+
 function step!(s::FitzHughNagumoNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    if !(isfinite(s.v) && isfinite(s.w) && isfinite(I_ext))
+    if !isfinite(dt) || dt <= 0.0
+        throw(ArgumentError("dt must be finite and positive"))
+    end
+    s.dt = dt
+    if !(isfinite(I_ext) && _valid(s))
         throw(DomainError((s.v, s.w, I_ext), "FitzHugh-Nagumo state/current must be finite"))
     end
     v_prev = s.v
@@ -33,11 +44,12 @@ function step!(s::FitzHughNagumoNeuronState, I_ext::Float64=0.0; dt::Float64=0.1
     dw = s.epsilon * (s.v + s.a - s.b * s.w) * s.dt
     new_v = s.v + dv
     new_w = s.w + dw
-    if !(isfinite(new_v) && isfinite(new_w))
+    candidate = FitzHughNagumoNeuronState(new_v, new_w, s.a, s.b, s.epsilon, s.dt, s.v_threshold)
+    if !_valid(candidate)
         throw(DomainError((new_v, new_w), "FitzHugh-Nagumo state became non-finite"))
     end
-    s.v = new_v
-    s.w = new_w
+    s.v = candidate.v
+    s.w = candidate.w
     return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
 end
 

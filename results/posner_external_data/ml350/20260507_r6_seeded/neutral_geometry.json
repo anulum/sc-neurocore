@@ -1,0 +1,313 @@
+{
+  "schema": "sc-neurocore.posner-neutral-optimization.v1",
+  "created_utc": "20260531T011815Z",
+  "source": "ORCA neutral closed-shell geometry optimization",
+  "not_runtime_hyperfine_data": true,
+  "orca_output": "/home/anulum/sc-neurocore-orca-runs/ml350_r6_seeded_20260507/run/posner_ml350_neutral_opt_20260507_r6_seeded.out",
+  "exit_status": 0,
+  "accepted_neutral_geometry": false,
+  "acceptance_rule": "accepted only when ORCA exits with status 0, prints `THE OPTIMIZATION HAS CONVERGED`, and prints `ORCA TERMINATED NORMALLY`",
+  "markers": {
+    "geometry_optimization_cycle_count": 117,
+    "last_geometry_optimization_cycle": 117,
+    "scf_converged_count": 117,
+    "final_single_point_energy_count": 117,
+    "the_optimization_has_converged": false,
+    "orca_terminated_normally": true,
+    "orca_error_termination": false,
+    "error_token_count": 1
+  },
+  "final_energy_Eh": -9954.01511299552,
+  "total_run_time": "22 days 16 hours 52 minutes 5 seconds 565 msec",
+  "final_geometry_convergence": {
+    "all_items_converged": false,
+    "items": {
+      "Energy change": {
+        "value": -5.90901e-05,
+        "tolerance": 5e-06,
+        "converged": false
+      },
+      "RMS gradient": {
+        "value": 0.0001032437,
+        "tolerance": 0.0001,
+        "converged": false
+      },
+      "MAX gradient": {
+        "value": 0.0010178376,
+        "tolerance": 0.0003,
+        "converged": false
+      },
+      "RMS step": {
+        "value": 0.0045728307,
+        "tolerance": 0.002,
+        "converged": false
+      },
+      "MAX step": {
+        "value": 0.0470340637,
+        "tolerance": 0.004,
+        "converged": false
+      }
+    }
+  },
+  "optimized_xyz": "results/posner_external_data/ml350/20260507_r6_seeded/neutral_endpoint.xyz",
+  "phosphorus_distances_A": [
+    {
+      "pair": "P2_P3",
+      "distance_A": 4.147609964471488
+    },
+    {
+      "pair": "P4_P5",
+      "distance_A": 4.202874505269009
+    },
+    {
+      "pair": "P1_P2",
+      "distance_A": 4.411892265708968
+    },
+    {
+      "pair": "P1_P6",
+      "distance_A": 4.459887715147511
+    },
+    {
+      "pair": "P3_P4",
+      "distance_A": 4.610693511529036
+    },
+    {
+      "pair": "P5_P6",
+      "distance_A": 5.054668177058774
+    },
+    {
+      "pair": "P4_P6",
+      "distance_A": 5.383656325600868
+    },
+    {
+      "pair": "P2_P6",
+      "distance_A": 5.446293003616018
+    },
+    {
+      "pair": "P2_P4",
+      "distance_A": 5.606436827752389
+    },
+    {
+      "pair": "P1_P3",
+      "distance_A": 5.6118231091420006
+    },
+    {
+      "pair": "P3_P5",
+      "distance_A": 5.721351889596039
+    },
+    {
+      "pair": "P3_P6",
+      "distance_A": 6.612523921123748
+    },
+    {
+      "pair": "P1_P5",
+      "distance_A": 7.166313965250959
+    },
+    {
+      "pair": "P1_P4",
+      "distance_A": 7.583677415714965
+    },
+    {
+      "pair": "P2_P5",
+      "distance_A": 7.712423101164926
+    }
+  ],
+  "nuclear_dipolar_pairs": [
+    {
+      "pair": "P1_P2",
+      "qubit_i": 2,
+      "qubit_j": 3,
+      "distance_A": 4.411892265708968,
+      "d_dimless": 3.237253073591015e-08,
+      "Axx": 1.784674743716073e-09,
+      "Ayy": 2.278831120379196e-09,
+      "Azz": -4.063505864095258e-09,
+      "Axy": -3.440339644677771e-08,
+      "Axz": 3.109593509567497e-08,
+      "Ayz": -3.1320061695851636e-08
+    },
+    {
+      "pair": "P1_P3",
+      "qubit_i": 2,
+      "qubit_j": 4,
+      "distance_A": 5.6118231091420006,
+      "d_dimless": 1.573038778551741e-08,
+      "Axx": 2.6002834179634037e-08,
+      "Ayy": -1.0971581605513787e-08,
+      "Azz": -1.5031252574120257e-08,
+      "Axy": -1.4092562385855377e-08,
+      "Axz": -5.401589114407958e-09,
+      "Ayz": 1.8240200011663582e-09
+    },
+    {
+      "pair": "P1_P4",
+      "qubit_i": 2,
+      "qubit_j": 5,
+      "distance_A": 7.583677415714965,
+      "d_dimless": 6.3739961161802146e-09,
+      "Axx": 1.0095753907172312e-08,
+      "Ayy": -6.1633582917886885e-09,
+      "Azz": -3.932395615383624e-09,
+      "Axy": 1.8625660560611687e-09,
+      "Axz": 6.341336602405851e-09,
+      "Ayz": 7.171425364047608e-10
+    },
+    {
+      "pair": "P1_P5",
+      "qubit_i": 2,
+      "qubit_j": 6,
+      "distance_A": 7.166313965250959,
+      "d_dimless": 7.553771696440535e-09,
+      "Axx": 8.57805813277323e-09,
+      "Ayy": -1.024299734589424e-09,
+      "Azz": -7.553758398183803e-09,
+      "Axy": 1.0263154026087922e-08,
+      "Axz": -1.464667930411854e-11,
+      "Ayz": -9.318293538942518e-12
+    },
+    {
+      "pair": "P1_P6",
+      "qubit_i": 2,
+      "qubit_j": 7,
+      "distance_A": 4.459887715147511,
+      "d_dimless": 3.1338598761274406e-08,
+      "Axx": -1.191986461888932e-08,
+      "Ayy": 4.6111952190946795e-09,
+      "Azz": 7.308669399794643e-09,
+      "Axy": 2.6421572469826676e-08,
+      "Axz": 2.7394908755994493e-08,
+      "Ayz": 3.727413752583029e-08
+    },
+    {
+      "pair": "P2_P3",
+      "qubit_i": 3,
+      "qubit_j": 4,
+      "distance_A": 4.147609964471488,
+      "d_dimless": 3.896346942565529e-08,
+      "Axx": 9.145470074073548e-09,
+      "Ayy": -3.401624698133559e-08,
+      "Azz": 2.4870776907262045e-08,
+      "Axy": 1.5427430935365644e-08,
+      "Axz": -5.541658501605009e-08,
+      "Ayz": -1.7770824859145986e-08
+    },
+    {
+      "pair": "P2_P4",
+      "qubit_i": 3,
+      "qubit_j": 5,
+      "distance_A": 5.606436827752389,
+      "d_dimless": 1.5775769402118268e-08,
+      "Axx": 1.3662046338719684e-08,
+      "Ayy": 1.9518308443893846e-09,
+      "Azz": -1.5613877183109075e-08,
+      "Axy": 2.284429534006085e-08,
+      "Axz": 2.1830605381134132e-09,
+      "Ayz": 1.6940957887956193e-09
+    },
+    {
+      "pair": "P2_P5",
+      "qubit_i": 3,
+      "qubit_j": 6,
+      "distance_A": 7.712423101164926,
+      "d_dimless": 6.06008628697796e-09,
+      "Axx": -2.4644104054266997e-09,
+      "Ayy": 6.7823099930230115e-09,
+      "Azz": -4.317899587596312e-09,
+      "Axy": 6.795373026208577e-09,
+      "Axz": -2.5028660963235698e-09,
+      "Ayz": -4.730100631826561e-09
+    },
+    {
+      "pair": "P2_P6",
+      "qubit_i": 3,
+      "qubit_j": 7,
+      "distance_A": 5.446293003616018,
+      "d_dimless": 1.7208711032714235e-08,
+      "Axx": -1.6603733799697145e-08,
+      "Ayy": 3.341565392108869e-08,
+      "Azz": -1.6811920121391557e-08,
+      "Axy": -5.5341294015408605e-09,
+      "Axz": -4.899484336318701e-10,
+      "Ayz": 4.481884414523795e-09
+    },
+    {
+      "pair": "P3_P4",
+      "qubit_i": 4,
+      "qubit_j": 5,
+      "distance_A": 4.610693511529036,
+      "d_dimless": 2.836302749250722e-08,
+      "Axx": -1.5953485745998635e-08,
+      "Ayy": -1.7613928929862876e-09,
+      "Azz": 1.7714878638984924e-08,
+      "Axy": 1.816904221713743e-08,
+      "Axz": 2.3912459089990216e-08,
+      "Ayz": 3.5010678685523635e-08
+    },
+    {
+      "pair": "P3_P5",
+      "qubit_i": 4,
+      "qubit_j": 6,
+      "distance_A": 5.721351889596039,
+      "d_dimless": 1.4844151196859381e-08,
+      "Axx": -1.4039554205250721e-08,
+      "Ayy": 2.8259138954409153e-08,
+      "Azz": -1.4219584749158431e-08,
+      "Axy": 5.889038765719397e-09,
+      "Axz": 7.088894729645032e-10,
+      "Ayz": 5.18853243355008e-09
+    },
+    {
+      "pair": "P3_P6",
+      "qubit_i": 4,
+      "qubit_j": 7,
+      "distance_A": 6.612523921123748,
+      "d_dimless": 9.615006451818813e-09,
+      "Axx": -2.6452596905249136e-09,
+      "Ayy": 3.981657419119474e-09,
+      "Azz": -1.3363977285945553e-09,
+      "Axy": -9.734747247816652e-09,
+      "Axz": -7.596038858293954e-09,
+      "Ayz": 1.0609498580455995e-08
+    },
+    {
+      "pair": "P4_P5",
+      "qubit_i": 5,
+      "qubit_j": 6,
+      "distance_A": 4.202874505269009,
+      "d_dimless": 3.744657320804483e-08,
+      "Axx": -3.119135191380777e-08,
+      "Ayy": 2.174583716907948e-08,
+      "Azz": 9.445514744728294e-09,
+      "Axy": -1.9242183500013882e-08,
+      "Axz": 1.7126598818604456e-08,
+      "Ayz": -5.268449215415057e-08
+    },
+    {
+      "pair": "P4_P6",
+      "qubit_i": 5,
+      "qubit_j": 7,
+      "distance_A": 5.383656325600868,
+      "d_dimless": 1.7816375761677982e-08,
+      "Axx": 2.849333064755856e-08,
+      "Ayy": -1.0718209235695111e-08,
+      "Azz": -1.7775121411863442e-08,
+      "Axy": -1.8130471804730767e-08,
+      "Axz": -1.3821999956646416e-09,
+      "Ayz": 5.411379167132557e-10
+    },
+    {
+      "pair": "P5_P6",
+      "qubit_i": 6,
+      "qubit_j": 7,
+      "distance_A": 5.054668177058774,
+      "d_dimless": 2.152649863489422e-08,
+      "Axx": 1.9309802160914057e-08,
+      "Ayy": -1.8529626468903577e-08,
+      "Azz": -7.801756920104755e-10,
+      "Axy": 1.1062602461309881e-08,
+      "Axz": -2.9106753238768812e-08,
+      "Ayz": -7.885054075539458e-09
+    }
+  ],
+  "nuclear_dipolar_a_ref_MHz": 7080.0
+}
