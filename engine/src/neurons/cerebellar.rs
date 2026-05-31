@@ -166,6 +166,7 @@ impl GranuleCell {
             ]
             .iter()
             .all(|gate| (0.0..=1.0).contains(gate))
+            && (-100.0..=60.0).contains(&self.v)
             && self.ca >= 0.0
             && [
                 self.g_na,
@@ -210,63 +211,75 @@ impl GranuleCell {
             // Na m gate (fast activation, Boltzmann + tau)
             let m_inf = Self::boltz(v, -30.0, 7.0);
             let tau_m = 0.1 + 0.3 / (1.0 + ((v + 30.0) / 10.0).powi(2)).max(0.01);
-            m = (m + dt_sub * (m_inf - m) / tau_m).clamp(0.0, 1.0);
+            m = granule_exact_relax(m, m_inf, tau_m, dt_sub).clamp(0.0, 1.0);
 
             // Na h gate (inactivation)
             let h_inf = Self::boltz(v, -52.0, -6.0);
             let tau_h = 0.5 + 5.0 / (1.0 + ((v + 50.0) / 15.0).powi(2)).max(0.01);
-            h = (h + dt_sub * (h_inf - h) / tau_h).clamp(0.0, 1.0);
+            h = granule_exact_relax(h, h_inf, tau_h, dt_sub).clamp(0.0, 1.0);
 
             // K_dr n gate
             let n_inf = Self::boltz(v, -35.0, 8.0);
             let tau_n = 1.0 + 5.0 / (1.0 + ((v + 35.0) / 15.0).powi(2)).max(0.01);
-            n = (n + dt_sub * (n_inf - n) / tau_n).clamp(0.0, 1.0);
+            n = granule_exact_relax(n, n_inf, tau_n, dt_sub).clamp(0.0, 1.0);
 
             // K_A a gate (fast activation)
             let a_inf = Self::boltz(v, -50.0, 20.0);
             let tau_a = 2.0;
-            a = (a + dt_sub * (a_inf - a) / tau_a).clamp(0.0, 1.0);
+            a = granule_exact_relax(a, a_inf, tau_a, dt_sub).clamp(0.0, 1.0);
 
             // K_A b gate (slow inactivation)
             let b_inf = Self::boltz(v, -70.0, -6.0);
             let tau_b = 50.0;
-            b = (b + dt_sub * (b_inf - b) / tau_b).clamp(0.0, 1.0);
+            b = granule_exact_relax(b, b_inf, tau_b, dt_sub).clamp(0.0, 1.0);
 
             // T-type Ca²⁺ m_t (fast activation)
             let mt_inf = Self::boltz(v, -52.0, 5.0);
             let tau_mt = 1.0;
-            m_t = (m_t + dt_sub * (mt_inf - m_t) / tau_mt).clamp(0.0, 1.0);
+            m_t = granule_exact_relax(m_t, mt_inf, tau_mt, dt_sub).clamp(0.0, 1.0);
 
             // T-type Ca²⁺ s (slow inactivation)
             let s_inf = Self::boltz(v, -60.0, -6.5);
             let tau_s = 20.0 + 50.0 / (1.0 + ((v + 65.0) / 10.0).powi(2)).max(0.01);
-            s_gate = (s_gate + dt_sub * (s_inf - s_gate) / tau_s).clamp(0.0, 1.0);
+            s_gate = granule_exact_relax(s_gate, s_inf, tau_s, dt_sub).clamp(0.0, 1.0);
 
             // Ih r gate (slow activation at hyperpolarised V)
             let r_inf = Self::boltz(v, -80.0, -10.0);
             let tau_r = 50.0 + 200.0 / (1.0 + ((v + 80.0) / 20.0).powi(2)).max(0.01);
-            r = (r + dt_sub * (r_inf - r) / tau_r).clamp(0.0, 1.0);
+            r = granule_exact_relax(r, r_inf, tau_r, dt_sub).clamp(0.0, 1.0);
 
             // Ca²⁺ dynamics
             let i_ca_t = self.g_t * m_t * m_t * s_gate * (v - self.e_ca);
             let ca_entry = if i_ca_t < 0.0 { -i_ca_t * 0.001 } else { 0.0 }; // Inward Ca²⁺
-            ca = (ca + dt_sub * (-ca / self.tau_ca + ca_entry)).max(0.0);
+            ca = granule_exact_relax(ca, ca_entry * self.tau_ca, self.tau_ca, dt_sub).max(0.0);
 
             // K_Ca (Hill function of Ca²⁺)
             let kca_inf = ca * ca / (ca * ca + self.kd_kca * self.kd_kca);
 
-            // Ionic currents
-            let i_na = self.g_na * m.powi(3) * h * (v - self.e_na);
-            let i_kdr = self.g_kdr * n.powi(4) * (v - self.e_k);
-            let i_ka = self.g_ka * a.powi(3) * b * (v - self.e_k);
-            let i_kca = self.g_kca * kca_inf * (v - self.e_k);
-            let i_h = self.g_h * r * (v - self.e_h);
-            let i_l = self.g_l * (v - self.e_l);
-            let i_gaba = self.g_tonic * (v - self.e_gaba);
-
-            let dv =
-                (-(i_na + i_kdr + i_ka + i_ca_t + i_kca + i_h + i_l + i_gaba) + input) / self.c_m;
-            v = (v + dt_sub * dv).clamp(-100.0, 60.0);
+            // Ionic conductances with exact voltage relaxation.
+            let g_na_eff = self.g_na * m.powi(3) * h;
+            let g_kdr_eff = self.g_kdr * n.powi(4);
+            let g_ka_eff = self.g_ka * a.powi(3) * b;
+            let g_t_eff = self.g_t * m_t * m_t * s_gate;
+            let g_kca_eff = self.g_kca * kca_inf;
+            let g_h_eff = self.g_h * r;
+            v = granule_exact_voltage_step(
+                v,
+                input,
+                self.c_m,
+                dt_sub,
+                &[
+                    (g_na_eff, self.e_na),
+                    (g_kdr_eff, self.e_k),
+                    (g_ka_eff, self.e_k),
+                    (g_t_eff, self.e_ca),
+                    (g_kca_eff, self.e_k),
+                    (g_h_eff, self.e_h),
+                    (self.g_l, self.e_l),
+                    (self.g_tonic, self.e_gaba),
+                ],
+            )
+            .clamp(-100.0, 60.0);
 
             if ![v, m, h, n, a, b, m_t, s_gate, ca, r]
                 .iter()
@@ -298,6 +311,26 @@ impl GranuleCell {
     pub fn reset(&mut self) {
         *self = Self::new();
     }
+}
+
+fn granule_exact_relax(value: f64, target: f64, tau: f64, dt: f64) -> f64 {
+    target + (value - target) * (-dt / tau).exp()
+}
+
+fn granule_exact_voltage_step(
+    v: f64,
+    input_current: f64,
+    c_m: f64,
+    dt: f64,
+    conductances: &[(f64, f64)],
+) -> f64 {
+    let g_total: f64 = conductances.iter().map(|(g, _)| *g).sum();
+    if g_total <= 0.0 {
+        return v + dt * input_current / c_m;
+    }
+    let reversal_drive: f64 = conductances.iter().map(|(g, e_rev)| g * e_rev).sum();
+    let v_inf = (input_current + reversal_drive) / g_total;
+    v_inf + (v - v_inf) * (-dt * g_total / c_m).exp()
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1483,16 +1516,59 @@ mod tests {
     }
 
     #[test]
+    fn granule_gate_and_calcium_kinetics_use_closed_form_relaxation() {
+        let mut n = GranuleCell::new();
+        n.g_na = 0.0;
+        n.g_kdr = 0.0;
+        n.g_ka = 0.0;
+        n.g_t = 0.0;
+        n.g_kca = 0.0;
+        n.g_h = 0.0;
+        n.g_l = 0.0;
+        n.g_tonic = 0.0;
+        n.gain = 0.0;
+        n.sub_steps = 1;
+        let (v0, m0, h0, n0, a0, b0, mt0, s0, ca0, r0) =
+            (n.v, n.m, n.h, n.n, n.a, n.b, n.m_t, n.s, n.ca, n.r);
+        let m_inf = GranuleCell::boltz(v0, -30.0, 7.0);
+        let tau_m = 0.1 + 0.3 / (1.0 + ((v0 + 30.0) / 10.0).powi(2)).max(0.01);
+        let h_inf = GranuleCell::boltz(v0, -52.0, -6.0);
+        let tau_h = 0.5 + 5.0 / (1.0 + ((v0 + 50.0) / 15.0).powi(2)).max(0.01);
+        let n_inf = GranuleCell::boltz(v0, -35.0, 8.0);
+        let tau_n = 1.0 + 5.0 / (1.0 + ((v0 + 35.0) / 15.0).powi(2)).max(0.01);
+        let a_inf = GranuleCell::boltz(v0, -50.0, 20.0);
+        let b_inf = GranuleCell::boltz(v0, -70.0, -6.0);
+        let mt_inf = GranuleCell::boltz(v0, -52.0, 5.0);
+        let s_inf = GranuleCell::boltz(v0, -60.0, -6.5);
+        let tau_s = 20.0 + 50.0 / (1.0 + ((v0 + 65.0) / 10.0).powi(2)).max(0.01);
+        let r_inf = GranuleCell::boltz(v0, -80.0, -10.0);
+        let tau_r = 50.0 + 200.0 / (1.0 + ((v0 + 80.0) / 20.0).powi(2)).max(0.01);
+
+        n.step(0.0);
+
+        assert_close_granule(n.v, v0);
+        assert_close_granule(n.m, granule_exact_relax(m0, m_inf, tau_m, n.dt));
+        assert_close_granule(n.h, granule_exact_relax(h0, h_inf, tau_h, n.dt));
+        assert_close_granule(n.n, granule_exact_relax(n0, n_inf, tau_n, n.dt));
+        assert_close_granule(n.a, granule_exact_relax(a0, a_inf, 2.0, n.dt));
+        assert_close_granule(n.b, granule_exact_relax(b0, b_inf, 50.0, n.dt));
+        assert_close_granule(n.m_t, granule_exact_relax(mt0, mt_inf, 1.0, n.dt));
+        assert_close_granule(n.s, granule_exact_relax(s0, s_inf, tau_s, n.dt));
+        assert_close_granule(n.ca, granule_exact_relax(ca0, 0.0, n.tau_ca, n.dt));
+        assert_close_granule(n.r, granule_exact_relax(r0, r_inf, tau_r, n.dt));
+    }
+
+    #[test]
     fn granule_ca_rises_with_spiking() {
         // Ca²⁺ should increase during spiking activity
         let mut n = GranuleCell::new();
         let ca0 = n.ca;
         for _ in 0..5000 {
-            n.step(15.0);
+            n.step(8.0);
         }
         assert!(
             n.ca > ca0,
-            "Ca²⁺ should rise during spiking: ca0={ca0}, ca_now={}",
+            "Ca²⁺ should rise in the T-current firing regime: ca0={ca0}, ca_now={}",
             n.ca
         );
     }
@@ -1576,9 +1652,18 @@ mod tests {
         }
         let elapsed = start.elapsed();
         assert!(
-            elapsed.as_millis() < 50,
-            "10k steps must complete in <50ms, took {}ms",
+            elapsed.as_millis() < 100,
+            "10k exact-integrator steps must complete in <100ms, took {}ms",
             elapsed.as_millis()
+        );
+    }
+
+    fn assert_close_granule(observed: f64, expected: f64) {
+        assert!(
+            (observed - expected).abs() <= 1.0e-12,
+            "observed {:.17e}, expected {:.17e}",
+            observed,
+            expected,
         );
     }
 

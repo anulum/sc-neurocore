@@ -101,6 +101,24 @@ func clamp01Granule(value float64) float64 {
 	return value
 }
 
+func exactRelaxGranule(value, target, tau, dt float64) float64 {
+	return target + (value-target)*math.Exp(-dt/tau)
+}
+
+func exactVoltageGranule(v, inputCurrent, cM, dt float64, conductances [][2]float64) float64 {
+	gTotal := 0.0
+	reversalDrive := 0.0
+	for _, pair := range conductances {
+		gTotal += pair[0]
+		reversalDrive += pair[0] * pair[1]
+	}
+	if gTotal <= 0.0 {
+		return v + dt*inputCurrent/cM
+	}
+	vInf := (inputCurrent + reversalDrive) / gTotal
+	return vInf + (v-vInf)*math.Exp(-dt*gTotal/cM)
+}
+
 func finiteGranule(values ...float64) bool {
 	for _, value := range values {
 		if math.IsNaN(value) || math.IsInf(value, 0) {
@@ -126,6 +144,7 @@ func (s *GranuleCellState) valid() bool {
 		s.ENa, s.EK, s.ECa, s.EH, s.EL, s.EGaba, s.TauCa, s.KdKca, s.Dt, s.Gain,
 	) &&
 		gateRangeGranule(s.M, s.H, s.N, s.A, s.B, s.MT, s.S, s.R) &&
+		s.V >= -100.0 && s.V <= 60.0 &&
 		s.Ca >= 0.0 &&
 		s.GNa >= 0.0 && s.GKdr >= 0.0 && s.GKa >= 0.0 && s.GT >= 0.0 &&
 		s.GKca >= 0.0 && s.GH >= 0.0 && s.GL >= 0.0 && s.GTonic >= 0.0 &&
@@ -157,51 +176,57 @@ func (s *GranuleCellState) Step(iExt float64) int {
 	for step := 0; step < s.SubSteps; step++ {
 		mInf := boltzGranule(v, -30.0, 7.0)
 		tauM := 0.1 + 0.3/math.Max(0.01, 1.0+math.Pow((v+30.0)/10.0, 2.0))
-		m = clamp01Granule(m + dtSub*(mInf-m)/tauM)
+		m = clamp01Granule(exactRelaxGranule(m, mInf, tauM, dtSub))
 
 		hInf := boltzGranule(v, -52.0, -6.0)
 		tauH := 0.5 + 5.0/math.Max(0.01, 1.0+math.Pow((v+50.0)/15.0, 2.0))
-		h = clamp01Granule(h + dtSub*(hInf-h)/tauH)
+		h = clamp01Granule(exactRelaxGranule(h, hInf, tauH, dtSub))
 
 		nInf := boltzGranule(v, -35.0, 8.0)
 		tauN := 1.0 + 5.0/math.Max(0.01, 1.0+math.Pow((v+35.0)/15.0, 2.0))
-		n = clamp01Granule(n + dtSub*(nInf-n)/tauN)
+		n = clamp01Granule(exactRelaxGranule(n, nInf, tauN, dtSub))
 
 		aInf := boltzGranule(v, -50.0, 20.0)
-		a = clamp01Granule(a + dtSub*(aInf-a)/2.0)
+		a = clamp01Granule(exactRelaxGranule(a, aInf, 2.0, dtSub))
 
 		bInf := boltzGranule(v, -70.0, -6.0)
-		b = clamp01Granule(b + dtSub*(bInf-b)/50.0)
+		b = clamp01Granule(exactRelaxGranule(b, bInf, 50.0, dtSub))
 
 		mtInf := boltzGranule(v, -52.0, 5.0)
-		mT = clamp01Granule(mT + dtSub*(mtInf-mT))
+		mT = clamp01Granule(exactRelaxGranule(mT, mtInf, 1.0, dtSub))
 
 		sInf := boltzGranule(v, -60.0, -6.5)
 		tauS := 20.0 + 50.0/math.Max(0.01, 1.0+math.Pow((v+65.0)/10.0, 2.0))
-		gateS = clamp01Granule(gateS + dtSub*(sInf-gateS)/tauS)
+		gateS = clamp01Granule(exactRelaxGranule(gateS, sInf, tauS, dtSub))
 
 		rInf := boltzGranule(v, -80.0, -10.0)
 		tauR := 50.0 + 200.0/math.Max(0.01, 1.0+math.Pow((v+80.0)/20.0, 2.0))
-		r = clamp01Granule(r + dtSub*(rInf-r)/tauR)
+		r = clamp01Granule(exactRelaxGranule(r, rInf, tauR, dtSub))
 
 		iCaT := s.GT * mT * mT * gateS * (v - s.ECa)
 		caEntry := 0.0
 		if iCaT < 0.0 {
 			caEntry = -iCaT * 0.001
 		}
-		ca = math.Max(0.0, ca+dtSub*(-ca/s.TauCa+caEntry))
+		ca = math.Max(0.0, exactRelaxGranule(ca, caEntry*s.TauCa, s.TauCa, dtSub))
 
 		kcaInf := ca * ca / (ca*ca + s.KdKca*s.KdKca)
-		iNa := s.GNa * math.Pow(m, 3.0) * h * (v - s.ENa)
-		iKdr := s.GKdr * math.Pow(n, 4.0) * (v - s.EK)
-		iKa := s.GKa * math.Pow(a, 3.0) * b * (v - s.EK)
-		iKca := s.GKca * kcaInf * (v - s.EK)
-		iH := s.GH * r * (v - s.EH)
-		iL := s.GL * (v - s.EL)
-		iGaba := s.GTonic * (v - s.EGaba)
-
-		dv := (-(iNa + iKdr + iKa + iCaT + iKca + iH + iL + iGaba) + input) / s.CM
-		v = math.Max(-100.0, math.Min(60.0, v+dtSub*dv))
+		gNaEff := s.GNa * math.Pow(m, 3.0) * h
+		gKdrEff := s.GKdr * math.Pow(n, 4.0)
+		gKaEff := s.GKa * math.Pow(a, 3.0) * b
+		gTEff := s.GT * mT * mT * gateS
+		gKcaEff := s.GKca * kcaInf
+		gHEff := s.GH * r
+		v = math.Max(-100.0, math.Min(60.0, exactVoltageGranule(v, input, s.CM, dtSub, [][2]float64{
+			{gNaEff, s.ENa},
+			{gKdrEff, s.EK},
+			{gKaEff, s.EK},
+			{gTEff, s.ECa},
+			{gKcaEff, s.EK},
+			{gHEff, s.EH},
+			{s.GL, s.EL},
+			{s.GTonic, s.EGaba},
+		})))
 
 		if !finiteGranule(v, m, h, n, a, b, mT, gateS, ca, r) {
 			return 0

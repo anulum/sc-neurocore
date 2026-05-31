@@ -12,6 +12,25 @@ import math
 from dataclasses import dataclass
 
 
+def _exact_relax(value: float, target: float, tau: float, dt: float) -> float:
+    return target + (value - target) * math.exp(-dt / tau)
+
+
+def _exact_voltage_step(
+    v: float,
+    input_current: float,
+    conductances: tuple[tuple[float, float], ...],
+    c_m: float,
+    dt: float,
+) -> float:
+    g_total = sum(g for g, _ in conductances)
+    if g_total <= 0.0:
+        return v + dt * input_current / c_m
+    reversal_drive = sum(g * e_rev for g, e_rev in conductances)
+    v_inf = (input_current + reversal_drive) / g_total
+    return v_inf + (v - v_inf) * math.exp(-dt * g_total / c_m)
+
+
 @dataclass
 class GranuleCell:
     """Cerebellar granule cell — D'Angelo et al. 2001 model.
@@ -94,49 +113,67 @@ class GranuleCell:
 
             m_inf = bz(v, -30.0, 7.0)
             tau_m = 0.1 + 0.3 / max(0.01, 1.0 + ((v + 30.0) / 10.0) ** 2)
-            m = self._clamp01(m + dt_sub * (m_inf - m) / tau_m)
+            m = self._clamp01(_exact_relax(m, m_inf, tau_m, dt_sub))
 
             h_inf = bz(v, -52.0, -6.0)
             tau_h = 0.5 + 5.0 / max(0.01, 1.0 + ((v + 50.0) / 15.0) ** 2)
-            h = self._clamp01(h + dt_sub * (h_inf - h) / tau_h)
+            h = self._clamp01(_exact_relax(h, h_inf, tau_h, dt_sub))
 
             n_inf = bz(v, -35.0, 8.0)
             tau_n = 1.0 + 5.0 / max(0.01, 1.0 + ((v + 35.0) / 15.0) ** 2)
-            n = self._clamp01(n + dt_sub * (n_inf - n) / tau_n)
+            n = self._clamp01(_exact_relax(n, n_inf, tau_n, dt_sub))
 
             a_inf = bz(v, -50.0, 20.0)
-            a = self._clamp01(a + dt_sub * (a_inf - a) / 2.0)
+            a = self._clamp01(_exact_relax(a, a_inf, 2.0, dt_sub))
 
             b_inf = bz(v, -70.0, -6.0)
-            b = self._clamp01(b + dt_sub * (b_inf - b) / 50.0)
+            b = self._clamp01(_exact_relax(b, b_inf, 50.0, dt_sub))
 
             mt_inf = bz(v, -52.0, 5.0)
-            m_t = self._clamp01(m_t + dt_sub * (mt_inf - m_t))
+            m_t = self._clamp01(_exact_relax(m_t, mt_inf, 1.0, dt_sub))
 
             s_inf = bz(v, -60.0, -6.5)
             tau_s = 20.0 + 50.0 / max(0.01, 1.0 + ((v + 65.0) / 10.0) ** 2)
-            s = self._clamp01(s + dt_sub * (s_inf - s) / tau_s)
+            s = self._clamp01(_exact_relax(s, s_inf, tau_s, dt_sub))
 
             r_inf = bz(v, -80.0, -10.0)
             tau_r = 50.0 + 200.0 / max(0.01, 1.0 + ((v + 80.0) / 20.0) ** 2)
-            r = self._clamp01(r + dt_sub * (r_inf - r) / tau_r)
+            r = self._clamp01(_exact_relax(r, r_inf, tau_r, dt_sub))
 
             i_ca_t = self.g_t * m_t**2 * s * (v - self.e_ca)
             ca_entry = -i_ca_t * 0.001 if i_ca_t < 0.0 else 0.0
-            ca = max(0.0, ca + dt_sub * (-ca / self.tau_ca + ca_entry))
+            ca = max(0.0, _exact_relax(ca, ca_entry * self.tau_ca, self.tau_ca, dt_sub))
 
             kca_inf = ca**2 / (ca**2 + self.kd_kca**2)
 
-            i_na = self.g_na * m**3 * h * (v - self.e_na)
-            i_kdr = self.g_kdr * n**4 * (v - self.e_k)
-            i_ka = self.g_ka * a**3 * b * (v - self.e_k)
-            i_kca = self.g_kca * kca_inf * (v - self.e_k)
-            i_h = self.g_h * r * (v - self.e_h)
-            i_l = self.g_l * (v - self.e_l)
-            i_gaba = self.g_tonic * (v - self.e_gaba)
-
-            dv_val = (-(i_na + i_kdr + i_ka + i_ca_t + i_kca + i_h + i_l + i_gaba) + inp) / self.c_m
-            v = max(-100.0, min(60.0, v + dt_sub * dv_val))
+            g_na_eff = self.g_na * m**3 * h
+            g_kdr_eff = self.g_kdr * n**4
+            g_ka_eff = self.g_ka * a**3 * b
+            g_t_eff = self.g_t * m_t**2 * s
+            g_kca_eff = self.g_kca * kca_inf
+            g_h_eff = self.g_h * r
+            v = max(
+                -100.0,
+                min(
+                    60.0,
+                    _exact_voltage_step(
+                        v,
+                        inp,
+                        (
+                            (g_na_eff, self.e_na),
+                            (g_kdr_eff, self.e_k),
+                            (g_ka_eff, self.e_k),
+                            (g_t_eff, self.e_ca),
+                            (g_kca_eff, self.e_k),
+                            (g_h_eff, self.e_h),
+                            (self.g_l, self.e_l),
+                            (self.g_tonic, self.e_gaba),
+                        ),
+                        self.c_m,
+                        dt_sub,
+                    ),
+                ),
+            )
 
             if not all(math.isfinite(x) for x in (v, m, h, n, a, b, m_t, s, ca, r)):
                 raise ValueError("granule cell integration produced non-finite state")
@@ -200,6 +237,8 @@ class GranuleCell:
         )
         if not all(math.isfinite(value) for value in finite_values):
             raise ValueError("granule cell state and parameters must be finite")
+        if not -100.0 <= self.v <= 60.0:
+            raise ValueError("granule cell v must stay in [-100, 60]")
 
         gates = (self.m, self.h, self.n, self.a, self.b, self.m_t, self.s, self.r)
         if not all(0.0 <= gate <= 1.0 for gate in gates):
@@ -221,7 +260,9 @@ class GranuleCell:
         ):
             raise ValueError("granule cell conductances must be non-negative")
         if self.c_m <= 0.0 or self.tau_ca <= 0.0 or self.kd_kca <= 0.0 or self.dt <= 0.0:
-            raise ValueError("granule cell capacitance, calcium, and timestep parameters must be positive")
+            raise ValueError(
+                "granule cell capacitance, calcium, and timestep parameters must be positive"
+            )
         if not isinstance(self.sub_steps, int) or self.sub_steps <= 0:
             raise ValueError("granule cell sub_steps must be a positive integer")
         if self.gain < 0.0:
