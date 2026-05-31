@@ -51,13 +51,29 @@ class TestAdaptiveThresholdIFIsolation:
             {"tau_theta": float("inf")},
             {"dt": 0.0},
             {"dt": float("nan")},
-            {"tau_m": 0.05},
-            {"tau_theta": 0.05},
         ],
     )
     def test_rejects_non_physical_configuration(self, kwargs):
         with pytest.raises(ValueError):
             AdaptiveThresholdIFNeuron(**kwargs)
+
+    def test_subthreshold_step_matches_exact_relaxation(self):
+        n = AdaptiveThresholdIFNeuron(v=-70.0, theta=-40.0, dt=0.25)
+        expected_v = n.v_rest + 12.0 + (n.v - (n.v_rest + 12.0)) * np.exp(-n.dt / n.tau_m)
+        expected_theta = n.theta_rest + (n.theta - n.theta_rest) * np.exp(-n.dt / n.tau_theta)
+
+        assert n.step(12.0) == 0
+
+        assert n.v == pytest.approx(expected_v, rel=1e-14, abs=1e-14)
+        assert n.theta == pytest.approx(expected_theta, rel=1e-14, abs=1e-14)
+
+    def test_large_timestep_exact_relaxation_remains_bounded(self):
+        n = AdaptiveThresholdIFNeuron(v=-70.0, theta=-30.0, tau_m=0.04, tau_theta=0.04, dt=1.0)
+
+        assert n.step(0.0) == 0
+
+        assert n.v == pytest.approx(n.v_rest, rel=0.0, abs=1e-8)
+        assert n.theta == pytest.approx(n.theta_rest, rel=0.0, abs=1e-8)
 
     def test_subthreshold_relaxation_is_monotone_toward_rest(self):
         n = AdaptiveThresholdIFNeuron(v=-70.0, theta=-40.0)
@@ -94,11 +110,11 @@ class TestAdaptiveThresholdIFIsolation:
             n.step(0.0)
         assert np.isnan(n.theta)
 
-    def test_rejects_non_finite_euler_update_before_state_mutation(self):
-        n = AdaptiveThresholdIFNeuron(v=-60.0, theta=-45.0, tau_m=1.0e-308, dt=1.0e-308)
+    def test_rejects_non_finite_relaxation_update_before_state_mutation(self):
+        n = AdaptiveThresholdIFNeuron(v=1.0e308, theta=-45.0)
         before = (n.v, n.theta)
-        with pytest.raises(ValueError, match="Euler update"):
-            n.step(1.0e308)
+        with pytest.raises(ValueError, match="exact relaxation"):
+            n.step(-1.0e308)
         assert (n.v, n.theta) == before
 
     def test_rejects_non_finite_threshold_jump_before_state_mutation(self):

@@ -16,7 +16,7 @@ import (
 var (
 	ErrAdaptiveThresholdIFInvalidInput    = errors.New("adaptive threshold if input current must be finite")
 	ErrAdaptiveThresholdIFInvalidState    = errors.New("adaptive threshold if state parameters must be finite and physically ordered")
-	ErrAdaptiveThresholdIFNonFiniteUpdate = errors.New("adaptive threshold if euler update must remain finite")
+	ErrAdaptiveThresholdIFNonFiniteUpdate = errors.New("adaptive threshold if exact relaxation update must remain finite")
 )
 
 // AdaptiveThresholdIFNeuronState holds the neuron state
@@ -56,8 +56,8 @@ func (s *AdaptiveThresholdIFNeuronState) Step(iExt float64) (int, error) {
 		return 0, ErrAdaptiveThresholdIFInvalidState
 	}
 
-	nextV := s.V + (-(s.V-s.VRest)+iExt)/s.TauM*s.Dt
-	nextTheta := s.Theta + (-(s.Theta - s.ThetaRest))/s.TauTheta*s.Dt
+	nextV := s.exactRelaxation(s.V, s.VRest+iExt, s.TauM)
+	nextTheta := s.exactRelaxation(s.Theta, s.ThetaRest, s.TauTheta)
 	if !adaptiveThresholdIFFinite(nextV, nextTheta) {
 		return 0, ErrAdaptiveThresholdIFNonFiniteUpdate
 	}
@@ -91,10 +91,13 @@ func (s *AdaptiveThresholdIFNeuronState) Valid() bool {
 		s.TauTheta > 0.0 &&
 		adaptiveThresholdIFFinite(s.Dt) &&
 		s.Dt > 0.0 &&
-		s.Dt <= s.TauM &&
-		s.Dt <= s.TauTheta &&
 		s.ThetaRest > s.VRest &&
 		s.ThetaRest > s.VReset
+}
+
+func (s AdaptiveThresholdIFNeuronState) exactRelaxation(state float64, steadyState float64, tau float64) float64 {
+	decay := math.Exp(-s.Dt / tau)
+	return steadyState + (state-steadyState)*decay
 }
 
 func adaptiveThresholdIFFinite(values ...float64) bool {

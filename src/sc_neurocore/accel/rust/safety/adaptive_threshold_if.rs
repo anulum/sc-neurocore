@@ -51,8 +51,8 @@ impl AdaptiveThresholdIFNeuron {
             return Err(AdaptiveThresholdIFError::InvalidState);
         }
 
-        let next_v = self.v + (-(self.v - self.v_rest) + i_ext) / self.tau_m * self.dt;
-        let next_theta = self.theta + (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt;
+        let next_v = self.exact_relaxation(self.v, self.v_rest + i_ext, self.tau_m);
+        let next_theta = self.exact_relaxation(self.theta, self.theta_rest, self.tau_theta);
         if !next_v.is_finite() || !next_theta.is_finite() {
             return Err(AdaptiveThresholdIFError::NonFiniteUpdate);
         }
@@ -68,6 +68,10 @@ impl AdaptiveThresholdIFNeuron {
         self.v = next_v;
         self.theta = next_theta;
         Ok(0)
+    }
+
+    fn exact_relaxation(&self, state: f64, steady_state: f64, tau: f64) -> f64 {
+        steady_state + (state - steady_state) * (-self.dt / tau).exp()
     }
 
     pub fn reset(&mut self) {
@@ -90,8 +94,6 @@ pub fn validate_adaptive_threshold_if(state: &AdaptiveThresholdIFNeuron) -> bool
         && state.tau_theta > 0.0
         && state.dt.is_finite()
         && state.dt > 0.0
-        && state.dt <= state.tau_m
-        && state.dt <= state.tau_theta
         && state.theta_rest > state.v_rest
         && state.theta_rest > state.v_reset
 }
@@ -115,6 +117,42 @@ mod tests {
     }
 
     #[test]
+    fn exact_relaxation_matches_reference() {
+        let mut state = AdaptiveThresholdIFNeuron {
+            v: -70.0,
+            theta: -40.0,
+            dt: 0.25,
+            ..AdaptiveThresholdIFNeuron::new()
+        };
+        let v_inf = state.v_rest + 12.0;
+        let expected_v = v_inf + (state.v - v_inf) * (-state.dt / state.tau_m).exp();
+        let expected_theta = state.theta_rest
+            + (state.theta - state.theta_rest) * (-state.dt / state.tau_theta).exp();
+
+        assert_eq!(state.step(12.0), Ok(0));
+
+        assert!((state.v - expected_v).abs() < 1.0e-12);
+        assert!((state.theta - expected_theta).abs() < 1.0e-12);
+    }
+
+    #[test]
+    fn large_timestep_relaxation_remains_bounded() {
+        let mut state = AdaptiveThresholdIFNeuron {
+            v: -70.0,
+            theta: -30.0,
+            tau_m: 0.04,
+            tau_theta: 0.04,
+            dt: 1.0,
+            ..AdaptiveThresholdIFNeuron::new()
+        };
+
+        assert_eq!(state.step(0.0), Ok(0));
+
+        assert!((state.v - state.v_rest).abs() < 1.0e-8);
+        assert!((state.theta - state.theta_rest).abs() < 1.0e-8);
+    }
+
+    #[test]
     fn test_adaptive_threshold_if_rejects_nonphysical_geometry() {
         let mut state = AdaptiveThresholdIFNeuron::new();
         state.theta_rest = -70.0;
@@ -135,11 +173,10 @@ mod tests {
     #[test]
     fn test_adaptive_threshold_if_rejects_nonfinite_update_without_mutation() {
         let mut state = AdaptiveThresholdIFNeuron::new();
-        state.tau_m = 1.0e-308;
-        state.dt = 1.0e-308;
+        state.v = 1.0e308;
         let before = (state.v, state.theta);
         assert_eq!(
-            state.step(1.0e308),
+            state.step(-1.0e308),
             Err(AdaptiveThresholdIFError::NonFiniteUpdate)
         );
         assert_eq!((state.v, state.theta), before);

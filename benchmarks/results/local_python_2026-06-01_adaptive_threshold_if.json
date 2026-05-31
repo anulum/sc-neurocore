@@ -1,0 +1,71 @@
+{
+  "benchmark": "AdaptiveThresholdIFNeuron Python exact-relaxation step",
+  "timestamp_utc": "2026-05-31T23:03:49+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_adaptive_threshold_if.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 80.0,
+  "median_ns_per_step": 675.001225,
+  "min_ns_per_step": 656.31816,
+  "max_ns_per_step": 723.622675,
+  "results": [
+    {
+      "steps": 200000,
+      "current": 80.0,
+      "elapsed_ns": 133474803,
+      "ns_per_step": 667.374015,
+      "spikes": 2504,
+      "ending_state": [
+        -61.09835396005715,
+        -16.519842932978975
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 80.0,
+      "elapsed_ns": 135000245,
+      "ns_per_step": 675.001225,
+      "spikes": 2504,
+      "ending_state": [
+        -61.09835396005715,
+        -16.519842932978975
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 80.0,
+      "elapsed_ns": 144724535,
+      "ns_per_step": 723.622675,
+      "spikes": 2504,
+      "ending_state": [
+        -61.09835396005715,
+        -16.519842932978975
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 80.0,
+      "elapsed_ns": 131263632,
+      "ns_per_step": 656.31816,
+      "spikes": 2504,
+      "ending_state": [
+        -61.09835396005715,
+        -16.519842932978975
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 80.0,
+      "elapsed_ns": 137140417,
+      "ns_per_step": 685.702085,
+      "spikes": 2504,
+      "ending_state": [
+        -61.09835396005715,
+        -16.519842932978975
+      ]
+    }
+  ]
+}
