@@ -33,6 +33,16 @@ end
 
 _sigmoid(x::Float64)::Float64 = x >= 0.0 ? 1.0 / (1.0 + exp(-x)) : (let z = exp(x); z / (1.0 + z) end)
 
+function _tau_n(v::Float64)::Float64
+    x = (v + 40.0) / 12.0
+    if !isfinite(x)
+        return NaN
+    elseif x > 709.0
+        return 1.0
+    end
+    return 1.0 + 7.5 / (1.0 + exp(x))
+end
+
 function valid(s::YamadaNeuronState)::Bool
     return isfinite(s.v) &&
         isfinite(s.n) && 0.0 <= s.n <= 1.0 &&
@@ -47,27 +57,58 @@ function valid(s::YamadaNeuronState)::Bool
         isfinite(s.v_threshold)
 end
 
+function _derivatives(s::YamadaNeuronState, v::Float64, n::Float64, q::Float64, I_ext::Float64)
+    if any(!isfinite, (v, n, q, I_ext)) || !(0.0 <= n <= 1.0) || !(0.0 <= q <= 1.0)
+        return 0.0, 0.0, 0.0, false
+    end
+    m_inf = _sigmoid((v + 30.0) / 9.5)
+    n_inf = _sigmoid((v + 30.0) / 10.0)
+    q_inf = _sigmoid((v + 50.0) / 10.0)
+    tau_n = _tau_n(v)
+    i_na = s.g_na * m_inf ^ 3 * (1.0 - n) * (v - s.e_na)
+    i_k = s.g_k * n ^ 4 * (v - s.e_k)
+    i_q = s.g_q * q * (v - s.e_q)
+    i_l = s.g_l * (v - s.e_l)
+    dv = -i_na - i_k - i_q - i_l + I_ext
+    dn = (n_inf - n) / tau_n
+    dq = (q_inf - q) / s.tau_q
+    if any(!isfinite, (m_inf, n_inf, q_inf, tau_n, i_na, i_k, i_q, i_l, dv, dn, dq))
+        return 0.0, 0.0, 0.0, false
+    end
+    return dv, dn, dq, true
+end
+
+function _rk4_candidate(s::YamadaNeuronState, I_ext::Float64, dt::Float64)
+    if !isfinite(I_ext) || !isfinite(dt) || dt <= 0.0 || !valid(s)
+        return 0.0, 0.0, 0.0, false
+    end
+    v0, n0, q0 = s.v, s.n, s.q
+    k1v, k1n, k1q, ok = _derivatives(s, v0, n0, q0, I_ext)
+    ok || return 0.0, 0.0, 0.0, false
+    k2v, k2n, k2q, ok = _derivatives(s, v0 + 0.5 * dt * k1v, n0 + 0.5 * dt * k1n, q0 + 0.5 * dt * k1q, I_ext)
+    ok || return 0.0, 0.0, 0.0, false
+    k3v, k3n, k3q, ok = _derivatives(s, v0 + 0.5 * dt * k2v, n0 + 0.5 * dt * k2n, q0 + 0.5 * dt * k2q, I_ext)
+    ok || return 0.0, 0.0, 0.0, false
+    k4v, k4n, k4q, ok = _derivatives(s, v0 + dt * k3v, n0 + dt * k3n, q0 + dt * k3q, I_ext)
+    ok || return 0.0, 0.0, 0.0, false
+
+    next_v = v0 + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0
+    next_n = n0 + dt * (k1n + 2.0 * k2n + 2.0 * k3n + k4n) / 6.0
+    next_q = q0 + dt * (k1q + 2.0 * k2q + 2.0 * k3q + k4q) / 6.0
+    if any(!isfinite, (next_v, next_n, next_q)) || !(0.0 <= next_n <= 1.0) || !(0.0 <= next_q <= 1.0)
+        return 0.0, 0.0, 0.0, false
+    end
+    return next_v, next_n, next_q, true
+end
+
 function step!(s::YamadaNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
     if !isfinite(I_ext) || !isfinite(dt) || dt <= 0.0 || !valid(s)
         return 0
     end
 
     v_prev = s.v
-    m_inf = _sigmoid((s.v + 30.0) / 9.5)
-    n_inf = _sigmoid((s.v + 30.0) / 10.0)
-    q_inf = _sigmoid((s.v + 50.0) / 10.0)
-    tau_n = 1.0 + 7.5 / (1.0 + exp((s.v + 40.0) / 12.0))
-    i_na = s.g_na * m_inf ^ 3 * (1.0 - s.n) * (s.v - s.e_na)
-    i_k = s.g_k * s.n ^ 4 * (s.v - s.e_k)
-    i_q = s.g_q * s.q * (s.v - s.e_q)
-    i_l = s.g_l * (s.v - s.e_l)
-    dv = (-i_na - i_k - i_q - i_l + I_ext) * dt
-    dn = (n_inf - s.n) / tau_n * dt
-    dq = (q_inf - s.q) / s.tau_q * dt
-    next_v = s.v + dv
-    next_n = s.n + dn
-    next_q = s.q + dq
-    if any(!isfinite, (m_inf, n_inf, q_inf, tau_n, i_na, i_k, i_q, i_l, dv, dn, dq, next_v, next_n, next_q)) || !(0.0 <= next_n <= 1.0) || !(0.0 <= next_q <= 1.0)
+    next_v, next_n, next_q, ok = _rk4_candidate(s, I_ext, dt)
+    if !ok
         return 0
     end
 

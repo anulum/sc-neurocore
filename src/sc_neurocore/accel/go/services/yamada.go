@@ -37,6 +37,23 @@ func yamadaSigmoid(x float64) float64 {
 	return z / (1.0 + z)
 }
 
+func yamadaTauN(v float64) float64 {
+	x := (v + 40.0) / 12.0
+	if !finite(x) {
+		return math.NaN()
+	}
+	if x > 709.0 {
+		return 1.0
+	}
+	return 1.0 + 7.5/(1.0+math.Exp(x))
+}
+
+type yamadaDerivative struct {
+	v float64
+	n float64
+	q float64
+}
+
 // NewYamadaNeuron creates a new YamadaNeuron neuron with default parameters.
 func NewYamadaNeuron() *YamadaNeuronState {
 	return &YamadaNeuronState{V: -60.0, N: 0.1, Q: 0.0, GNa: 20.0, GK: 10.0, GQ: 5.0, GL: 0.5, ENa: 60.0, EK: -80.0, EQ: -80.0, EL: -60.0, TauQ: 300.0, Dt: 0.05, VThreshold: -20.0}
@@ -53,6 +70,60 @@ func (s YamadaNeuronState) Valid() bool {
 		finite(s.VThreshold)
 }
 
+func (s YamadaNeuronState) derivatives(v, n, q, iExt float64) (yamadaDerivative, bool) {
+	if !finite(v) || !finite(n) || n < 0.0 || n > 1.0 || !finite(q) || q < 0.0 || q > 1.0 || !finite(iExt) {
+		return yamadaDerivative{}, false
+	}
+	mInf := yamadaSigmoid((v + 30.0) / 9.5)
+	nInf := yamadaSigmoid((v + 30.0) / 10.0)
+	qInf := yamadaSigmoid((v + 50.0) / 10.0)
+	tauN := yamadaTauN(v)
+	iNa := s.GNa * math.Pow(mInf, 3.0) * (1.0 - n) * (v - s.ENa)
+	iK := s.GK * math.Pow(n, 4.0) * (v - s.EK)
+	iQ := s.GQ * q * (v - s.EQ)
+	iL := s.GL * (v - s.EL)
+	d := yamadaDerivative{
+		v: -iNa - iK - iQ - iL + iExt,
+		n: (nInf - n) / tauN,
+		q: (qInf - q) / s.TauQ,
+	}
+	if !finite(mInf) || !finite(nInf) || !finite(qInf) || !finite(tauN) || !finite(iNa) || !finite(iK) || !finite(iQ) || !finite(iL) || !finite(d.v) || !finite(d.n) || !finite(d.q) {
+		return yamadaDerivative{}, false
+	}
+	return d, true
+}
+
+// RK4Candidate returns the candidate state for one candidate-first RK4 timestep.
+func (s YamadaNeuronState) RK4Candidate(iExt float64) (float64, float64, float64, bool) {
+	if !finite(iExt) || !s.Valid() {
+		return 0.0, 0.0, 0.0, false
+	}
+
+	k1, ok := s.derivatives(s.V, s.N, s.Q, iExt)
+	if !ok {
+		return 0.0, 0.0, 0.0, false
+	}
+	k2, ok := s.derivatives(s.V+0.5*s.Dt*k1.v, s.N+0.5*s.Dt*k1.n, s.Q+0.5*s.Dt*k1.q, iExt)
+	if !ok {
+		return 0.0, 0.0, 0.0, false
+	}
+	k3, ok := s.derivatives(s.V+0.5*s.Dt*k2.v, s.N+0.5*s.Dt*k2.n, s.Q+0.5*s.Dt*k2.q, iExt)
+	if !ok {
+		return 0.0, 0.0, 0.0, false
+	}
+	k4, ok := s.derivatives(s.V+s.Dt*k3.v, s.N+s.Dt*k3.n, s.Q+s.Dt*k3.q, iExt)
+	if !ok {
+		return 0.0, 0.0, 0.0, false
+	}
+	nextV := s.V + s.Dt*(k1.v+2.0*k2.v+2.0*k3.v+k4.v)/6.0
+	nextN := s.N + s.Dt*(k1.n+2.0*k2.n+2.0*k3.n+k4.n)/6.0
+	nextQ := s.Q + s.Dt*(k1.q+2.0*k2.q+2.0*k3.q+k4.q)/6.0
+	if !finite(nextV) || !finite(nextN) || !finite(nextQ) || nextN < 0.0 || nextN > 1.0 || nextQ < 0.0 || nextQ > 1.0 {
+		return 0.0, 0.0, 0.0, false
+	}
+	return nextV, nextN, nextQ, true
+}
+
 // Step advances the neuron by one timestep. Invalid inputs do not mutate state.
 func (s *YamadaNeuronState) Step(iExt float64) int {
 	if !finite(iExt) || !s.Valid() {
@@ -60,21 +131,8 @@ func (s *YamadaNeuronState) Step(iExt float64) int {
 	}
 
 	vPrev := s.V
-	mInf := yamadaSigmoid((s.V + 30.0) / 9.5)
-	nInf := yamadaSigmoid((s.V + 30.0) / 10.0)
-	qInf := yamadaSigmoid((s.V + 50.0) / 10.0)
-	tauN := 1.0 + 7.5/(1.0+math.Exp((s.V+40.0)/12.0))
-	iNa := s.GNa * math.Pow(mInf, 3.0) * (1.0 - s.N) * (s.V - s.ENa)
-	iK := s.GK * math.Pow(s.N, 4.0) * (s.V - s.EK)
-	iQ := s.GQ * s.Q * (s.V - s.EQ)
-	iL := s.GL * (s.V - s.EL)
-	dv := (-iNa - iK - iQ - iL + iExt) * s.Dt
-	dn := (nInf - s.N) / tauN * s.Dt
-	dq := (qInf - s.Q) / s.TauQ * s.Dt
-	nextV := s.V + dv
-	nextN := s.N + dn
-	nextQ := s.Q + dq
-	if !finite(mInf) || !finite(nInf) || !finite(qInf) || !finite(tauN) || !finite(iNa) || !finite(iK) || !finite(iQ) || !finite(iL) || !finite(dv) || !finite(dn) || !finite(dq) || !finite(nextV) || !finite(nextN) || !finite(nextQ) || nextN < 0.0 || nextN > 1.0 || nextQ < 0.0 || nextQ > 1.0 {
+	nextV, nextN, nextQ, ok := s.RK4Candidate(iExt)
+	if !ok {
 		return 0
 	}
 

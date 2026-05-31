@@ -1,0 +1,76 @@
+{
+  "benchmark": "YamadaNeuron Python RK4 step",
+  "timestamp_utc": "2026-05-31T22:38:23+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_yamada.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 50000,
+  "repeats": 5,
+  "current": 50.0,
+  "median_ns_per_step": 13808.92988,
+  "min_ns_per_step": 13546.76518,
+  "max_ns_per_step": 14451.36992,
+  "results": [
+    {
+      "steps": 50000,
+      "current": 50.0,
+      "elapsed_ns": 698760352,
+      "ns_per_step": 13975.20704,
+      "spikes": 31,
+      "ending_state": [
+        -54.817862820980025,
+        0.07714493423310415,
+        0.3818304060059905
+      ]
+    },
+    {
+      "steps": 50000,
+      "current": 50.0,
+      "elapsed_ns": 677338259,
+      "ns_per_step": 13546.76518,
+      "spikes": 31,
+      "ending_state": [
+        -54.817862820980025,
+        0.07714493423310415,
+        0.3818304060059905
+      ]
+    },
+    {
+      "steps": 50000,
+      "current": 50.0,
+      "elapsed_ns": 722568496,
+      "ns_per_step": 14451.36992,
+      "spikes": 31,
+      "ending_state": [
+        -54.817862820980025,
+        0.07714493423310415,
+        0.3818304060059905
+      ]
+    },
+    {
+      "steps": 50000,
+      "current": 50.0,
+      "elapsed_ns": 690446494,
+      "ns_per_step": 13808.92988,
+      "spikes": 31,
+      "ending_state": [
+        -54.817862820980025,
+        0.07714493423310415,
+        0.3818304060059905
+      ]
+    },
+    {
+      "steps": 50000,
+      "current": 50.0,
+      "elapsed_ns": 686093348,
+      "ns_per_step": 13721.86696,
+      "spikes": 31,
+      "ending_state": [
+        -54.817862820980025,
+        0.07714493423310415,
+        0.3818304060059905
+      ]
+    }
+  ]
+}

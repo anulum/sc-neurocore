@@ -25,6 +25,46 @@ from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate
 
 
+def _sigmoid(x: float) -> float:
+    return 1.0 / (1.0 + np.exp(-x))
+
+
+def _tau_n(v: float) -> float:
+    x = (v + 40.0) / 12.0
+    if x > 709.0:
+        return 1.0
+    return 1.0 + 7.5 / (1.0 + np.exp(x))
+
+
+def _rhs(neuron: YamadaNeuron, v: float, n_gate: float, q_gate: float, current: float) -> tuple[float, float, float]:
+    m_inf = _sigmoid((v + 30.0) / 9.5)
+    n_inf = _sigmoid((v + 30.0) / 10.0)
+    q_inf = _sigmoid((v + 50.0) / 10.0)
+    i_na = neuron.g_na * m_inf**3 * (1.0 - n_gate) * (v - neuron.e_na)
+    i_k = neuron.g_k * n_gate**4 * (v - neuron.e_k)
+    i_q = neuron.g_q * q_gate * (v - neuron.e_q)
+    i_l = neuron.g_l * (v - neuron.e_l)
+    return (
+        -i_na - i_k - i_q - i_l + current,
+        (n_inf - n_gate) / _tau_n(v),
+        (q_inf - q_gate) / neuron.tau_q,
+    )
+
+
+def _rk4_reference(neuron: YamadaNeuron, current: float) -> tuple[float, float, float]:
+    v0, n0, q0 = neuron.v, neuron.n, neuron.q
+    dt = neuron.dt
+    k1 = _rhs(neuron, v0, n0, q0, current)
+    k2 = _rhs(neuron, v0 + 0.5 * dt * k1[0], n0 + 0.5 * dt * k1[1], q0 + 0.5 * dt * k1[2], current)
+    k3 = _rhs(neuron, v0 + 0.5 * dt * k2[0], n0 + 0.5 * dt * k2[1], q0 + 0.5 * dt * k2[2], current)
+    k4 = _rhs(neuron, v0 + dt * k3[0], n0 + dt * k3[1], q0 + dt * k3[2], current)
+    return (
+        v0 + dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
+        n0 + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+        q0 + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
+    )
+
+
 def _run(neuron: YamadaNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
@@ -40,6 +80,15 @@ class TestYamadaIsolation:
 
     def test_step_returns_binary(self):
         assert YamadaNeuron().step(0.0) in (0, 1)
+
+    def test_step_matches_independent_rk4_candidate(self):
+        n = YamadaNeuron(v=-52.0, n=0.22, q=0.08, dt=0.025)
+        expected = _rk4_reference(n, 18.0)
+
+        spike = n.step(18.0)
+
+        assert (n.v, n.n, n.q) == pytest.approx(expected, rel=1e-14, abs=1e-14)
+        assert spike == int(expected[0] >= n.v_threshold and n.v_threshold > -52.0)
 
     def test_three_variables_evolve(self):
         n = YamadaNeuron()
@@ -259,16 +308,13 @@ class TestYamadaValidation:
         n = YamadaNeuron(v=-55.0, n=0.2, q=0.1, dt=1.0e308)
         before = (n.v, n.n, n.q)
 
-        with pytest.raises(ValueError, match="Euler update"):
+        with pytest.raises(ValueError, match="Yamada RK4"):
             n.step(1.0e308)
 
         assert (n.v, n.n, n.q) == before
 
 
-# Salvaged model-specific behavioural contracts from retired aggregate test file.
 class TestYamada:
-    def test_fires(self):
-        from sc_neurocore.neurons.models.yamada import YamadaNeuron
-
+    def test_moderate_drive_crosses_threshold_in_short_window(self):
         n = YamadaNeuron()
         assert sum(n.step(5.0) for _ in range(300)) > 0
