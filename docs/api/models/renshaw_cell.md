@@ -1,8 +1,16 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- (C) Concepts 1996-2026 Miroslav Sotek. All rights reserved. -->
+<!-- (C) Code 2020-2026 Miroslav Sotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore RenshawCell model reference -->
+
 # RenshawCell
 
 **Module:** `engine/src/neurons/motor.rs`
 **Reference:** Renshaw, J. Neurophysiol. 4, 1941 (discovery); Windhorst, Prog. Neurobiol. 46(5), 1996
-**Family:** Wang-Buzsaki HH variant with adaptation, spinal inhibitory interneuron
+**Family:** Wang-Buzsaki HH variant with exact gate relaxation, conductance-form membrane integration, and adaptation, spinal inhibitory interneuron
 **State variables:** `v` (membrane potential), `h` (Na+ inactivation), `n` (K+ activation), `adapt` (adaptation current)
 
 ---
@@ -78,9 +86,9 @@ Sub-stepping: 50 per call (0.5 ms real time per call).
 | NetworkRunner wired | `NeuronVariant::Renshaw` |
 | `create_neuron("Renshaw")` | Yes |
 | `supported_models()` | Includes "Renshaw" |
-| coverage tests | 10 (fire, no-fire, negative, burst-adapt, adapt variable, reset, bounded, NaN, extreme, performance) |
+| Behavior tests | Rust engine 14; Python model 4; Go service 4; Rust safety 6 |
 | Pipeline integration | Covered by `create_neuron_all_supported` |
-| Benchmark | `renshaw_1k_steps`: **2.78 ms** (2.78 µs/step), i5-11600K |
+| Benchmark | `renshaw_1k_steps`: **4.92 ms** median (4.92 µs/step), i5-11600K |
 
 ---
 
@@ -88,10 +96,10 @@ Sub-stepping: 50 per call (0.5 ms real time per call).
 
 | Benchmark | Median |
 |-----------|-------:|
-| renshaw_1k_steps | 2.78 ms |
-| Per step | **2.78 µs** |
+| renshaw_1k_steps | 4.92 ms |
+| Per step | **4.92 µs** |
 
-WB gating with 50 sub-steps + adaptation. Measured 2026-04-04.
+Exact WB gate relaxation, exact adaptation relaxation, conductance-form membrane integration, and 50 sub-steps. Measured 2026-05-31 on local i5-11600K.
 
 ---
 
@@ -101,4 +109,4 @@ WB gating with 50 sub-steps + adaptation. Measured 2026-04-04.
 2. **Adaptation variable increases.** adapt > baseline after sustained firing. Verified.
 3. **No spontaneous firing.** Zero input produces zero spikes. Verified.
 4. **Reset deterministic.** Post-reset matches fresh. Verified.
-5. **NaN-safe after reset.** Verified.
+5. **Invalid-input fail-closed behavior.** NaN, infinite, excess-current, and corrupted-gate paths preserve pre-step state and return no spike. Verified.
