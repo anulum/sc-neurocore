@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `CompteWMNeuron` Python, Julia, Go, and Rust safety surfaces
+  to validate NMDA/AMPA/GABA gate state, Mg2+-block denominators,
+  conductance and timescale contracts, non-finite drive, and bounded
+  voltage or gate candidates before mutation while preserving
+  spike-triggered self-inhibitory GABA feedback.
 - Hardened `COBALIFNeuron` Python, Julia, Go, and Rust safety surfaces
   to validate mutable conductance state, membrane geometry, synaptic
   deltas, and exponential decay contracts before each update; compute
