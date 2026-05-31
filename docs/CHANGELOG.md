@@ -171,6 +171,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   to reject invalid conductance/timescale/capacitance contracts, malformed
   synaptic gates, non-finite refractory or voltage state, unstable NMDA
   Mg2+-block exponentials, and non-finite membrane candidates before mutation.
+- Promoted `WilsonHRNeuron` Python, Rust engine, Julia, Go, and Rust safety surfaces to candidate-first RK4 over the coupled polynomial cortical `(v, r)` state, with finite derivative/candidate guards, reset-preserving spike semantics, module-specific RK4 parity tests, and refreshed benchmark evidence.
 - Hardened `WilsonHRNeuron` Python, Julia, Go, and Rust safety surfaces to
   reject invalid polynomial-cortical runtime state, non-positive recovery
   timescale or timestep, non-finite current, and non-finite voltage/recovery

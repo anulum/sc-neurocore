@@ -988,7 +988,7 @@ impl Default for GutkinErmentroutNeuron {
     }
 }
 
-/// Wilson HR — simplified cortical neuron. Wilson 1999.
+/// Wilson HR — polynomial cortical neuron. Wilson 1999.
 #[derive(Clone, Debug)]
 pub struct WilsonHRNeuron {
     pub v: f64,
@@ -1008,14 +1008,58 @@ impl WilsonHRNeuron {
             dt: 0.05,
         }
     }
+    fn valid_numeric_contract(&self) -> bool {
+        self.v.is_finite()
+            && self.r.is_finite()
+            && self.tau_r.is_finite()
+            && self.tau_r > 0.0
+            && self.v_peak.is_finite()
+            && self.dt.is_finite()
+            && self.dt > 0.0
+    }
+    fn poly(v: f64) -> f64 {
+        -(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55)
+    }
+    fn derivatives(&self, v: f64, r: f64, current: f64) -> Option<(f64, f64)> {
+        if !(v.is_finite() && r.is_finite() && current.is_finite()) {
+            return None;
+        }
+        let poly = Self::poly(v);
+        let syn = -26.0 * r * (v + 0.92);
+        let dv = poly + syn + current;
+        let dr = (-r + 1.35 * v + 1.03) / self.tau_r;
+        if poly.is_finite() && syn.is_finite() && dv.is_finite() && dr.is_finite() {
+            Some((dv, dr))
+        } else {
+            None
+        }
+    }
+    fn rk4_candidate(&self, current: f64) -> Option<(f64, f64)> {
+        let v0 = self.v;
+        let r0 = self.r;
+        let dt = self.dt;
+        let k1 = self.derivatives(v0, r0, current)?;
+        let k2 = self.derivatives(v0 + 0.5 * dt * k1.0, r0 + 0.5 * dt * k1.1, current)?;
+        let k3 = self.derivatives(v0 + 0.5 * dt * k2.0, r0 + 0.5 * dt * k2.1, current)?;
+        let k4 = self.derivatives(v0 + dt * k3.0, r0 + dt * k3.1, current)?;
+        let next_v = v0 + dt * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0) / 6.0;
+        let next_r = r0 + dt * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1) / 6.0;
+        if next_v.is_finite() && next_r.is_finite() {
+            Some((next_v, next_r))
+        } else {
+            None
+        }
+    }
     pub fn step(&mut self, current: f64) -> i32 {
-        // Wilson 1999: simultaneous Euler (both derivatives use old state)
-        let poly = -(17.81 + 47.71 * self.v + 32.63 * self.v * self.v) * (self.v - 0.55);
-        let syn = -26.0 * self.r * (self.v + 0.92);
-        let dv = (poly + syn + current) * self.dt;
-        let dr = (-self.r + 1.35 * self.v + 1.03) / self.tau_r * self.dt;
-        self.v += dv;
-        self.r += dr;
+        if !self.valid_numeric_contract() || !current.is_finite() {
+            return 0;
+        }
+        let (next_v, next_r) = match self.rk4_candidate(current) {
+            Some(candidate) => candidate,
+            None => return 0,
+        };
+        self.v = next_v;
+        self.r = next_r;
         // Wilson 1999: hard reset on threshold (not crossing)
         if self.v >= self.v_peak {
             self.v = -0.7;
@@ -1801,7 +1845,7 @@ mod tests {
     #[test]
     fn wilson_hr_fires() {
         let mut n = WilsonHRNeuron::new();
-        let t: i32 = (0..2000).map(|_| n.step(0.5)).sum();
+        let t: i32 = (0..2000).map(|_| n.step(10.0)).sum();
         assert!(t > 0);
     }
     #[test]
@@ -2484,8 +2528,50 @@ mod tests {
         assert!(n.v.is_finite());
     }
     #[test]
+    fn wilson_hr_matches_rk4_candidate() {
+        fn rhs(n: &WilsonHRNeuron, v: f64, r: f64, current: f64) -> (f64, f64) {
+            (
+                WilsonHRNeuron::poly(v) - 26.0 * r * (v + 0.92) + current,
+                (-r + 1.35 * v + 1.03) / n.tau_r,
+            )
+        }
+
+        let mut n = WilsonHRNeuron {
+            v: -0.4,
+            r: 0.08,
+            ..Default::default()
+        };
+        let current = 0.3;
+        let v0 = n.v;
+        let r0 = n.r;
+        let dt = n.dt;
+        let k1 = rhs(&n, v0, r0, current);
+        let k2 = rhs(&n, v0 + 0.5 * dt * k1.0, r0 + 0.5 * dt * k1.1, current);
+        let k3 = rhs(&n, v0 + 0.5 * dt * k2.0, r0 + 0.5 * dt * k2.1, current);
+        let k4 = rhs(&n, v0 + dt * k3.0, r0 + dt * k3.1, current);
+        let expected_v = v0 + dt * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0) / 6.0;
+        let expected_r = r0 + dt * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1) / 6.0;
+
+        assert_eq!(n.step(current), 0);
+        assert!((n.v - expected_v).abs() < 1e-14);
+        assert!((n.r - expected_r).abs() < 1e-14);
+    }
+    #[test]
     fn wilson_hr_nan_no_panic() {
-        WilsonHRNeuron::new().step(f64::NAN);
+        let mut n = WilsonHRNeuron::new();
+        let before = (n.v, n.r);
+        assert_eq!(n.step(f64::NAN), 0);
+        assert_eq!((n.v, n.r), before);
+    }
+    #[test]
+    fn wilson_hr_overflow_candidate_preserves_state() {
+        let mut n = WilsonHRNeuron {
+            v: 1.0e308,
+            ..Default::default()
+        };
+        let before = (n.v, n.r);
+        assert_eq!(n.step(0.3), 0);
+        assert_eq!((n.v, n.r), before);
     }
     #[test]
     fn wilson_hr_negative_no_crash() {

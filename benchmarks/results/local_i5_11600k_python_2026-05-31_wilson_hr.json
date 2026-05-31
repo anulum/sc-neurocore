@@ -1,0 +1,71 @@
+{
+  "benchmark": "python_wilson_hr_rk4_reference",
+  "current": 10.0,
+  "date": "2026-05-31",
+  "host_label": "local_i5_11600k",
+  "mean_seconds_per_step": 8.29748708255855e-06,
+  "median_seconds_per_step": 8.19656700012274e-06,
+  "min_seconds_per_step": 6.26267749001272e-06,
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "repeats": 7,
+  "samples": [
+    {
+      "elapsed_seconds": 0.6704423759365454,
+      "final_r": 0.8810341622852762,
+      "final_v": -0.11034506497386841,
+      "seconds_per_step": 6.704423759365454e-06,
+      "spikes": 4,
+      "steps_per_second": 149155.2497115197
+    },
+    {
+      "elapsed_seconds": 0.626267749001272,
+      "final_r": 0.8810341622852762,
+      "final_v": -0.11034506497386841,
+      "seconds_per_step": 6.26267749001272e-06,
+      "spikes": 4,
+      "steps_per_second": 159676.113227087
+    },
+    {
+      "elapsed_seconds": 0.8196567000122741,
+      "final_r": 0.8810341622852762,
+      "final_v": -0.11034506497386841,
+      "seconds_per_step": 8.19656700012274e-06,
+      "spikes": 4,
+      "steps_per_second": 122002.2968134129
+    },
+    {
+      "elapsed_seconds": 0.7743037049658597,
+      "final_r": 0.8810341622852762,
+      "final_v": -0.11034506497386841,
+      "seconds_per_step": 7.743037049658597e-06,
+      "spikes": 4,
+      "steps_per_second": 129148.29072709805
+    },
+    {
+      "elapsed_seconds": 1.033458760008216,
+      "final_r": 0.8810341622852762,
+      "final_v": -0.11034506497386841,
+      "seconds_per_step": 1.0334587600082159e-05,
+      "spikes": 4,
+      "steps_per_second": 96762.44845919638
+    },
+    {
+      "elapsed_seconds": 0.856277379905805,
+      "final_r": 0.8810341622852762,
+      "final_v": -0.11034506497386841,
+      "seconds_per_step": 8.56277379905805e-06,
+      "spikes": 4,
+      "steps_per_second": 116784.58680176805
+    },
+    {
+      "elapsed_seconds": 1.0278342879610136,
+      "final_r": 0.8810341622852762,
+      "final_v": -0.11034506497386841,
+      "seconds_per_step": 1.0278342879610135e-05,
+      "spikes": 4,
+      "steps_per_second": 97291.94790570468
+    }
+  ],
+  "steps": 100000
+}
