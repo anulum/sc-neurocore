@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `CerebellarBasketNeuron` Python, Julia, Go, and Rust safety
+  surfaces to reject invalid A-type/KCa gate state, calcium state,
+  non-physical conductance and capacitance contracts, unstable rate
+  exponentials, non-finite drive, malformed calcium activation denominators,
+  and out-of-bounds membrane or calcium candidates before mutation.
 - Hardened `BKNeuron` Python, Julia, Go, Mojo, and Rust safety surfaces to
   reject invalid BK gate state, calcium state, non-physical conductance and
   capacitance contracts, malformed substep geometry, unstable rate and BK
