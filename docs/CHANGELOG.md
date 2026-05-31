@@ -1,3 +1,4 @@
+- Hardened `BoothRinzelNeuron` Python, Julia, Go, and Rust safety surfaces with finite-domain validation, fail-closed candidate updates, physical gate/calcium bounds, and module-owned regression tests.
 # Changelog
 
 All notable changes to the `sc-neurocore` project will be documented in this file.
