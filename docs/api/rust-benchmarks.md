@@ -97,14 +97,16 @@ cargo bench --bench analysis_bench -- --quick
 |-------|-----------|----------|------|-------|
 | Retinal ganglion | 1.08 ms | **108 ns** | spiking | Pillow 2005 GLM (stim+history filters) |
 | Inner hair cell | 407 µs | **40.7 ns** | graded | Meddis vesicle pool + CaV1.3 |
-| Merkel cell | 202 µs | **20.2 ns** | spiking | Slow adapting |
+| Merkel cell | 312.93 µs | **31.29 ns** | spiking | exact slow adaptation |
 | Rod photoreceptor | 663 µs | **66.3 ns** | graded | cGMP cascade + Ca²⁺-GC feedback |
 | Nociceptor | 68.6 µs | **6.9 ns** | spiking | Sensitisation |
 | Pacinian corpuscle | 240 µs | **24.0 ns** | spiking | sin() input, fast adapting |
 | Olfactory receptor | 411 µs | **41.1 ns** | spiking | cAMP + Ca²⁺/CaM + PDE4 |
 
-> Sensory models use simple Euler integration (no sub-stepping).
-> Measured 2026-04-05 on i5-11600K @ 3.90 GHz.
+> Merkel cell remeasured 2026-05-31 after exact membrane/adaptation relaxation
+> and fail-closed state guards.
+> Remaining sensory rows retain their previously documented measurement date
+> until each model is remeasured after its own hardening pass.
 
 ### Motor Neurons (`neurons/motor.rs`) — Motor model group
 
