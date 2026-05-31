@@ -32,19 +32,28 @@ impl AiharaMapNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // x_prev = self.x
-        // sigmoid = 1.0 / (1.0 + math.exp(-(self.x + self.alpha)))
-        // x_new = self.k_f * self.x * sigmoid - self.y + current
-        // y_new = self.k_s * self.y + self.delta * self.x
-        // self.x = max(-10.0, min(10.0, x_new))
-        // self.y = max(-10.0, min(10.0, y_new))
-        // if not math.isfinite(self.x):
-        // self.x = 0.0
-        // if not math.isfinite(self.y):
-        // self.y = 0.0
-        // return 1 if self.x >= self.x_threshold && x_prev < self.x_threshold el
-        0 // spike indicator
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
+        if !validate_aihara_map_neuron(self) {
+            return Err("invalid Aihara map runtime state");
+        }
+        if !i_ext.is_finite() {
+            return Err("invalid Aihara map current");
+        }
+
+        let x_prev = self.x;
+        let sigmoid = logistic(self.x + self.alpha);
+        let x_new = self.k_f * self.x * sigmoid - self.y + i_ext;
+        let y_new = self.k_s * self.y + self.delta * self.x;
+        if !x_new.is_finite() || !y_new.is_finite() {
+            return Err("invalid Aihara map candidate state");
+        }
+        self.x = x_new.clamp(-10.0, 10.0);
+        self.y = y_new.clamp(-10.0, 10.0);
+        Ok(if self.x >= self.x_threshold && x_prev < self.x_threshold {
+            1
+        } else {
+            0
+        })
     }
 
     pub fn reset(&mut self) {
@@ -59,7 +68,24 @@ impl AiharaMapNeuron {
 }
 
 pub fn validate_aihara_map_neuron(state: &AiharaMapNeuron) -> bool {
-    true
+    state.x.is_finite()
+        && state.y.is_finite()
+        && state.k_f.is_finite()
+        && state.k_f >= 0.0
+        && state.k_s.is_finite()
+        && state.alpha.is_finite()
+        && state.delta.is_finite()
+        && state.delta >= 0.0
+        && state.x_threshold.is_finite()
+}
+
+fn logistic(z: f64) -> f64 {
+    if z >= 0.0 {
+        1.0 / (1.0 + (-z).exp())
+    } else {
+        let exp_z = z.exp();
+        exp_z / (1.0 + exp_z)
+    }
 }
 
 #[cfg(test)]
@@ -75,7 +101,14 @@ mod tests {
     #[test]
     fn test_aihara_map_neuron_step() {
         let mut state = AiharaMapNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).unwrap();
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_aihara_map_neuron_rejects_invalid_runtime_state() {
+        let mut state = AiharaMapNeuron::new();
+        state.y = f64::INFINITY;
+        assert!(state.step(0.0).is_err());
     }
 }
