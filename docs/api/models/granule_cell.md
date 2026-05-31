@@ -1,102 +1,133 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — GranuleCell model reference -->
+
 # GranuleCell
 
-**Module:** `engine/src/neurons/cerebellar.rs`
-**Reference:** D'Angelo et al., J Neurosci 21(3), 2001; Bhalla & Bhatt, Cerebellum, 2012
-**Family:** LIF + tonic GABA inhibition + T-type Ca2+ rebound
-**State variables:** `v` (membrane potential), `s` (T-type Ca2+ inactivation)
+**Module:** `src/sc_neurocore/neurons/models/granule_cell.py`<br>
+**Rust engine:** `engine/src/neurons/cerebellar.rs`<br>
+**Reference:** D'Angelo et al., *Journal of Neuroscience* 21(3), 2001<br>
+**Family:** conductance-based cerebellar granule-cell model with tonic GABA
 
 ---
 
-## Biological Context
+## Biological context
 
-Cerebellar granule cells are the most numerous neurons in the brain, comprising approximately 50% of all neurons (~50 billion in humans). They have tiny somata (6-8 µm diameter), resulting in very high input resistance and short membrane time constants. Each granule cell receives input from 4 mossy fibres via specialised structures called glomeruli, where Golgi cell axons provide tonic GABAergic inhibition.
+Cerebellar granule cells are small, high-input-resistance neurons receiving
+mossy-fibre excitation inside glomeruli while Golgi-cell axons provide tonic
+GABAergic inhibition. Their intrinsic dynamics combine fast sodium spiking,
+delayed and A-type potassium recovery, T-type calcium rebound, calcium-activated
+potassium after-hyperpolarisation, HCN sag current, leak, and tonic GABA.
 
-Key features:
-- **Tonic GABA inhibition:** Golgi cells provide continuous shunting inhibition via extrasynaptic GABA_A receptors, keeping granule cells near but below threshold. This creates a high-pass filter for mossy fibre input.
-- **T-type Ca2+ channels:** Enable post-inhibitory rebound bursting. When tonic inhibition is released (disinhibition), T-type channels that de-inactivated during hyperpolarisation produce a transient depolarising current, triggering brief bursts.
-- **High input resistance:** Small soma means even modest synaptic currents produce large voltage changes.
-- **Parallel fibre output:** Granule cell axons ascend and bifurcate into parallel fibres that extend for several millimetres along the folium, synapsing onto Purkinje cell dendrites.
-- **Sparse coding:** At any given time, only ~1-3% of granule cells are active, providing a combinatorial expansion of mossy fibre representations.
-
----
-
-## Equations
-
-### Membrane dynamics (LIF with tonic inhibition and T-type Ca2+)
-
-$$\tau_m \frac{dV}{dt} = -g_l(V - E_l) - g_{tonic}(V - E_{GABA}) - I_T + g \cdot \max(I_{ext}, 0)$$
-
-### T-type Ca2+ current
-
-$$I_T = g_T \cdot m_{T,\infty}^2 \cdot s \cdot (V - E_{Ca})$$
-
-$$m_{T,\infty} = \frac{1}{1 + \exp(-(V + 52)/5)}$$
-
-$$\tau_s \frac{ds}{dt} = s_\infty - s$$
-
-$$s_\infty = \frac{1}{1 + \exp((V + 60)/6.5)}$$
-
-$$\tau_s = 20 + \frac{50}{1 + \exp((V + 65)/10)}$$
-
-### Spike rule
-
-$$V \geq V_{thresh} \Rightarrow V \leftarrow V_{reset}, \quad s \leftarrow 0.5 \cdot s$$
+SC-NeuroCore models that surface as a sub-stepped Hodgkin-Huxley-type system,
+not as a reset-only leaky integrate-and-fire approximation.
 
 ---
 
-## Parameters
+## State variables
 
-| Parameter | Value | Unit | Description |
-|-----------|-------|------|-------------|
-| `v` | -70.0 | mV | Membrane potential |
-| `s` | 0.95 | — | T-type Ca2+ inactivation |
-| `g_l` | 0.05 | mS/cm² | Leak conductance (low for high Rin) |
-| `g_tonic` | 0.02 | mS/cm² | Tonic GABA conductance |
-| `g_t` | 0.03 | mS/cm² | T-type Ca2+ conductance |
-| `e_l` | -70.0 | mV | Leak reversal |
-| `e_gaba` | -75.0 | mV | GABA reversal (shunting) |
-| `e_ca` | 120.0 | mV | Ca2+ reversal |
-| `tau_m` | 5.0 | ms | Membrane time constant |
-| `c_m` | 1.0 | µF/cm² | Specific capacitance |
-| `v_threshold` | -40.0 | mV | Spike threshold |
-| `v_reset` | -70.0 | mV | Post-spike reset |
-| `refrac_period` | 1.0 | ms | Refractory period |
-| `gain` | 1.5 | — | Input scaling |
-| `dt` | 0.5 | ms | Integration timestep |
+| Variable | Meaning |
+|----------|---------|
+| `v` | Membrane potential in mV |
+| `m`, `h` | Sodium activation and inactivation |
+| `n` | Delayed-rectifier potassium activation |
+| `a`, `b` | A-type potassium activation and inactivation |
+| `m_t`, `s` | T-type calcium activation and inactivation |
+| `ca` | Intracellular calcium proxy |
+| `r` | HCN activation |
 
 ---
 
-## Pipeline Status
+## Current balance
 
-| Checklist | Status |
-|-----------|--------|
-| Rust implementation | `engine/src/neurons/cerebellar.rs` |
-| PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, s) |
-| NetworkRunner wired | `NeuronVariant::Granule` |
-| `create_neuron("GranuleCell")` | Yes |
-| `supported_models()` | Includes "GranuleCell" |
-| coverage tests | 11 (fire, no-fire, silent, GABA threshold, rebound, negative, NaN, extreme, reset, high Rin, performance) |
-| Pipeline integration | Covered by `create_neuron_all_supported` |
-| Benchmark | `granule_10k_steps`: **466 µs** (46.6 ns/step), i5-11600K |
+The membrane update integrates:
+
+$$
+C_m\frac{dV}{dt} =
+-(I_{Na} + I_{Kdr} + I_{KA} + I_{CaT} + I_{KCa} + I_h + I_L + I_{GABA})
++ g\,I_{ext}
+$$
+
+with the maintained current definitions:
+
+| Current | Definition |
+|---------|------------|
+| Sodium | \(I_{Na}=g_{Na}m^3h(V-E_{Na})\) |
+| Delayed rectifier | \(I_{Kdr}=g_{Kdr}n^4(V-E_K)\) |
+| A-type potassium | \(I_{KA}=g_{KA}a^3b(V-E_K)\) |
+| T-type calcium | \(I_{CaT}=g_Tm_T^2s(V-E_{Ca})\) |
+| Calcium-activated potassium | \(I_{KCa}=g_{KCa}\frac{Ca^2}{Ca^2+K_d^2}(V-E_K)\) |
+| HCN | \(I_h=g_hr(V-E_h)\) |
+| Leak | \(I_L=g_L(V-E_L)\) |
+| Tonic GABA | \(I_{GABA}=g_{tonic}(V-E_{GABA})\) |
+
+Gates use overflow-stable Boltzmann steady states and first-order relaxation.
+The default Python/Rust/Go/Julia paths use four sub-steps per model step.
 
 ---
 
-## Benchmark (Criterion, i5-11600K @ 3.90 GHz)
+## Default parameters
 
-| Benchmark | Median |
-|-----------|-------:|
-| granule_10k_steps | 466 µs |
-| Per step | **46.6 ns** |
-
-Simple Euler integration with T-type Ca2+ gating, no sub-stepping. Measured 2026-04-04.
+| Parameter | Value | Meaning |
+|-----------|------:|---------|
+| `c_m` | 1.0 | Membrane capacitance |
+| `g_na` | 17.0 | Sodium conductance |
+| `g_kdr` | 9.0 | Delayed-rectifier potassium conductance |
+| `g_ka` | 1.0 | A-type potassium conductance |
+| `g_t` | 0.5 | T-type calcium conductance |
+| `g_kca` | 3.5 | Calcium-activated potassium conductance |
+| `g_h` | 0.03 | HCN conductance |
+| `g_l` | 0.1 | Leak conductance |
+| `g_tonic` | 0.2 | Tonic GABA conductance |
+| `e_na` | 87.4 | Sodium reversal |
+| `e_k` | -84.7 | Potassium reversal |
+| `e_ca` | 129.3 | Calcium reversal |
+| `e_h` | -40.0 | HCN reversal |
+| `e_l` | -58.0 | Leak reversal |
+| `e_gaba` | -75.0 | GABA reversal |
+| `tau_ca` | 10.0 | Calcium decay time constant |
+| `kd_kca` | 0.2 | KCa half-saturation |
+| `dt` | 0.5 | Model timestep |
+| `sub_steps` | 4 | Integration sub-steps |
+| `gain` | 1.0 | External-current gain |
 
 ---
 
-## Findings
+## Safety and fidelity contract
 
-1. **Silent at rest.** Tonic GABA inhibition keeps the cell below threshold without external input. Verified.
-2. **Fires with strong input.** Sufficient excitatory current overcomes tonic inhibition. Verified.
-3. **Tonic GABA raises effective threshold.** Removing g_tonic increases firing rate for same input. Verified.
-4. **Rebound burst via T-type.** De-inactivated T-type channels (high s) facilitate firing after hyperpolarisation. Verified.
-5. **High input resistance.** Small current produces large voltage deflection. Verified.
-6. **Reset clears state.** v=-70, s=0.95 after reset. Verified.
+The maintained Python, Rust engine, Go service, Julia kernel, and Rust safety
+shim now share the same runtime boundary:
+
+- finite state and parameter validation before integration
+- gates constrained to `[0, 1]`
+- non-negative calcium and conductances
+- positive capacitance, calcium constants, timestep, and sub-step count
+- finite runtime input current
+- local candidate-state integration with no partial mutation on invalid input
+- spike reporting on upward crossing of 0 mV
+
+This keeps optional acceleration surfaces aligned with the production dynamics
+instead of returning placeholders or normalising corrupted state silently.
+
+---
+
+## Verification surfaces
+
+Module-specific tests cover the Python model and Go service. The Rust engine and
+Rust safety shim carry granule-specific tests in their respective crates/files.
+The checks exercise bounded state evolution, D'Angelo current-surface presence,
+tonic GABA suppression, T-type de-inactivation at rest, invalid-configuration
+rejection, non-finite drive preservation, and corrupted-state preservation.
+
+---
+
+## Benchmark status
+
+Earlier public timing numbers were tied to a stale LIF-style description and are
+not carried forward as current release evidence. Regenerate granule-cell timing
+evidence for the Python and Rust paths before using this model in release
+performance claims.
