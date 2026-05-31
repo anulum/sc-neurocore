@@ -1,0 +1,48 @@
+{
+  "generated_at": "2026-05-31T12:38:59+02:00",
+  "host": {
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "logical_cpus": 12,
+    "cores_per_socket": 6,
+    "threads_per_core": 2
+  },
+  "command": "cargo bench --manifest-path engine/Cargo.toml --bench full_bench upper_motor_1k_steps",
+  "benchmark": "upper_motor_1k_steps",
+  "steps_per_iteration": 1000,
+  "criterion_console_us": {
+    "lower": 587.23,
+    "point": 601.68,
+    "upper": 620.69
+  },
+  "criterion_estimates_ns": {
+    "mean": {
+      "point_estimate": 598733.2656330182,
+      "confidence_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": 589482.8350911048,
+        "upper_bound": 608919.420621864
+      },
+      "standard_error": 4976.174018619012
+    },
+    "median": {
+      "point_estimate": 587833.3554545455,
+      "confidence_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": 577040.5,
+        "upper_bound": 597843.2333333333
+      },
+      "standard_error": 5813.791856421508
+    },
+    "std_dev": {
+      "point_estimate": 50382.81817108981,
+      "confidence_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": 37356.036970061694,
+        "upper_bound": 63741.15278144433
+      },
+      "standard_error": 6887.1675622801595
+    }
+  },
+  "per_step_ns_from_console_point": 601.68,
+  "implementation": "Rust engine UpperMotorNeuron after exact alpha-beta gate relaxation, M/Ca gate relaxation, conductance-form membrane update, and fail-closed candidate validation"
+}

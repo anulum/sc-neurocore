@@ -1,3 +1,11 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Upper motor neuron model documentation -->
+
 # UpperMotorNeuron
 
 **Module:** `engine/src/neurons/motor.rs`
@@ -43,6 +51,23 @@ $$I_{Ca} = g_{Ca} \, s^2 \, (V - E_{Ca})$$
 
 Activates at depolarised potentials (half-activation -20 mV), modelling high-voltage-activated L-type Ca2+ channels in the apical dendrite.
 
+### Discrete-time integration and safety contract
+
+The maintained Python, Rust engine, Go, Julia, and Rust safety surfaces use
+the same sub-step contract:
+
+1. Validate finite configuration, finite current, and bounded runtime state.
+2. Update `m`, `h`, and `n` with exact first-order alpha/beta gate relaxation.
+3. Update `p` and `s` with exact first-order relaxation toward `p_inf` and `s_inf`.
+4. Update `v` with a conductance-form exponential membrane step using the
+   post-gate conductances for that sub-step.
+5. Commit the six candidate states only after all sub-steps remain finite and
+   gates stay in `[0, 1]`.
+
+Non-throwing runtime surfaces return no spike and preserve state when they
+receive non-finite current or corrupted state. Python and Julia raise
+`ValueError`/`ArgumentError` before mutation.
+
 ---
 
 ## Parameters
@@ -81,9 +106,9 @@ Sub-stepping: 4 steps per call (0.1 ms real time per call).
 | NetworkRunner wired | `NeuronVariant::UpperMotor` |
 | `create_neuron("UpperMotor")` | Yes |
 | `supported_models()` | Includes "UpperMotor" |
-| coverage tests | 10 (fire, no-fire, negative, adaptation, Ca2+, reset, bounded, NaN, extreme, performance) |
+| Module behaviour tests | Python, Rust engine, Go service, Rust safety |
 | Pipeline integration | Covered by `create_neuron_all_supported` |
-| Benchmark | `upper_motor_1k_steps`: **3.24 ms** (3.24 µs/step), i5-11600K |
+| Benchmark | `upper_motor_1k_steps`: 601.68 µs per 1k Rust engine steps, 601.68 ns/step, i5-11600K, 2026-05-31 |
 
 ---
 
@@ -91,10 +116,14 @@ Sub-stepping: 4 steps per call (0.1 ms real time per call).
 
 | Benchmark | Median |
 |-----------|-------:|
-| upper_motor_1k_steps | 3.24 ms |
-| Per step | **3.24 µs** |
+| upper_motor_1k_steps | 601.68 µs |
+| Per step | **601.68 ns** |
 
-Pospischil-style gating with 4 sub-steps + Ca2+ current. Measured 2026-04-04.
+Fresh command:
+`cargo bench --manifest-path engine/Cargo.toml --bench full_bench upper_motor_1k_steps`.
+Console interval: 587.23-620.69 µs per 1,000 Rust engine steps on an
+Intel Core i5-11600K host. The dated artefact is
+`benchmarks/results/local_i5_11600k_criterion_2026-05-31_upper_motor_neuron.json`.
 
 ---
 
@@ -104,4 +133,5 @@ Pospischil-style gating with 4 sub-steps + Ca2+ current. Measured 2026-04-04.
 2. **Ca2+ gate activates during spiking.** s > baseline after sustained input. Verified.
 3. **No spontaneous firing.** Zero input produces zero spikes. Verified.
 4. **Reset deterministic.** Post-reset matches fresh neuron. Verified.
-5. **NaN-safe after reset.** Verified.
+5. **Fail-closed invalid input/state.** Non-finite current or corrupted gate
+   state is rejected before mutation on the maintained runtime surfaces.

@@ -112,7 +112,7 @@ cargo bench --bench analysis_bench -- --quick
 |-------|----------|----------|-----------|-------|
 | Alpha motor | 6.48 ms | **6.48 µs** | 50 | WB + PIC (h_pic) + AHP + Ca²⁺ |
 | Gamma motor | 161 µs (10k) | **16.1 ns** | 1 | LIF + adaptation |
-| Upper motor | 475 µs | **475 ns** | 4 | Pospischil RS + Ca²⁺ |
+| Upper motor | 601.68 µs | **601.68 ns** | 4 | Pospischil RS + Ca²⁺, exact gates + conductance membrane |
 | Renshaw cell | 4.32 ms | **4.32 µs** | 50 | WB + adaptation |
 | Motor unit | 180 µs (10k) | **18.0 ns** | 1 | LIF + force model |
 

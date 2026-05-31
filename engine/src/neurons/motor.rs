@@ -353,58 +353,147 @@ impl UpperMotorNeuron {
         }
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
-        let v_prev = self.v;
-        let vt = -56.2;
-        for _ in 0..4 {
-            // Pospischil Na+ gating
-            let dv = self.v - vt;
-            let x_m = dv - 13.0;
-            let alpha_m = if x_m.abs() < 1e-6 {
-                0.32 * 4.0
-            } else {
-                -0.32 * x_m / ((-x_m / 4.0).exp() - 1.0)
-            };
-            let x_h = dv - 17.0;
-            let beta_m = if x_h.abs() < 1e-6 {
-                0.28 * 5.0
-            } else {
-                0.28 * x_h / ((x_h / 5.0).exp() - 1.0)
-            };
-            let alpha_h = 0.128 * (-(dv - 17.0) / 18.0).exp();
-            let beta_h = 4.0 / (1.0 + (-(dv - 40.0) / 5.0).exp());
-            // K+ gating
-            let x_n = dv - 15.0;
-            let alpha_n = if x_n.abs() < 1e-6 {
-                0.032 * 5.0
-            } else {
-                -0.032 * x_n / ((-x_n / 5.0).exp() - 1.0)
-            };
-            let beta_n = 0.5 * (-(dv - 10.0) / 40.0).exp();
+    fn finite(values: &[f64]) -> bool {
+        values.iter().all(|value| value.is_finite())
+    }
 
-            self.m += (alpha_m * (1.0 - self.m) - beta_m * self.m) * self.dt;
-            self.h += (alpha_h * (1.0 - self.h) - beta_h * self.h) * self.dt;
-            self.n += (alpha_n * (1.0 - self.n) - beta_n * self.n) * self.dt;
+    fn rate_exp(value: f64) -> f64 {
+        value.clamp(-60.0, 60.0).exp()
+    }
 
-            // M-current (slow K+, adaptation)
-            let p_inf = 1.0 / (1.0 + (-(self.v + 35.0) / 10.0).exp());
-            let tau_p =
-                400.0 / (3.3 * ((self.v + 35.0) / 20.0).exp() + (-(self.v + 35.0) / 20.0).exp());
-            self.p += (p_inf - self.p) / tau_p * self.dt;
-
-            // High-threshold Ca2+ (dendritic spike)
-            let s_inf = 1.0 / (1.0 + (-(self.v + 20.0) / 5.0).exp());
-            self.s += (s_inf - self.s) / 10.0 * self.dt;
-
-            let i_na = self.g_na * self.m.powi(3) * self.h * (self.v - self.e_na);
-            let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
-            let i_m = self.g_m * self.p * (self.v - self.e_k);
-            let i_ca = self.g_ca * self.s.powi(2) * (self.v - self.e_ca);
-            let i_l = self.g_l * (self.v - self.e_l);
-
-            self.v += (-i_na - i_k - i_m - i_ca - i_l + current) / self.c_m * self.dt;
+    fn gate(previous: f64, alpha: f64, beta: f64, dt: f64) -> Option<f64> {
+        let total = alpha + beta;
+        if total <= 0.0 || !total.is_finite() {
+            return None;
         }
-        if self.v >= self.v_threshold && v_prev < self.v_threshold {
+        let steady = alpha / total;
+        let next = steady + (previous - steady) * Self::rate_exp(-total * dt);
+        next.is_finite().then_some(next.clamp(0.0, 1.0))
+    }
+
+    fn gate_inf(previous: f64, steady: f64, tau: f64, dt: f64) -> Option<f64> {
+        if tau <= 0.0 || !tau.is_finite() {
+            return None;
+        }
+        let next = steady + (previous - steady) * Self::rate_exp(-dt / tau);
+        next.is_finite().then_some(next.clamp(0.0, 1.0))
+    }
+
+    fn valid_configuration(&self) -> bool {
+        Self::finite(&[
+            self.g_na,
+            self.g_k,
+            self.g_m,
+            self.g_ca,
+            self.g_l,
+            self.e_na,
+            self.e_k,
+            self.e_ca,
+            self.e_l,
+            self.c_m,
+            self.dt,
+            self.v_threshold,
+        ]) && self.g_na >= 0.0
+            && self.g_k >= 0.0
+            && self.g_m >= 0.0
+            && self.g_ca >= 0.0
+            && self.g_l >= 0.0
+            && self.c_m > 0.0
+            && self.dt > 0.0
+    }
+
+    fn valid_state(&self) -> bool {
+        Self::finite(&[self.v, self.m, self.h, self.n, self.p, self.s])
+            && (-150.0..=100.0).contains(&self.v)
+            && (0.0..=1.0).contains(&self.m)
+            && (0.0..=1.0).contains(&self.h)
+            && (0.0..=1.0).contains(&self.n)
+            && (0.0..=1.0).contains(&self.p)
+            && (0.0..=1.0).contains(&self.s)
+    }
+
+    fn step_candidate(
+        &self,
+        v: f64,
+        mut m: f64,
+        mut h: f64,
+        mut n: f64,
+        mut p: f64,
+        mut s: f64,
+        current: f64,
+    ) -> Option<(f64, f64, f64, f64, f64, f64)> {
+        let dv = v - (-56.2);
+        let x_m = dv - 13.0;
+        let alpha_m = if x_m.abs() < 1e-6 {
+            0.32 * 4.0
+        } else {
+            -0.32 * x_m / (Self::rate_exp(-x_m / 4.0) - 1.0)
+        };
+        let x_h = dv - 17.0;
+        let beta_m = if x_h.abs() < 1e-6 {
+            0.28 * 5.0
+        } else {
+            0.28 * x_h / (Self::rate_exp(x_h / 5.0) - 1.0)
+        };
+        let alpha_h = 0.128 * Self::rate_exp(-(dv - 17.0) / 18.0);
+        let beta_h = 4.0 / (1.0 + Self::rate_exp(-(dv - 40.0) / 5.0));
+        let x_n = dv - 15.0;
+        let alpha_n = if x_n.abs() < 1e-6 {
+            0.032 * 5.0
+        } else {
+            -0.032 * x_n / (Self::rate_exp(-x_n / 5.0) - 1.0)
+        };
+        let beta_n = 0.5 * Self::rate_exp(-(dv - 10.0) / 40.0);
+        m = Self::gate(m, alpha_m, beta_m, self.dt)?;
+        h = Self::gate(h, alpha_h, beta_h, self.dt)?;
+        n = Self::gate(n, alpha_n, beta_n, self.dt)?;
+        let p_inf = 1.0 / (1.0 + Self::rate_exp(-(v + 35.0) / 10.0));
+        let tau_p =
+            400.0 / (3.3 * Self::rate_exp((v + 35.0) / 20.0) + Self::rate_exp(-(v + 35.0) / 20.0));
+        p = Self::gate_inf(p, p_inf, tau_p, self.dt)?;
+        let s_inf = 1.0 / (1.0 + Self::rate_exp(-(v + 20.0) / 5.0));
+        s = Self::gate_inf(s, s_inf, 10.0, self.dt)?;
+        let g_na = self.g_na * m.powi(3) * h;
+        let g_k = self.g_k * n.powi(4);
+        let g_m = self.g_m * p;
+        let g_ca = self.g_ca * s.powi(2);
+        let g_total = g_na + g_k + g_m + g_ca + self.g_l;
+        if g_total <= 0.0 || !g_total.is_finite() {
+            return None;
+        }
+        let steady_v = (current
+            + g_na * self.e_na
+            + g_k * self.e_k
+            + g_m * self.e_k
+            + g_ca * self.e_ca
+            + self.g_l * self.e_l)
+            / g_total;
+        let next_v = steady_v + (v - steady_v) * Self::rate_exp(-(g_total / self.c_m) * self.dt);
+        Self::finite(&[next_v, m, h, n, p, s]).then_some((
+            next_v.clamp(-150.0, 100.0),
+            m,
+            h,
+            n,
+            p,
+            s,
+        ))
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        if !self.valid_configuration() || !self.valid_state() || !current.is_finite() {
+            return 0;
+        }
+        let v_prev = self.v;
+        let (mut v, mut m, mut h, mut n, mut p, mut s) =
+            (self.v, self.m, self.h, self.n, self.p, self.s);
+        for _ in 0..4 {
+            let Some(next) = self.step_candidate(v, m, h, n, p, s, current) else {
+                return 0;
+            };
+            (v, m, h, n, p, s) = next;
+        }
+        (self.v, self.m, self.h, self.n, self.p, self.s) = (v, m, h, n, p, s);
+        if v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
             0
@@ -926,6 +1015,99 @@ mod tests {
         let mut n = UpperMotorNeuron::new();
         let spikes: i32 = (0..5000).map(|_| n.step(0.0)).sum();
         assert_eq!(spikes, 0);
+    }
+
+    fn upper_motor_reference_step(mut n: UpperMotorNeuron, current: f64) -> UpperMotorNeuron {
+        fn gate(previous: f64, alpha: f64, beta: f64, dt: f64) -> f64 {
+            let total = alpha + beta;
+            let steady = alpha / total;
+            (steady + (previous - steady) * (-total * dt).exp()).clamp(0.0, 1.0)
+        }
+        fn gate_inf(previous: f64, steady: f64, tau: f64, dt: f64) -> f64 {
+            (steady + (previous - steady) * (-dt / tau).exp()).clamp(0.0, 1.0)
+        }
+        let vt = -56.2;
+        for _ in 0..4 {
+            let dv = n.v - vt;
+            let x_m = dv - 13.0;
+            let alpha_m = if x_m.abs() < 1e-6 {
+                0.32 * 4.0
+            } else {
+                -0.32 * x_m / ((-x_m / 4.0).exp() - 1.0)
+            };
+            let x_h = dv - 17.0;
+            let beta_m = if x_h.abs() < 1e-6 {
+                0.28 * 5.0
+            } else {
+                0.28 * x_h / ((x_h / 5.0).exp() - 1.0)
+            };
+            let alpha_h = 0.128 * (-(dv - 17.0) / 18.0).exp();
+            let beta_h = 4.0 / (1.0 + (-(dv - 40.0) / 5.0).exp());
+            let x_n = dv - 15.0;
+            let alpha_n = if x_n.abs() < 1e-6 {
+                0.032 * 5.0
+            } else {
+                -0.032 * x_n / ((-x_n / 5.0).exp() - 1.0)
+            };
+            let beta_n = 0.5 * (-(dv - 10.0) / 40.0).exp();
+
+            n.m = gate(n.m, alpha_m, beta_m, n.dt);
+            n.h = gate(n.h, alpha_h, beta_h, n.dt);
+            n.n = gate(n.n, alpha_n, beta_n, n.dt);
+
+            let p_inf = 1.0 / (1.0 + (-(n.v + 35.0) / 10.0).exp());
+            let tau_p = 400.0 / (3.3 * ((n.v + 35.0) / 20.0).exp() + (-(n.v + 35.0) / 20.0).exp());
+            n.p = gate_inf(n.p, p_inf, tau_p, n.dt);
+
+            let s_inf = 1.0 / (1.0 + (-(n.v + 20.0) / 5.0).exp());
+            n.s = gate_inf(n.s, s_inf, 10.0, n.dt);
+
+            let g_na = n.g_na * n.m.powi(3) * n.h;
+            let g_k = n.g_k * n.n.powi(4);
+            let g_m = n.g_m * n.p;
+            let g_ca = n.g_ca * n.s.powi(2);
+            let g_total = g_na + g_k + g_m + g_ca + n.g_l;
+            let steady_v = (current
+                + g_na * n.e_na
+                + g_k * n.e_k
+                + g_m * n.e_k
+                + g_ca * n.e_ca
+                + n.g_l * n.e_l)
+                / g_total;
+            n.v = steady_v + (n.v - steady_v) * (-(g_total / n.c_m) * n.dt).exp();
+        }
+        n
+    }
+
+    #[test]
+    fn upper_motor_uses_exact_gate_and_conductance_membrane_step() {
+        let mut n = UpperMotorNeuron::new();
+        let expected = upper_motor_reference_step(n.clone(), 5.0);
+
+        assert_eq!(n.step(5.0), 0);
+
+        assert!((n.v - expected.v).abs() <= 1e-12);
+        assert!((n.m - expected.m).abs() <= 1e-12);
+        assert!((n.h - expected.h).abs() <= 1e-12);
+        assert!((n.n - expected.n).abs() <= 1e-12);
+        assert!((n.p - expected.p).abs() <= 1e-12);
+        assert!((n.s - expected.s).abs() <= 1e-12);
+    }
+
+    #[test]
+    fn upper_motor_corrupted_gate_is_preserved_on_step() {
+        let mut n = UpperMotorNeuron::new();
+        n.m = 1.5;
+        let before = n.clone();
+
+        assert_eq!(n.step(5.0), 0);
+
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.m, before.m);
+        assert_eq!(n.h, before.h);
+        assert_eq!(n.n, before.n);
+        assert_eq!(n.p, before.p);
+        assert_eq!(n.s, before.s);
     }
 
     #[test]
