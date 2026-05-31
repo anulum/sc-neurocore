@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 
@@ -30,14 +31,61 @@ class FitzHughRinzelNeuron:
     dt: float = 0.1
     v_threshold: float = 1.0
 
+    def __post_init__(self) -> None:
+        self._validate_numeric_contract()
+
+    def _numeric_fields(self) -> tuple[tuple[str, float], ...]:
+        return (
+            ("v", self.v),
+            ("w", self.w),
+            ("y", self.y),
+            ("a", self.a),
+            ("b", self.b),
+            ("c", self.c),
+            ("d", self.d),
+            ("delta", self.delta),
+            ("mu", self.mu),
+            ("dt", self.dt),
+            ("v_threshold", self.v_threshold),
+        )
+
+    def _validate_numeric_contract(self) -> None:
+        for name, value in self._numeric_fields():
+            if not math.isfinite(value):
+                raise ValueError(f"FitzHugh-Rinzel parameter {name} must be finite")
+        for name, value in (("delta", self.delta), ("mu", self.mu), ("dt", self.dt)):
+            if value <= 0.0:
+                raise ValueError(f"FitzHugh-Rinzel parameter {name} must be positive")
+
+    def _derivatives(
+        self, v: float, w: float, y: float, current: float
+    ) -> tuple[float, float, float]:
+        if not all(math.isfinite(value) for value in (v, w, y, current)):
+            raise FloatingPointError("FitzHugh-Rinzel runtime state and current must be finite")
+        try:
+            dv = v - v**3 / 3.0 - w + y + current
+            dw = self.delta * (self.a + v - self.b * w)
+            dy = self.mu * (self.c - v - self.d * y)
+        except OverflowError as exc:
+            raise FloatingPointError("FitzHugh-Rinzel derivative overflow") from exc
+        if not all(math.isfinite(value) for value in (dv, dw, dy)):
+            raise FloatingPointError("FitzHugh-Rinzel derivative must be finite")
+        return dv, dw, dy
+
     def step(self, current: float) -> int:
+        """Advance the model by one simultaneous-Euler step."""
+
+        self._validate_numeric_contract()
         v_prev = self.v
-        dv = (self.v - self.v**3 / 3.0 - self.w + self.y + current) * self.dt
-        dw = self.delta * (self.a + self.v - self.b * self.w) * self.dt
-        dy = self.mu * (self.c - self.v - self.d * self.y) * self.dt
-        self.v += dv
-        self.w += dw
-        self.y += dy
+        dv, dw, dy = self._derivatives(self.v, self.w, self.y, float(current))
+        next_v = self.v + dv * self.dt
+        next_w = self.w + dw * self.dt
+        next_y = self.y + dy * self.dt
+        if not all(math.isfinite(value) for value in (next_v, next_w, next_y)):
+            raise FloatingPointError("FitzHugh-Rinzel candidate state must be finite")
+        self.v = next_v
+        self.w = next_w
+        self.y = next_y
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
     def reset(self) -> None:

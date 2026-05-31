@@ -190,3 +190,42 @@ class TestFHRPipeline:
         assert sc >= 3
         rate = firing_rate(train, dt=0.0001)
         assert rate > 0
+
+
+def test_fitzhugh_rinzel_rejects_invalid_numeric_configuration() -> None:
+    with pytest.raises(ValueError, match="dt.*positive"):
+        FitzHughRinzelNeuron(dt=0.0)
+
+    with pytest.raises(ValueError, match="delta.*positive"):
+        FitzHughRinzelNeuron(delta=-0.1)
+
+
+def test_fitzhugh_rinzel_rejects_nonfinite_current_without_mutation() -> None:
+    neuron = FitzHughRinzelNeuron(v=-1.0, w=0.2, y=0.1)
+    before = (neuron.v, neuron.w, neuron.y)
+
+    with pytest.raises(FloatingPointError, match="runtime state and current"):
+        neuron.step(float("nan"))
+
+    assert (neuron.v, neuron.w, neuron.y) == before
+
+
+def test_fitzhugh_rinzel_rejects_corrupted_runtime_parameter_without_mutation() -> None:
+    neuron = FitzHughRinzelNeuron(v=-1.0, w=0.2, y=0.1)
+    before = (neuron.v, neuron.w, neuron.y)
+    neuron.mu = float("nan")
+
+    with pytest.raises(ValueError, match="mu.*finite"):
+        neuron.step(0.5)
+
+    assert (neuron.v, neuron.w, neuron.y) == before
+
+
+def test_fitzhugh_rinzel_rejects_overflow_candidate_without_mutation() -> None:
+    neuron = FitzHughRinzelNeuron(v=1.0e155, w=0.2, y=0.1)
+    before = (neuron.v, neuron.w, neuron.y)
+
+    with pytest.raises(FloatingPointError, match="derivative overflow"):
+        neuron.step(0.5)
+
+    assert (neuron.v, neuron.w, neuron.y) == before

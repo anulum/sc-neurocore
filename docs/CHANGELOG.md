@@ -1453,3 +1453,5 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [1.0.0] - 2025-12-03
 - Initial Release: Stochastic Neurons, Synapses, and Basic Bitstream Utilities.
+
+- Hardened FitzHugh-Rinzel Python, Rust engine, Rust safety, Go, and Julia paths with finite-parameter validation plus candidate-first simultaneous-Euler commits that preserve state on invalid currents, corrupted runtime contracts, and overflow candidates.

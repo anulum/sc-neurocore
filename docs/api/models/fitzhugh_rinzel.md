@@ -566,3 +566,9 @@ print(f"Spikes: {spikes}, v={state['v']:.3f}, w={state['w']:.3f}, y={state['y']:
 
 *SC-NeuroCore v3.14.0 — ANULUM / Fortis Studio*
 *© 2020–2026 Miroslav Šotek. All rights reserved.*
+
+## Fail-closed integration contract
+
+The maintained Python, Rust engine, Rust safety, Go, and Julia FitzHugh-Rinzel surfaces use the same simultaneous-Euler update for the published three-variable dynamics. Each runtime validates finite membrane, recovery, slow-adaptation, threshold, and timestep values before evaluating derivatives; candidate `v`, `w`, and `y` values are computed from the old state and committed only when all candidates remain finite.
+
+Non-finite current, invalid positive-rate or timestep contracts, derivative overflow, and non-finite candidates leave the previous state intact. This preserves the existing benchmark interpretation because it does not change the integrator family or timestep semantics; it adds a state-poisoning boundary around the documented dynamics.
