@@ -25,28 +25,50 @@ end
 function validate(s::WilsonHRNeuronState)::Bool
     return isfinite(s.v) &&
         isfinite(s.r) &&
-        isfinite(s.tau_r) &&
-        s.tau_r > 0.0 &&
+        isfinite(s.tau_r) && s.tau_r > 0.0 &&
         isfinite(s.v_peak) &&
-        isfinite(s.dt) &&
-        s.dt > 0.0
+        isfinite(s.dt) && s.dt > 0.0
+end
+
+poly(v::Float64)::Float64 = -(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55)
+
+function derivatives(s::WilsonHRNeuronState, v::Float64, r::Float64, I_ext::Float64)
+    if !all(isfinite, (v, r, I_ext))
+        return (0.0, 0.0, false)
+    end
+    p = poly(v)
+    syn = -26.0 * r * (v + 0.92)
+    dv = p + syn + I_ext
+    dr = (-r + 1.35 * v + 1.03) / s.tau_r
+    if !all(isfinite, (p, syn, dv, dr))
+        return (0.0, 0.0, false)
+    end
+    return (dv, dr, true)
+end
+
+function rk4_candidate(s::WilsonHRNeuronState, I_ext::Float64)
+    v0, r0, dt = s.v, s.r, s.dt
+    k1v, k1r, ok = derivatives(s, v0, r0, I_ext)
+    ok || return (0.0, 0.0, false)
+    k2v, k2r, ok = derivatives(s, v0 + 0.5 * dt * k1v, r0 + 0.5 * dt * k1r, I_ext)
+    ok || return (0.0, 0.0, false)
+    k3v, k3r, ok = derivatives(s, v0 + 0.5 * dt * k2v, r0 + 0.5 * dt * k2r, I_ext)
+    ok || return (0.0, 0.0, false)
+    k4v, k4r, ok = derivatives(s, v0 + dt * k3v, r0 + dt * k3r, I_ext)
+    ok || return (0.0, 0.0, false)
+    next_v = v0 + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0
+    next_r = r0 + dt * (k1r + 2.0 * k2r + 2.0 * k3r + k4r) / 6.0
+    return (next_v, next_r, isfinite(next_v) && isfinite(next_r))
 end
 
 function step!(s::WilsonHRNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
     if !validate(s) || !isfinite(I_ext)
         return -1
     end
-
-    poly = -(17.81 + 47.71 * s.v + 32.63 * s.v ^ 2) * (s.v - 0.55)
-    syn = -26.0 * s.r * (s.v + 0.92)
-    dv = (poly + syn + I_ext) * s.dt
-    dr = (-s.r + 1.35 * s.v + 1.03) / s.tau_r * s.dt
-    next_v = s.v + dv
-    next_r = s.r + dr
-    if !all(isfinite, (poly, syn, dv, dr, next_v, next_r))
+    next_v, next_r, ok = rk4_candidate(s, I_ext)
+    if !ok
         return -1
     end
-
     s.v = next_v
     s.r = next_r
     if s.v >= s.v_peak
