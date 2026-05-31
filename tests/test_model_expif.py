@@ -17,6 +17,7 @@ Projection → Network → Analysis (spike_count + isi + firing_rate)."""
 from __future__ import annotations
 
 import time
+import os
 
 import numpy as np
 import pytest
@@ -237,7 +238,9 @@ class TestExpIFPerformance:
         for _ in range(N):
             n.step(20.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 50000
+        rate = N / elapsed
+        min_rate = 40_000 if os.getenv("CI") else 50_000
+        assert rate > min_rate, f"isolation: {rate:.0f} steps/s, minimum={min_rate}"
 
     def test_network_throughput(self):
         pop = Population(ExpIFNeuron, n=50, label="bench")

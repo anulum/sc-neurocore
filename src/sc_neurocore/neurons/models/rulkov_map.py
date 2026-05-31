@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -29,15 +30,47 @@ class RulkovMapNeuron:
     mu: float = 0.001
     x_threshold: float = 0.0
 
+    def __post_init__(self) -> None:
+        for name in ("x", "y", "alpha", "sigma", "mu", "x_threshold"):
+            value = float(getattr(self, name))
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+            setattr(self, name, value)
+        if self.alpha <= 0.0:
+            raise ValueError("alpha must be positive")
+        if self.mu <= 0.0:
+            raise ValueError("mu must be positive")
+
+    @staticmethod
+    def _validate_state(x: float, y: float) -> tuple[float, float]:
+        x_value = float(x)
+        y_value = float(y)
+        if not math.isfinite(x_value) or not math.isfinite(y_value):
+            raise FloatingPointError("Rulkov map state must be finite")
+        return x_value, y_value
+
     def step(self, current: float = 0.0) -> int:
-        x_prev = self.x
-        if self.x <= 0:
-            x_new = self.alpha / (1.0 - self.x) + self.y + current
-        elif self.x < self.alpha + self.y + current:
-            x_new = self.alpha + self.y + current
+        drive = float(current)
+        if not math.isfinite(drive):
+            raise ValueError("current must be finite")
+
+        x, y = self._validate_state(self.x, self.y)
+        x_prev = x
+        branch_boundary = self.alpha + y + drive
+        if not math.isfinite(branch_boundary):
+            raise FloatingPointError("Rulkov map branch boundary became non-finite")
+        if x <= 0:
+            denominator = 1.0 - x
+            if denominator <= 0.0 or not math.isfinite(denominator):
+                raise FloatingPointError("Rulkov map branch denominator is invalid")
+            x_new = self.alpha / denominator + y + drive
+        elif x < branch_boundary:
+            x_new = branch_boundary
         else:
             x_new = -1.0
-        y_new = self.y - self.mu * (self.x + 1.0) + self.mu * self.sigma
+        y_new = y - self.mu * (x + 1.0) + self.mu * self.sigma
+        if not math.isfinite(x_new) or not math.isfinite(y_new):
+            raise FloatingPointError("Rulkov map candidate state became non-finite")
         self.x = x_new
         self.y = y_new
         return 1 if (self.x >= self.x_threshold and x_prev < self.x_threshold) else 0

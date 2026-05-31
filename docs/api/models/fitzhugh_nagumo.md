@@ -40,10 +40,12 @@ def step(self, current: float) -> int:
 
 The baseline path is explicit Euler. The Python model also exposes
 `rk4` and `rosenbrock` integrators over the same two-state ODE. Runtime
-surfaces reject non-finite current and fail closed if the cubic term
-overflows or a derivative/state update becomes non-finite; the previous
-state is preserved on rejection. Julia, Go, and Rust safety counterparts
-use the same documented state equation and no-reset threshold crossing.
+surfaces validate state, positive `b`, `epsilon`, and timestep
+contracts before integration, reject non-finite current, and fail closed
+if the cubic term overflows or a derivative/state update becomes
+non-finite; the previous state is preserved on rejection. Julia, Go, and
+Rust safety counterparts use the same documented state equation,
+candidate-state validation, and no-reset threshold crossing.
 
 ---
 
@@ -196,6 +198,10 @@ which all qualitative analysis begins.
 - **No clipping.** The cubic naturally bounds v. No explicit bounds needed.
 - **dt = 0.1:** Adequate for the smooth polynomial dynamics. No stiffness
   issues (unlike HH with fast Na⁺ kinetics).
+- **Fail-closed candidate updates.** Each runtime surface validates the
+  current state, runtime drive, and candidate `(v, w)` before mutation,
+  so non-finite cubic overflow or corrupted runtime parameters cannot
+  poison the stored state.
 - **ε = 0.08:** Creates a 12.5:1 timescale separation. Small ε makes
   the w dynamics very slow → may need many steps for w to equilibrate.
 - **No reset mechanism.** The model never resets — v oscillates

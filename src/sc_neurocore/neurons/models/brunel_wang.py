@@ -9,9 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
-
-import numpy as np
+import math
 
 
 @dataclass
@@ -48,15 +46,85 @@ class BrunelWangNeuron:
     dt: float = 0.1
 
     def __post_init__(self) -> None:
+        for name in (
+            "v",
+            "v_rest",
+            "v_reset",
+            "v_threshold",
+            "tau_m",
+            "tau_ref",
+            "tau_ampa",
+            "tau_nmda_rise",
+            "tau_nmda_decay",
+            "tau_gaba",
+            "g_ampa_ext",
+            "g_ampa_rec",
+            "g_nmda",
+            "g_gaba",
+            "v_ampa",
+            "v_nmda",
+            "v_gaba",
+            "C_m",
+            "mg_conc",
+            "dt",
+        ):
+            value = float(getattr(self, name))
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+            setattr(self, name, value)
+        for name in (
+            "tau_m",
+            "tau_ref",
+            "tau_ampa",
+            "tau_nmda_rise",
+            "tau_nmda_decay",
+            "tau_gaba",
+            "C_m",
+            "dt",
+        ):
+            if getattr(self, name) <= 0.0:
+                raise ValueError(f"{name} must be positive")
+        for name in ("g_ampa_ext", "g_ampa_rec", "g_nmda", "g_gaba", "mg_conc"):
+            if getattr(self, name) < 0.0:
+                raise ValueError(f"{name} must be non-negative")
+        self._validate_voltage(self.v)
         self._s_ampa = 0.0
         self._s_nmda = 0.0
         self._x_nmda = 0.0
         self._s_gaba = 0.0
         self._ref_remaining = 0.0
 
-    def _nmda_voltage_dep(self, v: float) -> Any:
+    @staticmethod
+    def _validate_voltage(v: float) -> float:
+        voltage = float(v)
+        if not math.isfinite(voltage):
+            raise FloatingPointError("Brunel-Wang voltage state must be finite")
+        return voltage
+
+    @staticmethod
+    def _validate_nonnegative(name: str, value: float) -> float:
+        scalar = float(value)
+        if not math.isfinite(scalar) or scalar < 0.0:
+            raise ValueError(f"{name} must be finite and non-negative")
+        return scalar
+
+    @staticmethod
+    def _validate_gate(name: str, value: float) -> float:
+        gate = float(value)
+        if not math.isfinite(gate) or gate < 0.0 or gate > 1.0:
+            raise ValueError(f"{name} must be finite and in [0, 1]")
+        return gate
+
+    def _nmda_voltage_dep(self, v: float) -> float:
         """Mg2+ block factor: 1 / (1 + [Mg2+]/3.57 * exp(-0.062 * V))."""
-        return 1.0 / (1.0 + self.mg_conc / 3.57 * np.exp(-0.062 * v))
+        voltage = self._validate_voltage(v)
+        exponent = -0.062 * voltage
+        if exponent > 700.0:
+            return 0.0
+        factor = 1.0 / (1.0 + self.mg_conc / 3.57 * math.exp(exponent))
+        if not math.isfinite(factor) or factor < 0.0 or factor > 1.0:
+            raise FloatingPointError("Brunel-Wang NMDA voltage factor is invalid")
+        return factor
 
     def step(
         self,
@@ -74,22 +142,33 @@ class BrunelWangNeuron:
         s_nmda_rec : recurrent NMDA synaptic variable [0, 1]
         s_gaba : inhibitory GABA synaptic variable [0, 1]
         """
-        if self._ref_remaining > 0:
-            self._ref_remaining -= self.dt
+        ampa_ext = self._validate_nonnegative("i_ampa_ext", i_ampa_ext)
+        ampa_rec = self._validate_gate("s_ampa_rec", s_ampa_rec)
+        nmda_rec = self._validate_gate("s_nmda_rec", s_nmda_rec)
+        gaba = self._validate_gate("s_gaba", s_gaba)
+        v = self._validate_voltage(self.v)
+        ref_remaining = self._validate_nonnegative("_ref_remaining", self._ref_remaining)
+
+        if ref_remaining > 0:
+            self._ref_remaining = max(0.0, ref_remaining - self.dt)
             return 0
 
         # Synaptic currents
-        i_ampa = -self.g_ampa_ext * (self.v - self.v_ampa) * i_ampa_ext
-        i_ampa += -self.g_ampa_rec * (self.v - self.v_ampa) * s_ampa_rec
-        i_nmda = -self.g_nmda * self._nmda_voltage_dep(self.v) * (self.v - self.v_nmda) * s_nmda_rec
-        i_gaba = -self.g_gaba * (self.v - self.v_gaba) * s_gaba
+        i_ampa = -self.g_ampa_ext * (v - self.v_ampa) * ampa_ext
+        i_ampa += -self.g_ampa_rec * (v - self.v_ampa) * ampa_rec
+        i_nmda = -self.g_nmda * self._nmda_voltage_dep(v) * (v - self.v_nmda) * nmda_rec
+        i_gaba = -self.g_gaba * (v - self.v_gaba) * gaba
 
         # Membrane dynamics
-        i_leak = -(self.v - self.v_rest) / self.tau_m
+        i_leak = -(v - self.v_rest) / self.tau_m
         dv = (i_leak + (i_ampa + i_nmda + i_gaba) / self.C_m) * self.dt
-        self.v += dv
+        next_v = v + dv
+        if not all(math.isfinite(term) for term in (i_ampa, i_nmda, i_gaba, i_leak, dv, next_v)):
+            raise FloatingPointError("Brunel-Wang membrane candidate became non-finite")
 
-        if self.v >= self.v_threshold:
+        self.v = next_v
+
+        if next_v >= self.v_threshold:
             self.v = self.v_reset
             self._ref_remaining = self.tau_ref
             return 1

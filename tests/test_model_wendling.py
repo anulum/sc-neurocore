@@ -14,6 +14,7 @@ Pipeline limited: float return. Performance: ~59K isolation steps/s."""
 
 from __future__ import annotations
 
+import math
 import time
 
 import numpy as np
@@ -56,8 +57,11 @@ class TestWendlingIsolation:
         n = WendlingNeuron()
         for _ in range(1000):
             n.step(220.0)
+        n.y4 = 1.0
+        n.y9 = -1.0
         n.reset()
         assert n.y0 == 0.0 and n.y1 == 0.0 and n.y2 == 0.0 and n.y3 == 0.0
+        assert n.y4 == 0.0 and n.y9 == 0.0
 
 
 class TestWendlingSigmoid:
@@ -79,6 +83,12 @@ class TestWendlingSigmoid:
         for x in [-100, 0, 6, 100]:
             s = float(n._sigmoid(x))
             assert 0.0 <= s <= 2 * n.e0 + 0.01
+
+    def test_sigmoid_extreme_inputs_remain_bounded(self):
+        n = WendlingNeuron()
+
+        assert 0.0 <= n._sigmoid(-1e6) < 1e-100
+        assert n._sigmoid(1e6) == pytest.approx(2 * n.e0)
 
 
 class TestWendlingEEGOutput:
@@ -162,6 +172,90 @@ class TestWendlingParameters:
             trace = [n.step(220.0) for _ in range(200)]
             traces.append(trace)
         assert traces[0] == traces[1]
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"dt": 0.0},
+            {"a_exc": 0.0},
+            {"b_fast": 0.0},
+            {"g_slow": 0.0},
+            {"a_rate": 0.0},
+            {"b_rate": 0.0},
+            {"g_rate": 0.0},
+            {"c": -1.0},
+            {"e0": 0.0},
+            {"r": 0.0},
+            {"y0": math.nan},
+            {"v0": math.inf},
+        ],
+    )
+    def test_invalid_physical_configuration_is_rejected(self, kwargs: dict[str, float]):
+        with pytest.raises(ValueError):
+            WendlingNeuron(**kwargs)
+
+    def test_non_finite_external_input_does_not_mutate_state(self):
+        n = WendlingNeuron()
+        before = (
+            n.y0,
+            n.y5,
+            n.y1,
+            n.y6,
+            n.y2,
+            n.y7,
+            n.y3,
+            n.y8,
+            n.y4,
+            n.y9,
+        )
+
+        with pytest.raises(ValueError):
+            n.step(math.nan)
+
+        assert (
+            n.y0,
+            n.y5,
+            n.y1,
+            n.y6,
+            n.y2,
+            n.y7,
+            n.y3,
+            n.y8,
+            n.y4,
+            n.y9,
+        ) == before
+
+    def test_corrupted_runtime_state_does_not_mutate_state(self):
+        n = WendlingNeuron()
+        n.y6 = math.inf
+        before = (
+            n.y0,
+            n.y5,
+            n.y1,
+            n.y6,
+            n.y2,
+            n.y7,
+            n.y3,
+            n.y8,
+            n.y4,
+            n.y9,
+        )
+
+        with pytest.raises(ValueError):
+            n.step(220.0)
+
+        assert (
+            n.y0,
+            n.y5,
+            n.y1,
+            n.y6,
+            n.y2,
+            n.y7,
+            n.y3,
+            n.y8,
+            n.y4,
+            n.y9,
+        ) == before
 
 
 class TestWendlingPerformance:

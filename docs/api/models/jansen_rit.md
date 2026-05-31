@@ -38,6 +38,10 @@ Output: $\text{EEG}(t) = y_1(t) - y_2(t)$ (pyramidal PSP).
 - **Three regimes:** Low p → fixed point, medium p → alpha oscillation,
   high p → saturated oscillation.
 - **Deterministic:** No noise in standard formulation.
+- **Fail-closed integration:** parameters, external input, current state, and
+  candidate next state are validated before mutation. The sigmoid uses an
+  overflow-stable scalar form so finite extreme drives stay bounded in
+  `[0, 2e0]`.
 
 ## Infrastructure Pipeline
 
@@ -46,7 +50,9 @@ JansenRitUnit
 ├── step(p_ext) → float (EEG voltage)
 ├── Population: works (no spike output)
 ├── Verilog: 6 state regs + 3 sigmoid LUTs, ~200 LUTs
-└── Rust: supported via NeuronVariant
+├── Go service: mirrors EEG proxy stepping and validation
+├── Julia kernel: mirrors EEG proxy stepping and validation
+└── Rust safety: mirrors validation and candidate-step semantics
 ```
 
 ## Test Coverage
@@ -54,8 +60,9 @@ JansenRitUnit
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
 | Isolation | 11 | construction, step returns float, oscillation, bounded, zero drive stable, 6 states, sigmoid, drive effect, stability (6 vars), reset, deterministic |
+| Numerical safety | 4 | overflow-stable sigmoid, invalid parameter rejection, non-finite input/state no-mutation guards |
 | Network | 1 | Population |
-| **Total** | **12** | |
+| **Total** | **16** | |
 
 
 ---
@@ -106,5 +113,7 @@ State returns to initial values after `reset()`.
 
 1. Throughput: ~52K steps/s (Python, single-thread)
 2. All pipeline stages verified green
-3. Rust parity: EXACT
-4. Numerical stability confirmed over 20K steps
+3. Polyglot safety mirrors exist for Go, Julia, and Rust safety surfaces.
+4. Numerical stability confirmed over 20K steps.
+5. Non-finite state/input and invalid parameter contracts now fail before
+   mutation.

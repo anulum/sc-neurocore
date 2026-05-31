@@ -37,8 +37,12 @@ func TestLarterBreakspearStepAdvancesFiniteVoltage(t *testing.T) {
 func TestLarterBreakspearRejectsInvalidState(t *testing.T) {
 	state := NewLarterBreakspearNeuron()
 	state.Dt = 0
+	v0, w0, z0 := state.V, state.W, state.Z
 
 	if got := state.Step(0.0); !math.IsNaN(got) {
 		t.Fatalf("expected invalid integration step to return NaN, got %v", got)
+	}
+	if state.V != v0 || state.W != w0 || state.Z != z0 {
+		t.Fatalf("invalid step mutated state: got (%v, %v, %v)", state.V, state.W, state.Z)
 	}
 }

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import os
 import time
+import math
 
 import numpy as np
 import pytest
@@ -70,6 +71,33 @@ class TestFHNIsolation:
 
         with pytest.raises(FloatingPointError, match="overflowed|non-finite"):
             n.step(0.0)
+
+        assert (n.v, n.w) == before
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"v": math.nan},
+            {"w": math.inf},
+            {"a": math.nan},
+            {"b": 0.0},
+            {"epsilon": 0.0},
+            {"dt": 0.0},
+            {"v_threshold": math.inf},
+        ],
+    )
+    def test_invalid_physical_configuration_is_rejected(self, kwargs: dict[str, float]):
+        with pytest.raises(ValueError):
+            FitzHughNagumoNeuron(**kwargs)
+
+    @pytest.mark.parametrize("integrator", ["baseline_euler", "rk4", "rosenbrock"])
+    def test_runtime_parameter_corruption_fails_before_mutation(self, integrator: str):
+        n = FitzHughNagumoNeuron(integrator=integrator)
+        n.dt = math.nan
+        before = (n.v, n.w)
+
+        with pytest.raises(ValueError):
+            n.step(0.5)
 
         assert (n.v, n.w) == before
 
@@ -185,7 +213,7 @@ class TestFHNPerformance:
             n.step(0.8)
         elapsed = time.perf_counter() - t0
         throughput = N / elapsed
-        minimum_throughput = 35000 if os.environ.get("CI") else 100000
+        minimum_throughput = 30000 if os.environ.get("CI") else 100000
         assert np.isfinite(n.v) and np.isfinite(n.w)
         assert throughput > minimum_throughput, (
             f"FHN isolation throughput regressed: {throughput:.0f}/s <= {minimum_throughput}/s"

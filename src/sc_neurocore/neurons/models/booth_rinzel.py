@@ -9,7 +9,43 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import numpy as np
+import math
+
+
+_STATE_NAMES = ("vs", "vd", "h", "n", "q", "ca")
+_PARAM_NAMES = (
+    "p",
+    "gc",
+    "g_na",
+    "g_k",
+    "g_ca",
+    "g_kca",
+    "g_l",
+    "e_na",
+    "e_k",
+    "e_ca",
+    "e_l",
+    "c_m",
+    "alpha_ca",
+    "k_ca",
+    "f_ca",
+    "dt",
+    "v_threshold",
+)
+_STRICTLY_POSITIVE_PARAMS = (
+    "gc",
+    "g_na",
+    "g_k",
+    "g_ca",
+    "g_kca",
+    "g_l",
+    "c_m",
+    "alpha_ca",
+    "k_ca",
+    "f_ca",
+    "dt",
+)
+_GATE_NAMES = ("h", "n", "q")
 
 
 @dataclass
@@ -48,61 +84,114 @@ class BoothRinzelNeuron:
     dt: float = 0.025
     v_threshold: float = -20.0
 
+    def __post_init__(self) -> None:
+        self._validate_configuration(coerce=True)
+
+    def _validate_configuration(self, *, coerce: bool = False) -> None:
+        for name in (*_STATE_NAMES, *_PARAM_NAMES):
+            value = float(getattr(self, name))
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+            if coerce:
+                setattr(self, name, value)
+        for name in _STRICTLY_POSITIVE_PARAMS:
+            if getattr(self, name) <= 0.0:
+                raise ValueError(f"{name} must be positive")
+        if not 0.0 < self.p < 1.0:
+            raise ValueError("p must be in (0, 1)")
+        if self.ca < 0.0:
+            raise ValueError("ca must be non-negative")
+        for name in _GATE_NAMES:
+            if not 0.0 <= getattr(self, name) <= 1.0:
+                raise ValueError(f"{name} gate must remain in [0, 1]")
+
     @staticmethod
     def _safe_exp(x: float) -> float:
-        return float(np.exp(np.clip(x, -500, 500)))
+        return math.exp(max(-500.0, min(500.0, x)))
+
+    @staticmethod
+    def _clip(value: float, lower: float, upper: float) -> float:
+        return max(lower, min(upper, value))
+
+    @staticmethod
+    def _validate_candidate(
+        values: tuple[float, float, float, float, float, float],
+    ) -> tuple[float, float, float, float, float, float]:
+        if not all(math.isfinite(value) for value in values):
+            raise FloatingPointError("Booth-Rinzel candidate state became non-finite")
+        vs, vd, h, n, q, ca = values
+        if ca < 0.0:
+            raise FloatingPointError("Booth-Rinzel calcium concentration became negative")
+        for name, value in zip(_GATE_NAMES, (h, n, q)):
+            if not 0.0 <= value <= 1.0:
+                raise FloatingPointError(f"{name} gate left [0, 1]")
+        if not (-200.0 <= vs <= 100.0 and -200.0 <= vd <= 100.0):
+            raise FloatingPointError("Booth-Rinzel voltage left safety envelope")
+        return values
+
+    def _substep(
+        self, vs: float, vd: float, h: float, n: float, q: float, ca: float, current: float
+    ) -> tuple[float, float, float, float, float, float]:
+        m_inf = 1.0 / (1.0 + self._safe_exp(-(vs + 35.0) / 7.8))
+        h_inf = 1.0 / (1.0 + self._safe_exp((vs + 55.0) / 7.0))
+        tau_h = 30.0 / (
+            self._safe_exp((vs + 50.0) / 15.0) + self._safe_exp(-(vs + 50.0) / 16.0) + 1e-12
+        )
+        n_inf = 1.0 / (1.0 + self._safe_exp(-(vs + 28.0) / 15.0))
+        tau_n = 7.0 / (
+            self._safe_exp((vs + 40.0) / 40.0) + self._safe_exp(-(vs + 40.0) / 50.0) + 1e-12
+        )
+
+        next_h = self._clip(h + (h_inf - h) / tau_h * self.dt, 0.0, 1.0)
+        next_n = self._clip(n + (n_inf - n) / tau_n * self.dt, 0.0, 1.0)
+
+        i_na = self.g_na * m_inf**3 * next_h * (vs - self.e_na)
+        i_k = self.g_k * next_n**4 * (vs - self.e_k)
+        i_ls = self.g_l * (vs - self.e_l)
+        i_coup_s = self.gc * (vs - vd) / self.p
+        dvs = (-i_na - i_k - i_ls - i_coup_s + current / self.p) / self.c_m * self.dt
+
+        s_inf = 1.0 / (1.0 + self._safe_exp(-(vd + 22.0) / 5.0))
+        q_inf = 1.0 / (1.0 + self._safe_exp(-(vd + 35.0) / 2.0))
+        next_q = self._clip(q + (q_inf - q) / 400.0 * self.dt, 0.0, 1.0)
+
+        i_ca = self.g_ca * s_inf**2 * (vd - self.e_ca)
+        chi = min(ca / 250.0, 1.0)
+        i_kca = self.g_kca * chi * (vd - self.e_k)
+        i_ld = self.g_l * (vd - self.e_l)
+        i_coup_d = self.gc * (vd - vs) / (1.0 - self.p)
+        dvd = (-i_ca - i_kca - i_ld - i_coup_d) / self.c_m * self.dt
+        next_ca = max(0.0, ca + self.f_ca * (-self.alpha_ca * i_ca - self.k_ca * ca) * self.dt)
+
+        return self._validate_candidate(
+            (
+                self._clip(vs + dvs, -200.0, 100.0),
+                self._clip(vd + dvd, -200.0, 100.0),
+                next_h,
+                next_n,
+                next_q,
+                next_ca,
+            )
+        )
 
     def step(self, current: float) -> int:
+        current = float(current)
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+        self._validate_configuration()
+
         vs_prev = self.vs
+        candidate: tuple[float, float, float, float, float, float] = (
+            self.vs,
+            self.vd,
+            self.h,
+            self.n,
+            self.q,
+            self.ca,
+        )
         for _ in range(4):
-            # Soma: fast Na + delayed-rectifier K
-            m_inf = 1.0 / (1.0 + self._safe_exp(-(self.vs + 35.0) / 7.8))
-            h_inf = 1.0 / (1.0 + self._safe_exp((self.vs + 55.0) / 7.0))
-            tau_h = 30.0 / (
-                self._safe_exp((self.vs + 50.0) / 15.0)
-                + self._safe_exp(-(self.vs + 50.0) / 16.0)
-                + 1e-12
-            )
-            n_inf = 1.0 / (1.0 + self._safe_exp(-(self.vs + 28.0) / 15.0))
-            tau_n = 7.0 / (
-                self._safe_exp((self.vs + 40.0) / 40.0)
-                + self._safe_exp(-(self.vs + 40.0) / 50.0)
-                + 1e-12
-            )
-
-            self.h += (h_inf - self.h) / tau_h * self.dt
-            self.h = float(np.clip(self.h, 0, 1))
-            self.n += (n_inf - self.n) / tau_n * self.dt
-            self.n = float(np.clip(self.n, 0, 1))
-
-            i_na = self.g_na * m_inf**3 * self.h * (self.vs - self.e_na)
-            i_k = self.g_k * self.n**4 * (self.vs - self.e_k)
-            i_ls = self.g_l * (self.vs - self.e_l)
-            i_coup_s = self.gc * (self.vs - self.vd) / self.p
-
-            dvs = (-i_na - i_k - i_ls - i_coup_s + current / self.p) / self.c_m * self.dt
-
-            # Dendrite: Ca + KCa
-            s_inf = 1.0 / (1.0 + self._safe_exp(-(self.vd + 22.0) / 5.0))
-            q_inf = 1.0 / (1.0 + self._safe_exp(-(self.vd + 35.0) / 2.0))
-            tau_q = 400.0
-
-            self.q += (q_inf - self.q) / tau_q * self.dt
-            self.q = float(np.clip(self.q, 0, 1))
-
-            i_ca = self.g_ca * s_inf**2 * (self.vd - self.e_ca)
-            chi = min(self.ca / 250.0, 1.0)
-            i_kca = self.g_kca * chi * (self.vd - self.e_k)
-            i_ld = self.g_l * (self.vd - self.e_l)
-            i_coup_d = self.gc * (self.vd - self.vs) / (1.0 - self.p)
-
-            dvd = (-i_ca - i_kca - i_ld - i_coup_d) / self.c_m * self.dt
-            self.ca += self.f_ca * (-self.alpha_ca * i_ca - self.k_ca * self.ca) * self.dt
-            self.ca = max(self.ca, 0.0)
-
-            self.vs = float(np.clip(self.vs + dvs, -200, 100))
-            self.vd = float(np.clip(self.vd + dvd, -200, 100))
-
+            candidate = self._substep(*candidate, current)
+        self.vs, self.vd, self.h, self.n, self.q, self.ca = candidate
         return 1 if (self.vs >= self.v_threshold and vs_prev < self.v_threshold) else 0
 
     def reset(self) -> None:

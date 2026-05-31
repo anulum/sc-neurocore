@@ -39,8 +39,13 @@ $$m_K(V)=0.5(1+\tanh((V-v_0)/0.3))$$
 - Continuous output: `step()` returns voltage as a `float`, not a binary spike indicator.
 - Default integration: fourth-order Runge-Kutta for the coupled conductance ODEs.
 - Baseline integration: explicit Euler remains available with `integrator="euler"` for regression comparisons.
-- Fail-closed validation: construction rejects non-finite and non-physical time-step, conductance, and rate parameters; `step()` rejects non-finite coupling.
-- State safety: Python, Go, Rust, and Julia surfaces apply the same tanh gates and RK4 state equations for this model surface.
+- Fail-closed validation: construction and runtime entry reject non-finite
+  and non-physical timestep, conductance, and rate parameters; `step()`
+  rejects non-finite coupling.
+- State safety: Python, Go, Rust, and Julia surfaces apply the same tanh
+  gates and RK4 state equations, validate candidate `(v, w, z)` before
+  mutation, and preserve the previous state when the potassium gate leaves
+  `[0, 1]` or any candidate becomes non-finite.
 
 ## Test coverage
 
@@ -52,6 +57,7 @@ The module-specific test file is `tests/test_model_larter_breakspear.py`.
 | Analytical gates | exact tanh midpoint contracts for Ca, Na, and K gates |
 | Dynamics | oscillatory voltage, coupling response, RK4 accuracy against a substepped reference, finite coupling sweep |
 | Parameters | conductance, drive, and self-excitation sweeps plus fail-closed invalid-parameter boundaries |
+| Numerical safety | runtime parameter corruption and potassium-gate candidate rejection before state mutation |
 | Pipeline | population, projection wiring, network execution, monitor contract |
 | Performance guard | module-owned throughput thresholds for isolation and network execution |
 

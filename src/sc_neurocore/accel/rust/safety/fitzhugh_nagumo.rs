@@ -33,19 +33,19 @@ impl FitzHughNagumoNeuron {
     }
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
-        if !(self.v.is_finite() && self.w.is_finite() && i_ext.is_finite()) {
-            panic!("FitzHugh-Nagumo state/current must be finite");
+        if !(i_ext.is_finite() && validate_fitzhugh_nagumo(self)) {
+            return -1;
         }
         let v_prev = self.v;
         let dv = (self.v - self.v.powi(3) / 3.0 - self.w + i_ext) * self.dt;
         let dw = self.epsilon * (self.v + self.a - self.b * self.w) * self.dt;
-        let new_v = self.v + dv;
-        let new_w = self.w + dw;
-        if !(new_v.is_finite() && new_w.is_finite()) {
-            panic!("FitzHugh-Nagumo state became non-finite");
+        let mut next = self.clone();
+        next.v += dv;
+        next.w += dw;
+        if !validate_fitzhugh_nagumo(&next) {
+            return -1;
         }
-        self.v = new_v;
-        self.w = new_w;
+        *self = next;
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
@@ -61,6 +61,8 @@ impl FitzHughNagumoNeuron {
         self.a = 0.7_f64;
         self.b = 0.8_f64;
         self.epsilon = 0.08_f64;
+        self.dt = 0.1_f64;
+        self.v_threshold = 1.0_f64;
     }
 }
 
@@ -93,5 +95,14 @@ mod tests {
         let mut state = FitzHughNagumoNeuron::new();
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_fitzhugh_nagumo_rejects_invalid_without_mutation() {
+        let mut state = FitzHughNagumoNeuron::new();
+        let before = state.clone();
+        assert_eq!(state.step(f64::NAN), -1);
+        assert_eq!(state.v, before.v);
+        assert_eq!(state.w, before.w);
     }
 }
