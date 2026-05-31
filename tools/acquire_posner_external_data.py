@@ -40,6 +40,7 @@ from orca_posner_hf import (  # noqa: E402
     get_all_coords_flat,
     group_by_site,
     parse_orca_hf_output,
+    read_xyz_phosphorus_coords,
 )
 
 _SPIN_KEYS = ("Axx", "Ayy", "Azz", "Axy", "Axz", "Ayz")
@@ -481,6 +482,106 @@ def _tensor_only(src: dict[str, Any]) -> dict[str, float]:
     return {key: float(src[key]) for key in _SPIN_KEYS}
 
 
+def _last_float(pattern: str, text: str) -> float | None:
+    matches = re.findall(pattern, text, flags=re.MULTILINE)
+    if not matches:
+        return None
+    return float(matches[-1])
+
+
+def parse_neutral_optimization_status(
+    output: Path,
+    *,
+    exit_status: int | None = None,
+) -> dict[str, Any]:
+    """Parse neutral ORCA optimization status without promoting runtime data."""
+    text = output.read_text(encoding="utf-8", errors="replace")
+    cycles = [int(value) for value in re.findall(r"GEOMETRY OPTIMIZATION CYCLE\s+(\d+)", text)]
+    energies = re.findall(r"FINAL SINGLE POINT ENERGY\s+([-+0-9.Ee]+)", text)
+    scf_converged = len(re.findall(r"SCF CONVERGED AFTER", text))
+    geometry_converged = "THE OPTIMIZATION HAS CONVERGED" in text
+    terminated_normally = "ORCA TERMINATED NORMALLY" in text
+    error_termination = "ORCA finished by error termination" in text
+    final_geometry_block = _parse_last_geometry_convergence_block(text)
+    accepted = bool(
+        terminated_normally
+        and geometry_converged
+        and not error_termination
+        and (exit_status in (None, 0))
+    )
+    return {
+        "orca_output": str(output),
+        "exit_status": exit_status,
+        "accepted_neutral_geometry": accepted,
+        "acceptance_rule": (
+            "accepted only when ORCA exits with status 0, prints "
+            "`THE OPTIMIZATION HAS CONVERGED`, and prints `ORCA TERMINATED NORMALLY`"
+        ),
+        "markers": {
+            "geometry_optimization_cycle_count": len(cycles),
+            "last_geometry_optimization_cycle": cycles[-1] if cycles else None,
+            "scf_converged_count": scf_converged,
+            "final_single_point_energy_count": len(energies),
+            "the_optimization_has_converged": geometry_converged,
+            "orca_terminated_normally": terminated_normally,
+            "orca_error_termination": error_termination,
+            "error_token_count": text.count("ERROR"),
+        },
+        "final_energy_Eh": float(energies[-1]) if energies else None,
+        "total_run_time": _parse_total_run_time(text),
+        "final_geometry_convergence": final_geometry_block,
+    }
+
+
+def _parse_total_run_time(text: str) -> str | None:
+    match = re.search(r"TOTAL RUN TIME:\s*(.+)", text)
+    return match.group(1).strip() if match else None
+
+
+def _parse_last_geometry_convergence_block(text: str) -> dict[str, Any] | None:
+    marker = "Geometry convergence"
+    idx = text.rfind(marker)
+    if idx < 0:
+        return None
+    tail = text[idx:].splitlines()
+    rows: dict[str, dict[str, float | bool]] = {}
+    row_re = re.compile(
+        r"^\s*(Energy change|RMS gradient|MAX gradient|RMS step|MAX step)\s+"
+        r"([-+0-9.Ee]+)\s+([-+0-9.Ee]+)\s+(YES|NO)\s*$"
+    )
+    for line in tail:
+        match = row_re.match(line)
+        if match:
+            rows[match.group(1)] = {
+                "value": float(match.group(2)),
+                "tolerance": float(match.group(3)),
+                "converged": match.group(4) == "YES",
+            }
+        if rows and line.strip().startswith("Max(Bonds)"):
+            break
+    if not rows:
+        return None
+    return {
+        "all_items_converged": all(bool(row["converged"]) for row in rows.values()),
+        "items": rows,
+    }
+
+
+def _pp_distances_from_xyz(xyz_path: Path) -> list[dict[str, float | str]]:
+    coords = read_xyz_phosphorus_coords(xyz_path)
+    names = sorted(coords)
+    out = []
+    for i, a in enumerate(names):
+        for b in names[i + 1 :]:
+            out.append(
+                {
+                    "pair": f"{a}_{b}",
+                    "distance_A": float(np.linalg.norm(coords[b] - coords[a])),
+                }
+            )
+    return sorted(out, key=lambda row: float(row["distance_A"]))
+
+
 def _ca_label_by_atom_index() -> dict[int, str]:
     labels: dict[int, str] = {}
     for idx, (elem, _coord) in enumerate(get_all_coords_flat(), start=1):
@@ -490,6 +591,87 @@ def _ca_label_by_atom_index() -> dict[int, str]:
             else:
                 labels[idx] = f"Ca{idx - 1}"
     return labels
+
+
+def parse_neutral_opt(args: argparse.Namespace) -> int:
+    """Process a completed neutral ORCA optimization into curated evidence."""
+    output = Path(args.output)
+    xyz = Path(args.optimized_xyz) if args.optimized_xyz else None
+    exit_status = None
+    if args.exit_status:
+        exit_text = Path(args.exit_status).read_text(encoding="utf-8", errors="replace").strip()
+        exit_status = int(exit_text)
+    status = parse_neutral_optimization_status(output, exit_status=exit_status)
+    if args.source_label:
+        status["orca_output"] = args.source_label
+
+    out = Path(args.out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    geometry_payload: dict[str, Any] = {
+        "schema": "sc-neurocore.posner-neutral-optimization.v1",
+        "created_utc": _now_stamp(),
+        "source": "ORCA neutral closed-shell geometry optimization",
+        "not_runtime_hyperfine_data": True,
+        **status,
+    }
+    if xyz is not None:
+        copied_xyz = out / "neutral_endpoint.xyz"
+        shutil.copyfile(xyz, copied_xyz)
+        geometry_payload["optimized_xyz"] = str(copied_xyz)
+        geometry_payload["phosphorus_distances_A"] = _pp_distances_from_xyz(copied_xyz)
+        geometry_payload["nuclear_dipolar_pairs"] = compute_qubit_dipolar_tensor_table_from_xyz(
+            copied_xyz,
+            a_ref_Hz=args.a_ref_mhz * 1e6,
+        )
+        geometry_payload["nuclear_dipolar_a_ref_MHz"] = args.a_ref_mhz
+
+    _write(out / "neutral_geometry.json", json.dumps(geometry_payload, indent=2) + "\n")
+
+    missing_required = [
+        "hf.site1",
+        "hf.site2",
+        "ca_electron_map",
+        "incorporation_tensors",
+        "transport_depolarizing_rates",
+        "cage_dephasing_rate",
+    ]
+    extended_payload = {
+        "schema": "sc-neurocore.posner-extended-geometry-partial.v1",
+        "created_utc": _now_stamp(),
+        "source": "neutral ORCA endpoint geometry only",
+        "accepted_neutral_geometry": status["accepted_neutral_geometry"],
+        "missing_required_for_runtime": missing_required,
+        "not_runtime_data": True,
+    }
+    if xyz is not None:
+        extended_payload["optimized_xyz"] = str(out / "neutral_endpoint.xyz")
+        extended_payload["nuclear_dipolar_pairs"] = geometry_payload["nuclear_dipolar_pairs"]
+    _write(out / "extended.geometry.partial.json", json.dumps(extended_payload, indent=2) + "\n")
+
+    readme_lines = [
+        "# ML350 Posner Neutral ORCA Endpoint",
+        "",
+        "This package is curated evidence from the ML350 neutral closed-shell ORCA run.",
+        "It is not runtime hyperfine data and must not be used as `hf.json`.",
+        "",
+        f"- ORCA output: `{status['orca_output']}`",
+        f"- Exit status: `{exit_status}`",
+        f"- Accepted neutral geometry: `{status['accepted_neutral_geometry']}`",
+        f"- Last optimization cycle: `{status['markers']['last_geometry_optimization_cycle']}`",
+        f"- Final energy: `{status['final_energy_Eh']}` Eh",
+        f"- Normal termination marker: `{status['markers']['orca_terminated_normally']}`",
+        f"- Geometry convergence marker: `{status['markers']['the_optimization_has_converged']}`",
+        "",
+        "The original promotion gate remains fail-closed: neutral geometry is accepted",
+        "only when both `THE OPTIMIZATION HAS CONVERGED` and",
+        "`ORCA TERMINATED NORMALLY` are present with exit status 0.",
+        "",
+    ]
+    _write(out / "README.md", "\n".join(readme_lines))
+
+    print(f"Wrote {out / 'neutral_geometry.json'}")
+    print(f"Wrote {out / 'extended.geometry.partial.json'}")
+    return 0
 
 
 def parse_orca(args: argparse.Namespace) -> int:
@@ -782,6 +964,27 @@ def main() -> int:
         ),
     )
     p_parse.set_defaults(func=parse_orca)
+
+    p_neutral = sub.add_parser(
+        "parse-neutral-opt",
+        help="parse a neutral ORCA optimization endpoint without creating runtime HFC data",
+    )
+    p_neutral.add_argument("output")
+    p_neutral.add_argument("--optimized-xyz", default=None)
+    p_neutral.add_argument("--exit-status", default=None)
+    p_neutral.add_argument(
+        "--source-label",
+        default=None,
+        help="Stable provenance label/path for the original ORCA output",
+    )
+    p_neutral.add_argument("--out-dir", default=str(_DEFAULT_OUT / "ml350" / "neutral_latest"))
+    p_neutral.add_argument(
+        "--a-ref-mhz",
+        type=float,
+        default=7080.0,
+        help="Reference scale for geometry-only 31P dipolar tensors until HFC a_ref exists",
+    )
+    p_neutral.set_defaults(func=parse_neutral_opt)
 
     p_ibm = sub.add_parser("acquire-ibm", help="download IBM backend calibration")
     p_ibm.add_argument("--backend", default="ibm_fez")

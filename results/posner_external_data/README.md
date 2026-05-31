@@ -55,6 +55,10 @@ traceable molecular and backend data rather than silent placeholders.
 - Submitted Vertex r4 with isolated output, root-safe OpenMPI settings, PRRTE
   oversubscription settings, captured ORCA stdout, and explicit marker checks
   for normal termination and geometry convergence.
+- Processed the completed ML350 r6 seeded neutral endpoint into
+  `ml350/20260507_r6_seeded/`. ORCA exited with status `0` and printed
+  `ORCA TERMINATED NORMALLY`, but the last geometry table still failed the
+  convergence gate and did not print `THE OPTIMIZATION HAS CONVERGED`.
 
 ## Why These Changes Matter
 
@@ -76,9 +80,38 @@ The corrected workflow enforces three gates:
 
 Until all three gates pass, results remain acquisition/preparation artifacts.
 
-## Active Vertex Run
+## ML350 r6 Seeded Neutral Endpoint
 
-The active molecular acquisition lane is Vertex r6:
+The local ML350 lane completed on 2026-05-30 after 117 geometry cycles:
+
+- Run path:
+  `/home/anulum/sc-neurocore-orca-runs/ml350_r6_seeded_20260507`
+- Method:
+  `B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 Opt Freq`
+- Charge/multiplicity: neutral closed shell, `0 1`
+- Exit status: `0`
+- Final energy: `-9954.015112995519 Eh`
+- Total runtime: `22 days 16 hours 52 minutes 5 seconds 565 msec`
+- Marker present: `ORCA TERMINATED NORMALLY`
+- Marker absent: `THE OPTIMIZATION HAS CONVERGED`
+
+Curated processing output is in `ml350/20260507_r6_seeded/`:
+
+- `neutral_geometry.json`: marker counts, final energy, final geometry
+  convergence table, endpoint P-P distances, and geometry-derived
+  orientation-specific 31P-31P dipolar tensors.
+- `extended.geometry.partial.json`: geometry-only partial extended payload with
+  the 15 tensor dipolar pairs and explicit runtime-missing fields.
+- `neutral_endpoint.xyz`: final endpoint coordinates copied from the ML350 run.
+
+This endpoint is useful for diagnosis and continuation, but it is not accepted
+as runtime molecular data. The original promotion gate remains fail-closed:
+neutral geometry requires both `THE OPTIMIZATION HAS CONVERGED` and
+`ORCA TERMINATED NORMALLY` with exit status `0`.
+
+## Vertex Run History
+
+The previous molecular acquisition lane was Vertex r6:
 
 - Job:
   `projects/144846334489/locations/europe-west4/customJobs/2516198137865961472`
@@ -96,9 +129,8 @@ The active molecular acquisition lane is Vertex r6:
   point energy `-9953.816434214637`; neither `ORCA TERMINATED NORMALLY` nor
   `THE OPTIMIZATION HAS CONVERGED` had appeared at the latest check.
 
-This run is expected to take hours. The runner uploads outputs at process exit,
-so an output prefix with only prepared input objects while the job is running is
-not itself an error.
+That cloud lane was retained only as history after the local ML350 lane became
+the preserved source of the r6 seeded endpoint.
 
 ## Molecular Data
 
@@ -226,50 +258,29 @@ Comparison plan after r6 converges:
 Detailed internal tracking is in
 `docs/internal/posner_prior_art_comparison_plan_2026-05-09.md`.
 
-## Follow-Up Tasks After Vertex r6 Completes
+## Follow-Up Tasks After ML350 r6 Endpoint Processing
 
-1. Check the final Vertex state:
-
-   ```bash
-   gcloud ai custom-jobs describe \
-     projects/144846334489/locations/europe-west4/customJobs/2516198137865961472 \
-     --project=gotm-sc-neurocore \
-     --region=europe-west4 \
-     --format='yaml(state,startTime,endTime,error)'
-   ```
-
-2. Pull the isolated r6 outputs:
-
-   ```bash
-   gcloud storage cp --recursive \
-     gs://gotm-sc-neurocore/sc-neurocore-posner-orca/20260507T032756Z-r6-resync/output \
-     results/posner_external_data/vertex/20260507T032756Z-r6-resync/
-   ```
-
-3. Inspect the runner exit status and ORCA output:
-
-   - `results/posner_external_data/vertex/20260507T032756Z-r6-resync/output/exit_status.txt`
-   - `results/posner_external_data/vertex/20260507T032756Z-r6-resync/output/posner_vertex_neutral_opt_20260507T032756Z_r6.out`
-
-4. Accept the neutral geometry only if both markers are present:
+1. Continue the neutral optimization from the ML350 endpoint `.gbw`/`.xyz`
+   rather than restarting from the original generated geometry.
+2. Accept the neutral geometry only if both markers are present:
 
    - `ORCA TERMINATED NORMALLY`
    - `THE OPTIMIZATION HAS CONVERGED`
 
-5. If r6 converged, archive the final neutral XYZ and use it as the starting
+3. If a continuation converges, archive the final neutral XYZ and use it as the starting
    point for the cation-radical doublet workflow:
 
    - vertical radical EPR at neutral geometry;
    - relaxed cation-radical optimization;
    - relaxed cation-radical EPR.
 
-6. Parse the selected completed EPR output with the geometry used for that EPR
+4. Parse the selected completed EPR output with the geometry used for that EPR
    calculation, then validate `hf.json` and complete `extended.json`.
 
-7. Rotate or repair the SC-NeuroCore IBM Runtime credential, then acquire an
+5. Rotate or repair the SC-NeuroCore IBM Runtime credential, then acquire an
    IBM backend calibration snapshot.
 
-8. Only after molecular JSON validation and IBM calibration acquisition, run
+6. Only after molecular JSON validation and IBM calibration acquisition, run
    simulator parity checks and then decide whether to spend IBM QPU budget.
 
 ## Failure Handling
