@@ -12,13 +12,25 @@ import (
 	"testing"
 )
 
-func TestTermanWangCurrentBalance(t *testing.T) {
+func termanWangRK4Reference(s *TermanWangOscillatorState, current float64) (float64, float64) {
+	rhs := func(v, w float64) (float64, float64) {
+		f := 3.0*v - v*v*v + 2.0
+		g := s.Alpha * (1.0 + math.Tanh(v/s.Beta))
+		return f - w + current + s.Rho, s.Epsilon * (g - w)
+	}
+	dt := s.Dt
+	k1v, k1w := rhs(s.V, s.W)
+	k2v, k2w := rhs(s.V+0.5*dt*k1v, s.W+0.5*dt*k1w)
+	k3v, k3w := rhs(s.V+0.5*dt*k2v, s.W+0.5*dt*k2w)
+	k4v, k4w := rhs(s.V+dt*k3v, s.W+dt*k3w)
+	return s.V + dt*(k1v+2*k2v+2*k3v+k4v)/6.0, s.W + dt*(k1w+2*k2w+2*k3w+k4w)/6.0
+}
+
+func TestTermanWangRK4CurrentBalance(t *testing.T) {
 	s := NewTermanWangOscillator()
-	v0, w0 := s.V, s.W
-	f := 3.0*v0 - v0*v0*v0 + 2.0
-	g := s.Alpha * (1.0 + math.Tanh(v0/s.Beta))
-	expectedV := v0 + (f-w0+1.0+s.Rho)*s.Dt
-	expectedW := w0 + s.Epsilon*(g-w0)*s.Dt
+	s.V = -1.2
+	s.W = -0.25
+	expectedV, expectedW := termanWangRK4Reference(s, 1.0)
 
 	spike, err := s.Step(1.0)
 	if err != nil {
