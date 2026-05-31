@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// SPDX-FileCopyrightText: 2026 Arcane Sapience
-//
-// This file is part of SC-NeuroCore.
-// Licensed under the GNU Affero General Public License v3.0 or later.
-// See <https://www.gnu.org/licenses/>.
+// Commercial license available
+// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+// © Code 2020–2026 Miroslav Šotek. All rights reserved.
+// ORCID: 0009-0009-3560-0851
+// Contact: www.anulum.li | protoscience@anulum.li
 
 package services
 

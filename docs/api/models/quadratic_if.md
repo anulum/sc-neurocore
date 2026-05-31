@@ -28,7 +28,7 @@ if self.v >= self.v_peak:
 return 0
 ```
 
-Forward Euler, single step per call. No sub-stepping. Euler increments that overflow are rejected before state mutation.
+Forward Euler, single step per call. No sub-stepping. Euler increments that overflow are rejected before state mutation. The Python model, Rust engine, Go service, Julia counterpart, and Rust safety surface all use candidate-first finite-update checks so invalid currents, invalid runtime parameters, and non-finite Euler increments preserve the previous membrane state.
 
 ### Phase-plane structure
 

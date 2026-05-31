@@ -29,12 +29,11 @@ function valid(s::QuadraticIFNeuronState)::Bool
 end
 
 function step!(s::QuadraticIFNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
-    s.dt = dt
-    if !isfinite(I_ext) || !valid(s)
+    if !isfinite(dt) || dt <= 0.0 || !isfinite(I_ext) || !valid(s)
         throw(DomainError((s.v, I_ext), "QuadraticIF state/current must be finite and well-formed"))
     end
 
-    increment = (s.v * s.v + I_ext) * s.dt
+    increment = (s.v * s.v + I_ext) * dt
     next_v = s.v + increment
     if !isfinite(increment) || !isfinite(next_v)
         throw(DomainError((increment, next_v), "QuadraticIF Euler update became non-finite"))
