@@ -117,107 +117,175 @@ impl GranuleCell {
     /// Boltzmann steady-state.
     #[inline]
     fn boltz(v: f64, vh: f64, k: f64) -> f64 {
-        1.0 / (1.0 + (-(v - vh) / k).exp())
+        let z = -(v - vh) / k;
+        if z > 60.0 {
+            0.0
+        } else if z < -60.0 {
+            1.0
+        } else {
+            1.0 / (1.0 + z.exp())
+        }
+    }
+
+    fn is_valid(&self) -> bool {
+        [
+            self.v,
+            self.m,
+            self.h,
+            self.n,
+            self.a,
+            self.b,
+            self.m_t,
+            self.s,
+            self.ca,
+            self.r,
+            self.c_m,
+            self.g_na,
+            self.g_kdr,
+            self.g_ka,
+            self.g_t,
+            self.g_kca,
+            self.g_h,
+            self.g_l,
+            self.g_tonic,
+            self.e_na,
+            self.e_k,
+            self.e_ca,
+            self.e_h,
+            self.e_l,
+            self.e_gaba,
+            self.tau_ca,
+            self.kd_kca,
+            self.dt,
+            self.gain,
+        ]
+        .iter()
+        .all(|value| value.is_finite())
+            && [
+                self.m, self.h, self.n, self.a, self.b, self.m_t, self.s, self.r,
+            ]
+            .iter()
+            .all(|gate| (0.0..=1.0).contains(gate))
+            && self.ca >= 0.0
+            && [
+                self.g_na,
+                self.g_kdr,
+                self.g_ka,
+                self.g_t,
+                self.g_kca,
+                self.g_h,
+                self.g_l,
+                self.g_tonic,
+            ]
+            .iter()
+            .all(|conductance| *conductance >= 0.0)
+            && self.c_m > 0.0
+            && self.tau_ca > 0.0
+            && self.kd_kca > 0.0
+            && self.dt > 0.0
+            && self.sub_steps > 0
+            && self.gain >= 0.0
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
+        if !self.is_valid() || !current.is_finite() {
+            return 0;
+        }
+
         let input = self.gain * current;
         let dt_sub = self.dt / self.sub_steps as f64;
         let v_prev = self.v;
+        let mut v = self.v;
+        let mut m = self.m;
+        let mut h = self.h;
+        let mut n = self.n;
+        let mut a = self.a;
+        let mut b = self.b;
+        let mut m_t = self.m_t;
+        let mut s_gate = self.s;
+        let mut ca = self.ca;
+        let mut r = self.r;
 
         for _ in 0..self.sub_steps {
-            let v = self.v;
-
             // Na m gate (fast activation, Boltzmann + tau)
             let m_inf = Self::boltz(v, -30.0, 7.0);
             let tau_m = 0.1 + 0.3 / (1.0 + ((v + 30.0) / 10.0).powi(2)).max(0.01);
-            self.m += dt_sub * (m_inf - self.m) / tau_m;
+            m = (m + dt_sub * (m_inf - m) / tau_m).clamp(0.0, 1.0);
 
             // Na h gate (inactivation)
             let h_inf = Self::boltz(v, -52.0, -6.0);
             let tau_h = 0.5 + 5.0 / (1.0 + ((v + 50.0) / 15.0).powi(2)).max(0.01);
-            self.h += dt_sub * (h_inf - self.h) / tau_h;
+            h = (h + dt_sub * (h_inf - h) / tau_h).clamp(0.0, 1.0);
 
             // K_dr n gate
             let n_inf = Self::boltz(v, -35.0, 8.0);
             let tau_n = 1.0 + 5.0 / (1.0 + ((v + 35.0) / 15.0).powi(2)).max(0.01);
-            self.n += dt_sub * (n_inf - self.n) / tau_n;
+            n = (n + dt_sub * (n_inf - n) / tau_n).clamp(0.0, 1.0);
 
             // K_A a gate (fast activation)
             let a_inf = Self::boltz(v, -50.0, 20.0);
             let tau_a = 2.0;
-            self.a += dt_sub * (a_inf - self.a) / tau_a;
+            a = (a + dt_sub * (a_inf - a) / tau_a).clamp(0.0, 1.0);
 
             // K_A b gate (slow inactivation)
             let b_inf = Self::boltz(v, -70.0, -6.0);
             let tau_b = 50.0;
-            self.b += dt_sub * (b_inf - self.b) / tau_b;
+            b = (b + dt_sub * (b_inf - b) / tau_b).clamp(0.0, 1.0);
 
             // T-type Ca²⁺ m_t (fast activation)
             let mt_inf = Self::boltz(v, -52.0, 5.0);
             let tau_mt = 1.0;
-            self.m_t += dt_sub * (mt_inf - self.m_t) / tau_mt;
+            m_t = (m_t + dt_sub * (mt_inf - m_t) / tau_mt).clamp(0.0, 1.0);
 
             // T-type Ca²⁺ s (slow inactivation)
             let s_inf = Self::boltz(v, -60.0, -6.5);
             let tau_s = 20.0 + 50.0 / (1.0 + ((v + 65.0) / 10.0).powi(2)).max(0.01);
-            self.s += dt_sub * (s_inf - self.s) / tau_s;
+            s_gate = (s_gate + dt_sub * (s_inf - s_gate) / tau_s).clamp(0.0, 1.0);
 
             // Ih r gate (slow activation at hyperpolarised V)
             let r_inf = Self::boltz(v, -80.0, -10.0);
             let tau_r = 50.0 + 200.0 / (1.0 + ((v + 80.0) / 20.0).powi(2)).max(0.01);
-            self.r += dt_sub * (r_inf - self.r) / tau_r;
-
-            // Clamp gates
-            self.m = self.m.clamp(0.0, 1.0);
-            self.h = self.h.clamp(0.0, 1.0);
-            self.n = self.n.clamp(0.0, 1.0);
-            self.a = self.a.clamp(0.0, 1.0);
-            self.b = self.b.clamp(0.0, 1.0);
-            self.m_t = self.m_t.clamp(0.0, 1.0);
-            self.s = self.s.clamp(0.0, 1.0);
-            self.r = self.r.clamp(0.0, 1.0);
+            r = (r + dt_sub * (r_inf - r) / tau_r).clamp(0.0, 1.0);
 
             // Ca²⁺ dynamics
-            let i_ca_t = self.g_t * self.m_t * self.m_t * self.s * (v - self.e_ca);
+            let i_ca_t = self.g_t * m_t * m_t * s_gate * (v - self.e_ca);
             let ca_entry = if i_ca_t < 0.0 { -i_ca_t * 0.001 } else { 0.0 }; // Inward Ca²⁺
-            self.ca += dt_sub * (-self.ca / self.tau_ca + ca_entry);
-            self.ca = self.ca.max(0.0);
+            ca = (ca + dt_sub * (-ca / self.tau_ca + ca_entry)).max(0.0);
 
             // K_Ca (Hill function of Ca²⁺)
-            let kca_inf = self.ca * self.ca / (self.ca * self.ca + self.kd_kca * self.kd_kca);
+            let kca_inf = ca * ca / (ca * ca + self.kd_kca * self.kd_kca);
 
             // Ionic currents
-            let i_na = self.g_na * self.m.powi(3) * self.h * (v - self.e_na);
-            let i_kdr = self.g_kdr * self.n.powi(4) * (v - self.e_k);
-            let i_ka = self.g_ka * self.a.powi(3) * self.b * (v - self.e_k);
+            let i_na = self.g_na * m.powi(3) * h * (v - self.e_na);
+            let i_kdr = self.g_kdr * n.powi(4) * (v - self.e_k);
+            let i_ka = self.g_ka * a.powi(3) * b * (v - self.e_k);
             let i_kca = self.g_kca * kca_inf * (v - self.e_k);
-            let i_h = self.g_h * self.r * (v - self.e_h);
+            let i_h = self.g_h * r * (v - self.e_h);
             let i_l = self.g_l * (v - self.e_l);
             let i_gaba = self.g_tonic * (v - self.e_gaba);
 
             let dv =
                 (-(i_na + i_kdr + i_ka + i_ca_t + i_kca + i_h + i_l + i_gaba) + input) / self.c_m;
-            self.v += dt_sub * dv;
+            v = (v + dt_sub * dv).clamp(-100.0, 60.0);
+
+            if ![v, m, h, n, a, b, m_t, s_gate, ca, r]
+                .iter()
+                .all(|value| value.is_finite())
+            {
+                return 0;
+            }
         }
 
-        // Safety
-        self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() {
-            self.v = -70.0;
-        }
-        if !self.m.is_finite() {
-            self.m = 0.02;
-        }
-        if !self.h.is_finite() {
-            self.h = 0.85;
-        }
-        if !self.n.is_finite() {
-            self.n = 0.05;
-        }
-        if !self.ca.is_finite() {
-            self.ca = 0.05;
-        }
+        self.v = v;
+        self.m = m;
+        self.h = h;
+        self.n = n;
+        self.a = a;
+        self.b = b;
+        self.m_t = m_t;
+        self.s = s_gate;
+        self.ca = ca;
+        self.r = r;
 
         // Spike: V crosses 0 mV
         if self.v >= 0.0 && v_prev < 0.0 {
@@ -1160,8 +1228,23 @@ mod tests {
     #[test]
     fn granule_nan_input_stays_finite() {
         let mut n = GranuleCell::new();
+        let before = n.clone();
         n.step(f64::NAN);
         assert!(n.v.is_finite(), "NaN input must not corrupt state");
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.ca, before.ca);
+        assert_eq!(n.s, before.s);
+    }
+
+    #[test]
+    fn granule_corrupted_state_preserved_on_step() {
+        let mut n = GranuleCell::new();
+        n.m = -0.1;
+        let before = n.clone();
+        assert_eq!(n.step(10.0), 0);
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.m, before.m);
+        assert_eq!(n.ca, before.ca);
     }
 
     #[test]
