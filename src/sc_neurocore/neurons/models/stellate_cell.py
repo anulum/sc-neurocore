@@ -37,6 +37,31 @@ def _safe_exp(value: float) -> float:
     return math.exp(max(-60.0, min(60.0, value)))
 
 
+def _exact_relax(value: float, target: float, tau: float, dt: float) -> float:
+    return target + (value - target) * math.exp(-dt / tau)
+
+
+def _exact_hh_gate(value: float, alpha: float, beta: float, phi: float, dt: float) -> float:
+    rate = phi * (alpha + beta)
+    target = alpha / (alpha + beta)
+    return target + (value - target) * math.exp(-rate * dt)
+
+
+def _exact_voltage_step(
+    v: float,
+    input_current: float,
+    conductances: tuple[tuple[float, float], ...],
+    c_m: float,
+    dt: float,
+) -> float:
+    g_total = sum(g for g, _ in conductances)
+    if g_total <= 0.0:
+        return v + dt * input_current / c_m
+    reversal_drive = sum(g * e_rev for g, e_rev in conductances)
+    v_inf = (input_current + reversal_drive) / g_total
+    return v_inf + (v - v_inf) * math.exp(-dt * g_total / c_m)
+
+
 @dataclass
 class StellateCell:
     """Cerebellar stellate cell — fast-spiking molecular layer interneuron.
@@ -94,16 +119,31 @@ class StellateCell:
             p_inf = _boltz(v, -10.0, 10.0)
             tau_p = 1.0 + 4.0 / (1.0 + _safe_exp((v + 20.0) / 15.0))
 
-            h = max(0.0, min(1.0, h + sub_dt * self.phi * (alpha_h * (1.0 - h) - beta_h * h)))
-            n = max(0.0, min(1.0, n + sub_dt * self.phi * (alpha_n * (1.0 - n) - beta_n * n)))
-            p = max(0.0, min(1.0, p + sub_dt * (p_inf - p) / tau_p))
+            h = max(0.0, min(1.0, _exact_hh_gate(h, alpha_h, beta_h, self.phi, sub_dt)))
+            n = max(0.0, min(1.0, _exact_hh_gate(n, alpha_n, beta_n, self.phi, sub_dt)))
+            p = max(0.0, min(1.0, _exact_relax(p, p_inf, tau_p, sub_dt)))
 
-            i_na = self.g_na * m_inf**3 * h * (v - self.e_na)
-            i_k = self.g_k * n**4 * (v - self.e_k)
-            i_kv3 = self.g_kv3 * p**2 * (v - self.e_k)
-            i_l = self.g_l * (v - self.e_l)
-
-            v = max(-100.0, min(60.0, v + sub_dt * (-i_na - i_k - i_kv3 - i_l + inp) / self.c_m))
+            g_na_eff = self.g_na * m_inf**3 * h
+            g_k_eff = self.g_k * n**4
+            g_kv3_eff = self.g_kv3 * p**2
+            v = max(
+                -100.0,
+                min(
+                    60.0,
+                    _exact_voltage_step(
+                        v,
+                        inp,
+                        (
+                            (g_na_eff, self.e_na),
+                            (g_k_eff, self.e_k),
+                            (g_kv3_eff, self.e_k),
+                            (self.g_l, self.e_l),
+                        ),
+                        self.c_m,
+                        sub_dt,
+                    ),
+                ),
+            )
             if not all(math.isfinite(x) for x in (v, h, n, p)):
                 raise ValueError("stellate cell integration produced non-finite state")
             if v >= self.v_threshold:
@@ -143,9 +183,13 @@ class StellateCell:
         )
         if not all(math.isfinite(value) for value in finite_values):
             raise ValueError("stellate cell state and parameters must be finite")
+        if not -100.0 <= self.v <= 60.0:
+            raise ValueError("stellate cell v must stay in [-100, 60]")
         if not all(0.0 <= gate <= 1.0 for gate in (self.h, self.n, self.p)):
             raise ValueError("stellate cell gates must stay in [0, 1]")
-        if not all(conductance >= 0.0 for conductance in (self.g_na, self.g_k, self.g_kv3, self.g_l)):
+        if not all(
+            conductance >= 0.0 for conductance in (self.g_na, self.g_k, self.g_kv3, self.g_l)
+        ):
             raise ValueError("stellate cell conductances must be non-negative")
         if self.c_m <= 0.0 or self.phi <= 0.0 or self.dt <= 0.0:
             raise ValueError("stellate cell capacitance, rate scale, and timestep must be positive")

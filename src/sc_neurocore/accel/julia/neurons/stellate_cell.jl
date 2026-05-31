@@ -64,12 +64,33 @@ end
 
 _clamp01(x::Float64) = max(0.0, min(1.0, x))
 
+function _exact_relax(value::Float64, target::Float64, tau::Float64, dt::Float64)
+    return target + (value - target) * exp(-dt / tau)
+end
+
+function _exact_hh_gate(value::Float64, alpha::Float64, beta::Float64, phi::Float64, dt::Float64)
+    rate = phi * (alpha + beta)
+    target = alpha / (alpha + beta)
+    return target + (value - target) * exp(-rate * dt)
+end
+
+function _exact_voltage_step(v::Float64, input_current::Float64, c_m::Float64, dt::Float64, conductances)
+    g_total = sum(pair[1] for pair in conductances)
+    if g_total <= 0.0
+        return v + dt * input_current / c_m
+    end
+    reversal_drive = sum(pair[1] * pair[2] for pair in conductances)
+    v_inf = (input_current + reversal_drive) / g_total
+    return v_inf + (v - v_inf) * exp(-dt * g_total / c_m)
+end
+
 function _validate(s::StellateCellState)
     finite_values = (
         s.v, s.h, s.n, s.p, s.g_na, s.g_k, s.g_kv3, s.g_l,
         s.e_na, s.e_k, s.e_l, s.c_m, s.phi, s.dt, s.v_threshold, s.gain,
     )
     all(isfinite, finite_values) || throw(ArgumentError("stellate cell state and parameters must be finite"))
+    -100.0 <= s.v <= 60.0 || throw(ArgumentError("stellate cell v must stay in [-100, 60]"))
     all(x -> 0.0 <= x <= 1.0, (s.h, s.n, s.p)) ||
         throw(ArgumentError("stellate cell gates must stay in [0, 1]"))
     all(x -> x >= 0.0, (s.g_na, s.g_k, s.g_kv3, s.g_l)) ||
@@ -105,16 +126,19 @@ function step!(s::StellateCellState, I_ext::Float64=0.0; dt::Float64=s.dt)
         p_inf = _boltz(v, -10.0, 10.0)
         tau_p = 1.0 + 4.0 / (1.0 + _safe_exp((v + 20.0) / 15.0))
 
-        h = _clamp01(h + sub_dt * s.phi * (alpha_h * (1.0 - h) - beta_h * h))
-        n = _clamp01(n + sub_dt * s.phi * (alpha_n * (1.0 - n) - beta_n * n))
-        p = _clamp01(p + sub_dt * (p_inf - p) / tau_p)
+        h = _clamp01(_exact_hh_gate(h, alpha_h, beta_h, s.phi, sub_dt))
+        n = _clamp01(_exact_hh_gate(n, alpha_n, beta_n, s.phi, sub_dt))
+        p = _clamp01(_exact_relax(p, p_inf, tau_p, sub_dt))
 
-        i_na = s.g_na * m_inf^3 * h * (v - s.e_na)
-        i_k = s.g_k * n^4 * (v - s.e_k)
-        i_kv3 = s.g_kv3 * p^2 * (v - s.e_k)
-        i_l = s.g_l * (v - s.e_l)
-
-        v = max(-100.0, min(60.0, v + sub_dt * (-i_na - i_k - i_kv3 - i_l + inp) / s.c_m))
+        g_na_eff = s.g_na * m_inf^3 * h
+        g_k_eff = s.g_k * n^4
+        g_kv3_eff = s.g_kv3 * p^2
+        v = max(-100.0, min(60.0, _exact_voltage_step(v, inp, s.c_m, sub_dt, (
+            (g_na_eff, s.e_na),
+            (g_k_eff, s.e_k),
+            (g_kv3_eff, s.e_k),
+            (s.g_l, s.e_l),
+        ))))
         all(isfinite, (v, h, n, p)) || throw(ArgumentError("stellate cell integration produced non-finite state"))
         if v >= s.v_threshold
             fired = 1

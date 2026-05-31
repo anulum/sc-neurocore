@@ -86,6 +86,32 @@ impl StellateCell {
         }
     }
 
+    fn exact_relax(value: f64, target: f64, tau: f64, dt: f64) -> f64 {
+        target + (value - target) * (-dt / tau).exp()
+    }
+
+    fn exact_hh_gate(value: f64, alpha: f64, beta: f64, phi: f64, dt: f64) -> f64 {
+        let rate = phi * (alpha + beta);
+        let target = alpha / (alpha + beta);
+        target + (value - target) * (-rate * dt).exp()
+    }
+
+    fn exact_voltage_step(
+        v: f64,
+        input_current: f64,
+        c_m: f64,
+        dt: f64,
+        conductances: &[(f64, f64)],
+    ) -> f64 {
+        let g_total: f64 = conductances.iter().map(|(g, _)| *g).sum();
+        if g_total <= 0.0 {
+            return v + dt * input_current / c_m;
+        }
+        let reversal_drive: f64 = conductances.iter().map(|(g, e_rev)| g * e_rev).sum();
+        let v_inf = (input_current + reversal_drive) / g_total;
+        v_inf + (v - v_inf) * (-dt * g_total / c_m).exp()
+    }
+
     pub fn step(&mut self, i_ext: f64) -> i32 {
         if !validate_stellate_cell(self) || !i_ext.is_finite() {
             return 0;
@@ -111,16 +137,26 @@ impl StellateCell {
             let p_inf = Self::boltz(v, -10.0, 10.0);
             let tau_p = 1.0 + 4.0 / (1.0 + Self::safe_exp((v + 20.0) / 15.0));
 
-            h = (h + sub_dt * self.phi * (alpha_h * (1.0 - h) - beta_h * h)).clamp(0.0, 1.0);
-            n = (n + sub_dt * self.phi * (alpha_n * (1.0 - n) - beta_n * n)).clamp(0.0, 1.0);
-            p = (p + sub_dt * (p_inf - p) / tau_p).clamp(0.0, 1.0);
+            h = Self::exact_hh_gate(h, alpha_h, beta_h, self.phi, sub_dt).clamp(0.0, 1.0);
+            n = Self::exact_hh_gate(n, alpha_n, beta_n, self.phi, sub_dt).clamp(0.0, 1.0);
+            p = Self::exact_relax(p, p_inf, tau_p, sub_dt).clamp(0.0, 1.0);
 
-            let i_na = self.g_na * m_inf.powi(3) * h * (v - self.e_na);
-            let i_k = self.g_k * n.powi(4) * (v - self.e_k);
-            let i_kv3 = self.g_kv3 * p.powi(2) * (v - self.e_k);
-            let i_l = self.g_l * (v - self.e_l);
-
-            v = (v + sub_dt * (-i_na - i_k - i_kv3 - i_l + inp) / self.c_m).clamp(-100.0, 60.0);
+            let g_na_eff = self.g_na * m_inf.powi(3) * h;
+            let g_k_eff = self.g_k * n.powi(4);
+            let g_kv3_eff = self.g_kv3 * p.powi(2);
+            v = Self::exact_voltage_step(
+                v,
+                inp,
+                self.c_m,
+                sub_dt,
+                &[
+                    (g_na_eff, self.e_na),
+                    (g_k_eff, self.e_k),
+                    (g_kv3_eff, self.e_k),
+                    (self.g_l, self.e_l),
+                ],
+            )
+            .clamp(-100.0, 60.0);
             if ![v, h, n, p].iter().all(|value| value.is_finite()) {
                 return 0;
             }
@@ -167,6 +203,7 @@ pub fn validate_stellate_cell(state: &StellateCell) -> bool {
         && [state.h, state.n, state.p]
             .iter()
             .all(|gate| (0.0..=1.0).contains(gate))
+        && (-100.0..=60.0).contains(&state.v)
         && [state.g_na, state.g_k, state.g_kv3, state.g_l]
             .iter()
             .all(|conductance| *conductance >= 0.0)
@@ -208,6 +245,40 @@ mod tests {
     }
 
     #[test]
+    fn test_stellate_cell_closed_form_gate_kinetics() {
+        let mut state = StellateCell::new();
+        state.g_na = 0.0;
+        state.g_k = 0.0;
+        state.g_kv3 = 0.0;
+        state.g_l = 0.0;
+        state.gain = 0.0;
+        state.sub_steps = 1.0;
+        let (v0, h0, n0, p0) = (state.v, state.h, state.n, state.p);
+        let alpha_h = 0.07 * StellateCell::safe_exp(-(v0 + 58.0) / 20.0);
+        let beta_h = StellateCell::boltz(v0, -28.0, 10.0);
+        let alpha_n = StellateCell::safe_rate(0.01, 34.0, v0, 10.0, 0.1);
+        let beta_n = 0.125 * StellateCell::safe_exp(-(v0 + 44.0) / 80.0);
+        let p_inf = StellateCell::boltz(v0, -10.0, 10.0);
+        let tau_p = 1.0 + 4.0 / (1.0 + StellateCell::safe_exp((v0 + 20.0) / 15.0));
+
+        state.step(0.0);
+
+        assert_close_stellate(state.v, v0);
+        assert_close_stellate(
+            state.h,
+            StellateCell::exact_hh_gate(h0, alpha_h, beta_h, state.phi, state.dt),
+        );
+        assert_close_stellate(
+            state.n,
+            StellateCell::exact_hh_gate(n0, alpha_n, beta_n, state.phi, state.dt),
+        );
+        assert_close_stellate(
+            state.p,
+            StellateCell::exact_relax(p0, p_inf, tau_p, state.dt),
+        );
+    }
+
+    #[test]
     fn test_stellate_cell_invalid_drive_preserves_state() {
         let mut state = StellateCell::new();
         let before = state.clone();
@@ -228,5 +299,14 @@ mod tests {
         assert_eq!(state.h, before.h);
         assert_eq!(state.n, before.n);
         assert_eq!(state.p, before.p);
+    }
+
+    fn assert_close_stellate(observed: f64, expected: f64) {
+        assert!(
+            (observed - expected).abs() <= 1.0e-12,
+            "observed {:.17e}, expected {:.17e}",
+            observed,
+            expected,
+        );
     }
 }

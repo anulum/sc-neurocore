@@ -99,6 +99,30 @@ func clamp01Stellate(value float64) float64 {
 	return value
 }
 
+func exactRelaxStellate(value, target, tau, dt float64) float64 {
+	return target + (value-target)*math.Exp(-dt/tau)
+}
+
+func exactHHGateStellate(value, alpha, beta, phi, dt float64) float64 {
+	rate := phi * (alpha + beta)
+	target := alpha / (alpha + beta)
+	return target + (value-target)*math.Exp(-rate*dt)
+}
+
+func exactVoltageStellate(v, inputCurrent, cM, dt float64, conductances [][2]float64) float64 {
+	gTotal := 0.0
+	reversalDrive := 0.0
+	for _, pair := range conductances {
+		gTotal += pair[0]
+		reversalDrive += pair[0] * pair[1]
+	}
+	if gTotal <= 0.0 {
+		return v + dt*inputCurrent/cM
+	}
+	vInf := (inputCurrent + reversalDrive) / gTotal
+	return vInf + (v-vInf)*math.Exp(-dt*gTotal/cM)
+}
+
 func finiteStellate(values ...float64) bool {
 	for _, value := range values {
 		if math.IsNaN(value) || math.IsInf(value, 0) {
@@ -114,6 +138,7 @@ func (s *StellateCellState) valid() bool {
 		s.CM, s.Phi, s.Dt, s.VThreshold, s.Gain,
 	) &&
 		s.H >= 0.0 && s.H <= 1.0 && s.N >= 0.0 && s.N <= 1.0 && s.P >= 0.0 && s.P <= 1.0 &&
+		s.V >= -100.0 && s.V <= 60.0 &&
 		s.GNa >= 0.0 && s.GK >= 0.0 && s.GKv3 >= 0.0 && s.GL >= 0.0 &&
 		s.CM > 0.0 && s.Phi > 0.0 && s.Dt > 0.0 && s.SubSteps > 0 && s.Gain >= 0.0
 }
@@ -144,16 +169,19 @@ func (s *StellateCellState) Step(iExt float64) int {
 		pInf := boltzStellate(v, -10.0, 10.0)
 		tauP := 1.0 + 4.0/(1.0+safeExpStellate((v+20.0)/15.0))
 
-		h = clamp01Stellate(h + subDt*s.Phi*(alphaH*(1.0-h)-betaH*h))
-		n = clamp01Stellate(n + subDt*s.Phi*(alphaN*(1.0-n)-betaN*n))
-		p = clamp01Stellate(p + subDt*(pInf-p)/tauP)
+		h = clamp01Stellate(exactHHGateStellate(h, alphaH, betaH, s.Phi, subDt))
+		n = clamp01Stellate(exactHHGateStellate(n, alphaN, betaN, s.Phi, subDt))
+		p = clamp01Stellate(exactRelaxStellate(p, pInf, tauP, subDt))
 
-		iNa := s.GNa * math.Pow(mInf, 3.0) * h * (v - s.ENa)
-		iK := s.GK * math.Pow(n, 4.0) * (v - s.EK)
-		iKv3 := s.GKv3 * p * p * (v - s.EK)
-		iL := s.GL * (v - s.EL)
-
-		v = math.Max(-100.0, math.Min(60.0, v+subDt*(-iNa-iK-iKv3-iL+inp)/s.CM))
+		gNaEff := s.GNa * math.Pow(mInf, 3.0) * h
+		gKEff := s.GK * math.Pow(n, 4.0)
+		gKv3Eff := s.GKv3 * p * p
+		v = math.Max(-100.0, math.Min(60.0, exactVoltageStellate(v, inp, s.CM, subDt, [][2]float64{
+			{gNaEff, s.ENa},
+			{gKEff, s.EK},
+			{gKv3Eff, s.EK},
+			{s.GL, s.EL},
+		})))
 		if !finiteStellate(v, h, n, p) {
 			return 0
 		}
