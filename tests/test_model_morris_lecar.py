@@ -369,7 +369,7 @@ class TestMLPerformance:
         # Hosted runners share CPUs and can transiently drop below the
         # workstation floor; keep the local contract strict and use a
         # CI floor that still catches order-of-magnitude regressions.
-        min_rate = 35_000 if os.getenv("CI") else 50_000
+        min_rate = 30_000 if os.getenv("CI") else 50_000
         assert rate > min_rate, f"isolation: {rate:.0f} steps/s"
 
     def test_network_throughput(self):
