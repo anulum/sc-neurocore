@@ -1,0 +1,72 @@
+{
+  "benchmark": "CochlearHairCell Python exact membrane relaxation step",
+  "date": "2026-05-31",
+  "command": "PYTHONPATH=src .venv/bin/python - <<PY ...",
+  "python": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "results": [
+    {
+      "displacement": 0.0,
+      "steps": 200000,
+      "warmup_steps": 5000,
+      "elapsed_seconds": 0.42819102096837014,
+      "seconds_per_step": 2.140955104841851e-06,
+      "steps_per_second": 467081.2562759781,
+      "binary_events": 199915,
+      "final_state": {
+        "g_max": 10.0,
+        "e_met": 0.0,
+        "g_l": 1.0,
+        "e_l": -60.0,
+        "cap": 10.0,
+        "x0": 0.0,
+        "delta": 0.1,
+        "dt": 0.01,
+        "v": -10.000000000000147,
+        "glutamate_release": 1.2499999999999962
+      }
+    },
+    {
+      "displacement": 0.5,
+      "steps": 200000,
+      "warmup_steps": 5000,
+      "elapsed_seconds": 0.36865848989691585,
+      "seconds_per_step": 1.8432924494845793e-06,
+      "steps_per_second": 542507.5116428864,
+      "binary_events": 199959,
+      "final_state": {
+        "g_max": 10.0,
+        "e_met": 0.0,
+        "g_l": 1.0,
+        "e_l": -60.0,
+        "cap": 10.0,
+        "x0": 0.0,
+        "delta": 0.1,
+        "dt": 0.01,
+        "v": -5.487936308723912,
+        "glutamate_release": 1.3628015922819023
+      }
+    },
+    {
+      "displacement": -0.5,
+      "steps": 200000,
+      "warmup_steps": 5000,
+      "elapsed_seconds": 0.3353146859444678,
+      "seconds_per_step": 1.676573429722339e-06,
+      "steps_per_second": 596454.6391300095,
+      "binary_events": 0,
+      "final_state": {
+        "g_max": 10.0,
+        "e_met": 0.0,
+        "g_l": 1.0,
+        "e_l": -60.0,
+        "cap": 10.0,
+        "x0": 0.0,
+        "delta": 0.1,
+        "dt": 0.01,
+        "v": -56.23619528414594,
+        "glutamate_release": 0.09409511789635143
+      }
+    }
+  ]
+}

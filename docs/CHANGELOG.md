@@ -6,6 +6,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `CochlearHairCell` across the Python reference, Rust engine, Go
+  service, Julia mirror, and Rust safety surface by replacing the raw membrane
+  Euler voltage increment with exact conductance-form relaxation, adding stable
+  finite-domain Boltzmann activation, preserving state on invalid runtime
+  inputs, adding module-owned tests, and recording a refreshed Python benchmark
+  artefact.
 - Promoted `ButeraRespiratoryNeuron` to bounded candidate-first RK4
   integration across the Python reference, Rust engine, Go service, Julia
   mirror, and Rust safety surface; module-owned tests now cover RK4 parity,

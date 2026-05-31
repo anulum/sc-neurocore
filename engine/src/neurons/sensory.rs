@@ -2259,18 +2259,59 @@ impl CochlearHairCell {
 
     /// Boltzmann activation of MET channels.
     fn p_open(&self, displacement: f64) -> f64 {
-        1.0 / (1.0 + (-(displacement - self.x0) / self.delta).exp())
+        let z = (displacement - self.x0) / self.delta;
+        if z >= 0.0 {
+            1.0 / (1.0 + (-z).exp())
+        } else {
+            let ez = z.exp();
+            ez / (1.0 + ez)
+        }
+    }
+
+    fn valid_runtime(&self) -> bool {
+        [
+            self.v,
+            self.g_max,
+            self.e_met,
+            self.g_l,
+            self.e_l,
+            self.cap,
+            self.x0,
+            self.delta,
+            self.dt,
+            self.glutamate_release,
+        ]
+        .iter()
+        .all(|x| x.is_finite())
+            && self.g_max >= 0.0
+            && self.g_l > 0.0
+            && self.cap > 0.0
+            && self.delta > 0.0
+            && self.dt > 0.0
+            && self.glutamate_release >= 0.0
     }
 
     /// Step with basilar membrane displacement.
     pub fn step(&mut self, displacement: f64) -> i32 {
+        if !self.valid_runtime() || !displacement.is_finite() {
+            return 0;
+        }
         let po = self.p_open(displacement);
-        let i_met = self.g_max * po * (self.v - self.e_met);
-        let dv = (-self.g_l * (self.v - self.e_l) - i_met) / self.cap;
-        self.v += dv * self.dt;
+        let g_met = self.g_max * po;
+        let g_total = self.g_l + g_met;
+        if !(g_total.is_finite() && g_total > 0.0) {
+            return 0;
+        }
+        let v_inf = (self.g_l * self.e_l + g_met * self.e_met) / g_total;
+        let candidate_v = v_inf + (self.v - v_inf) * (-(g_total / self.cap) * self.dt).exp();
+        let candidate_release = (candidate_v + 60.0).max(0.0) / 40.0;
+        if !(candidate_v.is_finite() && candidate_release.is_finite()) {
+            return 0;
+        }
+        self.v = candidate_v;
 
         // Graded glutamate release (no spike, but we return 1 if above threshold).
-        self.glutamate_release = (self.v + 60.0).max(0.0) / 40.0;
+        self.glutamate_release = candidate_release;
         if self.glutamate_release > 0.5 {
             1
         } else {
@@ -2387,6 +2428,30 @@ mod gap_sensory_tests {
             cell.v,
             v_rest
         );
+    }
+
+    #[test]
+    fn cochlear_matches_closed_form_membrane_relaxation() {
+        let mut cell = CochlearHairCell::new();
+        let po = 1.0 / (1.0 + (-(0.0 - cell.x0) / cell.delta).exp());
+        let g_met = cell.g_max * po;
+        let g_total = cell.g_l + g_met;
+        let v_inf = (cell.g_l * cell.e_l + g_met * cell.e_met) / g_total;
+        let expected = v_inf + (cell.v - v_inf) * (-(g_total / cell.cap) * cell.dt).exp();
+        let spike = cell.step(0.0);
+        assert!(spike == 0 || spike == 1);
+        assert!((cell.v - expected).abs() < 1e-12);
+    }
+
+    #[test]
+    fn cochlear_invalid_runtime_preserves_state() {
+        let mut cell = CochlearHairCell::new();
+        cell.v = -55.0;
+        cell.glutamate_release = 0.125;
+        let before = (cell.v, cell.glutamate_release);
+        cell.cap = -1.0;
+        assert_eq!(cell.step(0.25), 0);
+        assert_eq!((cell.v, cell.glutamate_release), before);
     }
 
     #[test]

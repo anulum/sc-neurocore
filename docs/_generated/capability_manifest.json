@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 741
+    "test_files": 742
   },
   "documentation": {
     "public_pages": [
@@ -2135,6 +2135,7 @@
       "tests/test_model_chialvo_map.py",
       "tests/test_model_clif.py",
       "tests/test_model_coba_lif.py",
+      "tests/test_model_cochlear_hair_cell.py",
       "tests/test_model_compte_wm.py",
       "tests/test_model_connor_stevens.py",
       "tests/test_model_courage_nekorkin_map.py",
