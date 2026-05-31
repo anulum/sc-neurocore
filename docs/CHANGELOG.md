@@ -6,6 +6,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `YamadaNeuron` to candidate-first RK4 integration across the Python
+  reference, Go service, Julia mirror, Mojo spike kernel, and Rust safety
+  surface; module-owned tests now cover RK4 parity, finite-stage validation,
+  fail-closed state preservation, and refreshed Python benchmark evidence
+  documents the RK4 runtime cost.
 - Promoted `BendaHerzNeuron` to candidate-first RK4 adaptation integration
   with exponential hazard spike probability across the Python reference, Go
   service, Julia mirror, Mojo kernel notes, and Rust safety surface; module

@@ -23,6 +23,15 @@ fn _sigmoid(x: Float64) -> Float64:
     return z / (1.0 + z)
 
 
+fn _tau_n(v: Float64) -> Float64:
+    var x = (v + 40.0) / 12.0
+    if not _finite(x):
+        return 0.0 / 0.0
+    if x > 709.0:
+        return 1.0
+    return 1.0 + 7.5 / (1.0 + exp(x))
+
+
 fn yamada_valid(
     v: Float64,
     n: Float64,
@@ -104,32 +113,85 @@ fn yamada_step_spike(
     ):
         return 0
 
-    var m_inf = _sigmoid((v + 30.0) / 9.5)
-    var n_inf = _sigmoid((v + 30.0) / 10.0)
-    var q_inf = _sigmoid((v + 50.0) / 10.0)
-    var tau_n = 1.0 + 7.5 / (1.0 + exp((v + 40.0) / 12.0))
-    var i_na = g_na * m_inf * m_inf * m_inf * (1.0 - n) * (v - e_na)
-    var i_k = g_k * n * n * n * n * (v - e_k)
-    var i_q = g_q * q * (v - e_q)
-    var i_l = g_l * (v - e_l)
-    var dv = (-i_na - i_k - i_q - i_l + current) * dt
-    var dn = (n_inf - n) / tau_n * dt
-    var dq = (q_inf - q) / tau_q * dt
-    var next_v = v + dv
-    var next_n = n + dn
-    var next_q = q + dq
+    var m1 = _sigmoid((v + 30.0) / 9.5)
+    var n1_inf = _sigmoid((v + 30.0) / 10.0)
+    var q1_inf = _sigmoid((v + 50.0) / 10.0)
+    var tau1 = _tau_n(v)
+    var ina1 = g_na * m1 * m1 * m1 * (1.0 - n) * (v - e_na)
+    var ik1 = g_k * n * n * n * n * (v - e_k)
+    var iq1 = g_q * q * (v - e_q)
+    var il1 = g_l * (v - e_l)
+    var k1_v = -ina1 - ik1 - iq1 - il1 + current
+    var k1_n = (n1_inf - n) / tau1
+    var k1_q = (q1_inf - q) / tau_q
+
+    var v2 = v + 0.5 * dt * k1_v
+    var n2 = n + 0.5 * dt * k1_n
+    var q2 = q + 0.5 * dt * k1_q
+    if not _finite(v2) or not _finite(n2) or not _finite(q2) or n2 < 0.0 or n2 > 1.0 or q2 < 0.0 or q2 > 1.0:
+        return 0
+    var m2 = _sigmoid((v2 + 30.0) / 9.5)
+    var n2_inf = _sigmoid((v2 + 30.0) / 10.0)
+    var q2_inf = _sigmoid((v2 + 50.0) / 10.0)
+    var tau2 = _tau_n(v2)
+    var ina2 = g_na * m2 * m2 * m2 * (1.0 - n2) * (v2 - e_na)
+    var ik2 = g_k * n2 * n2 * n2 * n2 * (v2 - e_k)
+    var iq2 = g_q * q2 * (v2 - e_q)
+    var il2 = g_l * (v2 - e_l)
+    var k2_v = -ina2 - ik2 - iq2 - il2 + current
+    var k2_n = (n2_inf - n2) / tau2
+    var k2_q = (q2_inf - q2) / tau_q
+
+    var v3 = v + 0.5 * dt * k2_v
+    var n3 = n + 0.5 * dt * k2_n
+    var q3 = q + 0.5 * dt * k2_q
+    if not _finite(v3) or not _finite(n3) or not _finite(q3) or n3 < 0.0 or n3 > 1.0 or q3 < 0.0 or q3 > 1.0:
+        return 0
+    var m3 = _sigmoid((v3 + 30.0) / 9.5)
+    var n3_inf = _sigmoid((v3 + 30.0) / 10.0)
+    var q3_inf = _sigmoid((v3 + 50.0) / 10.0)
+    var tau3 = _tau_n(v3)
+    var ina3 = g_na * m3 * m3 * m3 * (1.0 - n3) * (v3 - e_na)
+    var ik3 = g_k * n3 * n3 * n3 * n3 * (v3 - e_k)
+    var iq3 = g_q * q3 * (v3 - e_q)
+    var il3 = g_l * (v3 - e_l)
+    var k3_v = -ina3 - ik3 - iq3 - il3 + current
+    var k3_n = (n3_inf - n3) / tau3
+    var k3_q = (q3_inf - q3) / tau_q
+
+    var v4 = v + dt * k3_v
+    var n4 = n + dt * k3_n
+    var q4 = q + dt * k3_q
+    if not _finite(v4) or not _finite(n4) or not _finite(q4) or n4 < 0.0 or n4 > 1.0 or q4 < 0.0 or q4 > 1.0:
+        return 0
+    var m4 = _sigmoid((v4 + 30.0) / 9.5)
+    var n4_inf = _sigmoid((v4 + 30.0) / 10.0)
+    var q4_inf = _sigmoid((v4 + 50.0) / 10.0)
+    var tau4 = _tau_n(v4)
+    var ina4 = g_na * m4 * m4 * m4 * (1.0 - n4) * (v4 - e_na)
+    var ik4 = g_k * n4 * n4 * n4 * n4 * (v4 - e_k)
+    var iq4 = g_q * q4 * (v4 - e_q)
+    var il4 = g_l * (v4 - e_l)
+    var k4_v = -ina4 - ik4 - iq4 - il4 + current
+    var k4_n = (n4_inf - n4) / tau4
+    var k4_q = (q4_inf - q4) / tau_q
+
+    var next_v = v + dt * (k1_v + 2.0 * k2_v + 2.0 * k3_v + k4_v) / 6.0
+    var next_n = n + dt * (k1_n + 2.0 * k2_n + 2.0 * k3_n + k4_n) / 6.0
+    var next_q = q + dt * (k1_q + 2.0 * k2_q + 2.0 * k3_q + k4_q) / 6.0
     if (
-        not _finite(m_inf)
-        or not _finite(n_inf)
-        or not _finite(q_inf)
-        or not _finite(tau_n)
-        or not _finite(i_na)
-        or not _finite(i_k)
-        or not _finite(i_q)
-        or not _finite(i_l)
-        or not _finite(dv)
-        or not _finite(dn)
-        or not _finite(dq)
+        not _finite(k1_v)
+        or not _finite(k1_n)
+        or not _finite(k1_q)
+        or not _finite(k2_v)
+        or not _finite(k2_n)
+        or not _finite(k2_q)
+        or not _finite(k3_v)
+        or not _finite(k3_n)
+        or not _finite(k3_q)
+        or not _finite(k4_v)
+        or not _finite(k4_n)
+        or not _finite(k4_q)
         or not _finite(next_v)
         or not _finite(next_n)
         or not _finite(next_q)

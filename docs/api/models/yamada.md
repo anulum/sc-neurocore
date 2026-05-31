@@ -58,27 +58,22 @@ Upward crossing: $V_t \geq V_{threshold}$ AND $V_{t-1} < V_{threshold}$.
 ```python
 def step(self, current: float) -> int:
     v_prev = self.v
-    m_inf = 1 / (1 + exp(-(v+30)/9.5))
-    n_inf = 1 / (1 + exp(-(v+30)/10))
-    q_inf = 1 / (1 + exp(-(v+50)/10))
-    tau_n = 1 + 7.5 / (1 + exp((v+40)/12))
-    i_na = g_na * m_inf**3 * (1-n) * (v - e_na)
-    i_k = g_k * n**4 * (v - e_k)
-    i_q = g_q * q * (v - e_q)
-    i_l = g_l * (v - e_l)
-    dv = (-i_na - i_k - i_q - i_l + current) * dt
-    dn = (n_inf - self.n) / tau_n * dt
-    dq = (q_inf - self.q) / self.tau_q * dt
-    next_v = self.v + dv
-    next_n = self.n + dn
-    next_q = self.q + dq
-    if any candidate is non-finite or next_n/next_q leave [0, 1]:
+    k1 = rhs(v, n, q, current)
+    k2 = rhs(v + 0.5*dt*k1.v, n + 0.5*dt*k1.n, q + 0.5*dt*k1.q, current)
+    k3 = rhs(v + 0.5*dt*k2.v, n + 0.5*dt*k2.n, q + 0.5*dt*k2.q, current)
+    k4 = rhs(v + dt*k3.v, n + dt*k3.n, q + dt*k3.q, current)
+    candidate = state + dt * (k1 + 2*k2 + 2*k3 + k4) / 6
+    if any stage/candidate is non-finite or n/q leave [0, 1]:
         raise ValueError
-    self.v, self.n, self.q = next_v, next_n, next_q
+    self.v, self.n, self.q = candidate
     return 1 if crossing else 0
 ```
 
-Forward Euler, single step per call. 4 sigmoid (exp) evaluations per step.
+Candidate-first RK4, single macro-step per call. Each of the four stages
+evaluates the same Yamada conductance RHS, giving 16 sigmoid/exponential
+evaluations per step. The state is committed only after all stages and the
+accepted candidate remain finite and the two gating variables stay inside
+`[0, 1]`.
 
 ---
 
@@ -205,16 +200,19 @@ currents and Boltzmann activation functions.
 
 ## Numerical Considerations
 
-- **Single Euler step:** dt=0.05ms. The implementation computes a full
-  candidate state before mutation and rejects non-finite Euler increments.
+- **Candidate-first RK4 step:** dt=0.05ms. The implementation evaluates all
+  four Runge-Kutta stages from the old state, computes a candidate state, and
+  commits only after finite-stage and finite-candidate checks pass.
 - **Stable sigmoid evaluations:** m_inf, n_inf, and q_inf use an overflow-safe
-  logistic form; tau_n still follows the published voltage-dependent formula.
+  logistic form; tau_n follows the published voltage-dependent formula with a
+  high-voltage saturation branch that preserves the finite `tau_n -> 1 ms`
+  limit instead of overflowing the exponential.
 - **Gate bounds:** n and q are treated as gating variables and must remain in
-  [0, 1]. Candidate steps that would move either gate outside this interval
-  fail closed before state mutation.
-- **No sub-stepping:** The 3-ODE system is stiff across the V/n/q timescales,
-  so this scalar path documents fail-closed finite behaviour rather than
-  claiming arbitrary-timestep accuracy.
+  [0, 1]. Intermediate RK4 stage states or candidate steps that would move
+  either gate outside this interval fail closed before state mutation.
+- **No hidden sub-stepping:** The 3-ODE system is stiff across the V/n/q
+  timescales. This scalar path improves local truncation error over the former
+  Euler update without claiming arbitrary-timestep accuracy.
 - **V not bounded:** Can transiently exceed E_Na during spike peak.
 
 ---
@@ -226,20 +224,38 @@ currents and Boltzmann activation functions.
 - Conductances must be non-negative; `tau_q` and `dt` must be strictly
   positive.
 - Gates `n` and `q` must start and remain within `[0, 1]`.
-- Each step computes currents, Euler increments, candidate voltage, and
-  candidate gates before mutation. Python raises `ValueError` on invalid
-  candidates; Rust, Go, Julia, and Mojo fail closed without reporting a spike.
+- Each step computes a candidate-first RK4 update before mutation. Python raises
+  `ValueError` on invalid candidates; Rust, Go, Julia, and Mojo fail closed
+  without reporting a spike.
 - `reset()` restores only the dynamic state (`v`, `n`, `q`) and preserves
   physical parameters.
 
 ---
 
+## Benchmark Evidence
+
+Local Python RK4 step evidence is committed at
+`benchmarks/results/local_python_2026-06-01_yamada.json`.
+
+Command:
+
+```bash
+PYTHONPATH=src .venv/bin/python benchmarks/bench_model_yamada.py
+```
+
+Result summary from the committed artifact: 50,000 steps, five repeats,
+50.0 current drive, median 13,808.92988 ns/step, 31 spikes per repeat, and
+identical ending `(v, n, q)` state across repeats.
+
+---
+
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/yamada.py` — 113 lines.
+- **Source:** `src/sc_neurocore/neurons/models/yamada.py` — candidate-first RK4 implementation.
 - **Three state variables:** v, n, q.
 - **Dataclass:** Uses `@dataclass`.
-- **4 inline sigmoid evaluations:** m_inf, n_inf, q_inf, tau_n.
+- **16 stage exponential evaluations:** four RK4 RHS stages, each with
+  m_inf, n_inf, q_inf, and tau_n.
 - **Polyglot surfaces:** Python, Rust, Go, Julia, and Mojo enforce the same finite-state, gate-bounds, candidate-update, spike-crossing, and parameter-preserving reset contracts.
 
 ---
@@ -249,7 +265,7 @@ currents and Boltzmann activation functions.
 ```
 YamadaNeuron
 ├── step(current) → int {0, 1}
-├── 1 Euler step + 4 exp() per call (dt=0.05ms)
+├── 1 candidate-first RK4 macro-step + 16 exp() per call (dt=0.05ms)
 ├── Population, Network, SpikeMonitor: compatible
 │   PoissonInput(weight=5, rate=500Hz)
 ├── Projection: tested src→tgt wiring
