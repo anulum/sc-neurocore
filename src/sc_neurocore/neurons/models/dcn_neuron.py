@@ -58,13 +58,26 @@ class DCNNeuron:
     gain: float = 1.0
     _sub_steps: int = field(default=20, repr=False)
 
+    def __post_init__(self) -> None:
+        self._validate_state()
+
     def step(self, current: float = 0.0) -> int:
+        self._validate_state()
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+
         inp = self.gain * current
         sub_dt = self.dt / self._sub_steps
         fired = 0
+        v = self.v
+        h = self.h
+        n = self.n
+        p = self.p
+        s = self.s
+        r = self.r
+        ca = self.ca
 
         for _ in range(self._sub_steps):
-            v = self.v
             alpha_m = _safe_rate(0.1, 35.0, v, 10.0, 1.0)
             beta_m = 4.0 * math.exp(-(v + 60.0) / 18.0)
             m_inf = alpha_m / (alpha_m + beta_m)
@@ -83,46 +96,46 @@ class DCNNeuron:
             r_inf = 1.0 / (1.0 + math.exp((v + 80.0) / 10.0))
             tau_r = 100.0 + 200.0 / (1.0 + math.exp((v + 70.0) / 10.0))
 
-            self.h += sub_dt * self.phi * (alpha_h * (1.0 - self.h) - beta_h * self.h)
-            self.n += sub_dt * self.phi * (alpha_n * (1.0 - self.n) - beta_n * self.n)
-            self.p += sub_dt * (p_inf - self.p) / tau_p
-            self.s += sub_dt * (s_inf - self.s) / tau_s
-            self.r += sub_dt * (r_inf - self.r) / tau_r
+            h += sub_dt * self.phi * (alpha_h * (1.0 - h) - beta_h * h)
+            n += sub_dt * self.phi * (alpha_n * (1.0 - n) - beta_n * n)
+            p += sub_dt * (p_inf - p) / tau_p
+            s += sub_dt * (s_inf - s) / tau_s
+            r += sub_dt * (r_inf - r) / tau_r
 
-            i_t = self.g_t * m_t_inf**2 * self.s * (v - self.e_ca)
+            i_t = self.g_t * m_t_inf**2 * s * (v - self.e_ca)
             ca_entry = -i_t * 0.001 if i_t < 0.0 else 0.0
-            self.ca += sub_dt * (ca_entry - self.ca / self.tau_ca)
-            self.ca = max(0.0, self.ca)
+            ca += sub_dt * (ca_entry - ca / self.tau_ca)
+            ca = max(0.0, ca)
 
-            ahp_inf = self.ca**2 / (self.ca**2 + self.kd_ahp**2)
+            ahp_inf = ca**2 / (ca**2 + self.kd_ahp**2)
 
-            i_na = self.g_na * m_inf**3 * self.h * (v - self.e_na)
-            i_nap = self.g_nap * self.p * (v - self.e_na)
-            i_k = self.g_k * self.n**4 * (v - self.e_k)
+            i_na = self.g_na * m_inf**3 * h * (v - self.e_na)
+            i_nap = self.g_nap * p * (v - self.e_na)
+            i_k = self.g_k * n**4 * (v - self.e_k)
             i_ahp = self.g_ahp * ahp_inf * (v - self.e_k)
-            i_h = self.g_h * self.r * (v - self.e_h)
+            i_h = self.g_h * r * (v - self.e_h)
             i_l = self.g_l * (v - self.e_l)
 
             dv_val = (-i_na - i_nap - i_k - i_t - i_ahp - i_h - i_l + inp) / self.c_m
-            self.v += sub_dt * dv_val
+            v += sub_dt * dv_val
 
-            if self.v >= self.v_threshold:
+            if v >= self.v_threshold:
                 fired = 1
-                self.v = -60.0
-                self.ca += 0.2
+                v = -60.0
+                s *= 0.5
+                ca += 0.5
 
-        self.v = max(-100.0, min(60.0, self.v))
-        if not math.isfinite(self.v):
-            self.v = -60.0
-            self.h = 0.6
-            self.n = 0.32
-        if not math.isfinite(self.ca):
-            self.ca = 0.05
-        self.h = max(0.0, min(1.0, self.h))
-        self.n = max(0.0, min(1.0, self.n))
-        self.p = max(0.0, min(1.0, self.p))
-        self.s = max(0.0, min(1.0, self.s))
-        self.r = max(0.0, min(1.0, self.r))
+        candidates = (v, h, n, p, s, r, ca)
+        if not all(math.isfinite(value) for value in candidates):
+            raise ValueError("DCN candidate state must be finite")
+
+        self.v = max(-100.0, min(60.0, v))
+        self.h = max(0.0, min(1.0, h))
+        self.n = max(0.0, min(1.0, n))
+        self.p = max(0.0, min(1.0, p))
+        self.s = max(0.0, min(1.0, s))
+        self.r = max(0.0, min(1.0, r))
+        self.ca = max(0.0, ca)
         return fired
 
     def reset(self) -> None:
@@ -133,3 +146,69 @@ class DCNNeuron:
         self.s = 0.8
         self.r = 0.1
         self.ca = 0.05
+        self._validate_state()
+
+    def _validate_state(self) -> None:
+        values = (
+            self.v,
+            self.h,
+            self.n,
+            self.p,
+            self.s,
+            self.r,
+            self.ca,
+            self.g_na,
+            self.g_nap,
+            self.g_k,
+            self.g_t,
+            self.g_ahp,
+            self.g_h,
+            self.g_l,
+            self.e_na,
+            self.e_k,
+            self.e_ca,
+            self.e_h,
+            self.e_l,
+            self.c_m,
+            self.phi,
+            self.tau_ca,
+            self.kd_ahp,
+            self.dt,
+            self.v_threshold,
+            self.gain,
+        )
+        if not all(math.isfinite(value) for value in values):
+            raise ValueError("DCN state and parameters must be finite")
+        for name in ("h", "n", "p", "s", "r"):
+            value = getattr(self, name)
+            if not 0.0 <= value <= 1.0:
+                raise ValueError(f"{name} gate must be in [0, 1]")
+        if self.ca < 0.0:
+            raise ValueError("ca must be non-negative")
+        if any(
+            value < 0.0
+            for value in (
+                self.g_na,
+                self.g_nap,
+                self.g_k,
+                self.g_t,
+                self.g_ahp,
+                self.g_h,
+                self.g_l,
+            )
+        ):
+            raise ValueError("conductances must be non-negative")
+        if self.c_m <= 0.0:
+            raise ValueError("c_m must be positive")
+        if self.phi <= 0.0:
+            raise ValueError("phi must be positive")
+        if self.tau_ca <= 0.0:
+            raise ValueError("tau_ca must be positive")
+        if self.kd_ahp <= 0.0:
+            raise ValueError("kd_ahp must be positive")
+        if self.dt <= 0.0:
+            raise ValueError("dt must be positive")
+        if self.gain < 0.0:
+            raise ValueError("gain must be non-negative")
+        if self._sub_steps <= 0:
+            raise ValueError("_sub_steps must be positive")

@@ -1,3 +1,11 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved. -->
+<!-- Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore - DCNNeuron model documentation -->
+
 # DCNNeuron
 
 **Module:** `engine/src/neurons/cerebellar.rs`
@@ -60,6 +68,17 @@ $$\frac{d[Ca]}{dt} = -(I_{Ca_T})_{inward} \cdot 0.001 - \frac{[Ca]}{\tau_{Ca}} +
 | `kd_ahp` | 0.5 | µM | AHP Ca²⁺ Kd (Hill n=2) |
 | `dt` | 0.5 | ms | Timestep (20 sub-steps) |
 
+## Runtime Safety Contract
+
+The maintained Python, Rust-engine, Go, Julia, and Rust safety surfaces now use
+the same seven-current sub-stepped update. Each step validates finite state,
+finite input current, gate bounds, non-negative conductances, positive
+capacitance, positive calcium and timestep constants, and non-negative gain
+before integration. Candidate state is computed locally and committed only when
+all state variables remain finite; invalid runtime input or corrupted state
+preserves the previous state on non-throwing runtimes, while the Python surface
+raises before mutation.
+
 ---
 
 ## Pipeline Status
@@ -71,7 +90,7 @@ $$\frac{d[Ca]}{dt} = -(I_{Ca_T})_{inward} \cdot 0.001 - \frac{[Ca]}{\tau_{Ca}} +
 | NetworkRunner wired | `NeuronVariant::DCN` |
 | `create_neuron("DCNNeuron")` | Yes |
 | `supported_models()` | Includes "DCNNeuron" |
-| coverage tests | 14 (fire, spontaneous, rebound, Ih, NaP excitability, AHP limits rate, Ca²⁺ rises, 7 currents, gates, reset, negative, NaN, extreme, performance) |
+| coverage tests | Rust engine tests plus module-specific Python and Go tests for seven-current surface, gate/Ca²⁺ bounds, T-type de-inactivation, Ih depolarisation, invalid configuration rejection, non-finite input preservation, and invalid candidate preservation |
 | Benchmark | `dcn_1k_steps`: **2.14 ms** (2.14 µs/step), i5-11600K |
 
 ---
@@ -83,7 +102,8 @@ $$\frac{d[Ca]}{dt} = -(I_{Ca_T})_{inward} \cdot 0.001 - \frac{[Ca]}{\tau_{Ca}} +
 | dcn_1k_steps | 2.14 ms |
 | Per step | **2.14 µs** |
 
-7 currents, 20 sub-steps (dt_sub=0.025 ms). Measured 2026-04-05.
+7 currents, 20 sub-steps (dt_sub=0.025 ms). Historical timing was measured
+2026-04-05; regenerate before using as release evidence.
 
 ---
 
