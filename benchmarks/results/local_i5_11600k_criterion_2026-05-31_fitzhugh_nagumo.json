@@ -1,0 +1,21 @@
+{
+  "schema": "sc-neurocore.local_rust_criterion_neuron_benchmark.v1",
+  "date": "2026-05-31",
+  "host": {
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz"
+  },
+  "command": "cargo bench --manifest-path engine/Cargo.toml --bench full_bench fhn_10k_steps -- --sample-size 10",
+  "benchmark": {
+    "name": "fhn_10k_steps",
+    "steps_per_iteration": 10000,
+    "sample_size": 10,
+    "criterion_time_interval_us": {
+      "lower": 487.96,
+      "point_estimate": 508.24,
+      "upper": 518.98
+    },
+    "point_estimate_ns_per_step": 50.824,
+    "point_estimate_steps_per_second": 19675743.74311349
+  },
+  "implementation_note": "Rust engine FitzHughNagumoNeuron uses RK4 over the two-state FitzHugh-Nagumo ODE with fail-closed finite-state validation before mutation."
+}

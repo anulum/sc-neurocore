@@ -15,7 +15,7 @@ import math
 
 import numpy as np
 
-from sc_neurocore.solvers import RK4Solver, RosenbrockEuler
+from sc_neurocore.solvers import RosenbrockEuler
 
 
 _STATE_NAMES = ("v", "w")
@@ -25,17 +25,14 @@ _STRICTLY_POSITIVE_PARAMS = ("b", "epsilon", "dt")
 
 @dataclass
 class FitzHughNagumoNeuron:
-    """FitzHugh-Nagumo 1961 — 2D qualitative spike model.
+    """FitzHugh-Nagumo 1961 two-state excitable-system model.
 
-    dv/dt = v - v³/3 - w + I
-    dw/dt = ε(v + a - bw)
+    dv/dt = v - v^3 / 3 - w + I
+    dw/dt = epsilon * (v + a - b*w)
 
-    Reference: FitzHugh, R. (1961). Biophys. J. 1:445–466.
-
-    Integrator options:
-    - ``baseline_euler`` preserves the historical explicit-Euler path
-    - ``rk4`` is an explicit fourth-order path over the same two-state ODE
-    - ``rosenbrock`` is a linearly implicit path for stiff slow-fast regimes
+    The production default is RK4 over the published two-state ODE. The
+    historical explicit-Euler path remains available only through the explicit
+    ``baseline_euler`` integrator option for compatibility experiments.
     """
 
     v: float = -1.0
@@ -45,60 +42,61 @@ class FitzHughNagumoNeuron:
     epsilon: float = 0.08
     dt: float = 0.1
     v_threshold: float = 1.0
-    integrator: Literal["baseline_euler", "rk4", "rosenbrock"] = "baseline_euler"
+    integrator: Literal["baseline_euler", "rk4", "rosenbrock"] = "rk4"
 
     def __post_init__(self) -> None:
         if self.integrator not in {"baseline_euler", "rk4", "rosenbrock"}:
             raise ValueError(f"Unsupported integrator for FitzHughNagumoNeuron: {self.integrator}")
         self._validate_configuration()
 
+    @staticmethod
+    def _finite_float(name: str, value: float) -> float:
+        if isinstance(value, bool):
+            raise ValueError(f"{name} must be finite")
+        try:
+            result = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{name} must be finite") from exc
+        if not math.isfinite(result):
+            raise ValueError(f"{name} must be finite")
+        return result
+
     def _validate_configuration(self) -> None:
         for name in (*_STATE_NAMES, *_PARAM_NAMES):
-            value = getattr(self, name)
-            if not isinstance(value, int | float) or not math.isfinite(float(value)):
-                raise ValueError(f"{name} must be finite")
-            setattr(self, name, float(value))
+            setattr(self, name, self._finite_float(name, getattr(self, name)))
         for name in _STRICTLY_POSITIVE_PARAMS:
             if getattr(self, name) <= 0.0:
                 raise ValueError(f"{name} must be positive")
 
     def _validate_runtime_configuration(self) -> None:
-        if not (
-            math.isfinite(self.v)
-            and math.isfinite(self.w)
-            and math.isfinite(self.a)
-            and math.isfinite(self.b)
-            and math.isfinite(self.epsilon)
-            and math.isfinite(self.dt)
-            and math.isfinite(self.v_threshold)
-        ):
-            raise ValueError("FitzHugh-Nagumo state and parameters must be finite")
-        if self.b <= 0.0 or self.epsilon <= 0.0 or self.dt <= 0.0:
-            raise ValueError("b, epsilon, and dt must be positive")
+        for name in (*_STATE_NAMES, *_PARAM_NAMES):
+            self._finite_float(name, getattr(self, name))
+        for name in _STRICTLY_POSITIVE_PARAMS:
+            if getattr(self, name) <= 0.0:
+                raise ValueError(f"{name} must be positive")
 
     def step(self, current: float) -> int:
-        if not isinstance(current, int | float) or not math.isfinite(float(current)):
-            raise ValueError("current must be finite")
-        current = float(current)
+        current = self._finite_float("current", current)
         self._validate_runtime_configuration()
         v_prev = self.v
         if self.integrator == "baseline_euler":
-            self._step_baseline_euler(current)
+            candidate = self._euler_candidate(current)
         elif self.integrator == "rk4":
-            self._step_rk4(current)
+            candidate = self._rk4_candidate(current)
         else:
-            self._step_rosenbrock(current)
+            candidate = self._rosenbrock_candidate(current)
+        self.v, self.w = self._validate_candidate(*candidate)
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
     @staticmethod
-    def _validate_state(v: float, w: float) -> tuple[float, float]:
-        if not (math.isfinite(v) and math.isfinite(w)):
-            raise FloatingPointError("FitzHugh-Nagumo state became non-finite")
+    def _validate_candidate(v: float, w: float) -> tuple[float, float]:
+        if not math.isfinite(v):
+            raise FloatingPointError("FitzHugh-Nagumo v candidate became non-finite")
+        if not math.isfinite(w):
+            raise FloatingPointError("FitzHugh-Nagumo w candidate became non-finite")
         return float(v), float(w)
 
-    def _rhs(self, _t: float, state: np.ndarray, current: float) -> np.ndarray:
-        v = float(state[0])
-        w = float(state[1])
+    def _rhs_tuple(self, v: float, w: float, current: float) -> tuple[float, float]:
         if not (math.isfinite(v) and math.isfinite(w) and math.isfinite(current)):
             raise FloatingPointError("FitzHugh-Nagumo derivative input became non-finite")
         try:
@@ -106,29 +104,30 @@ class FitzHughNagumoNeuron:
             dw = self.epsilon * (v + self.a - self.b * w)
         except OverflowError as exc:
             raise FloatingPointError("FitzHugh-Nagumo derivative overflowed") from exc
-        out = np.array([dv, dw], dtype=np.float64)
-        if not np.all(np.isfinite(out)):
+        if not (math.isfinite(dv) and math.isfinite(dw)):
             raise FloatingPointError("FitzHugh-Nagumo derivative became non-finite")
-        return out
+        return dv, dw
 
-    def _step_baseline_euler(self, current: float) -> None:
-        dv, dw = self._rhs(0.0, np.array([self.v, self.w], dtype=np.float64), current)
-        new_v = self.v + dv * self.dt
-        new_w = self.w + dw * self.dt
-        self.v, self.w = self._validate_state(new_v, new_w)
+    def _rhs(self, _t: float, state: np.ndarray, current: float) -> np.ndarray:
+        dv, dw = self._rhs_tuple(float(state[0]), float(state[1]), current)
+        return np.array([dv, dw], dtype=np.float64)
 
-    def _step_rk4(self, current: float) -> None:
-        solver = RK4Solver()
-        state = np.array([self.v, self.w], dtype=np.float64)
-        state, _ = solver.step(
-            lambda time, y: self._rhs(time, y, current),
-            state,
-            0.0,
-            self.dt,
+    def _euler_candidate(self, current: float) -> tuple[float, float]:
+        dv, dw = self._rhs_tuple(self.v, self.w, current)
+        return self.v + dv * self.dt, self.w + dw * self.dt
+
+    def _rk4_candidate(self, current: float) -> tuple[float, float]:
+        v0, w0, dt = self.v, self.w, self.dt
+        k1v, k1w = self._rhs_tuple(v0, w0, current)
+        k2v, k2w = self._rhs_tuple(v0 + 0.5 * dt * k1v, w0 + 0.5 * dt * k1w, current)
+        k3v, k3w = self._rhs_tuple(v0 + 0.5 * dt * k2v, w0 + 0.5 * dt * k2w, current)
+        k4v, k4w = self._rhs_tuple(v0 + dt * k3v, w0 + dt * k3w, current)
+        return (
+            v0 + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0,
+            w0 + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0,
         )
-        self.v, self.w = self._validate_state(float(state[0]), float(state[1]))
 
-    def _step_rosenbrock(self, current: float) -> None:
+    def _rosenbrock_candidate(self, current: float) -> tuple[float, float]:
         solver = RosenbrockEuler()
         state = np.array([self.v, self.w], dtype=np.float64)
         state, _ = solver.step(
@@ -137,7 +136,7 @@ class FitzHughNagumoNeuron:
             0.0,
             self.dt,
         )
-        self.v, self.w = self._validate_state(float(state[0]), float(state[1]))
+        return float(state[0]), float(state[1])
 
     def reset(self) -> None:
         self.v = -1.0

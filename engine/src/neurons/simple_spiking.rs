@@ -35,22 +35,68 @@ impl FitzHughNagumoNeuron {
             v_threshold: 1.0,
         }
     }
+
     pub fn step(&mut self, current: f64) -> i32 {
+        if !(current.is_finite() && self.is_valid()) {
+            return -1;
+        }
         let v_prev = self.v;
-        // FitzHugh 1961: simultaneous Euler (both derivatives use old state)
-        let dv = (self.v - self.v.powi(3) / 3.0 - self.w + current) * self.dt;
-        let dw = self.epsilon * (self.v + self.a - self.b * self.w) * self.dt;
-        self.v += dv;
-        self.w += dw;
+        let Some((new_v, new_w)) = self.rk4_candidate(current) else {
+            return -1;
+        };
+        if !(new_v.is_finite() && new_w.is_finite()) {
+            return -1;
+        }
+        self.v = new_v;
+        self.w = new_w;
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
             0
         }
     }
+
     pub fn reset(&mut self) {
         self.v = -1.0;
         self.w = -0.5;
+    }
+
+    fn is_valid(&self) -> bool {
+        self.v.is_finite()
+            && self.w.is_finite()
+            && self.a.is_finite()
+            && self.b.is_finite()
+            && self.epsilon.is_finite()
+            && self.dt.is_finite()
+            && self.v_threshold.is_finite()
+            && self.b > 0.0
+            && self.epsilon > 0.0
+            && self.dt > 0.0
+    }
+
+    fn rhs(&self, v: f64, w: f64, current: f64) -> Option<(f64, f64)> {
+        if !(v.is_finite() && w.is_finite() && current.is_finite()) {
+            return None;
+        }
+        let dv = v - v.powi(3) / 3.0 - w + current;
+        let dw = self.epsilon * (v + self.a - self.b * w);
+        if dv.is_finite() && dw.is_finite() {
+            Some((dv, dw))
+        } else {
+            None
+        }
+    }
+
+    fn rk4_candidate(&self, current: f64) -> Option<(f64, f64)> {
+        let (v0, w0, dt) = (self.v, self.w, self.dt);
+        let (k1v, k1w) = self.rhs(v0, w0, current)?;
+        let (k2v, k2w) = self.rhs(v0 + 0.5 * dt * k1v, w0 + 0.5 * dt * k1w, current)?;
+        let (k3v, k3w) = self.rhs(v0 + 0.5 * dt * k2v, w0 + 0.5 * dt * k2w, current)?;
+        let (k4v, k4w) = self.rhs(v0 + dt * k3v, w0 + dt * k3w, current)?;
+        Some((
+            v0 + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0,
+            w0 + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0,
+        ))
     }
 }
 impl Default for FitzHughNagumoNeuron {
@@ -1722,8 +1768,21 @@ mod tests {
         assert!((n.w - (-0.5)).abs() > 0.01, "recovery w should change");
     }
     #[test]
-    fn fhn_nan_no_panic() {
-        FitzHughNagumoNeuron::new().step(f64::NAN);
+    fn fhn_invalid_input_preserves_state() {
+        let mut n = FitzHughNagumoNeuron::new();
+        let before = n.clone();
+        assert_eq!(n.step(f64::NAN), -1);
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.w, before.w);
+    }
+    #[test]
+    fn fhn_overflow_candidate_preserves_state() {
+        let mut n = FitzHughNagumoNeuron::new();
+        n.v = 1.0e103;
+        let before = n.clone();
+        assert_eq!(n.step(0.0), -1);
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.w, before.w);
     }
     #[test]
     fn fhn_negative_no_crash() {

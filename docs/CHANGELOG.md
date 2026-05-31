@@ -63,12 +63,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   and runtime drive before integration; candidate updates now fail
   before mutation on potassium-rate overflow or non-finite state while
   preserving no-reset threshold crossing semantics.
-- Hardened `FitzHughNagumoNeuron` Python, Julia, Go, and Rust safety
-  surfaces to validate finite state, recovery-nullcline slope, slow
-  timescale, timestep, threshold, and external-drive contracts before
-  integration; candidate updates now fail before mutation on cubic
-  overflow or non-finite state while preserving no-reset threshold
-  crossing semantics.
+- Promoted `FitzHughNagumoNeuron` to RK4-by-default integration across the
+  Python reference, Rust engine, Julia mirror, Go mirror, and Rust safety
+  surface; the Python legacy Euler path is now explicit opt-in, fail-closed
+  candidate validation is preserved before mutation, module-owned tests now
+  cover 100% of the Python model, and refreshed Python/Rust benchmark
+  artefacts document the RK4 runtime cost.
 - Hardened `JansenRitUnit` Python, Julia, Go, and Rust safety surfaces to
   validate neural-mass state, excitatory/inhibitory gain and rate contracts,
   timestep and external-drive boundaries, overflow-stable sigmoid bounds, and
