@@ -237,7 +237,7 @@ cargo bench --bench analysis_bench -- --quick
 | e-prop ALIF | 10k | 28.3 µs | **2.8 ns** | Adaptive LIF for e-prop learning |
 | Resonate-and-Fire | 10k | 41.8 µs | **4.2 ns** | 2D subthreshold oscillator |
 | Alpha synapse LIF | 10k | 53.1 µs | **5.3 ns** | Excitatory + inhibitory alpha |
-| McKean | 10k | 73.8 µs | **7.4 ns** | Piecewise-linear FHN |
+| McKean | 10k | 320.24 µs | **32.0 ns** | RK4 piecewise-linear McKean |
 | Hindmarsh-Rose | 10k | 77.4 µs | **7.7 ns** | 3D burster (x,y,z) |
 | COBA LIF | 10k | 104 µs | **10.4 ns** | Conductance-based with g_e, g_i |
 | FitzHugh-Nagumo | 10k | 508.24 µs | **50.824 ns** | RK4 two-state qualitative spike model |

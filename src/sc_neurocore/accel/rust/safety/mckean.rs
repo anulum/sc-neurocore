@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for mckean
+// SC-NeuroCore — Rust safety for McKean
 
 #![allow(unused_variables, dead_code, non_snake_case)]
 
@@ -22,13 +22,13 @@ pub struct McKeanNeuron {
 impl McKeanNeuron {
     pub fn new() -> Self {
         Self {
-            v: 0.0_f64,
-            w: 0.0_f64,
-            a: 0.25_f64,
-            epsilon: 0.01_f64,
-            gamma: 0.5_f64,
-            dt: 0.1_f64,
-            v_peak: 0.8_f64,
+            v: 0.0,
+            w: 0.0,
+            a: 0.25,
+            epsilon: 0.01,
+            gamma: 0.5,
+            dt: 0.1,
+            v_peak: 0.8,
         }
     }
 
@@ -44,21 +44,46 @@ impl McKeanNeuron {
         }
     }
 
+    fn derivatives(&self, v: f64, w: f64, current: f64) -> Option<(f64, f64)> {
+        if !(v.is_finite() && w.is_finite() && current.is_finite()) {
+            return None;
+        }
+        let dv = self._f(v) - w + current;
+        let dw = self.epsilon * (v - self.gamma * w);
+        if dv.is_finite() && dw.is_finite() {
+            Some((dv, dw))
+        } else {
+            None
+        }
+    }
+
+    fn rk4_candidate(&self, current: f64) -> Option<(f64, f64)> {
+        let dt = self.dt;
+        let (k1v, k1w) = self.derivatives(self.v, self.w, current)?;
+        let (k2v, k2w) =
+            self.derivatives(self.v + 0.5 * dt * k1v, self.w + 0.5 * dt * k1w, current)?;
+        let (k3v, k3w) =
+            self.derivatives(self.v + 0.5 * dt * k2v, self.w + 0.5 * dt * k2w, current)?;
+        let (k4v, k4w) = self.derivatives(self.v + dt * k3v, self.w + dt * k3w, current)?;
+        let v = self.v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0;
+        let w = self.w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0;
+        if v.is_finite() && w.is_finite() {
+            Some((v, w))
+        } else {
+            None
+        }
+    }
+
     pub fn step(&mut self, i_ext: f64) -> i32 {
         if !validate_mckean(self) || !i_ext.is_finite() {
             return 0;
         }
-
-        let dv = (self._f(self.v) - self.w + i_ext) * self.dt;
-        let dw = self.epsilon * (self.v - self.gamma * self.w) * self.dt;
         let v_prev = self.v;
-        let new_v = self.v + dv;
-        let new_w = self.w + dw;
-        if !(new_v.is_finite() && new_w.is_finite()) {
+        let Some((v, w)) = self.rk4_candidate(i_ext) else {
             return 0;
-        }
-        self.v = new_v;
-        self.w = new_w;
+        };
+        self.v = v;
+        self.w = w;
         if self.v >= self.v_peak && v_prev < self.v_peak {
             1
         } else {
@@ -67,13 +92,11 @@ impl McKeanNeuron {
     }
 
     pub fn reset(&mut self) {
-        // self.v = 0.0
-        // self.w = 0.0
-        self.v = 0.0_f64;
-        self.w = 0.0_f64;
-        self.a = 0.25_f64;
-        self.epsilon = 0.01_f64;
-        self.gamma = 0.5_f64;
+        self.v = 0.0;
+        self.w = 0.0;
+        self.a = 0.25;
+        self.epsilon = 0.01;
+        self.gamma = 0.5;
     }
 }
 
@@ -96,6 +119,19 @@ pub fn validate_mckean(state: &McKeanNeuron) -> bool {
 mod tests {
     use super::*;
 
+    fn rk4_reference(n: &McKeanNeuron, current: f64) -> (f64, f64) {
+        let rhs = |v: f64, w: f64| (n._f(v) - w + current, n.epsilon * (v - n.gamma * w));
+        let dt = n.dt;
+        let (k1v, k1w) = rhs(n.v, n.w);
+        let (k2v, k2w) = rhs(n.v + 0.5 * dt * k1v, n.w + 0.5 * dt * k1w);
+        let (k3v, k3w) = rhs(n.v + 0.5 * dt * k2v, n.w + 0.5 * dt * k2w);
+        let (k4v, k4w) = rhs(n.v + dt * k3v, n.w + dt * k3w);
+        (
+            n.v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0,
+            n.w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0,
+        )
+    }
+
     #[test]
     fn test_mckean_new() {
         let state = McKeanNeuron::new();
@@ -111,12 +147,14 @@ mod tests {
     }
 
     #[test]
-    fn test_mckean_current_balance() {
+    fn test_mckean_matches_rk4_candidate() {
         let mut state = McKeanNeuron::new();
-        let spike = state.step(0.5);
-        assert_eq!(spike, 0);
-        assert!((state.v - 0.05).abs() < 1.0e-12);
-        assert!(state.w.abs() < 1.0e-12);
+        state.v = 0.2;
+        state.w = -0.1;
+        let expected = rk4_reference(&state, 0.5);
+        assert_eq!(state.step(0.5), 0);
+        assert!((state.v - expected.0).abs() < 1.0e-12);
+        assert!((state.w - expected.1).abs() < 1.0e-12);
     }
 
     #[test]
