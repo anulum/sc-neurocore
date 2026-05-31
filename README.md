@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 © 1998–2026 Miroslav Šotek. All rights reserved.
 Contact: www.anulum.li | protoscience@anulum.li
 ORCID: https://orcid.org/0009-0009-3560-0851
@@ -66,7 +67,7 @@ this README.
 | Model documentation pages | 174 |
 | Rust PyO3 model wrappers | 175 |
 | Optional extras | 24 |
-| Python test files | 730 |
+| Python test files | 740 |
 | Public documentation pages | 536 |
 | GitHub Actions workflows | 14 |
 
