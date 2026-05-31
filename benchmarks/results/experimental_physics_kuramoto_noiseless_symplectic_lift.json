@@ -2,9 +2,9 @@
   "candidate_failures": 0,
   "cases": [
     {
-      "baseline_runtime_ns": 316229,
+      "baseline_runtime_ns": 350993,
       "candidate_error": null,
-      "candidate_runtime_ns": 574007,
+      "candidate_runtime_ns": 1125718,
       "case_name": "triad_short",
       "comparison": {
         "comparable_leaf_count": 5,
@@ -24,16 +24,16 @@
       "route_name": "physics.kuramoto.noiseless-symplectic-lift"
     },
     {
-      "baseline_runtime_ns": 187415,
+      "baseline_runtime_ns": 236077,
       "candidate_error": null,
-      "candidate_runtime_ns": 570234,
+      "candidate_runtime_ns": 1283736,
       "case_name": "quartet_short",
       "comparison": {
         "comparable_leaf_count": 5,
         "detail": "output: all comparable leaves matched",
         "matched": true,
         "max_abs_diff": 3.6215868519207106e-05,
-        "max_rel_diff": 0.00017477427625284259
+        "max_rel_diff": 0.00014098183626334363
       },
       "metadata": {
         "coupling": 0.12,
@@ -46,9 +46,9 @@
       "route_name": "physics.kuramoto.noiseless-symplectic-lift"
     },
     {
-      "baseline_runtime_ns": 250737,
+      "baseline_runtime_ns": 366125,
       "candidate_error": null,
-      "candidate_runtime_ns": 838647,
+      "candidate_runtime_ns": 2387592,
       "case_name": "quartet_higher_coupling_short",
       "comparison": {
         "comparable_leaf_count": 5,
@@ -69,8 +69,8 @@
     }
   ],
   "matched_cases": 3,
-  "median_baseline_runtime_ns": 250737,
-  "median_candidate_runtime_ns": 574007,
+  "median_baseline_runtime_ns": 350993,
+  "median_candidate_runtime_ns": 1283736,
   "mode": "shadow",
   "route_name": "physics.kuramoto.noiseless-symplectic-lift",
   "total_cases": 3

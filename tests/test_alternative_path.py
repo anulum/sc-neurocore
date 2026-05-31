@@ -377,12 +377,18 @@ def test_kuramoto_noiseless_symplectic_lift_report_carries_regime_metadata():
 
 
 @pytest.mark.parametrize(
-    ("initial_phases", "horizon", "omegas", "coupling", "dt"),
+    ("initial_phases", "horizon", "omegas", "coupling", "dt", "match"),
     [
-        (np.array([0.1, np.nan, 2.4]), 0.01, np.array([0.8, 1.0, 1.1]), 0.18, 5e-4),
-        (np.array([0.1, 1.2, 2.4]), 0.01, np.array([0.8, 1.0]), 0.18, 5e-4),
-        (np.array([0.1, 1.2, 2.4]), 0.01, np.array([0.8, 1.0, 1.1]), -0.1, 5e-4),
-        (np.array([0.1, 1.2, 2.4]), 0.01, np.array([0.8, 1.0, 1.1]), 0.18, 0.0),
+        (np.array([]), 0.01, np.array([]), 0.18, 5e-4, "initial_phases"),
+        (np.array([0.1, np.nan, 2.4]), 0.01, np.array([0.8, 1.0, 1.1]), 0.18, 5e-4, "finite"),
+        (np.array([0.1, 1.2, 2.4]), 0.01, np.array([0.8, 1.0]), 0.18, 5e-4, "omegas"),
+        (np.array([0.1, 1.2, 2.4]), 0.01, np.array([0.8, np.inf, 1.1]), 0.18, 5e-4, "finite"),
+        (np.array([0.1, 1.2, 2.4]), 0.0, np.array([0.8, 1.0, 1.1]), 0.18, 5e-4, "horizon"),
+        (np.array([0.1, 1.2, 2.4]), True, np.array([0.8, 1.0, 1.1]), 0.18, 5e-4, "horizon"),
+        (np.array([0.1, 1.2, 2.4]), 0.01, np.array([0.8, 1.0, 1.1]), -0.1, 5e-4, "coupling"),
+        (np.array([0.1, 1.2, 2.4]), 0.01, np.array([0.8, 1.0, 1.1]), True, 5e-4, "coupling"),
+        (np.array([0.1, 1.2, 2.4]), 0.01, np.array([0.8, 1.0, 1.1]), 0.18, 0.0, "dt"),
+        (np.array([0.1, 1.2, 2.4]), 0.01, np.array([0.8, 1.0, 1.1]), 0.18, True, "dt"),
     ],
 )
 def test_kuramoto_noiseless_symplectic_lift_route_rejects_invalid_inputs(
@@ -391,10 +397,11 @@ def test_kuramoto_noiseless_symplectic_lift_route_rejects_invalid_inputs(
     omegas,
     coupling,
     dt,
+    match,
 ):
     route = make_kuramoto_noiseless_symplectic_lift_route()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=match):
         route.run(
             AlternativePathConfig(enabled=True, mode=AlternativePathMode.SHADOW),
             initial_phases,

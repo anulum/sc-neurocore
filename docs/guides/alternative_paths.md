@@ -306,6 +306,11 @@ What to expect:
 - if the lifted candidate ever becomes useful, it still needs separate
   justification before touching the stable path
 
+The route fails closed on empty phase arrays, shape mismatches between phases
+and natural frequencies, non-finite phases or frequencies, non-positive
+horizons or timesteps, boolean scalar parameters, and negative coupling. This
+keeps the benchmark confined to the bounded noiseless all-to-all phase regime.
+
 ## CLI Runner
 
 Use the small runner tool to execute built-in routes and write JSON reports:

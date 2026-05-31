@@ -7,6 +7,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `physics.kuramoto.noiseless-symplectic-lift` route validation
+  for empty phase arrays, phase/frequency shape mismatches, non-finite
+  phases or frequencies, non-positive horizons and timesteps, boolean scalar
+  parameters, and negative coupling; refreshed route documentation and
+  benchmark evidence for the bounded noiseless Hamiltonian-lift lane.
 - Hardened `StormerVerlet`, `LeapfrogSolver`, and the
   `physics.oscillator.harmonic-symplectic` route with fail-closed
   Hamiltonian state validation, finite time/timestep contracts, RHS
