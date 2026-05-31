@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `LarterBreakspearNeuron` Python, Julia, Go, and Rust safety
+  surfaces to revalidate conductance, ion-rate, timestep, coupling, and
+  potassium-gate bounds before integration; RK4 candidates now fail
+  before mutation on non-finite state or gate excursions while preserving
+  continuous voltage output semantics.
 - Hardened `WilsonCowanUnit` Python and Rust safety surfaces to
   revalidate E/I state, non-negative coupling weights, positive time
   constants, sigmoid gain, timestep, and candidate rate bounds before
