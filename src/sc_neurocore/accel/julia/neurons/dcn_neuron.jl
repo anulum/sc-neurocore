@@ -54,11 +54,32 @@ function _clamp01(x::Float64)
     return max(0.0, min(1.0, x))
 end
 
+function _exact_relax(value::Float64, target::Float64, tau::Float64, dt::Float64)
+    return target + (value - target) * exp(-dt / tau)
+end
+
+function _exact_hh_gate(value::Float64, alpha::Float64, beta::Float64, phi::Float64, dt::Float64)
+    rate = phi * (alpha + beta)
+    target = alpha / (alpha + beta)
+    return target + (value - target) * exp(-rate * dt)
+end
+
+function _exact_voltage_step(v::Float64, input_current::Float64, c_m::Float64, dt::Float64, conductances)
+    g_total = sum(pair[1] for pair in conductances)
+    if g_total <= 0.0
+        return v + dt * input_current / c_m
+    end
+    reversal_drive = sum(pair[1] * pair[2] for pair in conductances)
+    v_inf = (input_current + reversal_drive) / g_total
+    return v_inf + (v - v_inf) * exp(-dt * g_total / c_m)
+end
+
 function validate!(s::DCNNeuronState)
     values = (s.v, s.h, s.n, s.p, s.s, s.r, s.ca, s.g_na, s.g_nap, s.g_k, s.g_t,
         s.g_ahp, s.g_h, s.g_l, s.e_na, s.e_k, s.e_ca, s.e_h, s.e_l, s.c_m,
         s.phi, s.tau_ca, s.kd_ahp, s.dt, s.v_threshold, s.gain, s._sub_steps)
     all(isfinite, values) || throw(ArgumentError("DCN state and parameters must be finite"))
+    -100.0 <= s.v <= 60.0 || throw(ArgumentError("v must be in the physical clamp interval [-100, 60]"))
     all(0.0 .<= (s.h, s.n, s.p, s.s, s.r) .<= 1.0) || throw(ArgumentError("DCN gates must be in [0, 1]"))
     s.ca >= 0.0 || throw(ArgumentError("ca must be non-negative"))
     all((s.g_na, s.g_nap, s.g_k, s.g_t, s.g_ahp, s.g_h, s.g_l) .>= 0.0) || throw(ArgumentError("conductances must be non-negative"))
@@ -94,24 +115,31 @@ function step!(s::DCNNeuronState, I_ext::Float64=0.0)
         tau_s = 20.0 + 50.0 / (1.0 + exp((v + 65.0) / 10.0))
         r_inf = 1.0 / (1.0 + exp((v + 80.0) / 10.0))
         tau_r = 100.0 + 200.0 / (1.0 + exp((v + 70.0) / 10.0))
-        h += sub_dt * s.phi * (alpha_h * (1.0 - h) - beta_h * h)
-        n += sub_dt * s.phi * (alpha_n * (1.0 - n) - beta_n * n)
-        p += sub_dt * (p_inf - p) / tau_p
-        q += sub_dt * (s_inf - q) / tau_s
-        r += sub_dt * (r_inf - r) / tau_r
+        h = _exact_hh_gate(h, alpha_h, beta_h, s.phi, sub_dt)
+        n = _exact_hh_gate(n, alpha_n, beta_n, s.phi, sub_dt)
+        p = _exact_relax(p, p_inf, tau_p, sub_dt)
+        q = _exact_relax(q, s_inf, tau_s, sub_dt)
+        r = _exact_relax(r, r_inf, tau_r, sub_dt)
         i_t = s.g_t * m_t_inf ^ 2 * q * (v - s.e_ca)
         ca_entry = (i_t < 0.0) ? -i_t * 0.001 : 0.0
-        ca += sub_dt * (ca_entry - ca / s.tau_ca)
+        ca = _exact_relax(ca, ca_entry * s.tau_ca, s.tau_ca, sub_dt)
         ca = max(0.0, ca)
         ahp_inf = ca ^ 2 / (ca ^ 2 + s.kd_ahp ^ 2)
-        i_na = s.g_na * m_inf ^ 3 * h * (v - s.e_na)
-        i_nap = s.g_nap * p * (v - s.e_na)
-        i_k = s.g_k * n ^ 4 * (v - s.e_k)
-        i_ahp = s.g_ahp * ahp_inf * (v - s.e_k)
-        i_h = s.g_h * r * (v - s.e_h)
-        i_l = s.g_l * (v - s.e_l)
-        dv_val = (-i_na - i_nap - i_k - i_t - i_ahp - i_h - i_l + inp) / s.c_m
-        v += sub_dt * dv_val
+        g_na_eff = s.g_na * m_inf ^ 3 * h
+        g_nap_eff = s.g_nap * p
+        g_k_eff = s.g_k * n ^ 4
+        g_t_eff = s.g_t * m_t_inf ^ 2 * q
+        g_ahp_eff = s.g_ahp * ahp_inf
+        g_h_eff = s.g_h * r
+        v = _exact_voltage_step(v, inp, s.c_m, sub_dt, (
+            (g_na_eff, s.e_na),
+            (g_nap_eff, s.e_na),
+            (g_k_eff, s.e_k),
+            (g_t_eff, s.e_ca),
+            (g_ahp_eff, s.e_k),
+            (g_h_eff, s.e_h),
+            (s.g_l, s.e_l),
+        ))
         if v >= s.v_threshold
             fired = 1
             v = -60.0

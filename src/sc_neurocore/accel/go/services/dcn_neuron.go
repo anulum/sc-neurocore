@@ -100,27 +100,34 @@ func (s *DCNNeuronState) Step(iExt float64) int {
 		tauS := 20.0 + 50.0/(1.0+math.Exp((v+65.0)/10.0))
 		rInf := 1.0 / (1.0 + math.Exp((v+80.0)/10.0))
 		tauR := 100.0 + 200.0/(1.0+math.Exp((v+70.0)/10.0))
-		h += subDt * s.Phi * (alphaH*(1.0-h) - betaH*h)
-		n += subDt * s.Phi * (alphaN*(1.0-n) - betaN*n)
-		p += subDt * (pInf - p) / tauP
-		gateS += subDt * (sInf - gateS) / tauS
-		r += subDt * (rInf - r) / tauR
+		h = exactHHGateDCN(h, alphaH, betaH, s.Phi, subDt)
+		n = exactHHGateDCN(n, alphaN, betaN, s.Phi, subDt)
+		p = exactRelaxDCN(p, pInf, tauP, subDt)
+		gateS = exactRelaxDCN(gateS, sInf, tauS, subDt)
+		r = exactRelaxDCN(r, rInf, tauR, subDt)
 		iT := s.GT * math.Pow(mtInf, 2) * gateS * (v - s.ECa)
 		caEntry := 0.0
 		if iT < 0.0 {
 			caEntry = -iT * 0.001
 		}
-		ca += subDt * (caEntry - ca/s.TauCa)
+		ca = exactRelaxDCN(ca, caEntry*s.TauCa, s.TauCa, subDt)
 		ca = math.Max(0.0, ca)
 		ahpInf := math.Pow(ca, 2) / (math.Pow(ca, 2) + math.Pow(s.KdAhp, 2))
-		iNa := s.GNa * math.Pow(mInf, 3) * h * (v - s.ENa)
-		iNap := s.GNap * p * (v - s.ENa)
-		iK := s.GK * math.Pow(n, 4) * (v - s.EK)
-		iAhp := s.GAhp * ahpInf * (v - s.EK)
-		iH := s.GH * r * (v - s.EH)
-		iL := s.GL * (v - s.EL)
-		dv := (-iNa - iNap - iK - iT - iAhp - iH - iL + input) / s.CM
-		v += subDt * dv
+		gNaEff := s.GNa * math.Pow(mInf, 3) * h
+		gNapEff := s.GNap * p
+		gKEff := s.GK * math.Pow(n, 4)
+		gTEff := s.GT * math.Pow(mtInf, 2) * gateS
+		gAhpEff := s.GAhp * ahpInf
+		gHEff := s.GH * r
+		v = exactVoltageDCN(v, input, s.CM, subDt, [][2]float64{
+			{gNaEff, s.ENa},
+			{gNapEff, s.ENa},
+			{gKEff, s.EK},
+			{gTEff, s.ECa},
+			{gAhpEff, s.EK},
+			{gHEff, s.EH},
+			{s.GL, s.EL},
+		})
 		if v >= s.VThreshold {
 			fired = 1
 			v = -60.0
@@ -152,6 +159,30 @@ func safeRateDCN(a, vhalf, v, k, fallback float64) float64 {
 	return a * d / (1.0 - math.Exp(-d/k))
 }
 
+func exactRelaxDCN(value, target, tau, dt float64) float64 {
+	return target + (value-target)*math.Exp(-dt/tau)
+}
+
+func exactHHGateDCN(value, alpha, beta, phi, dt float64) float64 {
+	rate := phi * (alpha + beta)
+	target := alpha / (alpha + beta)
+	return target + (value-target)*math.Exp(-rate*dt)
+}
+
+func exactVoltageDCN(v, inputCurrent, cM, dt float64, conductances [][2]float64) float64 {
+	gTotal := 0.0
+	reversalDrive := 0.0
+	for _, pair := range conductances {
+		gTotal += pair[0]
+		reversalDrive += pair[0] * pair[1]
+	}
+	if gTotal <= 0.0 {
+		return v + dt*inputCurrent/cM
+	}
+	vInf := (inputCurrent + reversalDrive) / gTotal
+	return vInf + (v-vInf)*math.Exp(-dt*gTotal/cM)
+}
+
 func clamp01DCN(x float64) float64 {
 	return math.Max(0.0, math.Min(1.0, x))
 }
@@ -167,7 +198,7 @@ func (s *DCNNeuronState) valid() bool {
 			return false
 		}
 	}
-	if s.Ca < 0.0 || s.CM <= 0.0 || s.Phi <= 0.0 || s.TauCa <= 0.0 ||
+	if s.V < -100.0 || s.V > 60.0 || s.Ca < 0.0 || s.CM <= 0.0 || s.Phi <= 0.0 || s.TauCa <= 0.0 ||
 		s.KdAhp <= 0.0 || s.Dt <= 0.0 || s.Gain < 0.0 || s.SubSteps <= 0 {
 		return false
 	}

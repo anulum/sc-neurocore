@@ -97,23 +97,36 @@ impl DCNNeuron {
             let tau_s = 20.0 + 50.0 / (1.0 + ((v + 65.0) / 10.0).exp());
             let r_inf = 1.0 / (1.0 + ((v + 80.0) / 10.0).exp());
             let tau_r = 100.0 + 200.0 / (1.0 + ((v + 70.0) / 10.0).exp());
-            h += sub_dt * self.phi * (alpha_h * (1.0 - h) - beta_h * h);
-            n += sub_dt * self.phi * (alpha_n * (1.0 - n) - beta_n * n);
-            p += sub_dt * (p_inf - p) / tau_p;
-            s_gate += sub_dt * (s_inf - s_gate) / tau_s;
-            r += sub_dt * (r_inf - r) / tau_r;
+            h = exact_hh_gate(h, alpha_h, beta_h, self.phi, sub_dt);
+            n = exact_hh_gate(n, alpha_n, beta_n, self.phi, sub_dt);
+            p = exact_relax(p, p_inf, tau_p, sub_dt);
+            s_gate = exact_relax(s_gate, s_inf, tau_s, sub_dt);
+            r = exact_relax(r, r_inf, tau_r, sub_dt);
             let i_t = self.g_t * mt_inf.powi(2) * s_gate * (v - self.e_ca);
             let ca_entry = if i_t < 0.0 { -i_t * 0.001 } else { 0.0 };
-            ca = (ca + sub_dt * (ca_entry - ca / self.tau_ca)).max(0.0);
+            ca = exact_relax(ca, ca_entry * self.tau_ca, self.tau_ca, sub_dt).max(0.0);
             let ahp_inf = ca.powi(2) / (ca.powi(2) + self.kd_ahp.powi(2));
-            let i_na = self.g_na * m_inf.powi(3) * h * (v - self.e_na);
-            let i_nap = self.g_nap * p * (v - self.e_na);
-            let i_k = self.g_k * n.powi(4) * (v - self.e_k);
-            let i_ahp = self.g_ahp * ahp_inf * (v - self.e_k);
-            let i_h = self.g_h * r * (v - self.e_h);
-            let i_l = self.g_l * (v - self.e_l);
-            let dv = (-i_na - i_nap - i_k - i_t - i_ahp - i_h - i_l + input) / self.c_m;
-            v += sub_dt * dv;
+            let g_na_eff = self.g_na * m_inf.powi(3) * h;
+            let g_nap_eff = self.g_nap * p;
+            let g_k_eff = self.g_k * n.powi(4);
+            let g_t_eff = self.g_t * mt_inf.powi(2) * s_gate;
+            let g_ahp_eff = self.g_ahp * ahp_inf;
+            let g_h_eff = self.g_h * r;
+            v = exact_voltage_step(
+                v,
+                input,
+                self.c_m,
+                sub_dt,
+                &[
+                    (g_na_eff, self.e_na),
+                    (g_nap_eff, self.e_na),
+                    (g_k_eff, self.e_k),
+                    (g_t_eff, self.e_ca),
+                    (g_ahp_eff, self.e_k),
+                    (g_h_eff, self.e_h),
+                    (self.g_l, self.e_l),
+                ],
+            );
             if v >= self.v_threshold {
                 fired = 1;
                 v = -60.0;
@@ -184,6 +197,7 @@ pub fn validate_dcn_neuron(state: &DCNNeuron) -> bool {
             .iter()
             .all(|gate| (0.0..=1.0).contains(gate))
         && state.ca >= 0.0
+        && (-100.0..=60.0).contains(&state.v)
         && [
             state.g_na,
             state.g_nap,
@@ -213,6 +227,32 @@ fn safe_rate(a: f64, vhalf: f64, v: f64, k: f64, fallback: f64) -> f64 {
     }
 }
 
+fn exact_relax(value: f64, target: f64, tau: f64, dt: f64) -> f64 {
+    target + (value - target) * (-dt / tau).exp()
+}
+
+fn exact_hh_gate(value: f64, alpha: f64, beta: f64, phi: f64, dt: f64) -> f64 {
+    let rate = phi * (alpha + beta);
+    let target = alpha / (alpha + beta);
+    target + (value - target) * (-rate * dt).exp()
+}
+
+fn exact_voltage_step(
+    v: f64,
+    input_current: f64,
+    c_m: f64,
+    dt: f64,
+    conductances: &[(f64, f64)],
+) -> f64 {
+    let g_total: f64 = conductances.iter().map(|(g, _)| *g).sum();
+    if g_total <= 0.0 {
+        return v + dt * input_current / c_m;
+    }
+    let reversal_drive: f64 = conductances.iter().map(|(g, e_rev)| g * e_rev).sum();
+    let v_inf = (input_current + reversal_drive) / g_total;
+    v_inf + (v - v_inf) * (-dt * g_total / c_m).exp()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -234,11 +274,62 @@ mod tests {
     }
 
     #[test]
+    fn test_dcn_neuron_closed_form_gate_and_calcium_kinetics() {
+        let mut state = DCNNeuron::new();
+        state.g_na = 0.0;
+        state.g_nap = 0.0;
+        state.g_k = 0.0;
+        state.g_t = 0.0;
+        state.g_ahp = 0.0;
+        state.g_h = 0.0;
+        state.g_l = 0.0;
+        state.gain = 0.0;
+        let (v0, h0, n0, p0, s0, r0, ca0) = (
+            state.v, state.h, state.n, state.p, state.s, state.r, state.ca,
+        );
+        let alpha_h = 0.07 * (-(v0 + 58.0) / 20.0).exp();
+        let beta_h = 1.0 / (1.0 + (-(v0 + 28.0) / 10.0).exp());
+        let alpha_n = safe_rate(0.01, 34.0, v0, 10.0, 0.1);
+        let beta_n = 0.125 * (-(v0 + 44.0) / 80.0).exp();
+        let p_inf = 1.0 / (1.0 + (-(v0 + 48.0) / 5.0).exp());
+        let tau_p = 5.0 + 15.0 / (1.0 + ((v0 + 48.0) / 10.0).powi(2)).max(0.01);
+        let s_inf = 1.0 / (1.0 + ((v0 + 60.0) / 6.5).exp());
+        let tau_s = 20.0 + 50.0 / (1.0 + ((v0 + 65.0) / 10.0).exp());
+        let r_inf = 1.0 / (1.0 + ((v0 + 80.0) / 10.0).exp());
+        let tau_r = 100.0 + 200.0 / (1.0 + ((v0 + 70.0) / 10.0).exp());
+
+        state.step(0.0);
+
+        assert_close(state.v, v0);
+        assert_close(
+            state.h,
+            exact_hh_gate(h0, alpha_h, beta_h, state.phi, state.dt),
+        );
+        assert_close(
+            state.n,
+            exact_hh_gate(n0, alpha_n, beta_n, state.phi, state.dt),
+        );
+        assert_close(state.p, exact_relax(p0, p_inf, tau_p, state.dt));
+        assert_close(state.s, exact_relax(s0, s_inf, tau_s, state.dt));
+        assert_close(state.r, exact_relax(r0, r_inf, tau_r, state.dt));
+        assert_close(state.ca, exact_relax(ca0, 0.0, state.tau_ca, state.dt));
+    }
+
+    #[test]
     fn test_dcn_neuron_invalid_drive_preserves_state() {
         let mut state = DCNNeuron::new();
         let before = state.clone();
         assert_eq!(state.step(f64::NAN), 0);
         assert_eq!(state.v, before.v);
         assert_eq!(state.ca, before.ca);
+    }
+
+    fn assert_close(observed: f64, expected: f64) {
+        assert!(
+            (observed - expected).abs() <= 1.0e-12,
+            "observed {:.17e}, expected {:.17e}",
+            observed,
+            expected,
+        );
     }
 }
