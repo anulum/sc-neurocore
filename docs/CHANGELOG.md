@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `ComplementaryLIFNeuron` Python, Julia, Go, and Rust safety
+  surfaces to revalidate mutable dual-path state, threshold, timestep,
+  and membrane timescale before each update; recompute the decay
+  constant after runtime parameter mutation; and reject non-finite
+  drive or membrane candidates before mutation while preserving ternary
+  positive and negative spike semantics.
 - Hardened `ChayKeizerNeuron` Python, Julia, Go, and Rust safety
   surfaces to reject invalid beta-cell gate/calcium state,
   non-physical Ca-dependent potassium and calcium-buffer contracts,
