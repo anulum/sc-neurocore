@@ -37,31 +37,52 @@ impl WongWangUnit {
     }
 
     pub fn _phi(&self, i_syn: f64) -> f64 {
-        // a, b, d = 270.0, 108.0, 0.154
-        // x = a * i_syn - b
-        // if abs(x) < 1e-6:
-        // return 1.0 / d
-        // return x / (1.0 - (-d * x_f64).exp())
-        0.0
+        let a = 270.0_f64;
+        let b = 108.0_f64;
+        let d = 0.154_f64;
+        let x = a * i_syn - b;
+        if x.abs() < 1e-6 {
+            return 1.0 / d;
+        }
+        let exponent = -d * x;
+        if exponent > 700.0 {
+            return 0.0;
+        }
+        x / (1.0 - exponent.exp())
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // i1 = (
-        // self.j_n * self.s1
-        // - self.j_cross * self.s2
-        // + self.i_0
-        // + stim1
-        // + self.sigma * np.random.randn()
-        // )
-        // i2 = (
-        // self.j_n * self.s2
-        // - self.j_cross * self.s1
-        // + self.i_0
-        // + stim2
-        // + self.sigma * np.random.randn()
-        // )
-        // r1, r2 = self._phi(i1), self._phi(i2)
-        0 // spike indicator
+    pub fn step(
+        &mut self,
+        stim1: f64,
+        stim2: f64,
+        xi1: f64,
+        xi2: f64,
+    ) -> Result<(f64, f64), &'static str> {
+        if !validate_wong_wang(self) {
+            return Err("invalid Wong-Wang runtime state");
+        }
+        if !stim1.is_finite() || !stim2.is_finite() || !xi1.is_finite() || !xi2.is_finite() {
+            return Err("invalid Wong-Wang stimulus or noise");
+        }
+
+        let i1 = self.j_n * self.s1 - self.j_cross * self.s2 + self.i_0 + stim1 + self.sigma * xi1;
+        let i2 = self.j_n * self.s2 - self.j_cross * self.s1 + self.i_0 + stim2 + self.sigma * xi2;
+        let r1 = self._phi(i1);
+        let r2 = self._phi(i2);
+        if !r1.is_finite() || r1 < 0.0 || !r2.is_finite() || r2 < 0.0 {
+            return Err("invalid Wong-Wang transfer response");
+        }
+
+        let next_s1 =
+            self.s1 + (-self.s1 / self.tau_s + (1.0 - self.s1) * self.gamma * r1) * self.dt;
+        let next_s2 =
+            self.s2 + (-self.s2 / self.tau_s + (1.0 - self.s2) * self.gamma * r2) * self.dt;
+        if !next_s1.is_finite() || !next_s2.is_finite() {
+            return Err("invalid Wong-Wang candidate state");
+        }
+        self.s1 = next_s1.clamp(0.0, 1.0);
+        self.s2 = next_s2.clamp(0.0, 1.0);
+        Ok((r1, r2))
     }
 
     pub fn reset(&mut self) {
@@ -75,7 +96,25 @@ impl WongWangUnit {
 }
 
 pub fn validate_wong_wang(state: &WongWangUnit) -> bool {
-    true
+    finite_gate(state.s1)
+        && finite_gate(state.s2)
+        && state.tau_s.is_finite()
+        && state.tau_s > 0.0
+        && state.gamma.is_finite()
+        && state.gamma > 0.0
+        && state.j_n.is_finite()
+        && state.j_n >= 0.0
+        && state.j_cross.is_finite()
+        && state.j_cross >= 0.0
+        && state.i_0.is_finite()
+        && state.sigma.is_finite()
+        && state.sigma >= 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
+}
+
+fn finite_gate(value: f64) -> bool {
+    value.is_finite() && (0.0..=1.0).contains(&value)
 }
 
 #[cfg(test)]
@@ -91,7 +130,14 @@ mod tests {
     #[test]
     fn test_wong_wang_step() {
         let mut state = WongWangUnit::new();
-        let spike = state.step(10.0);
-        assert!(spike == 0 || spike == 1);
+        let rates = state.step(0.1, 0.0, 0.0, 0.0).unwrap();
+        assert!(rates.0.is_finite() && rates.1.is_finite());
+    }
+
+    #[test]
+    fn test_wong_wang_rejects_invalid_runtime_state() {
+        let mut state = WongWangUnit::new();
+        state.s1 = 1.5;
+        assert!(state.step(0.1, 0.0, 0.0, 0.0).is_err());
     }
 }

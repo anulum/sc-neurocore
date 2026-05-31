@@ -1,3 +1,4 @@
+- Hardened `BoothRinzelNeuron` Python, Julia, Go, and Rust safety surfaces with finite-domain validation, fail-closed candidate updates, physical gate/calcium bounds, and module-owned regression tests.
 # Changelog
 
 All notable changes to the `sc-neurocore` project will be documented in this file.
@@ -5,6 +6,143 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `PinskyRinzelNeuron` Python, Julia, Go, and Rust safety
+  surfaces to validate two-compartment state, compartment fraction,
+  positive conductances, timestep, calcium non-negativity, gate bounds,
+  and dual-input currents before integration; candidate updates now fail
+  before mutation on non-finite state or gate-envelope excursions while
+  preserving somatic threshold-crossing semantics.
+- Hardened `LarterBreakspearNeuron` Python, Julia, Go, and Rust safety
+  surfaces to revalidate conductance, ion-rate, timestep, coupling, and
+  potassium-gate bounds before integration; RK4 candidates now fail
+  before mutation on non-finite state or gate excursions while preserving
+  continuous voltage output semantics.
+- Hardened `WilsonCowanUnit` Python and Rust safety surfaces to
+  revalidate E/I state, non-negative coupling weights, positive time
+  constants, sigmoid gain, timestep, and candidate rate bounds before
+  mutation; public model documentation now states the two-term sigmoid
+  range and fail-closed polyglot runtime contract.
+- Hardened `MorrisLecarNeuron` Python, Julia, Go, and Rust safety
+  surfaces to validate finite conductance state, membrane capacitance,
+  activation slopes, potassium activation bounds, timestep, threshold,
+  and runtime drive before integration; candidate updates now fail
+  before mutation on potassium-rate overflow or non-finite state while
+  preserving no-reset threshold crossing semantics.
+- Hardened `FitzHughNagumoNeuron` Python, Julia, Go, and Rust safety
+  surfaces to validate finite state, recovery-nullcline slope, slow
+  timescale, timestep, threshold, and external-drive contracts before
+  integration; candidate updates now fail before mutation on cubic
+  overflow or non-finite state while preserving no-reset threshold
+  crossing semantics.
+- Hardened `JansenRitUnit` Python, Julia, Go, and Rust safety surfaces to
+  validate neural-mass state, excitatory/inhibitory gain and rate contracts,
+  timestep and external-drive boundaries, overflow-stable sigmoid bounds, and
+  finite candidate updates before mutation while preserving continuous EEG
+  proxy output semantics.
+- Hardened `WendlingNeuron` Python, Go, and Rust safety surfaces to validate
+  neural-mass state, physiological gain/rate/timestep contracts, non-finite
+  external drive, overflow-stable sigmoid bounds, and finite candidate updates
+  before mutation while preserving continuous EEG-proxy output semantics.
+- Hardened `CompteWMNeuron` Python, Julia, Go, and Rust safety surfaces
+  to validate NMDA/AMPA/GABA gate state, Mg2+-block denominators,
+  conductance and timescale contracts, non-finite drive, and bounded
+  voltage or gate candidates before mutation while preserving
+  spike-triggered self-inhibitory GABA feedback.
+- Hardened `COBALIFNeuron` Python, Julia, Go, and Rust safety surfaces
+  to validate mutable conductance state, membrane geometry, synaptic
+  deltas, and exponential decay contracts before each update; compute
+  voltage and conductance candidates before mutation; and reject
+  non-finite or out-of-envelope candidates while preserving spike reset
+  semantics.
+- Hardened `ComplementaryLIFNeuron` Python, Julia, Go, and Rust safety
+  surfaces to revalidate mutable dual-path state, threshold, timestep,
+  and membrane timescale before each update; recompute the decay
+  constant after runtime parameter mutation; and reject non-finite
+  drive or membrane candidates before mutation while preserving ternary
+  positive and negative spike semantics.
+- Hardened `ChayKeizerNeuron` Python, Julia, Go, and Rust safety
+  surfaces to reject invalid beta-cell gate/calcium state,
+  non-physical Ca-dependent potassium and calcium-buffer contracts,
+  unstable logistic/timescale exponentials, non-finite drive, and
+  out-of-bounds membrane, gate, or calcium candidates before mutation.
+- Hardened `ChayNeuron` Python, Julia, Go, and Rust safety surfaces to
+  reject invalid beta-cell gate/calcium state, non-physical conductance
+  and calcium-buffer contracts, unstable logistic exponentials,
+  non-finite drive, and out-of-bounds membrane, gate, or calcium
+  candidates before mutation while substepping the stiff potassium
+  dynamics.
+- Hardened `ChandelierNeuron` Python, Julia, Go, and Rust safety surfaces
+  to reject invalid Kv1/Kv3 gate state, non-physical conductance and
+  capacitance contracts, unstable rate and gate exponentials, non-finite
+  drive, and out-of-bounds membrane or gate candidates before mutation while
+  preserving axo-axonic Kv1 delay and Kv3 sharpening dynamics.
+- Hardened `CerebellarBasketNeuron` Python, Julia, Go, and Rust safety
+  surfaces to reject invalid A-type/KCa gate state, calcium state,
+  non-physical conductance and capacitance contracts, unstable rate
+  exponentials, non-finite drive, malformed calcium activation denominators,
+  and out-of-bounds membrane or calcium candidates before mutation.
+- Hardened `BKNeuron` Python, Julia, Go, Mojo, and Rust safety surfaces to
+  reject invalid BK gate state, calcium state, non-physical conductance and
+  capacitance contracts, malformed substep geometry, unstable rate and BK
+  activation exponentials, non-finite drive, and out-of-bounds membrane or
+  calcium candidates before mutation while preserving spike-triggered calcium
+  influx.
+- Hardened `ATypeKNeuron` Python, Julia, Go, and Rust safety surfaces to
+  reject invalid transient IA gate state, non-physical conductance and
+  capacitance contracts, malformed substep geometry, unstable rate
+  exponentials, non-finite drive, and out-of-bounds membrane candidates before
+  mutation while preserving A-type K first-spike-delay dynamics.
+- Hardened `AstrocyteLIFNeuron` Python, Julia, Go, and Rust safety
+  surfaces to reject invalid glial calcium state, non-positive membrane and
+  calcium timescales, malformed threshold geometry, non-finite drive,
+  gliotransmitter drift, and non-finite calcium or membrane candidates before
+  mutation while preserving tripartite feedback semantics.
+- Hardened `AlphaMotorNeuron` Python, Julia, Go, Mojo, and Rust safety surfaces
+  to reject invalid HH/PIC gate state, non-physical calcium buffers,
+  non-positive timestep/capacitance/timescale contracts, unstable rate
+  exponentials, and non-finite membrane/calcium candidates before mutation.
+- Hardened `ErmentroutKopellMapNeuron` Python, Julia, Go, and Rust safety
+  surfaces to reject invalid phase-map state, non-positive timestep,
+  non-finite drive, non-finite phase candidates, and mirror threshold drift
+  before mutation while preserving compact-circle phase wrapping.
+- Hardened `AiharaMapNeuron` Python, Julia, Go, and Rust safety surfaces to
+  reject invalid chaotic-map state, malformed feedback/damping parameters,
+  non-finite drive, unstable sigmoid evaluation, and non-finite map candidates
+  before mutation.
+- Hardened `ChialvoMapNeuron` Python, Julia, Go, and Rust safety surfaces to
+  reject invalid discrete-map state, non-finite drive, unstable exponential
+  map terms, and non-finite two-dimensional map candidates before mutation.
+- Hardened `RulkovMapNeuron` Python, Julia, Go, and Rust safety surfaces to
+  reject invalid discrete-map state, non-positive map gain/timescale
+  parameters, non-finite drive, non-finite branch boundaries, and non-finite
+  map candidates before mutation.
+- Hardened `BrunelWangNeuron` Python, Julia, Go, Mojo, and Rust safety surfaces
+  to reject invalid conductance/timescale/capacitance contracts, malformed
+  synaptic gates, non-finite refractory or voltage state, unstable NMDA
+  Mg2+-block exponentials, and non-finite membrane candidates before mutation.
+- Hardened `WilsonHRNeuron` Python, Julia, Go, and Rust safety surfaces to
+  reject invalid polynomial-cortical runtime state, non-positive recovery
+  timescale or timestep, non-finite current, and non-finite voltage/recovery
+  candidates before mutation while preserving spike-triggered voltage reset.
+- Hardened `WongWangUnit` Python, Julia, Go, Mojo, and Rust safety surfaces to
+  reject invalid two-pool gating state, non-positive timescales, non-finite
+  stimuli or noise, unstable transfer-function exponentials, and non-finite
+  candidate states before mutation while preserving tuple rate outputs.
+- Hardened `WilsonCowanUnit` Python, Julia, Go, and Rust safety surfaces to
+  reject invalid rate-state, non-positive timescales, non-finite external
+  drive, unstable sigmoid exponentials, and non-finite rate candidates before
+  mutation while preserving rate-model return semantics.
+- Hardened `TraubMilesNeuron` Python, Julia, Go, Mojo, and Rust safety
+  surfaces to reject invalid HH gate probabilities, non-physical
+  conductances, non-finite rate constants, and non-finite ten-substep
+  voltage candidates before state mutation.
+- Hardened `TermanWangOscillator` Python, Julia, Go, Mojo, and Rust safety
+  surfaces to reject invalid relaxation-oscillator state, non-positive
+  timescale parameters, non-finite drive, and non-finite cubic recovery
+  updates before mutation.
+- Hardened `WangBuzsakiNeuron` Python, Julia, Go, Mojo, and Rust safety
+  surfaces to reject invalid runtime state or non-finite fast-spiking
+  conductance updates before state mutation.
 - Hardened `PoissonNeuron` Python, Julia, Go, Mojo, and Rust safety surfaces to
   revalidate mutable rate and timestep state before sampling, reject non-finite
   interval hazards, and keep the finite-step Poisson probability bounded.

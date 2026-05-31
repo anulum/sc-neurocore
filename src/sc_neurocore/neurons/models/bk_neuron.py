@@ -11,38 +11,60 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 
+_EXP_MAX = 709.0
+_EXP_MIN = -745.0
+
+
+def _checked_exp(x: float) -> float:
+    if not math.isfinite(x) or x > _EXP_MAX:
+        raise ValueError("BK neuron exponential argument is non-finite or unstable")
+    if x < _EXP_MIN:
+        return 0.0
+    return math.exp(x)
+
 
 def _safe_rate(a: float, vhalf: float, v: float, k: float, fallback: float) -> float:
-    """Rate function with safe handling of (v + vhalf) ≈ 0."""
+    """Rate function with safe handling of (v + vhalf) near zero."""
     d = v + vhalf
     if abs(d) < 1e-7:
         return fallback
-    return a * d / (1.0 - math.exp(-d / k))
+    rate = a * d / (1.0 - _checked_exp(-d / k))
+    if not math.isfinite(rate):
+        raise ValueError("BK neuron rate candidate is non-finite")
+    return rate
+
+
+def _finite(name: str, value: float) -> None:
+    if not math.isfinite(value):
+        raise ValueError(f"{name} must be finite")
+
+
+def _positive(name: str, value: float) -> None:
+    _finite(name, value)
+    if value <= 0.0:
+        raise ValueError(f"{name} must be positive")
+
+
+def _nonnegative(name: str, value: float) -> None:
+    _finite(name, value)
+    if value < 0.0:
+        raise ValueError(f"{name} must be non-negative")
+
+
+def _probability(name: str, value: float) -> None:
+    _finite(name, value)
+    if not 0.0 <= value <= 1.0:
+        raise ValueError(f"{name} must stay in [0, 1]")
 
 
 @dataclass
 class BKNeuron:
-    """BK (Big Conductance Ca²⁺-Activated K⁺) channel neuron.
+    """BK calcium-activated K+ channel neuron.
 
-    Wang-Buzsáki base (Na⁺ + Kdr + leak) extended with a BK (KCa1.1)
-    current that depends jointly on membrane voltage and intracellular
-    Ca²⁺ concentration.
-
-    BK channels are the primary mediator of the fast
-    afterhyperpolarisation (fAHP) following action potentials. Their
-    joint voltage–Ca²⁺ dependence means they open during the spike peak
-    when Ca²⁺ influx is maximal, producing rapid repolarisation.
-
-    C_m dv/dt = -g_Na m³∞ h (v - E_Na) - g_K n⁴ (v - E_K)
-                - g_BK BK∞(v, [Ca²⁺]) (v - E_K) - g_L (v - E_L) + I
-
-    BK∞ = 1 / (1 + exp(-(v - V_half_BK) / 15))
-    V_half_BK = 10 - 30 · [Ca²⁺] / ([Ca²⁺] + 0.5)
-
-    d[Ca²⁺]/dt = -[Ca²⁺] / τ_Ca  (+ 0.3 on spike)
-
-    Reference: Contreras et al. (2021) J Comput Neurosci;
-    Wang & Bhatt (1996) BK biophysics; Wang & Buzsáki (1996) base model.
+    Runtime calcium, gate, and membrane candidates are computed locally and
+    committed only after all finite/probability/bounds checks pass. This keeps
+    the documented explicit substep path while preventing non-finite calcium or
+    voltage state from being silently reset after poisoning downstream currents.
     """
 
     v: float = -65.0
@@ -64,57 +86,88 @@ class BKNeuron:
     gain: float = 1.0
     _sub_steps: int = field(default=50, repr=False)
 
+    def __post_init__(self) -> None:
+        self._validate()
+
+    def _validate(self) -> None:
+        for name in ("v", "e_na", "e_k", "e_l", "v_threshold", "gain"):
+            _finite(name, getattr(self, name))
+        for name in ("h", "n"):
+            _probability(name, getattr(self, name))
+        _nonnegative("ca", self.ca)
+        for name in ("g_na", "g_k", "g_bk", "g_l"):
+            _nonnegative(name, getattr(self, name))
+        for name in ("c_m", "phi", "tau_ca", "dt"):
+            _positive(name, getattr(self, name))
+        if not isinstance(self._sub_steps, int) or self._sub_steps <= 0:
+            raise ValueError("_sub_steps must be a positive integer")
+
+    @staticmethod
+    def _validate_candidates(v: float, h: float, n: float, ca: float) -> None:
+        _finite("membrane candidate", v)
+        if v < -100.0 or v > 60.0:
+            raise ValueError("membrane candidate left physiological safety bounds")
+        _probability("h candidate", h)
+        _probability("n candidate", n)
+        _nonnegative("calcium candidate", ca)
+
     def step(self, current: float = 0.0) -> int:
         """Advance one dt. Returns 1 if spike, 0 otherwise."""
+        self._validate()
+        _finite("current", current)
         inp = self.gain * current
+        _finite("input drive", inp)
         sub_dt = self.dt / self._sub_steps
+        _positive("sub_dt", sub_dt)
+
+        v = self.v
+        h = self.h
+        n = self.n
+        ca = self.ca
         fired = 0
 
         for _ in range(self._sub_steps):
-            v = self.v
-
             alpha_m = _safe_rate(0.1, 35.0, v, 10.0, 1.0)
-            beta_m = 4.0 * math.exp(-(v + 60.0) / 18.0)
+            beta_m = 4.0 * _checked_exp(-(v + 60.0) / 18.0)
             m_inf = alpha_m / (alpha_m + beta_m)
+            _finite("m_inf", m_inf)
 
-            alpha_h = 0.07 * math.exp(-(v + 58.0) / 20.0)
-            beta_h = 1.0 / (1.0 + math.exp(-(v + 28.0) / 10.0))
-
+            alpha_h = 0.07 * _checked_exp(-(v + 58.0) / 20.0)
+            beta_h = 1.0 / (1.0 + _checked_exp(-(v + 28.0) / 10.0))
             alpha_n = _safe_rate(0.01, 34.0, v, 10.0, 0.1)
-            beta_n = 0.125 * math.exp(-(v + 44.0) / 80.0)
+            beta_n = 0.125 * _checked_exp(-(v + 44.0) / 80.0)
 
-            v_half_bk = 10.0 - 30.0 * (self.ca / (self.ca + 0.5))
-            bk_inf = 1.0 / (1.0 + math.exp(-(v - v_half_bk) / 15.0))
+            ca_next = max(ca + sub_dt * (-ca / self.tau_ca), 0.0)
+            _nonnegative("calcium decay candidate", ca_next)
+            denom = ca_next + 0.5
+            _positive("BK calcium denominator", denom)
+            v_half_bk = 10.0 - 30.0 * (ca_next / denom)
+            _finite("BK half-activation", v_half_bk)
+            bk_inf = 1.0 / (1.0 + _checked_exp(-(v - v_half_bk) / 15.0))
+            _probability("BK activation", bk_inf)
 
-            self.ca += sub_dt * (-self.ca / self.tau_ca)
+            h_next = h + sub_dt * self.phi * (alpha_h * (1.0 - h) - beta_h * h)
+            n_next = n + sub_dt * self.phi * (alpha_n * (1.0 - n) - beta_n * n)
 
-            self.h += sub_dt * self.phi * (alpha_h * (1.0 - self.h) - beta_h * self.h)
-            self.n += sub_dt * self.phi * (alpha_n * (1.0 - self.n) - beta_n * self.n)
-
-            i_na = self.g_na * m_inf**3 * self.h * (v - self.e_na)
-            i_k = self.g_k * self.n**4 * (v - self.e_k)
+            i_na = self.g_na * m_inf**3 * h_next * (v - self.e_na)
+            i_k = self.g_k * n_next**4 * (v - self.e_k)
             i_bk = self.g_bk * bk_inf * (v - self.e_k)
             i_l = self.g_l * (v - self.e_l)
-
             dv = (-i_na - i_k - i_bk - i_l + inp) / self.c_m
-            self.v += sub_dt * dv
+            v_next = v + sub_dt * dv
 
-            if self.v >= self.v_threshold:
+            if v_next >= self.v_threshold:
                 fired = 1
-                self.v = -65.0
-                self.ca += 0.3
+                v_next = -65.0
+                ca_next += 0.3
 
-        self.v = max(-100.0, min(60.0, self.v))
-        if not math.isfinite(self.v):
-            self.v = -65.0
-            self.h = 0.6
-            self.n = 0.32
-        if not math.isfinite(self.ca):
-            self.ca = 0.0
-        self.h = max(0.0, min(1.0, self.h))
-        self.n = max(0.0, min(1.0, self.n))
-        self.ca = max(0.0, self.ca)
+            self._validate_candidates(v_next, h_next, n_next, ca_next)
+            v, h, n, ca = v_next, h_next, n_next, ca_next
 
+        self.v = v
+        self.h = h
+        self.n = n
+        self.ca = ca
         return fired
 
     def reset(self) -> None:

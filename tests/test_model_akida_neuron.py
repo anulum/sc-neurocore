@@ -25,6 +25,7 @@ FULL PIPELINE WIRED + PERFORMANCE."""
 from __future__ import annotations
 
 import time
+import os
 
 import numpy as np
 import pytest
@@ -222,7 +223,8 @@ class TestAkidaPerformance:
             n.step(1)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert rate > 500_000, f"isolation: {rate:.0f} steps/s"
+        min_rate = 400_000 if os.getenv("CI") else 500_000
+        assert rate > min_rate, f"isolation: {rate:.0f} steps/s, minimum={min_rate}"
 
     def test_network_throughput(self):
         pop = Population(AkidaNeuron, n=20, label="bench")

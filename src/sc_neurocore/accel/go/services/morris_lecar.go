@@ -57,9 +57,7 @@ func NewMorrisLecarNeuron() *MorrisLecarNeuronState {
 // Step advances the neuron by one timestep
 func (s *MorrisLecarNeuronState) Step(current float64) int {
 	if !validateMorrisLecarState(s) || !finiteMorrisLecar(current) {
-		s.V = math.NaN()
-		s.W = math.NaN()
-		return 0
+		return -1
 	}
 	vPrev := s.V
 	mInf := s.mInf(s.V)
@@ -68,13 +66,13 @@ func (s *MorrisLecarNeuronState) Step(current float64) int {
 	iCa := s.GCa * mInf * (s.V - s.ECa)
 	iK := s.GK * s.W * (s.V - s.EK)
 	iL := s.GL * (s.V - s.EL)
-	s.V += (-iCa - iK - iL + current) / s.CM * s.Dt
-	s.W += lam * (wInf - s.W) * s.Dt
-	if !validateMorrisLecarState(s) {
-		s.V = math.NaN()
-		s.W = math.NaN()
-		return 0
+	next := *s
+	next.V += (-iCa - iK - iL + current) / s.CM * s.Dt
+	next.W += lam * (wInf - s.W) * s.Dt
+	if !validateMorrisLecarState(&next) {
+		return -1
 	}
+	*s = next
 	if s.V >= s.VThreshold && vPrev < s.VThreshold {
 		return 1
 	}
@@ -136,5 +134,7 @@ func validateMorrisLecarState(s *MorrisLecarNeuronState) bool {
 		s.V2 > 0.0 &&
 		s.V4 > 0.0 &&
 		s.Phi > 0.0 &&
-		s.Dt > 0.0
+		s.Dt > 0.0 &&
+		s.W >= 0.0 &&
+		s.W <= 1.0
 }

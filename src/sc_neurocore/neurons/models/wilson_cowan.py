@@ -12,6 +12,12 @@ import math
 from dataclasses import dataclass
 
 
+_STATE_NAMES = ("e", "i")
+_PARAM_NAMES = ("w_ee", "w_ei", "w_ie", "w_ii", "tau_e", "tau_i", "a", "theta", "dt")
+_NON_NEGATIVE_PARAMS = ("w_ee", "w_ei", "w_ie", "w_ii")
+_STRICTLY_POSITIVE_PARAMS = ("tau_e", "tau_i", "a", "dt")
+
+
 @dataclass
 class WilsonCowanUnit:
     """Wilson-Cowan 1972 — excitatory/inhibitory population rate model.
@@ -35,6 +41,43 @@ class WilsonCowanUnit:
     theta: float = 4.0
     dt: float = 0.1
 
+    def __post_init__(self) -> None:
+        self._validate_configuration(coerce=True)
+
+    def _validate_configuration(self, *, coerce: bool = False) -> None:
+        for name in (*_STATE_NAMES, *_PARAM_NAMES):
+            value = float(getattr(self, name))
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+            if coerce:
+                setattr(self, name, value)
+        for name in _NON_NEGATIVE_PARAMS:
+            if getattr(self, name) < 0.0:
+                raise ValueError(f"{name} must be non-negative")
+        for name in _STRICTLY_POSITIVE_PARAMS:
+            if getattr(self, name) <= 0.0:
+                raise ValueError(f"{name} must be positive")
+        self._validate_state(self.e, self.i)
+
+    @staticmethod
+    def _logistic(z: float) -> float:
+        if z >= 0.0:
+            return 1.0 / (1.0 + math.exp(-z))
+        exp_z = math.exp(z)
+        return exp_z / (1.0 + exp_z)
+
+    def _validate_rate(self, name: str, value: float) -> float:
+        rate = float(value)
+        baseline = self._logistic(-self.a * self.theta)
+        lower = -baseline
+        upper = 1.0 - baseline
+        if not math.isfinite(rate) or rate < lower or rate > upper:
+            raise FloatingPointError(f"{name} rate must remain in Wilson-Cowan sigmoid range")
+        return rate
+
+    def _validate_state(self, e: float, i: float) -> tuple[float, float]:
+        return self._validate_rate("e", e), self._validate_rate("i", i)
+
     def _sigmoid(self, x: float) -> float:
         # Published Wilson-Cowan 1972 two-term sigmoid:
         #   S(x) = 1/(1+exp(-a(x-θ))) − 1/(1+exp(aθ))
@@ -43,15 +86,23 @@ class WilsonCowanUnit:
         # `1/(1+exp(aθ))` ≈ 0.008 at x = 0 that shifted the model's
         # fixed points and suppressed the Hopf oscillator regime.
         # math.exp on scalars keeps the per-step cost ~0.7 µs.
-        return 1.0 / (1.0 + math.exp(-self.a * (x - self.theta))) - 1.0 / (
-            1.0 + math.exp(self.a * self.theta)
-        )
+        drive = float(x)
+        if not math.isfinite(drive):
+            raise ValueError("sigmoid input must be finite")
+        return self._logistic(self.a * (drive - self.theta)) - self._logistic(-self.a * self.theta)
 
     def step(self, ext_input: float = 0.0) -> float:
-        se = self._sigmoid(self.w_ee * self.e - self.w_ei * self.i + ext_input)
-        si = self._sigmoid(self.w_ie * self.e - self.w_ii * self.i)
-        self.e += (-self.e + se) / self.tau_e * self.dt
-        self.i += (-self.i + si) / self.tau_i * self.dt
+        drive = float(ext_input)
+        if not math.isfinite(drive):
+            raise ValueError("external input must be finite")
+
+        self._validate_configuration()
+        e, i = self._validate_state(self.e, self.i)
+        se = self._sigmoid(self.w_ee * e - self.w_ei * i + drive)
+        si = self._sigmoid(self.w_ie * e - self.w_ii * i)
+        next_e = e + (-e + se) / self.tau_e * self.dt
+        next_i = i + (-i + si) / self.tau_i * self.dt
+        self.e, self.i = self._validate_state(next_e, next_i)
         return self.e
 
     def reset(self) -> None:

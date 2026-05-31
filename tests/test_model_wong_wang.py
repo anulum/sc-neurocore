@@ -162,6 +162,45 @@ class TestWongWangStochasticity:
 
 
 class TestWongWangParameters:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("s1", np.nan),
+            ("s2", np.inf),
+            ("s1", -0.1),
+            ("s2", 1.1),
+            ("tau_s", 0.0),
+            ("gamma", 0.0),
+            ("j_n", -1.0),
+            ("j_cross", -1.0),
+            ("i_0", np.inf),
+            ("sigma", -1.0),
+            ("dt", 0.0),
+        ],
+    )
+    def test_rejects_invalid_numerical_configuration(self, field: str, value: float):
+        with pytest.raises((ValueError, FloatingPointError)):
+            WongWangUnit(**{field: value})
+
+    def test_rejects_non_finite_stimulus_before_state_mutation(self):
+        n = WongWangUnit()
+        before = (n.s1, n.s2)
+        with pytest.raises(ValueError, match="stimuli"):
+            n.step(np.nan, 0.0)
+        assert (n.s1, n.s2) == before
+
+    def test_rejects_corrupted_runtime_state_before_mutation(self):
+        n = WongWangUnit()
+        n.s1 = 1.5
+        before = (n.s1, n.s2)
+        with pytest.raises(FloatingPointError, match="gating state"):
+            n.step(0.1, 0.0)
+        assert (n.s1, n.s2) == before
+
+    def test_phi_saturates_for_extreme_finite_negative_drive(self):
+        n = WongWangUnit()
+        assert n._phi(-1.0e6) == 0.0
+
     @pytest.mark.parametrize("dt", [0.0005, 0.001, 0.002])
     def test_dt_stability(self, dt: float):
         n = WongWangUnit(dt=dt)

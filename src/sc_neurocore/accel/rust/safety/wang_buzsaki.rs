@@ -44,7 +44,10 @@ impl WangBuzsakiNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
+    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
+        if !validate_wang_buzsaki(self) || !i_ext.is_finite() {
+            return Err("invalid Wang-Buzsaki state or input");
+        }
         // v_prev = self.v
         // for _ in range(int(0.5 / max(self.dt, 0.001))):
         // # m is instantaneous (m_inf)
@@ -60,7 +63,7 @@ impl WangBuzsakiNeuron {
         // alpha_n = (
         // 0.01 * (self.v + 34.0) / (1.0 - (-(self.v + 34.0_f64).exp() / 10.0))
         // if abs(self.v + 34.0) > 1e-6
-        0 // spike indicator
+        Ok(0) // spike indicator
     }
 
     pub fn reset(&mut self) {
@@ -76,6 +79,24 @@ impl WangBuzsakiNeuron {
 
 pub fn validate_wang_buzsaki(state: &WangBuzsakiNeuron) -> bool {
     state.v.is_finite()
+        && state.h.is_finite()
+        && state.n.is_finite()
+        && state.g_na.is_finite()
+        && state.g_na > 0.0
+        && state.g_k.is_finite()
+        && state.g_k > 0.0
+        && state.g_l.is_finite()
+        && state.g_l > 0.0
+        && state.e_na.is_finite()
+        && state.e_k.is_finite()
+        && state.e_l.is_finite()
+        && state.c_m.is_finite()
+        && state.c_m > 0.0
+        && state.phi.is_finite()
+        && state.phi > 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
+        && state.v_threshold.is_finite()
 }
 
 #[cfg(test)]
@@ -92,7 +113,14 @@ mod tests {
     #[test]
     fn test_wang_buzsaki_step() {
         let mut state = WangBuzsakiNeuron::new();
-        let spike = state.step(10.0);
+        let spike = state.step(10.0).unwrap();
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_wang_buzsaki_rejects_invalid_runtime_state() {
+        let mut state = WangBuzsakiNeuron::new();
+        state.h = f64::INFINITY;
+        assert_eq!(state.step(10.0), Err("invalid Wang-Buzsaki state or input"));
     }
 }

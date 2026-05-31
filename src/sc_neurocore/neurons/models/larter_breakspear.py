@@ -14,6 +14,27 @@ from typing import Any
 import numpy as np
 
 
+_STATE_NAMES = ("v", "w", "z")
+_PARAM_NAMES = (
+    "g_ca",
+    "g_na",
+    "g_k",
+    "v_ca",
+    "v_na",
+    "v_k",
+    "v_l",
+    "g_l",
+    "phi",
+    "tau_k",
+    "b",
+    "a_ee",
+    "v0",
+    "i_ext",
+    "dt",
+)
+_STRICTLY_POSITIVE_PARAMS = ("dt", "tau_k", "phi", "b", "g_ca", "g_na", "g_k", "g_l")
+
+
 @dataclass
 class LarterBreakspearNeuron:
     """Breakspear, Terry & Friston 2003 — neural mass with ion channels.
@@ -49,34 +70,21 @@ class LarterBreakspearNeuron:
         self.integrator = self.integrator.lower()
         if self.integrator not in {"rk4", "euler"}:
             raise ValueError("integrator must be 'rk4' or 'euler'")
+        self._validate_configuration(coerce=True)
 
-        for name in (
-            "v",
-            "w",
-            "z",
-            "g_ca",
-            "g_na",
-            "g_k",
-            "v_ca",
-            "v_na",
-            "v_k",
-            "v_l",
-            "g_l",
-            "phi",
-            "tau_k",
-            "b",
-            "a_ee",
-            "v0",
-            "i_ext",
-            "dt",
-        ):
-            value = getattr(self, name)
+    def _validate_configuration(self, *, coerce: bool = False) -> None:
+        for name in (*_STATE_NAMES, *_PARAM_NAMES):
+            value = float(getattr(self, name))
             if not np.isfinite(value):
                 raise ValueError(f"{name} must be finite")
+            if coerce:
+                setattr(self, name, value)
 
-        for name in ("dt", "tau_k", "phi", "b", "g_ca", "g_na", "g_k", "g_l"):
+        for name in _STRICTLY_POSITIVE_PARAMS:
             if getattr(self, name) <= 0.0:
                 raise ValueError(f"{name} must be positive")
+        if not 0.0 <= self.w <= 1.0:
+            raise ValueError("w must remain in [0, 1]")
 
     def _m_ca(self, v: float) -> Any:
         return 0.5 * (1.0 + np.tanh((v - (-0.01)) / 0.15))
@@ -103,6 +111,8 @@ class LarterBreakspearNeuron:
     def _set_state(self, v: float, w: float, z: float) -> None:
         if not (np.isfinite(v) and np.isfinite(w) and np.isfinite(z)):
             raise FloatingPointError("Larter-Breakspear state became non-finite")
+        if not 0.0 <= w <= 1.0:
+            raise FloatingPointError("Larter-Breakspear potassium gate left [0, 1]")
         self.v = float(v)
         self.w = float(w)
         self.z = float(z)
@@ -139,6 +149,7 @@ class LarterBreakspearNeuron:
     def step(self, coupling: float = 0.0) -> float:
         if not np.isfinite(coupling):
             raise ValueError("coupling must be finite")
+        self._validate_configuration()
 
         if self.integrator == "rk4":
             self._step_rk4(coupling)

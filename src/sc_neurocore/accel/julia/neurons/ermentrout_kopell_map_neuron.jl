@@ -8,7 +8,7 @@
 
 module ErmentroutKopellMapNeuronAccel
 
-export step!, simulate, ErmentroutKopellMapNeuronState
+export step!, simulate, validate, ErmentroutKopellMapNeuronState
 
 mutable struct ErmentroutKopellMapNeuronState
     theta::Float64
@@ -18,30 +18,36 @@ mutable struct ErmentroutKopellMapNeuronState
 end
 
 function ErmentroutKopellMapNeuronState()
-    ErmentroutKopellMapNeuronState(0.0, 0.1, 1.0, 0.0)
+    ErmentroutKopellMapNeuronState(0.0, 0.1, 1.0, pi)
+end
+
+function validate(s::ErmentroutKopellMapNeuronState)::Bool
+    return isfinite(s.theta) &&
+        isfinite(s.dt) &&
+        s.dt > 0.0 &&
+        isfinite(s.gain) &&
+        isfinite(s.theta_threshold)
 end
 
 function step!(s::ErmentroutKopellMapNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        inp = s.gain * I_ext
-        theta_prev = s.theta
-        d_theta = 1.0 - cos(s.theta) + (1.0 + cos(s.theta)) * inp
-        s.theta += s.dt * d_theta
-        fired = (s.theta >= s.theta_threshold && theta_prev < s.theta_threshold) ? 1 : 0
-        two_pi = 2.0 * pi
-        if s.theta >= two_pi
-            s.theta -= two_pi
-        end
-        if s.theta < 0.0
-            s.theta += two_pi
-        end
-        if ! isfinite(s.theta)
-            s.theta = 0.0
-        end
-        return fired
-    catch _e
-        return 0
+    if !validate(s) || !isfinite(I_ext)
+        return -1
     end
+
+    inp = s.gain * I_ext
+    if !isfinite(inp)
+        return -1
+    end
+    theta_prev = s.theta
+    cos_theta = cos(s.theta)
+    d_theta = 1.0 - cos_theta + (1.0 + cos_theta) * inp
+    theta_next = s.theta + s.dt * d_theta
+    if !isfinite(d_theta) || !isfinite(theta_next)
+        return -1
+    end
+    fired = (theta_next >= s.theta_threshold && theta_prev < s.theta_threshold) ? 1 : 0
+    s.theta = mod(theta_next, 2.0 * pi)
+    return fired
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)

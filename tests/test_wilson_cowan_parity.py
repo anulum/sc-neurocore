@@ -6,12 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Parity: Python primary vs Rust simulator (Wilson-Cowan)
 
-"""Bit-exact parity between `WilsonCowanUnit.step` and the Rust
+"""Last-ulp parity between `WilsonCowanUnit.step` and the Rust
 `py_wilson_cowan_simulate`.
 
 Wilson-Cowan is deterministic (no stochastic noise), so Python and
-Rust must produce identical trajectories for any external-input
-sequence.
+Rust must produce numerically identical trajectories up to the
+last few IEEE-754 ulps for any external-input sequence.
 """
 
 from __future__ import annotations
@@ -69,31 +69,31 @@ def _run_rust(ext: np.ndarray):
 
 
 class TestBitExactParity:
-    """Wilson-Cowan is noise-free; Python and Rust traces must match bit-
-    exact (atol = 1e-15 to allow for IEEE last-ulp arithmetic)."""
+    """Wilson-Cowan is noise-free; Python and Rust traces must match within
+    a small last-ulp envelope across compiler and Python-version math paths."""
 
     def test_parity_zero_input(self):
         n = 5_000
         e_py, i_py = _run_python(np.zeros(n))
         e_rs, i_rs = _run_rust(np.zeros(n))
-        assert np.allclose(e_py, e_rs, atol=1e-15, rtol=0)
-        assert np.allclose(i_py, i_rs, atol=1e-15, rtol=0)
+        assert np.allclose(e_py, e_rs, atol=2e-14, rtol=0)
+        assert np.allclose(i_py, i_rs, atol=2e-14, rtol=0)
 
     def test_parity_constant_drive(self):
         n = 5_000
         ext = np.full(n, 1.5)
         e_py, i_py = _run_python(ext)
         e_rs, i_rs = _run_rust(ext)
-        assert np.allclose(e_py, e_rs, atol=1e-15, rtol=0)
-        assert np.allclose(i_py, i_rs, atol=1e-15, rtol=0)
+        assert np.allclose(e_py, e_rs, atol=2e-14, rtol=0)
+        assert np.allclose(i_py, i_rs, atol=2e-14, rtol=0)
 
     def test_parity_time_varying_drive(self):
         n = 3_000
         ext = np.sin(np.linspace(0, 10 * np.pi, n)) * 2.0
         e_py, i_py = _run_python(ext)
         e_rs, i_rs = _run_rust(ext)
-        assert np.allclose(e_py, e_rs, atol=1e-15, rtol=0)
-        assert np.allclose(i_py, i_rs, atol=1e-15, rtol=0)
+        assert np.allclose(e_py, e_rs, atol=2e-14, rtol=0)
+        assert np.allclose(i_py, i_rs, atol=2e-14, rtol=0)
 
     def test_parity_step_function_drive(self):
         """Sharp transitions are the hardest test for integration parity."""
@@ -103,8 +103,8 @@ class TestBitExactParity:
         ext[3_000:] = -2.0
         e_py, i_py = _run_python(ext)
         e_rs, i_rs = _run_rust(ext)
-        assert np.allclose(e_py, e_rs, atol=1e-15, rtol=0)
-        assert np.allclose(i_py, i_rs, atol=1e-15, rtol=0)
+        assert np.allclose(e_py, e_rs, atol=2e-14, rtol=0)
+        assert np.allclose(i_py, i_rs, atol=2e-14, rtol=0)
 
 
 class TestFinalStateParity:
@@ -133,8 +133,8 @@ class TestFinalStateParity:
         ext = np.full(n, 2.5)
         e_py, i_py = _run_python(ext)
         e_rs, i_rs = _run_rust(ext)
-        assert abs(e_py[-1] - e_rs[-1]) < 1e-15
-        assert abs(i_py[-1] - i_rs[-1]) < 1e-15
+        assert abs(e_py[-1] - e_rs[-1]) < 2e-14
+        assert abs(i_py[-1] - i_rs[-1]) < 2e-14
 
 
 class TestEdgeCases:

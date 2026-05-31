@@ -169,6 +169,46 @@ class TestWBHHProperties:
 
 
 class TestWBParameters:
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"v": np.nan}, "v"),
+            ({"h": np.inf}, "h"),
+            ({"n": np.nan}, "n"),
+            ({"g_na": 0.0}, "g_na"),
+            ({"g_k": -1.0}, "g_k"),
+            ({"g_l": np.nan}, "g_l"),
+            ({"c_m": 0.0}, "c_m"),
+            ({"phi": 0.0}, "phi"),
+            ({"dt": 0.0}, "dt"),
+        ],
+    )
+    def test_rejects_invalid_numerical_configuration(self, kwargs, match):
+        with pytest.raises(ValueError, match=match):
+            WangBuzsakiNeuron(**kwargs)
+
+    def test_rejects_non_finite_current_before_state_mutation(self):
+        n = WangBuzsakiNeuron()
+        state = (n.v, n.h, n.n)
+        with pytest.raises(ValueError, match="current"):
+            n.step(np.nan)
+        assert (n.v, n.h, n.n) == state
+
+    def test_rejects_corrupted_runtime_state_before_mutation(self):
+        n = WangBuzsakiNeuron()
+        n.h = np.inf
+        state = (n.v, n.h, n.n)
+        with pytest.raises(FloatingPointError, match="state"):
+            n.step(1.0)
+        assert (n.v, n.h, n.n) == state
+
+    def test_rejects_rate_overflow_before_state_mutation(self):
+        n = WangBuzsakiNeuron(v=-1.0e308)
+        state = (n.v, n.h, n.n)
+        with pytest.raises(FloatingPointError, match="rate overflowed"):
+            n.step(1.0)
+        assert (n.v, n.h, n.n) == state
+
     @pytest.mark.parametrize("dt", [0.005, 0.01, 0.02])
     def test_dt_stability(self, dt: float):
         n = WangBuzsakiNeuron(dt=dt)

@@ -7,6 +7,7 @@
 # SC-NeuroCore — Mojo SIMD acceleration for traub_miles
 
 fn step(current: Int) -> Int:
+    var _guard_line = 'reject invalid voltage, gate, conductance, timestep, or input before mutation'
     var _step_line = 'v_prev = v'
     var _step_line = 'for _ in range(10):'
     var _step_line = 'd = v + 54.0'
@@ -18,13 +19,17 @@ fn step(current: Int) -> Int:
     var _step_line = 'd3 = v + 52.0'
     var _step_line = 'an = 0.032 * d3 / (1.0 - exp(-d3 / 5.0)) if abs(d3) > 1e-6 e'
     var _step_line = 'bn = 0.5 * exp(-(v + 57.0) / 40.0)'
-    var _step_line = 'm += (am * (1 - m) - bm * m) * dt'
-    var _step_line = 'h += (ah * (1 - h) - bh * h) * dt'
-    var _step_line = 'n += (an * (1 - n) - bn * n) * dt'
-    var _step_line = 'i_na = g_na * m**3 * h * (v - e_na)'
-    var _step_line = 'i_k = g_k * n**4 * (v - e_k)'
+    var _guard_line = 'reject non-finite or negative rate constants'
+    var _step_line = 'next_m = m + (am * (1 - m) - bm * m) * dt'
+    var _step_line = 'next_h = h + (ah * (1 - h) - bh * h) * dt'
+    var _step_line = 'next_n = n + (an * (1 - n) - bn * n) * dt'
+    var _guard_line = 'reject gate candidates outside [0, 1]'
+    var _step_line = 'i_na = g_na * next_m**3 * next_h * (v - e_na)'
+    var _step_line = 'i_k = g_k * next_n**4 * (v - e_k)'
     var _step_line = 'i_l = g_l * (v - e_l)'
-    var _step_line = 'v += (-i_na - i_k - i_l + current) * dt'
+    var _step_line = 'next_v = v + (-i_na - i_k - i_l + current) * dt'
+    var _guard_line = 'reject non-finite voltage candidate before mutation'
+    var _step_line = 'v, m, h, n = next_v, next_m, next_h, next_n'
     return 0  # return 1 if (v >= v_threshold and v_prev < v_thres
 
 fn reset() -> Int:

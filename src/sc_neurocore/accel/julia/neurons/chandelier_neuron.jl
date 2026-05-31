@@ -8,7 +8,7 @@
 
 module ChandelierNeuronAccel
 
-export step!, simulate, ChandelierNeuronState
+export step!, simulate, validate, ChandelierNeuronState
 
 mutable struct ChandelierNeuronState
     v::Float64
@@ -34,35 +34,67 @@ function ChandelierNeuronState()
     ChandelierNeuronState(-65.0, 0.8, 0.1, 0.0, 0.0, 35.0, 9.0, 3.0, 4.0, 0.1, 55.0, -90.0, -65.0, 1.0, 5.0, 0.01, -20.0)
 end
 
-function step!(s::ChandelierNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        v_prev = s.v
-        n_sub = max(1, Int(0.5 / max(s.dt, 0.001)))
-        for _ in 1:n_sub
-            am = _safe_rate(0.1, 35.0, s.v, 10.0, 1.0)
-            bm = 4.0 * exp(-(s.v + 60.0) / 18.0)
-            m_inf = am / (am + bm)
-            ah = 0.07 * exp(-(s.v + 58.0) / 20.0)
-            bh = 1.0 / (1.0 + exp(-(s.v + 28.0) / 10.0))
-            an = _safe_rate(0.01, 34.0, s.v, 10.0, 0.1)
-            bn = 0.125 * exp(-(s.v + 44.0) / 80.0)
-            s.h += s.phi * (ah * (1.0 - s.h) - bh * s.h) * s.dt
-            s.n += s.phi * (an * (1.0 - s.n) - bn * s.n) * s.dt
-            d_inf = 1.0 / (1.0 + exp(-(s.v + 50.0) / 10.0))
-            s.d += (d_inf - s.d) / 150.0 * s.dt
-            p_inf = 1.0 / (1.0 + exp(-(s.v + 10.0) / 10.0))
-            s.p += s.phi * (p_inf - s.p) / 1.0 * s.dt
-            i_na = s.g_na * m_inf ^ 3 * s.h * (s.v - s.e_na)
-            i_k = s.g_k * s.n ^ 4 * (s.v - s.e_k)
-            i_kv1 = s.g_kv1 * s.d ^ 4 * (s.v - s.e_k)
-            i_kv3 = s.g_kv3 * s.p * (s.v - s.e_k)
-            i_l = s.g_l * (s.v - s.e_l)
-            s.v += (-i_na - i_k - i_kv1 - i_kv3 - i_l + I_ext) / s.c_m * s.dt
-        end
-        return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
-    catch _e
-        return 0
+_probability(x::Float64)::Bool = isfinite(x) && 0.0 <= x <= 1.0
+
+function validate(s::ChandelierNeuronState)::Bool
+    all(isfinite, (s.v, s.e_na, s.e_k, s.e_l, s.v_threshold)) &&
+        all(_probability, (s.h, s.n, s.d, s.p)) &&
+        all(x -> isfinite(x) && x >= 0.0, (s.g_na, s.g_k, s.g_kv1, s.g_kv3, s.g_l)) &&
+        all(x -> isfinite(x) && x > 0.0, (s.c_m, s.phi, s.dt))
+end
+
+function _checked_exp(x::Float64)::Float64
+    if !isfinite(x) || x > 709.0
+        return NaN
+    elseif x < -745.0
+        return 0.0
     end
+    exp(x)
+end
+
+function _safe_rate(a::Float64, vhalf::Float64, v::Float64, k::Float64, fallback::Float64)::Float64
+    d = v + vhalf
+    if abs(d) < 1e-7
+        return fallback
+    end
+    rate = a * d / (1.0 - _checked_exp(-d / k))
+    isfinite(rate) ? rate : NaN
+end
+
+function step!(s::ChandelierNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
+    if !validate(s) || !isfinite(I_ext)
+        return -1
+    end
+    v_prev = s.v
+    n_sub = max(1, Int(0.5 / max(s.dt, 0.001)))
+    v, h, n, d_gate, p_gate = s.v, s.h, s.n, s.d, s.p
+    for _ in 1:n_sub
+        am = _safe_rate(0.1, 35.0, v, 10.0, 1.0)
+        bm = 4.0 * _checked_exp(-(v + 60.0) / 18.0)
+        m_inf = am / (am + bm)
+        ah = 0.07 * _checked_exp(-(v + 58.0) / 20.0)
+        bh = 1.0 / (1.0 + _checked_exp(-(v + 28.0) / 10.0))
+        an = _safe_rate(0.01, 34.0, v, 10.0, 0.1)
+        bn = 0.125 * _checked_exp(-(v + 44.0) / 80.0)
+        h_next = h + s.phi * (ah * (1.0 - h) - bh * h) * s.dt
+        n_next = n + s.phi * (an * (1.0 - n) - bn * n) * s.dt
+        d_inf = 1.0 / (1.0 + _checked_exp(-(v + 50.0) / 10.0))
+        d_next = d_gate + (d_inf - d_gate) / 150.0 * s.dt
+        p_inf = 1.0 / (1.0 + _checked_exp(-(v + 10.0) / 10.0))
+        p_next = p_gate + s.phi * (p_inf - p_gate) * s.dt
+        i_na = s.g_na * m_inf ^ 3 * h_next * (v - s.e_na)
+        i_k = s.g_k * n_next ^ 4 * (v - s.e_k)
+        i_kv1 = s.g_kv1 * d_next ^ 4 * (v - s.e_k)
+        i_kv3 = s.g_kv3 * p_next * (v - s.e_k)
+        i_l = s.g_l * (v - s.e_l)
+        v_next = v + (-i_na - i_k - i_kv1 - i_kv3 - i_l + I_ext) / s.c_m * s.dt
+        if !(isfinite(v_next) && -100.0 <= v_next <= 60.0 && all(_probability, (h_next, n_next, d_next, p_next)))
+            return -1
+        end
+        v, h, n, d_gate, p_gate = v_next, h_next, n_next, d_next, p_next
+    end
+    s.v, s.h, s.n, s.d, s.p = v, h, n, d_gate, p_gate
+    return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
