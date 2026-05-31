@@ -85,7 +85,6 @@ function step!(s::MorrisLecarNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
     end
     s.v = candidate.v
     s.w = candidate.w
-    s.dt = candidate.dt
     return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
 end
 
