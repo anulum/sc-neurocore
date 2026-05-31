@@ -1,0 +1,50 @@
+{
+  "benchmark": "connor_stevens_1k_steps",
+  "command": "cargo bench --manifest-path engine/Cargo.toml connor_stevens_1k_steps",
+  "criterion_estimates": {
+    "mean": {
+      "confidence_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": 71554783.254,
+        "upper_bound": 74849174.88
+      },
+      "point_estimate": 73125317.29,
+      "standard_error": 846336.291457948
+    },
+    "median": {
+      "confidence_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": 69310796.0,
+        "upper_bound": 73499286.0
+      },
+      "point_estimate": 71125661.0,
+      "standard_error": 1028740.5878961964
+    },
+    "median_abs_dev": {
+      "confidence_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": 4661140.126848221,
+        "upper_bound": 7925244.830998778
+      },
+      "point_estimate": 5663425.893554091,
+      "standard_error": 853935.9626131615
+    },
+    "slope": null,
+    "std_dev": {
+      "confidence_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": 6225150.1757181445,
+        "upper_bound": 10655565.800584456
+      },
+      "point_estimate": 8452086.246226048,
+      "standard_error": 1150550.6730058487
+    }
+  },
+  "date": "2026-05-31",
+  "integrator": "candidate-first RK4",
+  "mean_ns_per_1000_steps": 73125317.29,
+  "mean_ns_per_step": 73125.31729,
+  "median_ns_per_1000_steps": 71125661.0,
+  "median_ns_per_step": 71125.661,
+  "source_estimates": "target/criterion/connor_stevens_1k_steps/new/estimates.json"
+}
