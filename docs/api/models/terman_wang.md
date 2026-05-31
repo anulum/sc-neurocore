@@ -53,17 +53,21 @@ $v_{peak} = 1.5$.
 
 ```python
 def step(self, current: float) -> int:
-    f = 3.0 * self.v - self.v**3 + 2.0
-    g = self.alpha * (1.0 + np.tanh(self.v / self.beta))
-    dv = (f - self.w + current + self.rho) * self.dt
-    dw = self.epsilon * (g - self.w) * self.dt
-    v_prev = self.v
-    self.v += dv
-    self.w += dw
+    f = 3.0 * v - v**3 + 2.0
+    g = alpha * (1.0 + tanh(v / beta))
+    next_v = v + (f - w + current + rho) * dt
+    next_w = w + epsilon * (g - w) * dt
+    validate(next_v, next_w)
+    self.v = next_v
+    self.w = next_w
     return 1 if (self.v >= self.v_peak and v_prev < self.v_peak) else 0
 ```
 
-Forward Euler, single step per call.
+Forward Euler, single step per call. The Python model, Rust engine, Go
+service, Julia counterpart, and Rust safety surface validate finite state,
+positive `beta`, `epsilon`, and `dt`, non-finite external drive, cubic
+overflow, non-finite derivative terms, and non-finite candidate states before
+mutation. Rejected steps preserve the previous `(v, w)` state.
 
 ---
 
