@@ -57,9 +57,10 @@ v += dv;  w += dw
 ```
 
 Runtime surfaces reject non-finite current and fail closed if a
-corrupted runtime state or state update becomes non-finite. Python,
-Julia, Go, and Rust safety counterparts preserve the previous `(v, w)`
-state on rejected updates instead of silently reporting no spike.
+corrupted runtime state or state update becomes non-finite. Python
+raises a numerical exception before mutation; the Rust engine, Julia,
+Go, and Rust safety counterparts return no spike while preserving the
+previous `(v, w)` state on rejected updates.
 
 ### 1.5 Spike Detection
 
