@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `AstrocyteLIFNeuron` Python, Julia, Go, and Rust safety
+  surfaces to reject invalid glial calcium state, non-positive membrane and
+  calcium timescales, malformed threshold geometry, non-finite drive,
+  gliotransmitter drift, and non-finite calcium or membrane candidates before
+  mutation while preserving tripartite feedback semantics.
 - Hardened `AlphaMotorNeuron` Python, Julia, Go, Mojo, and Rust safety surfaces
   to reject invalid HH/PIC gate state, non-physical calcium buffers,
   non-positive timestep/capacitance/timescale contracts, unstable rate
