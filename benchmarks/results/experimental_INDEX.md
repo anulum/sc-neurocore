@@ -14,8 +14,8 @@ This index tracks the current safe alternative-path reports.
 
 | Route | Report | Cases | Matched | Candidate failures | Max abs diff | Max rel diff | Median baseline runtime | Median candidate runtime |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| `physics.heat.cosine-mode` | `experimental_physics_heat_cosine_mode.json` | 2 | 2 | 0 | 0.0012876970 | 0.0035300391 | 70,536,361 ns | 8,542 ns |
-| `physics.oscillator.harmonic-symplectic` | `experimental_physics_oscillator_harmonic_symplectic.json` | 2 | 2 | 0 | 0.0000110030 | 0.0001249999 | 16,692,445 ns | 13,046,570 ns |
+| `physics.heat.cosine-mode` | `experimental_physics_heat_cosine_mode.json` | 2 | 2 | 0 | 0.0012876970 | 0.0035300391 | 105,036,675 ns | 6,674 ns |
+| `physics.oscillator.harmonic-symplectic` | `experimental_physics_oscillator_harmonic_symplectic.json` | 2 | 2 | 0 | 0.0000110030 | 0.0001249999 | 12,238,873 ns | 47,247,295 ns |
 | `physics.kuramoto.noiseless-symplectic-lift` | `experimental_physics_kuramoto_noiseless_symplectic_lift.json` | 2 | 2 | 0 | 0.0000502599 | 0.0004126183 | 407,331 ns | 1,041,644 ns |
 | `solver.lif.subthreshold-exact` | `experimental_solver_lif_subthreshold_exact.json` | 2 | 2 | 0 | 0.0000000000 | 0.0000000000 | 48,318,187 ns | 13,452 ns |
 

@@ -25,6 +25,36 @@ from numpy.typing import NDArray
 from .ode import ODESolver
 
 
+def _validate_symplectic_inputs(y: NDArray, t: float, dt: float) -> NDArray:
+    if isinstance(dt, bool) or not isinstance(dt, int | float):
+        raise ValueError("dt must be a finite positive number")
+    if not np.isfinite(float(dt)) or float(dt) <= 0.0:
+        raise ValueError("dt must be a finite positive number")
+    if isinstance(t, bool) or not isinstance(t, int | float):
+        raise ValueError("t must be finite")
+    if not np.isfinite(float(t)):
+        raise ValueError("t must be finite")
+    state = np.asarray(y, dtype=np.float64)
+    if state.ndim != 1 or state.size == 0 or state.size % 2 != 0:
+        raise ValueError("symplectic state must be a non-empty even-length 1-D array")
+    if not np.all(np.isfinite(state)):
+        raise ValueError("symplectic state must contain only finite values")
+    return state
+
+
+def _validated_rhs(
+    f: Callable[[float, NDArray], NDArray],
+    t: float,
+    y: NDArray,
+) -> NDArray:
+    dy = np.asarray(f(t, y), dtype=np.float64)
+    if dy.shape != y.shape:
+        raise ValueError("symplectic RHS must return an array matching the state shape")
+    if not np.all(np.isfinite(dy)):
+        raise ValueError("symplectic RHS must contain only finite values")
+    return dy
+
+
 class StormerVerlet(ODESolver):
     """Störmer-Verlet (velocity Verlet) — symplectic 2nd order.
 
@@ -46,25 +76,32 @@ class StormerVerlet(ODESolver):
         t: float,
         dt: float,
     ) -> tuple[NDArray, float]:
+        y = _validate_symplectic_inputs(y, t, dt)
+        dt = float(dt)
         n = len(y) // 2
         q, p = y[:n], y[n:]
 
         # Full evaluation to get derivatives
-        dy = f(t, y)
+        dy = _validated_rhs(f, float(t), y)
         dq, dp = dy[:n], dy[n:]
 
         # Half kick
         p_half = p + 0.5 * dt * dp
         # Drift
         y_temp = np.concatenate([q, p_half])
-        dy_temp = f(t + 0.5 * dt, y_temp)
-        q_new = q + dt * dy_temp[:n]
+        dy_temp = _validated_rhs(f, float(t) + 0.5 * dt, y_temp)
+        with np.errstate(over="ignore", invalid="ignore"):
+            q_new = q + dt * dy_temp[:n]
         # Half kick
         y_temp2 = np.concatenate([q_new, p_half])
-        dy_final = f(t + dt, y_temp2)
-        p_new = p_half + 0.5 * dt * dy_final[n:]
+        dy_final = _validated_rhs(f, float(t) + dt, y_temp2)
+        with np.errstate(over="ignore", invalid="ignore"):
+            p_new = p_half + 0.5 * dt * dy_final[n:]
 
-        return np.concatenate([q_new, p_new]), dt
+        y_new = np.concatenate([q_new, p_new])
+        if not np.all(np.isfinite(y_new)):
+            raise ValueError("symplectic update produced non-finite state")
+        return y_new, dt
 
 
 class LeapfrogSolver(ODESolver):
@@ -87,22 +124,29 @@ class LeapfrogSolver(ODESolver):
         t: float,
         dt: float,
     ) -> tuple[NDArray, float]:
+        y = _validate_symplectic_inputs(y, t, dt)
+        dt = float(dt)
         n = len(y) // 2
         q, p = y[:n].copy(), y[n:].copy()
 
-        dy0 = f(t, y)
+        dy0 = _validated_rhs(f, float(t), y)
         dp0 = dy0[n:]
 
         p_half = p + 0.5 * dt * dp0
 
         y_mid = np.concatenate([q, p_half])
-        dy_mid = f(t, y_mid)
+        dy_mid = _validated_rhs(f, float(t), y_mid)
         dq_mid = dy_mid[:n]
-        q_new = q + dt * dq_mid
+        with np.errstate(over="ignore", invalid="ignore"):
+            q_new = q + dt * dq_mid
 
         y_end = np.concatenate([q_new, p_half])
-        dy_end = f(t + dt, y_end)
+        dy_end = _validated_rhs(f, float(t) + dt, y_end)
         dp_end = dy_end[n:]
-        p_new = p_half + 0.5 * dt * dp_end
+        with np.errstate(over="ignore", invalid="ignore"):
+            p_new = p_half + 0.5 * dt * dp_end
 
-        return np.concatenate([q_new, p_new]), dt
+        y_new = np.concatenate([q_new, p_new])
+        if not np.all(np.isfinite(y_new)):
+            raise ValueError("symplectic update produced non-finite state")
+        return y_new, dt

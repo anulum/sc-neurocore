@@ -430,6 +430,34 @@ def test_harmonic_symplectic_route_matches_rk4_with_low_energy_drift():
     assert energy_drift < 1e-3
 
 
+@pytest.mark.parametrize(
+    ("q0", "p0", "horizon", "kwargs", "match"),
+    [
+        (0.0, 0.0, 1.0, {"dt": 1e-2}, "energy"),
+        (True, 0.0, 1.0, {"dt": 1e-2}, "q0"),
+        (float("nan"), 0.0, 1.0, {"dt": 1e-2}, "q0"),
+        (1.0, 0.0, 0.0, {"dt": 1e-2}, "horizon"),
+        (1.0, 0.0, 1.0, {"dt": 0.0}, "dt"),
+    ],
+)
+def test_harmonic_symplectic_route_rejects_invalid_hamiltonian_inputs(
+    q0, p0, horizon, kwargs, match
+):
+    route = make_harmonic_symplectic_route()
+
+    with pytest.raises(ValueError, match=match):
+        route.run(
+            AlternativePathConfig(
+                enabled=True,
+                mode=AlternativePathMode.SHADOW,
+            ),
+            q0,
+            p0,
+            horizon,
+            **kwargs,
+        )
+
+
 def test_write_batch_report_writes_json_file(tmp_path):
     registry = build_demo_registry()
     summary = registry.evaluate(
