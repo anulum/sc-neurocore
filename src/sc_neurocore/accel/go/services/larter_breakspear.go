@@ -71,12 +71,14 @@ func (s *LarterBreakspearNeuronState) Step(coupling float64) float64 {
 	k3v, k3w, k3z := s.derivatives(v0+0.5*dt*k2v, w0+0.5*dt*k2w, z0+0.5*dt*k2z, coupling)
 	k4v, k4w, k4z := s.derivatives(v0+dt*k3v, w0+dt*k3w, z0+dt*k3z, coupling)
 
-	s.V = v0 + (dt/6.0)*(k1v+2.0*k2v+2.0*k3v+k4v)
-	s.W = w0 + (dt/6.0)*(k1w+2.0*k2w+2.0*k3w+k4w)
-	s.Z = z0 + (dt/6.0)*(k1z+2.0*k2z+2.0*k3z+k4z)
-	if !validateLarterBreakspearState(s) {
+	next := *s
+	next.V = v0 + (dt/6.0)*(k1v+2.0*k2v+2.0*k3v+k4v)
+	next.W = w0 + (dt/6.0)*(k1w+2.0*k2w+2.0*k3w+k4w)
+	next.Z = z0 + (dt/6.0)*(k1z+2.0*k2z+2.0*k3z+k4z)
+	if !validateLarterBreakspearState(&next) {
 		return math.NaN()
 	}
+	*s = next
 	return s.V
 }
 
@@ -149,5 +151,7 @@ func validateLarterBreakspearState(s *LarterBreakspearNeuronState) bool {
 		s.GCa > 0.0 &&
 		s.GNa > 0.0 &&
 		s.GK > 0.0 &&
-		s.GL > 0.0
+		s.GL > 0.0 &&
+		s.W >= 0.0 &&
+		s.W <= 1.0
 }

@@ -172,11 +172,38 @@ class TestLBParameters:
             ("tau_k", 0.0),
             ("phi", -0.1),
             ("b", -0.1),
+            ("w", -0.01),
+            ("w", 1.01),
+            ("g_ca", 0.0),
+            ("g_na", 0.0),
+            ("g_k", 0.0),
+            ("g_l", 0.0),
         ],
     )
     def test_rejects_nonphysical_parameters(self, field: str, value: float):
         with pytest.raises(ValueError, match=field):
             LarterBreakspearNeuron(**{field: value})
+
+    @pytest.mark.parametrize("integrator", ["rk4", "euler"])
+    def test_runtime_parameter_corruption_fails_before_mutation(self, integrator: str):
+        n = LarterBreakspearNeuron(integrator=integrator)
+        n.tau_k = float("nan")
+        before = (n.v, n.w, n.z)
+
+        with pytest.raises(ValueError):
+            n.step(0.0)
+
+        assert (n.v, n.w, n.z) == before
+
+    @pytest.mark.parametrize("integrator", ["rk4", "euler"])
+    def test_potassium_gate_bounds_fail_before_mutation(self, integrator: str):
+        n = LarterBreakspearNeuron(w=0.0, dt=100.0, integrator=integrator)
+        before = (n.v, n.w, n.z)
+
+        with pytest.raises(FloatingPointError, match="potassium gate"):
+            n.step(-100.0)
+
+        assert (n.v, n.w, n.z) == before
 
     def test_rejects_unknown_integrator(self):
         with pytest.raises(ValueError, match="integrator"):
