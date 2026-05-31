@@ -2,9 +2,9 @@
   "candidate_failures": 0,
   "cases": [
     {
-      "baseline_runtime_ns": 80110702,
+      "baseline_runtime_ns": 113901203,
       "candidate_error": null,
-      "candidate_runtime_ns": 9440,
+      "candidate_runtime_ns": 7021,
       "case_name": "mode1_short",
       "comparison": {
         "comparable_leaf_count": 1,
@@ -13,13 +13,14 @@
         "max_abs_diff": 0.0012876970453560288,
         "max_rel_diff": 0.0016749986540028937
       },
+      "metadata": {},
       "returned_path": "shadow-baseline",
       "route_name": "physics.heat.cosine-mode"
     },
     {
-      "baseline_runtime_ns": 60962020,
+      "baseline_runtime_ns": 96172148,
       "candidate_error": null,
-      "candidate_runtime_ns": 7644,
+      "candidate_runtime_ns": 6328,
       "case_name": "mode2_short",
       "comparison": {
         "comparable_leaf_count": 1,
@@ -28,13 +29,14 @@
         "max_abs_diff": 0.0010044792798706847,
         "max_rel_diff": 0.003530039079973883
       },
+      "metadata": {},
       "returned_path": "shadow-baseline",
       "route_name": "physics.heat.cosine-mode"
     }
   ],
   "matched_cases": 2,
-  "median_baseline_runtime_ns": 70536361,
-  "median_candidate_runtime_ns": 8542,
+  "median_baseline_runtime_ns": 105036675,
+  "median_candidate_runtime_ns": 6674,
   "mode": "shadow",
   "route_name": "physics.heat.cosine-mode",
   "total_cases": 2

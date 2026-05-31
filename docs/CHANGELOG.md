@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 - Hardened `BoothRinzelNeuron` Python, Julia, Go, and Rust safety surfaces with finite-domain validation, fail-closed candidate updates, physical gate/calcium bounds, and module-owned regression tests.
 # Changelog
 
@@ -6,6 +7,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `FeynmanKacHeatSolver` with finite-domain validation for
+  length, diffusivity, walker count, timestep, seed, density grids, target
+  time, and histogram bins; replaced bounded iterative boundary correction
+  with exact triangle-wave reflection for Neumann Brownian paths; updated
+  Julia, Mojo, and Rust heat mirrors plus physics docs and reran the
+  `physics.heat.cosine-mode` shadow benchmark.
 - Hardened `PinskyRinzelNeuron` Python, Julia, Go, and Rust safety
   surfaces to validate two-compartment state, compartment fraction,
   positive conductances, timestep, calcium non-negativity, gate bounds,

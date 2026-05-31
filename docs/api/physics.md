@@ -1,20 +1,40 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Physics — Stochastic PDE Solvers + Wolfram Hypergraph
 
-Physics simulation using stochastic methods: heat equation via random walks (Feynman-Kac) and Wolfram Physics Project hypergraph evolution.
+Physics simulation using stochastic methods: heat equation via reflected
+Brownian Feynman-Kac paths and Wolfram Physics Project hypergraph evolution.
 
-## StochasticHeatSolver — 1D Heat Equation via Random Walks
+## FeynmanKacHeatSolver — 1D Heat Equation via Reflected Brownian Motion
 
-Solves the 1D heat equation using the Feynman-Kac connection between diffusion PDEs and Brownian motion. N random walkers perform discrete random walks on a 1D lattice; their density at time t approximates the temperature profile u(x,t).
+Solves the 1D heat equation using the Feynman-Kac connection between diffusion
+PDEs and Brownian motion. Walkers follow Euler-Maruyama Brownian increments
+with variance `2 * diffusivity * dt` and exact reflective Neumann boundaries on
+`[0, length]`.
 
-Walker dynamics: at each step, move -1, 0, or +1 with probabilities [0.25, 0.5, 0.25]. Reflective boundary conditions (walkers clipped to [0, length-1]).
+This is not a clipped lattice random walk. Boundary reflection uses
+triangle-wave folding with period `2 * length`, so arbitrarily large stochastic
+increments remain inside the physical domain without changing the reflected
+transition kernel.
 
 | Parameter | Meaning |
 |-----------|---------|
-| `length` | Lattice size (spatial resolution) |
-| `num_walkers` | Number of random walkers (more = smoother profile) |
-| `alpha` | Diffusion coefficient (reserved for future dt scaling) |
+| `length` | Positive domain length `L` |
+| `diffusivity` | Non-negative heat-equation coefficient `alpha` |
+| `num_walkers` | Positive number of Monte Carlo walkers |
+| `dt` | Positive Euler-Maruyama timestep |
+| `seed` | Integer seed for reproducible trajectories |
 
-Methods: `step()` (advance one timestep), `get_temperature_profile()` → normalized density histogram.
+Methods:
+
+- `set_initial_delta(x_0)` — initialize all walkers at a point in `[0, L]`
+- `set_initial_distribution(f, n_grid)` — sample a non-negative finite density
+- `step(n_substeps)` — advance reflected Brownian paths
+- `evolve_to(T)` — advance monotonically to a finite target time
+- `get_density(n_bins)` — probability density histogram integrating to one
+- `expectation(observable)` — Monte Carlo Feynman-Kac expectation
+
+`StochasticHeatSolver` is retained as a backwards-compatible alias for
+`FeynmanKacHeatSolver`.
 
 ## WolframHypergraph — Discrete Space-Time Evolution
 
@@ -37,16 +57,22 @@ Methods:
 ## Usage
 
 ```python
-from sc_neurocore.physics.heat import StochasticHeatSolver
+from sc_neurocore.physics.heat import FeynmanKacHeatSolver
 from sc_neurocore.physics.wolfram_hypergraph import WolframHypergraph
 import numpy as np
 
 # Heat equation
-solver = StochasticHeatSolver(length=100, num_walkers=10000, alpha=0.1)
-solver.walkers[:] = 50  # point source at center
-for _ in range(200):
-    solver.step()
-profile = solver.get_temperature_profile()  # diffused Gaussian-like
+solver = FeynmanKacHeatSolver(
+    length=1.0,
+    diffusivity=0.1,
+    num_walkers=10000,
+    dt=1e-3,
+    seed=42,
+)
+solver.set_initial_delta(0.5)
+solver.evolve_to(0.2)
+profile = solver.get_density(n_bins=64)
+u_cos = solver.expectation(lambda x: np.cos(np.pi * x))
 
 # Wolfram hypergraph
 wh = WolframHypergraph(
