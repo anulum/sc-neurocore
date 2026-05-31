@@ -11,6 +11,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from sc_neurocore.experimental import solver_routes
 from sc_neurocore.experimental import (
     AlternativePathCase,
     AlternativePathConfig,
@@ -521,6 +522,68 @@ def test_lif_subthreshold_exact_route_matches_rk4_and_stays_below_threshold():
     assert result.candidate_value is not None
     assert result.candidate_value["subthreshold"] is True
     assert result.candidate_value["predicted_spike_time"] is None
+
+
+@pytest.mark.parametrize(
+    ("v0", "current", "horizon", "kwargs", "match"),
+    [
+        (-65.0, 10.0, 0.0, {}, "horizon"),
+        (-65.0, 10.0, True, {}, "horizon"),
+        (-50.0, 10.0, 20.0, {}, "v0"),
+        (-65.0, 20.0, 20.0, {}, "suprathreshold"),
+        (-65.0, float("nan"), 20.0, {}, "current"),
+        (-65.0, 10.0, 20.0, {"tau": 0.0}, "tau"),
+        (-65.0, 10.0, 20.0, {"v_rest": -50.0}, "v_rest"),
+        (-65.0, 10.0, 20.0, {"r_m": True}, "r_m"),
+        (-65.0, 10.0, 20.0, {"dt": 0.0}, "dt"),
+    ],
+)
+def test_lif_subthreshold_exact_route_rejects_invalid_domain(v0, current, horizon, kwargs, match):
+    route = make_lif_subthreshold_exact_route()
+
+    with pytest.raises(ValueError, match=match):
+        route.run(
+            AlternativePathConfig(enabled=True, mode=AlternativePathMode.SHADOW),
+            v0,
+            current,
+            horizon,
+            tau=kwargs.get("tau", 20.0),
+            v_rest=kwargs.get("v_rest", -65.0),
+            v_thresh=kwargs.get("v_thresh", -50.0),
+            r_m=kwargs.get("r_m", 1.0),
+            dt=kwargs.get("dt", 1e-2),
+        )
+
+
+def test_lif_subthreshold_exact_route_rejects_nonfinite_steady_state_voltage():
+    route = make_lif_subthreshold_exact_route()
+
+    with pytest.raises(ValueError, match="steady-state voltage"):
+        route.run(
+            AlternativePathConfig(enabled=True, mode=AlternativePathMode.SHADOW),
+            -1e308,
+            1e308,
+            20.0,
+            tau=20.0,
+            v_rest=-1e308,
+            v_thresh=-1e307,
+            r_m=10.0,
+            dt=1e-2,
+        )
+
+
+def test_lif_rk4_baseline_rejects_nonfinite_numerical_candidate():
+    with pytest.warns(RuntimeWarning), pytest.raises(ValueError, match="baseline voltage"):
+        solver_routes._lif_rk4_baseline(
+            -60.0,
+            0.0,
+            1.0,
+            tau=1e-308,
+            v_rest=-65.0,
+            v_thresh=-50.0,
+            r_m=1.0,
+            dt=1.0,
+        )
 
 
 def test_default_report_path_handles_solver_route():

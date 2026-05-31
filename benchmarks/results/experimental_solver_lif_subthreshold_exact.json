@@ -2,9 +2,9 @@
   "candidate_failures": 0,
   "cases": [
     {
-      "baseline_runtime_ns": 38570916,
+      "baseline_runtime_ns": 29961274,
       "candidate_error": null,
-      "candidate_runtime_ns": 13505,
+      "candidate_runtime_ns": 50633,
       "case_name": "steady_subthreshold",
       "comparison": {
         "comparable_leaf_count": 4,
@@ -13,13 +13,14 @@
         "max_abs_diff": 0.0,
         "max_rel_diff": 0.0
       },
+      "metadata": {},
       "returned_path": "shadow-baseline",
       "route_name": "solver.lif.subthreshold-exact"
     },
     {
-      "baseline_runtime_ns": 58065458,
+      "baseline_runtime_ns": 40288939,
       "candidate_error": null,
-      "candidate_runtime_ns": 13399,
+      "candidate_runtime_ns": 28819,
       "case_name": "elevated_subthreshold",
       "comparison": {
         "comparable_leaf_count": 4,
@@ -28,13 +29,14 @@
         "max_abs_diff": 4.263256414560601e-14,
         "max_rel_diff": 8.517086836216603e-15
       },
+      "metadata": {},
       "returned_path": "shadow-baseline",
       "route_name": "solver.lif.subthreshold-exact"
     }
   ],
   "matched_cases": 2,
-  "median_baseline_runtime_ns": 48318187,
-  "median_candidate_runtime_ns": 13452,
+  "median_baseline_runtime_ns": 35125106,
+  "median_candidate_runtime_ns": 39726,
   "mode": "shadow",
   "route_name": "solver.lif.subthreshold-exact",
   "total_cases": 2

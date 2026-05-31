@@ -17,7 +17,7 @@ This index tracks the current safe alternative-path reports.
 | `physics.heat.cosine-mode` | `experimental_physics_heat_cosine_mode.json` | 2 | 2 | 0 | 0.0012876970 | 0.0035300391 | 105,036,675 ns | 6,674 ns |
 | `physics.oscillator.harmonic-symplectic` | `experimental_physics_oscillator_harmonic_symplectic.json` | 2 | 2 | 0 | 0.0000110030 | 0.0001249999 | 12,238,873 ns | 47,247,295 ns |
 | `physics.kuramoto.noiseless-symplectic-lift` | `experimental_physics_kuramoto_noiseless_symplectic_lift.json` | 3 | 3 | 0 | 0.0000502599 | 0.0006753018 | 350,993 ns | 1,283,736 ns |
-| `solver.lif.subthreshold-exact` | `experimental_solver_lif_subthreshold_exact.json` | 2 | 2 | 0 | 0.0000000000 | 0.0000000000 | 48,318,187 ns | 13,452 ns |
+| `solver.lif.subthreshold-exact` | `experimental_solver_lif_subthreshold_exact.json` | 2 | 2 | 0 | 0.0000000000 | 0.0000000000 | 35,125,106 ns | 39,726 ns |
 
 ## Reading Order
 

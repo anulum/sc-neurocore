@@ -21,6 +21,26 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import Any
+
+
+def _finite_float(name: str, value: Any) -> float:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a finite real value")
+    try:
+        result = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a finite real value") from exc
+    if not math.isfinite(result):
+        raise ValueError(f"{name} must be a finite real value")
+    return result
+
+
+def _positive_float(name: str, value: Any) -> float:
+    result = _finite_float(name, value)
+    if result <= 0.0:
+        raise ValueError(f"{name} must be positive")
+    return result
 
 
 @dataclass
@@ -36,11 +56,25 @@ class ExactLIFSolver:
     v_reset: float = -65.0
     r_m: float = 1.0
 
+    def __post_init__(self) -> None:
+        self.tau = _positive_float("tau", self.tau)
+        self.v_rest = _finite_float("v_rest", self.v_rest)
+        self.v_thresh = _finite_float("v_thresh", self.v_thresh)
+        self.v_reset = _finite_float("v_reset", self.v_reset)
+        self.r_m = _positive_float("r_m", self.r_m)
+        if self.v_reset >= self.v_thresh:
+            raise ValueError("v_reset must be below v_thresh")
+
     def evolve_to_time(self, v0: float, t: float, current: float) -> float:
         """Compute V(t) given initial voltage v0 and constant current.
 
         V(t) = V_rest + (v0 - V_rest) * exp(-t/tau) + R*I*(1 - exp(-t/tau))
         """
+        v0 = _finite_float("v0", v0)
+        t = _finite_float("t", t)
+        current = _finite_float("current", current)
+        if t < 0.0:
+            raise ValueError("t must be non-negative")
         decay = math.exp(-t / self.tau)
         v_inf = self.v_rest + self.r_m * current
         return v_inf + (v0 - v_inf) * decay
@@ -52,6 +86,8 @@ class ExactLIFSolver:
         t_spike = -tau * ln((V_inf - V_thresh) / (V_inf - v0))
         where V_inf = V_rest + R*I
         """
+        v0 = _finite_float("v0", v0)
+        current = _finite_float("current", current)
         v_inf = self.v_rest + self.r_m * current
         if v_inf <= self.v_thresh:
             return None  # current insufficient to reach threshold
@@ -90,7 +126,11 @@ class ExactLIFSolver:
 
         Returns (spike_times, voltage_at_spikes).
         """
-        v = v0 if v0 is not None else self.v_rest
+        current = _finite_float("current", current)
+        t_end = _finite_float("t_end", t_end)
+        if t_end < 0.0:
+            raise ValueError("t_end must be non-negative")
+        v = _finite_float("v0", v0) if v0 is not None else self.v_rest
         t = 0.0
         spike_times: list[float] = []
 

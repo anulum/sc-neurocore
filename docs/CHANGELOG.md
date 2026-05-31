@@ -7,6 +7,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `ExactLIFSolver` and the `solver.lif.subthreshold-exact`
+  alternative route with finite physical-parameter validation, non-negative
+  runtime-time contracts, reset/threshold ordering, fail-closed subthreshold
+  route-domain checks, route documentation, and refreshed benchmark evidence.
 - Hardened `physics.kuramoto.noiseless-symplectic-lift` route validation
   for empty phase arrays, phase/frequency shape mismatches, non-finite
   phases or frequencies, non-positive horizons and timesteps, boolean scalar
