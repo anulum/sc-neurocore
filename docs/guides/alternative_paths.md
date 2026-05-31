@@ -209,6 +209,11 @@ What to expect:
 - this is a validation lane for Hamiltonian-like problems, not a blanket
   replacement policy for all ODEs in SC-NeuroCore
 
+The maintained symplectic solvers now fail closed on non-finite time/state,
+non-positive timesteps, odd-length or non-1-D Hamiltonian state vectors, and RHS
+outputs that do not match the state shape. The route additionally rejects the
+zero-energy oscillator state because relative energy drift is undefined there.
+
 ## Third Real Route
 
 The third route is solver-focused rather than a broad physics claim:

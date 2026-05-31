@@ -7,6 +7,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `StormerVerlet`, `LeapfrogSolver`, and the
+  `physics.oscillator.harmonic-symplectic` route with fail-closed
+  Hamiltonian state validation, finite time/timestep contracts, RHS
+  shape/finite-output checks, zero-energy route rejection, updated
+  alternative-path documentation, and refreshed oscillator benchmark
+  evidence.
 - Hardened `WolframHypergraph` with hyperedge, node-id, and rewrite-step
   validation; rewrites now revalidate graph invariants after each evolution
   pass, dimension estimation fails closed on corrupted topology, the Julia

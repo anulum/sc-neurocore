@@ -81,6 +81,26 @@ def _harmonic_energy(y: np.ndarray) -> float:
     return float(0.5 * (y[0] ** 2 + y[1] ** 2))
 
 
+def _validate_harmonic_inputs(
+    q0: float,
+    p0: float,
+    horizon: float,
+    dt: float,
+) -> tuple[float, float, float, float]:
+    for value, name in ((q0, "q0"), (p0, "p0"), (horizon, "horizon"), (dt, "dt")):
+        if isinstance(value, bool) or not isinstance(value, int | float):
+            raise ValueError(f"{name} must be a finite number")
+        if not math.isfinite(float(value)):
+            raise ValueError(f"{name} must be a finite number")
+    if float(horizon) <= 0.0:
+        raise ValueError("horizon must be positive")
+    if float(dt) <= 0.0:
+        raise ValueError("dt must be positive")
+    if float(q0) == 0.0 and float(p0) == 0.0:
+        raise ValueError("initial harmonic energy must be positive")
+    return float(q0), float(p0), float(horizon), float(dt)
+
+
 def _integrate_harmonic(
     solver: RK4Solver | StormerVerlet,
     q0: float,
@@ -89,6 +109,7 @@ def _integrate_harmonic(
     *,
     dt: float = 1e-2,
 ) -> dict[str, np.ndarray | float]:
+    q0, p0, horizon, dt = _validate_harmonic_inputs(q0, p0, horizon, dt)
     steps = max(1, int(round(horizon / dt)))
     y = np.array([q0, p0], dtype=np.float64)
     t = 0.0

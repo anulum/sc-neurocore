@@ -2,9 +2,9 @@
   "candidate_failures": 0,
   "cases": [
     {
-      "baseline_runtime_ns": 5843215,
+      "baseline_runtime_ns": 5058530,
       "candidate_error": null,
-      "candidate_runtime_ns": 4400317,
+      "candidate_runtime_ns": 12977711,
       "case_name": "quarter_turn",
       "comparison": {
         "comparable_leaf_count": 4,
@@ -13,13 +13,14 @@
         "max_abs_diff": 6.249995982310352e-06,
         "max_rel_diff": 0.00012499991964620705
       },
+      "metadata": {},
       "returned_path": "shadow-baseline",
       "route_name": "physics.oscillator.harmonic-symplectic"
     },
     {
-      "baseline_runtime_ns": 27541675,
+      "baseline_runtime_ns": 19419217,
       "candidate_error": null,
-      "candidate_runtime_ns": 21692824,
+      "candidate_runtime_ns": 81516880,
       "case_name": "longer_horizon",
       "comparison": {
         "comparable_leaf_count": 4,
@@ -28,13 +29,14 @@
         "max_abs_diff": 1.100300246825725e-05,
         "max_rel_diff": 6.383291987827672e-05
       },
+      "metadata": {},
       "returned_path": "shadow-baseline",
       "route_name": "physics.oscillator.harmonic-symplectic"
     }
   ],
   "matched_cases": 2,
-  "median_baseline_runtime_ns": 16692445,
-  "median_candidate_runtime_ns": 13046570,
+  "median_baseline_runtime_ns": 12238873,
+  "median_candidate_runtime_ns": 47247295,
   "mode": "shadow",
   "route_name": "physics.oscillator.harmonic-symplectic",
   "total_cases": 2
