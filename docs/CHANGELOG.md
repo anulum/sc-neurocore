@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `ErmentroutKopellMapNeuron` Python, Julia, Go, and Rust safety
+  surfaces to reject invalid phase-map state, non-positive timestep,
+  non-finite drive, non-finite phase candidates, and mirror threshold drift
+  before mutation while preserving compact-circle phase wrapping.
 - Hardened `AiharaMapNeuron` Python, Julia, Go, and Rust safety surfaces to
   reject invalid chaotic-map state, malformed feedback/damping parameters,
   non-finite drive, unstable sigmoid evaluation, and non-finite map candidates

@@ -29,23 +29,42 @@ class ErmentroutKopellMapNeuron:
     gain: float = 1.0
     theta_threshold: float = math.pi
 
+    def __post_init__(self) -> None:
+        for name in ("theta", "dt", "gain", "theta_threshold"):
+            value = float(getattr(self, name))
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+            setattr(self, name, value)
+        if self.dt <= 0.0:
+            raise ValueError("dt must be positive")
+
+    @staticmethod
+    def _validate_theta(theta: float) -> float:
+        value = float(theta)
+        if not math.isfinite(value):
+            raise FloatingPointError("Ermentrout-Kopell phase state must be finite")
+        return value
+
     def step(self, current: float = 0.0) -> int:
-        inp = self.gain * current
-        theta_prev = self.theta
+        drive = float(current)
+        if not math.isfinite(drive):
+            raise ValueError("current must be finite")
 
-        d_theta = (1.0 - math.cos(self.theta)) + (1.0 + math.cos(self.theta)) * inp
-        self.theta += self.dt * d_theta
+        theta = self._validate_theta(self.theta)
+        inp = self.gain * drive
+        if not math.isfinite(inp):
+            raise FloatingPointError("Ermentrout-Kopell input drive became non-finite")
+        theta_prev = theta
 
-        fired = 1 if self.theta >= self.theta_threshold and theta_prev < self.theta_threshold else 0
+        cos_theta = math.cos(theta)
+        d_theta = (1.0 - cos_theta) + (1.0 + cos_theta) * inp
+        theta_next = theta + self.dt * d_theta
+        if not math.isfinite(d_theta) or not math.isfinite(theta_next):
+            raise FloatingPointError("Ermentrout-Kopell candidate phase became non-finite")
 
+        fired = 1 if theta_next >= self.theta_threshold and theta_prev < self.theta_threshold else 0
         two_pi = 2.0 * math.pi
-        if self.theta >= two_pi:
-            self.theta -= two_pi
-        if self.theta < 0.0:
-            self.theta += two_pi
-
-        if not math.isfinite(self.theta):
-            self.theta = 0.0
+        self.theta = theta_next % two_pi
 
         return fired
 
