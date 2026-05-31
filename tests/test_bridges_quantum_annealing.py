@@ -12,6 +12,7 @@ import time
 
 import numpy as np
 
+import sc_neurocore.bridges.quantum_annealing as qa
 from sc_neurocore.bridges.quantum_annealing import (
     IsingModel,
     QUBOModel,
@@ -72,7 +73,7 @@ class TestQUBOModel:
         Q = {(0, 0): -2.0, (1, 1): -2.0, (0, 1): 1.0}
         qubo = QUBOModel(Q=Q)
         ising = qubo.to_ising()
-        assert isinstance(ising, IsingModel)
+        assert isinstance(ising, qa.IsingModel)
         assert len(ising.h) == 2
 
 
@@ -86,7 +87,7 @@ class TestSCToIsing:
         adj = np.array([[0, 1, 0], [0, 0, 1], [0, 0, 0]], dtype=float)
         compiler = SCToIsing()
         ising = compiler.compile(adj)
-        assert isinstance(ising, IsingModel)
+        assert isinstance(ising, qa.IsingModel)
         assert ising.n_qubits >= 3
 
 
@@ -95,7 +96,7 @@ class TestSCToQUBO:
         adj = np.array([[0, 1], [1, 0]], dtype=float)
         compiler = SCToQUBO()
         qubo = compiler.compile(adj)
-        assert isinstance(qubo, QUBOModel)
+        assert isinstance(qubo, qa.QUBOModel)
         assert qubo.n_qubits >= 2
 
 
@@ -184,14 +185,14 @@ class TestSCBitstreamQUBO:
         candidates = np.array([[0.4, 0.3, 0.7], [0.6, 0.2, 0.9], [0.5, 0.3, 0.8]])
         bq = SCBitstreamQUBO()
         result = bq.weight_optimization(target, candidates, n_bits=4)
-        assert isinstance(result, QUBOModel)
+        assert isinstance(result, qa.QUBOModel)
 
     def test_pruning(self):
         adj = np.array([[0, 0.01, 0.9], [0.01, 0, 0.8], [0.9, 0.8, 0]], dtype=float)
         importance = np.array([[0, 0.1, 0.9], [0.1, 0, 0.8], [0.9, 0.8, 0]], dtype=float)
         bq = SCBitstreamQUBO()
         result = bq.pruning(adj, importance, max_connections=2)
-        assert isinstance(result, QUBOModel)
+        assert isinstance(result, qa.QUBOModel)
 
 
 # ---------------------------------------------------------------------------
