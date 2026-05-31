@@ -204,6 +204,32 @@ class TestWilsonCowanParameters:
             n.step(5.0)
         assert (n.e, n.i) == before
 
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("w_ee", -1.0),
+            ("w_ei", -1.0),
+            ("w_ie", -1.0),
+            ("w_ii", -1.0),
+            ("tau_e", 0.0),
+            ("tau_i", 0.0),
+            ("a", 0.0),
+            ("theta", math.inf),
+            ("dt", 0.0),
+        ],
+    )
+    def test_rejects_runtime_parameter_corruption_before_state_mutation(
+        self, field: str, value: float
+    ):
+        n = WilsonCowanUnit()
+        setattr(n, field, value)
+        before = (n.e, n.i)
+
+        with pytest.raises((ValueError, FloatingPointError)):
+            n.step(5.0)
+
+        assert (n.e, n.i) == before
+
     def test_sigmoid_saturates_for_extreme_finite_drive(self):
         n = WilsonCowanUnit()
         baseline = 1.0 / (1.0 + math.exp(n.a * n.theta))

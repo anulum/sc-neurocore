@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `WilsonCowanUnit` Python and Rust safety surfaces to
+  revalidate E/I state, non-negative coupling weights, positive time
+  constants, sigmoid gain, timestep, and candidate rate bounds before
+  mutation; public model documentation now states the two-term sigmoid
+  range and fail-closed polyglot runtime contract.
 - Hardened `MorrisLecarNeuron` Python, Julia, Go, and Rust safety
   surfaces to validate finite conductance state, membrane capacitance,
   activation slopes, potassium activation bounds, timestep, threshold,
