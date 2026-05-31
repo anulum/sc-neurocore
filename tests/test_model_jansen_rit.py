@@ -17,6 +17,7 @@ FULL PIPELINE WIRED + PERFORMANCE."""
 
 from __future__ import annotations
 
+import math
 import time
 
 import numpy as np
@@ -93,6 +94,12 @@ class TestJRAnalytical:
         assert n._sigmoid(100.0) > 2 * n.e0 - 0.01
         assert n._sigmoid(100.0) <= 2 * n.e0
 
+    def test_sigmoid_extreme_inputs_remain_bounded(self):
+        n = JansenRitUnit()
+
+        assert 0.0 <= n._sigmoid(-1e6) < 1e-100
+        assert n._sigmoid(1e6) == pytest.approx(2 * n.e0)
+
     def test_eeg_output_is_y1_minus_y2(self):
         """Output = y1 - y2 (pyramidal PSP difference)."""
         n = JansenRitUnit()
@@ -167,6 +174,44 @@ class TestJRParameters:
         for _ in range(5000):
             n.step(220.0)
         assert np.isfinite(n.y1)
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"dt": 0.0},
+            {"a_exc": 0.0},
+            {"b_exc": 0.0},
+            {"a_rate": 0.0},
+            {"b_rate": 0.0},
+            {"c": -1.0},
+            {"e0": 0.0},
+            {"r": 0.0},
+            {"y0": math.nan},
+            {"v0": math.inf},
+        ],
+    )
+    def test_invalid_physical_configuration_is_rejected(self, kwargs: dict[str, float]):
+        with pytest.raises(ValueError):
+            JansenRitUnit(**kwargs)
+
+    def test_non_finite_external_input_does_not_mutate_state(self):
+        n = JansenRitUnit()
+        before = (n.y0, n.y3, n.y1, n.y4, n.y2, n.y5)
+
+        with pytest.raises(ValueError):
+            n.step(math.nan)
+
+        assert (n.y0, n.y3, n.y1, n.y4, n.y2, n.y5) == before
+
+    def test_corrupted_runtime_state_does_not_mutate_state(self):
+        n = JansenRitUnit()
+        n.y4 = math.inf
+        before = (n.y0, n.y3, n.y1, n.y4, n.y2, n.y5)
+
+        with pytest.raises(ValueError):
+            n.step(220.0)
+
+        assert (n.y0, n.y3, n.y1, n.y4, n.y2, n.y5) == before
 
 
 # ---------------------------------------------------------------------------
