@@ -1,0 +1,48 @@
+{
+  "generated_at": "2026-05-31T12:15:02+02:00",
+  "host": {
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "logical_cpus": 12,
+    "cores_per_socket": 6,
+    "threads_per_core": 2
+  },
+  "command": "cargo bench --manifest-path engine/Cargo.toml --bench full_bench ubc_10k_steps",
+  "benchmark": "ubc_10k_steps",
+  "steps_per_iteration": 10000,
+  "criterion_console_us": {
+    "lower": 207.50,
+    "point": 211.47,
+    "upper": 215.61
+  },
+  "criterion_estimates_ns": {
+    "mean": {
+      "point_estimate": 206364.2107434879,
+      "confidence_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": 202511.7436186613,
+        "upper_bound": 210443.8668865907
+      },
+      "standard_error": 2030.3476622785658
+    },
+    "median": {
+      "point_estimate": 201615.93041125542,
+      "confidence_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": 198848.31851851853,
+        "upper_bound": 205841.5128988764
+      },
+      "standard_error": 1605.2012348805588
+    },
+    "std_dev": {
+      "point_estimate": 20358.25469977557,
+      "confidence_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": 16341.364531995108,
+        "upper_bound": 23858.467909524596
+      },
+      "standard_error": 1927.918352578467
+    }
+  },
+  "per_step_ns_from_console_point": 21.147,
+  "implementation": "Rust engine UnipolarBrushCell after closed-form membrane and persistent-current relaxation hardening"
+}

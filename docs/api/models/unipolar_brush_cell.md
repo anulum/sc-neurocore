@@ -1,3 +1,11 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Unipolar brush cell model documentation -->
+
 # UnipolarBrushCell
 
 **Module:** `engine/src/neurons/cerebellar.rs`
@@ -231,42 +239,48 @@ hyperpolarisation after each spike — a simple AHP model.
 
 ### Note on Persistent Current Units
 
-The "persistent" variable is in millivolt-equivalent units (not
-current density) because it directly adds to the voltage equation.
-This is a simplification — in a conductance-based model, the persistent
-current would be g_NMDA · s · B(V) · (V − E_NMDA).
+The `persistent` variable is in millivolt-equivalent units because it
+directly enters the voltage equation. It is a phenomenological
+NMDA-like state variable for the UBC giant-synapse time constant, not a
+conductance-density gate.
 
 ---
 
 ## Discrete-Time Implementation
 
-### Algorithm (no sub-stepping)
+### Algorithm (closed-form first-order relaxation)
 
 ```
-1. Rectify input:
+1. Validate finite configuration, bounded state, and finite current:
+   τ_m > 0, τ_p > 0, Δt > 0, gains ≥ 0, V_reset < V_th
+2. Rectify input:
    I_eff = gain · max(current, 0)
-2. Update persistent current:
-   dp = (persistent_gain · I_eff - persistent) / τ_p
-   persistent += dt · dp
-   persistent = max(persistent, 0)
-3. Update membrane potential:
-   dV = (-(V - V_rest) + I_eff + persistent) / τ_m
-   V += dt · dV
-4. Spike check:
-   If V ≥ V_th: V ← V_reset, return 1
-5. Safety: clamp V to [-100, 60], NaN guard
+3. Update persistent current with exact first-order relaxation:
+   α_p = 1 − exp(−Δt/τ_p)
+   persistent_next = persistent + (persistent_gain · I_eff − persistent) · α_p
+   persistent_next = max(persistent_next, 0)
+4. Update membrane potential with exact first-order relaxation:
+   α_m = 1 − exp(−Δt/τ_m)
+   V_ss = V_rest + I_eff + persistent_next
+   V_next = V + (V_ss − V) · α_m
+5. Commit only finite candidates:
+   If V_next ≥ V_th: V ← V_reset, return 1
+   Otherwise clamp V_next to [-100, 60], return 0
 ```
 
 ### Computational Efficiency
 
-The UBC model is extremely lightweight:
+The UBC model remains compact:
 - 2 state variables
-- 0 exponentials
+- 2 `expm1` evaluations per step
 - 0 sub-steps
-- ~5 arithmetic operations per step
+- fail-closed finite-state guards before mutation
 
-This makes it one of the fastest models in SC-NeuroCore (9.3 ns/step),
-comparable to the basic LIF.
+Fresh Rust Criterion evidence after exact-relaxation hardening:
+`cargo bench --manifest-path engine/Cargo.toml --bench full_bench
+ubc_10k_steps` on 2026-05-31 measured `ubc_10k_steps` at 211.47 µs
+for 10,000 engine steps (95% console interval 207.50-215.61 µs),
+or 21.15 ns per step, on an Intel Core i5-11600K host.
 
 ---
 
@@ -278,12 +292,13 @@ Initial: V = −65, persistent = 0
 
 I_eff = 2.5 · 10 = 25
 
-**t = 0.5 ms (1 step):**
-dp = (0.5·25 − 0)/200 = 0.0625
-persistent = 0.03125
+**t = 0.5 ms (1 step, exact relaxation):**
+α_p = 1 − e^(−0.5/200) ≈ 0.002497
+persistent = 0 + (12.5 − 0) · α_p ≈ 0.03121
 
-dV = (0 + 25 + 0.031)/8 = 3.129
-V = −65 + 0.5·3.129 = −63.44
+α_m = 1 − e^(−0.5/8) ≈ 0.06059
+V_ss = −65 + 25 + 0.03121 ≈ −39.97
+V = −65 + (−39.97 − (−65)) · α_m ≈ −63.48
 
 **t = 8 ms (~τ_m):** V near steady state (with growing persistent)
 V ≈ −65 + 25 + ~1 = −39 mV → fires
@@ -393,18 +408,19 @@ timescales.
 
 ### Energy Efficiency
 
-The UBC model is the most energy-efficient model in SC-NeuroCore that
-exhibits persistent activity.  Comparison:
+The UBC model keeps persistent activity in two state variables. The
+current exact-relaxation Rust Criterion measurement is documented in
+`benchmarks/results/local_i5_11600k_criterion_2026-05-31_unipolar_brush_cell.json`.
 
 | Model | Persistent activity | ns/step | Mechanism |
 |-------|-------------------|---------|-----------|
-| UBC | Yes (200 ms) | 9.3 | Slow current variable |
+| UBC | Yes (200 ms) | 21.15 | Slow current variable |
 | NMDA neuron | Yes (100 ms) | 3290 | NMDA + WB gating |
 | ElBoustani | Yes (NMDA-mediated) | 60.5 | 3-var mean-field |
 
-The UBC achieves persistent activity at <10 ns/step — 350× cheaper
-than the biophysical NMDA model — by abstracting the NMDA dynamics
-into a single phenomenological variable.
+The UBC row is measured after exact-relaxation hardening; the other
+rows are historical comparison points from their existing benchmark
+records.
 
 ---
 
@@ -476,8 +492,8 @@ A minimal vestibulocerebellar model:
 | NetworkRunner wired | `NeuronVariant::UnipolarBrush` |
 | `create_neuron("UnipolarBrushCell")` | Yes |
 | `supported_models()` | Includes "UnipolarBrushCell" |
-| coverage tests | 9 |
-| Benchmark | `ubc_10k_steps`: **93 µs** (9.3 ns/step), i5-11600K |
+| Module behaviour tests | Python, Rust engine, Go service, Rust safety |
+| Benchmark | `ubc_10k_steps`: 211.47 µs per 10k Rust engine steps, 21.15 ns/step, i5-11600K, 2026-05-31 |
 
 ---
 

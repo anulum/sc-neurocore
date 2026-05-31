@@ -1,3 +1,10 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Rust benchmark documentation -->
 # Rust Engine Benchmarks
 
 All measurements via Criterion 0.8, single-threaded, pure CPU.
@@ -120,7 +127,7 @@ cargo bench --bench analysis_bench -- --quick
 | Golgi cell (Solinas 2007) | 1k | 2.57 ms | **2.57 µs** | 10 | 11 currents: Na_t, Na_p, K_dr, K_A, K_M, Ca_T, Ca_N, BK, SK, Ih, leak |
 | Stellate cell | 1k | 5.15 ms | **5.15 µs** | 50 | WB + Kv3.1 |
 | Lugaro cell | 10k | 196 µs | **19.6 ns** | 1 | LIF + adaptation + 5-HT |
-| Unipolar brush cell | 10k | 128 µs | **12.8 ns** | 1 | LIF + persistent NMDA-like |
+| Unipolar brush cell | 10k | 211.47 µs | **21.15 ns** | 1 | LIF + persistent NMDA-like, exact relaxation |
 | DCN neuron | 1k | 2.68 ms | **2.68 µs** | 20 | 7 currents: Na_t, Na_p, K_dr, Ca_T, AHP, Ih, leak |
 
 > Granule cell uses simple Euler integration with T-type Ca2+ gating for
