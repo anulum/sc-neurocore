@@ -55,7 +55,7 @@ jobs:
             $0 ~ "^## \\[?" version "\\]" { in_section = 1; print; next }
             in_section && $0 ~ "^## \\[[0-9]" { exit }
             in_section { print }
-          ' CHANGELOG.md > /tmp/release_notes.md
+          ' docs/CHANGELOG.md > /tmp/release_notes.md
           test -s /tmp/release_notes.md
           echo "notes_file=/tmp/release_notes.md" >> "$GITHUB_OUTPUT"
 

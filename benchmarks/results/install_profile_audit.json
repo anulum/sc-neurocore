@@ -80,7 +80,7 @@
   "polyglot_research_sources_in_wheel": [],
   "project": {
     "name": "sc-neurocore",
-    "version": "3.15.2"
+    "version": "3.15.3"
   },
   "schema_version": "sc-neurocore.install-profile-audit.v1"
 }
