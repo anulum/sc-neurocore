@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for wong_wang
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct WongWangUnit {
     pub s1: f64,
@@ -51,6 +49,30 @@ impl WongWangUnit {
         x / (1.0 - exponent.exp())
     }
 
+    fn derivatives(
+        &self,
+        s1: f64,
+        s2: f64,
+        stim1: f64,
+        stim2: f64,
+        noise1: f64,
+        noise2: f64,
+    ) -> Result<(f64, f64, f64, f64), &'static str> {
+        let i1 = self.j_n * s1 - self.j_cross * s2 + self.i_0 + stim1 + noise1;
+        let i2 = self.j_n * s2 - self.j_cross * s1 + self.i_0 + stim2 + noise2;
+        let r1 = self._phi(i1);
+        let r2 = self._phi(i2);
+        if !r1.is_finite() || r1 < 0.0 || !r2.is_finite() || r2 < 0.0 {
+            return Err("invalid Wong-Wang transfer response");
+        }
+        let ds1 = -s1 / self.tau_s + (1.0 - s1) * self.gamma * r1;
+        let ds2 = -s2 / self.tau_s + (1.0 - s2) * self.gamma * r2;
+        if !ds1.is_finite() || !ds2.is_finite() {
+            return Err("invalid Wong-Wang derivative");
+        }
+        Ok((ds1, ds2, r1, r2))
+    }
+
     pub fn step(
         &mut self,
         stim1: f64,
@@ -65,18 +87,36 @@ impl WongWangUnit {
             return Err("invalid Wong-Wang stimulus or noise");
         }
 
-        let i1 = self.j_n * self.s1 - self.j_cross * self.s2 + self.i_0 + stim1 + self.sigma * xi1;
-        let i2 = self.j_n * self.s2 - self.j_cross * self.s1 + self.i_0 + stim2 + self.sigma * xi2;
-        let r1 = self._phi(i1);
-        let r2 = self._phi(i2);
-        if !r1.is_finite() || r1 < 0.0 || !r2.is_finite() || r2 < 0.0 {
-            return Err("invalid Wong-Wang transfer response");
-        }
-
-        let next_s1 =
-            self.s1 + (-self.s1 / self.tau_s + (1.0 - self.s1) * self.gamma * r1) * self.dt;
-        let next_s2 =
-            self.s2 + (-self.s2 / self.tau_s + (1.0 - self.s2) * self.gamma * r2) * self.dt;
+        let noise1 = self.sigma * xi1;
+        let noise2 = self.sigma * xi2;
+        let (k1_s1, k1_s2, r1, r2) =
+            self.derivatives(self.s1, self.s2, stim1, stim2, noise1, noise2)?;
+        let (k2_s1, k2_s2, _, _) = self.derivatives(
+            self.s1 + 0.5 * self.dt * k1_s1,
+            self.s2 + 0.5 * self.dt * k1_s2,
+            stim1,
+            stim2,
+            noise1,
+            noise2,
+        )?;
+        let (k3_s1, k3_s2, _, _) = self.derivatives(
+            self.s1 + 0.5 * self.dt * k2_s1,
+            self.s2 + 0.5 * self.dt * k2_s2,
+            stim1,
+            stim2,
+            noise1,
+            noise2,
+        )?;
+        let (k4_s1, k4_s2, _, _) = self.derivatives(
+            self.s1 + self.dt * k3_s1,
+            self.s2 + self.dt * k3_s2,
+            stim1,
+            stim2,
+            noise1,
+            noise2,
+        )?;
+        let next_s1 = self.s1 + self.dt * (k1_s1 + 2.0 * k2_s1 + 2.0 * k3_s1 + k4_s1) / 6.0;
+        let next_s2 = self.s2 + self.dt * (k1_s2 + 2.0 * k2_s2 + 2.0 * k3_s2 + k4_s2) / 6.0;
         if !next_s1.is_finite() || !next_s2.is_finite() {
             return Err("invalid Wong-Wang candidate state");
         }
@@ -139,5 +179,25 @@ mod tests {
         let mut state = WongWangUnit::new();
         state.s1 = 1.5;
         assert!(state.step(0.1, 0.0, 0.0, 0.0).is_err());
+    }
+
+    #[test]
+    fn test_wong_wang_rk4_differs_from_euler() {
+        let mut state = WongWangUnit::new();
+        state.s1 = 0.24;
+        state.s2 = 0.11;
+        state.sigma = 0.0;
+        state.dt = 0.02;
+        let r1 = state._phi(state.j_n * state.s1 - state.j_cross * state.s2 + state.i_0 + 0.17);
+        let r2 = state._phi(state.j_n * state.s2 - state.j_cross * state.s1 + state.i_0 + 0.03);
+        let euler_s1 = (state.s1
+            + (-state.s1 / state.tau_s + (1.0 - state.s1) * state.gamma * r1) * state.dt)
+            .clamp(0.0, 1.0);
+        let euler_s2 = (state.s2
+            + (-state.s2 / state.tau_s + (1.0 - state.s2) * state.gamma * r2) * state.dt)
+            .clamp(0.0, 1.0);
+        state.step(0.17, 0.03, 0.0, 0.0).unwrap();
+        assert!((state.s1 - euler_s1).abs() > 1e-5);
+        assert!((state.s2 - euler_s2).abs() > 1e-5);
     }
 }

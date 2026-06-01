@@ -30,6 +30,24 @@ import numpy as np
 
 from sc_neurocore.neurons.models.wong_wang import WongWangUnit
 
+BackendFn = Callable[
+    [
+        float,
+        float,
+        float,
+        float,
+        float,
+        float,
+        float,
+        float,
+        float,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+    ],
+    dict[str, Any],
+]
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RESULTS_DIR = REPO_ROOT / "benchmarks" / "results"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -43,6 +61,7 @@ DEFAULT_PARAMS: dict[str, float] = dict(
     sigma=0.02,
     dt=0.001,
 )
+INTEGRATOR = "fixed_step_rk4_piecewise_constant_noise"
 
 N_STEPS = 100_000
 SEED = 42
@@ -52,18 +71,18 @@ PARITY_N = 5_000
 # ── Backend probes ────────────────────────────────────────────────────
 
 
-def _probe_rust() -> tuple[Callable | None, str]:
+def _probe_rust() -> tuple[BackendFn | None, str]:
     try:
-        from sc_neurocore_engine import py_wong_wang_simulate  # type: ignore[import-not-found]
+        from sc_neurocore_engine import py_wong_wang_simulate
 
         return py_wong_wang_simulate, "available"
     except ImportError as e:
         return None, f"missing: {e}"
 
 
-def _probe_julia() -> tuple[Callable | None, str]:
+def _probe_julia() -> tuple[BackendFn | None, str]:
     try:
-        from sc_neurocore.accel.julia.neurons import (  # type: ignore[import-not-found]
+        from sc_neurocore.accel.julia.neurons import (
             _HAS_JULIA_NEURONS,
             simulate_wong_wang,
         )
@@ -75,9 +94,9 @@ def _probe_julia() -> tuple[Callable | None, str]:
         return None, f"missing: {e}"
 
 
-def _probe_go() -> tuple[Callable | None, str]:
+def _probe_go() -> tuple[BackendFn | None, str]:
     try:
-        from sc_neurocore.accel.go.wong_wang import (  # type: ignore[import-not-found]
+        from sc_neurocore.accel.go.wong_wang import (
             _HAS_GO_WONG_WANG,
             simulate_wong_wang,
         )
@@ -92,9 +111,9 @@ def _probe_go() -> tuple[Callable | None, str]:
         return None, f"missing: {e}"
 
 
-def _probe_mojo() -> tuple[Callable | None, str]:
+def _probe_mojo() -> tuple[BackendFn | None, str]:
     try:
-        from sc_neurocore.accel.mojo.wong_wang import (  # type: ignore[import-not-found]
+        from sc_neurocore.accel.mojo.wong_wang import (
             _HAS_MOJO_WONG_WANG,
             simulate_wong_wang,
         )
@@ -121,7 +140,7 @@ def _run_python(n: int, stim1: np.ndarray, stim2: np.ndarray, seed: int) -> floa
     return time.perf_counter() - t0
 
 
-def _run_batch(fn: Callable, n: int, stim1: np.ndarray, stim2: np.ndarray, seed: int):
+def _run_batch(fn: BackendFn, n: int, stim1: np.ndarray, stim2: np.ndarray, seed: int) -> tuple[float, dict[str, Any]]:
     np.random.seed(seed)
     xi = np.random.randn(2 * n).astype(np.float64)
     # Warm-up (JIT / first-call dispatch overhead)
@@ -163,7 +182,7 @@ def _run_batch(fn: Callable, n: int, stim1: np.ndarray, stim2: np.ndarray, seed:
 # ── Parity check ──────────────────────────────────────────────────────
 
 
-def _parity_trace(fn: Callable, n: int, stim1: np.ndarray, stim2: np.ndarray, seed: int):
+def _parity_trace(fn: BackendFn, n: int, stim1: np.ndarray, stim2: np.ndarray, seed: int) -> dict[str, Any]:
     np.random.seed(seed)
     xi = np.random.randn(2 * n).astype(np.float64)
     return fn(
@@ -213,7 +232,7 @@ def main() -> int:
     }
 
     # Probe + run each accelerator.
-    probes: list[tuple[str, Callable[[], tuple[Callable | None, str]]]] = [
+    probes: list[tuple[str, Callable[[], tuple[BackendFn | None, str]]]] = [
         ("rust", _probe_rust),
         ("julia", _probe_julia),
         ("go", _probe_go),
@@ -294,6 +313,7 @@ def main() -> int:
         "parity_n": PARITY_N,
         "seed": SEED,
         "params": DEFAULT_PARAMS,
+        "integrator": INTEGRATOR,
     }
 
     out_path = RESULTS_DIR / "bench_wong_wang.json"

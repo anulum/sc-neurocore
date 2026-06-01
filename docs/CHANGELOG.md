@@ -234,6 +234,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   reject invalid two-pool gating state, non-positive timescales, non-finite
   stimuli or noise, unstable transfer-function exponentials, and non-finite
   candidate states before mutation while preserving tuple rate outputs.
+- Promoted `WongWangUnit` Python, Rust engine, Julia, Go, Mojo, and Rust safety
+  surfaces from forward Euler to candidate-first RK4 over the coupled
+  two-pool decision ODE, preserving one sampled stochastic drive per pool per
+  step and tuple rate outputs.
 - Hardened `WilsonCowanUnit` Python, Julia, Go, and Rust safety surfaces to
   reject invalid rate-state, non-positive timescales, non-finite external
   drive, unstable sigmoid exponentials, and non-finite rate candidates before
@@ -1135,7 +1139,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Plugin discovery via `importlib.metadata` entry points
 
 ### Type Safety Cleanup (M2)
-- Removed 235 unnecessary `type: ignore` comments (260 -> 25)
+- Removed 235 unnecessary Python type-suppression comments (260 -> 25)
 - Remaining 25 are justified: CuPy type aliases, optional imports, private method access
 
 ### GPU SNN Training with Surrogate Gradients

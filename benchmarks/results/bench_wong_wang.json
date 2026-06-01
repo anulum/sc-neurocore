@@ -1,8 +1,8 @@
 {
   "meta": {
-    "timestamp_utc": "2026-04-19T13:40:22Z",
+    "timestamp_utc": "2026-06-01T11:00:21Z",
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
-    "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
     "python": "3.12.3",
     "n_steps": 100000,
     "parity_n": 5000,
@@ -15,47 +15,48 @@
       "i_0": 0.3255,
       "sigma": 0.02,
       "dt": 0.001
-    }
+    },
+    "integrator": "fixed_step_rk4_piecewise_constant_noise"
   },
   "backends": {
     "python": {
       "available": true,
       "used": true,
       "reason": "primary reference",
-      "wall_ms": 426.172,
-      "steps_per_s": 234647.0
+      "wall_ms": 964.246,
+      "steps_per_s": 103708.0
     },
     "rust": {
       "available": true,
       "used": true,
       "reason": "available",
-      "wall_ms": 3.18,
-      "steps_per_s": 31445275.0,
-      "speedup_over_python": 134.01
+      "wall_ms": 12.704,
+      "steps_per_s": 7871256.0,
+      "speedup_over_python": 75.9
     },
     "julia": {
       "available": true,
       "used": true,
       "reason": "available",
-      "wall_ms": 3.556,
-      "steps_per_s": 28121018.0,
-      "speedup_over_python": 119.84
+      "wall_ms": 17.137,
+      "steps_per_s": 5835242.0,
+      "speedup_over_python": 56.27
     },
     "go": {
       "available": true,
       "used": true,
       "reason": "available",
-      "wall_ms": 4.286,
-      "steps_per_s": 23332251.0,
-      "speedup_over_python": 99.44
+      "wall_ms": 21.128,
+      "steps_per_s": 4733106.0,
+      "speedup_over_python": 45.64
     },
     "mojo": {
       "available": true,
       "used": true,
       "reason": "available",
-      "wall_ms": 3.451,
-      "steps_per_s": 28979233.0,
-      "speedup_over_python": 123.5
+      "wall_ms": 15.84,
+      "steps_per_s": 6313145.0,
+      "speedup_over_python": 60.87
     }
   },
   "parity": {
@@ -65,8 +66,8 @@
     },
     "julia": {
       "max_abs_delta_s1": 0.0,
-      "max_abs_delta_s2": 0.0,
-      "atol": 0.0
+      "max_abs_delta_s2": 6.938893903907228e-18,
+      "atol": 6.938893903907228e-18
     },
     "go": {
       "max_abs_delta_s1": 0.0,
@@ -74,9 +75,9 @@
       "atol": 6.938893903907228e-18
     },
     "mojo": {
-      "max_abs_delta_s1": 2.1260770921571748e-14,
-      "max_abs_delta_s2": 6.053491041768666e-14,
-      "atol": 6.053491041768666e-14
+      "max_abs_delta_s1": 2.0539125955565396e-14,
+      "max_abs_delta_s2": 6.046552147864759e-14,
+      "atol": 6.046552147864759e-14
     }
   }
 }

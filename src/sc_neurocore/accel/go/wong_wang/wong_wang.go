@@ -16,7 +16,8 @@
 // step, order: [xi1_t0, xi2_t0, xi1_t1, xi2_t1, …]).
 //
 // Reference (match Python module):
-//   Wong, K.-F. & Wang, X.-J. (2006). J. Neurosci. 26:1314–1328.
+//
+//	Wong, K.-F. & Wang, X.-J. (2006). J. Neurosci. 26:1314–1328.
 package main
 
 /*
@@ -55,6 +56,20 @@ func clamp01(x float64) float64 {
 		return 1.0
 	}
 	return x
+}
+
+func derivativeS1(
+	s1, s2, stim1, xi1, tau, gm, jn, jx, i0f, sg float64,
+) float64 {
+	r1 := phi(jn*s1 - jx*s2 + i0f + stim1 + sg*xi1)
+	return -s1/tau + (1.0-s1)*gm*r1
+}
+
+func derivativeS2(
+	s1, s2, stim2, xi2, tau, gm, jn, jx, i0f, sg float64,
+) float64 {
+	r2 := phi(jn*s2 - jx*s1 + i0f + stim2 + sg*xi2)
+	return -s2/tau + (1.0-s2)*gm*r2
 }
 
 // wong_wang_simulate_c — C-ABI entry point.
@@ -107,8 +122,16 @@ func wong_wang_simulate_c(
 		i2 := jn*s2 - jx*s1 + i0f + float64(stim2[t]) + sg*xi2
 		r1 := phi(i1)
 		r2 := phi(i2)
-		s1 += (-s1/tau + (1.0-s1)*gm*r1) * dtf
-		s2 += (-s2/tau + (1.0-s2)*gm*r2) * dtf
+		k1S1 := -s1/tau + (1.0-s1)*gm*r1
+		k1S2 := -s2/tau + (1.0-s2)*gm*r2
+		k2S1 := derivativeS1(s1+0.5*dtf*k1S1, s2+0.5*dtf*k1S2, float64(stim1[t]), xi1, tau, gm, jn, jx, i0f, sg)
+		k2S2 := derivativeS2(s1+0.5*dtf*k1S1, s2+0.5*dtf*k1S2, float64(stim2[t]), xi2, tau, gm, jn, jx, i0f, sg)
+		k3S1 := derivativeS1(s1+0.5*dtf*k2S1, s2+0.5*dtf*k2S2, float64(stim1[t]), xi1, tau, gm, jn, jx, i0f, sg)
+		k3S2 := derivativeS2(s1+0.5*dtf*k2S1, s2+0.5*dtf*k2S2, float64(stim2[t]), xi2, tau, gm, jn, jx, i0f, sg)
+		k4S1 := derivativeS1(s1+dtf*k3S1, s2+dtf*k3S2, float64(stim1[t]), xi1, tau, gm, jn, jx, i0f, sg)
+		k4S2 := derivativeS2(s1+dtf*k3S1, s2+dtf*k3S2, float64(stim2[t]), xi2, tau, gm, jn, jx, i0f, sg)
+		s1 += dtf * (k1S1 + 2.0*k2S1 + 2.0*k3S1 + k4S1) / 6.0
+		s2 += dtf * (k1S2 + 2.0*k2S2 + 2.0*k3S2 + k4S2) / 6.0
 		s1 = clamp01(s1)
 		s2 = clamp01(s2)
 		s1out[t] = C.double(s1)

@@ -84,6 +84,33 @@ func phiWongWang(iSyn float64) (float64, error) {
 	return response, nil
 }
 
+func wongWangDerivatives(
+	s *WongWangUnitState,
+	s1 float64,
+	s2 float64,
+	stim1 float64,
+	stim2 float64,
+	noise1 float64,
+	noise2 float64,
+) (float64, float64, float64, float64, error) {
+	i1 := s.JN*s1 - s.JCross*s2 + s.I0 + stim1 + noise1
+	i2 := s.JN*s2 - s.JCross*s1 + s.I0 + stim2 + noise2
+	r1, err := phiWongWang(i1)
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	r2, err := phiWongWang(i2)
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	ds1 := -s1/s.TauS + (1.0-s1)*s.Gamma*r1
+	ds2 := -s2/s.TauS + (1.0-s2)*s.Gamma*r2
+	if !finiteWongWang(ds1) || !finiteWongWang(ds2) {
+		return 0, 0, 0, 0, errors.New("invalid Wong-Wang derivative")
+	}
+	return ds1, ds2, r1, r2, nil
+}
+
 // Step advances the neuron by one timestep
 func (s *WongWangUnitState) Step(stim1 float64, stim2 float64, xi1 float64, xi2 float64) (float64, float64, error) {
 	if !ValidateWongWang(s) {
@@ -93,18 +120,50 @@ func (s *WongWangUnitState) Step(stim1 float64, stim2 float64, xi1 float64, xi2 
 		return 0, 0, errors.New("invalid Wong-Wang stimuli or noise")
 	}
 
-	i1 := s.JN*s.S1 - s.JCross*s.S2 + s.I0 + stim1 + s.Sigma*xi1
-	i2 := s.JN*s.S2 - s.JCross*s.S1 + s.I0 + stim2 + s.Sigma*xi2
-	r1, err := phiWongWang(i1)
+	noise1 := s.Sigma * xi1
+	noise2 := s.Sigma * xi2
+	k1S1, k1S2, r1, r2, err := wongWangDerivatives(s, s.S1, s.S2, stim1, stim2, noise1, noise2)
 	if err != nil {
 		return 0, 0, err
 	}
-	r2, err := phiWongWang(i2)
+	k2S1, k2S2, _, _, err := wongWangDerivatives(
+		s,
+		s.S1+0.5*s.Dt*k1S1,
+		s.S2+0.5*s.Dt*k1S2,
+		stim1,
+		stim2,
+		noise1,
+		noise2,
+	)
 	if err != nil {
 		return 0, 0, err
 	}
-	nextS1 := s.S1 + (-s.S1/s.TauS+(1.0-s.S1)*s.Gamma*r1)*s.Dt
-	nextS2 := s.S2 + (-s.S2/s.TauS+(1.0-s.S2)*s.Gamma*r2)*s.Dt
+	k3S1, k3S2, _, _, err := wongWangDerivatives(
+		s,
+		s.S1+0.5*s.Dt*k2S1,
+		s.S2+0.5*s.Dt*k2S2,
+		stim1,
+		stim2,
+		noise1,
+		noise2,
+	)
+	if err != nil {
+		return 0, 0, err
+	}
+	k4S1, k4S2, _, _, err := wongWangDerivatives(
+		s,
+		s.S1+s.Dt*k3S1,
+		s.S2+s.Dt*k3S2,
+		stim1,
+		stim2,
+		noise1,
+		noise2,
+	)
+	if err != nil {
+		return 0, 0, err
+	}
+	nextS1 := s.S1 + s.Dt*(k1S1+2.0*k2S1+2.0*k3S1+k4S1)/6.0
+	nextS2 := s.S2 + s.Dt*(k1S2+2.0*k2S2+2.0*k3S2+k4S2)/6.0
 	if !finiteWongWang(nextS1) || !finiteWongWang(nextS2) {
 		return 0, 0, errors.New("invalid Wong-Wang candidate state")
 	}
