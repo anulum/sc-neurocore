@@ -149,9 +149,7 @@ class ArcaneNeuron:
 
         # Effective threshold: deep state + confidence modulate
         eff_threshold = (
-            self.theta
-            * (1.0 + self.gamma * old_v_deep)
-            * (1.0 - self.delta_conf * confidence)
+            self.theta * (1.0 + self.gamma * old_v_deep) * (1.0 - self.delta_conf * confidence)
         )
         self._require_finite_candidate(eff_threshold, "effective threshold")
         eff_threshold = max(eff_threshold, 0.1)

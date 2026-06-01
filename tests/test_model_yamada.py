@@ -36,7 +36,9 @@ def _tau_n(v: float) -> float:
     return 1.0 + 7.5 / (1.0 + np.exp(x))
 
 
-def _rhs(neuron: YamadaNeuron, v: float, n_gate: float, q_gate: float, current: float) -> tuple[float, float, float]:
+def _rhs(
+    neuron: YamadaNeuron, v: float, n_gate: float, q_gate: float, current: float
+) -> tuple[float, float, float]:
     m_inf = _sigmoid((v + 30.0) / 9.5)
     n_inf = _sigmoid((v + 30.0) / 10.0)
     q_inf = _sigmoid((v + 50.0) / 10.0)

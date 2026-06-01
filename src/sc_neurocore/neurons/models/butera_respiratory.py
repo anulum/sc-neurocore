@@ -136,9 +136,16 @@ class ButeraRespiratoryNeuron:
     @staticmethod
     def _candidate_valid(state: tuple[float, float, float]) -> bool:
         v, n, h_nap = state
-        return all(math.isfinite(x) for x in state) and -200.0 <= v <= 100.0 and -0.05 <= n <= 1.05 and -0.05 <= h_nap <= 1.05
+        return (
+            all(math.isfinite(x) for x in state)
+            and -200.0 <= v <= 100.0
+            and -0.05 <= n <= 1.05
+            and -0.05 <= h_nap <= 1.05
+        )
 
-    def _derivatives(self, state: tuple[float, float, float], current: float) -> tuple[float, float, float]:
+    def _derivatives(
+        self, state: tuple[float, float, float], current: float
+    ) -> tuple[float, float, float]:
         v, n, h_nap = state
         if not all(math.isfinite(value) for value in (v, n, h_nap, current)):
             raise FloatingPointError("Butera derivative state and current must be finite")
@@ -168,7 +175,10 @@ class ButeraRespiratoryNeuron:
         k2 = self._derivatives(tuple(s + 0.5 * dt * k for s, k in zip(state, k1)), current)
         k3 = self._derivatives(tuple(s + 0.5 * dt * k for s, k in zip(state, k2)), current)
         k4 = self._derivatives(tuple(s + dt * k for s, k in zip(state, k3)), current)
-        raw_candidate = tuple(s + dt * (a + 2.0 * b + 2.0 * c + d) / 6.0 for s, a, b, c, d in zip(state, k1, k2, k3, k4))
+        raw_candidate = tuple(
+            s + dt * (a + 2.0 * b + 2.0 * c + d) / 6.0
+            for s, a, b, c, d in zip(state, k1, k2, k3, k4)
+        )
         if not all(math.isfinite(value) for value in raw_candidate):
             raise FloatingPointError("Butera RK4 candidate must be finite")
         v, n, h_nap = raw_candidate

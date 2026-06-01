@@ -113,15 +113,19 @@ class ConnorStevensNeuron:
         return value
 
     @classmethod
-    def _rates(cls, v: float) -> tuple[float, float, float, float, float, float, float, float, float, float]:
+    def _rates(
+        cls, v: float
+    ) -> tuple[float, float, float, float, float, float, float, float, float, float]:
         alpha_m = cls._safe_rate(0.38, 29.7, v, 10.0, "alpha_m")
         beta_m = 15.2 * cls._checked_exp(-(v + 54.7) / 18.0, "beta_m")
         alpha_h = 0.266 * cls._checked_exp(-(v + 48.0) / 20.0, "alpha_h")
         beta_h = 3.8 / (1.0 + cls._checked_exp(-(v + 18.0) / 10.0, "beta_h"))
         alpha_n = cls._safe_rate(0.02, 45.7, v, 10.0, "alpha_n")
         beta_n = 0.25 * cls._checked_exp(-(v + 55.7) / 80.0, "beta_n")
-        a_inf_base = 0.0761 * cls._checked_exp((v + 94.22) / 31.84, "a_inf_num") / (
-            1.0 + cls._checked_exp((v + 1.17) / 28.93, "a_inf_den")
+        a_inf_base = (
+            0.0761
+            * cls._checked_exp((v + 94.22) / 31.84, "a_inf_num")
+            / (1.0 + cls._checked_exp((v + 1.17) / 28.93, "a_inf_den"))
         )
         if a_inf_base < 0.0 or not math.isfinite(a_inf_base):
             raise FloatingPointError("a_inf base is outside the real finite domain")
@@ -132,7 +136,9 @@ class ConnorStevensNeuron:
         tau_b = 1.24 + 2.678 / (1.0 + cls._checked_exp((v + 50.0) / 16.027, "tau_b"))
         rates = (alpha_m, beta_m, alpha_h, beta_h, alpha_n, beta_n, a_inf, tau_a, b_inf, tau_b)
         if not all(math.isfinite(rate) for rate in rates) or tau_a <= 0.0 or tau_b <= 0.0:
-            raise FloatingPointError("Connor-Stevens rates must be finite with positive time constants")
+            raise FloatingPointError(
+                "Connor-Stevens rates must be finite with positive time constants"
+            )
         return rates
 
     def _validate_runtime_state(self) -> None:
@@ -167,7 +173,9 @@ class ConnorStevensNeuron:
         self, state: tuple[float, float, float, float, float, float], current: float
     ) -> tuple[float, float, float, float, float, float]:
         v, m, h, n, a, b = state
-        alpha_m, beta_m, alpha_h, beta_h, alpha_n, beta_n, a_inf, tau_a, b_inf, tau_b = self._rates(v)
+        alpha_m, beta_m, alpha_h, beta_h, alpha_n, beta_n, a_inf, tau_a, b_inf, tau_b = self._rates(
+            v
+        )
         i_na = self.g_na * m**3 * h * (v - self.e_na)
         i_k = self.g_k * n**4 * (v - self.e_k)
         i_a = self.g_a * a**3 * b * (v - self.e_a)
@@ -193,7 +201,10 @@ class ConnorStevensNeuron:
         k2 = self._derivatives(tuple(s + 0.5 * dt * k for s, k in zip(state, k1)), current)
         k3 = self._derivatives(tuple(s + 0.5 * dt * k for s, k in zip(state, k2)), current)
         k4 = self._derivatives(tuple(s + dt * k for s, k in zip(state, k3)), current)
-        candidate = tuple(s + dt * (a + 2.0 * b + 2.0 * c + d) / 6.0 for s, a, b, c, d in zip(state, k1, k2, k3, k4))
+        candidate = tuple(
+            s + dt * (a + 2.0 * b + 2.0 * c + d) / 6.0
+            for s, a, b, c, d in zip(state, k1, k2, k3, k4)
+        )
         if not self._candidate_valid(candidate):
             raise FloatingPointError("Connor-Stevens RK4 candidate left finite physical bounds")
         return candidate
@@ -203,7 +214,9 @@ class ConnorStevensNeuron:
         current = self._finite_float("current", current)
         state = (self.v, self.m, self.h, self.n, self.a, self.b)
         if not self._candidate_valid(state):
-            raise FloatingPointError("Connor-Stevens runtime state is outside finite physical bounds")
+            raise FloatingPointError(
+                "Connor-Stevens runtime state is outside finite physical bounds"
+            )
         for _ in range(int(1.0 / max(self.dt, 0.001))):
             state = self._rk4_substep(state, current)
         return state

@@ -23,11 +23,15 @@ def _exact_voltage(v: float, drive: float, tau: float, dt: float) -> float:
 
 def test_direction_selective_rgc_exact_membrane_relaxation_contract() -> None:
     """The membrane state follows exact first-order relaxation, not Euler drift."""
-    cell = DirectionSelectiveRGC(tau=7.0, theta=100.0, dt=1.25, w_centre=1.4, w_surround=0.2, v=0.35)
+    cell = DirectionSelectiveRGC(
+        tau=7.0, theta=100.0, dt=1.25, w_centre=1.4, w_surround=0.2, v=0.35
+    )
     intensity = 2.0
     surround = 0.5
     expected_surround = 0.9 * cell._surround + 0.1 * surround
-    expected_drive = cell.w_centre * (intensity - cell._prev_intensity) - cell.w_surround * expected_surround
+    expected_drive = (
+        cell.w_centre * (intensity - cell._prev_intensity) - cell.w_surround * expected_surround
+    )
     expected_v = _exact_voltage(cell.v, expected_drive, cell.tau, cell.dt)
 
     assert cell.step_rf(intensity, surround) == 0
@@ -41,7 +45,9 @@ def test_direction_selective_rgc_exact_membrane_relaxation_contract() -> None:
     ("intensity", "surround"),
     [(float("nan"), 0.0), (0.0, float("inf")), (-0.1, 0.0), (0.0, -0.1)],
 )
-def test_direction_selective_rgc_invalid_drive_preserves_state(intensity: float, surround: float) -> None:
+def test_direction_selective_rgc_invalid_drive_preserves_state(
+    intensity: float, surround: float
+) -> None:
     """Invalid optical drive fails before mutating receptive-field state."""
     cell = DirectionSelectiveRGC.new_on()
     before = (cell.v, cell._prev_intensity, cell._surround)

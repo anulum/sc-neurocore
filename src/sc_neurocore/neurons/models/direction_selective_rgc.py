@@ -106,14 +106,19 @@ class DirectionSelectiveRGC:
         self._validate_runtime()
 
         temporal_diff = intensity - self._prev_intensity
-        centre_response = self.w_centre * temporal_diff if self.is_on_centre else -self.w_centre * temporal_diff
+        centre_response = (
+            self.w_centre * temporal_diff if self.is_on_centre else -self.w_centre * temporal_diff
+        )
         next_surround = 0.9 * self._surround + 0.1 * surround_mean
         surround_inhib = self.w_surround * next_surround
         drive = centre_response - surround_inhib
         decay = math.exp(-self.dt / self.tau)
         next_v = drive + (self.v - drive) * decay
 
-        if not all(math.isfinite(value) for value in (next_surround, drive, decay, next_v)) or next_surround < 0.0:
+        if (
+            not all(math.isfinite(value) for value in (next_surround, drive, decay, next_v))
+            or next_surround < 0.0
+        ):
             raise ValueError("DirectionSelectiveRGC candidate state must be finite and physical")
 
         self._prev_intensity = intensity

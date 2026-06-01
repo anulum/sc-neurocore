@@ -38,7 +38,9 @@ def _run_once(steps: int, current: float) -> dict[str, float | int | list[float]
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Benchmark AdaptiveThresholdIFNeuron exact-relaxation step.")
+    parser = argparse.ArgumentParser(
+        description="Benchmark AdaptiveThresholdIFNeuron exact-relaxation step."
+    )
     parser.add_argument("--steps", type=int, default=200_000)
     parser.add_argument("--repeats", type=int, default=5)
     parser.add_argument("--current", type=float, default=80.0)

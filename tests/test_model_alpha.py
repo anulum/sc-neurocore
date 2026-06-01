@@ -41,9 +41,7 @@ def _drive_contribution(
     decay_v = math.exp(-dt / tau_v)
     decay_drive = math.exp(-dt / tau_drive)
     if math.isclose(rate_v, rate_drive, rel_tol=0.0, abs_tol=1.0e-14):
-        return rate_v * decay_v * (
-            current_delta * dt + rise_delta * dt * dt / (2.0 * tau_drive)
-        )
+        return rate_v * decay_v * (current_delta * dt + rise_delta * dt * dt / (2.0 * tau_drive))
     rate_delta = rate_v - rate_drive
     first_order = current_delta * (decay_drive - decay_v) / rate_delta
     second_order = (
@@ -69,23 +67,15 @@ def _exact_alpha_reference(
     decay_inh = math.exp(-neuron.dt / neuron.tau_inh)
     a_exc_next = a_exc_ss + a_exc_delta * decay_exc
     a_inh_next = a_inh_ss + a_inh_delta * decay_inh
-    i_exc_next = a_exc_ss + decay_exc * (
-        i_exc_delta + a_exc_delta * neuron.dt / neuron.tau_exc
-    )
-    i_inh_next = a_inh_ss + decay_inh * (
-        i_inh_delta + a_inh_delta * neuron.dt / neuron.tau_inh
-    )
+    i_exc_next = a_exc_ss + decay_exc * (i_exc_delta + a_exc_delta * neuron.dt / neuron.tau_exc)
+    i_inh_next = a_inh_ss + decay_inh * (i_inh_delta + a_inh_delta * neuron.dt / neuron.tau_inh)
 
     v_steady = neuron.v_rest + a_exc_ss - a_inh_ss
     v_next = (
         v_steady
         + (neuron.v - v_steady) * math.exp(-neuron.dt / neuron.tau_v)
-        + _drive_contribution(
-            i_exc_delta, a_exc_delta, neuron.tau_exc, neuron.tau_v, neuron.dt
-        )
-        - _drive_contribution(
-            i_inh_delta, a_inh_delta, neuron.tau_inh, neuron.tau_v, neuron.dt
-        )
+        + _drive_contribution(i_exc_delta, a_exc_delta, neuron.tau_exc, neuron.tau_v, neuron.dt)
+        - _drive_contribution(i_inh_delta, a_inh_delta, neuron.tau_inh, neuron.tau_v, neuron.dt)
     )
     if v_next >= neuron.v_threshold:
         return 1, neuron.v_rest, a_exc_next, i_exc_next, a_inh_next, i_inh_next
@@ -175,9 +165,7 @@ class TestAlphaSynapticCurrents:
         n = AlphaNeuron(v_threshold=100.0)
         I = 1.0
         n.step(I)
-        expected = n.tau_exc * I * (
-            1.0 - math.exp(-n.dt / n.tau_exc) * (1.0 + n.dt / n.tau_exc)
-        )
+        expected = n.tau_exc * I * (1.0 - math.exp(-n.dt / n.tau_exc) * (1.0 + n.dt / n.tau_exc))
         assert abs(n.i_exc - expected) < 1e-12
 
     def test_exact_linear_flow_matches_closed_form(self):

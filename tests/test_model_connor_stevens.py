@@ -256,7 +256,9 @@ class TestCSPipeline:
         assert rate > 0
 
 
-def _connor_reference_rate(scale: float, shift: float, v: float, denom: float, limit: float) -> float:
+def _connor_reference_rate(
+    scale: float, shift: float, v: float, denom: float, limit: float
+) -> float:
     delta = v + shift
     x = delta / denom
     if abs(x) < 1e-9:
@@ -264,7 +266,9 @@ def _connor_reference_rate(scale: float, shift: float, v: float, denom: float, l
     return scale * delta / (1.0 - np.exp(-x))
 
 
-def _connor_reference_derivatives(state: tuple[float, float, float, float, float, float], current: float, params: dict[str, float]) -> tuple[float, float, float, float, float, float]:
+def _connor_reference_derivatives(
+    state: tuple[float, float, float, float, float, float], current: float, params: dict[str, float]
+) -> tuple[float, float, float, float, float, float]:
     v, m, h, n, a, b = state
     alpha_m = _connor_reference_rate(0.38, 29.7, v, 10.0, 3.8)
     beta_m = 15.2 * np.exp(-(v + 54.7) / 18.0)
@@ -272,7 +276,9 @@ def _connor_reference_derivatives(state: tuple[float, float, float, float, float
     beta_h = 3.8 / (1.0 + np.exp(-(v + 18.0) / 10.0))
     alpha_n = _connor_reference_rate(0.02, 45.7, v, 10.0, 0.2)
     beta_n = 0.25 * np.exp(-(v + 55.7) / 80.0)
-    a_inf = (0.0761 * np.exp((v + 94.22) / 31.84) / (1.0 + np.exp((v + 1.17) / 28.93))) ** (1.0 / 3.0)
+    a_inf = (0.0761 * np.exp((v + 94.22) / 31.84) / (1.0 + np.exp((v + 1.17) / 28.93))) ** (
+        1.0 / 3.0
+    )
     tau_a = 0.3632 + 1.158 / (1.0 + np.exp((v + 55.96) / 20.12))
     b_inf = (1.0 / (1.0 + np.exp((v + 53.3) / 14.54))) ** 4
     tau_b = 1.24 + 2.678 / (1.0 + np.exp((v + 50.0) / 16.027))
@@ -292,7 +298,9 @@ def _connor_reference_derivatives(state: tuple[float, float, float, float, float
     )
 
 
-def _connor_reference_rk4(neuron: ConnorStevensNeuron, current: float) -> tuple[float, float, float, float, float, float]:
+def _connor_reference_rk4(
+    neuron: ConnorStevensNeuron, current: float
+) -> tuple[float, float, float, float, float, float]:
     params = {
         "g_na": neuron.g_na,
         "g_k": neuron.g_k,
@@ -308,10 +316,19 @@ def _connor_reference_rk4(neuron: ConnorStevensNeuron, current: float) -> tuple[
     dt = neuron.dt
     for _ in range(int(1.0 / max(dt, 0.001))):
         k1 = _connor_reference_derivatives(state, current, params)
-        k2 = _connor_reference_derivatives(tuple(s + 0.5 * dt * k for s, k in zip(state, k1)), current, params)
-        k3 = _connor_reference_derivatives(tuple(s + 0.5 * dt * k for s, k in zip(state, k2)), current, params)
-        k4 = _connor_reference_derivatives(tuple(s + dt * k for s, k in zip(state, k3)), current, params)
-        state = tuple(s + dt * (a + 2.0 * b + 2.0 * c + d) / 6.0 for s, a, b, c, d in zip(state, k1, k2, k3, k4))
+        k2 = _connor_reference_derivatives(
+            tuple(s + 0.5 * dt * k for s, k in zip(state, k1)), current, params
+        )
+        k3 = _connor_reference_derivatives(
+            tuple(s + 0.5 * dt * k for s, k in zip(state, k2)), current, params
+        )
+        k4 = _connor_reference_derivatives(
+            tuple(s + dt * k for s, k in zip(state, k3)), current, params
+        )
+        state = tuple(
+            s + dt * (a + 2.0 * b + 2.0 * c + d) / 6.0
+            for s, a, b, c, d in zip(state, k1, k2, k3, k4)
+        )
     return state
 
 
@@ -323,7 +340,9 @@ def test_connor_stevens_matches_independent_rk4_contract() -> None:
     spike = neuron.step(8.5)
 
     assert spike in (0, 1)
-    assert (neuron.v, neuron.m, neuron.h, neuron.n, neuron.a, neuron.b) == pytest.approx(expected, rel=1e-10, abs=1e-10)
+    assert (neuron.v, neuron.m, neuron.h, neuron.n, neuron.a, neuron.b) == pytest.approx(
+        expected, rel=1e-10, abs=1e-10
+    )
 
 
 @pytest.mark.parametrize(
