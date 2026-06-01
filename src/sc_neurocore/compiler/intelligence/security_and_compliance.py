@@ -663,7 +663,7 @@ def generate_sbom(
         {
             "type": "library",
             "name": "sc-neurocore",
-            "version": "3.15.1",
+            "version": "3.15.2",
             "license": "AGPL-3.0-or-later",
         },
         {"type": "hardware", "name": profile_name, "vendor": p.vendor, "family": p.family},

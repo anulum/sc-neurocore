@@ -1,6 +1,6 @@
 # SC-NeuroCore Benchmarks
 
-Performance measurements for SC-NeuroCore. Historical core engine rows come from v3.13.3, FPGA synthesis additions from v3.14.0, and documentation/release evidence is current for v3.15.1. All Python numbers are CPU-only unless a GPU environment is named. Rust numbers use Criterion and must be read with their recorded SIMD/environment context.
+Performance measurements for SC-NeuroCore. Historical core engine rows come from v3.13.3, FPGA synthesis additions from v3.14.0, and documentation/release evidence is current for v3.15.2. All Python numbers are CPU-only unless a GPU environment is named. Rust numbers use Criterion and must be read with their recorded SIMD/environment context.
 
 ## Evidence boundary
 

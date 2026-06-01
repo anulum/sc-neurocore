@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.2] - 2026-06-01
+
+### Release integrity
+- Issued a patch release candidate after the `v3.15.1` tag to preserve the
+  no-history-rewrite rule while keeping the release tag aligned with the
+  current CI, documentation, version metadata, and typed RK4 candidate-state
+  fixes.
+- Confirmed the strict mypy preparation lane remains error-free for the
+  package source tree without adding suppressions.
+
 ## [3.15.1] - 2026-06-01
 
 ### Documentation and release polish
