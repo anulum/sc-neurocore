@@ -13,6 +13,8 @@ K⁺ nullcline shift). Slow oscillation regime at default parameters."""
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 
@@ -31,6 +33,32 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 def _run(neuron: PrescottNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
+def _prescott_rhs(
+    neuron: PrescottNeuron, v: float, w: float, current: float
+) -> tuple[float, float]:
+    m_inf = 1.0 / (1.0 + math.exp(-(v + 20.0) / 15.0))
+    w_inf = 1.0 / (1.0 + math.exp(-(v - neuron.beta_w) / neuron.gamma_w))
+    i_fast = neuron.g_fast * m_inf * (v - neuron.e_fast)
+    i_slow = neuron.g_slow * w * (v - neuron.e_slow)
+    i_l = neuron.g_l * (v - neuron.e_l)
+    return (
+        -i_fast - i_slow - i_l + current,
+        neuron.phi * (w_inf - w) / neuron.tau_w,
+    )
+
+
+def _prescott_rk4_after_call(neuron: PrescottNeuron, current: float) -> tuple[float, float]:
+    v0, w0, dt = neuron.v, neuron.w, neuron.dt
+    k1_v, k1_w = _prescott_rhs(neuron, v0, w0, current)
+    k2_v, k2_w = _prescott_rhs(neuron, v0 + 0.5 * dt * k1_v, w0 + 0.5 * dt * k1_w, current)
+    k3_v, k3_w = _prescott_rhs(neuron, v0 + 0.5 * dt * k2_v, w0 + 0.5 * dt * k2_w, current)
+    k4_v, k4_w = _prescott_rhs(neuron, v0 + dt * k3_v, w0 + dt * k3_w, current)
+    return (
+        v0 + dt * (k1_v + 2.0 * k2_v + 2.0 * k3_v + k4_v) / 6.0,
+        w0 + dt * (k1_w + 2.0 * k2_w + 2.0 * k3_w + k4_w) / 6.0,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -57,6 +85,17 @@ class TestPrescottIsolation:
             n.step(50.0)
         assert n.v != v0
         assert n.w != w0
+
+    def test_step_uses_candidate_first_rk4(self):
+        n = PrescottNeuron()
+        expected_v, expected_w = _prescott_rk4_after_call(n, 50.0)
+        euler_v, euler_w = _prescott_rhs(n, n.v, n.w, 50.0)
+        euler_candidate = (n.v + n.dt * euler_v, n.w + n.dt * euler_w)
+        spike = n.step(50.0)
+        assert spike == 0
+        assert n.v == pytest.approx(expected_v, abs=1e-12)
+        assert n.w == pytest.approx(expected_w, abs=1e-15)
+        assert (n.v, n.w) != pytest.approx(euler_candidate)
 
     def test_state_finite_long_run(self):
         n = PrescottNeuron()
@@ -120,7 +159,7 @@ class TestPrescottOscillations:
 
 class TestPrescottExcitability:
     def test_beta_w_modulates_firing(self):
-        """Higher beta_w (more positive) → stronger slow K → fewer spikes."""
+        """Higher beta_w (more positive) recruits more slow K feedback."""
         n_low = PrescottNeuron(beta_w=-30.0)  # Type I-like
         n_high = PrescottNeuron(beta_w=-10.0)  # Type II/III-like
         s_low = len(_run(n_low, current=50.0, steps=100000))
@@ -128,7 +167,7 @@ class TestPrescottExcitability:
         assert s_low >= s_high, f"beta_w=-30: {s_low} spikes, beta_w=-10: {s_high}"
 
     def test_high_beta_w_suppresses_firing(self):
-        """At beta_w=0, slow K is strongly activated → minimal firing."""
+        """At beta_w=0, slow K is highly activated and suppresses firing."""
         n = PrescottNeuron(beta_w=0.0)
         spikes = _run(n, current=50.0, steps=100000)
         assert len(spikes) <= 5, f"beta_w=0: {len(spikes)} spikes — expected suppression"
@@ -152,6 +191,55 @@ class TestPrescottExcitability:
 
 
 class TestPrescottParameters:
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("v", np.nan),
+            ("w", np.inf),
+            ("g_fast", -1.0),
+            ("g_slow", -1.0),
+            ("g_l", -1.0),
+            ("gamma_w", 0.0),
+            ("tau_w", 0.0),
+            ("phi", -0.1),
+            ("dt", 0.0),
+            ("v_threshold", np.inf),
+        ],
+    )
+    def test_rejects_invalid_configuration(self, field: str, value: float):
+        with pytest.raises((ValueError, FloatingPointError)):
+            PrescottNeuron(**{field: value})
+
+    def test_rejects_non_finite_current_before_state_mutation(self):
+        n = PrescottNeuron()
+        before = (n.v, n.w)
+        with pytest.raises(ValueError, match="current"):
+            n.step(float("nan"))
+        assert (n.v, n.w) == before
+
+    def test_rejects_corrupted_state_before_mutation(self):
+        n = PrescottNeuron()
+        n.w = 1.5
+        before = (n.v, n.w)
+        with pytest.raises(FloatingPointError, match="w state"):
+            n.step(50.0)
+        assert (n.v, n.w) == before
+
+    def test_state_kernel_rejects_non_finite_voltage(self):
+        with pytest.raises(FloatingPointError, match="voltage state"):
+            PrescottNeuron._validate_state(float("nan"), 0.0)
+
+    def test_recovery_kernel_rejects_non_finite_state(self):
+        with pytest.raises(FloatingPointError, match="w state"):
+            PrescottNeuron._validate_recovery(float("inf"))
+
+    def test_rejects_non_finite_derivative_before_state_mutation(self):
+        n = PrescottNeuron(g_fast=1.0e308)
+        before = (n.v, n.w)
+        with pytest.raises(FloatingPointError, match="derivative"):
+            n.step(50.0)
+        assert (n.v, n.w) == before
+
     def test_g_slow_affects_dynamics(self):
         """Different g_slow values produce different spike patterns.
 
@@ -175,12 +263,15 @@ class TestPrescottParameters:
         """Spikes only on V upward crossing of threshold."""
         n = PrescottNeuron()
         prev_v = n.v
+        crossings = 0
         for _ in range(50000):
             s = n.step(50.0)
             if s == 1:
-                # v_prev (internal) was < threshold, current v >= threshold
-                pass
+                crossings += 1
+                assert prev_v < n.v_threshold
+                assert n.v >= n.v_threshold
             prev_v = n.v
+        assert crossings > 0
 
 
 # ---------------------------------------------------------------------------
