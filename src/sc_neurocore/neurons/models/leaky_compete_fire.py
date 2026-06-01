@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from math import isfinite
+from math import exp, isfinite
 
 
 @dataclass
@@ -27,8 +27,18 @@ class LeakyCompeteFireNeuron:
     dt: float = 1.0
 
     def __post_init__(self) -> None:
-        if self.n_units <= 0:
+        if not isinstance(self.n_units, int) or self.n_units <= 0:
             raise ValueError("n_units must be positive")
+        self._validate_parameters()
+        if len(self.v) != self.n_units:
+            if self.v == [0.0] * 4:
+                self.v = [0.0] * self.n_units
+            else:
+                raise ValueError(f"v must have length {self.n_units}")
+        if any(not isfinite(voltage) for voltage in self.v):
+            raise ValueError("v must contain only finite values")
+
+    def _validate_parameters(self) -> None:
         if not isfinite(self.tau) or self.tau <= 0.0:
             raise ValueError("tau must be finite and positive")
         if not isfinite(self.v_threshold):
@@ -37,26 +47,44 @@ class LeakyCompeteFireNeuron:
             raise ValueError("w_inh must be finite and non-negative")
         if not isfinite(self.dt) or self.dt <= 0.0:
             raise ValueError("dt must be finite and positive")
-        self.v = [0.0] * self.n_units
+
+    def _validate_runtime_state(self) -> None:
+        self._validate_parameters()
+        if len(self.v) != self.n_units:
+            raise ValueError(f"v must have length {self.n_units}")
+        if any(not isfinite(voltage) for voltage in self.v):
+            raise ValueError("v must contain only finite values")
+
+    def _normalise_currents(self, currents: list[float] | float) -> list[float]:
+        if isinstance(currents, (int, float)):
+            current_values = [float(currents)] * self.n_units
+        else:
+            current_values = [float(current) for current in currents]
+        if len(current_values) != self.n_units:
+            raise ValueError(f"currents must have length {self.n_units}")
+        if any(not isfinite(current) for current in current_values):
+            raise ValueError("currents must contain only finite values")
+        return current_values
 
     def step(self, currents: list[float] | float) -> list[int]:
-        if isinstance(currents, (int, float)):
-            currents = [currents] * self.n_units
-        if len(currents) != self.n_units:
-            raise ValueError(f"currents must have length {self.n_units}")
-        if any(not isfinite(current) for current in currents):
-            raise ValueError("currents must contain only finite values")
+        current_values = self._normalise_currents(currents)
+        self._validate_runtime_state()
+        decay = exp(-self.dt / self.tau)
+        next_v = [
+            current + (voltage - current) * decay
+            for voltage, current in zip(self.v, current_values)
+        ]
+        if any(not isfinite(voltage) for voltage in next_v):
+            raise ValueError("LCF exact relaxation produced a non-finite candidate")
         spikes = [0] * self.n_units
         for i in range(self.n_units):
-            self.v[i] += (-self.v[i] + currents[i]) / self.tau * self.dt
-        for i in range(self.n_units):
-            if self.v[i] >= self.v_threshold:
+            if next_v[i] >= self.v_threshold:
                 spikes[i] = 1
-                self.v[i] = 0.0
+                next_v[i] = 0.0
                 for j in range(self.n_units):
                     if j != i:
-                        self.v[j] -= self.w_inh
-                        self.v[j] = max(0.0, self.v[j])
+                        next_v[j] = max(0.0, next_v[j] - self.w_inh)
+        self.v = next_v
         return spikes
 
     def reset(self) -> None:

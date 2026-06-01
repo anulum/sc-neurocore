@@ -1,0 +1,118 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "commercial_license": "available",
+  "copyright_concepts": "\u00a9 Concepts 1996\u20132026 Miroslav \u0160otek. All rights reserved.",
+  "copyright_code": "\u00a9 Code 2020\u20132026 Miroslav \u0160otek. All rights reserved.",
+  "orcid": "0009-0009-3560-0851",
+  "contact": "www.anulum.li | protoscience@anulum.li",
+  "project": "SC-NeuroCore",
+  "benchmark": "LeakyCompeteFireNeuron Python exact-relaxation WTA step",
+  "timestamp_utc": "2026-06-01T10:23:44+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_leaky_compete_fire.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 50000,
+  "repeats": 5,
+  "currents": [
+    5.0,
+    2.5,
+    1.25,
+    0.5
+  ],
+  "median_ns_per_step": 3638.31396,
+  "min_ns_per_step": 3426.82664,
+  "max_ns_per_step": 4084.3798,
+  "results": [
+    {
+      "steps": 50000,
+      "currents": [
+        5.0,
+        2.5,
+        1.25,
+        0.5
+      ],
+      "elapsed_ns": 171341332,
+      "ns_per_step": 3426.82664,
+      "total_spikes": 16666,
+      "ending_state": [
+        0.9063462346100915,
+        0.9205472405670958,
+        0.22658655865252286,
+        0.09063462346100915
+      ]
+    },
+    {
+      "steps": 50000,
+      "currents": [
+        5.0,
+        2.5,
+        1.25,
+        0.5
+      ],
+      "elapsed_ns": 181915698,
+      "ns_per_step": 3638.31396,
+      "total_spikes": 16666,
+      "ending_state": [
+        0.9063462346100915,
+        0.9205472405670958,
+        0.22658655865252286,
+        0.09063462346100915
+      ]
+    },
+    {
+      "steps": 50000,
+      "currents": [
+        5.0,
+        2.5,
+        1.25,
+        0.5
+      ],
+      "elapsed_ns": 204218990,
+      "ns_per_step": 4084.3798,
+      "total_spikes": 16666,
+      "ending_state": [
+        0.9063462346100915,
+        0.9205472405670958,
+        0.22658655865252286,
+        0.09063462346100915
+      ]
+    },
+    {
+      "steps": 50000,
+      "currents": [
+        5.0,
+        2.5,
+        1.25,
+        0.5
+      ],
+      "elapsed_ns": 188136293,
+      "ns_per_step": 3762.72586,
+      "total_spikes": 16666,
+      "ending_state": [
+        0.9063462346100915,
+        0.9205472405670958,
+        0.22658655865252286,
+        0.09063462346100915
+      ]
+    },
+    {
+      "steps": 50000,
+      "currents": [
+        5.0,
+        2.5,
+        1.25,
+        0.5
+      ],
+      "elapsed_ns": 180522801,
+      "ns_per_step": 3610.45602,
+      "total_spikes": 16666,
+      "ending_state": [
+        0.9063462346100915,
+        0.9205472405670958,
+        0.22658655865252286,
+        0.09063462346100915
+      ]
+    }
+  ]
+}

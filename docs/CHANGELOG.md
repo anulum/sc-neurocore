@@ -6,6 +6,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `LeakyCompeteFireNeuron` from raw Euler vector updates to exact
+  first-order relaxation across the Python reference, Go service, Julia
+  mirror, Mojo scalar helpers, and Rust safety surface; module-owned tests now
+  cover closed-form WTA parity, large-timestep boundedness, fail-closed state
+  preservation, vector mirror contracts, and refreshed Python benchmark
+  evidence.
 - Promoted `AlphaNeuron` from a single-pole synaptic filter to the full
   two-state Rall/Gerstner alpha-cascade flow across the Python reference, Go
   service, Julia mirror, and Rust safety surface; module-owned tests now cover
