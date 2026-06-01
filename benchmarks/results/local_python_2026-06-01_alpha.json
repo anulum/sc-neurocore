@@ -1,0 +1,99 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "commercial_license": "available",
+  "copyright_concepts": "\u00a9 Concepts 1996\u20132026 Miroslav \u0160otek. All rights reserved.",
+  "copyright_code": "\u00a9 Code 2020\u20132026 Miroslav \u0160otek. All rights reserved.",
+  "orcid": "0009-0009-3560-0851",
+  "contact": "www.anulum.li | protoscience@anulum.li",
+  "project": "SC-NeuroCore",
+  "benchmark": "AlphaNeuron Python exact alpha-cascade candidate-first step",
+  "timestamp_utc": "2026-06-01T10:13:14+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_alpha.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 50000,
+  "repeats": 5,
+  "exc_current": 2.0,
+  "inh_current": 0.35,
+  "median_ns_per_step": 3483.5833,
+  "min_ns_per_step": 3212.85764,
+  "max_ns_per_step": 4041.66612,
+  "results": [
+    {
+      "steps": 50000,
+      "exc_current": 2.0,
+      "inh_current": 0.35,
+      "elapsed_ns": 202083306,
+      "ns_per_step": 4041.66612,
+      "spikes": 0,
+      "ending_state": {
+        "v": 6.499999999999991,
+        "a_exc": 9.999999999999996,
+        "i_exc": 9.999999999999993,
+        "a_inh": 3.499999999999998,
+        "i_inh": 3.4999999999999956
+      }
+    },
+    {
+      "steps": 50000,
+      "exc_current": 2.0,
+      "inh_current": 0.35,
+      "elapsed_ns": 163900635,
+      "ns_per_step": 3278.0127,
+      "spikes": 0,
+      "ending_state": {
+        "v": 6.499999999999991,
+        "a_exc": 9.999999999999996,
+        "i_exc": 9.999999999999993,
+        "a_inh": 3.499999999999998,
+        "i_inh": 3.4999999999999956
+      }
+    },
+    {
+      "steps": 50000,
+      "exc_current": 2.0,
+      "inh_current": 0.35,
+      "elapsed_ns": 174179165,
+      "ns_per_step": 3483.5833,
+      "spikes": 0,
+      "ending_state": {
+        "v": 6.499999999999991,
+        "a_exc": 9.999999999999996,
+        "i_exc": 9.999999999999993,
+        "a_inh": 3.499999999999998,
+        "i_inh": 3.4999999999999956
+      }
+    },
+    {
+      "steps": 50000,
+      "exc_current": 2.0,
+      "inh_current": 0.35,
+      "elapsed_ns": 179660232,
+      "ns_per_step": 3593.20464,
+      "spikes": 0,
+      "ending_state": {
+        "v": 6.499999999999991,
+        "a_exc": 9.999999999999996,
+        "i_exc": 9.999999999999993,
+        "a_inh": 3.499999999999998,
+        "i_inh": 3.4999999999999956
+      }
+    },
+    {
+      "steps": 50000,
+      "exc_current": 2.0,
+      "inh_current": 0.35,
+      "elapsed_ns": 160642882,
+      "ns_per_step": 3212.85764,
+      "spikes": 0,
+      "ending_state": {
+        "v": 6.499999999999991,
+        "a_exc": 9.999999999999996,
+        "i_exc": 9.999999999999993,
+        "a_inh": 3.499999999999998,
+        "i_inh": 3.4999999999999956
+      }
+    }
+  ]
+}
