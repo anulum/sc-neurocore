@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
@@ -67,7 +66,7 @@ import numpy as np
 class LamportClock:
     """Lamport logical clock for causal ordering."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.time: int = 0
 
     def tick(self) -> int:
@@ -653,7 +652,7 @@ class ReplayVerifier:
     Compares checkpoint hashes from two runs to prove determinism.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.run_a_hashes: List[str] = []
         self.run_b_hashes: List[str] = []
 
@@ -744,7 +743,7 @@ class MPIRankMapping:
 class MPITopology:
     """Physical→logical node layout for distributed twin."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.ranks: Dict[int, MPIRankMapping] = {}
 
     def add_rank(self, mapping: MPIRankMapping) -> None:
@@ -808,7 +807,7 @@ class BackpressureController:
 class CheckpointAuditChain:
     """Tamper-evident chain of checkpoint hashes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.chain: List[Tuple[int, str, str]] = []  # (cp_id, cp_hash, chain_hash)
 
     def append(self, checkpoint: Checkpoint) -> str:
@@ -898,7 +897,7 @@ class TwinEndpoint:
 class TwinFederation:
     """Federates multiple digital twins for multi-subject studies."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.twins: Dict[str, TwinEndpoint] = {}
 
     def register(self, twin_id: str, session: TwinSession, priority: int = 0) -> None:

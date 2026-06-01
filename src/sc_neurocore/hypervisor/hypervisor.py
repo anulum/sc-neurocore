@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
@@ -180,7 +179,7 @@ class BitstreamFirewall:
     Any cross-region access is blocked and logged as a violation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.rules: List[FirewallRule] = []
         self.violations: List[Dict[str, Any]] = []
         self.max_violations: int = 1000
@@ -259,7 +258,7 @@ class Scheduler:
     Supports priority-based, round-robin, fair-share, and EDF scheduling.
     """
 
-    def __init__(self, policy: SchedulingPolicy = SchedulingPolicy.PRIORITY):
+    def __init__(self, policy: SchedulingPolicy = SchedulingPolicy.PRIORITY) -> None:
         self.policy = policy
         self.time_quantum_cycles: int = 10000
         self.schedule: List[ScheduleSlot] = []
@@ -368,7 +367,7 @@ class MigrationEngine:
     6. Resume tenant
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.history: List[MigrationResult] = []
 
     def checkpoint(self, tenant: Tenant) -> TenantState:
@@ -468,7 +467,7 @@ class Hypervisor:
     firewall enforcement, and live migration.
     """
 
-    def __init__(self, config: Optional[HypervisorConfig] = None):
+    def __init__(self, config: Optional[HypervisorConfig] = None) -> None:
         self.config = config or HypervisorConfig()
         self.regions: Dict[int, HWRegion] = {}
         self.tenants: Dict[str, Tenant] = {}
@@ -685,7 +684,7 @@ class PreemptionEvent:
 class PreemptionManager:
     """Handles preemption with state checkpoint/restore."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.events: List[PreemptionEvent] = []
         self.saved_states: Dict[str, TenantState] = {}
 
@@ -738,7 +737,7 @@ class SLAViolation:
 class SLAMonitor:
     """Monitors per-tenant QoS compliance and detects violations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.violations: List[SLAViolation] = []
 
     def check_latency(
@@ -810,7 +809,7 @@ class UsageRecord:
 class ResourceAccounting:
     """Tracks per-tenant resource usage for metered billing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.records: List[UsageRecord] = []
         self._totals: Dict[str, Dict[str, int]] = {}
 
@@ -902,7 +901,7 @@ class AuditEntry:
     details: str
     timestamp_ns: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp_ns == 0:
             self.timestamp_ns = time.time_ns()
 
@@ -910,7 +909,7 @@ class AuditEntry:
 class SecurityAuditLog:
     """Structured, append-only audit trail for compliance."""
 
-    def __init__(self, max_entries: int = 10000):
+    def __init__(self, max_entries: int = 10000) -> None:
         self.entries: Deque[AuditEntry] = deque(maxlen=max_entries)
 
     def log(self, event: AuditEntry) -> None:
@@ -945,7 +944,7 @@ def verify_isolation(firewall: BitstreamFirewall, regions: Dict[int, HWRegion]) 
 
     Returns list of violation descriptions (empty = sound).
     """
-    violations = []
+    violations: List[str] = []
     rules_by_tenant: Dict[str, List[FirewallRule]] = {}
     for rule in firewall.rules:
         rules_by_tenant.setdefault(rule.tenant_id, []).append(rule)

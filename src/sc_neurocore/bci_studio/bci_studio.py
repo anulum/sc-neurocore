@@ -4,13 +4,6 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# mypy: ignore-errors
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
-# ORCID: 0009-0009-3560-0851
-# Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — BCI Studio
 
 """BCI Studio orchestrator for real-time closed-loop brain-computer interfaces.
@@ -97,7 +90,7 @@ class SpikeCodec:
         if len(data) < 4:
             return np.array([], dtype=np.uint8)
         total_len = struct.unpack("<I", data[:4])[0]
-        spikes = []
+        spikes: List[int] = []
         i = 4
         while i + 1 < len(data) and len(spikes) < total_len:
             val = data[i]
@@ -122,7 +115,7 @@ class OnlineLearner:
         num_weights: int,
         lr: float = 0.01,
         decay: float = 0.999,
-    ):
+    ) -> None:
         self.weights = np.ones(num_weights, dtype=np.float32)
         self.lr = lr
         self.decay = decay
@@ -178,7 +171,7 @@ class FPGAFeedbackController:
 class LatencyProfiler:
     """Rolling window latency tracker with percentile reporting."""
 
-    def __init__(self, window_size: int = 1000):
+    def __init__(self, window_size: int = 1000) -> None:
         self.window: deque[float] = deque(maxlen=window_size)
 
     def record(self, latency_ms: float) -> None:
@@ -213,7 +206,7 @@ class BCIStudio:
         self,
         channels: int = 1024,
         lr: float = 0.01,
-    ):
+    ) -> None:
         self.channels = channels
         self.codec = SpikeCodec()
         self.learner = OnlineLearner(channels, lr=lr)

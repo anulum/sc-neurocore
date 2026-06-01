@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Typing hygiene
+- Removed active source-level file-wide mypy suppressions from the package tree
+  and repaired the exposed strict-mypy defects in ASIC flow, BCI Studio,
+  bioware, digital-twin synchronisation, evolutionary substrate,
+  explainability, federated learning, hypervisor, memristor, model-zoo, and
+  spintronic surfaces.
+- Confirmed strict package mypy passes for 940 source files with an isolated
+  cache path; the repository-local cache path currently exhibits local
+  filesystem `ENOSPC` behaviour and should not be used as typing evidence.
+
 ## [3.15.7] - 2026-06-01
 
 ### Engine publishing credentials

@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
@@ -151,7 +150,9 @@ class LIFPlugin(NeuronPlugin):
             "R_m": 1e7,
         }
 
-    def ode_dynamics(self, state, current, params, dt):
+    def ode_dynamics(
+        self, state: NeuronState, current: float, params: Dict[str, float], dt: float
+    ) -> NeuronState:
         s = state.copy()
         tau = params["tau_m"]
         V = s["V"]
@@ -159,10 +160,10 @@ class LIFPlugin(NeuronPlugin):
         s["V"] = V + dV * dt
         return s
 
-    def threshold_check(self, state, params):
+    def threshold_check(self, state: NeuronState, params: Dict[str, float]) -> bool:
         return state["V"] >= params["V_thresh"]
 
-    def reset(self, state, params):
+    def reset(self, state: NeuronState, params: Dict[str, float]) -> NeuronState:
         s = state.copy()
         s["V"] = params["V_reset"]
         return s
@@ -194,7 +195,9 @@ class IzhikevichPlugin(NeuronPlugin):
     def default_params(self) -> Dict[str, float]:
         return {"a": 0.02, "b": 0.2, "c": -65.0, "d": 8.0, "V_thresh": 30.0}
 
-    def ode_dynamics(self, state, current, params, dt):
+    def ode_dynamics(
+        self, state: NeuronState, current: float, params: Dict[str, float], dt: float
+    ) -> NeuronState:
         s = state.copy()
         V, u = s["V"], s["u"]
         dt_ms = dt * 1000.0
@@ -204,10 +207,10 @@ class IzhikevichPlugin(NeuronPlugin):
         s["u"] = u + du * dt_ms
         return s
 
-    def threshold_check(self, state, params):
+    def threshold_check(self, state: NeuronState, params: Dict[str, float]) -> bool:
         return state["V"] >= params["V_thresh"]
 
-    def reset(self, state, params):
+    def reset(self, state: NeuronState, params: Dict[str, float]) -> NeuronState:
         s = state.copy()
         s["V"] = params["c"]
         s["u"] = s["u"] + params["d"]
@@ -256,7 +259,9 @@ class AdExPlugin(NeuronPlugin):
             "V_peak": 20.0,
         }
 
-    def ode_dynamics(self, state, current, params, dt):
+    def ode_dynamics(
+        self, state: NeuronState, current: float, params: Dict[str, float], dt: float
+    ) -> NeuronState:
         s = state.copy()
         V, w = s["V"], s["w"]
         dt_ms = dt * 1000.0
@@ -271,10 +276,10 @@ class AdExPlugin(NeuronPlugin):
         s["w"] = w + dw * dt_ms
         return s
 
-    def threshold_check(self, state, params):
+    def threshold_check(self, state: NeuronState, params: Dict[str, float]) -> bool:
         return state["V"] >= params["V_peak"]
 
-    def reset(self, state, params):
+    def reset(self, state: NeuronState, params: Dict[str, float]) -> NeuronState:
         s = state.copy()
         s["V"] = params["V_reset"]
         s["w"] = s["w"] + params["b"]
@@ -319,7 +324,9 @@ class HodgkinHuxleyPlugin(NeuronPlugin):
             "V_thresh": 0.0,
         }
 
-    def ode_dynamics(self, state, current, params, dt):
+    def ode_dynamics(
+        self, state: NeuronState, current: float, params: Dict[str, float], dt: float
+    ) -> NeuronState:
         s = state.copy()
         V, m, h, n = s["V"], s["m"], s["h"], s["n"]
         dt_ms = dt * 1000.0
@@ -357,10 +364,10 @@ class HodgkinHuxleyPlugin(NeuronPlugin):
         s["n"] = max(0.0, min(1.0, s["n"]))
         return s
 
-    def threshold_check(self, state, params):
+    def threshold_check(self, state: NeuronState, params: Dict[str, float]) -> bool:
         return state["V"] >= params["V_thresh"]
 
-    def reset(self, state, params):
+    def reset(self, state: NeuronState, params: Dict[str, float]) -> NeuronState:
         return state.copy()
 
 
@@ -404,7 +411,7 @@ class PluginRegistry:
 class VerilogGenerator:
     """Generates synthesisable SystemVerilog from a NeuronPlugin."""
 
-    def __init__(self, bit_width: int = 16, frac_bits: int = 8):
+    def __init__(self, bit_width: int = 16, frac_bits: int = 8) -> None:
         self.bit_width = bit_width
         self.frac_bits = frac_bits
 

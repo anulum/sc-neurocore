@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
@@ -34,7 +33,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -131,7 +130,7 @@ class SpintronicDeviceConfig:
 
     @classmethod
     def from_tech(cls, tech: SpintronicTech) -> SpintronicDeviceConfig:
-        presets = {
+        presets: Dict[SpintronicTech, Dict[str, Any]] = {
             SpintronicTech.DOMAIN_WALL: dict(
                 material=MaterialParams.pt_co_multilayer(),
                 width_nm=60.0,
@@ -282,7 +281,7 @@ class SpintronicArray:
         tech: SpintronicTech = SpintronicTech.SOT_MRAM,
         variability: Optional[VariabilityModel] = None,
         rng_seed: int = 42,
-    ):
+    ) -> None:
         self.rows = rows
         self.cols = cols
         self.tech = tech
@@ -374,7 +373,7 @@ class SpintronicMapper:
         tech: SpintronicTech = SpintronicTech.SOT_MRAM,
         variability: Optional[VariabilityModel] = None,
         rng_seed: int = 42,
-    ):
+    ) -> None:
         self.tech = tech
         self.variability = variability or VariabilityModel()
         self.rng = np.random.default_rng(rng_seed)
@@ -391,7 +390,7 @@ class SpintronicMapper:
             cols,
             self.tech,
             self.variability,
-            self.rng.integers(0, 2**31),
+            int(self.rng.integers(0, 2**31)),
         )
         array.program_weights(weights_q88)
 
@@ -584,7 +583,7 @@ class RacetrackShiftRegister:
     shift_time_ns: float = 0.5
     shift_error_rate: float = 1e-5
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.bits is None:
             self.bits = np.zeros(self.n_positions, dtype=np.int8)
 
@@ -593,7 +592,8 @@ class RacetrackShiftRegister:
 
     def shift_right(self, n: int = 1, rng: Optional[np.random.Generator] = None) -> None:
         for _ in range(n):
-            self.bits = np.roll(self.bits, 1)
+            bits = self.bits if self.bits is not None else np.zeros(self.n_positions, dtype=np.int8)
+            self.bits = np.roll(bits, 1).astype(np.int8, copy=False)
             self.bits[0] = 0
             if rng is not None and rng.random() < self.shift_error_rate:
                 pos = rng.integers(0, self.n_positions)
@@ -601,7 +601,8 @@ class RacetrackShiftRegister:
 
     def shift_left(self, n: int = 1, rng: Optional[np.random.Generator] = None) -> None:
         for _ in range(n):
-            self.bits = np.roll(self.bits, -1)
+            bits = self.bits if self.bits is not None else np.zeros(self.n_positions, dtype=np.int8)
+            self.bits = np.roll(bits, -1).astype(np.int8, copy=False)
             self.bits[-1] = 0
             if rng is not None and rng.random() < self.shift_error_rate:
                 pos = rng.integers(0, self.n_positions)
@@ -703,7 +704,7 @@ class MLCConfig:
     bits_per_cell: int = 2
     levels: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.levels = 2**self.bits_per_cell
 
     @property
@@ -836,7 +837,7 @@ class DefectEntry:
 class DefectMap:
     """Tracks and remaps defective cells in a spintronic array."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.defects: List[DefectEntry] = []
         self.remap: Dict[Tuple[int, int], Tuple[int, int]] = {}
 
