@@ -1,0 +1,66 @@
+{
+  "benchmark": "ParametricLIFNeuron Python candidate-first step",
+  "timestamp_utc": "2026-06-01T00:25:11+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_plif.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 0.7,
+  "median_ns_per_step": 777.51111,
+  "min_ns_per_step": 757.85362,
+  "max_ns_per_step": 864.727135,
+  "results": [
+    {
+      "steps": 200000,
+      "current": 0.7,
+      "elapsed_ns": 151570724,
+      "ns_per_step": 757.85362,
+      "spikes": 100000,
+      "ending_state": [
+        1.0499999999999998
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 0.7,
+      "elapsed_ns": 155502222,
+      "ns_per_step": 777.51111,
+      "spikes": 100000,
+      "ending_state": [
+        1.0499999999999998
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 0.7,
+      "elapsed_ns": 152910068,
+      "ns_per_step": 764.55034,
+      "spikes": 100000,
+      "ending_state": [
+        1.0499999999999998
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 0.7,
+      "elapsed_ns": 163413790,
+      "ns_per_step": 817.06895,
+      "spikes": 100000,
+      "ending_state": [
+        1.0499999999999998
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 0.7,
+      "elapsed_ns": 172945427,
+      "ns_per_step": 864.727135,
+      "spikes": 100000,
+      "ending_state": [
+        1.0499999999999998
+      ]
+    }
+  ]
+}

@@ -40,8 +40,12 @@ func (s *ParametricLIFNeuronState) Step(iExt float64) int {
 	if s.V >= s.Threshold {
 		spike = 1.0
 	}
-	s.V = s.Alpha()*s.V*(1.0-spike) + iExt
-	if s.V >= s.Threshold {
+	nextV := s.Alpha()*s.V*(1.0-spike) + iExt
+	if !isFinitePLIF(nextV) {
+		return 0
+	}
+	s.V = nextV
+	if nextV >= s.Threshold {
 		return 1
 	}
 	return 0

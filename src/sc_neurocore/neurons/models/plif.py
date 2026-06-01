@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
-import numpy as np
 
 
 @dataclass
@@ -41,17 +40,30 @@ class ParametricLIFNeuron:
     @property
     def alpha(self) -> float:
         if self.a >= 0.0:
-            z = np.exp(-self.a)
+            z = math.exp(-self.a)
             return 1.0 / (1.0 + z)
-        z = np.exp(self.a)
+        z = math.exp(self.a)
         return z / (1.0 + z)
 
     def step(self, current: float) -> int:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
+        self._validate_runtime_state()
         spike = 1 if self.v >= self.threshold else 0
-        self.v = self.alpha * self.v * (1 - spike) + current
-        return 1 if self.v >= self.threshold else 0
+        next_v = self.alpha * self.v * (1 - spike) + current
+        if not math.isfinite(next_v):
+            raise ValueError("voltage candidate must remain finite")
+        self.v = next_v
+        return 1 if next_v >= self.threshold else 0
 
     def reset(self) -> None:
         self.v = 0.0
+
+    def _validate_runtime_state(self) -> None:
+        for name in ("v", "a"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"runtime {name} must be finite")
+        if not math.isfinite(self.threshold) or self.threshold <= 0.0:
+            raise ValueError("runtime threshold must be finite and positive")
+        if not math.isfinite(self.dt) or self.dt <= 0.0:
+            raise ValueError("runtime dt must be finite and positive")

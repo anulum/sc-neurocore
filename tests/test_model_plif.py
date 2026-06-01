@@ -98,6 +98,26 @@ class TestPLIFIsolation:
             n.step(current)
         assert n.v == before
 
+    @pytest.mark.parametrize(
+        "field",
+        ["v", "a", "threshold", "dt"],
+    )
+    def test_rejects_corrupted_runtime_state_before_mutation(self, field: str):
+        n = ParametricLIFNeuron(v=0.25)
+        before = n.v
+        setattr(n, field, np.nan)
+        with pytest.raises(ValueError, match="runtime"):
+            n.step(0.1)
+        if field != "v":
+            assert n.v == before
+
+    def test_rejects_non_finite_voltage_candidate_before_mutation(self):
+        n = ParametricLIFNeuron(v=1.0e308, a=1000.0, threshold=1.7e308)
+        before = n.v
+        with pytest.raises(ValueError, match="voltage candidate"):
+            n.step(1.0e308)
+        assert n.v == before
+
     def test_alpha_is_stable_for_large_negative_parameter(self):
         n = ParametricLIFNeuron(a=-1000.0)
         assert n.alpha == 0.0

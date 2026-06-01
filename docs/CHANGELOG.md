@@ -6,6 +6,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Hardened `ParametricLIFNeuron` candidate-first discrete recurrence semantics across the Python reference, Go service, Julia mirror, and Rust safety surface, preserving the Fang et al. PLIF update while rejecting corrupted runtime state and non-finite voltage candidates before mutation with refreshed benchmark evidence.
 - Promoted `SigmoidRateNeuron` from raw Euler rate updates to exact first-order relaxation across the Python reference, Go service, Julia mirror, Mojo kernel, and Rust safety surface, with module-specific tests for closed-form parity, large-timestep boundedness, invalid-state preservation, and refreshed benchmark evidence.
 - Promoted `NonResettingLIFNeuron` from raw Euler membrane and adaptive-threshold updates to exact first-order relaxation across the Python reference, Go service, Julia mirror, and Rust safety surface, with module-specific tests for closed-form parity, large-timestep boundedness, invalid-update preservation, and refreshed benchmark evidence.
 - Promoted `AdaptiveThresholdIFNeuron` from guarded Euler mutation to exact
