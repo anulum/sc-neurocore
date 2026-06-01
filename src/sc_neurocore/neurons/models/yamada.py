@@ -97,7 +97,9 @@ class YamadaNeuron:
         self.q = next_q
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def _derivatives(self, v: float, n: float, q: float, current: float) -> tuple[float, float, float]:
+    def _derivatives(
+        self, v: float, n: float, q: float, current: float
+    ) -> tuple[float, float, float]:
         if not all(math.isfinite(value) for value in (v, n, q, current)):
             raise ValueError("Yamada RK4 candidate must remain finite")
         if not 0.0 <= n <= 1.0 or not 0.0 <= q <= 1.0:

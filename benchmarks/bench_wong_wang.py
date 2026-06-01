@@ -140,7 +140,9 @@ def _run_python(n: int, stim1: np.ndarray, stim2: np.ndarray, seed: int) -> floa
     return time.perf_counter() - t0
 
 
-def _run_batch(fn: BackendFn, n: int, stim1: np.ndarray, stim2: np.ndarray, seed: int) -> tuple[float, dict[str, Any]]:
+def _run_batch(
+    fn: BackendFn, n: int, stim1: np.ndarray, stim2: np.ndarray, seed: int
+) -> tuple[float, dict[str, Any]]:
     np.random.seed(seed)
     xi = np.random.randn(2 * n).astype(np.float64)
     # Warm-up (JIT / first-call dispatch overhead)
@@ -182,7 +184,9 @@ def _run_batch(fn: BackendFn, n: int, stim1: np.ndarray, stim2: np.ndarray, seed
 # ── Parity check ──────────────────────────────────────────────────────
 
 
-def _parity_trace(fn: BackendFn, n: int, stim1: np.ndarray, stim2: np.ndarray, seed: int) -> dict[str, Any]:
+def _parity_trace(
+    fn: BackendFn, n: int, stim1: np.ndarray, stim2: np.ndarray, seed: int
+) -> dict[str, Any]:
     np.random.seed(seed)
     xi = np.random.randn(2 * n).astype(np.float64)
     return fn(

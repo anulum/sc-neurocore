@@ -66,8 +66,8 @@ class AlphaNeuron:
         decay_v = math.exp(-dt / tau_v)
         decay_drive = math.exp(-dt / tau_drive)
         if math.isclose(rate_v, rate_drive, rel_tol=0.0, abs_tol=1.0e-14):
-            return rate_v * decay_v * (
-                current_delta * dt + rise_delta * dt * dt / (2.0 * tau_drive)
+            return (
+                rate_v * decay_v * (current_delta * dt + rise_delta * dt * dt / (2.0 * tau_drive))
             )
         rate_delta = rate_v - rate_drive
         first_order = current_delta * (decay_drive - decay_v) / rate_delta
@@ -109,7 +109,8 @@ class AlphaNeuron:
             )
         )
         if not all(
-            math.isfinite(value) for value in (a_exc_next, i_exc_next, a_inh_next, i_inh_next, v_next)
+            math.isfinite(value)
+            for value in (a_exc_next, i_exc_next, a_inh_next, i_inh_next, v_next)
         ):
             raise ValueError("alpha exact-flow update became non-finite")
 

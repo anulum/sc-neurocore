@@ -136,7 +136,9 @@ def _butera_rates(v: float) -> tuple[float, float, float, float, float, float]:
     return m_na_inf, m_nap_inf, h_nap_inf, n_inf, tau_n, tau_h
 
 
-def _butera_derivatives(state: tuple[float, float, float], current: float, params: dict[str, float]) -> tuple[float, float, float]:
+def _butera_derivatives(
+    state: tuple[float, float, float], current: float, params: dict[str, float]
+) -> tuple[float, float, float]:
     v, n, h_nap = state
     m_na_inf, m_nap_inf, h_nap_inf, n_inf, tau_n, tau_h = _butera_rates(v)
     i_na = params["g_na"] * m_na_inf**3 * (1.0 - n) * (v - params["e_na"])
@@ -150,7 +152,9 @@ def _butera_derivatives(state: tuple[float, float, float], current: float, param
     )
 
 
-def _butera_reference_rk4(neuron: ButeraRespiratoryNeuron, current: float) -> tuple[float, float, float]:
+def _butera_reference_rk4(
+    neuron: ButeraRespiratoryNeuron, current: float
+) -> tuple[float, float, float]:
     state = (neuron.v, neuron.n, neuron.h_nap)
     params = {
         "g_na": neuron.g_na,
@@ -166,7 +170,9 @@ def _butera_reference_rk4(neuron: ButeraRespiratoryNeuron, current: float) -> tu
     k2 = _butera_derivatives(tuple(s + 0.5 * dt * k for s, k in zip(state, k1)), current, params)
     k3 = _butera_derivatives(tuple(s + 0.5 * dt * k for s, k in zip(state, k2)), current, params)
     k4 = _butera_derivatives(tuple(s + dt * k for s, k in zip(state, k3)), current, params)
-    return tuple(s + dt * (a + 2.0 * b + 2.0 * c + d) / 6.0 for s, a, b, c, d in zip(state, k1, k2, k3, k4))
+    return tuple(
+        s + dt * (a + 2.0 * b + 2.0 * c + d) / 6.0 for s, a, b, c, d in zip(state, k1, k2, k3, k4)
+    )
 
 
 def test_butera_matches_independent_rk4_contract() -> None:

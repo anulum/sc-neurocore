@@ -136,8 +136,12 @@ class TestWongWangDecisionDynamics:
         old_s1, old_s2 = n.s1, n.s2
         r1 = n._phi(n.j_n * old_s1 - n.j_cross * old_s2 + n.i_0 + 0.17)
         r2 = n._phi(n.j_n * old_s2 - n.j_cross * old_s1 + n.i_0 + 0.03)
-        euler_s1 = min(1.0, max(0.0, old_s1 + (-old_s1 / n.tau_s + (1.0 - old_s1) * n.gamma * r1) * n.dt))
-        euler_s2 = min(1.0, max(0.0, old_s2 + (-old_s2 / n.tau_s + (1.0 - old_s2) * n.gamma * r2) * n.dt))
+        euler_s1 = min(
+            1.0, max(0.0, old_s1 + (-old_s1 / n.tau_s + (1.0 - old_s1) * n.gamma * r1) * n.dt)
+        )
+        euler_s2 = min(
+            1.0, max(0.0, old_s2 + (-old_s2 / n.tau_s + (1.0 - old_s2) * n.gamma * r2) * n.dt)
+        )
 
         n.step(0.17, 0.03)
 
@@ -270,7 +274,9 @@ class TestWongWangParameters:
             n.step(0.1, 0.0)
         assert (n.s1, n.s2) == before
 
-    def test_rejects_non_finite_rk4_candidate_before_mutation(self, monkeypatch: pytest.MonkeyPatch):
+    def test_rejects_non_finite_rk4_candidate_before_mutation(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
         n = WongWangUnit()
         n.dt = sys.float_info.max
         before = (n.s1, n.s2)
