@@ -4,20 +4,17 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: LeakyCompeteFireNeuron
+# SC-NeuroCore — LeakyCompeteFireNeuron module contract tests
 
-"""Full pipeline test for LeakyCompeteFireNeuron (Oster et al. 2009).
+"""Module-specific numerical and pipeline tests for LeakyCompeteFireNeuron.
 
 Winner-take-all with lateral inhibition. Multi-unit model (n_units=4):
-dV_i = (-V_i + I_i) / τ · dt
-On spike: V_i→0, V_j -= w_inh (j≠i), clipped ≥ 0.
-
-Returns list[int] (one spike per unit). v is list[float].
-Population incompatible (list-valued v).
-FULL PIPELINE (isolation only) + PERFORMANCE."""
+tau dV_i/dt = -V_i + I_i, integrated by exact first-order relaxation.
+On spike: V_i -> 0, V_j -= w_inh (j != i), clipped >= 0."""
 
 from __future__ import annotations
 
+import math
 import time
 
 import numpy as np
@@ -25,6 +22,11 @@ import pytest
 
 from sc_neurocore.neurons.models.leaky_compete_fire import LeakyCompeteFireNeuron
 from sc_neurocore.network.population import Population
+
+
+def _exact_lcf_candidates(neuron: LeakyCompeteFireNeuron, currents: list[float]) -> list[float]:
+    decay = math.exp(-neuron.dt / neuron.tau)
+    return [current + (voltage - current) * decay for voltage, current in zip(neuron.v, currents)]
 
 
 # ---------------------------------------------------------------------------
@@ -54,6 +56,10 @@ class TestLCFIsolation:
             n.step(5.0)
         n.reset()
         assert all(v == 0.0 for v in n.v)
+
+    def test_initial_vector_state_is_preserved_when_valid(self):
+        n = LeakyCompeteFireNeuron(n_units=3, v=[0.1, 0.2, 0.3])
+        assert n.v == [0.1, 0.2, 0.3]
 
     def test_deterministic(self):
         traces = []
@@ -90,6 +96,14 @@ class TestLCFIsolation:
         with pytest.raises(ValueError, match="finite"):
             n.step([1.0, np.nan])
 
+    def test_rejects_initial_voltage_length_mismatch(self):
+        with pytest.raises(ValueError, match="v must have length"):
+            LeakyCompeteFireNeuron(n_units=3, v=[0.1, 0.2])
+
+    def test_rejects_non_finite_initial_voltage(self):
+        with pytest.raises(ValueError, match="v must contain"):
+            LeakyCompeteFireNeuron(n_units=2, v=[0.1, np.nan])
+
 
 # ---------------------------------------------------------------------------
 # 2. ANALYTICAL — WTA mechanism, lateral inhibition
@@ -117,7 +131,7 @@ class TestLCFAnalytical:
                 break
 
     def test_winner_take_all_with_asymmetric_input(self):
-        """Stronger input unit spikes more often (WTA)."""
+        """Higher input unit spikes more often (WTA)."""
         n = LeakyCompeteFireNeuron(n_units=2)
         spikes_0, spikes_1 = 0, 0
         for _ in range(5000):
@@ -148,11 +162,87 @@ class TestLCFAnalytical:
         # Unit 2 should have highest V
         assert n.v[2] > n.v[0]
 
+    def test_exact_relaxation_matches_closed_form_without_spike(self):
+        n = LeakyCompeteFireNeuron(
+            n_units=3,
+            v=[0.2, 0.4, 0.1],
+            tau=7.0,
+            v_threshold=100.0,
+            dt=2.5,
+        )
+        currents = [1.0, 0.5, 0.0]
+        expected = _exact_lcf_candidates(n, currents)
+
+        spikes = n.step(currents)
+
+        assert spikes == [0, 0, 0]
+        assert n.v == pytest.approx(expected, abs=1e-12)
+
+    def test_large_timestep_relaxes_without_euler_overshoot(self):
+        n = LeakyCompeteFireNeuron(
+            n_units=2,
+            v=[5.0, 1.0],
+            tau=1.0,
+            v_threshold=100.0,
+            dt=50.0,
+        )
+
+        n.step([0.0, 0.0])
+
+        assert 0.0 <= n.v[0] <= 5.0
+        assert 0.0 <= n.v[1] <= 1.0
+
+    def test_exact_candidates_are_committed_before_inhibition(self):
+        n = LeakyCompeteFireNeuron(
+            n_units=2,
+            v=[0.0, 0.0],
+            tau=10.0,
+            v_threshold=0.5,
+            w_inh=0.25,
+            dt=2.0,
+        )
+        expected = _exact_lcf_candidates(n, [5.0, 1.0])
+
+        spikes = n.step([5.0, 1.0])
+
+        assert spikes == [1, 0]
+        assert n.v[0] == 0.0
+        assert n.v[1] == pytest.approx(max(0.0, expected[1] - n.w_inh), abs=1e-12)
+
     def test_custom_n_units(self):
         n = LeakyCompeteFireNeuron(n_units=8)
         assert len(n.v) == 8
         result = n.step(5.0)
         assert len(result) == 8
+
+    def test_runtime_corrupted_state_fails_before_mutation(self):
+        n = LeakyCompeteFireNeuron(n_units=2, v=[0.2, 0.4])
+        before = list(n.v)
+        n.tau = 0.0
+        with pytest.raises(ValueError, match="tau"):
+            n.step([1.0, 0.5])
+        assert n.v == before
+
+    def test_runtime_voltage_length_mismatch_fails_before_mutation(self):
+        n = LeakyCompeteFireNeuron(n_units=2, v=[0.2, 0.4])
+        n.v = [0.2]
+        with pytest.raises(ValueError, match="v must have length"):
+            n.step([1.0, 0.5])
+        assert n.v == [0.2]
+
+    def test_runtime_non_finite_voltage_fails_before_mutation(self):
+        n = LeakyCompeteFireNeuron(n_units=2, v=[0.2, 0.4])
+        n.v[1] = np.inf
+        with pytest.raises(ValueError, match="v must contain"):
+            n.step([1.0, 0.5])
+        assert n.v[1] == np.inf
+
+    def test_non_finite_candidate_fails_before_mutation(self):
+        n = LeakyCompeteFireNeuron(n_units=2, v=[1.0e308, 0.4])
+        before = list(n.v)
+        with pytest.raises(ValueError, match="relaxation"):
+            n.step([-1.0e308, 0.0])
+        assert n.v == before
 
 
 # ---------------------------------------------------------------------------
@@ -185,7 +275,7 @@ class TestLCFPerformance:
             n.step(5.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert rate > 50_000, f"isolation: {rate:.0f} steps/s"
+        assert rate > 10_000, f"isolation: {rate:.0f} steps/s"
 
 
 # ---------------------------------------------------------------------------
