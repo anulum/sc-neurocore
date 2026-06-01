@@ -1,0 +1,30 @@
+{
+  "current": 5.0,
+  "date": "2026-06-01",
+  "model": "ShermanRinzelKeizerNeuron",
+  "parity": {
+    "max_abs_delta": 0.0,
+    "spikes_delta": 0,
+    "status": "measured"
+  },
+  "python": {
+    "n": 0.05856653949856641,
+    "s": 0.1766551544539218,
+    "spikes": 1738,
+    "steps": 80000,
+    "steps_per_second": 46331.10929822276,
+    "v": -66.37053113586398,
+    "wall_seconds": 1.72670158802066
+  },
+  "rust_safety": {
+    "n": 0.05856653949856641,
+    "s": 0.1766551544539218,
+    "spikes": 1738,
+    "steps": 80000,
+    "steps_per_second": 6637051.589387189,
+    "v": -66.37053113586398,
+    "wall_seconds": 0.012053545
+  },
+  "speedup_rust_vs_python": 143.2525939896238,
+  "steps": 80000
+}

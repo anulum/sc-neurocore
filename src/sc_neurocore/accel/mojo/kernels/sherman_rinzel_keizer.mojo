@@ -4,22 +4,17 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for sherman_rinzel_keizer
+# SC-NeuroCore — Mojo contract notes for Sherman-Rinzel-Keizer RK4
 
 fn step(current: Int) -> Int:
-    var _step_line = 'v_prev = v'
-    var _step_line = 'm_inf = 1.0 / (1.0 + exp(-(v + 20.0) / 12.0))'
-    var _step_line = 'n_inf = 1.0 / (1.0 + exp(-(v + 16.0) / 5.0))'
-    var _step_line = 's_inf = 1.0 / (1.0 + exp(-(v + 35.0) / 10.0))'
-    var _step_line = 'tau_n = 9.09'
-    var _step_line = 'i_ca = g_ca * m_inf * (v - e_ca)'
-    var _step_line = 'i_k = g_k * n * (v - e_k)'
-    var _step_line = 'i_s = g_s * s * (v - e_k)'
-    var _step_line = 'v += (-i_ca - i_k - i_s + current) * dt'
-    var _step_line = 'n += (n_inf - n) / tau_n * dt'
-    var _step_line = 's += (s_inf - s) / tau_s * dt'
-    return 0  # return 1 if (v >= v_threshold and v_prev < v_thres
+    # Maintained scalar contract:
+    # - validate finite current, finite voltage, and gates in [0, 1]
+    # - evaluate the Sherman-Rinzel-Keizer right-hand side with bounded sigmoid
+    # - advance v, n, and s with candidate-first RK4 under constant current
+    # - commit only finite candidates whose gates remain in [0, 1]
+    # - report threshold crossing without resetting the continuous state
+    return 0
 
 fn reset() -> Int:
-    var _reset_line = 'v, n, s = -50.0, 0.1, 0.1'
+    # Reset only dynamic state: v=-50.0, n=0.1, s=0.1.
     return 0
