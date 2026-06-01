@@ -32,6 +32,10 @@ class WongWangUnit:
     dt: float = 0.001
 
     def __post_init__(self) -> None:
+        self._validate_parameters()
+        self._validate_state(self.s1, self.s2)
+
+    def _validate_parameters(self) -> None:
         for name in (
             "s1",
             "s2",
@@ -53,7 +57,6 @@ class WongWangUnit:
         for name in ("j_n", "j_cross", "sigma"):
             if getattr(self, name) < 0.0:
                 raise ValueError(f"{name} must be non-negative")
-        self._validate_state(self.s1, self.s2)
 
     @staticmethod
     def _validate_state(s1: float, s2: float) -> tuple[float, float]:
@@ -86,10 +89,26 @@ class WongWangUnit:
             raise FloatingPointError("Wong-Wang transfer response must be finite")
         return response
 
+    def _derivatives(
+        self,
+        s1: float,
+        s2: float,
+        drive1: float,
+        drive2: float,
+        noise1: float,
+        noise2: float,
+    ) -> tuple[float, float, float, float]:
+        i1 = self.j_n * s1 - self.j_cross * s2 + self.i_0 + drive1 + noise1
+        i2 = self.j_n * s2 - self.j_cross * s1 + self.i_0 + drive2 + noise2
+        r1, r2 = self._phi(i1), self._phi(i2)
+        ds1 = -s1 / self.tau_s + (1.0 - s1) * self.gamma * r1
+        ds2 = -s2 / self.tau_s + (1.0 - s2) * self.gamma * r2
+        if not math.isfinite(ds1) or not math.isfinite(ds2):
+            raise FloatingPointError("Wong-Wang derivative became non-finite")
+        return ds1, ds2, r1, r2
+
     def step(self, stim1: float = 0.0, stim2: float = 0.0) -> tuple[float, float]:
-        # `np.clip(scalar, 0, 1)` builds a numpy generic wrapper for every
-        # call — measured as 45 % of step() on cProfile. Replace with
-        # built-in branch; preserves semantics, gives ~2× throughput.
+        self._validate_parameters()
         drive1 = float(stim1)
         drive2 = float(stim2)
         if not math.isfinite(drive1) or not math.isfinite(drive2):
@@ -100,11 +119,33 @@ class WongWangUnit:
         noise2 = self.sigma * float(np.random.randn())
         if not math.isfinite(noise1) or not math.isfinite(noise2):
             raise FloatingPointError("Wong-Wang noise sample became non-finite")
-        i1 = self.j_n * s1 - self.j_cross * s2 + self.i_0 + drive1 + noise1
-        i2 = self.j_n * s2 - self.j_cross * s1 + self.i_0 + drive2 + noise2
-        r1, r2 = self._phi(i1), self._phi(i2)
-        next_s1 = s1 + (-s1 / self.tau_s + (1.0 - s1) * self.gamma * r1) * self.dt
-        next_s2 = s2 + (-s2 / self.tau_s + (1.0 - s2) * self.gamma * r2) * self.dt
+        k1_s1, k1_s2, r1, r2 = self._derivatives(s1, s2, drive1, drive2, noise1, noise2)
+        k2_s1, k2_s2, _, _ = self._derivatives(
+            s1 + 0.5 * self.dt * k1_s1,
+            s2 + 0.5 * self.dt * k1_s2,
+            drive1,
+            drive2,
+            noise1,
+            noise2,
+        )
+        k3_s1, k3_s2, _, _ = self._derivatives(
+            s1 + 0.5 * self.dt * k2_s1,
+            s2 + 0.5 * self.dt * k2_s2,
+            drive1,
+            drive2,
+            noise1,
+            noise2,
+        )
+        k4_s1, k4_s2, _, _ = self._derivatives(
+            s1 + self.dt * k3_s1,
+            s2 + self.dt * k3_s2,
+            drive1,
+            drive2,
+            noise1,
+            noise2,
+        )
+        next_s1 = s1 + self.dt * (k1_s1 + 2.0 * k2_s1 + 2.0 * k3_s1 + k4_s1) / 6.0
+        next_s2 = s2 + self.dt * (k1_s2 + 2.0 * k2_s2 + 2.0 * k3_s2 + k4_s2) / 6.0
         if not math.isfinite(next_s1) or not math.isfinite(next_s2):
             raise FloatingPointError("Wong-Wang candidate state became non-finite")
         self.s1 = min(1.0, max(0.0, next_s1))

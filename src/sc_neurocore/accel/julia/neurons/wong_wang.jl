@@ -15,8 +15,9 @@ Per step:
   1. iₖ = j_n · sₖ − j_cross · s₍₃₋ₖ₎ + i₀ + stimₖ + σ · ξ
   2. rₖ = φ(iₖ) where φ(i) = (a·i − b) / (1 − exp(−d·(a·i − b)))
      with singularity guard `|a·i − b| < 1e-6 → 1/d`.
-  3. sₖ += (−sₖ/τₛ + (1 − sₖ) · γ · rₖ) · dt
-  4. clamp sₖ into [0, 1].
+  3. advance the coupled s₁/s₂ ODE with fixed-step RK4 while holding
+     the pre-drawn noise sample constant over that step.
+  4. clamp sₖ into [0, 1] after the finite candidate state is computed.
 
 Caller passes pre-drawn `xi` of length `2 * length(stim1)` so the
 trajectory is bit-exact with the Python `numpy.random.randn()` order
@@ -48,6 +49,30 @@ const D = 0.154
 end
 
 @inline finite_gate(x::Real)::Bool = isfinite(Float64(x)) && 0.0 <= Float64(x) <= 1.0
+
+@inline function wong_wang_derivatives(
+    s1::Float64,
+    s2::Float64,
+    drive1::Float64,
+    drive2::Float64,
+    noise1::Float64,
+    noise2::Float64,
+    τs::Float64,
+    γ::Float64,
+    jn::Float64,
+    jx::Float64,
+    i0::Float64,
+)::Tuple{Float64,Float64,Float64,Float64}
+    i1 = jn * s1 - jx * s2 + i0 + drive1 + noise1
+    i2 = jn * s2 - jx * s1 + i0 + drive2 + noise2
+    r1 = phi_wong_wang(i1)
+    r2 = phi_wong_wang(i2)
+    ds1 = -s1 / τs + (1.0 - s1) * γ * r1
+    ds2 = -s2 / τs + (1.0 - s2) * γ * r2
+    isfinite(ds1) && isfinite(ds2) ||
+        throw(ArgumentError("invalid Wong-Wang derivative"))
+    return (ds1, ds2, r1, r2)
+end
 
 function validate_wong_wang(
     s1::Real,
@@ -124,12 +149,52 @@ function simulate_wong_wang!(
         drive2 = Float64(stim2[t])
         all(isfinite, (xi1, xi2, drive1, drive2)) ||
             throw(ArgumentError("stimuli and noise must be finite"))
-        i1 = jn * s1 - jx * s2 + i0 + drive1 + σ * xi1
-        i2 = jn * s2 - jx * s1 + i0 + drive2 + σ * xi2
-        r1 = phi_wong_wang(i1)
-        r2 = phi_wong_wang(i2)
-        next_s1 = s1 + (-s1 / τs + (1.0 - s1) * γ * r1) * δt
-        next_s2 = s2 + (-s2 / τs + (1.0 - s2) * γ * r2) * δt
+        noise1 = σ * xi1
+        noise2 = σ * xi2
+        k1_s1, k1_s2, r1, r2 = wong_wang_derivatives(
+            s1, s2, drive1, drive2, noise1, noise2, τs, γ, jn, jx, i0
+        )
+        k2_s1, k2_s2, _, _ = wong_wang_derivatives(
+            s1 + 0.5 * δt * k1_s1,
+            s2 + 0.5 * δt * k1_s2,
+            drive1,
+            drive2,
+            noise1,
+            noise2,
+            τs,
+            γ,
+            jn,
+            jx,
+            i0,
+        )
+        k3_s1, k3_s2, _, _ = wong_wang_derivatives(
+            s1 + 0.5 * δt * k2_s1,
+            s2 + 0.5 * δt * k2_s2,
+            drive1,
+            drive2,
+            noise1,
+            noise2,
+            τs,
+            γ,
+            jn,
+            jx,
+            i0,
+        )
+        k4_s1, k4_s2, _, _ = wong_wang_derivatives(
+            s1 + δt * k3_s1,
+            s2 + δt * k3_s2,
+            drive1,
+            drive2,
+            noise1,
+            noise2,
+            τs,
+            γ,
+            jn,
+            jx,
+            i0,
+        )
+        next_s1 = s1 + δt * (k1_s1 + 2.0 * k2_s1 + 2.0 * k3_s1 + k4_s1) / 6.0
+        next_s2 = s2 + δt * (k1_s2 + 2.0 * k2_s2 + 2.0 * k3_s2 + k4_s2) / 6.0
         isfinite(next_s1) && isfinite(next_s2) ||
             throw(ArgumentError("invalid Wong-Wang candidate state"))
         s1 = clamp(next_s1, 0.0, 1.0)

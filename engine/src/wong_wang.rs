@@ -15,8 +15,9 @@
 //!   2. `r_k = phi(i_k)` where
 //!      `phi(i) = (a*i - b) / (1 - exp(-d*(a*i - b)))`
 //!      with singularity guard `|a*i - b| < 1e-6 -> 1/d`.
-//!   3. `s_k += (-s_k/tau_s + (1 - s_k) * gamma * r_k) * dt`
-//!   4. clamp `s_k` into `[0, 1]`.
+//!   3. integrate the coupled `s1`, `s2` ODE with fixed-step RK4 while
+//!      holding the step's pre-drawn noise sample constant.
+//!   4. clamp `s_k` into `[0, 1]` after the candidate state is finite.
 //!
 //! The Python primary draws `np.random.randn()` twice per step; the
 //! Rust simulator takes `xi` pre-drawn from the Python RNG so trajectories
@@ -37,10 +38,36 @@ fn phi(i_syn: f64) -> f64 {
     }
 }
 
+#[inline]
+fn derivatives(
+    s1: f64,
+    s2: f64,
+    stim1: f64,
+    stim2: f64,
+    xi1: f64,
+    xi2: f64,
+    tau_s: f64,
+    gamma: f64,
+    j_n: f64,
+    j_cross: f64,
+    i_0: f64,
+    sigma: f64,
+) -> (f64, f64, f64, f64) {
+    let i1 = j_n * s1 - j_cross * s2 + i_0 + stim1 + sigma * xi1;
+    let i2 = j_n * s2 - j_cross * s1 + i_0 + stim2 + sigma * xi2;
+    let r1 = phi(i1);
+    let r2 = phi(i2);
+    (
+        -s1 / tau_s + (1.0 - s1) * gamma * r1,
+        -s2 / tau_s + (1.0 - s2) * gamma * r2,
+        r1,
+        r2,
+    )
+}
+
 /// Simulate `n_steps` Wong-Wang iterations; write per-step state +
 /// firing-rate traces. `xi` must be length `2 * n_steps` (two noise
 /// samples per step, consumed in `i1, i2` order).
-#[allow(clippy::too_many_arguments)]
 pub fn simulate(
     mut s1: f64,
     mut s2: f64,
@@ -70,14 +97,53 @@ pub fn simulate(
     for t in 0..n {
         let xi1 = xi[2 * t];
         let xi2 = xi[2 * t + 1];
-        let i1 = j_n * s1 - j_cross * s2 + i_0 + stim1[t] + sigma * xi1;
-        let i2 = j_n * s2 - j_cross * s1 + i_0 + stim2[t] + sigma * xi2;
-        let r1 = phi(i1);
-        let r2 = phi(i2);
-        s1 += (-s1 / tau_s + (1.0 - s1) * gamma * r1) * dt;
-        s2 += (-s2 / tau_s + (1.0 - s2) * gamma * r2) * dt;
-        s1 = s1.clamp(0.0, 1.0);
-        s2 = s2.clamp(0.0, 1.0);
+        let (k1_s1, k1_s2, r1, r2) = derivatives(
+            s1, s2, stim1[t], stim2[t], xi1, xi2, tau_s, gamma, j_n, j_cross, i_0, sigma,
+        );
+        let (k2_s1, k2_s2, _, _) = derivatives(
+            s1 + 0.5 * dt * k1_s1,
+            s2 + 0.5 * dt * k1_s2,
+            stim1[t],
+            stim2[t],
+            xi1,
+            xi2,
+            tau_s,
+            gamma,
+            j_n,
+            j_cross,
+            i_0,
+            sigma,
+        );
+        let (k3_s1, k3_s2, _, _) = derivatives(
+            s1 + 0.5 * dt * k2_s1,
+            s2 + 0.5 * dt * k2_s2,
+            stim1[t],
+            stim2[t],
+            xi1,
+            xi2,
+            tau_s,
+            gamma,
+            j_n,
+            j_cross,
+            i_0,
+            sigma,
+        );
+        let (k4_s1, k4_s2, _, _) = derivatives(
+            s1 + dt * k3_s1,
+            s2 + dt * k3_s2,
+            stim1[t],
+            stim2[t],
+            xi1,
+            xi2,
+            tau_s,
+            gamma,
+            j_n,
+            j_cross,
+            i_0,
+            sigma,
+        );
+        s1 = (s1 + dt * (k1_s1 + 2.0 * k2_s1 + 2.0 * k3_s1 + k4_s1) / 6.0).clamp(0.0, 1.0);
+        s2 = (s2 + dt * (k1_s2 + 2.0 * k2_s2 + 2.0 * k3_s2 + k4_s2) / 6.0).clamp(0.0, 1.0);
         s1_out[t] = s1;
         s2_out[t] = s2;
         r1_out[t] = r1;
@@ -108,6 +174,28 @@ mod tests {
         let lo = phi(0.5);
         let hi = phi(1.0);
         assert!(hi > lo);
+    }
+
+    #[test]
+    fn rk4_state_differs_from_forward_euler() {
+        let n = 1;
+        let stim1 = vec![0.17_f64; n];
+        let stim2 = vec![0.03_f64; n];
+        let xi = vec![0.0_f64; 2 * n];
+        let mut s1o = vec![0.0_f64; n];
+        let mut s2o = vec![0.0_f64; n];
+        let mut r1o = vec![0.0_f64; n];
+        let mut r2o = vec![0.0_f64; n];
+        let (s1_f, s2_f) = simulate(
+            0.24, 0.11, 0.1, 0.641, 0.2609, 0.0497, 0.3255, 0.0, 0.02, &stim1, &stim2, &xi,
+            &mut s1o, &mut s2o, &mut r1o, &mut r2o,
+        );
+        let r1 = phi(0.2609 * 0.24 - 0.0497 * 0.11 + 0.3255 + 0.17);
+        let r2 = phi(0.2609 * 0.11 - 0.0497 * 0.24 + 0.3255 + 0.03);
+        let euler_s1 = (0.24 + (-0.24 / 0.1 + (1.0 - 0.24) * 0.641 * r1) * 0.02).clamp(0.0, 1.0);
+        let euler_s2 = (0.11 + (-0.11 / 0.1 + (1.0 - 0.11) * 0.641 * r2) * 0.02).clamp(0.0, 1.0);
+        assert!((s1_f - euler_s1).abs() > 1e-5);
+        assert!((s2_f - euler_s2).abs() > 1e-5);
     }
 
     #[test]

@@ -16,6 +16,7 @@ Performance: ~44K isolation steps/s."""
 
 from __future__ import annotations
 
+import sys
 import time
 
 import numpy as np
@@ -23,6 +24,26 @@ import pytest
 
 from sc_neurocore.neurons.models.wong_wang import WongWangUnit
 from sc_neurocore.network.population import Population
+
+
+def _rk4_expected_state(n: WongWangUnit, stim1: float, stim2: float) -> tuple[float, float]:
+    def rhs(s1: float, s2: float) -> tuple[float, float]:
+        r1 = n._phi(n.j_n * s1 - n.j_cross * s2 + n.i_0 + stim1)
+        r2 = n._phi(n.j_n * s2 - n.j_cross * s1 + n.i_0 + stim2)
+        return (
+            -s1 / n.tau_s + (1.0 - s1) * n.gamma * r1,
+            -s2 / n.tau_s + (1.0 - s2) * n.gamma * r2,
+        )
+
+    s1, s2 = n.s1, n.s2
+    k1_1, k1_2 = rhs(s1, s2)
+    k2_1, k2_2 = rhs(s1 + 0.5 * n.dt * k1_1, s2 + 0.5 * n.dt * k1_2)
+    k3_1, k3_2 = rhs(s1 + 0.5 * n.dt * k2_1, s2 + 0.5 * n.dt * k2_2)
+    k4_1, k4_2 = rhs(s1 + n.dt * k3_1, s2 + n.dt * k3_2)
+    return (
+        min(1.0, max(0.0, s1 + n.dt * (k1_1 + 2.0 * k2_1 + 2.0 * k3_1 + k4_1) / 6.0)),
+        min(1.0, max(0.0, s2 + n.dt * (k1_2 + 2.0 * k2_2 + 2.0 * k3_2 + k4_2) / 6.0)),
+    )
 
 
 class TestWongWangIsolation:
@@ -62,7 +83,7 @@ class TestWongWangDecisionDynamics:
     """Core: two mutually inhibiting pools compete for dominance."""
 
     def test_stimulus_drives_winner(self):
-        """Stronger stim1 → s1 wins (attractor for pool 1)."""
+        """Higher stim1 -> s1 wins (attractor for pool 1)."""
         np.random.seed(42)
         n = WongWangUnit(sigma=0.001)  # reduce noise for reliable test
         for _ in range(100000):
@@ -91,23 +112,39 @@ class TestWongWangDecisionDynamics:
         np.random.seed(42)
         n = WongWangUnit(sigma=0.001)
         for _ in range(100000):
-            n.step(0.2, 0.0)  # strong stim1, no stim2
+            n.step(0.2, 0.0)  # high stim1, no stim2
         # s1 should be high, s2 should be low
         assert n.s1 > 0.5
         assert n.s2 < 0.2
 
     def test_j_n_self_excitation(self):
         """j_n provides self-excitation: sustains the winning pool."""
-        n_strong = WongWangUnit(j_n=0.35, sigma=0.001)
+        n_high = WongWangUnit(j_n=0.35, sigma=0.001)
         n_weak = WongWangUnit(j_n=0.15, sigma=0.001)
         np.random.seed(42)
         for _ in range(50000):
-            n_strong.step(0.1, 0.0)
+            n_high.step(0.1, 0.0)
         np.random.seed(42)
         for _ in range(50000):
             n_weak.step(0.1, 0.0)
-        # Stronger self-excitation → higher winner activity
-        assert n_strong.s1 > n_weak.s1
+        # Higher self-excitation -> higher winner activity
+        assert n_high.s1 > n_weak.s1
+
+    def test_rk4_integrates_full_coupled_ode_not_forward_euler(self):
+        n = WongWangUnit(s1=0.24, s2=0.11, sigma=0.0, dt=0.02)
+        expected_s1, expected_s2 = _rk4_expected_state(n, 0.17, 0.03)
+        old_s1, old_s2 = n.s1, n.s2
+        r1 = n._phi(n.j_n * old_s1 - n.j_cross * old_s2 + n.i_0 + 0.17)
+        r2 = n._phi(n.j_n * old_s2 - n.j_cross * old_s1 + n.i_0 + 0.03)
+        euler_s1 = min(1.0, max(0.0, old_s1 + (-old_s1 / n.tau_s + (1.0 - old_s1) * n.gamma * r1) * n.dt))
+        euler_s2 = min(1.0, max(0.0, old_s2 + (-old_s2 / n.tau_s + (1.0 - old_s2) * n.gamma * r2) * n.dt))
+
+        n.step(0.17, 0.03)
+
+        assert n.s1 == pytest.approx(expected_s1, abs=1e-15)
+        assert n.s2 == pytest.approx(expected_s2, abs=1e-15)
+        assert abs(n.s1 - euler_s1) > 1e-5
+        assert abs(n.s2 - euler_s2) > 1e-5
 
 
 class TestWongWangPhiFunction:
@@ -197,9 +234,54 @@ class TestWongWangParameters:
             n.step(0.1, 0.0)
         assert (n.s1, n.s2) == before
 
+    def test_rejects_corrupted_runtime_parameters_before_mutation(self):
+        n = WongWangUnit()
+        n.dt = 0.0
+        before = (n.s1, n.s2)
+        with pytest.raises(ValueError, match="dt"):
+            n.step(0.1, 0.0)
+        assert (n.s1, n.s2) == before
+
     def test_phi_saturates_for_extreme_finite_negative_drive(self):
         n = WongWangUnit()
         assert n._phi(-1.0e6) == 0.0
+
+    def test_phi_rejects_non_finite_synaptic_current(self):
+        n = WongWangUnit()
+        with pytest.raises(ValueError, match="synaptic current"):
+            n._phi(np.nan)
+
+    def test_phi_rejects_overflowed_transfer_response(self):
+        n = WongWangUnit()
+        with pytest.raises(FloatingPointError, match="transfer response"):
+            n._phi(sys.float_info.max)
+
+    def test_derivative_guard_rejects_non_finite_stage(self):
+        n = WongWangUnit()
+        n.j_cross = 0.0
+        with pytest.raises(FloatingPointError, match="derivative"):
+            n._derivatives(-sys.float_info.max, 0.1, 0.0, 0.0, 0.0, 0.0)
+
+    def test_rejects_non_finite_rng_sample_before_mutation(self, monkeypatch: pytest.MonkeyPatch):
+        n = WongWangUnit()
+        before = (n.s1, n.s2)
+        monkeypatch.setattr(np.random, "randn", lambda: np.inf)
+        with pytest.raises(FloatingPointError, match="noise sample"):
+            n.step(0.1, 0.0)
+        assert (n.s1, n.s2) == before
+
+    def test_rejects_non_finite_rk4_candidate_before_mutation(self, monkeypatch: pytest.MonkeyPatch):
+        n = WongWangUnit()
+        n.dt = sys.float_info.max
+        before = (n.s1, n.s2)
+
+        def huge_derivative(*_args: float) -> tuple[float, float, float, float]:
+            return sys.float_info.max, sys.float_info.max, 0.0, 0.0
+
+        monkeypatch.setattr(n, "_derivatives", huge_derivative)
+        with pytest.raises(FloatingPointError, match="candidate state"):
+            n.step(0.1, 0.0)
+        assert (n.s1, n.s2) == before
 
     @pytest.mark.parametrize("dt", [0.0005, 0.001, 0.002])
     def test_dt_stability(self, dt: float):

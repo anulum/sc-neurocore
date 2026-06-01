@@ -41,13 +41,20 @@ def step(self, stim1=0.0, stim2=0.0) -> tuple[float, float]:
     i1 = j_n * s1 - j_cross * s2 + i_0 + stim1 + sigma * randn()
     i2 = j_n * s2 - j_cross * s1 + i_0 + stim2 + sigma * randn()
     r1, r2 = phi(i1), phi(i2)
-    s1 += (-s1/tau_s + (1-s1)*gamma*r1) * dt
-    s2 += (-s2/tau_s + (1-s2)*gamma*r2) * dt
+    k1 = f(s1, s2, stim1, stim2, noise1, noise2)
+    k2 = f(s1 + 0.5*dt*k1.s1, s2 + 0.5*dt*k1.s2, stim1, stim2, noise1, noise2)
+    k3 = f(s1 + 0.5*dt*k2.s1, s2 + 0.5*dt*k2.s2, stim1, stim2, noise1, noise2)
+    k4 = f(s1 + dt*k3.s1, s2 + dt*k3.s2, stim1, stim2, noise1, noise2)
+    s1 += dt * (k1.s1 + 2*k2.s1 + 2*k3.s1 + k4.s1) / 6
+    s2 += dt * (k1.s2 + 2*k2.s2 + 2*k3.s2 + k4.s2) / 6
     s1, s2 = clip([s1, s2], 0, 1)
     return (r1, r2)
 ```
 
-Forward Euler, single step per call. Gaussian noise on each pool.
+Fixed-step RK4 over the coupled two-state ODE, with one Gaussian noise
+sample per pool held constant inside the step. The returned firing rates
+`(r1, r2)` are the start-of-step rates, preserving the historical public
+surface while the state update uses the higher-order candidate.
 
 ---
 
@@ -247,8 +254,10 @@ grounded account of the underlying neural circuit.
 
 - **dt = 0.001 s (1 ms):** Typical for mean-field decision models. The
   slow NMDA dynamics (τ_s = 100 ms) are well-resolved at this timestep.
-- **Clipping:** s1, s2 clipped to [0, 1] after each step. This prevents
-  numerical overshoot from Euler integration at the bounds.
+- **Integrator:** fixed-step RK4 over the coupled two-state ODE. The step
+  uses the already sampled stochastic drive as piecewise-constant input for
+  the RK4 stages, then commits only a finite clipped candidate.
+- **Clipping:** s1, s2 clipped to [0, 1] after each finite candidate step.
 - **Singularity in Φ:** The transfer function has a removable singularity
   at aI − b = 0. Handled with |x| < 1e-6 guard → returns 1/d ≈ 6.5 Hz.
 - **Global RNG:** Uses `np.random.randn()` — not per-instance reproducible.
@@ -257,7 +266,7 @@ grounded account of the underlying neural circuit.
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/wong_wang.py` — 61 lines.
+- **Source:** `src/sc_neurocore/neurons/models/wong_wang.py`.
 - **Two state variables:** s1, s2 (NMDA gating fractions).
 - **Dataclass:** Uses `@dataclass` for parameter storage.
 - **Two-argument step:** `step(stim1, stim2)` — different from other models
