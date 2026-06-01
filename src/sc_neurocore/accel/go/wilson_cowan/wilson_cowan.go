@@ -33,6 +33,12 @@ func sigmoid(a, theta, x float64) float64 {
 	return 1.0/(1.0+math.Exp(-a*(x-theta))) - baseline
 }
 
+func wilsonCowanDerivatives(e, i, ext, wEE, wEI, wIE, wII, tauE, tauI, a, theta float64) (float64, float64) {
+	sE := sigmoid(a, theta, wEE*e-wEI*i+ext)
+	sI := sigmoid(a, theta, wIE*e-wII*i)
+	return (-e + sE) / tauE, (-i + sI) / tauI
+}
+
 // wilson_cowan_simulate_c — C-ABI entry point.
 //
 //export wilson_cowan_simulate_c
@@ -55,12 +61,22 @@ func wilson_cowan_simulate_c(
 	i := float64(iInit)
 	af := float64(a)
 	θ := float64(theta)
+	δt := float64(dt)
+	wee := float64(wEE)
+	wei := float64(wEI)
+	wie := float64(wIE)
+	wii := float64(wII)
+	τe := float64(tauE)
+	τi := float64(tauI)
 
 	for t := 0; t < N; t++ {
-		sE := sigmoid(af, θ, float64(wEE)*e-float64(wEI)*i+float64(ext[t]))
-		sI := sigmoid(af, θ, float64(wIE)*e-float64(wII)*i)
-		e += (-e + sE) / float64(tauE) * float64(dt)
-		i += (-i + sI) / float64(tauI) * float64(dt)
+		drive := float64(ext[t])
+		k1E, k1I := wilsonCowanDerivatives(e, i, drive, wee, wei, wie, wii, τe, τi, af, θ)
+		k2E, k2I := wilsonCowanDerivatives(e+0.5*δt*k1E, i+0.5*δt*k1I, drive, wee, wei, wie, wii, τe, τi, af, θ)
+		k3E, k3I := wilsonCowanDerivatives(e+0.5*δt*k2E, i+0.5*δt*k2I, drive, wee, wei, wie, wii, τe, τi, af, θ)
+		k4E, k4I := wilsonCowanDerivatives(e+δt*k3E, i+δt*k3I, drive, wee, wei, wie, wii, τe, τi, af, θ)
+		e += δt * (k1E + 2.0*k2E + 2.0*k3E + k4E) / 6.0
+		i += δt * (k1I + 2.0*k2I + 2.0*k3I + k4I) / 6.0
 		eo[t] = C.double(e)
 		io[t] = C.double(i)
 	}

@@ -12,13 +12,15 @@ the Wilson-Cowan E/I model. Same structure as bench_wong_wang.py."""
 from __future__ import annotations
 
 import json
+import importlib
 import platform
 import sys
 import time
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 import numpy as np
+from numpy.typing import NDArray
 
 from sc_neurocore.neurons.models.wilson_cowan import WilsonCowanUnit
 
@@ -40,60 +42,65 @@ DEFAULT_PARAMS: dict[str, float] = dict(
 
 N_STEPS = 100_000
 PARITY_N = 3_000
+INTEGRATOR = "fixed_step_rk4"
+
+FloatArray = NDArray[np.float64]
+BackendResult = dict[str, FloatArray | float]
+BackendFn = Callable[..., BackendResult]
+ProbeResult = tuple[BackendFn | None, str]
 
 
-def _probe_rust():
+def _probe_rust() -> ProbeResult:
     try:
-        from sc_neurocore_engine import py_wilson_cowan_simulate  # type: ignore
-
-        return py_wilson_cowan_simulate, "available"
+        module = importlib.import_module("sc_neurocore_engine")
     except ImportError as e:
         return None, f"missing: {e}"
+    fn = getattr(module, "py_wilson_cowan_simulate", None)
+    if not callable(fn):
+        return None, "py_wilson_cowan_simulate is unavailable"
+    return cast(BackendFn, fn), "available"
 
 
-def _probe_julia():
+def _probe_julia() -> ProbeResult:
     try:
-        from sc_neurocore.accel.julia.neurons import (  # type: ignore
-            _HAS_JULIA_NEURONS,
-            simulate_wilson_cowan,
-        )
-
-        if not _HAS_JULIA_NEURONS:
-            return None, "juliacall import failed"
-        return simulate_wilson_cowan, "available"
+        module = importlib.import_module("sc_neurocore.accel.julia.neurons")
     except ImportError as e:
         return None, f"missing: {e}"
+    if not bool(getattr(module, "_HAS_JULIA_NEURONS", False)):
+        return None, "juliacall import failed"
+    fn = getattr(module, "simulate_wilson_cowan", None)
+    if not callable(fn):
+        return None, "simulate_wilson_cowan is unavailable"
+    return cast(BackendFn, fn), "available"
 
 
-def _probe_go():
+def _probe_go() -> ProbeResult:
     try:
-        from sc_neurocore.accel.go.wilson_cowan import (  # type: ignore
-            _HAS_GO_WILSON_COWAN,
-            simulate_wilson_cowan,
-        )
-
-        if not _HAS_GO_WILSON_COWAN:
-            return None, "libwilson_cowan.so not built (go build)"
-        return simulate_wilson_cowan, "available"
+        module = importlib.import_module("sc_neurocore.accel.go.wilson_cowan")
     except ImportError as e:
         return None, f"missing: {e}"
+    if not bool(getattr(module, "_HAS_GO_WILSON_COWAN", False)):
+        return None, "libwilson_cowan.so not built (go build)"
+    fn = getattr(module, "simulate_wilson_cowan", None)
+    if not callable(fn):
+        return None, "simulate_wilson_cowan is unavailable"
+    return cast(BackendFn, fn), "available"
 
 
-def _probe_mojo():
+def _probe_mojo() -> ProbeResult:
     try:
-        from sc_neurocore.accel.mojo.wilson_cowan import (  # type: ignore
-            _HAS_MOJO_WILSON_COWAN,
-            simulate_wilson_cowan,
-        )
-
-        if not _HAS_MOJO_WILSON_COWAN:
-            return None, "libwilson_cowan.so not built (mojo build)"
-        return simulate_wilson_cowan, "available"
+        module = importlib.import_module("sc_neurocore.accel.mojo.wilson_cowan")
     except ImportError as e:
         return None, f"missing: {e}"
+    if not bool(getattr(module, "_HAS_MOJO_WILSON_COWAN", False)):
+        return None, "libwilson_cowan.so not built (mojo build)"
+    fn = getattr(module, "simulate_wilson_cowan", None)
+    if not callable(fn):
+        return None, "simulate_wilson_cowan is unavailable"
+    return cast(BackendFn, fn), "available"
 
 
-def _run_python(n: int, ext: np.ndarray) -> float:
+def _run_python(n: int, ext: FloatArray) -> float:
     u = WilsonCowanUnit(**DEFAULT_PARAMS)
     t0 = time.perf_counter()
     for t in range(n):
@@ -101,8 +108,7 @@ def _run_python(n: int, ext: np.ndarray) -> float:
     return time.perf_counter() - t0
 
 
-def _run_accel(fn: Callable, n: int, ext: np.ndarray):
-    # Warm up
+def _run_accel(fn: BackendFn, n: int, ext: FloatArray) -> tuple[float, BackendResult]:
     fn(
         0.1,
         0.05,
@@ -135,7 +141,7 @@ def _run_accel(fn: Callable, n: int, ext: np.ndarray):
     return time.perf_counter() - t0, out
 
 
-def _parity(fn: Callable, n: int, ext: np.ndarray):
+def _parity(fn: BackendFn, n: int, ext: FloatArray) -> BackendResult:
     return fn(
         0.1,
         0.05,
@@ -154,7 +160,7 @@ def _parity(fn: Callable, n: int, ext: np.ndarray):
 
 def _cpu_model() -> str:
     try:
-        with open("/proc/cpuinfo") as f:
+        with Path("/proc/cpuinfo").open(encoding="utf-8") as f:
             for line in f:
                 if line.startswith("model name"):
                     return line.split(":", 1)[1].strip()
@@ -182,7 +188,7 @@ def main() -> int:
         ("go", _probe_go),
         ("mojo", _probe_mojo),
     ]
-    outs: dict[str, Any] = {}
+    outs: dict[str, BackendResult] = {}
     for name, probe in probes:
         fn, reason = probe()
         if fn is None:
@@ -210,13 +216,20 @@ def main() -> int:
             if name == ref_name:
                 parity[name] = {"atol": 0.0}
                 continue
-            fn = backends[name].get("available") and probe()[0]
-            if not fn:
+            if not backends[name].get("available"):
+                parity[name] = {"atol": "skipped"}
+                continue
+            fn = probe()[0]
+            if fn is None:
                 parity[name] = {"atol": "skipped"}
                 continue
             out = _parity(fn, PARITY_N, p_ext)
-            d_e = float(np.abs(ref_out["e"] - out["e"]).max())
-            d_i = float(np.abs(ref_out["i"] - out["i"]).max())
+            ref_e = cast(FloatArray, ref_out["e"])
+            ref_i = cast(FloatArray, ref_out["i"])
+            out_e = cast(FloatArray, out["e"])
+            out_i = cast(FloatArray, out["i"])
+            d_e = float(np.abs(ref_e - out_e).max())
+            d_i = float(np.abs(ref_i - out_i).max())
             parity[name] = {
                 "max_abs_delta_e": d_e,
                 "max_abs_delta_i": d_i,
@@ -250,10 +263,11 @@ def main() -> int:
         "python": sys.version.split()[0],
         "n_steps": N_STEPS,
         "parity_n": PARITY_N,
+        "integrator": INTEGRATOR,
         "params": DEFAULT_PARAMS,
     }
     out_path = RESULTS_DIR / "bench_wilson_cowan.json"
-    with open(out_path, "w") as f:
+    with out_path.open("w", encoding="utf-8") as f:
         json.dump({"meta": meta, "backends": backends, "parity": parity}, f, indent=2)
     print(f"\nResults → {out_path.relative_to(REPO_ROOT)}")
     return 0

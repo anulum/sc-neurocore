@@ -25,6 +25,24 @@ from sc_neurocore.neurons.models.wilson_cowan import WilsonCowanUnit
 from sc_neurocore.network.population import Population
 
 
+def _rk4_expected_state(unit: WilsonCowanUnit, drive: float) -> tuple[float, float]:
+    e0, i0 = unit.e, unit.i
+
+    def derivatives(e: float, i: float) -> tuple[float, float]:
+        se = unit._sigmoid(unit.w_ee * e - unit.w_ei * i + drive)
+        si = unit._sigmoid(unit.w_ie * e - unit.w_ii * i)
+        return (-e + se) / unit.tau_e, (-i + si) / unit.tau_i
+
+    k1_e, k1_i = derivatives(e0, i0)
+    k2_e, k2_i = derivatives(e0 + 0.5 * unit.dt * k1_e, i0 + 0.5 * unit.dt * k1_i)
+    k3_e, k3_i = derivatives(e0 + 0.5 * unit.dt * k2_e, i0 + 0.5 * unit.dt * k2_i)
+    k4_e, k4_i = derivatives(e0 + unit.dt * k3_e, i0 + unit.dt * k3_i)
+    return (
+        e0 + unit.dt * (k1_e + 2.0 * k2_e + 2.0 * k3_e + k4_e) / 6.0,
+        i0 + unit.dt * (k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i) / 6.0,
+    )
+
+
 class TestWilsonCowanIsolation:
     def test_defaults(self):
         n = WilsonCowanUnit()
@@ -131,23 +149,39 @@ class TestWilsonCowanEIDynamics:
             n.step(10.0)
         assert abs(n.e - e1) < 0.001  # converged
 
+    def test_step_uses_candidate_first_rk4_flow(self):
+        n = WilsonCowanUnit(e=0.24, i=0.11, dt=0.35)
+        expected_e, expected_i = _rk4_expected_state(n, 3.0)
+        se = n._sigmoid(n.w_ee * n.e - n.w_ei * n.i + 3.0)
+        si = n._sigmoid(n.w_ie * n.e - n.w_ii * n.i)
+        euler_e = n.e + (-n.e + se) / n.tau_e * n.dt
+        euler_i = n.i + (-n.i + si) / n.tau_i * n.dt
+
+        result = n.step(3.0)
+
+        assert result == pytest.approx(0.42143718680097664, abs=1e-15)
+        assert n.e == pytest.approx(expected_e, abs=1e-15)
+        assert n.i == pytest.approx(expected_i, abs=1e-15)
+        assert abs(n.e - euler_e) > 1.0e-2
+        assert abs(n.i - euler_i) > 1.0e-2
+
     def test_w_ee_controls_excitatory_recurrence(self):
-        """Higher w_ee → stronger E→E feedback → higher E steady state."""
-        n_weak = WilsonCowanUnit(w_ee=5.0)
-        n_strong = WilsonCowanUnit(w_ee=15.0)
+        """Higher w_ee gives higher E→E feedback and higher E steady state."""
+        n_low = WilsonCowanUnit(w_ee=5.0)
+        n_high = WilsonCowanUnit(w_ee=15.0)
         for _ in range(10000):
-            n_weak.step(3.0)
-            n_strong.step(3.0)
-        assert n_strong.e > n_weak.e
+            n_low.step(3.0)
+            n_high.step(3.0)
+        assert n_high.e > n_low.e
 
     def test_w_ei_controls_inhibition(self):
-        """Higher w_ei → stronger I→E inhibition → lower E."""
-        n_weak = WilsonCowanUnit(w_ei=3.0)
-        n_strong = WilsonCowanUnit(w_ei=10.0)
+        """Higher w_ei gives higher I→E inhibition and lower E."""
+        n_low = WilsonCowanUnit(w_ei=3.0)
+        n_high = WilsonCowanUnit(w_ei=10.0)
         for _ in range(10000):
-            n_weak.step(5.0)
-            n_strong.step(5.0)
-        assert n_weak.e > n_strong.e
+            n_low.step(5.0)
+            n_high.step(5.0)
+        assert n_low.e > n_high.e
 
 
 class TestWilsonCowanOscillation:
@@ -235,6 +269,21 @@ class TestWilsonCowanParameters:
         baseline = 1.0 / (1.0 + math.exp(n.a * n.theta))
         assert abs(n._sigmoid(1.0e308) - (1.0 - baseline)) < 1e-12
         assert abs(n._sigmoid(-1.0e308) + baseline) < 1e-12
+
+    def test_sigmoid_rejects_non_finite_drive(self):
+        n = WilsonCowanUnit()
+
+        with pytest.raises(ValueError, match="sigmoid input"):
+            n._sigmoid(math.nan)
+
+    def test_rejects_non_finite_derivative_before_state_mutation(self):
+        n = WilsonCowanUnit(tau_e=1.0e-320)
+        before = (n.e, n.i)
+
+        with pytest.raises(FloatingPointError, match="derivative"):
+            n.step(0.0)
+
+        assert (n.e, n.i) == before
 
     @pytest.mark.parametrize("dt", [0.05, 0.1, 0.2])
     def test_dt_stability(self, dt: float):

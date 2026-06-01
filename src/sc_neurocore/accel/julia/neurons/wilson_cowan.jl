@@ -12,10 +12,9 @@ Batch parity with `WilsonCowanUnit.step` in
 Biophys. J. 12:1–24).
 
 Per step:
-  s_e = sigmoid(w_ee · E − w_ei · I + ext)
-  s_i = sigmoid(w_ie · E − w_ii · I)
-  E += (−E + s_e) · dt / τ_e
-  I += (−I + s_i) · dt / τ_i
+  dE/dt = (−E + sigmoid(w_ee · E − w_ei · I + ext)) / τ_e
+  dI/dt = (−I + sigmoid(w_ie · E − w_ii · I)) / τ_i
+  (E, I) advance through one fixed-step RK4 update.
 
 where `sigmoid(x) = 1 / (1 + exp(−a·(x − θ)))`. Deterministic — no
 noise — so bit-exact parity with the Python / Rust / Go / Mojo
@@ -51,6 +50,24 @@ end
     isfinite(xf) || throw(ArgumentError("sigmoid input must be finite"))
     baseline = logistic_wc(-af * θ)
     return logistic_wc(af * (xf - θ)) - baseline
+end
+
+@inline function wilson_cowan_derivatives(
+    e::Float64,
+    i::Float64,
+    ext::Float64,
+    wee::Float64,
+    wei::Float64,
+    wie::Float64,
+    wii::Float64,
+    τe::Float64,
+    τi::Float64,
+    af::Float64,
+    θ::Float64,
+)::Tuple{Float64,Float64}
+    s_e = sigmoid_wc(af, θ, wee * e - wei * i + ext)
+    s_i = sigmoid_wc(af, θ, wie * e - wii * i)
+    return ((-e + s_e) / τe, (-i + s_i) / τi)
 end
 
 function validate_wc(
@@ -119,11 +136,50 @@ function simulate_wilson_cowan!(
         throw(ArgumentError("invalid Wilson-Cowan numerical configuration"))
 
     @inbounds for t in 1:n
-        isfinite(Float64(ext_input[t])) || throw(ArgumentError("external input must be finite"))
-        s_e = sigmoid_wc(af, θ, wee * e - wei * i + Float64(ext_input[t]))
-        s_i = sigmoid_wc(af, θ, wie * e - wii * i)
-        next_e = e + (-e + s_e) / τe * δt
-        next_i = i + (-i + s_i) / τi * δt
+        ext = Float64(ext_input[t])
+        isfinite(ext) || throw(ArgumentError("external input must be finite"))
+        k1_e, k1_i = wilson_cowan_derivatives(e, i, ext, wee, wei, wie, wii, τe, τi, af, θ)
+        k2_e, k2_i = wilson_cowan_derivatives(
+            e + 0.5 * δt * k1_e,
+            i + 0.5 * δt * k1_i,
+            ext,
+            wee,
+            wei,
+            wie,
+            wii,
+            τe,
+            τi,
+            af,
+            θ,
+        )
+        k3_e, k3_i = wilson_cowan_derivatives(
+            e + 0.5 * δt * k2_e,
+            i + 0.5 * δt * k2_i,
+            ext,
+            wee,
+            wei,
+            wie,
+            wii,
+            τe,
+            τi,
+            af,
+            θ,
+        )
+        k4_e, k4_i = wilson_cowan_derivatives(
+            e + δt * k3_e,
+            i + δt * k3_i,
+            ext,
+            wee,
+            wei,
+            wie,
+            wii,
+            τe,
+            τi,
+            af,
+            θ,
+        )
+        next_e = e + δt * (k1_e + 2.0 * k2_e + 2.0 * k3_e + k4_e) / 6.0
+        next_i = i + δt * (k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i) / 6.0
         finite_rate_wc(next_e, af, θ) && finite_rate_wc(next_i, af, θ) ||
             throw(ArgumentError("invalid Wilson-Cowan candidate state"))
         e = next_e

@@ -11,10 +11,9 @@
 //! 1972, Biophys. J. 12:1–24).
 //!
 //! Per step:
-//!   s_e = sigmoid(w_ee · E − w_ei · I + ext)
-//!   s_i = sigmoid(w_ie · E − w_ii · I)
-//!   E += (−E + s_e) · dt / τ_e
-//!   I += (−I + s_i) · dt / τ_i
+//!   dE/dt = (−E + sigmoid(w_ee · E − w_ei · I + ext)) / τ_e
+//!   dI/dt = (−I + sigmoid(w_ie · E − w_ii · I)) / τ_i
+//!   (E, I) advance through one fixed-step RK4 update.
 //!
 //! where `sigmoid(x) = 1 / (1 + exp(−a·(x − θ)))`.
 //!
@@ -23,18 +22,43 @@
 //! RNG buffer needed.
 
 #[inline]
+fn logistic(z: f64) -> f64 {
+    if z >= 0.0 {
+        1.0 / (1.0 + (-z).exp())
+    } else {
+        let exp_z = z.exp();
+        exp_z / (1.0 + exp_z)
+    }
+}
+
+#[inline]
 fn sigmoid(a: f64, theta: f64, x: f64) -> f64 {
     // Published Wilson-Cowan 1972 two-term form:
     //   S(x) = 1/(1+exp(-a(x-θ))) − 1/(1+exp(aθ))
     // Range is [-β, 1-β] where β = 1/(1+exp(aθ)).
-    let baseline = 1.0 / (1.0 + (a * theta).exp());
-    1.0 / (1.0 + (-a * (x - theta)).exp()) - baseline
+    logistic(a * (x - theta)) - logistic(-a * theta)
+}
+
+#[inline]
+fn derivatives(
+    e: f64,
+    i: f64,
+    ext: f64,
+    params: (f64, f64, f64, f64, f64, f64, f64, f64),
+) -> (f64, f64) {
+    let (w_ee, w_ei, w_ie, w_ii, tau_e, tau_i, a, theta) = params;
+    let s_e = sigmoid(a, theta, w_ee * e - w_ei * i + ext);
+    let s_i = sigmoid(a, theta, w_ie * e - w_ii * i);
+    ((-e + s_e) / tau_e, (-i + s_i) / tau_i)
 }
 
 /// Simulate `ext_input.len()` Wilson-Cowan iterations, writing per-step
 /// `E` and `I` traces into caller-allocated buffers. Returns final
 /// `(E, I)` for convenience.
-#[allow(clippy::too_many_arguments)]
+#[expect(
+    clippy::too_many_arguments,
+    reason = "Python extension parity surface passes canonical scalar parameters"
+)]
 pub fn simulate(
     mut e: f64,
     mut i: f64,
@@ -54,12 +78,16 @@ pub fn simulate(
     let n = ext_input.len();
     assert_eq!(e_out.len(), n, "e_out length mismatch");
     assert_eq!(i_out.len(), n, "i_out length mismatch");
+    let params = (w_ee, w_ei, w_ie, w_ii, tau_e, tau_i, a, theta);
 
     for t in 0..n {
-        let s_e = sigmoid(a, theta, w_ee * e - w_ei * i + ext_input[t]);
-        let s_i = sigmoid(a, theta, w_ie * e - w_ii * i);
-        e += (-e + s_e) / tau_e * dt;
-        i += (-i + s_i) / tau_i * dt;
+        let ext = ext_input[t];
+        let (k1_e, k1_i) = derivatives(e, i, ext, params);
+        let (k2_e, k2_i) = derivatives(e + 0.5 * dt * k1_e, i + 0.5 * dt * k1_i, ext, params);
+        let (k3_e, k3_i) = derivatives(e + 0.5 * dt * k2_e, i + 0.5 * dt * k2_i, ext, params);
+        let (k4_e, k4_i) = derivatives(e + dt * k3_e, i + dt * k3_i, ext, params);
+        e += dt * (k1_e + 2.0 * k2_e + 2.0 * k3_e + k4_e) / 6.0;
+        i += dt * (k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i) / 6.0;
         e_out[t] = e;
         i_out[t] = i;
     }
@@ -125,7 +153,7 @@ mod tests {
     }
 
     #[test]
-    fn strong_drive_elevates_activity() {
+    fn high_drive_elevates_activity() {
         let (w_ee, w_ei, w_ie, w_ii, tau_e, tau_i, a, theta, dt) = defaults();
         let n = 10_000;
         let ext = vec![10.0_f64; n];
@@ -135,7 +163,24 @@ mod tests {
             0.1, 0.05, w_ee, w_ei, w_ie, w_ii, tau_e, tau_i, a, theta, dt, &ext, &mut e_out,
             &mut i_out,
         );
-        assert!(e_f > 0.3, "strong external drive must elevate E, got {e_f}");
+        assert!(e_f > 0.3, "high external drive must elevate E, got {e_f}");
+    }
+
+    #[test]
+    fn rk4_step_matches_reference_and_separates_from_euler() {
+        let mut e_out = vec![0.0_f64; 1];
+        let mut i_out = vec![0.0_f64; 1];
+        let ext = vec![3.0_f64; 1];
+        simulate(
+            0.24, 0.11, 10.0, 6.0, 10.0, 1.0, 1.0, 2.0, 1.2, 4.0, 0.35, &ext, &mut e_out,
+            &mut i_out,
+        );
+        let euler_e = 0.40111014473980233_f64;
+        let euler_i = 0.10924537850891547_f64;
+        assert!((e_out[0] - 0.42143718680097664_f64).abs() < 1e-15);
+        assert!((i_out[0] - 0.13798020053932203_f64).abs() < 1e-15);
+        assert!((e_out[0] - euler_e).abs() > 1e-2);
+        assert!((i_out[0] - euler_i).abs() > 1e-2);
     }
 
     #[test]

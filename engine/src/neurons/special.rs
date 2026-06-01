@@ -370,14 +370,39 @@ impl WilsonCowanUnit {
             dt: 0.1,
         }
     }
+    fn logistic(&self, z: f64) -> f64 {
+        if z >= 0.0 {
+            1.0 / (1.0 + (-z).exp())
+        } else {
+            let exp_z = z.exp();
+            exp_z / (1.0 + exp_z)
+        }
+    }
     fn sigmoid(&self, x: f64) -> f64 {
-        1.0 / (1.0 + (-self.a * (x - self.theta)).exp())
+        self.logistic(self.a * (x - self.theta)) - self.logistic(-self.a * self.theta)
+    }
+    fn derivatives(&self, e: f64, i: f64, ext_input: f64) -> (f64, f64) {
+        let se = self.sigmoid(self.w_ee * e - self.w_ei * i + ext_input);
+        let si = self.sigmoid(self.w_ie * e - self.w_ii * i);
+        ((-e + se) / self.tau_e, (-i + si) / self.tau_i)
     }
     pub fn step(&mut self, ext_input: f64) -> f64 {
-        let se = self.sigmoid(self.w_ee * self.e - self.w_ei * self.i + ext_input);
-        let si = self.sigmoid(self.w_ie * self.e - self.w_ii * self.i);
-        self.e += (-self.e + se) / self.tau_e * self.dt;
-        self.i += (-self.i + si) / self.tau_i * self.dt;
+        let e = self.e;
+        let i = self.i;
+        let (k1_e, k1_i) = self.derivatives(e, i, ext_input);
+        let (k2_e, k2_i) = self.derivatives(
+            e + 0.5 * self.dt * k1_e,
+            i + 0.5 * self.dt * k1_i,
+            ext_input,
+        );
+        let (k3_e, k3_i) = self.derivatives(
+            e + 0.5 * self.dt * k2_e,
+            i + 0.5 * self.dt * k2_i,
+            ext_input,
+        );
+        let (k4_e, k4_i) = self.derivatives(e + self.dt * k3_e, i + self.dt * k3_i, ext_input);
+        self.e = e + self.dt * (k1_e + 2.0 * k2_e + 2.0 * k3_e + k4_e) / 6.0;
+        self.i = i + self.dt * (k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i) / 6.0;
         self.e
     }
     pub fn reset(&mut self) {
