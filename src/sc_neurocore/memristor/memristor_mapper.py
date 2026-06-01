@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
@@ -109,7 +108,7 @@ class ConductanceModel:
     sigma_rw: float = 0.0
     num_levels: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         params = _TECH_PARAMS[self.technology]
         if self.g_on <= 0:
             self.g_on = params["g_on"]
@@ -283,7 +282,7 @@ class AgingReport:
 class AgingSimulator:
     """Simulates conductance drift over device lifetime."""
 
-    def __init__(self, model: ConductanceModel, alpha: float = 0.1):
+    def __init__(self, model: ConductanceModel, alpha: float = 0.1) -> None:
         self.model = model
         self.alpha = alpha
 
@@ -370,7 +369,7 @@ class WriteVerifyProtocol:
         max_iterations: int = 10,
         tolerance: float = 0.02,
         seed: int = 42,
-    ):
+    ) -> None:
         self.model = model
         self.max_iter = max_iterations
         self.tolerance = tolerance
@@ -500,7 +499,7 @@ class CrossbarArray:
 class VariabilityInjector:
     """Injects fab-realistic conductance variability into weight matrices."""
 
-    def __init__(self, model: ConductanceModel, seed: int = 42):
+    def __init__(self, model: ConductanceModel, seed: int = 42) -> None:
         self.model = model
         self.rng = np.random.default_rng(seed)
 
@@ -639,7 +638,7 @@ class MemristorMapper:
         max_crossbar_size: int = 256,
         compensation: CompensationStrategy = CompensationStrategy.LUT,
         seed: int = 42,
-    ):
+    ) -> None:
         self.technology = technology
         self.topology = topology
         self.max_size = max_crossbar_size
@@ -732,7 +731,7 @@ class MonteCarloSimulator:
         num_trials: int = 1000,
         tolerance: float = 0.05,
         seed: int = 42,
-    ):
+    ) -> None:
         self.model = model
         self.num_trials = num_trials
         self.tolerance = tolerance
@@ -798,7 +797,7 @@ class MonteCarloSimulator:
 class VerilogEmitter:
     """Generates crossbar-aware SystemVerilog with compensation LUTs."""
 
-    def __init__(self, bit_width: int = 16, frac_bits: int = 8):
+    def __init__(self, bit_width: int = 16, frac_bits: int = 8) -> None:
         self.bw = bit_width
         self.frac = frac_bits
 

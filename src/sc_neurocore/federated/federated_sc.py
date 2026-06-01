@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
@@ -317,7 +316,7 @@ class FederatedClient:
     local_weights: Optional[np.ndarray] = None
     commitment: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.rng = np.random.default_rng(self.client_id * 7919 + 1)
 
     def local_train(self, data: np.ndarray, labels: np.ndarray, lr: float = 0.01) -> np.ndarray:
@@ -327,12 +326,15 @@ class FederatedClient:
         loss = MSE(X @ w - y), grad = 2/n * X^T @ (X @ w - y)
         """
         if self.local_weights is None:
-            self.local_weights = self.rng.standard_normal(data.shape[1]) * 0.01
+            weights = np.asarray(self.rng.standard_normal(data.shape[1]) * 0.01, dtype=float)
+            self.local_weights = weights
+        else:
+            weights = self.local_weights
 
-        predictions = data @ self.local_weights
+        predictions = data @ weights
         errors = predictions - labels
         gradients = 2.0 / len(labels) * (data.T @ errors)
-        self.local_weights -= lr * gradients
+        self.local_weights = weights - lr * gradients
         return gradients
 
     def encode_gradients(self, gradients: np.ndarray) -> Tuple[List[np.ndarray], str, float, float]:
@@ -685,7 +687,7 @@ class AdaptiveEpsilonScheduler:
     min_epsilon: float = 0.1
     current_epsilon: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.current_epsilon = self.base_epsilon
 
     def step(self, converging: bool) -> float:
@@ -829,7 +831,7 @@ class AuditEntry:
     grad_norm: float
     timestamp: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         import time
 
         if self.timestamp == 0.0:

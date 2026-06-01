@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
@@ -37,7 +36,7 @@ class LFSRReplay:
     verification and replay-based auditing.
     """
 
-    def __init__(self, seed: int):
+    def __init__(self, seed: int) -> None:
         if seed == 0:
             raise ValueError("LFSR seed must be non-zero")
         self.initial_seed = seed
@@ -114,7 +113,7 @@ class DecisionNode:
 class SpikeDecisionTree:
     """Captures "why this spike fired" as a verifiable decision tree."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.root: Optional[DecisionNode] = None
         self._nodes: List[DecisionNode] = []
 
@@ -201,7 +200,7 @@ class SpikeDecisionTree:
         """Return the chain of spiking nodes from root down."""
         if self.root is None:
             return []
-        path = []
+        path: List[DecisionNode] = []
         self._collect_spike_path(self.root, path)
         return path
 
@@ -251,7 +250,7 @@ class ProvenanceStep:
 class ProvenanceTrace:
     """Full chain from input → encoding → computation → spike decision."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._steps: List[ProvenanceStep] = []
         self._complete = False
 
@@ -485,7 +484,7 @@ class ExplanationDiff:
 class TemporalWindow:
     """Records decisions across timesteps for temporal attribution."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._windows: Dict[int, List[DecisionNode]] = {}
 
     def add(self, node: DecisionNode) -> None:
@@ -609,7 +608,7 @@ class NaturalLanguageExplainer:
 class MultiLayerTrace:
     """Traces decisions across network layers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._layers: Dict[str, List[DecisionNode]] = {}
 
     def add(self, node: DecisionNode) -> None:
@@ -651,7 +650,7 @@ class SymbolicPathStep:
 class SymbolicPath:
     """Human-readable symbolic path: input → encoding → decision."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.steps: List[SymbolicPathStep] = []
 
     def add(self, neuron_id: str, decision: SpikeDecision, reason: str) -> None:
@@ -674,7 +673,7 @@ class SymbolicPath:
 class ExplainabilityEngine:
     """End-to-end explainability: replay + decision tree + provenance."""
 
-    def __init__(self, seed: int = 0xACE1):
+    def __init__(self, seed: int = 0xACE1) -> None:
         self.seed = seed
         self.replay = LFSRReplay(seed)
         self.tree = SpikeDecisionTree()

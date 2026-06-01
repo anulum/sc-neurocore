@@ -4,13 +4,6 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# mypy: ignore-errors
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
-# ORCID: 0009-0009-3560-0851
-# Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — OpenROAD / Open-Source ASIC Tape-Out Flow
 
 """Push-button ASIC tape-out pipeline: RTL → Yosys → OpenROAD → GDSII.
@@ -80,7 +73,7 @@ class PDKConfig:
 
     @classmethod
     def from_pdk_type(cls, pdk: PDKType) -> PDKConfig:
-        presets = {
+        presets: Dict[PDKType, Dict[str, Any]] = {
             PDKType.SKY130: dict(
                 liberty_file="$PDK_ROOT/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
                 lef_file="$PDK_ROOT/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",

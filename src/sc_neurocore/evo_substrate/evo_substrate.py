@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
@@ -47,10 +46,11 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import importlib
 import textwrap
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -61,9 +61,9 @@ from sc_neurocore.fault_injection import (
     GracefulDegradationPolicy,
 )
 
+_ec: Optional[Any]
 try:
-    from sc_neurocore.evo_substrate import evo_substrate_core as _ec
-
+    _ec = importlib.import_module("sc_neurocore.evo_substrate.evo_substrate_core")
     _HAS_RUST_EVO = True
 except ImportError:
     _ec = None
@@ -249,7 +249,7 @@ class MutationConfig:
 class MutationEngine:
     """Applies mutations to genomes."""
 
-    def __init__(self, config: Optional[MutationConfig] = None, rng_seed: int = 42):
+    def __init__(self, config: Optional[MutationConfig] = None, rng_seed: int = 42) -> None:
         self.config = config or MutationConfig()
         self.rng = np.random.default_rng(rng_seed)
 
@@ -328,7 +328,7 @@ class MutationEngine:
 class CrossoverEngine:
     """Uniform crossover between two parent genomes."""
 
-    def __init__(self, rng_seed: int = 42):
+    def __init__(self, rng_seed: int = 42) -> None:
         self.rng = np.random.default_rng(rng_seed)
 
     def crossover(self, parent_a: Genome, parent_b: Genome) -> Genome:
@@ -354,7 +354,7 @@ def genomic_distance(a: Genome, b: Genome) -> float:
     the reference implementation and produces bit-exact identical values.
     """
     va, vb = a.to_vector(), b.to_vector()
-    if _HAS_RUST_EVO:
+    if _HAS_RUST_EVO and _ec is not None:
         return float(
             _ec.py_genomic_distance(
                 np.ascontiguousarray(va, dtype=np.float64),
@@ -424,7 +424,7 @@ class LineageRecord:
 class LineageTracker:
     """Tracks ancestry graph for all organisms."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.records: List[LineageRecord] = []
         self._by_id: Dict[str, LineageRecord] = {}
 
@@ -487,7 +487,7 @@ class FitnessResult:
 class FitnessEvaluator:
     """Evaluates organism fitness from simulation metrics."""
 
-    def __init__(self, fitness_type: FitnessType = FitnessType.COMPOSITE):
+    def __init__(self, fitness_type: FitnessType = FitnessType.COMPOSITE) -> None:
         self.fitness_type = fitness_type
 
     def evaluate(self, genome: Genome, metrics: Dict[str, float]) -> FitnessResult:
@@ -590,7 +590,7 @@ class ReplicationEngine:
         industrial_mode: bool = True,
         runtime_fault_config: Optional[RuntimeFaultConfig] = None,
         degradation_policy: Optional[GracefulDegradationPolicy] = None,
-    ):
+    ) -> None:
         self.mutator = mutation_engine or MutationEngine()
         self.crossover = crossover_engine or CrossoverEngine()
         self.evaluator = fitness_evaluator or FitnessEvaluator()
@@ -661,7 +661,7 @@ class ReplicationEngine:
             self.population.append(child)
         return child
 
-    def evaluate_all(self, metrics_fn) -> None:
+    def evaluate_all(self, metrics_fn: Callable[[Genome], Dict[str, float]]) -> None:
         """Evaluate fitness for all living organisms."""
         for org in self.population:
             if org.alive:
@@ -733,7 +733,10 @@ class ReplicationEngine:
                 killed += self.extinction_detector.apply(self.population, self.mutator.rng)
 
         alive = [o for o in self.population if o.alive and o.fitness is not None]
-        alive.sort(key=lambda o: o.fitness.composite, reverse=True)
+        alive.sort(
+            key=lambda o: o.fitness.composite if o.fitness is not None else float("-inf"),
+            reverse=True,
+        )
 
         cutoff = max(self.elitism + 1, int(len(alive) * survival_fraction))
         killed = 0
@@ -745,7 +748,7 @@ class ReplicationEngine:
         self.population = [o for o in self.population if o.alive]
         return killed
 
-    def evolve_generation(self, metrics_fn) -> Dict[str, Any]:
+    def evolve_generation(self, metrics_fn: Callable[[Genome], Dict[str, float]]) -> Dict[str, Any]:
         """Run one full evolutionary generation."""
         self.generation += 1
 
@@ -763,6 +766,8 @@ class ReplicationEngine:
             if len(self.population) >= self.max_population:
                 break
 
+            parent: Optional[Organism]
+            partner: Optional[Organism]
             if self.industrial_mode:
                 parent = self.tournament.select(survivors, self.mutator.rng)
                 partner = self.tournament.select(survivors, self.mutator.rng)
@@ -773,7 +778,7 @@ class ReplicationEngine:
             if parent is None:
                 continue
 
-            child_added = None
+            child_added: Optional[Organism] = None
             if partner and self.mutator.rng.random() < 0.3:
                 child_added = self.replicate_crossover(parent, partner)
             else:
@@ -808,7 +813,10 @@ class ReplicationEngine:
     def best_organism(self) -> Optional[Organism]:
         alive_with_fitness = [o for o in self.population if o.alive and o.fitness]
         return (
-            max(alive_with_fitness, key=lambda o: o.fitness.composite)
+            max(
+                alive_with_fitness,
+                key=lambda o: o.fitness.composite if o.fitness is not None else float("-inf"),
+            )
             if alive_with_fitness
             else None
         )
@@ -987,7 +995,7 @@ class TileAllocation:
 class TileDeploymentTracker:
     """Tracks which organisms are deployed on which FPGA tiles."""
 
-    def __init__(self, num_tiles: int = 8):
+    def __init__(self, num_tiles: int = 8) -> None:
         self.num_tiles = num_tiles
         self.allocations: Dict[int, Optional[TileAllocation]] = {i: None for i in range(num_tiles)}
 
@@ -1021,7 +1029,7 @@ class TileDeploymentTracker:
 class HallOfFame:
     """Maintains the top-N organisms across all generations."""
 
-    def __init__(self, max_size: int = 10):
+    def __init__(self, max_size: int = 10) -> None:
         self.max_size = max_size
         self.entries: List[Tuple[float, Genome]] = []  # (fitness, genome)
 
@@ -1059,7 +1067,7 @@ class Island:
 class IslandModel:
     """Multi-deme evolution with periodic migration."""
 
-    def __init__(self, num_islands: int = 4, migration_rate: float = 0.1):
+    def __init__(self, num_islands: int = 4, migration_rate: float = 0.1) -> None:
         self.islands = {i: Island(i) for i in range(num_islands)}
         self.migration_rate = migration_rate
         self.total_migrations: int = 0
@@ -1123,7 +1131,7 @@ class GenomeSerializer:
 class NoveltyArchive:
     """Behavioural novelty archive for novelty search."""
 
-    def __init__(self, k_nearest: int = 5, threshold: float = 0.1):
+    def __init__(self, k_nearest: int = 5, threshold: float = 0.1) -> None:
         self.k_nearest = k_nearest
         self.threshold = threshold
         self.archive: List[np.ndarray] = []
@@ -1175,7 +1183,7 @@ class ResourceBudget:
 class ExtinctionDetector:
     """Detects population stagnation and triggers extinction events."""
 
-    def __init__(self, stagnation_gens: int = 10, kill_fraction: float = 0.9):
+    def __init__(self, stagnation_gens: int = 10, kill_fraction: float = 0.9) -> None:
         self.stagnation_gens = stagnation_gens
         self.kill_fraction = kill_fraction
         self._best_history: List[float] = []
@@ -1225,7 +1233,7 @@ class CoevoOrganism:
 class CoevolutionArena:
     """Runs predator-prey or symbiotic co-evolution."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.predators: List[CoevoOrganism] = []
         self.prey: List[CoevoOrganism] = []
 
@@ -1284,7 +1292,7 @@ class FormalSafetyGuard:
     Links to the safety_cert module for IEC 61508 compliance.
     """
 
-    def __init__(self, bounds: Optional[SafetyBounds] = None):
+    def __init__(self, bounds: Optional[SafetyBounds] = None) -> None:
         self.bounds = bounds or SafetyBounds()
         self.checked: int = 0
         self.rejected: int = 0
@@ -1331,19 +1339,22 @@ class FormalSafetyGuard:
 class TournamentSelector:
     """Tournament selection with configurable pressure."""
 
-    def __init__(self, tournament_size: int = 3):
+    def __init__(self, tournament_size: int = 3) -> None:
         self.tournament_size = tournament_size
 
     def select(self, population: List[Organism], rng: np.random.Generator) -> Organism:
+        if not population:
+            raise ValueError("Tournament selection requires a non-empty population")
         candidates = rng.choice(
             len(population),
             size=min(self.tournament_size, len(population)),
             replace=False,
         )
-        best = None
-        best_fit = -1.0
+        first_idx = int(candidates[0])
+        best = population[first_idx]
+        best_fit = best.fitness.composite if best.fitness else 0.0
         for idx in candidates:
-            org = population[idx]
+            org = population[int(idx)]
             fit = org.fitness.composite if org.fitness else 0.0
             if fit > best_fit:
                 best_fit = fit
@@ -1375,7 +1386,7 @@ def dominates(a: FitnessResult, b: FitnessResult) -> bool:
 class ParetoFront:
     """Maintains a non-dominated Pareto front."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.front: List[Organism] = []
 
     def update(self, organism: Organism) -> bool:
@@ -1403,7 +1414,7 @@ class ParetoFront:
 class AgeRegulator:
     """Culls organisms that exceed a maximum lifespan."""
 
-    def __init__(self, max_age: int = 20):
+    def __init__(self, max_age: int = 20) -> None:
         self.max_age = max_age
 
     def apply(self, population: List[Organism], current_generation: int) -> int:
@@ -1448,7 +1459,7 @@ def compute_bloat(genome: Genome, baseline_neurons: int = 16) -> BloatMetrics:
 class BloatPenalizer:
     """Penalizes fitness for bloated genomes."""
 
-    def __init__(self, penalty_weight: float = 0.1, threshold: float = 2.0):
+    def __init__(self, penalty_weight: float = 0.1, threshold: float = 2.0) -> None:
         self.penalty_weight = penalty_weight
         self.threshold = threshold
 
@@ -1511,7 +1522,7 @@ class CPPNEdge:
 class CPPNGenome:
     """Compositional Pattern Producing Network for developmental encoding."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.nodes: List[CPPNNode] = [
             CPPNNode(0, ActivationFunc.LINEAR),  # input x
             CPPNNode(1, ActivationFunc.LINEAR),  # input y
@@ -1591,7 +1602,7 @@ class HWFitnessReport:
 class HWFitnessCollector:
     """Collects HW fitness from deployed organisms."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.reports: Dict[str, HWFitnessReport] = {}
 
     def submit(self, report: HWFitnessReport) -> None:
@@ -1624,7 +1635,7 @@ class GenerationStats:
 class EvoStatisticsTracker:
     """Records per-generation statistics for analytics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.history: List[GenerationStats] = []
 
     def record(self, stats: GenerationStats) -> None:
@@ -1700,7 +1711,7 @@ def genome_complexity(genome: Genome) -> float:
 class ComplexityTracker:
     """Tracks population complexity over generations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.history: List[Tuple[int, float, float]] = []  # (gen, mean, max)
 
     def record(self, generation: int, population: List[Organism]) -> None:

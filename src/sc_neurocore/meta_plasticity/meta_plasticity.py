@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
@@ -59,7 +58,7 @@ import math
 from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Deque, Dict, List, Optional, Tuple
+from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -228,7 +227,7 @@ class MetaController:
     uses SC bitstream logic for decision-making.
     """
 
-    def __init__(self, sensitivity: float = 1.0, rng_seed: int = 42):
+    def __init__(self, sensitivity: float = 1.0, rng_seed: int = 42) -> None:
         self.sensitivity = sensitivity
         self.rng = np.random.default_rng(rng_seed)
         self.observation_window: Deque[Dict[str, float]] = deque(maxlen=100)
@@ -352,7 +351,7 @@ class RuleEvolver:
     population: List[PlasticityRuleSet] = field(default_factory=list)
     generation: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.population:
             self.population = [PlasticityRuleSet(generation=0) for _ in range(self.population_size)]
 
@@ -740,7 +739,7 @@ class SleepPhase:
     def record(self, metrics: Dict[str, float]) -> None:
         self.replay_buffer.append(metrics)
 
-    def sleep(self, engine_step_fn) -> int:
+    def sleep(self, engine_step_fn: Callable[[Dict[str, float]], Any]) -> int:
         """Run consolidation by replaying buffered experiences.
 
         engine_step_fn: callable that takes metrics dict.

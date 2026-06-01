@@ -260,7 +260,7 @@ exclude = [
     "src/sc_neurocore/quantum_cognition/tests/",
 ]
 [[tool.mypy.overrides]]
-module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'qiskit_ibm_runtime.*', 'psutil.*', 'watchdog.*', 'pytest.*', 'llm.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'httpx.*', 'nir.*', 'h5py.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*', 'gdsfactory.*', 'meep.*', 'gdstk.*', 'dimod.*', 'dwave.*', 'nupack.*']
+module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'sklearn.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'qiskit_ibm_runtime.*', 'psutil.*', 'watchdog.*', 'pytest.*', 'llm.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'httpx.*', 'nir.*', 'h5py.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*', 'gdsfactory.*', 'meep.*', 'gdstk.*', 'dimod.*', 'dwave.*', 'nupack.*']
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
