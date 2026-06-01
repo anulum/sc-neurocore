@@ -9,8 +9,8 @@
 """Full pipeline test for TraubMilesNeuron (Traub & Miles 1991).
 
 Reduced hippocampal CA3 pyramidal cell. HH-type Na/K/leak with 10
-sub-steps per step() call. Strong Na conductance (g_Na=100) drives
-fast action potentials."""
+sub-steps per step() call. High Na conductance (g_Na=100) drives fast
+action potentials."""
 
 from __future__ import annotations
 
@@ -28,6 +28,51 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count, isi, firing_rat
 
 def _run(neuron: TraubMilesNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
+def _rk4_expected_after_call(
+    neuron: TraubMilesNeuron, current: float
+) -> tuple[float, float, float, float]:
+    v, m, h, n = neuron.v, neuron.m, neuron.h, neuron.n
+
+    def derivatives(
+        vs: float, ms: float, hs: float, ns: float
+    ) -> tuple[float, float, float, float]:
+        am, bm, ah, bh, an, bn = neuron._rates(vs)
+        dm = am * (1.0 - ms) - bm * ms
+        dh = ah * (1.0 - hs) - bh * hs
+        dn = an * (1.0 - ns) - bn * ns
+        i_na = neuron.g_na * ms**3 * hs * (vs - neuron.e_na)
+        i_k = neuron.g_k * ns**4 * (vs - neuron.e_k)
+        i_l = neuron.g_l * (vs - neuron.e_l)
+        dv = -i_na - i_k - i_l + current
+        return dv, dm, dh, dn
+
+    for _ in range(10):
+        k1 = derivatives(v, m, h, n)
+        k2 = derivatives(
+            v + 0.5 * neuron.dt * k1[0],
+            m + 0.5 * neuron.dt * k1[1],
+            h + 0.5 * neuron.dt * k1[2],
+            n + 0.5 * neuron.dt * k1[3],
+        )
+        k3 = derivatives(
+            v + 0.5 * neuron.dt * k2[0],
+            m + 0.5 * neuron.dt * k2[1],
+            h + 0.5 * neuron.dt * k2[2],
+            n + 0.5 * neuron.dt * k2[3],
+        )
+        k4 = derivatives(
+            v + neuron.dt * k3[0],
+            m + neuron.dt * k3[1],
+            h + neuron.dt * k3[2],
+            n + neuron.dt * k3[3],
+        )
+        v += neuron.dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0
+        m += neuron.dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0
+        h += neuron.dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0
+        n += neuron.dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0
+    return v, m, h, n
 
 
 class TestTraubMilesIsolation:
@@ -71,6 +116,27 @@ class TestTraubMilesIsolation:
         n.step(5.0)
         # With 10 sub-steps, V should have changed substantially
         assert abs(n.v - v0) > 0.01
+
+    def test_step_uses_candidate_first_rk4_substeps(self):
+        n = TraubMilesNeuron(v=-63.5, m=0.08, h=0.55, n=0.32)
+        expected = _rk4_expected_after_call(n, 4.0)
+        euler_candidate = (
+            -65.66233161606698,
+            0.0415454873682337,
+            0.5626228886787493,
+            0.30359624347230457,
+        )
+
+        spike = n.step(4.0)
+
+        assert spike == 0
+        assert (n.v, n.m, n.h, n.n) == pytest.approx(expected, abs=1e-14)
+        assert n.v == pytest.approx(-65.6638958700765, abs=1e-14)
+        assert n.m == pytest.approx(0.04237301812907925, abs=1e-14)
+        assert n.h == pytest.approx(0.5626824931070477, abs=1e-14)
+        assert n.n == pytest.approx(0.30356298261126924, abs=1e-14)
+        assert abs(n.v - euler_candidate[0]) > 1e-3
+        assert abs(n.m - euler_candidate[1]) > 5e-4
 
 
 class TestTraubMilesFI:
@@ -185,6 +251,29 @@ class TestTraubMilesParameters:
         with pytest.raises(FloatingPointError, match="rate evaluation"):
             n.step(5.0)
         assert (n.v, n.m, n.h, n.n) == before
+
+    def test_rejects_corrupted_voltage_configuration_before_state_mutation(self):
+        n = TraubMilesNeuron()
+        n.v = np.nan
+        before = (n.v, n.m, n.h, n.n)
+        with pytest.raises(ValueError, match="v must be finite"):
+            n.step(5.0)
+        actual = (n.v, n.m, n.h, n.n)
+        assert np.isnan(actual[0])
+        assert actual[1:] == before[1:]
+
+    def test_state_kernel_rejects_non_finite_voltage(self):
+        with pytest.raises(FloatingPointError, match="voltage state"):
+            TraubMilesNeuron._validate_state(float("nan"), 0.05, 0.6, 0.3)
+
+    def test_rejects_non_finite_rate_kernel_input(self):
+        with pytest.raises(FloatingPointError, match="rates"):
+            TraubMilesNeuron._rates(float("nan"))
+
+    def test_derivative_kernel_rejects_non_finite_current_balance(self):
+        n = TraubMilesNeuron(g_na=1.0e308)
+        with pytest.raises(FloatingPointError, match="derivative"):
+            n._derivatives(-65.0, 1.0, 1.0, 0.3, 0.0)
 
     @pytest.mark.parametrize("dt", [0.005, 0.01, 0.02])
     def test_dt_stability(self, dt: float):

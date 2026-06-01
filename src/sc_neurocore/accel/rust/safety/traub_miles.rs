@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for traub_miles
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct TraubMilesNeuron {
     pub v: f64,
@@ -56,20 +54,7 @@ impl TraubMilesNeuron {
         let mut h = self.h;
         let mut n = self.n;
         for _ in 0..10 {
-            let (am, bm, ah, bh, an, bn) = rates(v)?;
-            let next_m = m + (am * (1.0 - m) - bm * m) * self.dt;
-            let next_h = h + (ah * (1.0 - h) - bh * h) * self.dt;
-            let next_n = n + (an * (1.0 - n) - bn * n) * self.dt;
-            if !finite_gate(next_m) || !finite_gate(next_h) || !finite_gate(next_n) {
-                return Err("invalid Traub-Miles gate candidate");
-            }
-            let i_na = self.g_na * next_m.powi(3) * next_h * (v - self.e_na);
-            let i_k = self.g_k * next_n.powi(4) * (v - self.e_k);
-            let i_l = self.g_l * (v - self.e_l);
-            let next_v = v + (-i_na - i_k - i_l + i_ext) * self.dt;
-            if !next_v.is_finite() {
-                return Err("invalid Traub-Miles voltage candidate");
-            }
+            let (next_v, next_m, next_h, next_n) = self.rk4_substep(v, m, h, n, i_ext)?;
             v = next_v;
             m = next_m;
             h = next_h;
@@ -85,6 +70,78 @@ impl TraubMilesNeuron {
         } else {
             0
         })
+    }
+
+    fn derivatives(
+        &self,
+        v: f64,
+        m: f64,
+        h: f64,
+        n: f64,
+        i_ext: f64,
+    ) -> Result<(f64, f64, f64, f64), &'static str> {
+        if !v.is_finite() || !finite_gate(m) || !finite_gate(h) || !finite_gate(n) {
+            return Err("invalid Traub-Miles derivative state");
+        }
+        let (am, bm, ah, bh, an, bn) = rates(v)?;
+        let dm = am * (1.0 - m) - bm * m;
+        let dh = ah * (1.0 - h) - bh * h;
+        let dn = an * (1.0 - n) - bn * n;
+        let i_na = self.g_na * m.powi(3) * h * (v - self.e_na);
+        let i_k = self.g_k * n.powi(4) * (v - self.e_k);
+        let i_l = self.g_l * (v - self.e_l);
+        let dv = -i_na - i_k - i_l + i_ext;
+        if [dv, dm, dh, dn, i_na, i_k, i_l]
+            .iter()
+            .any(|value| !value.is_finite())
+        {
+            return Err("invalid Traub-Miles derivative");
+        }
+        Ok((dv, dm, dh, dn))
+    }
+
+    fn rk4_substep(
+        &self,
+        v: f64,
+        m: f64,
+        h: f64,
+        n: f64,
+        i_ext: f64,
+    ) -> Result<(f64, f64, f64, f64), &'static str> {
+        let (k1_v, k1_m, k1_h, k1_n) = self.derivatives(v, m, h, n, i_ext)?;
+        let (k2_v, k2_m, k2_h, k2_n) = self.derivatives(
+            v + 0.5 * self.dt * k1_v,
+            m + 0.5 * self.dt * k1_m,
+            h + 0.5 * self.dt * k1_h,
+            n + 0.5 * self.dt * k1_n,
+            i_ext,
+        )?;
+        let (k3_v, k3_m, k3_h, k3_n) = self.derivatives(
+            v + 0.5 * self.dt * k2_v,
+            m + 0.5 * self.dt * k2_m,
+            h + 0.5 * self.dt * k2_h,
+            n + 0.5 * self.dt * k2_n,
+            i_ext,
+        )?;
+        let (k4_v, k4_m, k4_h, k4_n) = self.derivatives(
+            v + self.dt * k3_v,
+            m + self.dt * k3_m,
+            h + self.dt * k3_h,
+            n + self.dt * k3_n,
+            i_ext,
+        )?;
+        let next_v = v + self.dt * (k1_v + 2.0 * k2_v + 2.0 * k3_v + k4_v) / 6.0;
+        let next_m = m + self.dt * (k1_m + 2.0 * k2_m + 2.0 * k3_m + k4_m) / 6.0;
+        let next_h = h + self.dt * (k1_h + 2.0 * k2_h + 2.0 * k3_h + k4_h) / 6.0;
+        let next_n = n + self.dt * (k1_n + 2.0 * k2_n + 2.0 * k3_n + k4_n) / 6.0;
+        if !next_v.is_finite()
+            || !finite_gate(next_m)
+            || !finite_gate(next_h)
+            || !finite_gate(next_n)
+        {
+            return Err("invalid Traub-Miles candidate state");
+        }
+        Ok((next_v, next_m, next_h, next_n))
     }
 
     pub fn reset(&mut self) {
@@ -173,5 +230,21 @@ mod tests {
         let mut state = TraubMilesNeuron::new();
         state.m = 1.5;
         assert!(state.step(1.0).is_err());
+    }
+
+    #[test]
+    fn test_traub_miles_step_uses_rk4_reference() {
+        let mut state = TraubMilesNeuron::new();
+        state.v = -63.5;
+        state.m = 0.08;
+        state.h = 0.55;
+        state.n = 0.32;
+        let spike = state.step(4.0).unwrap();
+        assert_eq!(spike, 0);
+        assert!((state.v - (-65.6638958700765)).abs() < 1e-13);
+        assert!((state.m - 0.04237301812907925).abs() < 1e-15);
+        assert!((state.h - 0.5626824931070477).abs() < 1e-15);
+        assert!((state.n - 0.30356298261126924).abs() < 1e-15);
+        assert!((state.v - (-65.66233161606698)).abs() > 1e-3);
     }
 }

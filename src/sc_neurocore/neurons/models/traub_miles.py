@@ -33,6 +33,9 @@ class TraubMilesNeuron:
     v_threshold: float = -20.0
 
     def __post_init__(self) -> None:
+        self._validate_configuration(coerce=True)
+
+    def _validate_configuration(self, *, coerce: bool = False) -> None:
         for name in (
             "v",
             "m",
@@ -50,7 +53,8 @@ class TraubMilesNeuron:
             value = float(getattr(self, name))
             if not math.isfinite(value):
                 raise ValueError(f"{name} must be finite")
-            setattr(self, name, value)
+            if coerce:
+                setattr(self, name, value)
         if self.dt <= 0.0:
             raise ValueError("dt must be positive")
         for name in ("g_na", "g_k", "g_l"):
@@ -98,23 +102,58 @@ class TraubMilesNeuron:
             raise FloatingPointError("Traub-Miles rates must be finite and non-negative")
         return rates
 
+    def _derivatives(
+        self, v: float, m: float, h: float, n: float, drive: float
+    ) -> tuple[float, float, float, float]:
+        v, m, h, n = self._validate_state(v, m, h, n)
+        am, bm, ah, bh, an, bn = self._rates(v)
+        dm = am * (1.0 - m) - bm * m
+        dh = ah * (1.0 - h) - bh * h
+        dn = an * (1.0 - n) - bn * n
+        i_na = self.g_na * m**3 * h * (v - self.e_na)
+        i_k = self.g_k * n**4 * (v - self.e_k)
+        i_l = self.g_l * (v - self.e_l)
+        dv = -i_na - i_k - i_l + drive
+        values = (dv, dm, dh, dn, i_na, i_k, i_l)
+        if not all(math.isfinite(value) for value in values):
+            raise FloatingPointError("Traub-Miles derivative must remain finite")
+        return dv, dm, dh, dn
+
     def step(self, current: float) -> int:
         drive = float(current)
         if not math.isfinite(drive):
             raise ValueError("current must be finite")
 
+        self._validate_configuration()
         v, m, h, n = self._validate_state(self.v, self.m, self.h, self.n)
         v_prev = v
         for _ in range(10):
-            am, bm, ah, bh, an, bn = self._rates(v)
-            next_m = m + (am * (1.0 - m) - bm * m) * self.dt
-            next_h = h + (ah * (1.0 - h) - bh * h) * self.dt
-            next_n = n + (an * (1.0 - n) - bn * n) * self.dt
-            _, next_m, next_h, next_n = self._validate_state(v, next_m, next_h, next_n)
-            i_na = self.g_na * next_m**3 * next_h * (v - self.e_na)
-            i_k = self.g_k * next_n**4 * (v - self.e_k)
-            i_l = self.g_l * (v - self.e_l)
-            next_v = v + (-i_na - i_k - i_l + drive) * self.dt
+            k1_v, k1_m, k1_h, k1_n = self._derivatives(v, m, h, n, drive)
+            k2_v, k2_m, k2_h, k2_n = self._derivatives(
+                v + 0.5 * self.dt * k1_v,
+                m + 0.5 * self.dt * k1_m,
+                h + 0.5 * self.dt * k1_h,
+                n + 0.5 * self.dt * k1_n,
+                drive,
+            )
+            k3_v, k3_m, k3_h, k3_n = self._derivatives(
+                v + 0.5 * self.dt * k2_v,
+                m + 0.5 * self.dt * k2_m,
+                h + 0.5 * self.dt * k2_h,
+                n + 0.5 * self.dt * k2_n,
+                drive,
+            )
+            k4_v, k4_m, k4_h, k4_n = self._derivatives(
+                v + self.dt * k3_v,
+                m + self.dt * k3_m,
+                h + self.dt * k3_h,
+                n + self.dt * k3_n,
+                drive,
+            )
+            next_v = v + self.dt * (k1_v + 2.0 * k2_v + 2.0 * k3_v + k4_v) / 6.0
+            next_m = m + self.dt * (k1_m + 2.0 * k2_m + 2.0 * k3_m + k4_m) / 6.0
+            next_h = h + self.dt * (k1_h + 2.0 * k2_h + 2.0 * k3_h + k4_h) / 6.0
+            next_n = n + self.dt * (k1_n + 2.0 * k2_n + 2.0 * k3_n + k4_n) / 6.0
             v, m, h, n = self._validate_state(next_v, next_m, next_h, next_n)
         self.v, self.m, self.h, self.n = v, m, h, n
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
