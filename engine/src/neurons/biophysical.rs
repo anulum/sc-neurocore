@@ -1426,12 +1426,89 @@ impl MihalasNieburNeuron {
             dt: 1.0,
         }
     }
+
+    fn finite_values(values: &[f64]) -> bool {
+        values.iter().all(|value| value.is_finite())
+    }
+
+    fn valid_runtime(&self) -> bool {
+        Self::finite_values(&[
+            self.v,
+            self.theta,
+            self.i1,
+            self.i2,
+            self.v_rest,
+            self.v_reset,
+            self.theta_reset,
+            self.theta_inf,
+            self.tau_v,
+            self.tau_theta,
+            self.tau_1,
+            self.tau_2,
+            self.a,
+            self.b,
+            self.r1,
+            self.r2,
+            self.dt,
+        ]) && self.tau_v > 0.0
+            && self.tau_theta > 0.0
+            && self.tau_1 > 0.0
+            && self.tau_2 > 0.0
+            && self.dt > 0.0
+    }
+
+    fn derivatives(&self, v: f64, theta: f64, i1: f64, i2: f64, current: f64) -> [f64; 4] {
+        [
+            (-(v - self.v_rest) + i1 + i2 + current) / self.tau_v,
+            (self.theta_inf - theta + self.a * (v - self.v_rest)) / self.tau_theta,
+            -i1 / self.tau_1,
+            -i2 / self.tau_2,
+        ]
+    }
+
+    fn add_scaled(state: [f64; 4], slope: [f64; 4], scale: f64) -> [f64; 4] {
+        [
+            state[0] + scale * slope[0],
+            state[1] + scale * slope[1],
+            state[2] + scale * slope[2],
+            state[3] + scale * slope[3],
+        ]
+    }
+
+    fn rk4_candidate(&self, current: f64) -> Option<[f64; 4]> {
+        let state = [self.v, self.theta, self.i1, self.i2];
+        let half_dt = 0.5 * self.dt;
+        let k1 = self.derivatives(state[0], state[1], state[2], state[3], current);
+        let s2 = Self::add_scaled(state, k1, half_dt);
+        let k2 = self.derivatives(s2[0], s2[1], s2[2], s2[3], current);
+        let s3 = Self::add_scaled(state, k2, half_dt);
+        let k3 = self.derivatives(s3[0], s3[1], s3[2], s3[3], current);
+        let s4 = Self::add_scaled(state, k3, self.dt);
+        let k4 = self.derivatives(s4[0], s4[1], s4[2], s4[3], current);
+        let candidate = [
+            state[0] + self.dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
+            state[1] + self.dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+            state[2] + self.dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
+            state[3] + self.dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0,
+        ];
+        if Self::finite_values(&candidate) {
+            Some(candidate)
+        } else {
+            None
+        }
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
-        self.v += (-(self.v - self.v_rest) + self.i1 + self.i2 + current) / self.tau_v * self.dt;
-        self.theta += self.a * (self.v - self.v_rest)
-            + (self.theta_inf - self.theta) / self.tau_theta * self.dt;
-        self.i1 += -self.i1 / self.tau_1 * self.dt;
-        self.i2 += -self.i2 / self.tau_2 * self.dt;
+        if !current.is_finite() || !self.valid_runtime() {
+            return 0;
+        }
+        let Some(candidate) = self.rk4_candidate(current) else {
+            return 0;
+        };
+        self.v = candidate[0];
+        self.theta = candidate[1];
+        self.i1 = candidate[2];
+        self.i2 = candidate[3];
         if self.v >= self.theta {
             self.v = self.v_reset + self.b * (self.v - self.v_rest);
             self.theta = self.theta_reset.max(self.theta);
@@ -2818,6 +2895,36 @@ mod tests {
         n.reset();
         assert!((n.v - n.v_rest).abs() < 1e-10);
         assert!((n.theta - n.theta_reset).abs() < 1e-10);
+    }
+    #[test]
+    fn mn_rk4_reference_point() {
+        let mut n = MihalasNieburNeuron::new();
+        assert_eq!(n.step(0.5), 0);
+        assert!((n.v - 0.04758125).abs() < 1e-12);
+        assert!((n.theta - 1.0).abs() < 1e-15);
+        assert!((n.i1 - 0.0).abs() < 1e-15);
+        assert!((n.i2 - 0.0).abs() < 1e-15);
+    }
+    #[test]
+    fn mn_spike_reset_uses_b() {
+        let mut n = MihalasNieburNeuron::new();
+        n.v = 0.99;
+        n.b = 0.5;
+        n.r1 = 1.25;
+        n.r2 = -0.25;
+        assert_eq!(n.step(2.0), 1);
+        assert!((n.v - 0.5430570625).abs() < 1e-12);
+        assert!((n.i1 - 1.25).abs() < 1e-15);
+        assert!((n.i2 - (-0.25)).abs() < 1e-15);
+    }
+    #[test]
+    fn mn_invalid_input_preserves_state() {
+        let mut n = MihalasNieburNeuron::new();
+        n.v = 0.2;
+        n.i1 = 0.3;
+        let before = (n.v, n.theta, n.i1, n.i2);
+        assert_eq!(n.step(f64::NAN), 0);
+        assert_eq!((n.v, n.theta, n.i1, n.i2), before);
     }
     #[test]
     fn mn_extreme_bounded() {
