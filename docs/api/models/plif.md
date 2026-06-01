@@ -17,7 +17,9 @@ The implementation rejects non-physical configurations before integration:
 `v` and `a` must be finite, `threshold` must be finite and positive, `dt`
 must be finite and positive, and runtime current must be finite before state
 mutation. The sigmoid is evaluated in a branch-stable form so very large
-negative learnable parameters saturate to `alpha=0` without overflow.
+negative learnable parameters saturate to `alpha=0` without overflow. Runtime
+state is revalidated before every step, and the candidate voltage is computed
+before mutation so overflowing finite drives preserve the previous state.
 
 ## Parameters
 
@@ -57,21 +59,21 @@ ParametricLIFNeuron
 ├── step(current) → int {0,1} (deterministic)
 ├── Population: PoissonInput(weight=1.5, rate=500Hz)
 ├── Verilog: multiply-accumulate + sigmoid LUT, ~40 LUTs
-└── Rust: supported (2 f64 state variables)
+└── Go / Julia / Rust safety: candidate-first state preservation
 ```
 
-## Test Coverage
+## Test Surface
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 19 parametrized/behavioral checks | defaults, binary, sigmoid correctness, a=0 midpoint, monotonicity, bounds, stable saturation, fail-closed parameter/current validation |
+| Isolation | 24 parametrised/behavioural checks | defaults, binary, sigmoid correctness, a=0 midpoint, monotonicity, bounds, stable saturation, fail-closed parameter/current/runtime/candidate validation |
 | Dynamics | 5 | geometric accumulation, steady-state V, convergence rate, alpha≈1 no-leak, alpha≈0 fast-decay |
 | Threshold | 5 | spike-on-updated-V, suprathreshold every-step, exact threshold, critical current, soft reset |
 | Learnable rate | 8 | alpha effect on rate, 5-point suprathreshold sweep, subcritical (3 alpha values) |
 | Edge cases | 4 | zero input, negative input, reset, determinism |
 | Network | 2 | population, spikes |
 | Analysis | 2 | spike_count, consistency |
-| **Total** | **44** | scoped module validation |
+| **Total** | **49 Python module checks** | plus Go service, Julia, and Rust safety checks |
 
 Key finding: spike return is based on **updated** V (post-step), not pre-step V.
 The pre-step check only controls the reset mechanism. This is a subtle but
@@ -80,14 +82,16 @@ important implementation detail for surrogate gradient training.
 
 ---
 
-## Measured Performance (2026-04-04)
+## Measured Performance (2026-06-01)
 
 | Metric | Value |
 |--------|-------|
-| Python throughput | ~200K steps/s |
-| Spikes (10K steps, I=5.0) | 10000 |
-| State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+| Python candidate-first step | 777.51111 ns/step median |
+| Benchmark command | `PYTHONPATH=src .venv/bin/python benchmarks/bench_model_plif.py` |
+| Workload | 200,000 steps × 5 repeats, current = 0.7 |
+| Spikes per repeat | 100,000 |
+| Accepted ending voltage | `1.0499999999999998` |
+| Native safety mirrors | Go / Julia / Rust |
 
 ---
 
@@ -105,7 +109,7 @@ Returns `int` (spike indicator) or `float` (rate/potential).
 10000 spikes in 10,000 steps at I=5.0.
 **Status: PASS**
 
-### 4. State stability (20,000 steps)
+### 4. State stability (200,000 steps)
 All state variables remain finite after extended simulation.
 **Status: PASS**
 
@@ -117,14 +121,15 @@ State returns to initial values after `reset()`.
 `Population(ParametricLIFNeuron, n=10)` creates correct instances.
 **Status: PASS**
 
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
+### 7. Native safety mirrors
+Go, Julia, and Rust preserve the previous state when runtime state or candidate
+voltage is invalid.
 
 ---
 
 ## Findings (measured 2026-04-04)
 
-1. Throughput: ~200K steps/s (Python, single-thread)
+1. Throughput: 777.51111 ns/step median (Python, single-thread)
 2. All pipeline stages verified green
-3. Rust safety surface validates the same PLIF update and stable-sigmoid contract
-4. Numerical stability confirmed over 20K steps
+3. Native safety surfaces validate the same PLIF update and stable-sigmoid contract
+4. Numerical stability confirmed over 200K steps

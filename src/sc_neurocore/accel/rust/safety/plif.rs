@@ -42,8 +42,12 @@ impl ParametricLIFNeuron {
         }
 
         let spike = if self.v >= self.threshold { 1.0 } else { 0.0 };
-        self.v = self.alpha() * self.v * (1.0 - spike) + i_ext;
-        if self.v >= self.threshold {
+        let next_v = self.alpha() * self.v * (1.0 - spike) + i_ext;
+        if !next_v.is_finite() {
+            return 0;
+        }
+        self.v = next_v;
+        if next_v >= self.threshold {
             1
         } else {
             0
@@ -87,5 +91,27 @@ mod tests {
         let mut state = ParametricLIFNeuron::new();
         state.a = -1000.0;
         assert_eq!(state.alpha(), 0.0);
+    }
+
+    #[test]
+    fn test_plif_candidate_overflow_preserves_state() {
+        let mut state = ParametricLIFNeuron::new();
+        state.v = 1.0e308;
+        state.a = 1000.0;
+        state.threshold = 1.7e308;
+        let before = state.v;
+        let spike = state.step(1.0e308);
+        assert_eq!(spike, 0);
+        assert_eq!(state.v, before);
+    }
+
+    #[test]
+    fn test_plif_invalid_runtime_state_preserves_state() {
+        let mut state = ParametricLIFNeuron::new();
+        state.v = 0.25;
+        state.threshold = 0.0;
+        let spike = state.step(0.1);
+        assert_eq!(spike, 0);
+        assert_eq!(state.v, 0.25);
     }
 }

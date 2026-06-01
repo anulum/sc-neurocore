@@ -35,8 +35,12 @@ function step!(s::ParametricLIFNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
         return 0
     end
     spike = (s.v >= s.threshold) ? 1.0 : 0.0
-    s.v = alpha(s) * s.v * (1.0 - spike) + I_ext
-    return (s.v >= s.threshold) ? 1 : 0
+    next_v = alpha(s) * s.v * (1.0 - spike) + I_ext
+    if !isfinite(next_v)
+        return 0
+    end
+    s.v = next_v
+    return (next_v >= s.threshold) ? 1 : 0
 end
 
 function valid(s::ParametricLIFNeuronState)
