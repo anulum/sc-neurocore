@@ -6,6 +6,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `NonResettingLIFNeuron` from raw Euler membrane and adaptive-threshold updates to exact first-order relaxation across the Python reference, Go service, Julia mirror, and Rust safety surface, with module-specific tests for closed-form parity, large-timestep boundedness, invalid-update preservation, and refreshed benchmark evidence.
 - Promoted `AdaptiveThresholdIFNeuron` from guarded Euler mutation to exact
   first-order relaxation across the Python reference, Go service, Julia mirror,
   Mojo spike kernel, and Rust safety surface; module-owned tests now cover

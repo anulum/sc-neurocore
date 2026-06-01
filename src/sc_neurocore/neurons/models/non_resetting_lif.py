@@ -52,20 +52,21 @@ class NonResettingLIFNeuron:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         self._validate_runtime_state()
-        membrane_update = (-(self.v - self.v_rest) + self.r_m * current) / self.tau_m * self.dt
-        next_v = self.v + membrane_update
-        if not math.isfinite(membrane_update) or not math.isfinite(next_v):
-            raise ValueError("membrane update must remain finite")
-        threshold_update = (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt
-        next_theta = self.theta + threshold_update
-        if not math.isfinite(threshold_update) or not math.isfinite(next_theta):
-            raise ValueError("threshold update must remain finite")
+        membrane_steady_state = self.v_rest + self.r_m * current
+        if not math.isfinite(membrane_steady_state):
+            raise ValueError("membrane exact relaxation update must remain finite")
+        next_v = self._exact_relaxation(self.v, membrane_steady_state, self.tau_m)
+        if not math.isfinite(next_v):
+            raise ValueError("membrane exact relaxation update must remain finite")
+        next_theta = self._exact_relaxation(self.theta, self.theta_rest, self.tau_theta)
+        if not math.isfinite(next_theta):
+            raise ValueError("threshold exact relaxation update must remain finite")
 
         spike = next_v >= next_theta
         if spike:
             next_theta += self.delta_theta
             if not math.isfinite(next_theta):
-                raise ValueError("threshold update must remain finite")
+                raise ValueError("threshold exact relaxation update must remain finite")
 
         self.v = next_v
         self.theta = next_theta
@@ -76,6 +77,10 @@ class NonResettingLIFNeuron:
     def reset(self) -> None:
         self.v = self.v_rest
         self.theta = self.theta_rest
+
+    def _exact_relaxation(self, state: float, steady_state: float, tau: float) -> float:
+        decay = math.exp(-self.dt / tau)
+        return decay * state + (1.0 - decay) * steady_state
 
     def _validate_runtime_state(self) -> None:
         for field in (

@@ -58,14 +58,16 @@ func (s *NonResettingLIFNeuronState) Step(iExt float64) (int, error) {
 	if !nonResettingLIFFinite(iExt) || !s.Valid() {
 		return 0, ErrNonResettingLIFInvalidState
 	}
-	membraneUpdate := (-(s.V - s.VRest) + s.RM*iExt) / s.TauM * s.Dt
-	nextV := s.V + membraneUpdate
-	if !nonResettingLIFFinite(membraneUpdate) || !nonResettingLIFFinite(nextV) {
+	membraneSteadyState := s.VRest + s.RM*iExt
+	if !nonResettingLIFFinite(membraneSteadyState) {
 		return 0, ErrNonResettingLIFNonFiniteUpdate
 	}
-	thresholdUpdate := (-(s.Theta - s.ThetaRest)) / s.TauTheta * s.Dt
-	nextTheta := s.Theta + thresholdUpdate
-	if !nonResettingLIFFinite(thresholdUpdate) || !nonResettingLIFFinite(nextTheta) {
+	nextV := nonResettingLIFExactRelaxation(s.V, membraneSteadyState, s.Dt, s.TauM)
+	if !nonResettingLIFFinite(nextV) {
+		return 0, ErrNonResettingLIFNonFiniteUpdate
+	}
+	nextTheta := nonResettingLIFExactRelaxation(s.Theta, s.ThetaRest, s.Dt, s.TauTheta)
+	if !nonResettingLIFFinite(nextTheta) {
 		return 0, ErrNonResettingLIFNonFiniteUpdate
 	}
 	spike := 0
@@ -101,8 +103,13 @@ func SimulateNonResettingLIFNeuron(nSteps int, iExt float64) ([]float64, int) {
 
 var (
 	ErrNonResettingLIFInvalidState    = errors.New("non-resetting-lif state/current must be finite and physically valid")
-	ErrNonResettingLIFNonFiniteUpdate = errors.New("non-resetting-lif membrane or threshold update became non-finite")
+	ErrNonResettingLIFNonFiniteUpdate = errors.New("non-resetting-lif exact relaxation update became non-finite")
 )
+
+func nonResettingLIFExactRelaxation(state float64, steadyState float64, dt float64, tau float64) float64 {
+	decay := math.Exp(-dt / tau)
+	return decay*state + (1.0-decay)*steadyState
+}
 
 func nonResettingLIFFinite(v float64) bool {
 	return !math.IsNaN(v) && !math.IsInf(v, 0)

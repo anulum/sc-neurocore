@@ -40,6 +40,11 @@ def _run(neuron: NonResettingLIFNeuron, current: float, steps: int) -> list[int]
     return [t for t in range(steps) if neuron.step(current) == 1]
 
 
+def _exact_relaxation(state: float, steady_state: float, dt: float, tau: float) -> float:
+    decay = np.exp(-dt / tau)
+    return decay * state + (1.0 - decay) * steady_state
+
+
 # ---------------------------------------------------------------------------
 # 1. ISOLATION
 # ---------------------------------------------------------------------------
@@ -144,17 +149,16 @@ class TestNRLIFValidation:
         assert (n.v, n.theta) == before
 
     def test_rejects_non_finite_membrane_candidate_before_mutation(self):
-        n = NonResettingLIFNeuron(v=-60.0, theta=-45.0, tau_m=1.0e-308)
+        n = NonResettingLIFNeuron(v=-60.0, theta=-45.0, r_m=10.0)
         before = (n.v, n.theta)
-        with pytest.raises(ValueError, match="membrane update"):
+        with pytest.raises(ValueError, match="exact relaxation"):
             n.step(1.0e308)
         assert (n.v, n.theta) == before
 
     def test_rejects_non_finite_threshold_candidate_before_mutation(self):
-        n = NonResettingLIFNeuron(v=-60.0, theta=1.0e308, tau_theta=1.0e-308)
+        n = NonResettingLIFNeuron(v=1.0e308, theta=9.0e307, theta_rest=9.0e307, delta_theta=9.0e307)
         before = (n.v, n.theta)
-        n.theta_rest = 0.0
-        with pytest.raises(ValueError, match="threshold update"):
+        with pytest.raises(ValueError, match="exact relaxation"):
             n.step(0.0)
         assert (n.v, n.theta) == before
 
@@ -163,22 +167,49 @@ class TestNRLIFValidation:
 # 2. ANALYTICAL — dV, dθ, no-reset, spike mechanism
 # ---------------------------------------------------------------------------
 class TestNRLIFAnalytical:
+    def test_subthreshold_step_matches_exact_relaxation(self):
+        """Linear membrane and threshold ODEs follow the closed-form solution."""
+        n = NonResettingLIFNeuron(v=-60.0, theta=-40.0, dt=0.5)
+        v0 = n.v
+        theta0 = n.theta
+        current = 4.0
+        expected_v = _exact_relaxation(v0, n.v_rest + n.r_m * current, n.dt, n.tau_m)
+        expected_theta = _exact_relaxation(theta0, n.theta_rest, n.dt, n.tau_theta)
+        assert n.step(current) == 0
+        assert n.v == pytest.approx(expected_v, abs=1e-12)
+        assert n.theta == pytest.approx(expected_theta, abs=1e-12)
+
+    def test_large_timestep_exact_relaxation_remains_bounded(self):
+        """Exact relaxation stays inside the physical endpoint envelope for large dt."""
+        n = NonResettingLIFNeuron(v=1000.0, theta=2000.0, dt=100.0)
+        assert n.step(0.0) == 0
+        assert n.v == pytest.approx(
+            _exact_relaxation(1000.0, n.v_rest, n.dt, n.tau_m),
+            abs=1e-12,
+        )
+        assert n.theta == pytest.approx(
+            _exact_relaxation(2000.0, n.theta_rest, n.dt, n.tau_theta),
+            abs=1e-12,
+        )
+        assert n.v_rest <= n.v <= 1000.0
+        assert n.theta_rest <= n.theta <= 2000.0
+
     def test_dv_formula(self):
-        """dV = (-(V-V_rest) + R·I) / tau_m · dt."""
+        """Voltage follows exact first-order relaxation toward V_rest + R·I."""
         n = NonResettingLIFNeuron()
         v0 = n.v
         I = 5.0
-        expected_dv = (-(v0 - n.v_rest) + n.r_m * I) / n.tau_m * n.dt
+        expected_v = _exact_relaxation(v0, n.v_rest + n.r_m * I, n.dt, n.tau_m)
         n.step(I)
-        assert abs((n.v - v0) - expected_dv) < 1e-12
+        assert abs(n.v - expected_v) < 1e-12
 
     def test_dtheta_formula(self):
-        """dθ = -(θ - θ_rest) / tau_θ · dt."""
+        """Threshold follows exact first-order relaxation toward theta_rest."""
         n = NonResettingLIFNeuron()
         theta0 = n.theta
-        expected_dtheta = (-(theta0 - n.theta_rest)) / n.tau_theta * n.dt
+        expected_theta = _exact_relaxation(theta0, n.theta_rest, n.dt, n.tau_theta)
         n.step(0.0)  # subthreshold, no spike
-        assert abs((n.theta - theta0) - expected_dtheta) < 1e-14
+        assert abs(n.theta - expected_theta) < 1e-14
 
     def test_no_voltage_reset_on_spike(self):
         """V does NOT reset after spike — key model feature."""
