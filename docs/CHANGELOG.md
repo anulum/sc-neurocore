@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.3] - 2026-06-01
+
+### Release automation
+- Fixed the tag-release workflow to extract release notes from the committed
+  documentation changelog path.
+- Issued this patch release candidate without rewriting the existing
+  `v3.15.1` or `v3.15.2` tags.
+
 ## [3.15.2] - 2026-06-01
 
 ### Release integrity
