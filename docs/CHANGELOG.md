@@ -6,6 +6,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `AlphaNeuron` from a single-pole synaptic filter to the full
+  two-state Rall/Gerstner alpha-cascade flow across the Python reference, Go
+  service, Julia mirror, and Rust safety surface; module-owned tests now cover
+  closed-form alpha parity, equal-time-constant limits, large-timestep
+  boundedness, fail-closed state preservation, and refreshed Python benchmark
+  evidence.
 - Promoted `ResonateAndFireNeuron` from raw Euler oscillator increments to the
   exact constant-input linear resonator flow across the Python reference, Go
   service, Julia mirror, Mojo scalar helpers, and Rust safety surface; module
