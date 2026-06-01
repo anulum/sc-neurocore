@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.6] - 2026-06-01
+
+### Publishing hygiene
+- Aligned the engine wheel PyPI publication job with the repository's existing
+  trusted-publishing environment after PyPI rejected the dedicated
+  `pypi-engine` environment claim.
+- Issued this patch release without rewriting earlier tags so the failed
+  trusted-publisher attempt remains traceable and superseded.
+
 ## [3.15.5] - 2026-06-01
 
 ### Engine package metadata
