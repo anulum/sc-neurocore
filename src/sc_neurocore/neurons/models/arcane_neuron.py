@@ -56,6 +56,7 @@ Reference: Original design, Šotek & Arcane Sapience 2026.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 import numpy as np
 
 
@@ -105,80 +106,170 @@ class ArcaneNeuron:
     dt: float = 1.0
 
     def step(self, current: float) -> int:
+        if not math.isfinite(current):
+            raise ValueError("ArcaneNeuron current must be finite")
+        self._validate_runtime_state()
+
+        old_v_fast = float(self.v_fast)
+        old_v_work = float(self.v_work)
+        old_v_deep = float(self.v_deep)
+        old_spike_history = list(self._spike_history)
+        old_novelty_history = list(self._novelty_history)
+
         # Self-referential metrics
-        spike_rate = sum(self._spike_history) / len(self._spike_history)
-        self._confidence = 1.0 - np.mean(self._novelty_history)
+        spike_rate = float(sum(old_spike_history) / len(old_spike_history))
+        confidence = 1.0 - float(np.mean(old_novelty_history))
 
         # Attention gate
         gate_input = (
             self.w_gate[0] * current
-            + self.w_gate[1] * self.v_fast
-            + self.w_gate[2] * self.v_work
-            + self.w_gate[3] * self._confidence
+            + self.w_gate[1] * old_v_fast
+            + self.w_gate[2] * old_v_work
+            + self.w_gate[3] * confidence
         )
-        gate = 1.0 / (1.0 + np.exp(-gate_input))
+        gate = self._sigmoid(float(gate_input))
         i_eff = gate * current
 
-        # Fast compartment
-        self.v_fast += (-self.v_fast + i_eff - self.w_inh * spike_rate) / self.tau_fast * self.dt
+        # Fast compartment: exact first-order relaxation to a constant drive
+        # during this step.
+        fast_drive = i_eff - self.w_inh * spike_rate
+        next_v_fast_continuous = self._exact_relaxation(
+            old_v_fast, fast_drive, self.dt, self.tau_fast
+        )
+        self._require_finite_candidate(next_v_fast_continuous, "fast compartment")
 
         # Prediction error (self-modeling)
-        self._prediction = (
-            self.w_pred[0] * self.v_fast
-            + self.w_pred[1] * self.v_work
-            + self.w_pred[2] * self.v_deep
+        prediction = float(
+            self.w_pred[0] * next_v_fast_continuous
+            + self.w_pred[1] * old_v_work
+            + self.w_pred[2] * old_v_deep
         )
-        self._surprise = abs(self.v_fast - self._prediction)
-        self._novelty = 1.0 / (
-            1.0 + np.exp(-self.kappa * (self._surprise - self.surprise_baseline))
-        )
-
-        # Update novelty history
-        self._novelty_history[self._nov_idx % len(self._novelty_history)] = self._novelty
-        self._nov_idx += 1
+        surprise = abs(next_v_fast_continuous - prediction)
+        novelty = self._sigmoid(self.kappa * (surprise - self.surprise_baseline))
 
         # Effective threshold: deep state + confidence modulate
         eff_threshold = (
             self.theta
-            * (1.0 + self.gamma * self.v_deep)
-            * (1.0 - self.delta_conf * self._confidence)
+            * (1.0 + self.gamma * old_v_deep)
+            * (1.0 - self.delta_conf * confidence)
         )
+        self._require_finite_candidate(eff_threshold, "effective threshold")
         eff_threshold = max(eff_threshold, 0.1)
 
         # Spike decision
-        spike = 1 if self.v_fast >= eff_threshold else 0
+        spike = 1 if next_v_fast_continuous >= eff_threshold else 0
+        accepted_v_fast = 0.0 if spike else next_v_fast_continuous
 
-        # Working memory: only updates on spike
-        if spike:
-            self.v_work += self.alpha_w * self.v_fast / self.tau_work * self.dt
-            self.v_fast = 0.0
+        # Working memory: exact relaxation to the spike-gated drive.
+        work_drive = self.alpha_w * next_v_fast_continuous if spike else 0.0
+        next_v_work = self._exact_relaxation(old_v_work, work_drive, self.dt, self.tau_work)
+        self._require_finite_candidate(next_v_work, "working compartment")
 
-        # Working memory decay
-        self.v_work += -self.v_work / self.tau_work * self.dt
+        # Deep compartment: exact relaxation to novelty-gated working memory.
+        deep_drive = self.alpha_d * next_v_work * novelty
+        next_v_deep = self._exact_relaxation(old_v_deep, deep_drive, self.dt, self.tau_deep)
+        self._require_finite_candidate(next_v_deep, "deep compartment")
 
-        # Deep compartment: only updates on genuine novelty
-        prev_deep = self.v_deep
-        self.v_deep += (
-            (-self.v_deep + self.alpha_d * self.v_work * self._novelty) / self.tau_deep * self.dt
-        )
-        self._identity_drift += abs(self.v_deep - prev_deep)
+        # Meta-learning: update predictor weights toward reducing surprise.
+        meta_lr = self.lr_base * (1.0 + self.eta * novelty)
+        error = accepted_v_fast - prediction
+        next_w_pred = np.array(self.w_pred, dtype=float, copy=True)
+        next_w_pred[0] += meta_lr * error * accepted_v_fast
+        next_w_pred[1] += meta_lr * error * next_v_work
+        next_w_pred[2] += meta_lr * error * next_v_deep
+        norm = float(np.linalg.norm(next_w_pred))
+        if not math.isfinite(norm):
+            raise ValueError("ArcaneNeuron predictor candidate must remain finite")
+        if norm > 0.0:
+            next_w_pred /= norm
 
-        # Meta-learning: update predictor weights toward reducing surprise
-        meta_lr = self.lr_base * (1.0 + self.eta * self._novelty)
-        error = self.v_fast - self._prediction
-        self.w_pred[0] += meta_lr * error * self.v_fast
-        self.w_pred[1] += meta_lr * error * self.v_work
-        self.w_pred[2] += meta_lr * error * self.v_deep
-        norm = np.linalg.norm(self.w_pred)
-        if norm > 0:
-            self.w_pred /= norm
+        next_novelty_history = old_novelty_history
+        next_novelty_history[self._nov_idx % len(next_novelty_history)] = novelty
+        next_spike_history = old_spike_history
+        next_spike_history[self._hist_idx % len(next_spike_history)] = spike
 
-        # Update spike history
-        self._spike_history[self._hist_idx % len(self._spike_history)] = spike
+        self.v_fast = accepted_v_fast
+        self.v_work = next_v_work
+        self.v_deep = next_v_deep
+        self._prediction = prediction
+        self._surprise = surprise
+        self._novelty = novelty
+        self._confidence = confidence
+        self._novelty_history = next_novelty_history
+        self._nov_idx += 1
+        self._identity_drift += abs(next_v_deep - old_v_deep)
+        self.w_pred = next_w_pred
+        self._spike_history = next_spike_history
         self._hist_idx += 1
         self._total_steps += 1
 
         return spike
+
+    @staticmethod
+    def _exact_relaxation(state: float, steady_state: float, dt: float, tau: float) -> float:
+        decay = math.exp(-dt / tau)
+        return decay * state + (1.0 - decay) * steady_state
+
+    @staticmethod
+    def _sigmoid(x: float) -> float:
+        if not math.isfinite(x):
+            return 1.0 if x > 0.0 else 0.0
+        if x >= 0.0:
+            z = math.exp(-x)
+            return 1.0 / (1.0 + z)
+        z = math.exp(x)
+        return z / (1.0 + z)
+
+    @staticmethod
+    def _require_finite_candidate(value: float, label: str) -> None:
+        if not math.isfinite(value):
+            raise ValueError(f"ArcaneNeuron {label} candidate must remain finite")
+
+    def _validate_runtime_state(self) -> None:
+        for name in (
+            "v_fast",
+            "v_work",
+            "v_deep",
+            "alpha_w",
+            "alpha_d",
+            "theta",
+            "gamma",
+            "delta_conf",
+            "kappa",
+            "surprise_baseline",
+            "lr_base",
+            "eta",
+            "_prediction",
+            "_surprise",
+            "_novelty",
+            "_confidence",
+            "_identity_drift",
+            "w_inh",
+        ):
+            if not math.isfinite(float(getattr(self, name))):
+                raise ValueError(f"ArcaneNeuron {name} must be finite")
+        for name in ("tau_fast", "tau_work", "tau_deep", "dt"):
+            value = float(getattr(self, name))
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(f"ArcaneNeuron {name} must be finite and positive")
+        if self.theta <= 0.0:
+            raise ValueError("ArcaneNeuron theta must be finite and positive")
+        if self.alpha_w < 0.0 or self.alpha_d < 0.0 or self.lr_base < 0.0 or self.w_inh < 0.0:
+            raise ValueError("ArcaneNeuron coupling and learning rates must be non-negative")
+        w_gate = np.asarray(self.w_gate, dtype=float)
+        w_pred = np.asarray(self.w_pred, dtype=float)
+        if w_gate.shape != (4,) or not np.all(np.isfinite(w_gate)):
+            raise ValueError("ArcaneNeuron w_gate must be a finite 4-vector")
+        if w_pred.shape != (3,) or not np.all(np.isfinite(w_pred)):
+            raise ValueError("ArcaneNeuron w_pred must be a finite 3-vector")
+        if len(self._spike_history) == 0 or len(self._novelty_history) == 0:
+            raise ValueError("ArcaneNeuron history buffers must be non-empty")
+        if any(spike not in (0, 1) for spike in self._spike_history):
+            raise ValueError("ArcaneNeuron spike history must contain binary values")
+        if not all(math.isfinite(float(value)) for value in self._novelty_history):
+            raise ValueError("ArcaneNeuron novelty history must be finite")
+        if self._hist_idx < 0 or self._nov_idx < 0 or self._total_steps < 0:
+            raise ValueError("ArcaneNeuron history counters must be non-negative")
 
     def reset(self) -> None:
         self.v_fast = 0.0

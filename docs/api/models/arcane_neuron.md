@@ -481,23 +481,43 @@ even when activity is cleared.
 
 ## Implementation Details
 
-### Source code structure (218 lines)
+### 2026-06-01 physics hardening
+
+The maintained implementation now treats the fast, working-memory, and deep
+identity compartments as first-order relaxation processes and advances each
+with the closed-form update
+
+$$x(t + dt) = x_{\infty} + (x(t) - x_{\infty})e^{-dt / \tau}$$
+
+rather than raw explicit Euler increments. The attention gate, prediction,
+novelty, threshold, working-memory drive, deep novelty drive, and predictor
+weight update are evaluated candidate-first from the accepted old state. The
+candidate state is committed only after all scalar states, vector weights,
+history buffers, and predictor normalisation have passed finite-domain checks.
+
+Runtime validation rejects non-finite currents, corrupted state, invalid
+positive-time constants, invalid timestep, malformed gate/predictor vectors,
+and non-finite candidates before mutation. The Go service, Julia mirror, Mojo
+scalar helpers, and Rust safety surface now mirror the same exact-relaxation
+and fail-closed contract instead of placeholder no-op dynamics.
+
+### Source code structure
 
 ```
 arcane_neuron.py
 ├── Module docstring (52 lines): full architecture description
 ├── ArcaneNeuron dataclass
 │   ├── 19 parameters + 7 private state variables
-│   ├── step(current) → int (73 lines, most complex step in library)
+│   ├── step(current) → int
 │   │   ├── Self-referential metrics (spike_rate, confidence)
 │   │   ├── Attention gate (sigmoid)
-│   │   ├── Fast compartment (Euler + inhibition)
+│   │   ├── Fast compartment (exact relaxation + inhibition)
 │   │   ├── Prediction + surprise + novelty
 │   │   ├── Novelty history update
 │   │   ├── Effective threshold computation
 │   │   ├── Spike decision
-│   │   ├── Working memory (spike-gated + decay)
-│   │   ├── Deep compartment (novelty-gated)
+│   │   ├── Working memory (spike-gated exact relaxation)
+│   │   ├── Deep compartment (novelty-gated exact relaxation)
 │   │   ├── Predictor weight update (meta-learning)
 │   │   └── Spike history update
 │   ├── reset() (v_deep intentionally excluded)
@@ -515,15 +535,15 @@ causal dependencies:
 
 1. **Spike rate + confidence** (from history → current state assessment)
 2. **Gate** (from input + state → filtered input)
-3. **Fast update** (from filtered input → new v_fast)
+3. **Fast exact relaxation** (from filtered input → new v_fast candidate)
 4. **Prediction** (from new v_fast + work + deep → prediction)
 5. **Surprise + novelty** (from v_fast vs prediction → novelty signal)
 6. **Threshold** (from deep + confidence → firing decision)
 7. **Spike decision** (from v_fast vs threshold)
 8. **Working memory** (spike-gated → update only if fired)
-9. **Deep compartment** (novelty-gated → identity update)
-10. **Predictor weights** (meta-lr × error × state → weight update)
-11. **History update** (record spike and novelty for next step)
+9. **Deep exact relaxation** (novelty-gated → identity candidate)
+10. **Predictor weights** (meta-lr × error × state → candidate weights)
+11. **Candidate commit** (finite-domain checks pass before mutation)
 
 This ordering ensures that:
 - The gate sees the current input and previous state (not updated state)
@@ -585,26 +605,29 @@ ArcaneNeuron
 ├── Analysis: spike_count, firing_rate verified
 ├── State access: .identity_state, .confidence, .novelty, .meta_learning_rate
 ├── get_state() → 9-key diagnostic dict
-└── Rust: compatible (18 f64 state values, 2 exp calls)
+└── Go / Julia / Mojo / Rust safety: exact-relaxation mirrors
 ```
 
 ---
 
-## Performance
+## Measured Performance (2026-06-01)
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| Isolation throughput | ~27K steps/s | Most complex step() in library |
-| Network (10 neurons, 0.5s) | ~5K neuron-steps/s | 2 exp + norm + ring buffers |
-| exp() per step | 2 | Gate sigmoid + novelty sigmoid |
-| State updates per step | 11 | Most of any model |
+| Python exact-relaxation step | 40,715.27682 ns/step median | `50,000` steps × 5 repeats |
+| Benchmark command | `PYTHONPATH=src .venv/bin/python benchmarks/bench_model_arcane_neuron.py` | local workstation |
+| Spikes per repeat | 12,500 | current = 2.0 |
+| Ending identity state | `0.001526059150150208` | deterministic across repeats |
+| Predictor weights | `[0.9260935184030245, -0.3771971330404296, -0.008550906267018063]` | deterministic across repeats |
+| exp() per step | 5 | gate, fast/work/deep relaxation, novelty |
+| Candidate commits per step | 1 | all state variables validated before mutation |
 | Memory per neuron | ~400 bytes | 50 + 20 history + weights + scalars |
 
-The ArcaneNeuron is ~20× slower than a standard LIF due to:
-- 2 sigmoid evaluations (np.exp)
+The ArcaneNeuron remains one of the most expensive single-neuron models due to:
+- 2 sigmoid evaluations plus 3 exact-relaxation exponentials
 - Ring buffer sum (50 elements)
 - Weight update + normalisation (np.linalg.norm)
-- 11 sequential state updates
+- Candidate-first validation across scalar state, vector weights, and histories
 
 ---
 

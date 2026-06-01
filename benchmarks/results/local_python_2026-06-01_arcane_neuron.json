@@ -1,0 +1,136 @@
+{
+  "benchmark": "ArcaneNeuron Python exact-relaxation candidate-first step",
+  "timestamp_utc": "2026-06-01T09:19:26+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_arcane_neuron.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 50000,
+  "repeats": 5,
+  "current": 2.0,
+  "median_ns_per_step": 40715.27682,
+  "min_ns_per_step": 38023.15752,
+  "max_ns_per_step": 71363.82606,
+  "results": [
+    {
+      "steps": 50000,
+      "current": 2.0,
+      "elapsed_ns": 1901157876,
+      "ns_per_step": 38023.15752,
+      "spikes": 12500,
+      "ending_state": {
+        "v_fast": 0.0,
+        "v_work": 0.0669894019344306,
+        "v_deep": 0.001526059150150208,
+        "confidence": 0.5376309465135463,
+        "novelty": 0.4875521979988657,
+        "surprise": 0.09003970029051245,
+        "prediction": 0.7964922955250668,
+        "identity_drift": 0.0015868432877586278,
+        "meta_lr": 0.019751043959977316,
+        "total_steps": 50000
+      },
+      "predictor_weights": [
+        0.9260935184030245,
+        -0.3771971330404296,
+        -0.008550906267018063
+      ]
+    },
+    {
+      "steps": 50000,
+      "current": 2.0,
+      "elapsed_ns": 1908993121,
+      "ns_per_step": 38179.86242,
+      "spikes": 12500,
+      "ending_state": {
+        "v_fast": 0.0,
+        "v_work": 0.0669894019344306,
+        "v_deep": 0.001526059150150208,
+        "confidence": 0.5376309465135463,
+        "novelty": 0.4875521979988657,
+        "surprise": 0.09003970029051245,
+        "prediction": 0.7964922955250668,
+        "identity_drift": 0.0015868432877586278,
+        "meta_lr": 0.019751043959977316,
+        "total_steps": 50000
+      },
+      "predictor_weights": [
+        0.9260935184030245,
+        -0.3771971330404296,
+        -0.008550906267018063
+      ]
+    },
+    {
+      "steps": 50000,
+      "current": 2.0,
+      "elapsed_ns": 2035763841,
+      "ns_per_step": 40715.27682,
+      "spikes": 12500,
+      "ending_state": {
+        "v_fast": 0.0,
+        "v_work": 0.0669894019344306,
+        "v_deep": 0.001526059150150208,
+        "confidence": 0.5376309465135463,
+        "novelty": 0.4875521979988657,
+        "surprise": 0.09003970029051245,
+        "prediction": 0.7964922955250668,
+        "identity_drift": 0.0015868432877586278,
+        "meta_lr": 0.019751043959977316,
+        "total_steps": 50000
+      },
+      "predictor_weights": [
+        0.9260935184030245,
+        -0.3771971330404296,
+        -0.008550906267018063
+      ]
+    },
+    {
+      "steps": 50000,
+      "current": 2.0,
+      "elapsed_ns": 2698570165,
+      "ns_per_step": 53971.4033,
+      "spikes": 12500,
+      "ending_state": {
+        "v_fast": 0.0,
+        "v_work": 0.0669894019344306,
+        "v_deep": 0.001526059150150208,
+        "confidence": 0.5376309465135463,
+        "novelty": 0.4875521979988657,
+        "surprise": 0.09003970029051245,
+        "prediction": 0.7964922955250668,
+        "identity_drift": 0.0015868432877586278,
+        "meta_lr": 0.019751043959977316,
+        "total_steps": 50000
+      },
+      "predictor_weights": [
+        0.9260935184030245,
+        -0.3771971330404296,
+        -0.008550906267018063
+      ]
+    },
+    {
+      "steps": 50000,
+      "current": 2.0,
+      "elapsed_ns": 3568191303,
+      "ns_per_step": 71363.82606,
+      "spikes": 12500,
+      "ending_state": {
+        "v_fast": 0.0,
+        "v_work": 0.0669894019344306,
+        "v_deep": 0.001526059150150208,
+        "confidence": 0.5376309465135463,
+        "novelty": 0.4875521979988657,
+        "surprise": 0.09003970029051245,
+        "prediction": 0.7964922955250668,
+        "identity_drift": 0.0015868432877586278,
+        "meta_lr": 0.019751043959977316,
+        "total_steps": 50000
+      },
+      "predictor_weights": [
+        0.9260935184030245,
+        -0.3771971330404296,
+        -0.008550906267018063
+      ]
+    }
+  ]
+}
