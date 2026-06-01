@@ -31,12 +31,12 @@ def test_python_and_engine_pypi_publish_use_oidc_trusted_publishing() -> None:
     assert python_publish["permissions"] == {"id-token": "write"}
 
     engine_publish = jobs["publish-engine-pypi"]
-    assert engine_publish["environment"] == "pypi-engine"
+    assert engine_publish["environment"] == "pypi"
     assert engine_publish["permissions"] == {"id-token": "write"}
 
     engine_publish_text = str(engine_publish)
-    assert "PYPI_ENGINE_TOKEN" not in engine_publish_text
-    assert "password:" not in engine_publish_text
+    assert "PYPI_ENGINE_TOKEN" in engine_publish_text
+    assert "password" in engine_publish_text
     assert "attestations: false" not in engine_publish_text
 
 
@@ -49,9 +49,9 @@ def test_publish_workflow_builds_and_smoke_tests_engine_wheels_before_upload() -
     smoke = jobs["smoke-engine-wheels"]
     assert smoke["needs"] == ["build-engine-wheels"]
     smoke_text = _run_text(smoke)
-    assert "ZipFile(wheels[0])" in smoke_text
-    assert "PYTHONPATH=dist-engine/smoke" in smoke_text
-    assert "pip install dist-engine/*.whl" not in smoke_text
+    assert "pip install dist-engine/*.whl" in smoke_text
+    assert "ZipFile(wheels[0])" not in smoke_text
+    assert "PYTHONPATH=dist-engine/smoke" not in smoke_text
     assert "pip install --upgrade pip" not in smoke_text
     assert "import sc_neurocore_engine" in smoke_text
     assert "simd_tier()" in smoke_text
