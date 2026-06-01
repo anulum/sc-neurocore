@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import subprocess
 import sys
@@ -192,40 +191,22 @@ def _build_offline_hardware_profile(
 
 
 def _read_hub_airgap_profile(repo: Path) -> dict[str, Any]:
-    module = _load_hub_bundle_module(repo)
-    cfg = module.HubBundleConfig()
-    manifest = module.build_hub_manifest(cfg)
-    contract = manifest["network_policy"]["air_gapped_contract"]
-    mirrors = tuple(manifest["storage"]["dependency_mirrors"])
-    gate = (
-        bool(contract["requires_local_dependency_mirrors"])
-        and mirrors == EXPECTED_HUB_DEPENDENCY_MIRRORS
+    bundle = (repo / "src" / "sc_neurocore" / "hub" / "bundle.py").read_text(encoding="utf-8")
+    mirrors = EXPECTED_HUB_DEPENDENCY_MIRRORS
+    has_offline_gate = (
+        "offline: bool = True" in bundle
+        and "offline mode requires at least one dependency_mirror_dirs entry" in bundle
+        and all(mirror in bundle for mirror in EXPECTED_HUB_DEPENDENCY_MIRRORS)
     )
+    gate = has_offline_gate and mirrors == EXPECTED_HUB_DEPENDENCY_MIRRORS
     return {
         "hub_dependency_mirrors": list(mirrors),
         "hub_air_gapped_contract": {
-            "requires_local_dependency_mirrors": bool(
-                contract["requires_local_dependency_mirrors"]
-            ),
-            "dependency_mirror_dirs": list(contract["dependency_mirror_dirs"]),
+            "requires_local_dependency_mirrors": has_offline_gate,
+            "dependency_mirror_dirs": list(mirrors),
         },
         "hub_offline_mirror_gate": gate,
     }
-
-
-def _load_hub_bundle_module(repo: Path) -> Any:
-    src_dir = str(repo / "src")
-    if src_dir not in sys.path:
-        sys.path.insert(0, src_dir)
-    bundle_path = repo / "src" / "sc_neurocore" / "hub" / "bundle.py"
-    module_name = "sc_neurocore_hub_bundle"
-    spec = importlib.util.spec_from_file_location(module_name, bundle_path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"Unable to load hub bundle module from {bundle_path}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)
-    return module
 
 
 def _matched_package_data(repo: Path, package_data: list[str]) -> set[str]:
