@@ -1,0 +1,71 @@
+{
+  "benchmark": "ResonateAndFireNeuron Python exact-flow step",
+  "timestamp_utc": "2026-06-01T09:41:47+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_resonate_and_fire.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 2.0,
+  "median_ns_per_step": 2742.56363,
+  "min_ns_per_step": 2618.70871,
+  "max_ns_per_step": 3110.97803,
+  "results": [
+    {
+      "steps": 200000,
+      "current": 2.0,
+      "elapsed_ns": 523741742,
+      "ns_per_step": 2618.70871,
+      "spikes": 18181,
+      "ending_state": {
+        "x": 0.8509771070439969,
+        "y": 0.1932519645494586
+      }
+    },
+    {
+      "steps": 200000,
+      "current": 2.0,
+      "elapsed_ns": 548512726,
+      "ns_per_step": 2742.56363,
+      "spikes": 18181,
+      "ending_state": {
+        "x": 0.8509771070439969,
+        "y": 0.1932519645494586
+      }
+    },
+    {
+      "steps": 200000,
+      "current": 2.0,
+      "elapsed_ns": 622195606,
+      "ns_per_step": 3110.97803,
+      "spikes": 18181,
+      "ending_state": {
+        "x": 0.8509771070439969,
+        "y": 0.1932519645494586
+      }
+    },
+    {
+      "steps": 200000,
+      "current": 2.0,
+      "elapsed_ns": 534043168,
+      "ns_per_step": 2670.21584,
+      "spikes": 18181,
+      "ending_state": {
+        "x": 0.8509771070439969,
+        "y": 0.1932519645494586
+      }
+    },
+    {
+      "steps": 200000,
+      "current": 2.0,
+      "elapsed_ns": 565701952,
+      "ns_per_step": 2828.50976,
+      "spikes": 18181,
+      "ending_state": {
+        "x": 0.8509771070439969,
+        "y": 0.1932519645494586
+      }
+    }
+  ]
+}

@@ -45,28 +45,28 @@ func (s ResonateAndFireNeuronState) Valid() bool {
 		finite(s.Dt) && s.Dt > 0.0
 }
 
-// Step advances the resonator by one explicit Euler step. Invalid inputs do not mutate state.
+// Step advances the resonator by the exact constant-input linear flow. Invalid inputs do not mutate state.
 func (s *ResonateAndFireNeuronState) Step(iExt float64) (int, error) {
 	if !finite(iExt) || !s.Valid() {
 		return 0, ErrResonateAndFireInvalidState
 	}
 
-	dx := (s.B*s.X - s.Omega*s.Y + iExt) * s.Dt
-	dy := (s.Omega*s.X + s.B*s.Y) * s.Dt
-	nextX := s.X + dx
-	nextY := s.Y + dy
+	nextX, nextY, err := resonateAndFireExactFlow(s.X, s.Y, iExt, s.B, s.Omega, s.Dt)
+	if err != nil {
+		return 0, err
+	}
 	radius := math.Hypot(nextX, nextY)
-	if !finite(dx) || !finite(dy) || !finite(nextX) || !finite(nextY) || !finite(radius) {
+	if !finite(nextX) || !finite(nextY) || !finite(radius) {
 		return 0, ErrResonateAndFireNonFiniteUpdate
 	}
 
-	s.X = nextX
-	s.Y = nextY
 	if radius >= s.Threshold {
 		s.X = 0.0
 		s.Y = 0.0
 		return 1, nil
 	}
+	s.X = nextX
+	s.Y = nextY
 	return 0, nil
 }
 
@@ -96,5 +96,32 @@ func SimulateResonateAndFireNeuron(nSteps int, iExt float64) ([]float64, int) {
 
 var (
 	ErrResonateAndFireInvalidState    = errors.New("resonate-and-fire state/current must be finite and well-formed")
-	ErrResonateAndFireNonFiniteUpdate = errors.New("resonate-and-fire Euler update became non-finite")
+	ErrResonateAndFireNonFiniteUpdate = errors.New("resonate-and-fire exact-flow update became non-finite")
 )
+
+func resonateAndFireExactFlow(x float64, y float64, current float64, b float64, omega float64, dt float64) (float64, float64, error) {
+	denominator := b*b + omega*omega
+	dampingArgument := b * dt
+	angle := omega * dt
+	if !finite(denominator) || denominator <= 0.0 || !finite(dampingArgument) || !finite(angle) {
+		return 0.0, 0.0, ErrResonateAndFireNonFiniteUpdate
+	}
+
+	xSS := -b * current / denominator
+	ySS := omega * current / denominator
+	decay := math.Exp(dampingArgument)
+	cosAngle := math.Cos(angle)
+	sinAngle := math.Sin(angle)
+	if !finite(xSS) || !finite(ySS) || !finite(decay) || !finite(cosAngle) || !finite(sinAngle) {
+		return 0.0, 0.0, ErrResonateAndFireNonFiniteUpdate
+	}
+
+	dx := x - xSS
+	dy := y - ySS
+	nextX := xSS + decay*(dx*cosAngle-dy*sinAngle)
+	nextY := ySS + decay*(dx*sinAngle+dy*cosAngle)
+	if !finite(nextX) || !finite(nextY) {
+		return 0.0, 0.0, ErrResonateAndFireNonFiniteUpdate
+	}
+	return nextX, nextY, nil
+}

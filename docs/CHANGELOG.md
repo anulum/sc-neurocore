@@ -6,6 +6,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `ResonateAndFireNeuron` from raw Euler oscillator increments to the
+  exact constant-input linear resonator flow across the Python reference, Go
+  service, Julia mirror, Mojo scalar helpers, and Rust safety surface; module
+  tests now cover matrix-exponential parity, large-timestep damping,
+  fail-closed state preservation, and refreshed Python benchmark evidence.
 - Promoted `ArcaneNeuron` to candidate-first exact first-order relaxation across
   the fast, working-memory, and deep identity compartments on the Python
   reference, Go service, Julia mirror, Mojo scalar helpers, and Rust safety

@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo SIMD acceleration for resonate_and_fire
 
-from std.math import sqrt
+from std.math import cos, exp, sin, sqrt
 
 
 fn _finite(x: Float64) -> Bool:
@@ -36,6 +36,68 @@ fn resonate_and_fire_valid(
     )
 
 
+fn resonate_and_fire_exact_x(
+    x: Float64,
+    y: Float64,
+    current: Float64,
+    b: Float64,
+    omega: Float64,
+    dt: Float64,
+) -> Float64:
+    var denominator = b * b + omega * omega
+    if not _finite(denominator) or denominator <= 0.0:
+        return 0.0 / 0.0
+    var x_ss = -b * current / denominator
+    var y_ss = omega * current / denominator
+    var decay = exp(b * dt)
+    var angle = omega * dt
+    var cos_angle = cos(angle)
+    var sin_angle = sin(angle)
+    if (
+        not _finite(x_ss)
+        or not _finite(y_ss)
+        or not _finite(decay)
+        or not _finite(angle)
+        or not _finite(cos_angle)
+        or not _finite(sin_angle)
+    ):
+        return 0.0 / 0.0
+    var dx = x - x_ss
+    var dy = y - y_ss
+    return x_ss + decay * (dx * cos_angle - dy * sin_angle)
+
+
+fn resonate_and_fire_exact_y(
+    x: Float64,
+    y: Float64,
+    current: Float64,
+    b: Float64,
+    omega: Float64,
+    dt: Float64,
+) -> Float64:
+    var denominator = b * b + omega * omega
+    if not _finite(denominator) or denominator <= 0.0:
+        return 0.0 / 0.0
+    var x_ss = -b * current / denominator
+    var y_ss = omega * current / denominator
+    var decay = exp(b * dt)
+    var angle = omega * dt
+    var cos_angle = cos(angle)
+    var sin_angle = sin(angle)
+    if (
+        not _finite(x_ss)
+        or not _finite(y_ss)
+        or not _finite(decay)
+        or not _finite(angle)
+        or not _finite(cos_angle)
+        or not _finite(sin_angle)
+    ):
+        return 0.0 / 0.0
+    var dx = x - x_ss
+    var dy = y - y_ss
+    return y_ss + decay * (dx * sin_angle + dy * cos_angle)
+
+
 fn resonate_and_fire_step_spike(
     x: Float64,
     y: Float64,
@@ -50,16 +112,12 @@ fn resonate_and_fire_step_spike(
     if not resonate_and_fire_valid(x, y, b, omega, threshold, dt):
         return -1
 
-    var dx = (b * x - omega * y + current) * dt
-    var dy = (omega * x + b * y) * dt
-    var next_x = x + dx
-    var next_y = y + dy
+    var next_x = resonate_and_fire_exact_x(x, y, current, b, omega, dt)
+    var next_y = resonate_and_fire_exact_y(x, y, current, b, omega, dt)
     var radius_squared = next_x * next_x + next_y * next_y
     var radius = sqrt(radius_squared)
     if (
-        not _finite(dx)
-        or not _finite(dy)
-        or not _finite(next_x)
+        not _finite(next_x)
         or not _finite(next_y)
         or not _finite(radius_squared)
         or not _finite(radius)

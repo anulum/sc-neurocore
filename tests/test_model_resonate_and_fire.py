@@ -29,6 +29,29 @@ def _run(neuron: ResonateAndFireNeuron, current: float, steps: int) -> list[int]
     return [t for t in range(steps) if neuron.step(current) == 1]
 
 
+def _exact_linear_flow(
+    x: float,
+    y: float,
+    current: float,
+    b: float,
+    omega: float,
+    dt: float,
+) -> tuple[float, float]:
+    denominator = b**2 + omega**2
+    x_ss = -b * current / denominator
+    y_ss = omega * current / denominator
+    dx = x - x_ss
+    dy = y - y_ss
+    decay = np.exp(b * dt)
+    angle = omega * dt
+    cos_angle = np.cos(angle)
+    sin_angle = np.sin(angle)
+    return (
+        x_ss + decay * (dx * cos_angle - dy * sin_angle),
+        y_ss + decay * (dx * sin_angle + dy * cos_angle),
+    )
+
+
 def _critical_current(b: float, omega: float, threshold: float) -> float:
     """Analytical critical current: I_crit = θ · sqrt(b² + ω²)."""
     return threshold * np.sqrt(b**2 + omega**2)
@@ -66,6 +89,45 @@ class TestResonateAndFireIsolation:
             n.step(2.0)
         n.reset()
         assert n.x == 0.0 and n.y == 0.0
+
+    def test_exact_linear_flow_matches_matrix_exponential_without_spike(self):
+        """One step must match the closed-form constant-input resonator flow."""
+        n = ResonateAndFireNeuron(
+            x=0.3,
+            y=-0.2,
+            b=-0.2,
+            omega=1.7,
+            threshold=100.0,
+            dt=1.25,
+        )
+        expected_x, expected_y = _exact_linear_flow(n.x, n.y, 0.8, n.b, n.omega, n.dt)
+
+        spike = n.step(0.8)
+
+        assert spike == 0
+        assert n.x == pytest.approx(expected_x, rel=0.0, abs=1.0e-12)
+        assert n.y == pytest.approx(expected_y, rel=0.0, abs=1.0e-12)
+
+    def test_large_timestep_damped_homogeneous_flow_remains_bounded(self):
+        """Exact damped rotation must not explode when Euler would be unstable."""
+        n = ResonateAndFireNeuron(x=1.0, y=0.0, b=-0.5, omega=4.0, threshold=100.0, dt=10.0)
+        n.step(0.0)
+        assert np.hypot(n.x, n.y) == pytest.approx(np.exp(-5.0), rel=0.0, abs=1.0e-12)
+
+    def test_rejects_corrupted_runtime_state_before_mutation(self):
+        n = ResonateAndFireNeuron(x=0.25, y=-0.5)
+        n.dt = 0.0
+        before = (n.x, n.y)
+        with pytest.raises(ValueError, match="dt"):
+            n.step(0.5)
+        assert (n.x, n.y) == before
+
+    def test_rejects_non_finite_exact_radius_before_mutation(self):
+        n = ResonateAndFireNeuron(x=1.5e308, y=1.5e308, b=0.0, threshold=1.7e308)
+        before = (n.x, n.y)
+        with pytest.raises(ValueError, match="exact resonator update"):
+            n.step(0.0)
+        assert (n.x, n.y) == before
 
 
 class TestResonateAndFireSteadyState:
@@ -177,16 +239,16 @@ class TestResonateAndFireFI:
         assert spikes == 0
 
     def test_very_high_current_fires_every_step(self):
-        """At I=20, r exceeds threshold on every step."""
+        """At I=25, exact one-step radius exceeds threshold on every step."""
         n = ResonateAndFireNeuron()
-        spikes = len(_run(n, current=20.0, steps=1000))
+        spikes = len(_run(n, current=25.0, steps=1000))
         assert spikes == 1000
 
 
 class TestResonateAndFireOscillation:
     def test_subthreshold_oscillation(self):
         """Below I_crit, x and y oscillate (spiral) around steady state."""
-        n = ResonateAndFireNeuron()
+        n = ResonateAndFireNeuron(b=-0.01, threshold=10.0)
         xs = []
         for t in range(5000):
             n.step(0.5)
@@ -313,7 +375,7 @@ class TestResonateAndFireValidation:
         with pytest.raises(ValueError, match="omega"):
             ResonateAndFireNeuron(omega=0.0)
 
-    def test_rejects_non_finite_euler_update_before_state_mutation(self):
+    def test_rejects_non_finite_exact_update_before_state_mutation(self):
         n = ResonateAndFireNeuron(
             x=0.25,
             y=-0.5,
@@ -323,7 +385,26 @@ class TestResonateAndFireValidation:
         )
         before = (n.x, n.y)
 
-        with pytest.raises(ValueError, match="Euler update"):
+        with pytest.raises(ValueError, match="exact resonator"):
             n.step(1.0e308)
 
         assert (n.x, n.y) == before
+
+    def test_rejects_invalid_exact_flow_denominator(self):
+        with pytest.raises(ValueError, match="denominator"):
+            ResonateAndFireNeuron._exact_linear_flow(0.0, 0.0, 0.0, 0.0, 0.0, 1.0)
+
+    def test_rejects_non_finite_exact_flow_equilibrium(self):
+        with pytest.raises(ValueError, match="equilibrium"):
+            ResonateAndFireNeuron._exact_linear_flow(
+                0.0,
+                0.0,
+                1.0e308,
+                1.0e154,
+                1.0,
+                1.0e-154,
+            )
+
+    def test_rejects_non_finite_exact_flow_decay(self):
+        with pytest.raises(ValueError, match="decay"):
+            ResonateAndFireNeuron._exact_linear_flow(0.0, 0.0, 0.0, 1.0, 1.0, 1000.0)
