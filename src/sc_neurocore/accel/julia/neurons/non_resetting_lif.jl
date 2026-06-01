@@ -40,26 +40,33 @@ function step!(s::NonResettingLIFNeuronState, I_ext::Float64=0.0; dt::Float64=0.
     if !isfinite(I_ext) || !valid(s)
         throw(DomainError((s.v, s.theta, I_ext), "NonResettingLIF state/current must be finite and physically valid"))
     end
-    membrane_update = (-(s.v - s.v_rest) + s.r_m * I_ext) / s.tau_m * s.dt
-    next_v = s.v + membrane_update
-    if !isfinite(membrane_update) || !isfinite(next_v)
-        throw(DomainError((membrane_update, next_v), "NonResettingLIF membrane update must remain finite"))
+    membrane_steady_state = s.v_rest + s.r_m * I_ext
+    if !isfinite(membrane_steady_state)
+        throw(DomainError(membrane_steady_state, "NonResettingLIF membrane exact relaxation update must remain finite"))
     end
-    threshold_update = -(s.theta - s.theta_rest) / s.tau_theta * s.dt
-    next_theta = s.theta + threshold_update
-    if !isfinite(threshold_update) || !isfinite(next_theta)
-        throw(DomainError((threshold_update, next_theta), "NonResettingLIF threshold update must remain finite"))
+    next_v = _exact_relaxation(s.v, membrane_steady_state, s.dt, s.tau_m)
+    if !isfinite(next_v)
+        throw(DomainError(next_v, "NonResettingLIF membrane exact relaxation update must remain finite"))
+    end
+    next_theta = _exact_relaxation(s.theta, s.theta_rest, s.dt, s.tau_theta)
+    if !isfinite(next_theta)
+        throw(DomainError(next_theta, "NonResettingLIF threshold exact relaxation update must remain finite"))
     end
     spike = next_v >= next_theta
     if spike
         next_theta += s.delta_theta
         if !isfinite(next_theta)
-            throw(DomainError(next_theta, "NonResettingLIF threshold update must remain finite"))
+            throw(DomainError(next_theta, "NonResettingLIF threshold exact relaxation update must remain finite"))
         end
     end
     s.v = next_v
     s.theta = next_theta
     return spike ? 1 : 0
+end
+
+function _exact_relaxation(state::Float64, steady_state::Float64, dt::Float64, tau::Float64)::Float64
+    decay = exp(-dt / tau)
+    return decay * state + (1.0 - decay) * steady_state
 end
 
 function reset!(s::NonResettingLIFNeuronState)::Nothing

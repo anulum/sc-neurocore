@@ -1,0 +1,71 @@
+{
+  "benchmark": "NonResettingLIFNeuron Python exact-relaxation step",
+  "timestamp_utc": "2026-05-31T23:14:23+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_non_resetting_lif.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 20.0,
+  "median_ns_per_step": 1652.43353,
+  "min_ns_per_step": 1501.3029,
+  "max_ns_per_step": 2127.800915,
+  "results": [
+    {
+      "steps": 200000,
+      "current": 20.0,
+      "elapsed_ns": 330486706,
+      "ns_per_step": 1652.43353,
+      "spikes": 577,
+      "ending_state": [
+        -45.000000000000064,
+        -44.02411024181201
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 20.0,
+      "elapsed_ns": 355146930,
+      "ns_per_step": 1775.73465,
+      "spikes": 577,
+      "ending_state": [
+        -45.000000000000064,
+        -44.02411024181201
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 20.0,
+      "elapsed_ns": 425560183,
+      "ns_per_step": 2127.800915,
+      "spikes": 577,
+      "ending_state": [
+        -45.000000000000064,
+        -44.02411024181201
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 20.0,
+      "elapsed_ns": 308692241,
+      "ns_per_step": 1543.461205,
+      "spikes": 577,
+      "ending_state": [
+        -45.000000000000064,
+        -44.02411024181201
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 20.0,
+      "elapsed_ns": 300260580,
+      "ns_per_step": 1501.3029,
+      "spikes": 577,
+      "ending_state": [
+        -45.000000000000064,
+        -44.02411024181201
+      ]
+    }
+  ]
+}

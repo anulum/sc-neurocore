@@ -40,20 +40,22 @@ impl NonResettingLIFNeuron {
         if !i_ext.is_finite() || !validate_non_resetting_lif(self) {
             return Err("non-resetting-lif state/current must be finite and physically valid");
         }
-        let membrane_update = (-(self.v - self.v_rest) + self.r_m * i_ext) / self.tau_m * self.dt;
-        let next_v = self.v + membrane_update;
-        if !membrane_update.is_finite() || !next_v.is_finite() {
-            return Err("non-resetting-lif membrane update became non-finite");
+        let membrane_steady_state = self.v_rest + self.r_m * i_ext;
+        if !membrane_steady_state.is_finite() {
+            return Err("non-resetting-lif exact relaxation update became non-finite");
         }
-        let threshold_update = (-(self.theta - self.theta_rest)) / self.tau_theta * self.dt;
-        let mut next_theta = self.theta + threshold_update;
-        if !threshold_update.is_finite() || !next_theta.is_finite() {
-            return Err("non-resetting-lif threshold update became non-finite");
+        let next_v = exact_relaxation(self.v, membrane_steady_state, self.dt, self.tau_m);
+        if !next_v.is_finite() {
+            return Err("non-resetting-lif exact relaxation update became non-finite");
+        }
+        let mut next_theta = exact_relaxation(self.theta, self.theta_rest, self.dt, self.tau_theta);
+        if !next_theta.is_finite() {
+            return Err("non-resetting-lif exact relaxation update became non-finite");
         }
         let spike = if next_v >= next_theta {
             next_theta += self.delta_theta;
             if !next_theta.is_finite() {
-                return Err("non-resetting-lif threshold update became non-finite");
+                return Err("non-resetting-lif exact relaxation update became non-finite");
             }
             1
         } else {
@@ -68,6 +70,11 @@ impl NonResettingLIFNeuron {
         self.v = self.v_rest;
         self.theta = self.theta_rest;
     }
+}
+
+fn exact_relaxation(state: f64, steady_state: f64, dt: f64, tau: f64) -> f64 {
+    let decay = (-dt / tau).exp();
+    decay * state + (1.0 - decay) * steady_state
 }
 
 pub fn validate_non_resetting_lif(state: &NonResettingLIFNeuron) -> bool {
@@ -91,6 +98,11 @@ pub fn validate_non_resetting_lif(state: &NonResettingLIFNeuron) -> bool {
 mod tests {
     use super::*;
 
+    fn exact_reference(state: f64, steady_state: f64, dt: f64, tau: f64) -> f64 {
+        let decay = (-dt / tau).exp();
+        decay * state + (1.0 - decay) * steady_state
+    }
+
     #[test]
     fn test_non_resetting_lif_new() {
         let state = NonResettingLIFNeuron::new();
@@ -113,11 +125,43 @@ mod tests {
     }
 
     #[test]
+    fn test_exact_relaxation_matches_reference() {
+        let mut state = NonResettingLIFNeuron::new();
+        state.v = -60.0;
+        state.theta = -40.0;
+        state.dt = 0.5;
+        let expected_v = exact_reference(
+            state.v,
+            state.v_rest + state.r_m * 4.0,
+            state.dt,
+            state.tau_m,
+        );
+        let expected_theta =
+            exact_reference(state.theta, state.theta_rest, state.dt, state.tau_theta);
+        let spike = state.step(4.0).unwrap();
+        assert_eq!(spike, 0);
+        assert!((state.v - expected_v).abs() < 1.0e-12);
+        assert!((state.theta - expected_theta).abs() < 1.0e-12);
+    }
+
+    #[test]
+    fn test_large_timestep_relaxation_remains_bounded() {
+        let mut state = NonResettingLIFNeuron::new();
+        state.v = 1000.0;
+        state.theta = 2000.0;
+        state.dt = 100.0;
+        let spike = state.step(0.0).unwrap();
+        assert_eq!(spike, 0);
+        assert!(state.v >= state.v_rest && state.v <= 1000.0);
+        assert!(state.theta >= state.theta_rest && state.theta <= 2000.0);
+    }
+
+    #[test]
     fn test_invalid_update_does_not_mutate_state() {
         let mut state = NonResettingLIFNeuron::new();
         state.v = -60.0;
         state.theta = -45.0;
-        state.tau_m = 1.0e-308;
+        state.r_m = 10.0;
         let before = (state.v, state.theta);
         assert!(state.step(1.0e308).is_err());
         assert_eq!((state.v, state.theta), before);
