@@ -69,6 +69,23 @@ func sigmoidWilsonCowan(a float64, theta float64, x float64) (float64, error) {
 	return logisticWilsonCowan(a*(x-theta)) - logisticWilsonCowan(-a*theta), nil
 }
 
+func wilsonCowanDerivatives(s *WilsonCowanUnitState, e float64, i float64, iExt float64) (float64, float64, error) {
+	se, err := sigmoidWilsonCowan(s.A, s.Theta, s.WEe*e-s.WEi*i+iExt)
+	if err != nil {
+		return 0, 0, err
+	}
+	si, err := sigmoidWilsonCowan(s.A, s.Theta, s.WIe*e-s.WIi*i)
+	if err != nil {
+		return 0, 0, err
+	}
+	de := (-e + se) / s.TauE
+	di := (-i + si) / s.TauI
+	if !finiteWilsonCowan(de) || !finiteWilsonCowan(di) {
+		return 0, 0, errors.New("invalid Wilson-Cowan derivative")
+	}
+	return de, di, nil
+}
+
 // ValidateWilsonCowan checks the runtime rate state and numerical parameters.
 func ValidateWilsonCowan(s *WilsonCowanUnitState) bool {
 	if s == nil {
@@ -96,16 +113,24 @@ func (s *WilsonCowanUnitState) Step(iExt float64) (float64, error) {
 		return 0, errors.New("invalid Wilson-Cowan external input")
 	}
 
-	se, err := sigmoidWilsonCowan(s.A, s.Theta, s.WEe*s.E-s.WEi*s.I+iExt)
+	k1E, k1I, err := wilsonCowanDerivatives(s, s.E, s.I, iExt)
 	if err != nil {
 		return 0, err
 	}
-	si, err := sigmoidWilsonCowan(s.A, s.Theta, s.WIe*s.E-s.WIi*s.I)
+	k2E, k2I, err := wilsonCowanDerivatives(s, s.E+0.5*s.Dt*k1E, s.I+0.5*s.Dt*k1I, iExt)
 	if err != nil {
 		return 0, err
 	}
-	nextE := s.E + (-s.E+se)/s.TauE*s.Dt
-	nextI := s.I + (-s.I+si)/s.TauI*s.Dt
+	k3E, k3I, err := wilsonCowanDerivatives(s, s.E+0.5*s.Dt*k2E, s.I+0.5*s.Dt*k2I, iExt)
+	if err != nil {
+		return 0, err
+	}
+	k4E, k4I, err := wilsonCowanDerivatives(s, s.E+s.Dt*k3E, s.I+s.Dt*k3I, iExt)
+	if err != nil {
+		return 0, err
+	}
+	nextE := s.E + s.Dt*(k1E+2.0*k2E+2.0*k3E+k4E)/6.0
+	nextI := s.I + s.Dt*(k1I+2.0*k2I+2.0*k3I+k4I)/6.0
 	if !finiteWilsonCowanRate(nextE, s.A, s.Theta) || !finiteWilsonCowanRate(nextI, s.A, s.Theta) {
 		return 0, errors.New("invalid Wilson-Cowan candidate state")
 	}

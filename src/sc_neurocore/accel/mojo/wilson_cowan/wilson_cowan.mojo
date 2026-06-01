@@ -30,6 +30,35 @@ fn sigmoid(a: Float64, theta: Float64, x: Float64) -> Float64:
     return 1.0 / (1.0 + exp(-a * (x - theta))) - baseline
 
 
+@always_inline
+fn derivative_e(
+    e: Float64,
+    i: Float64,
+    ext: Float64,
+    w_ee: Float64,
+    w_ei: Float64,
+    tau_e: Float64,
+    a: Float64,
+    theta: Float64,
+) -> Float64:
+    var s_e = sigmoid(a, theta, w_ee * e - w_ei * i + ext)
+    return (-e + s_e) / tau_e
+
+
+@always_inline
+fn derivative_i(
+    e: Float64,
+    i: Float64,
+    w_ie: Float64,
+    w_ii: Float64,
+    tau_i: Float64,
+    a: Float64,
+    theta: Float64,
+) -> Float64:
+    var s_i = sigmoid(a, theta, w_ie * e - w_ii * i)
+    return (-i + s_i) / tau_i
+
+
 @export
 fn wilson_cowan_simulate_c(
     n: Int,
@@ -51,8 +80,12 @@ fn wilson_cowan_simulate_c(
     i_final_addr: Int,
 ) -> Int:
     var ext = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=ext_addr)
-    var eo = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=e_out_addr)
-    var io = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=i_out_addr)
+    var eo = UnsafePointer[Float64, MutAnyOrigin](
+        unsafe_from_address=e_out_addr
+    )
+    var io = UnsafePointer[Float64, MutAnyOrigin](
+        unsafe_from_address=i_out_addr
+    )
     var ef = UnsafePointer[Float64, MutAnyOrigin](
         unsafe_from_address=e_final_addr
     )
@@ -63,10 +96,68 @@ fn wilson_cowan_simulate_c(
     var e = e_init
     var i = i_init
     for t in range(n):
-        var s_e = sigmoid(a, theta, w_ee * e - w_ei * i + ext[t])
-        var s_i = sigmoid(a, theta, w_ie * e - w_ii * i)
-        e += (-e + s_e) / tau_e * dt
-        i += (-i + s_i) / tau_i * dt
+        var drive = ext[t]
+        var k1_e = derivative_e(e, i, drive, w_ee, w_ei, tau_e, a, theta)
+        var k1_i = derivative_i(e, i, w_ie, w_ii, tau_i, a, theta)
+        var k2_e = derivative_e(
+            e + 0.5 * dt * k1_e,
+            i + 0.5 * dt * k1_i,
+            drive,
+            w_ee,
+            w_ei,
+            tau_e,
+            a,
+            theta,
+        )
+        var k2_i = derivative_i(
+            e + 0.5 * dt * k1_e,
+            i + 0.5 * dt * k1_i,
+            w_ie,
+            w_ii,
+            tau_i,
+            a,
+            theta,
+        )
+        var k3_e = derivative_e(
+            e + 0.5 * dt * k2_e,
+            i + 0.5 * dt * k2_i,
+            drive,
+            w_ee,
+            w_ei,
+            tau_e,
+            a,
+            theta,
+        )
+        var k3_i = derivative_i(
+            e + 0.5 * dt * k2_e,
+            i + 0.5 * dt * k2_i,
+            w_ie,
+            w_ii,
+            tau_i,
+            a,
+            theta,
+        )
+        var k4_e = derivative_e(
+            e + dt * k3_e,
+            i + dt * k3_i,
+            drive,
+            w_ee,
+            w_ei,
+            tau_e,
+            a,
+            theta,
+        )
+        var k4_i = derivative_i(
+            e + dt * k3_e,
+            i + dt * k3_i,
+            w_ie,
+            w_ii,
+            tau_i,
+            a,
+            theta,
+        )
+        e += dt * (k1_e + 2.0 * k2_e + 2.0 * k3_e + k4_e) / 6.0
+        i += dt * (k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i) / 6.0
         eo[t] = e
         io[t] = i
     ef[0] = e

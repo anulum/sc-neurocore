@@ -91,6 +91,15 @@ class WilsonCowanUnit:
             raise ValueError("sigmoid input must be finite")
         return self._logistic(self.a * (drive - self.theta)) - self._logistic(-self.a * self.theta)
 
+    def _derivatives(self, e: float, i: float, drive: float) -> tuple[float, float]:
+        se = self._sigmoid(self.w_ee * e - self.w_ei * i + drive)
+        si = self._sigmoid(self.w_ie * e - self.w_ii * i)
+        de = (-e + se) / self.tau_e
+        di = (-i + si) / self.tau_i
+        if not math.isfinite(de) or not math.isfinite(di):
+            raise FloatingPointError("Wilson-Cowan derivative must remain finite")
+        return de, di
+
     def step(self, ext_input: float = 0.0) -> float:
         drive = float(ext_input)
         if not math.isfinite(drive):
@@ -98,10 +107,25 @@ class WilsonCowanUnit:
 
         self._validate_configuration()
         e, i = self._validate_state(self.e, self.i)
-        se = self._sigmoid(self.w_ee * e - self.w_ei * i + drive)
-        si = self._sigmoid(self.w_ie * e - self.w_ii * i)
-        next_e = e + (-e + se) / self.tau_e * self.dt
-        next_i = i + (-i + si) / self.tau_i * self.dt
+
+        k1_e, k1_i = self._derivatives(e, i, drive)
+        k2_e, k2_i = self._derivatives(
+            e + 0.5 * self.dt * k1_e,
+            i + 0.5 * self.dt * k1_i,
+            drive,
+        )
+        k3_e, k3_i = self._derivatives(
+            e + 0.5 * self.dt * k2_e,
+            i + 0.5 * self.dt * k2_i,
+            drive,
+        )
+        k4_e, k4_i = self._derivatives(
+            e + self.dt * k3_e,
+            i + self.dt * k3_i,
+            drive,
+        )
+        next_e = e + self.dt * (k1_e + 2.0 * k2_e + 2.0 * k3_e + k4_e) / 6.0
+        next_i = i + self.dt * (k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i) / 6.0
         self.e, self.i = self._validate_state(next_e, next_i)
         return self.e
 

@@ -37,15 +37,30 @@ suppressed oscillations.
 def step(self, ext_input: float = 0.0) -> float:
     validate_state_and_parameters()
     se = self._sigmoid(self.w_ee * self.e - self.w_ei * self.i + ext_input)
-    si = self._sigmoid(self.w_ie * self.e - self.w_ii * self.i)
-    next_e = self.e + (-self.e + se) / self.tau_e * self.dt
-    next_i = self.i + (-self.i + si) / self.tau_i * self.dt
+    k1_e, k1_i = self._derivatives(self.e, self.i, drive)
+    k2_e, k2_i = self._derivatives(
+        self.e + 0.5 * self.dt * k1_e,
+        self.i + 0.5 * self.dt * k1_i,
+        drive,
+    )
+    k3_e, k3_i = self._derivatives(
+        self.e + 0.5 * self.dt * k2_e,
+        self.i + 0.5 * self.dt * k2_i,
+        drive,
+    )
+    k4_e, k4_i = self._derivatives(
+        self.e + self.dt * k3_e,
+        self.i + self.dt * k3_i,
+        drive,
+    )
+    next_e = self.e + self.dt * (k1_e + 2*k2_e + 2*k3_e + k4_e) / 6
+    next_i = self.i + self.dt * (k1_i + 2*k2_i + 2*k3_i + k4_i) / 6
     self.e, self.i = validate_candidate(next_e, next_i)
     return self.e
 ```
 
-Forward Euler, single step per call. **Returns float (E rate), not binary
-spike.** This is a rate model, not a spiking model.
+Fixed-step RK4 integration, one update per call. **Returns float (E
+rate), not binary spike.** This is a rate model, not a spiking model.
 
 ---
 
@@ -106,16 +121,16 @@ create an oscillatory instability.
 
 ### Excitatory recurrence (w_ee)
 
-Higher w_ee → stronger positive feedback → higher E steady state:
+Higher w_ee → higher positive feedback → higher E steady state:
 - w_ee=5: weak recurrence, low E
-- w_ee=15: strong recurrence, high E
+- w_ee=15: high recurrence, high E
 Verified by test.
 
 ### Inhibitory control (w_ei)
 
-Higher w_ei → stronger I→E suppression → lower E steady state:
+Higher w_ei → higher I→E suppression → lower E steady state:
 - w_ei=3: weak inhibition, high E
-- w_ei=10: strong inhibition, low E
+- w_ei=10: high inhibition, low E
 Verified by test.
 
 ### Steady-state convergence
@@ -141,7 +156,7 @@ column at the mesoscopic level:
 
 This creates either:
 - **Damped oscillation → fixed point** (default parameters)
-- **Sustained oscillation** (strong coupling: w_ee=16, w_ei=12, w_ie=15)
+- **Sustained oscillation** (high coupling: w_ee=16, w_ei=12, w_ie=15)
 
 ### Zero input: decay to low activity
 
@@ -152,9 +167,10 @@ activity.
 
 ### E bounded in [0, 1]
 
-The sigmoid output is in (0, 1), and the Euler update preserves this
-bound for reasonable dt: $E_{new} = E + (-E + S)/\tau_E \cdot dt$. Since
-$0 < S < 1$ and $0 < E < 1$, the update keeps E bounded.
+The sigmoid output is in the published finite range
+$[-\beta, 1-\beta]$. The implementation stages the complete RK4
+candidate before mutation and accepts it only when both E and I remain
+finite and inside that range.
 
 ### Oscillation
 
@@ -231,16 +247,17 @@ The model predicts several key phenomena:
 
 ## Numerical Considerations
 
-- **Single Euler step:** No sub-stepping. The model is not stiff — the
-  sigmoid saturates naturally, preventing blowup.
+- **Fixed-step RK4:** The coupled E/I state advances through a staged
+  fourth-order Runge-Kutta update with a shared external drive for the
+  whole timestep.
 - **Fail-closed candidate updates:** Python, Go, Julia, and Rust
   surfaces validate finite E/I state, non-negative coupling weights,
   positive time constants, positive sigmoid gain, positive timestep, and
   the Wilson-Cowan sigmoid range before mutation. Invalid runtime
   parameter mutation or non-finite external drive leaves the previous
   state intact and returns or raises the surface-specific failure signal.
-- **dt stability:** Tested at dt = 0.05, 0.1, 0.2. All stable for 10,000
-  steps. For dt > tau_e (>1.0), the Euler scheme may overshoot.
+- **dt stability:** Tested at dt = 0.05, 0.1, 0.2. All stable for
+  10,000 steps under the default parameterisation.
 - **Sigmoid overflow:** the scalar logistic implementation uses a
   sign-split form, so extreme finite drives saturate to the asymptotes
   without relying on platform overflow behaviour.
@@ -249,10 +266,10 @@ The model predicts several key phenomena:
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/wilson_cowan.py` — 49 lines.
+- **Source:** `src/sc_neurocore/neurons/models/wilson_cowan.py`.
 - **Two state variables:** e (excitatory rate), i (inhibitory rate).
 - **Dataclass:** Uses `@dataclass` for parameter storage.
-- **Private sigmoid:** `_sigmoid(x)` method — single sigmoid shared by
+- **Private sigmoid:** `_sigmoid(x)` method — shared sigmoid used by
   both E and I updates with different arguments.
 - **Rust wiring:** Compatible for standalone dispatch but pipeline-limited
   (float return). Not in the Rust NeuronVariant enum.
@@ -263,26 +280,27 @@ The model predicts several key phenomena:
 
 | Metric | Python | Rust |
 |--------|--------|------|
-| Isolation | ~163K steps/s | Not applicable |
+| Isolation | 87,164 steps/s | 7,416,785 steps/s through PyO3 |
 | Network | Limited (float return) | — |
 
-Very fast model — single Euler step, 2 sigmoid evaluations (2 exp() calls)
-per step. No sub-stepping. One of the fastest models in the library.
+The RK4 update evaluates four coupled derivative stages. Each stage
+evaluates E and I sigmoid drives, giving eight sigmoid evaluations per
+step in the Python reference. Native Rust, Julia, Go, and Mojo paths keep
+the same arithmetic contract while reducing interpreter overhead.
 
 ---
 
-## Test Coverage
+## Test Evidence
 
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 5 | defaults, float return, 2-var evolution, finite 100k, reset |
-| Sigmoid | 3 | S(θ)=0.5, monotonic, bounded [0,1] |
-| E/I dynamics | 7 | E increases with input, I follows E, zero input decay, E bounded, steady state convergence, w_ee controls recurrence, w_ei controls inhibition |
-| Oscillation | 1 | enhanced coupling parameters (finite state check) |
-| Parameters | 2 | dt stability (3 values), deterministic |
-| Performance | 1 | isolation throughput > 20K steps/s |
-| Pipeline | 2 | Population creates, float return documented |
-| **Total** | **21** | |
+| Category | What is verified |
+|----------|-----------------|
+| Isolation | defaults, float return, two-variable evolution, finite long run, reset |
+| Sigmoid | threshold value, zero drive, monotonicity, published finite range |
+| E/I dynamics | input response, inhibitory following, low-input decay, bounded state, steady-state convergence, RK4 reference point, recurrence and inhibition controls |
+| Oscillation | enhanced-coupling finite state path |
+| Parameters | constructor rejection, runtime corruption preservation, finite-drive saturation, timestep stability, determinism |
+| Performance | isolation throughput remains above the documented floor |
+| Pipeline | Population construction and float-return limitation |
 
 See `tests/test_model_wilson_cowan.py`. No bugs found.
 
@@ -451,7 +469,7 @@ print(f"Final E: {wc.e:.4f}, Final I: {wc.i:.4f}")
 print(f"E range: [{min(e_trace):.4f}, {max(e_trace):.4f}]")
 ```
 
-### Example 2: Oscillatory regime with strong coupling
+### Example 2: Oscillatory regime with high coupling
 
 ```python
 from sc_neurocore.neurons.models.wilson_cowan import WilsonCowanUnit
@@ -497,20 +515,21 @@ print(f"Different attractors: {abs(wc_low.e - wc_high.e) > 0.1}")
 
 | Aspect | Python | Rust | Status |
 |--------|--------|------|--------|
-| State variables | e, i (rates) | same | **EXACT** |
-| Sigmoid function | 1/(1+exp(-a*(x-θ))) | same | **EXACT** |
-| Euler integration | dt/tau_e, dt/tau_i | same | **EXACT** |
-| All defaults | identical | identical | **EXACT** |
+| State variables | e, i (rates) | same | matched |
+| Sigmoid function | two-term Wilson-Cowan form | same | matched |
+| RK4 integration | four coupled stages | same | matched |
+| All defaults | identical | identical | matched |
 
-**No parity defects.** EXACT parity verified by automated scan.
+No parity defects were observed in the current automated parity suite.
 
 ### Source files
 
-| File | Lines | Description |
-|------|-------|-------------|
-| `src/sc_neurocore/neurons/models/wilson_cowan.py` | ~49 | Python reference |
-| `engine/src/neurons/special.rs` | (shared) | Rust implementation |
-| `tests/test_model_wilson_cowan.py` | ~220 | 21 tests |
+| File | Description |
+|------|-------------|
+| `src/sc_neurocore/neurons/models/wilson_cowan.py` | Python reference |
+| `engine/src/wilson_cowan.rs` | Rust PyO3 multi-step simulator |
+| `engine/src/neurons/special.rs` | Direct Rust neuron mirror |
+| `tests/test_model_wilson_cowan.py` | Module-specific Python tests |
 
 ---
 
@@ -538,26 +557,26 @@ bench_wilson_cowan.py`. Numbers trace back to
 
 | Backend | Steps/s | Wall (ms) | Speedup vs Python | Parity vs Rust |
 |---------|--------:|----------:|------------------:|---------------:|
-| Python primary | 1 110 484 | 90.05 |   1.00× | — |
-| Rust PyO3      | 36 516 581 |  2.74 |  32.9× | reference |
-| Julia (warm)   | 31 530 702 |  3.17 |  28.4× | Δ ≈ 1e-16 (bit-exact) |
-| Go cgo         | 21 838 772 |  4.58 |  19.7× | Δ ≈ 7e-15 |
-| Mojo FFI       | 27 997 794 |  3.57 |  25.2× | Δ ≈ 9e-11 (libm vs f64::exp) |
+| Python primary | 87 164 | 1147.26 |   1.00× | — |
+| Rust PyO3      | 7 416 785 |  13.48 |  85.09× | reference |
+| Julia (warm)   | 4 786 245 |  20.89 |  54.91× | Δ ≈ 1.1e-16 |
+| Go cgo         | 3 201 920 |  31.23 |  36.73× | Δ ≈ 2.2e-16 |
+| Mojo FFI       | 4 893 367 |  20.44 |  56.14× | Δ ≈ 7.1e-11 (libm vs f64::exp) |
 
 ### Backends
 
 | Backend | Status | Rationale |
 |---------|--------|-----------|
 | Rust PyO3 | **USED** | default `auto` path; fastest measured + zero parity drift |
-| Julia     | USED   | warm path ~87 % of Rust; preferred when juliacall is hot |
+| Julia     | USED   | warm path ~65 % of Rust; preferred when juliacall is hot |
 | Go cgo    | USED   | simplest cross-platform .so, slight FFI overhead |
-| Mojo FFI  | USED   | warm path ~77 % of Rust; libm-exp ulp drift tolerated |
+| Mojo FFI  | USED   | warm path ~66 % of Rust; libm-exp ulp drift tolerated |
 
 ### Tests
 
 | Backend | File | Tests | What is verified |
 |---------|------|------:|------------------|
-| Rust    | `tests/test_wilson_cowan_parity.py` (+ `engine/src/wilson_cowan.rs::tests`) | 16 | sigmoid regime + asymptotes, quiescent convergence, strong-drive elevation, output-shape, length-panic, Python↔Rust bit-exact under 4 drive patterns, zero-length + single-step edge |
+| Rust    | `tests/test_wilson_cowan_parity.py` (+ `engine/src/wilson_cowan.rs::tests`) | 16 | sigmoid regime + asymptotes, quiescent convergence, high-drive elevation, output-shape, length-panic, Python↔Rust bit-exact under 4 drive patterns, zero-length + one-step edge |
 | Julia   | `tests/test_wilson_cowan_julia_parity.py` | 4 | Python↔Julia bit-exact, Rust↔Julia cross |
 | Go      | `tests/test_wilson_cowan_go_parity.py`    | 4 | Python↔Go bit-exact, Rust↔Go cross |
 | Mojo    | `tests/test_wilson_cowan_mojo_parity.py`  | 3 | Python↔Mojo within libm ulp drift, Rust↔Mojo |

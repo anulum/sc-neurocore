@@ -1,11 +1,12 @@
 {
   "meta": {
-    "timestamp_utc": "2026-04-19T14:28:20Z",
+    "timestamp_utc": "2026-06-01T11:29:22Z",
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
-    "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
     "python": "3.12.3",
     "n_steps": 100000,
     "parity_n": 3000,
+    "integrator": "fixed_step_rk4",
     "params": {
       "w_ee": 10.0,
       "w_ei": 6.0,
@@ -23,40 +24,40 @@
       "available": true,
       "used": true,
       "reason": "primary reference",
-      "wall_ms": 90.051,
-      "steps_per_s": 1110484.0
+      "wall_ms": 1147.262,
+      "steps_per_s": 87164.0
     },
     "rust": {
       "available": true,
       "used": true,
       "reason": "available",
-      "wall_ms": 2.738,
-      "steps_per_s": 36516581.0,
-      "speedup_over_python": 32.88
+      "wall_ms": 13.483,
+      "steps_per_s": 7416785.0,
+      "speedup_over_python": 85.09
     },
     "julia": {
       "available": true,
       "used": true,
       "reason": "available",
-      "wall_ms": 3.172,
-      "steps_per_s": 31530702.0,
-      "speedup_over_python": 28.39
+      "wall_ms": 20.893,
+      "steps_per_s": 4786245.0,
+      "speedup_over_python": 54.91
     },
     "go": {
       "available": true,
       "used": true,
       "reason": "available",
-      "wall_ms": 4.579,
-      "steps_per_s": 21838772.0,
-      "speedup_over_python": 19.67
+      "wall_ms": 31.231,
+      "steps_per_s": 3201920.0,
+      "speedup_over_python": 36.73
     },
     "mojo": {
       "available": true,
       "used": true,
       "reason": "available",
-      "wall_ms": 3.572,
-      "steps_per_s": 27997794.0,
-      "speedup_over_python": 25.21
+      "wall_ms": 20.436,
+      "steps_per_s": 4893367.0,
+      "speedup_over_python": 56.14
     }
   },
   "parity": {
@@ -65,19 +66,19 @@
       "atol": 0.0
     },
     "julia": {
-      "max_abs_delta_e": 2.7755575615628914e-17,
-      "max_abs_delta_i": 1.1102230246251565e-16,
+      "max_abs_delta_e": 1.1102230246251565e-16,
+      "max_abs_delta_i": 2.168404344971009e-19,
       "atol": 1.1102230246251565e-16
     },
     "go": {
-      "max_abs_delta_e": 7.382983113757291e-15,
-      "max_abs_delta_i": 5.218048215738236e-15,
-      "atol": 7.382983113757291e-15
+      "max_abs_delta_e": 2.220446049250313e-16,
+      "max_abs_delta_i": 2.220446049250313e-16,
+      "atol": 2.220446049250313e-16
     },
     "mojo": {
-      "max_abs_delta_e": 8.686568131466288e-11,
-      "max_abs_delta_i": 5.813793890752095e-11,
-      "atol": 8.686568131466288e-11
+      "max_abs_delta_e": 7.069489438293886e-11,
+      "max_abs_delta_i": 4.720346336029024e-11,
+      "atol": 7.069489438293886e-11
     }
   }
 }
