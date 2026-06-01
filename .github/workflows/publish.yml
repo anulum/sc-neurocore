@@ -107,7 +107,7 @@ jobs:
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish == 'true'
     needs: [smoke-engine-wheels]
     runs-on: ubuntu-latest
-    environment: pypi-engine
+    environment: pypi
     permissions:
       id-token: write
     steps:
