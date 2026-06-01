@@ -7,9 +7,7 @@
 
 # API Reference Index
 
-This page is the maintained entry point for the public API reference. It avoids
-duplicating generated module listings so stale modules do not remain visible
-after code moves.
+This page is the maintained entry point for the public API reference. It avoids duplicating generated module listings so stale modules do not remain visible after code moves. New users should start with the Core Runtime section, then move to Compiler/Hardware or Training/Interop only when their workflow needs those surfaces.
 
 ## Full Generated Reference
 

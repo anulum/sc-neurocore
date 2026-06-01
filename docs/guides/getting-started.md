@@ -1,5 +1,9 @@
 # Getting Started
 
+This guide gets a new user from installation to the first useful SC-NeuroCore workflows. If you are evaluating the project rather than coding immediately, first read [Product Overview](../product_overview.md) and [Applications and Market](../applications_and_market.md).
+
+The base install is intentionally small. Optional training, hardware, quantum, JAX, GPU, Studio, and research surfaces are installed only when the relevant workflow needs them.
+
 ## Installation
 
 ```bash

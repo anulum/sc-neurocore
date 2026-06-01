@@ -1,24 +1,24 @@
 # SC-NeuroCore
 
-**Universal Stochastic Computing Framework for Neuromorphic Hardware**
+**Stochastic computing and neuromorphic hardware co-design toolkit**
 
-SC-NeuroCore provides a complete stack for building, simulating, and deploying
-stochastic computing (SC) neural networks — from individual neurons to full
-SCPN layer hierarchies, with both software simulation and Verilog RTL for
-FPGA deployment.
+**Version 3.15.1** | 174 neuron models | optional Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
-**Version 3.15.0** | 174 neuron models | optional Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+SC-NeuroCore helps research and engineering teams build spiking and stochastic neural systems, validate their numerical behaviour, and move selected workflows toward hardware evidence. It is designed for people who need more than a simulator: bounded stochastic arithmetic, reproducible benchmark artefacts, generated RTL, synthesis evidence, and explicit readiness gaps.
+
+Start here if you need to understand what the software is for:
+
+- [Product Overview](product_overview.md) explains the core workflow and evidence boundary.
+- [Applications and Market](applications_and_market.md) maps the project to practical commercial and research lanes.
+- [Learning Path](LEARNING_PATH.md) gives a staged route from stochastic-computing basics to FPGA deployment.
+- [Getting Started](guides/getting-started.md) gives the first install and first working examples.
+- [Benchmarks](benchmarks/BENCHMARKS.md) and [Cross-Framework Evidence](benchmarks/cross_framework.md) separate committed evidence from measurement gaps.
 
 !!! note "v4.0 transition"
-    Until v4.0, this repository intentionally keeps a broad kitchen-sink
-    research surface in one checkout while the current experimental
-    verification campaigns determine which runtime, compiler, hardware, bridge,
-    and research paths are promoted. v4.0 is planned as the stable public API
-    freeze and the point where the source tree is split into several focused
-    repositories.
+    Until v4.0, this repository intentionally keeps a broad research surface in one checkout while experimental verification campaigns determine which runtime, compiler, hardware, bridge, and research paths are promoted. v4.0 is planned as the stable public API freeze and the point where the source tree is split into several focused repositories.
 
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
-*Train in PyTorch → Quantise to Q8.8 → Simulate with stochastic bitstreams → Compile to SystemVerilog → Synthesise for FPGA. The Rust SIMD engine accelerates all stages.*
+*Train in PyTorch -> quantise to Q8.8 -> simulate with stochastic bitstreams -> compile to SystemVerilog -> synthesise for FPGA. The optional Rust engine accelerates selected stages when installed.*
 
 ## Key Features
 

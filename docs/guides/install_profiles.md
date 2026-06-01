@@ -40,8 +40,7 @@ The base path is enough for:
 
 ### Base install evidence
 
-The install-profile audit in `benchmarks/results/install_profile_audit.json`
-records the current base boundary. The latest measured run installed the local
+The install-profile audit in `benchmarks/results/install_profile_audit.json` records the base boundary used for release evidence. The latest measured run installed the local
 `sc-neurocore` wheel with its declared base dependencies, imported the public
 package, and verified that PyTorch, JAX, Qiskit, PennyLane, Lava, FastAPI, MPI,
 NIR, HTTP client, plotting, GPU, and Studio stacks were not pulled into the base
@@ -55,7 +54,7 @@ Current measured evidence:
 | Elapsed time | 12.942 s |
 | Installed packages | `defusedxml`, `numpy`, `pip`, `sc-neurocore`, `scipy` |
 | Heavy optional packages installed | None |
-| Public import smoke | `sc_neurocore.__version__ == "3.15.0"` and 44 public exports |
+| Public import smoke | `sc_neurocore.__version__ == "3.15.1"` and 44 public exports |
 
 ## Rust engine
 
