@@ -1,0 +1,61 @@
+{
+  "benchmark": "SigmoidRateNeuron Python exact-relaxation step",
+  "timestamp_utc": "2026-06-01T00:19:01+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_sigmoid_rate.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 3.0,
+  "median_ns_per_step": 999.738015,
+  "min_ns_per_step": 953.027835,
+  "max_ns_per_step": 1118.87627,
+  "results": [
+    {
+      "steps": 200000,
+      "current": 3.0,
+      "elapsed_ns": 199947603,
+      "ns_per_step": 999.738015,
+      "ending_state": [
+        0.9525741268224297
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 3.0,
+      "elapsed_ns": 190605567,
+      "ns_per_step": 953.027835,
+      "ending_state": [
+        0.9525741268224297
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 3.0,
+      "elapsed_ns": 205609660,
+      "ns_per_step": 1028.0483,
+      "ending_state": [
+        0.9525741268224297
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 3.0,
+      "elapsed_ns": 223775254,
+      "ns_per_step": 1118.87627,
+      "ending_state": [
+        0.9525741268224297
+      ]
+    },
+    {
+      "steps": 200000,
+      "current": 3.0,
+      "elapsed_ns": 196298846,
+      "ns_per_step": 981.49423,
+      "ending_state": [
+        0.9525741268224297
+      ]
+    }
+  ]
+}

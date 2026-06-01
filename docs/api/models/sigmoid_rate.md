@@ -28,15 +28,16 @@ $$\sigma(\beta(I - \theta)) = \frac{1}{1 + \exp(-\beta(I - \theta))}$$
 ```python
 def step(self, current: float) -> float:
     sigma = stable_sigmoid(self.beta * (current - self.theta))
-    next_r = self.r + (-self.r + sigma) / self.tau * self.dt
+    decay = exp(-self.dt / self.tau)
+    next_r = decay * self.r + (1 - decay) * sigma
     validate_rate_candidate(next_r)
     self.r = next_r
     return next_r
 ```
 
-Forward Euler, single step per call. **Returns float (rate), not binary spike.**
-The implementation rejects non-finite inputs, invalid runtime state, `dt > tau`
-Euler ratios, and candidate rates outside `[0, 1]` before mutating `r`.
+Exact first-order relaxation, single step per call. **Returns float (rate), not
+binary spike.** The implementation rejects non-finite inputs and invalid runtime
+state before mutating `r`; the exact update preserves `[0, 1]` by construction.
 
 ---
 
@@ -175,13 +176,13 @@ and external drive.
 
 ## Numerical Considerations
 
-- **Single Euler step:** No sub-stepping. The linear ODE is unconditionally
-  stable for dt < 2τ, but the production rate-state invariant is stricter:
-  `dt <= tau` makes each step a convex combination of the previous rate and the
-  sigmoid target.
-- **dt/τ ratio:** With defaults, dt/τ = 0.01 — well within the invariant.
-  Values with `dt > tau` are rejected because they can overshoot the physical
-  `[0, 1]` firing-rate interval in one Euler step.
+- **Exact first-order relaxation:** No sub-stepping. The production update uses
+  `r(t + dt) = decay * r(t) + (1 - decay) * sigma` with
+  `decay = exp(-dt / tau)`.
+- **Rate interval invariant:** For positive finite `dt` and `tau`, the exact
+  update is a convex combination of the previous rate and the sigmoid target.
+  Large timesteps therefore relax directly toward the target without Euler
+  overshoot.
 - **Sigmoid overflow:** Extreme finite `β(I−θ)` values use a branch-stable
   logistic form and saturate to 0 or 1 when floating-point multiplication reaches
   signed infinity. Non-saturating non-finite arguments fail closed.
@@ -196,35 +197,37 @@ and external drive.
 - **One state variable:** r (firing rate).
 - **Dataclass:** Uses `@dataclass` for parameter storage.
 - **Polyglot surfaces:** Python, Go, Julia, Mojo, and Rust safety surfaces share
-  the finite-state, `dt <= tau`, bounded-rate, stable-logistic, candidate-before-
-  mutation contract.
+  the finite-state, exact-relaxation, bounded-rate, stable-logistic,
+  candidate-before-mutation contract.
 - **Rust wiring:** Compatible but pipeline-limited (float return).
 
 ---
 
 ## Performance
 
-| Metric | Python | Rust |
-|--------|--------|------|
-| Isolation | ~500K steps/s | Not applicable |
-| Network | Limited (float return) | — |
+| Metric | Value |
+|--------|-------|
+| Python exact-relaxation step | 999.738015 ns/step median |
+| Benchmark command | `PYTHONPATH=src .venv/bin/python benchmarks/bench_model_sigmoid_rate.py` |
+| Workload | 200,000 steps × 5 repeats, current = 3.0 |
+| Accepted ending rate | `0.9525741268224297` |
+| Native safety mirrors | Go / Julia / Mojo / Rust |
 
-Fastest model in the library — single Euler step, 1 exp() call, no
-sub-stepping, no complex logic. The 500K steps/s is dominated by Python
-interpreter overhead.
+The exact-relaxation path uses one stable sigmoid evaluation and one exponential
+decay per step. The float return still limits direct spiking-network semantics.
 
 ---
 
-## Test Coverage
+## Test Surface
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
 | Isolation | 4 | defaults, float return, r evolves, reset |
-| Sigmoid | 4 | σ(θ)=0.5, monotonic, bounded (0,1), β controls steepness |
+| Sigmoid and relaxation | 6 | exact relaxation, large-timestep boundedness, σ(θ)=0.5, monotonic, bounded (0,1), β controls steepness |
 | Dynamics | 4 | steady state convergence, τ controls speed, high input r→1, low input r→0 |
-| Parameters | 3 | dt stability, β sweep, τ sweep |
+| Parameters | 3 | timestep stability, β sweep, τ sweep |
 | Pipeline | 2 | Population creates, float return documented |
-| **Total** | **17** | |
+| **Total** | **48 Python module checks** | plus Go service and Rust safety exact-relaxation checks |
 
 See `tests/test_model_sigmoid_rate.py`. No bugs found.
 
@@ -236,7 +239,8 @@ See `tests/test_model_sigmoid_rate.py`. No bugs found.
    parameter to machine precision.
 
 2. **Rate bounded in [0, 1]:** After 100,000 steps at any input, r
-   remains in the bounded interval. The positive invariance property holds.
+   remains in the bounded interval. The positive invariance property holds
+   for large timesteps under exact relaxation.
 
 3. **Steady state = σ(input):** At convergence, r equals the sigmoid
    evaluated at the current — confirmed by measuring |r − σ| < 0.001

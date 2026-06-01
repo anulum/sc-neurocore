@@ -14,7 +14,9 @@ fn _sigmoid_rate_finite(x: Float64) -> Bool:
     return x == x and residual == 0.0
 
 
-fn sigmoid_rate_valid(r: Float64, tau: Float64, beta: Float64, theta: Float64, dt: Float64) -> Bool:
+fn sigmoid_rate_valid(
+    r: Float64, tau: Float64, beta: Float64, theta: Float64, dt: Float64
+) -> Bool:
     return (
         _sigmoid_rate_finite(r)
         and _sigmoid_rate_finite(tau)
@@ -25,11 +27,12 @@ fn sigmoid_rate_valid(r: Float64, tau: Float64, beta: Float64, theta: Float64, d
         and r <= 1.0
         and tau > 0.0
         and dt > 0.0
-        and dt <= tau
     )
 
 
-fn _sigmoid_rate_transfer(beta: Float64, current: Float64, theta: Float64) -> Float64:
+fn _sigmoid_rate_transfer(
+    beta: Float64, current: Float64, theta: Float64
+) -> Float64:
     var z = beta * (current - theta)
     if z != z:
         return -1.0
@@ -46,7 +49,12 @@ fn _sigmoid_rate_transfer(beta: Float64, current: Float64, theta: Float64) -> Fl
 
 
 fn sigmoid_rate_step(
-    r: Float64, current: Float64, tau: Float64, beta: Float64, theta: Float64, dt: Float64
+    r: Float64,
+    current: Float64,
+    tau: Float64,
+    beta: Float64,
+    theta: Float64,
+    dt: Float64,
 ) -> Float64:
     if not _sigmoid_rate_finite(current):
         return -1.0
@@ -55,7 +63,8 @@ fn sigmoid_rate_step(
     var sigma = _sigmoid_rate_transfer(beta, current, theta)
     if sigma < 0.0:
         return -1.0
-    var next_r = r + (-r + sigma) / tau * dt
+    var decay = exp(-dt / tau)
+    var next_r = decay * r + (1.0 - decay) * sigma
     if not _sigmoid_rate_finite(next_r) or next_r < 0.0 or next_r > 1.0:
         return -1.0
     return next_r

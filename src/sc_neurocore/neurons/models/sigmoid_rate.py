@@ -39,8 +39,6 @@ class SigmoidRateNeuron:
             value = getattr(self, field)
             if not math.isfinite(value) or value <= 0.0:
                 raise ValueError(f"{field} must be finite and positive")
-        if self.dt > self.tau:
-            raise ValueError("dt must not exceed tau")
 
     def step(self, current: float) -> float:
         if not math.isfinite(current):
@@ -48,11 +46,7 @@ class SigmoidRateNeuron:
         self._validate_runtime_state()
 
         sigma = self._stable_sigmoid(self.beta, current, self.theta)
-        next_r = self.r + (-self.r + sigma) / self.tau * self.dt
-        if not math.isfinite(next_r):
-            raise ValueError("rate update must remain finite")
-        if not 0.0 <= next_r <= 1.0:
-            raise ValueError("rate update must remain in [0, 1]")
+        next_r = self._exact_relaxation(self.r, sigma)
         self.r = next_r
         return next_r
 
@@ -72,8 +66,10 @@ class SigmoidRateNeuron:
             raise ValueError("runtime rate state must be in [0, 1]")
         if self.tau <= 0.0 or self.dt <= 0.0:
             raise ValueError("runtime time constants must be positive")
-        if self.dt > self.tau:
-            raise ValueError("runtime dt must not exceed tau")
+
+    def _exact_relaxation(self, rate: float, steady_state: float) -> float:
+        decay = math.exp(-self.dt / self.tau)
+        return decay * rate + (1.0 - decay) * steady_state
 
     @staticmethod
     def _stable_sigmoid(beta: float, current: float, theta: float) -> float:
