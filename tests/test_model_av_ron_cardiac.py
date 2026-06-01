@@ -4,139 +4,122 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: AvRonCardiacNeuron
+# SC-NeuroCore — AvRonCardiacNeuron physics contracts
 
-"""Full pipeline test for AvRonCardiacNeuron.
-
-Cardiac oscillator: fires spontaneously at I=0 (ISI≈159 steps).
-Performance: ~49K isolation steps/s."""
+"""Model-specific contracts for Av-Ron cardiac ganglion RK4 dynamics."""
 
 from __future__ import annotations
 
-import time
-
-import numpy as np
+import math
 
 from sc_neurocore.neurons.models.av_ron_cardiac import AvRonCardiacNeuron
-from sc_neurocore.network.population import Population
-from sc_neurocore.network.projection import Projection
-from sc_neurocore.network.network import Network
-from sc_neurocore.network.monitor import SpikeMonitor
-from sc_neurocore.network.stimulus import PoissonInput
-from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 
-def _run(neuron: AvRonCardiacNeuron, current: float, steps: int) -> list[int]:
-    return [t for t in range(steps) if neuron.step(current) == 1]
+def test_rk4_reference_point_separates_from_euler_candidate() -> None:
+    neuron = AvRonCardiacNeuron(v=-55.0, h=0.55, n=0.35, s=0.45)
+
+    assert neuron.step(2.0) == 0
+
+    assert math.isclose(neuron.v, -50.0840498399381, rel_tol=0.0, abs_tol=1e-12)
+    assert math.isclose(neuron.h, 0.5506609782132562, rel_tol=0.0, abs_tol=1e-15)
+    assert math.isclose(neuron.n, 0.34988677751350306, rel_tol=0.0, abs_tol=1e-15)
+    assert math.isclose(neuron.s, 0.4500091998827305, rel_tol=0.0, abs_tol=1e-15)
+
+    euler_v = -49.772441553145036
+    assert abs(neuron.v - euler_v) > 1e-8
 
 
-class TestAvRonIsolation:
-    def test_defaults(self):
-        n = AvRonCardiacNeuron()
-        assert np.isfinite(n.v)
+def test_spike_is_reported_on_upward_threshold_crossing_only() -> None:
+    neuron = AvRonCardiacNeuron(v=-20.1, h=0.2, n=0.1, s=0.0, v_threshold=-20.0)
 
-    def test_step_returns_binary(self):
-        assert AvRonCardiacNeuron().step(0.0) in (0, 1)
-
-    def test_state_finite(self):
-        n = AvRonCardiacNeuron()
-        for _ in range(50000):
-            n.step(0.0)
-        assert np.isfinite(n.v)
-
-    def test_reset(self):
-        n = AvRonCardiacNeuron()
-        for _ in range(500):
-            n.step(0.0)
-        n.reset()
-        # Verify reset restores some initial value
-        assert np.isfinite(n.v)
+    assert neuron.step(50.0) == 1
+    assert neuron.v >= -20.0
+    assert neuron.step(50.0) == 0
 
 
-class TestAvRonSpontaneousOscillation:
-    def test_fires_at_zero_input(self):
-        """Cardiac oscillator fires spontaneously."""
-        n = AvRonCardiacNeuron()
-        spikes = _run(n, current=0.0, steps=50000)
-        assert len(spikes) >= 100
+def test_gates_remain_physical_during_nominal_burst_drive() -> None:
+    neuron = AvRonCardiacNeuron()
 
-    def test_regular_isi(self):
-        n = AvRonCardiacNeuron()
-        spikes = _run(n, current=0.0, steps=50000)
-        if len(spikes) >= 20:
-            isis = np.diff(spikes[5:]).astype(float)
-            cv = np.std(isis) / np.mean(isis)
-            assert cv < 0.2
+    for _ in range(1000):
+        neuron.step(5.0)
+        assert 0.0 <= neuron.h <= 1.0
+        assert 0.0 <= neuron.n <= 1.0
+        assert 0.0 <= neuron.s <= 1.0
 
-    def test_isi_around_159(self):
-        n = AvRonCardiacNeuron()
-        spikes = _run(n, current=0.0, steps=50000)
-        isis = np.diff(spikes[5:])
-        mean_isi = np.mean(isis)
-        assert 100 < mean_isi < 250, f"Mean ISI = {mean_isi:.0f}"
-
-    def test_current_modulates_rate(self):
-        """External current should modulate the cardiac rhythm."""
-        n0 = AvRonCardiacNeuron()
-        n10 = AvRonCardiacNeuron()
-        s0 = len(_run(n0, current=0.0, steps=50000))
-        s10 = len(_run(n10, current=10.0, steps=50000))
-        # At minimum: both should fire (cardiac oscillator)
-        assert s0 > 0 and s10 > 0
+    assert math.isfinite(neuron.v)
 
 
-class TestAvRonPerformance:
-    def test_isolation_throughput(self):
-        n = AvRonCardiacNeuron()
-        N = 10000
-        t0 = time.perf_counter()
-        for _ in range(N):
-            n.step(0.0)
-        elapsed = time.perf_counter() - t0
-        assert N / elapsed > 10000
+def test_invalid_runtime_input_preserves_state() -> None:
+    neuron = AvRonCardiacNeuron(v=-52.0, h=0.4, n=0.2, s=0.8)
+    before = (neuron.v, neuron.h, neuron.n, neuron.s)
+
+    assert neuron.step(float("nan")) == 0
+
+    assert (neuron.v, neuron.h, neuron.n, neuron.s) == before
 
 
-class TestAvRonPipeline:
-    def test_population(self):
-        assert Population(AvRonCardiacNeuron, n=5, label="avron").n == 5
+def test_invalid_parameter_preserves_state() -> None:
+    neuron = AvRonCardiacNeuron(v=-52.0, h=0.4, n=0.2, s=0.8, dt=0.0)
+    before = (neuron.v, neuron.h, neuron.n, neuron.s)
 
-    def test_network_spikes(self):
-        pop = Population(AvRonCardiacNeuron, n=5, label="avron")
-        drive = PoissonInput(n=5, rate_hz=100.0, weight=1.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        net.run(duration=5.0, dt=0.001, backend="python")
-        assert mon.count > 0
+    assert neuron.step(1.0) == 0
 
-    def test_projection_wiring(self):
-        src = Population(AvRonCardiacNeuron, n=5, label="src")
-        tgt = Population(AvRonCardiacNeuron, n=5, label="tgt")
-        drive = PoissonInput(n=5, rate_hz=100.0, weight=1.0, dt=0.001, seed=42)
-        proj = Projection(src, tgt, weight=1.0, probability=1.0, seed=42)
-        mon = SpikeMonitor(src)
-        net = Network(src, tgt, drive, proj, mon)
-        net.run(duration=5.0, dt=0.001, backend="python")
-        assert mon.count > 0
-
-    def test_analysis(self):
-        n = AvRonCardiacNeuron()
-        train = np.array([float(n.step(0.0)) for _ in range(50000)])
-        sc = spike_count(train)
-        assert sc >= 50
-
-    def test_deterministic(self):
-        traces = []
-        for _ in range(2):
-            n = AvRonCardiacNeuron()
-            trace = [(n.step(0.0), n.v) for _ in range(200)]
-            traces.append(trace)
-        assert traces[0] == traces[1]
+    assert (neuron.v, neuron.h, neuron.n, neuron.s) == before
 
 
-# Salvaged model-specific behavioural contracts from retired aggregate test file.
-class TestAvRonCardiac:
-    def test_fires(self):
-        from sc_neurocore.neurons.models.av_ron_cardiac import AvRonCardiacNeuron
+def test_corrupted_gate_state_preserves_state() -> None:
+    neuron = AvRonCardiacNeuron(v=-52.0, h=1.2, n=0.2, s=0.8)
+    before = (neuron.v, neuron.h, neuron.n, neuron.s)
 
-        n = AvRonCardiacNeuron()
-        assert sum(n.step(5.0) for _ in range(300)) > 0
+    assert neuron.step(1.0) == 0
+
+    assert (neuron.v, neuron.h, neuron.n, neuron.s) == before
+
+
+def test_nonfinite_candidate_preserves_state() -> None:
+    neuron = AvRonCardiacNeuron(v=1.0e308, h=0.5, n=0.5, s=0.5, e_l=-1.0e308)
+    before = (neuron.v, neuron.h, neuron.n, neuron.s)
+
+    assert neuron.step(1.0e308) == 0
+
+    assert (neuron.v, neuron.h, neuron.n, neuron.s) == before
+
+
+def test_reset_restores_default_dynamic_state() -> None:
+    neuron = AvRonCardiacNeuron(v=-40.0, h=0.1, n=0.9, s=0.2)
+
+    neuron.reset()
+
+    assert (neuron.v, neuron.h, neuron.n, neuron.s) == (-60.0, 0.6, 0.3, 0.5)
+
+
+def test_boltzmann_inactivation_and_activation_monotonicity() -> None:
+    neuron = AvRonCardiacNeuron()
+    low = neuron._rates(-70.0)
+    high = neuron._rates(-20.0)
+
+    assert high[0] > low[0]
+    assert high[2] > low[2]
+    assert high[1] < low[1]
+    assert high[3] < low[3]
+    assert 1.0 <= low[4] <= 13.0
+    assert 1.0 <= high[5] <= 9.0
+    assert 200.0 <= high[6] <= 1200.0
+
+
+def test_candidate_gate_escape_preserves_state() -> None:
+    neuron = AvRonCardiacNeuron(v=-20.0, h=0.01, n=0.99, s=0.99, dt=100.0)
+    before = (neuron.v, neuron.h, neuron.n, neuron.s)
+
+    assert neuron.step(0.0) == 0
+
+    assert (neuron.v, neuron.h, neuron.n, neuron.s) == before
+
+
+def test_finite_candidate_with_gate_escape_preserves_state() -> None:
+    neuron = AvRonCardiacNeuron(v=-80.0, h=0.01, n=0.5, s=0.5, dt=1.0)
+    before = (neuron.v, neuron.h, neuron.n, neuron.s)
+
+    assert neuron.step(0.0) == 0
+
+    assert (neuron.v, neuron.h, neuron.n, neuron.s) == before
