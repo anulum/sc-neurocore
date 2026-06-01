@@ -103,14 +103,16 @@ Result artifact: `benchmarks/results/bench_sherman_rinzel_keizer.json`.
 
 Measured locally on 2026-06-01 for `80,000` steps at `current=5.0`:
 
-| Backend | Steps/s | Wall seconds | Spikes |
-| --- | ---: | ---: | ---: |
-| Python | 46331 | 1.726702 | 1738 |
-| Rust safety | 6637052 | 0.012054 | 1738 |
+| Backend | Steps/s | Wall seconds | Speedup vs Python | Spikes |
+| --- | ---: | ---: | ---: | ---: |
+| Python | 76636 | 1.043889 | 1.00x | 1738 |
+| Go service | 4242512 | 0.018857 | 55.36x | 1738 |
+| Julia mirror | 4964628 | 0.016114 | 64.78x | 1738 |
+| Rust safety | 5212713 | 0.015347 | 68.02x | 1738 |
 
-The committed JSON also records Python/Rust state parity through maximum
-absolute state delta and spike-count delta. Update this table when the
-benchmark JSON changes.
+The committed JSON records Go, Julia, and Rust safety parity against Python
+through maximum absolute state delta and spike-count delta. Update this table
+whenever the benchmark JSON changes.
 
 ## Minimal use
 

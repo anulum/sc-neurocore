@@ -1,30 +1,66 @@
 {
+  "backends": {
+    "go_service": {
+      "n": 0.05856653949847954,
+      "s": 0.1766551544539228,
+      "spikes": 1738,
+      "steps": 80000,
+      "steps_per_second": 4242511.503172206,
+      "v": -66.37053113585591,
+      "wall_seconds": 0.018856755
+    },
+    "julia_mirror": {
+      "n": 0.05856653949871623,
+      "s": 0.17665515445392257,
+      "spikes": 1738,
+      "steps": 80000,
+      "steps_per_second": 4964628.108955864,
+      "v": -66.37053113587802,
+      "wall_seconds": 0.016113996505737305
+    },
+    "python": {
+      "n": 0.05856653949856641,
+      "s": 0.1766551544539218,
+      "spikes": 1738,
+      "steps": 80000,
+      "steps_per_second": 76636.49460141701,
+      "v": -66.37053113586398,
+      "wall_seconds": 1.0438890820369124
+    },
+    "rust_safety": {
+      "n": 0.05856653949856641,
+      "s": 0.1766551544539218,
+      "spikes": 1738,
+      "steps": 80000,
+      "steps_per_second": 5212712.554870316,
+      "v": -66.37053113586398,
+      "wall_seconds": 0.015347096
+    }
+  },
   "current": 5.0,
   "date": "2026-06-01",
   "model": "ShermanRinzelKeizerNeuron",
-  "parity": {
-    "max_abs_delta": 0.0,
-    "spikes_delta": 0,
-    "status": "measured"
+  "parity_vs_python": {
+    "go_service": {
+      "max_abs_delta": 8.071765478234738e-12,
+      "spikes_delta": 0,
+      "status": "measured"
+    },
+    "julia_mirror": {
+      "max_abs_delta": 1.404032445861958e-11,
+      "spikes_delta": 0,
+      "status": "measured"
+    },
+    "rust_safety": {
+      "max_abs_delta": 0.0,
+      "spikes_delta": 0,
+      "status": "measured"
+    }
   },
-  "python": {
-    "n": 0.05856653949856641,
-    "s": 0.1766551544539218,
-    "spikes": 1738,
-    "steps": 80000,
-    "steps_per_second": 46331.10929822276,
-    "v": -66.37053113586398,
-    "wall_seconds": 1.72670158802066
+  "speedup_vs_python": {
+    "go_service": 55.35889298221844,
+    "julia_mirror": 64.78151349140737,
+    "rust_safety": 68.01867154782327
   },
-  "rust_safety": {
-    "n": 0.05856653949856641,
-    "s": 0.1766551544539218,
-    "spikes": 1738,
-    "steps": 80000,
-    "steps_per_second": 6637051.589387189,
-    "v": -66.37053113586398,
-    "wall_seconds": 0.012053545
-  },
-  "speedup_rust_vs_python": 143.2525939896238,
   "steps": 80000
 }
