@@ -80,7 +80,7 @@ def test_conda_recipe_tracks_base_install_contract() -> None:
 
     recipe = tool._read_conda_recipe(_repo_root())
 
-    assert recipe["version"] == "3.15.4"
+    assert recipe["version"] == "3.15.5"
     assert recipe["run_dependencies"] == [
         "python >=3.10",
         "numpy >=1.24",
@@ -156,7 +156,7 @@ def test_install_measurement_uses_base_install_and_records_diagnostics(
                 stdout=json.dumps(
                     [
                         {"name": "numpy", "version": "2.0.0"},
-                        {"name": "sc-neurocore", "version": "3.15.4"},
+                        {"name": "sc-neurocore", "version": "3.15.5"},
                     ]
                 ),
                 stderr="",

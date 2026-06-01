@@ -97,7 +97,7 @@ def test_runner_writes_and_validates_cyclonedx_sbom(tmp_path: Path) -> None:
             "--source-name",
             "sc-neurocore",
             "--source-version",
-            "3.15.4",
+            "3.15.5",
             "--output",
             f"cyclonedx-json={tmp_path / 'packet' / 'security' / 'sbom.cdx.json'}",
         ]
