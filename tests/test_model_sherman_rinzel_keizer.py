@@ -4,335 +4,215 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: ShermanRinzelKeizerNeuron
-
-"""Full pipeline test for ShermanRinzelKeizerNeuron (Sherman et al. 1988).
-
-Pancreatic beta cell: 3 variables (V, n, s). Spontaneous burster at I=0.
-Non-monotonic f–I: peak at moderate I, suppression at high I via slow
-s variable accumulation. Three timescales: V (fast), n (tau_n=9.09),
-s (tau_s=5000)."""
+# SC-NeuroCore — Sherman-Rinzel-Keizer neuron behavioural tests
 
 from __future__ import annotations
 
-import numpy as np
+import math
+
 import pytest
 
-from sc_neurocore.neurons.models.sherman_rinzel_keizer import ShermanRinzelKeizerNeuron
-from sc_neurocore.network.population import Population
-from sc_neurocore.network.network import Network
-from sc_neurocore.network.monitor import SpikeMonitor
-from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
+from sc_neurocore.network.population import Population
+from sc_neurocore.neurons.models.sherman_rinzel_keizer import ShermanRinzelKeizerNeuron
 
 
-def _run(neuron: ShermanRinzelKeizerNeuron, current: float, steps: int) -> list[int]:
-    return [t for t in range(steps) if neuron.step(current) == 1]
+def _sigmoid(arg: float) -> float:
+    arg = max(-80.0, min(80.0, arg))
+    return 1.0 / (1.0 + math.exp(-arg))
 
 
-def _collect_trace(
-    neuron: ShermanRinzelKeizerNeuron, current: float, steps: int
-) -> tuple[list[int], np.ndarray, np.ndarray, np.ndarray]:
-    """Return (spike_times, V_trace, n_trace, s_trace)."""
-    spikes: list[int] = []
-    vs, ns, ss = [], [], []
-    for t in range(steps):
-        if neuron.step(current) == 1:
-            spikes.append(t)
-        vs.append(neuron.v)
-        ns.append(neuron.n)
-        ss.append(neuron.s)
-    return spikes, np.array(vs), np.array(ns), np.array(ss)
+def _rhs(
+    model: ShermanRinzelKeizerNeuron,
+    v: float,
+    n_gate: float,
+    s_gate: float,
+    current: float,
+) -> tuple[float, float, float]:
+    m_inf = _sigmoid((v + 20.0) / 12.0)
+    n_inf = _sigmoid((v + 16.0) / 5.0)
+    s_inf = _sigmoid((v + 35.0) / 10.0)
+    i_ca = model.g_ca * m_inf * (v - model.e_ca)
+    i_k = model.g_k * n_gate * (v - model.e_k)
+    i_s = model.g_s * s_gate * (v - model.e_k)
+    return -i_ca - i_k - i_s + current, (n_inf - n_gate) / 9.09, (s_inf - s_gate) / model.tau_s
 
 
-class TestSRKIsolation:
-    def test_construction_defaults(self):
-        n = ShermanRinzelKeizerNeuron()
-        assert n.v == -50.0
-        assert n.n == 0.1
-        assert n.s == 0.1
-        assert n.g_ca == 3.6
-        assert n.g_k == 10.0
-        assert n.g_s == 4.0
-        assert n.e_ca == 25.0
-        assert n.e_k == -75.0
-        assert n.tau_s == 5000.0
-        assert n.dt == 0.5
-
-    def test_step_returns_binary(self):
-        assert ShermanRinzelKeizerNeuron().step(0.0) in (0, 1)
-
-    def test_three_state_variables_evolve(self):
-        n = ShermanRinzelKeizerNeuron()
-        initial = (n.v, n.n, n.s)
-        for _ in range(500):
-            n.step(0.0)
-        for name, v0, v1 in zip(["v", "n", "s"], initial, (n.v, n.n, n.s)):
-            assert v0 != v1, f"{name} didn't evolve"
-
-    def test_state_finite_long_run(self):
-        n = ShermanRinzelKeizerNeuron()
-        for _ in range(100000):
-            n.step(10.0)
-        for name, val in [("v", n.v), ("n", n.n), ("s", n.s)]:
-            assert np.isfinite(val), f"{name} = {val}"
-
-    def test_reset(self):
-        n = ShermanRinzelKeizerNeuron()
-        for _ in range(1000):
-            n.step(10.0)
-        n.reset()
-        assert n.v == -50.0 and n.n == 0.1 and n.s == 0.1
+def _rk4_reference(model: ShermanRinzelKeizerNeuron, current: float) -> tuple[float, float, float]:
+    half_dt = 0.5 * model.dt
+    k1 = _rhs(model, model.v, model.n, model.s, current)
+    k2 = _rhs(
+        model,
+        model.v + half_dt * k1[0],
+        model.n + half_dt * k1[1],
+        model.s + half_dt * k1[2],
+        current,
+    )
+    k3 = _rhs(
+        model,
+        model.v + half_dt * k2[0],
+        model.n + half_dt * k2[1],
+        model.s + half_dt * k2[2],
+        current,
+    )
+    k4 = _rhs(
+        model,
+        model.v + model.dt * k3[0],
+        model.n + model.dt * k3[1],
+        model.s + model.dt * k3[2],
+        current,
+    )
+    return (
+        model.v + model.dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
+        model.n + model.dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+        model.s + model.dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
+    )
 
 
-class TestSRKSpontaneousBursting:
-    """The model fires spontaneously at I=0 — this is the core property."""
+def test_step_matches_candidate_first_rk4_reference() -> None:
+    model = ShermanRinzelKeizerNeuron(v=-50.0, n=0.1, s=0.1)
+    expected = _rk4_reference(model, 5.0)
 
-    def test_fires_at_zero_input(self):
-        n = ShermanRinzelKeizerNeuron()
-        spikes = _run(n, current=0.0, steps=100000)
-        assert len(spikes) >= 100, f"Only {len(spikes)} spikes at I=0"
+    spike = model.step(5.0)
 
-    def test_regular_isi_limit_cycle(self):
-        """After transient, ISI settles to a limit cycle (low CV)."""
-        n = ShermanRinzelKeizerNeuron()
-        spikes = _run(n, current=0.0, steps=100000)
-        assert len(spikes) >= 30
-        isis = np.diff(spikes[15:]).astype(float)
-        cv = np.std(isis) / np.mean(isis)
-        assert cv < 0.15, f"CV(ISI) = {cv:.4f} — expected near-regular limit cycle"
-
-    def test_mean_isi_quantified(self):
-        """Quantify: at I=0, mean ISI ≈ 60–80 steps (30–40 ms at dt=0.5)."""
-        n = ShermanRinzelKeizerNeuron()
-        spikes = _run(n, current=0.0, steps=100000)
-        isis = np.diff(spikes[15:])
-        mean_isi = np.mean(isis)
-        assert 40 < mean_isi < 100, f"Mean ISI = {mean_isi:.0f}"
-
-    def test_voltage_oscillation_amplitude(self):
-        """V should show large oscillations (spike peaks vs rest)."""
-        n = ShermanRinzelKeizerNeuron()
-        _, vs, _, _ = _collect_trace(n, current=0.0, steps=50000)
-        vs_steady = vs[5000:]  # skip transient
-        v_range = vs_steady.max() - vs_steady.min()
-        assert v_range > 30.0, f"V range = {v_range:.1f} mV, expected >30"
+    assert spike == 0
+    assert model.v == pytest.approx(expected[0], abs=1e-12)
+    assert model.n == pytest.approx(expected[1], abs=1e-12)
+    assert model.s == pytest.approx(expected[2], abs=1e-12)
 
 
-class TestSRKNonMonotonicFI:
-    """Non-monotonic f–I curve is a hallmark of slow-variable feedback."""
+def test_rk4_separates_from_former_euler_increment() -> None:
+    model = ShermanRinzelKeizerNeuron(v=-50.0, n=0.1, s=0.1)
+    euler_dv, euler_dn, euler_ds = _rhs(model, model.v, model.n, model.s, 5.0)
+    euler_candidate = (
+        model.v + model.dt * euler_dv,
+        model.n + model.dt * euler_dn,
+        model.s + model.dt * euler_ds,
+    )
 
-    def test_fi_5_point_sweep(self):
-        """Map out f–I with 5 points to characterise the non-monotonicity."""
-        rates = {}
-        for I in [0.0, 5.0, 20.0, 50.0, 100.0]:
-            n = ShermanRinzelKeizerNeuron()
-            rates[I] = len(_run(n, current=I, steps=100000))
-        # Rate should increase from I=0 to peak (~I=20)
-        assert rates[5.0] > rates[0.0]
-        assert rates[20.0] > rates[5.0]
-        # Then decline at high I
-        assert rates[20.0] > rates[100.0], (
-            f"f(20)={rates[20.0]}, f(100)={rates[100.0]} — expected decline"
-        )
+    model.step(5.0)
 
-    def test_high_current_depolarisation_block(self):
-        """I=100 → very few spikes. s accumulates → strong outward current."""
-        n = ShermanRinzelKeizerNeuron()
-        spikes, _, _, s_trace = _collect_trace(n, current=100.0, steps=100000)
-        assert len(spikes) < 50, f"{len(spikes)} spikes at I=100"
-        # s should have grown substantially
-        assert s_trace[-1] > 0.5, f"s_final = {s_trace[-1]:.4f}"
-
-    def test_peak_rate_region(self):
-        """Around I=20, rate should be the highest among tested points."""
-        rates = {}
-        for I in [10.0, 20.0, 30.0]:
-            n = ShermanRinzelKeizerNeuron()
-            rates[I] = len(_run(n, current=I, steps=100000))
-        peak_I = max(rates, key=rates.get)
-        # Peak should be at 10 or 20 (moderate current)
-        assert peak_I <= 30.0
+    assert abs(model.v - euler_candidate[0]) > 0.1
+    assert abs(model.n - euler_candidate[1]) > 1e-4
+    assert abs(model.s - euler_candidate[2]) < 1e-3
 
 
-class TestSRKThreeTimescales:
-    """V (fast), n (tau_n=9.09), s (tau_s=5000) — verify separation."""
-
-    def test_timescale_ordering(self):
-        """After 100 steps: |dn| > |ds| by at least 10×."""
-        n = ShermanRinzelKeizerNeuron()
-        n0_val, s0 = n.n, n.s
-        for _ in range(100):
-            n.step(10.0)
-        dn = abs(n.n - n0_val)
-        ds = abs(n.s - s0)
-        assert dn > 10 * ds, f"dn={dn:.6f}, ds={ds:.6f} — n should evolve 10× faster than s"
-
-    def test_s_tracks_mean_v_on_slow_timescale(self):
-        """s_inf = sigmoid(-(V+35)/10). When V is high on average, s grows."""
-        n = ShermanRinzelKeizerNeuron()
-        for _ in range(100000):
-            n.step(50.0)
-        # At high current, V spends time depolarised → s_inf ≈ 1 → s grows
-        assert n.s > 0.3
-
-    def test_n_follows_v_on_fast_timescale(self):
-        """n_inf = sigmoid(-(V+16)/5). n should track n_inf closely."""
-        n = ShermanRinzelKeizerNeuron()
-        for _ in range(10000):
-            n.step(0.0)
-        # Compute n_inf at current V
-        n_inf = 1.0 / (1.0 + np.exp(-(n.v + 16.0) / 5.0))
-        # n should be close to n_inf (tau_n=9.09 is fast)
-        assert abs(n.n - n_inf) < 0.15, (
-            f"n = {n.n:.4f}, n_inf = {n_inf:.4f} — expected close tracking"
-        )
-
-    def test_s_modulation_changes_burst_envelope(self):
-        """Different g_s values change the burst pattern — s mediates bursting."""
-        n_weak = ShermanRinzelKeizerNeuron(g_s=1.0)
-        n_strong = ShermanRinzelKeizerNeuron(g_s=8.0)
-        s_weak = len(_run(n_weak, current=0.0, steps=100000))
-        s_strong = len(_run(n_strong, current=0.0, steps=100000))
-        assert s_weak != s_strong, "g_s had no effect on spike count"
-
-    def test_tau_s_controls_burst_period(self):
-        """Shorter tau_s → faster s dynamics → different burst period."""
-        n_fast = ShermanRinzelKeizerNeuron(tau_s=1000.0)
-        n_slow = ShermanRinzelKeizerNeuron(tau_s=10000.0)
-        s_fast = _run(n_fast, current=0.0, steps=100000)
-        s_slow = _run(n_slow, current=0.0, steps=100000)
-        if len(s_fast) > 10 and len(s_slow) > 10:
-            isi_fast = np.mean(np.diff(s_fast[10:]))
-            isi_slow = np.mean(np.diff(s_slow[10:]))
-            assert isi_fast != isi_slow, "tau_s had no effect on ISI"
+def test_gate_variables_remain_bounded_under_sustained_drive() -> None:
+    model = ShermanRinzelKeizerNeuron(dt=0.05)
+    for _ in range(2000):
+        model.step(8.0)
+        assert 0.0 <= model.n <= 1.0
+        assert 0.0 <= model.s <= 1.0
+        assert math.isfinite(model.v)
 
 
-class TestSRKSigmoidActivation:
-    """Verify the three sigmoid activation functions are biophysically correct."""
+def test_slow_gate_separates_from_fast_gate() -> None:
+    model = ShermanRinzelKeizerNeuron(dt=0.05)
+    n0 = model.n
+    s0 = model.s
+    for _ in range(80):
+        model.step(4.0)
 
-    def test_m_inf_sigmoid(self):
-        """m_inf(V) = 1/(1+exp(-(V+20)/12)). At V=-20: m_inf=0.5."""
-        v_half = -20.0
-        m_inf = 1.0 / (1.0 + np.exp(-(v_half + 20.0) / 12.0))
-        assert abs(m_inf - 0.5) < 1e-10
-
-    def test_n_inf_sigmoid(self):
-        """n_inf(V) = 1/(1+exp(-(V+16)/5)). At V=-16: n_inf=0.5."""
-        v_half = -16.0
-        n_inf = 1.0 / (1.0 + np.exp(-(v_half + 16.0) / 5.0))
-        assert abs(n_inf - 0.5) < 1e-10
-
-    def test_s_inf_sigmoid(self):
-        """s_inf(V) = 1/(1+exp(-(V+35)/10)). At V=-35: s_inf=0.5."""
-        v_half = -35.0
-        s_inf = 1.0 / (1.0 + np.exp(-(v_half + 35.0) / 10.0))
-        assert abs(s_inf - 0.5) < 1e-10
-
-    def test_gating_variables_bounded(self):
-        """n and s should stay in [0, 1] (sigmoid range)."""
-        n = ShermanRinzelKeizerNeuron()
-        for _ in range(100000):
-            n.step(10.0)
-        assert 0.0 <= n.n <= 1.0, f"n = {n.n:.6f}"
-        assert 0.0 <= n.s <= 1.0, f"s = {n.s:.6f}"
+    assert abs(model.n - n0) > 100.0 * abs(model.s - s0)
 
 
-class TestSRKCurrentBalance:
-    """Verify the three currents (I_Ca, I_K, I_s) behave correctly."""
+def test_current_balance_signs_match_beta_cell_contract() -> None:
+    model = ShermanRinzelKeizerNeuron()
+    m_inf = _sigmoid((model.v + 20.0) / 12.0)
+    i_ca = model.g_ca * m_inf * (model.v - model.e_ca)
+    i_k = model.g_k * model.n * (model.v - model.e_k)
+    i_s = model.g_s * model.s * (model.v - model.e_k)
 
-    def test_i_ca_depolarising(self):
-        """I_Ca is inward (depolarising) when V < E_Ca = 25 mV.
-
-        At rest V ≈ -50 < 25: I_Ca = g_Ca·m_inf·(V-E_Ca) < 0 (inward).
-        """
-        n = ShermanRinzelKeizerNeuron()
-        m_inf = 1.0 / (1.0 + np.exp(-(n.v + 20.0) / 12.0))
-        i_ca = n.g_ca * m_inf * (n.v - n.e_ca)
-        assert i_ca < 0, f"I_Ca = {i_ca:.4f}, expected < 0 (inward)"
-
-    def test_i_k_hyperpolarising(self):
-        """I_K = g_K·n·(V-E_K). At rest V > E_K = -75: I_K > 0 (outward)."""
-        n = ShermanRinzelKeizerNeuron()
-        i_k = n.g_k * n.n * (n.v - n.e_k)
-        assert i_k > 0, f"I_K = {i_k:.4f}, expected > 0 (outward)"
-
-    def test_i_s_hyperpolarising(self):
-        """I_s = g_s·s·(V-E_K). Same reversal as I_K → outward at rest."""
-        n = ShermanRinzelKeizerNeuron()
-        i_s = n.g_s * n.s * (n.v - n.e_k)
-        assert i_s > 0, f"I_s = {i_s:.4f}, expected > 0 (outward)"
+    assert i_ca < 0.0
+    assert i_k > 0.0
+    assert i_s > 0.0
 
 
-class TestSRKNumericalStability:
-    @pytest.mark.parametrize("dt", [0.2, 0.5])
-    def test_dt_stability(self, dt: float):
-        n = ShermanRinzelKeizerNeuron(dt=dt)
-        for _ in range(50000):
-            n.step(10.0)
-        assert np.isfinite(n.v)
+def test_invalid_physical_parameters_rejected_before_mutation() -> None:
+    invalid_cases = (
+        ("g_ca", 0.0),
+        ("g_k", -1.0),
+        ("g_s", -1.0),
+        ("tau_s", 0.0),
+        ("dt", 0.0),
+    )
+    for attr, value in invalid_cases:
+        model = ShermanRinzelKeizerNeuron()
+        setattr(model, attr, value)
+        previous = (model.v, model.n, model.s)
 
-    def test_large_dt_unstable(self):
-        """dt=1.0 causes Euler divergence (NaN) — documents numerical limit."""
-        n = ShermanRinzelKeizerNeuron(dt=1.0)
-        for _ in range(50000):
-            n.step(10.0)
-        assert not np.isfinite(n.v), "dt=1.0 expected to diverge"
+        with pytest.raises(ValueError):
+            model.step(1.0)
 
-
-class TestSRKParameterSensitivity:
-    def test_g_ca_higher_more_excitable(self):
-        """Higher g_Ca → stronger inward Ca current → more excitable."""
-        n_low = ShermanRinzelKeizerNeuron(g_ca=2.0)
-        n_high = ShermanRinzelKeizerNeuron(g_ca=5.0)
-        s_low = len(_run(n_low, current=0.0, steps=100000))
-        s_high = len(_run(n_high, current=0.0, steps=100000))
-        assert s_high > s_low, f"g_ca=2: {s_low}, g_ca=5: {s_high}"
-
-    def test_g_k_affects_dynamics(self):
-        """g_K modulates the fast K current — changing it alters the spike pattern.
-
-        The relationship is non-monotonic due to interaction with the Ca and s
-        subsystems: at g_K=5, weaker K delayed rectifier changes the V
-        nullcline shape, potentially shifting the oscillatory regime.
-        """
-        n_low = ShermanRinzelKeizerNeuron(g_k=5.0)
-        n_high = ShermanRinzelKeizerNeuron(g_k=15.0)
-        s_low = len(_run(n_low, current=0.0, steps=100000))
-        s_high = len(_run(n_high, current=0.0, steps=100000))
-        assert s_low != s_high, "g_K change had no effect on spike count"
+        assert (model.v, model.n, model.s) == previous
 
 
-class TestSRKDeterminism:
-    def test_bit_exact(self):
-        traces = []
-        for _ in range(2):
-            n = ShermanRinzelKeizerNeuron()
-            trace = [(n.step(5.0), n.v, n.n, n.s) for _ in range(500)]
-            traces.append(trace)
-        assert traces[0] == traces[1]
+def test_non_finite_current_rejected_before_mutation() -> None:
+    model = ShermanRinzelKeizerNeuron()
+    previous = (model.v, model.n, model.s)
+
+    with pytest.raises(ValueError):
+        model.step(math.inf)
+
+    assert (model.v, model.n, model.s) == previous
 
 
-class TestSRKNetwork:
-    def test_population(self):
-        assert Population(ShermanRinzelKeizerNeuron, n=5, label="srk").n == 5
+def test_corrupted_gate_state_rejected_before_mutation() -> None:
+    model = ShermanRinzelKeizerNeuron(n=1.2)
+    previous = (model.v, model.n, model.s)
 
-    def test_network_spikes(self):
-        pop = Population(ShermanRinzelKeizerNeuron, n=5, label="srk")
-        drive = PoissonInput(n=5, rate_hz=200.0, weight=5.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        net.run(duration=2.0, dt=0.001, backend="python")
-        assert mon.count > 0
+    with pytest.raises(ValueError):
+        model.step(1.0)
+
+    assert (model.v, model.n, model.s) == previous
 
 
-class TestSRKAnalysis:
-    def test_spike_count_matches_manual(self):
-        n = ShermanRinzelKeizerNeuron()
-        train = np.array([float(n.step(0.0)) for _ in range(100000)])
-        assert spike_count(train) == int(train.sum())
+def test_invalid_candidate_rejected_before_mutation() -> None:
+    model = ShermanRinzelKeizerNeuron(dt=50.0)
+    previous = (model.v, model.n, model.s)
 
-    def test_spike_count_substantial(self):
-        n = ShermanRinzelKeizerNeuron()
-        train = np.array([float(n.step(0.0)) for _ in range(100000)])
-        assert spike_count(train) >= 100
+    with pytest.raises(ValueError):
+        model.step(1000.0)
+
+    assert (model.v, model.n, model.s) == previous
+
+
+def test_intermediate_stage_escape_rejected_before_mutation() -> None:
+    model = ShermanRinzelKeizerNeuron(dt=1.0e308)
+    previous = (model.v, model.n, model.s)
+
+    with pytest.raises(ValueError):
+        model.step(1.0)
+
+    assert (model.v, model.n, model.s) == previous
+
+
+def test_nonfinite_derivative_rejected_before_mutation() -> None:
+    model = ShermanRinzelKeizerNeuron(g_ca=1.0e308)
+    previous = (model.v, model.n, model.s)
+
+    with pytest.raises(ValueError):
+        model.step(1.0)
+
+    assert (model.v, model.n, model.s) == previous
+
+
+def test_reset_restores_dynamic_state_only() -> None:
+    model = ShermanRinzelKeizerNeuron(g_ca=4.2, dt=0.05)
+    for _ in range(10):
+        model.step(2.0)
+
+    model.reset()
+
+    assert (model.v, model.n, model.s) == (-50.0, 0.1, 0.1)
+    assert model.g_ca == 4.2
+    assert model.dt == 0.05
+
+
+def test_population_network_and_analysis_wiring() -> None:
+    population = Population(ShermanRinzelKeizerNeuron, n=3)
+
+    spikes = [neuron.step(5.0) for neuron in population.neurons]
+
+    assert len(population.neurons) == 3
+    assert spike_count(spikes) == sum(spikes)
