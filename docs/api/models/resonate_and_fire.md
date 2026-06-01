@@ -31,30 +31,38 @@ $$|z| = \sqrt{x^2 + y^2} \geq \theta$$
 
 On spike: $x \leftarrow 0,\; y \leftarrow 0$ (reset to origin).
 
-### Implementation (as coded)
+### Exact implementation (as coded)
 
 ```python
 def step(self, current: float) -> int:
-    dx = (self.b * self.x - self.omega * self.y + current) * self.dt
-    dy = (self.omega * self.x + self.b * self.y) * self.dt
-    next_x = self.x + dx
-    next_y = self.y + dy
+    x_ss = -self.b * current / (self.b**2 + self.omega**2)
+    y_ss = self.omega * current / (self.b**2 + self.omega**2)
+    decay = math.exp(self.b * self.dt)
+    angle = self.omega * self.dt
+    dx = self.x - x_ss
+    dy = self.y - y_ss
+    next_x = x_ss + decay * (dx * math.cos(angle) - dy * math.sin(angle))
+    next_y = y_ss + decay * (dx * math.sin(angle) + dy * math.cos(angle))
     radius = math.hypot(next_x, next_y)
-    if not all(math.isfinite(value) for value in (dx, dy, next_x, next_y, radius)):
-        raise ValueError("Euler update must be finite")
-    self.x = next_x
-    self.y = next_y
+    if not all(math.isfinite(value) for value in (next_x, next_y, radius)):
+        raise ValueError("exact resonator update must be finite")
     if radius >= self.threshold:
         self.x = 0.0
         self.y = 0.0
         return 1
+    self.x = next_x
+    self.y = next_y
     return 0
 ```
 
-Forward Euler, single step per call. No sub-stepping.
+The step is the closed-form constant-input solution:
+
+$$z(t+\Delta t) = z_{ss} + e^{(b+i\omega)\Delta t}(z(t)-z_{ss})$$
+
+with $z_{ss}=-I/(b+i\omega)$. No sub-stepping is required.
 
 Runtime contract: all maintained Python, Julia, Go, Mojo, and Rust
-safety surfaces reject non-finite current/state and non-finite Euler
+safety surfaces reject non-finite current/state and non-finite exact-flow
 updates before mutating oscillator state. Rejected native scalar paths
 return an explicit error/sentinel rather than silently converting
 numerical corruption into a no-spike event.
@@ -176,14 +184,14 @@ to inputs oscillating near its natural frequency omega.
 |---------|-------------|----------|----------|--------|
 | 0.0 | 0 | — | 0.0000 | Origin rest |
 | 0.5 | 0 | — | 0.4975 | Subthreshold spiral |
-| 1.0 | 2,272 | 22 | 0.7573 | Spiking (just above I_crit) |
-| 2.0 | 4,545 | 11 | 0.4950 | Regular spiking |
+| 1.0 | 2,173 | 23 | 0.9516 | Spiking (just above I_crit) |
+| 2.0 | 4,545 | 11 | 0.4925 | Regular spiking |
 | 5.0 | 10,000 | 5 | 0.0000 | Fast spiking |
-| 10.0 | 16,666 | 3 | 0.9978 | Rapid spiking |
-| 20.0 | 50,000 | 1 | 0.0000 | Every-step spiking |
+| 10.0 | 16,666 | 3 | 0.9946 | Rapid spiking |
+| 20.0 | 25,000 | 2 | 0.0000 | Alternating-step spiking |
+| 25.0 | 50,000 | 1 | 0.0000 | Every-step spiking |
 
-f–I is monotonic. At I=20, the single-step increment exceeds threshold
-on every step → spike rate = 1/dt.
+f–I is monotonic. At I=25, the exact one-step radius exceeds threshold after each reset, so spike rate = 1/dt.
 
 ### Damping parameter sweep (I=1.5)
 
@@ -216,12 +224,14 @@ for modelling neurons in sensory systems that exhibit band-pass filtering.
 
 - **dt stability:** Tested at dt = 0.02, 0.05, 0.1. All produce finite
   states after 50k steps at I=2.0.
-- **Euler integration:** The continuous damped oscillator is stable for
-  b < 0, but the maintained implementation uses explicit Euler. For the
-  homogeneous oscillator, numerical decay requires
-  `sqrt((1 + b*dt)^2 + (omega*dt)^2) < 1`. The runtime therefore
-  rejects non-finite Euler increments, candidate coordinates, and radius
-  before mutating state; it does not claim arbitrary-timestep accuracy.
+- **Exact linear flow:** The maintained implementation evaluates the
+  matrix-exponential solution for the damped oscillator instead of relying on
+  explicit Euler stability. The homogeneous radius decays exactly by
+  `exp(b*dt)` when `current = 0`, so large timesteps preserve the analytical
+  damped-rotation envelope instead of introducing numerical growth.
+- **Candidate validation:** Runtime code rejects non-finite exact-flow
+  coefficients, equilibria, rotations, candidate coordinates, and radius
+  before mutating state.
 - **Radius computation:** Uses `math.hypot(x, y)` each step to avoid
   avoidable overflow in the Euclidean norm.
 
@@ -294,14 +304,15 @@ for modelling neurons in sensory systems that exhibit band-pass filtering.
 
 ---
 
-## Measured Performance (2026-04-04)
+## Measured Performance (2026-06-01)
 
-| Metric | Value |
-|--------|-------|
-| Python throughput | ~105K steps/s |
-| Spikes (10K steps, I=5.0) | 2000 |
-| State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+| Metric | Value | Notes |
+|--------|-------|-------|
+| Python exact-flow step | 2,742.56363 ns/step median | `200,000` steps × 5 repeats |
+| Benchmark command | `PYTHONPATH=src .venv/bin/python benchmarks/bench_model_resonate_and_fire.py` | local workstation |
+| Spikes per repeat | 18,181 | current = 2.0 |
+| Ending state | `x=0.8509771070439969`, `y=0.1932519645494586` | deterministic across repeats |
+| Closed-form transcendental calls | 4 per step | `exp`, `cos`, `sin`, `hypot` |
 
 ---
 
