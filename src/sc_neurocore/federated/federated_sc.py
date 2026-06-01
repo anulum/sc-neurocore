@@ -204,14 +204,15 @@ class SecretShare:
 
     def split(self, bitstream: np.ndarray, rng: np.random.Generator) -> List[np.ndarray]:
         """Split bitstream into additive GF(2) shares."""
-        shares = []
-        accumulated = np.zeros_like(bitstream)
+        bitstream_u8 = bitstream.astype(np.uint8, copy=False)
+        shares: List[np.ndarray] = []
+        accumulated = np.zeros_like(bitstream_u8)
         for i in range(self.num_parties - 1):
-            share = rng.integers(0, 2, size=len(bitstream), dtype=np.uint8)
+            share = rng.integers(0, 2, size=len(bitstream_u8), dtype=np.uint8)
             shares.append(share)
             accumulated ^= share
         # Last share ensures XOR of all shares == original
-        shares.append(bitstream ^ accumulated)
+        shares.append(bitstream_u8 ^ accumulated)
         return shares
 
     @staticmethod

@@ -137,7 +137,7 @@ class OnlineLearner:
         self.weights[spike_mask] += self.lr * reward
         self.weights[~spike_mask] -= self.lr * reward * 0.1
 
-        self.weights = np.clip(self.weights, 0.01, 10.0)
+        np.clip(self.weights, 0.01, 10.0, out=self.weights)
         self.updates += 1
         return self.weights
 
