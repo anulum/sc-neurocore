@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.7] - 2026-06-01
+
+### Engine publishing credentials
+- Added the dedicated `sc-neurocore-engine` PyPI project token to the engine
+  wheel publish step after PyPI rejected OIDC tokens scoped to the primary
+  `sc-neurocore` project.
+- Issued this patch release without rewriting prior tags so the partial
+  publication attempts remain auditable and superseded.
+
 ## [3.15.6] - 2026-06-01
 
 ### Publishing hygiene
