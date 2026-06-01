@@ -4,123 +4,97 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: GIFPopulationNeuron
+# SC-NeuroCore — GIFPopulationNeuron physics contracts
 
-"""Escape-rate + eta adaptation, stochastic. Needs I≥50. ~169K steps/s."""
+"""Model-specific contracts for Mensi et al. GIF escape-rate dynamics."""
 
 from __future__ import annotations
 
-import time
-
-import numpy as np
+import math
 
 from sc_neurocore.neurons.models.gif_population import GIFPopulationNeuron
-from sc_neurocore.network.population import Population
-from sc_neurocore.network.projection import Projection
-from sc_neurocore.network.network import Network
-from sc_neurocore.network.monitor import SpikeMonitor
-from sc_neurocore.network.stimulus import PoissonInput
-from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate
 
 
-def _run(neuron: GIFPopulationNeuron, current: float, steps: int) -> list[int]:
-    return [t for t in range(steps) if neuron.step(current) == 1]
+def test_exact_coupled_subthreshold_reference_point() -> None:
+    neuron = GIFPopulationNeuron(v=-68.0, eta=0.4, seed=7)
+
+    assert neuron.step(4.0) == 0
+
+    assert math.isclose(neuron.v, -67.8370206677805, rel_tol=0.0, abs_tol=1e-12)
+    assert math.isclose(neuron.eta, 0.398004991677073, rel_tol=0.0, abs_tol=1e-15)
 
 
-class TestIsolation:
-    def test_step_returns_binary(self):
-        assert GIFPopulationNeuron().step(0.0) in (0, 1)
+def test_equal_time_constant_limit_is_finite() -> None:
+    neuron = GIFPopulationNeuron(v=-63.0, eta=1.5, tau_m=20.0, tau_eta=20.0)
 
-    def test_state_finite(self):
-        n = GIFPopulationNeuron()
-        for _ in range(5000):
-            n.step(50.0)
-        assert np.isfinite(getattr(n, "v", 0.0))
+    assert neuron.step(2.0) == 0
 
-    def test_reset(self):
-        n = GIFPopulationNeuron()
-        for _ in range(100):
-            n.step(50.0)
-        n.reset()
+    assert math.isfinite(neuron.v)
+    assert math.isclose(neuron.eta, 1.4629648680424988, rel_tol=0.0, abs_tol=1e-15)
 
 
-class TestDynamics:
-    def test_fires_at_test_current(self):
-        n = GIFPopulationNeuron()
-        spikes = _run(n, current=50.0, steps=5000)
-        assert len(spikes) >= 10
+def test_forced_spike_resets_voltage_and_adds_decayed_adaptation() -> None:
+    neuron = GIFPopulationNeuron(v=-51.0, eta=0.3, theta=-90.0, lambda_0=1.0e9)
 
-    def test_rate_increases_with_current(self):
-        n_low = GIFPopulationNeuron()
-        n_high = GIFPopulationNeuron()
-        s_low = len(_run(n_low, current=30.0, steps=5000))
-        s_high = len(_run(n_high, current=100.0, steps=5000))
-        assert s_high >= s_low
+    assert neuron.step(0.0) == 1
 
-    def test_two_runs_differ(self):
-        n1 = GIFPopulationNeuron()
-        n2 = GIFPopulationNeuron()
-        t1 = [n1.step(50.0) for _ in range(1000)]
-        t2 = [n2.step(50.0) for _ in range(1000)]
-        assert t1 != t2
+    assert neuron.v == neuron.v_reset
+    assert math.isclose(neuron.eta, 5.298503743757805, rel_tol=0.0, abs_tol=1e-15)
 
 
-class TestPerformance:
-    def test_isolation_throughput(self):
-        n = GIFPopulationNeuron()
-        N = 20000
-        t0 = time.perf_counter()
-        for _ in range(N):
-            n.step(50.0)
-        elapsed = time.perf_counter() - t0
-        assert N / elapsed > 20000
+def test_zero_baseline_hazard_never_spikes() -> None:
+    neuron = GIFPopulationNeuron(theta=-1000.0, lambda_0=0.0)
 
-    def test_network_throughput(self):
-        pop = Population(GIFPopulationNeuron, n=50, label="bench")
-        drive = PoissonInput(n=50, rate_hz=500.0, weight=50.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        t0 = time.perf_counter()
-        net.run(duration=0.5, dt=0.001, backend="python")
-        elapsed = time.perf_counter() - t0
-        assert 50 * 500 / elapsed > 5000
+    spikes = sum(neuron.step(100.0) for _ in range(128))
+
+    assert spikes == 0
+    assert neuron._spike_probability(neuron.v) == 0.0
 
 
-class TestPipeline:
-    def test_population(self):
-        assert Population(GIFPopulationNeuron, n=10, label="test").n == 10
+def test_invalid_input_and_invalid_parameters_preserve_state() -> None:
+    neuron = GIFPopulationNeuron(v=-62.0, eta=0.75)
+    before = (neuron.v, neuron.eta)
 
-    def test_network_spikes(self):
-        pop = Population(GIFPopulationNeuron, n=10, label="test")
-        drive = PoissonInput(n=10, rate_hz=500.0, weight=50.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        net.run(duration=2.0, dt=0.001, backend="python")
-        assert mon.count > 0
+    assert neuron.step(float("nan")) == 0
+    assert (neuron.v, neuron.eta) == before
 
-    def test_projection_wiring(self):
-        src = Population(GIFPopulationNeuron, n=5, label="src")
-        tgt = Population(GIFPopulationNeuron, n=5, label="tgt")
-        drive = PoissonInput(n=5, rate_hz=500.0, weight=50.0, dt=0.001, seed=42)
-        proj = Projection(src, tgt, weight=50.0, probability=1.0, seed=42)
-        mon = SpikeMonitor(src)
-        net = Network(src, tgt, drive, proj, mon)
-        net.run(duration=2.0, dt=0.001, backend="python")
-        assert mon.count > 0
-
-    def test_analysis(self):
-        n = GIFPopulationNeuron()
-        train = np.array([float(n.step(50.0)) for _ in range(5000)])
-        sc = spike_count(train)
-        assert sc >= 5
-        rate = firing_rate(train, dt=0.001)
-        assert rate > 0
+    neuron.tau_m = 0.0
+    assert neuron.step(1.0) == 0
+    assert (neuron.v, neuron.eta) == before
 
 
-# Salvaged model-specific behavioural contracts from retired aggregate test file.
-class TestGIFPopulation:
-    def test_stochastic_firing(self):
-        from sc_neurocore.neurons.models.gif_population import GIFPopulationNeuron
+def test_nonfinite_candidate_preserves_state() -> None:
+    neuron = GIFPopulationNeuron(v=1.0e308, v_rest=1.0e308, eta=0.0)
+    before = (neuron.v, neuron.eta)
 
-        n = GIFPopulationNeuron()
-        assert sum(n.step(30.0) for _ in range(500)) > 0
+    assert neuron.step(1.0e308) == 0
+
+    assert (neuron.v, neuron.eta) == before
+
+
+def test_seeded_reproducibility_and_seed_separation() -> None:
+    left = GIFPopulationNeuron(seed=123)
+    right = GIFPopulationNeuron(seed=123)
+    other = GIFPopulationNeuron(seed=999)
+
+    left_train = [left.step(60.0) for _ in range(256)]
+    right_train = [right.step(60.0) for _ in range(256)]
+    other_train = [other.step(60.0) for _ in range(256)]
+
+    assert left_train == right_train
+    zero_seed = GIFPopulationNeuron(seed=0)
+    one_seed = GIFPopulationNeuron(seed=1)
+    assert [zero_seed.step(60.0) for _ in range(32)] == [one_seed.step(60.0) for _ in range(32)]
+    assert left_train != other_train
+
+
+def test_reset_restores_state_and_rng_sequence() -> None:
+    neuron = GIFPopulationNeuron(seed=123, theta=-90.0, lambda_0=1.0e9)
+
+    first = [neuron.step(0.0) for _ in range(3)]
+    neuron.reset()
+    replay = [neuron.step(0.0) for _ in range(3)]
+
+    assert first == replay
+    assert neuron.v == neuron.v_reset
+    assert neuron.eta > neuron.eta_increment

@@ -4,20 +4,19 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for gif_population
+# SC-NeuroCore — Mojo SIMD contract for gif_population
 
 fn step(current: Int) -> Int:
-    var _step_line = '# Mensi 2012 Eq. 1-2'
-    var _step_line = 'v += (-(v - v_rest) - eta + current) / tau_m * dt'
-    var _step_line = 'eta *= exp(-dt / tau_eta)'
-    var _step_line = 'hazard = lambda_0 * exp(min((v - theta) / delta_v, 20.0))'
-    var _step_line = 'p_spike = 1.0 - exp(-hazard * dt)'
-    var _step_line = 'if _rng.random() < p_spike:'
-    var _step_line = 'v = v_reset'
-    var _step_line = 'eta += eta_increment'
-    return 0  # return 1
-    return 0  # return 0
+    # Contract mirror for the Mensi GIF scalar kernels:
+    # eta_decay = exp(-dt / tau_eta)
+    # membrane_decay = exp(-dt / tau_m)
+    # x0 = v - v_rest - current
+    # eta_new = eta * eta_decay
+    # if tau_m == tau_eta: x_new = membrane_decay * (x0 - eta * dt / tau_m)
+    # else: x_new = x0 * membrane_decay - eta * tau_eta / (tau_eta - tau_m) * (eta_decay - membrane_decay)
+    # p_spike = clamp(1 - exp(-lambda_0 * exp(clamp((v - theta) / delta_v, -745, 20)) * dt), 0, 1)
+    return 0
 
 fn reset() -> Int:
-    var _reset_line = 'v, eta = -65.0, 0.0'
+    # Contract: v = v_rest, eta = 0, rng = seed.
     return 0
