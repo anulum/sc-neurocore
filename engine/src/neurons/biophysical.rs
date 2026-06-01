@@ -1576,14 +1576,90 @@ impl GLIFNeuron {
             dt: 1.0,
         }
     }
+    fn finite_values(values: &[f64]) -> bool {
+        values.iter().all(|value| value.is_finite())
+    }
+
+    fn valid_runtime(&self) -> bool {
+        Self::finite_values(&[
+            self.v,
+            self.theta,
+            self.theta_inf,
+            self.i_asc1,
+            self.i_asc2,
+            self.v_rest,
+            self.v_reset,
+            self.tau_m,
+            self.tau_theta,
+            self.tau_asc1,
+            self.tau_asc2,
+            self.a_theta,
+            self.delta_theta,
+            self.r_asc1,
+            self.r_asc2,
+            self.resistance,
+            self.dt,
+        ]) && self.tau_m > 0.0
+            && self.tau_theta > 0.0
+            && self.tau_asc1 > 0.0
+            && self.tau_asc2 > 0.0
+            && self.dt > 0.0
+            && self.delta_theta >= 0.0
+            && self.resistance >= 0.0
+    }
+
+    fn derivatives(&self, v: f64, theta: f64, i_asc1: f64, i_asc2: f64, current: f64) -> [f64; 4] {
+        [
+            (-(v - self.v_rest) + self.resistance * current + i_asc1 + i_asc2) / self.tau_m,
+            (self.theta_inf - theta + self.a_theta * (v - self.v_rest)) / self.tau_theta,
+            -i_asc1 / self.tau_asc1,
+            -i_asc2 / self.tau_asc2,
+        ]
+    }
+
+    fn add_scaled(state: [f64; 4], slope: [f64; 4], scale: f64) -> [f64; 4] {
+        [
+            state[0] + scale * slope[0],
+            state[1] + scale * slope[1],
+            state[2] + scale * slope[2],
+            state[3] + scale * slope[3],
+        ]
+    }
+
+    fn rk4_candidate(&self, current: f64) -> Option<[f64; 4]> {
+        let state = [self.v, self.theta, self.i_asc1, self.i_asc2];
+        let half_dt = 0.5 * self.dt;
+        let k1 = self.derivatives(state[0], state[1], state[2], state[3], current);
+        let s2 = Self::add_scaled(state, k1, half_dt);
+        let k2 = self.derivatives(s2[0], s2[1], s2[2], s2[3], current);
+        let s3 = Self::add_scaled(state, k2, half_dt);
+        let k3 = self.derivatives(s3[0], s3[1], s3[2], s3[3], current);
+        let s4 = Self::add_scaled(state, k3, self.dt);
+        let k4 = self.derivatives(s4[0], s4[1], s4[2], s4[3], current);
+        let candidate = [
+            state[0] + self.dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
+            state[1] + self.dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+            state[2] + self.dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
+            state[3] + self.dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0,
+        ];
+        if Self::finite_values(&candidate) {
+            Some(candidate)
+        } else {
+            None
+        }
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
-        self.v += (-(self.v - self.v_rest) + self.resistance * current + self.i_asc1 + self.i_asc2)
-            / self.tau_m
-            * self.dt;
-        self.theta += self.a_theta * (self.v - self.v_rest)
-            + (self.theta_inf - self.theta) / self.tau_theta * self.dt;
-        self.i_asc1 *= (-self.dt / self.tau_asc1).exp();
-        self.i_asc2 *= (-self.dt / self.tau_asc2).exp();
+        if !current.is_finite() || !self.valid_runtime() {
+            return 0;
+        }
+        let Some(candidate) = self.rk4_candidate(current) else {
+            return 0;
+        };
+        self.v = candidate[0];
+        self.theta = candidate[1];
+        self.i_asc1 = candidate[2];
+        self.i_asc2 = candidate[3];
         if self.v >= self.theta {
             self.v = self.v_reset;
             self.theta += self.delta_theta;
@@ -2975,6 +3051,42 @@ mod tests {
         assert!((n.v - n.v_rest).abs() < 1e-10);
         assert!((n.i_asc1).abs() < 1e-10);
         assert!((n.i_asc2).abs() < 1e-10);
+    }
+    #[test]
+    fn glif_rk4_reference_point() {
+        let mut n = GLIFNeuron::new();
+        n.v = -68.0;
+        n.theta = -45.0;
+        n.i_asc1 = 0.4;
+        n.i_asc2 = -0.2;
+        assert_eq!(n.step(4.0), 0);
+        assert!((n.v - (-67.7924658728125)).abs() < 1e-12);
+        assert!((n.theta - (-45.049541282631253)).abs() < 1e-12);
+        assert!((n.i_asc1 - 0.361935).abs() < 1e-12);
+        assert!((n.i_asc2 - (-0.19900249583333334)).abs() < 1e-10);
+    }
+    #[test]
+    fn glif_spike_reset_adds_candidate_threshold() {
+        let mut n = GLIFNeuron::new();
+        n.v = -51.0;
+        n.theta = -50.5;
+        n.delta_theta = 2.5;
+        n.r_asc1 = 1.25;
+        n.r_asc2 = -0.25;
+        assert_eq!(n.step(40.0), 1);
+        assert!((n.v - (-70.0)).abs() < 1e-12);
+        assert!((n.theta - (-47.9930331381625)).abs() < 1e-12);
+        assert!((n.i_asc1 - 1.25).abs() < 1e-12);
+        assert!((n.i_asc2 - (-0.25)).abs() < 1e-12);
+    }
+    #[test]
+    fn glif_invalid_input_preserves_state() {
+        let mut n = GLIFNeuron::new();
+        n.v = -68.0;
+        n.i_asc1 = 0.4;
+        let before = (n.v, n.theta, n.i_asc1, n.i_asc2);
+        assert_eq!(n.step(f64::NAN), 0);
+        assert_eq!((n.v, n.theta, n.i_asc1, n.i_asc2), before);
     }
     #[test]
     fn glif_extreme_bounded() {
