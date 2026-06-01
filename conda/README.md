@@ -8,8 +8,8 @@ This directory contains the conda-forge recipe for `sc-neurocore`.
 2. Copy `meta.yaml` to `recipes/sc-neurocore/meta.yaml`
 3. Replace `PLACEHOLDER` with the SHA256 of the PyPI sdist tarball:
    ```bash
-   pip download sc-neurocore==3.15.3 --no-binary :all: --no-deps -d /tmp
-   sha256sum /tmp/sc_neurocore-3.15.3.tar.gz
+   pip download sc-neurocore==3.15.4 --no-binary :all: --no-deps -d /tmp
+   sha256sum /tmp/sc_neurocore-3.15.4.tar.gz
    ```
 4. Open a PR against `conda-forge/staged-recipes`
 5. Wait for review (typically 1-2 weeks)

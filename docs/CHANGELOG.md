@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.4] - 2026-06-01
+
+### Publish automation
+- Bumped the Rust engine crate release metadata alongside the Python package
+  release surfaces so crates.io publication no longer attempts to republish an
+  older engine version.
+- Changed the engine wheel smoke test to install the built wheel before import,
+  preserving runtime dependency resolution instead of unpacking the archive
+  directly.
+
 ## [3.15.3] - 2026-06-01
 
 ### Release automation
