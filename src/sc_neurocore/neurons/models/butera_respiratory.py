@@ -172,12 +172,28 @@ class ButeraRespiratoryNeuron:
         state = (self.v, self.n, self.h_nap)
         dt = self.dt
         k1 = self._derivatives(state, current)
-        k2 = self._derivatives(tuple(s + 0.5 * dt * k for s, k in zip(state, k1)), current)
-        k3 = self._derivatives(tuple(s + 0.5 * dt * k for s, k in zip(state, k2)), current)
-        k4 = self._derivatives(tuple(s + dt * k for s, k in zip(state, k3)), current)
-        raw_candidate = tuple(
-            s + dt * (a + 2.0 * b + 2.0 * c + d) / 6.0
-            for s, a, b, c, d in zip(state, k1, k2, k3, k4)
+        k2_state = (
+            state[0] + 0.5 * dt * k1[0],
+            state[1] + 0.5 * dt * k1[1],
+            state[2] + 0.5 * dt * k1[2],
+        )
+        k2 = self._derivatives(k2_state, current)
+        k3_state = (
+            state[0] + 0.5 * dt * k2[0],
+            state[1] + 0.5 * dt * k2[1],
+            state[2] + 0.5 * dt * k2[2],
+        )
+        k3 = self._derivatives(k3_state, current)
+        k4_state = (
+            state[0] + dt * k3[0],
+            state[1] + dt * k3[1],
+            state[2] + dt * k3[2],
+        )
+        k4 = self._derivatives(k4_state, current)
+        raw_candidate = (
+            state[0] + dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
+            state[1] + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+            state[2] + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
         )
         if not all(math.isfinite(value) for value in raw_candidate):
             raise FloatingPointError("Butera RK4 candidate must be finite")

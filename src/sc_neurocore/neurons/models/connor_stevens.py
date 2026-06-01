@@ -198,12 +198,40 @@ class ConnorStevensNeuron:
     ) -> tuple[float, float, float, float, float, float]:
         dt = self.dt
         k1 = self._derivatives(state, current)
-        k2 = self._derivatives(tuple(s + 0.5 * dt * k for s, k in zip(state, k1)), current)
-        k3 = self._derivatives(tuple(s + 0.5 * dt * k for s, k in zip(state, k2)), current)
-        k4 = self._derivatives(tuple(s + dt * k for s, k in zip(state, k3)), current)
-        candidate = tuple(
-            s + dt * (a + 2.0 * b + 2.0 * c + d) / 6.0
-            for s, a, b, c, d in zip(state, k1, k2, k3, k4)
+        k2_state = (
+            state[0] + 0.5 * dt * k1[0],
+            state[1] + 0.5 * dt * k1[1],
+            state[2] + 0.5 * dt * k1[2],
+            state[3] + 0.5 * dt * k1[3],
+            state[4] + 0.5 * dt * k1[4],
+            state[5] + 0.5 * dt * k1[5],
+        )
+        k2 = self._derivatives(k2_state, current)
+        k3_state = (
+            state[0] + 0.5 * dt * k2[0],
+            state[1] + 0.5 * dt * k2[1],
+            state[2] + 0.5 * dt * k2[2],
+            state[3] + 0.5 * dt * k2[3],
+            state[4] + 0.5 * dt * k2[4],
+            state[5] + 0.5 * dt * k2[5],
+        )
+        k3 = self._derivatives(k3_state, current)
+        k4_state = (
+            state[0] + dt * k3[0],
+            state[1] + dt * k3[1],
+            state[2] + dt * k3[2],
+            state[3] + dt * k3[3],
+            state[4] + dt * k3[4],
+            state[5] + dt * k3[5],
+        )
+        k4 = self._derivatives(k4_state, current)
+        candidate = (
+            state[0] + dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
+            state[1] + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+            state[2] + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
+            state[3] + dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0,
+            state[4] + dt * (k1[4] + 2.0 * k2[4] + 2.0 * k3[4] + k4[4]) / 6.0,
+            state[5] + dt * (k1[5] + 2.0 * k2[5] + 2.0 * k3[5] + k4[5]) / 6.0,
         )
         if not self._candidate_valid(candidate):
             raise FloatingPointError("Connor-Stevens RK4 candidate left finite physical bounds")
