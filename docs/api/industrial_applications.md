@@ -8,10 +8,7 @@
 
 # Industrial Applications
 
-Industrial application profiles map SC-NeuroCore modules to domain-specific
-hazards, standards, and evidence categories. They are readiness gates, not
-deployment approvals: a profile is marked ready only when the supplied evidence
-bag contains every mandatory category for that domain.
+Industrial application profiles map SC-NeuroCore modules to domain-specific hazards, standards, and evidence categories. They are readiness gates, not deployment approvals: a profile is marked ready only when the supplied evidence bag contains every mandatory category for that domain. This is the commercial bridge between research prototypes and buyer-facing diligence: it turns potential use cases into explicit evidence checklists and missing-evidence reports.
 
 ```python
 from sc_neurocore.industrial_applications import (

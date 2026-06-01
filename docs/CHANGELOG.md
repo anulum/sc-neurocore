@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.1] - 2026-06-01
+
+### Documentation and release polish
+- Added public Product Overview and Applications and Market pages so new users, evaluators, and commercial readers can understand the project scope, evidence boundary, potential applications, and market position without reverse-engineering the API inventory.
+- Refreshed the README, documentation home page, learning path, getting-started guide, notebook guide, API index, industrial-applications page, benchmark index, and cross-framework benchmark evidence page for clearer onboarding and claim traceability.
+- Added a notebooks README with recommended reading order and reproducibility rules.
+- Bumped Python package, public docs, capability metadata, and Rust engine package version references from 3.15.0 to 3.15.1.
+
 ### Physics and mathematics hardening
 - Promoted `LeakyCompeteFireNeuron` from raw Euler vector updates to exact
   first-order relaxation across the Python reference, Go service, Julia
@@ -844,6 +852,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - uvicorn skip guard for studio optional extra
 
 ## [Unreleased]
+
+## [3.15.1] - 2026-06-01
+
+### Documentation and release polish
+- Added public Product Overview and Applications and Market pages so new users, evaluators, and commercial readers can understand the project scope, evidence boundary, potential applications, and market position without reverse-engineering the API inventory.
+- Refreshed the README, documentation home page, learning path, getting-started guide, notebook guide, API index, industrial-applications page, benchmark index, and cross-framework benchmark evidence page for clearer onboarding and claim traceability.
+- Added a notebooks README with recommended reading order and reproducibility rules.
+- Bumped Python package, public docs, capability metadata, and Rust engine package version references from 3.15.0 to 3.15.1.
 
 ### NIR Bridge
 - Roundtrip tests for all 18/18 NIR primitives (was 7/18)

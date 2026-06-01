@@ -1,14 +1,10 @@
 # SC-NeuroCore Benchmarks
 
-Performance measurements for sc-neurocore v3.13.3 (core engine benchmarks)
-and v3.14.0 (FPGA synthesis). All Python numbers are CPU-only (NumPy
-backend). Rust numbers use Criterion with AVX-512 SIMD. Core engine
-performance is unchanged between v3.13.3 and v3.14.0.
+Performance measurements for SC-NeuroCore. Historical core engine rows come from v3.13.3, FPGA synthesis additions from v3.14.0, and documentation/release evidence is current for v3.15.1. All Python numbers are CPU-only unless a GPU environment is named. Rust numbers use Criterion and must be read with their recorded SIMD/environment context.
 
 ## Evidence boundary
 
-This page is a curated benchmark report, not an authority for untracked local
-measurements. Every quoted performance, power, utilisation, timing, or
+This page is a curated benchmark report, not an authority for untracked local measurements or marketing estimates. Every quoted performance, power, utilisation, timing, or
 hardware-efficiency number must remain traceable to a committed raw artefact:
 JSON or CSV under `benchmarks/results/`, a named tool report under `hdl/` or
 `build/`, or a companion paper artefact with command and environment

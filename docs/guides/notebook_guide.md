@@ -1,6 +1,6 @@
 # Notebook Guide
 
-Complete index of all 40 Jupyter notebooks in `notebooks/`.
+Complete index of the public Jupyter notebooks in `notebooks/`. The notebooks are organised as onboarding, feature demonstrations, and evidence notebooks. Treat evidence notebooks as reproducible documentation: each one states what it proves and what it does not prove.
 
 ## Quickstart
 

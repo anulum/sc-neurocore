@@ -6,7 +6,7 @@
 
 [package]
 name = "sc_neurocore_engine"
-version = "3.15.0"
+version = "3.15.1"
 edition = "2021"
 authors = ["Miroslav Sotek <protoscience@anulum.li>"]
 description = "High-performance SIMD backend for SC-NeuroCore stochastic neuromorphic computing"

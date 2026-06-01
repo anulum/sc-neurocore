@@ -1,8 +1,8 @@
 # SC-NeuroCore Learning Path
 
-A structured progression from first contact to FPGA deployment.
-Each level builds on the previous. Estimated times assume familiarity
-with Python and basic linear algebra.
+A structured progression from first contact to FPGA deployment. Use this page as the main onboarding route: it explains what to read, what to run, and what evidence each stage should produce. Each level builds on the previous. Estimated times assume familiarity with Python and basic linear algebra.
+
+Before starting, read [Product Overview](product_overview.md) for the project scope and [Applications and Market](applications_and_market.md) for practical use cases and commercial boundaries.
 
 ---
 

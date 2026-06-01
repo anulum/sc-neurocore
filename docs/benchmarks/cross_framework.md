@@ -10,9 +10,7 @@ SC-NeuroCore — Cross-framework benchmark evidence
 
 # Cross-Framework Benchmark Evidence
 
-This page is an evidence index for framework comparisons. It separates
-committed measurements from planned comparisons so the public benchmark surface
-does not imply numbers that are not in the repository.
+This page is an evidence index for framework comparisons across Python, Rust, and external SNN frameworks. It separates committed measurements from planned comparisons so the public benchmark surface does not imply numbers that are not in the repository. Polyglot comparison claims must name the language/runtime, command, raw artefact, and environment.
 
 ## Evidence Rules
 
