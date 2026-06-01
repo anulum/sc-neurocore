@@ -23,6 +23,18 @@
       "hdl/primitives/sc_firing_rate_bank.v",
       "hdl/primitives/sc_lif_neuron.v"
     ],
+    "hub_air_gapped_contract": {
+      "dependency_mirror_dirs": [
+        "mirrors/wheelhouse",
+        "mirrors/huggingface"
+      ],
+      "requires_local_dependency_mirrors": true
+    },
+    "hub_dependency_mirrors": [
+      "mirrors/wheelhouse",
+      "mirrors/huggingface"
+    ],
+    "hub_offline_mirror_gate": true,
     "missing_static_primitives": [],
     "pip_install": "pip install \"sc-neurocore[hdl]\"",
     "profile": "hdl-offline",
@@ -68,7 +80,7 @@
   "polyglot_research_sources_in_wheel": [],
   "project": {
     "name": "sc-neurocore",
-    "version": "3.15.0"
+    "version": "3.15.1"
   },
   "schema_version": "sc-neurocore.install-profile-audit.v1"
 }
