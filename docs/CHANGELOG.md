@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.5] - 2026-06-01
+
+### Engine package metadata
+- Declared the engine wheel runtime NumPy dependency in the bridge package
+  metadata so installed wheels resolve the dependency needed by the public
+  `sc_neurocore_engine.layers` module.
+- Issued this patch release after `v3.15.4` validated Python and crate
+  publication but exposed the missing engine-wheel runtime dependency during
+  smoke testing.
+
 ## [3.15.4] - 2026-06-01
 
 ### Publish automation
