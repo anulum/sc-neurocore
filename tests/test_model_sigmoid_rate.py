@@ -22,6 +22,19 @@ from sc_neurocore.neurons.models.sigmoid_rate import SigmoidRateNeuron
 from sc_neurocore.network.population import Population
 
 
+def _stable_sigmoid(beta: float, current: float, theta: float) -> float:
+    z = beta * (current - theta)
+    if z >= 0.0:
+        return 1.0 / (1.0 + np.exp(-z))
+    exp_z = np.exp(z)
+    return exp_z / (1.0 + exp_z)
+
+
+def _exact_rate(r: float, sigma: float, dt: float, tau: float) -> float:
+    decay = np.exp(-dt / tau)
+    return decay * r + (1.0 - decay) * sigma
+
+
 class TestSigmoidRateIsolation:
     def test_defaults(self):
         n = SigmoidRateNeuron()
@@ -50,6 +63,24 @@ class TestSigmoidRateIsolation:
 
 
 class TestSigmoidRateTransferFunction:
+    def test_single_step_matches_exact_relaxation(self):
+        """The rate state follows the closed-form first-order relaxation."""
+        n = SigmoidRateNeuron(r=0.25, tau=10.0, beta=2.0, theta=1.0, dt=0.5)
+        current = 3.0
+        sigma = _stable_sigmoid(n.beta, current, n.theta)
+        expected = _exact_rate(n.r, sigma, n.dt, n.tau)
+        assert n.step(current) == pytest.approx(expected, abs=1e-12)
+        assert n.r == pytest.approx(expected, abs=1e-12)
+
+    def test_large_timestep_exact_relaxation_remains_bounded(self):
+        """Exact relaxation preserves the rate interval even when dt exceeds tau."""
+        n = SigmoidRateNeuron(r=1.0, tau=0.1, dt=5.0)
+        value = n.step(-100.0)
+        expected = _exact_rate(1.0, _stable_sigmoid(n.beta, -100.0, n.theta), n.dt, n.tau)
+        assert value == pytest.approx(expected, abs=1e-12)
+        assert 0.0 <= n.r <= 1.0
+        assert n.r < 1.0e-12
+
     def test_sigmoid_at_theta(self):
         """σ(β(I-θ)) at I=θ: σ(0) = 0.5."""
         n = SigmoidRateNeuron(theta=3.0)
@@ -139,9 +170,9 @@ class TestSigmoidRateValidation:
         with pytest.raises(ValueError, match=field):
             SigmoidRateNeuron(**{field: value})
 
-    def test_rejects_euler_ratio_that_can_leave_unit_interval(self):
-        with pytest.raises(ValueError, match="dt must not exceed tau"):
-            SigmoidRateNeuron(tau=0.1, dt=0.2)
+    def test_accepts_large_timestep_exact_relaxation(self):
+        n = SigmoidRateNeuron(tau=0.1, dt=0.2)
+        assert 0.0 <= n.step(1.0) <= 1.0
 
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
     def test_rejects_non_finite_current_before_rate_mutation(self, current: float):
@@ -161,13 +192,31 @@ class TestSigmoidRateValidation:
         if field != "r":
             assert n.r == before
 
-    def test_rejects_non_finite_rate_candidate_before_mutation(self):
-        n = SigmoidRateNeuron(r=1.0, tau=1.0e308, dt=1.0e308)
+    def test_rejects_runtime_rate_outside_unit_interval_before_mutation(self):
+        n = SigmoidRateNeuron(r=0.25)
+        n.r = 1.5
+        with pytest.raises(ValueError, match="runtime rate state must be in \\[0, 1\\]"):
+            n.step(1.0)
+        assert n.r == 1.5
+
+    @pytest.mark.parametrize("field", ["tau", "dt"])
+    def test_rejects_non_positive_runtime_time_parameter_before_mutation(self, field: str):
+        n = SigmoidRateNeuron(r=0.25)
         before = n.r
-        n.tau = 1.0e-308
-        with pytest.raises(ValueError, match="runtime"):
-            n.step(-1.0e308)
+        setattr(n, field, 0.0)
+        with pytest.raises(ValueError, match="runtime time constants"):
+            n.step(1.0)
         assert n.r == before
+
+    def test_stable_sigmoid_rejects_nonsaturating_nan_argument(self):
+        with pytest.raises(ValueError, match="sigmoid argument"):
+            SigmoidRateNeuron._stable_sigmoid(np.inf, 1.0, 1.0)
+
+    def test_large_runtime_timestep_preserves_rate_interval(self):
+        n = SigmoidRateNeuron(r=1.0, tau=1.0e-308, dt=1.0e308)
+        before = n.r
+        assert n.step(-1.0e308) == pytest.approx(0.0, abs=1e-300)
+        assert 0.0 <= n.r <= before
 
     def test_extreme_finite_drive_saturates_without_overflow_warning(self):
         n = SigmoidRateNeuron(beta=1.0e308, theta=0.0)

@@ -26,8 +26,7 @@ function valid(s::SigmoidRateNeuronState)::Bool
     return all(isfinite, (s.r, s.tau, s.beta, s.theta, s.dt)) &&
         0.0 <= s.r <= 1.0 &&
         s.tau > 0.0 &&
-        s.dt > 0.0 &&
-        s.dt <= s.tau
+        s.dt > 0.0
 end
 
 function sigmoid_transfer(beta::Float64, I_ext::Float64, theta::Float64)::Float64
@@ -50,12 +49,17 @@ function step!(s::SigmoidRateNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
         throw(DomainError((s.r, I_ext), "SigmoidRate state/current must be finite and well-formed"))
     end
     sigma = sigmoid_transfer(s.beta, I_ext, s.theta)
-    next_r = s.r + (-s.r + sigma) / s.tau * s.dt
+    next_r = exact_relaxation(s.r, sigma, s.dt, s.tau)
     if !isfinite(next_r) || next_r < 0.0 || next_r > 1.0
-        throw(DomainError(next_r, "SigmoidRate update must remain finite and in [0,1]"))
+        throw(DomainError(next_r, "SigmoidRate exact relaxation update must remain finite and in [0,1]"))
     end
     s.r = next_r
     return next_r
+end
+
+function exact_relaxation(r::Float64, sigma::Float64, dt::Float64, tau::Float64)::Float64
+    decay = exp(-dt / tau)
+    return decay * r + (1.0 - decay) * sigma
 end
 
 function reset!(s::SigmoidRateNeuronState)::Nothing

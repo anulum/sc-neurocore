@@ -43,8 +43,7 @@ func (s SigmoidRateNeuronState) Valid() bool {
 		s.R >= 0.0 &&
 		s.R <= 1.0 &&
 		s.Tau > 0.0 &&
-		s.Dt > 0.0 &&
-		s.Dt <= s.Tau
+		s.Dt > 0.0
 }
 
 // Step advances the neuron by one timestep. Invalid inputs do not mutate state.
@@ -56,7 +55,7 @@ func (s *SigmoidRateNeuronState) Step(iExt float64) (float64, error) {
 	if err != nil {
 		return s.R, err
 	}
-	nextR := s.R + (-s.R+sigma)/s.Tau*s.Dt
+	nextR := sigmoidRateExactRelaxation(s.R, sigma, s.Dt, s.Tau)
 	if !sigmoidRateFinite(nextR) || nextR < 0.0 || nextR > 1.0 {
 		return s.R, ErrSigmoidRateNonFiniteUpdate
 	}
@@ -88,11 +87,16 @@ func SimulateSigmoidRateNeuron(nSteps int, iExt float64) ([]float64, int) {
 
 var (
 	ErrSigmoidRateInvalidState    = errors.New("sigmoid-rate state/current must be finite and well-formed")
-	ErrSigmoidRateNonFiniteUpdate = errors.New("sigmoid-rate update became non-finite or left [0,1]")
+	ErrSigmoidRateNonFiniteUpdate = errors.New("sigmoid-rate exact relaxation update became non-finite or left [0,1]")
 )
 
 func sigmoidRateFinite(x float64) bool {
 	return !math.IsNaN(x) && !math.IsInf(x, 0)
+}
+
+func sigmoidRateExactRelaxation(r float64, sigma float64, dt float64, tau float64) float64 {
+	decay := math.Exp(-dt / tau)
+	return decay*r + (1.0-decay)*sigma
 }
 
 func sigmoidRateTransfer(beta float64, current float64, theta float64) (float64, error) {
