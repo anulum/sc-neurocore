@@ -1,0 +1,45 @@
+{
+  "meta": {
+    "timestamp_utc": "2026-06-01T12:45:55Z",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "n_steps": 20000,
+    "parity_steps": 2000,
+    "current": 5.0,
+    "integrator": "ten_substep_candidate_first_rk4"
+  },
+  "backends": {
+    "python": {
+      "available": true,
+      "used": true,
+      "wall_ms": 2478.778,
+      "steps_per_s": 8068.0,
+      "state": {
+        "spikes": 244,
+        "v": -82.54672240414472,
+        "m": 0.0004255358717150609,
+        "h": 0.9619493862710186,
+        "n": 0.0363665145838198
+      }
+    },
+    "rust": {
+      "available": true,
+      "used": true,
+      "wall_ms": 57.499,
+      "steps_per_s": 347831.0,
+      "speedup_over_python": 43.11,
+      "state": {
+        "spikes": 244,
+        "v": -82.54672240414394,
+        "m": 0.0004255358717151391,
+        "h": 0.9619493862710224,
+        "n": 0.0363665145838159
+      }
+    }
+  },
+  "parity": {
+    "status": "measured",
+    "max_abs_delta": 0.0
+  }
+}

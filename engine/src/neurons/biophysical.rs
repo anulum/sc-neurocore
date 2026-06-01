@@ -150,25 +150,154 @@ impl TraubMilesNeuron {
             v_threshold: -20.0,
         }
     }
-    pub fn step(&mut self, current: f64) -> i32 {
-        let v_prev = self.v;
-        for _ in 0..10 {
-            let am = safe_rate(0.32, 54.0, self.v, 4.0, 8.0);
-            let bm = safe_rate(-0.28, 27.0, self.v, -5.0, 5.6);
-            let ah = 0.128 * (-(self.v + 50.0) / 18.0).exp();
-            let bh = 4.0 / (1.0 + (-(self.v + 27.0) / 5.0).exp());
-            let an = safe_rate(0.032, 52.0, self.v, 5.0, 0.32);
-            let bn = 0.5 * (-(self.v + 57.0) / 40.0).exp();
-
-            self.m += (am * (1.0 - self.m) - bm * self.m) * self.dt;
-            self.h += (ah * (1.0 - self.h) - bh * self.h) * self.dt;
-            self.n += (an * (1.0 - self.n) - bn * self.n) * self.dt;
-
-            let i_na = self.g_na * self.m.powi(3) * self.h * (self.v - self.e_na);
-            let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
-            let i_l = self.g_l * (self.v - self.e_l);
-            self.v += (-i_na - i_k - i_l + current) * self.dt;
+    fn finite_gate(value: f64) -> bool {
+        value.is_finite() && (0.0..=1.0).contains(&value)
+    }
+    fn valid_runtime(&self) -> bool {
+        self.v.is_finite()
+            && Self::finite_gate(self.m)
+            && Self::finite_gate(self.h)
+            && Self::finite_gate(self.n)
+            && self.g_na.is_finite()
+            && self.g_na >= 0.0
+            && self.g_k.is_finite()
+            && self.g_k >= 0.0
+            && self.g_l.is_finite()
+            && self.g_l >= 0.0
+            && self.e_na.is_finite()
+            && self.e_k.is_finite()
+            && self.e_l.is_finite()
+            && self.dt.is_finite()
+            && self.dt > 0.0
+            && self.v_threshold.is_finite()
+    }
+    fn rates(v: f64) -> Option<(f64, f64, f64, f64, f64, f64)> {
+        let d = v + 54.0;
+        let am = if d.abs() > 1e-6 {
+            0.32 * d / (1.0 - (-d / 4.0).exp())
+        } else {
+            8.0
+        };
+        let d2 = v + 27.0;
+        let bm = if d2.abs() > 1e-6 {
+            0.28 * d2 / ((d2 / 5.0).exp() - 1.0)
+        } else {
+            5.6
+        };
+        let ah = 0.128 * (-(v + 50.0) / 18.0).exp();
+        let bh = 4.0 / (1.0 + (-(v + 27.0) / 5.0).exp());
+        let d3 = v + 52.0;
+        let an = if d3.abs() > 1e-6 {
+            0.032 * d3 / (1.0 - (-d3 / 5.0).exp())
+        } else {
+            0.32
+        };
+        let bn = 0.5 * (-(v + 57.0) / 40.0).exp();
+        if [am, bm, ah, bh, an, bn]
+            .iter()
+            .all(|rate| rate.is_finite() && *rate >= 0.0)
+        {
+            Some((am, bm, ah, bh, an, bn))
+        } else {
+            None
         }
+    }
+    fn derivatives(
+        &self,
+        v: f64,
+        m: f64,
+        h: f64,
+        n: f64,
+        current: f64,
+    ) -> Option<(f64, f64, f64, f64)> {
+        if !v.is_finite() || !Self::finite_gate(m) || !Self::finite_gate(h) || !Self::finite_gate(n)
+        {
+            return None;
+        }
+        let (am, bm, ah, bh, an, bn) = Self::rates(v)?;
+        let dm = am * (1.0 - m) - bm * m;
+        let dh = ah * (1.0 - h) - bh * h;
+        let dn = an * (1.0 - n) - bn * n;
+        let i_na = self.g_na * m.powi(3) * h * (v - self.e_na);
+        let i_k = self.g_k * n.powi(4) * (v - self.e_k);
+        let i_l = self.g_l * (v - self.e_l);
+        let dv = -i_na - i_k - i_l + current;
+        if [dv, dm, dh, dn, i_na, i_k, i_l]
+            .iter()
+            .all(|value| value.is_finite())
+        {
+            Some((dv, dm, dh, dn))
+        } else {
+            None
+        }
+    }
+    fn rk4_substep(
+        &self,
+        v: f64,
+        m: f64,
+        h: f64,
+        n: f64,
+        current: f64,
+    ) -> Option<(f64, f64, f64, f64)> {
+        let (k1_v, k1_m, k1_h, k1_n) = self.derivatives(v, m, h, n, current)?;
+        let (k2_v, k2_m, k2_h, k2_n) = self.derivatives(
+            v + 0.5 * self.dt * k1_v,
+            m + 0.5 * self.dt * k1_m,
+            h + 0.5 * self.dt * k1_h,
+            n + 0.5 * self.dt * k1_n,
+            current,
+        )?;
+        let (k3_v, k3_m, k3_h, k3_n) = self.derivatives(
+            v + 0.5 * self.dt * k2_v,
+            m + 0.5 * self.dt * k2_m,
+            h + 0.5 * self.dt * k2_h,
+            n + 0.5 * self.dt * k2_n,
+            current,
+        )?;
+        let (k4_v, k4_m, k4_h, k4_n) = self.derivatives(
+            v + self.dt * k3_v,
+            m + self.dt * k3_m,
+            h + self.dt * k3_h,
+            n + self.dt * k3_n,
+            current,
+        )?;
+        let next_v = v + self.dt * (k1_v + 2.0 * k2_v + 2.0 * k3_v + k4_v) / 6.0;
+        let next_m = m + self.dt * (k1_m + 2.0 * k2_m + 2.0 * k3_m + k4_m) / 6.0;
+        let next_h = h + self.dt * (k1_h + 2.0 * k2_h + 2.0 * k3_h + k4_h) / 6.0;
+        let next_n = n + self.dt * (k1_n + 2.0 * k2_n + 2.0 * k3_n + k4_n) / 6.0;
+        if next_v.is_finite()
+            && Self::finite_gate(next_m)
+            && Self::finite_gate(next_h)
+            && Self::finite_gate(next_n)
+        {
+            Some((next_v, next_m, next_h, next_n))
+        } else {
+            None
+        }
+    }
+    pub fn step(&mut self, current: f64) -> i32 {
+        if !current.is_finite() || !self.valid_runtime() {
+            return 0;
+        }
+        let v_prev = self.v;
+        let mut v = self.v;
+        let mut m = self.m;
+        let mut h = self.h;
+        let mut n = self.n;
+        for _ in 0..10 {
+            let Some((next_v, next_m, next_h, next_n)) = self.rk4_substep(v, m, h, n, current)
+            else {
+                return 0;
+            };
+            v = next_v;
+            m = next_m;
+            h = next_h;
+            n = next_n;
+        }
+        self.v = v;
+        self.m = m;
+        self.h = h;
+        self.n = n;
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
@@ -809,7 +938,6 @@ impl PospischilNeuron {
         self.p = 0.0;
     }
 }
-#[allow(clippy::derivable_impls)]
 impl Default for PospischilNeuron {
     fn default() -> Self {
         Self::new()
@@ -2044,6 +2172,21 @@ mod tests {
         let mut n = TraubMilesNeuron::new();
         n.step(f64::NAN);
     }
+    #[test]
+    fn traub_rk4_reference_point() {
+        let mut n = TraubMilesNeuron::new();
+        n.v = -63.5;
+        n.m = 0.08;
+        n.h = 0.55;
+        n.n = 0.32;
+        let spike = n.step(4.0);
+        assert_eq!(spike, 0);
+        assert!((n.v - (-65.6638958700765)).abs() < 1e-13);
+        assert!((n.m - 0.04237301812907925).abs() < 1e-15);
+        assert!((n.h - 0.5626824931070477).abs() < 1e-15);
+        assert!((n.n - 0.30356298261126924).abs() < 1e-15);
+        assert!((n.v - (-65.66233161606698)).abs() > 1e-3);
+    }
 
     // -- WangBuzsaki --
     #[test]
@@ -2293,7 +2436,7 @@ mod tests {
     }
     #[test]
     fn golomb_extreme_bounded() {
-        // Golomb et al. 2007: n^4 kinetics diverge at extreme I; test at strong but realistic drive
+        // Golomb et al. 2007: n^4 kinetics diverge at extreme I; test at high but realistic drive
         let mut n = GolombFSNeuron::new();
         for _ in 0..200 {
             n.step(200.0);
@@ -2305,7 +2448,7 @@ mod tests {
         // Kv3 current enables high-frequency firing
         let mut n = GolombFSNeuron::new();
         let t: i32 = (0..5000).map(|_| n.step(300.0)).sum();
-        assert!(t > 0, "Golomb FS should fire with strong input, got {}", t);
+        assert!(t > 0, "Golomb FS should fire with high input, got {}", t);
     }
     #[test]
     fn golomb_negative_no_crash() {
@@ -2821,13 +2964,9 @@ mod tests {
     #[test]
     fn durstewitz_mg_block() {
         let n = DurstewitzDopamineNeuron::new();
-        // At rest (-65 mV), Mg²⁺ block should be strong
+        // At rest (-65 mV), Mg²⁺ block should be high
         let block = 1.0 / (1.0 + n.mg * (-0.062 * n.v).exp() / 3.57);
-        assert!(
-            block < 0.1,
-            "Mg²⁺ block at rest should be strong: {}",
-            block
-        );
+        assert!(block < 0.1, "Mg²⁺ block at rest should be high: {}", block);
     }
     #[test]
     fn durstewitz_negative_no_crash() {

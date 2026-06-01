@@ -63,6 +63,61 @@ function rates(v::Float64)
     return am, bm, ah, bh, an, bn
 end
 
+function derivatives(s::TraubMilesNeuronState, v::Float64, m::Float64, h::Float64, n::Float64, I_ext::Float64)
+    finite_gate(m) && finite_gate(h) && finite_gate(n) && isfinite(v) || return nothing
+    am, bm, ah, bh, an, bn = rates(v)
+    if !all(isfinite, (am, bm, ah, bh, an, bn)) || any(x -> x < 0.0, (am, bm, ah, bh, an, bn))
+        return nothing
+    end
+    dm = am * (1.0 - m) - bm * m
+    dh = ah * (1.0 - h) - bh * h
+    dn = an * (1.0 - n) - bn * n
+    i_na = s.g_na * m ^ 3 * h * (v - s.e_na)
+    i_k = s.g_k * n ^ 4 * (v - s.e_k)
+    i_l = s.g_l * (v - s.e_l)
+    dv = -i_na - i_k - i_l + I_ext
+    all(isfinite, (dv, dm, dh, dn, i_na, i_k, i_l)) || return nothing
+    return dv, dm, dh, dn
+end
+
+function rk4_substep(s::TraubMilesNeuronState, v::Float64, m::Float64, h::Float64, n::Float64, I_ext::Float64)
+    k1 = derivatives(s, v, m, h, n, I_ext)
+    k1 === nothing && return nothing
+    k2 = derivatives(
+        s,
+        v + 0.5 * s.dt * k1[1],
+        m + 0.5 * s.dt * k1[2],
+        h + 0.5 * s.dt * k1[3],
+        n + 0.5 * s.dt * k1[4],
+        I_ext,
+    )
+    k2 === nothing && return nothing
+    k3 = derivatives(
+        s,
+        v + 0.5 * s.dt * k2[1],
+        m + 0.5 * s.dt * k2[2],
+        h + 0.5 * s.dt * k2[3],
+        n + 0.5 * s.dt * k2[4],
+        I_ext,
+    )
+    k3 === nothing && return nothing
+    k4 = derivatives(
+        s,
+        v + s.dt * k3[1],
+        m + s.dt * k3[2],
+        h + s.dt * k3[3],
+        n + s.dt * k3[4],
+        I_ext,
+    )
+    k4 === nothing && return nothing
+    next_v = v + s.dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0
+    next_m = m + s.dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0
+    next_h = h + s.dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0
+    next_n = n + s.dt * (k1[4] + 2.0 * k2[4] + 2.0 * k3[4] + k4[4]) / 6.0
+    isfinite(next_v) && finite_gate(next_m) && finite_gate(next_h) && finite_gate(next_n) || return nothing
+    return next_v, next_m, next_h, next_n
+end
+
 function step!(s::TraubMilesNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
     if !validate(s) || !isfinite(I_ext)
         return -1
@@ -74,23 +129,9 @@ function step!(s::TraubMilesNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
     h = s.h
     n = s.n
     for _ in 1:10
-        am, bm, ah, bh, an, bn = rates(v)
-        if !all(isfinite, (am, bm, ah, bh, an, bn)) || any(x -> x < 0.0, (am, bm, ah, bh, an, bn))
-            return -1
-        end
-        next_m = m + (am * (1.0 - m) - bm * m) * s.dt
-        next_h = h + (ah * (1.0 - h) - bh * h) * s.dt
-        next_n = n + (an * (1.0 - n) - bn * n) * s.dt
-        if !finite_gate(next_m) || !finite_gate(next_h) || !finite_gate(next_n)
-            return -1
-        end
-        i_na = s.g_na * next_m ^ 3 * next_h * (v - s.e_na)
-        i_k = s.g_k * next_n ^ 4 * (v - s.e_k)
-        i_l = s.g_l * (v - s.e_l)
-        next_v = v + (-i_na - i_k - i_l + I_ext) * s.dt
-        if !isfinite(next_v)
-            return -1
-        end
+        candidate = rk4_substep(s, v, m, h, n, I_ext)
+        candidate === nothing && return -1
+        next_v, next_m, next_h, next_n = candidate
         v = next_v
         m = next_m
         h = next_h

@@ -101,6 +101,56 @@ func traubMilesRates(v float64) (float64, float64, float64, float64, float64, fl
 	return am, bm, ah, bh, an, bn, nil
 }
 
+func traubMilesDerivatives(s *TraubMilesNeuronState, v float64, m float64, h float64, n float64, iExt float64) (float64, float64, float64, float64, error) {
+	if !finiteTraubMiles(v) || !finiteTraubMilesGate(m) || !finiteTraubMilesGate(h) || !finiteTraubMilesGate(n) {
+		return 0, 0, 0, 0, errors.New("invalid Traub-Miles derivative state")
+	}
+	am, bm, ah, bh, an, bn, err := traubMilesRates(v)
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	dm := am*(1.0-m) - bm*m
+	dh := ah*(1.0-h) - bh*h
+	dn := an*(1.0-n) - bn*n
+	iNa := s.GNa * math.Pow(m, 3.0) * h * (v - s.ENa)
+	iK := s.GK * math.Pow(n, 4.0) * (v - s.EK)
+	iL := s.GL * (v - s.EL)
+	dv := -iNa - iK - iL + iExt
+	for _, value := range []float64{dv, dm, dh, dn, iNa, iK, iL} {
+		if !finiteTraubMiles(value) {
+			return 0, 0, 0, 0, errors.New("invalid Traub-Miles derivative")
+		}
+	}
+	return dv, dm, dh, dn, nil
+}
+
+func traubMilesRK4Substep(s *TraubMilesNeuronState, v float64, m float64, h float64, n float64, iExt float64) (float64, float64, float64, float64, error) {
+	k1V, k1M, k1H, k1N, err := traubMilesDerivatives(s, v, m, h, n, iExt)
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	k2V, k2M, k2H, k2N, err := traubMilesDerivatives(s, v+0.5*s.Dt*k1V, m+0.5*s.Dt*k1M, h+0.5*s.Dt*k1H, n+0.5*s.Dt*k1N, iExt)
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	k3V, k3M, k3H, k3N, err := traubMilesDerivatives(s, v+0.5*s.Dt*k2V, m+0.5*s.Dt*k2M, h+0.5*s.Dt*k2H, n+0.5*s.Dt*k2N, iExt)
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	k4V, k4M, k4H, k4N, err := traubMilesDerivatives(s, v+s.Dt*k3V, m+s.Dt*k3M, h+s.Dt*k3H, n+s.Dt*k3N, iExt)
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	nextV := v + s.Dt*(k1V+2.0*k2V+2.0*k3V+k4V)/6.0
+	nextM := m + s.Dt*(k1M+2.0*k2M+2.0*k3M+k4M)/6.0
+	nextH := h + s.Dt*(k1H+2.0*k2H+2.0*k3H+k4H)/6.0
+	nextN := n + s.Dt*(k1N+2.0*k2N+2.0*k3N+k4N)/6.0
+	if !finiteTraubMiles(nextV) || !finiteTraubMilesGate(nextM) || !finiteTraubMilesGate(nextH) || !finiteTraubMilesGate(nextN) {
+		return 0, 0, 0, 0, errors.New("invalid Traub-Miles candidate state")
+	}
+	return nextV, nextM, nextH, nextN, nil
+}
+
 // Step advances the neuron by one timestep
 func (s *TraubMilesNeuronState) Step(iExt float64) (int, error) {
 	if !ValidateTraubMiles(s) {
@@ -116,22 +166,9 @@ func (s *TraubMilesNeuronState) Step(iExt float64) (int, error) {
 	h := s.H
 	n := s.N
 	for substep := 0; substep < 10; substep++ {
-		am, bm, ah, bh, an, bn, err := traubMilesRates(v)
+		nextV, nextM, nextH, nextN, err := traubMilesRK4Substep(s, v, m, h, n, iExt)
 		if err != nil {
 			return 0, err
-		}
-		nextM := m + (am*(1.0-m)-bm*m)*s.Dt
-		nextH := h + (ah*(1.0-h)-bh*h)*s.Dt
-		nextN := n + (an*(1.0-n)-bn*n)*s.Dt
-		if !finiteTraubMilesGate(nextM) || !finiteTraubMilesGate(nextH) || !finiteTraubMilesGate(nextN) {
-			return 0, errors.New("invalid Traub-Miles gate candidate")
-		}
-		iNa := s.GNa * nextM * nextM * nextM * nextH * (v - s.ENa)
-		iK := s.GK * math.Pow(nextN, 4.0) * (v - s.EK)
-		iL := s.GL * (v - s.EL)
-		nextV := v + (-iNa-iK-iL+iExt)*s.Dt
-		if !finiteTraubMiles(nextV) {
-			return 0, errors.New("invalid Traub-Miles voltage candidate")
 		}
 		v = nextV
 		m = nextM
