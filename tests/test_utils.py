@@ -7,6 +7,7 @@
 # SC-NeuroCore — Tests for Utils
 
 import numpy as np
+from sc_neurocore.utils.rng import RNG
 from sc_neurocore.utils.bitstreams import (
     generate_bernoulli_bitstream,
     bitstream_to_probability,
@@ -20,7 +21,7 @@ from sc_neurocore.utils.bitstreams import (
 def test_generate_bernoulli_bitstream():
     length = 1000
     p = 0.7
-    bs = generate_bernoulli_bitstream(p, length)
+    bs = generate_bernoulli_bitstream(p, length, rng=RNG(seed=42))
     assert len(bs) == length
     assert set(np.unique(bs)).issubset({0, 1})
     p_hat = bitstream_to_probability(bs)
