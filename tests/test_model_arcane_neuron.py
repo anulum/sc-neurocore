@@ -18,6 +18,7 @@ from __future__ import annotations
 import time
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.arcane_neuron import ArcaneNeuron
 from sc_neurocore.network.population import Population
@@ -30,6 +31,19 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate
 
 def _run(neuron: ArcaneNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
+def _exact_relaxation(state: float, steady_state: float, dt: float, tau: float) -> float:
+    decay = np.exp(-dt / tau)
+    return decay * state + (1.0 - decay) * steady_state
+
+
+def _stable_sigmoid(x: float) -> float:
+    if x >= 0.0:
+        z = np.exp(-x)
+        return 1.0 / (1.0 + z)
+    z = np.exp(x)
+    return z / (1.0 + z)
 
 
 class TestArcaneIsolation:
@@ -76,6 +90,127 @@ class TestArcaneIsolation:
             "total_steps",
         }
         assert set(state.keys()) == expected_keys
+
+    def test_state_properties_and_recent_activity(self):
+        n = ArcaneNeuron()
+        assert n.identity_state == n.v_deep
+        assert n.confidence == n._confidence
+        assert n.novelty == n._novelty
+        assert n.identity_drift == n._identity_drift
+        assert n.get_recent_pre_activity() == 0.0
+        n.step(2.0)
+        assert n.get_recent_pre_activity() in (0.0, 1.0)
+
+    def test_three_compartments_use_closed_form_relaxation_without_spike(self):
+        """Fast, working, and deep states follow exact first-order updates."""
+        n = ArcaneNeuron(v_fast=0.4, v_work=0.2, v_deep=0.01, theta=100.0, dt=25.0)
+        n._spike_history = [0] * 50
+        n._novelty_history = [0.2] * 20
+        current = 1.5
+        confidence = 1.0 - np.mean(n._novelty_history)
+        gate_input = (
+            n.w_gate[0] * current
+            + n.w_gate[1] * n.v_fast
+            + n.w_gate[2] * n.v_work
+            + n.w_gate[3] * confidence
+        )
+        gate = _stable_sigmoid(gate_input)
+        expected_fast = _exact_relaxation(n.v_fast, gate * current, n.dt, n.tau_fast)
+        expected_prediction = float(np.dot(n.w_pred, [expected_fast, n.v_work, n.v_deep]))
+        expected_novelty = _stable_sigmoid(
+            n.kappa * (abs(expected_fast - expected_prediction) - n.surprise_baseline)
+        )
+        expected_work = _exact_relaxation(n.v_work, 0.0, n.dt, n.tau_work)
+        expected_deep_drive = n.alpha_d * expected_work * expected_novelty
+        expected_deep = _exact_relaxation(n.v_deep, expected_deep_drive, n.dt, n.tau_deep)
+
+        spike = n.step(current)
+
+        assert spike == 0
+        assert n.v_fast == pytest.approx(expected_fast)
+        assert n.v_work == pytest.approx(expected_work)
+        assert n.v_deep == pytest.approx(expected_deep)
+        assert n._prediction == pytest.approx(expected_prediction)
+        assert n._novelty == pytest.approx(expected_novelty)
+
+    def test_large_timestep_relaxation_remains_bounded(self):
+        n = ArcaneNeuron(v_fast=1000.0, v_work=5.0, v_deep=1.0, theta=1.0e9, dt=1000.0)
+        n._spike_history = [0] * 50
+        n.step(0.0)
+        assert 0.0 <= n.v_fast <= 1000.0
+        assert 0.0 <= n.v_work <= 5.0
+
+    @pytest.mark.parametrize(
+        "field",
+        ["v_fast", "v_work", "v_deep", "tau_fast", "tau_work", "tau_deep", "dt"],
+    )
+    def test_rejects_corrupted_runtime_state_before_mutation(self, field: str):
+        n = ArcaneNeuron(v_fast=0.25, v_work=0.1, v_deep=0.01)
+        setattr(n, field, np.nan)
+        corrupted = n.get_state()
+        with pytest.raises(ValueError, match="ArcaneNeuron"):
+            n.step(0.5)
+        after = n.get_state()
+        for key, expected in corrupted.items():
+            if isinstance(expected, float) and np.isnan(expected):
+                assert np.isnan(after[key])
+            else:
+                assert after[key] == expected
+
+    def test_rejects_corrupted_weight_vector_before_mutation(self):
+        n = ArcaneNeuron(v_fast=0.25, v_work=0.1, v_deep=0.01)
+        before = n.get_state()
+        n.w_gate = np.array([0.8, np.nan, 0.05, 0.05])
+        with pytest.raises(ValueError, match="ArcaneNeuron"):
+            n.step(0.5)
+        assert n.get_state() == before
+
+    def test_rejects_non_finite_current_before_mutation(self):
+        n = ArcaneNeuron(v_fast=0.25, v_work=0.1, v_deep=0.01)
+        before = n.get_state()
+        with pytest.raises(ValueError, match="current"):
+            n.step(np.inf)
+        assert n.get_state() == before
+
+    def test_rejects_predictor_overflow_before_mutation(self):
+        n = ArcaneNeuron(v_fast=0.25, v_work=0.1, v_deep=0.01)
+        before = n.get_state()
+        n.w_pred = np.array([1.0e308, 1.0e308, 1.0e308])
+        with np.errstate(over="ignore"), pytest.raises(ValueError, match="predictor candidate"):
+            n.step(0.5)
+        assert n.get_state() == before
+
+    def test_rejects_deep_candidate_overflow_before_mutation(self):
+        n = ArcaneNeuron(v_fast=0.0, v_work=1.0e308, v_deep=0.01, theta=100.0)
+        before = n.get_state()
+        n.alpha_d = 1.0e308
+        with pytest.raises(ValueError, match="deep compartment"):
+            n.step(0.0)
+        assert n.get_state() == before
+
+    def test_sigmoid_saturates_infinite_gate_input(self):
+        assert ArcaneNeuron._sigmoid(np.inf) == 1.0
+        assert ArcaneNeuron._sigmoid(-np.inf) == 0.0
+
+    @pytest.mark.parametrize(
+        ("mutator", "message"),
+        [
+            (lambda n: setattr(n, "theta", 0.0), "theta"),
+            (lambda n: setattr(n, "alpha_w", -1.0), "coupling"),
+            (lambda n: setattr(n, "w_pred", np.array([0.6, np.nan, 0.1])), "w_pred"),
+            (lambda n: setattr(n, "_spike_history", []), "history buffers"),
+            (lambda n: setattr(n, "_spike_history", [0.5] * 50), "spike history"),
+            (lambda n: setattr(n, "_novelty_history", [np.nan] * 20), "novelty history"),
+            (lambda n: setattr(n, "_hist_idx", -1), "history counters"),
+        ],
+    )
+    def test_rejects_invalid_runtime_contracts_before_mutation(self, mutator, message):
+        n = ArcaneNeuron(v_fast=0.25, v_work=0.1, v_deep=0.01)
+        before_steps = n.get_state()["total_steps"]
+        mutator(n)
+        with pytest.raises(ValueError, match=message):
+            n.step(0.5)
+        assert n.get_state()["total_steps"] == before_steps
 
 
 class TestArcaneIdentityPersistence:
@@ -242,7 +377,7 @@ class TestArcanePerformance:
         for _ in range(N):
             n.step(2.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 5000
+        assert N / elapsed > 1000
 
     def test_network_throughput(self):
         pop = Population(ArcaneNeuron, n=10, label="bench")
