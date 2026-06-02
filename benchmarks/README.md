@@ -17,11 +17,35 @@ optional runtime such as Julia, Go, Mojo, CUDA, MPI, or a hardware toolchain,
 absence of that runtime is an environment fact, not a failure of the base
 package.
 
+## Regression evidence gate
+
+Benchmark artefacts that back release claims are listed in
+`benchmarks/benchmark_regression_gates.json`. The gate fails closed when a
+required artefact is missing, a required numeric metric is absent or non-finite,
+an expected boolean/string contract changes, a declared source hash is stale, or
+a declared regression threshold is crossed.
+
+The manifest itself is part of the gate. It must carry the expected schema
+version, SPDX marker, unique gate IDs, unique artefact paths, and at least one
+required metric or expected-value contract per gate. A malformed or weakened
+manifest is a gate failure, not a bypass.
+
+```bash
+python tools/benchmark_evidence_gate.py \
+  --manifest benchmarks/benchmark_regression_gates.json \
+  --output benchmarks/results/benchmark_evidence_gate_report.json
+```
+
+Do not publish benchmark claims from a changed source tree until the relevant
+benchmark producer has been rerun and the gate report is regenerated from the
+same checkout.
+
 ## Scripts
 
 | Script | Description |
 |--------|-------------|
 | `bench_neuron_integrators.py` | Research-only cross-language RK4 neuron integrator parity and timing for Python / Rust / Julia / Go / Mojo |
+| `benchmark_regression_gates.json` | Manifest of benchmark artefacts and metrics enforced by `tools/benchmark_evidence_gate.py` |
 | `bench_v2_vs_v3.py` | Compare v2 (pure-Python) vs v3 (Rust engine) performance |
 | `benchmark_advanced_modules.py` | Benchmark advanced module operations |
 | `benchmark_sc.py` | Core stochastic computing primitives |

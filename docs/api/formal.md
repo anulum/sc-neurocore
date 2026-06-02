@@ -1,8 +1,8 @@
 # Formal Proofs — Lean 4 Safety Bounds
 
 Formal verification of the six safety invariants that SC-NeuroCore's
-hardware monitor (``safety_monitor.sv``) enforces at runtime. Three
-invariants are proved directly in Lean 4 pure core; three are stated
+hardware monitor (``safety_monitor.sv``) enforces at runtime. Twenty-one
+invariants are proved directly in Lean 4 pure core; two are stated
 as axioms pending Mathlib integration (see §1 for the reason). The
 :class:`FormalProofEngine` Python façade shells out to Lean 4 to
 elaborate + type-check the proof file.
@@ -25,18 +25,34 @@ specification; the SystemVerilog monitor is the runtime enforcer.
 
 ### 1.1 Proved theorems
 
-Three theorems close in pure core Lean 4 (no Mathlib dependency).
+Twenty-one theorem declarations close in pure core Lean 4 (no Mathlib
+dependency).
 
-**`monitor_soundness`** — the hardware monitor raises its halt signal
+**`halt_triggered_complete`** — the hardware monitor asserts halt
 exactly when coherence has dropped below the safety floor:
+
+$$
+\mathrm{halt\_triggered}(s) = \mathbf{true} \iff s.\mathrm{coherence} < s.\mathrm{limit}.
+$$
+
+Proof: unfold ``halt_triggered`` and simplify the Boolean comparison.
+
+**`monitor_soundness`** — the hardware monitor deasserts halt exactly
+when coherence is at or above the safety floor:
 
 $$
 \mathrm{halt\_triggered}(s) = \mathbf{false} \iff s.\mathrm{coherence} \ge s.\mathrm{limit}.
 $$
 
 Proof: unfold ``halt_triggered``, apply ``decide_eq_false_iff_not``
-+ ``Nat.not_lt`` (both pure core). Captured verbatim in
-``safety_bounds.lean`` lines 43–46.
++ ``Nat.not_lt`` (both pure core). Captured in
+``safety_bounds.lean`` under the controller-safety section.
+
+**Monitor polarity projections** — ``safe_of_halt_false``,
+``halt_false_of_safe``, ``unsafe_of_halt_true``, and
+``halt_true_of_unsafe`` expose each direction of the Boolean monitor
+contract as a separate theorem for consumers that need implication
+forms rather than an iff.
 
 **`safe_transition`** — once in the safe zone, monotone coherence
 keeps you there:
@@ -50,6 +66,31 @@ $$
 
 Proof: ``Nat.le_trans`` applied to the two hypotheses.
 
+**`safe_transition_halt_deasserted`** — if the previous state has halt
+deasserted, coherence is monotone, and the safety limit is unchanged,
+then the next state's halt signal remains deasserted.
+
+**`lif_spike_resets`** — the spike branch of the LIF update resets
+the membrane exactly to ``v_reset`` when ``membrane ≥ threshold``.
+
+**`lif_integrate_clips`** — the non-spike branch of the LIF update
+sets the membrane to ``min(membrane + input, v_max)``.
+
+**`lif_spike_branch_bounded`** and **`lif_integrate_branch_bounded`**
+prove each LIF branch's upper-bound preservation before the aggregate
+``lif_membrane_bounded`` theorem combines the cases.
+
+**`lif_threshold_preserved`**, **`lif_v_max_preserved`**, and
+**`lif_v_reset_preserved`** prove that a LIF step mutates only the
+membrane field and preserves the structural threshold and bound
+parameters. These contracts prevent downstream hardware/property
+consumers from assuming implicit record-field stability.
+
+**`lif_reset_bound_preserved`** proves that a valid ``v_reset ≤ v_max``
+ordering remains valid after a LIF step. **`lif_next_membrane_bounded`**
+states the membrane upper bound against the next state's own ``v_max``,
+which is the form downstream state-machine consumers usually need.
+
 **`lif_membrane_bounded`** — the LIF reset-and-clip update keeps the
 membrane inside $[0, v_\text{max}]$ whenever $v_\text{reset} \le v_\text{max}$:
 
@@ -62,9 +103,28 @@ Proof: unfold the ``if``; the spike branch returns ``v_reset``
 which is ≤ ``v_max`` by hypothesis; the integrate branch uses
 ``Nat.min_le_right`` on ``min(m + I, v_max)``.
 
+**`scc_bounded`** — the runtime SCC monitor accepts exactly the
+certified integer range evidence supplied by the stochastic doctor:
+
+$$
+d > 0 \,\wedge\, (-d \le n \wedge n \le d)
+\;\Rightarrow\;
+(-d \le n \wedge n \le d).
+$$
+
+Proof: the Lean statement is now the monitor-boundary preservation
+contract; it introduces the denominator-positivity witness and returns
+the supplied interval proof unchanged. The statistical derivation of
+the SCC numerator from bitstream data remains checked by the software
+doctor and hardware regression tests.
+
+**`scc_left_bounded`** and **`scc_right_bounded`** — projected SCC
+interval contracts expose each side of the certified range as a
+separate theorem for direct hardware-property mapping.
+
 ### 1.2 Axiomatised theorems
 
-Three theorems reduce to non-negativity of a quadratic form over ℕ.
+Two theorems reduce to non-negativity of a quadratic form over ℕ.
 Lean 4 pure core lacks ``nlinarith`` / ``polyrith`` (those live in
 Mathlib); attempting a first-principles proof requires dozens of
 lines of tactic gymnastics around ``Nat`` subtraction. These are
@@ -103,16 +163,6 @@ $$
 
 Again, one ``nlinarith`` call in Mathlib.
 
-**`scc_bounded`** — the stochastic cross-correlation numerator
-magnitude is bounded by the denominator:
-
-$$
-\forall n,\ d : d > 0 \;\Rightarrow\; |n| \le d.
-$$
-
-The underlying result is a Cauchy-Schwarz consequence; full proof
-requires Mathlib's measure theory for the continuous case.
-
 ### 1.3 Hardware cross-check
 
 Each axiomatised theorem is empirically checked in the Rust test
@@ -122,7 +172,6 @@ suite at every commit:
 | ------------------------------- | --------------------------------------------------------- |
 | ``sc_precision_numerator_bound``| Rust test sweep $N \in [1, 1024]$, $k \in [0, N]$ — 23 sub-tests in ``engine/tests/test_sc_precision.rs`` |
 | ``sc_add_preserves_range``     | ``engine/tests/test_sc_add.rs`` fuzzes pA, pB, D over 10⁴ triples |
-| ``scc_bounded``                 | ``engine/tests/test_scc.rs`` at 10⁴ samples × 23 pairwise products |
 
 A violation of any cross-check is treated as a fatal regression — the
 hardware monitor ``neuro_safe_monitor.sv`` would halt the fabric in
@@ -230,9 +279,9 @@ the theorems (not on every unit test).
 
 | Feature                                | Detail                                                                   |
 | -------------------------------------- | ------------------------------------------------------------------------ |
-| :class:`FormalProofEngine`             | Python façade; ``is_available()`` + ``check_proofs() -> bool``           |
-| 3 proved theorems (pure core Lean 4)   | ``monitor_soundness``, ``safe_transition``, ``lif_membrane_bounded``     |
-| 3 axiomatised theorems                 | With explicit Mathlib roadmap note in file header                         |
+| :class:`FormalProofEngine`             | Python façade; ``is_available()``, theorem/axiom inventory checks, and ``check_proofs() -> bool`` |
+| 21 proved theorem declarations (pure core Lean 4) | Controller polarity, safe transition, LIF branch/structure/bound, and SCC interval contracts |
+| 2 axiomatised theorems                 | With explicit Mathlib roadmap note in file header                         |
 | 1:1 Lean ↔ SystemVerilog property map  | Every Lean theorem corresponds to a ``neuro_safe_monitor.sv`` property   |
 | Hardware cross-check                   | Each axiomatised theorem has a matching Rust fuzz/sweep test              |
 | Graceful `lean` absence                | ``is_available()`` returns False if ``lean`` not on ``PATH``              |
@@ -286,6 +335,11 @@ class FormalProofEngine:
 
     def __init__(self) -> None
     def is_available(self) -> bool
+    def list_axioms(self) -> list[str]
+    def list_theorems(self) -> list[str]
+    def axiom_inventory_matches(self) -> bool
+    def theorem_inventory_matches(self) -> bool
+    def proof_inventory_matches(self) -> bool
     def check_proofs(self) -> bool
 ```
 
@@ -293,13 +347,22 @@ class FormalProofEngine:
 | ------------------------- | --------------------------------------------------------------------------------- |
 | ``__init__()``            | Resolves ``lean`` on PATH, resolves the bundled proof file path.                  |
 | ``is_available() -> bool``| True iff ``lean`` is callable **and** ``safety_bounds.lean`` is present in the package. |
-| ``check_proofs() -> bool``| ``subprocess.run([self._lean_bin, str(self.proof_file)])``; returns True iff Lean elaborated without an ``error`` line in stdout/stderr. |
+| ``list_axioms() -> list[str]`` | Returns explicit top-level Lean axiom declaration names from the proof file; an empty list means no explicit axiom debt. |
+| ``list_theorems() -> list[str]`` | Returns explicit top-level Lean theorem declaration names from the proof file. |
+| ``axiom_inventory_matches() -> bool`` | True iff the proof file contains exactly the reviewed axiom allowlist: ``sc_precision_numerator_bound`` and ``sc_add_preserves_range``. |
+| ``theorem_inventory_matches() -> bool`` | True iff the proof file contains exactly the reviewed theorem inventory. |
+| ``proof_inventory_matches() -> bool`` | True iff both theorem and axiom inventories match the reviewed release inventory. |
+| ``check_proofs() -> bool``| Runs ``lean`` with a 300 s timeout; returns True iff Lean elaborates without an ``error`` line and the proof inventory matches the reviewed allowlists. |
 
 Error-handling semantics: ``check_proofs`` catches ``CalledProcessError``
-and prints the captured ``stderr``; returns ``False``. A missing Lean
-binary produces ``False`` with a dedicated log line — ``is_available``
-should be called first to distinguish "Lean missing" from "proofs
-broken".
+and ``TimeoutExpired``, prints the captured diagnostic, and returns
+``False``. A missing Lean binary produces ``False`` with a dedicated log
+line — ``is_available`` should be called first to distinguish "Lean
+missing" from "proofs broken". A new or reordered axiom also returns
+``False`` even if Lean elaborates the file, because release proof debt
+must be explicit and reviewed. A missing or renamed theorem also
+returns ``False`` because release proof coverage must not shrink
+silently.
 
 ### 6.2 `safety_bounds.lean` structure
 
@@ -342,7 +405,7 @@ theorem lif_membrane_bounded
     (lif_step s input).membrane ≤ s.v_max := ...
 
 -- §5. SCC correlation range ──────────────────────────────────────────
-axiom scc_bounded (n d : Int) :
+theorem scc_bounded (n d : Int) :
     0 < d → -d ≤ n ∧ n ≤ d → -d ≤ n ∧ n ≤ d
 ```
 
@@ -354,9 +417,9 @@ axiom scc_bounded (n d : Int) :
 - **No Mathlib** required for the current proof file — the three
   proved theorems use only pure core tactics (``simp``, ``omega``,
   ``decide_eq_false_iff_not``, ``Nat.not_lt``, ``Nat.le_trans``,
-  ``Nat.min_le_right``).
+  ``Nat.min_le_right``, and direct hypothesis return).
 - **Mathlib upgrade path** — when the project adopts Mathlib, the
-  three axiomatised theorems become one-liner proofs with
+  two axiomatised theorems become one-liner proofs with
   ``nlinarith``. Target milestone: first CI run that exercises the
   Mathlib-based version.
 
@@ -368,6 +431,9 @@ axiom scc_bounded (n d : Int) :
 | ``safety_bounds.lean`` missing          | ``is_available()`` returns False                          |
 | Lean elaboration error                  | ``check_proofs()`` returns False + prints Lean stderr     |
 | Lean version mismatch (tactic unknown)  | Lean prints ``unknown tactic``; engine reports False       |
+| Lean process hangs                      | ``check_proofs()`` times out after 300 s and returns False |
+| Axiom inventory drift                   | ``check_proofs()`` returns False even if Lean elaborates   |
+| Theorem inventory drift                 | ``check_proofs()`` returns False even if Lean elaborates   |
 
 ---
 
@@ -380,18 +446,28 @@ Measured on 2026-04-20 — Linux x86-64 (Intel i5-11600K, Lean
 
 | Scenario                        | Wall time  | Notes                                 |
 | ------------------------------- | ---------- | ------------------------------------- |
-| Cold (first ``lean`` invocation) | **0.613 s** | 3 theorems + 3 axioms elaborated    |
+| Cold (first ``lean`` invocation) | **0.613 s** | Previous benchmark: 3 theorems + 3 axioms elaborated |
 | Warm (repeat calls)             | 0.542 s    | file already in kernel page cache    |
 
 Measured by ``benchmarks/bench_formal.py`` (2026-04-20). Raw JSON at
 ``benchmarks/results/bench_formal.json`` — includes the theorem / axiom
-counts for regression tracking.
+counts for regression tracking. The benchmark harness also records
+``theorem_names``, ``expected_theorems``, ``theorem_inventory_matches``,
+``axiom_names``, ``expected_axioms``, ``axiom_inventory_matches``, and
+``proof_inventory_matches`` so release evidence captures timing,
+proof-coverage inventory, and proof-debt governance. It also records
+``proof_file_sha256`` and ``proof_file_bytes`` so a benchmark artefact
+is tied to the exact Lean source snapshot that was elaborated. The
+current source inventory is twenty-one proved theorem declarations and two
+explicit axiom declarations; rerun ``benchmarks/bench_formal.py`` before
+publishing a refreshed timing artefact.
 
 Elaboration of the full ``safety_bounds.lean`` file completes in
 sub-second wall clock. The cost grows with theorem complexity; the
-three proved theorems use cheap tactics (``simp``, one ``Nat.le_trans``,
-one ``Nat.min_le_right``) so there's no bottleneck today. A future
-Mathlib-based proof of the three axiomatised theorems will increase
+twenty-one proved theorem declarations use cheap tactics (``simp``, one
+``Nat.le_trans``, one ``Nat.min_le_right``, and direct
+hypothesis/projection returns) so there's no bottleneck today. A future
+Mathlib-based proof of the two axiomatised theorems will increase
 the wall clock (Mathlib import alone takes seconds); budget for
 ~5–10 s total once Mathlib lands.
 
@@ -494,7 +570,30 @@ simulation-time regressions (numerical drift, SC-specific bugs);
 Lean catches specification-level changes that would silently relax
 a safety contract.
 
-## 8d. Future: machine-checked RTL
+## 8d. Ongoing proof-maintenance policy
+
+Lean proof coverage is a standing maintenance obligation, not a one-time
+artefact. Any change that modifies the safety monitor, stochastic doctor,
+SC arithmetic contracts, generated formal-network evidence, or LIF-like
+state-machine contracts must update the formal proof inventory in the
+same change when a new invariant is introduced.
+
+Release reviewers should apply these rules:
+
+- New safety behaviour requires either a proof-bearing Lean theorem or an
+  explicitly named reviewed axiom with a documented proof/evidence route.
+- A new axiom is a release-gate event. It must be listed by
+  ``FormalProofEngine.list_axioms()``, included in the reviewed allowlist,
+  documented in this page, and backed by runtime or hardware evidence until
+  it is discharged.
+- Theorem deletion, theorem rename, theorem reorder, axiom drift, or proof
+  benchmark drift is a release-gate event. ``check_proofs()`` rejects these
+  changes even when Lean elaborates the remaining file.
+- ``benchmarks/bench_formal.py`` must be rerun before publishing formal
+  benchmark evidence after any proof-source change. The emitted JSON binds
+  timing and inventory data to ``proof_file_sha256`` and ``proof_file_bytes``.
+
+## 8e. Future: machine-checked RTL
 
 The gap between the Lean specification and the SystemVerilog
 ``safety_monitor.sv`` is currently **hand-verified by correspondence**.
@@ -510,8 +609,8 @@ Lean spec directly:
   synthesisable Verilog. Not a direct fit for an existing
   SystemVerilog file, but a full rewrite of ``safety_monitor.sv``
   in Kôika would give the same guarantee in Coq instead of Lean.
-- **Mathlib ``polyrith`` for the axiomatised three.** Lowest-
-  effort win — adopting Mathlib upgrades the three axioms to
+- **Mathlib ``polyrith`` for the axiomatised two.** Lowest-
+  effort win — adopting Mathlib upgrades the two axioms to
   proved theorems and eliminates the "axiomatised" line from §1.2.
   Target: after the Mathlib cache is in the repo and CI builds it
   in acceptable wall clock.
@@ -522,12 +621,11 @@ roadmap note.
 
 ## 9. Limitations
 
-- **Three theorems are axiomatised.** ``sc_precision_numerator_bound``,
-  ``sc_add_preserves_range``, and ``scc_bounded`` are stated without
-  proof pending a Mathlib-based project setup. The hardware monitor
-  enforces them at runtime, and Rust fuzz tests sweep the parameter
-  space, but a Lean-proved statement is a stronger guarantee and is
-  a near-term follow-up.
+- **Two theorems are axiomatised.** ``sc_precision_numerator_bound``
+  and ``sc_add_preserves_range`` are stated without proof pending a
+  Mathlib-based project setup. The hardware monitor enforces them at
+  runtime, and Rust fuzz tests sweep the parameter space, but a
+  Lean-proved statement is still the near-term follow-up.
 - **Lean 4 version coupling.** The syntactic forms used
   (``decide_eq_false_iff_not``, ``Nat.not_lt``) are stable in Lean
   4.x but may shift across major Lean releases. CI pins a specific
@@ -551,7 +649,11 @@ roadmap note.
 - **Axioms are explicit, not hidden.** :func:`list_axioms` enumerates
   every ``axiom`` declaration in the proof file; ``len(list_axioms())``
   is part of the release checklist and must match the count listed in
-  §6 (currently 3). A silent new axiom would fail that check.
+  §6 (currently 2). A silent new axiom would fail that check.
+- **Theorem coverage is explicit, not inferred.** :func:`list_theorems`
+  enumerates the reviewed top-level theorem declarations. A deleted,
+  reordered, or renamed theorem fails the formal proof gate even if
+  Lean elaborates the remaining file.
 - **Cold-start dominated by elaborator, not proof search.** The 0.6 s
   ``check_proofs`` call is mostly Lean core elaborator startup; the
   three theorems themselves elaborate in a few milliseconds each.
@@ -565,7 +667,7 @@ roadmap note.
 - Python bridge: ``src/sc_neurocore/formal/lean_bridge.py`` (~45
   lines) + ``src/sc_neurocore/formal/__init__.py`` exports.
 - Lean 4 proofs: ``src/sc_neurocore/formal/proofs/safety_bounds.lean``
-  (~130 lines — 3 proofs + 3 axioms).
+  (~220 lines — 21 proof-bearing theorem declarations + 2 axioms).
 - Hardware monitor: ``src/sc_neurocore/hdl_gen/safety/safety_monitor.sv``.
 - ASIC flow: ``src/sc_neurocore/hdl_gen/openroad_flow/run_asic_flow.sh``.
 

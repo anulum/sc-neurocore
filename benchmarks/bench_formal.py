@@ -13,6 +13,7 @@ proved-vs-axiomatised split. Backs `docs/api/formal.md` §7.
 import json
 import os
 import re
+import hashlib
 import subprocess
 import time
 
@@ -21,6 +22,33 @@ REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 PROOF_FILE = os.path.join(
     REPO_ROOT, "src", "sc_neurocore", "formal", "proofs", "safety_bounds.lean"
 )
+EXPECTED_AXIOMS = [
+    "sc_precision_numerator_bound",
+    "sc_add_preserves_range",
+]
+EXPECTED_THEOREMS = [
+    "halt_triggered_complete",
+    "monitor_soundness",
+    "safe_of_halt_false",
+    "halt_false_of_safe",
+    "unsafe_of_halt_true",
+    "halt_true_of_unsafe",
+    "safe_transition",
+    "safe_transition_halt_deasserted",
+    "lif_spike_resets",
+    "lif_integrate_clips",
+    "lif_spike_branch_bounded",
+    "lif_integrate_branch_bounded",
+    "lif_threshold_preserved",
+    "lif_v_max_preserved",
+    "lif_v_reset_preserved",
+    "lif_reset_bound_preserved",
+    "lif_membrane_bounded",
+    "lif_next_membrane_bounded",
+    "scc_bounded",
+    "scc_left_bounded",
+    "scc_right_bounded",
+]
 
 
 def _resolve_lean() -> str:
@@ -47,17 +75,30 @@ def main() -> int:
     proc2 = subprocess.run([lean, PROOF_FILE], capture_output=True, timeout=300)
     wall_warm = time.perf_counter() - t1
 
-    # Count theorems and axioms from the source file.
+    # Count theorem declarations and explicit top-level axioms from the source file.
     with open(PROOF_FILE, "r") as fh:
         src = fh.read()
-    n_theorem = len(re.findall(r"^theorem ", src, re.MULTILINE))
-    n_axiom = len(re.findall(r"^axiom ", src, re.MULTILINE))
+    theorem_names = re.findall(r"^theorem\s+([A-Za-z0-9_'.]+)", src, re.MULTILINE)
+    n_theorem = len(theorem_names)
+    axiom_names = re.findall(r"^axiom\s+([A-Za-z0-9_'.]+)", src, re.MULTILINE)
+    n_axiom = len(axiom_names)
 
     results = {
         "lean_check_cold_wall_s": wall,
         "lean_check_warm_wall_s": wall_warm,
+        "proof_file": PROOF_FILE,
+        "proof_file_sha256": hashlib.sha256(src.encode("utf-8")).hexdigest(),
+        "proof_file_bytes": len(src.encode("utf-8")),
         "n_theorems_proved": n_theorem,
         "n_axioms_explicit": n_axiom,
+        "theorem_names": theorem_names,
+        "expected_theorems": EXPECTED_THEOREMS,
+        "theorem_inventory_matches": theorem_names == EXPECTED_THEOREMS,
+        "axiom_names": axiom_names,
+        "expected_axioms": EXPECTED_AXIOMS,
+        "axiom_inventory_matches": axiom_names == EXPECTED_AXIOMS,
+        "proof_inventory_matches": theorem_names == EXPECTED_THEOREMS
+        and axiom_names == EXPECTED_AXIOMS,
         "cold_exit_code": proc.returncode,
         "warm_exit_code": proc2.returncode,
     }
@@ -68,6 +109,12 @@ def main() -> int:
     print(f"{'lean warm wall':<36} {wall_warm:>14.3f} s")
     print(f"{'theorems proved':<36} {n_theorem:>16}")
     print(f"{'axioms (Mathlib roadmap)':<36} {n_axiom:>16}")
+    print(f"{'theorem inventory matches':<36} {str(theorem_names == EXPECTED_THEOREMS):>16}")
+    print(f"{'axiom inventory matches':<36} {str(axiom_names == EXPECTED_AXIOMS):>16}")
+    print(
+        f"{'proof inventory matches':<36} "
+        f"{str(theorem_names == EXPECTED_THEOREMS and axiom_names == EXPECTED_AXIOMS):>16}"
+    )
 
     out_dir = os.path.join(SCRIPT_DIR, "results")
     os.makedirs(out_dir, exist_ok=True)
