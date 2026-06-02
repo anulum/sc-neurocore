@@ -271,6 +271,9 @@ def test_formal_proof_engine_unavailable(monkeypatch: pytest.MonkeyPatch, tmp_pa
     engine.proof_file = tmp_path / "missing.lean"
 
     assert engine.is_available() is False
+    assert engine.list_axioms() == []
+    assert engine.list_theorems() == []
+    assert engine.proof_inventory_matches() is False
     assert engine.check_proofs() is False
 
 
@@ -278,10 +281,27 @@ def test_formal_proof_engine_success_and_failure(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     proof_file = tmp_path / "safety_bounds.lean"
-    proof_file.write_text("theorem ok : True := by trivial\n")
+    proof_file.write_text(
+        "\n".join(
+            [
+                "axiom sc_precision_numerator_bound : True",
+                "axiom sc_add_preserves_range : True",
+                "theorem ok : True := by trivial",
+                "  axiom nested_text_is_not_a_declaration : True",
+            ]
+        ),
+        encoding="utf-8",
+    )
     monkeypatch.setattr("sc_neurocore.formal.lean_bridge.shutil.which", lambda _: "/usr/bin/lean")
+    monkeypatch.setattr("sc_neurocore.formal.lean_bridge.EXPECTED_THEOREMS", ("ok",))
     engine = FormalProofEngine()
     engine.proof_file = proof_file
+
+    assert engine.list_axioms() == ["sc_precision_numerator_bound", "sc_add_preserves_range"]
+    assert engine.list_theorems() == ["ok"]
+    assert engine.axiom_inventory_matches() is True
+    assert engine.theorem_inventory_matches() is True
+    assert engine.proof_inventory_matches() is True
 
     monkeypatch.setattr(
         "sc_neurocore.formal.lean_bridge.subprocess.run",
@@ -302,4 +322,91 @@ def test_formal_proof_engine_success_and_failure(
             subprocess.CalledProcessError(1, args[0], stderr="native failure")
         ),
     )
+    assert engine.check_proofs() is False
+
+
+def test_formal_proof_engine_rejects_unexpected_axiom(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    proof_file = tmp_path / "safety_bounds.lean"
+    proof_file.write_text(
+        "\n".join(
+            [
+                "axiom sc_precision_numerator_bound : True",
+                "axiom sc_add_preserves_range : True",
+                "axiom unreviewed_shortcut : True",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("sc_neurocore.formal.lean_bridge.shutil.which", lambda _: "/usr/bin/lean")
+    monkeypatch.setattr("sc_neurocore.formal.lean_bridge.EXPECTED_THEOREMS", ())
+    monkeypatch.setattr(
+        "sc_neurocore.formal.lean_bridge.subprocess.run",
+        lambda *args, **kwargs: SimpleNamespace(stdout="", stderr=""),
+    )
+
+    engine = FormalProofEngine()
+    engine.proof_file = proof_file
+
+    assert engine.axiom_inventory_matches() is False
+    assert engine.check_proofs() is False
+
+
+def test_formal_proof_engine_rejects_theorem_inventory_drift(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    proof_file = tmp_path / "safety_bounds.lean"
+    proof_file.write_text(
+        "\n".join(
+            [
+                "axiom sc_precision_numerator_bound : True",
+                "axiom sc_add_preserves_range : True",
+                "theorem retained_contract : True := by trivial",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("sc_neurocore.formal.lean_bridge.shutil.which", lambda _: "/usr/bin/lean")
+    monkeypatch.setattr(
+        "sc_neurocore.formal.lean_bridge.EXPECTED_THEOREMS",
+        ("retained_contract", "missing_contract"),
+    )
+    monkeypatch.setattr(
+        "sc_neurocore.formal.lean_bridge.subprocess.run",
+        lambda *args, **kwargs: SimpleNamespace(stdout="", stderr=""),
+    )
+
+    engine = FormalProofEngine()
+    engine.proof_file = proof_file
+
+    assert engine.axiom_inventory_matches() is True
+    assert engine.theorem_inventory_matches() is False
+    assert engine.check_proofs() is False
+
+
+def test_formal_proof_engine_times_out(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    proof_file = tmp_path / "safety_bounds.lean"
+    proof_file.write_text(
+        "\n".join(
+            [
+                "axiom sc_precision_numerator_bound : True",
+                "axiom sc_add_preserves_range : True",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("sc_neurocore.formal.lean_bridge.shutil.which", lambda _: "/usr/bin/lean")
+    monkeypatch.setattr(
+        "sc_neurocore.formal.lean_bridge.subprocess.run",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            subprocess.TimeoutExpired(args[0], timeout=300)
+        ),
+    )
+
+    engine = FormalProofEngine()
+    engine.proof_file = proof_file
+
     assert engine.check_proofs() is False

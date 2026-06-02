@@ -1,0 +1,55 @@
+{
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "schema_version": "sc-neurocore.benchmark-regression-gates.v1",
+  "gates": [
+    {
+      "id": "formal-proof-elaboration",
+      "artefact": "benchmarks/results/bench_formal.json",
+      "required_numbers": [
+        "lean_check_cold_wall_s",
+        "lean_check_warm_wall_s",
+        "n_theorems_proved",
+        "n_axioms_explicit"
+      ],
+      "expected_values": {
+        "cold_exit_code": 0,
+        "warm_exit_code": 0
+      }
+    },
+    {
+      "id": "online-o1-adaptation",
+      "artefact": "benchmarks/results/online_o1_adaptation_benchmark.json",
+      "required_numbers": [
+        "python.final_weight",
+        "python.steps_to_target",
+        "rust.final_weight",
+        "rust.steps_to_target",
+        "resource_estimate.per_synapse_state_bits",
+        "resource_estimate.total_state_bits",
+        "resource_estimate.max_update_latency_cycles"
+      ],
+      "expected_values": {
+        "hardware_measurement_claimed": false,
+        "parity.rust_matches_python": true
+      }
+    },
+    {
+      "id": "stochastic-backpropagation",
+      "artefact": "benchmarks/results/stochastic_backprop_benchmark.json",
+      "required_numbers": [
+        "loss.initial",
+        "loss.final",
+        "loss.best",
+        "estimator_variance.estimators.pathwise_relaxation.variance",
+        "estimator_variance.estimators.score_function.variance",
+        "estimator_variance.estimators.straight_through.variance",
+        "stream_evidence.sampled_product_mae",
+        "objective_terms.total"
+      ],
+      "expected_values": {
+        "hardware_measurement_claimed": false,
+        "joint_design.enabled": true
+      }
+    }
+  ]
+}

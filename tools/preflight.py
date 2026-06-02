@@ -54,7 +54,16 @@ GATES = [
     ("capability-manifest", ["python", "tools/capability_manifest.py", "--check"]),
     (
         "ruff-check",
-        ["python", "-m", "ruff", "check", "src/", "tests/", "tools/capability_manifest.py"],
+        [
+            "python",
+            "-m",
+            "ruff",
+            "check",
+            "src/",
+            "tests/",
+            "tools/capability_manifest.py",
+            "tools/benchmark_evidence_gate.py",
+        ],
     ),
     (
         "ruff-format",
@@ -67,6 +76,18 @@ GATES = [
             "src/",
             "tests/",
             "tools/capability_manifest.py",
+            "tools/benchmark_evidence_gate.py",
+        ],
+    ),
+    (
+        "benchmark-evidence",
+        [
+            "python",
+            "tools/benchmark_evidence_gate.py",
+            "--manifest",
+            "benchmarks/benchmark_regression_gates.json",
+            "--output",
+            "/tmp/sc_neurocore_benchmark_evidence_gate_report.json",
         ],
     ),
     ("bandit", ["python", "-m", "bandit", "-r", "src/sc_neurocore/", "-c", "pyproject.toml", "-q"]),
