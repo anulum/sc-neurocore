@@ -342,7 +342,8 @@ verilog = compile_adaptive_precision(
 
 # Hysteresis band rules:
 # threshold_up_pct must satisfy 0 < threshold_down_pct < threshold_up_pct < 1.
-# Values outside this range now fail fast during compilation.
+# Codes are quantised into LP datapath range, so both thresholds must
+# map to at least 1 distinct non-zero code points.
 
 # Iterate over all canonical pairs
 for (lp_w, lp_f), (hp_w, hp_f) in PRECISION_PAIRS:

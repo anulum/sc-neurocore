@@ -319,6 +319,13 @@ class TestValidation:
                 threshold_down_pct=0.0,
             )
 
+        with pytest.raises(ValueError, match="Quantised threshold codes"):
+            compile_adaptive_precision(
+                lif_neuron,
+                threshold_up_pct=0.00001,
+                threshold_down_pct=0.000001,
+            )
+
     def test_thresholds_are_reflected_in_manifest(self, lif_neuron):
         """Manifest must retain threshold policy under compiler contract."""
         up = 0.9
