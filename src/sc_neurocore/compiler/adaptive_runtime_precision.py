@@ -185,6 +185,7 @@ def _validate_lp_hp(lp_width: int, lp_frac: int, hp_width: int, hp_frac: int) ->
 def _validate_hysteresis(
     threshold_up_pct: float,
     threshold_down_pct: float,
+    max_lp_code: int,
 ) -> None:
     """Validate adaptive-precision hysteresis thresholds.
 
@@ -201,6 +202,13 @@ def _validate_hysteresis(
     if not (0.0 < threshold_down_pct < threshold_up_pct):
         raise ValueError(
             "threshold_down_pct must satisfy 0 < threshold_down_pct < threshold_up_pct"
+        )
+
+    quantized_up = int(threshold_up_pct * max_lp_code)
+    quantized_down = int(threshold_down_pct * max_lp_code)
+    if not (1 <= quantized_down < quantized_up < max_lp_code):
+        raise ValueError(
+            "Quantised threshold codes must satisfy 1 <= down < up < max_lp_code"
         )
 
 
@@ -275,7 +283,6 @@ def compile_adaptive_precision(
     )
 
     _validate_lp_hp(lp_width, lp_frac, hp_width, hp_frac)
-    _validate_hysteresis(threshold_up_pct=threshold_up_pct, threshold_down_pct=threshold_down_pct)
 
     # Generate both datapaths as inner modules
     lp_module = f"{module_name}_lp"
@@ -301,9 +308,13 @@ def compile_adaptive_precision(
         rounding=rounding,
     )
 
-    # Compute hysteresis thresholds
     q_lp = Q88(data_width=lp_width, fraction=lp_frac, signed=signed)
     max_q = int(q_lp.max_value * (1 << lp_frac))
+    _validate_hysteresis(
+        threshold_up_pct=threshold_up_pct,
+        threshold_down_pct=threshold_down_pct,
+        max_lp_code=max_q,
+    )
     thresh_up = int(threshold_up_pct * max_q)
     thresh_down = int(threshold_down_pct * max_q)
 
