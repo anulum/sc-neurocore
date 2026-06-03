@@ -35,6 +35,11 @@ from .adaptive_precision import (
     precision_plan_manifest,
     write_precision_formal_evidence_bundle,
 )
+from .live_control import (
+    MMIOUpdateSpec,
+    ParameterBankSpec,
+    TrapSpec,
+)
 
 __all__ = [
     "compile_to_verilog",
@@ -62,4 +67,7 @@ __all__ = [
     "auto_tune_synapse_precisions",
     "precision_plan_manifest",
     "write_precision_formal_evidence_bundle",
+    "MMIOUpdateSpec",
+    "ParameterBankSpec",
+    "TrapSpec",
 ]
