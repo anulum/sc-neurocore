@@ -7,6 +7,28 @@ Commercial Licensing: Available
 
 # SC-NeuroCore
 
+<p align="center">
+  <img src="docs/assets/sc_neurocore_header.png" width="1280" alt="SC-NeuroCore — Stochastic Computing & Neuromorphic Engine">
+</p>
+
+[![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/anulum/sc-neurocore/actions/workflows/codeql.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/codeql.yml)
+[![PyPI](https://img.shields.io/pypi/v/sc-neurocore.svg)](https://pypi.org/project/sc-neurocore/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/sc-neurocore.svg)](https://pypi.org/project/sc-neurocore/)
+[![Total downloads](https://img.shields.io/pepy/dt/sc-neurocore.svg)](https://pepy.tech/project/sc-neurocore)
+[![mypy](https://img.shields.io/badge/mypy-strict-blue)](https://mypy-lang.org/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Typed](https://img.shields.io/badge/typed-py.typed-blue)](https://peps.python.org/pep-0561/)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://anulum.github.io/sc-neurocore/)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
+[![Rust](https://img.shields.io/badge/engine-Rust-orange)](https://www.rust-lang.org/)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12175/badge)](https://www.bestpractices.dev/projects/12175)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/anulum/sc-neurocore/badge)](https://scorecard.dev/viewer/?uri=github.com/anulum/sc-neurocore)
+[![REUSE](https://img.shields.io/badge/REUSE-compliant-green)](https://reuse.software/)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)
+
 **Stochastic computing and neuromorphic hardware co-design toolkit**
 
 **Version:** 3.15.7
@@ -20,6 +42,10 @@ It is useful when a team needs to answer practical questions such as:
 - Can a model be converted into auditable hardware artefacts rather than remaining only a Python simulation?
 - Which evidence is available for speed, parity, synthesis, safety-case readiness, or cross-framework comparison?
 - Which capabilities are stable package surfaces and which remain source-checkout research surfaces?
+
+<p align="center">
+  <img src="docs/assets/spike_raster.png" width="800" alt="LIF spike raster — 5 neurons, sinusoidal input">
+</p>
 
 ## Who It Is For
 
