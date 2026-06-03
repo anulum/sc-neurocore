@@ -13,6 +13,10 @@ import pytest
 
 from sc_neurocore.compiler.quantizer import (
     QFormat,
+    BlockFloatingMode,
+    parse_precision_format,
+    quantize_block_floating,
+    dequantize_block_floating,
     quantize_weights,
     dequantize_weights,
     q_weights_to_sc_probabilities,
@@ -41,6 +45,43 @@ class TestQFormat:
     def test_invalid_format_raises(self):
         with pytest.raises(ValueError, match="Expected format"):
             QFormat.from_string("float32")
+
+
+class TestPrecisionFormatParser:
+    """Test format parsing for fixed and block-floating modes."""
+
+    def test_parse_block_floating_alias(self):
+        fmt = parse_precision_format("BFP16E3X32")
+        assert isinstance(fmt, BlockFloatingMode)
+        assert fmt.mantissa_bits == 16
+        assert fmt.exponent_bits == 3
+        assert fmt.block_size == 32
+
+    def test_parse_block_floating_flexible_alias(self):
+        fmt = parse_precision_format("bfp16_e3")
+        assert isinstance(fmt, BlockFloatingMode)
+        assert fmt.mantissa_bits == 16
+        assert fmt.exponent_bits == 3
+
+    def test_parse_block_floating_dash_alias(self):
+        fmt = parse_precision_format("BFP16-3x32")
+        assert isinstance(fmt, BlockFloatingMode)
+        assert fmt.block_size == 32
+
+
+class TestBlockFloatingQuantize:
+    """Validate block-floating quantization contracts."""
+
+    def test_quantize_block_floating_roundtrip(self):
+        w = np.array([0.0, 0.25, -0.5, 0.75, -1.0, 1.0], dtype=np.float64)
+        q, exponents = quantize_block_floating(w, fmt="BFP12E4X4", block_size=4, clip=True)
+        recovered = dequantize_block_floating(q, exponents, fmt="BFP12E4X4")
+        np.testing.assert_allclose(recovered, w, rtol=0.0, atol=0.02)
+
+    def test_quantize_block_floating_block_size_conflict(self):
+        w = np.array([1.0, 0.5, -0.25])
+        with pytest.raises(ValueError, match="Block size conflict"):
+            quantize_block_floating(w, fmt="BFP12E4X8", block_size=4)
 
 
 class TestQuantizeWeights:

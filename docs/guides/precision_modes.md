@@ -160,6 +160,25 @@ verilog = neuron.to_verilog(
 )
 ```
 
+## Block-Floating Pilot via quantizer API
+
+Quantizer and adaptive-precision surfaces also parse block-floating formats such as
+`BFP16E3X32`:
+
+```python
+from sc_neurocore.compiler.quantizer import (
+    quantize_block_floating,
+    dequantize_block_floating,
+)
+
+weights = np.array([[0.1, 0.2], [0.3, 0.4]])
+q, exponents = quantize_block_floating(weights, fmt="BFP16E3X32")
+restored = dequantize_block_floating(q, exponents, fmt="BFP16E3X32")
+```
+
+In this codepath, adaptive precision emits manifest metadata (`mantissa_bits`,
+`exponent_bits`, `block_size`) alongside fixed-point datapath emission for now.
+
 ## CLI Usage
 
 ### Compiling with Precision Selection

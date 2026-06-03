@@ -221,6 +221,41 @@ neuron type:
 Custom `(data_width, fraction)` pairs are also accepted — the 15 presets
 are canonical shortcuts, not limitations.
 
+### 3.3 Precision Strings and Manifest
+
+Adaptive precision also accepts exact precision strings on both datapaths:
+
+```python
+verilog = compile_adaptive_precision(
+    neuron,
+    lp_precision="Q8.8",
+    hp_precision="Q16.16",
+)
+
+verilog = compile_adaptive_precision(
+    neuron,
+    lp_precision="BFP16E3X32",
+    hp_precision="Q16.16",
+)
+```
+
+When emitted, the top-level RTL includes a deterministic JSON manifest:
+
+```verilog
+// SC-NeuroCore Adaptive Precision Manifest: {"kind":"adaptive_precision_v1",...}
+```
+
+The manifest carries:
+
+- LP/HP precision metadata (`kind`, precision label, width/fraction fields),
+- explicit block metadata for block-floating modes (`mantissa_bits`, `exponent_bits`,
+  `block_size`),
+- signed/overflow/rounding contract,
+- hysteresis percentages.
+
+This contract is consumed by downstream parity tooling and is expected to be stable
+across codegen releases.
+
 ---
 
 ## 4. Python API

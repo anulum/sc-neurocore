@@ -28,6 +28,8 @@ from sc_neurocore.compiler.adaptive_runtime_precision import (
 )
 from sc_neurocore.neurons.equation_builder import from_equations
 
+import json
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # Fixtures
@@ -217,6 +219,57 @@ class TestAllPrecisionPairs:
         assert "module sc_lif_test_lp" in v
         assert "module sc_lif_test_hp" in v
         assert v.count("endmodule") == 3
+
+
+def _extract_manifest(verilog: str) -> dict:
+    """Extract adaptive precision manifest JSON from generated RTL comments."""
+    prefix = "// SC-NeuroCore Adaptive Precision Manifest: "
+    for line in verilog.splitlines():
+        if line.startswith(prefix):
+            return json.loads(line[len(prefix) :])
+    raise AssertionError("Adaptive precision manifest comment not found")
+
+
+class TestPrecisionStrings:
+    """Verify new precision-string support and manifest emission."""
+
+    def test_precision_string_api(self, lif_neuron):
+        """Q-format strings should be resolved and emitted deterministically."""
+        v = compile_adaptive_precision(
+            lif_neuron,
+            module_name="sc_lif_adapt_precision_strings",
+            lp_precision="Q8.8",
+            hp_precision="Q16.16",
+        )
+        manifest = _extract_manifest(v)
+        assert manifest["lp_precision"]["kind"] == "fixed"
+        assert manifest["hp_precision"]["kind"] == "fixed"
+        assert manifest["lp_precision"]["label"] == "Q8.8"
+        assert manifest["hp_precision"]["label"] == "Q16.16"
+
+    def test_block_floating_precision_metadata(self, lif_neuron):
+        """Block-floating precision should emit block metadata and deterministic label."""
+        v = compile_adaptive_precision(
+            lif_neuron,
+            module_name="sc_lif_adapt_bfp",
+            lp_precision="BFP16E3X32",
+            hp_precision="Q16.16",
+        )
+        manifest = _extract_manifest(v)
+        assert manifest["lp_precision"]["kind"] == "block_floating"
+        assert manifest["lp_precision"]["mantissa_bits"] == 16
+        assert manifest["lp_precision"]["exponent_bits"] == 3
+        assert manifest["lp_precision"]["block_size"] == 32
+        assert manifest["lp_precision"]["label"].startswith("BFP16E3")
+
+    def test_invalid_precision_string(self, lif_neuron):
+        """Invalid precision strings must fail with ValueError."""
+        with pytest.raises(ValueError, match="precision"):
+            compile_adaptive_precision(
+                lif_neuron,
+                lp_precision="definitely-not-a-format",
+                hp_precision="Q16.16",
+            )
 
 
 # ═══════════════════════════════════════════════════════════════════════

@@ -16,6 +16,7 @@ from sc_neurocore.hdl_gen.bus_interface import (
 from sc_neurocore.compiler.mixed_precision import (
     MixedPrecisionSpec,
     PrecisionConfig,
+    BlockFloatingPrecisionConfig,
     from_preset,
     solve_precision,
     PRECISION_PRESETS,
@@ -312,3 +313,13 @@ class TestFromPreset:
         """Preset lookup should be case-insensitive."""
         spec = from_preset({"v": "Q8.8"})
         assert spec.get("v").data_width == 16
+
+    def test_block_floating_preset(self) -> None:
+        """Block-floating presets should be materializable and typed."""
+        spec = from_preset({"k": "bfp16e3x32"})
+        cfg = spec.get("k")
+        assert isinstance(cfg, BlockFloatingPrecisionConfig)
+        assert cfg.mantissa_bits == 16
+        assert cfg.exponent_bits == 3
+        assert cfg.block_size == 32
+        assert cfg.kind == "block_floating"
