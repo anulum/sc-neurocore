@@ -49,6 +49,7 @@ Usage::
 from __future__ import annotations
 
 import json
+import math
 from typing import Any
 
 from ..hdl_gen._ident import sanitize_ident
@@ -181,6 +182,28 @@ def _validate_lp_hp(lp_width: int, lp_frac: int, hp_width: int, hp_frac: int) ->
         raise ValueError(f"LP data_width ({lp_width}) must be >= 2")
 
 
+def _validate_hysteresis(
+    threshold_up_pct: float,
+    threshold_down_pct: float,
+) -> None:
+    """Validate adaptive-precision hysteresis thresholds.
+
+    HP must engage above the lower threshold and release below the lower
+    threshold with a strict separation. The thresholds are expected to satisfy:
+    0 < threshold_down_pct < threshold_up_pct < 1.
+    """
+    if not math.isfinite(threshold_up_pct) or not math.isfinite(threshold_down_pct):
+        raise ValueError("Threshold percentages must be finite")
+
+    if not (0.0 < threshold_up_pct < 1.0):
+        raise ValueError("threshold_up_pct must satisfy 0 < threshold_up_pct < 1")
+
+    if not (0.0 < threshold_down_pct < threshold_up_pct):
+        raise ValueError(
+            "threshold_down_pct must satisfy 0 < threshold_down_pct < threshold_up_pct"
+        )
+
+
 def compile_adaptive_precision(
     neuron: EquationNeuron,
     module_name: str = "sc_adaptive_neuron",
@@ -252,6 +275,7 @@ def compile_adaptive_precision(
     )
 
     _validate_lp_hp(lp_width, lp_frac, hp_width, hp_frac)
+    _validate_hysteresis(threshold_up_pct=threshold_up_pct, threshold_down_pct=threshold_down_pct)
 
     # Generate both datapaths as inner modules
     lp_module = f"{module_name}_lp"
