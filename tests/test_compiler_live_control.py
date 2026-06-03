@@ -4,6 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Tests for compiler live-control contract schema
 
 """Contract tests for compiler live-control specifications."""
 
