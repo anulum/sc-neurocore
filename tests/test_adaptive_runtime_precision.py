@@ -280,6 +280,55 @@ class TestPrecisionStrings:
 class TestValidation:
     """Verify that invalid configurations are rejected."""
 
+    def test_thresholds_require_ordered_band(self, lif_neuron):
+        """Swapped hysteresis thresholds must be rejected."""
+        with pytest.raises(ValueError, match="threshold_down_pct"):
+            compile_adaptive_precision(
+                lif_neuron,
+                threshold_up_pct=0.2,
+                threshold_down_pct=0.8,
+            )
+
+        with pytest.raises(ValueError, match="threshold_up_pct"):
+            compile_adaptive_precision(
+                lif_neuron,
+                threshold_up_pct=1.0,
+                threshold_down_pct=0.2,
+            )
+
+    def test_thresholds_reject_nonfinite(self, lif_neuron):
+        """NaN and infinities are rejected by threshold validation."""
+        with pytest.raises(ValueError, match="finite"):
+            compile_adaptive_precision(
+                lif_neuron,
+                threshold_up_pct=float("nan"),
+                threshold_down_pct=0.2,
+            )
+
+        with pytest.raises(ValueError, match="finite"):
+            compile_adaptive_precision(
+                lif_neuron,
+                threshold_up_pct=0.9,
+                threshold_down_pct=float("inf"),
+            )
+
+        with pytest.raises(ValueError, match="must satisfy 0 < threshold_down_pct"):
+            compile_adaptive_precision(
+                lif_neuron,
+                threshold_up_pct=0.6,
+                threshold_down_pct=0.0,
+            )
+
+    def test_thresholds_are_reflected_in_manifest(self, lif_neuron):
+        """Manifest must retain threshold policy under compiler contract."""
+        up = 0.9
+        down = 0.3
+        v = compile_adaptive_precision(lif_neuron, threshold_up_pct=up, threshold_down_pct=down)
+        manifest = _extract_manifest(v)
+
+        assert manifest["threshold_up_pct"] == up
+        assert manifest["threshold_down_pct"] == down
+
     def test_lp_wider_than_hp_rejected(self, lif_neuron):
         """LP wider than HP must raise ValueError."""
         with pytest.raises(ValueError, match="strictly less"):
