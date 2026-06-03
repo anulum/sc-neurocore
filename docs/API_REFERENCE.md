@@ -5248,9 +5248,12 @@ hp_width : int
 hp_frac : int
     High-precision fractional bits (default 16).
 threshold_up_pct : float
-    Fraction of LP range at which to switch to HP (default 0.8).
+    Fraction of LP range at which to switch to HP (default 0.8). Must satisfy
+    0 < threshold_down_pct < threshold_up_pct < 1, and both thresholds must
+    quantise to non-zero LP code points.
 threshold_down_pct : float
-    Fraction of LP range at which to switch back to LP (default 0.5).
+    Fraction of LP range at which to switch back to LP (default 0.5). Must be
+    strictly lower than threshold_up_pct and quantise on LP codes.
 signed : bool
     True for signed two's complement.
 overflow : str
