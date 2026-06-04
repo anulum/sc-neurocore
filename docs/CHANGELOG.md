@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added the NEU-C.6 DCLS Q8.8 RTL path: bit-true Rust DCLS tent-kernel
+  arithmetic, SystemVerilog axonal delay/tent/layer modules, IR
+  `DclsLayer` emission, SymbiYosys safety/liveness harness, Python/PyTorch
+  cosimulation, module-specific tests, and isolated benchmark evidence.
 - Added NEU-C.5 ADC-to-spike quantiser HDL with Q-format decimation, deterministic AER rate coding, formal transfer properties, bit-true Python reference, isolated benchmark evidence, and hardware documentation.
 - Added NEU-C.2 timing-aware formal-property framework with reusable SystemVerilog monitors, Python proof orchestration, nuXmv/Kind 2 emitters, a dense-layer SymbiYosys/cvc5 proof, and isolated benchmark evidence.
 - Added the NEU-C.4 AER strict-priority queue and router backpressure path,

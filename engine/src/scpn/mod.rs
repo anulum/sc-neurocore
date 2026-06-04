@@ -7,7 +7,11 @@
 // SC-NeuroCore — SCPN Module
 
 pub mod kuramoto;
+pub mod dcls;
 pub mod metrics;
 
+pub use dcls::{
+    dcls_max_forward_q88, tent_gate_q88, DclsError, DclsForwardResult, DclsLayerConfig,
+};
 pub use kuramoto::KuramotoSolver;
 pub use metrics::SCPNMetrics;

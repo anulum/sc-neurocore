@@ -218,6 +218,7 @@ nav:
       - Hardware Guide: hardware/HARDWARE_GUIDE.md
       - AER Priority Queue: hardware/aer_priority_queue.md
       - ADC-to-Spike Quantiser: hardware/adc_to_spike_quantiser.md
+      - DCLS RTL Contract: compiler/dcls_rtl.md
       - FPGA Toolchain Guide: hardware/FPGA_TOOLCHAIN_GUIDE.md
       - Hardware Manual: hardware/SC_NEUROCORE_HARDWARE_MANUAL.md
       - Implementation Summary: hardware/HARDWARE_IMPLEMENTATION_SUMMARY.md
