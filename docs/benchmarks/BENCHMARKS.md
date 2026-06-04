@@ -18,7 +18,8 @@ The 2026-06-04 local Python/Rust precision benchmark artefacts were captured on
 a workstation under concurrent load and without an exclusive isolated CPU core
 set.  Treat those medians as contract/regression context, not final throughput
 claims.  Any production performance claim must be rerun on reserved isolated
-cores, with CPU affinity and host-load evidence recorded in the raw artefact.
+cores, with CPU affinity, host-load, governor, and frequency evidence recorded
+in the raw artefact.
 
 > **v3.14.0 additions:** SHD FPGA synthesis on Zynq XC7Z020 — 1 317 LUT
 > (2.5%), 848 FF (0.8%), WNS +4.048 ns at 100 MHz. See
@@ -86,10 +87,10 @@ arithmetic contract instead of Python-only per-tensor rescaling.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python `CompiledMixedDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 35.485 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
-| Python `CompiledMixedDense.forward_with_overflow` | Same deterministic matrix/vector | 33.715 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
-| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.468 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
-| Rust `mixed_dense_q88_q1616` | 64×32 dense, 20,000 calls × 7 repeats | 2.343 µs/call | `benchmarks/results/local_rust_2026-06-04_mixed_dense.json` |
+| Python `CompiledMixedDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 31.634 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| Python `CompiledMixedDense.forward_with_overflow` | Same deterministic matrix/vector | 28.136 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.022 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| Rust `mixed_dense_q88_q1616` | 64×32 dense, 20,000 calls × 7 repeats | 2.245 µs/call | `benchmarks/results/local_rust_2026-06-04_mixed_dense.json` |
 | HDL `sc_mixed_precision_dense` Yosys RTLIL stat | Default 64×32 parameters | 12,708 cells, 2,048 multipliers | `hdl/reports/yosys_mixed_precision_dense_2026-06-04.json` |
 
 The Python mixed path reconstructed the float64 dot product with maximum
@@ -111,10 +112,10 @@ the HDL datapath.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 28.328 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| Python `CompiledBlockFloatingDense.forward_with_overflow` | Same deterministic matrix/vector | 31.260 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.141 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 11.331 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
+| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 31.429 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Python `CompiledBlockFloatingDense.forward_with_overflow` | Same deterministic matrix/vector | 30.326 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.209 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 10.056 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
 | HDL `sc_block_floating_dense` Yosys RTLIL stat | Parameterised 2×2, `BLOCK_SIZE=2` elaboration copy | 96 cells, 4 multipliers | `hdl/reports/yosys_block_floating_dense_2026-06-04.json` |
 
 The deterministic block-floating workload recorded maximum absolute error
@@ -140,10 +141,10 @@ rather than only a collapsed Boolean.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python mixed `precision_trap_report` | 64×32 dense, 2,000 calls × 7 repeats | 340.461 µs/call | `benchmarks/results/local_python_2026-06-04_precision_traps.json` |
-| Python BFP `precision_trap_report` | 64×32 dense, 2,000 calls × 7 repeats | 161.677 µs/call | `benchmarks/results/local_python_2026-06-04_precision_traps.json` |
-| Rust mixed `PrecisionTrapReport` | 64×32 dense, 20,000 calls × 7 repeats | 3.483 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_traps.json` |
-| Rust BFP `PrecisionTrapReport` | 64×32 dense, 20,000 calls × 7 repeats | 11.277 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_traps.json` |
+| Python mixed `precision_trap_report` | 64×32 dense, 2,000 calls × 7 repeats | 52.810 µs/call | `benchmarks/results/local_python_2026-06-04_precision_traps.json` |
+| Python BFP `precision_trap_report` | 64×32 dense, 2,000 calls × 7 repeats | 50.173 µs/call | `benchmarks/results/local_python_2026-06-04_precision_traps.json` |
+| Rust mixed `PrecisionTrapReport` | 64×32 dense, 20,000 calls × 7 repeats | 2.325 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_traps.json` |
+| Rust BFP `PrecisionTrapReport` | 64×32 dense, 20,000 calls × 7 repeats | 8.669 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_traps.json` |
 | HDL `sc_precision_overflow_trap` Yosys stat | Default `TRAP_WIDTH=1` | 3 cells, 8 wire bits | `hdl/reports/yosys_precision_overflow_trap_2026-06-04.json` |
 
 The committed Python and Rust trap workloads both report
@@ -161,10 +162,10 @@ workload.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python mixed `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 150.131 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
-| Python BFP `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 140.462 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
-| Rust mixed `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 3.887 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
-| Rust BFP `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 13.510 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
+| Python mixed `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 82.388 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
+| Python BFP `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 79.117 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
+| Rust mixed `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 2.322 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
+| Rust BFP `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 8.748 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
 | HDL `sc_precision_envelope_guard` Yosys stat | Default `N_OUTPUTS=32` | 67 cells, 1,701 wire bits | `hdl/reports/yosys_precision_envelope_guard_2026-06-04.json` |
 
 Both Python and Rust envelope reports returned

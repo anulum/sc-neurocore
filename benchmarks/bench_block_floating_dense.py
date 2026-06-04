@@ -18,6 +18,7 @@ from typing import Protocol
 
 import numpy as np
 
+from _benchmark_context import load_average, measurement_context
 from sc_neurocore.compiler.quantizer import PrecisionEnvelopeReport, compile_dense_block_floating
 
 
@@ -94,6 +95,7 @@ def time_float_dot(weights: np.ndarray, inputs: np.ndarray) -> tuple[float, floa
 
 
 def main() -> int:
+    load_average_before = load_average()
     weights, inputs = deterministic_inputs()
     compiled = compile_dense_block_floating(weights, fmt="BFP16E3X32")
 
@@ -124,10 +126,14 @@ def main() -> int:
         "benchmark": "block_floating_dense_q16_64x32",
         "language": "Python",
         "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
-        "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_block_floating_dense.py",
+        "command": (
+            "taskset -c 10-11 env PYTHONPATH=src "
+            ".venv/bin/python benchmarks/bench_block_floating_dense.py"
+        ),
         "python": platform.python_version(),
         "platform": platform.platform(),
         "processor": platform.processor(),
+        "measurement_context": measurement_context(load_average_before),
         "n_inputs": N_INPUTS,
         "n_outputs": N_OUTPUTS,
         "iterations": ITERATIONS,

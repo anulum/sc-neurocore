@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Precision envelope benchmark artefact writer
 
 from __future__ import annotations
 
@@ -11,6 +18,7 @@ from typing import Protocol
 
 import numpy as np
 
+from _benchmark_context import load_average, measurement_context
 from sc_neurocore.compiler.quantizer import (
     QFormatMixed,
     PrecisionEnvelopeReport,
@@ -71,6 +79,7 @@ def time_envelope_report(compiled: EnvelopeReporter, inputs: np.ndarray) -> tupl
 
 
 def main() -> int:
+    load_average_before = load_average()
     mixed, mixed_inputs, block_floating, bfp_inputs = deterministic_safe_workloads()
     mixed_results = [time_envelope_report(mixed, mixed_inputs) for _ in range(REPEATS)]
     bfp_results = [time_envelope_report(block_floating, bfp_inputs) for _ in range(REPEATS)]
@@ -83,10 +92,14 @@ def main() -> int:
         "benchmark": "precision_envelope_reports_64x32",
         "language": "Python",
         "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
-        "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_precision_envelopes.py",
+        "command": (
+            "taskset -c 10-11 env PYTHONPATH=src "
+            ".venv/bin/python benchmarks/bench_precision_envelopes.py"
+        ),
         "python": platform.python_version(),
         "platform": platform.platform(),
         "processor": platform.processor(),
+        "measurement_context": measurement_context(load_average_before),
         "n_inputs": N_INPUTS,
         "n_outputs": N_OUTPUTS,
         "iterations": ITERATIONS,

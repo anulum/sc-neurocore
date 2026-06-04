@@ -6,6 +6,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Hardened the 2026-06-04 mixed, block-floating, precision-trap, and
+  precision-envelope benchmark artefact writers so Python and Rust runs record
+  taskset affinity, load before/after, CPU governor, and frequency context.
 - Aligned the mixed dense Python and Rust benchmark workloads on the canonical
   raw Q8.8/Q16.16 physical contract (`QFormatMixed(scale_per_tensor=False)`),
   eliminating the stale per-tensor Python envelope mismatch and refreshing the

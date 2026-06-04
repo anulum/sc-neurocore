@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-import os
 from pathlib import Path
 import platform
 import statistics
@@ -19,6 +18,7 @@ from typing import Protocol
 
 import numpy as np
 
+from _benchmark_context import load_average, measurement_context
 from sc_neurocore.compiler.quantizer import (
     PrecisionEnvelopeReport,
     QFormatMixed,
@@ -95,29 +95,8 @@ def time_float_dot(weights: np.ndarray, inputs: np.ndarray) -> tuple[float, floa
     return elapsed_ns / ITERATIONS, checksum
 
 
-def measurement_context() -> dict[str, object]:
-    """Return benchmark context for non-exclusive workstation captures."""
-
-    affinity = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else []
-    return {
-        "host_load": "workstation under concurrent load during capture",
-        "cpu_isolation": (
-            "taskset affinity only when launched with taskset; no kernel-reserved "
-            "isolated cores were detected on this workstation"
-        ),
-        "cpu_affinity": affinity,
-        "load_average": list(os.getloadavg()) if hasattr(os, "getloadavg") else None,
-        "timing_interpretation": (
-            "use timing medians as local regression context only, not final throughput claims"
-        ),
-        "production_rerun_requirement": (
-            "rerun on reserved isolated cores with recorded affinity, governor, "
-            "frequency, versions, and host-load evidence before publishing performance claims"
-        ),
-    }
-
-
 def main() -> int:
+    load_average_before = load_average()
     weights, inputs = deterministic_inputs()
     mixed_format = QFormatMixed(scale_per_tensor=False)
     compiled = compile_dense_mixed_precision(weights, fmt=mixed_format)
@@ -156,7 +135,7 @@ def main() -> int:
         "python": platform.python_version(),
         "platform": platform.platform(),
         "processor": platform.processor(),
-        "measurement_context": measurement_context(),
+        "measurement_context": measurement_context(load_average_before),
         "n_inputs": N_INPUTS,
         "n_outputs": N_OUTPUTS,
         "iterations": ITERATIONS,

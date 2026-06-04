@@ -1,10 +1,23 @@
 {
   "benchmark": "block_floating_dense_q16_64x32",
   "language": "Rust",
-  "timestamp_unix": 1780568896,
-  "command": "cargo run --manifest-path engine/Cargo.toml --release --example bench_block_floating_dense",
+  "timestamp_unix": 1780570965,
+  "command": "taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_block_floating_dense",
+  "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
   "target_os": "linux",
   "target_arch": "x86_64",
+  "measurement_context": {
+    "host_load": "workstation under concurrent load during capture",
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "cpu_affinity": "10-11",
+    "load_average_before": "3.67 4.22 4.23 1/2836 1902446",
+    "load_average_after": "3.67 4.22 4.23 2/2835 1902450",
+    "cpu_governor": "powersave",
+    "cpu_frequency_mhz": "min=2044.493,max=4600.524,sampled_cpu_count=12",
+    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+  },
   "n_inputs": 64,
   "n_outputs": 32,
   "mantissa_bits": 16,
@@ -12,9 +25,9 @@
   "block_size": 32,
   "iterations": 20000,
   "repeats": 7,
-  "median_ns_per_call": 11331.267,
-  "min_ns_per_call": 11043.053,
-  "max_ns_per_call": 11462.593,
+  "median_ns_per_call": 10056.027,
+  "min_ns_per_call": 9872.994,
+  "max_ns_per_call": 10689.885,
   "checksum": 0,
   "safe_overflow_count": 0,
   "safe_max_abs_bound_q1616": 610816,
@@ -27,19 +40,5 @@
   "saturating_probe_overflow_count": 32,
   "saturating_probe_max_abs_bound_q1616": 1125865547104256,
   "saturating_probe_conservative_overflow_free": false,
-  "results_ns_per_call": [
-    11392.232,
-    11176.047,
-    11331.267,
-    11439.504,
-    11296.997,
-    11462.593,
-    11043.053
-  ],
-  "measurement_context": {
-    "host_load": "workstation under concurrent load during capture",
-    "cpu_isolation": "not exclusive; no isolated benchmark core set was reserved",
-    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
-    "production_rerun_requirement": "rerun on isolated cores with recorded affinity and host-load evidence before publishing performance claims"
-  }
+  "results_ns_per_call": [10689.885, 10166.371, 10056.027, 10120.829, 9872.994, 10020.937, 9873.518]
 }
