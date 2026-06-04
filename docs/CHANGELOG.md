@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added AXI4-Lite live-parameter-bank RTL emission from the compiler
+  live-control schema, including BRAM/distributed RAM style hints, flattened
+  parameter outputs, staged commits, trap status, and module-specific compile
+  tests.
 - Added deterministic compiler live-control schemas for AXI4-Lite/PCIe
   parameter-bank updates, including encoded-word range checks, fixed
   control/status registers, atomic staged commit sequences, and trap-clear
