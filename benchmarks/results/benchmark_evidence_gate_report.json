@@ -24,11 +24,15 @@
     {
       "artefact": "benchmarks/results/local_python_2026-06-04_timing_formal_framework.json",
       "id": "timing-formal-framework"
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_adc_to_spike_quantiser.json",
+      "id": "adc-to-spike-quantiser-contract"
     }
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 6,
+  "gate_count": 7,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

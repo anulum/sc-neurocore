@@ -123,6 +123,41 @@
         "sby_runtime_s",
         "sby_exit_code"
       ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_adc_to_spike_quantiser.json",
+      "description": "NEU-C.5 ADC-to-spike quantiser reference, formal, and synthesis-estimate evidence.",
+      "expected_values": {
+        "benchmark": "adc_to_spike_quantiser_contract",
+        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "formal.exit_code": 0,
+        "formal.passed": true,
+        "hardware_measurement_claimed": false,
+        "host_context.cgroup_effective_cpuset": "10-11",
+        "host_context.runtime_cpuset_shield_claimed": true,
+        "language": "Python+SystemVerilog",
+        "yosys.exit_code": 0
+      },
+      "id": "adc-to-spike-quantiser-contract",
+      "minimum_values": {
+        "repeats": 100,
+        "samples": 4096,
+        "total_samples": 409600,
+        "total_spikes": 1,
+        "yosys.cells": 1
+      },
+      "required_numbers": [
+        "samples",
+        "repeats",
+        "total_samples",
+        "total_spikes",
+        "median_ns_per_sample",
+        "formal.elapsed_ns",
+        "formal.exit_code",
+        "yosys.elapsed_ns",
+        "yosys.exit_code",
+        "yosys.cells"
+      ]
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"
