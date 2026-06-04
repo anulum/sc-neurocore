@@ -1,0 +1,212 @@
+
+use sc_neurocore_engine::ir::qformat::{
+    block_floating_dense_q16, mixed_dense_q88_q1616, BlockFloatingMode,
+};
+use std::fs;
+use std::hint::black_box;
+use std::path::Path;
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
+
+const N_INPUTS: usize = 64;
+const N_OUTPUTS: usize = 32;
+const ITERATIONS: usize = 20_000;
+const REPEATS: usize = 7;
+
+fn deterministic_mixed_weights() -> Vec<i16> {
+    (0..(N_INPUTS * N_OUTPUTS))
+        .map(|i| (((i * 17 + 11) % 513) as i32 - 256) as i16)
+        .collect()
+}
+
+fn deterministic_bfp_mantissas() -> Vec<i16> {
+    (0..(N_INPUTS * N_OUTPUTS))
+        .map(|i| (((i * 23 + 3) % 1025) as i32 - 512) as i16)
+        .collect()
+}
+
+fn deterministic_inputs() -> Vec<i32> {
+    (0..N_INPUTS)
+        .map(|i| (((i * 19 + 5) % 257) as i32 - 128) << 6)
+        .collect()
+}
+
+fn time_mixed_envelopes(weights: &[i16], inputs: &[i32]) -> (f64, i64, bool, i64) {
+    let start = Instant::now();
+    let mut checksum = 0_i64;
+    let mut conservative_safe = false;
+    let mut max_abs_bound = 0_i64;
+    for _ in 0..ITERATIONS {
+        let result = mixed_dense_q88_q1616(
+            black_box(weights),
+            black_box(inputs),
+            black_box(N_OUTPUTS),
+            black_box(N_INPUTS),
+        )
+        .expect("deterministic benchmark dimensions must be valid");
+        let report = result.precision_envelope_report();
+        checksum ^= report.max_abs_bound_q1616;
+        checksum ^= report.min_headroom_q1616;
+        conservative_safe = report.conservative_overflow_free;
+        max_abs_bound = report.max_abs_bound_q1616;
+    }
+    let elapsed_ns = start.elapsed().as_nanos() as f64;
+    (
+        elapsed_ns / ITERATIONS as f64,
+        checksum,
+        conservative_safe,
+        max_abs_bound,
+    )
+}
+
+fn time_bfp_envelopes(
+    mantissas: &[i16],
+    exponents: &[u8],
+    inputs: &[i32],
+    mode: BlockFloatingMode,
+) -> (f64, i64, bool, i64) {
+    let start = Instant::now();
+    let mut checksum = 0_i64;
+    let mut conservative_safe = false;
+    let mut max_abs_bound = 0_i64;
+    for _ in 0..ITERATIONS {
+        let result = block_floating_dense_q16(
+            black_box(mantissas),
+            black_box(exponents),
+            black_box(inputs),
+            black_box(N_OUTPUTS),
+            black_box(N_INPUTS),
+            black_box(mode),
+        )
+        .expect("deterministic benchmark dimensions must be valid");
+        let report = result.precision_envelope_report();
+        checksum ^= report.max_abs_bound_q1616;
+        checksum ^= report.min_headroom_q1616;
+        conservative_safe = report.conservative_overflow_free;
+        max_abs_bound = report.max_abs_bound_q1616;
+    }
+    let elapsed_ns = start.elapsed().as_nanos() as f64;
+    (
+        elapsed_ns / ITERATIONS as f64,
+        checksum,
+        conservative_safe,
+        max_abs_bound,
+    )
+}
+
+fn median(values: &mut [f64]) -> f64 {
+    values.sort_by(|a, b| a.total_cmp(b));
+    values[values.len() / 2]
+}
+
+fn values_json(values: &[f64]) -> String {
+    values
+        .iter()
+        .map(|value| format!("{value:.3}"))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+fn main() {
+    let weights = deterministic_mixed_weights();
+    let inputs = deterministic_inputs();
+    let mode = BlockFloatingMode::bfp16_e3_x32();
+    let mantissas = deterministic_bfp_mantissas();
+    let exponents = vec![
+        mode.exponent_bias() as u8;
+        (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size
+    ];
+
+    let mut mixed_ns = Vec::with_capacity(REPEATS);
+    let mut bfp_ns = Vec::with_capacity(REPEATS);
+    let mut mixed_checksum = 0_i64;
+    let mut bfp_checksum = 0_i64;
+    let mut mixed_conservative_safe = false;
+    let mut bfp_conservative_safe = false;
+    let mut mixed_max_abs_bound = 0_i64;
+    let mut bfp_max_abs_bound = 0_i64;
+
+    for _ in 0..REPEATS {
+        let (ns, checksum, conservative_safe, max_abs_bound) =
+            time_mixed_envelopes(&weights, &inputs);
+        mixed_ns.push(ns);
+        mixed_checksum ^= checksum;
+        mixed_conservative_safe = conservative_safe;
+        mixed_max_abs_bound = max_abs_bound;
+    }
+    for _ in 0..REPEATS {
+        let (ns, checksum, conservative_safe, max_abs_bound) =
+            time_bfp_envelopes(&mantissas, &exponents, &inputs, mode);
+        bfp_ns.push(ns);
+        bfp_checksum ^= checksum;
+        bfp_conservative_safe = conservative_safe;
+        bfp_max_abs_bound = max_abs_bound;
+    }
+
+    let mut mixed_sorted = mixed_ns.clone();
+    let mut bfp_sorted = bfp_ns.clone();
+    let mixed_median_ns_per_call = median(&mut mixed_sorted);
+    let bfp_median_ns_per_call = median(&mut bfp_sorted);
+    let timestamp_unix = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system clock must be after UNIX epoch")
+        .as_secs();
+
+    let report = format!(
+        concat!(
+            "{{\n",
+            "  \"benchmark\": \"precision_envelope_reports_64x32\",\n",
+            "  \"language\": \"Rust\",\n",
+            "  \"timestamp_unix\": {timestamp_unix},\n",
+            "  \"command\": \"cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_envelopes\",\n",
+            "  \"target_os\": \"{os}\",\n",
+            "  \"target_arch\": \"{arch}\",\n",
+            "  \"n_inputs\": {n_inputs},\n",
+            "  \"n_outputs\": {n_outputs},\n",
+            "  \"iterations\": {iterations},\n",
+            "  \"repeats\": {repeats},\n",
+            "  \"mixed_envelope_median_ns_per_call\": {mixed_median_ns_per_call:.3},\n",
+            "  \"mixed_envelope_min_ns_per_call\": {mixed_min_ns_per_call:.3},\n",
+            "  \"mixed_envelope_max_ns_per_call\": {mixed_max_ns_per_call:.3},\n",
+            "  \"mixed_conservative_overflow_free\": {mixed_conservative_safe},\n",
+            "  \"mixed_max_abs_bound_q1616\": {mixed_max_abs_bound},\n",
+            "  \"mixed_checksum\": {mixed_checksum},\n",
+            "  \"mixed_results_ns_per_call\": [{mixed_results}],\n",
+            "  \"bfp_envelope_median_ns_per_call\": {bfp_median_ns_per_call:.3},\n",
+            "  \"bfp_envelope_min_ns_per_call\": {bfp_min_ns_per_call:.3},\n",
+            "  \"bfp_envelope_max_ns_per_call\": {bfp_max_ns_per_call:.3},\n",
+            "  \"bfp_conservative_overflow_free\": {bfp_conservative_safe},\n",
+            "  \"bfp_max_abs_bound_q1616\": {bfp_max_abs_bound},\n",
+            "  \"bfp_checksum\": {bfp_checksum},\n",
+            "  \"bfp_results_ns_per_call\": [{bfp_results}]\n",
+            "}}\n"
+        ),
+        timestamp_unix = timestamp_unix,
+        os = std::env::consts::OS,
+        arch = std::env::consts::ARCH,
+        n_inputs = N_INPUTS,
+        n_outputs = N_OUTPUTS,
+        iterations = ITERATIONS,
+        repeats = REPEATS,
+        mixed_median_ns_per_call = mixed_median_ns_per_call,
+        mixed_min_ns_per_call = mixed_sorted[0],
+        mixed_max_ns_per_call = mixed_sorted[mixed_sorted.len() - 1],
+        mixed_conservative_safe = mixed_conservative_safe,
+        mixed_max_abs_bound = mixed_max_abs_bound,
+        mixed_checksum = mixed_checksum,
+        mixed_results = values_json(&mixed_ns),
+        bfp_median_ns_per_call = bfp_median_ns_per_call,
+        bfp_min_ns_per_call = bfp_sorted[0],
+        bfp_max_ns_per_call = bfp_sorted[bfp_sorted.len() - 1],
+        bfp_conservative_safe = bfp_conservative_safe,
+        bfp_max_abs_bound = bfp_max_abs_bound,
+        bfp_checksum = bfp_checksum,
+        bfp_results = values_json(&bfp_ns),
+    );
+
+    let path = Path::new("benchmarks/results/local_rust_2026-06-04_precision_envelopes.json");
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).expect("benchmark result directory must be writable");
+    }
+    fs::write(path, &report).expect("benchmark result artefact must be writable");
+    print!("{report}");
+}

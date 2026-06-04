@@ -24,6 +24,11 @@ Backend: NumPy (CPU only)
 | Precision trap report block-floating dense (64x32 overflow) | Python | 2000 | 161.677 us | overflow_count=32 |
 | Precision trap report block-floating dense (64x32 overflow) | Rust | 20000 | 11.277 us | overflow_count=32 |
 | Precision overflow trap latch | HDL/Yosys | TRAP_WIDTH=1 | 3 cells | `$adff`+`$mux`+`$or` |
+| Precision envelope report mixed dense (64x32 safe) | Python | 2000 | 150.131 us | max_abs_bound=132850 |
+| Precision envelope report mixed dense (64x32 safe) | Rust | 20000 | 3.887 us | max_abs_bound=132850 |
+| Precision envelope report block-floating dense (64x32 safe) | Python | 2000 | 140.462 us | max_abs_bound=78032768 |
+| Precision envelope report block-floating dense (64x32 safe) | Rust | 20000 | 13.510 us | max_abs_bound=78032768 |
+| Precision envelope guard | HDL/Yosys | N_OUTPUTS=32 | 67 cells | `$adff`+`$gt`+`$mux`+`$reduce_or` |
 | Full pipeline (4 syn, 256 steps) | cpu | 200 | 1830.0 us | 139.9 Kstep/s |
 | Full pipeline (16 syn, 256 steps) | cpu | 50 | 8678.5 us | 29.5 Kstep/s |
 | gpu_pack_bitstream (65536) | cpu | 2000 | 375.9 us | 0.17 Gbit/s |

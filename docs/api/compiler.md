@@ -219,6 +219,7 @@ The manifest records operation counts and whether `firtool` is available.
 import numpy as np
 
 from sc_neurocore.compiler.quantizer import (
+    PrecisionEnvelopeReport,
     PrecisionTrapReport,
     QFormatMixed,
     compile_dense_block_floating,
@@ -255,6 +256,7 @@ compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed())
 outputs_q1616, overflow = compiled.forward_with_overflow(inputs)
 outputs = compiled.forward_float(inputs)
 trap_report: PrecisionTrapReport = compiled.precision_trap_report(inputs)
+envelope_report: PrecisionEnvelopeReport = compiled.precision_envelope_report(inputs)
 manifest = compiled.manifest()
 ```
 
@@ -272,6 +274,12 @@ The report manifest includes `output_format`, `output_count`,
 `overflow_count`, `saturated_min_count`, `saturated_max_count`, and
 `has_overflow`.
 
+`precision_envelope_report` adds conservative predeployment range evidence.  It
+returns realised output codes, realised overflow flags, per-output absolute
+bound codes, and a manifest containing `observed_overflow_free`,
+`conservative_overflow_free`, `max_abs_output_code`, `max_abs_bound_code`, and
+`min_headroom_code`.
+
 Block-floating dense deployment uses shared-exponent weight blocks with
 Q16.16 inputs and outputs:
 
@@ -280,6 +288,7 @@ compiled_bfp = compile_dense_block_floating(weights, fmt="BFP16E3X32")
 outputs_q1616, overflow = compiled_bfp.forward_with_overflow(inputs)
 outputs = compiled_bfp.forward_float(inputs)
 trap_report = compiled_bfp.precision_trap_report(inputs)
+envelope_report = compiled_bfp.precision_envelope_report(inputs)
 ```
 
 `BFP16E3X32` stores 16-bit signed mantissas and one 3-bit biased exponent per

@@ -58,6 +58,8 @@ cargo bench --bench analysis_bench -- --quick
 | block_floating_dense_q16_64x32 | 12.512 µs |
 | mixed_dense_q88_q1616_trap_64x32 | 3.483 µs |
 | block_floating_dense_q16_trap_64x32 | 11.277 µs |
+| mixed_dense_q88_q1616_envelope_64x32 | 3.887 µs |
+| block_floating_dense_q16_envelope_64x32 | 13.510 µs |
 | attention_10x16_20x32 | 88.5 µs |
 | gnn_20x8_forward | 85.3 µs |
 
@@ -82,6 +84,15 @@ Python reference artefact is
 `benchmarks/results/local_python_2026-06-04_precision_traps.json`.  Both Rust
 trap workloads reported 32 saturated outputs on the deterministic 64×32
 overflow workload.
+
+The precision envelope rows were measured on 2026-06-04 with
+`cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_envelopes`.
+The committed raw artefact is
+`benchmarks/results/local_rust_2026-06-04_precision_envelopes.json`; the
+matching Python reference artefact is
+`benchmarks/results/local_python_2026-06-04_precision_envelopes.json`.  Both
+Rust envelope workloads reported `conservative_overflow_free=true` and matched
+the Python maximum absolute bounds for the deterministic 64×32 safe workload.
 
 ### PRNG
 

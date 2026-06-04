@@ -1,0 +1,121 @@
+{
+  "benchmark": "precision_envelope_reports_64x32",
+  "language": "Python",
+  "timestamp_utc": "2026-06-04T03:52:58+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_precision_envelopes.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "n_inputs": 64,
+  "n_outputs": 32,
+  "iterations": 2000,
+  "repeats": 7,
+  "mixed_envelope_median_ns_per_call": 150131.4325,
+  "mixed_envelope_min_ns_per_call": 138864.332,
+  "mixed_envelope_max_ns_per_call": 179226.047,
+  "mixed_conservative_overflow_free": true,
+  "mixed_max_abs_bound_code": 132850,
+  "bfp_envelope_median_ns_per_call": 140461.685,
+  "bfp_envelope_min_ns_per_call": 122897.978,
+  "bfp_envelope_max_ns_per_call": 162940.4325,
+  "bfp_conservative_overflow_free": true,
+  "bfp_max_abs_bound_code": 78032768,
+  "mixed_manifest": {
+    "operation": "dense_mixed_qformat",
+    "output_format": "Q16.16",
+    "output_count": 32,
+    "overflow_count": 0,
+    "observed_overflow_free": true,
+    "conservative_overflow_free": true,
+    "max_abs_output_code": 52596,
+    "max_abs_bound_code": 132850,
+    "conservative_safe_bound_code": 2147483647,
+    "min_headroom_code": 2147350797
+  },
+  "bfp_manifest": {
+    "operation": "dense_block_floating",
+    "output_format": "Q16.16",
+    "output_count": 32,
+    "overflow_count": 0,
+    "observed_overflow_free": true,
+    "conservative_overflow_free": true,
+    "max_abs_output_code": 27857600,
+    "max_abs_bound_code": 78032768,
+    "conservative_safe_bound_code": 2147483647,
+    "min_headroom_code": 2069450879
+  },
+  "mixed_results": [
+    {
+      "ns_per_call": 151788.9155,
+      "checksum": 0,
+      "conservative_safe": true
+    },
+    {
+      "ns_per_call": 139634.3325,
+      "checksum": 0,
+      "conservative_safe": true
+    },
+    {
+      "ns_per_call": 138864.332,
+      "checksum": 0,
+      "conservative_safe": true
+    },
+    {
+      "ns_per_call": 150131.4325,
+      "checksum": 0,
+      "conservative_safe": true
+    },
+    {
+      "ns_per_call": 141999.9135,
+      "checksum": 0,
+      "conservative_safe": true
+    },
+    {
+      "ns_per_call": 157790.1225,
+      "checksum": 0,
+      "conservative_safe": true
+    },
+    {
+      "ns_per_call": 179226.047,
+      "checksum": 0,
+      "conservative_safe": true
+    }
+  ],
+  "bfp_results": [
+    {
+      "ns_per_call": 140461.685,
+      "checksum": 0,
+      "conservative_safe": true
+    },
+    {
+      "ns_per_call": 160702.0275,
+      "checksum": 0,
+      "conservative_safe": true
+    },
+    {
+      "ns_per_call": 135571.501,
+      "checksum": 0,
+      "conservative_safe": true
+    },
+    {
+      "ns_per_call": 129905.3525,
+      "checksum": 0,
+      "conservative_safe": true
+    },
+    {
+      "ns_per_call": 144256.542,
+      "checksum": 0,
+      "conservative_safe": true
+    },
+    {
+      "ns_per_call": 162940.4325,
+      "checksum": 0,
+      "conservative_safe": true
+    },
+    {
+      "ns_per_call": 122897.978,
+      "checksum": 0,
+      "conservative_safe": true
+    }
+  ]
+}

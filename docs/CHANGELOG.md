@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added precision envelope reports across the mixed fixed-point and
+  block-floating dense deployment paths, including conservative absolute-bound
+  checks in Python and Rust, a synchronous HDL envelope guard, module-specific
+  tests, and committed Python, Rust, and Yosys benchmark artefacts.
 - Added precision trap reports across the mixed fixed-point and block-floating
   dense deployment paths, including exact overflow counts in the Rust qformat
   mirror, a synchronous HDL trap latch, module-specific tests, and committed

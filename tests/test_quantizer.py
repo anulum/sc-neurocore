@@ -19,6 +19,7 @@ from sc_neurocore.compiler.quantizer import (
     Q8_8,
     Q16_16,
     BlockFloatingMode,
+    PrecisionEnvelopeReport,
     PrecisionTrapReport,
     compile_dense_block_floating,
     compile_dense_mixed_precision,
@@ -153,6 +154,67 @@ class TestPrecisionTrapReport:
             )
 
 
+class TestPrecisionEnvelopeReport:
+    """Validate precision envelope invariants for predeployment range gates."""
+
+    def test_manifest_distinguishes_observed_and_conservative_safety(self):
+        report = PrecisionEnvelopeReport(
+            operation="dense_mixed_qformat",
+            output_codes=np.array([1024, -512], dtype=np.int64),
+            overflow_mask=np.array([False, False], dtype=bool),
+            abs_bound_codes=np.array([2048, 4096], dtype=np.int64),
+            output_fmt=Q16_16,
+        )
+
+        assert report.output_count == 2
+        assert report.overflow_count == 0
+        assert report.observed_overflow_free is True
+        assert report.conservative_overflow_free is True
+        assert report.max_abs_output_code == 1024
+        assert report.max_abs_bound_code == 4096
+        assert report.min_headroom_code == ((1 << 31) - 1) - 4096
+        assert report.manifest()["conservative_overflow_free"] is True
+
+    def test_conservative_envelope_can_reject_cancelling_outputs(self):
+        report = PrecisionEnvelopeReport(
+            operation="dense_mixed_qformat",
+            output_codes=np.array([0], dtype=np.int64),
+            overflow_mask=np.array([False], dtype=bool),
+            abs_bound_codes=np.array([(1 << 31) + 1], dtype=np.int64),
+            output_fmt=Q16_16,
+        )
+
+        assert report.observed_overflow_free is True
+        assert report.conservative_overflow_free is False
+        assert report.min_headroom_code < 0
+
+    def test_rejects_ambiguous_envelope_shapes_and_negative_bounds(self):
+        with pytest.raises(ValueError, match="identical shape"):
+            PrecisionEnvelopeReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([1, 2], dtype=np.int64),
+                overflow_mask=np.array([False, False], dtype=bool),
+                abs_bound_codes=np.array([2], dtype=np.int64),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(ValueError, match="non-negative"):
+            PrecisionEnvelopeReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([1], dtype=np.int64),
+                overflow_mask=np.array([False], dtype=bool),
+                abs_bound_codes=np.array([-1], dtype=np.int64),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(TypeError, match="integer"):
+            PrecisionEnvelopeReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([1], dtype=np.int64),
+                overflow_mask=np.array([False], dtype=bool),
+                abs_bound_codes=np.array([1.5]),
+                output_fmt=Q16_16,
+            )
+
+
 class TestQFormatMixed:
     """Validate the Q8.8-weight/Q16.16-accumulator contract."""
 
@@ -281,6 +343,11 @@ class TestCompiledMixedDense:
             compiled.forward_float(inputs), weights @ inputs, atol=1 / Q16_16.scale
         )
 
+        envelope = compiled.precision_envelope_report(inputs)
+        assert envelope.observed_overflow_free is True
+        assert envelope.conservative_overflow_free is True
+        assert envelope.max_abs_bound_code == 34816
+
     def test_default_scaled_contract_tracks_float_dense_result(self):
         weights = np.array([[0.375, -0.125, 0.0625], [-0.5, 0.25, 0.125]], dtype=np.float64)
         inputs = np.array([0.5, -0.25, 0.125], dtype=np.float64)
@@ -304,6 +371,11 @@ class TestCompiledMixedDense:
         assert report.overflow_count == 1
         assert report.saturated_max_count == 1
         assert report.saturated_min_count == 0
+
+        envelope = compiled.precision_envelope_report(inputs)
+        assert envelope.observed_overflow_free is False
+        assert envelope.conservative_overflow_free is False
+        assert envelope.max_abs_bound_code > envelope.conservative_safe_bound_code
 
     def test_negative_raw_products_use_hardware_arithmetic_shift(self):
         weights = np.array([[0.5]], dtype=np.float64)
@@ -374,6 +446,11 @@ class TestCompiledBlockFloatingDense:
         expected = compiled.reconstructed_weights @ q_inputs
         np.testing.assert_allclose(compiled.forward_float(inputs), expected, rtol=0.0, atol=1e-12)
 
+        envelope = compiled.precision_envelope_report(inputs)
+        assert envelope.observed_overflow_free is True
+        assert envelope.conservative_overflow_free is True
+        assert envelope.max_abs_bound_code == 43008
+
     def test_block_floating_dense_saturates_outputs(self):
         weights = np.array([[8192.0, 8192.0]], dtype=np.float64)
         inputs = np.array([32767.0, 32767.0], dtype=np.float64)
@@ -389,6 +466,11 @@ class TestCompiledBlockFloatingDense:
         assert report.overflow_count == 1
         assert report.saturated_max_count == 1
         assert report.saturated_min_count == 0
+
+        envelope = compiled.precision_envelope_report(inputs)
+        assert envelope.observed_overflow_free is False
+        assert envelope.conservative_overflow_free is False
+        assert envelope.max_abs_bound_code > envelope.conservative_safe_bound_code
 
     def test_block_floating_dense_rejects_invalid_shapes_and_inputs(self):
         with pytest.raises(ValueError, match="2-D dense"):
