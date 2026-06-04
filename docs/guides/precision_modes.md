@@ -202,13 +202,17 @@ path:
   shared-exponent integer MAC, shape validation, mantissa/exponent bounds, and
   saturation behaviour.
 - HDL: `hdl/sc_block_floating_dense.v` provides a synchronous RTL reference
-  with explicit dynamic exponent shifts, overflow telemetry, and saturated
-  Q16.16 outputs.
+  with explicit dynamic exponent shifts, per-output overflow telemetry,
+  aggregate overflow, and saturated Q16.16 outputs.
 
 Benchmark and synthesis evidence from 2026-06-04 is committed under
 `benchmarks/results/local_python_2026-06-04_block_floating_dense.json`,
 `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json`, and
 `hdl/reports/yosys_block_floating_dense_2026-06-04.json`.
+
+The block-floating HDL `overflow_vector` uses the same lane convention as the
+mixed fixed-point dense path: bit `i` identifies output channel `i`, and the
+aggregate `overflow` line is asserted when any channel saturates.
 
 ## Mixed Q8.8 / Q16.16 Weight-Accumulator Contract
 

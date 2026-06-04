@@ -26,6 +26,7 @@ module sc_block_floating_dense #(
     input wire signed [N_INPUTS*INPUT_WIDTH-1:0] inputs_q1616,
     output reg valid_out,
     output reg signed [N_OUTPUTS*ACCUM_WIDTH-1:0] outputs_q1616,
+    output reg [N_OUTPUTS-1:0] overflow_vector,
     output reg overflow
 );
 
@@ -59,15 +60,18 @@ reg signed [PRODUCT_WIDTH-1:0] product;
 reg signed [SUM_WIDTH-1:0] shifted_product;
 reg signed [SUM_WIDTH-1:0] sum;
 reg signed [N_OUTPUTS*ACCUM_WIDTH-1:0] outputs_next;
+reg [N_OUTPUTS-1:0] overflow_vector_next;
 reg overflow_next;
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         valid_out <= 1'b0;
         outputs_q1616 <= {N_OUTPUTS*ACCUM_WIDTH{1'b0}};
+        overflow_vector <= {N_OUTPUTS{1'b0}};
         overflow <= 1'b0;
     end else begin
         outputs_next = {N_OUTPUTS*ACCUM_WIDTH{1'b0}};
+        overflow_vector_next = {N_OUTPUTS{1'b0}};
         overflow_next = 1'b0;
 
         if (valid_in) begin
@@ -96,9 +100,11 @@ always @(posedge clk or negedge rst_n) begin
 
                 if (sum > ACCUM_MAX_EXT) begin
                     outputs_next[output_idx*ACCUM_WIDTH +: ACCUM_WIDTH] = ACCUM_MAX;
+                    overflow_vector_next[output_idx] = 1'b1;
                     overflow_next = 1'b1;
                 end else if (sum < ACCUM_MIN_EXT) begin
                     outputs_next[output_idx*ACCUM_WIDTH +: ACCUM_WIDTH] = ACCUM_MIN;
+                    overflow_vector_next[output_idx] = 1'b1;
                     overflow_next = 1'b1;
                 end else begin
                     outputs_next[output_idx*ACCUM_WIDTH +: ACCUM_WIDTH] = sum[ACCUM_WIDTH-1:0];
@@ -108,6 +114,7 @@ always @(posedge clk or negedge rst_n) begin
 
         valid_out <= valid_in;
         outputs_q1616 <= outputs_next;
+        overflow_vector <= overflow_vector_next;
         overflow <= overflow_next;
     end
 end
