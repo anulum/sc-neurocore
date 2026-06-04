@@ -15,14 +15,14 @@ Backend: NumPy (CPU only)
 | vec_popcount SWAR (1024 words) | cpu | 50000 | 30.2 us | 2.17 Gbit/s |
 | Dense forward (16x8, L=256) | cpu | 500 | 352.7 us | 0.09 GOP/s (SC) |
 | Dense forward (64x32, L=1024) | cpu | 100 | 2405.8 us | 0.87 GOP/s (SC) |
-| Mixed dense Q8.8/Q16.16 (64x32) | Python | 2000 | 72.982 us | max abs error 7.63e-05 |
-| Mixed dense Q8.8/Q16.16 overflow telemetry (64x32) | Python | 2000 | 91.827 us | safe=0, saturating probe=32 |
-| Mixed dense Q8.8/Q16.16 (64x32) | Rust | 20000 | 3.293 us | safe=0, saturating probe=32 |
-| Mixed dense Q8.8/Q16.16 lane telemetry | HDL/Yosys | N_OUTPUTS=32 | 4,387 cells | `overflow_vector` registered |
-| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 44.393 us | max abs error 0.2231 |
-| Block-floating dense BFP16E3X32/Q16.16 overflow telemetry (64x32) | Python | 2000 | 46.304 us | safe=0, saturating probe=32 |
-| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 11.665 us | safe=0, saturating probe=32 |
-| Block-floating dense BFP16E3X32/Q16.16 lane telemetry | HDL/Yosys | N_OUTPUTS=32 | 12,771 cells | `overflow_vector` registered |
+| Mixed dense Q8.8/Q16.16 (64x32) | Python | 2000 | 31.330 us | max abs error 7.63e-05, safe_bound=531401 |
+| Mixed dense Q8.8/Q16.16 overflow telemetry (64x32) | Python | 2000 | 39.562 us | safe=0, saturating probe=32 |
+| Mixed dense Q8.8/Q16.16 (64x32) | Rust | 20000 | 2.986 us | safe=0, saturating probe=32, safe_bound=531400 |
+| Mixed dense Q8.8/Q16.16 lane telemetry | HDL/Yosys | N_OUTPUTS=32 | 12,708 cells | `overflow_vector` + `abs_bounds_q1616` registered |
+| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 29.453 us | max abs error 0.2231, safe_bound=610816 |
+| Block-floating dense BFP16E3X32/Q16.16 overflow telemetry (64x32) | Python | 2000 | 42.582 us | safe=0, saturating probe=32 |
+| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 9.116 us | safe=0, saturating probe=32, safe_bound=312131072 |
+| Block-floating dense BFP16E3X32/Q16.16 lane telemetry | HDL/Yosys | 2x2 parameterised report | 96 cells | `overflow_vector` + `abs_bounds_q1616` registered |
 | Precision trap report mixed dense (64x32 overflow) | Python | 2000 | 340.461 us | overflow_count=32 |
 | Precision trap report mixed dense (64x32 overflow) | Rust | 20000 | 3.483 us | overflow_count=32 |
 | Precision trap report block-floating dense (64x32 overflow) | Python | 2000 | 161.677 us | overflow_count=32 |

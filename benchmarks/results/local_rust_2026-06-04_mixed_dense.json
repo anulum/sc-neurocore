@@ -1,7 +1,7 @@
 {
   "benchmark": "mixed_dense_q88_q1616_64x32",
   "language": "Rust",
-  "timestamp_unix": 1780554724,
+  "timestamp_unix": 1780562423,
   "command": "cargo run --manifest-path engine/Cargo.toml --release --example bench_mixed_dense",
   "target_os": "linux",
   "target_arch": "x86_64",
@@ -9,11 +9,16 @@
   "n_outputs": 32,
   "iterations": 20000,
   "repeats": 7,
-  "median_ns_per_call": 3293.439,
-  "min_ns_per_call": 2888.998,
-  "max_ns_per_call": 3594.755,
+  "median_ns_per_call": 2985.800,
+  "min_ns_per_call": 2514.107,
+  "max_ns_per_call": 3875.688,
   "checksum": 0,
   "safe_overflow_count": 0,
+  "safe_max_abs_bound_q1616": 531400,
+  "safe_conservative_overflow_free": true,
+  "safe_min_headroom_q1616": 2146952247,
   "saturating_probe_overflow_count": 32,
-  "results_ns_per_call": [3594.755, 3327.618, 3266.756, 3338.714, 3293.439, 2921.296, 2888.998]
+  "saturating_probe_max_abs_bound_q1616": 17454214414336,
+  "saturating_probe_conservative_overflow_free": false,
+  "results_ns_per_call": [3010.920, 3023.520, 2985.800, 2514.107, 2907.954, 3875.688, 2661.188]
 }

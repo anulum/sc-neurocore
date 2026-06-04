@@ -3,50 +3,31 @@
    "invocation": "stat -json ",
    "modules": {
       "\\sc_block_floating_dense": {
-         "num_wires":         12722,
-         "num_wire_bits":     785156,
-         "num_pub_wires":     17,
-         "num_pub_wire_bits": 36293,
+         "num_wires":         106,
+         "num_wire_bits":     4470,
+         "num_pub_wires":     18,
+         "num_pub_wire_bits": 557,
          "num_memories":      0,
          "num_memory_bits":   0,
          "num_processes":     0,
-         "num_cells":         12771,
+         "num_cells":         96,
          "num_cells_by_type": {
-            "$add": 2016,
-            "$adff": 4,
-            "$ge": 64,
-            "$gt": 32,
-            "$lt": 32,
-            "$mul": 2048,
-            "$mux": 4351,
-            "$neg": 64,
-            "$sshl": 2048,
-            "$sshr": 2048,
-            "$sub": 64
+            "$add": 12,
+            "$adff": 5,
+            "$ge": 2,
+            "$gt": 4,
+            "$lt": 2,
+            "$mul": 4,
+            "$mux": 39,
+            "$neg": 2,
+            "$not": 4,
+            "$shl": 6,
+            "$shr": 4,
+            "$sshl": 4,
+            "$sshr": 4,
+            "$sub": 4
          }
       }
-   },
-      "design": {
-         "num_wires":         12722,
-         "num_wire_bits":     785156,
-         "num_pub_wires":     17,
-         "num_pub_wire_bits": 36293,
-         "num_memories":      0,
-         "num_memory_bits":   0,
-         "num_processes":     0,
-         "num_cells":         12771,
-         "num_cells_by_type": {
-            "$add": 2016,
-            "$adff": 4,
-            "$ge": 64,
-            "$gt": 32,
-            "$lt": 32,
-            "$mul": 2048,
-            "$mux": 4351,
-            "$neg": 64,
-            "$sshl": 2048,
-            "$sshr": 2048,
-            "$sub": 64
-         }
-      }
+   }
+
 }

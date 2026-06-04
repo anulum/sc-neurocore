@@ -141,3 +141,119 @@ endmodule
     run_result = subprocess.run([vvp, str(sim_path)], check=False, capture_output=True, text=True)
     assert run_result.returncode == 0, run_result.stderr
     assert "PASS" in run_result.stdout
+
+
+def test_mixed_precision_dense_reports_per_output_abs_bounds(tmp_path: Path) -> None:
+    import shutil
+    import subprocess
+    import textwrap
+
+    import pytest
+
+    if shutil.which("iverilog") is None or shutil.which("vvp") is None:
+        pytest.skip("iverilog/vvp unavailable")
+
+    testbench = tmp_path / "mixed_precision_dense_bounds_tb.v"
+    executable = tmp_path / "mixed_precision_dense_bounds_tb.out"
+    testbench.write_text(
+        textwrap.dedent(
+            r"""
+            `timescale 1ns / 1ps
+
+            module mixed_precision_dense_bounds_tb;
+                localparam integer N_INPUTS = 2;
+                localparam integer N_OUTPUTS = 3;
+                localparam integer WEIGHT_WIDTH = 16;
+                localparam integer INPUT_WIDTH = 32;
+                localparam integer ACCUM_WIDTH = 32;
+                localparam integer BOUND_WIDTH = 64;
+
+                reg clk = 1'b0;
+                reg rst_n = 1'b0;
+                reg valid_in = 1'b0;
+                reg signed [N_OUTPUTS*N_INPUTS*WEIGHT_WIDTH-1:0] weights_q88 = 0;
+                reg signed [N_INPUTS*INPUT_WIDTH-1:0] inputs_q1616 = 0;
+                wire valid_out;
+                wire signed [N_OUTPUTS*ACCUM_WIDTH-1:0] outputs_q1616;
+                wire [N_OUTPUTS*BOUND_WIDTH-1:0] abs_bounds_q1616;
+                wire [N_OUTPUTS-1:0] overflow_vector;
+                wire overflow;
+
+                sc_mixed_precision_dense #(
+                    .N_INPUTS(N_INPUTS),
+                    .N_OUTPUTS(N_OUTPUTS),
+                    .WEIGHT_WIDTH(WEIGHT_WIDTH),
+                    .INPUT_WIDTH(INPUT_WIDTH),
+                    .ACCUM_WIDTH(ACCUM_WIDTH),
+                    .WEIGHT_FRAC(8),
+                    .BOUND_WIDTH(BOUND_WIDTH)
+                ) dut (
+                    .clk(clk),
+                    .rst_n(rst_n),
+                    .valid_in(valid_in),
+                    .weights_q88(weights_q88),
+                    .inputs_q1616(inputs_q1616),
+                    .valid_out(valid_out),
+                    .outputs_q1616(outputs_q1616),
+                    .abs_bounds_q1616(abs_bounds_q1616),
+                    .overflow_vector(overflow_vector),
+                    .overflow(overflow)
+                );
+
+                always #5 clk = ~clk;
+
+                initial begin
+                    inputs_q1616[0*INPUT_WIDTH +: INPUT_WIDTH] = 32'sd2147418112;
+                    inputs_q1616[1*INPUT_WIDTH +: INPUT_WIDTH] = 32'sd2147418112;
+                    weights_q88[0*WEIGHT_WIDTH +: WEIGHT_WIDTH] = 16'sd256;
+                    weights_q88[1*WEIGHT_WIDTH +: WEIGHT_WIDTH] = -16'sd256;
+                    weights_q88[2*WEIGHT_WIDTH +: WEIGHT_WIDTH] = 16'sd32767;
+                    weights_q88[3*WEIGHT_WIDTH +: WEIGHT_WIDTH] = 16'sd32767;
+                    weights_q88[4*WEIGHT_WIDTH +: WEIGHT_WIDTH] = 16'sh8000;
+                    weights_q88[5*WEIGHT_WIDTH +: WEIGHT_WIDTH] = 16'sh8000;
+
+                    #12 rst_n = 1'b1;
+                    #8 valid_in = 1'b1;
+                    #10 valid_in = 1'b0;
+                    #10;
+
+                    if (valid_out !== 1'b1) begin
+                        $display("expected valid_out");
+                        $finish(1);
+                    end
+                    if (overflow_vector !== 3'b110 || overflow !== 1'b1) begin
+                        $display("unexpected overflow telemetry vector=%b overflow=%b", overflow_vector, overflow);
+                        $finish(1);
+                    end
+                    if (abs_bounds_q1616[0*BOUND_WIDTH +: BOUND_WIDTH] !== 64'd4294836224) begin
+                        $display("unexpected cancellation bound %0d", abs_bounds_q1616[0*BOUND_WIDTH +: BOUND_WIDTH]);
+                        $finish(1);
+                    end
+                    if (abs_bounds_q1616[1*BOUND_WIDTH +: BOUND_WIDTH] !== 64'd549722259968) begin
+                        $display("unexpected positive saturation bound %0d", abs_bounds_q1616[1*BOUND_WIDTH +: BOUND_WIDTH]);
+                        $finish(1);
+                    end
+                    if (abs_bounds_q1616[2*BOUND_WIDTH +: BOUND_WIDTH] !== 64'd549739036672) begin
+                        $display("unexpected negative saturation bound %0d", abs_bounds_q1616[2*BOUND_WIDTH +: BOUND_WIDTH]);
+                        $finish(1);
+                    end
+                    $finish(0);
+                end
+            endmodule
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    subprocess.run(
+        [
+            "iverilog",
+            "-g2012",
+            "-o",
+            str(executable),
+            str(testbench),
+            "hdl/sc_mixed_precision_dense.v",
+        ],
+        check=True,
+    )
+    subprocess.run(["vvp", str(executable)], check=True)
