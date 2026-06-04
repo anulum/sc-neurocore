@@ -62,6 +62,7 @@ cargo bench --bench analysis_bench -- --quick
 | block_floating_dense_q16_envelope_64x32 | 8.748 µs |
 | dcls_q88_tent_kernel_16tap | 40.184 ns/sample |
 | ultrascale_plus_target_contract_64x32 | 130.836 µs/emit |
+| ultrascale_plus_dense_fold_plan_64x32 | 6.661 ns/plan |
 | attention_10x16_20x32 | 88.5 µs |
 | gnn_20x8_forward | 85.3 µs |
 
@@ -135,6 +136,15 @@ Rust target report deliberately records `fits_dsp_budget=false`: a 64x32
 one-DSP-per-MAC dense graph estimates `2048` DSPs against the ZU3EG budget of
 `360`, so ZU3EG deployment needs a folded/time-multiplexed implementation or a
 larger target before any timing-closure claim is valid.
+
+`ultrascale_plus_dense_fold_plan_64x32` was measured on 2026-06-04 with the
+same runtime cpuset shield. The committed raw artefact is
+`benchmarks/results/local_rust_2026-06-04_ultrascale_dense_folding.json`; the
+matching Python/SystemVerilog artefact is
+`benchmarks/results/local_python_2026-06-04_ultrascale_dense_folding.json`.
+Both surfaces report the same ZU3EG fold plan: 320 DSPs per compute cycle,
+five output rows per cycle, one input fold, seven output groups, and seven
+compute cycles for the 64x32 dense contract.
 
 ### PRNG
 

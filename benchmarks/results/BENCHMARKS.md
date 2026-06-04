@@ -46,6 +46,8 @@ governor, and frequency evidence.
 | DCLS Q8.8 tent-kernel layer | Rust | 4096 samples x 100 iterations x 7 repeats | 40.184 ns/sample | cpuset 10-11, overflow_count=0, active_tap_total=2808700 |
 | UltraScale+ target contract | Python+Vivado Tcl | 2 manifests x 2000 iterations x 7 repeats | 122.678 us/manifest | cpuset 10-11, ZU3EG/ZU9EG Tcl, DSP48E2 baseline |
 | UltraScale+ target contract | Rust | 64x32 graph x 2000 iterations x 7 repeats | 130.836 us/emit | cpuset 10-11, DSP estimate 2048 > ZU3EG budget 360, BRAM 2 <= 216 |
+| UltraScale+ dense folding | Python+SystemVerilog | 64x32 plan x 20000 iterations x 7 repeats | 2.447 us/plan | cpuset 10-11, 320 DSP/cycle, 7 compute cycles, bounded Yosys 240 cells |
+| UltraScale+ dense folding | Rust | 64x32 plan x 20000 iterations x 7 repeats | 6.661 ns/plan | cpuset 10-11, 320 DSP/cycle, 7 compute cycles |
 | Full pipeline (4 syn, 256 steps) | cpu | 200 | 1830.0 us | 139.9 Kstep/s |
 | Full pipeline (16 syn, 256 steps) | cpu | 50 | 8678.5 us | 29.5 Kstep/s |
 | gpu_pack_bitstream (65536) | cpu | 2000 | 375.9 us | 0.17 Gbit/s |
@@ -87,3 +89,14 @@ Vivado ZU3EG timing evidence.
 | `local_rust_2026-06-04_ultrascale_plus_target.json` | `10-11` | Rust | `130.836` us/emit median; 64x32 dense graph estimates `2048` DSPs against the ZU3EG budget of `360`; BRAM estimate `2` fits budget `216` |
 
 Both artefacts record runtime cpuset evidence and `hardware_measurement_claimed=false` where applicable. This is target-contract and resource-budget evidence, not board-level Vivado timing closure. The DSP over-budget result is intentional fail-closed evidence that the 64x32 dense contract requires folding/time-multiplexing or a larger target before it can be claimed as a ZU3EG implementation.
+
+## UltraScale+ dense folding - 2026-06-04
+
+| Artefact | Cpuset | Surfaces | Key result |
+| --- | --- | --- | --- |
+| `local_python_2026-06-04_ultrascale_dense_folding.json` | `10-11` | Python, SystemVerilog | `2.447` us/plan median; 64x32 plan uses 320 DSPs per compute cycle and completes in 7 cycles; bounded 8x8 Yosys elaboration reports 240 cells |
+| `local_rust_2026-06-04_ultrascale_dense_folding.json` | `10-11` | Rust | `6.661` ns/plan median; same 320-DSP, 7-cycle fold contract |
+
+Both artefacts record runtime cpuset evidence. This is deterministic
+resource-planning and HDL-elaboration evidence. It does not claim Vivado
+board-level timing closure or replace the generic stochastic dense path.

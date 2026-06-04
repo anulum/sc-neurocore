@@ -282,6 +282,80 @@
         "bram_36k_budget",
         "uram_budget"
       ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_ultrascale_dense_folding.json",
+      "description": "UltraScale+ dense-folding Python/SystemVerilog resource-plan evidence.",
+      "expected_values": {
+        "benchmark": "ultrascale_plus_dense_folding_contract",
+        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "hardware_measurement_claimed": false,
+        "host_context.cgroup_effective_cpuset": "10-11",
+        "host_context.runtime_cpuset_shield_claimed": true,
+        "language": "Python+SystemVerilog",
+        "plan.compute_cycles": 7,
+        "plan.dsp_per_cycle": 320,
+        "plan.fits_dsp_budget": true,
+        "plan.fold_required": true,
+        "yosys.exit_code": 0
+      },
+      "id": "ultrascale-plus-dense-folding-python-contract",
+      "minimum_values": {
+        "iterations": 20000,
+        "repeats": 7,
+        "yosys.cells": 1
+      },
+      "required_numbers": [
+        "iterations",
+        "repeats",
+        "median_ns_per_plan",
+        "min_ns_per_plan",
+        "max_ns_per_plan",
+        "checksum",
+        "plan.mac_count",
+        "plan.dsp_budget",
+        "plan.dsp_per_cycle",
+        "plan.output_parallelism",
+        "plan.input_parallelism",
+        "plan.compute_cycles",
+        "yosys.elapsed_ns",
+        "yosys.cells"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_ultrascale_dense_folding.json",
+      "description": "UltraScale+ dense-folding Rust resource-plan evidence.",
+      "expected_values": {
+        "benchmark": "ultrascale_plus_dense_folding_contract",
+        "fits_dsp_budget": true,
+        "fold_required": true,
+        "language": "Rust",
+        "measurement_context.cgroup_effective_cpuset": "10-11",
+        "measurement_context.cpu_affinity": "10-11",
+        "measurement_context.runtime_cpuset_shield_claimed": true
+      },
+      "id": "ultrascale-plus-dense-folding-rust-contract",
+      "minimum_values": {
+        "dsp_per_cycle": 320,
+        "iterations": 20000,
+        "repeats": 7
+      },
+      "required_numbers": [
+        "iterations",
+        "repeats",
+        "median_ns_per_plan",
+        "min_ns_per_plan",
+        "max_ns_per_plan",
+        "checksum",
+        "n_inputs",
+        "n_outputs",
+        "mac_count",
+        "dsp_budget",
+        "dsp_per_cycle",
+        "output_parallelism",
+        "input_parallelism",
+        "compute_cycles"
+      ]
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"

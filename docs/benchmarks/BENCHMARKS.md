@@ -782,3 +782,23 @@ The generated Tcl and Rust target metadata use the Zynq UltraScale+ `DSP48E2`
 primitive baseline. The checked-in XDC files are clock/timing baselines only;
 they intentionally avoid `PACKAGE_PIN` and `LOC` constraints until a
 board-revision pin manifest is verified.
+
+## UltraScale+ dense folding (2026-06-04)
+
+This benchmark exercises the resource-safe fold plan added after the ZU3EG
+target benchmark proved that an unfurled 64x32 dense layer would require 2,048
+DSPs. The shared Python and Rust planners use row-group folding: five output
+rows are processed per cycle with all 64 input lanes live, using 320 DSPs per
+compute cycle and completing the 32 output rows in seven cycles.
+
+| Surface | Contract | Result |
+| --- | --- | --- |
+| Python + SystemVerilog | Planner parity plus bounded 8x8 HDL elaboration for `sc_dense_folded_q88_core` | `2447.444` ns/plan median over 20000 iterations x 7 repeats; Yosys reports 240 generic cells |
+| Rust | `SvTarget::dense_fold_plan(64, 32)` | `6.661` ns/plan median over 20000 iterations x 7 repeats |
+
+Both runs used the runtime cpuset shield on CPUs 10-11. The Yosys evidence is a
+bounded parameterised elaboration check, not a Vivado ZU3EG utilisation report.
+The folded HDL core implements deterministic Q8.8-weight/Q16.16-MAC dense
+execution and is covered by Icarus simulation; it must be selected deliberately
+by deployment code and does not silently replace the existing stochastic dense
+path.

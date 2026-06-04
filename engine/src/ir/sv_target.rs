@@ -52,6 +52,25 @@ pub struct ResourceReport {
     pub fits_dsp_budget: bool,
     pub fits_bram_budget: bool,
     pub fits_uram_budget: bool,
+    pub dense_fold_plan: Option<DenseFoldPlan>,
+}
+
+/// Deterministic time-multiplexing plan for dense layers that exceed a target
+/// one-DSP-per-MAC budget.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseFoldPlan {
+    pub n_inputs: usize,
+    pub n_outputs: usize,
+    pub mac_count: u32,
+    pub dsp_budget: u32,
+    pub output_parallelism: u32,
+    pub input_parallelism: u32,
+    pub dsp_per_cycle: u32,
+    pub input_fold_factor: u32,
+    pub output_fold_factor: u32,
+    pub compute_cycles: u32,
+    pub fold_required: bool,
+    pub fits_dsp_budget: bool,
 }
 
 impl SkuKind {
@@ -170,6 +189,14 @@ impl SvTarget {
         }
     }
 
+    pub fn dense_fold_plan(&self, n_inputs: usize, n_outputs: usize) -> Option<DenseFoldPlan> {
+        let dsp_budget = match self {
+            Self::ZynqUltraScalePlus { dsp_budget, .. } => *dsp_budget,
+            Self::Generic | Self::Zynq7 { .. } => return None,
+        };
+        Some(plan_dense_fold(n_inputs, n_outputs, dsp_budget))
+    }
+
     pub fn header_comment(&self) -> String {
         match self {
             Self::Generic => String::new(),
@@ -192,12 +219,18 @@ impl SvTarget {
         let mut bram_bits = 0_u64;
         let uram_bits = 0_u64;
         let mut critical_path_estimate_ns = 2.5_f64;
+        let mut dense_fold_plan: Option<DenseFoldPlan> = None;
 
         for op in &graph.ops {
             match op {
                 ScOp::DenseForward { params, .. } => {
                     let macs = saturating_u32(params.n_inputs.saturating_mul(params.n_neurons));
                     dsp_estimated = dsp_estimated.saturating_add(macs);
+                    if let Some(plan) = self.dense_fold_plan(params.n_inputs, params.n_neurons) {
+                        if plan.fold_required {
+                            dense_fold_plan = Some(plan);
+                        }
+                    }
                     lut_estimated = lut_estimated.saturating_add(220).saturating_add(macs * 6);
                     ff_estimated = ff_estimated.saturating_add(180).saturating_add(macs * 4);
                     bram_bits = bram_bits.saturating_add(
@@ -278,7 +311,55 @@ impl SvTarget {
             fits_dsp_budget: dsp_estimated <= dsp_budget,
             fits_bram_budget: bram_36k_estimated <= bram_budget,
             fits_uram_budget: uram_estimated <= uram_budget,
+            dense_fold_plan,
         }
+    }
+}
+
+fn plan_dense_fold(n_inputs: usize, n_outputs: usize, dsp_budget: u32) -> DenseFoldPlan {
+    let mac_count = saturating_u32(n_inputs.saturating_mul(n_outputs));
+    if n_inputs == 0 || n_outputs == 0 || dsp_budget == 0 {
+        return DenseFoldPlan {
+            n_inputs,
+            n_outputs,
+            mac_count,
+            dsp_budget,
+            output_parallelism: 0,
+            input_parallelism: 0,
+            dsp_per_cycle: 0,
+            input_fold_factor: 0,
+            output_fold_factor: 0,
+            compute_cycles: 0,
+            fold_required: mac_count > dsp_budget,
+            fits_dsp_budget: dsp_budget >= 1,
+        };
+    }
+
+    let n_inputs_u32 = saturating_u32(n_inputs).max(1);
+    let n_outputs_u32 = saturating_u32(n_outputs).max(1);
+    let output_parallelism = if dsp_budget >= n_inputs_u32 {
+        (dsp_budget / n_inputs_u32).clamp(1, n_outputs_u32)
+    } else {
+        1
+    };
+    let input_parallelism = (dsp_budget / output_parallelism).clamp(1, n_inputs_u32);
+    let dsp_per_cycle = output_parallelism.saturating_mul(input_parallelism);
+    let input_fold_factor = ceil_div_u64(n_inputs_u32 as u64, input_parallelism as u64) as u32;
+    let output_fold_factor = ceil_div_u64(n_outputs_u32 as u64, output_parallelism as u64) as u32;
+    let compute_cycles = input_fold_factor.saturating_mul(output_fold_factor);
+    DenseFoldPlan {
+        n_inputs,
+        n_outputs,
+        mac_count,
+        dsp_budget,
+        output_parallelism,
+        input_parallelism,
+        dsp_per_cycle,
+        input_fold_factor,
+        output_fold_factor,
+        compute_cycles,
+        fold_required: mac_count > dsp_budget,
+        fits_dsp_budget: dsp_per_cycle <= dsp_budget,
     }
 }
 
@@ -365,5 +446,65 @@ mod tests {
         assert!(report.bram_36k_estimated <= report.bram_36k_budget);
         assert!(report.fits_dsp_budget);
         assert_eq!(report.device_part, "xczu3eg-sbva484-1-e");
+    }
+
+    #[test]
+    fn dense_fold_plan_maps_shd_scale_dense_into_zu3eg_budget() {
+        let target = SvTarget::zynq_ultrascale_plus(SkuKind::Zu3eg, 250);
+        let plan = target
+            .dense_fold_plan(64, 32)
+            .expect("UltraScale+ target must expose dense folding");
+        assert_eq!(plan.mac_count, 2_048);
+        assert_eq!(plan.dsp_budget, 360);
+        assert_eq!(plan.output_parallelism, 5);
+        assert_eq!(plan.input_parallelism, 64);
+        assert_eq!(plan.dsp_per_cycle, 320);
+        assert_eq!(plan.output_fold_factor, 7);
+        assert_eq!(plan.input_fold_factor, 1);
+        assert_eq!(plan.compute_cycles, 7);
+        assert!(plan.fold_required);
+        assert!(plan.fits_dsp_budget);
+    }
+
+    #[test]
+    fn resource_report_carries_dense_fold_plan_when_unfurled_budget_fails() {
+        let mut builder = ScGraphBuilder::new("folded_resource_dense");
+        let inputs = builder.input(
+            "inputs",
+            ScType::Vec {
+                element: Box::new(ScType::FixedPoint { width: 16, frac: 8 }),
+                count: 64,
+            },
+        );
+        let weights = builder.constant(
+            ScConst::I64Vec(vec![128; 64 * 32]),
+            ScType::Vec {
+                element: Box::new(ScType::FixedPoint { width: 16, frac: 8 }),
+                count: 64 * 32,
+            },
+        );
+        let leak = builder.constant(ScConst::I64(16), ScType::FixedPoint { width: 16, frac: 8 });
+        let gain = builder.constant(ScConst::I64(1), ScType::FixedPoint { width: 16, frac: 8 });
+        let dense = builder.dense_forward(
+            inputs,
+            weights,
+            leak,
+            gain,
+            DenseParams {
+                n_inputs: 64,
+                n_neurons: 32,
+                ..DenseParams::default()
+            },
+        );
+        builder.output("spikes", dense);
+        let target = SvTarget::zynq_ultrascale_plus(SkuKind::Zu3eg, 250);
+        let report = target.estimate_graph(&builder.build());
+        let plan = report
+            .dense_fold_plan
+            .as_ref()
+            .expect("over-budget dense graph must carry fold plan");
+        assert!(!report.fits_dsp_budget);
+        assert_eq!(plan.dsp_per_cycle, 320);
+        assert!(plan.fits_dsp_budget);
     }
 }
