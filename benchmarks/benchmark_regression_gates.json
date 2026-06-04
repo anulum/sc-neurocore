@@ -217,6 +217,71 @@
         "overflow_count",
         "active_tap_total"
       ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_ultrascale_plus_target.json",
+      "description": "NEU-C.1 Zynq UltraScale+ Vivado-project target-contract evidence.",
+      "expected_values": {
+        "benchmark": "ultrascale_plus_target_contract",
+        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "hardware_measurement_claimed": false,
+        "host_context.cgroup_effective_cpuset": "10-11",
+        "host_context.runtime_cpuset_shield_claimed": true,
+        "language": "Python",
+        "sku_baseline.zu3eg.dsp_primitive": "DSP48E2",
+        "sku_baseline.zu9eg.dsp_primitive": "DSP48E2"
+      },
+      "id": "ultrascale-plus-target-python-contract",
+      "minimum_values": {
+        "manifest_count": 2,
+        "repeats": 7
+      },
+      "required_numbers": [
+        "manifest_count",
+        "iterations",
+        "repeats",
+        "median_ns_per_manifest",
+        "min_ns_per_manifest",
+        "max_ns_per_manifest",
+        "checksum"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_ultrascale_plus_target.json",
+      "description": "NEU-C.1 Zynq UltraScale+ Rust target emitter and resource-budget evidence.",
+      "expected_values": {
+        "benchmark": "ultrascale_plus_target_contract",
+        "dsp_primitive": "DSP48E2",
+        "fits_bram_budget": true,
+        "fits_dsp_budget": false,
+        "fits_uram_budget": true,
+        "language": "Rust",
+        "measurement_context.cgroup_effective_cpuset": "10-11",
+        "measurement_context.cpu_affinity": "10-11",
+        "measurement_context.runtime_cpuset_shield_claimed": true
+      },
+      "id": "ultrascale-plus-target-rust-contract",
+      "minimum_values": {
+        "dsp_estimated": 361,
+        "iterations": 2000,
+        "repeats": 7
+      },
+      "required_numbers": [
+        "n_inputs",
+        "n_outputs",
+        "iterations",
+        "repeats",
+        "median_ns_per_emit",
+        "min_ns_per_emit",
+        "max_ns_per_emit",
+        "checksum",
+        "dsp_estimated",
+        "bram_36k_estimated",
+        "lut_estimated",
+        "dsp_budget",
+        "bram_36k_budget",
+        "uram_budget"
+      ]
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"

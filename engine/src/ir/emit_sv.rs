@@ -17,11 +17,20 @@
 //! - Internal wiring for all intermediate values
 
 use crate::ir::graph::*;
+use crate::ir::sv_target::{ResourceReport, SvTarget};
 
 /// Emit a synthesizable SystemVerilog module from an SC graph.
 ///
 /// The graph should pass `verify::verify()` before emission.
 pub fn emit(graph: &ScGraph) -> Result<String, String> {
+    emit_systemverilog_with_target(graph, SvTarget::Generic).map(|(systemverilog, _)| systemverilog)
+}
+
+/// Emit a synthesizable SystemVerilog module and a resource estimate for a target.
+pub fn emit_systemverilog_with_target(
+    graph: &ScGraph,
+    target: SvTarget,
+) -> Result<(String, ResourceReport), String> {
     let mut sv = String::new();
 
     // Header
@@ -31,6 +40,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
          // Do not edit — regenerate from IR source.\n\n",
         graph.name
     ));
+    sv.push_str(&target.header_comment());
     sv.push_str("`timescale 1ns / 1ps\n\n");
 
     // Module declaration
@@ -70,7 +80,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
     for op in &graph.ops {
         match op {
             ScOp::Input { .. } | ScOp::Output { .. } => {}
-            ScOp::Constant { id, value, .. } => emit_constant(&mut sv, *id, value),
+            ScOp::Constant { id, value, .. } => emit_constant(&mut sv, *id, value, &target),
             ScOp::Encode { id, .. } => {
                 sv.push_str(&format!("    wire v{};\n", id.0));
             }
@@ -185,6 +195,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                 let leak_wire = value_to_wire(graph, *leak);
                 let gain_wire = value_to_wire(graph, *gain);
                 let noise_wire = value_to_wire(graph, *noise);
+                emit_target_dsp_attribute(&mut sv, &target);
                 sv.push_str(&format!(
                     "    sc_lif_neuron #(\n\
                      \x20       .DATA_WIDTH({}),\n\
@@ -231,6 +242,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                 let weights_wire = value_to_wire(graph, *weights);
                 let leak_wire = value_to_wire(graph, *leak);
                 let gain_wire = value_to_wire(graph, *gain);
+                emit_target_dsp_attribute(&mut sv, &target);
                 sv.push_str(&format!(
                     "    sc_dense_layer_core #(\n\
                      \x20       .N_INPUTS({}),\n\
@@ -289,6 +301,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                 let centre_wire = value_to_wire(graph, *centre);
                 let sigma_wire = value_to_wire(graph, *sigma);
                 let tap_offsets = emit_concat_u32(&params.tap_offsets, params.ptr_width)?;
+                emit_target_dsp_attribute(&mut sv, &target);
                 sv.push_str(&format!(
                     "    sc_dcls_layer_core #(\n\
                      \x20       .N_TAPS({}),\n\
@@ -421,7 +434,8 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
     }
 
     sv.push_str("\nendmodule\n");
-    Ok(sv)
+    let report = target.estimate_graph(graph);
+    Ok((sv, report))
 }
 
 fn type_to_width(ty: &ScType) -> usize {
@@ -489,7 +503,21 @@ fn emit_concat_u32(values: &[u32], width: u32) -> Result<String, String> {
     Ok(format!("{{{}}}", fields.join(", ")))
 }
 
-fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst) {
+fn emit_target_dsp_attribute(sv: &mut String, target: &SvTarget) {
+    if let Some(attribute) = target.dsp_attribute() {
+        sv.push_str("    ");
+        sv.push_str(attribute);
+        sv.push('\n');
+    }
+}
+
+fn emit_ram_style_attribute(sv: &mut String, target: &SvTarget, bits: u64) {
+    if let Some(style) = target.ram_style_for_bits(bits) {
+        sv.push_str(&format!("    (* ram_style = \"{}\" *)\n", style));
+    }
+}
+
+fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst, target: &SvTarget) {
     match value {
         ScConst::F64(v) => {
             let fp = (*v * 256.0) as i64; // Q8.8
@@ -513,6 +541,7 @@ fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst) {
                 sv.push_str(&format!("    wire [0:0] c{};\n", id.0));
                 return;
             }
+            emit_ram_style_attribute(sv, target, width as u64);
             sv.push_str(&format!("    wire [{}:0] c{};\n", width - 1, id.0));
             for (i, v) in vec.iter().enumerate() {
                 let fp = (*v * 256.0) as i64;
@@ -530,6 +559,7 @@ fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst) {
                 sv.push_str(&format!("    wire [0:0] c{};\n", id.0));
                 return;
             }
+            emit_ram_style_attribute(sv, target, width as u64);
             sv.push_str(&format!("    wire [{}:0] c{};\n", width - 1, id.0));
             for (i, v) in vec.iter().enumerate() {
                 sv.push_str(&format!(
@@ -547,6 +577,7 @@ fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst) {
 mod tests {
     use super::*;
     use crate::ir::builder::ScGraphBuilder;
+    use crate::ir::sv_target::{SkuKind, SvTarget};
 
     #[test]
     fn dcls_layer_emits_core_with_q88_contract_ports() {
@@ -590,5 +621,57 @@ mod tests {
         assert!(sv.contains(".overflow(v4_overflow)"));
         assert!(sv.contains(".invalid_sigma(v4_invalid_sigma)"));
         assert!(sv.contains("assign weighted_sum = v4;"));
+    }
+
+    #[test]
+    fn ultrascale_plus_target_emits_dsp48e2_metadata_and_resource_report() {
+        let mut builder = ScGraphBuilder::new("ultrascale_dense");
+        let inputs = builder.input(
+            "inputs",
+            ScType::Vec {
+                element: Box::new(ScType::FixedPoint { width: 16, frac: 8 }),
+                count: 4,
+            },
+        );
+        let weights = builder.constant(
+            ScConst::I64Vec(vec![128; 12]),
+            ScType::Vec {
+                element: Box::new(ScType::FixedPoint { width: 16, frac: 8 }),
+                count: 12,
+            },
+        );
+        let leak = builder.constant(
+            ScConst::I64(16),
+            ScType::FixedPoint { width: 16, frac: 8 },
+        );
+        let gain = builder.constant(
+            ScConst::I64(1),
+            ScType::FixedPoint { width: 16, frac: 8 },
+        );
+        let result = builder.dense_forward(
+            inputs,
+            weights,
+            leak,
+            gain,
+            DenseParams {
+                n_inputs: 4,
+                n_neurons: 3,
+                ..DenseParams::default()
+            },
+        );
+        builder.output("spikes", result);
+
+        let (sv, report) = emit_systemverilog_with_target(
+            &builder.build(),
+            SvTarget::zynq_ultrascale_plus(SkuKind::Zu3eg, 250),
+        )
+        .expect("UltraScale+ target emission should succeed");
+
+        assert!(sv.contains("Target: Zynq UltraScale+ MPSoC ZU3EG"));
+        assert!(sv.contains("sc_target_dsp = \"DSP48E2\""));
+        assert!(sv.contains("(* ram_style = \"distributed\" *)"));
+        assert_eq!(report.device_part, "xczu3eg-sbva484-1-e");
+        assert!(report.dsp_estimated >= 12);
+        assert!(report.fits_dsp_budget);
     }
 }

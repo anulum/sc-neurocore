@@ -7,6 +7,7 @@
 // SC-NeuroCore — Rust benchmark measurement context helpers
 
 use std::fs;
+use std::path::Path;
 use std::process::Command;
 
 pub fn load_average() -> String {
@@ -39,6 +40,31 @@ fn read_proc_field(path: &str, prefix: &str) -> String {
 
 fn cpu_affinity() -> String {
     read_proc_field("/proc/self/status", "Cpus_allowed_list:")
+}
+
+fn cgroup_relative_path() -> Option<String> {
+    fs::read_to_string("/proc/self/cgroup")
+        .ok()
+        .and_then(|content| {
+            content.lines().find_map(|line| {
+                line.strip_prefix("0::")
+                    .map(|value| value.trim_start_matches('/').to_string())
+            })
+        })
+}
+
+fn cgroup_effective_cpuset() -> String {
+    let Some(relative) = cgroup_relative_path() else {
+        return "unavailable".to_string();
+    };
+    let path = Path::new("/sys/fs/cgroup")
+        .join(relative)
+        .join("cpuset.cpus.effective");
+    fs::read_to_string(path)
+        .ok()
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| "unavailable".to_string())
 }
 
 fn cpu_indices() -> Vec<u32> {
@@ -131,8 +157,10 @@ pub fn measurement_context_json(load_average_before: &str) -> String {
         concat!(
             "{{\n",
             "    \"host_load\": \"workstation under concurrent load during capture\",\n",
-            "    \"cpu_isolation\": \"taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation\",\n",
+            "    \"cpu_isolation\": \"runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation\",\n",
             "    \"cpu_affinity\": {cpu_affinity},\n",
+            "    \"cgroup_effective_cpuset\": {cgroup_effective_cpuset},\n",
+            "    \"runtime_cpuset_shield_claimed\": {runtime_cpuset_shield_claimed},\n",
             "    \"load_average_before\": {load_average_before},\n",
             "    \"load_average_after\": {load_average_after},\n",
             "    \"cpu_governor\": {cpu_governor},\n",
@@ -143,6 +171,9 @@ pub fn measurement_context_json(load_average_before: &str) -> String {
             "  }}"
         ),
         cpu_affinity = json_string(&cpu_affinity()),
+        cgroup_effective_cpuset = json_string(&cgroup_effective_cpuset()),
+        runtime_cpuset_shield_claimed = cgroup_effective_cpuset() == cpu_affinity()
+            && cgroup_effective_cpuset() != "unavailable",
         load_average_before = json_string(load_average_before),
         load_average_after = json_string(&load_average()),
         cpu_governor = json_string(&cpu_governor()),

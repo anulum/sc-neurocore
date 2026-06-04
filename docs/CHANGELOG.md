@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added the NEU-C.1 Zynq UltraScale+ target contract: Rust target metadata,
+  conservative resource-budget reporting, deterministic Vivado Tcl generation,
+  board-safe timing-only XDC baselines, module-specific tests, and isolated
+  Python/Rust comparison benchmark evidence.
 - Added the NEU-C.6 DCLS Q8.8 RTL path: bit-true Rust DCLS tent-kernel
   arithmetic, SystemVerilog axonal delay/tent/layer modules, IR
   `DclsLayer` emission, SymbiYosys safety/liveness harness, Python/PyTorch

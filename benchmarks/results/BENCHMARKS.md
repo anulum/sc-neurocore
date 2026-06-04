@@ -44,6 +44,8 @@ governor, and frequency evidence.
 | ADC-to-spike quantiser | Python+SystemVerilog | 4096 samples x 100 repeats | 3.705 us/sample | cpuset 10-11, formal pass, Yosys 7675 cells |
 | DCLS Q8.8 tent-kernel layer | Python+PyTorch+SystemVerilog | 4096 samples x 100 repeats | 6.349 us/sample | cpuset 10-11, PyTorch parity 5/5, formal pass, Yosys 106003 cells |
 | DCLS Q8.8 tent-kernel layer | Rust | 4096 samples x 100 iterations x 7 repeats | 40.184 ns/sample | cpuset 10-11, overflow_count=0, active_tap_total=2808700 |
+| UltraScale+ target contract | Python+Vivado Tcl | 2 manifests x 2000 iterations x 7 repeats | 122.678 us/manifest | cpuset 10-11, ZU3EG/ZU9EG Tcl, DSP48E2 baseline |
+| UltraScale+ target contract | Rust | 64x32 graph x 2000 iterations x 7 repeats | 130.836 us/emit | cpuset 10-11, DSP estimate 2048 > ZU3EG budget 360, BRAM 2 <= 216 |
 | Full pipeline (4 syn, 256 steps) | cpu | 200 | 1830.0 us | 139.9 Kstep/s |
 | Full pipeline (16 syn, 256 steps) | cpu | 50 | 8678.5 us | 29.5 Kstep/s |
 | gpu_pack_bitstream (65536) | cpu | 2000 | 375.9 us | 0.17 Gbit/s |
@@ -76,3 +78,12 @@ The run records `hardware_measurement_claimed=false` and
 `runtime_cpuset_shield_claimed=true` for the Python/SystemVerilog artefact.
 This is local contract, bounded-formal, and synthesis-estimate evidence, not
 Vivado ZU3EG timing evidence.
+
+## UltraScale+ target contract - 2026-06-04
+
+| Artefact | Cpuset | Surfaces | Key result |
+| --- | --- | --- | --- |
+| `local_python_2026-06-04_ultrascale_plus_target.json` | `10-11` | Python, Vivado Tcl | `122.678` us/manifest median; deterministic ZU3EG/ZU9EG project Tcl; `DSP48E2` primitive baseline |
+| `local_rust_2026-06-04_ultrascale_plus_target.json` | `10-11` | Rust | `130.836` us/emit median; 64x32 dense graph estimates `2048` DSPs against the ZU3EG budget of `360`; BRAM estimate `2` fits budget `216` |
+
+Both artefacts record runtime cpuset evidence and `hardware_measurement_claimed=false` where applicable. This is target-contract and resource-budget evidence, not board-level Vivado timing closure. The DSP over-budget result is intentional fail-closed evidence that the 64x32 dense contract requires folding/time-multiplexing or a larger target before it can be claimed as a ZU3EG implementation.
