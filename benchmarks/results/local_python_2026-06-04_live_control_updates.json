@@ -1,0 +1,257 @@
+{
+  "benchmark": "live_control_update_and_trap_evidence",
+  "language": "Python+SystemVerilog",
+  "timestamp_utc": "2026-06-04T12:07:40+00:00",
+  "command": "taskset -c 10-11 env PYTHONPATH=src .venv/bin/python benchmarks/bench_live_control_updates.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "measurement_context": {
+    "host_load": "workstation under concurrent load during capture",
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "cpu_affinity": [
+      10,
+      11
+    ],
+    "load_average_before": [
+      4.357421875,
+      4.47314453125,
+      4.2119140625
+    ],
+    "load_average_after": [
+      4.4892578125,
+      4.49853515625,
+      4.2216796875
+    ],
+    "cpu_governor": [
+      "powersave"
+    ],
+    "cpu_frequency_mhz": {
+      "min_observed_mhz": 3699.962,
+      "max_observed_mhz": 3704.689,
+      "sampled_cpu_count": 12.0
+    },
+    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+  },
+  "iterations": 20000,
+  "repeats": 7,
+  "banks": [
+    {
+      "bank_name": "weights",
+      "start_address_bytes": 8192,
+      "parameter_count": 64,
+      "parameter_names": [
+        "w0",
+        "w1",
+        "w2",
+        "w3",
+        "w4",
+        "w5",
+        "w6",
+        "w7",
+        "w8",
+        "w9",
+        "w10",
+        "w11",
+        "w12",
+        "w13",
+        "w14",
+        "w15",
+        "w16",
+        "w17",
+        "w18",
+        "w19",
+        "w20",
+        "w21",
+        "w22",
+        "w23",
+        "w24",
+        "w25",
+        "w26",
+        "w27",
+        "w28",
+        "w29",
+        "w30",
+        "w31",
+        "w32",
+        "w33",
+        "w34",
+        "w35",
+        "w36",
+        "w37",
+        "w38",
+        "w39",
+        "w40",
+        "w41",
+        "w42",
+        "w43",
+        "w44",
+        "w45",
+        "w46",
+        "w47",
+        "w48",
+        "w49",
+        "w50",
+        "w51",
+        "w52",
+        "w53",
+        "w54",
+        "w55",
+        "w56",
+        "w57",
+        "w58",
+        "w59",
+        "w60",
+        "w61",
+        "w62",
+        "w63"
+      ],
+      "precision_mode": "q",
+      "q_format": "Q8.8",
+      "bfp_exponent_bits": 5,
+      "bfp_mantissa_bits": 11,
+      "writable": true,
+      "reset_value": 0
+    },
+    {
+      "bank_name": "kuramoto",
+      "start_address_bytes": 12288,
+      "parameter_count": 32,
+      "parameter_names": [
+        "k0",
+        "k1",
+        "k2",
+        "k3",
+        "k4",
+        "k5",
+        "k6",
+        "k7",
+        "k8",
+        "k9",
+        "k10",
+        "k11",
+        "k12",
+        "k13",
+        "k14",
+        "k15",
+        "k16",
+        "k17",
+        "k18",
+        "k19",
+        "k20",
+        "k21",
+        "k22",
+        "k23",
+        "k24",
+        "k25",
+        "k26",
+        "k27",
+        "k28",
+        "k29",
+        "k30",
+        "k31"
+      ],
+      "precision_mode": "q",
+      "q_format": "Q16.16",
+      "bfp_exponent_bits": 5,
+      "bfp_mantissa_bits": 11,
+      "writable": true,
+      "reset_value": 0
+    }
+  ],
+  "control_registers": {
+    "control": 256,
+    "status": 260,
+    "bank_select": 264,
+    "entry_index": 268,
+    "write_data_lo": 272,
+    "write_data_hi": 276,
+    "trap_status": 280,
+    "trap_clear": 284,
+    "write_checksum": 288
+  },
+  "trap_bits": {
+    "staged_overflow": 1,
+    "staged_underflow": 2
+  },
+  "expected_trap_bits": {
+    "staged_overflow": 1,
+    "staged_underflow": 2
+  },
+  "valid_update_write_count": 6,
+  "live_update_sequence_median_ns": 19501.0621,
+  "live_update_sequence_min_ns": 16766.22235,
+  "live_update_sequence_max_ns": 22620.67465,
+  "static_regeneration_median_ns": 109203.57142857143,
+  "static_regeneration_min_ns": 75086.71428571429,
+  "static_regeneration_max_ns": 172346.57142857142,
+  "trap_capture": {
+    "iverilog": "/usr/bin/iverilog",
+    "vvp": "/usr/bin/vvp",
+    "compile_ns": 12148319,
+    "simulation_ns": 13226248,
+    "passed": true
+  },
+  "update_results": [
+    {
+      "ns_per_sequence": 19501.0621,
+      "checksum": 0
+    },
+    {
+      "ns_per_sequence": 18518.20905,
+      "checksum": 0
+    },
+    {
+      "ns_per_sequence": 18468.02325,
+      "checksum": 0
+    },
+    {
+      "ns_per_sequence": 16766.22235,
+      "checksum": 0
+    },
+    {
+      "ns_per_sequence": 22620.67465,
+      "checksum": 0
+    },
+    {
+      "ns_per_sequence": 20634.61955,
+      "checksum": 0
+    },
+    {
+      "ns_per_sequence": 20172.5341,
+      "checksum": 0
+    }
+  ],
+  "static_regeneration_results": [
+    {
+      "ns_per_regeneration": 172346.57142857142,
+      "checksum": 19382
+    },
+    {
+      "ns_per_regeneration": 109203.57142857143,
+      "checksum": 19382
+    },
+    {
+      "ns_per_regeneration": 95385.71428571429,
+      "checksum": 19382
+    },
+    {
+      "ns_per_regeneration": 75086.71428571429,
+      "checksum": 19382
+    },
+    {
+      "ns_per_regeneration": 110981.85714285714,
+      "checksum": 19382
+    },
+    {
+      "ns_per_regeneration": 114421.14285714286,
+      "checksum": 19382
+    },
+    {
+      "ns_per_regeneration": 90543.42857142857,
+      "checksum": 19382
+    }
+  ]
+}

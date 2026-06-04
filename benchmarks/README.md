@@ -45,6 +45,7 @@ same checkout.
 | Script | Description |
 |--------|-------------|
 | `bench_neuron_integrators.py` | Research-only cross-language RK4 neuron integrator parity and timing for Python / Rust / Julia / Go / Mojo |
+| `bench_live_control_updates.py` | Local regression evidence for generated live-control update sequences, static RTL regeneration, and staged overflow/underflow trap capture |
 | `benchmark_regression_gates.json` | Manifest of benchmark artefacts and metrics enforced by `tools/benchmark_evidence_gate.py` |
 | `bench_v2_vs_v3.py` | Compare v2 (pure-Python) vs v3 (Rust engine) performance |
 | `benchmark_advanced_modules.py` | Benchmark advanced module operations |
