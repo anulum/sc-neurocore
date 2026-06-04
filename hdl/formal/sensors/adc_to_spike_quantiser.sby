@@ -1,0 +1,14 @@
+[options]
+mode bmc
+depth 18
+
+[engines]
+smtbmc cvc5
+
+[script]
+read_verilog -formal -sv adc_to_spike_quantiser_formal.v adc_to_spike_quantiser.v
+prep -top adc_to_spike_quantiser_formal
+
+[files]
+hdl/formal/sensors/adc_to_spike_quantiser_formal.v
+hdl/sensors/adc_to_spike_quantiser.v

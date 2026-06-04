@@ -41,6 +41,7 @@ governor, and frequency evidence.
 | Precision envelope guard | HDL/Yosys | N_OUTPUTS=32 | 67 cells | `$adff`+`$gt`+`$mux`+`$reduce_or` |
 | Live-control parameter update sequence | Python+SystemVerilog | 20000 | 19.501 us | static_regeneration=109.204 us, generated trap capture passed |
 | AER strict-priority queue backpressure | Python+SystemVerilog | 4096 events x 100 repeats | 4.138 us/event | runtime cpuset shield 10-11, priority=0 violations, FIFO=0 violations, drop/deadline traps latched |
+| ADC-to-spike quantiser | Python+SystemVerilog | 4096 samples x 100 repeats | 3.705 us/sample | cpuset 10-11, formal pass, Yosys 7675 cells |
 | Full pipeline (4 syn, 256 steps) | cpu | 200 | 1830.0 us | 139.9 Kstep/s |
 | Full pipeline (16 syn, 256 steps) | cpu | 50 | 8678.5 us | 29.5 Kstep/s |
 | gpu_pack_bitstream (65536) | cpu | 2000 | 375.9 us | 0.17 Gbit/s |
@@ -53,3 +54,11 @@ governor, and frequency evidence.
 | `local_python_2026-06-04_timing_formal_framework.json` | `10-11` | Python, SystemVerilog, nuXmv, Kind 2 | SymbiYosys/cvc5 pass in `1.476097` s; 16 nuXmv models and 16 Kind 2 nodes emitted |
 
 The run records `hardware_measurement_claimed=false` and `runtime_cpuset_shield_claimed=true`. The nuXmv and Kind 2 binaries were not installed locally, so the benchmark validates deterministic model emission for those surfaces and records runtime execution as unavailable.
+
+## ADC-to-spike quantiser - 2026-06-04
+
+| Artefact | Cpuset | Surfaces | Key result |
+| --- | --- | --- | --- |
+| `local_python_2026-06-04_adc_to_spike_quantiser.json` | `10-11` | Python, SystemVerilog | `3704.696` ns/sample; SymbiYosys/cvc5 pass in `4.579` s; Yosys `7675` cells |
+
+The run records `hardware_measurement_claimed=false` and `runtime_cpuset_shield_claimed=true`. This is local contract evidence, not board-level throughput evidence.

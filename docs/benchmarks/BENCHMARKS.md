@@ -718,3 +718,17 @@ This benchmark exercises the NEU-C.2 timing formal framework across the active p
 | Kind 2 | Lustre bounded-node emission | 16 models, `0.000012825` s, runtime unavailable locally |
 
 Evidence boundary: this is formal proof and model-emitter evidence, not hardware throughput evidence. `hardware_measurement_claimed=false` remains intentional.
+
+## ADC-to-spike quantiser (2026-06-04)
+
+Artefact: `benchmarks/results/local_python_2026-06-04_adc_to_spike_quantiser.json`.
+
+This benchmark exercises the NEU-C.5 ADC-to-spike sensor-ingress contract across the active Python and SystemVerilog surfaces. The run used runtime core isolation with `host_context.cgroup_effective_cpuset=10-11` and `runtime_cpuset_shield_claimed=true`; load average during the run was `3.71, 3.80, 3.48`.
+
+| Surface | Operation | Result |
+| --- | --- | --- |
+| Python | Bit-true ADC decimation and deterministic AER rate-code reference | `3704.696` ns/sample over `409600` samples |
+| SystemVerilog | SymbiYosys/cvc5 formal proof | pass, `4.579` s |
+| SystemVerilog | Yosys generic synthesis estimate | `7675` cells, `11.861` s |
+
+Evidence boundary: this is local contract, formal, and synthesis-estimate evidence. `hardware_measurement_claimed=false` remains intentional until board-level isolated hardware evidence is captured.
