@@ -68,10 +68,14 @@ fn main() {
     }
     let saturating_weights = vec![127_i16 << 8; N_INPUTS * N_OUTPUTS];
     let saturating_inputs = vec![32767_i32 << 16; N_INPUTS];
-    let saturating_probe_overflow_count =
+    let safe_envelope_report = mixed_dense_q88_q1616(&weights, &inputs, N_OUTPUTS, N_INPUTS)
+        .expect("safe envelope dimensions must be valid")
+        .precision_envelope_report();
+    let saturating_probe =
         mixed_dense_q88_q1616(&saturating_weights, &saturating_inputs, N_OUTPUTS, N_INPUTS)
-            .expect("saturating probe dimensions must be valid")
-            .overflow_count;
+            .expect("saturating probe dimensions must be valid");
+    let saturating_probe_overflow_count = saturating_probe.overflow_count;
+    let saturating_probe_envelope_report = saturating_probe.precision_envelope_report();
     let mut sorted = ns_per_call.clone();
     let median_ns_per_call = median(&mut sorted);
     let min_ns_per_call = sorted[0];
@@ -104,7 +108,12 @@ fn main() {
             "  \"max_ns_per_call\": {max_ns_per_call_arg:.3},\n",
             "  \"checksum\": {checksum_arg},\n",
             "  \"safe_overflow_count\": {overflow_count_arg},\n",
+            "  \"safe_max_abs_bound_q1616\": {safe_max_abs_bound_q1616_arg},\n",
+            "  \"safe_conservative_overflow_free\": {safe_conservative_overflow_free_arg},\n",
+            "  \"safe_min_headroom_q1616\": {safe_min_headroom_q1616_arg},\n",
             "  \"saturating_probe_overflow_count\": {saturating_probe_overflow_count_arg},\n",
+            "  \"saturating_probe_max_abs_bound_q1616\": {saturating_probe_max_abs_bound_q1616_arg},\n",
+            "  \"saturating_probe_conservative_overflow_free\": {saturating_probe_conservative_overflow_free_arg},\n",
             "  \"results_ns_per_call\": [{results_arg}]\n",
             "}}\n"
         ),
@@ -120,7 +129,12 @@ fn main() {
         max_ns_per_call_arg = max_ns_per_call,
         checksum_arg = checksum,
         overflow_count_arg = overflow_count,
+        safe_max_abs_bound_q1616_arg = safe_envelope_report.max_abs_bound_q1616,
+        safe_conservative_overflow_free_arg = safe_envelope_report.conservative_overflow_free,
+        safe_min_headroom_q1616_arg = safe_envelope_report.min_headroom_q1616,
         saturating_probe_overflow_count_arg = saturating_probe_overflow_count,
+        saturating_probe_max_abs_bound_q1616_arg = saturating_probe_envelope_report.max_abs_bound_q1616,
+        saturating_probe_conservative_overflow_free_arg = saturating_probe_envelope_report.conservative_overflow_free,
         results_arg = results,
     );
 

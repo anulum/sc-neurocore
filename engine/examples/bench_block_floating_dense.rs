@@ -81,7 +81,11 @@ fn main() {
     }
     let saturating_mantissas = vec![i16::MAX; N_INPUTS * N_OUTPUTS];
     let saturating_inputs = vec![32767_i32 << 16; N_INPUTS];
-    let saturating_probe_overflow_count = block_floating_dense_q16(
+    let safe_envelope_report =
+        block_floating_dense_q16(&mantissas, &exponents, &inputs, N_OUTPUTS, N_INPUTS, mode)
+            .expect("safe envelope dimensions must be valid")
+            .precision_envelope_report();
+    let saturating_probe = block_floating_dense_q16(
         &saturating_mantissas,
         &exponents,
         &saturating_inputs,
@@ -89,8 +93,9 @@ fn main() {
         N_INPUTS,
         mode,
     )
-    .expect("saturating probe dimensions must be valid")
-    .overflow_count;
+    .expect("saturating probe dimensions must be valid");
+    let saturating_probe_overflow_count = saturating_probe.overflow_count;
+    let saturating_probe_envelope_report = saturating_probe.precision_envelope_report();
     let mut sorted = ns_per_call.clone();
     let median_ns_per_call = median(&mut sorted);
     let min_ns_per_call = sorted[0];
@@ -125,7 +130,12 @@ fn main() {
             "  \"max_ns_per_call\": {max_ns_per_call:.3},\n",
             "  \"checksum\": {checksum},\n",
             "  \"safe_overflow_count\": {overflow_count},\n",
+            "  \"safe_max_abs_bound_q1616\": {safe_max_abs_bound_q1616},\n",
+            "  \"safe_conservative_overflow_free\": {safe_conservative_overflow_free},\n",
+            "  \"safe_min_headroom_q1616\": {safe_min_headroom_q1616},\n",
             "  \"saturating_probe_overflow_count\": {saturating_probe_overflow_count},\n",
+            "  \"saturating_probe_max_abs_bound_q1616\": {saturating_probe_max_abs_bound_q1616},\n",
+            "  \"saturating_probe_conservative_overflow_free\": {saturating_probe_conservative_overflow_free},\n",
             "  \"results_ns_per_call\": [{results}]\n",
             "}}\n"
         ),
@@ -144,7 +154,12 @@ fn main() {
         max_ns_per_call = max_ns_per_call,
         checksum = checksum,
         overflow_count = overflow_count,
+        safe_max_abs_bound_q1616 = safe_envelope_report.max_abs_bound_q1616,
+        safe_conservative_overflow_free = safe_envelope_report.conservative_overflow_free,
+        safe_min_headroom_q1616 = safe_envelope_report.min_headroom_q1616,
         saturating_probe_overflow_count = saturating_probe_overflow_count,
+        saturating_probe_max_abs_bound_q1616 = saturating_probe_envelope_report.max_abs_bound_q1616,
+        saturating_probe_conservative_overflow_free = saturating_probe_envelope_report.conservative_overflow_free,
         results = results,
     );
 

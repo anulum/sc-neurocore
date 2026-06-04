@@ -203,6 +203,7 @@ path:
   saturation behaviour.
 - HDL: `hdl/sc_block_floating_dense.v` provides a synchronous RTL reference
   with explicit dynamic exponent shifts, per-output overflow telemetry,
+  per-output conservative absolute-bound telemetry (`abs_bounds_q1616`),
   aggregate overflow, and saturated Q16.16 outputs.
 
 Benchmark and synthesis evidence from 2026-06-04 is committed under
@@ -213,6 +214,9 @@ Benchmark and synthesis evidence from 2026-06-04 is committed under
 The block-floating HDL `overflow_vector` uses the same lane convention as the
 mixed fixed-point dense path: bit `i` identifies output channel `i`, and the
 aggregate `overflow` line is asserted when any channel saturates.
+`abs_bounds_q1616[i]` is the unsigned conservative absolute Q16.16 bound for
+the same output channel and is intentionally nonzero for cancellation cases
+where the realised saturated output is zero.
 
 ## Mixed Q8.8 / Q16.16 Weight-Accumulator Contract
 
@@ -258,7 +262,8 @@ This path is wired across three implementation surfaces:
   canonical integer MAC, arithmetic shift, shape validation, and saturation
   behaviour.
 - HDL: `hdl/sc_mixed_precision_dense.v` provides a synchronous RTL reference
-  with per-output overflow telemetry, aggregate overflow, and saturated Q16.16
+  with per-output overflow telemetry, per-output conservative absolute-bound
+  telemetry (`abs_bounds_q1616`), aggregate overflow, and saturated Q16.16
   outputs.
 
 Benchmark and synthesis evidence from 2026-06-04 is committed under
@@ -270,6 +275,9 @@ The HDL `overflow_vector` is lane-aligned with the Python/Rust overflow masks:
 bit `i` is asserted only when output channel `i` saturates to the signed Q16.16
 minimum or maximum code.  The aggregate `overflow` output is the OR of that
 vector for consumers that only need a single anomaly line.
+The HDL `abs_bounds_q1616` vector uses the same lane order and carries unsigned
+64-bit conservative absolute Q16.16 bounds, matching the Python
+`PrecisionEnvelopeReport.abs_bound_codes` and Rust `abs_bounds_q1616` telemetry.
 
 ### Precision Trap Reports and Hardware Latch
 
@@ -319,7 +327,10 @@ inside the symmetric signed output range, so cancellation in one workload cannot
 hide a dangerous weight/input package.
 
 The Rust mirror exposes the same summary through
-`MixedDenseResult::precision_envelope_report()`.  The HDL side provides
+`MixedDenseResult::precision_envelope_report()`.  The dense HDL references also
+export per-output `abs_bounds_q1616` lanes so firmware can compare hardware
+runtime telemetry against Python/Rust envelope reports without reconstructing
+the MAC offline.  The HDL side additionally provides
 `hdl/sc_precision_envelope_guard.v`, a synchronous per-output guard that checks
 absolute bounds against the output Q-domain and reports a violation vector.
 

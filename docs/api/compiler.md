@@ -268,6 +268,11 @@ when any lane saturates.
 The block-floating dense HDL reference uses the same lane convention, with
 `overflow_vector[i]` identifying the output channel that saturated after the
 shared-exponent product shift and Q16.16 accumulation.
+Both dense HDL references also export `abs_bounds_q1616[i]`, an unsigned
+64-bit conservative absolute Q16.16 bound for output channel `i`.  This mirrors
+Python `PrecisionEnvelopeReport.abs_bound_codes` and Rust
+`MixedDenseResult.abs_bounds_q1616`, including cancellation cases where the
+realised output is small but the absolute product envelope is large.
 
 `forward_with_overflow` returns saturated accumulator-format integer codes and
 per-output overflow flags.  In canonical `scale_per_tensor=False` mode the

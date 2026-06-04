@@ -18,7 +18,7 @@ from typing import Protocol
 
 import numpy as np
 
-from sc_neurocore.compiler.quantizer import compile_dense_mixed_precision
+from sc_neurocore.compiler.quantizer import PrecisionEnvelopeReport, compile_dense_mixed_precision
 
 
 N_INPUTS = 64
@@ -36,6 +36,9 @@ class MixedDenseRunner(Protocol):
 
     def forward_with_overflow(self, inputs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Return saturated Q16.16 output codes and per-output overflow mask."""
+
+    def precision_envelope_report(self, inputs: np.ndarray) -> PrecisionEnvelopeReport:
+        """Return conservative per-output precision envelope telemetry."""
 
 
 def deterministic_inputs() -> tuple[np.ndarray, np.ndarray]:
@@ -100,10 +103,14 @@ def main() -> int:
     reconstructed = compiled.forward_float(inputs)
     reference = weights @ inputs
     _, safe_overflow = compiled.forward_with_overflow(inputs)
+    safe_envelope = compiled.precision_envelope_report(inputs)
     overflow_probe = compile_dense_mixed_precision(
         np.full((N_OUTPUTS, N_INPUTS), 127.0, dtype=np.float64)
     )
     _, probe_overflow = overflow_probe.forward_with_overflow(
+        np.full(N_INPUTS, 32767.0, dtype=np.float64)
+    )
+    probe_envelope = overflow_probe.precision_envelope_report(
         np.full(N_INPUTS, 32767.0, dtype=np.float64)
     )
 
@@ -130,7 +137,12 @@ def main() -> int:
         "float_dot_max_ns_per_call": max(float_ns),
         "max_abs_error_vs_float_dot": float(np.max(np.abs(reconstructed - reference))),
         "safe_overflow_count": int(np.count_nonzero(safe_overflow)),
+        "safe_max_abs_bound_code": safe_envelope.max_abs_bound_code,
+        "safe_conservative_overflow_free": safe_envelope.conservative_overflow_free,
+        "safe_min_headroom_code": safe_envelope.min_headroom_code,
         "saturating_probe_overflow_count": int(np.count_nonzero(probe_overflow)),
+        "saturating_probe_max_abs_bound_code": probe_envelope.max_abs_bound_code,
+        "saturating_probe_conservative_overflow_free": probe_envelope.conservative_overflow_free,
         "compiled_manifest": compiled.manifest(),
         "mixed_results": [
             {"ns_per_call": result[0], "checksum": result[1]} for result in mixed_results

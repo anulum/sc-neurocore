@@ -36,8 +36,15 @@ def test_block_floating_dense_hdl_uses_signed_dynamic_shift_and_saturation() -> 
     source = HDL_PATH.read_text(encoding="utf-8")
 
     assert "unbiased_shift = exponent_lane - EXPONENT_BIAS" in source
-    assert "shifted_product = product <<< unbiased_shift" in source
-    assert "shifted_product = product >>> (-unbiased_shift)" in source
+    assert (
+        "shifted_product = {{(SUM_WIDTH-PRODUCT_WIDTH){product[PRODUCT_WIDTH-1]}}, product} <<< unbiased_shift"
+        in source
+    )
+    assert "right_shift = -unbiased_shift" in source
+    assert (
+        "shifted_product = {{(SUM_WIDTH-PRODUCT_WIDTH){product[PRODUCT_WIDTH-1]}}, product} >>> right_shift"
+        in source
+    )
     assert "outputs_next[output_idx*ACCUM_WIDTH +: ACCUM_WIDTH] = ACCUM_MAX" in source
     assert "overflow_vector_next[output_idx] = 1'b1" in source
     assert "overflow_next = 1'b1" in source
@@ -147,3 +154,125 @@ endmodule
     run_result = subprocess.run([vvp, str(sim_path)], check=False, capture_output=True, text=True)
     assert run_result.returncode == 0, run_result.stderr
     assert "PASS" in run_result.stdout
+
+
+def test_block_floating_dense_reports_per_output_abs_bounds(tmp_path: Path) -> None:
+    import shutil
+    import subprocess
+    import textwrap
+
+    import pytest
+
+    if shutil.which("iverilog") is None or shutil.which("vvp") is None:
+        pytest.skip("iverilog/vvp unavailable")
+
+    testbench = tmp_path / "block_floating_dense_bounds_tb.v"
+    executable = tmp_path / "block_floating_dense_bounds_tb.out"
+    testbench.write_text(
+        textwrap.dedent(
+            r"""
+            `timescale 1ns / 1ps
+
+            module block_floating_dense_bounds_tb;
+                localparam integer N_INPUTS = 2;
+                localparam integer N_OUTPUTS = 3;
+                localparam integer MANTISSA_WIDTH = 16;
+                localparam integer EXPONENT_WIDTH = 3;
+                localparam integer BLOCK_SIZE = 6;
+                localparam integer INPUT_WIDTH = 32;
+                localparam integer ACCUM_WIDTH = 32;
+                localparam integer BOUND_WIDTH = 64;
+
+                reg clk = 1'b0;
+                reg rst_n = 1'b0;
+                reg valid_in = 1'b0;
+                reg signed [N_OUTPUTS*N_INPUTS*MANTISSA_WIDTH-1:0] mantissas_bfp = 0;
+                reg [((N_OUTPUTS*N_INPUTS + BLOCK_SIZE - 1)/BLOCK_SIZE)*EXPONENT_WIDTH-1:0] exponents_bfp = 0;
+                reg signed [N_INPUTS*INPUT_WIDTH-1:0] inputs_q1616 = 0;
+                wire valid_out;
+                wire signed [N_OUTPUTS*ACCUM_WIDTH-1:0] outputs_q1616;
+                wire [N_OUTPUTS*BOUND_WIDTH-1:0] abs_bounds_q1616;
+                wire [N_OUTPUTS-1:0] overflow_vector;
+                wire overflow;
+
+                sc_block_floating_dense #(
+                    .N_INPUTS(N_INPUTS),
+                    .N_OUTPUTS(N_OUTPUTS),
+                    .MANTISSA_WIDTH(MANTISSA_WIDTH),
+                    .EXPONENT_WIDTH(EXPONENT_WIDTH),
+                    .BLOCK_SIZE(BLOCK_SIZE),
+                    .INPUT_WIDTH(INPUT_WIDTH),
+                    .ACCUM_WIDTH(ACCUM_WIDTH),
+                    .BOUND_WIDTH(BOUND_WIDTH)
+                ) dut (
+                    .clk(clk),
+                    .rst_n(rst_n),
+                    .valid_in(valid_in),
+                    .mantissas_bfp(mantissas_bfp),
+                    .exponents_bfp(exponents_bfp),
+                    .inputs_q1616(inputs_q1616),
+                    .valid_out(valid_out),
+                    .outputs_q1616(outputs_q1616),
+                    .abs_bounds_q1616(abs_bounds_q1616),
+                    .overflow_vector(overflow_vector),
+                    .overflow(overflow)
+                );
+
+                always #5 clk = ~clk;
+
+                initial begin
+                    inputs_q1616[0*INPUT_WIDTH +: INPUT_WIDTH] = 32'sd2147418112;
+                    inputs_q1616[1*INPUT_WIDTH +: INPUT_WIDTH] = 32'sd2147418112;
+                    exponents_bfp[0*EXPONENT_WIDTH +: EXPONENT_WIDTH] = 3'd3;
+                    mantissas_bfp[0*MANTISSA_WIDTH +: MANTISSA_WIDTH] = 16'sd1;
+                    mantissas_bfp[1*MANTISSA_WIDTH +: MANTISSA_WIDTH] = -16'sd1;
+                    mantissas_bfp[2*MANTISSA_WIDTH +: MANTISSA_WIDTH] = 16'sd32767;
+                    mantissas_bfp[3*MANTISSA_WIDTH +: MANTISSA_WIDTH] = 16'sd32767;
+                    mantissas_bfp[4*MANTISSA_WIDTH +: MANTISSA_WIDTH] = 16'sh8000;
+                    mantissas_bfp[5*MANTISSA_WIDTH +: MANTISSA_WIDTH] = 16'sh8000;
+
+                    #12 rst_n = 1'b1;
+                    #8 valid_in = 1'b1;
+                    #10 valid_in = 1'b0;
+                    #10;
+
+                    if (valid_out !== 1'b1) begin
+                        $display("expected valid_out");
+                        $finish(1);
+                    end
+                    if (overflow_vector !== 3'b110 || overflow !== 1'b1) begin
+                        $display("unexpected overflow telemetry vector=%b overflow=%b", overflow_vector, overflow);
+                        $finish(1);
+                    end
+                    if (abs_bounds_q1616[0*BOUND_WIDTH +: BOUND_WIDTH] !== 64'd4294836224) begin
+                        $display("unexpected cancellation bound %0d", abs_bounds_q1616[0*BOUND_WIDTH +: BOUND_WIDTH]);
+                        $finish(1);
+                    end
+                    if (abs_bounds_q1616[1*BOUND_WIDTH +: BOUND_WIDTH] !== 64'd140728898551808) begin
+                        $display("unexpected positive saturation bound %0d", abs_bounds_q1616[1*BOUND_WIDTH +: BOUND_WIDTH]);
+                        $finish(1);
+                    end
+                    if (abs_bounds_q1616[2*BOUND_WIDTH +: BOUND_WIDTH] !== 64'd140733193388032) begin
+                        $display("unexpected negative saturation bound %0d", abs_bounds_q1616[2*BOUND_WIDTH +: BOUND_WIDTH]);
+                        $finish(1);
+                    end
+                    $finish(0);
+                end
+            endmodule
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    subprocess.run(
+        [
+            "iverilog",
+            "-g2012",
+            "-o",
+            str(executable),
+            str(testbench),
+            "hdl/sc_block_floating_dense.v",
+        ],
+        check=True,
+    )
+    subprocess.run(["vvp", str(executable)], check=True)

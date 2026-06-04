@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added per-output conservative absolute-bound telemetry to the mixed
+  Q8.8/Q16.16 and block-floating dense RTL (`abs_bounds_q1616`), aligned the
+  Python/Rust benchmark artefacts with the same precision-envelope fields, and
+  refreshed module-specific HDL tests plus HDL/Python/Rust benchmark evidence.
 - Added per-output overflow telemetry to the mixed Q8.8/Q16.16 dense RTL and
   refreshed the Python, Rust, HDL, and documentation evidence for lane-level
   saturation attribution.
