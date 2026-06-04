@@ -453,6 +453,114 @@ class PrecisionTrapReport:
 
 
 @dataclass(frozen=True)
+class PrecisionEnvelopeReport:
+    """Conservative fixed-point output-envelope report for deployment checks."""
+
+    operation: str
+    output_codes: np.ndarray[Any, Any]
+    overflow_mask: np.ndarray[Any, Any]
+    abs_bound_codes: np.ndarray[Any, Any]
+    output_fmt: QFormat
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.operation, str) or not self.operation:
+            raise ValueError("operation must be a non-empty string")
+        if not isinstance(self.output_fmt, QFormat):
+            raise TypeError("output_fmt must be a QFormat")
+
+        raw_codes = np.asarray(self.output_codes)
+        raw_bounds = np.asarray(self.abs_bound_codes)
+        if not np.issubdtype(raw_codes.dtype, np.integer):
+            raise TypeError("output_codes must contain integer fixed-point codes")
+        if not np.issubdtype(raw_bounds.dtype, np.integer):
+            raise TypeError("abs_bound_codes must contain integer fixed-point codes")
+
+        codes = raw_codes.astype(np.int64, copy=True)
+        bounds = raw_bounds.astype(np.int64, copy=True)
+        mask = np.asarray(self.overflow_mask, dtype=bool)
+
+        if codes.ndim != 1:
+            raise ValueError("output_codes must be a 1-D vector")
+        if mask.ndim != 1:
+            raise ValueError("overflow_mask must be a 1-D vector")
+        if bounds.ndim != 1:
+            raise ValueError("abs_bound_codes must be a 1-D vector")
+        if codes.shape != mask.shape or codes.shape != bounds.shape:
+            raise ValueError(
+                "output_codes, overflow_mask, and abs_bound_codes must have identical shape"
+            )
+        if np.any(bounds < 0):
+            raise ValueError("abs_bound_codes must be non-negative")
+
+        min_code, max_code = _fixed_integer_bounds(self.output_fmt)
+        if np.any(codes < min_code) or np.any(codes > max_code):
+            raise ValueError("output_codes exceed the configured output format")
+
+        object.__setattr__(self, "output_codes", codes)
+        object.__setattr__(self, "overflow_mask", mask.astype(bool, copy=True))
+        object.__setattr__(self, "abs_bound_codes", bounds)
+
+    @property
+    def output_count(self) -> int:
+        """Number of output channels covered by this report."""
+        return int(self.output_codes.size)
+
+    @property
+    def overflow_count(self) -> int:
+        """Number of outputs that saturated during the producing operation."""
+        return int(np.count_nonzero(self.overflow_mask))
+
+    @property
+    def observed_overflow_free(self) -> bool:
+        """Whether the realised workload avoided fixed-point saturation."""
+        return self.overflow_count == 0
+
+    @property
+    def conservative_safe_bound_code(self) -> int:
+        """Largest symmetric absolute code accepted as overflow-free."""
+        return (1 << (self.output_fmt.total_bits - 1)) - 1
+
+    @property
+    def max_abs_output_code(self) -> int:
+        """Maximum absolute saturated output code observed in the workload."""
+        if self.output_codes.size == 0:
+            return 0
+        return int(np.max(np.abs(self.output_codes.astype(object))))
+
+    @property
+    def max_abs_bound_code(self) -> int:
+        """Maximum conservative absolute output bound for the workload."""
+        if self.abs_bound_codes.size == 0:
+            return 0
+        return int(np.max(self.abs_bound_codes))
+
+    @property
+    def min_headroom_code(self) -> int:
+        """Smallest conservative headroom, in fixed-point integer codes."""
+        return self.conservative_safe_bound_code - self.max_abs_bound_code
+
+    @property
+    def conservative_overflow_free(self) -> bool:
+        """Whether the absolute envelope proves the workload is in range."""
+        return self.min_headroom_code >= 0
+
+    def manifest(self) -> dict[str, bool | int | str]:
+        """Deterministic envelope metadata for predeployment gates."""
+        return {
+            "operation": self.operation,
+            "output_format": self.output_fmt.q_label,
+            "output_count": self.output_count,
+            "overflow_count": self.overflow_count,
+            "observed_overflow_free": self.observed_overflow_free,
+            "conservative_overflow_free": self.conservative_overflow_free,
+            "max_abs_output_code": self.max_abs_output_code,
+            "max_abs_bound_code": self.max_abs_bound_code,
+            "conservative_safe_bound_code": self.conservative_safe_bound_code,
+            "min_headroom_code": self.min_headroom_code,
+        }
+
+
+@dataclass(frozen=True)
 class CompiledMixedDense:
     """Bit-true mixed fixed-point dense operator compiled from float weights."""
 
@@ -553,6 +661,29 @@ class CompiledMixedDense:
             operation="dense_mixed_qformat",
             output_codes=codes,
             overflow_mask=overflow,
+            output_fmt=self.fmt.accum_fmt,
+        )
+
+    def precision_envelope_report(self, inputs: np.ndarray[Any, Any]) -> PrecisionEnvelopeReport:
+        """Return a conservative absolute-output envelope for this workload."""
+        codes, overflow = self.forward_with_overflow(inputs)
+        input_codes = self._input_codes(inputs)
+        abs_products = np.abs(self.quantized_weights.astype(np.int64)) @ np.abs(
+            input_codes.astype(np.int64)
+        )
+
+        divisor = self.accumulator_divisor
+        if divisor == self.fmt.weight_fmt.scale:
+            scale = self.fmt.weight_fmt.scale
+            bounds = (abs_products + scale - 1) // scale
+        else:
+            bounds = np.ceil(abs_products.astype(np.float64) / divisor).astype(np.int64)
+
+        return PrecisionEnvelopeReport(
+            operation="dense_mixed_qformat",
+            output_codes=codes,
+            overflow_mask=overflow,
+            abs_bound_codes=bounds.astype(np.int64),
             output_fmt=self.fmt.accum_fmt,
         )
 
@@ -710,6 +841,23 @@ class CompiledBlockFloatingDense:
             operation="dense_block_floating",
             output_codes=codes,
             overflow_mask=overflow,
+            output_fmt=self.input_fmt,
+        )
+
+    def precision_envelope_report(self, inputs: np.ndarray[Any, Any]) -> PrecisionEnvelopeReport:
+        """Return a conservative absolute-output envelope for this workload."""
+        codes, overflow = self.forward_with_overflow(inputs)
+        input_values = self._input_values(inputs)
+        abs_bound_values = np.abs(np.asarray(self._weight_values, dtype=np.float64)) @ np.abs(
+            input_values
+        )
+        abs_bound_codes = np.ceil(abs_bound_values * self.input_fmt.scale)
+        abs_bound_codes = np.minimum(abs_bound_codes, np.iinfo(np.int64).max).astype(np.int64)
+        return PrecisionEnvelopeReport(
+            operation="dense_block_floating",
+            output_codes=codes,
+            overflow_mask=overflow,
+            abs_bound_codes=abs_bound_codes,
             output_fmt=self.input_fmt,
         )
 

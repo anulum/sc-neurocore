@@ -290,6 +290,34 @@ Trap benchmark and synthesis evidence from 2026-06-04 is committed under
 `benchmarks/results/local_rust_2026-06-04_precision_traps.json`, and
 `hdl/reports/yosys_precision_overflow_trap_2026-06-04.json`.
 
+### Precision Envelope Reports and Predeployment Guard
+
+Trap reports describe what saturated after an operation.  Envelope reports add
+a conservative predeployment bound for the same workload:
+
+```python
+report = compiled.precision_envelope_report(inputs)
+if not report.conservative_overflow_free:
+    raise ValueError("compiled dense workload exceeds the signed output envelope")
+```
+
+The envelope report stores the realised saturated output codes, the realised
+overflow mask, and a per-output absolute bound in output-format integer codes.
+`observed_overflow_free` answers whether this exact input vector saturated.
+`conservative_overflow_free` answers whether the absolute-product envelope is
+inside the symmetric signed output range, so cancellation in one workload cannot
+hide a dangerous weight/input package.
+
+The Rust mirror exposes the same summary through
+`MixedDenseResult::precision_envelope_report()`.  The HDL side provides
+`hdl/sc_precision_envelope_guard.v`, a synchronous per-output guard that checks
+absolute bounds against the output Q-domain and reports a violation vector.
+
+Envelope benchmark and synthesis evidence from 2026-06-04 is committed under
+`benchmarks/results/local_python_2026-06-04_precision_envelopes.json`,
+`benchmarks/results/local_rust_2026-06-04_precision_envelopes.json`, and
+`hdl/reports/yosys_precision_envelope_guard_2026-06-04.json`.
+
 ## CLI Usage
 
 ### Compiling with Precision Selection

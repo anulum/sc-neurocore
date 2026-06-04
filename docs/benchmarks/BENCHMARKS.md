@@ -127,6 +127,27 @@ The committed Python and Rust trap workloads both report
 output channels.  The HDL trap primitive synthesises to one `$adff`, one
 `$mux`, and one `$or` cell at the default width.
 
+### Precision Envelope Reports (2026-06-04)
+
+This benchmark covers the conservative predeployment envelope path for mixed
+Q8.8/Q16.16 and block-floating dense outputs.  The Python and Rust workloads
+use matched fixed-point codes and report the same maximum absolute bounds:
+`132850` for the mixed dense workload and `78032768` for the block-floating
+workload.
+
+| Path | Workload | Median | Raw evidence |
+|------|----------|-------:|--------------|
+| Python mixed `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 150.131 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
+| Python BFP `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 140.462 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
+| Rust mixed `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 3.887 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
+| Rust BFP `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 13.510 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
+| HDL `sc_precision_envelope_guard` Yosys stat | Default `N_OUTPUTS=32` | 67 cells, 1,701 wire bits | `hdl/reports/yosys_precision_envelope_guard_2026-06-04.json` |
+
+Both Python and Rust envelope reports returned
+`conservative_overflow_free=true` for the committed safe workload.  The HDL
+guard synthesises to two `$adff`, thirty-two `$gt`, thirty-two `$mux`, and one
+`$reduce_or` cell at the default width.
+
 ---
 
 ## 5. Full Pipeline (Python)

@@ -226,6 +226,7 @@ pub struct MixedDenseResult {
     pub outputs_q1616: Vec<i32>,
     pub overflow: bool,
     pub overflow_count: usize,
+    pub abs_bounds_q1616: Vec<i64>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -257,9 +258,63 @@ impl PrecisionTrapReport {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PrecisionEnvelopeReport {
+    pub output_count: usize,
+    pub overflow: bool,
+    pub overflow_count: usize,
+    pub observed_overflow_free: bool,
+    pub conservative_overflow_free: bool,
+    pub max_abs_output_q1616: i64,
+    pub max_abs_bound_q1616: i64,
+    pub conservative_safe_bound_q1616: i64,
+    pub min_headroom_q1616: i64,
+}
+
 impl MixedDenseResult {
     pub fn precision_trap_report(&self) -> PrecisionTrapReport {
         PrecisionTrapReport::from_q1616(&self.outputs_q1616, self.overflow_count)
+    }
+
+    pub fn precision_envelope_report(&self) -> PrecisionEnvelopeReport {
+        let max_abs_output_q1616 = self
+            .outputs_q1616
+            .iter()
+            .map(|&value| abs_i32_to_i64(value))
+            .max()
+            .unwrap_or(0);
+        let max_abs_bound_q1616 = self.abs_bounds_q1616.iter().copied().max().unwrap_or(0);
+        let conservative_safe_bound_q1616 = i64::from(i32::MAX);
+        let min_headroom_q1616 = conservative_safe_bound_q1616.saturating_sub(max_abs_bound_q1616);
+        PrecisionEnvelopeReport {
+            output_count: self.outputs_q1616.len(),
+            overflow: self.overflow,
+            overflow_count: self.overflow_count,
+            observed_overflow_free: self.overflow_count == 0,
+            conservative_overflow_free: max_abs_bound_q1616 <= conservative_safe_bound_q1616,
+            max_abs_output_q1616,
+            max_abs_bound_q1616,
+            conservative_safe_bound_q1616,
+            min_headroom_q1616,
+        }
+    }
+}
+
+fn abs_i32_to_i64(value: i32) -> i64 {
+    if value == i32::MIN {
+        i64::from(i32::MAX) + 1
+    } else {
+        i64::from(value.abs())
+    }
+}
+
+fn i128_to_i64_saturating(value: i128) -> i64 {
+    if value > i128::from(i64::MAX) {
+        i64::MAX
+    } else if value < i128::from(i64::MIN) {
+        i64::MIN
+    } else {
+        value as i64
     }
 }
 
@@ -372,16 +427,21 @@ pub fn mixed_dense_q88_q1616(
     }
 
     let mut outputs_q1616 = Vec::with_capacity(n_outputs);
+    let mut abs_bounds_q1616 = Vec::with_capacity(n_outputs);
     let mut overflow_count = 0_usize;
     for output_idx in 0..n_outputs {
         let mut sum: i128 = 0;
+        let mut abs_bound: i128 = 0;
         let row_start = output_idx * n_inputs;
         for input_idx in 0..n_inputs {
             let weight = i128::from(weights_q88[row_start + input_idx]);
             let input = i128::from(inputs_q1616[input_idx]);
             sum += weight * input;
+            abs_bound += weight.abs() * input.abs();
         }
         let scaled = sum >> 8;
+        let scaled_bound = (abs_bound + ((1_i128 << 8) - 1)) >> 8;
+        abs_bounds_q1616.push(i128_to_i64_saturating(scaled_bound));
         if scaled > i128::from(i32::MAX) {
             outputs_q1616.push(i32::MAX);
             overflow_count += 1;
@@ -397,6 +457,7 @@ pub fn mixed_dense_q88_q1616(
         outputs_q1616,
         overflow: overflow_count > 0,
         overflow_count,
+        abs_bounds_q1616,
     })
 }
 
@@ -458,9 +519,11 @@ pub fn block_floating_dense_q16(
     }
 
     let mut outputs_q1616 = Vec::with_capacity(n_outputs);
+    let mut abs_bounds_q1616 = Vec::with_capacity(n_outputs);
     let mut overflow_count = 0_usize;
     for output_idx in 0..n_outputs {
         let mut sum: i128 = 0;
+        let mut abs_bound: i128 = 0;
         let row_start = output_idx * n_inputs;
         for input_idx in 0..n_inputs {
             let linear_idx = row_start + input_idx;
@@ -469,10 +532,14 @@ pub fn block_floating_dense_q16(
             let shift = i32::from(exponents[block_idx]) - mode.exponent_bias();
             if shift >= 0 {
                 sum += product << shift;
+                abs_bound += product.abs() << shift;
             } else {
                 sum += product >> (-shift);
+                let divisor_shift = -shift;
+                abs_bound += (product.abs() + ((1_i128 << divisor_shift) - 1)) >> divisor_shift;
             }
         }
+        abs_bounds_q1616.push(i128_to_i64_saturating(abs_bound));
         if sum > i128::from(i32::MAX) {
             outputs_q1616.push(i32::MAX);
             overflow_count += 1;
@@ -488,6 +555,7 @@ pub fn block_floating_dense_q16(
         outputs_q1616,
         overflow: overflow_count > 0,
         overflow_count,
+        abs_bounds_q1616,
     })
 }
 
@@ -525,6 +593,13 @@ mod tests {
         assert_eq!(result.outputs_q1616, vec![20480, 30720]);
         assert!(!result.overflow);
         assert_eq!(result.overflow_count, 0);
+        assert_eq!(result.abs_bounds_q1616, vec![20480, 34816]);
+
+        let envelope = result.precision_envelope_report();
+        assert!(envelope.observed_overflow_free);
+        assert!(envelope.conservative_overflow_free);
+        assert_eq!(envelope.max_abs_output_q1616, 30720);
+        assert_eq!(envelope.max_abs_bound_q1616, 34816);
     }
 
     #[test]
@@ -551,6 +626,13 @@ mod tests {
         assert_eq!(report.overflow_count, 1);
         assert_eq!(report.saturated_max_count, 1);
         assert_eq!(report.saturated_min_count, 0);
+
+        let envelope = result.precision_envelope_report();
+        assert!(!envelope.observed_overflow_free);
+        assert!(!envelope.conservative_overflow_free);
+        assert_eq!(envelope.output_count, 1);
+        assert_eq!(envelope.overflow_count, 1);
+        assert!(envelope.max_abs_bound_q1616 > envelope.conservative_safe_bound_q1616);
     }
 
     #[test]
@@ -597,6 +679,13 @@ mod tests {
 
         assert_eq!(result.outputs_q1616, vec![131072, 0]);
         assert!(!result.overflow);
+        assert_eq!(result.abs_bounds_q1616, vec![131072, 262144]);
+
+        let envelope = result.precision_envelope_report();
+        assert!(envelope.observed_overflow_free);
+        assert!(envelope.conservative_overflow_free);
+        assert_eq!(envelope.max_abs_output_q1616, 131072);
+        assert_eq!(envelope.max_abs_bound_q1616, 262144);
     }
 
     #[test]
@@ -619,6 +708,13 @@ mod tests {
         assert_eq!(report.overflow_count, 1);
         assert_eq!(report.saturated_max_count, 1);
         assert_eq!(report.saturated_min_count, 0);
+
+        let envelope = result.precision_envelope_report();
+        assert!(!envelope.observed_overflow_free);
+        assert!(!envelope.conservative_overflow_free);
+        assert_eq!(envelope.output_count, 1);
+        assert_eq!(envelope.overflow_count, 1);
+        assert!(envelope.max_abs_bound_q1616 > envelope.conservative_safe_bound_q1616);
     }
 
     #[test]
