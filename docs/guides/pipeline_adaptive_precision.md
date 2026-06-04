@@ -249,12 +249,21 @@ The manifest carries:
 
 - LP/HP precision metadata (`kind`, precision label, width/fraction fields),
 - explicit block metadata for block-floating modes (`mantissa_bits`, `exponent_bits`,
-  `block_size`),
+  `block_size`, exponent bias, exponent code range, unbiased exponent range,
+  maximum mantissa magnitude, minimum quantum, maximum absolute value, and the
+  flattened contiguous block-alignment rule),
 - signed/overflow/rounding contract,
 - hysteresis percentages.
 
 This contract is consumed by downstream parity tooling and is expected to be stable
 across codegen releases.
+
+For `BFP16E3X32`, the adaptive manifest must record exponent bias `3`,
+exponent codes `[0, 7]`, unbiased exponent range `[-3, +4]`, mantissa maximum
+`32767`, minimum quantum `0.125`, and maximum absolute value `524272.0`.  The
+generated RTL still emits a fixed mantissa datapath; the shared exponent path is
+explicit metadata until a target-specific block exponent datapath is emitted and
+formally checked.
 
 ---
 
@@ -542,6 +551,7 @@ endmodule
 | Q1.7 → Q8.8 | Present | Authoritative | Telemetry | No power claim |
 | Q8.8 → Q16.16 | Present | Authoritative | Telemetry | No power claim |
 | Q12.12 → Q18.18 | Present | Authoritative | Telemetry | No power claim |
+| BFP16E3X32 → Q16.16 | Fixed mantissa + exponent metadata | Authoritative | Telemetry | No power claim |
 
 The current implementation deliberately pays area for an LP monitor plus an HP
 reference datapath.  Power reduction must be measured only after a target
