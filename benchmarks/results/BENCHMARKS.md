@@ -19,6 +19,11 @@ Backend: NumPy (CPU only)
 | Mixed dense Q8.8/Q16.16 (64x32) | Rust | 20000 | 2.223 us | 104.5x vs Python mixed reference |
 | Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 58.386 us | max abs error 0.2231 |
 | Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 12.512 us | 4.7x vs Python BFP reference |
+| Precision trap report mixed dense (64x32 overflow) | Python | 2000 | 340.461 us | overflow_count=32 |
+| Precision trap report mixed dense (64x32 overflow) | Rust | 20000 | 3.483 us | overflow_count=32 |
+| Precision trap report block-floating dense (64x32 overflow) | Python | 2000 | 161.677 us | overflow_count=32 |
+| Precision trap report block-floating dense (64x32 overflow) | Rust | 20000 | 11.277 us | overflow_count=32 |
+| Precision overflow trap latch | HDL/Yosys | TRAP_WIDTH=1 | 3 cells | `$adff`+`$mux`+`$or` |
 | Full pipeline (4 syn, 256 steps) | cpu | 200 | 1830.0 us | 139.9 Kstep/s |
 | Full pipeline (16 syn, 256 steps) | cpu | 50 | 8678.5 us | 29.5 Kstep/s |
 | gpu_pack_bitstream (65536) | cpu | 2000 | 375.9 us | 0.17 Gbit/s |

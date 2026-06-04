@@ -14,6 +14,7 @@ from .mlir_emitter import MLIRBundle, MLIREmitter, generate_mlir_bundle
 from .quantizer import (
     CompiledBlockFloatingDense,
     CompiledMixedDense,
+    PrecisionTrapReport,
     QFormat,
     QFormatMixed,
     Q8_8,
@@ -59,6 +60,7 @@ __all__ = [
     "generate_mlir_bundle",
     "CompiledBlockFloatingDense",
     "CompiledMixedDense",
+    "PrecisionTrapReport",
     "QFormat",
     "QFormatMixed",
     "Q8_8",

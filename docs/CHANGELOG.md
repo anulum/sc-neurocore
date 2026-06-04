@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added precision trap reports across the mixed fixed-point and block-floating
+  dense deployment paths, including exact overflow counts in the Rust qformat
+  mirror, a synchronous HDL trap latch, module-specific tests, and committed
+  Python, Rust, and Yosys benchmark artefacts.
 - Added dense block-floating `BFP16E3X32` execution across the Python quantiser
   API, Rust IR qformat mirror, and synchronous HDL reference module, including
   shared-exponent product scaling, Q16.16 output saturation, overflow telemetry,

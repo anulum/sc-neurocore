@@ -219,6 +219,7 @@ The manifest records operation counts and whether `firtool` is available.
 import numpy as np
 
 from sc_neurocore.compiler.quantizer import (
+    PrecisionTrapReport,
     QFormatMixed,
     compile_dense_block_floating,
     compile_dense_mixed_precision,
@@ -253,6 +254,7 @@ reference paths:
 compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed())
 outputs_q1616, overflow = compiled.forward_with_overflow(inputs)
 outputs = compiled.forward_float(inputs)
+trap_report: PrecisionTrapReport = compiled.precision_trap_report(inputs)
 manifest = compiled.manifest()
 ```
 
@@ -264,6 +266,12 @@ the host path carries `tensor_scale` in the manifest so deployment code can
 reconstruct compact stored weights without silently changing the physical
 output scale.
 
+`precision_trap_report` packages the same saturated output codes and overflow
+mask into deterministic telemetry for host validation and HDL trap registers.
+The report manifest includes `output_format`, `output_count`,
+`overflow_count`, `saturated_min_count`, `saturated_max_count`, and
+`has_overflow`.
+
 Block-floating dense deployment uses shared-exponent weight blocks with
 Q16.16 inputs and outputs:
 
@@ -271,6 +279,7 @@ Q16.16 inputs and outputs:
 compiled_bfp = compile_dense_block_floating(weights, fmt="BFP16E3X32")
 outputs_q1616, overflow = compiled_bfp.forward_with_overflow(inputs)
 outputs = compiled_bfp.forward_float(inputs)
+trap_report = compiled_bfp.precision_trap_report(inputs)
 ```
 
 `BFP16E3X32` stores 16-bit signed mantissas and one 3-bit biased exponent per

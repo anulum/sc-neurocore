@@ -1,0 +1,113 @@
+{
+  "benchmark": "precision_trap_reports_64x32",
+  "language": "Python",
+  "timestamp_utc": "2026-06-04T03:17:55+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_precision_traps.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "n_inputs": 64,
+  "n_outputs": 32,
+  "iterations": 2000,
+  "repeats": 7,
+  "mixed_trap_median_ns_per_call": 340460.818,
+  "mixed_trap_min_ns_per_call": 304104.4005,
+  "mixed_trap_max_ns_per_call": 349093.747,
+  "mixed_overflow_count": 32,
+  "bfp_trap_median_ns_per_call": 161677.409,
+  "bfp_trap_min_ns_per_call": 139333.9325,
+  "bfp_trap_max_ns_per_call": 256403.561,
+  "bfp_overflow_count": 32,
+  "mixed_manifest": {
+    "operation": "dense_mixed_qformat",
+    "output_format": "Q16.16",
+    "output_count": 32,
+    "overflow_count": 32,
+    "saturated_min_count": 0,
+    "saturated_max_count": 32,
+    "has_overflow": true
+  },
+  "bfp_manifest": {
+    "operation": "dense_block_floating",
+    "output_format": "Q16.16",
+    "output_count": 32,
+    "overflow_count": 32,
+    "saturated_min_count": 0,
+    "saturated_max_count": 32,
+    "has_overflow": true
+  },
+  "mixed_results": [
+    {
+      "ns_per_call": 304104.4005,
+      "checksum": 0,
+      "overflow_count": 32
+    },
+    {
+      "ns_per_call": 341094.0075,
+      "checksum": 0,
+      "overflow_count": 32
+    },
+    {
+      "ns_per_call": 349093.747,
+      "checksum": 0,
+      "overflow_count": 32
+    },
+    {
+      "ns_per_call": 318997.25,
+      "checksum": 0,
+      "overflow_count": 32
+    },
+    {
+      "ns_per_call": 346425.366,
+      "checksum": 0,
+      "overflow_count": 32
+    },
+    {
+      "ns_per_call": 334425.3385,
+      "checksum": 0,
+      "overflow_count": 32
+    },
+    {
+      "ns_per_call": 340460.818,
+      "checksum": 0,
+      "overflow_count": 32
+    }
+  ],
+  "bfp_results": [
+    {
+      "ns_per_call": 237946.292,
+      "checksum": 0,
+      "overflow_count": 32
+    },
+    {
+      "ns_per_call": 256403.561,
+      "checksum": 0,
+      "overflow_count": 32
+    },
+    {
+      "ns_per_call": 226055.0155,
+      "checksum": 0,
+      "overflow_count": 32
+    },
+    {
+      "ns_per_call": 161677.409,
+      "checksum": 0,
+      "overflow_count": 32
+    },
+    {
+      "ns_per_call": 142357.882,
+      "checksum": 0,
+      "overflow_count": 32
+    },
+    {
+      "ns_per_call": 147442.2895,
+      "checksum": 0,
+      "overflow_count": 32
+    },
+    {
+      "ns_per_call": 139333.9325,
+      "checksum": 0,
+      "overflow_count": 32
+    }
+  ]
+}

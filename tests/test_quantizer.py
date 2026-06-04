@@ -19,6 +19,7 @@ from sc_neurocore.compiler.quantizer import (
     Q8_8,
     Q16_16,
     BlockFloatingMode,
+    PrecisionTrapReport,
     compile_dense_block_floating,
     compile_dense_mixed_precision,
     parse_precision_format,
@@ -103,6 +104,55 @@ class TestPrecisionMetadata:
         assert QFormat.from_string("Q16.16") == Q16_16
 
 
+class TestPrecisionTrapReport:
+    """Validate precision trap report invariants for fixed-point deployment telemetry."""
+
+    def test_manifest_counts_overflow_and_saturation_side(self):
+        report = PrecisionTrapReport(
+            operation="dense_mixed_qformat",
+            output_codes=np.array([0, (1 << 31) - 1, -(1 << 31)], dtype=np.int64),
+            overflow_mask=np.array([False, True, True], dtype=bool),
+            output_fmt=Q16_16,
+        )
+
+        assert report.output_count == 3
+        assert report.overflow_count == 2
+        assert report.saturated_max_count == 1
+        assert report.saturated_min_count == 1
+        assert report.manifest() == {
+            "operation": "dense_mixed_qformat",
+            "output_format": "Q16.16",
+            "output_count": 3,
+            "overflow_count": 2,
+            "saturated_min_count": 1,
+            "saturated_max_count": 1,
+            "has_overflow": True,
+        }
+
+    def test_rejects_ambiguous_trap_shapes_and_out_of_range_codes(self):
+        with pytest.raises(ValueError, match="identical shape"):
+            PrecisionTrapReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([1, 2], dtype=np.int64),
+                overflow_mask=np.array([True], dtype=bool),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(ValueError, match="exceed"):
+            PrecisionTrapReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([1 << 31], dtype=np.int64),
+                overflow_mask=np.array([True], dtype=bool),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(TypeError, match="integer"):
+            PrecisionTrapReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([0.0]),
+                overflow_mask=np.array([False], dtype=bool),
+                output_fmt=Q16_16,
+            )
+
+
 class TestQFormatMixed:
     """Validate the Q8.8-weight/Q16.16-accumulator contract."""
 
@@ -164,7 +214,9 @@ class TestQFormatMixed:
 
         assert tensor_scale == 1.0
         np.testing.assert_array_equal(quantised, np.zeros((2, 3), dtype=np.int64))
-        np.testing.assert_array_equal(dequantize_weights(quantised, fmt=fmt, scale=tensor_scale), weights)
+        np.testing.assert_array_equal(
+            dequantize_weights(quantised, fmt=fmt, scale=tensor_scale), weights
+        )
 
     def test_mixed_quantisation_rejects_non_finite_weights(self):
         with pytest.raises(ValueError, match="finite values"):
@@ -225,7 +277,9 @@ class TestCompiledMixedDense:
             dtype=np.int64,
         )
         np.testing.assert_array_equal(compiled.forward_accumulator_codes(inputs), manual)
-        np.testing.assert_allclose(compiled.forward_float(inputs), weights @ inputs, atol=1 / Q16_16.scale)
+        np.testing.assert_allclose(
+            compiled.forward_float(inputs), weights @ inputs, atol=1 / Q16_16.scale
+        )
 
     def test_default_scaled_contract_tracks_float_dense_result(self):
         weights = np.array([[0.375, -0.125, 0.0625], [-0.5, 0.25, 0.125]], dtype=np.float64)
@@ -244,6 +298,12 @@ class TestCompiledMixedDense:
 
         assert overflow.tolist() == [True]
         assert int(codes[0]) == (1 << (Q16_16.total_bits - 1)) - 1
+
+        report = compiled.precision_trap_report(inputs)
+        assert report.manifest()["operation"] == "dense_mixed_qformat"
+        assert report.overflow_count == 1
+        assert report.saturated_max_count == 1
+        assert report.saturated_min_count == 0
 
     def test_negative_raw_products_use_hardware_arithmetic_shift(self):
         weights = np.array([[0.5]], dtype=np.float64)
@@ -323,6 +383,12 @@ class TestCompiledBlockFloatingDense:
 
         assert overflow.tolist() == [True]
         assert int(codes[0]) == (1 << (Q16_16.total_bits - 1)) - 1
+
+        report = compiled.precision_trap_report(inputs)
+        assert report.manifest()["operation"] == "dense_block_floating"
+        assert report.overflow_count == 1
+        assert report.saturated_max_count == 1
+        assert report.saturated_min_count == 0
 
     def test_block_floating_dense_rejects_invalid_shapes_and_inputs(self):
         with pytest.raises(ValueError, match="2-D dense"):

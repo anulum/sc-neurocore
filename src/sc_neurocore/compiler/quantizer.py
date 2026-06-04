@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Literal
 
 import numpy as np
@@ -286,7 +286,9 @@ def _round_scaled(scaled: np.ndarray[Any, Any], rounding: str) -> np.ndarray[Any
         return (floor + (np.random.random(scaled.shape) < probability)).astype(np.int64)
     if rounding == "floor":
         return np.floor(scaled).astype(np.int64)
-    raise ValueError(f"Unknown rounding mode: {rounding!r}. Use 'nearest', 'stochastic', or 'floor'.")
+    raise ValueError(
+        f"Unknown rounding mode: {rounding!r}. Use 'nearest', 'stochastic', or 'floor'."
+    )
 
 
 def _quantize_fixed_array(
@@ -376,6 +378,81 @@ def quantize_weights(
 
 
 @dataclass(frozen=True)
+class PrecisionTrapReport:
+    """Per-output fixed-point saturation report for deployment trap wiring."""
+
+    operation: str
+    output_codes: np.ndarray[Any, Any]
+    overflow_mask: np.ndarray[Any, Any]
+    output_fmt: QFormat
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.operation, str) or not self.operation:
+            raise ValueError("operation must be a non-empty string")
+        if not isinstance(self.output_fmt, QFormat):
+            raise TypeError("output_fmt must be a QFormat")
+
+        raw_codes = np.asarray(self.output_codes)
+        if not np.issubdtype(raw_codes.dtype, np.integer):
+            raise TypeError("output_codes must contain integer fixed-point codes")
+        codes = raw_codes.astype(np.int64, copy=True)
+        mask = np.asarray(self.overflow_mask, dtype=bool)
+
+        if codes.ndim != 1:
+            raise ValueError("output_codes must be a 1-D vector")
+        if mask.ndim != 1:
+            raise ValueError("overflow_mask must be a 1-D vector")
+        if codes.shape != mask.shape:
+            raise ValueError("output_codes and overflow_mask must have identical shape")
+
+        min_code, max_code = _fixed_integer_bounds(self.output_fmt)
+        if np.any(codes < min_code) or np.any(codes > max_code):
+            raise ValueError("output_codes exceed the configured output format")
+
+        object.__setattr__(self, "output_codes", codes)
+        object.__setattr__(self, "overflow_mask", mask.astype(bool, copy=True))
+
+    @property
+    def output_count(self) -> int:
+        """Number of output channels covered by this report."""
+        return int(self.output_codes.size)
+
+    @property
+    def overflow_count(self) -> int:
+        """Number of outputs that saturated during the producing operation."""
+        return int(np.count_nonzero(self.overflow_mask))
+
+    @property
+    def has_overflow(self) -> bool:
+        """Whether any output channel saturated."""
+        return self.overflow_count > 0
+
+    @property
+    def saturated_min_count(self) -> int:
+        """Number of outputs clamped to the minimum representable code."""
+        min_code, _ = _fixed_integer_bounds(self.output_fmt)
+        return int(np.count_nonzero(self.output_codes == min_code))
+
+    @property
+    def saturated_max_count(self) -> int:
+        """Number of outputs clamped to the maximum representable code."""
+        _, max_code = _fixed_integer_bounds(self.output_fmt)
+        return int(np.count_nonzero(self.output_codes == max_code))
+
+    def manifest(self) -> dict[str, bool | int | str]:
+        """Deterministic trap metadata for host and hardware telemetry."""
+        return {
+            "operation": self.operation,
+            "output_format": self.output_fmt.q_label,
+            "output_count": self.output_count,
+            "overflow_count": self.overflow_count,
+            "saturated_min_count": self.saturated_min_count,
+            "saturated_max_count": self.saturated_max_count,
+            "has_overflow": self.has_overflow,
+        }
+
+
+@dataclass(frozen=True)
 class CompiledMixedDense:
     """Bit-true mixed fixed-point dense operator compiled from float weights."""
 
@@ -455,7 +532,9 @@ class CompiledMixedDense:
         if divisor == self.fmt.weight_fmt.scale:
             accumulator_codes = np.floor_divide(raw_products, self.fmt.weight_fmt.scale)
         else:
-            accumulator_codes = _round_scaled(raw_products.astype(np.float64) / divisor, self.fmt.rounding)
+            accumulator_codes = _round_scaled(
+                raw_products.astype(np.float64) / divisor, self.fmt.rounding
+            )
 
         min_accum, max_accum = _fixed_integer_bounds(self.fmt.accum_fmt)
         overflow = (accumulator_codes < min_accum) | (accumulator_codes > max_accum)
@@ -466,6 +545,16 @@ class CompiledMixedDense:
         """Return saturated accumulator-format integer codes for dense outputs."""
         codes, _ = self.forward_with_overflow(inputs)
         return codes
+
+    def precision_trap_report(self, inputs: np.ndarray[Any, Any]) -> PrecisionTrapReport:
+        """Return saturation telemetry suitable for a hardware trap register."""
+        codes, overflow = self.forward_with_overflow(inputs)
+        return PrecisionTrapReport(
+            operation="dense_mixed_qformat",
+            output_codes=codes,
+            overflow_mask=overflow,
+            output_fmt=self.fmt.accum_fmt,
+        )
 
     def forward_float(self, inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Return dense outputs reconstructed from saturated accumulator codes."""
@@ -506,6 +595,7 @@ class CompiledBlockFloatingDense:
     exponents: np.ndarray[Any, Any]
     mode: BlockFloatingMode
     input_fmt: QFormat = Q16_16
+    _weight_values: np.ndarray[Any, Any] = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         if not isinstance(self.mode, BlockFloatingMode):
@@ -518,7 +608,9 @@ class CompiledBlockFloatingDense:
         if mantissas.ndim != 2:
             raise ValueError("mantissas must be a 2-D dense weight matrix")
 
-        expected_blocks = int(math.ceil(mantissas.size / self.mode.block_size)) if mantissas.size else 0
+        expected_blocks = (
+            int(math.ceil(mantissas.size / self.mode.block_size)) if mantissas.size else 0
+        )
         if exponents.size != expected_blocks:
             raise ValueError(
                 f"exponent count mismatch: expected {expected_blocks}, got {int(exponents.size)}"
@@ -531,7 +623,9 @@ class CompiledBlockFloatingDense:
 
         object.__setattr__(self, "mantissas", mantissas)
         object.__setattr__(self, "exponents", exponents)
-        object.__setattr__(self, "_weight_values", self._reconstruct_weight_values(mantissas, exponents))
+        object.__setattr__(
+            self, "_weight_values", self._reconstruct_weight_values(mantissas, exponents)
+        )
 
     @property
     def output_size(self) -> int:
@@ -609,6 +703,16 @@ class CompiledBlockFloatingDense:
         codes, _ = self.forward_with_overflow(inputs)
         return codes
 
+    def precision_trap_report(self, inputs: np.ndarray[Any, Any]) -> PrecisionTrapReport:
+        """Return saturation telemetry suitable for a hardware trap register."""
+        codes, overflow = self.forward_with_overflow(inputs)
+        return PrecisionTrapReport(
+            operation="dense_block_floating",
+            output_codes=codes,
+            overflow_mask=overflow,
+            output_fmt=self.input_fmt,
+        )
+
 
 def compile_dense_block_floating(
     weights: np.ndarray[Any, Any],
@@ -648,7 +752,9 @@ def compile_dense_block_floating(
     )
 
 
-def _encode_bfp_block(values: np.ndarray[Any, Any], mode: BlockFloatingMode, *, clip: bool) -> tuple[int, np.ndarray[Any, Any]]:
+def _encode_bfp_block(
+    values: np.ndarray[Any, Any], mode: BlockFloatingMode, *, clip: bool
+) -> tuple[int, np.ndarray[Any, Any]]:
     abs_max = float(np.max(np.abs(values))) if len(values) else 0.0
     if abs_max == 0.0:
         exponent = mode.exponent_bias
@@ -657,7 +763,7 @@ def _encode_bfp_block(values: np.ndarray[Any, Any], mode: BlockFloatingMode, *, 
         exponent = max(0, min((1 << mode.exponent_bits) - 1, unbiased_exp + mode.exponent_bias))
 
     exp_unbiased = exponent - mode.exponent_bias
-    scale = 2.0 ** exp_unbiased
+    scale = 2.0**exp_unbiased
     encoded = np.rint(values / scale).astype(np.int64)
 
     if clip:
@@ -721,9 +827,7 @@ def dequantize_block_floating(
 
     num_blocks = int(math.ceil(flat.size / mode.block_size)) if flat.size else 0
     if exps.size != num_blocks:
-        raise ValueError(
-            f"Exponent count mismatch: expected {num_blocks}, got {int(exps.size)}"
-        )
+        raise ValueError(f"Exponent count mismatch: expected {num_blocks}, got {int(exps.size)}")
 
     restored = np.empty_like(flat, dtype=np.float64)
     for idx in range(num_blocks):
