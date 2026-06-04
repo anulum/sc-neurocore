@@ -25,8 +25,14 @@ def test_precision_overflow_trap_hdl_exposes_sticky_vector_contract() -> None:
     assert "input wire clear_trap" in source
     assert "input wire [TRAP_WIDTH-1:0] overflow_in" in source
     assert "output reg [TRAP_WIDTH-1:0] trap_vector" in source
+    assert "output wire [TRAP_WIDTH-1:0] trap_event_vector" in source
+    assert "output wire trap_event" in source
     assert "output wire trap_latched" in source
-    assert "trap_vector <= trap_vector | overflow_in" in source
+    assert "trap_accepting = rst_n & ~clear_trap" in source
+    assert "trap_event_vector = trap_accepting ? overflow_in" in source
+    assert "trap_vector <= trap_vector | trap_event_vector" in source
+    assert "a_no_silent_precision_overflow" in source
+    assert "a_sticky_precision_overflow" in source
 
 
 def test_precision_overflow_trap_hdl_latches_clears_and_accumulates(tmp_path: Path) -> None:
@@ -48,6 +54,8 @@ module tb_precision_overflow_trap;
     reg clear_trap = 1'b0;
     reg [2:0] overflow_in = 3'b000;
     wire [2:0] trap_vector;
+    wire [2:0] trap_event_vector;
+    wire trap_event;
     wire trap_latched;
 
     sc_precision_overflow_trap #(
@@ -58,6 +66,8 @@ module tb_precision_overflow_trap;
         .clear_trap(clear_trap),
         .overflow_in(overflow_in),
         .trap_vector(trap_vector),
+        .trap_event_vector(trap_event_vector),
+        .trap_event(trap_event),
         .trap_latched(trap_latched)
     );
 
@@ -66,7 +76,19 @@ module tb_precision_overflow_trap;
     initial begin
         #12 rst_n = 1'b1;
         #10 overflow_in = 3'b010;
+        #1;
+        if (trap_event_vector !== 3'b010 || trap_event !== 1'b1) begin
+            $fatal(1, "overflow event was not exposed in the same cycle");
+        end
+        #9;
+        if (trap_vector !== 3'b010 || trap_latched !== 1'b1) begin
+            $fatal(1, "overflow pulse was not retained after latch edge");
+        end
         #10 overflow_in = 3'b000;
+        #1;
+        if (trap_event_vector !== 3'b000 || trap_event !== 1'b0) begin
+            $fatal(1, "idle cycle leaked a trap event");
+        end
         #10;
         if (trap_vector !== 3'b010 || trap_latched !== 1'b1) begin
             $fatal(1, "overflow pulse was not retained");
@@ -74,15 +96,29 @@ module tb_precision_overflow_trap;
 
         clear_trap = 1'b1;
         overflow_in = 3'b111;
-        #10;
+        #1;
+        if (trap_event_vector !== 3'b000 || trap_event !== 1'b0) begin
+            $fatal(1, "clear must suppress same-cycle overflow event");
+        end
+        #9;
         if (trap_vector !== 3'b000 || trap_latched !== 1'b0) begin
             $fatal(1, "clear must dominate concurrent overflow");
         end
 
         clear_trap = 1'b0;
-        overflow_in = 3'b101;
-        #10 overflow_in = 3'b001;
-        #10 overflow_in = 3'b000;
+        overflow_in = 3'b100;
+        #1;
+        if (trap_event_vector !== 3'b100 || trap_event !== 1'b1) begin
+            $fatal(1, "first accumulated overflow event was not exposed");
+        end
+        #9;
+        overflow_in = 3'b001;
+        #1;
+        if (trap_event_vector !== 3'b001 || trap_event !== 1'b1) begin
+            $fatal(1, "second accumulated overflow event was not exposed");
+        end
+        #9;
+        overflow_in = 3'b000;
         #10;
         if (trap_vector !== 3'b101 || trap_latched !== 1'b1) begin
             $fatal(1, "trap vector did not accumulate overflow lanes");

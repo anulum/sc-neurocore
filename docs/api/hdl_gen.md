@@ -151,6 +151,16 @@ behave (Rushby 1993): a single violation must not be "washed out" by a
 subsequent good cycle — the safety-case analysis depends on every
 violation being observable.
 
+The precision-overflow trap follows the same fail-observable rule for
+mixed-precision datapaths. `sc_precision_overflow_trap` exposes both
+`trap_event_vector`/`trap_event`, which mirror accepted overflow lanes in
+the same cycle, and `trap_vector`/`trap_latched`, which retain every lane
+until the host asserts `clear_trap` or reset. Clear and reset dominate
+concurrent overflow pulses, so host intervention cannot accidentally
+re-latch stale saturation telemetry. Optional
+`SC_NEUROCORE_ASSERTIONS` properties bind the no-silent-overflow and
+sticky-latch contracts for formal or simulation audit runs.
+
 ### 2.4 Nanosecond response budget
 
 `hardware_halt` is a pure combinational OR of the seven violation
