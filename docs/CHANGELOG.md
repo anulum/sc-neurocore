@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added the PCIe-MMIO live-control register-window adapter over the staged
+  parameter-bank core, module-specific PCIe commit simulation, process-affinity
+  AXI4-Lite/PCIe comparison benchmark evidence, and compiler API documentation
+  for the exact bus-contract boundary.
 - Added the UltraScale+ dense-folding contract: shared Rust/Python fold planner,
   folded Q8.8/Q16.16 HDL core, target-emitter fold metadata, module-specific
   simulation tests, and isolated Python/Rust benchmark evidence for fitting the

@@ -54,7 +54,13 @@
       "artefact": "benchmarks/results/local_python_2026-06-04_live_control_updates.json",
       "expected_values": {
         "benchmark": "live_control_update_and_trap_evidence",
+        "benchmark_isolation_mode": "process-affinity-cpuset",
+        "bus_protocols.axi4_lite": true,
+        "bus_protocols.pcie": true,
         "language": "Python+SystemVerilog",
+        "measurement_context.benchmark_affinity_matches_requested": true,
+        "measurement_context.runtime_cpuset_shield_claimed": true,
+        "pcie_mmio_commit_capture.passed": true,
         "trap_bits.staged_overflow": 1,
         "trap_bits.staged_underflow": 2,
         "trap_capture.passed": true
@@ -65,9 +71,14 @@
         "repeats",
         "valid_update_write_count",
         "live_update_sequence_median_ns",
+        "pcie_mmio_valid_update_write_count",
+        "pcie_mmio_live_update_sequence_median_ns",
         "static_regeneration_median_ns",
+        "pcie_mmio_static_regeneration_median_ns",
         "trap_capture.compile_ns",
-        "trap_capture.simulation_ns"
+        "trap_capture.simulation_ns",
+        "pcie_mmio_commit_capture.compile_ns",
+        "pcie_mmio_commit_capture.simulation_ns"
       ]
     },
     {
