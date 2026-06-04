@@ -50,6 +50,26 @@
         "hardware_measurement_claimed": false,
         "joint_design.enabled": true
       }
+    },
+    {
+      "id": "live-control-update-trap-evidence",
+      "artefact": "benchmarks/results/local_python_2026-06-04_live_control_updates.json",
+      "required_numbers": [
+        "iterations",
+        "repeats",
+        "valid_update_write_count",
+        "live_update_sequence_median_ns",
+        "static_regeneration_median_ns",
+        "trap_capture.compile_ns",
+        "trap_capture.simulation_ns"
+      ],
+      "expected_values": {
+        "benchmark": "live_control_update_and_trap_evidence",
+        "language": "Python+SystemVerilog",
+        "trap_bits.staged_overflow": 1,
+        "trap_bits.staged_underflow": 2,
+        "trap_capture.passed": true
+      }
     }
   ]
 }

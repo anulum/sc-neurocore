@@ -6,6 +6,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added live-control update and trap evidence benchmarks covering generated
+  MMIO update sequences, static RTL regeneration, and staged range-trap
+  simulation, with the artefact registered in the benchmark gate manifest.
 - Added generated live-parameter-bank staged overflow and underflow traps that
   latch malformed MMIO payloads and block shadow-bank mutation before active
   coefficient application.

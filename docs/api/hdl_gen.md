@@ -171,6 +171,11 @@ staged-overflow and staged-underflow traps from the selected bank width before
 shadow loading, so malformed MMIO payloads cannot truncate into active
 coefficients. This lets a deployed design hot-swap weights or phase-coupling
 coefficients while keeping the precision and trap contracts auditable.
+The local regression artefact
+`benchmarks/results/local_python_2026-06-04_live_control_updates.json` records
+the generated update-sequence timing, static RTL regeneration timing, and
+overflow/underflow trap-capture simulation under taskset-only affinity; it is
+not a production throughput claim.
 
 ### 2.4 Nanosecond response budget
 
