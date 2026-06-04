@@ -254,12 +254,18 @@ This path is wired across three implementation surfaces:
   canonical integer MAC, arithmetic shift, shape validation, and saturation
   behaviour.
 - HDL: `hdl/sc_mixed_precision_dense.v` provides a synchronous RTL reference
-  with explicit overflow telemetry and saturated Q16.16 outputs.
+  with per-output overflow telemetry, aggregate overflow, and saturated Q16.16
+  outputs.
 
 Benchmark and synthesis evidence from 2026-06-04 is committed under
 `benchmarks/results/local_python_2026-06-04_mixed_dense.json`,
 `benchmarks/results/local_rust_2026-06-04_mixed_dense.json`, and
 `hdl/reports/yosys_mixed_precision_dense_2026-06-04.json`.
+
+The HDL `overflow_vector` is lane-aligned with the Python/Rust overflow masks:
+bit `i` is asserted only when output channel `i` saturates to the signed Q16.16
+minimum or maximum code.  The aggregate `overflow` output is the OR of that
+vector for consumers that only need a single anomaly line.
 
 ### Precision Trap Reports and Hardware Latch
 
