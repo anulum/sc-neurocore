@@ -214,6 +214,7 @@ nav:
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
   - Hardware:
+      - Timing-Aware Formal Properties: formal/timing_aware_properties.md
       - Hardware Guide: hardware/HARDWARE_GUIDE.md
       - AER Priority Queue: hardware/aer_priority_queue.md
       - FPGA Toolchain Guide: hardware/FPGA_TOOLCHAIN_GUIDE.md

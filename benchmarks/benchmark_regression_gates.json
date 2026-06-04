@@ -1,24 +1,27 @@
 {
   "SPDX-License-Identifier": "AGPL-3.0-or-later",
-  "schema_version": "sc-neurocore.benchmark-regression-gates.v1",
   "gates": [
     {
-      "id": "formal-proof-elaboration",
       "artefact": "benchmarks/results/bench_formal.json",
+      "expected_values": {
+        "cold_exit_code": 0,
+        "warm_exit_code": 0
+      },
+      "id": "formal-proof-elaboration",
       "required_numbers": [
         "lean_check_cold_wall_s",
         "lean_check_warm_wall_s",
         "n_theorems_proved",
         "n_axioms_explicit"
-      ],
-      "expected_values": {
-        "cold_exit_code": 0,
-        "warm_exit_code": 0
-      }
+      ]
     },
     {
-      "id": "online-o1-adaptation",
       "artefact": "benchmarks/results/online_o1_adaptation_benchmark.json",
+      "expected_values": {
+        "hardware_measurement_claimed": false,
+        "parity.rust_matches_python": true
+      },
+      "id": "online-o1-adaptation",
       "required_numbers": [
         "python.final_weight",
         "python.steps_to_target",
@@ -27,15 +30,15 @@
         "resource_estimate.per_synapse_state_bits",
         "resource_estimate.total_state_bits",
         "resource_estimate.max_update_latency_cycles"
-      ],
-      "expected_values": {
-        "hardware_measurement_claimed": false,
-        "parity.rust_matches_python": true
-      }
+      ]
     },
     {
-      "id": "stochastic-backpropagation",
       "artefact": "benchmarks/results/stochastic_backprop_benchmark.json",
+      "expected_values": {
+        "hardware_measurement_claimed": false,
+        "joint_design.enabled": true
+      },
+      "id": "stochastic-backpropagation",
       "required_numbers": [
         "loss.initial",
         "loss.final",
@@ -45,15 +48,18 @@
         "estimator_variance.estimators.straight_through.variance",
         "stream_evidence.sampled_product_mae",
         "objective_terms.total"
-      ],
-      "expected_values": {
-        "hardware_measurement_claimed": false,
-        "joint_design.enabled": true
-      }
+      ]
     },
     {
-      "id": "live-control-update-trap-evidence",
       "artefact": "benchmarks/results/local_python_2026-06-04_live_control_updates.json",
+      "expected_values": {
+        "benchmark": "live_control_update_and_trap_evidence",
+        "language": "Python+SystemVerilog",
+        "trap_bits.staged_overflow": 1,
+        "trap_bits.staged_underflow": 2,
+        "trap_capture.passed": true
+      },
+      "id": "live-control-update-trap-evidence",
       "required_numbers": [
         "iterations",
         "repeats",
@@ -62,18 +68,22 @@
         "static_regeneration_median_ns",
         "trap_capture.compile_ns",
         "trap_capture.simulation_ns"
-      ],
-      "expected_values": {
-        "benchmark": "live_control_update_and_trap_evidence",
-        "language": "Python+SystemVerilog",
-        "trap_bits.staged_overflow": 1,
-        "trap_bits.staged_underflow": 2,
-        "trap_capture.passed": true
-      }
+      ]
     },
     {
-      "id": "aer-priority-backpressure-contract",
       "artefact": "benchmarks/results/local_python_2026-06-04_aer_priority_queue.json",
+      "expected_values": {
+        "benchmark": "aer_priority_queue_backpressure_contract",
+        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "fifo_tie_violations": 0,
+        "hardware_measurement_claimed": false,
+        "host_context.cgroup_effective_cpuset": "10-11",
+        "host_context.runtime_cpuset_shield_claimed": true,
+        "language": "Python+SystemVerilog",
+        "priority_violations": 0,
+        "yosys.exit_code": 0
+      },
+      "id": "aer-priority-backpressure-contract",
       "required_numbers": [
         "events",
         "repeats",
@@ -83,18 +93,37 @@
         "backpressure_rejections",
         "deadline_traps",
         "yosys.elapsed_ns"
-      ],
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_timing_formal_framework.json",
+      "description": "NEU-C.2 timing-aware formal framework proof and model-emitter evidence.",
       "expected_values": {
-        "benchmark": "aer_priority_queue_backpressure_contract",
-        "language": "Python+SystemVerilog",
-        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "benchmark": "timing_formal_framework",
+        "cvc5_available": true,
         "hardware_measurement_claimed": false,
-        "priority_violations": 0,
-        "fifo_tie_violations": 0,
         "host_context.cgroup_effective_cpuset": "10-11",
         "host_context.runtime_cpuset_shield_claimed": true,
-        "yosys.exit_code": 0
-      }
+        "language": "Python+SystemVerilog",
+        "sby_available": true,
+        "symbiyosys_passed": true
+      },
+      "id": "timing-formal-framework",
+      "minimum_values": {
+        "kind2_emit_count": 16,
+        "nuxmv_emit_count": 16,
+        "property_count": 16
+      },
+      "required_numbers": [
+        "property_count",
+        "nuxmv_emit_count",
+        "kind2_emit_count",
+        "nuxmv_emit_s",
+        "kind2_emit_s",
+        "sby_runtime_s",
+        "sby_exit_code"
+      ]
     }
-  ]
+  ],
+  "schema_version": "sc-neurocore.benchmark-regression-gates.v1"
 }

@@ -703,3 +703,18 @@ Competitive comparison (raw waveform compression):
   reports true Rust throughput without FFI.
 - Brian2 installed with numpy 2.4.2 (its requirement); benchmarks run after
   downgrading to numpy 1.26.4 for sc-neurocore compatibility.
+
+## Timing-aware formal framework (2026-06-04)
+
+Artefact: `benchmarks/results/local_python_2026-06-04_timing_formal_framework.json`.
+
+This benchmark exercises the NEU-C.2 timing formal framework across the active polyglot proof surfaces. The run was executed under runtime core isolation with `host_context.cgroup_effective_cpuset=10-11` and `runtime_cpuset_shield_claimed=true`; the workstation load average during the run was `1.96, 2.40, 3.13`. These timings should not be compared against unloaded baselines unless the same isolated-core condition is reproduced.
+
+| Surface | Operation | Result |
+| --- | --- | --- |
+| SystemVerilog | Dense-layer timing monitors proved through SymbiYosys/cvc5 | pass, `1.476097` s |
+| Python | TimingProperty construction and proof orchestration | 16 properties |
+| nuXmv | bounded transition-model emission | 16 models, `0.000016258` s, runtime unavailable locally |
+| Kind 2 | Lustre bounded-node emission | 16 models, `0.000012825` s, runtime unavailable locally |
+
+Evidence boundary: this is formal proof and model-emitter evidence, not hardware throughput evidence. `hardware_measurement_claimed=false` remains intentional.

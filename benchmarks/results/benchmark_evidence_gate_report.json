@@ -20,11 +20,15 @@
     {
       "artefact": "benchmarks/results/local_python_2026-06-04_aer_priority_queue.json",
       "id": "aer-priority-backpressure-contract"
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_timing_formal_framework.json",
+      "id": "timing-formal-framework"
     }
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 5,
+  "gate_count": 6,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"
