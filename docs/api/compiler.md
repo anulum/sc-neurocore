@@ -274,6 +274,23 @@ Python `PrecisionEnvelopeReport.abs_bound_codes` and Rust
 `MixedDenseResult.abs_bounds_q1616`, including cancellation cases where the
 realised output is small but the absolute product envelope is large.
 
+### Live-Control Parameter Banks
+
+The live-control schema decouples long-lived parameters from static logic
+fabric. `ParameterBankSpec` describes writable Q-format or block-floating
+entries in BRAM/distributed RAM, including byte span, entry addresses, and raw
+encoded-word bounds. `MMIOUpdateSpec` adds a deterministic AXI4-Lite/PCIe
+control window with fixed registers for bank select, entry select, write-data
+low/high words, status, trap status, and trap clear. Host code uses
+`build_update_sequence(...)` to stage a bank/index/value update and then assert
+`update_valid|commit` in one command write, so operators can update weights or
+Kuramoto phase-coupling parameters without resynthesising the bitstream.
+
+The status map exposes `ready`, `busy`, `update_ack`, and `trap_latched` bits.
+Trap clearing is a separate two-write sequence that records the intended flag
+width before asserting the clear command, preserving deterministic host
+intervention semantics.
+
 `forward_with_overflow` returns saturated accumulator-format integer codes and
 per-output overflow flags.  In canonical `scale_per_tensor=False` mode the
 division from Q8.8×Q16.16 products to Q16.16 outputs uses the same signed
