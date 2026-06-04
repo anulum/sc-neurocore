@@ -40,6 +40,7 @@ governor, and frequency evidence.
 | Precision envelope report block-floating dense (64x32 safe) | Rust | 20000 | 8.748 us | max_abs_bound=78032768 |
 | Precision envelope guard | HDL/Yosys | N_OUTPUTS=32 | 67 cells | `$adff`+`$gt`+`$mux`+`$reduce_or` |
 | Live-control parameter update sequence | Python+SystemVerilog | 20000 | 19.501 us | static_regeneration=109.204 us, generated trap capture passed |
+| AER strict-priority queue backpressure | Python+SystemVerilog | 4096 events x 100 repeats | 4.138 us/event | runtime cpuset shield 10-11, priority=0 violations, FIFO=0 violations, drop/deadline traps latched |
 | Full pipeline (4 syn, 256 steps) | cpu | 200 | 1830.0 us | 139.9 Kstep/s |
 | Full pipeline (16 syn, 256 steps) | cpu | 50 | 8678.5 us | 29.5 Kstep/s |
 | gpu_pack_bitstream (65536) | cpu | 2000 | 375.9 us | 0.17 Gbit/s |

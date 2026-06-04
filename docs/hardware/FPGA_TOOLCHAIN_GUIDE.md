@@ -137,6 +137,22 @@ vvp tb_lif
 python scripts/cosim_gen_and_check.py --check
 ```
 
+### Formal RTL Checks: SymbiYosys + Yosys
+
+| Item | Details |
+|------|---------|
+| **Download** | OSS CAD Suite or distro packages providing `sby`, `yosys`, and `cvc5` |
+| **Purpose** | Discharge module-level safety and ordering properties before FPGA integration |
+| **Current AER job** | `hdl/formal/sc_aer_priority_queue.sby` |
+
+```bash
+# Bounded proof when SymbiYosys and cvc5 are installed
+sby -f hdl/formal/sc_aer_priority_queue.sby
+
+# Parse/elaboration fallback used for local regression evidence
+yosys -p "read_verilog -formal -sv hdl/sc_aer_priority_queue.v hdl/formal/sc_aer_priority_queue_formal.v; prep -top sc_aer_priority_queue_formal"
+```
+
 ---
 
 ## 3. Hardware Requirements by Use Case

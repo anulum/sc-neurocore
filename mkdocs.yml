@@ -215,6 +215,7 @@ nav:
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
   - Hardware:
       - Hardware Guide: hardware/HARDWARE_GUIDE.md
+      - AER Priority Queue: hardware/aer_priority_queue.md
       - FPGA Toolchain Guide: hardware/FPGA_TOOLCHAIN_GUIDE.md
       - Hardware Manual: hardware/SC_NEUROCORE_HARDWARE_MANUAL.md
       - Implementation Summary: hardware/HARDWARE_IMPLEMENTATION_SUMMARY.md

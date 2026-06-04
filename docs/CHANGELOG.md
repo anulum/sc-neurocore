@@ -6,6 +6,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added the NEU-C.4 AER strict-priority queue and router backpressure path,
+  including sticky drop/deadline traps, Python reference contract,
+  SystemVerilog simulation, formal harness, benchmark gate, and hardware docs.
 - Added live-control update and trap evidence benchmarks covering generated
   MMIO update sequences, static RTL regeneration, and staged range-trap
   simulation, with the artefact registered in the benchmark gate manifest.

@@ -70,6 +70,31 @@
         "trap_bits.staged_underflow": 2,
         "trap_capture.passed": true
       }
+    },
+    {
+      "id": "aer-priority-backpressure-contract",
+      "artefact": "benchmarks/results/local_python_2026-06-04_aer_priority_queue.json",
+      "required_numbers": [
+        "events",
+        "repeats",
+        "median_ns_per_event",
+        "priority_violations",
+        "fifo_tie_violations",
+        "backpressure_rejections",
+        "deadline_traps",
+        "yosys.elapsed_ns"
+      ],
+      "expected_values": {
+        "benchmark": "aer_priority_queue_backpressure_contract",
+        "language": "Python+SystemVerilog",
+        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "hardware_measurement_claimed": false,
+        "priority_violations": 0,
+        "fifo_tie_violations": 0,
+        "host_context.cgroup_effective_cpuset": "10-11",
+        "host_context.runtime_cpuset_shield_claimed": true,
+        "yosys.exit_code": 0
+      }
     }
   ]
 }
