@@ -17,9 +17,29 @@ const N_OUTPUTS: usize = 32;
 const ITERATIONS: usize = 20_000;
 const REPEATS: usize = 7;
 
+fn round_div_nearest_even(value: i32, divisor: i32) -> i16 {
+    let sign = if value < 0 { -1 } else { 1 };
+    let magnitude = value.abs();
+    let quotient = magnitude / divisor;
+    let remainder = magnitude % divisor;
+    let rounded_magnitude = if remainder * 2 < divisor {
+        quotient
+    } else if remainder * 2 > divisor {
+        quotient + 1
+    } else if quotient % 2 == 0 {
+        quotient
+    } else {
+        quotient + 1
+    };
+    (sign * rounded_magnitude) as i16
+}
+
 fn deterministic_mantissas() -> Vec<i16> {
     (0..(N_INPUTS * N_OUTPUTS))
-        .map(|i| (((i * 23 + 3) % 1025) as i32 - 512) as i16)
+        .map(|i| {
+            let raw_weight_code = ((i * 23 + 3) % 1025) as i32 - 512;
+            round_div_nearest_even(raw_weight_code, 64)
+        })
         .collect()
 }
 
@@ -64,10 +84,7 @@ fn median(values: &mut [f64]) -> f64 {
 fn main() {
     let mode = BlockFloatingMode::bfp16_e3_x32();
     let mantissas = deterministic_mantissas();
-    let exponents = vec![
-        mode.exponent_bias() as u8;
-        (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size
-    ];
+    let exponents = vec![0_u8; (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size];
     let inputs = deterministic_inputs();
     let mut ns_per_call = Vec::with_capacity(REPEATS);
     let mut checksum = 0_i64;
@@ -79,15 +96,21 @@ fn main() {
         checksum ^= run_checksum;
         overflow_count = run_overflow_count;
     }
-    let saturating_mantissas = vec![i16::MAX; N_INPUTS * N_OUTPUTS];
+    let saturating_mantissas = vec![16_384_i16; N_INPUTS * N_OUTPUTS];
+    let saturating_exponents =
+        vec![2_u8; (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size];
     let saturating_inputs = vec![32767_i32 << 16; N_INPUTS];
     let safe_envelope_report =
         block_floating_dense_q16(&mantissas, &exponents, &inputs, N_OUTPUTS, N_INPUTS, mode)
             .expect("safe envelope dimensions must be valid")
             .precision_envelope_report();
+    let mantissa_checksum = mantissas.iter().map(|&value| i64::from(value)).sum::<i64>();
+    let exponent_checksum = exponents.iter().map(|&value| i64::from(value)).sum::<i64>();
+    let exponent_code_min = exponents.iter().copied().min().unwrap_or(0);
+    let exponent_code_max = exponents.iter().copied().max().unwrap_or(0);
     let saturating_probe = block_floating_dense_q16(
         &saturating_mantissas,
-        &exponents,
+        &saturating_exponents,
         &saturating_inputs,
         N_OUTPUTS,
         N_INPUTS,
@@ -133,6 +156,10 @@ fn main() {
             "  \"safe_max_abs_bound_q1616\": {safe_max_abs_bound_q1616},\n",
             "  \"safe_conservative_overflow_free\": {safe_conservative_overflow_free},\n",
             "  \"safe_min_headroom_q1616\": {safe_min_headroom_q1616},\n",
+            "  \"mantissa_checksum\": {mantissa_checksum},\n",
+            "  \"exponent_checksum\": {exponent_checksum},\n",
+            "  \"exponent_code_min\": {exponent_code_min},\n",
+            "  \"exponent_code_max\": {exponent_code_max},\n",
             "  \"saturating_probe_overflow_count\": {saturating_probe_overflow_count},\n",
             "  \"saturating_probe_max_abs_bound_q1616\": {saturating_probe_max_abs_bound_q1616},\n",
             "  \"saturating_probe_conservative_overflow_free\": {saturating_probe_conservative_overflow_free},\n",
@@ -157,6 +184,10 @@ fn main() {
         safe_max_abs_bound_q1616 = safe_envelope_report.max_abs_bound_q1616,
         safe_conservative_overflow_free = safe_envelope_report.conservative_overflow_free,
         safe_min_headroom_q1616 = safe_envelope_report.min_headroom_q1616,
+        mantissa_checksum = mantissa_checksum,
+        exponent_checksum = exponent_checksum,
+        exponent_code_min = exponent_code_min,
+        exponent_code_max = exponent_code_max,
         saturating_probe_overflow_count = saturating_probe_overflow_count,
         saturating_probe_max_abs_bound_q1616 = saturating_probe_envelope_report.max_abs_bound_q1616,
         saturating_probe_conservative_overflow_free = saturating_probe_envelope_report.conservative_overflow_free,

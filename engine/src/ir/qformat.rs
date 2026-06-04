@@ -748,3 +748,74 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+mod block_floating_benchmark_contract_tests {
+    use super::*;
+
+    const N_INPUTS: usize = 64;
+    const N_OUTPUTS: usize = 32;
+
+    fn round_div_nearest_even(value: i32, divisor: i32) -> i16 {
+        let sign = if value < 0 { -1 } else { 1 };
+        let magnitude = value.abs();
+        let quotient = magnitude / divisor;
+        let remainder = magnitude % divisor;
+        let rounded_magnitude = if remainder * 2 < divisor {
+            quotient
+        } else if remainder * 2 > divisor {
+            quotient + 1
+        } else if quotient % 2 == 0 {
+            quotient
+        } else {
+            quotient + 1
+        };
+        (sign * rounded_magnitude) as i16
+    }
+
+    #[test]
+    fn block_floating_benchmark_matches_python_quantiser_envelope() {
+        let mode = BlockFloatingMode::bfp16_e3_x32();
+        let mantissas = (0..(N_INPUTS * N_OUTPUTS))
+            .map(|idx| {
+                let raw_weight_code = ((idx * 23 + 3) % 1025) as i32 - 512;
+                round_div_nearest_even(raw_weight_code, 64)
+            })
+            .collect::<Vec<_>>();
+        let exponents = vec![0_u8; (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size];
+        let inputs = (0..N_INPUTS)
+            .map(|idx| (((idx * 19 + 5) % 257) as i32 - 128) << 8)
+            .collect::<Vec<_>>();
+
+        let result =
+            block_floating_dense_q16(&mantissas, &exponents, &inputs, N_OUTPUTS, N_INPUTS, mode)
+                .expect("benchmark contract dimensions are valid");
+        let envelope = result.precision_envelope_report();
+
+        assert_eq!(result.overflow_count, 0);
+        assert_eq!(envelope.max_abs_bound_q1616, 610_816);
+        assert!(envelope.conservative_overflow_free);
+
+        let saturating_mantissas = vec![16_384_i16; N_INPUTS * N_OUTPUTS];
+        let saturating_exponents =
+            vec![2_u8; (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size];
+        let saturating_inputs = vec![32767_i32 << 16; N_INPUTS];
+        let saturating_result = block_floating_dense_q16(
+            &saturating_mantissas,
+            &saturating_exponents,
+            &saturating_inputs,
+            N_OUTPUTS,
+            N_INPUTS,
+            mode,
+        )
+        .expect("saturating benchmark contract dimensions are valid");
+        let saturating_envelope = saturating_result.precision_envelope_report();
+
+        assert_eq!(saturating_result.overflow_count, N_OUTPUTS);
+        assert_eq!(
+            saturating_envelope.max_abs_bound_q1616,
+            1_125_865_547_104_256
+        );
+        assert!(!saturating_envelope.conservative_overflow_free);
+    }
+}

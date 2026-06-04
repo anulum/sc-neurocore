@@ -3,6 +3,12 @@
 Generated on: 2026-03-07 00:40:28
 Backend: NumPy (CPU only)
 
+Note: the 2026-06-04 local Python/Rust precision benchmark rows were captured on
+a workstation under concurrent load and without exclusive CPU core isolation.
+Use them as committed contract/regression evidence only.  Production throughput
+claims require a rerun on isolated cores with recorded CPU affinity and host-load
+evidence.
+
 | Benchmark | Backend | Iterations | Avg Latency | Throughput |
 |-----------|---------|------------|-------------|------------|
 | LFSR step (16-bit) | cpu | 1000000 | 0.8 us | 1.33 Mstep/s |
@@ -19,9 +25,9 @@ Backend: NumPy (CPU only)
 | Mixed dense Q8.8/Q16.16 overflow telemetry (64x32) | Python | 2000 | 39.562 us | safe=0, saturating probe=32 |
 | Mixed dense Q8.8/Q16.16 (64x32) | Rust | 20000 | 2.986 us | safe=0, saturating probe=32, safe_bound=531400 |
 | Mixed dense Q8.8/Q16.16 lane telemetry | HDL/Yosys | N_OUTPUTS=32 | 12,708 cells | `overflow_vector` + `abs_bounds_q1616` registered |
-| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 29.453 us | max abs error 0.2231, safe_bound=610816 |
-| Block-floating dense BFP16E3X32/Q16.16 overflow telemetry (64x32) | Python | 2000 | 42.582 us | safe=0, saturating probe=32 |
-| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 9.116 us | safe=0, saturating probe=32, safe_bound=312131072 |
+| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 28.328 us | max abs error 0.2231, safe_bound=610816 |
+| Block-floating dense BFP16E3X32/Q16.16 overflow telemetry (64x32) | Python | 2000 | 31.260 us | safe=0, saturating probe=32 |
+| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 11.331 us | safe=0, saturating probe=32, safe_bound=610816 |
 | Block-floating dense BFP16E3X32/Q16.16 lane telemetry | HDL/Yosys | 2x2 parameterised report | 96 cells | `overflow_vector` + `abs_bounds_q1616` registered |
 | Precision trap report mixed dense (64x32 overflow) | Python | 2000 | 340.461 us | overflow_count=32 |
 | Precision trap report mixed dense (64x32 overflow) | Rust | 20000 | 3.483 us | overflow_count=32 |

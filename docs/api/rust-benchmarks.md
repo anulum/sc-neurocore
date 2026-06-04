@@ -55,13 +55,19 @@ cargo bench --bench analysis_bench -- --quick
 |-----------|-------:|
 | dense_forward_64x32 | 993 µs |
 | mixed_dense_q88_q1616_64x32 | 2.986 µs |
-| block_floating_dense_q16_64x32 | 9.116 µs |
+| block_floating_dense_q16_64x32 | 11.331 µs |
 | mixed_dense_q88_q1616_trap_64x32 | 3.483 µs |
 | block_floating_dense_q16_trap_64x32 | 11.277 µs |
 | mixed_dense_q88_q1616_envelope_64x32 | 3.887 µs |
 | block_floating_dense_q16_envelope_64x32 | 13.510 µs |
 | attention_10x16_20x32 | 88.5 µs |
 | gnn_20x8_forward | 85.3 µs |
+
+The 2026-06-04 dense precision rows were captured on a workstation under
+concurrent load and without exclusive CPU core isolation.  Use the medians as
+local regression context and parity evidence.  Before citing them as production
+throughput, rerun the benchmark on isolated cores and record CPU affinity plus
+host-load evidence in the raw JSON artefact.
 
 `mixed_dense_q88_q1616_64x32` was measured on 2026-06-04 with
 `cargo run --manifest-path engine/Cargo.toml --release --example bench_mixed_dense`.
@@ -83,9 +89,10 @@ matching Python reference artefact is
 Both artefacts record safe-workload overflow count `0` and saturating-probe
 overflow count `32` for parity with the block-floating HDL `overflow_vector`.
 They also record conservative envelope telemetry for comparison with the HDL
-`abs_bounds_q1616` lanes: Python safe max absolute bound `610816`, Rust safe
-max absolute bound `312131072`, Python saturating-probe max bound
-`1125865547104256`, and Rust saturating-probe max bound `4503324753657856`.
+`abs_bounds_q1616` lanes.  The Python and Rust block-floating artefacts now use
+the same physical BFP workload: mantissa checksum `-15`, exponent checksum `0`,
+safe max absolute bound `610816`, and saturating-probe max bound
+`1125865547104256`.
 
 The precision trap rows were measured on 2026-06-04 with
 `cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_traps`.

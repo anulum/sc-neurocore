@@ -14,11 +14,33 @@
   "mixed_trap_max_ns_per_call": 7362.632,
   "mixed_overflow_count": 32,
   "mixed_checksum": 0,
-  "mixed_results_ns_per_call": [6386.829, 3142.927, 7362.632, 2767.427, 5191.008, 3483.093, 2743.655],
+  "mixed_results_ns_per_call": [
+    6386.829,
+    3142.927,
+    7362.632,
+    2767.427,
+    5191.008,
+    3483.093,
+    2743.655
+  ],
   "bfp_trap_median_ns_per_call": 11277.205,
   "bfp_trap_min_ns_per_call": 9754.853,
   "bfp_trap_max_ns_per_call": 14311.523,
   "bfp_overflow_count": 32,
   "bfp_checksum": 0,
-  "bfp_results_ns_per_call": [11393.577, 11100.059, 9754.853, 10977.113, 14311.523, 11710.387, 11277.205]
+  "bfp_results_ns_per_call": [
+    11393.577,
+    11100.059,
+    9754.853,
+    10977.113,
+    14311.523,
+    11710.387,
+    11277.205
+  ],
+  "measurement_context": {
+    "host_load": "workstation under concurrent load during capture",
+    "cpu_isolation": "not exclusive; no isolated benchmark core set was reserved",
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+    "production_rerun_requirement": "rerun on isolated cores with recorded affinity and host-load evidence before publishing performance claims"
+  }
 }

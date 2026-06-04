@@ -9,7 +9,7 @@
   "n_outputs": 32,
   "iterations": 20000,
   "repeats": 7,
-  "median_ns_per_call": 2985.800,
+  "median_ns_per_call": 2985.8,
   "min_ns_per_call": 2514.107,
   "max_ns_per_call": 3875.688,
   "checksum": 0,
@@ -20,5 +20,19 @@
   "saturating_probe_overflow_count": 32,
   "saturating_probe_max_abs_bound_q1616": 17454214414336,
   "saturating_probe_conservative_overflow_free": false,
-  "results_ns_per_call": [3010.920, 3023.520, 2985.800, 2514.107, 2907.954, 3875.688, 2661.188]
+  "results_ns_per_call": [
+    3010.92,
+    3023.52,
+    2985.8,
+    2514.107,
+    2907.954,
+    3875.688,
+    2661.188
+  ],
+  "measurement_context": {
+    "host_load": "workstation under concurrent load during capture",
+    "cpu_isolation": "not exclusive; no isolated benchmark core set was reserved",
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+    "production_rerun_requirement": "rerun on isolated cores with recorded affinity and host-load evidence before publishing performance claims"
+  }
 }
