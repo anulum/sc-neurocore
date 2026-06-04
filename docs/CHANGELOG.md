@@ -6,6 +6,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added generated live-parameter-bank staged overflow and underflow traps that
+  latch malformed MMIO payloads and block shadow-bank mutation before active
+  coefficient application.
 - Hardened compiler live-control update semantics with checksum-gated shadow
   loads, explicit apply/rollback sequences, active-only generated parameter
   outputs, and status telemetry for shadow-loaded, applied, rollback, and

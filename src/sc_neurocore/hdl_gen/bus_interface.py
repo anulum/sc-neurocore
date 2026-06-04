@@ -63,6 +63,8 @@ from sc_neurocore.compiler.live_control import (
     STATUS_SHADOW_LOADED,
     STATUS_TRAP_LATCHED,
     STATUS_UPDATE_ACK,
+    TRAP_STAGED_OVERFLOW,
+    TRAP_STAGED_UNDERFLOW,
 )
 
 
@@ -187,7 +189,7 @@ def generate_live_parameter_bank(
 
     bank_names = [_validate_sv_identifier(bank.bank_name, "bank_name") for bank in spec.banks]
     total_parameter_bits = sum(bank.entry_width_bits * bank.parameter_count for bank in spec.banks)
-    trap_width = spec.trap.max_flags if spec.trap.enabled else 1
+    trap_width = max(spec.trap.max_flags, 2)
     ctrl = spec.control_register_addresses
     status_trap_expr = (
         f"{{{{(DATA_WIDTH-4){{1'b0}}}}, 4'h{STATUS_TRAP_LATCHED:X}}}"
@@ -227,6 +229,9 @@ def generate_live_parameter_bank(
         "    input  wire                         S_AXI_RREADY,",
         "    input  wire [TRAP_WIDTH-1:0]        trap_vector,",
         "    output wire                         trap_latched,",
+        "    output wire [TRAP_WIDTH-1:0]        trap_status_vector,",
+        "    output wire                         staged_overflow,",
+        "    output wire                         staged_underflow,",
         "    output reg                          update_pulse,",
         "    output reg                          apply_pulse,",
         "    output reg                          rollback_pulse,",
@@ -253,6 +258,8 @@ def generate_live_parameter_bank(
         f"    localparam [DATA_WIDTH-1:0] STATUS_APPLIED    = {bus_data_width}'h{STATUS_APPLIED:X};",
         f"    localparam [DATA_WIDTH-1:0] STATUS_ROLLBACK_ACK = {bus_data_width}'h{STATUS_ROLLBACK_ACK:X};",
         f"    localparam [DATA_WIDTH-1:0] STATUS_CHECKSUM_VALID = {bus_data_width}'h{STATUS_CHECKSUM_VALID:X};",
+        f"    localparam [TRAP_WIDTH-1:0] TRAP_STAGED_OVERFLOW_VECTOR = {trap_width}'h{TRAP_STAGED_OVERFLOW:X};",
+        f"    localparam [TRAP_WIDTH-1:0] TRAP_STAGED_UNDERFLOW_VECTOR = {trap_width}'h{TRAP_STAGED_UNDERFLOW:X};",
         "",
         "    reg [DATA_WIDTH-1:0] reg_control;",
         "    reg [DATA_WIDTH-1:0] reg_status;",
@@ -262,35 +269,78 @@ def generate_live_parameter_bank(
         "    reg [DATA_WIDTH-1:0] reg_write_data_hi;",
         "    reg [DATA_WIDTH-1:0] reg_write_checksum;",
         "    reg reg_shadow_loaded;",
+        "    reg [TRAP_WIDTH-1:0] reg_trap_vector;",
         "    wire [63:0] staged_word = {reg_write_data_hi, reg_write_data_lo};",
         "    wire [DATA_WIDTH-1:0] observed_checksum = reg_bank_select ^ reg_entry_index ^ reg_write_data_lo ^ reg_write_data_hi;",
         "    wire checksum_valid = (reg_write_checksum == observed_checksum);",
         f"    wire [DATA_WIDTH-1:0] trap_status_bit = trap_latched ? {status_trap_expr} : {{DATA_WIDTH{{1'b0}}}};",
         "",
-        "    assign trap_latched = |trap_vector;",
-        "    assign shadow_loaded = reg_shadow_loaded;",
     ]
 
     flat_offset = 0
-    for bank, bank_name in zip(spec.banks, bank_names):
+    overflow_terms: list[str] = []
+    underflow_terms: list[str] = []
+    for bank_index, (bank, bank_name) in enumerate(zip(spec.banks, bank_names)):
         style = _ram_style_for_bank(
             bank.parameter_count * bank.entry_width_bits, block_ram_threshold_bits
         )
         width = bank.entry_width_bits
         count = bank.parameter_count
         reset_word = bank.normalise_encoded_word(bank.reset_value)
+        overflow_name = f"{bank_name}_staged_overflow"
+        underflow_name = f"{bank_name}_staged_underflow"
+        overflow_terms.append(overflow_name)
+        underflow_terms.append(underflow_name)
         lines.extend(
             [
                 f'    (* ram_style = "{style}" *) reg [{width - 1}:0] {bank_name} [0:{count - 1}];',
                 f'    (* ram_style = "{style}" *) reg [{width - 1}:0] shadow_{bank_name} [0:{count - 1}];',
                 f"    localparam [{width - 1}:0] RESET_{bank_name.upper()} = {width}'h{reset_word:X};",
+                f"    wire {bank_name}_selected_for_update = (reg_bank_select == 32'd{bank_index}) && (reg_entry_index < 32'd{count});",
             ]
         )
+        if width < 64:
+            extension_width = 64 - width
+            lines.extend(
+                [
+                    f"    wire {bank_name}_zero_extension_valid = (staged_word[63:{width}] == {extension_width}'d0);",
+                    "    wire %s_sign_extension_valid = (staged_word[63:%d] == {%d{staged_word[%d]}});"
+                    % (bank_name, width, extension_width, width - 1),
+                    f"    wire {bank_name}_staged_range_valid = {bank_name}_zero_extension_valid || {bank_name}_sign_extension_valid;",
+                    f"    wire {overflow_name} = {bank_name}_selected_for_update && !{bank_name}_staged_range_valid && !staged_word[63];",
+                    f"    wire {underflow_name} = {bank_name}_selected_for_update && !{bank_name}_staged_range_valid && staged_word[63];",
+                ]
+            )
+        else:
+            lines.extend(
+                [
+                    f"    wire {overflow_name} = 1'b0;",
+                    f"    wire {underflow_name} = 1'b0;",
+                ]
+            )
         for index in range(count):
             lines.append(
                 f"    assign parameter_words[{flat_offset} +: {width}] = {bank_name}[{index}];"
             )
             flat_offset += width
+
+    lines.extend(
+        [
+            f"    wire staged_overflow_fault = {' | '.join(overflow_terms)};",
+            f"    wire staged_underflow_fault = {' | '.join(underflow_terms)};",
+            "    wire staged_update_fault = staged_overflow_fault | staged_underflow_fault;",
+            "    wire [TRAP_WIDTH-1:0] generated_trap_vector =",
+            "        (staged_overflow_fault ? TRAP_STAGED_OVERFLOW_VECTOR : {TRAP_WIDTH{1'b0}}) |",
+            "        (staged_underflow_fault ? TRAP_STAGED_UNDERFLOW_VECTOR : {TRAP_WIDTH{1'b0}});",
+            "    wire [TRAP_WIDTH-1:0] observed_trap_vector = trap_vector | generated_trap_vector;",
+            "",
+            "    assign trap_latched = |reg_trap_vector;",
+            "    assign trap_status_vector = reg_trap_vector;",
+            "    assign staged_overflow = staged_overflow_fault;",
+            "    assign staged_underflow = staged_underflow_fault;",
+            "    assign shadow_loaded = reg_shadow_loaded;",
+        ]
+    )
 
     lines.extend(
         [
@@ -315,6 +365,7 @@ def generate_live_parameter_bank(
             "            reg_write_data_hi <= {DATA_WIDTH{1'b0}};",
             "            reg_write_checksum <= {DATA_WIDTH{1'b0}};",
             "            reg_shadow_loaded <= 1'b0;",
+            "            reg_trap_vector <= {TRAP_WIDTH{1'b0}};",
             "            update_pulse <= 1'b0;",
             "            apply_pulse <= 1'b0;",
             "            rollback_pulse <= 1'b0;",
@@ -342,6 +393,7 @@ def generate_live_parameter_bank(
             "            apply_pulse <= 1'b0;",
             "            rollback_pulse <= 1'b0;",
             "            trap_clear_pulse <= 1'b0;",
+            "            reg_trap_vector <= reg_trap_vector | observed_trap_vector;",
             "            reg_status <= STATUS_READY | trap_status_bit | (reg_shadow_loaded ? STATUS_SHADOW_LOADED : {DATA_WIDTH{1'b0}}) | (checksum_valid ? STATUS_CHECKSUM_VALID : {DATA_WIDTH{1'b0}});",
             "",
             "            if (S_AXI_BREADY && S_AXI_BVALID) begin",
@@ -360,7 +412,7 @@ def generate_live_parameter_bank(
             "                    ADDR_CONTROL: begin",
             "                        reg_control <= S_AXI_WDATA;",
             "                        if ((S_AXI_WDATA & CTRL_UPDATE_VALID) != {DATA_WIDTH{1'b0}}) begin",
-            "                            if (checksum_valid) begin",
+            "                            if (checksum_valid && !staged_update_fault) begin",
             "                            update_pulse <= 1'b1;",
             "                            reg_shadow_loaded <= 1'b1;",
             "                            reg_status <= STATUS_READY | STATUS_SHADOW_LOADED | STATUS_CHECKSUM_VALID | trap_status_bit;",
@@ -441,6 +493,7 @@ def generate_live_parameter_bank(
             "                        end",
             "                        if (S_AXI_WDATA[2]) begin",
             "                            trap_clear_pulse <= 1'b1;",
+            "                            reg_trap_vector <= {TRAP_WIDTH{1'b0}};",
             "                        end",
             "                    end",
             "                    ADDR_BANK_SEL: reg_bank_select <= S_AXI_WDATA;",
@@ -448,7 +501,10 @@ def generate_live_parameter_bank(
             "                    ADDR_DATA_LO: reg_write_data_lo <= S_AXI_WDATA;",
             "                    ADDR_DATA_HI: reg_write_data_hi <= S_AXI_WDATA;",
             "                    ADDR_CHECKSUM: reg_write_checksum <= S_AXI_WDATA;",
-            "                    ADDR_TRAP_CLEAR: trap_clear_pulse <= 1'b1;",
+            "                    ADDR_TRAP_CLEAR: begin",
+            "                        trap_clear_pulse <= 1'b1;",
+            "                        reg_trap_vector <= {TRAP_WIDTH{1'b0}};",
+            "                    end",
             "                    default: begin end",
             "                endcase",
             "            end",
@@ -465,7 +521,7 @@ def generate_live_parameter_bank(
             "                    ADDR_DATA_LO: S_AXI_RDATA <= reg_write_data_lo;",
             "                    ADDR_DATA_HI: S_AXI_RDATA <= reg_write_data_hi;",
             "                    ADDR_CHECKSUM: S_AXI_RDATA <= observed_checksum;",
-            "                    ADDR_TRAP_STAT: S_AXI_RDATA <= {{(DATA_WIDTH-TRAP_WIDTH){1'b0}}, trap_vector};",
+            "                    ADDR_TRAP_STAT: S_AXI_RDATA <= {{(DATA_WIDTH-TRAP_WIDTH){1'b0}}, reg_trap_vector};",
             "                    default: S_AXI_RDATA <= {DATA_WIDTH{1'b0}};",
             "                endcase",
             "            end",

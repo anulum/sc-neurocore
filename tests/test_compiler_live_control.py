@@ -25,6 +25,8 @@ from sc_neurocore.compiler.live_control import (
     STATUS_SHADOW_LOADED,
     STATUS_TRAP_LATCHED,
     STATUS_UPDATE_ACK,
+    TRAP_STAGED_OVERFLOW,
+    TRAP_STAGED_UNDERFLOW,
     TrapSpec,
 )
 
@@ -162,6 +164,8 @@ def test_mmio_update_serialization_roundtrip() -> None:
     assert payload["status_bits"]["applied"] == STATUS_APPLIED
     assert payload["status_bits"]["rollback_ack"] == STATUS_ROLLBACK_ACK
     assert payload["status_bits"]["checksum_valid"] == STATUS_CHECKSUM_VALID
+    assert payload["trap_bits"]["staged_overflow"] == TRAP_STAGED_OVERFLOW
+    assert payload["trap_bits"]["staged_underflow"] == TRAP_STAGED_UNDERFLOW
 
 
 def test_mmio_update_protocol_alias_and_width_guards() -> None:
