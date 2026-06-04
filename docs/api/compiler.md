@@ -260,6 +260,11 @@ envelope_report: PrecisionEnvelopeReport = compiled.precision_envelope_report(in
 manifest = compiled.manifest()
 ```
 
+The mixed-dense HDL reference exposes the same lane-level overflow contract as
+the Python `overflow` mask and Rust `overflow_count`: `overflow_vector[i]`
+identifies output channel `i`, while the aggregate `overflow` line is asserted
+when any lane saturates.
+
 `forward_with_overflow` returns saturated accumulator-format integer codes and
 per-output overflow flags.  In canonical `scale_per_tensor=False` mode the
 division from Q8.8×Q16.16 products to Q16.16 outputs uses the same signed

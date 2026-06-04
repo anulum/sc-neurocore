@@ -29,9 +29,10 @@ fn deterministic_inputs() -> Vec<i32> {
         .collect()
 }
 
-fn run_once(weights: &[i16], inputs: &[i32]) -> (f64, i64) {
+fn run_once(weights: &[i16], inputs: &[i32]) -> (f64, i64, usize) {
     let start = Instant::now();
     let mut checksum = 0_i64;
+    let mut overflow_count = 0_usize;
     for _ in 0..ITERATIONS {
         let result = mixed_dense_q88_q1616(
             black_box(weights),
@@ -42,9 +43,10 @@ fn run_once(weights: &[i16], inputs: &[i32]) -> (f64, i64) {
         .expect("deterministic benchmark dimensions must be valid");
         checksum ^= i64::from(result.outputs_q1616[0]);
         checksum ^= i64::from(result.outputs_q1616[N_OUTPUTS - 1]);
+        overflow_count = result.overflow_count;
     }
     let elapsed_ns = start.elapsed().as_nanos() as f64;
-    (elapsed_ns / ITERATIONS as f64, checksum)
+    (elapsed_ns / ITERATIONS as f64, checksum, overflow_count)
 }
 
 fn median(values: &mut [f64]) -> f64 {
@@ -57,11 +59,19 @@ fn main() {
     let inputs = deterministic_inputs();
     let mut ns_per_call = Vec::with_capacity(REPEATS);
     let mut checksum = 0_i64;
+    let mut overflow_count = 0_usize;
     for _ in 0..REPEATS {
-        let (ns, run_checksum) = run_once(&weights, &inputs);
+        let (ns, run_checksum, run_overflow_count) = run_once(&weights, &inputs);
         ns_per_call.push(ns);
         checksum ^= run_checksum;
+        overflow_count = run_overflow_count;
     }
+    let saturating_weights = vec![127_i16 << 8; N_INPUTS * N_OUTPUTS];
+    let saturating_inputs = vec![32767_i32 << 16; N_INPUTS];
+    let saturating_probe_overflow_count =
+        mixed_dense_q88_q1616(&saturating_weights, &saturating_inputs, N_OUTPUTS, N_INPUTS)
+            .expect("saturating probe dimensions must be valid")
+            .overflow_count;
     let mut sorted = ns_per_call.clone();
     let median_ns_per_call = median(&mut sorted);
     let min_ns_per_call = sorted[0];
@@ -93,6 +103,8 @@ fn main() {
             "  \"min_ns_per_call\": {min_ns_per_call_arg:.3},\n",
             "  \"max_ns_per_call\": {max_ns_per_call_arg:.3},\n",
             "  \"checksum\": {checksum_arg},\n",
+            "  \"safe_overflow_count\": {overflow_count_arg},\n",
+            "  \"saturating_probe_overflow_count\": {saturating_probe_overflow_count_arg},\n",
             "  \"results_ns_per_call\": [{results_arg}]\n",
             "}}\n"
         ),
@@ -107,6 +119,8 @@ fn main() {
         min_ns_per_call_arg = min_ns_per_call,
         max_ns_per_call_arg = max_ns_per_call,
         checksum_arg = checksum,
+        overflow_count_arg = overflow_count,
+        saturating_probe_overflow_count_arg = saturating_probe_overflow_count,
         results_arg = results,
     );
 

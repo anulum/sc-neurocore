@@ -3,40 +3,40 @@
    "invocation": "stat -json ",
    "modules": {
       "\\sc_mixed_precision_dense": {
-         "num_wires":         4270,
-         "num_wire_bits":     248582,
-         "num_pub_wires":     12,
-         "num_pub_wire_bits": 35973,
+         "num_wires":         4334,
+         "num_wire_bits":     248708,
+         "num_pub_wires":     13,
+         "num_pub_wire_bits": 36005,
          "num_memories":      0,
          "num_memory_bits":   0,
          "num_processes":     0,
-         "num_cells":         4292,
+         "num_cells":         4387,
          "num_cells_by_type": {
             "$add": 2016,
-            "$adff": 3,
+            "$adff": 4,
             "$gt": 32,
             "$lt": 32,
             "$mul": 2048,
-            "$mux": 161
+            "$mux": 255
          }
       }
    },
       "design": {
-         "num_wires":         4270,
-         "num_wire_bits":     248582,
-         "num_pub_wires":     12,
-         "num_pub_wire_bits": 35973,
+         "num_wires":         4334,
+         "num_wire_bits":     248708,
+         "num_pub_wires":     13,
+         "num_pub_wire_bits": 36005,
          "num_memories":      0,
          "num_memory_bits":   0,
          "num_processes":     0,
-         "num_cells":         4292,
+         "num_cells":         4387,
          "num_cells_by_type": {
             "$add": 2016,
-            "$adff": 3,
+            "$adff": 4,
             "$gt": 32,
             "$lt": 32,
             "$mul": 2048,
-            "$mux": 161
+            "$mux": 255
          }
       }
 }

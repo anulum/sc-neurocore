@@ -54,7 +54,7 @@ cargo bench --bench analysis_bench -- --quick
 | Benchmark | Median |
 |-----------|-------:|
 | dense_forward_64x32 | 993 µs |
-| mixed_dense_q88_q1616_64x32 | 2.223 µs |
+| mixed_dense_q88_q1616_64x32 | 3.293 µs |
 | block_floating_dense_q16_64x32 | 12.512 µs |
 | mixed_dense_q88_q1616_trap_64x32 | 3.483 µs |
 | block_floating_dense_q16_trap_64x32 | 11.277 µs |
@@ -68,6 +68,7 @@ cargo bench --bench analysis_bench -- --quick
 The committed raw artefact is
 `benchmarks/results/local_rust_2026-06-04_mixed_dense.json`; the matching Python
 reference artefact is `benchmarks/results/local_python_2026-06-04_mixed_dense.json`.
+Both artefacts record safe-workload overflow count `0` and saturating-probe overflow count `32` for parity with the mixed-dense HDL `overflow_vector`.
 
 `block_floating_dense_q16_64x32` was measured on 2026-06-04 with
 `cargo run --manifest-path engine/Cargo.toml --release --example bench_block_floating_dense`.
