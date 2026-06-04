@@ -13,6 +13,10 @@ from .pipeline import CompilerPipeline
 from .mlir_emitter import MLIRBundle, MLIREmitter, generate_mlir_bundle
 from .quantizer import (
     QFormat,
+    QFormatMixed,
+    Q8_8,
+    Q16_16,
+    dequantize,
     quantize_weights,
     dequantize_weights,
     q_weights_to_sc_probabilities,
@@ -50,6 +54,10 @@ __all__ = [
     "MLIREmitter",
     "generate_mlir_bundle",
     "QFormat",
+    "QFormatMixed",
+    "Q8_8",
+    "Q16_16",
+    "dequantize",
     "quantize_weights",
     "dequantize_weights",
     "q_weights_to_sc_probabilities",

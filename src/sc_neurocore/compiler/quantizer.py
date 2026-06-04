@@ -13,9 +13,12 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
+
+RoundingMode = Literal["nearest", "stochastic", "floor"]
+_ROUNDING_MODES: set[str] = {"nearest", "stochastic", "floor"}
 
 
 @dataclass(frozen=True)
@@ -24,6 +27,16 @@ class QFormat:
 
     integer_bits: int
     fraction_bits: int
+
+    def __post_init__(self) -> None:
+        if type(self.integer_bits) is not int:
+            raise TypeError("integer_bits must be an integer")
+        if type(self.fraction_bits) is not int:
+            raise TypeError("fraction_bits must be an integer")
+        if self.integer_bits < 1:
+            raise ValueError("integer_bits must include at least the sign bit")
+        if self.fraction_bits < 0:
+            raise ValueError("fraction_bits must be non-negative")
 
     @property
     def total_bits(self) -> int:
@@ -41,14 +54,87 @@ class QFormat:
     def max_val(self) -> float:
         return ((1 << (self.total_bits - 1)) - 1) / self.scale
 
+    @property
+    def min_value(self) -> float:
+        """Minimum representable fixed-point value."""
+        return self.min_val
+
+    @property
+    def max_value(self) -> float:
+        """Maximum representable fixed-point value."""
+        return self.max_val
+
+    @property
+    def q_label(self) -> str:
+        """Canonical Q-format label."""
+        return f"Q{self.integer_bits}.{self.fraction_bits}"
+
     @classmethod
     def from_string(cls, fmt: str) -> QFormat:
         """Parse 'Q8.8', 'Q4.12', etc."""
-        fmt = fmt.strip().upper()
-        if not fmt.startswith("Q") or "." not in fmt:
+        if not isinstance(fmt, str):
+            raise TypeError(f"Expected Q-format string, got {type(fmt)!r}")
+
+        text = fmt.strip().upper()
+        match = re.fullmatch(r"Q(?P<int>\d+)\.(?P<frac>\d+)", text)
+        if match is None:
             raise ValueError(f"Expected format like 'Q8.8', got {fmt!r}")
-        parts = fmt[1:].split(".")
-        return cls(integer_bits=int(parts[0]), fraction_bits=int(parts[1]))
+        return cls(
+            integer_bits=int(match.group("int")),
+            fraction_bits=int(match.group("frac")),
+        )
+
+
+Q8_8 = QFormat(8, 8)
+Q16_16 = QFormat(16, 16)
+
+
+@dataclass(frozen=True)
+class QFormatMixed:
+    """Mixed fixed-point contract for Q-format weights and wider accumulators."""
+
+    weight_fmt: QFormat = Q8_8
+    accum_fmt: QFormat = Q16_16
+    scale_per_tensor: bool = True
+    rounding: RoundingMode = "nearest"
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.weight_fmt, QFormat):
+            raise TypeError("weight_fmt must be a QFormat")
+        if not isinstance(self.accum_fmt, QFormat):
+            raise TypeError("accum_fmt must be a QFormat")
+        if type(self.scale_per_tensor) is not bool:
+            raise TypeError("scale_per_tensor must be a boolean")
+        if self.rounding not in _ROUNDING_MODES:
+            raise ValueError("rounding must be 'nearest', 'stochastic', or 'floor'")
+        if self.accum_fmt.total_bits < self.weight_fmt.total_bits:
+            raise ValueError("accum_fmt must be at least as wide as weight_fmt")
+        if self.accum_fmt.fraction_bits < self.weight_fmt.fraction_bits:
+            raise ValueError("accum_fmt must preserve at least the weight fractional precision")
+        if (
+            self.accum_fmt.min_value > self.weight_fmt.min_value
+            or self.accum_fmt.max_value < self.weight_fmt.max_value
+        ):
+            raise ValueError("accum_fmt must cover the full weight dynamic range")
+
+    @property
+    def accumulator_guard_bits(self) -> int:
+        """Extra accumulator bits available above the stored weight width."""
+        return self.accum_fmt.total_bits - self.weight_fmt.total_bits
+
+    @property
+    def metadata(self) -> dict[str, bool | int | str]:
+        """Deterministic metadata for manifests and hardware telemetry."""
+        return {
+            "kind": "mixed_fixed_point",
+            "weight_format": self.weight_fmt.q_label,
+            "accumulator_format": self.accum_fmt.q_label,
+            "weight_total_bits": self.weight_fmt.total_bits,
+            "accumulator_total_bits": self.accum_fmt.total_bits,
+            "accumulator_guard_bits": self.accumulator_guard_bits,
+            "scale_per_tensor": self.scale_per_tensor,
+            "rounding": self.rounding,
+        }
 
 
 @dataclass(frozen=True)
@@ -148,6 +234,7 @@ class BlockFloatingMode:
             raise ValueError(f"Expected block-floating format like 'BFP16E3', got {fmt!r}")
 
         core = re.sub(r"[._-](?=\d)", "E", parts[0])
+        core = re.sub(r"[._-]", "", core)
         if "E" not in core:
             raise ValueError(f"Expected block-floating format like 'BFP16E3', got {fmt!r}")
 
@@ -171,55 +258,121 @@ def parse_precision_format(fmt: str) -> QFormat | BlockFloatingMode:
         return QFormat.from_string(fmt)
 
 
+def _coerce_q_format(fmt: str | QFormat) -> QFormat:
+    if isinstance(fmt, QFormat):
+        return fmt
+    if isinstance(fmt, str):
+        return QFormat.from_string(fmt)
+    raise TypeError(f"Expected QFormat or Q-format string, got {type(fmt)!r}")
+
+
+def _fixed_integer_bounds(q: QFormat) -> tuple[int, int]:
+    return -(1 << (q.total_bits - 1)), (1 << (q.total_bits - 1)) - 1
+
+
+def _finite_float_array(values: np.ndarray[Any, Any], *, label: str) -> np.ndarray[Any, Any]:
+    arr = np.asarray(values, dtype=np.float64)
+    if not np.all(np.isfinite(arr)):
+        raise ValueError(f"{label} must contain only finite values")
+    return arr
+
+
+def _round_scaled(scaled: np.ndarray[Any, Any], rounding: str) -> np.ndarray[Any, Any]:
+    if rounding == "nearest":
+        return np.rint(scaled).astype(np.int64)
+    if rounding == "stochastic":
+        floor = np.floor(scaled)
+        probability = scaled - floor
+        return (floor + (np.random.random(scaled.shape) < probability)).astype(np.int64)
+    if rounding == "floor":
+        return np.floor(scaled).astype(np.int64)
+    raise ValueError(f"Unknown rounding mode: {rounding!r}. Use 'nearest', 'stochastic', or 'floor'.")
+
+
+def _quantize_fixed_array(
+    weights: np.ndarray[Any, Any],
+    q: QFormat,
+    *,
+    rounding: str,
+    clip: bool,
+) -> np.ndarray[Any, Any]:
+    w = _finite_float_array(weights, label="weights")
+
+    if clip:
+        w = np.clip(w, q.min_value, q.max_value)
+
+    quantized = _round_scaled(w * q.scale, rounding)
+    min_int, max_int = _fixed_integer_bounds(q)
+    return np.clip(quantized, min_int, max_int)
+
+
+def _mixed_tensor_scale(weights: np.ndarray[Any, Any], fmt: QFormatMixed) -> float:
+    if not fmt.scale_per_tensor or weights.size == 0:
+        return 1.0
+
+    max_abs = float(np.max(np.abs(weights)))
+    if max_abs == 0.0:
+        return 1.0
+
+    _, max_int = _fixed_integer_bounds(fmt.weight_fmt)
+    return max_int / (max_abs * fmt.weight_fmt.scale)
+
+
+def _quantize_mixed_precision_weights(
+    weights: np.ndarray[Any, Any],
+    fmt: QFormatMixed,
+    *,
+    rounding: str,
+    clip: bool,
+) -> tuple[np.ndarray[Any, Any], float]:
+    w = _finite_float_array(weights, label="weights")
+    tensor_scale = _mixed_tensor_scale(w, fmt)
+    if not math.isfinite(tensor_scale) or tensor_scale <= 0.0:
+        raise ValueError("per-tensor scale must be finite and positive")
+
+    if clip and not fmt.scale_per_tensor:
+        w = np.clip(w, fmt.weight_fmt.min_value, fmt.weight_fmt.max_value)
+
+    quantized = _round_scaled(w * fmt.weight_fmt.scale * tensor_scale, rounding)
+    min_int, max_int = _fixed_integer_bounds(fmt.weight_fmt)
+    return np.clip(quantized, min_int, max_int), tensor_scale
+
+
 def quantize_weights(
     weights: np.ndarray[Any, Any],
-    fmt: str = "Q8.8",
-    rounding: str = "nearest",
+    fmt: str | QFormat | QFormatMixed = "Q8.8",
+    rounding: str | None = None,
     clip: bool = True,
-) -> np.ndarray[Any, Any]:
+) -> np.ndarray[Any, Any] | tuple[np.ndarray[Any, Any], float]:
     """Quantize float weights to fixed-point integers.
 
     Parameters
     ----------
     weights : np.ndarray
         Float weight matrix (any shape).
-    fmt : str
-        Q-format string, e.g. ``"Q8.8"``.
+    fmt : str | QFormat | QFormatMixed
+        Q-format string/object, e.g. ``"Q8.8"`` or ``QFormatMixed()``.
     rounding : str
         ``nearest`` (round half to even), ``stochastic``, or ``floor``.
     clip : bool
         If True, clip values to the representable range before quantization.
     """
-    if fmt.upper().startswith("BFP"):
+    if isinstance(fmt, QFormatMixed):
+        return _quantize_mixed_precision_weights(
+            weights,
+            fmt,
+            rounding=rounding or fmt.rounding,
+            clip=clip,
+        )
+
+    if isinstance(fmt, str) and fmt.upper().startswith("BFP"):
         raise ValueError(
             "Block-floating formats are supported via quantize_block_floating(); "
             "quantize_weights() is fixed-point only."
         )
 
-    q = QFormat.from_string(fmt)
-    w = np.asarray(weights, dtype=np.float64)
-
-    if clip:
-        w = np.clip(w, q.min_val, q.max_val)
-
-    scaled = w * q.scale
-
-    if rounding == "nearest":
-        quantized = np.rint(scaled).astype(np.int64)
-    elif rounding == "stochastic":
-        floor = np.floor(scaled)
-        prob = scaled - floor
-        quantized = (floor + (np.random.random(w.shape) < prob)).astype(np.int64)
-    elif rounding == "floor":
-        quantized = np.floor(scaled).astype(np.int64)
-    else:
-        raise ValueError(
-            f"Unknown rounding mode: {rounding!r}. Use 'nearest', 'stochastic', or 'floor'."
-        )
-
-    min_int = -(1 << (q.total_bits - 1))
-    max_int = (1 << (q.total_bits - 1)) - 1
-    return np.clip(quantized, min_int, max_int)
+    q = _coerce_q_format(fmt)
+    return _quantize_fixed_array(weights, q, rounding=rounding or "nearest", clip=clip)
 
 
 def _encode_bfp_block(values: np.ndarray[Any, Any], mode: BlockFloatingMode, *, clip: bool) -> tuple[int, np.ndarray[Any, Any]]:
@@ -227,7 +380,7 @@ def _encode_bfp_block(values: np.ndarray[Any, Any], mode: BlockFloatingMode, *, 
     if abs_max == 0.0:
         exponent = mode.exponent_bias
     else:
-        unbiased_exp = int(math.floor(math.log2(abs_max)))
+        unbiased_exp = int(math.ceil(math.log2(abs_max / mode.mantissa_range)))
         exponent = max(0, min((1 << mode.exponent_bits) - 1, unbiased_exp + mode.exponent_bias))
 
     exp_unbiased = exponent - mode.exponent_bias
@@ -310,25 +463,29 @@ def dequantize_block_floating(
 
 
 def q_weights_to_sc_probabilities(
-    quantized: np.ndarray[Any, Any], fmt: str = "Q8.8"
+    quantized: np.ndarray[Any, Any], fmt: str | QFormat = "Q8.8"
 ) -> np.ndarray[Any, Any]:
     """Convert fixed-point quantized weights to SC probabilities in [0, 1]."""
-    q = QFormat.from_string(fmt)
-    min_int = -(1 << (q.total_bits - 1))
-    max_int = (1 << (q.total_bits - 1)) - 1
+    q = _coerce_q_format(fmt)
+    min_int, max_int = _fixed_integer_bounds(q)
     return (quantized.astype(np.float64) - min_int) / (max_int - min_int)
 
 
 def quantization_error(
-    weights: np.ndarray[Any, Any], fmt: str = "Q8.8", rounding: str = "nearest"
+    weights: np.ndarray[Any, Any],
+    fmt: str | QFormat = "Q8.8",
+    rounding: str = "nearest",
 ) -> dict[str, float]:
     """Compute quantization error statistics."""
-    quantized = quantize_weights(weights, fmt=fmt, rounding=rounding)
+    w = _finite_float_array(weights, label="weights")
+    quantized = quantize_weights(w, fmt=fmt, rounding=rounding)
+    if isinstance(quantized, tuple):
+        raise TypeError("quantization_error expects a fixed-point QFormat, not QFormatMixed")
     recovered = dequantize_weights(quantized, fmt=fmt)
-    error = weights - recovered
+    error = w - recovered
     mae = float(np.mean(np.abs(error)))
     rmse = float(np.sqrt(np.mean(error**2)))
-    signal_power = float(np.mean(weights**2))
+    signal_power = float(np.mean(w**2))
     snr = 10 * np.log10(signal_power / max(rmse**2, 1e-30))
     return {
         "max_abs_error": float(np.max(np.abs(error))),
@@ -338,9 +495,25 @@ def quantization_error(
     }
 
 
-def dequantize_weights(quantized: np.ndarray[Any, Any], fmt: str = "Q8.8") -> np.ndarray[Any, Any]:
+def dequantize_weights(
+    quantized: np.ndarray[Any, Any],
+    fmt: str | QFormat | QFormatMixed = "Q8.8",
+    scale: float = 1.0,
+) -> np.ndarray[Any, Any]:
     """Convert quantized fixed-point weights back to float."""
-    if fmt.upper().startswith("BFP"):
+    if isinstance(fmt, str) and fmt.upper().startswith("BFP"):
         raise ValueError("BFP formats require dequantize_block_floating().")
-    q = QFormat.from_string(fmt)
-    return quantized.astype(np.float64) / q.scale
+    if not math.isfinite(scale) or scale <= 0.0:
+        raise ValueError("scale must be finite and positive")
+
+    q = fmt.weight_fmt if isinstance(fmt, QFormatMixed) else _coerce_q_format(fmt)
+    return quantized.astype(np.float64) / (q.scale * scale)
+
+
+def dequantize(
+    quantized: np.ndarray[Any, Any],
+    fmt: str | QFormat | QFormatMixed = "Q8.8",
+    scale: float = 1.0,
+) -> np.ndarray[Any, Any]:
+    """Alias matching the mixed-precision public API."""
+    return dequantize_weights(quantized, fmt=fmt, scale=scale)

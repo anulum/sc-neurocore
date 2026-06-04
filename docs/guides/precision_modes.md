@@ -179,6 +179,31 @@ restored = dequantize_block_floating(q, exponents, fmt="BFP16E3X32")
 In this codepath, adaptive precision emits manifest metadata (`mantissa_bits`,
 `exponent_bits`, `block_size`) alongside fixed-point datapath emission for now.
 
+## Mixed Q8.8 / Q16.16 Weight-Accumulator Contract
+
+The quantiser also exposes the mixed fixed-point contract used by hardware
+compiler paths that keep stored weights compact while widening the accumulation
+datapath:
+
+```python
+from sc_neurocore.compiler.quantizer import (
+    QFormatMixed,
+    dequantize_weights,
+    quantize_weights,
+)
+
+fmt = QFormatMixed()  # Q8.8 weights, Q16.16 accumulator, per-tensor scale
+q_weights, tensor_scale = quantize_weights(weights, fmt=fmt)
+restored = dequantize_weights(q_weights, fmt=fmt, scale=tensor_scale)
+```
+
+For `QFormatMixed`, `quantize_weights` returns both the stored integer tensor and
+the scale multiplier required to reconstruct the original values.  The default
+path maximises the Q8.8 integer dynamic range per tensor and carries the
+deterministic scale metadata needed by the wider Q16.16 accumulator path.  Set
+`scale_per_tensor=False` only when the canonical Q8.8 scale must be preserved
+exactly for legacy parity.
+
 ## CLI Usage
 
 ### Compiling with Precision Selection
