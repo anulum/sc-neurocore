@@ -27,6 +27,10 @@ MMIOWritePurpose = Literal[
     "select_entry",
     "write_data_lo",
     "write_data_hi",
+    "write_checksum",
+    "load_shadow",
+    "apply_shadow",
+    "rollback_shadow",
     "commit_update",
     "clear_trap",
 ]
@@ -35,10 +39,15 @@ _VALID_PROTOCOLS = frozenset({"axi4_lite", "axi_lite", "pcie"})
 CONTROL_UPDATE_VALID = 0x1
 CONTROL_COMMIT = 0x2
 CONTROL_CLEAR_TRAP = 0x4
+CONTROL_ROLLBACK = 0x8
 STATUS_READY = 0x1
 STATUS_BUSY = 0x2
 STATUS_UPDATE_ACK = 0x4
 STATUS_TRAP_LATCHED = 0x8
+STATUS_SHADOW_LOADED = 0x10
+STATUS_APPLIED = 0x20
+STATUS_ROLLBACK_ACK = 0x40
+STATUS_CHECKSUM_VALID = 0x80
 CONTROL_REGISTER_OFFSETS: dict[str, int] = {
     "control": 0x00,
     "status": 0x04,
@@ -48,8 +57,9 @@ CONTROL_REGISTER_OFFSETS: dict[str, int] = {
     "write_data_hi": 0x14,
     "trap_status": 0x18,
     "trap_clear": 0x1C,
+    "write_checksum": 0x20,
 }
-CONTROL_REGISTER_SPAN_BYTES = 0x20
+CONTROL_REGISTER_SPAN_BYTES = 0x24
 
 
 def _normalise_bus_protocol(protocol: str) -> BusProtocol:
@@ -386,6 +396,10 @@ class MMIOUpdateSpec:
             "busy": STATUS_BUSY,
             "update_ack": STATUS_UPDATE_ACK,
             "trap_latched": STATUS_TRAP_LATCHED,
+            "shadow_loaded": STATUS_SHADOW_LOADED,
+            "applied": STATUS_APPLIED,
+            "rollback_ack": STATUS_ROLLBACK_ACK,
+            "checksum_valid": STATUS_CHECKSUM_VALID,
         }
 
     @property
@@ -395,7 +409,21 @@ class MMIOUpdateSpec:
             "update_valid": CONTROL_UPDATE_VALID,
             "commit": CONTROL_COMMIT,
             "clear_trap": CONTROL_CLEAR_TRAP,
+            "rollback": CONTROL_ROLLBACK,
         }
+
+    def update_checksum(self, bank_name: str, parameter: int | str, encoded_value: int) -> int:
+        """Return deterministic 32-bit checksum for one staged update.
+
+        The checksum is a control-plane guard, not a cryptographic primitive:
+        it binds bank select, entry index, and the staged 64-bit value so stale
+        or partial writes cannot be applied silently.
+        """
+        bank = self.bank_by_name(bank_name)
+        bank_select = self.bank_index(bank_name)
+        entry_index = bank.entry_index(parameter)
+        encoded_word = bank.normalise_encoded_word(encoded_value)
+        return _xor32(bank_select, entry_index, encoded_word & 0xFFFF_FFFF, encoded_word >> 32)
 
     def bank_index(self, bank_name: str) -> int:
         """Return deterministic bank-select index for one bank name."""
@@ -444,13 +472,34 @@ class MMIOUpdateSpec:
             )
         writes.append(
             MMIOWrite(
-                addresses["control"],
-                CONTROL_UPDATE_VALID | CONTROL_COMMIT,
+                addresses["write_checksum"],
+                self.update_checksum(bank_name, parameter, encoded_value),
                 32,
-                "commit_update",
+                "write_checksum",
             )
         )
+        writes.append(MMIOWrite(addresses["control"], CONTROL_UPDATE_VALID, 32, "load_shadow"))
+        writes.append(MMIOWrite(addresses["control"], CONTROL_COMMIT, 32, "apply_shadow"))
         return tuple(writes)
+
+    def build_apply_sequence(self) -> tuple[MMIOWrite, ...]:
+        """Build the host-side write sequence that applies a loaded shadow word."""
+        return (
+            MMIOWrite(
+                self.control_register_addresses["control"], CONTROL_COMMIT, 32, "apply_shadow"
+            ),
+        )
+
+    def build_rollback_sequence(self) -> tuple[MMIOWrite, ...]:
+        """Build the host-side write sequence that restores shadow from active state."""
+        return (
+            MMIOWrite(
+                self.control_register_addresses["control"],
+                CONTROL_ROLLBACK,
+                32,
+                "rollback_shadow",
+            ),
+        )
 
     def build_trap_clear_sequence(self) -> tuple[MMIOWrite, ...]:
         """Build the host-side write sequence for clearing sticky trap state."""
@@ -524,3 +573,11 @@ def _ranges_overlap(ranges: Any, candidate: tuple[int, int]) -> bool:
         if range_start < candidate_end and candidate_start < range_end:
             return True
     return False
+
+
+def _xor32(*values: int) -> int:
+    """Return a deterministic 32-bit XOR fold for MMIO write guards."""
+    checksum = 0
+    for value in values:
+        checksum ^= int(value) & 0xFFFF_FFFF
+    return checksum & 0xFFFF_FFFF
