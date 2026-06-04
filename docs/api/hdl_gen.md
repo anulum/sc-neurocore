@@ -166,9 +166,11 @@ Live-control parameter banks are generated from `MMIOUpdateSpec` with
 BRAM/distributed RAM style hints per bank, fixed control/status register
 addresses, staged low/high write-data registers, checksum-guarded shadow loads,
 explicit apply and rollback pulses, flattened active-only `parameter_words`
-output, and host-visible trap clear/status signals. This lets a deployed design
-hot-swap weights or phase-coupling coefficients while keeping the precision and
-trap contracts auditable.
+output, and host-visible trap clear/status signals. It also derives sticky
+staged-overflow and staged-underflow traps from the selected bank width before
+shadow loading, so malformed MMIO payloads cannot truncate into active
+coefficients. This lets a deployed design hot-swap weights or phase-coupling
+coefficients while keeping the precision and trap contracts auditable.
 
 ### 2.4 Nanosecond response budget
 

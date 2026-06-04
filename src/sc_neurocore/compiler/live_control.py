@@ -48,6 +48,8 @@ STATUS_SHADOW_LOADED = 0x10
 STATUS_APPLIED = 0x20
 STATUS_ROLLBACK_ACK = 0x40
 STATUS_CHECKSUM_VALID = 0x80
+TRAP_STAGED_OVERFLOW = 0x1
+TRAP_STAGED_UNDERFLOW = 0x2
 CONTROL_REGISTER_OFFSETS: dict[str, int] = {
     "control": 0x00,
     "status": 0x04,
@@ -412,6 +414,14 @@ class MMIOUpdateSpec:
             "rollback": CONTROL_ROLLBACK,
         }
 
+    @property
+    def trap_bits(self) -> dict[str, int]:
+        """Return deterministic trap-bit assignments for generated parameter banks."""
+        return {
+            "staged_overflow": TRAP_STAGED_OVERFLOW,
+            "staged_underflow": TRAP_STAGED_UNDERFLOW,
+        }
+
     def update_checksum(self, bank_name: str, parameter: int | str, encoded_value: int) -> int:
         """Return deterministic 32-bit checksum for one staged update.
 
@@ -526,6 +536,7 @@ class MMIOUpdateSpec:
             "control_registers": self.control_register_addresses,
             "control_bits": self.control_bits,
             "status_bits": self.status_bits,
+            "trap_bits": self.trap_bits,
             "trap": {
                 "enabled": self.trap.enabled,
                 "action": self.trap.action,
