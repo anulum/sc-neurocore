@@ -42,6 +42,8 @@ governor, and frequency evidence.
 | Live-control parameter update sequence | Python+SystemVerilog | 20000 | 19.501 us | static_regeneration=109.204 us, generated trap capture passed |
 | AER strict-priority queue backpressure | Python+SystemVerilog | 4096 events x 100 repeats | 4.138 us/event | runtime cpuset shield 10-11, priority=0 violations, FIFO=0 violations, drop/deadline traps latched |
 | ADC-to-spike quantiser | Python+SystemVerilog | 4096 samples x 100 repeats | 3.705 us/sample | cpuset 10-11, formal pass, Yosys 7675 cells |
+| DCLS Q8.8 tent-kernel layer | Python+PyTorch+SystemVerilog | 4096 samples x 100 repeats | 6.349 us/sample | cpuset 10-11, PyTorch parity 5/5, formal pass, Yosys 106003 cells |
+| DCLS Q8.8 tent-kernel layer | Rust | 4096 samples x 100 iterations x 7 repeats | 40.184 ns/sample | cpuset 10-11, overflow_count=0, active_tap_total=2808700 |
 | Full pipeline (4 syn, 256 steps) | cpu | 200 | 1830.0 us | 139.9 Kstep/s |
 | Full pipeline (16 syn, 256 steps) | cpu | 50 | 8678.5 us | 29.5 Kstep/s |
 | gpu_pack_bitstream (65536) | cpu | 2000 | 375.9 us | 0.17 Gbit/s |
@@ -62,3 +64,15 @@ The run records `hardware_measurement_claimed=false` and `runtime_cpuset_shield_
 | `local_python_2026-06-04_adc_to_spike_quantiser.json` | `10-11` | Python, SystemVerilog | `3704.696` ns/sample; SymbiYosys/cvc5 pass in `4.579` s; Yosys `7675` cells |
 
 The run records `hardware_measurement_claimed=false` and `runtime_cpuset_shield_claimed=true`. This is local contract evidence, not board-level throughput evidence.
+
+## DCLS Q8.8 RTL contract - 2026-06-04
+
+| Artefact | Cpuset | Surfaces | Key result |
+| --- | --- | --- | --- |
+| `local_python_2026-06-04_dcls_q88.json` | `10-11` | Python, PyTorch, SystemVerilog | `6349.497` ns/sample; PyTorch parity 5/5; SymbiYosys/cvc5 bounded check in `1.533` s; Yosys `106003` cells |
+| `local_rust_2026-06-04_dcls_q88.json` | `10-11` | Rust | `40.184` ns/sample median; `overflow_count=0`; `active_tap_total=2808700` |
+
+The run records `hardware_measurement_claimed=false` and
+`runtime_cpuset_shield_claimed=true` for the Python/SystemVerilog artefact.
+This is local contract, bounded-formal, and synthesis-estimate evidence, not
+Vivado ZU3EG timing evidence.

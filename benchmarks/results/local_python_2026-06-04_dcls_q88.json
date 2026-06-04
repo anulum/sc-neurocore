@@ -1,0 +1,153 @@
+{
+  "active_tap_total": 2808700,
+  "benchmark": "dcls_q88_rtl_contract",
+  "benchmark_isolation_mode": "runtime-cpuset-shield",
+  "checksum": 0,
+  "cosim": {
+    "case_count": 5,
+    "cases_passed": 5,
+    "comparisons": [
+      {
+        "abs_accumulator_diff": 0,
+        "name": "hand_computed_three_tap",
+        "passed": true,
+        "python": {
+          "accumulator_q16_16": 57344,
+          "active_tap_count": 3,
+          "max_gate_q88": 256,
+          "output_q88": 224,
+          "overflow": false
+        },
+        "pytorch": {
+          "accumulator_q16_16": 57344,
+          "active_tap_count": 3,
+          "max_gate_q88": 256,
+          "output_q88": 224,
+          "overflow": false
+        }
+      },
+      {
+        "abs_accumulator_diff": 0,
+        "name": "silent_taps",
+        "passed": true,
+        "python": {
+          "accumulator_q16_16": -21760,
+          "active_tap_count": 2,
+          "max_gate_q88": 170,
+          "output_q88": -85,
+          "overflow": false
+        },
+        "pytorch": {
+          "accumulator_q16_16": -21760,
+          "active_tap_count": 2,
+          "max_gate_q88": 170,
+          "output_q88": -85,
+          "overflow": false
+        }
+      },
+      {
+        "abs_accumulator_diff": 0,
+        "name": "outside_tent_zeroes_far_taps",
+        "passed": true,
+        "python": {
+          "accumulator_q16_16": 4096,
+          "active_tap_count": 5,
+          "max_gate_q88": 256,
+          "output_q88": 16,
+          "overflow": false
+        },
+        "pytorch": {
+          "accumulator_q16_16": 4096,
+          "active_tap_count": 5,
+          "max_gate_q88": 256,
+          "output_q88": 16,
+          "overflow": false
+        }
+      },
+      {
+        "abs_accumulator_diff": 0,
+        "name": "negative_contribution",
+        "passed": true,
+        "python": {
+          "accumulator_q16_16": -73728,
+          "active_tap_count": 4,
+          "max_gate_q88": 256,
+          "output_q88": -288,
+          "overflow": false
+        },
+        "pytorch": {
+          "accumulator_q16_16": -73728,
+          "active_tap_count": 4,
+          "max_gate_q88": 256,
+          "output_q88": -288,
+          "overflow": false
+        }
+      },
+      {
+        "abs_accumulator_diff": 0,
+        "name": "output_saturation",
+        "passed": true,
+        "python": {
+          "accumulator_q16_16": 536887295,
+          "active_tap_count": 128,
+          "max_gate_q88": 256,
+          "output_q88": 32767,
+          "overflow": true
+        },
+        "pytorch": {
+          "accumulator_q16_16": 536887295,
+          "active_tap_count": 128,
+          "max_gate_q88": 256,
+          "output_q88": 32767,
+          "overflow": true
+        }
+      }
+    ],
+    "max_abs_accumulator_diff": 0,
+    "pytorch_available": true
+  },
+  "date_utc": "2026-06-04T16:34:12Z",
+  "formal": {
+    "available": true,
+    "elapsed_ns": 1532979238,
+    "exit_code": 0,
+    "passed": true
+  },
+  "hardware_measurement_claimed": false,
+  "host_context": {
+    "affinity_cpu_count": 2,
+    "affinity_cpus": [
+      10,
+      11
+    ],
+    "cgroup_effective_cpuset": "10-11",
+    "cpu_governors_sample": {
+      "10": "powersave",
+      "11": "powersave"
+    },
+    "load_average": [
+      3.42578125,
+      3.65771484375,
+      3.20263671875
+    ],
+    "runtime_cpuset_shield_claimed": true
+  },
+  "language": "Python+PyTorch+SystemVerilog",
+  "language_surfaces": [
+    "Python",
+    "PyTorch",
+    "SystemVerilog"
+  ],
+  "median_ns_per_sample": 6349.497084960937,
+  "overflow_count": 0,
+  "repeats": 100,
+  "samples": 4096,
+  "taps": 16,
+  "total_samples": 409600,
+  "yosys": {
+    "available": true,
+    "cells": 106003,
+    "elapsed_ns": 105897081377,
+    "exit_code": 0
+  }
+}

@@ -158,6 +158,65 @@
         "yosys.exit_code",
         "yosys.cells"
       ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_dcls_q88.json",
+      "description": "NEU-C.6 DCLS Q8.8 Python/PyTorch reference, formal, and synthesis-estimate evidence.",
+      "expected_values": {
+        "benchmark": "dcls_q88_rtl_contract",
+        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "cosim.cases_passed": 5,
+        "cosim.max_abs_accumulator_diff": 0,
+        "formal.exit_code": 0,
+        "formal.passed": true,
+        "hardware_measurement_claimed": false,
+        "host_context.cgroup_effective_cpuset": "10-11",
+        "host_context.runtime_cpuset_shield_claimed": true,
+        "language": "Python+PyTorch+SystemVerilog",
+        "yosys.exit_code": 0
+      },
+      "id": "dcls-q88-rtl-contract",
+      "required_numbers": [
+        "samples",
+        "repeats",
+        "taps",
+        "total_samples",
+        "median_ns_per_sample",
+        "checksum",
+        "overflow_count",
+        "active_tap_total",
+        "cosim.case_count",
+        "cosim.cases_passed",
+        "cosim.max_abs_accumulator_diff",
+        "formal.elapsed_ns",
+        "formal.exit_code",
+        "yosys.elapsed_ns",
+        "yosys.exit_code",
+        "yosys.cells"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_dcls_q88.json",
+      "description": "NEU-C.6 DCLS Q8.8 Rust reference evidence.",
+      "expected_values": {
+        "benchmark": "dcls_q88_rtl_contract",
+        "language": "Rust",
+        "measurement_context.cpu_affinity": "10-11"
+      },
+      "id": "dcls-q88-rust-contract",
+      "required_numbers": [
+        "taps",
+        "samples",
+        "iterations",
+        "repeats",
+        "total_samples",
+        "median_ns_per_sample",
+        "min_ns_per_sample",
+        "max_ns_per_sample",
+        "checksum",
+        "overflow_count",
+        "active_tap_total"
+      ]
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"

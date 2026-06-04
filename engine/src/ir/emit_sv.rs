@@ -97,6 +97,21 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                     id.0
                 ));
             }
+            ScOp::DclsLayer { id, params, .. } => {
+                sv.push_str(&format!(
+                    "    wire signed [{}:0] v{};\n\
+                     \x20   wire signed [31:0] v{}_accumulator_q16_16;\n\
+                     \x20   wire v{}_valid;\n\
+                     \x20   wire v{}_overflow;\n\
+                     \x20   wire v{}_invalid_sigma;\n",
+                    params.data_width - 1,
+                    id.0,
+                    id.0,
+                    id.0,
+                    id.0,
+                    id.0
+                ));
+            }
             ScOp::BitwiseXor { id, .. } => {
                 sv.push_str(&format!("    wire v{};\n", id.0));
             }
@@ -253,6 +268,68 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                 ));
                 inst_idx += 1;
             }
+            ScOp::DclsLayer {
+                id,
+                spike,
+                weights,
+                centre,
+                sigma,
+                params,
+            } => {
+                if params.tap_offsets.len() != params.n_taps {
+                    return Err(format!(
+                        "DclsLayer (v{}) expected {} tap offsets, got {}",
+                        id.0,
+                        params.n_taps,
+                        params.tap_offsets.len()
+                    ));
+                }
+                let spike_wire = value_to_wire(graph, *spike);
+                let weights_wire = value_to_wire(graph, *weights);
+                let centre_wire = value_to_wire(graph, *centre);
+                let sigma_wire = value_to_wire(graph, *sigma);
+                let tap_offsets = emit_concat_u32(&params.tap_offsets, params.ptr_width)?;
+                sv.push_str(&format!(
+                    "    sc_dcls_layer_core #(\n\
+                     \x20       .N_TAPS({}),\n\
+                     \x20       .DATA_WIDTH({}),\n\
+                     \x20       .FRACTION({}),\n\
+                     \x20       .DELAY_DEPTH({}),\n\
+                     \x20       .PTR_WIDTH({})\n\
+                     \x20   ) u_dcls_{} (\n\
+                     \x20       .clk(clk),\n\
+                     \x20       .rst_n(rst_n),\n\
+                     \x20       .in_valid(1'b1),\n\
+                     \x20       .spike_in({}),\n\
+                     \x20       .tap_offsets({}),\n\
+                     \x20       .tap_weights_q88({}),\n\
+                     \x20       .centre_q88({}),\n\
+                     \x20       .sigma_q88({}),\n\
+                     \x20       .out_valid(v{}_valid),\n\
+                     \x20       .weighted_sum_q88(v{}),\n\
+                     \x20       .accumulator_q16_16(v{}_accumulator_q16_16),\n\
+                     \x20       .overflow(v{}_overflow),\n\
+                     \x20       .invalid_sigma(v{}_invalid_sigma)\n\
+                     \x20   );\n\n",
+                    params.n_taps,
+                    params.data_width,
+                    params.fraction,
+                    params.delay_depth,
+                    params.ptr_width,
+                    inst_idx,
+                    spike_wire,
+                    tap_offsets,
+                    weights_wire,
+                    centre_wire,
+                    sigma_wire,
+                    id.0,
+                    id.0,
+                    id.0,
+                    id.0,
+                    id.0
+                ));
+                inst_idx += 1;
+            }
             ScOp::BitwiseXor { id, lhs, rhs } => {
                 let lhs_wire = value_to_wire(graph, *lhs);
                 let rhs_wire = value_to_wire(graph, *rhs);
@@ -361,6 +438,7 @@ fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
                 ScOp::Popcount { .. } | ScOp::Reduce { .. } => 64,
                 ScOp::LifStep { params, .. } => params.data_width as usize,
                 ScOp::DenseForward { params, .. } => params.n_neurons,
+                ScOp::DclsLayer { params, .. } => params.data_width as usize,
                 ScOp::GraphForward { n_features, .. } => *n_features,
                 ScOp::SoftmaxAttention { .. }
                 | ScOp::KuramotoStep { .. }
@@ -387,6 +465,28 @@ fn value_to_wire(graph: &ScGraph, id: ValueId) -> String {
         }
     }
     format!("v{}", id.0)
+}
+
+fn emit_concat_u32(values: &[u32], width: u32) -> Result<String, String> {
+    if width == 0 {
+        return Err("packed unsigned concatenation width must be positive".to_string());
+    }
+    let max_value = if width >= 32 {
+        u32::MAX
+    } else {
+        (1_u32 << width) - 1
+    };
+    let mut fields = Vec::with_capacity(values.len());
+    for value in values.iter().rev() {
+        if *value > max_value {
+            return Err(format!(
+                "packed unsigned value {} exceeds {}-bit field",
+                value, width
+            ));
+        }
+        fields.push(format!("{}'d{}", width, value));
+    }
+    Ok(format!("{{{}}}", fields.join(", ")))
 }
 
 fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst) {
@@ -440,5 +540,55 @@ fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst) {
                 ));
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ir::builder::ScGraphBuilder;
+
+    #[test]
+    fn dcls_layer_emits_core_with_q88_contract_ports() {
+        let mut builder = ScGraphBuilder::new("dcls_contract");
+        let spike = builder.input("spike_in", ScType::Bool);
+        let weights = builder.constant(
+            ScConst::I64Vec(vec![256, 128, -64]),
+            ScType::Vec {
+                element: Box::new(ScType::FixedPoint { width: 16, frac: 8 }),
+                count: 3,
+            },
+        );
+        let centre = builder.constant(
+            ScConst::I64(256),
+            ScType::FixedPoint { width: 16, frac: 8 },
+        );
+        let sigma = builder.constant(
+            ScConst::I64(512),
+            ScType::FixedPoint { width: 16, frac: 8 },
+        );
+        let result = builder.dcls_layer(
+            spike,
+            weights,
+            centre,
+            sigma,
+            DclsParams {
+                n_taps: 3,
+                data_width: 16,
+                fraction: 8,
+                delay_depth: 31,
+                ptr_width: 5,
+                tap_offsets: vec![0, 1, 2],
+            },
+        );
+        builder.output("weighted_sum", result);
+
+        let sv = emit(&builder.build()).expect("DCLS layer should emit synthesizable RTL");
+        assert!(sv.contains("sc_dcls_layer_core"));
+        assert!(sv.contains(".tap_offsets({5'd2, 5'd1, 5'd0})"));
+        assert!(sv.contains(".accumulator_q16_16(v4_accumulator_q16_16)"));
+        assert!(sv.contains(".overflow(v4_overflow)"));
+        assert!(sv.contains(".invalid_sigma(v4_invalid_sigma)"));
+        assert!(sv.contains("assign weighted_sum = v4;"));
     }
 }

@@ -112,6 +112,26 @@ impl ScGraphBuilder {
         })
     }
 
+    /// Add a delay-coded learnable-spike layer forward pass.
+    pub fn dcls_layer(
+        &mut self,
+        spike: ValueId,
+        weights: ValueId,
+        centre: ValueId,
+        sigma: ValueId,
+        params: DclsParams,
+    ) -> ValueId {
+        let id = self.graph.fresh_id();
+        self.graph.push(ScOp::DclsLayer {
+            id,
+            spike,
+            weights,
+            centre,
+            sigma,
+            params,
+        })
+    }
+
     /// Add a bitwise XOR (HDC binding).
     pub fn bitwise_xor(&mut self, lhs: ValueId, rhs: ValueId) -> ValueId {
         let id = self.graph.fresh_id();

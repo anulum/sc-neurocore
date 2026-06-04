@@ -60,6 +60,7 @@ cargo bench --bench analysis_bench -- --quick
 | block_floating_dense_q16_trap_64x32 | 8.669 µs |
 | mixed_dense_q88_q1616_envelope_64x32 | 2.322 µs |
 | block_floating_dense_q16_envelope_64x32 | 8.748 µs |
+| dcls_q88_tent_kernel_16tap | 40.184 ns/sample |
 | attention_10x16_20x32 | 88.5 µs |
 | gnn_20x8_forward | 85.3 µs |
 
@@ -113,6 +114,15 @@ matching Python reference artefact is
 `benchmarks/results/local_python_2026-06-04_precision_envelopes.json`.  Both
 Rust envelope workloads reported `conservative_overflow_free=true` and matched
 the Python maximum absolute bounds for the deterministic 64×32 safe workload.
+
+`dcls_q88_tent_kernel_16tap` was measured on 2026-06-04 with
+`taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_dcls_q88`.
+The committed raw artefact is
+`benchmarks/results/local_rust_2026-06-04_dcls_q88.json`; the matching
+Python/PyTorch/SystemVerilog artefact is
+`benchmarks/results/local_python_2026-06-04_dcls_q88.json`.  The Rust path
+reported `overflow_count=0` and `active_tap_total=2808700`, matching the
+Python reference workload and DCLS Q8.8 saturation contract.
 
 ### PRNG
 

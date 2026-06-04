@@ -1,0 +1,33 @@
+{
+  "benchmark": "dcls_q88_rtl_contract",
+  "language": "Rust",
+  "timestamp_unix": 1780590948,
+  "command": "taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_dcls_q88",
+  "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "target_os": "linux",
+  "target_arch": "x86_64",
+  "measurement_context": {
+    "host_load": "workstation under concurrent load during capture",
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "cpu_affinity": "10-11",
+    "load_average_before": "4.35 3.77 3.28 2/3155 2317902",
+    "load_average_after": "4.35 3.77 3.28 1/3155 2317906",
+    "cpu_governor": "powersave",
+    "cpu_frequency_mhz": "min=800.000,max=4612.466,sampled_cpu_count=12",
+    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+  },
+  "taps": 16,
+  "samples": 4096,
+  "iterations": 100,
+  "repeats": 7,
+  "total_samples": 409600,
+  "median_ns_per_sample": 40.184,
+  "min_ns_per_sample": 37.993,
+  "max_ns_per_sample": 43.304,
+  "checksum": 0,
+  "overflow_count": 0,
+  "active_tap_total": 2808700,
+  "results_ns_per_sample": [40.581, 40.366, 37.993, 43.304, 39.817, 40.184, 40.126]
+}

@@ -732,3 +732,29 @@ This benchmark exercises the NEU-C.5 ADC-to-spike sensor-ingress contract across
 | SystemVerilog | Yosys generic synthesis estimate | `7675` cells, `11.861` s |
 
 Evidence boundary: this is local contract, formal, and synthesis-estimate evidence. `hardware_measurement_claimed=false` remains intentional until board-level isolated hardware evidence is captured.
+
+## DCLS Q8.8 RTL contract (2026-06-04)
+
+Artefacts: `benchmarks/results/local_python_2026-06-04_dcls_q88.json` and
+`benchmarks/results/local_rust_2026-06-04_dcls_q88.json`.
+
+This benchmark exercises the NEU-C.6 DCLS Q8.8 scalar layer contract across
+Python, PyTorch, Rust, and SystemVerilog.  The Python/SystemVerilog run used
+runtime core isolation with `host_context.cgroup_effective_cpuset=10-11` and
+`runtime_cpuset_shield_claimed=true`; load average during the run was
+`3.43, 3.66, 3.20`.  The Rust run used the same isolated unit and recorded CPU
+affinity `10-11`.
+
+| Surface | Operation | Result |
+| --- | --- | --- |
+| Python | Bit-true DCLS Q8.8 tent-kernel reference | `6349.497` ns/sample over `409600` samples |
+| PyTorch | Quantised deterministic parity reference | 5/5 cases passed, max accumulator diff `0` |
+| Rust | Bit-true DCLS Q8.8 reference | `40.184` ns/sample median over `409600` samples x 7 repeats |
+| SystemVerilog | SymbiYosys/cvc5 bounded formal check | pass, `1.533` s |
+| SystemVerilog | Yosys generic synthesis estimate | `106003` cells, `105.897` s |
+
+Evidence boundary: this is local contract, bounded-formal, and
+synthesis-estimate evidence.  `hardware_measurement_claimed=false` remains
+intentional.  The Vivado ZU3EG WNS/utilisation contract is gated behind
+`MIF_VIVADO_CI=1` and is not claimed until the self-hosted Vivado runner
+archives a passing timing summary.

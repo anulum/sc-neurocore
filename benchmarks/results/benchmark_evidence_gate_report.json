@@ -28,11 +28,19 @@
     {
       "artefact": "benchmarks/results/local_python_2026-06-04_adc_to_spike_quantiser.json",
       "id": "adc-to-spike-quantiser-contract"
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_dcls_q88.json",
+      "id": "dcls-q88-rtl-contract"
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_dcls_q88.json",
+      "id": "dcls-q88-rust-contract"
     }
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 7,
+  "gate_count": 9,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"
