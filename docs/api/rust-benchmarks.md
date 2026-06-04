@@ -55,6 +55,7 @@ cargo bench --bench analysis_bench -- --quick
 |-----------|-------:|
 | dense_forward_64x32 | 993 µs |
 | mixed_dense_q88_q1616_64x32 | 2.223 µs |
+| block_floating_dense_q16_64x32 | 12.512 µs |
 | attention_10x16_20x32 | 88.5 µs |
 | gnn_20x8_forward | 85.3 µs |
 
@@ -63,6 +64,13 @@ cargo bench --bench analysis_bench -- --quick
 The committed raw artefact is
 `benchmarks/results/local_rust_2026-06-04_mixed_dense.json`; the matching Python
 reference artefact is `benchmarks/results/local_python_2026-06-04_mixed_dense.json`.
+
+`block_floating_dense_q16_64x32` was measured on 2026-06-04 with
+`cargo run --manifest-path engine/Cargo.toml --release --example bench_block_floating_dense`.
+The committed raw artefact is
+`benchmarks/results/local_rust_2026-06-04_block_floating_dense.json`; the
+matching Python reference artefact is
+`benchmarks/results/local_python_2026-06-04_block_floating_dense.json`.
 
 ### PRNG
 

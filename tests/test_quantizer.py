@@ -19,6 +19,7 @@ from sc_neurocore.compiler.quantizer import (
     Q8_8,
     Q16_16,
     BlockFloatingMode,
+    compile_dense_block_floating,
     compile_dense_mixed_precision,
     parse_precision_format,
     quantize_block_floating,
@@ -270,6 +271,12 @@ class TestBlockFloatingQuantize:
         recovered = dequantize_block_floating(q, exponents, fmt="BFP12E4X4")
         np.testing.assert_allclose(recovered, w, rtol=0.0, atol=0.02)
 
+    def test_block_floating_exponent_range_matches_encoded_codes(self):
+        mode = BlockFloatingMode.from_aliases("BFP8E2X2")
+        assert mode.min_exponent == -1
+        assert mode.max_exponent == 2
+        assert mode.metadata["exponent_max"] == 2
+
     def test_quantize_block_floating_block_size_conflict(self):
         w = np.array([1.0, 0.5, -0.25])
         with pytest.raises(ValueError, match="Block size conflict"):
@@ -290,6 +297,41 @@ class TestBlockFloatingQuantize:
         restored = dequantize_block_floating(q, exponents, fmt=fmt)
         assert np.all(np.isfinite(restored))
         assert restored.shape == w.shape
+
+
+class TestCompiledBlockFloatingDense:
+    """Validate dense block-floating weights with fixed-point inputs."""
+
+    def test_block_floating_dense_matches_reconstructed_matrix_dot(self):
+        weights = np.array([[0.5, -0.25], [1.25, 0.125]], dtype=np.float64)
+        inputs = np.array([0.5, -0.25], dtype=np.float64)
+        compiled = compile_dense_block_floating(weights, fmt="BFP16E3X2")
+
+        assert compiled.manifest()["operation"] == "dense_block_floating"
+        assert compiled.manifest()["weight_shape"] == [2, 2]
+
+        q_inputs = quantize_weights(inputs, fmt=Q16_16).astype(np.float64) / Q16_16.scale
+        expected = compiled.reconstructed_weights @ q_inputs
+        np.testing.assert_allclose(compiled.forward_float(inputs), expected, rtol=0.0, atol=1e-12)
+
+    def test_block_floating_dense_saturates_outputs(self):
+        weights = np.array([[8192.0, 8192.0]], dtype=np.float64)
+        inputs = np.array([32767.0, 32767.0], dtype=np.float64)
+        compiled = compile_dense_block_floating(weights, fmt="BFP16E3X2")
+
+        codes, overflow = compiled.forward_with_overflow(inputs)
+
+        assert overflow.tolist() == [True]
+        assert int(codes[0]) == (1 << (Q16_16.total_bits - 1)) - 1
+
+    def test_block_floating_dense_rejects_invalid_shapes_and_inputs(self):
+        with pytest.raises(ValueError, match="2-D dense"):
+            compile_dense_block_floating(np.array([0.5, -0.25]))
+        compiled = compile_dense_block_floating(np.array([[0.5, -0.25]], dtype=np.float64))
+        with pytest.raises(ValueError, match="input length mismatch"):
+            compiled.forward_float(np.array([0.5]))
+        with pytest.raises(ValueError, match="finite values"):
+            compiled.forward_float(np.array([0.5, np.inf]))
 
 
 class TestQuantizeWeights:

@@ -6,6 +6,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added dense block-floating `BFP16E3X32` execution across the Python quantiser
+  API, Rust IR qformat mirror, and synchronous HDL reference module, including
+  shared-exponent product scaling, Q16.16 output saturation, overflow telemetry,
+  module-specific tests, and committed Python, Rust, and Yosys benchmark
+  artefacts.
+- Corrected block-floating metadata so the maximum unbiased exponent reflects
+  every encoded biased exponent code.
 - Added the compiled mixed-dense Q8.8/Q16.16 contract across the Python
   quantiser API, Rust IR qformat mirror, and synchronous HDL reference module,
   including exact signed MAC scaling, accumulator saturation, and overflow

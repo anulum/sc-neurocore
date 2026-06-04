@@ -134,6 +134,83 @@ impl QFormatMixed {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BlockFloatingMode {
+    pub mantissa_bits: u8,
+    pub exponent_bits: u8,
+    pub block_size: usize,
+}
+
+impl BlockFloatingMode {
+    pub fn new(
+        mantissa_bits: u8,
+        exponent_bits: u8,
+        block_size: usize,
+    ) -> Result<Self, BlockFloatingError> {
+        if mantissa_bits < 2 {
+            return Err(BlockFloatingError::MantissaTooNarrow);
+        }
+        if exponent_bits == 0 || exponent_bits > 7 {
+            return Err(BlockFloatingError::InvalidExponentBits);
+        }
+        if block_size == 0 {
+            return Err(BlockFloatingError::EmptyBlock);
+        }
+        Ok(Self {
+            mantissa_bits,
+            exponent_bits,
+            block_size,
+        })
+    }
+
+    pub fn bfp16_e3_x32() -> Self {
+        Self {
+            mantissa_bits: 16,
+            exponent_bits: 3,
+            block_size: 32,
+        }
+    }
+
+    pub fn exponent_bias(self) -> i32 {
+        (1_i32 << (self.exponent_bits - 1)) - 1
+    }
+
+    pub fn min_exponent(self) -> i32 {
+        -self.exponent_bias()
+    }
+
+    pub fn max_exponent(self) -> i32 {
+        ((1_i32 << self.exponent_bits) - 1) - self.exponent_bias()
+    }
+
+    pub fn mantissa_range(self) -> i128 {
+        (1_i128 << (self.mantissa_bits - 1)) - 1
+    }
+
+    pub fn exponent_code_max(self) -> u8 {
+        ((1_u16 << self.exponent_bits) - 1) as u8
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BlockFloatingError {
+    MantissaTooNarrow,
+    InvalidExponentBits,
+    EmptyBlock,
+}
+
+impl fmt::Display for BlockFloatingError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::MantissaTooNarrow => write!(f, "mantissa bits must be at least 2"),
+            Self::InvalidExponentBits => write!(f, "exponent bits must be in 1..=7"),
+            Self::EmptyBlock => write!(f, "block size must be positive"),
+        }
+    }
+}
+
+impl Error for BlockFloatingError {}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MixedDenseResult {
     pub outputs_q1616: Vec<i32>,
@@ -164,6 +241,43 @@ impl fmt::Display for MixedDenseError {
 }
 
 impl Error for MixedDenseError {}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BlockFloatingDenseError {
+    EmptyShape,
+    ShapeOverflow,
+    MantissaLengthMismatch { expected: usize, actual: usize },
+    ExponentLengthMismatch { expected: usize, actual: usize },
+    InputLengthMismatch { expected: usize, actual: usize },
+    MantissaOutOfRange { index: usize, value: i16 },
+    ExponentOutOfRange { index: usize, value: u8 },
+}
+
+impl fmt::Display for BlockFloatingDenseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EmptyShape => write!(f, "dense shape must have positive inputs and outputs"),
+            Self::ShapeOverflow => write!(f, "dense shape overflows addressable memory"),
+            Self::MantissaLengthMismatch { expected, actual } => {
+                write!(f, "mantissa length mismatch: expected {expected}, got {actual}")
+            }
+            Self::ExponentLengthMismatch { expected, actual } => {
+                write!(f, "exponent length mismatch: expected {expected}, got {actual}")
+            }
+            Self::InputLengthMismatch { expected, actual } => {
+                write!(f, "input length mismatch: expected {expected}, got {actual}")
+            }
+            Self::MantissaOutOfRange { index, value } => {
+                write!(f, "mantissa at index {index} exceeds configured range: {value}")
+            }
+            Self::ExponentOutOfRange { index, value } => {
+                write!(f, "exponent at index {index} exceeds configured range: {value}")
+            }
+        }
+    }
+}
+
+impl Error for BlockFloatingDenseError {}
 
 pub fn mixed_dense_q88_q1616(
     weights_q88: &[i16],
@@ -209,6 +323,96 @@ pub fn mixed_dense_q88_q1616(
             overflow = true;
         } else {
             outputs_q1616.push(scaled as i32);
+        }
+    }
+
+    Ok(MixedDenseResult {
+        outputs_q1616,
+        overflow,
+    })
+}
+
+pub fn block_floating_dense_q16(
+    mantissas: &[i16],
+    exponents: &[u8],
+    inputs_q1616: &[i32],
+    n_outputs: usize,
+    n_inputs: usize,
+    mode: BlockFloatingMode,
+) -> Result<MixedDenseResult, BlockFloatingDenseError> {
+    if n_inputs == 0 || n_outputs == 0 {
+        return Err(BlockFloatingDenseError::EmptyShape);
+    }
+    let expected_weights = n_outputs
+        .checked_mul(n_inputs)
+        .ok_or(BlockFloatingDenseError::ShapeOverflow)?;
+    let expected_blocks = expected_weights
+        .checked_add(mode.block_size - 1)
+        .ok_or(BlockFloatingDenseError::ShapeOverflow)?
+        / mode.block_size;
+
+    if mantissas.len() != expected_weights {
+        return Err(BlockFloatingDenseError::MantissaLengthMismatch {
+            expected: expected_weights,
+            actual: mantissas.len(),
+        });
+    }
+    if exponents.len() != expected_blocks {
+        return Err(BlockFloatingDenseError::ExponentLengthMismatch {
+            expected: expected_blocks,
+            actual: exponents.len(),
+        });
+    }
+    if inputs_q1616.len() != n_inputs {
+        return Err(BlockFloatingDenseError::InputLengthMismatch {
+            expected: n_inputs,
+            actual: inputs_q1616.len(),
+        });
+    }
+
+    let mantissa_range = mode.mantissa_range();
+    for (index, &mantissa) in mantissas.iter().enumerate() {
+        if i128::from(mantissa).abs() > mantissa_range {
+            return Err(BlockFloatingDenseError::MantissaOutOfRange {
+                index,
+                value: mantissa,
+            });
+        }
+    }
+    let exponent_code_max = mode.exponent_code_max();
+    for (index, &exponent) in exponents.iter().enumerate() {
+        if exponent > exponent_code_max {
+            return Err(BlockFloatingDenseError::ExponentOutOfRange {
+                index,
+                value: exponent,
+            });
+        }
+    }
+
+    let mut outputs_q1616 = Vec::with_capacity(n_outputs);
+    let mut overflow = false;
+    for output_idx in 0..n_outputs {
+        let mut sum: i128 = 0;
+        let row_start = output_idx * n_inputs;
+        for input_idx in 0..n_inputs {
+            let linear_idx = row_start + input_idx;
+            let block_idx = linear_idx / mode.block_size;
+            let product = i128::from(mantissas[linear_idx]) * i128::from(inputs_q1616[input_idx]);
+            let shift = i32::from(exponents[block_idx]) - mode.exponent_bias();
+            if shift >= 0 {
+                sum += product << shift;
+            } else {
+                sum += product >> (-shift);
+            }
+        }
+        if sum > i128::from(i32::MAX) {
+            outputs_q1616.push(i32::MAX);
+            overflow = true;
+        } else if sum < i128::from(i32::MIN) {
+            outputs_q1616.push(i32::MIN);
+            overflow = true;
+        } else {
+            outputs_q1616.push(sum as i32);
         }
     }
 
@@ -289,6 +493,74 @@ mod tests {
             MixedDenseError::InputLengthMismatch {
                 expected: 2,
                 actual: 1,
+            }
+        );
+    }
+
+    #[test]
+    fn block_floating_mode_reports_full_exponent_range() {
+        let mode = BlockFloatingMode::new(8, 2, 2).unwrap();
+
+        assert_eq!(mode.exponent_bias(), 1);
+        assert_eq!(mode.min_exponent(), -1);
+        assert_eq!(mode.max_exponent(), 2);
+        assert_eq!(mode.exponent_code_max(), 3);
+    }
+
+    #[test]
+    fn block_floating_dense_matches_manual_shifted_products() {
+        let mode = BlockFloatingMode::new(16, 3, 2).unwrap();
+        let bias = mode.exponent_bias() as u8;
+        let mantissas = [2_i16, -4_i16, 8_i16, 16_i16];
+        let exponents = [bias, bias - 1];
+        let inputs = [32768_i32, -16384_i32];
+
+        let result = block_floating_dense_q16(&mantissas, &exponents, &inputs, 2, 2, mode).unwrap();
+
+        assert_eq!(result.outputs_q1616, vec![131072, 0]);
+        assert!(!result.overflow);
+    }
+
+    #[test]
+    fn block_floating_dense_saturates_large_outputs() {
+        let mode = BlockFloatingMode::bfp16_e3_x32();
+        let mantissas = vec![i16::MAX; 64];
+        let exponents = vec![mode.exponent_code_max(); 2];
+        let inputs = vec![i32::MAX; 64];
+
+        let result = block_floating_dense_q16(&mantissas, &exponents, &inputs, 1, 64, mode).unwrap();
+
+        assert_eq!(result.outputs_q1616, vec![i32::MAX]);
+        assert!(result.overflow);
+    }
+
+    #[test]
+    fn block_floating_dense_rejects_invalid_lengths_and_ranges() {
+        let mode = BlockFloatingMode::new(8, 2, 2).unwrap();
+
+        assert_eq!(
+            block_floating_dense_q16(&[], &[1], &[1], 1, 0, mode).unwrap_err(),
+            BlockFloatingDenseError::EmptyShape
+        );
+        assert_eq!(
+            block_floating_dense_q16(&[1], &[1], &[1], 2, 1, mode).unwrap_err(),
+            BlockFloatingDenseError::MantissaLengthMismatch {
+                expected: 2,
+                actual: 1,
+            }
+        );
+        assert_eq!(
+            block_floating_dense_q16(&[1, 2], &[], &[1, 2], 1, 2, mode).unwrap_err(),
+            BlockFloatingDenseError::ExponentLengthMismatch {
+                expected: 1,
+                actual: 0,
+            }
+        );
+        assert_eq!(
+            block_floating_dense_q16(&[128, 0], &[1], &[1, 2], 1, 2, mode).unwrap_err(),
+            BlockFloatingDenseError::MantissaOutOfRange {
+                index: 0,
+                value: 128,
             }
         );
     }

@@ -177,7 +177,38 @@ restored = dequantize_block_floating(q, exponents, fmt="BFP16E3X32")
 ```
 
 In this codepath, adaptive precision emits manifest metadata (`mantissa_bits`,
-`exponent_bits`, `block_size`) alongside fixed-point datapath emission for now.
+`exponent_bits`, `block_size`) alongside fixed-point datapath emission.  The
+biased exponent range uses every representable exponent code; for
+`BFP16E3X32`, the unbiased range is `[-3, +4]`.
+
+### Block-Floating Dense Deployment Path
+
+Dense layers can be compiled into block-floating weights with fixed-point
+Q16.16 inputs and saturated Q16.16 outputs:
+
+```python
+from sc_neurocore.compiler.quantizer import compile_dense_block_floating
+
+compiled = compile_dense_block_floating(weights, fmt="BFP16E3X32")
+outputs_q1616, overflow = compiled.forward_with_overflow(inputs)
+```
+
+This path is wired across the same deployment surfaces as the mixed fixed-point
+path:
+
+- Python: `CompiledBlockFloatingDense` stores mantissas, shared exponents,
+  reconstructed deployment weights, Q16.16 output saturation, and manifests.
+- Rust: `sc_neurocore_engine::ir::qformat::block_floating_dense_q16` mirrors the
+  shared-exponent integer MAC, shape validation, mantissa/exponent bounds, and
+  saturation behaviour.
+- HDL: `hdl/sc_block_floating_dense.v` provides a synchronous RTL reference
+  with explicit dynamic exponent shifts, overflow telemetry, and saturated
+  Q16.16 outputs.
+
+Benchmark and synthesis evidence from 2026-06-04 is committed under
+`benchmarks/results/local_python_2026-06-04_block_floating_dense.json`,
+`benchmarks/results/local_rust_2026-06-04_block_floating_dense.json`, and
+`hdl/reports/yosys_block_floating_dense_2026-06-04.json`.
 
 ## Mixed Q8.8 / Q16.16 Weight-Accumulator Contract
 
