@@ -79,12 +79,12 @@ def test_parameter_bank_overlap_detected_by_mmio_contract() -> None:
     first = ParameterBankSpec(
         bank_name="a",
         start_address_bytes=0x4000,
-        parameter_count=2,
-        parameter_names=("a_0", "a_1"),
+        parameter_count=4,
+        parameter_names=("a_0", "a_1", "a_2", "a_3"),
     )
     second = ParameterBankSpec(
         bank_name="b",
-        start_address_bytes=0x4002,
+        start_address_bytes=0x4004,
         parameter_count=2,
         parameter_names=("b_0", "b_1"),
     )
