@@ -22,8 +22,34 @@ from sc_neurocore.compiler.quantizer import QFormat
 BusProtocol = Literal["axi4_lite", "pcie"]
 PrecisionMode = Literal["q", "bfp"]
 TrapAction = Literal["hold", "saturate", "clip", "halt", "interrupt"]
+MMIOWritePurpose = Literal[
+    "select_bank",
+    "select_entry",
+    "write_data_lo",
+    "write_data_hi",
+    "commit_update",
+    "clear_trap",
+]
 
 _VALID_PROTOCOLS = frozenset({"axi4_lite", "axi_lite", "pcie"})
+CONTROL_UPDATE_VALID = 0x1
+CONTROL_COMMIT = 0x2
+CONTROL_CLEAR_TRAP = 0x4
+STATUS_READY = 0x1
+STATUS_BUSY = 0x2
+STATUS_UPDATE_ACK = 0x4
+STATUS_TRAP_LATCHED = 0x8
+CONTROL_REGISTER_OFFSETS: dict[str, int] = {
+    "control": 0x00,
+    "status": 0x04,
+    "bank_select": 0x08,
+    "entry_index": 0x0C,
+    "write_data_lo": 0x10,
+    "write_data_hi": 0x14,
+    "trap_status": 0x18,
+    "trap_clear": 0x1C,
+}
+CONTROL_REGISTER_SPAN_BYTES = 0x20
 
 
 def _normalise_bus_protocol(protocol: str) -> BusProtocol:
@@ -33,6 +59,28 @@ def _normalise_bus_protocol(protocol: str) -> BusProtocol:
     if protocol not in _VALID_PROTOCOLS:
         raise ValueError(f"Unsupported MMIO protocol: {protocol!r}")
     return protocol  # type: ignore[return-value]
+
+
+@dataclass(frozen=True)
+class MMIOWrite:
+    """One deterministic memory-mapped write in a live-update transaction."""
+
+    address_bytes: int
+    value: int
+    width_bits: int
+    purpose: MMIOWritePurpose
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.address_bytes, int) or isinstance(self.address_bytes, bool):
+            raise ValueError("address_bytes must be an integer")
+        if self.address_bytes < 0 or self.address_bytes % 4 != 0:
+            raise ValueError("address_bytes must be non-negative and 4-byte aligned")
+        if not isinstance(self.value, int) or isinstance(self.value, bool):
+            raise ValueError("value must be an integer")
+        if self.width_bits not in {8, 16, 32, 64}:
+            raise ValueError("width_bits must be one of 8, 16, 32, 64")
+        if self.value < 0 or self.value >= (1 << self.width_bits):
+            raise ValueError("value does not fit the declared write width")
 
 
 @dataclass(frozen=True)
@@ -125,6 +173,9 @@ class ParameterBankSpec:
             raise ValueError("entry width must be positive")
         if width_bits > 64:
             raise ValueError("entry width must not exceed 64 bits")
+        if not isinstance(self.writable, bool):
+            raise ValueError("writable must be a bool")
+        self.normalise_encoded_word(self.reset_value)
 
     @property
     def entry_width_bits(self) -> int:
@@ -147,6 +198,61 @@ class ParameterBankSpec:
     def end_address_bytes(self) -> int:
         """Return first invalid byte address beyond the parameter bank."""
         return self.start_address_bytes + self.span_bytes
+
+    @property
+    def encoded_word_max(self) -> int:
+        """Largest unsigned storage word accepted for one entry."""
+        return (1 << self.entry_width_bits) - 1
+
+    @property
+    def signed_code_min(self) -> int:
+        """Smallest signed two's-complement code accepted for convenience."""
+        return -(1 << (self.entry_width_bits - 1))
+
+    @property
+    def signed_code_max(self) -> int:
+        """Largest signed two's-complement code accepted for convenience."""
+        return (1 << (self.entry_width_bits - 1)) - 1
+
+    def normalise_encoded_word(self, value: int) -> int:
+        """Return an unsigned storage word after validating encoded range.
+
+        Positive values are treated as raw register words. Negative values are
+        accepted only when they fit the signed two's-complement range for the
+        bank entry width, then converted to the unsigned wire representation.
+        """
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise ValueError("encoded parameter value must be an integer")
+        if 0 <= value <= self.encoded_word_max:
+            return value
+        if self.signed_code_min <= value <= -1:
+            return value & self.encoded_word_max
+        raise ValueError(
+            f"encoded parameter value must fit the bank entry width ({self.entry_width_bits} bits)"
+        )
+
+    def entry_index(self, parameter: int | str) -> int:
+        """Resolve a parameter name or numeric entry into a bank index."""
+        if isinstance(parameter, bool):
+            raise ValueError("parameter index must not be bool")
+        if isinstance(parameter, int):
+            index = parameter
+        elif isinstance(parameter, str):
+            try:
+                index = self.parameter_names.index(parameter)
+            except ValueError as exc:
+                raise ValueError(
+                    f"unknown parameter {parameter!r} in bank {self.bank_name!r}"
+                ) from exc
+        else:
+            raise ValueError("parameter must be an integer index or parameter name")
+        if index < 0 or index >= self.parameter_count:
+            raise ValueError("parameter index out of range")
+        return index
+
+    def entry_address(self, parameter: int | str) -> int:
+        """Return byte address for one parameter entry in this bank."""
+        return self.start_address_bytes + self.entry_index(parameter) * self.entry_width_bytes
 
     def to_dict(self) -> dict[str, Any]:
         """Serialise to JSON-compatible mapping."""
@@ -193,6 +299,7 @@ class MMIOUpdateSpec:
     supports_burst: bool = True
     supports_partial_write: bool = False
     trap: TrapSpec = field(default_factory=TrapSpec)
+    control_base_address_bytes: int = 0x0
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "bus_protocol", _normalise_bus_protocol(self.bus_protocol))
@@ -213,12 +320,37 @@ class MMIOUpdateSpec:
             raise ValueError("address_width_bits must be between 12 and 64")
         if self.bank_name_width < 8 or self.bank_name_width > 64:
             raise ValueError("bank_name_width must be between 8 and 64")
-        if self.bank_name_width < len(max(self.banks, key=lambda item: len(item.bank_name)).bank_name):
+        if self.bank_name_width < len(
+            max(self.banks, key=lambda item: len(item.bank_name)).bank_name
+        ):
             raise ValueError("bank_name_width too small for longest bank name")
+        if not isinstance(self.supports_burst, bool):
+            raise ValueError("supports_burst must be a bool")
+        if not isinstance(self.supports_partial_write, bool):
+            raise ValueError("supports_partial_write must be a bool")
+        if not isinstance(self.trap, TrapSpec):
+            raise ValueError("trap must be a TrapSpec")
+        if (
+            not isinstance(self.control_base_address_bytes, int)
+            or isinstance(self.control_base_address_bytes, bool)
+            or self.control_base_address_bytes < 0
+            or self.control_base_address_bytes % 4 != 0
+        ):
+            raise ValueError("control_base_address_bytes must be non-negative and 4-byte aligned")
 
         overlaps = _validate_banks_do_not_overlap(self.banks)
         if overlaps:
             raise ValueError("Parameter banks must not overlap")
+        control_start = self.control_base_address_bytes
+        control_end = control_start + CONTROL_REGISTER_SPAN_BYTES
+        if _ranges_overlap(
+            ((bank.start_address_bytes, bank.end_address_bytes) for bank in self.banks),
+            (control_start, control_end),
+        ):
+            raise ValueError("Control register window must not overlap parameter banks")
+        max_address = max([control_end, *(bank.end_address_bytes for bank in self.banks)])
+        if max_address > (1 << self.address_width_bits):
+            raise ValueError("address_width_bits too small for control and bank address map")
 
     @property
     def has_traps(self) -> bool:
@@ -228,9 +360,107 @@ class MMIOUpdateSpec:
     @property
     def total_address_space_bytes(self) -> int:
         """Total MMIO span from min bank start to max bank end."""
-        starts = [bank.start_address_bytes for bank in self.banks]
-        ends = [bank.end_address_bytes for bank in self.banks]
+        starts = [
+            self.control_base_address_bytes,
+            *(bank.start_address_bytes for bank in self.banks),
+        ]
+        ends = [
+            self.control_base_address_bytes + CONTROL_REGISTER_SPAN_BYTES,
+            *(bank.end_address_bytes for bank in self.banks),
+        ]
         return max(ends) - min(starts)
+
+    @property
+    def control_register_addresses(self) -> dict[str, int]:
+        """Return absolute addresses for the fixed live-control register map."""
+        return {
+            name: self.control_base_address_bytes + offset
+            for name, offset in CONTROL_REGISTER_OFFSETS.items()
+        }
+
+    @property
+    def status_bits(self) -> dict[str, int]:
+        """Return host-visible status-bit assignments."""
+        return {
+            "ready": STATUS_READY,
+            "busy": STATUS_BUSY,
+            "update_ack": STATUS_UPDATE_ACK,
+            "trap_latched": STATUS_TRAP_LATCHED,
+        }
+
+    @property
+    def control_bits(self) -> dict[str, int]:
+        """Return host-writeable control-bit assignments."""
+        return {
+            "update_valid": CONTROL_UPDATE_VALID,
+            "commit": CONTROL_COMMIT,
+            "clear_trap": CONTROL_CLEAR_TRAP,
+        }
+
+    def bank_index(self, bank_name: str) -> int:
+        """Return deterministic bank-select index for one bank name."""
+        for index, bank in enumerate(self.banks):
+            if bank.bank_name == bank_name:
+                return index
+        raise ValueError(f"unknown parameter bank {bank_name!r}")
+
+    def bank_by_name(self, bank_name: str) -> ParameterBankSpec:
+        """Return a bank by name or fail closed."""
+        return self.banks[self.bank_index(bank_name)]
+
+    def build_update_sequence(
+        self,
+        bank_name: str,
+        parameter: int | str,
+        encoded_value: int,
+    ) -> tuple[MMIOWrite, ...]:
+        """Build an atomic staged MMIO update sequence.
+
+        The returned writes select the bank, select the entry, stage the low
+        and optional high data words, then assert update-valid and commit in a
+        single command register write. This keeps host code from writing
+        directly into live compute memory without a deterministic handshake.
+        """
+        bank = self.bank_by_name(bank_name)
+        if not bank.writable:
+            raise ValueError(f"parameter bank {bank_name!r} is read-only")
+        bank_select = self.bank_index(bank_name)
+        entry_index = bank.entry_index(parameter)
+        encoded_word = bank.normalise_encoded_word(encoded_value)
+        addresses = self.control_register_addresses
+        writes = [
+            MMIOWrite(addresses["bank_select"], bank_select, 32, "select_bank"),
+            MMIOWrite(addresses["entry_index"], entry_index, 32, "select_entry"),
+            MMIOWrite(addresses["write_data_lo"], encoded_word & 0xFFFF_FFFF, 32, "write_data_lo"),
+        ]
+        if bank.entry_width_bits > 32:
+            writes.append(
+                MMIOWrite(
+                    addresses["write_data_hi"],
+                    (encoded_word >> 32) & 0xFFFF_FFFF,
+                    32,
+                    "write_data_hi",
+                )
+            )
+        writes.append(
+            MMIOWrite(
+                addresses["control"],
+                CONTROL_UPDATE_VALID | CONTROL_COMMIT,
+                32,
+                "commit_update",
+            )
+        )
+        return tuple(writes)
+
+    def build_trap_clear_sequence(self) -> tuple[MMIOWrite, ...]:
+        """Build the host-side write sequence for clearing sticky trap state."""
+        if not self.trap.enabled:
+            raise ValueError("trap clear sequence requires enabled traps")
+        addresses = self.control_register_addresses
+        return (
+            MMIOWrite(addresses["trap_clear"], self.trap.max_flags, 32, "clear_trap"),
+            MMIOWrite(addresses["control"], CONTROL_CLEAR_TRAP, 32, "clear_trap"),
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """Serialise contract for manifest persistence."""
@@ -243,6 +473,10 @@ class MMIOUpdateSpec:
             "bank_name_width": self.bank_name_width,
             "supports_burst": self.supports_burst,
             "supports_partial_write": self.supports_partial_write,
+            "control_base_address_bytes": self.control_base_address_bytes,
+            "control_registers": self.control_register_addresses,
+            "control_bits": self.control_bits,
+            "status_bits": self.status_bits,
             "trap": {
                 "enabled": self.trap.enabled,
                 "action": self.trap.action,
@@ -264,6 +498,7 @@ class MMIOUpdateSpec:
             bank_name_width=payload["bank_name_width"],
             supports_burst=payload.get("supports_burst", True),
             supports_partial_write=payload.get("supports_partial_write", False),
+            control_base_address_bytes=payload.get("control_base_address_bytes", 0x0),
             trap=TrapSpec(
                 enabled=payload["trap"]["enabled"],
                 action=payload["trap"]["action"],
@@ -279,7 +514,13 @@ def _validate_banks_do_not_overlap(
 ) -> bool:
     """Return True if any two bank ranges overlap."""
     ranges = sorted((bank.start_address_bytes, bank.end_address_bytes) for bank in banks)
-    for (start_a, end_a), (start_b, end_b) in zip(ranges, ranges[1:]):
-        if end_a > start_b:
+    return any(end_a > start_b for (_start_a, end_a), (start_b, _end_b) in zip(ranges, ranges[1:]))
+
+
+def _ranges_overlap(ranges: Any, candidate: tuple[int, int]) -> bool:
+    """Return True when any half-open range overlaps the candidate range."""
+    candidate_start, candidate_end = candidate
+    for range_start, range_end in ranges:
+        if range_start < candidate_end and candidate_start < range_end:
             return True
     return False

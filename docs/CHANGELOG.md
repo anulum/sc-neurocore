@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added deterministic compiler live-control schemas for AXI4-Lite/PCIe
+  parameter-bank updates, including encoded-word range checks, fixed
+  control/status registers, atomic staged commit sequences, and trap-clear
+  command generation.
 - Aligned adaptive block-floating precision metadata with the quantizer
   exponent-bias contract and added explicit block exponent alignment telemetry
   for `BFP16E3X32` to `Q16.16` adaptive-precision manifests.

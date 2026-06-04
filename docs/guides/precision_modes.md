@@ -283,6 +283,14 @@ The HDL `abs_bounds_q1616` vector uses the same lane order and carries unsigned
 64-bit conservative absolute Q16.16 bounds, matching the Python
 `PrecisionEnvelopeReport.abs_bound_codes` and Rust `abs_bounds_q1616` telemetry.
 
+For live hardware deployments, the same Q8.8, Q16.16, and block-floating
+encoded words can be placed behind `MMIOUpdateSpec` parameter banks instead of
+being hardcoded into logic. The control window stages `bank_select`,
+`entry_index`, `write_data_lo`, and optional `write_data_hi`, then commits with
+one `update_valid|commit` write. This keeps precision updates reproducible and
+lets a controller adjust weights or phase-coupling parameters without a new
+FPGA synthesis run.
+
 ### Precision Trap Reports and Hardware Latch
 
 Both compiled dense deployment paths expose a trap report method that turns
