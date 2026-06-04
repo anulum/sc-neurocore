@@ -17,6 +17,7 @@ use sc_neurocore_engine::bitstream::{
 };
 use sc_neurocore_engine::encoder::BitstreamEncoder;
 use sc_neurocore_engine::graph::StochasticGraphLayer;
+use sc_neurocore_engine::ir::qformat::mixed_dense_q88_q1616;
 use sc_neurocore_engine::layer::DenseLayer;
 use sc_neurocore_engine::neuron::{AdExNeuron, ExpIfNeuron, FixedPointLif, LapicqueNeuron};
 use sc_neurocore_engine::neurons::{
@@ -399,6 +400,26 @@ fn bench_all(c: &mut Criterion) {
 
     c.bench_function("dense_forward_prepacked_64x32", |b| {
         b.iter(|| black_box(layer.forward_prepacked(black_box(&packed_inputs)).unwrap()))
+    });
+
+    let mixed_weights_q88: Vec<i16> = (0..(64 * 32))
+        .map(|i| (((i * 17 + 11) % 513) as i32 - 256) as i16)
+        .collect();
+    let mixed_inputs_q1616: Vec<i32> = (0..64)
+        .map(|i| (((i * 19 + 5) % 257) as i32 - 128) << 8)
+        .collect();
+    c.bench_function("mixed_dense_q88_q1616_64x32", |b| {
+        b.iter(|| {
+            black_box(
+                mixed_dense_q88_q1616(
+                    black_box(&mixed_weights_q88),
+                    black_box(&mixed_inputs_q1616),
+                    32,
+                    64,
+                )
+                .unwrap(),
+            )
+        })
     });
 
     // -- Kuramoto --

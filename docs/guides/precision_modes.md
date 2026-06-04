@@ -204,6 +204,32 @@ deterministic scale metadata needed by the wider Q16.16 accumulator path.  Set
 `scale_per_tensor=False` only when the canonical Q8.8 scale must be preserved
 exactly for legacy parity.
 
+### Mixed Dense Deployment Path
+
+Dense layers can be compiled into the same mixed contract directly:
+
+```python
+from sc_neurocore.compiler.quantizer import QFormatMixed, compile_dense_mixed_precision
+
+compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed())
+outputs_q1616, overflow = compiled.forward_with_overflow(inputs)
+```
+
+This path is wired across three implementation surfaces:
+
+- Python: `CompiledMixedDense` stores Q8.8 weights, Q16.16 accumulator metadata,
+  exact signed saturation, and deterministic deployment manifests.
+- Rust: `sc_neurocore_engine::ir::qformat::mixed_dense_q88_q1616` mirrors the
+  canonical integer MAC, arithmetic shift, shape validation, and saturation
+  behaviour.
+- HDL: `hdl/sc_mixed_precision_dense.v` provides a synchronous RTL reference
+  with explicit overflow telemetry and saturated Q16.16 outputs.
+
+Benchmark and synthesis evidence from 2026-06-04 is committed under
+`benchmarks/results/local_python_2026-06-04_mixed_dense.json`,
+`benchmarks/results/local_rust_2026-06-04_mixed_dense.json`, and
+`hdl/reports/yosys_mixed_precision_dense_2026-06-04.json`.
+
 ## CLI Usage
 
 ### Compiling with Precision Selection

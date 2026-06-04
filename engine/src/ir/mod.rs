@@ -27,4 +27,5 @@ pub mod emit_sv;
 pub mod graph;
 pub mod parser;
 pub mod printer;
+pub mod qformat;
 pub mod verify;

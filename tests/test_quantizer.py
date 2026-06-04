@@ -19,6 +19,7 @@ from sc_neurocore.compiler.quantizer import (
     Q8_8,
     Q16_16,
     BlockFloatingMode,
+    compile_dense_mixed_precision,
     parse_precision_format,
     quantize_block_floating,
     dequantize,
@@ -202,6 +203,62 @@ class TestQFormatMixed:
             rtol=0.0,
             atol=(0.5 / (fmt.weight_fmt.scale * tensor_scale)) + 1e-12,
         )
+
+
+class TestCompiledMixedDense:
+    """Validate the bit-true dense Q8.8-weight/Q16.16-accumulator contract."""
+
+    def test_canonical_q88_q1616_integer_mac_matches_manual_codes(self):
+        weights = np.array([[0.5, -0.25], [1.0, 0.125]], dtype=np.float64)
+        inputs = np.array([0.5, -0.25], dtype=np.float64)
+        compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed(scale_per_tensor=False))
+
+        assert compiled.manifest()["operation"] == "dense_mixed_qformat"
+        assert compiled.manifest()["weight_shape"] == [2, 2]
+
+        manual = np.array(
+            [
+                (128 * 32768 + (-64) * (-16384)) // Q8_8.scale,
+                (256 * 32768 + 32 * (-16384)) // Q8_8.scale,
+            ],
+            dtype=np.int64,
+        )
+        np.testing.assert_array_equal(compiled.forward_accumulator_codes(inputs), manual)
+        np.testing.assert_allclose(compiled.forward_float(inputs), weights @ inputs, atol=1 / Q16_16.scale)
+
+    def test_default_scaled_contract_tracks_float_dense_result(self):
+        weights = np.array([[0.375, -0.125, 0.0625], [-0.5, 0.25, 0.125]], dtype=np.float64)
+        inputs = np.array([0.5, -0.25, 0.125], dtype=np.float64)
+        compiled = compile_dense_mixed_precision(weights)
+
+        assert compiled.tensor_scale > 1.0
+        np.testing.assert_allclose(compiled.forward_float(inputs), weights @ inputs, atol=2e-4)
+
+    def test_canonical_contract_saturates_and_reports_accumulator_overflow(self):
+        weights = np.array([[127.0, 127.0]], dtype=np.float64)
+        inputs = np.array([20_000.0, 20_000.0], dtype=np.float64)
+        compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed(scale_per_tensor=False))
+
+        codes, overflow = compiled.forward_with_overflow(inputs)
+
+        assert overflow.tolist() == [True]
+        assert int(codes[0]) == (1 << (Q16_16.total_bits - 1)) - 1
+
+    def test_negative_raw_products_use_hardware_arithmetic_shift(self):
+        weights = np.array([[0.5]], dtype=np.float64)
+        inputs = np.array([-1 / Q16_16.scale], dtype=np.float64)
+        compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed(scale_per_tensor=False))
+
+        assert int(compiled.forward_accumulator_codes(inputs)[0]) == -1
+
+    def test_rejects_non_dense_or_non_finite_inputs_before_accumulation(self):
+        with pytest.raises(ValueError, match="2-D dense"):
+            compile_dense_mixed_precision(np.array([0.5, -0.25]))
+        compiled = compile_dense_mixed_precision(np.array([[0.5, -0.25]], dtype=np.float64))
+        with pytest.raises(ValueError, match="input length mismatch"):
+            compiled.forward_float(np.array([0.5]))
+        with pytest.raises(ValueError, match="finite values"):
+            compiled.forward_float(np.array([0.5, np.nan]))
 
 
 class TestBlockFloatingQuantize:

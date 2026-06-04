@@ -1,0 +1,99 @@
+{
+  "benchmark": "mixed_dense_q88_q1616_64x32",
+  "language": "Python",
+  "timestamp_utc": "2026-06-04T02:03:54+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_mixed_precision_dense.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "n_inputs": 64,
+  "n_outputs": 32,
+  "iterations": 2000,
+  "repeats": 7,
+  "mixed_median_ns_per_call": 232187.0745,
+  "mixed_min_ns_per_call": 206709.698,
+  "mixed_max_ns_per_call": 248704.193,
+  "float_dot_median_ns_per_call": 3922.916,
+  "float_dot_min_ns_per_call": 3223.567,
+  "float_dot_max_ns_per_call": 8035.485,
+  "max_abs_error_vs_float_dot": 7.62939453125e-05,
+  "compiled_manifest": {
+    "operation": "dense_mixed_qformat",
+    "input_size": 64,
+    "output_size": 32,
+    "weight_shape": [
+      32,
+      64
+    ],
+    "tensor_scale": 127.99609375,
+    "accumulator_divisor": 32767.0,
+    "kind": "mixed_fixed_point",
+    "weight_format": "Q8.8",
+    "accumulator_format": "Q16.16",
+    "weight_total_bits": 16,
+    "accumulator_total_bits": 32,
+    "accumulator_guard_bits": 16,
+    "scale_per_tensor": true,
+    "rounding": "nearest"
+  },
+  "mixed_results": [
+    {
+      "ns_per_call": 214769.095,
+      "checksum": 0
+    },
+    {
+      "ns_per_call": 206709.698,
+      "checksum": 0
+    },
+    {
+      "ns_per_call": 240518.967,
+      "checksum": 0
+    },
+    {
+      "ns_per_call": 248704.193,
+      "checksum": 0
+    },
+    {
+      "ns_per_call": 232187.0745,
+      "checksum": 0
+    },
+    {
+      "ns_per_call": 236491.4535,
+      "checksum": 0
+    },
+    {
+      "ns_per_call": 212631.595,
+      "checksum": 0
+    }
+  ],
+  "float_dot_results": [
+    {
+      "ns_per_call": 8035.485,
+      "checksum": -4574.40185546875
+    },
+    {
+      "ns_per_call": 3837.515,
+      "checksum": -4574.40185546875
+    },
+    {
+      "ns_per_call": 3643.31,
+      "checksum": -4574.40185546875
+    },
+    {
+      "ns_per_call": 4237.117,
+      "checksum": -4574.40185546875
+    },
+    {
+      "ns_per_call": 3223.567,
+      "checksum": -4574.40185546875
+    },
+    {
+      "ns_per_call": 4551.2525,
+      "checksum": -4574.40185546875
+    },
+    {
+      "ns_per_call": 3922.916,
+      "checksum": -4574.40185546875
+    }
+  ]
+}

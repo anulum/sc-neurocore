@@ -6,6 +6,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added the compiled mixed-dense Q8.8/Q16.16 contract across the Python
+  quantiser API, Rust IR qformat mirror, and synchronous HDL reference module,
+  including exact signed MAC scaling, accumulator saturation, and overflow
+  telemetry.
+- Added module-specific mixed-dense quantiser and HDL tests plus committed
+  Python, Rust, and Yosys benchmark artefacts for the 64×32 mixed-precision
+  dense contract.
 - Added the `QFormatMixed` quantiser contract for Q8.8 stored weights with
   Q16.16 accumulator metadata, including per-tensor scale round-trip support,
   public compiler exports, module-specific quantiser tests, and refreshed

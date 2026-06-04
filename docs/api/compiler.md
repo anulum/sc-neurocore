@@ -220,6 +220,7 @@ import numpy as np
 
 from sc_neurocore.compiler.quantizer import (
     QFormatMixed,
+    compile_dense_mixed_precision,
     dequantize_weights,
     quantize_weights,
 )
@@ -242,6 +243,25 @@ wide as the weight format, preserve the weight fractional precision, and cover
 the full weight dynamic range.  The returned `tensor_scale` is deterministic
 metadata for reconstructing values and for hardware emitters that need the
 scale alongside compact stored weights.
+
+Dense deployment can compile a two-dimensional weight matrix into the same
+bit-true Q8.8-weight/Q16.16-accumulator contract used by the Rust and HDL
+reference paths:
+
+```python
+compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed())
+outputs_q1616, overflow = compiled.forward_with_overflow(inputs)
+outputs = compiled.forward_float(inputs)
+manifest = compiled.manifest()
+```
+
+`forward_with_overflow` returns saturated accumulator-format integer codes and
+per-output overflow flags.  In canonical `scale_per_tensor=False` mode the
+division from Q8.8×Q16.16 products to Q16.16 outputs uses the same signed
+arithmetic shift as the hardware reference.  With per-tensor scaling enabled,
+the host path carries `tensor_scale` in the manifest so deployment code can
+reconstruct compact stored weights without silently changing the physical
+output scale.
 
 #### Rounding Modes
 
