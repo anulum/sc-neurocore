@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
+import os
 from pathlib import Path
 import platform
 import statistics
@@ -18,7 +19,11 @@ from typing import Protocol
 
 import numpy as np
 
-from sc_neurocore.compiler.quantizer import PrecisionEnvelopeReport, compile_dense_mixed_precision
+from sc_neurocore.compiler.quantizer import (
+    PrecisionEnvelopeReport,
+    QFormatMixed,
+    compile_dense_mixed_precision,
+)
 
 
 N_INPUTS = 64
@@ -90,9 +95,32 @@ def time_float_dot(weights: np.ndarray, inputs: np.ndarray) -> tuple[float, floa
     return elapsed_ns / ITERATIONS, checksum
 
 
+def measurement_context() -> dict[str, object]:
+    """Return benchmark context for non-exclusive workstation captures."""
+
+    affinity = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else []
+    return {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": (
+            "taskset affinity only when launched with taskset; no kernel-reserved "
+            "isolated cores were detected on this workstation"
+        ),
+        "cpu_affinity": affinity,
+        "load_average": list(os.getloadavg()) if hasattr(os, "getloadavg") else None,
+        "timing_interpretation": (
+            "use timing medians as local regression context only, not final throughput claims"
+        ),
+        "production_rerun_requirement": (
+            "rerun on reserved isolated cores with recorded affinity, governor, "
+            "frequency, versions, and host-load evidence before publishing performance claims"
+        ),
+    }
+
+
 def main() -> int:
     weights, inputs = deterministic_inputs()
-    compiled = compile_dense_mixed_precision(weights)
+    mixed_format = QFormatMixed(scale_per_tensor=False)
+    compiled = compile_dense_mixed_precision(weights, fmt=mixed_format)
 
     mixed_results = [time_mixed_forward(compiled, inputs) for _ in range(REPEATS)]
     overflow_results = [time_mixed_forward_with_overflow(compiled, inputs) for _ in range(REPEATS)]
@@ -105,7 +133,8 @@ def main() -> int:
     _, safe_overflow = compiled.forward_with_overflow(inputs)
     safe_envelope = compiled.precision_envelope_report(inputs)
     overflow_probe = compile_dense_mixed_precision(
-        np.full((N_OUTPUTS, N_INPUTS), 127.0, dtype=np.float64)
+        np.full((N_OUTPUTS, N_INPUTS), 127.0, dtype=np.float64),
+        fmt=mixed_format,
     )
     _, probe_overflow = overflow_probe.forward_with_overflow(
         np.full(N_INPUTS, 32767.0, dtype=np.float64)
@@ -116,12 +145,18 @@ def main() -> int:
 
     report = {
         "benchmark": "mixed_dense_q88_q1616_64x32",
+        "benchmark_contract": "canonical_q88_weight_q1616_input",
+        "scale_per_tensor": False,
         "language": "Python",
         "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
-        "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_mixed_precision_dense.py",
+        "command": (
+            "taskset -c 10-11 env PYTHONPATH=src "
+            ".venv/bin/python benchmarks/bench_mixed_precision_dense.py"
+        ),
         "python": platform.python_version(),
         "platform": platform.platform(),
         "processor": platform.processor(),
+        "measurement_context": measurement_context(),
         "n_inputs": N_INPUTS,
         "n_outputs": N_OUTPUTS,
         "iterations": ITERATIONS,

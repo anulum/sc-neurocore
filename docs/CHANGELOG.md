@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Aligned the mixed dense Python and Rust benchmark workloads on the canonical
+  raw Q8.8/Q16.16 physical contract (`QFormatMixed(scale_per_tensor=False)`),
+  eliminating the stale per-tensor Python envelope mismatch and refreshing the
+  cross-language benchmark documentation.
 - Marked the 2026-06-04 local precision benchmark artefacts as captured under
   concurrent workstation load and documented the isolated-core requirement for
   future production throughput claims.

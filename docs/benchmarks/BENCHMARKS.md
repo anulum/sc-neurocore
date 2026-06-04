@@ -80,22 +80,25 @@ This benchmark covers the deterministic dense mixed-precision contract: stored
 Q8.8 weights, Q16.16 inputs and outputs, signed arithmetic product scaling, and
 explicit saturation/overflow handling.  The Python path is the deployment
 reference and manifest writer; the Rust path is the low-latency integer mirror.
+The Python path is run with `QFormatMixed(scale_per_tensor=False)` for this
+benchmark so the Python, Rust, and HDL surfaces share the same raw Q8.8/Q16.16
+arithmetic contract instead of Python-only per-tensor rescaling.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python `CompiledMixedDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 31.330 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
-| Python `CompiledMixedDense.forward_with_overflow` | Same deterministic matrix/vector | 39.562 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
-| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.309 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
-| Rust `mixed_dense_q88_q1616` | 64×32 dense, 20,000 calls × 7 repeats | 2.986 µs/call | `benchmarks/results/local_rust_2026-06-04_mixed_dense.json` |
+| Python `CompiledMixedDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 35.485 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| Python `CompiledMixedDense.forward_with_overflow` | Same deterministic matrix/vector | 33.715 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.468 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| Rust `mixed_dense_q88_q1616` | 64×32 dense, 20,000 calls × 7 repeats | 2.343 µs/call | `benchmarks/results/local_rust_2026-06-04_mixed_dense.json` |
 | HDL `sc_mixed_precision_dense` Yosys RTLIL stat | Default 64×32 parameters | 12,708 cells, 2,048 multipliers | `hdl/reports/yosys_mixed_precision_dense_2026-06-04.json` |
 
 The Python mixed path reconstructed the float64 dot product with maximum
-absolute error `7.62939453125e-05` on the committed deterministic workload.
+absolute error `0.0` on the committed deterministic workload.
 The Python and Rust artefacts both recorded safe-workload overflow count `0`
 and saturating-probe overflow count `32`, matching the lane-level HDL
 `overflow_vector` contract.  The same artefacts now record conservative
-precision-envelope telemetry: Python safe max absolute bound `531401`, Rust
-safe max absolute bound `531400`, and saturating-probe max absolute bound
+precision-envelope telemetry: Python and Rust safe max absolute bound `531400`,
+and saturating-probe max absolute bound
 `17454214414336`; the HDL exports the matching per-output `abs_bounds_q1616`
 vector.
 
