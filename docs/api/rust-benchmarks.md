@@ -11,7 +11,7 @@ All measurements via Criterion 0.8, single-threaded, pure CPU.
 Hardware: 11th Gen Intel Core i5-11600K @ 3.90 GHz (6C/12T), DDR4-2400, Ubuntu 24.04.
 Verified via `lscpu` on 2026-05-31.
 
-Last updated: 2026-05-31.
+Last updated: 2026-06-04.
 
 ## How to Run
 
@@ -54,8 +54,15 @@ cargo bench --bench analysis_bench -- --quick
 | Benchmark | Median |
 |-----------|-------:|
 | dense_forward_64x32 | 993 µs |
+| mixed_dense_q88_q1616_64x32 | 2.223 µs |
 | attention_10x16_20x32 | 88.5 µs |
 | gnn_20x8_forward | 85.3 µs |
+
+`mixed_dense_q88_q1616_64x32` was measured on 2026-06-04 with
+`cargo run --manifest-path engine/Cargo.toml --release --example bench_mixed_dense`.
+The committed raw artefact is
+`benchmarks/results/local_rust_2026-06-04_mixed_dense.json`; the matching Python
+reference artefact is `benchmarks/results/local_python_2026-06-04_mixed_dense.json`.
 
 ### PRNG
 

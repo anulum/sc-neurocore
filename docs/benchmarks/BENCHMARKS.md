@@ -68,6 +68,25 @@ or paper claims until the raw artefact and environment record are committed.
 | 16×8, L=256 | 500 | 352.7 | 0.09 GOP/s (SC) |
 | 64×32, L=1,024 | 100 | 2,405.8 | 0.87 GOP/s (SC) |
 
+### Mixed Q8.8/Q16.16 Dense Contract (2026-06-04)
+
+This benchmark covers the deterministic dense mixed-precision contract: stored
+Q8.8 weights, Q16.16 inputs and outputs, signed arithmetic product scaling, and
+explicit saturation/overflow handling.  The Python path is the deployment
+reference and manifest writer; the Rust path is the low-latency integer mirror.
+
+| Path | Workload | Median | Raw evidence |
+|------|----------|-------:|--------------|
+| Python `CompiledMixedDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 232.187 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| NumPy float64 dot baseline | Same deterministic matrix/vector | 3.923 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| Rust `mixed_dense_q88_q1616` | 64×32 dense, 20,000 calls × 7 repeats | 2.223 µs/call | `benchmarks/results/local_rust_2026-06-04_mixed_dense.json` |
+| HDL `sc_mixed_precision_dense` Yosys stat | Default 64×32 parameters | 4,292 cells, 2,048 multipliers | `hdl/reports/yosys_mixed_precision_dense_2026-06-04.json` |
+
+The Python mixed path reconstructed the float64 dot product with maximum
+absolute error `7.62939453125e-05` on the committed deterministic workload.
+The Rust mirror was 104.5× faster than the Python mixed reference on the same
+64×32 integer MAC workload.
+
 ---
 
 ## 5. Full Pipeline (Python)
