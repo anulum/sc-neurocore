@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Compiler precision
+- Added the `QFormatMixed` quantiser contract for Q8.8 stored weights with
+  Q16.16 accumulator metadata, including per-tensor scale round-trip support,
+  public compiler exports, module-specific quantiser tests, and refreshed
+  compiler precision documentation.
+- Corrected block-floating alias normalisation and shared-exponent selection
+  so sub-unit tensors retain the finest representable scale within the exponent
+  range.
+
 ### Typing hygiene
 - Removed active source-level file-wide mypy suppressions from the package tree
   and repaired the exposed strict-mypy defects in ASIC flow, BCI Studio,

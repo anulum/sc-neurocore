@@ -216,17 +216,32 @@ The manifest records operation counts and whether `firtool` is available.
 ### 4.3 Weight Quantizer
 
 ```python
-from sc_neurocore.compiler.quantizer import quantize_weights
+import numpy as np
 
-weights = [0.5, -0.3, 1.2, 0.0]
-q_weights = quantize_weights(
-    weights,
-    data_width=16,
-    fraction=8,
-    rounding="nearest",     # or "stochastic", "floor"
+from sc_neurocore.compiler.quantizer import (
+    QFormatMixed,
+    dequantize_weights,
+    quantize_weights,
 )
-# Returns list of Q8.8 integers
+
+weights = np.array([0.5, -0.3, 1.2, 0.0], dtype=np.float64)
+
+# Canonical fixed-point Q8.8 path: returns the integer tensor only.
+q_weights = quantize_weights(weights, fmt="Q8.8", rounding="nearest")
+restored = dequantize_weights(q_weights, fmt="Q8.8")
+
+# Mixed hardware path: Q8.8 stored weights with Q16.16 accumulation metadata.
+mixed = QFormatMixed()
+q_mixed, tensor_scale = quantize_weights(weights, fmt=mixed)
+restored_mixed = dequantize_weights(q_mixed, fmt=mixed, scale=tensor_scale)
 ```
+
+`QFormatMixed` defaults to Q8.8 weights, a Q16.16 accumulator, nearest rounding,
+and per-tensor scale maximisation.  Its accumulator format must be at least as
+wide as the weight format, preserve the weight fractional precision, and cover
+the full weight dynamic range.  The returned `tensor_scale` is deterministic
+metadata for reconstructing values and for hardware emitters that need the
+scale alongside compact stored weights.
 
 #### Rounding Modes
 
