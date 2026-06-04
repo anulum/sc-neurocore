@@ -78,12 +78,22 @@ impl fmt::Display for QFormatError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::MissingSignBit => write!(f, "integer_bits must include the sign bit"),
-            Self::TotalBitsTooWide(bits) => write!(f, "Q-format total bits exceed i64 range: {bits}"),
-            Self::AccumulatorNarrower => write!(f, "accumulator format must not be narrower than weight format"),
-            Self::AccumulatorFractionLoss => {
-                write!(f, "accumulator format must preserve weight fractional precision")
+            Self::TotalBitsTooWide(bits) => {
+                write!(f, "Q-format total bits exceed i64 range: {bits}")
             }
-            Self::AccumulatorRangeLoss => write!(f, "accumulator format must cover the full weight range"),
+            Self::AccumulatorNarrower => write!(
+                f,
+                "accumulator format must not be narrower than weight format"
+            ),
+            Self::AccumulatorFractionLoss => {
+                write!(
+                    f,
+                    "accumulator format must preserve weight fractional precision"
+                )
+            }
+            Self::AccumulatorRangeLoss => {
+                write!(f, "accumulator format must cover the full weight range")
+            }
         }
     }
 }
@@ -215,6 +225,42 @@ impl Error for BlockFloatingError {}
 pub struct MixedDenseResult {
     pub outputs_q1616: Vec<i32>,
     pub overflow: bool,
+    pub overflow_count: usize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PrecisionTrapReport {
+    pub output_count: usize,
+    pub overflow: bool,
+    pub overflow_count: usize,
+    pub saturated_min_count: usize,
+    pub saturated_max_count: usize,
+}
+
+impl PrecisionTrapReport {
+    pub fn from_q1616(outputs_q1616: &[i32], overflow_count: usize) -> Self {
+        let saturated_min_count = outputs_q1616
+            .iter()
+            .filter(|&&value| value == i32::MIN)
+            .count();
+        let saturated_max_count = outputs_q1616
+            .iter()
+            .filter(|&&value| value == i32::MAX)
+            .count();
+        Self {
+            output_count: outputs_q1616.len(),
+            overflow: overflow_count > 0,
+            overflow_count,
+            saturated_min_count,
+            saturated_max_count,
+        }
+    }
+}
+
+impl MixedDenseResult {
+    pub fn precision_trap_report(&self) -> PrecisionTrapReport {
+        PrecisionTrapReport::from_q1616(&self.outputs_q1616, self.overflow_count)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -231,10 +277,16 @@ impl fmt::Display for MixedDenseError {
             Self::EmptyShape => write!(f, "dense shape must have positive inputs and outputs"),
             Self::ShapeOverflow => write!(f, "dense shape overflows addressable memory"),
             Self::WeightLengthMismatch { expected, actual } => {
-                write!(f, "weight length mismatch: expected {expected}, got {actual}")
+                write!(
+                    f,
+                    "weight length mismatch: expected {expected}, got {actual}"
+                )
             }
             Self::InputLengthMismatch { expected, actual } => {
-                write!(f, "input length mismatch: expected {expected}, got {actual}")
+                write!(
+                    f,
+                    "input length mismatch: expected {expected}, got {actual}"
+                )
             }
         }
     }
@@ -259,19 +311,34 @@ impl fmt::Display for BlockFloatingDenseError {
             Self::EmptyShape => write!(f, "dense shape must have positive inputs and outputs"),
             Self::ShapeOverflow => write!(f, "dense shape overflows addressable memory"),
             Self::MantissaLengthMismatch { expected, actual } => {
-                write!(f, "mantissa length mismatch: expected {expected}, got {actual}")
+                write!(
+                    f,
+                    "mantissa length mismatch: expected {expected}, got {actual}"
+                )
             }
             Self::ExponentLengthMismatch { expected, actual } => {
-                write!(f, "exponent length mismatch: expected {expected}, got {actual}")
+                write!(
+                    f,
+                    "exponent length mismatch: expected {expected}, got {actual}"
+                )
             }
             Self::InputLengthMismatch { expected, actual } => {
-                write!(f, "input length mismatch: expected {expected}, got {actual}")
+                write!(
+                    f,
+                    "input length mismatch: expected {expected}, got {actual}"
+                )
             }
             Self::MantissaOutOfRange { index, value } => {
-                write!(f, "mantissa at index {index} exceeds configured range: {value}")
+                write!(
+                    f,
+                    "mantissa at index {index} exceeds configured range: {value}"
+                )
             }
             Self::ExponentOutOfRange { index, value } => {
-                write!(f, "exponent at index {index} exceeds configured range: {value}")
+                write!(
+                    f,
+                    "exponent at index {index} exceeds configured range: {value}"
+                )
             }
         }
     }
@@ -305,7 +372,7 @@ pub fn mixed_dense_q88_q1616(
     }
 
     let mut outputs_q1616 = Vec::with_capacity(n_outputs);
-    let mut overflow = false;
+    let mut overflow_count = 0_usize;
     for output_idx in 0..n_outputs {
         let mut sum: i128 = 0;
         let row_start = output_idx * n_inputs;
@@ -317,10 +384,10 @@ pub fn mixed_dense_q88_q1616(
         let scaled = sum >> 8;
         if scaled > i128::from(i32::MAX) {
             outputs_q1616.push(i32::MAX);
-            overflow = true;
+            overflow_count += 1;
         } else if scaled < i128::from(i32::MIN) {
             outputs_q1616.push(i32::MIN);
-            overflow = true;
+            overflow_count += 1;
         } else {
             outputs_q1616.push(scaled as i32);
         }
@@ -328,7 +395,8 @@ pub fn mixed_dense_q88_q1616(
 
     Ok(MixedDenseResult {
         outputs_q1616,
-        overflow,
+        overflow: overflow_count > 0,
+        overflow_count,
     })
 }
 
@@ -390,7 +458,7 @@ pub fn block_floating_dense_q16(
     }
 
     let mut outputs_q1616 = Vec::with_capacity(n_outputs);
-    let mut overflow = false;
+    let mut overflow_count = 0_usize;
     for output_idx in 0..n_outputs {
         let mut sum: i128 = 0;
         let row_start = output_idx * n_inputs;
@@ -407,10 +475,10 @@ pub fn block_floating_dense_q16(
         }
         if sum > i128::from(i32::MAX) {
             outputs_q1616.push(i32::MAX);
-            overflow = true;
+            overflow_count += 1;
         } else if sum < i128::from(i32::MIN) {
             outputs_q1616.push(i32::MIN);
-            overflow = true;
+            overflow_count += 1;
         } else {
             outputs_q1616.push(sum as i32);
         }
@@ -418,7 +486,8 @@ pub fn block_floating_dense_q16(
 
     Ok(MixedDenseResult {
         outputs_q1616,
-        overflow,
+        overflow: overflow_count > 0,
+        overflow_count,
     })
 }
 
@@ -455,6 +524,7 @@ mod tests {
 
         assert_eq!(result.outputs_q1616, vec![20480, 30720]);
         assert!(!result.overflow);
+        assert_eq!(result.overflow_count, 0);
     }
 
     #[test]
@@ -473,6 +543,14 @@ mod tests {
 
         assert_eq!(result.outputs_q1616, vec![i32::MAX]);
         assert!(result.overflow);
+        assert_eq!(result.overflow_count, 1);
+
+        let report = result.precision_trap_report();
+        assert_eq!(report.output_count, 1);
+        assert!(report.overflow);
+        assert_eq!(report.overflow_count, 1);
+        assert_eq!(report.saturated_max_count, 1);
+        assert_eq!(report.saturated_min_count, 0);
     }
 
     #[test]
@@ -528,10 +606,19 @@ mod tests {
         let exponents = vec![mode.exponent_code_max(); 2];
         let inputs = vec![i32::MAX; 64];
 
-        let result = block_floating_dense_q16(&mantissas, &exponents, &inputs, 1, 64, mode).unwrap();
+        let result =
+            block_floating_dense_q16(&mantissas, &exponents, &inputs, 1, 64, mode).unwrap();
 
         assert_eq!(result.outputs_q1616, vec![i32::MAX]);
         assert!(result.overflow);
+        assert_eq!(result.overflow_count, 1);
+
+        let report = result.precision_trap_report();
+        assert_eq!(report.output_count, 1);
+        assert!(report.overflow);
+        assert_eq!(report.overflow_count, 1);
+        assert_eq!(report.saturated_max_count, 1);
+        assert_eq!(report.saturated_min_count, 0);
     }
 
     #[test]

@@ -107,6 +107,26 @@ quantisation on the committed synthetic workload, not runtime nondeterminism.
 The Rust mirror was 4.7× faster than the Python BFP reference on the same
 64×32 integer MAC workload.
 
+### Precision Trap Reports (2026-06-04)
+
+This benchmark covers the saturation telemetry path for mixed Q8.8/Q16.16 and
+block-floating dense outputs.  The workload intentionally saturates all 32
+output channels so the trap report has to preserve an exact overflow count
+rather than only a collapsed Boolean.
+
+| Path | Workload | Median | Raw evidence |
+|------|----------|-------:|--------------|
+| Python mixed `precision_trap_report` | 64×32 dense, 2,000 calls × 7 repeats | 340.461 µs/call | `benchmarks/results/local_python_2026-06-04_precision_traps.json` |
+| Python BFP `precision_trap_report` | 64×32 dense, 2,000 calls × 7 repeats | 161.677 µs/call | `benchmarks/results/local_python_2026-06-04_precision_traps.json` |
+| Rust mixed `PrecisionTrapReport` | 64×32 dense, 20,000 calls × 7 repeats | 3.483 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_traps.json` |
+| Rust BFP `PrecisionTrapReport` | 64×32 dense, 20,000 calls × 7 repeats | 11.277 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_traps.json` |
+| HDL `sc_precision_overflow_trap` Yosys stat | Default `TRAP_WIDTH=1` | 3 cells, 8 wire bits | `hdl/reports/yosys_precision_overflow_trap_2026-06-04.json` |
+
+The committed Python and Rust trap workloads both report
+`mixed_overflow_count=32` and `bfp_overflow_count=32`, matching the number of
+output channels.  The HDL trap primitive synthesises to one `$adff`, one
+`$mux`, and one `$or` cell at the default width.
+
 ---
 
 ## 5. Full Pipeline (Python)

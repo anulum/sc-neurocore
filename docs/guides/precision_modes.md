@@ -261,6 +261,35 @@ Benchmark and synthesis evidence from 2026-06-04 is committed under
 `benchmarks/results/local_rust_2026-06-04_mixed_dense.json`, and
 `hdl/reports/yosys_mixed_precision_dense_2026-06-04.json`.
 
+### Precision Trap Reports and Hardware Latch
+
+Both compiled dense deployment paths expose a trap report method that turns
+transient overflow flags into deterministic telemetry:
+
+```python
+report = compiled.precision_trap_report(inputs)
+assert report.manifest()["overflow_count"] == 0
+```
+
+The report records the output format, output count, overflow count, and whether
+saturation reached the minimum or maximum representable code.  Use this host
+report when validating a weight package before deployment or when comparing
+hardware telemetry against the Python reference.
+
+The Rust mirror exposes the same contract through
+`MixedDenseResult::precision_trap_report()`, including the exact
+`overflow_count` generated during the saturating integer MAC.  The HDL side
+provides `hdl/sc_precision_overflow_trap.v`, a synchronous sticky latch for the
+overflow lines emitted by `sc_mixed_precision_dense` and
+`sc_block_floating_dense`.  `clear_trap` is host-controlled and dominates a
+concurrent overflow pulse, so software can acknowledge an anomaly without a
+stale vector immediately reappearing in the same cycle.
+
+Trap benchmark and synthesis evidence from 2026-06-04 is committed under
+`benchmarks/results/local_python_2026-06-04_precision_traps.json`,
+`benchmarks/results/local_rust_2026-06-04_precision_traps.json`, and
+`hdl/reports/yosys_precision_overflow_trap_2026-06-04.json`.
+
 ## CLI Usage
 
 ### Compiling with Precision Selection
