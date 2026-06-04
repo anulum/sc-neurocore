@@ -261,6 +261,20 @@ class TestPrecisionStrings:
         assert manifest["lp_precision"]["exponent_bits"] == 3
         assert manifest["lp_precision"]["block_size"] == 32
         assert manifest["lp_precision"]["label"].startswith("BFP16E3")
+        assert manifest["lp_precision"]["exponent_bias"] == 3
+        assert manifest["lp_precision"]["exponent_code_range"] == [0, 7]
+        assert manifest["lp_precision"]["exponent_min"] == -3
+        assert manifest["lp_precision"]["exponent_max"] == 4
+        assert manifest["lp_precision"]["mantissa_abs_max"] == 32_767
+        assert manifest["lp_precision"]["minimum_quantum"] == pytest.approx(0.125)
+        assert manifest["lp_precision"]["max_abs_value"] == pytest.approx(524_272.0)
+        assert manifest["lp_precision"]["block_exponent_alignment"] == "contiguous_flattened_block"
+        assert manifest["lp_precision"]["block_exponent_count"] == (
+            "ceil(parameter_count / block_size)"
+        )
+        assert manifest["lp_precision"]["datapath_contract"] == (
+            "fixed_mantissa_with_explicit_shared_exponent_metadata"
+        )
 
     def test_invalid_precision_string(self, lif_neuron):
         """Invalid precision strings must fail with ValueError."""

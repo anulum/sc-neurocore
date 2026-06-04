@@ -47,8 +47,6 @@ from sc_neurocore.compiler.quantizer import (
     parse_precision_format,
 )
 
-PrecisionSpecLike = str | PrecisionConfig | BlockFloatingPrecisionConfig
-
 
 @dataclass(frozen=True)
 class BlockFloatingPrecisionConfig:
@@ -62,6 +60,22 @@ class BlockFloatingPrecisionConfig:
     exponent_bits: int
     block_size: int
     signed: bool = True
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.mantissa_bits, int) or isinstance(self.mantissa_bits, bool):
+            raise TypeError("mantissa_bits must be an integer")
+        if not isinstance(self.exponent_bits, int) or isinstance(self.exponent_bits, bool):
+            raise TypeError("exponent_bits must be an integer")
+        if not isinstance(self.block_size, int) or isinstance(self.block_size, bool):
+            raise TypeError("block_size must be an integer")
+        if type(self.signed) is not bool:
+            raise TypeError("signed must be a boolean")
+        if self.mantissa_bits < 2:
+            raise ValueError("mantissa_bits must be at least 2")
+        if self.exponent_bits < 1:
+            raise ValueError("exponent_bits must be at least 1")
+        if self.block_size < 1:
+            raise ValueError("block_size must be positive")
 
     @property
     def data_width(self) -> int:
@@ -90,8 +104,24 @@ class BlockFloatingPrecisionConfig:
         return self.mantissa_bits - 1
 
     @property
+    def exponent_bias(self) -> int:
+        return (1 << (self.exponent_bits - 1)) - 1
+
+    @property
+    def exponent_code_min(self) -> int:
+        return 0
+
+    @property
+    def exponent_code_max(self) -> int:
+        return (1 << self.exponent_bits) - 1
+
+    @property
+    def mantissa_abs_max(self) -> int:
+        return (1 << (self.mantissa_bits - 1)) - 1
+
+    @property
     def max_value(self) -> float:
-        return float((1 << (self.exponent_bits - 1)) * ((1 << self.mantissa_bits) - 1))
+        return float(self.mantissa_abs_max) * (2.0**self.max_exponent)
 
     @property
     def min_value(self) -> float:
@@ -99,7 +129,7 @@ class BlockFloatingPrecisionConfig:
 
     @property
     def resolution(self) -> float:
-        return 2.0 ** (-(self.mantissa_bits - 1))
+        return 2.0**self.min_exponent
 
     @property
     def q_label(self) -> str:
@@ -107,11 +137,11 @@ class BlockFloatingPrecisionConfig:
 
     @property
     def min_exponent(self) -> int:
-        return -(1 << (self.exponent_bits - 1))
+        return -self.exponent_bias
 
     @property
     def max_exponent(self) -> int:
-        return (1 << (self.exponent_bits - 1)) - 1
+        return self.exponent_code_max - self.exponent_bias
 
     @property
     def is_block_floating(self) -> bool:
@@ -124,7 +154,7 @@ class BlockFloatingPrecisionConfig:
         del value
         raise NotImplementedError("Block-floating encoding requires per-block exponent metadata.")
 
-    def manifest(self) -> dict[str, float | int | str]:
+    def manifest(self) -> dict[str, bool | float | int | list[int] | str]:
         return {
             "kind": self.kind,
             "mantissa_bits": self.mantissa_bits,
@@ -132,7 +162,14 @@ class BlockFloatingPrecisionConfig:
             "block_size": self.block_size,
             "signed": self.signed,
             "emitted_fraction": self.emit_fraction,
+            "exponent_bias": self.exponent_bias,
+            "exponent_code_range": [self.exponent_code_min, self.exponent_code_max],
             "exponent_range": [self.min_exponent, self.max_exponent],
+            "mantissa_abs_max": self.mantissa_abs_max,
+            "minimum_quantum": self.resolution,
+            "max_abs_value": self.max_value,
+            "block_exponent_alignment": "contiguous_flattened_block",
+            "block_exponent_count": "ceil(parameter_count / block_size)",
         }
 
 
@@ -222,6 +259,9 @@ class PrecisionConfig:
         return max(lo, min(hi, raw))
 
 
+PrecisionSpecLike = str | PrecisionConfig | BlockFloatingPrecisionConfig
+
+
 @dataclass
 class MixedPrecisionSpec:
     """Specification for mixed-precision compilation.
@@ -296,7 +336,9 @@ def _precision_range(cfg: PrecisionConfig | BlockFloatingPrecisionConfig) -> str
     return f"[{cfg.min_value:.1f}, {cfg.max_value:.1f}]"
 
 
-def _parse_precision_spec(spec: PrecisionSpecLike) -> PrecisionConfig | BlockFloatingPrecisionConfig:
+def _parse_precision_spec(
+    spec: PrecisionSpecLike,
+) -> PrecisionConfig | BlockFloatingPrecisionConfig:
     """Parse legacy and explicit precision specs for mixed-precision workflows."""
     if isinstance(spec, PrecisionConfig):
         return spec
@@ -423,7 +465,7 @@ def solve_precision(
     if min_resolution is None:
         min_resolution = {v: 0.01 for v in bounds}
 
-    configs: dict[str, PrecisionConfig] = {}
+    configs: dict[str, PrecisionConfig | BlockFloatingPrecisionConfig] = {}
 
     for var, (lo, hi) in bounds.items():
         int_bits = _min_bits_for_range(lo, hi, signed)

@@ -310,6 +310,10 @@ envelope_report = compiled_bfp.precision_envelope_report(inputs)
 three exponent bits, the unbiased range is `[-3, +4]`.  The Python deployment
 path preserves the shared exponent metadata, saturates final Q16.16 output
 codes, and exposes overflow flags for hardware telemetry parity.
+Compiler manifests record the exact exponent bias (`3` for `BFP16E3X32`),
+encoded exponent range `[0, 7]`, maximum signed mantissa magnitude `32767`,
+minimum quantum `0.125`, maximum absolute value `524272.0`, and the contiguous
+flattened block-alignment rule required by downstream RTL emitters.
 
 #### Rounding Modes
 

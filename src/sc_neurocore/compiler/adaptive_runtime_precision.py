@@ -110,7 +110,7 @@ def _precision_manifest(
             "emitted_fraction": emitted_fraction,
         }
 
-    metadata = parsed.metadata.copy()
+    metadata: dict[str, Any] = dict(parsed.metadata)
     metadata.update(
         {
             "kind": kind,
@@ -120,6 +120,14 @@ def _precision_manifest(
             "fraction": emitted_fraction,
             "signed": True,
             "emitted_fraction": emitted_fraction,
+            "exponent_bias": parsed.exponent_bias,
+            "exponent_code_range": [0, (1 << parsed.exponent_bits) - 1],
+            "mantissa_abs_max": parsed.mantissa_range,
+            "minimum_quantum": 2.0**parsed.min_exponent,
+            "max_abs_value": float(parsed.mantissa_range) * (2.0**parsed.max_exponent),
+            "block_exponent_alignment": "contiguous_flattened_block",
+            "block_exponent_count": "ceil(parameter_count / block_size)",
+            "datapath_contract": "fixed_mantissa_with_explicit_shared_exponent_metadata",
         }
     )
     return metadata
@@ -134,38 +142,61 @@ def _coerce_precision(
 ) -> tuple[int, int, str, dict[str, Any], QFormat | BlockFloatingMode]:
     """Resolve concrete fixed-point datapath parameters and telemetry metadata."""
     if precision is None:
-        q = Q88(data_width=default_width, fraction=default_frac, signed=True)
-        return default_width, default_frac, q.q_label, _precision_manifest(
+        q = QFormat(default_width - default_frac, default_frac)
+        return (
+            default_width,
+            default_frac,
+            q.q_label,
+            _precision_manifest(
+                q,
+                source=f"{tag}:fallback",
+                resolved_width=default_width,
+                emitted_fraction=default_frac,
+                kind="fixed",
+            ),
             q,
-            source=f"{tag}:fallback",
-            resolved_width=default_width,
-            emitted_fraction=default_frac,
-            kind="fixed",
-        ), q
+        )
 
-    parsed = parse_precision_format(precision)
+    try:
+        parsed = parse_precision_format(precision)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"{tag} precision must be a fixed Q-format or block-floating format"
+        ) from exc
     if isinstance(parsed, QFormat):
         width = parsed.total_bits
         fraction = parsed.fraction_bits
-        return width, fraction, _precision_label(parsed, source=precision), _precision_manifest(
+        return (
+            width,
+            fraction,
+            _precision_label(parsed, source=precision),
+            _precision_manifest(
+                parsed,
+                source=precision,
+                resolved_width=width,
+                emitted_fraction=fraction,
+                kind="fixed",
+            ),
             parsed,
-            source=precision,
-            resolved_width=width,
-            emitted_fraction=fraction,
-            kind="fixed",
-        ), parsed
+        )
 
     # Block-floating is emitted as mantissa-width fixed datapath with
     # deterministic block metadata for parity tooling.
     width = parsed.mantissa_bits
     fraction = parsed.emit_fraction
-    return width, fraction, _precision_label(parsed, source=precision), _precision_manifest(
+    return (
+        width,
+        fraction,
+        _precision_label(parsed, source=precision),
+        _precision_manifest(
+            parsed,
+            source=precision,
+            resolved_width=width,
+            emitted_fraction=fraction,
+            kind="block_floating",
+        ),
         parsed,
-        source=precision,
-        resolved_width=width,
-        emitted_fraction=fraction,
-        kind="block_floating",
-    ), parsed
+    )
 
 
 def _validate_lp_hp(lp_width: int, lp_frac: int, hp_width: int, hp_frac: int) -> None:
@@ -207,9 +238,7 @@ def _validate_hysteresis(
     quantized_up = int(threshold_up_pct * max_lp_code)
     quantized_down = int(threshold_down_pct * max_lp_code)
     if not (1 <= quantized_down < quantized_up < max_lp_code):
-        raise ValueError(
-            "Quantised threshold codes must satisfy 1 <= down < up < max_lp_code"
-        )
+        raise ValueError("Quantised threshold codes must satisfy 1 <= down < up < max_lp_code")
 
 
 def compile_adaptive_precision(

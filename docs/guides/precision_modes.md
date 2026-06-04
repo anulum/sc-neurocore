@@ -179,7 +179,11 @@ restored = dequantize_block_floating(q, exponents, fmt="BFP16E3X32")
 In this codepath, adaptive precision emits manifest metadata (`mantissa_bits`,
 `exponent_bits`, `block_size`) alongside fixed-point datapath emission.  The
 biased exponent range uses every representable exponent code; for
-`BFP16E3X32`, the unbiased range is `[-3, +4]`.
+`BFP16E3X32`, exponent bias is `3`, exponent codes are `[0, 7]`, and the
+unbiased range is `[-3, +4]`.  The compiler manifest also records the maximum
+signed mantissa magnitude `32767`, minimum quantum `0.125`, maximum absolute
+value `524272.0`, and the contiguous flattened block-alignment rule that
+downstream emitters must preserve.
 
 ### Block-Floating Dense Deployment Path
 
