@@ -53,9 +53,14 @@ from typing import Literal
 
 from sc_neurocore.compiler.live_control import (
     CONTROL_COMMIT,
+    CONTROL_ROLLBACK,
     CONTROL_UPDATE_VALID,
     MMIOUpdateSpec,
+    STATUS_APPLIED,
+    STATUS_CHECKSUM_VALID,
     STATUS_READY,
+    STATUS_ROLLBACK_ACK,
+    STATUS_SHADOW_LOADED,
     STATUS_TRAP_LATCHED,
     STATUS_UPDATE_ACK,
 )
@@ -223,7 +228,10 @@ def generate_live_parameter_bank(
         "    input  wire [TRAP_WIDTH-1:0]        trap_vector,",
         "    output wire                         trap_latched,",
         "    output reg                          update_pulse,",
+        "    output reg                          apply_pulse,",
+        "    output reg                          rollback_pulse,",
         "    output reg                          trap_clear_pulse,",
+        "    output wire                         shadow_loaded,",
         "    output wire [PARAMETER_WORDS_WIDTH-1:0] parameter_words",
         ");",
         "",
@@ -235,10 +243,16 @@ def generate_live_parameter_bank(
         f"    localparam [ADDR_WIDTH-1:0] ADDR_DATA_HI    = {adw}'h{ctrl['write_data_hi']:X};",
         f"    localparam [ADDR_WIDTH-1:0] ADDR_TRAP_STAT  = {adw}'h{ctrl['trap_status']:X};",
         f"    localparam [ADDR_WIDTH-1:0] ADDR_TRAP_CLEAR = {adw}'h{ctrl['trap_clear']:X};",
+        f"    localparam [ADDR_WIDTH-1:0] ADDR_CHECKSUM   = {adw}'h{ctrl['write_checksum']:X};",
         f"    localparam [DATA_WIDTH-1:0] CTRL_UPDATE_VALID = {bus_data_width}'h{CONTROL_UPDATE_VALID:X};",
         f"    localparam [DATA_WIDTH-1:0] CTRL_COMMIT       = {bus_data_width}'h{CONTROL_COMMIT:X};",
+        f"    localparam [DATA_WIDTH-1:0] CTRL_ROLLBACK     = {bus_data_width}'h{CONTROL_ROLLBACK:X};",
         f"    localparam [DATA_WIDTH-1:0] STATUS_READY      = {bus_data_width}'h{STATUS_READY:X};",
         f"    localparam [DATA_WIDTH-1:0] STATUS_UPDATE_ACK = {bus_data_width}'h{STATUS_UPDATE_ACK:X};",
+        f"    localparam [DATA_WIDTH-1:0] STATUS_SHADOW_LOADED = {bus_data_width}'h{STATUS_SHADOW_LOADED:X};",
+        f"    localparam [DATA_WIDTH-1:0] STATUS_APPLIED    = {bus_data_width}'h{STATUS_APPLIED:X};",
+        f"    localparam [DATA_WIDTH-1:0] STATUS_ROLLBACK_ACK = {bus_data_width}'h{STATUS_ROLLBACK_ACK:X};",
+        f"    localparam [DATA_WIDTH-1:0] STATUS_CHECKSUM_VALID = {bus_data_width}'h{STATUS_CHECKSUM_VALID:X};",
         "",
         "    reg [DATA_WIDTH-1:0] reg_control;",
         "    reg [DATA_WIDTH-1:0] reg_status;",
@@ -246,10 +260,15 @@ def generate_live_parameter_bank(
         "    reg [DATA_WIDTH-1:0] reg_entry_index;",
         "    reg [DATA_WIDTH-1:0] reg_write_data_lo;",
         "    reg [DATA_WIDTH-1:0] reg_write_data_hi;",
+        "    reg [DATA_WIDTH-1:0] reg_write_checksum;",
+        "    reg reg_shadow_loaded;",
         "    wire [63:0] staged_word = {reg_write_data_hi, reg_write_data_lo};",
+        "    wire [DATA_WIDTH-1:0] observed_checksum = reg_bank_select ^ reg_entry_index ^ reg_write_data_lo ^ reg_write_data_hi;",
+        "    wire checksum_valid = (reg_write_checksum == observed_checksum);",
         f"    wire [DATA_WIDTH-1:0] trap_status_bit = trap_latched ? {status_trap_expr} : {{DATA_WIDTH{{1'b0}}}};",
         "",
         "    assign trap_latched = |trap_vector;",
+        "    assign shadow_loaded = reg_shadow_loaded;",
     ]
 
     flat_offset = 0
@@ -263,6 +282,7 @@ def generate_live_parameter_bank(
         lines.extend(
             [
                 f'    (* ram_style = "{style}" *) reg [{width - 1}:0] {bank_name} [0:{count - 1}];',
+                f'    (* ram_style = "{style}" *) reg [{width - 1}:0] shadow_{bank_name} [0:{count - 1}];',
                 f"    localparam [{width - 1}:0] RESET_{bank_name.upper()} = {width}'h{reset_word:X};",
             ]
         )
@@ -293,7 +313,11 @@ def generate_live_parameter_bank(
             "            reg_entry_index <= {DATA_WIDTH{1'b0}};",
             "            reg_write_data_lo <= {DATA_WIDTH{1'b0}};",
             "            reg_write_data_hi <= {DATA_WIDTH{1'b0}};",
+            "            reg_write_checksum <= {DATA_WIDTH{1'b0}};",
+            "            reg_shadow_loaded <= 1'b0;",
             "            update_pulse <= 1'b0;",
+            "            apply_pulse <= 1'b0;",
+            "            rollback_pulse <= 1'b0;",
             "            trap_clear_pulse <= 1'b0;",
         ]
     )
@@ -303,6 +327,7 @@ def generate_live_parameter_bank(
             [
                 f"            for (init_idx = 0; init_idx < {bank.parameter_count}; init_idx = init_idx + 1) begin",
                 f"                {bank_name}[init_idx] <= RESET_{bank_name.upper()};",
+                f"                shadow_{bank_name}[init_idx] <= RESET_{bank_name.upper()};",
                 "            end",
             ]
         )
@@ -314,8 +339,10 @@ def generate_live_parameter_bank(
             "            S_AXI_WREADY <= 1'b0;",
             "            S_AXI_ARREADY <= 1'b0;",
             "            update_pulse <= 1'b0;",
+            "            apply_pulse <= 1'b0;",
+            "            rollback_pulse <= 1'b0;",
             "            trap_clear_pulse <= 1'b0;",
-            "            reg_status <= STATUS_READY | trap_status_bit;",
+            "            reg_status <= STATUS_READY | trap_status_bit | (reg_shadow_loaded ? STATUS_SHADOW_LOADED : {DATA_WIDTH{1'b0}}) | (checksum_valid ? STATUS_CHECKSUM_VALID : {DATA_WIDTH{1'b0}});",
             "",
             "            if (S_AXI_BREADY && S_AXI_BVALID) begin",
             "                S_AXI_BVALID <= 1'b0;",
@@ -332,9 +359,11 @@ def generate_live_parameter_bank(
             "                case (S_AXI_AWADDR)",
             "                    ADDR_CONTROL: begin",
             "                        reg_control <= S_AXI_WDATA;",
-            "                        if ((S_AXI_WDATA & (CTRL_UPDATE_VALID | CTRL_COMMIT)) == (CTRL_UPDATE_VALID | CTRL_COMMIT)) begin",
+            "                        if ((S_AXI_WDATA & CTRL_UPDATE_VALID) != {DATA_WIDTH{1'b0}}) begin",
+            "                            if (checksum_valid) begin",
             "                            update_pulse <= 1'b1;",
-            "                            reg_status <= STATUS_READY | STATUS_UPDATE_ACK | trap_status_bit;",
+            "                            reg_shadow_loaded <= 1'b1;",
+            "                            reg_status <= STATUS_READY | STATUS_SHADOW_LOADED | STATUS_CHECKSUM_VALID | trap_status_bit;",
             "                            case (reg_bank_select)",
         ]
     )
@@ -344,7 +373,60 @@ def generate_live_parameter_bank(
             [
                 f"                                32'd{bank_index}: begin",
                 f"                                    if (reg_entry_index < 32'd{bank.parameter_count}) begin",
-                f"                                        {bank_name}[reg_entry_index] <= staged_word[{bank.entry_width_bits - 1}:0];",
+                f"                                        shadow_{bank_name}[reg_entry_index] <= staged_word[{bank.entry_width_bits - 1}:0];",
+                "                                    end",
+                "                                end",
+            ]
+        )
+
+    lines.extend(
+        [
+            "                                default: begin",
+            "                                    reg_status <= STATUS_READY | trap_status_bit;",
+            "                                end",
+            "                            endcase",
+            "                            end",
+            "                        end else if ((S_AXI_WDATA & CTRL_COMMIT) != {DATA_WIDTH{1'b0}}) begin",
+            "                            if (reg_shadow_loaded) begin",
+            "                                apply_pulse <= 1'b1;",
+            "                                reg_shadow_loaded <= 1'b0;",
+            "                                reg_status <= STATUS_READY | STATUS_UPDATE_ACK | STATUS_APPLIED | trap_status_bit;",
+            "                                case (reg_bank_select)",
+        ]
+    )
+
+    for bank_index, (bank, bank_name) in enumerate(zip(spec.banks, bank_names)):
+        lines.extend(
+            [
+                f"                                    32'd{bank_index}: begin",
+                f"                                        if (reg_entry_index < 32'd{bank.parameter_count}) begin",
+                f"                                            {bank_name}[reg_entry_index] <= shadow_{bank_name}[reg_entry_index];",
+                "                                        end",
+                "                                    end",
+            ]
+        )
+
+    lines.extend(
+        [
+            "                                    default: begin",
+            "                                        reg_status <= STATUS_READY | trap_status_bit;",
+            "                                    end",
+            "                                endcase",
+            "                            end",
+            "                        end else if ((S_AXI_WDATA & CTRL_ROLLBACK) != {DATA_WIDTH{1'b0}}) begin",
+            "                            rollback_pulse <= 1'b1;",
+            "                            reg_shadow_loaded <= 1'b0;",
+            "                            reg_status <= STATUS_READY | STATUS_ROLLBACK_ACK | trap_status_bit;",
+            "                            case (reg_bank_select)",
+        ]
+    )
+
+    for bank_index, (bank, bank_name) in enumerate(zip(spec.banks, bank_names)):
+        lines.extend(
+            [
+                f"                                32'd{bank_index}: begin",
+                f"                                    if (reg_entry_index < 32'd{bank.parameter_count}) begin",
+                f"                                        shadow_{bank_name}[reg_entry_index] <= {bank_name}[reg_entry_index];",
                 "                                    end",
                 "                                end",
             ]
@@ -365,6 +447,7 @@ def generate_live_parameter_bank(
             "                    ADDR_ENTRY_IDX: reg_entry_index <= S_AXI_WDATA;",
             "                    ADDR_DATA_LO: reg_write_data_lo <= S_AXI_WDATA;",
             "                    ADDR_DATA_HI: reg_write_data_hi <= S_AXI_WDATA;",
+            "                    ADDR_CHECKSUM: reg_write_checksum <= S_AXI_WDATA;",
             "                    ADDR_TRAP_CLEAR: trap_clear_pulse <= 1'b1;",
             "                    default: begin end",
             "                endcase",
@@ -381,6 +464,7 @@ def generate_live_parameter_bank(
             "                    ADDR_ENTRY_IDX: S_AXI_RDATA <= reg_entry_index;",
             "                    ADDR_DATA_LO: S_AXI_RDATA <= reg_write_data_lo;",
             "                    ADDR_DATA_HI: S_AXI_RDATA <= reg_write_data_hi;",
+            "                    ADDR_CHECKSUM: S_AXI_RDATA <= observed_checksum;",
             "                    ADDR_TRAP_STAT: S_AXI_RDATA <= {{(DATA_WIDTH-TRAP_WIDTH){1'b0}}, trap_vector};",
             "                    default: S_AXI_RDATA <= {DATA_WIDTH{1'b0}};",
             "                endcase",

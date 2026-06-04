@@ -48,13 +48,22 @@ def test_live_parameter_bank_emits_bram_and_distributed_banks() -> None:
 
     assert "module sc_live_params" in source
     assert '(* ram_style = "distributed" *) reg [15:0] weights [0:3];' in source
+    assert '(* ram_style = "distributed" *) reg [15:0] shadow_weights [0:3];' in source
     assert '(* ram_style = "block" *) reg [31:0] kuramoto [0:127];' in source
+    assert '(* ram_style = "block" *) reg [31:0] shadow_kuramoto [0:127];' in source
     assert "localparam [ADDR_WIDTH-1:0] ADDR_CONTROL    = 32'h100;" in source
     assert "localparam [ADDR_WIDTH-1:0] ADDR_BANK_SEL   = 32'h108;" in source
     assert "localparam [ADDR_WIDTH-1:0] ADDR_TRAP_CLEAR = 32'h11C;" in source
-    assert "weights[reg_entry_index] <= staged_word[15:0];" in source
-    assert "kuramoto[reg_entry_index] <= staged_word[31:0];" in source
+    assert "localparam [ADDR_WIDTH-1:0] ADDR_CHECKSUM   = 32'h120;" in source
+    assert "shadow_weights[reg_entry_index] <= staged_word[15:0];" in source
+    assert "shadow_kuramoto[reg_entry_index] <= staged_word[31:0];" in source
+    assert "weights[reg_entry_index] <= shadow_weights[reg_entry_index];" in source
+    assert "shadow_weights[reg_entry_index] <= weights[reg_entry_index];" in source
     assert "assign parameter_words[0 +: 16] = weights[0];" in source
+    assert "output reg                          apply_pulse" in source
+    assert "output reg                          rollback_pulse" in source
+    assert "output wire                         shadow_loaded" in source
+    assert "wire checksum_valid = (reg_write_checksum == observed_checksum);" in source
     assert "trap_clear_pulse <= 1'b1;" in source
 
 

@@ -15,9 +15,14 @@ import pytest
 from sc_neurocore.compiler.live_control import (
     CONTROL_COMMIT,
     CONTROL_REGISTER_SPAN_BYTES,
+    CONTROL_ROLLBACK,
     CONTROL_UPDATE_VALID,
     MMIOUpdateSpec,
     ParameterBankSpec,
+    STATUS_APPLIED,
+    STATUS_CHECKSUM_VALID,
+    STATUS_ROLLBACK_ACK,
+    STATUS_SHADOW_LOADED,
     STATUS_TRAP_LATCHED,
     STATUS_UPDATE_ACK,
     TrapSpec,
@@ -151,7 +156,12 @@ def test_mmio_update_serialization_roundtrip() -> None:
     assert restored == original
     assert restored.has_traps is True
     assert payload["control_registers"]["control"] == 0x0
+    assert payload["control_registers"]["write_checksum"] == 0x20
     assert payload["status_bits"]["trap_latched"] == STATUS_TRAP_LATCHED
+    assert payload["status_bits"]["shadow_loaded"] == STATUS_SHADOW_LOADED
+    assert payload["status_bits"]["applied"] == STATUS_APPLIED
+    assert payload["status_bits"]["rollback_ack"] == STATUS_ROLLBACK_ACK
+    assert payload["status_bits"]["checksum_valid"] == STATUS_CHECKSUM_VALID
 
 
 def test_mmio_update_protocol_alias_and_width_guards() -> None:
@@ -239,7 +249,9 @@ def test_mmio_update_sequence_stages_and_commits_wide_bfp_word() -> None:
         "select_entry",
         "write_data_lo",
         "write_data_hi",
-        "commit_update",
+        "write_checksum",
+        "load_shadow",
+        "apply_shadow",
     ]
     assert writes[0].address_bytes == 0x108
     assert writes[0].value == 0
@@ -247,10 +259,37 @@ def test_mmio_update_sequence_stages_and_commits_wide_bfp_word() -> None:
     assert writes[1].value == 1
     assert writes[2].value == 0x5678_9ABC
     assert writes[3].value == 0x1234
+    assert writes[4].address_bytes == 0x120
+    assert writes[4].value == spec.update_checksum("bfp_weights", "w_1", 0x1234_5678_9ABC)
+    assert writes[-2].address_bytes == 0x100
+    assert writes[-2].value == CONTROL_UPDATE_VALID
     assert writes[-1].address_bytes == 0x100
-    assert writes[-1].value == CONTROL_UPDATE_VALID | CONTROL_COMMIT
+    assert writes[-1].value == CONTROL_COMMIT
     assert spec.status_bits["update_ack"] == STATUS_UPDATE_ACK
-    assert CONTROL_REGISTER_SPAN_BYTES == 0x20
+    assert CONTROL_REGISTER_SPAN_BYTES == 0x24
+
+
+def test_mmio_update_sequence_supports_explicit_apply_and_rollback() -> None:
+    bank = ParameterBankSpec(
+        bank_name="weights",
+        start_address_bytes=0x9000,
+        parameter_count=1,
+        parameter_names=("w_0",),
+    )
+    spec = MMIOUpdateSpec(
+        bus_protocol="axi4_lite",
+        banks=(bank,),
+        control_base_address_bytes=0x100,
+    )
+
+    apply_writes = spec.build_apply_sequence()
+    rollback_writes = spec.build_rollback_sequence()
+
+    assert apply_writes[0].purpose == "apply_shadow"
+    assert apply_writes[0].value == CONTROL_COMMIT
+    assert rollback_writes[0].purpose == "rollback_shadow"
+    assert rollback_writes[0].value == CONTROL_ROLLBACK
+    assert spec.control_bits["rollback"] == CONTROL_ROLLBACK
 
 
 def test_mmio_update_sequence_rejects_read_only_and_unknown_entries() -> None:
