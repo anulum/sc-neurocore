@@ -16,9 +16,16 @@ module sc_precision_overflow_trap #(
     input wire clear_trap,
     input wire [TRAP_WIDTH-1:0] overflow_in,
     output reg [TRAP_WIDTH-1:0] trap_vector,
+    output wire [TRAP_WIDTH-1:0] trap_event_vector,
+    output wire trap_event,
     output wire trap_latched
 );
 
+wire trap_accepting;
+
+assign trap_accepting = rst_n & ~clear_trap;
+assign trap_event_vector = trap_accepting ? overflow_in : {TRAP_WIDTH{1'b0}};
+assign trap_event = |trap_event_vector;
 assign trap_latched = |trap_vector;
 
 always @(posedge clk or negedge rst_n) begin
@@ -27,8 +34,23 @@ always @(posedge clk or negedge rst_n) begin
     end else if (clear_trap) begin
         trap_vector <= {TRAP_WIDTH{1'b0}};
     end else begin
-        trap_vector <= trap_vector | overflow_in;
+        trap_vector <= trap_vector | trap_event_vector;
     end
 end
+
+`ifdef SC_NEUROCORE_ASSERTIONS
+property p_no_silent_precision_overflow;
+    @(posedge clk) disable iff (!rst_n || clear_trap)
+        (|overflow_in) |-> (trap_event && (trap_event_vector == overflow_in));
+endproperty
+
+property p_sticky_precision_overflow;
+    @(posedge clk) disable iff (!rst_n || clear_trap)
+        (|overflow_in) |=> ((trap_vector & $past(overflow_in)) == $past(overflow_in));
+endproperty
+
+a_no_silent_precision_overflow: assert property (p_no_silent_precision_overflow);
+a_sticky_precision_overflow: assert property (p_sticky_precision_overflow);
+`endif
 
 endmodule
