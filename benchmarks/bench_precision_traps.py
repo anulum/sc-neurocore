@@ -18,6 +18,7 @@ from typing import Protocol
 
 import numpy as np
 
+from _benchmark_context import load_average, measurement_context
 from sc_neurocore.compiler.quantizer import (
     QFormatMixed,
     PrecisionTrapReport,
@@ -67,6 +68,7 @@ def time_trap_report(compiled: TrapReporter, inputs: np.ndarray) -> tuple[float,
 
 
 def main() -> int:
+    load_average_before = load_average()
     mixed, mixed_inputs, block_floating, bfp_inputs = deterministic_overflow_workloads()
     mixed_results = [time_trap_report(mixed, mixed_inputs) for _ in range(REPEATS)]
     bfp_results = [time_trap_report(block_floating, bfp_inputs) for _ in range(REPEATS)]
@@ -77,10 +79,14 @@ def main() -> int:
         "benchmark": "precision_trap_reports_64x32",
         "language": "Python",
         "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
-        "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_precision_traps.py",
+        "command": (
+            "taskset -c 10-11 env PYTHONPATH=src "
+            ".venv/bin/python benchmarks/bench_precision_traps.py"
+        ),
         "python": platform.python_version(),
         "platform": platform.platform(),
         "processor": platform.processor(),
+        "measurement_context": measurement_context(load_average_before),
         "n_inputs": N_INPUTS,
         "n_outputs": N_OUTPUTS,
         "iterations": ITERATIONS,

@@ -54,20 +54,20 @@ cargo bench --bench analysis_bench -- --quick
 | Benchmark | Median |
 |-----------|-------:|
 | dense_forward_64x32 | 993 µs |
-| mixed_dense_q88_q1616_64x32 | 2.343 µs |
-| block_floating_dense_q16_64x32 | 11.331 µs |
-| mixed_dense_q88_q1616_trap_64x32 | 3.483 µs |
-| block_floating_dense_q16_trap_64x32 | 11.277 µs |
-| mixed_dense_q88_q1616_envelope_64x32 | 3.887 µs |
-| block_floating_dense_q16_envelope_64x32 | 13.510 µs |
+| mixed_dense_q88_q1616_64x32 | 2.245 µs |
+| block_floating_dense_q16_64x32 | 10.056 µs |
+| mixed_dense_q88_q1616_trap_64x32 | 2.325 µs |
+| block_floating_dense_q16_trap_64x32 | 8.669 µs |
+| mixed_dense_q88_q1616_envelope_64x32 | 2.322 µs |
+| block_floating_dense_q16_envelope_64x32 | 8.748 µs |
 | attention_10x16_20x32 | 88.5 µs |
 | gnn_20x8_forward | 85.3 µs |
 
 The 2026-06-04 dense precision rows were captured on a workstation under
 concurrent load and without exclusive CPU core isolation.  Use the medians as
 local regression context and parity evidence.  Before citing them as production
-throughput, rerun the benchmark on isolated cores and record CPU affinity plus
-host-load evidence in the raw JSON artefact.
+throughput, rerun the benchmark on isolated cores and record CPU affinity,
+host-load, governor, and frequency evidence in the raw JSON artefact.
 
 `mixed_dense_q88_q1616_64x32` was measured on 2026-06-04 with
 `taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_mixed_dense`.
@@ -83,7 +83,7 @@ and saturating-probe max bound `17454214414336`.  The Python benchmark uses
 Q8.8/Q16.16 physical contract implemented by Rust and HDL.
 
 `block_floating_dense_q16_64x32` was measured on 2026-06-04 with
-`cargo run --manifest-path engine/Cargo.toml --release --example bench_block_floating_dense`.
+`taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_block_floating_dense`.
 The committed raw artefact is
 `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json`; the
 matching Python reference artefact is
@@ -97,7 +97,7 @@ safe max absolute bound `610816`, and saturating-probe max bound
 `1125865547104256`.
 
 The precision trap rows were measured on 2026-06-04 with
-`cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_traps`.
+`taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_traps`.
 The committed raw artefact is
 `benchmarks/results/local_rust_2026-06-04_precision_traps.json`; the matching
 Python reference artefact is
@@ -106,7 +106,7 @@ trap workloads reported 32 saturated outputs on the deterministic 64×32
 overflow workload.
 
 The precision envelope rows were measured on 2026-06-04 with
-`cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_envelopes`.
+`taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_envelopes`.
 The committed raw artefact is
 `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json`; the
 matching Python reference artefact is

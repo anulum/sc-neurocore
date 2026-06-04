@@ -1,22 +1,51 @@
 {
   "benchmark": "precision_trap_reports_64x32",
   "language": "Python",
-  "timestamp_utc": "2026-06-04T03:17:55+00:00",
-  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_precision_traps.py",
+  "timestamp_utc": "2026-06-04T11:02:00+00:00",
+  "command": "taskset -c 10-11 env PYTHONPATH=src .venv/bin/python benchmarks/bench_precision_traps.py",
   "python": "3.12.3",
   "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
   "processor": "x86_64",
+  "measurement_context": {
+    "host_load": "workstation under concurrent load during capture",
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "cpu_affinity": [
+      10,
+      11
+    ],
+    "load_average_before": [
+      3.75634765625,
+      4.30224609375,
+      4.2490234375
+    ],
+    "load_average_after": [
+      3.75634765625,
+      4.30224609375,
+      4.2490234375
+    ],
+    "cpu_governor": [
+      "powersave"
+    ],
+    "cpu_frequency_mhz": {
+      "min_observed_mhz": 3498.53,
+      "max_observed_mhz": 4549.457,
+      "sampled_cpu_count": 12.0
+    },
+    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+  },
   "n_inputs": 64,
   "n_outputs": 32,
   "iterations": 2000,
   "repeats": 7,
-  "mixed_trap_median_ns_per_call": 340460.818,
-  "mixed_trap_min_ns_per_call": 304104.4005,
-  "mixed_trap_max_ns_per_call": 349093.747,
+  "mixed_trap_median_ns_per_call": 52810.453,
+  "mixed_trap_min_ns_per_call": 48680.2325,
+  "mixed_trap_max_ns_per_call": 67791.9875,
   "mixed_overflow_count": 32,
-  "bfp_trap_median_ns_per_call": 161677.409,
-  "bfp_trap_min_ns_per_call": 139333.9325,
-  "bfp_trap_max_ns_per_call": 256403.561,
+  "bfp_trap_median_ns_per_call": 50173.42,
+  "bfp_trap_min_ns_per_call": 46726.818,
+  "bfp_trap_max_ns_per_call": 57913.442,
   "bfp_overflow_count": 32,
   "mixed_manifest": {
     "operation": "dense_mixed_qformat",
@@ -38,82 +67,76 @@
   },
   "mixed_results": [
     {
-      "ns_per_call": 304104.4005,
+      "ns_per_call": 63483.644,
       "checksum": 0,
       "overflow_count": 32
     },
     {
-      "ns_per_call": 341094.0075,
+      "ns_per_call": 67791.9875,
       "checksum": 0,
       "overflow_count": 32
     },
     {
-      "ns_per_call": 349093.747,
+      "ns_per_call": 50649.7315,
       "checksum": 0,
       "overflow_count": 32
     },
     {
-      "ns_per_call": 318997.25,
+      "ns_per_call": 51595.1435,
       "checksum": 0,
       "overflow_count": 32
     },
     {
-      "ns_per_call": 346425.366,
+      "ns_per_call": 57897.594,
       "checksum": 0,
       "overflow_count": 32
     },
     {
-      "ns_per_call": 334425.3385,
+      "ns_per_call": 52810.453,
       "checksum": 0,
       "overflow_count": 32
     },
     {
-      "ns_per_call": 340460.818,
+      "ns_per_call": 48680.2325,
       "checksum": 0,
       "overflow_count": 32
     }
   ],
   "bfp_results": [
     {
-      "ns_per_call": 237946.292,
+      "ns_per_call": 48293.61,
       "checksum": 0,
       "overflow_count": 32
     },
     {
-      "ns_per_call": 256403.561,
+      "ns_per_call": 50681.652,
       "checksum": 0,
       "overflow_count": 32
     },
     {
-      "ns_per_call": 226055.0155,
+      "ns_per_call": 56437.4105,
       "checksum": 0,
       "overflow_count": 32
     },
     {
-      "ns_per_call": 161677.409,
+      "ns_per_call": 57913.442,
       "checksum": 0,
       "overflow_count": 32
     },
     {
-      "ns_per_call": 142357.882,
+      "ns_per_call": 46726.818,
       "checksum": 0,
       "overflow_count": 32
     },
     {
-      "ns_per_call": 147442.2895,
+      "ns_per_call": 50173.42,
       "checksum": 0,
       "overflow_count": 32
     },
     {
-      "ns_per_call": 139333.9325,
+      "ns_per_call": 50135.7785,
       "checksum": 0,
       "overflow_count": 32
     }
-  ],
-  "measurement_context": {
-    "host_load": "workstation under concurrent load during capture",
-    "cpu_isolation": "not exclusive; no isolated benchmark core set was reserved",
-    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
-    "production_rerun_requirement": "rerun on isolated cores with recorded affinity and host-load evidence before publishing performance claims"
-  }
+  ]
 }

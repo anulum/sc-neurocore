@@ -6,6 +6,9 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Precision trap Rust benchmark artefact writer
 
+mod benchmark_context;
+
+use benchmark_context::{load_average, measurement_context_json, rust_version};
 use sc_neurocore_engine::ir::qformat::{
     block_floating_dense_q16, mixed_dense_q88_q1616, BlockFloatingMode,
 };
@@ -94,6 +97,7 @@ fn values_json(values: &[f64]) -> String {
 }
 
 fn main() {
+    let load_average_before = load_average();
     let weights = overflow_weights_mixed();
     let inputs = overflow_inputs();
     let mode = BlockFloatingMode::bfp16_e3_x32();
@@ -138,9 +142,11 @@ fn main() {
             "  \"benchmark\": \"precision_trap_reports_64x32\",\n",
             "  \"language\": \"Rust\",\n",
             "  \"timestamp_unix\": {timestamp_unix},\n",
-            "  \"command\": \"cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_traps\",\n",
+            "  \"command\": \"taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_traps\",\n",
+            "  \"rustc\": \"{rust_version}\",\n",
             "  \"target_os\": \"{os}\",\n",
             "  \"target_arch\": \"{arch}\",\n",
+            "  \"measurement_context\": {measurement_context},\n",
             "  \"n_inputs\": {n_inputs},\n",
             "  \"n_outputs\": {n_outputs},\n",
             "  \"iterations\": {iterations},\n",
@@ -160,8 +166,10 @@ fn main() {
             "}}\n"
         ),
         timestamp_unix = timestamp_unix,
+        rust_version = rust_version(),
         os = std::env::consts::OS,
         arch = std::env::consts::ARCH,
+        measurement_context = measurement_context_json(&load_average_before),
         n_inputs = N_INPUTS,
         n_outputs = N_OUTPUTS,
         iterations = ITERATIONS,
