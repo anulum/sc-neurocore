@@ -1,0 +1,31 @@
+{
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "evaluated_gates": [
+    {
+      "artefact": "benchmarks/results/bench_formal.json",
+      "id": "formal-proof-elaboration"
+    },
+    {
+      "artefact": "benchmarks/results/online_o1_adaptation_benchmark.json",
+      "id": "online-o1-adaptation"
+    },
+    {
+      "artefact": "benchmarks/results/stochastic_backprop_benchmark.json",
+      "id": "stochastic-backpropagation"
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_live_control_updates.json",
+      "id": "live-control-update-trap-evidence"
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_aer_priority_queue.json",
+      "id": "aer-priority-backpressure-contract"
+    }
+  ],
+  "failure_count": 0,
+  "failures": [],
+  "gate_count": 5,
+  "manifest": "benchmarks/benchmark_regression_gates.json",
+  "passed": true,
+  "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"
+}

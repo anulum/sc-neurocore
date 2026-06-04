@@ -119,10 +119,11 @@ implements physically.
 ### 2.1 Separate compilers for synth vs analogue
 
 The :class:`VerilogGenerator` is intentionally thin (~90 LOC) because
-the heavy lifting lives in the 46 hand-written Verilog cores under
+the heavy lifting lives in the 54 hand-written Verilog cores under
 the repo-root `hdl/` tree (e.g. `sc_dense_layer_core.v`,
-`sc_bitstream_encoder.v`, `sc_aer_router.v`, `sc_lif_neuron.v`,
-`sc_firing_rate_bank.v`, plus 8 matching formal-property files under
+`sc_bitstream_encoder.v`, `sc_aer_router.v`, `sc_aer_priority_queue.v`,
+`sc_lif_neuron.v`,
+`sc_firing_rate_bank.v`, plus 11 matching formal-property files under
 `hdl/formal/`). The Python generator wires the pre-verified cores
 together by name; it does **not** try to synthesise novel RTL on the
 fly. This separation keeps the RTL part verifiable (the cores each

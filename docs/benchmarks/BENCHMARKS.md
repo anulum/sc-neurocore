@@ -21,6 +21,16 @@ claims.  Any production performance claim must be rerun on reserved isolated
 cores, with CPU affinity, host-load, governor, and frequency evidence recorded
 in the raw artefact.
 
+The 2026-06-04 AER priority queue benchmark follows the same boundary.  It was
+run under a temporary runtime cpuset shield: system/user slices were moved off
+the benchmark cores, the benchmark ran in its own `benchmark.slice`, and the raw
+artefact records the process affinity plus cgroup effective CPU set.  This is
+stronger than `taskset` pinning but still distinct from boot-time
+`isolcpus`/`nohz_full` kernel isolation.  The artefact is
+Python/SystemVerilog contract evidence for strict-priority ordering, FIFO ties,
+backpressure drops, critical-deadline traps, and Yosys RTL elaboration; it is
+not an FPGA throughput or latency measurement.
+
 > **v3.14.0 additions:** SHD FPGA synthesis on Zynq XC7Z020 — 1 317 LUT
 > (2.5%), 848 FF (0.8%), WNS +4.048 ns at 100 MHz. See
 > `hdl/reports/vivado_util_xc7z020_100mhz.rpt` for full Vivado report.
@@ -74,6 +84,24 @@ in the raw artefact.
 |---------------|-----------|---------------|------------|
 | 16×8, L=256 | 500 | 352.7 | 0.09 GOP/s (SC) |
 | 64×32, L=1,024 | 100 | 2,405.8 | 0.87 GOP/s (SC) |
+
+### AER Priority Queue Backpressure Contract (2026-06-04)
+
+This benchmark covers the NEU-C.4 event-control contract: AER fanout packets
+with lower numeric priority must overtake best-effort packets while preserving
+FIFO order within equal priority classes.  The committed artefact also records
+finite-capacity backpressure, sticky drop traps, sticky critical-deadline traps,
+CPU affinity, cgroup effective CPU set, host load, CPU governor, and Yosys
+elaboration time.
+
+| Path | Workload | Result | Raw evidence |
+|------|----------|--------|--------------|
+| Python reference model | 4,096 deterministic events x 100 repeats | 4.138 us/event under runtime cpuset shield `10-11`; `priority_violations=0`, `fifo_tie_violations=0` | `benchmarks/results/local_python_2026-06-04_aer_priority_queue.json` |
+| SystemVerilog `sc_aer_priority_queue` | Yosys synthesis/elaboration | `yosys.exit_code=0`, 6,364 cells in the artefact | `benchmarks/results/local_python_2026-06-04_aer_priority_queue.json` |
+
+No Rust, Julia, Go, or Mojo counterpart exists for this HDL-only queue surface
+as of 2026-06-04.  Cross-language comparison therefore means Python reference
+contract versus SystemVerilog RTL elaboration/simulation for this task.
 
 ### Mixed Q8.8/Q16.16 Dense Contract (2026-06-04)
 

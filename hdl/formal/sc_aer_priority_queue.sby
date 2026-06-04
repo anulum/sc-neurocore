@@ -1,0 +1,14 @@
+[options]
+mode bmc
+depth 12
+
+[engines]
+smtbmc cvc5
+
+[script]
+read_verilog -formal -sv sc_aer_priority_queue.v sc_aer_priority_queue_formal.v
+prep -top sc_aer_priority_queue_formal
+
+[files]
+hdl/sc_aer_priority_queue.v
+hdl/formal/sc_aer_priority_queue_formal.v
