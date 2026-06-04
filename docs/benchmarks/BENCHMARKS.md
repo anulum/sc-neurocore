@@ -758,3 +758,27 @@ synthesis-estimate evidence.  `hardware_measurement_claimed=false` remains
 intentional.  The Vivado ZU3EG WNS/utilisation contract is gated behind
 `MIF_VIVADO_CI=1` and is not claimed until the self-hosted Vivado runner
 archives a passing timing summary.
+
+## UltraScale+ target contract (2026-06-04)
+
+This benchmark exercises the NEU-C.1 Zynq UltraScale+ target contract across the
+Python Vivado-project generator and Rust SystemVerilog emitter/resource model.
+Both runs used runtime core isolation: system/user/init slices were moved off
+the benchmark cores, the benchmark ran in `benchmark.slice`, and the raw
+artefacts record CPU affinity or cgroup cpuset evidence for CPUs 10-11.
+
+| Surface | Contract | Result |
+| --- | --- | --- |
+| Python + Vivado Tcl | Manifest validation and deterministic ZU3EG/ZU9EG batch Tcl generation | `122678.065` ns/manifest median over 2 manifests x 2000 iterations x 7 repeats |
+| Rust | Target-aware SystemVerilog emission and conservative resource reporting for a 64x32 dense graph | `130835.757` ns/emit median over 2000 iterations x 7 repeats |
+
+The Rust report estimates `2048` DSPs for a one-DSP-per-MAC 64x32 dense graph.
+That exceeds the ZU3EG budget of `360`, while the BRAM estimate `2` fits the
+budget `216`. This over-budget DSP result is intentional fail-closed evidence:
+SC-NeuroCore must not claim that this unfurled graph fits ZU3EG until a folded
+or time-multiplexed dense implementation is added and validated.
+
+The generated Tcl and Rust target metadata use the Zynq UltraScale+ `DSP48E2`
+primitive baseline. The checked-in XDC files are clock/timing baselines only;
+they intentionally avoid `PACKAGE_PIN` and `LOC` constraints until a
+board-revision pin manifest is verified.

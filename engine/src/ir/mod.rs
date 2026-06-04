@@ -28,4 +28,5 @@ pub mod graph;
 pub mod parser;
 pub mod printer;
 pub mod qformat;
+pub mod sv_target;
 pub mod verify;

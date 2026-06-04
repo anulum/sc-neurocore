@@ -61,6 +61,7 @@ cargo bench --bench analysis_bench -- --quick
 | mixed_dense_q88_q1616_envelope_64x32 | 2.322 µs |
 | block_floating_dense_q16_envelope_64x32 | 8.748 µs |
 | dcls_q88_tent_kernel_16tap | 40.184 ns/sample |
+| ultrascale_plus_target_contract_64x32 | 130.836 µs/emit |
 | attention_10x16_20x32 | 88.5 µs |
 | gnn_20x8_forward | 85.3 µs |
 
@@ -123,6 +124,17 @@ Python/PyTorch/SystemVerilog artefact is
 `benchmarks/results/local_python_2026-06-04_dcls_q88.json`.  The Rust path
 reported `overflow_count=0` and `active_tap_total=2808700`, matching the
 Python reference workload and DCLS Q8.8 saturation contract.
+
+`ultrascale_plus_target_contract_64x32` was measured on 2026-06-04 with the
+Rust benchmark process pinned to CPUs 10-11 inside a runtime cpuset shield. The
+committed raw artefact is
+`benchmarks/results/local_rust_2026-06-04_ultrascale_plus_target.json`; the
+matching Python/Vivado-Tcl artefact is
+`benchmarks/results/local_python_2026-06-04_ultrascale_plus_target.json`. The
+Rust target report deliberately records `fits_dsp_budget=false`: a 64x32
+one-DSP-per-MAC dense graph estimates `2048` DSPs against the ZU3EG budget of
+`360`, so ZU3EG deployment needs a folded/time-multiplexed implementation or a
+larger target before any timing-closure claim is valid.
 
 ### PRNG
 
