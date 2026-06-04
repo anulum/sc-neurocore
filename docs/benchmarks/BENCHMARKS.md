@@ -14,6 +14,12 @@ When a newer local run exists but its raw output is not committed, cite it only
 as local exploratory evidence. Do not promote it to README, roadmap, release,
 or paper claims until the raw artefact and environment record are committed.
 
+The 2026-06-04 local Python/Rust precision benchmark artefacts were captured on
+a workstation under concurrent load and without an exclusive isolated CPU core
+set.  Treat those medians as contract/regression context, not final throughput
+claims.  Any production performance claim must be rerun on reserved isolated
+cores, with CPU affinity and host-load evidence recorded in the raw artefact.
+
 > **v3.14.0 additions:** SHD FPGA synthesis on Zynq XC7Z020 — 1 317 LUT
 > (2.5%), 848 FF (0.8%), WNS +4.048 ns at 100 MHz. See
 > `hdl/reports/vivado_util_xc7z020_100mhz.rpt` for full Vivado report.
@@ -102,10 +108,10 @@ the HDL datapath.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 29.453 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| Python `CompiledBlockFloatingDense.forward_with_overflow` | Same deterministic matrix/vector | 42.582 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.317 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 9.116 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
+| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 28.328 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Python `CompiledBlockFloatingDense.forward_with_overflow` | Same deterministic matrix/vector | 31.260 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.141 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 11.331 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
 | HDL `sc_block_floating_dense` Yosys RTLIL stat | Parameterised 2×2, `BLOCK_SIZE=2` elaboration copy | 96 cells, 4 multipliers | `hdl/reports/yosys_block_floating_dense_2026-06-04.json` |
 
 The deterministic block-floating workload recorded maximum absolute error
@@ -113,11 +119,11 @@ The deterministic block-floating workload recorded maximum absolute error
 quantisation on the committed synthetic workload, not runtime nondeterminism.
 The Python and Rust artefacts both recorded safe-workload overflow count `0`
 and saturating-probe overflow count `32`, matching the lane-level HDL
-`overflow_vector` contract.  The refreshed artefacts also record conservative
-precision-envelope telemetry: Python safe max absolute bound `610816`, Rust
-safe max absolute bound `312131072`, Python saturating-probe max absolute bound
-`1125865547104256`, and Rust saturating-probe max absolute bound
-`4503324753657856`.  The HDL exports per-output `abs_bounds_q1616`; the
+`overflow_vector` contract.  Both languages now compare the same deterministic
+BFP contract: mantissa checksum `-15`, exponent checksum `0`, exponent code
+range `[0, 0]`, safe max absolute bound `610816`, and saturating-probe max
+absolute bound `1125865547104256`.  The HDL exports per-output
+`abs_bounds_q1616`; the
 full-size 64×32 block-floating Yosys frontend path is documented as toolchain
 debt because Yosys 0.33 elaborates the default procedural loops during
 `read_verilog` before `chparam` can reduce the dimensions.

@@ -6,6 +6,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Marked the 2026-06-04 local precision benchmark artefacts as captured under
+  concurrent workstation load and documented the isolated-core requirement for
+  future production throughput claims.
+- Aligned the block-floating dense Python and Rust benchmark workloads so the
+  safe and saturating precision-envelope bounds compare the same physical BFP
+  mantissa/exponent contract across languages.
 - Added per-output conservative absolute-bound telemetry to the mixed
   Q8.8/Q16.16 and block-floating dense RTL (`abs_bounds_q1616`), aligned the
   Python/Rust benchmark artefacts with the same precision-envelope fields, and

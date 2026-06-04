@@ -117,5 +117,11 @@
       "checksum": 0,
       "conservative_safe": true
     }
-  ]
+  ],
+  "measurement_context": {
+    "host_load": "workstation under concurrent load during capture",
+    "cpu_isolation": "not exclusive; no isolated benchmark core set was reserved",
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+    "production_rerun_requirement": "rerun on isolated cores with recorded affinity and host-load evidence before publishing performance claims"
+  }
 }

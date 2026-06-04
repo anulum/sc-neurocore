@@ -574,3 +574,36 @@ class TestQuantizationError:
         assert e1616["rmse"] < e88["rmse"]
         assert e1616["max_abs_error"] < e88["max_abs_error"]
         assert e1616["snr_db"] > e88["snr_db"]
+
+
+def test_block_floating_benchmark_contract_matches_rust_envelope() -> None:
+    """The documented Python/Rust benchmark workload must share one envelope."""
+    n_inputs = 64
+    n_outputs = 32
+    weights = np.array(
+        [((idx * 23 + 3) % 1025 - 512) / 512.0 for idx in range(n_inputs * n_outputs)],
+        dtype=np.float64,
+    ).reshape(n_outputs, n_inputs)
+    inputs = np.array(
+        [((idx * 19 + 5) % 257 - 128) / 256.0 for idx in range(n_inputs)],
+        dtype=np.float64,
+    )
+
+    compiled = compile_dense_block_floating(weights, fmt="BFP16E3X32")
+    envelope = compiled.precision_envelope_report(inputs)
+
+    assert int(np.sum(compiled.mantissas.astype(np.int64))) == -15
+    assert int(np.sum(compiled.exponents.astype(np.int64))) == 0
+    assert envelope.max_abs_bound_code == 610_816
+    assert envelope.conservative_overflow_free
+
+    probe = compile_dense_block_floating(
+        np.full((n_outputs, n_inputs), 8192.0, dtype=np.float64),
+        fmt="BFP16E3X32",
+    )
+    probe_envelope = probe.precision_envelope_report(np.full(n_inputs, 32767.0, dtype=np.float64))
+
+    assert int(np.sum(probe.mantissas.astype(np.int64))) == 33_554_432
+    assert int(np.sum(probe.exponents.astype(np.int64))) == 128
+    assert probe_envelope.max_abs_bound_code == 1_125_865_547_104_256
+    assert not probe_envelope.conservative_overflow_free
