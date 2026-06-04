@@ -161,6 +161,14 @@ re-latch stale saturation telemetry. Optional
 `SC_NEUROCORE_ASSERTIONS` properties bind the no-silent-overflow and
 sticky-latch contracts for formal or simulation audit runs.
 
+Live-control parameter banks are generated from `MMIOUpdateSpec` with
+`generate_live_parameter_bank(...)`. The emitted AXI4-Lite RTL uses
+BRAM/distributed RAM style hints per bank, fixed control/status register
+addresses, staged low/high write-data registers, an `update_valid|commit`
+command, flattened `parameter_words` output, and host-visible trap clear/status
+signals. This lets a deployed design hot-swap weights or phase-coupling
+coefficients while keeping the precision and trap contracts auditable.
+
 ### 2.4 Nanosecond response budget
 
 `hardware_halt` is a pure combinational OR of the seven violation

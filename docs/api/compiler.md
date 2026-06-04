@@ -290,6 +290,9 @@ The status map exposes `ready`, `busy`, `update_ack`, and `trap_latched` bits.
 Trap clearing is a separate two-write sequence that records the intended flag
 width before asserting the clear command, preserving deterministic host
 intervention semantics.
+`sc_neurocore.hdl_gen.bus_interface.generate_live_parameter_bank(...)` consumes
+the same manifest and emits the corresponding AXI4-Lite parameter-bank RTL, so
+the Python control schema and hardware register map remain one contract.
 
 `forward_with_overflow` returns saturated accumulator-format integer codes and
 per-output overflow flags.  In canonical `scale_per_tensor=False` mode the
