@@ -21,9 +21,9 @@ evidence.
 | vec_popcount SWAR (1024 words) | cpu | 50000 | 30.2 us | 2.17 Gbit/s |
 | Dense forward (16x8, L=256) | cpu | 500 | 352.7 us | 0.09 GOP/s (SC) |
 | Dense forward (64x32, L=1024) | cpu | 100 | 2405.8 us | 0.87 GOP/s (SC) |
-| Mixed dense Q8.8/Q16.16 (64x32) | Python | 2000 | 31.330 us | max abs error 7.63e-05, safe_bound=531401 |
-| Mixed dense Q8.8/Q16.16 overflow telemetry (64x32) | Python | 2000 | 39.562 us | safe=0, saturating probe=32 |
-| Mixed dense Q8.8/Q16.16 (64x32) | Rust | 20000 | 2.986 us | safe=0, saturating probe=32, safe_bound=531400 |
+| Mixed dense Q8.8/Q16.16 (64x32) | Python | 2000 | 35.485 us | max abs error 0, safe_bound=531400 |
+| Mixed dense Q8.8/Q16.16 overflow telemetry (64x32) | Python | 2000 | 33.715 us | safe=0, saturating probe=32 |
+| Mixed dense Q8.8/Q16.16 (64x32) | Rust | 20000 | 2.343 us | safe=0, saturating probe=32, safe_bound=531400 |
 | Mixed dense Q8.8/Q16.16 lane telemetry | HDL/Yosys | N_OUTPUTS=32 | 12,708 cells | `overflow_vector` + `abs_bounds_q1616` registered |
 | Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 28.328 us | max abs error 0.2231, safe_bound=610816 |
 | Block-floating dense BFP16E3X32/Q16.16 overflow telemetry (64x32) | Python | 2000 | 31.260 us | safe=0, saturating probe=32 |

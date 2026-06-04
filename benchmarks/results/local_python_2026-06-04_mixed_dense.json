@@ -1,29 +1,46 @@
 {
   "benchmark": "mixed_dense_q88_q1616_64x32",
+  "benchmark_contract": "canonical_q88_weight_q1616_input",
+  "scale_per_tensor": false,
   "language": "Python",
-  "timestamp_utc": "2026-06-04T08:40:10+00:00",
-  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_mixed_precision_dense.py",
+  "timestamp_utc": "2026-06-04T10:49:22+00:00",
+  "command": "taskset -c 10-11 env PYTHONPATH=src .venv/bin/python benchmarks/bench_mixed_precision_dense.py",
   "python": "3.12.3",
   "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
   "processor": "x86_64",
+  "measurement_context": {
+    "host_load": "workstation under concurrent load during capture",
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "cpu_affinity": [
+      10,
+      11
+    ],
+    "load_average": [
+      5.05322265625,
+      4.06396484375,
+      3.6640625
+    ],
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+  },
   "n_inputs": 64,
   "n_outputs": 32,
   "iterations": 2000,
   "repeats": 7,
-  "mixed_median_ns_per_call": 31329.6385,
-  "mixed_min_ns_per_call": 30133.3735,
-  "mixed_max_ns_per_call": 35479.1535,
-  "forward_with_overflow_median_ns_per_call": 39561.974,
-  "forward_with_overflow_min_ns_per_call": 33327.989,
-  "forward_with_overflow_max_ns_per_call": 55555.099,
-  "float_dot_median_ns_per_call": 1309.4795,
-  "float_dot_min_ns_per_call": 1285.4885,
-  "float_dot_max_ns_per_call": 1402.838,
-  "max_abs_error_vs_float_dot": 7.62939453125e-05,
+  "mixed_median_ns_per_call": 35485.3275,
+  "mixed_min_ns_per_call": 32965.3775,
+  "mixed_max_ns_per_call": 62661.793,
+  "forward_with_overflow_median_ns_per_call": 33714.7695,
+  "forward_with_overflow_min_ns_per_call": 30618.7015,
+  "forward_with_overflow_max_ns_per_call": 37494.6305,
+  "float_dot_median_ns_per_call": 1468.4545,
+  "float_dot_min_ns_per_call": 1308.6385,
+  "float_dot_max_ns_per_call": 1683.053,
+  "max_abs_error_vs_float_dot": 0.0,
   "safe_overflow_count": 0,
-  "safe_max_abs_bound_code": 531401,
+  "safe_max_abs_bound_code": 531400,
   "safe_conservative_overflow_free": true,
-  "safe_min_headroom_code": 2146952246,
+  "safe_min_headroom_code": 2146952247,
   "saturating_probe_overflow_count": 32,
   "saturating_probe_max_abs_bound_code": 17454214414336,
   "saturating_probe_conservative_overflow_free": false,
@@ -35,118 +52,112 @@
       32,
       64
     ],
-    "tensor_scale": 127.99609375,
-    "accumulator_divisor": 32767.0,
+    "tensor_scale": 1.0,
+    "accumulator_divisor": 256.0,
     "kind": "mixed_fixed_point",
     "weight_format": "Q8.8",
     "accumulator_format": "Q16.16",
     "weight_total_bits": 16,
     "accumulator_total_bits": 32,
     "accumulator_guard_bits": 16,
-    "scale_per_tensor": true,
+    "scale_per_tensor": false,
     "rounding": "nearest"
   },
   "mixed_results": [
     {
-      "ns_per_call": 33353.7635,
+      "ns_per_call": 62661.793,
       "checksum": 0
     },
     {
-      "ns_per_call": 30657.9355,
+      "ns_per_call": 40328.93,
       "checksum": 0
     },
     {
-      "ns_per_call": 30133.3735,
+      "ns_per_call": 35485.3275,
       "checksum": 0
     },
     {
-      "ns_per_call": 31329.6385,
+      "ns_per_call": 36138.4315,
       "checksum": 0
     },
     {
-      "ns_per_call": 30346.9805,
+      "ns_per_call": 33766.3195,
       "checksum": 0
     },
     {
-      "ns_per_call": 34728.7805,
+      "ns_per_call": 32965.3775,
       "checksum": 0
     },
     {
-      "ns_per_call": 35479.1535,
+      "ns_per_call": 33548.7505,
       "checksum": 0
     }
   ],
   "forward_with_overflow_results": [
     {
-      "ns_per_call": 34923.2265,
+      "ns_per_call": 37494.6305,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 55555.099,
+      "ns_per_call": 33446.6685,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 42278.868,
+      "ns_per_call": 33714.7695,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 55112.263,
+      "ns_per_call": 34848.5515,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 39561.974,
+      "ns_per_call": 30618.7015,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 33327.989,
+      "ns_per_call": 32958.288,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 37381.1605,
+      "ns_per_call": 36558.445,
       "checksum": 0,
       "overflow_count": 0
     }
   ],
   "float_dot_results": [
     {
-      "ns_per_call": 1376.5125,
+      "ns_per_call": 1683.053,
       "checksum": -4574.40185546875
     },
     {
-      "ns_per_call": 1309.4795,
+      "ns_per_call": 1308.6385,
       "checksum": -4574.40185546875
     },
     {
-      "ns_per_call": 1298.176,
+      "ns_per_call": 1327.871,
       "checksum": -4574.40185546875
     },
     {
-      "ns_per_call": 1298.6145,
+      "ns_per_call": 1468.4545,
       "checksum": -4574.40185546875
     },
     {
-      "ns_per_call": 1285.4885,
+      "ns_per_call": 1594.996,
       "checksum": -4574.40185546875
     },
     {
-      "ns_per_call": 1402.838,
+      "ns_per_call": 1616.718,
       "checksum": -4574.40185546875
     },
     {
-      "ns_per_call": 1380.8605,
+      "ns_per_call": 1315.8985,
       "checksum": -4574.40185546875
     }
-  ],
-  "measurement_context": {
-    "host_load": "workstation under concurrent load during capture",
-    "cpu_isolation": "not exclusive; no isolated benchmark core set was reserved",
-    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
-    "production_rerun_requirement": "rerun on isolated cores with recorded affinity and host-load evidence before publishing performance claims"
-  }
+  ]
 }

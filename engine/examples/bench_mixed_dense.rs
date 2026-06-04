@@ -10,6 +10,7 @@ use sc_neurocore_engine::ir::qformat::mixed_dense_q88_q1616;
 use std::fs;
 use std::hint::black_box;
 use std::path::Path;
+use std::process::Command;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 const N_INPUTS: usize = 64;
@@ -27,6 +28,38 @@ fn deterministic_inputs() -> Vec<i32> {
     (0..N_INPUTS)
         .map(|i| (((i * 19 + 5) % 257) as i32 - 128) << 8)
         .collect()
+}
+
+fn read_proc_field(path: &str, prefix: &str) -> String {
+    fs::read_to_string(path)
+        .ok()
+        .and_then(|content| {
+            content.lines().find_map(|line| {
+                line.strip_prefix(prefix)
+                    .map(|value| value.trim().to_string())
+            })
+        })
+        .unwrap_or_else(|| "unavailable".to_string())
+}
+
+fn cpu_affinity() -> String {
+    read_proc_field("/proc/self/status", "Cpus_allowed_list:")
+}
+
+fn load_average() -> String {
+    fs::read_to_string("/proc/loadavg")
+        .map(|content| content.trim().to_string())
+        .unwrap_or_else(|_| "unavailable".to_string())
+}
+
+fn rust_version() -> String {
+    Command::new("rustc")
+        .arg("--version")
+        .output()
+        .ok()
+        .and_then(|output| String::from_utf8(output.stdout).ok())
+        .map(|version| version.trim().to_string())
+        .unwrap_or_else(|| "unavailable".to_string())
 }
 
 fn run_once(weights: &[i16], inputs: &[i32]) -> (f64, i64, usize) {
@@ -94,11 +127,22 @@ fn main() {
         concat!(
             "{{\n",
             "  \"benchmark\": \"mixed_dense_q88_q1616_64x32\",\n",
+            "  \"benchmark_contract\": \"canonical_q88_weight_q1616_input\",\n",
+            "  \"scale_per_tensor\": false,\n",
             "  \"language\": \"Rust\",\n",
             "  \"timestamp_unix\": {timestamp_unix_arg},\n",
-            "  \"command\": \"cargo run --manifest-path engine/Cargo.toml --release --example bench_mixed_dense\",\n",
+            "  \"command\": \"taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_mixed_dense\",\n",
+            "  \"rustc\": \"{rust_version_arg}\",\n",
             "  \"target_os\": \"{os}\",\n",
             "  \"target_arch\": \"{arch}\",\n",
+            "  \"measurement_context\": {{\n",
+            "    \"host_load\": \"workstation under concurrent load during capture\",\n",
+            "    \"cpu_isolation\": \"taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation\",\n",
+            "    \"cpu_affinity\": \"{cpu_affinity_arg}\",\n",
+            "    \"load_average\": \"{load_average_arg}\",\n",
+            "    \"timing_interpretation\": \"use timing medians as local regression context only, not final throughput claims\",\n",
+            "    \"production_rerun_requirement\": \"rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims\"\n",
+            "  }},\n",
             "  \"n_inputs\": {n_inputs},\n",
             "  \"n_outputs\": {n_outputs},\n",
             "  \"iterations\": {iterations},\n",
@@ -118,8 +162,11 @@ fn main() {
             "}}\n"
         ),
         timestamp_unix_arg = timestamp_unix,
+        rust_version_arg = rust_version(),
         os = std::env::consts::OS,
         arch = std::env::consts::ARCH,
+        cpu_affinity_arg = cpu_affinity(),
+        load_average_arg = load_average(),
         n_inputs = N_INPUTS,
         n_outputs = N_OUTPUTS,
         iterations = ITERATIONS,

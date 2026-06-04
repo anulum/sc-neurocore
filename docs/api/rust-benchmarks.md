@@ -54,7 +54,7 @@ cargo bench --bench analysis_bench -- --quick
 | Benchmark | Median |
 |-----------|-------:|
 | dense_forward_64x32 | 993 µs |
-| mixed_dense_q88_q1616_64x32 | 2.986 µs |
+| mixed_dense_q88_q1616_64x32 | 2.343 µs |
 | block_floating_dense_q16_64x32 | 11.331 µs |
 | mixed_dense_q88_q1616_trap_64x32 | 3.483 µs |
 | block_floating_dense_q16_trap_64x32 | 11.277 µs |
@@ -70,15 +70,17 @@ throughput, rerun the benchmark on isolated cores and record CPU affinity plus
 host-load evidence in the raw JSON artefact.
 
 `mixed_dense_q88_q1616_64x32` was measured on 2026-06-04 with
-`cargo run --manifest-path engine/Cargo.toml --release --example bench_mixed_dense`.
+`taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_mixed_dense`.
 The committed raw artefact is
 `benchmarks/results/local_rust_2026-06-04_mixed_dense.json`; the matching Python
 reference artefact is `benchmarks/results/local_python_2026-06-04_mixed_dense.json`.
 Both artefacts record safe-workload overflow count `0` and saturating-probe
 overflow count `32` for parity with the mixed-dense HDL `overflow_vector`.
 They also record conservative envelope telemetry for comparison with the HDL
-`abs_bounds_q1616` lanes: Python safe max absolute bound `531401`, Rust safe
-max absolute bound `531400`, and saturating-probe max bound `17454214414336`.
+`abs_bounds_q1616` lanes: Python and Rust safe max absolute bound `531400`,
+and saturating-probe max bound `17454214414336`.  The Python benchmark uses
+`QFormatMixed(scale_per_tensor=False)` here so the comparison is the same raw
+Q8.8/Q16.16 physical contract implemented by Rust and HDL.
 
 `block_floating_dense_q16_64x32` was measured on 2026-06-04 with
 `cargo run --manifest-path engine/Cargo.toml --release --example bench_block_floating_dense`.

@@ -819,3 +819,38 @@ mod block_floating_benchmark_contract_tests {
         assert!(!saturating_envelope.conservative_overflow_free);
     }
 }
+#[cfg(test)]
+mod mixed_dense_benchmark_contract_tests {
+    use super::*;
+
+    #[test]
+    fn mixed_dense_benchmark_contract_matches_python_envelope() {
+        const N_INPUTS: usize = 64;
+        const N_OUTPUTS: usize = 32;
+
+        let weights = (0..(N_INPUTS * N_OUTPUTS))
+            .map(|idx| (((idx * 17 + 11) % 513) as i32 - 256) as i16)
+            .collect::<Vec<_>>();
+        let inputs = (0..N_INPUTS)
+            .map(|idx| (((idx as i32 * 19 + 5) % 257) - 128) << 8)
+            .collect::<Vec<_>>();
+        let safe = mixed_dense_q88_q1616(&weights, &inputs, N_OUTPUTS, N_INPUTS)
+            .expect("benchmark contract dimensions must be valid");
+        let safe_envelope = safe.precision_envelope_report();
+
+        assert_eq!(safe.overflow_count, 0);
+        assert_eq!(safe_envelope.max_abs_bound_q1616, 531_400);
+        assert!(safe_envelope.conservative_overflow_free);
+        assert_eq!(safe_envelope.min_headroom_q1616, 2_146_952_247);
+
+        let probe_weights = vec![127_i16 << 8; N_INPUTS * N_OUTPUTS];
+        let probe_inputs = vec![32767_i32 << 16; N_INPUTS];
+        let probe = mixed_dense_q88_q1616(&probe_weights, &probe_inputs, N_OUTPUTS, N_INPUTS)
+            .expect("saturating probe dimensions must be valid");
+        let probe_envelope = probe.precision_envelope_report();
+
+        assert_eq!(probe.overflow_count, N_OUTPUTS);
+        assert_eq!(probe_envelope.max_abs_bound_q1616, 17_454_214_414_336);
+        assert!(!probe_envelope.conservative_overflow_free);
+    }
+}
