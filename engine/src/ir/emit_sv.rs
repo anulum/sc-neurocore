@@ -242,6 +242,7 @@ pub fn emit_systemverilog_with_target(
                 let weights_wire = value_to_wire(graph, *weights);
                 let leak_wire = value_to_wire(graph, *leak);
                 let gain_wire = value_to_wire(graph, *gain);
+                emit_dense_fold_plan_comment(&mut sv, &target, params);
                 emit_target_dsp_attribute(&mut sv, &target);
                 sv.push_str(&format!(
                     "    sc_dense_layer_core #(\n\
@@ -511,6 +512,24 @@ fn emit_target_dsp_attribute(sv: &mut String, target: &SvTarget) {
     }
 }
 
+fn emit_dense_fold_plan_comment(sv: &mut String, target: &SvTarget, params: &DenseParams) {
+    let Some(plan) = target.dense_fold_plan(params.n_inputs, params.n_neurons) else {
+        return;
+    };
+    if !plan.fold_required {
+        return;
+    }
+    sv.push_str(&format!(
+        "    // Dense fold plan: unfurled_macs={}, dsp_budget={}, dsp_per_cycle={}, output_parallelism={}, input_parallelism={}, compute_cycles={}\n",
+        plan.mac_count,
+        plan.dsp_budget,
+        plan.dsp_per_cycle,
+        plan.output_parallelism,
+        plan.input_parallelism,
+        plan.compute_cycles
+    ));
+}
+
 fn emit_ram_style_attribute(sv: &mut String, target: &SvTarget, bits: u64) {
     if let Some(style) = target.ram_style_for_bits(bits) {
         sv.push_str(&format!("    (* ram_style = \"{}\" *)\n", style));
@@ -673,5 +692,49 @@ mod tests {
         assert_eq!(report.device_part, "xczu3eg-sbva484-1-e");
         assert!(report.dsp_estimated >= 12);
         assert!(report.fits_dsp_budget);
+    }
+
+    #[test]
+    fn ultrascale_plus_over_budget_dense_emits_fold_plan_comment() {
+        let mut builder = ScGraphBuilder::new("ultrascale_fold_dense");
+        let inputs = builder.input(
+            "inputs",
+            ScType::Vec {
+                element: Box::new(ScType::FixedPoint { width: 16, frac: 8 }),
+                count: 64,
+            },
+        );
+        let weights = builder.constant(
+            ScConst::I64Vec(vec![128; 64 * 32]),
+            ScType::Vec {
+                element: Box::new(ScType::FixedPoint { width: 16, frac: 8 }),
+                count: 64 * 32,
+            },
+        );
+        let leak = builder.constant(ScConst::I64(16), ScType::FixedPoint { width: 16, frac: 8 });
+        let gain = builder.constant(ScConst::I64(1), ScType::FixedPoint { width: 16, frac: 8 });
+        let result = builder.dense_forward(
+            inputs,
+            weights,
+            leak,
+            gain,
+            DenseParams {
+                n_inputs: 64,
+                n_neurons: 32,
+                ..DenseParams::default()
+            },
+        );
+        builder.output("spikes", result);
+
+        let (sv, report) = emit_systemverilog_with_target(
+            &builder.build(),
+            SvTarget::zynq_ultrascale_plus(SkuKind::Zu3eg, 250),
+        )
+        .expect("UltraScale+ target emission should produce fold-plan metadata");
+
+        assert!(sv.contains("Dense fold plan: unfurled_macs=2048"));
+        assert!(sv.contains("dsp_per_cycle=320"));
+        assert!(sv.contains("compute_cycles=7"));
+        assert!(report.dense_fold_plan.is_some());
     }
 }

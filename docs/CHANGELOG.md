@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added the UltraScale+ dense-folding contract: shared Rust/Python fold planner,
+  folded Q8.8/Q16.16 HDL core, target-emitter fold metadata, module-specific
+  simulation tests, and isolated Python/Rust benchmark evidence for fitting the
+  64x32 dense contract into the ZU3EG DSP budget.
 - Added the NEU-C.1 Zynq UltraScale+ target contract: Rust target metadata,
   conservative resource-budget reporting, deterministic Vivado Tcl generation,
   board-safe timing-only XDC baselines, module-specific tests, and isolated

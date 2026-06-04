@@ -44,11 +44,19 @@
     {
       "artefact": "benchmarks/results/local_rust_2026-06-04_ultrascale_plus_target.json",
       "id": "ultrascale-plus-target-rust-contract"
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_ultrascale_dense_folding.json",
+      "id": "ultrascale-plus-dense-folding-python-contract"
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_ultrascale_dense_folding.json",
+      "id": "ultrascale-plus-dense-folding-rust-contract"
     }
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 11,
+  "gate_count": 13,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

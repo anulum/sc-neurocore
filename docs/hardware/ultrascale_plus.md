@@ -79,6 +79,37 @@ cannot be honestly claimed to fit ZU3EG. ZU3EG deployment for that workload
 requires a folded or time-multiplexed dense implementation, a smaller layer, or
 a larger target.
 
+## Dense folding contract
+
+The follow-up dense-folding contract provides that missing resource-safe path.
+`SvTarget::dense_fold_plan(64, 32)` and `tools/ultrascale_dense_folding.py`
+both compute the same ZU3EG plan:
+
+| Field | Value |
+| --- | ---: |
+| Unfurled MACs | 2,048 |
+| ZU3EG DSP budget | 360 |
+| Output rows per cycle | 5 |
+| Input lanes per output row | 64 |
+| DSPs per compute cycle | 320 |
+| Output fold factor | 7 |
+| Input fold factor | 1 |
+| Compute cycles | 7 |
+
+The SystemVerilog emitter now annotates over-budget UltraScale+ dense
+instances with this fold plan so generated RTL carries the resource remedy next
+to the unfurled dense instance. The standalone
+`hdl/sc_dense_folded_q88_core.v` implements the folded Q8.8-weight/Q16.16-MAC
+execution contract and is covered by Icarus simulation. The benchmark also runs
+bounded Yosys elaboration on an 8x8 parameterisation, reporting 240 generic
+cells. That Yosys number validates HDL elaboration only; it is not a ZU3EG
+Vivado timing or utilisation report.
+
+The folded core is deterministic fixed-point dense logic. It does not silently
+replace the existing stochastic dense layer in the generic emitter path.
+Deployment code must select it deliberately when the target resource contract
+requires folding.
+
 ## Vivado gate
 
 `tests/test_ultrascale_plus_flow.py` includes an opt-in Vivado CI gate. It runs
