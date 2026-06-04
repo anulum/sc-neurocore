@@ -265,6 +265,10 @@ the Python `overflow` mask and Rust `overflow_count`: `overflow_vector[i]`
 identifies output channel `i`, while the aggregate `overflow` line is asserted
 when any lane saturates.
 
+The block-floating dense HDL reference uses the same lane convention, with
+`overflow_vector[i]` identifying the output channel that saturated after the
+shared-exponent product shift and Q16.16 accumulation.
+
 `forward_with_overflow` returns saturated accumulator-format integer codes and
 per-output overflow flags.  In canonical `scale_per_tensor=False` mode the
 division from Q8.8×Q16.16 products to Q16.16 outputs uses the same signed

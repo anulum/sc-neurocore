@@ -19,8 +19,10 @@ Backend: NumPy (CPU only)
 | Mixed dense Q8.8/Q16.16 overflow telemetry (64x32) | Python | 2000 | 91.827 us | safe=0, saturating probe=32 |
 | Mixed dense Q8.8/Q16.16 (64x32) | Rust | 20000 | 3.293 us | safe=0, saturating probe=32 |
 | Mixed dense Q8.8/Q16.16 lane telemetry | HDL/Yosys | N_OUTPUTS=32 | 4,387 cells | `overflow_vector` registered |
-| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 58.386 us | max abs error 0.2231 |
-| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 12.512 us | 4.7x vs Python BFP reference |
+| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 44.393 us | max abs error 0.2231 |
+| Block-floating dense BFP16E3X32/Q16.16 overflow telemetry (64x32) | Python | 2000 | 46.304 us | safe=0, saturating probe=32 |
+| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 11.665 us | safe=0, saturating probe=32 |
+| Block-floating dense BFP16E3X32/Q16.16 lane telemetry | HDL/Yosys | N_OUTPUTS=32 | 12,771 cells | `overflow_vector` registered |
 | Precision trap report mixed dense (64x32 overflow) | Python | 2000 | 340.461 us | overflow_count=32 |
 | Precision trap report mixed dense (64x32 overflow) | Rust | 20000 | 3.483 us | overflow_count=32 |
 | Precision trap report block-floating dense (64x32 overflow) | Python | 2000 | 161.677 us | overflow_count=32 |

@@ -29,9 +29,15 @@ fn deterministic_inputs() -> Vec<i32> {
         .collect()
 }
 
-fn run_once(mode: BlockFloatingMode, mantissas: &[i16], exponents: &[u8], inputs: &[i32]) -> (f64, i64) {
+fn run_once(
+    mode: BlockFloatingMode,
+    mantissas: &[i16],
+    exponents: &[u8],
+    inputs: &[i32],
+) -> (f64, i64, usize) {
     let start = Instant::now();
     let mut checksum = 0_i64;
+    let mut overflow_count = 0_usize;
     for _ in 0..ITERATIONS {
         let result = block_floating_dense_q16(
             black_box(mantissas),
@@ -44,9 +50,10 @@ fn run_once(mode: BlockFloatingMode, mantissas: &[i16], exponents: &[u8], inputs
         .expect("deterministic benchmark dimensions must be valid");
         checksum ^= i64::from(result.outputs_q1616[0]);
         checksum ^= i64::from(result.outputs_q1616[N_OUTPUTS - 1]);
+        overflow_count = result.overflow_count;
     }
     let elapsed_ns = start.elapsed().as_nanos() as f64;
-    (elapsed_ns / ITERATIONS as f64, checksum)
+    (elapsed_ns / ITERATIONS as f64, checksum, overflow_count)
 }
 
 fn median(values: &mut [f64]) -> f64 {
@@ -57,15 +64,33 @@ fn median(values: &mut [f64]) -> f64 {
 fn main() {
     let mode = BlockFloatingMode::bfp16_e3_x32();
     let mantissas = deterministic_mantissas();
-    let exponents = vec![mode.exponent_bias() as u8; (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size];
+    let exponents = vec![
+        mode.exponent_bias() as u8;
+        (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size
+    ];
     let inputs = deterministic_inputs();
     let mut ns_per_call = Vec::with_capacity(REPEATS);
     let mut checksum = 0_i64;
+    let mut overflow_count = 0_usize;
     for _ in 0..REPEATS {
-        let (ns, run_checksum) = run_once(mode, &mantissas, &exponents, &inputs);
+        let (ns, run_checksum, run_overflow_count) =
+            run_once(mode, &mantissas, &exponents, &inputs);
         ns_per_call.push(ns);
         checksum ^= run_checksum;
+        overflow_count = run_overflow_count;
     }
+    let saturating_mantissas = vec![i16::MAX; N_INPUTS * N_OUTPUTS];
+    let saturating_inputs = vec![32767_i32 << 16; N_INPUTS];
+    let saturating_probe_overflow_count = block_floating_dense_q16(
+        &saturating_mantissas,
+        &exponents,
+        &saturating_inputs,
+        N_OUTPUTS,
+        N_INPUTS,
+        mode,
+    )
+    .expect("saturating probe dimensions must be valid")
+    .overflow_count;
     let mut sorted = ns_per_call.clone();
     let median_ns_per_call = median(&mut sorted);
     let min_ns_per_call = sorted[0];
@@ -99,6 +124,8 @@ fn main() {
             "  \"min_ns_per_call\": {min_ns_per_call:.3},\n",
             "  \"max_ns_per_call\": {max_ns_per_call:.3},\n",
             "  \"checksum\": {checksum},\n",
+            "  \"safe_overflow_count\": {overflow_count},\n",
+            "  \"saturating_probe_overflow_count\": {saturating_probe_overflow_count},\n",
             "  \"results_ns_per_call\": [{results}]\n",
             "}}\n"
         ),
@@ -116,6 +143,8 @@ fn main() {
         min_ns_per_call = min_ns_per_call,
         max_ns_per_call = max_ns_per_call,
         checksum = checksum,
+        overflow_count = overflow_count,
+        saturating_probe_overflow_count = saturating_probe_overflow_count,
         results = results,
     );
 

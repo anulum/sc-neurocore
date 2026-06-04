@@ -98,16 +98,18 @@ the HDL datapath.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 58.386 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.844 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 12.512 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
-| HDL `sc_block_floating_dense` Yosys stat | Default 64×32 parameters | 12,676 cells, 2,048 multipliers | `hdl/reports/yosys_block_floating_dense_2026-06-04.json` |
+| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 44.393 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Python `CompiledBlockFloatingDense.forward_with_overflow` | Same deterministic matrix/vector | 46.304 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.746 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 11.665 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
+| HDL `sc_block_floating_dense` Yosys stat | Default 64×32 parameters | 12,771 cells, 2,048 multipliers | `hdl/reports/yosys_block_floating_dense_2026-06-04.json` |
 
 The deterministic block-floating workload recorded maximum absolute error
 `0.22306060791015625` versus float64 dot.  This reflects BFP16E3 block-scale
 quantisation on the committed synthetic workload, not runtime nondeterminism.
-The Rust mirror was 4.7× faster than the Python BFP reference on the same
-64×32 integer MAC workload.
+The Python and Rust artefacts both recorded safe-workload overflow count `0`
+and saturating-probe overflow count `32`, matching the lane-level HDL
+`overflow_vector` contract.
 
 ### Precision Trap Reports (2026-06-04)
 

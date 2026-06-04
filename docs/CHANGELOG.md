@@ -9,6 +9,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Added per-output overflow telemetry to the mixed Q8.8/Q16.16 dense RTL and
   refreshed the Python, Rust, HDL, and documentation evidence for lane-level
   saturation attribution.
+- Added per-output overflow telemetry to the block-floating dense RTL and
+  refreshed the Python, Rust, HDL, and documentation evidence for lane-level
+  saturation attribution.
 - Added precision envelope reports across the mixed fixed-point and
   block-floating dense deployment paths, including conservative absolute-bound
   checks in Python and Rust, a synchronous HDL envelope guard, module-specific

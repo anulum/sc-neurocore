@@ -55,7 +55,7 @@ cargo bench --bench analysis_bench -- --quick
 |-----------|-------:|
 | dense_forward_64x32 | 993 µs |
 | mixed_dense_q88_q1616_64x32 | 3.293 µs |
-| block_floating_dense_q16_64x32 | 12.512 µs |
+| block_floating_dense_q16_64x32 | 11.665 µs |
 | mixed_dense_q88_q1616_trap_64x32 | 3.483 µs |
 | block_floating_dense_q16_trap_64x32 | 11.277 µs |
 | mixed_dense_q88_q1616_envelope_64x32 | 3.887 µs |
@@ -76,6 +76,8 @@ The committed raw artefact is
 `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json`; the
 matching Python reference artefact is
 `benchmarks/results/local_python_2026-06-04_block_floating_dense.json`.
+Both artefacts record safe-workload overflow count `0` and saturating-probe
+overflow count `32` for parity with the block-floating HDL `overflow_vector`.
 
 The precision trap rows were measured on 2026-06-04 with
 `cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_traps`.
