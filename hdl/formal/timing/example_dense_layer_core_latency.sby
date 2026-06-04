@@ -1,0 +1,20 @@
+[options]
+mode bmc
+depth 12
+
+[engines]
+smtbmc cvc5
+
+[script]
+read_verilog -formal -sv -I. timing_wrapper_lib.sv example_dense_layer_core_latency.sv sc_dense_layer_core.v sc_dotproduct_to_current.v sc_bitstream_encoder.v sc_bitstream_synapse.v sc_lif_neuron.v
+prep -top example_dense_layer_core_latency
+
+[files]
+hdl/formal/timing/timing_wrapper_lib.sv
+hdl/formal/timing/timing_assertions.svh
+hdl/formal/timing/example_dense_layer_core_latency.sv
+hdl/sc_dense_layer_core.v
+hdl/sc_dotproduct_to_current.v
+hdl/sc_bitstream_encoder.v
+hdl/sc_bitstream_synapse.v
+hdl/sc_lif_neuron.v

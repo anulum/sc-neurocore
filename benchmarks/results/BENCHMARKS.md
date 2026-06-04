@@ -45,3 +45,11 @@ governor, and frequency evidence.
 | Full pipeline (16 syn, 256 steps) | cpu | 50 | 8678.5 us | 29.5 Kstep/s |
 | gpu_pack_bitstream (65536) | cpu | 2000 | 375.9 us | 0.17 Gbit/s |
 | gpu_vec_mac (64x32x16w) | cpu | 1000 | 736.4 us | 2.85 GOP/s |
+
+## Timing-aware formal framework - 2026-06-04
+
+| Artefact | Cpuset | Surfaces | Key result |
+| --- | --- | --- | --- |
+| `local_python_2026-06-04_timing_formal_framework.json` | `10-11` | Python, SystemVerilog, nuXmv, Kind 2 | SymbiYosys/cvc5 pass in `1.476097` s; 16 nuXmv models and 16 Kind 2 nodes emitted |
+
+The run records `hardware_measurement_claimed=false` and `runtime_cpuset_shield_claimed=true`. The nuXmv and Kind 2 binaries were not installed locally, so the benchmark validates deterministic model emission for those surfaces and records runtime execution as unavailable.
