@@ -87,6 +87,26 @@ absolute error `7.62939453125e-05` on the committed deterministic workload.
 The Rust mirror was 104.5× faster than the Python mixed reference on the same
 64×32 integer MAC workload.
 
+### Block-Floating Dense Contract (2026-06-04)
+
+This benchmark covers dense `BFP16E3X32` weights with Q16.16 inputs and
+saturated Q16.16 outputs.  The shared exponent path preserves larger dynamic
+range per block than canonical Q8.8 weights, at the cost of dynamic shifts in
+the HDL datapath.
+
+| Path | Workload | Median | Raw evidence |
+|------|----------|-------:|--------------|
+| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 58.386 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.844 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 12.512 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
+| HDL `sc_block_floating_dense` Yosys stat | Default 64×32 parameters | 12,676 cells, 2,048 multipliers | `hdl/reports/yosys_block_floating_dense_2026-06-04.json` |
+
+The deterministic block-floating workload recorded maximum absolute error
+`0.22306060791015625` versus float64 dot.  This reflects BFP16E3 block-scale
+quantisation on the committed synthetic workload, not runtime nondeterminism.
+The Rust mirror was 4.7× faster than the Python BFP reference on the same
+64×32 integer MAC workload.
+
 ---
 
 ## 5. Full Pipeline (Python)

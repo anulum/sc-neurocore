@@ -163,7 +163,7 @@ class BlockFloatingMode:
     @property
     def max_exponent(self) -> int:
         """Maximum unbiased exponent."""
-        return self.exponent_bias
+        return ((1 << self.exponent_bits) - 1) - self.exponent_bias
 
     @property
     def mantissa_range(self) -> int:
@@ -495,6 +495,156 @@ def compile_dense_mixed_precision(
         quantized_weights=np.asarray(q_weights, dtype=np.int64),
         tensor_scale=float(tensor_scale),
         fmt=mixed_fmt,
+    )
+
+
+@dataclass(frozen=True)
+class CompiledBlockFloatingDense:
+    """Dense operator compiled with shared-exponent block-floating weights."""
+
+    mantissas: np.ndarray[Any, Any]
+    exponents: np.ndarray[Any, Any]
+    mode: BlockFloatingMode
+    input_fmt: QFormat = Q16_16
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.mode, BlockFloatingMode):
+            raise TypeError("mode must be a BlockFloatingMode")
+        if not isinstance(self.input_fmt, QFormat):
+            raise TypeError("input_fmt must be a QFormat")
+
+        mantissas = np.asarray(self.mantissas, dtype=np.int64)
+        exponents = np.asarray(self.exponents, dtype=np.int64).reshape(-1)
+        if mantissas.ndim != 2:
+            raise ValueError("mantissas must be a 2-D dense weight matrix")
+
+        expected_blocks = int(math.ceil(mantissas.size / self.mode.block_size)) if mantissas.size else 0
+        if exponents.size != expected_blocks:
+            raise ValueError(
+                f"exponent count mismatch: expected {expected_blocks}, got {int(exponents.size)}"
+            )
+
+        if np.any(np.abs(mantissas) > self.mode.mantissa_range):
+            raise ValueError("mantissas exceed the configured block-floating range")
+        if np.any(exponents < 0) or np.any(exponents > (1 << self.mode.exponent_bits) - 1):
+            raise ValueError("exponents exceed the configured block-floating range")
+
+        object.__setattr__(self, "mantissas", mantissas)
+        object.__setattr__(self, "exponents", exponents)
+        object.__setattr__(self, "_weight_values", self._reconstruct_weight_values(mantissas, exponents))
+
+    @property
+    def output_size(self) -> int:
+        """Number of dense output channels."""
+        return int(self.mantissas.shape[0])
+
+    @property
+    def input_size(self) -> int:
+        """Number of dense input channels."""
+        return int(self.mantissas.shape[1])
+
+    def _reconstruct_weight_values(
+        self,
+        mantissas: np.ndarray[Any, Any],
+        exponents: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
+        if mantissas.size == 0:
+            return mantissas.astype(np.float64)
+        block_indices = np.arange(mantissas.size, dtype=np.int64) // self.mode.block_size
+        unbiased = exponents[block_indices] - self.mode.exponent_bias
+        scales = np.power(2.0, unbiased.astype(np.float64)).reshape(mantissas.shape)
+        return mantissas.astype(np.float64) * scales
+
+    @property
+    def reconstructed_weights(self) -> np.ndarray[Any, Any]:
+        """Float reconstruction of the compiled block-floating weight matrix."""
+        return np.asarray(self._weight_values, dtype=np.float64).copy()
+
+    def manifest(self) -> dict[str, bool | int | list[int] | str]:
+        """Deterministic deployment metadata for block-floating dense weights."""
+        return {
+            "operation": "dense_block_floating",
+            "input_size": self.input_size,
+            "output_size": self.output_size,
+            "weight_shape": [self.output_size, self.input_size],
+            "mantissa_bits": self.mode.mantissa_bits,
+            "exponent_bits": self.mode.exponent_bits,
+            "block_size": self.mode.block_size,
+            "exponent_bias": self.mode.exponent_bias,
+            "input_format": self.input_fmt.q_label,
+        }
+
+    def _input_values(self, inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        values = _finite_float_array(inputs, label="inputs")
+        if values.ndim != 1:
+            raise ValueError("inputs must be a 1-D vector")
+        if values.shape[0] != self.input_size:
+            raise ValueError(
+                f"input length mismatch: expected {self.input_size}, got {values.shape[0]}"
+            )
+        input_codes = _quantize_fixed_array(
+            values,
+            self.input_fmt,
+            rounding="nearest",
+            clip=True,
+        )
+        return input_codes.astype(np.float64) / self.input_fmt.scale
+
+    def forward_float(self, inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Return dense outputs from BFP weights and quantised fixed-point inputs."""
+        return np.asarray(self._weight_values, dtype=np.float64) @ self._input_values(inputs)
+
+    def forward_with_overflow(
+        self, inputs: np.ndarray[Any, Any]
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+        """Return saturated fixed-point output codes and per-output overflow flags."""
+        outputs = self.forward_float(inputs)
+        codes = np.rint(outputs * self.input_fmt.scale).astype(np.int64)
+        min_accum, max_accum = _fixed_integer_bounds(self.input_fmt)
+        overflow = (codes < min_accum) | (codes > max_accum)
+        return np.clip(codes, min_accum, max_accum).astype(np.int64), overflow.astype(bool)
+
+    def forward_accumulator_codes(self, inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Return saturated output codes in the configured fixed-point input format."""
+        codes, _ = self.forward_with_overflow(inputs)
+        return codes
+
+
+def compile_dense_block_floating(
+    weights: np.ndarray[Any, Any],
+    fmt: str = "BFP16E3X32",
+    *,
+    block_size: int | None = None,
+    input_fmt: str | QFormat = Q16_16,
+    clip: bool = True,
+) -> CompiledBlockFloatingDense:
+    """Compile a dense matrix into block-floating weights with Q-format inputs."""
+    mode = BlockFloatingMode.from_aliases(fmt)
+    selected_block_size = mode.block_size if block_size is None else block_size
+    if selected_block_size <= 0:
+        raise ValueError("block_size must be positive")
+    if selected_block_size != mode.block_size:
+        mode = BlockFloatingMode(
+            mantissa_bits=mode.mantissa_bits,
+            exponent_bits=mode.exponent_bits,
+            block_size=selected_block_size,
+        )
+
+    weight_matrix = _finite_float_array(weights, label="weights")
+    if weight_matrix.ndim != 2:
+        raise ValueError("weights must be a 2-D dense matrix")
+
+    mantissas, exponents = quantize_block_floating(
+        weight_matrix,
+        fmt=f"BFP{mode.mantissa_bits}E{mode.exponent_bits}X{mode.block_size}",
+        block_size=mode.block_size,
+        clip=clip,
+    )
+    return CompiledBlockFloatingDense(
+        mantissas=mantissas,
+        exponents=exponents,
+        mode=mode,
+        input_fmt=_coerce_q_format(input_fmt),
     )
 
 

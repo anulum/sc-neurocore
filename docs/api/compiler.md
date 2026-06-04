@@ -220,6 +220,7 @@ import numpy as np
 
 from sc_neurocore.compiler.quantizer import (
     QFormatMixed,
+    compile_dense_block_floating,
     compile_dense_mixed_precision,
     dequantize_weights,
     quantize_weights,
@@ -262,6 +263,21 @@ arithmetic shift as the hardware reference.  With per-tensor scaling enabled,
 the host path carries `tensor_scale` in the manifest so deployment code can
 reconstruct compact stored weights without silently changing the physical
 output scale.
+
+Block-floating dense deployment uses shared-exponent weight blocks with
+Q16.16 inputs and outputs:
+
+```python
+compiled_bfp = compile_dense_block_floating(weights, fmt="BFP16E3X32")
+outputs_q1616, overflow = compiled_bfp.forward_with_overflow(inputs)
+outputs = compiled_bfp.forward_float(inputs)
+```
+
+`BFP16E3X32` stores 16-bit signed mantissas and one 3-bit biased exponent per
+32-weight block.  The exponent range is the full encoded biased range: for
+three exponent bits, the unbiased range is `[-3, +4]`.  The Python deployment
+path preserves the shared exponent metadata, saturates final Q16.16 output
+codes, and exposes overflow flags for hardware telemetry parity.
 
 #### Rounding Modes
 
