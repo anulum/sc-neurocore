@@ -36,6 +36,12 @@ MMIOWritePurpose = Literal[
     "commit_update",
     "clear_trap",
 ]
+MMIOReadPurpose = Literal[
+    "read_status",
+    "read_trap_status",
+    "read_active_data_lo",
+    "read_active_data_hi",
+]
 
 _VALID_PROTOCOLS = frozenset({"axi4_lite", "axi_lite", "pcie"})
 UPDATE_CHECKSUM_ALGORITHM = "crc32-ieee-le-4x32"
@@ -67,8 +73,10 @@ CONTROL_REGISTER_OFFSETS: dict[str, int] = {
     "trap_status": 0x18,
     "trap_clear": 0x1C,
     "write_checksum": 0x20,
+    "read_data_lo": 0x24,
+    "read_data_hi": 0x28,
 }
-CONTROL_REGISTER_SPAN_BYTES = 0x24
+CONTROL_REGISTER_SPAN_BYTES = 0x2C
 
 
 def _normalise_bus_protocol(protocol: str) -> BusProtocol:
@@ -100,6 +108,23 @@ class MMIOWrite:
             raise ValueError("width_bits must be one of 8, 16, 32, 64")
         if self.value < 0 or self.value >= (1 << self.width_bits):
             raise ValueError("value does not fit the declared write width")
+
+
+@dataclass(frozen=True)
+class MMIORead:
+    """One deterministic memory-mapped read in a live-control transaction."""
+
+    address_bytes: int
+    width_bits: int
+    purpose: MMIOReadPurpose
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.address_bytes, int) or isinstance(self.address_bytes, bool):
+            raise ValueError("address_bytes must be an integer")
+        if self.address_bytes < 0 or self.address_bytes % 4 != 0:
+            raise ValueError("address_bytes must be non-negative and 4-byte aligned")
+        if self.width_bits not in {8, 16, 32, 64}:
+            raise ValueError("width_bits must be one of 8, 16, 32, 64")
 
 
 @dataclass(frozen=True)
@@ -543,6 +568,33 @@ class MMIOUpdateSpec:
             MMIOWrite(addresses["trap_clear"], self.effective_trap_width, 32, "clear_trap"),
             MMIOWrite(addresses["control"], CONTROL_CLEAR_TRAP, 32, "clear_trap"),
         )
+
+    def build_readback_sequence(
+        self,
+        bank_name: str,
+        parameter: int | str,
+    ) -> tuple[MMIOWrite | MMIORead, ...]:
+        """Build the host-side select/readback sequence for one active entry.
+
+        The generated RTL exposes readback through the control window rather
+        than permitting host code to bypass the staged update protocol with
+        direct parameter-memory reads. Hosts select the bank and entry, then
+        read the active low word and, for entries wider than 32 bits, the high
+        word. Read-only banks are intentionally readable; only writes are
+        blocked by ``build_update_sequence``.
+        """
+        bank = self.bank_by_name(bank_name)
+        bank_select = self.bank_index(bank_name)
+        entry_index = bank.entry_index(parameter)
+        addresses = self.control_register_addresses
+        sequence: list[MMIOWrite | MMIORead] = [
+            MMIOWrite(addresses["bank_select"], bank_select, 32, "select_bank"),
+            MMIOWrite(addresses["entry_index"], entry_index, 32, "select_entry"),
+            MMIORead(addresses["read_data_lo"], 32, "read_active_data_lo"),
+        ]
+        if bank.entry_width_bits > 32:
+            sequence.append(MMIORead(addresses["read_data_hi"], 32, "read_active_data_hi"))
+        return tuple(sequence)
 
     def to_dict(self) -> dict[str, Any]:
         """Serialise contract for manifest persistence."""

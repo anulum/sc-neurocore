@@ -9152,6 +9152,50 @@ PowerEstimate
 
 ---
 
+## Module `compiler.live_control`
+
+### Class `ParameterBankSpec`
+Defines one hot-swappable parameter bank for AXI4-Lite or PCIe MMIO control.
+The bank records the bank name, start address, parameter count, public
+parameter names, precision mode, Q-format or block-floating layout, reset value,
+and write permissions. Fixed-point banks expose deterministic entry widths from
+their Q-format. Block-floating banks expose exponent-plus-mantissa entry widths.
+
+### Class `MMIOWrite`
+Describes a single host-side register write in the live-control transaction
+sequence. The schema validates aligned addresses, bus width, encoded value
+width, and the write purpose so generated drivers can emit deterministic
+selection, data, checksum, shadow-load, commit, rollback, and trap-clear
+operations.
+
+### Class `MMIORead`
+Describes a single host-side register read in the live-control transaction
+sequence. Read purposes are restricted to status, trap status, active low data,
+and active high data. The active-data reads are used after selecting a bank and
+entry to verify the committed parameter value without resynthesizing the
+bitstream.
+
+### Class `MMIOUpdateSpec`
+Defines the complete live-control contract for hot-swapping parameters. The
+spec owns the control register map, status bits, trap bits, CRC32 update guard,
+bus protocol, bank list, and read/write data widths.
+
+### Method `build_update_sequence(bank_name, parameter, encoded_word)`
+Builds the deterministic host write sequence for a staged parameter update:
+select bank, select entry, write low/high data words, write CRC32 checksum, load
+the shadow bank, and apply the shadow bank. The method rejects read-only banks,
+unknown banks, unknown entries, and encoded words outside the bank precision
+width.
+
+### Method `build_readback_sequence(bank_name, parameter)`
+Builds the deterministic host readback sequence for a committed active
+parameter. The sequence writes the bank and entry selectors, reads
+`read_data_lo`, and reads `read_data_hi` only when the selected precision width
+exceeds 32 bits. Readback is allowed for read-only calibration banks because it
+does not mutate shadow or active state.
+
+---
+
 ## Module `compiler_service`
 
 ### Class `LiveUpdateKind`
