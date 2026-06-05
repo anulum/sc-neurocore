@@ -112,8 +112,8 @@ jobs:
         id: scan-image
         shell: bash
         run: |
-          first_tag="$(cat <<'EOF' | head -n 1
-          ${{ steps.meta.outputs.tags }}
+          first_tag="$(cat <<'EOF' | sed '/^[[:space:]]*$/d' | head -n 1
+${{ steps.meta.outputs.tags }}
           EOF
           )"
           test -n "${first_tag}"

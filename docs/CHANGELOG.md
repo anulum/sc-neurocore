@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.9] - 2026-06-05
+
+### Security and release workflows
+- Patched the hub runtime Starlette pin from `1.0.0` to `1.0.1`.
+- Fixed Docker image scanning to scan the selected pushed image reference.
+- Switched the Rust engine Z3 dependency to a static build path so release
+  wheels no longer depend on runner-provided Z3 headers.
+
 ## [3.15.8] - 2026-06-05
 
 ### Documentation and release polish
