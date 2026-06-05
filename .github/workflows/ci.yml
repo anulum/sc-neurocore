@@ -106,7 +106,12 @@ jobs:
       - name: Install HDL simulator
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq iverilog
+          sudo apt-get install -y -qq cvc5 git iverilog make verilator yosys
+          curl -fsSL https://github.com/YosysHQ/sby/archive/0cb15210a857e4d20030484b37a6b9b6386bd01d.tar.gz -o /tmp/sby.tar.gz
+          mkdir -p /tmp/sby
+          tar -xzf /tmp/sby.tar.gz -C /tmp/sby --strip-components=1
+          sudo make -C /tmp/sby install PREFIX=/usr/local
+          sby --version
 
       - name: Install package
         run: python tools/ci_install_dev.py

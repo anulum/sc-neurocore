@@ -2,7 +2,7 @@
 
 **Stochastic computing and neuromorphic hardware co-design toolkit**
 
-**Version 3.15.28** | 174 neuron models | optional Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.15.29** | 174 neuron models | optional Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 SC-NeuroCore helps research and engineering teams build spiking and stochastic neural systems, validate their numerical behaviour, and move selected workflows toward hardware evidence. It is designed for people who need more than a simulator: bounded stochastic arithmetic, reproducible benchmark artefacts, generated RTL, synthesis evidence, and explicit readiness gaps.
 
