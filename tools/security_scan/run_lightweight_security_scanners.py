@@ -154,6 +154,10 @@ def run_lightweight_scanners(
     actionlint = _run(
         [
             "actionlint",
+            "-shellcheck",
+            "",
+            "-pyflakes",
+            "",
             "-format",
             "{{json .}}",
         ],

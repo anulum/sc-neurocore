@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.22] - 2026-06-05
+
+### Security workflows
+- Made the lightweight actionlint scanner deterministic by disabling its
+  external ShellCheck and Pyflakes integrations; those analyzers remain separate
+  CI concerns instead of hidden actionlint dependencies.
+
 ## [3.15.21] - 2026-06-05
 
 ### Security workflows
