@@ -7,10 +7,11 @@ Note: the local Python/Rust precision benchmark rows were captured on a
 workstation under concurrent load and without exclusive CPU core isolation.
 Use them as committed contract/regression evidence only. Production throughput
 claims require a rerun on isolated cores with recorded CPU affinity, host-load,
-governor, and frequency evidence. The 2026-06-05 precision trap/envelope rerun
-and live-control update rerun below are pinned to CPUs `8-9` by process
-affinity and record that affinity in the raw artefacts; they are not
-kernel-reserved isolated-core claims.
+governor, and frequency evidence. The 2026-06-05 block-floating
+exponent-edge rerun, precision trap/envelope rerun, and live-control update
+rerun below are pinned to CPUs `8-9` by process affinity and record that
+affinity in the raw artefacts; they are not kernel-reserved isolated-core
+claims.
 
 | Benchmark | Backend | Iterations | Avg Latency | Throughput |
 |-----------|---------|------------|-------------|------------|
@@ -28,9 +29,10 @@ kernel-reserved isolated-core claims.
 | Mixed dense Q8.8/Q16.16 overflow telemetry (64x32) | Python | 2000 | 28.136 us | safe=0, saturating probe=32 |
 | Mixed dense Q8.8/Q16.16 (64x32) | Rust | 20000 | 2.245 us | safe=0, saturating probe=32, safe_bound=531400 |
 | Mixed dense Q8.8/Q16.16 lane telemetry | HDL/Yosys | N_OUTPUTS=32 | 12,708 cells | `overflow_vector` + `abs_bounds_q1616` registered |
-| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 34.217 us | max abs error 0.2231, safe_bound=610816, block_exponents=64 |
-| Block-floating dense BFP16E3X32/Q16.16 overflow telemetry (64x32) | Python | 2000 | 33.901 us | safe=0, saturating probe=32 |
-| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 11.687 us | safe=0, saturating probe=32, safe_bound=610816, block_exponents=64 |
+| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 39.722 us | max abs error 0.2231, safe_bound=610816, block_exponents=64 |
+| Block-floating dense BFP16E3X32/Q16.16 overflow telemetry (64x32) | Python | 2000 | 40.530 us | safe=0, saturating probe=32 |
+| Block-floating dense BFP16E3X2/Q16.16 exponent-edge parity/trap | Python+Rust | deterministic sweep | contract | safe_codes=[1056736,-1069024], safe=0, max_exponent_trap=1, safe_bound=1069024 |
+| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 10.944 us | safe=0, saturating probe=32, safe_bound=610816, block_exponents=64 |
 | Block-floating dense BFP16E3X32/Q16.16 lane telemetry | HDL/Yosys | 2x2 parameterised report | 96 cells | `overflow_vector` + `abs_bounds_q1616` registered |
 | Precision trap report mixed dense (64x32 overflow/underflow) | Python | 2000 | 44.744 us | overflow_count=32, underflow_probe=32 |
 | Precision trap report mixed dense (64x32 overflow/underflow) | Rust | 20000 | 2.506 us | overflow_count=32, underflow_probe=32 |

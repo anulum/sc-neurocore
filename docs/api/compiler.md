@@ -364,6 +364,11 @@ with `parameter_count`, `block_size`, `exponent_count`, `last_block_size`, and
 the exponent-index formula.  The Python and Rust BFP surfaces reject mismatched
 exponent-vector lengths before accumulation, preventing an emitter from
 silently applying a shared exponent to the wrong parameter block.
+The maintained comparison benchmark also exercises a seeded `BFP16E3X2`
+edge-sweep contract: exponent codes `[0, 7, 0, 7]` must produce exact safe
+Q16.16 codes `[1056736, -1069024]` with zero overflow/underflow, while a
+max-exponent saturating payload must raise one overflow trap and clamp to
+`2147483647` rather than wrapping.
 
 #### Rounding Modes
 

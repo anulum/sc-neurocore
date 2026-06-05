@@ -6,6 +6,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added seeded block-floating exponent-edge parity and trap contracts across
+  the Python quantizer, Rust qformat mirror, and comparison benchmark
+  artefacts: `BFP16E3X2` safe min/max exponent sweeps now match exact Q16.16
+  output codes across languages, while max-exponent saturation records a
+  deterministic overflow trap instead of silent wraparound.
 - Added explicit block-exponent layout metadata for block-floating precision
   across adaptive manifests, mixed-precision specs, Python dense BFP manifests,
   and the Rust qformat mirror, with exponent-count validation before emission

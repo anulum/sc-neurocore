@@ -165,10 +165,10 @@ the HDL datapath.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 34.217 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| Python `CompiledBlockFloatingDense.forward_with_overflow` | Same deterministic matrix/vector | 33.901 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.057 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 11.687 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
+| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 39.722 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Python `CompiledBlockFloatingDense.forward_with_overflow` | Same deterministic matrix/vector | 40.530 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.256 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 10.944 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
 | HDL `sc_block_floating_dense` Yosys RTLIL stat | Parameterised 2×2, `BLOCK_SIZE=2` elaboration copy | 96 cells, 4 multipliers | `hdl/reports/yosys_block_floating_dense_2026-06-04.json` |
 
 The deterministic block-floating workload recorded maximum absolute error
@@ -186,6 +186,15 @@ manifest and Rust artefact.  The HDL exports per-output
 full-size 64×32 block-floating Yosys frontend path is documented as toolchain
 debt because Yosys 0.33 elaborates the default procedural loops during
 `read_verilog` before `chparam` can reduce the dimensions.
+
+The same Python and Rust artefacts now include a seeded `BFP16E3X2` exponent
+edge sweep.  Both languages agree on safe exponent codes `[0, 7, 0, 7]`, safe
+Q16.16 output codes `[1056736, -1069024]`, safe overflow and underflow counts
+`0`, conservative safe bound `1069024`, and headroom `2146414623`.  The
+max-exponent saturation probe records exponent code `[7]`, saturated output
+code `[2147483647]`, overflow count `1`, underflow count `0`, and conservative
+bound `2251662376828928`, proving that max shared-exponent payloads trap
+rather than silently wrapping.
 
 ### Precision Trap Reports (2026-06-04)
 

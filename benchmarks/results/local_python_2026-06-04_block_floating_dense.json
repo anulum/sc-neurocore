@@ -1,7 +1,7 @@
 {
   "benchmark": "block_floating_dense_q16_64x32",
   "language": "Python",
-  "timestamp_utc": "2026-06-05T02:15:09+00:00",
+  "timestamp_utc": "2026-06-05T02:29:11+00:00",
   "command": "taskset -c 8-9 env PYTHONPATH=src .venv/bin/python benchmarks/bench_block_floating_dense.py",
   "python": "3.12.3",
   "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
@@ -14,21 +14,21 @@
       9
     ],
     "load_average_before": [
-      4.7919921875,
-      4.1259765625,
-      3.65673828125
+      3.9443359375,
+      3.56396484375,
+      3.5244140625
     ],
     "load_average_after": [
-      4.7919921875,
-      4.1259765625,
-      3.65673828125
+      4.26953125,
+      3.6376953125,
+      3.548828125
     ],
     "cpu_governor": [
       "powersave"
     ],
     "cpu_frequency_mhz": {
       "min_observed_mhz": 800.0,
-      "max_observed_mhz": 4600.201,
+      "max_observed_mhz": 4600.123,
       "sampled_cpu_count": 12.0
     },
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
@@ -39,15 +39,15 @@
   "n_outputs": 32,
   "iterations": 2000,
   "repeats": 7,
-  "bfp_median_ns_per_call": 34217.4085,
-  "bfp_min_ns_per_call": 29778.1835,
-  "bfp_max_ns_per_call": 37909.2665,
-  "forward_with_overflow_median_ns_per_call": 33901.223,
-  "forward_with_overflow_min_ns_per_call": 28737.8625,
-  "forward_with_overflow_max_ns_per_call": 39033.366,
-  "float_dot_median_ns_per_call": 1057.0695,
-  "float_dot_min_ns_per_call": 1044.7735,
-  "float_dot_max_ns_per_call": 1085.836,
+  "bfp_median_ns_per_call": 39722.0525,
+  "bfp_min_ns_per_call": 36768.217,
+  "bfp_max_ns_per_call": 58193.222,
+  "forward_with_overflow_median_ns_per_call": 40529.854,
+  "forward_with_overflow_min_ns_per_call": 33999.854,
+  "forward_with_overflow_max_ns_per_call": 56410.895,
+  "float_dot_median_ns_per_call": 1256.2145,
+  "float_dot_min_ns_per_call": 1075.6105,
+  "float_dot_max_ns_per_call": 1627.605,
   "max_abs_error_vs_float_dot": 0.22306060791015625,
   "safe_overflow_count": 0,
   "safe_max_abs_bound_code": 610816,
@@ -61,6 +61,35 @@
   "saturating_probe_overflow_count": 32,
   "saturating_probe_max_abs_bound_code": 1125865547104256,
   "saturating_probe_conservative_overflow_free": false,
+  "exponent_edge_sweep": {
+    "format": "BFP16E3X2",
+    "safe_exponent_codes": [
+      0,
+      7,
+      0,
+      7
+    ],
+    "safe_output_codes_q1616": [
+      1056736,
+      -1069024
+    ],
+    "safe_overflow_count": 0,
+    "safe_underflow_count": 0,
+    "safe_max_abs_error_vs_reconstructed_reference": 0.0,
+    "safe_max_abs_bound_q1616": 1069024,
+    "safe_min_headroom_q1616": 2146414623,
+    "safe_conservative_overflow_free": true,
+    "max_exponent_saturating_codes_q1616": [
+      2147483647
+    ],
+    "max_exponent_saturating_exponent_codes": [
+      7
+    ],
+    "max_exponent_saturating_overflow_count": 1,
+    "max_exponent_saturating_underflow_count": 0,
+    "max_exponent_saturating_conservative_overflow_free": false,
+    "max_exponent_saturating_max_abs_bound_q1616": 2251662376828928
+  },
   "compiled_manifest": {
     "operation": "dense_block_floating",
     "input_size": 64,
@@ -92,98 +121,98 @@
   },
   "bfp_results": [
     {
-      "ns_per_call": 30960.7035,
+      "ns_per_call": 57945.5325,
       "checksum": 0
     },
     {
-      "ns_per_call": 35754.209,
+      "ns_per_call": 37819.494,
       "checksum": 0
     },
     {
-      "ns_per_call": 35288.444,
+      "ns_per_call": 58193.222,
       "checksum": 0
     },
     {
-      "ns_per_call": 29778.1835,
+      "ns_per_call": 54665.6745,
       "checksum": 0
     },
     {
-      "ns_per_call": 37909.2665,
+      "ns_per_call": 36768.217,
       "checksum": 0
     },
     {
-      "ns_per_call": 33150.3305,
+      "ns_per_call": 39114.129,
       "checksum": 0
     },
     {
-      "ns_per_call": 34217.4085,
+      "ns_per_call": 39722.0525,
       "checksum": 0
     }
   ],
   "forward_with_overflow_results": [
     {
-      "ns_per_call": 31290.004,
+      "ns_per_call": 33999.854,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 37660.84,
+      "ns_per_call": 45220.7765,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 39033.366,
+      "ns_per_call": 37624.3375,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 28737.8625,
+      "ns_per_call": 39704.3745,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 33901.223,
+      "ns_per_call": 56410.895,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 36650.239,
+      "ns_per_call": 40529.854,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 33546.5975,
+      "ns_per_call": 42723.7605,
       "checksum": 0,
       "overflow_count": 0
     }
   ],
   "float_dot_results": [
     {
-      "ns_per_call": 1066.219,
+      "ns_per_call": 1443.1585,
       "checksum": -215.4693603515625
     },
     {
-      "ns_per_call": 1057.02,
+      "ns_per_call": 1360.391,
       "checksum": -215.4693603515625
     },
     {
-      "ns_per_call": 1080.4355,
+      "ns_per_call": 1256.2145,
       "checksum": -215.4693603515625
     },
     {
-      "ns_per_call": 1085.836,
+      "ns_per_call": 1080.0995,
       "checksum": -215.4693603515625
     },
     {
-      "ns_per_call": 1045.1965,
+      "ns_per_call": 1105.2975,
       "checksum": -215.4693603515625
     },
     {
-      "ns_per_call": 1044.7735,
+      "ns_per_call": 1075.6105,
       "checksum": -215.4693603515625
     },
     {
-      "ns_per_call": 1057.0695,
+      "ns_per_call": 1627.605,
       "checksum": -215.4693603515625
     }
   ]
