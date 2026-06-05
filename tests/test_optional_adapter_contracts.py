@@ -385,9 +385,7 @@ def test_formal_proof_engine_rejects_theorem_inventory_drift(
     assert engine.check_proofs() is False
 
 
-def test_formal_proof_engine_times_out(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_formal_proof_engine_times_out(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     proof_file = tmp_path / "safety_bounds.lean"
     proof_file.write_text(
         "\n".join(

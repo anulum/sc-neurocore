@@ -39,7 +39,9 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import Any
 
+import numpy as np
 
 from sc_neurocore.compiler.quantizer import (
     BlockExponentLayout,
@@ -155,7 +157,7 @@ class BlockFloatingPrecisionConfig:
         del value
         raise NotImplementedError("Block-floating encoding requires per-block exponent metadata.")
 
-    def manifest(self) -> dict[str, bool | float | int | list[int] | str | dict[str, int | str]]:
+    def manifest(self) -> dict[str, object]:
         return self.manifest_for_parameter_count()
 
     def block_exponent_count(self, parameter_count: int) -> int:
@@ -176,10 +178,10 @@ class BlockFloatingPrecisionConfig:
 
     def validate_exponents(
         self,
-        exponents: object,
+        exponents: np.ndarray[Any, Any],
         *,
         parameter_count: int,
-    ) -> object:
+    ) -> np.ndarray[Any, Any]:
         """Validate block exponent count and range before emission."""
         return BlockFloatingMode(
             self.mantissa_bits,
@@ -190,10 +192,12 @@ class BlockFloatingPrecisionConfig:
     def manifest_for_parameter_count(
         self,
         parameter_count: int | None = None,
-    ) -> dict[str, bool | float | int | list[int] | str | dict[str, int | str]]:
+    ) -> dict[str, object]:
         """Return metadata, optionally with a concrete exponent-vector layout."""
-        layout = self.block_exponent_layout(parameter_count) if parameter_count is not None else None
-        payload: dict[str, bool | float | int | list[int] | str | dict[str, int | str]] = {
+        layout = (
+            self.block_exponent_layout(parameter_count) if parameter_count is not None else None
+        )
+        payload: dict[str, object] = {
             "kind": self.kind,
             "label": self.q_label,
             "data_width": self.data_width,
@@ -402,11 +406,12 @@ class MixedPrecisionSpec:
 
         variables: dict[str, object] = {}
         for index, (var, cfg) in enumerate(self.var_configs.items()):
+            variable_manifest: dict[str, object]
             if isinstance(cfg, BlockFloatingPrecisionConfig):
                 parameter_count = None if parameter_counts is None else parameter_counts.get(var)
                 variable_manifest = cfg.manifest_for_parameter_count(parameter_count)
             else:
-                variable_manifest = cfg.manifest()
+                variable_manifest = dict(cfg.manifest())
             variable_manifest.update(
                 {
                     "variable": var,

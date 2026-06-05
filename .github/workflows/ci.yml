@@ -186,6 +186,8 @@ jobs:
           MISSING=$(find src tests engine/src engine/tests engine/benches hdl bridge \
             -type f \( -name "*.py" -o -name "*.rs" -o -name "*.v" \) \
             ! -path "*/__pycache__/*" \
+            ! -path "src/sc_neurocore/accel/mojo/.pixi/*" \
+            ! -path "src/sc_neurocore/hdl_gen/openroad_flow/build/*" \
             -exec grep -rL "SPDX-License-Identifier" {} +) || true
           if [ -n "$MISSING" ]; then
             echo "::error::Files missing SPDX header:"

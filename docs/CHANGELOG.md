@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.18] - 2026-06-05
+
+### CI and source hygiene
+- Scoped the SPDX guard away from vendored Mojo `.pixi` environments and generated OpenROAD build artefacts.
+- Added minimal single-line SPDX markers to real HDL and module-specific test surfaces covered by the guard.
+- Formatted the mixed-precision/live-control surfaces and tightened mixed-precision manifest typing so CI mypy passes without changing runtime contracts.
+
 ## [3.15.17] - 2026-06-05
 
 ### Release workflows

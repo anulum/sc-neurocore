@@ -509,9 +509,7 @@ def test_mmio_selective_trap_clear_sequence_preserves_unselected_faults() -> Non
         trap=TrapSpec(enabled=True, max_flags=8),
     )
 
-    writes = spec.build_selective_trap_clear_sequence(
-        TRAP_STAGED_OVERFLOW | TRAP_PARTIAL_WRITE
-    )
+    writes = spec.build_selective_trap_clear_sequence(TRAP_STAGED_OVERFLOW | TRAP_PARTIAL_WRITE)
 
     assert [write.purpose for write in writes] == ["clear_trap", "clear_trap"]
     assert writes[0].address_bytes == 0x11C

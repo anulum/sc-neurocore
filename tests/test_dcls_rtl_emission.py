@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """DCLS RTL emission and synthesis-elaboration contract."""
 
 from __future__ import annotations

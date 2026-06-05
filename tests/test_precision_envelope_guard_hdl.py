@@ -1,4 +1,4 @@
-
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Module-specific tests for the precision envelope guard RTL contract."""
 
 from pathlib import Path

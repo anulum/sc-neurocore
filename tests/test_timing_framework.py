@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Timing-aware formal property framework workflow contract tests.
 
 This file verifies the NEU-C.2 workflow contract: a bounded timing property is

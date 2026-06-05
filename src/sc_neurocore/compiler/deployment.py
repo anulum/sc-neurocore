@@ -617,8 +617,12 @@ def _gen_c_driver(
             lines.append(f"#define LIVE_BANK_{bank_id} {bank_index}U")
             for parameter in bank.parameter_names:
                 param_id = _driver_identifier(parameter).upper()
-                lines.append(f"#define LIVE_{bank_id}_{param_id}_INDEX {bank.entry_index(parameter)}U")
-                lines.append(f"#define LIVE_{bank_id}_{param_id}_WIDTH_BITS {bank.entry_width_bits}U")
+                lines.append(
+                    f"#define LIVE_{bank_id}_{param_id}_INDEX {bank.entry_index(parameter)}U"
+                )
+                lines.append(
+                    f"#define LIVE_{bank_id}_{param_id}_WIDTH_BITS {bank.entry_width_bits}U"
+                )
 
     lines.extend(
         [

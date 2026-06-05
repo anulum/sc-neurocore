@@ -366,7 +366,9 @@ class TestHostDriverGen:
         """Generated C live-control helpers should compile in a real consumer."""
         cc = shutil.which("cc") or shutil.which("gcc")
         if cc is None:
-            raise AssertionError("a C compiler is required for generated live-control driver checks")
+            raise AssertionError(
+                "a C compiler is required for generated live-control driver checks"
+            )
         spec = MMIOUpdateSpec(
             bus_protocol="axi4_lite",
             control_base_address_bytes=0x100,
@@ -425,7 +427,17 @@ int main(void) {
         )
 
         result = subprocess.run(
-            [cc, "-std=c11", "-Wall", "-Wextra", "-Werror", "-c", str(source_path), "-o", str(object_path)],
+            [
+                cc,
+                "-std=c11",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+                "-c",
+                str(source_path),
+                "-o",
+                str(object_path),
+            ],
             check=False,
             capture_output=True,
             text=True,
