@@ -97,7 +97,8 @@ fn values_json(values: &[f64]) -> String {
 fn main() {
     let load_average_before = load_average();
     let graph = build_graph();
-    let resource_report = SvTarget::zynq_ultrascale_plus(SkuKind::Zu3eg, 250).estimate_graph(&graph);
+    let resource_report =
+        SvTarget::zynq_ultrascale_plus(SkuKind::Zu3eg, 250).estimate_graph(&graph);
     let mut ns_per_emit = Vec::with_capacity(REPEATS);
     let mut checksum = 0_usize;
     let mut dsp_estimated = 0_u32;

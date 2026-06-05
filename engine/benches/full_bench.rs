@@ -427,8 +427,10 @@ fn bench_all(c: &mut Criterion) {
     let bfp_mantissas: Vec<i16> = (0..(64 * 32))
         .map(|i| (((i * 23 + 3) % 1025) as i32 - 512) as i16)
         .collect();
-    let bfp_exponents: Vec<u8> =
-        vec![bfp_mode.exponent_bias() as u8; (64 * 32 + bfp_mode.block_size - 1) / bfp_mode.block_size];
+    let bfp_exponents: Vec<u8> = vec![
+        bfp_mode.exponent_bias() as u8;
+        (64 * 32 + bfp_mode.block_size - 1) / bfp_mode.block_size
+    ];
     c.bench_function("block_floating_dense_q16_64x32", |b| {
         b.iter(|| {
             black_box(

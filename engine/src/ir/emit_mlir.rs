@@ -120,7 +120,12 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                     "  %v{} = hw.instance \"dcls_{}\" @sc_dcls_layer_core<\
                      N_TAPS: i32 = {}, DATA_WIDTH: i32 = {}, FRACTION: i32 = {}>(\
                      clk: %clk: i1, rst_n: %rst_n: i1) -> (weighted_sum_q88: i{})\n",
-                    id.0, id.0, params.n_taps, params.data_width, params.fraction, params.data_width
+                    id.0,
+                    id.0,
+                    params.n_taps,
+                    params.data_width,
+                    params.fraction,
+                    params.data_width
                 ));
                 last_output = format!("%v{}", id.0);
             }

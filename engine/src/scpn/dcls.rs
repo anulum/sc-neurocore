@@ -124,11 +124,7 @@ impl DclsLayerConfig {
 }
 
 /// Return the Q8.8 triangular tent gate for a tap delay index.
-pub fn tent_gate_q88(
-    tap_index: usize,
-    centre_q88: i16,
-    sigma_q88: i16,
-) -> Result<i16, DclsError> {
+pub fn tent_gate_q88(tap_index: usize, centre_q88: i16, sigma_q88: i16) -> Result<i16, DclsError> {
     if sigma_q88 <= 0 {
         return Err(DclsError::InvalidSigma { sigma_q88 });
     }

@@ -11,10 +11,17 @@ use core_affinity;
 use crossbeam_channel::{bounded, Receiver, Sender, TrySendError};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
-use std::sync::{atomic::{AtomicBool, Ordering}, Arc};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 use std::thread;
 use std::time::Duration;
-use z3::{ast::{Ast, Bool, Int}, Config, Context, SatResult, Solver};
+use std::{error::Error, fmt};
+use z3::{
+    ast::{Ast, Bool, Int},
+    Config, Context, SatResult, Solver,
+};
 
 const NUM_PLACES: usize = 4;
 const NUM_TRANSITIONS: usize = 3;
@@ -25,17 +32,9 @@ const DEFAULT_SNAPSHOT_PERIOD: u64 = 30;
 const DEFAULT_STEP_INTERVAL_NS: u64 = 0;
 
 // Transition structure for the transfer net used by the verifier.
-const W_IN: [[i64; NUM_PLACES]; NUM_TRANSITIONS] = [
-    [1, 0, 0, 0],
-    [0, 1, 0, 0],
-    [0, 0, 1, 0],
-];
+const W_IN: [[i64; NUM_PLACES]; NUM_TRANSITIONS] = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]];
 
-const W_OUT: [[i64; NUM_PLACES]; NUM_TRANSITIONS] = [
-    [0, 1, 0, 0],
-    [0, 0, 1, 1],
-    [1, 0, 0, 0],
-];
+const W_OUT: [[i64; NUM_PLACES]; NUM_TRANSITIONS] = [[0, 1, 0, 0], [0, 0, 1, 1], [1, 0, 0, 0]];
 
 /// Snapshot transferred from the RT loop to the Z3 worker.
 #[derive(Clone, Debug)]
@@ -51,6 +50,23 @@ pub struct SupervisorState {
     pub safe_shutdown_flag: Arc<AtomicBool>,
     pub tx_snapshot: Sender<PetriNetSnapshot>,
 }
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SupervisorExecutionError {
+    InvalidNeuronCount,
+    SafetyViolation,
+}
+
+impl fmt::Display for SupervisorExecutionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidNeuronCount => f.write_str("n_neurons must be > 0"),
+            Self::SafetyViolation => f.write_str("safety contract violation detected"),
+        }
+    }
+}
+
+impl Error for SupervisorExecutionError {}
 
 #[derive(Debug)]
 struct LightweightSnnPool {
@@ -86,8 +102,7 @@ impl LightweightSnnPool {
         for (idx, mark) in self.markings.iter_mut().enumerate() {
             let local = ((drift + idx as i64) as f64) / 10.0;
             *mark = (*mark + drift)
-                .max(0)
-                .min(200)
+                .clamp(0, 200)
                 .saturating_add((self.n_neurons as i64) % 2);
             self.transition_rates[idx % NUM_TRANSITIONS] = local.abs();
         }
@@ -100,11 +115,11 @@ impl LightweightSnnPool {
 
     fn snapshot(&self, snapshot_step: u64, control_output: f64) -> PetriNetSnapshot {
         let mut transition_rates = self.transition_rates.to_vec();
-        transition_rates.extend([control_output].repeat(1));
+        transition_rates.push(control_output);
 
         PetriNetSnapshot {
             step_index: snapshot_step,
-            active_markings: self.markings.iter().map(|&value| value).collect(),
+            active_markings: self.markings.to_vec(),
             transition_rates,
         }
     }
@@ -132,10 +147,7 @@ pub fn verify_bounds_at_depth(snapshot: &PetriNetSnapshot, depth: usize) -> bool
             if step == 0 {
                 step_markings.push(Int::from_i64(&context, initial));
             } else {
-                step_markings.push(Int::new_const(
-                    &context,
-                    format!("mark_{step}_{place}"),
-                ));
+                step_markings.push(Int::new_const(&context, format!("mark_{step}_{place}")));
             }
         }
         markings.push(step_markings);
@@ -261,7 +273,76 @@ fn execute_snn_control_loop(
     executed_steps
 }
 
-#[pyclass(name = "PySpikingControllerPool", module = "sc_neurocore_engine.sc_neurocore_engine")]
+fn run_supervisor_steps_with_flag(
+    n_neurons: usize,
+    seed: u64,
+    snapshot_period: u64,
+    step_interval_ns: u64,
+    core_snn: usize,
+    core_z3: usize,
+    max_steps: u64,
+    safe_shutdown_flag: Arc<AtomicBool>,
+) -> Result<u64, SupervisorExecutionError> {
+    if n_neurons == 0 {
+        return Err(SupervisorExecutionError::InvalidNeuronCount);
+    }
+
+    safe_shutdown_flag.store(false, Ordering::Release);
+
+    let (tx_snapshot, rx_snapshot) = bounded::<PetriNetSnapshot>(DEFAULT_SNAPSHOT_CAPACITY);
+    let z3_handle = spawn_z3_verification_worker(rx_snapshot, safe_shutdown_flag.clone(), core_z3);
+
+    let pool = LightweightSnnPool::new(n_neurons, seed);
+    let executed = {
+        let supervisor = SupervisorState {
+            safe_shutdown_flag: safe_shutdown_flag.clone(),
+            tx_snapshot,
+        };
+        execute_snn_control_loop(
+            pool,
+            &supervisor,
+            snapshot_period,
+            core_snn,
+            max_steps,
+            step_interval_ns,
+        )
+    };
+
+    // All snapshot senders are dropped here so the Z3 worker can observe EOF.
+    let _ = z3_handle.join();
+
+    if safe_shutdown_flag.load(Ordering::Acquire) {
+        return Err(SupervisorExecutionError::SafetyViolation);
+    }
+
+    Ok(executed)
+}
+
+pub fn run_supervisor_steps(
+    n_neurons: usize,
+    seed: u64,
+    snapshot_period: u64,
+    step_interval_ns: u64,
+    core_snn: usize,
+    core_z3: usize,
+    max_steps: u64,
+) -> Result<u64, SupervisorExecutionError> {
+    run_supervisor_steps_with_flag(
+        n_neurons,
+        seed,
+        snapshot_period,
+        step_interval_ns,
+        core_snn,
+        core_z3,
+        max_steps,
+        Arc::new(AtomicBool::new(false)),
+    )
+}
+
+#[pyclass(
+    name = "PySpikingControllerPool",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 pub struct PySpikingControllerPool {
     n_neurons: usize,
     seed: u64,
@@ -300,39 +381,24 @@ impl PySpikingControllerPool {
     /// * `max_steps`: Hard runtime limit (0 for no hard limit).
     #[pyo3(signature = (core_snn=1, core_z3=2, max_steps=0))]
     fn start(&self, core_snn: usize, core_z3: usize, max_steps: usize) -> PyResult<usize> {
-        self.safe_shutdown_flag.store(false, Ordering::Release);
-
-        let (tx_snapshot, rx_snapshot) = bounded::<PetriNetSnapshot>(DEFAULT_SNAPSHOT_CAPACITY);
-        let supervisor = SupervisorState {
-            safe_shutdown_flag: self.safe_shutdown_flag.clone(),
-            tx_snapshot,
-        };
-
-        let z3_handle = spawn_z3_verification_worker(
-            rx_snapshot,
-            supervisor.safe_shutdown_flag.clone(),
-            core_z3,
-        );
-
-        let pool = LightweightSnnPool::new(self.n_neurons, self.seed);
-        let executed = execute_snn_control_loop(
-            pool,
-            &supervisor,
+        match run_supervisor_steps_with_flag(
+            self.n_neurons,
+            self.seed,
             self.snapshot_period,
-            core_snn,
-            max_steps as u64,
             self.step_interval_ns,
-        );
-
-        let _ = z3_handle.join();
-
-        if self.safe_shutdown_flag.load(Ordering::Acquire) {
-            return Err(PyRuntimeError::new_err(
+            core_snn,
+            core_z3,
+            max_steps as u64,
+            self.safe_shutdown_flag.clone(),
+        ) {
+            Ok(executed) => Ok(executed as usize),
+            Err(SupervisorExecutionError::SafetyViolation) => Err(PyRuntimeError::new_err(
                 "Hardware execution terminated: safety contract violation detected by Z3 worker.",
-            ));
+            )),
+            Err(SupervisorExecutionError::InvalidNeuronCount) => Err(PyRuntimeError::new_err(
+                SupervisorExecutionError::InvalidNeuronCount.to_string(),
+            )),
         }
-
-        Ok(executed as usize)
     }
 
     fn is_safety_tripped(&self) -> bool {
