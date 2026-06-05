@@ -55,6 +55,8 @@ jobs:
 
       - name: Install lightweight scanner tools
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
           python -m pip install --require-hashes -r requirements/security-scanners.txt
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
