@@ -108,20 +108,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Select scanned image tag
-        id: scan-image
-        shell: bash
-        env:
-          METADATA_VERSION: ${{ steps.meta.outputs.version }}
-        run: |
-          test -n "${METADATA_VERSION}"
-          first_tag="${REGISTRY}/${IMAGE_NAME}:${METADATA_VERSION}"
-          echo "image=${first_tag}" >> "${GITHUB_OUTPUT}"
-
       - name: Trivy fail on CRITICAL/HIGH
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # master
         with:
-          image-ref: ${{ steps.scan-image.outputs.image }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
           format: table
           exit-code: "1"
           ignore-unfixed: true
@@ -131,7 +121,7 @@ jobs:
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # master
         if: always()
         with:
-          image-ref: ${{ steps.scan-image.outputs.image }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
           format: sarif
           output: trivy-results.sarif
           ignore-unfixed: true
