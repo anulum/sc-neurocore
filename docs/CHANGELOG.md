@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.25] - 2026-06-05
+
+### CI and release workflows
+- Moved the macOS static-Z3 C++ parser configuration before the v3-engine
+  maturin dependency build so Apple Clang uses delayed template parsing during
+  the actual engine install step.
+
 ## [3.15.24] - 2026-06-05
 
 ### CI and release hygiene
