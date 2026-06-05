@@ -325,12 +325,16 @@ output scale.
 `precision_trap_report` packages the same saturated output codes and overflow
 mask into deterministic telemetry for host validation and HDL trap registers.
 The report manifest includes `output_format`, `output_count`,
-`overflow_count`, `saturated_min_count`, `saturated_max_count`, and
-`has_overflow`.
+`overflow_count`, `underflow_count`, `saturated_min_count`,
+`saturated_max_count`, `has_overflow`, and `has_underflow`.  Overflow means the
+realised output saturated at the configured Q-format bound.  Underflow means a
+nonzero fixed-point product or BFP output collapsed below one output-code LSB
+and therefore produced a zero code that remains visible to safety review.
 
 `precision_envelope_report` adds conservative predeployment range evidence.  It
-returns realised output codes, realised overflow flags, per-output absolute
-bound codes, and a manifest containing `observed_overflow_free`,
+returns realised output codes, realised overflow and underflow flags,
+per-output absolute bound codes, and a manifest containing
+`observed_overflow_free`, `observed_underflow_free`,
 `conservative_overflow_free`, `max_abs_output_code`, `max_abs_bound_code`, and
 `min_headroom_code`.
 
@@ -349,7 +353,8 @@ envelope_report = compiled_bfp.precision_envelope_report(inputs)
 32-weight block.  The exponent range is the full encoded biased range: for
 three exponent bits, the unbiased range is `[-3, +4]`.  The Python deployment
 path preserves the shared exponent metadata, saturates final Q16.16 output
-codes, and exposes overflow flags for hardware telemetry parity.
+codes, and exposes overflow and sub-LSB underflow flags for hardware telemetry
+parity.
 Compiler manifests record the exact exponent bias (`3` for `BFP16E3X32`),
 encoded exponent range `[0, 7]`, maximum signed mantissa magnitude `32767`,
 minimum quantum `0.125`, maximum absolute value `524272.0`, and the contiguous

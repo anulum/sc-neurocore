@@ -194,16 +194,19 @@ rather than only a collapsed Boolean.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python mixed `precision_trap_report` | 64×32 dense, 2,000 calls × 7 repeats | 52.810 µs/call | `benchmarks/results/local_python_2026-06-04_precision_traps.json` |
-| Python BFP `precision_trap_report` | 64×32 dense, 2,000 calls × 7 repeats | 50.173 µs/call | `benchmarks/results/local_python_2026-06-04_precision_traps.json` |
-| Rust mixed `PrecisionTrapReport` | 64×32 dense, 20,000 calls × 7 repeats | 2.325 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_traps.json` |
-| Rust BFP `PrecisionTrapReport` | 64×32 dense, 20,000 calls × 7 repeats | 8.669 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_traps.json` |
+| Python mixed `precision_trap_report` | 64×32 dense, 2,000 calls × 7 repeats | 44.744 µs/call | `benchmarks/results/local_python_2026-06-04_precision_traps.json` |
+| Python BFP `precision_trap_report` | 64×32 dense, 2,000 calls × 7 repeats | 45.906 µs/call | `benchmarks/results/local_python_2026-06-04_precision_traps.json` |
+| Rust mixed `PrecisionTrapReport` | 64×32 dense, 20,000 calls × 7 repeats | 2.506 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_traps.json` |
+| Rust BFP `PrecisionTrapReport` | 64×32 dense, 20,000 calls × 7 repeats | 8.777 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_traps.json` |
 | HDL `sc_precision_overflow_trap` Yosys stat | Default `TRAP_WIDTH=1` | 3 cells, 8 wire bits | `hdl/reports/yosys_precision_overflow_trap_2026-06-04.json` |
 
 The committed Python and Rust trap workloads both report
 `mixed_overflow_count=32` and `bfp_overflow_count=32`, matching the number of
 output channels.  The HDL trap primitive synthesises to one `$adff`, one
 `$mux`, and one `$or` cell at the default width.
+The 2026-06-05 rerun also records matched sub-LSB underflow probes:
+`mixed_underflow_count=32` and `bfp_underflow_count=32` in both Python and
+Rust, while the saturating overflow workloads retain `underflow_count=0`.
 
 ### Precision Envelope Reports (2026-06-04)
 
@@ -215,16 +218,19 @@ workload.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python mixed `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 82.388 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
-| Python BFP `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 79.117 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
-| Rust mixed `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 2.322 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
-| Rust BFP `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 8.748 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
+| Python mixed `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 92.835 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
+| Python BFP `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 95.808 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
+| Rust mixed `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 2.338 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
+| Rust BFP `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 8.668 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
 | HDL `sc_precision_envelope_guard` Yosys stat | Default `N_OUTPUTS=32` | 67 cells, 1,701 wire bits | `hdl/reports/yosys_precision_envelope_guard_2026-06-04.json` |
 
 Both Python and Rust envelope reports returned
 `conservative_overflow_free=true` for the committed safe workload.  The HDL
 guard synthesises to two `$adff`, thirty-two `$gt`, thirty-two `$mux`, and one
 `$reduce_or` cell at the default width.
+The raw artefacts now include `observed_underflow_free=true` for the safe
+workload and matched underflow probes with `underflow_count=32` for mixed and
+BFP dense paths in both Python and Rust.
 
 ---
 

@@ -3,13 +3,14 @@
 Generated on: 2026-03-07 00:40:28
 Backend: NumPy (CPU only)
 
-Note: the 2026-06-04 local Python/Rust precision benchmark rows were captured on
-a workstation under concurrent load and without exclusive CPU core isolation.
+Note: the local Python/Rust precision benchmark rows were captured on a
+workstation under concurrent load and without exclusive CPU core isolation.
 Use them as committed contract/regression evidence only. Production throughput
 claims require a rerun on isolated cores with recorded CPU affinity, host-load,
-governor, and frequency evidence. The live-control update rerun below is pinned
-to CPUs `8-9` by process affinity and records that affinity in the raw artefact;
-it is not a kernel-reserved isolated-core claim.
+governor, and frequency evidence. The 2026-06-05 precision trap/envelope rerun
+and live-control update rerun below are pinned to CPUs `8-9` by process
+affinity and record that affinity in the raw artefacts; they are not
+kernel-reserved isolated-core claims.
 
 | Benchmark | Backend | Iterations | Avg Latency | Throughput |
 |-----------|---------|------------|-------------|------------|
@@ -31,15 +32,15 @@ it is not a kernel-reserved isolated-core claim.
 | Block-floating dense BFP16E3X32/Q16.16 overflow telemetry (64x32) | Python | 2000 | 30.326 us | safe=0, saturating probe=32 |
 | Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 10.056 us | safe=0, saturating probe=32, safe_bound=610816 |
 | Block-floating dense BFP16E3X32/Q16.16 lane telemetry | HDL/Yosys | 2x2 parameterised report | 96 cells | `overflow_vector` + `abs_bounds_q1616` registered |
-| Precision trap report mixed dense (64x32 overflow) | Python | 2000 | 52.810 us | overflow_count=32 |
-| Precision trap report mixed dense (64x32 overflow) | Rust | 20000 | 2.325 us | overflow_count=32 |
-| Precision trap report block-floating dense (64x32 overflow) | Python | 2000 | 50.173 us | overflow_count=32 |
-| Precision trap report block-floating dense (64x32 overflow) | Rust | 20000 | 8.669 us | overflow_count=32 |
+| Precision trap report mixed dense (64x32 overflow/underflow) | Python | 2000 | 44.744 us | overflow_count=32, underflow_probe=32 |
+| Precision trap report mixed dense (64x32 overflow/underflow) | Rust | 20000 | 2.506 us | overflow_count=32, underflow_probe=32 |
+| Precision trap report block-floating dense (64x32 overflow/underflow) | Python | 2000 | 45.906 us | overflow_count=32, underflow_probe=32 |
+| Precision trap report block-floating dense (64x32 overflow/underflow) | Rust | 20000 | 8.777 us | overflow_count=32, underflow_probe=32 |
 | Precision overflow trap latch | HDL/Yosys | TRAP_WIDTH=1 | 3 cells | `$adff`+`$mux`+`$or` |
-| Precision envelope report mixed dense (64x32 safe) | Python | 2000 | 82.388 us | max_abs_bound=132850 |
-| Precision envelope report mixed dense (64x32 safe) | Rust | 20000 | 2.322 us | max_abs_bound=132850 |
-| Precision envelope report block-floating dense (64x32 safe) | Python | 2000 | 79.117 us | max_abs_bound=78032768 |
-| Precision envelope report block-floating dense (64x32 safe) | Rust | 20000 | 8.748 us | max_abs_bound=78032768 |
+| Precision envelope report mixed dense (64x32 safe/underflow) | Python | 2000 | 92.835 us | max_abs_bound=132850, underflow_probe=32 |
+| Precision envelope report mixed dense (64x32 safe/underflow) | Rust | 20000 | 2.338 us | max_abs_bound=132850, underflow_probe=32 |
+| Precision envelope report block-floating dense (64x32 safe/underflow) | Python | 2000 | 95.808 us | max_abs_bound=78032768, underflow_probe=32 |
+| Precision envelope report block-floating dense (64x32 safe/underflow) | Rust | 20000 | 8.668 us | max_abs_bound=78032768, underflow_probe=32 |
 | Precision envelope guard | HDL/Yosys | N_OUTPUTS=32 | 67 cells | `$adff`+`$gt`+`$mux`+`$reduce_or` |
 | Live-control parameter update sequence | Python+SystemVerilog | 20000 | 13.822 us AXI4-Lite; 13.589 us PCIe-MMIO | process affinity `8-9`, CRC32 update guard, checksum-mismatch, invalid-selection, read-only-bank, and partial-write traps, AXI trap simulation passed, PCIe commit simulation passed |
 | AER strict-priority queue backpressure | Python+SystemVerilog | 4096 events x 100 repeats | 4.138 us/event | runtime cpuset shield 10-11, priority=0 violations, FIFO=0 violations, drop/deadline traps latched |

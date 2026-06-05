@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added sub-LSB underflow telemetry to mixed Q8.8/Q16.16 and block-floating
+  dense precision trap/envelope reports across Python and Rust, with refreshed
+  process-affinity benchmark artefacts documenting matched overflow and
+  underflow probes.
 - Added sticky live-control partial-write traps so generated AXI4-Lite/PCIe
   parameter banks reject partial `WSTRB` updates before control or staged-data
   registers can be modified.
