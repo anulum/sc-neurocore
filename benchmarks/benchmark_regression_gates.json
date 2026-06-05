@@ -65,8 +65,10 @@
         "measurement_context.benchmark_affinity_matches_requested": true,
         "measurement_context.runtime_cpuset_shield_claimed": true,
         "pcie_mmio_commit_capture.checksum_mismatch_rejected": true,
+        "pcie_mmio_commit_capture.invalid_selection_rejected": true,
         "pcie_mmio_commit_capture.passed": true,
         "trap_bits.checksum_mismatch": 4,
+        "trap_bits.invalid_selection": 8,
         "trap_bits.staged_overflow": 1,
         "trap_bits.staged_underflow": 2,
         "trap_capture.passed": true

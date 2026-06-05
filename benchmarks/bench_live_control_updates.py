@@ -24,6 +24,7 @@ from sc_neurocore.compiler.live_control import (
     MMIOUpdateSpec,
     ParameterBankSpec,
     TRAP_CHECKSUM_MISMATCH,
+    TRAP_INVALID_SELECTION,
     TRAP_STAGED_OVERFLOW,
     TRAP_STAGED_UNDERFLOW,
     TrapSpec,
@@ -183,9 +184,9 @@ module tb_sc_live_params;
     wire [1:0] rresp;
     wire rvalid;
     reg rready = 1'b0;
-    reg [2:0] external_trap_vector = 3'b000;
+    reg [3:0] external_trap_vector = 4'b000;
     wire trap_latched;
-    wire [2:0] trap_status_vector;
+    wire [3:0] trap_status_vector;
     wire staged_overflow;
     wire staged_underflow;
     wire update_pulse;
@@ -193,6 +194,7 @@ module tb_sc_live_params;
     wire rollback_pulse;
     wire trap_clear_pulse;
     wire checksum_mismatch_pulse;
+    wire invalid_selection_pulse;
     wire shadow_loaded;
     wire [2047:0] parameter_words;
 
@@ -228,6 +230,7 @@ module tb_sc_live_params;
         .rollback_pulse(rollback_pulse),
         .trap_clear_pulse(trap_clear_pulse),
         .checksum_mismatch_pulse(checksum_mismatch_pulse),
+        .invalid_selection_pulse(invalid_selection_pulse),
         .shadow_loaded(shadow_loaded),
         .parameter_words(parameter_words)
     );
@@ -271,7 +274,7 @@ module tb_sc_live_params;
 
         axi_write(32'h11C, 32'h00000003);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 3'b000) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 4'b0000) begin
             $finish(3);
         end
 
@@ -352,17 +355,19 @@ module tb_sc_live_pcie_params;
     wire [31:0] read_data;
     wire read_data_valid;
     wire read_error;
-    reg [2:0] external_trap_vector = 3'b000;
+    reg [3:0] external_trap_vector = 4'b000;
     wire trap_latched;
-    wire [2:0] trap_status_vector;
+    wire [3:0] trap_status_vector;
     wire staged_overflow;
     wire staged_underflow;
     reg observed_checksum_mismatch = 1'b0;
+    reg observed_invalid_selection = 1'b0;
     wire update_pulse;
     wire apply_pulse;
     wire rollback_pulse;
     wire trap_clear_pulse;
     wire checksum_mismatch_pulse;
+    wire invalid_selection_pulse;
     wire shadow_loaded;
     wire [2047:0] parameter_words;
 
@@ -370,6 +375,9 @@ module tb_sc_live_pcie_params;
     always @(posedge clk) begin
         if (checksum_mismatch_pulse) begin
             observed_checksum_mismatch <= 1'b1;
+        end
+        if (invalid_selection_pulse) begin
+            observed_invalid_selection <= 1'b1;
         end
     end
 
@@ -399,6 +407,7 @@ module tb_sc_live_pcie_params;
         .rollback_pulse(rollback_pulse),
         .trap_clear_pulse(trap_clear_pulse),
         .checksum_mismatch_pulse(checksum_mismatch_pulse),
+        .invalid_selection_pulse(invalid_selection_pulse),
         .shadow_loaded(shadow_loaded),
         .parameter_words(parameter_words)
     );
@@ -439,12 +448,32 @@ module tb_sc_live_pcie_params;
             $finish(6);
         end
 
-        pcie_write(32'h11C, 32'h00000007);
+        pcie_write(32'h11C, 32'h0000000F);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 3'b000) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 4'b0000) begin
             $finish(7);
         end
 
+        pcie_write(32'h108, 32'd2);
+        pcie_write(32'h10C, 32'd0);
+        pcie_write(32'h120, 32'h9ADDBE56);
+        pcie_write(32'h100, 32'h00000001);
+        repeat (2) @(negedge clk);
+        if (shadow_loaded !== 1'b0 || parameter_words[15:0] !== 16'h0000) begin
+            $finish(8);
+        end
+        if (trap_latched !== 1'b1 || trap_status_vector[3] !== 1'b1 || observed_invalid_selection !== 1'b1) begin
+            $finish(9);
+        end
+
+        pcie_write(32'h11C, 32'h0000000F);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b0 || trap_status_vector !== 4'b0000) begin
+            $finish(10);
+        end
+
+        pcie_write(32'h108, 32'd0);
+        pcie_write(32'h10C, 32'd0);
         pcie_write(32'h120, 32'h1D7D9B35);
         pcie_write(32'h100, 32'h00000001);
         repeat (2) @(negedge clk);
@@ -457,7 +486,7 @@ module tb_sc_live_pcie_params;
         if (parameter_words[15:0] !== 16'h1234 || shadow_loaded !== 1'b0) begin
             $finish(3);
         end
-        if (trap_latched !== 1'b0 || trap_status_vector !== 3'b000 || staged_overflow !== 1'b0 || staged_underflow !== 1'b0) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 4'b0000 || staged_overflow !== 1'b0 || staged_underflow !== 1'b0) begin
             $finish(4);
         end
 
@@ -502,6 +531,8 @@ endmodule
         "simulation_ns": end_ns - compile_done_ns,
         "checksum_mismatch_rejected": True,
         "checksum_mismatch_trap_bit": TRAP_CHECKSUM_MISMATCH,
+        "invalid_selection_rejected": True,
+        "invalid_selection_trap_bit": TRAP_INVALID_SELECTION,
         "passed": True,
     }
 
@@ -554,6 +585,7 @@ def main() -> int:
             "staged_overflow": TRAP_STAGED_OVERFLOW,
             "staged_underflow": TRAP_STAGED_UNDERFLOW,
             "checksum_mismatch": TRAP_CHECKSUM_MISMATCH,
+            "invalid_selection": TRAP_INVALID_SELECTION,
         },
         "valid_update_write_count": len(spec.build_update_sequence("weights", 0, 0x1234)),
         "live_update_sequence_median_ns": statistics.median(update_ns),

@@ -169,8 +169,10 @@ addresses, staged low/high write-data registers, CRC32-guarded shadow loads,
 explicit apply and rollback pulses, checksum-mismatch pulses, flattened
 active-only `parameter_words` output, and host-visible trap clear/status
 signals. It also derives sticky staged-overflow, staged-underflow, and
-CRC32-mismatch traps before shadow loading, so malformed MMIO payloads cannot
-truncate into active coefficients or bypass the update guard. This lets a
+CRC32-mismatch traps before shadow loading, and latches invalid bank/entry
+selection as trap bit `0x8`, so malformed MMIO payloads cannot truncate into
+active coefficients, bypass the update guard, or masquerade as a loaded shadow
+update. This lets a
 deployed design hot-swap weights or phase-coupling
 coefficients while keeping the precision and trap contracts auditable.
 The local regression artefact
