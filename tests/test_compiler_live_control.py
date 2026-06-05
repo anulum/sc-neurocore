@@ -26,6 +26,7 @@ from sc_neurocore.compiler.live_control import (
     STATUS_TRAP_LATCHED,
     STATUS_UPDATE_ACK,
     TRAP_CHECKSUM_MISMATCH,
+    TRAP_INVALID_SELECTION,
     TRAP_STAGED_OVERFLOW,
     TRAP_STAGED_UNDERFLOW,
     TrapSpec,
@@ -170,6 +171,7 @@ def test_mmio_update_serialization_roundtrip() -> None:
     assert payload["trap_bits"]["staged_overflow"] == TRAP_STAGED_OVERFLOW
     assert payload["trap_bits"]["staged_underflow"] == TRAP_STAGED_UNDERFLOW
     assert payload["trap_bits"]["checksum_mismatch"] == TRAP_CHECKSUM_MISMATCH
+    assert payload["trap_bits"]["invalid_selection"] == TRAP_INVALID_SELECTION
     assert payload["effective_trap_width"] == 4
 
 
@@ -374,5 +376,5 @@ def test_mmio_trap_clear_sequence_requires_enabled_traps() -> None:
         control_base_address_bytes=0x100,
         trap=TrapSpec(enabled=True, max_flags=1),
     )
-    assert narrow.effective_trap_width == 3
-    assert narrow.build_trap_clear_sequence()[0].value == 3
+    assert narrow.effective_trap_width == 4
+    assert narrow.build_trap_clear_sequence()[0].value == 4

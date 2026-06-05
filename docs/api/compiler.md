@@ -290,19 +290,21 @@ resynthesising the bitstream.
 
 The status map exposes `ready`, `busy`, `update_ack`, `trap_latched`,
 `shadow_loaded`, `applied`, `rollback_ack`, `checksum_valid`, and sticky
-`checksum_mismatch` trap bits. Generated
+`checksum_mismatch`/`invalid_selection` trap bits. Generated
 parameter-bank RTL reserves deterministic trap lanes for staged overflow,
-staged underflow, and checksum mismatch before shadow loading: if a host payload
-cannot be represented as either a zero-extended raw word or a valid signed
-extension for the selected bank width, or if the CRC32 guard does not match the
-staged payload, the trap vector latches and the shadow bank is not modified.
+staged underflow, checksum mismatch, and invalid bank/entry selection before
+shadow loading: if a host payload cannot be represented as either a
+zero-extended raw word or a valid signed extension for the selected bank width,
+if the CRC32 guard does not match the staged payload, or if the selected
+bank/index pair is not writable, the trap vector latches and the shadow bank is
+not modified.
 Trap clearing is a separate two-write sequence that records the intended flag
 width before asserting the clear command, preserving deterministic host
 intervention semantics.
 `sc_neurocore.hdl_gen.bus_interface.generate_live_parameter_bank(...)` consumes
 the same manifest and emits the corresponding AXI4-Lite parameter-bank RTL with
-active/shadow memories, checksum-gated shadow loading, generated staged-range
-and CRC32-mismatch traps, explicit apply, rollback, and active-only
+active/shadow memories, checksum-gated shadow loading, generated staged-range,
+CRC32-mismatch, and invalid-selection traps, explicit apply, rollback, and active-only
 `parameter_words`, so the Python control schema and hardware register map
 remain one contract.
 

@@ -6,6 +6,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added sticky live-control invalid-selection traps so generated AXI4-Lite/PCIe
+  parameter banks reject non-existent bank/entry writes without raising a false
+  shadow-loaded acknowledgement.
 - Added sticky CRC32 checksum-mismatch traps and a testbench-visible mismatch
   pulse to the generated AXI4-Lite/PCIe live-control parameter-bank surfaces,
   with module-specific simulation tests and refreshed benchmark-gate evidence.
