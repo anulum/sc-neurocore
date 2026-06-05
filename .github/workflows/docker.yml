@@ -111,9 +111,11 @@ jobs:
       - name: Select scanned image tag
         id: scan-image
         shell: bash
+        env:
+          METADATA_VERSION: ${{ steps.meta.outputs.version }}
         run: |
-          first_tag="$(printf '%s\n' '${{ steps.meta.outputs.tags }}' | sed '/^[[:space:]]*$/d' | head -n 1)"
-          test -n "${first_tag}"
+          test -n "${METADATA_VERSION}"
+          first_tag="${REGISTRY}/${IMAGE_NAME}:${METADATA_VERSION}"
           echo "image=${first_tag}" >> "${GITHUB_OUTPUT}"
 
       - name: Trivy fail on CRITICAL/HIGH
