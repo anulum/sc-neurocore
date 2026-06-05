@@ -108,6 +108,20 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Wait for GHCR image availability
+        shell: bash
+        env:
+          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+        run: |
+          test -n "${IMAGE_REF}"
+          for attempt in {1..12}; do
+            if docker pull "${IMAGE_REF}"; then
+              exit 0
+            fi
+            sleep 10
+          done
+          docker pull "${IMAGE_REF}"
+
       - name: Trivy fail on CRITICAL/HIGH
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # master
         with:
