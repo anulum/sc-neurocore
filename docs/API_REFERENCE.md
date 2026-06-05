@@ -5441,7 +5441,8 @@ Generate C MMIO driver header.
 The C live-control helpers mirror the Python sequence: split the encoded word,
 write low and high staging registers, compute IEEE CRC32 over bank, entry, low,
 and high words, commit, trap-check status, then read back committed active
-state for verification.
+state for verification. The generated header is covered by a C11 consumer
+compile check that calls the update/readback verification helper.
 
 ### Function `generate_cocotb_testbench(module_name)`
 Generate a Cocotb (Python) testbench for a compiled neuron.
