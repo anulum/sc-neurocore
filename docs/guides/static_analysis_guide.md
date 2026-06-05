@@ -182,7 +182,9 @@ assert probe.width_headroom_bits == -13
 
 The `manifest()` method returns the same fields as plain JSON-compatible
 values.  Benchmark evidence gates use those manifest fields to lock Python and
-Rust Q16.16 proof parity.
+Rust Q16.16 proof parity.  `PrecisionEnvelopeReport` in the quantizer delegates
+its proof fields to this API, so dense mixed-precision and block-floating
+deployment manifests cannot drift from the standalone static-analysis proof.
 
 ### Safety Boundary
 
