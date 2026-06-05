@@ -6,7 +6,7 @@
 
 [package]
 name = "sc_neurocore_engine"
-version = "3.15.8"
+version = "3.15.9"
 edition = "2021"
 authors = ["Miroslav Sotek <protoscience@anulum.li>"]
 description = "High-performance SIMD backend for SC-NeuroCore stochastic neuromorphic computing"
@@ -50,7 +50,7 @@ rustfft = "6.2"
 wgpu = { version = "29", optional = true }
 pollster = { version = "0.4", optional = true }
 bytemuck = { version = "1.21", features = ["derive"], optional = true }
-z3 = "0.12"
+z3 = { version = "0.12", features = ["static-link-z3"] }
 
 [dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }
