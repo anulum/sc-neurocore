@@ -1,5 +1,5 @@
 # sc-neurocore Technical Manual
-Version: 3.15.29
+Version: 3.15.30
 Last updated: 2026-04-13
 
 This manual is the canonical, long-form reference for the sc-neurocore codebase. It is written for engineers and researchers who need to understand how the stochastic computing pipeline is constructed, how it maps to hardware, and how to extend it safely. It assumes basic familiarity with Python and numerical programming but does not require prior neuromorphic or FPGA experience.

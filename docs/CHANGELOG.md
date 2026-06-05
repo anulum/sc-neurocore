@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.30] - 2026-06-05
+
+### CI and release workflows
+- Installed the pinned `click` runtime dependency before the pinned
+  SymbiYosys executable check so hosted HDL/formal CI validates `sby`
+  immediately after installation.
+
 ## [3.15.29] - 2026-06-05
 
 ### CI and release workflows
