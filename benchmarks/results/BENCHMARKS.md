@@ -28,9 +28,9 @@ kernel-reserved isolated-core claims.
 | Mixed dense Q8.8/Q16.16 overflow telemetry (64x32) | Python | 2000 | 28.136 us | safe=0, saturating probe=32 |
 | Mixed dense Q8.8/Q16.16 (64x32) | Rust | 20000 | 2.245 us | safe=0, saturating probe=32, safe_bound=531400 |
 | Mixed dense Q8.8/Q16.16 lane telemetry | HDL/Yosys | N_OUTPUTS=32 | 12,708 cells | `overflow_vector` + `abs_bounds_q1616` registered |
-| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 31.429 us | max abs error 0.2231, safe_bound=610816 |
-| Block-floating dense BFP16E3X32/Q16.16 overflow telemetry (64x32) | Python | 2000 | 30.326 us | safe=0, saturating probe=32 |
-| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 10.056 us | safe=0, saturating probe=32, safe_bound=610816 |
+| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 34.217 us | max abs error 0.2231, safe_bound=610816, block_exponents=64 |
+| Block-floating dense BFP16E3X32/Q16.16 overflow telemetry (64x32) | Python | 2000 | 33.901 us | safe=0, saturating probe=32 |
+| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 11.687 us | safe=0, saturating probe=32, safe_bound=610816, block_exponents=64 |
 | Block-floating dense BFP16E3X32/Q16.16 lane telemetry | HDL/Yosys | 2x2 parameterised report | 96 cells | `overflow_vector` + `abs_bounds_q1616` registered |
 | Precision trap report mixed dense (64x32 overflow/underflow) | Python | 2000 | 44.744 us | overflow_count=32, underflow_probe=32 |
 | Precision trap report mixed dense (64x32 overflow/underflow) | Rust | 20000 | 2.506 us | overflow_count=32, underflow_probe=32 |

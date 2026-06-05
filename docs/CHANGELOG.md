@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added explicit block-exponent layout metadata for block-floating precision
+  across adaptive manifests, mixed-precision specs, Python dense BFP manifests,
+  and the Rust qformat mirror, with exponent-count validation before emission
+  or accumulation.
 - Added sub-LSB underflow telemetry to mixed Q8.8/Q16.16 and block-floating
   dense precision trap/envelope reports across Python and Rust, with refreshed
   process-affinity benchmark artefacts documenting matched overflow and

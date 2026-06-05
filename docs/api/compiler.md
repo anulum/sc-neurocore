@@ -358,7 +358,12 @@ parity.
 Compiler manifests record the exact exponent bias (`3` for `BFP16E3X32`),
 encoded exponent range `[0, 7]`, maximum signed mantissa magnitude `32767`,
 minimum quantum `0.125`, maximum absolute value `524272.0`, and the contiguous
-flattened block-alignment rule required by downstream RTL emitters.
+flattened block-alignment rule required by downstream RTL emitters.  When the
+parameter count is known, manifests also carry an exact `block_exponent_layout`
+with `parameter_count`, `block_size`, `exponent_count`, `last_block_size`, and
+the exponent-index formula.  The Python and Rust BFP surfaces reject mismatched
+exponent-vector lengths before accumulation, preventing an emitter from
+silently applying a shared exponent to the wrong parameter block.
 
 #### Rounding Modes
 

@@ -42,6 +42,7 @@ from dataclasses import dataclass
 
 
 from sc_neurocore.compiler.quantizer import (
+    BlockExponentLayout,
     BlockFloatingMode,
     QFormat,
     parse_precision_format,
@@ -154,8 +155,45 @@ class BlockFloatingPrecisionConfig:
         del value
         raise NotImplementedError("Block-floating encoding requires per-block exponent metadata.")
 
-    def manifest(self) -> dict[str, bool | float | int | list[int] | str]:
-        return {
+    def manifest(self) -> dict[str, bool | float | int | list[int] | str | dict[str, int | str]]:
+        return self.manifest_for_parameter_count()
+
+    def block_exponent_count(self, parameter_count: int) -> int:
+        """Return exact shared-exponent count for a flattened parameter payload."""
+        return BlockFloatingMode(
+            self.mantissa_bits,
+            self.exponent_bits,
+            self.block_size,
+        ).block_exponent_count(parameter_count)
+
+    def block_exponent_layout(self, parameter_count: int) -> BlockExponentLayout:
+        """Return exact shared-exponent layout for downstream compiler emitters."""
+        return BlockFloatingMode(
+            self.mantissa_bits,
+            self.exponent_bits,
+            self.block_size,
+        ).block_exponent_layout(parameter_count)
+
+    def validate_exponents(
+        self,
+        exponents: object,
+        *,
+        parameter_count: int,
+    ) -> object:
+        """Validate block exponent count and range before emission."""
+        return BlockFloatingMode(
+            self.mantissa_bits,
+            self.exponent_bits,
+            self.block_size,
+        ).validate_exponents(exponents, parameter_count=parameter_count)
+
+    def manifest_for_parameter_count(
+        self,
+        parameter_count: int | None = None,
+    ) -> dict[str, bool | float | int | list[int] | str | dict[str, int | str]]:
+        """Return metadata, optionally with a concrete exponent-vector layout."""
+        layout = self.block_exponent_layout(parameter_count) if parameter_count is not None else None
+        payload: dict[str, bool | float | int | list[int] | str | dict[str, int | str]] = {
             "kind": self.kind,
             "mantissa_bits": self.mantissa_bits,
             "exponent_bits": self.exponent_bits,
@@ -170,7 +208,13 @@ class BlockFloatingPrecisionConfig:
             "max_abs_value": self.max_value,
             "block_exponent_alignment": "contiguous_flattened_block",
             "block_exponent_count": "ceil(parameter_count / block_size)",
+            "block_exponent_count_policy": "ceil(parameter_count / block_size)",
         }
+        if layout is not None:
+            payload["parameter_count"] = parameter_count
+            payload["block_exponent_count"] = layout.exponent_count
+            payload["block_exponent_layout"] = layout.manifest()
+        return payload
 
 
 @dataclass(frozen=True)
@@ -329,6 +373,32 @@ class MixedPrecisionSpec:
                 f"  kind={cfg.kind}"
             )
         return "\n".join(lines)
+
+    def manifest(
+        self,
+        *,
+        parameter_counts: dict[str, int] | None = None,
+    ) -> dict[str, object]:
+        """Return deterministic per-variable precision metadata."""
+        if parameter_counts is not None:
+            unknown = sorted(set(parameter_counts) - set(self.var_configs))
+            if unknown:
+                raise KeyError(f"Unknown variable(s) in parameter_counts: {', '.join(unknown)}")
+
+        variables: dict[str, object] = {}
+        for var, cfg in self.var_configs.items():
+            if isinstance(cfg, BlockFloatingPrecisionConfig):
+                parameter_count = None if parameter_counts is None else parameter_counts.get(var)
+                variables[var] = cfg.manifest_for_parameter_count(parameter_count)
+            else:
+                variables[var] = cfg.manifest()
+
+        return {
+            "kind": "mixed_precision_spec",
+            "total_bits": self.total_bits,
+            "variable_count": len(self.var_configs),
+            "variables": variables,
+        }
 
 
 def _precision_range(cfg: PrecisionConfig | BlockFloatingPrecisionConfig) -> str:

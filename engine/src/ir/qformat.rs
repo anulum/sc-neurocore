@@ -200,6 +200,60 @@ impl BlockFloatingMode {
     pub fn exponent_code_max(self) -> u8 {
         ((1_u16 << self.exponent_bits) - 1) as u8
     }
+
+    pub fn block_exponent_count(self, parameter_count: usize) -> Result<usize, BlockFloatingError> {
+        if parameter_count == 0 {
+            return Ok(0);
+        }
+        parameter_count
+            .checked_add(self.block_size - 1)
+            .map(|value| value / self.block_size)
+            .ok_or(BlockFloatingError::ParameterCountOverflow)
+    }
+
+    pub fn block_exponent_layout(
+        self,
+        parameter_count: usize,
+    ) -> Result<BlockExponentLayout, BlockFloatingError> {
+        Ok(BlockExponentLayout {
+            parameter_count,
+            block_size: self.block_size,
+            exponent_count: self.block_exponent_count(parameter_count)?,
+            last_block_size: if parameter_count == 0 {
+                0
+            } else {
+                let remainder = parameter_count % self.block_size;
+                if remainder == 0 {
+                    self.block_size
+                } else {
+                    remainder
+                }
+            },
+        })
+    }
+
+    pub fn validate_exponent_count(
+        self,
+        parameter_count: usize,
+        exponent_count: usize,
+    ) -> Result<(), BlockFloatingError> {
+        let expected = self.block_exponent_count(parameter_count)?;
+        if exponent_count != expected {
+            return Err(BlockFloatingError::ExponentCountMismatch {
+                expected,
+                actual: exponent_count,
+            });
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BlockExponentLayout {
+    pub parameter_count: usize,
+    pub block_size: usize,
+    pub exponent_count: usize,
+    pub last_block_size: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -207,6 +261,8 @@ pub enum BlockFloatingError {
     MantissaTooNarrow,
     InvalidExponentBits,
     EmptyBlock,
+    ParameterCountOverflow,
+    ExponentCountMismatch { expected: usize, actual: usize },
 }
 
 impl fmt::Display for BlockFloatingError {
@@ -215,6 +271,13 @@ impl fmt::Display for BlockFloatingError {
             Self::MantissaTooNarrow => write!(f, "mantissa bits must be at least 2"),
             Self::InvalidExponentBits => write!(f, "exponent bits must be in 1..=7"),
             Self::EmptyBlock => write!(f, "block size must be positive"),
+            Self::ParameterCountOverflow => write!(f, "parameter count overflows block layout"),
+            Self::ExponentCountMismatch { expected, actual } => {
+                write!(
+                    f,
+                    "exponent count mismatch: expected {expected}, got {actual}"
+                )
+            }
         }
     }
 }
@@ -499,10 +562,9 @@ pub fn block_floating_dense_q16(
     let expected_weights = n_outputs
         .checked_mul(n_inputs)
         .ok_or(BlockFloatingDenseError::ShapeOverflow)?;
-    let expected_blocks = expected_weights
-        .checked_add(mode.block_size - 1)
-        .ok_or(BlockFloatingDenseError::ShapeOverflow)?
-        / mode.block_size;
+    let expected_blocks = mode
+        .block_exponent_count(expected_weights)
+        .map_err(|_| BlockFloatingDenseError::ShapeOverflow)?;
 
     if mantissas.len() != expected_weights {
         return Err(BlockFloatingDenseError::MantissaLengthMismatch {
@@ -723,6 +785,25 @@ mod tests {
         assert_eq!(mode.min_exponent(), -1);
         assert_eq!(mode.max_exponent(), 2);
         assert_eq!(mode.exponent_code_max(), 3);
+    }
+
+    #[test]
+    fn block_floating_mode_computes_exponent_layout() {
+        let mode = BlockFloatingMode::new(16, 3, 32).unwrap();
+        let layout = mode.block_exponent_layout(65).unwrap();
+
+        assert_eq!(layout.parameter_count, 65);
+        assert_eq!(layout.block_size, 32);
+        assert_eq!(layout.exponent_count, 3);
+        assert_eq!(layout.last_block_size, 1);
+        assert_eq!(mode.block_exponent_count(0).unwrap(), 0);
+        assert_eq!(
+            mode.validate_exponent_count(65, 2).unwrap_err(),
+            BlockFloatingError::ExponentCountMismatch {
+                expected: 3,
+                actual: 2,
+            }
+        );
     }
 
     #[test]

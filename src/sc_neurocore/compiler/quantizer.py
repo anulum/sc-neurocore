@@ -185,7 +185,37 @@ class BlockFloatingMode:
             "block_size": self.block_size,
             "exponent_min": self.min_exponent,
             "exponent_max": self.max_exponent,
+            "block_exponent_alignment": "contiguous_flattened_block",
+            "block_exponent_count_policy": "ceil(parameter_count / block_size)",
         }
+
+    def block_exponent_count(self, parameter_count: int) -> int:
+        """Return the exact number of shared exponents for a flat parameter payload."""
+        if type(parameter_count) is not int:
+            raise TypeError("parameter_count must be an integer")
+        if parameter_count < 0:
+            raise ValueError("parameter_count must be non-negative")
+        if parameter_count == 0:
+            return 0
+        return (parameter_count + self.block_size - 1) // self.block_size
+
+    def block_exponent_layout(self, parameter_count: int) -> "BlockExponentLayout":
+        """Return the explicit exponent-vector layout for downstream emitters."""
+        return BlockExponentLayout(
+            parameter_count=parameter_count,
+            block_size=self.block_size,
+            exponent_count=self.block_exponent_count(parameter_count),
+        )
+
+    def validate_exponents(
+        self,
+        exponents: np.ndarray[Any, Any],
+        *,
+        parameter_count: int,
+    ) -> np.ndarray[Any, Any]:
+        """Validate exponent vector length and code range for a parameter payload."""
+        layout = self.block_exponent_layout(parameter_count)
+        return layout.validate_exponents(exponents, exponent_bits=self.exponent_bits)
 
     @classmethod
     def from_string(cls, fmt: str) -> "BlockFloatingMode":
@@ -256,6 +286,80 @@ def parse_precision_format(fmt: str) -> QFormat | BlockFloatingMode:
         return BlockFloatingMode.from_aliases(fmt)
     except (ValueError, TypeError):
         return QFormat.from_string(fmt)
+
+
+@dataclass(frozen=True)
+class BlockExponentLayout:
+    """Concrete shared-exponent layout for flattened block-floating parameters."""
+
+    parameter_count: int
+    block_size: int
+    exponent_count: int
+    alignment: str = "contiguous_flattened_block"
+    flattened_order: str = "row_major"
+
+    def __post_init__(self) -> None:
+        if type(self.parameter_count) is not int:
+            raise TypeError("parameter_count must be an integer")
+        if type(self.block_size) is not int:
+            raise TypeError("block_size must be an integer")
+        if type(self.exponent_count) is not int:
+            raise TypeError("exponent_count must be an integer")
+        if self.parameter_count < 0:
+            raise ValueError("parameter_count must be non-negative")
+        if self.block_size < 1:
+            raise ValueError("block_size must be positive")
+        expected = 0
+        if self.parameter_count:
+            expected = (self.parameter_count + self.block_size - 1) // self.block_size
+        if self.exponent_count != expected:
+            raise ValueError(
+                f"exponent_count mismatch: expected {expected}, got {self.exponent_count}"
+            )
+        if self.alignment != "contiguous_flattened_block":
+            raise ValueError("alignment must be contiguous_flattened_block")
+        if self.flattened_order != "row_major":
+            raise ValueError("flattened_order must be row_major")
+
+    @property
+    def last_block_size(self) -> int:
+        """Number of parameters carried by the final exponent block."""
+        if self.parameter_count == 0:
+            return 0
+        remainder = self.parameter_count % self.block_size
+        return remainder or self.block_size
+
+    def manifest(self) -> dict[str, int | str]:
+        """Deterministic block-exponent layout manifest."""
+        return {
+            "alignment": self.alignment,
+            "flattened_order": self.flattened_order,
+            "parameter_count": self.parameter_count,
+            "block_size": self.block_size,
+            "exponent_count": self.exponent_count,
+            "last_block_size": self.last_block_size,
+            "exponent_index_formula": "parameter_index // block_size",
+        }
+
+    def validate_exponents(
+        self,
+        exponents: np.ndarray[Any, Any],
+        *,
+        exponent_bits: int,
+    ) -> np.ndarray[Any, Any]:
+        """Validate exponent vector length and encoded range."""
+        raw = np.asarray(exponents)
+        if not np.issubdtype(raw.dtype, np.integer):
+            raise TypeError("exponents must contain integer codes")
+        codes = raw.astype(np.int64, copy=True).reshape(-1)
+        if codes.size != self.exponent_count:
+            raise ValueError(
+                f"exponent count mismatch: expected {self.exponent_count}, got {codes.size}"
+            )
+        max_code = (1 << exponent_bits) - 1
+        if np.any(codes < 0) or np.any(codes > max_code):
+            raise ValueError("exponents exceed the configured block-floating range")
+        return codes
 
 
 def _coerce_q_format(fmt: str | QFormat) -> QFormat:
@@ -776,6 +880,7 @@ class CompiledBlockFloatingDense:
     mode: BlockFloatingMode
     input_fmt: QFormat = Q16_16
     _weight_values: np.ndarray[Any, Any] = field(init=False, repr=False)
+    _block_exponent_layout: BlockExponentLayout = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         if not isinstance(self.mode, BlockFloatingMode):
@@ -788,21 +893,15 @@ class CompiledBlockFloatingDense:
         if mantissas.ndim != 2:
             raise ValueError("mantissas must be a 2-D dense weight matrix")
 
-        expected_blocks = (
-            int(math.ceil(mantissas.size / self.mode.block_size)) if mantissas.size else 0
-        )
-        if exponents.size != expected_blocks:
-            raise ValueError(
-                f"exponent count mismatch: expected {expected_blocks}, got {int(exponents.size)}"
-            )
+        layout = self.mode.block_exponent_layout(int(mantissas.size))
+        exponents = layout.validate_exponents(exponents, exponent_bits=self.mode.exponent_bits)
 
         if np.any(np.abs(mantissas) > self.mode.mantissa_range):
             raise ValueError("mantissas exceed the configured block-floating range")
-        if np.any(exponents < 0) or np.any(exponents > (1 << self.mode.exponent_bits) - 1):
-            raise ValueError("exponents exceed the configured block-floating range")
 
         object.__setattr__(self, "mantissas", mantissas)
         object.__setattr__(self, "exponents", exponents)
+        object.__setattr__(self, "_block_exponent_layout", layout)
         object.__setattr__(
             self, "_weight_values", self._reconstruct_weight_values(mantissas, exponents)
         )
@@ -834,17 +933,21 @@ class CompiledBlockFloatingDense:
         """Float reconstruction of the compiled block-floating weight matrix."""
         return np.asarray(self._weight_values, dtype=np.float64).copy()
 
-    def manifest(self) -> dict[str, bool | int | list[int] | str]:
+    def manifest(self) -> dict[str, Any]:
         """Deterministic deployment metadata for block-floating dense weights."""
         return {
             "operation": "dense_block_floating",
             "input_size": self.input_size,
             "output_size": self.output_size,
             "weight_shape": [self.output_size, self.input_size],
+            "parameter_count": int(self.mantissas.size),
             "mantissa_bits": self.mode.mantissa_bits,
             "exponent_bits": self.mode.exponent_bits,
             "block_size": self.mode.block_size,
             "exponent_bias": self.mode.exponent_bias,
+            "exponent_code_range": [0, (1 << self.mode.exponent_bits) - 1],
+            "block_exponent_count": self._block_exponent_layout.exponent_count,
+            "block_exponent_layout": self._block_exponent_layout.manifest(),
             "input_format": self.input_fmt.q_label,
         }
 

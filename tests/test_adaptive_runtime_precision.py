@@ -276,6 +276,40 @@ class TestPrecisionStrings:
             "fixed_mantissa_with_explicit_shared_exponent_metadata"
         )
 
+    def test_block_floating_precision_metadata_carries_concrete_layout(self, lif_neuron):
+        """BFP manifests must carry exact block layout when parameter count is known."""
+        v = compile_adaptive_precision(
+            lif_neuron,
+            module_name="sc_lif_adapt_bfp_layout",
+            lp_precision="BFP16E3X32",
+            hp_precision="Q16.16",
+            lp_parameter_count=65,
+        )
+        manifest = _extract_manifest(v)
+        lp = manifest["lp_precision"]
+
+        assert lp["parameter_count"] == 65
+        assert lp["block_exponent_count"] == 3
+        assert lp["block_exponent_layout"] == {
+            "alignment": "contiguous_flattened_block",
+            "flattened_order": "row_major",
+            "parameter_count": 65,
+            "block_size": 32,
+            "exponent_count": 3,
+            "last_block_size": 1,
+            "exponent_index_formula": "parameter_index // block_size",
+        }
+
+    def test_block_floating_precision_metadata_rejects_bad_parameter_count(self, lif_neuron):
+        """Invalid BFP parameter-count metadata must fail before RTL emission."""
+        with pytest.raises(ValueError, match="parameter_count"):
+            compile_adaptive_precision(
+                lif_neuron,
+                lp_precision="BFP16E3X32",
+                hp_precision="Q16.16",
+                lp_parameter_count=-1,
+            )
+
     def test_invalid_precision_string(self, lif_neuron):
         """Invalid precision strings must fail with ValueError."""
         with pytest.raises(ValueError, match="precision"):

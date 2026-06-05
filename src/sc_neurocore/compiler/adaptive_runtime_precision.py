@@ -97,6 +97,7 @@ def _precision_manifest(
     emitted_fraction: int,
     *,
     kind: str,
+    parameter_count: int | None = None,
 ) -> dict[str, Any]:
     """Build deterministic metadata for precision contracts."""
     if isinstance(parsed, QFormat):
@@ -127,9 +128,19 @@ def _precision_manifest(
             "max_abs_value": float(parsed.mantissa_range) * (2.0**parsed.max_exponent),
             "block_exponent_alignment": "contiguous_flattened_block",
             "block_exponent_count": "ceil(parameter_count / block_size)",
+            "block_exponent_count_policy": "ceil(parameter_count / block_size)",
             "datapath_contract": "fixed_mantissa_with_explicit_shared_exponent_metadata",
         }
     )
+    if parameter_count is not None:
+        layout = parsed.block_exponent_layout(parameter_count)
+        metadata.update(
+            {
+                "parameter_count": parameter_count,
+                "block_exponent_count": layout.exponent_count,
+                "block_exponent_layout": layout.manifest(),
+            }
+        )
     return metadata
 
 
@@ -139,6 +150,7 @@ def _coerce_precision(
     default_width: int,
     default_frac: int,
     tag: str,
+    parameter_count: int | None = None,
 ) -> tuple[int, int, str, dict[str, Any], QFormat | BlockFloatingMode]:
     """Resolve concrete fixed-point datapath parameters and telemetry metadata."""
     if precision is None:
@@ -153,6 +165,7 @@ def _coerce_precision(
                 resolved_width=default_width,
                 emitted_fraction=default_frac,
                 kind="fixed",
+                parameter_count=parameter_count,
             ),
             q,
         )
@@ -176,6 +189,7 @@ def _coerce_precision(
                 resolved_width=width,
                 emitted_fraction=fraction,
                 kind="fixed",
+                parameter_count=parameter_count,
             ),
             parsed,
         )
@@ -194,6 +208,7 @@ def _coerce_precision(
             resolved_width=width,
             emitted_fraction=fraction,
             kind="block_floating",
+            parameter_count=parameter_count,
         ),
         parsed,
     )
@@ -251,6 +266,8 @@ def compile_adaptive_precision(
     *,
     lp_precision: str | None = None,
     hp_precision: str | None = None,
+    lp_parameter_count: int | None = None,
+    hp_parameter_count: int | None = None,
     threshold_up_pct: float = 0.8,
     threshold_down_pct: float = 0.5,
     signed: bool = True,
@@ -282,6 +299,10 @@ def compile_adaptive_precision(
     hp_precision : str | None
         Optional HP precision string, e.g. ``Q16.16`` or ``BFP20E4X32``.
         If provided, ``hp_width`` and ``hp_frac`` are ignored for HP datapath.
+    lp_parameter_count : int | None
+        Optional flattened LP parameter count for block-exponent metadata.
+    hp_parameter_count : int | None
+        Optional flattened HP parameter count for block-exponent metadata.
     threshold_up_pct : float
         Fraction of LP range at which to switch to HP (default 0.8).
     threshold_down_pct : float
@@ -303,12 +324,14 @@ def compile_adaptive_precision(
         default_width=lp_width,
         default_frac=lp_frac,
         tag="lp",
+        parameter_count=lp_parameter_count,
     )
     hp_width, hp_frac, hp_q_label, hp_metadata, hp_precision_obj = _coerce_precision(
         hp_precision,
         default_width=hp_width,
         default_frac=hp_frac,
         tag="hp",
+        parameter_count=hp_parameter_count,
     )
 
     _validate_lp_hp(lp_width, lp_frac, hp_width, hp_frac)
