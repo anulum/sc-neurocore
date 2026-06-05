@@ -84,6 +84,78 @@ fn median(values: &mut [f64]) -> f64 {
     values[values.len() / 2]
 }
 
+fn exponent_edge_sweep_json() -> String {
+    let mode = BlockFloatingMode::new(16, 3, 2).expect("BFP16E3X2 is valid");
+    let mantissas = [
+        1_i16,
+        -2_i16,
+        i16::MAX,
+        -i16::MAX,
+        -3_i16,
+        4_i16,
+        -i16::MAX,
+        i16::MAX,
+    ];
+    let exponents = [
+        0_u8,
+        mode.exponent_code_max(),
+        0_u8,
+        mode.exponent_code_max(),
+    ];
+    let inputs = [32768_i32, -16384_i32, 1_i32, -1_i32];
+    let safe = block_floating_dense_q16(&mantissas, &exponents, &inputs, 2, 4, mode)
+        .expect("seeded exponent-edge dimensions are valid");
+    let safe_envelope = safe.precision_envelope_report();
+
+    let saturating_mantissas = [i16::MAX, i16::MAX];
+    let saturating_exponents = [mode.exponent_code_max()];
+    let saturating_inputs = [32767_i32 << 16, 32767_i32 << 16];
+    let saturating = block_floating_dense_q16(
+        &saturating_mantissas,
+        &saturating_exponents,
+        &saturating_inputs,
+        1,
+        2,
+        mode,
+    )
+    .expect("max-exponent trap dimensions are valid");
+    let saturating_envelope = saturating.precision_envelope_report();
+
+    format!(
+        concat!(
+            "{{",
+            "\"format\":\"BFP16E3X2\",",
+            "\"safe_exponent_codes\":[0,{max_code},0,{max_code}],",
+            "\"safe_output_codes_q1616\":[{safe_output_0},{safe_output_1}],",
+            "\"safe_overflow_count\":{safe_overflow_count},",
+            "\"safe_underflow_count\":{safe_underflow_count},",
+            "\"safe_max_abs_bound_q1616\":{safe_max_abs_bound_q1616},",
+            "\"safe_min_headroom_q1616\":{safe_min_headroom_q1616},",
+            "\"safe_conservative_overflow_free\":{safe_conservative_overflow_free},",
+            "\"max_exponent_saturating_codes_q1616\":[{saturating_code}],",
+            "\"max_exponent_saturating_exponent_codes\":[{max_code}],",
+            "\"max_exponent_saturating_overflow_count\":{saturating_overflow_count},",
+            "\"max_exponent_saturating_underflow_count\":{saturating_underflow_count},",
+            "\"max_exponent_saturating_conservative_overflow_free\":{saturating_conservative_overflow_free},",
+            "\"max_exponent_saturating_max_abs_bound_q1616\":{saturating_max_abs_bound_q1616}",
+            "}}"
+        ),
+        max_code = mode.exponent_code_max(),
+        safe_output_0 = safe.outputs_q1616[0],
+        safe_output_1 = safe.outputs_q1616[1],
+        safe_overflow_count = safe.overflow_count,
+        safe_underflow_count = safe.underflow_count,
+        safe_max_abs_bound_q1616 = safe_envelope.max_abs_bound_q1616,
+        safe_min_headroom_q1616 = safe_envelope.min_headroom_q1616,
+        safe_conservative_overflow_free = safe_envelope.conservative_overflow_free,
+        saturating_code = saturating.outputs_q1616[0],
+        saturating_overflow_count = saturating.overflow_count,
+        saturating_underflow_count = saturating.underflow_count,
+        saturating_conservative_overflow_free = saturating_envelope.conservative_overflow_free,
+        saturating_max_abs_bound_q1616 = saturating_envelope.max_abs_bound_q1616,
+    )
+}
+
 fn main() {
     let load_average_before = load_average();
     let mode = BlockFloatingMode::bfp16_e3_x32();
@@ -175,6 +247,7 @@ fn main() {
             "  \"saturating_probe_overflow_count\": {saturating_probe_overflow_count},\n",
             "  \"saturating_probe_max_abs_bound_q1616\": {saturating_probe_max_abs_bound_q1616},\n",
             "  \"saturating_probe_conservative_overflow_free\": {saturating_probe_conservative_overflow_free},\n",
+            "  \"exponent_edge_sweep\": {exponent_edge_sweep},\n",
             "  \"results_ns_per_call\": [{results}]\n",
             "}}\n"
         ),
@@ -207,6 +280,7 @@ fn main() {
         saturating_probe_overflow_count = saturating_probe_overflow_count,
         saturating_probe_max_abs_bound_q1616 = saturating_probe_envelope_report.max_abs_bound_q1616,
         saturating_probe_conservative_overflow_free = saturating_probe_envelope_report.conservative_overflow_free,
+        exponent_edge_sweep = exponent_edge_sweep_json(),
         results = results,
     );
 

@@ -19,7 +19,12 @@ from typing import Protocol
 import numpy as np
 
 from _benchmark_context import load_average, measurement_context
-from sc_neurocore.compiler.quantizer import PrecisionEnvelopeReport, compile_dense_block_floating
+from sc_neurocore.compiler.quantizer import (
+    Q16_16,
+    PrecisionEnvelopeReport,
+    compile_dense_block_floating,
+    quantize_weights,
+)
 
 
 N_INPUTS = 64
@@ -94,6 +99,58 @@ def time_float_dot(weights: np.ndarray, inputs: np.ndarray) -> tuple[float, floa
     return elapsed_ns / ITERATIONS, checksum
 
 
+def exponent_edge_sweep_report() -> dict[str, object]:
+    weights = np.array(
+        [
+            [0.125, -0.25, 1_000_000.0, -1_000_000.0],
+            [-0.375, 0.5, -1_000_000.0, 1_000_000.0],
+        ],
+        dtype=np.float64,
+    )
+    inputs = np.array([0.5, -0.25, 1 / 65536.0, -1 / 65536.0], dtype=np.float64)
+    compiled = compile_dense_block_floating(weights, fmt="BFP16E3X2")
+    reconstructed = compiled.forward_float(inputs)
+    q_inputs = quantize_weights(inputs, fmt=Q16_16).astype(np.float64) / Q16_16.scale
+    reference = compiled.reconstructed_weights @ q_inputs
+    codes, overflow = compiled.forward_with_overflow(inputs)
+    envelope = compiled.precision_envelope_report(inputs)
+
+    saturating = compile_dense_block_floating(
+        np.array([[1_000_000.0, 1_000_000.0]], dtype=np.float64),
+        fmt="BFP16E3X2",
+    )
+    saturating_codes, saturating_overflow = saturating.forward_with_overflow(
+        np.array([32767.0, 32767.0], dtype=np.float64)
+    )
+    saturating_envelope = saturating.precision_envelope_report(
+        np.array([32767.0, 32767.0], dtype=np.float64)
+    )
+
+    return {
+        "format": "BFP16E3X2",
+        "safe_exponent_codes": compiled.exponents.astype(int).tolist(),
+        "safe_output_codes_q1616": codes.astype(int).tolist(),
+        "safe_overflow_count": int(np.count_nonzero(overflow)),
+        "safe_underflow_count": envelope.underflow_count,
+        "safe_max_abs_error_vs_reconstructed_reference": float(
+            np.max(np.abs(reconstructed - reference))
+        ),
+        "safe_max_abs_bound_q1616": envelope.max_abs_bound_code,
+        "safe_min_headroom_q1616": envelope.min_headroom_code,
+        "safe_conservative_overflow_free": envelope.conservative_overflow_free,
+        "max_exponent_saturating_codes_q1616": saturating_codes.astype(int).tolist(),
+        "max_exponent_saturating_exponent_codes": saturating.exponents.astype(int).tolist(),
+        "max_exponent_saturating_overflow_count": int(np.count_nonzero(saturating_overflow)),
+        "max_exponent_saturating_underflow_count": saturating_envelope.underflow_count,
+        "max_exponent_saturating_conservative_overflow_free": (
+            saturating_envelope.conservative_overflow_free
+        ),
+        "max_exponent_saturating_max_abs_bound_q1616": (
+            saturating_envelope.max_abs_bound_code
+        ),
+    }
+
+
 def main() -> int:
     load_average_before = load_average()
     weights, inputs = deterministic_inputs()
@@ -160,6 +217,7 @@ def main() -> int:
         "saturating_probe_overflow_count": int(np.count_nonzero(probe_overflow)),
         "saturating_probe_max_abs_bound_code": probe_envelope.max_abs_bound_code,
         "saturating_probe_conservative_overflow_free": probe_envelope.conservative_overflow_free,
+        "exponent_edge_sweep": exponent_edge_sweep_report(),
         "compiled_manifest": compiled.manifest(),
         "bfp_results": [
             {"ns_per_call": result[0], "checksum": result[1]} for result in bfp_results

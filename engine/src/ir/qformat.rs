@@ -830,6 +830,71 @@ mod tests {
     }
 
     #[test]
+    fn block_floating_dense_seeded_exponent_edges_match_manual_q1616_codes() {
+        let mode = BlockFloatingMode::new(16, 3, 2).unwrap();
+        let mantissas = [
+            1_i16,
+            -2_i16,
+            i16::MAX,
+            -i16::MAX,
+            -3_i16,
+            4_i16,
+            -i16::MAX,
+            i16::MAX,
+        ];
+        let exponents = [
+            0_u8,
+            mode.exponent_code_max(),
+            0_u8,
+            mode.exponent_code_max(),
+        ];
+        let inputs = [32768_i32, -16384_i32, 1_i32, -1_i32];
+
+        let result = block_floating_dense_q16(&mantissas, &exponents, &inputs, 2, 4, mode)
+            .expect("seeded exponent-edge dimensions are valid");
+
+        assert_eq!(result.outputs_q1616, vec![1_056_736, -1_069_024]);
+        assert_eq!(result.overflow_count, 0);
+        assert_eq!(result.underflow_count, 0);
+        assert_eq!(result.abs_bounds_q1616, vec![1_056_736, 1_069_024]);
+
+        let envelope = result.precision_envelope_report();
+        assert!(envelope.observed_overflow_free);
+        assert!(envelope.observed_underflow_free);
+        assert!(envelope.conservative_overflow_free);
+        assert_eq!(envelope.max_abs_bound_q1616, 1_069_024);
+        assert_eq!(envelope.min_headroom_q1616, 2_146_414_623);
+    }
+
+    #[test]
+    fn block_floating_dense_max_exponent_edge_saturates_and_reports_trap() {
+        let mode = BlockFloatingMode::new(16, 3, 2).unwrap();
+        let mantissas = [i16::MAX, i16::MAX];
+        let exponents = [mode.exponent_code_max()];
+        let inputs = [32767_i32 << 16, 32767_i32 << 16];
+
+        let result = block_floating_dense_q16(&mantissas, &exponents, &inputs, 1, 2, mode)
+            .expect("max-exponent trap dimensions are valid");
+
+        assert_eq!(result.outputs_q1616, vec![i32::MAX]);
+        assert!(result.overflow);
+        assert_eq!(result.overflow_count, 1);
+        assert_eq!(result.underflow_count, 0);
+
+        let report = result.precision_trap_report();
+        assert!(report.overflow);
+        assert_eq!(report.overflow_count, 1);
+        assert!(!report.underflow);
+        assert_eq!(report.saturated_max_count, 1);
+
+        let envelope = result.precision_envelope_report();
+        assert!(!envelope.observed_overflow_free);
+        assert!(envelope.observed_underflow_free);
+        assert!(!envelope.conservative_overflow_free);
+        assert!(envelope.max_abs_bound_q1616 > envelope.conservative_safe_bound_q1616);
+    }
+
+    #[test]
     fn block_floating_dense_reports_sub_lsb_underflow() {
         let mode = BlockFloatingMode::new(16, 3, 1).unwrap();
         let result = block_floating_dense_q16(&[1_i16], &[0_u8], &[1_i32], 1, 1, mode).unwrap();
