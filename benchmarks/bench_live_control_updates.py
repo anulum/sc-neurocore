@@ -26,6 +26,7 @@ from sc_neurocore.compiler.live_control import (
     TRAP_STAGED_OVERFLOW,
     TRAP_STAGED_UNDERFLOW,
     TrapSpec,
+    UPDATE_CHECKSUM_ALGORITHM,
 )
 from sc_neurocore.hdl_gen.bus_interface import generate_live_parameter_bank
 
@@ -70,9 +71,8 @@ def time_update_sequences(spec: MMIOUpdateSpec) -> tuple[float, int]:
     start_ns = time.perf_counter_ns()
     for index in range(ITERATIONS):
         writes = spec.build_update_sequence("weights", index % weight_count, index & 0x7FFF)
-        checksum ^= len(writes)
-        checksum ^= writes[-2].value
-        checksum ^= writes[-1].value
+        guard = next(write.value for write in writes if write.purpose == "write_checksum")
+        checksum = (checksum + len(writes) + guard + writes[-1].value) & 0xFFFF_FFFF
     elapsed_ns = time.perf_counter_ns() - start_ns
     return elapsed_ns / ITERATIONS, checksum
 
@@ -256,7 +256,7 @@ module tb_sc_live_params;
         axi_write(32'h10C, 32'd0);
         axi_write(32'h110, 32'h00010000);
         axi_write(32'h114, 32'h00000000);
-        axi_write(32'h120, 32'h00010000);
+        axi_write(32'h120, 32'h27E798F0);
         axi_write(32'h100, 32'h00000001);
         repeat (2) @(negedge clk);
         if (trap_latched !== 1'b1 || trap_status_vector[0] !== 1'b1 || staged_overflow !== 1'b1) begin
@@ -274,7 +274,7 @@ module tb_sc_live_params;
 
         axi_write(32'h110, 32'h00007FFF);
         axi_write(32'h114, 32'hFFFFFFFF);
-        axi_write(32'h120, 32'hFFFF8000);
+        axi_write(32'h120, 32'h0E6BCD92);
         axi_write(32'h100, 32'h00000001);
         repeat (2) @(negedge clk);
         if (trap_latched !== 1'b1 || trap_status_vector[1] !== 1'b1 || staged_underflow !== 1'b1) begin
@@ -421,6 +421,13 @@ module tb_sc_live_pcie_params;
         pcie_write(32'h120, 32'h00001234);
         pcie_write(32'h100, 32'h00000001);
         repeat (2) @(negedge clk);
+        if (shadow_loaded !== 1'b0 || parameter_words[15:0] !== 16'h0000) begin
+            $finish(5);
+        end
+
+        pcie_write(32'h120, 32'h1D7D9B35);
+        pcie_write(32'h100, 32'h00000001);
+        repeat (2) @(negedge clk);
         if (shadow_loaded !== 1'b1 || parameter_words[15:0] !== 16'h0000) begin
             $finish(2);
         end
@@ -512,6 +519,12 @@ def main() -> int:
         "iterations": ITERATIONS,
         "repeats": REPEATS,
         "bus_protocols": {"axi4_lite": True, "pcie": True},
+        "checksum_algorithm": UPDATE_CHECKSUM_ALGORITHM,
+        "checksum_guard_samples": {
+            "weights_w0_0x1234": spec.update_checksum("weights", 0, 0x1234),
+            "weights_w0_staged_overflow_raw_words": 0x27E798F0,
+            "weights_w0_staged_underflow_raw_words": 0x0E6BCD92,
+        },
         "banks": [bank.to_dict() for bank in spec.banks],
         "control_registers": spec.control_register_addresses,
         "trap_bits": spec.trap_bits,

@@ -765,7 +765,7 @@ updates. Both protocols use the same deterministic register map:
 | `write_data_hi` | `0x14` | high 32 bits for 64-bit staged words |
 | `trap_status` | `0x18` | sticky generated and external trap bits |
 | `trap_clear` | `0x1C` | sticky trap clear register |
-| `write_checksum` | `0x20` | XOR guard over bank, entry, and staged value |
+| `write_checksum` | `0x20` | IEEE CRC32 guard over bank, entry, and staged value |
 
 `generate_live_parameter_bank()` emits the AXI4-Lite core directly for
 `bus_protocol="axi4_lite"`. For `bus_protocol="pcie"` it emits a PCIe-MMIO
@@ -775,6 +775,8 @@ must decode posted writes and reads into the generated single-clock MMIO strobes
 It is not a generated PCIe endpoint PHY.
 
 Valid updates are fail-closed. The host must write bank select, entry index,
-low/high staged data, and checksum before asserting `CONTROL_UPDATE_VALID`; the
-active parameter output changes only after a separate `CONTROL_COMMIT`. Range
-traps latch staged overflow or underflow attempts and prevent shadow mutation.
+low/high staged data, and the `crc32-ieee-le-4x32` guard before asserting
+`CONTROL_UPDATE_VALID`; the active parameter output changes only after a
+separate `CONTROL_COMMIT`. The CRC32 payload is four little-endian 32-bit words:
+bank select, entry index, low data word, and high data word. Range traps latch
+staged overflow or underflow attempts and prevent shadow mutation.

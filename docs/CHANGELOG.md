@@ -6,6 +6,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Replaced live-control update guards with an IEEE CRC32 register-window
+  guard shared by the compiler schema and generated SystemVerilog, with stale
+  guard rejection tests and refreshed benchmark evidence.
 - Added the PCIe-MMIO live-control register-window adapter over the staged
   parameter-bank core, module-specific PCIe commit simulation, process-affinity
   AXI4-Lite/PCIe comparison benchmark evidence, and compiler API documentation

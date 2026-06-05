@@ -41,7 +41,7 @@ it is not a kernel-reserved isolated-core claim.
 | Precision envelope report block-floating dense (64x32 safe) | Python | 2000 | 79.117 us | max_abs_bound=78032768 |
 | Precision envelope report block-floating dense (64x32 safe) | Rust | 20000 | 8.748 us | max_abs_bound=78032768 |
 | Precision envelope guard | HDL/Yosys | N_OUTPUTS=32 | 67 cells | `$adff`+`$gt`+`$mux`+`$reduce_or` |
-| Live-control parameter update sequence | Python+SystemVerilog | 20000 | 11.267 us AXI4-Lite; 11.583 us PCIe-MMIO | process affinity `8-9`, AXI trap simulation passed, PCIe commit simulation passed |
+| Live-control parameter update sequence | Python+SystemVerilog | 20000 | 13.683 us AXI4-Lite; 13.787 us PCIe-MMIO | process affinity `8-9`, CRC32 update guard, AXI trap simulation passed, PCIe commit simulation passed |
 | AER strict-priority queue backpressure | Python+SystemVerilog | 4096 events x 100 repeats | 4.138 us/event | runtime cpuset shield 10-11, priority=0 violations, FIFO=0 violations, drop/deadline traps latched |
 | ADC-to-spike quantiser | Python+SystemVerilog | 4096 samples x 100 repeats | 3.705 us/sample | cpuset 10-11, formal pass, Yosys 7675 cells |
 | DCLS Q8.8 tent-kernel layer | Python+PyTorch+SystemVerilog | 4096 samples x 100 repeats | 6.349 us/sample | cpuset 10-11, PyTorch parity 5/5, formal pass, Yosys 106003 cells |
@@ -107,9 +107,11 @@ board-level timing closure or replace the generic stochastic dense path.
 
 | Artefact | Cpuset | Surfaces | Key result |
 | --- | --- | --- | --- |
-| `local_python_2026-06-04_live_control_updates.json` | process affinity `8-9` | Python, SystemVerilog, AXI4-Lite, PCIe-MMIO | AXI4-Lite staged-update sequence median `11267.487` ns; PCIe-MMIO staged-update sequence median `11582.822` ns; AXI trap simulation and PCIe commit simulation both passed |
+| `local_python_2026-06-04_live_control_updates.json` | process affinity `8-9` | Python, SystemVerilog, AXI4-Lite, PCIe-MMIO | AXI4-Lite staged-update sequence median `13683.303` ns; PCIe-MMIO staged-update sequence median `13786.909` ns; AXI trap simulation and PCIe commit simulation both passed |
 
 The PCIe surface is a register-window adapter contract over the same staged
-parameter-bank core used by AXI4-Lite. It does not claim a full PCIe hard-IP
-endpoint implementation. Upstream PCIe hard IP must decode MMIO transactions
-into the single-clock strobes exposed by the generated wrapper.
+parameter-bank core used by AXI4-Lite. The update guard is
+`crc32-ieee-le-4x32`, computed over bank select, entry index, low data word, and
+high data word. It does not claim a full PCIe hard-IP endpoint implementation.
+Upstream PCIe hard IP must decode MMIO transactions into the single-clock
+strobes exposed by the generated wrapper.

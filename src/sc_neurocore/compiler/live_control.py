@@ -15,7 +15,9 @@ describe how long-lived parameters are written to a target design.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Literal
+import struct
+from typing import Any, Literal, cast
+import zlib
 
 from sc_neurocore.compiler.quantizer import QFormat
 
@@ -36,6 +38,7 @@ MMIOWritePurpose = Literal[
 ]
 
 _VALID_PROTOCOLS = frozenset({"axi4_lite", "axi_lite", "pcie"})
+UPDATE_CHECKSUM_ALGORITHM = "crc32-ieee-le-4x32"
 CONTROL_UPDATE_VALID = 0x1
 CONTROL_COMMIT = 0x2
 CONTROL_CLEAR_TRAP = 0x4
@@ -70,7 +73,7 @@ def _normalise_bus_protocol(protocol: str) -> BusProtocol:
         protocol = "axi4_lite"
     if protocol not in _VALID_PROTOCOLS:
         raise ValueError(f"Unsupported MMIO protocol: {protocol!r}")
-    return protocol  # type: ignore[return-value]
+    return cast(BusProtocol, protocol)
 
 
 @dataclass(frozen=True)
@@ -97,7 +100,7 @@ class MMIOWrite:
 
 @dataclass(frozen=True)
 class TrapSpec:
-    """Contract for overflow and saturation trap signaling.
+    """Contract for overflow and saturation trap signalling.
 
     Parameters
     ----------
@@ -423,17 +426,24 @@ class MMIOUpdateSpec:
         }
 
     def update_checksum(self, bank_name: str, parameter: int | str, encoded_value: int) -> int:
-        """Return deterministic 32-bit checksum for one staged update.
+        """Return deterministic IEEE CRC32 guard for one staged update.
 
-        The checksum is a control-plane guard, not a cryptographic primitive:
-        it binds bank select, entry index, and the staged 64-bit value so stale
-        or partial writes cannot be applied silently.
+        The checksum is a control-plane guard, not a cryptographic primitive.
+        It binds bank select, entry index, and the staged 64-bit value so stale
+        or partial writes cannot be applied silently. The payload is four
+        little-endian 32-bit words: bank select, entry index, low data word,
+        high data word.
         """
         bank = self.bank_by_name(bank_name)
         bank_select = self.bank_index(bank_name)
         entry_index = bank.entry_index(parameter)
         encoded_word = bank.normalise_encoded_word(encoded_value)
-        return _xor32(bank_select, entry_index, encoded_word & 0xFFFF_FFFF, encoded_word >> 32)
+        return _crc32_update_guard(
+            bank_select,
+            entry_index,
+            encoded_word & 0xFFFF_FFFF,
+            encoded_word >> 32,
+        )
 
     def bank_index(self, bank_name: str) -> int:
         """Return deterministic bank-select index for one bank name."""
@@ -533,6 +543,7 @@ class MMIOUpdateSpec:
             "supports_burst": self.supports_burst,
             "supports_partial_write": self.supports_partial_write,
             "control_base_address_bytes": self.control_base_address_bytes,
+            "checksum_algorithm": UPDATE_CHECKSUM_ALGORITHM,
             "control_registers": self.control_register_addresses,
             "control_bits": self.control_bits,
             "status_bits": self.status_bits,
@@ -586,9 +597,19 @@ def _ranges_overlap(ranges: Any, candidate: tuple[int, int]) -> bool:
     return False
 
 
-def _xor32(*values: int) -> int:
-    """Return a deterministic 32-bit XOR fold for MMIO write guards."""
-    checksum = 0
-    for value in values:
-        checksum ^= int(value) & 0xFFFF_FFFF
-    return checksum & 0xFFFF_FFFF
+def _crc32_update_guard(
+    bank_select: int,
+    entry_index: int,
+    data_lo: int,
+    data_hi: int,
+) -> int:
+    """Return IEEE CRC32 over four little-endian 32-bit update words."""
+
+    payload = struct.pack(
+        "<IIII",
+        bank_select & 0xFFFF_FFFF,
+        entry_index & 0xFFFF_FFFF,
+        data_lo & 0xFFFF_FFFF,
+        data_hi & 0xFFFF_FFFF,
+    )
+    return zlib.crc32(payload) & 0xFFFF_FFFF

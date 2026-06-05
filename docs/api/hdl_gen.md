@@ -165,7 +165,7 @@ sticky-latch contracts for formal or simulation audit runs.
 Live-control parameter banks are generated from `MMIOUpdateSpec` with
 `generate_live_parameter_bank(...)`. The emitted AXI4-Lite RTL uses
 BRAM/distributed RAM style hints per bank, fixed control/status register
-addresses, staged low/high write-data registers, checksum-guarded shadow loads,
+addresses, staged low/high write-data registers, CRC32-guarded shadow loads,
 explicit apply and rollback pulses, flattened active-only `parameter_words`
 output, and host-visible trap clear/status signals. It also derives sticky
 staged-overflow and staged-underflow traps from the selected bank width before
@@ -175,8 +175,8 @@ coefficients while keeping the precision and trap contracts auditable.
 The local regression artefact
 `benchmarks/results/local_python_2026-06-04_live_control_updates.json` records
 the generated update-sequence timing, static RTL regeneration timing, and
-overflow/underflow trap-capture simulation under taskset-only affinity; it is
-not a production throughput claim.
+overflow/underflow trap-capture simulation under recorded process affinity; it
+is not a production throughput claim.
 
 ### 2.4 Nanosecond response budget
 

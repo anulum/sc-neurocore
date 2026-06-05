@@ -28,6 +28,7 @@ from sc_neurocore.compiler.live_control import (
     TRAP_STAGED_OVERFLOW,
     TRAP_STAGED_UNDERFLOW,
     TrapSpec,
+    UPDATE_CHECKSUM_ALGORITHM,
 )
 
 
@@ -159,6 +160,7 @@ def test_mmio_update_serialization_roundtrip() -> None:
     assert restored.has_traps is True
     assert payload["control_registers"]["control"] == 0x0
     assert payload["control_registers"]["write_checksum"] == 0x20
+    assert payload["checksum_algorithm"] == UPDATE_CHECKSUM_ALGORITHM
     assert payload["status_bits"]["trap_latched"] == STATUS_TRAP_LATCHED
     assert payload["status_bits"]["shadow_loaded"] == STATUS_SHADOW_LOADED
     assert payload["status_bits"]["applied"] == STATUS_APPLIED
@@ -271,6 +273,29 @@ def test_mmio_update_sequence_stages_and_commits_wide_bfp_word() -> None:
     assert writes[-1].value == CONTROL_COMMIT
     assert spec.status_bits["update_ack"] == STATUS_UPDATE_ACK
     assert CONTROL_REGISTER_SPAN_BYTES == 0x24
+
+
+def test_mmio_update_checksum_uses_ieee_crc32_update_guard() -> None:
+    bank = ParameterBankSpec(
+        bank_name="weights",
+        start_address_bytes=0x9000,
+        parameter_count=2,
+        parameter_names=("w_0", "w_1"),
+        q_format="Q16.16",
+    )
+    spec = MMIOUpdateSpec(
+        bus_protocol="axi4_lite",
+        banks=(bank,),
+        control_base_address_bytes=0x100,
+    )
+
+    checksum = spec.update_checksum("weights", "w_0", 0x1234)
+
+    assert checksum == 0x1D7D9B35
+    assert checksum != 0x00001234
+    assert spec.update_checksum("weights", "w_1", 0x1234) != checksum
+    assert spec.update_checksum("weights", "w_0", 0x1235) != checksum
+    assert spec.update_checksum("weights", "w_0", 0x00010000) == 0x27E798F0
 
 
 def test_mmio_update_sequence_supports_explicit_apply_and_rollback() -> None:
