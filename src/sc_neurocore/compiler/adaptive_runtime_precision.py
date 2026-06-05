@@ -101,6 +101,10 @@ def _precision_manifest(
 ) -> dict[str, Any]:
     """Build deterministic metadata for precision contracts."""
     if isinstance(parsed, QFormat):
+        if parameter_count is not None:
+            raise ValueError(
+                "parameter_count metadata is only valid for block-floating precision"
+            )
         return {
             "kind": kind,
             "source": source,
@@ -109,6 +113,12 @@ def _precision_manifest(
             "fraction": parsed.fraction_bits,
             "signed": True,
             "emitted_fraction": emitted_fraction,
+            "emitted_datapath_width": resolved_width,
+            "emitted_datapath_fraction": emitted_fraction,
+            "exponent_stream_width": 0,
+            "exponent_vector_width": 0,
+            "datapath_contract": "fixed_point_twos_complement",
+            "emitter_contract_version": "adaptive_precision_emitter.v1",
         }
 
     metadata: dict[str, Any] = dict(parsed.metadata)
@@ -121,6 +131,12 @@ def _precision_manifest(
             "fraction": emitted_fraction,
             "signed": True,
             "emitted_fraction": emitted_fraction,
+            "emitted_datapath_width": resolved_width,
+            "emitted_datapath_fraction": emitted_fraction,
+            "emitted_datapath_contract": (
+                "mantissa_width_fixed_datapath_with_detached_shared_exponent_stream"
+            ),
+            "exponent_stream_width": parsed.exponent_bits,
             "exponent_bias": parsed.exponent_bias,
             "exponent_code_range": [0, (1 << parsed.exponent_bits) - 1],
             "mantissa_abs_max": parsed.mantissa_range,
@@ -129,7 +145,10 @@ def _precision_manifest(
             "block_exponent_alignment": "contiguous_flattened_block",
             "block_exponent_count": "ceil(parameter_count / block_size)",
             "block_exponent_count_policy": "ceil(parameter_count / block_size)",
+            "exponent_vector_width": "exponent_bits * ceil(parameter_count / block_size)",
             "datapath_contract": "fixed_mantissa_with_explicit_shared_exponent_metadata",
+            "bfp_emission_status": "metadata_only_until_target_bfp_datapath_selection",
+            "emitter_contract_version": "adaptive_precision_emitter.v1",
         }
     )
     if parameter_count is not None:
@@ -139,6 +158,7 @@ def _precision_manifest(
                 "parameter_count": parameter_count,
                 "block_exponent_count": layout.exponent_count,
                 "block_exponent_layout": layout.manifest(),
+                "exponent_vector_width": parsed.exponent_bits * layout.exponent_count,
             }
         )
     return metadata
@@ -414,6 +434,7 @@ def compile_adaptive_precision(
             {
                 "schema_version": "1.0",
                 "kind": "adaptive_precision_v1",
+                "emitter_contract_version": "adaptive_precision_emitter.v1",
                 "module_name": safe_name,
                 "primary_variable": primary_var,
                 "threshold_up_pct": threshold_up_pct,
