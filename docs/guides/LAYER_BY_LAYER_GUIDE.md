@@ -1,6 +1,6 @@
 # Layer-by-Layer Guide: Building Your Architecture
 
-**Version**: 3.15.30
+**Version**: 3.15.31
 **Target**: Detailed Component Reference
 
 ---

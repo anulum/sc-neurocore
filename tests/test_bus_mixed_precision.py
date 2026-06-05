@@ -211,7 +211,8 @@ class TestMixedPrecisionSpec:
                 "v": PrecisionConfig(16, 8),
             }
         )
-        assert spec.get("v").data_width == 16
+        assert spec.get("v").data_width == 15
+        assert spec.get("v").q_label == "Q7.8"
 
     def test_get_missing(self) -> None:
         """Should raise on missing variable."""
@@ -312,7 +313,8 @@ class TestFromPreset:
     def test_case_insensitive(self) -> None:
         """Preset lookup should be case-insensitive."""
         spec = from_preset({"v": "Q7.8"})
-        assert spec.get("v").data_width == 16
+        assert spec.get("v").data_width == 15
+        assert spec.get("v").q_label == "Q7.8"
 
     def test_block_floating_preset(self) -> None:
         """Block-floating presets should be materializable and typed."""
