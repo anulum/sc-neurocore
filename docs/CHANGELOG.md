@@ -5,7 +5,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
-## [3.15.15] - 2026-06-05
+## [3.15.16] - 2026-06-05
 
 ### Release workflows
 - Fixed Docker Trivy scans to use the metadata-selected image tag as an
