@@ -1510,7 +1510,7 @@ dependencies = [
 
 [[package]]
 name = "sc_neurocore_engine"
-version = "3.15.13"
+version = "3.15.14"
 dependencies = [
  "bytemuck",
  "core_affinity",
