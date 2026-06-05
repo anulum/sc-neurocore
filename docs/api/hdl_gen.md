@@ -176,6 +176,9 @@ update guard, mutate calibration/read-only constants, or masquerade as a loaded
 shadow update. This lets a
 deployed design hot-swap weights or phase-coupling
 coefficients while keeping the precision and trap contracts auditable.
+Successful shadow loads also latch the accepted bank and entry index. Apply and
+rollback use that latched identity, preventing post-load writes to `bank_select`
+or `entry_index` from redirecting an in-flight coefficient update.
 The local regression artefact
 `benchmarks/results/local_python_2026-06-04_live_control_updates.json` records
 the generated update-sequence timing, static RTL regeneration timing, and

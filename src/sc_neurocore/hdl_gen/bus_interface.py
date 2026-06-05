@@ -294,6 +294,8 @@ def generate_live_parameter_bank(
         "    reg [DATA_WIDTH-1:0] reg_write_data_hi;",
         "    reg [DATA_WIDTH-1:0] reg_write_checksum;",
         "    reg reg_shadow_loaded;",
+        "    reg [DATA_WIDTH-1:0] reg_shadow_bank_select;",
+        "    reg [DATA_WIDTH-1:0] reg_shadow_entry_index;",
         "    reg [TRAP_WIDTH-1:0] reg_trap_vector;",
         "    wire [63:0] staged_word = {reg_write_data_hi, reg_write_data_lo};",
         "",
@@ -394,6 +396,8 @@ def generate_live_parameter_bank(
             "    wire staged_update_fault = staged_overflow_fault | staged_underflow_fault;",
             f"    wire bank_entry_selection_valid = {' | '.join(f'{name}_selected_for_update' for name in bank_names)};",
             f"    wire bank_update_writable = {' | '.join(writable_terms)};",
+            "    wire [DATA_WIDTH-1:0] rollback_bank_select = reg_shadow_loaded ? reg_shadow_bank_select : reg_bank_select;",
+            "    wire [DATA_WIDTH-1:0] rollback_entry_index = reg_shadow_loaded ? reg_shadow_entry_index : reg_entry_index;",
             "    wire [TRAP_WIDTH-1:0] generated_trap_vector =",
             "        (staged_overflow_fault ? TRAP_STAGED_OVERFLOW_VECTOR : {TRAP_WIDTH{1'b0}}) |",
             "        (staged_underflow_fault ? TRAP_STAGED_UNDERFLOW_VECTOR : {TRAP_WIDTH{1'b0}});",
@@ -430,6 +434,8 @@ def generate_live_parameter_bank(
             "            reg_write_data_hi <= {DATA_WIDTH{1'b0}};",
             "            reg_write_checksum <= {DATA_WIDTH{1'b0}};",
             "            reg_shadow_loaded <= 1'b0;",
+            "            reg_shadow_bank_select <= {DATA_WIDTH{1'b0}};",
+            "            reg_shadow_entry_index <= {DATA_WIDTH{1'b0}};",
             "            reg_trap_vector <= {TRAP_WIDTH{1'b0}};",
             "            update_pulse <= 1'b0;",
             "            apply_pulse <= 1'b0;",
@@ -486,6 +492,8 @@ def generate_live_parameter_bank(
             "                            if (checksum_valid && !staged_update_fault && bank_entry_selection_valid && bank_update_writable) begin",
             "                            update_pulse <= 1'b1;",
             "                            reg_shadow_loaded <= 1'b1;",
+            "                            reg_shadow_bank_select <= reg_bank_select;",
+            "                            reg_shadow_entry_index <= reg_entry_index;",
             "                            reg_status <= STATUS_READY | STATUS_SHADOW_LOADED | STATUS_CHECKSUM_VALID | trap_status_bit;",
             "                            case (reg_bank_select)",
         ]
@@ -529,7 +537,7 @@ def generate_live_parameter_bank(
             "                                apply_pulse <= 1'b1;",
             "                                reg_shadow_loaded <= 1'b0;",
             "                                reg_status <= STATUS_READY | STATUS_UPDATE_ACK | STATUS_APPLIED | trap_status_bit;",
-            "                                case (reg_bank_select)",
+            "                                case (reg_shadow_bank_select)",
         ]
     )
 
@@ -537,8 +545,8 @@ def generate_live_parameter_bank(
         lines.extend(
             [
                 f"                                    32'd{bank_index}: begin",
-                f"                                        if (reg_entry_index < 32'd{bank.parameter_count}) begin",
-                f"                                            {bank_name}[reg_entry_index] <= shadow_{bank_name}[reg_entry_index];",
+                f"                                        if (reg_shadow_entry_index < 32'd{bank.parameter_count}) begin",
+                f"                                            {bank_name}[reg_shadow_entry_index] <= shadow_{bank_name}[reg_shadow_entry_index];",
                 "                                        end",
                 "                                    end",
             ]
@@ -555,7 +563,7 @@ def generate_live_parameter_bank(
             "                            rollback_pulse <= 1'b1;",
             "                            reg_shadow_loaded <= 1'b0;",
             "                            reg_status <= STATUS_READY | STATUS_ROLLBACK_ACK | trap_status_bit;",
-            "                            case (reg_bank_select)",
+            "                            case (rollback_bank_select)",
         ]
     )
 
@@ -563,8 +571,8 @@ def generate_live_parameter_bank(
         lines.extend(
             [
                 f"                                32'd{bank_index}: begin",
-                f"                                    if (reg_entry_index < 32'd{bank.parameter_count}) begin",
-                f"                                        shadow_{bank_name}[reg_entry_index] <= {bank_name}[reg_entry_index];",
+                f"                                    if (rollback_entry_index < 32'd{bank.parameter_count}) begin",
+                f"                                        shadow_{bank_name}[rollback_entry_index] <= {bank_name}[rollback_entry_index];",
                 "                                    end",
                 "                                end",
             ]

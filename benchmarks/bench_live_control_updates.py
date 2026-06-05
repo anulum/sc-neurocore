@@ -516,9 +516,11 @@ module tb_sc_live_pcie_params;
             $finish(2);
         end
 
+        pcie_write(32'h108, 32'd2);
+        pcie_write(32'h10C, 32'd0);
         pcie_write(32'h100, 32'h00000002);
         repeat (2) @(negedge clk);
-        if (parameter_words[15:0] !== 16'h1234 || shadow_loaded !== 1'b0) begin
+        if (parameter_words[15:0] !== 16'h1234 || parameter_words[2063:2048] !== 16'h0000 || shadow_loaded !== 1'b0) begin
             $finish(3);
         end
         if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000 || staged_overflow !== 1'b0 || staged_underflow !== 1'b0) begin
@@ -570,6 +572,7 @@ endmodule
         "invalid_selection_trap_bit": TRAP_INVALID_SELECTION,
         "read_only_bank_rejected": True,
         "read_only_bank_trap_bit": TRAP_READ_ONLY_BANK,
+        "retargeted_commit_preserved_shadow_identity": True,
         "passed": True,
     }
 

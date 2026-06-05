@@ -6,6 +6,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Latched live-control shadow bank and entry identity at load time so generated
+  AXI4-Lite/PCIe apply and rollback operations cannot be retargeted by later
+  selection-register writes.
 - Added sticky live-control read-only-bank traps so generated AXI4-Lite/PCIe
   parameter banks reject direct MMIO writes to calibration/read-only banks before
   shadow loading or active coefficient mutation.

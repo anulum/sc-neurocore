@@ -58,8 +58,16 @@ def test_live_parameter_bank_emits_bram_and_distributed_banks() -> None:
     assert "localparam [ADDR_WIDTH-1:0] ADDR_CHECKSUM   = 32'h120;" in source
     assert "shadow_weights[reg_entry_index] <= staged_word[15:0];" in source
     assert "shadow_kuramoto[reg_entry_index] <= staged_word[31:0];" in source
-    assert "weights[reg_entry_index] <= shadow_weights[reg_entry_index];" in source
-    assert "shadow_weights[reg_entry_index] <= weights[reg_entry_index];" in source
+    assert "reg [DATA_WIDTH-1:0] reg_shadow_bank_select;" in source
+    assert "reg [DATA_WIDTH-1:0] reg_shadow_entry_index;" in source
+    assert "reg_shadow_bank_select <= reg_bank_select;" in source
+    assert "reg_shadow_entry_index <= reg_entry_index;" in source
+    assert "weights[reg_shadow_entry_index] <= shadow_weights[reg_shadow_entry_index];" in source
+    assert "shadow_weights[rollback_entry_index] <= weights[rollback_entry_index];" in source
+    assert (
+        "wire [DATA_WIDTH-1:0] rollback_bank_select = reg_shadow_loaded ? reg_shadow_bank_select : reg_bank_select;"
+        in source
+    )
     assert "assign parameter_words[0 +: 16] = weights[0];" in source
     assert "output reg                          apply_pulse" in source
     assert "output reg                          rollback_pulse" in source
@@ -386,10 +394,12 @@ module tb_sc_live_pcie_params;
             $finish(2);
         end
 
+        pcie_write(32'h108, 32'd1);
+        pcie_write(32'h10C, 32'd0);
         pcie_write(32'h100, 32'h00000002);
         repeat (2) @(negedge clk);
         if (parameter_words[15:0] !== 16'h1234 || parameter_words[31:16] !== 16'h0000 || shadow_loaded !== 1'b0) begin
-            $display("PCIe MMIO commit failed, parameter=%h shadow=%b", parameter_words, shadow_loaded);
+            $display("PCIe MMIO commit failed or retargeted after shadow load, parameter=%h shadow=%b", parameter_words, shadow_loaded);
             $finish(3);
         end
         if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000 || staged_overflow !== 1'b0 || staged_underflow !== 1'b0) begin

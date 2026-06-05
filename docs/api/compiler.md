@@ -287,6 +287,10 @@ deterministic CRC32 checksum, reject mismatches through a sticky
 `checksum_mismatch` trap, load it into a shadow bank, and then apply it explicitly,
 so operators can update weights or Kuramoto phase-coupling parameters without
 resynthesising the bitstream.
+Successful shadow loads latch the bank and entry identity at load time. Apply
+and rollback use that latched identity rather than the mutable selection
+registers, so a later `bank_select` or `entry_index` write cannot retarget an
+in-flight transaction.
 
 The status map exposes `ready`, `busy`, `update_ack`, `trap_latched`,
 `shadow_loaded`, `applied`, `rollback_ack`, `checksum_valid`, and sticky
