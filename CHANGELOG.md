@@ -4,6 +4,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.8] - 2026-06-05
+
+### Documentation and release polish
+- Bumped Python, Rust engine, bridge package, Sphinx docs, README, and
+  generated capability metadata to version `3.15.8`.
+- Expanded the public documentation surface with an evaluator map covering
+  onboarding, notebooks, tutorials, API docs, benchmarks, hardware, industrial
+  applications, commercial evaluation, and evidence boundaries.
+- Kept benchmark, hardware, clinical, regulatory, and market language tied to
+  committed artefacts or explicit missing-evidence boundaries.
+
 ## [3.15.1] - 2026-06-01
 
 ### Documentation and release polish

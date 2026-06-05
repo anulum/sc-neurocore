@@ -32,4 +32,13 @@ industrial-control condition monitoring. The profile data deliberately records
 hazards and missing evidence instead of making unsupported field-deployment
 claims.
 
+## Buyer-facing interpretation
+
+Use this API to turn a potential application into a diligence checklist. A
+`ready=false` result is useful: it names the exact missing evidence before a
+pilot or commercial deployment discussion. A `ready=true` result means the
+local evidence bag satisfies the profile contract; it does not replace
+independent certification, target-hardware qualification, cybersecurity review,
+or domain-authority acceptance.
+
 ::: sc_neurocore.industrial_applications

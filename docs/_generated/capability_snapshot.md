@@ -5,15 +5,15 @@
 
 | Surface | Current inventory |
 |---|---:|
-| Package version | 3.15.7 |
+| Package version | 3.15.8 |
 | Public API exports | 44 |
 | Python model source modules | 151 |
 | Python model classes | 157 |
 | Model documentation pages | 174 |
 | Rust PyO3 model wrappers | 175 |
 | Optional extras | 24 |
-| Python test files | 742 |
-| Public documentation pages | 538 |
+| Python test files | 762 |
+| Public documentation pages | 543 |
 | GitHub Actions workflows | 14 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
