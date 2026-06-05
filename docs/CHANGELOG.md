@@ -6,6 +6,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added sticky live-control partial-write traps so generated AXI4-Lite/PCIe
+  parameter banks reject partial `WSTRB` updates before control or staged-data
+  registers can be modified.
 - Latched live-control shadow bank and entry identity at load time so generated
   AXI4-Lite/PCIe apply and rollback operations cannot be retargeted by later
   selection-register writes.

@@ -78,6 +78,9 @@ def test_live_parameter_bank_emits_bram_and_distributed_banks() -> None:
     assert "output reg                          checksum_mismatch_pulse" in source
     assert "output reg                          invalid_selection_pulse" in source
     assert "output reg                          read_only_bank_pulse" in source
+    assert "output reg                          partial_write_pulse" in source
+    assert "FULL_WRITE_STROBE" in source
+    assert "wire write_strobe_accepted = (S_AXI_WSTRB == FULL_WRITE_STROBE);" in source
     assert "localparam [31:0] UPDATE_CRC32_POLY_REFLECTED = 32'hEDB88320;" in source
     assert "function automatic [31:0] live_update_crc32;" in source
     assert (
@@ -91,6 +94,7 @@ def test_live_parameter_bank_emits_bram_and_distributed_banks() -> None:
     assert "TRAP_CHECKSUM_MISMATCH_VECTOR" in source
     assert "TRAP_INVALID_SELECTION_VECTOR" in source
     assert "TRAP_READ_ONLY_BANK_VECTOR" in source
+    assert "TRAP_PARTIAL_WRITE_VECTOR" in source
     assert "wire kuramoto_writable_for_update = kuramoto_selected_for_update && 1'b0;" in source
     assert "wire bank_update_writable = weights_writable_for_update | kuramoto_writable_for_update;" in source
     assert (
@@ -100,6 +104,7 @@ def test_live_parameter_bank_emits_bram_and_distributed_banks() -> None:
     assert "checksum_mismatch_pulse <= 1'b1;" in source
     assert "invalid_selection_pulse <= 1'b1;" in source
     assert "read_only_bank_pulse <= 1'b1;" in source
+    assert "partial_write_pulse <= 1'b1;" in source
     assert "reg_trap_vector <= reg_trap_vector | observed_trap_vector;" in source
     assert (
         "ADDR_TRAP_STAT: S_AXI_RDATA <= {{(DATA_WIDTH-TRAP_WIDTH){1'b0}}, reg_trap_vector};"
@@ -130,6 +135,7 @@ def test_live_parameter_bank_emits_pcie_mmio_register_window_contract() -> None:
     assert "checksum_mismatch_pulse" in source
     assert "invalid_selection_pulse" in source
     assert "read_only_bank_pulse" in source
+    assert "partial_write_pulse" in source
     assert "assign pcie_mmio_write_ready = core_awready & core_wready;" in source
     assert ".S_AXI_AWVALID(pcie_mmio_write_valid)" in source
     assert ".S_AXI_WVALID(pcie_mmio_write_valid)" in source
@@ -142,6 +148,16 @@ def test_live_parameter_bank_emits_pcie_mmio_register_window_contract() -> None:
     spec = MMIOUpdateSpec(bus_protocol="axi4_lite", banks=(bank,), control_base_address_bytes=0x100)
     with pytest.raises(ValueError, match="SystemVerilog identifier"):
         generate_live_parameter_bank(spec, module_name="bad;endmodule")
+    with pytest.raises(ValueError, match="full-word writes"):
+        generate_live_parameter_bank(
+            MMIOUpdateSpec(
+                bus_protocol="axi4_lite",
+                banks=(bank,),
+                control_base_address_bytes=0x100,
+                supports_partial_write=True,
+            ),
+            module_name="sc_live_params",
+        )
 
 
 def test_live_parameter_bank_rtl_compiles_with_iverilog(tmp_path: Path) -> None:
@@ -233,14 +249,15 @@ module tb_sc_live_pcie_params;
     wire [31:0] read_data;
     wire read_data_valid;
     wire read_error;
-    reg [4:0] external_trap_vector = 5'b00000;
+    reg [5:0] external_trap_vector = 6'b000000;
     wire trap_latched;
-    wire [4:0] trap_status_vector;
+    wire [5:0] trap_status_vector;
     wire staged_overflow;
     wire staged_underflow;
     reg observed_checksum_mismatch = 1'b0;
     reg observed_invalid_selection = 1'b0;
     reg observed_read_only_bank = 1'b0;
+    reg observed_partial_write = 1'b0;
     wire update_pulse;
     wire apply_pulse;
     wire rollback_pulse;
@@ -248,6 +265,7 @@ module tb_sc_live_pcie_params;
     wire checksum_mismatch_pulse;
     wire invalid_selection_pulse;
     wire read_only_bank_pulse;
+    wire partial_write_pulse;
     wire shadow_loaded;
     wire [31:0] parameter_words;
 
@@ -261,6 +279,9 @@ module tb_sc_live_pcie_params;
         end
         if (read_only_bank_pulse) begin
             observed_read_only_bank <= 1'b1;
+        end
+        if (partial_write_pulse) begin
+            observed_partial_write <= 1'b1;
         end
     end
 
@@ -292,6 +313,7 @@ module tb_sc_live_pcie_params;
         .checksum_mismatch_pulse(checksum_mismatch_pulse),
         .invalid_selection_pulse(invalid_selection_pulse),
         .read_only_bank_pulse(read_only_bank_pulse),
+        .partial_write_pulse(partial_write_pulse),
         .shadow_loaded(shadow_loaded),
         .parameter_words(parameter_words)
     );
@@ -314,10 +336,49 @@ module tb_sc_live_pcie_params;
         end
     endtask
 
+    task pcie_partial_write;
+        input [31:0] addr;
+        input [31:0] data;
+        input [3:0] strobe;
+        begin
+            @(negedge clk);
+            write_addr = addr;
+            write_data = data;
+            write_strobe = strobe;
+            write_valid = 1'b1;
+            @(negedge clk);
+            write_valid = 1'b0;
+            @(negedge clk);
+            write_strobe = 4'hF;
+            if (write_error !== 1'b1) begin
+                $display("partial PCIe MMIO write did not raise write error at %h", addr);
+                $finish(14);
+            end
+        end
+    endtask
+
     initial begin
         repeat (2) @(negedge clk);
         rst_n = 1'b1;
         repeat (2) @(negedge clk);
+
+        pcie_partial_write(32'h110, 32'hFFFFEEEE, 4'h1);
+        repeat (2) @(negedge clk);
+        if (shadow_loaded !== 1'b0 || parameter_words !== 32'h00000000) begin
+            $display("partial write unexpectedly mutated live-control state");
+            $finish(15);
+        end
+        if (trap_latched !== 1'b1 || trap_status_vector[5] !== 1'b1 || observed_partial_write !== 1'b1) begin
+            $display("partial write did not raise trap, status=%b observed=%b", trap_status_vector, observed_partial_write);
+            $finish(16);
+        end
+
+        pcie_write(32'h11C, 32'h0000003F);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
+            $display("partial-write trap clear failed, status=%b", trap_status_vector);
+            $finish(17);
+        end
 
         pcie_write(32'h108, 32'd0);
         pcie_write(32'h10C, 32'd0);
@@ -335,9 +396,9 @@ module tb_sc_live_pcie_params;
             $finish(6);
         end
 
-        pcie_write(32'h11C, 32'h0000001F);
+        pcie_write(32'h11C, 32'h0000003F);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
             $display("checksum-mismatch trap clear failed, status=%b", trap_status_vector);
             $finish(7);
         end
@@ -356,9 +417,9 @@ module tb_sc_live_pcie_params;
             $finish(9);
         end
 
-        pcie_write(32'h11C, 32'h0000001F);
+        pcie_write(32'h11C, 32'h0000003F);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
             $display("invalid-selection trap clear failed, status=%b", trap_status_vector);
             $finish(10);
         end
@@ -377,9 +438,9 @@ module tb_sc_live_pcie_params;
             $finish(12);
         end
 
-        pcie_write(32'h11C, 32'h0000001F);
+        pcie_write(32'h11C, 32'h0000003F);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
             $display("read-only-bank trap clear failed, status=%b", trap_status_vector);
             $finish(13);
         end
@@ -402,7 +463,7 @@ module tb_sc_live_pcie_params;
             $display("PCIe MMIO commit failed or retargeted after shadow load, parameter=%h shadow=%b", parameter_words, shadow_loaded);
             $finish(3);
         end
-        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000 || staged_overflow !== 1'b0 || staged_underflow !== 1'b0) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000 || staged_overflow !== 1'b0 || staged_underflow !== 1'b0) begin
             $display("valid PCIe MMIO update raised a trap");
             $finish(4);
         end
@@ -480,9 +541,9 @@ module tb_sc_live_params;
     wire [1:0] rresp;
     wire rvalid;
     reg rready = 1'b0;
-    reg [4:0] external_trap_vector = 5'b00000;
+    reg [5:0] external_trap_vector = 6'b000000;
     wire trap_latched;
-    wire [4:0] trap_status_vector;
+    wire [5:0] trap_status_vector;
     wire staged_overflow;
     wire staged_underflow;
     wire update_pulse;
@@ -492,6 +553,7 @@ module tb_sc_live_params;
     wire checksum_mismatch_pulse;
     wire invalid_selection_pulse;
     wire read_only_bank_pulse;
+    wire partial_write_pulse;
     wire shadow_loaded;
     wire [15:0] parameter_words;
 
@@ -529,6 +591,7 @@ module tb_sc_live_params;
         .checksum_mismatch_pulse(checksum_mismatch_pulse),
         .invalid_selection_pulse(invalid_selection_pulse),
         .read_only_bank_pulse(read_only_bank_pulse),
+        .partial_write_pulse(partial_write_pulse),
         .shadow_loaded(shadow_loaded),
         .parameter_words(parameter_words)
     );
@@ -574,7 +637,7 @@ module tb_sc_live_params;
 
         axi_write(32'h11C, 32'h00000003);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
             $display("trap clear failed, status=%b", trap_status_vector);
             $finish(1);
         end

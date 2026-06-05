@@ -119,9 +119,9 @@ hard IP to present decoded single-clock MMIO strobes.
 
 | Path | Workload | Result | Raw evidence |
 |------|----------|--------|--------------|
-| Python update-sequence builder | 20,000 deterministic staged writes x 7 repeats | AXI4-Lite median `13.128 us/sequence`; PCIe-MMIO median `12.366 us/sequence` under process affinity `8-9` | `benchmarks/results/local_python_2026-06-04_live_control_updates.json` |
+| Python update-sequence builder | 20,000 deterministic staged writes x 7 repeats | AXI4-Lite median `13.822 us/sequence`; PCIe-MMIO median `13.589 us/sequence` under process affinity `8-9` | `benchmarks/results/local_python_2026-06-04_live_control_updates.json` |
 | SystemVerilog AXI4-Lite core | Generated trap-capture simulation | `trap_capture.passed=true`; staged overflow and underflow traps latched without mutating active coefficients | `benchmarks/results/local_python_2026-06-04_live_control_updates.json` |
-| SystemVerilog PCIe-MMIO wrapper | Generated commit simulation | `pcie_mmio_commit_capture.passed=true`; stale CRC32 guard raises sticky `checksum_mismatch`, invalid bank selection raises sticky `invalid_selection`, read-only bank writes raise sticky `read_only_bank`, and retargeting selection registers after shadow load cannot redirect the committed bank | `benchmarks/results/local_python_2026-06-04_live_control_updates.json` |
+| SystemVerilog PCIe-MMIO wrapper | Generated commit simulation | `pcie_mmio_commit_capture.passed=true`; partial write strobes raise sticky `partial_write`, stale CRC32 guard raises sticky `checksum_mismatch`, invalid bank selection raises sticky `invalid_selection`, read-only bank writes raise sticky `read_only_bank`, and retargeting selection registers after shadow load cannot redirect the committed bank | `benchmarks/results/local_python_2026-06-04_live_control_updates.json` |
 
 No Rust, Julia, Go, or Mojo counterpart exists for this HDL bus-adapter surface
 as of 2026-06-04.  Cross-language comparison therefore means Python control
