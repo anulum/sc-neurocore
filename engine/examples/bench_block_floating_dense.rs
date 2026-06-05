@@ -112,6 +112,10 @@ fn main() {
     let exponent_checksum = exponents.iter().map(|&value| i64::from(value)).sum::<i64>();
     let exponent_code_min = exponents.iter().copied().min().unwrap_or(0);
     let exponent_code_max = exponents.iter().copied().max().unwrap_or(0);
+    let parameter_count = N_INPUTS * N_OUTPUTS;
+    let block_exponent_count = mode
+        .block_exponent_count(parameter_count)
+        .expect("benchmark parameter count must have a valid BFP layout");
     let saturating_probe = block_floating_dense_q16(
         &saturating_mantissas,
         &saturating_exponents,
@@ -142,7 +146,7 @@ fn main() {
             "  \"benchmark\": \"block_floating_dense_q16_64x32\",\n",
             "  \"language\": \"Rust\",\n",
             "  \"timestamp_unix\": {timestamp_unix},\n",
-            "  \"command\": \"taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_block_floating_dense\",\n",
+            "  \"command\": \"taskset -c 8-9 cargo run --manifest-path engine/Cargo.toml --release --example bench_block_floating_dense\",\n",
             "  \"rustc\": \"{rust_version}\",\n",
             "  \"target_os\": \"{os}\",\n",
             "  \"target_arch\": \"{arch}\",\n",
@@ -152,6 +156,8 @@ fn main() {
             "  \"mantissa_bits\": {mantissa_bits},\n",
             "  \"exponent_bits\": {exponent_bits},\n",
             "  \"block_size\": {block_size},\n",
+            "  \"parameter_count\": {parameter_count},\n",
+            "  \"block_exponent_count\": {block_exponent_count},\n",
             "  \"iterations\": {iterations},\n",
             "  \"repeats\": {repeats},\n",
             "  \"median_ns_per_call\": {median_ns_per_call:.3},\n",
@@ -182,6 +188,8 @@ fn main() {
         mantissa_bits = mode.mantissa_bits,
         exponent_bits = mode.exponent_bits,
         block_size = mode.block_size,
+        parameter_count = parameter_count,
+        block_exponent_count = block_exponent_count,
         iterations = ITERATIONS,
         repeats = REPEATS,
         median_ns_per_call = median_ns_per_call,

@@ -50,6 +50,36 @@ def test_block_floating_manifest_carries_alignment_metadata() -> None:
     assert manifest["max_abs_value"] == pytest.approx(524_272.0)
     assert manifest["block_exponent_alignment"] == "contiguous_flattened_block"
     assert manifest["block_exponent_count"] == "ceil(parameter_count / block_size)"
+    assert manifest["block_exponent_count_policy"] == "ceil(parameter_count / block_size)"
+
+
+def test_block_floating_manifest_carries_concrete_layout_when_count_known() -> None:
+    """Concrete parameter counts must produce exact exponent-vector metadata."""
+
+    config = BlockFloatingPrecisionConfig(16, 3, 32)
+    manifest = config.manifest_for_parameter_count(65)
+
+    assert manifest["parameter_count"] == 65
+    assert manifest["block_exponent_count"] == 3
+    assert manifest["block_exponent_layout"] == {
+        "alignment": "contiguous_flattened_block",
+        "flattened_order": "row_major",
+        "parameter_count": 65,
+        "block_size": 32,
+        "exponent_count": 3,
+        "last_block_size": 1,
+        "exponent_index_formula": "parameter_index // block_size",
+    }
+
+
+def test_mixed_precision_spec_manifest_rejects_unknown_parameter_counts() -> None:
+    """Parameter-count manifests must not silently attach to the wrong variable."""
+
+    spec = from_preset({"v": "bfp16e3x32"})
+
+    assert spec.manifest(parameter_counts={"v": 65})["variables"]["v"]["block_exponent_count"] == 3
+    with pytest.raises(KeyError, match="unknown"):
+        spec.manifest(parameter_counts={"unknown": 65})
 
 
 def test_from_preset_block_floating_preserves_exact_metadata() -> None:

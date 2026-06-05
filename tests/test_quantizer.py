@@ -105,6 +105,39 @@ class TestPrecisionMetadata:
         assert QFormat.from_string("Q16.16") == Q16_16
 
 
+class TestBlockExponentLayout:
+    """Validate explicit block-exponent metadata for BFP compiler surfaces."""
+
+    def test_block_exponent_layout_computes_partial_tail(self):
+        mode = BlockFloatingMode.from_aliases("BFP16E3X32")
+        layout = mode.block_exponent_layout(65)
+
+        assert mode.block_exponent_count(65) == 3
+        assert layout.manifest() == {
+            "alignment": "contiguous_flattened_block",
+            "flattened_order": "row_major",
+            "parameter_count": 65,
+            "block_size": 32,
+            "exponent_count": 3,
+            "last_block_size": 1,
+            "exponent_index_formula": "parameter_index // block_size",
+        }
+
+    def test_block_exponent_layout_rejects_bad_counts_and_vectors(self):
+        mode = BlockFloatingMode.from_aliases("BFP16E3X32")
+
+        with pytest.raises(ValueError, match="non-negative"):
+            mode.block_exponent_count(-1)
+        with pytest.raises(TypeError, match="integer"):
+            mode.block_exponent_count(True)
+        with pytest.raises(ValueError, match="exponent count mismatch"):
+            mode.validate_exponents(np.array([0, 1], dtype=np.int64), parameter_count=65)
+        with pytest.raises(ValueError, match="configured block-floating range"):
+            mode.validate_exponents(np.array([0, 8, 1], dtype=np.int64), parameter_count=65)
+        with pytest.raises(TypeError, match="integer codes"):
+            mode.validate_exponents(np.array([0.0, 1.0, 2.0]), parameter_count=65)
+
+
 class TestPrecisionTrapReport:
     """Validate precision trap report invariants for fixed-point deployment telemetry."""
 
@@ -508,6 +541,9 @@ class TestCompiledBlockFloatingDense:
 
         assert compiled.manifest()["operation"] == "dense_block_floating"
         assert compiled.manifest()["weight_shape"] == [2, 2]
+        assert compiled.manifest()["parameter_count"] == 4
+        assert compiled.manifest()["block_exponent_count"] == 2
+        assert compiled.manifest()["block_exponent_layout"]["last_block_size"] == 2
 
         q_inputs = quantize_weights(inputs, fmt=Q16_16).astype(np.float64) / Q16_16.scale
         expected = compiled.reconstructed_weights @ q_inputs

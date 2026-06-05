@@ -34,6 +34,20 @@ step scaled by sensitivity, and stochastic sampling uses the existing Hoeffding
 bitstream-length helper. Custom sensitivity maps can be supplied after an
 external sensitivity-analysis pass.
 
+## Adaptive runtime precision BFP metadata
+
+`compile_adaptive_precision(...)` accepts fixed Q-format strings such as
+`Q8.8`/`Q16.16` and block-floating strings such as `BFP16E3X32`.  When a
+block-floating precision is supplied with `lp_parameter_count` or
+`hp_parameter_count`, the generated manifest records the exact
+`block_exponent_layout`: flattened row-major parameter count, block size,
+exponent-vector length, and final partial-block size.  Invalid negative
+parameter counts fail before RTL emission.
+
+This metadata is a compiler contract for downstream emitters.  The generated
+adaptive wrapper still emits fixed mantissa-width datapaths; shared exponents
+remain explicit metadata until the target-specific BFP datapath is selected.
+
 ::: sc_neurocore.compiler.adaptive_precision
     options:
       show_root_heading: true

@@ -127,7 +127,7 @@ def main() -> int:
         "language": "Python",
         "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
         "command": (
-            "taskset -c 10-11 env PYTHONPATH=src "
+            "taskset -c 8-9 env PYTHONPATH=src "
             ".venv/bin/python benchmarks/bench_block_floating_dense.py"
         ),
         "python": platform.python_version(),
@@ -154,6 +154,7 @@ def main() -> int:
         "safe_min_headroom_code": safe_envelope.min_headroom_code,
         "mantissa_checksum": int(np.sum(compiled.mantissas.astype(np.int64))),
         "exponent_checksum": int(np.sum(compiled.exponents.astype(np.int64))),
+        "block_exponent_count": compiled.manifest()["block_exponent_count"],
         "exponent_code_min": int(np.min(compiled.exponents)),
         "exponent_code_max": int(np.max(compiled.exponents)),
         "saturating_probe_overflow_count": int(np.count_nonzero(probe_overflow)),

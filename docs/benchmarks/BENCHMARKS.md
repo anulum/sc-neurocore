@@ -165,10 +165,10 @@ the HDL datapath.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 31.429 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| Python `CompiledBlockFloatingDense.forward_with_overflow` | Same deterministic matrix/vector | 30.326 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.209 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 10.056 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
+| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 34.217 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Python `CompiledBlockFloatingDense.forward_with_overflow` | Same deterministic matrix/vector | 33.901 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.057 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 11.687 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
 | HDL `sc_block_floating_dense` Yosys RTLIL stat | Parameterised 2×2, `BLOCK_SIZE=2` elaboration copy | 96 cells, 4 multipliers | `hdl/reports/yosys_block_floating_dense_2026-06-04.json` |
 
 The deterministic block-floating workload recorded maximum absolute error
@@ -179,7 +179,9 @@ and saturating-probe overflow count `32`, matching the lane-level HDL
 `overflow_vector` contract.  Both languages now compare the same deterministic
 BFP contract: mantissa checksum `-15`, exponent checksum `0`, exponent code
 range `[0, 0]`, safe max absolute bound `610816`, and saturating-probe max
-absolute bound `1125865547104256`.  The HDL exports per-output
+absolute bound `1125865547104256`.  The 64×32 payload records
+`parameter_count=2048` and `block_exponent_count=64` in both the Python
+manifest and Rust artefact.  The HDL exports per-output
 `abs_bounds_q1616`; the
 full-size 64×32 block-floating Yosys frontend path is documented as toolchain
 debt because Yosys 0.33 elaborates the default procedural loops during
