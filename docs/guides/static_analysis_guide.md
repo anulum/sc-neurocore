@@ -6,9 +6,10 @@
 
 # Static Analysis Guide
 
-SC-NeuroCore provides three static analysis capabilities that no other
-neuromorphic compiler offers. These tools operate on the ODE expression
-at compile time — no simulation needed.
+SC-NeuroCore provides compile-time static analysis for guard bits, overflow
+proofs, Q-format envelope proofs, formal assertions, pipeline depth, and power
+estimation. These tools operate before deployment so unsafe fixed-point
+contracts can fail closed without relying on simulation luck.
 
 ## 1. Guard-Bit Auto-Computation
 
@@ -124,7 +125,77 @@ else:
 
 ---
 
-## 3. SystemVerilog Assertion (SVA) Generation
+## 3. Fixed-Point Envelope Width Proofs
+
+Mixed Q8.8/Q16.16 and block-floating dense layers compute conservative
+absolute Q-code bounds per output lane.  A realised dot product can be small
+because positive and negative terms cancel, but the hardware accumulator still
+needs enough width for the absolute product envelope.  `prove_fixed_point_envelope`
+turns those bounds into a static, machine-checkable Q-format safety proof.
+
+### API
+
+```python
+from sc_neurocore.compiler.static_analysis import prove_fixed_point_envelope
+
+proof = prove_fixed_point_envelope(
+    [531_400],          # conservative absolute Q16.16 bound codes
+    total_bits=32,
+    fractional_bits=16,
+)
+
+assert proof.static_overflow_proven_safe
+assert proof.required_total_bits == 21
+assert proof.required_integer_bits == 5
+assert proof.width_headroom_bits == 11
+```
+
+For a saturating mixed-dense probe:
+
+```python
+probe = prove_fixed_point_envelope(
+    [17_454_214_414_336],
+    total_bits=32,
+    fractional_bits=16,
+)
+
+assert probe.saturation_required
+assert probe.required_total_bits == 45
+assert probe.required_integer_bits == 29
+assert probe.width_headroom_bits == -13
+```
+
+### Result Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `proof_kind` | `str` | `signed_symmetric_fixed_point_width` for signed Q formats |
+| `output_format` | `str` | Human-readable Q format, e.g. `Q16.16` |
+| `conservative_safe_bound_code` | `int` | Largest signed or unsigned code representable without saturation |
+| `max_abs_bound_code` | `int` | Largest conservative absolute output bound supplied to the proof |
+| `min_headroom_code` | `int` | Remaining code headroom; negative means saturation is required |
+| `required_total_bits` | `int` | Total width needed by the conservative bound, including sign when signed |
+| `required_integer_bits` | `int` | Integer-side Q-format width needed after fractional bits are reserved |
+| `width_headroom_bits` | `int` | `total_bits - required_total_bits` |
+| `saturation_required` | `bool` | True when the conservative bound exceeds the target format |
+| `static_overflow_proven_safe` | `bool` | True when no saturation is required by the static bound |
+
+The `manifest()` method returns the same fields as plain JSON-compatible
+values.  Benchmark evidence gates use those manifest fields to lock Python and
+Rust Q16.16 proof parity.
+
+### Safety Boundary
+
+- Signed proofs use absolute magnitudes and reserve one sign bit.
+- Unsigned proofs reject negative Q-code inputs.
+- Empty bound vectors, invalid widths, and non-integer Q-code values are
+  rejected before any manifest is produced.
+- The proof is conservative by design: it does not infer safety from
+  cancellation in the realised output value.
+
+---
+
+## 4. SystemVerilog Assertion (SVA) Generation
 
 For safety-critical designs (DO-254, IEC 61508), simulation coverage is
 not sufficient — you need formal verification properties.

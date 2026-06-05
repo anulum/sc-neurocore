@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added a static-analysis Q-format envelope proof API for conservative Q-code
+  bounds, with fail-closed validation, signed Q16.16 width/headroom manifests,
+  and module-specific tests for safe, saturating, and block-floating
+  exponent-edge contracts.
 - Added signed fixed-point width proofs to mixed Q8.8/Q16.16 and
   block-floating precision envelope reports across Python, Rust, and refreshed
   comparison benchmark artefacts, including required total bits, required
