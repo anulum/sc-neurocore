@@ -1,5 +1,5 @@
 # SC-NeuroCore FPGA Hardware Manual
-**Version:** 3.15.16
+**Version:** 3.15.17
 **Date**: April 13, 2026
 **Status**: Release Candidate
 

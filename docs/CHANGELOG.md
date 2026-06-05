@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.17] - 2026-06-05
+
+### Release workflows
+- Added the static-Z3 CMake policy floor to all Rust engine wheel builders.
+- Installed Docker build-stage `clang` and `libclang-dev` so Z3 bindings can
+  locate libclang during containerized release builds.
+- Replaced the Docker build step id used in SARIF gating with an expression-safe
+  identifier.
+
 ## [3.15.16] - 2026-06-05
 
 ### Release workflows
