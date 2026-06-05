@@ -66,6 +66,7 @@
         "measurement_context.runtime_cpuset_shield_claimed": true,
         "pcie_mmio_commit_capture.checksum_mismatch_rejected": true,
         "pcie_mmio_commit_capture.invalid_selection_rejected": true,
+        "pcie_mmio_commit_capture.invalid_readback_rejected": true,
         "pcie_mmio_commit_capture.partial_write_rejected": true,
         "pcie_mmio_commit_capture.read_only_bank_rejected": true,
         "pcie_mmio_commit_capture.retargeted_commit_preserved_shadow_identity": true,

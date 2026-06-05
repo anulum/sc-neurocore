@@ -118,8 +118,12 @@ def test_live_parameter_bank_emits_bram_and_distributed_banks() -> None:
         "reg_trap_vector <= (reg_trap_vector | observed_trap_vector) & ~S_AXI_WDATA[TRAP_WIDTH-1:0];"
         in source
     )
-    assert "ADDR_READ_LO: S_AXI_RDATA <= active_read_data_lo;" in source
-    assert "ADDR_READ_HI: S_AXI_RDATA <= active_read_data_hi;" in source
+    assert "ADDR_READ_LO: begin" in source
+    assert "ADDR_READ_HI: begin" in source
+    assert "S_AXI_RDATA <= active_read_data_lo;" in source
+    assert "S_AXI_RDATA <= active_read_data_hi;" in source
+    assert "S_AXI_RRESP <= 2'b10;" in source
+    assert "reg_trap_vector <= reg_trap_vector | observed_trap_vector | TRAP_INVALID_SELECTION_VECTOR;" in source
     assert "trap_clear_pulse <= 1'b1;" in source
 
 
@@ -351,6 +355,24 @@ module tb_sc_live_params;
         end
     endtask
 
+    task axi_read_expect_error;
+        input [31:0] addr;
+        begin
+            @(negedge clk);
+            araddr = addr;
+            arvalid = 1'b1;
+            rready = 1'b1;
+            @(negedge clk);
+            arvalid = 1'b0;
+            @(negedge clk);
+            if (rresp !== 2'b10) begin
+                $display("AXI invalid readback did not fail closed at %h response=%b data=%h", addr, rresp, rdata);
+                $finish(6);
+            end
+            rready = 1'b0;
+        end
+    endtask
+
     initial begin
         repeat (2) @(negedge clk);
         rst_n = 1'b1;
@@ -381,6 +403,14 @@ module tb_sc_live_params;
 
         axi_read_expect(32'h124, 32'h00001234);
         axi_read_expect(32'h128, 32'h00000000);
+
+        axi_write(32'h10C, 32'd3);
+        axi_read_expect_error(32'h124);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b1 || trap_status_vector[3] !== 1'b1 || invalid_selection_pulse !== 1'b1) begin
+            $display("invalid active-readback selection did not raise sticky trap status=%b pulse=%b", trap_status_vector, invalid_selection_pulse);
+            $finish(7);
+        end
 
         $finish(0);
     end

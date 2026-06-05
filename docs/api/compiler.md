@@ -838,3 +838,6 @@ low/high staged data, and the `crc32-ieee-le-4x32` guard before asserting
 separate `CONTROL_COMMIT`. The CRC32 payload is four little-endian 32-bit words:
 bank select, entry index, low data word, and high data word. Range traps latch
 staged overflow or underflow attempts and prevent shadow mutation.
+Active readback is fail-closed as well: invalid bank or entry selections on
+`read_data_lo` or `read_data_hi` return a bus error and latch
+`invalid_selection` rather than returning an ambiguous zero coefficient.
