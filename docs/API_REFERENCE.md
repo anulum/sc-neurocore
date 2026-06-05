@@ -5415,17 +5415,33 @@ data_width : int
     Fixed-point data width.
 fraction : int
     Fractional bits.
+live_update_spec : MMIOUpdateSpec, optional
+    Live-control bank contract. When provided, generated Python and C drivers
+    include CRC-guarded live-parameter update helpers, hardware-trap checks, and
+    committed active-parameter readback helpers for each named bank entry.
 
 Returns
 -------
 str
     Complete driver source code.
 
-### Function `_gen_python_driver(module_name, params, base_address, data_width, fraction)`
+### Function `_gen_python_driver(module_name, params, base_address, data_width, fraction, live_update_spec)`
 Generate Python MMIO driver.
 
-### Function `_gen_c_driver(module_name, params, base_address, data_width, fraction)`
+When a live-control contract is supplied, generated methods stage both
+`WRITE_DATA_LO` and `WRITE_DATA_HI` before writing the CRC32 checksum. Narrow
+entries therefore force the high word to zero before commit, preventing stale
+wide-update state from affecting later Q8.8/Q16.16 updates. The generated
+`verify_live_<bank>_<parameter>_encoded()` helpers update the active bank and
+compare committed readback against the requested encoded word.
+
+### Function `_gen_c_driver(module_name, params, base_address, data_width, fraction, live_update_spec)`
 Generate C MMIO driver header.
+
+The C live-control helpers mirror the Python sequence: split the encoded word,
+write low and high staging registers, compute IEEE CRC32 over bank, entry, low,
+and high words, commit, trap-check status, then read back committed active
+state for verification.
 
 ### Function `generate_cocotb_testbench(module_name)`
 Generate a Cocotb (Python) testbench for a compiled neuron.
@@ -9183,9 +9199,11 @@ bus protocol, bank list, and read/write data widths.
 ### Method `build_update_sequence(bank_name, parameter, encoded_word)`
 Builds the deterministic host write sequence for a staged parameter update:
 select bank, select entry, write low/high data words, write CRC32 checksum, load
-the shadow bank, and apply the shadow bank. The method rejects read-only banks,
-unknown banks, unknown entries, and encoded words outside the bank precision
-width.
+the shadow bank, and apply the shadow bank. The high word is written even for
+narrow entries, where it is zero, so a previous wide update cannot leave stale
+high-register state behind the checksum guard. The method rejects read-only
+banks, unknown banks, unknown entries, and encoded words outside the bank
+precision width.
 
 ### Method `build_readback_sequence(bank_name, parameter)`
 Builds the deterministic host readback sequence for a committed active
