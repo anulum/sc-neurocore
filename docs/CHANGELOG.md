@@ -6,6 +6,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Routed quantizer precision-envelope proof fields through the static-analysis
+  Q-format envelope proof API, with module-specific regression coverage to keep
+  dense deployment manifests aligned with the standalone proof contract.
 - Added a static-analysis Q-format envelope proof API for conservative Q-code
   bounds, with fail-closed validation, signed Q16.16 width/headroom manifests,
   and module-specific tests for safe, saturating, and block-floating

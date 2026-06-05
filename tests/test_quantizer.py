@@ -13,6 +13,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+from sc_neurocore.compiler.static_analysis import prove_fixed_point_envelope
 from sc_neurocore.compiler.quantizer import (
     QFormat,
     QFormatMixed,
@@ -238,6 +239,32 @@ class TestPrecisionEnvelopeReport:
         assert report.static_overflow_proven_safe is True
         assert report.manifest()["conservative_overflow_free"] is True
         assert report.manifest()["proof_kind"] == "signed_symmetric_fixed_point_width"
+
+    def test_envelope_manifest_reuses_static_analysis_width_proof(self):
+        """Quantizer envelope proof fields must match the static-analysis proof."""
+        report = PrecisionEnvelopeReport(
+            operation="dense_mixed_qformat",
+            output_codes=np.array([1024, -512], dtype=np.int64),
+            overflow_mask=np.array([False, False], dtype=bool),
+            abs_bound_codes=np.array([2048, 4096], dtype=np.int64),
+            output_fmt=Q16_16,
+        )
+        proof = prove_fixed_point_envelope([2048, 4096])
+        manifest = report.manifest()
+        proof_manifest = proof.manifest()
+
+        for key in (
+            "proof_kind",
+            "conservative_safe_bound_code",
+            "max_abs_bound_code",
+            "min_headroom_code",
+            "required_total_bits",
+            "required_integer_bits",
+            "width_headroom_bits",
+            "saturation_required",
+            "static_overflow_proven_safe",
+        ):
+            assert manifest[key] == proof_manifest[key]
 
     def test_manifest_distinguishes_underflow_from_overflow(self):
         report = PrecisionEnvelopeReport(

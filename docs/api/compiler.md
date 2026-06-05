@@ -288,7 +288,11 @@ proof used by the Python and Rust deployment surfaces:
 
 These fields are static envelope claims over absolute product magnitudes.  They
 do not rely on cancellation in the realised dot product, so a small output code
-does not weaken the predeployment overflow proof.
+does not weaken the predeployment overflow proof.  The quantizer delegates
+these manifest fields to
+`sc_neurocore.compiler.static_analysis.prove_fixed_point_envelope()`, so the
+standalone static-analysis API and dense deployment reports share one Python
+proof authority.
 
 ### Live-Control Parameter Banks
 
