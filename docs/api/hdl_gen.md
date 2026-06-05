@@ -166,11 +166,12 @@ Live-control parameter banks are generated from `MMIOUpdateSpec` with
 `generate_live_parameter_bank(...)`. The emitted AXI4-Lite RTL uses
 BRAM/distributed RAM style hints per bank, fixed control/status register
 addresses, staged low/high write-data registers, CRC32-guarded shadow loads,
-explicit apply and rollback pulses, flattened active-only `parameter_words`
-output, and host-visible trap clear/status signals. It also derives sticky
-staged-overflow and staged-underflow traps from the selected bank width before
-shadow loading, so malformed MMIO payloads cannot truncate into active
-coefficients. This lets a deployed design hot-swap weights or phase-coupling
+explicit apply and rollback pulses, checksum-mismatch pulses, flattened
+active-only `parameter_words` output, and host-visible trap clear/status
+signals. It also derives sticky staged-overflow, staged-underflow, and
+CRC32-mismatch traps before shadow loading, so malformed MMIO payloads cannot
+truncate into active coefficients or bypass the update guard. This lets a
+deployed design hot-swap weights or phase-coupling
 coefficients while keeping the precision and trap contracts auditable.
 The local regression artefact
 `benchmarks/results/local_python_2026-06-04_live_control_updates.json` records

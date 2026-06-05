@@ -6,6 +6,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added sticky CRC32 checksum-mismatch traps and a testbench-visible mismatch
+  pulse to the generated AXI4-Lite/PCIe live-control parameter-bank surfaces,
+  with module-specific simulation tests and refreshed benchmark-gate evidence.
 - Replaced live-control update guards with an IEEE CRC32 register-window
   guard shared by the compiler schema and generated SystemVerilog, with stale
   guard rejection tests and refreshed benchmark evidence.

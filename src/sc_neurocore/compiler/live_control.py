@@ -53,6 +53,7 @@ STATUS_ROLLBACK_ACK = 0x40
 STATUS_CHECKSUM_VALID = 0x80
 TRAP_STAGED_OVERFLOW = 0x1
 TRAP_STAGED_UNDERFLOW = 0x2
+TRAP_CHECKSUM_MISMATCH = 0x4
 CONTROL_REGISTER_OFFSETS: dict[str, int] = {
     "control": 0x00,
     "status": 0x04,
@@ -423,7 +424,13 @@ class MMIOUpdateSpec:
         return {
             "staged_overflow": TRAP_STAGED_OVERFLOW,
             "staged_underflow": TRAP_STAGED_UNDERFLOW,
+            "checksum_mismatch": TRAP_CHECKSUM_MISMATCH,
         }
+
+    @property
+    def effective_trap_width(self) -> int:
+        """Return trap-vector width needed by host-visible generated traps."""
+        return max(self.trap.max_flags, len(self.trap_bits))
 
     def update_checksum(self, bank_name: str, parameter: int | str, encoded_value: int) -> int:
         """Return deterministic IEEE CRC32 guard for one staged update.
@@ -527,7 +534,7 @@ class MMIOUpdateSpec:
             raise ValueError("trap clear sequence requires enabled traps")
         addresses = self.control_register_addresses
         return (
-            MMIOWrite(addresses["trap_clear"], self.trap.max_flags, 32, "clear_trap"),
+            MMIOWrite(addresses["trap_clear"], self.effective_trap_width, 32, "clear_trap"),
             MMIOWrite(addresses["control"], CONTROL_CLEAR_TRAP, 32, "clear_trap"),
         )
 
@@ -548,6 +555,7 @@ class MMIOUpdateSpec:
             "control_bits": self.control_bits,
             "status_bits": self.status_bits,
             "trap_bits": self.trap_bits,
+            "effective_trap_width": self.effective_trap_width,
             "trap": {
                 "enabled": self.trap.enabled,
                 "action": self.trap.action,

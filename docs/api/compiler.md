@@ -283,24 +283,28 @@ encoded-word bounds. `MMIOUpdateSpec` adds a deterministic AXI4-Lite/PCIe
 control window with fixed registers for bank select, entry select, write-data
 low/high words, status, trap status, and trap clear. Host code uses
 `build_update_sequence(...)` to stage a bank/index/value update with a
-deterministic checksum, load it into a shadow bank, and then apply it explicitly,
+deterministic CRC32 checksum, reject mismatches through a sticky
+`checksum_mismatch` trap, load it into a shadow bank, and then apply it explicitly,
 so operators can update weights or Kuramoto phase-coupling parameters without
 resynthesising the bitstream.
 
 The status map exposes `ready`, `busy`, `update_ack`, `trap_latched`,
-`shadow_loaded`, `applied`, `rollback_ack`, and `checksum_valid` bits. Generated
-parameter-bank RTL reserves deterministic trap lanes for staged overflow and
-staged underflow before shadow loading: if a host payload cannot be represented
-as either a zero-extended raw word or a valid signed extension for the selected
-bank width, the trap vector latches and the shadow bank is not modified. Trap
-clearing is a separate two-write sequence that records the intended flag width
-before asserting the clear command, preserving deterministic host intervention
-semantics.
+`shadow_loaded`, `applied`, `rollback_ack`, `checksum_valid`, and sticky
+`checksum_mismatch` trap bits. Generated
+parameter-bank RTL reserves deterministic trap lanes for staged overflow,
+staged underflow, and checksum mismatch before shadow loading: if a host payload
+cannot be represented as either a zero-extended raw word or a valid signed
+extension for the selected bank width, or if the CRC32 guard does not match the
+staged payload, the trap vector latches and the shadow bank is not modified.
+Trap clearing is a separate two-write sequence that records the intended flag
+width before asserting the clear command, preserving deterministic host
+intervention semantics.
 `sc_neurocore.hdl_gen.bus_interface.generate_live_parameter_bank(...)` consumes
 the same manifest and emits the corresponding AXI4-Lite parameter-bank RTL with
 active/shadow memories, checksum-gated shadow loading, generated staged-range
-traps, explicit apply, rollback, and active-only `parameter_words`, so the
-Python control schema and hardware register map remain one contract.
+and CRC32-mismatch traps, explicit apply, rollback, and active-only
+`parameter_words`, so the Python control schema and hardware register map
+remain one contract.
 
 `forward_with_overflow` returns saturated accumulator-format integer codes and
 per-output overflow flags.  In canonical `scale_per_tensor=False` mode the

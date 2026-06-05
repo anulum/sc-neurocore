@@ -64,6 +64,7 @@ from sc_neurocore.compiler.live_control import (
     STATUS_SHADOW_LOADED,
     STATUS_TRAP_LATCHED,
     STATUS_UPDATE_ACK,
+    TRAP_CHECKSUM_MISMATCH,
     TRAP_STAGED_OVERFLOW,
     TRAP_STAGED_UNDERFLOW,
 )
@@ -203,7 +204,7 @@ def generate_live_parameter_bank(
 
     bank_names = [_validate_sv_identifier(bank.bank_name, "bank_name") for bank in spec.banks]
     total_parameter_bits = sum(bank.entry_width_bits * bank.parameter_count for bank in spec.banks)
-    trap_width = max(spec.trap.max_flags, 2)
+    trap_width = spec.effective_trap_width
     ctrl = spec.control_register_addresses
     status_trap_expr = (
         f"{{{{(DATA_WIDTH-4){{1'b0}}}}, 4'h{STATUS_TRAP_LATCHED:X}}}"
@@ -250,6 +251,7 @@ def generate_live_parameter_bank(
         "    output reg                          apply_pulse,",
         "    output reg                          rollback_pulse,",
         "    output reg                          trap_clear_pulse,",
+        "    output reg                          checksum_mismatch_pulse,",
         "    output wire                         shadow_loaded,",
         "    output wire [PARAMETER_WORDS_WIDTH-1:0] parameter_words",
         ");",
@@ -267,6 +269,7 @@ def generate_live_parameter_bank(
         f"    localparam [DATA_WIDTH-1:0] CTRL_COMMIT       = {bus_data_width}'h{CONTROL_COMMIT:X};",
         f"    localparam [DATA_WIDTH-1:0] CTRL_ROLLBACK     = {bus_data_width}'h{CONTROL_ROLLBACK:X};",
         f"    localparam [DATA_WIDTH-1:0] STATUS_READY      = {bus_data_width}'h{STATUS_READY:X};",
+        f"    localparam [DATA_WIDTH-1:0] STATUS_TRAP_LATCHED = {bus_data_width}'h{STATUS_TRAP_LATCHED:X};",
         f"    localparam [DATA_WIDTH-1:0] STATUS_UPDATE_ACK = {bus_data_width}'h{STATUS_UPDATE_ACK:X};",
         f"    localparam [DATA_WIDTH-1:0] STATUS_SHADOW_LOADED = {bus_data_width}'h{STATUS_SHADOW_LOADED:X};",
         f"    localparam [DATA_WIDTH-1:0] STATUS_APPLIED    = {bus_data_width}'h{STATUS_APPLIED:X};",
@@ -274,6 +277,7 @@ def generate_live_parameter_bank(
         f"    localparam [DATA_WIDTH-1:0] STATUS_CHECKSUM_VALID = {bus_data_width}'h{STATUS_CHECKSUM_VALID:X};",
         f"    localparam [TRAP_WIDTH-1:0] TRAP_STAGED_OVERFLOW_VECTOR = {trap_width}'h{TRAP_STAGED_OVERFLOW:X};",
         f"    localparam [TRAP_WIDTH-1:0] TRAP_STAGED_UNDERFLOW_VECTOR = {trap_width}'h{TRAP_STAGED_UNDERFLOW:X};",
+        f"    localparam [TRAP_WIDTH-1:0] TRAP_CHECKSUM_MISMATCH_VECTOR = {trap_width}'h{TRAP_CHECKSUM_MISMATCH:X};",
         "    localparam [31:0] UPDATE_CRC32_POLY_REFLECTED = 32'hEDB88320;",
         "",
         "    reg [DATA_WIDTH-1:0] reg_control;",
@@ -420,6 +424,7 @@ def generate_live_parameter_bank(
             "            apply_pulse <= 1'b0;",
             "            rollback_pulse <= 1'b0;",
             "            trap_clear_pulse <= 1'b0;",
+            "            checksum_mismatch_pulse <= 1'b0;",
         ]
     )
 
@@ -443,6 +448,7 @@ def generate_live_parameter_bank(
             "            apply_pulse <= 1'b0;",
             "            rollback_pulse <= 1'b0;",
             "            trap_clear_pulse <= 1'b0;",
+            "            checksum_mismatch_pulse <= 1'b0;",
             "            reg_trap_vector <= reg_trap_vector | observed_trap_vector;",
             "            reg_status <= STATUS_READY | trap_status_bit | (reg_shadow_loaded ? STATUS_SHADOW_LOADED : {DATA_WIDTH{1'b0}}) | (checksum_valid ? STATUS_CHECKSUM_VALID : {DATA_WIDTH{1'b0}});",
             "",
@@ -487,6 +493,11 @@ def generate_live_parameter_bank(
             "                                    reg_status <= STATUS_READY | trap_status_bit;",
             "                                end",
             "                            endcase",
+            "                            end",
+            "                            else if (!checksum_valid) begin",
+            "                                checksum_mismatch_pulse <= 1'b1;",
+            "                                reg_trap_vector <= reg_trap_vector | observed_trap_vector | TRAP_CHECKSUM_MISMATCH_VECTOR;",
+            "                                reg_status <= STATUS_READY | STATUS_TRAP_LATCHED;",
             "                            end",
             "                        end else if ((S_AXI_WDATA & CTRL_COMMIT) != {DATA_WIDTH{1'b0}}) begin",
             "                            if (reg_shadow_loaded) begin",
@@ -602,7 +613,7 @@ def _generate_pcie_live_parameter_bank(
     if bus_data_width != 32:
         raise ValueError("PCIe MMIO live parameter-bank RTL currently requires 32-bit data")
     total_parameter_bits = sum(bank.entry_width_bits * bank.parameter_count for bank in spec.banks)
-    trap_width = max(spec.trap.max_flags, 2)
+    trap_width = spec.effective_trap_width
     core_module = f"{module}_axi4_lite_core"
     core_spec = replace(spec, bus_protocol="axi4_lite")
     core_source = generate_live_parameter_bank(
@@ -649,6 +660,7 @@ def _generate_pcie_live_parameter_bank(
         "    output wire                         apply_pulse,",
         "    output wire                         rollback_pulse,",
         "    output wire                         trap_clear_pulse,",
+        "    output wire                         checksum_mismatch_pulse,",
         "    output wire                         shadow_loaded,",
         "    output wire [PARAMETER_WORDS_WIDTH-1:0] parameter_words",
         ");",
@@ -704,6 +716,7 @@ def _generate_pcie_live_parameter_bank(
         "        .apply_pulse(apply_pulse),",
         "        .rollback_pulse(rollback_pulse),",
         "        .trap_clear_pulse(trap_clear_pulse),",
+        "        .checksum_mismatch_pulse(checksum_mismatch_pulse),",
         "        .shadow_loaded(shadow_loaded),",
         "        .parameter_words(parameter_words)",
         "    );",

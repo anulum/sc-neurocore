@@ -23,6 +23,7 @@ from _benchmark_context import load_average, measurement_context
 from sc_neurocore.compiler.live_control import (
     MMIOUpdateSpec,
     ParameterBankSpec,
+    TRAP_CHECKSUM_MISMATCH,
     TRAP_STAGED_OVERFLOW,
     TRAP_STAGED_UNDERFLOW,
     TrapSpec,
@@ -182,15 +183,16 @@ module tb_sc_live_params;
     wire [1:0] rresp;
     wire rvalid;
     reg rready = 1'b0;
-    reg [1:0] external_trap_vector = 2'b00;
+    reg [2:0] external_trap_vector = 3'b000;
     wire trap_latched;
-    wire [1:0] trap_status_vector;
+    wire [2:0] trap_status_vector;
     wire staged_overflow;
     wire staged_underflow;
     wire update_pulse;
     wire apply_pulse;
     wire rollback_pulse;
     wire trap_clear_pulse;
+    wire checksum_mismatch_pulse;
     wire shadow_loaded;
     wire [2047:0] parameter_words;
 
@@ -225,6 +227,7 @@ module tb_sc_live_params;
         .apply_pulse(apply_pulse),
         .rollback_pulse(rollback_pulse),
         .trap_clear_pulse(trap_clear_pulse),
+        .checksum_mismatch_pulse(checksum_mismatch_pulse),
         .shadow_loaded(shadow_loaded),
         .parameter_words(parameter_words)
     );
@@ -268,7 +271,7 @@ module tb_sc_live_params;
 
         axi_write(32'h11C, 32'h00000003);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 2'b00) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 3'b000) begin
             $finish(3);
         end
 
@@ -349,19 +352,26 @@ module tb_sc_live_pcie_params;
     wire [31:0] read_data;
     wire read_data_valid;
     wire read_error;
-    reg [1:0] external_trap_vector = 2'b00;
+    reg [2:0] external_trap_vector = 3'b000;
     wire trap_latched;
-    wire [1:0] trap_status_vector;
+    wire [2:0] trap_status_vector;
     wire staged_overflow;
     wire staged_underflow;
+    reg observed_checksum_mismatch = 1'b0;
     wire update_pulse;
     wire apply_pulse;
     wire rollback_pulse;
     wire trap_clear_pulse;
+    wire checksum_mismatch_pulse;
     wire shadow_loaded;
     wire [2047:0] parameter_words;
 
     always #5 clk = ~clk;
+    always @(posedge clk) begin
+        if (checksum_mismatch_pulse) begin
+            observed_checksum_mismatch <= 1'b1;
+        end
+    end
 
     sc_live_pcie_params dut (
         .pcie_clk(clk),
@@ -388,6 +398,7 @@ module tb_sc_live_pcie_params;
         .apply_pulse(apply_pulse),
         .rollback_pulse(rollback_pulse),
         .trap_clear_pulse(trap_clear_pulse),
+        .checksum_mismatch_pulse(checksum_mismatch_pulse),
         .shadow_loaded(shadow_loaded),
         .parameter_words(parameter_words)
     );
@@ -424,6 +435,15 @@ module tb_sc_live_pcie_params;
         if (shadow_loaded !== 1'b0 || parameter_words[15:0] !== 16'h0000) begin
             $finish(5);
         end
+        if (trap_latched !== 1'b1 || trap_status_vector[2] !== 1'b1 || observed_checksum_mismatch !== 1'b1) begin
+            $finish(6);
+        end
+
+        pcie_write(32'h11C, 32'h00000007);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b0 || trap_status_vector !== 3'b000) begin
+            $finish(7);
+        end
 
         pcie_write(32'h120, 32'h1D7D9B35);
         pcie_write(32'h100, 32'h00000001);
@@ -437,7 +457,7 @@ module tb_sc_live_pcie_params;
         if (parameter_words[15:0] !== 16'h1234 || shadow_loaded !== 1'b0) begin
             $finish(3);
         end
-        if (trap_latched !== 1'b0 || trap_status_vector !== 2'b00 || staged_overflow !== 1'b0 || staged_underflow !== 1'b0) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 3'b000 || staged_overflow !== 1'b0 || staged_underflow !== 1'b0) begin
             $finish(4);
         end
 
@@ -480,6 +500,8 @@ endmodule
         "vvp": vvp,
         "compile_ns": compile_done_ns - start_ns,
         "simulation_ns": end_ns - compile_done_ns,
+        "checksum_mismatch_rejected": True,
+        "checksum_mismatch_trap_bit": TRAP_CHECKSUM_MISMATCH,
         "passed": True,
     }
 
@@ -531,6 +553,7 @@ def main() -> int:
         "expected_trap_bits": {
             "staged_overflow": TRAP_STAGED_OVERFLOW,
             "staged_underflow": TRAP_STAGED_UNDERFLOW,
+            "checksum_mismatch": TRAP_CHECKSUM_MISMATCH,
         },
         "valid_update_write_count": len(spec.build_update_sequence("weights", 0, 0x1234)),
         "live_update_sequence_median_ns": statistics.median(update_ns),
