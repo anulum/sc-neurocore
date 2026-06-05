@@ -1800,7 +1800,7 @@
     "name": "sc-neurocore",
     "readme": "README.md",
     "requires_python": ">=3.10",
-    "version": "3.15.25"
+    "version": "3.15.26"
   },
   "project_label": "SC-NeuroCore",
   "quality_gates": {

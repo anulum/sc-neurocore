@@ -26,6 +26,7 @@ concurrency:
 
 jobs:
   synthesize:
+    if: github.event_name != 'push' || github.ref_type != 'tag'
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.26] - 2026-06-05
+
+### CI and release workflows
+- Skipped Yosys synthesis on release tag pushes so tag releases do not fail on
+  non-HDL changes after all modules time out under hosted-runner synthesis
+  budgets; branch, pull-request, and manual synthesis workflows remain active.
+
 ## [3.15.25] - 2026-06-05
 
 ### CI and release workflows

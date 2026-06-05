@@ -1,5 +1,5 @@
 # SC-NeuroCore Python Driver Manual
-**Version:** 3.15.25
+**Version:** 3.15.26
 **Date**: April 13, 2026
 **Target Platform**: PYNQ-Z2 (Xilinx Zynq-7000)
 
