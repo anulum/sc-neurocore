@@ -112,10 +112,7 @@ jobs:
         id: scan-image
         shell: bash
         run: |
-          first_tag="$(cat <<'EOF' | sed '/^[[:space:]]*$/d' | head -n 1
-${{ steps.meta.outputs.tags }}
-          EOF
-          )"
+          first_tag="$(printf '%s\n' '${{ steps.meta.outputs.tags }}' | sed '/^[[:space:]]*$/d' | head -n 1)"
           test -n "${first_tag}"
           echo "image=${first_tag}" >> "${GITHUB_OUTPUT}"
 
