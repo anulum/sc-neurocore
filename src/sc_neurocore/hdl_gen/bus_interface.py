@@ -273,6 +273,8 @@ def generate_live_parameter_bank(
         f"    localparam [ADDR_WIDTH-1:0] ADDR_TRAP_STAT  = {adw}'h{ctrl['trap_status']:X};",
         f"    localparam [ADDR_WIDTH-1:0] ADDR_TRAP_CLEAR = {adw}'h{ctrl['trap_clear']:X};",
         f"    localparam [ADDR_WIDTH-1:0] ADDR_CHECKSUM   = {adw}'h{ctrl['write_checksum']:X};",
+        f"    localparam [ADDR_WIDTH-1:0] ADDR_READ_LO    = {adw}'h{ctrl['read_data_lo']:X};",
+        f"    localparam [ADDR_WIDTH-1:0] ADDR_READ_HI    = {adw}'h{ctrl['read_data_hi']:X};",
         f"    localparam [DATA_WIDTH-1:0] CTRL_UPDATE_VALID = {bus_data_width}'h{CONTROL_UPDATE_VALID:X};",
         f"    localparam [DATA_WIDTH-1:0] CTRL_COMMIT       = {bus_data_width}'h{CONTROL_COMMIT:X};",
         f"    localparam [DATA_WIDTH-1:0] CTRL_ROLLBACK     = {bus_data_width}'h{CONTROL_ROLLBACK:X};",
@@ -303,6 +305,8 @@ def generate_live_parameter_bank(
         "    reg [DATA_WIDTH-1:0] reg_shadow_bank_select;",
         "    reg [DATA_WIDTH-1:0] reg_shadow_entry_index;",
         "    reg [TRAP_WIDTH-1:0] reg_trap_vector;",
+        "    reg [DATA_WIDTH-1:0] active_read_data_lo;",
+        "    reg [DATA_WIDTH-1:0] active_read_data_hi;",
         "    wire [63:0] staged_word = {reg_write_data_hi, reg_write_data_lo};",
         "    wire write_strobe_accepted = (S_AXI_WSTRB == FULL_WRITE_STROBE);",
         "",
@@ -415,6 +419,62 @@ def generate_live_parameter_bank(
             "    assign staged_overflow = staged_overflow_fault;",
             "    assign staged_underflow = staged_underflow_fault;",
             "    assign shadow_loaded = reg_shadow_loaded;",
+        ]
+    )
+
+    lines.extend(
+        [
+            "",
+            "    always @* begin",
+            "        active_read_data_lo = {DATA_WIDTH{1'b0}};",
+            "        active_read_data_hi = {DATA_WIDTH{1'b0}};",
+            "        case (reg_bank_select)",
+        ]
+    )
+    for bank_index, (bank, bank_name) in enumerate(zip(spec.banks, bank_names)):
+        width = bank.entry_width_bits
+        count = bank.parameter_count
+        lines.extend(
+            [
+                f"            32'd{bank_index}: begin",
+                f"                if (reg_entry_index < 32'd{count}) begin",
+            ]
+        )
+        if width <= bus_data_width:
+            pad_width = bus_data_width - width
+            if pad_width:
+                lines.append(
+                    f"                    active_read_data_lo = {{{{{pad_width}{{1'b0}}}}, {bank_name}[reg_entry_index]}};"
+                )
+            else:
+                lines.append(f"                    active_read_data_lo = {bank_name}[reg_entry_index];")
+            lines.append("                    active_read_data_hi = {DATA_WIDTH{1'b0}};")
+        else:
+            high_width = width - bus_data_width
+            high_pad_width = bus_data_width - high_width
+            lines.append(
+                f"                    active_read_data_lo = {bank_name}[reg_entry_index][DATA_WIDTH-1:0];"
+            )
+            if high_pad_width:
+                lines.append(
+                    "                    active_read_data_hi = "
+                    f"{{{{{high_pad_width}{{1'b0}}}}, {bank_name}[reg_entry_index][{width - 1}:DATA_WIDTH]}};"
+                )
+            else:
+                lines.append(
+                    f"                    active_read_data_hi = {bank_name}[reg_entry_index][{width - 1}:DATA_WIDTH];"
+                )
+        lines.extend(
+            [
+                "                end",
+                "            end",
+            ]
+        )
+    lines.extend(
+        [
+            "            default: begin end",
+            "        endcase",
+            "    end",
         ]
     )
 
@@ -629,11 +689,13 @@ def generate_live_parameter_bank(
             "                    ADDR_BANK_SEL: S_AXI_RDATA <= reg_bank_select;",
             "                    ADDR_ENTRY_IDX: S_AXI_RDATA <= reg_entry_index;",
             "                    ADDR_DATA_LO: S_AXI_RDATA <= reg_write_data_lo;",
-            "                    ADDR_DATA_HI: S_AXI_RDATA <= reg_write_data_hi;",
-            "                    ADDR_CHECKSUM: S_AXI_RDATA <= observed_checksum;",
-            "                    ADDR_TRAP_STAT: S_AXI_RDATA <= {{(DATA_WIDTH-TRAP_WIDTH){1'b0}}, reg_trap_vector};",
-            "                    default: S_AXI_RDATA <= {DATA_WIDTH{1'b0}};",
-            "                endcase",
+                    "                    ADDR_DATA_HI: S_AXI_RDATA <= reg_write_data_hi;",
+                    "                    ADDR_CHECKSUM: S_AXI_RDATA <= observed_checksum;",
+                    "                    ADDR_TRAP_STAT: S_AXI_RDATA <= {{(DATA_WIDTH-TRAP_WIDTH){1'b0}}, reg_trap_vector};",
+                    "                    ADDR_READ_LO: S_AXI_RDATA <= active_read_data_lo;",
+                    "                    ADDR_READ_HI: S_AXI_RDATA <= active_read_data_hi;",
+                    "                    default: S_AXI_RDATA <= {DATA_WIDTH{1'b0}};",
+                "                endcase",
             "            end",
             "        end",
             "    end",
