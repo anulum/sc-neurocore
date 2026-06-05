@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.19] - 2026-06-05
+
+### Release workflows
+- Added macOS-only static-Z3 C++ parser flags for engine wheel and v3 engine builds so Apple Clang handles Z3's template-heavy LP sources.
+
 ## [3.15.18] - 2026-06-05
 
 ### CI and source hygiene

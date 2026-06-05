@@ -95,6 +95,10 @@ jobs:
         run: |
           python tools/ci_install_engine_deps.py
 
+      - name: Configure macOS static Z3 C++ parser
+        if: runner.os == 'macOS'
+        run: echo "CXXFLAGS=-fdelayed-template-parsing" >> "$GITHUB_ENV"
+
       - name: Build autonomous_learning cdylib
         shell: bash
         run: |
