@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.31] - 2026-06-05
+
+### CI and release workflows
+- Aligned the explicit `Q7.8` mixed-precision preset contract with the
+  sign-inclusive Q-label parser so branch CI no longer treats explicit
+  Q-format labels as named `q88` aliases.
+
 ## [3.15.30] - 2026-06-05
 
 ### CI and release workflows
