@@ -6,6 +6,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added emitter-facing mixed-precision manifests for fixed Q16.16 and
+  block-floating variables, including deterministic assignment order, emitted
+  datapath width/fraction, exponent stream width, exponent-vector width, and
+  fail-closed BFP parameter-count validation for downstream HDL emitters.
 - Routed quantizer precision-envelope proof fields through the static-analysis
   Q-format envelope proof API, with module-specific regression coverage to keep
   dense deployment manifests aligned with the standalone proof contract.

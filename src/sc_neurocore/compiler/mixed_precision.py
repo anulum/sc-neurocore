@@ -195,11 +195,17 @@ class BlockFloatingPrecisionConfig:
         layout = self.block_exponent_layout(parameter_count) if parameter_count is not None else None
         payload: dict[str, bool | float | int | list[int] | str | dict[str, int | str]] = {
             "kind": self.kind,
+            "label": self.q_label,
+            "data_width": self.data_width,
+            "fraction": self.emit_fraction,
             "mantissa_bits": self.mantissa_bits,
             "exponent_bits": self.exponent_bits,
             "block_size": self.block_size,
             "signed": self.signed,
             "emitted_fraction": self.emit_fraction,
+            "emitted_datapath_width": self.data_width,
+            "emitted_datapath_fraction": self.emit_fraction,
+            "exponent_stream_width": self.exponent_bits,
             "exponent_bias": self.exponent_bias,
             "exponent_code_range": [self.exponent_code_min, self.exponent_code_max],
             "exponent_range": [self.min_exponent, self.max_exponent],
@@ -209,11 +215,14 @@ class BlockFloatingPrecisionConfig:
             "block_exponent_alignment": "contiguous_flattened_block",
             "block_exponent_count": "ceil(parameter_count / block_size)",
             "block_exponent_count_policy": "ceil(parameter_count / block_size)",
+            "exponent_vector_width": "exponent_bits * ceil(parameter_count / block_size)",
+            "datapath_contract": "fixed_mantissa_with_explicit_shared_exponent_metadata",
         }
         if layout is not None:
             payload["parameter_count"] = parameter_count
             payload["block_exponent_count"] = layout.exponent_count
             payload["block_exponent_layout"] = layout.manifest()
+            payload["exponent_vector_width"] = self.exponent_bits * layout.exponent_count
         return payload
 
 
@@ -263,7 +272,8 @@ class PrecisionConfig:
     def q_label(self) -> str:
         """Human-readable Q-format label."""
         prefix = "Q" if self.signed else "UQ"
-        return f"{prefix}{self.int_bits}.{self.fraction}"
+        integer_bits = self.data_width - self.fraction
+        return f"{prefix}{integer_bits}.{self.fraction}"
 
     @property
     def emit_fraction(self) -> int:
@@ -278,13 +288,18 @@ class PrecisionConfig:
     def is_block_floating(self) -> bool:
         return False
 
-    def manifest(self) -> dict[str, float | int | str]:
+    def manifest(self) -> dict[str, bool | float | int | str]:
         return {
             "kind": self.kind,
             "data_width": self.data_width,
             "fraction": self.fraction,
             "signed": self.signed,
             "label": self.q_label,
+            "emitted_datapath_width": self.data_width,
+            "emitted_datapath_fraction": self.emit_fraction,
+            "exponent_stream_width": 0,
+            "exponent_vector_width": 0,
+            "datapath_contract": "fixed_point_twos_complement",
         }
 
     def can_represent(self, value: float) -> bool:
@@ -386,17 +401,26 @@ class MixedPrecisionSpec:
                 raise KeyError(f"Unknown variable(s) in parameter_counts: {', '.join(unknown)}")
 
         variables: dict[str, object] = {}
-        for var, cfg in self.var_configs.items():
+        for index, (var, cfg) in enumerate(self.var_configs.items()):
             if isinstance(cfg, BlockFloatingPrecisionConfig):
                 parameter_count = None if parameter_counts is None else parameter_counts.get(var)
-                variables[var] = cfg.manifest_for_parameter_count(parameter_count)
+                variable_manifest = cfg.manifest_for_parameter_count(parameter_count)
             else:
-                variables[var] = cfg.manifest()
+                variable_manifest = cfg.manifest()
+            variable_manifest.update(
+                {
+                    "variable": var,
+                    "assignment_index": index,
+                    "emitter_contract_version": "mixed_precision_emitter.v1",
+                }
+            )
+            variables[var] = variable_manifest
 
         return {
             "kind": "mixed_precision_spec",
             "total_bits": self.total_bits,
             "variable_count": len(self.var_configs),
+            "variable_order": list(self.var_configs),
             "variables": variables,
         }
 

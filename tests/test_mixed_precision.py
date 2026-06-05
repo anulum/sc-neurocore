@@ -42,6 +42,12 @@ def test_block_floating_manifest_carries_alignment_metadata() -> None:
     manifest = BlockFloatingPrecisionConfig(16, 3, 32).manifest()
 
     assert manifest["kind"] == "block_floating"
+    assert manifest["label"] == "BFP16E3X32"
+    assert manifest["data_width"] == 16
+    assert manifest["fraction"] == 15
+    assert manifest["emitted_datapath_width"] == 16
+    assert manifest["emitted_datapath_fraction"] == 15
+    assert manifest["exponent_stream_width"] == 3
     assert manifest["exponent_bias"] == 3
     assert manifest["exponent_code_range"] == [0, 7]
     assert manifest["exponent_range"] == [-3, 4]
@@ -51,6 +57,10 @@ def test_block_floating_manifest_carries_alignment_metadata() -> None:
     assert manifest["block_exponent_alignment"] == "contiguous_flattened_block"
     assert manifest["block_exponent_count"] == "ceil(parameter_count / block_size)"
     assert manifest["block_exponent_count_policy"] == "ceil(parameter_count / block_size)"
+    assert manifest["exponent_vector_width"] == "exponent_bits * ceil(parameter_count / block_size)"
+    assert manifest["datapath_contract"] == (
+        "fixed_mantissa_with_explicit_shared_exponent_metadata"
+    )
 
 
 def test_block_floating_manifest_carries_concrete_layout_when_count_known() -> None:
@@ -61,6 +71,7 @@ def test_block_floating_manifest_carries_concrete_layout_when_count_known() -> N
 
     assert manifest["parameter_count"] == 65
     assert manifest["block_exponent_count"] == 3
+    assert manifest["exponent_vector_width"] == 9
     assert manifest["block_exponent_layout"] == {
         "alignment": "contiguous_flattened_block",
         "flattened_order": "row_major",
@@ -80,6 +91,48 @@ def test_mixed_precision_spec_manifest_rejects_unknown_parameter_counts() -> Non
     assert spec.manifest(parameter_counts={"v": 65})["variables"]["v"]["block_exponent_count"] == 3
     with pytest.raises(KeyError, match="unknown"):
         spec.manifest(parameter_counts={"unknown": 65})
+
+
+def test_mixed_precision_spec_manifest_is_emitter_facing_contract() -> None:
+    """Mixed fixed/BFP manifests must preserve deterministic emitter assignments."""
+
+    spec = from_preset({"v": "q1616", "w": "bfp16e3x32"})
+    manifest = spec.manifest(parameter_counts={"w": 65})
+    variables = cast(dict[str, dict[str, object]], manifest["variables"])
+
+    assert manifest["variable_order"] == ["v", "w"]
+    assert variables["v"]["variable"] == "v"
+    assert variables["v"]["assignment_index"] == 0
+    assert variables["v"]["kind"] == "fixed"
+    assert variables["v"]["label"] == "Q16.16"
+    assert variables["v"]["emitted_datapath_width"] == 32
+    assert variables["v"]["emitted_datapath_fraction"] == 16
+    assert variables["v"]["exponent_stream_width"] == 0
+    assert variables["v"]["exponent_vector_width"] == 0
+    assert variables["v"]["datapath_contract"] == "fixed_point_twos_complement"
+
+    assert variables["w"]["variable"] == "w"
+    assert variables["w"]["assignment_index"] == 1
+    assert variables["w"]["kind"] == "block_floating"
+    assert variables["w"]["label"] == "BFP16E3X32"
+    assert variables["w"]["emitted_datapath_width"] == 16
+    assert variables["w"]["emitted_datapath_fraction"] == 15
+    assert variables["w"]["block_exponent_count"] == 3
+    assert variables["w"]["exponent_stream_width"] == 3
+    assert variables["w"]["exponent_vector_width"] == 9
+    assert variables["w"]["datapath_contract"] == (
+        "fixed_mantissa_with_explicit_shared_exponent_metadata"
+    )
+    assert variables["w"]["emitter_contract_version"] == "mixed_precision_emitter.v1"
+
+
+def test_mixed_precision_spec_manifest_rejects_malformed_bfp_parameter_count() -> None:
+    """BFP parameter-count metadata must fail closed before emitter handoff."""
+
+    spec = from_preset({"v": "bfp16e3x32"})
+
+    with pytest.raises(TypeError, match="parameter_count"):
+        spec.manifest(parameter_counts={"v": cast(Any, 1.5)})
 
 
 def test_from_preset_block_floating_preserves_exact_metadata() -> None:

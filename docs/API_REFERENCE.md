@@ -8439,6 +8439,29 @@ signed : bool
 - **encode**(value)
   - Encode a float to Q-format integer.
 
+### Class `BlockFloatingPrecisionConfig`
+Block-floating specification for a single mixed-precision variable.
+
+The mixed-precision emitter stores the mantissa in the fixed datapath and
+carries shared-exponent metadata through the manifest. `BFP16E3X32` therefore
+emits a 16-bit mantissa datapath with a 3-bit exponent stream and one shared
+exponent per contiguous block of 32 flattened parameters.
+
+- **data_width**()
+  - Mantissa payload width emitted into the fixed datapath.
+- **emit_fraction**()
+  - Conservative mantissa fraction used by fixed-point compatibility emitters.
+- **block_exponent_count**(parameter_count)
+  - Exact shared-exponent count for a flattened parameter payload.
+- **block_exponent_layout**(parameter_count)
+  - Deterministic row-major contiguous block layout for downstream emitters.
+- **validate_exponents**(exponents, parameter_count)
+  - Fail-closed exponent count and code-range validation.
+- **manifest_for_parameter_count**(parameter_count)
+  - Return emitter-facing BFP metadata, including datapath width, exponent
+    stream width, exponent-vector width, and concrete layout when the parameter
+    count is known.
+
 ### Class `MixedPrecisionSpec`
 Specification for mixed-precision compilation.
 
@@ -8458,6 +8481,12 @@ var_configs : dict&#91;str, PrecisionConfig&#93;
   - Get the precision config for a variable.
 - **summary**()
   - Return a human-readable summary of the precision allocation.
+- **manifest**(parameter_counts)
+  - Return the deterministic emitter-facing precision plan. Each variable row
+    includes `variable`, `assignment_index`, `label`, emitted datapath
+    width/fraction, exponent stream width, exponent-vector width, and the
+    datapath contract. Block-floating rows include exact shared-exponent layout
+    when `parameter_counts` supplies the flattened parameter count.
 
 ### Function `_min_bits_for_range(lo, hi, signed)`
 Compute minimum integer bits to cover a value range.
