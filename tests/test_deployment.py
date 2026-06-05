@@ -7,6 +7,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+import shutil
+import subprocess
+
 import pytest
 
 from sc_neurocore.compiler.deployment import (
@@ -289,6 +293,69 @@ class TestHostDriverGen:
         assert "SC_LIVE_BASE + LIVE_REG_READ_DATA_HI" in drv
         assert "sc_live_update_live_bfp_weights_w0_encoded" in drv
         assert "sc_live_verify_live_bfp_weights_w0_encoded" in drv
+
+    def test_c_live_control_driver_compiles_with_readback_consumer(self, tmp_path: Path) -> None:
+        """Generated C live-control helpers should compile in a real consumer."""
+        cc = shutil.which("cc") or shutil.which("gcc")
+        if cc is None:
+            raise AssertionError("a C compiler is required for generated live-control driver checks")
+        spec = MMIOUpdateSpec(
+            bus_protocol="axi4_lite",
+            control_base_address_bytes=0x100,
+            banks=(
+                ParameterBankSpec(
+                    bank_name="weights",
+                    start_address_bytes=0x2000,
+                    parameter_count=1,
+                    parameter_names=("w0",),
+                    q_format="Q8.8",
+                ),
+            ),
+        )
+        header = generate_host_driver("sc_live", {}, language="c", live_update_spec=spec)
+        header_path = tmp_path / "sc_live_driver.h"
+        source_path = tmp_path / "driver_consumer.c"
+        object_path = tmp_path / "driver_consumer.o"
+        header_path.write_text(header, encoding="utf-8")
+        source_path.write_text(
+            """
+#include <stdint.h>
+#include "sc_live_driver.h"
+
+static uint32_t observed_addr;
+static uint32_t observed_val;
+
+void mmio_write(uint32_t addr, uint32_t val) {
+    observed_addr = addr;
+    observed_val = val;
+}
+
+uint32_t mmio_read(uint32_t addr) {
+    if (addr == SC_LIVE_BASE + LIVE_REG_STATUS) {
+        return 0U;
+    }
+    if (addr == SC_LIVE_BASE + LIVE_REG_READ_DATA_LO) {
+        return 0x00001234U;
+    }
+    return 0U;
+}
+
+int main(void) {
+    int rc = sc_live_verify_live_weights_w0_encoded(0x1234ULL);
+    return rc == 0 && observed_addr != 0U && observed_val != 0xFFFFFFFFU ? 0 : 1;
+}
+""",
+            encoding="utf-8",
+        )
+
+        result = subprocess.run(
+            [cc, "-std=c11", "-Wall", "-Wextra", "-Werror", "-c", str(source_path), "-o", str(object_path)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 0, result.stderr
 
 
 # ═══════════════════════════════════════════════════════════════════════
