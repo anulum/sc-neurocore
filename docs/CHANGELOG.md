@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.23] - 2026-06-05
+
+### Release workflows
+- Aligned the Rust engine crate and bridge wheel metadata with the public
+  Python package version before registry publication.
+- Added release-surface tests for engine crate and bridge metadata version
+  parity.
+
 ## [3.15.22] - 2026-06-05
 
 ### Security workflows
