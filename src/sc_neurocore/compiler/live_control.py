@@ -518,16 +518,13 @@ class MMIOUpdateSpec:
             MMIOWrite(addresses["bank_select"], bank_select, 32, "select_bank"),
             MMIOWrite(addresses["entry_index"], entry_index, 32, "select_entry"),
             MMIOWrite(addresses["write_data_lo"], encoded_word & 0xFFFF_FFFF, 32, "write_data_lo"),
+            MMIOWrite(
+                addresses["write_data_hi"],
+                (encoded_word >> 32) & 0xFFFF_FFFF,
+                32,
+                "write_data_hi",
+            ),
         ]
-        if bank.entry_width_bits > 32:
-            writes.append(
-                MMIOWrite(
-                    addresses["write_data_hi"],
-                    (encoded_word >> 32) & 0xFFFF_FFFF,
-                    32,
-                    "write_data_hi",
-                )
-            )
         writes.append(
             MMIOWrite(
                 addresses["write_checksum"],

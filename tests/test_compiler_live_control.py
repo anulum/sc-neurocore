@@ -383,6 +383,38 @@ def test_mmio_update_checksum_uses_ieee_crc32_update_guard() -> None:
     assert spec.update_checksum("weights", "w_0", 0x00010000) == 0x27E798F0
 
 
+def test_mmio_update_sequence_zeroes_high_word_for_narrow_entries() -> None:
+    bank = ParameterBankSpec(
+        bank_name="weights",
+        start_address_bytes=0x9000,
+        parameter_count=1,
+        parameter_names=("w_0",),
+        q_format="Q8.8",
+    )
+    spec = MMIOUpdateSpec(
+        bus_protocol="axi4_lite",
+        banks=(bank,),
+        control_base_address_bytes=0x100,
+    )
+
+    writes = spec.build_update_sequence("weights", "w_0", 0x1234)
+
+    assert [write.purpose for write in writes] == [
+        "select_bank",
+        "select_entry",
+        "write_data_lo",
+        "write_data_hi",
+        "write_checksum",
+        "load_shadow",
+        "apply_shadow",
+    ]
+    assert writes[2].address_bytes == 0x110
+    assert writes[2].value == 0x1234
+    assert writes[3].address_bytes == 0x114
+    assert writes[3].value == 0
+    assert writes[4].value == spec.update_checksum("weights", "w_0", 0x1234)
+
+
 def test_mmio_update_sequence_supports_explicit_apply_and_rollback() -> None:
     bank = ParameterBankSpec(
         bank_name="weights",
