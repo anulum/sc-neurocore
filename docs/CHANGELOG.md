@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.32] - 2026-06-05
+
+### CI and release workflows
+- Restored the direct `MixedPrecisionSpec.get()` contract to preserve explicit
+  `PrecisionConfig(16, 8)` widths while keeping explicit `Q7.8` preset parsing
+  sign-inclusive.
+
 ## [3.15.31] - 2026-06-05
 
 ### CI and release workflows

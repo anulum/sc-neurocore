@@ -211,8 +211,8 @@ class TestMixedPrecisionSpec:
                 "v": PrecisionConfig(16, 8),
             }
         )
-        assert spec.get("v").data_width == 15
-        assert spec.get("v").q_label == "Q7.8"
+        assert spec.get("v").data_width == 16
+        assert spec.get("v").q_label == "Q8.8"
 
     def test_get_missing(self) -> None:
         """Should raise on missing variable."""
