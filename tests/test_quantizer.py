@@ -125,10 +125,25 @@ class TestPrecisionTrapReport:
             "output_format": "Q16.16",
             "output_count": 3,
             "overflow_count": 2,
+            "underflow_count": 0,
             "saturated_min_count": 1,
             "saturated_max_count": 1,
             "has_overflow": True,
+            "has_underflow": False,
         }
+
+    def test_manifest_counts_sub_lsb_underflow(self):
+        report = PrecisionTrapReport(
+            operation="dense_mixed_qformat",
+            output_codes=np.array([0, 1], dtype=np.int64),
+            overflow_mask=np.array([False, False], dtype=bool),
+            underflow_mask=np.array([True, False], dtype=bool),
+            output_fmt=Q16_16,
+        )
+
+        assert report.underflow_count == 1
+        assert report.has_underflow is True
+        assert report.manifest()["underflow_count"] == 1
 
     def test_rejects_ambiguous_trap_shapes_and_out_of_range_codes(self):
         with pytest.raises(ValueError, match="identical shape"):
@@ -136,6 +151,14 @@ class TestPrecisionTrapReport:
                 operation="dense_mixed_qformat",
                 output_codes=np.array([1, 2], dtype=np.int64),
                 overflow_mask=np.array([True], dtype=bool),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(ValueError, match="identical shape"):
+            PrecisionTrapReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([1, 2], dtype=np.int64),
+                overflow_mask=np.array([False, False], dtype=bool),
+                underflow_mask=np.array([True], dtype=bool),
                 output_fmt=Q16_16,
             )
         with pytest.raises(ValueError, match="exceed"):
@@ -169,11 +192,27 @@ class TestPrecisionEnvelopeReport:
         assert report.output_count == 2
         assert report.overflow_count == 0
         assert report.observed_overflow_free is True
+        assert report.underflow_count == 0
+        assert report.observed_underflow_free is True
         assert report.conservative_overflow_free is True
         assert report.max_abs_output_code == 1024
         assert report.max_abs_bound_code == 4096
         assert report.min_headroom_code == ((1 << 31) - 1) - 4096
         assert report.manifest()["conservative_overflow_free"] is True
+
+    def test_manifest_distinguishes_underflow_from_overflow(self):
+        report = PrecisionEnvelopeReport(
+            operation="dense_mixed_qformat",
+            output_codes=np.array([0], dtype=np.int64),
+            overflow_mask=np.array([False], dtype=bool),
+            underflow_mask=np.array([True], dtype=bool),
+            abs_bound_codes=np.array([1], dtype=np.int64),
+            output_fmt=Q16_16,
+        )
+
+        assert report.observed_overflow_free is True
+        assert report.observed_underflow_free is False
+        assert report.manifest()["underflow_count"] == 1
 
     def test_conservative_envelope_can_reject_cancelling_outputs(self):
         report = PrecisionEnvelopeReport(
@@ -195,6 +234,15 @@ class TestPrecisionEnvelopeReport:
                 output_codes=np.array([1, 2], dtype=np.int64),
                 overflow_mask=np.array([False, False], dtype=bool),
                 abs_bound_codes=np.array([2], dtype=np.int64),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(ValueError, match="identical shape"):
+            PrecisionEnvelopeReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([1, 2], dtype=np.int64),
+                overflow_mask=np.array([False, False], dtype=bool),
+                underflow_mask=np.array([True], dtype=bool),
+                abs_bound_codes=np.array([1, 2], dtype=np.int64),
                 output_fmt=Q16_16,
             )
         with pytest.raises(ValueError, match="non-negative"):
@@ -377,6 +425,25 @@ class TestCompiledMixedDense:
         assert envelope.conservative_overflow_free is False
         assert envelope.max_abs_bound_code > envelope.conservative_safe_bound_code
 
+    def test_canonical_contract_reports_sub_lsb_underflow(self):
+        weights = np.array([[1 / Q8_8.scale]], dtype=np.float64)
+        inputs = np.array([1 / Q16_16.scale], dtype=np.float64)
+        compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed(scale_per_tensor=False))
+
+        codes, overflow = compiled.forward_with_overflow(inputs)
+
+        assert int(codes[0]) == 0
+        assert overflow.tolist() == [False]
+
+        report = compiled.precision_trap_report(inputs)
+        assert report.overflow_count == 0
+        assert report.underflow_count == 1
+        assert report.manifest()["has_underflow"] is True
+
+        envelope = compiled.precision_envelope_report(inputs)
+        assert envelope.observed_overflow_free is True
+        assert envelope.observed_underflow_free is False
+
     def test_negative_raw_products_use_hardware_arithmetic_shift(self):
         weights = np.array([[0.5]], dtype=np.float64)
         inputs = np.array([-1 / Q16_16.scale], dtype=np.float64)
@@ -471,6 +538,24 @@ class TestCompiledBlockFloatingDense:
         assert envelope.observed_overflow_free is False
         assert envelope.conservative_overflow_free is False
         assert envelope.max_abs_bound_code > envelope.conservative_safe_bound_code
+
+    def test_block_floating_dense_reports_sub_lsb_underflow(self):
+        weights = np.array([[0.125]], dtype=np.float64)
+        inputs = np.array([1 / Q16_16.scale], dtype=np.float64)
+        compiled = compile_dense_block_floating(weights, fmt="BFP16E3X1")
+
+        codes, overflow = compiled.forward_with_overflow(inputs)
+
+        assert int(codes[0]) == 0
+        assert overflow.tolist() == [False]
+
+        report = compiled.precision_trap_report(inputs)
+        assert report.overflow_count == 0
+        assert report.underflow_count == 1
+
+        envelope = compiled.precision_envelope_report(inputs)
+        assert envelope.observed_overflow_free is True
+        assert envelope.observed_underflow_free is False
 
     def test_block_floating_dense_rejects_invalid_shapes_and_inputs(self):
         with pytest.raises(ValueError, match="2-D dense"):

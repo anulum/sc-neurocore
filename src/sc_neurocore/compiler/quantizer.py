@@ -385,6 +385,7 @@ class PrecisionTrapReport:
     output_codes: np.ndarray[Any, Any]
     overflow_mask: np.ndarray[Any, Any]
     output_fmt: QFormat
+    underflow_mask: np.ndarray[Any, Any] | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.operation, str) or not self.operation:
@@ -397,13 +398,19 @@ class PrecisionTrapReport:
             raise TypeError("output_codes must contain integer fixed-point codes")
         codes = raw_codes.astype(np.int64, copy=True)
         mask = np.asarray(self.overflow_mask, dtype=bool)
+        if self.underflow_mask is None:
+            underflow = np.zeros(mask.shape, dtype=bool)
+        else:
+            underflow = np.asarray(self.underflow_mask, dtype=bool)
 
         if codes.ndim != 1:
             raise ValueError("output_codes must be a 1-D vector")
         if mask.ndim != 1:
             raise ValueError("overflow_mask must be a 1-D vector")
-        if codes.shape != mask.shape:
-            raise ValueError("output_codes and overflow_mask must have identical shape")
+        if underflow.ndim != 1:
+            raise ValueError("underflow_mask must be a 1-D vector")
+        if codes.shape != mask.shape or codes.shape != underflow.shape:
+            raise ValueError("output_codes, overflow_mask, and underflow_mask must have identical shape")
 
         min_code, max_code = _fixed_integer_bounds(self.output_fmt)
         if np.any(codes < min_code) or np.any(codes > max_code):
@@ -411,6 +418,7 @@ class PrecisionTrapReport:
 
         object.__setattr__(self, "output_codes", codes)
         object.__setattr__(self, "overflow_mask", mask.astype(bool, copy=True))
+        object.__setattr__(self, "underflow_mask", underflow.astype(bool, copy=True))
 
     @property
     def output_count(self) -> int:
@@ -426,6 +434,16 @@ class PrecisionTrapReport:
     def has_overflow(self) -> bool:
         """Whether any output channel saturated."""
         return self.overflow_count > 0
+
+    @property
+    def underflow_count(self) -> int:
+        """Number of nonzero outputs that collapsed below one output LSB."""
+        return int(np.count_nonzero(self.underflow_mask))
+
+    @property
+    def has_underflow(self) -> bool:
+        """Whether any nonzero output collapsed to the zero code."""
+        return self.underflow_count > 0
 
     @property
     def saturated_min_count(self) -> int:
@@ -446,9 +464,11 @@ class PrecisionTrapReport:
             "output_format": self.output_fmt.q_label,
             "output_count": self.output_count,
             "overflow_count": self.overflow_count,
+            "underflow_count": self.underflow_count,
             "saturated_min_count": self.saturated_min_count,
             "saturated_max_count": self.saturated_max_count,
             "has_overflow": self.has_overflow,
+            "has_underflow": self.has_underflow,
         }
 
 
@@ -461,6 +481,7 @@ class PrecisionEnvelopeReport:
     overflow_mask: np.ndarray[Any, Any]
     abs_bound_codes: np.ndarray[Any, Any]
     output_fmt: QFormat
+    underflow_mask: np.ndarray[Any, Any] | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.operation, str) or not self.operation:
@@ -478,16 +499,22 @@ class PrecisionEnvelopeReport:
         codes = raw_codes.astype(np.int64, copy=True)
         bounds = raw_bounds.astype(np.int64, copy=True)
         mask = np.asarray(self.overflow_mask, dtype=bool)
+        if self.underflow_mask is None:
+            underflow = np.zeros(mask.shape, dtype=bool)
+        else:
+            underflow = np.asarray(self.underflow_mask, dtype=bool)
 
         if codes.ndim != 1:
             raise ValueError("output_codes must be a 1-D vector")
         if mask.ndim != 1:
             raise ValueError("overflow_mask must be a 1-D vector")
+        if underflow.ndim != 1:
+            raise ValueError("underflow_mask must be a 1-D vector")
         if bounds.ndim != 1:
             raise ValueError("abs_bound_codes must be a 1-D vector")
-        if codes.shape != mask.shape or codes.shape != bounds.shape:
+        if codes.shape != mask.shape or codes.shape != underflow.shape or codes.shape != bounds.shape:
             raise ValueError(
-                "output_codes, overflow_mask, and abs_bound_codes must have identical shape"
+                "output_codes, overflow_mask, underflow_mask, and abs_bound_codes must have identical shape"
             )
         if np.any(bounds < 0):
             raise ValueError("abs_bound_codes must be non-negative")
@@ -498,6 +525,7 @@ class PrecisionEnvelopeReport:
 
         object.__setattr__(self, "output_codes", codes)
         object.__setattr__(self, "overflow_mask", mask.astype(bool, copy=True))
+        object.__setattr__(self, "underflow_mask", underflow.astype(bool, copy=True))
         object.__setattr__(self, "abs_bound_codes", bounds)
 
     @property
@@ -514,6 +542,16 @@ class PrecisionEnvelopeReport:
     def observed_overflow_free(self) -> bool:
         """Whether the realised workload avoided fixed-point saturation."""
         return self.overflow_count == 0
+
+    @property
+    def underflow_count(self) -> int:
+        """Number of nonzero outputs that collapsed below one output LSB."""
+        return int(np.count_nonzero(self.underflow_mask))
+
+    @property
+    def observed_underflow_free(self) -> bool:
+        """Whether the realised workload avoided sub-LSB output collapse."""
+        return self.underflow_count == 0
 
     @property
     def conservative_safe_bound_code(self) -> int:
@@ -551,7 +589,9 @@ class PrecisionEnvelopeReport:
             "output_format": self.output_fmt.q_label,
             "output_count": self.output_count,
             "overflow_count": self.overflow_count,
+            "underflow_count": self.underflow_count,
             "observed_overflow_free": self.observed_overflow_free,
+            "observed_underflow_free": self.observed_underflow_free,
             "conservative_overflow_free": self.conservative_overflow_free,
             "max_abs_output_code": self.max_abs_output_code,
             "max_abs_bound_code": self.max_abs_bound_code,
@@ -629,10 +669,9 @@ class CompiledMixedDense:
     def _raw_accumulator_products(self, input_codes: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         return self.quantized_weights.astype(np.int64) @ input_codes.astype(np.int64)
 
-    def forward_with_overflow(
+    def _forward_anomaly_masks(
         self, inputs: np.ndarray[Any, Any]
-    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
-        """Return saturated Q-accumulator codes and per-output overflow flags."""
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         input_codes = self._input_codes(inputs)
         raw_products = self._raw_accumulator_products(input_codes)
 
@@ -646,8 +685,16 @@ class CompiledMixedDense:
 
         min_accum, max_accum = _fixed_integer_bounds(self.fmt.accum_fmt)
         overflow = (accumulator_codes < min_accum) | (accumulator_codes > max_accum)
+        underflow = (raw_products != 0) & (accumulator_codes == 0)
         clipped = np.clip(accumulator_codes, min_accum, max_accum).astype(np.int64)
-        return clipped, overflow.astype(bool)
+        return clipped, overflow.astype(bool), (underflow & ~overflow).astype(bool)
+
+    def forward_with_overflow(
+        self, inputs: np.ndarray[Any, Any]
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+        """Return saturated Q-accumulator codes and per-output overflow flags."""
+        codes, overflow, _ = self._forward_anomaly_masks(inputs)
+        return codes, overflow
 
     def forward_accumulator_codes(self, inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Return saturated accumulator-format integer codes for dense outputs."""
@@ -656,17 +703,18 @@ class CompiledMixedDense:
 
     def precision_trap_report(self, inputs: np.ndarray[Any, Any]) -> PrecisionTrapReport:
         """Return saturation telemetry suitable for a hardware trap register."""
-        codes, overflow = self.forward_with_overflow(inputs)
+        codes, overflow, underflow = self._forward_anomaly_masks(inputs)
         return PrecisionTrapReport(
             operation="dense_mixed_qformat",
             output_codes=codes,
             overflow_mask=overflow,
             output_fmt=self.fmt.accum_fmt,
+            underflow_mask=underflow,
         )
 
     def precision_envelope_report(self, inputs: np.ndarray[Any, Any]) -> PrecisionEnvelopeReport:
         """Return a conservative absolute-output envelope for this workload."""
-        codes, overflow = self.forward_with_overflow(inputs)
+        codes, overflow, underflow = self._forward_anomaly_masks(inputs)
         input_codes = self._input_codes(inputs)
         abs_products = np.abs(self.quantized_weights.astype(np.int64)) @ np.abs(
             input_codes.astype(np.int64)
@@ -685,6 +733,7 @@ class CompiledMixedDense:
             overflow_mask=overflow,
             abs_bound_codes=bounds.astype(np.int64),
             output_fmt=self.fmt.accum_fmt,
+            underflow_mask=underflow,
         )
 
     def forward_float(self, inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
@@ -819,15 +868,23 @@ class CompiledBlockFloatingDense:
         """Return dense outputs from BFP weights and quantised fixed-point inputs."""
         return np.asarray(self._weight_values, dtype=np.float64) @ self._input_values(inputs)
 
-    def forward_with_overflow(
+    def _forward_anomaly_masks(
         self, inputs: np.ndarray[Any, Any]
-    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
-        """Return saturated fixed-point output codes and per-output overflow flags."""
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         outputs = self.forward_float(inputs)
         codes = np.rint(outputs * self.input_fmt.scale).astype(np.int64)
         min_accum, max_accum = _fixed_integer_bounds(self.input_fmt)
         overflow = (codes < min_accum) | (codes > max_accum)
-        return np.clip(codes, min_accum, max_accum).astype(np.int64), overflow.astype(bool)
+        underflow = (outputs != 0.0) & (codes == 0)
+        clipped = np.clip(codes, min_accum, max_accum).astype(np.int64)
+        return clipped, overflow.astype(bool), (underflow & ~overflow).astype(bool)
+
+    def forward_with_overflow(
+        self, inputs: np.ndarray[Any, Any]
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+        """Return saturated fixed-point output codes and per-output overflow flags."""
+        codes, overflow, _ = self._forward_anomaly_masks(inputs)
+        return codes, overflow
 
     def forward_accumulator_codes(self, inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Return saturated output codes in the configured fixed-point input format."""
@@ -836,17 +893,18 @@ class CompiledBlockFloatingDense:
 
     def precision_trap_report(self, inputs: np.ndarray[Any, Any]) -> PrecisionTrapReport:
         """Return saturation telemetry suitable for a hardware trap register."""
-        codes, overflow = self.forward_with_overflow(inputs)
+        codes, overflow, underflow = self._forward_anomaly_masks(inputs)
         return PrecisionTrapReport(
             operation="dense_block_floating",
             output_codes=codes,
             overflow_mask=overflow,
             output_fmt=self.input_fmt,
+            underflow_mask=underflow,
         )
 
     def precision_envelope_report(self, inputs: np.ndarray[Any, Any]) -> PrecisionEnvelopeReport:
         """Return a conservative absolute-output envelope for this workload."""
-        codes, overflow = self.forward_with_overflow(inputs)
+        codes, overflow, underflow = self._forward_anomaly_masks(inputs)
         input_values = self._input_values(inputs)
         abs_bound_values = np.abs(np.asarray(self._weight_values, dtype=np.float64)) @ np.abs(
             input_values
@@ -859,6 +917,7 @@ class CompiledBlockFloatingDense:
             overflow_mask=overflow,
             abs_bound_codes=abs_bound_codes,
             output_fmt=self.input_fmt,
+            underflow_mask=underflow,
         )
 
 

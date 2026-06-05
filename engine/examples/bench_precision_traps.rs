@@ -34,10 +34,31 @@ fn overflow_inputs() -> Vec<i32> {
     vec![i32::MAX; N_INPUTS]
 }
 
-fn time_mixed_traps(weights: &[i16], inputs: &[i32]) -> (f64, i64, usize) {
+fn underflow_weights_mixed() -> Vec<i16> {
+    let mut weights = vec![0_i16; N_INPUTS * N_OUTPUTS];
+    for output_idx in 0..N_OUTPUTS {
+        weights[output_idx * N_INPUTS] = 1_i16;
+    }
+    weights
+}
+
+fn underflow_mantissas_bfp() -> Vec<i16> {
+    let mut mantissas = vec![0_i16; N_INPUTS * N_OUTPUTS];
+    for output_idx in 0..N_OUTPUTS {
+        mantissas[output_idx * N_INPUTS] = 1_i16;
+    }
+    mantissas
+}
+
+fn underflow_inputs() -> Vec<i32> {
+    vec![1_i32; N_INPUTS]
+}
+
+fn time_mixed_traps(weights: &[i16], inputs: &[i32]) -> (f64, i64, usize, usize) {
     let start = Instant::now();
     let mut checksum = 0_i64;
     let mut overflow_count = 0_usize;
+    let mut underflow_count = 0_usize;
     for _ in 0..ITERATIONS {
         let result = mixed_dense_q88_q1616(
             black_box(weights),
@@ -49,10 +70,17 @@ fn time_mixed_traps(weights: &[i16], inputs: &[i32]) -> (f64, i64, usize) {
         let report = result.precision_trap_report();
         checksum ^= report.saturated_max_count as i64;
         checksum ^= report.saturated_min_count as i64;
+        checksum ^= report.underflow_count as i64;
         overflow_count = report.overflow_count;
+        underflow_count = report.underflow_count;
     }
     let elapsed_ns = start.elapsed().as_nanos() as f64;
-    (elapsed_ns / ITERATIONS as f64, checksum, overflow_count)
+    (
+        elapsed_ns / ITERATIONS as f64,
+        checksum,
+        overflow_count,
+        underflow_count,
+    )
 }
 
 fn time_bfp_traps(
@@ -60,10 +88,11 @@ fn time_bfp_traps(
     exponents: &[u8],
     inputs: &[i32],
     mode: BlockFloatingMode,
-) -> (f64, i64, usize) {
+) -> (f64, i64, usize, usize) {
     let start = Instant::now();
     let mut checksum = 0_i64;
     let mut overflow_count = 0_usize;
+    let mut underflow_count = 0_usize;
     for _ in 0..ITERATIONS {
         let result = block_floating_dense_q16(
             black_box(mantissas),
@@ -77,10 +106,17 @@ fn time_bfp_traps(
         let report = result.precision_trap_report();
         checksum ^= report.saturated_max_count as i64;
         checksum ^= report.saturated_min_count as i64;
+        checksum ^= report.underflow_count as i64;
         overflow_count = report.overflow_count;
+        underflow_count = report.underflow_count;
     }
     let elapsed_ns = start.elapsed().as_nanos() as f64;
-    (elapsed_ns / ITERATIONS as f64, checksum, overflow_count)
+    (
+        elapsed_ns / ITERATIONS as f64,
+        checksum,
+        overflow_count,
+        underflow_count,
+    )
 }
 
 fn median(values: &mut [f64]) -> f64 {
@@ -106,6 +142,11 @@ fn main() {
         mode.exponent_code_max();
         (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size
     ];
+    let underflow_weights = underflow_weights_mixed();
+    let underflow_mantissas = underflow_mantissas_bfp();
+    let underflow_exponents =
+        vec![0_u8; (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size];
+    let underflow_inputs = underflow_inputs();
 
     let mut mixed_ns = Vec::with_capacity(REPEATS);
     let mut bfp_ns = Vec::with_capacity(REPEATS);
@@ -113,19 +154,40 @@ fn main() {
     let mut bfp_checksum = 0_i64;
     let mut mixed_overflow_count = 0_usize;
     let mut bfp_overflow_count = 0_usize;
+    let mut mixed_overflow_underflow_count = 0_usize;
+    let mut bfp_overflow_underflow_count = 0_usize;
 
     for _ in 0..REPEATS {
-        let (ns, checksum, overflow_count) = time_mixed_traps(&weights, &inputs);
+        let (ns, checksum, overflow_count, underflow_count) = time_mixed_traps(&weights, &inputs);
         mixed_ns.push(ns);
         mixed_checksum ^= checksum;
         mixed_overflow_count = overflow_count;
+        mixed_overflow_underflow_count = underflow_count;
     }
     for _ in 0..REPEATS {
-        let (ns, checksum, overflow_count) = time_bfp_traps(&mantissas, &exponents, &inputs, mode);
+        let (ns, checksum, overflow_count, underflow_count) =
+            time_bfp_traps(&mantissas, &exponents, &inputs, mode);
         bfp_ns.push(ns);
         bfp_checksum ^= checksum;
         bfp_overflow_count = overflow_count;
+        bfp_overflow_underflow_count = underflow_count;
     }
+    let mixed_underflow_count =
+        mixed_dense_q88_q1616(&underflow_weights, &underflow_inputs, N_OUTPUTS, N_INPUTS)
+            .expect("underflow probe dimensions must be valid")
+            .precision_trap_report()
+            .underflow_count;
+    let bfp_underflow_count = block_floating_dense_q16(
+        &underflow_mantissas,
+        &underflow_exponents,
+        &underflow_inputs,
+        N_OUTPUTS,
+        N_INPUTS,
+        mode,
+    )
+    .expect("underflow probe dimensions must be valid")
+    .precision_trap_report()
+    .underflow_count;
 
     let mut mixed_sorted = mixed_ns.clone();
     let mut bfp_sorted = bfp_ns.clone();
@@ -142,7 +204,7 @@ fn main() {
             "  \"benchmark\": \"precision_trap_reports_64x32\",\n",
             "  \"language\": \"Rust\",\n",
             "  \"timestamp_unix\": {timestamp_unix},\n",
-            "  \"command\": \"taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_traps\",\n",
+            "  \"command\": \"taskset -c 8-9 cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_traps\",\n",
             "  \"rustc\": \"{rust_version}\",\n",
             "  \"target_os\": \"{os}\",\n",
             "  \"target_arch\": \"{arch}\",\n",
@@ -155,12 +217,16 @@ fn main() {
             "  \"mixed_trap_min_ns_per_call\": {mixed_min_ns_per_call:.3},\n",
             "  \"mixed_trap_max_ns_per_call\": {mixed_max_ns_per_call:.3},\n",
             "  \"mixed_overflow_count\": {mixed_overflow_count},\n",
+            "  \"mixed_overflow_workload_underflow_count\": {mixed_overflow_underflow_count},\n",
+            "  \"mixed_underflow_count\": {mixed_underflow_count},\n",
             "  \"mixed_checksum\": {mixed_checksum},\n",
             "  \"mixed_results_ns_per_call\": [{mixed_results}],\n",
             "  \"bfp_trap_median_ns_per_call\": {bfp_median_ns_per_call:.3},\n",
             "  \"bfp_trap_min_ns_per_call\": {bfp_min_ns_per_call:.3},\n",
             "  \"bfp_trap_max_ns_per_call\": {bfp_max_ns_per_call:.3},\n",
             "  \"bfp_overflow_count\": {bfp_overflow_count},\n",
+            "  \"bfp_overflow_workload_underflow_count\": {bfp_overflow_underflow_count},\n",
+            "  \"bfp_underflow_count\": {bfp_underflow_count},\n",
             "  \"bfp_checksum\": {bfp_checksum},\n",
             "  \"bfp_results_ns_per_call\": [{bfp_results}]\n",
             "}}\n"
@@ -178,12 +244,16 @@ fn main() {
         mixed_min_ns_per_call = mixed_sorted[0],
         mixed_max_ns_per_call = mixed_sorted[mixed_sorted.len() - 1],
         mixed_overflow_count = mixed_overflow_count,
+        mixed_overflow_underflow_count = mixed_overflow_underflow_count,
+        mixed_underflow_count = mixed_underflow_count,
         mixed_checksum = mixed_checksum,
         mixed_results = values_json(&mixed_ns),
         bfp_median_ns_per_call = bfp_median_ns_per_call,
         bfp_min_ns_per_call = bfp_sorted[0],
         bfp_max_ns_per_call = bfp_sorted[bfp_sorted.len() - 1],
         bfp_overflow_count = bfp_overflow_count,
+        bfp_overflow_underflow_count = bfp_overflow_underflow_count,
+        bfp_underflow_count = bfp_underflow_count,
         bfp_checksum = bfp_checksum,
         bfp_results = values_json(&bfp_ns),
     );

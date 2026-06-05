@@ -1,8 +1,8 @@
 {
   "benchmark": "precision_trap_reports_64x32",
   "language": "Python",
-  "timestamp_utc": "2026-06-04T11:02:00+00:00",
-  "command": "taskset -c 10-11 env PYTHONPATH=src .venv/bin/python benchmarks/bench_precision_traps.py",
+  "timestamp_utc": "2026-06-05T01:57:29+00:00",
+  "command": "taskset -c 8-9 env PYTHONPATH=src .venv/bin/python benchmarks/bench_precision_traps.py",
   "python": "3.12.3",
   "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
   "processor": "x86_64",
@@ -10,25 +10,25 @@
     "host_load": "workstation under concurrent load during capture",
     "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
     "cpu_affinity": [
-      10,
-      11
+      8,
+      9
     ],
     "load_average_before": [
-      3.75634765625,
-      4.30224609375,
-      4.2490234375
+      3.16796875,
+      3.61572265625,
+      3.50390625
     ],
     "load_average_after": [
-      3.75634765625,
-      4.30224609375,
-      4.2490234375
+      3.16796875,
+      3.61572265625,
+      3.50390625
     ],
     "cpu_governor": [
       "powersave"
     ],
     "cpu_frequency_mhz": {
-      "min_observed_mhz": 3498.53,
-      "max_observed_mhz": 4549.457,
+      "min_observed_mhz": 800.0,
+      "max_observed_mhz": 4577.049,
       "sampled_cpu_count": 12.0
     },
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
@@ -39,104 +39,146 @@
   "n_outputs": 32,
   "iterations": 2000,
   "repeats": 7,
-  "mixed_trap_median_ns_per_call": 52810.453,
-  "mixed_trap_min_ns_per_call": 48680.2325,
-  "mixed_trap_max_ns_per_call": 67791.9875,
+  "mixed_trap_median_ns_per_call": 44744.1995,
+  "mixed_trap_min_ns_per_call": 43961.2835,
+  "mixed_trap_max_ns_per_call": 48970.659,
   "mixed_overflow_count": 32,
-  "bfp_trap_median_ns_per_call": 50173.42,
-  "bfp_trap_min_ns_per_call": 46726.818,
-  "bfp_trap_max_ns_per_call": 57913.442,
+  "mixed_underflow_count": 32,
+  "bfp_trap_median_ns_per_call": 45906.19,
+  "bfp_trap_min_ns_per_call": 43638.309,
+  "bfp_trap_max_ns_per_call": 50907.436,
   "bfp_overflow_count": 32,
+  "bfp_underflow_count": 32,
   "mixed_manifest": {
     "operation": "dense_mixed_qformat",
     "output_format": "Q16.16",
     "output_count": 32,
     "overflow_count": 32,
+    "underflow_count": 0,
     "saturated_min_count": 0,
     "saturated_max_count": 32,
-    "has_overflow": true
+    "has_overflow": true,
+    "has_underflow": false
   },
   "bfp_manifest": {
     "operation": "dense_block_floating",
     "output_format": "Q16.16",
     "output_count": 32,
     "overflow_count": 32,
+    "underflow_count": 0,
     "saturated_min_count": 0,
     "saturated_max_count": 32,
-    "has_overflow": true
+    "has_overflow": true,
+    "has_underflow": false
+  },
+  "mixed_underflow_manifest": {
+    "operation": "dense_mixed_qformat",
+    "output_format": "Q16.16",
+    "output_count": 32,
+    "overflow_count": 0,
+    "underflow_count": 32,
+    "saturated_min_count": 0,
+    "saturated_max_count": 0,
+    "has_overflow": false,
+    "has_underflow": true
+  },
+  "bfp_underflow_manifest": {
+    "operation": "dense_block_floating",
+    "output_format": "Q16.16",
+    "output_count": 32,
+    "overflow_count": 0,
+    "underflow_count": 32,
+    "saturated_min_count": 0,
+    "saturated_max_count": 0,
+    "has_overflow": false,
+    "has_underflow": true
   },
   "mixed_results": [
     {
-      "ns_per_call": 63483.644,
+      "ns_per_call": 48164.7145,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     },
     {
-      "ns_per_call": 67791.9875,
+      "ns_per_call": 48970.659,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     },
     {
-      "ns_per_call": 50649.7315,
+      "ns_per_call": 45223.9585,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     },
     {
-      "ns_per_call": 51595.1435,
+      "ns_per_call": 44703.225,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     },
     {
-      "ns_per_call": 57897.594,
+      "ns_per_call": 44744.1995,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     },
     {
-      "ns_per_call": 52810.453,
+      "ns_per_call": 43961.2835,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     },
     {
-      "ns_per_call": 48680.2325,
+      "ns_per_call": 44458.7555,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     }
   ],
   "bfp_results": [
     {
-      "ns_per_call": 48293.61,
+      "ns_per_call": 45906.19,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     },
     {
-      "ns_per_call": 50681.652,
+      "ns_per_call": 45989.243,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     },
     {
-      "ns_per_call": 56437.4105,
+      "ns_per_call": 43638.309,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     },
     {
-      "ns_per_call": 57913.442,
+      "ns_per_call": 48618.9075,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     },
     {
-      "ns_per_call": 46726.818,
+      "ns_per_call": 44503.0865,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     },
     {
-      "ns_per_call": 50173.42,
+      "ns_per_call": 50907.436,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     },
     {
-      "ns_per_call": 50135.7785,
+      "ns_per_call": 44357.6755,
       "checksum": 0,
-      "overflow_count": 32
+      "overflow_count": 32,
+      "underflow_count": 0
     }
   ]
 }

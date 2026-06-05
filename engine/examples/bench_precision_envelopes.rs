@@ -40,10 +40,31 @@ fn deterministic_inputs() -> Vec<i32> {
         .collect()
 }
 
-fn time_mixed_envelopes(weights: &[i16], inputs: &[i32]) -> (f64, i64, bool, i64) {
+fn underflow_weights_mixed() -> Vec<i16> {
+    let mut weights = vec![0_i16; N_INPUTS * N_OUTPUTS];
+    for output_idx in 0..N_OUTPUTS {
+        weights[output_idx * N_INPUTS] = 1_i16;
+    }
+    weights
+}
+
+fn underflow_mantissas_bfp() -> Vec<i16> {
+    let mut mantissas = vec![0_i16; N_INPUTS * N_OUTPUTS];
+    for output_idx in 0..N_OUTPUTS {
+        mantissas[output_idx * N_INPUTS] = 1_i16;
+    }
+    mantissas
+}
+
+fn underflow_inputs() -> Vec<i32> {
+    vec![1_i32; N_INPUTS]
+}
+
+fn time_mixed_envelopes(weights: &[i16], inputs: &[i32]) -> (f64, i64, bool, bool, i64) {
     let start = Instant::now();
     let mut checksum = 0_i64;
     let mut conservative_safe = false;
+    let mut underflow_free = false;
     let mut max_abs_bound = 0_i64;
     for _ in 0..ITERATIONS {
         let result = mixed_dense_q88_q1616(
@@ -56,7 +77,9 @@ fn time_mixed_envelopes(weights: &[i16], inputs: &[i32]) -> (f64, i64, bool, i64
         let report = result.precision_envelope_report();
         checksum ^= report.max_abs_bound_q1616;
         checksum ^= report.min_headroom_q1616;
+        checksum ^= report.underflow_count as i64;
         conservative_safe = report.conservative_overflow_free;
+        underflow_free = report.observed_underflow_free;
         max_abs_bound = report.max_abs_bound_q1616;
     }
     let elapsed_ns = start.elapsed().as_nanos() as f64;
@@ -64,6 +87,7 @@ fn time_mixed_envelopes(weights: &[i16], inputs: &[i32]) -> (f64, i64, bool, i64
         elapsed_ns / ITERATIONS as f64,
         checksum,
         conservative_safe,
+        underflow_free,
         max_abs_bound,
     )
 }
@@ -73,10 +97,11 @@ fn time_bfp_envelopes(
     exponents: &[u8],
     inputs: &[i32],
     mode: BlockFloatingMode,
-) -> (f64, i64, bool, i64) {
+) -> (f64, i64, bool, bool, i64) {
     let start = Instant::now();
     let mut checksum = 0_i64;
     let mut conservative_safe = false;
+    let mut underflow_free = false;
     let mut max_abs_bound = 0_i64;
     for _ in 0..ITERATIONS {
         let result = block_floating_dense_q16(
@@ -91,7 +116,9 @@ fn time_bfp_envelopes(
         let report = result.precision_envelope_report();
         checksum ^= report.max_abs_bound_q1616;
         checksum ^= report.min_headroom_q1616;
+        checksum ^= report.underflow_count as i64;
         conservative_safe = report.conservative_overflow_free;
+        underflow_free = report.observed_underflow_free;
         max_abs_bound = report.max_abs_bound_q1616;
     }
     let elapsed_ns = start.elapsed().as_nanos() as f64;
@@ -99,6 +126,7 @@ fn time_bfp_envelopes(
         elapsed_ns / ITERATIONS as f64,
         checksum,
         conservative_safe,
+        underflow_free,
         max_abs_bound,
     )
 }
@@ -126,6 +154,11 @@ fn main() {
         mode.exponent_bias() as u8;
         (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size
     ];
+    let underflow_weights = underflow_weights_mixed();
+    let underflow_mantissas = underflow_mantissas_bfp();
+    let underflow_exponents =
+        vec![0_u8; (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size];
+    let underflow_inputs = underflow_inputs();
 
     let mut mixed_ns = Vec::with_capacity(REPEATS);
     let mut bfp_ns = Vec::with_capacity(REPEATS);
@@ -133,25 +166,45 @@ fn main() {
     let mut bfp_checksum = 0_i64;
     let mut mixed_conservative_safe = false;
     let mut bfp_conservative_safe = false;
+    let mut mixed_underflow_free = false;
+    let mut bfp_underflow_free = false;
     let mut mixed_max_abs_bound = 0_i64;
     let mut bfp_max_abs_bound = 0_i64;
 
     for _ in 0..REPEATS {
-        let (ns, checksum, conservative_safe, max_abs_bound) =
+        let (ns, checksum, conservative_safe, underflow_free, max_abs_bound) =
             time_mixed_envelopes(&weights, &inputs);
         mixed_ns.push(ns);
         mixed_checksum ^= checksum;
         mixed_conservative_safe = conservative_safe;
+        mixed_underflow_free = underflow_free;
         mixed_max_abs_bound = max_abs_bound;
     }
     for _ in 0..REPEATS {
-        let (ns, checksum, conservative_safe, max_abs_bound) =
+        let (ns, checksum, conservative_safe, underflow_free, max_abs_bound) =
             time_bfp_envelopes(&mantissas, &exponents, &inputs, mode);
         bfp_ns.push(ns);
         bfp_checksum ^= checksum;
         bfp_conservative_safe = conservative_safe;
+        bfp_underflow_free = underflow_free;
         bfp_max_abs_bound = max_abs_bound;
     }
+    let mixed_underflow_count =
+        mixed_dense_q88_q1616(&underflow_weights, &underflow_inputs, N_OUTPUTS, N_INPUTS)
+            .expect("underflow probe dimensions must be valid")
+            .precision_envelope_report()
+            .underflow_count;
+    let bfp_underflow_count = block_floating_dense_q16(
+        &underflow_mantissas,
+        &underflow_exponents,
+        &underflow_inputs,
+        N_OUTPUTS,
+        N_INPUTS,
+        mode,
+    )
+    .expect("underflow probe dimensions must be valid")
+    .precision_envelope_report()
+    .underflow_count;
 
     let mut mixed_sorted = mixed_ns.clone();
     let mut bfp_sorted = bfp_ns.clone();
@@ -168,7 +221,7 @@ fn main() {
             "  \"benchmark\": \"precision_envelope_reports_64x32\",\n",
             "  \"language\": \"Rust\",\n",
             "  \"timestamp_unix\": {timestamp_unix},\n",
-            "  \"command\": \"taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_envelopes\",\n",
+            "  \"command\": \"taskset -c 8-9 cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_envelopes\",\n",
             "  \"rustc\": \"{rust_version}\",\n",
             "  \"target_os\": \"{os}\",\n",
             "  \"target_arch\": \"{arch}\",\n",
@@ -181,14 +234,18 @@ fn main() {
             "  \"mixed_envelope_min_ns_per_call\": {mixed_min_ns_per_call:.3},\n",
             "  \"mixed_envelope_max_ns_per_call\": {mixed_max_ns_per_call:.3},\n",
             "  \"mixed_conservative_overflow_free\": {mixed_conservative_safe},\n",
+            "  \"mixed_observed_underflow_free\": {mixed_underflow_free},\n",
             "  \"mixed_max_abs_bound_q1616\": {mixed_max_abs_bound},\n",
+            "  \"mixed_underflow_count\": {mixed_underflow_count},\n",
             "  \"mixed_checksum\": {mixed_checksum},\n",
             "  \"mixed_results_ns_per_call\": [{mixed_results}],\n",
             "  \"bfp_envelope_median_ns_per_call\": {bfp_median_ns_per_call:.3},\n",
             "  \"bfp_envelope_min_ns_per_call\": {bfp_min_ns_per_call:.3},\n",
             "  \"bfp_envelope_max_ns_per_call\": {bfp_max_ns_per_call:.3},\n",
             "  \"bfp_conservative_overflow_free\": {bfp_conservative_safe},\n",
+            "  \"bfp_observed_underflow_free\": {bfp_underflow_free},\n",
             "  \"bfp_max_abs_bound_q1616\": {bfp_max_abs_bound},\n",
+            "  \"bfp_underflow_count\": {bfp_underflow_count},\n",
             "  \"bfp_checksum\": {bfp_checksum},\n",
             "  \"bfp_results_ns_per_call\": [{bfp_results}]\n",
             "}}\n"
@@ -206,14 +263,18 @@ fn main() {
         mixed_min_ns_per_call = mixed_sorted[0],
         mixed_max_ns_per_call = mixed_sorted[mixed_sorted.len() - 1],
         mixed_conservative_safe = mixed_conservative_safe,
+        mixed_underflow_free = mixed_underflow_free,
         mixed_max_abs_bound = mixed_max_abs_bound,
+        mixed_underflow_count = mixed_underflow_count,
         mixed_checksum = mixed_checksum,
         mixed_results = values_json(&mixed_ns),
         bfp_median_ns_per_call = bfp_median_ns_per_call,
         bfp_min_ns_per_call = bfp_sorted[0],
         bfp_max_ns_per_call = bfp_sorted[bfp_sorted.len() - 1],
         bfp_conservative_safe = bfp_conservative_safe,
+        bfp_underflow_free = bfp_underflow_free,
         bfp_max_abs_bound = bfp_max_abs_bound,
+        bfp_underflow_count = bfp_underflow_count,
         bfp_checksum = bfp_checksum,
         bfp_results = values_json(&bfp_ns),
     );

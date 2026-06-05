@@ -65,35 +65,62 @@ def deterministic_safe_workloads() -> tuple[
     return mixed, inputs, block_floating, inputs
 
 
-def time_envelope_report(compiled: EnvelopeReporter, inputs: np.ndarray) -> tuple[float, int, bool]:
+def deterministic_underflow_workloads() -> tuple[
+    EnvelopeReporter, np.ndarray, EnvelopeReporter, np.ndarray
+]:
+    mixed_weights = np.zeros((N_OUTPUTS, N_INPUTS), dtype=np.float64)
+    bfp_weights = np.zeros((N_OUTPUTS, N_INPUTS), dtype=np.float64)
+    mixed_weights[:, 0] = 1.0 / 256.0
+    bfp_weights[:, 0] = 0.125
+    inputs = np.full(N_INPUTS, 1.0 / 65536.0, dtype=np.float64)
+    mixed = compile_dense_mixed_precision(
+        mixed_weights,
+        fmt=QFormatMixed(scale_per_tensor=False),
+    )
+    block_floating = compile_dense_block_floating(bfp_weights, fmt="BFP16E3X32")
+    return mixed, inputs, block_floating, inputs
+
+
+def time_envelope_report(
+    compiled: EnvelopeReporter,
+    inputs: np.ndarray,
+) -> tuple[float, int, bool, bool]:
     start_ns = time.perf_counter_ns()
     checksum = 0
     conservative_safe = False
+    underflow_free = False
     for _ in range(ITERATIONS):
         report = compiled.precision_envelope_report(inputs)
         checksum ^= int(report.max_abs_bound_code)
         checksum ^= int(report.min_headroom_code)
+        checksum ^= int(report.underflow_count)
         conservative_safe = bool(report.conservative_overflow_free)
+        underflow_free = bool(report.observed_underflow_free)
     elapsed_ns = time.perf_counter_ns() - start_ns
-    return elapsed_ns / ITERATIONS, checksum, conservative_safe
+    return elapsed_ns / ITERATIONS, checksum, conservative_safe, underflow_free
 
 
 def main() -> int:
     load_average_before = load_average()
     mixed, mixed_inputs, block_floating, bfp_inputs = deterministic_safe_workloads()
+    underflow_mixed, underflow_mixed_inputs, underflow_bfp, underflow_bfp_inputs = (
+        deterministic_underflow_workloads()
+    )
     mixed_results = [time_envelope_report(mixed, mixed_inputs) for _ in range(REPEATS)]
     bfp_results = [time_envelope_report(block_floating, bfp_inputs) for _ in range(REPEATS)]
     mixed_ns = [float(item[0]) for item in mixed_results]
     bfp_ns = [float(item[0]) for item in bfp_results]
     mixed_report = mixed.precision_envelope_report(mixed_inputs)
     bfp_report = block_floating.precision_envelope_report(bfp_inputs)
+    mixed_underflow_report = underflow_mixed.precision_envelope_report(underflow_mixed_inputs)
+    bfp_underflow_report = underflow_bfp.precision_envelope_report(underflow_bfp_inputs)
 
     report = {
         "benchmark": "precision_envelope_reports_64x32",
         "language": "Python",
         "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
         "command": (
-            "taskset -c 10-11 env PYTHONPATH=src "
+            "taskset -c 8-9 env PYTHONPATH=src "
             ".venv/bin/python benchmarks/bench_precision_envelopes.py"
         ),
         "python": platform.python_version(),
@@ -108,20 +135,36 @@ def main() -> int:
         "mixed_envelope_min_ns_per_call": min(mixed_ns),
         "mixed_envelope_max_ns_per_call": max(mixed_ns),
         "mixed_conservative_overflow_free": mixed_report.conservative_overflow_free,
+        "mixed_observed_underflow_free": mixed_report.observed_underflow_free,
         "mixed_max_abs_bound_code": mixed_report.max_abs_bound_code,
+        "mixed_underflow_count": mixed_underflow_report.underflow_count,
         "bfp_envelope_median_ns_per_call": statistics.median(bfp_ns),
         "bfp_envelope_min_ns_per_call": min(bfp_ns),
         "bfp_envelope_max_ns_per_call": max(bfp_ns),
         "bfp_conservative_overflow_free": bfp_report.conservative_overflow_free,
+        "bfp_observed_underflow_free": bfp_report.observed_underflow_free,
         "bfp_max_abs_bound_code": bfp_report.max_abs_bound_code,
+        "bfp_underflow_count": bfp_underflow_report.underflow_count,
         "mixed_manifest": mixed_report.manifest(),
         "bfp_manifest": bfp_report.manifest(),
+        "mixed_underflow_manifest": mixed_underflow_report.manifest(),
+        "bfp_underflow_manifest": bfp_underflow_report.manifest(),
         "mixed_results": [
-            {"ns_per_call": item[0], "checksum": item[1], "conservative_safe": item[2]}
+            {
+                "ns_per_call": item[0],
+                "checksum": item[1],
+                "conservative_safe": item[2],
+                "underflow_free": item[3],
+            }
             for item in mixed_results
         ],
         "bfp_results": [
-            {"ns_per_call": item[0], "checksum": item[1], "conservative_safe": item[2]}
+            {
+                "ns_per_call": item[0],
+                "checksum": item[1],
+                "conservative_safe": item[2],
+                "underflow_free": item[3],
+            }
             for item in bfp_results
         ],
     }
