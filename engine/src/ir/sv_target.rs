@@ -405,7 +405,10 @@ mod tests {
         let target = SvTarget::zynq_ultrascale_plus(SkuKind::Zu3eg, 250);
         assert_eq!(target.dsp_primitive(), "DSP48E2");
         assert!(target.dsp_attribute().unwrap().contains("DSP48E2"));
-        assert!(!target.dsp_attribute().unwrap().contains(&format!("DSP{}", 58)));
+        assert!(!target
+            .dsp_attribute()
+            .unwrap()
+            .contains(&format!("DSP{}", 58)));
     }
 
     #[test]

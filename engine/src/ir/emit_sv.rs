@@ -609,14 +609,8 @@ mod tests {
                 count: 3,
             },
         );
-        let centre = builder.constant(
-            ScConst::I64(256),
-            ScType::FixedPoint { width: 16, frac: 8 },
-        );
-        let sigma = builder.constant(
-            ScConst::I64(512),
-            ScType::FixedPoint { width: 16, frac: 8 },
-        );
+        let centre = builder.constant(ScConst::I64(256), ScType::FixedPoint { width: 16, frac: 8 });
+        let sigma = builder.constant(ScConst::I64(512), ScType::FixedPoint { width: 16, frac: 8 });
         let result = builder.dcls_layer(
             spike,
             weights,
@@ -659,14 +653,8 @@ mod tests {
                 count: 12,
             },
         );
-        let leak = builder.constant(
-            ScConst::I64(16),
-            ScType::FixedPoint { width: 16, frac: 8 },
-        );
-        let gain = builder.constant(
-            ScConst::I64(1),
-            ScType::FixedPoint { width: 16, frac: 8 },
-        );
+        let leak = builder.constant(ScConst::I64(16), ScType::FixedPoint { width: 16, frac: 8 });
+        let gain = builder.constant(ScConst::I64(1), ScType::FixedPoint { width: 16, frac: 8 });
         let result = builder.dense_forward(
             inputs,
             weights,

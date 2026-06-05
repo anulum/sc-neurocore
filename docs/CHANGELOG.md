@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Engine supervisor
+- Added a public Rust supervisor execution entrypoint shared by the PyO3
+  controller path, preserving bounded-run completion by dropping snapshot
+  senders before joining the Z3 worker and adding module-specific supervisor
+  tests for safe bounded execution, unsafe Petri-net rejection, worker shutdown
+  signalling, and zero-neuron fail-closed validation.
+
 ### Compiler precision
 - Added emitter-facing mixed-precision manifests for fixed Q16.16 and
   block-floating variables, including deterministic assignment order, emitted

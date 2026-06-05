@@ -29,7 +29,11 @@ fn spike_window(index: usize) -> [u8; TAPS] {
     let mut spikes = [0_u8; TAPS];
     for tap in 0..TAPS {
         let value = (index + tap * 3) % 7;
-        spikes[tap] = if value == 0 || value == 1 || value == 4 { 1 } else { 0 };
+        spikes[tap] = if value == 0 || value == 1 || value == 4 {
+            1
+        } else {
+            0
+        };
     }
     spikes
 }

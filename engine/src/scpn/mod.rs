@@ -6,8 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — SCPN Module
 
-pub mod kuramoto;
 pub mod dcls;
+pub mod kuramoto;
 pub mod metrics;
 
 pub use dcls::{
