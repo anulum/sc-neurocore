@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.20] - 2026-06-05
+
+### Security workflows
+- Updated the CI security scanner actionlint toolchain to `v1.7.12`, matching the locally validated workflow parser used for release gating.
+
 ## [3.15.19] - 2026-06-05
 
 ### Release workflows
