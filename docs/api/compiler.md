@@ -424,19 +424,30 @@ Signal types: `BITSTREAM`, `RATE`, `SPIKE`, `FIXED`, `ANY`.
 
 ```python
 from sc_neurocore.compiler.static_analysis import (
-    prove_overflow_free,
+    prove_fixed_point_envelope,
+    prove_no_overflow,
     generate_sva,
     estimate_power,
 )
 
 # Guard bit computation
-proof = prove_overflow_free(
-    equations={"v": "-(v - E_L)/tau_m + I/C"},
-    params=dict(E_L=-65, tau_m=10, C=1),
+proof = prove_no_overflow(
+    "-(v - E_L)/tau_m + I/C",
+    bounds={"v": (-128, 127), "E_L": (-65, -65), "tau_m": (10, 10), "I": (0, 100), "C": (1, 1)},
     data_width=16,
     fraction=8,
 )
-print(f"Safe: {proof.safe}, guard bits: {proof.guard_bits}")
+print(f"Safe: {proof.proven_safe}, output range: {proof.expr_interval}")
+
+# Conservative Q16.16 width proof for dense precision envelopes
+envelope = prove_fixed_point_envelope(
+    [531_400],
+    total_bits=32,
+    fractional_bits=16,
+)
+assert envelope.static_overflow_proven_safe
+assert envelope.required_total_bits == 21
+assert envelope.width_headroom_bits == 11
 
 # SVA assertion generation
 sva = generate_sva(
@@ -689,14 +700,14 @@ print('Quantizer: PASS')
 
 ```bash
 python -c "
-from sc_neurocore.compiler.static_analysis import prove_overflow_free
-r = prove_overflow_free(
-    {'v': '-(v - E_L)/tau_m + I/C'},
-    dict(E_L=-65, tau_m=10, C=1),
+from sc_neurocore.compiler.static_analysis import prove_no_overflow
+r = prove_no_overflow(
+    '-(v - E_L)/tau_m + I/C',
+    bounds={'v': (-128, 127), 'E_L': (-65, -65), 'tau_m': (10, 10), 'I': (0, 100), 'C': (1, 1)},
     data_width=16, fraction=8,
 )
-assert r.safe
-print(f'Overflow proof: PASS (guard_bits={r.guard_bits})')
+assert r.proven_safe
+print('Overflow proof: PASS')
 "
 ```
 
