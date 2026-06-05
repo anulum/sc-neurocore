@@ -1,6 +1,6 @@
 # Neuromorphic Computing Primer: The Philosophy of Spikes
 
-**Version:** 3.15.13
+**Version:** 3.15.14
 **Target**: Conceptual Introduction
 
 ---
