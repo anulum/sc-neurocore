@@ -25,6 +25,7 @@ from sc_neurocore.compiler.live_control import (
     STATUS_SHADOW_LOADED,
     STATUS_TRAP_LATCHED,
     STATUS_UPDATE_ACK,
+    TRAP_CHECKSUM_MISMATCH,
     TRAP_STAGED_OVERFLOW,
     TRAP_STAGED_UNDERFLOW,
     TrapSpec,
@@ -168,6 +169,8 @@ def test_mmio_update_serialization_roundtrip() -> None:
     assert payload["status_bits"]["checksum_valid"] == STATUS_CHECKSUM_VALID
     assert payload["trap_bits"]["staged_overflow"] == TRAP_STAGED_OVERFLOW
     assert payload["trap_bits"]["staged_underflow"] == TRAP_STAGED_UNDERFLOW
+    assert payload["trap_bits"]["checksum_mismatch"] == TRAP_CHECKSUM_MISMATCH
+    assert payload["effective_trap_width"] == 4
 
 
 def test_mmio_update_protocol_alias_and_width_guards() -> None:
@@ -364,3 +367,12 @@ def test_mmio_trap_clear_sequence_requires_enabled_traps() -> None:
     )
     with pytest.raises(ValueError, match="enabled traps"):
         disabled.build_trap_clear_sequence()
+
+    narrow = MMIOUpdateSpec(
+        bus_protocol="axi4_lite",
+        banks=(bank,),
+        control_base_address_bytes=0x100,
+        trap=TrapSpec(enabled=True, max_flags=1),
+    )
+    assert narrow.effective_trap_width == 3
+    assert narrow.build_trap_clear_sequence()[0].value == 3
