@@ -100,7 +100,7 @@ jobs:
             type=sha
 
       - name: Build and push
-        id: build-push
+        id: build_push
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
         with:
           context: .
@@ -138,7 +138,7 @@ jobs:
             "${IMAGE_REF}"
 
       - name: Trivy SARIF report
-        if: always() && steps.build-push.outcome == 'success'
+        if: always() && steps.build_push.outcome == 'success'
         shell: bash
         env:
           IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}

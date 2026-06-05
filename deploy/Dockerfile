@@ -10,13 +10,14 @@ FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5
 ARG RUST_VERSION
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl build-essential cmake pkg-config \
+    curl build-essential cmake clang libclang-dev pkg-config \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
     | sh -s -- -y --default-toolchain ${RUST_VERSION} --profile minimal  # pinned via RUST_VERSION ARG
 ENV PATH="/root/.cargo/bin:${PATH}"
+ENV CMAKE_POLICY_VERSION_MINIMUM=3.5
 
 WORKDIR /build
 COPY requirements/maturin.txt ./requirements/maturin.txt
