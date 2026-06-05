@@ -315,7 +315,7 @@ class TestHostDriverGen:
 
         driver.clear_live_traps()
         assert writes[-2:] == [
-            (0x8000_011C, spec.effective_trap_width),
+            (0x8000_011C, spec.trap_clear_mask),
             (0x8000_0100, spec.control_bits["clear_trap"]),
         ]
 
@@ -343,6 +343,7 @@ class TestHostDriverGen:
         assert "mmio_write(SC_LIVE_BASE + LIVE_REG_WRITE_DATA_HI, data_hi);" in drv
         assert "SC_LIVE_BASE + LIVE_REG_READ_DATA_HI" in drv
         assert "LIVE_CTRL_ROLLBACK" in drv
+        assert "LIVE_TRAP_CLEAR_MASK" in drv
         assert "static inline uint32_t live_read_status" in drv
         assert "static inline uint32_t live_read_trap_status" in drv
         assert "static inline void live_rollback_shadow" in drv

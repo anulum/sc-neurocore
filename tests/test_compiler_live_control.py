@@ -177,6 +177,7 @@ def test_mmio_update_serialization_roundtrip() -> None:
     assert payload["trap_bits"]["read_only_bank"] == TRAP_READ_ONLY_BANK
     assert payload["trap_bits"]["partial_write"] == TRAP_PARTIAL_WRITE
     assert payload["effective_trap_width"] == 6
+    assert payload["trap_clear_mask"] == 0x3F
 
 
 def test_mmio_update_protocol_alias_and_width_guards() -> None:
@@ -471,7 +472,7 @@ def test_mmio_trap_clear_sequence_requires_enabled_traps() -> None:
     writes = spec.build_trap_clear_sequence()
     assert [write.purpose for write in writes] == ["clear_trap", "clear_trap"]
     assert writes[0].address_bytes == 0x11C
-    assert writes[0].value == 8
+    assert writes[0].value == 0xFF
 
     disabled = MMIOUpdateSpec(
         bus_protocol="axi4_lite",
@@ -489,4 +490,5 @@ def test_mmio_trap_clear_sequence_requires_enabled_traps() -> None:
         trap=TrapSpec(enabled=True, max_flags=1),
     )
     assert narrow.effective_trap_width == 6
-    assert narrow.build_trap_clear_sequence()[0].value == 6
+    assert narrow.trap_clear_mask == 0x3F
+    assert narrow.build_trap_clear_sequence()[0].value == 0x3F

@@ -114,6 +114,10 @@ def test_live_parameter_bank_emits_bram_and_distributed_banks() -> None:
         "ADDR_TRAP_STAT: S_AXI_RDATA <= {{(DATA_WIDTH-TRAP_WIDTH){1'b0}}, reg_trap_vector};"
         in source
     )
+    assert (
+        "reg_trap_vector <= (reg_trap_vector | observed_trap_vector) & ~S_AXI_WDATA[TRAP_WIDTH-1:0];"
+        in source
+    )
     assert "ADDR_READ_LO: S_AXI_RDATA <= active_read_data_lo;" in source
     assert "ADDR_READ_HI: S_AXI_RDATA <= active_read_data_hi;" in source
     assert "trap_clear_pulse <= 1'b1;" in source
@@ -579,7 +583,14 @@ module tb_sc_live_pcie_params;
             $finish(16);
         end
 
-        pcie_write(32'h11C, 32'h0000003F);
+        pcie_write(32'h11C, 32'h00000004);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b1 || trap_status_vector !== 6'b100000) begin
+            $display("partial-write trap was cleared by an unrelated mask, status=%b", trap_status_vector);
+            $finish(17);
+        end
+
+        pcie_write(32'h11C, 32'h00000020);
         repeat (2) @(negedge clk);
         if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
             $display("partial-write trap clear failed, status=%b", trap_status_vector);
@@ -841,20 +852,27 @@ module tb_sc_live_params;
             $finish(1);
         end
 
-        axi_write(32'h11C, 32'h00000003);
-        repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
-            $display("trap clear failed, status=%b", trap_status_vector);
-            $finish(1);
-        end
-
         axi_write(32'h110, 32'h00007FFF);
         axi_write(32'h114, 32'hFFFFFFFF);
         axi_write(32'h120, 32'h0E6BCD92);
         axi_write(32'h100, 32'h00000001);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b1 || trap_status_vector[1] !== 1'b1 || staged_underflow !== 1'b1) begin
+        if (trap_latched !== 1'b1 || trap_status_vector[1:0] !== 2'b11 || staged_underflow !== 1'b1) begin
             $display("expected generated underflow trap, status=%b underflow=%b", trap_status_vector, staged_underflow);
+            $finish(1);
+        end
+
+        axi_write(32'h11C, 32'h00000001);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b1 || trap_status_vector !== 6'b000010) begin
+            $display("selective overflow trap clear failed, status=%b", trap_status_vector);
+            $finish(1);
+        end
+
+        axi_write(32'h11C, 32'h00000002);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
+            $display("selective underflow trap clear failed, status=%b", trap_status_vector);
             $finish(1);
         end
 

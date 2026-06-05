@@ -286,19 +286,25 @@ module tb_sc_live_params;
             $finish(2);
         end
 
-        axi_write(32'h11C, 32'h00000003);
-        repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
-            $finish(3);
-        end
-
         axi_write(32'h110, 32'h00007FFF);
         axi_write(32'h114, 32'hFFFFFFFF);
         axi_write(32'h120, 32'h0E6BCD92);
         axi_write(32'h100, 32'h00000001);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b1 || trap_status_vector[1] !== 1'b1 || staged_underflow !== 1'b1) begin
+        if (trap_latched !== 1'b1 || trap_status_vector[1:0] !== 2'b11 || staged_underflow !== 1'b1) begin
             $finish(4);
+        end
+
+        axi_write(32'h11C, 32'h00000001);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b1 || trap_status_vector !== 6'b000010) begin
+            $finish(3);
+        end
+
+        axi_write(32'h11C, 32'h00000002);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
+            $finish(5);
         end
 
         $finish(0);
@@ -340,6 +346,7 @@ endmodule
         "vvp": vvp,
         "compile_ns": compile_done_ns - start_ns,
         "simulation_ns": end_ns - compile_done_ns,
+        "selective_trap_clear_preserved_unmasked_fault": True,
         "passed": True,
     }
 
@@ -489,7 +496,13 @@ module tb_sc_live_pcie_params;
             $finish(16);
         end
 
-        pcie_write(32'h11C, 32'h0000003F);
+        pcie_write(32'h11C, 32'h00000004);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b1 || trap_status_vector !== 6'b100000) begin
+            $finish(17);
+        end
+
+        pcie_write(32'h11C, 32'h00000020);
         repeat (2) @(negedge clk);
         if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
             $finish(17);
@@ -618,6 +631,7 @@ endmodule
         "read_only_bank_trap_bit": TRAP_READ_ONLY_BANK,
         "partial_write_rejected": True,
         "partial_write_trap_bit": TRAP_PARTIAL_WRITE,
+        "selective_trap_clear_preserved_unmasked_fault": True,
         "retargeted_commit_preserved_shadow_identity": True,
         "passed": True,
     }
@@ -667,6 +681,7 @@ def main() -> int:
         "banks": [bank.to_dict() for bank in spec.banks],
         "control_registers": spec.control_register_addresses,
         "trap_bits": spec.trap_bits,
+        "trap_clear_mask": spec.trap_clear_mask,
         "expected_trap_bits": {
             "staged_overflow": TRAP_STAGED_OVERFLOW,
             "staged_underflow": TRAP_STAGED_UNDERFLOW,
