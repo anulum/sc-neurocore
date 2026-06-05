@@ -15,7 +15,6 @@ on:
     paths:
       - "hdl/**"
       - "tools/yosys_synth.*"
-      - ".github/workflows/yosys-synth.yml"
   pull_request:
     paths:
       - "hdl/**"
