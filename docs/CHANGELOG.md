@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.28] - 2026-06-05
+
+### CI and release workflows
+- Added an executable entry point to the benchmark context example so
+  `cargo test --manifest-path engine/Cargo.toml` builds all examples on Linux.
+
 ## [3.15.27] - 2026-06-05
 
 ### CI and release workflows
