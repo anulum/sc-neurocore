@@ -2,6 +2,19 @@
 
 Complete index of the public Jupyter notebooks in `notebooks/`. The notebooks are organised as onboarding, feature demonstrations, and evidence notebooks. Treat evidence notebooks as reproducible documentation: each one states what it proves and what it does not prove.
 
+## How to use the notebooks
+
+| Reader | Recommended path | Output to keep |
+| --- | --- | --- |
+| New user | `quickstart_colab` -> `03_end_to_end_pipeline` -> `04_neuron_explorer` | Screenshots or local notes only; do not promote as benchmark evidence. |
+| Hardware evaluator | `08_equation_to_verilog` -> `27_python_to_proven_silicon` -> `29_golden_path_evidence` | Generated manifests, RTL, and named report artefacts. |
+| Interop reviewer | `05_nir_bridge` -> cross-framework benchmark docs | NIR graph artefacts and raw benchmark JSON. |
+| Industrial reviewer | Evidence notebooks `34` through `39` | Evidence-gap tables and readiness manifests. |
+
+Notebook output becomes a public claim only when the raw artefact is committed
+and the docs name it. Otherwise it remains explanatory or local exploratory
+evidence.
+
 ## Quickstart
 
 | Notebook | Topic | Prerequisites |

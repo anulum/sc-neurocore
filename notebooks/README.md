@@ -10,6 +10,15 @@ The notebooks are executable documentation for onboarding, feature exploration, 
 4. `08_equation_to_verilog.ipynb` and `27_python_to_proven_silicon.ipynb` for hardware-oriented flows.
 5. Evidence notebooks `29` and later when reviewing claims, readiness gates, or local artefacts.
 
+## Audience map
+
+| Audience | Notebook path |
+| --- | --- |
+| Research lab | `04_neuron_explorer`, `10_spike_train_analysis`, `16_neuron_atlas`, then the relevant evidence notebook. |
+| Hardware team | `08_equation_to_verilog`, `13_quantisation_pipeline`, `27_python_to_proven_silicon`, `29_golden_path_evidence`. |
+| Commercial evaluator | `29_golden_path_evidence`, `34_industrial_readiness_evidence`, `36_fault_resilience_evidence`, `38_formal_snn_verification_standard_evidence`. |
+| Interop reviewer | `05_nir_bridge`, `28_domain_bridge`, and the cross-framework benchmark documentation. |
+
 ## Reproducibility rules
 
 - Install only the extras required by the notebook category.

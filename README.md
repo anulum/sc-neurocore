@@ -31,7 +31,7 @@ Commercial Licensing: Available
 
 **Stochastic computing and neuromorphic hardware co-design toolkit**
 
-**Version:** 3.15.7
+**Version:** 3.15.8
 
 SC-NeuroCore is a research-to-hardware software stack for designing spiking and stochastic neural systems, validating their numerical behaviour, and moving selected models toward FPGA, ASIC, and embedded neuromorphic deployment. It combines a Python public API, an optional Rust acceleration engine, SystemVerilog generation paths, benchmark evidence, and polyglot research mirrors for selected kernels.
 
@@ -73,7 +73,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 
 | Surface | Current status |
 | --- | --- |
-| Public Python package | Version 3.15.7 package surface with base NumPy/SciPy dependency boundary. |
+| Public Python package | Version 3.15.8 package surface with base NumPy/SciPy dependency boundary. |
 | Optional acceleration | Rust engine and optional heavy backends are opt-in; Python fallbacks remain available. |
 | Hardware evidence | Committed synthesis and report artefacts exist for selected flows; power/energy claims require matching committed reports. |
 | Benchmarks | Only committed JSON/CSV/report artefacts are public evidence. Local exploratory runs must not be promoted without raw artefacts. |
@@ -90,15 +90,15 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 
 | Surface | Current inventory |
 |---|---:|
-| Package version | 3.15.7 |
+| Package version | 3.15.8 |
 | Public API exports | 44 |
 | Python model source modules | 151 |
 | Python model classes | 157 |
 | Model documentation pages | 174 |
 | Rust PyO3 model wrappers | 175 |
 | Optional extras | 24 |
-| Python test files | 742 |
-| Public documentation pages | 538 |
+| Python test files | 762 |
+| Public documentation pages | 543 |
 | GitHub Actions workflows | 14 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -618,7 +618,7 @@ If you use SC-NeuroCore in your research, please cite:
 @software{sotek2026scneurocore,
   author    = {Šotek, Miroslav},
   title     = {SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design},
-  version   = {3.15.7},
+  version   = {3.15.8},
   year      = {2026},
   doi       = {10.5281/zenodo.18906614},
   url       = {https://github.com/anulum/sc-neurocore},

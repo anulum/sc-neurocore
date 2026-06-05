@@ -5,6 +5,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.8] - 2026-06-05
+
+### Documentation and release polish
+- Bumped Python, Rust engine, bridge package, Sphinx docs, README, and
+  generated capability metadata to version `3.15.8`.
+- Expanded the documentation home page with an evaluator map that routes new
+  users, hardware teams, framework reviewers, industrial evaluators, notebook
+  readers, and API consumers to the correct first evidence surface.
+- Strengthened onboarding, notebook, API, FPGA tutorial, industrial
+  applications, product overview, and applications/market documentation so
+  users can understand what SC-NeuroCore is for, where it has evidence, where
+  optional dependencies apply, and which claims require committed artefacts.
+
 ### Engine supervisor
 - Added a public Rust supervisor execution entrypoint shared by the PyO3
   controller path, preserving bounded-run completion by dropping snapshot

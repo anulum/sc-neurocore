@@ -51,6 +51,8 @@ def test_benchmark_evidence_gate_accepts_reviewed_manifest(tmp_path: Path) -> No
     _write_json(
         manifest,
         {
+            "SPDX-License-Identifier": "AGPL-3.0-or-later",
+            "schema_version": "sc-neurocore.benchmark-regression-gates.v1",
             "gates": [
                 {
                     "id": "demo",
@@ -83,6 +85,8 @@ def test_benchmark_evidence_gate_fails_closed_on_missing_metric(tmp_path: Path) 
     _write_json(
         manifest,
         {
+            "SPDX-License-Identifier": "AGPL-3.0-or-later",
+            "schema_version": "sc-neurocore.benchmark-regression-gates.v1",
             "gates": [
                 {
                     "id": "demo",
@@ -122,6 +126,8 @@ def test_benchmark_evidence_gate_rejects_stale_source_hash(tmp_path: Path) -> No
     _write_json(
         manifest,
         {
+            "SPDX-License-Identifier": "AGPL-3.0-or-later",
+            "schema_version": "sc-neurocore.benchmark-regression-gates.v1",
             "gates": [
                 {
                     "id": "demo",

@@ -23,6 +23,19 @@ The project is valuable because it sits between three markets that are usually s
 
 A buyer or partner does not only get another simulator. They get a route for asking whether a stochastic or spiking model can be measured, compared, exported, and defended with artefacts. That makes the software relevant for research labs, hardware start-ups, industrial R&D groups, and organisations evaluating neuromorphic edge systems.
 
+## Commercial evaluation sequence
+
+1. **Fit:** choose an application lane and identify the minimum useful workflow
+   from modelling, training, interop, hardware, or evidence tooling.
+2. **Evidence:** run only the relevant tutorials, notebooks, tests, and
+   benchmarks, then keep the raw artefacts named in the report.
+3. **Gap review:** classify missing timing, power, hardware, clinical,
+   cybersecurity, regulatory, or external-dataset evidence explicitly.
+4. **Pilot:** scope a target-specific proof of concept around the missing
+   evidence, not around broad feature-count claims.
+5. **License:** use AGPL for open research or request a commercial license for
+   closed-source evaluation, embedding, OEM, or white-label use.
+
 ## Differentiation
 
 SC-NeuroCore is differentiated by the combination of stochastic bitstream arithmetic, spiking neural models, optional accelerated execution, generated hardware artefacts, and evidence-indexed documentation. Many SNN frameworks support training or biological simulation. Few make stochastic-computing arithmetic and hardware evidence central to the workflow.
