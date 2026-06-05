@@ -25,6 +25,7 @@ from sc_neurocore.compiler.live_control import (
     ParameterBankSpec,
     TRAP_CHECKSUM_MISMATCH,
     TRAP_INVALID_SELECTION,
+    TRAP_PARTIAL_WRITE,
     TRAP_READ_ONLY_BANK,
     TRAP_STAGED_OVERFLOW,
     TRAP_STAGED_UNDERFLOW,
@@ -193,9 +194,9 @@ module tb_sc_live_params;
     wire [1:0] rresp;
     wire rvalid;
     reg rready = 1'b0;
-    reg [4:0] external_trap_vector = 5'b00000;
+    reg [5:0] external_trap_vector = 6'b000000;
     wire trap_latched;
-    wire [4:0] trap_status_vector;
+    wire [5:0] trap_status_vector;
     wire staged_overflow;
     wire staged_underflow;
     wire update_pulse;
@@ -205,6 +206,7 @@ module tb_sc_live_params;
     wire checksum_mismatch_pulse;
     wire invalid_selection_pulse;
     wire read_only_bank_pulse;
+    wire partial_write_pulse;
     wire shadow_loaded;
     wire [2063:0] parameter_words;
 
@@ -242,6 +244,7 @@ module tb_sc_live_params;
         .checksum_mismatch_pulse(checksum_mismatch_pulse),
         .invalid_selection_pulse(invalid_selection_pulse),
         .read_only_bank_pulse(read_only_bank_pulse),
+        .partial_write_pulse(partial_write_pulse),
         .shadow_loaded(shadow_loaded),
         .parameter_words(parameter_words)
     );
@@ -285,7 +288,7 @@ module tb_sc_live_params;
 
         axi_write(32'h11C, 32'h00000003);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
             $finish(3);
         end
 
@@ -366,14 +369,15 @@ module tb_sc_live_pcie_params;
     wire [31:0] read_data;
     wire read_data_valid;
     wire read_error;
-    reg [4:0] external_trap_vector = 5'b00000;
+    reg [5:0] external_trap_vector = 6'b000000;
     wire trap_latched;
-    wire [4:0] trap_status_vector;
+    wire [5:0] trap_status_vector;
     wire staged_overflow;
     wire staged_underflow;
     reg observed_checksum_mismatch = 1'b0;
     reg observed_invalid_selection = 1'b0;
     reg observed_read_only_bank = 1'b0;
+    reg observed_partial_write = 1'b0;
     wire update_pulse;
     wire apply_pulse;
     wire rollback_pulse;
@@ -381,6 +385,7 @@ module tb_sc_live_pcie_params;
     wire checksum_mismatch_pulse;
     wire invalid_selection_pulse;
     wire read_only_bank_pulse;
+    wire partial_write_pulse;
     wire shadow_loaded;
     wire [2063:0] parameter_words;
 
@@ -394,6 +399,9 @@ module tb_sc_live_pcie_params;
         end
         if (read_only_bank_pulse) begin
             observed_read_only_bank <= 1'b1;
+        end
+        if (partial_write_pulse) begin
+            observed_partial_write <= 1'b1;
         end
     end
 
@@ -425,6 +433,7 @@ module tb_sc_live_pcie_params;
         .checksum_mismatch_pulse(checksum_mismatch_pulse),
         .invalid_selection_pulse(invalid_selection_pulse),
         .read_only_bank_pulse(read_only_bank_pulse),
+        .partial_write_pulse(partial_write_pulse),
         .shadow_loaded(shadow_loaded),
         .parameter_words(parameter_words)
     );
@@ -446,10 +455,45 @@ module tb_sc_live_pcie_params;
         end
     endtask
 
+    task pcie_partial_write;
+        input [31:0] addr;
+        input [31:0] data;
+        input [3:0] strobe;
+        begin
+            @(negedge clk);
+            write_addr = addr;
+            write_data = data;
+            write_strobe = strobe;
+            write_valid = 1'b1;
+            @(negedge clk);
+            write_valid = 1'b0;
+            @(negedge clk);
+            write_strobe = 4'hF;
+            if (write_error !== 1'b1) begin
+                $finish(14);
+            end
+        end
+    endtask
+
     initial begin
         repeat (2) @(negedge clk);
         rst_n = 1'b1;
         repeat (2) @(negedge clk);
+
+        pcie_partial_write(32'h110, 32'hFFFFEEEE, 4'h1);
+        repeat (2) @(negedge clk);
+        if (shadow_loaded !== 1'b0 || parameter_words[15:0] !== 16'h0000) begin
+            $finish(15);
+        end
+        if (trap_latched !== 1'b1 || trap_status_vector[5] !== 1'b1 || observed_partial_write !== 1'b1) begin
+            $finish(16);
+        end
+
+        pcie_write(32'h11C, 32'h0000003F);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
+            $finish(17);
+        end
 
         pcie_write(32'h108, 32'd0);
         pcie_write(32'h10C, 32'd0);
@@ -465,9 +509,9 @@ module tb_sc_live_pcie_params;
             $finish(6);
         end
 
-        pcie_write(32'h11C, 32'h0000001F);
+        pcie_write(32'h11C, 32'h0000003F);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
             $finish(7);
         end
 
@@ -483,9 +527,9 @@ module tb_sc_live_pcie_params;
             $finish(9);
         end
 
-        pcie_write(32'h11C, 32'h0000001F);
+        pcie_write(32'h11C, 32'h0000003F);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
             $finish(10);
         end
 
@@ -501,9 +545,9 @@ module tb_sc_live_pcie_params;
             $finish(12);
         end
 
-        pcie_write(32'h11C, 32'h0000001F);
+        pcie_write(32'h11C, 32'h0000003F);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
             $finish(13);
         end
 
@@ -523,7 +567,7 @@ module tb_sc_live_pcie_params;
         if (parameter_words[15:0] !== 16'h1234 || parameter_words[2063:2048] !== 16'h0000 || shadow_loaded !== 1'b0) begin
             $finish(3);
         end
-        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000 || staged_overflow !== 1'b0 || staged_underflow !== 1'b0) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000 || staged_overflow !== 1'b0 || staged_underflow !== 1'b0) begin
             $finish(4);
         end
 
@@ -572,6 +616,8 @@ endmodule
         "invalid_selection_trap_bit": TRAP_INVALID_SELECTION,
         "read_only_bank_rejected": True,
         "read_only_bank_trap_bit": TRAP_READ_ONLY_BANK,
+        "partial_write_rejected": True,
+        "partial_write_trap_bit": TRAP_PARTIAL_WRITE,
         "retargeted_commit_preserved_shadow_identity": True,
         "passed": True,
     }
@@ -627,6 +673,7 @@ def main() -> int:
             "checksum_mismatch": TRAP_CHECKSUM_MISMATCH,
             "invalid_selection": TRAP_INVALID_SELECTION,
             "read_only_bank": TRAP_READ_ONLY_BANK,
+            "partial_write": TRAP_PARTIAL_WRITE,
         },
         "valid_update_write_count": len(spec.build_update_sequence("weights", 0, 0x1234)),
         "live_update_sequence_median_ns": statistics.median(update_ns),

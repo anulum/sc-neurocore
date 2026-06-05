@@ -41,7 +41,7 @@ it is not a kernel-reserved isolated-core claim.
 | Precision envelope report block-floating dense (64x32 safe) | Python | 2000 | 79.117 us | max_abs_bound=78032768 |
 | Precision envelope report block-floating dense (64x32 safe) | Rust | 20000 | 8.748 us | max_abs_bound=78032768 |
 | Precision envelope guard | HDL/Yosys | N_OUTPUTS=32 | 67 cells | `$adff`+`$gt`+`$mux`+`$reduce_or` |
-| Live-control parameter update sequence | Python+SystemVerilog | 20000 | 13.128 us AXI4-Lite; 12.366 us PCIe-MMIO | process affinity `8-9`, CRC32 update guard, checksum-mismatch, invalid-selection, and read-only-bank traps, AXI trap simulation passed, PCIe commit simulation passed |
+| Live-control parameter update sequence | Python+SystemVerilog | 20000 | 13.822 us AXI4-Lite; 13.589 us PCIe-MMIO | process affinity `8-9`, CRC32 update guard, checksum-mismatch, invalid-selection, read-only-bank, and partial-write traps, AXI trap simulation passed, PCIe commit simulation passed |
 | AER strict-priority queue backpressure | Python+SystemVerilog | 4096 events x 100 repeats | 4.138 us/event | runtime cpuset shield 10-11, priority=0 violations, FIFO=0 violations, drop/deadline traps latched |
 | ADC-to-spike quantiser | Python+SystemVerilog | 4096 samples x 100 repeats | 3.705 us/sample | cpuset 10-11, formal pass, Yosys 7675 cells |
 | DCLS Q8.8 tent-kernel layer | Python+PyTorch+SystemVerilog | 4096 samples x 100 repeats | 6.349 us/sample | cpuset 10-11, PyTorch parity 5/5, formal pass, Yosys 106003 cells |
@@ -107,12 +107,14 @@ board-level timing closure or replace the generic stochastic dense path.
 
 | Artefact | Cpuset | Surfaces | Key result |
 | --- | --- | --- | --- |
-| `local_python_2026-06-04_live_control_updates.json` | process affinity `8-9` | Python, SystemVerilog, AXI4-Lite, PCIe-MMIO | AXI4-Lite staged-update sequence median `13127.835` ns; PCIe-MMIO staged-update sequence median `12365.626` ns; AXI trap simulation and PCIe commit simulation both passed |
+| `local_python_2026-06-04_live_control_updates.json` | process affinity `8-9` | Python, SystemVerilog, AXI4-Lite, PCIe-MMIO | AXI4-Lite staged-update sequence median `13822.271` ns; PCIe-MMIO staged-update sequence median `13588.656` ns; AXI trap simulation and PCIe commit simulation both passed |
 
 The PCIe surface is a register-window adapter contract over the same staged
 parameter-bank core used by AXI4-Lite. The update guard is
 `crc32-ieee-le-4x32`, computed over bank select, entry index, low data word, and
-high data word. A stale CRC32 guard raises sticky `checksum_mismatch` trap bit
+high data word. A partial write strobe raises sticky `partial_write` trap bit
+`0x20` and returns a write error before control or staged-data registers change.
+A stale CRC32 guard raises sticky `checksum_mismatch` trap bit
 `0x4`, and an out-of-range bank/entry selection raises sticky
 `invalid_selection` trap bit `0x8`. A write to a valid but read-only bank raises
 sticky `read_only_bank` trap bit `0x10`, before any shadow load can occur. It does

@@ -66,6 +66,7 @@ from sc_neurocore.compiler.live_control import (
     STATUS_UPDATE_ACK,
     TRAP_CHECKSUM_MISMATCH,
     TRAP_INVALID_SELECTION,
+    TRAP_PARTIAL_WRITE,
     TRAP_READ_ONLY_BANK,
     TRAP_STAGED_OVERFLOW,
     TRAP_STAGED_UNDERFLOW,
@@ -195,6 +196,8 @@ def generate_live_parameter_bank(
         raise ValueError("live parameter-bank RTL emission requires axi4_lite or pcie")
     if bus_data_width != 32:
         raise ValueError("live parameter-bank RTL currently requires a 32-bit AXI data bus")
+    if spec.supports_partial_write:
+        raise ValueError("live parameter-bank RTL requires full-word writes")
     if spec.trap.max_flags > bus_data_width:
         raise ValueError("trap flag count must fit in one AXI read word for RTL emission")
     module = _validate_sv_identifier(module_name, "module_name")
@@ -256,6 +259,7 @@ def generate_live_parameter_bank(
         "    output reg                          checksum_mismatch_pulse,",
         "    output reg                          invalid_selection_pulse,",
         "    output reg                          read_only_bank_pulse,",
+        "    output reg                          partial_write_pulse,",
         "    output wire                         shadow_loaded,",
         "    output wire [PARAMETER_WORDS_WIDTH-1:0] parameter_words",
         ");",
@@ -284,6 +288,8 @@ def generate_live_parameter_bank(
         f"    localparam [TRAP_WIDTH-1:0] TRAP_CHECKSUM_MISMATCH_VECTOR = {trap_width}'h{TRAP_CHECKSUM_MISMATCH:X};",
         f"    localparam [TRAP_WIDTH-1:0] TRAP_INVALID_SELECTION_VECTOR = {trap_width}'h{TRAP_INVALID_SELECTION:X};",
         f"    localparam [TRAP_WIDTH-1:0] TRAP_READ_ONLY_BANK_VECTOR = {trap_width}'h{TRAP_READ_ONLY_BANK:X};",
+        f"    localparam [TRAP_WIDTH-1:0] TRAP_PARTIAL_WRITE_VECTOR = {trap_width}'h{TRAP_PARTIAL_WRITE:X};",
+        "    localparam [DATA_WIDTH/8-1:0] FULL_WRITE_STROBE = {(DATA_WIDTH/8){1'b1}};",
         "    localparam [31:0] UPDATE_CRC32_POLY_REFLECTED = 32'hEDB88320;",
         "",
         "    reg [DATA_WIDTH-1:0] reg_control;",
@@ -298,6 +304,7 @@ def generate_live_parameter_bank(
         "    reg [DATA_WIDTH-1:0] reg_shadow_entry_index;",
         "    reg [TRAP_WIDTH-1:0] reg_trap_vector;",
         "    wire [63:0] staged_word = {reg_write_data_hi, reg_write_data_lo};",
+        "    wire write_strobe_accepted = (S_AXI_WSTRB == FULL_WRITE_STROBE);",
         "",
         "    function automatic [31:0] crc32_update_word;",
         "        input [31:0] crc_in;",
@@ -444,6 +451,7 @@ def generate_live_parameter_bank(
             "            checksum_mismatch_pulse <= 1'b0;",
             "            invalid_selection_pulse <= 1'b0;",
             "            read_only_bank_pulse <= 1'b0;",
+            "            partial_write_pulse <= 1'b0;",
         ]
     )
 
@@ -470,6 +478,7 @@ def generate_live_parameter_bank(
             "            checksum_mismatch_pulse <= 1'b0;",
             "            invalid_selection_pulse <= 1'b0;",
             "            read_only_bank_pulse <= 1'b0;",
+            "            partial_write_pulse <= 1'b0;",
             "            reg_trap_vector <= reg_trap_vector | observed_trap_vector;",
             "            reg_status <= STATUS_READY | trap_status_bit | (reg_shadow_loaded ? STATUS_SHADOW_LOADED : {DATA_WIDTH{1'b0}}) | (checksum_valid ? STATUS_CHECKSUM_VALID : {DATA_WIDTH{1'b0}});",
             "",
@@ -485,6 +494,12 @@ def generate_live_parameter_bank(
             "                S_AXI_WREADY <= 1'b1;",
             "                S_AXI_BVALID <= 1'b1;",
             "                S_AXI_BRESP <= 2'b00;",
+            "                if (!write_strobe_accepted) begin",
+            "                    S_AXI_BRESP <= 2'b10;",
+            "                    partial_write_pulse <= 1'b1;",
+            "                    reg_trap_vector <= reg_trap_vector | observed_trap_vector | TRAP_PARTIAL_WRITE_VECTOR;",
+            "                    reg_status <= STATUS_READY | STATUS_TRAP_LATCHED;",
+            "                end else begin",
             "                case (S_AXI_AWADDR)",
             "                    ADDR_CONTROL: begin",
             "                        reg_control <= S_AXI_WDATA;",
@@ -601,6 +616,7 @@ def generate_live_parameter_bank(
             "                    end",
             "                    default: begin end",
             "                endcase",
+            "                end",
             "            end",
             "",
             "            if (S_AXI_ARVALID && !S_AXI_RVALID) begin",
@@ -696,6 +712,7 @@ def _generate_pcie_live_parameter_bank(
         "    output wire                         checksum_mismatch_pulse,",
         "    output wire                         invalid_selection_pulse,",
         "    output wire                         read_only_bank_pulse,",
+        "    output wire                         partial_write_pulse,",
         "    output wire                         shadow_loaded,",
         "    output wire [PARAMETER_WORDS_WIDTH-1:0] parameter_words",
         ");",
@@ -754,6 +771,7 @@ def _generate_pcie_live_parameter_bank(
         "        .checksum_mismatch_pulse(checksum_mismatch_pulse),",
         "        .invalid_selection_pulse(invalid_selection_pulse),",
         "        .read_only_bank_pulse(read_only_bank_pulse),",
+        "        .partial_write_pulse(partial_write_pulse),",
         "        .shadow_loaded(shadow_loaded),",
         "        .parameter_words(parameter_words)",
         "    );",

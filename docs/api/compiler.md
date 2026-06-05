@@ -290,14 +290,16 @@ resynthesising the bitstream.
 Successful shadow loads latch the bank and entry identity at load time. Apply
 and rollback use that latched identity rather than the mutable selection
 registers, so a later `bank_select` or `entry_index` write cannot retarget an
-in-flight transaction.
+in-flight transaction. The generated bus surface requires full-word writes; a
+partial write strobe is rejected with a sticky `partial_write` trap before any
+control or staged-data register is modified.
 
 The status map exposes `ready`, `busy`, `update_ack`, `trap_latched`,
 `shadow_loaded`, `applied`, `rollback_ack`, `checksum_valid`, and sticky
-`checksum_mismatch`/`invalid_selection`/`read_only_bank` trap bits. Generated
+`checksum_mismatch`/`invalid_selection`/`read_only_bank`/`partial_write` trap bits. Generated
 parameter-bank RTL reserves deterministic trap lanes for staged overflow,
 staged underflow, checksum mismatch, invalid bank/entry selection, and
-read-only bank rejection before shadow loading: if a host payload cannot be represented as either a
+read-only bank or partial-write rejection before shadow loading: if a host payload cannot be represented as either a
 zero-extended raw word or a valid signed extension for the selected bank width,
 if the CRC32 guard does not match the staged payload, or if the selected
 bank/index pair is not writable, the trap vector latches and the shadow bank is
@@ -308,7 +310,7 @@ intervention semantics.
 `sc_neurocore.hdl_gen.bus_interface.generate_live_parameter_bank(...)` consumes
 the same manifest and emits the corresponding AXI4-Lite parameter-bank RTL with
 active/shadow memories, checksum-gated shadow loading, generated staged-range,
-CRC32-mismatch, invalid-selection, and read-only-bank traps, explicit apply, rollback, and active-only
+CRC32-mismatch, invalid-selection, read-only-bank, and partial-write traps, explicit apply, rollback, and active-only
 `parameter_words`, so the Python control schema and hardware register map
 remain one contract.
 

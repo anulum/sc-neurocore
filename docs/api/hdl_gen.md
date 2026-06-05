@@ -176,6 +176,9 @@ update guard, mutate calibration/read-only constants, or masquerade as a loaded
 shadow update. This lets a
 deployed design hot-swap weights or phase-coupling
 coefficients while keeping the precision and trap contracts auditable.
+The same generated core rejects partial write strobes as trap bit `0x20` and
+returns a write error before any control or staged-data register is updated,
+matching the default `supports_partial_write=False` schema contract.
 Successful shadow loads also latch the accepted bank and entry index. Apply and
 rollback use that latched identity, preventing post-load writes to `bank_select`
 or `entry_index` from redirecting an in-flight coefficient update.
