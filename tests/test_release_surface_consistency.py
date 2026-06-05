@@ -37,6 +37,20 @@ def test_public_release_surfaces_use_project_version() -> None:
         assert version in text, f"{label} does not mention package version {version}"
 
 
+def test_engine_release_metadata_uses_project_version() -> None:
+    version = _project_version()
+    surfaces = {
+        "engine/Cargo.toml": _repo_root() / "engine" / "Cargo.toml",
+        "bridge/pyproject.toml": _repo_root() / "bridge" / "pyproject.toml",
+    }
+
+    for label, path in surfaces.items():
+        payload = tomllib.loads(path.read_text(encoding="utf-8"))
+        assert payload["package" if label.endswith("Cargo.toml") else "project"][
+            "version"
+        ] == version
+
+
 def test_docs_index_does_not_advertise_previous_release_version() -> None:
     version = _project_version()
     major, minor, patch = (int(part) for part in version.split("."))
