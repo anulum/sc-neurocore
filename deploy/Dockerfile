@@ -10,7 +10,7 @@ FROM python:${PYTHON_VERSION}-slim@sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5
 ARG RUST_VERSION
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl build-essential pkg-config \
+    curl build-essential cmake pkg-config \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 
