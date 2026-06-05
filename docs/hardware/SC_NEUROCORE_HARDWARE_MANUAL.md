@@ -87,6 +87,9 @@ by the compiler manifest. Offsets below are relative to that live-control base.
 Readback registers intentionally report committed active state rather than the
 shadow bank. Operators can therefore write, commit, and verify a coefficient in
 milliseconds while preserving the no-resynthesis live-control contract.
+Invalid `BANK_SELECT` or `ENTRY_INDEX` values on readback return a bus error
+and latch the sticky `invalid_selection` trap bit instead of returning a silent
+zero value.
 Generated host drivers always write both staging words before the checksum:
 `WRITE_DATA_HI` is zero for entries no wider than 32 bits. This prevents stale
 wide-update high-word state from invalidating or corrupting a later narrow

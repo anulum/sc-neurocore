@@ -482,6 +482,21 @@ module tb_sc_live_pcie_params;
         end
     endtask
 
+    task pcie_read_expect_error;
+        input [31:0] addr;
+        begin
+            @(negedge clk);
+            read_addr = addr;
+            read_valid = 1'b1;
+            @(negedge clk);
+            read_valid = 1'b0;
+            @(negedge clk);
+            if (read_error !== 1'b1) begin
+                $finish(18);
+            end
+        end
+    endtask
+
     initial begin
         repeat (2) @(negedge clk);
         rst_n = 1'b1;
@@ -544,6 +559,21 @@ module tb_sc_live_pcie_params;
         repeat (2) @(negedge clk);
         if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
             $finish(10);
+        end
+
+        observed_invalid_selection = 1'b0;
+        pcie_write(32'h108, 32'd0);
+        pcie_write(32'h10C, 32'd99);
+        pcie_read_expect_error(32'h124);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b1 || trap_status_vector[3] !== 1'b1 || observed_invalid_selection !== 1'b1) begin
+            $finish(19);
+        end
+
+        pcie_write(32'h11C, 32'h0000003F);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b0 || trap_status_vector !== 6'b000000) begin
+            $finish(20);
         end
 
         pcie_write(32'h108, 32'd2);
@@ -627,6 +657,7 @@ endmodule
         "checksum_mismatch_trap_bit": TRAP_CHECKSUM_MISMATCH,
         "invalid_selection_rejected": True,
         "invalid_selection_trap_bit": TRAP_INVALID_SELECTION,
+        "invalid_readback_rejected": True,
         "read_only_bank_rejected": True,
         "read_only_bank_trap_bit": TRAP_READ_ONLY_BANK,
         "partial_write_rejected": True,

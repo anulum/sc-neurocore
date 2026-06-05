@@ -179,6 +179,9 @@ coefficients while keeping the precision and trap contracts auditable.
 The same generated core rejects partial write strobes as trap bit `0x20` and
 returns a write error before any control or staged-data register is updated,
 matching the default `supports_partial_write=False` schema contract.
+Invalid active-readback bank or entry selections return a bus error and latch
+the sticky `invalid_selection` trap, preventing host verification code from
+confusing an invalid readback with a committed zero-valued coefficient.
 Successful shadow loads also latch the accepted bank and entry index. Apply and
 rollback use that latched identity, preventing post-load writes to `bank_select`
 or `entry_index` from redirecting an in-flight coefficient update.

@@ -13,6 +13,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   signalling, and zero-neuron fail-closed validation.
 
 ### Compiler precision
+- Hardened generated AXI4-Lite/PCIe live-control readback so invalid
+  bank/entry selections return a bus error and latch the sticky
+  `invalid_selection` trap instead of silently returning zero.
 - Added emitter-facing mixed-precision manifests for fixed Q16.16 and
   block-floating variables, including deterministic assignment order, emitted
   datapath width/fraction, exponent stream width, exponent-vector width, and
