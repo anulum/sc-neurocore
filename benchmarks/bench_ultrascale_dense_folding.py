@@ -75,7 +75,7 @@ def _run_yosys() -> dict[str, Any]:
         raise RuntimeError(completed.stderr)
     cells = 0
     for line in completed.stdout.splitlines():
-        if "\"num_cells\":" in line:
+        if '"num_cells":' in line:
             cells = int(line.split(":", 1)[1].strip().rstrip(","))
             break
     return {

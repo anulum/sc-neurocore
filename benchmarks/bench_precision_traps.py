@@ -54,7 +54,9 @@ def deterministic_overflow_workloads() -> tuple[TrapReporter, np.ndarray, TrapRe
     return mixed, inputs, block_floating, inputs
 
 
-def deterministic_underflow_workloads() -> tuple[TrapReporter, np.ndarray, TrapReporter, np.ndarray]:
+def deterministic_underflow_workloads() -> tuple[
+    TrapReporter, np.ndarray, TrapReporter, np.ndarray
+]:
     mixed_weights = np.zeros((N_OUTPUTS, N_INPUTS), dtype=np.float64)
     bfp_weights = np.zeros((N_OUTPUTS, N_INPUTS), dtype=np.float64)
     mixed_weights[:, 0] = 1.0 / 256.0
@@ -102,8 +104,7 @@ def main() -> int:
         "language": "Python",
         "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
         "command": (
-            "taskset -c 8-9 env PYTHONPATH=src "
-            ".venv/bin/python benchmarks/bench_precision_traps.py"
+            "taskset -c 8-9 env PYTHONPATH=src .venv/bin/python benchmarks/bench_precision_traps.py"
         ),
         "python": platform.python_version(),
         "platform": platform.platform(),
