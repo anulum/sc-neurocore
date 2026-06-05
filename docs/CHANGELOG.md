@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.27] - 2026-06-05
+
+### CI and release workflows
+- Removed Yosys workflow-file edits from the Yosys push path filter so
+  release-hygiene workflow changes do not self-trigger hosted-runner synthesis.
+
 ## [3.15.26] - 2026-06-05
 
 ### CI and release workflows
