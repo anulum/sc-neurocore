@@ -72,14 +72,14 @@ by the compiler manifest. Offsets below are relative to that live-control base.
 
 | Offset | Name | Type | Description |
 | :--- | :--- | :--- | :--- |
-| `0x00` | `CONTROL` | R/W | Bit 0 loads a CRC-checked staged update into the shadow bank. Bit 1 applies the shadow bank to active coefficients. Bit 2 clears traps. |
+| `0x00` | `CONTROL` | R/W | Bit 0 loads a CRC-checked staged update into the shadow bank. Bit 1 applies the shadow bank to active coefficients. Bit 2 emits a trap-clear command pulse. |
 | `0x04` | `STATUS` | R | Ready, trap-latched, shadow-loaded, applied, rollback, and checksum-valid telemetry bits. |
 | `0x08` | `BANK_SELECT` | R/W | Selects the parameter bank by manifest order. |
 | `0x0C` | `ENTRY_INDEX` | R/W | Selects the entry inside the active bank. |
 | `0x10` | `WRITE_DATA_LO` | R/W | Low 32 bits of the staged encoded coefficient. |
 | `0x14` | `WRITE_DATA_HI` | R/W | High 32 bits of the staged encoded coefficient for wide Q or BFP entries. |
 | `0x18` | `TRAP_STATUS` | R | Sticky generated and external trap vector. |
-| `0x1C` | `TRAP_CLEAR` | W | Clears selected sticky trap bits. |
+| `0x1C` | `TRAP_CLEAR` | W | Clears only the selected sticky trap bits; unselected latched faults remain visible in `TRAP_STATUS`. |
 | `0x20` | `WRITE_CHECKSUM` | R/W | IEEE CRC32 over bank, entry, low word, and high word. Reads return the observed checksum for the current staged payload. |
 | `0x24` | `READ_DATA_LO` | R | Low 32 bits of the committed active parameter selected by `BANK_SELECT` and `ENTRY_INDEX`. |
 | `0x28` | `READ_DATA_HI` | R | High 32 bits of the committed active parameter. Narrow entries return zero. |

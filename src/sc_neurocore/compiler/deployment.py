@@ -354,6 +354,7 @@ def _gen_python_driver(
                 f"    LIVE_CTRL_ROLLBACK      = 0x{live_update_spec.control_bits['rollback']:08X}",
                 f"    LIVE_CTRL_CLEAR_TRAP    = 0x{live_update_spec.control_bits['clear_trap']:08X}",
                 f"    LIVE_STATUS_TRAP_LATCHED = 0x{live_update_spec.status_bits['trap_latched']:08X}",
+                f"    LIVE_TRAP_CLEAR_MASK    = 0x{live_update_spec.trap_clear_mask:08X}",
             ]
         )
         for bank_index, bank in enumerate(live_update_spec.banks):
@@ -450,7 +451,7 @@ def _gen_python_driver(
                 "",
                 "    def clear_live_traps(self) -> None:",
                 '        """Clear all sticky live-control trap bits."""',
-                f"        self._wr(self.LIVE_REG_TRAP_CLEAR, 0x{live_update_spec.effective_trap_width:08X})",
+                "        self._wr(self.LIVE_REG_TRAP_CLEAR, self.LIVE_TRAP_CLEAR_MASK)",
                 "        self._wr(self.LIVE_REG_CONTROL, self.LIVE_CTRL_CLEAR_TRAP)",
                 "",
             ]
@@ -600,6 +601,7 @@ def _gen_c_driver(
                 f"#define LIVE_CTRL_ROLLBACK       0x{live_update_spec.control_bits['rollback']:08X}U",
                 f"#define LIVE_CTRL_CLEAR_TRAP     0x{live_update_spec.control_bits['clear_trap']:08X}U",
                 f"#define LIVE_STATUS_TRAP_LATCHED 0x{live_update_spec.status_bits['trap_latched']:08X}U",
+                f"#define LIVE_TRAP_CLEAR_MASK     0x{live_update_spec.trap_clear_mask:08X}U",
             ]
         )
         for bank_index, bank in enumerate(live_update_spec.banks):
@@ -683,7 +685,7 @@ def _gen_c_driver(
                 "}",
                 "",
                 "static inline void live_clear_traps(void) {",
-                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_TRAP_CLEAR, 0x{live_update_spec.effective_trap_width:08X}U);",
+                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_TRAP_CLEAR, LIVE_TRAP_CLEAR_MASK);",
                 f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_CONTROL, LIVE_CTRL_CLEAR_TRAP);",
                 "}",
                 "",

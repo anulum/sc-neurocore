@@ -463,6 +463,11 @@ class MMIOUpdateSpec:
         """Return trap-vector width needed by host-visible generated traps."""
         return max(self.trap.max_flags, len(self.trap_bits))
 
+    @property
+    def trap_clear_mask(self) -> int:
+        """Return the mask that clears all host-visible generated trap bits."""
+        return (1 << self.effective_trap_width) - 1
+
     def update_checksum(self, bank_name: str, parameter: int | str, encoded_value: int) -> int:
         """Return deterministic IEEE CRC32 guard for one staged update.
 
@@ -557,12 +562,12 @@ class MMIOUpdateSpec:
         )
 
     def build_trap_clear_sequence(self) -> tuple[MMIOWrite, ...]:
-        """Build the host-side write sequence for clearing sticky trap state."""
+        """Build the host-side sequence for clearing all generated sticky traps."""
         if not self.trap.enabled:
             raise ValueError("trap clear sequence requires enabled traps")
         addresses = self.control_register_addresses
         return (
-            MMIOWrite(addresses["trap_clear"], self.effective_trap_width, 32, "clear_trap"),
+            MMIOWrite(addresses["trap_clear"], self.trap_clear_mask, 32, "clear_trap"),
             MMIOWrite(addresses["control"], CONTROL_CLEAR_TRAP, 32, "clear_trap"),
         )
 
@@ -611,6 +616,7 @@ class MMIOUpdateSpec:
             "status_bits": self.status_bits,
             "trap_bits": self.trap_bits,
             "effective_trap_width": self.effective_trap_width,
+            "trap_clear_mask": self.trap_clear_mask,
             "trap": {
                 "enabled": self.trap.enabled,
                 "action": self.trap.action,

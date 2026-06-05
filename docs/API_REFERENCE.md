@@ -9201,7 +9201,9 @@ bitstream.
 ### Class `MMIOUpdateSpec`
 Defines the complete live-control contract for hot-swapping parameters. The
 spec owns the control register map, status bits, trap bits, CRC32 update guard,
-bus protocol, bank list, and read/write data widths.
+bus protocol, bank list, and read/write data widths. `effective_trap_width`
+reports the host-visible trap-vector width; `trap_clear_mask` is the all-bits
+mask used when host code wants to clear every generated sticky trap.
 
 ### Method `build_update_sequence(bank_name, parameter, encoded_word)`
 Builds the deterministic host write sequence for a staged parameter update:
@@ -9218,6 +9220,12 @@ parameter. The sequence writes the bank and entry selectors, reads
 `read_data_lo`, and reads `read_data_hi` only when the selected precision width
 exceeds 32 bits. Readback is allowed for read-only calibration banks because it
 does not mutate shadow or active state.
+
+### Method `build_trap_clear_sequence()`
+Builds the deterministic host write sequence for clearing all generated sticky
+traps. The sequence writes `trap_clear_mask` to `TRAP_CLEAR`, then emits the
+control-register clear pulse. Generated RTL clears only selected bits, so
+unselected latched faults remain visible in `TRAP_STATUS`.
 
 ---
 
