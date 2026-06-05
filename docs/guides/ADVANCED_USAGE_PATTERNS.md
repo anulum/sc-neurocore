@@ -1,6 +1,6 @@
 # Advanced Usage Patterns: Pushing the Frontiers
 
-**Version:** 3.15.9
+**Version:** 3.15.10
 **Target**: Advanced Developers & Researchers
 
 ---

@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.10] - 2026-06-05
+
+### Release workflows
+- Fixed Docker workflow image-tag selection so the workflow remains valid on
+  tag pushes and scans the selected pushed image reference.
+
 ## [3.15.9] - 2026-06-05
 
 ### Security and release workflows
