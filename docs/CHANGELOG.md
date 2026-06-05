@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.29] - 2026-06-05
+
+### CI and release workflows
+- Aligned branch CI version-contract tests with source metadata, installed the
+  HDL/formal toolchain required by RTL contract tests, and synchronized the
+  conda install profile with the release version.
+
 ## [3.15.28] - 2026-06-05
 
 ### CI and release workflows
