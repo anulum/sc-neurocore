@@ -170,9 +170,10 @@ explicit apply and rollback pulses, checksum-mismatch pulses, flattened
 active-only `parameter_words` output, and host-visible trap clear/status
 signals. It also derives sticky staged-overflow, staged-underflow, and
 CRC32-mismatch traps before shadow loading, and latches invalid bank/entry
-selection as trap bit `0x8`, so malformed MMIO payloads cannot truncate into
-active coefficients, bypass the update guard, or masquerade as a loaded shadow
-update. This lets a
+selection as trap bit `0x8` plus read-only bank writes as trap bit `0x10`, so
+malformed MMIO payloads cannot truncate into active coefficients, bypass the
+update guard, mutate calibration/read-only constants, or masquerade as a loaded
+shadow update. This lets a
 deployed design hot-swap weights or phase-coupling
 coefficients while keeping the precision and trap contracts auditable.
 The local regression artefact

@@ -25,6 +25,7 @@ from sc_neurocore.compiler.live_control import (
     ParameterBankSpec,
     TRAP_CHECKSUM_MISMATCH,
     TRAP_INVALID_SELECTION,
+    TRAP_READ_ONLY_BANK,
     TRAP_STAGED_OVERFLOW,
     TRAP_STAGED_UNDERFLOW,
     TrapSpec,
@@ -59,6 +60,14 @@ def live_control_spec(bus_protocol: str = "axi4_lite") -> MMIOUpdateSpec:
                 parameter_count=32,
                 parameter_names=tuple(f"k{i}" for i in range(32)),
                 q_format="Q16.16",
+            ),
+            ParameterBankSpec(
+                bank_name="calibration",
+                start_address_bytes=0x4000,
+                parameter_count=1,
+                parameter_names=("cal0",),
+                q_format="Q8.8",
+                writable=False,
             ),
         ),
         trap=TrapSpec(max_flags=2),
@@ -184,9 +193,9 @@ module tb_sc_live_params;
     wire [1:0] rresp;
     wire rvalid;
     reg rready = 1'b0;
-    reg [3:0] external_trap_vector = 4'b000;
+    reg [4:0] external_trap_vector = 5'b00000;
     wire trap_latched;
-    wire [3:0] trap_status_vector;
+    wire [4:0] trap_status_vector;
     wire staged_overflow;
     wire staged_underflow;
     wire update_pulse;
@@ -195,8 +204,9 @@ module tb_sc_live_params;
     wire trap_clear_pulse;
     wire checksum_mismatch_pulse;
     wire invalid_selection_pulse;
+    wire read_only_bank_pulse;
     wire shadow_loaded;
-    wire [2047:0] parameter_words;
+    wire [2063:0] parameter_words;
 
     always #5 clk = ~clk;
 
@@ -231,6 +241,7 @@ module tb_sc_live_params;
         .trap_clear_pulse(trap_clear_pulse),
         .checksum_mismatch_pulse(checksum_mismatch_pulse),
         .invalid_selection_pulse(invalid_selection_pulse),
+        .read_only_bank_pulse(read_only_bank_pulse),
         .shadow_loaded(shadow_loaded),
         .parameter_words(parameter_words)
     );
@@ -274,7 +285,7 @@ module tb_sc_live_params;
 
         axi_write(32'h11C, 32'h00000003);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 4'b0000) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000) begin
             $finish(3);
         end
 
@@ -355,21 +366,23 @@ module tb_sc_live_pcie_params;
     wire [31:0] read_data;
     wire read_data_valid;
     wire read_error;
-    reg [3:0] external_trap_vector = 4'b000;
+    reg [4:0] external_trap_vector = 5'b00000;
     wire trap_latched;
-    wire [3:0] trap_status_vector;
+    wire [4:0] trap_status_vector;
     wire staged_overflow;
     wire staged_underflow;
     reg observed_checksum_mismatch = 1'b0;
     reg observed_invalid_selection = 1'b0;
+    reg observed_read_only_bank = 1'b0;
     wire update_pulse;
     wire apply_pulse;
     wire rollback_pulse;
     wire trap_clear_pulse;
     wire checksum_mismatch_pulse;
     wire invalid_selection_pulse;
+    wire read_only_bank_pulse;
     wire shadow_loaded;
-    wire [2047:0] parameter_words;
+    wire [2063:0] parameter_words;
 
     always #5 clk = ~clk;
     always @(posedge clk) begin
@@ -378,6 +391,9 @@ module tb_sc_live_pcie_params;
         end
         if (invalid_selection_pulse) begin
             observed_invalid_selection <= 1'b1;
+        end
+        if (read_only_bank_pulse) begin
+            observed_read_only_bank <= 1'b1;
         end
     end
 
@@ -408,6 +424,7 @@ module tb_sc_live_pcie_params;
         .trap_clear_pulse(trap_clear_pulse),
         .checksum_mismatch_pulse(checksum_mismatch_pulse),
         .invalid_selection_pulse(invalid_selection_pulse),
+        .read_only_bank_pulse(read_only_bank_pulse),
         .shadow_loaded(shadow_loaded),
         .parameter_words(parameter_words)
     );
@@ -448,15 +465,15 @@ module tb_sc_live_pcie_params;
             $finish(6);
         end
 
-        pcie_write(32'h11C, 32'h0000000F);
+        pcie_write(32'h11C, 32'h0000001F);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 4'b0000) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000) begin
             $finish(7);
         end
 
-        pcie_write(32'h108, 32'd2);
+        pcie_write(32'h108, 32'd3);
         pcie_write(32'h10C, 32'd0);
-        pcie_write(32'h120, 32'h9ADDBE56);
+        pcie_write(32'h120, 32'h34B52FC7);
         pcie_write(32'h100, 32'h00000001);
         repeat (2) @(negedge clk);
         if (shadow_loaded !== 1'b0 || parameter_words[15:0] !== 16'h0000) begin
@@ -466,10 +483,28 @@ module tb_sc_live_pcie_params;
             $finish(9);
         end
 
-        pcie_write(32'h11C, 32'h0000000F);
+        pcie_write(32'h11C, 32'h0000001F);
         repeat (2) @(negedge clk);
-        if (trap_latched !== 1'b0 || trap_status_vector !== 4'b0000) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000) begin
             $finish(10);
+        end
+
+        pcie_write(32'h108, 32'd2);
+        pcie_write(32'h10C, 32'd0);
+        pcie_write(32'h120, 32'h9ADDBE56);
+        pcie_write(32'h100, 32'h00000001);
+        repeat (2) @(negedge clk);
+        if (shadow_loaded !== 1'b0 || parameter_words[2063:2048] !== 16'h0000) begin
+            $finish(11);
+        end
+        if (trap_latched !== 1'b1 || trap_status_vector[4] !== 1'b1 || observed_read_only_bank !== 1'b1) begin
+            $finish(12);
+        end
+
+        pcie_write(32'h11C, 32'h0000001F);
+        repeat (2) @(negedge clk);
+        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000) begin
+            $finish(13);
         end
 
         pcie_write(32'h108, 32'd0);
@@ -486,7 +521,7 @@ module tb_sc_live_pcie_params;
         if (parameter_words[15:0] !== 16'h1234 || shadow_loaded !== 1'b0) begin
             $finish(3);
         end
-        if (trap_latched !== 1'b0 || trap_status_vector !== 4'b0000 || staged_overflow !== 1'b0 || staged_underflow !== 1'b0) begin
+        if (trap_latched !== 1'b0 || trap_status_vector !== 5'b00000 || staged_overflow !== 1'b0 || staged_underflow !== 1'b0) begin
             $finish(4);
         end
 
@@ -533,6 +568,8 @@ endmodule
         "checksum_mismatch_trap_bit": TRAP_CHECKSUM_MISMATCH,
         "invalid_selection_rejected": True,
         "invalid_selection_trap_bit": TRAP_INVALID_SELECTION,
+        "read_only_bank_rejected": True,
+        "read_only_bank_trap_bit": TRAP_READ_ONLY_BANK,
         "passed": True,
     }
 
@@ -586,6 +623,7 @@ def main() -> int:
             "staged_underflow": TRAP_STAGED_UNDERFLOW,
             "checksum_mismatch": TRAP_CHECKSUM_MISMATCH,
             "invalid_selection": TRAP_INVALID_SELECTION,
+            "read_only_bank": TRAP_READ_ONLY_BANK,
         },
         "valid_update_write_count": len(spec.build_update_sequence("weights", 0, 0x1234)),
         "live_update_sequence_median_ns": statistics.median(update_ns),

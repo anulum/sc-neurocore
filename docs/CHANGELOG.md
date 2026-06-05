@@ -6,6 +6,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added sticky live-control read-only-bank traps so generated AXI4-Lite/PCIe
+  parameter banks reject direct MMIO writes to calibration/read-only banks before
+  shadow loading or active coefficient mutation.
 - Added sticky live-control invalid-selection traps so generated AXI4-Lite/PCIe
   parameter banks reject non-existent bank/entry writes without raising a false
   shadow-loaded acknowledgement.
