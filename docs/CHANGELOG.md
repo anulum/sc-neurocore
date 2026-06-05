@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.24] - 2026-06-05
+
+### CI and release hygiene
+- Formatted the release-surface parity test before publishing the next
+  immutable release tag.
+
 ## [3.15.23] - 2026-06-05
 
 ### Release workflows
