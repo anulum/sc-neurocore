@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """UltraScale+ target compiler and Vivado-project generator contract."""
 
 from __future__ import annotations

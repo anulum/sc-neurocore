@@ -102,9 +102,7 @@ def _precision_manifest(
     """Build deterministic metadata for precision contracts."""
     if isinstance(parsed, QFormat):
         if parameter_count is not None:
-            raise ValueError(
-                "parameter_count metadata is only valid for block-floating precision"
-            )
+            raise ValueError("parameter_count metadata is only valid for block-floating precision")
         return {
             "kind": kind,
             "source": source,

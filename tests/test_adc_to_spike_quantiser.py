@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """ADC-to-spike quantiser module contract tests.
 
 These tests cover the NEU-C.5 sensor-ingress contract: ADC samples are converted

@@ -519,7 +519,9 @@ class PrecisionTrapReport:
         if underflow.ndim != 1:
             raise ValueError("underflow_mask must be a 1-D vector")
         if codes.shape != mask.shape or codes.shape != underflow.shape:
-            raise ValueError("output_codes, overflow_mask, and underflow_mask must have identical shape")
+            raise ValueError(
+                "output_codes, overflow_mask, and underflow_mask must have identical shape"
+            )
 
         min_code, max_code = _fixed_integer_bounds(self.output_fmt)
         if np.any(codes < min_code) or np.any(codes > max_code):
@@ -547,7 +549,9 @@ class PrecisionTrapReport:
     @property
     def underflow_count(self) -> int:
         """Number of nonzero outputs that collapsed below one output LSB."""
-        return int(np.count_nonzero(self.underflow_mask))
+        underflow_mask = self.underflow_mask
+        assert underflow_mask is not None
+        return int(np.count_nonzero(underflow_mask))
 
     @property
     def has_underflow(self) -> bool:
@@ -621,7 +625,11 @@ class PrecisionEnvelopeReport:
             raise ValueError("underflow_mask must be a 1-D vector")
         if bounds.ndim != 1:
             raise ValueError("abs_bound_codes must be a 1-D vector")
-        if codes.shape != mask.shape or codes.shape != underflow.shape or codes.shape != bounds.shape:
+        if (
+            codes.shape != mask.shape
+            or codes.shape != underflow.shape
+            or codes.shape != bounds.shape
+        ):
             raise ValueError(
                 "output_codes, overflow_mask, underflow_mask, and abs_bound_codes must have identical shape"
             )
@@ -655,7 +663,9 @@ class PrecisionEnvelopeReport:
     @property
     def underflow_count(self) -> int:
         """Number of nonzero outputs that collapsed below one output LSB."""
-        return int(np.count_nonzero(self.underflow_mask))
+        underflow_mask = self.underflow_mask
+        assert underflow_mask is not None
+        return int(np.count_nonzero(underflow_mask))
 
     @property
     def observed_underflow_free(self) -> bool:

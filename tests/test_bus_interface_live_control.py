@@ -100,7 +100,10 @@ def test_live_parameter_bank_emits_bram_and_distributed_banks() -> None:
     assert "TRAP_READ_ONLY_BANK_VECTOR" in source
     assert "TRAP_PARTIAL_WRITE_VECTOR" in source
     assert "wire kuramoto_writable_for_update = kuramoto_selected_for_update && 1'b0;" in source
-    assert "wire bank_update_writable = weights_writable_for_update | kuramoto_writable_for_update;" in source
+    assert (
+        "wire bank_update_writable = weights_writable_for_update | kuramoto_writable_for_update;"
+        in source
+    )
     assert (
         "if (checksum_valid && !staged_update_fault && bank_entry_selection_valid && bank_update_writable) begin"
         in source
@@ -123,7 +126,10 @@ def test_live_parameter_bank_emits_bram_and_distributed_banks() -> None:
     assert "S_AXI_RDATA <= active_read_data_lo;" in source
     assert "S_AXI_RDATA <= active_read_data_hi;" in source
     assert "S_AXI_RRESP <= 2'b10;" in source
-    assert "reg_trap_vector <= reg_trap_vector | observed_trap_vector | TRAP_INVALID_SELECTION_VECTOR;" in source
+    assert (
+        "reg_trap_vector <= reg_trap_vector | observed_trap_vector | TRAP_INVALID_SELECTION_VECTOR;"
+        in source
+    )
     assert "trap_clear_pulse <= 1'b1;" in source
 
 
@@ -214,7 +220,9 @@ def test_live_parameter_bank_reads_back_committed_active_word(tmp_path: Path) ->
     iverilog = shutil.which("iverilog")
     vvp = shutil.which("vvp")
     if iverilog is None or vvp is None:
-        raise AssertionError("iverilog and vvp must be available for live-control readback simulation")
+        raise AssertionError(
+            "iverilog and vvp must be available for live-control readback simulation"
+        )
 
     spec = MMIOUpdateSpec(
         bus_protocol="axi4_lite",
@@ -440,7 +448,9 @@ def test_live_parameter_bank_pcie_mmio_commits_shadow_update(tmp_path: Path) -> 
     iverilog = shutil.which("iverilog")
     vvp = shutil.which("vvp")
     if iverilog is None or vvp is None:
-        raise AssertionError("iverilog and vvp must be available for PCIe MMIO live-control simulation")
+        raise AssertionError(
+            "iverilog and vvp must be available for PCIe MMIO live-control simulation"
+        )
 
     spec = MMIOUpdateSpec(
         bus_protocol="pcie",

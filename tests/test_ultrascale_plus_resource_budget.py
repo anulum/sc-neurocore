@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """UltraScale+ SKU budget and resource-estimate contract."""
 
 from __future__ import annotations

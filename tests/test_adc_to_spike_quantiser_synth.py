@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Vivado-gated synthesis contract for the ADC-to-spike quantiser."""
 
 from __future__ import annotations

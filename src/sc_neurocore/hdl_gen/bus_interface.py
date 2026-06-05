@@ -447,7 +447,9 @@ def generate_live_parameter_bank(
                     f"                    active_read_data_lo = {{{{{pad_width}{{1'b0}}}}, {bank_name}[reg_entry_index]}};"
                 )
             else:
-                lines.append(f"                    active_read_data_lo = {bank_name}[reg_entry_index];")
+                lines.append(
+                    f"                    active_read_data_lo = {bank_name}[reg_entry_index];"
+                )
             lines.append("                    active_read_data_hi = {DATA_WIDTH{1'b0}};")
         else:
             high_width = width - bus_data_width
@@ -688,29 +690,29 @@ def generate_live_parameter_bank(
             "                    ADDR_BANK_SEL: S_AXI_RDATA <= reg_bank_select;",
             "                    ADDR_ENTRY_IDX: S_AXI_RDATA <= reg_entry_index;",
             "                    ADDR_DATA_LO: S_AXI_RDATA <= reg_write_data_lo;",
-                    "                    ADDR_DATA_HI: S_AXI_RDATA <= reg_write_data_hi;",
-                    "                    ADDR_CHECKSUM: S_AXI_RDATA <= observed_checksum;",
-                    "                    ADDR_TRAP_STAT: S_AXI_RDATA <= {{(DATA_WIDTH-TRAP_WIDTH){1'b0}}, reg_trap_vector};",
-                    "                    ADDR_READ_LO: begin",
-                    "                        S_AXI_RDATA <= active_read_data_lo;",
-                    "                        if (!bank_entry_selection_valid) begin",
-                    "                            S_AXI_RRESP <= 2'b10;",
-                    "                            invalid_selection_pulse <= 1'b1;",
-                    "                            reg_trap_vector <= reg_trap_vector | observed_trap_vector | TRAP_INVALID_SELECTION_VECTOR;",
-                    "                            reg_status <= STATUS_READY | STATUS_TRAP_LATCHED;",
-                    "                        end",
-                    "                    end",
-                    "                    ADDR_READ_HI: begin",
-                    "                        S_AXI_RDATA <= active_read_data_hi;",
-                    "                        if (!bank_entry_selection_valid) begin",
-                    "                            S_AXI_RRESP <= 2'b10;",
-                    "                            invalid_selection_pulse <= 1'b1;",
-                    "                            reg_trap_vector <= reg_trap_vector | observed_trap_vector | TRAP_INVALID_SELECTION_VECTOR;",
-                    "                            reg_status <= STATUS_READY | STATUS_TRAP_LATCHED;",
-                    "                        end",
-                    "                    end",
-                    "                    default: S_AXI_RDATA <= {DATA_WIDTH{1'b0}};",
-                "                endcase",
+            "                    ADDR_DATA_HI: S_AXI_RDATA <= reg_write_data_hi;",
+            "                    ADDR_CHECKSUM: S_AXI_RDATA <= observed_checksum;",
+            "                    ADDR_TRAP_STAT: S_AXI_RDATA <= {{(DATA_WIDTH-TRAP_WIDTH){1'b0}}, reg_trap_vector};",
+            "                    ADDR_READ_LO: begin",
+            "                        S_AXI_RDATA <= active_read_data_lo;",
+            "                        if (!bank_entry_selection_valid) begin",
+            "                            S_AXI_RRESP <= 2'b10;",
+            "                            invalid_selection_pulse <= 1'b1;",
+            "                            reg_trap_vector <= reg_trap_vector | observed_trap_vector | TRAP_INVALID_SELECTION_VECTOR;",
+            "                            reg_status <= STATUS_READY | STATUS_TRAP_LATCHED;",
+            "                        end",
+            "                    end",
+            "                    ADDR_READ_HI: begin",
+            "                        S_AXI_RDATA <= active_read_data_hi;",
+            "                        if (!bank_entry_selection_valid) begin",
+            "                            S_AXI_RRESP <= 2'b10;",
+            "                            invalid_selection_pulse <= 1'b1;",
+            "                            reg_trap_vector <= reg_trap_vector | observed_trap_vector | TRAP_INVALID_SELECTION_VECTOR;",
+            "                            reg_status <= STATUS_READY | STATUS_TRAP_LATCHED;",
+            "                        end",
+            "                    end",
+            "                    default: S_AXI_RDATA <= {DATA_WIDTH{1'b0}};",
+            "                endcase",
             "            end",
             "        end",
             "    end",
