@@ -6,6 +6,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Compiler precision
+- Added signed fixed-point width proofs to mixed Q8.8/Q16.16 and
+  block-floating precision envelope reports across Python, Rust, and refreshed
+  comparison benchmark artefacts, including required total bits, required
+  Q16.16 integer bits, headroom, saturation requirement, and static overflow
+  proof status.
 - Added seeded block-floating exponent-edge parity and trap contracts across
   the Python quantizer, Rust qformat mirror, and comparison benchmark
   artefacts: `BFP16E3X2` safe min/max exponent sweeps now match exact Q16.16

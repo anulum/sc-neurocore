@@ -231,7 +231,13 @@ class TestPrecisionEnvelopeReport:
         assert report.max_abs_output_code == 1024
         assert report.max_abs_bound_code == 4096
         assert report.min_headroom_code == ((1 << 31) - 1) - 4096
+        assert report.required_total_bits == 14
+        assert report.required_integer_bits == 1
+        assert report.width_headroom_bits == 18
+        assert report.saturation_required is False
+        assert report.static_overflow_proven_safe is True
         assert report.manifest()["conservative_overflow_free"] is True
+        assert report.manifest()["proof_kind"] == "signed_symmetric_fixed_point_width"
 
     def test_manifest_distinguishes_underflow_from_overflow(self):
         report = PrecisionEnvelopeReport(
@@ -259,6 +265,11 @@ class TestPrecisionEnvelopeReport:
         assert report.observed_overflow_free is True
         assert report.conservative_overflow_free is False
         assert report.min_headroom_code < 0
+        assert report.required_total_bits == 33
+        assert report.required_integer_bits == 17
+        assert report.width_headroom_bits == -1
+        assert report.saturation_required is True
+        assert report.static_overflow_proven_safe is False
 
     def test_rejects_ambiguous_envelope_shapes_and_negative_bounds(self):
         with pytest.raises(ValueError, match="identical shape"):
@@ -428,6 +439,9 @@ class TestCompiledMixedDense:
         assert envelope.observed_overflow_free is True
         assert envelope.conservative_overflow_free is True
         assert envelope.max_abs_bound_code == 34816
+        assert envelope.required_total_bits == 17
+        assert envelope.required_integer_bits == 1
+        assert envelope.width_headroom_bits == 15
 
     def test_default_scaled_contract_tracks_float_dense_result(self):
         weights = np.array([[0.375, -0.125, 0.0625], [-0.5, 0.25, 0.125]], dtype=np.float64)
@@ -809,6 +823,9 @@ def test_mixed_dense_benchmark_contract_matches_rust_envelope() -> None:
     assert int(safe_envelope.max_abs_bound_code) == 531_400
     assert safe_envelope.conservative_overflow_free
     assert int(safe_envelope.min_headroom_code) == 2_146_952_247
+    assert int(safe_envelope.required_total_bits) == 21
+    assert int(safe_envelope.required_integer_bits) == 5
+    assert int(safe_envelope.width_headroom_bits) == 11
     assert int(np.count_nonzero(safe_overflow)) == 0
 
     probe = compile_dense_mixed_precision(
@@ -821,4 +838,8 @@ def test_mixed_dense_benchmark_contract_matches_rust_envelope() -> None:
 
     assert int(probe_envelope.max_abs_bound_code) == 17_454_214_414_336
     assert not probe_envelope.conservative_overflow_free
+    assert int(probe_envelope.required_total_bits) == 45
+    assert int(probe_envelope.required_integer_bits) == 29
+    assert int(probe_envelope.width_headroom_bits) == -13
+    assert probe_envelope.saturation_required
     assert int(np.count_nonzero(probe_overflow)) == n_outputs

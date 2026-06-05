@@ -52,11 +52,35 @@
     {
       "artefact": "benchmarks/results/local_rust_2026-06-04_ultrascale_dense_folding.json",
       "id": "ultrascale-plus-dense-folding-rust-contract"
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_mixed_dense.json",
+      "id": "mixed-dense-python-q1616-width-proof"
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_mixed_dense.json",
+      "id": "mixed-dense-rust-q1616-width-proof"
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_block_floating_dense.json",
+      "id": "block-floating-python-q1616-width-proof"
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_block_floating_dense.json",
+      "id": "block-floating-rust-q1616-width-proof"
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_precision_envelopes.json",
+      "id": "precision-envelopes-python-q1616-width-proof"
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_precision_envelopes.json",
+      "id": "precision-envelopes-rust-q1616-width-proof"
     }
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 13,
+  "gate_count": 19,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

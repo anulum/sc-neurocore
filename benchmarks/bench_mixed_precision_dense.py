@@ -129,7 +129,7 @@ def main() -> int:
         "language": "Python",
         "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
         "command": (
-            "taskset -c 10-11 env PYTHONPATH=src "
+            "taskset -c 8-9 env PYTHONPATH=src "
             ".venv/bin/python benchmarks/bench_mixed_precision_dense.py"
         ),
         "python": platform.python_version(),
@@ -154,9 +154,21 @@ def main() -> int:
         "safe_max_abs_bound_code": safe_envelope.max_abs_bound_code,
         "safe_conservative_overflow_free": safe_envelope.conservative_overflow_free,
         "safe_min_headroom_code": safe_envelope.min_headroom_code,
+        "safe_required_total_bits": safe_envelope.required_total_bits,
+        "safe_required_integer_bits": safe_envelope.required_integer_bits,
+        "safe_width_headroom_bits": safe_envelope.width_headroom_bits,
+        "safe_saturation_required": safe_envelope.saturation_required,
+        "safe_static_overflow_proven_safe": safe_envelope.static_overflow_proven_safe,
         "saturating_probe_overflow_count": int(np.count_nonzero(probe_overflow)),
         "saturating_probe_max_abs_bound_code": probe_envelope.max_abs_bound_code,
         "saturating_probe_conservative_overflow_free": probe_envelope.conservative_overflow_free,
+        "saturating_probe_required_total_bits": probe_envelope.required_total_bits,
+        "saturating_probe_required_integer_bits": probe_envelope.required_integer_bits,
+        "saturating_probe_width_headroom_bits": probe_envelope.width_headroom_bits,
+        "saturating_probe_saturation_required": probe_envelope.saturation_required,
+        "saturating_probe_static_overflow_proven_safe": (
+            probe_envelope.static_overflow_proven_safe
+        ),
         "compiled_manifest": compiled.manifest(),
         "mixed_results": [
             {"ns_per_call": result[0], "checksum": result[1]} for result in mixed_results

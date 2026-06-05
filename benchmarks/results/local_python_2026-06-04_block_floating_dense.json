@@ -1,7 +1,7 @@
 {
   "benchmark": "block_floating_dense_q16_64x32",
   "language": "Python",
-  "timestamp_utc": "2026-06-05T02:29:11+00:00",
+  "timestamp_utc": "2026-06-05T02:48:43+00:00",
   "command": "taskset -c 8-9 env PYTHONPATH=src .venv/bin/python benchmarks/bench_block_floating_dense.py",
   "python": "3.12.3",
   "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
@@ -14,21 +14,21 @@
       9
     ],
     "load_average_before": [
-      3.9443359375,
-      3.56396484375,
-      3.5244140625
+      6.11376953125,
+      5.5810546875,
+      4.505859375
     ],
     "load_average_after": [
-      4.26953125,
-      3.6376953125,
-      3.548828125
+      6.11376953125,
+      5.5810546875,
+      4.505859375
     ],
     "cpu_governor": [
       "powersave"
     ],
     "cpu_frequency_mhz": {
       "min_observed_mhz": 800.0,
-      "max_observed_mhz": 4600.123,
+      "max_observed_mhz": 4509.238,
       "sampled_cpu_count": 12.0
     },
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
@@ -39,20 +39,25 @@
   "n_outputs": 32,
   "iterations": 2000,
   "repeats": 7,
-  "bfp_median_ns_per_call": 39722.0525,
-  "bfp_min_ns_per_call": 36768.217,
-  "bfp_max_ns_per_call": 58193.222,
-  "forward_with_overflow_median_ns_per_call": 40529.854,
-  "forward_with_overflow_min_ns_per_call": 33999.854,
-  "forward_with_overflow_max_ns_per_call": 56410.895,
-  "float_dot_median_ns_per_call": 1256.2145,
-  "float_dot_min_ns_per_call": 1075.6105,
-  "float_dot_max_ns_per_call": 1627.605,
+  "bfp_median_ns_per_call": 38760.259,
+  "bfp_min_ns_per_call": 37998.5705,
+  "bfp_max_ns_per_call": 42643.0995,
+  "forward_with_overflow_median_ns_per_call": 42356.208,
+  "forward_with_overflow_min_ns_per_call": 33772.233,
+  "forward_with_overflow_max_ns_per_call": 43368.88,
+  "float_dot_median_ns_per_call": 1029.303,
+  "float_dot_min_ns_per_call": 963.412,
+  "float_dot_max_ns_per_call": 1343.338,
   "max_abs_error_vs_float_dot": 0.22306060791015625,
   "safe_overflow_count": 0,
   "safe_max_abs_bound_code": 610816,
   "safe_conservative_overflow_free": true,
   "safe_min_headroom_code": 2146872831,
+  "safe_required_total_bits": 21,
+  "safe_required_integer_bits": 5,
+  "safe_width_headroom_bits": 11,
+  "safe_saturation_required": false,
+  "safe_static_overflow_proven_safe": true,
   "mantissa_checksum": -15,
   "exponent_checksum": 0,
   "block_exponent_count": 64,
@@ -61,6 +66,11 @@
   "saturating_probe_overflow_count": 32,
   "saturating_probe_max_abs_bound_code": 1125865547104256,
   "saturating_probe_conservative_overflow_free": false,
+  "saturating_probe_required_total_bits": 51,
+  "saturating_probe_required_integer_bits": 35,
+  "saturating_probe_width_headroom_bits": -19,
+  "saturating_probe_saturation_required": true,
+  "saturating_probe_static_overflow_proven_safe": false,
   "exponent_edge_sweep": {
     "format": "BFP16E3X2",
     "safe_exponent_codes": [
@@ -79,6 +89,11 @@
     "safe_max_abs_bound_q1616": 1069024,
     "safe_min_headroom_q1616": 2146414623,
     "safe_conservative_overflow_free": true,
+    "safe_required_total_bits": 22,
+    "safe_required_integer_bits": 6,
+    "safe_width_headroom_bits": 10,
+    "safe_saturation_required": false,
+    "safe_static_overflow_proven_safe": true,
     "max_exponent_saturating_codes_q1616": [
       2147483647
     ],
@@ -88,7 +103,12 @@
     "max_exponent_saturating_overflow_count": 1,
     "max_exponent_saturating_underflow_count": 0,
     "max_exponent_saturating_conservative_overflow_free": false,
-    "max_exponent_saturating_max_abs_bound_q1616": 2251662376828928
+    "max_exponent_saturating_max_abs_bound_q1616": 2251662376828928,
+    "max_exponent_saturating_required_total_bits": 52,
+    "max_exponent_saturating_required_integer_bits": 36,
+    "max_exponent_saturating_width_headroom_bits": -20,
+    "max_exponent_saturating_saturation_required": true,
+    "max_exponent_saturating_static_overflow_proven_safe": false
   },
   "compiled_manifest": {
     "operation": "dense_block_floating",
@@ -121,98 +141,98 @@
   },
   "bfp_results": [
     {
-      "ns_per_call": 57945.5325,
+      "ns_per_call": 42643.0995,
       "checksum": 0
     },
     {
-      "ns_per_call": 37819.494,
+      "ns_per_call": 37998.5705,
       "checksum": 0
     },
     {
-      "ns_per_call": 58193.222,
+      "ns_per_call": 39603.963,
       "checksum": 0
     },
     {
-      "ns_per_call": 54665.6745,
+      "ns_per_call": 39371.7715,
       "checksum": 0
     },
     {
-      "ns_per_call": 36768.217,
+      "ns_per_call": 38069.5145,
       "checksum": 0
     },
     {
-      "ns_per_call": 39114.129,
+      "ns_per_call": 38760.259,
       "checksum": 0
     },
     {
-      "ns_per_call": 39722.0525,
+      "ns_per_call": 38589.3165,
       "checksum": 0
     }
   ],
   "forward_with_overflow_results": [
     {
-      "ns_per_call": 33999.854,
+      "ns_per_call": 42356.208,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 45220.7765,
+      "ns_per_call": 39376.567,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 37624.3375,
+      "ns_per_call": 43284.0885,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 39704.3745,
+      "ns_per_call": 42955.739,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 56410.895,
+      "ns_per_call": 43368.88,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 40529.854,
+      "ns_per_call": 37714.1295,
       "checksum": 0,
       "overflow_count": 0
     },
     {
-      "ns_per_call": 42723.7605,
+      "ns_per_call": 33772.233,
       "checksum": 0,
       "overflow_count": 0
     }
   ],
   "float_dot_results": [
     {
-      "ns_per_call": 1443.1585,
+      "ns_per_call": 1343.338,
       "checksum": -215.4693603515625
     },
     {
-      "ns_per_call": 1360.391,
+      "ns_per_call": 1253.597,
       "checksum": -215.4693603515625
     },
     {
-      "ns_per_call": 1256.2145,
+      "ns_per_call": 963.412,
       "checksum": -215.4693603515625
     },
     {
-      "ns_per_call": 1080.0995,
+      "ns_per_call": 1236.0055,
       "checksum": -215.4693603515625
     },
     {
-      "ns_per_call": 1105.2975,
+      "ns_per_call": 982.496,
       "checksum": -215.4693603515625
     },
     {
-      "ns_per_call": 1075.6105,
+      "ns_per_call": 1029.303,
       "checksum": -215.4693603515625
     },
     {
-      "ns_per_call": 1627.605,
+      "ns_per_call": 1009.452,
       "checksum": -215.4693603515625
     }
   ]

@@ -344,6 +344,11 @@ pub struct PrecisionEnvelopeReport {
     pub max_abs_bound_q1616: i64,
     pub conservative_safe_bound_q1616: i64,
     pub min_headroom_q1616: i64,
+    pub required_total_bits_q1616: u8,
+    pub required_integer_bits_q1616: u8,
+    pub width_headroom_bits_q1616: i16,
+    pub saturation_required: bool,
+    pub static_overflow_proven_safe: bool,
 }
 
 impl MixedDenseResult {
@@ -365,6 +370,10 @@ impl MixedDenseResult {
         let max_abs_bound_q1616 = self.abs_bounds_q1616.iter().copied().max().unwrap_or(0);
         let conservative_safe_bound_q1616 = i64::from(i32::MAX);
         let min_headroom_q1616 = conservative_safe_bound_q1616.saturating_sub(max_abs_bound_q1616);
+        let required_total_bits_q1616 = required_signed_total_bits(max_abs_bound_q1616);
+        let required_integer_bits_q1616 = required_integer_bits_q1616(required_total_bits_q1616);
+        let width_headroom_bits_q1616 = 32_i16 - i16::from(required_total_bits_q1616);
+        let saturation_required = required_total_bits_q1616 > 32;
         PrecisionEnvelopeReport {
             output_count: self.outputs_q1616.len(),
             overflow: self.overflow,
@@ -378,8 +387,24 @@ impl MixedDenseResult {
             max_abs_bound_q1616,
             conservative_safe_bound_q1616,
             min_headroom_q1616,
+            required_total_bits_q1616,
+            required_integer_bits_q1616,
+            width_headroom_bits_q1616,
+            saturation_required,
+            static_overflow_proven_safe: !saturation_required,
         }
     }
+}
+
+fn required_signed_total_bits(abs_bound_q1616: i64) -> u8 {
+    if abs_bound_q1616 <= 0 {
+        return 1;
+    }
+    (64 - (abs_bound_q1616 as u64).leading_zeros()) as u8 + 1
+}
+
+fn required_integer_bits_q1616(required_total_bits_q1616: u8) -> u8 {
+    required_total_bits_q1616.saturating_sub(16).max(1)
 }
 
 fn abs_i32_to_i64(value: i32) -> i64 {
@@ -697,6 +722,11 @@ mod tests {
         assert!(envelope.conservative_overflow_free);
         assert_eq!(envelope.max_abs_output_q1616, 30720);
         assert_eq!(envelope.max_abs_bound_q1616, 34816);
+        assert_eq!(envelope.required_total_bits_q1616, 17);
+        assert_eq!(envelope.required_integer_bits_q1616, 1);
+        assert_eq!(envelope.width_headroom_bits_q1616, 15);
+        assert!(!envelope.saturation_required);
+        assert!(envelope.static_overflow_proven_safe);
     }
 
     #[test]
@@ -753,6 +783,8 @@ mod tests {
         assert_eq!(envelope.overflow_count, 1);
         assert_eq!(envelope.underflow_count, 0);
         assert!(envelope.max_abs_bound_q1616 > envelope.conservative_safe_bound_q1616);
+        assert!(envelope.saturation_required);
+        assert!(!envelope.static_overflow_proven_safe);
     }
 
     #[test]
@@ -1073,6 +1105,10 @@ mod mixed_dense_benchmark_contract_tests {
         assert_eq!(safe_envelope.max_abs_bound_q1616, 531_400);
         assert!(safe_envelope.conservative_overflow_free);
         assert_eq!(safe_envelope.min_headroom_q1616, 2_146_952_247);
+        assert_eq!(safe_envelope.required_total_bits_q1616, 21);
+        assert_eq!(safe_envelope.required_integer_bits_q1616, 5);
+        assert_eq!(safe_envelope.width_headroom_bits_q1616, 11);
+        assert!(!safe_envelope.saturation_required);
 
         let probe_weights = vec![127_i16 << 8; N_INPUTS * N_OUTPUTS];
         let probe_inputs = vec![32767_i32 << 16; N_INPUTS];
@@ -1083,5 +1119,9 @@ mod mixed_dense_benchmark_contract_tests {
         assert_eq!(probe.overflow_count, N_OUTPUTS);
         assert_eq!(probe_envelope.max_abs_bound_q1616, 17_454_214_414_336);
         assert!(!probe_envelope.conservative_overflow_free);
+        assert_eq!(probe_envelope.required_total_bits_q1616, 45);
+        assert_eq!(probe_envelope.required_integer_bits_q1616, 29);
+        assert_eq!(probe_envelope.width_headroom_bits_q1616, -13);
+        assert!(probe_envelope.saturation_required);
     }
 }
