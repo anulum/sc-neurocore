@@ -107,6 +107,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq cvc5 git iverilog make verilator yosys
+          python -m pip install "click==8.3.1"
           curl -fsSL https://github.com/YosysHQ/sby/archive/0cb15210a857e4d20030484b37a6b9b6386bd01d.tar.gz -o /tmp/sby.tar.gz
           mkdir -p /tmp/sby
           tar -xzf /tmp/sby.tar.gz -C /tmp/sby --strip-components=1
