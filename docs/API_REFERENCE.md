@@ -5433,7 +5433,11 @@ When a live-control contract is supplied, generated methods stage both
 entries therefore force the high word to zero before commit, preventing stale
 wide-update state from affecting later Q8.8/Q16.16 updates. The generated
 `verify_live_<bank>_<parameter>_encoded()` helpers update the active bank and
-compare committed readback against the requested encoded word.
+compare committed readback against the requested encoded word. Generated Python
+drivers also expose `read_live_status()`, `read_live_trap_status()`,
+`rollback_live_shadow()`, and `clear_live_traps()` so host software can observe
+and recover the same update/apply/rollback/clear handshake implemented by the
+generated control registers.
 
 ### Function `_gen_c_driver(module_name, params, base_address, data_width, fraction, live_update_spec)`
 Generate C MMIO driver header.
@@ -5441,8 +5445,10 @@ Generate C MMIO driver header.
 The C live-control helpers mirror the Python sequence: split the encoded word,
 write low and high staging registers, compute IEEE CRC32 over bank, entry, low,
 and high words, commit, trap-check status, then read back committed active
-state for verification. The generated header is covered by a C11 consumer
-compile check that calls the update/readback verification helper.
+state for verification. The generated header also exposes `live_read_status()`,
+`live_read_trap_status()`, `live_rollback_shadow()`, and `live_clear_traps()`.
+Generated C11 consumers are compile-checked against the update/readback and
+recovery helper surface.
 
 ### Function `generate_cocotb_testbench(module_name)`
 Generate a Cocotb (Python) testbench for a compiled neuron.

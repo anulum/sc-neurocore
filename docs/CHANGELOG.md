@@ -51,6 +51,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Hardened generated Python and C host drivers for live-control parameter
   banks with CRC32 update helpers, committed readback verification, trap-status
   checks, and mandatory high-word staging for narrow updates.
+- Added generated Python and C live-control rollback, status-read, and
+  trap-status-read helpers so host drivers expose the load/apply/rollback/
+  clear/readback handshake.
 - Added generated C live-control driver compile validation against a C11
   consumer that calls the committed update/readback verification helper.
 - Latched live-control shadow bank and entry identity at load time so generated

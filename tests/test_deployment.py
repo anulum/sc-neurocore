@@ -268,6 +268,57 @@ class TestHostDriverGen:
         with pytest.raises(RuntimeError, match="hardware trap"):
             driver.update_live_weights_w0_encoded(0x1234)
 
+    def test_python_live_control_driver_exposes_rollback_and_trap_reads(self) -> None:
+        """Generated Python driver should expose the live-control recovery handshake."""
+        spec = MMIOUpdateSpec(
+            bus_protocol="axi4_lite",
+            control_base_address_bytes=0x100,
+            banks=(
+                ParameterBankSpec(
+                    bank_name="weights",
+                    start_address_bytes=0x2000,
+                    parameter_count=1,
+                    parameter_names=("w0",),
+                    q_format="Q8.8",
+                ),
+            ),
+        )
+        source = generate_host_driver(
+            "sc_live",
+            {},
+            language="python",
+            base_address=0x8000_0000,
+            live_update_spec=spec,
+        )
+        namespace: dict[str, object] = {}
+        exec(source, namespace)
+        driver_cls = namespace["ScLiveDriver"]
+        writes: list[tuple[int, int]] = []
+
+        def read_fn(address: int) -> int:
+            if address == 0x8000_0104:
+                return 0xA5
+            if address == 0x8000_0118:
+                return 0x5A
+            raise AssertionError(f"unexpected read address 0x{address:08X}")
+
+        def write_fn(address: int, value: int) -> None:
+            writes.append((address, value))
+
+        driver = driver_cls(read_fn, write_fn)
+
+        assert driver.read_live_status() == 0xA5
+        assert driver.read_live_trap_status() == 0x5A
+
+        driver.rollback_live_shadow()
+        assert writes == [(0x8000_0100, spec.control_bits["rollback"])]
+
+        driver.clear_live_traps()
+        assert writes[-2:] == [
+            (0x8000_011C, spec.effective_trap_width),
+            (0x8000_0100, spec.control_bits["clear_trap"]),
+        ]
+
     def test_c_live_control_driver_emits_crc_update_and_readback_helpers(self) -> None:
         """Generated C driver should expose deterministic live-control helpers."""
         spec = MMIOUpdateSpec(
@@ -291,6 +342,10 @@ class TestHostDriverGen:
         assert "static inline uint32_t live_update_crc32" in drv
         assert "mmio_write(SC_LIVE_BASE + LIVE_REG_WRITE_DATA_HI, data_hi);" in drv
         assert "SC_LIVE_BASE + LIVE_REG_READ_DATA_HI" in drv
+        assert "LIVE_CTRL_ROLLBACK" in drv
+        assert "static inline uint32_t live_read_status" in drv
+        assert "static inline uint32_t live_read_trap_status" in drv
+        assert "static inline void live_rollback_shadow" in drv
         assert "sc_live_update_live_bfp_weights_w0_encoded" in drv
         assert "sc_live_verify_live_bfp_weights_w0_encoded" in drv
 
@@ -334,6 +389,9 @@ uint32_t mmio_read(uint32_t addr) {
     if (addr == SC_LIVE_BASE + LIVE_REG_STATUS) {
         return 0U;
     }
+    if (addr == SC_LIVE_BASE + LIVE_REG_TRAP_STATUS) {
+        return 0U;
+    }
     if (addr == SC_LIVE_BASE + LIVE_REG_READ_DATA_LO) {
         return 0x00001234U;
     }
@@ -342,7 +400,11 @@ uint32_t mmio_read(uint32_t addr) {
 
 int main(void) {
     int rc = sc_live_verify_live_weights_w0_encoded(0x1234ULL);
-    return rc == 0 && observed_addr != 0U && observed_val != 0xFFFFFFFFU ? 0 : 1;
+    live_rollback_shadow();
+    live_clear_traps();
+    uint32_t status = live_read_status();
+    uint32_t trap_status = live_read_trap_status();
+    return rc == 0 && status == 0U && trap_status == 0U && observed_addr != 0U && observed_val != 0xFFFFFFFFU ? 0 : 1;
 }
 """,
             encoding="utf-8",
