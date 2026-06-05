@@ -66,6 +66,12 @@ def test_live_parameter_bank_emits_bram_and_distributed_banks() -> None:
     assert "output wire [TRAP_WIDTH-1:0]        trap_status_vector" in source
     assert "output wire                         staged_overflow" in source
     assert "output wire                         staged_underflow" in source
+    assert "localparam [31:0] UPDATE_CRC32_POLY_REFLECTED = 32'hEDB88320;" in source
+    assert "function automatic [31:0] live_update_crc32;" in source
+    assert (
+        "wire [DATA_WIDTH-1:0] observed_checksum = live_update_crc32(reg_bank_select, reg_entry_index, reg_write_data_lo, reg_write_data_hi);"
+        in source
+    )
     assert "wire checksum_valid = (reg_write_checksum == observed_checksum);" in source
     assert "wire weights_staged_overflow" in source
     assert "wire weights_staged_underflow" in source
@@ -266,6 +272,14 @@ module tb_sc_live_pcie_params;
         pcie_write(32'h120, 32'h00001234);
         pcie_write(32'h100, 32'h00000001);
         repeat (2) @(negedge clk);
+        if (shadow_loaded !== 1'b0 || parameter_words !== 16'h0000) begin
+            $display("stale guard unexpectedly loaded the shadow bank");
+            $finish(5);
+        end
+
+        pcie_write(32'h120, 32'h1D7D9B35);
+        pcie_write(32'h100, 32'h00000001);
+        repeat (2) @(negedge clk);
         if (shadow_loaded !== 1'b1 || parameter_words !== 16'h0000) begin
             $display("shadow load failed or active bank mutated early");
             $finish(2);
@@ -429,7 +443,7 @@ module tb_sc_live_params;
         axi_write(32'h10C, 32'd0);
         axi_write(32'h110, 32'h00010000);
         axi_write(32'h114, 32'h00000000);
-        axi_write(32'h120, 32'h00010000);
+        axi_write(32'h120, 32'h27E798F0);
         axi_write(32'h100, 32'h00000001);
         repeat (2) @(negedge clk);
         if (trap_latched !== 1'b1 || trap_status_vector[0] !== 1'b1 || staged_overflow !== 1'b1) begin
@@ -450,7 +464,7 @@ module tb_sc_live_params;
 
         axi_write(32'h110, 32'h00007FFF);
         axi_write(32'h114, 32'hFFFFFFFF);
-        axi_write(32'h120, 32'hFFFF8000);
+        axi_write(32'h120, 32'h0E6BCD92);
         axi_write(32'h100, 32'h00000001);
         repeat (2) @(negedge clk);
         if (trap_latched !== 1'b1 || trap_status_vector[1] !== 1'b1 || staged_underflow !== 1'b1) begin
