@@ -5437,7 +5437,9 @@ compare committed readback against the requested encoded word. Generated Python
 drivers also expose `read_live_status()`, `read_live_trap_status()`,
 `rollback_live_shadow()`, and `clear_live_traps()` so host software can observe
 and recover the same update/apply/rollback/clear handshake implemented by the
-generated control registers.
+generated control registers. `clear_selected_live_traps(mask)` clears one
+selected subset of sticky trap bits while leaving unrelated latched faults
+visible.
 
 ### Function `_gen_c_driver(module_name, params, base_address, data_width, fraction, live_update_spec)`
 Generate C MMIO driver header.
@@ -5448,7 +5450,7 @@ and high words, commit, trap-check status, then read back committed active
 state for verification. The generated header also exposes `live_read_status()`,
 `live_read_trap_status()`, `live_rollback_shadow()`, and `live_clear_traps()`.
 Generated C11 consumers are compile-checked against the update/readback and
-recovery helper surface.
+recovery helper surface, including `live_clear_selected_traps(mask)`.
 
 ### Function `generate_cocotb_testbench(module_name)`
 Generate a Cocotb (Python) testbench for a compiled neuron.
@@ -9226,6 +9228,11 @@ Builds the deterministic host write sequence for clearing all generated sticky
 traps. The sequence writes `trap_clear_mask` to `TRAP_CLEAR`, then emits the
 control-register clear pulse. Generated RTL clears only selected bits, so
 unselected latched faults remain visible in `TRAP_STATUS`.
+
+### Method `build_selective_trap_clear_sequence(trap_mask)`
+Builds the deterministic host write sequence for clearing only selected sticky
+traps. The mask is rejected unless it is an integer subset of
+`trap_clear_mask`, preventing host code from writing undefined trap bits.
 
 ---
 

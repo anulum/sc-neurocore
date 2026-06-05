@@ -561,15 +561,23 @@ class MMIOUpdateSpec:
             ),
         )
 
-    def build_trap_clear_sequence(self) -> tuple[MMIOWrite, ...]:
-        """Build the host-side sequence for clearing all generated sticky traps."""
+    def build_selective_trap_clear_sequence(self, trap_mask: int) -> tuple[MMIOWrite, ...]:
+        """Build the host-side sequence for clearing selected sticky traps."""
         if not self.trap.enabled:
             raise ValueError("trap clear sequence requires enabled traps")
+        if not isinstance(trap_mask, int) or isinstance(trap_mask, bool):
+            raise ValueError("trap_mask must be an integer")
+        if trap_mask < 0 or trap_mask > self.trap_clear_mask:
+            raise ValueError("trap_mask must select only host-visible trap bits")
         addresses = self.control_register_addresses
         return (
-            MMIOWrite(addresses["trap_clear"], self.trap_clear_mask, 32, "clear_trap"),
+            MMIOWrite(addresses["trap_clear"], trap_mask, 32, "clear_trap"),
             MMIOWrite(addresses["control"], CONTROL_CLEAR_TRAP, 32, "clear_trap"),
         )
+
+    def build_trap_clear_sequence(self) -> tuple[MMIOWrite, ...]:
+        """Build the host-side sequence for clearing all generated sticky traps."""
+        return self.build_selective_trap_clear_sequence(self.trap_clear_mask)
 
     def build_readback_sequence(
         self,

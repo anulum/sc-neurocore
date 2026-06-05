@@ -85,6 +85,7 @@
       "required_numbers": [
         "iterations",
         "repeats",
+        "selective_trap_clear_write_count",
         "valid_update_write_count",
         "live_update_sequence_median_ns",
         "pcie_mmio_valid_update_write_count",

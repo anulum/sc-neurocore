@@ -690,6 +690,9 @@ def main() -> int:
             "read_only_bank": TRAP_READ_ONLY_BANK,
             "partial_write": TRAP_PARTIAL_WRITE,
         },
+        "selective_trap_clear_write_count": len(
+            spec.build_selective_trap_clear_sequence(TRAP_STAGED_OVERFLOW)
+        ),
         "valid_update_write_count": len(spec.build_update_sequence("weights", 0, 0x1234)),
         "live_update_sequence_median_ns": statistics.median(update_ns),
         "live_update_sequence_min_ns": min(update_ns),
