@@ -55,6 +55,7 @@ TRAP_STAGED_OVERFLOW = 0x1
 TRAP_STAGED_UNDERFLOW = 0x2
 TRAP_CHECKSUM_MISMATCH = 0x4
 TRAP_INVALID_SELECTION = 0x8
+TRAP_READ_ONLY_BANK = 0x10
 CONTROL_REGISTER_OFFSETS: dict[str, int] = {
     "control": 0x00,
     "status": 0x04,
@@ -427,6 +428,7 @@ class MMIOUpdateSpec:
             "staged_underflow": TRAP_STAGED_UNDERFLOW,
             "checksum_mismatch": TRAP_CHECKSUM_MISMATCH,
             "invalid_selection": TRAP_INVALID_SELECTION,
+            "read_only_bank": TRAP_READ_ONLY_BANK,
         }
 
     @property

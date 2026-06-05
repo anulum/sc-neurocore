@@ -66,6 +66,7 @@ from sc_neurocore.compiler.live_control import (
     STATUS_UPDATE_ACK,
     TRAP_CHECKSUM_MISMATCH,
     TRAP_INVALID_SELECTION,
+    TRAP_READ_ONLY_BANK,
     TRAP_STAGED_OVERFLOW,
     TRAP_STAGED_UNDERFLOW,
 )
@@ -254,6 +255,7 @@ def generate_live_parameter_bank(
         "    output reg                          trap_clear_pulse,",
         "    output reg                          checksum_mismatch_pulse,",
         "    output reg                          invalid_selection_pulse,",
+        "    output reg                          read_only_bank_pulse,",
         "    output wire                         shadow_loaded,",
         "    output wire [PARAMETER_WORDS_WIDTH-1:0] parameter_words",
         ");",
@@ -281,6 +283,7 @@ def generate_live_parameter_bank(
         f"    localparam [TRAP_WIDTH-1:0] TRAP_STAGED_UNDERFLOW_VECTOR = {trap_width}'h{TRAP_STAGED_UNDERFLOW:X};",
         f"    localparam [TRAP_WIDTH-1:0] TRAP_CHECKSUM_MISMATCH_VECTOR = {trap_width}'h{TRAP_CHECKSUM_MISMATCH:X};",
         f"    localparam [TRAP_WIDTH-1:0] TRAP_INVALID_SELECTION_VECTOR = {trap_width}'h{TRAP_INVALID_SELECTION:X};",
+        f"    localparam [TRAP_WIDTH-1:0] TRAP_READ_ONLY_BANK_VECTOR = {trap_width}'h{TRAP_READ_ONLY_BANK:X};",
         "    localparam [31:0] UPDATE_CRC32_POLY_REFLECTED = 32'hEDB88320;",
         "",
         "    reg [DATA_WIDTH-1:0] reg_control;",
@@ -337,6 +340,7 @@ def generate_live_parameter_bank(
     flat_offset = 0
     overflow_terms: list[str] = []
     underflow_terms: list[str] = []
+    writable_terms: list[str] = []
     for bank_index, (bank, bank_name) in enumerate(zip(spec.banks, bank_names)):
         style = _ram_style_for_bank(
             bank.parameter_count * bank.entry_width_bits, block_ram_threshold_bits
@@ -348,12 +352,14 @@ def generate_live_parameter_bank(
         underflow_name = f"{bank_name}_staged_underflow"
         overflow_terms.append(overflow_name)
         underflow_terms.append(underflow_name)
+        writable_terms.append(f"{bank_name}_writable_for_update")
         lines.extend(
             [
                 f'    (* ram_style = "{style}" *) reg [{width - 1}:0] {bank_name} [0:{count - 1}];',
                 f'    (* ram_style = "{style}" *) reg [{width - 1}:0] shadow_{bank_name} [0:{count - 1}];',
                 f"    localparam [{width - 1}:0] RESET_{bank_name.upper()} = {width}'h{reset_word:X};",
                 f"    wire {bank_name}_selected_for_update = (reg_bank_select == 32'd{bank_index}) && (reg_entry_index < 32'd{count});",
+                f"    wire {bank_name}_writable_for_update = {bank_name}_selected_for_update && 1'b{int(bank.writable)};",
             ]
         )
         if width < 64:
@@ -387,6 +393,7 @@ def generate_live_parameter_bank(
             f"    wire staged_underflow_fault = {' | '.join(underflow_terms)};",
             "    wire staged_update_fault = staged_overflow_fault | staged_underflow_fault;",
             f"    wire bank_entry_selection_valid = {' | '.join(f'{name}_selected_for_update' for name in bank_names)};",
+            f"    wire bank_update_writable = {' | '.join(writable_terms)};",
             "    wire [TRAP_WIDTH-1:0] generated_trap_vector =",
             "        (staged_overflow_fault ? TRAP_STAGED_OVERFLOW_VECTOR : {TRAP_WIDTH{1'b0}}) |",
             "        (staged_underflow_fault ? TRAP_STAGED_UNDERFLOW_VECTOR : {TRAP_WIDTH{1'b0}});",
@@ -430,6 +437,7 @@ def generate_live_parameter_bank(
             "            trap_clear_pulse <= 1'b0;",
             "            checksum_mismatch_pulse <= 1'b0;",
             "            invalid_selection_pulse <= 1'b0;",
+            "            read_only_bank_pulse <= 1'b0;",
         ]
     )
 
@@ -455,6 +463,7 @@ def generate_live_parameter_bank(
             "            trap_clear_pulse <= 1'b0;",
             "            checksum_mismatch_pulse <= 1'b0;",
             "            invalid_selection_pulse <= 1'b0;",
+            "            read_only_bank_pulse <= 1'b0;",
             "            reg_trap_vector <= reg_trap_vector | observed_trap_vector;",
             "            reg_status <= STATUS_READY | trap_status_bit | (reg_shadow_loaded ? STATUS_SHADOW_LOADED : {DATA_WIDTH{1'b0}}) | (checksum_valid ? STATUS_CHECKSUM_VALID : {DATA_WIDTH{1'b0}});",
             "",
@@ -474,7 +483,7 @@ def generate_live_parameter_bank(
             "                    ADDR_CONTROL: begin",
             "                        reg_control <= S_AXI_WDATA;",
             "                        if ((S_AXI_WDATA & CTRL_UPDATE_VALID) != {DATA_WIDTH{1'b0}}) begin",
-            "                            if (checksum_valid && !staged_update_fault && bank_entry_selection_valid) begin",
+            "                            if (checksum_valid && !staged_update_fault && bank_entry_selection_valid && bank_update_writable) begin",
             "                            update_pulse <= 1'b1;",
             "                            reg_shadow_loaded <= 1'b1;",
             "                            reg_status <= STATUS_READY | STATUS_SHADOW_LOADED | STATUS_CHECKSUM_VALID | trap_status_bit;",
@@ -508,6 +517,11 @@ def generate_live_parameter_bank(
             "                            else if (!bank_entry_selection_valid) begin",
             "                                invalid_selection_pulse <= 1'b1;",
             "                                reg_trap_vector <= reg_trap_vector | observed_trap_vector | TRAP_INVALID_SELECTION_VECTOR;",
+            "                                reg_status <= STATUS_READY | STATUS_TRAP_LATCHED;",
+            "                            end",
+            "                            else if (!bank_update_writable) begin",
+            "                                read_only_bank_pulse <= 1'b1;",
+            "                                reg_trap_vector <= reg_trap_vector | observed_trap_vector | TRAP_READ_ONLY_BANK_VECTOR;",
             "                                reg_status <= STATUS_READY | STATUS_TRAP_LATCHED;",
             "                            end",
             "                        end else if ((S_AXI_WDATA & CTRL_COMMIT) != {DATA_WIDTH{1'b0}}) begin",
@@ -673,6 +687,7 @@ def _generate_pcie_live_parameter_bank(
         "    output wire                         trap_clear_pulse,",
         "    output wire                         checksum_mismatch_pulse,",
         "    output wire                         invalid_selection_pulse,",
+        "    output wire                         read_only_bank_pulse,",
         "    output wire                         shadow_loaded,",
         "    output wire [PARAMETER_WORDS_WIDTH-1:0] parameter_words",
         ");",
@@ -730,6 +745,7 @@ def _generate_pcie_live_parameter_bank(
         "        .trap_clear_pulse(trap_clear_pulse),",
         "        .checksum_mismatch_pulse(checksum_mismatch_pulse),",
         "        .invalid_selection_pulse(invalid_selection_pulse),",
+        "        .read_only_bank_pulse(read_only_bank_pulse),",
         "        .shadow_loaded(shadow_loaded),",
         "        .parameter_words(parameter_words)",
         "    );",
