@@ -47,6 +47,12 @@ parameter counts fail before RTL emission.
 This metadata is a compiler contract for downstream emitters.  The generated
 adaptive wrapper still emits fixed mantissa-width datapaths; shared exponents
 remain explicit metadata until the target-specific BFP datapath is selected.
+Every adaptive manifest carries `adaptive_precision_emitter.v1`, explicit
+`emitted_datapath_width`, `emitted_datapath_fraction`,
+`exponent_stream_width`, and `exponent_vector_width` fields. Fixed Q-format
+paths set the exponent widths to zero and reject accidental
+`*_parameter_count` inputs so a block-exponent layout cannot be silently
+dropped before HDL/Rust emitter handoff.
 
 ::: sc_neurocore.compiler.adaptive_precision
     options:

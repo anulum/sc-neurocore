@@ -265,6 +265,16 @@ class TestPrecisionStrings:
         assert manifest["lp_precision"]["exponent_code_range"] == [0, 7]
         assert manifest["lp_precision"]["exponent_min"] == -3
         assert manifest["lp_precision"]["exponent_max"] == 4
+        assert manifest["emitter_contract_version"] == "adaptive_precision_emitter.v1"
+        assert manifest["lp_precision"]["emitted_datapath_width"] == 16
+        assert manifest["lp_precision"]["emitted_datapath_fraction"] == 15
+        assert manifest["lp_precision"]["exponent_stream_width"] == 3
+        assert manifest["lp_precision"]["exponent_vector_width"] == (
+            "exponent_bits * ceil(parameter_count / block_size)"
+        )
+        assert manifest["lp_precision"]["emitted_datapath_contract"] == (
+            "mantissa_width_fixed_datapath_with_detached_shared_exponent_stream"
+        )
         assert manifest["lp_precision"]["mantissa_abs_max"] == 32_767
         assert manifest["lp_precision"]["minimum_quantum"] == pytest.approx(0.125)
         assert manifest["lp_precision"]["max_abs_value"] == pytest.approx(524_272.0)
@@ -290,6 +300,7 @@ class TestPrecisionStrings:
 
         assert lp["parameter_count"] == 65
         assert lp["block_exponent_count"] == 3
+        assert lp["exponent_vector_width"] == 9
         assert lp["block_exponent_layout"] == {
             "alignment": "contiguous_flattened_block",
             "flattened_order": "row_major",
@@ -308,6 +319,16 @@ class TestPrecisionStrings:
                 lp_precision="BFP16E3X32",
                 hp_precision="Q16.16",
                 lp_parameter_count=-1,
+            )
+
+    def test_fixed_precision_rejects_block_parameter_count(self, lif_neuron):
+        """Fixed Q-format manifests must not silently accept BFP layout metadata."""
+        with pytest.raises(ValueError, match="block-floating precision"):
+            compile_adaptive_precision(
+                lif_neuron,
+                lp_precision="Q8.8",
+                hp_precision="Q16.16",
+                lp_parameter_count=65,
             )
 
     def test_invalid_precision_string(self, lif_neuron):

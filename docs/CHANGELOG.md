@@ -13,6 +13,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   signalling, and zero-neuron fail-closed validation.
 
 ### Compiler precision
+- Hardened adaptive runtime precision manifests for BFP/Q16.16 handoff by
+  adding the `adaptive_precision_emitter.v1` contract, emitted datapath
+  width/fraction, exponent-stream width, exponent-vector width, and fail-closed
+  rejection of block-exponent parameter counts on fixed Q-format paths.
 - Hardened generated AXI4-Lite/PCIe live-control readback so invalid
   bank/entry selections return a bus error and latch the sticky
   `invalid_selection` trap instead of silently returning zero.
