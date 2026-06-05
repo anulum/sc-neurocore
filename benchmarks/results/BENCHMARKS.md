@@ -7,9 +7,9 @@ Note: the local Python/Rust precision benchmark rows were captured on a
 workstation under concurrent load and without exclusive CPU core isolation.
 Use them as committed contract/regression evidence only. Production throughput
 claims require a rerun on isolated cores with recorded CPU affinity, host-load,
-governor, and frequency evidence. The 2026-06-05 block-floating
-exponent-edge rerun, precision trap/envelope rerun, and live-control update
-rerun below are pinned to CPUs `8-9` by process affinity and record that
+governor, and frequency evidence. The 2026-06-05 mixed-dense,
+block-floating, precision-envelope, precision-trap, and live-control update
+reruns below are pinned to CPUs `8-9` by process affinity and record that
 affinity in the raw artefacts; they are not kernel-reserved isolated-core
 claims.
 
@@ -25,24 +25,24 @@ claims.
 | vec_popcount SWAR (1024 words) | cpu | 50000 | 30.2 us | 2.17 Gbit/s |
 | Dense forward (16x8, L=256) | cpu | 500 | 352.7 us | 0.09 GOP/s (SC) |
 | Dense forward (64x32, L=1024) | cpu | 100 | 2405.8 us | 0.87 GOP/s (SC) |
-| Mixed dense Q8.8/Q16.16 (64x32) | Python | 2000 | 31.634 us | max abs error 0, safe_bound=531400 |
-| Mixed dense Q8.8/Q16.16 overflow telemetry (64x32) | Python | 2000 | 28.136 us | safe=0, saturating probe=32 |
-| Mixed dense Q8.8/Q16.16 (64x32) | Rust | 20000 | 2.245 us | safe=0, saturating probe=32, safe_bound=531400 |
+| Mixed dense Q8.8/Q16.16 (64x32) | Python | 2000 | 51.934 us | max abs error 0, safe_bound=531400, safe_width=21/5/+11 |
+| Mixed dense Q8.8/Q16.16 overflow telemetry (64x32) | Python | 2000 | 51.104 us | safe=0, saturating probe=32, saturation_width=45/29/-13 |
+| Mixed dense Q8.8/Q16.16 (64x32) | Rust | 20000 | 2.659 us | safe=0, saturating probe=32, safe_bound=531400, widths=21/5/+11 and 45/29/-13 |
 | Mixed dense Q8.8/Q16.16 lane telemetry | HDL/Yosys | N_OUTPUTS=32 | 12,708 cells | `overflow_vector` + `abs_bounds_q1616` registered |
-| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 39.722 us | max abs error 0.2231, safe_bound=610816, block_exponents=64 |
-| Block-floating dense BFP16E3X32/Q16.16 overflow telemetry (64x32) | Python | 2000 | 40.530 us | safe=0, saturating probe=32 |
-| Block-floating dense BFP16E3X2/Q16.16 exponent-edge parity/trap | Python+Rust | deterministic sweep | contract | safe_codes=[1056736,-1069024], safe=0, max_exponent_trap=1, safe_bound=1069024 |
-| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 10.944 us | safe=0, saturating probe=32, safe_bound=610816, block_exponents=64 |
+| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Python | 2000 | 38.760 us | max abs error 0.2231, safe_bound=610816, safe_width=21/5/+11, block_exponents=64 |
+| Block-floating dense BFP16E3X32/Q16.16 overflow telemetry (64x32) | Python | 2000 | 42.356 us | safe=0, saturating probe=32, saturation_width=51/35/-19 |
+| Block-floating dense BFP16E3X2/Q16.16 exponent-edge parity/trap | Python+Rust | deterministic sweep | contract | safe_codes=[1056736,-1069024], safe=0, max_exponent_trap=1, safe_width=22/6/+10, saturation_width=52/36/-20 |
+| Block-floating dense BFP16E3X32/Q16.16 (64x32) | Rust | 20000 | 11.471 us | safe=0, saturating probe=32, safe_bound=610816, widths=21/5/+11 and 51/35/-19, block_exponents=64 |
 | Block-floating dense BFP16E3X32/Q16.16 lane telemetry | HDL/Yosys | 2x2 parameterised report | 96 cells | `overflow_vector` + `abs_bounds_q1616` registered |
 | Precision trap report mixed dense (64x32 overflow/underflow) | Python | 2000 | 44.744 us | overflow_count=32, underflow_probe=32 |
 | Precision trap report mixed dense (64x32 overflow/underflow) | Rust | 20000 | 2.506 us | overflow_count=32, underflow_probe=32 |
 | Precision trap report block-floating dense (64x32 overflow/underflow) | Python | 2000 | 45.906 us | overflow_count=32, underflow_probe=32 |
 | Precision trap report block-floating dense (64x32 overflow/underflow) | Rust | 20000 | 8.777 us | overflow_count=32, underflow_probe=32 |
 | Precision overflow trap latch | HDL/Yosys | TRAP_WIDTH=1 | 3 cells | `$adff`+`$mux`+`$or` |
-| Precision envelope report mixed dense (64x32 safe/underflow) | Python | 2000 | 92.835 us | max_abs_bound=132850, underflow_probe=32 |
-| Precision envelope report mixed dense (64x32 safe/underflow) | Rust | 20000 | 2.338 us | max_abs_bound=132850, underflow_probe=32 |
-| Precision envelope report block-floating dense (64x32 safe/underflow) | Python | 2000 | 95.808 us | max_abs_bound=78032768, underflow_probe=32 |
-| Precision envelope report block-floating dense (64x32 safe/underflow) | Rust | 20000 | 8.668 us | max_abs_bound=78032768, underflow_probe=32 |
+| Precision envelope report mixed dense (64x32 safe/underflow) | Python | 2000 | 87.578 us | max_abs_bound=132850, underflow_probe=32, width=19/3/+13 |
+| Precision envelope report mixed dense (64x32 safe/underflow) | Rust | 20000 | 2.991 us | max_abs_bound=132850, underflow_probe=32, width=19/3/+13 |
+| Precision envelope report block-floating dense (64x32 safe/underflow) | Python | 2000 | 90.475 us | max_abs_bound=78032768, underflow_probe=32, width=28/12/+4 |
+| Precision envelope report block-floating dense (64x32 safe/underflow) | Rust | 20000 | 9.874 us | max_abs_bound=78032768, underflow_probe=32, width=28/12/+4 |
 | Precision envelope guard | HDL/Yosys | N_OUTPUTS=32 | 67 cells | `$adff`+`$gt`+`$mux`+`$reduce_or` |
 | Live-control parameter update sequence | Python+SystemVerilog | 20000 | 13.822 us AXI4-Lite; 13.589 us PCIe-MMIO | process affinity `8-9`, CRC32 update guard, checksum-mismatch, invalid-selection, read-only-bank, and partial-write traps, AXI trap simulation passed, PCIe commit simulation passed |
 | AER strict-priority queue backpressure | Python+SystemVerilog | 4096 events x 100 repeats | 4.138 us/event | runtime cpuset shield 10-11, priority=0 violations, FIFO=0 violations, drop/deadline traps latched |

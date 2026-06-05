@@ -21,6 +21,13 @@ claims.  Any production performance claim must be rerun on reserved isolated
 cores, with CPU affinity, host-load, governor, and frequency evidence recorded
 in the raw artefact.
 
+The 2026-06-05 refreshed mixed-dense, block-floating, and precision-envelope
+artefacts were executed with process affinity pinned to CPUs `8-9`.  The raw
+JSON records host load, affinity, CPU governor, and sampled frequency context,
+but the workstation still did not expose kernel-reserved isolated cores to this
+user session.  Treat the refreshed medians as local regression evidence and the
+proof fields as the authoritative contract evidence.
+
 The 2026-06-05 live-control AXI4-Lite/PCIe-MMIO rerun was executed with
 process affinity pinned to CPUs `8-9`, and the raw artefact records that the
 process affinity matched the requested benchmark cpuset.  The workstation did
@@ -140,10 +147,10 @@ arithmetic contract instead of Python-only per-tensor rescaling.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python `CompiledMixedDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 31.634 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
-| Python `CompiledMixedDense.forward_with_overflow` | Same deterministic matrix/vector | 28.136 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
-| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.022 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
-| Rust `mixed_dense_q88_q1616` | 64×32 dense, 20,000 calls × 7 repeats | 2.245 µs/call | `benchmarks/results/local_rust_2026-06-04_mixed_dense.json` |
+| Python `CompiledMixedDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 51.934 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| Python `CompiledMixedDense.forward_with_overflow` | Same deterministic matrix/vector | 51.104 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.656 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| Rust `mixed_dense_q88_q1616` | 64×32 dense, 20,000 calls × 7 repeats | 2.659 µs/call | `benchmarks/results/local_rust_2026-06-04_mixed_dense.json` |
 | HDL `sc_mixed_precision_dense` Yosys RTLIL stat | Default 64×32 parameters | 12,708 cells, 2,048 multipliers | `hdl/reports/yosys_mixed_precision_dense_2026-06-04.json` |
 
 The Python mixed path reconstructed the float64 dot product with maximum
@@ -154,7 +161,11 @@ and saturating-probe overflow count `32`, matching the lane-level HDL
 precision-envelope telemetry: Python and Rust safe max absolute bound `531400`,
 and saturating-probe max absolute bound
 `17454214414336`; the HDL exports the matching per-output `abs_bounds_q1616`
-vector.
+vector.  The refreshed Python and Rust artefacts also prove the signed
+symmetric fixed-point width contract: the safe workload requires `21` signed
+total bits, `5` Q16.16 integer bits, and has `11` bits of headroom; the
+saturating probe requires `45` signed total bits and `29` Q16.16 integer bits,
+has `-13` bits of headroom, and records `saturation_required=true`.
 
 ### Block-Floating Dense Contract (2026-06-04)
 
@@ -165,10 +176,10 @@ the HDL datapath.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 39.722 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| Python `CompiledBlockFloatingDense.forward_with_overflow` | Same deterministic matrix/vector | 40.530 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.256 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
-| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 10.944 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
+| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 38.760 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Python `CompiledBlockFloatingDense.forward_with_overflow` | Same deterministic matrix/vector | 42.356 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.029 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 11.471 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
 | HDL `sc_block_floating_dense` Yosys RTLIL stat | Parameterised 2×2, `BLOCK_SIZE=2` elaboration copy | 96 cells, 4 multipliers | `hdl/reports/yosys_block_floating_dense_2026-06-04.json` |
 
 The deterministic block-floating workload recorded maximum absolute error
@@ -179,7 +190,11 @@ and saturating-probe overflow count `32`, matching the lane-level HDL
 `overflow_vector` contract.  Both languages now compare the same deterministic
 BFP contract: mantissa checksum `-15`, exponent checksum `0`, exponent code
 range `[0, 0]`, safe max absolute bound `610816`, and saturating-probe max
-absolute bound `1125865547104256`.  The 64×32 payload records
+absolute bound `1125865547104256`.  The refreshed proof fields record safe
+width `21` signed total bits, `5` Q16.16 integer bits, and `11` bits of
+headroom; the saturating probe records `51` signed total bits, `35` Q16.16
+integer bits, `-19` bits of headroom, and `saturation_required=true`.  The
+64×32 payload records
 `parameter_count=2048` and `block_exponent_count=64` in both the Python
 manifest and Rust artefact.  The HDL exports per-output
 `abs_bounds_q1616`; the
@@ -193,7 +208,10 @@ Q16.16 output codes `[1056736, -1069024]`, safe overflow and underflow counts
 `0`, conservative safe bound `1069024`, and headroom `2146414623`.  The
 max-exponent saturation probe records exponent code `[7]`, saturated output
 code `[2147483647]`, overflow count `1`, underflow count `0`, and conservative
-bound `2251662376828928`, proving that max shared-exponent payloads trap
+bound `2251662376828928`.  The safe edge sweep requires `22` signed total
+bits and `6` Q16.16 integer bits with `10` bits of headroom; the max-exponent
+saturation probe requires `52` signed total bits and `36` Q16.16 integer bits
+with `-20` bits of headroom, proving that max shared-exponent payloads trap
 rather than silently wrapping.
 
 ### Precision Trap Reports (2026-06-04)
@@ -229,10 +247,10 @@ workload.
 
 | Path | Workload | Median | Raw evidence |
 |------|----------|-------:|--------------|
-| Python mixed `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 92.835 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
-| Python BFP `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 95.808 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
-| Rust mixed `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 2.338 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
-| Rust BFP `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 8.668 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
+| Python mixed `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 87.578 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
+| Python BFP `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 90.475 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
+| Rust mixed `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 2.991 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
+| Rust BFP `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 9.874 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
 | HDL `sc_precision_envelope_guard` Yosys stat | Default `N_OUTPUTS=32` | 67 cells, 1,701 wire bits | `hdl/reports/yosys_precision_envelope_guard_2026-06-04.json` |
 
 Both Python and Rust envelope reports returned
@@ -241,7 +259,11 @@ guard synthesises to two `$adff`, thirty-two `$gt`, thirty-two `$mux`, and one
 `$reduce_or` cell at the default width.
 The raw artefacts now include `observed_underflow_free=true` for the safe
 workload and matched underflow probes with `underflow_count=32` for mixed and
-BFP dense paths in both Python and Rust.
+BFP dense paths in both Python and Rust.  The refreshed manifests expose
+`proof_kind=signed_symmetric_fixed_point_width`: mixed dense requires `19`
+signed total bits, `3` Q16.16 integer bits, and has `13` bits of headroom,
+while block-floating dense requires `28` signed total bits, `12` Q16.16
+integer bits, and has `4` bits of headroom.
 
 ---
 

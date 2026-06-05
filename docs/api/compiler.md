@@ -274,6 +274,22 @@ Python `PrecisionEnvelopeReport.abs_bound_codes` and Rust
 `MixedDenseResult.abs_bounds_q1616`, including cancellation cases where the
 realised output is small but the absolute product envelope is large.
 
+`PrecisionEnvelopeReport.manifest()` also exposes the signed fixed-point width
+proof used by the Python and Rust deployment surfaces:
+
+| Field | Meaning |
+|-------|---------|
+| `proof_kind` | Fixed string `signed_symmetric_fixed_point_width` for this contract. |
+| `required_total_bits` | Sign bit plus the bit length required by the largest conservative absolute Q16.16 bound. |
+| `required_integer_bits` | `required_total_bits - 16`, clamped to at least one signed integer bit for Q16.16 reporting. |
+| `width_headroom_bits` | `32 - required_total_bits`; negative values mean Q16.16 saturation is required. |
+| `saturation_required` | True when the conservative bound cannot fit in signed 32-bit Q16.16. |
+| `static_overflow_proven_safe` | Alias of the conservative overflow proof used by safety-gate callers. |
+
+These fields are static envelope claims over absolute product magnitudes.  They
+do not rely on cancellation in the realised dot product, so a small output code
+does not weaken the predeployment overflow proof.
+
 ### Live-Control Parameter Banks
 
 The live-control schema decouples long-lived parameters from static logic

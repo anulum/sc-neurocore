@@ -374,6 +374,14 @@ def _fixed_integer_bounds(q: QFormat) -> tuple[int, int]:
     return -(1 << (q.total_bits - 1)), (1 << (q.total_bits - 1)) - 1
 
 
+def _required_signed_total_bits(abs_bound_code: int) -> int:
+    if abs_bound_code < 0:
+        raise ValueError("abs_bound_code must be non-negative")
+    if abs_bound_code == 0:
+        return 1
+    return int(abs_bound_code).bit_length() + 1
+
+
 def _finite_float_array(values: np.ndarray[Any, Any], *, label: str) -> np.ndarray[Any, Any]:
     arr = np.asarray(values, dtype=np.float64)
     if not np.all(np.isfinite(arr)):
@@ -686,6 +694,31 @@ class PrecisionEnvelopeReport:
         """Whether the absolute envelope proves the workload is in range."""
         return self.min_headroom_code >= 0
 
+    @property
+    def required_total_bits(self) -> int:
+        """Signed fixed-point width required by the conservative envelope."""
+        return _required_signed_total_bits(self.max_abs_bound_code)
+
+    @property
+    def required_integer_bits(self) -> int:
+        """Q-format integer bits, including sign, required by the envelope."""
+        return max(1, self.required_total_bits - self.output_fmt.fraction_bits)
+
+    @property
+    def width_headroom_bits(self) -> int:
+        """Remaining signed fixed-point width after the conservative proof."""
+        return self.output_fmt.total_bits - self.required_total_bits
+
+    @property
+    def saturation_required(self) -> bool:
+        """Whether the conservative proof requires a saturating output clamp."""
+        return self.required_total_bits > self.output_fmt.total_bits
+
+    @property
+    def static_overflow_proven_safe(self) -> bool:
+        """Whether static width proof guarantees no Q-format overflow."""
+        return not self.saturation_required
+
     def manifest(self) -> dict[str, bool | int | str]:
         """Deterministic envelope metadata for predeployment gates."""
         return {
@@ -701,6 +734,12 @@ class PrecisionEnvelopeReport:
             "max_abs_bound_code": self.max_abs_bound_code,
             "conservative_safe_bound_code": self.conservative_safe_bound_code,
             "min_headroom_code": self.min_headroom_code,
+            "proof_kind": "signed_symmetric_fixed_point_width",
+            "required_total_bits": self.required_total_bits,
+            "required_integer_bits": self.required_integer_bits,
+            "width_headroom_bits": self.width_headroom_bits,
+            "saturation_required": self.saturation_required,
+            "static_overflow_proven_safe": self.static_overflow_proven_safe,
         }
 
 

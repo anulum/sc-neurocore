@@ -138,6 +138,11 @@ def exponent_edge_sweep_report() -> dict[str, object]:
         "safe_max_abs_bound_q1616": envelope.max_abs_bound_code,
         "safe_min_headroom_q1616": envelope.min_headroom_code,
         "safe_conservative_overflow_free": envelope.conservative_overflow_free,
+        "safe_required_total_bits": envelope.required_total_bits,
+        "safe_required_integer_bits": envelope.required_integer_bits,
+        "safe_width_headroom_bits": envelope.width_headroom_bits,
+        "safe_saturation_required": envelope.saturation_required,
+        "safe_static_overflow_proven_safe": envelope.static_overflow_proven_safe,
         "max_exponent_saturating_codes_q1616": saturating_codes.astype(int).tolist(),
         "max_exponent_saturating_exponent_codes": saturating.exponents.astype(int).tolist(),
         "max_exponent_saturating_overflow_count": int(np.count_nonzero(saturating_overflow)),
@@ -147,6 +152,21 @@ def exponent_edge_sweep_report() -> dict[str, object]:
         ),
         "max_exponent_saturating_max_abs_bound_q1616": (
             saturating_envelope.max_abs_bound_code
+        ),
+        "max_exponent_saturating_required_total_bits": (
+            saturating_envelope.required_total_bits
+        ),
+        "max_exponent_saturating_required_integer_bits": (
+            saturating_envelope.required_integer_bits
+        ),
+        "max_exponent_saturating_width_headroom_bits": (
+            saturating_envelope.width_headroom_bits
+        ),
+        "max_exponent_saturating_saturation_required": (
+            saturating_envelope.saturation_required
+        ),
+        "max_exponent_saturating_static_overflow_proven_safe": (
+            saturating_envelope.static_overflow_proven_safe
         ),
     }
 
@@ -209,6 +229,11 @@ def main() -> int:
         "safe_max_abs_bound_code": safe_envelope.max_abs_bound_code,
         "safe_conservative_overflow_free": safe_envelope.conservative_overflow_free,
         "safe_min_headroom_code": safe_envelope.min_headroom_code,
+        "safe_required_total_bits": safe_envelope.required_total_bits,
+        "safe_required_integer_bits": safe_envelope.required_integer_bits,
+        "safe_width_headroom_bits": safe_envelope.width_headroom_bits,
+        "safe_saturation_required": safe_envelope.saturation_required,
+        "safe_static_overflow_proven_safe": safe_envelope.static_overflow_proven_safe,
         "mantissa_checksum": int(np.sum(compiled.mantissas.astype(np.int64))),
         "exponent_checksum": int(np.sum(compiled.exponents.astype(np.int64))),
         "block_exponent_count": compiled.manifest()["block_exponent_count"],
@@ -217,6 +242,13 @@ def main() -> int:
         "saturating_probe_overflow_count": int(np.count_nonzero(probe_overflow)),
         "saturating_probe_max_abs_bound_code": probe_envelope.max_abs_bound_code,
         "saturating_probe_conservative_overflow_free": probe_envelope.conservative_overflow_free,
+        "saturating_probe_required_total_bits": probe_envelope.required_total_bits,
+        "saturating_probe_required_integer_bits": probe_envelope.required_integer_bits,
+        "saturating_probe_width_headroom_bits": probe_envelope.width_headroom_bits,
+        "saturating_probe_saturation_required": probe_envelope.saturation_required,
+        "saturating_probe_static_overflow_proven_safe": (
+            probe_envelope.static_overflow_proven_safe
+        ),
         "exponent_edge_sweep": exponent_edge_sweep_report(),
         "compiled_manifest": compiled.manifest(),
         "bfp_results": [

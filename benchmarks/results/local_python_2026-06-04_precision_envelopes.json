@@ -1,7 +1,7 @@
 {
   "benchmark": "precision_envelope_reports_64x32",
   "language": "Python",
-  "timestamp_utc": "2026-06-05T01:57:39+00:00",
+  "timestamp_utc": "2026-06-05T02:48:56+00:00",
   "command": "taskset -c 8-9 env PYTHONPATH=src .venv/bin/python benchmarks/bench_precision_envelopes.py",
   "python": "3.12.3",
   "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
@@ -14,21 +14,21 @@
       9
     ],
     "load_average_before": [
-      3.85693359375,
-      3.7451171875,
-      3.54736328125
+      5.70849609375,
+      5.51220703125,
+      4.49462890625
     ],
     "load_average_after": [
-      3.85693359375,
-      3.7451171875,
-      3.54736328125
+      5.4111328125,
+      5.45361328125,
+      4.48095703125
     ],
     "cpu_governor": [
       "powersave"
     ],
     "cpu_frequency_mhz": {
-      "min_observed_mhz": 800.0,
-      "max_observed_mhz": 4450.137,
+      "min_observed_mhz": 2730.277,
+      "max_observed_mhz": 4566.812,
       "sampled_cpu_count": 12.0
     },
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
@@ -39,19 +39,29 @@
   "n_outputs": 32,
   "iterations": 2000,
   "repeats": 7,
-  "mixed_envelope_median_ns_per_call": 92835.0945,
-  "mixed_envelope_min_ns_per_call": 90307.931,
-  "mixed_envelope_max_ns_per_call": 104169.2035,
+  "mixed_envelope_median_ns_per_call": 87578.4055,
+  "mixed_envelope_min_ns_per_call": 84780.5575,
+  "mixed_envelope_max_ns_per_call": 95934.1605,
   "mixed_conservative_overflow_free": true,
   "mixed_observed_underflow_free": true,
   "mixed_max_abs_bound_code": 132850,
+  "mixed_required_total_bits": 19,
+  "mixed_required_integer_bits": 3,
+  "mixed_width_headroom_bits": 13,
+  "mixed_saturation_required": false,
+  "mixed_static_overflow_proven_safe": true,
   "mixed_underflow_count": 32,
-  "bfp_envelope_median_ns_per_call": 95808.258,
-  "bfp_envelope_min_ns_per_call": 88205.6995,
-  "bfp_envelope_max_ns_per_call": 105222.0315,
+  "bfp_envelope_median_ns_per_call": 90474.5315,
+  "bfp_envelope_min_ns_per_call": 86330.3585,
+  "bfp_envelope_max_ns_per_call": 114233.8715,
   "bfp_conservative_overflow_free": true,
   "bfp_observed_underflow_free": true,
   "bfp_max_abs_bound_code": 78032768,
+  "bfp_required_total_bits": 28,
+  "bfp_required_integer_bits": 12,
+  "bfp_width_headroom_bits": 4,
+  "bfp_saturation_required": false,
+  "bfp_static_overflow_proven_safe": true,
   "bfp_underflow_count": 32,
   "mixed_manifest": {
     "operation": "dense_mixed_qformat",
@@ -65,7 +75,13 @@
     "max_abs_output_code": 52596,
     "max_abs_bound_code": 132850,
     "conservative_safe_bound_code": 2147483647,
-    "min_headroom_code": 2147350797
+    "min_headroom_code": 2147350797,
+    "proof_kind": "signed_symmetric_fixed_point_width",
+    "required_total_bits": 19,
+    "required_integer_bits": 3,
+    "width_headroom_bits": 13,
+    "saturation_required": false,
+    "static_overflow_proven_safe": true
   },
   "bfp_manifest": {
     "operation": "dense_block_floating",
@@ -79,7 +95,13 @@
     "max_abs_output_code": 27857600,
     "max_abs_bound_code": 78032768,
     "conservative_safe_bound_code": 2147483647,
-    "min_headroom_code": 2069450879
+    "min_headroom_code": 2069450879,
+    "proof_kind": "signed_symmetric_fixed_point_width",
+    "required_total_bits": 28,
+    "required_integer_bits": 12,
+    "width_headroom_bits": 4,
+    "saturation_required": false,
+    "static_overflow_proven_safe": true
   },
   "mixed_underflow_manifest": {
     "operation": "dense_mixed_qformat",
@@ -93,7 +115,13 @@
     "max_abs_output_code": 0,
     "max_abs_bound_code": 1,
     "conservative_safe_bound_code": 2147483647,
-    "min_headroom_code": 2147483646
+    "min_headroom_code": 2147483646,
+    "proof_kind": "signed_symmetric_fixed_point_width",
+    "required_total_bits": 2,
+    "required_integer_bits": 1,
+    "width_headroom_bits": 30,
+    "saturation_required": false,
+    "static_overflow_proven_safe": true
   },
   "bfp_underflow_manifest": {
     "operation": "dense_block_floating",
@@ -107,47 +135,53 @@
     "max_abs_output_code": 0,
     "max_abs_bound_code": 1,
     "conservative_safe_bound_code": 2147483647,
-    "min_headroom_code": 2147483646
+    "min_headroom_code": 2147483646,
+    "proof_kind": "signed_symmetric_fixed_point_width",
+    "required_total_bits": 2,
+    "required_integer_bits": 1,
+    "width_headroom_bits": 30,
+    "saturation_required": false,
+    "static_overflow_proven_safe": true
   },
   "mixed_results": [
     {
-      "ns_per_call": 91595.9065,
+      "ns_per_call": 95934.1605,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true
     },
     {
-      "ns_per_call": 98042.6525,
+      "ns_per_call": 85147.148,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true
     },
     {
-      "ns_per_call": 92428.2715,
+      "ns_per_call": 90349.934,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true
     },
     {
-      "ns_per_call": 99718.885,
+      "ns_per_call": 93878.6415,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true
     },
     {
-      "ns_per_call": 90307.931,
+      "ns_per_call": 87578.4055,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true
     },
     {
-      "ns_per_call": 92835.0945,
+      "ns_per_call": 85918.8975,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true
     },
     {
-      "ns_per_call": 104169.2035,
+      "ns_per_call": 84780.5575,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true
@@ -155,43 +189,43 @@
   ],
   "bfp_results": [
     {
-      "ns_per_call": 105222.0315,
+      "ns_per_call": 90127.249,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true
     },
     {
-      "ns_per_call": 99971.1175,
+      "ns_per_call": 90831.8815,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true
     },
     {
-      "ns_per_call": 99229.3765,
+      "ns_per_call": 86330.3585,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true
     },
     {
-      "ns_per_call": 91999.45,
+      "ns_per_call": 90474.5315,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true
     },
     {
-      "ns_per_call": 95808.258,
+      "ns_per_call": 88011.7455,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true
     },
     {
-      "ns_per_call": 88205.6995,
+      "ns_per_call": 92551.608,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true
     },
     {
-      "ns_per_call": 94731.7505,
+      "ns_per_call": 114233.8715,
       "checksum": 0,
       "conservative_safe": true,
       "underflow_free": true

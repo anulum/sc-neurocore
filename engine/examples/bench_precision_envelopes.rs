@@ -205,6 +205,13 @@ fn main() {
     .expect("underflow probe dimensions must be valid")
     .precision_envelope_report()
     .underflow_count;
+    let mixed_safe_report = mixed_dense_q88_q1616(&weights, &inputs, N_OUTPUTS, N_INPUTS)
+        .expect("safe envelope dimensions must be valid")
+        .precision_envelope_report();
+    let bfp_safe_report =
+        block_floating_dense_q16(&mantissas, &exponents, &inputs, N_OUTPUTS, N_INPUTS, mode)
+            .expect("safe envelope dimensions must be valid")
+            .precision_envelope_report();
 
     let mut mixed_sorted = mixed_ns.clone();
     let mut bfp_sorted = bfp_ns.clone();
@@ -236,6 +243,11 @@ fn main() {
             "  \"mixed_conservative_overflow_free\": {mixed_conservative_safe},\n",
             "  \"mixed_observed_underflow_free\": {mixed_underflow_free},\n",
             "  \"mixed_max_abs_bound_q1616\": {mixed_max_abs_bound},\n",
+            "  \"mixed_required_total_bits_q1616\": {mixed_required_total_bits_q1616},\n",
+            "  \"mixed_required_integer_bits_q1616\": {mixed_required_integer_bits_q1616},\n",
+            "  \"mixed_width_headroom_bits_q1616\": {mixed_width_headroom_bits_q1616},\n",
+            "  \"mixed_saturation_required\": {mixed_saturation_required},\n",
+            "  \"mixed_static_overflow_proven_safe\": {mixed_static_overflow_proven_safe},\n",
             "  \"mixed_underflow_count\": {mixed_underflow_count},\n",
             "  \"mixed_checksum\": {mixed_checksum},\n",
             "  \"mixed_results_ns_per_call\": [{mixed_results}],\n",
@@ -245,6 +257,11 @@ fn main() {
             "  \"bfp_conservative_overflow_free\": {bfp_conservative_safe},\n",
             "  \"bfp_observed_underflow_free\": {bfp_underflow_free},\n",
             "  \"bfp_max_abs_bound_q1616\": {bfp_max_abs_bound},\n",
+            "  \"bfp_required_total_bits_q1616\": {bfp_required_total_bits_q1616},\n",
+            "  \"bfp_required_integer_bits_q1616\": {bfp_required_integer_bits_q1616},\n",
+            "  \"bfp_width_headroom_bits_q1616\": {bfp_width_headroom_bits_q1616},\n",
+            "  \"bfp_saturation_required\": {bfp_saturation_required},\n",
+            "  \"bfp_static_overflow_proven_safe\": {bfp_static_overflow_proven_safe},\n",
             "  \"bfp_underflow_count\": {bfp_underflow_count},\n",
             "  \"bfp_checksum\": {bfp_checksum},\n",
             "  \"bfp_results_ns_per_call\": [{bfp_results}]\n",
@@ -265,6 +282,11 @@ fn main() {
         mixed_conservative_safe = mixed_conservative_safe,
         mixed_underflow_free = mixed_underflow_free,
         mixed_max_abs_bound = mixed_max_abs_bound,
+        mixed_required_total_bits_q1616 = mixed_safe_report.required_total_bits_q1616,
+        mixed_required_integer_bits_q1616 = mixed_safe_report.required_integer_bits_q1616,
+        mixed_width_headroom_bits_q1616 = mixed_safe_report.width_headroom_bits_q1616,
+        mixed_saturation_required = mixed_safe_report.saturation_required,
+        mixed_static_overflow_proven_safe = mixed_safe_report.static_overflow_proven_safe,
         mixed_underflow_count = mixed_underflow_count,
         mixed_checksum = mixed_checksum,
         mixed_results = values_json(&mixed_ns),
@@ -274,6 +296,11 @@ fn main() {
         bfp_conservative_safe = bfp_conservative_safe,
         bfp_underflow_free = bfp_underflow_free,
         bfp_max_abs_bound = bfp_max_abs_bound,
+        bfp_required_total_bits_q1616 = bfp_safe_report.required_total_bits_q1616,
+        bfp_required_integer_bits_q1616 = bfp_safe_report.required_integer_bits_q1616,
+        bfp_width_headroom_bits_q1616 = bfp_safe_report.width_headroom_bits_q1616,
+        bfp_saturation_required = bfp_safe_report.saturation_required,
+        bfp_static_overflow_proven_safe = bfp_safe_report.static_overflow_proven_safe,
         bfp_underflow_count = bfp_underflow_count,
         bfp_checksum = bfp_checksum,
         bfp_results = values_json(&bfp_ns),
