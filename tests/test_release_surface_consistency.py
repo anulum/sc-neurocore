@@ -46,9 +46,9 @@ def test_engine_release_metadata_uses_project_version() -> None:
 
     for label, path in surfaces.items():
         payload = tomllib.loads(path.read_text(encoding="utf-8"))
-        assert payload["package" if label.endswith("Cargo.toml") else "project"][
-            "version"
-        ] == version
+        assert (
+            payload["package" if label.endswith("Cargo.toml") else "project"]["version"] == version
+        )
 
 
 def test_docs_index_does_not_advertise_previous_release_version() -> None:
