@@ -2,7 +2,7 @@
   "benchmark": "live_control_update_and_trap_evidence",
   "benchmark_isolation_mode": "process-affinity-cpuset",
   "language": "Python+SystemVerilog",
-  "timestamp_utc": "2026-06-05T12:08:56+00:00",
+  "timestamp_utc": "2026-06-05T12:29:51+00:00",
   "command": "taskset -c 8-9 env PYTHONPATH=src .venv/bin/python benchmarks/bench_live_control_updates.py",
   "python": "3.12.3",
   "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
@@ -15,21 +15,21 @@
       9
     ],
     "load_average_before": [
-      5.58251953125,
-      4.84765625,
-      3.97802734375
+      3.89404296875,
+      3.646484375,
+      3.55810546875
     ],
     "load_average_after": [
-      6.4169921875,
-      5.033203125,
-      4.04296875
+      3.98291015625,
+      3.66943359375,
+      3.56591796875
     ],
     "cpu_governor": [
       "powersave"
     ],
     "cpu_frequency_mhz": {
-      "min_observed_mhz": 2697.545,
-      "max_observed_mhz": 3910.181,
+      "min_observed_mhz": 3530.628,
+      "max_observed_mhz": 4573.676,
       "sampled_cpu_count": 12.0
     },
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
@@ -227,33 +227,34 @@
     "read_only_bank": 16,
     "partial_write": 32
   },
+  "selective_trap_clear_write_count": 2,
   "valid_update_write_count": 7,
-  "live_update_sequence_median_ns": 17034.48105,
-  "live_update_sequence_min_ns": 15170.8425,
-  "live_update_sequence_max_ns": 23574.28295,
+  "live_update_sequence_median_ns": 19819.1405,
+  "live_update_sequence_min_ns": 17697.66055,
+  "live_update_sequence_max_ns": 21569.7274,
   "pcie_mmio_valid_update_write_count": 7,
-  "pcie_mmio_live_update_sequence_median_ns": 16092.60295,
-  "pcie_mmio_live_update_sequence_min_ns": 14971.9826,
-  "pcie_mmio_live_update_sequence_max_ns": 17963.41575,
-  "static_regeneration_median_ns": 115781.28571428571,
-  "static_regeneration_min_ns": 94337.0,
-  "static_regeneration_max_ns": 172899.57142857142,
-  "pcie_mmio_static_regeneration_median_ns": 178764.85714285713,
-  "pcie_mmio_static_regeneration_min_ns": 165201.57142857142,
-  "pcie_mmio_static_regeneration_max_ns": 264932.14285714284,
+  "pcie_mmio_live_update_sequence_median_ns": 17587.4796,
+  "pcie_mmio_live_update_sequence_min_ns": 16321.75,
+  "pcie_mmio_live_update_sequence_max_ns": 20353.9858,
+  "static_regeneration_median_ns": 130575.42857142857,
+  "static_regeneration_min_ns": 110191.85714285714,
+  "static_regeneration_max_ns": 174268.57142857142,
+  "pcie_mmio_static_regeneration_median_ns": 217396.0,
+  "pcie_mmio_static_regeneration_min_ns": 142491.0,
+  "pcie_mmio_static_regeneration_max_ns": 250364.42857142858,
   "trap_capture": {
     "iverilog": "/usr/bin/iverilog",
     "vvp": "/usr/bin/vvp",
-    "compile_ns": 9567342,
-    "simulation_ns": 10398104,
+    "compile_ns": 12788403,
+    "simulation_ns": 7213424,
     "selective_trap_clear_preserved_unmasked_fault": true,
     "passed": true
   },
   "pcie_mmio_commit_capture": {
     "iverilog": "/usr/bin/iverilog",
     "vvp": "/usr/bin/vvp",
-    "compile_ns": 21005786,
-    "simulation_ns": 12333370,
+    "compile_ns": 13697370,
+    "simulation_ns": 7726186,
     "checksum_mismatch_rejected": true,
     "checksum_mismatch_trap_bit": 4,
     "invalid_selection_rejected": true,
@@ -268,121 +269,121 @@
   },
   "update_results": [
     {
-      "ns_per_sequence": 17568.43425,
+      "ns_per_sequence": 20437.0927,
       "checksum": 161808
     },
     {
-      "ns_per_sequence": 15650.2109,
+      "ns_per_sequence": 19379.75335,
       "checksum": 161808
     },
     {
-      "ns_per_sequence": 17034.48105,
+      "ns_per_sequence": 20247.02415,
       "checksum": 161808
     },
     {
-      "ns_per_sequence": 15170.8425,
+      "ns_per_sequence": 21569.7274,
       "checksum": 161808
     },
     {
-      "ns_per_sequence": 16355.08215,
+      "ns_per_sequence": 18401.53,
       "checksum": 161808
     },
     {
-      "ns_per_sequence": 23574.28295,
+      "ns_per_sequence": 19819.1405,
       "checksum": 161808
     },
     {
-      "ns_per_sequence": 17084.07975,
+      "ns_per_sequence": 17697.66055,
       "checksum": 161808
     }
   ],
   "pcie_mmio_update_results": [
     {
-      "ns_per_sequence": 17963.41575,
+      "ns_per_sequence": 18191.6964,
       "checksum": 161808
     },
     {
-      "ns_per_sequence": 16251.7659,
+      "ns_per_sequence": 19008.34675,
       "checksum": 161808
     },
     {
-      "ns_per_sequence": 15188.10835,
+      "ns_per_sequence": 16694.16125,
       "checksum": 161808
     },
     {
-      "ns_per_sequence": 16905.26295,
+      "ns_per_sequence": 20353.9858,
       "checksum": 161808
     },
     {
-      "ns_per_sequence": 15817.34965,
+      "ns_per_sequence": 17360.551,
       "checksum": 161808
     },
     {
-      "ns_per_sequence": 14971.9826,
+      "ns_per_sequence": 17587.4796,
       "checksum": 161808
     },
     {
-      "ns_per_sequence": 16092.60295,
+      "ns_per_sequence": 16321.75,
       "checksum": 161808
     }
   ],
   "static_regeneration_results": [
     {
-      "ns_per_regeneration": 148742.14285714287,
+      "ns_per_regeneration": 174268.57142857142,
       "checksum": 27861
     },
     {
-      "ns_per_regeneration": 115781.28571428571,
+      "ns_per_regeneration": 130575.42857142857,
       "checksum": 27861
     },
     {
-      "ns_per_regeneration": 99077.85714285714,
+      "ns_per_regeneration": 132085.7142857143,
       "checksum": 27861
     },
     {
-      "ns_per_regeneration": 141871.7142857143,
+      "ns_per_regeneration": 110191.85714285714,
       "checksum": 27861
     },
     {
-      "ns_per_regeneration": 172899.57142857142,
+      "ns_per_regeneration": 115999.42857142857,
       "checksum": 27861
     },
     {
-      "ns_per_regeneration": 114627.85714285714,
+      "ns_per_regeneration": 154568.85714285713,
       "checksum": 27861
     },
     {
-      "ns_per_regeneration": 94337.0,
+      "ns_per_regeneration": 121366.42857142857,
       "checksum": 27861
     }
   ],
   "pcie_mmio_static_regeneration_results": [
     {
-      "ns_per_regeneration": 264932.14285714284,
+      "ns_per_regeneration": 213016.14285714287,
       "checksum": 32375
     },
     {
-      "ns_per_regeneration": 264511.71428571426,
+      "ns_per_regeneration": 211692.42857142858,
       "checksum": 32375
     },
     {
-      "ns_per_regeneration": 225788.57142857142,
+      "ns_per_regeneration": 142491.0,
       "checksum": 32375
     },
     {
-      "ns_per_regeneration": 171065.7142857143,
+      "ns_per_regeneration": 250364.42857142858,
       "checksum": 32375
     },
     {
-      "ns_per_regeneration": 178764.85714285713,
+      "ns_per_regeneration": 241258.42857142858,
       "checksum": 32375
     },
     {
-      "ns_per_regeneration": 177368.2857142857,
+      "ns_per_regeneration": 217707.85714285713,
       "checksum": 32375
     },
     {
-      "ns_per_regeneration": 165201.57142857142,
+      "ns_per_regeneration": 217396.0,
       "checksum": 32375
     }
   ]

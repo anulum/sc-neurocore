@@ -92,6 +92,10 @@ Generated host drivers always write both staging words before the checksum:
 wide-update high-word state from invalidating or corrupting a later narrow
 coefficient update.
 
+Generated host drivers expose both all-trap and selected-trap clear helpers.
+Selected clearing writes the requested mask to `TRAP_CLEAR` and leaves
+unselected sticky fault evidence latched for later operator inspection.
+
 ---
 
 ## 4. Module Descriptions

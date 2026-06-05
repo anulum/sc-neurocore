@@ -313,6 +313,17 @@ class TestHostDriverGen:
         driver.rollback_live_shadow()
         assert writes == [(0x8000_0100, spec.control_bits["rollback"])]
 
+        driver.clear_selected_live_traps(0x21)
+        assert writes[-2:] == [
+            (0x8000_011C, 0x21),
+            (0x8000_0100, spec.control_bits["clear_trap"]),
+        ]
+
+        with pytest.raises(ValueError, match="trap_mask"):
+            driver.clear_selected_live_traps(True)
+        with pytest.raises(ValueError, match="live-control trap bits"):
+            driver.clear_selected_live_traps(spec.trap_clear_mask + 1)
+
         driver.clear_live_traps()
         assert writes[-2:] == [
             (0x8000_011C, spec.trap_clear_mask),
@@ -347,6 +358,7 @@ class TestHostDriverGen:
         assert "static inline uint32_t live_read_status" in drv
         assert "static inline uint32_t live_read_trap_status" in drv
         assert "static inline void live_rollback_shadow" in drv
+        assert "static inline int live_clear_selected_traps" in drv
         assert "sc_live_update_live_bfp_weights_w0_encoded" in drv
         assert "sc_live_verify_live_bfp_weights_w0_encoded" in drv
 
@@ -402,10 +414,11 @@ uint32_t mmio_read(uint32_t addr) {
 int main(void) {
     int rc = sc_live_verify_live_weights_w0_encoded(0x1234ULL);
     live_rollback_shadow();
+    int clear_rc = live_clear_selected_traps(0x1U);
     live_clear_traps();
     uint32_t status = live_read_status();
     uint32_t trap_status = live_read_trap_status();
-    return rc == 0 && status == 0U && trap_status == 0U && observed_addr != 0U && observed_val != 0xFFFFFFFFU ? 0 : 1;
+    return rc == 0 && clear_rc == 0 && status == 0U && trap_status == 0U && observed_addr != 0U && observed_val != 0xFFFFFFFFU ? 0 : 1;
 }
 """,
             encoding="utf-8",
