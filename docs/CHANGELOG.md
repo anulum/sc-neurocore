@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.33] - 2026-06-05
+
+### CI and benchmark evidence
+- Replaced the Wilson-Cowan CI throughput floor with a bounded-runtime
+  regression sentinel and documented that production throughput evidence must
+  come from isolated benchmark runs, not hosted coverage jobs.
+
 ## [3.15.32] - 2026-06-05
 
 ### CI and release workflows
