@@ -510,6 +510,7 @@ module sc_chiplet_die_{die.die_id} #(
     parameter N_NEURONS = {die.n_neurons},
     parameter AER_ID_W  = {die.aer_id_width},
     parameter DATA_W    = {die.data_width},
+    parameter AER_PRIO_W = 2,
     parameter LFSR_SEED = 16'h{die.lfsr_seed:04X}
 )(
     input  wire clk,
@@ -532,15 +533,25 @@ module sc_chiplet_die_{die.die_id} #(
     // Local AER router instance
     sc_aer_router #(
         .N_SRC(N_NEURONS), .N_TGT(N_NEURONS),
-        .DATA_WIDTH(DATA_W)
+        .DATA_WIDTH(DATA_W),
+        .PRIO_WIDTH(AER_PRIO_W)
     ) local_router (
         .clk(clk), .rst_n(rst_n),
         .in_event_valid(local_spike_valid),
+        .in_event_ready(),
         .in_neuron_id(local_spike_id),
         .in_timestamp(16'd0),
+        .in_priority({{AER_PRIO_W{{1'b0}}}}),
         .out_event_valid(local_out_valid),
+        .out_event_ready(1'b1),
         .out_target_id(local_out_id),
-        .out_weight(local_out_weight)
+        .out_weight(local_out_weight),
+        .out_timestamp(),
+        .out_priority(),
+        .busy(),
+        .queue_full(),
+        .dropped_event(),
+        .critical_deadline_violation()
     );
 
 {in_assigns}

@@ -1,0 +1,239 @@
+{
+  "benchmark": "block_floating_dense_q16_64x32",
+  "language": "Python",
+  "timestamp_utc": "2026-06-05T02:48:43+00:00",
+  "command": "taskset -c 8-9 env PYTHONPATH=src .venv/bin/python benchmarks/bench_block_floating_dense.py",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "measurement_context": {
+    "host_load": "workstation under concurrent load during capture",
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "cpu_affinity": [
+      8,
+      9
+    ],
+    "load_average_before": [
+      6.11376953125,
+      5.5810546875,
+      4.505859375
+    ],
+    "load_average_after": [
+      6.11376953125,
+      5.5810546875,
+      4.505859375
+    ],
+    "cpu_governor": [
+      "powersave"
+    ],
+    "cpu_frequency_mhz": {
+      "min_observed_mhz": 800.0,
+      "max_observed_mhz": 4509.238,
+      "sampled_cpu_count": 12.0
+    },
+    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+  },
+  "n_inputs": 64,
+  "n_outputs": 32,
+  "iterations": 2000,
+  "repeats": 7,
+  "bfp_median_ns_per_call": 38760.259,
+  "bfp_min_ns_per_call": 37998.5705,
+  "bfp_max_ns_per_call": 42643.0995,
+  "forward_with_overflow_median_ns_per_call": 42356.208,
+  "forward_with_overflow_min_ns_per_call": 33772.233,
+  "forward_with_overflow_max_ns_per_call": 43368.88,
+  "float_dot_median_ns_per_call": 1029.303,
+  "float_dot_min_ns_per_call": 963.412,
+  "float_dot_max_ns_per_call": 1343.338,
+  "max_abs_error_vs_float_dot": 0.22306060791015625,
+  "safe_overflow_count": 0,
+  "safe_max_abs_bound_code": 610816,
+  "safe_conservative_overflow_free": true,
+  "safe_min_headroom_code": 2146872831,
+  "safe_required_total_bits": 21,
+  "safe_required_integer_bits": 5,
+  "safe_width_headroom_bits": 11,
+  "safe_saturation_required": false,
+  "safe_static_overflow_proven_safe": true,
+  "mantissa_checksum": -15,
+  "exponent_checksum": 0,
+  "block_exponent_count": 64,
+  "exponent_code_min": 0,
+  "exponent_code_max": 0,
+  "saturating_probe_overflow_count": 32,
+  "saturating_probe_max_abs_bound_code": 1125865547104256,
+  "saturating_probe_conservative_overflow_free": false,
+  "saturating_probe_required_total_bits": 51,
+  "saturating_probe_required_integer_bits": 35,
+  "saturating_probe_width_headroom_bits": -19,
+  "saturating_probe_saturation_required": true,
+  "saturating_probe_static_overflow_proven_safe": false,
+  "exponent_edge_sweep": {
+    "format": "BFP16E3X2",
+    "safe_exponent_codes": [
+      0,
+      7,
+      0,
+      7
+    ],
+    "safe_output_codes_q1616": [
+      1056736,
+      -1069024
+    ],
+    "safe_overflow_count": 0,
+    "safe_underflow_count": 0,
+    "safe_max_abs_error_vs_reconstructed_reference": 0.0,
+    "safe_max_abs_bound_q1616": 1069024,
+    "safe_min_headroom_q1616": 2146414623,
+    "safe_conservative_overflow_free": true,
+    "safe_required_total_bits": 22,
+    "safe_required_integer_bits": 6,
+    "safe_width_headroom_bits": 10,
+    "safe_saturation_required": false,
+    "safe_static_overflow_proven_safe": true,
+    "max_exponent_saturating_codes_q1616": [
+      2147483647
+    ],
+    "max_exponent_saturating_exponent_codes": [
+      7
+    ],
+    "max_exponent_saturating_overflow_count": 1,
+    "max_exponent_saturating_underflow_count": 0,
+    "max_exponent_saturating_conservative_overflow_free": false,
+    "max_exponent_saturating_max_abs_bound_q1616": 2251662376828928,
+    "max_exponent_saturating_required_total_bits": 52,
+    "max_exponent_saturating_required_integer_bits": 36,
+    "max_exponent_saturating_width_headroom_bits": -20,
+    "max_exponent_saturating_saturation_required": true,
+    "max_exponent_saturating_static_overflow_proven_safe": false
+  },
+  "compiled_manifest": {
+    "operation": "dense_block_floating",
+    "input_size": 64,
+    "output_size": 32,
+    "weight_shape": [
+      32,
+      64
+    ],
+    "parameter_count": 2048,
+    "mantissa_bits": 16,
+    "exponent_bits": 3,
+    "block_size": 32,
+    "exponent_bias": 3,
+    "exponent_code_range": [
+      0,
+      7
+    ],
+    "block_exponent_count": 64,
+    "block_exponent_layout": {
+      "alignment": "contiguous_flattened_block",
+      "flattened_order": "row_major",
+      "parameter_count": 2048,
+      "block_size": 32,
+      "exponent_count": 64,
+      "last_block_size": 32,
+      "exponent_index_formula": "parameter_index // block_size"
+    },
+    "input_format": "Q16.16"
+  },
+  "bfp_results": [
+    {
+      "ns_per_call": 42643.0995,
+      "checksum": 0
+    },
+    {
+      "ns_per_call": 37998.5705,
+      "checksum": 0
+    },
+    {
+      "ns_per_call": 39603.963,
+      "checksum": 0
+    },
+    {
+      "ns_per_call": 39371.7715,
+      "checksum": 0
+    },
+    {
+      "ns_per_call": 38069.5145,
+      "checksum": 0
+    },
+    {
+      "ns_per_call": 38760.259,
+      "checksum": 0
+    },
+    {
+      "ns_per_call": 38589.3165,
+      "checksum": 0
+    }
+  ],
+  "forward_with_overflow_results": [
+    {
+      "ns_per_call": 42356.208,
+      "checksum": 0,
+      "overflow_count": 0
+    },
+    {
+      "ns_per_call": 39376.567,
+      "checksum": 0,
+      "overflow_count": 0
+    },
+    {
+      "ns_per_call": 43284.0885,
+      "checksum": 0,
+      "overflow_count": 0
+    },
+    {
+      "ns_per_call": 42955.739,
+      "checksum": 0,
+      "overflow_count": 0
+    },
+    {
+      "ns_per_call": 43368.88,
+      "checksum": 0,
+      "overflow_count": 0
+    },
+    {
+      "ns_per_call": 37714.1295,
+      "checksum": 0,
+      "overflow_count": 0
+    },
+    {
+      "ns_per_call": 33772.233,
+      "checksum": 0,
+      "overflow_count": 0
+    }
+  ],
+  "float_dot_results": [
+    {
+      "ns_per_call": 1343.338,
+      "checksum": -215.4693603515625
+    },
+    {
+      "ns_per_call": 1253.597,
+      "checksum": -215.4693603515625
+    },
+    {
+      "ns_per_call": 963.412,
+      "checksum": -215.4693603515625
+    },
+    {
+      "ns_per_call": 1236.0055,
+      "checksum": -215.4693603515625
+    },
+    {
+      "ns_per_call": 982.496,
+      "checksum": -215.4693603515625
+    },
+    {
+      "ns_per_call": 1029.303,
+      "checksum": -215.4693603515625
+    },
+    {
+      "ns_per_call": 1009.452,
+      "checksum": -215.4693603515625
+    }
+  ]
+}

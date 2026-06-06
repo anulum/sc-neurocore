@@ -12,7 +12,17 @@ from .equation_compiler import compile_to_verilog, equation_to_fpga, Q88
 from .pipeline import CompilerPipeline
 from .mlir_emitter import MLIRBundle, MLIREmitter, generate_mlir_bundle
 from .quantizer import (
+    CompiledBlockFloatingDense,
+    CompiledMixedDense,
+    PrecisionEnvelopeReport,
+    PrecisionTrapReport,
     QFormat,
+    QFormatMixed,
+    Q8_8,
+    Q16_16,
+    compile_dense_block_floating,
+    compile_dense_mixed_precision,
+    dequantize,
     quantize_weights,
     dequantize_weights,
     q_weights_to_sc_probabilities,
@@ -35,6 +45,11 @@ from .adaptive_precision import (
     precision_plan_manifest,
     write_precision_formal_evidence_bundle,
 )
+from .live_control import (
+    MMIOUpdateSpec,
+    ParameterBankSpec,
+    TrapSpec,
+)
 
 __all__ = [
     "compile_to_verilog",
@@ -44,7 +59,17 @@ __all__ = [
     "MLIRBundle",
     "MLIREmitter",
     "generate_mlir_bundle",
+    "CompiledBlockFloatingDense",
+    "CompiledMixedDense",
+    "PrecisionEnvelopeReport",
+    "PrecisionTrapReport",
     "QFormat",
+    "QFormatMixed",
+    "Q8_8",
+    "Q16_16",
+    "compile_dense_block_floating",
+    "compile_dense_mixed_precision",
+    "dequantize",
     "quantize_weights",
     "dequantize_weights",
     "q_weights_to_sc_probabilities",
@@ -62,4 +87,7 @@ __all__ = [
     "auto_tune_synapse_precisions",
     "precision_plan_manifest",
     "write_precision_formal_evidence_bundle",
+    "MMIOUpdateSpec",
+    "ParameterBankSpec",
+    "TrapSpec",
 ]

@@ -7,6 +7,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+import shutil
+import subprocess
+
 import pytest
 
 from sc_neurocore.compiler.deployment import (
@@ -15,6 +19,7 @@ from sc_neurocore.compiler.deployment import (
     generate_constraints,
     generate_host_driver,
 )
+from sc_neurocore.compiler.live_control import MMIOUpdateSpec, ParameterBankSpec
 
 # Minimal Verilog stub for resource estimation
 STUB_VERILOG = """
@@ -186,6 +191,259 @@ class TestHostDriverGen:
         """Should raise on invalid language."""
         with pytest.raises(ValueError, match="Unsupported language"):
             generate_host_driver("sc_lif", LIF_PARAMS, language="rust")  # type: ignore
+
+    def test_python_live_control_driver_zeroes_high_word_and_verifies_readback(self) -> None:
+        """Generated Python driver should use the full CRC/readback live-control contract."""
+        spec = MMIOUpdateSpec(
+            bus_protocol="axi4_lite",
+            control_base_address_bytes=0x100,
+            banks=(
+                ParameterBankSpec(
+                    bank_name="weights",
+                    start_address_bytes=0x2000,
+                    parameter_count=1,
+                    parameter_names=("w0",),
+                    q_format="Q8.8",
+                ),
+            ),
+        )
+        source = generate_host_driver(
+            "sc_live",
+            {},
+            language="python",
+            base_address=0x8000_0000,
+            live_update_spec=spec,
+        )
+        namespace: dict[str, object] = {}
+        exec(source, namespace)
+        driver_cls = namespace["ScLiveDriver"]
+        writes: list[tuple[int, int]] = []
+
+        def read_fn(address: int) -> int:
+            if address == 0x8000_0104:
+                return 0
+            if address == 0x8000_0124:
+                return 0x1234
+            return 0
+
+        def write_fn(address: int, value: int) -> None:
+            writes.append((address, value))
+
+        driver = driver_cls(read_fn, write_fn)
+
+        assert driver.verify_live_weights_w0_encoded(0x1234) is True
+        assert (0x8000_0114, 0) in writes
+        assert writes[:7] == [
+            (0x8000_0108, 0),
+            (0x8000_010C, 0),
+            (0x8000_0110, 0x1234),
+            (0x8000_0114, 0),
+            (0x8000_0120, spec.update_checksum("weights", "w0", 0x1234)),
+            (0x8000_0100, 1),
+            (0x8000_0100, 2),
+        ]
+        assert writes[-2:] == [(0x8000_0108, 0), (0x8000_010C, 0)]
+
+    def test_python_live_control_driver_raises_on_trap_status(self) -> None:
+        """Generated Python driver should not hide hardware trap telemetry."""
+        spec = MMIOUpdateSpec(
+            bus_protocol="axi4_lite",
+            control_base_address_bytes=0x100,
+            banks=(
+                ParameterBankSpec(
+                    bank_name="weights",
+                    start_address_bytes=0x2000,
+                    parameter_count=1,
+                    parameter_names=("w0",),
+                    q_format="Q8.8",
+                ),
+            ),
+        )
+        source = generate_host_driver("sc_live", {}, language="python", live_update_spec=spec)
+        namespace: dict[str, object] = {}
+        exec(source, namespace)
+        driver_cls = namespace["ScLiveDriver"]
+        driver = driver_cls(lambda _address: spec.status_bits["trap_latched"], lambda _a, _v: None)
+
+        with pytest.raises(RuntimeError, match="hardware trap"):
+            driver.update_live_weights_w0_encoded(0x1234)
+
+    def test_python_live_control_driver_exposes_rollback_and_trap_reads(self) -> None:
+        """Generated Python driver should expose the live-control recovery handshake."""
+        spec = MMIOUpdateSpec(
+            bus_protocol="axi4_lite",
+            control_base_address_bytes=0x100,
+            banks=(
+                ParameterBankSpec(
+                    bank_name="weights",
+                    start_address_bytes=0x2000,
+                    parameter_count=1,
+                    parameter_names=("w0",),
+                    q_format="Q8.8",
+                ),
+            ),
+        )
+        source = generate_host_driver(
+            "sc_live",
+            {},
+            language="python",
+            base_address=0x8000_0000,
+            live_update_spec=spec,
+        )
+        namespace: dict[str, object] = {}
+        exec(source, namespace)
+        driver_cls = namespace["ScLiveDriver"]
+        writes: list[tuple[int, int]] = []
+
+        def read_fn(address: int) -> int:
+            if address == 0x8000_0104:
+                return 0xA5
+            if address == 0x8000_0118:
+                return 0x5A
+            raise AssertionError(f"unexpected read address 0x{address:08X}")
+
+        def write_fn(address: int, value: int) -> None:
+            writes.append((address, value))
+
+        driver = driver_cls(read_fn, write_fn)
+
+        assert driver.read_live_status() == 0xA5
+        assert driver.read_live_trap_status() == 0x5A
+
+        driver.rollback_live_shadow()
+        assert writes == [(0x8000_0100, spec.control_bits["rollback"])]
+
+        driver.clear_selected_live_traps(0x21)
+        assert writes[-2:] == [
+            (0x8000_011C, 0x21),
+            (0x8000_0100, spec.control_bits["clear_trap"]),
+        ]
+
+        with pytest.raises(ValueError, match="trap_mask"):
+            driver.clear_selected_live_traps(True)
+        with pytest.raises(ValueError, match="live-control trap bits"):
+            driver.clear_selected_live_traps(spec.trap_clear_mask + 1)
+
+        driver.clear_live_traps()
+        assert writes[-2:] == [
+            (0x8000_011C, spec.trap_clear_mask),
+            (0x8000_0100, spec.control_bits["clear_trap"]),
+        ]
+
+    def test_c_live_control_driver_emits_crc_update_and_readback_helpers(self) -> None:
+        """Generated C driver should expose deterministic live-control helpers."""
+        spec = MMIOUpdateSpec(
+            bus_protocol="pcie",
+            control_base_address_bytes=0x100,
+            banks=(
+                ParameterBankSpec(
+                    bank_name="bfp_weights",
+                    start_address_bytes=0x2000,
+                    parameter_count=1,
+                    parameter_names=("w0",),
+                    precision_mode="bfp",
+                    bfp_exponent_bits=12,
+                    bfp_mantissa_bits=36,
+                ),
+            ),
+        )
+
+        drv = generate_host_driver("sc_live", {}, language="c", live_update_spec=spec)
+
+        assert "static inline uint32_t live_update_crc32" in drv
+        assert "mmio_write(SC_LIVE_BASE + LIVE_REG_WRITE_DATA_HI, data_hi);" in drv
+        assert "SC_LIVE_BASE + LIVE_REG_READ_DATA_HI" in drv
+        assert "LIVE_CTRL_ROLLBACK" in drv
+        assert "LIVE_TRAP_CLEAR_MASK" in drv
+        assert "static inline uint32_t live_read_status" in drv
+        assert "static inline uint32_t live_read_trap_status" in drv
+        assert "static inline void live_rollback_shadow" in drv
+        assert "static inline int live_clear_selected_traps" in drv
+        assert "sc_live_update_live_bfp_weights_w0_encoded" in drv
+        assert "sc_live_verify_live_bfp_weights_w0_encoded" in drv
+
+    def test_c_live_control_driver_compiles_with_readback_consumer(self, tmp_path: Path) -> None:
+        """Generated C live-control helpers should compile in a real consumer."""
+        cc = shutil.which("cc") or shutil.which("gcc")
+        if cc is None:
+            raise AssertionError(
+                "a C compiler is required for generated live-control driver checks"
+            )
+        spec = MMIOUpdateSpec(
+            bus_protocol="axi4_lite",
+            control_base_address_bytes=0x100,
+            banks=(
+                ParameterBankSpec(
+                    bank_name="weights",
+                    start_address_bytes=0x2000,
+                    parameter_count=1,
+                    parameter_names=("w0",),
+                    q_format="Q8.8",
+                ),
+            ),
+        )
+        header = generate_host_driver("sc_live", {}, language="c", live_update_spec=spec)
+        header_path = tmp_path / "sc_live_driver.h"
+        source_path = tmp_path / "driver_consumer.c"
+        object_path = tmp_path / "driver_consumer.o"
+        header_path.write_text(header, encoding="utf-8")
+        source_path.write_text(
+            """
+#include <stdint.h>
+#include "sc_live_driver.h"
+
+static uint32_t observed_addr;
+static uint32_t observed_val;
+
+void mmio_write(uint32_t addr, uint32_t val) {
+    observed_addr = addr;
+    observed_val = val;
+}
+
+uint32_t mmio_read(uint32_t addr) {
+    if (addr == SC_LIVE_BASE + LIVE_REG_STATUS) {
+        return 0U;
+    }
+    if (addr == SC_LIVE_BASE + LIVE_REG_TRAP_STATUS) {
+        return 0U;
+    }
+    if (addr == SC_LIVE_BASE + LIVE_REG_READ_DATA_LO) {
+        return 0x00001234U;
+    }
+    return 0U;
+}
+
+int main(void) {
+    int rc = sc_live_verify_live_weights_w0_encoded(0x1234ULL);
+    live_rollback_shadow();
+    int clear_rc = live_clear_selected_traps(0x1U);
+    live_clear_traps();
+    uint32_t status = live_read_status();
+    uint32_t trap_status = live_read_trap_status();
+    return rc == 0 && clear_rc == 0 && status == 0U && trap_status == 0U && observed_addr != 0U && observed_val != 0xFFFFFFFFU ? 0 : 1;
+}
+""",
+            encoding="utf-8",
+        )
+
+        result = subprocess.run(
+            [
+                cc,
+                "-std=c11",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+                "-c",
+                str(source_path),
+                "-o",
+                str(object_path),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 0, result.stderr
 
 
 # ═══════════════════════════════════════════════════════════════════════

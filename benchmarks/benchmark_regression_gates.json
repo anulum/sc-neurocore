@@ -1,24 +1,27 @@
 {
   "SPDX-License-Identifier": "AGPL-3.0-or-later",
-  "schema_version": "sc-neurocore.benchmark-regression-gates.v1",
   "gates": [
     {
-      "id": "formal-proof-elaboration",
       "artefact": "benchmarks/results/bench_formal.json",
+      "expected_values": {
+        "cold_exit_code": 0,
+        "warm_exit_code": 0
+      },
+      "id": "formal-proof-elaboration",
       "required_numbers": [
         "lean_check_cold_wall_s",
         "lean_check_warm_wall_s",
         "n_theorems_proved",
         "n_axioms_explicit"
-      ],
-      "expected_values": {
-        "cold_exit_code": 0,
-        "warm_exit_code": 0
-      }
+      ]
     },
     {
-      "id": "online-o1-adaptation",
       "artefact": "benchmarks/results/online_o1_adaptation_benchmark.json",
+      "expected_values": {
+        "hardware_measurement_claimed": false,
+        "parity.rust_matches_python": true
+      },
+      "id": "online-o1-adaptation",
       "required_numbers": [
         "python.final_weight",
         "python.steps_to_target",
@@ -27,15 +30,15 @@
         "resource_estimate.per_synapse_state_bits",
         "resource_estimate.total_state_bits",
         "resource_estimate.max_update_latency_cycles"
-      ],
-      "expected_values": {
-        "hardware_measurement_claimed": false,
-        "parity.rust_matches_python": true
-      }
+      ]
     },
     {
-      "id": "stochastic-backpropagation",
       "artefact": "benchmarks/results/stochastic_backprop_benchmark.json",
+      "expected_values": {
+        "hardware_measurement_claimed": false,
+        "joint_design.enabled": true
+      },
+      "id": "stochastic-backpropagation",
       "required_numbers": [
         "loss.initial",
         "loss.final",
@@ -45,11 +48,612 @@
         "estimator_variance.estimators.straight_through.variance",
         "stream_evidence.sampled_product_mae",
         "objective_terms.total"
-      ],
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_live_control_updates.json",
       "expected_values": {
+        "benchmark": "live_control_update_and_trap_evidence",
+        "benchmark_isolation_mode": "process-affinity-cpuset",
+        "bus_protocols.axi4_lite": true,
+        "bus_protocols.pcie": true,
+        "checksum_algorithm": "crc32-ieee-le-4x32",
+        "checksum_guard_samples.weights_w0_0x1234": 494770997,
+        "checksum_guard_samples.weights_w0_staged_overflow_raw_words": 669489392,
+        "checksum_guard_samples.weights_w0_staged_underflow_raw_words": 241946002,
+        "language": "Python+SystemVerilog",
+        "measurement_context.benchmark_affinity_matches_requested": true,
+        "measurement_context.runtime_cpuset_shield_claimed": true,
+        "pcie_mmio_commit_capture.checksum_mismatch_rejected": true,
+        "pcie_mmio_commit_capture.invalid_selection_rejected": true,
+        "pcie_mmio_commit_capture.invalid_readback_rejected": true,
+        "pcie_mmio_commit_capture.partial_write_rejected": true,
+        "pcie_mmio_commit_capture.read_only_bank_rejected": true,
+        "pcie_mmio_commit_capture.retargeted_commit_preserved_shadow_identity": true,
+        "pcie_mmio_commit_capture.selective_trap_clear_preserved_unmasked_fault": true,
+        "pcie_mmio_commit_capture.passed": true,
+        "trap_clear_mask": 63,
+        "trap_bits.checksum_mismatch": 4,
+        "trap_bits.invalid_selection": 8,
+        "trap_bits.partial_write": 32,
+        "trap_bits.read_only_bank": 16,
+        "trap_bits.staged_overflow": 1,
+        "trap_bits.staged_underflow": 2,
+        "trap_capture.selective_trap_clear_preserved_unmasked_fault": true,
+        "trap_capture.passed": true
+      },
+      "id": "live-control-update-trap-evidence",
+      "required_numbers": [
+        "iterations",
+        "repeats",
+        "selective_trap_clear_write_count",
+        "valid_update_write_count",
+        "live_update_sequence_median_ns",
+        "pcie_mmio_valid_update_write_count",
+        "pcie_mmio_live_update_sequence_median_ns",
+        "static_regeneration_median_ns",
+        "pcie_mmio_static_regeneration_median_ns",
+        "trap_capture.compile_ns",
+        "trap_capture.simulation_ns",
+        "pcie_mmio_commit_capture.compile_ns",
+        "pcie_mmio_commit_capture.simulation_ns"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_aer_priority_queue.json",
+      "expected_values": {
+        "benchmark": "aer_priority_queue_backpressure_contract",
+        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "fifo_tie_violations": 0,
         "hardware_measurement_claimed": false,
-        "joint_design.enabled": true
-      }
+        "host_context.cgroup_effective_cpuset": "10-11",
+        "host_context.runtime_cpuset_shield_claimed": true,
+        "language": "Python+SystemVerilog",
+        "priority_violations": 0,
+        "yosys.exit_code": 0
+      },
+      "id": "aer-priority-backpressure-contract",
+      "required_numbers": [
+        "events",
+        "repeats",
+        "median_ns_per_event",
+        "priority_violations",
+        "fifo_tie_violations",
+        "backpressure_rejections",
+        "deadline_traps",
+        "yosys.elapsed_ns"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_timing_formal_framework.json",
+      "description": "NEU-C.2 timing-aware formal framework proof and model-emitter evidence.",
+      "expected_values": {
+        "benchmark": "timing_formal_framework",
+        "cvc5_available": true,
+        "hardware_measurement_claimed": false,
+        "host_context.cgroup_effective_cpuset": "10-11",
+        "host_context.runtime_cpuset_shield_claimed": true,
+        "language": "Python+SystemVerilog",
+        "sby_available": true,
+        "symbiyosys_passed": true
+      },
+      "id": "timing-formal-framework",
+      "minimum_values": {
+        "kind2_emit_count": 16,
+        "nuxmv_emit_count": 16,
+        "property_count": 16
+      },
+      "required_numbers": [
+        "property_count",
+        "nuxmv_emit_count",
+        "kind2_emit_count",
+        "nuxmv_emit_s",
+        "kind2_emit_s",
+        "sby_runtime_s",
+        "sby_exit_code"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_adc_to_spike_quantiser.json",
+      "description": "NEU-C.5 ADC-to-spike quantiser reference, formal, and synthesis-estimate evidence.",
+      "expected_values": {
+        "benchmark": "adc_to_spike_quantiser_contract",
+        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "formal.exit_code": 0,
+        "formal.passed": true,
+        "hardware_measurement_claimed": false,
+        "host_context.cgroup_effective_cpuset": "10-11",
+        "host_context.runtime_cpuset_shield_claimed": true,
+        "language": "Python+SystemVerilog",
+        "yosys.exit_code": 0
+      },
+      "id": "adc-to-spike-quantiser-contract",
+      "minimum_values": {
+        "repeats": 100,
+        "samples": 4096,
+        "total_samples": 409600,
+        "total_spikes": 1,
+        "yosys.cells": 1
+      },
+      "required_numbers": [
+        "samples",
+        "repeats",
+        "total_samples",
+        "total_spikes",
+        "median_ns_per_sample",
+        "formal.elapsed_ns",
+        "formal.exit_code",
+        "yosys.elapsed_ns",
+        "yosys.exit_code",
+        "yosys.cells"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_dcls_q88.json",
+      "description": "NEU-C.6 DCLS Q8.8 Python/PyTorch reference, formal, and synthesis-estimate evidence.",
+      "expected_values": {
+        "benchmark": "dcls_q88_rtl_contract",
+        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "cosim.cases_passed": 5,
+        "cosim.max_abs_accumulator_diff": 0,
+        "formal.exit_code": 0,
+        "formal.passed": true,
+        "hardware_measurement_claimed": false,
+        "host_context.cgroup_effective_cpuset": "10-11",
+        "host_context.runtime_cpuset_shield_claimed": true,
+        "language": "Python+PyTorch+SystemVerilog",
+        "yosys.exit_code": 0
+      },
+      "id": "dcls-q88-rtl-contract",
+      "required_numbers": [
+        "samples",
+        "repeats",
+        "taps",
+        "total_samples",
+        "median_ns_per_sample",
+        "checksum",
+        "overflow_count",
+        "active_tap_total",
+        "cosim.case_count",
+        "cosim.cases_passed",
+        "cosim.max_abs_accumulator_diff",
+        "formal.elapsed_ns",
+        "formal.exit_code",
+        "yosys.elapsed_ns",
+        "yosys.exit_code",
+        "yosys.cells"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_dcls_q88.json",
+      "description": "NEU-C.6 DCLS Q8.8 Rust reference evidence.",
+      "expected_values": {
+        "benchmark": "dcls_q88_rtl_contract",
+        "language": "Rust",
+        "measurement_context.cpu_affinity": "10-11"
+      },
+      "id": "dcls-q88-rust-contract",
+      "required_numbers": [
+        "taps",
+        "samples",
+        "iterations",
+        "repeats",
+        "total_samples",
+        "median_ns_per_sample",
+        "min_ns_per_sample",
+        "max_ns_per_sample",
+        "checksum",
+        "overflow_count",
+        "active_tap_total"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_ultrascale_plus_target.json",
+      "description": "NEU-C.1 Zynq UltraScale+ Vivado-project target-contract evidence.",
+      "expected_values": {
+        "benchmark": "ultrascale_plus_target_contract",
+        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "hardware_measurement_claimed": false,
+        "host_context.cgroup_effective_cpuset": "10-11",
+        "host_context.runtime_cpuset_shield_claimed": true,
+        "language": "Python",
+        "sku_baseline.zu3eg.dsp_primitive": "DSP48E2",
+        "sku_baseline.zu9eg.dsp_primitive": "DSP48E2"
+      },
+      "id": "ultrascale-plus-target-python-contract",
+      "minimum_values": {
+        "manifest_count": 2,
+        "repeats": 7
+      },
+      "required_numbers": [
+        "manifest_count",
+        "iterations",
+        "repeats",
+        "median_ns_per_manifest",
+        "min_ns_per_manifest",
+        "max_ns_per_manifest",
+        "checksum"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_ultrascale_plus_target.json",
+      "description": "NEU-C.1 Zynq UltraScale+ Rust target emitter and resource-budget evidence.",
+      "expected_values": {
+        "benchmark": "ultrascale_plus_target_contract",
+        "dsp_primitive": "DSP48E2",
+        "fits_bram_budget": true,
+        "fits_dsp_budget": false,
+        "fits_uram_budget": true,
+        "language": "Rust",
+        "measurement_context.cgroup_effective_cpuset": "10-11",
+        "measurement_context.cpu_affinity": "10-11",
+        "measurement_context.runtime_cpuset_shield_claimed": true
+      },
+      "id": "ultrascale-plus-target-rust-contract",
+      "minimum_values": {
+        "dsp_estimated": 361,
+        "iterations": 2000,
+        "repeats": 7
+      },
+      "required_numbers": [
+        "n_inputs",
+        "n_outputs",
+        "iterations",
+        "repeats",
+        "median_ns_per_emit",
+        "min_ns_per_emit",
+        "max_ns_per_emit",
+        "checksum",
+        "dsp_estimated",
+        "bram_36k_estimated",
+        "lut_estimated",
+        "dsp_budget",
+        "bram_36k_budget",
+        "uram_budget"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_ultrascale_dense_folding.json",
+      "description": "UltraScale+ dense-folding Python/SystemVerilog resource-plan evidence.",
+      "expected_values": {
+        "benchmark": "ultrascale_plus_dense_folding_contract",
+        "benchmark_isolation_mode": "runtime-cpuset-shield",
+        "hardware_measurement_claimed": false,
+        "host_context.cgroup_effective_cpuset": "10-11",
+        "host_context.runtime_cpuset_shield_claimed": true,
+        "language": "Python+SystemVerilog",
+        "plan.compute_cycles": 7,
+        "plan.dsp_per_cycle": 320,
+        "plan.fits_dsp_budget": true,
+        "plan.fold_required": true,
+        "yosys.exit_code": 0
+      },
+      "id": "ultrascale-plus-dense-folding-python-contract",
+      "minimum_values": {
+        "iterations": 20000,
+        "repeats": 7,
+        "yosys.cells": 1
+      },
+      "required_numbers": [
+        "iterations",
+        "repeats",
+        "median_ns_per_plan",
+        "min_ns_per_plan",
+        "max_ns_per_plan",
+        "checksum",
+        "plan.mac_count",
+        "plan.dsp_budget",
+        "plan.dsp_per_cycle",
+        "plan.output_parallelism",
+        "plan.input_parallelism",
+        "plan.compute_cycles",
+        "yosys.elapsed_ns",
+        "yosys.cells"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_ultrascale_dense_folding.json",
+      "description": "UltraScale+ dense-folding Rust resource-plan evidence.",
+      "expected_values": {
+        "benchmark": "ultrascale_plus_dense_folding_contract",
+        "fits_dsp_budget": true,
+        "fold_required": true,
+        "language": "Rust",
+        "measurement_context.cgroup_effective_cpuset": "10-11",
+        "measurement_context.cpu_affinity": "10-11",
+        "measurement_context.runtime_cpuset_shield_claimed": true
+      },
+      "id": "ultrascale-plus-dense-folding-rust-contract",
+      "minimum_values": {
+        "dsp_per_cycle": 320,
+        "iterations": 20000,
+        "repeats": 7
+      },
+      "required_numbers": [
+        "iterations",
+        "repeats",
+        "median_ns_per_plan",
+        "min_ns_per_plan",
+        "max_ns_per_plan",
+        "checksum",
+        "n_inputs",
+        "n_outputs",
+        "mac_count",
+        "dsp_budget",
+        "dsp_per_cycle",
+        "output_parallelism",
+        "input_parallelism",
+        "compute_cycles"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_mixed_dense.json",
+      "description": "Mixed Q8.8/Q16.16 Python dense proof-width and overflow evidence.",
+      "expected_values": {
+        "benchmark": "mixed_dense_q88_q1616_64x32",
+        "benchmark_contract": "canonical_q88_weight_q1616_input",
+        "language": "Python",
+        "measurement_context.cpu_affinity": [
+          8,
+          9
+        ],
+        "safe_conservative_overflow_free": true,
+        "safe_required_total_bits": 21,
+        "safe_required_integer_bits": 5,
+        "safe_width_headroom_bits": 11,
+        "safe_saturation_required": false,
+        "safe_static_overflow_proven_safe": true,
+        "saturating_probe_conservative_overflow_free": false,
+        "saturating_probe_required_total_bits": 45,
+        "saturating_probe_required_integer_bits": 29,
+        "saturating_probe_width_headroom_bits": -13,
+        "saturating_probe_saturation_required": true,
+        "saturating_probe_static_overflow_proven_safe": false
+      },
+      "id": "mixed-dense-python-q1616-width-proof",
+      "required_numbers": [
+        "iterations",
+        "repeats",
+        "mixed_median_ns_per_call",
+        "forward_with_overflow_median_ns_per_call",
+        "float_dot_median_ns_per_call",
+        "max_abs_error_vs_float_dot",
+        "safe_overflow_count",
+        "safe_max_abs_bound_code",
+        "safe_min_headroom_code",
+        "saturating_probe_overflow_count",
+        "saturating_probe_max_abs_bound_code"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_mixed_dense.json",
+      "description": "Mixed Q8.8/Q16.16 Rust dense proof-width and overflow evidence.",
+      "expected_values": {
+        "benchmark": "mixed_dense_q88_q1616_64x32",
+        "benchmark_contract": "canonical_q88_weight_q1616_input",
+        "language": "Rust",
+        "measurement_context.cpu_affinity": "8-9",
+        "measurement_context.runtime_cpuset_shield_claimed": false,
+        "safe_conservative_overflow_free": true,
+        "safe_required_total_bits_q1616": 21,
+        "safe_required_integer_bits_q1616": 5,
+        "safe_width_headroom_bits_q1616": 11,
+        "safe_saturation_required": false,
+        "safe_static_overflow_proven_safe": true,
+        "saturating_probe_conservative_overflow_free": false,
+        "saturating_probe_required_total_bits_q1616": 45,
+        "saturating_probe_required_integer_bits_q1616": 29,
+        "saturating_probe_width_headroom_bits_q1616": -13,
+        "saturating_probe_saturation_required": true,
+        "saturating_probe_static_overflow_proven_safe": false
+      },
+      "id": "mixed-dense-rust-q1616-width-proof",
+      "required_numbers": [
+        "iterations",
+        "repeats",
+        "median_ns_per_call",
+        "min_ns_per_call",
+        "max_ns_per_call",
+        "checksum",
+        "safe_overflow_count",
+        "safe_max_abs_bound_q1616",
+        "safe_min_headroom_q1616",
+        "saturating_probe_overflow_count",
+        "saturating_probe_max_abs_bound_q1616"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_block_floating_dense.json",
+      "description": "Block-floating Python dense proof-width, overflow, and exponent-edge evidence.",
+      "expected_values": {
+        "benchmark": "block_floating_dense_q16_64x32",
+        "language": "Python",
+        "measurement_context.cpu_affinity": [
+          8,
+          9
+        ],
+        "safe_conservative_overflow_free": true,
+        "safe_required_total_bits": 21,
+        "safe_required_integer_bits": 5,
+        "safe_width_headroom_bits": 11,
+        "safe_saturation_required": false,
+        "safe_static_overflow_proven_safe": true,
+        "saturating_probe_conservative_overflow_free": false,
+        "saturating_probe_required_total_bits": 51,
+        "saturating_probe_required_integer_bits": 35,
+        "saturating_probe_width_headroom_bits": -19,
+        "saturating_probe_saturation_required": true,
+        "saturating_probe_static_overflow_proven_safe": false,
+        "exponent_edge_sweep.safe_conservative_overflow_free": true,
+        "exponent_edge_sweep.safe_required_total_bits": 22,
+        "exponent_edge_sweep.safe_required_integer_bits": 6,
+        "exponent_edge_sweep.safe_width_headroom_bits": 10,
+        "exponent_edge_sweep.safe_saturation_required": false,
+        "exponent_edge_sweep.safe_static_overflow_proven_safe": true,
+        "exponent_edge_sweep.max_exponent_saturating_conservative_overflow_free": false,
+        "exponent_edge_sweep.max_exponent_saturating_required_total_bits": 52,
+        "exponent_edge_sweep.max_exponent_saturating_required_integer_bits": 36,
+        "exponent_edge_sweep.max_exponent_saturating_width_headroom_bits": -20,
+        "exponent_edge_sweep.max_exponent_saturating_saturation_required": true,
+        "exponent_edge_sweep.max_exponent_saturating_static_overflow_proven_safe": false
+      },
+      "id": "block-floating-python-q1616-width-proof",
+      "required_numbers": [
+        "iterations",
+        "repeats",
+        "bfp_median_ns_per_call",
+        "forward_with_overflow_median_ns_per_call",
+        "float_dot_median_ns_per_call",
+        "max_abs_error_vs_float_dot",
+        "safe_overflow_count",
+        "safe_max_abs_bound_code",
+        "safe_min_headroom_code",
+        "saturating_probe_overflow_count",
+        "saturating_probe_max_abs_bound_code",
+        "exponent_edge_sweep.safe_overflow_count",
+        "exponent_edge_sweep.safe_underflow_count",
+        "exponent_edge_sweep.safe_max_abs_bound_q1616",
+        "exponent_edge_sweep.max_exponent_saturating_overflow_count",
+        "exponent_edge_sweep.max_exponent_saturating_max_abs_bound_q1616"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_block_floating_dense.json",
+      "description": "Block-floating Rust dense proof-width, overflow, and exponent-edge evidence.",
+      "expected_values": {
+        "benchmark": "block_floating_dense_q16_64x32",
+        "language": "Rust",
+        "measurement_context.cpu_affinity": "8-9",
+        "measurement_context.runtime_cpuset_shield_claimed": false,
+        "safe_conservative_overflow_free": true,
+        "safe_required_total_bits_q1616": 21,
+        "safe_required_integer_bits_q1616": 5,
+        "safe_width_headroom_bits_q1616": 11,
+        "safe_saturation_required": false,
+        "safe_static_overflow_proven_safe": true,
+        "saturating_probe_conservative_overflow_free": false,
+        "saturating_probe_required_total_bits_q1616": 51,
+        "saturating_probe_required_integer_bits_q1616": 35,
+        "saturating_probe_width_headroom_bits_q1616": -19,
+        "saturating_probe_saturation_required": true,
+        "saturating_probe_static_overflow_proven_safe": false,
+        "exponent_edge_sweep.safe_conservative_overflow_free": true,
+        "exponent_edge_sweep.safe_required_total_bits_q1616": 22,
+        "exponent_edge_sweep.safe_required_integer_bits_q1616": 6,
+        "exponent_edge_sweep.safe_width_headroom_bits_q1616": 10,
+        "exponent_edge_sweep.safe_saturation_required": false,
+        "exponent_edge_sweep.safe_static_overflow_proven_safe": true,
+        "exponent_edge_sweep.max_exponent_saturating_conservative_overflow_free": false,
+        "exponent_edge_sweep.max_exponent_saturating_required_total_bits_q1616": 52,
+        "exponent_edge_sweep.max_exponent_saturating_required_integer_bits_q1616": 36,
+        "exponent_edge_sweep.max_exponent_saturating_width_headroom_bits_q1616": -20,
+        "exponent_edge_sweep.max_exponent_saturating_saturation_required": true,
+        "exponent_edge_sweep.max_exponent_saturating_static_overflow_proven_safe": false
+      },
+      "id": "block-floating-rust-q1616-width-proof",
+      "required_numbers": [
+        "iterations",
+        "repeats",
+        "median_ns_per_call",
+        "min_ns_per_call",
+        "max_ns_per_call",
+        "checksum",
+        "safe_overflow_count",
+        "safe_max_abs_bound_q1616",
+        "safe_min_headroom_q1616",
+        "saturating_probe_overflow_count",
+        "saturating_probe_max_abs_bound_q1616",
+        "exponent_edge_sweep.safe_overflow_count",
+        "exponent_edge_sweep.safe_underflow_count",
+        "exponent_edge_sweep.safe_max_abs_bound_q1616",
+        "exponent_edge_sweep.max_exponent_saturating_overflow_count",
+        "exponent_edge_sweep.max_exponent_saturating_max_abs_bound_q1616"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-04_precision_envelopes.json",
+      "description": "Python precision-envelope proof-width evidence for mixed and block-floating dense paths.",
+      "expected_values": {
+        "benchmark": "precision_envelope_reports_64x32",
+        "language": "Python",
+        "measurement_context.cpu_affinity": [
+          8,
+          9
+        ],
+        "mixed_conservative_overflow_free": true,
+        "mixed_required_total_bits": 19,
+        "mixed_required_integer_bits": 3,
+        "mixed_width_headroom_bits": 13,
+        "mixed_saturation_required": false,
+        "mixed_static_overflow_proven_safe": true,
+        "mixed_manifest.proof_kind": "signed_symmetric_fixed_point_width",
+        "mixed_manifest.required_total_bits": 19,
+        "mixed_manifest.required_integer_bits": 3,
+        "mixed_manifest.width_headroom_bits": 13,
+        "bfp_conservative_overflow_free": true,
+        "bfp_required_total_bits": 28,
+        "bfp_required_integer_bits": 12,
+        "bfp_width_headroom_bits": 4,
+        "bfp_saturation_required": false,
+        "bfp_static_overflow_proven_safe": true,
+        "bfp_manifest.proof_kind": "signed_symmetric_fixed_point_width",
+        "bfp_manifest.required_total_bits": 28,
+        "bfp_manifest.required_integer_bits": 12,
+        "bfp_manifest.width_headroom_bits": 4
+      },
+      "id": "precision-envelopes-python-q1616-width-proof",
+      "required_numbers": [
+        "iterations",
+        "repeats",
+        "mixed_envelope_median_ns_per_call",
+        "mixed_envelope_min_ns_per_call",
+        "mixed_envelope_max_ns_per_call",
+        "mixed_max_abs_bound_code",
+        "mixed_underflow_count",
+        "bfp_envelope_median_ns_per_call",
+        "bfp_envelope_min_ns_per_call",
+        "bfp_envelope_max_ns_per_call",
+        "bfp_max_abs_bound_code",
+        "bfp_underflow_count"
+      ]
+    },
+    {
+      "artefact": "benchmarks/results/local_rust_2026-06-04_precision_envelopes.json",
+      "description": "Rust precision-envelope proof-width evidence for mixed and block-floating dense paths.",
+      "expected_values": {
+        "benchmark": "precision_envelope_reports_64x32",
+        "language": "Rust",
+        "measurement_context.cpu_affinity": "8-9",
+        "measurement_context.runtime_cpuset_shield_claimed": false,
+        "mixed_conservative_overflow_free": true,
+        "mixed_required_total_bits_q1616": 19,
+        "mixed_required_integer_bits_q1616": 3,
+        "mixed_width_headroom_bits_q1616": 13,
+        "mixed_saturation_required": false,
+        "mixed_static_overflow_proven_safe": true,
+        "bfp_conservative_overflow_free": true,
+        "bfp_required_total_bits_q1616": 28,
+        "bfp_required_integer_bits_q1616": 12,
+        "bfp_width_headroom_bits_q1616": 4,
+        "bfp_saturation_required": false,
+        "bfp_static_overflow_proven_safe": true
+      },
+      "id": "precision-envelopes-rust-q1616-width-proof",
+      "required_numbers": [
+        "iterations",
+        "repeats",
+        "mixed_envelope_median_ns_per_call",
+        "mixed_envelope_min_ns_per_call",
+        "mixed_envelope_max_ns_per_call",
+        "mixed_max_abs_bound_q1616",
+        "mixed_underflow_count",
+        "bfp_envelope_median_ns_per_call",
+        "bfp_envelope_min_ns_per_call",
+        "bfp_envelope_max_ns_per_call",
+        "bfp_max_abs_bound_q1616",
+        "bfp_underflow_count"
+      ]
     }
-  ]
+  ],
+  "schema_version": "sc-neurocore.benchmark-regression-gates.v1"
 }

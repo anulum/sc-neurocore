@@ -1,0 +1,47 @@
+{
+  "benchmark": "ultrascale_plus_dense_folding_contract",
+  "benchmark_isolation_mode": "runtime-cpuset-shield",
+  "checksum": 0,
+  "date_utc": "2026-06-04T17:22:09Z",
+  "hardware_measurement_claimed": false,
+  "host_context": {
+    "affinity_cpu_count": 2,
+    "affinity_cpus": [
+      10,
+      11
+    ],
+    "cgroup_effective_cpuset": "10-11",
+    "load_average": [
+      3.3857421875,
+      4.1005859375,
+      3.8837890625
+    ],
+    "runtime_cpuset_shield_claimed": true
+  },
+  "iterations": 20000,
+  "language": "Python+SystemVerilog",
+  "max_ns_per_plan": 2851.8013,
+  "median_ns_per_plan": 2447.4438,
+  "min_ns_per_plan": 2167.83045,
+  "plan": {
+    "compute_cycles": 7,
+    "dsp_budget": 360,
+    "dsp_per_cycle": 320,
+    "fits_dsp_budget": true,
+    "fold_required": true,
+    "input_fold_factor": 1,
+    "input_parallelism": 64,
+    "mac_count": 2048,
+    "n_inputs": 64,
+    "n_outputs": 32,
+    "output_fold_factor": 7,
+    "output_parallelism": 5
+  },
+  "repeats": 7,
+  "yosys": {
+    "cells": 240,
+    "elapsed_ns": 1002892629,
+    "exit_code": 0,
+    "parameterisation": "N_INPUTS=8,N_NEURONS=8,PARALLEL_NEURONS=4"
+  }
+}

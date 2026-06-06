@@ -33,6 +33,7 @@ try:
         SCPNMetrics,
         BitStreamTensor,
         BrunelNetwork,
+        PySpikingControllerPool,
     )
 except ImportError:
     _core_available = False
@@ -389,6 +390,7 @@ __all__ = [
     "Izhikevich",
     "BitstreamAverager",
     "NetworkRunner",
+    "PySpikingControllerPool",
     *(_NEURON_MODELS if _neurons_available else []),
     *(_AI_MODELS if _ai_available else []),
     *(

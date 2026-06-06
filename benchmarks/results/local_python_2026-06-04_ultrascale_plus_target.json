@@ -1,0 +1,58 @@
+{
+  "benchmark": "ultrascale_plus_target_contract",
+  "benchmark_isolation_mode": "runtime-cpuset-shield",
+  "checksum": 0,
+  "date_utc": "2026-06-04T16:58:56Z",
+  "hardware_measurement_claimed": false,
+  "host_context": {
+    "affinity_cpu_count": 2,
+    "affinity_cpus": [
+      10,
+      11
+    ],
+    "cgroup_effective_cpuset": "10-11",
+    "cpu_governors_sample": {
+      "10": "powersave",
+      "11": "powersave"
+    },
+    "load_average": [
+      3.65625,
+      3.28271484375,
+      3.197265625
+    ],
+    "runtime_cpuset_shield_claimed": true
+  },
+  "iterations": 2000,
+  "language": "Python",
+  "language_surfaces": [
+    "Python",
+    "Vivado Tcl"
+  ],
+  "manifest_count": 2,
+  "max_ns_per_manifest": 139307.54575,
+  "median_ns_per_manifest": 122678.06525,
+  "min_ns_per_manifest": 107405.64075,
+  "repeats": 7,
+  "sku_baseline": {
+    "zu3eg": {
+      "bram_36k_budget": 216,
+      "dsp_budget": 360,
+      "dsp_primitive": "DSP48E2",
+      "ff_budget": 141120,
+      "lut_budget": 70560,
+      "name": "ZU3EG",
+      "part": "xczu3eg-sbva484-1-e",
+      "uram_budget": 0
+    },
+    "zu9eg": {
+      "bram_36k_budget": 912,
+      "dsp_budget": 2520,
+      "dsp_primitive": "DSP48E2",
+      "ff_budget": 548160,
+      "lut_budget": 274080,
+      "name": "ZU9EG",
+      "part": "xczu9eg-ffvb1156-2-e",
+      "uram_budget": 0
+    }
+  }
+}

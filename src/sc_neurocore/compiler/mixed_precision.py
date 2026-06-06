@@ -39,6 +39,195 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
+
+from sc_neurocore.compiler.quantizer import (
+    BlockExponentLayout,
+    BlockFloatingMode,
+    QFormat,
+    parse_precision_format,
+)
+
+
+@dataclass(frozen=True)
+class BlockFloatingPrecisionConfig:
+    """Block-floating specification for a single variable.
+
+    The emitter stores only mantissa width in the fixed datapath and carries
+    exponent metadata through a detached manifest.
+    """
+
+    mantissa_bits: int
+    exponent_bits: int
+    block_size: int
+    signed: bool = True
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.mantissa_bits, int) or isinstance(self.mantissa_bits, bool):
+            raise TypeError("mantissa_bits must be an integer")
+        if not isinstance(self.exponent_bits, int) or isinstance(self.exponent_bits, bool):
+            raise TypeError("exponent_bits must be an integer")
+        if not isinstance(self.block_size, int) or isinstance(self.block_size, bool):
+            raise TypeError("block_size must be an integer")
+        if type(self.signed) is not bool:
+            raise TypeError("signed must be a boolean")
+        if self.mantissa_bits < 2:
+            raise ValueError("mantissa_bits must be at least 2")
+        if self.exponent_bits < 1:
+            raise ValueError("exponent_bits must be at least 1")
+        if self.block_size < 1:
+            raise ValueError("block_size must be positive")
+
+    @property
+    def data_width(self) -> int:
+        """Storage width for the mantissa payload."""
+        return self.mantissa_bits
+
+    @property
+    def fraction(self) -> int:
+        """Conservative default fractional estimate.
+
+        Used for any fixed-point compatibility fallbacks.
+        """
+        return max(1, self.mantissa_bits - 1)
+
+    @property
+    def emit_fraction(self) -> int:
+        """Deterministic fraction used by compile paths that still emit Q-format RTL."""
+        return self.fraction
+
+    @property
+    def kind(self) -> str:
+        return "block_floating"
+
+    @property
+    def int_bits(self) -> int:
+        return self.mantissa_bits - 1
+
+    @property
+    def exponent_bias(self) -> int:
+        return (1 << (self.exponent_bits - 1)) - 1
+
+    @property
+    def exponent_code_min(self) -> int:
+        return 0
+
+    @property
+    def exponent_code_max(self) -> int:
+        return (1 << self.exponent_bits) - 1
+
+    @property
+    def mantissa_abs_max(self) -> int:
+        return (1 << (self.mantissa_bits - 1)) - 1
+
+    @property
+    def max_value(self) -> float:
+        return float(self.mantissa_abs_max) * (2.0**self.max_exponent)
+
+    @property
+    def min_value(self) -> float:
+        return -self.max_value
+
+    @property
+    def resolution(self) -> float:
+        return 2.0**self.min_exponent
+
+    @property
+    def q_label(self) -> str:
+        return f"BFP{self.mantissa_bits}E{self.exponent_bits}X{self.block_size}"
+
+    @property
+    def min_exponent(self) -> int:
+        return -self.exponent_bias
+
+    @property
+    def max_exponent(self) -> int:
+        return self.exponent_code_max - self.exponent_bias
+
+    @property
+    def is_block_floating(self) -> bool:
+        return True
+
+    def can_represent(self, value: float) -> bool:
+        return self.min_value <= value <= self.max_value
+
+    def encode(self, value: float) -> int:
+        del value
+        raise NotImplementedError("Block-floating encoding requires per-block exponent metadata.")
+
+    def manifest(self) -> dict[str, object]:
+        return self.manifest_for_parameter_count()
+
+    def block_exponent_count(self, parameter_count: int) -> int:
+        """Return exact shared-exponent count for a flattened parameter payload."""
+        return BlockFloatingMode(
+            self.mantissa_bits,
+            self.exponent_bits,
+            self.block_size,
+        ).block_exponent_count(parameter_count)
+
+    def block_exponent_layout(self, parameter_count: int) -> BlockExponentLayout:
+        """Return exact shared-exponent layout for downstream compiler emitters."""
+        return BlockFloatingMode(
+            self.mantissa_bits,
+            self.exponent_bits,
+            self.block_size,
+        ).block_exponent_layout(parameter_count)
+
+    def validate_exponents(
+        self,
+        exponents: np.ndarray[Any, Any],
+        *,
+        parameter_count: int,
+    ) -> np.ndarray[Any, Any]:
+        """Validate block exponent count and range before emission."""
+        return BlockFloatingMode(
+            self.mantissa_bits,
+            self.exponent_bits,
+            self.block_size,
+        ).validate_exponents(exponents, parameter_count=parameter_count)
+
+    def manifest_for_parameter_count(
+        self,
+        parameter_count: int | None = None,
+    ) -> dict[str, object]:
+        """Return metadata, optionally with a concrete exponent-vector layout."""
+        layout = (
+            self.block_exponent_layout(parameter_count) if parameter_count is not None else None
+        )
+        payload: dict[str, object] = {
+            "kind": self.kind,
+            "label": self.q_label,
+            "data_width": self.data_width,
+            "fraction": self.emit_fraction,
+            "mantissa_bits": self.mantissa_bits,
+            "exponent_bits": self.exponent_bits,
+            "block_size": self.block_size,
+            "signed": self.signed,
+            "emitted_fraction": self.emit_fraction,
+            "emitted_datapath_width": self.data_width,
+            "emitted_datapath_fraction": self.emit_fraction,
+            "exponent_stream_width": self.exponent_bits,
+            "exponent_bias": self.exponent_bias,
+            "exponent_code_range": [self.exponent_code_min, self.exponent_code_max],
+            "exponent_range": [self.min_exponent, self.max_exponent],
+            "mantissa_abs_max": self.mantissa_abs_max,
+            "minimum_quantum": self.resolution,
+            "max_abs_value": self.max_value,
+            "block_exponent_alignment": "contiguous_flattened_block",
+            "block_exponent_count": "ceil(parameter_count / block_size)",
+            "block_exponent_count_policy": "ceil(parameter_count / block_size)",
+            "exponent_vector_width": "exponent_bits * ceil(parameter_count / block_size)",
+            "datapath_contract": "fixed_mantissa_with_explicit_shared_exponent_metadata",
+        }
+        if layout is not None:
+            payload["parameter_count"] = parameter_count
+            payload["block_exponent_count"] = layout.exponent_count
+            payload["block_exponent_layout"] = layout.manifest()
+            payload["exponent_vector_width"] = self.exponent_bits * layout.exponent_count
+        return payload
 
 
 @dataclass(frozen=True)
@@ -87,7 +276,35 @@ class PrecisionConfig:
     def q_label(self) -> str:
         """Human-readable Q-format label."""
         prefix = "Q" if self.signed else "UQ"
-        return f"{prefix}{self.int_bits}.{self.fraction}"
+        integer_bits = self.data_width - self.fraction
+        return f"{prefix}{integer_bits}.{self.fraction}"
+
+    @property
+    def emit_fraction(self) -> int:
+        """Exact fraction for fixed-point emission."""
+        return self.fraction
+
+    @property
+    def kind(self) -> str:
+        return "fixed"
+
+    @property
+    def is_block_floating(self) -> bool:
+        return False
+
+    def manifest(self) -> dict[str, bool | float | int | str]:
+        return {
+            "kind": self.kind,
+            "data_width": self.data_width,
+            "fraction": self.fraction,
+            "signed": self.signed,
+            "label": self.q_label,
+            "emitted_datapath_width": self.data_width,
+            "emitted_datapath_fraction": self.emit_fraction,
+            "exponent_stream_width": 0,
+            "exponent_vector_width": 0,
+            "datapath_contract": "fixed_point_twos_complement",
+        }
 
     def can_represent(self, value: float) -> bool:
         """Check if a value fits in this format without overflow."""
@@ -105,6 +322,9 @@ class PrecisionConfig:
         return max(lo, min(hi, raw))
 
 
+PrecisionSpecLike = str | PrecisionConfig | BlockFloatingPrecisionConfig
+
+
 @dataclass
 class MixedPrecisionSpec:
     """Specification for mixed-precision compilation.
@@ -118,7 +338,7 @@ class MixedPrecisionSpec:
         Per-variable precision configuration.
     """
 
-    var_configs: dict[str, PrecisionConfig]
+    var_configs: dict[str, PrecisionConfig | BlockFloatingPrecisionConfig]
 
     @property
     def total_bits(self) -> int:
@@ -130,7 +350,7 @@ class MixedPrecisionSpec:
         """List of variable names."""
         return list(self.var_configs.keys())
 
-    def get(self, var: str) -> PrecisionConfig:
+    def get(self, var: str) -> PrecisionConfig | BlockFloatingPrecisionConfig:
         """Get the precision config for a variable.
 
         Parameters
@@ -165,19 +385,87 @@ class MixedPrecisionSpec:
         """
         lines = [f"Mixed-Precision Allocation ({self.total_bits} bits total):"]
         for var, cfg in self.var_configs.items():
+            range_text = _precision_range(cfg)
             lines.append(
                 f"  {var:12s} → {cfg.q_label:8s} ({cfg.data_width}-bit)"
-                f"  range=[{cfg.min_value:.1f}, {cfg.max_value:.1f}]"
-                f"  res={cfg.resolution:.6f}"
+                f"  range=[{range_text}]  res={cfg.resolution:.6f}"
+                f"  kind={cfg.kind}"
             )
         return "\n".join(lines)
+
+    def manifest(
+        self,
+        *,
+        parameter_counts: dict[str, int] | None = None,
+    ) -> dict[str, object]:
+        """Return deterministic per-variable precision metadata."""
+        if parameter_counts is not None:
+            unknown = sorted(set(parameter_counts) - set(self.var_configs))
+            if unknown:
+                raise KeyError(f"Unknown variable(s) in parameter_counts: {', '.join(unknown)}")
+
+        variables: dict[str, object] = {}
+        for index, (var, cfg) in enumerate(self.var_configs.items()):
+            variable_manifest: dict[str, object]
+            if isinstance(cfg, BlockFloatingPrecisionConfig):
+                parameter_count = None if parameter_counts is None else parameter_counts.get(var)
+                variable_manifest = cfg.manifest_for_parameter_count(parameter_count)
+            else:
+                variable_manifest = dict(cfg.manifest())
+            variable_manifest.update(
+                {
+                    "variable": var,
+                    "assignment_index": index,
+                    "emitter_contract_version": "mixed_precision_emitter.v1",
+                }
+            )
+            variables[var] = variable_manifest
+
+        return {
+            "kind": "mixed_precision_spec",
+            "total_bits": self.total_bits,
+            "variable_count": len(self.var_configs),
+            "variable_order": list(self.var_configs),
+            "variables": variables,
+        }
+
+
+def _precision_range(cfg: PrecisionConfig | BlockFloatingPrecisionConfig) -> str:
+    """Range descriptor shared between fixed and block formats."""
+    return f"[{cfg.min_value:.1f}, {cfg.max_value:.1f}]"
+
+
+def _parse_precision_spec(
+    spec: PrecisionSpecLike,
+) -> PrecisionConfig | BlockFloatingPrecisionConfig:
+    """Parse legacy and explicit precision specs for mixed-precision workflows."""
+    if isinstance(spec, PrecisionConfig):
+        return spec
+    if isinstance(spec, BlockFloatingPrecisionConfig):
+        return spec
+
+    parsed = parse_precision_format(spec)
+    if isinstance(parsed, BlockFloatingMode):
+        return BlockFloatingPrecisionConfig(
+            mantissa_bits=parsed.mantissa_bits,
+            exponent_bits=parsed.exponent_bits,
+            block_size=parsed.block_size,
+        )
+    if isinstance(parsed, QFormat):
+        return PrecisionConfig(
+            data_width=parsed.total_bits,
+            fraction=parsed.fraction_bits,
+            signed=True,
+        )
+
+    raise TypeError(f"Unsupported precision spec: {spec!r}")
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # Standard precision configs
 # ═══════════════════════════════════════════════════════════════════════
 
-PRECISION_PRESETS: dict[str, PrecisionConfig] = {
+PRECISION_PRESETS: dict[str, PrecisionConfig | BlockFloatingPrecisionConfig] = {
     "q17": PrecisionConfig(8, 7),
     "q44": PrecisionConfig(8, 4),
     "q88": PrecisionConfig(16, 8),
@@ -190,6 +478,7 @@ PRECISION_PRESETS: dict[str, PrecisionConfig] = {
     "q1616": PrecisionConfig(32, 16),
     "q824": PrecisionConfig(32, 24),
     "q1818": PrecisionConfig(36, 18),
+    "bfp16e3x32": BlockFloatingPrecisionConfig(16, 3, 32),
 }
 
 
@@ -275,7 +564,7 @@ def solve_precision(
     if min_resolution is None:
         min_resolution = {v: 0.01 for v in bounds}
 
-    configs: dict[str, PrecisionConfig] = {}
+    configs: dict[str, PrecisionConfig | BlockFloatingPrecisionConfig] = {}
 
     for var, (lo, hi) in bounds.items():
         int_bits = _min_bits_for_range(lo, hi, signed)
@@ -323,14 +612,14 @@ def solve_precision(
 
 
 def from_preset(
-    var_presets: dict[str, str],
+    var_presets: dict[str, PrecisionSpecLike],
 ) -> MixedPrecisionSpec:
     """Create a MixedPrecisionSpec from named presets.
 
     Parameters
     ----------
-    var_presets : dict[str, str]
-        Mapping from variable name to preset name (e.g. ``{"v": "q88", "u": "q44"}``).
+    var_presets : dict[str, str | PrecisionConfig | BlockFloatingPrecisionConfig]
+        Mapping from variable name to preset name or precision object.
 
     Returns
     -------
@@ -342,11 +631,25 @@ def from_preset(
     KeyError
         If a preset name is not found.
     """
-    configs: dict[str, PrecisionConfig] = {}
+    configs: dict[str, PrecisionConfig | BlockFloatingPrecisionConfig] = {}
     for var, preset_name in var_presets.items():
+        if isinstance(preset_name, (PrecisionConfig, BlockFloatingPrecisionConfig)):
+            configs[var] = preset_name
+            continue
+
+        if not isinstance(preset_name, str):
+            raise TypeError(f"Unsupported preset for {var!r}: {preset_name!r}")
+
+        try:
+            configs[var] = _parse_precision_spec(preset_name)
+            continue
+        except (ValueError, TypeError):
+            pass
+
         key = preset_name.lower().replace(".", "").replace("-", "").replace("_", "")
         if key not in PRECISION_PRESETS:
             available = ", ".join(sorted(PRECISION_PRESETS.keys()))
             raise KeyError(f"Unknown preset '{preset_name}'. Available: {available}")
-        configs[var] = PRECISION_PRESETS[key]
+        preset_cfg = PRECISION_PRESETS[key]
+        configs[var] = preset_cfg
     return MixedPrecisionSpec(configs)

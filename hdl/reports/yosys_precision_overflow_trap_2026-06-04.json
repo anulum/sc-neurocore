@@ -1,0 +1,36 @@
+{
+   "creator": "Yosys 0.33 (git sha1 2584903a060)",
+   "invocation": "stat -json ",
+   "modules": {
+      "\\sc_precision_overflow_trap": {
+         "num_wires":         8,
+         "num_wire_bits":     8,
+         "num_pub_wires":     6,
+         "num_pub_wire_bits": 6,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         3,
+         "num_cells_by_type": {
+            "$adff": 1,
+            "$mux": 1,
+            "$or": 1
+         }
+      }
+   },
+      "design": {
+         "num_wires":         8,
+         "num_wire_bits":     8,
+         "num_pub_wires":     6,
+         "num_pub_wire_bits": 6,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         3,
+         "num_cells_by_type": {
+            "$adff": 1,
+            "$mux": 1,
+            "$or": 1
+         }
+      }
+}

@@ -6,6 +6,11 @@ This tutorial walks through the full SC-NeuroCore pipeline: train a digit
 classifier in Python, simulate it with stochastic bitstreams (bit-exact match
 to RTL), export hardware artefacts, and optionally run FPGA tool reports.
 
+Use this tutorial as the first hardware-oriented onboarding path. It teaches
+the project’s main evidence discipline: Python results, quantised arithmetic,
+RTL, synthesis reports, and deployment claims are separate artefacts. Do not
+turn a planning estimate into a power, timing, or production-throughput claim.
+
 **Prerequisites**:
 
 - Python 3.10+, `pip install sc-neurocore scikit-learn`
