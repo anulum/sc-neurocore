@@ -56,6 +56,7 @@ from __future__ import annotations
 
 import ast
 import math
+from collections.abc import Sequence
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Any
@@ -269,6 +270,136 @@ class OverflowProofResult:
     q_max: float
     margin_lo: float
     margin_hi: float
+
+
+@dataclass(frozen=True)
+class FixedPointEnvelopeProof:
+    """Static fixed-point width proof over conservative Q-code bounds.
+
+    The proof is intended for deployment artefacts that already compute
+    conservative absolute output bounds, such as mixed Q8.8/Q16.16 and
+    block-floating dense paths.  It does not use realised output cancellation:
+    a small output value remains unsafe when the absolute product envelope
+    exceeds the signed Q-format capacity.
+    """
+
+    proof_kind: str
+    output_format: str
+    signed: bool
+    total_bits: int
+    fractional_bits: int
+    conservative_safe_bound_code: int
+    max_abs_bound_code: int
+    min_headroom_code: int
+    required_total_bits: int
+    required_integer_bits: int
+    width_headroom_bits: int
+    saturation_required: bool
+    static_overflow_proven_safe: bool
+
+    def manifest(self) -> dict[str, int | bool | str]:
+        """Return a stable JSON-serialisable proof manifest."""
+        return {
+            "proof_kind": self.proof_kind,
+            "output_format": self.output_format,
+            "signed": self.signed,
+            "total_bits": self.total_bits,
+            "fractional_bits": self.fractional_bits,
+            "conservative_safe_bound_code": self.conservative_safe_bound_code,
+            "max_abs_bound_code": self.max_abs_bound_code,
+            "min_headroom_code": self.min_headroom_code,
+            "required_total_bits": self.required_total_bits,
+            "required_integer_bits": self.required_integer_bits,
+            "width_headroom_bits": self.width_headroom_bits,
+            "saturation_required": self.saturation_required,
+            "static_overflow_proven_safe": self.static_overflow_proven_safe,
+        }
+
+
+def _required_total_bits_for_bound(abs_bound_code: int, *, signed: bool) -> int:
+    """Return the minimum total bit width needed by a non-negative code bound."""
+    if abs_bound_code <= 0:
+        return 1
+    if signed:
+        return abs_bound_code.bit_length() + 1
+    return abs_bound_code.bit_length()
+
+
+def prove_fixed_point_envelope(
+    bound_codes: Sequence[int],
+    *,
+    total_bits: int = 32,
+    fractional_bits: int = 16,
+    signed: bool = True,
+) -> FixedPointEnvelopeProof:
+    """Prove whether conservative Q-code bounds fit a fixed-point format.
+
+    Parameters
+    ----------
+    bound_codes : Sequence[int]
+        Conservative absolute output bounds in integer Q-code units.  For
+        signed formats the function accepts signed codes and proves against
+        their absolute magnitudes.  Unsigned formats reject negative codes.
+    total_bits : int
+        Total output width, including the sign bit for signed formats.
+    fractional_bits : int
+        Fractional precision bits in the Q-format.
+    signed : bool
+        Whether the target fixed-point format is signed.
+
+    Returns
+    -------
+    FixedPointEnvelopeProof
+        Fail-closed width proof and saturation requirement.
+    """
+    if total_bits <= 0:
+        raise ValueError("total_bits must be positive")
+    if fractional_bits < 0:
+        raise ValueError("fractional_bits must be non-negative")
+    if fractional_bits >= total_bits:
+        raise ValueError("fractional_bits must be smaller than total_bits")
+    if not bound_codes:
+        raise ValueError("bound_codes must contain at least one conservative bound")
+
+    normalised_bounds: list[int] = []
+    for code in bound_codes:
+        if isinstance(code, bool) or not isinstance(code, int):
+            raise TypeError("bound_codes must be integer Q-code values")
+        if not signed and code < 0:
+            raise ValueError("unsigned fixed-point envelope cannot contain negative codes")
+        normalised_bounds.append(abs(code) if signed else code)
+
+    max_abs_bound = max(normalised_bounds)
+    if signed:
+        safe_bound = (1 << (total_bits - 1)) - 1
+        integer_floor = 1
+        proof_kind = "signed_symmetric_fixed_point_width"
+    else:
+        safe_bound = (1 << total_bits) - 1
+        integer_floor = 0
+        proof_kind = "unsigned_fixed_point_width"
+
+    required_total = _required_total_bits_for_bound(max_abs_bound, signed=signed)
+    required_integer = max(required_total - fractional_bits, integer_floor)
+    width_headroom = total_bits - required_total
+    saturation_required = max_abs_bound > safe_bound
+    output_format = f"Q{total_bits - fractional_bits}.{fractional_bits}"
+
+    return FixedPointEnvelopeProof(
+        proof_kind=proof_kind,
+        output_format=output_format,
+        signed=signed,
+        total_bits=total_bits,
+        fractional_bits=fractional_bits,
+        conservative_safe_bound_code=safe_bound,
+        max_abs_bound_code=max_abs_bound,
+        min_headroom_code=safe_bound - max_abs_bound,
+        required_total_bits=required_total,
+        required_integer_bits=required_integer,
+        width_headroom_bits=width_headroom,
+        saturation_required=saturation_required,
+        static_overflow_proven_safe=not saturation_required,
+    )
 
 
 def prove_no_overflow(

@@ -9,6 +9,20 @@
 
 This page is the maintained entry point for the public API reference. It avoids duplicating generated module listings so stale modules do not remain visible after code moves. New users should start with the Core Runtime section, then move to Compiler/Hardware or Training/Interop only when their workflow needs those surfaces.
 
+## API selection rule
+
+Use the smallest public surface that proves the workflow:
+
+- for base package work, import from `sc_neurocore`, `neurons`, `synapses`,
+  `layers`, `sources`, `recorders`, `compiler`, `hdl_gen`, or documented API
+  pages below;
+- for optional paths, install the matching extra first and keep the dependency
+  boundary in the report;
+- for source-only research modules, work from a checkout and do not imply that
+  the module ships in the base wheel;
+- for hardware, benchmarks, or industrial claims, pair the API call with the
+  generated manifest, raw benchmark artefact, or evidence bag.
+
 ## Full Generated Reference
 
 - [Full package reference](../API_REFERENCE.md) — generated from

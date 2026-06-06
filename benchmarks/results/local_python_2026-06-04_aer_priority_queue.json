@@ -1,0 +1,44 @@
+{
+  "backpressure_rejections": 100,
+  "benchmark": "aer_priority_queue_backpressure_contract",
+  "benchmark_isolation_mode": "runtime-cpuset-shield",
+  "deadline_traps": 100,
+  "events": 4096,
+  "fifo_tie_violations": 0,
+  "hardware_measurement_claimed": false,
+  "host_context": {
+    "cgroup_cpuset": "10-11",
+    "cgroup_effective_cpuset": "10-11",
+    "cgroup_path": "benchmark.slice/run-u6739341.service",
+    "cpu0_frequency_khz": 4600000,
+    "cpu0_governor": "powersave",
+    "cpu_affinity": [
+      10,
+      11
+    ],
+    "kernel_isolated_core_claimed": false,
+    "kernel_isolated_cpus": "",
+    "kernel_nohz_full_cpus": "(null)",
+    "load_average_after": [
+      4.55126953125,
+      4.4033203125,
+      4.23388671875
+    ],
+    "load_average_before": [
+      4.85107421875,
+      4.44384765625,
+      4.24072265625
+    ],
+    "runtime_cpuset_shield_claimed": true
+  },
+  "language": "Python+SystemVerilog",
+  "median_ns_per_event": 4137.5712890625,
+  "priority_violations": 0,
+  "repeats": 100,
+  "yosys": {
+    "available": true,
+    "cell_count": 6364,
+    "elapsed_ns": 2925590809,
+    "exit_code": 0
+  }
+}

@@ -160,6 +160,197 @@ verilog = neuron.to_verilog(
 )
 ```
 
+## Block-Floating Pilot via quantizer API
+
+Quantizer and adaptive-precision surfaces also parse block-floating formats such as
+`BFP16E3X32`:
+
+```python
+from sc_neurocore.compiler.quantizer import (
+    quantize_block_floating,
+    dequantize_block_floating,
+)
+
+weights = np.array([[0.1, 0.2], [0.3, 0.4]])
+q, exponents = quantize_block_floating(weights, fmt="BFP16E3X32")
+restored = dequantize_block_floating(q, exponents, fmt="BFP16E3X32")
+```
+
+In this codepath, adaptive precision emits manifest metadata (`mantissa_bits`,
+`exponent_bits`, `block_size`) alongside fixed-point datapath emission.  The
+biased exponent range uses every representable exponent code; for
+`BFP16E3X32`, exponent bias is `3`, exponent codes are `[0, 7]`, and the
+unbiased range is `[-3, +4]`.  The compiler manifest also records the maximum
+signed mantissa magnitude `32767`, minimum quantum `0.125`, maximum absolute
+value `524272.0`, and the contiguous flattened block-alignment rule that
+downstream emitters must preserve.
+
+### Block-Floating Dense Deployment Path
+
+Dense layers can be compiled into block-floating weights with fixed-point
+Q16.16 inputs and saturated Q16.16 outputs:
+
+```python
+from sc_neurocore.compiler.quantizer import compile_dense_block_floating
+
+compiled = compile_dense_block_floating(weights, fmt="BFP16E3X32")
+outputs_q1616, overflow = compiled.forward_with_overflow(inputs)
+```
+
+This path is wired across the same deployment surfaces as the mixed fixed-point
+path:
+
+- Python: `CompiledBlockFloatingDense` stores mantissas, shared exponents,
+  reconstructed deployment weights, Q16.16 output saturation, and manifests.
+- Rust: `sc_neurocore_engine::ir::qformat::block_floating_dense_q16` mirrors the
+  shared-exponent integer MAC, shape validation, mantissa/exponent bounds, and
+  saturation behaviour.
+- HDL: `hdl/sc_block_floating_dense.v` provides a synchronous RTL reference
+  with explicit dynamic exponent shifts, per-output overflow telemetry,
+  per-output conservative absolute-bound telemetry (`abs_bounds_q1616`),
+  aggregate overflow, and saturated Q16.16 outputs.
+
+Benchmark and synthesis evidence from 2026-06-04 is committed under
+`benchmarks/results/local_python_2026-06-04_block_floating_dense.json`,
+`benchmarks/results/local_rust_2026-06-04_block_floating_dense.json`, and
+`hdl/reports/yosys_block_floating_dense_2026-06-04.json`.
+
+The block-floating HDL `overflow_vector` uses the same lane convention as the
+mixed fixed-point dense path: bit `i` identifies output channel `i`, and the
+aggregate `overflow` line is asserted when any channel saturates.
+`abs_bounds_q1616[i]` is the unsigned conservative absolute Q16.16 bound for
+the same output channel and is intentionally nonzero for cancellation cases
+where the realised saturated output is zero.
+
+## Mixed Q8.8 / Q16.16 Weight-Accumulator Contract
+
+The quantiser also exposes the mixed fixed-point contract used by hardware
+compiler paths that keep stored weights compact while widening the accumulation
+datapath:
+
+```python
+from sc_neurocore.compiler.quantizer import (
+    QFormatMixed,
+    dequantize_weights,
+    quantize_weights,
+)
+
+fmt = QFormatMixed()  # Q8.8 weights, Q16.16 accumulator, per-tensor scale
+q_weights, tensor_scale = quantize_weights(weights, fmt=fmt)
+restored = dequantize_weights(q_weights, fmt=fmt, scale=tensor_scale)
+```
+
+For `QFormatMixed`, `quantize_weights` returns both the stored integer tensor and
+the scale multiplier required to reconstruct the original values.  The default
+path maximises the Q8.8 integer dynamic range per tensor and carries the
+deterministic scale metadata needed by the wider Q16.16 accumulator path.  Set
+`scale_per_tensor=False` only when the canonical Q8.8 scale must be preserved
+exactly for legacy parity.
+
+### Mixed Dense Deployment Path
+
+Dense layers can be compiled into the same mixed contract directly:
+
+```python
+from sc_neurocore.compiler.quantizer import QFormatMixed, compile_dense_mixed_precision
+
+compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed())
+outputs_q1616, overflow = compiled.forward_with_overflow(inputs)
+```
+
+This path is wired across three implementation surfaces:
+
+- Python: `CompiledMixedDense` stores Q8.8 weights, Q16.16 accumulator metadata,
+  exact signed saturation, and deterministic deployment manifests.
+- Rust: `sc_neurocore_engine::ir::qformat::mixed_dense_q88_q1616` mirrors the
+  canonical integer MAC, arithmetic shift, shape validation, and saturation
+  behaviour.
+- HDL: `hdl/sc_mixed_precision_dense.v` provides a synchronous RTL reference
+  with per-output overflow telemetry, per-output conservative absolute-bound
+  telemetry (`abs_bounds_q1616`), aggregate overflow, and saturated Q16.16
+  outputs.
+
+Benchmark and synthesis evidence from 2026-06-04 is committed under
+`benchmarks/results/local_python_2026-06-04_mixed_dense.json`,
+`benchmarks/results/local_rust_2026-06-04_mixed_dense.json`, and
+`hdl/reports/yosys_mixed_precision_dense_2026-06-04.json`.
+
+The HDL `overflow_vector` is lane-aligned with the Python/Rust overflow masks:
+bit `i` is asserted only when output channel `i` saturates to the signed Q16.16
+minimum or maximum code.  The aggregate `overflow` output is the OR of that
+vector for consumers that only need a single anomaly line.
+The HDL `abs_bounds_q1616` vector uses the same lane order and carries unsigned
+64-bit conservative absolute Q16.16 bounds, matching the Python
+`PrecisionEnvelopeReport.abs_bound_codes` and Rust `abs_bounds_q1616` telemetry.
+
+For live hardware deployments, the same Q8.8, Q16.16, and block-floating
+encoded words can be placed behind `MMIOUpdateSpec` parameter banks instead of
+being hardcoded into logic. The control window stages `bank_select`,
+`entry_index`, `write_data_lo`, and optional `write_data_hi`, then commits with
+one `update_valid|commit` write. This keeps precision updates reproducible and
+lets a controller adjust weights or phase-coupling parameters without a new
+FPGA synthesis run.
+
+### Precision Trap Reports and Hardware Latch
+
+Both compiled dense deployment paths expose a trap report method that turns
+transient overflow flags into deterministic telemetry:
+
+```python
+report = compiled.precision_trap_report(inputs)
+assert report.manifest()["overflow_count"] == 0
+```
+
+The report records the output format, output count, overflow count, and whether
+saturation reached the minimum or maximum representable code.  Use this host
+report when validating a weight package before deployment or when comparing
+hardware telemetry against the Python reference.
+
+The Rust mirror exposes the same contract through
+`MixedDenseResult::precision_trap_report()`, including the exact
+`overflow_count` generated during the saturating integer MAC.  The HDL side
+provides `hdl/sc_precision_overflow_trap.v`, a synchronous sticky latch for the
+overflow lines emitted by `sc_mixed_precision_dense` and
+`sc_block_floating_dense`.  `clear_trap` is host-controlled and dominates a
+concurrent overflow pulse, so software can acknowledge an anomaly without a
+stale vector immediately reappearing in the same cycle.
+
+Trap benchmark and synthesis evidence from 2026-06-04 is committed under
+`benchmarks/results/local_python_2026-06-04_precision_traps.json`,
+`benchmarks/results/local_rust_2026-06-04_precision_traps.json`, and
+`hdl/reports/yosys_precision_overflow_trap_2026-06-04.json`.
+
+### Precision Envelope Reports and Predeployment Guard
+
+Trap reports describe what saturated after an operation.  Envelope reports add
+a conservative predeployment bound for the same workload:
+
+```python
+report = compiled.precision_envelope_report(inputs)
+if not report.conservative_overflow_free:
+    raise ValueError("compiled dense workload exceeds the signed output envelope")
+```
+
+The envelope report stores the realised saturated output codes, the realised
+overflow mask, and a per-output absolute bound in output-format integer codes.
+`observed_overflow_free` answers whether this exact input vector saturated.
+`conservative_overflow_free` answers whether the absolute-product envelope is
+inside the symmetric signed output range, so cancellation in one workload cannot
+hide a dangerous weight/input package.
+
+The Rust mirror exposes the same summary through
+`MixedDenseResult::precision_envelope_report()`.  The dense HDL references also
+export per-output `abs_bounds_q1616` lanes so firmware can compare hardware
+runtime telemetry against Python/Rust envelope reports without reconstructing
+the MAC offline.  The HDL side additionally provides
+`hdl/sc_precision_envelope_guard.v`, a synchronous per-output guard that checks
+absolute bounds against the output Q-domain and reports a violation vector.
+
+Envelope benchmark and synthesis evidence from 2026-06-04 is committed under
+`benchmarks/results/local_python_2026-06-04_precision_envelopes.json`,
+`benchmarks/results/local_rust_2026-06-04_precision_envelopes.json`, and
+`hdl/reports/yosys_precision_envelope_guard_2026-06-04.json`.
+
 ## CLI Usage
 
 ### Compiling with Precision Selection

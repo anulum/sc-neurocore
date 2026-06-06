@@ -20,7 +20,9 @@ verified state-transfer protocol before it can claim numerical equivalence.
 
 Supports all Q-format combinations available in the precision presets:
 Q1.7, Q4.4, Q8.8, Q4.12, Q1.15, Q9.9, Q12.12, Q14.13, Q20.12, Q16.16,
-Q8.24, Q18.18, plus arbitrary custom (data_width, fraction) pairs.
+Q8.24, Q18.18, plus block-floating formats (for metadata and parameter
+precision planning, e.g. BFP16E3X32), plus arbitrary custom
+(data_width, fraction) pairs.
 
 Usage::
 
@@ -46,9 +48,14 @@ Usage::
 
 from __future__ import annotations
 
+import json
+import math
+from typing import Any
+
 from ..hdl_gen._ident import sanitize_ident
 from ..neurons.equation_builder import EquationNeuron
 from .equation_compiler import Q88, compile_to_verilog
+from .quantizer import BlockFloatingMode, QFormat, parse_precision_format
 
 # All valid LP/HP pair presets — any (data_width, fraction) pair is valid,
 # but these are the canonical presets from PRECISION_PRESETS
@@ -72,6 +79,159 @@ PRECISION_PAIRS: list[tuple[tuple[int, int], tuple[int, int]]] = [
 ]
 
 
+def _precision_label(parsed: QFormat | BlockFloatingMode, *, source: str) -> str:
+    """Return a deterministic textual label for telemetry."""
+    if isinstance(parsed, QFormat):
+        return f"Q{parsed.integer_bits}.{parsed.fraction_bits}"
+
+    label = parsed.label
+    if source.upper().endswith(f"X{parsed.block_size}"):
+        return label
+    return f"{label}X{parsed.block_size}"
+
+
+def _precision_manifest(
+    parsed: QFormat | BlockFloatingMode,
+    source: str,
+    resolved_width: int,
+    emitted_fraction: int,
+    *,
+    kind: str,
+    parameter_count: int | None = None,
+) -> dict[str, Any]:
+    """Build deterministic metadata for precision contracts."""
+    if isinstance(parsed, QFormat):
+        if parameter_count is not None:
+            raise ValueError("parameter_count metadata is only valid for block-floating precision")
+        return {
+            "kind": kind,
+            "source": source,
+            "label": f"Q{parsed.integer_bits}.{parsed.fraction_bits}",
+            "data_width": resolved_width,
+            "fraction": parsed.fraction_bits,
+            "signed": True,
+            "emitted_fraction": emitted_fraction,
+            "emitted_datapath_width": resolved_width,
+            "emitted_datapath_fraction": emitted_fraction,
+            "exponent_stream_width": 0,
+            "exponent_vector_width": 0,
+            "datapath_contract": "fixed_point_twos_complement",
+            "emitter_contract_version": "adaptive_precision_emitter.v1",
+        }
+
+    metadata: dict[str, Any] = dict(parsed.metadata)
+    metadata.update(
+        {
+            "kind": kind,
+            "source": source,
+            "label": _precision_label(parsed, source=source),
+            "data_width": resolved_width,
+            "fraction": emitted_fraction,
+            "signed": True,
+            "emitted_fraction": emitted_fraction,
+            "emitted_datapath_width": resolved_width,
+            "emitted_datapath_fraction": emitted_fraction,
+            "emitted_datapath_contract": (
+                "mantissa_width_fixed_datapath_with_detached_shared_exponent_stream"
+            ),
+            "exponent_stream_width": parsed.exponent_bits,
+            "exponent_bias": parsed.exponent_bias,
+            "exponent_code_range": [0, (1 << parsed.exponent_bits) - 1],
+            "mantissa_abs_max": parsed.mantissa_range,
+            "minimum_quantum": 2.0**parsed.min_exponent,
+            "max_abs_value": float(parsed.mantissa_range) * (2.0**parsed.max_exponent),
+            "block_exponent_alignment": "contiguous_flattened_block",
+            "block_exponent_count": "ceil(parameter_count / block_size)",
+            "block_exponent_count_policy": "ceil(parameter_count / block_size)",
+            "exponent_vector_width": "exponent_bits * ceil(parameter_count / block_size)",
+            "datapath_contract": "fixed_mantissa_with_explicit_shared_exponent_metadata",
+            "bfp_emission_status": "metadata_only_until_target_bfp_datapath_selection",
+            "emitter_contract_version": "adaptive_precision_emitter.v1",
+        }
+    )
+    if parameter_count is not None:
+        layout = parsed.block_exponent_layout(parameter_count)
+        metadata.update(
+            {
+                "parameter_count": parameter_count,
+                "block_exponent_count": layout.exponent_count,
+                "block_exponent_layout": layout.manifest(),
+                "exponent_vector_width": parsed.exponent_bits * layout.exponent_count,
+            }
+        )
+    return metadata
+
+
+def _coerce_precision(
+    precision: str | None,
+    *,
+    default_width: int,
+    default_frac: int,
+    tag: str,
+    parameter_count: int | None = None,
+) -> tuple[int, int, str, dict[str, Any], QFormat | BlockFloatingMode]:
+    """Resolve concrete fixed-point datapath parameters and telemetry metadata."""
+    if precision is None:
+        q = QFormat(default_width - default_frac, default_frac)
+        return (
+            default_width,
+            default_frac,
+            q.q_label,
+            _precision_manifest(
+                q,
+                source=f"{tag}:fallback",
+                resolved_width=default_width,
+                emitted_fraction=default_frac,
+                kind="fixed",
+                parameter_count=parameter_count,
+            ),
+            q,
+        )
+
+    try:
+        parsed = parse_precision_format(precision)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"{tag} precision must be a fixed Q-format or block-floating format"
+        ) from exc
+    if isinstance(parsed, QFormat):
+        width = parsed.total_bits
+        fraction = parsed.fraction_bits
+        return (
+            width,
+            fraction,
+            _precision_label(parsed, source=precision),
+            _precision_manifest(
+                parsed,
+                source=precision,
+                resolved_width=width,
+                emitted_fraction=fraction,
+                kind="fixed",
+                parameter_count=parameter_count,
+            ),
+            parsed,
+        )
+
+    # Block-floating is emitted as mantissa-width fixed datapath with
+    # deterministic block metadata for parity tooling.
+    width = parsed.mantissa_bits
+    fraction = parsed.emit_fraction
+    return (
+        width,
+        fraction,
+        _precision_label(parsed, source=precision),
+        _precision_manifest(
+            parsed,
+            source=precision,
+            resolved_width=width,
+            emitted_fraction=fraction,
+            kind="block_floating",
+            parameter_count=parameter_count,
+        ),
+        parsed,
+    )
+
+
 def _validate_lp_hp(lp_width: int, lp_frac: int, hp_width: int, hp_frac: int) -> None:
     """Validate that the LP/HP pair is sensible."""
     if lp_width >= hp_width:
@@ -86,6 +246,34 @@ def _validate_lp_hp(lp_width: int, lp_frac: int, hp_width: int, hp_frac: int) ->
         raise ValueError(f"LP data_width ({lp_width}) must be >= 2")
 
 
+def _validate_hysteresis(
+    threshold_up_pct: float,
+    threshold_down_pct: float,
+    max_lp_code: int,
+) -> None:
+    """Validate adaptive-precision hysteresis thresholds.
+
+    HP must engage above the lower threshold and release below the lower
+    threshold with a strict separation. The thresholds are expected to satisfy:
+    0 < threshold_down_pct < threshold_up_pct < 1.
+    """
+    if not math.isfinite(threshold_up_pct) or not math.isfinite(threshold_down_pct):
+        raise ValueError("Threshold percentages must be finite")
+
+    if not (0.0 < threshold_up_pct < 1.0):
+        raise ValueError("threshold_up_pct must satisfy 0 < threshold_up_pct < 1")
+
+    if not (0.0 < threshold_down_pct < threshold_up_pct):
+        raise ValueError(
+            "threshold_down_pct must satisfy 0 < threshold_down_pct < threshold_up_pct"
+        )
+
+    quantized_up = int(threshold_up_pct * max_lp_code)
+    quantized_down = int(threshold_down_pct * max_lp_code)
+    if not (1 <= quantized_down < quantized_up < max_lp_code):
+        raise ValueError("Quantised threshold codes must satisfy 1 <= down < up < max_lp_code")
+
+
 def compile_adaptive_precision(
     neuron: EquationNeuron,
     module_name: str = "sc_adaptive_neuron",
@@ -94,6 +282,10 @@ def compile_adaptive_precision(
     hp_width: int = 32,
     hp_frac: int = 16,
     *,
+    lp_precision: str | None = None,
+    hp_precision: str | None = None,
+    lp_parameter_count: int | None = None,
+    hp_parameter_count: int | None = None,
     threshold_up_pct: float = 0.8,
     threshold_down_pct: float = 0.5,
     signed: bool = True,
@@ -119,6 +311,16 @@ def compile_adaptive_precision(
         High-precision total bit width (default 32).
     hp_frac : int
         High-precision fractional bits (default 16).
+    lp_precision : str | None
+        Optional LP precision string, e.g. ``Q8.8`` or ``BFP16E3X32``.
+        If provided, ``lp_width`` and ``lp_frac`` are ignored for LP datapath.
+    hp_precision : str | None
+        Optional HP precision string, e.g. ``Q16.16`` or ``BFP20E4X32``.
+        If provided, ``hp_width`` and ``hp_frac`` are ignored for HP datapath.
+    lp_parameter_count : int | None
+        Optional flattened LP parameter count for block-exponent metadata.
+    hp_parameter_count : int | None
+        Optional flattened HP parameter count for block-exponent metadata.
     threshold_up_pct : float
         Fraction of LP range at which to switch to HP (default 0.8).
     threshold_down_pct : float
@@ -135,6 +337,21 @@ def compile_adaptive_precision(
     str
         Synthesisable Verilog source with HP-authoritative dual datapaths.
     """
+    lp_width, lp_frac, lp_q_label, lp_metadata, lp_precision_obj = _coerce_precision(
+        lp_precision,
+        default_width=lp_width,
+        default_frac=lp_frac,
+        tag="lp",
+        parameter_count=lp_parameter_count,
+    )
+    hp_width, hp_frac, hp_q_label, hp_metadata, hp_precision_obj = _coerce_precision(
+        hp_precision,
+        default_width=hp_width,
+        default_frac=hp_frac,
+        tag="hp",
+        parameter_count=hp_parameter_count,
+    )
+
     _validate_lp_hp(lp_width, lp_frac, hp_width, hp_frac)
 
     # Generate both datapaths as inner modules
@@ -161,9 +378,13 @@ def compile_adaptive_precision(
         rounding=rounding,
     )
 
-    # Compute hysteresis thresholds
     q_lp = Q88(data_width=lp_width, fraction=lp_frac, signed=signed)
     max_q = int(q_lp.max_value * (1 << lp_frac))
+    _validate_hysteresis(
+        threshold_up_pct=threshold_up_pct,
+        threshold_down_pct=threshold_down_pct,
+        max_lp_code=max_q,
+    )
     thresh_up = int(threshold_up_pct * max_q)
     thresh_down = int(threshold_down_pct * max_q)
 
@@ -172,9 +393,6 @@ def compile_adaptive_precision(
     state_vars = list(neuron.equations.keys())
     primary_var = state_vars[0]  # typically 'v'
     safe_primary = sanitize_ident(primary_var, context="state variable")
-
-    lp_q_label = f"Q{lp_width - lp_frac - 1}.{lp_frac}"
-    hp_q_label = f"Q{hp_width - hp_frac - 1}.{hp_frac}"
 
     lines: list[str] = []
 
@@ -202,6 +420,32 @@ def compile_adaptive_precision(
     lines.append(
         f"// Hysteresis: switch-up at {threshold_up_pct * 100:.0f}% "
         f"of LP range, switch-down at {threshold_down_pct * 100:.0f}%"
+    )
+    lines.append(
+        "// Meta: "
+        f"lp_precision={lp_precision_obj.__class__.__name__}, "
+        f"hp_precision={hp_precision_obj.__class__.__name__}"
+    )
+    lines.append(
+        "// SC-NeuroCore Adaptive Precision Manifest: "
+        + json.dumps(
+            {
+                "schema_version": "1.0",
+                "kind": "adaptive_precision_v1",
+                "emitter_contract_version": "adaptive_precision_emitter.v1",
+                "module_name": safe_name,
+                "primary_variable": primary_var,
+                "threshold_up_pct": threshold_up_pct,
+                "threshold_down_pct": threshold_down_pct,
+                "signed": signed,
+                "overflow": overflow,
+                "rounding": rounding,
+                "lp_precision": lp_metadata,
+                "hp_precision": hp_metadata,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
     )
     lines.append("`timescale 1ns / 1ps")
     lines.append("")

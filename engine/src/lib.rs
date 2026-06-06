@@ -62,6 +62,7 @@ pub mod rk4_neurons;
 pub mod scpn;
 pub mod simd;
 pub mod sobol;
+pub mod supervisor;
 pub mod synapses;
 pub mod wilson_cowan;
 pub mod wong_wang;
@@ -636,6 +637,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyLapicqueNeuron>()?;
     pyo3_neurons::register_neuron_classes(m)?;
     m.add_class::<PyNetworkRunner>()?;
+    m.add_class::<supervisor::PySpikingControllerPool>()?;
     m.add_function(wrap_pyfunction!(py_simulate_ei_network, m)?)?;
     m.add_function(wrap_pyfunction!(py_batch_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(rk4_neurons::py_rk4_neuron_simulate, m)?)?;

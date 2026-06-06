@@ -17,11 +17,20 @@
 //! - Internal wiring for all intermediate values
 
 use crate::ir::graph::*;
+use crate::ir::sv_target::{ResourceReport, SvTarget};
 
 /// Emit a synthesizable SystemVerilog module from an SC graph.
 ///
 /// The graph should pass `verify::verify()` before emission.
 pub fn emit(graph: &ScGraph) -> Result<String, String> {
+    emit_systemverilog_with_target(graph, SvTarget::Generic).map(|(systemverilog, _)| systemverilog)
+}
+
+/// Emit a synthesizable SystemVerilog module and a resource estimate for a target.
+pub fn emit_systemverilog_with_target(
+    graph: &ScGraph,
+    target: SvTarget,
+) -> Result<(String, ResourceReport), String> {
     let mut sv = String::new();
 
     // Header
@@ -31,6 +40,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
          // Do not edit — regenerate from IR source.\n\n",
         graph.name
     ));
+    sv.push_str(&target.header_comment());
     sv.push_str("`timescale 1ns / 1ps\n\n");
 
     // Module declaration
@@ -70,7 +80,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
     for op in &graph.ops {
         match op {
             ScOp::Input { .. } | ScOp::Output { .. } => {}
-            ScOp::Constant { id, value, .. } => emit_constant(&mut sv, *id, value),
+            ScOp::Constant { id, value, .. } => emit_constant(&mut sv, *id, value, &target),
             ScOp::Encode { id, .. } => {
                 sv.push_str(&format!("    wire v{};\n", id.0));
             }
@@ -92,6 +102,21 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                 sv.push_str(&format!(
                     "    wire [{}:0] v{}_spikes;\n    wire v{}_running;\n    wire v{}_done;\n",
                     params.n_neurons - 1,
+                    id.0,
+                    id.0,
+                    id.0
+                ));
+            }
+            ScOp::DclsLayer { id, params, .. } => {
+                sv.push_str(&format!(
+                    "    wire signed [{}:0] v{};\n\
+                     \x20   wire signed [31:0] v{}_accumulator_q16_16;\n\
+                     \x20   wire v{}_valid;\n\
+                     \x20   wire v{}_overflow;\n\
+                     \x20   wire v{}_invalid_sigma;\n",
+                    params.data_width - 1,
+                    id.0,
+                    id.0,
                     id.0,
                     id.0,
                     id.0
@@ -170,6 +195,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                 let leak_wire = value_to_wire(graph, *leak);
                 let gain_wire = value_to_wire(graph, *gain);
                 let noise_wire = value_to_wire(graph, *noise);
+                emit_target_dsp_attribute(&mut sv, &target);
                 sv.push_str(&format!(
                     "    sc_lif_neuron #(\n\
                      \x20       .DATA_WIDTH({}),\n\
@@ -216,6 +242,8 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                 let weights_wire = value_to_wire(graph, *weights);
                 let leak_wire = value_to_wire(graph, *leak);
                 let gain_wire = value_to_wire(graph, *gain);
+                emit_dense_fold_plan_comment(&mut sv, &target, params);
+                emit_target_dsp_attribute(&mut sv, &target);
                 sv.push_str(&format!(
                     "    sc_dense_layer_core #(\n\
                      \x20       .N_INPUTS({}),\n\
@@ -247,6 +275,69 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                     weights_wire,
                     leak_wire,
                     gain_wire,
+                    id.0,
+                    id.0,
+                    id.0
+                ));
+                inst_idx += 1;
+            }
+            ScOp::DclsLayer {
+                id,
+                spike,
+                weights,
+                centre,
+                sigma,
+                params,
+            } => {
+                if params.tap_offsets.len() != params.n_taps {
+                    return Err(format!(
+                        "DclsLayer (v{}) expected {} tap offsets, got {}",
+                        id.0,
+                        params.n_taps,
+                        params.tap_offsets.len()
+                    ));
+                }
+                let spike_wire = value_to_wire(graph, *spike);
+                let weights_wire = value_to_wire(graph, *weights);
+                let centre_wire = value_to_wire(graph, *centre);
+                let sigma_wire = value_to_wire(graph, *sigma);
+                let tap_offsets = emit_concat_u32(&params.tap_offsets, params.ptr_width)?;
+                emit_target_dsp_attribute(&mut sv, &target);
+                sv.push_str(&format!(
+                    "    sc_dcls_layer_core #(\n\
+                     \x20       .N_TAPS({}),\n\
+                     \x20       .DATA_WIDTH({}),\n\
+                     \x20       .FRACTION({}),\n\
+                     \x20       .DELAY_DEPTH({}),\n\
+                     \x20       .PTR_WIDTH({})\n\
+                     \x20   ) u_dcls_{} (\n\
+                     \x20       .clk(clk),\n\
+                     \x20       .rst_n(rst_n),\n\
+                     \x20       .in_valid(1'b1),\n\
+                     \x20       .spike_in({}),\n\
+                     \x20       .tap_offsets({}),\n\
+                     \x20       .tap_weights_q88({}),\n\
+                     \x20       .centre_q88({}),\n\
+                     \x20       .sigma_q88({}),\n\
+                     \x20       .out_valid(v{}_valid),\n\
+                     \x20       .weighted_sum_q88(v{}),\n\
+                     \x20       .accumulator_q16_16(v{}_accumulator_q16_16),\n\
+                     \x20       .overflow(v{}_overflow),\n\
+                     \x20       .invalid_sigma(v{}_invalid_sigma)\n\
+                     \x20   );\n\n",
+                    params.n_taps,
+                    params.data_width,
+                    params.fraction,
+                    params.delay_depth,
+                    params.ptr_width,
+                    inst_idx,
+                    spike_wire,
+                    tap_offsets,
+                    weights_wire,
+                    centre_wire,
+                    sigma_wire,
+                    id.0,
+                    id.0,
                     id.0,
                     id.0,
                     id.0
@@ -344,7 +435,8 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
     }
 
     sv.push_str("\nendmodule\n");
-    Ok(sv)
+    let report = target.estimate_graph(graph);
+    Ok((sv, report))
 }
 
 fn type_to_width(ty: &ScType) -> usize {
@@ -361,6 +453,7 @@ fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
                 ScOp::Popcount { .. } | ScOp::Reduce { .. } => 64,
                 ScOp::LifStep { params, .. } => params.data_width as usize,
                 ScOp::DenseForward { params, .. } => params.n_neurons,
+                ScOp::DclsLayer { params, .. } => params.data_width as usize,
                 ScOp::GraphForward { n_features, .. } => *n_features,
                 ScOp::SoftmaxAttention { .. }
                 | ScOp::KuramotoStep { .. }
@@ -389,7 +482,61 @@ fn value_to_wire(graph: &ScGraph, id: ValueId) -> String {
     format!("v{}", id.0)
 }
 
-fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst) {
+fn emit_concat_u32(values: &[u32], width: u32) -> Result<String, String> {
+    if width == 0 {
+        return Err("packed unsigned concatenation width must be positive".to_string());
+    }
+    let max_value = if width >= 32 {
+        u32::MAX
+    } else {
+        (1_u32 << width) - 1
+    };
+    let mut fields = Vec::with_capacity(values.len());
+    for value in values.iter().rev() {
+        if *value > max_value {
+            return Err(format!(
+                "packed unsigned value {} exceeds {}-bit field",
+                value, width
+            ));
+        }
+        fields.push(format!("{}'d{}", width, value));
+    }
+    Ok(format!("{{{}}}", fields.join(", ")))
+}
+
+fn emit_target_dsp_attribute(sv: &mut String, target: &SvTarget) {
+    if let Some(attribute) = target.dsp_attribute() {
+        sv.push_str("    ");
+        sv.push_str(attribute);
+        sv.push('\n');
+    }
+}
+
+fn emit_dense_fold_plan_comment(sv: &mut String, target: &SvTarget, params: &DenseParams) {
+    let Some(plan) = target.dense_fold_plan(params.n_inputs, params.n_neurons) else {
+        return;
+    };
+    if !plan.fold_required {
+        return;
+    }
+    sv.push_str(&format!(
+        "    // Dense fold plan: unfurled_macs={}, dsp_budget={}, dsp_per_cycle={}, output_parallelism={}, input_parallelism={}, compute_cycles={}\n",
+        plan.mac_count,
+        plan.dsp_budget,
+        plan.dsp_per_cycle,
+        plan.output_parallelism,
+        plan.input_parallelism,
+        plan.compute_cycles
+    ));
+}
+
+fn emit_ram_style_attribute(sv: &mut String, target: &SvTarget, bits: u64) {
+    if let Some(style) = target.ram_style_for_bits(bits) {
+        sv.push_str(&format!("    (* ram_style = \"{}\" *)\n", style));
+    }
+}
+
+fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst, target: &SvTarget) {
     match value {
         ScConst::F64(v) => {
             let fp = (*v * 256.0) as i64; // Q8.8
@@ -413,6 +560,7 @@ fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst) {
                 sv.push_str(&format!("    wire [0:0] c{};\n", id.0));
                 return;
             }
+            emit_ram_style_attribute(sv, target, width as u64);
             sv.push_str(&format!("    wire [{}:0] c{};\n", width - 1, id.0));
             for (i, v) in vec.iter().enumerate() {
                 let fp = (*v * 256.0) as i64;
@@ -430,6 +578,7 @@ fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst) {
                 sv.push_str(&format!("    wire [0:0] c{};\n", id.0));
                 return;
             }
+            emit_ram_style_attribute(sv, target, width as u64);
             sv.push_str(&format!("    wire [{}:0] c{};\n", width - 1, id.0));
             for (i, v) in vec.iter().enumerate() {
                 sv.push_str(&format!(
@@ -440,5 +589,140 @@ fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst) {
                 ));
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ir::builder::ScGraphBuilder;
+    use crate::ir::sv_target::{SkuKind, SvTarget};
+
+    #[test]
+    fn dcls_layer_emits_core_with_q88_contract_ports() {
+        let mut builder = ScGraphBuilder::new("dcls_contract");
+        let spike = builder.input("spike_in", ScType::Bool);
+        let weights = builder.constant(
+            ScConst::I64Vec(vec![256, 128, -64]),
+            ScType::Vec {
+                element: Box::new(ScType::FixedPoint { width: 16, frac: 8 }),
+                count: 3,
+            },
+        );
+        let centre = builder.constant(ScConst::I64(256), ScType::FixedPoint { width: 16, frac: 8 });
+        let sigma = builder.constant(ScConst::I64(512), ScType::FixedPoint { width: 16, frac: 8 });
+        let result = builder.dcls_layer(
+            spike,
+            weights,
+            centre,
+            sigma,
+            DclsParams {
+                n_taps: 3,
+                data_width: 16,
+                fraction: 8,
+                delay_depth: 31,
+                ptr_width: 5,
+                tap_offsets: vec![0, 1, 2],
+            },
+        );
+        builder.output("weighted_sum", result);
+
+        let sv = emit(&builder.build()).expect("DCLS layer should emit synthesizable RTL");
+        assert!(sv.contains("sc_dcls_layer_core"));
+        assert!(sv.contains(".tap_offsets({5'd2, 5'd1, 5'd0})"));
+        assert!(sv.contains(".accumulator_q16_16(v4_accumulator_q16_16)"));
+        assert!(sv.contains(".overflow(v4_overflow)"));
+        assert!(sv.contains(".invalid_sigma(v4_invalid_sigma)"));
+        assert!(sv.contains("assign weighted_sum = v4;"));
+    }
+
+    #[test]
+    fn ultrascale_plus_target_emits_dsp48e2_metadata_and_resource_report() {
+        let mut builder = ScGraphBuilder::new("ultrascale_dense");
+        let inputs = builder.input(
+            "inputs",
+            ScType::Vec {
+                element: Box::new(ScType::FixedPoint { width: 16, frac: 8 }),
+                count: 4,
+            },
+        );
+        let weights = builder.constant(
+            ScConst::I64Vec(vec![128; 12]),
+            ScType::Vec {
+                element: Box::new(ScType::FixedPoint { width: 16, frac: 8 }),
+                count: 12,
+            },
+        );
+        let leak = builder.constant(ScConst::I64(16), ScType::FixedPoint { width: 16, frac: 8 });
+        let gain = builder.constant(ScConst::I64(1), ScType::FixedPoint { width: 16, frac: 8 });
+        let result = builder.dense_forward(
+            inputs,
+            weights,
+            leak,
+            gain,
+            DenseParams {
+                n_inputs: 4,
+                n_neurons: 3,
+                ..DenseParams::default()
+            },
+        );
+        builder.output("spikes", result);
+
+        let (sv, report) = emit_systemverilog_with_target(
+            &builder.build(),
+            SvTarget::zynq_ultrascale_plus(SkuKind::Zu3eg, 250),
+        )
+        .expect("UltraScale+ target emission should succeed");
+
+        assert!(sv.contains("Target: Zynq UltraScale+ MPSoC ZU3EG"));
+        assert!(sv.contains("sc_target_dsp = \"DSP48E2\""));
+        assert!(sv.contains("(* ram_style = \"distributed\" *)"));
+        assert_eq!(report.device_part, "xczu3eg-sbva484-1-e");
+        assert!(report.dsp_estimated >= 12);
+        assert!(report.fits_dsp_budget);
+    }
+
+    #[test]
+    fn ultrascale_plus_over_budget_dense_emits_fold_plan_comment() {
+        let mut builder = ScGraphBuilder::new("ultrascale_fold_dense");
+        let inputs = builder.input(
+            "inputs",
+            ScType::Vec {
+                element: Box::new(ScType::FixedPoint { width: 16, frac: 8 }),
+                count: 64,
+            },
+        );
+        let weights = builder.constant(
+            ScConst::I64Vec(vec![128; 64 * 32]),
+            ScType::Vec {
+                element: Box::new(ScType::FixedPoint { width: 16, frac: 8 }),
+                count: 64 * 32,
+            },
+        );
+        let leak = builder.constant(ScConst::I64(16), ScType::FixedPoint { width: 16, frac: 8 });
+        let gain = builder.constant(ScConst::I64(1), ScType::FixedPoint { width: 16, frac: 8 });
+        let result = builder.dense_forward(
+            inputs,
+            weights,
+            leak,
+            gain,
+            DenseParams {
+                n_inputs: 64,
+                n_neurons: 32,
+                ..DenseParams::default()
+            },
+        );
+        builder.output("spikes", result);
+
+        let (sv, report) = emit_systemverilog_with_target(
+            &builder.build(),
+            SvTarget::zynq_ultrascale_plus(SkuKind::Zu3eg, 250),
+        )
+        .expect("UltraScale+ target emission should produce fold-plan metadata");
+
+        assert!(sv.contains("Dense fold plan: unfurled_macs=2048"));
+        assert!(sv.contains("dsp_per_cycle=320"));
+        assert!(sv.contains("compute_cycles=7"));
+        assert!(report.dense_fold_plan.is_some());
     }
 }

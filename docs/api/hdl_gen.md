@@ -119,10 +119,11 @@ implements physically.
 ### 2.1 Separate compilers for synth vs analogue
 
 The :class:`VerilogGenerator` is intentionally thin (~90 LOC) because
-the heavy lifting lives in the 46 hand-written Verilog cores under
+the heavy lifting lives in the 54 hand-written Verilog cores under
 the repo-root `hdl/` tree (e.g. `sc_dense_layer_core.v`,
-`sc_bitstream_encoder.v`, `sc_aer_router.v`, `sc_lif_neuron.v`,
-`sc_firing_rate_bank.v`, plus 8 matching formal-property files under
+`sc_bitstream_encoder.v`, `sc_aer_router.v`, `sc_aer_priority_queue.v`,
+`sc_lif_neuron.v`,
+`sc_firing_rate_bank.v`, plus 11 matching formal-property files under
 `hdl/formal/`). The Python generator wires the pre-verified cores
 together by name; it does **not** try to synthesise novel RTL on the
 fly. This separation keeps the RTL part verifiable (the cores each
@@ -150,6 +151,45 @@ register file. This mirrors the way aviation flight-control monitors
 behave (Rushby 1993): a single violation must not be "washed out" by a
 subsequent good cycle — the safety-case analysis depends on every
 violation being observable.
+
+The precision-overflow trap follows the same fail-observable rule for
+mixed-precision datapaths. `sc_precision_overflow_trap` exposes both
+`trap_event_vector`/`trap_event`, which mirror accepted overflow lanes in
+the same cycle, and `trap_vector`/`trap_latched`, which retain every lane
+until the host asserts `clear_trap` or reset. Clear and reset dominate
+concurrent overflow pulses, so host intervention cannot accidentally
+re-latch stale saturation telemetry. Optional
+`SC_NEUROCORE_ASSERTIONS` properties bind the no-silent-overflow and
+sticky-latch contracts for formal or simulation audit runs.
+
+Live-control parameter banks are generated from `MMIOUpdateSpec` with
+`generate_live_parameter_bank(...)`. The emitted AXI4-Lite RTL uses
+BRAM/distributed RAM style hints per bank, fixed control/status register
+addresses, staged low/high write-data registers, CRC32-guarded shadow loads,
+explicit apply and rollback pulses, checksum-mismatch pulses, flattened
+active-only `parameter_words` output, and host-visible trap clear/status
+signals. It also derives sticky staged-overflow, staged-underflow, and
+CRC32-mismatch traps before shadow loading, and latches invalid bank/entry
+selection as trap bit `0x8` plus read-only bank writes as trap bit `0x10`, so
+malformed MMIO payloads cannot truncate into active coefficients, bypass the
+update guard, mutate calibration/read-only constants, or masquerade as a loaded
+shadow update. This lets a
+deployed design hot-swap weights or phase-coupling
+coefficients while keeping the precision and trap contracts auditable.
+The same generated core rejects partial write strobes as trap bit `0x20` and
+returns a write error before any control or staged-data register is updated,
+matching the default `supports_partial_write=False` schema contract.
+Invalid active-readback bank or entry selections return a bus error and latch
+the sticky `invalid_selection` trap, preventing host verification code from
+confusing an invalid readback with a committed zero-valued coefficient.
+Successful shadow loads also latch the accepted bank and entry index. Apply and
+rollback use that latched identity, preventing post-load writes to `bank_select`
+or `entry_index` from redirecting an in-flight coefficient update.
+The local regression artefact
+`benchmarks/results/local_python_2026-06-04_live_control_updates.json` records
+the generated update-sequence timing, static RTL regeneration timing, and
+overflow/underflow trap-capture simulation under recorded process affinity; it
+is not a production throughput claim.
 
 ### 2.4 Nanosecond response budget
 

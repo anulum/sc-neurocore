@@ -216,17 +216,179 @@ The manifest records operation counts and whether `firtool` is available.
 ### 4.3 Weight Quantizer
 
 ```python
-from sc_neurocore.compiler.quantizer import quantize_weights
+import numpy as np
 
-weights = [0.5, -0.3, 1.2, 0.0]
-q_weights = quantize_weights(
-    weights,
-    data_width=16,
-    fraction=8,
-    rounding="nearest",     # or "stochastic", "floor"
+from sc_neurocore.compiler.quantizer import (
+    PrecisionEnvelopeReport,
+    PrecisionTrapReport,
+    QFormatMixed,
+    compile_dense_block_floating,
+    compile_dense_mixed_precision,
+    dequantize_weights,
+    quantize_weights,
 )
-# Returns list of Q8.8 integers
+
+weights = np.array([0.5, -0.3, 1.2, 0.0], dtype=np.float64)
+
+# Canonical fixed-point Q8.8 path: returns the integer tensor only.
+q_weights = quantize_weights(weights, fmt="Q8.8", rounding="nearest")
+restored = dequantize_weights(q_weights, fmt="Q8.8")
+
+# Mixed hardware path: Q8.8 stored weights with Q16.16 accumulation metadata.
+mixed = QFormatMixed()
+q_mixed, tensor_scale = quantize_weights(weights, fmt=mixed)
+restored_mixed = dequantize_weights(q_mixed, fmt=mixed, scale=tensor_scale)
 ```
+
+`QFormatMixed` defaults to Q8.8 weights, a Q16.16 accumulator, nearest rounding,
+and per-tensor scale maximisation.  Its accumulator format must be at least as
+wide as the weight format, preserve the weight fractional precision, and cover
+the full weight dynamic range.  The returned `tensor_scale` is deterministic
+metadata for reconstructing values and for hardware emitters that need the
+scale alongside compact stored weights.
+
+Dense deployment can compile a two-dimensional weight matrix into the same
+bit-true Q8.8-weight/Q16.16-accumulator contract used by the Rust and HDL
+reference paths:
+
+```python
+compiled = compile_dense_mixed_precision(weights, fmt=QFormatMixed())
+outputs_q1616, overflow = compiled.forward_with_overflow(inputs)
+outputs = compiled.forward_float(inputs)
+trap_report: PrecisionTrapReport = compiled.precision_trap_report(inputs)
+envelope_report: PrecisionEnvelopeReport = compiled.precision_envelope_report(inputs)
+manifest = compiled.manifest()
+```
+
+The mixed-dense HDL reference exposes the same lane-level overflow contract as
+the Python `overflow` mask and Rust `overflow_count`: `overflow_vector[i]`
+identifies output channel `i`, while the aggregate `overflow` line is asserted
+when any lane saturates.
+
+The block-floating dense HDL reference uses the same lane convention, with
+`overflow_vector[i]` identifying the output channel that saturated after the
+shared-exponent product shift and Q16.16 accumulation.
+Both dense HDL references also export `abs_bounds_q1616[i]`, an unsigned
+64-bit conservative absolute Q16.16 bound for output channel `i`.  This mirrors
+Python `PrecisionEnvelopeReport.abs_bound_codes` and Rust
+`MixedDenseResult.abs_bounds_q1616`, including cancellation cases where the
+realised output is small but the absolute product envelope is large.
+
+`PrecisionEnvelopeReport.manifest()` also exposes the signed fixed-point width
+proof used by the Python and Rust deployment surfaces:
+
+| Field | Meaning |
+|-------|---------|
+| `proof_kind` | Fixed string `signed_symmetric_fixed_point_width` for this contract. |
+| `required_total_bits` | Sign bit plus the bit length required by the largest conservative absolute Q16.16 bound. |
+| `required_integer_bits` | `required_total_bits - 16`, clamped to at least one signed integer bit for Q16.16 reporting. |
+| `width_headroom_bits` | `32 - required_total_bits`; negative values mean Q16.16 saturation is required. |
+| `saturation_required` | True when the conservative bound cannot fit in signed 32-bit Q16.16. |
+| `static_overflow_proven_safe` | Alias of the conservative overflow proof used by safety-gate callers. |
+
+These fields are static envelope claims over absolute product magnitudes.  They
+do not rely on cancellation in the realised dot product, so a small output code
+does not weaken the predeployment overflow proof.  The quantizer delegates
+these manifest fields to
+`sc_neurocore.compiler.static_analysis.prove_fixed_point_envelope()`, so the
+standalone static-analysis API and dense deployment reports share one Python
+proof authority.
+
+### Live-Control Parameter Banks
+
+The live-control schema decouples long-lived parameters from static logic
+fabric. `ParameterBankSpec` describes writable Q-format or block-floating
+entries in BRAM/distributed RAM, including byte span, entry addresses, and raw
+encoded-word bounds. `MMIOUpdateSpec` adds a deterministic AXI4-Lite/PCIe
+control window with fixed registers for bank select, entry select, write-data
+low/high words, status, trap status, and trap clear. Host code uses
+`build_update_sequence(...)` to stage a bank/index/value update with a
+deterministic CRC32 checksum, reject mismatches through a sticky
+`checksum_mismatch` trap, load it into a shadow bank, and then apply it explicitly,
+so operators can update weights or Kuramoto phase-coupling parameters without
+resynthesising the bitstream.
+Successful shadow loads latch the bank and entry identity at load time. Apply
+and rollback use that latched identity rather than the mutable selection
+registers, so a later `bank_select` or `entry_index` write cannot retarget an
+in-flight transaction. The generated bus surface requires full-word writes; a
+partial write strobe is rejected with a sticky `partial_write` trap before any
+control or staged-data register is modified.
+
+The status map exposes `ready`, `busy`, `update_ack`, `trap_latched`,
+`shadow_loaded`, `applied`, `rollback_ack`, `checksum_valid`, and sticky
+`checksum_mismatch`/`invalid_selection`/`read_only_bank`/`partial_write` trap bits. Generated
+parameter-bank RTL reserves deterministic trap lanes for staged overflow,
+staged underflow, checksum mismatch, invalid bank/entry selection, and
+read-only bank or partial-write rejection before shadow loading: if a host payload cannot be represented as either a
+zero-extended raw word or a valid signed extension for the selected bank width,
+if the CRC32 guard does not match the staged payload, or if the selected
+bank/index pair is not writable, the trap vector latches and the shadow bank is
+not modified.
+Trap clearing is a separate two-write sequence that records the intended flag
+width before asserting the clear command, preserving deterministic host
+intervention semantics.
+`sc_neurocore.hdl_gen.bus_interface.generate_live_parameter_bank(...)` consumes
+the same manifest and emits the corresponding AXI4-Lite parameter-bank RTL with
+active/shadow memories, checksum-gated shadow loading, generated staged-range,
+CRC32-mismatch, invalid-selection, read-only-bank, and partial-write traps, explicit apply, rollback, and active-only
+`parameter_words`, so the Python control schema and hardware register map
+remain one contract.
+
+`forward_with_overflow` returns saturated accumulator-format integer codes and
+per-output overflow flags.  In canonical `scale_per_tensor=False` mode the
+division from Q8.8×Q16.16 products to Q16.16 outputs uses the same signed
+arithmetic shift as the hardware reference.  With per-tensor scaling enabled,
+the host path carries `tensor_scale` in the manifest so deployment code can
+reconstruct compact stored weights without silently changing the physical
+output scale.
+
+`precision_trap_report` packages the same saturated output codes and overflow
+mask into deterministic telemetry for host validation and HDL trap registers.
+The report manifest includes `output_format`, `output_count`,
+`overflow_count`, `underflow_count`, `saturated_min_count`,
+`saturated_max_count`, `has_overflow`, and `has_underflow`.  Overflow means the
+realised output saturated at the configured Q-format bound.  Underflow means a
+nonzero fixed-point product or BFP output collapsed below one output-code LSB
+and therefore produced a zero code that remains visible to safety review.
+
+`precision_envelope_report` adds conservative predeployment range evidence.  It
+returns realised output codes, realised overflow and underflow flags,
+per-output absolute bound codes, and a manifest containing
+`observed_overflow_free`, `observed_underflow_free`,
+`conservative_overflow_free`, `max_abs_output_code`, `max_abs_bound_code`, and
+`min_headroom_code`.
+
+Block-floating dense deployment uses shared-exponent weight blocks with
+Q16.16 inputs and outputs:
+
+```python
+compiled_bfp = compile_dense_block_floating(weights, fmt="BFP16E3X32")
+outputs_q1616, overflow = compiled_bfp.forward_with_overflow(inputs)
+outputs = compiled_bfp.forward_float(inputs)
+trap_report = compiled_bfp.precision_trap_report(inputs)
+envelope_report = compiled_bfp.precision_envelope_report(inputs)
+```
+
+`BFP16E3X32` stores 16-bit signed mantissas and one 3-bit biased exponent per
+32-weight block.  The exponent range is the full encoded biased range: for
+three exponent bits, the unbiased range is `[-3, +4]`.  The Python deployment
+path preserves the shared exponent metadata, saturates final Q16.16 output
+codes, and exposes overflow and sub-LSB underflow flags for hardware telemetry
+parity.
+Compiler manifests record the exact exponent bias (`3` for `BFP16E3X32`),
+encoded exponent range `[0, 7]`, maximum signed mantissa magnitude `32767`,
+minimum quantum `0.125`, maximum absolute value `524272.0`, and the contiguous
+flattened block-alignment rule required by downstream RTL emitters.  When the
+parameter count is known, manifests also carry an exact `block_exponent_layout`
+with `parameter_count`, `block_size`, `exponent_count`, `last_block_size`, and
+the exponent-index formula.  The Python and Rust BFP surfaces reject mismatched
+exponent-vector lengths before accumulation, preventing an emitter from
+silently applying a shared exponent to the wrong parameter block.
+The maintained comparison benchmark also exercises a seeded `BFP16E3X2`
+edge-sweep contract: exponent codes `[0, 7, 0, 7]` must produce exact safe
+Q16.16 codes `[1056736, -1069024]` with zero overflow/underflow, while a
+max-exponent saturating payload must raise one overflow trap and clamp to
+`2147483647` rather than wrapping.
 
 #### Rounding Modes
 
@@ -266,19 +428,30 @@ Signal types: `BITSTREAM`, `RATE`, `SPIKE`, `FIXED`, `ANY`.
 
 ```python
 from sc_neurocore.compiler.static_analysis import (
-    prove_overflow_free,
+    prove_fixed_point_envelope,
+    prove_no_overflow,
     generate_sva,
     estimate_power,
 )
 
 # Guard bit computation
-proof = prove_overflow_free(
-    equations={"v": "-(v - E_L)/tau_m + I/C"},
-    params=dict(E_L=-65, tau_m=10, C=1),
+proof = prove_no_overflow(
+    "-(v - E_L)/tau_m + I/C",
+    bounds={"v": (-128, 127), "E_L": (-65, -65), "tau_m": (10, 10), "I": (0, 100), "C": (1, 1)},
     data_width=16,
     fraction=8,
 )
-print(f"Safe: {proof.safe}, guard bits: {proof.guard_bits}")
+print(f"Safe: {proof.proven_safe}, output range: {proof.expr_interval}")
+
+# Conservative Q16.16 width proof for dense precision envelopes
+envelope = prove_fixed_point_envelope(
+    [531_400],
+    total_bits=32,
+    fractional_bits=16,
+)
+assert envelope.static_overflow_proven_safe
+assert envelope.required_total_bits == 21
+assert envelope.width_headroom_bits == 11
 
 # SVA assertion generation
 sva = generate_sva(
@@ -531,14 +704,14 @@ print('Quantizer: PASS')
 
 ```bash
 python -c "
-from sc_neurocore.compiler.static_analysis import prove_overflow_free
-r = prove_overflow_free(
-    {'v': '-(v - E_L)/tau_m + I/C'},
-    dict(E_L=-65, tau_m=10, C=1),
+from sc_neurocore.compiler.static_analysis import prove_no_overflow
+r = prove_no_overflow(
+    '-(v - E_L)/tau_m + I/C',
+    bounds={'v': (-128, 127), 'E_L': (-65, -65), 'tau_m': (10, 10), 'I': (0, 100), 'C': (1, 1)},
     data_width=16, fraction=8,
 )
-assert r.safe
-print(f'Overflow proof: PASS (guard_bits={r.guard_bits})')
+assert r.proven_safe
+print('Overflow proof: PASS')
 "
 ```
 
@@ -634,3 +807,37 @@ python -m pytest tests/e2e/test_e2e_pipeline.py -v
 - [Formal Verification Guide](../guides/formal_verification.md) — SymbiYosys
 - [Deployment Guide](../guides/deployment_guide.md) — Constraints, drivers
 - [Multi-Target Deployment](../guides/multi_target_deployment.md) — 194 profiles
+
+## Live-control MMIO Parameter Banks
+
+`MMIOUpdateSpec` supports `axi4_lite` and `pcie` bus contracts for live parameter
+updates. Both protocols use the same deterministic register map:
+
+| Register | Offset | Purpose |
+|----------|-------:|---------|
+| `control` | `0x00` | update, apply, rollback, and trap-clear control bits |
+| `status` | `0x04` | ready, update acknowledgement, checksum, shadow, and trap status |
+| `bank_select` | `0x08` | selected live parameter bank |
+| `entry_index` | `0x0C` | selected entry inside the bank |
+| `write_data_lo` | `0x10` | low 32 bits of the staged encoded parameter word |
+| `write_data_hi` | `0x14` | high 32 bits for 64-bit staged words |
+| `trap_status` | `0x18` | sticky generated and external trap bits |
+| `trap_clear` | `0x1C` | sticky trap clear register |
+| `write_checksum` | `0x20` | IEEE CRC32 guard over bank, entry, and staged value |
+
+`generate_live_parameter_bank()` emits the AXI4-Lite core directly for
+`bus_protocol="axi4_lite"`. For `bus_protocol="pcie"` it emits a PCIe-MMIO
+register-window adapter over that same core. The PCIe wrapper is deliberately a
+register-window contract: upstream PCIe hard IP or a board integration wrapper
+must decode posted writes and reads into the generated single-clock MMIO strobes.
+It is not a generated PCIe endpoint PHY.
+
+Valid updates are fail-closed. The host must write bank select, entry index,
+low/high staged data, and the `crc32-ieee-le-4x32` guard before asserting
+`CONTROL_UPDATE_VALID`; the active parameter output changes only after a
+separate `CONTROL_COMMIT`. The CRC32 payload is four little-endian 32-bit words:
+bank select, entry index, low data word, and high data word. Range traps latch
+staged overflow or underflow attempts and prevent shadow mutation.
+Active readback is fail-closed as well: invalid bank or entry selections on
+`read_data_lo` or `read_data_hi` return a bus error and latch
+`invalid_selection` rather than returning an ambiguous zero coefficient.

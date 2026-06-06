@@ -32,13 +32,18 @@ IR graph construction → verification → SystemVerilog emission → Yosys synt
 | F10 | Runtime | Metastability | Async input crossing clock domain | Glitch on spike bus | S1 | Double-FF synchronizer | CDC lint (Spyglass/Verilator) |
 | F11 | Runtime | Refractory counter underflow | Off-by-one in counter | Extra spike per burst | S1 | Property-based test (Hypothesis) | Counter ≥ 0 assertion in RTL |
 | F12 | Training | Gradient explosion | Surrogate β too large | NaN weights after export | S1 | NaN guard in `to_sc_weights()` | Gradient clipping + β schedule |
+| F13 | Runtime | Silent accumulator saturation | Mixed Q8.8/Q16.16 or block-floating MAC exceeds accumulator range | Saturated output could be mistaken for valid control signal | S1 | `overflow_vector`, same-cycle `trap_event_vector`, sticky `trap_vector`, optional `SC_NEUROCORE_ASSERTIONS` | Saturate output, raise immediate trap event, latch per-lane trap until host clear |
 
 ## Residual Risk
 
-After all mitigations, residual risk concentrates in F05 (LFSR mismatch)
-and F06 (signed/unsigned). Both are covered by the co-simulation checker
-that compares Python golden-model spike trains against Icarus Verilog
-output bit-for-bit across 10 000 timesteps with 5 LFSR seeds.
+After all mitigations, residual risk concentrates in F05 (LFSR mismatch),
+F06 (signed/unsigned), and F13 (operator response to a latched saturation
+trap). F05 and F06 are covered by the co-simulation checker that compares
+Python golden-model spike trains against Icarus Verilog output bit-for-bit
+across 10 000 timesteps with 5 LFSR seeds. F13 is covered by the
+precision-overflow trap contract: a transient accumulator saturation is
+visible immediately through `trap_event_vector` and persists through
+`trap_vector` until host clear, preventing silent wash-out.
 
 ## Review Schedule
 

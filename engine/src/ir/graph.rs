@@ -151,6 +151,39 @@ impl Default for DenseParams {
     }
 }
 
+// DCLS layer parameters
+
+/// Parameters for a delay-coded learnable-spike layer.
+/// Maps to `sc_dcls_layer_core` and its Q8.8 tent kernel.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DclsParams {
+    /// Number of delayed taps sampled from the input spike stream.
+    pub n_taps: usize,
+    /// Q-format data width.
+    pub data_width: u32,
+    /// Q-format fractional bits.
+    pub fraction: u32,
+    /// Delay-line depth in spike samples.
+    pub delay_depth: usize,
+    /// Bit width used to address the delay line.
+    pub ptr_width: u32,
+    /// Per-tap delay offsets, ordered low-to-high in the emitted bus.
+    pub tap_offsets: Vec<u32>,
+}
+
+impl Default for DclsParams {
+    fn default() -> Self {
+        Self {
+            n_taps: 3,
+            data_width: 16,
+            fraction: 8,
+            delay_depth: 31,
+            ptr_width: 5,
+            tap_offsets: vec![0, 1, 2],
+        }
+    }
+}
+
 /// Reduce operation mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReduceMode {
@@ -257,6 +290,22 @@ pub enum ScOp {
         params: DenseParams,
     },
 
+    /// Delay-coded learnable-spike layer with a Q8.8 tent kernel.
+    /// Maps to `sc_dcls_layer_core` in HDL.
+    DclsLayer {
+        id: ValueId,
+        /// One-bit input spike stream.
+        spike: ValueId,
+        /// Per-tap Q8.8 weights, packed low-to-high.
+        weights: ValueId,
+        /// Q8.8 centre of the learnable tent in delay-index units.
+        centre: ValueId,
+        /// Q8.8 positive tent radius.
+        sigma: ValueId,
+        /// Layer parameters.
+        params: DclsParams,
+    },
+
     // L2: XOR encoding for hyperdimensional computing
     /// Bitwise XOR of two bitstreams (HDC binding).
     BitwiseXor {
@@ -340,6 +389,7 @@ impl ScOp {
             | Self::Reduce { id, .. }
             | Self::LifStep { id, .. }
             | Self::DenseForward { id, .. }
+            | Self::DclsLayer { id, .. }
             | Self::GraphForward { id, .. }
             | Self::SoftmaxAttention { id, .. }
             | Self::KuramotoStep { id, .. }
@@ -373,6 +423,13 @@ impl ScOp {
                 gain,
                 ..
             } => vec![*inputs, *weights, *leak, *gain],
+            Self::DclsLayer {
+                spike,
+                weights,
+                centre,
+                sigma,
+                ..
+            } => vec![*spike, *weights, *centre, *sigma],
             Self::GraphForward {
                 features,
                 adjacency,
@@ -406,6 +463,7 @@ impl ScOp {
             Self::Reduce { .. } => "sc.reduce",
             Self::LifStep { .. } => "sc.lif_step",
             Self::DenseForward { .. } => "sc.dense_forward",
+            Self::DclsLayer { .. } => "sc.dcls_layer",
             Self::GraphForward { .. } => "sc.graph_forward",
             Self::SoftmaxAttention { .. } => "sc.softmax_attention",
             Self::KuramotoStep { .. } => "sc.kuramoto_step",
