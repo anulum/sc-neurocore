@@ -16,7 +16,7 @@ from __future__ import annotations
 import re
 from typing import Literal
 
-from sc_neurocore.compiler.live_control import MMIOUpdateSpec
+from .live_control import MMIOUpdateSpec
 
 
 def generate_host_driver(

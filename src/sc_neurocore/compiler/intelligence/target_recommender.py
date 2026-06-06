@@ -70,7 +70,7 @@ def recommend_target(
     list[TargetRecommendation]
         Ranked recommendations.
     """
-    from sc_neurocore.compiler.platforms import (
+    from ..platforms import (
         list_profile_names,
         get_profile,
     )

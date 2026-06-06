@@ -403,7 +403,7 @@ an unverified accuracy or power claim.
 
 - [x] Dedicated `tests/e2e/` directory for integration tests
 - [x] Each test tagged with `@pytest.mark.e2e` for selective execution
-- [ ] CI matrix: run e2e tests on every PR touching `compiler/` or `hdl_gen/`
+- [x] CI matrix: run e2e tests on every PR touching `compiler/` or `hdl_gen/`
 
 ---
 
