@@ -58,6 +58,7 @@ def test_manifest_syft_command_uses_packet_runner() -> None:
 def test_runner_writes_and_validates_cyclonedx_sbom(tmp_path: Path) -> None:
     tool = _load_tool()
     calls: list[list[str]] = []
+    project_name, project_version = tool._project_identity(_repo_root())
 
     def fake_run(
         command: list[str],
@@ -95,9 +96,9 @@ def test_runner_writes_and_validates_cyclonedx_sbom(tmp_path: Path) -> None:
             "syft",
             ".",
             "--source-name",
-            "sc-neurocore",
+            project_name,
             "--source-version",
-            "3.15.7",
+            project_version,
             "--output",
             f"cyclonedx-json={tmp_path / 'packet' / 'security' / 'sbom.cdx.json'}",
         ]

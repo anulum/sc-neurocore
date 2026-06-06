@@ -11,7 +11,7 @@ All measurements via Criterion 0.8, single-threaded, pure CPU.
 Hardware: 11th Gen Intel Core i5-11600K @ 3.90 GHz (6C/12T), DDR4-2400, Ubuntu 24.04.
 Verified via `lscpu` on 2026-05-31.
 
-Last updated: 2026-05-31.
+Last updated: 2026-06-04.
 
 ## How to Run
 
@@ -54,8 +54,97 @@ cargo bench --bench analysis_bench -- --quick
 | Benchmark | Median |
 |-----------|-------:|
 | dense_forward_64x32 | 993 µs |
+| mixed_dense_q88_q1616_64x32 | 2.245 µs |
+| block_floating_dense_q16_64x32 | 10.056 µs |
+| mixed_dense_q88_q1616_trap_64x32 | 2.325 µs |
+| block_floating_dense_q16_trap_64x32 | 8.669 µs |
+| mixed_dense_q88_q1616_envelope_64x32 | 2.322 µs |
+| block_floating_dense_q16_envelope_64x32 | 8.748 µs |
+| dcls_q88_tent_kernel_16tap | 40.184 ns/sample |
+| ultrascale_plus_target_contract_64x32 | 130.836 µs/emit |
+| ultrascale_plus_dense_fold_plan_64x32 | 6.661 ns/plan |
 | attention_10x16_20x32 | 88.5 µs |
 | gnn_20x8_forward | 85.3 µs |
+
+The 2026-06-04 dense precision rows were captured on a workstation under
+concurrent load and without exclusive CPU core isolation.  Use the medians as
+local regression context and parity evidence.  Before citing them as production
+throughput, rerun the benchmark on isolated cores and record CPU affinity,
+host-load, governor, and frequency evidence in the raw JSON artefact.
+
+`mixed_dense_q88_q1616_64x32` was measured on 2026-06-04 with
+`taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_mixed_dense`.
+The committed raw artefact is
+`benchmarks/results/local_rust_2026-06-04_mixed_dense.json`; the matching Python
+reference artefact is `benchmarks/results/local_python_2026-06-04_mixed_dense.json`.
+Both artefacts record safe-workload overflow count `0` and saturating-probe
+overflow count `32` for parity with the mixed-dense HDL `overflow_vector`.
+They also record conservative envelope telemetry for comparison with the HDL
+`abs_bounds_q1616` lanes: Python and Rust safe max absolute bound `531400`,
+and saturating-probe max bound `17454214414336`.  The Python benchmark uses
+`QFormatMixed(scale_per_tensor=False)` here so the comparison is the same raw
+Q8.8/Q16.16 physical contract implemented by Rust and HDL.
+
+`block_floating_dense_q16_64x32` was measured on 2026-06-04 with
+`taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_block_floating_dense`.
+The committed raw artefact is
+`benchmarks/results/local_rust_2026-06-04_block_floating_dense.json`; the
+matching Python reference artefact is
+`benchmarks/results/local_python_2026-06-04_block_floating_dense.json`.
+Both artefacts record safe-workload overflow count `0` and saturating-probe
+overflow count `32` for parity with the block-floating HDL `overflow_vector`.
+They also record conservative envelope telemetry for comparison with the HDL
+`abs_bounds_q1616` lanes.  The Python and Rust block-floating artefacts now use
+the same physical BFP workload: mantissa checksum `-15`, exponent checksum `0`,
+safe max absolute bound `610816`, and saturating-probe max bound
+`1125865547104256`.
+
+The precision trap rows were measured on 2026-06-04 with
+`taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_traps`.
+The committed raw artefact is
+`benchmarks/results/local_rust_2026-06-04_precision_traps.json`; the matching
+Python reference artefact is
+`benchmarks/results/local_python_2026-06-04_precision_traps.json`.  Both Rust
+trap workloads reported 32 saturated outputs on the deterministic 64×32
+overflow workload.
+
+The precision envelope rows were measured on 2026-06-04 with
+`taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_precision_envelopes`.
+The committed raw artefact is
+`benchmarks/results/local_rust_2026-06-04_precision_envelopes.json`; the
+matching Python reference artefact is
+`benchmarks/results/local_python_2026-06-04_precision_envelopes.json`.  Both
+Rust envelope workloads reported `conservative_overflow_free=true` and matched
+the Python maximum absolute bounds for the deterministic 64×32 safe workload.
+
+`dcls_q88_tent_kernel_16tap` was measured on 2026-06-04 with
+`taskset -c 10-11 cargo run --manifest-path engine/Cargo.toml --release --example bench_dcls_q88`.
+The committed raw artefact is
+`benchmarks/results/local_rust_2026-06-04_dcls_q88.json`; the matching
+Python/PyTorch/SystemVerilog artefact is
+`benchmarks/results/local_python_2026-06-04_dcls_q88.json`.  The Rust path
+reported `overflow_count=0` and `active_tap_total=2808700`, matching the
+Python reference workload and DCLS Q8.8 saturation contract.
+
+`ultrascale_plus_target_contract_64x32` was measured on 2026-06-04 with the
+Rust benchmark process pinned to CPUs 10-11 inside a runtime cpuset shield. The
+committed raw artefact is
+`benchmarks/results/local_rust_2026-06-04_ultrascale_plus_target.json`; the
+matching Python/Vivado-Tcl artefact is
+`benchmarks/results/local_python_2026-06-04_ultrascale_plus_target.json`. The
+Rust target report deliberately records `fits_dsp_budget=false`: a 64x32
+one-DSP-per-MAC dense graph estimates `2048` DSPs against the ZU3EG budget of
+`360`, so ZU3EG deployment needs a folded/time-multiplexed implementation or a
+larger target before any timing-closure claim is valid.
+
+`ultrascale_plus_dense_fold_plan_64x32` was measured on 2026-06-04 with the
+same runtime cpuset shield. The committed raw artefact is
+`benchmarks/results/local_rust_2026-06-04_ultrascale_dense_folding.json`; the
+matching Python/SystemVerilog artefact is
+`benchmarks/results/local_python_2026-06-04_ultrascale_dense_folding.json`.
+Both surfaces report the same ZU3EG fold plan: 320 DSPs per compute cycle,
+five output rows per cycle, one input fold, seven output groups, and seven
+compute cycles for the 64x32 dense contract.
 
 ### PRNG
 

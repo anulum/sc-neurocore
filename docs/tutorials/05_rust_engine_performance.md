@@ -15,9 +15,9 @@ sc-neurocore info
 ```
 
 ```
-sc-neurocore 3.13.3
+sc-neurocore 3.15.33
 Python 3.12.x
-Rust engine: 3.13.3 (avx2)
+Rust engine: 3.15.33 (avx2)
 NumPy: 2.x.x
 ```
 

@@ -27,6 +27,7 @@ from .online_learning_emitter import (
 from .sobol16_emitter import Sobol16Emitter
 from .quasirandom_emitter import QuasiRandomEmitter, Halton16Emitter
 from .tmr_wrapper import generate_tmr_wrapper
+from .bus_interface import generate_live_parameter_bank
 
 __all__ = [
     "VerilogGenerator",
@@ -45,4 +46,5 @@ __all__ = [
     "QuasiRandomEmitter",
     "Halton16Emitter",
     "generate_tmr_wrapper",
+    "generate_live_parameter_bank",
 ]

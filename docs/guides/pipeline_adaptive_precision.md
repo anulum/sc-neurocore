@@ -221,6 +221,50 @@ neuron type:
 Custom `(data_width, fraction)` pairs are also accepted — the 15 presets
 are canonical shortcuts, not limitations.
 
+### 3.3 Precision Strings and Manifest
+
+Adaptive precision also accepts exact precision strings on both datapaths:
+
+```python
+verilog = compile_adaptive_precision(
+    neuron,
+    lp_precision="Q8.8",
+    hp_precision="Q16.16",
+)
+
+verilog = compile_adaptive_precision(
+    neuron,
+    lp_precision="BFP16E3X32",
+    hp_precision="Q16.16",
+)
+```
+
+When emitted, the top-level RTL includes a deterministic JSON manifest:
+
+```verilog
+// SC-NeuroCore Adaptive Precision Manifest: {"kind":"adaptive_precision_v1",...}
+```
+
+The manifest carries:
+
+- LP/HP precision metadata (`kind`, precision label, width/fraction fields),
+- explicit block metadata for block-floating modes (`mantissa_bits`, `exponent_bits`,
+  `block_size`, exponent bias, exponent code range, unbiased exponent range,
+  maximum mantissa magnitude, minimum quantum, maximum absolute value, and the
+  flattened contiguous block-alignment rule),
+- signed/overflow/rounding contract,
+- hysteresis percentages.
+
+This contract is consumed by downstream parity tooling and is expected to be stable
+across codegen releases.
+
+For `BFP16E3X32`, the adaptive manifest must record exponent bias `3`,
+exponent codes `[0, 7]`, unbiased exponent range `[-3, +4]`, mantissa maximum
+`32767`, minimum quantum `0.125`, and maximum absolute value `524272.0`.  The
+generated RTL still emits a fixed mantissa datapath; the shared exponent path is
+explicit metadata until a target-specific block exponent datapath is emitted and
+formally checked.
+
 ---
 
 ## 4. Python API
@@ -304,6 +348,11 @@ verilog = compile_adaptive_precision(
     threshold_up_pct=0.9,
     threshold_down_pct=0.3,
 )
+
+# Hysteresis band rules:
+# threshold_up_pct must satisfy 0 < threshold_down_pct < threshold_up_pct < 1.
+# Codes are quantised into LP datapath range, so both thresholds must
+# map to at least 1 distinct non-zero code points.
 
 # Iterate over all canonical pairs
 for (lp_w, lp_f), (hp_w, hp_f) in PRECISION_PAIRS:
@@ -502,6 +551,7 @@ endmodule
 | Q1.7 → Q8.8 | Present | Authoritative | Telemetry | No power claim |
 | Q8.8 → Q16.16 | Present | Authoritative | Telemetry | No power claim |
 | Q12.12 → Q18.18 | Present | Authoritative | Telemetry | No power claim |
+| BFP16E3X32 → Q16.16 | Fixed mantissa + exponent metadata | Authoritative | Telemetry | No power claim |
 
 The current implementation deliberately pays area for an LP monitor plus an HP
 reference datapath.  Power reduction must be measured only after a target

@@ -1,5 +1,5 @@
 # SC-NeuroCore FPGA Hardware Manual
-**Version: 3.14.0
+**Version:** 3.15.28
 **Date**: April 13, 2026
 **Status**: Release Candidate
 
@@ -62,6 +62,42 @@ The `sc_firing_rate_bank` accumulates spikes over the duration of a simulation r
 | `0x84` | `RATE1` | R | Firing rate for Neuron 1. |
 | ... | ... | ... | ... |
 | `0x98` | `RATE6` | R | Firing rate for Neuron 6. |
+
+### 3.1 Live Parameter-Bank Control Window
+
+Generated live-control parameter banks expose a fixed AXI4-Lite or PCIe MMIO
+window for hot-swapping weights, Kuramoto parameters, and calibration
+coefficients without resynthesizing the bitstream. The base address is selected
+by the compiler manifest. Offsets below are relative to that live-control base.
+
+| Offset | Name | Type | Description |
+| :--- | :--- | :--- | :--- |
+| `0x00` | `CONTROL` | R/W | Bit 0 loads a CRC-checked staged update into the shadow bank. Bit 1 applies the shadow bank to active coefficients. Bit 2 emits a trap-clear command pulse. |
+| `0x04` | `STATUS` | R | Ready, trap-latched, shadow-loaded, applied, rollback, and checksum-valid telemetry bits. |
+| `0x08` | `BANK_SELECT` | R/W | Selects the parameter bank by manifest order. |
+| `0x0C` | `ENTRY_INDEX` | R/W | Selects the entry inside the active bank. |
+| `0x10` | `WRITE_DATA_LO` | R/W | Low 32 bits of the staged encoded coefficient. |
+| `0x14` | `WRITE_DATA_HI` | R/W | High 32 bits of the staged encoded coefficient for wide Q or BFP entries. |
+| `0x18` | `TRAP_STATUS` | R | Sticky generated and external trap vector. |
+| `0x1C` | `TRAP_CLEAR` | W | Clears only the selected sticky trap bits; unselected latched faults remain visible in `TRAP_STATUS`. |
+| `0x20` | `WRITE_CHECKSUM` | R/W | IEEE CRC32 over bank, entry, low word, and high word. Reads return the observed checksum for the current staged payload. |
+| `0x24` | `READ_DATA_LO` | R | Low 32 bits of the committed active parameter selected by `BANK_SELECT` and `ENTRY_INDEX`. |
+| `0x28` | `READ_DATA_HI` | R | High 32 bits of the committed active parameter. Narrow entries return zero. |
+
+Readback registers intentionally report committed active state rather than the
+shadow bank. Operators can therefore write, commit, and verify a coefficient in
+milliseconds while preserving the no-resynthesis live-control contract.
+Invalid `BANK_SELECT` or `ENTRY_INDEX` values on readback return a bus error
+and latch the sticky `invalid_selection` trap bit instead of returning a silent
+zero value.
+Generated host drivers always write both staging words before the checksum:
+`WRITE_DATA_HI` is zero for entries no wider than 32 bits. This prevents stale
+wide-update high-word state from invalidating or corrupting a later narrow
+coefficient update.
+
+Generated host drivers expose both all-trap and selected-trap clear helpers.
+Selected clearing writes the requested mask to `TRAP_CLEAR` and leaves
+unselected sticky fault evidence latched for later operator inspection.
 
 ---
 

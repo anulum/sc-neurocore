@@ -132,6 +132,30 @@ pub fn print(graph: &ScGraph) -> String {
                     params.n_neurons
                 ));
             }
+            ScOp::DclsLayer {
+                id,
+                spike,
+                weights,
+                centre,
+                sigma,
+                params,
+            } => {
+                out.push_str(&format!(
+                    "{} = sc.dcls_layer {}, weights={}, centre={}, sigma={}, \
+                     taps={}, depth={}, dw={}, frac={} : fixed<{},{}>\n",
+                    id,
+                    spike,
+                    weights,
+                    centre,
+                    sigma,
+                    params.n_taps,
+                    params.delay_depth,
+                    params.data_width,
+                    params.fraction,
+                    params.data_width,
+                    params.fraction
+                ));
+            }
             ScOp::GraphForward {
                 id,
                 features,

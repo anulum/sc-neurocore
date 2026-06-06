@@ -2,7 +2,7 @@
 
 **Stochastic computing and neuromorphic hardware co-design toolkit**
 
-**Version 3.15.7** | 174 neuron models | optional Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.15.33** | 174 neuron models | optional Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 SC-NeuroCore helps research and engineering teams build spiking and stochastic neural systems, validate their numerical behaviour, and move selected workflows toward hardware evidence. It is designed for people who need more than a simulator: bounded stochastic arithmetic, reproducible benchmark artefacts, generated RTL, synthesis evidence, and explicit readiness gaps.
 
@@ -13,6 +13,17 @@ Start here if you need to understand what the software is for:
 - [Learning Path](LEARNING_PATH.md) gives a staged route from stochastic-computing basics to FPGA deployment.
 - [Getting Started](guides/getting-started.md) gives the first install and first working examples.
 - [Benchmarks](benchmarks/BENCHMARKS.md) and [Cross-Framework Evidence](benchmarks/cross_framework.md) separate committed evidence from measurement gaps.
+
+## Evaluation Map
+
+| If you are... | Read first | Then validate |
+| --- | --- | --- |
+| New to stochastic computing | [Product Overview](product_overview.md) and [SC Fundamentals](tutorials/01_stochastic_computing_fundamentals.md) | Run the base quickstart and inspect the bitstream error bounds. |
+| Comparing SNN frameworks | [Cross-Framework Evidence](benchmarks/cross_framework.md) | Check the raw artefact named beside every comparison row. |
+| Planning FPGA or ASIC work | [FPGA in 20 Minutes](tutorials/fpga_in_20_minutes.md), [Hardware Guide](hardware/HARDWARE_GUIDE.md), and [FPGA Toolchain Guide](hardware/FPGA_TOOLCHAIN_GUIDE.md) | Re-run synthesis on the exact target and commit utilisation/timing/power reports before publishing claims. |
+| Reviewing industrial potential | [Applications and Market](applications_and_market.md) and [Industrial Applications](api/industrial_applications.md) | Build an evidence bag and inspect missing evidence before any deployment claim. |
+| Reviewing notebooks | [Notebook Guide](guides/notebook_guide.md) and [notebooks README](https://github.com/anulum/sc-neurocore/blob/main/notebooks/README.md) | Treat notebook output as explanatory unless the raw artefact is committed. |
+| Consuming APIs | [API Reference Index](api/API_REFERENCE.md) | Prefer public package surfaces first; source-only research modules require a checkout. |
 
 !!! note "v4.0 transition"
     Until v4.0, this repository intentionally keeps a broad research surface in one checkout while experimental verification campaigns determine which runtime, compiler, hardware, bridge, and research paths are promoted. v4.0 is planned as the stable public API freeze and the point where the source tree is split into several focused repositories.
