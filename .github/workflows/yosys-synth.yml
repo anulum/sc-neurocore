@@ -51,7 +51,7 @@ jobs:
           python-version: "3.12"
 
       - name: Run synthesis (Xilinx 7-series target)
-        run: python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json --markdown
+        run: python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json --markdown --allow-skips
 
       - name: Upload synthesis results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

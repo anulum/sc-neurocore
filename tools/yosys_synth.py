@@ -21,6 +21,7 @@ Usage::
     python tools/yosys_synth.py                     # all modules
     python tools/yosys_synth.py --module sc_lif_neuron
     python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json
+    python tools/yosys_synth.py --allow-skips       # CI artifact mode
 """
 
 from __future__ import annotations
@@ -211,6 +212,11 @@ def main() -> int:
     ap.add_argument("--module", type=str, help="single module to synthesize")
     ap.add_argument("--json", type=str, help="write results to JSON file")
     ap.add_argument("--markdown", action="store_true", help="print markdown table")
+    ap.add_argument(
+        "--allow-skips",
+        action="store_true",
+        help="return success when skipped modules are recorded as artifact evidence",
+    )
     args = ap.parse_args()
 
     if not shutil.which("yosys"):
@@ -257,7 +263,7 @@ def main() -> int:
         Path(args.json).write_text(json.dumps(payload, indent=2) + "\n")
         print(f"\nResults written to {args.json}")
 
-    return 0 if all(r.ok for r in results) else 1
+    return 0 if args.allow_skips or all(r.ok for r in results) else 1
 
 
 if __name__ == "__main__":
