@@ -23,6 +23,22 @@ The project gives researchers and engineers one place to explore:
 4. Export evidence: JSON benchmark results, generated RTL, synthesis reports, notebook evidence, or readiness assessments.
 5. Promote only claims that are backed by committed artefacts.
 
+## What a completed workflow produces
+
+SC-NeuroCore is most useful when the output is not just a plot or a trained
+model, but an evidence packet that another engineer can inspect:
+
+- a deterministic Python or Rust reference result;
+- a quantisation or precision manifest that states the numerical contract;
+- generated RTL or deployment metadata when the hardware path is used;
+- benchmark or synthesis artefacts with command and environment context;
+- a documented evidence boundary that states what the artefact does not prove.
+
+This is the practical bridge from research code to industrial diligence. A lab
+can use the same workflow to explore a biological model, an FPGA engineer can
+audit the emitted arithmetic, and a commercial reviewer can see which claims are
+ready, which are local-only, and which remain open evidence gaps.
+
 ## Why stochastic computing matters
 
 Stochastic computing represents values as probabilities over bitstreams. That can trade exact arithmetic for compact logic, fault tolerance, and hardware-friendly approximate computation. In neuromorphic systems, this aligns naturally with spikes, rates, stochastic synapses, and noisy physical substrates.

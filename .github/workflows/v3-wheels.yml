@@ -20,6 +20,7 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  CMAKE_POLICY_VERSION_MINIMUM: "3.5"
 
 jobs:
   build-wheels:
@@ -41,6 +42,10 @@ jobs:
 
       - name: Install maturin
         run: pip install --require-hashes -r requirements/maturin.txt
+
+      - name: Configure macOS static Z3 C++ parser
+        if: runner.os == 'macOS'
+        run: echo "CXXFLAGS=-fdelayed-template-parsing" >> "$GITHUB_ENV"
 
       - name: Remove tracked Windows bridge binary
         if: runner.os == 'Windows'

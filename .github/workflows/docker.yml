@@ -100,6 +100,7 @@ jobs:
             type=sha
 
       - name: Build and push
+        id: build_push
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
         with:
           context: .
@@ -108,35 +109,50 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Select scanned image tag
-        id: scan-image
+      - name: Wait for GHCR image availability
         shell: bash
+        env:
+          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
         run: |
-          first_tag="$(cat <<'EOF' | head -n 1
-          ${{ steps.meta.outputs.tags }}
-          EOF
-          )"
-          test -n "${first_tag}"
-          echo "image=${first_tag}" >> "${GITHUB_OUTPUT}"
+          test -n "${IMAGE_REF}"
+          for attempt in {1..12}; do
+            if docker pull "${IMAGE_REF}"; then
+              exit 0
+            fi
+            sleep 10
+          done
+          docker pull "${IMAGE_REF}"
 
       - name: Trivy fail on CRITICAL/HIGH
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # master
-        with:
-          image-ref: ${{ steps.scan-image.outputs.image }}
-          format: table
-          exit-code: "1"
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
+        shell: bash
+        env:
+          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:0.70.0 image \
+            --scanners vuln \
+            --ignore-unfixed \
+            --severity CRITICAL,HIGH \
+            --exit-code 1 \
+            "${IMAGE_REF}"
 
       - name: Trivy SARIF report
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # master
-        if: always()
-        with:
-          image-ref: ${{ steps.scan-image.outputs.image }}
-          format: sarif
-          output: trivy-results.sarif
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
+        if: always() && steps.build_push.outcome == 'success'
+        shell: bash
+        env:
+          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${PWD}:/work" \
+            aquasec/trivy:0.70.0 image \
+            --scanners vuln \
+            --ignore-unfixed \
+            --severity CRITICAL,HIGH \
+            --format sarif \
+            --output /work/trivy-results.sarif \
+            "${IMAGE_REF}"
 
       - name: Upload Trivy SARIF
         uses: github/codeql-action/upload-sarif@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4

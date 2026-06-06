@@ -55,8 +55,10 @@ jobs:
 
       - name: Install lightweight scanner tools
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
           python -m pip install --require-hashes -r requirements/security-scanners.txt
-          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
           go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8
           go install github.com/anchore/syft/cmd/syft@v1.20.0
@@ -109,7 +111,7 @@ jobs:
 
   nightly-cargo-fuzz:
     name: Nightly Cargo Fuzz
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -143,7 +145,7 @@ jobs:
 
   nightly-benchmark-regression:
     name: Nightly Benchmark Regression
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6

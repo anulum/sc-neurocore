@@ -57,6 +57,8 @@ jobs:
 
   build-engine-wheels:
     runs-on: ${{ matrix.os }}
+    env:
+      CMAKE_POLICY_VERSION_MINIMUM: "3.5"
     strategy:
       fail-fast: false
       matrix:
@@ -70,6 +72,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install maturin
         run: pip install --require-hashes -r requirements/maturin.txt
+      - name: Configure macOS static Z3 C++ parser
+        if: runner.os == 'macOS'
+        run: echo "CXXFLAGS=-fdelayed-template-parsing" >> "$GITHUB_ENV"
       - name: Build engine wheel
         run: |
           cd bridge

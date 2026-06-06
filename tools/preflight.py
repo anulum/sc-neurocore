@@ -12,6 +12,7 @@ import argparse
 import pathlib
 import subprocess
 import sys
+import tempfile
 
 try:
     import tomllib
@@ -23,6 +24,9 @@ SPDX_EXTS = {".py", ".rs", ".v"}
 SPDX_MARKER = "SPDX-License-Identifier"
 
 ENGINE_DIR = pathlib.Path("engine")
+BENCHMARK_EVIDENCE_REPORT = (
+    pathlib.Path(tempfile.gettempdir()) / "sc_neurocore_benchmark_evidence_gate_report.json"
+)
 
 
 def _coverage_fail_under() -> int:
@@ -87,7 +91,7 @@ GATES = [
             "--manifest",
             "benchmarks/benchmark_regression_gates.json",
             "--output",
-            "/tmp/sc_neurocore_benchmark_evidence_gate_report.json",
+            str(BENCHMARK_EVIDENCE_REPORT),
         ],
     ),
     ("bandit", ["python", "-m", "bandit", "-r", "src/sc_neurocore/", "-c", "pyproject.toml", "-q"]),

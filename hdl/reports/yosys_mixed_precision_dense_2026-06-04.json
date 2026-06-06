@@ -1,0 +1,44 @@
+{
+   "creator": "Yosys 0.33 (git sha1 2584903a060)",
+   "invocation": "stat -json ",
+   "modules": {
+      "\\sc_mixed_precision_dense": {
+         "num_wires":         12624,
+         "num_wire_bits":     689540,
+         "num_pub_wires":     14,
+         "num_pub_wire_bits": 38053,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         12708,
+         "num_cells_by_type": {
+            "$add": 6112,
+            "$adff": 5,
+            "$gt": 64,
+            "$lt": 32,
+            "$mul": 2048,
+            "$mux": 2399,
+            "$not": 2048
+         }
+      }
+   },
+      "design": {
+         "num_wires":         12624,
+         "num_wire_bits":     689540,
+         "num_pub_wires":     14,
+         "num_pub_wire_bits": 38053,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         12708,
+         "num_cells_by_type": {
+            "$add": 6112,
+            "$adff": 5,
+            "$gt": 64,
+            "$lt": 32,
+            "$mul": 2048,
+            "$mux": 2399,
+            "$not": 2048
+         }
+      }
+}
