@@ -84,7 +84,7 @@ jobs:
       - name: Install maturin + cross-compile deps
         run: |
           pip install --require-hashes -r requirements/maturin.txt
-          sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+          sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
       - name: Build ARM64 wheel
         env:
