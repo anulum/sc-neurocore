@@ -62,8 +62,11 @@ jobs:
 
       - name: Install tools
         run: |
-          pip install --require-hashes -r requirements/lint.txt
-          pip install "numpy==2.2.6" "scipy==1.17.1" "fastapi==0.135.3" "pydantic==2.12.5" "uvicorn==0.43.0" "starlette==1.0.0" "types-PyYAML==6.0.12.20250915" "pint==0.23"
+          pip install --require-hashes \
+            -r requirements/lint.txt \
+            -r requirements/runtime.txt \
+            -r requirements/hub.txt \
+            -r requirements/hdl.txt
 
       - name: Capability manifest drift
         run: python tools/capability_manifest.py --check
@@ -107,7 +110,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq cvc5 git iverilog make verilator yosys
-          python -m pip install "click==8.3.1"
+          python -m pip install --require-hashes -r requirements/sby.txt
           curl -fsSL https://github.com/YosysHQ/sby/archive/0cb15210a857e4d20030484b37a6b9b6386bd01d.tar.gz -o /tmp/sby.tar.gz
           mkdir -p /tmp/sby
           tar -xzf /tmp/sby.tar.gz -C /tmp/sby --strip-components=1
