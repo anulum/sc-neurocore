@@ -24,6 +24,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
 CARGO_FUZZ_SCHEMA_VERSION = "sc-neurocore.cargo-fuzz-scanners.v1"
 CARGO_FUZZ_PROCESS_TIMEOUT_OVERHEAD_SECONDS = 300
+CARGO_FUZZ_BUILD_TIMEOUT_SECONDS = 900
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -52,6 +53,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=300,
         help="Total seconds budget split across selected targets.",
+    )
+    parser.add_argument(
+        "--build-timeout",
+        type=int,
+        default=CARGO_FUZZ_BUILD_TIMEOUT_SECONDS,
+        help="Seconds allowed for each cargo-fuzz target build before execution.",
     )
     return parser
 
@@ -149,12 +156,25 @@ def _target_command(target: str, seconds: int) -> list[str]:
     ]
 
 
+def _target_build_command(target: str) -> list[str]:
+    return [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "build",
+        target,
+        "--fuzz-dir",
+        "fuzz",
+    ]
+
+
 def run_cargo_fuzz_scanners(
     *,
     repo_root: Path,
     output_dir: Path,
     selected_targets: Sequence[str] = ("all",),
     max_total_time: int = 300,
+    build_timeout: int = CARGO_FUZZ_BUILD_TIMEOUT_SECONDS,
     run_command: RunCommand = subprocess.run,
 ) -> dict[str, Any]:
     targets = _selected_targets(repo_root, selected_targets)
@@ -162,6 +182,8 @@ def run_cargo_fuzz_scanners(
         raise ValueError("no fuzz targets discovered")
     if max_total_time < len(targets):
         raise ValueError("max_total_time must be at least the selected target count")
+    if build_timeout < 1:
+        raise ValueError("build_timeout must be positive")
 
     security_dir = output_dir / "security"
     security_dir.mkdir(parents=True, exist_ok=True)
@@ -169,7 +191,32 @@ def run_cargo_fuzz_scanners(
     seconds_per_target = max(1, max_total_time // len(targets))
     target_results: list[dict[str, Any]] = []
     for target in targets:
+        build_command = _target_build_command(target)
+        build_result = _run(
+            build_command,
+            repo_root=repo_root,
+            run_command=run_command,
+            timeout=build_timeout,
+        )
         command = _target_command(target, seconds_per_target)
+        if build_result.returncode != 0:
+            target_report = {
+                "target": target,
+                "phase": "build",
+                "build_command": build_command,
+                "build_returncode": build_result.returncode,
+                "build_stdout_tail": _tail_lines(build_result.stdout),
+                "build_stderr_tail": _tail_lines(build_result.stderr),
+                "command": command,
+                "returncode": build_result.returncode,
+                "stdout_tail": [],
+                "stderr_tail": _tail_lines(build_result.stderr),
+                "passed": False,
+            }
+            _write_json(security_dir / f"cargo_fuzz_{target}.json", target_report)
+            target_results.append(target_report)
+            continue
+
         result = _run(
             command,
             repo_root=repo_root,
@@ -178,6 +225,11 @@ def run_cargo_fuzz_scanners(
         )
         target_report = {
             "target": target,
+            "phase": "run",
+            "build_command": build_command,
+            "build_returncode": build_result.returncode,
+            "build_stdout_tail": _tail_lines(build_result.stdout),
+            "build_stderr_tail": _tail_lines(build_result.stderr),
             "command": command,
             "returncode": result.returncode,
             "stdout_tail": _tail_lines(result.stdout),
@@ -211,6 +263,7 @@ def main(
             output_dir=args.output_dir,
             selected_targets=tuple(args.target or ("all",)),
             max_total_time=args.max_total_time,
+            build_timeout=args.build_timeout,
         )
     except ValueError as exc:
         print(json.dumps({"passed": False, "error": str(exc)}, indent=2, sort_keys=True))

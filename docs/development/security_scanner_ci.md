@@ -60,8 +60,11 @@ It does not execute heavyweight scanner binaries in CI yet.
   outside push and pull-request CI with a bounded total time budget and installs
   the maintained `cargo-fuzz` release pinned in the workflow using stable Cargo
   before executing the fuzz lane on the configured nightly toolchain. The Python
-  runner keeps a separate process watchdog above libFuzzer's own per-target
-  budget so CI compile/startup overhead does not interrupt a valid bounded run.
+  runner first builds each target with `cargo fuzz build` under an explicit
+  build timeout, then runs `cargo fuzz run` with libFuzzer's per-target time
+  budget. Per-target reports record whether a failure happened during `build` or
+  `run`, including the relevant command tails, so scheduled CI timeouts remain
+  actionable instead of being ambiguous scanner failures.
 - The nightly/manual benchmark-regression lane writes
   `security/benchmark_regression.json` by regenerating the deterministic
   side-channel benchmark and comparing all numeric metrics against the tracked
@@ -114,7 +117,7 @@ the uploaded index reflects the scanner artefacts that were actually produced.
 - `python tools/security_scan/run_osv_scanners.py --output-dir security/ci-security-packet`
 - `python tools/security_scan/run_typing_scanners.py --output-dir security/ci-security-packet`
 - `python tools/security_scan/run_syft_cyclonedx_scanners.py --output-dir security/ci-security-packet`
-- `python tools/security_scan/run_cargo_fuzz_scanners.py --output-dir security/cargo-fuzz-packet --target all --max-total-time 300`
+- `python tools/security_scan/run_cargo_fuzz_scanners.py --output-dir security/cargo-fuzz-packet --target all --max-total-time 300 --build-timeout 900`
 - `python tools/security_scan/run_benchmark_regression_scanners.py --baseline benchmarks/baselines/security_side_channel_benchmark.json --current security/benchmark-current/security_side_channel_benchmark.json --output security/benchmark-regression-packet/security/benchmark_regression.json --max-regression-pct 5.0`
 - `python tools/security_scan/python_code_scanner_plan.py`
 - `python tools/security_scan/rust_supply_chain_scanner_plan.py`
