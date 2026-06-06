@@ -5,6 +5,325 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.33] - 2026-06-05
+
+### CI and benchmark evidence
+- Replaced the Wilson-Cowan CI throughput floor with a bounded-runtime
+  regression sentinel and documented that production throughput evidence must
+  come from isolated benchmark runs, not hosted coverage jobs.
+
+## [3.15.32] - 2026-06-05
+
+### CI and release workflows
+- Restored the direct `MixedPrecisionSpec.get()` contract to preserve explicit
+  `PrecisionConfig(16, 8)` widths while keeping explicit `Q7.8` preset parsing
+  sign-inclusive.
+
+## [3.15.31] - 2026-06-05
+
+### CI and release workflows
+- Aligned the explicit `Q7.8` mixed-precision preset contract with the
+  sign-inclusive Q-label parser so branch CI no longer treats explicit
+  Q-format labels as named `q88` aliases.
+
+## [3.15.30] - 2026-06-05
+
+### CI and release workflows
+- Installed the pinned `click` runtime dependency before the pinned
+  SymbiYosys executable check so hosted HDL/formal CI validates `sby`
+  immediately after installation.
+
+## [3.15.29] - 2026-06-05
+
+### CI and release workflows
+- Aligned branch CI version-contract tests with source metadata, installed the
+  HDL/formal toolchain required by RTL contract tests, and synchronized the
+  conda install profile with the release version.
+
+## [3.15.28] - 2026-06-05
+
+### CI and release workflows
+- Added an executable entry point to the benchmark context example so
+  `cargo test --manifest-path engine/Cargo.toml` builds all examples on Linux.
+
+## [3.15.27] - 2026-06-05
+
+### CI and release workflows
+- Removed Yosys workflow-file edits from the Yosys push path filter so
+  release-hygiene workflow changes do not self-trigger hosted-runner synthesis.
+
+## [3.15.26] - 2026-06-05
+
+### CI and release workflows
+- Skipped Yosys synthesis on release tag pushes so tag releases do not fail on
+  non-HDL changes after all modules time out under hosted-runner synthesis
+  budgets; branch, pull-request, and manual synthesis workflows remain active.
+
+## [3.15.25] - 2026-06-05
+
+### CI and release workflows
+- Moved the macOS static-Z3 C++ parser configuration before the v3-engine
+  maturin dependency build so Apple Clang uses delayed template parsing during
+  the actual engine install step.
+
+## [3.15.24] - 2026-06-05
+
+### CI and release hygiene
+- Formatted the release-surface parity test before publishing the next
+  immutable release tag.
+
+## [3.15.23] - 2026-06-05
+
+### Release workflows
+- Aligned the Rust engine crate and bridge wheel metadata with the public
+  Python package version before registry publication.
+- Added release-surface tests for engine crate and bridge metadata version
+  parity.
+
+## [3.15.22] - 2026-06-05
+
+### Security workflows
+- Made the lightweight actionlint scanner deterministic by disabling its
+  external ShellCheck and Pyflakes integrations; those analyzers remain separate
+  CI concerns instead of hidden actionlint dependencies.
+
+## [3.15.21] - 2026-06-05
+
+### Security workflows
+- Installed ShellCheck in the CI security scanner job so actionlint has the same shell-analysis dependency available as local validation.
+
+## [3.15.20] - 2026-06-05
+
+### Security workflows
+- Updated the CI security scanner actionlint toolchain to `v1.7.12`, matching the locally validated workflow parser used for release gating.
+
+## [3.15.19] - 2026-06-05
+
+### Release workflows
+- Added macOS-only static-Z3 C++ parser flags for engine wheel and v3 engine builds so Apple Clang handles Z3's template-heavy LP sources.
+
+## [3.15.18] - 2026-06-05
+
+### CI and source hygiene
+- Scoped the SPDX guard away from vendored Mojo `.pixi` environments and generated OpenROAD build artefacts.
+- Added minimal single-line SPDX markers to real HDL and module-specific test surfaces covered by the guard.
+- Formatted the mixed-precision/live-control surfaces and tightened mixed-precision manifest typing so CI mypy passes without changing runtime contracts.
+
+## [3.15.17] - 2026-06-05
+
+### Release workflows
+- Added the static-Z3 CMake policy floor to all Rust engine wheel builders.
+- Installed Docker build-stage `clang` and `libclang-dev` so Z3 bindings can
+  locate libclang during containerized release builds.
+- Replaced the Docker build step id used in SARIF gating with an expression-safe
+  identifier.
+
+## [3.15.16] - 2026-06-05
+
+### Release workflows
+- Fixed Docker Trivy scans to use the metadata-selected image tag as an
+  explicit image reference instead of an empty default scan target.
+
+## [3.15.10] - 2026-06-05
+
+### Release workflows
+- Fixed Docker workflow image-tag selection so the workflow remains valid on
+  tag pushes and scans the selected pushed image reference.
+
+## [3.15.9] - 2026-06-05
+
+### Security and release workflows
+- Patched the hub runtime Starlette pin from `1.0.0` to `1.0.1`.
+- Fixed Docker image scanning to scan the selected pushed image reference.
+- Switched the Rust engine Z3 dependency to a static build path so release
+  wheels no longer depend on runner-provided Z3 headers.
+
+## [3.15.8] - 2026-06-05
+
+### Documentation and release polish
+- Bumped Python, Rust engine, bridge package, Sphinx docs, README, and
+  generated capability metadata to version `3.15.8`.
+- Expanded the documentation home page with an evaluator map that routes new
+  users, hardware teams, framework reviewers, industrial evaluators, notebook
+  readers, and API consumers to the correct first evidence surface.
+- Strengthened onboarding, notebook, API, FPGA tutorial, industrial
+  applications, product overview, and applications/market documentation so
+  users can understand what SC-NeuroCore is for, where it has evidence, where
+  optional dependencies apply, and which claims require committed artefacts.
+
+### Engine supervisor
+- Added a public Rust supervisor execution entrypoint shared by the PyO3
+  controller path, preserving bounded-run completion by dropping snapshot
+  senders before joining the Z3 worker and adding module-specific supervisor
+  tests for safe bounded execution, unsafe Petri-net rejection, worker shutdown
+  signalling, and zero-neuron fail-closed validation.
+
+### Compiler precision
+- Hardened adaptive runtime precision manifests for BFP/Q16.16 handoff by
+  adding the `adaptive_precision_emitter.v1` contract, emitted datapath
+  width/fraction, exponent-stream width, exponent-vector width, and fail-closed
+  rejection of block-exponent parameter counts on fixed Q-format paths.
+- Hardened generated AXI4-Lite/PCIe live-control readback so invalid
+  bank/entry selections return a bus error and latch the sticky
+  `invalid_selection` trap instead of silently returning zero.
+- Added emitter-facing mixed-precision manifests for fixed Q16.16 and
+  block-floating variables, including deterministic assignment order, emitted
+  datapath width/fraction, exponent stream width, exponent-vector width, and
+  fail-closed BFP parameter-count validation for downstream HDL emitters.
+- Routed quantizer precision-envelope proof fields through the static-analysis
+  Q-format envelope proof API, with module-specific regression coverage to keep
+  dense deployment manifests aligned with the standalone proof contract.
+- Added a static-analysis Q-format envelope proof API for conservative Q-code
+  bounds, with fail-closed validation, signed Q16.16 width/headroom manifests,
+  and module-specific tests for safe, saturating, and block-floating
+  exponent-edge contracts.
+- Added signed fixed-point width proofs to mixed Q8.8/Q16.16 and
+  block-floating precision envelope reports across Python, Rust, and refreshed
+  comparison benchmark artefacts, including required total bits, required
+  Q16.16 integer bits, headroom, saturation requirement, and static overflow
+  proof status.
+- Added seeded block-floating exponent-edge parity and trap contracts across
+  the Python quantizer, Rust qformat mirror, and comparison benchmark
+  artefacts: `BFP16E3X2` safe min/max exponent sweeps now match exact Q16.16
+  output codes across languages, while max-exponent saturation records a
+  deterministic overflow trap instead of silent wraparound.
+- Added explicit block-exponent layout metadata for block-floating precision
+  across adaptive manifests, mixed-precision specs, Python dense BFP manifests,
+  and the Rust qformat mirror, with exponent-count validation before emission
+  or accumulation.
+- Added sub-LSB underflow telemetry to mixed Q8.8/Q16.16 and block-floating
+  dense precision trap/envelope reports across Python and Rust, with refreshed
+  process-affinity benchmark artefacts documenting matched overflow and
+  underflow probes.
+- Added sticky live-control partial-write traps so generated AXI4-Lite/PCIe
+  parameter banks reject partial `WSTRB` updates before control or staged-data
+  registers can be modified.
+- Hardened live-control trap clearing so generated AXI4-Lite/PCIe parameter
+  banks clear only selected sticky trap bits and preserve unrelated latched
+  fault evidence.
+- Added selected-trap clear helpers to the live-control schema and generated
+  Python/C host drivers.
+- Added deterministic live-control active-parameter readback for host update
+  sequences and generated AXI4-Lite/PCIe parameter banks, including low/high
+  committed-word registers and module-specific RTL simulation coverage.
+- Hardened generated Python and C host drivers for live-control parameter
+  banks with CRC32 update helpers, committed readback verification, trap-status
+  checks, and mandatory high-word staging for narrow updates.
+- Added generated Python and C live-control rollback, status-read, and
+  trap-status-read helpers so host drivers expose the load/apply/rollback/
+  clear/readback handshake.
+- Added generated C live-control driver compile validation against a C11
+  consumer that calls the committed update/readback verification helper.
+- Latched live-control shadow bank and entry identity at load time so generated
+  AXI4-Lite/PCIe apply and rollback operations cannot be retargeted by later
+  selection-register writes.
+- Added sticky live-control read-only-bank traps so generated AXI4-Lite/PCIe
+  parameter banks reject direct MMIO writes to calibration/read-only banks before
+  shadow loading or active coefficient mutation.
+- Added sticky live-control invalid-selection traps so generated AXI4-Lite/PCIe
+  parameter banks reject non-existent bank/entry writes without raising a false
+  shadow-loaded acknowledgement.
+- Added sticky CRC32 checksum-mismatch traps and a testbench-visible mismatch
+  pulse to the generated AXI4-Lite/PCIe live-control parameter-bank surfaces,
+  with module-specific simulation tests and refreshed benchmark-gate evidence.
+- Replaced live-control update guards with an IEEE CRC32 register-window
+  guard shared by the compiler schema and generated SystemVerilog, with stale
+  guard rejection tests and refreshed benchmark evidence.
+- Added the PCIe-MMIO live-control register-window adapter over the staged
+  parameter-bank core, module-specific PCIe commit simulation, process-affinity
+  AXI4-Lite/PCIe comparison benchmark evidence, and compiler API documentation
+  for the exact bus-contract boundary.
+- Added the UltraScale+ dense-folding contract: shared Rust/Python fold planner,
+  folded Q8.8/Q16.16 HDL core, target-emitter fold metadata, module-specific
+  simulation tests, and isolated Python/Rust benchmark evidence for fitting the
+  64x32 dense contract into the ZU3EG DSP budget.
+- Added the NEU-C.1 Zynq UltraScale+ target contract: Rust target metadata,
+  conservative resource-budget reporting, deterministic Vivado Tcl generation,
+  board-safe timing-only XDC baselines, module-specific tests, and isolated
+  Python/Rust comparison benchmark evidence.
+- Added the NEU-C.6 DCLS Q8.8 RTL path: bit-true Rust DCLS tent-kernel
+  arithmetic, SystemVerilog axonal delay/tent/layer modules, IR
+  `DclsLayer` emission, SymbiYosys safety/liveness harness, Python/PyTorch
+  cosimulation, module-specific tests, and isolated benchmark evidence.
+- Added NEU-C.5 ADC-to-spike quantiser HDL with Q-format decimation, deterministic AER rate coding, formal transfer properties, bit-true Python reference, isolated benchmark evidence, and hardware documentation.
+- Added NEU-C.2 timing-aware formal-property framework with reusable SystemVerilog monitors, Python proof orchestration, nuXmv/Kind 2 emitters, a dense-layer SymbiYosys/cvc5 proof, and isolated benchmark evidence.
+- Added the NEU-C.4 AER strict-priority queue and router backpressure path,
+  including sticky drop/deadline traps, Python reference contract,
+  SystemVerilog simulation, formal harness, benchmark gate, and hardware docs.
+- Added live-control update and trap evidence benchmarks covering generated
+  MMIO update sequences, static RTL regeneration, and staged range-trap
+  simulation, with the artefact registered in the benchmark gate manifest.
+- Added generated live-parameter-bank staged overflow and underflow traps that
+  latch malformed MMIO payloads and block shadow-bank mutation before active
+  coefficient application.
+- Hardened compiler live-control update semantics with checksum-gated shadow
+  loads, explicit apply/rollback sequences, active-only generated parameter
+  outputs, and status telemetry for shadow-loaded, applied, rollback, and
+  checksum-valid states.
+- Added AXI4-Lite live-parameter-bank RTL emission from the compiler
+  live-control schema, including BRAM/distributed RAM style hints, flattened
+  parameter outputs, staged commits, trap status, and module-specific compile
+  tests.
+- Added deterministic compiler live-control schemas for AXI4-Lite/PCIe
+  parameter-bank updates, including encoded-word range checks, fixed
+  control/status registers, atomic staged commit sequences, and trap-clear
+  command generation.
+- Aligned adaptive block-floating precision metadata with the quantizer
+  exponent-bias contract and added explicit block exponent alignment telemetry
+  for `BFP16E3X32` to `Q16.16` adaptive-precision manifests.
+- Hardened the 2026-06-04 mixed, block-floating, precision-trap, and
+  precision-envelope benchmark artefact writers so Python and Rust runs record
+  taskset affinity, load before/after, CPU governor, and frequency context.
+- Aligned the mixed dense Python and Rust benchmark workloads on the canonical
+  raw Q8.8/Q16.16 physical contract (`QFormatMixed(scale_per_tensor=False)`),
+  eliminating the stale per-tensor Python envelope mismatch and refreshing the
+  cross-language benchmark documentation.
+- Marked the 2026-06-04 local precision benchmark artefacts as captured under
+  concurrent workstation load and documented the isolated-core requirement for
+  future production throughput claims.
+- Aligned the block-floating dense Python and Rust benchmark workloads so the
+  safe and saturating precision-envelope bounds compare the same physical BFP
+  mantissa/exponent contract across languages.
+- Added per-output conservative absolute-bound telemetry to the mixed
+  Q8.8/Q16.16 and block-floating dense RTL (`abs_bounds_q1616`), aligned the
+  Python/Rust benchmark artefacts with the same precision-envelope fields, and
+  refreshed module-specific HDL tests plus HDL/Python/Rust benchmark evidence.
+- Added per-output overflow telemetry to the mixed Q8.8/Q16.16 dense RTL and
+  refreshed the Python, Rust, HDL, and documentation evidence for lane-level
+  saturation attribution.
+- Added per-output overflow telemetry to the block-floating dense RTL and
+  refreshed the Python, Rust, HDL, and documentation evidence for lane-level
+  saturation attribution.
+- Added precision envelope reports across the mixed fixed-point and
+  block-floating dense deployment paths, including conservative absolute-bound
+  checks in Python and Rust, a synchronous HDL envelope guard, module-specific
+  tests, and committed Python, Rust, and Yosys benchmark artefacts.
+- Added precision trap reports across the mixed fixed-point and block-floating
+  dense deployment paths, including exact overflow counts in the Rust qformat
+  mirror, a synchronous HDL trap latch, module-specific tests, and committed
+  Python, Rust, and Yosys benchmark artefacts.
+- Added dense block-floating `BFP16E3X32` execution across the Python quantiser
+  API, Rust IR qformat mirror, and synchronous HDL reference module, including
+  shared-exponent product scaling, Q16.16 output saturation, overflow telemetry,
+  module-specific tests, and committed Python, Rust, and Yosys benchmark
+  artefacts.
+- Corrected block-floating metadata so the maximum unbiased exponent reflects
+  every encoded biased exponent code.
+- Added the compiled mixed-dense Q8.8/Q16.16 contract across the Python
+  quantiser API, Rust IR qformat mirror, and synchronous HDL reference module,
+  including exact signed MAC scaling, accumulator saturation, and overflow
+  telemetry.
+- Added module-specific mixed-dense quantiser and HDL tests plus committed
+  Python, Rust, and Yosys benchmark artefacts for the 64×32 mixed-precision
+  dense contract.
+- Added the `QFormatMixed` quantiser contract for Q8.8 stored weights with
+  Q16.16 accumulator metadata, including per-tensor scale round-trip support,
+  public compiler exports, module-specific quantiser tests, and refreshed
+  compiler precision documentation.
+- Corrected block-floating alias normalisation and shared-exponent selection
+  so sub-unit tensors retain the finest representable scale within the exponent
+  range.
+
 ### Typing hygiene
 - Removed active source-level file-wide mypy suppressions from the package tree
   and repaired the exposed strict-mypy defects in ASIC flow, BCI Studio,

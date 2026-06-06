@@ -1,0 +1,38 @@
+{
+   "creator": "Yosys 0.33 (git sha1 2584903a060)",
+   "invocation": "stat -json ",
+   "modules": {
+      "\\sc_precision_envelope_guard": {
+         "num_wires":         42,
+         "num_wire_bits":     1701,
+         "num_pub_wires":     9,
+         "num_pub_wire_bits": 1637,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         67,
+         "num_cells_by_type": {
+            "$adff": 2,
+            "$gt": 32,
+            "$mux": 32,
+            "$reduce_or": 1
+         }
+      }
+   },
+      "design": {
+         "num_wires":         42,
+         "num_wire_bits":     1701,
+         "num_pub_wires":     9,
+         "num_pub_wire_bits": 1637,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         67,
+         "num_cells_by_type": {
+            "$adff": 2,
+            "$gt": 32,
+            "$mux": 32,
+            "$reduce_or": 1
+         }
+      }
+}

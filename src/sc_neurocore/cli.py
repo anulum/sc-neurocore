@@ -221,10 +221,22 @@ def main() -> int:
         help="Low-precision data width for adaptive precision (default: 16)",
     )
     parser.add_argument(
+        "--lp-precision",
+        default=None,
+        help="Low-precision format for adaptive precision (e.g. Q8.8, BFP16E3X32). "
+        "If unset, --lp-width/--lp-frac are used.",
+    )
+    parser.add_argument(
         "--lp-frac",
         type=int,
         default=8,
         help="Low-precision fractional bits for adaptive precision (default: 8)",
+    )
+    parser.add_argument(
+        "--hp-precision",
+        default=None,
+        help="High-precision format for adaptive precision (e.g. Q16.16, BFP20E4X32). "
+        "If unset, --hp-width/--hp-frac are used.",
     )
     parser.add_argument(
         "--hp-width",
@@ -592,7 +604,8 @@ def _cmd_compile(args: Any) -> int:
     3. **Adaptive precision** (``--adaptive-precision``): generate a
        dual-datapath module with LP and HP sub-modules, hysteresis-based
        precision switching, and clock gating.  Configure LP/HP widths via
-       ``--lp-width``, ``--lp-frac``, ``--hp-width``, ``--hp-frac``.
+       ``--lp-width`` / ``--lp-frac`` and ``--hp-width`` / ``--hp-frac`` or
+       precision strings via ``--lp-precision`` / ``--hp-precision``.
     """
     import os
 
@@ -667,6 +680,8 @@ def _cmd_compile(args: Any) -> int:
             lp_frac=args.lp_frac,
             hp_width=args.hp_width,
             hp_frac=args.hp_frac,
+            lp_precision=getattr(args, "lp_precision", None),
+            hp_precision=getattr(args, "hp_precision", None),
         )
     else:
         verilog = compile_to_verilog(

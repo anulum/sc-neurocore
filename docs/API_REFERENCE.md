@@ -5248,9 +5248,12 @@ hp_width : int
 hp_frac : int
     High-precision fractional bits (default 16).
 threshold_up_pct : float
-    Fraction of LP range at which to switch to HP (default 0.8).
+    Fraction of LP range at which to switch to HP (default 0.8). Must satisfy
+    0 < threshold_down_pct < threshold_up_pct < 1, and both thresholds must
+    quantise to non-zero LP code points.
 threshold_down_pct : float
-    Fraction of LP range at which to switch back to LP (default 0.5).
+    Fraction of LP range at which to switch back to LP (default 0.5). Must be
+    strictly lower than threshold_up_pct and quantise on LP codes.
 signed : bool
     True for signed two's complement.
 overflow : str
@@ -5412,17 +5415,42 @@ data_width : int
     Fixed-point data width.
 fraction : int
     Fractional bits.
+live_update_spec : MMIOUpdateSpec, optional
+    Live-control bank contract. When provided, generated Python and C drivers
+    include CRC-guarded live-parameter update helpers, hardware-trap checks, and
+    committed active-parameter readback helpers for each named bank entry.
 
 Returns
 -------
 str
     Complete driver source code.
 
-### Function `_gen_python_driver(module_name, params, base_address, data_width, fraction)`
+### Function `_gen_python_driver(module_name, params, base_address, data_width, fraction, live_update_spec)`
 Generate Python MMIO driver.
 
-### Function `_gen_c_driver(module_name, params, base_address, data_width, fraction)`
+When a live-control contract is supplied, generated methods stage both
+`WRITE_DATA_LO` and `WRITE_DATA_HI` before writing the CRC32 checksum. Narrow
+entries therefore force the high word to zero before commit, preventing stale
+wide-update state from affecting later Q8.8/Q16.16 updates. The generated
+`verify_live_<bank>_<parameter>_encoded()` helpers update the active bank and
+compare committed readback against the requested encoded word. Generated Python
+drivers also expose `read_live_status()`, `read_live_trap_status()`,
+`rollback_live_shadow()`, and `clear_live_traps()` so host software can observe
+and recover the same update/apply/rollback/clear handshake implemented by the
+generated control registers. `clear_selected_live_traps(mask)` clears one
+selected subset of sticky trap bits while leaving unrelated latched faults
+visible.
+
+### Function `_gen_c_driver(module_name, params, base_address, data_width, fraction, live_update_spec)`
 Generate C MMIO driver header.
+
+The C live-control helpers mirror the Python sequence: split the encoded word,
+write low and high staging registers, compute IEEE CRC32 over bank, entry, low,
+and high words, commit, trap-check status, then read back committed active
+state for verification. The generated header also exposes `live_read_status()`,
+`live_read_trap_status()`, `live_rollback_shadow()`, and `live_clear_traps()`.
+Generated C11 consumers are compile-checked against the update/readback and
+recovery helper surface, including `live_clear_selected_traps(mask)`.
 
 ### Function `generate_cocotb_testbench(module_name)`
 Generate a Cocotb (Python) testbench for a compiled neuron.
@@ -8436,6 +8464,29 @@ signed : bool
 - **encode**(value)
   - Encode a float to Q-format integer.
 
+### Class `BlockFloatingPrecisionConfig`
+Block-floating specification for a single mixed-precision variable.
+
+The mixed-precision emitter stores the mantissa in the fixed datapath and
+carries shared-exponent metadata through the manifest. `BFP16E3X32` therefore
+emits a 16-bit mantissa datapath with a 3-bit exponent stream and one shared
+exponent per contiguous block of 32 flattened parameters.
+
+- **data_width**()
+  - Mantissa payload width emitted into the fixed datapath.
+- **emit_fraction**()
+  - Conservative mantissa fraction used by fixed-point compatibility emitters.
+- **block_exponent_count**(parameter_count)
+  - Exact shared-exponent count for a flattened parameter payload.
+- **block_exponent_layout**(parameter_count)
+  - Deterministic row-major contiguous block layout for downstream emitters.
+- **validate_exponents**(exponents, parameter_count)
+  - Fail-closed exponent count and code-range validation.
+- **manifest_for_parameter_count**(parameter_count)
+  - Return emitter-facing BFP metadata, including datapath width, exponent
+    stream width, exponent-vector width, and concrete layout when the parameter
+    count is known.
+
 ### Class `MixedPrecisionSpec`
 Specification for mixed-precision compilation.
 
@@ -8455,6 +8506,12 @@ var_configs : dict&#91;str, PrecisionConfig&#93;
   - Get the precision config for a variable.
 - **summary**()
   - Return a human-readable summary of the precision allocation.
+- **manifest**(parameter_counts)
+  - Return the deterministic emitter-facing precision plan. Each variable row
+    includes `variable`, `assignment_index`, `label`, emitted datapath
+    width/fraction, exponent stream width, exponent-vector width, and the
+    datapath contract. Block-floating rows include exact shared-exponent layout
+    when `parameter_counts` supplies the flattened parameter count.
 
 ### Function `_min_bits_for_range(lo, hi, signed)`
 Compute minimum integer bits to cover a value range.
@@ -9117,6 +9174,65 @@ Returns
 -------
 PowerEstimate
     Estimated power breakdown.
+
+---
+
+## Module `compiler.live_control`
+
+### Class `ParameterBankSpec`
+Defines one hot-swappable parameter bank for AXI4-Lite or PCIe MMIO control.
+The bank records the bank name, start address, parameter count, public
+parameter names, precision mode, Q-format or block-floating layout, reset value,
+and write permissions. Fixed-point banks expose deterministic entry widths from
+their Q-format. Block-floating banks expose exponent-plus-mantissa entry widths.
+
+### Class `MMIOWrite`
+Describes a single host-side register write in the live-control transaction
+sequence. The schema validates aligned addresses, bus width, encoded value
+width, and the write purpose so generated drivers can emit deterministic
+selection, data, checksum, shadow-load, commit, rollback, and trap-clear
+operations.
+
+### Class `MMIORead`
+Describes a single host-side register read in the live-control transaction
+sequence. Read purposes are restricted to status, trap status, active low data,
+and active high data. The active-data reads are used after selecting a bank and
+entry to verify the committed parameter value without resynthesizing the
+bitstream.
+
+### Class `MMIOUpdateSpec`
+Defines the complete live-control contract for hot-swapping parameters. The
+spec owns the control register map, status bits, trap bits, CRC32 update guard,
+bus protocol, bank list, and read/write data widths. `effective_trap_width`
+reports the host-visible trap-vector width; `trap_clear_mask` is the all-bits
+mask used when host code wants to clear every generated sticky trap.
+
+### Method `build_update_sequence(bank_name, parameter, encoded_word)`
+Builds the deterministic host write sequence for a staged parameter update:
+select bank, select entry, write low/high data words, write CRC32 checksum, load
+the shadow bank, and apply the shadow bank. The high word is written even for
+narrow entries, where it is zero, so a previous wide update cannot leave stale
+high-register state behind the checksum guard. The method rejects read-only
+banks, unknown banks, unknown entries, and encoded words outside the bank
+precision width.
+
+### Method `build_readback_sequence(bank_name, parameter)`
+Builds the deterministic host readback sequence for a committed active
+parameter. The sequence writes the bank and entry selectors, reads
+`read_data_lo`, and reads `read_data_hi` only when the selected precision width
+exceeds 32 bits. Readback is allowed for read-only calibration banks because it
+does not mutate shadow or active state.
+
+### Method `build_trap_clear_sequence()`
+Builds the deterministic host write sequence for clearing all generated sticky
+traps. The sequence writes `trap_clear_mask` to `TRAP_CLEAR`, then emits the
+control-register clear pulse. Generated RTL clears only selected bits, so
+unselected latched faults remain visible in `TRAP_STATUS`.
+
+### Method `build_selective_trap_clear_sequence(trap_mask)`
+Builds the deterministic host write sequence for clearing only selected sticky
+traps. The mask is rejected unless it is an integer subset of
+`trap_clear_mask`, preventing host code from writing undefined trap bits.
 
 ---
 

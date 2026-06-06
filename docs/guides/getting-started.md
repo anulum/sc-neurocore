@@ -4,6 +4,16 @@ This guide gets a new user from installation to the first useful SC-NeuroCore wo
 
 The base install is intentionally small. Optional training, hardware, quantum, JAX, GPU, Studio, and research surfaces are installed only when the relevant workflow needs them.
 
+## Choose your first route
+
+| Goal | Start with | Why |
+| --- | --- | --- |
+| Learn the basic stochastic-computing idea | Bitstream encoder and `VectorizedSCLayer` examples below | They show probability-as-bitstream without optional dependencies. |
+| Evaluate SNN modelling | Single-neuron, model-zoo, and network examples | They expose neuron dynamics before hardware-specific concerns. |
+| Evaluate hardware potential | [FPGA in 20 Minutes](../tutorials/fpga_in_20_minutes.md) after this page | It connects quantisation, SC simulation, RTL export, and report boundaries. |
+| Evaluate market or industrial fit | [Applications and Market](../applications_and_market.md) and [Industrial Applications](../api/industrial_applications.md) | They map use cases to evidence categories and deployment gaps. |
+| Review evidence notebooks | [Notebook Guide](notebook_guide.md) | It separates onboarding notebooks from readiness and evidence notebooks. |
+
 ## Installation
 
 ```bash
