@@ -337,17 +337,17 @@ an unverified accuracy or power claim.
 
 | Current File | Lines | Proposed Sub-Modules |
 |-------------|------:|----------------------|
-| `src/sc_neurocore/compiler/intelligence/` | Responsibility-scoped package | Compiler intelligence, verification/safety, power/thermal, reporting, security/compliance, SoC/chiplet, digital-twin, and frontier-physics modules |
-| `deployment.py` (~1120 lines) | 9 sections | `resource_estimator.py`, `constraint_gen.py`, `host_driver_gen.py`, `cocotb_gen.py`, `sby_formal.py`, `riscv_driver.py`, `slr_placement.py`, `certification_gen.py`, `multi_target.py` |
-| `static_analysis.py` (~720 lines) | 5 sections | `guard_bits.py`, `overflow_proof.py`, `sva_gen.py`, `pipeline_analysis.py`, `power_estimator.py` |
+| `src/sc_neurocore/compiler/intelligence/` | Responsibility-scoped package | [DONE] Compiler intelligence, verification/safety, power/thermal, reporting, security/compliance, SoC/chiplet, digital-twin, and frontier-physics modules |
+| `deployment.py` (~1120 lines) | 9 sections | [DONE] `resource_estimator.py`, `constraint_gen.py`, `host_driver_gen.py`, `cocotb_gen.py`, `sby_formal.py`, `riscv_driver.py`, `slr_placement.py`, `certification_gen.py`, `multi_target.py` |
+| `static_analysis.py` (~720 lines) | 5 sections | [DONE] `guard_bits.py`, `overflow_proof.py`, `sva_gen.py`, `pipeline_analysis.py`, `power_estimator.py` |
 
 ### Refactoring Rules
 
-- [ ] Each sub-module gets its own file in `src/sc_neurocore/compiler/`
-- [ ] Original file becomes a thin re-export facade (backwards-compatible imports)
-- [ ] Each sub-module has a dedicated test file in `tests/`
-- [ ] All existing public API signatures remain unchanged
-- [ ] Module-level `__init__.py` exposes the same `from ... import` surface
+- [x] Each sub-module gets its own file in `src/sc_neurocore/compiler/`
+- [x] Original file becomes a thin re-export facade (backwards-compatible imports)
+- [x] Each sub-module has a dedicated test file in `tests/`
+- [x] All existing public API signatures remain unchanged
+- [x] Module-level `__init__.py` exposes the same `from ... import` surface
 
 ---
 

@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore
+# SC-NeuroCore — Intelligence package re-exports
 
 """Compiler intelligence helpers for hardware-aware SC-NeuroCore flows."""
 
@@ -19,48 +19,20 @@ from sc_neurocore.compiler.platforms import (
 )
 from sc_neurocore.compiler.platforms.registry import _DISCOVERY_HOOKS
 
-from .core import (
-    CompilationCache,
-    DebugProbeSpec,
-    DispatchPlan,
-    FP8_E4M3,
-    MXFPConfig,
-    MXFP4,
-    MXFP6,
-    MXFP8_E4M3,
-    MXFP8_E5M2,
-    NIRGraph,
-    OnChipLearningParams,
-    PositConfig,
+from .auto_quantization import (
     QuantSweepResult,
-    ReconfigPartition,
-    TargetRecommendation,
-    TimescalePartition,
-    TopologyPlan,
-    WeightNoiseProfile,
     auto_quantisation_sweep,
-    create_noise_profile,
-    export_learning_config,
     format_quantisation_report,
-    generate_dvs_aer_bridge,
-    generate_hls_cpp,
-    generate_learning_params,
+)
+from .bitstream_flow import (
     generate_oss_makefile,
-    generate_tcl_project,
-    generate_weight_rom,
-    import_nir_graph,
-    inject_weight_noise,
+)
+from .compilation_cache import (
+    CompilationCache,
+)
+from .debug_probes import (
+    DebugProbeSpec,
     insert_debug_probes,
-    mxfp_decode_block,
-    mxfp_encode_block,
-    optimize_network_topology,
-    partition_timescales,
-    plan_heterogeneous_dispatch,
-    plan_partial_reconfiguration,
-    posit_decode,
-    posit_encode,
-    recommend_target,
-    verilog_to_vhdl_wrapper,
 )
 from .digital_twin import (
     DriftCompensator,
@@ -72,6 +44,13 @@ from .digital_twin import (
     generate_hil_calibration,
     ingest_telemetry,
     schedule_seu_scrubbing,
+)
+from .dispatch_planner import (
+    DispatchPlan,
+    plan_heterogeneous_dispatch,
+)
+from .dvs_bridge import (
+    generate_dvs_aer_bridge,
 )
 from .exotic_physics import (
     AdiabaticPhase,
@@ -92,6 +71,37 @@ from .exotic_physics import (
     synthesize_morphology,
     synthesize_reversible_logic,
 )
+from .hls_export import (
+    generate_hls_cpp,
+)
+from .learning_export import (
+    OnChipLearningParams,
+    export_learning_config,
+    generate_learning_params,
+)
+from .mxfp_encoding import (
+    FP8_E4M3,
+    MXFPConfig,
+    MXFP4,
+    MXFP6,
+    MXFP8_E4M3,
+    MXFP8_E5M2,
+    mxfp_decode_block,
+    mxfp_encode_block,
+)
+from .network_optimizer import (
+    TopologyPlan,
+    optimize_network_topology,
+)
+from .nir_import import (
+    NIRGraph,
+    import_nir_graph,
+)
+from .posit_arithmetic import (
+    PositConfig,
+    posit_decode,
+    posit_encode,
+)
 from .power_and_thermal import (
     ApproximationConfig,
     EnergyHarvestBudget,
@@ -107,6 +117,10 @@ from .power_and_thermal import (
     generate_thermal_constraints,
     model_energy_harvest,
     thermal_analysis,
+)
+from .reconfig_planner import (
+    ReconfigPartition,
+    plan_partial_reconfiguration,
 )
 from .reporting import (
     ModelComplexity,
@@ -167,6 +181,17 @@ from .soc_and_chiplet import (
     plan_pim_layout,
     storage_recommendation,
 )
+from .target_recommender import (
+    TargetRecommendation,
+    recommend_target,
+)
+from .tcl_gen import (
+    generate_tcl_project,
+)
+from .timescale_partitioner import (
+    TimescalePartition,
+    partition_timescales,
+)
 from .verification_and_safety import (
     AgingPrediction,
     CDCReport,
@@ -191,6 +216,17 @@ from .verification_and_safety import (
     run_fault_campaign,
     verify_ode_stability,
     verify_timing_closure,
+)
+from .vhdl_emitter import (
+    verilog_to_vhdl_wrapper,
+)
+from .weight_noise import (
+    WeightNoiseProfile,
+    create_noise_profile,
+    inject_weight_noise,
+)
+from .weight_rom import (
+    generate_weight_rom,
 )
 
 __all__ = [
