@@ -1,6 +1,6 @@
 # SC-NeuroCore Benchmarks
 
-Performance measurements for SC-NeuroCore. Historical core engine rows come from v3.13.3, FPGA synthesis additions from v3.14.0, and documentation/release evidence is current for v3.15.7. All Python numbers are CPU-only unless a GPU environment is named. Rust numbers use Criterion and must be read with their recorded SIMD/environment context.
+Performance measurements for SC-NeuroCore. Historical core engine rows come from v3.13.3, FPGA synthesis additions from v3.14.0, and documentation/release evidence is current for v3.15.8. All Python numbers are CPU-only unless a GPU environment is named. Rust numbers use Criterion and must be read with their recorded SIMD/environment context.
 
 ## Evidence boundary
 
@@ -13,6 +13,36 @@ provenance.
 When a newer local run exists but its raw output is not committed, cite it only
 as local exploratory evidence. Do not promote it to README, roadmap, release,
 or paper claims until the raw artefact and environment record are committed.
+
+The 2026-06-04 local Python/Rust precision benchmark artefacts were captured on
+a workstation under concurrent load and without an exclusive isolated CPU core
+set.  Treat those medians as contract/regression context, not final throughput
+claims.  Any production performance claim must be rerun on reserved isolated
+cores, with CPU affinity, host-load, governor, and frequency evidence recorded
+in the raw artefact.
+
+The 2026-06-05 refreshed mixed-dense, block-floating, and precision-envelope
+artefacts were executed with process affinity pinned to CPUs `8-9`.  The raw
+JSON records host load, affinity, CPU governor, and sampled frequency context,
+but the workstation still did not expose kernel-reserved isolated cores to this
+user session.  Treat the refreshed medians as local regression evidence and the
+proof fields as the authoritative contract evidence.
+
+The 2026-06-05 live-control AXI4-Lite/PCIe-MMIO rerun was executed with
+process affinity pinned to CPUs `8-9`, and the raw artefact records that the
+process affinity matched the requested benchmark cpuset.  The workstation did
+not expose kernel-reserved isolated cores to this user session, so these numbers
+remain local regression evidence rather than production throughput claims.
+
+The 2026-06-04 AER priority queue benchmark follows the same boundary.  It was
+run under a temporary runtime cpuset shield: system/user slices were moved off
+the benchmark cores, the benchmark ran in its own `benchmark.slice`, and the raw
+artefact records the process affinity plus cgroup effective CPU set.  This is
+stronger than `taskset` pinning but still distinct from boot-time
+`isolcpus`/`nohz_full` kernel isolation.  The artefact is
+Python/SystemVerilog contract evidence for strict-priority ordering, FIFO ties,
+backpressure drops, critical-deadline traps, and Yosys RTL elaboration; it is
+not an FPGA throughput or latency measurement.
 
 > **v3.14.0 additions:** SHD FPGA synthesis on Zynq XC7Z020 — 1 317 LUT
 > (2.5%), 848 FF (0.8%), WNS +4.048 ns at 100 MHz. See
@@ -67,6 +97,173 @@ or paper claims until the raw artefact and environment record are committed.
 |---------------|-----------|---------------|------------|
 | 16×8, L=256 | 500 | 352.7 | 0.09 GOP/s (SC) |
 | 64×32, L=1,024 | 100 | 2,405.8 | 0.87 GOP/s (SC) |
+
+### AER Priority Queue Backpressure Contract (2026-06-04)
+
+This benchmark covers the NEU-C.4 event-control contract: AER fanout packets
+with lower numeric priority must overtake best-effort packets while preserving
+FIFO order within equal priority classes.  The committed artefact also records
+finite-capacity backpressure, sticky drop traps, sticky critical-deadline traps,
+CPU affinity, cgroup effective CPU set, host load, CPU governor, and Yosys
+elaboration time.
+
+| Path | Workload | Result | Raw evidence |
+|------|----------|--------|--------------|
+| Python reference model | 4,096 deterministic events x 100 repeats | 4.138 us/event under runtime cpuset shield `10-11`; `priority_violations=0`, `fifo_tie_violations=0` | `benchmarks/results/local_python_2026-06-04_aer_priority_queue.json` |
+| SystemVerilog `sc_aer_priority_queue` | Yosys synthesis/elaboration | `yosys.exit_code=0`, 6,364 cells in the artefact | `benchmarks/results/local_python_2026-06-04_aer_priority_queue.json` |
+
+No Rust, Julia, Go, or Mojo counterpart exists for this HDL-only queue surface
+as of 2026-06-04.  Cross-language comparison therefore means Python reference
+contract versus SystemVerilog RTL elaboration/simulation for this task.
+
+### Live-control AXI4-Lite / PCIe-MMIO Register Window (2026-06-05)
+
+This benchmark covers the live-parameter update contract for hot-swappable
+weights and Kuramoto coupling parameters.  Both protocols use the same
+CRC32-gated shadow-bank core: AXI4-Lite exposes the core directly, while the
+PCIe path emits a PCIe-MMIO register-window adapter that expects upstream PCIe
+hard IP to present decoded single-clock MMIO strobes.
+
+| Path | Workload | Result | Raw evidence |
+|------|----------|--------|--------------|
+| Python update-sequence builder | 20,000 deterministic staged writes x 7 repeats | AXI4-Lite median `14.139 us/sequence`; PCIe-MMIO median `14.216 us/sequence` under process affinity `8-9` | `benchmarks/results/local_python_2026-06-04_live_control_updates.json` |
+| SystemVerilog AXI4-Lite core | Generated trap-capture simulation | `trap_capture.passed=true`; staged overflow and underflow traps latched without mutating active coefficients | `benchmarks/results/local_python_2026-06-04_live_control_updates.json` |
+| SystemVerilog PCIe-MMIO wrapper | Generated commit simulation | `pcie_mmio_commit_capture.passed=true`; partial write strobes raise sticky `partial_write`, stale CRC32 guard raises sticky `checksum_mismatch`, invalid bank selection and invalid active readback raise sticky `invalid_selection`, read-only bank writes raise sticky `read_only_bank`, and retargeting selection registers after shadow load cannot redirect the committed bank | `benchmarks/results/local_python_2026-06-04_live_control_updates.json` |
+
+No Rust, Julia, Go, or Mojo counterpart exists for this HDL bus-adapter surface
+as of 2026-06-04.  Cross-language comparison therefore means Python control
+contract generation versus SystemVerilog RTL simulation for AXI4-Lite and
+PCIe-MMIO.
+
+### Mixed Q8.8/Q16.16 Dense Contract (2026-06-04)
+
+This benchmark covers the deterministic dense mixed-precision contract: stored
+Q8.8 weights, Q16.16 inputs and outputs, signed arithmetic product scaling, and
+explicit saturation/overflow handling.  The Python path is the deployment
+reference and manifest writer; the Rust path is the low-latency integer mirror.
+The Python path is run with `QFormatMixed(scale_per_tensor=False)` for this
+benchmark so the Python, Rust, and HDL surfaces share the same raw Q8.8/Q16.16
+arithmetic contract instead of Python-only per-tensor rescaling.
+
+| Path | Workload | Median | Raw evidence |
+|------|----------|-------:|--------------|
+| Python `CompiledMixedDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 51.934 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| Python `CompiledMixedDense.forward_with_overflow` | Same deterministic matrix/vector | 51.104 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.656 µs/call | `benchmarks/results/local_python_2026-06-04_mixed_dense.json` |
+| Rust `mixed_dense_q88_q1616` | 64×32 dense, 20,000 calls × 7 repeats | 2.659 µs/call | `benchmarks/results/local_rust_2026-06-04_mixed_dense.json` |
+| HDL `sc_mixed_precision_dense` Yosys RTLIL stat | Default 64×32 parameters | 12,708 cells, 2,048 multipliers | `hdl/reports/yosys_mixed_precision_dense_2026-06-04.json` |
+
+The Python mixed path reconstructed the float64 dot product with maximum
+absolute error `0.0` on the committed deterministic workload.
+The Python and Rust artefacts both recorded safe-workload overflow count `0`
+and saturating-probe overflow count `32`, matching the lane-level HDL
+`overflow_vector` contract.  The same artefacts now record conservative
+precision-envelope telemetry: Python and Rust safe max absolute bound `531400`,
+and saturating-probe max absolute bound
+`17454214414336`; the HDL exports the matching per-output `abs_bounds_q1616`
+vector.  The refreshed Python and Rust artefacts also prove the signed
+symmetric fixed-point width contract: the safe workload requires `21` signed
+total bits, `5` Q16.16 integer bits, and has `11` bits of headroom; the
+saturating probe requires `45` signed total bits and `29` Q16.16 integer bits,
+has `-13` bits of headroom, and records `saturation_required=true`.
+
+### Block-Floating Dense Contract (2026-06-04)
+
+This benchmark covers dense `BFP16E3X32` weights with Q16.16 inputs and
+saturated Q16.16 outputs.  The shared exponent path preserves larger dynamic
+range per block than canonical Q8.8 weights, at the cost of dynamic shifts in
+the HDL datapath.
+
+| Path | Workload | Median | Raw evidence |
+|------|----------|-------:|--------------|
+| Python `CompiledBlockFloatingDense.forward_accumulator_codes` | 64×32 dense, 2,000 calls × 7 repeats | 38.760 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Python `CompiledBlockFloatingDense.forward_with_overflow` | Same deterministic matrix/vector | 42.356 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| NumPy float64 dot baseline | Same deterministic matrix/vector | 1.029 µs/call | `benchmarks/results/local_python_2026-06-04_block_floating_dense.json` |
+| Rust `block_floating_dense_q16` | 64×32 dense, 20,000 calls × 7 repeats | 11.471 µs/call | `benchmarks/results/local_rust_2026-06-04_block_floating_dense.json` |
+| HDL `sc_block_floating_dense` Yosys RTLIL stat | Parameterised 2×2, `BLOCK_SIZE=2` elaboration copy | 96 cells, 4 multipliers | `hdl/reports/yosys_block_floating_dense_2026-06-04.json` |
+
+The deterministic block-floating workload recorded maximum absolute error
+`0.22306060791015625` versus float64 dot.  This reflects BFP16E3 block-scale
+quantisation on the committed synthetic workload, not runtime nondeterminism.
+The Python and Rust artefacts both recorded safe-workload overflow count `0`
+and saturating-probe overflow count `32`, matching the lane-level HDL
+`overflow_vector` contract.  Both languages now compare the same deterministic
+BFP contract: mantissa checksum `-15`, exponent checksum `0`, exponent code
+range `[0, 0]`, safe max absolute bound `610816`, and saturating-probe max
+absolute bound `1125865547104256`.  The refreshed proof fields record safe
+width `21` signed total bits, `5` Q16.16 integer bits, and `11` bits of
+headroom; the saturating probe records `51` signed total bits, `35` Q16.16
+integer bits, `-19` bits of headroom, and `saturation_required=true`.  The
+64×32 payload records
+`parameter_count=2048` and `block_exponent_count=64` in both the Python
+manifest and Rust artefact.  The HDL exports per-output
+`abs_bounds_q1616`; the
+full-size 64×32 block-floating Yosys frontend path is documented as toolchain
+debt because Yosys 0.33 elaborates the default procedural loops during
+`read_verilog` before `chparam` can reduce the dimensions.
+
+The same Python and Rust artefacts now include a seeded `BFP16E3X2` exponent
+edge sweep.  Both languages agree on safe exponent codes `[0, 7, 0, 7]`, safe
+Q16.16 output codes `[1056736, -1069024]`, safe overflow and underflow counts
+`0`, conservative safe bound `1069024`, and headroom `2146414623`.  The
+max-exponent saturation probe records exponent code `[7]`, saturated output
+code `[2147483647]`, overflow count `1`, underflow count `0`, and conservative
+bound `2251662376828928`.  The safe edge sweep requires `22` signed total
+bits and `6` Q16.16 integer bits with `10` bits of headroom; the max-exponent
+saturation probe requires `52` signed total bits and `36` Q16.16 integer bits
+with `-20` bits of headroom, proving that max shared-exponent payloads trap
+rather than silently wrapping.
+
+### Precision Trap Reports (2026-06-04)
+
+This benchmark covers the saturation telemetry path for mixed Q8.8/Q16.16 and
+block-floating dense outputs.  The workload intentionally saturates all 32
+output channels so the trap report has to preserve an exact overflow count
+rather than only a collapsed Boolean.
+
+| Path | Workload | Median | Raw evidence |
+|------|----------|-------:|--------------|
+| Python mixed `precision_trap_report` | 64×32 dense, 2,000 calls × 7 repeats | 44.744 µs/call | `benchmarks/results/local_python_2026-06-04_precision_traps.json` |
+| Python BFP `precision_trap_report` | 64×32 dense, 2,000 calls × 7 repeats | 45.906 µs/call | `benchmarks/results/local_python_2026-06-04_precision_traps.json` |
+| Rust mixed `PrecisionTrapReport` | 64×32 dense, 20,000 calls × 7 repeats | 2.506 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_traps.json` |
+| Rust BFP `PrecisionTrapReport` | 64×32 dense, 20,000 calls × 7 repeats | 8.777 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_traps.json` |
+| HDL `sc_precision_overflow_trap` Yosys stat | Default `TRAP_WIDTH=1` | 3 cells, 8 wire bits | `hdl/reports/yosys_precision_overflow_trap_2026-06-04.json` |
+
+The committed Python and Rust trap workloads both report
+`mixed_overflow_count=32` and `bfp_overflow_count=32`, matching the number of
+output channels.  The HDL trap primitive synthesises to one `$adff`, one
+`$mux`, and one `$or` cell at the default width.
+The 2026-06-05 rerun also records matched sub-LSB underflow probes:
+`mixed_underflow_count=32` and `bfp_underflow_count=32` in both Python and
+Rust, while the saturating overflow workloads retain `underflow_count=0`.
+
+### Precision Envelope Reports (2026-06-04)
+
+This benchmark covers the conservative predeployment envelope path for mixed
+Q8.8/Q16.16 and block-floating dense outputs.  The Python and Rust workloads
+use matched fixed-point codes and report the same maximum absolute bounds:
+`132850` for the mixed dense workload and `78032768` for the block-floating
+workload.
+
+| Path | Workload | Median | Raw evidence |
+|------|----------|-------:|--------------|
+| Python mixed `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 87.578 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
+| Python BFP `precision_envelope_report` | 64×32 dense, 2,000 calls × 7 repeats | 90.475 µs/call | `benchmarks/results/local_python_2026-06-04_precision_envelopes.json` |
+| Rust mixed `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 2.991 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
+| Rust BFP `PrecisionEnvelopeReport` | 64×32 dense, 20,000 calls × 7 repeats | 9.874 µs/call | `benchmarks/results/local_rust_2026-06-04_precision_envelopes.json` |
+| HDL `sc_precision_envelope_guard` Yosys stat | Default `N_OUTPUTS=32` | 67 cells, 1,701 wire bits | `hdl/reports/yosys_precision_envelope_guard_2026-06-04.json` |
+
+Both Python and Rust envelope reports returned
+`conservative_overflow_free=true` for the committed safe workload.  The HDL
+guard synthesises to two `$adff`, thirty-two `$gt`, thirty-two `$mux`, and one
+`$reduce_or` cell at the default width.
+The raw artefacts now include `observed_underflow_free=true` for the safe
+workload and matched underflow probes with `underflow_count=32` for mixed and
+BFP dense paths in both Python and Rust.  The refreshed manifests expose
+`proof_kind=signed_symmetric_fixed_point_width`: mixed dense requires `19`
+signed total bits, `3` Q16.16 integer bits, and has `13` bits of headroom,
+while block-floating dense requires `28` signed total bits, `12` Q16.16
+integer bits, and has `4` bits of headroom.
 
 ---
 
@@ -369,6 +566,13 @@ Synthesis tooling (`tools/yosys_synth.py`) targets Xilinx 7-series via Yosys
 python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json --markdown
 ```
 
+CI runs this command with `--allow-skips` so timeout-limited hosted runners
+still publish `benchmarks/results/yosys_synth.json` as evidence. A skipped
+module is not a hardware timing claim; it records that the bounded CI runner
+could not complete that module inside the configured synthesis timeout. Local
+or release-grade FPGA evidence should rerun without `--allow-skips` on an
+isolated synthesis host.
+
 Target modules: `sc_bitstream_encoder`, `sc_lif_neuron`, `sc_bitstream_synapse`,
 `sc_dotproduct_to_current`, `sc_firing_rate_bank`, `sc_dense_layer_core`,
 `sc_neurocore_top`.
@@ -437,6 +641,10 @@ python benchmarks/benchmark_advanced_modules.py
 
 # FPGA synthesis (requires yosys in PATH)
 python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json --markdown
+
+# CI artifact mode: record timeout skips without treating hosted-runner
+# synthesis incompletion as a design failure.
+python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json --markdown --allow-skips
 ```
 
 ---
@@ -570,3 +778,102 @@ Competitive comparison (raw waveform compression):
   reports true Rust throughput without FFI.
 - Brian2 installed with numpy 2.4.2 (its requirement); benchmarks run after
   downgrading to numpy 1.26.4 for sc-neurocore compatibility.
+
+## Timing-aware formal framework (2026-06-04)
+
+Artefact: `benchmarks/results/local_python_2026-06-04_timing_formal_framework.json`.
+
+This benchmark exercises the NEU-C.2 timing formal framework across the active polyglot proof surfaces. The run was executed under runtime core isolation with `host_context.cgroup_effective_cpuset=10-11` and `runtime_cpuset_shield_claimed=true`; the workstation load average during the run was `1.96, 2.40, 3.13`. These timings should not be compared against unloaded baselines unless the same isolated-core condition is reproduced.
+
+| Surface | Operation | Result |
+| --- | --- | --- |
+| SystemVerilog | Dense-layer timing monitors proved through SymbiYosys/cvc5 | pass, `1.476097` s |
+| Python | TimingProperty construction and proof orchestration | 16 properties |
+| nuXmv | bounded transition-model emission | 16 models, `0.000016258` s, runtime unavailable locally |
+| Kind 2 | Lustre bounded-node emission | 16 models, `0.000012825` s, runtime unavailable locally |
+
+Evidence boundary: this is formal proof and model-emitter evidence, not hardware throughput evidence. `hardware_measurement_claimed=false` remains intentional.
+
+## ADC-to-spike quantiser (2026-06-04)
+
+Artefact: `benchmarks/results/local_python_2026-06-04_adc_to_spike_quantiser.json`.
+
+This benchmark exercises the NEU-C.5 ADC-to-spike sensor-ingress contract across the active Python and SystemVerilog surfaces. The run used runtime core isolation with `host_context.cgroup_effective_cpuset=10-11` and `runtime_cpuset_shield_claimed=true`; load average during the run was `3.71, 3.80, 3.48`.
+
+| Surface | Operation | Result |
+| --- | --- | --- |
+| Python | Bit-true ADC decimation and deterministic AER rate-code reference | `3704.696` ns/sample over `409600` samples |
+| SystemVerilog | SymbiYosys/cvc5 formal proof | pass, `4.579` s |
+| SystemVerilog | Yosys generic synthesis estimate | `7675` cells, `11.861` s |
+
+Evidence boundary: this is local contract, formal, and synthesis-estimate evidence. `hardware_measurement_claimed=false` remains intentional until board-level isolated hardware evidence is captured.
+
+## DCLS Q8.8 RTL contract (2026-06-04)
+
+Artefacts: `benchmarks/results/local_python_2026-06-04_dcls_q88.json` and
+`benchmarks/results/local_rust_2026-06-04_dcls_q88.json`.
+
+This benchmark exercises the NEU-C.6 DCLS Q8.8 scalar layer contract across
+Python, PyTorch, Rust, and SystemVerilog.  The Python/SystemVerilog run used
+runtime core isolation with `host_context.cgroup_effective_cpuset=10-11` and
+`runtime_cpuset_shield_claimed=true`; load average during the run was
+`3.43, 3.66, 3.20`.  The Rust run used the same isolated unit and recorded CPU
+affinity `10-11`.
+
+| Surface | Operation | Result |
+| --- | --- | --- |
+| Python | Bit-true DCLS Q8.8 tent-kernel reference | `6349.497` ns/sample over `409600` samples |
+| PyTorch | Quantised deterministic parity reference | 5/5 cases passed, max accumulator diff `0` |
+| Rust | Bit-true DCLS Q8.8 reference | `40.184` ns/sample median over `409600` samples x 7 repeats |
+| SystemVerilog | SymbiYosys/cvc5 bounded formal check | pass, `1.533` s |
+| SystemVerilog | Yosys generic synthesis estimate | `106003` cells, `105.897` s |
+
+Evidence boundary: this is local contract, bounded-formal, and
+synthesis-estimate evidence.  `hardware_measurement_claimed=false` remains
+intentional.  The Vivado ZU3EG WNS/utilisation contract is gated behind
+`MIF_VIVADO_CI=1` and is not claimed until the self-hosted Vivado runner
+archives a passing timing summary.
+
+## UltraScale+ target contract (2026-06-04)
+
+This benchmark exercises the NEU-C.1 Zynq UltraScale+ target contract across the
+Python Vivado-project generator and Rust SystemVerilog emitter/resource model.
+Both runs used runtime core isolation: system/user/init slices were moved off
+the benchmark cores, the benchmark ran in `benchmark.slice`, and the raw
+artefacts record CPU affinity or cgroup cpuset evidence for CPUs 10-11.
+
+| Surface | Contract | Result |
+| --- | --- | --- |
+| Python + Vivado Tcl | Manifest validation and deterministic ZU3EG/ZU9EG batch Tcl generation | `122678.065` ns/manifest median over 2 manifests x 2000 iterations x 7 repeats |
+| Rust | Target-aware SystemVerilog emission and conservative resource reporting for a 64x32 dense graph | `130835.757` ns/emit median over 2000 iterations x 7 repeats |
+
+The Rust report estimates `2048` DSPs for a one-DSP-per-MAC 64x32 dense graph.
+That exceeds the ZU3EG budget of `360`, while the BRAM estimate `2` fits the
+budget `216`. This over-budget DSP result is intentional fail-closed evidence:
+SC-NeuroCore must not claim that this unfurled graph fits ZU3EG until a folded
+or time-multiplexed dense implementation is added and validated.
+
+The generated Tcl and Rust target metadata use the Zynq UltraScale+ `DSP48E2`
+primitive baseline. The checked-in XDC files are clock/timing baselines only;
+they intentionally avoid `PACKAGE_PIN` and `LOC` constraints until a
+board-revision pin manifest is verified.
+
+## UltraScale+ dense folding (2026-06-04)
+
+This benchmark exercises the resource-safe fold plan added after the ZU3EG
+target benchmark proved that an unfurled 64x32 dense layer would require 2,048
+DSPs. The shared Python and Rust planners use row-group folding: five output
+rows are processed per cycle with all 64 input lanes live, using 320 DSPs per
+compute cycle and completing the 32 output rows in seven cycles.
+
+| Surface | Contract | Result |
+| --- | --- | --- |
+| Python + SystemVerilog | Planner parity plus bounded 8x8 HDL elaboration for `sc_dense_folded_q88_core` | `2447.444` ns/plan median over 20000 iterations x 7 repeats; Yosys reports 240 generic cells |
+| Rust | `SvTarget::dense_fold_plan(64, 32)` | `6.661` ns/plan median over 20000 iterations x 7 repeats |
+
+Both runs used the runtime cpuset shield on CPUs 10-11. The Yosys evidence is a
+bounded parameterised elaboration check, not a Vivado ZU3EG utilisation report.
+The folded HDL core implements deterministic Q8.8-weight/Q16.16-MAC dense
+execution and is covered by Icarus simulation; it must be selected deliberately
+by deployment code and does not silently replace the existing stochastic dense
+path.

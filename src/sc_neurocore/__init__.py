@@ -34,7 +34,7 @@ Module Tiers
 """
 
 
-__version__ = "3.15.7"
+__version__ = "3.15.33"
 
 # ── Datasets ────────────────────────────────────────────────────────────────
 from . import datasets  # noqa: F401

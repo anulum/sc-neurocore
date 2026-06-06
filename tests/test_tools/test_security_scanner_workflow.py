@@ -147,14 +147,12 @@ def test_security_scanner_workflow_avoids_unpinned_pip_and_curl_installers() -> 
     assert "install.sh" not in run_text
 
 
-def test_security_scanner_workflow_runs_cargo_fuzz_only_on_nightly_or_manual() -> None:
+def test_security_scanner_workflow_runs_cargo_fuzz_only_on_nightly() -> None:
     workflow = _load_workflow()
     jobs = workflow["jobs"]
     fuzz_job = jobs["nightly-cargo-fuzz"]
 
-    assert fuzz_job["if"] == (
-        "github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'"
-    )
+    assert fuzz_job["if"] == "github.event_name == 'schedule'"
 
     run_text = "\n".join(
         step["run"] for step in fuzz_job["steps"] if isinstance(step, dict) and "run" in step
@@ -174,14 +172,12 @@ def test_security_scanner_workflow_runs_cargo_fuzz_only_on_nightly_or_manual() -
     assert "security/cargo-fuzz-packet/security/cargo_fuzz_summary.json" in run_text
 
 
-def test_security_scanner_workflow_runs_benchmark_regression_only_on_nightly_or_manual() -> None:
+def test_security_scanner_workflow_runs_benchmark_regression_only_on_nightly() -> None:
     workflow = _load_workflow()
     jobs = workflow["jobs"]
     benchmark_job = jobs["nightly-benchmark-regression"]
 
-    assert benchmark_job["if"] == (
-        "github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'"
-    )
+    assert benchmark_job["if"] == "github.event_name == 'schedule'"
 
     run_text = "\n".join(
         step["run"] for step in benchmark_job["steps"] if isinstance(step, dict) and "run" in step

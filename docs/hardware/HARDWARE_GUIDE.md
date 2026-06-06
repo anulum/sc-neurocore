@@ -117,7 +117,7 @@ Before deploying:
 
 ## 10. Event-Driven Architecture
 
-SC-NeuroCore includes three event-driven Verilog modules for power-efficient
+SC-NeuroCore includes event-driven Verilog modules for power-efficient
 SNN execution:
 
 | Module | Purpose |
@@ -125,6 +125,7 @@ SNN execution:
 | `sc_aer_encoder.v` | Converts spike vector to AER (Address-Event Representation) packets. Only active neurons generate events. |
 | `sc_event_neuron.v` | Q8.8 LIF that computes only on input events or periodic leak ticks. Idle neurons consume zero switching power. |
 | `sc_aer_router.v` | Distributes AER events to target neurons using BRAM connectivity lookup. Sparse fanout serialized. |
+| `sc_aer_priority_queue.v` | Strict-priority AER queue for downstream backpressure, FIFO ties within priority, sticky drop traps, and critical-event deadline traps. |
 
 For a 1000-neuron network firing at 10 Hz with 1 MHz clock:
 - **Clock-driven**: 1000 neurons × 1M cycles/s = 1 billion operations/s
@@ -139,6 +140,11 @@ Use clock-driven modules when:
 - Bit-exact Python-Verilog co-simulation is needed
 - Network is dense (most neurons active every cycle)
 - Deterministic timing is required for formal verification
+
+For live control or safety-critical fanout, enable the router priority path and
+connect `out_event_ready`.  See [AER Priority Queue and Backpressure
+Contract](aer_priority_queue.md) for the full port, trap, formal, and benchmark
+contract.
 
 ## 11. One-Command Deployment
 

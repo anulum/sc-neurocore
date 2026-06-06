@@ -1,0 +1,19 @@
+[options]
+mode bmc
+depth 16
+
+[engines]
+smtbmc cvc5
+
+[script]
+read_verilog -sv sc_dcls_axonal_delay.v
+read_verilog -sv sc_dcls_tent_kernel.v
+read_verilog -sv sc_dcls_layer_core.v
+read_verilog -formal -sv sc_dcls_layer_core_formal.v
+prep -top sc_dcls_layer_core_formal
+
+[files]
+hdl/sc_dcls_axonal_delay.v
+hdl/sc_dcls_tent_kernel.v
+hdl/sc_dcls_layer_core.v
+hdl/formal/sc_dcls_layer_core_formal.v

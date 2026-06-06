@@ -31,6 +31,11 @@ def _load_tool() -> Any:
     return module
 
 
+def _project_version(tool: Any) -> str:
+    pyproject = (_repo_root() / "pyproject.toml").read_text(encoding="utf-8")
+    return tool.tomllib.loads(pyproject)["project"]["version"]
+
+
 def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
     tool = _load_tool()
 
@@ -80,7 +85,7 @@ def test_conda_recipe_tracks_base_install_contract() -> None:
 
     recipe = tool._read_conda_recipe(_repo_root())
 
-    assert recipe["version"] == "3.15.7"
+    assert recipe["version"] == _project_version(tool)
     assert recipe["run_dependencies"] == [
         "python >=3.10",
         "numpy >=1.24",
@@ -156,7 +161,7 @@ def test_install_measurement_uses_base_install_and_records_diagnostics(
                 stdout=json.dumps(
                     [
                         {"name": "numpy", "version": "2.0.0"},
-                        {"name": "sc-neurocore", "version": "3.15.7"},
+                        {"name": "sc-neurocore", "version": _project_version(tool)},
                     ]
                 ),
                 stderr="",

@@ -7,6 +7,12 @@
 
 """Packaged HDL resources for offline deployment profiles."""
 
+from .aer_priority_queue_reference import AERPriorityEvent, AERPriorityQueueReference
 from .resources import baseline_primitive_text, list_baseline_primitive_rtl
 
-__all__ = ["baseline_primitive_text", "list_baseline_primitive_rtl"]
+__all__ = [
+    "AERPriorityEvent",
+    "AERPriorityQueueReference",
+    "baseline_primitive_text",
+    "list_baseline_primitive_rtl",
+]

@@ -30,6 +30,9 @@ concurrency:
   group: v3-engine-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+
 jobs:
   rust-lint:
     runs-on: ubuntu-latest
@@ -86,6 +89,10 @@ jobs:
         with:
           workspaces: engine
           cache-bin: false
+
+      - name: Configure macOS static Z3 C++ parser
+        if: runner.os == 'macOS'
+        run: echo "CXXFLAGS=-fdelayed-template-parsing" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         shell: bash
