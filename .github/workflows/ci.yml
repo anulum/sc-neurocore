@@ -171,7 +171,7 @@ jobs:
           workspaces: crates/autonomous_learning
 
       - name: Install with training extras
-        run: pip install -e ".[dev,training]"
+        run: python tools/ci_install_dev.py
 
       - name: Build autonomous_learning cdylib
         run: |
