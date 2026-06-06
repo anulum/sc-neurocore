@@ -10,14 +10,14 @@
 
 from __future__ import annotations
 
-from sc_neurocore.compiler.platforms import (
+from ..platforms import (
     HardwareProfile,
     discover_platforms,
     get_profile,
     load_profiles_from_toml,
     register_platform_hook,
 )
-from sc_neurocore.compiler.platforms.registry import _DISCOVERY_HOOKS
+from ..platforms.registry import _DISCOVERY_HOOKS
 
 from .auto_quantization import (
     QuantSweepResult,

@@ -80,8 +80,8 @@ def auto_quantisation_sweep(
     list[QuantSweepResult]
         Sweep results sorted by data_width (ascending).
     """
-    from sc_neurocore.compiler.static_analysis import compute_guard_bits
-    from sc_neurocore.compiler.platforms import get_profile
+    from ..static_analysis import compute_guard_bits
+    from ..platforms import get_profile
 
     if widths is None:
         widths = [4, 8, 12, 16, 20, 24, 32]

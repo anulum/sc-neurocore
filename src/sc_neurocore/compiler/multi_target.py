@@ -81,8 +81,8 @@ def compile_multi_target(
     list[CompilationResult]
         Per-target compilation results.
     """
-    from sc_neurocore.compiler.platforms import get_profile
-    from sc_neurocore.compiler.static_analysis import compute_guard_bits
+    from .platforms import get_profile
+    from .static_analysis import compute_guard_bits
 
     results = []
     for target_name in targets:
