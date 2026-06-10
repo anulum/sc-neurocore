@@ -283,6 +283,12 @@ The model predicts several key phenomena:
 | Isolation | 87,164 steps/s | 7,416,785 steps/s through PyO3 |
 | Network | Limited (float return) | — |
 
+These numbers are benchmark evidence, not CI throughput claims. Use only
+isolated benchmark runs with recorded host load, CPU affinity, and toolchain
+metadata for production throughput comparisons. The CI test suite keeps a
+bounded-runtime sentinel so hosted-runner load and coverage instrumentation do
+not convert a scientific model test into a noisy benchmark gate.
+
 The RK4 update evaluates four coupled derivative stages. Each stage
 evaluates E and I sigmoid drives, giving eight sigmoid evaluations per
 step in the Python reference. Native Rust, Julia, Go, and Mojo paths keep
@@ -299,7 +305,7 @@ the same arithmetic contract while reducing interpreter overhead.
 | E/I dynamics | input response, inhibitory following, low-input decay, bounded state, steady-state convergence, RK4 reference point, recurrence and inhibition controls |
 | Oscillation | enhanced-coupling finite state path |
 | Parameters | constructor rejection, runtime corruption preservation, finite-drive saturation, timestep stability, determinism |
-| Performance | isolation throughput remains above the documented floor |
+| Performance | bounded runtime sentinel catches pathological slowdown without making production throughput claims |
 | Pipeline | Population construction and float-return limitation |
 
 See `tests/test_model_wilson_cowan.py`. No bugs found.

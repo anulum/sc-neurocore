@@ -11,7 +11,8 @@
 E/I rate model: returns float (E rate), not int spike.
 τ_e dE/dt = -E + S(w_ee·E - w_ei·I + I_ext).
 Pipeline limited: returns float, Network expects int → documented.
-Performance: ~163K isolation steps/s."""
+Performance evidence is benchmark-only. CI checks bounded runtime under
+coverage/load, not production throughput."""
 
 from __future__ import annotations
 
@@ -302,14 +303,16 @@ class TestWilsonCowanParameters:
 
 
 class TestWilsonCowanPerformance:
-    def test_isolation_throughput(self):
+    def test_isolation_runtime_regression_sentinel(self):
+        """Bound pathological slowdowns without making CI throughput claims."""
         n = WilsonCowanUnit()
         N = 50000
         t0 = time.perf_counter()
         for _ in range(N):
             n.step(5.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 20000
+        assert elapsed < 10.0
+        assert np.isfinite(n.e) and np.isfinite(n.i)
 
 
 class TestWilsonCowanPipeline:

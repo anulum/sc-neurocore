@@ -235,7 +235,7 @@ _MANDATORY_SCANNERS = (
         inputs=(_input(path=".github/workflows", purpose="Workflow syntax and action policy"),),
         owner="SC-NeuroCore CI lane owner",
         noise="low",
-        pinned_version="actionlint==1.7.7",
+        pinned_version="actionlint==1.7.12",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(

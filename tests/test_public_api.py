@@ -35,9 +35,7 @@ def test_all_symbols_importable():
 
 
 def test_version_string():
-    from importlib.metadata import version
-
-    assert sc_neurocore.__version__ == version("sc-neurocore")
+    assert sc_neurocore.__version__ == _project_metadata()["project"]["version"]
 
 
 def test_all_count():
