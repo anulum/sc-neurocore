@@ -13,13 +13,11 @@ from __future__ import annotations
 from .live_control_ops import (
     MMIORead,
     MMIOWrite,
-    _crc32_update_guard,
 )
 from .live_control_specs import (
     MMIOUpdateSpec,
     ParameterBankSpec,
     TrapSpec,
-    _normalise_bus_protocol,
 )
 from .live_control_types import (
     CONTROL_CLEAR_TRAP,

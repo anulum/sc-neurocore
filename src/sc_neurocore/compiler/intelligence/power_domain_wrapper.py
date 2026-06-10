@@ -98,7 +98,7 @@ def generate_power_domain_wrapper(
             "            active <= 0;",
             "        end else if (!active) begin",
             f"            if (wakeup_cnt == {wakeup_cycles - 1})",
-                "                active <= 1;",
+            "                active <= 1;",
             "            else",
             "                wakeup_cnt <= wakeup_cnt + 1;",
             "        end",

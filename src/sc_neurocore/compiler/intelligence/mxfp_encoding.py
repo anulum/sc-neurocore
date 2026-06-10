@@ -93,7 +93,9 @@ def mxfp_encode_block(
     # Shared exponent = floor(log2(abs_max)) + bias
     exp_bias = (1 << (config.shared_exp_bits - 1)) - 1 if config.shared_exp_bits else 0
     shared_exp = int(math.floor(math.log2(abs_max))) + exp_bias if abs_max > 0 else 0
-    shared_exp = max(0, min((1 << config.shared_exp_bits) - 1, shared_exp)) if config.shared_exp_bits else 0
+    shared_exp = (
+        max(0, min((1 << config.shared_exp_bits) - 1, shared_exp)) if config.shared_exp_bits else 0
+    )
 
     # Scale factor
     scale = 2.0 ** (shared_exp - exp_bias) if config.shared_exp_bits else 1.0
