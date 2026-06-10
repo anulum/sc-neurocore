@@ -107,7 +107,9 @@ def run(iterations: int, repeats: int) -> dict[str, Any]:
                     tcl = generate_tcl(manifest)
                     checksum ^= len(tcl)
                     if "DSP" + "58" in tcl:
-                        raise AssertionError("UltraScale+ Tcl must not claim a newer-family DSP mapping")
+                        raise AssertionError(
+                            "UltraScale+ Tcl must not claim a newer-family DSP mapping"
+                        )
             elapsed = time.perf_counter_ns() - start
             medians.append(elapsed / max(iterations * len(manifests), 1))
     ordered = sorted(medians)

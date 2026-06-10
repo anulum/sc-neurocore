@@ -19,7 +19,9 @@ class TestPowerEstimator:
 
     def test_basic_estimation(self) -> None:
         """Should return a PowerEstimate with reasonable values."""
-        verilog = "module test; reg signed [15:0] v_reg; wire signed [31:0] _mul0 = a * b; endmodule"
+        verilog = (
+            "module test; reg signed [15:0] v_reg; wire signed [31:0] _mul0 = a * b; endmodule"
+        )
         p = estimate_power(verilog)
         assert p.dynamic_mw > 0
         assert p.static_mw > 0

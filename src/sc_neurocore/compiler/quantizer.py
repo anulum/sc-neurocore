@@ -44,9 +44,6 @@ from .quantization_reports import (
 )
 
 # Shared helper used by some other modules
-from .fixed_point_quantization import (
-    _round_scaled,
-)
 
 __all__ = [
     "BlockExponentLayout",

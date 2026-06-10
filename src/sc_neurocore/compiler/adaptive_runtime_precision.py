@@ -13,17 +13,8 @@ from __future__ import annotations
 from .compiler_impl import (
     compile_adaptive_precision,
 )
-from .manifest_gen import (
-    _precision_label,
-    _precision_manifest,
-)
 from .precision_pairs import (
     PRECISION_PAIRS,
-)
-from .validation import (
-    _coerce_precision,
-    _validate_hysteresis,
-    _validate_lp_hp,
 )
 
 __all__ = [

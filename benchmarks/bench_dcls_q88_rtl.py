@@ -134,7 +134,9 @@ def run(samples: int, repeats: int, taps: int) -> dict[str, Any]:
     start = time.perf_counter_ns()
     for _ in range(repeats):
         for sample in range(samples):
-            result = dcls_q88_reference(_spike_window(sample, taps), weights_q88, centre_q88, sigma_q88)
+            result = dcls_q88_reference(
+                _spike_window(sample, taps), weights_q88, centre_q88, sigma_q88
+            )
             checksum ^= int(result["accumulator_q16_16"])
             overflow_count += int(bool(result["overflow"]))
             active_tap_total += int(result["active_tap_count"])
@@ -165,7 +167,9 @@ def run(samples: int, repeats: int, taps: int) -> dict[str, Any]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Benchmark the DCLS Q8.8 reference and RTL evidence.")
+    parser = argparse.ArgumentParser(
+        description="Benchmark the DCLS Q8.8 reference and RTL evidence."
+    )
     parser.add_argument("--samples", type=int, default=4096)
     parser.add_argument("--repeats", type=int, default=100)
     parser.add_argument("--taps", type=int, default=16)
