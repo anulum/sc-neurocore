@@ -566,6 +566,13 @@ Synthesis tooling (`tools/yosys_synth.py`) targets Xilinx 7-series via Yosys
 python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json --markdown
 ```
 
+CI runs this command with `--allow-skips` so timeout-limited hosted runners
+still publish `benchmarks/results/yosys_synth.json` as evidence. A skipped
+module is not a hardware timing claim; it records that the bounded CI runner
+could not complete that module inside the configured synthesis timeout. Local
+or release-grade FPGA evidence should rerun without `--allow-skips` on an
+isolated synthesis host.
+
 Target modules: `sc_bitstream_encoder`, `sc_lif_neuron`, `sc_bitstream_synapse`,
 `sc_dotproduct_to_current`, `sc_firing_rate_bank`, `sc_dense_layer_core`,
 `sc_neurocore_top`.
@@ -634,6 +641,10 @@ python benchmarks/benchmark_advanced_modules.py
 
 # FPGA synthesis (requires yosys in PATH)
 python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json --markdown
+
+# CI artifact mode: record timeout skips without treating hosted-runner
+# synthesis incompletion as a design failure.
+python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json --markdown --allow-skips
 ```
 
 ---

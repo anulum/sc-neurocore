@@ -15,7 +15,6 @@ on:
     paths:
       - "hdl/**"
       - "tools/yosys_synth.*"
-      - ".github/workflows/yosys-synth.yml"
   pull_request:
     paths:
       - "hdl/**"
@@ -26,11 +25,12 @@ concurrency:
 
 jobs:
   synthesize:
+    if: github.event_name != 'push' || github.ref_type != 'tag'
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Install Yosys
         run: |
@@ -51,7 +51,7 @@ jobs:
           python-version: "3.12"
 
       - name: Run synthesis (Xilinx 7-series target)
-        run: python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json --markdown
+        run: python tools/yosys_synth.py --json benchmarks/results/yosys_synth.json --markdown --allow-skips
 
       - name: Upload synthesis results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

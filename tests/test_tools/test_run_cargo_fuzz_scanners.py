@@ -78,7 +78,7 @@ def test_runner_executes_each_target_with_bounded_time_and_writes_summary(tmp_pa
         assert capture_output is True
         assert text is True
         assert check is False
-        assert timeout == 320
+        assert timeout in {320, 900}
         calls.append(command)
         return subprocess.CompletedProcess(command, 0, stdout="ok", stderr="")
 
@@ -91,11 +91,14 @@ def test_runner_executes_each_target_with_bounded_time_and_writes_summary(tmp_pa
     )
 
     assert [call[:5] for call in calls] == [
+        ["cargo", "+nightly", "fuzz", "build", "bitstream_ops"],
         ["cargo", "+nightly", "fuzz", "run", "bitstream_ops"],
+        ["cargo", "+nightly", "fuzz", "build", "ir_parser"],
         ["cargo", "+nightly", "fuzz", "run", "ir_parser"],
     ]
     assert all("--fuzz-dir" in call for call in calls)
-    assert all("-max_total_time=20" in call for call in calls)
+    run_calls = [call for call in calls if call[3] == "run"]
+    assert all("-max_total_time=20" in call for call in run_calls)
     assert all("-runs=0" not in call for call in calls)
     assert summary["passed"] is True
     assert summary["target_count"] == 2
@@ -140,6 +143,8 @@ def test_runner_reports_target_failures_without_dropping_artifacts(tmp_path: Pat
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
         del cwd, capture_output, text, timeout, check
+        if command[3] == "build":
+            return subprocess.CompletedProcess(command, 0, stdout="built", stderr="")
         return subprocess.CompletedProcess(command, 1, stdout="", stderr="crash")
 
     summary = tool.run_cargo_fuzz_scanners(
@@ -155,6 +160,8 @@ def test_runner_reports_target_failures_without_dropping_artifacts(tmp_path: Pat
     report = json.loads(
         (tmp_path / "packet" / "security" / "cargo_fuzz_ir_parser.json").read_text(encoding="utf-8")
     )
+    assert report["phase"] == "run"
+    assert report["build_returncode"] == 0
     assert report["stderr_tail"] == ["crash"]
 
 
@@ -172,6 +179,8 @@ def test_runner_records_timeout_as_target_failure(tmp_path: Path) -> None:
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
         del cwd, capture_output, text, check
+        if command[3] == "build":
+            return subprocess.CompletedProcess(command, 0, stdout="built", stderr="")
         raise subprocess.TimeoutExpired(command, timeout, output="partial", stderr="still running")
 
     summary = tool.run_cargo_fuzz_scanners(
@@ -187,6 +196,46 @@ def test_runner_records_timeout_as_target_failure(tmp_path: Path) -> None:
     report = json.loads(
         (tmp_path / "packet" / "security" / "cargo_fuzz_ir_parser.json").read_text(encoding="utf-8")
     )
+    assert report["phase"] == "run"
     assert report["returncode"] == 124
     assert report["stdout_tail"] == ["partial"]
     assert report["stderr_tail"] == ["still running", "command timed out after 305 seconds"]
+
+
+def test_runner_records_build_timeout_before_fuzz_execution(tmp_path: Path) -> None:
+    tool = _load_tool()
+    repo_root = Path(__file__).resolve().parents[2]
+    calls: list[list[str]] = []
+
+    def fake_run(
+        command: list[str],
+        *,
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        timeout: int,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, capture_output, text, check
+        calls.append(command)
+        raise subprocess.TimeoutExpired(command, timeout, output="partial", stderr="compiling")
+
+    summary = tool.run_cargo_fuzz_scanners(
+        repo_root=repo_root,
+        output_dir=tmp_path / "packet",
+        selected_targets=("ir_parser",),
+        max_total_time=5,
+        build_timeout=7,
+        run_command=fake_run,
+    )
+
+    assert summary["passed"] is False
+    assert summary["failed_targets"] == ["ir_parser"]
+    assert [call[3] for call in calls] == ["build"]
+    report = json.loads(
+        (tmp_path / "packet" / "security" / "cargo_fuzz_ir_parser.json").read_text(encoding="utf-8")
+    )
+    assert report["phase"] == "build"
+    assert report["build_returncode"] == 124
+    assert report["build_stdout_tail"] == ["partial"]
+    assert report["build_stderr_tail"] == ["compiling", "command timed out after 7 seconds"]
