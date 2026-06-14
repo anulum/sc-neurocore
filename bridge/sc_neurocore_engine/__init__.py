@@ -520,6 +520,16 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_fitzhugh_nagumo_simulate,
+    )
+
+    __all__ += ["py_fitzhugh_nagumo_simulate"]
+    _fitzhugh_nagumo_rust_available = True
+except ImportError:
+    _fitzhugh_nagumo_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_ph_route_waveguides,
         py_ph_mzi_transfer_matrix,
         py_ph_cascade_mzi,
