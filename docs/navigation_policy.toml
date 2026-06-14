@@ -71,3 +71,12 @@ name = "research-whitepaper"
 rationale = "Foundational research whitepaper kept outside task-oriented navigation."
 patterns = ["research/SC_NEUROCORE_FOUNDATIONAL_WHITEPAPER.md"]
 expected_count = 1
+
+[[classification]]
+name = "top-level-performance-references"
+rationale = "Top-level hardware-benchmark and performance-index references linked from benchmark and validation material rather than placed directly in nav."
+patterns = [
+  "HARDWARE_BENCHMARK_REPORT.md",
+  "SC_NEUROCORE_PERFORMANCE_INDEX.md",
+]
+expected_count = 2
