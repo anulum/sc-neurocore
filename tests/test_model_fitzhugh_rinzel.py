@@ -231,10 +231,13 @@ class TestFHRParameters:
         assert (neuron.v, neuron.w, neuron.y) == before
 
     def test_rejects_overflow_candidate_without_mutation(self):
+        # v = 1e155 makes the cube overflow to +inf; the exact `v*v*v` form
+        # produces inf (rather than the libm-pow OverflowError) which the finite
+        # guard rejects as a non-finite derivative — same contract, no mutation.
         neuron = FitzHughRinzelNeuron(v=1.0e155, w=0.2, y=0.1)
         before = (neuron.v, neuron.w, neuron.y)
 
-        with pytest.raises(FloatingPointError, match="derivative overflow"):
+        with pytest.raises(FloatingPointError, match="derivative"):
             neuron.step(0.5)
 
         assert (neuron.v, neuron.w, neuron.y) == before

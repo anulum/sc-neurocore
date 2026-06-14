@@ -830,6 +830,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_ermentrout_kopell_map_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_fitzhugh_nagumo_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_hindmarsh_rose_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_fitzhugh_rinzel_simulate, m)?)?;
     // Byte-level fault injection (parity with FaultInjector.inject)
     m.add_function(wrap_pyfunction!(py_inject_bitflip_u8, m)?)?;
     m.add_function(wrap_pyfunction!(py_inject_stuck_at_0_u8, m)?)?;
@@ -5810,6 +5811,48 @@ fn py_hindmarsh_rose_simulate<'py>(
     };
     let (trace, spikes) = neuron.simulate(n_steps, current);
     (trace.into_pyarray(py), spikes, neuron.x, neuron.y, neuron.z)
+}
+
+/// Parity contract with
+/// `sc_neurocore.neurons.models.fitzhugh_rinzel.FitzHughRinzelNeuron.simulate`:
+/// for the same parameters and constant input the returned `v` trace, upward-
+/// crossing spike count, and final `(v, w, y)` state are bit-identical to the
+/// Python RK4 reference (the right-hand side is exact arithmetic — `v.powi(3)`
+/// = `v*v*v`, additions and multiplications, no transcendental functions).
+#[pyfunction]
+#[pyo3(signature = (v0, w0, y0, a, b, c, d, delta, mu, dt, v_threshold, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
+fn py_fitzhugh_rinzel_simulate<'py>(
+    py: Python<'py>,
+    v0: f64,
+    w0: f64,
+    y0: f64,
+    a: f64,
+    b: f64,
+    c: f64,
+    d: f64,
+    delta: f64,
+    mu: f64,
+    dt: f64,
+    v_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64, f64) {
+    let mut neuron = crate::neurons::FitzHughRinzelNeuron {
+        v: v0,
+        w: w0,
+        y: y0,
+        a,
+        b,
+        c,
+        d,
+        delta,
+        mu,
+        dt,
+        v_threshold,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    (trace.into_pyarray(py), spikes, neuron.v, neuron.w, neuron.y)
 }
 
 // ── Byte-level fault injection (PyO3) ──

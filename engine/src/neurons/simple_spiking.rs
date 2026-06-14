@@ -605,6 +605,24 @@ impl FitzHughRinzelNeuron {
         self.w = -0.5;
         self.y = 0.0;
     }
+
+    /// Run `n_steps` RK4 updates under a constant input, returning the `v` trace
+    /// and the upward-crossing spike count. Reuses `step` (RK4) so the trace is
+    /// bit-identical to the per-step path and — because the right-hand side is
+    /// exact arithmetic (`v.powi(3)` = `v*v*v`) — to the Python reference. The
+    /// final state is left in `self.v` / `self.w` / `self.y`.
+    pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+        let mut trace = Vec::with_capacity(n_steps);
+        let mut spikes: i64 = 0;
+        for _ in 0..n_steps {
+            let spiked = self.step(current);
+            trace.push(self.v);
+            if spiked == 1 {
+                spikes += 1;
+            }
+        }
+        (trace, spikes)
+    }
 }
 impl Default for FitzHughRinzelNeuron {
     fn default() -> Self {
