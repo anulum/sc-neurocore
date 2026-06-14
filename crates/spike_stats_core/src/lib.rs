@@ -102,19 +102,12 @@ pub fn victor_purpura_distance(times_a: &[f64], times_b: &[f64], cost_per_s: f64
 /// All-pairs Victor-Purpura distance matrix for N spike trains.
 ///
 /// Returns flat N×N row-major matrix.
-pub fn multi_neuron_victor_purpura(
-    spike_times_list: &[Vec<f64>],
-    cost_per_s: f64,
-) -> Vec<f64> {
+pub fn multi_neuron_victor_purpura(spike_times_list: &[Vec<f64>], cost_per_s: f64) -> Vec<f64> {
     let n = spike_times_list.len();
     let mut mat = vec![0.0f64; n * n];
     for i in 0..n {
         for j in (i + 1)..n {
-            let d = victor_purpura_distance(
-                &spike_times_list[i],
-                &spike_times_list[j],
-                cost_per_s,
-            );
+            let d = victor_purpura_distance(&spike_times_list[i], &spike_times_list[j], cost_per_s);
             mat[i * n + j] = d;
             mat[j * n + i] = d;
         }
@@ -145,7 +138,11 @@ pub fn isi_distance(train_a: &[f64], train_b: &[f64], dt: f64) -> f64 {
         let ratio = if a == 0.0 && b == 0.0 {
             0.0
         } else if a <= b {
-            if b > 0.0 { a / b - 1.0 } else { 0.0 }
+            if b > 0.0 {
+                a / b - 1.0
+            } else {
+                0.0
+            }
         } else if a > 0.0 {
             -(b / a - 1.0)
         } else {
@@ -171,12 +168,7 @@ fn compute_isi(train: &[f64], dt: f64) -> Vec<f64> {
 }
 
 /// SPIKE-distance (Kreuz et al. 2013) between spike time arrays.
-pub fn spike_distance(
-    times_a: &[f64],
-    times_b: &[f64],
-    t_start: f64,
-    t_end: f64,
-) -> f64 {
+pub fn spike_distance(times_a: &[f64], times_b: &[f64], t_start: f64, t_end: f64) -> f64 {
     let mut ta: Vec<f64> = times_a
         .iter()
         .copied()
@@ -236,12 +228,7 @@ fn local_isi(times: &[f64], idx: usize) -> f64 {
 }
 
 /// SPIKE-synchronization (Kreuz et al. 2015).
-pub fn spike_sync(
-    times_a: &[f64],
-    times_b: &[f64],
-    t_start: f64,
-    t_end: f64,
-) -> f64 {
+pub fn spike_sync(times_a: &[f64], times_b: &[f64], t_start: f64, t_end: f64) -> f64 {
     let mut ta: Vec<f64> = times_a
         .iter()
         .copied()
@@ -306,11 +293,7 @@ pub fn spike_sync(
 }
 
 /// Hunter-Milton (2003) coincidence similarity.
-pub fn hunter_milton_similarity(
-    times_a: &[f64],
-    times_b: &[f64],
-    dt_max: f64,
-) -> f64 {
+pub fn hunter_milton_similarity(times_a: &[f64], times_b: &[f64], dt_max: f64) -> f64 {
     if times_a.is_empty() || times_b.is_empty() {
         return 0.0;
     }
@@ -427,11 +410,7 @@ pub fn cross_correlation(
 }
 
 /// Event synchronization (Quiroga et al. 2002).
-pub fn event_synchronization(
-    times_a: &[f64],
-    times_b: &[f64],
-    tau: f64,
-) -> f64 {
+pub fn event_synchronization(times_a: &[f64], times_b: &[f64], tau: f64) -> f64 {
     if times_a.is_empty() || times_b.is_empty() {
         return 0.0;
     }
@@ -492,11 +471,7 @@ pub fn spike_time_tiling_coefficient(
 
 /// Coincidence index: fraction of spikes in A that have a nearest
 /// neighbour in B within `window`.
-pub fn coincidence_index(
-    times_a: &[f64],
-    times_b: &[f64],
-    window: f64,
-) -> f64 {
+pub fn coincidence_index(times_a: &[f64], times_b: &[f64], window: f64) -> f64 {
     if times_a.is_empty() {
         return 0.0;
     }
@@ -522,7 +497,10 @@ pub fn lempel_ziv_complexity(binary_train: &[u8]) -> f64 {
     if n == 0 {
         return 0.0;
     }
-    let s: Vec<u8> = binary_train.iter().map(|&x| if x > 0 { 1 } else { 0 }).collect();
+    let s: Vec<u8> = binary_train
+        .iter()
+        .map(|&x| if x > 0 { 1 } else { 0 })
+        .collect();
     let mut complexity: usize = 1;
     let mut l: usize = 1;
     let mut k: usize = 1;
@@ -638,9 +616,7 @@ pub fn permutation_entropy(data: &[f64], order: usize, delay: usize) -> f64 {
     let mut pattern_counts: HashMap<Vec<usize>, usize> = HashMap::new();
 
     for i in 0..n_patterns {
-        let mut window: Vec<(f64, usize)> = (0..order)
-            .map(|j| (data[i + j * delay], j))
-            .collect();
+        let mut window: Vec<(f64, usize)> = (0..order).map(|j| (data[i + j * delay], j)).collect();
         window.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
         let rank: Vec<usize> = {
             let mut r = vec![0usize; order];
@@ -664,7 +640,11 @@ pub fn permutation_entropy(data: &[f64], order: usize, delay: usize) -> f64 {
     // factorial(order)
     let h_max = (1..=order).fold(1usize, |acc, x| acc * x) as f64;
     let h_max = h_max.log2();
-    if h_max > 0.0 { h / h_max } else { 0.0 }
+    if h_max > 0.0 {
+        h / h_max
+    } else {
+        0.0
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -807,13 +787,19 @@ mod tests {
         let b = vec![0.15, 0.35, 0.55, 0.75];
         let d1 = victor_purpura_distance(&a, &b, 500.0);
         let d2 = victor_purpura_distance(&b, &a, 500.0);
-        assert!((d1 - d2).abs() < EPS, "VP should be symmetric: {d1} vs {d2}");
+        assert!(
+            (d1 - d2).abs() < EPS,
+            "VP should be symmetric: {d1} vs {d2}"
+        );
     }
 
     #[test]
     fn vp_single_spikes_close() {
         let d = victor_purpura_distance(&[0.1], &[0.1001], 1000.0);
-        assert!(d < 1.0, "close spikes should cost less than insert+delete, got {d}");
+        assert!(
+            d < 1.0,
+            "close spikes should cost less than insert+delete, got {d}"
+        );
     }
 
     // ── Spike distance ──────────────────────────────────────────────
@@ -822,7 +808,10 @@ mod tests {
     fn spike_dist_identical() {
         let times = vec![0.2, 0.5, 0.8];
         let d = spike_distance(&times, &times, 0.0, 1.0);
-        assert!(d < 0.1, "identical trains: SPIKE-dist should be ~0, got {d}");
+        assert!(
+            d < 0.1,
+            "identical trains: SPIKE-dist should be ~0, got {d}"
+        );
     }
 
     #[test]
@@ -843,7 +832,10 @@ mod tests {
     fn spike_sync_identical() {
         let times = vec![0.2, 0.4, 0.6, 0.8];
         let s = spike_sync(&times, &times, 0.0, 1.0);
-        assert!((s - 1.0).abs() < 0.01, "identical trains sync should be ~1.0, got {s}");
+        assert!(
+            (s - 1.0).abs() < 0.01,
+            "identical trains sync should be ~1.0, got {s}"
+        );
     }
 
     #[test]
@@ -858,7 +850,10 @@ mod tests {
     fn hunter_milton_identical() {
         let times = vec![0.1, 0.3, 0.5, 0.7];
         let s = hunter_milton_similarity(&times, &times, 0.01);
-        assert!((s - 1.0).abs() < EPS, "identical: HM should be 1.0, got {s}");
+        assert!(
+            (s - 1.0).abs() < EPS,
+            "identical: HM should be 1.0, got {s}"
+        );
     }
 
     #[test]
@@ -883,7 +878,10 @@ mod tests {
         let times = vec![0.1, 0.3, 0.5, 0.7, 0.9];
         let hist = cross_correlation(&times, &times, 0.01, 0.05);
         let peak = hist.iter().cloned().fold(0.0f64, f64::max);
-        assert!(peak >= 5.0, "self-correlation should have peak=N, got {peak}");
+        assert!(
+            peak >= 5.0,
+            "self-correlation should have peak=N, got {peak}"
+        );
     }
 
     // ── Event synchronization ───────────────────────────────────────
@@ -910,7 +908,10 @@ mod tests {
     fn coincidence_identical() {
         let times = vec![0.1, 0.3, 0.5];
         let c = coincidence_index(&times, &times, 0.01);
-        assert!((c - 1.0).abs() < EPS, "identical: CI should be 1.0, got {c}");
+        assert!(
+            (c - 1.0).abs() < EPS,
+            "identical: CI should be 1.0, got {c}"
+        );
     }
 
     // ── Multi-neuron VP ─────────────────────────────────────────────
@@ -930,10 +931,7 @@ mod tests {
 
     #[test]
     fn multi_vp_symmetric() {
-        let trains = vec![
-            vec![0.1, 0.3, 0.5],
-            vec![0.15, 0.35, 0.55],
-        ];
+        let trains = vec![vec![0.1, 0.3, 0.5], vec![0.15, 0.35, 0.55]];
         let mat = multi_neuron_victor_purpura(&trains, 1000.0);
         assert!((mat[0 * 2 + 1] - mat[1 * 2 + 0]).abs() < EPS);
     }
@@ -1041,7 +1039,7 @@ mod tests {
 #[cfg(feature = "pyo3_bindings")]
 mod python {
     use super::*;
-    use numpy::{PyArray1, PyReadonlyArray1, PyUntypedArrayMethods};
+    use numpy::{PyArray1, PyReadonlyArray1};
     use pyo3::prelude::*;
 
     #[pyfunction]
@@ -1092,11 +1090,7 @@ mod python {
         train_b: PyReadonlyArray1<'py, f64>,
         dt: f64,
     ) -> PyResult<f64> {
-        Ok(isi_distance(
-            train_a.as_slice()?,
-            train_b.as_slice()?,
-            dt,
-        ))
+        Ok(isi_distance(train_a.as_slice()?, train_b.as_slice()?, dt))
     }
 
     #[pyfunction]
@@ -1167,12 +1161,7 @@ mod python {
         bin_size: f64,
         max_lag: f64,
     ) -> PyResult<Bound<'py, PyArray1<f64>>> {
-        let hist = cross_correlation(
-            times_a.as_slice()?,
-            times_b.as_slice()?,
-            bin_size,
-            max_lag,
-        );
+        let hist = cross_correlation(times_a.as_slice()?, times_b.as_slice()?, bin_size, max_lag);
         Ok(PyArray1::from_vec(py, hist))
     }
 
@@ -1220,9 +1209,7 @@ mod python {
     }
 
     #[pyfunction]
-    fn py_lempel_ziv_complexity<'py>(
-        data: PyReadonlyArray1<'py, u8>,
-    ) -> PyResult<f64> {
+    fn py_lempel_ziv_complexity<'py>(data: PyReadonlyArray1<'py, u8>) -> PyResult<f64> {
         Ok(lempel_ziv_complexity(data.as_slice()?))
     }
 
@@ -1236,11 +1223,7 @@ mod python {
     }
 
     #[pyfunction]
-    fn py_sample_entropy<'py>(
-        data: PyReadonlyArray1<'py, f64>,
-        m: usize,
-        r: f64,
-    ) -> PyResult<f64> {
+    fn py_sample_entropy<'py>(data: PyReadonlyArray1<'py, f64>, m: usize, r: f64) -> PyResult<f64> {
         Ok(sample_entropy(data.as_slice()?, m, r))
     }
 
@@ -1259,11 +1242,7 @@ mod python {
         y: PyReadonlyArray1<'py, f64>,
         k: usize,
     ) -> PyResult<f64> {
-        Ok(kozachenko_leonenko_mi(
-            x.as_slice()?,
-            y.as_slice()?,
-            k,
-        ))
+        Ok(kozachenko_leonenko_mi(x.as_slice()?, y.as_slice()?, k))
     }
 
     #[pyfunction]

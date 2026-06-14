@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Security and Rust engine
+- Migrated the PyO3/numpy Rust extension chain from `0.28` to `0.29`
+  across the engine, fuzz harness, evo substrate, stochastic doctor, and spike
+  stats crates; refreshed lockfiles and added the missing spike-stats lockfile
+  for reproducible advisory scanning.
+- Updated the GPU feature path for WGPU 29 API changes exposed by the
+  all-features engine check.
+
 ## [3.15.25] - 2026-06-05
 
 ### CI and release workflows

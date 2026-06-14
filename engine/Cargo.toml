@@ -42,8 +42,8 @@ gpu = ["dep:wgpu", "dep:pollster", "dep:bytemuck"]
 
 [dependencies]
 crossbeam-channel = "0.5"
-pyo3 = { version = "0.28", features = ["extension-module"] }
-numpy = "0.28"
+pyo3 = { version = "0.29", features = ["extension-module"] }
+numpy = "0.29"
 ndarray = "0.16"
 rand = "0.10"
 rand_chacha = "0.10"
@@ -62,7 +62,7 @@ criterion = { version = "0.8", features = ["html_reports"] }
 proptest = "1.4"
 
 [build-dependencies]
-pyo3-build-config = "0.28"
+pyo3-build-config = "0.29"
 
 [[example]]
 name = "bench_block_floating_dense"

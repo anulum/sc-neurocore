@@ -41,16 +41,14 @@ pub fn is_available() -> bool {
 impl GpuContext {
     fn try_new() -> Option<Self> {
         let backends = wgpu::Backends::VULKAN | wgpu::Backends::METAL | wgpu::Backends::DX12;
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            backends,
-            ..Default::default()
-        });
+        let mut descriptor = wgpu::InstanceDescriptor::new_without_display_handle();
+        descriptor.backends = backends;
+        let instance = wgpu::Instance::new(descriptor);
 
         // Allow adapter selection via SC_GPU_ADAPTER env var (substring match).
         let adapter = if let Ok(name_filter) = std::env::var("SC_GPU_ADAPTER") {
             let filter_lower = name_filter.to_lowercase();
-            instance
-                .enumerate_adapters(backends)
+            pollster::block_on(instance.enumerate_adapters(backends))
                 .into_iter()
                 .find(|a| a.get_info().name.to_lowercase().contains(&filter_lower))
         } else {
@@ -59,19 +57,17 @@ impl GpuContext {
                 compatible_surface: None,
                 force_fallback_adapter: false,
             }))
+            .ok()
         }?;
 
         let adapter_name = adapter.get_info().name.clone();
 
-        let (device, queue) = pollster::block_on(adapter.request_device(
-            &wgpu::DeviceDescriptor {
-                label: Some("sc-neurocore-gpu"),
-                required_features: wgpu::Features::empty(),
-                required_limits: wgpu::Limits::default(),
-                ..Default::default()
-            },
-            None,
-        ))
+        let (device, queue) = pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
+            label: Some("sc-neurocore-gpu"),
+            required_features: wgpu::Features::empty(),
+            required_limits: wgpu::Limits::default(),
+            ..Default::default()
+        }))
         .ok()?;
 
         // Compile encode shader.
@@ -109,8 +105,8 @@ impl GpuContext {
         // Pipelines.
         let encode_pl = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("encode_pl"),
-            bind_group_layouts: &[&encode_bgl],
-            push_constant_ranges: &[],
+            bind_group_layouts: &[Some(&encode_bgl)],
+            immediate_size: 0,
         });
         let encode_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
             label: Some("encode_pipeline"),
@@ -123,8 +119,8 @@ impl GpuContext {
 
         let accum_pl = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("accum_pl"),
-            bind_group_layouts: &[&accum_bgl],
-            push_constant_ranges: &[],
+            bind_group_layouts: &[Some(&accum_bgl)],
+            immediate_size: 0,
         });
         let accumulate_pipeline =
             device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {

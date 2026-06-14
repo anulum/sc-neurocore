@@ -7,7 +7,9 @@ popcount kernels and Rayon parallelism across neurons and inputs.
 
 ## 1. Installation and Verification
 
-Requires Rust 1.75+ and maturin 1.x.
+Requires Rust 1.83+ and maturin 1.x. The Python extension path follows the
+PyO3/numpy Rust crate floor; use a newer stable toolchain when building local
+wheels.
 
 ```bash
 cd engine && maturin develop --release
