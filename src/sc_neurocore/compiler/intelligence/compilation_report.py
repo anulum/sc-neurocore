@@ -45,7 +45,7 @@ def generate_compilation_report(
     str
         Markdown report.
     """
-    from ...platforms import get_profile
+    from ..platforms import get_profile
 
     p = get_profile(profile_name)
 

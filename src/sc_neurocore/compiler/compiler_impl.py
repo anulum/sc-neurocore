@@ -15,7 +15,7 @@ import json
 from ..hdl_gen._ident import sanitize_ident
 from ..neurons.equation_builder import EquationNeuron
 from .equation_compiler import Q88, compile_to_verilog
-from .adaptive_runtime_precision.validation import (
+from .validation import (
     _coerce_precision,
     _validate_lp_hp,
     _validate_hysteresis,

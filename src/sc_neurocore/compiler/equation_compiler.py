@@ -22,9 +22,13 @@ from .verilog_compiler import (
 from .verilog_compiler_config import (
     Q88,
 )
+from .verilog_expr_emitter import (
+    _VerilogExprEmitter,
+)
 
 __all__ = [
     "Q88",
+    "_VerilogExprEmitter",
     "compile_to_verilog",
     "equation_to_fpga",
     "generate_testbench",

@@ -64,7 +64,7 @@ def score_supply_chain_risk(
     profile_name: str,
 ) -> SupplyChainRisk:
     """Assess supply chain risk for a hardware profile."""
-    from ...platforms import get_profile
+    from ..platforms import get_profile
 
     p = get_profile(profile_name)
     score = 0.0
@@ -96,7 +96,7 @@ def score_supply_chain_risk(
         factors.append("Standard commercial supply")
 
     # Alternatives
-    from ...platforms import list_profile_names
+    from ..platforms import list_profile_names
 
     alts = [
         n

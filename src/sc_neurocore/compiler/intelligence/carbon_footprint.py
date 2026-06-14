@@ -66,7 +66,7 @@ def estimate_carbon_footprint(
     grid_carbon_g_per_kwh: float = 400.0,
 ) -> CarbonEstimate:
     """Estimate carbon footprint for a compilation target."""
-    from ...platforms import get_profile
+    from ..platforms import get_profile
 
     p = get_profile(profile_name)
 
