@@ -214,8 +214,7 @@ class PrecisionConfig:
     @property
     def q_label(self) -> str:
         prefix = "Q" if self.signed else "UQ"
-        integer_bits = self.data_width - self.fraction
-        return f"{prefix}{integer_bits}.{self.fraction}"
+        return f"{prefix}{self.int_bits}.{self.fraction}"
 
     @property
     def emit_fraction(self) -> int:

@@ -58,7 +58,7 @@ def compare_targets(
     targets: list[str],
 ) -> list[TargetComparison]:
     """Compare compilation results across multiple hardware targets."""
-    from ...platforms import get_profile
+    from ..platforms import get_profile
     from ..static_analysis import (
         critical_path_depth as cpd,
         pipeline_stages_needed,

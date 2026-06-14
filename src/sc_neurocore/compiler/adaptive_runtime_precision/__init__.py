@@ -10,10 +10,10 @@
 
 from __future__ import annotations
 
-from .compiler_impl import (
+from ..compiler_impl import (
     compile_adaptive_precision,
 )
-from .precision_pairs import (
+from ..precision_pairs import (
     PRECISION_PAIRS,
 )
 

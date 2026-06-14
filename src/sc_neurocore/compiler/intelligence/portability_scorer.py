@@ -41,7 +41,7 @@ def score_portability(
     min_data_width: int = 8,
 ) -> PortabilityScore:
     """Score how portable a model is across all profiles."""
-    from ...platforms import (
+    from ..platforms import (
         list_profile_names,
         get_profile,
     )

@@ -12,8 +12,8 @@
 | Model documentation pages | 174 |
 | Rust PyO3 model wrappers | 175 |
 | Optional extras | 24 |
-| Python test files | 762 |
-| Public documentation pages | 543 |
+| Python test files | 776 |
+| Public documentation pages | 545 |
 | GitHub Actions workflows | 14 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
