@@ -4,64 +4,55 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for ermentrout_kopell_map_neuron
+# SC-NeuroCore — Julia acceleration for the Ermentrout-Kopell theta map
 
-module ErmentroutKopellMapNeuronAccel
+# Parity contract: `simulate_trace` reproduces
+# `sc_neurocore.neurons.models.ermentrout_kopell_map_neuron.ErmentroutKopellMapNeuron.simulate`.
+# The only transcendental is `cos`, and the theta neuron is a non-chaotic phase
+# oscillator, so Julia's `cos` (which may differ from the reference libm by a
+# ULP) does not amplify: the trace stays within a small ULP band and the spike
+# counts match. The wrap uses `mod(theta, 2*pi)` (floored remainder), matching
+# Python's `theta % (2*pi)`.
+#
+# Reference: Ermentrout & Kopell (1986) SIAM J Appl Math 46:233-253.
 
-export step!, simulate, validate, ErmentroutKopellMapNeuronState
+module ErmentroutKopellMapAccel
 
-mutable struct ErmentroutKopellMapNeuronState
-    theta::Float64
-    dt::Float64
-    gain::Float64
-    theta_threshold::Float64
-end
+export simulate_trace
 
-function ErmentroutKopellMapNeuronState()
-    ErmentroutKopellMapNeuronState(0.0, 0.1, 1.0, pi)
-end
+"""
+    simulate_trace(theta0, dt, gain, theta_threshold, n_steps, current)
 
-function validate(s::ErmentroutKopellMapNeuronState)::Bool
-    return isfinite(s.theta) &&
-        isfinite(s.dt) &&
-        s.dt > 0.0 &&
-        isfinite(s.gain) &&
-        isfinite(s.theta_threshold)
-end
-
-function step!(s::ErmentroutKopellMapNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    if !validate(s) || !isfinite(I_ext)
-        return -1
-    end
-
-    inp = s.gain * I_ext
-    if !isfinite(inp)
-        return -1
-    end
-    theta_prev = s.theta
-    cos_theta = cos(s.theta)
-    d_theta = 1.0 - cos_theta + (1.0 + cos_theta) * inp
-    theta_next = s.theta + s.dt * d_theta
-    if !isfinite(d_theta) || !isfinite(theta_next)
-        return -1
-    end
-    fired = (theta_next >= s.theta_threshold && theta_prev < s.theta_threshold) ? 1 : 0
-    s.theta = mod(theta_next, 2.0 * pi)
-    return fired
-end
-
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
-    s = ErmentroutKopellMapNeuronState()
-    trace = zeros(n_steps)
+Run `n_steps` of the Ermentrout-Kopell theta map from phase `theta0` under a
+constant input `current`. Returns a named tuple `(trace, spikes, thetaf)` where
+`trace[t]` is `theta` after step `t` (wrapped to [0, 2*pi)), `spikes` counts
+upward crossings of `theta_threshold`, and `thetaf` is the final phase.
+"""
+function simulate_trace(
+    theta0::Float64,
+    dt::Float64,
+    gain::Float64,
+    theta_threshold::Float64,
+    n_steps::Int,
+    current::Float64,
+)
+    trace = Vector{Float64}(undef, n_steps)
+    theta = theta0
+    inp = gain * current
+    two_pi = 2.0 * pi
     spikes = 0
     for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
-        trace[t] = s.theta
-        if result isa Number && result > 0
+        theta_prev = theta
+        cos_theta = cos(theta)
+        d_theta = (1.0 - cos_theta) + (1.0 + cos_theta) * inp
+        theta_next = theta + dt * d_theta
+        if theta_next >= theta_threshold && theta_prev < theta_threshold
             spikes += 1
         end
+        theta = mod(theta_next, two_pi)
+        trace[t] = theta
     end
-    return trace, spikes
+    return (trace = trace, spikes = spikes, thetaf = theta)
 end
 
-end # module ErmentroutKopellMapNeuronAccel
+end # module ErmentroutKopellMapAccel

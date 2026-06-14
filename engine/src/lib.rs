@@ -827,6 +827,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_rulkov_map_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_ibarz_tanaka_map_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_medvedev_map_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_ermentrout_kopell_map_simulate, m)?)?;
     // Byte-level fault injection (parity with FaultInjector.inject)
     m.add_function(wrap_pyfunction!(py_inject_bitflip_u8, m)?)?;
     m.add_function(wrap_pyfunction!(py_inject_stuck_at_0_u8, m)?)?;
@@ -5705,6 +5706,34 @@ fn py_medvedev_map_simulate<'py>(
     };
     let (trace, spikes) = neuron.simulate(n_steps, current);
     (trace.into_pyarray(py), spikes, neuron.x)
+}
+
+/// Parity contract with
+/// `sc_neurocore.neurons.models.ermentrout_kopell_map_neuron.ErmentroutKopellMapNeuron.simulate`:
+/// for the same parameters and constant input the returned `theta` trace,
+/// upward-crossing spike count, and final `theta` state match the Python
+/// reference bit-for-bit on a shared libm (the only transcendental is `cos`,
+/// and the non-chaotic phase flow does not amplify ULP differences). This is a
+/// one-dimensional phase map, so there is no second state.
+#[pyfunction]
+#[pyo3(signature = (theta0, dt, gain, theta_threshold, n_steps, current))]
+fn py_ermentrout_kopell_map_simulate<'py>(
+    py: Python<'py>,
+    theta0: f64,
+    dt: f64,
+    gain: f64,
+    theta_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64) {
+    let mut neuron = crate::neurons::ErmentroutKopellMapNeuron {
+        theta: theta0,
+        dt,
+        gain,
+        theta_threshold,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    (trace.into_pyarray(py), spikes, neuron.theta)
 }
 
 // ── Byte-level fault injection (PyO3) ──
