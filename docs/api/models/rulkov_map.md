@@ -153,13 +153,73 @@ the interaction between the fast map dynamics and the slow y modulation.
 
 ---
 
+## Polyglot acceleration
+
+A single `step` is trivial, but `simulate(n_steps, current, backend=...)` is a
+sequential recurrence (each step depends on the previous, and an upward-crossing
+spike depends on the previous `x`) that does not vectorise — a compiled inner
+loop genuinely beats Python. The kernel carries a full polyglot chain:
+
+```python
+neuron = RulkovMapNeuron()
+trace, spikes = neuron.simulate(2_000_000, current=0.5)            # auto -> Rust
+trace, spikes = neuron.simulate(2_000_000, 0.5, backend="go")     # force a backend
+```
+
+`backend` accepts `"auto" | "rust" | "julia" | "go" | "mojo" | "python"`. `auto`
+prefers Rust (it ships in the `sc_neurocore_engine` wheel) and falls back to the
+pure-NumPy reference. `trace[t]` is `x` after step `t`; `spikes` counts upward
+crossings of `x_threshold`; the instance `(x, y)` is left at the final step.
+
+Because the fast map is exact floating-point arithmetic (one division,
+additions and multiplications, no transcendental functions), **Rust, Julia and
+Go reproduce the NumPy trace bit-for-bit** across the silent, bursting and
+spontaneous regimes. Mojo's release build can contract the slow-variable update
+`y - mu*(x+1) + mu*sigma` into fused multiply-adds (one rounding rather than
+two); each step therefore agrees to within a couple of ULP. Unlike a freely
+chaotic map, the branch resets (`x` to exactly `-1`, or to the plateau value)
+periodically resynchronise the trajectory, so the whole-trace gap stays at the
+per-step ULP level rather than diverging. This is the documented Mojo FMA-parity
+behaviour, not a defect, and the spike counts still match exactly.
+
+### Measured backends
+
+Reproduce with `python benchmarks/bench_rulkov_map.py --json
+benchmarks/results/bench_rulkov_map.json`. Workload: 2,000,000 steps, default
+parameters, current = 0.5, median of 5 repeats. **Non-isolated** (loaded
+workstation, Python 3.12 / NumPy 2.3) — functional/regression evidence, not
+isolated-core release numbers.
+
+| backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
+|---|---:|---:|---:|
+| python (NumPy) | 350.06 | 1.00× | 0 |
+| go | 15.87 | 22.06× | 0 |
+| mojo | 16.07 | 21.78× | 1.78e-15 (sub-ULP FMA) |
+| rust | 16.56 | 21.14× | 0 |
+| julia | 18.53 | 18.89× | 0 |
+
+The speedups are more modest than for the branch-free Cazelles map (~22× versus
+~82×): the three-branch conditional limits instruction-level parallelism in
+every backend, and the NumPy reference inner loop is correspondingly cheaper per
+step. Go and Mojo lead by filling a preallocated NumPy buffer over the C ABI;
+Rust returns a NumPy array directly (avoiding a multi-million-element
+Python-list marshal); `auto` selects Rust as the always-available wheel backend
+within ~1.04× of the fastest locally-built backend.
+
+---
+
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/rulkov_map.py` — 44 lines.
-- **No numpy dependency:** Pure Python arithmetic. The only numpy usage in
-  tests is for analysis.
-- **Rust wiring:** Compatible with `step(f64) → i32` dispatch.
-  Two f64 state variables.
+- **Source:** `src/sc_neurocore/neurons/models/rulkov_map.py`.
+- **Backends:** Rust (`engine/src/neurons/maps.rs` + `py_rulkov_map_simulate`),
+  Julia (`accel/julia/neurons/rulkov_map.jl`), Go
+  (`accel/go/neurons/rulkov_map/rulkov_map.go`, c-shared), Mojo
+  (`accel/mojo/neurons/rulkov_map.mojo`, FFI). Each reproduces the NumPy
+  reference bit-for-bit (Rust/Julia/Go) or to a documented per-step ULP bound
+  (Mojo); see *Polyglot acceleration* above.
+- **Rust wiring:** `RulkovMapNeuron::step(f64) → i32` and
+  `RulkovMapNeuron::simulate(n_steps, current) → (Vec<f64>, i64)`; two f64 state
+  variables, six f64 parameters.
 
 ---
 
@@ -175,7 +235,12 @@ the interaction between the fast map dynamics and the slow y modulation.
 | Determinism | 1 | bit-exact (300 steps) |
 | Network | 2 | Population(n=10), Network spikes |
 | Analysis | 2 | spike_count, consistency |
-| **Total** | **25** | |
+| Polyglot parity | 33 | rust/julia/go bit-exact (4 regimes + empty/single + high-current branches 2/3), mojo ULP-bounded trace + per-step + spike count, dispatch/validation, simulate==repeated-step, final-state advance |
+
+The step-level categories above are listed by intent; parametrisation expands
+them at collection time. The two files collect **67 tests** in total (34 in
+`tests/test_model_rulkov_map.py`, 33 in `tests/test_rulkov_map_backends.py`),
+all passing.
 
 ---
 
