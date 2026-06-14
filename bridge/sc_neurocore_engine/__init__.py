@@ -460,6 +460,16 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_ollivier_ricci_curvature,
+    )
+
+    __all__ += ["py_ollivier_ricci_curvature"]
+    _topology_rust_available = True
+except ImportError:
+    _topology_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_ph_route_waveguides,
         py_ph_mzi_transfer_matrix,
         py_ph_cascade_mzi,
