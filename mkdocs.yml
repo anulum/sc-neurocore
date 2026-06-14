@@ -25,6 +25,8 @@ not_in_nav: |
   benchmarks/ZENITH_BENCHMARKS_GPU.md
   architecture/AUTONOMOUS_LEARNING_ZENITH.md
   research/SC_NEUROCORE_FOUNDATIONAL_WHITEPAPER.md
+  HARDWARE_BENCHMARK_REPORT.md
+  SC_NEUROCORE_PERFORMANCE_INDEX.md
 
 validation:
   anchors: ignore
