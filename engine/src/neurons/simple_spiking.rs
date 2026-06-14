@@ -338,6 +338,25 @@ impl HindmarshRoseNeuron {
         self.y = -10.0;
         self.z = 2.0;
     }
+
+    /// Run `n_steps` RK4 updates under a constant input, returning the `x` trace
+    /// and the upward-crossing spike count. Reuses `step` (RK4) so the trace is
+    /// bit-identical to the per-step path and — because the right-hand side is
+    /// exact arithmetic (`x.powi(3)` = `x*x*x`, `x.powi(2)` = `x*x`) — to the
+    /// Python reference, even though the bursting dynamics are chaotic. The
+    /// final state is left in `self.x` / `self.y` / `self.z`.
+    pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+        let mut trace = Vec::with_capacity(n_steps);
+        let mut spikes: i64 = 0;
+        for _ in 0..n_steps {
+            let spiked = self.step(current);
+            trace.push(self.x);
+            if spiked == 1 {
+                spikes += 1;
+            }
+        }
+        (trace, spikes)
+    }
 }
 impl Default for HindmarshRoseNeuron {
     fn default() -> Self {

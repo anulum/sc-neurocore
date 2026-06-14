@@ -196,14 +196,17 @@ sc_neurocore Pipeline
 │   └── sc_neurocore_engine::neurons::simple_spiking::HindmarshRoseNeuron
 │       ├── new() → Self
 │       ├── step(&mut self, current: f64) → i32
+│       ├── simulate(n_steps, current) → (Vec<f64>, i64)   [RK4]
 │       └── reset(&mut self)
 │
-├── PyO3 binding
-│   └── sc_neurocore_engine.HindmarshRoseNeuron (Python class)
-│       ├── __init__()
-│       ├── step(current) → int
-│       ├── reset()
-│       └── get_state() → dict {x, y, z}
+├── PyO3 bindings
+│   ├── sc_neurocore_engine.HindmarshRoseNeuron (Python class)
+│   └── sc_neurocore_engine.py_hindmarsh_rose_simulate (N-step RK4)
+│
+├── Polyglot simulate chain (RK4): see "Polyglot acceleration" below
+│   ├── Julia: src/sc_neurocore/accel/julia/neurons/hindmarsh_rose.jl
+│   ├── Go:    src/sc_neurocore/accel/go/neurons/hindmarsh_rose/hindmarsh_rose.go (c-shared)
+│   └── Mojo:  src/sc_neurocore/accel/mojo/neurons/hindmarsh_rose.mojo (FFI)
 │
 └── Network runner
     └── NeuronVariant::HindmarshRose(HindmarshRoseNeuron)
@@ -422,6 +425,65 @@ The Rust compiler can fully vectorise and pipeline these operations.
 | 20,000 steps at I=5.0 | 2 s sim time | All 3 state variables finite |
 | 200 steps at I=5.0 (moderate) | 20 ms sim time | Bounded |
 | Extended run (100K steps) | 10 s sim time | No divergence |
+
+### 7.5 Polyglot acceleration
+
+`step` runs one RK4 update, but `simulate(n_steps, current, backend=...)` is a
+sequential recurrence (each step depends on the previous) that does not
+vectorise — a compiled inner loop genuinely beats Python. The kernel carries a
+full polyglot chain over the **RK4** integrator (the production default;
+`simulate` raises for the `euler` integrator, which stays on `step()`):
+
+```python
+from sc_neurocore.neurons.models.hindmarsh_rose import HindmarshRoseNeuron
+
+neuron = HindmarshRoseNeuron()                                    # integrator="rk4"
+trace, spikes = neuron.simulate(2_000_000, current=3.0)           # auto -> Rust
+trace, spikes = neuron.simulate(2_000_000, 3.0, backend="go")    # force a backend
+```
+
+`backend` accepts `"auto" | "rust" | "julia" | "go" | "mojo" | "python"`. `auto`
+prefers Rust (it ships in the `sc_neurocore_engine` wheel). `trace[t]` is `x`
+after step `t`; `spikes` counts upward crossings of `x_threshold`.
+
+The RK4 right-hand side is **exact arithmetic** — the square and cube are written
+`x*x` and `(x*x)*x` (bit-identical to Rust `x.powi(2)`/`x.powi(3)`, Julia
+`x^2`/`x^3` and Go/Mojo `x*x`), with no transcendental functions. So even though
+Hindmarsh-Rose is a three-dimensional **chaotic** burster, **Rust, Julia and Go
+reproduce the NumPy trace bit-for-bit at every horizon** (verified over a
+60,000-step chaotic run) — exactness is independent of the dynamics. This is the
+sharp contrast with the chaotic *map* kernels (Cazelles, Medvedev), where a
+clip/fold introduced a one-bit difference: here the polynomial flow has no such
+step, so the bit-exact backends never diverge. Mojo's release build fuses some
+RK4 multiply-adds into FMAs (≤8 ULP/step); the chaotic flow amplifies that ULP
+into a growing whole-trace gap, so Mojo is validated on the per-step bound and
+structural invariants, not whole-trace equality.
+
+> Aligning the square/cube to `x*x` / `(x*x)*x` (from `x**2` / `x**3`) made the
+> Python reference bit-identical to the engine's existing `x.powi(2)` /
+> `x.powi(3)`, which is what lets the chain agree to the last bit.
+
+#### Measured backends
+
+Reproduce with `python benchmarks/bench_hindmarsh_rose_simulate.py --json
+benchmarks/results/bench_hindmarsh_rose_simulate.json`. Workload: 2,000,000 RK4
+steps, default parameters, current = 3.0 (bursting), median of 5 repeats.
+**Non-isolated** (loaded workstation, Python 3.12 / NumPy 2.3) —
+functional/regression evidence, not isolated-core release numbers.
+
+| backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
+|---|---:|---:|---:|
+| python (NumPy) | 1711.68 | 1.00× | 0 |
+| mojo | 46.02 | 37.20× | 1.23e-08 (chaotic FMA amplification) |
+| go | 64.48 | 26.55× | 0 (bit-exact) |
+| julia | 66.78 | 25.63× | 0 (bit-exact) |
+| rust | 71.68 | 23.88× | 0 (bit-exact) |
+
+Mojo is fastest in raw throughput (the FMA contraction helps the cube-heavy RHS),
+but because the chaotic flow amplifies its FMA ULP it is **not** chosen by
+`auto`; `auto` selects Rust — the fastest backend that is both bit-exact and
+ships in the wheel. The cube-heavy three-state RHS makes the NumPy reference the
+slowest of the polynomial models, so the speedups are the highest (24–37×).
 
 ---
 
