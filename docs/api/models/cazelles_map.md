@@ -39,7 +39,7 @@ def step(self, current: float) -> int:
     f = self.a * self.x * (1.0 - self.x)
     x_new = f - self.y + current
     y_new = self.y + self.epsilon * (self.x - self.sigma)
-    self.x = np.clip(x_new, -2.0, 2.0)
+    self.x = min(2.0, max(-2.0, x_new))
     self.y = y_new
     return 1 if self.x >= self.x_threshold else 0
 ```
@@ -240,11 +240,14 @@ model in SC-NeuroCore (tied with TrueNorth and ThresholdLinearRate).
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/cazelles_map.py` — 44 lines.
+- **Source:** `src/sc_neurocore/neurons/models/cazelles_map.py`.
 - **Two state variables:** x (fast), y (slow).
 - **Simplest map model** in SC-NeuroCore (tied with MedvedevMap).
 - **Dataclass:** Uses `@dataclass`.
-- **Rust wiring:** Trivially compatible (2 f64 state vars, pure arithmetic).
+- **Polyglot `simulate`:** N-step recurrence accelerated by Rust (PyO3, engine
+  `neurons/maps.rs`), Julia (`accel/julia/neurons/cazelles_map.jl`), Go (cgo,
+  `accel/go/neurons/cazelles_map`) and Mojo (FFI, `accel/mojo/neurons`), all
+  parity-checked against the NumPy reference. See *Polyglot acceleration* above.
 
 ---
 
@@ -256,6 +259,54 @@ model in SC-NeuroCore (tied with TrueNorth and ThresholdLinearRate).
 | Network (10n) | ~100K neuron-steps/s | Very fast |
 
 Among the fastest models — pure arithmetic, no exp(), no ODE integration.
+
+---
+
+## Polyglot acceleration
+
+The single `step` is trivial, but `simulate(n_steps, current, backend=...)` is a
+sequential recurrence (each step depends on the previous) that does not
+vectorise — a compiled inner loop genuinely beats Python. The kernel carries a
+full polyglot chain:
+
+```python
+neuron = CazellesMapNeuron(a=3.8)
+trace, spikes = neuron.simulate(2_000_000, current=0.05)            # auto -> Rust
+trace, spikes = neuron.simulate(2_000_000, 0.05, backend="go")     # force a backend
+```
+
+`backend` accepts `"auto" | "rust" | "julia" | "go" | "mojo" | "python"`. `auto`
+prefers Rust (it ships in the `sc_neurocore_engine` wheel) and falls back to the
+pure-NumPy reference.
+
+Because the map is exact floating-point arithmetic, **Rust, Julia and Go
+reproduce the NumPy trace bit-for-bit**, even in the chaotic regime (a = 3.8).
+Mojo's release build contracts `y + epsilon*(x - sigma)` into a fused
+multiply-add (one rounding rather than two), so each step agrees to within two
+ULP; in the chaotic regime the map amplifies that single ULP into a visible
+trace gap, while the per-step physical-state agreement stays tightly bounded and
+the spike counts still match. This is the documented Mojo FMA-parity behaviour,
+not a defect.
+
+### Measured backends
+
+Reproduce with `python benchmarks/bench_cazelles_map.py --json
+benchmarks/results/bench_cazelles_map.json`. Workload: 2,000,000 steps,
+a = 3.8, median of 5 repeats. **Non-isolated** (loaded workstation, Python 3.12 /
+NumPy 2.3) — functional/regression evidence, not isolated-core release numbers.
+
+| backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
+|---|---:|---:|---:|
+| python (NumPy) | 808.73 | 1.00× | 0 |
+| go | 9.84 | 82.18× | 0 |
+| mojo | 9.88 | 81.84× | 2.96e-04 (chaotic ULP amplification) |
+| rust | 13.96 | 57.94× | 0 |
+| julia | 25.75 | 31.40× | 0 |
+
+Go and Mojo lead because they fill a preallocated NumPy buffer over the C ABI;
+Rust returns a NumPy array directly (avoiding a multi-million-element Python-list
+marshal); `auto` selects Rust as the always-available wheel backend within ~1.4×
+of the fastest locally-built backends.
 
 ---
 
