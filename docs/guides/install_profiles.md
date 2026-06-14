@@ -77,6 +77,21 @@ Check what the current environment can use:
 sc-neurocore info
 ```
 
+Contributor environments must keep the editable Python package, Rust engine
+wheel, and checked-in release metadata on the same version. After changing
+release metadata or rebuilding the engine, refresh the editable install and run
+the version audit:
+
+```bash
+python -m pip install -e ".[dev]"
+python tools/version_surface_audit.py
+```
+
+The audit checks installed distribution metadata as well as `pyproject.toml`,
+`src/sc_neurocore/__init__.py`, `engine/Cargo.toml`, and
+`bridge/pyproject.toml`; stale `.dist-info` or `.egg-info` metadata must be
+refreshed rather than ignored.
+
 ## Optional extras
 
 | Install command | Use when | Adds |
