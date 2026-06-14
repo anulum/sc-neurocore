@@ -550,6 +550,16 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_izhikevich2007_simulate,
+    )
+
+    __all__ += ["py_izhikevich2007_simulate"]
+    _izhikevich2007_rust_available = True
+except ImportError:
+    _izhikevich2007_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_ph_route_waveguides,
         py_ph_mzi_transfer_matrix,
         py_ph_cascade_mzi,
