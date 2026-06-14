@@ -79,4 +79,5 @@ def install_editable(extra: str) -> int:
     _run(sys.executable, "-m", "pip", "install", "--force-reinstall", str(wheels[-1]))
     _sync_engine_extension_into_bridge()
     _run(sys.executable, "-m", "pip", "install", "-e", f".[{extra}]")
+    _run(sys.executable, str(ROOT / "tools" / "version_surface_audit.py"))
     return 0
