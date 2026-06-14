@@ -823,6 +823,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // LGSSM Kalman filter (predictive_model)
     m.add_function(wrap_pyfunction!(py_lgssm_kalman_filter, m)?)?;
     m.add_function(wrap_pyfunction!(py_ollivier_ricci_curvature, m)?)?;
+    m.add_function(wrap_pyfunction!(py_cazelles_map_simulate, m)?)?;
     // Byte-level fault injection (parity with FaultInjector.inject)
     m.add_function(wrap_pyfunction!(py_inject_bitflip_u8, m)?)?;
     m.add_function(wrap_pyfunction!(py_inject_stuck_at_0_u8, m)?)?;
@@ -5571,6 +5572,40 @@ fn py_ollivier_ricci_curvature(knm_flat: Vec<f64>, n: usize, i: usize, j: usize)
             Err(PyValueError::new_err("transport problem is infeasible"))
         }
     }
+}
+
+/// N-step Cazelles-Courbage-Rabinovich (2001) bursting-map simulation.
+///
+/// Parity contract with `sc_neurocore.neurons.models.cazelles_map.CazellesMapNeuron.simulate`:
+/// for the same parameters and constant input the returned `x` trace, spike
+/// count, and final `(x, y)` state are bit-identical to the Python reference
+/// (the map is exact floating-point arithmetic, no transcendental functions).
+#[pyfunction]
+#[pyo3(signature = (x0, y0, a, epsilon, sigma, x_threshold, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
+fn py_cazelles_map_simulate<'py>(
+    py: Python<'py>,
+    x0: f64,
+    y0: f64,
+    a: f64,
+    epsilon: f64,
+    sigma: f64,
+    x_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+    let mut neuron = crate::neurons::CazellesMapNeuron {
+        x: x0,
+        y: y0,
+        a,
+        epsilon,
+        sigma,
+        x_threshold,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    // Return the trace as a NumPy array directly; marshalling a multi-million
+    // element Vec<f64> into a Python list would dominate the wall-clock.
+    (trace.into_pyarray(py), spikes, neuron.x, neuron.y)
 }
 
 // ── Byte-level fault injection (PyO3) ──

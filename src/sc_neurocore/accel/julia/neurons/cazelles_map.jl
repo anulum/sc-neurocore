@@ -4,50 +4,54 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for cazelles_map
+# SC-NeuroCore — Julia acceleration for the Cazelles 2001 bursting map
+
+# Parity contract: `simulate_trace` reproduces
+# `sc_neurocore.neurons.models.cazelles_map.CazellesMapNeuron.simulate`
+# bit-for-bit — the map is exact floating-point arithmetic (a*x*(1-x),
+# additions, a clamp), so identical operation order yields identical results.
+#
+# Reference: Cazelles, B., Courbage, M. & Rabinovich, M. (2001).
+# Europhys. Lett. 56(4):504-509.
 
 module CazellesMapAccel
 
-export step!, simulate, CazellesMapNeuronState
+export simulate_trace
 
-mutable struct CazellesMapNeuronState
-    x::Float64
-    y::Float64
-    a::Float64
-    epsilon::Float64
-    sigma::Float64
-    x_threshold::Float64
-end
+"""
+    simulate_trace(x0, y0, a, epsilon, sigma, x_threshold, n_steps, current)
 
-function CazellesMapNeuronState()
-    CazellesMapNeuronState(0.1, 0.0, 3.8, 0.01, 0.5, 0.9)
-end
-
-function step!(s::CazellesMapNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        f = s.a * s.x * (1.0 - s.x)
-        x_new = f - s.y + I_ext
-        y_new = s.y + s.epsilon * (s.x - s.sigma)
-        s.x = clamp(x_new, -2.0, 2.0)
-        s.y = y_new
-        return (s.x >= s.x_threshold) ? 1 : 0
-    catch _e
-        return 0
-    end
-end
-
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
-    s = CazellesMapNeuronState()
-    trace = zeros(n_steps)
+Run `n_steps` of the Cazelles bursting map from state `(x0, y0)` under a
+constant input `current`. Returns a named tuple `(trace, spikes, xf, yf)`
+where `trace[t]` is `x` after step `t`, `spikes` counts threshold crossings,
+and `(xf, yf)` is the final state.
+"""
+function simulate_trace(
+    x0::Float64,
+    y0::Float64,
+    a::Float64,
+    epsilon::Float64,
+    sigma::Float64,
+    x_threshold::Float64,
+    n_steps::Int,
+    current::Float64,
+)
+    trace = Vector{Float64}(undef, n_steps)
+    x = x0
+    y = y0
     spikes = 0
     for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
-        trace[t] = s.x
-        if result isa Number && result > 0
+        f = a * x * (1.0 - x)
+        x_new = f - y + current
+        y_new = y + epsilon * (x - sigma)
+        x = min(2.0, max(-2.0, x_new))
+        y = y_new
+        trace[t] = x
+        if x >= x_threshold
             spikes += 1
         end
     end
-    return trace, spikes
+    return (trace = trace, spikes = spikes, xf = x, yf = y)
 end
 
 end # module CazellesMapAccel
