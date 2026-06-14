@@ -74,11 +74,7 @@ pub fn crossover_uniform(a: &[f64], b: &[f64], mask: &[u8], out: &mut [f64]) {
 /// caller-provided Gaussian PRNG so the Rust kernel stays pure /
 /// deterministic under a fixed seed on the caller's side.
 #[inline]
-pub fn point_mutation(
-    gene: &mut [f64],
-    mutation_mask: &[u8],
-    noise: &[f64],
-) {
+pub fn point_mutation(gene: &mut [f64], mutation_mask: &[u8], noise: &[f64]) {
     debug_assert_eq!(gene.len(), mutation_mask.len());
     debug_assert_eq!(gene.len(), noise.len());
     for i in 0..gene.len() {
@@ -323,9 +319,7 @@ mod python {
 
     /// Mean pairwise distance over a population matrix (`n × d`).
     #[pyfunction]
-    fn py_population_diversity<'py>(
-        population: PyReadonlyArray2<'py, f64>,
-    ) -> PyResult<f64> {
+    fn py_population_diversity<'py>(population: PyReadonlyArray2<'py, f64>) -> PyResult<f64> {
         let shape = population.shape();
         let n = shape[0];
         let d = shape[1];
@@ -341,15 +335,12 @@ mod python {
     /// wire format.
     #[pyfunction]
     fn py_evolve_run(config_json: &str) -> PyResult<String> {
-        let cfg: crate::runner::EvolveConfig = serde_json::from_str(config_json)
-            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!(
-                "invalid EvolveConfig JSON: {e}"
-            )))?;
+        let cfg: crate::runner::EvolveConfig = serde_json::from_str(config_json).map_err(|e| {
+            pyo3::exceptions::PyValueError::new_err(format!("invalid EvolveConfig JSON: {e}"))
+        })?;
         let result = crate::runner::evolve_run(&cfg);
         serde_json::to_string(&result).map_err(|e| {
-            pyo3::exceptions::PyRuntimeError::new_err(format!(
-                "EvolveResult serialise failed: {e}"
-            ))
+            pyo3::exceptions::PyRuntimeError::new_err(format!("EvolveResult serialise failed: {e}"))
         })
     }
 

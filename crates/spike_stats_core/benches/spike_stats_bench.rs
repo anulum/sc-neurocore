@@ -56,11 +56,19 @@ fn bench_multi_vp(c: &mut Criterion) {
     let mut group = c.benchmark_group("multi_neuron_vp");
     for &n_trains in &[4, 8, 16] {
         let trains: Vec<Vec<f64>> = (0..n_trains)
-            .map(|k| (0..20).map(|i| i as f64 * 0.05 + k as f64 * 0.002).collect())
+            .map(|k| {
+                (0..20)
+                    .map(|i| i as f64 * 0.05 + k as f64 * 0.002)
+                    .collect()
+            })
             .collect();
-        group.bench_with_input(BenchmarkId::from_parameter(n_trains), &n_trains, |bench, _| {
-            bench.iter(|| multi_neuron_victor_purpura(black_box(&trains), 1000.0));
-        });
+        group.bench_with_input(
+            BenchmarkId::from_parameter(n_trains),
+            &n_trains,
+            |bench, _| {
+                bench.iter(|| multi_neuron_victor_purpura(black_box(&trains), 1000.0));
+            },
+        );
     }
     group.finish();
 }

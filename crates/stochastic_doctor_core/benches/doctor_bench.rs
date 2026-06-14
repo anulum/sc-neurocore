@@ -54,20 +54,16 @@ fn bench_scc_batch(c: &mut Criterion) {
             .map(|i| ((i * 7 + 3) % 2) as u8)
             .collect();
         let mut out = vec![0.0f64; n * n];
-        group.bench_with_input(
-            BenchmarkId::from_parameter(n),
-            &n,
-            |bench, _| {
-                bench.iter(|| {
-                    scc_batch_impl(
-                        black_box(&streams),
-                        black_box(n),
-                        black_box(stream_len),
-                        black_box(&mut out),
-                    )
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::from_parameter(n), &n, |bench, _| {
+            bench.iter(|| {
+                scc_batch_impl(
+                    black_box(&streams),
+                    black_box(n),
+                    black_box(stream_len),
+                    black_box(&mut out),
+                )
+            });
+        });
     }
     group.finish();
 }
