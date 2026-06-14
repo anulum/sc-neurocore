@@ -64,6 +64,7 @@ pub mod simd;
 pub mod sobol;
 pub mod supervisor;
 pub mod synapses;
+pub mod topology;
 pub mod wilson_cowan;
 pub mod wong_wang;
 
@@ -821,6 +822,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_evo_tournament, m)?)?;
     // LGSSM Kalman filter (predictive_model)
     m.add_function(wrap_pyfunction!(py_lgssm_kalman_filter, m)?)?;
+    m.add_function(wrap_pyfunction!(py_ollivier_ricci_curvature, m)?)?;
     // Byte-level fault injection (parity with FaultInjector.inject)
     m.add_function(wrap_pyfunction!(py_inject_bitflip_u8, m)?)?;
     m.add_function(wrap_pyfunction!(py_inject_stuck_at_0_u8, m)?)?;
@@ -5539,6 +5541,36 @@ fn py_lgssm_kalman_filter<'py>(
     dict.set_item("log_likelihood", result.log_likelihood)?;
     dict.set_item("backend", "rust")?;
     Ok(dict.into_any().unbind())
+}
+
+/// Discrete Ollivier-Ricci curvature between two nodes of a coupling graph.
+///
+/// Parity contract with `sc_neurocore.math.topology.ollivier_ricci_curvature`:
+/// for the same `knm` and `(i, j)`, the Rust value agrees with the Python
+/// value to within float64 round-off.
+///
+/// `knm_flat` is the row-major `n x n` coupling matrix. Raises `ValueError`
+/// on a malformed shape, a non-finite or negative entry, or an out-of-range
+/// index, mirroring the Python validation.
+#[pyfunction]
+#[pyo3(signature = (knm_flat, n, i, j))]
+fn py_ollivier_ricci_curvature(knm_flat: Vec<f64>, n: usize, i: usize, j: usize) -> PyResult<f64> {
+    use topology::CurvatureError;
+    match topology::ollivier_ricci_curvature(&knm_flat, n, i, j) {
+        Ok(value) => Ok(value),
+        Err(CurvatureError::BadShape) => Err(PyValueError::new_err(
+            "knm must be a square coupling matrix with at least one node",
+        )),
+        Err(CurvatureError::BadValue) => Err(PyValueError::new_err(
+            "knm must contain only finite, non-negative values",
+        )),
+        Err(CurvatureError::BadIndex) => Err(PyValueError::new_err(
+            "node index out of range for coupling graph",
+        )),
+        Err(CurvatureError::Infeasible) => {
+            Err(PyValueError::new_err("transport problem is infeasible"))
+        }
+    }
 }
 
 // ── Byte-level fault injection (PyO3) ──
