@@ -552,6 +552,23 @@ impl ErmentroutKopellMapNeuron {
         fired
     }
 
+    /// Run `n_steps` under a constant input, returning the `theta` trace
+    /// (wrapped to `[0, 2*pi)`) and the upward-crossing spike count. Reuses
+    /// `step` so the trace matches the per-step path; on a shared libm it also
+    /// matches the Python reference bit-for-bit (the only transcendental is
+    /// `cos`, and the non-chaotic phase flow does not amplify ULP differences).
+    /// The final state is left in `self.theta`.
+    pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+        let mut trace = Vec::with_capacity(n_steps);
+        let mut spikes: i64 = 0;
+        for _ in 0..n_steps {
+            let spiked = self.step(current);
+            trace.push(self.theta);
+            spikes += spiked as i64;
+        }
+        (trace, spikes)
+    }
+
     pub fn reset(&mut self) {
         *self = Self::new();
     }
