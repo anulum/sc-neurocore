@@ -826,6 +826,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_cazelles_map_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_rulkov_map_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_ibarz_tanaka_map_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_medvedev_map_simulate, m)?)?;
     // Byte-level fault injection (parity with FaultInjector.inject)
     m.add_function(wrap_pyfunction!(py_inject_bitflip_u8, m)?)?;
     m.add_function(wrap_pyfunction!(py_inject_stuck_at_0_u8, m)?)?;
@@ -5676,6 +5677,34 @@ fn py_ibarz_tanaka_map_simulate<'py>(
     };
     let (trace, spikes) = neuron.simulate(n_steps, current);
     (trace.into_pyarray(py), spikes, neuron.x, neuron.y)
+}
+
+/// Parity contract with
+/// `sc_neurocore.neurons.models.medvedev_map.MedvedevMapNeuron.simulate`: for
+/// the same parameters and constant input the returned `x` trace, upward-
+/// crossing spike count, and final `x` state are bit-identical to the Python
+/// reference (the map is exact floating-point arithmetic — a multiply, an add,
+/// and a fold into `[0, 1)`; `f64::rem_euclid(1.0)` equals Python's `x % 1.0`
+/// bit-for-bit). This is a one-dimensional map, so there is no `y` state.
+#[pyfunction]
+#[pyo3(signature = (x0, alpha, beta, x_threshold, n_steps, current))]
+fn py_medvedev_map_simulate<'py>(
+    py: Python<'py>,
+    x0: f64,
+    alpha: f64,
+    beta: f64,
+    x_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64) {
+    let mut neuron = crate::neurons::MedvedevMapNeuron {
+        x: x0,
+        alpha,
+        beta,
+        x_threshold,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    (trace.into_pyarray(py), spikes, neuron.x)
 }
 
 // ── Byte-level fault injection (PyO3) ──
