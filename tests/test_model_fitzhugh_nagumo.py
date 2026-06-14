@@ -16,11 +16,12 @@ The production default is RK4 over the published two-state ODE."""
 from __future__ import annotations
 
 import os
-import time
 import math
+import time
 
 import numpy as np
 import pytest
+from tests.performance_guard import assert_throughput_guard
 
 from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
 from sc_neurocore.network.population import Population
@@ -299,8 +300,11 @@ class TestFHNPerformance:
         throughput = N / elapsed
         minimum_throughput = 10000 if os.environ.get("CI") else 20000
         assert np.isfinite(n.v) and np.isfinite(n.w)
-        assert throughput > minimum_throughput, (
-            f"FHN isolation throughput regressed: {throughput:.0f}/s <= {minimum_throughput}/s"
+        assert_throughput_guard(
+            label="FHN isolation",
+            observed_per_second=throughput,
+            strict_minimum_per_second=float(minimum_throughput),
+            smoke_minimum_per_second=100.0,
         )
 
     def test_network_throughput(self):
@@ -311,7 +315,12 @@ class TestFHNPerformance:
         t0 = time.perf_counter()
         net.run(duration=0.5, dt=0.001, backend="python")
         elapsed = time.perf_counter() - t0
-        assert 50 * 500 / elapsed > 5000
+        assert_throughput_guard(
+            label="FHN network",
+            observed_per_second=50 * 500 / elapsed,
+            strict_minimum_per_second=5000.0,
+            smoke_minimum_per_second=100.0,
+        )
 
 
 class TestFHNPipeline:

@@ -19,6 +19,20 @@ If a number is not traceable to one of those artefacts, treat it as an
 unpublished local measurement. Do not copy it into README, roadmap, release, or
 paper prose as a product claim.
 
+Module-owned pytest throughput checks are load-tolerant smoke guards by
+default. They assert finite positive progress and a low non-strict floor so
+functional suites can run while ORCA, synthesis, or other workstation jobs are
+active. To enforce the historical strict numeric thresholds, run the affected
+tests on isolated benchmark cores with:
+
+```bash
+SC_NEUROCORE_STRICT_THROUGHPUT=1 pytest tests/test_model_fitzhugh_nagumo.py tests/test_model_ai_optimized.py
+```
+
+Strict throughput output is still local benchmark evidence until the raw
+artefact records CPU affinity, host load, governor, frequency, versions, and
+the command that produced it.
+
 ## Metrics
 
 ::: sc_neurocore.benchmarks.metrics
