@@ -17,6 +17,11 @@ documentation = "https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_eng
 readme = "../README.md"
 keywords = ["neuromorphic", "stochastic-computing", "simd", "spiking-network", "fpga"]
 categories = ["science", "simulation", "mathematics"]
+# `examples/benchmark_context.rs` is a shared helper module included by the
+# bench examples via `mod benchmark_context;`, not a runnable example. Declaring
+# example targets explicitly stops Cargo auto-discovering the helper as a
+# standalone example (which fails with E0601: no `main`).
+autoexamples = false
 exclude = [
     "tests/",
     ".github/",
@@ -58,6 +63,27 @@ proptest = "1.4"
 
 [build-dependencies]
 pyo3-build-config = "0.28"
+
+[[example]]
+name = "bench_block_floating_dense"
+
+[[example]]
+name = "bench_dcls_q88"
+
+[[example]]
+name = "bench_mixed_dense"
+
+[[example]]
+name = "bench_precision_envelopes"
+
+[[example]]
+name = "bench_precision_traps"
+
+[[example]]
+name = "bench_ultrascale_dense_folding"
+
+[[example]]
+name = "bench_ultrascale_plus_target"
 
 [[bench]]
 name = "bitstream_bench"
