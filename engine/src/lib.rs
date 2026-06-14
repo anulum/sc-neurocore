@@ -831,6 +831,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_fitzhugh_nagumo_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_hindmarsh_rose_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_fitzhugh_rinzel_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_izhikevich2007_simulate, m)?)?;
     // Byte-level fault injection (parity with FaultInjector.inject)
     m.add_function(wrap_pyfunction!(py_inject_bitflip_u8, m)?)?;
     m.add_function(wrap_pyfunction!(py_inject_stuck_at_0_u8, m)?)?;
@@ -5853,6 +5854,50 @@ fn py_fitzhugh_rinzel_simulate<'py>(
     };
     let (trace, spikes) = neuron.simulate(n_steps, current);
     (trace.into_pyarray(py), spikes, neuron.v, neuron.w, neuron.y)
+}
+
+/// Parity contract with
+/// `sc_neurocore.neurons.models.izhikevich2007.Izhikevich2007Neuron.simulate`:
+/// for the same parameters and constant input the returned `v` trace, spike
+/// count, and final `(v, u)` state are bit-identical to the Python RK4 reference
+/// (the NeuroML right-hand side `k (v-vr)(v-vt)/C` is exact arithmetic — products,
+/// a sum and a division, no transcendental functions).
+#[pyfunction]
+#[pyo3(signature = (v0, u0, cap, k, vr, vt, vpeak, a, b, c, d, dt, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
+fn py_izhikevich2007_simulate<'py>(
+    py: Python<'py>,
+    v0: f64,
+    u0: f64,
+    cap: f64,
+    k: f64,
+    vr: f64,
+    vt: f64,
+    vpeak: f64,
+    a: f64,
+    b: f64,
+    c: f64,
+    d: f64,
+    dt: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+    let mut neuron = crate::rk4_neurons::Izhikevich2007Rk4 {
+        v: v0,
+        u: u0,
+        cap,
+        k,
+        vr,
+        vt,
+        vpeak,
+        a,
+        b,
+        c,
+        d,
+        dt,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    (trace.into_pyarray(py), spikes, neuron.v, neuron.u)
 }
 
 // ── Byte-level fault injection (PyO3) ──
