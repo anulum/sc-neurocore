@@ -91,7 +91,11 @@ jobs:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         run: |
           cd bridge
-          maturin build --release --target aarch64-unknown-linux-gnu --find-interpreter --out ../dist/
+          # Target the exact matrix interpreter rather than --find-interpreter:
+          # the latter also discovers the runner's free-threaded pythonX.Yt, which
+          # PyO3 0.29 rejects for CPython < 3.14 (free-threaded unsupported).
+          maturin build --release --target aarch64-unknown-linux-gnu \
+            --interpreter python${{ matrix.python-version }} --out ../dist/
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
