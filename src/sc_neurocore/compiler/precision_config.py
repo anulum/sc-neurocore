@@ -214,8 +214,21 @@ class PrecisionConfig:
     @property
     def q_label(self) -> str:
         prefix = "Q" if self.signed else "UQ"
-        integer_bits = self.data_width - self.fraction
-        return f"{prefix}{integer_bits}.{self.fraction}"
+        return f"{prefix}{self.int_bits}.{self.fraction}"
+
+    @property
+    def emitter_label(self) -> str:
+        """Standard Q-format label for the HDL emitter (sign-inclusive integer field).
+
+        Unlike :attr:`q_label`, which reports the integer *magnitude* bits
+        (sign-excluded, e.g. ``Q7.8`` for a 16-bit signed config used in the
+        human-readable bus summary), the emitter-facing contract follows the
+        conventional fixed-point notation where the integer field spans every
+        non-fractional bit (``Q8.8`` for 16-bit, ``Q16.16`` for 32-bit), matching
+        the ``q_format`` strings used across the NIR/FPGA pipeline.
+        """
+        prefix = "Q" if self.signed else "UQ"
+        return f"{prefix}{self.data_width - self.fraction}.{self.fraction}"
 
     @property
     def emit_fraction(self) -> int:
@@ -235,7 +248,7 @@ class PrecisionConfig:
             "data_width": self.data_width,
             "fraction": self.fraction,
             "signed": self.signed,
-            "label": self.q_label,
+            "label": self.emitter_label,
             "emitted_datapath_width": self.data_width,
             "emitted_datapath_fraction": self.emit_fraction,
             "exponent_stream_width": 0,

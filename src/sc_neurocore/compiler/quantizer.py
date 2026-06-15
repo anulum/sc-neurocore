@@ -43,10 +43,20 @@ from .quantization_reports import (
     PrecisionTrapReport,
 )
 
-# Shared helper used by some other modules
-from .fixed_point_quantization import (
-    _round_scaled,
-)
+
+def parse_precision_format(fmt: str) -> QFormat | BlockFloatingMode:
+    """Parse fixed-point and block-floating precision labels."""
+    if not isinstance(fmt, str):
+        raise TypeError(f"Expected precision format string, got {type(fmt)!r}")
+
+    text = fmt.strip()
+    upper = text.upper()
+    if upper.startswith("BFP"):
+        return BlockFloatingMode.from_aliases(text)
+    if upper.startswith("Q"):
+        return QFormat.from_string(text)
+    raise ValueError(f"Unsupported precision format: {fmt!r}")
+
 
 __all__ = [
     "BlockExponentLayout",
@@ -65,6 +75,7 @@ __all__ = [
     "dequantize",
     "dequantize_block_floating",
     "dequantize_weights",
+    "parse_precision_format",
     "q_weights_to_sc_probabilities",
     "quantization_error",
     "quantize_block_floating",

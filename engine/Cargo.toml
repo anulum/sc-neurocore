@@ -17,6 +17,11 @@ documentation = "https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_eng
 readme = "../README.md"
 keywords = ["neuromorphic", "stochastic-computing", "simd", "spiking-network", "fpga"]
 categories = ["science", "simulation", "mathematics"]
+# `examples/benchmark_context.rs` is a shared helper module included by the
+# bench examples via `mod benchmark_context;`, not a runnable example. Declaring
+# example targets explicitly stops Cargo auto-discovering the helper as a
+# standalone example (which fails with E0601: no `main`).
+autoexamples = false
 exclude = [
     "tests/",
     ".github/",
@@ -37,8 +42,8 @@ gpu = ["dep:wgpu", "dep:pollster", "dep:bytemuck"]
 
 [dependencies]
 crossbeam-channel = "0.5"
-pyo3 = { version = "0.28", features = ["extension-module"] }
-numpy = "0.28"
+pyo3 = { version = "0.29", features = ["extension-module"] }
+numpy = "0.29"
 ndarray = "0.16"
 rand = "0.10"
 rand_chacha = "0.10"
@@ -50,14 +55,35 @@ rustfft = "6.2"
 wgpu = { version = "29", optional = true }
 pollster = { version = "0.4", optional = true }
 bytemuck = { version = "1.21", features = ["derive"], optional = true }
-z3 = { version = "0.12", features = ["static-link-z3"] }
+z3 = { version = "0.20", features = ["bundled"] }
 
 [dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }
 proptest = "1.4"
 
 [build-dependencies]
-pyo3-build-config = "0.28"
+pyo3-build-config = "0.29"
+
+[[example]]
+name = "bench_block_floating_dense"
+
+[[example]]
+name = "bench_dcls_q88"
+
+[[example]]
+name = "bench_mixed_dense"
+
+[[example]]
+name = "bench_precision_envelopes"
+
+[[example]]
+name = "bench_precision_traps"
+
+[[example]]
+name = "bench_ultrascale_dense_folding"
+
+[[example]]
+name = "bench_ultrascale_plus_target"
 
 [[bench]]
 name = "bitstream_bench"

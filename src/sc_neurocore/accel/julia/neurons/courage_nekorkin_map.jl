@@ -4,57 +4,64 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for courage_nekorkin_map
+# SC-NeuroCore — Julia Courbage-Nekorkin-Vdovin 2007 map (parity with courage_nekorkin_map.py)
+
+# Parity contract: `simulate_trace` reproduces
+# `sc_neurocore.neurons.models.courage_nekorkin_map.CourageNekorkinMapNeuron.simulate`
+# bit-for-bit. The map is exact floating-point arithmetic (additions,
+# multiplications, one division for the breakpoints, and a piecewise/Heaviside
+# branch — no transcendental functions), so an identical operation order yields
+# an identical trace, upward-crossing spike count, and final state.
+#
+# Reference: Courbage, M., Nekorkin, V.I. & Vdovin, L.V. (2007).
+# Chaos 17:043109 (arXiv:0712.2097), eqs. 3-5.
 
 module CourageNekorkinMapAccel
 
-export step!, simulate, CourageNekorkinMapNeuronState
+export simulate_trace
 
-mutable struct CourageNekorkinMapNeuronState
-    x::Float64
-    y::Float64
-    alpha::Float64
-    beta::Float64
-    j::Float64
-    x_threshold::Float64
-end
-
-function CourageNekorkinMapNeuronState()
-    CourageNekorkinMapNeuronState(0.0, 0.0, 3.0, 0.001, 0.1, 1.0)
-end
-
-function _f(s::CourageNekorkinMapNeuronState, x)
-    if x < 0
-        return s.alpha * x
-    end
-    return s.alpha * x / (1.0 + s.alpha * x)
-end
-
-function step!(s::CourageNekorkinMapNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        x_prev = s.x
-        x_new = s._f(s.x) + s.y + I_ext + s.j
-        y_new = s.y - s.beta * (s.x + 1.0)
-        s.x = max(min(x_new, 1000000.0), -1000000.0)
-        s.y = max(min(y_new, 1000000.0), -1000000.0)
-        return (s.x >= s.x_threshold && x_prev < s.x_threshold) ? 1 : 0
-    catch _e
-        return 0
-    end
-end
-
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
-    s = CourageNekorkinMapNeuronState()
-    trace = zeros(n_steps)
+function simulate_trace(
+    x0::Float64,
+    y0::Float64,
+    m0::Float64,
+    m1::Float64,
+    a::Float64,
+    d::Float64,
+    j::Float64,
+    beta::Float64,
+    eps::Float64,
+    x_threshold::Float64,
+    n_steps::Int,
+    current::Float64,
+)
+    trace = Vector{Float64}(undef, n_steps)
+    x = x0
+    y = y0
+    am1 = a * m1
+    den = m0 + m1
+    jmin = am1 / den
+    jmax = (m0 + am1) / den
     spikes = 0
-    for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
-        trace[t] = s.x
-        if result isa Number && result > 0
+    @inbounds for t in 1:n_steps
+        x_prev = x
+        if x <= jmin
+            fx = -m0 * x
+        elseif x < jmax
+            fx = m1 * (x - a)
+        else
+            fx = -m0 * (x - 1.0)
+        end
+        h = (x - d) >= 0.0 ? 1.0 : 0.0
+        x_new = x + fx - y - beta * h + current
+        y_new = y + eps * (x - j)
+        x = x_new
+        y = y_new
+        trace[t] = x
+        if x >= x_threshold && x_prev < x_threshold
             spikes += 1
         end
     end
-    return trace, spikes
+    return (trace = trace, spikes = spikes, xf = x, yf = y)
 end
 
 end # module CourageNekorkinMapAccel

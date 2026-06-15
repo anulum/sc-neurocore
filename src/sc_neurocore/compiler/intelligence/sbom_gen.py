@@ -37,7 +37,7 @@ def generate_sbom(
     sbom_format: str = "CycloneDX",
 ) -> SBOM:
     """Generate SBOM/HBOM for IP core compliance."""
-    from ...platforms import get_profile
+    from ..platforms import get_profile
 
     p = get_profile(profile_name)
 

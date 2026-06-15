@@ -20,7 +20,141 @@ mathematical foundations audit (Round 2).
 
 from __future__ import annotations
 
+import importlib as _importlib
+import os as _os
+from typing import Callable, Optional
+
 import numpy as np
+
+# ───────────────────────── backend detection ─────────────────────────
+#
+# `ollivier_ricci_curvature` is the one compute-bound observable in this
+# module (an exact optimal-transport solve per node pair). It carries a
+# polyglot accelerator chain — Rust (PyO3), Julia (juliacall), Go (cgo),
+# and Mojo (FFI) — that all reproduce the NumPy reference to float64
+# round-off. The lighter observables (winding number, sheaf defect,
+# connection curvature) are single vectorised NumPy expressions for which
+# NumPy is already the fastest path, so they are not accelerated.
+
+_RustOllivier = Callable[..., float]
+
+
+def _load_rust_ollivier() -> _RustOllivier:
+    engine = _importlib.import_module("sc_neurocore_engine")
+    return engine.py_ollivier_ricci_curvature  # type: ignore[no-any-return]
+
+
+try:
+    _rust_ollivier: Optional[_RustOllivier] = _load_rust_ollivier()
+    _HAS_RUST_TOPOLOGY = True
+except (ImportError, AttributeError):
+    _rust_ollivier = None
+    _HAS_RUST_TOPOLOGY = False
+
+# Lazy accelerator handles (loaded on first explicit request).
+_julia_module = None
+_HAS_JULIA_TOPOLOGY = False
+_go_lib = None
+_HAS_GO_TOPOLOGY = False
+_mojo_lib = None
+_HAS_MOJO_TOPOLOGY = False
+
+
+def _ensure_julia_loaded() -> bool:
+    """Lazy-load the Julia `TopologyAccel` module on first request.
+
+    Julia startup latency is ~5 s — never paid unless ``backend='julia'``
+    is requested or selected by ``auto``.
+    """
+    global _julia_module, _HAS_JULIA_TOPOLOGY
+    if _julia_module is not None:
+        return True
+    import importlib.util as importlib_util
+
+    if importlib_util.find_spec("juliacall") is None:
+        return False
+    juliacall = _importlib.import_module("juliacall")
+    jl = juliacall.Main
+    jl_path = _os.path.join(
+        _os.path.dirname(__file__), "..", "accel", "julia", "math", "topology.jl"
+    )
+    jl_path = _os.path.abspath(jl_path)
+    if not _os.path.isfile(jl_path):
+        return False
+    jl.include(jl_path)
+    _julia_module = jl.TopologyAccel
+    _HAS_JULIA_TOPOLOGY = True
+    return True
+
+
+def _ensure_go_loaded() -> bool:
+    """Lazy-load the Go topology shared library on first request.
+
+    Built once via::
+
+        cd src/sc_neurocore/accel/go/topology
+        go build -buildmode=c-shared -o libtopology.so topology.go
+    """
+    global _go_lib, _HAS_GO_TOPOLOGY
+    if _go_lib is not None:
+        return True
+    import ctypes
+
+    so_path = _os.path.join(
+        _os.path.dirname(__file__), "..", "accel", "go", "topology", "libtopology.so"
+    )
+    so_path = _os.path.abspath(so_path)
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    fn = getattr(lib, "ollivier_ricci_curvature_c", None)
+    if fn is None:
+        return False
+    fn.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int, ctypes.c_int]
+    fn.restype = ctypes.c_double
+    _go_lib = lib
+    _HAS_GO_TOPOLOGY = True
+    return True
+
+
+def _ensure_mojo_loaded() -> bool:
+    """Lazy-load the Mojo topology shared library on first request.
+
+    Built once via::
+
+        cd src/sc_neurocore/accel/mojo/math
+        mojo build --emit shared-lib -o libtopology.so topology.mojo
+
+    Per ``feedback_mojo_026_ffi_pattern``, the coupling matrix is passed
+    as a raw int64 address (numpy ``arr.ctypes.data``) and the Mojo side
+    reconstructs ``UnsafePointer[Float64, MutAnyOrigin]`` internally.
+    """
+    global _mojo_lib, _HAS_MOJO_TOPOLOGY
+    if _mojo_lib is not None:
+        return True
+    import ctypes
+
+    so_path = _os.path.join(
+        _os.path.dirname(__file__), "..", "accel", "mojo", "math", "libtopology.so"
+    )
+    so_path = _os.path.abspath(so_path)
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    fn = getattr(lib, "ollivier_ricci_curvature_c", None)
+    if fn is None:
+        return False
+    fn.argtypes = [ctypes.c_int64, ctypes.c_int64, ctypes.c_int64, ctypes.c_int64]
+    fn.restype = ctypes.c_double
+    _mojo_lib = lib
+    _HAS_MOJO_TOPOLOGY = True
+    return True
 
 
 def _validate_coupling_graph(knm: np.ndarray) -> np.ndarray:
@@ -175,7 +309,64 @@ def winding_number(phases: np.ndarray) -> int:
     return int(np.round(np.sum(diffs) / (2 * np.pi)))
 
 
-def ollivier_ricci_curvature(knm: np.ndarray, i: int, j: int) -> float:
+def _ollivier_ricci_python(graph: np.ndarray, i: int, j: int) -> float:
+    """Pure-NumPy Ollivier-Ricci curvature on a validated coupling graph."""
+    distances = _shortest_path_distances(graph)
+    graph_distance = distances[i, j]
+    if not np.isfinite(graph_distance) or graph_distance <= 0.0:
+        return 0.0
+    mu_i = _lazy_random_walk(graph, i)
+    mu_j = _lazy_random_walk(graph, j)
+    w1 = _minimum_transport_cost(mu_i, mu_j, distances)
+    return float(1.0 - w1 / graph_distance)
+
+
+def _ollivier_ricci_rust(graph: np.ndarray, i: int, j: int) -> float:
+    if _rust_ollivier is None:
+        raise RuntimeError("Rust topology backend probed False; cannot dispatch")
+    flat = np.ascontiguousarray(graph, dtype=np.float64).ravel(order="C").tolist()
+    return float(_rust_ollivier(flat, graph.shape[0], i, j))
+
+
+def _ollivier_ricci_julia(graph: np.ndarray, i: int, j: int) -> float:
+    if _julia_module is None:
+        raise RuntimeError("Julia topology module not loaded; cannot dispatch")
+    # Julia uses 1-based node indices.
+    return float(
+        _julia_module.ollivier_ricci_curvature(
+            np.ascontiguousarray(graph, dtype=np.float64), i + 1, j + 1
+        )
+    )
+
+
+def _ollivier_ricci_go(graph: np.ndarray, i: int, j: int) -> float:
+    if _go_lib is None:
+        raise RuntimeError("Go topology library not loaded; cannot dispatch")
+    import ctypes
+
+    flat = np.ascontiguousarray(graph, dtype=np.float64).ravel(order="C")
+    return float(
+        _go_lib.ollivier_ricci_curvature_c(
+            flat.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            ctypes.c_int(graph.shape[0]),
+            ctypes.c_int(i),
+            ctypes.c_int(j),
+        )
+    )
+
+
+def _ollivier_ricci_mojo(graph: np.ndarray, i: int, j: int) -> float:
+    if _mojo_lib is None:
+        raise RuntimeError("Mojo topology library not loaded; cannot dispatch")
+    flat = np.ascontiguousarray(graph, dtype=np.float64).ravel(order="C")
+    return float(
+        _mojo_lib.ollivier_ricci_curvature_c(
+            int(flat.ctypes.data), int(graph.shape[0]), int(i), int(j)
+        )
+    )
+
+
+def ollivier_ricci_curvature(knm: np.ndarray, i: int, j: int, backend: str = "auto") -> float:
     """Compute Ollivier-Ricci curvature between nodes i and j on the coupling graph.
 
     Ollivier (2009), "Ricci curvature of Markov chains on metric spaces."
@@ -185,7 +376,8 @@ def ollivier_ricci_curvature(knm: np.ndarray, i: int, j: int) -> float:
 
     kappa(i,j) = 1 - W1(mu_i, mu_j) / d(i,j)
     where mu_i is the lazy random walk distribution from node i,
-    and W1 is the Wasserstein-1 distance on the unweighted support graph.
+    and W1 is the Wasserstein-1 distance on the unweighted support graph
+    (an exact successive-shortest-path min-cost flow).
 
     Parameters
     ----------
@@ -193,12 +385,21 @@ def ollivier_ricci_curvature(knm: np.ndarray, i: int, j: int) -> float:
         Coupling matrix (non-negative, not necessarily symmetric).
     i, j : int
         Node indices.
+    backend : {"auto", "rust", "julia", "go", "mojo", "python"}
+        Acceleration backend selector. ``auto`` prefers Rust when the
+        ``sc_neurocore_engine`` wheel is built, else the pure-NumPy path.
+        The named backends force a specific path and raise ``RuntimeError``
+        when that backend is unavailable. Every backend reproduces the
+        NumPy reference to float64 round-off.
 
     Returns
     -------
     float
         Ollivier-Ricci curvature. Returns 0.0 for self or disconnected pairs.
     """
+    if backend not in ("auto", "rust", "julia", "go", "mojo", "python"):
+        raise ValueError(f"backend must be auto/rust/julia/go/mojo/python, got {backend!r}")
+
     graph = _validate_coupling_graph(knm)
     n_nodes = graph.shape[0]
     i = _validate_node_index("i", i, n_nodes)
@@ -206,14 +407,38 @@ def ollivier_ricci_curvature(knm: np.ndarray, i: int, j: int) -> float:
     if i == j:
         return 0.0
 
-    distances = _shortest_path_distances(graph)
-    graph_distance = distances[i, j]
-    if not np.isfinite(graph_distance) or graph_distance <= 0.0:
-        return 0.0
-    mu_i = _lazy_random_walk(graph, i)
-    mu_j = _lazy_random_walk(graph, j)
-    w1 = _minimum_transport_cost(mu_i, mu_j, distances)
-    return float(1.0 - w1 / graph_distance)
+    if backend == "rust" and not _HAS_RUST_TOPOLOGY:
+        raise RuntimeError(
+            "Rust topology backend requested but py_ollivier_ricci_curvature "
+            "is not available; install the sc_neurocore_engine wheel."
+        )
+    if backend == "julia" and not _ensure_julia_loaded():
+        raise RuntimeError(
+            "Julia topology backend requested but juliacall + the "
+            "accel/julia/math/topology.jl module is not available."
+        )
+    if backend == "go" and not _ensure_go_loaded():
+        raise RuntimeError(
+            "Go topology backend requested but libtopology.so is not built; "
+            "run `cd src/sc_neurocore/accel/go/topology && "
+            "go build -buildmode=c-shared -o libtopology.so topology.go`."
+        )
+    if backend == "mojo" and not _ensure_mojo_loaded():
+        raise RuntimeError(
+            "Mojo topology backend requested but libtopology.so is not built; "
+            "run `cd src/sc_neurocore/accel/mojo/math && "
+            "mojo build --emit shared-lib -o libtopology.so topology.mojo`."
+        )
+
+    if backend == "rust" or (backend == "auto" and _HAS_RUST_TOPOLOGY):
+        return _ollivier_ricci_rust(graph, i, j)
+    if backend == "julia":
+        return _ollivier_ricci_julia(graph, i, j)
+    if backend == "go":
+        return _ollivier_ricci_go(graph, i, j)
+    if backend == "mojo":
+        return _ollivier_ricci_mojo(graph, i, j)
+    return _ollivier_ricci_python(graph, i, j)
 
 
 def sheaf_consistency_defect(phases: np.ndarray, knm: np.ndarray) -> float:

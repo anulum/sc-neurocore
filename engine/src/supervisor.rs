@@ -19,8 +19,8 @@ use std::thread;
 use std::time::Duration;
 use std::{error::Error, fmt};
 use z3::{
-    ast::{Ast, Bool, Int},
-    Config, Context, SatResult, Solver,
+    ast::{Bool, Int},
+    SatResult, Solver,
 };
 
 const NUM_PLACES: usize = 4;
@@ -135,9 +135,9 @@ fn bind_core(core_index: usize) {
 }
 
 pub fn verify_bounds_at_depth(snapshot: &PetriNetSnapshot, depth: usize) -> bool {
-    let cfg = Config::new();
-    let context = Context::new(&cfg);
-    let solver = Solver::new(&context);
+    // z3 0.20 manages the context globally/thread-locally; AST and Solver
+    // constructors no longer take an explicit `&Context`.
+    let solver = Solver::new();
 
     let mut markings = Vec::with_capacity(depth + 1);
     for step in 0..=depth {
@@ -145,9 +145,9 @@ pub fn verify_bounds_at_depth(snapshot: &PetriNetSnapshot, depth: usize) -> bool
         for place in 0..NUM_PLACES {
             let initial = i64::from(*snapshot.active_markings.get(place).unwrap_or(&0));
             if step == 0 {
-                step_markings.push(Int::from_i64(&context, initial));
+                step_markings.push(Int::from_i64(initial));
             } else {
-                step_markings.push(Int::new_const(&context, format!("mark_{step}_{place}")));
+                step_markings.push(Int::new_const(format!("mark_{step}_{place}")));
             }
         }
         markings.push(step_markings);
@@ -157,16 +157,13 @@ pub fn verify_bounds_at_depth(snapshot: &PetriNetSnapshot, depth: usize) -> bool
     for step in 0..depth {
         let mut step_firings = Vec::with_capacity(NUM_TRANSITIONS);
         for transition in 0..NUM_TRANSITIONS {
-            step_firings.push(Bool::new_const(
-                &context,
-                format!("fire_{step}_{transition}"),
-            ));
+            step_firings.push(Bool::new_const(format!("fire_{step}_{transition}")));
         }
         firings.push(step_firings);
     }
 
     for place in 0..NUM_PLACES {
-        solver.assert(&markings[0][place].ge(&Int::from_i64(&context, 0)));
+        solver.assert(markings[0][place].ge(Int::from_i64(0)));
     }
 
     for step in 0..depth {
@@ -175,10 +172,10 @@ pub fn verify_bounds_at_depth(snapshot: &PetriNetSnapshot, depth: usize) -> bool
 
             for transition in 0..NUM_TRANSITIONS {
                 let fire = &firings[step][transition];
-                let as_int = fire.ite(&Int::from_i64(&context, 1), &Int::from_i64(&context, 0));
+                let as_int = fire.ite(&Int::from_i64(1), &Int::from_i64(0));
 
-                let win = Int::from_i64(&context, W_IN[transition][place]);
-                let wout = Int::from_i64(&context, W_OUT[transition][place]);
+                let win = Int::from_i64(W_IN[transition][place]);
+                let wout = Int::from_i64(W_OUT[transition][place]);
                 if W_IN[transition][place] != 0 {
                     next_value -= &win * &as_int;
                 }
@@ -187,20 +184,19 @@ pub fn verify_bounds_at_depth(snapshot: &PetriNetSnapshot, depth: usize) -> bool
                 }
             }
 
-            solver.assert(&markings[step + 1][place]._eq(&next_value));
-            solver.assert(&markings[step + 1][place].ge(&Int::from_i64(&context, 0)));
+            solver.assert(markings[step + 1][place]._eq(&next_value));
+            solver.assert(markings[step + 1][place].ge(Int::from_i64(0)));
         }
     }
 
     // Safety condition: no marking in error sink exceeds threshold.
-    let threshold = Int::from_i64(&context, SAFETY_THRESHOLD_P3);
+    let threshold = Int::from_i64(SAFETY_THRESHOLD_P3);
     let mut violation_conditions: Vec<Bool> = Vec::with_capacity(depth);
     for step in 1..=depth {
         violation_conditions.push(markings[step][3].gt(&threshold));
     }
     if !violation_conditions.is_empty() {
-        let violation_refs: Vec<&Bool> = violation_conditions.iter().collect();
-        let violation = Bool::or(&context, &violation_refs);
+        let violation = Bool::or(&violation_conditions);
         solver.assert(&violation);
     } else {
         return true;

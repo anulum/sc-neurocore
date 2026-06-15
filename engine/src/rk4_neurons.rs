@@ -74,6 +74,78 @@ impl IzhikevichRk4 {
     }
 }
 
+/// Izhikevich 2007 biophysical parameterisation (NeuroML `izhikevich2007Cell`):
+/// `C dv/dt = k (v - vr)(v - vt) - u + I`, `du/dt = a (b (v - vr) - u)`, with a
+/// `v >= vpeak -> v = c, u += d` reset. RK4 over the coupled ODE. The right-hand
+/// side is exact arithmetic (products, a sum, a division — no transcendental
+/// functions), so `simulate` matches the Python reference bit-for-bit.
+#[derive(Clone, Debug)]
+pub struct Izhikevich2007Rk4 {
+    pub v: f64,
+    pub u: f64,
+    pub cap: f64,
+    pub k: f64,
+    pub vr: f64,
+    pub vt: f64,
+    pub vpeak: f64,
+    pub a: f64,
+    pub b: f64,
+    pub c: f64,
+    pub d: f64,
+    pub dt: f64,
+}
+
+impl Izhikevich2007Rk4 {
+    fn rhs(&self, v: f64, u: f64, current: f64) -> (f64, f64) {
+        let dv = (self.k * (v - self.vr) * (v - self.vt) - u + current) / self.cap;
+        let du = self.a * (self.b * (v - self.vr) - u);
+        (dv, du)
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        let (k1v, k1u) = self.rhs(self.v, self.u, current);
+        let (k2v, k2u) = self.rhs(
+            self.v + 0.5 * self.dt * k1v,
+            self.u + 0.5 * self.dt * k1u,
+            current,
+        );
+        let (k3v, k3u) = self.rhs(
+            self.v + 0.5 * self.dt * k2v,
+            self.u + 0.5 * self.dt * k2u,
+            current,
+        );
+        let (k4v, k4u) = self.rhs(self.v + self.dt * k3v, self.u + self.dt * k3u, current);
+        let dt6 = self.dt / 6.0;
+        self.v += dt6 * (k1v + 2.0 * k2v + 2.0 * k3v + k4v);
+        self.u += dt6 * (k1u + 2.0 * k2u + 2.0 * k3u + k4u);
+        if self.v >= self.vpeak {
+            self.v = self.c;
+            self.u += self.d;
+            1
+        } else {
+            0
+        }
+    }
+
+    /// Run `n_steps` RK4 updates under a constant input, returning the `v` trace
+    /// (already reset to `c` on spiking steps) and the spike count. Reuses
+    /// `step`, so the trace is bit-identical to the per-step path and to the
+    /// Python reference (the right-hand side is exact arithmetic). The final
+    /// state is left in `self.v` / `self.u`.
+    pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+        let mut trace = Vec::with_capacity(n_steps);
+        let mut spikes: i64 = 0;
+        for _ in 0..n_steps {
+            let spiked = self.step(current);
+            trace.push(self.v);
+            if spiked == 1 {
+                spikes += 1;
+            }
+        }
+        (trace, spikes)
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct AdExRk4 {
     pub v: f64,

@@ -50,7 +50,7 @@ def generate_cdc_synchroniser(
         "// SC-NeuroCore multi-clock domain support",
         f"// Stages: {stages}, Width: {width}-bit",
         "",
-        '(* ASYNC_REG = \"TRUE\" *)  // Xilinx: place in same slice',
+        '(* ASYNC_REG = "TRUE" *)  // Xilinx: place in same slice',
         f"module {module_name} (",
         f"    input  wire         {src_clock},",
         f"    input  wire         {dst_clock},",
@@ -63,7 +63,7 @@ def generate_cdc_synchroniser(
 
     # Synchroniser chain
     for i in range(stages):
-        lines.append(f'    (* ASYNC_REG = \"TRUE\" *) reg {w}sync_r{i};')
+        lines.append(f'    (* ASYNC_REG = "TRUE" *) reg {w}sync_r{i};')
 
     lines.extend(
         [

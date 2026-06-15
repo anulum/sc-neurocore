@@ -38,7 +38,11 @@ pub struct XorShift64 {
 impl XorShift64 {
     pub fn seed_from_u64(seed: u64) -> Self {
         // XorShift requires non-zero state. Bump a zero seed to something harmless.
-        let s = if seed == 0 { 0xDEAD_BEEF_CAFE_BABE } else { seed };
+        let s = if seed == 0 {
+            0xDEAD_BEEF_CAFE_BABE
+        } else {
+            seed
+        };
         Self { state: s }
     }
 
@@ -358,8 +362,7 @@ fn apply_point(cfg: &MutationConfig, genome: &mut Genome, rng: &mut XorShift64) 
 
 fn apply_structural(cfg: &MutationConfig, genome: &mut Genome, rng: &mut XorShift64) {
     let delta = [-2i32, -1, 1, 2][rng.gen_range(0, 4)];
-    let new_n =
-        (genome.topology.num_neurons + delta).clamp(cfg.min_neurons, cfg.max_neurons);
+    let new_n = (genome.topology.num_neurons + delta).clamp(cfg.min_neurons, cfg.max_neurons);
     genome.topology.num_neurons = new_n;
     let conn_noise = rng.next_normal(0.0, 0.05);
     genome.topology.connectivity = (genome.topology.connectivity + conn_noise).clamp(0.01, 1.0);
@@ -501,8 +504,7 @@ fn evaluate_fitness(spec: &FitnessSpec, genome: &Genome) -> FitnessResult {
     let accuracy = spec.accuracy_bias + spec.accuracy_neuron_coef * n / 32.0;
     let energy = (1.0 - 0.5 * n / 1024.0 - 0.5 * bitstream / 1024.0).max(0.0);
     let latency = (1.0 - layers / 10.0).max(0.0);
-    let composite =
-        spec.w_accuracy * accuracy + spec.w_energy * energy + spec.w_latency * latency;
+    let composite = spec.w_accuracy * accuracy + spec.w_energy * energy + spec.w_latency * latency;
 
     FitnessResult {
         genome_id: genome.genome_id.clone(),
@@ -589,8 +591,7 @@ impl BloatPenalizer {
         let conn = (n * n * genome.topology.connectivity) as i64;
         let total = (n * 8.0 + l) as i64 + conn;
         let base_n = self.baseline_neurons as f64;
-        let baseline =
-            (base_n * 8.0 + 2.0) as i64 + (base_n * base_n * 0.3) as i64;
+        let baseline = (base_n * 8.0 + 2.0) as i64 + (base_n * base_n * 0.3) as i64;
         total as f64 / (baseline.max(1)) as f64
     }
 
@@ -953,7 +954,7 @@ pub fn evolve_run(config: &EvolveConfig) -> EvolveResult {
     let mut mutator = MutationEngine::new(config.mutation.clone(), master_rng.next_u64());
     let mut crossover = CrossoverEngine::new(master_rng.next_u64());
     let mut guard = FormalSafetyGuard::new(config.safety_bounds.clone());
-    let mut bloat = BloatPenalizer::default();
+    let bloat = BloatPenalizer::default();
     let age = AgeRegulator::new(config.max_age);
     let mut extinction =
         ExtinctionDetector::new(config.stagnation_gens, config.extinction_kill_fraction);
@@ -1018,8 +1019,8 @@ pub fn evolve_run(config: &EvolveConfig) -> EvolveResult {
             let fb = population[*b].fitness.as_ref().unwrap().composite;
             fb.partial_cmp(&fa).unwrap_or(std::cmp::Ordering::Equal)
         });
-        let keep =
-            (config.elitism + 1).max((alive_sorted.len() as f64 * config.survival_fraction) as usize);
+        let keep = (config.elitism + 1)
+            .max((alive_sorted.len() as f64 * config.survival_fraction) as usize);
         for &idx in alive_sorted.iter().skip(keep) {
             population[idx].alive = false;
             killed += 1;
@@ -1043,9 +1044,10 @@ pub fn evolve_run(config: &EvolveConfig) -> EvolveResult {
                 survivors.get(1).cloned()
             };
 
-            let child_genome = if let (Some(partner), true) =
-                (partner.as_ref(), mutator.rng.next_f64() < config.crossover_prob)
-            {
+            let child_genome = if let (Some(partner), true) = (
+                partner.as_ref(),
+                mutator.rng.next_f64() < config.crossover_prob,
+            ) {
                 let mut c = crossover.crossover(&parent.genome, &partner.genome);
                 c.generation = gen;
                 c
@@ -1219,9 +1221,6 @@ mod tests {
             r1.stats_per_generation.last().unwrap().best_fitness,
             r2.stats_per_generation.last().unwrap().best_fitness,
         );
-        assert_eq!(
-            r1.final_population.len(),
-            r2.final_population.len(),
-        );
+        assert_eq!(r1.final_population.len(), r2.final_population.len(),);
     }
 }

@@ -170,7 +170,9 @@ def run_deterministic_suite(require_torch: bool = True) -> dict[str, Any]:
             if require_torch:
                 raise
         if torch_result is not None:
-            diff = abs(int(python_result["accumulator_q16_16"]) - int(torch_result["accumulator_q16_16"]))
+            diff = abs(
+                int(python_result["accumulator_q16_16"]) - int(torch_result["accumulator_q16_16"])
+            )
             max_abs_diff = max(max_abs_diff, diff)
             passed = python_result == torch_result
         else:

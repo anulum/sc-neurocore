@@ -202,12 +202,14 @@ class TestFixedPointEnvelopeProof:
     def test_unsigned_envelope_rejects_negative_codes(self) -> None:
         """Unsigned Q-code proofs reject signed bounds rather than taking abs()."""
         import pytest
+
         with pytest.raises(ValueError, match="unsigned fixed-point envelope"):
             prove_fixed_point_envelope([-1], total_bits=16, fractional_bits=8, signed=False)
 
     def test_invalid_format_and_empty_bounds_fail_closed(self) -> None:
         """Malformed proof requests are rejected before producing a manifest."""
         import pytest
+
         for kwargs in (
             {"total_bits": 0, "fractional_bits": 0},
             {"total_bits": 16, "fractional_bits": 16},
@@ -221,6 +223,7 @@ class TestFixedPointEnvelopeProof:
     def test_non_integer_bound_codes_are_rejected(self) -> None:
         """Proof inputs must be integer Q-code bounds, not floats or bools."""
         import pytest
+
         for bad_code in (1.0, True):
             with pytest.raises(TypeError, match="integer Q-code"):
                 prove_fixed_point_envelope([bad_code])

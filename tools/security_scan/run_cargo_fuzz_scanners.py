@@ -24,7 +24,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
 CARGO_FUZZ_SCHEMA_VERSION = "sc-neurocore.cargo-fuzz-scanners.v1"
 CARGO_FUZZ_PROCESS_TIMEOUT_OVERHEAD_SECONDS = 300
-CARGO_FUZZ_BUILD_TIMEOUT_SECONDS = 900
+CARGO_FUZZ_BUILD_TIMEOUT_SECONDS = 1800
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 
 
