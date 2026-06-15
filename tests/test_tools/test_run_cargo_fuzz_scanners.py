@@ -78,7 +78,7 @@ def test_runner_executes_each_target_with_bounded_time_and_writes_summary(tmp_pa
         assert capture_output is True
         assert text is True
         assert check is False
-        assert timeout in {320, 900}
+        assert timeout in {320, 1800}
         calls.append(command)
         return subprocess.CompletedProcess(command, 0, stdout="ok", stderr="")
 

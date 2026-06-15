@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 
-from .precision_config import PrecisionConfig
+from .precision_config import BlockFloatingPrecisionConfig, PrecisionConfig
 from .mixed_precision_spec import MixedPrecisionSpec
 
 
@@ -65,7 +65,7 @@ def solve_precision(
     if min_resolution is None:
         min_resolution = {v: 0.01 for v in bounds}
 
-    configs: dict[str, PrecisionConfig] = {}
+    configs: dict[str, PrecisionConfig | BlockFloatingPrecisionConfig] = {}
 
     for var, (lo, hi) in bounds.items():
         int_bits = _min_bits_for_range(lo, hi, signed)
