@@ -155,10 +155,10 @@ class TestPrecisionConfig:
     """Test the PrecisionConfig dataclass."""
 
     def test_q88_properties(self) -> None:
-        """Q8.8 should have correct properties."""
+        """Q8.8 should expose sign-inclusive label and magnitude integer bits."""
         cfg = PrecisionConfig(16, 8)
         assert cfg.int_bits == 7
-        assert cfg.q_label == "Q7.8"
+        assert cfg.q_label == "Q8.8"
         assert cfg.resolution == pytest.approx(1 / 256)
 
     def test_unsigned(self) -> None:
@@ -212,6 +212,7 @@ class TestMixedPrecisionSpec:
             }
         )
         assert spec.get("v").data_width == 16
+        assert spec.get("v").q_label == "Q8.8"
 
     def test_get_missing(self) -> None:
         """Should raise on missing variable."""
@@ -229,8 +230,8 @@ class TestMixedPrecisionSpec:
         )
         s = spec.summary()
         assert "24 bits total" in s
-        assert "Q7.8" in s
-        assert "Q3.4" in s
+        assert "Q8.8" in s
+        assert "Q4.4" in s
 
 
 class TestConstraintSolver:
@@ -311,8 +312,9 @@ class TestFromPreset:
 
     def test_case_insensitive(self) -> None:
         """Preset lookup should be case-insensitive."""
-        spec = from_preset({"v": "Q8.8"})
-        assert spec.get("v").data_width == 16
+        spec = from_preset({"v": "Q7.8"})
+        assert spec.get("v").data_width == 15
+        assert spec.get("v").q_label == "Q7.8"
 
     def test_block_floating_preset(self) -> None:
         """Block-floating presets should be materializable and typed."""

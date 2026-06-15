@@ -5,6 +5,29 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.34] - 2026-06-15
+
+### Physics and mathematics hardening
+- Corrected `CourageNekorkinMapNeuron` to the canonical Courbage-Nekorkin-Vdovin
+  2007 map (`Chaos` 17:043109): `x + F(x) - y - beta*H(x - d)` with the
+  piecewise-linear field, Heaviside discontinuity at `x = d`, and `B^+`
+  invariant-region default parameters, replacing the prior non-canonical form.
+  Added the polyglot N-step `simulate` chain (python/rust/julia/go/mojo;
+  Rust/Julia/Go bit-exact, Mojo ULP-bounded) with parity tests, a multi-language
+  benchmark, and a rewritten model documentation page.
+
+### Dependencies
+- Migrated z3 `0.12` -> `0.20` (feature `static-link-z3` renamed to `bundled`;
+  the bounded-model verifier updated for the lifetime-free 0.20 AST/Solver API).
+- Bumped esbuild/vite/@vitejs/plugin-react (Studio frontend, clears the open
+  esbuild advisory), github/codeql-action, click, and hypothesis.
+
+### CI and release reconciliation
+- Reconciled `main` with the previously orphaned release tags `v3.15.26`–
+  `v3.15.33` so the published release lineage is continuous again.
+- Regenerated the capability manifest, corrected the mixed-precision emitter
+  Q-format label, and built the ARM64 wheel against the exact matrix interpreter.
+
 ### Security and Rust engine
 - Migrated the PyO3/numpy Rust extension chain from `0.28` to `0.29`
   across the engine, fuzz harness, evo substrate, stochastic doctor, and spike
@@ -12,6 +35,60 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   for reproducible advisory scanning.
 - Updated the GPU feature path for WGPU 29 API changes exposed by the
   all-features engine check.
+
+## [3.15.33] - 2026-06-05
+
+### CI and benchmark evidence
+- Replaced the Wilson-Cowan CI throughput floor with a bounded-runtime
+  regression sentinel and documented that production throughput evidence must
+  come from isolated benchmark runs, not hosted coverage jobs.
+
+## [3.15.32] - 2026-06-05
+
+### CI and release workflows
+- Restored the direct `MixedPrecisionSpec.get()` contract to preserve explicit
+  `PrecisionConfig(16, 8)` widths while keeping explicit `Q7.8` preset parsing
+  sign-inclusive.
+
+## [3.15.31] - 2026-06-05
+
+### CI and release workflows
+- Aligned the explicit `Q7.8` mixed-precision preset contract with the
+  sign-inclusive Q-label parser so branch CI no longer treats explicit
+  Q-format labels as named `q88` aliases.
+
+## [3.15.30] - 2026-06-05
+
+### CI and release workflows
+- Installed the pinned `click` runtime dependency before the pinned
+  SymbiYosys executable check so hosted HDL/formal CI validates `sby`
+  immediately after installation.
+
+## [3.15.29] - 2026-06-05
+
+### CI and release workflows
+- Aligned branch CI version-contract tests with source metadata, installed the
+  HDL/formal toolchain required by RTL contract tests, and synchronized the
+  conda install profile with the release version.
+
+## [3.15.28] - 2026-06-05
+
+### CI and release workflows
+- Added an executable entry point to the benchmark context example so
+  `cargo test --manifest-path engine/Cargo.toml` builds all examples on Linux.
+
+## [3.15.27] - 2026-06-05
+
+### CI and release workflows
+- Removed Yosys workflow-file edits from the Yosys push path filter so
+  release-hygiene workflow changes do not self-trigger hosted-runner synthesis.
+
+## [3.15.26] - 2026-06-05
+
+### CI and release workflows
+- Skipped Yosys synthesis on release tag pushes so tag releases do not fail on
+  non-HDL changes after all modules time out under hosted-runner synthesis
+  budgets; branch, pull-request, and manual synthesis workflows remain active.
 
 ## [3.15.25] - 2026-06-05
 
