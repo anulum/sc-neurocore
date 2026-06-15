@@ -9,3 +9,8 @@
 id = "RUSTSEC-2024-0436"
 ignoreUntil = "2026-08-31T23:59:59Z"
 reason = "Transitive wgpu -> metal dependency pulls paste on non-Linux target support; cargo audit classifies this as an unmaintained warning rather than a vulnerability. Review by 2026-08-31 and replace or upgrade the GPU backend dependency path if upstream still carries paste."
+
+[[IgnoredVulns]]
+id = "GHSA-gv7w-rqvm-qjhr"
+ignoreUntil = "2026-07-15T23:59:59Z"
+reason = "esbuild Deno module binary-download advisory; SC-NeuroCore Studio uses esbuild through the Vite/Node toolchain, not Deno. Keep the finding reviewed while npm ecosystem dependencies move to esbuild >=0.28.1."
