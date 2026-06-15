@@ -34,6 +34,11 @@ process affinity matched the requested benchmark cpuset.  The workstation did
 not expose kernel-reserved isolated cores to this user session, so these numbers
 remain local regression evidence rather than production throughput claims.
 
+The module-level pytest throughput checks use load-tolerant smoke thresholds
+unless `SC_NEUROCORE_STRICT_THROUGHPUT=1` is set.  Use strict mode only for
+isolated-core benchmark captures and commit the raw artefact before treating the
+numbers as release evidence.
+
 The 2026-06-04 AER priority queue benchmark follows the same boundary.  It was
 run under a temporary runtime cpuset shield: system/user slices were moved off
 the benchmark cores, the benchmark ran in its own `benchmark.slice`, and the raw

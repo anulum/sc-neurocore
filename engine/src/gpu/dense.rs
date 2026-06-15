@@ -261,7 +261,10 @@ impl GpuDenseLayer {
 
         let slice = self.output_staging.slice(..out_bytes);
         slice.map_async(wgpu::MapMode::Read, |_| {});
-        dev.poll(wgpu::Maintain::Wait);
+        let _ = dev.poll(wgpu::PollType::Wait {
+            submission_index: None,
+            timeout: None,
+        });
 
         let data = slice.get_mapped_range();
         let output_f32: &[f32] = bytemuck::cast_slice(&data);

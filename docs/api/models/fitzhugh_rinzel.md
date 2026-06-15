@@ -3,7 +3,7 @@
 
 **Module:** `sc_neurocore.neurons.models.fitzhugh_rinzel`
 **Rust engine:** `sc_neurocore_engine::neurons::simple_spiking::FitzHughRinzelNeuron`
-**Polyglot mirrors:** Julia `FitzhughRinzelAccel`, Go `FitzHughRinzelNeuron`, Rust safety `FitzHughRinzelNeuron`
+**Polyglot `simulate` chain (RK4):** Rust (`py_fitzhugh_rinzel_simulate`), Julia (`FitzHughRinzelAccel`), Go (`accel/go/neurons/fitzhugh_rinzel`, c-shared), Mojo (`accel/mojo/neurons/fitzhugh_rinzel.mojo`) — see *Polyglot acceleration* below
 **Reference:** FitzHugh-Rinzel three-state qualitative bursting model after Rinzel's fast-slow classification work.
 **Family:** cubic fast-slow burster: FitzHugh-Nagumo fast subsystem plus ultra-slow modulation.
 
@@ -133,6 +133,64 @@ Benchmark artefacts are stored under `benchmarks/results/`.
 | Rust engine | `cargo bench --manifest-path engine/Cargo.toml --bench full_bench fitzhugh_rinzel_10k_steps -- --sample-size 10` | Criterion estimate `572.65 µs` per 10k steps, `57.265 ns` per step |
 
 The RK4 path is intentionally slower than the previous Euler benchmark because it evaluates the coupled ODE four times per step and validates the candidate before mutation.
+
+---
+
+## Polyglot acceleration
+
+`step` runs one RK4 update, but `simulate(n_steps, current, backend=...)` is a
+sequential recurrence (each step depends on the previous) that does not
+vectorise — a compiled inner loop genuinely beats Python. The kernel carries a
+full polyglot chain over the RK4 integrator (the only integrator this model
+exposes):
+
+```python
+from sc_neurocore.neurons.models.fitzhugh_rinzel import FitzHughRinzelNeuron
+
+neuron = FitzHughRinzelNeuron()
+trace, spikes = neuron.simulate(2_000_000, current=0.5)           # auto -> Rust
+trace, spikes = neuron.simulate(2_000_000, 0.5, backend="go")    # force a backend
+```
+
+`backend` accepts `"auto" | "rust" | "julia" | "go" | "mojo" | "python"`. `auto`
+prefers Rust (it ships in the `sc_neurocore_engine` wheel). `trace[t]` is `v`
+after step `t`; `spikes` counts upward crossings of `v_threshold`.
+
+The RK4 right-hand side is **exact arithmetic** — the cube is written `v*v*v`
+(bit-identical to Rust `v.powi(3)`, Julia `v^3` and Go/Mojo `v*v*v`), with no
+transcendental functions. So **Rust, Julia and Go reproduce the NumPy trace
+bit-for-bit**, verified over a 60,000-step slow-burst run. Mojo's release build
+fuses some RK4 multiply-adds into FMAs (one rounding rather than two); the slow
+`mu = 1e-4` recovery keeps the dynamics from being strongly chaotic, so the gap
+stays small (~1.5e-12 over 50,000 steps, ~2e-8 over 2,000,000) with identical
+spike counts. Mojo is validated on that bound, not whole-trace equality.
+
+> Aligning the cube to `v*v*v` (from the historical `v**3`) made the Python
+> reference bit-identical to the engine's existing `v.powi(3)`; the `v**3` path's
+> libm-pow `OverflowError` was replaced by the finite guard (exact multiplication
+> overflows to inf instead of raising), with the same reject-without-mutation
+> contract.
+
+### Measured backends
+
+Reproduce with `python benchmarks/bench_fitzhugh_rinzel_simulate.py --json
+benchmarks/results/bench_fitzhugh_rinzel_simulate.json`. Workload: 2,000,000 RK4
+steps, default parameters, current = 0.5, median of 5 repeats. **Non-isolated**
+(loaded workstation, Python 3.12 / NumPy 2.3) — functional/regression evidence,
+not isolated-core release numbers.
+
+| backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
+|---|---:|---:|---:|
+| python (NumPy) | 1905.59 | 1.00× | 0 |
+| mojo | 87.96 | 21.66× | 2.19e-08 (slow-growing FMA band) |
+| go | 95.19 | 20.02× | 0 (bit-exact) |
+| julia | 101.13 | 18.84× | 0 (bit-exact) |
+| rust | 101.70 | 18.74× | 0 (bit-exact) |
+
+Mojo is fastest in raw throughput, but it is not bit-exact, so `auto` selects
+Rust — the fastest backend that is both bit-exact and ships in the wheel. The
+four derivative stages over three states keep the absolute per-step cost high, so
+the speedups settle around 19–22×.
 
 ---
 

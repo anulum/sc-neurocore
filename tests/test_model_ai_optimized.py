@@ -19,6 +19,7 @@ import time
 
 import numpy as np
 import pytest
+from tests.performance_guard import assert_throughput_guard
 
 from sc_neurocore.neurons.models.ai_optimized import (
     AttentionGatedNeuron,
@@ -148,4 +149,10 @@ class TestAIOptimizedPerformance:
         for _ in range(N):
             n.step(2.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > min_perf * 0.5
+        strict_minimum = float(min_perf) * 0.5
+        assert_throughput_guard(
+            label=f"{cls.__name__} isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=strict_minimum,
+            smoke_minimum_per_second=min(500.0, max(25.0, strict_minimum * 0.01)),
+        )

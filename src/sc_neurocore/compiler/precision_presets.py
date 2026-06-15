@@ -17,7 +17,7 @@ from .precision_config import (
 )
 from .block_floating import BlockFloatingMode
 from .q_format import QFormat
-from .quantize_core import parse_precision_format
+from .quantizer import parse_precision_format
 from .mixed_precision_spec import MixedPrecisionSpec
 
 PRECISION_PRESETS: dict[str, PrecisionConfig | BlockFloatingPrecisionConfig] = {

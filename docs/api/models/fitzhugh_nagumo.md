@@ -107,9 +107,14 @@ sc_neurocore pipeline
 │   ├── Network(population, drive, monitor)
 │   └── Analysis: spike_count(), firing_rate(), isi()
 ├── Rust engine: sc_neurocore_engine::neurons::simple_spiking::FitzHughNagumoNeuron
-├── PyO3 binding: sc_neurocore_engine.FitzHughNagumoNeuron
-├── Julia mirror: src/sc_neurocore/accel/julia/neurons/fitzhugh_nagumo.jl
-├── Go mirror: src/sc_neurocore/accel/go/services/fitzhugh_nagumo.go
+│   ├── step(current) -> i32
+│   └── simulate(n_steps, current) -> (Vec<f64>, i64)   [RK4]
+├── PyO3 bindings: sc_neurocore_engine.FitzHughNagumoNeuron,
+│                  sc_neurocore_engine.py_fitzhugh_nagumo_simulate
+├── Polyglot simulate chain (RK4): see "Polyglot acceleration" below
+│   ├── Julia: src/sc_neurocore/accel/julia/neurons/fitzhugh_nagumo.jl
+│   ├── Go:    src/sc_neurocore/accel/go/neurons/fitzhugh_nagumo/fitzhugh_nagumo.go (c-shared)
+│   └── Mojo:  src/sc_neurocore/accel/mojo/neurons/fitzhugh_nagumo.mojo (FFI)
 └── Rust safety mirror: src/sc_neurocore/accel/rust/safety/fitzhugh_nagumo.rs
 ```
 
@@ -164,6 +169,65 @@ Artifact: `benchmarks/results/local_i5_11600k_criterion_2026-05-31_fitzhugh_nagu
 | Point-estimate throughput | 19,675,743.7431 steps/s |
 
 The new Rust number reflects four RK4 derivative stages per step, replacing the previous single-stage engine benchmark.
+
+---
+
+## Polyglot acceleration
+
+`step` runs one RK4 update, but `simulate(n_steps, current, backend=...)` is a
+sequential recurrence (each step depends on the previous) that does not
+vectorise — a compiled inner loop genuinely beats Python. The kernel carries a
+full polyglot chain over the **RK4** integrator (the production default;
+`simulate` raises for the `baseline_euler` / `rosenbrock` integrators, which stay
+on the per-step `step()` path):
+
+```python
+from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
+
+neuron = FitzHughNagumoNeuron()                                    # integrator="rk4"
+trace, spikes = neuron.simulate(2_000_000, current=0.5)            # auto -> Rust
+trace, spikes = neuron.simulate(2_000_000, 0.5, backend="go")     # force a backend
+```
+
+`backend` accepts `"auto" | "rust" | "julia" | "go" | "mojo" | "python"`. `auto`
+prefers Rust (it ships in the `sc_neurocore_engine` wheel) and falls back to the
+pure-NumPy reference. `trace[t]` is `v` after step `t`; `spikes` counts upward
+crossings of `v_threshold`.
+
+The RK4 right-hand side is **exact arithmetic** — the cube is written `v*v*v`
+(bit-identical to Rust `v.powi(3)`, Julia `v^3` and Go/Mojo `v*v*v`), with no
+transcendental functions — and FitzHugh-Nagumo is a two-dimensional flow, so by
+Poincaré-Bendixson it cannot be chaotic. **Rust, Julia and Go reproduce the NumPy
+trace bit-for-bit**, even over a 50,000-step limit cycle. Mojo's release build
+fuses some of the RK4 multiply-adds into FMAs (one rounding rather than two), so
+each step agrees to within a couple of ULP; being non-chaotic, that gap does not
+amplify and the spike counts stay identical.
+
+> Aligning the cube to `v*v*v` (from the historical `v**3`) made the Python
+> reference bit-identical to the engine's existing `v.powi(3)` and is what lets
+> the whole chain agree to the last bit.
+
+### Measured backends
+
+Reproduce with `python benchmarks/bench_fitzhugh_nagumo_simulate.py --json
+benchmarks/results/bench_fitzhugh_nagumo_simulate.json`. Workload: 2,000,000 RK4
+steps, default parameters, current = 0.5, median of 5 repeats. **Non-isolated**
+(loaded workstation, Python 3.12 / NumPy 2.3) — functional/regression evidence,
+not isolated-core release numbers.
+
+| backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
+|---|---:|---:|---:|
+| python (NumPy) | 1016.65 | 1.00× | 0 |
+| mojo | 81.81 | 12.43× | 7.16e-13 (non-amplifying FMA) |
+| go | 87.62 | 11.60× | 0 (bit-exact) |
+| rust | 91.70 | 11.09× | 0 (bit-exact) |
+| julia | 94.24 | 10.79× | 0 (bit-exact) |
+
+Mojo is fastest in raw throughput (the FMA contraction helps the arithmetic-heavy
+RK4), but because it is not bit-exact it is **not** chosen by `auto`; `auto`
+selects Rust — the fastest backend that is both bit-exact and ships in the wheel.
+The four derivative stages per step make the absolute per-step cost higher than
+the map kernels, so the speedups settle around 11–12×.
 
 ---
 

@@ -102,7 +102,7 @@ $(TOP).json: $(SRCS)
 \tyosys -p "synth_ecp5 -top $(TOP) -json $@" $(SRCS)
 
 $(TOP).config: $(TOP).json $(LPF)
-\tnextpnr-ecp5 --$(DEVICE) --package $(PACKAGE) --lpf $(LPF) --json $< --textcfg $@ --freq $(FREQ)
+\tnextpnr-ecp5 --{device} --package $(PACKAGE) --lpf $(LPF) --json $< --textcfg $@ --freq $(FREQ)
 
 $(TOP).bit: $(TOP).config
 \tecppack $< $@
@@ -115,4 +115,4 @@ clean:
 
 .PHONY: all prog clean
 """
-    raise ValueError(f"Unsupported OSS target: {target!r}")
+    raise ValueError(f"Unsupported open-source FPGA target: {target!r}")

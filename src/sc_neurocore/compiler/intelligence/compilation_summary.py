@@ -44,7 +44,7 @@ def generate_compilation_summary(
     str
         Markdown compilation summary.
     """
-    from ...platforms import get_profile
+    from ..platforms import get_profile
     from ..static_analysis import (
         compute_guard_bits,
         critical_path_depth as cpd,

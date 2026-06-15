@@ -572,13 +572,69 @@ proportional to Z(θ₀) = (1-cos θ₀)/f(θ₀).  Numerical verification:
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/maps.rs:444` |
-| PyO3 wrapper | Yes (state: theta) |
+| Python model + dispatch | `src/sc_neurocore/neurons/models/ermentrout_kopell_map_neuron.py` |
+| Rust implementation | `engine/src/neurons/maps.rs` (`step` + `simulate`) |
+| PyO3 wrappers | `py_neuron_default!` (state: theta) + `py_ermentrout_kopell_map_simulate` |
+| Polyglot `simulate` chain | rust / julia / go / mojo (see below) |
 | NetworkRunner wired | `NeuronVariant::ErmentroutKopellMap` |
 | `create_neuron("ErmentroutKopellMap")` | Yes |
-| `supported_models()` | Includes "ErmentroutKopellMap" |
-| coverage tests | 9 (fire, silent, Type I, theta wraps, negative, NaN, extreme, reset, performance) |
-| Benchmark | `ermentrout_kopell_100k_steps`: **5.45 ms** (54.5 ns/step), i5-11600K |
+| coverage tests | step-level `tests/test_model_ermentrout_kopell_map_neuron.py` + polyglot parity `tests/test_ermentrout_kopell_map_backends.py` (43 collected, all passing) |
+| Benchmark | `benchmarks/bench_ermentrout_kopell_map.py` (+ committed JSON) |
+
+---
+
+## Polyglot acceleration
+
+`step` is a single iteration, but `simulate(n_steps, current, backend=...)` is a
+sequential recurrence (each step depends on the previous) that does not
+vectorise — a compiled inner loop genuinely beats Python. The kernel carries a
+full polyglot chain:
+
+```python
+from sc_neurocore.neurons.models.ermentrout_kopell_map_neuron import (
+    ErmentroutKopellMapNeuron,
+)
+
+neuron = ErmentroutKopellMapNeuron()
+trace, spikes = neuron.simulate(2_000_000, current=0.1)            # auto -> Rust
+trace, spikes = neuron.simulate(2_000_000, 0.1, backend="julia")  # force a backend
+```
+
+`backend` accepts `"auto" | "rust" | "julia" | "go" | "mojo" | "python"`. `auto`
+prefers Rust (it ships in the `sc_neurocore_engine` wheel) and falls back to the
+pure-NumPy reference. `trace[t]` is `theta` after step `t` (wrapped to
+`[0, 2*pi)`); `spikes` counts upward crossings of `theta_threshold`.
+
+The only transcendental is `cos`, and the theta neuron is a **non-chaotic phase
+oscillator** (Lyapunov exponent 0), so per-step floating-point differences do
+not amplify. On Linux, Python `math.cos` and Rust `f64::cos` resolve to the same
+glibc symbol, so **Rust reproduces the NumPy trace bit-for-bit**. Julia, Go and
+Mojo use their own `cos`, so they sit within a small, non-amplifying ULP band of
+the reference — but every backend produces **identical spike counts**, because a
+threshold crossing of `pi` is robust to a sub-ULP phase perturbation. The wrap is
+the floored remainder (`theta % 2*pi` = Julia `mod` = Go/Mojo `theta - floor(theta/2*pi)*2*pi`).
+
+### Measured backends
+
+Reproduce with `python benchmarks/bench_ermentrout_kopell_map.py --json
+benchmarks/results/bench_ermentrout_kopell_map.json`. Workload: 2,000,000 steps,
+default parameters, current = 0.1, median of 5 repeats. **Non-isolated** (loaded
+workstation, Python 3.12 / NumPy 2.3) — functional/regression evidence, not
+isolated-core release numbers.
+
+| backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
+|---|---:|---:|---:|
+| python (NumPy) | 340.23 | 1.00× | 0 |
+| julia | 40.65 | 8.37× | 8.54e-13 (non-amplifying ULP) |
+| mojo | 47.93 | 7.10× | 1.84e-11 (non-amplifying ULP) |
+| rust | 47.99 | 7.09× | 0 (bit-exact) |
+| go | 57.67 | 5.90× | 3.97e-12 (non-amplifying ULP) |
+
+The speedups (~6–8×) are modest because the per-step cost is dominated by the
+`cos` evaluation, which every compiled backend pays. The libm-divergent backends'
+parity stays at the 1e-13…1e-11 level even over 2,000,000 steps — confirming the
+non-chaotic, non-amplifying character. `auto` selects Rust: the fastest
+**bit-exact** backend and the one that ships in the wheel.
 
 ---
 

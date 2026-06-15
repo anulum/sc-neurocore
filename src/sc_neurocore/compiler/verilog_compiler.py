@@ -66,7 +66,9 @@ def compile_to_verilog(
             min_representable = 1.0 / (1 << fraction)
             raise ValueError(
                 f"dt={neuron.dt} underflows in Q{data_width - fraction}.{fraction}: "
-                f"smallest representable non-zero value is {min_representable} "
+                f"smallest representable non-zero value is {min_representable}. "
+                f"Use dt=1.0 or another value >= {min_representable}, "
+                "or increase fractional precision, e.g. fraction=12."
             )
 
     safe_module_name = sanitize_ident(module_name, context="module name")

@@ -42,7 +42,7 @@ def generate_pipeline_wrapper(
         Synthesisable Verilog pipeline wrapper.
     """
     from ..static_analysis import critical_path_depth, pipeline_stages_needed
-    from ...platforms import get_profile
+    from ..platforms import get_profile
 
     profile = get_profile(target)
     freq = profile.max_freq_mhz or 100

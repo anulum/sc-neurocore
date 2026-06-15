@@ -150,21 +150,13 @@ def exponent_edge_sweep_report() -> dict[str, object]:
         "max_exponent_saturating_conservative_overflow_free": (
             saturating_envelope.conservative_overflow_free
         ),
-        "max_exponent_saturating_max_abs_bound_q1616": (
-            saturating_envelope.max_abs_bound_code
-        ),
-        "max_exponent_saturating_required_total_bits": (
-            saturating_envelope.required_total_bits
-        ),
+        "max_exponent_saturating_max_abs_bound_q1616": (saturating_envelope.max_abs_bound_code),
+        "max_exponent_saturating_required_total_bits": (saturating_envelope.required_total_bits),
         "max_exponent_saturating_required_integer_bits": (
             saturating_envelope.required_integer_bits
         ),
-        "max_exponent_saturating_width_headroom_bits": (
-            saturating_envelope.width_headroom_bits
-        ),
-        "max_exponent_saturating_saturation_required": (
-            saturating_envelope.saturation_required
-        ),
+        "max_exponent_saturating_width_headroom_bits": (saturating_envelope.width_headroom_bits),
+        "max_exponent_saturating_saturation_required": (saturating_envelope.saturation_required),
         "max_exponent_saturating_static_overflow_proven_safe": (
             saturating_envelope.static_overflow_proven_safe
         ),
