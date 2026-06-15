@@ -4,6 +4,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.34] - 2026-06-15
+
 ### Physics and mathematics hardening
 - Corrected `CourageNekorkinMapNeuron` to the canonical Courbage-Nekorkin-Vdovin
   2007 map (`Chaos` 17:043109): `x̄ = x + F(x) − y − β·H(x − d) + I`,
@@ -22,6 +24,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   fail-closed Rust safety mirror, the Julia/Go/Mojo backends, cross-backend parity
   tests, a multi-language benchmark with a committed results artefact, and a
   rewritten model documentation page.
+
+### Dependencies
+- Migrated z3 `0.12` -> `0.20` (feature `static-link-z3` renamed to `bundled`;
+  the bounded-model verifier updated for the lifetime-free 0.20 AST/Solver API).
+- Bumped esbuild/vite/@vitejs/plugin-react (Studio frontend, clears the open
+  esbuild advisory), github/codeql-action, click, and hypothesis.
+
+### CI and release reconciliation
+- Reconciled `main` with the previously orphaned release tags `v3.15.26`–
+  `v3.15.33` so the published release lineage is continuous again.
+- Regenerated the capability manifest, corrected the mixed-precision emitter
+  Q-format label, and built the ARM64 wheel against the exact matrix interpreter.
 
 ## [3.15.8] - 2026-06-05
 
