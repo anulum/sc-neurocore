@@ -480,6 +480,16 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_courage_nekorkin_map_simulate,
+    )
+
+    __all__ += ["py_courage_nekorkin_map_simulate"]
+    _courage_nekorkin_rust_available = True
+except ImportError:
+    _courage_nekorkin_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_rulkov_map_simulate,
     )
 
