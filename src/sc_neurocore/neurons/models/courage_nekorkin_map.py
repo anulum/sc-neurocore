@@ -109,9 +109,7 @@ def _ensure_go_loaded() -> bool:
     import ctypes
 
     so_path = _os.path.abspath(
-        _os.path.join(
-            _ACCEL_ROOT, "go", "neurons", "courage_nekorkin_map", "libcourage.so"
-        )
+        _os.path.join(_ACCEL_ROOT, "go", "neurons", "courage_nekorkin_map", "libcourage.so")
     )
     if not _os.path.isfile(so_path):
         return False
