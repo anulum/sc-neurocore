@@ -180,3 +180,7 @@ pub fn measurement_context_json(load_average_before: &str) -> String {
         cpu_frequency_mhz = json_string(&cpu_frequency_mhz()),
     )
 }
+
+fn main() {
+    println!("{}", measurement_context_json(&load_average()));
+}

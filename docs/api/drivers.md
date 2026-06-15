@@ -3,7 +3,7 @@
 **Module:** `sc_neurocore.drivers`
 **Source:** `src/sc_neurocore/drivers/` — 4 files, 399 LOC,
 `__tier__ = "research"`
-**Status (v3.15.25):** PYNQ-Z2 FPGA driver works in EMULATION mode and
+**Status (v3.15.34):** PYNQ-Z2 FPGA driver works in EMULATION mode and
 correctly fails fast in HARDWARE mode without PYNQ. `PhysicalTwinBridge`
 now exposes an honest deterministic EMULATION backend and an explicit
 JSON-line TCP backend for hardware-twin services. `verify_hardware_link`
