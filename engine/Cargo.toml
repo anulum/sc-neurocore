@@ -55,7 +55,7 @@ rustfft = "6.2"
 wgpu = { version = "29", optional = true }
 pollster = { version = "0.4", optional = true }
 bytemuck = { version = "1.21", features = ["derive"], optional = true }
-z3 = { version = "0.12", features = ["static-link-z3"] }
+z3 = { version = "0.20", features = ["bundled"] }
 
 [dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }
