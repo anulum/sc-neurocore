@@ -425,36 +425,95 @@ minimal logic can implement the entire neuron. A Zynq-7020 could potentially run
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/maps.rs:164` |
-| PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: x) |
+| Python model + dispatch | `src/sc_neurocore/neurons/models/medvedev_map.py` |
+| Rust implementation | `engine/src/neurons/maps.rs` (`step` + `simulate`) |
+| PyO3 wrappers | `py_neuron_default!` (state: x) + `py_medvedev_map_simulate` |
+| Polyglot `simulate` chain | rust / julia / go / mojo (see below) |
 | NetworkRunner wired | `NeuronVariant::MedvedevMap` |
 | `create_neuron("MedvedevMapNeuron")` | Yes |
-| `supported_models()` | Includes "MedvedevMapNeuron" |
-| coverage tests | 13 (construction, step binary, silent, spikes, x bounded, piecewise branches, rate increase, chaotic sensitivity, stability, reset, deterministic, population, spike_count) |
-| Benchmark | Python: ~712K steps/s |
+| coverage tests | step-level `tests/test_model_medvedev_map.py` + polyglot parity `tests/test_medvedev_map_backends.py` (71 collected across both, all passing) |
+| Benchmark | `benchmarks/bench_medvedev_map.py` (+ committed JSON) |
+
+---
+
+## Polyglot acceleration
+
+`step` is a single iteration, but `simulate(n_steps, current, backend=...)` is a
+sequential recurrence (each step depends on the previous) that does not
+vectorise — a compiled inner loop genuinely beats Python. The kernel carries a
+full polyglot chain:
+
+```python
+from sc_neurocore.neurons.models.medvedev_map import MedvedevMapNeuron
+
+neuron = MedvedevMapNeuron()
+trace, spikes = neuron.simulate(2_000_000, current=0.1)            # auto -> Rust
+trace, spikes = neuron.simulate(2_000_000, 0.1, backend="go")     # force a backend
+```
+
+`backend` accepts `"auto" | "rust" | "julia" | "go" | "mojo" | "python"`. `auto`
+prefers Rust (it ships in the `sc_neurocore_engine` wheel) and falls back to the
+pure-NumPy reference. `trace[t]` is `x` after step `t` (folded into `[0, 1)`);
+`spikes` counts upward crossings of `x_threshold`; the instance `x` is left at
+the final step.
+
+The fold uses the **Euclidean remainder**, which is bit-identical across the
+chain: Python `x % 1.0` = Rust `rem_euclid(1.0)` = Julia `mod(x, 1.0)` =
+Go/Mojo `x - floor(x)` (note Julia's `%` operator is `rem`, truncated, and must
+not be used). Because every step is exact floating-point arithmetic, **Rust,
+Julia and Go reproduce the NumPy trace bit-for-bit** across the chaotic regime.
+
+Mojo's release build contracts `alpha*x + current` into a fused multiply-add
+(one rounding rather than two), so each step agrees only to within a couple of
+ULP. This is an expanding chaotic map (λ = ln 3.5 ≈ 1.25 > 0), so a single ULP
+is amplified into a visibly different whole trace and a slightly different spike
+count over long horizons — by design, exactly the sensitive-dependence property
+documented above. Mojo is therefore validated on the per-step ULP bound and the
+`[0, 1)` structural invariant, not on whole-trace or exact-spike equality; when
+bit-exactness is required, use `auto` (Rust), `julia` or `go`.
+
+### Measured backends
+
+Reproduce with `python benchmarks/bench_medvedev_map.py --json
+benchmarks/results/bench_medvedev_map.json`. Workload: 2,000,000 steps, default
+parameters, current = 0.1, median of 5 repeats. **Non-isolated** (loaded
+workstation, Python 3.12 / NumPy 2.3) — functional/regression evidence, not
+isolated-core release numbers.
+
+| backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
+|---|---:|---:|---:|
+| python (NumPy) | 220.72 | 1.00× | 0 |
+| mojo | 11.07 | 19.94× | 9.99e-01 (chaotic FMA divergence) |
+| rust | 17.21 | 12.82× | 0 |
+| julia | 32.16 | 6.86× | 0 |
+| go | 33.58 | 6.57× | 0 |
+
+Mojo is fastest in raw throughput, but because its FMA contraction diverges on
+this chaotic map it is **not** chosen by `auto`; `auto` selects Rust — the
+fastest **bit-exact** backend and the one that ships in the wheel. Julia and Go
+trail here because the per-step work is tiny (one multiply, one add, one fold),
+so the `mod`/`math.Mod` call and FFI marshalling dominate the loop.
 
 ---
 
 ## Benchmark
 
-### Python (measured 2026-04-04)
+### Polyglot throughput (measured 2026-06-14)
 
-| Metric | Value |
-|--------|-------|
-| Python throughput | ~712K steps/s |
-| Spikes (10K steps, I=5.0) | 0 |
-| State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+See *Polyglot acceleration* above for the full `simulate` backend table
+(2,000,000-step workload). Single-step `step()` throughput is dominated by PyO3
+call overhead; the `simulate` path removes that per-call cost, which is why the
+NumPy inner loop alone reaches ~9 M steps/s and Rust ~116 M steps/s on this
+2,000,000-step workload.
 
 ### Performance context
 
 The Medvedev map is one of the fastest neuron models in SC-NeuroCore:
-- **1 multiply + 1 add + 1 mod** per step (vs ~100 operations for WB models)
+- **1 multiply + 1 add + 1 fold** per step (vs ~100 operations for WB models)
 - No sub-stepping (vs 50 sub-steps for conductance-based models)
-- Rust parity is EXACT (deterministic map with no floating-point order sensitivity)
-
-The Python throughput of 712K steps/s reflects PyO3 call overhead; the Rust inner loop
-is a single multiply-add-mod sequence that runs in ~1–2 ns.
+- Rust/Julia/Go parity is **bit-exact** (the fold's Euclidean remainder is
+  order-independent); Mojo diverges only through FMA contraction on the chaotic
+  orbit.
 
 ---
 

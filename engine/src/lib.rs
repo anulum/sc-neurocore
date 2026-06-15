@@ -823,6 +823,16 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // LGSSM Kalman filter (predictive_model)
     m.add_function(wrap_pyfunction!(py_lgssm_kalman_filter, m)?)?;
     m.add_function(wrap_pyfunction!(py_ollivier_ricci_curvature, m)?)?;
+    m.add_function(wrap_pyfunction!(py_cazelles_map_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_courage_nekorkin_map_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_rulkov_map_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_ibarz_tanaka_map_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_medvedev_map_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_ermentrout_kopell_map_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_fitzhugh_nagumo_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_hindmarsh_rose_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_fitzhugh_rinzel_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_izhikevich2007_simulate, m)?)?;
     // Byte-level fault injection (parity with FaultInjector.inject)
     m.add_function(wrap_pyfunction!(py_inject_bitflip_u8, m)?)?;
     m.add_function(wrap_pyfunction!(py_inject_stuck_at_0_u8, m)?)?;
@@ -5571,6 +5581,367 @@ fn py_ollivier_ricci_curvature(knm_flat: Vec<f64>, n: usize, i: usize, j: usize)
             Err(PyValueError::new_err("transport problem is infeasible"))
         }
     }
+}
+
+/// N-step Cazelles-Courbage-Rabinovich (2001) bursting-map simulation.
+///
+/// Parity contract with `sc_neurocore.neurons.models.cazelles_map.CazellesMapNeuron.simulate`:
+/// for the same parameters and constant input the returned `x` trace, spike
+/// count, and final `(x, y)` state are bit-identical to the Python reference
+/// (the map is exact floating-point arithmetic, no transcendental functions).
+#[pyfunction]
+#[pyo3(signature = (x0, y0, a, epsilon, sigma, x_threshold, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
+fn py_cazelles_map_simulate<'py>(
+    py: Python<'py>,
+    x0: f64,
+    y0: f64,
+    a: f64,
+    epsilon: f64,
+    sigma: f64,
+    x_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+    let mut neuron = crate::neurons::CazellesMapNeuron {
+        x: x0,
+        y: y0,
+        a,
+        epsilon,
+        sigma,
+        x_threshold,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    // Return the trace as a NumPy array directly; marshalling a multi-million
+    // element Vec<f64> into a Python list would dominate the wall-clock.
+    (trace.into_pyarray(py), spikes, neuron.x, neuron.y)
+}
+
+/// N-step Courbage-Nekorkin-Vdovin (2007) discontinuous spiking-map simulation.
+///
+/// Parity contract with
+/// `sc_neurocore.neurons.models.courage_nekorkin_map.CourageNekorkinMapNeuron.simulate`:
+/// for the same parameters and constant input the returned `x` trace,
+/// upward-crossing spike count, and final `(x, y)` state are bit-identical to
+/// the Python reference (the map is exact floating-point arithmetic — additions,
+/// multiplications, one division for the breakpoints, and a piecewise/Heaviside
+/// branch, no transcendental functions).
+#[pyfunction]
+#[pyo3(signature = (x0, y0, m0, m1, a, d, j, beta, eps, x_threshold, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
+fn py_courage_nekorkin_map_simulate<'py>(
+    py: Python<'py>,
+    x0: f64,
+    y0: f64,
+    m0: f64,
+    m1: f64,
+    a: f64,
+    d: f64,
+    j: f64,
+    beta: f64,
+    eps: f64,
+    x_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+    let mut neuron = crate::neurons::CourageNekorkinMapNeuron {
+        x: x0,
+        y: y0,
+        m0,
+        m1,
+        a,
+        d,
+        j,
+        beta,
+        eps,
+        x_threshold,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    (trace.into_pyarray(py), spikes, neuron.x, neuron.y)
+}
+
+/// Parity contract with `sc_neurocore.neurons.models.rulkov_map.RulkovMapNeuron.simulate`:
+/// for the same parameters and constant input the returned `x` trace, upward-
+/// crossing spike count, and final `(x, y)` state are bit-identical to the
+/// Python reference (the map is exact floating-point arithmetic — one division,
+/// additions and multiplications, no transcendental functions).
+#[pyfunction]
+#[pyo3(signature = (x0, y0, alpha, sigma, mu, x_threshold, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
+fn py_rulkov_map_simulate<'py>(
+    py: Python<'py>,
+    x0: f64,
+    y0: f64,
+    alpha: f64,
+    sigma: f64,
+    mu: f64,
+    x_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+    let mut neuron = crate::neurons::RulkovMapNeuron {
+        x: x0,
+        y: y0,
+        alpha,
+        sigma,
+        mu,
+        x_threshold,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    (trace.into_pyarray(py), spikes, neuron.x, neuron.y)
+}
+
+/// Parity contract with
+/// `sc_neurocore.neurons.models.ibarz_tanaka_map.IbarzTanakaMapNeuron.simulate`:
+/// for the same parameters and constant input the returned `x` trace (already
+/// reset on spiking steps), spike count, and final `(x, y)` state are
+/// bit-identical to the Python reference (the map is exact floating-point
+/// arithmetic — one division, additions and multiplications, no transcendental
+/// functions).
+#[pyfunction]
+#[pyo3(signature = (x0, y0, alpha, beta, mu, sigma, x_threshold, x_reset, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
+fn py_ibarz_tanaka_map_simulate<'py>(
+    py: Python<'py>,
+    x0: f64,
+    y0: f64,
+    alpha: f64,
+    beta: f64,
+    mu: f64,
+    sigma: f64,
+    x_threshold: f64,
+    x_reset: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+    let mut neuron = crate::neurons::IbarzTanakaMapNeuron {
+        x: x0,
+        y: y0,
+        alpha,
+        beta,
+        mu,
+        sigma,
+        x_threshold,
+        x_reset,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    (trace.into_pyarray(py), spikes, neuron.x, neuron.y)
+}
+
+/// Parity contract with
+/// `sc_neurocore.neurons.models.medvedev_map.MedvedevMapNeuron.simulate`: for
+/// the same parameters and constant input the returned `x` trace, upward-
+/// crossing spike count, and final `x` state are bit-identical to the Python
+/// reference (the map is exact floating-point arithmetic — a multiply, an add,
+/// and a fold into `[0, 1)`; `f64::rem_euclid(1.0)` equals Python's `x % 1.0`
+/// bit-for-bit). This is a one-dimensional map, so there is no `y` state.
+#[pyfunction]
+#[pyo3(signature = (x0, alpha, beta, x_threshold, n_steps, current))]
+fn py_medvedev_map_simulate<'py>(
+    py: Python<'py>,
+    x0: f64,
+    alpha: f64,
+    beta: f64,
+    x_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64) {
+    let mut neuron = crate::neurons::MedvedevMapNeuron {
+        x: x0,
+        alpha,
+        beta,
+        x_threshold,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    (trace.into_pyarray(py), spikes, neuron.x)
+}
+
+/// Parity contract with
+/// `sc_neurocore.neurons.models.ermentrout_kopell_map_neuron.ErmentroutKopellMapNeuron.simulate`:
+/// for the same parameters and constant input the returned `theta` trace,
+/// upward-crossing spike count, and final `theta` state match the Python
+/// reference bit-for-bit on a shared libm (the only transcendental is `cos`,
+/// and the non-chaotic phase flow does not amplify ULP differences). This is a
+/// one-dimensional phase map, so there is no second state.
+#[pyfunction]
+#[pyo3(signature = (theta0, dt, gain, theta_threshold, n_steps, current))]
+fn py_ermentrout_kopell_map_simulate<'py>(
+    py: Python<'py>,
+    theta0: f64,
+    dt: f64,
+    gain: f64,
+    theta_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64) {
+    let mut neuron = crate::neurons::ErmentroutKopellMapNeuron {
+        theta: theta0,
+        dt,
+        gain,
+        theta_threshold,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    (trace.into_pyarray(py), spikes, neuron.theta)
+}
+
+/// Parity contract with
+/// `sc_neurocore.neurons.models.fitzhugh_nagumo.FitzHughNagumoNeuron.simulate`:
+/// for the same parameters and constant input the returned `v` trace, upward-
+/// crossing spike count, and final `(v, w)` state are bit-identical to the
+/// Python RK4 reference (the right-hand side is exact arithmetic — a cube
+/// `v.powi(3)` = `v*v*v`, additions and multiplications, no transcendental
+/// functions — and a two-dimensional flow cannot be chaotic).
+#[pyfunction]
+#[pyo3(signature = (v0, w0, a, b, epsilon, dt, v_threshold, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
+fn py_fitzhugh_nagumo_simulate<'py>(
+    py: Python<'py>,
+    v0: f64,
+    w0: f64,
+    a: f64,
+    b: f64,
+    epsilon: f64,
+    dt: f64,
+    v_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+    let mut neuron = crate::neurons::FitzHughNagumoNeuron {
+        v: v0,
+        w: w0,
+        a,
+        b,
+        epsilon,
+        dt,
+        v_threshold,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    (trace.into_pyarray(py), spikes, neuron.v, neuron.w)
+}
+
+/// Parity contract with
+/// `sc_neurocore.neurons.models.hindmarsh_rose.HindmarshRoseNeuron.simulate`:
+/// for the same parameters and constant input the returned `x` trace, upward-
+/// crossing spike count, and final `(x, y, z)` state are bit-identical to the
+/// Python RK4 reference (the right-hand side is exact arithmetic — `x.powi(3)`
+/// = `x*x*x`, `x.powi(2)` = `x*x`, no transcendental functions — so even the
+/// chaotic bursting trace reproduces exactly).
+#[pyfunction]
+#[pyo3(signature = (x0, y0, z0, b, r, s, x_rest, dt, x_threshold, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
+fn py_hindmarsh_rose_simulate<'py>(
+    py: Python<'py>,
+    x0: f64,
+    y0: f64,
+    z0: f64,
+    b: f64,
+    r: f64,
+    s: f64,
+    x_rest: f64,
+    dt: f64,
+    x_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64, f64) {
+    let mut neuron = crate::neurons::HindmarshRoseNeuron {
+        x: x0,
+        y: y0,
+        z: z0,
+        b,
+        r,
+        s,
+        x_rest,
+        dt,
+        x_threshold,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    (trace.into_pyarray(py), spikes, neuron.x, neuron.y, neuron.z)
+}
+
+/// Parity contract with
+/// `sc_neurocore.neurons.models.fitzhugh_rinzel.FitzHughRinzelNeuron.simulate`:
+/// for the same parameters and constant input the returned `v` trace, upward-
+/// crossing spike count, and final `(v, w, y)` state are bit-identical to the
+/// Python RK4 reference (the right-hand side is exact arithmetic — `v.powi(3)`
+/// = `v*v*v`, additions and multiplications, no transcendental functions).
+#[pyfunction]
+#[pyo3(signature = (v0, w0, y0, a, b, c, d, delta, mu, dt, v_threshold, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
+fn py_fitzhugh_rinzel_simulate<'py>(
+    py: Python<'py>,
+    v0: f64,
+    w0: f64,
+    y0: f64,
+    a: f64,
+    b: f64,
+    c: f64,
+    d: f64,
+    delta: f64,
+    mu: f64,
+    dt: f64,
+    v_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64, f64) {
+    let mut neuron = crate::neurons::FitzHughRinzelNeuron {
+        v: v0,
+        w: w0,
+        y: y0,
+        a,
+        b,
+        c,
+        d,
+        delta,
+        mu,
+        dt,
+        v_threshold,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    (trace.into_pyarray(py), spikes, neuron.v, neuron.w, neuron.y)
+}
+
+/// Parity contract with
+/// `sc_neurocore.neurons.models.izhikevich2007.Izhikevich2007Neuron.simulate`:
+/// for the same parameters and constant input the returned `v` trace, spike
+/// count, and final `(v, u)` state are bit-identical to the Python RK4 reference
+/// (the NeuroML right-hand side `k (v-vr)(v-vt)/C` is exact arithmetic — products,
+/// a sum and a division, no transcendental functions).
+#[pyfunction]
+#[pyo3(signature = (v0, u0, cap, k, vr, vt, vpeak, a, b, c, d, dt, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
+fn py_izhikevich2007_simulate<'py>(
+    py: Python<'py>,
+    v0: f64,
+    u0: f64,
+    cap: f64,
+    k: f64,
+    vr: f64,
+    vt: f64,
+    vpeak: f64,
+    a: f64,
+    b: f64,
+    c: f64,
+    d: f64,
+    dt: f64,
+    n_steps: usize,
+    current: f64,
+) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+    let mut neuron = crate::rk4_neurons::Izhikevich2007Rk4 {
+        v: v0,
+        u: u0,
+        cap,
+        k,
+        vr,
+        vt,
+        vpeak,
+        a,
+        b,
+        c,
+        d,
+        dt,
+    };
+    let (trace, spikes) = neuron.simulate(n_steps, current);
+    (trace.into_pyarray(py), spikes, neuron.v, neuron.u)
 }
 
 // ── Byte-level fault injection (PyO3) ──

@@ -4,6 +4,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Physics and mathematics hardening
+- Corrected `CourageNekorkinMapNeuron` to the canonical Courbage-Nekorkin-Vdovin
+  2007 map (`Chaos` 17:043109): `x̄ = x + F(x) − y − β·H(x − d) + I`,
+  `ȳ = y + ε(x − J)` with the piecewise-linear field `F`, the Heaviside
+  discontinuity at `x = d`, and the breakpoints `J_min`, `J_max`. Replaced the
+  prior implementation, which was missing the leading `x` term, used an incorrect
+  saturating field, had no Heaviside term, an opposite-sign recovery update, and a
+  `±1e6` clip that masked divergence. Default parameters set to the published
+  chaotic spiking-bursting regime (`m0=0.0864, m1=0.65, a=0.2, d=0.235, J=0.2,
+  beta=0.085, eps=0.02`).
+- Added the polyglot N-step `simulate(n_steps, current, backend=...)` chain for
+  the map across python / rust / julia / go / mojo. Rust, Julia and Go reproduce
+  the NumPy reference bit-for-bit; the Mojo backend is per-step ULP-bounded with a
+  matching spike-count band. `auto` selects Rust.
+- Added the Rust engine struct plus PyO3 `py_courage_nekorkin_map_simulate`, the
+  fail-closed Rust safety mirror, the Julia/Go/Mojo backends, cross-backend parity
+  tests, a multi-language benchmark with a committed results artefact, and a
+  rewritten model documentation page.
+
 ## [3.15.8] - 2026-06-05
 
 ### Documentation and release polish

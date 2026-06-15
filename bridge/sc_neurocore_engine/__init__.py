@@ -470,6 +470,106 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_cazelles_map_simulate,
+    )
+
+    __all__ += ["py_cazelles_map_simulate"]
+    _cazelles_rust_available = True
+except ImportError:
+    _cazelles_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_courage_nekorkin_map_simulate,
+    )
+
+    __all__ += ["py_courage_nekorkin_map_simulate"]
+    _courage_nekorkin_rust_available = True
+except ImportError:
+    _courage_nekorkin_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_rulkov_map_simulate,
+    )
+
+    __all__ += ["py_rulkov_map_simulate"]
+    _rulkov_rust_available = True
+except ImportError:
+    _rulkov_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_ibarz_tanaka_map_simulate,
+    )
+
+    __all__ += ["py_ibarz_tanaka_map_simulate"]
+    _ibarz_tanaka_rust_available = True
+except ImportError:
+    _ibarz_tanaka_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_medvedev_map_simulate,
+    )
+
+    __all__ += ["py_medvedev_map_simulate"]
+    _medvedev_rust_available = True
+except ImportError:
+    _medvedev_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_ermentrout_kopell_map_simulate,
+    )
+
+    __all__ += ["py_ermentrout_kopell_map_simulate"]
+    _ermentrout_kopell_rust_available = True
+except ImportError:
+    _ermentrout_kopell_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_fitzhugh_nagumo_simulate,
+    )
+
+    __all__ += ["py_fitzhugh_nagumo_simulate"]
+    _fitzhugh_nagumo_rust_available = True
+except ImportError:
+    _fitzhugh_nagumo_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_hindmarsh_rose_simulate,
+    )
+
+    __all__ += ["py_hindmarsh_rose_simulate"]
+    _hindmarsh_rose_rust_available = True
+except ImportError:
+    _hindmarsh_rose_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_fitzhugh_rinzel_simulate,
+    )
+
+    __all__ += ["py_fitzhugh_rinzel_simulate"]
+    _fitzhugh_rinzel_rust_available = True
+except ImportError:
+    _fitzhugh_rinzel_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_izhikevich2007_simulate,
+    )
+
+    __all__ += ["py_izhikevich2007_simulate"]
+    _izhikevich2007_rust_available = True
+except ImportError:
+    _izhikevich2007_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_ph_route_waveguides,
         py_ph_mzi_transfer_matrix,
         py_ph_cascade_mzi,
