@@ -18,6 +18,10 @@ class LapicqueNeuron:
 
     tau * dv/dt = -(v - v_rest) + R * I
 
+    Constant-current steps use the exact RC flow:
+    V(t + dt) = V_inf + (V(t) - V_inf) * exp(-dt / tau)
+    where V_inf = V_rest + R * I.
+
     Reference: Lapicque, L. (1907). J. Physiol. Pathol. Gén. 9:620–635.
     """
 
@@ -51,10 +55,11 @@ class LapicqueNeuron:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         self._validate_runtime_state()
-        dv = (-(self.v - self.v_rest) + self.resistance * current) / self.tau * self.dt
-        next_v = self.v + dv
-        if not math.isfinite(dv) or not math.isfinite(next_v):
-            raise ValueError("voltage increment must be finite")
+        v_inf = self.v_rest + self.resistance * current
+        decay = math.exp(-self.dt / self.tau)
+        next_v = v_inf + (self.v - v_inf) * decay
+        if not math.isfinite(v_inf) or not math.isfinite(decay) or not math.isfinite(next_v):
+            raise ValueError("voltage candidate must be finite")
         self.v = next_v
 
         if self.v >= self.v_threshold:

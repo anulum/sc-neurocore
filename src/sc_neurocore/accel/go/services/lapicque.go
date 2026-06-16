@@ -8,7 +8,10 @@
 
 package services
 
-import "errors"
+import (
+	"errors"
+	"math"
+)
 
 // LapicqueNeuronState holds the neuron state.
 type LapicqueNeuronState struct {
@@ -36,29 +39,30 @@ func NewLapicqueNeuron() *LapicqueNeuronState {
 
 // Valid reports whether the state satisfies the Lapicque RC integration contract.
 func (s LapicqueNeuronState) Valid() bool {
-	return finite(s.V) &&
-		finite(s.VRest) &&
-		finite(s.VReset) &&
-		finite(s.VThreshold) && s.VThreshold > s.VRest && s.VThreshold > s.VReset &&
+	return finiteLapicque(s.V) &&
+		finiteLapicque(s.VRest) &&
+		finiteLapicque(s.VReset) &&
+		finiteLapicque(s.VThreshold) && s.VThreshold > s.VRest && s.VThreshold > s.VReset &&
 		s.V < s.VThreshold &&
-		finite(s.Tau) && s.Tau > 0.0 &&
-		finite(s.Resistance) && s.Resistance > 0.0 &&
-		finite(s.Dt) && s.Dt > 0.0
+		finiteLapicque(s.Tau) && s.Tau > 0.0 &&
+		finiteLapicque(s.Resistance) && s.Resistance > 0.0 &&
+		finiteLapicque(s.Dt) && s.Dt > 0.0
 }
 
 // Step advances the neuron by one timestep. Invalid inputs do not mutate state.
 func (s *LapicqueNeuronState) Step(iExt float64) (int, error) {
-	if !finite(iExt) {
+	if !finiteLapicque(iExt) {
 		return 0, errors.New("lapicque input current must be finite")
 	}
 	if !s.Valid() {
 		return 0, errors.New("lapicque state must satisfy finite positive-RC threshold contract")
 	}
 
-	dv := (-(s.V - s.VRest) + s.Resistance*iExt) / s.Tau * s.Dt
-	nextV := s.V + dv
-	if !finite(dv) || !finite(nextV) {
-		return 0, errors.New("lapicque voltage increment must remain finite")
+	vInf := s.VRest + s.Resistance*iExt
+	decay := math.Exp(-s.Dt / s.Tau)
+	nextV := vInf + (s.V-vInf)*decay
+	if !finiteLapicque(vInf) || !finiteLapicque(decay) || !finiteLapicque(nextV) {
+		return 0, errors.New("lapicque voltage candidate must remain finite")
 	}
 
 	s.V = nextV
@@ -72,6 +76,10 @@ func (s *LapicqueNeuronState) Step(iExt float64) (int, error) {
 // Reset restores dynamic state without changing parameters.
 func (s *LapicqueNeuronState) Reset() {
 	s.V = s.VRest
+}
+
+func finiteLapicque(value float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0)
 }
 
 // SimulateLapicqueNeuron runs the neuron for n steps.

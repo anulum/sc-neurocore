@@ -528,8 +528,31 @@ impl LapicqueNeuron {
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
-        let dv = (-(self.v - self.v_rest) + self.resistance * current) / self.tau * self.dt;
-        self.v += dv;
+        if !self.v.is_finite()
+            || !self.v_rest.is_finite()
+            || !self.v_reset.is_finite()
+            || !self.v_threshold.is_finite()
+            || self.v_threshold <= self.v_rest
+            || self.v_threshold <= self.v_reset
+            || self.v >= self.v_threshold
+            || !self.tau.is_finite()
+            || self.tau <= 0.0
+            || !self.resistance.is_finite()
+            || self.resistance <= 0.0
+            || !self.dt.is_finite()
+            || self.dt <= 0.0
+            || !current.is_finite()
+        {
+            return 0;
+        }
+
+        let v_inf = self.v_rest + self.resistance * current;
+        let decay = (-self.dt / self.tau).exp();
+        let next_v = v_inf + (self.v - v_inf) * decay;
+        if !v_inf.is_finite() || !decay.is_finite() || !next_v.is_finite() {
+            return 0;
+        }
+        self.v = next_v;
 
         if self.v >= self.v_threshold {
             self.v = self.v_reset;
@@ -922,6 +945,21 @@ mod tests {
         assert!((n.v).abs() < 1e-12);
     }
 
+    #[test]
+    fn lapicque_exact_flow_matches_closed_form() {
+        let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 5.0);
+        n.v = 0.25;
+        let current = 0.5;
+        let v0 = n.v;
+        let v_inf = n.v_rest + n.resistance * current;
+        let euler = v0 + (-(v0 - n.v_rest) + n.resistance * current) / n.tau * n.dt;
+        let expected = v_inf + (v0 - v_inf) * (-n.dt / n.tau).exp();
+
+        assert_eq!(n.step(current), 0);
+        assert!((n.v - expected).abs() < 1e-15);
+        assert!((n.v - euler).abs() > 1e-4);
+    }
+
     // ── AdEx coverage tests ────────────────────────────────────────
 
     #[test]
@@ -1065,6 +1103,15 @@ mod tests {
         let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
         let total: i32 = (0..500).map(|_| n.step(-5.0)).sum();
         assert_eq!(total, 0);
+    }
+
+    #[test]
+    fn lapicque_invalid_state_does_not_mutate() {
+        let mut n = LapicqueNeuron::new(20.0, 1.0, 1.0, 1.0);
+        n.v = 0.25;
+        n.tau = 0.0;
+        assert_eq!(n.step(1.0), 0);
+        assert_eq!(n.v, 0.25);
     }
 
     #[test]

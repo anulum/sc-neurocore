@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo SIMD acceleration for lapicque
 
+from std.math import exp
+
 
 fn _finite(x: Float64) -> Bool:
     return (
@@ -54,9 +56,10 @@ fn lapicque_step_spike(
     if not lapicque_valid(v, v_rest, v_reset, v_threshold, tau, resistance, dt):
         return 0
 
-    var dv = (-(v - v_rest) + resistance * current) / tau * dt
-    var next_v = v + dv
-    if not _finite(dv) or not _finite(next_v):
+    var v_inf = v_rest + resistance * current
+    var decay = exp(-dt / tau)
+    var next_v = v_inf + (v - v_inf) * decay
+    if not _finite(v_inf) or not _finite(decay) or not _finite(next_v):
         return 0
     if next_v >= v_threshold:
         return 1

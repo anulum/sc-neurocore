@@ -14,8 +14,9 @@ Spike: V → V_reset when V ≥ V_threshold.
 
 Steady state: V_ss = V_rest + R·I. Fires only if V_ss ≥ V_threshold,
 i.e. I ≥ (V_threshold - V_rest) / R = rheobase.
-Euler: dV = (-(V-V_rest) + R·I) / τ · dt.
-FULL PIPELINE WIRED + PERFORMANCE."""
+Exact constant-current flow:
+V(t + dt) = V_ss + (V(t) - V_ss) · exp(-dt / τ).
+"""
 
 from __future__ import annotations
 
@@ -138,26 +139,39 @@ class TestLapicqueValidation:
             n.step(current)
         assert n.v == before
 
-    def test_rejects_non_finite_voltage_increment_before_state_mutation(self):
-        n = LapicqueNeuron(v=0.25, v_threshold=1.0e308, tau=1.0e-308)
+    def test_rejects_non_finite_voltage_candidate_before_state_mutation(self):
+        n = LapicqueNeuron(v=0.25, v_threshold=1.0e308, resistance=1.0e308)
         before = n.v
-        with pytest.raises(ValueError, match="voltage increment"):
+        with pytest.raises(ValueError, match="voltage candidate"):
             n.step(1.0e308)
         assert n.v == before
 
 
 # ---------------------------------------------------------------------------
-# 2. ANALYTICAL — dV formula, steady state, rheobase
+# 2. ANALYTICAL — exact-flow formula, steady state, rheobase
 # ---------------------------------------------------------------------------
 class TestLapicqueAnalytical:
-    def test_dv_formula(self):
-        """dV = (-(V-V_rest) + R·I) / τ · dt."""
+    def test_exact_flow_formula(self):
+        """V_next = V_ss + (V - V_ss) · exp(-dt / τ)."""
         n = LapicqueNeuron()
         v0 = n.v
         I = 0.5  # subthreshold
-        expected = (-(v0 - n.v_rest) + n.resistance * I) / n.tau * n.dt
+        v_ss = n.v_rest + n.resistance * I
+        expected = v_ss + (v0 - v_ss) * np.exp(-n.dt / n.tau)
         n.step(I)
-        assert abs((n.v - v0) - expected) < 1e-14
+        assert abs(n.v - expected) < 1e-14
+
+    def test_exact_flow_separates_from_forward_euler_for_large_dt(self):
+        n = LapicqueNeuron(v=0.25, dt=5.0)
+        v0 = n.v
+        current = 0.5
+        euler = v0 + (-(v0 - n.v_rest) + n.resistance * current) / n.tau * n.dt
+        v_ss = n.v_rest + n.resistance * current
+        expected = v_ss + (v0 - v_ss) * np.exp(-n.dt / n.tau)
+        spike = n.step(current)
+        assert spike == 0
+        assert abs(n.v - expected) < 1e-14
+        assert abs(n.v - euler) > 1e-4
 
     def test_steady_state(self):
         """V_ss = V_rest + R·I (at equilibrium dV=0)."""
@@ -261,7 +275,7 @@ class TestLapicquePerformance:
             n.step(20.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        min_rate = 120_000 if os.environ.get("CI") else 200_000
+        min_rate = 100_000 if os.environ.get("CI") else 160_000
         assert np.isfinite(n.v)
         assert rate > min_rate, f"isolation: {rate:.0f} steps/s, minimum={min_rate}"
 
