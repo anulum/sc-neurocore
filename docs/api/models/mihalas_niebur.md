@@ -1,6 +1,8 @@
 # MihalasNieburNeuron
 
 **Module:** `sc_neurocore.neurons.models.mihalas_niebur`
+**Rust engine:** `sc_neurocore_engine::neurons::MihalasNieburNeuron`
+**Polyglot `simulate` backends:** Rust engine (PyO3, bit-exact), Julia `MihalasNieburAccel`, Go c-shared (`accel/go/neurons/mihalas_niebur`), Mojo FFI (`accel/mojo/neurons/mihalas_niebur.mojo`); standalone Rust safety mirror `MihalasNieburNeuron`
 **Reference:** Mihalas, S. & Niebur, E., Neural Comput. 21(3):704-718, 2009
 **Family:** Generalised integrate-and-fire
 **State variables:** `v`, `theta`, `i1`, `i2`
@@ -65,12 +67,12 @@ These boundaries are intentionally consistent across the Python reference, Rust 
 
 | Surface | Contract |
 | --- | --- |
-| Python | Authoritative reference class with candidate-first RK4 and fail-closed state preservation. |
-| Rust engine | PyO3-backed engine class uses the same RK4 state transition and spike reset. |
-| Go service | Service mirror uses the same scalar equations and reference-point tests. |
-| Julia mirror | Scientific mirror uses the same scalar equations and fail-closed checks. |
-| Rust safety | Standalone safety mirror validates the same state transition and reset semantics. |
-| Mojo | Scalar kernel contract records the RK4 vector-field semantics for downstream kernel work. |
+| Python | Authoritative reference class with candidate-first RK4 and fail-closed state preservation; also the `simulate` reference loop. |
+| Rust engine | PyO3-backed engine class uses the same RK4 state transition and spike reset, and exposes `py_mihalas_niebur_simulate` for the accelerated N-step path (bit-exact). |
+| Julia | `MihalasNieburAccel.simulate_trace` mirrors the N-step RK4 recurrence (bit-exact, linear arithmetic). |
+| Go | `accel/go/neurons/mihalas_niebur` builds a C-ABI shared library (`mihalas_niebur_simulate_c`) loaded via ctypes (bit-exact). |
+| Mojo | `accel/mojo/neurons/mihalas_niebur.mojo` builds an FFI kernel (`mihalas_niebur_simulate_c`); validated non-amplifying within a ULP band (FMA fusion). |
+| Rust safety | Standalone safety mirror validates the same single-`step` state transition and reset semantics. |
 
 ## Behavioural invariants
 
@@ -101,30 +103,55 @@ let spikes: i32 = (0..1000).map(|_| neuron.step(2.0)).sum();
 println!("{spikes} {} {} {} {}", neuron.v, neuron.theta, neuron.i1, neuron.i2);
 ```
 
-## Benchmark evidence
+## Polyglot acceleration
 
-Generated locally on 2026-06-01 with:
+A single `step` is trivial, but an N-step run is a sequential RK4 recurrence
+with a discontinuous spike reset that does not vectorise, so a compiled inner
+loop genuinely beats Python. `simulate(n_steps, current, backend="auto")`
+dispatches across the polyglot chain and returns `(trace, spikes)`:
 
-```bash
-PYTHONPATH=src .venv/bin/python benchmarks/bench_mihalas_niebur.py
+```python
+from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
+
+neuron = MihalasNieburNeuron()
+trace, spikes = neuron.simulate(2_000_000, current=2.0)   # auto → Rust
 ```
 
-Evidence file: `benchmarks/results/bench_mihalas_niebur.json`
+The Mihalas-Niebur 2009 right-hand side is purely linear — additions,
+multiplications and divisions, no transcendental functions — so every RK4 stage
+is exact arithmetic. The Rust engine, Julia and Go backends therefore reproduce
+the NumPy reference **bit-for-bit**: trace, spike count and the final
+`(v, theta, i1, i2)` state all match exactly. Mojo fuses multiply-add; on this
+platform it also matches bit-for-bit, but because FMA fusion is
+compiler/version dependent it is validated as non-amplifying within a tight ULP
+band (with identical spike counts) rather than asserted strictly exact. `auto`
+selects Rust (the bit-exact backend shipped in the wheel).
 
-| Backend | Steps/s | Wall ms for 100000 steps | Relative speed |
-| --- | ---: | ---: | ---: |
-| Python | 148913 | 671.53 | 1.00x |
-| Rust PyO3 | 4470483 | 22.37 | 30.02x |
+### Measured throughput
 
-Parity evidence over 10000 steps: `max_abs_delta = 0.0`, `spikes_delta = 0`.
+2,000,000 RK4 steps, default tonic regime (`current=2.0`, 2857 spikes), median
+of 5 repeats. Non-isolated loaded workstation per
+`BROADCAST_2026-06-04_benchmark_core_isolation` — functional/regression
+evidence, not an isolated-core figure. Reproduce with
+`python benchmarks/bench_mihalas_niebur_simulate.py`.
+
+| Backend | Median (ms) | Speed-up vs Python | Whole-trace parity |
+|---------|------------:|-------------------:|--------------------|
+| python  | 2381.79 | 1.0× | reference |
+| rust (`auto`) | 85.72 | 27.8× | bit-exact (0) |
+| go      | 86.21 | 27.6× | bit-exact (0) |
+| mojo    | 92.63 | 25.7× | 0 measured (FMA, ULP-validated) |
+| julia   | 95.83 | 24.9× | bit-exact (0) |
+
+Artefact: `benchmarks/results/bench_mihalas_niebur_simulate.json`.
 
 ## Verification commands
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m pytest tests/test_model_mihalas_niebur.py -q
-(cd src/sc_neurocore/accel/go && go test ./services -run 'MihalasNiebur')
-rustc --test src/sc_neurocore/accel/rust/safety/mihalas_niebur.rs -o /tmp/sc_neurocore_mihalas_niebur_safety && /tmp/sc_neurocore_mihalas_niebur_safety
+PYTHONPATH=src .venv/bin/python -m pytest tests/test_mihalas_niebur_backends.py -q
 cargo test --manifest-path engine/Cargo.toml mn_ --release
-.venv/bin/python -m maturin develop --manifest-path engine/Cargo.toml --release
-PYTHONPATH=src .venv/bin/python benchmarks/bench_mihalas_niebur.py
+(cd src/sc_neurocore/accel/go/neurons/mihalas_niebur && go build -buildmode=c-shared -o libmihalasniebur.so mihalas_niebur.go)
+(cd src/sc_neurocore/accel/mojo/neurons && mojo build --emit shared-lib -o libmihalasniebur.so mihalas_niebur.mojo)
+PYTHONPATH=src .venv/bin/python benchmarks/bench_mihalas_niebur_simulate.py --json benchmarks/results/bench_mihalas_niebur_simulate.json
 ```

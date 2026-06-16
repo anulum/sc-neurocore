@@ -1,0 +1,51 @@
+{
+  "benchmark": "mihalas_niebur_simulate",
+  "environment": {
+    "isolation": "non-isolated (loaded workstation)",
+    "numpy": "2.3.5",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ms": 2381.786194004235,
+      "min_ms": 2354.907547007315,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0
+    },
+    {
+      "backend": "rust",
+      "median_ms": 85.72402199206408,
+      "min_ms": 84.58583800529595,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 27.78434957502028
+    },
+    {
+      "backend": "julia",
+      "median_ms": 95.83258999919053,
+      "min_ms": 91.24324900039937,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 24.853613932633493
+    },
+    {
+      "backend": "go",
+      "median_ms": 86.2080880033318,
+      "min_ms": 85.69571300176904,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 27.62833800364744
+    },
+    {
+      "backend": "mojo",
+      "median_ms": 92.62740300619043,
+      "min_ms": 91.93054698698688,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 25.7136237949482
+    }
+  ],
+  "workload": {
+    "current": 2.0,
+    "n_steps": 2000000,
+    "repeats": 5
+  }
+}
