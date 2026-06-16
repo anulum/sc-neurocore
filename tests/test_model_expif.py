@@ -35,6 +35,24 @@ def _run(neuron: ExpIFNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
 
+def _rhs(neuron: ExpIFNeuron, v: float, current: float) -> float:
+    exp_term = neuron.delta_t * np.exp(np.clip((v - neuron.v_rh) / neuron.delta_t, -20.0, 20.0))
+    return float((-(v - neuron.v_rest) + exp_term + current) / neuron.tau)
+
+
+def _rk4_candidate(neuron: ExpIFNeuron, current: float) -> float:
+    v0 = neuron.v
+    k1 = _rhs(neuron, v0, current)
+    k2 = _rhs(neuron, v0 + 0.5 * neuron.dt * k1, current)
+    k3 = _rhs(neuron, v0 + 0.5 * neuron.dt * k2, current)
+    k4 = _rhs(neuron, v0 + neuron.dt * k3, current)
+    return float(v0 + neuron.dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0)
+
+
+def _euler_candidate(neuron: ExpIFNeuron, current: float) -> float:
+    return float(neuron.v + neuron.dt * _rhs(neuron, neuron.v, current))
+
+
 class TestExpIFIsolation:
     def test_construction_all_defaults(self):
         n = ExpIFNeuron()
@@ -101,10 +119,10 @@ class TestExpIFValidation:
             n.step(0.0)
         assert np.isnan(n.v)
 
-    def test_rejects_non_finite_euler_update_before_state_mutation(self):
+    def test_rejects_non_finite_rk4_update_before_state_mutation(self):
         n = ExpIFNeuron(v=-60.0, dt=1.0e308, tau=1.0)
         before = n.v
-        with pytest.raises(ValueError, match="Euler update"):
+        with pytest.raises(ValueError, match="RK4"):
             n.step(1.0e308)
         assert n.v == before
 
@@ -152,16 +170,22 @@ class TestExpIFExponentialEscape:
 
 
 class TestExpIFAnalytical:
-    def test_membrane_equation_one_step(self):
-        """dV = [-(V-V_rest) + delta_t*exp(clip((V-v_rh)/delta_t)) + I] / tau * dt."""
-        n = ExpIFNeuron()
-        v0 = n.v
+    def test_membrane_equation_one_step_matches_rk4(self):
+        """The maintained path uses candidate-first RK4 for the EIF ODE."""
+        n = ExpIFNeuron(v=-62.0, dt=0.25)
         I = 5.0
-        exp_term = n.delta_t * np.exp(np.clip((v0 - n.v_rh) / n.delta_t, -20, 20))
-        expected_dv = (-(v0 - n.v_rest) + exp_term + I) / n.tau * n.dt
+        expected = _rk4_candidate(n, I)
         n.step(I)
-        if n.v != n.v_reset:  # no spike
-            assert abs((n.v - v0) - expected_dv) < 1e-10
+        assert n.v == pytest.approx(expected, abs=1e-12)
+
+    def test_rk4_separates_from_raw_euler_near_exponential_onset(self):
+        n = ExpIFNeuron(v=-56.0, dt=0.5)
+        I = 12.0
+        rk4 = _rk4_candidate(n, I)
+        euler = _euler_candidate(n, I)
+        n.step(I)
+        assert abs(rk4 - euler) > 1e-4
+        assert n.v == pytest.approx(rk4, abs=1e-12)
 
     def test_subthreshold_v_approaches_rest(self):
         """With zero input and V near rest, V stays near V_rest."""
@@ -239,8 +263,8 @@ class TestExpIFPerformance:
             n.step(20.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        min_rate = 40_000 if os.getenv("CI") else 50_000
-        assert rate > min_rate, f"isolation: {rate:.0f} steps/s, minimum={min_rate}"
+        min_rate = 10_000 if os.getenv("CI") else 12_000
+        assert rate > min_rate, f"local RK4 regression: {rate:.0f} steps/s, minimum={min_rate}"
 
     def test_network_throughput(self):
         pop = Population(ExpIFNeuron, n=50, label="bench")

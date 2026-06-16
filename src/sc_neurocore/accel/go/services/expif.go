@@ -16,7 +16,7 @@ import (
 var (
 	ErrExpIFInvalidInput    = errors.New("expif input current must be finite")
 	ErrExpIFInvalidState    = errors.New("expif state parameters must be finite with positive delta_t, tau, and dt")
-	ErrExpIFNonFiniteUpdate = errors.New("expif euler update must remain finite")
+	ErrExpIFNonFiniteUpdate = errors.New("expif rk4 update must remain finite")
 )
 
 // ExpIFNeuronState holds the neuron state
@@ -61,7 +61,19 @@ func (s *ExpIFNeuronState) Valid() bool {
 		s.Dt > 0.0
 }
 
-// Step advances the neuron by one timestep
+func (s *ExpIFNeuronState) rhs(v float64, iExt float64) (float64, bool) {
+	arg := (v - s.VRh) / s.DeltaT
+	if arg < -20.0 {
+		arg = -20.0
+	} else if arg > 20.0 {
+		arg = 20.0
+	}
+	expTerm := s.DeltaT * math.Exp(arg)
+	rhs := (-(v - s.VRest) + expTerm + iExt) / s.Tau
+	return rhs, expIFFinite(expTerm, rhs)
+}
+
+// Step advances the neuron by one candidate-first RK4 timestep.
 func (s *ExpIFNeuronState) Step(iExt float64) (int, error) {
 	if !expIFFinite(iExt) {
 		return 0, ErrExpIFInvalidInput
@@ -70,22 +82,17 @@ func (s *ExpIFNeuronState) Step(iExt float64) (int, error) {
 		return 0, ErrExpIFInvalidState
 	}
 
-	arg := (s.V - s.VRh) / s.DeltaT
-	if arg < -20.0 {
-		arg = -20.0
-	} else if arg > 20.0 {
-		arg = 20.0
-	}
-	expTerm := s.DeltaT * math.Exp(arg)
-	dv := (-(s.V - s.VRest) + expTerm + iExt) / s.Tau * s.Dt
-	nextV := s.V + dv
-	if !expIFFinite(expTerm, dv, nextV) {
+	k1, ok1 := s.rhs(s.V, iExt)
+	k2, ok2 := s.rhs(s.V+0.5*s.Dt*k1, iExt)
+	k3, ok3 := s.rhs(s.V+0.5*s.Dt*k2, iExt)
+	k4, ok4 := s.rhs(s.V+s.Dt*k3, iExt)
+	nextV := s.V + s.Dt*(k1+2.0*k2+2.0*k3+k4)/6.0
+	if !ok1 || !ok2 || !ok3 || !ok4 || !expIFFinite(nextV) {
 		return 0, ErrExpIFNonFiniteUpdate
 	}
 
-	vPrev := s.V
 	s.V = nextV
-	if s.V >= s.VThreshold && vPrev < s.VThreshold {
+	if s.V >= s.VThreshold {
 		s.V = s.VReset
 		return 1, nil
 	}
