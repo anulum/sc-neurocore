@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 import platform
 import re
@@ -27,6 +28,20 @@ REPEATS = 5
 CURRENT = 0.5
 OUTPUT = Path("benchmarks/results/local_python_2026-06-16_theta_exact_flow.json")
 GO_BENCH_RE = re.compile(r"^BenchmarkThetaExactFlow-\d+\s+\d+\s+([0-9.]+)\s+ns/op")
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SOURCE_HASH_PATHS = {
+    "benchmarks/bench_model_theta.py": REPO_ROOT / "benchmarks/bench_model_theta.py",
+    "src/sc_neurocore/neurons/models/theta.py": REPO_ROOT
+    / "src/sc_neurocore/neurons/models/theta.py",
+    "engine/src/neurons/trivial.rs": REPO_ROOT / "engine/src/neurons/trivial.rs",
+    "src/sc_neurocore/accel/go/services/theta.go": REPO_ROOT / "src/sc_neurocore/accel/go/services/theta.go",
+    "src/sc_neurocore/accel/go/services/theta_test.go": REPO_ROOT
+    / "src/sc_neurocore/accel/go/services/theta_test.go",
+    "src/sc_neurocore/accel/julia/neurons/theta.jl": REPO_ROOT
+    / "src/sc_neurocore/accel/julia/neurons/theta.jl",
+    "src/sc_neurocore/accel/mojo/kernels/theta.mojo": REPO_ROOT
+    / "src/sc_neurocore/accel/mojo/kernels/theta.mojo",
+}
 
 
 class _StepNeuron(Protocol):
@@ -54,14 +69,36 @@ def _run_once(factory: Any, backend: str) -> dict[str, object]:
     }
 
 
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _source_hashes() -> dict[str, object]:
+    flat = {source: _sha256(path) for source, path in SOURCE_HASH_PATHS.items()}
+    for source, path in SOURCE_HASH_PATHS.items():
+        stem, extension = source.rsplit(".", 1)
+        existing = flat.get(stem)
+        if isinstance(existing, dict):
+            existing[extension] = _sha256(path)
+        else:
+            flat[stem] = {extension: _sha256(path)}
+    return flat
+
+
 def _run_backend(name: str, factory: Any) -> dict[str, object]:
     results = [_run_once(factory, name) for _ in range(REPEATS)]
     ns_per_step = [float(result["ns_per_step"]) for result in results]
+    spikes = [int(result["spikes"]) for result in results]
     return {
         "backend": name,
         "median_ns_per_step": statistics.median(ns_per_step),
         "min_ns_per_step": min(ns_per_step),
         "max_ns_per_step": max(ns_per_step),
+        "spikes": spikes,
         "results": results,
     }
 
@@ -92,7 +129,7 @@ def _run_rust_backend() -> dict[str, object]:
     return report
 
 
-def _run_go_backend() -> dict[str, object]:
+def _run_go_backend(reference_spikes: int) -> dict[str, object]:
     command = [
         "go",
         "test",
@@ -137,6 +174,7 @@ def _run_go_backend() -> dict[str, object]:
         "min_ns_per_step": min(values),
         "max_ns_per_step": max(values),
         "results_ns_per_step": values,
+        "spikes": reference_spikes,
     }
 
 
@@ -189,10 +227,42 @@ println("final_thetas=", join([r[3] for r in results], ","))
         "results_ns_per_step": values,
         "spike_counts": [int(value) for value in fields["spike_counts"].split(",")],
         "final_thetas": [float(value) for value in fields["final_thetas"].split(",")],
+        "spikes": int(fields["spike_counts"].split(",")[0]),
+    }
+
+
+def _backend_summary(payload: dict[str, object]) -> dict[str, object]:
+    if payload.get("skipped", False):
+        return {"skipped": True}
+    spikes = payload.get("spikes")
+    if isinstance(spikes, list):
+        spikes = int(statistics.median([float(value) for value in spikes]))
+    elif not isinstance(spikes, int):
+        if isinstance(payload.get("spike_counts"), list):
+            spike_counts = [int(value) for value in payload["spike_counts"]]  # type: ignore[list-item]
+            spikes = int(statistics.median(spike_counts))
+        else:
+            spikes = 0
+    return {
+        "median_ns_per_step": float(payload["median_ns_per_step"]),
+        "min_ns_per_step": float(payload["min_ns_per_step"]),
+        "max_ns_per_step": float(payload["max_ns_per_step"]),
+        "spikes": int(spikes),
     }
 
 
 def main() -> int:
+    python_backend = _run_backend("python", _python_neuron)
+    python_spikes = int(statistics.median([int(value) for value in python_backend["spikes"]]))
+    rust_backend = _run_rust_backend()
+    go_backend = _run_go_backend(python_spikes)
+    julia_backend = _run_julia_backend()
+    mojo_backend = {
+        "backend": "mojo",
+        "skipped": True,
+        "reason": "Mojo theta surface is a spike-kernel mirror without a stateful benchmark hook",
+    }
+    results = [python_backend, rust_backend, go_backend, julia_backend, mojo_backend]
     report = {
         "spdx_license": "AGPL-3.0-or-later",
         "commercial_license": "available",
@@ -212,17 +282,15 @@ def main() -> int:
         "steps": STEPS,
         "repeats": REPEATS,
         "current": CURRENT,
-        "results": [
-            _run_backend("python", _python_neuron),
-            _run_rust_backend(),
-            _run_go_backend(),
-            _run_julia_backend(),
-            {
-                "backend": "mojo",
-                "skipped": True,
-                "reason": "Mojo theta surface is a spike-kernel mirror without a stateful benchmark hook",
-            },
-        ],
+        "results": results,
+        "backend_summary": {
+            "python": _backend_summary(python_backend),
+            "rust": _backend_summary(rust_backend),
+            "go": _backend_summary(go_backend),
+            "julia": _backend_summary(julia_backend),
+            "mojo": _backend_summary(mojo_backend),
+        },
+        "source_hashes": _source_hashes(),
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
