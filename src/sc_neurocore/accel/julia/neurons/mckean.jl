@@ -4,101 +4,63 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for McKean
+# SC-NeuroCore — Julia McKean 1970 piecewise-linear FHN caricature (parity with mckean.py)
 
-module MckeanAccel
+# Parity contract: `simulate_trace` reproduces
+# `sc_neurocore.neurons.models.mckean.McKeanNeuron.simulate` bit-for-bit. The
+# piecewise-linear right-hand side is exact arithmetic (additions, multiplications
+# and branch selection — no transcendental functions), so an identical RK4
+# operation order yields an identical `v` trace, upward-crossing spike count, and
+# final `(v, w)` state.
+#
+# Reference: McKean, H.P. (1970). Advances in Mathematics, 4:209-223.
 
-export step!, simulate, validate, McKeanNeuronState
+module McKeanAccel
 
-mutable struct McKeanNeuronState
-    v::Float64
-    w::Float64
-    a::Float64
-    epsilon::Float64
-    gamma::Float64
-    dt::Float64
-    v_peak::Float64
-end
+export simulate_trace
 
-function McKeanNeuronState()
-    McKeanNeuronState(0.0, 0.0, 0.25, 0.01, 0.5, 0.1, 0.8)
-end
-
-function validate(s::McKeanNeuronState, dt::Float64=s.dt)::Bool
-    isfinite(s.v) &&
-    isfinite(s.w) &&
-    isfinite(s.a) && 0.0 < s.a < 1.0 &&
-    isfinite(s.epsilon) && s.epsilon > 0.0 &&
-    isfinite(s.gamma) && s.gamma > 0.0 &&
-    isfinite(s.dt) && s.dt > 0.0 &&
-    isfinite(dt) && dt > 0.0 &&
-    isfinite(s.v_peak)
-end
-
-function _f(s::McKeanNeuronState, v::Float64)
-    if !isfinite(v)
-        return NaN
-    end
-    mid1 = s.a / 2.0
-    mid2 = (1.0 + s.a) / 2.0
-    if v < mid1
-        return -v
-    elseif v < mid2
-        return v - s.a
-    else
-        return 1.0 - v
-    end
-end
-
-function derivatives(s::McKeanNeuronState, v::Float64, w::Float64, current::Float64)
-    if !all(isfinite, (v, w, current))
-        return nothing
-    end
-    dv = _f(s, v) - w + current
-    dw = s.epsilon * (v - s.gamma * w)
-    all(isfinite, (dv, dw)) ? (dv, dw) : nothing
-end
-
-function rk4_candidate(s::McKeanNeuronState, current::Float64, dt::Float64)
-    k1 = derivatives(s, s.v, s.w, current)
-    k1 === nothing && return nothing
-    k2 = derivatives(s, s.v + 0.5 * dt * k1[1], s.w + 0.5 * dt * k1[2], current)
-    k2 === nothing && return nothing
-    k3 = derivatives(s, s.v + 0.5 * dt * k2[1], s.w + 0.5 * dt * k2[2], current)
-    k3 === nothing && return nothing
-    k4 = derivatives(s, s.v + dt * k3[1], s.w + dt * k3[2], current)
-    k4 === nothing && return nothing
-    candidate = (
-        s.v + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
-        s.w + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
-    )
-    all(isfinite, candidate) ? candidate : nothing
-end
-
-function step!(s::McKeanNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
-    if !validate(s, dt) || !isfinite(I_ext)
-        return 0
-    end
-
-    v_prev = s.v
-    candidate = rk4_candidate(s, I_ext, dt)
-    candidate === nothing && return 0
-    s.v, s.w = candidate
-    return (s.v >= s.v_peak && v_prev < s.v_peak) ? 1 : 0
-end
-
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
-    s = McKeanNeuronState()
-    trace = zeros(n_steps)
+function simulate_trace(
+    v0::Float64,
+    w0::Float64,
+    a::Float64,
+    eps::Float64,
+    gamma::Float64,
+    dt::Float64,
+    v_peak::Float64,
+    n_steps::Int,
+    current::Float64,
+)
+    trace = Vector{Float64}(undef, n_steps)
+    v = v0
+    w = w0
+    half_a = a / 2.0
+    mid = (1.0 + a) / 2.0
+    fv(x) = x < half_a ? -x : (x < mid ? x - a : 1.0 - x)
     spikes = 0
-    for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
-        trace[t] = s.v
-        if result isa Number && result > 0
+    @inbounds for t in 1:n_steps
+        v_prev = v
+        dv1 = fv(v) - w + current
+        dw1 = eps * (v - gamma * w)
+        v2 = v + 0.5 * dt * dv1
+        w2 = w + 0.5 * dt * dw1
+        dv2 = fv(v2) - w2 + current
+        dw2 = eps * (v2 - gamma * w2)
+        v3 = v + 0.5 * dt * dv2
+        w3 = w + 0.5 * dt * dw2
+        dv3 = fv(v3) - w3 + current
+        dw3 = eps * (v3 - gamma * w3)
+        v4 = v + dt * dv3
+        w4 = w + dt * dw3
+        dv4 = fv(v4) - w4 + current
+        dw4 = eps * (v4 - gamma * w4)
+        v = v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0
+        w = w + dt * (dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4) / 6.0
+        trace[t] = v
+        if v >= v_peak && v_prev < v_peak
             spikes += 1
         end
     end
-    return trace, spikes
+    return (trace = trace, spikes = spikes, vf = v, wf = w)
 end
 
-end # module MckeanAccel
+end # module McKeanAccel

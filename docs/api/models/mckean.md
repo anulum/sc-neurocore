@@ -71,15 +71,58 @@ The module-specific behavioural test surface verifies:
 | Surface | Contract |
 |---------|----------|
 | `tests/test_model_mckean.py` | Python RK4 reference, branch equations, dynamics, validation, public network workflow |
-| `engine/src/neurons/simple_spiking.rs` | Rust engine RK4 candidate and fail-closed state preservation |
-| `src/sc_neurocore/accel/julia/neurons/mckean.jl` | Julia RK4 service parity and invalid-state sentinel behavior |
-| `src/sc_neurocore/accel/go/services/mckean.go` | Go RK4 service parity and invalid-state sentinel behavior |
+| `tests/test_mckean_backends.py` | Cross-backend `simulate` parity (rust/julia/go bit-exact, mojo ULP-bounded) |
+| `engine/src/neurons/simple_spiking.rs` | Rust engine RK4 `step`/`simulate` candidate and fail-closed state preservation |
+| `src/sc_neurocore/accel/julia/neurons/mckean.jl` | Julia RK4 `simulate_trace` parity |
+| `src/sc_neurocore/accel/go/neurons/mckean/mckean.go` | Go RK4 c-shared `simulate` parity |
+| `src/sc_neurocore/accel/mojo/neurons/mckean.mojo` | Mojo RK4 FFI `simulate` (FMA ULP-bounded) |
 | `src/sc_neurocore/accel/rust/safety/mckean.rs` | Standalone Rust safety RK4 parity and invalid-state sentinel behavior |
 
 The public Python workflow test is named explicitly: McKean public surface
 inside the Python simulator. It exercises real `Population`, `Projection`,
 `Network`, `SpikeMonitor`, and spike-stat analysis APIs, not synthetic coverage
 buckets.
+
+## Polyglot acceleration
+
+A single `step` is trivial, but an N-step run is a sequential RK4 recurrence that
+does not vectorise, so a compiled inner loop genuinely beats Python.
+`simulate(n_steps, current, backend="auto")` dispatches across the polyglot chain
+and returns `(trace, spikes)`:
+
+```python
+from sc_neurocore.neurons.models.mckean import McKeanNeuron
+
+neuron = McKeanNeuron()
+trace, spikes = neuron.simulate(20_000, current=0.5)   # auto → Rust
+```
+
+The piecewise-linear right-hand side is exact floating-point arithmetic
+(additions, multiplications and branch selection — no transcendental functions),
+so **Rust, Julia and Go reproduce the NumPy reference bit-for-bit**. Mojo's
+release build contracts the RK4 multiply-adds into fused multiply-adds; because a
+two-dimensional autonomous flow cannot be chaotic (Poincaré-Bendixson), that
+single-ULP difference does not amplify — the whole-trace gap stays at the
+`10⁻¹²` level even over millions of steps and the spike counts match. `auto`
+selects Rust (the fastest bit-exact backend, shipped in the wheel).
+
+### Measured throughput
+
+2,000,000 RK4 steps, default relaxation regime (`current=0.5`), median of 5
+repeats. Non-isolated loaded workstation (Intel i5-11600K) per
+`BROADCAST_2026-06-04_benchmark_core_isolation` — functional/regression evidence,
+not an isolated-core figure. Reproduce with
+`python benchmarks/bench_mckean_simulate.py`.
+
+| Backend | Median (ms) | Speed-up vs Python | Whole-trace parity |
+|---------|------------:|-------------------:|--------------------|
+| python  | 2233.96 | 1.0× | reference |
+| rust (`auto`) | 69.96 | 31.9× | bit-exact (0) |
+| go      | 79.14 | 28.2× | bit-exact (0) |
+| mojo    | 86.61 | 25.8× | 3.4×10⁻¹² (FMA, non-amplifying) |
+| julia   | 93.53 | 23.9× | bit-exact (0) |
+
+Artefact: `benchmarks/results/bench_mckean_simulate.json`.
 
 ## Example
 

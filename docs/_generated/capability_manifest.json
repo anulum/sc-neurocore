@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 788
+    "test_files": 789
   },
   "documentation": {
     "public_pages": [
@@ -2126,6 +2126,7 @@
       "tests/test_loihi_cuba_docs.py",
       "tests/test_lr_schedulers.py",
       "tests/test_math_category_theory_contracts.py",
+      "tests/test_mckean_backends.py",
       "tests/test_medvedev_map_backends.py",
       "tests/test_memristor/test_memristor_mapper.py",
       "tests/test_meta_plasticity/test_meta_plasticity.py",
