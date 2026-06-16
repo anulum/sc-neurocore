@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 790
+    "test_files": 791
   },
   "documentation": {
     "public_pages": [
@@ -2341,6 +2341,7 @@
       "tests/test_optional_adapter_contracts.py",
       "tests/test_orca_posner_hf.py",
       "tests/test_overflow_proof.py",
+      "tests/test_pernarowski_backends.py",
       "tests/test_petri_net.py",
       "tests/test_phi_estimation.py",
       "tests/test_physical_twin.py",

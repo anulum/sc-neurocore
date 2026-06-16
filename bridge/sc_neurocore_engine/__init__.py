@@ -510,6 +510,16 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_pernarowski_simulate,
+    )
+
+    __all__ += ["py_pernarowski_simulate"]
+    _pernarowski_rust_available = True
+except ImportError:
+    _pernarowski_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_rulkov_map_simulate,
     )
 
