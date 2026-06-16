@@ -28,20 +28,55 @@ function valid(s::QuadraticIFNeuronState)::Bool
         s.dt > 0.0
 end
 
+function _exact_candidate(s::QuadraticIFNeuronState, I_ext::Float64)
+    if I_ext > 0.0
+        root_i = sqrt(I_ext)
+        phase = atan(s.v / root_i)
+        peak_phase = atan(s.v_peak / root_i)
+        next_phase = phase + root_i * s.dt
+        if next_phase >= peak_phase || next_phase >= pi / 2.0
+            return s.v_reset, true
+        end
+        return root_i * tan(next_phase), false
+    elseif I_ext == 0.0
+        denominator = 1.0 - s.v * s.dt
+        if denominator <= 0.0
+            return s.v_reset, true
+        end
+        next_v = s.v / denominator
+        return next_v >= s.v_peak ? (s.v_reset, true) : (next_v, false)
+    end
+
+    root_i = sqrt(-I_ext)
+    if abs(s.v + root_i) <= 1.0e-15
+        return s.v, false
+    end
+    numerator_ratio = (s.v - root_i) / (s.v + root_i)
+    evolved_ratio = numerator_ratio * exp(2.0 * root_i * s.dt)
+    denominator = 1.0 - evolved_ratio
+    if (numerator_ratio < 1.0 && evolved_ratio >= 1.0) || abs(denominator) <= 1.0e-15
+        return s.v_reset, true
+    end
+    next_v = root_i * (1.0 + evolved_ratio) / denominator
+    return next_v >= s.v_peak ? (s.v_reset, true) : (next_v, false)
+end
+
 function step!(s::QuadraticIFNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
-    if !isfinite(dt) || dt <= 0.0 || !isfinite(I_ext) || !valid(s)
+    if !all(isfinite, (s.v, s.v_reset, s.v_peak, dt, I_ext)) ||
+       s.v >= s.v_peak ||
+       s.v_reset >= s.v_peak ||
+       dt <= 0.0
         throw(DomainError((s.v, I_ext), "QuadraticIF state/current must be finite and well-formed"))
     end
 
-    increment = (s.v * s.v + I_ext) * dt
-    next_v = s.v + increment
-    if !isfinite(increment) || !isfinite(next_v)
-        throw(DomainError((increment, next_v), "QuadraticIF Euler update became non-finite"))
+    s.dt = dt
+    next_v, spiked = _exact_candidate(s, I_ext)
+    if !isfinite(next_v)
+        throw(DomainError(next_v, "QuadraticIF exact-flow update became non-finite"))
     end
 
     s.v = next_v
-    if s.v >= s.v_peak
-        s.v = s.v_reset
+    if spiked
         return 1
     end
     return 0

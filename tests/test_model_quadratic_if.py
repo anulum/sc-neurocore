@@ -28,6 +28,38 @@ def _run(neuron: QuadraticIFNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
 
+def _exact_qif_candidate(neuron: QuadraticIFNeuron, current: float) -> tuple[float, bool]:
+    if current > 0.0:
+        root_i = np.sqrt(current)
+        phase = np.arctan(neuron.v / root_i)
+        peak_phase = np.arctan(neuron.v_peak / root_i)
+        next_phase = phase + root_i * neuron.dt
+        if next_phase >= peak_phase or next_phase >= np.pi / 2.0:
+            return neuron.v_reset, True
+        return float(root_i * np.tan(next_phase)), False
+    if current == 0.0:
+        denominator = 1.0 - neuron.v * neuron.dt
+        if denominator <= 0.0:
+            return neuron.v_reset, True
+        next_v = neuron.v / denominator
+        return (neuron.v_reset, True) if next_v >= neuron.v_peak else (float(next_v), False)
+
+    root_i = np.sqrt(-current)
+    if abs(neuron.v + root_i) <= 1e-15:
+        return neuron.v, False
+    numerator_ratio = (neuron.v - root_i) / (neuron.v + root_i)
+    evolved_ratio = numerator_ratio * np.exp(2.0 * root_i * neuron.dt)
+    denominator = 1.0 - evolved_ratio
+    if denominator <= 0.0:
+        return neuron.v_reset, True
+    next_v = root_i * (1.0 + evolved_ratio) / denominator
+    return (neuron.v_reset, True) if next_v >= neuron.v_peak else (float(next_v), False)
+
+
+def _euler_candidate(neuron: QuadraticIFNeuron, current: float) -> float:
+    return neuron.v + (neuron.v * neuron.v + current) * neuron.dt
+
+
 class TestQIFIsolation:
     def test_construction_defaults(self):
         n = QuadraticIFNeuron()
@@ -100,12 +132,18 @@ class TestQIFValidation:
             n.step(current)
         assert n.v == before
 
-    def test_rejects_non_finite_euler_increment_before_state_mutation(self):
-        n = QuadraticIFNeuron(v=-1.0e200)
+    def test_rejects_non_finite_exact_flow_before_state_mutation(self):
+        n = QuadraticIFNeuron(v=-0.25)
         before = n.v
-        with pytest.raises(ValueError, match="Euler increment"):
-            n.step(0.0)
+        with pytest.raises(ValueError, match="exact-flow"):
+            n.step(-1.0e308)
         assert n.v == before
+
+    def test_negative_current_fixed_point_is_preserved(self):
+        n = QuadraticIFNeuron(v=-1.0)
+        spike = n.step(-1.0)
+        assert spike == 0
+        assert n.v == -1.0
 
 
 class TestQIFBifurcation:
@@ -192,12 +230,28 @@ class TestQIFISI:
 
 class TestQIFEdgeCases:
     def test_quadratic_divergence(self):
-        """At I>0, V accelerates upward (V² positive feedback)."""
+        """At I>0, the exact flow follows the quadratic positive feedback."""
         n = QuadraticIFNeuron()
         n.v = 0.5  # positive side
+        expected, spiked = _exact_qif_candidate(n, 1.0)
         n.step(1.0)
-        # dV = (0.5² + 1.0) * 0.01 = 0.0125
-        assert n.v > 0.5
+        assert not spiked
+        assert n.v == pytest.approx(expected, abs=1e-12)
+
+    def test_exact_flow_separates_from_raw_euler(self):
+        n = QuadraticIFNeuron(v=0.5, dt=0.1)
+        exact, spiked = _exact_qif_candidate(n, 1.0)
+        euler = _euler_candidate(n, 1.0)
+        n.step(1.0)
+        assert not spiked
+        assert abs(exact - euler) > 1e-3
+        assert n.v == pytest.approx(exact, abs=1e-12)
+
+    def test_exact_flow_resets_on_within_step_peak_crossing(self):
+        n = QuadraticIFNeuron(v=0.95, dt=0.5)
+        spike = n.step(1.0)
+        assert spike == 1
+        assert n.v == n.v_reset
 
     def test_custom_peak(self):
         n = QuadraticIFNeuron(v_peak=0.5)

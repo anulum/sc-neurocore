@@ -44,14 +44,12 @@ impl QuadraticIFNeuron {
         if !self.valid_numeric_contract() || !current.is_finite() {
             return 0;
         }
-        let increment = (self.v * self.v + current) * self.dt;
-        let next_v = self.v + increment;
-        if !(increment.is_finite() && next_v.is_finite()) {
+        let (next_v, spiked) = self.exact_candidate(current);
+        if !next_v.is_finite() {
             return 0;
         }
         self.v = next_v;
-        if self.v >= self.v_peak {
-            self.v = self.v_reset;
+        if spiked {
             1
         } else {
             0
@@ -60,6 +58,47 @@ impl QuadraticIFNeuron {
 
     pub fn reset(&mut self) {
         self.v = self.v_reset;
+    }
+
+    fn exact_candidate(&self, current: f64) -> (f64, bool) {
+        if current > 0.0 {
+            let root_i = current.sqrt();
+            let phase = (self.v / root_i).atan();
+            let peak_phase = (self.v_peak / root_i).atan();
+            let next_phase = phase + root_i * self.dt;
+            if next_phase >= peak_phase || next_phase >= std::f64::consts::FRAC_PI_2 {
+                return (self.v_reset, true);
+            }
+            return (root_i * next_phase.tan(), false);
+        }
+        if current == 0.0 {
+            let denominator = 1.0 - self.v * self.dt;
+            if denominator <= 0.0 {
+                return (self.v_reset, true);
+            }
+            let next_v = self.v / denominator;
+            if next_v >= self.v_peak {
+                return (self.v_reset, true);
+            }
+            return (next_v, false);
+        }
+
+        let root_i = (-current).sqrt();
+        if (self.v + root_i).abs() <= 1e-15 {
+            return (self.v, false);
+        }
+        let numerator_ratio = (self.v - root_i) / (self.v + root_i);
+        let evolved_ratio = numerator_ratio * (2.0 * root_i * self.dt).exp();
+        let denominator = 1.0 - evolved_ratio;
+        if (numerator_ratio < 1.0 && evolved_ratio >= 1.0) || denominator.abs() <= 1e-15 {
+            return (self.v_reset, true);
+        }
+        let next_v = root_i * (1.0 + evolved_ratio) / denominator;
+        if next_v >= self.v_peak {
+            (self.v_reset, true)
+        } else {
+            (next_v, false)
+        }
     }
 }
 
@@ -1066,12 +1105,36 @@ mod tests {
     #[test]
     fn qif_nonfinite_increment_preserves_state() {
         let mut n = QuadraticIFNeuron {
-            v: -1.0e200,
+            v: -0.25,
             ..Default::default()
         };
         let before = n.v;
-        assert_eq!(n.step(0.0), 0);
+        assert_eq!(n.step(-1.0e308), 0);
         assert_eq!(n.v, before);
+    }
+    #[test]
+    fn qif_matches_exact_positive_current_flow() {
+        let mut n = QuadraticIFNeuron::default();
+        let root_i = 0.5_f64.sqrt();
+        let expected = root_i * ((n.v / root_i).atan() + root_i * n.dt).tan();
+        assert_eq!(n.step(0.5), 0);
+        assert!((n.v - expected).abs() < 1e-12);
+    }
+    #[test]
+    fn qif_preserves_negative_current_fixed_point() {
+        let mut n = QuadraticIFNeuron::default();
+        assert_eq!(n.step(-1.0), 0);
+        assert_eq!(n.v, -1.0);
+    }
+    #[test]
+    fn qif_exact_flow_resets_on_peak_crossing() {
+        let mut n = QuadraticIFNeuron {
+            v: 0.95,
+            dt: 0.5,
+            ..Default::default()
+        };
+        assert_eq!(n.step(1.0), 1);
+        assert_eq!(n.v, n.v_reset);
     }
     #[test]
     fn qif_negative_no_crash() {
