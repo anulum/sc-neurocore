@@ -16,6 +16,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   cross-backend parity tests, a multi-language benchmark with a committed results
   artefact, and a model-documentation upgrade; replaced the decorative
   `accel/go/services` stub with a real c-shared backend.
+- Added the polyglot N-step `simulate(n_steps, current, backend=...)` chain for
+  `WilsonHRNeuron` (Wilson 1999 polynomial cortical model) across
+  python / rust / julia / go / mojo. The polynomial RK4 right-hand side with a
+  hard voltage reset is exact arithmetic, so Rust, Julia and Go reproduce the
+  NumPy reference bit-for-bit; the Mojo backend is ULP-bounded and non-amplifying
+  (the per-spike reset re-anchors the 2D autonomous flow). Added the Rust engine
+  `simulate` plus PyO3 `py_wilson_hr_simulate`, the Julia/Go/Mojo backends,
+  cross-backend parity tests, a multi-language benchmark with a committed results
+  artefact, and a model-documentation upgrade; replaced the decorative
+  `accel/go/services` stub with a real c-shared backend.
 
 ## [3.15.34] - 2026-06-15
 

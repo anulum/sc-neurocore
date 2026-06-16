@@ -1138,6 +1138,21 @@ impl WilsonHRNeuron {
             0
         }
     }
+    /// Run `n_steps` RK4 updates under a constant input, returning the `v` trace
+    /// (already reset to `-0.7` on spiking steps) and the spike count. Reuses
+    /// `step`, so the trace is bit-identical to the per-step path and to the
+    /// Python reference (the right-hand side is exact polynomial arithmetic — no
+    /// transcendental functions). The final state is left in `self.v` / `self.r`.
+    pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+        let mut trace = Vec::with_capacity(n_steps);
+        let mut spikes: i64 = 0;
+        for _ in 0..n_steps {
+            let spiked = self.step(current);
+            trace.push(self.v);
+            spikes += spiked as i64;
+        }
+        (trace, spikes)
+    }
     pub fn reset(&mut self) {
         self.v = -0.7;
         self.r = 0.1;

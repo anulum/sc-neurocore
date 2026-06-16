@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 789
+    "test_files": 790
   },
   "documentation": {
     "public_pages": [
@@ -2603,6 +2603,7 @@
       "tests/test_wilson_cowan_julia_parity.py",
       "tests/test_wilson_cowan_mojo_parity.py",
       "tests/test_wilson_cowan_parity.py",
+      "tests/test_wilson_hr_backends.py",
       "tests/test_wong_wang_dynamics.py",
       "tests/test_wong_wang_go_parity.py",
       "tests/test_wong_wang_julia_parity.py",

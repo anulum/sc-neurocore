@@ -51,14 +51,58 @@ Invalid runtime contracts are fail-closed:
 | Surface | Contract |
 |---------|----------|
 | `tests/test_model_wilson_hr.py` | Python RK4 reference, polynomial equation, dynamics, validation, public network workflow |
-| `engine/src/neurons/simple_spiking.rs` | Rust engine RK4 candidate and invalid-state preservation |
-| `src/sc_neurocore/accel/go/services/wilson_hr.go` | Go RK4 service and invalid-state preservation |
-| `src/sc_neurocore/accel/julia/neurons/wilson_hr.jl` | Julia RK4 service and invalid-state sentinel behavior |
+| `tests/test_wilson_hr_backends.py` | Cross-backend `simulate` parity (rust/julia/go bit-exact, mojo ULP-bounded) |
+| `engine/src/neurons/simple_spiking.rs` | Rust engine RK4 `step`/`simulate` candidate and invalid-state preservation |
+| `src/sc_neurocore/accel/julia/neurons/wilson_hr.jl` | Julia RK4 `simulate_trace` parity |
+| `src/sc_neurocore/accel/go/neurons/wilson_hr/wilson_hr.go` | Go RK4 c-shared `simulate` parity |
+| `src/sc_neurocore/accel/mojo/neurons/wilson_hr.mojo` | Mojo RK4 FFI `simulate` (FMA ULP-bounded) |
 | `src/sc_neurocore/accel/rust/safety/wilson_hr.rs` | Standalone Rust safety RK4 parity and invalid-state preservation |
 
 The cross-module Python workflow is explicitly named as the Wilson-HR public
 surface inside the Python simulator. It exercises real `Population`,
 `Projection`, `Network`, `SpikeMonitor`, and spike-stat analysis APIs.
+
+## Polyglot acceleration
+
+A single `step` is trivial, but an N-step run is a sequential RK4 recurrence that
+does not vectorise, so a compiled inner loop genuinely beats Python.
+`simulate(n_steps, current, backend="auto")` dispatches across the polyglot chain
+and returns `(trace, spikes)` (the `v` trace is already hard-reset to `-0.7` on
+spiking steps):
+
+```python
+from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
+
+neuron = WilsonHRNeuron()
+trace, spikes = neuron.simulate(50_000, current=10.0)   # auto → Rust
+```
+
+The right-hand side is exact polynomial floating-point arithmetic (no
+transcendental functions), so **Rust, Julia and Go reproduce the NumPy reference
+bit-for-bit**. Mojo's release build contracts the RK4 multiply-adds into fused
+multiply-adds; the per-spike hard reset re-anchors the trajectory and a
+two-dimensional autonomous flow cannot be chaotic (Poincaré-Bendixson), so the
+single-ULP difference does not accumulate — the whole-trace gap stays near one ULP
+even over millions of steps and the spike counts match. `auto` selects Rust (the
+fastest bit-exact backend, shipped in the wheel).
+
+### Measured throughput
+
+2,000,000 RK4 steps, suprathreshold regime (`current=10.0`), median of 5 repeats.
+Non-isolated loaded workstation (Intel i5-11600K) per
+`BROADCAST_2026-06-04_benchmark_core_isolation` — functional/regression evidence,
+not an isolated-core figure. Reproduce with
+`python benchmarks/bench_wilson_hr_simulate.py`.
+
+| Backend | Median (ms) | Speed-up vs Python | Whole-trace parity |
+|---------|------------:|-------------------:|--------------------|
+| python  | 4160.43 | 1.0× | reference |
+| mojo    | 82.82 | 50.2× | 2.8×10⁻¹⁶ (FMA, ~1 ULP) |
+| go      | 116.65 | 35.7× | bit-exact (0) |
+| rust (`auto`) | 129.89 | 32.0× | bit-exact (0) |
+| julia   | 138.63 | 30.0× | bit-exact (0) |
+
+Artefact: `benchmarks/results/bench_wilson_hr_simulate.json`.
 
 ## Example
 
