@@ -62,20 +62,58 @@ impl MorrisLecarNeuron {
         self.phi * ((v - self.v3) / (2.0 * self.v4)).cosh()
     }
 
+    fn rhs(&self, v: f64, w: f64, current: f64) -> Option<(f64, f64)> {
+        if !(v.is_finite() && w.is_finite() && current.is_finite() && (0.0..=1.0).contains(&w)) {
+            return None;
+        }
+        let m_inf = self._m_inf(v);
+        let w_inf = self._w_inf(v);
+        let lam = self._lam(v);
+        if !(m_inf.is_finite() && w_inf.is_finite() && lam.is_finite()) {
+            return None;
+        }
+        let i_ca = self.g_ca * m_inf * (v - self.e_ca);
+        let i_k = self.g_k * w * (v - self.e_k);
+        let i_l = self.g_l * (v - self.e_l);
+        let dv = (-i_ca - i_k - i_l + current) / self.c_m;
+        let dw = lam * (w_inf - w);
+        if dv.is_finite() && dw.is_finite() {
+            Some((dv, dw))
+        } else {
+            None
+        }
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
         if !validate_morris_lecar(self) || !current.is_finite() {
             return -1;
         }
         let v_prev = self.v;
-        let m_inf = self._m_inf(self.v);
-        let w_inf = self._w_inf(self.v);
-        let lam = self._lam(self.v);
-        let i_ca = self.g_ca * m_inf * (self.v - self.e_ca);
-        let i_k = self.g_k * self.w * (self.v - self.e_k);
-        let i_l = self.g_l * (self.v - self.e_l);
+        let Some((k1_v, k1_w)) = self.rhs(self.v, self.w, current) else {
+            return -1;
+        };
+        let Some((k2_v, k2_w)) = self.rhs(
+            self.v + 0.5 * self.dt * k1_v,
+            self.w + 0.5 * self.dt * k1_w,
+            current,
+        ) else {
+            return -1;
+        };
+        let Some((k3_v, k3_w)) = self.rhs(
+            self.v + 0.5 * self.dt * k2_v,
+            self.w + 0.5 * self.dt * k2_w,
+            current,
+        ) else {
+            return -1;
+        };
+        let Some((k4_v, k4_w)) =
+            self.rhs(self.v + self.dt * k3_v, self.w + self.dt * k3_w, current)
+        else {
+            return -1;
+        };
         let mut next = self.clone();
-        next.v += (-i_ca - i_k - i_l + current) / self.c_m * self.dt;
-        next.w += lam * (w_inf - self.w) * self.dt;
+        next.v += self.dt * (k1_v + 2.0 * k2_v + 2.0 * k3_v + k4_v) / 6.0;
+        next.w += self.dt * (k1_w + 2.0 * k2_w + 2.0 * k3_w + k4_w) / 6.0;
         if !validate_morris_lecar(&next) {
             return -1;
         }
@@ -141,6 +179,16 @@ pub fn validate_morris_lecar(state: &MorrisLecarNeuron) -> bool {
 mod tests {
     use super::*;
 
+    fn rhs_for_test(n: &MorrisLecarNeuron, v: f64, w: f64, current: f64) -> (f64, f64) {
+        let m_inf = 0.5 * (1.0 + ((v - n.v1) / n.v2).tanh());
+        let w_inf = 0.5 * (1.0 + ((v - n.v3) / n.v4).tanh());
+        let lam = n.phi * ((v - n.v3) / (2.0 * n.v4)).cosh();
+        let i_ca = n.g_ca * m_inf * (v - n.e_ca);
+        let i_k = n.g_k * w * (v - n.e_k);
+        let i_l = n.g_l * (v - n.e_l);
+        ((-i_ca - i_k - i_l + current) / n.c_m, lam * (w_inf - w))
+    }
+
     #[test]
     fn test_morris_lecar_new() {
         let state = MorrisLecarNeuron::new();
@@ -149,19 +197,28 @@ mod tests {
     }
 
     #[test]
-    fn test_morris_lecar_step() {
+    fn test_morris_lecar_step_matches_rk4_current_balance() {
         let mut state = MorrisLecarNeuron::new();
         let v0 = state.v;
         let w0 = state.w;
         let current = 50.0;
-        let m_inf = 0.5 * (1.0 + ((v0 - state.v1) / state.v2).tanh());
-        let w_inf = 0.5 * (1.0 + ((v0 - state.v3) / state.v4).tanh());
-        let lam = state.phi * ((v0 - state.v3) / (2.0 * state.v4)).cosh();
-        let i_ca = state.g_ca * m_inf * (v0 - state.e_ca);
-        let i_k = state.g_k * w0 * (v0 - state.e_k);
-        let i_l = state.g_l * (v0 - state.e_l);
-        let expected_v = v0 + (-i_ca - i_k - i_l + current) / state.c_m * state.dt;
-        let expected_w = w0 + lam * (w_inf - w0) * state.dt;
+        let (k1_v, k1_w) = rhs_for_test(&state, v0, w0, current);
+        let (k2_v, k2_w) = rhs_for_test(
+            &state,
+            v0 + 0.5 * state.dt * k1_v,
+            w0 + 0.5 * state.dt * k1_w,
+            current,
+        );
+        let (k3_v, k3_w) = rhs_for_test(
+            &state,
+            v0 + 0.5 * state.dt * k2_v,
+            w0 + 0.5 * state.dt * k2_w,
+            current,
+        );
+        let (k4_v, k4_w) =
+            rhs_for_test(&state, v0 + state.dt * k3_v, w0 + state.dt * k3_w, current);
+        let expected_v = v0 + state.dt * (k1_v + 2.0 * k2_v + 2.0 * k3_v + k4_v) / 6.0;
+        let expected_w = w0 + state.dt * (k1_w + 2.0 * k2_w + 2.0 * k3_w + k4_w) / 6.0;
 
         let spike = state.step(current);
 

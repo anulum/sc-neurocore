@@ -45,6 +45,24 @@ function _lam(s::MorrisLecarNeuronState, v)
     return s.phi * cosh((v - s.v3) / (2.0 * s.v4))
 end
 
+function _rhs(s::MorrisLecarNeuronState, v, w, I_ext)
+    if !(isfinite(v) && isfinite(w) && isfinite(I_ext) && 0.0 <= w <= 1.0)
+        return nothing
+    end
+    m_inf = _m_inf(s, v)
+    w_inf = _w_inf(s, v)
+    lam = _lam(s, v)
+    if !(isfinite(m_inf) && isfinite(w_inf) && isfinite(lam))
+        return nothing
+    end
+    i_ca = s.g_ca * m_inf * (v - s.e_ca)
+    i_k = s.g_k * w * (v - s.e_k)
+    i_l = s.g_l * (v - s.e_l)
+    dv = (-i_ca - i_k - i_l + I_ext) / s.c_m
+    dw = lam * (w_inf - w)
+    return (isfinite(dv) && isfinite(dw)) ? (dv, dw) : nothing
+end
+
 function _valid(s::MorrisLecarNeuronState)
     values = (
         s.v, s.w, s.c_m, s.g_ca, s.g_k, s.g_l, s.e_ca, s.e_k, s.e_l,
@@ -68,15 +86,25 @@ function step!(s::MorrisLecarNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
     end
 
     v_prev = s.v
-    m_inf = _m_inf(s, s.v)
-    w_inf = _w_inf(s, s.v)
-    lam = _lam(s, s.v)
-    i_ca = s.g_ca * m_inf * (s.v - s.e_ca)
-    i_k = s.g_k * s.w * (s.v - s.e_k)
-    i_l = s.g_l * (s.v - s.e_l)
+    k1 = _rhs(s, s.v, s.w, I_ext)
+    if k1 === nothing
+        return -1
+    end
+    k2 = _rhs(s, s.v + 0.5 * dt * k1[1], s.w + 0.5 * dt * k1[2], I_ext)
+    if k2 === nothing
+        return -1
+    end
+    k3 = _rhs(s, s.v + 0.5 * dt * k2[1], s.w + 0.5 * dt * k2[2], I_ext)
+    if k3 === nothing
+        return -1
+    end
+    k4 = _rhs(s, s.v + dt * k3[1], s.w + dt * k3[2], I_ext)
+    if k4 === nothing
+        return -1
+    end
     candidate = MorrisLecarNeuronState(
-        s.v + (-i_ca - i_k - i_l + I_ext) / s.c_m * dt,
-        s.w + lam * (w_inf - s.w) * dt,
+        s.v + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+        s.w + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
         s.c_m, s.g_ca, s.g_k, s.g_l, s.e_ca, s.e_k, s.e_l,
         s.v1, s.v2, s.v3, s.v4, s.phi, dt, s.v_threshold,
     )

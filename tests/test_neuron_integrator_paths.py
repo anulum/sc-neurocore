@@ -262,13 +262,13 @@ def test_fitzhugh_nagumo_rosenbrock_path_tracks_rk4_and_stays_finite():
     assert abs(candidate.w - reference.w) < 0.2
 
 
-def test_default_integrators_match_historical_paths():
+def test_default_integrators_match_maintained_paths():
     hh_default = HodgkinHuxleyNeuron(dt=0.01)
     hh_baseline = HodgkinHuxleyNeuron(dt=0.01, integrator="baseline_euler")
     adex_default = AdExNeuron(dt=0.1)
     adex_baseline = AdExNeuron(dt=0.1, integrator="baseline_euler")
     ml_default = MorrisLecarNeuron(dt=0.05)
-    ml_baseline = MorrisLecarNeuron(dt=0.05, integrator="baseline_euler")
+    ml_rk4 = MorrisLecarNeuron(dt=0.05, integrator="rk4")
     fhn_default = FitzHughNagumoNeuron(dt=0.05)
     fhn_baseline = FitzHughNagumoNeuron(dt=0.05, integrator="baseline_euler")
 
@@ -277,13 +277,13 @@ def test_default_integrators_match_historical_paths():
     adex_default_spikes = _count_spikes(adex_default, 500.0, 2000)
     adex_baseline_spikes = _count_spikes(adex_baseline, 500.0, 2000)
     ml_default_spikes = _count_spikes(ml_default, 100.0, 1000)
-    ml_baseline_spikes = _count_spikes(ml_baseline, 100.0, 1000)
+    ml_rk4_spikes = _count_spikes(ml_rk4, 100.0, 1000)
     fhn_default_spikes = _count_spikes(fhn_default, 0.8, 1000)
     fhn_baseline_spikes = _count_spikes(fhn_baseline, 0.8, 1000)
 
     assert hh_default_spikes == hh_baseline_spikes
     assert adex_default_spikes == adex_baseline_spikes
-    assert ml_default_spikes == ml_baseline_spikes
+    assert ml_default_spikes == ml_rk4_spikes
     assert fhn_default_spikes == fhn_baseline_spikes
 
 

@@ -60,15 +60,25 @@ func (s *MorrisLecarNeuronState) Step(current float64) int {
 		return -1
 	}
 	vPrev := s.V
-	mInf := s.mInf(s.V)
-	wInf := s.wInf(s.V)
-	lam := s.lambda(s.V)
-	iCa := s.GCa * mInf * (s.V - s.ECa)
-	iK := s.GK * s.W * (s.V - s.EK)
-	iL := s.GL * (s.V - s.EL)
+	k1V, k1W, ok := s.rhs(s.V, s.W, current)
+	if !ok {
+		return -1
+	}
+	k2V, k2W, ok := s.rhs(s.V+0.5*s.Dt*k1V, s.W+0.5*s.Dt*k1W, current)
+	if !ok {
+		return -1
+	}
+	k3V, k3W, ok := s.rhs(s.V+0.5*s.Dt*k2V, s.W+0.5*s.Dt*k2W, current)
+	if !ok {
+		return -1
+	}
+	k4V, k4W, ok := s.rhs(s.V+s.Dt*k3V, s.W+s.Dt*k3W, current)
+	if !ok {
+		return -1
+	}
 	next := *s
-	next.V += (-iCa - iK - iL + current) / s.CM * s.Dt
-	next.W += lam * (wInf - s.W) * s.Dt
+	next.V += s.Dt * (k1V + 2.0*k2V + 2.0*k3V + k4V) / 6.0
+	next.W += s.Dt * (k1W + 2.0*k2W + 2.0*k3W + k4W) / 6.0
 	if !validateMorrisLecarState(&next) {
 		return -1
 	}
@@ -104,6 +114,27 @@ func (s *MorrisLecarNeuronState) wInf(v float64) float64 {
 
 func (s *MorrisLecarNeuronState) lambda(v float64) float64 {
 	return s.Phi * math.Cosh((v-s.V3)/(2.0*s.V4))
+}
+
+func (s *MorrisLecarNeuronState) rhs(v float64, w float64, current float64) (float64, float64, bool) {
+	if !finiteMorrisLecar(v) || !finiteMorrisLecar(w) || !finiteMorrisLecar(current) || w < 0.0 || w > 1.0 {
+		return 0.0, 0.0, false
+	}
+	mInf := s.mInf(v)
+	wInf := s.wInf(v)
+	lam := s.lambda(v)
+	if !finiteMorrisLecar(mInf) || !finiteMorrisLecar(wInf) || !finiteMorrisLecar(lam) {
+		return 0.0, 0.0, false
+	}
+	iCa := s.GCa * mInf * (v - s.ECa)
+	iK := s.GK * w * (v - s.EK)
+	iL := s.GL * (v - s.EL)
+	dv := (-iCa - iK - iL + current) / s.CM
+	dw := lam * (wInf - w)
+	if !finiteMorrisLecar(dv) || !finiteMorrisLecar(dw) {
+		return 0.0, 0.0, false
+	}
+	return dv, dw, true
 }
 
 func finiteMorrisLecar(value float64) bool {
