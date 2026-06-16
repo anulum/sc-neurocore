@@ -1,6 +1,8 @@
 # GLIFNeuron
 
 **Module:** `sc_neurocore.neurons.models.glif`
+**Rust engine:** `sc_neurocore_engine::neurons::GLIFNeuron`
+**Polyglot `simulate` backends:** Rust engine (PyO3, bit-exact), Julia `GlifAccel`, Go c-shared (`accel/go/neurons/glif`), Mojo FFI (`accel/mojo/neurons/glif.mojo`); standalone Rust safety mirror `GLIFNeuron`
 **Reference:** Teeter, C. et al., Nat. Commun. 9:709, 2018
 **Family:** Allen Institute generalised leaky integrate-and-fire level 5
 **State variables:** `v`, `theta`, `i_asc1`, `i_asc2`
@@ -66,12 +68,12 @@ The non-throwing Go, Julia, Rust engine, and Rust safety mirrors preserve state 
 
 | Surface | Contract |
 | --- | --- |
-| Python | Authoritative reference class with candidate-first RK4 and explicit runtime validation. |
-| Rust engine | PyO3-backed class uses the same RK4 state transition and additive spike reset. |
-| Go service | Service mirror uses the same scalar equations and reference-point tests. |
-| Julia mirror | Scientific mirror uses the same scalar equations and state-preserving invalid-input behaviour. |
-| Rust safety | Standalone safety mirror validates the same state transition and reset semantics. |
-| Mojo | Scalar kernel contract records the GLIF RK4 vector-field semantics for later kernel work. |
+| Python | Authoritative reference class with candidate-first RK4 and explicit runtime validation; also the `simulate` reference loop. |
+| Rust engine | PyO3-backed class uses the same RK4 state transition and additive spike reset, and exposes `py_glif_simulate` for the accelerated N-step path (bit-exact). |
+| Julia | `GlifAccel.simulate_trace` mirrors the N-step RK4 recurrence (bit-exact, linear arithmetic). |
+| Go | `accel/go/neurons/glif` builds a C-ABI shared library (`glif_simulate_c`) loaded via ctypes (bit-exact). |
+| Mojo | `accel/mojo/neurons/glif.mojo` builds an FFI kernel (`glif_simulate_c`); validated non-amplifying within a ULP band (FMA fusion). |
+| Rust safety | Standalone safety mirror validates the same single-`step` state transition and reset semantics. |
 
 ## Behavioural invariants
 
@@ -102,30 +104,55 @@ let spikes: i32 = (0..1000).map(|_| neuron.step(40.0)).sum();
 println!("{spikes} {} {} {} {}", neuron.v, neuron.theta, neuron.i_asc1, neuron.i_asc2);
 ```
 
-## Benchmark evidence
+## Polyglot acceleration
 
-Generated locally on 2026-06-01 with:
+A single `step` is trivial, but an N-step run is a sequential RK4 recurrence
+with a discontinuous spike reset that does not vectorise, so a compiled inner
+loop genuinely beats Python. `simulate(n_steps, current, backend="auto")`
+dispatches across the polyglot chain and returns `(trace, spikes)`:
 
-```bash
-PYTHONPATH=src .venv/bin/python benchmarks/bench_glif.py
+```python
+from sc_neurocore.neurons.models.glif import GLIFNeuron
+
+neuron = GLIFNeuron()
+trace, spikes = neuron.simulate(2_000_000, current=30.0)   # auto → Rust
 ```
 
-Evidence file: `benchmarks/results/bench_glif.json`
+The Allen GLIF5 right-hand side is purely linear — additions, multiplications
+and divisions, no transcendental functions — so every RK4 stage is exact
+arithmetic. The Rust engine, Julia and Go backends therefore reproduce the
+NumPy reference **bit-for-bit**: trace, spike count and the final
+`(v, theta, i_asc1, i_asc2)` state all match exactly. Mojo fuses multiply-add;
+on this platform it also matches bit-for-bit, but because FMA fusion is
+compiler/version dependent it is validated as non-amplifying within a tight ULP
+band (with identical spike counts) rather than asserted strictly exact. `auto`
+selects Rust (the bit-exact backend shipped in the wheel).
 
-| Backend | Steps/s | Wall ms for 100000 steps | Relative speed |
-| --- | ---: | ---: | ---: |
-| Python | 185536 | 538.98 | 1.00x |
-| Rust PyO3 | 5149511 | 19.42 | 27.75x |
+### Measured throughput
 
-Parity evidence over 10000 steps: `max_abs_delta = 0.0`, `spikes_delta = 0`.
+2,000,000 RK4 steps, default tonic regime (`current=30.0`), median of 5
+repeats. Non-isolated loaded workstation per
+`BROADCAST_2026-06-04_benchmark_core_isolation` — functional/regression
+evidence, not an isolated-core figure. Reproduce with
+`python benchmarks/bench_glif_simulate.py`.
+
+| Backend | Median (ms) | Speed-up vs Python | Whole-trace parity |
+|---------|------------:|-------------------:|--------------------|
+| python  | 2316.01 | 1.0× | reference |
+| go      | 81.67 | 28.4× | bit-exact (0) |
+| mojo    | 88.34 | 26.2× | 0 measured (FMA, ULP-validated) |
+| rust (`auto`) | 89.08 | 26.0× | bit-exact (0) |
+| julia   | 92.17 | 25.1× | bit-exact (0) |
+
+Artefact: `benchmarks/results/bench_glif_simulate.json`.
 
 ## Verification commands
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m pytest tests/test_model_glif.py -q
-(cd src/sc_neurocore/accel/go && go test ./services -run 'GLIF')
-rustc --test src/sc_neurocore/accel/rust/safety/glif.rs -o /tmp/sc_neurocore_glif_safety && /tmp/sc_neurocore_glif_safety
+PYTHONPATH=src .venv/bin/python -m pytest tests/test_glif_backends.py -q
 cargo test --manifest-path engine/Cargo.toml glif_ --release
-.venv/bin/python -m maturin develop --manifest-path engine/Cargo.toml --release
-PYTHONPATH=src .venv/bin/python benchmarks/bench_glif.py
+(cd src/sc_neurocore/accel/go/neurons/glif && go build -buildmode=c-shared -o libglif.so glif.go)
+(cd src/sc_neurocore/accel/mojo/neurons && mojo build --emit shared-lib -o libglif.so glif.mojo)
+PYTHONPATH=src .venv/bin/python benchmarks/bench_glif_simulate.py --json benchmarks/results/bench_glif_simulate.json
 ```

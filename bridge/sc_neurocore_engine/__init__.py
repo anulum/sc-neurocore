@@ -540,6 +540,16 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_glif_simulate,
+    )
+
+    __all__ += ["py_glif_simulate"]
+    _glif_rust_available = True
+except ImportError:
+    _glif_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_rulkov_map_simulate,
     )
 

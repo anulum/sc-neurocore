@@ -52,6 +52,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   Julia/Go/Mojo backends, cross-backend parity tests, a multi-language benchmark
   with a committed artefact, and a documentation upgrade; replaced the decorative
   `accel/go/services` and `accel/mojo/kernels` stubs with real backends.
+- Added the polyglot N-step `simulate(n_steps, current, backend=...)` chain for
+  `GLIFNeuron` (Allen Institute GLIF5 generalised leaky integrate-and-fire model)
+  across python / rust / julia / go / mojo. The four-state
+  `(v, theta, i_asc1, i_asc2)` right-hand side is purely linear (no transcendental
+  functions), advanced by candidate-first RK4 with an additive threshold spike
+  reset, so Rust, Julia and Go reproduce the NumPy reference bit-for-bit (trace,
+  spike count, final state); the Mojo backend fuses multiply-add and is validated
+  non-amplifying within a ULP band. Added the Rust engine `simulate` + PyO3
+  `py_glif_simulate`, the Julia/Go/Mojo backends, cross-backend parity tests, a
+  multi-language benchmark with a committed artefact, and a documentation upgrade;
+  replaced the decorative `accel/go/services` and `accel/mojo/kernels` stubs with
+  real backends.
 
 ## [3.15.34] - 2026-06-15
 

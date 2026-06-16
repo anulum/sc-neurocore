@@ -1686,6 +1686,22 @@ impl GLIFNeuron {
             0
         }
     }
+
+    /// Run `n_steps` of the candidate-first RK4 recurrence under a constant
+    /// `current`, recording the membrane voltage after every step.
+    ///
+    /// Reuses [`step`] verbatim so the compiled inner loop is bit-identical to
+    /// the per-step path; returns the voltage trace and the total spike count.
+    pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+        let mut trace = Vec::with_capacity(n_steps);
+        let mut spikes: i64 = 0;
+        for _ in 0..n_steps {
+            spikes += i64::from(self.step(current));
+            trace.push(self.v);
+        }
+        (trace, spikes)
+    }
+
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.theta = self.theta_inf;
