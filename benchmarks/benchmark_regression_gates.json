@@ -248,6 +248,47 @@
       ]
     },
     {
+      "artefact": "benchmarks/results/local_python_2026-06-16_theta_exact_flow.json",
+      "expected_values": {
+        "spdx_license": "AGPL-3.0-or-later",
+        "benchmark": "ThetaNeuron tangent-half-angle exact constant-current flow step",
+        "evidence_class": "local_regression_non_isolated",
+        "production_speed_claim": false,
+        "backend_summary.mojo.skipped": true
+      },
+      "id": "theta-exact-flow-multibackend-local-regression",
+      "required_numbers": [
+        "backend_summary.python.median_ns_per_step",
+        "backend_summary.python.min_ns_per_step",
+        "backend_summary.python.max_ns_per_step",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ns_per_step",
+        "backend_summary.rust.min_ns_per_step",
+        "backend_summary.rust.max_ns_per_step",
+        "backend_summary.rust.spikes",
+        "backend_summary.go.median_ns_per_step",
+        "backend_summary.go.min_ns_per_step",
+        "backend_summary.go.max_ns_per_step",
+        "backend_summary.go.spikes",
+        "backend_summary.julia.median_ns_per_step",
+        "backend_summary.julia.min_ns_per_step",
+        "backend_summary.julia.max_ns_per_step",
+        "backend_summary.julia.spikes",
+        "steps",
+        "repeats",
+        "current"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_model_theta.py": "source_hashes.benchmarks/bench_model_theta.py",
+        "src/sc_neurocore/neurons/models/theta.py": "source_hashes.src/sc_neurocore/neurons/models/theta.py",
+        "engine/src/neurons/trivial.rs": "source_hashes.engine/src/neurons/trivial.rs",
+        "src/sc_neurocore/accel/go/services/theta.go": "source_hashes.src/sc_neurocore/accel/go/services/theta.go",
+        "src/sc_neurocore/accel/go/services/theta_test.go": "source_hashes.src/sc_neurocore/accel/go/services/theta_test.go",
+        "src/sc_neurocore/accel/julia/neurons/theta.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/theta.jl",
+        "src/sc_neurocore/accel/mojo/kernels/theta.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/theta.mojo"
+      }
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-04_ultrascale_plus_target.json",
       "description": "NEU-C.1 Zynq UltraScale+ Vivado-project target-contract evidence.",
       "expected_values": {

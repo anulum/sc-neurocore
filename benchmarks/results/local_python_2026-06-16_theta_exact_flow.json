@@ -6,7 +6,7 @@
   "orcid": "0009-0009-3560-0851",
   "contact": "www.anulum.li | protoscience@anulum.li",
   "benchmark": "ThetaNeuron tangent-half-angle exact constant-current flow step",
-  "timestamp_utc": "2026-06-16T20:48:22+00:00",
+  "timestamp_utc": "2026-06-16T21:24:34+00:00",
   "command": "PYTHONPATH=src ./.venv/bin/python benchmarks/bench_model_theta.py",
   "evidence_class": "local_regression_non_isolated",
   "production_speed_claim": false,
@@ -20,55 +20,62 @@
   "results": [
     {
       "backend": "python",
-      "median_ns_per_step": 889.172275,
-      "min_ns_per_step": 816.947935,
-      "max_ns_per_step": 933.067915,
+      "median_ns_per_step": 792.349765,
+      "min_ns_per_step": 788.321145,
+      "max_ns_per_step": 821.144025,
+      "spikes": [
+        450,
+        450,
+        450,
+        450,
+        450
+      ],
       "results": [
         {
           "backend": "python",
           "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 177834455,
-          "ns_per_step": 889.172275,
+          "elapsed_ns": 158469953,
+          "ns_per_step": 792.349765,
           "spikes": 450
         },
         {
           "backend": "python",
           "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 186613583,
-          "ns_per_step": 933.067915,
+          "elapsed_ns": 158456483,
+          "ns_per_step": 792.282415,
           "spikes": 450
         },
         {
           "backend": "python",
           "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 176657598,
-          "ns_per_step": 883.28799,
+          "elapsed_ns": 157664229,
+          "ns_per_step": 788.321145,
           "spikes": 450
         },
         {
           "backend": "python",
           "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 163389587,
-          "ns_per_step": 816.947935,
+          "elapsed_ns": 159668345,
+          "ns_per_step": 798.341725,
           "spikes": 450
         },
         {
           "backend": "python",
           "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 182936428,
-          "ns_per_step": 914.68214,
+          "elapsed_ns": 164228805,
+          "ns_per_step": 821.144025,
           "spikes": 450
         }
       ]
     },
     {
       "backend": "rust",
-      "timestamp_unix": 1781642903,
+      "timestamp_unix": 1781645071,
       "command": "cargo run --manifest-path engine/Cargo.toml --example bench_theta_exact_flow",
       "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
       "target_os": "linux",
@@ -79,10 +86,10 @@
         "cpu_affinity": "0-11",
         "cgroup_effective_cpuset": "unavailable",
         "runtime_cpuset_shield_claimed": false,
-        "load_average_before": "7.25 5.94 7.69 3/5336 1197625",
-        "load_average_after": "7.25 5.94 7.69 2/5337 1197636",
+        "load_average_before": "2.95 3.84 4.52 2/5846 1349639",
+        "load_average_after": "2.95 3.84 4.52 1/5847 1349654",
         "cpu_governor": "powersave",
-        "cpu_frequency_mhz": "min=4588.807,max=4606.084,sampled_cpu_count=12",
+        "cpu_frequency_mhz": "min=1795.862,max=4816.439,sampled_cpu_count=12",
         "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
         "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
         "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
@@ -90,15 +97,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 0.5,
-      "median_ns_per_step": 91.60734,
-      "min_ns_per_step": 90.318735,
-      "max_ns_per_step": 109.14571,
+      "median_ns_per_step": 89.432905,
+      "min_ns_per_step": 89.102555,
+      "max_ns_per_step": 90.352955,
       "results_ns_per_step": [
-        109.14571,
-        101.271365,
-        90.318735,
-        91.0505,
-        91.60734
+        90.352955,
+        89.13806,
+        89.434815,
+        89.432905,
+        89.102555
       ],
       "spike_counts": [
         450,
@@ -122,16 +129,17 @@
       "steps": 200000,
       "repeats": 5,
       "current": 0.5,
-      "median_ns_per_step": 96.24,
-      "min_ns_per_step": 95.44,
-      "max_ns_per_step": 97.21,
+      "median_ns_per_step": 94.89,
+      "min_ns_per_step": 94.67,
+      "max_ns_per_step": 97.1,
       "results_ns_per_step": [
-        96.24,
-        95.44,
-        95.89,
-        97.21,
-        96.48
-      ]
+        94.7,
+        94.67,
+        94.89,
+        95.92,
+        97.1
+      ],
+      "spikes": 450
     },
     {
       "backend": "julia",
@@ -139,15 +147,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 0.5,
-      "median_ns_per_step": 93.079455,
-      "min_ns_per_step": 92.723025,
-      "max_ns_per_step": 94.184555,
+      "median_ns_per_step": 91.808745,
+      "min_ns_per_step": 91.277715,
+      "max_ns_per_step": 92.29462,
       "results_ns_per_step": [
-        94.184555,
-        92.723025,
-        93.079455,
-        93.2123,
-        93.06591
+        92.29462,
+        91.979595,
+        91.634505,
+        91.808745,
+        91.277715
       ],
       "spike_counts": [
         450,
@@ -162,12 +170,72 @@
         0.7322706365983036,
         0.7322706365983036,
         0.7322706365983036
-      ]
+      ],
+      "spikes": 450
     },
     {
       "backend": "mojo",
       "skipped": true,
       "reason": "Mojo theta surface is a spike-kernel mirror without a stateful benchmark hook"
     }
-  ]
+  ],
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 792.349765,
+      "min_ns_per_step": 788.321145,
+      "max_ns_per_step": 821.144025,
+      "spikes": 450
+    },
+    "rust": {
+      "median_ns_per_step": 89.432905,
+      "min_ns_per_step": 89.102555,
+      "max_ns_per_step": 90.352955,
+      "spikes": 450
+    },
+    "go": {
+      "median_ns_per_step": 94.89,
+      "min_ns_per_step": 94.67,
+      "max_ns_per_step": 97.1,
+      "spikes": 450
+    },
+    "julia": {
+      "median_ns_per_step": 91.808745,
+      "min_ns_per_step": 91.277715,
+      "max_ns_per_step": 92.29462,
+      "spikes": 450
+    },
+    "mojo": {
+      "skipped": true
+    }
+  },
+  "source_hashes": {
+    "benchmarks/bench_model_theta.py": "0e7bfaea7a72501416667b810126a18d1bd96705a9cbd5f0a9c5c77d36114a76",
+    "src/sc_neurocore/neurons/models/theta.py": "7fa6736b2e1b6c425dae49b7844b50032ae96e59f51a97b6a311bf5c47e9f752",
+    "engine/src/neurons/trivial.rs": "790ec361ca40899676e66e1e4d581a4bf68666239548be935d40119c6dd613b1",
+    "src/sc_neurocore/accel/go/services/theta.go": "f569b96aa7d99ff6a65c6010a7630ae533e0fc08eb5c732ef62ee8ddafc84480",
+    "src/sc_neurocore/accel/go/services/theta_test.go": "fc20379b199a4d3e32b50fd774aea53eceb0bd5787cca70fda0deee0cb1717a8",
+    "src/sc_neurocore/accel/julia/neurons/theta.jl": "c59028502154a237fc6ae155323e529f0dc6c63bb8cdc31b7a0a5debb310250f",
+    "src/sc_neurocore/accel/mojo/kernels/theta.mojo": "ac61ff3b5d84337229f83d4ffab0ac1a936a06dfe194235d70b746fe5e6b4dae",
+    "benchmarks/bench_model_theta": {
+      "py": "0e7bfaea7a72501416667b810126a18d1bd96705a9cbd5f0a9c5c77d36114a76"
+    },
+    "src/sc_neurocore/neurons/models/theta": {
+      "py": "7fa6736b2e1b6c425dae49b7844b50032ae96e59f51a97b6a311bf5c47e9f752"
+    },
+    "engine/src/neurons/trivial": {
+      "rs": "790ec361ca40899676e66e1e4d581a4bf68666239548be935d40119c6dd613b1"
+    },
+    "src/sc_neurocore/accel/go/services/theta": {
+      "go": "f569b96aa7d99ff6a65c6010a7630ae533e0fc08eb5c732ef62ee8ddafc84480"
+    },
+    "src/sc_neurocore/accel/go/services/theta_test": {
+      "go": "fc20379b199a4d3e32b50fd774aea53eceb0bd5787cca70fda0deee0cb1717a8"
+    },
+    "src/sc_neurocore/accel/julia/neurons/theta": {
+      "jl": "c59028502154a237fc6ae155323e529f0dc6c63bb8cdc31b7a0a5debb310250f"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/theta": {
+      "mojo": "ac61ff3b5d84337229f83d4ffab0ac1a936a06dfe194235d70b746fe5e6b4dae"
+    }
+  }
 }
