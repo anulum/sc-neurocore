@@ -38,19 +38,26 @@ class ExpIFNeuron:
             if not math.isfinite(value) or value <= 0.0:
                 raise ValueError(f"{field} must be finite and positive")
 
+    def _rhs(self, v: float, current: float) -> float:
+        exp_term = self.delta_t * np.exp(np.clip((v - self.v_rh) / self.delta_t, -20.0, 20.0))
+        rhs = (-(v - self.v_rest) + exp_term + current) / self.tau
+        if not math.isfinite(rhs):
+            raise ValueError("RK4 derivative must remain finite")
+        return float(rhs)
+
     def step(self, current: float) -> int:
         if not math.isfinite(self.v):
             raise ValueError("runtime voltage state must be finite")
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         with np.errstate(over="ignore", invalid="ignore"):
-            exp_term = self.delta_t * np.exp(
-                np.clip((self.v - self.v_rh) / self.delta_t, -20.0, 20.0)
-            )
-            dv = (-(self.v - self.v_rest) + exp_term + current) / self.tau * self.dt
-            next_v = self.v + dv
+            k1 = self._rhs(self.v, current)
+            k2 = self._rhs(self.v + 0.5 * self.dt * k1, current)
+            k3 = self._rhs(self.v + 0.5 * self.dt * k2, current)
+            k4 = self._rhs(self.v + self.dt * k3, current)
+            next_v = self.v + self.dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0
         if not math.isfinite(next_v):
-            raise ValueError("Euler update must remain finite")
+            raise ValueError("RK4 update must remain finite")
 
         self.v = next_v
 

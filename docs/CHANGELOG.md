@@ -6,6 +6,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Replaced `ExpIFNeuron` raw Euler mutation with candidate-first RK4 across the
+  maintained Python reference, Rust engine, Go service, Julia mirror, and Mojo
+  mirror. The Fourcaud-Trocmé EIF ODE and hard reset are unchanged; all surfaces
+  now reject non-finite RK4 derivatives/candidates before mutation. Added focused
+  Python/Rust/Go RK4 tests, a Go benchmark hook, a local non-isolated Python RK4
+  regression artifact, and refreshed the public model documentation.
 - Added the polyglot N-step `simulate(n_steps, current, backend=...)` chain for
   `McKeanNeuron` (McKean 1970 piecewise-linear FitzHugh-Nagumo caricature) across
   python / rust / julia / go / mojo. The piecewise-linear RK4 right-hand side is

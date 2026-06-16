@@ -25,11 +25,13 @@ def step(self, current: float) -> int:
         raise ValueError("runtime voltage state must be finite")
     if not math.isfinite(current):
         raise ValueError("current must be finite")
-    exp_term = self.delta_t * np.exp(np.clip((self.v - self.v_rh) / self.delta_t, -20, 20))
-    dv = (-(self.v - self.v_rest) + exp_term + current) / self.tau * self.dt
-    next_v = self.v + dv
+    k1 = self._rhs(self.v, current)
+    k2 = self._rhs(self.v + 0.5 * self.dt * k1, current)
+    k3 = self._rhs(self.v + 0.5 * self.dt * k2, current)
+    k4 = self._rhs(self.v + self.dt * k3, current)
+    next_v = self.v + self.dt * (k1 + 2*k2 + 2*k3 + k4) / 6
     if not math.isfinite(next_v):
-        raise ValueError("Euler update must remain finite")
+        raise ValueError("RK4 update must remain finite")
     self.v = next_v
     if self.v >= self.v_threshold:
         self.v = self.v_reset
@@ -37,11 +39,12 @@ def step(self, current: float) -> int:
     return 0
 ```
 
-Forward Euler, single step. The exp() argument is clipped to [−20, 20]
-to prevent IEEE overflow. Runtime validation is fail-closed across the
-maintained Python reference and native safety entry points: non-finite current,
-corrupted voltage state, invalid time constants, and non-finite Euler
-candidates are rejected before membrane state mutation. This is the
+Candidate-first fourth-order Runge-Kutta (RK4), single macro-step. The exp()
+argument is clipped to [−20, 20] to prevent IEEE overflow. Runtime validation
+is fail-closed across the maintained Python reference and native safety entry
+points: non-finite current, corrupted voltage state, invalid time constants,
+and non-finite RK4 derivatives or candidates are rejected before membrane state
+mutation. This is the
 **Exponential Integrate-and-Fire** (EIF) — the AdEx without the adaptation
 current w.
 
@@ -475,15 +478,35 @@ for dt_val in [0.5, 1.0, 2.0, 5.0, 10.0]:
 
 | File | Lines | Description |
 |------|-------|-------------|
-| `src/sc_neurocore/neurons/models/expif.py` | ~39 | Python reference |
-| `engine/src/neurons/trivial.rs` | (shared) | Rust implementation |
-| `tests/test_model_expif.py` | ~300 | 28 tests |
+| `src/sc_neurocore/neurons/models/expif.py` | Python candidate-first RK4 reference |
+| `engine/src/neuron.rs` | Rust engine RK4 mirror |
+| `src/sc_neurocore/accel/go/services/expif.go` | Go service RK4 mirror |
+| `src/sc_neurocore/accel/julia/neurons/expif.jl` | Julia RK4 mirror |
+| `src/sc_neurocore/accel/mojo/kernels/expif.mojo` | Mojo RK4 mirror |
+| `tests/test_model_expif.py` | Python RK4, validation, dynamics, and pipeline checks |
+| `src/sc_neurocore/accel/go/services/expif_test.go` | Go RK4 reference and invalid-update checks |
 
 ---
 
 ## Performance Benchmarks
 
-### Criterion benchmarks (local i5-11600K, measured 2026-04-05)
+### RK4 local regression benchmark (measured 2026-06-16)
+
+Reproduce with:
+
+```bash
+PYTHONPATH=src ./.venv/bin/python benchmarks/bench_model_expif.py
+```
+
+Artifact: `benchmarks/results/local_python_2026-06-16_expif_rk4.json`.
+Rust PyO3 timing is opt-in via `SC_NEUROCORE_BENCH_RUST_PYO3=1` after
+rebuilding/installing the local engine wheel, so the committed artifact does not
+mix new Python source with a possibly stale installed Rust extension.
+
+This is **non-isolated local regression evidence** on a loaded workstation. It
+must not be promoted as a production speed claim without an isolated-core rerun.
+
+### Historical Criterion benchmarks (local i5-11600K, measured 2026-04-05)
 
 | Metric | Value |
 |--------|-------|
@@ -498,8 +521,9 @@ for dt_val in [0.5, 1.0, 2.0, 5.0, 10.0]:
 |--------|-------|
 | Isolation | ~220K steps/s |
 
-Rust achieves a **190× speedup** over Python. The model is fast —
-1 exp() + 1 clip per step, single Euler update.
+The historical numbers measured the older one-stage Euler path. The maintained
+production path now evaluates four EIF derivative stages per macro-step, so the
+old speedup is retained only as historical context.
 
 ---
 
@@ -513,9 +537,10 @@ Rust achieves a **190× speedup** over Python. The model is fast —
 - **No refractory period:** Only the reset to V_reset < V_rest
   provides a brief relative refractory effect. No explicit
   absolute refractory period.
-- **Forward Euler only:** The exponential term can cause large
-  voltage jumps near threshold. Sub-stepping or implicit methods
-  would improve accuracy.
+- **Explicit RK4:** The exponential term can still create sharp threshold
+  approaches, but the maintained path no longer uses a raw one-stage Euler
+  mutation. Implicit methods remain a possible future upgrade for very large
+  timesteps.
 - **Single compartment:** No dendritic processing, no axonal
   conduction delay.
 - **No synaptic dynamics:** Input current is instantaneous —

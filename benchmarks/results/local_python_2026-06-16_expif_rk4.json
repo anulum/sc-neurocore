@@ -1,0 +1,84 @@
+{
+  "benchmark": "ExpIFNeuron candidate-first RK4 step",
+  "command": "PYTHONPATH=src ./.venv/bin/python benchmarks/bench_model_expif.py",
+  "current": 20.0,
+  "evidence_class": "local_regression_non_isolated",
+  "isolation": "non-isolated loaded workstation",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "production_speed_claim": false,
+  "python": "3.12.3",
+  "repeats": 5,
+  "results": [
+    {
+      "backend": "python",
+      "max_ns_per_step": 20746.996045,
+      "median_ns_per_step": 18354.14708,
+      "min_ns_per_step": 17169.028145,
+      "results": [
+        {
+          "backend": "python",
+          "current": 20.0,
+          "elapsed_ns": 3440812880,
+          "ns_per_step": 17204.0644,
+          "spikes": 881,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 20.0,
+          "elapsed_ns": 3433805629,
+          "ns_per_step": 17169.028145,
+          "spikes": 881,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 20.0,
+          "elapsed_ns": 4149399209,
+          "ns_per_step": 20746.996045,
+          "spikes": 881,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 20.0,
+          "elapsed_ns": 3805541115,
+          "ns_per_step": 19027.705575,
+          "spikes": 881,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 20.0,
+          "elapsed_ns": 3670829416,
+          "ns_per_step": 18354.14708,
+          "spikes": 881,
+          "steps": 200000
+        }
+      ]
+    },
+    {
+      "backend": "rust_pyo3",
+      "reason": "set SC_NEUROCORE_BENCH_RUST_PYO3=1 after rebuilding/installing the local engine wheel",
+      "skipped": true
+    },
+    {
+      "backend": "go",
+      "reason": "covered by focused Go RK4 test and benchmark hook; not loaded through Python FFI",
+      "skipped": true
+    },
+    {
+      "backend": "julia",
+      "reason": "covered by Julia source mirror; not loaded by this local Python benchmark",
+      "skipped": true
+    },
+    {
+      "backend": "mojo",
+      "reason": "non-authoritative Mojo kernel mirror aligned; no shared library benchmark hook",
+      "skipped": true
+    }
+  ],
+  "steps": 200000,
+  "timestamp_utc": "2026-06-16T14:57:21+00:00"
+}

@@ -450,10 +450,38 @@ impl ExpIfNeuron {
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
-        let exp_arg = ((self.v - self.v_rh) * self.inv_delta_t).clamp(-20.0, 20.0);
-        let exp_term = self.delta_t * exp_arg.exp();
-        let dv = (-(self.v - self.v_rest) + exp_term + current) * self.dt_div_tau;
-        self.v += dv;
+        if !self.v.is_finite()
+            || !current.is_finite()
+            || !self.v_rest.is_finite()
+            || !self.v_reset.is_finite()
+            || !self.v_threshold.is_finite()
+            || !self.v_rh.is_finite()
+            || !self.delta_t.is_finite()
+            || !self.tau.is_finite()
+            || !self.dt.is_finite()
+            || self.delta_t <= 0.0
+            || self.tau <= 0.0
+            || self.dt <= 0.0
+        {
+            return 0;
+        }
+
+        self.inv_delta_t = 1.0 / self.delta_t;
+        self.dt_div_tau = self.dt / self.tau;
+        let k1 = self.rhs(self.v, current);
+        let k2 = self.rhs(self.v + 0.5 * self.dt * k1, current);
+        let k3 = self.rhs(self.v + 0.5 * self.dt * k2, current);
+        let k4 = self.rhs(self.v + self.dt * k3, current);
+        let next_v = self.v + self.dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
+        if !k1.is_finite()
+            || !k2.is_finite()
+            || !k3.is_finite()
+            || !k4.is_finite()
+            || !next_v.is_finite()
+        {
+            return 0;
+        }
+        self.v = next_v;
 
         if self.v >= self.v_threshold {
             self.v = self.v_reset;
@@ -465,6 +493,12 @@ impl ExpIfNeuron {
 
     pub fn reset(&mut self) {
         self.v = self.v_rest;
+    }
+
+    fn rhs(&self, v: f64, current: f64) -> f64 {
+        let exp_arg = ((v - self.v_rh) * self.inv_delta_t).clamp(-20.0, 20.0);
+        let exp_term = self.delta_t * exp_arg.exp();
+        (-(v - self.v_rest) + exp_term + current) / self.tau
     }
 }
 
@@ -843,6 +877,27 @@ mod tests {
         let mut n = ExpIfNeuron::new();
         let total: i32 = (0..500).map(|_| n.step(0.0)).sum();
         assert_eq!(total, 0);
+    }
+
+    #[test]
+    fn expif_matches_rk4_reference() {
+        let mut n = ExpIfNeuron::new();
+        n.v = -60.0;
+        n.dt = 0.25;
+        n.tau = 20.0;
+        let rhs = |v: f64, s: &ExpIfNeuron, current: f64| {
+            let exp_arg = ((v - s.v_rh) / s.delta_t).clamp(-20.0, 20.0);
+            (-(v - s.v_rest) + s.delta_t * exp_arg.exp() + current) / s.tau
+        };
+        let current = 12.0;
+        let k1 = rhs(n.v, &n, current);
+        let k2 = rhs(n.v + 0.5 * n.dt * k1, &n, current);
+        let k3 = rhs(n.v + 0.5 * n.dt * k2, &n, current);
+        let k4 = rhs(n.v + n.dt * k3, &n, current);
+        let expected = n.v + n.dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
+
+        assert_eq!(n.step(current), 0);
+        assert!((n.v - expected).abs() < 1e-12);
     }
 
     // ── Lapicque tests ────────────────────────────────────────────
