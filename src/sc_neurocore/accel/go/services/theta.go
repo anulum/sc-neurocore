@@ -29,33 +29,66 @@ func NewThetaNeuron() *ThetaNeuronState {
 
 // Valid reports whether the state satisfies the theta phase contract.
 func (s ThetaNeuronState) Valid() bool {
-	return finite(s.Theta) && finite(s.Dt) && s.Dt > 0.0
+	return finiteTheta(s.Theta) && finiteTheta(s.Dt) && s.Dt > 0.0
+}
+
+func finiteTheta(x float64) bool {
+	return !math.IsNaN(x) && !math.IsInf(x, 0)
 }
 
 func wrapTheta(theta float64) float64 {
 	return math.Mod(theta+math.Pi, 2.0*math.Pi) - math.Pi
 }
 
+func (s ThetaNeuronState) exactCandidate(iExt float64) (float64, bool) {
+	y := math.Tan(s.Theta / 2.0)
+	if iExt > 0.0 {
+		rootI := math.Sqrt(iExt)
+		phase := math.Atan(y / rootI)
+		nextPhase := phase + rootI*s.Dt
+		if math.Abs(math.Cos(nextPhase)) <= 1.0e-15 {
+			return -math.Pi, nextPhase >= math.Pi/2.0
+		}
+		return wrapTheta(2.0 * math.Atan(rootI*math.Tan(nextPhase))), nextPhase >= math.Pi/2.0
+	}
+	if iExt == 0.0 {
+		denominator := 1.0 - y*s.Dt
+		if math.Abs(denominator) <= 1.0e-15 {
+			return -math.Pi, true
+		}
+		return wrapTheta(2.0 * math.Atan(y/denominator)), denominator <= 0.0
+	}
+
+	rootI := math.Sqrt(-iExt)
+	if math.Abs(y+rootI) <= 1.0e-15 {
+		return s.Theta, false
+	}
+	ratio := (y - rootI) / (y + rootI)
+	evolved := ratio * math.Exp(2.0*rootI*s.Dt)
+	denominator := 1.0 - evolved
+	spiked := (ratio < 1.0 && evolved >= 1.0) || math.Abs(denominator) <= 1.0e-15
+	if spiked && math.Abs(denominator) <= 1.0e-15 {
+		return -math.Pi, true
+	}
+	return wrapTheta(2.0 * math.Atan(rootI*(1.0+evolved)/denominator)), spiked
+}
+
 // Step advances the neuron by one timestep. Invalid inputs do not mutate state.
 func (s *ThetaNeuronState) Step(iExt float64) (int, error) {
-	if !finite(iExt) || !s.Valid() {
+	if !finiteTheta(iExt) || !s.Valid() {
 		return 0, ErrThetaInvalidState
 	}
 
-	previous := s.Theta
-	cosTheta := math.Cos(s.Theta)
-	dtheta := ((1.0 - cosTheta) + (1.0+cosTheta)*iExt) * s.Dt
-	nextTheta := s.Theta + dtheta
-	if !finite(dtheta) || !finite(nextTheta) {
+	nextTheta, spiked := s.exactCandidate(iExt)
+	if !finiteTheta(nextTheta) {
 		return 0, ErrThetaNonFiniteUpdate
 	}
 
-	spike := 0
-	if previous < math.Pi*0.99 && nextTheta >= math.Pi*0.99 {
-		spike = 1
-	}
 	s.Theta = wrapTheta(nextTheta)
-	return spike, nil
+	if spiked {
+		return 1, nil
+	}
+	return 0, nil
 }
 
 // Reset restores dynamic state without changing parameters.
@@ -83,5 +116,5 @@ func SimulateThetaNeuron(nSteps int, iExt float64) ([]float64, int) {
 
 var (
 	ErrThetaInvalidState    = errors.New("theta state/current must be finite with positive dt")
-	ErrThetaNonFiniteUpdate = errors.New("theta phase increment became non-finite")
+	ErrThetaNonFiniteUpdate = errors.New("theta exact-flow update became non-finite")
 )

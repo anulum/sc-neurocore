@@ -1,0 +1,173 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "commercial_license": "available",
+  "copyright_concepts": "\u00a9 Concepts 1996\u20132026 Miroslav \u0160otek. All rights reserved.",
+  "copyright_code": "\u00a9 Code 2020\u20132026 Miroslav \u0160otek. All rights reserved.",
+  "orcid": "0009-0009-3560-0851",
+  "contact": "www.anulum.li | protoscience@anulum.li",
+  "benchmark": "ThetaNeuron tangent-half-angle exact constant-current flow step",
+  "timestamp_utc": "2026-06-16T20:48:22+00:00",
+  "command": "PYTHONPATH=src ./.venv/bin/python benchmarks/bench_model_theta.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "isolation": "non-isolated loaded workstation",
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 0.5,
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 889.172275,
+      "min_ns_per_step": 816.947935,
+      "max_ns_per_step": 933.067915,
+      "results": [
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 0.5,
+          "elapsed_ns": 177834455,
+          "ns_per_step": 889.172275,
+          "spikes": 450
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 0.5,
+          "elapsed_ns": 186613583,
+          "ns_per_step": 933.067915,
+          "spikes": 450
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 0.5,
+          "elapsed_ns": 176657598,
+          "ns_per_step": 883.28799,
+          "spikes": 450
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 0.5,
+          "elapsed_ns": 163389587,
+          "ns_per_step": 816.947935,
+          "spikes": 450
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 0.5,
+          "elapsed_ns": 182936428,
+          "ns_per_step": 914.68214,
+          "spikes": 450
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "timestamp_unix": 1781642903,
+      "command": "cargo run --manifest-path engine/Cargo.toml --example bench_theta_exact_flow",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "target_os": "linux",
+      "target_arch": "x86_64",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "7.25 5.94 7.69 3/5336 1197625",
+        "load_average_after": "7.25 5.94 7.69 2/5337 1197636",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=4588.807,max=4606.084,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 200000,
+      "repeats": 5,
+      "current": 0.5,
+      "median_ns_per_step": 91.60734,
+      "min_ns_per_step": 90.318735,
+      "max_ns_per_step": 109.14571,
+      "results_ns_per_step": [
+        109.14571,
+        101.271365,
+        90.318735,
+        91.0505,
+        91.60734
+      ],
+      "spike_counts": [
+        450,
+        450,
+        450,
+        450,
+        450
+      ],
+      "final_thetas": [
+        0.7322706365982774,
+        0.7322706365982774,
+        0.7322706365982774,
+        0.7322706365982774,
+        0.7322706365982774
+      ],
+      "driver_command": "cargo run --manifest-path engine/Cargo.toml --example bench_theta_exact_flow"
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/theta.go src/sc_neurocore/accel/go/services/theta_test.go -run ^$ -bench BenchmarkThetaExactFlow$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 0.5,
+      "median_ns_per_step": 96.24,
+      "min_ns_per_step": 95.44,
+      "max_ns_per_step": 97.21,
+      "results_ns_per_step": [
+        96.24,
+        95.44,
+        95.89,
+        97.21,
+        96.48
+      ]
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <theta exact-flow benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 0.5,
+      "median_ns_per_step": 93.079455,
+      "min_ns_per_step": 92.723025,
+      "max_ns_per_step": 94.184555,
+      "results_ns_per_step": [
+        94.184555,
+        92.723025,
+        93.079455,
+        93.2123,
+        93.06591
+      ],
+      "spike_counts": [
+        450,
+        450,
+        450,
+        450,
+        450
+      ],
+      "final_thetas": [
+        0.7322706365983036,
+        0.7322706365983036,
+        0.7322706365983036,
+        0.7322706365983036,
+        0.7322706365983036
+      ]
+    },
+    {
+      "backend": "mojo",
+      "skipped": true,
+      "reason": "Mojo theta surface is a spike-kernel mirror without a stateful benchmark hook"
+    }
+  ]
+}

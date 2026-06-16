@@ -27,23 +27,51 @@ function wrap_phase(theta::Float64)::Float64
     return mod(theta + pi, 2.0 * pi) - pi
 end
 
+function _exact_candidate(s::ThetaNeuronState, I_ext::Float64)
+    y = tan(s.theta / 2.0)
+    if I_ext > 0.0
+        root_i = sqrt(I_ext)
+        phase = atan(y / root_i)
+        next_phase = phase + root_i * s.dt
+        if abs(cos(next_phase)) <= 1.0e-15
+            return -pi, next_phase >= pi / 2.0
+        end
+        return wrap_phase(2.0 * atan(root_i * tan(next_phase))), next_phase >= pi / 2.0
+    elseif I_ext == 0.0
+        denominator = 1.0 - y * s.dt
+        if abs(denominator) <= 1.0e-15
+            return -pi, true
+        end
+        return wrap_phase(2.0 * atan(y / denominator)), denominator <= 0.0
+    end
+
+    root_i = sqrt(-I_ext)
+    if abs(y + root_i) <= 1.0e-15
+        return s.theta, false
+    end
+    ratio = (y - root_i) / (y + root_i)
+    evolved = ratio * exp(2.0 * root_i * s.dt)
+    denominator = 1.0 - evolved
+    spiked = (ratio < 1.0 && evolved >= 1.0) || abs(denominator) <= 1.0e-15
+    if spiked && abs(denominator) <= 1.0e-15
+        return -pi, true
+    end
+    return wrap_phase(2.0 * atan(root_i * (1.0 + evolved) / denominator)), spiked
+end
+
 function step!(s::ThetaNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
-    s.dt = dt
-    if !isfinite(I_ext) || !valid(s)
+    if !all(isfinite, (s.theta, dt, I_ext)) || dt <= 0.0
         throw(DomainError((s.theta, s.dt, I_ext), "Theta state/current must be finite with positive dt"))
     end
 
-    theta_prev = s.theta
-    cos_theta = cos(s.theta)
-    dtheta = ((1.0 - cos_theta) + (1.0 + cos_theta) * I_ext) * s.dt
-    next_theta = s.theta + dtheta
-    if !isfinite(dtheta) || !isfinite(next_theta)
-        throw(DomainError((dtheta, next_theta), "Theta phase increment must remain finite"))
+    s.dt = dt
+    next_theta, spiked = _exact_candidate(s, I_ext)
+    if !isfinite(next_theta)
+        throw(DomainError(next_theta, "Theta exact-flow update became non-finite"))
     end
 
-    spike = (theta_prev < pi * 0.99 && next_theta >= pi * 0.99) ? 1 : 0
     s.theta = wrap_phase(next_theta)
-    return spike
+    return spiked ? 1 : 0
 end
 
 function reset!(s::ThetaNeuronState)::Nothing
