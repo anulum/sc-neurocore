@@ -17,18 +17,26 @@ func closeMorrisLecar(got float64, want float64, tol float64) bool {
 	return math.Abs(got-want) <= tol
 }
 
-func TestMorrisLecarStepMatchesEulerCurrentBalance(t *testing.T) {
+func morrisLecarRhsForTest(state *MorrisLecarNeuronState, v float64, w float64, current float64) (float64, float64) {
+	mInf := 0.5 * (1.0 + math.Tanh((v-state.V1)/state.V2))
+	wInf := 0.5 * (1.0 + math.Tanh((v-state.V3)/state.V4))
+	lam := state.Phi * math.Cosh((v-state.V3)/(2.0*state.V4))
+	iCa := state.GCa * mInf * (v - state.ECa)
+	iK := state.GK * w * (v - state.EK)
+	iL := state.GL * (v - state.EL)
+	return (-iCa - iK - iL + current) / state.CM, lam * (wInf - w)
+}
+
+func TestMorrisLecarStepMatchesRK4CurrentBalance(t *testing.T) {
 	state := NewMorrisLecarNeuron()
 	v0, w0 := state.V, state.W
 	current := 50.0
-	mInf := 0.5 * (1.0 + math.Tanh((v0-state.V1)/state.V2))
-	wInf := 0.5 * (1.0 + math.Tanh((v0-state.V3)/state.V4))
-	lam := state.Phi * math.Cosh((v0-state.V3)/(2.0*state.V4))
-	iCa := state.GCa * mInf * (v0 - state.ECa)
-	iK := state.GK * w0 * (v0 - state.EK)
-	iL := state.GL * (v0 - state.EL)
-	expectedV := v0 + (-iCa-iK-iL+current)/state.CM*state.Dt
-	expectedW := w0 + lam*(wInf-w0)*state.Dt
+	k1V, k1W := morrisLecarRhsForTest(state, v0, w0, current)
+	k2V, k2W := morrisLecarRhsForTest(state, v0+0.5*state.Dt*k1V, w0+0.5*state.Dt*k1W, current)
+	k3V, k3W := morrisLecarRhsForTest(state, v0+0.5*state.Dt*k2V, w0+0.5*state.Dt*k2W, current)
+	k4V, k4W := morrisLecarRhsForTest(state, v0+state.Dt*k3V, w0+state.Dt*k3W, current)
+	expectedV := v0 + state.Dt*(k1V+2.0*k2V+2.0*k3V+k4V)/6.0
+	expectedW := w0 + state.Dt*(k1W+2.0*k2W+2.0*k3W+k4W)/6.0
 
 	state.Step(current)
 
@@ -76,5 +84,15 @@ func TestMorrisLecarRejectsOverflowCandidateWithoutMutation(t *testing.T) {
 	}
 	if state.V != v0 || state.W != w0 {
 		t.Fatalf("overflow candidate mutated: got (%v, %v)", state.V, state.W)
+	}
+}
+
+func BenchmarkMorrisLecarRK4(b *testing.B) {
+	state := NewMorrisLecarNeuron()
+	for i := 0; i < b.N; i++ {
+		state.Step(100.0)
+	}
+	if !finiteMorrisLecar(state.V) || !finiteMorrisLecar(state.W) {
+		b.Fatalf("non-finite final state: (%v, %v)", state.V, state.W)
 	}
 }

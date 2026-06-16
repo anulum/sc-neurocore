@@ -48,8 +48,8 @@ class MorrisLecarNeuron:
     Reference: Morris, C. & Lecar, H. (1981). Biophys. J. 35:193–213.
 
     Integrator options:
-    - ``baseline_euler`` preserves the historical explicit-Euler path
-    - ``rk4`` is an explicit fourth-order path over the same Morris-Lecar ODEs
+    - ``rk4`` is the maintained default fourth-order path over the Morris-Lecar ODEs
+    - ``baseline_euler`` preserves the historical explicit-Euler path for comparison
     - ``rosenbrock`` is a linearly implicit stiff-system path over the same
       conductance equations
     """
@@ -70,7 +70,7 @@ class MorrisLecarNeuron:
     phi: float = 1.0 / 15.0
     dt: float = 0.1
     v_threshold: float = 0.0
-    integrator: Literal["baseline_euler", "rk4", "rosenbrock"] = "baseline_euler"
+    integrator: Literal["baseline_euler", "rk4", "rosenbrock"] = "rk4"
 
     def __post_init__(self) -> None:
         if self.integrator not in {"baseline_euler", "rk4", "rosenbrock"}:

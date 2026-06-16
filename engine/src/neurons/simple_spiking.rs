@@ -193,22 +193,69 @@ impl MorrisLecarNeuron {
             && (0.0..=1.0).contains(&self.w)
     }
 
+    fn m_inf(&self, v: f64) -> f64 {
+        0.5 * (1.0 + ((v - self.v1) / self.v2).tanh())
+    }
+
+    fn w_inf(&self, v: f64) -> f64 {
+        0.5 * (1.0 + ((v - self.v3) / self.v4).tanh())
+    }
+
+    fn lambda(&self, v: f64) -> f64 {
+        self.phi * ((v - self.v3) / (2.0 * self.v4)).cosh()
+    }
+
+    fn rhs(&self, v: f64, w: f64, current: f64) -> Option<(f64, f64)> {
+        if !(v.is_finite() && w.is_finite() && current.is_finite() && (0.0..=1.0).contains(&w)) {
+            return None;
+        }
+        let m_inf = self.m_inf(v);
+        let w_inf = self.w_inf(v);
+        let lam = self.lambda(v);
+        if !(m_inf.is_finite() && w_inf.is_finite() && lam.is_finite()) {
+            return None;
+        }
+        let i_ca = self.g_ca * m_inf * (v - self.e_ca);
+        let i_k = self.g_k * w * (v - self.e_k);
+        let i_l = self.g_l * (v - self.e_l);
+        let dv = (-i_ca - i_k - i_l + current) / self.c_m;
+        let dw = lam * (w_inf - w);
+        if dv.is_finite() && dw.is_finite() {
+            Some((dv, dw))
+        } else {
+            None
+        }
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
         if !self.valid_numeric_contract() || !current.is_finite() {
             return 0;
         }
         let v_prev = self.v;
-        let m_inf = 0.5 * (1.0 + ((self.v - self.v1) / self.v2).tanh());
-        let w_inf = 0.5 * (1.0 + ((self.v - self.v3) / self.v4).tanh());
-        let lam = self.phi * ((self.v - self.v3) / (2.0 * self.v4)).cosh();
-        if !(m_inf.is_finite() && w_inf.is_finite() && lam.is_finite()) {
+        let Some((k1_v, k1_w)) = self.rhs(self.v, self.w, current) else {
             return 0;
-        }
-        let i_ca = self.g_ca * m_inf * (self.v - self.e_ca);
-        let i_k = self.g_k * self.w * (self.v - self.e_k);
-        let i_l = self.g_l * (self.v - self.e_l);
-        let next_v = self.v + (-i_ca - i_k - i_l + current) / self.c_m * self.dt;
-        let next_w = self.w + lam * (w_inf - self.w) * self.dt;
+        };
+        let Some((k2_v, k2_w)) = self.rhs(
+            self.v + 0.5 * self.dt * k1_v,
+            self.w + 0.5 * self.dt * k1_w,
+            current,
+        ) else {
+            return 0;
+        };
+        let Some((k3_v, k3_w)) = self.rhs(
+            self.v + 0.5 * self.dt * k2_v,
+            self.w + 0.5 * self.dt * k2_w,
+            current,
+        ) else {
+            return 0;
+        };
+        let Some((k4_v, k4_w)) =
+            self.rhs(self.v + self.dt * k3_v, self.w + self.dt * k3_w, current)
+        else {
+            return 0;
+        };
+        let next_v = self.v + self.dt * (k1_v + 2.0 * k2_v + 2.0 * k3_v + k4_v) / 6.0;
+        let next_w = self.w + self.dt * (k1_w + 2.0 * k2_w + 2.0 * k3_w + k4_w) / 6.0;
         if !(next_v.is_finite() && next_w.is_finite() && (0.0..=1.0).contains(&next_w)) {
             return 0;
         }
@@ -2197,6 +2244,28 @@ mod tests {
             n.step(200.0);
         }
         assert!(n.v.is_finite());
+    }
+    #[test]
+    fn ml_rk4_separates_from_forward_euler() {
+        let mut n = MorrisLecarNeuron::new();
+        let v0 = n.v;
+        let w0 = n.w;
+        let current = 50.0;
+        let m_inf = 0.5 * (1.0 + ((v0 - n.v1) / n.v2).tanh());
+        let w_inf = 0.5 * (1.0 + ((v0 - n.v3) / n.v4).tanh());
+        let lam = n.phi * ((v0 - n.v3) / (2.0 * n.v4)).cosh();
+        let i_ca = n.g_ca * m_inf * (v0 - n.e_ca);
+        let i_k = n.g_k * w0 * (v0 - n.e_k);
+        let i_l = n.g_l * (v0 - n.e_l);
+        let euler_v = v0 + (-i_ca - i_k - i_l + current) / n.c_m * n.dt;
+        let euler_w = w0 + lam * (w_inf - w0) * n.dt;
+
+        assert_eq!(n.step(current), 0);
+
+        assert!((n.v - euler_v).abs() > 1e-6);
+        assert!((n.w - euler_w).abs() > 1e-8);
+        assert!(n.v.is_finite());
+        assert!((0.0..=1.0).contains(&n.w));
     }
     #[test]
     fn ml_nan_no_panic() {

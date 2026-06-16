@@ -23,7 +23,6 @@ FULL PIPELINE WIRED + PERFORMANCE."""
 from __future__ import annotations
 
 import math
-import os
 import time
 
 import numpy as np
@@ -63,6 +62,7 @@ class TestMLIsolation:
         assert n.v == -60.0 and n.w == 0.0
         assert n.c_m == 20.0 and n.dt == 0.1
         assert n.v_threshold == 0.0
+        assert n.integrator == "rk4"
 
     def test_step_returns_binary(self):
         assert MorrisLecarNeuron().step(0.0) in (0, 1)
@@ -203,7 +203,7 @@ class TestMLAnalytical:
 
     def test_dv_formula_one_step(self):
         """dV = (-I_Ca - I_K - I_L + I) / C_m · dt."""
-        n = MorrisLecarNeuron()
+        n = MorrisLecarNeuron(integrator="baseline_euler")
         v0, w0 = n.v, n.w
         I = 50.0
         m_inf = n._m_inf(v0)
@@ -216,13 +216,25 @@ class TestMLAnalytical:
 
     def test_dw_formula_one_step(self):
         """dw = λ(V)·(w_∞(V) - w) · dt."""
-        n = MorrisLecarNeuron()
+        n = MorrisLecarNeuron(integrator="baseline_euler")
         v0, w0 = n.v, n.w
         lam = n._lam(v0)
         w_inf = n._w_inf(v0)
         expected_dw = lam * (w_inf - w0) * n.dt
         n.step(0.0)
         assert abs((n.w - w0) - expected_dw) < 1e-14
+
+    def test_default_rk4_separates_from_historical_euler(self):
+        default = MorrisLecarNeuron(dt=0.1)
+        baseline = MorrisLecarNeuron(dt=0.1, integrator="baseline_euler")
+        current = 50.0
+
+        default.step(current)
+        baseline.step(current)
+
+        assert default.integrator == "rk4"
+        assert abs(default.v - baseline.v) > 1e-6
+        assert abs(default.w - baseline.w) > 1e-8
 
     def test_current_balance_at_rest(self):
         """Three currents at initial state."""
@@ -365,11 +377,10 @@ class TestMLPerformance:
             n.step(100.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        # 2 tanh + 1 cosh + 3 currents + 2 state updates.
-        # Hosted runners share CPUs and can transiently drop below the
-        # workstation floor; keep the local contract strict and use a
-        # CI floor that still catches order-of-magnitude regressions.
-        min_rate = 30_000 if os.getenv("CI") else 50_000
+        # Default RK4 evaluates the conductance RHS four times per step.
+        # Hosted runners and the local workstation can share CPUs; this is
+        # a regression guard, not an isolated benchmark claim.
+        min_rate = 20_000
         assert rate > min_rate, f"isolation: {rate:.0f} steps/s"
 
     def test_network_throughput(self):

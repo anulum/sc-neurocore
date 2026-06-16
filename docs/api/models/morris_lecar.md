@@ -69,32 +69,28 @@ The baseline Euler implementation computes $m_\infty$, $w_\infty$, and
 $\lambda$ from the old voltage, then updates V and w:
 
 ```
-m_inf = 0.5 * (1 + tanh((V - V1) / V2))
-w_inf = 0.5 * (1 + tanh((V - V3) / V4))
-lam   = phi * cosh((V - V3) / (2 * V4))
-I_Ca  = g_Ca * m_inf * (V - E_Ca)
-I_K   = g_K * w * (V - E_K)
-I_L   = g_L * (V - E_L)
-V    += (-I_Ca - I_K - I_L + I_ext) / C_m * dt
-w    += lam * (w_inf - w) * dt
+f_V(V, w, I_ext) =
+  (-g_Ca * m_inf(V) * (V - E_Ca) - g_K * w * (V - E_K)
+   -g_L * (V - E_L) + I_ext) / C_m
+
+f_w(V, w) = lam(V) * (w_inf(V) - w)
+
+m_inf(V) = 0.5 * (1 + tanh((V - V1) / V2))
+w_inf(V) = 0.5 * (1 + tanh((V - V3) / V4))
+lam(V)   = phi * cosh((V - V3) / (2 * V4))
 ```
 
-Note: $w_\infty$ and $\lambda$ are computed from old $V$ before the
-voltage update, so the sequential update is equivalent to simultaneous
-Euler for this particular coupling structure.
-
-The Python model also exposes `rk4` and `rosenbrock` integrators for the
-same Morris-Lecar ODEs. The Go service, Rust safety surface, and Julia
-counterpart preserve the documented baseline Euler state equation for
-cross-runtime current-balance checks and fail-closed invalid-state
-behaviour. The Rust engine follows the same candidate-first finite-state
-commit boundary for its PyO3 and network-runner surface. All runtime
-surfaces validate finite conductance parameters, positive membrane
-capacitance, positive activation slopes and timestep, and the potassium
-activation envelope `w in [0, 1]` before integration. They reject
-non-finite runtime current and fail closed if the `cosh` potassium-rate
-term overflows or any derivative/state update becomes non-finite; the
-previous `(V, w)` state is preserved on rejection.
+The maintained production path advances these two ODEs with a
+candidate-first fourth-order Runge-Kutta step. Python still exposes
+`baseline_euler` for historical comparison and `rosenbrock` for the
+linearly implicit solver path, but the default Python model, Rust engine,
+Go service, Julia counterpart, and Rust safety surface use the RK4
+conductance update. All runtime surfaces validate finite conductance
+parameters, positive membrane capacitance, positive activation slopes and
+timestep, and the potassium activation envelope `w in [0, 1]` before
+integration. They reject non-finite runtime current and fail closed if the
+`cosh` potassium-rate term overflows or any RK4 derivative/state candidate
+becomes non-finite; the previous `(V, w)` state is preserved on rejection.
 
 ---
 
@@ -422,15 +418,27 @@ NeuronVariant::MorrisLecar(n) => n.v,
 
 ## 7. Performance Benchmarks
 
-### 7.1 Rust (Criterion 0.8)
+### 7.1 Current multi-backend local regression
 
-Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
+The maintained RK4 path is covered by
+`benchmarks/bench_model_morris_lecar.py`, which writes
+`benchmarks/results/local_python_2026-06-17_morris_lecar_rk4.json`.
+That artefact records Python, Rust, Go, and Julia timing medians plus
+source hashes for the touched implementation and test files. The run is
+labelled `local_regression_non_isolated` and
+`production_speed_claim=false`; it is evidence that the same RK4 contract
+is runnable across maintained backends, not a production throughput claim.
+
+### 7.2 Historical Rust Criterion evidence
+
+Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05. This
+pre-RK4 Criterion result is retained as historical context only.
 
 | Benchmark | Iterations | Median | Per-step | Notes |
 |-----------|-----------|--------|----------|-------|
 | `morris_lecar_10k_steps` | 10,000 | 810 µs | **81.0 ns** | 2 tanh + 1 cosh per step |
 
-### 7.2 Python
+### 7.3 Historical Python
 
 Measured on same hardware, single-threaded, 2026-04-04.
 
@@ -438,7 +446,7 @@ Measured on same hardware, single-threaded, 2026-04-04.
 |--------|-------|
 | Isolation throughput | ~141K steps/s (~7.1 µs/step) |
 
-### 7.3 Speedup
+### 7.4 Historical speedup
 
 | Metric | Python | Rust | Speedup |
 |--------|--------|------|---------|
@@ -448,7 +456,7 @@ The 88× speedup (lower than FHN's 221×) reflects the transcendental
 function cost: each step requires 2× tanh and 1× cosh, which limit
 the speedup achievable through Rust compilation alone.
 
-### 7.4 Numerical Stability
+### 7.5 Numerical Stability
 
 | Test | Duration | Result |
 |------|----------|--------|
