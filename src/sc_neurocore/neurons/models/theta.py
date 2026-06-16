@@ -37,20 +37,53 @@ class ThetaNeuron:
     def _wrap_phase(theta: float) -> float:
         return ((theta + math.pi) % (2.0 * math.pi)) - math.pi
 
+    def _exact_candidate(self, current: float) -> tuple[float, bool]:
+        y = math.tan(self.theta / 2.0)
+        if current > 0.0:
+            root_i = math.sqrt(current)
+            phase = math.atan(y / root_i)
+            next_phase = phase + root_i * self.dt
+            spiked = next_phase >= math.pi / 2.0
+            if math.isclose(math.cos(next_phase), 0.0, rel_tol=0.0, abs_tol=1e-15):
+                return -math.pi, spiked
+            return self._wrap_phase(2.0 * math.atan(root_i * math.tan(next_phase))), spiked
+        if current == 0.0:
+            denominator = 1.0 - y * self.dt
+            if math.isclose(denominator, 0.0, rel_tol=0.0, abs_tol=1e-15):
+                return -math.pi, True
+            next_y = y / denominator
+            return self._wrap_phase(2.0 * math.atan(next_y)), denominator <= 0.0
+
+        root_i = math.sqrt(-current)
+        if math.isclose(y, -root_i, rel_tol=0.0, abs_tol=1e-15):
+            return self.theta, False
+        numerator_ratio = (y - root_i) / (y + root_i)
+        try:
+            evolved_ratio = numerator_ratio * math.exp(2.0 * root_i * self.dt)
+        except OverflowError:
+            return math.nan, False
+        denominator = 1.0 - evolved_ratio
+        spiked = numerator_ratio < 1.0 <= evolved_ratio or math.isclose(
+            denominator,
+            0.0,
+            rel_tol=0.0,
+            abs_tol=1e-15,
+        )
+        if spiked and math.isclose(denominator, 0.0, rel_tol=0.0, abs_tol=1e-15):
+            return -math.pi, True
+        next_y = root_i * (1.0 + evolved_ratio) / denominator
+        return self._wrap_phase(2.0 * math.atan(next_y)), spiked
+
     def step(self, current: float) -> int:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         self._validate_runtime_state()
 
-        theta_prev = self.theta
-        cos_theta = math.cos(self.theta)
-        dtheta = ((1.0 - cos_theta) + (1.0 + cos_theta) * current) * self.dt
-        next_theta = self.theta + dtheta
-        if not math.isfinite(dtheta) or not math.isfinite(next_theta):
-            raise ValueError("phase increment must be finite")
-        spike = 1 if (theta_prev < math.pi * 0.99 and next_theta >= math.pi * 0.99) else 0
+        next_theta, spiked = self._exact_candidate(current)
+        if not math.isfinite(next_theta):
+            raise ValueError("exact-flow candidate must be finite")
         self.theta = self._wrap_phase(next_theta)
-        return spike
+        return int(spiked)
 
     def reset(self) -> None:
         self.theta = 0.0

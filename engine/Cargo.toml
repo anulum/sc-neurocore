@@ -80,6 +80,9 @@ name = "bench_precision_envelopes"
 name = "bench_precision_traps"
 
 [[example]]
+name = "bench_theta_exact_flow"
+
+[[example]]
 name = "bench_ultrascale_dense_folding"
 
 [[example]]

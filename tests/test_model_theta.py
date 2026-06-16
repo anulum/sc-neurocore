@@ -14,6 +14,8 @@ Analytical: ISI = π/√I (continuous time), f = √I/π Hz."""
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 
@@ -28,6 +30,35 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count, isi, firing_rat
 
 def _run(neuron: ThetaNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
+def _wrap_phase(theta: float) -> float:
+    return ((theta + math.pi) % (2.0 * math.pi)) - math.pi
+
+
+def _exact_theta_candidate(theta: float, current: float, dt: float) -> tuple[float, bool]:
+    y = math.tan(theta / 2.0)
+    if current > 0.0:
+        root_i = math.sqrt(current)
+        phase = math.atan(y / root_i)
+        next_phase = phase + root_i * dt
+        return _wrap_phase(2.0 * math.atan(root_i * math.tan(next_phase))), next_phase >= math.pi / 2.0
+    if current == 0.0:
+        denominator = 1.0 - y * dt
+        if abs(denominator) <= 1e-15:
+            return -math.pi, True
+        return _wrap_phase(2.0 * math.atan(y / denominator)), denominator <= 0.0
+
+    root_i = math.sqrt(-current)
+    if math.isclose(y, -root_i, rel_tol=0.0, abs_tol=1e-15):
+        return theta, False
+    ratio = (y - root_i) / (y + root_i)
+    evolved = ratio * math.exp(2.0 * root_i * dt)
+    denominator = 1.0 - evolved
+    spiked = ratio < 1.0 <= evolved or abs(denominator) <= 1e-15
+    if spiked and abs(denominator) <= 1e-15:
+        return -math.pi, True
+    return _wrap_phase(2.0 * math.atan(root_i * (1.0 + evolved) / denominator)), spiked
 
 
 class TestThetaIsolation:
@@ -89,11 +120,11 @@ class TestThetaValidation:
         assert -np.pi <= n.theta <= np.pi
         assert abs(n.theta - 0.5) < 1e-12
 
-    def test_rejects_non_finite_phase_increment_before_state_mutation(self):
+    def test_rejects_non_finite_exact_candidate_before_state_mutation(self):
         n = ThetaNeuron(theta=0.25, dt=1.0e308)
         before = n.theta
-        with pytest.raises(ValueError, match="phase increment"):
-            n.step(1.0e308)
+        with pytest.raises(ValueError, match="exact-flow candidate"):
+            n.step(-1.0e308)
         assert n.theta == before
 
     @pytest.mark.parametrize("field", ["theta", "dt"])
@@ -177,11 +208,7 @@ class TestThetaAnalyticalISI:
         )
 
     def test_near_constant_isi(self):
-        """ISI is near-constant (±1 step jitter from discrete spike detection).
-
-        The 0.99π threshold and phase wrapping can cause ISI to alternate
-        between floor and ceil of the analytical value.
-        """
+        """ISI is near-constant, with only discrete step quantisation jitter."""
         n = ThetaNeuron()
         spikes = _run(n, current=1.0, steps=50000)
         isis = np.diff(spikes[2:])
@@ -213,7 +240,7 @@ class TestThetaPhaseSpace:
         assert len(thetas) > 20
 
     def test_spike_at_pi(self):
-        """Spike is detected when theta crosses 0.99π from below."""
+        """Spike is detected when the exact flow crosses π from below."""
         n = ThetaNeuron()
         for _ in range(50000):
             if n.step(1.0) == 1:
@@ -222,20 +249,37 @@ class TestThetaPhaseSpace:
         pytest.fail("No spike in 50k steps at I=1.0")
 
     def test_dynamics_equation(self):
-        """Verify dθ/dt = (1-cosθ) + (1+cosθ)·I at a specific point."""
+        """Verify the tangent-half-angle exact constant-current flow."""
         n = ThetaNeuron(theta=1.0)
-        I = 2.0
-        dtheta_expected = ((1 - np.cos(1.0)) + (1 + np.cos(1.0)) * I) * n.dt
-        theta_before = n.theta
-        n.step(I)
-        # theta_after = theta_before + dtheta (before wrapping)
-        dtheta_measured = n.theta - theta_before
-        # Wrapping might change this if theta crosses π, so check approximately
-        if abs(dtheta_measured - dtheta_expected) > 0.1:
-            # Wrapping occurred — the raw increment was correct but theta wrapped
-            pass
-        else:
-            assert abs(dtheta_measured - dtheta_expected) < 1e-10
+        expected, spiked = _exact_theta_candidate(n.theta, 2.0, n.dt)
+        result = n.step(2.0)
+        assert result == int(spiked)
+        assert abs(n.theta - expected) < 1e-12
+
+    def test_exact_positive_flow_separates_from_forward_euler(self):
+        n = ThetaNeuron(theta=1.0, dt=0.2)
+        current = 2.0
+        euler = _wrap_phase(
+            n.theta
+            + ((1.0 - math.cos(n.theta)) + (1.0 + math.cos(n.theta)) * current) * n.dt
+        )
+        expected, spiked = _exact_theta_candidate(n.theta, current, n.dt)
+        result = n.step(current)
+        assert result == int(spiked)
+        assert abs(n.theta - expected) < 1e-12
+        assert abs(n.theta - euler) > 1e-4
+
+    def test_exact_flow_reports_within_step_crossing(self):
+        n = ThetaNeuron(theta=2.5, dt=1.0)
+        expected, spiked = _exact_theta_candidate(n.theta, 1.0, n.dt)
+        assert spiked
+        assert n.step(1.0) == 1
+        assert abs(n.theta - expected) < 1e-12
+
+    def test_negative_current_stable_fixed_point_is_preserved(self):
+        n = ThetaNeuron(theta=-math.pi / 2.0, dt=100.0)
+        assert n.step(-1.0) == 0
+        assert abs(n.theta + math.pi / 2.0) < 1e-12
 
 
 class TestThetaParameters:
@@ -268,8 +312,8 @@ class TestThetaEdgeCases:
     def test_candidate_phase_is_validated_before_assignment(self):
         n = ThetaNeuron(theta=0.25, dt=1.0e308)
         before = n.theta
-        with pytest.raises(ValueError, match="phase increment"):
-            n.step(1.0e308)
+        with pytest.raises(ValueError, match="exact-flow candidate"):
+            n.step(-1.0e308)
         assert n.theta == before
 
     def test_deterministic(self):
