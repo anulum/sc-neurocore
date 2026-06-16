@@ -4,105 +4,60 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for Pernarowski
+# SC-NeuroCore — Julia Pernarowski 1994 beta-cell burster (parity with pernarowski.py)
+
+# Parity contract: `simulate_trace` reproduces
+# `sc_neurocore.neurons.models.pernarowski.PernarowskiNeuron.simulate` bit-for-bit.
+# The right-hand side is exact polynomial arithmetic (the cubic uses `v*v*v`,
+# matching the engine `v.powi(3)`; no transcendental functions), so an identical
+# RK4 operation order yields an identical `v` trace, upward-crossing spike count,
+# and final `(v, w, z)` state.
+#
+# Reference: Pernarowski, M. (1994). SIAM J. Appl. Math. 54:814-832.
 
 module PernarowskiAccel
 
-export step!, simulate, PernarowskiNeuronState, validate
+export simulate_trace
 
-mutable struct PernarowskiNeuronState
-    v::Float64
-    w::Float64
-    z::Float64
-    alpha::Float64
-    beta::Float64
-    eps1::Float64
-    eps2::Float64
-    gamma::Float64
-    dt::Float64
-    v_threshold::Float64
-end
-
-function PernarowskiNeuronState()
-    PernarowskiNeuronState(-1.0, 0.0, 0.0, 0.1, 0.5, 0.1, 0.001, 0.5, 0.1, 0.5)
-end
-
-function validate(s::PernarowskiNeuronState)::Bool
-    isfinite(s.v) &&
-    isfinite(s.w) &&
-    isfinite(s.z) &&
-    isfinite(s.alpha) &&
-    isfinite(s.beta) &&
-    isfinite(s.eps1) && s.eps1 > 0.0 &&
-    isfinite(s.eps2) && s.eps2 > 0.0 &&
-    isfinite(s.gamma) && s.gamma > 0.0 &&
-    isfinite(s.dt) && s.dt > 0.0 &&
-    isfinite(s.v_threshold)
-end
-
-function derivatives(s::PernarowskiNeuronState, v::Float64, w::Float64, z::Float64, current::Float64)
-    if !all(isfinite, (v, w, z, current))
-        return nothing
-    end
-    dv = v - v^3 / 3.0 - w - z + current
-    dw = s.eps1 * (v - s.gamma * w + s.alpha)
-    dz = s.eps2 * (s.beta * (v + 0.7) - z)
-    all(isfinite, (dv, dw, dz)) ? (dv, dw, dz) : nothing
-end
-
-function rk4_candidate(s::PernarowskiNeuronState, current::Float64, dt::Float64)
-    k1 = derivatives(s, s.v, s.w, s.z, current)
-    k1 === nothing && return nothing
-    k2 = derivatives(
-        s,
-        s.v + 0.5 * dt * k1[1],
-        s.w + 0.5 * dt * k1[2],
-        s.z + 0.5 * dt * k1[3],
-        current,
+function simulate_trace(
+    v0::Float64,
+    w0::Float64,
+    z0::Float64,
+    alpha::Float64,
+    beta::Float64,
+    eps1::Float64,
+    eps2::Float64,
+    gamma::Float64,
+    dt::Float64,
+    v_threshold::Float64,
+    n_steps::Int,
+    current::Float64,
+)
+    trace = Vector{Float64}(undef, n_steps)
+    v = v0
+    w = w0
+    z = z0
+    deriv(vv, ww, zz) = (
+        vv - vv * vv * vv / 3.0 - ww - zz + current,
+        eps1 * (vv - gamma * ww + alpha),
+        eps2 * (beta * (vv + 0.7) - zz),
     )
-    k2 === nothing && return nothing
-    k3 = derivatives(
-        s,
-        s.v + 0.5 * dt * k2[1],
-        s.w + 0.5 * dt * k2[2],
-        s.z + 0.5 * dt * k2[3],
-        current,
-    )
-    k3 === nothing && return nothing
-    k4 = derivatives(s, s.v + dt * k3[1], s.w + dt * k3[2], s.z + dt * k3[3], current)
-    k4 === nothing && return nothing
-    candidate = (
-        s.v + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
-        s.w + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
-        s.z + dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0,
-    )
-    all(isfinite, candidate) ? candidate : nothing
-end
-
-function step!(s::PernarowskiNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
-    if !validate(s) || !isfinite(I_ext) || !isfinite(dt) || dt <= 0.0
-        return 0
-    end
-
-    v_prev = s.v
-    candidate = rk4_candidate(s, I_ext, dt)
-    candidate === nothing && return 0
-    s.v, s.w, s.z = candidate
-    return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
-end
-
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
-    s = PernarowskiNeuronState()
-    trace = zeros(n_steps)
     spikes = 0
-    for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
-        trace[t] = s.v
-        if result isa Number && result > 0
+    @inbounds for t in 1:n_steps
+        v_prev = v
+        dv1, dw1, dz1 = deriv(v, w, z)
+        dv2, dw2, dz2 = deriv(v + 0.5 * dt * dv1, w + 0.5 * dt * dw1, z + 0.5 * dt * dz1)
+        dv3, dw3, dz3 = deriv(v + 0.5 * dt * dv2, w + 0.5 * dt * dw2, z + 0.5 * dt * dz2)
+        dv4, dw4, dz4 = deriv(v + dt * dv3, w + dt * dw3, z + dt * dz3)
+        v = v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0
+        w = w + dt * (dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4) / 6.0
+        z = z + dt * (dz1 + 2.0 * dz2 + 2.0 * dz3 + dz4) / 6.0
+        trace[t] = v
+        if v >= v_threshold && v_prev < v_threshold
             spikes += 1
         end
     end
-    return trace, spikes
+    return (trace = trace, spikes = spikes, vf = v, wf = w, zf = z)
 end
 
 end # module PernarowskiAccel

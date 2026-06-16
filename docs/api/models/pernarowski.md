@@ -3,7 +3,7 @@
 
 **Module:** `sc_neurocore.neurons.models.pernarowski`
 **Rust engine:** `sc_neurocore_engine::neurons::simple_spiking::PernarowskiNeuron`
-**Polyglot mirrors:** Julia `PernarowskiAccel`, Go `PernarowskiNeuronState`, Rust safety `PernarowskiNeuron`
+**Polyglot `simulate` backends:** Rust engine (PyO3), Julia `PernarowskiAccel`, Go c-shared (`accel/go/neurons/pernarowski`), Mojo FFI (`accel/mojo/neurons/pernarowski.mojo`); standalone Rust safety mirror `PernarowskiNeuron`
 **Reference:** Pernarowski, M. (1994). SIAM Journal on Applied Mathematics, 54, 814-832.
 **Family:** three-state beta-cell burster with fast cubic voltage and two slower recovery/adaptation variables.
 
@@ -102,26 +102,56 @@ src/sc_neurocore/neurons/models/pernarowski.py: 100% statement coverage
 Polyglot and engine checks from the same pass:
 
 ```text
-julia --project=. -e 'include("src/sc_neurocore/accel/julia/neurons/pernarowski.jl"); ...'
-go test src/sc_neurocore/accel/go/services/pernarowski.go
-rustc --test src/sc_neurocore/accel/rust/safety/pernarowski.rs -o "$tmp/pernarowski_safety_test" && "$tmp/pernarowski_safety_test"
 cargo test --manifest-path engine/Cargo.toml pernarowski -- --nocapture
+pytest tests/test_pernarowski_backends.py
 ```
 
-Observed results: Julia valid-step check passed, Go compile/test passed, Rust safety tests passed with 5 tests, and Rust engine Pernarowski tests passed with 9 tests.
+Observed results: Rust engine Pernarowski tests pass (9 tests); the cross-backend
+parity suite confirms Rust/Julia/Go bit-exactness and the Mojo ULP band.
 
 ---
 
-## Benchmark evidence
+## Polyglot acceleration
 
-Benchmark artefacts are stored under `benchmarks/results/`.
+A single `step` is trivial, but an N-step run is a sequential RK4 recurrence that
+does not vectorise, so a compiled inner loop genuinely beats Python.
+`simulate(n_steps, current, backend="auto")` dispatches across the polyglot chain
+and returns `(trace, spikes)`:
 
-| Surface | Command | Result |
-|---------|---------|--------|
-| Python reference | `PernarowskiNeuron.step(0.5)`, 7 repeats of 100,000 steps | median `1.0787754809716717e-05` seconds per step, deterministic 343 spikes per repeat |
-| Rust engine | `cargo bench --manifest-path engine/Cargo.toml --bench full_bench pernarowski_10k_steps -- --sample-size 10` | Criterion estimate `632.87 µs` per 10k steps, `63.287 ns` per step |
+```python
+from sc_neurocore.neurons.models.pernarowski import PernarowskiNeuron
 
-The RK4 path is slower than the prior Euler table value because each step evaluates the coupled ODE four times and validates the candidate before mutation.
+neuron = PernarowskiNeuron()
+trace, spikes = neuron.simulate(20_000, current=0.0)   # auto → Rust
+```
+
+The right-hand side is exact polynomial floating-point arithmetic — the cubic is
+written `v*v*v` so it matches the engine's `v.powi(3)` to the last bit, with no
+transcendental functions — so **Rust, Julia and Go reproduce the NumPy reference
+bit-for-bit**. Mojo's release build contracts the RK4 multiply-adds into fused
+multiply-adds; the model is a periodic slow-fast burster (not chaotic), so the
+single-ULP difference stays bounded over millions of steps and the spike counts
+match. `auto` selects Rust (the fastest bit-exact backend, shipped in the wheel).
+
+### Measured throughput
+
+2,000,000 RK4 steps, default bursting regime (`current=0.0`), median of 5 repeats.
+Non-isolated loaded workstation (Intel i5-11600K) per
+`BROADCAST_2026-06-04_benchmark_core_isolation` — functional/regression evidence,
+not an isolated-core figure. Reproduce with
+`python benchmarks/bench_pernarowski_simulate.py`.
+
+| Backend | Median (ms) | Speed-up vs Python | Whole-trace parity |
+|---------|------------:|-------------------:|--------------------|
+| python  | 2224.59 | 1.0× | reference |
+| mojo    | 102.34 | 21.7× | 1.6×10⁻¹² (FMA, non-amplifying) |
+| go      | 109.63 | 20.3× | bit-exact (0) |
+| julia   | 112.26 | 19.8× | bit-exact (0) |
+| rust (`auto`) | 124.82 | 17.8× | bit-exact (0) |
+
+Artefact: `benchmarks/results/bench_pernarowski_simulate.json`. The earlier
+single-language step-level criterion/Python figures remain valid regression
+evidence for the per-step `step` path.
 
 ---
 

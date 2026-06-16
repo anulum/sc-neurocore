@@ -8,9 +8,120 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import importlib as _importlib
 import math
-from typing import ClassVar
+import os as _os
+from dataclasses import dataclass
+from typing import Callable, ClassVar, Optional
+
+import numpy as np
+import numpy.typing as npt
+
+# ───────────────────────── backend detection ─────────────────────────
+#
+# A single `step` is trivial, but an N-step RK4 simulation is a sequential
+# recurrence (each step depends on the previous) that does not vectorise, so a
+# compiled inner loop genuinely beats Python. The polyglot chain (Rust PyO3,
+# Julia juliacall, Go cgo, Mojo FFI) accelerates `simulate`. The right-hand side
+# is exact polynomial arithmetic (the cubic uses `v*v*v`, matching the engine's
+# `v.powi(3)`), so Rust/Julia/Go reproduce the NumPy reference bit-for-bit; the
+# FMA-fusing Mojo backend stays within a measured per-step ULP band with
+# identical spike counts.
+
+_RustSimulate = Callable[..., "tuple[list[float], int, float, float, float]"]
+
+
+def _load_rust_simulate() -> _RustSimulate:
+    engine = _importlib.import_module("sc_neurocore_engine")
+    return engine.py_pernarowski_simulate  # type: ignore[no-any-return]
+
+
+try:
+    _rust_simulate: Optional[_RustSimulate] = _load_rust_simulate()
+    _HAS_RUST = True
+except (ImportError, AttributeError):
+    _rust_simulate = None
+    _HAS_RUST = False
+
+_julia_module = None
+_HAS_JULIA = False
+_go_lib = None
+_HAS_GO = False
+_mojo_lib = None
+_HAS_MOJO = False
+
+_ACCEL_ROOT = _os.path.join(_os.path.dirname(__file__), "..", "..", "accel")
+
+
+def _ensure_julia_loaded() -> bool:
+    global _julia_module, _HAS_JULIA
+    if _julia_module is not None:
+        return True
+    import importlib.util as importlib_util
+
+    if importlib_util.find_spec("juliacall") is None:
+        return False
+    jl_path = _os.path.abspath(_os.path.join(_ACCEL_ROOT, "julia", "neurons", "pernarowski.jl"))
+    if not _os.path.isfile(jl_path):
+        return False
+    juliacall = _importlib.import_module("juliacall")
+    jl = juliacall.Main
+    jl.include(jl_path)
+    _julia_module = jl.PernarowskiAccel
+    _HAS_JULIA = True
+    return True
+
+
+def _ensure_go_loaded() -> bool:
+    global _go_lib, _HAS_GO
+    if _go_lib is not None:
+        return True
+    import ctypes
+
+    so_path = _os.path.abspath(
+        _os.path.join(_ACCEL_ROOT, "go", "neurons", "pernarowski", "libpernarowski.so")
+    )
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    fn = getattr(lib, "pernarowski_simulate_c", None)
+    if fn is None:
+        return False
+    fn.argtypes = [ctypes.c_double] * 10 + [
+        ctypes.c_int,
+        ctypes.c_double,
+        ctypes.POINTER(ctypes.c_double),
+    ]
+    fn.restype = ctypes.c_longlong
+    _go_lib = lib
+    _HAS_GO = True
+    return True
+
+
+def _ensure_mojo_loaded() -> bool:
+    global _mojo_lib, _HAS_MOJO
+    if _mojo_lib is not None:
+        return True
+    import ctypes
+
+    so_path = _os.path.abspath(_os.path.join(_ACCEL_ROOT, "mojo", "neurons", "libpernarowski.so"))
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    fn = getattr(lib, "pernarowski_simulate_c", None)
+    if fn is None:
+        return False
+    fn.argtypes = [ctypes.c_double] * 10 + [ctypes.c_int64, ctypes.c_double, ctypes.c_int64]
+    fn.restype = ctypes.c_int64
+    _mojo_lib = lib
+    _HAS_MOJO = True
+    return True
 
 
 @dataclass
@@ -86,12 +197,13 @@ class PernarowskiNeuron:
     ) -> tuple[float, float, float]:
         if not all(math.isfinite(value) for value in (v, w, z, current)):
             raise FloatingPointError("Pernarowski runtime state and current must be finite")
-        try:
-            dv = v - v**3 / 3.0 - w - z + current
-            dw = self.eps1 * (v - self.gamma * w + self.alpha)
-            dz = self.eps2 * (self.beta * (v + 0.7) - z)
-        except OverflowError as exc:
-            raise FloatingPointError("Pernarowski derivative overflow") from exc
+        # Use v*v*v (not v**3) so the cubic is bit-identical to the engine's
+        # `v.powi(3)` across the polyglot chain. Float multiplication overflows to
+        # `inf` instead of raising OverflowError, so the finite guard below catches
+        # the non-finite case with the same no-mutation contract.
+        dv = v - v * v * v / 3.0 - w - z + current
+        dw = self.eps1 * (v - self.gamma * w + self.alpha)
+        dz = self.eps2 * (self.beta * (v + 0.7) - z)
         if not all(math.isfinite(value) for value in (dv, dw, dz)):
             raise FloatingPointError("Pernarowski derivative must be finite")
         return dv, dw, dz
@@ -134,6 +246,183 @@ class PernarowskiNeuron:
         if self.v >= self.v_threshold and v_prev < self.v_threshold:
             return 1
         return 0
+
+    def simulate(
+        self, n_steps: int, current: float = 0.0, backend: str = "auto"
+    ) -> tuple[npt.NDArray[np.float64], int]:
+        """Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
+
+        ``trace[t]`` is the fast variable ``v`` after step ``t``; ``spikes`` counts
+        the steps whose ``v`` crossed ``v_threshold`` upward. The instance state
+        ``(v, w, z)`` is advanced to the final step. The Rust/Julia/Go backends
+        reproduce the pure-NumPy reference bit-for-bit; the FMA-fusing Mojo backend
+        stays within a measured per-step ULP band with identical spike counts.
+        """
+        if n_steps < 0:
+            raise ValueError("n_steps must be non-negative")
+        if backend not in ("auto", "rust", "julia", "go", "mojo", "python"):
+            raise ValueError(f"backend must be auto/rust/julia/go/mojo/python, got {backend!r}")
+        current = self._validate_runtime_contract(current)
+
+        if backend == "rust" and not _HAS_RUST:
+            raise RuntimeError("Rust Pernarowski backend requested but the engine wheel lacks it.")
+        if backend == "julia" and not _ensure_julia_loaded():
+            raise RuntimeError(
+                "Julia Pernarowski backend requested but juliacall/.jl is unavailable."
+            )
+        if backend == "go" and not _ensure_go_loaded():
+            raise RuntimeError(
+                "Go Pernarowski backend requested but libpernarowski.so is not built; run "
+                "`cd src/sc_neurocore/accel/go/neurons/pernarowski && go build "
+                "-buildmode=c-shared -o libpernarowski.so pernarowski.go`."
+            )
+        if backend == "mojo" and not _ensure_mojo_loaded():
+            raise RuntimeError(
+                "Mojo Pernarowski backend requested but libpernarowski.so is not built; run "
+                "`cd src/sc_neurocore/accel/mojo/neurons && mojo build --emit shared-lib "
+                "-o libpernarowski.so pernarowski.mojo`."
+            )
+
+        if backend == "rust" or (backend == "auto" and _HAS_RUST):
+            trace, spikes, vf, wf, zf = self._simulate_rust(n_steps, current)
+        elif backend == "julia":
+            trace, spikes, vf, wf, zf = self._simulate_julia(n_steps, current)
+        elif backend == "go":
+            trace, spikes, vf, wf, zf = self._simulate_go(n_steps, current)
+        elif backend == "mojo":
+            trace, spikes, vf, wf, zf = self._simulate_mojo(n_steps, current)
+        else:
+            trace, spikes, vf, wf, zf = self._simulate_python(n_steps, current)
+        self.v, self.w, self.z = vf, wf, zf
+        return trace, spikes
+
+    def _simulate_python(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, float, float, float]:
+        trace = np.empty(n_steps, dtype=np.float64)
+        v, w, z = self.v, self.w, self.z
+        alpha, beta, eps1, eps2, gamma = self.alpha, self.beta, self.eps1, self.eps2, self.gamma
+        dt, v_threshold = self.dt, self.v_threshold
+
+        def deriv(vv: float, ww: float, zz: float) -> tuple[float, float, float]:
+            dv = vv - vv * vv * vv / 3.0 - ww - zz + current
+            dw = eps1 * (vv - gamma * ww + alpha)
+            dz = eps2 * (beta * (vv + 0.7) - zz)
+            return dv, dw, dz
+
+        spikes = 0
+        for t in range(n_steps):
+            v_prev = v
+            dv1, dw1, dz1 = deriv(v, w, z)
+            dv2, dw2, dz2 = deriv(v + 0.5 * dt * dv1, w + 0.5 * dt * dw1, z + 0.5 * dt * dz1)
+            dv3, dw3, dz3 = deriv(v + 0.5 * dt * dv2, w + 0.5 * dt * dw2, z + 0.5 * dt * dz2)
+            dv4, dw4, dz4 = deriv(v + dt * dv3, w + dt * dw3, z + dt * dz3)
+            v = v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0
+            w = w + dt * (dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4) / 6.0
+            z = z + dt * (dz1 + 2.0 * dz2 + 2.0 * dz3 + dz4) / 6.0
+            trace[t] = v
+            if v >= v_threshold and v_prev < v_threshold:
+                spikes += 1
+        return trace, spikes, v, w, z
+
+    def _simulate_rust(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, float, float, float]:
+        assert _rust_simulate is not None
+        trace_list, spikes, vf, wf, zf = _rust_simulate(
+            self.v,
+            self.w,
+            self.z,
+            self.alpha,
+            self.beta,
+            self.eps1,
+            self.eps2,
+            self.gamma,
+            self.dt,
+            self.v_threshold,
+            n_steps,
+            current,
+        )
+        return (
+            np.asarray(trace_list, dtype=np.float64),
+            int(spikes),
+            float(vf),
+            float(wf),
+            float(zf),
+        )
+
+    def _simulate_julia(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, float, float, float]:
+        assert _julia_module is not None
+        result = _julia_module.simulate_trace(
+            float(self.v),
+            float(self.w),
+            float(self.z),
+            float(self.alpha),
+            float(self.beta),
+            float(self.eps1),
+            float(self.eps2),
+            float(self.gamma),
+            float(self.dt),
+            float(self.v_threshold),
+            int(n_steps),
+            float(current),
+        )
+        trace = np.asarray(result.trace, dtype=np.float64)
+        return trace, int(result.spikes), float(result.vf), float(result.wf), float(result.zf)
+
+    def _simulate_go(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, float, float, float]:
+        assert _go_lib is not None
+        import ctypes
+
+        trace = np.zeros(n_steps + 3, dtype=np.float64, order="C")
+        spikes = _go_lib.pernarowski_simulate_c(
+            ctypes.c_double(self.v),
+            ctypes.c_double(self.w),
+            ctypes.c_double(self.z),
+            ctypes.c_double(self.alpha),
+            ctypes.c_double(self.beta),
+            ctypes.c_double(self.eps1),
+            ctypes.c_double(self.eps2),
+            ctypes.c_double(self.gamma),
+            ctypes.c_double(self.dt),
+            ctypes.c_double(self.v_threshold),
+            ctypes.c_int(n_steps),
+            ctypes.c_double(current),
+            trace.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        )
+        vf = float(trace[n_steps]) if n_steps > 0 else self.v
+        wf = float(trace[n_steps + 1])
+        zf = float(trace[n_steps + 2])
+        return np.ascontiguousarray(trace[:n_steps]), int(spikes), vf, wf, zf
+
+    def _simulate_mojo(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, float, float, float]:
+        assert _mojo_lib is not None
+        trace = np.zeros(n_steps + 3, dtype=np.float64, order="C")
+        spikes = _mojo_lib.pernarowski_simulate_c(
+            float(self.v),
+            float(self.w),
+            float(self.z),
+            float(self.alpha),
+            float(self.beta),
+            float(self.eps1),
+            float(self.eps2),
+            float(self.gamma),
+            float(self.dt),
+            float(self.v_threshold),
+            int(n_steps),
+            float(current),
+            int(trace.ctypes.data),
+        )
+        vf = float(trace[n_steps]) if n_steps > 0 else self.v
+        wf = float(trace[n_steps + 1])
+        zf = float(trace[n_steps + 2])
+        return np.ascontiguousarray(trace[:n_steps]), int(spikes), vf, wf, zf
 
     def reset(self) -> None:
         self.v, self.w, self.z = -1.0, 0.0, 0.0

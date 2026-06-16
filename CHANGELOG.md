@@ -22,6 +22,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   cross-backend parity tests, a multi-language benchmark with a committed artefact,
   and a documentation upgrade; replaced the decorative `accel/go/services` stub
   with a real c-shared backend.
+- Added the polyglot N-step `simulate(n_steps, current, backend=...)` chain for
+  `PernarowskiNeuron` (Pernarowski 1994 pancreatic beta-cell burster) across
+  python / rust / julia / go / mojo. Aligned the Python cubic to `v*v*v` so it is
+  bit-identical to the engine's `v.powi(3)` (removing the now unreachable
+  `OverflowError` branch); Rust, Julia and Go reproduce the NumPy RK4 reference
+  bit-for-bit, the Mojo backend is ULP-bounded. Added the Rust engine `simulate` +
+  PyO3 `py_pernarowski_simulate`, the Julia/Go/Mojo backends, cross-backend parity
+  tests, a multi-language benchmark with a committed artefact, and a documentation
+  upgrade; replaced the decorative `accel/go/services` stub with a real c-shared
+  backend.
 
 ## [3.15.34] - 2026-06-15
 

@@ -50,7 +50,7 @@ def _rhs(
     neuron: PernarowskiNeuron, v: float, w: float, z: float, current: float
 ) -> tuple[float, float, float]:
     return (
-        v - v**3 / 3.0 - w - z + current,
+        v - v * v * v / 3.0 - w - z + current,
         neuron.eps1 * (v - neuron.gamma * w + neuron.alpha),
         neuron.eps2 * (neuron.beta * (v + 0.7) - z),
     )
