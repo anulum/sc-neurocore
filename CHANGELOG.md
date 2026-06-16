@@ -4,6 +4,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Physics and mathematics hardening
+- Added the polyglot N-step `simulate(n_steps, current, backend=...)` chain for
+  `McKeanNeuron` (McKean 1970 piecewise-linear FitzHugh-Nagumo caricature) across
+  python / rust / julia / go / mojo. Rust, Julia and Go reproduce the NumPy RK4
+  reference bit-for-bit (exact piecewise-linear arithmetic); the Mojo backend is
+  ULP-bounded and non-amplifying. Added the Rust engine `simulate` + PyO3
+  `py_mckean_simulate`, the Julia/Go/Mojo backends, cross-backend parity tests, a
+  multi-language benchmark with a committed artefact, and a documentation upgrade;
+  replaced the decorative `accel/go/services` stub with a real c-shared backend.
+
 ## [3.15.34] - 2026-06-15
 
 ### Physics and mathematics hardening
