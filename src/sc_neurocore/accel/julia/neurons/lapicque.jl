@@ -49,10 +49,11 @@ function step!(s::LapicqueNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::In
         throw(DomainError(s.v, "Lapicque state must satisfy finite positive-RC threshold contract"))
     end
 
-    dv = (-(s.v - s.v_rest) + s.resistance * I_ext) / s.tau * s.dt
-    next_v = s.v + dv
-    if !isfinite(dv) || !isfinite(next_v)
-        throw(DomainError(next_v, "Lapicque voltage increment must remain finite"))
+    v_inf = s.v_rest + s.resistance * I_ext
+    decay = exp(-s.dt / s.tau)
+    next_v = v_inf + (s.v - v_inf) * decay
+    if !isfinite(v_inf) || !isfinite(decay) || !isfinite(next_v)
+        throw(DomainError(next_v, "Lapicque voltage candidate must remain finite"))
     end
 
     s.v = next_v

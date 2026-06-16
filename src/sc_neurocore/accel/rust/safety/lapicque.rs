@@ -38,10 +38,11 @@ impl LapicqueNeuron {
             return Err("lapicque state must satisfy finite positive-RC threshold contract");
         }
 
-        let dv = (-(self.v - self.v_rest) + self.resistance * i_ext) / self.tau * self.dt;
-        let next_v = self.v + dv;
-        if !dv.is_finite() || !next_v.is_finite() {
-            return Err("lapicque voltage increment must remain finite");
+        let v_inf = self.v_rest + self.resistance * i_ext;
+        let decay = (-self.dt / self.tau).exp();
+        let next_v = v_inf + (self.v - v_inf) * decay;
+        if !v_inf.is_finite() || !decay.is_finite() || !next_v.is_finite() {
+            return Err("lapicque voltage candidate must remain finite");
         }
 
         self.v = next_v;
@@ -99,6 +100,26 @@ mod tests {
     }
 
     #[test]
+    fn test_lapicque_exact_flow_matches_closed_form() {
+        let mut state = LapicqueNeuron::new();
+        state.v = 0.25;
+        state.dt = 5.0;
+        let current = 0.5;
+        let v0 = state.v;
+        let v_inf = state.v_rest + state.resistance * current;
+        let euler = v0 + (-(v0 - state.v_rest) + state.resistance * current) / state.tau * state.dt;
+        let expected = v_inf + (v0 - v_inf) * (-state.dt / state.tau).exp();
+
+        let spike = state.step(current).expect("valid step must succeed");
+        assert_eq!(spike, 0);
+        assert!((state.v - expected).abs() < 1e-15);
+        assert!(
+            (state.v - euler).abs() > 1e-4,
+            "exact-flow candidate collapsed to Euler"
+        );
+    }
+
+    #[test]
     fn test_positive_current_spikes_and_resets() {
         let mut state = LapicqueNeuron::new();
         let mut spikes = 0;
@@ -131,7 +152,7 @@ mod tests {
         let mut state = LapicqueNeuron::new();
         state.v = 0.25;
         state.v_threshold = 1.0e308;
-        state.tau = 1.0e-308;
+        state.resistance = 1.0e308;
         assert!(state.step(1.0e308).is_err());
         assert_eq!(state.v, 0.25);
     }

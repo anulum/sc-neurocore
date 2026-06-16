@@ -11,6 +11,13 @@ $$\tau \frac{dV}{dt} = -(V - V_r) + R \cdot I$$
 
 Spike: $V \geq V_\theta$, hard reset $V \to V_{reset}$.
 
+For constant current over a timestep, maintained runtime surfaces use the exact
+RC flow rather than forward Euler:
+
+$$V_{t+\Delta t} = V_\infty + (V_t - V_\infty)e^{-\Delta t/\tau}$$
+
+where $V_\infty = V_r + R \cdot I$.
+
 ## Parameters
 
 | Parameter | Default | Description |
@@ -29,14 +36,15 @@ The implementation rejects invalid state before mutation:
 - `tau`, `resistance`, and `dt` must be positive;
 - `v_threshold` must be greater than both `v_rest` and `v_reset`;
 - initial `v` must be below `v_threshold`;
-- each Euler voltage increment and candidate voltage must remain finite before assignment.
+- exact-flow steady voltage, decay, and candidate voltage must remain finite
+  before assignment.
 
 These guards preserve the positive-rheobase RC contract and prevent overflowing
 inputs or time constants from poisoning membrane state.
 
 Python re-validates mutable runtime state on every `step()` call. Rust and Go
-return explicit errors for invalid currents, corrupted state, or non-finite Euler
-increments; Julia raises `DomainError` for the same contract. The Mojo kernel
+return explicit errors for invalid currents, corrupted state, or non-finite
+exact-flow candidates; Julia raises `DomainError` for the same contract. The Mojo kernel
 surface remains a pure spike-flag function and fails closed with `0` for invalid
 inputs.
 
@@ -46,7 +54,7 @@ inputs.
   Simple RC circuit with threshold.
 - **Analytical rheobase:** I_rh = V_θ / R. Below rheobase, v settles to
   steady state R·I < V_θ. Above, periodic spiking.
-- **Deterministic:** Fully deterministic Euler integration.
+- **Deterministic:** Fully deterministic exact constant-current RC integration.
 - **Hard reset:** v → v_reset (not subtract-reset).
 - **Simplest conductance-free model:** No gating, no adaptation, no noise.
 
@@ -57,7 +65,7 @@ LapicqueNeuron
 ├── step(current) → int {0,1}
 ├── Population: PoissonInput(weight=2.0, rate=500Hz)
 ├── Verilog: MAC + compare, ~10 LUTs
-└── Rust/Go/Julia/Mojo: finite-increment spike/reset contract with explicit errors where supported
+└── Rust/Go/Julia/Mojo: finite exact-flow spike/reset contract with explicit errors where supported
 ```
 
 ## Test Coverage
@@ -67,20 +75,22 @@ LapicqueNeuron
 | Isolation | 12 | construction, step binary, subthreshold, spikes, rheobase, rate increase, voltage clamp, hard reset, stability, reset, deterministic, custom tau |
 | Network | 2 | Population, spikes |
 | Analysis | 4 | spike_count, ISI, firing-rate, cross-validation |
-| Validation | 27 | finite parameters/current, positive RC scales, threshold geometry, corrupted runtime state, initial voltage below threshold, finite increment before mutation |
-| **Total** | **67** | |
+| Validation | 27 | finite parameters/current, positive RC scales, threshold geometry, corrupted runtime state, initial voltage below threshold, finite candidate before mutation |
+| Exact flow | 2 | closed-form update and separation from forward Euler |
+| **Total** | **68** | |
 
 
 ---
 
-## Measured Performance (2026-04-04)
+## Measured Performance (2026-06-17)
 
 | Metric | Value |
 |--------|-------|
-| Python throughput | ~758K steps/s |
-| Spikes (10K steps, I=5.0) | 2000 |
+| Evidence class | Local regression, non-isolated workstation |
+| Benchmark artefact | `benchmarks/results/local_python_2026-06-17_lapicque_exact_flow.json` |
+| Spikes (10K steps, I=5.0) | Deterministic periodic spiking under exact flow |
 | State stability (20K steps) | PASS |
-| Polyglot contract | Rust, Go, Julia, and Mojo finite-increment surfaces aligned, with explicit errors where supported |
+| Polyglot contract | Python, Rust engine, Rust safety, Go, Julia, and Mojo exact-flow surfaces aligned, with explicit errors where supported |
 
 ---
 
@@ -111,13 +121,13 @@ State returns to initial values after `reset()`.
 **Status: PASS**
 
 ### 7. Polyglot safety surfaces
-Rust, Go, Julia, and Mojo carry the same finite-increment spike/reset contract.
+Rust, Go, Julia, and Mojo carry the same finite exact-flow spike/reset contract.
 
 ---
 
-## Findings (measured 2026-04-04)
+## Findings (measured 2026-06-17)
 
-1. Throughput: ~758K steps/s (Python, single-thread)
-2. All pipeline stages verified green
-3. Polyglot contract aligned for Rust, Go, Julia, and Mojo
-4. Numerical stability confirmed over 20K steps
+1. Constant-current integration now uses the closed-form RC update.
+2. All pipeline stages verified green.
+3. Polyglot contract aligned for Python, Rust engine, Rust safety, Go, Julia, and Mojo.
+4. Numerical stability confirmed over 20K steps.
