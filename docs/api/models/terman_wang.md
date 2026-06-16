@@ -3,7 +3,7 @@
 
 **Module:** `sc_neurocore.neurons.models.terman_wang`
 **Rust engine:** `sc_neurocore_engine::neurons::simple_spiking::TermanWangOscillator`
-**Polyglot mirrors:** Julia `TermanWangAccel`, Go `TermanWangOscillatorState`, Mojo kernel notes, Rust safety `TermanWangOscillator`
+**Polyglot `simulate` backends:** Rust engine (PyO3, bit-exact), Julia `TermanWangAccel`, Go c-shared (`accel/go/neurons/terman_wang`), Mojo FFI (`accel/mojo/neurons/terman_wang.mojo`); standalone Rust safety mirror `TermanWangOscillator`
 **Reference:** Terman, D. & Wang, D. L. (1995). Neural Computation, 7(5), 1035-1064.
 **Family:** two-state relaxation oscillator for LEGION-style temporal segmentation.
 
@@ -102,13 +102,58 @@ src/sc_neurocore/neurons/models/terman_wang.py: 100% statement coverage
 Polyglot and engine checks from the same pass:
 
 ```text
-julia --project=. -e 'include("src/sc_neurocore/accel/julia/neurons/terman_wang.jl"); ...'
-go test src/sc_neurocore/accel/go/services/terman_wang.go src/sc_neurocore/accel/go/services/terman_wang_test.go
-rustc --test src/sc_neurocore/accel/rust/safety/terman_wang.rs -o "$tmp/terman_wang_safety_test" && "$tmp/terman_wang_safety_test"
 cargo test --manifest-path engine/Cargo.toml tw_ -- --nocapture
+pytest tests/test_terman_wang_backends.py
 ```
 
-Observed results: Julia valid-step check passed, Go tests passed, Rust safety tests passed with 6 tests, and Rust engine Terman-Wang tests passed with 7 tests.
+Observed results: Rust engine Terman-Wang tests pass (7 tests); the cross-backend
+parity suite confirms Rust bit-exactness and the Julia/Go/Mojo ULP band.
+
+---
+
+## Polyglot acceleration
+
+A single `step` is trivial, but an N-step run is a sequential RK4 recurrence that
+does not vectorise, so a compiled inner loop genuinely beats Python.
+`simulate(n_steps, current, backend="auto")` dispatches across the polyglot chain
+and returns `(trace, spikes)`:
+
+```python
+from sc_neurocore.neurons.models.terman_wang import TermanWangOscillator
+
+neuron = TermanWangOscillator()
+trace, spikes = neuron.simulate(20_000, current=0.5)   # auto → Rust
+```
+
+The right-hand side mixes an exact cubic (written `v*v*v` so it matches the
+engine's `v.powi(3)` to the last bit) with a `tanh` gating term. On Linux the Rust
+engine resolves `tanh` to the **same glibc symbol** as Python, so the Rust backend
+is bit-identical to the NumPy reference. Julia, Go and Mojo use their own
+libm/`tanh` (and Mojo an FMA path), so they are within a per-step ULP band; a
+two-dimensional autonomous relaxation oscillator cannot be chaotic
+(Poincaré-Bendixson), so that band does not amplify over millions of steps and the
+spike counts match. `auto` selects Rust (the bit-exact backend, shipped in the
+wheel).
+
+### Measured throughput
+
+2,000,000 RK4 steps, default relaxation regime (`current=0.5`), median of 5
+repeats. Non-isolated loaded workstation (Intel i5-11600K) per
+`BROADCAST_2026-06-04_benchmark_core_isolation` — functional/regression evidence,
+not an isolated-core figure. Reproduce with
+`python benchmarks/bench_terman_wang_simulate.py`.
+
+| Backend | Median (ms) | Speed-up vs Python | Whole-trace parity |
+|---------|------------:|-------------------:|--------------------|
+| python  | 2085.15 | 1.0× | reference |
+| julia   | 161.85 | 12.9× | 4.4×10⁻¹⁶ (own libm tanh, ~1 ULP) |
+| mojo    | 203.87 | 10.2× | 4.6×10⁻¹² (FMA + own tanh) |
+| go      | 213.75 | 9.8× | 4.4×10⁻¹⁶ (own tanh, ~1 ULP) |
+| rust (`auto`) | 249.33 | 8.4× | bit-exact (0) |
+
+Artefact: `benchmarks/results/bench_terman_wang_simulate.json`. The earlier
+single-language step-level criterion/Python figures remain valid regression
+evidence for the per-step `step` path.
 
 ---
 

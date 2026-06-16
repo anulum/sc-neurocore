@@ -37,6 +37,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   tests, a multi-language benchmark with a committed results artefact, and a
   model-documentation upgrade; replaced the decorative `accel/go/services` stub
   with a real c-shared backend.
+- Added the polyglot N-step `simulate(n_steps, current, backend=...)` chain for
+  `TermanWangOscillator` (Terman-Wang 1995 LEGION relaxation oscillator) across
+  python / rust / julia / go / mojo. Aligned the Python cubic to `v*v*v` (from
+  `v**3`) so it matches the engine's `v.powi(3)` and removed the now-unreachable
+  `OverflowError` branch. The right-hand side mixes the exact cubic with a `tanh`
+  gating term: the Rust engine resolves `tanh` to the same glibc symbol as Python
+  and is bit-identical, while Julia/Go/Mojo use their own libm `tanh` and are
+  ULP-bounded (the 2D relaxation oscillator is non-chaotic, so it does not
+  amplify). Added the Rust engine `simulate` plus PyO3 `py_terman_wang_simulate`,
+  the Julia/Go/Mojo backends, cross-backend parity tests, a multi-language
+  benchmark with a committed results artefact, and a model-documentation upgrade;
+  replaced the decorative `accel/go/services` and `accel/mojo/kernels` stubs with
+  real backends.
 
 ## [3.15.34] - 2026-06-15
 

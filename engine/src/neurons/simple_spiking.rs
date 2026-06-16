@@ -836,6 +836,22 @@ impl TermanWangOscillator {
             0
         }
     }
+    /// Run `n_steps` RK4 updates under a constant input, returning the `v` trace
+    /// and the upward-`v_peak`-crossing spike count. Reuses `step`; the cubic uses
+    /// `v.powi(3)` = `v*v*v` (matching the Python `v*v*v`). The hyperbolic-tangent
+    /// gating resolves to the same glibc `tanh` as the Python reference on Linux,
+    /// so this backend is bit-identical there. The final state is left in
+    /// `self.v` / `self.w`.
+    pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+        let mut trace = Vec::with_capacity(n_steps);
+        let mut spikes: i64 = 0;
+        for _ in 0..n_steps {
+            let spiked = self.step(current);
+            trace.push(self.v);
+            spikes += spiked as i64;
+        }
+        (trace, spikes)
+    }
     pub fn reset(&mut self) {
         self.v = -1.5;
         self.w = -0.5;

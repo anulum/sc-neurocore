@@ -33,7 +33,7 @@ def _run(neuron: TermanWangOscillator, current: float, steps: int) -> list[int]:
 
 
 def _rhs(neuron: TermanWangOscillator, v: float, w: float, current: float) -> tuple[float, float]:
-    f = 3.0 * v - v**3 + 2.0
+    f = 3.0 * v - v * v * v + 2.0
     g = neuron.alpha * (1.0 + np.tanh(v / neuron.beta))
     return f - w + current + neuron.rho, neuron.epsilon * (g - w)
 

@@ -520,6 +520,16 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_terman_wang_simulate,
+    )
+
+    __all__ += ["py_terman_wang_simulate"]
+    _terman_wang_rust_available = True
+except ImportError:
+    _terman_wang_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_rulkov_map_simulate,
     )
 
