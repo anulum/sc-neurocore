@@ -22,7 +22,8 @@ func TestQuadraticIFCurrentBalance(t *testing.T) {
 	if spike != 0 {
 		t.Fatalf("unexpected spike: %d", spike)
 	}
-	expected := before + (before*before+0.5)*s.Dt
+	rootI := math.Sqrt(0.5)
+	expected := rootI * math.Tan(math.Atan(before/rootI)+rootI*s.Dt)
 	if math.Abs(s.V-expected) > 1e-12 {
 		t.Fatalf("unexpected v: %.17g want %.17g", s.V, expected)
 	}
@@ -42,12 +43,36 @@ func TestQuadraticIFInvalidCurrentPreservesState(t *testing.T) {
 
 func TestQuadraticIFNonFiniteIncrementPreservesState(t *testing.T) {
 	s := NewQuadraticIFNeuron()
-	s.V = -1.0e200
+	s.V = -0.25
 	before := s.V
-	if _, err := s.Step(0.0); err == nil {
-		t.Fatal("non-finite increment was accepted")
+	if _, err := s.Step(-1.0e308); err == nil {
+		t.Fatal("non-finite exact-flow candidate was accepted")
 	}
 	if s.V != before {
 		t.Fatalf("state mutated: before=%v after=%v", before, s.V)
+	}
+}
+
+func TestQuadraticIFFixedPointPreserved(t *testing.T) {
+	s := NewQuadraticIFNeuron()
+	spike, err := s.Step(-1.0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if spike != 0 || s.V != -1.0 {
+		t.Fatalf("fixed point changed: spike=%d v=%.17g", spike, s.V)
+	}
+}
+
+func TestQuadraticIFExactFlowResetsOnPeakCrossing(t *testing.T) {
+	s := NewQuadraticIFNeuron()
+	s.V = 0.95
+	s.Dt = 0.5
+	spike, err := s.Step(1.0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if spike != 1 || s.V != s.VReset {
+		t.Fatalf("expected reset spike, got spike=%d v=%.17g", spike, s.V)
 	}
 }

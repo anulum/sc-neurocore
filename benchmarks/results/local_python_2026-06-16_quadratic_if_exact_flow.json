@@ -1,0 +1,84 @@
+{
+  "benchmark": "QuadraticIFNeuron exact constant-current flow step",
+  "command": "PYTHONPATH=src ./.venv/bin/python benchmarks/bench_model_quadratic_if.py",
+  "current": 0.5,
+  "evidence_class": "local_regression_non_isolated",
+  "isolation": "non-isolated loaded workstation",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "production_speed_claim": false,
+  "python": "3.12.3",
+  "repeats": 5,
+  "results": [
+    {
+      "backend": "python",
+      "max_ns_per_step": 489.05864,
+      "median_ns_per_step": 461.890925,
+      "min_ns_per_step": 439.14141,
+      "results": [
+        {
+          "backend": "python",
+          "current": 0.5,
+          "elapsed_ns": 88170876,
+          "ns_per_step": 440.85438,
+          "spikes": 738,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 0.5,
+          "elapsed_ns": 96243480,
+          "ns_per_step": 481.2174,
+          "spikes": 738,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 0.5,
+          "elapsed_ns": 92378185,
+          "ns_per_step": 461.890925,
+          "spikes": 738,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 0.5,
+          "elapsed_ns": 87828282,
+          "ns_per_step": 439.14141,
+          "spikes": 738,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 0.5,
+          "elapsed_ns": 97811728,
+          "ns_per_step": 489.05864,
+          "spikes": 738,
+          "steps": 200000
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "reason": "covered by focused Rust exact-flow tests; not loaded through this Python benchmark",
+      "skipped": true
+    },
+    {
+      "backend": "go",
+      "reason": "covered by focused Go exact-flow tests; not loaded through Python FFI",
+      "skipped": true
+    },
+    {
+      "backend": "julia",
+      "reason": "covered by Julia source mirror check; not loaded by this Python benchmark",
+      "skipped": true
+    },
+    {
+      "backend": "mojo",
+      "reason": "non-authoritative Mojo kernel mirror aligned; no shared library benchmark hook",
+      "skipped": true
+    }
+  ],
+  "steps": 200000,
+  "timestamp_utc": "2026-06-16T18:13:02+00:00"
+}

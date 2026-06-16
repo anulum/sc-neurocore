@@ -48,21 +48,59 @@ func (s QuadraticIFNeuronState) Valid() bool {
 		s.Dt > 0.0
 }
 
-// Step advances the neuron by one timestep. Invalid inputs do not mutate state.
+func (s QuadraticIFNeuronState) exactCandidate(iExt float64) (float64, bool) {
+	if iExt > 0.0 {
+		rootI := math.Sqrt(iExt)
+		phase := math.Atan(s.V / rootI)
+		peakPhase := math.Atan(s.VPeak / rootI)
+		nextPhase := phase + rootI*s.Dt
+		if nextPhase >= peakPhase || nextPhase >= math.Pi/2.0 {
+			return s.VReset, true
+		}
+		return rootI * math.Tan(nextPhase), false
+	}
+	if iExt == 0.0 {
+		denominator := 1.0 - s.V*s.Dt
+		if denominator <= 0.0 {
+			return s.VReset, true
+		}
+		nextV := s.V / denominator
+		if nextV >= s.VPeak {
+			return s.VReset, true
+		}
+		return nextV, false
+	}
+
+	rootI := math.Sqrt(-iExt)
+	if math.Abs(s.V+rootI) <= 1.0e-15 {
+		return s.V, false
+	}
+	numeratorRatio := (s.V - rootI) / (s.V + rootI)
+	evolvedRatio := numeratorRatio * math.Exp(2.0*rootI*s.Dt)
+	denominator := 1.0 - evolvedRatio
+	if (numeratorRatio < 1.0 && evolvedRatio >= 1.0) || math.Abs(denominator) <= 1.0e-15 {
+		return s.VReset, true
+	}
+	nextV := rootI * (1.0 + evolvedRatio) / denominator
+	if nextV >= s.VPeak {
+		return s.VReset, true
+	}
+	return nextV, false
+}
+
+// Step advances the neuron by one exact constant-current QIF flow step. Invalid inputs do not mutate state.
 func (s *QuadraticIFNeuronState) Step(iExt float64) (int, error) {
 	if !quadraticIFFinite(iExt) || !s.Valid() {
 		return 0, ErrQuadraticIFInvalidState
 	}
 
-	increment := (s.V*s.V + iExt) * s.Dt
-	nextV := s.V + increment
-	if !quadraticIFFinite(increment, nextV) {
+	nextV, spiked := s.exactCandidate(iExt)
+	if !quadraticIFFinite(nextV) {
 		return 0, ErrQuadraticIFNonFiniteUpdate
 	}
 
 	s.V = nextV
-	if s.V >= s.VPeak {
-		s.V = s.VReset
+	if spiked {
 		return 1, nil
 	}
 	return 0, nil
@@ -93,5 +131,5 @@ func SimulateQuadraticIFNeuron(nSteps int, iExt float64) ([]float64, int) {
 
 var (
 	ErrQuadraticIFInvalidState    = errors.New("quadratic-if state/current must be finite and well-formed")
-	ErrQuadraticIFNonFiniteUpdate = errors.New("quadratic-if Euler update became non-finite")
+	ErrQuadraticIFNonFiniteUpdate = errors.New("quadratic-if exact-flow update became non-finite")
 )
