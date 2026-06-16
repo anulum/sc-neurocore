@@ -8,9 +8,119 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import importlib as _importlib
 import math
-from typing import ClassVar
+import os as _os
+from dataclasses import dataclass
+from typing import Callable, ClassVar, Optional
+
+import numpy as np
+import numpy.typing as npt
+
+# ───────────────────────── backend detection ─────────────────────────
+#
+# A single `step` is trivial, but an N-step RK4 simulation is a sequential
+# recurrence (each step depends on the previous) that does not vectorise, so a
+# compiled inner loop genuinely beats Python. The polyglot chain (Rust PyO3,
+# Julia juliacall, Go cgo, Mojo FFI) accelerates `simulate`. The right-hand side
+# is exact polynomial arithmetic, so Rust/Julia/Go reproduce the NumPy reference
+# bit-for-bit; the FMA-fusing Mojo backend stays within a measured per-step ULP
+# band with identical spike counts.
+
+_RustSimulate = Callable[..., "tuple[list[float], int, float, float]"]
+
+
+def _load_rust_simulate() -> _RustSimulate:
+    engine = _importlib.import_module("sc_neurocore_engine")
+    return engine.py_wilson_hr_simulate  # type: ignore[no-any-return]
+
+
+try:
+    _rust_simulate: Optional[_RustSimulate] = _load_rust_simulate()
+    _HAS_RUST = True
+except (ImportError, AttributeError):
+    _rust_simulate = None
+    _HAS_RUST = False
+
+_julia_module = None
+_HAS_JULIA = False
+_go_lib = None
+_HAS_GO = False
+_mojo_lib = None
+_HAS_MOJO = False
+
+_ACCEL_ROOT = _os.path.join(_os.path.dirname(__file__), "..", "..", "accel")
+
+
+def _ensure_julia_loaded() -> bool:
+    global _julia_module, _HAS_JULIA
+    if _julia_module is not None:
+        return True
+    import importlib.util as importlib_util
+
+    if importlib_util.find_spec("juliacall") is None:
+        return False
+    jl_path = _os.path.abspath(_os.path.join(_ACCEL_ROOT, "julia", "neurons", "wilson_hr.jl"))
+    if not _os.path.isfile(jl_path):
+        return False
+    juliacall = _importlib.import_module("juliacall")
+    jl = juliacall.Main
+    jl.include(jl_path)
+    _julia_module = jl.WilsonHRAccel
+    _HAS_JULIA = True
+    return True
+
+
+def _ensure_go_loaded() -> bool:
+    global _go_lib, _HAS_GO
+    if _go_lib is not None:
+        return True
+    import ctypes
+
+    so_path = _os.path.abspath(
+        _os.path.join(_ACCEL_ROOT, "go", "neurons", "wilson_hr", "libwilsonhr.so")
+    )
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    fn = getattr(lib, "wilson_hr_simulate_c", None)
+    if fn is None:
+        return False
+    fn.argtypes = [ctypes.c_double] * 5 + [
+        ctypes.c_int,
+        ctypes.c_double,
+        ctypes.POINTER(ctypes.c_double),
+    ]
+    fn.restype = ctypes.c_longlong
+    _go_lib = lib
+    _HAS_GO = True
+    return True
+
+
+def _ensure_mojo_loaded() -> bool:
+    global _mojo_lib, _HAS_MOJO
+    if _mojo_lib is not None:
+        return True
+    import ctypes
+
+    so_path = _os.path.abspath(_os.path.join(_ACCEL_ROOT, "mojo", "neurons", "libwilsonhr.so"))
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    fn = getattr(lib, "wilson_hr_simulate_c", None)
+    if fn is None:
+        return False
+    fn.argtypes = [ctypes.c_double] * 5 + [ctypes.c_int64, ctypes.c_double, ctypes.c_int64]
+    fn.restype = ctypes.c_int64
+    _mojo_lib = lib
+    _HAS_MOJO = True
+    return True
 
 
 @dataclass
@@ -117,6 +227,147 @@ class WilsonHRNeuron:
             self.v = -0.7
             return 1
         return 0
+
+    def simulate(
+        self, n_steps: int, current: float = 0.0, backend: str = "auto"
+    ) -> tuple[npt.NDArray[np.float64], int]:
+        """Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
+
+        ``trace[t]`` is the membrane variable ``v`` after step ``t`` (already
+        hard-reset to ``-0.7`` on spiking steps); ``spikes`` counts the steps whose
+        post-RK4 ``v`` reached ``v_peak``. The instance state ``(v, r)`` is advanced
+        to the final step. The Rust/Julia/Go backends reproduce the pure-NumPy
+        reference bit-for-bit; the FMA-fusing Mojo backend stays within a measured
+        per-step ULP band with identical spike counts.
+        """
+        if n_steps < 0:
+            raise ValueError("n_steps must be non-negative")
+        if backend not in ("auto", "rust", "julia", "go", "mojo", "python"):
+            raise ValueError(f"backend must be auto/rust/julia/go/mojo/python, got {backend!r}")
+        current = self._validate_runtime_contract(current)
+
+        if backend == "rust" and not _HAS_RUST:
+            raise RuntimeError("Rust Wilson-HR backend requested but the engine wheel lacks it.")
+        if backend == "julia" and not _ensure_julia_loaded():
+            raise RuntimeError(
+                "Julia Wilson-HR backend requested but juliacall/.jl is unavailable."
+            )
+        if backend == "go" and not _ensure_go_loaded():
+            raise RuntimeError(
+                "Go Wilson-HR backend requested but libwilsonhr.so is not built; run "
+                "`cd src/sc_neurocore/accel/go/neurons/wilson_hr && go build "
+                "-buildmode=c-shared -o libwilsonhr.so wilson_hr.go`."
+            )
+        if backend == "mojo" and not _ensure_mojo_loaded():
+            raise RuntimeError(
+                "Mojo Wilson-HR backend requested but libwilsonhr.so is not built; run "
+                "`cd src/sc_neurocore/accel/mojo/neurons && mojo build --emit shared-lib "
+                "-o libwilsonhr.so wilson_hr.mojo`."
+            )
+
+        if backend == "rust" or (backend == "auto" and _HAS_RUST):
+            trace, spikes, vf, rf = self._simulate_rust(n_steps, current)
+        elif backend == "julia":
+            trace, spikes, vf, rf = self._simulate_julia(n_steps, current)
+        elif backend == "go":
+            trace, spikes, vf, rf = self._simulate_go(n_steps, current)
+        elif backend == "mojo":
+            trace, spikes, vf, rf = self._simulate_mojo(n_steps, current)
+        else:
+            trace, spikes, vf, rf = self._simulate_python(n_steps, current)
+        self.v, self.r = vf, rf
+        return trace, spikes
+
+    def _simulate_python(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
+        trace = np.empty(n_steps, dtype=np.float64)
+        v, r = self.v, self.r
+        tau_r, v_peak, dt = self.tau_r, self.v_peak, self.dt
+
+        def deriv(vv: float, rr: float) -> tuple[float, float]:
+            poly = -(17.81 + 47.71 * vv + 32.63 * vv * vv) * (vv - 0.55)
+            syn = -26.0 * rr * (vv + 0.92)
+            return poly + syn + current, (-rr + 1.35 * vv + 1.03) / tau_r
+
+        spikes = 0
+        for t in range(n_steps):
+            dv1, dr1 = deriv(v, r)
+            dv2, dr2 = deriv(v + 0.5 * dt * dv1, r + 0.5 * dt * dr1)
+            dv3, dr3 = deriv(v + 0.5 * dt * dv2, r + 0.5 * dt * dr2)
+            dv4, dr4 = deriv(v + dt * dv3, r + dt * dr3)
+            v = v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0
+            r = r + dt * (dr1 + 2.0 * dr2 + 2.0 * dr3 + dr4) / 6.0
+            if v >= v_peak:
+                v = -0.7
+                spikes += 1
+            trace[t] = v
+        return trace, spikes, v, r
+
+    def _simulate_rust(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
+        assert _rust_simulate is not None
+        trace_list, spikes, vf, rf = _rust_simulate(
+            self.v, self.r, self.tau_r, self.v_peak, self.dt, n_steps, current
+        )
+        return np.asarray(trace_list, dtype=np.float64), int(spikes), float(vf), float(rf)
+
+    def _simulate_julia(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
+        assert _julia_module is not None
+        result = _julia_module.simulate_trace(
+            float(self.v),
+            float(self.r),
+            float(self.tau_r),
+            float(self.v_peak),
+            float(self.dt),
+            int(n_steps),
+            float(current),
+        )
+        trace = np.asarray(result.trace, dtype=np.float64)
+        return trace, int(result.spikes), float(result.vf), float(result.rf)
+
+    def _simulate_go(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
+        assert _go_lib is not None
+        import ctypes
+
+        trace = np.zeros(n_steps + 2, dtype=np.float64, order="C")
+        spikes = _go_lib.wilson_hr_simulate_c(
+            ctypes.c_double(self.v),
+            ctypes.c_double(self.r),
+            ctypes.c_double(self.tau_r),
+            ctypes.c_double(self.v_peak),
+            ctypes.c_double(self.dt),
+            ctypes.c_int(n_steps),
+            ctypes.c_double(current),
+            trace.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        )
+        vf = float(trace[n_steps]) if n_steps > 0 else self.v
+        rf = float(trace[n_steps + 1])
+        return np.ascontiguousarray(trace[:n_steps]), int(spikes), vf, rf
+
+    def _simulate_mojo(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
+        assert _mojo_lib is not None
+        trace = np.zeros(n_steps + 2, dtype=np.float64, order="C")
+        spikes = _mojo_lib.wilson_hr_simulate_c(
+            float(self.v),
+            float(self.r),
+            float(self.tau_r),
+            float(self.v_peak),
+            float(self.dt),
+            int(n_steps),
+            float(current),
+            int(trace.ctypes.data),
+        )
+        vf = float(trace[n_steps]) if n_steps > 0 else self.v
+        rf = float(trace[n_steps + 1])
+        return np.ascontiguousarray(trace[:n_steps]), int(spikes), vf, rf
 
     def reset(self) -> None:
         self.v = -0.7
