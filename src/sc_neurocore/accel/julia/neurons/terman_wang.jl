@@ -4,90 +4,55 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for Terman-Wang
+# SC-NeuroCore — Julia Terman-Wang 1995 LEGION relaxation oscillator (parity with terman_wang.py)
+
+# Parity contract: `simulate_trace` reproduces
+# `sc_neurocore.neurons.models.terman_wang.TermanWangOscillator.simulate`. The
+# cubic is exact (`v*v*v`, matching the engine `v.powi(3)`); the `tanh` gating uses
+# Julia's libm, so the trace is within a per-step ULP band of the NumPy reference
+# (the two-dimensional relaxation oscillator is non-chaotic, so it does not
+# amplify) with identical spike counts.
+#
+# Reference: Terman, D. & Wang, D.L. (1995). Physica D 81:148-176.
 
 module TermanWangAccel
 
-export step!, simulate, validate, TermanWangOscillatorState
+export simulate_trace
 
-mutable struct TermanWangOscillatorState
-    v::Float64
-    w::Float64
-    alpha::Float64
-    beta::Float64
-    epsilon::Float64
-    rho::Float64
-    dt::Float64
-    v_peak::Float64
-end
-
-function TermanWangOscillatorState()
-    TermanWangOscillatorState(-1.5, -0.5, 3.0, 0.2, 0.02, 0.0, 0.05, 1.5)
-end
-
-function validate(s::TermanWangOscillatorState, dt::Float64=s.dt)::Bool
-    return isfinite(s.v) &&
-        isfinite(s.w) &&
-        isfinite(s.alpha) &&
-        isfinite(s.beta) && s.beta > 0.0 &&
-        isfinite(s.epsilon) && s.epsilon > 0.0 &&
-        isfinite(s.rho) &&
-        isfinite(s.dt) && s.dt > 0.0 &&
-        isfinite(dt) && dt > 0.0 &&
-        isfinite(s.v_peak)
-end
-
-function derivatives(s::TermanWangOscillatorState, v::Float64, w::Float64, current::Float64)
-    if !all(isfinite, (v, w, current))
-        return nothing
-    end
-    f = 3.0 * v - v^3 + 2.0
-    g = s.alpha * (1.0 + tanh(v / s.beta))
-    dv = f - w + current + s.rho
-    dw = s.epsilon * (g - w)
-    all(isfinite, (dv, dw)) ? (dv, dw) : nothing
-end
-
-function rk4_candidate(s::TermanWangOscillatorState, current::Float64, dt::Float64)
-    k1 = derivatives(s, s.v, s.w, current)
-    k1 === nothing && return nothing
-    k2 = derivatives(s, s.v + 0.5 * dt * k1[1], s.w + 0.5 * dt * k1[2], current)
-    k2 === nothing && return nothing
-    k3 = derivatives(s, s.v + 0.5 * dt * k2[1], s.w + 0.5 * dt * k2[2], current)
-    k3 === nothing && return nothing
-    k4 = derivatives(s, s.v + dt * k3[1], s.w + dt * k3[2], current)
-    k4 === nothing && return nothing
-    candidate = (
-        s.v + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
-        s.w + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
+function simulate_trace(
+    v0::Float64,
+    w0::Float64,
+    alpha::Float64,
+    beta::Float64,
+    eps::Float64,
+    rho::Float64,
+    dt::Float64,
+    v_peak::Float64,
+    n_steps::Int,
+    current::Float64,
+)
+    trace = Vector{Float64}(undef, n_steps)
+    v = v0
+    w = w0
+    deriv(vv, ww) = (
+        3.0 * vv - vv * vv * vv + 2.0 - ww + current + rho,
+        eps * (alpha * (1.0 + tanh(vv / beta)) - ww),
     )
-    all(isfinite, candidate) ? candidate : nothing
-end
-
-function step!(s::TermanWangOscillatorState, I_ext::Float64=0.0; dt::Float64=s.dt)
-    if !validate(s, dt) || !isfinite(I_ext)
-        return -1
-    end
-
-    v_prev = s.v
-    candidate = rk4_candidate(s, I_ext, dt)
-    candidate === nothing && return -1
-    s.v, s.w = candidate
-    return (s.v >= s.v_peak && v_prev < s.v_peak) ? 1 : 0
-end
-
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
-    s = TermanWangOscillatorState()
-    trace = zeros(n_steps)
     spikes = 0
-    for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
-        trace[t] = s.v
-        if result isa Number && result > 0
+    @inbounds for t in 1:n_steps
+        v_prev = v
+        dv1, dw1 = deriv(v, w)
+        dv2, dw2 = deriv(v + 0.5 * dt * dv1, w + 0.5 * dt * dw1)
+        dv3, dw3 = deriv(v + 0.5 * dt * dv2, w + 0.5 * dt * dw2)
+        dv4, dw4 = deriv(v + dt * dv3, w + dt * dw3)
+        v = v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0
+        w = w + dt * (dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4) / 6.0
+        trace[t] = v
+        if v >= v_peak && v_prev < v_peak
             spikes += 1
         end
     end
-    return trace, spikes
+    return (trace = trace, spikes = spikes, vf = v, wf = w)
 end
 
 end # module TermanWangAccel
