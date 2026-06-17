@@ -616,25 +616,29 @@ the floored remainder (`theta % 2*pi` = Julia `mod` = Go/Mojo `theta - floor(the
 
 ### Measured backends
 
-Reproduce with `python benchmarks/bench_ermentrout_kopell_map.py --json
-benchmarks/results/bench_ermentrout_kopell_map.json`. Workload: 2,000,000 steps,
-default parameters, current = 0.1, median of 5 repeats. **Non-isolated** (loaded
-workstation, Python 3.12 / NumPy 2.3) — functional/regression evidence, not
-isolated-core release numbers.
+Reproduce with `PYTHONPATH=src .venv/bin/python benchmarks/bench_ermentrout_kopell_map.py --json benchmarks/results/bench_ermentrout_kopell_map.json`.
+Workload: 2,000,000 steps, default parameters, current = 0.1, median of 5
+repeats. **Non-isolated** (loaded workstation, Python 3.12 / NumPy 2.3) —
+functional/regression evidence, not isolated-core release numbers.
 
-| backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
-|---|---:|---:|---:|
-| python (NumPy) | 340.23 | 1.00× | 0 |
-| julia | 40.65 | 8.37× | 8.54e-13 (non-amplifying ULP) |
-| mojo | 47.93 | 7.10× | 1.84e-11 (non-amplifying ULP) |
-| rust | 47.99 | 7.09× | 0 (bit-exact) |
-| go | 57.67 | 5.90× | 3.97e-12 (non-amplifying ULP) |
+| backend | median (ms) | min (ms) | speedup vs NumPy | parity Δ vs NumPy | spikes |
+|---|---:|---:|---:|---:|---:|
+| python (NumPy) | 310.88642598479055 | 295.77069298829883 | 1.0× | 0 | 20137 |
+| rust | 49.06533900066279 | 48.531609994824976 | 6.336171976323062× | 0 | 20137 |
+| julia | 41.5626679896377 | 40.897541999584064 | 7.47994392617673× | 8.539835505416704e-13 | 20137 |
+| go | 58.85015899548307 | 58.60249500256032 | 5.28267775807797× | 3.97237798210881e-12 | 20137 |
+| mojo | 47.326404019258916 | 46.48430601810105 | 6.568984743871075× | 1.836397700571979e-11 | 20137 |
 
 The speedups (~6–8×) are modest because the per-step cost is dominated by the
 `cos` evaluation, which every compiled backend pays. The libm-divergent backends'
 parity stays at the 1e-13…1e-11 level even over 2,000,000 steps — confirming the
 non-chaotic, non-amplifying character. `auto` selects Rust: the fastest
-**bit-exact** backend and the one that ships in the wheel.
+**bit-exact** backend and the one that ships in the wheel. Artefact:
+`benchmarks/results/bench_ermentrout_kopell_map.json`; gate:
+`ermentrout-kopell-map-five-backend-local-regression` in
+`benchmarks/benchmark_regression_gates.json`. The artefact records SHA-256
+source provenance for the benchmark runner and Python/Rust/Julia/Go/Mojo
+backend chain.
 
 ---
 
