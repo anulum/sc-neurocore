@@ -1,4 +1,46 @@
 {
+  "backend_summary": {
+    "go": {
+      "backend": "go",
+      "median_ms": 16.764686995884404,
+      "min_ms": 16.218030999880284,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 22.323038187825478,
+      "spikes": 567
+    },
+    "julia": {
+      "backend": "julia",
+      "median_ms": 23.4530640009325,
+      "min_ms": 22.022475983249024,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 15.956923496272763,
+      "spikes": 567
+    },
+    "mojo": {
+      "backend": "mojo",
+      "median_ms": 20.01404599286616,
+      "min_ms": 19.43143500830047,
+      "parity_max_abs_diff": 3.9968028886505635e-13,
+      "speedup_vs_python": 18.69880523655552,
+      "spikes": 567
+    },
+    "python": {
+      "backend": "python",
+      "median_ms": 374.2387480160687,
+      "min_ms": 342.2251640004106,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "spikes": 567
+    },
+    "rust": {
+      "backend": "rust",
+      "median_ms": 15.829967014724389,
+      "min_ms": 15.798506006831303,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 23.64115779066167,
+      "spikes": 567
+    }
+  },
   "benchmark": "ibarz_tanaka_map_simulate",
   "environment": {
     "isolation": "non-isolated (loaded workstation)",
@@ -9,40 +51,75 @@
   "results": [
     {
       "backend": "python",
-      "median_ms": 315.99085499328794,
-      "min_ms": 280.21756800444564,
+      "median_ms": 374.2387480160687,
+      "min_ms": 342.2251640004106,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 1.0
+      "speedup_vs_python": 1.0,
+      "spikes": 567
     },
     {
       "backend": "rust",
-      "median_ms": 15.85663800506154,
-      "min_ms": 15.817310006241314,
+      "median_ms": 15.829967014724389,
+      "min_ms": 15.798506006831303,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 19.927985673408298
+      "speedup_vs_python": 23.64115779066167,
+      "spikes": 567
     },
     {
       "backend": "julia",
-      "median_ms": 21.830764999322128,
-      "min_ms": 21.116345000336878,
+      "median_ms": 23.4530640009325,
+      "min_ms": 22.022475983249024,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 14.474566283091768
+      "speedup_vs_python": 15.956923496272763,
+      "spikes": 567
     },
     {
       "backend": "go",
-      "median_ms": 15.364509999926668,
-      "min_ms": 14.913090999471024,
+      "median_ms": 16.764686995884404,
+      "min_ms": 16.218030999880284,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 20.566282621105138
+      "speedup_vs_python": 22.323038187825478,
+      "spikes": 567
     },
     {
       "backend": "mojo",
-      "median_ms": 17.395640003087465,
-      "min_ms": 17.020534003677312,
+      "median_ms": 20.01404599286616,
+      "min_ms": 19.43143500830047,
       "parity_max_abs_diff": 3.9968028886505635e-13,
-      "speedup_vs_python": 18.16494563794171
+      "speedup_vs_python": 18.69880523655552,
+      "spikes": 567
     }
   ],
+  "source_hashes": {
+    "benchmarks/bench_ibarz_tanaka_map": {
+      "py": "1e9508d9f50b9027a63a044d647a1bc28369579423d3ba0d9fe059032432b509"
+    },
+    "benchmarks/bench_ibarz_tanaka_map.py": "1e9508d9f50b9027a63a044d647a1bc28369579423d3ba0d9fe059032432b509",
+    "engine/src/lib": {
+      "rs": "2ff46fde73954a8fceb51bc8d8457a6acf70fb788297c1c6bfe367c81b8a9f5f"
+    },
+    "engine/src/lib.rs": "2ff46fde73954a8fceb51bc8d8457a6acf70fb788297c1c6bfe367c81b8a9f5f",
+    "engine/src/neurons/maps": {
+      "rs": "e2f9d1d6d9d460373ba83bb6b71f5765b934d1ff13859ba0a79fe18c405f78d4"
+    },
+    "engine/src/neurons/maps.rs": "e2f9d1d6d9d460373ba83bb6b71f5765b934d1ff13859ba0a79fe18c405f78d4",
+    "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/ibarz_tanaka_map": {
+      "go": "8619cca12c8a2edc0d35179489ef35a96ed187cabfaffdcaa3173905e405b907"
+    },
+    "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/ibarz_tanaka_map.go": "8619cca12c8a2edc0d35179489ef35a96ed187cabfaffdcaa3173905e405b907",
+    "src/sc_neurocore/accel/julia/neurons/ibarz_tanaka_map": {
+      "jl": "619530e2505c81d3d4ae26c48384c0b404e6885c3b68b6560ff1d5d92b160796"
+    },
+    "src/sc_neurocore/accel/julia/neurons/ibarz_tanaka_map.jl": "619530e2505c81d3d4ae26c48384c0b404e6885c3b68b6560ff1d5d92b160796",
+    "src/sc_neurocore/accel/mojo/neurons/ibarz_tanaka_map": {
+      "mojo": "1795cfd1207af4b4a560710796145ea0d61c953a17120dc30012fcaab5a6e9eb"
+    },
+    "src/sc_neurocore/accel/mojo/neurons/ibarz_tanaka_map.mojo": "1795cfd1207af4b4a560710796145ea0d61c953a17120dc30012fcaab5a6e9eb",
+    "src/sc_neurocore/neurons/models/ibarz_tanaka_map": {
+      "py": "56c79f30b7eed131e389395761a85f7a6cfe43c8f7071355c37296ad5e9afe02"
+    },
+    "src/sc_neurocore/neurons/models/ibarz_tanaka_map.py": "56c79f30b7eed131e389395761a85f7a6cfe43c8f7071355c37296ad5e9afe02"
+  },
   "workload": {
     "current": 3.0,
     "n_steps": 2000000,
