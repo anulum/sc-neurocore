@@ -591,6 +591,76 @@
       }
     },
     {
+      "artefact": "benchmarks/results/bench_cazelles_map.json",
+      "description": "Cazelles 2001 bursting-map five-backend simulation evidence.",
+      "expected_values": {
+        "benchmark": "cazelles_map_simulate",
+        "environment.isolation": "non-isolated (loaded workstation)",
+        "workload.a": 3.8,
+        "workload.current": 0.05,
+        "workload.n_steps": 2000000,
+        "workload.repeats": 5
+      },
+      "id": "cazelles-map-five-backend-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "regression_limits": {
+        "backend_summary.go.parity_max_abs_diff": {
+          "max": 0.0
+        },
+        "backend_summary.julia.parity_max_abs_diff": {
+          "max": 0.0
+        },
+        "backend_summary.mojo.parity_max_abs_diff": {
+          "max": 0.001
+        },
+        "backend_summary.rust.parity_max_abs_diff": {
+          "max": 0.0
+        }
+      },
+      "required_numbers": [
+        "backend_summary.python.median_ms",
+        "backend_summary.python.min_ms",
+        "backend_summary.python.parity_max_abs_diff",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ms",
+        "backend_summary.rust.min_ms",
+        "backend_summary.rust.parity_max_abs_diff",
+        "backend_summary.rust.spikes",
+        "backend_summary.julia.median_ms",
+        "backend_summary.julia.min_ms",
+        "backend_summary.julia.parity_max_abs_diff",
+        "backend_summary.julia.spikes",
+        "backend_summary.go.median_ms",
+        "backend_summary.go.min_ms",
+        "backend_summary.go.parity_max_abs_diff",
+        "backend_summary.go.spikes",
+        "backend_summary.mojo.median_ms",
+        "backend_summary.mojo.min_ms",
+        "backend_summary.mojo.parity_max_abs_diff",
+        "backend_summary.mojo.spikes"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_cazelles_map.py": "source_hashes.benchmarks/bench_cazelles_map.py",
+        "engine/src/lib.rs": "source_hashes.engine/src/lib.rs",
+        "engine/src/neurons/maps.rs": "source_hashes.engine/src/neurons/maps.rs",
+        "src/sc_neurocore/neurons/models/cazelles_map.py": "source_hashes.src/sc_neurocore/neurons/models/cazelles_map.py",
+        "src/sc_neurocore/accel/go/neurons/cazelles_map/cazelles_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/cazelles_map/cazelles_map.go",
+        "src/sc_neurocore/accel/julia/neurons/cazelles_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/cazelles_map.jl",
+        "src/sc_neurocore/accel/mojo/neurons/cazelles_map.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/cazelles_map.mojo"
+      }
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-04_ultrascale_plus_target.json",
       "description": "NEU-C.1 Zynq UltraScale+ Vivado-project target-contract evidence.",
       "expected_values": {
