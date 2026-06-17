@@ -474,25 +474,30 @@ bit-exactness is required, use `auto` (Rust), `julia` or `go`.
 
 ### Measured backends
 
-Reproduce with `python benchmarks/bench_medvedev_map.py --json
-benchmarks/results/bench_medvedev_map.json`. Workload: 2,000,000 steps, default
-parameters, current = 0.1, median of 5 repeats. **Non-isolated** (loaded
-workstation, Python 3.12 / NumPy 2.3) — functional/regression evidence, not
-isolated-core release numbers.
+Reproduce with `PYTHONPATH=src .venv/bin/python benchmarks/bench_medvedev_map.py --json benchmarks/results/bench_medvedev_map.json`.
+Workload: 2,000,000 steps, default parameters, current = 0.1, median of 5
+repeats. **Non-isolated** (loaded workstation, Python 3.12 / NumPy 2.3) —
+functional/regression evidence, not isolated-core release numbers.
 
-| backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
-|---|---:|---:|---:|
-| python (NumPy) | 220.72 | 1.00× | 0 |
-| mojo | 11.07 | 19.94× | 9.99e-01 (chaotic FMA divergence) |
-| rust | 17.21 | 12.82× | 0 |
-| julia | 32.16 | 6.86× | 0 |
-| go | 33.58 | 6.57× | 0 |
+| backend | median (ms) | min (ms) | speedup vs NumPy | parity Δ vs NumPy | spikes |
+|---|---:|---:|---:|---:|---:|
+| python (NumPy) | 254.89072600612417 | 247.64505599159747 | 1.0× | 0 | 131993 |
+| rust | 28.578949015354738 | 28.245699999388307 | 8.918827836152333× | 0 | 131993 |
+| julia | 36.655931995483115 | 35.76657301164232 | 6.953601017088661× | 0 | 131993 |
+| go | 37.796882999828085 | 37.63167999568395 | 6.7436969870579935× | 0 | 131993 |
+| mojo | 12.649924989091232 | 12.604543997440487 | 20.149583987725723× | 0.9992580911717543 | 132209 |
 
 Mojo is fastest in raw throughput, but because its FMA contraction diverges on
 this chaotic map it is **not** chosen by `auto`; `auto` selects Rust — the
 fastest **bit-exact** backend and the one that ships in the wheel. Julia and Go
 trail here because the per-step work is tiny (one multiply, one add, one fold),
-so the `mod`/`math.Mod` call and FFI marshalling dominate the loop.
+so the `mod`/`math.Mod` call and FFI marshalling dominate the loop. Artefact:
+`benchmarks/results/bench_medvedev_map.json`; gate:
+`medvedev-map-five-backend-local-regression` in
+`benchmarks/benchmark_regression_gates.json`. The artefact records SHA-256
+source provenance for the benchmark runner and Python/Rust/Julia/Go/Mojo
+backend chain. The gate enforces exact spike parity for Python, Rust, Julia and
+Go; Mojo is bounded by the documented expanding-chaos FMA envelope.
 
 ---
 
