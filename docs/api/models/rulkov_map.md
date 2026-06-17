@@ -184,19 +184,22 @@ behaviour, not a defect, and the spike counts still match exactly.
 
 ### Measured backends
 
-Reproduce with `python benchmarks/bench_rulkov_map.py --json
+Reproduce with `PYTHONPATH=src .venv/bin/python benchmarks/bench_rulkov_map.py --json
 benchmarks/results/bench_rulkov_map.json`. Workload: 2,000,000 steps, default
 parameters, current = 0.5, median of 5 repeats. **Non-isolated** (loaded
 workstation, Python 3.12 / NumPy 2.3) — functional/regression evidence, not
-isolated-core release numbers.
+isolated-core release numbers. The committed artefact includes source SHA-256
+hashes for the Python benchmark, Python model, Rust engine entry points, Go
+cgo kernel, Julia kernel, and Mojo kernel; `tools/benchmark_evidence_gate.py`
+validates those hashes plus backend numeric metrics before release use.
 
-| backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
-|---|---:|---:|---:|
-| python (NumPy) | 350.06 | 1.00× | 0 |
-| go | 15.87 | 22.06× | 0 |
-| mojo | 16.07 | 21.78× | 1.78e-15 (sub-ULP FMA) |
-| rust | 16.56 | 21.14× | 0 |
-| julia | 18.53 | 18.89× | 0 |
+| backend | median (ms) | min (ms) | speedup vs NumPy | parity Δ vs NumPy | spikes |
+|---|---:|---:|---:|---:|---:|
+| python (NumPy) | 357.54 | 328.32 | 1.00× | 0 | 34 |
+| go | 14.66 | 14.18 | 24.39× | 0 | 34 |
+| mojo | 15.84 | 15.48 | 22.57× | 1.78e-15 (sub-ULP FMA) | 34 |
+| rust | 16.33 | 16.02 | 21.89× | 0 | 34 |
+| julia | 17.71 | 17.24 | 20.19× | 0 | 34 |
 
 The speedups are more modest than for the branch-free Cazelles map (~22× versus
 ~82×): the three-branch conditional limits instruction-level parallelism in
@@ -204,7 +207,9 @@ every backend, and the NumPy reference inner loop is correspondingly cheaper per
 step. Go and Mojo lead by filling a preallocated NumPy buffer over the C ABI;
 Rust returns a NumPy array directly (avoiding a multi-million-element
 Python-list marshal); `auto` selects Rust as the always-available wheel backend
-within ~1.04× of the fastest locally-built backend.
+within ~1.11× of the fastest locally-built backend. The benchmark gate
+additionally requires all five backend spike counts to remain equal; the
+refreshed artefact reports 34 spikes for every backend.
 
 ---
 
