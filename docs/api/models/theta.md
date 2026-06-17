@@ -210,11 +210,11 @@ regression comparison only and are not production throughput claims.
 
 | Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
 |---------|---------------:|------------:|------------:|-------:|
-| Python | 835.06643 | 832.502915 | 1008.433715 | 450 |
-| Rust engine | 94.53046 | 92.57925 | 99.261925 | 450 |
-| Go service mirror | 107.2 | 101.7 | 113.8 | 450 |
-| Julia mirror | 98.259515 | 97.152235 | 99.084195 | 450 |
-| Mojo mirror | 82.32672000303864 | 78.47523491363972 | 84.54791008261964 | 450 |
+| Python | 1115.22545 | 1019.392715 | 1574.31564 | 450 |
+| Rust engine | 138.5801 | 120.986305 | 147.37324 | 450 |
+| Go service mirror | 156.5 | 150.7 | 179.7 | 450 |
+| Julia mirror | 127.33956 | 126.497845 | 128.39905 | 450 |
+| Mojo mirror | 104.11917013698258 | 98.57875003945082 | 106.32325502228923 | 450 |
 
 ---
 
@@ -249,9 +249,11 @@ Rust, Go, Julia, and Mojo carry the same spike-crossing and compact-phase valida
 
 ---
 
-## Findings (measured 2026-04-04)
+## Findings (measured 2026-06-16)
 
-1. Throughput: ~131K steps/s (Python, single-thread)
-2. All pipeline stages verified green
-3. Polyglot contract aligned for Rust, Go, Julia, and Mojo
-4. Numerical stability confirmed over 20K steps
+1. Local Python median: 1115.22545 ns/step, about 897K steps/s in the
+   non-isolated regression run.
+2. Rust engine, Go, Julia, and Mojo measurements are present in the benchmark
+   artefact; no maintained backend is skipped.
+3. Polyglot contract aligned for Rust, Go, Julia, and Mojo.
+4. Numerical stability confirmed over 20K steps.

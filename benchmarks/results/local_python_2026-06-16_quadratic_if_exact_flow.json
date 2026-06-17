@@ -1,84 +1,294 @@
 {
+  "spdx_license": "AGPL-3.0-or-later",
+  "commercial_license": "available",
+  "copyright_concepts": "\u00a9 Concepts 1996\u20132026 Miroslav \u0160otek. All rights reserved.",
+  "copyright_code": "\u00a9 Code 2020\u20132026 Miroslav \u0160otek. All rights reserved.",
+  "orcid": "0009-0009-3560-0851",
+  "contact": "www.anulum.li | protoscience@anulum.li",
   "benchmark": "QuadraticIFNeuron exact constant-current flow step",
+  "timestamp_utc": "2026-06-17T00:27:44+00:00",
   "command": "PYTHONPATH=src ./.venv/bin/python benchmarks/bench_model_quadratic_if.py",
-  "current": 0.5,
   "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
   "isolation": "non-isolated loaded workstation",
+  "python": "3.12.3",
   "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
   "processor": "x86_64",
-  "production_speed_claim": false,
-  "python": "3.12.3",
+  "steps": 200000,
   "repeats": 5,
+  "current": 0.5,
   "results": [
     {
       "backend": "python",
-      "max_ns_per_step": 489.05864,
-      "median_ns_per_step": 461.890925,
-      "min_ns_per_step": 439.14141,
+      "median_ns_per_step": 529.888895,
+      "min_ns_per_step": 506.170625,
+      "max_ns_per_step": 666.01508,
+      "spikes": 738,
       "results": [
         {
           "backend": "python",
+          "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 88170876,
-          "ns_per_step": 440.85438,
+          "elapsed_ns": 103417163,
+          "ns_per_step": 517.085815,
           "spikes": 738,
-          "steps": 200000
+          "ending_state": [
+            -0.9705863128052687
+          ]
         },
         {
           "backend": "python",
+          "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 96243480,
-          "ns_per_step": 481.2174,
+          "elapsed_ns": 101234125,
+          "ns_per_step": 506.170625,
           "spikes": 738,
-          "steps": 200000
+          "ending_state": [
+            -0.9705863128052687
+          ]
         },
         {
           "backend": "python",
+          "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 92378185,
-          "ns_per_step": 461.890925,
+          "elapsed_ns": 106544417,
+          "ns_per_step": 532.722085,
           "spikes": 738,
-          "steps": 200000
+          "ending_state": [
+            -0.9705863128052687
+          ]
         },
         {
           "backend": "python",
+          "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 87828282,
-          "ns_per_step": 439.14141,
+          "elapsed_ns": 133203016,
+          "ns_per_step": 666.01508,
           "spikes": 738,
-          "steps": 200000
+          "ending_state": [
+            -0.9705863128052687
+          ]
         },
         {
           "backend": "python",
+          "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 97811728,
-          "ns_per_step": 489.05864,
+          "elapsed_ns": 105977779,
+          "ns_per_step": 529.888895,
           "spikes": 738,
-          "steps": 200000
+          "ending_state": [
+            -0.9705863128052687
+          ]
         }
       ]
     },
     {
       "backend": "rust",
-      "reason": "covered by focused Rust exact-flow tests; not loaded through this Python benchmark",
-      "skipped": true
+      "timestamp_unix": 1781656058,
+      "command": "cargo run --manifest-path engine/Cargo.toml --example bench_quadratic_if_exact_flow",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "target_os": "linux",
+      "target_arch": "x86_64",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "8.58 5.54 5.46 9/6287 1882650",
+        "load_average_after": "8.58 5.54 5.46 8/6288 1882661",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=2815.245,max=4029.073,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 200000,
+      "repeats": 5,
+      "current": 0.5,
+      "median_ns_per_step": 62.256035,
+      "min_ns_per_step": 49.96484,
+      "max_ns_per_step": 69.097795,
+      "results_ns_per_step": [
+        49.96484,
+        67.18306,
+        57.617925,
+        62.256035,
+        69.097795
+      ],
+      "spike_counts": [
+        738,
+        738,
+        738,
+        738,
+        738
+      ],
+      "final_vs": [
+        -0.9705863128052687,
+        -0.9705863128052687,
+        -0.9705863128052687,
+        -0.9705863128052687,
+        -0.9705863128052687
+      ],
+      "spikes": 738,
+      "driver_command": "cargo run --manifest-path engine/Cargo.toml --example bench_quadratic_if_exact_flow"
     },
     {
       "backend": "go",
-      "reason": "covered by focused Go exact-flow tests; not loaded through Python FFI",
-      "skipped": true
+      "command": "go test src/sc_neurocore/accel/go/services/quadratic_if.go src/sc_neurocore/accel/go/services/quadratic_if_test.go -run ^$ -bench BenchmarkQuadraticIFExactFlow$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 0.5,
+      "median_ns_per_step": 51.41,
+      "min_ns_per_step": 48.78,
+      "max_ns_per_step": 56.64,
+      "results_ns_per_step": [
+        51.41,
+        52.19,
+        48.78,
+        56.64,
+        50.66
+      ],
+      "spikes": 738
     },
     {
       "backend": "julia",
-      "reason": "covered by Julia source mirror check; not loaded by this Python benchmark",
-      "skipped": true
+      "command": "julia --project=. -e <quadratic-if exact-flow benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 0.5,
+      "median_ns_per_step": 46.907565,
+      "min_ns_per_step": 45.69871,
+      "max_ns_per_step": 49.259465,
+      "results_ns_per_step": [
+        49.259465,
+        46.907565,
+        47.46197,
+        45.69871,
+        45.87585
+      ],
+      "spikes": 738,
+      "spike_counts": [
+        738,
+        738,
+        738,
+        738,
+        738
+      ],
+      "final_vs": [
+        -0.9705863128052687,
+        -0.9705863128052687,
+        -0.9705863128052687,
+        -0.9705863128052687,
+        -0.9705863128052687
+      ]
     },
     {
       "backend": "mojo",
-      "reason": "non-authoritative Mojo kernel mirror aligned; no shared library benchmark hook",
-      "skipped": true
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp quadratic-if benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 0.5,
+      "median_ns_per_step": 45.37766988505609,
+      "min_ns_per_step": 44.75855501368642,
+      "max_ns_per_step": 46.39446997316554,
+      "results_ns_per_step": [
+        45.37766988505609,
+        46.39446997316554,
+        46.10822506947443,
+        45.351235021371394,
+        44.75855501368642
+      ],
+      "spikes": 738,
+      "spike_counts": [
+        738,
+        738,
+        738,
+        738,
+        738
+      ],
+      "final_vs": [
+        -0.9705863128052687,
+        -0.9705863128052687,
+        -0.9705863128052687,
+        -0.9705863128052687,
+        -0.9705863128052687
+      ]
     }
   ],
-  "steps": 200000,
-  "timestamp_utc": "2026-06-16T18:13:02+00:00"
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 529.888895,
+      "min_ns_per_step": 506.170625,
+      "max_ns_per_step": 666.01508,
+      "spikes": 738
+    },
+    "rust": {
+      "median_ns_per_step": 62.256035,
+      "min_ns_per_step": 49.96484,
+      "max_ns_per_step": 69.097795,
+      "spikes": 738
+    },
+    "go": {
+      "median_ns_per_step": 51.41,
+      "min_ns_per_step": 48.78,
+      "max_ns_per_step": 56.64,
+      "spikes": 738
+    },
+    "julia": {
+      "median_ns_per_step": 46.907565,
+      "min_ns_per_step": 45.69871,
+      "max_ns_per_step": 49.259465,
+      "spikes": 738
+    },
+    "mojo": {
+      "median_ns_per_step": 45.37766988505609,
+      "min_ns_per_step": 44.75855501368642,
+      "max_ns_per_step": 46.39446997316554,
+      "spikes": 738
+    }
+  },
+  "source_hashes": {
+    "benchmarks/bench_model_quadratic_if.py": "881b994bc854dbce694c984561bc3f1f7feeac1909de654b0890005217fbf46f",
+    "engine/Cargo.toml": "b45659ddea2ed1857f14addef1a50c26a6665e9e9c8cdbbb65d70695f8aea7cb",
+    "engine/examples/bench_quadratic_if_exact_flow.rs": "d1a961724a4733dbc769f0663b22d100c9c2ebedc28c8c3441ecc99db8a66da3",
+    "engine/src/neurons/trivial.rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1",
+    "src/sc_neurocore/neurons/models/quadratic_if.py": "87b5d954c643baa48bce72403ba8842d910a0c582b1f70073034fe5baae3a9ee",
+    "src/sc_neurocore/accel/go/services/quadratic_if.go": "d423093f0b0c48026450223273ca018743beee32de606b44dd6afb9c303d4057",
+    "src/sc_neurocore/accel/go/services/quadratic_if_test.go": "6259afde1eb944dfbfa27c2dc56c716de94a7ac5b8550c36cb23086e764c78fa",
+    "src/sc_neurocore/accel/julia/neurons/quadratic_if.jl": "beb4a62c77ed5052f84a37aa1c8e85596fd7756c23fa68dd220684c930d915e2",
+    "src/sc_neurocore/accel/mojo/kernels/quadratic_if.mojo": "45ee0459d4d2f51a6f061d4e72692e345509dd54a018ca384751bd375786d06e",
+    "src/sc_neurocore/accel/rust/safety/quadratic_if.rs": "5edfcb1a3a6717d3f0bc17f677cda6d17456a39126cfbb02ee8de5ea06a33012",
+    "benchmarks/bench_model_quadratic_if": {
+      "py": "881b994bc854dbce694c984561bc3f1f7feeac1909de654b0890005217fbf46f"
+    },
+    "engine/Cargo": {
+      "toml": "b45659ddea2ed1857f14addef1a50c26a6665e9e9c8cdbbb65d70695f8aea7cb"
+    },
+    "engine/examples/bench_quadratic_if_exact_flow": {
+      "rs": "d1a961724a4733dbc769f0663b22d100c9c2ebedc28c8c3441ecc99db8a66da3"
+    },
+    "engine/src/neurons/trivial": {
+      "rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1"
+    },
+    "src/sc_neurocore/neurons/models/quadratic_if": {
+      "py": "87b5d954c643baa48bce72403ba8842d910a0c582b1f70073034fe5baae3a9ee"
+    },
+    "src/sc_neurocore/accel/go/services/quadratic_if": {
+      "go": "d423093f0b0c48026450223273ca018743beee32de606b44dd6afb9c303d4057"
+    },
+    "src/sc_neurocore/accel/go/services/quadratic_if_test": {
+      "go": "6259afde1eb944dfbfa27c2dc56c716de94a7ac5b8550c36cb23086e764c78fa"
+    },
+    "src/sc_neurocore/accel/julia/neurons/quadratic_if": {
+      "jl": "beb4a62c77ed5052f84a37aa1c8e85596fd7756c23fa68dd220684c930d915e2"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/quadratic_if": {
+      "mojo": "45ee0459d4d2f51a6f061d4e72692e345509dd54a018ca384751bd375786d06e"
+    },
+    "src/sc_neurocore/accel/rust/safety/quadratic_if": {
+      "rs": "5edfcb1a3a6717d3f0bc17f677cda6d17456a39126cfbb02ee8de5ea06a33012"
+    }
+  }
 }

@@ -29,16 +29,13 @@ impl QuadraticIFNeuron {
             return Err("quadratic-if state/current must be finite and well-formed");
         }
 
-        let derivative = self.v * self.v + i_ext;
-        let increment = derivative * self.dt;
-        let next_v = self.v + increment;
-        if !increment.is_finite() || !next_v.is_finite() {
-            return Err("quadratic-if Euler update became non-finite");
+        let (next_v, spiked) = self.exact_candidate(i_ext);
+        if !next_v.is_finite() {
+            return Err("quadratic-if exact-flow update became non-finite");
         }
 
         self.v = next_v;
-        if self.v >= self.v_peak {
-            self.v = self.v_reset;
+        if spiked {
             Ok(1)
         } else {
             Ok(0)
@@ -47,6 +44,47 @@ impl QuadraticIFNeuron {
 
     pub fn reset(&mut self) {
         self.v = self.v_reset;
+    }
+
+    fn exact_candidate(&self, i_ext: f64) -> (f64, bool) {
+        if i_ext > 0.0 {
+            let root_i = i_ext.sqrt();
+            let phase = (self.v / root_i).atan();
+            let peak_phase = (self.v_peak / root_i).atan();
+            let next_phase = phase + root_i * self.dt;
+            if next_phase >= peak_phase || next_phase >= std::f64::consts::FRAC_PI_2 {
+                return (self.v_reset, true);
+            }
+            return (root_i * next_phase.tan(), false);
+        }
+        if i_ext == 0.0 {
+            let denominator = 1.0 - self.v * self.dt;
+            if denominator <= 0.0 {
+                return (self.v_reset, true);
+            }
+            let next_v = self.v / denominator;
+            if next_v >= self.v_peak {
+                return (self.v_reset, true);
+            }
+            return (next_v, false);
+        }
+
+        let root_i = (-i_ext).sqrt();
+        if (self.v + root_i).abs() <= 1.0e-15 {
+            return (self.v, false);
+        }
+        let numerator_ratio = (self.v - root_i) / (self.v + root_i);
+        let evolved_ratio = numerator_ratio * (2.0 * root_i * self.dt).exp();
+        let denominator = 1.0 - evolved_ratio;
+        if (numerator_ratio < 1.0 && evolved_ratio >= 1.0) || denominator.abs() <= 1.0e-15 {
+            return (self.v_reset, true);
+        }
+        let next_v = root_i * (1.0 + evolved_ratio) / denominator;
+        if next_v >= self.v_peak {
+            (self.v_reset, true)
+        } else {
+            (next_v, false)
+        }
     }
 }
 
@@ -104,11 +142,23 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_euler_increment_does_not_mutate_state() {
+    fn test_invalid_exact_flow_candidate_does_not_mutate_state() {
         let mut state = QuadraticIFNeuron::new();
-        state.v = -1.0e200;
-        assert!(state.step(0.0).is_err());
-        assert_eq!(state.v, -1.0e200);
+        state.v = -0.25;
+        assert!(state.step(-1.0e308).is_err());
+        assert_eq!(state.v, -0.25);
+    }
+
+    #[test]
+    fn test_exact_flow_matches_closed_form() {
+        let mut state = QuadraticIFNeuron::new();
+        let before = state.v;
+        let current = 0.5_f64;
+        let root_i = current.sqrt();
+        let expected = root_i * ((before / root_i).atan() + root_i * state.dt).tan();
+        let spike = state.step(current).unwrap();
+        assert_eq!(spike, 0);
+        assert!((state.v - expected).abs() < 1.0e-12);
     }
 
     #[test]

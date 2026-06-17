@@ -76,3 +76,19 @@ func TestQuadraticIFExactFlowResetsOnPeakCrossing(t *testing.T) {
 		t.Fatalf("expected reset spike, got spike=%d v=%.17g", spike, s.V)
 	}
 }
+
+func BenchmarkQuadraticIFExactFlow(b *testing.B) {
+	s := NewQuadraticIFNeuron()
+	spikes := 0
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		spike, err := s.Step(0.5)
+		if err != nil {
+			b.Fatalf("unexpected error: %v", err)
+		}
+		spikes += spike
+	}
+	if spikes < 0 {
+		b.Fatal("unreachable")
+	}
+}

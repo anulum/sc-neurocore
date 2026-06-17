@@ -434,11 +434,11 @@ Measured local regression values from
 
 | Backend | Median ns/step | Min ns/step | Max ns/step | Spikes | Evidence |
 |---------|---------------:|------------:|------------:|-------:|----------|
-| Python | 25467.72258 | 25179.76967 | 26262.524385 | 476 | RK4 reference |
-| Rust engine | 322.44675 | 313.577755 | 335.575095 | 476 | RK4 engine example |
-| Go service mirror | 230.2 | 229.4 | 241.7 | 0 | deterministic RK4 mirror |
-| Julia mirror | 159.14346 | 157.318495 | 161.061555 | 476 | RK4 mirror |
-| Mojo mirror | 216.30613497109152 | 213.5709249705542 | 222.3385649267584 | 476 | RK4 mirror |
+| Python | 29475.94944 | 27080.170765 | 43231.485975 | 476 | RK4 reference |
+| Rust engine | 296.67044 | 286.407105 | 305.03592 | 476 | RK4 engine example |
+| Go service mirror | 233.2 | 213.6 | 261.9 | 0 | deterministic RK4 mirror |
+| Julia mirror | 159.344265 | 158.39477 | 160.11992 | 476 | RK4 mirror |
+| Mojo mirror | 193.95623996388167 | 189.0052849194035 | 196.45741005660966 | 476 | RK4 mirror |
 
 ### 7.2 Historical Rust Criterion evidence
 

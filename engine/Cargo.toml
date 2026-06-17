@@ -83,6 +83,9 @@ name = "bench_lapicque_exact_flow"
 name = "bench_escape_rate_exact_flow"
 
 [[example]]
+name = "bench_quadratic_if_exact_flow"
+
+[[example]]
 name = "bench_precision_envelopes"
 
 [[example]]
