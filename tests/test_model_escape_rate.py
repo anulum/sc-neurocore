@@ -13,7 +13,7 @@ LIF membrane + Bernoulli spike. Analytical: V_ss = V_rest + R·I,
 p_spike at V_ss = rho_0·exp((V_ss-theta)/delta_u)·dt.
 At I=20: V_ss = theta → p = 0.001/step.
 Rust: wired in engine/src/network_runner.rs (5 mentions).
-Performance: ~52K isolation steps/s."""
+Membrane dynamics use exact constant-current RC relaxation before hazard evaluation."""
 
 from __future__ import annotations
 
@@ -122,15 +122,29 @@ class TestEscapeRateAnalytical:
         assert abs(mean_v - v_ss) < 5.0
 
     def test_membrane_equation_one_step(self):
-        """dV = (-(V-V_rest) + R·I) / tau_m · dt."""
+        """V_next = V_inf + (V - V_inf) * exp(-dt / tau_m)."""
         np.random.seed(999)
         n = EscapeRateNeuron()
         v0 = n.v
         I = 15.0
-        expected_dv = (-(v0 - n.v_rest) + n.resistance * I) / n.tau_m * n.dt
+        v_inf = n.v_rest + n.resistance * I
+        expected = v_inf + (v0 - v_inf) * math.exp(-n.dt / n.tau_m)
         n.step(I)
         if n.v != n.v_reset:
-            assert abs((n.v - v0) - expected_dv) < 1e-10
+            assert abs(n.v - expected) < 1e-10
+
+    def test_membrane_exact_flow_separates_from_forward_euler(self):
+        np.random.seed(999)
+        n = EscapeRateNeuron(v=-65.0, dt=5.0, rho_0=1.0e-12)
+        v0 = n.v
+        current = 10.0
+        v_inf = n.v_rest + n.resistance * current
+        euler = v0 + (-(v0 - n.v_rest) + n.resistance * current) / n.tau_m * n.dt
+        expected = v_inf + (v0 - v_inf) * math.exp(-n.dt / n.tau_m)
+        spike = n.step(current)
+        assert spike == 0
+        assert abs(n.v - expected) < 1e-10
+        assert abs(n.v - euler) > 1e-3
 
     def test_rho0_scales_rate(self):
         n_low = EscapeRateNeuron(rho_0=0.0001)
@@ -225,9 +239,9 @@ class TestEscapeRateValidation:
         assert n.v == before
 
     def test_rejects_non_finite_voltage_candidate_before_reset_mutation(self):
-        n = EscapeRateNeuron(v=-65.0, v_threshold=1.0e308, tau_m=1.0e-308)
+        n = EscapeRateNeuron(v=-65.0, v_threshold=1.0e308, resistance=1.0e308)
         before = n.v
-        with pytest.raises(ValueError, match="voltage update"):
+        with pytest.raises(ValueError, match="voltage candidate"):
             n.step(1.0e308)
         assert n.v == before
 

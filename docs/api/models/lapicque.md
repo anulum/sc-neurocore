@@ -84,13 +84,23 @@ LapicqueNeuron
 
 ## Measured Performance (2026-06-17)
 
+Local non-isolated regression run. These numbers are recorded for
+regression comparison only and are not production throughput claims.
+
 | Metric | Value |
 |--------|-------|
 | Evidence class | Local regression, non-isolated workstation |
 | Benchmark artefact | `benchmarks/results/local_python_2026-06-17_lapicque_exact_flow.json` |
-| Spikes (10K steps, I=5.0) | Deterministic periodic spiking under exact flow |
-| State stability (20K steps) | PASS |
+| Workload | 200000 steps, 5 repeats, I=5.0 |
 | Polyglot contract | Python, Rust engine, Rust safety, Go, Julia, and Mojo exact-flow surfaces aligned, with explicit errors where supported |
+
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
+|---------|---------------:|------------:|------------:|-------:|
+| Python | 893.094255 | 866.38822 | 915.48428 | 40000 |
+| Rust engine | 29.41035 | 28.47989 | 38.429475 | 40000 |
+| Go service mirror | 37.29 | 21.2 | 38.77 | 40000 |
+| Julia mirror | 9.94024 | 9.22951 | 10.84847 | 40000 |
+| Mojo mirror | 2.126540057361126 | 2.1256899344734848 | 2.1467500482685864 | 40000 |
 
 ---
 

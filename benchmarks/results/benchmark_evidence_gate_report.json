@@ -50,6 +50,10 @@
       "id": "lapicque-exact-flow-multibackend-local-regression"
     },
     {
+      "artefact": "benchmarks/results/local_python_2026-06-17_escape_rate_exact_flow.json",
+      "id": "escape-rate-exact-flow-multibackend-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-04_ultrascale_plus_target.json",
       "id": "ultrascale-plus-target-python-contract"
     },
@@ -92,7 +96,7 @@
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 22,
+  "gate_count": 23,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

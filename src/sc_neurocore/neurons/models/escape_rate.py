@@ -20,6 +20,9 @@ from sc_neurocore.utils.numerics import safe_exp
 class EscapeRateNeuron:
     """Gerstner 2000 — stochastic threshold (escape noise model).
 
+    Membrane dynamics use the exact constant-current RC flow before evaluating
+    the finite-step escape hazard.
+
     Reference: Gerstner, W. (2000). Neural Comput. 12:43–89.
     """
 
@@ -47,7 +50,7 @@ class EscapeRateNeuron:
 
     def _spike_probability(self, voltage: float) -> float:
         if not math.isfinite(voltage):
-            raise ValueError("voltage update must be finite")
+            raise ValueError("voltage candidate must be finite")
         rate = self.rho_0 * safe_exp((voltage - self.v_threshold) / self.delta_u)
         hazard = rate * self.dt
         if not math.isfinite(hazard) or hazard < 0.0:
@@ -62,9 +65,7 @@ class EscapeRateNeuron:
             raise ValueError("current must be finite")
         self._validate_runtime_state()
 
-        voltage = (
-            self.v + (-(self.v - self.v_rest) + self.resistance * current) / self.tau_m * self.dt
-        )
+        voltage = self._exact_voltage_candidate(current)
         p_spike = self._spike_probability(voltage)
         if np.random.random() < p_spike:
             self.v = self.v_reset
@@ -74,3 +75,11 @@ class EscapeRateNeuron:
 
     def reset(self) -> None:
         self.v = self.v_rest
+
+    def _exact_voltage_candidate(self, current: float) -> float:
+        steady_state = self.v_rest + self.resistance * current
+        decay = math.exp(-self.dt / self.tau_m)
+        voltage = steady_state + (self.v - steady_state) * decay
+        if not math.isfinite(steady_state) or not math.isfinite(decay) or not math.isfinite(voltage):
+            raise ValueError("voltage candidate must be finite")
+        return voltage

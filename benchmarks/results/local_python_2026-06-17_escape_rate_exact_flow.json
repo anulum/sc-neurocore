@@ -1,0 +1,293 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "commercial_license": "available",
+  "copyright_concepts": "\u00a9 Concepts 1996\u20132026 Miroslav \u0160otek. All rights reserved.",
+  "copyright_code": "\u00a9 Code 2020\u20132026 Miroslav \u0160otek. All rights reserved.",
+  "orcid": "0009-0009-3560-0851",
+  "contact": "www.anulum.li | protoscience@anulum.li",
+  "benchmark": "EscapeRateNeuron exact membrane flow with finite-step escape hazard",
+  "timestamp_utc": "2026-06-17T00:17:10+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_escape_rate.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 30.0,
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 5834.21848,
+      "min_ns_per_step": 5698.08305,
+      "max_ns_per_step": 6869.082345,
+      "spikes": 3219,
+      "results": [
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 30.0,
+          "elapsed_ns": 1139616610,
+          "ns_per_step": 5698.08305,
+          "spikes": 3219,
+          "ending_state": [
+            -51.03638323514327
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 30.0,
+          "elapsed_ns": 1196532260,
+          "ns_per_step": 5982.6613,
+          "spikes": 3196,
+          "ending_state": [
+            -41.49361205103592
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 30.0,
+          "elapsed_ns": 1158592904,
+          "ns_per_step": 5792.96452,
+          "spikes": 3121,
+          "ending_state": [
+            -45.480505721582034
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 30.0,
+          "elapsed_ns": 1373816469,
+          "ns_per_step": 6869.082345,
+          "spikes": 3240,
+          "ending_state": [
+            -40.44986730461433
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 30.0,
+          "elapsed_ns": 1166843696,
+          "ns_per_step": 5834.21848,
+          "spikes": 3141,
+          "ending_state": [
+            -47.39790891824819
+          ]
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "timestamp_unix": 1781655426,
+      "command": "cargo run --manifest-path engine/Cargo.toml --example bench_escape_rate_exact_flow",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "target_os": "linux",
+      "target_arch": "x86_64",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "3.48 3.97 5.76 3/6215 1838325",
+        "load_average_after": "3.48 3.97 5.76 2/6215 1838335",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=4412.446,max=4600.456,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 200000,
+      "repeats": 5,
+      "current": 30,
+      "median_ns_per_step": 91.437735,
+      "min_ns_per_step": 88.389655,
+      "max_ns_per_step": 98.2433,
+      "results_ns_per_step": [
+        89.284895,
+        91.437735,
+        98.2433,
+        92.68143,
+        88.389655
+      ],
+      "spike_counts": [
+        3148,
+        3150,
+        3251,
+        3174,
+        3167
+      ],
+      "final_vs": [
+        -40.0001843263706,
+        -48.175953791020376,
+        -40.22339749212773,
+        -42.01616538219249,
+        -40.005523173810026
+      ],
+      "spikes": 3148,
+      "driver_command": "cargo run --manifest-path engine/Cargo.toml --example bench_escape_rate_exact_flow"
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/escape_rate.go src/sc_neurocore/accel/go/services/escape_rate_test.go -run ^$ -bench BenchmarkEscapeRateExactFlow$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 30.0,
+      "median_ns_per_step": 73.03,
+      "min_ns_per_step": 72.09,
+      "max_ns_per_step": 98.9,
+      "results_ns_per_step": [
+        98.9,
+        77.69,
+        72.09,
+        72.55,
+        73.03
+      ],
+      "spikes": 0
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <escape-rate exact-flow benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 30.0,
+      "median_ns_per_step": 39.474865,
+      "min_ns_per_step": 39.248385,
+      "max_ns_per_step": 40.57662,
+      "results_ns_per_step": [
+        39.474865,
+        39.248385,
+        39.76164,
+        40.57662,
+        39.38493
+      ],
+      "spikes": 3202,
+      "spike_counts": [
+        3244,
+        3227,
+        3195,
+        3163,
+        3202
+      ],
+      "final_vs": [
+        -40.07436256529999,
+        -44.060058497098375,
+        -40.20213840997256,
+        -40.12260314315392,
+        -51.03638323514327
+      ]
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp escape-rate benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 30.0,
+      "median_ns_per_step": 49.645785038592294,
+      "min_ns_per_step": 49.42665997077711,
+      "max_ns_per_step": 50.340774905635044,
+      "results_ns_per_step": [
+        49.645785038592294,
+        50.340774905635044,
+        49.42665997077711,
+        49.62659993907437,
+        49.81129997759126
+      ],
+      "spikes": 200,
+      "spike_counts": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "final_vs": [
+        -40.000000000000036,
+        -40.000000000000036,
+        -40.000000000000036,
+        -40.000000000000036,
+        -40.000000000000036
+      ]
+    }
+  ],
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 5834.21848,
+      "min_ns_per_step": 5698.08305,
+      "max_ns_per_step": 6869.082345,
+      "spikes": 3219
+    },
+    "rust": {
+      "median_ns_per_step": 91.437735,
+      "min_ns_per_step": 88.389655,
+      "max_ns_per_step": 98.2433,
+      "spikes": 3148
+    },
+    "go": {
+      "median_ns_per_step": 73.03,
+      "min_ns_per_step": 72.09,
+      "max_ns_per_step": 98.9,
+      "spikes": 0
+    },
+    "julia": {
+      "median_ns_per_step": 39.474865,
+      "min_ns_per_step": 39.248385,
+      "max_ns_per_step": 40.57662,
+      "spikes": 3202
+    },
+    "mojo": {
+      "median_ns_per_step": 49.645785038592294,
+      "min_ns_per_step": 49.42665997077711,
+      "max_ns_per_step": 50.340774905635044,
+      "spikes": 200
+    }
+  },
+  "source_hashes": {
+    "benchmarks/bench_model_escape_rate.py": "f1a45de672dbde2433173e7f3be7cc0b5080dc846ae8d33e3fe68919e35737ba",
+    "engine/Cargo.toml": "f0b74eea4756c31095bfde1dacda592a93f183230199927ee79d6abb99ce1701",
+    "engine/examples/bench_escape_rate_exact_flow.rs": "cb00d2968a05249e52b76669a585a6d0c4f9b16041b39bd5521d9c2eb69057d9",
+    "engine/src/neurons/trivial.rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1",
+    "src/sc_neurocore/neurons/models/escape_rate.py": "0f29e31b778cea3fce4765816a409ac4668837521af03aeb5209a428c672d26a",
+    "src/sc_neurocore/accel/go/services/escape_rate.go": "a8eeb1664e764b04a5df63b10c205aa1636b2930e5282f3aebef59c18f4915af",
+    "src/sc_neurocore/accel/go/services/escape_rate_test.go": "e52340e6eaf02307ca4388e813f6055f5ee700048ed5c713ce84a309b345d5e4",
+    "src/sc_neurocore/accel/julia/neurons/escape_rate.jl": "806bb0348c24680846cdb1f9c8c8408c77971f6c34aaabd32f5888b97494c113",
+    "src/sc_neurocore/accel/mojo/kernels/escape_rate.mojo": "6198785abb259a54f168fb2860479f7a0b9424be5121ef6519e60cba3dada5b5",
+    "src/sc_neurocore/accel/rust/safety/escape_rate.rs": "efbfc9d681468cd6f7897d5b6c4b4c7b43a9e60280e096a3db2035d7f5b0408a",
+    "benchmarks/bench_model_escape_rate": {
+      "py": "f1a45de672dbde2433173e7f3be7cc0b5080dc846ae8d33e3fe68919e35737ba"
+    },
+    "engine/Cargo": {
+      "toml": "f0b74eea4756c31095bfde1dacda592a93f183230199927ee79d6abb99ce1701"
+    },
+    "engine/examples/bench_escape_rate_exact_flow": {
+      "rs": "cb00d2968a05249e52b76669a585a6d0c4f9b16041b39bd5521d9c2eb69057d9"
+    },
+    "engine/src/neurons/trivial": {
+      "rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1"
+    },
+    "src/sc_neurocore/neurons/models/escape_rate": {
+      "py": "0f29e31b778cea3fce4765816a409ac4668837521af03aeb5209a428c672d26a"
+    },
+    "src/sc_neurocore/accel/go/services/escape_rate": {
+      "go": "a8eeb1664e764b04a5df63b10c205aa1636b2930e5282f3aebef59c18f4915af"
+    },
+    "src/sc_neurocore/accel/go/services/escape_rate_test": {
+      "go": "e52340e6eaf02307ca4388e813f6055f5ee700048ed5c713ce84a309b345d5e4"
+    },
+    "src/sc_neurocore/accel/julia/neurons/escape_rate": {
+      "jl": "806bb0348c24680846cdb1f9c8c8408c77971f6c34aaabd32f5888b97494c113"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/escape_rate": {
+      "mojo": "6198785abb259a54f168fb2860479f7a0b9424be5121ef6519e60cba3dada5b5"
+    },
+    "src/sc_neurocore/accel/rust/safety/escape_rate": {
+      "rs": "efbfc9d681468cd6f7897d5b6c4b4c7b43a9e60280e096a3db2035d7f5b0408a"
+    }
+  }
+}

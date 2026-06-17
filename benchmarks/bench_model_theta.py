@@ -16,9 +16,11 @@ import platform
 import re
 import statistics
 import subprocess
+import tempfile
+import textwrap
 import time
 from datetime import UTC, datetime
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from sc_neurocore.neurons.models.theta import ThetaNeuron
 
@@ -78,7 +80,9 @@ def _sha256(path: Path) -> str:
 
 
 def _source_hashes() -> dict[str, object]:
-    flat = {source: _sha256(path) for source, path in SOURCE_HASH_PATHS.items()}
+    flat: dict[str, object] = {
+        source: _sha256(path) for source, path in SOURCE_HASH_PATHS.items()
+    }
     for source, path in SOURCE_HASH_PATHS.items():
         stem, extension = source.rsplit(".", 1)
         existing = flat.get(stem)
@@ -91,8 +95,8 @@ def _source_hashes() -> dict[str, object]:
 
 def _run_backend(name: str, factory: Any) -> dict[str, object]:
     results = [_run_once(factory, name) for _ in range(REPEATS)]
-    ns_per_step = [float(result["ns_per_step"]) for result in results]
-    spikes = [int(result["spikes"]) for result in results]
+    ns_per_step = [float(cast(float, result["ns_per_step"])) for result in results]
+    spikes = [int(cast(int, result["spikes"])) for result in results]
     return {
         "backend": name,
         "median_ns_per_step": statistics.median(ns_per_step),
@@ -124,7 +128,7 @@ def _run_rust_backend() -> dict[str, object]:
             "skipped": True,
             "reason": f"Rust theta benchmark command failed: {exc}",
         }
-    report = json.loads(completed.stdout)
+    report = cast(dict[str, object], json.loads(completed.stdout))
     report["driver_command"] = " ".join(command)
     return report
 
@@ -231,6 +235,81 @@ println("final_thetas=", join([r[3] for r in results], ","))
     }
 
 
+def _run_mojo_backend() -> dict[str, object]:
+    program = textwrap.dedent(
+        f"""
+        from theta import theta_next_theta, theta_step_spike
+        from std.time import perf_counter
+
+        alias STEPS = {STEPS}
+        alias REPEATS = {REPEATS}
+        alias CURRENT = {CURRENT}
+
+        def run_once() raises:
+            var theta = 0.0
+            var spikes = 0
+            var start = perf_counter()
+            for _ in range(STEPS):
+                spikes += theta_step_spike(theta, CURRENT, 0.01)
+                theta = theta_next_theta(theta, CURRENT, 0.01)
+            var elapsed = perf_counter() - start
+            print("ns_per_step=", Float64(elapsed) * 1000000000.0 / Float64(STEPS))
+            print("spikes=", spikes)
+            print("final_theta=", theta)
+
+        def main() raises:
+            for _ in range(REPEATS):
+                run_once()
+        """
+    )
+    with tempfile.NamedTemporaryFile("w", suffix=".mojo", encoding="utf-8") as handle:
+        handle.write(program)
+        handle.flush()
+        command = [
+            "mojo",
+            "run",
+            "--disable-warnings",
+            "-I",
+            "src/sc_neurocore/accel/mojo/kernels",
+            handle.name,
+        ]
+        try:
+            completed = _run_command(command)
+        except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+            return {"backend": "mojo", "skipped": True, "reason": f"Mojo benchmark failed: {exc}"}
+    values = [
+        float(line.split("=", 1)[1])
+        for line in completed.stdout.splitlines()
+        if line.startswith("ns_per_step=")
+    ]
+    spike_counts = [
+        int(line.split("=", 1)[1])
+        for line in completed.stdout.splitlines()
+        if line.startswith("spikes=")
+    ]
+    final_thetas = [
+        float(line.split("=", 1)[1])
+        for line in completed.stdout.splitlines()
+        if line.startswith("final_theta=")
+    ]
+    if not values:
+        return {"backend": "mojo", "skipped": True, "reason": "Mojo benchmark produced no rows"}
+    return {
+        "backend": "mojo",
+        "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp theta benchmark>",
+        "steps": STEPS,
+        "repeats": len(values),
+        "current": CURRENT,
+        "median_ns_per_step": statistics.median(values),
+        "min_ns_per_step": min(values),
+        "max_ns_per_step": max(values),
+        "results_ns_per_step": values,
+        "spikes": int(statistics.median(spike_counts)),
+        "spike_counts": spike_counts,
+        "final_thetas": final_thetas,
+    }
+
+
 def _backend_summary(payload: dict[str, object]) -> dict[str, object]:
     if payload.get("skipped", False):
         return {"skipped": True}
@@ -238,30 +317,29 @@ def _backend_summary(payload: dict[str, object]) -> dict[str, object]:
     if isinstance(spikes, list):
         spikes = int(statistics.median([float(value) for value in spikes]))
     elif not isinstance(spikes, int):
-        if isinstance(payload.get("spike_counts"), list):
-            spike_counts = [int(value) for value in payload["spike_counts"]]  # type: ignore[list-item]
+        spike_counts_raw = payload.get("spike_counts")
+        if isinstance(spike_counts_raw, list):
+            spike_counts = [int(value) for value in spike_counts_raw]
             spikes = int(statistics.median(spike_counts))
         else:
             spikes = 0
     return {
-        "median_ns_per_step": float(payload["median_ns_per_step"]),
-        "min_ns_per_step": float(payload["min_ns_per_step"]),
-        "max_ns_per_step": float(payload["max_ns_per_step"]),
+        "median_ns_per_step": float(cast(float, payload["median_ns_per_step"])),
+        "min_ns_per_step": float(cast(float, payload["min_ns_per_step"])),
+        "max_ns_per_step": float(cast(float, payload["max_ns_per_step"])),
         "spikes": int(spikes),
     }
 
 
 def main() -> int:
     python_backend = _run_backend("python", _python_neuron)
-    python_spikes = int(statistics.median([int(value) for value in python_backend["spikes"]]))
+    python_spikes = int(
+        statistics.median([int(value) for value in cast(list[int], python_backend["spikes"])])
+    )
     rust_backend = _run_rust_backend()
     go_backend = _run_go_backend(python_spikes)
     julia_backend = _run_julia_backend()
-    mojo_backend = {
-        "backend": "mojo",
-        "skipped": True,
-        "reason": "Mojo theta surface is a spike-kernel mirror without a stateful benchmark hook",
-    }
+    mojo_backend = _run_mojo_backend()
     results = [python_backend, rust_backend, go_backend, julia_backend, mojo_backend]
     report = {
         "spdx_license": "AGPL-3.0-or-later",

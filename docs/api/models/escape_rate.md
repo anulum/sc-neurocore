@@ -13,6 +13,15 @@
 
 $$\tau_m \frac{dV}{dt} = -(V - V_{rest}) + R \cdot I$$
 
+For constant current over one step, the maintained implementation uses
+the closed-form RC flow:
+
+$$V(t+\Delta t) = V_\infty + (V(t) - V_\infty)\exp(-\Delta t/\tau_m)$$
+
+where:
+
+$$V_\infty = V_{rest} + R \cdot I$$
+
 ### Instantaneous escape rate
 
 $$\rho(V) = \rho_0 \exp\!\left(\frac{V - V_{threshold}}{\Delta u}\right)$$
@@ -31,7 +40,9 @@ $$\text{Bernoulli}(p_{spike}): \quad \text{if } U(0,1) < p_{spike}: \text{spike,
 
 ```python
 def step(self, current: float) -> int:
-    voltage = self.v + (-(self.v - self.v_rest) + self.resistance * current) / self.tau_m * self.dt
+    steady_state = self.v_rest + self.resistance * current
+    decay = math.exp(-self.dt / self.tau_m)
+    voltage = steady_state + (self.v - steady_state) * decay
     rate = self.rho_0 * safe_exp((voltage - self.v_threshold) / self.delta_u)
     p_spike = -math.expm1(-rate * self.dt)
     if np.random.random() < p_spike:
@@ -41,10 +52,11 @@ def step(self, current: float) -> int:
     return 0
 ```
 
-The membrane potential evolves deterministically (Euler), but spiking
-is **stochastic**: the probability of a spike increases exponentially
-as V approaches threshold. There is no hard threshold — even far below
-V_threshold, there is a small but nonzero probability of firing.
+The membrane potential evolves deterministically by the exact
+constant-current RC solution, while spiking is **stochastic**: the
+probability of a spike increases exponentially as V approaches
+threshold. There is no hard threshold — even far below V_threshold,
+there is a small but nonzero probability of firing.
 
 ---
 
@@ -97,7 +109,7 @@ Two main approaches to stochastic spiking models:
 |----------|-------------------|----------------------|
 | Source | Threshold is stochastic | Membrane voltage is stochastic |
 | Mechanism | Bernoulli(ρ(V)·dt) | V += σ·ξ each step |
-| V dynamics | Deterministic | Stochastic |
+| V dynamics | Deterministic exact RC flow | Stochastic |
 | ρ(V) | Exponential escape | Not applicable |
 | ISI distribution | Renewal | Non-renewal |
 | Analytical | Tractable | Requires Fokker-Planck |
@@ -138,8 +150,10 @@ With I=50: V_ss = −70 + 50 = −20 mV (well above nominal threshold).
 
 ### Membrane equation one-step verification
 
-The update dV = (−(V−V_rest) + R·I)/τ_m × dt is verified analytically
-in the test suite to machine precision.
+The update
+$V_\infty + (V - V_\infty)\exp(-dt/\tau_m)$ is verified analytically
+in the test suite to machine precision, including a large-step case
+that separates it from the historical forward-Euler increment.
 
 ---
 
@@ -190,8 +204,7 @@ produce inf for V >> V_θ.
 - **1 safe_exp() per step:** For the escape rate calculation.
 - **1 np.random.random() per step:** RNG call is the performance
   bottleneck (much slower than arithmetic).
-- **Bernoulli approximation:** p_spike = ρ·dt assumes dt is small
-  enough that p_spike << 1. The implementation uses the bounded hazard
+- **Finite-step hazard:** The implementation uses the bounded hazard
   transform 1 − exp(−ρ·dt), so high escape rates saturate without invalid
   probabilities.
 - **safe_exp overflow protection:** Clips exp argument to prevent inf.
@@ -204,7 +217,7 @@ assignment:
 
 - `v`, `v_rest`, `v_reset`, `v_threshold`, and input current must be finite;
 - `tau_m`, `rho_0`, `delta_u`, `resistance`, and `dt` must be finite and positive;
-- the candidate membrane update must remain finite before spike-probability evaluation;
+- the exact-flow membrane candidate must remain finite before spike-probability evaluation;
 - the finite-step escape hazard must remain finite and non-negative;
 - the Bernoulli probability must remain finite and bounded in `[0, 1]`.
 
@@ -221,22 +234,32 @@ into a silent reset or poisoned membrane state.
 - **Dataclass:** Uses `@dataclass`.
 - **Uses safe_exp:** From `sc_neurocore.utils.numerics`.
 - **Uses np.random:** Per-step RNG call (not seedable via constructor).
-- **Rust/Go/Julia wiring:** Compatible scalar state surface with bounded
-  finite-step hazard probability and explicit invalid-state or non-finite
-  hazard errors. Rust and Go safety mirrors deterministically emit only
-  saturated-probability spikes; Julia keeps stochastic Bernoulli sampling.
+- **Rust engine / Go / Julia / Rust safety wiring:** Compatible scalar
+  state surface with exact constant-current RC flow, bounded finite-step
+  hazard probability, and explicit invalid-state or non-finite hazard
+  errors. Rust and Go safety mirrors deterministically emit only
+  saturated-probability spikes; the Python reference, Rust engine, and
+  Julia mirror keep stochastic Bernoulli sampling.
 
 ---
 
 ## Performance
 
-| Metric | Python | Rust |
-|--------|--------|------|
-| Isolation | ~75K steps/s | Not measured |
-| Network | Pipeline verified | — |
+Local non-isolated regression run, measured 2026-06-17. These numbers
+are recorded for regression comparison only and are not production
+throughput claims.
 
-Slower than deterministic models due to np.random.random() per step.
-The RNG call dominates per-step cost (not the exp).
+| Backend | Median ns/step | Spikes | Evidence |
+|---------|---------------:|-------:|----------|
+| Python | 5834.21848 | 3219 | stochastic reference, exact RC flow |
+| Rust engine | 91.437735 | 3148 | stochastic engine example, exact RC flow |
+| Go service mirror | 73.03 | 0 | deterministic saturated-probability mirror |
+| Julia mirror | 39.474865 | 3202 | stochastic mirror, exact RC flow |
+| Mojo mirror | 49.645785038592294 | 200 | deterministic threshold-sequence mirror, exact RC flow |
+
+The benchmark artefact is
+`benchmarks/results/local_python_2026-06-17_escape_rate_exact_flow.json`.
+The RNG call remains the dominant cost in stochastic paths.
 
 ---
 
@@ -246,13 +269,13 @@ The RNG call dominates per-step cost (not the exp).
 |----------|------:|-----------------|
 | Isolation | 5 | construction, binary output, state evolves, state finite (10K), reset |
 | Stochastic | 6 | stochastic spiking, two runs differ, rate increases with input, zero input silent, bounded hazard transform, high-rate saturation |
-| Analytical | 4 | V steady-state, membrane equation 1-step, ρ₀ scales rate, Δu controls sensitivity |
+| Analytical | 5 | V steady-state, exact membrane equation 1-step, exact-flow vs Euler separation, ρ₀ scales rate, Δu controls sensitivity |
 | ISI | 2 | ISI variability (CV > 0), higher current shorter ISI |
 | Parameters | 2 | τ_m controls V dynamics, resistance scales input |
 | Validation | 43 | finite parameters/current, positive scales, corrupted runtime state, finite voltage candidates, finite bounded hazards |
 | Performance | 2 | isolation throughput, network throughput |
 | Pipeline | 4 | Population, Network spikes, Projection wiring, analysis pipeline |
-| **Total** | **68** | dedicated module checks |
+| **Total** | **69** | dedicated module checks |
 
 See `tests/test_model_escape_rate.py`.
 
@@ -271,8 +294,8 @@ See `tests/test_model_escape_rate.py`.
 
 4. **safe_exp prevents overflow.** No NaN or inf at extreme voltages.
 
-5. **V steady-state exact.** V_ss = V_rest + R·I verified to machine
-   precision.
+5. **Exact constant-current membrane flow.** V_ss = V_rest + R·I and
+   the one-step RC relaxation are verified to machine precision.
 
 6. **ρ₀ scales rate linearly.** Doubling ρ₀ approximately doubles the
    spike count (at low rates where p_spike << 1).
@@ -500,8 +523,9 @@ for du in [1.0, 3.0, 10.0]:
 | Aspect | Python | Rust | Status |
 |--------|--------|------|--------|
 | State variable | v (membrane potential) | same | **EXACT** |
+| Membrane update | closed-form RC flow | same | **EXACT** |
 | Escape rate | ρ₀ × safe_exp((v-v_θ)/Δu) | same | **EXACT** |
-| Bernoulli spike | random() < ρ·dt | same | **EXACT** |
+| Bernoulli spike | random() < (1-exp(-ρ·dt)) | same | **EXACT** |
 | All defaults | identical | identical | **EXACT** |
 
 **No parity defects.** EXACT parity verified by automated scan.
@@ -510,31 +534,32 @@ for du in [1.0, 3.0, 10.0]:
 
 | File | Lines | Description |
 |------|-------|-------------|
-| `src/sc_neurocore/neurons/models/escape_rate.py` | ~41 | Python reference |
+| `src/sc_neurocore/neurons/models/escape_rate.py` | ~47 | Python reference |
 | `engine/src/neurons/trivial.rs` | (shared) | Rust implementation |
-| `tests/test_model_escape_rate.py` | ~270 | 68 tests |
+| `tests/test_model_escape_rate.py` | ~286 | 69 tests |
 
 ---
 
 ## Performance Benchmarks
 
-### Criterion benchmarks (local i5-11600K, measured 2026-04-05)
+### Local exact-flow regression benchmark (measured 2026-06-17)
 
-| Metric | Value |
-|--------|-------|
-| Test | `escape_rate_10k_steps` |
-| Median | 532.9 µs |
-| Per-step | 53.3 ns |
-| Throughput | ~18.8M steps/s |
+The local regression benchmark records Python, Rust engine, Go, Julia,
+and Mojo timing medians plus backend spike-count/final-voltage evidence in:
 
-### Python baseline
+`benchmarks/results/local_python_2026-06-17_escape_rate_exact_flow.json`
 
-| Metric | Value |
-|--------|-------|
-| Isolation | ~75K steps/s |
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
+|---------|---------------:|------------:|------------:|-------:|
+| Python | 5834.21848 | 5698.08305 | 6869.082345 | 3219 |
+| Rust engine | 91.437735 | 88.389655 | 98.2433 | 3148 |
+| Go service mirror | 73.03 | 72.09 | 98.9 | 0 |
+| Julia mirror | 39.474865 | 39.248385 | 40.57662 | 3202 |
+| Mojo mirror | 49.645785038592294 | 49.42665997077711 | 50.340774905635044 | 200 |
 
-Rust achieves a **250× speedup**. The per-step cost is dominated by
-the RNG call (random number generation for the Bernoulli test).
+The benchmark gate requires the benchmark script, exact-flow model
+sources, and generated artefact hashes to match before accepting the
+numbers as current evidence.
 
 ---
 
@@ -544,8 +569,8 @@ the RNG call (random number generation for the Bernoulli test).
   the model slower than deterministic IF variants.
 - **Global RNG:** Uses np.random (Python) — not per-instance
   reproducible without explicit seed management.
-- **Bernoulli approximation:** p_spike = ρ·dt assumes small dt. For
-  high rates (p_spike > 1), the model saturates at 1 spike per step.
+- **One spike per step:** The finite-step hazard is bounded in `[0, 1]`.
+  At very high rates it saturates to one spike per timestep.
 - **No adaptation:** No spike-frequency adaptation or refractory
   period beyond the V_reset mechanism.
 - **Linear membrane:** The subthreshold dynamics are pure LIF — no

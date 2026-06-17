@@ -253,8 +253,7 @@
         "spdx_license": "AGPL-3.0-or-later",
         "benchmark": "ThetaNeuron tangent-half-angle exact constant-current flow step",
         "evidence_class": "local_regression_non_isolated",
-        "production_speed_claim": false,
-        "backend_summary.mojo.skipped": true
+        "production_speed_claim": false
       },
       "id": "theta-exact-flow-multibackend-local-regression",
       "required_numbers": [
@@ -274,6 +273,10 @@
         "backend_summary.julia.min_ns_per_step",
         "backend_summary.julia.max_ns_per_step",
         "backend_summary.julia.spikes",
+        "backend_summary.mojo.median_ns_per_step",
+        "backend_summary.mojo.min_ns_per_step",
+        "backend_summary.mojo.max_ns_per_step",
+        "backend_summary.mojo.spikes",
         "steps",
         "repeats",
         "current"
@@ -295,8 +298,7 @@
         "benchmark": "MorrisLecarNeuron candidate-first RK4 conductance step",
         "evidence_class": "local_regression_non_isolated",
         "production_speed_claim": false,
-        "hardware_measurement_claimed": false,
-        "backend_summary.mojo.skipped": true
+        "hardware_measurement_claimed": false
       },
       "id": "morris-lecar-rk4-multibackend-local-regression",
       "required_numbers": [
@@ -314,6 +316,10 @@
         "backend_summary.julia.min_ns_per_step",
         "backend_summary.julia.max_ns_per_step",
         "backend_summary.julia.spikes",
+        "backend_summary.mojo.median_ns_per_step",
+        "backend_summary.mojo.min_ns_per_step",
+        "backend_summary.mojo.max_ns_per_step",
+        "backend_summary.mojo.spikes",
         "steps",
         "repeats",
         "current"
@@ -327,6 +333,7 @@
         "src/sc_neurocore/accel/go/services/morris_lecar.go": "source_hashes.src/sc_neurocore/accel/go/services/morris_lecar.go",
         "src/sc_neurocore/accel/go/services/morris_lecar_test.go": "source_hashes.src/sc_neurocore/accel/go/services/morris_lecar_test.go",
         "src/sc_neurocore/accel/julia/neurons/morris_lecar.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/morris_lecar.jl",
+        "src/sc_neurocore/accel/mojo/kernels/morris_lecar.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/morris_lecar.mojo",
         "src/sc_neurocore/accel/rust/safety/morris_lecar.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/morris_lecar.rs"
       }
     },
@@ -376,6 +383,54 @@
         "src/sc_neurocore/accel/julia/neurons/lapicque.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/lapicque.jl",
         "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/lapicque.mojo",
         "src/sc_neurocore/accel/rust/safety/lapicque.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/lapicque.rs"
+      }
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-17_escape_rate_exact_flow.json",
+      "expected_values": {
+        "spdx_license": "AGPL-3.0-or-later",
+        "benchmark": "EscapeRateNeuron exact membrane flow with finite-step escape hazard",
+        "evidence_class": "local_regression_non_isolated",
+        "production_speed_claim": false,
+        "hardware_measurement_claimed": false
+      },
+      "id": "escape-rate-exact-flow-multibackend-local-regression",
+      "required_numbers": [
+        "backend_summary.python.median_ns_per_step",
+        "backend_summary.python.min_ns_per_step",
+        "backend_summary.python.max_ns_per_step",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ns_per_step",
+        "backend_summary.rust.min_ns_per_step",
+        "backend_summary.rust.max_ns_per_step",
+        "backend_summary.rust.spikes",
+        "backend_summary.go.median_ns_per_step",
+        "backend_summary.go.min_ns_per_step",
+        "backend_summary.go.max_ns_per_step",
+        "backend_summary.go.spikes",
+        "backend_summary.julia.median_ns_per_step",
+        "backend_summary.julia.min_ns_per_step",
+        "backend_summary.julia.max_ns_per_step",
+        "backend_summary.julia.spikes",
+        "backend_summary.mojo.median_ns_per_step",
+        "backend_summary.mojo.min_ns_per_step",
+        "backend_summary.mojo.max_ns_per_step",
+        "backend_summary.mojo.spikes",
+        "steps",
+        "repeats",
+        "current"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_model_escape_rate.py": "source_hashes.benchmarks/bench_model_escape_rate.py",
+        "engine/Cargo.toml": "source_hashes.engine/Cargo.toml",
+        "engine/examples/bench_escape_rate_exact_flow.rs": "source_hashes.engine/examples/bench_escape_rate_exact_flow.rs",
+        "engine/src/neurons/trivial.rs": "source_hashes.engine/src/neurons/trivial.rs",
+        "src/sc_neurocore/neurons/models/escape_rate.py": "source_hashes.src/sc_neurocore/neurons/models/escape_rate.py",
+        "src/sc_neurocore/accel/go/services/escape_rate.go": "source_hashes.src/sc_neurocore/accel/go/services/escape_rate.go",
+        "src/sc_neurocore/accel/go/services/escape_rate_test.go": "source_hashes.src/sc_neurocore/accel/go/services/escape_rate_test.go",
+        "src/sc_neurocore/accel/julia/neurons/escape_rate.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/escape_rate.jl",
+        "src/sc_neurocore/accel/mojo/kernels/escape_rate.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/escape_rate.mojo",
+        "src/sc_neurocore/accel/rust/safety/escape_rate.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/escape_rate.rs"
       }
     },
     {

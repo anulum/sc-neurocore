@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo SIMD acceleration for theta
 
-from std.math import atan, cos, exp, sqrt, tan
+from std.math import atan, cos, exp, floor, sqrt, tan
 
 comptime PI = 3.14159265358979323846
 
@@ -61,3 +61,43 @@ fn theta_step_spike(theta: Float64, current: Float64, dt: Float64) -> Int:
     if (ratio < 1.0 and evolved >= 1.0) or _abs(crossing_denominator) <= 1.0e-15:
         return 1
     return 0
+
+
+fn _wrap_phase(theta: Float64) -> Float64:
+    var two_pi = 2.0 * PI
+    var wrapped = theta + PI
+    wrapped = wrapped - floor(wrapped / two_pi) * two_pi
+    return wrapped - PI
+
+
+fn theta_next_theta(theta: Float64, current: Float64, dt: Float64) -> Float64:
+    if not _finite(current):
+        return 0.0 / 0.0
+    if not theta_valid(theta, dt):
+        return 0.0 / 0.0
+
+    var y = tan(theta / 2.0)
+    if current > 0.0:
+        var root_i = sqrt(current)
+        var phase = atan(y / root_i)
+        var next_phase = phase + root_i * dt
+        if _abs(cos(next_phase)) <= 1.0e-15:
+            return -PI
+        return _wrap_phase(2.0 * atan(root_i * tan(next_phase)))
+    if current == 0.0:
+        var denominator = 1.0 - y * dt
+        if _abs(denominator) <= 1.0e-15:
+            return -PI
+        return _wrap_phase(2.0 * atan(y / denominator))
+
+    var root_i_neg = sqrt(-current)
+    if _abs(y + root_i_neg) <= 1.0e-15:
+        return theta
+    var ratio = (y - root_i_neg) / (y + root_i_neg)
+    var evolved = ratio * exp(2.0 * root_i_neg * dt)
+    var denominator_neg = 1.0 - evolved
+    if not _finite(evolved) or not _finite(denominator_neg):
+        return 0.0 / 0.0
+    if ((ratio < 1.0 and evolved >= 1.0) or _abs(denominator_neg) <= 1.0e-15) and _abs(denominator_neg) <= 1.0e-15:
+        return -PI
+    return _wrap_phase(2.0 * atan(root_i_neg * (1.0 + evolved) / denominator_neg))
