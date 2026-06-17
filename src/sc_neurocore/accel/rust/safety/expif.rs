@@ -49,17 +49,22 @@ impl ExpIFNeuron {
             return Err(ExpIFError::InvalidState);
         }
 
-        let arg = ((self.v - self.v_rh) / self.delta_t).clamp(-20.0, 20.0);
-        let exp_term = self.delta_t * arg.exp();
-        let dv = (-(self.v - self.v_rest) + exp_term + i_ext) / self.tau * self.dt;
-        let next_v = self.v + dv;
-        if !exp_term.is_finite() || !dv.is_finite() || !next_v.is_finite() {
+        let k1 = self.rhs(self.v, i_ext);
+        let k2 = self.rhs(self.v + 0.5 * self.dt * k1, i_ext);
+        let k3 = self.rhs(self.v + 0.5 * self.dt * k2, i_ext);
+        let k4 = self.rhs(self.v + self.dt * k3, i_ext);
+        let next_v = self.v + self.dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
+        if !k1.is_finite()
+            || !k2.is_finite()
+            || !k3.is_finite()
+            || !k4.is_finite()
+            || !next_v.is_finite()
+        {
             return Err(ExpIFError::NonFiniteUpdate);
         }
 
-        let v_prev = self.v;
         self.v = next_v;
-        if v_prev < self.v_threshold && self.v >= self.v_threshold {
+        if self.v >= self.v_threshold {
             self.v = self.v_reset;
             return Ok(1);
         }
@@ -68,6 +73,12 @@ impl ExpIFNeuron {
 
     pub fn reset(&mut self) {
         self.v = self.v_rest;
+    }
+
+    fn rhs(&self, v: f64, i_ext: f64) -> f64 {
+        let arg = ((v - self.v_rh) / self.delta_t).clamp(-20.0, 20.0);
+        let exp_term = self.delta_t * arg.exp();
+        (-(v - self.v_rest) + exp_term + i_ext) / self.tau
     }
 }
 
@@ -118,5 +129,20 @@ mod tests {
         let before = state.v;
         assert_eq!(state.step(1.0e308), Err(ExpIFError::NonFiniteUpdate));
         assert_eq!(state.v, before);
+    }
+
+    #[test]
+    fn test_expif_matches_rk4_reference() {
+        let mut state = ExpIFNeuron::new();
+        state.v = -60.0;
+        let current = 12.0;
+        let k1 = state.rhs(state.v, current);
+        let k2 = state.rhs(state.v + 0.5 * state.dt * k1, current);
+        let k3 = state.rhs(state.v + 0.5 * state.dt * k2, current);
+        let k4 = state.rhs(state.v + state.dt * k3, current);
+        let expected = state.v + state.dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
+
+        assert_eq!(state.step(current), Ok(0));
+        assert!((state.v - expected).abs() < 1.0e-12);
     }
 }

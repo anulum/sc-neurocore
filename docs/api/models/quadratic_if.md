@@ -250,11 +250,11 @@ regression comparison only and are not production throughput claims.
 
 | Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
 |---------|---------------:|------------:|------------:|-------:|
-| Python | 529.888895 | 506.170625 | 666.01508 | 738 |
-| Rust engine | 62.256035 | 49.96484 | 69.097795 | 738 |
-| Go service mirror | 51.41 | 48.78 | 56.64 | 738 |
-| Julia mirror | 46.907565 | 45.69871 | 49.259465 | 738 |
-| Mojo mirror | 45.37766988505609 | 44.75855501368642 | 46.39446997316554 | 738 |
+| Python | 459.99869 | 439.83584 | 478.183125 | 738 |
+| Rust engine | 46.570625 | 43.884265 | 47.170375 | 738 |
+| Go service mirror | 45.52 | 44.87 | 48.73 | 738 |
+| Julia mirror | 42.52687 | 42.26953 | 43.0555 | 738 |
+| Mojo mirror | 34.84739994746633 | 34.430494997650385 | 35.246850020485 | 738 |
 
 ---
 
@@ -292,7 +292,7 @@ candidate-first spike/reset contract.
 
 ## Findings (measured 2026-06-16)
 
-1. Local Python median: 529.888895 ns/step, about 1.89M steps/s in the
+1. Local Python median: 459.99869 ns/step, about 2.17M steps/s in the
    non-isolated regression run.
 2. Rust engine, Go, Julia, and Mojo measurements are present in the benchmark
    artefact; no maintained backend is skipped.

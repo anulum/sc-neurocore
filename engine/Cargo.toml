@@ -86,6 +86,9 @@ name = "bench_escape_rate_exact_flow"
 name = "bench_quadratic_if_exact_flow"
 
 [[example]]
+name = "bench_expif_rk4"
+
+[[example]]
 name = "bench_precision_envelopes"
 
 [[example]]

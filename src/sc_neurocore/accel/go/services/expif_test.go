@@ -65,10 +65,13 @@ func TestExpIFRejectsInvalidUpdateBeforeMutation(t *testing.T) {
 
 func BenchmarkExpIFRK4Step(b *testing.B) {
 	s := NewExpIFNeuron()
+	spikes := 0
 	for i := 0; i < b.N; i++ {
-		_, err := s.Step(20.0)
+		spike, err := s.Step(20.0)
 		if err != nil {
 			b.Fatalf("unexpected error: %v", err)
 		}
+		spikes += spike
 	}
+	b.ReportMetric(float64(spikes), "spikes")
 }

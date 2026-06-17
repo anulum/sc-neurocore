@@ -1,84 +1,301 @@
 {
+  "spdx_license": "AGPL-3.0-or-later",
+  "commercial_license": "available",
+  "copyright_concepts": "\u00a9 Concepts 1996\u20132026 Miroslav \u0160otek. All rights reserved.",
+  "copyright_code": "\u00a9 Code 2020\u20132026 Miroslav \u0160otek. All rights reserved.",
+  "orcid": "0009-0009-3560-0851",
+  "contact": "www.anulum.li | protoscience@anulum.li",
   "benchmark": "ExpIFNeuron candidate-first RK4 step",
+  "timestamp_utc": "2026-06-17T00:39:16+00:00",
   "command": "PYTHONPATH=src ./.venv/bin/python benchmarks/bench_model_expif.py",
-  "current": 20.0,
   "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
   "isolation": "non-isolated loaded workstation",
+  "python": "3.12.3",
   "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
   "processor": "x86_64",
-  "production_speed_claim": false,
-  "python": "3.12.3",
+  "steps": 200000,
   "repeats": 5,
+  "current": 20.0,
   "results": [
     {
       "backend": "python",
-      "max_ns_per_step": 20746.996045,
-      "median_ns_per_step": 18354.14708,
-      "min_ns_per_step": 17169.028145,
+      "median_ns_per_step": 16820.414835,
+      "min_ns_per_step": 16763.600625,
+      "max_ns_per_step": 18207.096945,
+      "spikes": 881,
       "results": [
         {
           "backend": "python",
+          "steps": 200000,
           "current": 20.0,
-          "elapsed_ns": 3440812880,
-          "ns_per_step": 17204.0644,
+          "elapsed_ns": 3354671942,
+          "ns_per_step": 16773.35971,
           "spikes": 881,
-          "steps": 200000
+          "ending_state": [
+            -63.73481057516655
+          ]
         },
         {
           "backend": "python",
+          "steps": 200000,
           "current": 20.0,
-          "elapsed_ns": 3433805629,
-          "ns_per_step": 17169.028145,
+          "elapsed_ns": 3352720125,
+          "ns_per_step": 16763.600625,
           "spikes": 881,
-          "steps": 200000
+          "ending_state": [
+            -63.73481057516655
+          ]
         },
         {
           "backend": "python",
+          "steps": 200000,
           "current": 20.0,
-          "elapsed_ns": 4149399209,
-          "ns_per_step": 20746.996045,
+          "elapsed_ns": 3364082967,
+          "ns_per_step": 16820.414835,
           "spikes": 881,
-          "steps": 200000
+          "ending_state": [
+            -63.73481057516655
+          ]
         },
         {
           "backend": "python",
+          "steps": 200000,
           "current": 20.0,
-          "elapsed_ns": 3805541115,
-          "ns_per_step": 19027.705575,
+          "elapsed_ns": 3437142328,
+          "ns_per_step": 17185.71164,
           "spikes": 881,
-          "steps": 200000
+          "ending_state": [
+            -63.73481057516655
+          ]
         },
         {
           "backend": "python",
+          "steps": 200000,
           "current": 20.0,
-          "elapsed_ns": 3670829416,
-          "ns_per_step": 18354.14708,
+          "elapsed_ns": 3641419389,
+          "ns_per_step": 18207.096945,
           "spikes": 881,
-          "steps": 200000
+          "ending_state": [
+            -63.73481057516655
+          ]
         }
       ]
     },
     {
-      "backend": "rust_pyo3",
-      "reason": "set SC_NEUROCORE_BENCH_RUST_PYO3=1 after rebuilding/installing the local engine wheel",
-      "skipped": true
+      "backend": "rust",
+      "timestamp_unix": 1781656752,
+      "command": "cargo run --manifest-path engine/Cargo.toml --example bench_expif_rk4",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "target_os": "linux",
+      "target_arch": "x86_64",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "5.09 5.61 5.52 5/6182 1970379",
+        "load_average_after": "5.09 5.61 5.52 3/6181 1970473",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=4199.624,max=4202.914,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 200000,
+      "repeats": 5,
+      "current": 20,
+      "median_ns_per_step": 105.96647,
+      "min_ns_per_step": 105.191365,
+      "max_ns_per_step": 123.606465,
+      "results_ns_per_step": [
+        105.96647,
+        105.191365,
+        105.387335,
+        123.606465,
+        114.22719
+      ],
+      "spike_counts": [
+        881,
+        881,
+        881,
+        881,
+        881
+      ],
+      "final_vs": [
+        -63.73481057516655,
+        -63.73481057516655,
+        -63.73481057516655,
+        -63.73481057516655,
+        -63.73481057516655
+      ],
+      "spikes": 881,
+      "driver_command": "cargo run --manifest-path engine/Cargo.toml --example bench_expif_rk4"
     },
     {
       "backend": "go",
-      "reason": "covered by focused Go RK4 test and benchmark hook; not loaded through Python FFI",
-      "skipped": true
+      "command": "go test src/sc_neurocore/accel/go/services/expif.go src/sc_neurocore/accel/go/services/expif_test.go -run ^$ -bench BenchmarkExpIFRK4Step$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 20.0,
+      "median_ns_per_step": 154.5,
+      "min_ns_per_step": 151.1,
+      "max_ns_per_step": 159.0,
+      "results_ns_per_step": [
+        154.5,
+        151.4,
+        151.1,
+        154.7,
+        159.0
+      ],
+      "spikes": 881,
+      "spike_counts": [
+        881,
+        881,
+        881,
+        881,
+        881
+      ]
     },
     {
       "backend": "julia",
-      "reason": "covered by Julia source mirror; not loaded by this local Python benchmark",
-      "skipped": true
+      "command": "julia --project=. -e <expif rk4 benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 20.0,
+      "median_ns_per_step": 99.584425,
+      "min_ns_per_step": 97.48369,
+      "max_ns_per_step": 104.18271,
+      "results_ns_per_step": [
+        104.18271,
+        101.79765,
+        99.584425,
+        98.69055,
+        97.48369
+      ],
+      "spikes": 881,
+      "spike_counts": [
+        881,
+        881,
+        881,
+        881,
+        881
+      ],
+      "final_vs": [
+        -63.73481057516655,
+        -63.73481057516655,
+        -63.73481057516655,
+        -63.73481057516655,
+        -63.73481057516655
+      ]
     },
     {
       "backend": "mojo",
-      "reason": "non-authoritative Mojo kernel mirror aligned; no shared library benchmark hook",
-      "skipped": true
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp expif benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 20.0,
+      "median_ns_per_step": 126.94658493273892,
+      "min_ns_per_step": 126.58483494305983,
+      "max_ns_per_step": 131.48430996807292,
+      "results_ns_per_step": [
+        131.48430996807292,
+        127.88250009180047,
+        126.58483494305983,
+        126.94658493273892,
+        126.89465991570614
+      ],
+      "spikes": 881,
+      "spike_counts": [
+        881,
+        881,
+        881,
+        881,
+        881
+      ],
+      "final_vs": [
+        -63.73481057516656,
+        -63.73481057516656,
+        -63.73481057516656,
+        -63.73481057516656,
+        -63.73481057516656
+      ]
     }
   ],
-  "steps": 200000,
-  "timestamp_utc": "2026-06-16T14:57:21+00:00"
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 16820.414835,
+      "min_ns_per_step": 16763.600625,
+      "max_ns_per_step": 18207.096945,
+      "spikes": 881
+    },
+    "rust": {
+      "median_ns_per_step": 105.96647,
+      "min_ns_per_step": 105.191365,
+      "max_ns_per_step": 123.606465,
+      "spikes": 881
+    },
+    "go": {
+      "median_ns_per_step": 154.5,
+      "min_ns_per_step": 151.1,
+      "max_ns_per_step": 159.0,
+      "spikes": 881
+    },
+    "julia": {
+      "median_ns_per_step": 99.584425,
+      "min_ns_per_step": 97.48369,
+      "max_ns_per_step": 104.18271,
+      "spikes": 881
+    },
+    "mojo": {
+      "median_ns_per_step": 126.94658493273892,
+      "min_ns_per_step": 126.58483494305983,
+      "max_ns_per_step": 131.48430996807292,
+      "spikes": 881
+    }
+  },
+  "source_hashes": {
+    "benchmarks/bench_model_expif.py": "499d302630a15d1099e50c4304cbd3bd5dd3c9ca0a248f7bd9977c02d7afedec",
+    "engine/Cargo.toml": "2d82433cbadcb9e33e73e4e88f7608547bc08302dfd6ff53f87fd47d017fbe60",
+    "engine/examples/bench_expif_rk4.rs": "882de387325059663d9542f25c0a85166047fd2e6fe30228ea9ba85b9315e127",
+    "engine/src/neuron.rs": "5627c16c29ec9c323595cc9c33d5bddf227fea9e3205a7aa43922f2353506bb1",
+    "src/sc_neurocore/neurons/models/expif.py": "71e9d5dcb478cbfea5859565fc661192c7d6e5d8c9063b04b2ab5a63bd3f06db",
+    "src/sc_neurocore/accel/go/services/expif.go": "35f838bb603df9e9d8cbcea9b0cab6d8a4acf1bd7e99a186cef55900ccae906d",
+    "src/sc_neurocore/accel/go/services/expif_test.go": "4296f205200afcb86fc4e75485f90d2ac512c7858dd2cf556fd8ef5c1685ddc5",
+    "src/sc_neurocore/accel/julia/neurons/expif.jl": "275758b406b81ef387f4b377e6c2602302c26c3f3871cb0d2deaee76725045d6",
+    "src/sc_neurocore/accel/mojo/kernels/expif.mojo": "dc0113e7f236f55e3fb62b75d547b23574d79f486b92520aee78945afe25751b",
+    "src/sc_neurocore/accel/rust/safety/expif.rs": "30ec68452eb32a1f4a1a0698385393740ce891f3103acc2f478c34fafcdf2004",
+    "benchmarks/bench_model_expif": {
+      "py": "499d302630a15d1099e50c4304cbd3bd5dd3c9ca0a248f7bd9977c02d7afedec"
+    },
+    "engine/Cargo": {
+      "toml": "2d82433cbadcb9e33e73e4e88f7608547bc08302dfd6ff53f87fd47d017fbe60"
+    },
+    "engine/examples/bench_expif_rk4": {
+      "rs": "882de387325059663d9542f25c0a85166047fd2e6fe30228ea9ba85b9315e127"
+    },
+    "engine/src/neuron": {
+      "rs": "5627c16c29ec9c323595cc9c33d5bddf227fea9e3205a7aa43922f2353506bb1"
+    },
+    "src/sc_neurocore/neurons/models/expif": {
+      "py": "71e9d5dcb478cbfea5859565fc661192c7d6e5d8c9063b04b2ab5a63bd3f06db"
+    },
+    "src/sc_neurocore/accel/go/services/expif": {
+      "go": "35f838bb603df9e9d8cbcea9b0cab6d8a4acf1bd7e99a186cef55900ccae906d"
+    },
+    "src/sc_neurocore/accel/go/services/expif_test": {
+      "go": "4296f205200afcb86fc4e75485f90d2ac512c7858dd2cf556fd8ef5c1685ddc5"
+    },
+    "src/sc_neurocore/accel/julia/neurons/expif": {
+      "jl": "275758b406b81ef387f4b377e6c2602302c26c3f3871cb0d2deaee76725045d6"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/expif": {
+      "mojo": "dc0113e7f236f55e3fb62b75d547b23574d79f486b92520aee78945afe25751b"
+    },
+    "src/sc_neurocore/accel/rust/safety/expif": {
+      "rs": "30ec68452eb32a1f4a1a0698385393740ce891f3103acc2f478c34fafcdf2004"
+    }
+  }
 }

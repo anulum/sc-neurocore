@@ -248,6 +248,54 @@
       ]
     },
     {
+      "artefact": "benchmarks/results/local_python_2026-06-16_expif_rk4.json",
+      "expected_values": {
+        "spdx_license": "AGPL-3.0-or-later",
+        "benchmark": "ExpIFNeuron candidate-first RK4 step",
+        "evidence_class": "local_regression_non_isolated",
+        "production_speed_claim": false,
+        "hardware_measurement_claimed": false
+      },
+      "id": "expif-rk4-multibackend-local-regression",
+      "required_numbers": [
+        "backend_summary.python.median_ns_per_step",
+        "backend_summary.python.min_ns_per_step",
+        "backend_summary.python.max_ns_per_step",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ns_per_step",
+        "backend_summary.rust.min_ns_per_step",
+        "backend_summary.rust.max_ns_per_step",
+        "backend_summary.rust.spikes",
+        "backend_summary.go.median_ns_per_step",
+        "backend_summary.go.min_ns_per_step",
+        "backend_summary.go.max_ns_per_step",
+        "backend_summary.go.spikes",
+        "backend_summary.julia.median_ns_per_step",
+        "backend_summary.julia.min_ns_per_step",
+        "backend_summary.julia.max_ns_per_step",
+        "backend_summary.julia.spikes",
+        "backend_summary.mojo.median_ns_per_step",
+        "backend_summary.mojo.min_ns_per_step",
+        "backend_summary.mojo.max_ns_per_step",
+        "backend_summary.mojo.spikes",
+        "steps",
+        "repeats",
+        "current"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_model_expif.py": "source_hashes.benchmarks/bench_model_expif.py",
+        "engine/Cargo.toml": "source_hashes.engine/Cargo.toml",
+        "engine/examples/bench_expif_rk4.rs": "source_hashes.engine/examples/bench_expif_rk4.rs",
+        "engine/src/neuron.rs": "source_hashes.engine/src/neuron.rs",
+        "src/sc_neurocore/neurons/models/expif.py": "source_hashes.src/sc_neurocore/neurons/models/expif.py",
+        "src/sc_neurocore/accel/go/services/expif.go": "source_hashes.src/sc_neurocore/accel/go/services/expif.go",
+        "src/sc_neurocore/accel/go/services/expif_test.go": "source_hashes.src/sc_neurocore/accel/go/services/expif_test.go",
+        "src/sc_neurocore/accel/julia/neurons/expif.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/expif.jl",
+        "src/sc_neurocore/accel/mojo/kernels/expif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/expif.mojo",
+        "src/sc_neurocore/accel/rust/safety/expif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/expif.rs"
+      }
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-16_quadratic_if_exact_flow.json",
       "expected_values": {
         "spdx_license": "AGPL-3.0-or-later",

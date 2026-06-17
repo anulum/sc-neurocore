@@ -185,8 +185,9 @@ ExpIF is the **simplest exponential-onset model** — one parameter
 
 ## Numerical Considerations
 
-- **1 exp() per step:** Clipped to [−20, 20] → no overflow.
-- **Single Euler step:** dt=0.1 ms. Adequate for τ=20 ms.
+- **4 exp() evaluations per RK4 step:** Each RHS evaluation is clipped to
+  [−20, 20] → no overflow.
+- **Single RK4 macro-step:** dt=0.1 ms. Adequate for τ=20 ms.
 - **No sub-stepping:** The exponential term can cause V to overshoot
   the threshold by a large amount in a single step. The hard threshold
   check (V ≥ V_threshold) catches this.
@@ -197,22 +198,38 @@ ExpIF is the **simplest exponential-onset model** — one parameter
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/expif.py` — 39 lines.
+- **Source:** `src/sc_neurocore/neurons/models/expif.py`.
 - **One state variable:** v.
 - **Dataclass:** Uses `@dataclass`.
 - **Simplest exponential model** in SC-NeuroCore (AdEx adds w).
-- **Rust wiring:** Compatible (1 f64 state var, 1 exp).
+- **Polyglot surfaces:** Python, Rust engine, Rust safety, Go, Julia, and
+  Mojo use candidate-first RK4 with clipped exponential RHS evaluations and
+  reset-on-threshold spike semantics.
 
 ---
 
-## Performance
+## Measured Performance (2026-06-16)
 
-| Metric | Python | Rust |
-|--------|--------|------|
-| Isolation | ~220K steps/s | Not measured |
-| Network | Pipeline verified | — |
+Local non-isolated regression run. These numbers are recorded for
+regression comparison only and are not production throughput claims.
 
-Fast — single exp + clip per step, no sub-stepping, 1 state variable.
+| Metric | Value |
+|--------|-------|
+| Evidence class | Local regression, non-isolated workstation |
+| Benchmark artefact | `benchmarks/results/local_python_2026-06-16_expif_rk4.json` |
+| Workload | 200000 steps, 5 repeats, I=20.0 |
+| Polyglot contract | Python, Rust engine, Rust safety, Go, Julia, and Mojo RK4 surfaces aligned, with explicit errors where supported |
+
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
+|---------|---------------:|------------:|------------:|-------:|
+| Python | 16820.414835 | 16763.600625 | 18207.096945 | 881 |
+| Rust engine | 105.96647 | 105.191365 | 123.606465 | 881 |
+| Go service mirror | 154.5 | 151.1 | 159.0 | 881 |
+| Julia mirror | 99.584425 | 97.48369 | 104.18271 | 881 |
+| Mojo mirror | 126.94658493273892 | 126.58483494305983 | 131.48430996807292 | 881 |
+
+Fast for a nonlinear spiking model: one state variable, four clipped
+exponential RHS evaluations per RK4 macro-step, and no sub-stepping.
 
 ---
 
@@ -227,7 +244,7 @@ Fast — single exp + clip per step, no sub-stepping, 1 state variable.
 | Parameters | 4 | τ affects rate, custom V_rh, dt stability [0.05,0.1,0.2] (parametrised), deterministic |
 | Performance | 2 | isolation throughput, network throughput |
 | Pipeline | 4 | Population, Network spikes, Projection wiring, analysis pipeline |
-| **Total** | **28** | **ALL PASSED (7.07s)** |
+| **Total** | **51** | **ALL PASSED** |
 
 See `tests/test_model_expif.py`.
 
