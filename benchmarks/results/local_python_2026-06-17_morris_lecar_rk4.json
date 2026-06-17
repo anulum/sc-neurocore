@@ -1,7 +1,7 @@
 {
   "spdx_license": "AGPL-3.0-or-later",
   "benchmark": "MorrisLecarNeuron candidate-first RK4 conductance step",
-  "timestamp_utc": "2026-06-16T23:50:18+00:00",
+  "timestamp_utc": "2026-06-17T00:18:21+00:00",
   "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_morris_lecar.py",
   "evidence_class": "local_regression_non_isolated",
   "production_speed_claim": false,
@@ -14,18 +14,50 @@
   "current": 100.0,
   "backend_summary": {
     "python": {
+      "median_ns_per_step": 25467.72258,
+      "min_ns_per_step": 25179.76967,
+      "max_ns_per_step": 26262.524385,
+      "spikes": 476
+    },
+    "rust": {
+      "median_ns_per_step": 322.44675,
+      "min_ns_per_step": 313.577755,
+      "max_ns_per_step": 335.575095,
+      "spikes": 476
+    },
+    "go": {
+      "median_ns_per_step": 230.2,
+      "min_ns_per_step": 229.4,
+      "max_ns_per_step": 241.7,
+      "spikes": 0
+    },
+    "julia": {
+      "median_ns_per_step": 159.14346,
+      "min_ns_per_step": 157.318495,
+      "max_ns_per_step": 161.061555,
+      "spikes": 476
+    },
+    "mojo": {
+      "median_ns_per_step": 216.30613497109152,
+      "min_ns_per_step": 213.5709249705542,
+      "max_ns_per_step": 222.3385649267584,
+      "spikes": 476
+    }
+  },
+  "results": [
+    {
       "backend": "python",
-      "median_ns_per_step": 32499.68559,
-      "min_ns_per_step": 29316.05671,
-      "max_ns_per_step": 45162.231075,
+      "median_ns_per_step": 25467.72258,
+      "min_ns_per_step": 25179.76967,
+      "max_ns_per_step": 26262.524385,
       "spikes": 476,
       "results": [
         {
           "backend": "python",
           "steps": 200000,
           "current": 100.0,
-          "elapsed_ns": 6560884208,
-          "ns_per_step": 32804.42104,
+          "elapsed_ns": 5075197659,
+          "ns_per_step": 25375.988295,
           "spikes": 476,
           "ending_state": [
             16.869723514583974,
@@ -36,8 +68,8 @@
           "backend": "python",
           "steps": 200000,
           "current": 100.0,
-          "elapsed_ns": 6394866866,
-          "ns_per_step": 31974.33433,
+          "elapsed_ns": 5035953934,
+          "ns_per_step": 25179.76967,
           "spikes": 476,
           "ending_state": [
             16.869723514583974,
@@ -48,8 +80,8 @@
           "backend": "python",
           "steps": 200000,
           "current": 100.0,
-          "elapsed_ns": 5863211342,
-          "ns_per_step": 29316.05671,
+          "elapsed_ns": 5093544516,
+          "ns_per_step": 25467.72258,
           "spikes": 476,
           "ending_state": [
             16.869723514583974,
@@ -60,8 +92,8 @@
           "backend": "python",
           "steps": 200000,
           "current": 100.0,
-          "elapsed_ns": 6499937118,
-          "ns_per_step": 32499.68559,
+          "elapsed_ns": 5218617448,
+          "ns_per_step": 26093.08724,
           "spikes": 476,
           "ending_state": [
             16.869723514583974,
@@ -72,8 +104,8 @@
           "backend": "python",
           "steps": 200000,
           "current": 100.0,
-          "elapsed_ns": 9032446215,
-          "ns_per_step": 45162.231075,
+          "elapsed_ns": 5252504877,
+          "ns_per_step": 26262.524385,
           "spikes": 476,
           "ending_state": [
             16.869723514583974,
@@ -82,9 +114,9 @@
         }
       ]
     },
-    "rust": {
+    {
       "backend": "rust",
-      "timestamp_unix": 1781653815,
+      "timestamp_unix": 1781655497,
       "command": "cargo run --manifest-path engine/Cargo.toml --example bench_morris_lecar_rk4",
       "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
       "target_os": "linux",
@@ -95,10 +127,10 @@
         "cpu_affinity": "0-11",
         "cgroup_effective_cpuset": "unavailable",
         "runtime_cpuset_shield_claimed": false,
-        "load_average_before": "9.89 14.47 12.62 16/10414 1698104",
-        "load_average_after": "9.89 14.47 12.62 5/10407 1698315",
+        "load_average_before": "3.95 4.05 5.65 8/6196 1841820",
+        "load_average_after": "3.95 4.05 5.65 3/6196 1841831",
         "cpu_governor": "powersave",
-        "cpu_frequency_mhz": "min=3899.491,max=3900.000,sampled_cpu_count=12",
+        "cpu_frequency_mhz": "min=4400.000,max=4400.938,sampled_cpu_count=12",
         "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
         "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
         "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
@@ -106,15 +138,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 100,
-      "median_ns_per_step": 503.68263,
-      "min_ns_per_step": 443.46815,
-      "max_ns_per_step": 542.39206,
+      "median_ns_per_step": 322.44675,
+      "min_ns_per_step": 313.577755,
+      "max_ns_per_step": 335.575095,
       "results_ns_per_step": [
-        462.510955,
-        443.46815,
-        506.471275,
-        503.68263,
-        542.39206
+        328.717915,
+        322.44675,
+        315.885735,
+        335.575095,
+        313.577755
       ],
       "spike_counts": [
         476,
@@ -139,39 +171,39 @@
       ],
       "driver_command": "cargo run --manifest-path engine/Cargo.toml --example bench_morris_lecar_rk4"
     },
-    "go": {
+    {
       "backend": "go",
       "command": "go test src/sc_neurocore/accel/go/services/morris_lecar.go src/sc_neurocore/accel/go/services/morris_lecar_test.go -run ^$ -bench BenchmarkMorrisLecarRK4$ -benchtime 200000x -count 5",
       "steps": 200000,
       "repeats": 5,
       "current": 100.0,
-      "median_ns_per_step": 313.4,
-      "min_ns_per_step": 261.1,
-      "max_ns_per_step": 386.4,
+      "median_ns_per_step": 230.2,
+      "min_ns_per_step": 229.4,
+      "max_ns_per_step": 241.7,
       "results_ns_per_step": [
-        261.1,
-        356.0,
-        272.5,
-        313.4,
-        386.4
+        241.7,
+        229.4,
+        230.2,
+        232.7,
+        230.2
       ],
       "spikes": 0
     },
-    "julia": {
+    {
       "backend": "julia",
       "command": "julia --project=. -e <morris-lecar rk4 benchmark>",
       "steps": 200000,
       "repeats": 5,
       "current": 100.0,
-      "median_ns_per_step": 230.399385,
-      "min_ns_per_step": 227.681775,
-      "max_ns_per_step": 234.44796,
+      "median_ns_per_step": 159.14346,
+      "min_ns_per_step": 157.318495,
+      "max_ns_per_step": 161.061555,
       "results_ns_per_step": [
-        230.399385,
-        234.44796,
-        229.980275,
-        227.681775,
-        230.53366
+        161.061555,
+        158.955065,
+        159.14346,
+        157.318495,
+        159.690735
       ],
       "spikes": 476,
       "final_vs": [
@@ -189,27 +221,62 @@
         0.09419342900971757
       ]
     },
-    "mojo": {
+    {
       "backend": "mojo",
-      "skipped": true,
-      "reason": "No maintained Morris-Lecar Mojo runtime counterpart exists in this checkout."
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp morris-lecar benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 100.0,
+      "median_ns_per_step": 216.30613497109152,
+      "min_ns_per_step": 213.5709249705542,
+      "max_ns_per_step": 222.3385649267584,
+      "results_ns_per_step": [
+        222.3385649267584,
+        217.6513099402655,
+        213.5709249705542,
+        215.82729503279552,
+        216.30613497109152
+      ],
+      "spikes": 476,
+      "spike_counts": [
+        476,
+        476,
+        476,
+        476,
+        476
+      ],
+      "final_vs": [
+        16.86972355181323,
+        16.86972355181323,
+        16.86972355181323,
+        16.86972355181323,
+        16.86972355181323
+      ],
+      "final_ws": [
+        0.09419342912587332,
+        0.09419342912587332,
+        0.09419342912587332,
+        0.09419342912587332,
+        0.09419342912587332
+      ]
     }
-  },
+  ],
   "source_hashes": {
-    "benchmarks/bench_model_morris_lecar.py": "2b02ae12cb8e25eeb62deedd1992fd77aaf65e8cd6e937fdb53b9bceec65ae79",
-    "engine/Cargo.toml": "c748a20be0f10b17b3a6cb5667ddf2830033ec4659247925b15b0c01f31bf368",
+    "benchmarks/bench_model_morris_lecar.py": "04f8a9b1e613e0c4bdc6a59fdc5d483cd57ac4c7707300218397f8019de753e4",
+    "engine/Cargo.toml": "f0b74eea4756c31095bfde1dacda592a93f183230199927ee79d6abb99ce1701",
     "engine/examples/bench_morris_lecar_rk4.rs": "b6cc638e2572191fed853143767f879b54f6df5df4293c55ae6f04d2ed2c5e04",
     "engine/src/neurons/simple_spiking.rs": "52817fb9531c2a286ffd715b1fd17e72e5c29901b4b6790ffef3d3b7f10986a8",
     "src/sc_neurocore/neurons/models/morris_lecar.py": "b90196793ab9673e3c8f0fe6f839201f538f3682716628e07bc3b3dc1a1e8910",
     "src/sc_neurocore/accel/go/services/morris_lecar.go": "b3aa3ce8e184cd47cc2745a74b8af7814ea655b11ac85f985752359eb8d92050",
     "src/sc_neurocore/accel/go/services/morris_lecar_test.go": "a4a74b6144fc4822033b1acfe37f24691d4b7e94c780134e1299471f70280495",
     "src/sc_neurocore/accel/julia/neurons/morris_lecar.jl": "0b1516066d50b55be0ddcd19286f83f6be11f1f76f73356b8ec4311248b883e7",
+    "src/sc_neurocore/accel/mojo/kernels/morris_lecar.mojo": "b7f413681044b5b04164a6ebde31efcf46ab0e5b95742de8855bd5816bc7fb67",
     "src/sc_neurocore/accel/rust/safety/morris_lecar.rs": "944f9614db7afbf3eb4e4390667b903964e1cf28f1f8df11517828524afebfd2",
     "benchmarks/bench_model_morris_lecar": {
-      "py": "2b02ae12cb8e25eeb62deedd1992fd77aaf65e8cd6e937fdb53b9bceec65ae79"
+      "py": "04f8a9b1e613e0c4bdc6a59fdc5d483cd57ac4c7707300218397f8019de753e4"
     },
     "engine/Cargo": {
-      "toml": "c748a20be0f10b17b3a6cb5667ddf2830033ec4659247925b15b0c01f31bf368"
+      "toml": "f0b74eea4756c31095bfde1dacda592a93f183230199927ee79d6abb99ce1701"
     },
     "engine/examples/bench_morris_lecar_rk4": {
       "rs": "b6cc638e2572191fed853143767f879b54f6df5df4293c55ae6f04d2ed2c5e04"
@@ -228,6 +295,9 @@
     },
     "src/sc_neurocore/accel/julia/neurons/morris_lecar": {
       "jl": "0b1516066d50b55be0ddcd19286f83f6be11f1f76f73356b8ec4311248b883e7"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/morris_lecar": {
+      "mojo": "b7f413681044b5b04164a6ebde31efcf46ab0e5b95742de8855bd5816bc7fb67"
     },
     "src/sc_neurocore/accel/rust/safety/morris_lecar": {
       "rs": "944f9614db7afbf3eb4e4390667b903964e1cf28f1f8df11517828524afebfd2"

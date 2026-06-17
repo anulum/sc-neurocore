@@ -429,6 +429,17 @@ labelled `local_regression_non_isolated` and
 `production_speed_claim=false`; it is evidence that the same RK4 contract
 is runnable across maintained backends, not a production throughput claim.
 
+Measured local regression values from
+`benchmarks/results/local_python_2026-06-17_morris_lecar_rk4.json`:
+
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes | Evidence |
+|---------|---------------:|------------:|------------:|-------:|----------|
+| Python | 25467.72258 | 25179.76967 | 26262.524385 | 476 | RK4 reference |
+| Rust engine | 322.44675 | 313.577755 | 335.575095 | 476 | RK4 engine example |
+| Go service mirror | 230.2 | 229.4 | 241.7 | 0 | deterministic RK4 mirror |
+| Julia mirror | 159.14346 | 157.318495 | 161.061555 | 476 | RK4 mirror |
+| Mojo mirror | 216.30613497109152 | 213.5709249705542 | 222.3385649267584 | 476 | RK4 mirror |
+
 ### 7.2 Historical Rust Criterion evidence
 
 Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05. This

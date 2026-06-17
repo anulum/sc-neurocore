@@ -5,7 +5,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Morris-Lecar RK4 multi-backend local regression benchmark
+# SC-NeuroCore — Escape-rate exact-flow multi-backend local regression benchmark
 
 from __future__ import annotations
 
@@ -22,39 +22,38 @@ import textwrap
 import time
 from typing import Any, Protocol, cast
 
-from sc_neurocore.neurons.models.morris_lecar import MorrisLecarNeuron
+from sc_neurocore.neurons.models.escape_rate import EscapeRateNeuron
 
 
 STEPS = 200_000
 REPEATS = 5
-CURRENT = 100.0
-OUTPUT = Path("benchmarks/results/local_python_2026-06-17_morris_lecar_rk4.json")
+CURRENT = 30.0
+OUTPUT = Path("benchmarks/results/local_python_2026-06-17_escape_rate_exact_flow.json")
 REPO_ROOT = Path(__file__).resolve().parents[1]
-GO_BENCH_RE = re.compile(r"^BenchmarkMorrisLecarRK4-\d+\s+\d+\s+([0-9.]+)\s+ns/op")
+GO_BENCH_RE = re.compile(r"^BenchmarkEscapeRateExactFlow-\d+\s+\d+\s+([0-9.]+)\s+ns/op")
 SOURCE_HASH_PATHS = {
-    "benchmarks/bench_model_morris_lecar.py": REPO_ROOT / "benchmarks/bench_model_morris_lecar.py",
+    "benchmarks/bench_model_escape_rate.py": REPO_ROOT / "benchmarks/bench_model_escape_rate.py",
     "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
-    "engine/examples/bench_morris_lecar_rk4.rs": REPO_ROOT
-    / "engine/examples/bench_morris_lecar_rk4.rs",
-    "engine/src/neurons/simple_spiking.rs": REPO_ROOT / "engine/src/neurons/simple_spiking.rs",
-    "src/sc_neurocore/neurons/models/morris_lecar.py": REPO_ROOT
-    / "src/sc_neurocore/neurons/models/morris_lecar.py",
-    "src/sc_neurocore/accel/go/services/morris_lecar.go": REPO_ROOT
-    / "src/sc_neurocore/accel/go/services/morris_lecar.go",
-    "src/sc_neurocore/accel/go/services/morris_lecar_test.go": REPO_ROOT
-    / "src/sc_neurocore/accel/go/services/morris_lecar_test.go",
-    "src/sc_neurocore/accel/julia/neurons/morris_lecar.jl": REPO_ROOT
-    / "src/sc_neurocore/accel/julia/neurons/morris_lecar.jl",
-    "src/sc_neurocore/accel/mojo/kernels/morris_lecar.mojo": REPO_ROOT
-    / "src/sc_neurocore/accel/mojo/kernels/morris_lecar.mojo",
-    "src/sc_neurocore/accel/rust/safety/morris_lecar.rs": REPO_ROOT
-    / "src/sc_neurocore/accel/rust/safety/morris_lecar.rs",
+    "engine/examples/bench_escape_rate_exact_flow.rs": REPO_ROOT
+    / "engine/examples/bench_escape_rate_exact_flow.rs",
+    "engine/src/neurons/trivial.rs": REPO_ROOT / "engine/src/neurons/trivial.rs",
+    "src/sc_neurocore/neurons/models/escape_rate.py": REPO_ROOT
+    / "src/sc_neurocore/neurons/models/escape_rate.py",
+    "src/sc_neurocore/accel/go/services/escape_rate.go": REPO_ROOT
+    / "src/sc_neurocore/accel/go/services/escape_rate.go",
+    "src/sc_neurocore/accel/go/services/escape_rate_test.go": REPO_ROOT
+    / "src/sc_neurocore/accel/go/services/escape_rate_test.go",
+    "src/sc_neurocore/accel/julia/neurons/escape_rate.jl": REPO_ROOT
+    / "src/sc_neurocore/accel/julia/neurons/escape_rate.jl",
+    "src/sc_neurocore/accel/mojo/kernels/escape_rate.mojo": REPO_ROOT
+    / "src/sc_neurocore/accel/mojo/kernels/escape_rate.mojo",
+    "src/sc_neurocore/accel/rust/safety/escape_rate.rs": REPO_ROOT
+    / "src/sc_neurocore/accel/rust/safety/escape_rate.rs",
 }
 
 
 class _StepNeuron(Protocol):
     v: float
-    w: float
 
     def step(self, current: float) -> int: ...
 
@@ -94,20 +93,19 @@ def _run_once(factory: Any, backend: str) -> dict[str, object]:
         "elapsed_ns": elapsed_ns,
         "ns_per_step": elapsed_ns / STEPS,
         "spikes": spikes,
-        "ending_state": [float(neuron.v), float(neuron.w)],
+        "ending_state": [float(neuron.v)],
     }
 
 
 def _run_python_backend() -> dict[str, object]:
-    results = [_run_once(lambda: MorrisLecarNeuron(), "python") for _ in range(REPEATS)]
+    results = [_run_once(lambda: EscapeRateNeuron(), "python") for _ in range(REPEATS)]
     ns_per_step = [cast(float, result["ns_per_step"]) for result in results]
-    first_spikes = cast(int, results[0]["spikes"])
     return {
         "backend": "python",
         "median_ns_per_step": statistics.median(ns_per_step),
         "min_ns_per_step": min(ns_per_step),
         "max_ns_per_step": max(ns_per_step),
-        "spikes": first_spikes,
+        "spikes": cast(int, results[0]["spikes"]),
         "results": results,
     }
 
@@ -123,7 +121,7 @@ def _run_rust_backend() -> dict[str, object]:
         "--manifest-path",
         "engine/Cargo.toml",
         "--example",
-        "bench_morris_lecar_rk4",
+        "bench_escape_rate_exact_flow",
     ]
     try:
         completed = _run_command(command)
@@ -138,12 +136,12 @@ def _run_go_backend() -> dict[str, object]:
     command = [
         "go",
         "test",
-        "src/sc_neurocore/accel/go/services/morris_lecar.go",
-        "src/sc_neurocore/accel/go/services/morris_lecar_test.go",
+        "src/sc_neurocore/accel/go/services/escape_rate.go",
+        "src/sc_neurocore/accel/go/services/escape_rate_test.go",
         "-run",
         "^$",
         "-bench",
-        "BenchmarkMorrisLecarRK4$",
+        "BenchmarkEscapeRateExactFlow$",
         "-benchtime",
         "200000x",
         "-count",
@@ -162,7 +160,7 @@ def _run_go_backend() -> dict[str, object]:
         return {
             "backend": "go",
             "skipped": True,
-            "reason": "Go benchmark output did not include BenchmarkMorrisLecarRK4 ns/op rows",
+            "reason": "Go benchmark output did not include BenchmarkEscapeRateExactFlow ns/op rows",
             "stdout": completed.stdout,
         }
     return {
@@ -181,22 +179,24 @@ def _run_go_backend() -> dict[str, object]:
 
 def _run_julia_backend() -> dict[str, object]:
     script = f"""
+using Random
 using Statistics
-include("src/sc_neurocore/accel/julia/neurons/morris_lecar.jl")
+include("src/sc_neurocore/accel/julia/neurons/escape_rate.jl")
 const STEPS = {STEPS}
 const REPEATS = {REPEATS}
 const CURRENT = {CURRENT}
-function run_once()
-    s = MorrisLecarAccel.MorrisLecarNeuronState()
+function run_once(seed)
+    Random.seed!(seed)
+    s = EscapeRateAccel.EscapeRateNeuronState()
     spikes = 0
     start = time_ns()
     for _ in 1:STEPS
-        spikes += MorrisLecarAccel.step!(s, CURRENT)
+        spikes += EscapeRateAccel.step!(s, CURRENT)
     end
     elapsed = time_ns() - start
-    return elapsed / STEPS, spikes, s.v, s.w
+    return elapsed / STEPS, spikes, s.v
 end
-results = [run_once() for _ in 1:REPEATS]
+results = [run_once(42 + i) for i in 1:REPEATS]
 values = [r[1] for r in results]
 println("median_ns_per_step=", median(values))
 println("min_ns_per_step=", minimum(values))
@@ -204,7 +204,6 @@ println("max_ns_per_step=", maximum(values))
 println("results_ns_per_step=", join(values, ","))
 println("spike_counts=", join([r[2] for r in results], ","))
 println("final_vs=", join([r[3] for r in results], ","))
-println("final_ws=", join([r[4] for r in results], ","))
 """
     command = ["julia", "--project=.", "-e", script]
     try:
@@ -213,9 +212,10 @@ println("final_ws=", join([r[4] for r in results], ","))
         return {"backend": "julia", "skipped": True, "reason": f"Julia benchmark failed: {exc}"}
     fields = dict(line.split("=", 1) for line in completed.stdout.splitlines() if "=" in line)
     values = [float(value) for value in fields["results_ns_per_step"].split(",")]
+    spike_counts = [int(value) for value in fields["spike_counts"].split(",")]
     return {
         "backend": "julia",
-        "command": "julia --project=. -e <morris-lecar rk4 benchmark>",
+        "command": "julia --project=. -e <escape-rate exact-flow benchmark>",
         "steps": STEPS,
         "repeats": len(values),
         "current": CURRENT,
@@ -223,16 +223,16 @@ println("final_ws=", join([r[4] for r in results], ","))
         "min_ns_per_step": float(fields["min_ns_per_step"]),
         "max_ns_per_step": float(fields["max_ns_per_step"]),
         "results_ns_per_step": values,
-        "spikes": int(fields["spike_counts"].split(",")[0]),
+        "spikes": int(statistics.median(spike_counts)),
+        "spike_counts": spike_counts,
         "final_vs": [float(value) for value in fields["final_vs"].split(",")],
-        "final_ws": [float(value) for value in fields["final_ws"].split(",")],
     }
 
 
 def _run_mojo_backend() -> dict[str, object]:
     program = textwrap.dedent(
         f"""
-        from morris_lecar import morris_lecar_next_v, morris_lecar_next_w, morris_lecar_step_spike
+        from escape_rate import escape_rate_next_v, escape_rate_step_spike
         from std.time import perf_counter
 
         alias STEPS = {STEPS}
@@ -240,21 +240,22 @@ def _run_mojo_backend() -> dict[str, object]:
         alias CURRENT = {CURRENT}
 
         def run_once() raises:
-            var v = -60.0
-            var w = 0.0
+            var v = -70.0
             var spikes = 0
             var start = perf_counter()
-            for _ in range(STEPS):
-                var next_v = morris_lecar_next_v(v, w, CURRENT, 20.0, 4.0, 8.0, 2.0, 120.0, -84.0, -60.0, -1.2, 18.0, 12.0, 17.4, 1.0 / 15.0, 0.1, 0.0)
-                var next_w = morris_lecar_next_w(v, w, CURRENT, 20.0, 4.0, 8.0, 2.0, 120.0, -84.0, -60.0, -1.2, 18.0, 12.0, 17.4, 1.0 / 15.0, 0.1, 0.0)
-                spikes += morris_lecar_step_spike(v, next_v, 0.0)
-                v = next_v
-                w = next_w
+            for i in range(STEPS):
+                var threshold = Float64(i % 1000) / 1000.0
+                var next_v = escape_rate_next_v(v, CURRENT, -70.0, -70.0, -50.0, 10.0, 0.001, 3.0, 1.0, 1.0)
+                var spike = escape_rate_step_spike(v, CURRENT, -70.0, -70.0, -50.0, 10.0, 0.001, 3.0, 1.0, 1.0, threshold)
+                if spike == 1:
+                    v = -70.0
+                    spikes += 1
+                else:
+                    v = next_v
             var elapsed = perf_counter() - start
             print("ns_per_step=", Float64(elapsed) * 1000000000.0 / Float64(STEPS))
             print("spikes=", spikes)
             print("final_v=", v)
-            print("final_w=", w)
 
         def main() raises:
             for _ in range(REPEATS):
@@ -291,16 +292,11 @@ def _run_mojo_backend() -> dict[str, object]:
         for line in completed.stdout.splitlines()
         if line.startswith("final_v=")
     ]
-    final_ws = [
-        float(line.split("=", 1)[1])
-        for line in completed.stdout.splitlines()
-        if line.startswith("final_w=")
-    ]
     if not values:
         return {"backend": "mojo", "skipped": True, "reason": "Mojo benchmark produced no rows"}
     return {
         "backend": "mojo",
-        "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp morris-lecar benchmark>",
+        "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp escape-rate benchmark>",
         "steps": STEPS,
         "repeats": len(values),
         "current": CURRENT,
@@ -311,29 +307,25 @@ def _run_mojo_backend() -> dict[str, object]:
         "spikes": int(statistics.median(spike_counts)),
         "spike_counts": spike_counts,
         "final_vs": final_vs,
-        "final_ws": final_ws,
     }
 
 
 def _backend_summary(payload: dict[str, object]) -> dict[str, object]:
     if payload.get("skipped", False):
         return {"skipped": True, "reason": str(payload.get("reason", "unknown"))}
-    spikes = payload.get("spikes")
-    if not isinstance(spikes, int):
-        spike_counts_raw = payload.get("spike_counts")
-        if isinstance(spike_counts_raw, list):
-            spikes = int(statistics.median([int(value) for value in spike_counts_raw]))
-        else:
-            spikes = 0
+    median_ns_per_step = cast(float, payload["median_ns_per_step"])
+    min_ns_per_step = cast(float, payload["min_ns_per_step"])
+    max_ns_per_step = cast(float, payload["max_ns_per_step"])
+    spikes = cast(int, payload["spikes"])
     return {
-        "median_ns_per_step": float(cast(float, payload["median_ns_per_step"])),
-        "min_ns_per_step": float(cast(float, payload["min_ns_per_step"])),
-        "max_ns_per_step": float(cast(float, payload["max_ns_per_step"])),
+        "median_ns_per_step": float(median_ns_per_step),
+        "min_ns_per_step": float(min_ns_per_step),
+        "max_ns_per_step": float(max_ns_per_step),
         "spikes": int(spikes),
     }
 
 
-def main() -> None:
+def main() -> int:
     python = _run_python_backend()
     rust = _run_rust_backend()
     go = _run_go_backend()
@@ -341,9 +333,14 @@ def main() -> None:
     mojo = _run_mojo_backend()
     payload = {
         "spdx_license": "AGPL-3.0-or-later",
-        "benchmark": "MorrisLecarNeuron candidate-first RK4 conductance step",
+        "commercial_license": "available",
+        "copyright_concepts": "© Concepts 1996–2026 Miroslav Šotek. All rights reserved.",
+        "copyright_code": "© Code 2020–2026 Miroslav Šotek. All rights reserved.",
+        "orcid": "0009-0009-3560-0851",
+        "contact": "www.anulum.li | protoscience@anulum.li",
+        "benchmark": "EscapeRateNeuron exact membrane flow with finite-step escape hazard",
         "timestamp_utc": datetime.now(UTC).isoformat(timespec="seconds"),
-        "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_morris_lecar.py",
+        "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_escape_rate.py",
         "evidence_class": "local_regression_non_isolated",
         "production_speed_claim": False,
         "hardware_measurement_claimed": False,
@@ -353,6 +350,7 @@ def main() -> None:
         "steps": STEPS,
         "repeats": REPEATS,
         "current": CURRENT,
+        "results": [python, rust, go, julia, mojo],
         "backend_summary": {
             "python": _backend_summary(python),
             "rust": _backend_summary(rust),
@@ -360,13 +358,13 @@ def main() -> None:
             "julia": _backend_summary(julia),
             "mojo": _backend_summary(mojo),
         },
-        "results": [python, rust, go, julia, mojo],
         "source_hashes": _source_hashes(),
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(payload, indent=2))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

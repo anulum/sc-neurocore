@@ -50,9 +50,9 @@ The implementation preserves the compact-circle state contract before mutation:
 - initial `theta`, `dt`, and input current must be finite;
 - `dt` must be positive;
 - initial `theta` is normalised into `[-pi, pi]`;
-- each Euler phase increment and candidate phase must remain finite before assignment.
-- runtime `theta` and `dt` are revalidated before `cos(theta)` and Euler
-  evaluation so corrupted objects fail closed without mutating phase.
+- each tangent-half-angle exact-flow candidate phase must remain finite before assignment.
+- runtime `theta` and `dt` are revalidated before exact-flow evaluation so
+  corrupted objects fail closed without mutating phase.
 
 These guards prevent finite but numerically explosive inputs from turning the
 phase state into `NaN` while preserving the theta/QIF phase-map semantics.
@@ -141,7 +141,8 @@ bounded (no divergence risk) and the phase space is compact (S¹).
 ## Numerical Considerations
 
 - **Phase wrapping ensures boundedness:** theta never diverges because it's
-  wrapped to [−π, π] at construction and after every accepted step. Overflowing Euler increments are rejected before state mutation.
+  wrapped to [−π, π] at construction and after every accepted step. Non-finite
+  exact-flow candidates are rejected before state mutation.
 - **0.99π detection threshold:** The spike detection uses 0.99π instead of
   exact π to avoid missing spikes due to discrete stepping. This introduces
   ±1 step ISI jitter.
@@ -195,14 +196,25 @@ bounded (no divergence risk) and the phase space is compact (S¹).
 
 ---
 
-## Measured Performance (2026-04-04)
+## Measured Performance (2026-06-16)
+
+Local non-isolated regression run. These numbers are recorded for
+regression comparison only and are not production throughput claims.
 
 | Metric | Value |
 |--------|-------|
-| Python throughput | ~131K steps/s |
-| Spikes (10K steps, I=5.0) | 71 |
-| State stability (20K steps) | PASS |
-| Rust safety surface | Same spike-crossing and compact-phase contract |
+| Evidence class | Local regression, non-isolated workstation |
+| Benchmark artefact | `benchmarks/results/local_python_2026-06-16_theta_exact_flow.json` |
+| Workload | 200000 steps, 5 repeats, I=0.5 |
+| Polyglot contract | Python, Rust engine, Go, Julia, and Mojo spike-kernel surfaces aligned where maintained |
+
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
+|---------|---------------:|------------:|------------:|-------:|
+| Python | 835.06643 | 832.502915 | 1008.433715 | 450 |
+| Rust engine | 94.53046 | 92.57925 | 99.261925 | 450 |
+| Go service mirror | 107.2 | 101.7 | 113.8 | 450 |
+| Julia mirror | 98.259515 | 97.152235 | 99.084195 | 450 |
+| Mojo mirror | 82.32672000303864 | 78.47523491363972 | 84.54791008261964 | 450 |
 
 ---
 

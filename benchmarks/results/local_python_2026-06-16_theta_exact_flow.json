@@ -6,7 +6,7 @@
   "orcid": "0009-0009-3560-0851",
   "contact": "www.anulum.li | protoscience@anulum.li",
   "benchmark": "ThetaNeuron tangent-half-angle exact constant-current flow step",
-  "timestamp_utc": "2026-06-16T21:24:34+00:00",
+  "timestamp_utc": "2026-06-17T00:17:05+00:00",
   "command": "PYTHONPATH=src ./.venv/bin/python benchmarks/bench_model_theta.py",
   "evidence_class": "local_regression_non_isolated",
   "production_speed_claim": false,
@@ -20,9 +20,9 @@
   "results": [
     {
       "backend": "python",
-      "median_ns_per_step": 792.349765,
-      "min_ns_per_step": 788.321145,
-      "max_ns_per_step": 821.144025,
+      "median_ns_per_step": 835.06643,
+      "min_ns_per_step": 832.502915,
+      "max_ns_per_step": 1008.433715,
       "spikes": [
         450,
         450,
@@ -35,47 +35,47 @@
           "backend": "python",
           "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 158469953,
-          "ns_per_step": 792.349765,
+          "elapsed_ns": 194670818,
+          "ns_per_step": 973.35409,
           "spikes": 450
         },
         {
           "backend": "python",
           "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 158456483,
-          "ns_per_step": 792.282415,
+          "elapsed_ns": 201686743,
+          "ns_per_step": 1008.433715,
           "spikes": 450
         },
         {
           "backend": "python",
           "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 157664229,
-          "ns_per_step": 788.321145,
+          "elapsed_ns": 166981067,
+          "ns_per_step": 834.905335,
           "spikes": 450
         },
         {
           "backend": "python",
           "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 159668345,
-          "ns_per_step": 798.341725,
+          "elapsed_ns": 166500583,
+          "ns_per_step": 832.502915,
           "spikes": 450
         },
         {
           "backend": "python",
           "steps": 200000,
           "current": 0.5,
-          "elapsed_ns": 164228805,
-          "ns_per_step": 821.144025,
+          "elapsed_ns": 167013286,
+          "ns_per_step": 835.06643,
           "spikes": 450
         }
       ]
     },
     {
       "backend": "rust",
-      "timestamp_unix": 1781645071,
+      "timestamp_unix": 1781655421,
       "command": "cargo run --manifest-path engine/Cargo.toml --example bench_theta_exact_flow",
       "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
       "target_os": "linux",
@@ -86,10 +86,10 @@
         "cpu_affinity": "0-11",
         "cgroup_effective_cpuset": "unavailable",
         "runtime_cpuset_shield_claimed": false,
-        "load_average_before": "2.95 3.84 4.52 2/5846 1349639",
-        "load_average_after": "2.95 3.84 4.52 1/5847 1349654",
+        "load_average_before": "3.17 3.92 5.75 6/6227 1837867",
+        "load_average_after": "3.17 3.92 5.75 3/6226 1837879",
         "cpu_governor": "powersave",
-        "cpu_frequency_mhz": "min=1795.862,max=4816.439,sampled_cpu_count=12",
+        "cpu_frequency_mhz": "min=4395.127,max=4465.042,sampled_cpu_count=12",
         "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
         "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
         "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
@@ -97,15 +97,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 0.5,
-      "median_ns_per_step": 89.432905,
-      "min_ns_per_step": 89.102555,
-      "max_ns_per_step": 90.352955,
+      "median_ns_per_step": 94.53046,
+      "min_ns_per_step": 92.57925,
+      "max_ns_per_step": 99.261925,
       "results_ns_per_step": [
-        90.352955,
-        89.13806,
-        89.434815,
-        89.432905,
-        89.102555
+        94.53046,
+        97.55289,
+        93.282815,
+        92.57925,
+        99.261925
       ],
       "spike_counts": [
         450,
@@ -129,15 +129,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 0.5,
-      "median_ns_per_step": 94.89,
-      "min_ns_per_step": 94.67,
-      "max_ns_per_step": 97.1,
+      "median_ns_per_step": 107.2,
+      "min_ns_per_step": 101.7,
+      "max_ns_per_step": 113.8,
       "results_ns_per_step": [
-        94.7,
-        94.67,
-        94.89,
-        95.92,
-        97.1
+        101.7,
+        113.8,
+        108.2,
+        106.9,
+        107.2
       ],
       "spikes": 450
     },
@@ -147,15 +147,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 0.5,
-      "median_ns_per_step": 91.808745,
-      "min_ns_per_step": 91.277715,
-      "max_ns_per_step": 92.29462,
+      "median_ns_per_step": 98.259515,
+      "min_ns_per_step": 97.152235,
+      "max_ns_per_step": 99.084195,
       "results_ns_per_step": [
-        92.29462,
-        91.979595,
-        91.634505,
-        91.808745,
-        91.277715
+        97.152235,
+        99.084195,
+        97.83506,
+        98.259515,
+        98.270985
       ],
       "spike_counts": [
         450,
@@ -175,55 +175,85 @@
     },
     {
       "backend": "mojo",
-      "skipped": true,
-      "reason": "Mojo theta surface is a spike-kernel mirror without a stateful benchmark hook"
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp theta benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 0.5,
+      "median_ns_per_step": 82.32672000303864,
+      "min_ns_per_step": 78.47523491363972,
+      "max_ns_per_step": 84.54791008261964,
+      "results_ns_per_step": [
+        78.47523491363972,
+        79.22114498796873,
+        84.00760008953512,
+        82.32672000303864,
+        84.54791008261964
+      ],
+      "spikes": 450,
+      "spike_counts": [
+        450,
+        450,
+        450,
+        450,
+        450
+      ],
+      "final_thetas": [
+        0.7322706365982774,
+        0.7322706365982774,
+        0.7322706365982774,
+        0.7322706365982774,
+        0.7322706365982774
+      ]
     }
   ],
   "backend_summary": {
     "python": {
-      "median_ns_per_step": 792.349765,
-      "min_ns_per_step": 788.321145,
-      "max_ns_per_step": 821.144025,
+      "median_ns_per_step": 835.06643,
+      "min_ns_per_step": 832.502915,
+      "max_ns_per_step": 1008.433715,
       "spikes": 450
     },
     "rust": {
-      "median_ns_per_step": 89.432905,
-      "min_ns_per_step": 89.102555,
-      "max_ns_per_step": 90.352955,
+      "median_ns_per_step": 94.53046,
+      "min_ns_per_step": 92.57925,
+      "max_ns_per_step": 99.261925,
       "spikes": 450
     },
     "go": {
-      "median_ns_per_step": 94.89,
-      "min_ns_per_step": 94.67,
-      "max_ns_per_step": 97.1,
+      "median_ns_per_step": 107.2,
+      "min_ns_per_step": 101.7,
+      "max_ns_per_step": 113.8,
       "spikes": 450
     },
     "julia": {
-      "median_ns_per_step": 91.808745,
-      "min_ns_per_step": 91.277715,
-      "max_ns_per_step": 92.29462,
+      "median_ns_per_step": 98.259515,
+      "min_ns_per_step": 97.152235,
+      "max_ns_per_step": 99.084195,
       "spikes": 450
     },
     "mojo": {
-      "skipped": true
+      "median_ns_per_step": 82.32672000303864,
+      "min_ns_per_step": 78.47523491363972,
+      "max_ns_per_step": 84.54791008261964,
+      "spikes": 450
     }
   },
   "source_hashes": {
-    "benchmarks/bench_model_theta.py": "0e7bfaea7a72501416667b810126a18d1bd96705a9cbd5f0a9c5c77d36114a76",
+    "benchmarks/bench_model_theta.py": "94183cb8ed3389ba1c156b706de7e51ff063ae6ca467d745b23ee322601873cd",
     "src/sc_neurocore/neurons/models/theta.py": "7fa6736b2e1b6c425dae49b7844b50032ae96e59f51a97b6a311bf5c47e9f752",
-    "engine/src/neurons/trivial.rs": "790ec361ca40899676e66e1e4d581a4bf68666239548be935d40119c6dd613b1",
+    "engine/src/neurons/trivial.rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1",
     "src/sc_neurocore/accel/go/services/theta.go": "f569b96aa7d99ff6a65c6010a7630ae533e0fc08eb5c732ef62ee8ddafc84480",
     "src/sc_neurocore/accel/go/services/theta_test.go": "fc20379b199a4d3e32b50fd774aea53eceb0bd5787cca70fda0deee0cb1717a8",
     "src/sc_neurocore/accel/julia/neurons/theta.jl": "c59028502154a237fc6ae155323e529f0dc6c63bb8cdc31b7a0a5debb310250f",
-    "src/sc_neurocore/accel/mojo/kernels/theta.mojo": "ac61ff3b5d84337229f83d4ffab0ac1a936a06dfe194235d70b746fe5e6b4dae",
+    "src/sc_neurocore/accel/mojo/kernels/theta.mojo": "3699cca7ed50d6d352ba588b3b0e8daac2aff061d95f20a756768d4ab3927b84",
     "benchmarks/bench_model_theta": {
-      "py": "0e7bfaea7a72501416667b810126a18d1bd96705a9cbd5f0a9c5c77d36114a76"
+      "py": "94183cb8ed3389ba1c156b706de7e51ff063ae6ca467d745b23ee322601873cd"
     },
     "src/sc_neurocore/neurons/models/theta": {
       "py": "7fa6736b2e1b6c425dae49b7844b50032ae96e59f51a97b6a311bf5c47e9f752"
     },
     "engine/src/neurons/trivial": {
-      "rs": "790ec361ca40899676e66e1e4d581a4bf68666239548be935d40119c6dd613b1"
+      "rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1"
     },
     "src/sc_neurocore/accel/go/services/theta": {
       "go": "f569b96aa7d99ff6a65c6010a7630ae533e0fc08eb5c732ef62ee8ddafc84480"
@@ -235,7 +265,7 @@
       "jl": "c59028502154a237fc6ae155323e529f0dc6c63bb8cdc31b7a0a5debb310250f"
     },
     "src/sc_neurocore/accel/mojo/kernels/theta": {
-      "mojo": "ac61ff3b5d84337229f83d4ffab0ac1a936a06dfe194235d70b746fe5e6b4dae"
+      "mojo": "3699cca7ed50d6d352ba588b3b0e8daac2aff061d95f20a756768d4ab3927b84"
     }
   }
 }

@@ -8,13 +8,17 @@
 
 package services
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func TestEscapeRateStepMatchesMembraneBalanceBelowSaturation(t *testing.T) {
 	state := NewEscapeRateNeuron()
 	v0 := state.V
 	current := 10.0
-	expected := v0 + (-(v0-state.VRest)+state.Resistance*current)/state.TauM*state.Dt
+	vInf := state.VRest + state.Resistance*current
+	expected := vInf + (v0-vInf)*math.Exp(-state.Dt/state.TauM)
 
 	spike, err := state.Step(current)
 	if err != nil {
@@ -23,8 +27,34 @@ func TestEscapeRateStepMatchesMembraneBalanceBelowSaturation(t *testing.T) {
 	if spike != 0 {
 		t.Fatalf("unexpected deterministic saturation spike: %d", spike)
 	}
-	if state.V != expected {
+	if math.Abs(state.V-expected) > 1e-14 {
 		t.Fatalf("voltage mismatch: got %.17g want %.17g", state.V, expected)
+	}
+}
+
+func TestEscapeRateExactFlowDiffersFromEulerWhenDtIsLarge(t *testing.T) {
+	state := NewEscapeRateNeuron()
+	state.V = -65.0
+	state.Dt = 5.0
+	state.Rho0 = 1.0e-12
+	current := 10.0
+	v0 := state.V
+	vInf := state.VRest + state.Resistance*current
+	euler := v0 + (-(v0-state.VRest)+state.Resistance*current)/state.TauM*state.Dt
+	expected := vInf + (v0-vInf)*math.Exp(-state.Dt/state.TauM)
+
+	spike, err := state.Step(current)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if spike != 0 {
+		t.Fatalf("unexpected deterministic saturation spike: %d", spike)
+	}
+	if math.Abs(state.V-expected) > 1e-14 {
+		t.Fatalf("voltage mismatch: got %.17g want %.17g", state.V, expected)
+	}
+	if math.Abs(state.V-euler) < 1e-3 {
+		t.Fatalf("exact-flow candidate collapsed to Euler: got %.17g euler %.17g", state.V, euler)
 	}
 }
 
@@ -45,10 +75,10 @@ func TestEscapeRateRejectsNonFiniteUpdateBeforeMutation(t *testing.T) {
 	state := NewEscapeRateNeuron()
 	state.V = -65.0
 	state.VThreshold = 1.0e308
-	state.TauM = 1.0e-308
+	state.Resistance = 1.0e308
 
 	if _, err := state.Step(1.0e308); err == nil {
-		t.Fatalf("expected overflowing membrane update to fail")
+		t.Fatalf("expected overflowing membrane candidate to fail")
 	}
 	if state.V != -65.0 {
 		t.Fatalf("overflowing update mutated voltage to %.17g", state.V)
@@ -66,5 +96,18 @@ func TestEscapeRateRejectsNonFiniteHazardBeforeMutation(t *testing.T) {
 	}
 	if state.V != -50.0 {
 		t.Fatalf("overflowing hazard mutated voltage to %.17g", state.V)
+	}
+}
+
+func BenchmarkEscapeRateExactFlow(b *testing.B) {
+	state := NewEscapeRateNeuron()
+	for i := 0; i < b.N; i++ {
+		_, err := state.Step(30.0)
+		if err != nil {
+			b.Fatalf("unexpected error: %v", err)
+		}
+	}
+	if !finite(state.V) {
+		b.Fatalf("non-finite final voltage: %v", state.V)
 	}
 }

@@ -16,7 +16,7 @@ import (
 var (
 	ErrEscapeRateInvalidInput       = errors.New("escape rate input current must be finite")
 	ErrEscapeRateInvalidState       = errors.New("escape rate state parameters must be finite and positive")
-	ErrEscapeRateNonFiniteUpdate    = errors.New("escape rate membrane update must remain finite")
+	ErrEscapeRateNonFiniteUpdate    = errors.New("escape rate membrane candidate must remain finite")
 	ErrEscapeRateNonFiniteHazard    = errors.New("escape rate hazard must remain finite and non-negative")
 	ErrEscapeRateInvalidProbability = errors.New("escape rate spike probability must remain finite and bounded")
 )
@@ -58,8 +58,10 @@ func (s *EscapeRateNeuronState) Step(iExt float64) (int, error) {
 		return 0, ErrEscapeRateInvalidState
 	}
 
-	nextV := s.V + (-(s.V-s.VRest)+s.Resistance*iExt)/s.TauM*s.Dt
-	if !finite(nextV) {
+	vInf := s.VRest + s.Resistance*iExt
+	decay := math.Exp(-s.Dt / s.TauM)
+	nextV := vInf + (s.V-vInf)*decay
+	if !finite(vInf) || !finite(decay) || !finite(nextV) {
 		return 0, ErrEscapeRateNonFiniteUpdate
 	}
 	hazard := s.Rho0 * safeExp((nextV-s.VThreshold)/s.DeltaU) * s.Dt

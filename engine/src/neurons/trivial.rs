@@ -500,12 +500,47 @@ impl EscapeRateNeuron {
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
-        self.v += (-(self.v - self.v_rest) + self.resistance * current) / self.tau_m * self.dt;
-        let rate = self.rho_0 * ((self.v - self.v_threshold) / self.delta_u).exp();
-        if self.rng.random::<f64>() < rate * self.dt {
+        if !self.v.is_finite()
+            || !self.v_rest.is_finite()
+            || !self.v_reset.is_finite()
+            || !self.v_threshold.is_finite()
+            || !self.tau_m.is_finite()
+            || self.tau_m <= 0.0
+            || !self.rho_0.is_finite()
+            || self.rho_0 <= 0.0
+            || !self.delta_u.is_finite()
+            || self.delta_u <= 0.0
+            || !self.resistance.is_finite()
+            || self.resistance <= 0.0
+            || !self.dt.is_finite()
+            || self.dt <= 0.0
+            || !current.is_finite()
+        {
+            return 0;
+        }
+        let v_inf = self.v_rest + self.resistance * current;
+        let decay = (-self.dt / self.tau_m).exp();
+        let next_v = v_inf + (self.v - v_inf) * decay;
+        if !v_inf.is_finite() || !decay.is_finite() || !next_v.is_finite() {
+            return 0;
+        }
+        let hazard = self.rho_0
+            * ((next_v - self.v_threshold) / self.delta_u)
+                .clamp(-700.0, 700.0)
+                .exp()
+            * self.dt;
+        if !hazard.is_finite() || hazard < 0.0 {
+            return 0;
+        }
+        let p_spike = -(-hazard).exp_m1();
+        if !p_spike.is_finite() || !(0.0..=1.0).contains(&p_spike) {
+            return 0;
+        }
+        if self.rng.random::<f64>() < p_spike {
             self.v = self.v_reset;
             1
         } else {
+            self.v = next_v;
             0
         }
     }
@@ -1052,6 +1087,23 @@ mod tests {
     }
 
     #[test]
+    fn escape_rate_exact_flow_matches_closed_form() {
+        let mut n = EscapeRateNeuron::new(42);
+        n.v = -65.0;
+        n.dt = 5.0;
+        n.rho_0 = 1.0e-12;
+        let current = 10.0;
+        let v0 = n.v;
+        let v_inf = n.v_rest + n.resistance * current;
+        let euler = v0 + (-(v0 - n.v_rest) + n.resistance * current) / n.tau_m * n.dt;
+        let expected = v_inf + (v0 - v_inf) * (-n.dt / n.tau_m).exp();
+
+        assert_eq!(n.step(current), 0);
+        assert!((n.v - expected).abs() < 1e-14);
+        assert!((n.v - euler).abs() > 1e-3);
+    }
+
+    #[test]
     fn klif_fires() {
         let mut n = KLIFNeuron::default();
         let total: i32 = (0..50).map(|_| n.step(0.5)).sum();
@@ -1449,7 +1501,18 @@ mod tests {
     }
     #[test]
     fn escape_rate_nan_no_panic() {
-        EscapeRateNeuron::new(42).step(f64::NAN);
+        let mut n = EscapeRateNeuron::new(42);
+        let before = n.v;
+        assert_eq!(n.step(f64::NAN), 0);
+        assert_eq!(n.v, before);
+    }
+    #[test]
+    fn escape_rate_invalid_state_does_not_mutate() {
+        let mut n = EscapeRateNeuron::new(42);
+        n.v = -65.0;
+        n.tau_m = 0.0;
+        assert_eq!(n.step(1.0), 0);
+        assert_eq!(n.v, -65.0);
     }
     #[test]
     fn escape_rate_seed_varies() {

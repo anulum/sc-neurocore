@@ -41,9 +41,11 @@ function step!(s::EscapeRateNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::
         throw(DomainError(s.v, "EscapeRate state parameters must be finite and positive"))
     end
 
-    next_v = s.v + (-(s.v - s.v_rest) + s.resistance * I_ext) / s.tau_m * s.dt
-    if !isfinite(next_v)
-        throw(DomainError(next_v, "EscapeRate membrane update must remain finite"))
+    v_inf = s.v_rest + s.resistance * I_ext
+    decay = exp(-s.dt / s.tau_m)
+    next_v = v_inf + (s.v - v_inf) * decay
+    if !isfinite(v_inf) || !isfinite(decay) || !isfinite(next_v)
+        throw(DomainError(next_v, "EscapeRate membrane candidate must remain finite"))
     end
     rate = s.rho_0 * safe_exp((next_v - s.v_threshold) / s.delta_u)
     hazard = rate * s.dt
