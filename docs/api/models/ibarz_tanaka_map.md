@@ -67,26 +67,31 @@ still match exactly.
 
 ### Measured backends
 
-Reproduce with `python benchmarks/bench_ibarz_tanaka_map.py --json
-benchmarks/results/bench_ibarz_tanaka_map.json`. Workload: 2,000,000 steps,
-default parameters, current = 3.0 (sustained bursting), median of 5 repeats.
-**Non-isolated** (loaded workstation, Python 3.12 / NumPy 2.3) —
-functional/regression evidence, not isolated-core release numbers.
+Reproduce with `PYTHONPATH=src .venv/bin/python benchmarks/bench_ibarz_tanaka_map.py --json benchmarks/results/bench_ibarz_tanaka_map.json`.
+Workload: 2,000,000 steps, default parameters, current = 3.0 (sustained
+bursting), median of 5 repeats. **Non-isolated** (loaded workstation, Python
+3.12 / NumPy 2.3) — functional/regression evidence, not isolated-core release
+numbers.
 
-| backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
-|---|---:|---:|---:|
-| python (NumPy) | 315.99 | 1.00× | 0 |
-| go | 15.36 | 20.57× | 0 |
-| rust | 15.86 | 19.93× | 0 |
-| mojo | 17.40 | 18.16× | 4.00e-13 (sub-ULP FMA) |
-| julia | 21.83 | 14.47× | 0 |
+| backend | median (ms) | min (ms) | speedup vs NumPy | parity Δ vs NumPy | spikes |
+|---|---:|---:|---:|---:|---:|
+| python (NumPy) | 374.2387480160687 | 342.2251640004106 | 1.0× | 0 | 567 |
+| rust | 15.829967014724389 | 15.798506006831303 | 23.64115779066167× | 0 | 567 |
+| julia | 23.4530640009325 | 22.022475983249024 | 15.956923496272763× | 0 | 567 |
+| go | 16.764686995884404 | 16.218030999880284 | 22.323038187825478× | 0 | 567 |
+| mojo | 20.01404599286616 | 19.43143500830047 | 18.69880523655552× | 3.9968028886505635e-13 | 567 |
 
 The speedups (~20×) are modest relative to a branch-free map: the two-piece
 conditional plus the per-spike reset limit instruction-level parallelism in
 every backend. Go and Mojo lead by filling a preallocated NumPy buffer over the
 C ABI; Rust returns a NumPy array directly (avoiding a multi-million-element
 Python-list marshal); `auto` selects Rust as the always-available wheel backend
-within ~1.03× of the fastest locally-built backend.
+within ~1.06× of the fastest locally-built backend. Artefact:
+`benchmarks/results/bench_ibarz_tanaka_map.json`; gate:
+`ibarz-tanaka-map-five-backend-local-regression` in
+`benchmarks/benchmark_regression_gates.json`. The artefact records SHA-256
+source provenance for the benchmark runner and Python/Rust/Julia/Go/Mojo
+backend chain.
 
 ## Infrastructure Pipeline
 
