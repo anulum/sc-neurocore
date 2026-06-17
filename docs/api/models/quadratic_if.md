@@ -18,17 +18,22 @@ bifurcation (Ermentrout 1996). The quadratic nonlinearity is the normal
 form of the bifurcation — any conductance-based model with a saddle-node
 on an invariant circle reduces to this via coordinate transform.
 
-### Discrete integration (as implemented)
+### Exact constant-current flow (as implemented)
 
-```python
-self.v += (self.v**2 + current) * self.dt
-if self.v >= self.v_peak:
-    self.v = self.v_reset
-    return 1
-return 0
-```
+For constant input over one timestep, SC-NEUROCORE advances the QIF state with
+the closed-form Riccati flow rather than a forward-Euler increment:
 
-Forward Euler, single step per call. No sub-stepping. Euler increments that overflow are rejected before state mutation. The Python model, Rust engine, Go service, Julia counterpart, and Rust safety surface all use candidate-first finite-update checks so invalid currents, invalid runtime parameters, and non-finite Euler increments preserve the previous membrane state.
+| Current regime | Candidate voltage after one `dt` |
+|----------------|-----------------------------------|
+| $I > 0$ | $a \tan(a\,dt + \arctan(V/a))$, $a=\sqrt{I}$ |
+| $I = 0$ | $V/(1 - V\,dt)$ |
+| $I < 0$ | $a(1 + q)/(1 - q)$, $a=\sqrt{-I}$, $q=((V-a)/(V+a))\exp(2a\,dt)$ |
+
+The candidate is computed before mutation. If the candidate is non-finite,
+the call fails without changing state. If the candidate crosses
+`v_peak`, the membrane resets to `v_reset` and emits one spike. Python, Rust
+engine, Rust safety, Go service, Julia, and Mojo surfaces use the same
+candidate-first exact-flow contract.
 
 ### Phase-plane structure
 
@@ -63,9 +68,9 @@ The implementation rejects invalid state before mutation:
 - `v`, `v_reset`, `v_peak`, `dt`, and input current must be finite;
 - initial `v` and `v_reset` must be below `v_peak`;
 - `dt` must be positive;
-- Euler increments and candidate voltages must remain finite before assignment.
+- exact-flow candidate voltages must remain finite before assignment.
 
-These guards prevent a finite but numerically explosive quadratic term from
+These guards prevent a finite but numerically explosive quadratic flow from
 poisoning the membrane state.
 
 ## Behaviour
@@ -155,19 +160,24 @@ $V_{\text{reset}} = -1$), corrections scale as $O(1/\sqrt{I})$.
 - **V_peak placement:** Lower V_peak → fewer steps per ISI → faster simulation
   but less of the quadratic acceleration region is traversed. Measured:
   V_peak = 0.5 fires more often than V_peak = 2.0 at same current.
-- **Euler overshoot:** At the spike peak, $dV/dt = V_{\text{peak}}^2 + I$.
-  With defaults: $1.0 + I$. For $I = 5$: $\Delta V = 0.06$ per step.
-  The comparator `>=` catches the first crossing, so overshoot does not cause
-  missed spikes — it only wastes the overshoot voltage (reset discards it).
+- **Exact-flow peak crossing:** The closed-form candidate may pass
+  `v_peak` within one timestep. The comparator `>=` catches the first
+  discrete sample crossing and immediately resets, so the overshoot voltage is
+  discarded rather than retained.
 
 ---
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/quadratic_if.py` — 35 lines.
-- **No sub-stepping:** Single Euler step per `step()` call. Sufficient because
-  the V² nonlinearity is mild at the default dt=0.01.
-- **Polyglot surfaces:** Rust, Go, Julia, and Mojo QIF surfaces use the same finite-state, reset-below-peak, positive-`dt`, finite-Euler-increment, and spike/reset contract as the Python model. Invalid native scalar paths return explicit errors or a dedicated invalid sentinel rather than silently converting numerical corruption into a no-spike event.
+- **Source:** `src/sc_neurocore/neurons/models/quadratic_if.py`.
+- **No sub-stepping:** Single exact constant-current flow step per `step()`
+  call.
+- **Polyglot surfaces:** Rust engine, Rust safety, Go, Julia, and Mojo QIF
+  surfaces use the same finite-state, reset-below-peak, positive-`dt`,
+  candidate-first exact-flow, and spike/reset contract as the Python model.
+  Invalid native scalar paths return explicit errors or a dedicated invalid
+  sentinel rather than silently converting numerical corruption into a no-spike
+  event.
 
 ---
 
@@ -183,8 +193,8 @@ $V_{\text{reset}} = -1$), corrections scale as $O(1/\sqrt{I})$.
 | Determinism | 1 | bit-exact reproducibility across 2 independent runs (200 steps each) |
 | Network | 2 | Population(n=10) construction, Network produces spikes with PoissonInput(rate=500Hz, weight=2.0) |
 | Analysis | 2 | spike_count ≥ 100 in 50k steps at I=1.0, spike_count matches manual np.sum |
-| Validation | 6 | finite parameters, peak/reset geometry, initial voltage below peak, finite current, finite Euler increment before mutation |
-| **Total** | **37** | |
+| Validation | 9 | finite parameters, peak/reset geometry, initial voltage below peak, finite current, finite exact-flow candidate before mutation |
+| **Total** | **40** | |
 
 ---
 
@@ -226,14 +236,25 @@ phase coordinates) serves as the canonical phase model.
 
 ---
 
-## Measured Performance (2026-04-04)
+## Measured Performance (2026-06-16)
+
+Local non-isolated regression run. These numbers are recorded for
+regression comparison only and are not production throughput claims.
 
 | Metric | Value |
 |--------|-------|
-| Python throughput | ~407K steps/s |
-| Spikes (10K steps, I=5.0) | 263 |
-| State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+| Evidence class | Local regression, non-isolated workstation |
+| Benchmark artefact | `benchmarks/results/local_python_2026-06-16_quadratic_if_exact_flow.json` |
+| Workload | 200000 steps, 5 repeats, I=0.5 |
+| Polyglot contract | Python, Rust engine, Rust safety, Go, Julia, and Mojo exact-flow surfaces aligned, with explicit errors where supported |
+
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
+|---------|---------------:|------------:|------------:|-------:|
+| Python | 529.888895 | 506.170625 | 666.01508 | 738 |
+| Rust engine | 62.256035 | 49.96484 | 69.097795 | 738 |
+| Go service mirror | 51.41 | 48.78 | 56.64 | 738 |
+| Julia mirror | 46.907565 | 45.69871 | 49.259465 | 738 |
+| Mojo mirror | 45.37766988505609 | 44.75855501368642 | 46.39446997316554 | 738 |
 
 ---
 
@@ -263,14 +284,17 @@ State returns to initial values after `reset()`.
 `Population(QuadraticIFNeuron, n=10)` creates correct instances.
 **Status: PASS**
 
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
+### 7. Polyglot safety surfaces
+Rust engine, Rust safety, Go, Julia, and Mojo carry the same exact-flow,
+candidate-first spike/reset contract.
 
 ---
 
-## Findings (measured 2026-04-04)
+## Findings (measured 2026-06-16)
 
-1. Throughput: ~407K steps/s (Python, single-thread)
-2. All pipeline stages verified green
-3. Rust parity: EXACT
-4. Numerical stability confirmed over 20K steps
+1. Local Python median: 529.888895 ns/step, about 1.89M steps/s in the
+   non-isolated regression run.
+2. Rust engine, Go, Julia, and Mojo measurements are present in the benchmark
+   artefact; no maintained backend is skipped.
+3. Exact-flow spike counts match across all five measured backends.
+4. Numerical stability confirmed over 20K steps.

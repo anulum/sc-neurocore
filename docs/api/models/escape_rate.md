@@ -551,11 +551,11 @@ and Mojo timing medians plus backend spike-count/final-voltage evidence in:
 
 | Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
 |---------|---------------:|------------:|------------:|-------:|
-| Python | 5834.21848 | 5698.08305 | 6869.082345 | 3219 |
-| Rust engine | 91.437735 | 88.389655 | 98.2433 | 3148 |
-| Go service mirror | 73.03 | 72.09 | 98.9 | 0 |
-| Julia mirror | 39.474865 | 39.248385 | 40.57662 | 3202 |
-| Mojo mirror | 49.645785038592294 | 49.42665997077711 | 50.340774905635044 | 200 |
+| Python | 9405.77913 | 6556.279045 | 10897.996965 | 3258 |
+| Rust engine | 97.389495 | 96.09129 | 106.0708 | 3148 |
+| Go service mirror | 79.67 | 77.51 | 80.63 | 0 |
+| Julia mirror | 43.746405 | 43.18922 | 45.725265 | 3202 |
+| Mojo mirror | 57.00929497834295 | 56.82438990334049 | 57.42964000091888 | 200 |
 
 The benchmark gate requires the benchmark script, exact-flow model
 sources, and generated artefact hashes to match before accepting the
