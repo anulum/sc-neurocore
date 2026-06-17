@@ -62,6 +62,10 @@
       "id": "escape-rate-exact-flow-multibackend-local-regression"
     },
     {
+      "artefact": "benchmarks/results/bench_cazelles_map.json",
+      "id": "cazelles-map-five-backend-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-04_ultrascale_plus_target.json",
       "id": "ultrascale-plus-target-python-contract"
     },
@@ -104,7 +108,7 @@
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 25,
+  "gate_count": 26,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

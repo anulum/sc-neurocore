@@ -290,23 +290,29 @@ not a defect.
 
 ### Measured backends
 
-Reproduce with `python benchmarks/bench_cazelles_map.py --json
+Reproduce with `PYTHONPATH=src .venv/bin/python benchmarks/bench_cazelles_map.py --json
 benchmarks/results/bench_cazelles_map.json`. Workload: 2,000,000 steps,
-a = 3.8, median of 5 repeats. **Non-isolated** (loaded workstation, Python 3.12 /
-NumPy 2.3) — functional/regression evidence, not isolated-core release numbers.
+a = 3.8, current = 0.05, median of 5 repeats. **Non-isolated** (loaded
+workstation, Python 3.12 / NumPy 2.3) — functional/regression evidence, not
+isolated-core release numbers. The committed artefact includes source SHA-256
+hashes for the Python benchmark, Python model, Rust engine entry points, Go
+cgo kernel, Julia kernel, and Mojo kernel; `tools/benchmark_evidence_gate.py`
+validates those hashes plus backend numeric metrics before release use.
 
-| backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
-|---|---:|---:|---:|
-| python (NumPy) | 808.73 | 1.00× | 0 |
-| go | 9.84 | 82.18× | 0 |
-| mojo | 9.88 | 81.84× | 2.96e-04 (chaotic ULP amplification) |
-| rust | 13.96 | 57.94× | 0 |
-| julia | 25.75 | 31.40× | 0 |
+| backend | median (ms) | min (ms) | speedup vs NumPy | parity Δ vs NumPy | spikes |
+|---|---:|---:|---:|---:|---:|
+| python (NumPy) | 838.76 | 830.87 | 1.00× | 0 | 24 |
+| mojo | 9.62 | 9.56 | 87.21× | 2.96e-04 (chaotic ULP amplification) | 24 |
+| go | 9.96 | 9.82 | 84.25× | 0 | 24 |
+| rust | 13.88 | 13.77 | 60.42× | 0 | 24 |
+| julia | 25.51 | 20.87 | 32.88× | 0 | 24 |
 
 Go and Mojo lead because they fill a preallocated NumPy buffer over the C ABI;
 Rust returns a NumPy array directly (avoiding a multi-million-element Python-list
 marshal); `auto` selects Rust as the always-available wheel backend within ~1.4×
-of the fastest locally-built backends.
+of the fastest locally-built backends. The benchmark gate additionally requires
+all five backend spike counts to remain equal; the refreshed artefact reports
+24 spikes for every backend.
 
 ---
 
