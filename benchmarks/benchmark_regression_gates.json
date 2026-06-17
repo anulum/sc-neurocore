@@ -282,6 +282,18 @@
         "repeats",
         "current"
       ],
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0
+        }
+      ],
       "source_hashes": {
         "benchmarks/bench_model_expif.py": "source_hashes.benchmarks/bench_model_expif.py",
         "engine/Cargo.toml": "source_hashes.engine/Cargo.toml",
@@ -330,6 +342,18 @@
         "repeats",
         "current"
       ],
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0
+        }
+      ],
       "source_hashes": {
         "benchmarks/bench_model_quadratic_if.py": "source_hashes.benchmarks/bench_model_quadratic_if.py",
         "engine/Cargo.toml": "source_hashes.engine/Cargo.toml",
@@ -377,6 +401,18 @@
         "repeats",
         "current"
       ],
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0
+        }
+      ],
       "source_hashes": {
         "benchmarks/bench_model_theta.py": "source_hashes.benchmarks/bench_model_theta.py",
         "src/sc_neurocore/neurons/models/theta.py": "source_hashes.src/sc_neurocore/neurons/models/theta.py",
@@ -408,6 +444,7 @@
         "backend_summary.go.median_ns_per_step",
         "backend_summary.go.min_ns_per_step",
         "backend_summary.go.max_ns_per_step",
+        "backend_summary.go.spikes",
         "backend_summary.julia.median_ns_per_step",
         "backend_summary.julia.min_ns_per_step",
         "backend_summary.julia.max_ns_per_step",
@@ -419,6 +456,18 @@
         "steps",
         "repeats",
         "current"
+      ],
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0
+        }
       ],
       "source_hashes": {
         "benchmarks/bench_model_morris_lecar.py": "source_hashes.benchmarks/bench_model_morris_lecar.py",
@@ -467,6 +516,18 @@
         "steps",
         "repeats",
         "current"
+      ],
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0
+        }
       ],
       "source_hashes": {
         "benchmarks/bench_model_lapicque.py": "source_hashes.benchmarks/bench_model_lapicque.py",

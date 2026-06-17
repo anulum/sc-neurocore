@@ -89,10 +89,12 @@ func TestMorrisLecarRejectsOverflowCandidateWithoutMutation(t *testing.T) {
 
 func BenchmarkMorrisLecarRK4(b *testing.B) {
 	state := NewMorrisLecarNeuron()
+	spikes := 0
 	for i := 0; i < b.N; i++ {
-		state.Step(100.0)
+		spikes += state.Step(100.0)
 	}
 	if !finiteMorrisLecar(state.V) || !finiteMorrisLecar(state.W) {
 		b.Fatalf("non-finite final state: (%v, %v)", state.V, state.W)
 	}
+	b.ReportMetric(float64(spikes), "spikes")
 }

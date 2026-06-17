@@ -31,6 +31,7 @@ CURRENT = 100.0
 OUTPUT = Path("benchmarks/results/local_python_2026-06-17_morris_lecar_rk4.json")
 REPO_ROOT = Path(__file__).resolve().parents[1]
 GO_BENCH_RE = re.compile(r"^BenchmarkMorrisLecarRK4-\d+\s+\d+\s+([0-9.]+)\s+ns/op")
+GO_SPIKES_RE = re.compile(r"\s([0-9.]+)\s+spikes(?:\s|$)")
 SOURCE_HASH_PATHS = {
     "benchmarks/bench_model_morris_lecar.py": REPO_ROOT / "benchmarks/bench_model_morris_lecar.py",
     "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
@@ -153,11 +154,13 @@ def _run_go_backend() -> dict[str, object]:
         completed = _run_command(command)
     except (FileNotFoundError, subprocess.CalledProcessError) as exc:
         return {"backend": "go", "skipped": True, "reason": f"Go benchmark failed: {exc}"}
-    values = [
-        float(match.group(1))
-        for line in completed.stdout.splitlines()
-        if (match := GO_BENCH_RE.match(line))
-    ]
+    values: list[float] = []
+    spike_counts: list[int] = []
+    for line in completed.stdout.splitlines():
+        if match := GO_BENCH_RE.match(line):
+            values.append(float(match.group(1)))
+            if spike_match := GO_SPIKES_RE.search(line):
+                spike_counts.append(int(float(spike_match.group(1))))
     if not values:
         return {
             "backend": "go",
@@ -175,7 +178,8 @@ def _run_go_backend() -> dict[str, object]:
         "min_ns_per_step": min(values),
         "max_ns_per_step": max(values),
         "results_ns_per_step": values,
-        "spikes": 0,
+        "spikes": int(statistics.median(spike_counts)) if spike_counts else 0,
+        "spike_counts": spike_counts,
     }
 
 
