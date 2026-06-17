@@ -1,4 +1,46 @@
 {
+  "backend_summary": {
+    "go": {
+      "backend": "go",
+      "median_ms": 37.796882999828085,
+      "min_ms": 37.63167999568395,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 6.7436969870579935,
+      "spikes": 131993
+    },
+    "julia": {
+      "backend": "julia",
+      "median_ms": 36.655931995483115,
+      "min_ms": 35.76657301164232,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 6.953601017088661,
+      "spikes": 131993
+    },
+    "mojo": {
+      "backend": "mojo",
+      "median_ms": 12.649924989091232,
+      "min_ms": 12.604543997440487,
+      "parity_max_abs_diff": 0.9992580911717543,
+      "speedup_vs_python": 20.149583987725723,
+      "spikes": 132209
+    },
+    "python": {
+      "backend": "python",
+      "median_ms": 254.89072600612417,
+      "min_ms": 247.64505599159747,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "spikes": 131993
+    },
+    "rust": {
+      "backend": "rust",
+      "median_ms": 28.578949015354738,
+      "min_ms": 28.245699999388307,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 8.918827836152333,
+      "spikes": 131993
+    }
+  },
   "benchmark": "medvedev_map_simulate",
   "environment": {
     "isolation": "non-isolated (loaded workstation)",
@@ -9,40 +51,75 @@
   "results": [
     {
       "backend": "python",
-      "median_ms": 220.72096400370356,
-      "min_ms": 204.44753299670992,
+      "median_ms": 254.89072600612417,
+      "min_ms": 247.64505599159747,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 1.0
+      "speedup_vs_python": 1.0,
+      "spikes": 131993
     },
     {
       "backend": "rust",
-      "median_ms": 17.214548999618273,
-      "min_ms": 17.069495996111073,
+      "median_ms": 28.578949015354738,
+      "min_ms": 28.245699999388307,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 12.821768610295743
+      "speedup_vs_python": 8.918827836152333,
+      "spikes": 131993
     },
     {
       "backend": "julia",
-      "median_ms": 32.15678400010802,
-      "min_ms": 28.08615799585823,
+      "median_ms": 36.655931995483115,
+      "min_ms": 35.76657301164232,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 6.863900444862961
+      "speedup_vs_python": 6.953601017088661,
+      "spikes": 131993
     },
     {
       "backend": "go",
-      "median_ms": 33.58191299776081,
-      "min_ms": 32.59216000151355,
+      "median_ms": 37.796882999828085,
+      "min_ms": 37.63167999568395,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 6.572614371862047
+      "speedup_vs_python": 6.7436969870579935,
+      "spikes": 131993
     },
     {
       "backend": "mojo",
-      "median_ms": 11.068384999816772,
-      "min_ms": 10.982312996929977,
+      "median_ms": 12.649924989091232,
+      "min_ms": 12.604543997440487,
       "parity_max_abs_diff": 0.9992580911717543,
-      "speedup_vs_python": 19.941569073298176
+      "speedup_vs_python": 20.149583987725723,
+      "spikes": 132209
     }
   ],
+  "source_hashes": {
+    "benchmarks/bench_medvedev_map": {
+      "py": "dd339b59ad221c059953d857e4d13410f2935c9f1e13cb69c21d041511fbb7f4"
+    },
+    "benchmarks/bench_medvedev_map.py": "dd339b59ad221c059953d857e4d13410f2935c9f1e13cb69c21d041511fbb7f4",
+    "engine/src/lib": {
+      "rs": "2ff46fde73954a8fceb51bc8d8457a6acf70fb788297c1c6bfe367c81b8a9f5f"
+    },
+    "engine/src/lib.rs": "2ff46fde73954a8fceb51bc8d8457a6acf70fb788297c1c6bfe367c81b8a9f5f",
+    "engine/src/neurons/maps": {
+      "rs": "e2f9d1d6d9d460373ba83bb6b71f5765b934d1ff13859ba0a79fe18c405f78d4"
+    },
+    "engine/src/neurons/maps.rs": "e2f9d1d6d9d460373ba83bb6b71f5765b934d1ff13859ba0a79fe18c405f78d4",
+    "src/sc_neurocore/accel/go/neurons/medvedev_map/medvedev_map": {
+      "go": "2d9da4b634b2acea3ab2df18dab64ce41f04019dca0883db5906ea1017a0bb45"
+    },
+    "src/sc_neurocore/accel/go/neurons/medvedev_map/medvedev_map.go": "2d9da4b634b2acea3ab2df18dab64ce41f04019dca0883db5906ea1017a0bb45",
+    "src/sc_neurocore/accel/julia/neurons/medvedev_map": {
+      "jl": "20963c49ff36471801875efdeb62d323b73007ec8307b9993da68d8b0f33ec70"
+    },
+    "src/sc_neurocore/accel/julia/neurons/medvedev_map.jl": "20963c49ff36471801875efdeb62d323b73007ec8307b9993da68d8b0f33ec70",
+    "src/sc_neurocore/accel/mojo/neurons/medvedev_map": {
+      "mojo": "1cefc322da3fdae33d3a7dec7a975aefea4503b8dbf2611b8fae871ee97abc86"
+    },
+    "src/sc_neurocore/accel/mojo/neurons/medvedev_map.mojo": "1cefc322da3fdae33d3a7dec7a975aefea4503b8dbf2611b8fae871ee97abc86",
+    "src/sc_neurocore/neurons/models/medvedev_map": {
+      "py": "57a59de89e08779abbb63488ba4d966e1b06d3d7372e20b773e6e9300fe1a35a"
+    },
+    "src/sc_neurocore/neurons/models/medvedev_map.py": "57a59de89e08779abbb63488ba4d966e1b06d3d7372e20b773e6e9300fe1a35a"
+  },
   "workload": {
     "current": 0.1,
     "n_steps": 2000000,
