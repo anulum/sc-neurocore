@@ -166,6 +166,43 @@ def _check_regression_limits(
             _fail(failures, gate_id, f"metric_below_min_{minimum}", metric_path)
 
 
+def _check_parity_groups(
+    *,
+    gate_id: str,
+    payload: Any,
+    parity_groups: list[dict[str, Any]],
+    failures: list[GateFailure],
+) -> None:
+    for index, group in enumerate(parity_groups):
+        paths = group.get("paths")
+        if not isinstance(paths, list) or len(paths) < 2:
+            _fail(failures, gate_id, "parity_group_requires_at_least_two_paths", f"parity_groups.{index}.paths")
+            continue
+        tolerance = group.get("tolerance", 0.0)
+        if not _is_finite_number(tolerance) or tolerance < 0.0:
+            _fail(failures, gate_id, "parity_group_tolerance_is_not_finite_non_negative", f"parity_groups.{index}.tolerance")
+            continue
+
+        values: list[float] = []
+        for metric_path in paths:
+            if not isinstance(metric_path, str):
+                _fail(failures, gate_id, "parity_metric_path_is_not_string", f"parity_groups.{index}.paths")
+                continue
+            try:
+                value = _path_value(payload, metric_path)
+            except KeyError:
+                _fail(failures, gate_id, "missing_parity_metric", metric_path)
+                continue
+            if not _is_finite_number(value):
+                _fail(failures, gate_id, "parity_metric_is_not_finite_number", metric_path)
+                continue
+            values.append(float(value))
+        if len(values) != len(paths):
+            continue
+        if max(values) - min(values) > float(tolerance):
+            _fail(failures, gate_id, "parity_group_mismatch", f"parity_groups.{index}")
+
+
 def _check_manifest_contract(manifest: Any, failures: list[GateFailure]) -> list[Any]:
     if not isinstance(manifest, dict):
         _fail(failures, "manifest", "manifest_root_is_not_object", "manifest")
@@ -198,11 +235,11 @@ def _check_gate_manifest_entry(
     seen_artefacts.add(artefact_path)
     if not gate.get("required_numbers") and not gate.get("expected_values"):
         _fail(failures, gate_id, "gate_has_no_required_metrics_or_contracts", artefact_path)
-    for field in ("required_numbers", "expected_values", "source_hashes", "regression_limits"):
+    for field in ("required_numbers", "expected_values", "source_hashes", "regression_limits", "parity_groups"):
         if field not in gate:
             continue
         value = gate[field]
-        expected_type = list if field == "required_numbers" else dict
+        expected_type = list if field in {"required_numbers", "parity_groups"} else dict
         if not isinstance(value, expected_type):
             _fail(failures, gate_id, f"{field}_has_wrong_type", field)
 
@@ -293,6 +330,12 @@ def evaluate_benchmark_evidence_gate(
             gate_id=gate_id,
             payload=payload,
             regression_limits=dict(gate.get("regression_limits", {})),
+            failures=failures,
+        )
+        _check_parity_groups(
+            gate_id=gate_id,
+            payload=payload,
+            parity_groups=list(gate.get("parity_groups", [])),
             failures=failures,
         )
 

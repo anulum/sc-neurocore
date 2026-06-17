@@ -241,3 +241,102 @@ def test_benchmark_evidence_gate_rejects_contractless_gate(tmp_path: Path) -> No
         failure["reason"] == "gate_has_no_required_metrics_or_contracts"
         for failure in report["failures"]
     )
+
+
+def test_benchmark_evidence_gate_accepts_numeric_parity_group(tmp_path: Path) -> None:
+    tool = _load_tool()
+    _write_json(
+        tmp_path / "benchmarks" / "results" / "demo.json",
+        {
+            "backend_summary": {
+                "python": {"spikes": 881},
+                "rust": {"spikes": 881},
+                "go": {"spikes": 881},
+            }
+        },
+    )
+    manifest = tmp_path / "benchmarks" / "benchmark_regression_gates.json"
+    _write_json(
+        manifest,
+        {
+            "SPDX-License-Identifier": "AGPL-3.0-or-later",
+            "schema_version": "sc-neurocore.benchmark-regression-gates.v1",
+            "gates": [
+                {
+                    "id": "parity",
+                    "artefact": "benchmarks/results/demo.json",
+                    "required_numbers": [
+                        "backend_summary.python.spikes",
+                        "backend_summary.rust.spikes",
+                        "backend_summary.go.spikes",
+                    ],
+                    "parity_groups": [
+                        {
+                            "paths": [
+                                "backend_summary.python.spikes",
+                                "backend_summary.rust.spikes",
+                                "backend_summary.go.spikes",
+                            ],
+                            "tolerance": 0,
+                        }
+                    ],
+                }
+            ],
+        },
+    )
+
+    report = tool.evaluate_benchmark_evidence_gate(
+        manifest_path=manifest,
+        output_path=tmp_path / "gate.json",
+        repo_root=tmp_path,
+    )
+
+    assert report["passed"] is True
+
+
+def test_benchmark_evidence_gate_rejects_numeric_parity_mismatch(tmp_path: Path) -> None:
+    tool = _load_tool()
+    _write_json(
+        tmp_path / "benchmarks" / "results" / "demo.json",
+        {
+            "backend_summary": {
+                "python": {"spikes": 881},
+                "rust": {"spikes": 881},
+                "go": {"spikes": 880},
+            }
+        },
+    )
+    manifest = tmp_path / "benchmarks" / "benchmark_regression_gates.json"
+    _write_json(
+        manifest,
+        {
+            "SPDX-License-Identifier": "AGPL-3.0-or-later",
+            "schema_version": "sc-neurocore.benchmark-regression-gates.v1",
+            "gates": [
+                {
+                    "id": "parity",
+                    "artefact": "benchmarks/results/demo.json",
+                    "required_numbers": ["backend_summary.python.spikes"],
+                    "parity_groups": [
+                        {
+                            "paths": [
+                                "backend_summary.python.spikes",
+                                "backend_summary.rust.spikes",
+                                "backend_summary.go.spikes",
+                            ],
+                            "tolerance": 0,
+                        }
+                    ],
+                }
+            ],
+        },
+    )
+
+    report = tool.evaluate_benchmark_evidence_gate(
+        manifest_path=manifest,
+        output_path=tmp_path / "gate.json",
+        repo_root=tmp_path,
+    )
+
+    assert report["passed"] is False
+    assert any(failure["reason"] == "parity_group_mismatch" for failure in report["failures"])
