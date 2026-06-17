@@ -73,6 +73,32 @@ fn expif_step_spike(
     return 0
 
 
+fn expif_next_v(
+    v: Float64,
+    current: Float64,
+    v_rest: Float64,
+    v_reset: Float64,
+    v_threshold: Float64,
+    v_rh: Float64,
+    delta_t: Float64,
+    tau: Float64,
+    dt: Float64,
+) -> Float64:
+    if not _expif_finite(current) or not expif_valid(v, v_rest, v_reset, v_threshold, v_rh, delta_t, tau, dt):
+        return 0.0 / 0.0
+
+    var k1 = _expif_rhs(v, current, v_rest, v_rh, delta_t, tau)
+    var k2 = _expif_rhs(v + 0.5 * dt * k1, current, v_rest, v_rh, delta_t, tau)
+    var k3 = _expif_rhs(v + 0.5 * dt * k2, current, v_rest, v_rh, delta_t, tau)
+    var k4 = _expif_rhs(v + dt * k3, current, v_rest, v_rh, delta_t, tau)
+    var next_v = v + dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0
+    if not _expif_finite(k1) or not _expif_finite(k2) or not _expif_finite(k3) or not _expif_finite(k4) or not _expif_finite(next_v):
+        return 0.0 / 0.0
+    if next_v >= v_threshold:
+        return v_reset
+    return next_v
+
+
 struct ExpIFKernel:
     fn step(self, current: Float64) -> Int:
         return expif_step_spike(
