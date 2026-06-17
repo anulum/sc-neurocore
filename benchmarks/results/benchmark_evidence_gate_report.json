@@ -70,6 +70,10 @@
       "id": "rulkov-map-five-backend-local-regression"
     },
     {
+      "artefact": "benchmarks/results/bench_courage_nekorkin_map_simulate.json",
+      "id": "courage-nekorkin-map-five-backend-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-04_ultrascale_plus_target.json",
       "id": "ultrascale-plus-target-python-contract"
     },
@@ -112,7 +116,7 @@
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 27,
+  "gate_count": 28,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"
