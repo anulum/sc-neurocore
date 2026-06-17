@@ -132,17 +132,22 @@ and `auto` selects Rust (the fastest bit-exact backend, shipped in the wheel).
 2 000 000 steps, default chaotic regime, median of 5 repeats. Non-isolated loaded
 workstation (Intel i5-11600K) per `BROADCAST_2026-06-04_benchmark_core_isolation`
 — functional/regression evidence, not an isolated-core figure. Reproduce with
-`python benchmarks/bench_courage_nekorkin_map_simulate.py`.
+`PYTHONPATH=src .venv/bin/python benchmarks/bench_courage_nekorkin_map_simulate.py --json benchmarks/results/bench_courage_nekorkin_map_simulate.json`.
 
-| Backend | Median (ms) | Speed-up vs Python | Whole-trace parity |
-|---------|------------:|-------------------:|--------------------|
-| python  | 618.49 | 1.0× | reference |
-| rust (`auto`) | 15.97 | 38.7× | bit-exact (0) |
-| julia   | 17.49 | 35.4× | bit-exact (0) |
-| go      | 15.88 | 39.0× | bit-exact (0) |
-| mojo    | 15.42 | 40.1× | 1.97×10⁻¹ (chaotic FMA, by design) |
+| Backend | Median (ms) | Min (ms) | Speed-up vs Python | Whole-trace parity | Spikes |
+|---------|------------:|---------:|-------------------:|-------------------:|-------:|
+| Python  | 557.3819330020342 | 538.0827189947013 | 1.0× | reference | 371008 |
+| Rust (`auto`) | 13.899400015361607 | 13.64939400809817 | 40.10115058103343× | 0 | 371008 |
+| Julia   | 15.836403996217996 | 11.05115600512363 | 35.19624361282691× | 0 | 371008 |
+| Go      | 14.982394000981003 | 14.369175012689084 | 37.20246129994569× | 0 | 371008 |
+| Mojo    | 14.448277011979371 | 13.346396997803822 | 38.57774408255719× | 0.1971105443600312 | 371063 |
 
-Artefact: `benchmarks/results/bench_courage_nekorkin_map_simulate.json`.
+Artefact: `benchmarks/results/bench_courage_nekorkin_map_simulate.json`; gate:
+`courage-nekorkin-map-five-backend-local-regression` in
+`benchmarks/benchmark_regression_gates.json`. The artefact records SHA-256
+source provenance for the benchmark runner and Python/Rust/Julia/Go/Mojo
+backend chain. The gate enforces exact spike-count parity for Python, Rust,
+Julia and Go; Mojo is bounded by the documented chaotic FMA drift envelope.
 
 ---
 

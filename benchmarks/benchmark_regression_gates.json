@@ -730,6 +730,81 @@
       }
     },
     {
+      "artefact": "benchmarks/results/bench_courage_nekorkin_map_simulate.json",
+      "description": "Courbage-Nekorkin-Vdovin 2007 chaotic spiking-map five-backend simulation evidence.",
+      "expected_values": {
+        "benchmark": "courage_nekorkin_map_simulate",
+        "environment.isolation": "non-isolated (loaded workstation)",
+        "workload.current": 0.0,
+        "workload.n_steps": 2000000,
+        "workload.repeats": 5
+      },
+      "id": "courage-nekorkin-map-five-backend-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.go.spikes"
+          ],
+          "tolerance": 0.0
+        },
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 100.0
+        }
+      ],
+      "regression_limits": {
+        "backend_summary.go.parity_max_abs_diff": {
+          "max": 0.0
+        },
+        "backend_summary.julia.parity_max_abs_diff": {
+          "max": 0.0
+        },
+        "backend_summary.mojo.parity_max_abs_diff": {
+          "max": 0.2
+        },
+        "backend_summary.rust.parity_max_abs_diff": {
+          "max": 0.0
+        }
+      },
+      "required_numbers": [
+        "backend_summary.python.median_ms",
+        "backend_summary.python.min_ms",
+        "backend_summary.python.parity_max_abs_diff",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ms",
+        "backend_summary.rust.min_ms",
+        "backend_summary.rust.parity_max_abs_diff",
+        "backend_summary.rust.spikes",
+        "backend_summary.julia.median_ms",
+        "backend_summary.julia.min_ms",
+        "backend_summary.julia.parity_max_abs_diff",
+        "backend_summary.julia.spikes",
+        "backend_summary.go.median_ms",
+        "backend_summary.go.min_ms",
+        "backend_summary.go.parity_max_abs_diff",
+        "backend_summary.go.spikes",
+        "backend_summary.mojo.median_ms",
+        "backend_summary.mojo.min_ms",
+        "backend_summary.mojo.parity_max_abs_diff",
+        "backend_summary.mojo.spikes"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_courage_nekorkin_map_simulate.py": "source_hashes.benchmarks/bench_courage_nekorkin_map_simulate.py",
+        "engine/src/lib.rs": "source_hashes.engine/src/lib.rs",
+        "engine/src/neurons/maps.rs": "source_hashes.engine/src/neurons/maps.rs",
+        "src/sc_neurocore/neurons/models/courage_nekorkin_map.py": "source_hashes.src/sc_neurocore/neurons/models/courage_nekorkin_map.py",
+        "src/sc_neurocore/accel/go/neurons/courage_nekorkin_map/courage_nekorkin_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/courage_nekorkin_map/courage_nekorkin_map.go",
+        "src/sc_neurocore/accel/julia/neurons/courage_nekorkin_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/courage_nekorkin_map.jl",
+        "src/sc_neurocore/accel/mojo/neurons/courage_nekorkin_map.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/courage_nekorkin_map.mojo"
+      }
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-04_ultrascale_plus_target.json",
       "description": "NEU-C.1 Zynq UltraScale+ Vivado-project target-contract evidence.",
       "expected_values": {
