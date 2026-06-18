@@ -54,7 +54,7 @@ from __future__ import annotations
 
 import importlib as _importlib
 from dataclasses import dataclass
-from typing import Callable, Mapping, Optional, Tuple, cast
+from typing import Any, Callable, Mapping, Optional, Tuple, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -268,28 +268,32 @@ class LinearGaussianSSM:
     - ``Sigma_0``: (d, d) prior covariance
     """
 
-    A: np.ndarray
-    B: np.ndarray
-    C: np.ndarray
-    D: np.ndarray
-    Q: np.ndarray
-    R: np.ndarray
-    mu_0: np.ndarray
-    Sigma_0: np.ndarray
+    A: np.ndarray[Any, Any]
+    B: np.ndarray[Any, Any]
+    C: np.ndarray[Any, Any]
+    D: np.ndarray[Any, Any]
+    Q: np.ndarray[Any, Any]
+    R: np.ndarray[Any, Any]
+    mu_0: np.ndarray[Any, Any]
+    Sigma_0: np.ndarray[Any, Any]
 
     @property
     def state_dim(self) -> int:
+        """Return the latent state dimension."""
         return int(self.A.shape[0])
 
     @property
     def obs_dim(self) -> int:
+        """Return the observation dimension."""
         return int(self.C.shape[0])
 
     @property
     def control_dim(self) -> int:
+        """Return the control-input dimension."""
         return int(self.B.shape[1])
 
     def __post_init__(self) -> None:
+        """Validate the state-space matrix dimensions."""
         d = self.state_dim
         p = self.obs_dim
         m = self.control_dim
@@ -362,10 +366,10 @@ class FilterResult:
         Log p(y_{1:T} | u_{1:T}) under the model — used by EM.
     """
 
-    means: np.ndarray
-    covariances: np.ndarray
-    pred_means: np.ndarray
-    pred_covariances: np.ndarray
+    means: np.ndarray[Any, Any]
+    covariances: np.ndarray[Any, Any]
+    pred_means: np.ndarray[Any, Any]
+    pred_covariances: np.ndarray[Any, Any]
     log_likelihood: float
 
 
@@ -383,8 +387,8 @@ class KalmanFilter:
 
     def filter(
         self,
-        observations: np.ndarray,
-        controls: Optional[np.ndarray] = None,
+        observations: np.ndarray[Any, Any],
+        controls: Optional[np.ndarray[Any, Any]] = None,
         backend: str = "auto",
     ) -> FilterResult:
         """Run forward filtering on a sequence.
@@ -515,8 +519,8 @@ class KalmanFilter:
 
     def _filter_rust(
         self,
-        observations: np.ndarray,
-        controls: np.ndarray,
+        observations: np.ndarray[Any, Any],
+        controls: np.ndarray[Any, Any],
     ) -> FilterResult:
         """Forward-pass dispatch to the Rust LGSSM Kalman filter.
 
@@ -565,8 +569,8 @@ class KalmanFilter:
 
     def _filter_julia(
         self,
-        observations: np.ndarray,
-        controls: np.ndarray,
+        observations: np.ndarray[Any, Any],
+        controls: np.ndarray[Any, Any],
     ) -> FilterResult:
         """Forward-pass dispatch to the Julia LGSSM Kalman filter.
 
@@ -601,8 +605,8 @@ class KalmanFilter:
 
     def _filter_go(
         self,
-        observations: np.ndarray,
-        controls: np.ndarray,
+        observations: np.ndarray[Any, Any],
+        controls: np.ndarray[Any, Any],
     ) -> FilterResult:
         """Forward-pass dispatch to the Go LGSSM Kalman filter.
 
@@ -671,8 +675,8 @@ class KalmanFilter:
 
     def _filter_mojo(
         self,
-        observations: np.ndarray,
-        controls: np.ndarray,
+        observations: np.ndarray[Any, Any],
+        controls: np.ndarray[Any, Any],
     ) -> FilterResult:
         """Forward-pass dispatch to the Mojo LGSSM Kalman filter.
 
@@ -755,9 +759,9 @@ class SmoothResult:
         Required by the EM M-step.
     """
 
-    means: np.ndarray
-    covariances: np.ndarray
-    cross_covariances: np.ndarray
+    means: np.ndarray[Any, Any]
+    covariances: np.ndarray[Any, Any]
+    cross_covariances: np.ndarray[Any, Any]
 
 
 class RTSSmoother:
@@ -771,6 +775,7 @@ class RTSSmoother:
         self.model = model
 
     def smooth(self, filter_result: FilterResult) -> SmoothResult:
+        """Run RTS smoothing over a forward-filter result."""
         T, d = filter_result.means.shape
         A = self.model.A
 
@@ -829,9 +834,9 @@ class EMLearner:
 
     def fit(
         self,
-        observations: np.ndarray,
+        observations: np.ndarray[Any, Any],
         initial_model: LinearGaussianSSM,
-        controls: Optional[np.ndarray] = None,
+        controls: Optional[np.ndarray[Any, Any]] = None,
     ) -> LinearGaussianSSM:
         """Estimate model parameters from a single observation sequence."""
         T, p = observations.shape
@@ -935,6 +940,7 @@ class PredictiveWorldModel:
     seed: int = 42
 
     def __post_init__(self) -> None:
+        """Initialise the underlying linear-Gaussian state-space model."""
         self.model: LinearGaussianSSM = LinearGaussianSSM.random(
             state_dim=self.state_dim,
             obs_dim=self.state_dim,  # observe the state directly
@@ -942,18 +948,19 @@ class PredictiveWorldModel:
             seed=self.seed,
         )
         # Filtered posterior moments — updated by `predict_next_state`.
-        self._mu: np.ndarray = self.model.mu_0.copy()
-        self._Sigma: np.ndarray = self.model.Sigma_0.copy()
+        self._mu: np.ndarray[Any, Any] = self.model.mu_0.copy()
+        self._Sigma: np.ndarray[Any, Any] = self.model.Sigma_0.copy()
 
     def reset(self) -> None:
+        """Reset the running belief state to the prior mean."""
         self._mu = self.model.mu_0.copy()
         self._Sigma = self.model.Sigma_0.copy()
 
     def predict_next_state(
         self,
-        current_state: np.ndarray,
-        action: np.ndarray,
-    ) -> np.ndarray:
+        current_state: np.ndarray[Any, Any],
+        action: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         """Predict E[x_{t+1} | x_t, u_t] under the SSM dynamics.
 
         Returns the deterministic mean prediction; for a full
@@ -968,10 +975,10 @@ class PredictiveWorldModel:
 
     def predict_next_state_with_cov(
         self,
-        current_state: np.ndarray,
-        current_cov: np.ndarray,
-        action: np.ndarray,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        current_state: np.ndarray[Any, Any],
+        current_cov: np.ndarray[Any, Any],
+        action: np.ndarray[Any, Any],
+    ) -> Tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Predict mean + covariance of x_{t+1} given (x_t, Σ_t, u_t)."""
         mu_next = self.predict_next_state(current_state, action)
         Sigma_next = self.model.A @ current_cov @ self.model.A.T + self.model.Q
@@ -979,11 +986,11 @@ class PredictiveWorldModel:
 
     def forecast(
         self,
-        initial_state: np.ndarray,
-        actions: list[np.ndarray],
-    ) -> list[np.ndarray]:
+        initial_state: np.ndarray[Any, Any],
+        actions: list[np.ndarray[Any, Any]],
+    ) -> list[np.ndarray[Any, Any]]:
         """Multi-step deterministic forecast (mean trajectory)."""
-        traj: list[np.ndarray] = []
+        traj: list[np.ndarray[Any, Any]] = []
         x: npt.NDArray[np.float64] = initial_state.astype(np.float64)
         for a in actions:
             x = self.predict_next_state(x, np.asarray(a, dtype=np.float64))
@@ -992,12 +999,12 @@ class PredictiveWorldModel:
 
     def forecast_with_cov(
         self,
-        initial_state: np.ndarray,
-        initial_cov: np.ndarray,
-        actions: list[np.ndarray],
-    ) -> list[Tuple[np.ndarray, np.ndarray]]:
+        initial_state: np.ndarray[Any, Any],
+        initial_cov: np.ndarray[Any, Any],
+        actions: list[np.ndarray[Any, Any]],
+    ) -> list[Tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]]:
         """Multi-step probabilistic forecast (mean + cov trajectory)."""
-        traj: list[Tuple[np.ndarray, np.ndarray]] = []
+        traj: list[Tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]] = []
         x: npt.NDArray[np.float64] = initial_state.astype(np.float64)
         P: npt.NDArray[np.float64] = initial_cov.astype(np.float64)
         for a in actions:
