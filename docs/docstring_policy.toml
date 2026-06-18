@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 93
+expected_file_count = 103
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -380,3 +380,43 @@ rationale = "Public spike-based next-state predictor."
 [[file]]
 path = "src/sc_neurocore/world_model/predictive_model.py"
 rationale = "Public linear-Gaussian state-space world model with Kalman filtering and RTS smoothing."
+
+[[file]]
+path = "src/sc_neurocore/network/cortical_column.py"
+rationale = "Public cortical-column network with block-CSR delay routing."
+
+[[file]]
+path = "src/sc_neurocore/network/gamma_oscillation.py"
+rationale = "Public gamma-oscillation E/I network with Rust and Python step kernels."
+
+[[file]]
+path = "src/sc_neurocore/network/monitor.py"
+rationale = "Public network activity monitor."
+
+[[file]]
+path = "src/sc_neurocore/network/mpi_runner.py"
+rationale = "Public MPI distributed network runner."
+
+[[file]]
+path = "src/sc_neurocore/network/network.py"
+rationale = "Public spiking-network engine."
+
+[[file]]
+path = "src/sc_neurocore/network/population.py"
+rationale = "Public neuron-population container and model resolver."
+
+[[file]]
+path = "src/sc_neurocore/network/projection.py"
+rationale = "Public inter-population projection with delays."
+
+[[file]]
+path = "src/sc_neurocore/network/stimulus.py"
+rationale = "Public stimulus generators for network input."
+
+[[file]]
+path = "src/sc_neurocore/network/topology.py"
+rationale = "Public network connectivity-topology generators."
+
+[[file]]
+path = "src/sc_neurocore/network/_torch_bridge.py"
+rationale = "Public optional Torch bridge for network tensors."

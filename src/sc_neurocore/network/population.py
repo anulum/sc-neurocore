@@ -20,7 +20,7 @@ from sc_neurocore.neurons import models as _model_registry
 def _resolve_model(model: type[Any] | str) -> type[Any]:
     """Return a model class from a string name or pass through a class."""
     if isinstance(model, str):
-        cls = getattr(_model_registry, model, None)
+        cls: type[Any] | None = getattr(_model_registry, model, None)
         if cls is None:
             raise ValueError(f"Unknown model '{model}'. Check neurons.models.__all__.")
         return cls
@@ -53,7 +53,9 @@ class Population:
         for i, neuron in enumerate(self.neurons):
             self._voltages[i] = getattr(neuron, "v", 0.0)
 
-    def step_all(self, currents: np.ndarray, spike_gating: bool = False) -> np.ndarray:
+    def step_all(
+        self, currents: np.ndarray[Any, Any], spike_gating: bool = False
+    ) -> np.ndarray[Any, Any]:
         """Advance all neurons one timestep; return binary spike vector.
 
         If *spike_gating* is True, neurons with zero input current and
@@ -90,7 +92,7 @@ class Population:
                 neuron.reset_state()
         self._sync_voltages()
 
-    def get_states(self) -> dict[str, np.ndarray]:
+    def get_states(self) -> dict[str, np.ndarray[Any, Any]]:
         """Collect all neuron states into arrays keyed by variable name."""
         if self.n == 0:
             return {}
@@ -106,7 +108,7 @@ class Population:
             result[k] = np.array([getattr(n, k, 0.0) for n in self.neurons])
         return result
 
-    def set_voltages(self, voltages: np.ndarray) -> None:
+    def set_voltages(self, voltages: np.ndarray[Any, Any]) -> None:
         """Sync voltages from an external source (e.g. Rust backend) into neurons."""
         for i, neuron in enumerate(self.neurons):
             if hasattr(neuron, "v"):
@@ -114,6 +116,6 @@ class Population:
         self._voltages[:] = voltages[: self.n]
 
     @property
-    def voltages(self) -> np.ndarray:
+    def voltages(self) -> np.ndarray[Any, Any]:
         """Current membrane voltages (read-only view)."""
         return self._voltages

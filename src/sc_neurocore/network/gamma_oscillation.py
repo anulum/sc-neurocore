@@ -111,7 +111,7 @@ _logger = logging.getLogger(__name__)
 _julia_ping_step: Callable[..., Any] | None = None
 _HAS_JULIA_PING_STEP = False
 try:
-    from juliacall import Main as jl  # type: ignore[import-not-found]
+    from juliacall import Main as jl
 
     _jl_ping_file = os.path.abspath(
         os.path.join(
@@ -240,18 +240,19 @@ class PINGCircuit:
     # defaults exist only so mypy sees the fields as plain ndarray
     # instead of ndarray | None, which would force a narrowing
     # assertion at every usage site).
-    v_e: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
-    v_i: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
-    g_ampa_e: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
-    g_ampa_i: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
-    g_gaba_e: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
-    g_gaba_i: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
-    refrac_e: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
-    refrac_i: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
-    i_drive_e: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
-    i_drive_i: np.ndarray = field(default_factory=lambda: np.zeros(0), repr=False)
+    v_e: np.ndarray[Any, Any] = field(default_factory=lambda: np.zeros(0), repr=False)
+    v_i: np.ndarray[Any, Any] = field(default_factory=lambda: np.zeros(0), repr=False)
+    g_ampa_e: np.ndarray[Any, Any] = field(default_factory=lambda: np.zeros(0), repr=False)
+    g_ampa_i: np.ndarray[Any, Any] = field(default_factory=lambda: np.zeros(0), repr=False)
+    g_gaba_e: np.ndarray[Any, Any] = field(default_factory=lambda: np.zeros(0), repr=False)
+    g_gaba_i: np.ndarray[Any, Any] = field(default_factory=lambda: np.zeros(0), repr=False)
+    refrac_e: np.ndarray[Any, Any] = field(default_factory=lambda: np.zeros(0), repr=False)
+    refrac_i: np.ndarray[Any, Any] = field(default_factory=lambda: np.zeros(0), repr=False)
+    i_drive_e: np.ndarray[Any, Any] = field(default_factory=lambda: np.zeros(0), repr=False)
+    i_drive_i: np.ndarray[Any, Any] = field(default_factory=lambda: np.zeros(0), repr=False)
 
     def __post_init__(self) -> None:
+        """Validate the population sizes and initialise oscillator state."""
         if self.n_excitatory <= 0 or self.n_inhibitory <= 0:
             raise ValueError("PINGCircuit needs at least 1 E and 1 I neuron")
         self._rng = np.random.default_rng(self.seed)
@@ -314,7 +315,7 @@ class PINGCircuit:
 
     # ── Single timestep ──────────────────────────────────────────
 
-    def step(self, dt: float = 0.1) -> tuple[np.ndarray, np.ndarray]:
+    def step(self, dt: float = 0.1) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Advance one timestep (dt in ms); return (spikes_e, spikes_i)."""
         if self._use_rust:
             return self._step_rust(dt)
@@ -326,8 +327,10 @@ class PINGCircuit:
             return self._step_mojo(dt)
         return self._step_python(dt)
 
-    def _step_rust(self, dt: float) -> tuple[np.ndarray, np.ndarray]:
-        """Rust-backed per-step kernel — matches the Python path
+    def _step_rust(self, dt: float) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+        """Run the Rust-backed per-step kernel.
+
+        Matches the Python path
         bit-identically for a given seed.
 
         Noise samples are pre-drawn on the Python side so the per-
@@ -391,7 +394,7 @@ class PINGCircuit:
             self.g_gaba_i += self._w_ii_eff * n_i_spikes
         return spikes_e_u8.astype(bool), spikes_i_u8.astype(bool)
 
-    def _step_julia(self, dt: float) -> tuple[np.ndarray, np.ndarray]:
+    def _step_julia(self, dt: float) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         assert _julia_ping_step is not None, "backend='julia' but _julia_ping_step is not loaded"
         xi_e = self._rng.standard_normal(self.n_excitatory)
         xi_i = self._rng.standard_normal(self.n_inhibitory)
@@ -434,7 +437,7 @@ class PINGCircuit:
             self.g_gaba_i += self._w_ii_eff * n_i_spikes
         return spikes_e_u8.astype(bool), spikes_i_u8.astype(bool)
 
-    def _step_go(self, dt: float) -> tuple[np.ndarray, np.ndarray]:
+    def _step_go(self, dt: float) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         assert _go_ping_step is not None, "backend='go' but _go_ping_step is not loaded"
         xi_e = self._rng.standard_normal(self.n_excitatory)
         xi_i = self._rng.standard_normal(self.n_inhibitory)
@@ -521,7 +524,7 @@ class PINGCircuit:
             self.g_gaba_i += self._w_ii_eff * n_i_spikes
         return spikes_e_u8.astype(bool), spikes_i_u8.astype(bool)
 
-    def _step_mojo(self, dt: float) -> tuple[np.ndarray, np.ndarray]:
+    def _step_mojo(self, dt: float) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         assert _mojo_ping_step is not None, "backend='mojo' but _mojo_ping_step is not loaded"
         xi_e = self._rng.standard_normal(self.n_excitatory)
         xi_i = self._rng.standard_normal(self.n_inhibitory)
@@ -608,11 +611,14 @@ class PINGCircuit:
             self.g_gaba_i += self._w_ii_eff * n_i_spikes
         return spikes_e_u8.astype(bool), spikes_i_u8.astype(bool)
 
-    def _step_python(self, dt: float) -> tuple[np.ndarray, np.ndarray]:
-        """Reference Python implementation. Bit-identical to
+    def _step_python(self, dt: float) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+        """Run the reference Python per-step kernel.
+
+        Bit-identical to
         `_step_rust` for a given seed (the noise is pre-drawn at the
         same point in the per-instance RNG sequence, so the two
-        backends consume RNG identically)."""
+        backends consume RNG identically).
+        """
         assert (
             self.v_e is not None
             and self.v_i is not None
@@ -740,10 +746,10 @@ class PINGCircuit:
 
     @staticmethod
     def population_rate(
-        spike_log: list[np.ndarray],
+        spike_log: list[np.ndarray[Any, Any]],
         dt: float,
         bin_ms: float = 1.0,
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Bin per-step spike booleans into a population rate (Hz).
 
         `spike_log[t]` is a length-N boolean array of spikes at
@@ -766,7 +772,7 @@ class PINGCircuit:
 
     def dominant_frequency(
         self,
-        spike_log: list[np.ndarray],
+        spike_log: list[np.ndarray[Any, Any]],
         dt: float,
         bin_ms: float = 1.0,
         f_min: float = 5.0,

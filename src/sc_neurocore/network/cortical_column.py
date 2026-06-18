@@ -147,7 +147,7 @@ _logger = logging.getLogger(__name__)
 _julia_multi_spmv = None
 _HAS_JULIA_MULTI_SPMV = False
 try:
-    from juliacall import Main as jl  # type: ignore[import-not-found]
+    from juliacall import Main as jl
 
     _jl_file = os.path.abspath(
         os.path.join(
@@ -262,7 +262,7 @@ K_BG: dict[str, int] = {
 # table are 0.
 #
 # Row order follows POPULATIONS; column order follows POPULATIONS.
-CONN_PROBS: np.ndarray = np.array(
+CONN_PROBS: np.ndarray[Any, Any] = np.array(
     [
         # src:  L23e    L23i    L4e     L4i     L5e     L5i     L6e     L6i
         [0.1009, 0.1689, 0.0437, 0.0818, 0.0323, 0.0000, 0.0076, 0.0000],  # L23e
@@ -500,12 +500,12 @@ class CorticalColumn:
         self._n_total_i = i_off
         # Accumulators for block-CSR construction. Each element is
         # (rows_global, cols_global, data_weighted).
-        block_e_acc: list[list[tuple[np.ndarray, np.ndarray, np.ndarray]]] = [
-            [] for _ in range(n_delay_bins)
-        ]
-        block_i_acc: list[list[tuple[np.ndarray, np.ndarray, np.ndarray]]] = [
-            [] for _ in range(n_delay_bins)
-        ]
+        block_e_acc: list[
+            list[tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]]
+        ] = [[] for _ in range(n_delay_bins)]
+        block_i_acc: list[
+            list[tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]]
+        ] = [[] for _ in range(n_delay_bins)]
         for ti, target in enumerate(POPULATIONS):
             n_t = self.sizes[target]
             for sj, source in enumerate(POPULATIONS):
@@ -688,8 +688,12 @@ class CorticalColumn:
         # inner loop is what lets the Rust path actually beat scipy
         # — measured 2026-04-18, the per-call cast overhead alone
         # was eating the per-call speedup.
-        self._block_e_arrays: list[tuple[np.ndarray, np.ndarray, np.ndarray]] = []
-        self._block_i_arrays: list[tuple[np.ndarray, np.ndarray, np.ndarray]] = []
+        self._block_e_arrays: list[
+            tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]
+        ] = []
+        self._block_i_arrays: list[
+            tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]
+        ] = []
         if delay_distribution and use_block_csr:
             for b in range(self.n_delay_bins):
                 blk_e = self._stack_block(
@@ -720,9 +724,9 @@ class CorticalColumn:
                 )
 
         # Per-population state arrays.
-        self.v: dict[str, np.ndarray] = {}
-        self.i_syn: dict[str, np.ndarray] = {}
-        self.refrac: dict[str, np.ndarray] = {}
+        self.v: dict[str, np.ndarray[Any, Any]] = {}
+        self.i_syn: dict[str, np.ndarray[Any, Any]] = {}
+        self.refrac: dict[str, np.ndarray[Any, Any]] = {}
         for p in POPULATIONS:
             n_p = self.sizes[p]
             # Initial voltages distributed uniformly between V_reset
@@ -737,8 +741,8 @@ class CorticalColumn:
         # source type. The buffer length is set at the first `step()`
         # call once `dt` is known (so callers can pick `dt` freely).
         self._dt: float | None = None
-        self._buf_e: dict[str, np.ndarray] = {}
-        self._buf_i: dict[str, np.ndarray] = {}
+        self._buf_e: dict[str, np.ndarray[Any, Any]] = {}
+        self._buf_i: dict[str, np.ndarray[Any, Any]] = {}
         self._buf_idx: int = 0
         self._buf_len_e: int = 0
         self._buf_len_i: int = 0
@@ -755,7 +759,6 @@ class CorticalColumn:
         millions of synapses. Size contracts must therefore be observable without
         materialising the full synapse graph.
         """
-
         if not (0.0 < scale <= 1.0):
             raise ValueError(f"scale must be in (0, 1], got {scale}")
         return {pop: max(1, int(round(FULL_SIZES[pop] * scale))) for pop in POPULATIONS}
@@ -764,7 +767,7 @@ class CorticalColumn:
 
     @staticmethod
     def _stack_block(
-        triples: list[tuple[np.ndarray, np.ndarray, np.ndarray]],
+        triples: list[tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]],
         n_rows: int,
         n_cols: int,
     ) -> sparse.csr_matrix:
@@ -839,7 +842,7 @@ class CorticalColumn:
             self._buf_i[p] = np.zeros((self._buf_len_i, n_p), dtype=np.int32)
         self._dt = dt
 
-    def step(self, dt: float = 0.1) -> dict[str, np.ndarray]:
+    def step(self, dt: float = 0.1) -> dict[str, np.ndarray[Any, Any]]:
         """Advance the network by one timestep `dt` (ms).
 
         Returns a dict mapping population name → boolean spike
@@ -870,8 +873,9 @@ class CorticalColumn:
         return self._integrate_and_detect(dt)
 
     def _inject_block(self, dt: float) -> None:
-        """Block-CSR injection. With the batched Rust kernel
-        available, ONE FFI call per step does all `2 × n_delay_bins`
+        """Inject block-CSR spikes for one step.
+
+        With the batched Rust kernel available, ONE FFI call per step does all `2 × n_delay_bins`
         spmv at once; otherwise falls back to per-block scipy /
         single-Rust calls.
         """
@@ -881,10 +885,10 @@ class CorticalColumn:
 
         # Gather spike vectors per bin, dropping empty bins so the
         # batched call only ever sees non-trivial work.
-        indptrs: list[np.ndarray] = []
-        indices_list: list[np.ndarray] = []
-        data_list: list[np.ndarray] = []
-        xs: list[np.ndarray] = []
+        indptrs: list[np.ndarray[Any, Any]] = []
+        indices_list: list[np.ndarray[Any, Any]] = []
+        data_list: list[np.ndarray[Any, Any]] = []
+        xs: list[np.ndarray[Any, Any]] = []
 
         for b, d_steps in enumerate(self._global_e_bin_steps):
             block = self._block_e[b]
@@ -1044,18 +1048,22 @@ class CorticalColumn:
     @staticmethod
     def _spmv_into(
         block: sparse.csr_matrix,
-        x: np.ndarray,
-        y: np.ndarray,
-        arrays: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None,
+        x: np.ndarray[Any, Any],
+        y: np.ndarray[Any, Any],
+        arrays: tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]
+        | None = None,
     ) -> None:
-        """`y += block @ x`. Uses the Rust rayon-parallel kernel
+        """Compute ``y += block @ x`` via a sparse block matrix-vector product.
+
+        Uses the Rust rayon-parallel kernel
         when available, falls back to scipy single-threaded.
 
         `arrays` is the dtype-checked `(indptr, indices, data)` triple
         precomputed at construction so the per-step inner loop avoids
         the per-call cast overhead that otherwise eats the per-call
         Rust speedup. Falls back to deriving from `block` if not
-        supplied (slow path used by the parity sanity tests)."""
+        supplied (slow path used by the parity sanity tests).
+        """
         if _HAS_RUST_CSR_SPMV and _rust_csr_spmv_add is not None:
             if arrays is None:
                 arrays = (
@@ -1121,9 +1129,9 @@ class CorticalColumn:
     def _integrate_and_detect(
         self,
         dt: float,
-    ) -> dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray[Any, Any]]:
         """Per-population LIF Euler step + spike detect + buffer push."""
-        spikes: dict[str, np.ndarray] = {}
+        spikes: dict[str, np.ndarray[Any, Any]] = {}
         for p in POPULATIONS:
             in_refrac = self.refrac[p] > 0.0
             # dV/dt = -(V - E_L)/tau_m + I_syn/C_m  (Euler)
@@ -1153,7 +1161,7 @@ class CorticalColumn:
         self,
         duration_ms: float,
         dt: float = 0.1,
-    ) -> dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray[Any, Any]]:
         """Run the network for `duration_ms` ms.
 
         Returns a dict mapping population name → boolean
@@ -1162,7 +1170,7 @@ class CorticalColumn:
         n_steps = int(round(duration_ms / dt))
         if n_steps <= 0:
             raise ValueError(f"duration_ms / dt must be ≥ 1, got {n_steps}")
-        rasters: dict[str, list[np.ndarray]] = {p: [] for p in POPULATIONS}
+        rasters: dict[str, list[np.ndarray[Any, Any]]] = {p: [] for p in POPULATIONS}
         for _ in range(n_steps):
             spikes = self.step(dt=dt)
             for p in POPULATIONS:
@@ -1173,7 +1181,7 @@ class CorticalColumn:
 
     def population_rates(
         self,
-        rasters: dict[str, np.ndarray],
+        rasters: dict[str, np.ndarray[Any, Any]],
         dt: float = 0.1,
         burn_in_ms: float = 200.0,
     ) -> dict[str, float]:
@@ -1238,7 +1246,8 @@ class CorticalColumn:
 
     # ── Introspection ────────────────────────────────────────────
 
-    def __repr__(self) -> str:  # noqa: D401  (one-line summary)
+    def __repr__(self) -> str:
+        """Return a concise debug representation of the cortical column."""
         return (
             f"CorticalColumn(scale={self.scale}, n_total={self.n_total}, "
             f"bg_rate={self.bg_rate} Hz, g_inh={self.g_inh})"
@@ -1246,4 +1255,5 @@ class CorticalColumn:
 
     @property
     def population_names(self) -> Sequence[str]:
+        """Return the ordered cortical population names."""
         return POPULATIONS

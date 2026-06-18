@@ -178,7 +178,7 @@ class Network:
                 proj.indptr.tolist(),
                 proj.indices.tolist(),
                 proj.data.tolist(),
-                proj.max_delay,  # type: ignore[attr-defined]
+                proj.max_delay,
             )
 
         n_steps = int(round(duration / dt))
@@ -234,7 +234,9 @@ class Network:
             sys.stdout.write(f"\r[100%] step {n_steps}/{n_steps}\n")
             sys.stdout.flush()
 
-    def _apply_stimuli(self, pop_to_currents: dict[int, np.ndarray], t: int, dt: float) -> None:
+    def _apply_stimuli(
+        self, pop_to_currents: dict[int, np.ndarray[Any, Any]], t: int, dt: float
+    ) -> None:
         """Inject stimulus currents into target populations."""
         for stim in self.stimuli:
             target = stim.target
@@ -254,7 +256,9 @@ class Network:
                 pop_to_currents[pid] += stim.get_current(t, dt)
 
     def _apply_projections(
-        self, pop_to_currents: dict[int, np.ndarray], last_spikes: dict[int, np.ndarray]
+        self,
+        pop_to_currents: dict[int, np.ndarray[Any, Any]],
+        last_spikes: dict[int, np.ndarray[Any, Any]],
     ) -> None:
         """Propagate spikes through all projections."""
         for proj in self.projections:
@@ -264,7 +268,7 @@ class Network:
             if pid in pop_to_currents:
                 pop_to_currents[pid] += current
 
-    def _record(self, pop: Population, spikes: np.ndarray, t: int, dt: float) -> None:
+    def _record(self, pop: Population, spikes: np.ndarray[Any, Any], t: int, dt: float) -> None:
         """Feed spikes/states to all monitors attached to this population."""
         for sp_mon in self.spike_monitors:
             if sp_mon.population is pop:
@@ -276,7 +280,7 @@ class Network:
             if rt_mon.population is pop:
                 rt_mon.record(spikes, t, dt)
 
-    def _update_plasticity(self, last_spikes: dict[int, np.ndarray]) -> None:
+    def _update_plasticity(self, last_spikes: dict[int, np.ndarray[Any, Any]]) -> None:
         """Apply plasticity rules to projections that have them."""
         for proj in self.projections:
             if proj.plasticity:
@@ -284,7 +288,7 @@ class Network:
                 tgt_sp = last_spikes.get(id(proj.target), np.zeros(proj.target.n, dtype=np.int8))
                 proj.update_plasticity(src_sp, tgt_sp)
 
-    def _apply_fim(self, last_spikes: dict[int, np.ndarray]) -> None:
+    def _apply_fim(self, last_spikes: dict[int, np.ndarray[Any, Any]]) -> None:
         """Fisher Information Metric self-observation feedback.
 
         Pulls each neuron's activity toward the population mean,

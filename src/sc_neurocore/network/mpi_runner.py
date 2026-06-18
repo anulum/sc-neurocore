@@ -136,7 +136,9 @@ class MPIRunner:
                 if tgt_rank == self.rank:
                     self._local_projs.append(proj)
 
-    def _exchange_spikes(self, local_spikes: dict[int, np.ndarray]) -> dict[int, np.ndarray]:
+    def _exchange_spikes(
+        self, local_spikes: dict[int, np.ndarray[Any, Any]]
+    ) -> dict[int, np.ndarray[Any, Any]]:
         """Allgatherv spike vectors so every rank knows who spiked.
 
         Each rank sends spike vectors for its local populations packed
@@ -144,7 +146,7 @@ class MPIRunner:
         pop_index -> spike array for all populations.
         """
         assert MPI is not None
-        chunks: list[np.ndarray] = []
+        chunks: list[np.ndarray[Any, Any]] = []
         for idx in self._local_indices:
             spikes = local_spikes.get(idx, np.zeros(self._populations[idx].n, dtype=np.int8))
             header = np.array([idx, spikes.shape[0]], dtype=np.int32)
@@ -164,7 +166,7 @@ class MPIRunner:
 
         self.comm.Allgatherv(send_buf, [recv_buf, recv_counts, displacements, MPI.BYTE])
 
-        all_spikes: dict[int, np.ndarray] = {}
+        all_spikes: dict[int, np.ndarray[Any, Any]] = {}
         pos = 0
         while pos < total:
             header = recv_buf[pos : pos + 8].view(np.int32)
@@ -178,11 +180,11 @@ class MPIRunner:
 
     def _step_local(
         self,
-        pop_to_currents: dict[int, np.ndarray],
-        last_spikes: dict[int, np.ndarray],
-    ) -> dict[int, np.ndarray]:
+        pop_to_currents: dict[int, np.ndarray[Any, Any]],
+        last_spikes: dict[int, np.ndarray[Any, Any]],
+    ) -> dict[int, np.ndarray[Any, Any]]:
         """Step only this rank's populations, return local spike dict."""
-        local_spikes: dict[int, np.ndarray] = {}
+        local_spikes: dict[int, np.ndarray[Any, Any]] = {}
         for idx in self._local_indices:
             pop = self._populations[idx]
             currents = np.asarray(
@@ -227,12 +229,12 @@ class MPIRunner:
         """
         np.random.seed(self.network.seed + self.rank)
         pop_id_to_idx = {id(p): i for i, p in enumerate(self._populations)}
-        all_spikes: dict[int, np.ndarray] = {
+        all_spikes: dict[int, np.ndarray[Any, Any]] = {
             i: np.zeros(p.n, dtype=np.int8) for i, p in enumerate(self._populations)
         }
 
         for t in range(n_steps):
-            pop_to_currents: dict[int, np.ndarray] = {
+            pop_to_currents: dict[int, np.ndarray[Any, Any]] = {
                 idx: np.zeros(self._populations[idx].n, dtype=np.float64)
                 for idx in self._local_indices
             }

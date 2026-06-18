@@ -66,7 +66,7 @@ class _PopulationSpec:
     label: str
 
 
-def _csr_to_dense(projection: Projection) -> np.ndarray:
+def _csr_to_dense(projection: Projection) -> np.ndarray[Any, Any]:
     dense = np.zeros((projection.target.n, projection.source.n), dtype=np.float32)
     for src_idx in range(projection.source.n):
         for k in range(projection.indptr[src_idx], projection.indptr[src_idx + 1]):
@@ -75,7 +75,7 @@ def _csr_to_dense(projection: Projection) -> np.ndarray:
     return dense
 
 
-def _csr_mask(projection: Projection) -> np.ndarray:
+def _csr_mask(projection: Projection) -> np.ndarray[Any, Any]:
     mask = np.zeros((projection.target.n, projection.source.n), dtype=np.float32)
     for src_idx in range(projection.source.n):
         for k in range(projection.indptr[src_idx], projection.indptr[src_idx + 1]):
