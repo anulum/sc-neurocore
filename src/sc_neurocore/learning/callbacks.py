@@ -27,10 +27,10 @@ class TrainingCallback:
     """Base class for training callbacks."""
 
     def log(self, metrics: dict[str, float], step: int) -> None:
-        pass
+        """Record a mapping of metric names to values at the given step."""
 
     def close(self) -> None:
-        pass
+        """Flush and release any resources held by the callback."""
 
 
 class TensorBoardCallback(TrainingCallback):
@@ -38,7 +38,7 @@ class TensorBoardCallback(TrainingCallback):
 
     def __init__(self, log_dir: str = "runs"):
         try:
-            from torch.utils.tensorboard import SummaryWriter  # type: ignore[attr-defined]
+            from torch.utils.tensorboard import SummaryWriter
         except ImportError:
             from sc_neurocore.exceptions import SCDependencyError
 
@@ -46,10 +46,12 @@ class TensorBoardCallback(TrainingCallback):
         self._writer = SummaryWriter(log_dir=log_dir)  # type: ignore[no-untyped-call]
 
     def log(self, metrics: dict[str, float], step: int) -> None:
+        """Write each metric as a TensorBoard scalar at the given step."""
         for key, value in metrics.items():
             self._writer.add_scalar(key, value, step)  # type: ignore[no-untyped-call]
 
     def close(self) -> None:
+        """Close the underlying TensorBoard summary writer."""
         self._writer.close()  # type: ignore[no-untyped-call]
 
 
@@ -68,9 +70,11 @@ class WandBCallback(TrainingCallback):
         self._wandb.init(project=project, **init_kwargs)
 
     def log(self, metrics: dict[str, float], step: int) -> None:
+        """Forward the metrics to the active Weights & Biases run."""
         self._wandb.log(metrics, step=step)
 
     def close(self) -> None:
+        """Finish the active Weights & Biases run."""
         self._wandb.finish()
 
 
@@ -82,9 +86,11 @@ class CSVCallback(TrainingCallback):
         self._rows: list[dict[str, float | int]] = []
 
     def log(self, metrics: dict[str, float], step: int) -> None:
+        """Buffer one row of metrics for the given step in memory."""
         self._rows.append({"step": step, **metrics})
 
     def close(self) -> None:
+        """Write all buffered metric rows to the CSV file."""
         if not self._rows:
             return
         keys = list(self._rows[0].keys())

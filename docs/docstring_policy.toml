@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 126
+expected_file_count = 130
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -476,6 +476,22 @@ rationale = "Public published neural decoder/encoder reference implementations (
 [[file]]
 path = "src/sc_neurocore/bio/transcriptomic.py"
 rationale = "Public single-cell transcriptomic foundation-model interfaces (scKG-BERT, Geneformer)."
+
+[[file]]
+path = "src/sc_neurocore/learning/advanced.py"
+rationale = "Public advanced plasticity rules (BPTT, eligibility traces, R-STDP, STP, structural plasticity)."
+
+[[file]]
+path = "src/sc_neurocore/learning/federated.py"
+rationale = "Public privacy-preserving federated aggregation over SC bitstreams."
+
+[[file]]
+path = "src/sc_neurocore/learning/neuroevolution.py"
+rationale = "Public genetic algorithm for evolving SNN weights and parameters."
+
+[[file]]
+path = "src/sc_neurocore/learning/callbacks.py"
+rationale = "Public training callbacks for logging metrics to TensorBoard, W&B, or CSV."
 
 [[file]]
 path = "src/sc_neurocore/neuro_symbolic/predictive_coding.py"

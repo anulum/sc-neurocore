@@ -6,20 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Genetic Algorithm for evolving SNN weights/parameters
 
-from typing import Any
+"""Genetic algorithm for evolving spiking-neural-network weights and parameters."""
+
+from __future__ import annotations
+
 import logging
-import numpy as np
 from dataclasses import dataclass
-from typing import Callable
+from typing import Any, Callable
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class SNNGeneticEvolver:
-    """
-    Genetic Algorithm for evolving SNN weights/parameters.
-    """
+    """Genetic algorithm for evolving SNN weights and parameters."""
 
     population_size: int = 20
     mutation_rate: float = 0.05
@@ -31,7 +33,8 @@ class SNNGeneticEvolver:
         # Initialize population
         self.population = [layer_factory() for _ in range(self.population_size)]
 
-    def evolve(self, generations: int) -> None:
+    def evolve(self, generations: int) -> Any:
+        """Run the GA for the given number of generations and return the best individual."""
         for gen in range(generations):
             # 1. Evaluate Fitness
             scores = [self.fitness_func(ind) for ind in self.population]
@@ -50,7 +53,7 @@ class SNNGeneticEvolver:
             while len(next_gen) < self.population_size:
                 # Simple random selection for parents
                 p1, p2 = np.random.choice(ranked_pop[: n_elite + 5], 2, replace=False)
-                child = self._crossover(p1, p2)  # type: ignore[func-returns-value]
+                child = self._crossover(p1, p2)
                 self._mutate(child)
                 next_gen.append(child)
 
@@ -58,7 +61,7 @@ class SNNGeneticEvolver:
 
         return self.population[0]  # Return best
 
-    def _crossover(self, p1, p2) -> None:  # type: ignore[no-untyped-def]
+    def _crossover(self, p1: Any, p2: Any) -> Any:
         # Create new instance
         child = self.layer_factory()
         if not hasattr(p1, "weights"):
@@ -69,7 +72,7 @@ class SNNGeneticEvolver:
         child.weights = np.where(mask, p1.weights, p2.weights)
         return child
 
-    def _mutate(self, ind) -> None:  # type: ignore[no-untyped-def]
+    def _mutate(self, ind: Any) -> None:
         if not hasattr(ind, "weights"):
             return
 
