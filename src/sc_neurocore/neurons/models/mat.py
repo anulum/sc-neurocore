@@ -9,7 +9,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import numpy as np
+import math
+
+
+_VOLTAGE_MIN = -200.0
+_VOLTAGE_MAX = 100.0
+_THETA_MAX = 1.0e9
 
 
 @dataclass
@@ -33,18 +38,118 @@ class MATNeuron:
     resistance: float = 1.0
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        """Validate the numerical contract before the first integration step."""
+        self._validate_state()
+
+    def _validate_state(self) -> None:
+        """Reject invalid MAT parameters or state before mutation."""
+        finite_values = (
+            self.v,
+            self.theta1,
+            self.theta2,
+            self.v_rest,
+            self.v_reset,
+            self.v_threshold_base,
+            self.tau_m,
+            self.tau_1,
+            self.tau_2,
+            self.h1,
+            self.h2,
+            self.resistance,
+            self.dt,
+        )
+        if not all(math.isfinite(value) for value in finite_values):
+            raise ValueError("MATNeuron state and parameters must be finite")
+        if not (_VOLTAGE_MIN <= self.v <= _VOLTAGE_MAX):
+            raise ValueError("MATNeuron voltage is outside the safety envelope")
+        if not (_VOLTAGE_MIN <= self.v_reset <= _VOLTAGE_MAX):
+            raise ValueError("MATNeuron reset voltage is outside the safety envelope")
+        if (
+            self.theta1 < 0.0
+            or self.theta2 < 0.0
+            or self.theta1 > _THETA_MAX
+            or self.theta2 > _THETA_MAX
+        ):
+            raise ValueError("MATNeuron threshold adaptation is outside the safety envelope")
+        if self.h1 < 0.0 or self.h2 < 0.0 or self.h1 > _THETA_MAX or self.h2 > _THETA_MAX:
+            raise ValueError("MATNeuron threshold increments are outside the safety envelope")
+        if self.tau_m <= 0.0 or self.tau_1 <= 0.0 or self.tau_2 <= 0.0:
+            raise ValueError("MATNeuron time constants must be positive")
+        if self.resistance <= 0.0 or self.dt <= 0.0:
+            raise ValueError("MATNeuron resistance and timestep must be positive")
+
+    def _derivatives(
+        self, v: float, theta1: float, theta2: float, current: float
+    ) -> tuple[float, float, float]:
+        """Return the MAT membrane and threshold right-hand side."""
+        dv = (-(v - self.v_rest) + self.resistance * current) / self.tau_m
+        return dv, -theta1 / self.tau_1, -theta2 / self.tau_2
+
+    def _rk4_candidate(self, current: float) -> tuple[float, float, float]:
+        """Advance `(v, theta1, theta2)` with one candidate-first RK4 step."""
+        k1v, k1t1, k1t2 = self._derivatives(self.v, self.theta1, self.theta2, current)
+        k2v, k2t1, k2t2 = self._derivatives(
+            self.v + 0.5 * self.dt * k1v,
+            self.theta1 + 0.5 * self.dt * k1t1,
+            self.theta2 + 0.5 * self.dt * k1t2,
+            current,
+        )
+        k3v, k3t1, k3t2 = self._derivatives(
+            self.v + 0.5 * self.dt * k2v,
+            self.theta1 + 0.5 * self.dt * k2t1,
+            self.theta2 + 0.5 * self.dt * k2t2,
+            current,
+        )
+        k4v, k4t1, k4t2 = self._derivatives(
+            self.v + self.dt * k3v,
+            self.theta1 + self.dt * k3t1,
+            self.theta2 + self.dt * k3t2,
+            current,
+        )
+        scale = self.dt / 6.0
+        return (
+            self.v + scale * (k1v + 2.0 * k2v + 2.0 * k3v + k4v),
+            self.theta1 + scale * (k1t1 + 2.0 * k2t1 + 2.0 * k3t1 + k4t1),
+            self.theta2 + scale * (k1t2 + 2.0 * k2t2 + 2.0 * k3t2 + k4t2),
+        )
+
     def step(self, current: float) -> int:
-        self.v += (-(self.v - self.v_rest) + self.resistance * current) / self.tau_m * self.dt
-        self.theta1 *= np.exp(-self.dt / self.tau_1)
-        self.theta2 *= np.exp(-self.dt / self.tau_2)
-        threshold = self.v_threshold_base + self.theta1 + self.theta2
-        if self.v >= threshold:
+        """Advance one MAT step and return `1` only when a spike occurs.
+
+        The continuous membrane and adaptive-threshold states are integrated as a
+        single candidate RK4 update. State is committed only after all candidates
+        are finite and inside the documented numerical envelope.
+        """
+        if not math.isfinite(current):
+            raise ValueError("MATNeuron input current must be finite")
+        self._validate_state()
+        v_candidate, theta1_candidate, theta2_candidate = self._rk4_candidate(current)
+        if not (
+            math.isfinite(v_candidate)
+            and math.isfinite(theta1_candidate)
+            and math.isfinite(theta2_candidate)
+            and _VOLTAGE_MIN <= v_candidate <= _VOLTAGE_MAX
+            and 0.0 <= theta1_candidate <= _THETA_MAX
+            and 0.0 <= theta2_candidate <= _THETA_MAX
+        ):
+            raise ValueError("MATNeuron RK4 candidate left the safety envelope")
+        threshold = self.v_threshold_base + theta1_candidate + theta2_candidate
+        if v_candidate >= threshold:
+            theta1_after_spike = theta1_candidate + self.h1
+            theta2_after_spike = theta2_candidate + self.h2
+            if theta1_after_spike > _THETA_MAX or theta2_after_spike > _THETA_MAX:
+                raise ValueError("MATNeuron post-spike adaptation left the safety envelope")
             self.v = self.v_reset
-            self.theta1 += self.h1
-            self.theta2 += self.h2
+            self.theta1 = theta1_after_spike
+            self.theta2 = theta2_after_spike
             return 1
+        self.v = v_candidate
+        self.theta1 = theta1_candidate
+        self.theta2 = theta2_candidate
         return 0
 
     def reset(self) -> None:
+        """Restore voltage and adaptive thresholds to the resting state."""
         self.v = self.v_rest
         self.theta1, self.theta2 = 0.0, 0.0

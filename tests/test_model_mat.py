@@ -4,14 +4,14 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: MATNeuron
+# SC-NeuroCore — End-to-end test: MATNeuron RK4 hardening
 
 """Full pipeline test for MATNeuron (Kobayashi et al. 2009).
 
 Multi-timescale Adaptive Threshold model.
 dV/dt = (-(V-V_rest) + R·I) / tau_m
-theta1 *= exp(-dt/tau_1)    (fast adaptation, tau=10)
-theta2 *= exp(-dt/tau_2)    (slow adaptation, tau=200)
+dtheta1/dt = -theta1/tau_1    (fast adaptation, tau=10)
+dtheta2/dt = -theta2/tau_2    (slow adaptation, tau=200)
 Threshold: V_th = V_base + theta1 + theta2.
 On spike: V→V_reset, theta1 += h1, theta2 += h2.
 
@@ -88,36 +88,43 @@ class TestMATIsolation:
 # 2. ANALYTICAL — membrane equation, threshold decay, spike mechanism
 # ---------------------------------------------------------------------------
 class TestMATAnalytical:
-    def test_dv_formula_one_step(self):
-        """dV = (-(V-V_rest) + R·I) / tau_m · dt."""
+    def test_rk4_candidate_one_step(self):
+        """The public step commits the candidate-first RK4 state."""
         n = MATNeuron()
-        v0 = n.v
         I = 15.0
-        expected_dv = (-(v0 - n.v_rest) + n.resistance * I) / n.tau_m * n.dt
+        expected_v, expected_theta1, expected_theta2 = n._rk4_candidate(I)
         n.step(I)
-        # If no spike, dv should match exactly
-        actual_dv = n.v - v0
-        assert abs(actual_dv - expected_dv) < 1e-12
+        assert abs(n.v - expected_v) < 1e-12
+        assert abs(n.theta1 - expected_theta1) < 1e-12
+        assert abs(n.theta2 - expected_theta2) < 1e-12
+
+    def test_rk4_separates_from_forward_euler(self):
+        """Finite-dt MAT integration must not regress to raw forward Euler."""
+        n = MATNeuron(theta1=4.0, theta2=2.0, dt=2.0)
+        I = 15.0
+        euler_v = n.v + (-(n.v - n.v_rest) + n.resistance * I) / n.tau_m * n.dt
+        expected_v, _, _ = n._rk4_candidate(I)
+        assert abs(expected_v - euler_v) > 1e-3
 
     def test_theta1_exponential_decay(self):
-        """theta1 *= exp(-dt/tau_1). After n steps: theta1 = h1·exp(-n·dt/tau_1)."""
+        """RK4 threshold decay tracks the closed-form exponential."""
         n = MATNeuron()
         n.theta1 = 5.0  # as if just spiked
         steps = 20
         for _ in range(steps):
             n.step(0.0)  # zero current to prevent new spikes
         expected = 5.0 * np.exp(-steps * n.dt / n.tau_1)
-        assert abs(n.theta1 - expected) < 1e-10
+        assert abs(n.theta1 - expected) < 1e-3
 
     def test_theta2_exponential_decay(self):
-        """theta2 *= exp(-dt/tau_2). Slower decay than theta1."""
+        """RK4 slow-threshold decay tracks the closed-form exponential."""
         n = MATNeuron()
         n.theta2 = 3.0
         steps = 20
         for _ in range(steps):
             n.step(0.0)
         expected = 3.0 * np.exp(-steps * n.dt / n.tau_2)
-        assert abs(n.theta2 - expected) < 1e-10
+        assert abs(n.theta2 - expected) < 1e-9
 
     def test_theta1_decays_faster_than_theta2(self):
         """tau_1 < tau_2 → theta1 decays faster."""
@@ -155,6 +162,15 @@ class TestMATAnalytical:
                 assert n.theta2 >= n.h2 * 0.9
                 break
 
+    def test_spike_retains_threshold_candidates(self):
+        """Spike reset keeps the RK4-decayed threshold state before increments."""
+        n = MATNeuron()
+        _, theta1_candidate, theta2_candidate = n._rk4_candidate(250.0)
+        assert n.step(250.0) == 1
+        assert n.v == n.v_reset
+        assert abs(n.theta1 - (theta1_candidate + n.h1)) < 1e-12
+        assert abs(n.theta2 - (theta2_candidate + n.h2)) < 1e-12
+
     def test_spike_resets_voltage(self):
         """On spike: V → V_reset."""
         n = MATNeuron()
@@ -173,6 +189,23 @@ class TestMATAnalytical:
         expected_ss = n.v_rest + n.resistance * I
         # Should be close to steady state
         assert abs(n.v - expected_ss) < 1.0
+
+    def test_invalid_current_preserves_state(self):
+        """Invalid runtime current is rejected before mutating state."""
+        n = MATNeuron()
+        before = (n.v, n.theta1, n.theta2)
+        with pytest.raises(ValueError, match="input current"):
+            n.step(float("nan"))
+        assert (n.v, n.theta1, n.theta2) == before
+
+    def test_invalid_state_preserves_state(self):
+        """Corrupted threshold adaptation is rejected before mutation."""
+        n = MATNeuron()
+        n.theta1 = -1.0
+        before = (n.v, n.theta1, n.theta2)
+        with pytest.raises(ValueError, match="threshold adaptation"):
+            n.step(10.0)
+        assert (n.v, n.theta1, n.theta2) == before
 
 
 # ---------------------------------------------------------------------------
