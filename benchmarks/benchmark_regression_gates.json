@@ -661,6 +661,66 @@
       }
     },
     {
+      "artefact": "benchmarks/results/local_python_2026-06-18_rall_cable_implicit.json",
+      "expected_values": {
+        "spdx_license": "AGPL-3.0-or-later",
+        "benchmark": "RallCableNeuron implicit sealed passive-cable solve",
+        "evidence_class": "local_regression_non_isolated",
+        "production_speed_claim": false,
+        "hardware_measurement_claimed": false
+      },
+      "id": "rall-cable-implicit-multibackend-local-regression",
+      "required_numbers": [
+        "backend_summary.python.median_ns_per_step",
+        "backend_summary.python.min_ns_per_step",
+        "backend_summary.python.max_ns_per_step",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ns_per_step",
+        "backend_summary.rust.min_ns_per_step",
+        "backend_summary.rust.max_ns_per_step",
+        "backend_summary.rust.spikes",
+        "backend_summary.go.median_ns_per_step",
+        "backend_summary.go.min_ns_per_step",
+        "backend_summary.go.max_ns_per_step",
+        "backend_summary.go.spikes",
+        "backend_summary.julia.median_ns_per_step",
+        "backend_summary.julia.min_ns_per_step",
+        "backend_summary.julia.max_ns_per_step",
+        "backend_summary.julia.spikes",
+        "backend_summary.mojo.median_ns_per_step",
+        "backend_summary.mojo.min_ns_per_step",
+        "backend_summary.mojo.max_ns_per_step",
+        "backend_summary.mojo.spikes",
+        "steps",
+        "repeats",
+        "current"
+      ],
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0
+        }
+      ],
+      "source_hashes": {
+        "benchmarks/bench_model_rall_cable.py": "source_hashes.benchmarks/bench_model_rall_cable.py",
+        "engine/Cargo.toml": "source_hashes.engine/Cargo.toml",
+        "engine/examples/bench_rall_cable_implicit.rs": "source_hashes.engine/examples/bench_rall_cable_implicit.rs",
+        "engine/src/neurons/multi_compartment.rs": "source_hashes.engine/src/neurons/multi_compartment.rs",
+        "src/sc_neurocore/neurons/models/rall_cable.py": "source_hashes.src/sc_neurocore/neurons/models/rall_cable.py",
+        "src/sc_neurocore/accel/go/services/rall_cable.go": "source_hashes.src/sc_neurocore/accel/go/services/rall_cable.go",
+        "src/sc_neurocore/accel/go/services/rall_cable_test.go": "source_hashes.src/sc_neurocore/accel/go/services/rall_cable_test.go",
+        "src/sc_neurocore/accel/julia/neurons/rall_cable.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/rall_cable.jl",
+        "src/sc_neurocore/accel/mojo/kernels/rall_cable.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/rall_cable.mojo",
+        "src/sc_neurocore/accel/rust/safety/rall_cable.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/rall_cable.rs"
+      }
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-17_escape_rate_exact_flow.json",
       "expected_values": {
         "spdx_license": "AGPL-3.0-or-later",

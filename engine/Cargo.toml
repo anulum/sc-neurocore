@@ -101,6 +101,9 @@ name = "bench_precision_traps"
 name = "bench_theta_exact_flow"
 
 [[example]]
+name = "bench_rall_cable_implicit"
+
+[[example]]
 name = "bench_ultrascale_dense_folding"
 
 [[example]]

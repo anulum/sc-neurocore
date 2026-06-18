@@ -1,0 +1,316 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "benchmark": "RallCableNeuron implicit sealed passive-cable solve",
+  "timestamp_utc": "2026-06-18T18:14:00+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_rall_cable.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 500.0,
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 18633.773545,
+      "min_ns_per_step": 18126.659645,
+      "max_ns_per_step": 18857.107415,
+      "spikes": 0
+    },
+    "rust": {
+      "median_ns_per_step": 677.157,
+      "min_ns_per_step": 653.795345,
+      "max_ns_per_step": 747.625365,
+      "spikes": 0
+    },
+    "go": {
+      "median_ns_per_step": 173.4,
+      "min_ns_per_step": 169.8,
+      "max_ns_per_step": 180.1,
+      "spikes": 0
+    },
+    "julia": {
+      "median_ns_per_step": 148.29874,
+      "min_ns_per_step": 146.88848,
+      "max_ns_per_step": 878.248485,
+      "spikes": 0
+    },
+    "mojo": {
+      "median_ns_per_step": 27.44925004662946,
+      "min_ns_per_step": 27.203955105505884,
+      "max_ns_per_step": 27.822800038848072,
+      "spikes": 0
+    }
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 18633.773545,
+      "min_ns_per_step": 18126.659645,
+      "max_ns_per_step": 18857.107415,
+      "spikes": 0,
+      "results": [
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 500.0,
+          "elapsed_ns": 3726754709,
+          "ns_per_step": 18633.773545,
+          "spikes": 0,
+          "ending_state": [
+            -62.607655502392916,
+            301.0287081339704
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 500.0,
+          "elapsed_ns": 3760823596,
+          "ns_per_step": 18804.11798,
+          "spikes": 0,
+          "ending_state": [
+            -62.607655502392916,
+            301.0287081339704
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 500.0,
+          "elapsed_ns": 3717545610,
+          "ns_per_step": 18587.72805,
+          "spikes": 0,
+          "ending_state": [
+            -62.607655502392916,
+            301.0287081339704
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 500.0,
+          "elapsed_ns": 3771421483,
+          "ns_per_step": 18857.107415,
+          "spikes": 0,
+          "ending_state": [
+            -62.607655502392916,
+            301.0287081339704
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 500.0,
+          "elapsed_ns": 3625331929,
+          "ns_per_step": 18126.659645,
+          "spikes": 0,
+          "ending_state": [
+            -62.607655502392916,
+            301.0287081339704
+          ]
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "command": "cargo run --quiet --manifest-path engine/Cargo.toml --example bench_rall_cable_implicit",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 500.0,
+      "median_ns_per_step": 677.157,
+      "min_ns_per_step": 653.795345,
+      "max_ns_per_step": 747.625365,
+      "results_ns_per_step": [
+        653.795345,
+        700.457165,
+        747.625365,
+        674.217595,
+        677.157
+      ],
+      "spikes": 0,
+      "spike_counts": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "final_soma": [
+        -62.607655502392916,
+        -62.607655502392916,
+        -62.607655502392916,
+        -62.607655502392916,
+        -62.607655502392916
+      ],
+      "final_distal": [
+        301.0287081339704,
+        301.0287081339704,
+        301.0287081339704,
+        301.0287081339704,
+        301.0287081339704
+      ],
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "5.17 11.09 13.93 2/3995 1858775",
+        "load_average_after": "5.17 11.09 13.93 3/3997 1858794",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=4599.245,max=4605.139,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      }
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/rall_cable.go src/sc_neurocore/accel/go/services/rall_cable_test.go -run ^$ -bench BenchmarkRallCableImplicitSolve$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 500.0,
+      "median_ns_per_step": 173.4,
+      "min_ns_per_step": 169.8,
+      "max_ns_per_step": 180.1,
+      "results_ns_per_step": [
+        177.2,
+        180.1,
+        169.8,
+        169.8,
+        173.4
+      ],
+      "spikes": 0,
+      "spike_counts": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <rall cable implicit benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 500.0,
+      "median_ns_per_step": 148.29874,
+      "min_ns_per_step": 146.88848,
+      "max_ns_per_step": 878.248485,
+      "results_ns_per_step": [
+        878.248485,
+        146.88848,
+        147.31524,
+        151.88412,
+        148.29874
+      ],
+      "spikes": 0,
+      "spike_counts": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "final_soma": [
+        -62.607655502392916,
+        -62.607655502392916,
+        -62.607655502392916,
+        -62.607655502392916,
+        -62.607655502392916
+      ],
+      "final_distal": [
+        301.0287081339704,
+        301.0287081339704,
+        301.0287081339704,
+        301.0287081339704,
+        301.0287081339704
+      ]
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp rall cable benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 500.0,
+      "median_ns_per_step": 27.44925004662946,
+      "min_ns_per_step": 27.203955105505884,
+      "max_ns_per_step": 27.822800038848072,
+      "results_ns_per_step": [
+        27.433624782133847,
+        27.699454803951085,
+        27.822800038848072,
+        27.44925004662946,
+        27.203955105505884
+      ],
+      "spikes": 0,
+      "spike_counts": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "final_soma": [
+        -62.607655502392916,
+        -62.607655502392916,
+        -62.607655502392916,
+        -62.607655502392916,
+        -62.607655502392916
+      ],
+      "final_distal": [
+        301.0287081339704,
+        301.0287081339704,
+        301.0287081339704,
+        301.0287081339704,
+        301.0287081339704
+      ]
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_model_rall_cable.py": "04091fd9d1bedfd7269c48859fea51af303e2b0ac7aadddcf3d6e28a17b6843d",
+    "engine/Cargo.toml": "b800894b7f0464759c83932ccced02e0647826925b058236ed9ecf237c3a6f02",
+    "engine/examples/bench_rall_cable_implicit.rs": "f80b16c983ca4f6803d22c196ac96e895a4151377a3f890563018d7d24eaa441",
+    "engine/src/neurons/multi_compartment.rs": "174ed48c869ae978caa9b743eba16d5a82d2d3a309c7c45ffe17c2e2d6ede539",
+    "src/sc_neurocore/neurons/models/rall_cable.py": "3d78e9f5d3e5e4c8f900bac824fd998154aef21f68b52624fd51a84df6d23d61",
+    "src/sc_neurocore/accel/go/services/rall_cable.go": "3a059d8f5c4766ef99f2032b0e0f22c88d00425484a6386c8b5508c25f785c10",
+    "src/sc_neurocore/accel/go/services/rall_cable_test.go": "ca83b14433f4369fc403f1c02d5879d2eebc5a3c9b4c64a360d94a10a2ea3d42",
+    "src/sc_neurocore/accel/julia/neurons/rall_cable.jl": "b3b421485d985d0ce56a79f2220737b5cf2608a5c092fd0af244f81da3cf8f0c",
+    "src/sc_neurocore/accel/mojo/kernels/rall_cable.mojo": "aca3070df22e6ba0060daa14ee5222defb0440bc64b5da05557bc8170d3c0744",
+    "src/sc_neurocore/accel/rust/safety/rall_cable.rs": "66f055e5bab3311d6eccf214ec4e840ac4420ea36938530f9479f5caec0c50d0",
+    "benchmarks/bench_model_rall_cable": {
+      "py": "04091fd9d1bedfd7269c48859fea51af303e2b0ac7aadddcf3d6e28a17b6843d"
+    },
+    "engine/Cargo": {
+      "toml": "b800894b7f0464759c83932ccced02e0647826925b058236ed9ecf237c3a6f02"
+    },
+    "engine/examples/bench_rall_cable_implicit": {
+      "rs": "f80b16c983ca4f6803d22c196ac96e895a4151377a3f890563018d7d24eaa441"
+    },
+    "engine/src/neurons/multi_compartment": {
+      "rs": "174ed48c869ae978caa9b743eba16d5a82d2d3a309c7c45ffe17c2e2d6ede539"
+    },
+    "src/sc_neurocore/neurons/models/rall_cable": {
+      "py": "3d78e9f5d3e5e4c8f900bac824fd998154aef21f68b52624fd51a84df6d23d61"
+    },
+    "src/sc_neurocore/accel/go/services/rall_cable": {
+      "go": "3a059d8f5c4766ef99f2032b0e0f22c88d00425484a6386c8b5508c25f785c10"
+    },
+    "src/sc_neurocore/accel/go/services/rall_cable_test": {
+      "go": "ca83b14433f4369fc403f1c02d5879d2eebc5a3c9b4c64a360d94a10a2ea3d42"
+    },
+    "src/sc_neurocore/accel/julia/neurons/rall_cable": {
+      "jl": "b3b421485d985d0ce56a79f2220737b5cf2608a5c092fd0af244f81da3cf8f0c"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/rall_cable": {
+      "mojo": "aca3070df22e6ba0060daa14ee5222defb0440bc64b5da05557bc8170d3c0744"
+    },
+    "src/sc_neurocore/accel/rust/safety/rall_cable": {
+      "rs": "66f055e5bab3311d6eccf214ec4e840ac4420ea36938530f9479f5caec0c50d0"
+    }
+  }
+}
