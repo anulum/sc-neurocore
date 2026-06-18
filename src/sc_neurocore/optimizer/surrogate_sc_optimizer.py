@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Iterable
+from typing import Any, Iterable
 
 import numpy as np
 
@@ -132,9 +132,9 @@ class _RidgeSurrogate:
 
     def __init__(self, alpha: float = 1e-3) -> None:
         self.alpha = alpha
-        self._coef: np.ndarray | None = None
+        self._coef: np.ndarray[Any, Any] | None = None
 
-    def fit(self, features: np.ndarray, labels: np.ndarray) -> None:
+    def fit(self, features: np.ndarray[Any, Any], labels: np.ndarray[Any, Any]) -> None:
         if features.ndim != 2 or labels.ndim != 2:
             raise ValueError("features and labels must be two-dimensional")
         if features.shape[0] != labels.shape[0]:
@@ -142,10 +142,11 @@ class _RidgeSurrogate:
         reg = self.alpha * np.eye(features.shape[1], dtype=np.float64)
         self._coef = np.linalg.solve(features.T @ features + reg, features.T @ labels)
 
-    def predict(self, features: np.ndarray) -> np.ndarray:
+    def predict(self, features: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         if self._coef is None:
             raise RuntimeError("surrogate is not fitted")
-        return features @ self._coef
+        prediction: np.ndarray[Any, Any] = features @ self._coef
+        return prediction
 
 
 class SurrogateSCOptimizer:
@@ -214,8 +215,8 @@ class SurrogateSCOptimizer:
         return self._rebalance(selected, network)
 
     def _fit_surrogate(self, network: list[LayerProfile]) -> None:
-        rows: list[np.ndarray] = []
-        labels: list[np.ndarray] = []
+        rows: list[np.ndarray[Any, Any]] = []
+        labels: list[np.ndarray[Any, Any]] = []
 
         for layer in network:
             for cand in self._candidate_grid(layer):
@@ -390,7 +391,7 @@ class SurrogateSCOptimizer:
             target_name=self.target.name,
         )
 
-    def _features(self, cand: _Candidate) -> np.ndarray:
+    def _features(self, cand: _Candidate) -> np.ndarray[Any, Any]:
         decor = [1.0 if cand.decorrelator == name else 0.0 for name in _DECORRELATORS]
         mode = [1.0 if cand.mode == name else 0.0 for name in _MODES]
         poly = (
@@ -412,7 +413,7 @@ class SurrogateSCOptimizer:
             dtype=np.float64,
         )
 
-    def _normalise_label(self, label: _Label) -> np.ndarray:
+    def _normalise_label(self, label: _Label) -> np.ndarray[Any, Any]:
         return np.array(
             [
                 label.luts / max(1, self.target.budget.max_luts),
@@ -423,7 +424,7 @@ class SurrogateSCOptimizer:
             dtype=np.float64,
         )
 
-    def _denormalise_prediction(self, values: np.ndarray) -> _Label:
+    def _denormalise_prediction(self, values: np.ndarray[Any, Any]) -> _Label:
         return _Label(
             luts=float(values[0] * max(1, self.target.budget.max_luts)),
             power_mw=float(values[1] * max(1e-9, self.target.budget.max_power_mw)),

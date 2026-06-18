@@ -19,6 +19,7 @@ a single command.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -50,9 +51,17 @@ class OptimizationResult:
     final_bitstream_length: int
     final_sparsity: float
     steps: list[OptimizationStep] = field(default_factory=list)
-    optimized_weights: list[np.ndarray] = field(default_factory=list, repr=False)
+    optimized_weights: list[np.ndarray[Any, Any]] = field(default_factory=list, repr=False)
 
     def summary(self) -> str:
+        """Render a multi-line human-readable report of the optimization outcome.
+
+        Returns
+        -------
+        str
+            One line for the target verdict, LUT utilisation, bitstream length,
+            sparsity and step count, followed by one line per compression step.
+        """
         lines = [
             f"Resource Optimization: {self.target}",
             f"  Fits: {'YES' if self.fits else 'NO'}",
@@ -68,7 +77,7 @@ class OptimizationResult:
 
 def fit_to_target(
     layer_sizes: list[tuple[int, int]],
-    weights: list[np.ndarray],
+    weights: list[np.ndarray[Any, Any]],
     target: str = "ice40",
     max_iterations: int = 10,
     min_bitstream_length: int = 32,
