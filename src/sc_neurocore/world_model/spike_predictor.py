@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from typing import Any
 import numpy as np
 
 
@@ -60,6 +61,7 @@ class SpikePredictor:
     seed: int = 42
 
     def __post_init__(self) -> None:
+        """Seed the RNG and initialise the predictor weights."""
         rng = np.random.RandomState(self.seed)
         n_features = self.n_channels * self.history_len
         # Small random weights — predict from history
@@ -69,13 +71,13 @@ class SpikePredictor:
         self._history = np.zeros((self.history_len, self.n_channels), dtype=np.float64)
         self._t = 0
 
-    def _features(self) -> np.ndarray:
+    def _features(self) -> np.ndarray[Any, Any]:
         """Flatten history buffer into feature vector."""
         # Ordered: oldest first
         indices = [(self._t + i) % self.history_len for i in range(self.history_len)]
         return self._history[indices].ravel()
 
-    def predict_probs(self) -> np.ndarray:
+    def predict_probs(self) -> np.ndarray[Any, Any]:
         """Predict per-channel firing probabilities from history."""
         features = self._features()
         logits = self.W @ features + self.bias
@@ -83,11 +85,11 @@ class SpikePredictor:
         probs = 1.0 / (1.0 + np.exp(-np.clip(logits, -20, 20)))
         return probs
 
-    def predict(self) -> np.ndarray:
+    def predict(self) -> np.ndarray[Any, Any]:
         """Predict binary spike pattern."""
         return (self.predict_probs() > self.threshold).astype(np.int8)
 
-    def update(self, actual: np.ndarray) -> None:
+    def update(self, actual: np.ndarray[Any, Any]) -> None:
         """Update weights with observed spike pattern (LMS rule).
 
         Parameters
@@ -112,13 +114,13 @@ class SpikePredictor:
 
 
 def predict_and_xor_world_model(
-    spikes: np.ndarray,
+    spikes: np.ndarray[Any, Any],
     n_channels: int,
     history_len: int = 8,
     lr: float = 0.01,
     threshold: float = 0.5,
     seed: int = 42,
-) -> tuple[np.ndarray, int]:
+) -> tuple[np.ndarray[Any, Any], int]:
     """World-model predict-XOR loop for codec compression.
 
     Returns (errors, correct_count).
@@ -145,13 +147,13 @@ def predict_and_xor_world_model(
 
 
 def xor_and_recover_world_model(
-    errors: np.ndarray,
+    errors: np.ndarray[Any, Any],
     n_channels: int,
     history_len: int = 8,
     lr: float = 0.01,
     threshold: float = 0.5,
     seed: int = 42,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """World-model XOR-recover loop for codec decompression."""
     T = errors.shape[0]
     predictor = SpikePredictor(

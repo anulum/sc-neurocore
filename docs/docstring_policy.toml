@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 91
+expected_file_count = 93
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -372,3 +372,11 @@ rationale = "Public multimodal spike-fusion combiner."
 [[file]]
 path = "src/sc_neurocore/fusion/sensor_fusion.py"
 rationale = "Public sensor-fusion adapters, attention weighting, Verilog emitter, and energy estimator."
+
+[[file]]
+path = "src/sc_neurocore/world_model/spike_predictor.py"
+rationale = "Public spike-based next-state predictor."
+
+[[file]]
+path = "src/sc_neurocore/world_model/predictive_model.py"
+rationale = "Public linear-Gaussian state-space world model with Kalman filtering and RTS smoothing."
