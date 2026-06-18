@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 117
+expected_file_count = 119
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -476,3 +476,11 @@ rationale = "Public published neural decoder/encoder reference implementations (
 [[file]]
 path = "src/sc_neurocore/bio/transcriptomic.py"
 rationale = "Public single-cell transcriptomic foundation-model interfaces (scKG-BERT, Geneformer)."
+
+[[file]]
+path = "src/sc_neurocore/optimizer/resource_optimizer.py"
+rationale = "Public automatic FPGA resource optimizer that fits an SNN to a target device budget."
+
+[[file]]
+path = "src/sc_neurocore/optimizer/surrogate_sc_optimizer.py"
+rationale = "Public surrogate-model compiler optimiser over stochastic-computing design points."
