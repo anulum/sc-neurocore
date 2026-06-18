@@ -220,6 +220,7 @@ nav:
       - Hardware Guide: hardware/HARDWARE_GUIDE.md
       - AER Priority Queue: hardware/aer_priority_queue.md
       - ADC-to-Spike Quantiser: hardware/adc_to_spike_quantiser.md
+      - CORDIV State Machine: hardware/sc_cordiv.md
       - DCLS RTL Contract: compiler/dcls_rtl.md
       - Zynq UltraScale+ Target: hardware/ultrascale_plus.md
       - FPGA Toolchain Guide: hardware/FPGA_TOOLCHAIN_GUIDE.md
