@@ -35,18 +35,36 @@ function valid(s::NonlinearLIFNeuronState)::Bool
         s.dt <= s.tau_w
 end
 
+function derivatives(s::NonlinearLIFNeuronState, v::Float64, w::Float64, current::Float64)
+    nonlinear = s.a * (v - s.v_rest) * (v - s.v_crit)
+    dv = (nonlinear - w + current) / s.c_m
+    dw = (s.b * (v - s.v_rest) - w) / s.tau_w
+    return dv, dw
+end
+
+function rk4_candidate(s::NonlinearLIFNeuronState, current::Float64)
+    k1v, k1w = derivatives(s, s.v, s.w, current)
+    k2v, k2w = derivatives(s, s.v + 0.5 * s.dt * k1v, s.w + 0.5 * s.dt * k1w, current)
+    k3v, k3w = derivatives(s, s.v + 0.5 * s.dt * k2v, s.w + 0.5 * s.dt * k2w, current)
+    k4v, k4w = derivatives(s, s.v + s.dt * k3v, s.w + s.dt * k3w, current)
+    next_v = s.v + (s.dt / 6.0) * (k1v + 2.0 * k2v + 2.0 * k3v + k4v)
+    next_w = s.w + (s.dt / 6.0) * (k1w + 2.0 * k2w + 2.0 * k3w + k4w)
+    return next_v, next_w
+end
+
 function step!(s::NonlinearLIFNeuronState, current::Float64)::Int
     if !isfinite(current) || !valid(s)
-        return 0
+        return -1
     end
 
-    cubic = s.a * (s.v - s.v_rest) * (s.v - s.v_crit)
-    dv = (cubic - s.w + current) / s.c_m * s.dt
-    dw = (s.b * (s.v - s.v_rest) - s.w) / s.tau_w * s.dt
-    s.v += dv
-    s.w += dw
+    next_v, next_w = rk4_candidate(s, current)
+    if !(isfinite(next_v) && isfinite(next_w))
+        return -1
+    end
+    s.v = next_v
+    s.w = next_w
 
-    if s.v >= s.v_threshold
+    if next_v >= s.v_threshold
         s.v = s.v_reset
         return 1
     end

@@ -5,7 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 
-//! Safety surface for the nonlinear leaky integrate-and-fire neuron.
+/// Safety surface for the nonlinear leaky integrate-and-fire neuron.
 
 #[derive(Clone, Copy, Debug)]
 pub struct NonlinearLifState {
@@ -63,18 +63,54 @@ pub fn validate_nlif(state: &NonlinearLifState) -> bool {
         && state.dt <= state.tau_w
 }
 
+fn derivatives(state: &NonlinearLifState, v: f64, w: f64, current: f64) -> (f64, f64) {
+    let nonlinear = state.a * (v - state.v_rest) * (v - state.v_crit);
+    let dv = (nonlinear - w + current) / state.c_m;
+    let dw = (state.b * (v - state.v_rest) - w) / state.tau_w;
+    (dv, dw)
+}
+
+fn rk4_candidate(state: &NonlinearLifState, current: f64) -> Option<(f64, f64)> {
+    let (k1v, k1w) = derivatives(state, state.v, state.w, current);
+    let (k2v, k2w) = derivatives(
+        state,
+        state.v + 0.5 * state.dt * k1v,
+        state.w + 0.5 * state.dt * k1w,
+        current,
+    );
+    let (k3v, k3w) = derivatives(
+        state,
+        state.v + 0.5 * state.dt * k2v,
+        state.w + 0.5 * state.dt * k2w,
+        current,
+    );
+    let (k4v, k4w) = derivatives(
+        state,
+        state.v + state.dt * k3v,
+        state.w + state.dt * k3w,
+        current,
+    );
+    let next_v = state.v + (state.dt / 6.0) * (k1v + 2.0 * k2v + 2.0 * k3v + k4v);
+    let next_w = state.w + (state.dt / 6.0) * (k1w + 2.0 * k2w + 2.0 * k3w + k4w);
+    if next_v.is_finite() && next_w.is_finite() {
+        Some((next_v, next_w))
+    } else {
+        None
+    }
+}
+
 pub fn step(state: &mut NonlinearLifState, current: f64) -> i32 {
     if !current.is_finite() || !validate_nlif(state) {
-        return 0;
+        return -1;
     }
 
-    let cubic = state.a * (state.v - state.v_rest) * (state.v - state.v_crit);
-    let dv = (cubic - state.w + current) / state.c_m * state.dt;
-    let dw = (state.b * (state.v - state.v_rest) - state.w) / state.tau_w * state.dt;
-    state.v += dv;
-    state.w += dw;
+    let Some((next_v, next_w)) = rk4_candidate(state, current) else {
+        return -1;
+    };
+    state.v = next_v;
+    state.w = next_w;
 
-    if state.v >= state.v_threshold {
+    if next_v >= state.v_threshold {
         state.v = state.v_reset;
         1
     } else {
@@ -104,7 +140,7 @@ mod tests {
         let mut state = NonlinearLifState::default();
         state.v = -60.0;
         state.w = 0.5;
-        assert_eq!(step(&mut state, f64::NAN), 0);
+        assert_eq!(step(&mut state, f64::NAN), -1);
         assert_eq!(state.v, -60.0);
         assert_eq!(state.w, 0.5);
     }

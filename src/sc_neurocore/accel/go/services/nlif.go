@@ -57,18 +57,36 @@ func (s NonlinearLIFState) Valid() bool {
 		s.DT <= s.TauW
 }
 
-// Step advances one Euler step and returns 1 on spike. Invalid inputs do not mutate state.
+func (s NonlinearLIFState) derivatives(v float64, w float64, current float64) (float64, float64) {
+	nonlinear := s.A * (v - s.VRest) * (v - s.VCrit)
+	dv := (nonlinear - w + current) / s.CM
+	dw := (s.B*(v-s.VRest) - w) / s.TauW
+	return dv, dw
+}
+
+func (s NonlinearLIFState) rk4Candidate(current float64) (float64, float64, bool) {
+	k1v, k1w := s.derivatives(s.V, s.W, current)
+	k2v, k2w := s.derivatives(s.V+0.5*s.DT*k1v, s.W+0.5*s.DT*k1w, current)
+	k3v, k3w := s.derivatives(s.V+0.5*s.DT*k2v, s.W+0.5*s.DT*k2w, current)
+	k4v, k4w := s.derivatives(s.V+s.DT*k3v, s.W+s.DT*k3w, current)
+	nextV := s.V + (s.DT/6.0)*(k1v+2.0*k2v+2.0*k3v+k4v)
+	nextW := s.W + (s.DT/6.0)*(k1w+2.0*k2w+2.0*k3w+k4w)
+	return nextV, nextW, nlifFinite(nextV, nextW)
+}
+
+// Step advances one candidate-first RK4 step and returns 1 on spike. Invalid inputs do not mutate state.
 func (s *NonlinearLIFState) Step(current float64) int {
 	if !nlifFinite(current) || !s.Valid() {
-		return 0
+		return -1
 	}
 
-	cubic := s.A * (s.V - s.VRest) * (s.V - s.VCrit)
-	dv := (cubic - s.W + current) / s.CM * s.DT
-	dw := (s.B*(s.V-s.VRest) - s.W) / s.TauW * s.DT
-	s.V += dv
-	s.W += dw
-	if s.V >= s.VThreshold {
+	nextV, nextW, ok := s.rk4Candidate(current)
+	if !ok {
+		return -1
+	}
+	s.V = nextV
+	s.W = nextW
+	if nextV >= s.VThreshold {
 		s.V = s.VReset
 		return 1
 	}
