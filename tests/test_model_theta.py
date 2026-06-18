@@ -42,7 +42,9 @@ def _exact_theta_candidate(theta: float, current: float, dt: float) -> tuple[flo
         root_i = math.sqrt(current)
         phase = math.atan(y / root_i)
         next_phase = phase + root_i * dt
-        return _wrap_phase(2.0 * math.atan(root_i * math.tan(next_phase))), next_phase >= math.pi / 2.0
+        return _wrap_phase(
+            2.0 * math.atan(root_i * math.tan(next_phase))
+        ), next_phase >= math.pi / 2.0
     if current == 0.0:
         denominator = 1.0 - y * dt
         if abs(denominator) <= 1e-15:
@@ -260,8 +262,7 @@ class TestThetaPhaseSpace:
         n = ThetaNeuron(theta=1.0, dt=0.2)
         current = 2.0
         euler = _wrap_phase(
-            n.theta
-            + ((1.0 - math.cos(n.theta)) + (1.0 + math.cos(n.theta)) * current) * n.dt
+            n.theta + ((1.0 - math.cos(n.theta)) + (1.0 + math.cos(n.theta)) * current) * n.dt
         )
         expected, spiked = _exact_theta_candidate(n.theta, current, n.dt)
         result = n.step(current)

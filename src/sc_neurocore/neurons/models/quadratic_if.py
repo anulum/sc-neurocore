@@ -63,7 +63,9 @@ class QuadraticIFNeuron:
         except OverflowError:
             return math.nan, False
         denominator = 1.0 - evolved_ratio
-        if numerator_ratio < 1.0 <= evolved_ratio or math.isclose(denominator, 0.0, rel_tol=0.0, abs_tol=1e-15):
+        if numerator_ratio < 1.0 <= evolved_ratio or math.isclose(
+            denominator, 0.0, rel_tol=0.0, abs_tol=1e-15
+        ):
             return self.v_reset, True
         next_v = root_i * (1.0 + evolved_ratio) / denominator
         return (self.v_reset, True) if next_v >= self.v_peak else (next_v, False)
