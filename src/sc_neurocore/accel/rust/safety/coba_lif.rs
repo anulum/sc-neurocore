@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for coba_lif
 
-#![allow(dead_code)]
-
 const V_MIN: f64 = -200.0;
 const V_MAX: f64 = 100.0;
 const G_MAX: f64 = 1.0e9;
@@ -55,16 +53,7 @@ impl COBALIFNeuron {
         value.is_finite() && value >= 0.0
     }
 
-    fn decay(&self, tau: f64) -> Result<f64, &'static str> {
-        let ratio = -self.dt / tau;
-        let decay = if ratio < -700.0 { 0.0 } else { ratio.exp() };
-        if !decay.is_finite() || !(0.0..1.0).contains(&decay) {
-            return Err("decay must be in [0, 1)");
-        }
-        Ok(decay)
-    }
-
-    fn validate(&self) -> Result<(f64, f64), &'static str> {
+    fn validate(&self) -> Result<(), &'static str> {
         if !Self::finite(self.v) || !(V_MIN..=V_MAX).contains(&self.v) {
             return Err("v outside COBA LIF safety envelope");
         }
@@ -91,7 +80,40 @@ impl COBALIFNeuron {
         if !(V_MIN..=V_MAX).contains(&self.v_reset) {
             return Err("v_reset outside COBA LIF safety envelope");
         }
-        Ok((self.decay(self.tau_e)?, self.decay(self.tau_i)?))
+        Ok(())
+    }
+
+    fn derivatives(&self, v: f64, g_e: f64, g_i: f64, i_ext: f64) -> (f64, f64, f64) {
+        let i_syn = g_e * (v - self.e_e) + g_i * (v - self.e_i);
+        let dv = (-self.g_l * (v - self.e_l) - i_syn + i_ext) / self.c_m;
+        (dv, -g_e / self.tau_e, -g_i / self.tau_i)
+    }
+
+    fn rk4_candidate(&self, v: f64, g_e: f64, g_i: f64, i_ext: f64) -> (f64, f64, f64) {
+        let (k1v, k1e, k1i) = self.derivatives(v, g_e, g_i, i_ext);
+        let (k2v, k2e, k2i) = self.derivatives(
+            v + 0.5 * self.dt * k1v,
+            g_e + 0.5 * self.dt * k1e,
+            g_i + 0.5 * self.dt * k1i,
+            i_ext,
+        );
+        let (k3v, k3e, k3i) = self.derivatives(
+            v + 0.5 * self.dt * k2v,
+            g_e + 0.5 * self.dt * k2e,
+            g_i + 0.5 * self.dt * k2i,
+            i_ext,
+        );
+        let (k4v, k4e, k4i) = self.derivatives(
+            v + self.dt * k3v,
+            g_e + self.dt * k3e,
+            g_i + self.dt * k3i,
+            i_ext,
+        );
+        (
+            v + (self.dt / 6.0) * (k1v + 2.0 * k2v + 2.0 * k3v + k4v),
+            g_e + (self.dt / 6.0) * (k1e + 2.0 * k2e + 2.0 * k3e + k4e),
+            g_i + (self.dt / 6.0) * (k1i + 2.0 * k2i + 2.0 * k3i + k4i),
+        )
     }
 
     pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
@@ -107,18 +129,16 @@ impl COBALIFNeuron {
         if !i_ext.is_finite() || !Self::nonnegative(delta_ge) || !Self::nonnegative(delta_gi) {
             return Err("invalid COBA LIF step input");
         }
-        let (decay_e, decay_i) = self.validate()?;
+        self.validate()?;
         let ge_pre = self.g_e + delta_ge;
         let gi_pre = self.g_i + delta_gi;
         if ge_pre > G_MAX || gi_pre > G_MAX {
             return Err("conductance candidate outside COBA LIF safety envelope");
         }
         let i_syn = ge_pre * (self.v - self.e_e) + gi_pre * (self.v - self.e_i);
-        let dv = (-self.g_l * (self.v - self.e_l) - i_syn + i_ext) / self.c_m * self.dt;
-        let v_candidate = self.v + dv;
-        let ge_candidate = ge_pre * decay_e;
-        let gi_candidate = gi_pre * decay_i;
-        for value in [i_syn, dv, v_candidate, ge_candidate, gi_candidate] {
+        let (v_candidate, ge_candidate, gi_candidate) =
+            self.rk4_candidate(self.v, ge_pre, gi_pre, i_ext);
+        for value in [i_syn, v_candidate, ge_candidate, gi_candidate] {
             if !value.is_finite() {
                 return Err("COBA LIF candidate must be finite");
             }
@@ -157,11 +177,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn conductance_injection_decays_after_update() {
+    fn conductance_injection_uses_coupled_rk4_candidate() {
         let mut state = COBALIFNeuron::new();
+        let (v_candidate, ge_candidate, gi_candidate) = state.rk4_candidate(state.v, 5.0, 3.0, 0.0);
         assert_eq!(state.step_with_conductance(0.0, 5.0, 3.0).unwrap(), 0);
-        assert!(state.g_e > 0.0 && state.g_e < 5.0);
-        assert!(state.g_i > 0.0 && state.g_i < 3.0);
+        assert!((state.v - v_candidate).abs() < 1.0e-12);
+        assert!((state.g_e - ge_candidate).abs() < 1.0e-12);
+        assert!((state.g_i - gi_candidate).abs() < 1.0e-12);
     }
 
     #[test]

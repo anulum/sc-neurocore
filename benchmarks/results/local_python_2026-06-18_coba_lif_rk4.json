@@ -1,0 +1,283 @@
+{
+  "backend_summary": {
+    "go": {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/coba_lif.go src/sc_neurocore/accel/go/services/coba_lif_test.go -run ^$ -bench BenchmarkCOBALIFRK4$ -benchtime 200000x -count 5",
+      "current": 500.0,
+      "max_ns_per_step": 55.5,
+      "median_ns_per_step": 53.78,
+      "min_ns_per_step": 52.53,
+      "repeats": 5,
+      "results_ns_per_step": [
+        54.05,
+        53.78,
+        52.53,
+        55.5,
+        53.55
+      ],
+      "spike_counts": [
+        2777,
+        2777,
+        2777,
+        2777,
+        2777
+      ],
+      "spikes": 2777,
+      "steps": 200000
+    },
+    "julia": {
+      "backend": "julia",
+      "command": "julia --project=. -e <coba_lif RK4 benchmark>",
+      "current": 500.0,
+      "final_ges": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_gis": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_vs": [
+        -52.7891870728416,
+        -52.7891870728416,
+        -52.7891870728416,
+        -52.7891870728416,
+        -52.7891870728416
+      ],
+      "max_ns_per_step": 47.17233,
+      "median_ns_per_step": 47.08304,
+      "min_ns_per_step": 46.4668,
+      "repeats": 5,
+      "results_ns_per_step": [
+        46.4668,
+        47.09625,
+        47.08304,
+        46.71143,
+        47.17233
+      ],
+      "spike_counts": [
+        2777,
+        2777,
+        2777,
+        2777,
+        2777
+      ],
+      "spikes": 2777,
+      "steps": 200000
+    },
+    "mojo": {
+      "backend": "mojo",
+      "command": "mojo -I src/sc_neurocore/accel/mojo/kernels <temp coba_lif benchmark>",
+      "current": 500.0,
+      "final_ges": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_gis": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_vs": [
+        -52.7891870728416,
+        -52.7891870728416,
+        -52.7891870728416,
+        -52.7891870728416,
+        -52.7891870728416
+      ],
+      "max_ns_per_step": 41.19301505852491,
+      "median_ns_per_step": 40.720870019868016,
+      "min_ns_per_step": 39.89655990153551,
+      "repeats": 5,
+      "results_ns_per_step": [
+        41.10225010663271,
+        40.639854851178825,
+        40.720870019868016,
+        39.89655990153551,
+        41.19301505852491
+      ],
+      "spike_counts": [
+        2777,
+        2777,
+        2777,
+        2777,
+        2777
+      ],
+      "spikes": 2777,
+      "steps": 200000
+    },
+    "python": {
+      "backend": "python",
+      "max_ns_per_step": 5184.71355,
+      "median_ns_per_step": 4402.640635,
+      "min_ns_per_step": 4346.72628,
+      "results": [
+        {
+          "backend": "python",
+          "current": 500.0,
+          "elapsed_ns": 1036942710,
+          "ending_state": [
+            -52.7891870728416,
+            0.0,
+            0.0
+          ],
+          "ns_per_step": 5184.71355,
+          "spikes": 2777,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 500.0,
+          "elapsed_ns": 873494782,
+          "ending_state": [
+            -52.7891870728416,
+            0.0,
+            0.0
+          ],
+          "ns_per_step": 4367.47391,
+          "spikes": 2777,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 500.0,
+          "elapsed_ns": 900737883,
+          "ending_state": [
+            -52.7891870728416,
+            0.0,
+            0.0
+          ],
+          "ns_per_step": 4503.689415,
+          "spikes": 2777,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 500.0,
+          "elapsed_ns": 880528127,
+          "ending_state": [
+            -52.7891870728416,
+            0.0,
+            0.0
+          ],
+          "ns_per_step": 4402.640635,
+          "spikes": 2777,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 500.0,
+          "elapsed_ns": 869345256,
+          "ending_state": [
+            -52.7891870728416,
+            0.0,
+            0.0
+          ],
+          "ns_per_step": 4346.72628,
+          "spikes": 2777,
+          "steps": 200000
+        }
+      ],
+      "spikes": 2777
+    },
+    "rust": {
+      "backend": "rust",
+      "command": "rustc -O <temp coba_lif safety benchmark> && <temp benchmark>",
+      "current": 500.0,
+      "final_ges": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_gis": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_vs": [
+        -52.7891870728416,
+        -52.7891870728416,
+        -52.7891870728416,
+        -52.7891870728416,
+        -52.7891870728416
+      ],
+      "max_ns_per_step": 39.21943,
+      "median_ns_per_step": 38.70256,
+      "min_ns_per_step": 38.62633,
+      "repeats": 5,
+      "results_ns_per_step": [
+        38.62633,
+        38.70256,
+        39.21943,
+        38.84344,
+        38.639415
+      ],
+      "spike_counts": [
+        2777,
+        2777,
+        2777,
+        2777,
+        2777
+      ],
+      "spikes": 2777,
+      "steps": 200000
+    }
+  },
+  "benchmark": "COBALIFNeuron candidate-first RK4 conductance ODE",
+  "current": 500.0,
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "host": "aaarthuus",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "production_speed_claim": false,
+  "python": "3.12.3",
+  "repeats": 5,
+  "source_hashes": {
+    "benchmarks/bench_model_coba_lif": {
+      "py": "cfcb1b6a0d8e0c79c4275c20dc9eb412189c98c427d63bfb15a3b0fcc291e66c"
+    },
+    "benchmarks/bench_model_coba_lif.py": "cfcb1b6a0d8e0c79c4275c20dc9eb412189c98c427d63bfb15a3b0fcc291e66c",
+    "src/sc_neurocore/accel/go/services/coba_lif": {
+      "go": "f4ab5de26da5cc292e5f341e5db06aef2e96e2091b2b28aa527c4d07d1365afa"
+    },
+    "src/sc_neurocore/accel/go/services/coba_lif.go": "f4ab5de26da5cc292e5f341e5db06aef2e96e2091b2b28aa527c4d07d1365afa",
+    "src/sc_neurocore/accel/go/services/coba_lif_test": {
+      "go": "3a2835c998e551ccec9733a53b44a02495615704cfb88c9bc375261d84a619ac"
+    },
+    "src/sc_neurocore/accel/go/services/coba_lif_test.go": "3a2835c998e551ccec9733a53b44a02495615704cfb88c9bc375261d84a619ac",
+    "src/sc_neurocore/accel/julia/neurons/coba_lif": {
+      "jl": "7b54dadf537a2c726790f0d35b8f0dda52ac0baf964d33822ca51d4cad89ac81"
+    },
+    "src/sc_neurocore/accel/julia/neurons/coba_lif.jl": "7b54dadf537a2c726790f0d35b8f0dda52ac0baf964d33822ca51d4cad89ac81",
+    "src/sc_neurocore/accel/mojo/kernels/coba_lif": {
+      "mojo": "57773f634ed04f7eefa4618703ee8366ed426b0384a0dca55a47273c261aeaf7"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/coba_lif.mojo": "57773f634ed04f7eefa4618703ee8366ed426b0384a0dca55a47273c261aeaf7",
+    "src/sc_neurocore/accel/rust/safety/coba_lif": {
+      "rs": "8c6b3da7d71d2ea221ba9ab45eff64103467cf42b10380cacdd59cd5221d3d46"
+    },
+    "src/sc_neurocore/accel/rust/safety/coba_lif.rs": "8c6b3da7d71d2ea221ba9ab45eff64103467cf42b10380cacdd59cd5221d3d46",
+    "src/sc_neurocore/neurons/models/coba_lif": {
+      "py": "b3c89aadbfc818fb2339b18c427266743bf7a49b854befe698ea88713a344e75"
+    },
+    "src/sc_neurocore/neurons/models/coba_lif.py": "b3c89aadbfc818fb2339b18c427266743bf7a49b854befe698ea88713a344e75"
+  },
+  "spdx_license": "AGPL-3.0-or-later",
+  "steps": 200000,
+  "timestamp_utc": "2026-06-18T18:57:51.868701+00:00"
+}
