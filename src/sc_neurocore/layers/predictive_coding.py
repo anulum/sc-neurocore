@@ -64,12 +64,13 @@ class PredictiveCodingSCLayer:
     seed: int | None = None
 
     def __post_init__(self) -> None:
+        """Initialise the prediction weights and recurrent state."""
         rng = np.random.RandomState(self.seed)
         # Prediction weights: each neuron predicts the next input
         self.weights = rng.uniform(0.1, 0.9, (self.n_neurons, self.n_inputs))
-        self._prev_input: np.ndarray | None = None
+        self._prev_input: np.ndarray[Any, Any] | None = None
 
-    def forward(self, inputs: list[float] | np.ndarray) -> dict[str, Any]:
+    def forward(self, inputs: list[float] | np.ndarray[Any, Any]) -> dict[str, Any]:
         """Process one timestep.
 
         Parameters
@@ -130,6 +131,7 @@ class PredictiveCodingSCLayer:
         }
 
     def reset(self) -> None:
+        """Re-initialise the prediction weights and clear the previous input."""
         rng = np.random.RandomState(self.seed)
         self.weights = rng.uniform(0.1, 0.9, (self.n_neurons, self.n_inputs))
         self._prev_input = None

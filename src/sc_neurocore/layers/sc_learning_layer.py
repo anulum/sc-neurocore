@@ -6,11 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SC dense layer with integrated STDP learning
 
+"""Stochastic-computing dense layer with integrated STDP learning."""
+
 from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from typing import Any
 import numpy as np
 
 from ..synapses.stochastic_stdp import StochasticSTDPSynapse
@@ -39,6 +42,7 @@ class SCLearningLayer:
     base_seed: int | None = None
 
     def __post_init__(self) -> None:
+        """Build the LIF neurons and their per-input STDP synapses."""
         self.neurons: list[StochasticLIFNeuron] = []
         # synapses[neuron_idx][input_idx]
         self.synapses: list[list[StochasticSTDPSynapse]] = []
@@ -75,10 +79,8 @@ class SCLearningLayer:
                 )
             self.synapses.append(neuron_syns)
 
-    def run_epoch(self, input_values: Sequence[float]) -> np.ndarray:
-        """
-        Run one bitstream epoch (length 'length').
-        """
+    def run_epoch(self, input_values: Sequence[float]) -> np.ndarray[Any, Any]:
+        """Run one bitstream epoch of duration ``length`` and return the spikes."""
         # 1. Encode inputs
         input_bitstreams = [
             self.input_encoders[i].encode(input_values[i]) for i in range(self.n_inputs)
@@ -125,7 +127,8 @@ class SCLearningLayer:
 
         return epoch_spikes
 
-    def get_weights(self) -> np.ndarray:
+    def get_weights(self) -> np.ndarray[Any, Any]:
+        """Return the dense weight matrix gathered from all synapses."""
         weights = np.zeros((self.n_neurons, self.n_inputs))
         for i in range(self.n_neurons):
             for j in range(self.n_inputs):

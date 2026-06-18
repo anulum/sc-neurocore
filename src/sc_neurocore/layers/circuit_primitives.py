@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from typing import Any
 import numpy as np
 
 
@@ -43,6 +44,7 @@ class LateralInhibition:
     radius: int = 2
 
     def __post_init__(self) -> None:
+        """Build the lateral-inhibition kernel matrix."""
         # Build inhibition kernel matrix
         kernel = np.zeros((self.n_neurons, self.n_neurons))
         for i in range(self.n_neurons):
@@ -54,7 +56,7 @@ class LateralInhibition:
                     )
         self._kernel = kernel
 
-    def apply(self, rates: np.ndarray) -> np.ndarray:
+    def apply(self, rates: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Apply lateral inhibition to firing rates.
 
         Parameters
@@ -68,7 +70,8 @@ class LateralInhibition:
             Inhibited firing rates, clipped to [0, inf).
         """
         inhibition = self._kernel @ rates
-        return np.maximum(rates - inhibition, 0.0)
+        inhibited: np.ndarray[Any, Any] = np.maximum(rates - inhibition, 0.0)
+        return inhibited
 
 
 @dataclass
@@ -85,7 +88,7 @@ class WinnerTakeAll:
     n_neurons: int
     k: int = 1
 
-    def apply(self, rates: np.ndarray) -> np.ndarray:
+    def apply(self, rates: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Apply k-WTA to firing rates.
 
         Parameters
@@ -105,6 +108,6 @@ class WinnerTakeAll:
         result[top_k] = rates[top_k]
         return result
 
-    def winners(self, rates: np.ndarray) -> np.ndarray:
+    def winners(self, rates: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Return indices of the k winning neurons."""
         return np.argsort(rates)[-self.k :][::-1]

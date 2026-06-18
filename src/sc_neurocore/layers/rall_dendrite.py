@@ -26,6 +26,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from typing import Any
 import numpy as np
 
 
@@ -54,6 +55,7 @@ class RallDendrite:
     dt: float = 1.0
 
     def __post_init__(self) -> None:
+        """Validate the dendrite geometry and initialise compartment state."""
         if self.n_branches <= 0:
             raise ValueError("n_branches must be positive")
         if self.branch_length <= 0:
@@ -76,12 +78,12 @@ class RallDendrite:
         parent_d = (self.n_branches) ** (2.0 / 3.0)
         self.attenuation = (self.diameters / parent_d) ** 1.5
 
-    def step(self, branch_inputs: np.ndarray) -> float:
+    def step(self, branch_inputs: np.ndarray[Any, Any]) -> float:
         """Advance one timestep.
 
         Parameters
         ----------
-        branch_inputs : np.ndarray
+        branch_inputs : np.ndarray[Any, Any]
             Shape (n_branches,) — synaptic current injected at distal tip of each branch.
 
         Returns
@@ -117,10 +119,11 @@ class RallDendrite:
         return float(self.soma_v)
 
     @property
-    def branch_voltages(self) -> np.ndarray:
+    def branch_voltages(self) -> np.ndarray[Any, Any]:
         """Current compartment voltages, shape (n_branches, branch_length)."""
         return self.v.copy()
 
     def reset(self) -> None:
+        """Reset all compartment and soma voltages to zero."""
         self.v[:] = 0.0
         self.soma_v = 0.0
