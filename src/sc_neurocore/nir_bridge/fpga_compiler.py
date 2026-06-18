@@ -131,7 +131,7 @@ _NEURON_TEMPLATES: dict[str, dict[str, Any]] = {
 }
 
 
-def _require_homogeneous_param(values: np.ndarray, label: str) -> float:
+def _require_homogeneous_param(values: np.ndarray[Any, Any], label: str) -> float:
     """Return the scalar value of a per-neuron parameter or fail closed."""
     arr = np.asarray(values, dtype=np.float64).reshape(-1)
     if arr.size == 0:
@@ -257,7 +257,7 @@ def _hierarchy_weight_literals(
 ) -> dict[str, tuple[int, ...]]:
     """Return flattened quantised weight literals owned by hierarchy output ports."""
 
-    weights_by_stream: dict[str, np.ndarray] = {
+    weights_by_stream: dict[str, np.ndarray[Any, Any]] = {
         _scnir_connection_stream_id(str(conn.src), str(conn.dst)): np.asarray(
             conn.weights,
             dtype=np.int64,

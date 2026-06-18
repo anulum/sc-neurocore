@@ -33,15 +33,15 @@ class _UnitDelayNode:
     """
 
     name: str
-    _buffer: np.ndarray | None = None
+    _buffer: np.ndarray[Any, Any] | None = None
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         if self._buffer is None:
             x = np.atleast_1d(np.asarray(x, dtype=np.float64))
             self._buffer = np.zeros_like(x)
         return self._buffer.copy()
 
-    def update_buffer(self, value: np.ndarray) -> None:
+    def update_buffer(self, value: np.ndarray[Any, Any]) -> None:
         self._buffer = np.atleast_1d(np.asarray(value, dtype=np.float64)).copy()
 
     def reset(self) -> None:
@@ -59,7 +59,7 @@ class SCSubgraphNode:
         if len(self.network.input_nodes) != 1 or len(self.network.output_nodes) != 1:
             raise ValueError("Nested NIRGraph nodes must expose exactly one input and one output")
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         outputs = self.network.step({self.network.input_nodes[0]: np.atleast_1d(np.asarray(x))})
         return outputs[self.network.output_nodes[0]]
 
@@ -90,13 +90,15 @@ class SCMultiPortSubgraphNode:
     def output_ports(self) -> list[str]:
         return self.network.output_nodes
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Single-input convenience: feeds x to first input, returns first output."""
         inputs = {self.network.input_nodes[0]: np.atleast_1d(np.asarray(x))}
         outputs = self.network.step(inputs)
         return outputs[self.network.output_nodes[0]]
 
-    def forward_multi(self, inputs: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+    def forward_multi(
+        self, inputs: dict[str, np.ndarray[Any, Any]]
+    ) -> dict[str, np.ndarray[Any, Any]]:
         """Multi-port forward: provide named inputs, get named outputs."""
         return self.network.step(inputs)
 
@@ -234,7 +236,7 @@ class SCNetwork:
             self._topo_order = self._topological_sort()
         return self._topo_order
 
-    def step(self, inputs: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+    def step(self, inputs: dict[str, np.ndarray[Any, Any]]) -> dict[str, np.ndarray[Any, Any]]:
         """Execute one timestep through the graph.
 
         Parameters
@@ -245,7 +247,7 @@ class SCNetwork:
         -------
         dict mapping output node name → output array
         """
-        values: dict[str, np.ndarray] = {}
+        values: dict[str, np.ndarray[Any, Any]] = {}
 
         for name in self.topo_order:
             node = self.nodes[name]
@@ -273,7 +275,9 @@ class SCNetwork:
 
         return {name: values[name] for name in self.output_nodes if name in values}
 
-    def run(self, inputs: dict[str, np.ndarray], steps: int = 100) -> dict[str, list[np.ndarray]]:
+    def run(
+        self, inputs: dict[str, np.ndarray[Any, Any]], steps: int = 100
+    ) -> dict[str, list[np.ndarray[Any, Any]]]:
         """Run the network for multiple timesteps.
 
         Parameters
@@ -285,7 +289,7 @@ class SCNetwork:
         -------
         dict mapping output node name → list of output arrays per timestep
         """
-        results: dict[str, list[np.ndarray]] = {n: [] for n in self.output_nodes}
+        results: dict[str, list[np.ndarray[Any, Any]]] = {n: [] for n in self.output_nodes}
         for _ in range(steps):
             out = self.step(inputs)
             for name, val in out.items():

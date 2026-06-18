@@ -85,7 +85,7 @@ class NeuronSpec:
         ``"cuba_lif"``, ``"cuba_li"``.
     n_neurons : int
         Number of neurons in this population.
-    params : dict[str, np.ndarray]
+    params : dict[str, np.ndarray[Any, Any]]
         Neuron parameters keyed by canonical names:
         ``tau``, ``r``, ``v_leak``, ``v_threshold``, ``v_reset``,
         ``tau_syn``, ``tau_mem``, ``w_in`` (type-dependent).
@@ -96,7 +96,7 @@ class NeuronSpec:
     name: str
     neuron_type: str
     n_neurons: int
-    params: dict[str, np.ndarray] = field(default_factory=dict)
+    params: dict[str, np.ndarray[Any, Any]] = field(default_factory=dict)
     dt: float = 1.0
 
 
@@ -110,31 +110,31 @@ class ConnectionSpec:
         Source population name.
     dst : str
         Destination population name.
-    weights : np.ndarray
+    weights : np.ndarray[Any, Any]
         Weight matrix of shape ``(n_dst, n_src)`` in float32.
         Row *i* contains the weights from all source neurons to
         destination neuron *i*.
-    bias : np.ndarray | None
+    bias : np.ndarray[Any, Any] | None
         Optional bias vector of shape ``(n_dst,)``.
     delay_steps : int | tuple[int, ...]
         Number of explicit unit-delay timesteps on this connection.  A scalar
         applies to all source columns; a tuple carries one delay per source
         column for heterogeneous NIR ``Delay`` vectors.
-    source_threshold : np.ndarray | None
+    source_threshold : np.ndarray[Any, Any] | None
         Optional threshold vector applied to source signals before the weight
         matrix.  Represents NIR ``Threshold`` on the source side.
-    destination_threshold : np.ndarray | None
+    destination_threshold : np.ndarray[Any, Any] | None
         Optional threshold vector applied after this connection's affine
         accumulation and before the destination population input.
     """
 
     src: str
     dst: str
-    weights: np.ndarray
-    bias: np.ndarray | None = None
+    weights: np.ndarray[Any, Any]
+    bias: np.ndarray[Any, Any] | None = None
     delay_steps: DelaySteps = 0
-    source_threshold: np.ndarray | None = None
-    destination_threshold: np.ndarray | None = None
+    source_threshold: np.ndarray[Any, Any] | None = None
+    destination_threshold: np.ndarray[Any, Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -258,7 +258,7 @@ _SINGLE_PORT_SUBGRAPH_NODE = "SCSubgraphNode"
 _MULTIPORT_SUBGRAPH_NODE = "SCMultiPortSubgraphNode"
 
 
-def _extract_neuron_params(node: Any, neuron_type: str) -> dict[str, np.ndarray]:
+def _extract_neuron_params(node: Any, neuron_type: str) -> dict[str, np.ndarray[Any, Any]]:
     """Extract canonical parameters from an SC neuron node.
 
     Parameters
@@ -270,10 +270,10 @@ def _extract_neuron_params(node: Any, neuron_type: str) -> dict[str, np.ndarray]
 
     Returns
     -------
-    dict[str, np.ndarray]
+    dict[str, np.ndarray[Any, Any]]
         Parameter dictionary with type-appropriate keys.
     """
-    params: dict[str, np.ndarray] = {}
+    params: dict[str, np.ndarray[Any, Any]] = {}
 
     # Common parameters
     for attr in ("tau", "r", "v_leak", "v_threshold", "v_reset"):
@@ -477,7 +477,7 @@ def _delay_steps(node: Any, node_name: str) -> DelaySteps:
     return values
 
 
-def _delay_steps_array(delay_steps: DelaySteps) -> np.ndarray:
+def _delay_steps_array(delay_steps: DelaySteps) -> np.ndarray[Any, Any]:
     """Return delay metadata as a one-dimensional integer array."""
 
     return np.atleast_1d(np.asarray(delay_steps, dtype=np.int64)).reshape(-1)
@@ -523,7 +523,7 @@ def _fit_delay_steps_to_width(delay_steps: DelaySteps, width: int, label: str) -
     return values
 
 
-def _scale_vector(node: Any, node_name: str) -> np.ndarray:
+def _scale_vector(node: Any, node_name: str) -> np.ndarray[Any, Any]:
     """Return a finite one-dimensional scale vector from an SCScaleNode."""
 
     raw_scale = getattr(node, "scale", None)
@@ -537,7 +537,7 @@ def _scale_vector(node: Any, node_name: str) -> np.ndarray:
     return scale
 
 
-def _threshold_vector(node: Any, node_name: str) -> np.ndarray:
+def _threshold_vector(node: Any, node_name: str) -> np.ndarray[Any, Any]:
     """Return a finite one-dimensional threshold vector from an SCThresholdNode."""
 
     raw_threshold = getattr(node, "threshold", None)
@@ -551,18 +551,23 @@ def _threshold_vector(node: Any, node_name: str) -> np.ndarray:
     return threshold
 
 
-def _compose_scale(left: np.ndarray | None, right: np.ndarray) -> np.ndarray:
+def _compose_scale(
+    left: np.ndarray[Any, Any] | None, right: np.ndarray[Any, Any]
+) -> np.ndarray[Any, Any]:
     """Compose adjacent scale vectors under NumPy broadcasting rules."""
 
     if left is None:
         return right
     try:
-        return np.multiply(left, right, dtype=np.float32)
+        product: np.ndarray[Any, Any] = np.multiply(left, right, dtype=np.float32)
+        return product
     except ValueError as exc:
         raise ValueError("Adjacent Scale nodes have incompatible shapes for FPGA lowering") from exc
 
 
-def _broadcast_scale(scale: np.ndarray | None, size: int, label: str) -> np.ndarray | None:
+def _broadcast_scale(
+    scale: np.ndarray[Any, Any] | None, size: int, label: str
+) -> np.ndarray[Any, Any] | None:
     """Broadcast a scalar/vector scale to ``size`` or fail closed."""
 
     if scale is None:
@@ -575,10 +580,10 @@ def _broadcast_scale(scale: np.ndarray | None, size: int, label: str) -> np.ndar
 
 
 def _broadcast_threshold(
-    threshold: np.ndarray | None,
+    threshold: np.ndarray[Any, Any] | None,
     size: int,
     label: str,
-) -> np.ndarray | None:
+) -> np.ndarray[Any, Any] | None:
     """Broadcast a scalar/vector threshold to ``size`` or fail closed."""
 
     if threshold is None:
@@ -625,7 +630,9 @@ def _flatten_widths(node: Any, node_name: str) -> tuple[int, int]:
     return input_width, output_width
 
 
-def _conv1d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, np.ndarray]:
+def _conv1d_to_dense_matrix(
+    node: Any, node_name: str
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Lower a shape-known NIR Conv1d node to an exact dense matrix."""
 
     weight = np.asarray(getattr(node, "weight", None), dtype=np.float32)
@@ -683,7 +690,9 @@ def _conv1d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, np.n
     return dense, np.repeat(bias, output_length).astype(np.float32, copy=False)
 
 
-def _conv2d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, np.ndarray]:
+def _conv2d_to_dense_matrix(
+    node: Any, node_name: str
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Lower a shape-known NIR Conv2d node to an exact dense matrix."""
 
     weight = np.asarray(getattr(node, "weight", None), dtype=np.float32)
@@ -782,7 +791,7 @@ def _conv2d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, np.n
     return dense, np.repeat(bias, output_height * output_width).astype(np.float32, copy=False)
 
 
-def _pool2d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, None]:
+def _pool2d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray[Any, Any], None]:
     """Lower a shape-known NIR Pool2d node to an exact dense matrix."""
 
     class_name = type(node).__name__
@@ -842,7 +851,9 @@ def _pool2d_to_dense_matrix(node: Any, node_name: str) -> tuple[np.ndarray, None
     return dense, None
 
 
-def _weight_matrix_and_bias(node: Any, node_name: str) -> tuple[np.ndarray, np.ndarray | None]:
+def _weight_matrix_and_bias(
+    node: Any, node_name: str
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any] | None]:
     """Return dense weight and bias arrays for a weight-carrying NIR node."""
 
     class_name = type(node).__name__
@@ -886,12 +897,15 @@ def _resolve_weight_source(
     nodes: dict[str, Any],
     predecessors: dict[str, list[str]],
     accumulated_delay_steps: DelaySteps = 0,
-    accumulated_scale: np.ndarray | None = None,
-    accumulated_threshold: np.ndarray | None = None,
+    accumulated_scale: np.ndarray[Any, Any] | None = None,
+    accumulated_threshold: np.ndarray[Any, Any] | None = None,
     required_source_width: int | None = None,
     flatten_output_width: int | None = None,
     seen: frozenset[str] = frozenset(),
-) -> tuple[str, DelaySteps, np.ndarray | None, int | None, np.ndarray | None] | None:
+) -> (
+    tuple[str, DelaySteps, np.ndarray[Any, Any] | None, int | None, np.ndarray[Any, Any] | None]
+    | None
+):
     """Resolve the population/input source feeding a weight node.
 
     Traverses pass-through nodes immediately upstream of ``Affine``/``Linear``
@@ -985,12 +999,12 @@ def _resolve_weight_destination(
     *,
     nodes: dict[str, Any],
     successors: dict[str, list[str]],
-    accumulated_scale: np.ndarray | None = None,
-    accumulated_threshold: np.ndarray | None = None,
+    accumulated_scale: np.ndarray[Any, Any] | None = None,
+    accumulated_threshold: np.ndarray[Any, Any] | None = None,
     required_destination_width: int | None = None,
     flatten_input_width: int | None = None,
     seen: frozenset[str] = frozenset(),
-) -> tuple[str, np.ndarray | None, int | None, np.ndarray | None] | None:
+) -> tuple[str, np.ndarray[Any, Any] | None, int | None, np.ndarray[Any, Any] | None] | None:
     """Resolve the neuron destination fed by a weight node.
 
     Traverses pass-through nodes immediately downstream of ``Affine``/``Linear``
@@ -1064,14 +1078,14 @@ def _resolve_weight_destination(
 
 
 def _fold_connection_scales(
-    weights: np.ndarray,
-    bias: np.ndarray | None,
+    weights: np.ndarray[Any, Any],
+    bias: np.ndarray[Any, Any] | None,
     *,
-    source_scale: np.ndarray | None,
-    destination_scale: np.ndarray | None,
+    source_scale: np.ndarray[Any, Any] | None,
+    destination_scale: np.ndarray[Any, Any] | None,
     src: str,
     dst: str,
-) -> tuple[np.ndarray, np.ndarray | None]:
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any] | None]:
     """Fold adjacent Scale nodes into a connection's weights and bias."""
 
     folded_weights = np.asarray(weights, dtype=np.float32).copy()
@@ -1154,11 +1168,11 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
 
     # Track which weight node feeds which neuron node
     # Pattern: Input → [Affine/Linear] → [Neuron] → [Affine/Linear] → [Neuron] → Output
-    pending_weights: dict[str, tuple[np.ndarray, np.ndarray | None]] = {}
+    pending_weights: dict[str, tuple[np.ndarray[Any, Any], np.ndarray[Any, Any] | None]] = {}
     # Maps a neuron node name → (weight node, post-weight scale, flatten width, threshold)
     weight_source_for: dict[
         str,
-        tuple[str, np.ndarray | None, int | None, np.ndarray | None],
+        tuple[str, np.ndarray[Any, Any] | None, int | None, np.ndarray[Any, Any] | None],
     ] = {}
 
     # First pass: classify nodes
@@ -1261,9 +1275,9 @@ def from_scnetwork(network: Any, dt: float | None = None) -> NeuronGraph:
         # the immediate source path as scalar connection delay metadata.
         src_name = ""
         delay_steps: DelaySteps = 0
-        source_scale: np.ndarray | None = None
+        source_scale: np.ndarray[Any, Any] | None = None
         source_flatten_width: int | None = None
-        source_threshold: np.ndarray | None = None
+        source_threshold: np.ndarray[Any, Any] | None = None
         for pred in predecessors.get(weight_node_name, []):
             resolved = _resolve_weight_source(pred, nodes=nodes, predecessors=predecessors)
             if resolved is not None:

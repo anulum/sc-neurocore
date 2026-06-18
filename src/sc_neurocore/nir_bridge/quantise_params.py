@@ -44,6 +44,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 
+from typing import Any
 import numpy as np
 
 from ..compiler.equation_compiler import Q88
@@ -100,16 +101,16 @@ class QuantisedGraph:
 
 
 def _quantise_array(
-    arr: np.ndarray,
+    arr: np.ndarray[Any, Any],
     q: Q88,
     label: str,
     warnings: list[str],
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Quantise a float array to Q-format integers with clamping.
 
     Parameters
     ----------
-    arr : np.ndarray
+    arr : np.ndarray[Any, Any]
         Float values to quantise.
     q : Q88
         Fixed-point format.
@@ -120,7 +121,7 @@ def _quantise_array(
 
     Returns
     -------
-    np.ndarray
+    np.ndarray[Any, Any]
         Integer array of Q-encoded values (dtype int64).
     """
     flat = arr.flatten()
@@ -227,7 +228,7 @@ def quantise_graph(graph: NeuronGraph, q: Q88) -> QuantisedGraph:
     # Quantise populations
     q_populations: list[NeuronSpec] = []
     for pop in graph.populations:
-        q_params: dict[str, np.ndarray] = {}
+        q_params: dict[str, np.ndarray[Any, Any]] = {}
         for pname, pval in pop.params.items():
             q_params[pname] = _quantise_array(
                 pval,
