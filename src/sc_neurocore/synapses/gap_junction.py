@@ -25,6 +25,7 @@ network-wide oscillatory coupling.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 import math
 
 import numpy as np
@@ -49,6 +50,7 @@ class GapJunction:
     rectification: float = 0.0
 
     def __post_init__(self) -> None:
+        """Validate the conductance and rectification parameters."""
         if not math.isfinite(self.conductance) or self.conductance < 0.0:
             raise ValueError("conductance must be finite and non-negative")
         if not math.isfinite(self.rectification) or not 0.0 <= self.rectification <= 1.0:
@@ -72,7 +74,9 @@ class GapJunction:
             return self.conductance * dv * factor
         return self.conductance * dv
 
-    def current_matrix(self, voltages: np.ndarray, adjacency: np.ndarray) -> np.ndarray:
+    def current_matrix(
+        self, voltages: np.ndarray[Any, Any], adjacency: np.ndarray[Any, Any]
+    ) -> np.ndarray[Any, Any]:
         """Compute gap junction currents for a population.
 
         Parameters
@@ -93,10 +97,13 @@ class GapJunction:
         N = len(voltages)
         dv_matrix = voltages[np.newaxis, :] - voltages[:, np.newaxis]  # dv[i,j] = V[j] - V[i]
         currents = self.conductance * dv_matrix * adjacency
-        return currents.sum(axis=1)
+        net_current: np.ndarray[Any, Any] = currents.sum(axis=1)
+        return net_current
 
     @staticmethod
-    def _validate_current_matrix_inputs(voltages: np.ndarray, adjacency: np.ndarray) -> None:
+    def _validate_current_matrix_inputs(
+        voltages: np.ndarray[Any, Any], adjacency: np.ndarray[Any, Any]
+    ) -> None:
         if not isinstance(voltages, np.ndarray) or voltages.ndim != 1:
             raise ValueError("current_matrix voltages must be a one-dimensional array")
         if not np.all(np.isfinite(voltages)):
