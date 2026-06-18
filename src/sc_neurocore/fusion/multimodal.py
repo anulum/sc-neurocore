@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from typing import Any
 import numpy as np
 
 
@@ -70,7 +71,9 @@ class MultiModalFusion:
         else:
             raise ValueError(f"Unknown mode '{mode}'")
 
-    def fuse(self, spike_trains: dict[str, np.ndarray], duration_us: float) -> np.ndarray:
+    def fuse(
+        self, spike_trains: dict[str, np.ndarray[Any, Any]], duration_us: float
+    ) -> np.ndarray[Any, Any]:
         """Fuse spike trains from all modalities into a unified output.
 
         Parameters
