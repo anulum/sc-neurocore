@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 from sc_neurocore.neurons.equation_builder import from_equations
@@ -16,7 +17,7 @@ MAX_STEPS = 100_000
 MAX_PLOT_POINTS = 5_000
 
 
-def _spike_stats(spike_indices: list[int], dt: float, n_steps: int) -> dict:
+def _spike_stats(spike_indices: list[int], dt: float, n_steps: int) -> dict[str, Any]:
     """Compute spike statistics from spike index list."""
     duration_s = n_steps * dt / 1000.0
     rate = len(spike_indices) / duration_s if duration_s > 0 else 0.0
@@ -51,7 +52,7 @@ def _make_current_trace(
     step_offset: float = 0.8,
     ramp_start: float = 0.0,
     ramp_end: float | None = None,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Generate a current injection trace for the given protocol."""
     I = np.zeros(n_steps)
     if protocol == "constant":
@@ -87,7 +88,7 @@ def simulate(
     current: float = 0.0,
     protocol: str = "constant",
     frequency_hz: float = 10.0,
-) -> dict:
+) -> dict[str, Any]:
     """Run an ODE neuron simulation and return time series data."""
     n_steps = int(duration / dt)
     if n_steps > MAX_STEPS:
@@ -152,7 +153,7 @@ def fi_curve(
     i_min: float = 0.0,
     i_max: float = 50.0,
     i_steps: int = 20,
-) -> dict:
+) -> dict[str, Any]:
     """Sweep current and compute firing rate at each level."""
     currents = np.linspace(i_min, i_max, i_steps).tolist()
     rates: list[float] = []

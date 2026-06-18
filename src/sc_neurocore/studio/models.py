@@ -72,15 +72,15 @@ def _load_class(name: str) -> type:
         return _class_cache[name]
     module_name = _CLASS_TO_MODULE[name]
     mod = importlib.import_module(f"sc_neurocore.neurons.models.{module_name}")
-    cls = getattr(mod, name)
+    cls: type = getattr(mod, name)
     _class_cache[name] = cls
     return cls
 
 
-def _classify_fields(cls: type) -> tuple[list[dict], list[dict]]:
+def _classify_fields(cls: type) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Split dataclass fields into state variables and parameters."""
-    state_vars: list[dict] = []
-    params: list[dict] = []
+    state_vars: list[dict[str, Any]] = []
+    params: list[dict[str, Any]] = []
     for f in dataclasses.fields(cls):
         if f.name == "dt":
             continue
@@ -189,7 +189,7 @@ def _categorize(name: str) -> str:
     return "Other"
 
 
-_models_cache: list[dict] | None = None
+_models_cache: list[dict[str, Any]] | None = None
 
 
 class RustStudioBackendUnavailable(ImportError):
@@ -204,7 +204,7 @@ class ModelMetadataError(RuntimeError):
     """Raised when Studio model metadata loading fails for a known model."""
 
 
-def list_models() -> list[dict]:
+def list_models() -> list[dict[str, Any]]:
     """Return metadata for all 118 neuron models with categories.
 
     Results are cached after first call — subsequent calls return instantly.
@@ -244,7 +244,7 @@ def list_models() -> list[dict]:
     return result
 
 
-def get_model_detail(name: str) -> dict | None:
+def get_model_detail(name: str) -> dict[str, Any] | None:
     """Return full metadata for a single model."""
     if name not in _CLASS_TO_MODULE:
         return None

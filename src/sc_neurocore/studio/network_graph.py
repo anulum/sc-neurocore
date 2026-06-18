@@ -37,7 +37,7 @@ def create_population(
     neuron_type: str = "excitatory",
     x: float = 0.0,
     y: float = 0.0,
-) -> dict:
+) -> dict[str, Any]:
     """Create a population node for the network canvas."""
     return {
         "id": f"pop_{secrets.token_hex(4)}",
@@ -57,7 +57,7 @@ def create_projection(
     weight: float = 0.1,
     delay: float = 1.0,
     probability: float = 0.2,
-) -> dict:
+) -> dict[str, Any]:
     """Create a projection edge between two populations."""
     return {
         "id": f"proj_{secrets.token_hex(4)}",
@@ -154,7 +154,7 @@ def validate_graph(graph: object) -> list[str]:
     return errors
 
 
-def simulate_graph(graph: dict) -> dict:
+def simulate_graph(graph: dict[str, Any]) -> dict[str, Any]:
     """Simulate a network graph using the E-I network backend.
 
     Maps populations and projections to the existing E-I simulation.
@@ -228,7 +228,7 @@ def simulate_graph(graph: dict) -> dict:
     return result
 
 
-def graph_to_nir(graph: object) -> dict:
+def graph_to_nir(graph: object) -> dict[str, Any]:
     """Export network graph to NIR-compatible format."""
     if not isinstance(graph, Mapping):
         raise ValueError("Network graph must be an object")
@@ -265,7 +265,7 @@ def graph_to_nir(graph: object) -> dict:
     }
 
 
-def nir_to_graph(nir_data: object) -> dict:
+def nir_to_graph(nir_data: object) -> dict[str, Any]:
     """Import NIR-compatible format to network graph."""
     if not isinstance(nir_data, Mapping):
         raise ValueError("NIR payload must be an object")

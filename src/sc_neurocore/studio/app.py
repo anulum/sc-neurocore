@@ -259,8 +259,8 @@ class PresetDefaultFlowAttestationVerifyRequest(BaseModel):
 
 
 class CompareRequest(BaseModel):
-    config_a: dict
-    config_b: dict
+    config_a: dict[str, Any]
+    config_b: dict[str, Any]
 
 
 class FreqResponseRequest(BaseModel):
@@ -333,7 +333,7 @@ class _SimCache:
         self.hits = 0
         self.misses = 0
 
-    def _key(self, data: dict) -> str:
+    def _key(self, data: dict[str, Any]) -> str:
         raw = json.dumps(data, sort_keys=True, default=str)
         return hashlib.md5(raw.encode(), usedforsecurity=False).hexdigest()
 

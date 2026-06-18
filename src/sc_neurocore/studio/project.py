@@ -115,7 +115,7 @@ def _safe_path(name: str) -> Path:
     return path
 
 
-def save_project(name: str, state: dict) -> dict:
+def save_project(name: str, state: dict[str, Any]) -> dict[str, Any]:
     """Save full studio state to a JSON file."""
     _ensure_dir()
     path = _safe_path(name)
@@ -134,7 +134,7 @@ def save_project(name: str, state: dict) -> dict:
     return {"name": name, "path": str(path), "saved_at": payload["saved_at"]}
 
 
-def load_project(name: str) -> dict:
+def load_project(name: str) -> dict[str, Any]:
     """Load a saved project by name."""
     path = _safe_path(name)
     name = _safe_name(name)
@@ -153,7 +153,7 @@ def load_project(name: str) -> dict:
     return data
 
 
-def list_projects() -> list[dict]:
+def list_projects() -> list[dict[str, Any]]:
     """List all saved projects."""
     _ensure_dir()
     projects = []
@@ -176,7 +176,7 @@ def list_projects() -> list[dict]:
     return projects
 
 
-def delete_project(name: str) -> dict:
+def delete_project(name: str) -> dict[str, Any]:
     """Delete a saved project."""
     path = _safe_path(name)
     name = _safe_name(name)
@@ -186,7 +186,7 @@ def delete_project(name: str) -> dict:
     return {"deleted": name}
 
 
-def run_pipeline(graph: dict, target: str = "ice40") -> dict:
+def run_pipeline(graph: dict[str, Any], target: str = "ice40") -> dict[str, Any]:
     """Full pipeline: graph → compile equations → emit SV → synthesise.
 
     If the graph has ODE equations in population params, compiles them

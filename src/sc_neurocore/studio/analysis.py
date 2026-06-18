@@ -21,7 +21,7 @@ def bifurcation_sweep(
     param_min: float,
     param_max: float,
     n_values: int = 30,
-) -> dict:
+) -> dict[str, Any]:
     """Sweep one parameter and extract voltage attractors at each value.
 
     Returns {param_values, attractors} where attractors[i] is a list
@@ -66,11 +66,11 @@ def sensitivity_analysis(
     base_config: dict[str, Any],
     param_names: list[str],
     perturbation: float = 0.1,
-) -> dict:
+) -> dict[str, Any]:
     """Compute firing rate sensitivity to each parameter (±perturbation fraction)."""
     base_result = simulate_fn(**base_config)
     base_rate = base_result["stats"]["rate_hz"]
-    sensitivities: list[dict] = []
+    sensitivities: list[dict[str, Any]] = []
 
     for pname in param_names:
         params = dict(base_config.get("params") or {})
@@ -110,7 +110,7 @@ def nullclines_2d(
     var_names: list[str],
     ranges: dict[str, tuple[float, float]],
     grid_size: int = 80,
-) -> dict:
+) -> dict[str, Any]:
     """Compute nullclines for a 2-variable ODE system on a grid."""
     from sc_neurocore.neurons.equation_builder import from_equations
 
@@ -153,7 +153,7 @@ def nullclines_2d(
                 pass
 
     # Extract zero-contours via sign changes
-    def contour_points(Z: np.ndarray, threshold: float = 0.0) -> list[list[float]]:
+    def contour_points(Z: np.ndarray[Any, Any], threshold: float = 0.0) -> list[list[float]]:
         pts = []
         for i in range(grid_size - 1):
             for j in range(grid_size - 1):
@@ -183,7 +183,7 @@ def heatmap_2d(
     y_min: float,
     y_max: float,
     y_steps: int,
-) -> dict:
+) -> dict[str, Any]:
     """Sweep two parameters and compute firing rate heatmap."""
     x_vals = np.linspace(x_min, x_max, x_steps).tolist()
     y_vals = np.linspace(y_min, y_max, y_steps).tolist()
@@ -243,7 +243,7 @@ def spike_triggered_average(
     spikes: list[int],
     dt: float,
     window_ms: float = 20.0,
-) -> dict:
+) -> dict[str, Any]:
     """Compute spike-triggered average of voltage around each spike."""
     if len(spikes) < 2:
         return {"time_ms": [], "average": [], "n_spikes": len(spikes)}
@@ -280,7 +280,7 @@ def frequency_response(
     freq_max: float = 100.0,
     n_freqs: int = 20,
     amplitude: float = 10.0,
-) -> dict:
+) -> dict[str, Any]:
     """Sweep sinusoidal current frequency and measure spike rate response."""
     freqs = np.logspace(np.log10(freq_min), np.log10(freq_max), n_freqs).tolist()
     rates: list[float] = []
@@ -313,7 +313,7 @@ def precision_compare(
     dt: float,
     duration: float,
     current: float,
-) -> dict:
+) -> dict[str, Any]:
     """Compare float64 vs Q8.8 fixed-point simulation of the same ODE."""
     from sc_neurocore.studio.simulation import simulate
 

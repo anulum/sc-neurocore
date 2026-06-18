@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 try:
@@ -29,7 +30,7 @@ def simulate_ei_network(
     ext_rate: float = 5.0,
     duration: float = 200.0,
     dt: float = 0.1,
-) -> dict:
+) -> dict[str, Any]:
     """Simulate a balanced E-I network. Uses Rust engine when available."""
     try:
         return _simulate_rust(
@@ -70,7 +71,7 @@ def _simulate_rust(
     ext_rate: float,
     duration: float,
     dt: float,
-) -> dict:
+) -> dict[str, Any]:
     """Entire simulation in Rust — connectivity, Poisson input, stepping, recording."""
     simulate = get_ei_network_simulator()
     result = simulate(
@@ -115,7 +116,7 @@ def _simulate_numpy(
     ext_rate: float,
     duration: float,
     dt: float,
-) -> dict:
+) -> dict[str, Any]:
     """Pure NumPy fallback (no Rust engine)."""
     n_total = n_exc + n_inh
     n_steps = min(int(duration / dt), 50_000)
