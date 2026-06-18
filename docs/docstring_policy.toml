@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 72
+expected_file_count = 75
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -296,3 +296,15 @@ rationale = "Public topological invariants (Ollivier-Ricci curvature, winding nu
 [[file]]
 path = "src/sc_neurocore/synapses/gap_junction.py"
 rationale = "Public electrical gap-junction synapse with population current-matrix computation."
+
+[[file]]
+path = "src/sc_neurocore/encoding/__init__.py"
+rationale = "Public spike-encoding package entry point re-exporting encoders and the optimizer."
+
+[[file]]
+path = "src/sc_neurocore/encoding/encoders.py"
+rationale = "Public spike encoders (rate, temporal-contrast, phase) over numeric input arrays."
+
+[[file]]
+path = "src/sc_neurocore/encoding/optimizer.py"
+rationale = "Public encoding-scheme optimizer that profiles data and ranks encoder suitability."

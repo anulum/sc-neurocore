@@ -13,10 +13,11 @@ No framework provides all 7 in one place with consistent API.
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 
-def rate_encode(values: np.ndarray, T: int, seed: int = 42) -> np.ndarray:
+def rate_encode(values: np.ndarray[Any, Any], T: int, seed: int = 42) -> np.ndarray[Any, Any]:
     """Rate coding: spike probability proportional to value.
 
     Parameters
@@ -36,7 +37,7 @@ def rate_encode(values: np.ndarray, T: int, seed: int = 42) -> np.ndarray:
     return (rng.random((T, len(rates))) < rates[np.newaxis, :]).astype(np.int8)
 
 
-def latency_encode(values: np.ndarray, T: int) -> np.ndarray:
+def latency_encode(values: np.ndarray[Any, Any], T: int) -> np.ndarray[Any, Any]:
     """Latency (Time-to-First-Spike) coding: higher value = earlier spike.
 
     Parameters
@@ -57,7 +58,7 @@ def latency_encode(values: np.ndarray, T: int) -> np.ndarray:
     return spikes
 
 
-def delta_encode(values: np.ndarray, threshold: float = 0.1) -> np.ndarray:
+def delta_encode(values: np.ndarray[Any, Any], threshold: float = 0.1) -> np.ndarray[Any, Any]:
     """Delta coding: spike when change exceeds threshold.
 
     Parameters
@@ -73,10 +74,11 @@ def delta_encode(values: np.ndarray, threshold: float = 0.1) -> np.ndarray:
     if values.ndim == 1:
         values = values[:, np.newaxis]
     diff = np.abs(np.diff(values, axis=0, prepend=values[:1]))
-    return (diff > threshold).astype(np.int8)
+    spikes: np.ndarray[Any, Any] = (diff > threshold).astype(np.int8)
+    return spikes
 
 
-def phase_encode(values: np.ndarray, T: int, n_phases: int = 8) -> np.ndarray:
+def phase_encode(values: np.ndarray[Any, Any], T: int, n_phases: int = 8) -> np.ndarray[Any, Any]:
     """Phase coding: value encoded as spike phase within oscillation cycle.
 
     Parameters
@@ -99,7 +101,7 @@ def phase_encode(values: np.ndarray, T: int, n_phases: int = 8) -> np.ndarray:
     return spikes
 
 
-def burst_encode(values: np.ndarray, T: int, max_burst: int = 5) -> np.ndarray:
+def burst_encode(values: np.ndarray[Any, Any], T: int, max_burst: int = 5) -> np.ndarray[Any, Any]:
     """Burst coding: value encoded as burst length (consecutive spikes).
 
     Parameters
@@ -122,7 +124,7 @@ def burst_encode(values: np.ndarray, T: int, max_burst: int = 5) -> np.ndarray:
     return spikes
 
 
-def rank_order_encode(values: np.ndarray, T: int) -> np.ndarray:
+def rank_order_encode(values: np.ndarray[Any, Any], T: int) -> np.ndarray[Any, Any]:
     """Rank-order coding: neurons fire in order of decreasing value.
 
     Parameters
@@ -144,7 +146,9 @@ def rank_order_encode(values: np.ndarray, T: int) -> np.ndarray:
     return spikes
 
 
-def sigma_delta_encode(values: np.ndarray, threshold: float = 0.1) -> np.ndarray:
+def sigma_delta_encode(
+    values: np.ndarray[Any, Any], threshold: float = 0.1
+) -> np.ndarray[Any, Any]:
     """Sigma-delta coding: integrate error, spike when threshold exceeded.
 
     Parameters

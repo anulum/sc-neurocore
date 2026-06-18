@@ -283,7 +283,7 @@ module = [
   'sc_neurocore.comm.*', 'sc_neurocore.compiler.*', 'sc_neurocore.compression.*', 'sc_neurocore.continual.*',
   'sc_neurocore.control.*', 'sc_neurocore.conversion.*', 'sc_neurocore.core.*', 'sc_neurocore.datasets.*',
   'sc_neurocore.debug.*', 'sc_neurocore.digital_twin.*', 'sc_neurocore.distillation.*', 'sc_neurocore.doctor.*',
-  'sc_neurocore.drivers.*', 'sc_neurocore.edge.*', 'sc_neurocore.encoding.*', 'sc_neurocore.energy_accounting.*',
+  'sc_neurocore.drivers.*', 'sc_neurocore.edge.*', 'sc_neurocore.energy_accounting.*',
   'sc_neurocore.ensembles.*', 'sc_neurocore.evo_substrate.*', 'sc_neurocore.experimental.*', 'sc_neurocore.experiments.*',
   'sc_neurocore.explain.*', 'sc_neurocore.explainability.*', 'sc_neurocore.export.*', 'sc_neurocore.fault_injection.*',
   'sc_neurocore.federated.*', 'sc_neurocore.few_shot.*', 'sc_neurocore.fusion.*', 'sc_neurocore.generative.*',
