@@ -47,7 +47,7 @@ class EncodingOptimizer:
     def __init__(self, T: int = 32):
         self.T = T
 
-    def profile(self, data: np.ndarray) -> dict:
+    def profile(self, data: np.ndarray[Any, Any]) -> dict[str, float]:
         """Compute data statistics relevant to encoding selection.
 
         Parameters
@@ -90,7 +90,7 @@ class EncodingOptimizer:
 
         return stats
 
-    def recommend(self, data: np.ndarray) -> list[EncodingRecommendation]:
+    def recommend(self, data: np.ndarray[Any, Any]) -> list[EncodingRecommendation]:
         """Recommend encoding schemes ranked by suitability.
 
         Parameters
@@ -137,7 +137,7 @@ class EncodingOptimizer:
         recs.sort(key=lambda r: r.score, reverse=True)
         return recs
 
-    def _info_score(self, original: np.ndarray, encoded: np.ndarray) -> float:
+    def _info_score(self, original: np.ndarray[Any, Any], encoded: np.ndarray[Any, Any]) -> float:
         """Estimate how well encoding preserves input information."""
         decoded_approx = encoded.mean(axis=0)
         if len(decoded_approx) != len(original):  # pragma: no cover
@@ -158,7 +158,7 @@ class EncodingOptimizer:
             ("rank_order", encoders.rank_order_encode, lambda s: 0.7 if s["std"] > 0.2 else 0.3),
         ]
 
-    def _reason(self, name: str, stats: dict) -> str:
+    def _reason(self, name: str, stats: dict[str, float]) -> str:
         reasons = {
             "rate": "Good general-purpose encoding, works well with diverse data",
             "latency": "Low-latency single-spike encoding, energy-efficient",
