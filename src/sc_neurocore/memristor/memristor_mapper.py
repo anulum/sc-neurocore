@@ -23,7 +23,7 @@ from __future__ import annotations
 import textwrap
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -109,6 +109,7 @@ class ConductanceModel:
     num_levels: int = 0
 
     def __post_init__(self) -> None:
+        """Fill any unset conductance parameters from the technology presets."""
         params = _TECH_PARAMS[self.technology]
         if self.g_on <= 0:
             self.g_on = params["g_on"]
@@ -153,7 +154,8 @@ class ConductanceModel:
         t0 = 1.0
         if elapsed_s <= t0:
             return conductance
-        return conductance * (elapsed_s / t0) ** (-alpha)
+        drifted: float = conductance * (elapsed_s / t0) ** (-alpha)
+        return drifted
 
     def thermal_shift(self, conductance: float, temp_c: float, ref_c: float = 25.0) -> float:
         """Temperature-dependent conductance shift.
@@ -258,10 +260,12 @@ class StuckFaultMap:
 
     @property
     def num_faults(self) -> int:
+        """Return the total count of stuck-on and stuck-off devices."""
         return len(self.stuck_on) + len(self.stuck_off)
 
     @property
     def fault_rate(self) -> float:
+        """Return the fraction of crossbar cells that are faulty."""
         total = self.rows * self.cols
         return self.num_faults / total if total > 0 else 0.0
 
@@ -287,8 +291,8 @@ class AgingSimulator:
         self.alpha = alpha
 
     def simulate(
-        self, conductances: np.ndarray, elapsed_s: float
-    ) -> Tuple[np.ndarray, AgingReport]:
+        self, conductances: np.ndarray[Any, Any], elapsed_s: float
+    ) -> Tuple[np.ndarray[Any, Any], AgingReport]:
         """Apply drift to all conductances, return (drifted, report)."""
         drifted = np.zeros_like(conductances)
         for idx in np.ndindex(conductances.shape):
@@ -317,11 +321,11 @@ class SCAbsorbEncoder:
 
     @staticmethod
     def compute_adjusted_thresholds(
-        ideal_weights: np.ndarray,
-        actual_conductances: np.ndarray,
+        ideal_weights: np.ndarray[Any, Any],
+        actual_conductances: np.ndarray[Any, Any],
         model: ConductanceModel,
         q_bits: int = 8,
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Return Q8.8 adjusted thresholds that absorb device error."""
         levels_ideal = np.clip(
             np.round(ideal_weights * (model.num_levels - 1)).astype(int),
@@ -450,6 +454,7 @@ class CrossbarEstimator:
 
     @classmethod
     def estimate(cls, crossbar: CrossbarArray) -> CrossbarPowerEstimate:
+        """Estimate read/write power, latency and area for a crossbar array."""
         p = cls.TECH_POWER[crossbar.technology]
         n = crossbar.num_devices
         return CrossbarPowerEstimate(
@@ -467,6 +472,8 @@ class CrossbarEstimator:
 
 
 class CrossbarTopology(Enum):
+    """Physical wiring topology of a memristor crossbar array."""
+
     STANDARD = "standard"  # M×N passive crossbar
     ONE_T_ONE_R = "1t1r"  # 1-transistor-1-resistor
     ONE_S_ONE_R = "1s1r"  # 1-selector-1-resistor
@@ -484,12 +491,14 @@ class CrossbarArray:
 
     @property
     def num_devices(self) -> int:
+        """Return the device count, doubling for differential topologies."""
         if self.topology == CrossbarTopology.DIFFERENTIAL:
             return self.rows * self.cols * 2
         return self.rows * self.cols
 
     @property
     def conductance_model(self) -> ConductanceModel:
+        """Return the conductance model for this array's technology."""
         return ConductanceModel(technology=self.technology)
 
 
@@ -503,7 +512,7 @@ class VariabilityInjector:
         self.model = model
         self.rng = np.random.default_rng(seed)
 
-    def quantize_weights(self, weights: np.ndarray) -> np.ndarray:
+    def quantize_weights(self, weights: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Map floating-point weights [0, 1] to conductance levels."""
         levels = np.clip(
             np.round(weights * (self.model.num_levels - 1)).astype(int),
@@ -512,28 +521,32 @@ class VariabilityInjector:
         )
         return levels
 
-    def inject_d2d(self, levels: np.ndarray) -> np.ndarray:
+    def inject_d2d(self, levels: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Apply device-to-device variability to quantised levels."""
         result = np.zeros_like(levels, dtype=np.float64)
         for idx in np.ndindex(levels.shape):
             result[idx] = self.model.sample_d2d(int(levels[idx]), self.rng)
         return result
 
-    def inject_rw(self, conductances: np.ndarray) -> np.ndarray:
+    def inject_rw(self, conductances: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Apply read/write noise to conductance values."""
         result = np.zeros_like(conductances, dtype=np.float64)
         for idx in np.ndindex(conductances.shape):
             result[idx] = self.model.sample_rw(float(conductances[idx]), self.rng)
         return result
 
-    def inject_full(self, weights: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def inject_full(
+        self, weights: np.ndarray[Any, Any]
+    ) -> Tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Full pipeline: quantise → D2D → R/W noise. Returns (levels, conductances)."""
         levels = self.quantize_weights(weights)
         g_d2d = self.inject_d2d(levels)
         g_final = self.inject_rw(g_d2d)
         return levels, g_final
 
-    def compute_error(self, weights: np.ndarray, conductances: np.ndarray) -> Dict[str, float]:
+    def compute_error(
+        self, weights: np.ndarray[Any, Any], conductances: np.ndarray[Any, Any]
+    ) -> Dict[str, float]:
         """Compute variability-induced error statistics."""
         levels = self.quantize_weights(weights)
         ideal = np.array(
@@ -553,6 +566,8 @@ class VariabilityInjector:
 
 
 class CompensationStrategy(Enum):
+    """Strategy for compensating memristor conductance non-idealities."""
+
     NONE = "none"
     LUT = "lut"  # per-device compensation lookup table
     STOCHASTIC_ENCODING = "sc_absorb"  # adjust SC encoding thresholds
@@ -568,15 +583,15 @@ class CompensationLUT:
     """
 
     device_id: Tuple[int, int]
-    nominal_levels: np.ndarray  # shape (num_levels,)
-    compensated_thresholds: np.ndarray  # Q8.8 fixed-point thresholds
+    nominal_levels: np.ndarray[Any, Any]  # shape (num_levels,)
+    compensated_thresholds: np.ndarray[Any, Any]  # Q8.8 fixed-point thresholds
 
     @classmethod
     def build(
         cls,
         device_id: Tuple[int, int],
         model: ConductanceModel,
-        measured_g: Optional[np.ndarray] = None,
+        measured_g: Optional[np.ndarray[Any, Any]] = None,
     ) -> CompensationLUT:
         """Build compensation LUT from measured or modelled conductances.
 
@@ -610,8 +625,8 @@ class CrossbarMapping:
     """Mapping of a weight matrix to a crossbar array."""
 
     crossbar: CrossbarArray
-    weight_levels: np.ndarray  # shape (rows, cols), quantised levels
-    conductances: np.ndarray  # shape (rows, cols), actual conductances
+    weight_levels: np.ndarray[Any, Any]  # shape (rows, cols), quantised levels
+    conductances: np.ndarray[Any, Any]  # shape (rows, cols), actual conductances
     compensation_luts: List[CompensationLUT] = field(default_factory=list)
     error_stats: Dict[str, float] = field(default_factory=dict)
 
@@ -646,7 +661,7 @@ class MemristorMapper:
         self.model = ConductanceModel(technology=technology)
         self.injector = VariabilityInjector(self.model, seed)
 
-    def map_weights(self, weights: np.ndarray) -> MappingResult:
+    def map_weights(self, weights: np.ndarray[Any, Any]) -> MappingResult:
         """Map a weight matrix (or list of matrices) to crossbar arrays."""
         if weights.ndim == 1:
             weights = weights.reshape(1, -1)
@@ -713,8 +728,8 @@ class MonteCarloReport:
     std_output_error: float
     max_output_error: float
     yield_fraction: float  # fraction of trials within tolerance
-    output_distribution: np.ndarray
-    error_histogram: np.ndarray
+    output_distribution: np.ndarray[Any, Any]
+    error_histogram: np.ndarray[Any, Any]
 
 
 class MonteCarloSimulator:
@@ -739,8 +754,8 @@ class MonteCarloSimulator:
 
     def simulate_mac(
         self,
-        weights: np.ndarray,
-        inputs: np.ndarray,
+        weights: np.ndarray[Any, Any],
+        inputs: np.ndarray[Any, Any],
     ) -> MonteCarloReport:
         """Simulate multiply-accumulate with variability.
 
