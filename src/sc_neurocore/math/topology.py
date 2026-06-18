@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import importlib as _importlib
 import os as _os
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import numpy as np
 
@@ -157,7 +157,7 @@ def _ensure_mojo_loaded() -> bool:
     return True
 
 
-def _validate_coupling_graph(knm: np.ndarray) -> np.ndarray:
+def _validate_coupling_graph(knm: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     graph = np.asarray(knm, dtype=np.float64)
     if graph.ndim != 2 or graph.shape[0] != graph.shape[1]:
         raise ValueError("knm must be a square coupling matrix")
@@ -179,7 +179,7 @@ def _validate_node_index(name: str, index: int, n_nodes: int) -> int:
     return index
 
 
-def _shortest_path_distances(graph: np.ndarray) -> np.ndarray:
+def _shortest_path_distances(graph: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     adjacency = graph > 0.0
     np.fill_diagonal(adjacency, False)
     n_nodes = graph.shape[0]
@@ -197,7 +197,9 @@ def _shortest_path_distances(graph: np.ndarray) -> np.ndarray:
     return distances
 
 
-def _lazy_random_walk(graph: np.ndarray, node: int, *, idleness: float = 0.5) -> np.ndarray:
+def _lazy_random_walk(
+    graph: np.ndarray[Any, Any], node: int, *, idleness: float = 0.5
+) -> np.ndarray[Any, Any]:
     distribution = np.zeros(graph.shape[0], dtype=np.float64)
     distribution[node] = idleness
     row = graph[node].copy()
@@ -210,7 +212,9 @@ def _lazy_random_walk(graph: np.ndarray, node: int, *, idleness: float = 0.5) ->
     return distribution
 
 
-def _minimum_transport_cost(source: np.ndarray, target: np.ndarray, distances: np.ndarray) -> float:
+def _minimum_transport_cost(
+    source: np.ndarray[Any, Any], target: np.ndarray[Any, Any], distances: np.ndarray[Any, Any]
+) -> float:
     source_nodes = np.flatnonzero(source > 0.0)
     target_nodes = np.flatnonzero(target > 0.0)
     if source_nodes.size == 0 or target_nodes.size == 0:
@@ -285,7 +289,7 @@ def _minimum_transport_cost(source: np.ndarray, target: np.ndarray, distances: n
     return float(total_cost)
 
 
-def winding_number(phases: np.ndarray) -> int:
+def winding_number(phases: np.ndarray[Any, Any]) -> int:
     """Compute the winding number of a phase trajectory around S^1.
 
     The winding number counts how many times the phase wraps around
@@ -309,7 +313,7 @@ def winding_number(phases: np.ndarray) -> int:
     return int(np.round(np.sum(diffs) / (2 * np.pi)))
 
 
-def _ollivier_ricci_python(graph: np.ndarray, i: int, j: int) -> float:
+def _ollivier_ricci_python(graph: np.ndarray[Any, Any], i: int, j: int) -> float:
     """Pure-NumPy Ollivier-Ricci curvature on a validated coupling graph."""
     distances = _shortest_path_distances(graph)
     graph_distance = distances[i, j]
@@ -321,14 +325,14 @@ def _ollivier_ricci_python(graph: np.ndarray, i: int, j: int) -> float:
     return float(1.0 - w1 / graph_distance)
 
 
-def _ollivier_ricci_rust(graph: np.ndarray, i: int, j: int) -> float:
+def _ollivier_ricci_rust(graph: np.ndarray[Any, Any], i: int, j: int) -> float:
     if _rust_ollivier is None:
         raise RuntimeError("Rust topology backend probed False; cannot dispatch")
     flat = np.ascontiguousarray(graph, dtype=np.float64).ravel(order="C").tolist()
     return float(_rust_ollivier(flat, graph.shape[0], i, j))
 
 
-def _ollivier_ricci_julia(graph: np.ndarray, i: int, j: int) -> float:
+def _ollivier_ricci_julia(graph: np.ndarray[Any, Any], i: int, j: int) -> float:
     if _julia_module is None:
         raise RuntimeError("Julia topology module not loaded; cannot dispatch")
     # Julia uses 1-based node indices.
@@ -339,7 +343,7 @@ def _ollivier_ricci_julia(graph: np.ndarray, i: int, j: int) -> float:
     )
 
 
-def _ollivier_ricci_go(graph: np.ndarray, i: int, j: int) -> float:
+def _ollivier_ricci_go(graph: np.ndarray[Any, Any], i: int, j: int) -> float:
     if _go_lib is None:
         raise RuntimeError("Go topology library not loaded; cannot dispatch")
     import ctypes
@@ -355,7 +359,7 @@ def _ollivier_ricci_go(graph: np.ndarray, i: int, j: int) -> float:
     )
 
 
-def _ollivier_ricci_mojo(graph: np.ndarray, i: int, j: int) -> float:
+def _ollivier_ricci_mojo(graph: np.ndarray[Any, Any], i: int, j: int) -> float:
     if _mojo_lib is None:
         raise RuntimeError("Mojo topology library not loaded; cannot dispatch")
     flat = np.ascontiguousarray(graph, dtype=np.float64).ravel(order="C")
@@ -366,7 +370,9 @@ def _ollivier_ricci_mojo(graph: np.ndarray, i: int, j: int) -> float:
     )
 
 
-def ollivier_ricci_curvature(knm: np.ndarray, i: int, j: int, backend: str = "auto") -> float:
+def ollivier_ricci_curvature(
+    knm: np.ndarray[Any, Any], i: int, j: int, backend: str = "auto"
+) -> float:
     """Compute Ollivier-Ricci curvature between nodes i and j on the coupling graph.
 
     Ollivier (2009), "Ricci curvature of Markov chains on metric spaces."
@@ -441,7 +447,7 @@ def ollivier_ricci_curvature(knm: np.ndarray, i: int, j: int, backend: str = "au
     return _ollivier_ricci_python(graph, i, j)
 
 
-def sheaf_consistency_defect(phases: np.ndarray, knm: np.ndarray) -> float:
+def sheaf_consistency_defect(phases: np.ndarray[Any, Any], knm: np.ndarray[Any, Any]) -> float:
     """Compute the sheaf consistency defect for the SCPN phase state.
 
     In sheaf theory, a global section exists iff the gluing conditions
@@ -474,7 +480,9 @@ def sheaf_consistency_defect(phases: np.ndarray, knm: np.ndarray) -> float:
     return float(cost.sum() / (N * N))
 
 
-def connection_curvature(phases: np.ndarray, knm: np.ndarray) -> np.ndarray:
+def connection_curvature(
+    phases: np.ndarray[Any, Any], knm: np.ndarray[Any, Any]
+) -> np.ndarray[Any, Any]:
     """Compute the connection curvature from PGBO phase dynamics.
 
     The PGBO covariant derivative u_mu = dphi_mu - alpha * A_mu
@@ -494,4 +502,5 @@ def connection_curvature(phases: np.ndarray, knm: np.ndarray) -> np.ndarray:
         Connection curvature matrix. Diagonal is zero.
     """
     diffs = phases[np.newaxis, :] - phases[:, np.newaxis]
-    return knm * np.cos(diffs)
+    curvature: np.ndarray[Any, Any] = knm * np.cos(diffs)
+    return curvature
