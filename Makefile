@@ -12,6 +12,7 @@ test-all: test test-rust
 lint:
 	ruff format --check src/ tests/
 	ruff check src/ tests/
+	mypy --strict src/sc_neurocore/
 
 fmt:
 	ruff format src/ tests/

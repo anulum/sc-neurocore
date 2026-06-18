@@ -20,15 +20,17 @@ import numpy as np
 
 
 def pack_bitstream(bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-    """
-    Packs a uint8 bitstream (0s and 1s) into uint64 integers.
-    This allows processing 64 time steps in parallel.
+    """Pack a uint8 bitstream into uint64 words for 64-way parallel processing.
 
-    Args:
-        bitstream: Shape (N,) or (Batch, N) of uint8 {0,1}
+    Parameters
+    ----------
+    bitstream : numpy.ndarray of shape (N,) or (Batch, N), uint8
+        Input bits valued in ``{0, 1}``.
 
-    Returns:
-        packed: Shape (ceil(N/64),) or (Batch, ceil(N/64)) of uint64
+    Returns
+    -------
+    numpy.ndarray of shape (ceil(N / 64),) or (Batch, ceil(N / 64)), uint64
+        The packed 64-bit words.
     """
     bitstream = np.asarray(bitstream, dtype=np.uint8)
 
@@ -78,7 +80,8 @@ def unpack_bitstream(
         original_length: Total number of bits to extract
         original_shape: Optional tuple for reshaping output (batch, length)
 
-    Returns:
+    Returns
+    -------
         Unpacked bitstream of shape (original_length,) or original_shape
     """
     if packed.ndim == 1:
@@ -110,9 +113,7 @@ def unpack_bitstream(
 
 
 def vec_and(a_packed: np.ndarray[Any, Any], b_packed: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-    """
-    Bitwise AND on packed arrays. Simulates SC Multiplication.
-    """
+    """Bitwise-AND two packed arrays, realising stochastic multiplication."""
     result: np.ndarray[Any, Any] = np.bitwise_and(a_packed, b_packed)
     return result
 
@@ -145,10 +146,7 @@ def vec_mux(
 
 
 def vec_popcount(packed: np.ndarray[Any, Any]) -> int:
-    """
-    Count total set bits (1s) in the packed array.
-    Used for integration/accumulation.
-    """
+    """Count the total set bits in a packed array, for integration/accumulation."""
     # Using numpy's ability to cast to specialized types or simple lookup?
     # Actually, Python 3.10+ int.bit_count() is fast, but for numpy arrays:
     # We can use a trick or just loop if C-extension isn't available.

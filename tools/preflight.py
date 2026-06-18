@@ -95,7 +95,11 @@ GATES = [
         ],
     ),
     ("bandit", ["python", "-m", "bandit", "-r", "src/sc_neurocore/", "-c", "pyproject.toml", "-q"]),
-    ("mypy", ["python", "-m", "mypy", "src/sc_neurocore/"]),
+    ("mypy", ["python", "-m", "mypy", "--strict", "src/sc_neurocore/"]),
+    (
+        "docstring-policy",
+        ["python", "-m", "pytest", "tests/test_public_docstring_policy.py", "-q"],
+    ),
     ("spdx-guard", None),
     (
         "pytest",

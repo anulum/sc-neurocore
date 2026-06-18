@@ -168,8 +168,8 @@ class HardwareProfile:
             defining every field, provide constraints and let SC-NeuroCore select
             the optimal fixed-point configuration.
 
-            Parameters
-            ----------
+        Parameters
+        ----------
             name : str
                 Unique profile identifier.
             vendor : str
@@ -195,8 +195,8 @@ class HardwareProfile:
             notes : str
                 Human-readable description.
 
-            Returns
-            -------
+        Returns
+        -------
             HardwareProfile
                 Auto-constructed profile.
         """

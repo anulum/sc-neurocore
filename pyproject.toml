@@ -239,6 +239,13 @@ ignore = [
   "B007",   # unused loop control variable
   "B017", "B018", "B023", "B028", "B904", "B905",  # minor bugbear rules
 ]
+# NumPy-convention docstrings (BROADCAST_2026-06-17). `D` is not yet in the global
+# `select` because the legacy tree still carries ~4.6k D violations; instead the
+# scoped public-docstring gate (tests/test_public_docstring_policy.py) enforces
+# `ruff check --select D` against docs/docstring_policy.toml, and that file list grows
+# package-by-package until `D` can be promoted to the global select.
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
 
 [tool.bandit]
 skips = ["B101", "B307", "B311", "B404", "B603", "B607"]
@@ -253,16 +260,56 @@ exclude_dirs = [
 [tool.mypy]
 strict = true
 ignore_missing_imports = false
-warn_unused_ignores = false
-warn_return_any = false
-disallow_any_generics = false
 exclude = [
     "src/sc_neurocore/quantum_cognition/tests/",
 ]
+
+# External untyped third-party dependencies — no upstream stubs available.
 [[tool.mypy.overrides]]
 module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'sklearn.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'qiskit_ibm_runtime.*', 'psutil.*', 'watchdog.*', 'pytest.*', 'llm.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'httpx.*', 'nir.*', 'h5py.*', 'orjson.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*', 'gdsfactory.*', 'meep.*', 'gdstk.*', 'dimod.*', 'dwave.*', 'nupack.*']
 ignore_missing_imports = true
 
+# Strict-typing burn-down ledger — TODO(gh-strict-mypy): docs/internal/MASTER_TODO_2026-04-20.md §1.4.
+# Each package below still carries type-arg / no-any-return / unused-ignore debt under
+# full `strict = true`. Entries are deleted package-by-package as the debt is cleared; the
+# destination is an empty ledger (the whole tree fully strict). Do NOT add packages here to
+# silence new code — newly written or modified code must be strict-clean from the first commit.
+[[tool.mypy.overrides]]
+module = [
+  'sc_neurocore.accel.*', 'sc_neurocore.adapters.*', 'sc_neurocore.analog_bridge.*', 'sc_neurocore.analysis.*',
+  'sc_neurocore.arcane_zenith', 'sc_neurocore.audio.*', 'sc_neurocore.augmentation.*', 'sc_neurocore.autofit.*',
+  'sc_neurocore.bci_studio.*', 'sc_neurocore.benchmarks.*', 'sc_neurocore.bio.*', 'sc_neurocore.bioware.*',
+  'sc_neurocore.bridges.*', 'sc_neurocore.chaos.*', 'sc_neurocore.chip_compiler.*', 'sc_neurocore.chiplet.*',
+  'sc_neurocore.comm.*', 'sc_neurocore.compiler.*', 'sc_neurocore.compression.*', 'sc_neurocore.continual.*',
+  'sc_neurocore.control.*', 'sc_neurocore.conversion.*', 'sc_neurocore.core.*', 'sc_neurocore.datasets.*',
+  'sc_neurocore.debug.*', 'sc_neurocore.digital_twin.*', 'sc_neurocore.distillation.*', 'sc_neurocore.doctor.*',
+  'sc_neurocore.drivers.*', 'sc_neurocore.edge.*', 'sc_neurocore.encoding.*', 'sc_neurocore.energy_accounting.*',
+  'sc_neurocore.ensembles.*', 'sc_neurocore.evo_substrate.*', 'sc_neurocore.experimental.*', 'sc_neurocore.experiments.*',
+  'sc_neurocore.explain.*', 'sc_neurocore.explainability.*', 'sc_neurocore.export.*', 'sc_neurocore.fault_injection.*',
+  'sc_neurocore.federated.*', 'sc_neurocore.few_shot.*', 'sc_neurocore.fusion.*', 'sc_neurocore.generative.*',
+  'sc_neurocore.graphs.*', 'sc_neurocore.hdc.*', 'sc_neurocore.hdl_gen.*', 'sc_neurocore.homeostasis.*',
+  'sc_neurocore.hypervisor.*', 'sc_neurocore.identity.*', 'sc_neurocore.integrations.*', 'sc_neurocore.interfaces.*',
+  'sc_neurocore.layers.*', 'sc_neurocore.learning.*', 'sc_neurocore.math.*', 'sc_neurocore.memristor.*',
+  'sc_neurocore.meta_plasticity.*', 'sc_neurocore.model_zoo.*', 'sc_neurocore.nas.*', 'sc_neurocore._native.*',
+  'sc_neurocore.network.*', 'sc_neurocore.neurons.*', 'sc_neurocore.neuro_symbolic.*', 'sc_neurocore.nir_bridge.*',
+  'sc_neurocore.optics.*', 'sc_neurocore.optimizer.*', 'sc_neurocore.physics.*', 'sc_neurocore.pipeline.*',
+  'sc_neurocore.privacy.*', 'sc_neurocore.profiling.*', 'sc_neurocore.qat.*', 'sc_neurocore.quantum.*',
+  'sc_neurocore.quantum_cognition.*', 'sc_neurocore.reservoir.*', 'sc_neurocore.residual.*', 'sc_neurocore.resilience.*',
+  'sc_neurocore.safety_cert.*', 'sc_neurocore.scpn.*', 'sc_neurocore.security.*', 'sc_neurocore.sensors.*',
+  'sc_neurocore.sleep.*', 'sc_neurocore.snn_optimizer.*', 'sc_neurocore.solvers.*', 'sc_neurocore.sources.*',
+  'sc_neurocore.spatial.*', 'sc_neurocore.spike_codec.*', 'sc_neurocore.spike_dsp.*', 'sc_neurocore.spike_gnn.*',
+  'sc_neurocore.spike_ode.*', 'sc_neurocore.spintronic.*', 'sc_neurocore.stochastic_doctor.*', 'sc_neurocore.studio.*',
+  'sc_neurocore.swarm.*', 'sc_neurocore.symbolic.*', 'sc_neurocore.synapses.*', 'sc_neurocore.temporal_hierarchy.*',
+  'sc_neurocore.topology.*', 'sc_neurocore.training.*', 'sc_neurocore.transfer.*', 'sc_neurocore.transformers.*',
+  'sc_neurocore.utils.*', 'sc_neurocore.verification.*', 'sc_neurocore.viz.*', 'sc_neurocore.world_model.*',
+]
+disallow_any_generics = false
+warn_return_any = false
+warn_unused_ignores = false
+
+# Hard external-binding modules (torch / jax / Rust FFI) — additionally relax untyped
+# call/decorator/subclassing checks on top of the burn-down ledger above.
+# TODO(gh-strict-mypy): docs/internal/MASTER_TODO_2026-04-20.md §1.4.
 [[tool.mypy.overrides]]
 module = ['sc_neurocore.training.*', 'sc_neurocore.qat.*', 'sc_neurocore.conversion.*', 'sc_neurocore.accel.jax_backend', 'sc_neurocore.accel.jit_kernels', 'sc_neurocore.nas.*', 'sc_neurocore._native.*', 'sc_neurocore.quantum_cognition.fs_watcher']
 disallow_subclassing_any = false

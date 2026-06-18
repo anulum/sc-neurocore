@@ -53,6 +53,7 @@ class BitstreamCurrentSource:
     sc_mode: str = "unipolar"
 
     def __post_init__(self) -> None:
+        """Validate input/weight lengths and derive the input count."""
         self.n_inputs = len(self.x_inputs)
         if self.n_inputs < 1:
             raise ValueError("BitstreamCurrentSource requires at least one input.")
@@ -178,7 +179,5 @@ class BitstreamCurrentSource:
         return float(I_t)
 
     def full_current_estimate(self) -> float:
-        """
-        Return the mean current over the realised bitstream duration.
-        """
+        """Return the mean current over the realised bitstream duration."""
         return float(self.current_scalar)

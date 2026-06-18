@@ -14,17 +14,24 @@ from typing import Dict
 
 
 class SpikeToConceptMapper:
-    """
-    XAI Module: Maps spike patterns to semantic concepts.
-    """
+    """Map spike-vector activity to human-readable semantic concepts."""
 
     def __init__(self, concept_map: Dict[int, str]):
         self.concept_map = concept_map
 
     def explain(self, spikes: np.ndarray[Any, Any]) -> str:
-        """
-        Input: Spike vector (n_neurons,)
-        Output: "The agent is thinking about [Concept1, Concept2]"
+        """Describe the concepts implied by an active spike vector.
+
+        Parameters
+        ----------
+        spikes : numpy.ndarray of shape (n_neurons,)
+            Spike activity; indices with a value greater than zero are
+            treated as active.
+
+        Returns
+        -------
+        str
+            A human-readable sentence naming the active concepts.
         """
         active_indices = np.where(spikes > 0)[0]
 

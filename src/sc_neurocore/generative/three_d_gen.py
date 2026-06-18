@@ -6,13 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — 3D Generation Module
 
-"""
-SC-NeuroCore 3D Generation Module
-==================================
+"""3D mesh and point-cloud generation from voxel grids.
 
-Generates 3D mesh and point cloud outputs from voxel grids and
-probability distributions using the Marching Cubes algorithm.
-
+Generates 3D mesh and point-cloud outputs from voxel grids and probability
+distributions using the marching-cubes algorithm.
 """
 
 from __future__ import annotations
@@ -356,7 +353,8 @@ class SC3DGenerator:
             voxel_grid: 3D numpy array of scalar values
             iso_level: Isosurface threshold (default: self.iso_level)
 
-        Returns:
+        Returns
+        -------
             Dict with 'vertices', 'faces', 'normals'
         """
         if iso_level is None:
@@ -563,7 +561,8 @@ class SC3DGenerator:
             bitstreams: 2D array of bitstreams (n_units, length)
             grid_size: Output voxel grid dimensions
 
-        Returns:
+        Returns
+        -------
             3D voxel grid with probability-based values
         """
         n_voxels = np.prod(grid_size)
@@ -595,7 +594,8 @@ class SC3DGenerator:
             scpn_outputs: Output from run_integrated_step()
             grid_size: Voxel grid dimensions
 
-        Returns:
+        Returns
+        -------
             Mesh dict from generate_surface_mesh()
         """
         # Collect all bitstreams from SCPN layers
