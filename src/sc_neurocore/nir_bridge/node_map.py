@@ -51,9 +51,9 @@ class SCInputNode:
     """Graph entry point — passes input through unchanged."""
 
     name: str
-    shape: tuple
+    shape: tuple[int, ...]
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         return x
 
 
@@ -62,10 +62,10 @@ class SCOutputNode:
     """Graph exit point — collects output."""
 
     name: str
-    shape: tuple
-    last_output: np.ndarray | None = None
+    shape: tuple[int, ...]
+    last_output: np.ndarray[Any, Any] | None = None
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         self.last_output = x
         return x
 
@@ -80,12 +80,12 @@ class SCLIFNode:
 
     name: str
     n_neurons: int
-    tau: np.ndarray
-    r: np.ndarray
-    v_leak: np.ndarray
-    v_threshold: np.ndarray
-    v_reset: np.ndarray
-    v: np.ndarray | None = None
+    tau: np.ndarray[Any, Any]
+    r: np.ndarray[Any, Any]
+    v_leak: np.ndarray[Any, Any]
+    v_threshold: np.ndarray[Any, Any]
+    v_reset: np.ndarray[Any, Any]
+    v: np.ndarray[Any, Any] | None = None
     dt: float = 1.0
     reset_mode: str = "reset"
 
@@ -131,7 +131,7 @@ class SCLIFNode:
         assert self.v is not None
         self.v = np.broadcast_to(self.v, (size,)).copy()
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         x = np.atleast_1d(x).flatten()
         if self.n_neurons == 1 and len(x) > 1:
             self._broadcast_to(len(x))
@@ -159,10 +159,10 @@ class SCIFNode:
 
     name: str
     n_neurons: int
-    r: np.ndarray
-    v_threshold: np.ndarray
-    v_reset: np.ndarray
-    v: np.ndarray | None = None
+    r: np.ndarray[Any, Any]
+    v_threshold: np.ndarray[Any, Any]
+    v_reset: np.ndarray[Any, Any]
+    v: np.ndarray[Any, Any] | None = None
     dt: float = 1.0
     reset_mode: str = "reset"
 
@@ -201,7 +201,7 @@ class SCIFNode:
                 setattr(self, attr, np.broadcast_to(arr, (size,)).copy())
         self.v = np.zeros(size)
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         x = np.atleast_1d(x).flatten()
         if self.n_neurons == 1 and len(x) > 1:
             self._broadcast_to(len(x))
@@ -227,10 +227,10 @@ class SCLINode:
 
     name: str
     n_neurons: int
-    tau: np.ndarray
-    r: np.ndarray
-    v_leak: np.ndarray
-    v: np.ndarray | None = None
+    tau: np.ndarray[Any, Any]
+    r: np.ndarray[Any, Any]
+    v_leak: np.ndarray[Any, Any]
+    v: np.ndarray[Any, Any] | None = None
     dt: float = 1.0
 
     @classmethod
@@ -253,7 +253,7 @@ class SCLINode:
         assert self.v is not None
         self.v = np.broadcast_to(self.v, (size,)).copy()
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         assert self.v is not None
         x = np.atleast_1d(x).flatten()
         if self.n_neurons == 1 and len(x) > 1:
@@ -272,16 +272,17 @@ class SCAffineNode:
     """Dense linear transform with bias: y = Wx + b"""
 
     name: str
-    weight: np.ndarray
-    bias: np.ndarray
+    weight: np.ndarray[Any, Any]
+    bias: np.ndarray[Any, Any]
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Affine) -> SCAffineNode:
         return cls(name=name, weight=node.weight, bias=node.bias)
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         x = np.atleast_1d(x).flatten()
-        return self.weight @ x + self.bias
+        result: np.ndarray[Any, Any] = self.weight @ x + self.bias
+        return result
 
 
 @dataclass
@@ -289,15 +290,16 @@ class SCLinearNode:
     """Matrix multiply without bias: y = Wx"""
 
     name: str
-    weight: np.ndarray
+    weight: np.ndarray[Any, Any]
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Linear) -> SCLinearNode:
         return cls(name=name, weight=node.weight)
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         x = np.atleast_1d(x).flatten()
-        return self.weight @ x
+        projected: np.ndarray[Any, Any] = self.weight @ x
+        return projected
 
 
 @dataclass
@@ -305,14 +307,15 @@ class SCScaleNode:
     """Element-wise scaling: y = s * x"""
 
     name: str
-    scale: np.ndarray
+    scale: np.ndarray[Any, Any]
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Scale) -> SCScaleNode:
         return cls(name=name, scale=node.scale)
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
-        return self.scale * x
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        scaled: np.ndarray[Any, Any] = self.scale * x
+        return scaled
 
 
 @dataclass
@@ -320,13 +323,13 @@ class SCThresholdNode:
     """Spike threshold: y = 1 if x > threshold else 0"""
 
     name: str
-    threshold: np.ndarray
+    threshold: np.ndarray[Any, Any]
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Threshold) -> SCThresholdNode:
         return cls(name=name, threshold=node.threshold)
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         return (x > self.threshold).astype(np.float64)
 
 
@@ -352,7 +355,7 @@ class SCFlattenNode:
             output_shape=output_shape,
         )
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         x = np.asarray(x)
         if x.ndim == 0:
             if self.start_dim not in (0, -1) or self.end_dim not in (0, -1):
@@ -380,8 +383,8 @@ class SCIntegratorNode:
     """Pure integrator: dv/dt = R*I (no leak, no threshold). Euler: v += R*I*dt"""
 
     name: str
-    r: np.ndarray
-    v: np.ndarray | None = None
+    r: np.ndarray[Any, Any]
+    v: np.ndarray[Any, Any] | None = None
     dt: float = 1.0
 
     @classmethod
@@ -399,7 +402,7 @@ class SCIntegratorNode:
         if self.v is None:
             self.v = np.zeros_like(self.r)
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         x = np.atleast_1d(x).flatten()[: len(self.r)]
         self.v += self.r * x * self.dt
         return self.v.copy()
@@ -417,9 +420,9 @@ class SCDelayNode:
     """
 
     name: str
-    delay_steps: np.ndarray
-    delay_time: np.ndarray | None = None  # original physical time for lossless export
-    _buffers: list[list[np.ndarray]] | None = None
+    delay_steps: np.ndarray[Any, Any]
+    delay_time: np.ndarray[Any, Any] | None = None  # original physical time for lossless export
+    _buffers: list[list[np.ndarray[Any, Any]]] | None = None
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Delay, dt: float = 1.0) -> SCDelayNode:
@@ -431,7 +434,7 @@ class SCDelayNode:
         if self._buffers is None:
             self._buffers = [[np.zeros(1) for _ in range(int(d))] for d in self.delay_steps]
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         assert self._buffers is not None
         x = np.atleast_1d(x).flatten()
         out = np.zeros(len(self.delay_steps))
@@ -460,15 +463,15 @@ class SCCubaLIFNode:
 
     name: str
     n_neurons: int
-    tau_syn: np.ndarray
-    tau_mem: np.ndarray
-    r: np.ndarray
-    v_leak: np.ndarray
-    v_threshold: np.ndarray
-    v_reset: np.ndarray
-    w_in: np.ndarray
-    v: np.ndarray | None = None
-    i_syn: np.ndarray | None = None
+    tau_syn: np.ndarray[Any, Any]
+    tau_mem: np.ndarray[Any, Any]
+    r: np.ndarray[Any, Any]
+    v_leak: np.ndarray[Any, Any]
+    v_threshold: np.ndarray[Any, Any]
+    v_reset: np.ndarray[Any, Any]
+    w_in: np.ndarray[Any, Any]
+    v: np.ndarray[Any, Any] | None = None
+    i_syn: np.ndarray[Any, Any] | None = None
     dt: float = 1.0
     reset_mode: str = "reset"
 
@@ -522,7 +525,7 @@ class SCCubaLIFNode:
         self.v = np.broadcast_to(self.v, (size,)).copy()
         self.i_syn = np.zeros(size)
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         assert self.v is not None and self.i_syn is not None
         x = np.atleast_1d(x).flatten()
         if self.n_neurons == 1 and len(x) > 1:
@@ -554,13 +557,13 @@ class SCCubaLINode:
 
     name: str
     n_neurons: int
-    tau_syn: np.ndarray
-    tau_mem: np.ndarray
-    r: np.ndarray
-    v_leak: np.ndarray
-    w_in: np.ndarray
-    v: np.ndarray | None = None
-    i_syn: np.ndarray | None = None
+    tau_syn: np.ndarray[Any, Any]
+    tau_mem: np.ndarray[Any, Any]
+    r: np.ndarray[Any, Any]
+    v_leak: np.ndarray[Any, Any]
+    w_in: np.ndarray[Any, Any]
+    v: np.ndarray[Any, Any] | None = None
+    i_syn: np.ndarray[Any, Any] | None = None
     dt: float = 1.0
 
     @classmethod
@@ -597,7 +600,7 @@ class SCCubaLINode:
         self.v = np.broadcast_to(self.v, (size,)).copy()
         self.i_syn = np.zeros(size)
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         assert self.v is not None and self.i_syn is not None
         x = np.atleast_1d(x).flatten()
         if self.n_neurons == 1 and len(x) > 1:
@@ -642,7 +645,7 @@ class SCSumPool2dNode:
             output_shape=_shape3_tuple_from_type(getattr(node, "output_type", None), "output"),
         )
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         if x.ndim < 2:
             return x
         # Expect (C, H, W) or (H, W)
@@ -692,7 +695,7 @@ class SCAvgPool2dNode:
             output_shape=_shape3_tuple_from_type(getattr(node, "output_type", None), "output"),
         )
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         sum_node = SCSumPool2dNode(
             name=self.name + "_sum",
             kernel_size=self.kernel_size,
@@ -709,8 +712,8 @@ class SCConv1dNode:
     """1D convolution: y = conv1d(x, weight) + bias."""
 
     name: str
-    weight: np.ndarray
-    bias: np.ndarray
+    weight: np.ndarray[Any, Any]
+    bias: np.ndarray[Any, Any]
     stride: int
     padding: int
     dilation: int
@@ -735,7 +738,7 @@ class SCConv1dNode:
             input_shape=getattr(node, "input_shape", None),
         )
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         # x: (C_in, L) or (L,)
         if x.ndim == 1:
             x = x[np.newaxis, :]
@@ -765,8 +768,8 @@ class SCConv2dNode:
     """2D convolution: y = conv2d(x, weight) + bias."""
 
     name: str
-    weight: np.ndarray
-    bias: np.ndarray
+    weight: np.ndarray[Any, Any]
+    bias: np.ndarray[Any, Any]
     stride: tuple[int, int]
     padding: tuple[int, int]
     dilation: tuple[int, int]
@@ -797,7 +800,7 @@ class SCConv2dNode:
             output_shape=_shape3_tuple_from_type(getattr(node, "output_type", None), "output"),
         )
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         # x: (C_in, H, W) or (H, W)
         if x.ndim == 2:
             x = x[np.newaxis, :, :]
