@@ -19690,11 +19690,14 @@ seed : int
 ## Module `neurons.models.rall_cable`
 
 ### Class `RallCableNeuron`
-Rall 1962 — N-compartment passive cable discretization.
+Rall 1962 N-compartment passive cable with an implicit tridiagonal step.
 
-Each compartment: C dV_i/dt = -g_L(V_i - E_L) + g_a(V_{i-1} - 2V_i + V_{i+1})
-Soma is compartment 0; input injected at distal end (N-1).
-Spike detection at soma.
+Each compartment follows the sealed-end passive cable stencil:
+tau_m dV_i/dt = -(V_i - E_L) + g_ratio(V_{i-1} - 2V_i + V_{i+1}) + I_i.
+
+The implementation solves the linear cable step as a candidate-first implicit
+tridiagonal system, commits only finite candidates, and resets only the soma on
+threshold crossing. Soma is compartment 0; input is injected at the distal end.
 
 Reference: Rall, W. (1959). Exp. Neurol. 1:491–527.
 
