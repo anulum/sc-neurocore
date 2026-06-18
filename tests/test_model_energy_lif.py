@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — End-to-end test: EnergyLIFNeuron
 
-"""Full pipeline test for EnergyLIFNeuron (Fardet & Levina 2020).
+"""Full pipeline test for EnergyLIFNeuron exact-flow hardening.
 
 LIF with metabolic energy constraint ε. Spike cost depletes ε."""
 
@@ -113,6 +113,31 @@ class TestEnergyLIFValidation:
 
         assert before < n.epsilon < n.epsilon_0
 
+    def test_exact_candidate_commit(self):
+        n = EnergyLIFNeuron(epsilon=0.5)
+        expected_v, expected_epsilon = n._exact_candidate(10.0)
+
+        assert n.step(10.0) == 0
+
+        assert abs(n.v - expected_v) < 1.0e-12
+        assert abs(n.epsilon - expected_epsilon) < 1.0e-12
+
+    def test_exact_flow_separates_from_forward_euler(self):
+        n = EnergyLIFNeuron(v=-65.0, epsilon=0.5, dt=2.0)
+        euler_v = n.v + (-(n.v - n.v_rest) + n.resistance * n.epsilon * 10.0) / n.tau_m * n.dt
+        exact_v, _ = n._exact_candidate(10.0)
+
+        assert abs(exact_v - euler_v) > 1.0e-3
+
+    def test_spike_uses_energy_candidate(self):
+        n = EnergyLIFNeuron()
+        _, epsilon_candidate = n._exact_candidate(250.0)
+
+        assert n.step(250.0) == 1
+
+        assert n.v == n.v_reset
+        assert abs(n.epsilon - max(0.0, epsilon_candidate - n.alpha)) < 1.0e-12
+
     @pytest.mark.parametrize("field", ["tau_m", "tau_e", "resistance", "dt"])
     @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
     def test_rejects_non_positive_or_non_finite_scale_parameters(self, field: str, value: float):
@@ -130,6 +155,16 @@ class TestEnergyLIFValidation:
         before = (n.v, n.epsilon)
         with pytest.raises(ValueError, match="current"):
             n.step(current)
+        assert (n.v, n.epsilon) == before
+
+    def test_rejects_corrupted_runtime_state_before_mutation(self):
+        n = EnergyLIFNeuron(v=-65.0, epsilon=0.5)
+        n.epsilon = -1.0
+        before = (n.v, n.epsilon)
+
+        with pytest.raises(ValueError, match="epsilon"):
+            n.step(10.0)
+
         assert (n.v, n.epsilon) == before
 
 
