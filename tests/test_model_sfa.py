@@ -89,14 +89,15 @@ class TestSFAAdaptation:
         else:
             pytest.fail("No spike in 10k steps")
 
-    def test_g_sfa_decays_exponentially(self):
-        """Without spikes, g_sfa decays as exp(-dt/tau_sfa)."""
+    def test_g_sfa_uses_coupled_rk4_candidate(self):
+        """Without spikes, g_sfa follows the coupled RK4 candidate."""
         n = SFANeuron()
         n.g_sfa = 1.0
+        expected_v, expected_g = n._rk4_candidate(n.v, n.g_sfa, 0.0)  # noqa: SLF001
         # Step with subthreshold current (no spikes)
-        n.step(0.0)
-        expected = 1.0 * np.exp(-n.dt / n.tau_sfa)
-        assert abs(n.g_sfa - expected) < 1e-10
+        assert n.step(0.0) == 0
+        assert n.v == pytest.approx(expected_v)
+        assert n.g_sfa == pytest.approx(expected_g)
 
     def test_adaptation_current_opposes_depolarisation(self):
         """g_sfa > 0 adds hyperpolarising current g_sfa·(V - E_K).

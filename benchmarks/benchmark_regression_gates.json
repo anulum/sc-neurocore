@@ -1823,6 +1823,63 @@
         "src/sc_neurocore/accel/rust/safety/coba_lif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/coba_lif.rs",
         "src/sc_neurocore/neurons/models/coba_lif.py": "source_hashes.src/sc_neurocore/neurons/models/coba_lif.py"
       }
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-18_sfa_rk4.json",
+      "description": "SFA candidate-first RK4 adaptation ODE parity across Python, Rust, Go, Julia, and Mojo.",
+      "expected_values": {
+        "benchmark": "SFANeuron candidate-first RK4 adaptation ODE",
+        "current": 50.0,
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "production_speed_claim": false,
+        "repeats": 5,
+        "steps": 200000
+      },
+      "id": "sfa-rk4-multibackend-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "required_numbers": [
+        "backend_summary.python.median_ns_per_step",
+        "backend_summary.python.min_ns_per_step",
+        "backend_summary.python.max_ns_per_step",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ns_per_step",
+        "backend_summary.rust.min_ns_per_step",
+        "backend_summary.rust.max_ns_per_step",
+        "backend_summary.rust.spikes",
+        "backend_summary.go.median_ns_per_step",
+        "backend_summary.go.min_ns_per_step",
+        "backend_summary.go.max_ns_per_step",
+        "backend_summary.go.spikes",
+        "backend_summary.julia.median_ns_per_step",
+        "backend_summary.julia.min_ns_per_step",
+        "backend_summary.julia.max_ns_per_step",
+        "backend_summary.julia.spikes",
+        "backend_summary.mojo.median_ns_per_step",
+        "backend_summary.mojo.min_ns_per_step",
+        "backend_summary.mojo.max_ns_per_step",
+        "backend_summary.mojo.spikes"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_model_sfa.py": "source_hashes.benchmarks/bench_model_sfa.py",
+        "src/sc_neurocore/accel/go/services/sfa.go": "source_hashes.src/sc_neurocore/accel/go/services/sfa.go",
+        "src/sc_neurocore/accel/go/services/sfa_test.go": "source_hashes.src/sc_neurocore/accel/go/services/sfa_test.go",
+        "src/sc_neurocore/accel/julia/neurons/sfa.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sfa.jl",
+        "src/sc_neurocore/accel/mojo/kernels/sfa.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/sfa.mojo",
+        "src/sc_neurocore/accel/rust/safety/sfa.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sfa.rs",
+        "src/sc_neurocore/neurons/models/sfa.py": "source_hashes.src/sc_neurocore/neurons/models/sfa.py"
+      }
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"

@@ -6,6 +6,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `SFANeuron` from forward-Euler voltage plus separate adaptation
+  decay to candidate-first RK4 over the coupled `(v, g_sfa)` adaptation ODE
+  across Python, Go, Julia, Mojo, and Rust safety surfaces. Added native Go/Rust
+  RK4 tests, refreshed Python module tests, a five-backend local non-isolated
+  benchmark artifact, a regression-gate row, and updated model documentation.
 - Replaced `ExpIFNeuron` raw Euler mutation with candidate-first RK4 across the
   maintained Python reference, Rust engine, Go service, Julia mirror, and Mojo
   mirror. The Fourcaud-Trocmé EIF ODE and hard reset are unchanged; all surfaces

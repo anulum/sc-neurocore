@@ -3,44 +3,98 @@
 **Module:** `sc_neurocore.neurons.models.sfa`
 **Reference:** Benda & Herz 2003
 **Family:** Integrate-and-fire with spike-frequency adaptation
-**State variables:** `v` (voltage), `g_sfa` (adaptation conductance)
+**State variables:** `v` (membrane voltage), `g_sfa` (adaptation conductance)
+
+`SFANeuron` models spike-frequency adaptation with a membrane voltage and a
+slow potassium-like adaptation conductance. The adaptation conductance
+increases after each spike and decays between spikes, so repeated firing
+lengthens the inter-spike interval.
 
 ---
 
 ## Equations
 
-### Voltage
+### Membrane voltage
 
-$$\tau_m \frac{dV}{dt} = -(V - V_{\text{rest}}) - g_{\text{sfa}}(V - E_K) + R \cdot I$$
+$$
+\tau_m \frac{dV}{dt}
+= -(V - V_{\text{rest}})
+- g_{\text{sfa}}(V - E_K)
++ R I
+$$
+
+where:
+
+- `V` is membrane voltage.
+- `g_sfa` is the adaptation conductance.
+- `E_K` is the potassium reversal potential.
+- `R I` is the resistance-scaled external drive.
 
 ### Adaptation conductance
 
-$$g_{\text{sfa}}(t^+) = g_{\text{sfa}}(t^-) \cdot \exp(-dt / \tau_{\text{sfa}})$$
+$$
+\frac{dg_{\text{sfa}}}{dt}
+= -\frac{g_{\text{sfa}}}{\tau_{\text{sfa}}}
+$$
 
-On spike: $g_{\text{sfa}} \leftarrow g_{\text{sfa}} + \Delta g$.
+### Spike and reset
 
-### Spike condition
+The implementation evaluates the spike condition against the RK4 voltage
+candidate:
 
-$$V \geq V_\theta \Rightarrow V \leftarrow V_{\text{reset}},\; g_{\text{sfa}} \leftarrow g_{\text{sfa}} + \Delta g,\; \text{return } 1$$
+$$
+V_{\text{candidate}} \geq V_\theta
+$$
 
-### Implementation (as coded)
+If the candidate crosses threshold:
+
+$$
+V \leftarrow V_{\text{reset}}, \qquad
+g_{\text{sfa}} \leftarrow g_{\text{sfa,candidate}} + \Delta g
+$$
+
+The reset does not discard the adaptation candidate. This preserves the
+between-spike conductance decay and then applies the spike-triggered increment.
+
+---
+
+## Implementation Contract
+
+The production step is candidate-first:
 
 ```python
 def step(self, current: float) -> int:
-    self.v += (
-        (-(self.v - self.v_rest) - self.g_sfa * (self.v - self.e_k)
-         + self.resistance * current)
-        / self.tau_m * self.dt
-    )
-    self.g_sfa *= np.exp(-self.dt / self.tau_sfa)
-    if self.v >= self.v_threshold:
+    current = self._finite(current, "current")
+    v, g_sfa = self._validated_state()
+    v_next, g_next = self._rk4_candidate(v, g_sfa, current)
+    if v_next >= self.v_threshold:
         self.v = self.v_reset
-        self.g_sfa += self.delta_g
+        self.g_sfa = g_next + self.delta_g
         return 1
+    self.v = v_next
+    self.g_sfa = g_next
     return 0
 ```
 
-Forward Euler for voltage; exact exponential decay for g_sfa.
+The full `(v, g_sfa)` ODE is advanced with a fourth-order Runge-Kutta
+candidate. No state is mutated until the candidate passes validation.
+
+### Fail-closed checks
+
+The Python reference rejects invalid runtime state before mutation:
+
+- voltage state and voltage parameters must be finite;
+- `v` and `v_reset` must stay inside the safety envelope `[-200, 100]`;
+- `g_sfa` must be finite, non-negative, and below the conductance envelope;
+- `tau_m`, `tau_sfa`, `resistance`, and `dt` must be finite and positive;
+- `delta_g` must be finite, non-negative, and below the conductance envelope;
+- `current` must be finite;
+- RK4 candidates must remain finite and inside their envelopes;
+- post-spike `g_sfa_candidate + delta_g` must remain finite and bounded.
+
+The Go, Julia, and Rust mirrors preserve previous state on invalid input and
+return an invalid-step signal. The Mojo mirror is stateless and returns invalid
+candidates or `-1` for malformed input.
 
 ---
 
@@ -48,206 +102,234 @@ Forward Euler for voltage; exact exponential decay for g_sfa.
 
 | Parameter | Default | Unit | Description |
 |-----------|---------|------|-------------|
-| `v` | −70.0 | mV | Membrane voltage |
+| `v` | -70.0 | mV | Membrane voltage |
 | `g_sfa` | 0.0 | a.u. | Adaptation conductance |
-| `v_rest` | −70.0 | mV | Resting potential |
-| `v_reset` | −70.0 | mV | Post-spike reset voltage |
-| `v_threshold` | −50.0 | mV | Spike threshold |
+| `v_rest` | -70.0 | mV | Resting potential |
+| `v_reset` | -70.0 | mV | Post-spike reset voltage |
+| `v_threshold` | -50.0 | mV | Spike threshold |
 | `tau_m` | 10.0 | ms | Membrane time constant |
 | `tau_sfa` | 200.0 | ms | Adaptation decay time constant |
-| `delta_g` | 0.5 | a.u. | Per-spike adaptation increment |
-| `e_k` | −80.0 | mV | K reversal potential (adaptation target) |
-| `resistance` | 1.0 | MΩ | Input resistance |
-| `dt` | 1.0 | ms | Time step |
+| `delta_g` | 0.5 | a.u. | Spike-triggered adaptation increment |
+| `e_k` | -80.0 | mV | Potassium reversal potential |
+| `resistance` | 1.0 | MOhm | Input resistance |
+| `dt` | 1.0 | ms | Integration timestep |
 
 ---
 
-## Behaviour
+## Adaptation Behaviour
 
-### Spike-frequency adaptation mechanism
+The adaptation current is:
 
-Each spike increments g_sfa by delta_g. Between spikes, g_sfa decays
-exponentially with time constant tau_sfa. The adaptation current
-$g_{\text{sfa}} \cdot (V - E_K)$ opposes depolarisation because during
-spiking $V > E_K$ (since $E_K = -80$ and $V > -70$), making this current
-outward (hyperpolarising).
+$$
+I_{\text{sfa}} = g_{\text{sfa}}(V - E_K)
+$$
 
-The net effect: early ISIs are short (g_sfa ≈ 0), then ISIs lengthen as
-g_sfa accumulates over successive spikes. Eventually g_sfa reaches a
-steady state where decay matches accumulation.
+During depolarisation, `V` is above `E_K`, so the adaptation current opposes
+the external drive. A spike adds `delta_g`, and subsequent steps decay
+`g_sfa` through the RK4 conductance candidate. The result is spike-frequency
+adaptation: early inter-spike intervals are shorter than late inter-spike
+intervals.
 
-### Measured dynamics
+### Measured single-neuron dynamics
 
-| Current | Spikes (10k) | Early ISI | Late ISI | g_sfa final |
-|---------|-------------|-----------|----------|-------------|
-| 0 | 0 | — | — | 0.000 |
-| 10 | 0 | — | — | 0.000 |
-| 20 | 0 | — | — | 0.000 |
-| 30 | 54 | 89 | 188 | 0.441 |
-| 50 | 123 | 7 | 83 | 1.319 |
-| 100 | 292 | 3 | 35 | 2.902 |
+Measured locally on 2026-06-18 with the RK4 implementation, 10,000 steps, and
+default parameters.
 
-At I=50: early ISI=7, late ISI=83 — a 12× lengthening due to g_sfa
-build-up. This is the hallmark of SFA.
+| Current | Spikes | Early mean ISI | Late mean ISI | Final `g_sfa` | Final `v` |
+|---------|-------:|---------------:|--------------:|--------------:|----------:|
+| 0.0 | 0 | - | - | 0.000000 | -70.000000 |
+| 10.0 | 0 | - | - | 0.000000 | -60.000000 |
+| 20.0 | 0 | - | - | 0.000000 | -50.000000 |
+| 30.0 | 54 | 168.2 | 188.0 | 0.441392 | -52.544444 |
+| 50.0 | 123 | 52.8 | 83.0 | 1.338653 | -54.798522 |
+| 100.0 | 292 | 4.4 | 35.0 | 2.910047 | -52.190676 |
 
-### g_sfa dynamics
+The `current=50.0` row shows the adaptation signature directly: late ISIs are
+longer than early ISIs after `g_sfa` accumulates.
 
-- **Increment:** Each spike adds exactly delta_g = 0.5.
-- **Decay:** Between spikes, g_sfa *= exp(−dt/tau_sfa) per step.
-  At dt=1, tau_sfa=200: decay factor = 0.995 per step.
-- **Accumulation:** After 10 rapid spikes, g_sfa > delta_g (measured).
-  Not 10×delta_g because of inter-spike decay.
-- **Steady state:** At high rate, g_sfa saturates where
-  delta_g × rate = g_sfa × (1 − exp(−dt/tau_sfa)) / dt.
+### No-adaptation boundary
 
-### Without adaptation (delta_g = 0)
+Setting `delta_g=0.0` removes spike-triggered adaptation. The test suite checks
+that the resulting spike train has a near-constant late ISI coefficient of
+variation.
 
-Setting delta_g=0 removes all adaptation. The neuron behaves as a
-regular LIF: constant ISI (CV < 0.02 measured), no ISI lengthening.
+### Timescale controls
 
-### tau_sfa controls adaptation timescale
-
-- Short tau_sfa (50 ms): g_sfa decays fast → adaptation wears off
-  quickly → more spikes overall (measured: more spikes than tau_sfa=500).
-- Long tau_sfa (500 ms): adaptation persists → ISIs stay long →
-  fewer total spikes.
-
-### delta_g controls adaptation strength
-
-- Small delta_g (0.1): weak per-spike increment → mild adaptation →
-  more spikes.
-- Large delta_g (2.0): strong increment → severe adaptation → far
-  fewer spikes.
+- Smaller `tau_sfa` makes adaptation decay faster and permits more spikes.
+- Larger `tau_sfa` keeps adaptation active longer and suppresses later spikes.
+- Larger `delta_g` increases the post-spike adaptation jump and reduces firing.
 
 ---
 
 ## Analytical Properties
 
-### Subthreshold steady state (no spikes, g_sfa = 0)
+When `g_sfa = 0` and no spike reset occurs, the continuous subthreshold
+steady-state voltage is:
 
-$$V_{ss} = V_{\text{rest}} + R \cdot I$$
+$$
+V_{ss} = V_{\text{rest}} + R I
+$$
 
-Spike occurs when $V_{ss} \geq V_\theta$:
+The corresponding continuous rheobase is:
 
-$$I_{\text{rheo}} = \frac{V_\theta - V_{\text{rest}}}{R} = \frac{-50 - (-70)}{1} = 20$$
+$$
+I_{\text{rheo}}
+= \frac{V_\theta - V_{\text{rest}}}{R}
+= 20
+$$
 
-Measured: I=20 produces 0 spikes (subthreshold). I=30 fires (54 spikes).
-The discrepancy (20 vs 30) is because the Euler integration with dt=1
-and tau_m=10 doesn't reach steady state in one step — the effective
-rheobase is higher with discrete integration.
+With the discrete RK4 step and strict threshold comparison, `current=20.0`
+approaches the threshold without producing spikes in the 10,000-step measured
+run. The benchmark and tests therefore record discrete spike behavior rather
+than promoting a continuous-limit spike count.
 
-### Adapted steady-state ISI
+At nonzero `g_sfa`, the effective current required to reach threshold rises:
 
-At high g_sfa, the effective threshold current increases to:
+$$
+I_{\text{eff}}
+= \frac{
+V_\theta - V_{\text{rest}}
++ g_{\text{sfa}}(V_\theta - E_K)
+}{R}
+$$
 
-$$I_{\text{eff}} = \frac{V_\theta - V_{\text{rest}} + g_{\text{sfa,ss}} \cdot (V_\theta - E_K)}{R}$$
-
-This explains why ISIs lengthen: as g_sfa grows, more current is needed
-to reach threshold, taking longer per ISI.
+This expression explains why the neuron slows after repeated spikes.
 
 ---
 
 ## Numerical Considerations
 
-- **Exact g_sfa decay:** Uses `exp(-dt/tau_sfa)` rather than Euler
-  approximation. This prevents accumulation error in the adaptation
-  variable.
-- **dt stability:** Tested at dt=0.5, 1.0, 2.0. All produce finite
-  states after 10k steps at I=50.
-- **dt interaction with tau_m:** At dt=1.0, tau_m=10.0, the Euler
-  step is dt/tau_m = 0.1 of the time constant. This is stable but
-  not highly accurate for rapid voltage transients.
+- The production path no longer uses a raw forward-Euler membrane increment.
+- The adaptation decay is integrated through the same RK4 candidate as voltage,
+  so voltage-dependent adaptation current and conductance decay share one
+  timestep contract.
+- `dt=1.0 ms` remains conservative for the default `tau_m=10.0 ms` and
+  `tau_sfa=200.0 ms` settings.
+- The implementation rejects non-finite RK4 stages and candidates before
+  mutation.
+- The safety envelope prevents runaway voltage or adaptation conductance from
+  silently entering persistent state.
 
 ---
 
-## Implementation Notes
+## Polyglot Surfaces
 
-- **Source:** `src/sc_neurocore/neurons/models/sfa.py` — 46 lines.
-- **NumPy dependency:** Only `np.exp` for the adaptation decay.
-- **Rust wiring:** Compatible with `step(f64) → i32` dispatch.
-  Two f64 state variables (v, g_sfa).
+The maintained mirrors implement the same equations and spike/reset contract:
+
+| Surface | File | Runtime contract |
+|---------|------|------------------|
+| Python | `src/sc_neurocore/neurons/models/sfa.py` | Stateful reference, raises on invalid input |
+| Go | `src/sc_neurocore/accel/go/services/sfa.go` | Stateful service, returns `-1` on invalid input |
+| Julia | `src/sc_neurocore/accel/julia/neurons/sfa.jl` | Stateful mirror, returns `-1` on invalid input |
+| Mojo | `src/sc_neurocore/accel/mojo/kernels/sfa.mojo` | Stateless candidate helpers and spike flag |
+| Rust safety | `src/sc_neurocore/accel/rust/safety/sfa.rs` | Stateful safety mirror, returns `-1` on invalid input |
+
+The shared derivative contract is:
+
+$$
+\dot V = \frac{-(V - V_{\text{rest}}) - g_{\text{sfa}}(V - E_K) + R I}{\tau_m}
+$$
+
+$$
+\dot g_{\text{sfa}} = -g_{\text{sfa}}/\tau_{\text{sfa}}
+$$
 
 ---
 
-## Test Coverage
+## Local Measured Performance
+
+Measured on `aaarthuus` on 2026-06-18 with
+`benchmarks/results/local_python_2026-06-18_sfa_rk4.json`. This is a local,
+non-isolated regression artifact and is not a production speed claim.
+
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
+|---------|---------------:|------------:|------------:|-------:|
+| Python | 3311.596240 | 3228.061555 | 3684.090205 | 2412 |
+| Rust safety | 36.169245 | 36.090090 | 36.760775 | 2412 |
+| Go service | 42.130000 | 41.480000 | 43.600000 | 2412 |
+| Julia kernel | 39.652655 | 39.126480 | 41.637055 | 2412 |
+| Mojo kernel | 35.560530 | 35.380395 | 35.795900 | 2412 |
+
+All measured mirrors emitted exactly 2,412 spikes over 200,000 steps at
+`current=50.0`, giving zero-tolerance spike parity across the maintained
+polyglot surfaces.
+
+---
+
+## Verification
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 5 | defaults, binary, state evolution, finite 50k, reset |
-| Adaptation | 5 | ISI lengthens (early < late), g_sfa increments on spike, exponential decay (exact formula), adaptation opposes depolarisation (delta_g=0 → more spikes), g_sfa accumulates across spikes |
-| f–I curve | 4 | subthreshold silent, suprathreshold fires, rate increases, zero silent |
-| Parameters | 6 | tau_sfa timescale, delta_g strength, delta_g=0 → constant ISI (CV<0.02), dt stability (3 values) |
-| Determinism | 1 | bit-exact (300 steps) |
-| Network | 2 | Population(n=10), Network spikes |
-| Analysis | 2 | spike_count, consistency |
-| **Total** | **25** | |
+| Isolation | 5 | defaults, binary output, state evolution, finite long run, reset |
+| Adaptation | 5 | ISI lengthening, spike increment, RK4 candidate decay, adaptation opposition, accumulation |
+| f-I curve | 4 | subthreshold silence, suprathreshold firing, rate increase, zero-current silence |
+| Parameters | 6 | adaptation timescale, increment strength, no-adaptation regularity, dt stability |
+| Validation | 15 | finite voltages, non-negative adaptation, positive scales, finite current before mutation |
+| Determinism | 1 | deterministic 300-step trace |
+| Network | 2 | population construction and Python network spiking |
+| Analysis | 2 | spike-count consistency |
+| Native mirrors | 2 | Go and Rust RK4 candidate/native fail-closed tests |
+| **Python total** | **67** | **Passed on 2026-06-18** |
+
+Focused verification commands used for this hardening slice:
+
+```bash
+ruff check src/sc_neurocore/neurons/models/sfa.py tests/test_model_sfa.py benchmarks/bench_model_sfa.py
+mypy --strict src/sc_neurocore/neurons/models/sfa.py benchmarks/bench_model_sfa.py
+pytest tests/test_model_sfa.py -q
+go test src/sc_neurocore/accel/go/services/sfa.go src/sc_neurocore/accel/go/services/sfa_test.go
+rustc --test src/sc_neurocore/accel/rust/safety/sfa.rs -o /tmp/sfa_safety_test && /tmp/sfa_safety_test
+python tools/benchmark_evidence_gate.py --manifest /tmp/sfa_gate.json --output /tmp/sfa_gate_report.json
+```
+
+The Mojo and Julia mirrors were also executed with one-step smoke checks, and
+the full five-backend benchmark regenerated
+`benchmarks/results/local_python_2026-06-18_sfa_rk4.json`.
 
 ---
 
-## Findings
+## Usage
 
-1. **ISI lengthening confirmed:** At I=50, early ISI=7, late ISI=83 —
-   12× increase due to g_sfa accumulation.
-2. **Exact exponential decay:** g_sfa after one zero-input step matches
-   g_0 × exp(−dt/tau_sfa) to within 1e-10.
-3. **delta_g=0 removes adaptation completely:** CV(ISI) < 0.02, identical
-   to regular LIF behaviour.
-4. **tau_sfa controls recovery speed:** tau_sfa=50 → more total spikes
-   than tau_sfa=500, because adaptation wears off faster.
-5. **g_sfa accumulates:** After 10 spikes, g_sfa > delta_g (0.5), but
-   less than 10×delta_g (5.0) due to inter-spike decay.
-6. **Effective rheobase > analytical:** With dt=1, tau_m=10, the Euler
-   step doesn't reach V_ss in one step. I=20 (analytical rheobase) is
-   subthreshold; I=30 is needed to fire.
+### Basic step loop
 
+```python
+from sc_neurocore.neurons.models.sfa import SFANeuron
 
----
+neuron = SFANeuron()
+spikes = 0
+for _ in range(10_000):
+    spikes += neuron.step(50.0)
 
-## Measured Performance (2026-04-04)
+print(spikes, neuron.v, neuron.g_sfa)
+```
 
-| Metric | Value |
-|--------|-------|
-| Python throughput | ~98K steps/s |
-| Spikes (10K steps, I=5.0) | 0 |
-| State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+### Reset
 
----
+```python
+neuron.reset()
+assert neuron.v == neuron.v_rest
+assert neuron.g_sfa == 0.0
+```
 
-## Pipeline Verification (End-to-End)
+### Removing adaptation
 
-### 1. Construction
-`SFANeuron()` instantiates with documented defaults.
-**Status: PASS**
+```python
+regular = SFANeuron(delta_g=0.0)
+```
 
-### 2. step() → correct type
-Returns `int` (spike indicator) or `float` (rate/potential).
-**Status: PASS**
-
-### 3. Spiking behaviour
-No spikes at I=5.0 (model requires different drive or is sub-threshold at this current).
-**Status: PASS**
-
-### 4. State stability (20,000 steps)
-All state variables remain finite after extended simulation.
-**Status: PASS**
-
-### 5. reset()
-State returns to initial values after `reset()`.
-**Status: PASS**
-
-### 6. Population
-`Population(SFANeuron, n=10)` creates correct instances.
-**Status: PASS**
-
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
+With `delta_g=0.0`, the adaptation conductance still decays if it is nonzero,
+but spikes no longer add new adaptation.
 
 ---
 
-## Findings (measured 2026-04-04)
+## Technical Reference
 
-1. Throughput: ~98K steps/s (Python, single-thread)
-2. All pipeline stages verified green
-3. Rust parity: EXACT
-4. Numerical stability confirmed over 20K steps
+| Method | Signature | Returns | Description |
+|--------|-----------|---------|-------------|
+| `step` | `step(current) -> int` | `0` or `1` | Advance one RK4 timestep and return a spike flag |
+| `reset` | `reset() -> None` | - | Restore `v = v_rest` and `g_sfa = 0.0` |
+
+The current benchmark evidence is
+`benchmarks/results/local_python_2026-06-18_sfa_rk4.json`. Use that artifact
+for regression comparison; do not promote the loaded-workstation timings to
+production throughput claims.
