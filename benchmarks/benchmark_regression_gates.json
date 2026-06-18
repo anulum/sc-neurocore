@@ -1,5 +1,6 @@
 {
   "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "schema_version": "sc-neurocore.benchmark-regression-gates.v1",
   "gates": [
     {
       "artefact": "benchmarks/results/bench_formal.json",
@@ -540,6 +541,66 @@
         "src/sc_neurocore/accel/julia/neurons/lapicque.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/lapicque.jl",
         "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/lapicque.mojo",
         "src/sc_neurocore/accel/rust/safety/lapicque.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/lapicque.rs"
+      }
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-06-18_gutkin_ermentrout_rk4.json",
+      "expected_values": {
+        "spdx_license": "AGPL-3.0-or-later",
+        "benchmark": "GutkinErmentroutNeuron candidate-first RK4 conductance step",
+        "evidence_class": "local_regression_non_isolated",
+        "production_speed_claim": false,
+        "hardware_measurement_claimed": false
+      },
+      "id": "gutkin-ermentrout-rk4-multibackend-local-regression",
+      "required_numbers": [
+        "backend_summary.python.median_ns_per_step",
+        "backend_summary.python.min_ns_per_step",
+        "backend_summary.python.max_ns_per_step",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ns_per_step",
+        "backend_summary.rust.min_ns_per_step",
+        "backend_summary.rust.max_ns_per_step",
+        "backend_summary.rust.spikes",
+        "backend_summary.go.median_ns_per_step",
+        "backend_summary.go.min_ns_per_step",
+        "backend_summary.go.max_ns_per_step",
+        "backend_summary.go.spikes",
+        "backend_summary.julia.median_ns_per_step",
+        "backend_summary.julia.min_ns_per_step",
+        "backend_summary.julia.max_ns_per_step",
+        "backend_summary.julia.spikes",
+        "backend_summary.mojo.median_ns_per_step",
+        "backend_summary.mojo.min_ns_per_step",
+        "backend_summary.mojo.max_ns_per_step",
+        "backend_summary.mojo.spikes",
+        "steps",
+        "repeats",
+        "current"
+      ],
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0
+        }
+      ],
+      "source_hashes": {
+        "benchmarks/bench_model_gutkin_ermentrout.py": "source_hashes.benchmarks/bench_model_gutkin_ermentrout.py",
+        "engine/Cargo.toml": "source_hashes.engine/Cargo.toml",
+        "engine/examples/bench_gutkin_ermentrout_rk4.rs": "source_hashes.engine/examples/bench_gutkin_ermentrout_rk4.rs",
+        "engine/src/neurons/simple_spiking.rs": "source_hashes.engine/src/neurons/simple_spiking.rs",
+        "src/sc_neurocore/neurons/models/gutkin_ermentrout.py": "source_hashes.src/sc_neurocore/neurons/models/gutkin_ermentrout.py",
+        "src/sc_neurocore/accel/go/services/gutkin_ermentrout.go": "source_hashes.src/sc_neurocore/accel/go/services/gutkin_ermentrout.go",
+        "src/sc_neurocore/accel/go/services/gutkin_ermentrout_test.go": "source_hashes.src/sc_neurocore/accel/go/services/gutkin_ermentrout_test.go",
+        "src/sc_neurocore/accel/julia/neurons/gutkin_ermentrout.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/gutkin_ermentrout.jl",
+        "src/sc_neurocore/accel/mojo/kernels/gutkin_ermentrout.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/gutkin_ermentrout.mojo",
+        "src/sc_neurocore/accel/rust/safety/gutkin_ermentrout.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/gutkin_ermentrout.rs"
       }
     },
     {

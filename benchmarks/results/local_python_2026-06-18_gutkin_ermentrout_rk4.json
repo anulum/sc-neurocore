@@ -1,0 +1,313 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "benchmark": "GutkinErmentroutNeuron candidate-first RK4 conductance step",
+  "timestamp_utc": "2026-06-18T17:32:59+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_gutkin_ermentrout.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 5.0,
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 3804.33962,
+      "min_ns_per_step": 3756.07069,
+      "max_ns_per_step": 3935.855725,
+      "spikes": 662
+    },
+    "rust": {
+      "median_ns_per_step": 168.049885,
+      "min_ns_per_step": 163.083295,
+      "max_ns_per_step": 202.456505,
+      "spikes": 662
+    },
+    "go": {
+      "median_ns_per_step": 172.6,
+      "min_ns_per_step": 169.7,
+      "max_ns_per_step": 174.4,
+      "spikes": 662
+    },
+    "julia": {
+      "median_ns_per_step": 117.993155,
+      "min_ns_per_step": 116.74055,
+      "max_ns_per_step": 120.40165,
+      "spikes": 662
+    },
+    "mojo": {
+      "median_ns_per_step": 135.06057497579604,
+      "min_ns_per_step": 134.55815002089366,
+      "max_ns_per_step": 136.72101980773732,
+      "spikes": 662
+    }
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 3804.33962,
+      "min_ns_per_step": 3756.07069,
+      "max_ns_per_step": 3935.855725,
+      "spikes": 662,
+      "results": [
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 787171145,
+          "ns_per_step": 3935.855725,
+          "spikes": 662,
+          "ending_state": [
+            -65.4141155174714,
+            0.009619581811940777
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 768732827,
+          "ns_per_step": 3843.664135,
+          "spikes": 662,
+          "ending_state": [
+            -65.4141155174714,
+            0.009619581811940777
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 760867924,
+          "ns_per_step": 3804.33962,
+          "spikes": 662,
+          "ending_state": [
+            -65.4141155174714,
+            0.009619581811940777
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 753227173,
+          "ns_per_step": 3766.135865,
+          "spikes": 662,
+          "ending_state": [
+            -65.4141155174714,
+            0.009619581811940777
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 751214138,
+          "ns_per_step": 3756.07069,
+          "spikes": 662,
+          "ending_state": [
+            -65.4141155174714,
+            0.009619581811940777
+          ]
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "timestamp_unix": 1781803973,
+      "command": "cargo run --manifest-path engine/Cargo.toml --example bench_gutkin_ermentrout_rk4",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "target_os": "linux",
+      "target_arch": "x86_64",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "4.31 31.41 63.88 2/3080 1583126",
+        "load_average_after": "4.31 31.41 63.88 2/3081 1583141",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=1867.203,max=4616.487,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5,
+      "median_ns_per_step": 168.049885,
+      "min_ns_per_step": 163.083295,
+      "max_ns_per_step": 202.456505,
+      "results_ns_per_step": [
+        168.049885,
+        163.083295,
+        165.955505,
+        202.456505,
+        190.23376
+      ],
+      "spike_counts": [
+        662,
+        662,
+        662,
+        662,
+        662
+      ],
+      "final_vs": [
+        -65.4141155174717,
+        -65.4141155174717,
+        -65.4141155174717,
+        -65.4141155174717,
+        -65.4141155174717
+      ],
+      "final_ns": [
+        0.009619581811942252,
+        0.009619581811942252,
+        0.009619581811942252,
+        0.009619581811942252,
+        0.009619581811942252
+      ],
+      "driver_command": "cargo run --manifest-path engine/Cargo.toml --example bench_gutkin_ermentrout_rk4"
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/gutkin_ermentrout.go src/sc_neurocore/accel/go/services/gutkin_ermentrout_test.go -run ^$ -bench BenchmarkGutkinErmentroutRK4$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 172.6,
+      "min_ns_per_step": 169.7,
+      "max_ns_per_step": 174.4,
+      "results_ns_per_step": [
+        173.0,
+        169.7,
+        174.4,
+        170.8,
+        172.6
+      ],
+      "spikes": 662,
+      "spike_counts": [
+        662,
+        662,
+        662,
+        662,
+        662
+      ]
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <gutkin-ermentrout rk4 benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 117.993155,
+      "min_ns_per_step": 116.74055,
+      "max_ns_per_step": 120.40165,
+      "results_ns_per_step": [
+        119.41187,
+        120.40165,
+        117.040635,
+        116.74055,
+        117.993155
+      ],
+      "spikes": 662,
+      "final_vs": [
+        -65.4141155174717,
+        -65.4141155174717,
+        -65.4141155174717,
+        -65.4141155174717,
+        -65.4141155174717
+      ],
+      "final_ns": [
+        0.009619581811942252,
+        0.009619581811942252,
+        0.009619581811942252,
+        0.009619581811942252,
+        0.009619581811942252
+      ]
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp gutkin-ermentrout benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 135.06057497579604,
+      "min_ns_per_step": 134.55815002089366,
+      "max_ns_per_step": 136.72101980773732,
+      "results_ns_per_step": [
+        136.72101980773732,
+        135.06057497579604,
+        134.55815002089366,
+        134.87423479091376,
+        135.19333500880748
+      ],
+      "spikes": 662,
+      "spike_counts": [
+        662,
+        662,
+        662,
+        662,
+        662
+      ],
+      "final_vs": [
+        -65.41411756711382,
+        -65.41411756711382,
+        -65.41411756711382,
+        -65.41411756711382,
+        -65.41411756711382
+      ],
+      "final_ns": [
+        0.00961959232184049,
+        0.00961959232184049,
+        0.00961959232184049,
+        0.00961959232184049,
+        0.00961959232184049
+      ]
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_model_gutkin_ermentrout.py": "473de963a3654f58dac619d2bd931af60360f98b92222947b475f7cd9285a967",
+    "engine/Cargo.toml": "b2378d0293e90a551db3d73bc19fefb4399d9276bc2b4fbe6700ef2b05dfa4c1",
+    "engine/examples/bench_gutkin_ermentrout_rk4.rs": "f9cf08248b539250407380208713e1741293b49bc4a43658edc8dde281c794bd",
+    "engine/src/neurons/simple_spiking.rs": "67a1ab9fe1241d1ff3192887f19cc56e5f76f58922fdf7e2a3ccb5e5632dce93",
+    "src/sc_neurocore/neurons/models/gutkin_ermentrout.py": "d2621abffa959c222083866f207ad8e72545c428eb868b9225656d3ac93bd690",
+    "src/sc_neurocore/accel/go/services/gutkin_ermentrout.go": "eb600316c73f4eabca23298c360de0db6b3e416e6ea6e532b07d8e8fa05f52e9",
+    "src/sc_neurocore/accel/go/services/gutkin_ermentrout_test.go": "ac4210f411c5a98a03aafc93f7d73ced73a70f6a93265e05036818649848c247",
+    "src/sc_neurocore/accel/julia/neurons/gutkin_ermentrout.jl": "a916947aee44ceb1ba2e1f7f068422cac924d45217fd71541a31c49722a11837",
+    "src/sc_neurocore/accel/mojo/kernels/gutkin_ermentrout.mojo": "db1e69262dea2de30621d589029692424b1a4a20d24aeb0b4a1975efde80fadb",
+    "src/sc_neurocore/accel/rust/safety/gutkin_ermentrout.rs": "b2f899adffdf37eaac9df31f31e8cd97cdacdd9fc49eb25cd86c5ec2a33026f7",
+    "benchmarks/bench_model_gutkin_ermentrout": {
+      "py": "473de963a3654f58dac619d2bd931af60360f98b92222947b475f7cd9285a967"
+    },
+    "engine/Cargo": {
+      "toml": "b2378d0293e90a551db3d73bc19fefb4399d9276bc2b4fbe6700ef2b05dfa4c1"
+    },
+    "engine/examples/bench_gutkin_ermentrout_rk4": {
+      "rs": "f9cf08248b539250407380208713e1741293b49bc4a43658edc8dde281c794bd"
+    },
+    "engine/src/neurons/simple_spiking": {
+      "rs": "67a1ab9fe1241d1ff3192887f19cc56e5f76f58922fdf7e2a3ccb5e5632dce93"
+    },
+    "src/sc_neurocore/neurons/models/gutkin_ermentrout": {
+      "py": "d2621abffa959c222083866f207ad8e72545c428eb868b9225656d3ac93bd690"
+    },
+    "src/sc_neurocore/accel/go/services/gutkin_ermentrout": {
+      "go": "eb600316c73f4eabca23298c360de0db6b3e416e6ea6e532b07d8e8fa05f52e9"
+    },
+    "src/sc_neurocore/accel/go/services/gutkin_ermentrout_test": {
+      "go": "ac4210f411c5a98a03aafc93f7d73ced73a70f6a93265e05036818649848c247"
+    },
+    "src/sc_neurocore/accel/julia/neurons/gutkin_ermentrout": {
+      "jl": "a916947aee44ceb1ba2e1f7f068422cac924d45217fd71541a31c49722a11837"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/gutkin_ermentrout": {
+      "mojo": "db1e69262dea2de30621d589029692424b1a4a20d24aeb0b4a1975efde80fadb"
+    },
+    "src/sc_neurocore/accel/rust/safety/gutkin_ermentrout": {
+      "rs": "b2f899adffdf37eaac9df31f31e8cd97cdacdd9fc49eb25cd86c5ec2a33026f7"
+    }
+  }
+}

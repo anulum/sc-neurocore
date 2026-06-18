@@ -18755,12 +18755,26 @@ Reference: D'Angelo et al. (2001) J Neurosci 21:759–770.
 ## Module `neurons.models.gutkin_ermentrout`
 
 ### Class `GutkinErmentroutNeuron`
-Gutkin & Ermentrout 1998 — persistent Na + K minimal conductance.
+Gutkin-Ermentrout persistent-sodium conductance neuron.
 
-Reference: Gutkin, B.S. & Ermentrout, G.B. (1998). Neural Comput. 10:1047–1065.
+The model keeps voltage ``v`` and delayed-rectifier activation ``n`` as
+dynamic states. Persistent sodium activation is instantaneous through
+``m_inf(v)``. The implementation advances the coupled ODE with a
+candidate-first fourth-order Runge-Kutta step and commits the candidate
+only when the complete numeric contract remains finite and biologically
+bounded.
 
+- **__post_init__**()
+  - Validate the initial state and parameters.
 - **step**(current)
+  - Advance one RK4 step under constant external current.
 - **reset**()
+  - Restore the documented default voltage and potassium gate.
+- **_valid_static_contract**()
+- **_m_inf**(v)
+- **_n_inf**(v)
+- **_rhs**(v, n_gate, current)
+- **_rk4_candidate**(current)
 
 ---
 
