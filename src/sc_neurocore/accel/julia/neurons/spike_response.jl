@@ -8,7 +8,7 @@
 
 module SpikeResponseAccel
 
-export step!, simulate, SpikeResponseNeuronState
+export step!, simulate, valid, SpikeResponseNeuronState
 
 mutable struct SpikeResponseNeuronState
     v::Float64
@@ -24,24 +24,42 @@ function SpikeResponseNeuronState()
     SpikeResponseNeuronState(0.0, 1.0, 10.0, 5.0, -5.0, 1000.0, 1.0)
 end
 
-function step!(s::SpikeResponseNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        eta = (s.time_since_spike < 100.0) ? s.eta_reset * exp(-s.time_since_spike / s.tau_eta) : 0.0
-        kappa = weighted_input * (1.0 - exp(-s.dt / s.tau_kappa))
-        s.v = eta + kappa
-        s.time_since_spike += s.dt
-        if s.v >= s.v_threshold
-            s.time_since_spike = 0.0
-            s.v = 0.0
-            return 1
-        end
-        return 0
-    catch _e
-        return 0
+function step!(s::SpikeResponseNeuronState, weighted_input::Float64=0.0; dt::Float64=s.dt)
+    if !valid(s) || !isfinite(weighted_input) || !isfinite(dt) || dt <= 0.0
+        return -1
     end
+    s.dt = dt
+    eta = (s.time_since_spike < 100.0) ? s.eta_reset * exp(-s.time_since_spike / s.tau_eta) : 0.0
+    kappa = weighted_input * (1.0 - exp(-s.dt / s.tau_kappa))
+    next_v = eta + kappa
+    if !isfinite(next_v)
+        return -1
+    end
+    s.v = next_v
+    s.time_since_spike += s.dt
+    if s.v >= s.v_threshold
+        s.time_since_spike = 0.0
+        s.v = 0.0
+        return 1
+    end
+    return 0
 end
 
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
+function valid(s::SpikeResponseNeuronState)
+    return isfinite(s.v) &&
+           isfinite(s.v_threshold) &&
+           isfinite(s.tau_eta) &&
+           s.tau_eta > 0.0 &&
+           isfinite(s.tau_kappa) &&
+           s.tau_kappa > 0.0 &&
+           isfinite(s.eta_reset) &&
+           isfinite(s.time_since_spike) &&
+           s.time_since_spike >= 0.0 &&
+           isfinite(s.dt) &&
+           s.dt > 0.0
+end
+
+function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=1.0)
     s = SpikeResponseNeuronState()
     trace = zeros(n_steps)
     spikes = 0

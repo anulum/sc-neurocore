@@ -152,10 +152,10 @@ At I=10: ISI = 20 steps (measured). Perfectly constant (CV(ISI) < 0.01).
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/spike_response.py` — 52 lines.
+- **Source:** `src/sc_neurocore/neurons/models/spike_response.py`.
 - **NumPy dependency:** `np.exp` for η and κ kernels.
-- **Rust wiring:** Compatible with `step(f64) → i32` dispatch.
-  Two f64 state variables (v, time_since_spike).
+- **Polyglot mirrors:** Python, Go service, Julia kernel, Mojo kernel helpers,
+  and Rust safety module use the same SRM refractory/input kernel contract.
 
 ---
 
@@ -194,14 +194,33 @@ At I=10: ISI = 20 steps (measured). Perfectly constant (CV(ISI) < 0.01).
 
 ---
 
-## Measured Performance (2026-04-04)
+## Local Measured Performance (2026-06-18)
+
+Measured on `aaarthuus` with
+`benchmarks/results/local_python_2026-06-18_spike_response_kernel.json`.
+This is a local, non-isolated regression artefact and is not a production speed
+claim.
+
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
+|---------|---------------:|------------:|------------:|-------:|
+| Python | 2167.304955 | 1928.878800 | 2209.086270 | 10000 |
+| Rust safety | 6.423395 | 6.329140 | 6.448140 | 10000 |
+| Go service | 46.060000 | 27.630000 | 58.330000 | 10000 |
+| Julia kernel | 15.350930 | 14.896575 | 16.892050 | 10000 |
+| Mojo kernel | 27.105000 | 27.009510 | 27.328315 | 10000 |
+
+All measured mirrors emitted exactly 10,000 spikes over 200,000 steps at
+`current=10.0`, giving zero-tolerance spike parity across Python, Rust safety,
+Go, Julia, and Mojo.
+
+## Previous Measured Performance (2026-04-04)
 
 | Metric | Value |
 |--------|-------|
 | Python throughput | ~160K steps/s |
 | Spikes (10K steps, I=5.0) | 0 |
 | State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+| Rust parity | Historical note superseded by the 2026-06-18 five-backend measured table above |
 
 ---
 
@@ -212,7 +231,7 @@ At I=10: ISI = 20 steps (measured). Perfectly constant (CV(ISI) < 0.01).
 **Status: PASS**
 
 ### 2. step() → correct type
-Returns `int` (spike indicator) or `float` (rate/potential).
+Returns `int` as a binary spike indicator.
 **Status: PASS**
 
 ### 3. Spiking behaviour
@@ -231,14 +250,15 @@ State returns to initial values after `reset()`.
 `Population(SpikeResponseNeuron, n=10)` creates correct instances.
 **Status: PASS**
 
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
+### 7. Polyglot parity
+Python, Rust safety, Go, Julia, and Mojo produce identical spike counts in the
+2026-06-18 local regression artefact.
 
 ---
 
-## Findings (measured 2026-04-04)
+## Findings (measured 2026-04-04; refreshed 2026-06-18)
 
 1. Throughput: ~160K steps/s (Python, single-thread)
 2. All pipeline stages verified green
-3. Rust parity: EXACT
+3. Polyglot spike parity: exact across Python, Rust safety, Go, Julia, and Mojo in the 2026-06-18 local regression artefact
 4. Numerical stability confirmed over 20K steps

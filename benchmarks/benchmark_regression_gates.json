@@ -712,6 +712,63 @@
       }
     },
     {
+      "artefact": "benchmarks/results/local_python_2026-06-18_spike_response_kernel.json",
+      "expected_values": {
+        "spdx_license": "AGPL-3.0-or-later",
+        "benchmark": "SpikeResponseNeuron exact SRM refractory/input kernel",
+        "evidence_class": "local_regression_non_isolated",
+        "production_speed_claim": false,
+        "hardware_measurement_claimed": false
+      },
+      "id": "spike-response-kernel-multibackend-local-regression",
+      "required_numbers": [
+        "backend_summary.python.median_ns_per_step",
+        "backend_summary.python.min_ns_per_step",
+        "backend_summary.python.max_ns_per_step",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ns_per_step",
+        "backend_summary.rust.min_ns_per_step",
+        "backend_summary.rust.max_ns_per_step",
+        "backend_summary.rust.spikes",
+        "backend_summary.go.median_ns_per_step",
+        "backend_summary.go.min_ns_per_step",
+        "backend_summary.go.max_ns_per_step",
+        "backend_summary.go.spikes",
+        "backend_summary.julia.median_ns_per_step",
+        "backend_summary.julia.min_ns_per_step",
+        "backend_summary.julia.max_ns_per_step",
+        "backend_summary.julia.spikes",
+        "backend_summary.mojo.median_ns_per_step",
+        "backend_summary.mojo.min_ns_per_step",
+        "backend_summary.mojo.max_ns_per_step",
+        "backend_summary.mojo.spikes",
+        "steps",
+        "repeats",
+        "current"
+      ],
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0
+        }
+      ],
+      "source_hashes": {
+        "benchmarks/bench_model_spike_response.py": "source_hashes.benchmarks/bench_model_spike_response.py",
+        "src/sc_neurocore/neurons/models/spike_response.py": "source_hashes.src/sc_neurocore/neurons/models/spike_response.py",
+        "src/sc_neurocore/accel/go/services/spike_response.go": "source_hashes.src/sc_neurocore/accel/go/services/spike_response.go",
+        "src/sc_neurocore/accel/go/services/spike_response_test.go": "source_hashes.src/sc_neurocore/accel/go/services/spike_response_test.go",
+        "src/sc_neurocore/accel/julia/neurons/spike_response.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/spike_response.jl",
+        "src/sc_neurocore/accel/mojo/kernels/spike_response.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/spike_response.mojo",
+        "src/sc_neurocore/accel/rust/safety/spike_response.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/spike_response.rs"
+      }
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-18_rall_cable_implicit.json",
       "expected_values": {
         "spdx_license": "AGPL-3.0-or-later",
