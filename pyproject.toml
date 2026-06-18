@@ -278,7 +278,7 @@ ignore_missing_imports = true
 module = [
   'sc_neurocore.accel.*', 'sc_neurocore.adapters.*', 'sc_neurocore.analog_bridge.*', 'sc_neurocore.analysis.*',
   'sc_neurocore.arcane_zenith', 'sc_neurocore.audio.*', 'sc_neurocore.augmentation.*', 'sc_neurocore.autofit.*',
-  'sc_neurocore.bci_studio.*', 'sc_neurocore.benchmarks.*', 'sc_neurocore.bio.*', 'sc_neurocore.bioware.*',
+  'sc_neurocore.bci_studio.*', 'sc_neurocore.benchmarks.*', 'sc_neurocore.bioware.*',
   'sc_neurocore.bridges.*', 'sc_neurocore.chaos.*', 'sc_neurocore.chip_compiler.*', 'sc_neurocore.chiplet.*',
   'sc_neurocore.comm.*', 'sc_neurocore.compiler.*', 'sc_neurocore.compression.*', 'sc_neurocore.continual.*',
   'sc_neurocore.control.*', 'sc_neurocore.conversion.*', 'sc_neurocore.core.*', 'sc_neurocore.datasets.*',
