@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 71
+expected_file_count = 72
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -292,3 +292,7 @@ rationale = "Public category-theoretic functors mapping stochastic, quantum, and
 [[file]]
 path = "src/sc_neurocore/math/topology.py"
 rationale = "Public topological invariants (Ollivier-Ricci curvature, winding number, sheaf defect)."
+
+[[file]]
+path = "src/sc_neurocore/synapses/gap_junction.py"
+rationale = "Public electrical gap-junction synapse with population current-matrix computation."
