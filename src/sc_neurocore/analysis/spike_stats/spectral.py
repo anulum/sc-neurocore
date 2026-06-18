@@ -10,10 +10,13 @@
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 
-def power_spectrum(binary_train: np.ndarray, dt: float = 0.001) -> tuple[np.ndarray, np.ndarray]:
+def power_spectrum(
+    binary_train: np.ndarray[Any, Any], dt: float = 0.001
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Power spectral density of a binary spike train.
 
     Returns (psd, freqs_hz).

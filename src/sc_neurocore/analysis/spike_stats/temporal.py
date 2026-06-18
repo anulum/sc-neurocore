@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 from .basic import spike_times, bin_spike_train
 
 
 def burst_detection(
-    binary_train: np.ndarray, dt: float = 0.001, max_isi_ms: float = 10.0, min_spikes: int = 3
+    binary_train: np.ndarray[Any, Any],
+    dt: float = 0.001,
+    max_isi_ms: float = 10.0,
+    min_spikes: int = 3,
 ) -> list[tuple[float, float, int]]:
     """Detect bursts: consecutive spikes with ISI < max_isi_ms.
 
@@ -42,7 +46,7 @@ def burst_detection(
     return bursts
 
 
-def first_spike_latency(binary_train: np.ndarray, dt: float = 0.001) -> float:
+def first_spike_latency(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> float:
     """Time to first spike (seconds). Returns nan if no spike."""
     idx = np.argmax(binary_train > 0)
     if binary_train[idx] == 0:
@@ -51,7 +55,7 @@ def first_spike_latency(binary_train: np.ndarray, dt: float = 0.001) -> float:
 
 
 def response_onset(
-    binary_train: np.ndarray,
+    binary_train: np.ndarray[Any, Any],
     baseline_steps: int = 100,
     dt: float = 0.001,
     threshold_sigma: float = 3.0,
@@ -75,7 +79,7 @@ def response_onset(
 
 
 def change_point_detection(
-    binary_train: np.ndarray, bin_size: int = 50, threshold: float = 3.0
+    binary_train: np.ndarray[Any, Any], bin_size: int = 50, threshold: float = 3.0
 ) -> list[int]:
     """CUSUM-based change point detection in firing rate. Page 1954.
 

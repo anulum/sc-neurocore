@@ -10,10 +10,13 @@
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 
-def phase_locking_value(binary_train: np.ndarray, lfp_signal: np.ndarray) -> float:
+def phase_locking_value(
+    binary_train: np.ndarray[Any, Any], lfp_signal: np.ndarray[Any, Any]
+) -> float:
     """Phase locking value (PLV) between spikes and LFP phase.
 
     Extracts instantaneous phase of LFP via Hilbert transform,
@@ -31,8 +34,8 @@ def phase_locking_value(binary_train: np.ndarray, lfp_signal: np.ndarray) -> flo
 
 
 def spike_field_coherence(
-    binary_train: np.ndarray, lfp_signal: np.ndarray, dt: float = 0.001
-) -> tuple[np.ndarray, np.ndarray]:
+    binary_train: np.ndarray[Any, Any], lfp_signal: np.ndarray[Any, Any], dt: float = 0.001
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Spike-field coherence (SFC) between binary train and LFP.
 
     Returns (coherence, freqs_hz). SFC = |S_xy|^2 / (S_xx * S_yy).
@@ -53,8 +56,8 @@ def spike_field_coherence(
 
 
 def spike_phase_histogram(
-    binary_train: np.ndarray, lfp_signal: np.ndarray, n_bins: int = 36
-) -> tuple[np.ndarray, np.ndarray]:
+    binary_train: np.ndarray[Any, Any], lfp_signal: np.ndarray[Any, Any], n_bins: int = 36
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Histogram of LFP phase at spike times.
 
     Returns (counts, bin_centers_rad) with bins spanning [-pi, pi].

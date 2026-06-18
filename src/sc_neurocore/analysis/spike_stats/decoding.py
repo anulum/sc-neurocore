@@ -10,14 +10,15 @@
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 
 def population_vector_decode(
-    trains: list[np.ndarray],
-    preferred_directions: np.ndarray,
+    trains: list[np.ndarray[Any, Any]],
+    preferred_directions: np.ndarray[Any, Any],
     window: int = 50,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Georgopoulos population vector decoding.
 
     Each neuron i has a preferred direction (angle in radians).
@@ -42,9 +43,9 @@ def population_vector_decode(
 
 
 def bayesian_decode(
-    spike_counts: np.ndarray,
-    tuning_rates: np.ndarray,
-    prior: np.ndarray = None,  # type: ignore[assignment]
+    spike_counts: np.ndarray[Any, Any],
+    tuning_rates: np.ndarray[Any, Any],
+    prior: np.ndarray[Any, Any] = None,  # type: ignore[assignment]
 ) -> int:
     """Bayesian MAP decoder. Dayan & Abbott 2001.
 
@@ -64,7 +65,9 @@ def bayesian_decode(
     return int(np.argmax(log_posterior))
 
 
-def maximum_likelihood_decode(spike_counts: np.ndarray, tuning_rates: np.ndarray) -> int:
+def maximum_likelihood_decode(
+    spike_counts: np.ndarray[Any, Any], tuning_rates: np.ndarray[Any, Any]
+) -> int:
     """Maximum likelihood stimulus decoder. Dayan & Abbott 2001.
 
     Poisson likelihood: argmax_s prod_j (lambda_j^{n_j} * exp(-lambda_j) / n_j!).
@@ -73,7 +76,7 @@ def maximum_likelihood_decode(spike_counts: np.ndarray, tuning_rates: np.ndarray
 
 
 def linear_discriminant_decode(
-    train_data: np.ndarray, labels: np.ndarray, test_point: np.ndarray
+    train_data: np.ndarray[Any, Any], labels: np.ndarray[Any, Any], test_point: np.ndarray[Any, Any]
 ) -> int:
     """Fisher linear discriminant decoder. Fisher 1936.
 
@@ -105,7 +108,9 @@ def linear_discriminant_decode(
     return int(best_class)
 
 
-def naive_bayes_decode(train_data: np.ndarray, labels: np.ndarray, test_point: np.ndarray) -> int:
+def naive_bayes_decode(
+    train_data: np.ndarray[Any, Any], labels: np.ndarray[Any, Any], test_point: np.ndarray[Any, Any]
+) -> int:
     """Gaussian naive Bayes decoder. Mitchell 1997.
 
     Assumes feature independence. Returns predicted class label.

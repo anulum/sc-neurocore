@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 from .basic import bin_spike_train
@@ -17,8 +18,8 @@ from .correlation import cross_correlation
 
 
 def functional_connectivity(
-    trains: list[np.ndarray], max_lag_ms: float = 20.0, dt: float = 0.001
-) -> np.ndarray:
+    trains: list[np.ndarray[Any, Any]], max_lag_ms: float = 20.0, dt: float = 0.001
+) -> np.ndarray[Any, Any]:
     """Infer functional connectivity matrix from peak cross-correlation.
 
     Returns NxN matrix where entry (i,j) is max |cross-correlation|
@@ -37,7 +38,9 @@ def functional_connectivity(
     return mat
 
 
-def unitary_events(trains: list[np.ndarray], bin_size: int = 5, alpha: float = 0.05) -> list[int]:
+def unitary_events(
+    trains: list[np.ndarray[Any, Any]], bin_size: int = 5, alpha: float = 0.05
+) -> list[int]:
     """Unitary event analysis. Gruen et al. 2002.
 
     Detects bins where coincident spikes exceed chance (Poisson assumption).
@@ -63,7 +66,7 @@ def unitary_events(trains: list[np.ndarray], bin_size: int = 5, alpha: float = 0
 
 
 def cell_assembly_detection(
-    trains: list[np.ndarray], bin_size: int = 5, threshold: float = 2.0
+    trains: list[np.ndarray[Any, Any]], bin_size: int = 5, threshold: float = 2.0
 ) -> list[list[int]]:
     """Cell assembly detection via PCA on binned spike matrix. Lopes-dos-Santos et al. 2013.
 
@@ -94,7 +97,7 @@ def cell_assembly_detection(
 
 
 def synfire_chain_detection(
-    trains: list[np.ndarray],
+    trains: list[np.ndarray[Any, Any]],
     dt: float = 0.001,
     max_delay_ms: float = 20.0,
     min_chain_length: int = 3,

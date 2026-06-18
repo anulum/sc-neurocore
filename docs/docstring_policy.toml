@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 103
+expected_file_count = 116
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -420,3 +420,55 @@ rationale = "Public network connectivity-topology generators."
 [[file]]
 path = "src/sc_neurocore/network/_torch_bridge.py"
 rationale = "Public optional Torch bridge for network tensors."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/basic.py"
+rationale = "Public basic spike statistics (counts, rates)."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/rate.py"
+rationale = "Public firing-rate estimators."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/temporal.py"
+rationale = "Public temporal spike statistics."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/spectral.py"
+rationale = "Public spike spectral statistics."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/waveform.py"
+rationale = "Public spike-waveform feature extraction."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/point_process.py"
+rationale = "Public point-process spike-train models."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/network.py"
+rationale = "Public network-level spike statistics."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/lfp.py"
+rationale = "Public local-field-potential analysis."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/dimensionality.py"
+rationale = "Public neural dimensionality estimators."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/decoding.py"
+rationale = "Public population spike decoders."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/gpfa.py"
+rationale = "Public Gaussian-process factor analysis for spike trains."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/stimulus.py"
+rationale = "Public stimulus-locked spike analysis."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/neural_decoders.py"
+rationale = "Public published neural decoder/encoder reference implementations (POYO, POSSM, NDT3, CEBRA)."
