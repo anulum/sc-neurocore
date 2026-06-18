@@ -20,7 +20,7 @@ Supports three delay modes:
 
 from __future__ import annotations
 
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 
@@ -29,13 +29,13 @@ from .population import Population
 
 
 def _csr_matvec(
-    indptr: np.ndarray,
-    indices: np.ndarray,
-    data: np.ndarray,
-    x: np.ndarray,
+    indptr: np.ndarray[Any, Any],
+    indices: np.ndarray[Any, Any],
+    data: np.ndarray[Any, Any],
+    x: np.ndarray[Any, Any],
     n_out: int,
     weight_threshold: float = 0.0,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """CSR matrix-vector product: result[j] += data[k] * x[i] for each (i,j).
 
     Skips source neurons with x[i]==0 (spike-driven) and optionally
@@ -54,14 +54,14 @@ def _csr_matvec(
 
 
 def _csr_delayed_matvec(
-    indptr: np.ndarray,
-    indices: np.ndarray,
-    data: np.ndarray,
-    delay_steps: np.ndarray,
-    spike_history: np.ndarray,
+    indptr: np.ndarray[Any, Any],
+    indices: np.ndarray[Any, Any],
+    data: np.ndarray[Any, Any],
+    delay_steps: np.ndarray[Any, Any],
+    spike_history: np.ndarray[Any, Any],
     hist_idx: int,
     n_out: int,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """CSR matrix-vector product with per-synapse delays.
 
     For each synapse k connecting source i to target j with delay d_k:
@@ -82,14 +82,14 @@ def _csr_delayed_matvec(
 
 
 def validate_csr_topology(
-    indptr: np.ndarray,
-    indices: np.ndarray,
-    data: np.ndarray,
+    indptr: np.ndarray[Any, Any],
+    indices: np.ndarray[Any, Any],
+    data: np.ndarray[Any, Any],
     n_source: int,
     n_target: int,
     *,
     context: str = "Projection",
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Validate and normalize CSR connectivity arrays."""
     indptr = np.asarray(indptr)
     indices = np.asarray(indices)
@@ -153,8 +153,9 @@ class Projection:
         target: Population,
         weight: float,
         probability: float = 1.0,
-        delay: float | np.ndarray = 0.0,
-        topology: str | tuple[np.ndarray, np.ndarray, np.ndarray] = "random",
+        delay: float | np.ndarray[Any, Any] = 0.0,
+        topology: str
+        | tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]] = "random",
         plasticity: str | None = None,
         seed: int = 42,
         weight_threshold: float = 0.0,
@@ -170,10 +171,10 @@ class Projection:
         self.plasticity = plasticity
         self.seed = seed
         self.weight_threshold = weight_threshold
-        self.delay: float | np.ndarray = 0.0
+        self.delay: float | np.ndarray[Any, Any] = 0.0
         self._delay_mode: str = "none"
-        self._delay_buf: np.ndarray | None = None
-        self._per_syn_delays: np.ndarray | None = None
+        self._delay_buf: np.ndarray[Any, Any] | None = None
+        self._per_syn_delays: np.ndarray[Any, Any] | None = None
 
         self.indptr, self.indices, self.data = self._build_connectivity(topology, probability, seed)
 
@@ -183,7 +184,7 @@ class Projection:
             self._pre_trace = np.zeros(source.n, dtype=np.float64)
             self._post_trace = np.zeros(target.n, dtype=np.float64)
 
-    def _init_delays(self, delay: float | np.ndarray) -> None:
+    def _init_delays(self, delay: float | np.ndarray[Any, Any]) -> None:
         """Set up delay buffers based on delay specification."""
         delay = np.atleast_1d(np.asarray(delay, dtype=np.float64)).flatten()
         n_synapses = len(self.data)
@@ -246,10 +247,10 @@ class Projection:
 
     def _build_connectivity(
         self,
-        topology: str | tuple[np.ndarray, np.ndarray, np.ndarray],
+        topology: str | tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]],
         probability: float,
         seed: int,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Build CSR arrays from topology name or pre-built tuple."""
         if isinstance(topology, tuple) and len(topology) == 3:
             return validate_csr_topology(
@@ -272,7 +273,7 @@ class Projection:
             )
         raise ValueError(f"Unknown topology '{topology}'")
 
-    def propagate(self, source_spikes: np.ndarray) -> np.ndarray:
+    def propagate(self, source_spikes: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Compute target currents from source spikes through CSR connectivity.
 
         Handles three delay modes:
@@ -293,7 +294,7 @@ class Projection:
             current = _csr_matvec(
                 self.indptr, self.indices, self.data, source_spikes, self.target.n, wt
             )
-            output = cast(np.ndarray, delay_buf[self._delay_idx].copy())
+            output = cast(np.ndarray[Any, Any], delay_buf[self._delay_idx].copy())
             delay_buf[self._delay_idx] = current
             self._delay_idx = (self._delay_idx + 1) % self._delay_steps_uniform
             return output
@@ -316,8 +317,8 @@ class Projection:
 
     def update_plasticity(
         self,
-        src_spikes: np.ndarray,
-        tgt_spikes: np.ndarray,
+        src_spikes: np.ndarray[Any, Any],
+        tgt_spikes: np.ndarray[Any, Any],
         a_plus: float = 0.01,
         a_minus: float = 0.012,
         tau: float = 20.0,

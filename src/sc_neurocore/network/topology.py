@@ -30,17 +30,18 @@ See :doc:`docs/api/network` §6 for the generator catalogue and
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
-CSR = tuple[np.ndarray, np.ndarray, np.ndarray]
+CSR = tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]
 
 
 def _to_csr(
     n_rows: int,
     n_cols: int,
-    rows: np.ndarray,
-    cols: np.ndarray,
-    weights: np.ndarray,
+    rows: np.ndarray[Any, Any],
+    cols: np.ndarray[Any, Any],
+    weights: np.ndarray[Any, Any],
 ) -> CSR:
     """Convert COO arrays to CSR (indptr, indices, data)."""
     if len(rows) == 0:

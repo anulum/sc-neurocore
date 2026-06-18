@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 
@@ -27,7 +27,7 @@ class SpikeMonitor:
         self._neuron_ids: list[int] = []
         self._timesteps: list[int] = []
 
-    def record(self, spikes: np.ndarray, t_step: int) -> None:
+    def record(self, spikes: np.ndarray[Any, Any], t_step: int) -> None:
         """Store spike events for this timestep (from binary spike vector)."""
         idx = np.nonzero(spikes)[0]
         for i in idx:
@@ -40,12 +40,12 @@ class SpikeMonitor:
         self._timesteps.append(t_step)
 
     @property
-    def spike_times(self) -> np.ndarray:
+    def spike_times(self) -> np.ndarray[Any, Any]:
         """All spike timesteps as 1-D array."""
         return np.array(self._timesteps, dtype=np.int64)
 
     @property
-    def spike_trains(self) -> dict[int, np.ndarray]:
+    def spike_trains(self) -> dict[int, np.ndarray[Any, Any]]:
         """Per-neuron spike timestep arrays."""
         trains: dict[int, list[int]] = {}
         for nid, ts in zip(self._neuron_ids, self._timesteps):
@@ -57,14 +57,14 @@ class SpikeMonitor:
         """Total number of spikes recorded."""
         return len(self._neuron_ids)
 
-    def raster_data(self) -> tuple[np.ndarray, np.ndarray]:
+    def raster_data(self) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Return (timesteps, neuron_ids) arrays for raster plots."""
         return (
             np.array(self._timesteps, dtype=np.int64),
             np.array(self._neuron_ids, dtype=np.int64),
         )
 
-    def firing_rates(self, n_steps: int, dt: float = 0.001) -> np.ndarray:
+    def firing_rates(self, n_steps: int, dt: float = 0.001) -> np.ndarray[Any, Any]:
         """Mean firing rate (Hz) per neuron over the simulation."""
         duration = n_steps * dt
         rates = np.zeros(self.population.n, dtype=np.float64)
@@ -75,7 +75,7 @@ class SpikeMonitor:
         rates /= duration
         return rates
 
-    def isi(self, neuron: int) -> np.ndarray:
+    def isi(self, neuron: int) -> np.ndarray[Any, Any]:
         """Inter-spike intervals (timestep units) for a single neuron."""
         trains = self.spike_trains
         ts = trains.get(neuron, np.array([], dtype=np.int64))
@@ -83,7 +83,9 @@ class SpikeMonitor:
             return np.array([], dtype=np.int64)
         return np.diff(ts)
 
-    def cross_correlation(self, i: int, j: int, max_lag: int = 50) -> tuple[np.ndarray, np.ndarray]:
+    def cross_correlation(
+        self, i: int, j: int, max_lag: int = 50
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Cross-correlogram between neurons i and j."""
         from sc_neurocore.analysis.spike_stats import cross_correlation as _cc
 
@@ -113,7 +115,7 @@ class StateMonitor:
         self.population = population
         self.variables = variables or ["v"]
         self.record = record
-        self._data: dict[str, list[np.ndarray]] = {v: [] for v in self.variables}
+        self._data: dict[str, list[np.ndarray[Any, Any]]] = {v: [] for v in self.variables}
         self._t: list[int] = []
 
     def snapshot(self, t_step: int) -> None:
@@ -127,13 +129,13 @@ class StateMonitor:
             self._data[v].append(arr.copy())
 
     @property
-    def traces(self) -> dict[str, np.ndarray]:
+    def traces(self) -> dict[str, np.ndarray[Any, Any]]:
         """Variable traces as {name: (n_steps, n_neurons)} arrays."""
         return {k: np.array(v) if v else np.empty((0, 0)) for k, v in self._data.items()}
 
     @property
-    def t(self) -> np.ndarray:
-        """Timestep array."""
+    def t(self) -> np.ndarray[Any, Any]:
+        """Return the recorded snapshot timestep array."""
         return np.array(self._t, dtype=np.int64)
 
 
@@ -148,7 +150,7 @@ class RateMonitor:
         self._current_count = 0
         self._steps_in_bin = 0
 
-    def record(self, spikes: np.ndarray, t_step: int, dt: float = 0.001) -> None:
+    def record(self, spikes: np.ndarray[Any, Any], t_step: int, dt: float = 0.001) -> None:
         """Accumulate spikes; flush when a bin completes."""
         self._current_count += int(spikes.sum())
         self._steps_in_bin += 1
@@ -160,7 +162,7 @@ class RateMonitor:
             self._steps_in_bin = 0
 
     @property
-    def rate(self) -> np.ndarray:
+    def rate(self) -> np.ndarray[Any, Any]:
         """Firing rate (Hz) per bin."""
         if not self._spike_counts:
             return np.array([], dtype=np.float64)
@@ -169,6 +171,6 @@ class RateMonitor:
         return counts / (duration_s * self.population.n)
 
     @property
-    def t(self) -> np.ndarray:
+    def t(self) -> np.ndarray[Any, Any]:
         """Bin edge timestep array."""
         return np.array(self._bin_edges, dtype=np.int64)

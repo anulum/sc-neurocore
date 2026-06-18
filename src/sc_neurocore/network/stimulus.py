@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 class TimedArray:
     """Time-varying current from a pre-computed array."""
 
-    def __init__(self, values: np.ndarray | list[float], dt: float = 0.001) -> None:
+    def __init__(self, values: np.ndarray[Any, Any] | list[float], dt: float = 0.001) -> None:
         self.values = np.asarray(values, dtype=np.float64)
         self.dt = dt
         self.target: Population | None = None
@@ -45,7 +45,7 @@ class PoissonInput:
         self._rng = np.random.default_rng(seed)
         self.target: Population | None = None
 
-    def get_current(self, t_step: int, dt: float | None = None) -> np.ndarray:
+    def get_current(self, t_step: int, dt: float | None = None) -> np.ndarray[Any, Any]:
         """Generate Poisson spikes and return weighted current vector."""
         step_dt = dt if dt is not None else self.dt
         p_spike = self.rate_hz * step_dt
