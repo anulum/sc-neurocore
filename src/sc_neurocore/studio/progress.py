@@ -70,7 +70,7 @@ def _characterize_with_progress(
             }
 
         params = base_config.get("params") or {}
-        sensitivities: list[dict] = []
+        sensitivities: list[dict[str, Any]] = []
         param_list = list(params.items())[:15]
         for pi, (pname, pval) in enumerate(param_list):
             if pval == 0:
@@ -225,7 +225,7 @@ async def ws_progress_handler(websocket: Any) -> None:
         return
 
     op = request.get("op")
-    q: queue.Queue = queue.Queue(maxsize=200)
+    q: queue.Queue[Any] = queue.Queue(maxsize=200)
 
     if op == "characterize":
         from sc_neurocore.studio.models import simulate_model

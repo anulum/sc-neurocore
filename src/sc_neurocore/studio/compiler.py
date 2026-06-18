@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 
 def build_ir_from_equation(
     equations: list[str],
@@ -15,7 +17,7 @@ def build_ir_from_equation(
     threshold: str | None = None,
     reset: str | None = None,
     dt: float = 0.1,
-) -> dict:
+) -> dict[str, Any]:
     """Build an SC IR graph from ODE equations.
 
     Uses the Rust ScGraphBuilder to construct a stochastic computing IR
@@ -77,7 +79,7 @@ def build_ir_from_equation(
     }
 
 
-def verify_ir(ir_text: str) -> dict:
+def verify_ir(ir_text: str) -> dict[str, Any]:
     """Parse and verify an IR text representation."""
     from sc_neurocore_engine.ir import parse_ir
 
@@ -91,7 +93,7 @@ def verify_ir(ir_text: str) -> dict:
     }
 
 
-def emit_systemverilog(ir_text: str) -> dict:
+def emit_systemverilog(ir_text: str) -> dict[str, Any]:
     """Parse IR text and emit synthesisable SystemVerilog."""
     from sc_neurocore_engine.ir import parse_ir
 
@@ -109,7 +111,7 @@ def emit_sv_from_equation(
     params: dict[str, float] | None = None,
     threshold: str | None = None,
     reset: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Direct equation → SystemVerilog via the Python equation compiler."""
     from sc_neurocore.compiler.equation_compiler import equation_to_fpga
 
@@ -137,7 +139,7 @@ def cosim_traces(
     dt: float = 0.1,
     duration: float = 100.0,
     current: float = 10.0,
-) -> dict:
+) -> dict[str, Any]:
     """Run Python float and Q8.8 fixed-point simulations side by side."""
     from sc_neurocore.studio.analysis import precision_compare
 

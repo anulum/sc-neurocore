@@ -46,26 +46,26 @@ _CELL_TYPES = [
 ]
 
 
-def list_surrogates() -> list[dict]:
+def list_surrogates() -> list[dict[str, Any]]:
     return [{"name": s, "available": HAS_TORCH} for s in _SURROGATES]
 
 
-def list_cell_types() -> list[dict]:
+def list_cell_types() -> list[dict[str, Any]]:
     return [{"name": c, "available": HAS_TORCH} for c in _CELL_TYPES]
 
 
 class TrainingJob:
     """Manages a single training run in a background thread."""
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
         self.id = f"j{secrets.token_hex(6)}"
         self.status = "pending"
-        self.metrics: queue.Queue = queue.Queue(maxsize=500)
+        self.metrics: queue.Queue[Any] = queue.Queue(maxsize=500)
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
         self.error: str | None = None
-        self.final_metrics: dict | None = None
+        self.final_metrics: dict[str, Any] | None = None
 
     def start(self) -> None:
         self.status = "running"
@@ -309,7 +309,7 @@ _jobs: dict[str, TrainingJob] = {}
 _jobs_lock = threading.Lock()
 
 
-def start_training(config: dict) -> dict:
+def start_training(config: dict[str, Any]) -> dict[str, Any]:
     job = TrainingJob(config)
     with _jobs_lock:
         _jobs[job.id] = job
@@ -317,7 +317,7 @@ def start_training(config: dict) -> dict:
     return {"job_id": job.id, "status": "running"}
 
 
-def stop_training(job_id: str) -> dict:
+def stop_training(job_id: str) -> dict[str, Any]:
     with _jobs_lock:
         job = _jobs.get(job_id)
     if not job:
@@ -326,7 +326,7 @@ def stop_training(job_id: str) -> dict:
     return {"job_id": job_id, "status": "stopping"}
 
 
-def get_training_status(job_id: str) -> dict:
+def get_training_status(job_id: str) -> dict[str, Any]:
     with _jobs_lock:
         job = _jobs.get(job_id)
     if not job:
@@ -359,6 +359,6 @@ def stream_metrics(job_id: str) -> Any:
             yield f"data: {json.dumps({'event': 'heartbeat'})}\n\n"
 
 
-def list_jobs() -> list[dict]:
+def list_jobs() -> list[dict[str, Any]]:
     with _jobs_lock:
         return [{"job_id": j.id, "status": j.status, "config": j.config} for j in _jobs.values()]

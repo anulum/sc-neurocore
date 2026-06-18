@@ -8,15 +8,16 @@
 
 from __future__ import annotations
 
+from typing import Any
 import warnings
 
 from sc_neurocore.studio.codegen import classify_firing_pattern
 from sc_neurocore.studio.models import list_models, simulate_model
 
-_CACHE: dict[str, dict] | None = None
+_CACHE: dict[str, dict[str, Any]] | None = None
 
 
-def scan_all_models(current: float = 10.0, duration: float = 100.0) -> list[dict]:
+def scan_all_models(current: float = 10.0, duration: float = 100.0) -> list[dict[str, Any]]:
     """Simulate every model at a given current and classify its firing pattern.
 
     Results are cached after first call.
@@ -25,7 +26,7 @@ def scan_all_models(current: float = 10.0, duration: float = 100.0) -> list[dict
     if _CACHE is not None:
         return list(_CACHE.values())
 
-    results: dict[str, dict] = {}
+    results: dict[str, dict[str, Any]] = {}
     failures: list[dict[str, str]] = []
     models = list_models()
 

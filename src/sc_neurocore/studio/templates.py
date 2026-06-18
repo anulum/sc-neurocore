@@ -8,8 +8,10 @@
 
 from __future__ import annotations
 
+from typing import Any
 
-TEMPLATES: dict[str, dict] = {
+
+TEMPLATES: dict[str, dict[str, Any]] = {
     "lif": {
         "name": "lif",
         "description": "Leaky Integrate-and-Fire",
@@ -103,9 +105,9 @@ TEMPLATES: dict[str, dict] = {
 }
 
 
-def list_templates() -> list[dict]:
+def list_templates() -> list[dict[str, Any]]:
     return list(TEMPLATES.values())
 
 
-def get_template(name: str) -> dict | None:
+def get_template(name: str) -> dict[str, Any] | None:
     return TEMPLATES.get(name)

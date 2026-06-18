@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 
 def generate_model_script(
     model_name: str,
@@ -126,7 +128,7 @@ def classify_firing_pattern(
     spikes: list[int],
     n_steps: int,
     dt: float,
-) -> dict:
+) -> dict[str, Any]:
     """Classify the firing pattern from spike indices."""
     if len(spikes) == 0:
         return {"pattern": "silent", "description": "No spikes detected"}

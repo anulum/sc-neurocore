@@ -8,12 +8,13 @@
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 from sc_neurocore.studio.codegen import classify_firing_pattern
 
 
-def characterize_model(simulate_fn, base_config: dict) -> dict:  # type: ignore[no-untyped-def]
+def characterize_model(simulate_fn, base_config: dict[str, Any]) -> dict[str, Any]:  # type: ignore[no-untyped-def]
     """Run a full characterisation suite on a neuron model.
 
     Returns a dict with:
@@ -64,7 +65,7 @@ def characterize_model(simulate_fn, base_config: dict) -> dict:  # type: ignore[
 
     # 6. Quick sensitivity (top 5)
     params = base_config.get("params") or {}
-    sensitivities: list[dict] = []
+    sensitivities: list[dict[str, Any]] = []
     for pname, pval in list(params.items())[:15]:
         if pval == 0:
             continue

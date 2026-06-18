@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 import json
 import os
 import subprocess
@@ -15,7 +16,7 @@ import tempfile
 from pathlib import Path
 
 
-def check_tools() -> dict:
+def check_tools() -> dict[str, Any]:
     """Detect which EDA tools are installed."""
     tools = {}
     for name, cmd in [
@@ -48,7 +49,7 @@ _DEVICE_CAPACITY = {
 }
 
 
-def run_synthesis(verilog_source: str, target: str = "ice40") -> dict:
+def run_synthesis(verilog_source: str, target: str = "ice40") -> dict[str, Any]:
     """Run Yosys synthesis and return resource usage."""
     if not isinstance(verilog_source, str):
         raise ValueError("verilog_source must be a string")
@@ -115,7 +116,7 @@ def run_synthesis(verilog_source: str, target: str = "ice40") -> dict:
         }
 
 
-def _parse_yosys_json(json_path: str) -> dict:
+def _parse_yosys_json(json_path: str) -> dict[str, Any]:
     """Extract resource counts from Yosys JSON output."""
     with open(json_path) as f:
         data = json.load(f)
@@ -160,7 +161,7 @@ def _parse_yosys_json(json_path: str) -> dict:
     return resources
 
 
-def estimate_resources(ir_op_count: int, target: str = "ice40") -> dict:
+def estimate_resources(ir_op_count: int, target: str = "ice40") -> dict[str, Any]:
     """Quick resource estimate from IR operation count, no Yosys needed.
 
     Heuristic: each IR op maps to ~2 LUTs + 1 FF on average.
@@ -186,7 +187,7 @@ def estimate_resources(ir_op_count: int, target: str = "ice40") -> dict:
     }
 
 
-def multi_target_synthesis(verilog_source: str) -> dict:
+def multi_target_synthesis(verilog_source: str) -> dict[str, Any]:
     """Run synthesis on all supported targets, return comparison."""
     if not isinstance(verilog_source, str):
         raise ValueError("verilog_source must be a string")
@@ -200,7 +201,7 @@ def multi_target_synthesis(verilog_source: str) -> dict:
     return {"targets": results, "supported": list(_TARGETS.keys())}
 
 
-def run_pnr(json_path: str, target: str = "ice40") -> dict:
+def run_pnr(json_path: str, target: str = "ice40") -> dict[str, Any]:
     """Run nextpnr place-and-route and return timing report."""
     cfg = _TARGETS.get(target)
     if not cfg or not cfg["pnr"]:

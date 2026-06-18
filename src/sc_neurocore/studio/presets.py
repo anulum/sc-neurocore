@@ -8,7 +8,9 @@
 
 from __future__ import annotations
 
-PRESETS: list[dict] = [
+from typing import Any
+
+PRESETS: list[dict[str, Any]] = [
     {
         "id": "threshold",
         "title": "Threshold Behavior",
@@ -172,7 +174,7 @@ PRESETS: list[dict] = [
 ]
 
 
-def list_presets() -> list[dict]:
+def list_presets() -> list[dict[str, Any]]:
     return [
         {
             "id": p["id"],
@@ -184,11 +186,11 @@ def list_presets() -> list[dict]:
     ]
 
 
-def get_preset(preset_id: str) -> dict | None:
+def get_preset(preset_id: str) -> dict[str, Any] | None:
     return next((p for p in PRESETS if p["id"] == preset_id), None)
 
 
-def get_preset_actions(preset_id: str) -> list[dict]:
+def get_preset_actions(preset_id: str) -> list[dict[str, Any]]:
     preset = get_preset(preset_id)
     if not preset:
         return []
@@ -198,13 +200,13 @@ def get_preset_actions(preset_id: str) -> list[dict]:
     return [action for action in actions if isinstance(action, dict)]
 
 
-def get_preset_action(preset_id: str, action_id: str) -> dict | None:
+def get_preset_action(preset_id: str, action_id: str) -> dict[str, Any] | None:
     actions = get_preset_actions(preset_id)
     return next((action for action in actions if action.get("id") == action_id), None)
 
 
-def list_preset_action_catalog() -> list[dict]:
-    rows: list[dict] = []
+def list_preset_action_catalog() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
     for preset in PRESETS:
         preset_id = preset.get("id")
         if not isinstance(preset_id, str):
