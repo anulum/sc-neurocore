@@ -22,9 +22,10 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class CognitiveOrchestrator:
-    """
-    Central Orchestrator for sc-neurocore Agents.
-    Connects disparate modules into a functional pipeline.
+    """Central orchestrator that sequences registered modules into a pipeline.
+
+    Connects disparate processing modules and routes a :class:`TensorStream`
+    through them in execution order.
     """
 
     modules: Dict[str, Any] = field(default_factory=dict)
@@ -36,15 +37,25 @@ class CognitiveOrchestrator:
         self.modules[name] = module_obj
 
     def set_attention(self, module_name: str) -> None:
-        """Focuses resources on a specific module."""
+        """Focus orchestrator resources on a specific module."""
         if module_name in self.modules:
             self.attention_focus = module_name
             logger.info("Orchestrator: Attention focused on '%s'.", module_name)
 
     def execute_pipeline(self, pipeline: List[str], initial_input: TensorStream) -> TensorStream:
-        """
-        Executes a sequence of modules.
-        Automatically handles TensorStream conversions.
+        """Execute a sequence of modules, handling TensorStream conversions.
+
+        Parameters
+        ----------
+        pipeline : list of str
+            Ordered module names to execute; unknown names are skipped.
+        initial_input : TensorStream
+            Input stream fed to the first module in the pipeline.
+
+        Returns
+        -------
+        TensorStream
+            The stream produced by the final executed module.
         """
         current_stream = initial_input
 

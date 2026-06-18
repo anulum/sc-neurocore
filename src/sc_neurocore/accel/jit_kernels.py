@@ -31,6 +31,8 @@ except ImportError:
 
     # Fallback decorator: returns the original function
     def jit(*args: Any, **kwargs: Any) -> Callable[[_F], _F]:
+        """Return a no-op decorator used when Numba is unavailable."""
+
         def decorator(func: _F) -> _F:
             return func
 
@@ -45,10 +47,14 @@ except ImportError:
 def jit_pack_bits(
     bitstream: np.ndarray[Any, Any], packed_arr: np.ndarray[Any, Any]
 ) -> None:  # pragma: no cover
-    """
-    Packs a uint8 bitstream into uint64 array.
-    bitstream: (N,) uint8 {0, 1}
-    packed_arr: (N//64,) uint64
+    """Pack a uint8 bitstream into a uint64 word array.
+
+    Parameters
+    ----------
+    bitstream : numpy.ndarray of shape (N,), uint8
+        Input bits valued in ``{0, 1}``.
+    packed_arr : numpy.ndarray of shape (N // 64,), uint64
+        Output array receiving the packed 64-bit words.
     """
     n = bitstream.size
     n_packed = n // 64
@@ -68,12 +74,18 @@ def jit_vec_mac(
     packed_inputs: np.ndarray[Any, Any],
     outputs: np.ndarray[Any, Any],
 ) -> None:  # pragma: no cover
-    """
-    Vectorized Multiply-Accumulate (MAC).
-    Simulates: Output[i] = Sum(Weights[i] AND Inputs)
-    weights: (n_neurons, n_inputs, n_words)
-    inputs: (n_inputs, n_words)
-    outputs: (n_neurons,)
+    """Accumulate a packed bitwise multiply-accumulate (MAC).
+
+    Computes ``outputs[i] = sum(popcount(packed_weights[i] AND packed_inputs))``.
+
+    Parameters
+    ----------
+    packed_weights : numpy.ndarray of shape (n_neurons, n_inputs, n_words), uint64
+        Packed synaptic weight bitstreams.
+    packed_inputs : numpy.ndarray of shape (n_inputs, n_words), uint64
+        Packed input bitstreams.
+    outputs : numpy.ndarray of shape (n_neurons,)
+        Output array receiving the accumulated MAC results.
     """
     n_neurons = packed_weights.shape[0]
     n_inputs = packed_weights.shape[1]

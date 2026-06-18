@@ -156,7 +156,8 @@ def gpu_pack_bitstream(bits: xp.ndarray) -> xp.ndarray:  # type: ignore
     Args:
         bits: Shape ``(N,)`` or ``(B, N)`` of uint8.
 
-    Returns:
+    Returns
+    -------
         Packed uint64 array, shape ``(ceil(N/64),)`` or ``(B, ceil(N/64))``.
     """
     if _gpu_enabled():  # pragma: no cover
@@ -239,7 +240,8 @@ def gpu_vec_mac(
         packed_weights: ``(n_neurons, n_inputs, n_words)`` uint64
         packed_inputs:  ``(n_inputs, n_words)`` uint64
 
-    Returns:
+    Returns
+    -------
         ``(n_neurons,)`` total bit counts (= SC dot products).
     """
     if _gpu_enabled():  # pragma: no cover

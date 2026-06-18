@@ -28,9 +28,10 @@ except ImportError:
 
 
 class MPIDriver:
-    """
-    Distributed SC-NeuroCore Driver using MPI.
-    Handles partitioning and synchronization of bitstreams across cluster nodes.
+    """Distributed sc-neurocore driver built on MPI.
+
+    Handles partitioning and synchronisation of bitstreams across cluster
+    nodes.
     """
 
     def __init__(self) -> None:
@@ -45,9 +46,18 @@ class MPIDriver:
             self.size = 1
 
     def scatter_workload(self, global_inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-        """
-        Distributes a large input array across nodes.
-        Splits along axis 0 (Batch or Neurons).
+        """Distribute a large input array across nodes along axis 0.
+
+        Parameters
+        ----------
+        global_inputs : numpy.ndarray
+            Full input array held on the root rank, split along axis 0
+            (batch or neuron dimension).
+
+        Returns
+        -------
+        numpy.ndarray
+            This rank's contiguous chunk of the input array.
         """
         if not HAS_MPI or self.size == 1:
             return global_inputs
@@ -63,9 +73,7 @@ class MPIDriver:
         return local_input  # pragma: no cover
 
     def gather_results(self, local_results: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-        """
-        Collects results from all nodes to Root.
-        """
+        """Collect per-node result arrays back to the root rank."""
         if not HAS_MPI or self.size == 1:
             return local_results
         comm = self.comm

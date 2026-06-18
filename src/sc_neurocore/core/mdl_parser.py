@@ -30,16 +30,15 @@ class MDLSpecification:
 
 
 class MindDescriptionLanguage:
-    """
-    Parser for Mind Description Language (MDL).
-    A universal, substrate-independent format for archiving consciousness.
+    """Parser for the Mind Description Language (MDL).
+
+    A universal, substrate-independent format for archiving an agent's
+    architecture and state.
     """
 
     @staticmethod
     def encode(orchestrator: Any, agent_name: str) -> str:
-        """
-        Exports the Orchestrator state to YAML MDL.
-        """
+        """Export the orchestrator state to a YAML MDL string."""
         architecture = {}
         state = {}
 
@@ -58,9 +57,7 @@ class MindDescriptionLanguage:
 
     @staticmethod
     def decode(mdl_string: str) -> Dict[str, Any]:
-        """
-        Parses MDL back to a dictionary (for reconstruction).
-        """
+        """Parse an MDL string back into a dictionary for reconstruction."""
         data = yaml.safe_load(mdl_string)
         logger.info(
             "MDL: Decoded mind of '%s' (v%s)",

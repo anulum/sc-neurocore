@@ -17,9 +17,10 @@ from dataclasses import dataclass
 
 @dataclass
 class TensorStream:
-    """
-    Unified Data Structure for sc-neurocore.
-    Handles automatic conversion between domains.
+    """Unified tensor container for sc-neurocore.
+
+    Handles automatic conversion between the probability, bitstream, and
+    quantum domains.
     """
 
     data: np.ndarray[Any, Any]

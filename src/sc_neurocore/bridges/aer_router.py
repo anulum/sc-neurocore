@@ -6,11 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — AER Interconnect Router (ported from interconnect/main.go)
 
-"""AER-over-UDP multi-FPGA spike router with dynamic routing,
-ACK-based reliability, sequence tracking, and per-route statistics.
+"""AER-over-UDP multi-FPGA spike router.
 
-Protocol: Each SpikePacket is a 28-byte big-endian binary frame.
-ACKs are 8-byte sequence echoes.
+Provides dynamic routing, ACK-based reliability, sequence tracking, and
+per-route statistics.
+
+Protocol: each SpikePacket is a 28-byte big-endian binary frame; ACKs are
+8-byte sequence echoes.
 """
 
 from __future__ import annotations

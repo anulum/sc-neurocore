@@ -84,7 +84,7 @@ jobs:
         run: bandit -r src/sc_neurocore/ -c pyproject.toml -q
 
       - name: mypy
-        run: mypy src/sc_neurocore/
+        run: mypy --strict src/sc_neurocore/
 
   test:
     runs-on: ubuntu-latest

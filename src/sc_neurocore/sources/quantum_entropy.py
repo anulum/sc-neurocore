@@ -21,20 +21,18 @@ from typing import Optional
 
 @dataclass
 class QuantumEntropySource:
-    """
-    Generates entropy based on simulated Quantum Measurement Collapse.
-    Used to inject 'True' (Simulated) Quantum Indeterminacy into Neural Models.
+    """Simulated quantum-measurement entropy source.
 
-    Physics:
-    - Maintains a Qubit State |psi>
-    - Applies Hadamard (Superposition) and Phase Rotations
-    - Measures (Collapse) to generate noise
+    Injects simulated quantum indeterminacy into neural models by maintaining
+    a qubit state ``|psi>``, applying Hadamard superposition and phase
+    rotations, and measuring (collapsing) the state to generate noise.
     """
 
     n_qubits: int = 1
     seed: Optional[int] = None
 
     def __post_init__(self) -> None:
+        """Initialise the RNG and reset the qubit register to ``|0>``."""
         self._rng = np.random.RandomState(self.seed)
         # Initialize |0> state
         self.state = np.zeros(2**self.n_qubits, dtype=np.complex128)
