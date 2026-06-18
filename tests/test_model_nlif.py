@@ -142,17 +142,17 @@ class TestNLIFAnalytical:
         cubic = n.a * (v - n.v_rest) * (v - n.v_crit)
         assert cubic < 0  # (positive) * (negative) = negative
 
-    def test_dv_formula_one_step(self):
-        """dV = (a·(V-V_rest)·(V-V_crit) - w + I) / C_m · dt."""
+    def test_rk4_candidate_one_step(self):
+        """One step matches the candidate-first RK4 update."""
         n = NonlinearLIFNeuron()
         v0, w0 = n.v, n.w
-        I = 5.0
-        cubic = n.a * (v0 - n.v_rest) * (v0 - n.v_crit)
-        expected_dv = (cubic - w0 + I) / n.c_m * n.dt
-        expected_dw = (n.b * (v0 - n.v_rest) - w0) / n.tau_w * n.dt
-        n.step(I)
-        assert abs((n.v - v0) - expected_dv) < 1e-12
-        assert abs((n.w - w0) - expected_dw) < 1e-14
+        current = 5.0
+        expected_v, expected_w = n._rk4_candidate(current)
+        n.step(current)
+        assert abs(n.v - expected_v) < 1e-12
+        assert abs(n.w - expected_w) < 1e-14
+        assert n.v != v0
+        assert n.w != w0
 
     def test_dw_formula_one_step(self):
         """dw = (b·(V-V_rest) - w) / tau_w · dt."""

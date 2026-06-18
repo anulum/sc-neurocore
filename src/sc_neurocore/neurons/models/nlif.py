@@ -81,17 +81,18 @@ class NonlinearLIFNeuron:
             raise ValueError("dt must not exceed tau_w")
 
     def step(self, current: float) -> int:
-        """Advance one Euler step and return ``1`` when the neuron spikes."""
+        """Advance one candidate-first RK4 step and return ``1`` on spike."""
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         self._validate_configuration()
 
-        cubic = self.a * (self.v - self.v_rest) * (self.v - self.v_crit)
-        dv = (cubic - self.w + current) / self.c_m * self.dt
-        dw = (self.b * (self.v - self.v_rest) - self.w) / self.tau_w * self.dt
-        self.v += dv
-        self.w += dw
-        if self.v >= self.v_threshold:
+        next_v, next_w = self._rk4_candidate(current)
+        if not (math.isfinite(next_v) and math.isfinite(next_w)):
+            raise ValueError("RK4 candidate must be finite")
+
+        self.v = next_v
+        self.w = next_w
+        if next_v >= self.v_threshold:
             self.v = self.v_reset
             return 1
         return 0
@@ -100,3 +101,34 @@ class NonlinearLIFNeuron:
         """Restore dynamic state without changing model parameters."""
         self.v = self.v_rest
         self.w = 0.0
+
+    def _derivatives(self, v: float, w: float, current: float) -> tuple[float, float]:
+        """Return NLIF right-hand-side derivatives at ``(v, w)``."""
+
+        nonlinear = self.a * (v - self.v_rest) * (v - self.v_crit)
+        dv = (nonlinear - w + current) / self.c_m
+        dw = (self.b * (v - self.v_rest) - w) / self.tau_w
+        return dv, dw
+
+    def _rk4_candidate(self, current: float) -> tuple[float, float]:
+        """Compute the fourth-order Runge-Kutta candidate without mutation."""
+
+        k1_v, k1_w = self._derivatives(self.v, self.w, current)
+        k2_v, k2_w = self._derivatives(
+            self.v + 0.5 * self.dt * k1_v,
+            self.w + 0.5 * self.dt * k1_w,
+            current,
+        )
+        k3_v, k3_w = self._derivatives(
+            self.v + 0.5 * self.dt * k2_v,
+            self.w + 0.5 * self.dt * k2_w,
+            current,
+        )
+        k4_v, k4_w = self._derivatives(
+            self.v + self.dt * k3_v,
+            self.w + self.dt * k3_w,
+            current,
+        )
+        next_v = self.v + (self.dt / 6.0) * (k1_v + 2.0 * k2_v + 2.0 * k3_v + k4_v)
+        next_w = self.w + (self.dt / 6.0) * (k1_w + 2.0 * k2_w + 2.0 * k3_w + k4_w)
+        return next_v, next_w

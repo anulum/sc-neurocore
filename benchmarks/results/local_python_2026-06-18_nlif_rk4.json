@@ -1,0 +1,257 @@
+{
+  "backend_summary": {
+    "go": {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/nlif.go src/sc_neurocore/accel/go/services/nlif_test.go -run ^$ -bench BenchmarkNonlinearLIFRK4$ -benchtime 200000x -count 5",
+      "current": 20.0,
+      "max_ns_per_step": 67.46,
+      "median_ns_per_step": 66.09,
+      "min_ns_per_step": 62.37,
+      "repeats": 5,
+      "results_ns_per_step": [
+        65.93,
+        62.37,
+        67.46,
+        66.09,
+        66.66
+      ],
+      "spike_counts": [
+        4563,
+        4563,
+        4563,
+        4563,
+        4563
+      ],
+      "spikes": 4563,
+      "steps": 200000
+    },
+    "julia": {
+      "backend": "julia",
+      "command": "julia --project=. -e <nlif RK4 benchmark>",
+      "current": 20.0,
+      "final_vs": [
+        -49.48171180538531,
+        -49.48171180538531,
+        -49.48171180538531,
+        -49.48171180538531,
+        -49.48171180538531
+      ],
+      "final_ws": [
+        8.280982873467336,
+        8.280982873467336,
+        8.280982873467336,
+        8.280982873467336,
+        8.280982873467336
+      ],
+      "max_ns_per_step": 46.3801,
+      "median_ns_per_step": 45.84403,
+      "min_ns_per_step": 45.5958,
+      "repeats": 5,
+      "results_ns_per_step": [
+        46.074985,
+        45.835165,
+        45.5958,
+        45.84403,
+        46.3801
+      ],
+      "spike_counts": [
+        4563,
+        4563,
+        4563,
+        4563,
+        4563
+      ],
+      "spikes": 4563,
+      "steps": 200000
+    },
+    "mojo": {
+      "backend": "mojo",
+      "command": "mojo -I src/sc_neurocore/accel/mojo/kernels <temp nlif benchmark>",
+      "current": 20.0,
+      "final_vs": [
+        -49.48171180538531,
+        -49.48171180538531,
+        -49.48171180538531,
+        -49.48171180538531,
+        -49.48171180538531
+      ],
+      "final_ws": [
+        8.280982873467334,
+        8.280982873467334,
+        8.280982873467334,
+        8.280982873467334,
+        8.280982873467334
+      ],
+      "max_ns_per_step": 24.24896985758096,
+      "median_ns_per_step": 23.544875148218125,
+      "min_ns_per_step": 21.59391005989164,
+      "repeats": 5,
+      "results_ns_per_step": [
+        21.59391005989164,
+        24.24896985758096,
+        23.556770174764097,
+        21.920910221524537,
+        23.544875148218125
+      ],
+      "spike_counts": [
+        4563,
+        4563,
+        4563,
+        4563,
+        4563
+      ],
+      "spikes": 4563,
+      "steps": 200000
+    },
+    "python": {
+      "backend": "python",
+      "max_ns_per_step": 2938.29589,
+      "median_ns_per_step": 2902.702155,
+      "min_ns_per_step": 2664.22469,
+      "results": [
+        {
+          "backend": "python",
+          "current": 20.0,
+          "elapsed_ns": 532844938,
+          "ending_state": [
+            -49.48171180538531,
+            8.280982873467336
+          ],
+          "ns_per_step": 2664.22469,
+          "spikes": 4563,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 20.0,
+          "elapsed_ns": 587659178,
+          "ending_state": [
+            -49.48171180538531,
+            8.280982873467336
+          ],
+          "ns_per_step": 2938.29589,
+          "spikes": 4563,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 20.0,
+          "elapsed_ns": 558043371,
+          "ending_state": [
+            -49.48171180538531,
+            8.280982873467336
+          ],
+          "ns_per_step": 2790.216855,
+          "spikes": 4563,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 20.0,
+          "elapsed_ns": 580540431,
+          "ending_state": [
+            -49.48171180538531,
+            8.280982873467336
+          ],
+          "ns_per_step": 2902.702155,
+          "spikes": 4563,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 20.0,
+          "elapsed_ns": 583513848,
+          "ending_state": [
+            -49.48171180538531,
+            8.280982873467336
+          ],
+          "ns_per_step": 2917.56924,
+          "spikes": 4563,
+          "steps": 200000
+        }
+      ],
+      "spikes": 4563
+    },
+    "rust": {
+      "backend": "rust",
+      "command": "rustc -O <temp nlif safety benchmark> && <temp nlif safety benchmark>",
+      "current": 20.0,
+      "final_vs": [
+        -49.48171180538531,
+        -49.48171180538531,
+        -49.48171180538531,
+        -49.48171180538531,
+        -49.48171180538531
+      ],
+      "final_ws": [
+        8.280982873467336,
+        8.280982873467336,
+        8.280982873467336,
+        8.280982873467336,
+        8.280982873467336
+      ],
+      "max_ns_per_step": 27.431215,
+      "median_ns_per_step": 26.980975,
+      "min_ns_per_step": 26.77929,
+      "repeats": 5,
+      "results_ns_per_step": [
+        27.431215,
+        26.980975,
+        27.190865,
+        26.77929,
+        26.84547
+      ],
+      "spike_counts": [
+        4563,
+        4563,
+        4563,
+        4563,
+        4563
+      ],
+      "spikes": 4563,
+      "steps": 200000
+    }
+  },
+  "benchmark": "NonlinearLIFNeuron candidate-first RK4 two-state ODE",
+  "current": 20.0,
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "host": "aaarthuus",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "production_speed_claim": false,
+  "python": "3.12.3",
+  "repeats": 5,
+  "source_hashes": {
+    "benchmarks/bench_model_nlif": {
+      "py": "415cd0648cda4ab0da0641360b03474b3f0a43446c1afb0d20cd1b0c6326894b"
+    },
+    "benchmarks/bench_model_nlif.py": "415cd0648cda4ab0da0641360b03474b3f0a43446c1afb0d20cd1b0c6326894b",
+    "src/sc_neurocore/accel/go/services/nlif": {
+      "go": "9cc556161461d66e766bbb05ddd1a3e2162d034dbfce1fd1e1753280e244bddf"
+    },
+    "src/sc_neurocore/accel/go/services/nlif.go": "9cc556161461d66e766bbb05ddd1a3e2162d034dbfce1fd1e1753280e244bddf",
+    "src/sc_neurocore/accel/go/services/nlif_test": {
+      "go": "06d45fd95c418ff8a3fd31190ee3d0cc27830437b326df57b034efcd6526f9c7"
+    },
+    "src/sc_neurocore/accel/go/services/nlif_test.go": "06d45fd95c418ff8a3fd31190ee3d0cc27830437b326df57b034efcd6526f9c7",
+    "src/sc_neurocore/accel/julia/neurons/nlif": {
+      "jl": "dee6bdbb0e0f54723ec93ed40cf995b564540de36086c886afba35e519eae131"
+    },
+    "src/sc_neurocore/accel/julia/neurons/nlif.jl": "dee6bdbb0e0f54723ec93ed40cf995b564540de36086c886afba35e519eae131",
+    "src/sc_neurocore/accel/mojo/kernels/nlif": {
+      "mojo": "52a1b36f12a31266101ad7e4e793dbae7eb35d2d04095431fc53e9d661751e39"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/nlif.mojo": "52a1b36f12a31266101ad7e4e793dbae7eb35d2d04095431fc53e9d661751e39",
+    "src/sc_neurocore/accel/rust/safety/nlif": {
+      "rs": "ae8869553f3ef775a2c33f9b99e62b0265a01f93edd89809f6c5d63599bddf43"
+    },
+    "src/sc_neurocore/accel/rust/safety/nlif.rs": "ae8869553f3ef775a2c33f9b99e62b0265a01f93edd89809f6c5d63599bddf43",
+    "src/sc_neurocore/neurons/models/nlif": {
+      "py": "2283751ae114849e947e8e45e9760288142325f8f2137147bddf59c251c0b0f5"
+    },
+    "src/sc_neurocore/neurons/models/nlif.py": "2283751ae114849e947e8e45e9760288142325f8f2137147bddf59c251c0b0f5"
+  },
+  "spdx_license": "AGPL-3.0-or-later",
+  "steps": 200000,
+  "timestamp_utc": "2026-06-18T18:46:42.455711+00:00"
+}
