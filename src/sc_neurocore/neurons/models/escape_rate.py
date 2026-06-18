@@ -80,6 +80,10 @@ class EscapeRateNeuron:
         steady_state = self.v_rest + self.resistance * current
         decay = math.exp(-self.dt / self.tau_m)
         voltage = steady_state + (self.v - steady_state) * decay
-        if not math.isfinite(steady_state) or not math.isfinite(decay) or not math.isfinite(voltage):
+        if (
+            not math.isfinite(steady_state)
+            or not math.isfinite(decay)
+            or not math.isfinite(voltage)
+        ):
             raise ValueError("voltage candidate must be finite")
         return voltage
