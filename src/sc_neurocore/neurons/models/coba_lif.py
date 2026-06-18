@@ -14,10 +14,14 @@ import math
 
 @dataclass
 class COBALIFNeuron:
-    """Conductance-based LIF with excitatory/inhibitory synaptic state.
+    """Conductance-based LIF with coupled RK4 synaptic conductance state.
 
     C dV/dt = -g_L(V - E_L) - g_e(V - E_e) - g_i(V - E_i) + I
     dg_e/dt = -g_e / tau_e, dg_i/dt = -g_i / tau_i.
+
+    Conductance injections are applied before integration. The full
+    ``(v, g_e, g_i)`` candidate is advanced with RK4 and committed only after
+    finite-value and envelope checks pass.
     """
 
     v: float = -65.0
@@ -62,7 +66,7 @@ class COBALIFNeuron:
             raise ValueError(f"{name} must be non-negative")
         return value
 
-    def _validated_state(self) -> tuple[float, float, float, float, float]:
+    def _validated_state(self) -> tuple[float, float, float]:
         v = self._finite(self.v, "v")
         if not self._V_MIN <= v <= self._V_MAX:
             raise ValueError("v outside COBA LIF safety envelope")
@@ -84,39 +88,38 @@ class COBALIFNeuron:
             raise ValueError("v_reset outside COBA LIF safety envelope")
         self._positive(self.dt, "dt")
 
-        decay_e = self._decay(self.tau_e, "tau_e")
-        decay_i = self._decay(self.tau_i, "tau_i")
-        return v, g_e, g_i, decay_e, decay_i
-
-    def _decay(self, tau: float, name: str) -> float:
-        ratio = -self.dt / tau
-        if ratio < -700.0:
-            return 0.0
-        decay = math.exp(ratio)
-        if not 0.0 <= decay < 1.0:
-            raise ValueError(f"{name} decay must be in [0, 1)")
-        return decay
+        return v, g_e, g_i
 
     def step(self, current: float, delta_ge: float = 0.0, delta_gi: float = 0.0) -> int:
+        """Advance one candidate-first RK4 timestep.
+
+        Args:
+            current: External drive current.
+            delta_ge: Instantaneous excitatory conductance increment.
+            delta_gi: Instantaneous inhibitory conductance increment.
+
+        Returns:
+            ``1`` when the RK4 voltage candidate crosses threshold, otherwise
+            ``0``. Invalid states or candidates raise ``ValueError`` without
+            mutating the stored state.
+        """
         current = self._finite(current, "current")
         delta_ge = self._nonnegative(delta_ge, "delta_ge")
         delta_gi = self._nonnegative(delta_gi, "delta_gi")
-        v, g_e, g_i, decay_e, decay_i = self._validated_state()
+        v, g_e, g_i = self._validated_state()
 
         g_e_pre = g_e + delta_ge
         g_i_pre = g_i + delta_gi
         if g_e_pre > self._G_MAX or g_i_pre > self._G_MAX:
             raise ValueError("conductance candidate outside COBA LIF safety envelope")
 
+        v_candidate, g_e_candidate, g_i_candidate = self._rk4_candidate(
+            v, g_e_pre, g_i_pre, current
+        )
         i_syn = g_e_pre * (v - self.e_e) + g_i_pre * (v - self.e_i)
-        dv = (-self.g_l * (v - self.e_l) - i_syn + current) / self.c_m * self.dt
-        v_candidate = v + dv
-        g_e_candidate = g_e_pre * decay_e
-        g_i_candidate = g_i_pre * decay_i
 
         for value, name in (
             (i_syn, "synaptic current candidate"),
-            (dv, "voltage increment candidate"),
             (v_candidate, "voltage candidate"),
             (g_e_candidate, "excitatory conductance candidate"),
             (g_i_candidate, "inhibitory conductance candidate"),
@@ -140,6 +143,45 @@ class COBALIFNeuron:
         return 0
 
     def reset(self) -> None:
+        """Restore the membrane to leak reversal and clear conductances."""
         self.v = self.e_l
         self.g_e = 0.0
         self.g_i = 0.0
+
+    def _derivatives(
+        self, v: float, g_e: float, g_i: float, current: float
+    ) -> tuple[float, float, float]:
+        i_syn = g_e * (v - self.e_e) + g_i * (v - self.e_i)
+        dv = (-self.g_l * (v - self.e_l) - i_syn + current) / self.c_m
+        dge = -g_e / self.tau_e
+        dgi = -g_i / self.tau_i
+        return dv, dge, dgi
+
+    def _rk4_candidate(
+        self, v: float, g_e: float, g_i: float, current: float
+    ) -> tuple[float, float, float]:
+        """Return the coupled RK4 candidate for ``(v, g_e, g_i)``."""
+        k1v, k1e, k1i = self._derivatives(v, g_e, g_i, current)
+        k2v, k2e, k2i = self._derivatives(
+            v + 0.5 * self.dt * k1v,
+            g_e + 0.5 * self.dt * k1e,
+            g_i + 0.5 * self.dt * k1i,
+            current,
+        )
+        k3v, k3e, k3i = self._derivatives(
+            v + 0.5 * self.dt * k2v,
+            g_e + 0.5 * self.dt * k2e,
+            g_i + 0.5 * self.dt * k2i,
+            current,
+        )
+        k4v, k4e, k4i = self._derivatives(
+            v + self.dt * k3v,
+            g_e + self.dt * k3e,
+            g_i + self.dt * k3i,
+            current,
+        )
+        return (
+            v + (self.dt / 6.0) * (k1v + 2.0 * k2v + 2.0 * k3v + k4v),
+            g_e + (self.dt / 6.0) * (k1e + 2.0 * k2e + 2.0 * k3e + k4e),
+            g_i + (self.dt / 6.0) * (k1i + 2.0 * k2i + 2.0 * k3i + k4i),
+        )

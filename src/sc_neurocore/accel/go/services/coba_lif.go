@@ -42,50 +42,46 @@ func NewCOBALIFNeuron() *COBALIFNeuronState {
 func cobaLIFFinite(value float64) bool      { return !math.IsNaN(value) && !math.IsInf(value, 0) }
 func cobaLIFNonnegative(value float64) bool { return cobaLIFFinite(value) && value >= 0.0 }
 
-func cobaLIFDecay(dt, tau float64) (float64, error) {
-	ratio := -dt / tau
-	if ratio < -700.0 {
-		return 0.0, nil
-	}
-	decay := math.Exp(ratio)
-	if !cobaLIFFinite(decay) || decay < 0.0 || decay >= 1.0 {
-		return 0, errors.New("decay must be in [0, 1)")
-	}
-	return decay, nil
-}
-
-func (s *COBALIFNeuronState) validate() (float64, float64, error) {
+func (s *COBALIFNeuronState) validate() error {
 	if !cobaLIFFinite(s.V) || s.V < cobaLIFVMin || s.V > cobaLIFVMax {
-		return 0, 0, errors.New("v outside COBA LIF safety envelope")
+		return errors.New("v outside COBA LIF safety envelope")
 	}
 	if !cobaLIFNonnegative(s.GE) || !cobaLIFNonnegative(s.GI) || s.GE > cobaLIFGMax || s.GI > cobaLIFGMax {
-		return 0, 0, errors.New("conductance outside COBA LIF safety envelope")
+		return errors.New("conductance outside COBA LIF safety envelope")
 	}
 	for _, value := range []float64{s.CM, s.TauE, s.TauI, s.Dt} {
 		if !cobaLIFFinite(value) || value <= 0.0 {
-			return 0, 0, errors.New("positive COBA LIF parameter invalid")
+			return errors.New("positive COBA LIF parameter invalid")
 		}
 	}
 	if !cobaLIFNonnegative(s.GL) {
-		return 0, 0, errors.New("leak conductance invalid")
+		return errors.New("leak conductance invalid")
 	}
 	for _, value := range []float64{s.EL, s.EE, s.EI, s.VThreshold, s.VReset} {
 		if !cobaLIFFinite(value) {
-			return 0, 0, errors.New("finite COBA LIF parameter invalid")
+			return errors.New("finite COBA LIF parameter invalid")
 		}
 	}
 	if s.VReset < cobaLIFVMin || s.VReset > cobaLIFVMax {
-		return 0, 0, errors.New("v_reset outside COBA LIF safety envelope")
+		return errors.New("v_reset outside COBA LIF safety envelope")
 	}
-	decayE, err := cobaLIFDecay(s.Dt, s.TauE)
-	if err != nil {
-		return 0, 0, err
-	}
-	decayI, err := cobaLIFDecay(s.Dt, s.TauI)
-	if err != nil {
-		return 0, 0, err
-	}
-	return decayE, decayI, nil
+	return nil
+}
+
+func (s *COBALIFNeuronState) derivatives(v, ge, gi, iExt float64) (float64, float64, float64) {
+	iSyn := ge*(v-s.EE) + gi*(v-s.EI)
+	dv := (-s.GL*(v-s.EL) - iSyn + iExt) / s.CM
+	return dv, -ge / s.TauE, -gi / s.TauI
+}
+
+func (s *COBALIFNeuronState) rk4Candidate(v, ge, gi, iExt float64) (float64, float64, float64) {
+	k1v, k1e, k1i := s.derivatives(v, ge, gi, iExt)
+	k2v, k2e, k2i := s.derivatives(v+0.5*s.Dt*k1v, ge+0.5*s.Dt*k1e, gi+0.5*s.Dt*k1i, iExt)
+	k3v, k3e, k3i := s.derivatives(v+0.5*s.Dt*k2v, ge+0.5*s.Dt*k2e, gi+0.5*s.Dt*k2i, iExt)
+	k4v, k4e, k4i := s.derivatives(v+s.Dt*k3v, ge+s.Dt*k3e, gi+s.Dt*k3i, iExt)
+	return v + (s.Dt/6.0)*(k1v+2.0*k2v+2.0*k3v+k4v),
+		ge + (s.Dt/6.0)*(k1e+2.0*k2e+2.0*k3e+k4e),
+		gi + (s.Dt/6.0)*(k1i+2.0*k2i+2.0*k3i+k4i)
 }
 
 // Step advances the neuron by one timestep with current-only drive.
@@ -98,8 +94,7 @@ func (s *COBALIFNeuronState) StepWithConductance(iExt, deltaGE, deltaGI float64)
 	if !cobaLIFFinite(iExt) || !cobaLIFNonnegative(deltaGE) || !cobaLIFNonnegative(deltaGI) {
 		return 0, errors.New("invalid COBA LIF step input")
 	}
-	decayE, decayI, err := s.validate()
-	if err != nil {
+	if err := s.validate(); err != nil {
 		return 0, err
 	}
 	gePre := s.GE + deltaGE
@@ -107,12 +102,9 @@ func (s *COBALIFNeuronState) StepWithConductance(iExt, deltaGE, deltaGI float64)
 	if gePre > cobaLIFGMax || giPre > cobaLIFGMax {
 		return 0, errors.New("conductance candidate outside COBA LIF safety envelope")
 	}
+	vCandidate, geCandidate, giCandidate := s.rk4Candidate(s.V, gePre, giPre, iExt)
 	iSyn := gePre*(s.V-s.EE) + giPre*(s.V-s.EI)
-	dv := (-s.GL*(s.V-s.EL) - iSyn + iExt) / s.CM * s.Dt
-	vCandidate := s.V + dv
-	geCandidate := gePre * decayE
-	giCandidate := giPre * decayI
-	if !cobaLIFFinite(iSyn) || !cobaLIFFinite(dv) || !cobaLIFFinite(vCandidate) || !cobaLIFFinite(geCandidate) || !cobaLIFFinite(giCandidate) {
+	if !cobaLIFFinite(iSyn) || !cobaLIFFinite(vCandidate) || !cobaLIFFinite(geCandidate) || !cobaLIFFinite(giCandidate) {
 		return 0, errors.New("COBA LIF candidate must be finite")
 	}
 	if vCandidate < cobaLIFVMin || vCandidate > cobaLIFVMax {

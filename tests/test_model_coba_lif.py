@@ -10,8 +10,6 @@
 
 from __future__ import annotations
 
-import math
-
 import pytest
 
 from sc_neurocore.neurons.models.coba_lif import COBALIFNeuron
@@ -32,13 +30,17 @@ def test_default_step_preserves_finite_conductance_state() -> None:
     assert neuron.g_i == pytest.approx(0.0)
 
 
-def test_conductance_injections_are_applied_before_exponential_decay() -> None:
+def test_conductance_injections_are_applied_before_coupled_rk4_candidate() -> None:
     neuron = COBALIFNeuron()
+    expected_v, expected_ge, expected_gi = neuron._rk4_candidate(  # noqa: SLF001
+        neuron.v, 5.0, 3.0, 0.0
+    )
 
     assert neuron.step(0.0, delta_ge=5.0, delta_gi=3.0) == 0
 
-    assert neuron.g_e == pytest.approx(5.0 * math.exp(-neuron.dt / neuron.tau_e))
-    assert neuron.g_i == pytest.approx(3.0 * math.exp(-neuron.dt / neuron.tau_i))
+    assert neuron.v == pytest.approx(expected_v)
+    assert neuron.g_e == pytest.approx(expected_ge)
+    assert neuron.g_i == pytest.approx(expected_gi)
 
 
 def test_excitatory_conductance_depolarizes_relative_to_rest() -> None:
@@ -61,14 +63,17 @@ def test_inhibitory_conductance_hyperpolarizes_relative_to_rest() -> None:
     assert inhibited.v < rest.v
 
 
-def test_suprathreshold_drive_resets_voltage_but_preserves_decayed_conductance() -> None:
+def test_suprathreshold_drive_resets_voltage_but_preserves_rk4_conductance() -> None:
     neuron = COBALIFNeuron(v=-51.0)
+    _, expected_ge, expected_gi = neuron._rk4_candidate(  # noqa: SLF001
+        neuron.v, 5.0, 0.0, 1.0e5
+    )
 
     assert neuron.step(1.0e5, delta_ge=5.0) == 1
 
     assert neuron.v == neuron.v_reset
-    assert neuron.g_e > 0.0
-    assert neuron.g_i == 0.0
+    assert neuron.g_e == pytest.approx(expected_ge)
+    assert neuron.g_i == pytest.approx(expected_gi)
 
 
 def test_reset_restores_resting_voltage_and_clears_conductances_only() -> None:

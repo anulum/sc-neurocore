@@ -29,26 +29,31 @@ $$g_e \leftarrow g_e + \Delta g_e, \quad g_i \leftarrow g_i + \Delta g_i$$
 
 These delta values are passed as extra parameters to `step()`.
 
-### Implementation
+### Implementation Contract
 
 ```python
 def step(self, current: float, delta_ge: float = 0.0, delta_gi: float = 0.0) -> int:
-    self.g_e += delta_ge
-    self.g_i += delta_gi
-    i_syn = self.g_e * (self.v - self.e_e) + self.g_i * (self.v - self.e_i)
-    dv = (-self.g_l * (self.v - self.e_l) - i_syn + current) / self.c_m * self.dt
-    self.v += dv
-    self.g_e *= np.exp(-self.dt / self.tau_e)
-    self.g_i *= np.exp(-self.dt / self.tau_i)
-    if self.v >= self.v_threshold:
+    g_e_pre = self.g_e + delta_ge
+    g_i_pre = self.g_i + delta_gi
+    v_next, g_e_next, g_i_next = self._rk4_candidate(
+        self.v, g_e_pre, g_i_pre, current
+    )
+    if v_next >= self.v_threshold:
         self.v = self.v_reset
+        self.g_e = g_e_next
+        self.g_i = g_i_next
         return 1
+    self.v = v_next
+    self.g_e = g_e_next
+    self.g_i = g_i_next
     return 0
 ```
 
-Forward Euler integration with exact exponential conductance decay.
-The conductances are updated analytically (exp decay) rather than by
-Euler — more accurate for the first-order linear ODE.
+The implementation applies conductance injections before integration, advances
+the coupled `(v, g_e, g_i)` ODE with a fourth-order Runge-Kutta candidate, and
+commits that candidate only after finite-value and safety-envelope checks pass.
+A spike is evaluated against the RK4 voltage candidate; reset changes only
+`v`, while the RK4 conductance candidates are retained.
 
 ---
 
@@ -150,14 +155,17 @@ $$V_{ss} = \frac{10 \times (-65) + 100}{10} = \frac{-550}{10} = -55 \text{ mV}$$
 This is below the threshold of −50 mV. The neuron needs I ≥ 150 for
 V_ss to reach threshold. The test uses I=500 for reliable spiking.
 
-### Conductance decay (exact exponential)
+### Conductance decay
 
-The conductances decay analytically:
+The conductance equations remain first-order exponential decays:
 $$g_e(t + dt) = g_e(t) \cdot \exp(-dt/\tau_e)$$
 
-This is the exact solution of dg_e/dt = −g_e/τ_e, computed per step.
-At dt=0.1, τ_e=5: exp(−0.1/5) = exp(−0.02) ≈ 0.9802. Each step
-retains 98.02% of the previous conductance.
+The production step now computes those conductance candidates through the same
+RK4 pass as membrane voltage so the voltage-dependent synaptic current and
+conductance decay are integrated as one coupled candidate. At `dt=0.1` and
+`tau_e=5`, RK4 retains approximately the same 98.02% excitatory conductance as
+the closed-form exponential while preserving one shared integration contract
+across Python, Rust, Go, Julia, and Mojo.
 
 ---
 
@@ -218,45 +226,65 @@ individual ion channel kinetics.
 
 ---
 
+## Polyglot Surfaces
+
+The Python model, Rust safety mirror, Go service, Julia kernel, and Mojo
+accelerator contract use the same candidate-first RK4 equations:
+
+$$\dot V = \frac{-g_L(V - E_L) - g_e(V - E_e) - g_i(V - E_i) + I}{C_m}$$
+
+$$\dot g_e = -g_e/\tau_e,\quad \dot g_i = -g_i/\tau_i$$
+
+Invalid state, invalid step input, non-finite candidates, negative
+conductance candidates, and voltage candidates outside the configured safety
+envelope fail closed before mutation on stateful surfaces.
+
+## Local Measured Performance
+
+Measured on `aaarthuus` on 2026-06-18 with
+`benchmarks/results/local_python_2026-06-18_coba_lif_rk4.json`. This is a
+local, non-isolated regression artefact and is not a production speed claim.
+
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
+|---------|---------------:|------------:|------------:|-------:|
+| Python | 4402.640635 | 4346.726280 | 5184.713550 | 2777 |
+| Rust safety | 38.702560 | 38.626330 | 39.219430 | 2777 |
+| Go service | 53.780000 | 52.530000 | 55.500000 | 2777 |
+| Julia kernel | 47.083040 | 46.466800 | 47.172330 | 2777 |
+| Mojo kernel | 40.720870 | 39.896560 | 41.193015 | 2777 |
+
+All measured mirrors emitted exactly 2,777 spikes over 200,000 steps at
+`current=500.0`, giving zero-tolerance spike parity across the maintained
+polyglot surfaces.
+
+---
+
 ## Numerical Considerations
 
-- **Hybrid integration:** V uses forward Euler; g_e, g_i use exact
-  exponential decay. This is more accurate than pure Euler for the
-  conductance dynamics.
-- **2 exp() per step:** g_e and g_i each require one exp() call.
-  Pre-computing the decay factors would save time but reduce
-  flexibility for variable dt.
-- **No V clipping:** Unlike some models, V is not explicitly bounded.
-  The spike-and-reset mechanism keeps V near E_L.
+- **Coupled RK4 candidate:** V, g_e, and g_i are advanced together so the
+  voltage-dependent conductance current is integrated against the same
+  candidate trajectory as conductance decay.
+- **No exp() calls in the production step:** Conductance decay is represented
+  by RK4 derivative evaluations instead of separate exponential decay factors.
+- **Fail-closed envelope:** V is not clipped after mutation. Candidate voltage
+  must remain in the configured safety envelope before it can be committed.
 - **dt = 0.1 ms:** Conservative timestep for the LIF-class ODE.
   The effective membrane time constant (20 ms at rest) is 200× larger
   than dt, ensuring numerical stability.
 - **Conductance non-negativity:** delta_ge and delta_gi are typically
-  non-negative. The decay cannot produce negative conductances from
-  positive initial values.
+  non-negative. Candidate conductances must remain non-negative before commit.
 
 ---
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/coba_lif.py` — 54 lines.
+- **Source:** `src/sc_neurocore/neurons/models/coba_lif.py`.
 - **Three state variables:** v, g_e, g_i.
 - **Dataclass:** Uses `@dataclass`.
 - **Multi-argument step():** Takes 3 parameters (current, delta_ge,
   delta_gi). In Population context, only current is used.
-- **Rust wiring:** Compatible (3 f64 state vars, 2 exp).
-
----
-
-## Performance
-
-| Metric | Python | Rust |
-|--------|--------|------|
-| Isolation | ~477K steps/s | Not measured |
-| Network (20n, 500ms) | ~400K neuron-steps/s | — |
-
-Fast — the 2 exp() calls are the only expensive operations. No
-sub-stepping, no clipping.
+- **Polyglot wiring:** Python, Rust safety, Go service, Julia, and Mojo share
+  the same RK4 derivative equations and spike/reset contract.
 
 ---
 
@@ -264,76 +292,56 @@ sub-stepping, no clipping.
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 9 | construction, binary output, subthreshold (I=100), spikes (I=500), g_e decay, delta_ge injection, delta_gi injection, state finite (10K), reset |
-| Network | 3 | Population(n=10/20), Network+PoissonInput spikes, Projection+spike_trains |
-| Analysis | 3 | firing_rate >0, spike_count >10, isi finite |
-| **Total** | **15** | **ALL PASSED (2.91s)** |
+| Dynamics | 5 | finite rest state, candidate-first RK4 injection, excitation, inhibition, spike reset |
+| Reset | 1 | reset restores leak voltage and clears conductances without changing dt |
+| Validation | 19 | invalid runtime state, invalid parameters, invalid step inputs, voltage envelope, conductance envelope |
+| Polyglot mirrors | 2 | Go and Rust RK4 candidate tests run in their native test harnesses |
+| **Python total** | **27** | **Passed on 2026-06-18** |
 
 See `tests/test_model_coba_lif.py`.
 
 ---
 
-## Findings (Measured 2026-03-31)
+## Findings (Measured 2026-06-18)
 
-1. **15/15 tests PASSED in 2.91s.** No failures.
+1. **27 Python behavior tests passed.** The current module-specific suite
+   covers RK4 conductance injection, excitation, inhibition, spike reset,
+   reset semantics, invalid runtime state, invalid parameters, invalid step
+   input, and candidate-envelope rejection.
 
 2. **Subthreshold at I=100 confirmed.** V_ss ≈ −55 mV < V_threshold = −50.
-   Zero spikes in 5000 steps. Consistent with analytical prediction.
+   This remains below threshold by the analytical steady-state expression.
 
-3. **Spiking at I=500.** More than 10 spikes in 10000 steps. The high
-   current overcomes the C_m=200 pF capacitance.
+3. **Spiking at I=500 is parity-measured.** Python, Rust, Go, Julia, and Mojo
+   each emitted 2,777 spikes over 200,000 steps.
 
-4. **g_e decays exponentially.** After setting g_e=10.0 and stepping
-   once with zero input, g_e < 10.0. Verified: g_e *= exp(−0.1/5.0).
+4. **Conductance injection is candidate-first.** `delta_ge` and `delta_gi`
+   are added to the pre-step state, then the full `(v, g_e, g_i)` candidate is
+   advanced with RK4 before any mutation occurs.
 
-5. **delta_ge injection works.** Calling step(0.0, delta_ge=5.0) results
-   in g_e > 0 after the step. The conductance is added before the
-   voltage update, then decayed.
+5. **Spike reset retains conductance candidates.** When the RK4 voltage
+   candidate crosses threshold, only voltage resets; the RK4 conductance
+   candidates remain committed.
 
-6. **delta_gi injection works.** Calling step(0.0, delta_gi=3.0) results
-   in g_i > 0 after the step. Same timing as delta_ge.
+6. **Invalid state does not mutate.** Non-finite values, negative
+   conductances, invalid positive parameters, and out-of-envelope candidates
+   fail before state commit.
 
-7. **State finite across 10K steps.** V, g_e, g_i all remain finite
-   with I=500. The spike-and-reset mechanism keeps V bounded.
+7. **Native mirror tests pass.** Go and Rust safety tests verify RK4 candidate
+   parity, invalid-state preservation, and suprathreshold reset behavior.
 
 8. **Reset restores initial state.** v → E_L (−65), g_e → 0, g_i → 0.
 
-9. **Network pipeline functional.** Population(n=20) with PoissonInput
-   (rate=500Hz, weight=500) produces spikes. Projection(pop→pop,
-   weight=50, prob=0.3) works. spike_trains extractable.
-
-10. **Analysis pipeline verified.** firing_rate > 0 Hz, spike_count > 10,
-    isi all finite. From 10K-step binary train at I=600.
-
-11. **Deterministic.** No stochastic component in neuron dynamics (the
-    PoissonInput uses seed=42 for reproducibility).
-
 ---
 
-## Pipeline Verification (End-to-End, Measured 2026-03-31)
+## Pipeline Verification
 
 ### Test execution
 
 ```
-15/15 PASSED in 2.91s
-├── TestCOBAIsolation: 9 tests
-│   ├── construction (v=-65, g_e=0, g_i=0, c_m=200)
-│   ├── step() → int {0,1}
-│   ├── subthreshold at I=100 (0 spikes in 5K)
-│   ├── spikes under drive I=500 (>10 in 10K)
-│   ├── g_e decay (10.0 → <10.0 in 1 step)
-│   ├── delta_ge injection (g_e > 0 after step)
-│   ├── delta_gi injection (g_i > 0 after step)
-│   ├── state finite (10K steps at I=500)
-│   └── reset() (v→E_L, g_e→0, g_i→0)
-├── TestCOBANetwork: 3 tests
-│   ├── Population(n=10)
-│   ├── Network(n=20) + PoissonInput → spikes > 0
-│   └── Projection(pop→pop, w=50, p=0.3) + spike_trains
-└── TestCOBAAnalysis: 3 tests
-    ├── firing_rate > 0
-    ├── spike_count > 10
-    └── isi all finite
+27/27 Python behavior tests passed on 2026-06-18.
+Go native RK4 tests passed.
+Rust safety RK4 tests passed.
 ```
 
 ### Pipeline stages verified
@@ -342,28 +350,15 @@ See `tests/test_model_coba_lif.py`.
 |-------|--------|-------|
 | Import + construction | ✓ PASS | v=-65, g_e=0, g_i=0 |
 | step(I) → int {0,1} | ✓ PASS | Standard binary output |
-| step(I, Δg_e, Δg_i) | ✓ PASS | Multi-argument interface |
-| Subthreshold (I=100) | ✓ PASS | V_ss < threshold |
-| Spiking (I=500) | ✓ PASS | >10 spikes in 10K steps |
-| g_e decay | ✓ PASS | Exponential: exp(-dt/τ_e) |
-| delta_ge injection | ✓ PASS | g_e increases |
-| delta_gi injection | ✓ PASS | g_i increases |
-| State finite (10K) | ✓ PASS | V, g_e, g_i all finite |
+| step(I, Δg_e, Δg_i) | ✓ PASS | Candidate-first RK4 multi-argument interface |
+| Subthreshold (I=100) | ✓ PASS | V_ss < threshold by analytical steady-state |
+| Spiking (I=500) | ✓ PASS | 2,777 spikes in 200,000-step parity benchmark |
+| g_e/g_i decay | ✓ PASS | Coupled RK4 conductance candidates |
+| delta_ge injection | ✓ PASS | Applied before RK4 candidate |
+| delta_gi injection | ✓ PASS | Applied before RK4 candidate |
+| State finite | ✓ PASS | V, g_e, g_i finite after accepted candidates |
 | reset() | ✓ PASS | v→E_L, g_e→0, g_i→0 |
-| Population(n=10) | ✓ PASS | 10 instances |
-| Network + PoissonInput | ✓ PASS | Spikes > 0 |
-| Projection(pop→pop) | ✓ PASS | spike_trains extractable |
-| firing_rate | ✓ PASS | > 0 Hz |
-| spike_count | ✓ PASS | > 10 |
-| isi | ✓ PASS | all finite |
-
-### Network configuration tested
-
-- Population: 20 COBALIFNeurons (spiking test), 10 (Projection test)
-- PoissonInput: rate=500Hz, weight=500.0, dt=0.001, seed=42
-- Projection: self-recurrent, weight=50.0, probability=0.3
-- SpikeMonitor: count, spike_trains verified
-- Duration: 0.5s (500 timesteps) for spiking, 0.3s for Projection
+| Python/Rust/Go/Julia/Mojo parity | ✓ PASS | Zero-tolerance spike parity in local benchmark |
 
 ### Note on conductance injection
 
@@ -373,7 +368,10 @@ they exist for direct neuron access or custom network implementations.
 To fully exploit COBA's conductance-based synapses, a custom Network
 loop that passes conductance deltas per synapse would be needed.
 
-**ALL 15 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
+The current local evidence covers the single-neuron physics contract and its
+maintained polyglot mirrors. Network-level conductance-routing work remains a
+separate pipeline surface because `Population` currently drives this model via
+the scalar `current` argument.
 
 ---
 
@@ -494,18 +492,18 @@ assert!((neuron.v - (-65.0)).abs() < 1e-12);
 | `step` | `step(current, delta_ge=0, delta_gi=0) → int` | 0 or 1 | Advance dt ms, inject conductances, return spike |
 | `reset` | `reset() → None` | — | Restore v=E_L, g_e=0, g_i=0 |
 
-### Python/Rust Parity
+### Polyglot RK4 Parity
 
-| Property | Python | Rust | Match |
-|----------|--------|------|-------|
-| Conductance injection | `g_e += Δg_e` | `self.g_e += delta_ge` | EXACT |
-| Synaptic current | `g_e·(V-E_e) + g_i·(V-E_i)` | identical | EXACT |
-| Voltage (Euler) | `V += (-g_L·(V-E_L) - I_syn + I) / C_m · dt` | identical | EXACT |
-| g_e decay (exact exp) | `g_e *= exp(-dt/τ_e)` | `g_e *= (-dt/τ_e).exp()` | EXACT |
-| g_i decay (exact exp) | `g_i *= exp(-dt/τ_i)` | `g_i *= (-dt/τ_i).exp()` | EXACT |
-| Spike condition | `V ≥ θ` | `V ≥ θ` | EXACT |
-| Reset | `V = V_reset` | `V = V_reset` | EXACT |
-| Parameters (13) | All f64 | All f64 | EXACT |
+| Property | Python | Rust/Go/Julia/Mojo | Match |
+|----------|--------|--------------------|-------|
+| Conductance injection | add Δg_e/Δg_i before candidate | same pre-candidate timing | EXACT |
+| Synaptic current | `g_e·(V-E_e) + g_i·(V-E_i)` | same equation | EXACT |
+| Voltage derivative | `(-g_L·(V-E_L) - I_syn + I) / C_m` | same equation | EXACT |
+| Conductance derivatives | `-g_e/τ_e`, `-g_i/τ_i` | same equations | EXACT |
+| Integrator | candidate-first RK4 | candidate-first RK4 | EXACT |
+| Spike condition | RK4 `V_next ≥ θ` | RK4 `V_next ≥ θ` | EXACT |
+| Reset | `V = V_reset`; retain conductance candidates | same semantics | EXACT |
+| Parameters (13) | finite `float` values | finite `f64`/`Float64` values | EXACT |
 
 ### NetworkRunner wrapper
 
@@ -525,35 +523,16 @@ NetworkRunner.
 | SpikeMonitor | Yes | Binary spike output |
 | PoissonInput | Yes | Tested at 500 Hz |
 | PyO3 bridge | Yes | Full 3-arg step() with defaults |
-| Conductance injection | Python only | Not via NetworkRunner |
+| Conductance injection | Python/Rust/Go/Julia/Mojo | NetworkRunner wrapper remains current-only |
 
 ---
 
 ## Performance Benchmarks
 
-### Criterion 0.8 (Rust engine)
-
-Measured on i5-11600K @ 3.90 GHz, single-threaded, 2026-04-05.
-
-| Benchmark | Steps | Median | Per step |
-|-----------|------:|-------:|---------:|
-| `coba_lif_10k_steps` | 10 000 | 102 µs | **10.2 ns** |
-
-2 exp() calls per step (g_e decay, g_i decay) + Euler voltage update.
-No sub-stepping.
-
-### Python throughput
-
-| Metric | Value |
-|--------|------:|
-| Isolation | ~477 000 steps/s |
-| Network (50 neurons, 0.5 s) | ~400 000 neuron-steps/s |
-
-### Rust speedup
-
-| Metric | Python | Rust | Speedup |
-|--------|-------:|-----:|--------:|
-| Per step | ~2.1 µs | 10.2 ns | **~206×** |
+The current measured benchmark is
+`benchmarks/results/local_python_2026-06-18_coba_lif_rk4.json`. It is local
+non-isolated regression evidence, not a production throughput claim. The
+current table is recorded in [Local Measured Performance](#local-measured-performance).
 
 ---
 
