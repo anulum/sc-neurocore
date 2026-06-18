@@ -297,7 +297,7 @@ module = [
   'sc_neurocore.quantum_cognition.*', 'sc_neurocore.reservoir.*', 'sc_neurocore.residual.*', 'sc_neurocore.resilience.*',
   'sc_neurocore.safety_cert.*', 'sc_neurocore.scpn.*', 'sc_neurocore.security.*', 'sc_neurocore.sensors.*',
   'sc_neurocore.sleep.*', 'sc_neurocore.snn_optimizer.*', 'sc_neurocore.sources.*',
-  'sc_neurocore.spatial.*', 'sc_neurocore.spike_dsp.*', 'sc_neurocore.spike_gnn.*',
+  'sc_neurocore.spatial.*', 'sc_neurocore.spike_gnn.*',
   'sc_neurocore.spike_ode.*', 'sc_neurocore.spintronic.*', 'sc_neurocore.stochastic_doctor.*', 'sc_neurocore.studio.*',
   'sc_neurocore.swarm.*', 'sc_neurocore.symbolic.*', 'sc_neurocore.temporal_hierarchy.*',
   'sc_neurocore.topology.*', 'sc_neurocore.training.*', 'sc_neurocore.transfer.*', 'sc_neurocore.transformers.*',

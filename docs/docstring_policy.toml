@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 85
+expected_file_count = 88
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -348,3 +348,15 @@ rationale = "Public predictive (context-model) spike codec."
 [[file]]
 path = "src/sc_neurocore/spike_codec/streaming_codec.py"
 rationale = "Public streaming spike codec for online encode/decode."
+
+[[file]]
+path = "src/sc_neurocore/spike_dsp/filters.py"
+rationale = "Public spike-train digital filters."
+
+[[file]]
+path = "src/sc_neurocore/spike_dsp/spectral.py"
+rationale = "Public spike-train spectral analysis."
+
+[[file]]
+path = "src/sc_neurocore/spike_dsp/wavelets.py"
+rationale = "Public spike-train wavelet transforms."
