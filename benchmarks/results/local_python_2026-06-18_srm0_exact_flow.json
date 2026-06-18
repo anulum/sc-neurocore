@@ -1,0 +1,285 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "benchmark": "SRM0Neuron exact coupled refractory-kernel flow step",
+  "timestamp_utc": "2026-06-18T17:47:09+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_srm0.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 2.0,
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 1598.46511,
+      "min_ns_per_step": 1519.13829,
+      "max_ns_per_step": 1641.185615,
+      "spikes": 1905
+    },
+    "rust": {
+      "median_ns_per_step": 19.277575,
+      "min_ns_per_step": 18.721155,
+      "max_ns_per_step": 19.369475,
+      "spikes": 1905
+    },
+    "go": {
+      "median_ns_per_step": 29.54,
+      "min_ns_per_step": 28.85,
+      "max_ns_per_step": 30.56,
+      "spikes": 1905
+    },
+    "julia": {
+      "median_ns_per_step": 23.17631,
+      "min_ns_per_step": 22.518675,
+      "max_ns_per_step": 23.896565,
+      "spikes": 1905
+    },
+    "mojo": {
+      "median_ns_per_step": 6.995495059527457,
+      "min_ns_per_step": 6.984084902796894,
+      "max_ns_per_step": 7.047534745652229,
+      "spikes": 1905
+    }
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 1598.46511,
+      "min_ns_per_step": 1519.13829,
+      "max_ns_per_step": 1641.185615,
+      "spikes": 1905,
+      "results": [
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 2.0,
+          "elapsed_ns": 319693022,
+          "ns_per_step": 1598.46511,
+          "spikes": 1905,
+          "ending_state": [
+            0.007465877159109402
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 2.0,
+          "elapsed_ns": 311930163,
+          "ns_per_step": 1559.650815,
+          "spikes": 1905,
+          "ending_state": [
+            0.007465877159109402
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 2.0,
+          "elapsed_ns": 321222102,
+          "ns_per_step": 1606.11051,
+          "spikes": 1905,
+          "ending_state": [
+            0.007465877159109402
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 2.0,
+          "elapsed_ns": 328237123,
+          "ns_per_step": 1641.185615,
+          "spikes": 1905,
+          "ending_state": [
+            0.007465877159109402
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 2.0,
+          "elapsed_ns": 303827658,
+          "ns_per_step": 1519.13829,
+          "spikes": 1905,
+          "ending_state": [
+            0.007465877159109402
+          ]
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "command": "rustc -O <temp srm0 safety benchmark> && <temp srm0 safety benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 2.0,
+      "median_ns_per_step": 19.277575,
+      "min_ns_per_step": 18.721155,
+      "max_ns_per_step": 19.369475,
+      "results_ns_per_step": [
+        19.098945,
+        18.721155,
+        19.369475,
+        19.277575,
+        19.30545
+      ],
+      "spikes": 1905,
+      "spike_counts": [
+        1905,
+        1905,
+        1905,
+        1905,
+        1905
+      ],
+      "final_vs": [
+        0.007465877159109402,
+        0.007465877159109402,
+        0.007465877159109402,
+        0.007465877159109402,
+        0.007465877159109402
+      ],
+      "final_etas": [
+        -1.3356765098292471,
+        -1.3356765098292471,
+        -1.3356765098292471,
+        -1.3356765098292471,
+        -1.3356765098292471
+      ]
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/srm0.go src/sc_neurocore/accel/go/services/srm0_test.go -run ^$ -bench BenchmarkSRM0ExactFlow$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 2.0,
+      "median_ns_per_step": 29.54,
+      "min_ns_per_step": 28.85,
+      "max_ns_per_step": 30.56,
+      "results_ns_per_step": [
+        30.56,
+        29.54,
+        29.41,
+        30.18,
+        28.85
+      ],
+      "spikes": 1905,
+      "spike_counts": [
+        1905,
+        1905,
+        1905,
+        1905,
+        1905
+      ]
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <srm0 exact-flow benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 2.0,
+      "median_ns_per_step": 23.17631,
+      "min_ns_per_step": 22.518675,
+      "max_ns_per_step": 23.896565,
+      "results_ns_per_step": [
+        22.76755,
+        22.518675,
+        23.17631,
+        23.896565,
+        23.359215
+      ],
+      "spikes": 1905,
+      "spike_counts": [
+        1905,
+        1905,
+        1905,
+        1905,
+        1905
+      ],
+      "final_vs": [
+        0.007465877159109402,
+        0.007465877159109402,
+        0.007465877159109402,
+        0.007465877159109402,
+        0.007465877159109402
+      ],
+      "final_etas": [
+        -1.3356765098292471,
+        -1.3356765098292471,
+        -1.3356765098292471,
+        -1.3356765098292471,
+        -1.3356765098292471
+      ]
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp srm0 benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 2.0,
+      "median_ns_per_step": 6.995495059527457,
+      "min_ns_per_step": 6.984084902796894,
+      "max_ns_per_step": 7.047534745652229,
+      "results_ns_per_step": [
+        7.047534745652229,
+        6.984084902796894,
+        6.986244989093393,
+        7.0005550514906645,
+        6.995495059527457
+      ],
+      "spikes": 1905,
+      "spike_counts": [
+        1905,
+        1905,
+        1905,
+        1905,
+        1905
+      ],
+      "final_vs": [
+        0.007465877159108148,
+        0.007465877159108148,
+        0.007465877159108148,
+        0.007465877159108148,
+        0.007465877159108148
+      ],
+      "final_etas": [
+        -1.3356765098292471,
+        -1.3356765098292471,
+        -1.3356765098292471,
+        -1.3356765098292471,
+        -1.3356765098292471
+      ]
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_model_srm0.py": "054e60b255c31102fad2245b017c734256edc12b9040a90496946f53cdb1d9a3",
+    "src/sc_neurocore/neurons/models/srm0.py": "d1280e7699c05ee1df77658cf9c5a78e3371cb63f63ffab0e947563125fa1fa0",
+    "src/sc_neurocore/accel/go/services/srm0.go": "6e7c942e5f8e0e3dfe0a62ab732df0f9749c88e54a35210e67c95f9adb888749",
+    "src/sc_neurocore/accel/go/services/srm0_test.go": "21fdebf5ab8a6f66abe94211f6eaf8e9c1999b38a871918530635ee958a77352",
+    "src/sc_neurocore/accel/julia/neurons/srm0.jl": "06942b1ede558535150414df84e72b2803aae279375424eaa0c5401baf7a27db",
+    "src/sc_neurocore/accel/mojo/kernels/srm0.mojo": "567183a26a275a0d039f02e04cc98f778d99e9c982c4fed1a530caadccdb112b",
+    "src/sc_neurocore/accel/rust/safety/srm0.rs": "64e569e857629aeabeee5d146736e81eeb8049184f923b0dec0db505ddd6a332",
+    "benchmarks/bench_model_srm0": {
+      "py": "054e60b255c31102fad2245b017c734256edc12b9040a90496946f53cdb1d9a3"
+    },
+    "src/sc_neurocore/neurons/models/srm0": {
+      "py": "d1280e7699c05ee1df77658cf9c5a78e3371cb63f63ffab0e947563125fa1fa0"
+    },
+    "src/sc_neurocore/accel/go/services/srm0": {
+      "go": "6e7c942e5f8e0e3dfe0a62ab732df0f9749c88e54a35210e67c95f9adb888749"
+    },
+    "src/sc_neurocore/accel/go/services/srm0_test": {
+      "go": "21fdebf5ab8a6f66abe94211f6eaf8e9c1999b38a871918530635ee958a77352"
+    },
+    "src/sc_neurocore/accel/julia/neurons/srm0": {
+      "jl": "06942b1ede558535150414df84e72b2803aae279375424eaa0c5401baf7a27db"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/srm0": {
+      "mojo": "567183a26a275a0d039f02e04cc98f778d99e9c982c4fed1a530caadccdb112b"
+    },
+    "src/sc_neurocore/accel/rust/safety/srm0": {
+      "rs": "64e569e857629aeabeee5d146736e81eeb8049184f923b0dec0db505ddd6a332"
+    }
+  }
+}

@@ -19891,16 +19891,17 @@ Reference: Furber, S.B. et al. (2014). Proc. IEEE 102:652–665.
 ## Module `neurons.models.srm0`
 
 ### Class `SRM0Neuron`
-Spike Response Model, zeroth order.
+Spike Response Model, zeroth order, with exact coupled refractory-kernel flow.
 
 Reference: Gerstner, W. & Kistler, W.M. (2002). Spiking Neuron Models. Cambridge Univ. Press.
 
-v(t) = eta(t - t_hat) + integral(kappa(t - s) * I(s) ds)
+Continuous step contract for constant current over dt:
+  d eta / dt = -eta / tau_eta
+  d v / dt = (v_rest + resistance * current + eta(t) - v) / tau_m
 
-Simplified discrete version:
-  eta decays after spike: eta(s) = -eta_reset * exp(-s / tau_eta)
-  kappa integrates input: v += (I * R - v) * dt / tau_m + eta
-  Spike when v > threshold.
+The implementation advances this linear coupled system with the closed-form
+step, including the equal-time-constant analytic limit. When the candidate
+membrane reaches threshold, the step commits v_rest and eta = -eta_reset.
 
 Gerstner, W. & Kistler, W.M. (2002). Spiking Neuron Models.
 Cambridge University Press. Ch. 4.
