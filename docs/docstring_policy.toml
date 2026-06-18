@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 88
+expected_file_count = 89
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -360,3 +360,7 @@ rationale = "Public spike-train spectral analysis."
 [[file]]
 path = "src/sc_neurocore/spike_dsp/wavelets.py"
 rationale = "Public spike-train wavelet transforms."
+
+[[file]]
+path = "src/sc_neurocore/federated/federated_sc.py"
+rationale = "Public federated stochastic-computing trainer with differential-privacy accounting and audit log."
