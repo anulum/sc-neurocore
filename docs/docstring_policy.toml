@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 68
+expected_file_count = 71
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -280,3 +280,15 @@ rationale = "Public exact exponential-integration LIF solver with validated memb
 [[file]]
 path = "src/sc_neurocore/solvers/ising.py"
 rationale = "Public quantum-inspired stochastic Ising machine solver."
+
+[[file]]
+path = "src/sc_neurocore/math/__init__.py"
+rationale = "Public math package entry point re-exporting the category-theory bridge."
+
+[[file]]
+path = "src/sc_neurocore/math/category_theory.py"
+rationale = "Public category-theoretic functors mapping stochastic, quantum, and bio domains."
+
+[[file]]
+path = "src/sc_neurocore/math/topology.py"
+rationale = "Public topological invariants (Ollivier-Ricci curvature, winding number, sheaf defect)."
