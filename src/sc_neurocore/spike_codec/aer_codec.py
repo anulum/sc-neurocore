@@ -26,6 +26,7 @@ from __future__ import annotations
 import struct
 from dataclasses import dataclass
 
+from typing import Any
 import numpy as np
 
 from .codec import CompressionResult
@@ -62,7 +63,7 @@ class AERSpikeCodec:
         self.timestamp_bits = timestamp_bits
         self.neuron_bits = neuron_bits
 
-    def compress(self, spikes: np.ndarray) -> tuple[bytes, AERCompressionResult]:
+    def compress(self, spikes: np.ndarray[Any, Any]) -> tuple[bytes, AERCompressionResult]:
         """Compress spike raster to AER event stream.
 
         Parameters
@@ -143,7 +144,7 @@ class AERSpikeCodec:
             codec_type="aer",
         )
 
-    def decompress(self, data: bytes, T: int = 0, N: int = 0) -> np.ndarray:
+    def decompress(self, data: bytes, T: int = 0, N: int = 0) -> np.ndarray[Any, Any]:
         """Decompress AER event stream to spike raster.
 
         Parameters
