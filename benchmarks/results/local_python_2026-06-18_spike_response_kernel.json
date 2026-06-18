@@ -1,0 +1,257 @@
+{
+  "backend_summary": {
+    "go": {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/spike_response.go src/sc_neurocore/accel/go/services/spike_response_test.go -run ^$ -bench BenchmarkSpikeResponseKernel$ -benchtime 200000x -count 5",
+      "current": 10.0,
+      "max_ns_per_step": 58.33,
+      "median_ns_per_step": 46.06,
+      "min_ns_per_step": 27.63,
+      "repeats": 5,
+      "results_ns_per_step": [
+        29.94,
+        50.17,
+        27.63,
+        58.33,
+        46.06
+      ],
+      "spike_counts": [
+        10000,
+        10000,
+        10000,
+        10000,
+        10000
+      ],
+      "spikes": 10000,
+      "steps": 200000
+    },
+    "julia": {
+      "backend": "julia",
+      "command": "julia --project=. -e <spike_response kernel benchmark>",
+      "current": 10.0,
+      "final_tss": [
+        19.0,
+        19.0,
+        19.0,
+        19.0,
+        19.0
+      ],
+      "final_vs": [
+        0.9861980281122491,
+        0.9861980281122491,
+        0.9861980281122491,
+        0.9861980281122491,
+        0.9861980281122491
+      ],
+      "max_ns_per_step": 16.89205,
+      "median_ns_per_step": 15.35093,
+      "min_ns_per_step": 14.896575,
+      "repeats": 5,
+      "results_ns_per_step": [
+        16.89205,
+        14.896575,
+        16.368575,
+        15.35093,
+        15.237585
+      ],
+      "spike_counts": [
+        10000,
+        10000,
+        10000,
+        10000,
+        10000
+      ],
+      "spikes": 10000,
+      "steps": 200000
+    },
+    "mojo": {
+      "backend": "mojo",
+      "command": "mojo -I src/sc_neurocore/accel/mojo/kernels <temp spike_response benchmark>",
+      "current": 10.0,
+      "final_tss": [
+        19.0,
+        19.0,
+        19.0,
+        19.0,
+        19.0
+      ],
+      "final_vs": [
+        0.9861980281129492,
+        0.9861980281129492,
+        0.9861980281129492,
+        0.9861980281129492,
+        0.9861980281129492
+      ],
+      "max_ns_per_step": 27.328314899932593,
+      "median_ns_per_step": 27.105000044684857,
+      "min_ns_per_step": 27.00951008591801,
+      "repeats": 5,
+      "results_ns_per_step": [
+        27.328314899932593,
+        27.105000044684857,
+        27.102435124106705,
+        27.00951008591801,
+        27.215495065320283
+      ],
+      "spike_counts": [
+        10000,
+        10000,
+        10000,
+        10000,
+        10000
+      ],
+      "spikes": 10000,
+      "steps": 200000
+    },
+    "python": {
+      "backend": "python",
+      "max_ns_per_step": 2209.08627,
+      "median_ns_per_step": 2167.304955,
+      "min_ns_per_step": 1928.8788,
+      "results": [
+        {
+          "backend": "python",
+          "current": 10.0,
+          "elapsed_ns": 433460991,
+          "ending_state": [
+            0.9861980281122491,
+            19.0
+          ],
+          "ns_per_step": 2167.304955,
+          "spikes": 10000,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 10.0,
+          "elapsed_ns": 385775760,
+          "ending_state": [
+            0.9861980281122491,
+            19.0
+          ],
+          "ns_per_step": 1928.8788,
+          "spikes": 10000,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 10.0,
+          "elapsed_ns": 405661511,
+          "ending_state": [
+            0.9861980281122491,
+            19.0
+          ],
+          "ns_per_step": 2028.307555,
+          "spikes": 10000,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 10.0,
+          "elapsed_ns": 441817254,
+          "ending_state": [
+            0.9861980281122491,
+            19.0
+          ],
+          "ns_per_step": 2209.08627,
+          "spikes": 10000,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 10.0,
+          "elapsed_ns": 435604036,
+          "ending_state": [
+            0.9861980281122491,
+            19.0
+          ],
+          "ns_per_step": 2178.02018,
+          "spikes": 10000,
+          "steps": 200000
+        }
+      ],
+      "spikes": 10000
+    },
+    "rust": {
+      "backend": "rust",
+      "command": "rustc -O <temp spike_response safety benchmark> && <temp spike_response safety benchmark>",
+      "current": 10.0,
+      "final_tss": [
+        19.0,
+        19.0,
+        19.0,
+        19.0,
+        19.0
+      ],
+      "final_vs": [
+        0.9861980281122491,
+        0.9861980281122491,
+        0.9861980281122491,
+        0.9861980281122491,
+        0.9861980281122491
+      ],
+      "max_ns_per_step": 6.44814,
+      "median_ns_per_step": 6.423395,
+      "min_ns_per_step": 6.32914,
+      "repeats": 5,
+      "results_ns_per_step": [
+        6.42568,
+        6.44814,
+        6.32914,
+        6.423395,
+        6.419035
+      ],
+      "spike_counts": [
+        10000,
+        10000,
+        10000,
+        10000,
+        10000
+      ],
+      "spikes": 10000,
+      "steps": 200000
+    }
+  },
+  "benchmark": "SpikeResponseNeuron exact SRM refractory/input kernel",
+  "current": 10.0,
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "host": "aaarthuus",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "production_speed_claim": false,
+  "python": "3.12.3",
+  "repeats": 5,
+  "source_hashes": {
+    "benchmarks/bench_model_spike_response": {
+      "py": "c2a1b1b9c657902655edc88de5b4b16b93772350e7a1550e899880a1a6962dd6"
+    },
+    "benchmarks/bench_model_spike_response.py": "c2a1b1b9c657902655edc88de5b4b16b93772350e7a1550e899880a1a6962dd6",
+    "src/sc_neurocore/accel/go/services/spike_response": {
+      "go": "c26b40dda3ba44906b352c8d9f7aaff27be7e58ad86f619d2106135f98bf1396"
+    },
+    "src/sc_neurocore/accel/go/services/spike_response.go": "c26b40dda3ba44906b352c8d9f7aaff27be7e58ad86f619d2106135f98bf1396",
+    "src/sc_neurocore/accel/go/services/spike_response_test": {
+      "go": "fbfd381ebd4276ab1907db654e380e280bca0f5ca8e626991ad7f5790ea851c9"
+    },
+    "src/sc_neurocore/accel/go/services/spike_response_test.go": "fbfd381ebd4276ab1907db654e380e280bca0f5ca8e626991ad7f5790ea851c9",
+    "src/sc_neurocore/accel/julia/neurons/spike_response": {
+      "jl": "b8532c00d26531cab2bf4f6022ecf4e49ffbc96e3077f6a677e17e9b42a9a353"
+    },
+    "src/sc_neurocore/accel/julia/neurons/spike_response.jl": "b8532c00d26531cab2bf4f6022ecf4e49ffbc96e3077f6a677e17e9b42a9a353",
+    "src/sc_neurocore/accel/mojo/kernels/spike_response": {
+      "mojo": "e43740dd1e29698e434e4cfda166903841e7430bd58da9095893ae2c5254c571"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/spike_response.mojo": "e43740dd1e29698e434e4cfda166903841e7430bd58da9095893ae2c5254c571",
+    "src/sc_neurocore/accel/rust/safety/spike_response": {
+      "rs": "e695abbbbfb009ff01c597546412ca20f412767b46f69df94cd416a86994a447"
+    },
+    "src/sc_neurocore/accel/rust/safety/spike_response.rs": "e695abbbbfb009ff01c597546412ca20f412767b46f69df94cd416a86994a447",
+    "src/sc_neurocore/neurons/models/spike_response": {
+      "py": "200fe721e0d18da65fae6d3153b17fe4c3c9ab198a991bac2d2c9e4200578630"
+    },
+    "src/sc_neurocore/neurons/models/spike_response.py": "200fe721e0d18da65fae6d3153b17fe4c3c9ab198a991bac2d2c9e4200578630"
+  },
+  "spdx_license": "AGPL-3.0-or-later",
+  "steps": 200000,
+  "timestamp_utc": "2026-06-18T18:35:46.519219+00:00"
+}

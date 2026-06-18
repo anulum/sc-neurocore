@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for spike_response
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct SpikeResponseNeuron {
     pub v: f64,
@@ -32,38 +30,48 @@ impl SpikeResponseNeuron {
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // # Refractory kernel (spike afterpotential)
-        // eta = (
-        // self.eta_reset * (-self.time_since_spike / self.tau_eta_f64).exp()
-        // if self.time_since_spike < 100.0
-        // else 0.0
-        // )
-        // # Input kernel
-        // kappa = weighted_input * (1.0 - (-self.dt / self.tau_kappa_f64).exp())
-        // self.v = eta + kappa
-        // self.time_since_spike += self.dt
-        // if self.v >= self.v_threshold:
-        // self.time_since_spike = 0.0
-        // self.v = 0.0
-        // return 1
-        // return 0
-        0 // spike indicator
+    pub fn step(&mut self, weighted_input: f64) -> i32 {
+        if !validate_spike_response(self) || !weighted_input.is_finite() {
+            return -1;
+        }
+        let eta = if self.time_since_spike < 100.0 {
+            self.eta_reset * (-self.time_since_spike / self.tau_eta).exp()
+        } else {
+            0.0
+        };
+        let kappa = weighted_input * (1.0 - (-self.dt / self.tau_kappa).exp());
+        let next_v = eta + kappa;
+        if !next_v.is_finite() {
+            return -1;
+        }
+        self.v = next_v;
+        self.time_since_spike += self.dt;
+        if self.v >= self.v_threshold {
+            self.time_since_spike = 0.0;
+            self.v = 0.0;
+            return 1;
+        }
+        0
     }
 
     pub fn reset(&mut self) {
-        // self.v = 0.0
-        // self.time_since_spike = 1000.0
         self.v = 0.0_f64;
-        self.v_threshold = 1.0_f64;
-        self.tau_eta = 10.0_f64;
-        self.tau_kappa = 5.0_f64;
-        self.eta_reset = -5.0_f64;
+        self.time_since_spike = 1000.0_f64;
     }
 }
 
 pub fn validate_spike_response(state: &SpikeResponseNeuron) -> bool {
     state.v.is_finite()
+        && state.v_threshold.is_finite()
+        && state.tau_eta.is_finite()
+        && state.tau_eta > 0.0
+        && state.tau_kappa.is_finite()
+        && state.tau_kappa > 0.0
+        && state.eta_reset.is_finite()
+        && state.time_since_spike.is_finite()
+        && state.time_since_spike >= 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
 }
 
 #[cfg(test)]
@@ -82,5 +90,26 @@ mod tests {
         let mut state = SpikeResponseNeuron::new();
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_spike_response_kernel_step() {
+        let mut state = SpikeResponseNeuron::new();
+        let expected = 10.0 * (1.0 - (-state.dt / state.tau_kappa).exp());
+        assert_eq!(state.step(10.0), 1);
+        assert_eq!(state.v, 0.0);
+        assert_eq!(state.time_since_spike, 0.0);
+
+        assert_eq!(state.step(0.0), 0);
+        assert!((state.v - state.eta_reset).abs() < 1.0e-12);
+        assert!(expected > state.v_threshold);
+    }
+
+    #[test]
+    fn test_spike_response_rejects_invalid_input_without_mutation() {
+        let mut state = SpikeResponseNeuron::new();
+        let original = (state.v, state.time_since_spike);
+        assert_eq!(state.step(f64::NAN), -1);
+        assert_eq!((state.v, state.time_since_spike), original);
     }
 }
