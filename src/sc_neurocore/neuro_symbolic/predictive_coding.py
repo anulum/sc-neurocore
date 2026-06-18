@@ -78,6 +78,7 @@ class ReasoningTrace:
         similarity: float,
         confidence: float,
     ) -> None:
+        """Append a timestamped reasoning step to the trace."""
         self.steps.append(
             ReasoningStep(
                 symbol=symbol,
@@ -90,22 +91,27 @@ class ReasoningTrace:
 
     @property
     def length(self) -> int:
+        """Return the number of recorded reasoning steps."""
         return len(self.steps)
 
     @property
     def mean_confidence(self) -> float:
+        """Return the mean confidence across all reasoning steps."""
         if not self.steps:
             return 0.0
         return float(np.mean([s.confidence for s in self.steps]))
 
     @property
     def is_complete(self) -> bool:
+        """Return whether the trace has been finalised with at least one step."""
         return self.end_ns > 0 and self.length > 0
 
     def finalize(self) -> None:
+        """Stamp the trace end time to mark reasoning as complete."""
         self.end_ns = time.perf_counter_ns()
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialise the trace and its steps into a plain dictionary."""
         return {
             "steps": [
                 {
@@ -131,17 +137,19 @@ class Hypervector:
 
     __slots__ = ("data", "length")
 
-    def __init__(self, data: np.ndarray, length: int):
+    def __init__(self, data: np.ndarray[Any, Any], length: int):
         self.data = data
         self.length = length
 
     @classmethod
     def zeros(cls, dim: int = HYPERVECTOR_DIM) -> Hypervector:
+        """Construct an all-zero hypervector of the given dimensionality."""
         words = math.ceil(dim / 64)
         return cls(np.zeros(words, dtype=np.uint64), dim)
 
     @classmethod
     def random(cls, seed: int, dim: int = HYPERVECTOR_DIM) -> Hypervector:
+        """Construct a seeded pseudo-random binary hypervector."""
         words = math.ceil(dim / 64)
         rng = np.random.default_rng(seed)
         data = rng.integers(0, np.iinfo(np.uint64).max, size=words, dtype=np.uint64)
@@ -174,9 +182,11 @@ class Hypervector:
         return 1.0 - 2.0 * self.hamming_distance(other)
 
     def popcount(self) -> int:
+        """Return the number of set bits across the packed words."""
         return sum(bin(int(w)).count("1") for w in self.data)
 
     def density(self) -> float:
+        """Return the fraction of bits that are set (0.0–1.0)."""
         return self.popcount() / self.length if self.length else 0.0
 
     @staticmethod
@@ -197,7 +207,7 @@ class Hypervector:
         return _pack(result_bits, length)
 
 
-def _unpack(hv: Hypervector) -> np.ndarray:
+def _unpack(hv: Hypervector) -> np.ndarray[Any, Any]:
     bits = np.zeros(hv.length, dtype=np.uint8)
     for idx in range(hv.length):
         word_idx = idx // 64
@@ -206,7 +216,7 @@ def _unpack(hv: Hypervector) -> np.ndarray:
     return bits
 
 
-def _pack(bits: np.ndarray, length: int) -> Hypervector:
+def _pack(bits: np.ndarray[Any, Any], length: int) -> Hypervector:
     words = math.ceil(length / 64)
     data = np.zeros(words, dtype=np.uint64)
     for idx in range(length):
@@ -223,12 +233,14 @@ class SymbolEncoder:
         self._base_seed = base_seed
 
     def encode(self, symbol: str) -> Hypervector:
+        """Return the cached or freshly generated hypervector for a symbol."""
         if symbol not in self._cache:
             seed = self._symbol_seed(symbol)
             self._cache[symbol] = Hypervector.random(seed)
         return self._cache[symbol]
 
     def encode_sequence(self, symbols: Sequence[str]) -> Hypervector:
+        """Bind a symbol sequence into one position-aware hypervector."""
         n = len(symbols)
         if n == 0:
             raise ValueError("cannot encode empty sequence")
@@ -242,6 +254,7 @@ class SymbolEncoder:
 
     @property
     def vocabulary_size(self) -> int:
+        """Return the number of distinct symbols encoded so far."""
         return len(self._cache)
 
     def _symbol_seed(self, symbol: str) -> int:
@@ -277,26 +290,26 @@ class PredictiveCodingLayer:
         self.mu = np.zeros(hidden_dim, dtype=np.float32)
         self._error_history: List[float] = []
 
-    def predict(self, hidden: Optional[np.ndarray] = None) -> np.ndarray:
+    def predict(self, hidden: Optional[np.ndarray[Any, Any]] = None) -> np.ndarray[Any, Any]:
         """Generate a top-down prediction from the hidden state."""
         h = hidden if hidden is not None else self.mu
         return np.tanh(self.W_td.T @ h)
 
     def compute_error(
         self,
-        observation: np.ndarray,
-        hidden: Optional[np.ndarray] = None,
-    ) -> np.ndarray:
+        observation: np.ndarray[Any, Any],
+        hidden: Optional[np.ndarray[Any, Any]] = None,
+    ) -> np.ndarray[Any, Any]:
         """Bottom-up prediction error: weighted residual."""
         prediction = self.predict(hidden)
-        error = self.precision * (observation - prediction)
+        error: np.ndarray[Any, Any] = self.precision * (observation - prediction)
         self._error_history.append(float(np.mean(np.abs(error))))
         return error
 
     def update(
         self,
-        observation: np.ndarray,
-        hidden: Optional[np.ndarray] = None,
+        observation: np.ndarray[Any, Any],
+        hidden: Optional[np.ndarray[Any, Any]] = None,
     ) -> float:
         """One-step gradient update on both weights and hidden state.
 
@@ -312,6 +325,7 @@ class PredictiveCodingLayer:
 
     @property
     def mean_recent_error(self) -> float:
+        """Return the mean absolute error over the last 50 updates."""
         if not self._error_history:
             return 0.0
         recent = self._error_history[-50:]
@@ -319,6 +333,7 @@ class PredictiveCodingLayer:
 
     @property
     def converged(self) -> bool:
+        """Return whether recent errors are stable below the threshold."""
         if len(self._error_history) < 10:
             return False
         recent = self._error_history[-10:]
@@ -343,16 +358,18 @@ class VerifiableInference:
         self._library[name] = self.encoder.encode(name)
 
     def register_symbols(self, names: Sequence[str]) -> None:
+        """Register several symbols into the lookup library."""
         for n in names:
             self.register_symbol(n)
 
     @property
     def num_symbols(self) -> int:
+        """Return the number of symbols in the lookup library."""
         return len(self._library)
 
     def infer(
         self,
-        observation: np.ndarray,
+        observation: np.ndarray[Any, Any],
         top_k: int = 1,
     ) -> Tuple[List[Tuple[str, float]], ReasoningTrace]:
         """Run inference: prediction → error → HDC symbol match.

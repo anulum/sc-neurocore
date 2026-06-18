@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 124
+expected_file_count = 126
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -476,6 +476,14 @@ rationale = "Public published neural decoder/encoder reference implementations (
 [[file]]
 path = "src/sc_neurocore/bio/transcriptomic.py"
 rationale = "Public single-cell transcriptomic foundation-model interfaces (scKG-BERT, Geneformer)."
+
+[[file]]
+path = "src/sc_neurocore/neuro_symbolic/predictive_coding.py"
+rationale = "Public hierarchical predictive-coding layer with HDC symbol encoding and auditable traces."
+
+[[file]]
+path = "src/sc_neurocore/neuro_symbolic/self_verification.py"
+rationale = "Public machine-checkable self-verification traces for neuro-symbolic inference."
 
 [[file]]
 path = "src/sc_neurocore/experimental/examples.py"
