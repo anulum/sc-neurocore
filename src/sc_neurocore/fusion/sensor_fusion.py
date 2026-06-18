@@ -25,6 +25,8 @@ import numpy as np
 
 
 class SensorModality(Enum):
+    """Enumeration of the supported sensor modalities."""
+
     DVS = "dvs"
     TACTILE = "tactile"
     COCHLEA = "cochlea"
@@ -37,27 +39,30 @@ class EventStream:
     """Timestamped event stream from a single sensor modality."""
 
     modality: SensorModality
-    timestamps: np.ndarray  # microsecond timestamps
-    addresses: np.ndarray  # spatial/channel addresses
-    polarities: np.ndarray  # +1 / -1 for ON/OFF events
+    timestamps: np.ndarray[Any, Any]  # microsecond timestamps
+    addresses: np.ndarray[Any, Any]  # spatial/channel addresses
+    polarities: np.ndarray[Any, Any]  # +1 / -1 for ON/OFF events
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def num_events(self) -> int:
+        """Return the number of events in the stream."""
         return len(self.timestamps)
 
     @property
     def duration_us(self) -> float:
+        """Return the stream duration in microseconds."""
         if self.num_events < 2:
             return 0.0
         return float(self.timestamps[-1] - self.timestamps[0])
 
     @property
     def event_rate(self) -> float:
+        """Return the mean event rate in events per microsecond."""
         dur = self.duration_us
         return self.num_events / (dur * 1e-6) if dur > 0 else 0.0
 
-    def to_bitstream(self, length: int, num_channels: int) -> np.ndarray:
+    def to_bitstream(self, length: int, num_channels: int) -> np.ndarray[Any, Any]:
         """Convert event stream to SC bitstream matrix (channels × length)."""
         bs = np.zeros((num_channels, length), dtype=np.uint8)
         if self.num_events == 0:
@@ -86,9 +91,9 @@ class BitstreamDecorrelator:
 
     def decorrelate(
         self,
-        streams: List[np.ndarray],
+        streams: List[np.ndarray[Any, Any]],
         method: str = "lfsr",
-    ) -> List[np.ndarray]:
+    ) -> List[np.ndarray[Any, Any]]:
         """Decorrelate a list of bitstream matrices.
 
         Each matrix is (channels × length).
@@ -103,16 +108,18 @@ class BitstreamDecorrelator:
             result.append(decorrelated)
         return result
 
-    def _generate_mask(self, shape: Tuple[int, ...], seed: int, method: str) -> np.ndarray:
+    def _generate_mask(
+        self, shape: Tuple[int, ...], seed: int, method: str
+    ) -> np.ndarray[Any, Any]:
         if method == "sobol":
             return self._sobol_mask(shape, seed)
         return self._lfsr_mask(shape, seed)
 
-    def _lfsr_mask(self, shape: Tuple[int, ...], seed: int) -> np.ndarray:
+    def _lfsr_mask(self, shape: Tuple[int, ...], seed: int) -> np.ndarray[Any, Any]:
         rng = np.random.default_rng(seed)
         return rng.integers(0, 2, size=shape, dtype=np.uint8)
 
-    def _sobol_mask(self, shape: Tuple[int, ...], seed: int) -> np.ndarray:
+    def _sobol_mask(self, shape: Tuple[int, ...], seed: int) -> np.ndarray[Any, Any]:
         total = 1
         for s in shape:
             total *= s
@@ -120,7 +127,7 @@ class BitstreamDecorrelator:
         flat = (rng.random(total) > 0.5).astype(np.uint8)
         return flat.reshape(shape)
 
-    def measure_scc(self, a: np.ndarray, b: np.ndarray) -> float:
+    def measure_scc(self, a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
         """Compute stochastic cross-correlation between two bitstreams."""
         a_flat = a.flatten().astype(np.float64)
         b_flat = b.flatten().astype(np.float64)
@@ -151,18 +158,22 @@ class CrossModalAttention:
         self.W_k = rng.integers(0, 2, (num_channels, num_channels), dtype=np.uint8)
         self.W_v = rng.integers(0, 2, (num_channels, num_channels), dtype=np.uint8)
 
-    def _sc_and(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        return (a & b).astype(np.uint8)
+    def _sc_and(self, a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        result: np.ndarray[Any, Any] = (a & b).astype(np.uint8)
+        return result
 
-    def _sc_mux(self, a: np.ndarray, b: np.ndarray, sel: np.ndarray) -> np.ndarray:
-        return ((a & sel) | (b & ~sel & 1)).astype(np.uint8)
+    def _sc_mux(
+        self, a: np.ndarray[Any, Any], b: np.ndarray[Any, Any], sel: np.ndarray[Any, Any]
+    ) -> np.ndarray[Any, Any]:
+        result: np.ndarray[Any, Any] = ((a & sel) | (b & ~sel & 1)).astype(np.uint8)
+        return result
 
     def attend(
         self,
-        query_stream: np.ndarray,
-        key_stream: np.ndarray,
-        value_stream: np.ndarray,
-    ) -> np.ndarray:
+        query_stream: np.ndarray[Any, Any],
+        key_stream: np.ndarray[Any, Any],
+        value_stream: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         """Compute cross-modal attention in SC domain.
 
         All inputs are (channels × bitstream_length).
@@ -176,7 +187,9 @@ class CrossModalAttention:
         attended = self._sc_mux(v, np.zeros_like(v, dtype=np.uint8), similarity)
         return attended
 
-    def _project(self, stream: np.ndarray, weights: np.ndarray) -> np.ndarray:
+    def _project(
+        self, stream: np.ndarray[Any, Any], weights: np.ndarray[Any, Any]
+    ) -> np.ndarray[Any, Any]:
         ch, length = stream.shape
         result = np.zeros_like(stream, dtype=np.uint8)
         for c in range(ch):
@@ -213,13 +226,14 @@ class SensorFusionLayer:
         self._modality_weights: Dict[SensorModality, float] = {}
 
     def set_weight(self, modality: SensorModality, weight: float) -> None:
+        """Set the fusion weight for a modality, clipped to ``[0, 1]``."""
         self._modality_weights[modality] = max(0.0, min(1.0, weight))
 
     def fuse(
         self,
         streams: List[EventStream],
         use_attention: bool = True,
-    ) -> Tuple[np.ndarray, FusionMetrics]:
+    ) -> Tuple[np.ndarray[Any, Any], FusionMetrics]:
         """Fuse multiple event streams into a single SC bitstream.
 
         Returns (fused_bitstream, metrics).
@@ -285,31 +299,35 @@ class HDCBinding:
     def __init__(self, dim: int = 1024, seed: int = 42):
         self.dim = dim
         self.rng = np.random.default_rng(seed)
-        self._codebooks: Dict[str, np.ndarray] = {}
+        self._codebooks: Dict[str, np.ndarray[Any, Any]] = {}
 
-    def get_hypervector(self, key: str) -> np.ndarray:
+    def get_hypervector(self, key: str) -> np.ndarray[Any, Any]:
         """Get or create a random hypervector for a key."""
         if key not in self._codebooks:
             self._codebooks[key] = self.rng.integers(0, 2, self.dim, dtype=np.uint8)
         return self._codebooks[key]
 
-    def bind(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    def bind(self, a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """XOR binding: associate two representations."""
-        return np.bitwise_xor(a, b).astype(np.uint8)
+        bound: np.ndarray[Any, Any] = np.bitwise_xor(a, b).astype(np.uint8)
+        return bound
 
-    def bundle(self, vectors: List[np.ndarray]) -> np.ndarray:
+    def bundle(self, vectors: List[np.ndarray[Any, Any]]) -> np.ndarray[Any, Any]:
         """Majority-vote bundling: superpose multiple vectors."""
         if not vectors:
             return np.zeros(self.dim, dtype=np.uint8)
         stacked = np.stack(vectors).astype(np.int32)
-        return (np.sum(stacked, axis=0) > len(vectors) / 2).astype(np.uint8)
+        majority: np.ndarray[Any, Any] = (np.sum(stacked, axis=0) > len(vectors) / 2).astype(
+            np.uint8
+        )
+        return majority
 
-    def similarity(self, a: np.ndarray, b: np.ndarray) -> float:
+    def similarity(self, a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
         """Cosine-like similarity via Hamming distance."""
         matches = np.sum(a == b)
         return float(matches / len(a))
 
-    def encode_stream(self, stream: EventStream, num_channels: int = 64) -> np.ndarray:
+    def encode_stream(self, stream: EventStream, num_channels: int = 64) -> np.ndarray[Any, Any]:
         """Encode an event stream as a single hypervector."""
         modality_hv = self.get_hypervector(stream.modality.value)
         bs = stream.to_bitstream(min(self.dim, 256), num_channels)
@@ -327,12 +345,13 @@ class DVSAdapter:
 
     @staticmethod
     def encode_events(
-        timestamps: np.ndarray,
-        x: np.ndarray,
-        y: np.ndarray,
-        polarities: np.ndarray,
+        timestamps: np.ndarray[Any, Any],
+        x: np.ndarray[Any, Any],
+        y: np.ndarray[Any, Any],
+        polarities: np.ndarray[Any, Any],
         resolution: Tuple[int, int] = (128, 128),
     ) -> EventStream:
+        """Encode DVS camera events into an EventStream of AER addresses."""
         addresses = (y.astype(np.int64) * resolution[0] + x.astype(np.int64)) % (
             resolution[0] * resolution[1]
         )
@@ -366,7 +385,10 @@ class CochleaAdapter:
         )
         return int(log_pos * (self.num_channels - 1))
 
-    def encode_spikes(self, timestamps: np.ndarray, frequencies: np.ndarray) -> EventStream:
+    def encode_spikes(
+        self, timestamps: np.ndarray[Any, Any], frequencies: np.ndarray[Any, Any]
+    ) -> EventStream:
+        """Encode cochlear spike timestamps and frequencies into an EventStream."""
         channels = np.array([self.freq_to_channel(f) for f in frequencies])
         return EventStream(
             modality=SensorModality.COCHLEA,
@@ -382,9 +404,9 @@ class TactileAdapter:
 
     @staticmethod
     def encode_pressure(
-        timestamps: np.ndarray,
-        taxel_ids: np.ndarray,
-        pressures: np.ndarray,
+        timestamps: np.ndarray[Any, Any],
+        taxel_ids: np.ndarray[Any, Any],
+        pressures: np.ndarray[Any, Any],
         threshold: float = 0.1,
     ) -> EventStream:
         """Convert pressure readings to ON/OFF events."""
@@ -403,9 +425,9 @@ class IMUAdapter:
 
     @staticmethod
     def encode_angular_rate(
-        timestamps: np.ndarray,
-        axis_id: np.ndarray,
-        rates_dps: np.ndarray,
+        timestamps: np.ndarray[Any, Any],
+        axis_id: np.ndarray[Any, Any],
+        rates_dps: np.ndarray[Any, Any],
         deadzone_dps: float = 5.0,
     ) -> EventStream:
         """Convert angular rate to events (above deadzone)."""
@@ -489,6 +511,7 @@ class FusionVerilogEmitter:
         bitstream_width: int = 16,
         use_attention: bool = True,
     ) -> str:
+        """Emit configurable multi-modal fusion SystemVerilog as a string."""
         lines = [
             "// SC-NeuroCore — Auto-Generated Multi-Modal Fusion",
             f"// Streams: {num_streams}, Bitstream: {bitstream_width}b",
@@ -576,6 +599,7 @@ class FusionEnergyEstimate:
 
     @property
     def total_mw(self) -> float:
+        """Return the total estimated power in milliwatts."""
         return self.total_uw / 1000.0
 
 
@@ -596,6 +620,7 @@ class FusionEnergyEstimator:
         use_attention: bool = True,
         clock_mhz: float = 100.0,
     ) -> FusionEnergyEstimate:
+        """Estimate fusion energy from stream, channel, and timing parameters."""
         # LFSR: 16-bit per stream, 1 toggle/cycle over bitstream_length cycles
         lfsr_toggles = num_streams * 16 * bitstream_length
         decorr_fj = lfsr_toggles * self._efj_per_lut
