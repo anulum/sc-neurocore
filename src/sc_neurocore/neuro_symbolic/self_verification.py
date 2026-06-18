@@ -141,7 +141,9 @@ class NeuroSymbolicSelfVerifier:
         )
 
     @staticmethod
-    def _validate_vector(values: np.ndarray[Any, Any] | Sequence[float], name: str) -> np.ndarray:
+    def _validate_vector(
+        values: np.ndarray[Any, Any] | Sequence[float], name: str
+    ) -> np.ndarray[Any, Any]:
         arr = np.asarray(values, dtype=np.float64)
         if arr.ndim != 1:
             raise ValueError(f"{name} must be one-dimensional")
@@ -150,7 +152,9 @@ class NeuroSymbolicSelfVerifier:
         return arr
 
     @staticmethod
-    def _check_shape(name: str, lhs: np.ndarray, rhs: np.ndarray) -> VerificationObligation:
+    def _check_shape(
+        name: str, lhs: np.ndarray[Any, Any], rhs: np.ndarray[Any, Any]
+    ) -> VerificationObligation:
         status = VerificationStatus.PASS if lhs.shape == rhs.shape else VerificationStatus.FAIL
         return VerificationObligation(
             name=name,
@@ -160,9 +164,9 @@ class NeuroSymbolicSelfVerifier:
 
     @staticmethod
     def _check_prediction_error(
-        observation: np.ndarray,
-        prediction: np.ndarray,
-        error: np.ndarray,
+        observation: np.ndarray[Any, Any],
+        prediction: np.ndarray[Any, Any],
+        error: np.ndarray[Any, Any],
     ) -> VerificationObligation:
         expected = observation - prediction
         residual = float(np.max(np.abs(expected - error))) if expected.size else 0.0
@@ -175,8 +179,8 @@ class NeuroSymbolicSelfVerifier:
 
     @staticmethod
     def _check_signature(
-        observation: np.ndarray,
-        prediction: np.ndarray,
+        observation: np.ndarray[Any, Any],
+        prediction: np.ndarray[Any, Any],
         signature: SCErrorSignature,
     ) -> VerificationObligation:
         expected_bits = np.logical_xor(observation >= 0.0, prediction >= 0.0).astype(np.uint8)
@@ -275,7 +279,7 @@ def build_self_verification_trace(
     *,
     observation: np.ndarray[Any, Any] | Sequence[float],
 ) -> NeuroSymbolicSelfVerificationTrace:
-    """Convenience wrapper for high-level neuro-symbolic inference results."""
+    """Verify a high-level neuro-symbolic inference result against its observation."""
     return NeuroSymbolicSelfVerifier().verify_result(result, observation=observation)
 
 
