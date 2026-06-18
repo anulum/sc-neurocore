@@ -10,15 +10,16 @@
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 
-def spike_times(binary_train: np.ndarray, dt: float = 0.001) -> np.ndarray:
+def spike_times(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> np.ndarray[Any, Any]:
     """Extract spike times (seconds) from a binary 0/1 array."""
     return np.where(binary_train > 0)[0] * dt
 
 
-def isi(binary_train: np.ndarray, dt: float = 0.001) -> np.ndarray:
+def isi(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> np.ndarray[Any, Any]:
     """Inter-spike intervals (seconds) from a binary train."""
     times = spike_times(binary_train, dt)
     if times.size < 2:
@@ -26,7 +27,7 @@ def isi(binary_train: np.ndarray, dt: float = 0.001) -> np.ndarray:
     return np.diff(times)
 
 
-def firing_rate(binary_train: np.ndarray, dt: float = 0.001) -> float:
+def firing_rate(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> float:
     """Mean firing rate (Hz)."""
     duration = binary_train.size * dt
     if duration <= 0:
@@ -34,12 +35,12 @@ def firing_rate(binary_train: np.ndarray, dt: float = 0.001) -> float:
     return float(np.sum(binary_train) / duration)
 
 
-def spike_count(binary_train: np.ndarray) -> int:
-    """Total spike count."""
+def spike_count(binary_train: np.ndarray[Any, Any]) -> int:
+    """Return the total number of spikes in a binary spike train."""
     return int(np.sum(binary_train))
 
 
-def bin_spike_train(binary_train: np.ndarray, bin_size: int = 10) -> np.ndarray:
+def bin_spike_train(binary_train: np.ndarray[Any, Any], bin_size: int = 10) -> np.ndarray[Any, Any]:
     """Bin a binary spike train into spike counts per bin."""
     n = binary_train.size
     n_bins = n // bin_size

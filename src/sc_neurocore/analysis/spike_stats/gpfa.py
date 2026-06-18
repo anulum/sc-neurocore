@@ -25,7 +25,7 @@ import numpy as np
 from .basic import bin_spike_train
 
 
-def _gp_kernel(n_bins: int, tau: float, sigma: float = 1.0) -> np.ndarray:
+def _gp_kernel(n_bins: int, tau: float, sigma: float = 1.0) -> np.ndarray[Any, Any]:
     """Squared-exponential kernel matrix for *n_bins* time points."""
     t = np.arange(n_bins, dtype=np.float64)
     diff = t[:, None] - t[None, :]
@@ -33,8 +33,12 @@ def _gp_kernel(n_bins: int, tau: float, sigma: float = 1.0) -> np.ndarray:
 
 
 def _gpfa_e_step(
-    Y: np.ndarray, C: np.ndarray, d: np.ndarray, R: np.ndarray, K_all: list[np.ndarray]
-) -> tuple[np.ndarray, np.ndarray]:
+    Y: np.ndarray[Any, Any],
+    C: np.ndarray[Any, Any],
+    d: np.ndarray[Any, Any],
+    R: np.ndarray[Any, Any],
+    K_all: list[np.ndarray[Any, Any]],
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Posterior p(x|y) for each latent dimension jointly."""
     n_neurons, n_bins = Y.shape
     n_latents = C.shape[1]
@@ -102,8 +106,8 @@ def _gpfa_e_step(
 
 
 def _gpfa_m_step(
-    Y: np.ndarray, x_post: np.ndarray, xx_post: np.ndarray
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    Y: np.ndarray[Any, Any], x_post: np.ndarray[Any, Any], xx_post: np.ndarray[Any, Any]
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Update C, d, R from sufficient statistics."""
     n_neurons, n_bins = Y.shape
 
@@ -125,7 +129,11 @@ def _gpfa_m_step(
 
 
 def _gpfa_log_likelihood(
-    Y: np.ndarray, C: np.ndarray, d: np.ndarray, R: np.ndarray, K_all: list[np.ndarray]
+    Y: np.ndarray[Any, Any],
+    C: np.ndarray[Any, Any],
+    d: np.ndarray[Any, Any],
+    R: np.ndarray[Any, Any],
+    K_all: list[np.ndarray[Any, Any]],
 ) -> np.float64:
     """Exact marginal Gaussian log likelihood for the GPFA observation model."""
     n_neurons, n_bins = Y.shape
@@ -158,7 +166,7 @@ def _gpfa_log_likelihood(
 
 
 def gpfa(
-    trains: list[np.ndarray],
+    trains: list[np.ndarray[Any, Any]],
     n_latents: int = 3,
     bin_ms: float = 20.0,
     dt: float = 0.001,
@@ -217,8 +225,11 @@ def gpfa(
 
 
 def gpfa_transform(
-    new_trains: list[np.ndarray], params: dict[str, Any], bin_ms: float = 20.0, dt: float = 0.001
-) -> np.ndarray:
+    new_trains: list[np.ndarray[Any, Any]],
+    params: dict[str, Any],
+    bin_ms: float = 20.0,
+    dt: float = 0.001,
+) -> np.ndarray[Any, Any]:
     """Project new spike trains using learned GPFA parameters."""
     C = params["C"]
     d = params["d"]

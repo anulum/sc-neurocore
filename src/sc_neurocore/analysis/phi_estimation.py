@@ -30,11 +30,12 @@ This module provides tractable approximations:
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 from scipy.linalg import det as sla_det
 
 
-def phi_star(data: np.ndarray, tau: int = 1) -> float:
+def phi_star(data: np.ndarray[Any, Any], tau: int = 1) -> float:
     """Geometric integrated information (Barrett & Seth 2011).
 
     Phi* = MI(past; future) - max_partition sum MI(past_k; future_k)
@@ -43,7 +44,7 @@ def phi_star(data: np.ndarray, tau: int = 1) -> float:
 
     Parameters
     ----------
-    data : np.ndarray
+    data : np.ndarray[Any, Any]
         Shape (n_channels, n_timesteps). Spike counts or continuous signals.
     tau : int
         Time lag for past→future mapping.
@@ -77,7 +78,7 @@ def phi_star(data: np.ndarray, tau: int = 1) -> float:
     return float(phi)
 
 
-def _gaussian_mi(x: np.ndarray, y: np.ndarray) -> float:
+def _gaussian_mi(x: np.ndarray[Any, Any], y: np.ndarray[Any, Any]) -> float:
     """Mutual information under Gaussian assumption.
 
     MI(X;Y) = 0.5 * log(det(Cov_X) * det(Cov_Y) / det(Cov_XY))
@@ -104,12 +105,12 @@ def _gaussian_mi(x: np.ndarray, y: np.ndarray) -> float:
     return max(0.0, float(mi))
 
 
-def phi_from_spike_trains(spikes: np.ndarray, bin_size: int = 10, tau: int = 1) -> float:
+def phi_from_spike_trains(spikes: np.ndarray[Any, Any], bin_size: int = 10, tau: int = 1) -> float:
     """Compute Phi* from binary spike trains.
 
     Parameters
     ----------
-    spikes : np.ndarray
+    spikes : np.ndarray[Any, Any]
         Shape (n_neurons, n_timesteps), binary {0, 1}.
     bin_size : int
         Number of timesteps per bin for spike count computation.

@@ -10,12 +10,13 @@
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 
 def spike_triggered_average(
-    stimulus: np.ndarray, binary_train: np.ndarray, window_steps: int = 50
-) -> np.ndarray:
+    stimulus: np.ndarray[Any, Any], binary_train: np.ndarray[Any, Any], window_steps: int = 50
+) -> np.ndarray[Any, Any]:
     """Spike-triggered average (STA) of a stimulus signal.
 
     Returns the average stimulus snippet preceding each spike.
@@ -29,8 +30,8 @@ def spike_triggered_average(
 
 
 def spike_triggered_covariance(
-    stimulus: np.ndarray, binary_train: np.ndarray, window_steps: int = 50
-) -> np.ndarray:
+    stimulus: np.ndarray[Any, Any], binary_train: np.ndarray[Any, Any], window_steps: int = 50
+) -> np.ndarray[Any, Any]:
     """Spike-triggered covariance (STC). Schwartz et al. 2006.
 
     Returns covariance matrix of stimulus snippets preceding spikes.
@@ -44,7 +45,10 @@ def spike_triggered_covariance(
 
 
 def spatial_information(
-    binary_train: np.ndarray, positions: np.ndarray, n_bins: int = 20, dt: float = 0.001
+    binary_train: np.ndarray[Any, Any],
+    positions: np.ndarray[Any, Any],
+    n_bins: int = 20,
+    dt: float = 0.001,
 ) -> float:
     """Spatial information (bits/spike). Skaggs et al. 1993.
 
@@ -81,8 +85,8 @@ def spatial_information(
 
 
 def place_field_detection(
-    binary_train: np.ndarray,
-    positions: np.ndarray,
+    binary_train: np.ndarray[Any, Any],
+    positions: np.ndarray[Any, Any],
     n_bins: int = 50,
     threshold_std: float = 2.0,
     dt: float = 0.001,
@@ -119,8 +123,11 @@ def place_field_detection(
 
 
 def tuning_curve(
-    binary_train: np.ndarray, stimulus_values: np.ndarray, n_bins: int = 20, dt: float = 0.001
-) -> tuple[np.ndarray, np.ndarray]:
+    binary_train: np.ndarray[Any, Any],
+    stimulus_values: np.ndarray[Any, Any],
+    n_bins: int = 20,
+    dt: float = 0.001,
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Compute tuning curve: mean firing rate vs stimulus value. Dayan & Abbott 2001.
 
     Returns (mean_rates, bin_centers).

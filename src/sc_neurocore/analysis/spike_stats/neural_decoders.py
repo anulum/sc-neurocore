@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from typing import Any
 import numpy as np
 
 
@@ -30,9 +31,9 @@ import numpy as np
 
 
 def tokenise_spikes(
-    spike_trains: list[np.ndarray],
+    spike_trains: list[np.ndarray[Any, Any]],
     dt: float = 1.0,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Convert binary spike trains to sorted (unit_id, timestamp) tokens.
 
     Used by POYO+ and POSSM (Azabou et al. 2023; Ryoo et al. 2025).
@@ -61,9 +62,9 @@ def tokenise_spikes(
 
 
 def sinusoidal_position_encode(
-    timestamps: np.ndarray,
+    timestamps: np.ndarray[Any, Any],
     d_model: int,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Sinusoidal position encoding. Vaswani et al. (2017).
 
     PE(t, 2i)   = sin(t / 10000^{2i/d})
@@ -81,10 +82,10 @@ def sinusoidal_position_encode(
 
 
 def scaled_dot_product_attention(
-    queries: np.ndarray,
-    keys: np.ndarray,
-    values: np.ndarray,
-) -> np.ndarray:
+    queries: np.ndarray[Any, Any],
+    keys: np.ndarray[Any, Any],
+    values: np.ndarray[Any, Any],
+) -> np.ndarray[Any, Any]:
     """Scaled dot-product attention.
 
     Attention(Q, K, V) = softmax(Q K^T / sqrt(d_k)) V
@@ -120,11 +121,12 @@ class POYODecoder:
     seed: int = 42
 
     def __post_init__(self) -> None:
+        """Initialise the POYO decoder weights from the seed."""
         rng = np.random.default_rng(self.seed)
         self._latent_queries = rng.normal(0.0, 0.02, (self.n_latents, self.d_model))
-        self._unit_embeddings: dict[int, np.ndarray] = {}
+        self._unit_embeddings: dict[int, np.ndarray[Any, Any]] = {}
 
-    def _unit_embedding(self, unit_id: int) -> np.ndarray:
+    def _unit_embedding(self, unit_id: int) -> np.ndarray[Any, Any]:
         if unit_id not in self._unit_embeddings:
             rng = np.random.default_rng(self.seed + unit_id + 1)
             self._unit_embeddings[unit_id] = rng.normal(0.0, 0.02, self.d_model)
@@ -132,9 +134,9 @@ class POYODecoder:
 
     def encode(
         self,
-        spike_trains: list[np.ndarray],
+        spike_trains: list[np.ndarray[Any, Any]],
         dt: float = 1.0,
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Encode population activity to latent representation.
 
         Returns array [n_latents, d_model].
@@ -149,9 +151,9 @@ class POYODecoder:
 
     def decode(
         self,
-        latents: np.ndarray,
-        output_queries: np.ndarray,
-    ) -> np.ndarray:
+        latents: np.ndarray[Any, Any],
+        output_queries: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         """Cross-attention decode from latents.
 
         output_queries : [n_outputs, d_model]
@@ -197,6 +199,7 @@ class POSSMDecoder:
     seed: int = 42
 
     def __post_init__(self) -> None:
+        """Initialise the POSSM decoder state-space parameters from the seed."""
         rng = np.random.default_rng(self.seed)
         # HiPPO-LegS initialisation for complex diagonal A
         real_part = -0.5 * np.ones(self.d_state)
@@ -207,7 +210,7 @@ class POSSMDecoder:
         self._D = rng.normal(0.0, 0.02, (self.d_model, self.d_model))
         self._h = np.zeros(self.d_state, dtype=np.complex128)
 
-    def discretise(self, step_dt: float) -> tuple[np.ndarray, np.ndarray]:
+    def discretise(self, step_dt: float) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Zero-order hold discretisation.
 
         A_bar = exp(dt * A)
@@ -218,7 +221,7 @@ class POSSMDecoder:
         b_bar = np.diag(a_bar - 1.0) @ np.diag(a_inv) @ self._B
         return a_bar, b_bar
 
-    def step(self, x: np.ndarray) -> np.ndarray:
+    def step(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Single causal SSM step.
 
         h_t = A_bar h_{t-1} + B_bar x_t
@@ -230,9 +233,9 @@ class POSSMDecoder:
 
     def encode_causal(
         self,
-        spike_trains: list[np.ndarray],
+        spike_trains: list[np.ndarray[Any, Any]],
         dt: float = 1.0,
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Causal online encoding of spike trains.
 
         Returns [n_timesteps, d_model] output sequence.
@@ -282,17 +285,18 @@ class NDT3Decoder:
     seed: int = 42
 
     def __post_init__(self) -> None:
+        """Initialise the NDT-3 decoder weights from the seed."""
         rng = np.random.default_rng(self.seed)
-        self._embed_w: np.ndarray | None = None
-        self._embed_b: np.ndarray | None = None
+        self._embed_w: np.ndarray[Any, Any] | None = None
+        self._embed_b: np.ndarray[Any, Any] | None = None
         self._output_w = rng.normal(0.0, 0.02, (self.d_model, self.d_model))
         self._output_b = np.zeros(self.d_model)
 
     def bin_and_embed(
         self,
-        spike_trains: list[np.ndarray],
+        spike_trains: list[np.ndarray[Any, Any]],
         dt: float = 1.0,
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Bin spike trains and project to embeddings.
 
         Returns (binned [n_bins, n_neurons], embedded [n_bins, d_model]).
@@ -329,7 +333,7 @@ class NDT3Decoder:
         embedded += pe
         return binned, embedded
 
-    def predict_next(self, embedded: np.ndarray) -> np.ndarray:
+    def predict_next(self, embedded: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Causal autoregressive prediction of next time bin.
 
         Uses causal (lower-triangular) masked self-attention.
@@ -351,9 +355,9 @@ class NDT3Decoder:
 
     def decode(
         self,
-        spike_trains: list[np.ndarray],
+        spike_trains: list[np.ndarray[Any, Any]],
         dt: float = 1.0,
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Full decode pipeline: bin → embed → causal attention → output.
 
         Returns [n_bins, d_model] decoded representations.
@@ -391,6 +395,7 @@ class CEBRAEncoder:
     seed: int = 42
 
     def __post_init__(self) -> None:
+        """Initialise the CEBRA encoder weights from the seed."""
         rng = np.random.default_rng(self.seed)
         # Two-layer MLP encoder: d_input → d_hidden → d_output
         d_hidden = max(self.d_input, 2 * self.d_output)
@@ -399,7 +404,7 @@ class CEBRAEncoder:
         self._w2 = rng.normal(0.0, np.sqrt(2.0 / d_hidden), (self.d_output, d_hidden))
         self._b2 = np.zeros(self.d_output)
 
-    def encode(self, x: np.ndarray) -> np.ndarray:
+    def encode(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Encode neural data through 2-layer MLP.
 
         x : [batch, d_input] or [d_input].
@@ -419,7 +424,7 @@ class CEBRAEncoder:
         return z
 
     @staticmethod
-    def cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    def cosine_similarity(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Pairwise cosine similarity matrix.
 
         a : [n, d], b : [m, d]. Returns [n, m].
@@ -430,8 +435,8 @@ class CEBRAEncoder:
 
     def infonce_loss(
         self,
-        anchors: np.ndarray,
-        positives: np.ndarray,
+        anchors: np.ndarray[Any, Any],
+        positives: np.ndarray[Any, Any],
     ) -> float:
         """InfoNCE contrastive loss. van den Oord et al. (2018).
 
@@ -453,9 +458,9 @@ class CEBRAEncoder:
 
     def _forward_and_loss(
         self,
-        anchors: np.ndarray,
-        positives: np.ndarray,
-    ) -> tuple[float, dict[str, np.ndarray]]:
+        anchors: np.ndarray[Any, Any],
+        positives: np.ndarray[Any, Any],
+    ) -> tuple[float, dict[str, np.ndarray[Any, Any]]]:
         """Forward pass with cached intermediates for backprop.
 
         Returns (loss, cache) where cache contains all intermediates.
@@ -500,7 +505,7 @@ class CEBRAEncoder:
         }
         return float(loss), cache
 
-    def _backward(self, cache: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+    def _backward(self, cache: dict[str, np.ndarray[Any, Any]]) -> dict[str, np.ndarray[Any, Any]]:
         """Analytical backprop through InfoNCE + MLP.
 
         Returns gradients for w1, b1, w2, b2.
@@ -519,7 +524,9 @@ class CEBRAEncoder:
         d_zp = d_sim.T @ cache["z_a"] / tau
 
         # Backprop through L2 normalisation: z = z_pre / ||z_pre||
-        def grad_l2norm(d_z: np.ndarray, z_pre: np.ndarray, norms: np.ndarray) -> np.ndarray:
+        def grad_l2norm(
+            d_z: np.ndarray[Any, Any], z_pre: np.ndarray[Any, Any], norms: np.ndarray[Any, Any]
+        ) -> np.ndarray[Any, Any]:
             z_hat = z_pre / norms
             return (d_z - z_hat * (d_z * z_hat).sum(axis=-1, keepdims=True)) / norms
 
@@ -545,7 +552,7 @@ class CEBRAEncoder:
 
     def fit(
         self,
-        data: np.ndarray,
+        data: np.ndarray[Any, Any],
         n_steps: int = 200,
         time_offset: int = 1,
     ) -> float:
@@ -570,7 +577,7 @@ class CEBRAEncoder:
             self._b2 -= self.learning_rate * grads["b2"]
         return loss
 
-    def transform(self, data: np.ndarray) -> np.ndarray:
+    def transform(self, data: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Embed neural data into learned latent space.
 
         data : [n_samples, d_input].

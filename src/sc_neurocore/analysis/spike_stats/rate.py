@@ -10,15 +10,16 @@
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 
 def instantaneous_rate(
-    binary_train: np.ndarray,
+    binary_train: np.ndarray[Any, Any],
     dt: float = 0.001,
     kernel: str = "gaussian",
     sigma_ms: float = 10.0,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Instantaneous firing rate via kernel convolution (Hz).
 
     Kernels: 'gaussian', 'exponential', 'rectangular'.
@@ -43,8 +44,8 @@ def instantaneous_rate(
 
 
 def population_rate(
-    trains: list[np.ndarray], dt: float = 0.001, sigma_ms: float = 10.0
-) -> np.ndarray:
+    trains: list[np.ndarray[Any, Any]], dt: float = 0.001, sigma_ms: float = 10.0
+) -> np.ndarray[Any, Any]:
     """Population-level instantaneous firing rate (Hz).
 
     Sums all trains then applies Gaussian kernel smoothing.
@@ -59,8 +60,8 @@ def population_rate(
 
 
 def psth(
-    trials: list[np.ndarray], bin_ms: float = 10.0, dt: float = 0.001
-) -> tuple[np.ndarray, np.ndarray]:
+    trials: list[np.ndarray[Any, Any]], bin_ms: float = 10.0, dt: float = 0.001
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Peri-stimulus time histogram across trials.
 
     Returns (rates_hz, bin_centers_ms).
