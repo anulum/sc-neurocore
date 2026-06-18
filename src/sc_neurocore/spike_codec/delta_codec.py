@@ -28,6 +28,7 @@ from __future__ import annotations
 import struct
 from dataclasses import dataclass
 
+from typing import Any
 import numpy as np
 
 from .codec import SpikeCodec, CompressionResult
@@ -73,7 +74,7 @@ class DeltaSpikeCodec:
         self.group_size = group_size
         self.base_codec = SpikeCodec(mode=mode, timing_precision=timing_precision)
 
-    def compress(self, spikes: np.ndarray) -> tuple[bytes, DeltaCompressionResult]:
+    def compress(self, spikes: np.ndarray[Any, Any]) -> tuple[bytes, DeltaCompressionResult]:
         """Compress spike raster using inter-channel delta coding.
 
         Parameters
@@ -147,7 +148,7 @@ class DeltaSpikeCodec:
             codec_type="delta",
         )
 
-    def decompress(self, data: bytes, T: int, N: int) -> np.ndarray:
+    def decompress(self, data: bytes, T: int, N: int) -> np.ndarray[Any, Any]:
         """Decompress delta-coded spike raster.
 
         Parameters

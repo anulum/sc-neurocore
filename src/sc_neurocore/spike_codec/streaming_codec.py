@@ -28,6 +28,7 @@ from __future__ import annotations
 import struct
 from dataclasses import dataclass
 
+from typing import Any
 import numpy as np
 
 from .codec import CompressionResult
@@ -44,7 +45,7 @@ class StreamingCompressionResult(CompressionResult):
     codec_type: str = "streaming"
 
 
-def _pack_window(window: np.ndarray) -> bytes:
+def _pack_window(window: np.ndarray[Any, Any]) -> bytes:
     """Pack a (W, N) spike window into compact frame bytes.
 
     Format per frame:
@@ -82,7 +83,7 @@ def _pack_window(window: np.ndarray) -> bytes:
     return header + bytes(skip_bits) + bytes(active_data)
 
 
-def _unpack_window(frame: bytes, offset: int) -> tuple[np.ndarray, int]:
+def _unpack_window(frame: bytes, offset: int) -> tuple[np.ndarray[Any, Any], int]:
     """Unpack one frame. Returns (window, new_offset)."""
     N, W = struct.unpack("!HH", frame[offset : offset + 4])
     offset += 4
@@ -126,7 +127,7 @@ class StreamingSpikeCodec:
     def __init__(self, window_size: int = 20):
         self.window_size = window_size
 
-    def compress(self, spikes: np.ndarray) -> tuple[bytes, StreamingCompressionResult]:
+    def compress(self, spikes: np.ndarray[Any, Any]) -> tuple[bytes, StreamingCompressionResult]:
         """Compress spike raster into independently decodable frames.
 
         Parameters
@@ -186,7 +187,7 @@ class StreamingSpikeCodec:
             codec_type="streaming",
         )
 
-    def decompress(self, data: bytes, T: int = 0, N: int = 0) -> np.ndarray:
+    def decompress(self, data: bytes, T: int = 0, N: int = 0) -> np.ndarray[Any, Any]:
         """Decompress streaming frames to spike raster.
 
         T and N are read from the header if not provided (or if 0).
@@ -222,7 +223,7 @@ class StreamingSpikeCodec:
         full = np.vstack(windows)
         return full[:T]
 
-    def compress_frame(self, window: np.ndarray) -> bytes:
+    def compress_frame(self, window: np.ndarray[Any, Any]) -> bytes:
         """Compress a single time window (for real-time streaming).
 
         Parameters
@@ -235,7 +236,7 @@ class StreamingSpikeCodec:
         """
         return _pack_window(np.asarray(window, dtype=np.int8))
 
-    def decompress_frame(self, frame: bytes) -> np.ndarray:
+    def decompress_frame(self, frame: bytes) -> np.ndarray[Any, Any]:
         """Decompress a single frame.
 
         Parameters

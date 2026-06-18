@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from typing import Any
 import numpy as np
 
 from .entropy import HuffmanEncoder
@@ -41,6 +42,7 @@ class CompressionResult:
     lossless: bool
 
     def summary(self) -> str:
+        """Return a human-readable one-line summary of the codec statistics."""
         mode = "lossless" if self.lossless else "lossy"
         return (
             f"SpikeCodec ({mode}): {self.compression_ratio:.1f}x compression, "
@@ -78,7 +80,7 @@ class SpikeCodec:
         self.entropy = entropy
         self._huffman = HuffmanEncoder()
 
-    def compress(self, spikes: np.ndarray) -> tuple[bytes, CompressionResult]:
+    def compress(self, spikes: np.ndarray[Any, Any]) -> tuple[bytes, CompressionResult]:
         """Compress a spike raster.
 
         Parameters
@@ -119,7 +121,7 @@ class SpikeCodec:
         )
         return encoded, result
 
-    def decompress(self, data: bytes, T: int, N: int) -> np.ndarray:
+    def decompress(self, data: bytes, T: int, N: int) -> np.ndarray[Any, Any]:
         """Decompress to spike raster.
 
         Parameters
@@ -140,7 +142,7 @@ class SpikeCodec:
                     spikes[t, n] = 1
         return spikes
 
-    def _quantize_timing(self, spikes: np.ndarray) -> np.ndarray:
+    def _quantize_timing(self, spikes: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         if self.timing_precision <= 1:  # pragma: no cover
             return spikes
         T, N = spikes.shape
@@ -159,7 +161,7 @@ class SpikeCodec:
         density = n_spikes / max(total_bins, 1)
         return "huffman" if density > 0.03 else "varint"
 
-    def _encode_events(self, events: list[np.ndarray], T: int, N: int) -> bytes:
+    def _encode_events(self, events: list[np.ndarray[Any, Any]], T: int, N: int) -> bytes:
         """Encode spike events using ISI + auto-selected entropy backend."""
         n_spikes = sum(len(e) for e in events)
         backend = self._pick_entropy(n_spikes, T * N)
@@ -186,7 +188,7 @@ class SpikeCodec:
 
         return b"".join(parts)
 
-    def _encode_events_huffman(self, events: list[np.ndarray], T: int, N: int) -> bytes:
+    def _encode_events_huffman(self, events: list[np.ndarray[Any, Any]], T: int, N: int) -> bytes:
         """Encode events using Huffman-coded ISIs."""
         # Collect all ISI values first (for building Huffman table)
         all_isis = []
@@ -233,7 +235,7 @@ class SpikeCodec:
             + huff_data
         )
 
-    def _decode_events(self, data: bytes, N: int) -> list[np.ndarray]:
+    def _decode_events(self, data: bytes, N: int) -> list[np.ndarray[Any, Any]]:
         """Decode ISI-encoded spike events (auto-detects entropy backend)."""
         if data[0:1] == b"\x01":
             return self._decode_events_huffman(data, N)
@@ -259,7 +261,7 @@ class SpikeCodec:
             events.append(times)
         return events
 
-    def _decode_events_huffman(self, data: bytes, N: int) -> list[np.ndarray]:
+    def _decode_events_huffman(self, data: bytes, N: int) -> list[np.ndarray[Any, Any]]:
         """Decode Huffman-coded ISI events."""
         import struct
 

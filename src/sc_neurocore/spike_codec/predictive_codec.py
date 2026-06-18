@@ -78,10 +78,10 @@ class _RatePredictor:  # pragma: no cover — superseded by _predict_and_xor inl
         self.threshold = threshold
         self.rates = np.zeros(n_channels, dtype=np.float64)
 
-    def predict(self) -> np.ndarray:
+    def predict(self) -> np.ndarray[Any, Any]:
         return (self.rates > self.threshold).astype(np.int8)
 
-    def update(self, actual: np.ndarray) -> None:
+    def update(self, actual: np.ndarray[Any, Any]) -> None:
         self.rates += self.alpha * (actual.astype(np.float64) - self.rates)
 
     def reset(self) -> None:
@@ -89,8 +89,8 @@ class _RatePredictor:  # pragma: no cover — superseded by _predict_and_xor inl
 
 
 def _predict_and_xor_context(
-    spikes: np.ndarray, N: int, context_bits: int = 8
-) -> tuple[np.ndarray, int]:
+    spikes: np.ndarray[Any, Any], N: int, context_bits: int = 8
+) -> tuple[np.ndarray[Any, Any], int]:
     """Context-model predict-XOR loop. Returns (errors, correct_count).
 
     Per-channel Markov predictor: hash last K spike states as context key,
@@ -140,7 +140,9 @@ def _predict_and_xor_context(
     return errors, correct
 
 
-def _xor_and_recover_context(errors: np.ndarray, N: int, context_bits: int = 8) -> np.ndarray:
+def _xor_and_recover_context(
+    errors: np.ndarray[Any, Any], N: int, context_bits: int = 8
+) -> np.ndarray[Any, Any]:
     """Context-model XOR-recover loop for decoder."""
     T = errors.shape[0]
     spikes = np.empty((T, N), dtype=np.int8)
@@ -174,8 +176,8 @@ def _xor_and_recover_context(errors: np.ndarray, N: int, context_bits: int = 8) 
 
 
 def _predict_and_xor(
-    spikes: np.ndarray, N: int, alpha: float, threshold: float
-) -> tuple[np.ndarray, int]:
+    spikes: np.ndarray[Any, Any], N: int, alpha: float, threshold: float
+) -> tuple[np.ndarray[Any, Any], int]:
     """EMA predict-XOR loop. Returns (errors, correct_count)."""
     T = spikes.shape[0]
     rates = np.zeros(N, dtype=np.float64)
@@ -193,7 +195,9 @@ def _predict_and_xor(
     return errors, correct
 
 
-def _xor_and_recover(errors: np.ndarray, N: int, alpha: float, threshold: float) -> np.ndarray:
+def _xor_and_recover(
+    errors: np.ndarray[Any, Any], N: int, alpha: float, threshold: float
+) -> np.ndarray[Any, Any]:
     """EMA XOR-recover loop for decoder."""
     T = errors.shape[0]
     rates = np.zeros(N, dtype=np.float64)
@@ -223,11 +227,11 @@ def _lfsr16_step(reg: int) -> int:
 
 
 def _predict_and_xor_lfsr(
-    spikes: np.ndarray,
+    spikes: np.ndarray[Any, Any],
     N: int,
     alpha_q8: int,
     seed: int,
-) -> tuple[np.ndarray, int]:
+) -> tuple[np.ndarray[Any, Any], int]:
     """LFSR-based predict-XOR loop. Bit-true with Verilog.
 
     Uses Q8.8 fixed-point rate tracking + LFSR comparator for prediction.
@@ -279,11 +283,11 @@ def _predict_and_xor_lfsr(
 
 
 def _xor_and_recover_lfsr(
-    errors: np.ndarray,
+    errors: np.ndarray[Any, Any],
     N: int,
     alpha_q8: int,
     seed: int,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """LFSR-based XOR-recover loop for decoder."""
     T = errors.shape[0]
     rates_q8 = np.zeros(N, dtype=np.int32)
@@ -382,7 +386,7 @@ class PredictiveSpikeCodec:
             entropy=entropy,
         )
 
-    def compress(self, spikes: np.ndarray) -> tuple[bytes, PredictiveCompressionResult]:
+    def compress(self, spikes: np.ndarray[Any, Any]) -> tuple[bytes, PredictiveCompressionResult]:
         """Compress spike raster using predictive error coding.
 
         Parameters
@@ -479,7 +483,7 @@ class PredictiveSpikeCodec:
             predictor_type=self.predictor,
         )
 
-    def decompress(self, data: bytes, T: int, N: int) -> np.ndarray:
+    def decompress(self, data: bytes, T: int, N: int) -> np.ndarray[Any, Any]:
         """Decompress to spike raster.
 
         Runs identical predictor on decoder side. XOR(error, predicted)
