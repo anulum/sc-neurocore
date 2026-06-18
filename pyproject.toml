@@ -284,7 +284,7 @@ module = [
   'sc_neurocore.control.*', 'sc_neurocore.conversion.*', 'sc_neurocore.core.*', 'sc_neurocore.datasets.*',
   'sc_neurocore.debug.*', 'sc_neurocore.digital_twin.*', 'sc_neurocore.distillation.*', 'sc_neurocore.doctor.*',
   'sc_neurocore.drivers.*', 'sc_neurocore.edge.*', 'sc_neurocore.energy_accounting.*',
-  'sc_neurocore.ensembles.*', 'sc_neurocore.evo_substrate.*', 'sc_neurocore.experimental.*', 'sc_neurocore.experiments.*',
+  'sc_neurocore.ensembles.*', 'sc_neurocore.evo_substrate.*', 'sc_neurocore.experiments.*',
   'sc_neurocore.explain.*', 'sc_neurocore.explainability.*', 'sc_neurocore.export.*', 'sc_neurocore.fault_injection.*',
   'sc_neurocore.few_shot.*', 'sc_neurocore.generative.*',
   'sc_neurocore.graphs.*', 'sc_neurocore.hdc.*', 'sc_neurocore.hdl_gen.*', 'sc_neurocore.homeostasis.*',

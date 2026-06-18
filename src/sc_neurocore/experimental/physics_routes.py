@@ -6,9 +6,17 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Real physics routes for the safe alternative-path harness
 
+"""Physics-solver comparison routes for the safe alternative-path harness.
+
+Registers baseline/candidate route pairs for heat diffusion, harmonic
+oscillators, and Kuramoto synchronisation, validating fast candidates against
+reference solvers under the alternative-path harness.
+"""
+
 from __future__ import annotations
 
 import math
+from typing import Any
 
 import numpy as np
 
@@ -60,7 +68,6 @@ def _heat_cosine_mode_candidate(
 
 def make_heat_cosine_mode_route() -> AlternativePathRoute[float]:
     """Route Monte Carlo heat evolution against an exact Neumann cosine mode."""
-
     return AlternativePathRoute(
         name="physics.heat.cosine-mode",
         baseline=_heat_cosine_mode_baseline,
@@ -73,11 +80,11 @@ def make_heat_cosine_mode_route() -> AlternativePathRoute[float]:
     )
 
 
-def _harmonic_oscillator_rhs(_t: float, y: np.ndarray) -> np.ndarray:
+def _harmonic_oscillator_rhs(_t: float, y: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     return np.array([y[1], -y[0]], dtype=np.float64)
 
 
-def _harmonic_energy(y: np.ndarray) -> float:
+def _harmonic_energy(y: np.ndarray[Any, Any]) -> float:
     return float(0.5 * (y[0] ** 2 + y[1] ** 2))
 
 
@@ -108,7 +115,7 @@ def _integrate_harmonic(
     horizon: float,
     *,
     dt: float = 1e-2,
-) -> dict[str, np.ndarray | float]:
+) -> dict[str, np.ndarray[Any, Any] | float]:
     q0, p0, horizon, dt = _validate_harmonic_inputs(q0, p0, horizon, dt)
     steps = max(1, int(round(horizon / dt)))
     y = np.array([q0, p0], dtype=np.float64)
@@ -135,7 +142,7 @@ def _harmonic_rk4_baseline(
     horizon: float,
     *,
     dt: float = 1e-2,
-) -> dict[str, np.ndarray | float]:
+) -> dict[str, np.ndarray[Any, Any] | float]:
     return _integrate_harmonic(RK4Solver(), q0, p0, horizon, dt=dt)
 
 
@@ -145,13 +152,14 @@ def _harmonic_stormer_verlet_candidate(
     horizon: float,
     *,
     dt: float = 1e-2,
-) -> dict[str, np.ndarray | float]:
+) -> dict[str, np.ndarray[Any, Any] | float]:
     return _integrate_harmonic(StormerVerlet(), q0, p0, horizon, dt=dt)
 
 
-def make_harmonic_symplectic_route() -> AlternativePathRoute[dict[str, np.ndarray | float]]:
+def make_harmonic_symplectic_route() -> AlternativePathRoute[
+    dict[str, np.ndarray[Any, Any] | float]
+]:
     """Route harmonic-oscillator integration against the symplectic solver."""
-
     return AlternativePathRoute(
         name="physics.oscillator.harmonic-symplectic",
         baseline=_harmonic_rk4_baseline,
@@ -165,32 +173,33 @@ def make_harmonic_symplectic_route() -> AlternativePathRoute[dict[str, np.ndarra
 
 
 def _kuramoto_phase_velocity(
-    phases: np.ndarray,
-    omegas: np.ndarray,
+    phases: np.ndarray[Any, Any],
+    omegas: np.ndarray[Any, Any],
     coupling: float,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     n = phases.size
     phase_diff = phases[np.newaxis, :] - phases[:, np.newaxis]
     coupling_term = coupling * np.sum(np.sin(phase_diff), axis=1) / n
-    return omegas + coupling_term
+    derivative: np.ndarray[Any, Any] = omegas + coupling_term
+    return derivative
 
 
-def _kuramoto_order_parameter(phases: np.ndarray) -> float:
+def _kuramoto_order_parameter(phases: np.ndarray[Any, Any]) -> float:
     return float(np.abs(np.mean(np.exp(1j * phases))))
 
 
-def _kuramoto_interaction_energy(phases: np.ndarray, coupling: float) -> float:
+def _kuramoto_interaction_energy(phases: np.ndarray[Any, Any], coupling: float) -> float:
     phase_diff = phases[np.newaxis, :] - phases[:, np.newaxis]
     return float(-0.5 * coupling * np.mean(np.cos(phase_diff)))
 
 
 def _validate_kuramoto_route_inputs(
-    initial_phases: np.ndarray,
+    initial_phases: np.ndarray[Any, Any],
     horizon: float,
-    omegas: np.ndarray,
+    omegas: np.ndarray[Any, Any],
     coupling: float,
     dt: float,
-) -> tuple[np.ndarray, np.ndarray, float, float, float, int]:
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], float, float, float, int]:
     phases = np.asarray(initial_phases, dtype=np.float64)
     omega_arr = np.asarray(omegas, dtype=np.float64)
 
@@ -219,18 +228,19 @@ def _validate_kuramoto_route_inputs(
     return phases.copy(), omega_arr.copy(), float(horizon), float(coupling), float(dt), steps
 
 
-def _wrap_phases(phases: np.ndarray) -> np.ndarray:
-    return np.mod(phases, 2.0 * np.pi)
+def _wrap_phases(phases: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    wrapped: np.ndarray[Any, Any] = np.mod(phases, 2.0 * np.pi)
+    return wrapped
 
 
 def _kuramoto_euler_baseline(
-    initial_phases: np.ndarray,
+    initial_phases: np.ndarray[Any, Any],
     horizon: float,
     *,
-    omegas: np.ndarray,
+    omegas: np.ndarray[Any, Any],
     coupling: float,
     dt: float = 1e-3,
-) -> dict[str, np.ndarray | float]:
+) -> dict[str, np.ndarray[Any, Any] | float]:
     phases, omega_arr, _, coupling, dt, steps = _validate_kuramoto_route_inputs(
         initial_phases, horizon, omegas, coupling, dt
     )
@@ -252,13 +262,13 @@ def _kuramoto_euler_baseline(
 
 
 def _kuramoto_xy_lift_candidate(
-    initial_phases: np.ndarray,
+    initial_phases: np.ndarray[Any, Any],
     horizon: float,
     *,
-    omegas: np.ndarray,
+    omegas: np.ndarray[Any, Any],
     coupling: float,
     dt: float = 1e-3,
-) -> dict[str, np.ndarray | float]:
+) -> dict[str, np.ndarray[Any, Any] | float]:
     phases, omega_arr, _, coupling, dt, steps = _validate_kuramoto_route_inputs(
         initial_phases, horizon, omegas, coupling, dt
     )
@@ -267,7 +277,7 @@ def _kuramoto_xy_lift_candidate(
     initial_momenta = _kuramoto_phase_velocity(phases, omega_arr, coupling)
     solver = StormerVerlet()
 
-    def rhs(_t: float, y: np.ndarray) -> np.ndarray:
+    def rhs(_t: float, y: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         n = omega_arr.size
         q = y[:n]
         p = y[n:]
@@ -294,10 +304,9 @@ def _kuramoto_xy_lift_candidate(
 
 
 def make_kuramoto_noiseless_symplectic_lift_route() -> AlternativePathRoute[
-    dict[str, np.ndarray | float]
+    dict[str, np.ndarray[Any, Any] | float]
 ]:
     """Route a bounded noiseless Kuramoto regime against a symplectic XY lift."""
-
     return AlternativePathRoute(
         name="physics.kuramoto.noiseless-symplectic-lift",
         baseline=_kuramoto_euler_baseline,
