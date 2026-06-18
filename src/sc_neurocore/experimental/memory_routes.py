@@ -6,6 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Bounded memory experiments for the safe alternative-path harness
 
+"""Bounded-memory experiment routes for the safe alternative-path harness.
+
+Registers baseline/candidate route pairs that compare full-history buffers
+against fixed-footprint streaming estimators under the alternative-path harness.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -16,7 +22,6 @@ import numpy.typing as npt
 from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
 
 from .alternative_path import AlternativePathConfig, AlternativePathRoute, ComparisonStats
-
 
 _DEFAULT_CUES = np.array(
     [
@@ -47,11 +52,11 @@ def _make_memory_neurons(n_neurons: int, seed: int) -> list[StochasticLIFNeuron]
 
 
 def _run_delayed_recall_trial(
-    cue: np.ndarray,
+    cue: np.ndarray[Any, Any],
     *,
     delay_steps: int,
-    write_matrix: np.ndarray | None,
-    read_matrix: np.ndarray | None,
+    write_matrix: np.ndarray[Any, Any] | None,
+    read_matrix: np.ndarray[Any, Any] | None,
     encode_steps: int = 4,
     recall_steps: int = 4,
     encode_current: float = 1.3,
@@ -70,7 +75,7 @@ def _run_delayed_recall_trial(
     local_trace_gain_recall: float = 0.6,
     local_spike_gain_recall: float = 0.5,
     seed: int = 0,
-) -> tuple[float, np.ndarray]:
+) -> tuple[float, np.ndarray[Any, Any]]:
     cue_arr = np.asarray(cue, dtype=np.float64).reshape(-1)
     neurons = _make_memory_neurons(cue_arr.size, seed)
     local_trace: npt.NDArray[np.float64] = np.zeros(cue_arr.size, dtype=np.float64)
@@ -148,14 +153,14 @@ def _run_delayed_recall_suite(
     delay_steps: int,
     *,
     shared_state_dim: int = 3,
-    cues: np.ndarray | None = None,
+    cues: np.ndarray[Any, Any] | None = None,
     seed_count: int = 12,
 ) -> dict[str, Any]:
     cue_matrix = np.asarray(cues if cues is not None else _DEFAULT_CUES, dtype=np.float64)
     n_neurons = cue_matrix.shape[1]
     accuracies: list[float] = []
     per_cue_accuracies = np.zeros(cue_matrix.shape[0], dtype=np.float64)
-    first_recalled: np.ndarray | None = None
+    first_recalled: np.ndarray[Any, Any] | None = None
 
     for seed in range(seed_count):
         rng = np.random.default_rng(seed)
@@ -195,7 +200,7 @@ def _run_delayed_recall_suite(
 def _delayed_recall_local_baseline(
     delay_steps: int,
     *,
-    cues: np.ndarray | None = None,
+    cues: np.ndarray[Any, Any] | None = None,
     seed_count: int = 12,
     shared_state_dim: int = 3,
 ) -> dict[str, Any]:
@@ -203,7 +208,7 @@ def _delayed_recall_local_baseline(
     cue_matrix = np.asarray(cues if cues is not None else _DEFAULT_CUES, dtype=np.float64)
     accuracies: list[float] = []
     per_cue_accuracies = np.zeros(cue_matrix.shape[0], dtype=np.float64)
-    first_recalled: np.ndarray | None = None
+    first_recalled: np.ndarray[Any, Any] | None = None
 
     for seed in range(seed_count):
         for cue_index, cue in enumerate(cue_matrix):
@@ -240,7 +245,7 @@ def _delayed_recall_local_baseline(
 def _delayed_recall_shared_state_candidate(
     delay_steps: int,
     *,
-    cues: np.ndarray | None = None,
+    cues: np.ndarray[Any, Any] | None = None,
     seed_count: int = 12,
     shared_state_dim: int = 3,
 ) -> dict[str, Any]:
@@ -296,7 +301,6 @@ def make_delayed_recall_shared_state_route() -> AlternativePathRoute[dict[str, A
     not claim to model ATP, Posner molecules, or validated in-vivo quantum
     memory.
     """
-
     return AlternativePathRoute(
         name="memory.delayed-recall.shared-state",
         baseline=_delayed_recall_local_baseline,

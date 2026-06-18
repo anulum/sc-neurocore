@@ -6,7 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Real solver routes for the safe alternative-path harness
 
+"""ODE-solver comparison routes for the safe alternative-path harness.
+
+Registers baseline/candidate route pairs that validate approximate LIF and
+RK4 integrators against the exact analytic solver under the harness.
+"""
+
 from __future__ import annotations
+
+from typing import Any
 
 import numpy as np
 
@@ -64,13 +72,13 @@ def _validate_lif_subthreshold_contract(
 
 def _lif_rhs(
     _t: float,
-    y: np.ndarray,
+    y: np.ndarray[Any, Any],
     *,
     tau: float,
     v_rest: float,
     current: float,
     r_m: float,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     return np.array([(-(y[0] - v_rest) + r_m * current) / tau], dtype=np.float64)
 
 
@@ -168,7 +176,6 @@ def _lif_exact_candidate(
 
 def make_lif_subthreshold_exact_route() -> AlternativePathRoute[dict[str, float | bool | None]]:
     """Route subthreshold LIF integration against the analytical solution."""
-
     return AlternativePathRoute(
         name="solver.lif.subthreshold-exact",
         baseline=_lif_rk4_baseline,
