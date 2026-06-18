@@ -45,7 +45,7 @@ def _lfsr16_step(reg: int) -> int:
     return ((reg << 1) | feedback) & 0xFFFF
 
 
-def lfsr_encode(value: float, seed: int, length: int) -> np.ndarray:
+def lfsr_encode(value: float, seed: int, length: int) -> np.ndarray[Any, Any]:
     """Encode a probability [0,1] into a packed bitstream using LFSR-16."""
     threshold = int(np.clip(value, 0.0, 1.0) * 65535)
     reg = seed & 0xFFFF
@@ -58,7 +58,7 @@ def lfsr_encode(value: float, seed: int, length: int) -> np.ndarray:
     return bits
 
 
-def bitstream_probability(bits: np.ndarray) -> float:
+def bitstream_probability(bits: np.ndarray[Any, Any]) -> float:
     """Estimate probability from a bitstream."""
     n = len(bits)
     return float(np.sum(bits)) / n if n > 0 else 0.0
@@ -88,7 +88,9 @@ class DPMechanism:
         e = self.epsilon / self.sensitivity
         return 1.0 / (1.0 + math.exp(e))
 
-    def privatise(self, bitstream: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+    def privatise(
+        self, bitstream: np.ndarray[Any, Any], rng: np.random.Generator
+    ) -> np.ndarray[Any, Any]:
         """Apply DP noise by flipping bits with calibrated probability."""
         p = self.flip_probability
         flip_mask = rng.random(len(bitstream)) < p
@@ -112,7 +114,7 @@ class DPMechanism:
 # ── Gradient Clipping ────────────────────────────────────────────────
 
 
-def clip_gradients(gradients: np.ndarray, max_norm: float) -> np.ndarray:
+def clip_gradients(gradients: np.ndarray[Any, Any], max_norm: float) -> np.ndarray[Any, Any]:
     """L2 gradient clipping for formal DP sensitivity bounds.
 
     Clips the gradient vector so its L2 norm ≤ max_norm.
@@ -127,7 +129,9 @@ def clip_gradients(gradients: np.ndarray, max_norm: float) -> np.ndarray:
 # ── Gradient Sparsification ──────────────────────────────────────────
 
 
-def sparsify_topk(gradients: np.ndarray, k: int) -> Tuple[np.ndarray, np.ndarray]:
+def sparsify_topk(
+    gradients: np.ndarray[Any, Any], k: int
+) -> Tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Top-k gradient sparsification.
 
     Returns (sparse_gradients, mask) where only k largest-magnitude
@@ -186,6 +190,7 @@ class PrivacyAccountant:
         return max(0.0, self.target_epsilon - self.current_epsilon())
 
     def is_exhausted(self) -> bool:
+        """Return whether the privacy budget is exhausted."""
         return self.current_epsilon() >= self.target_epsilon
 
 
@@ -202,10 +207,12 @@ class SecretShare:
 
     num_parties: int = 3
 
-    def split(self, bitstream: np.ndarray, rng: np.random.Generator) -> List[np.ndarray]:
+    def split(
+        self, bitstream: np.ndarray[Any, Any], rng: np.random.Generator
+    ) -> List[np.ndarray[Any, Any]]:
         """Split bitstream into additive GF(2) shares."""
         bitstream_u8 = bitstream.astype(np.uint8, copy=False)
-        shares: List[np.ndarray] = []
+        shares: List[np.ndarray[Any, Any]] = []
         accumulated = np.zeros_like(bitstream_u8)
         for i in range(self.num_parties - 1):
             share = rng.integers(0, 2, size=len(bitstream_u8), dtype=np.uint8)
@@ -216,7 +223,7 @@ class SecretShare:
         return shares
 
     @staticmethod
-    def reconstruct(shares: List[np.ndarray]) -> np.ndarray:
+    def reconstruct(shares: List[np.ndarray[Any, Any]]) -> np.ndarray[Any, Any]:
         """Reconstruct bitstream from all shares (XOR)."""
         result = np.zeros_like(shares[0])
         for share in shares:
@@ -224,7 +231,9 @@ class SecretShare:
         return result
 
     @staticmethod
-    def verify_reconstruction(original: np.ndarray, shares: List[np.ndarray]) -> bool:
+    def verify_reconstruction(
+        original: np.ndarray[Any, Any], shares: List[np.ndarray[Any, Any]]
+    ) -> bool:
         """Verify that shares reconstruct correctly."""
         return np.array_equal(original, SecretShare.reconstruct(shares))
 
@@ -240,7 +249,7 @@ class CommitmentScheme:
     """
 
     @staticmethod
-    def commit(data: np.ndarray, nonce: Optional[bytes] = None) -> str:
+    def commit(data: np.ndarray[Any, Any], nonce: Optional[bytes] = None) -> str:
         """Create a binding commitment to data."""
         payload = data.tobytes()
         if nonce is not None:
@@ -248,7 +257,7 @@ class CommitmentScheme:
         return hashlib.sha256(payload).hexdigest()
 
     @staticmethod
-    def verify(data: np.ndarray, commitment: str, nonce: Optional[bytes] = None) -> bool:
+    def verify(data: np.ndarray[Any, Any], commitment: str, nonce: Optional[bytes] = None) -> bool:
         """Verify a commitment."""
         return CommitmentScheme.commit(data, nonce) == commitment
 
@@ -270,10 +279,10 @@ class SCGradientEncoder:
 
     def encode(
         self,
-        gradients: np.ndarray,
-        seeds: np.ndarray,
+        gradients: np.ndarray[Any, Any],
+        seeds: np.ndarray[Any, Any],
         rng: np.random.Generator,
-    ) -> List[np.ndarray]:
+    ) -> List[np.ndarray[Any, Any]]:
         """Encode gradient vector as privatised SC bitstreams.
 
         1. Normalise gradients to [0, 1]
@@ -297,7 +306,9 @@ class SCGradientEncoder:
             bitstreams.append(bs)
         return bitstreams
 
-    def decode(self, bitstreams: List[np.ndarray], g_min: float, g_max: float) -> np.ndarray:
+    def decode(
+        self, bitstreams: List[np.ndarray[Any, Any]], g_min: float, g_max: float
+    ) -> np.ndarray[Any, Any]:
         """Decode SC bitstreams back to gradient values."""
         probs = np.array([bitstream_probability(bs) for bs in bitstreams])
         span = g_max - g_min
@@ -314,13 +325,16 @@ class FederatedClient:
     client_id: int
     encoder: SCGradientEncoder
     rng: np.random.Generator = field(default_factory=lambda: np.random.default_rng(42))
-    local_weights: Optional[np.ndarray] = None
+    local_weights: Optional[np.ndarray[Any, Any]] = None
     commitment: Optional[str] = None
 
     def __post_init__(self) -> None:
+        """Seed the client RNG deterministically from the client id."""
         self.rng = np.random.default_rng(self.client_id * 7919 + 1)
 
-    def local_train(self, data: np.ndarray, labels: np.ndarray, lr: float = 0.01) -> np.ndarray:
+    def local_train(
+        self, data: np.ndarray[Any, Any], labels: np.ndarray[Any, Any], lr: float = 0.01
+    ) -> np.ndarray[Any, Any]:
         """Simulate one local training step (gradient computation).
 
         Uses a simple linear model for demonstration:
@@ -336,9 +350,12 @@ class FederatedClient:
         errors = predictions - labels
         gradients = 2.0 / len(labels) * (data.T @ errors)
         self.local_weights = weights - lr * gradients
-        return gradients
+        accumulated: np.ndarray[Any, Any] = gradients
+        return accumulated
 
-    def encode_gradients(self, gradients: np.ndarray) -> Tuple[List[np.ndarray], str, float, float]:
+    def encode_gradients(
+        self, gradients: np.ndarray[Any, Any]
+    ) -> Tuple[List[np.ndarray[Any, Any]], str, float, float]:
         """Encode gradients as privatised SC bitstreams + commitment.
 
         Returns: (bitstreams, commitment_hash, g_min, g_max)
@@ -366,9 +383,9 @@ class FederatedAggregator:
 
     def aggregate_bitstreams(
         self,
-        client_bitstreams: List[List[np.ndarray]],
+        client_bitstreams: List[List[np.ndarray[Any, Any]]],
         weights: Optional[List[float]] = None,
-    ) -> List[np.ndarray]:
+    ) -> List[np.ndarray[Any, Any]]:
         """Weighted majority-vote aggregation of SC bitstreams.
 
         For each gradient dimension, compute the weighted majority bit across
@@ -392,7 +409,7 @@ class FederatedAggregator:
 
     def detect_outliers(
         self,
-        client_bitstreams: List[List[np.ndarray]],
+        client_bitstreams: List[List[np.ndarray[Any, Any]]],
         threshold: float = 0.3,
     ) -> List[bool]:
         """Detect malicious/outlier clients via cosine similarity.
@@ -428,7 +445,7 @@ class FederatedAggregator:
 
     def verify_commitments(
         self,
-        client_bitstreams: List[List[np.ndarray]],
+        client_bitstreams: List[List[np.ndarray[Any, Any]]],
         commitments: List[str],
         nonces: Optional[List[bytes]] = None,
     ) -> List[bool]:
@@ -471,11 +488,12 @@ class ConvergenceTracker:
     grad_norms: List[float] = field(default_factory=list)
     round_losses: List[float] = field(default_factory=list)
 
-    def record(self, aggregated_gradient: np.ndarray) -> None:
+    def record(self, aggregated_gradient: np.ndarray[Any, Any]) -> None:
         """Record one round's gradient norm."""
         self.grad_norms.append(float(np.linalg.norm(aggregated_gradient)))
 
     def record_loss(self, loss: float) -> None:
+        """Append a per-round loss value to the client history."""
         self.round_losses.append(loss)
 
     @property
@@ -515,10 +533,10 @@ class FederatedRound:
 
     def run(
         self,
-        data_per_client: List[np.ndarray],
-        labels_per_client: List[np.ndarray],
+        data_per_client: List[np.ndarray[Any, Any]],
+        labels_per_client: List[np.ndarray[Any, Any]],
         client_weights: Optional[List[float]] = None,
-    ) -> Optional[np.ndarray]:
+    ) -> Optional[np.ndarray[Any, Any]]:
         """Execute one federated round.
 
         Returns aggregated gradient if privacy budget allows, None otherwise.
@@ -619,6 +637,7 @@ class DPCertificate:
         mechanism: DPMechanism,
         bitstream_length: int,
     ) -> DPCertificate:
+        """Build a differential-privacy certificate from an accountant."""
         return cls(
             mechanism="bitstream_flip_rr",
             epsilon=accountant.current_epsilon(),
@@ -635,6 +654,7 @@ class DPCertificate:
         )
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the certificate as a serialisable dictionary."""
         return {
             "mechanism": self.mechanism,
             "epsilon": self.epsilon,
@@ -648,17 +668,18 @@ class DPCertificate:
 
     @property
     def is_compliant(self) -> bool:
-        return self.epsilon <= self.accountant_state.get("target_epsilon", float("inf"))
+        """Return whether the spent epsilon is within the target budget."""
+        return bool(self.epsilon <= self.accountant_state.get("target_epsilon", float("inf")))
 
 
 # ── Gradient Compression (Gap 2) ────────────────────────────────────
 
 
 def stochastic_quantize(
-    gradients: np.ndarray,
+    gradients: np.ndarray[Any, Any],
     levels: int,
     rng: np.random.Generator,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Stochastic quantization to reduce communication bits.
 
     Quantizes each gradient to one of ``levels`` levels with
@@ -673,7 +694,8 @@ def stochastic_quantize(
     prob = normalised - lower
     upper = lower + (rng.random(len(gradients)) < prob).astype(np.int32)
     upper = np.clip(upper, 0, levels - 1)
-    return upper.astype(np.float64) / (levels - 1) * span + g_min
+    dequantized: np.ndarray[Any, Any] = upper.astype(np.float64) / (levels - 1) * span + g_min
+    return dequantized
 
 
 # ── Adaptive Epsilon Scheduling (Gap 3) ──────────────────────────────
@@ -689,6 +711,7 @@ class AdaptiveEpsilonScheduler:
     current_epsilon: float = 0.0
 
     def __post_init__(self) -> None:
+        """Initialise the current epsilon to the base privacy budget."""
         self.current_epsilon = self.base_epsilon
 
     def step(self, converging: bool) -> float:
@@ -714,7 +737,7 @@ class AdaptiveEpsilonScheduler:
 
 
 def krum_select(
-    client_vectors: List[np.ndarray],
+    client_vectors: List[np.ndarray[Any, Any]],
     num_byzantine: int = 1,
 ) -> int:
     """Multi-Krum selection: find the vector closest to most others.
@@ -741,9 +764,9 @@ def krum_select(
 
 
 def trimmed_mean(
-    client_vectors: List[np.ndarray],
+    client_vectors: List[np.ndarray[Any, Any]],
     trim_fraction: float = 0.1,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Coordinate-wise trimmed mean aggregation.
 
     Removes the top and bottom ``trim_fraction`` of values per
@@ -756,24 +779,27 @@ def trimmed_mean(
     sorted_vals = np.sort(stacked, axis=0)
     trimmed = sorted_vals[trim_count : n - trim_count, :]
     if trimmed.shape[0] == 0:
-        return np.mean(stacked, axis=0)
-    return np.mean(trimmed, axis=0)
+        full_mean: np.ndarray[Any, Any] = np.mean(stacked, axis=0)
+        return full_mean
+    trimmed_mean: np.ndarray[Any, Any] = np.mean(trimmed, axis=0)
+    return trimmed_mean
 
 
 # ── FedProx Proximal Term (Gap 5) ────────────────────────────────────
 
 
 def fedprox_gradient(
-    gradients: np.ndarray,
-    local_weights: np.ndarray,
-    global_weights: np.ndarray,
+    gradients: np.ndarray[Any, Any],
+    local_weights: np.ndarray[Any, Any],
+    global_weights: np.ndarray[Any, Any],
     mu: float = 0.01,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Add FedProx proximal term for non-IID robustness.
 
     grad_proximal = grad + μ * (w_local - w_global)
     """
-    return gradients + mu * (local_weights - global_weights)
+    corrected: np.ndarray[Any, Any] = gradients + mu * (local_weights - global_weights)
+    return corrected
 
 
 # ── Momentum / Error Feedback (Gap 8) ────────────────────────────────
@@ -787,15 +813,16 @@ class ErrorFeedback:
     loss over rounds.
     """
 
-    residual: Optional[np.ndarray] = None
+    residual: Optional[np.ndarray[Any, Any]] = None
 
-    def accumulate(self, gradients: np.ndarray) -> np.ndarray:
+    def accumulate(self, gradients: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Add residual from previous round."""
         if self.residual is not None:
-            return gradients + self.residual
+            compensated: np.ndarray[Any, Any] = gradients + self.residual
+            return compensated
         return gradients.copy()
 
-    def update(self, original: np.ndarray, sparse: np.ndarray) -> None:
+    def update(self, original: np.ndarray[Any, Any], sparse: np.ndarray[Any, Any]) -> None:
         """Store the residual (what was lost to sparsification)."""
         self.residual = original - sparse
 
@@ -833,6 +860,7 @@ class AuditEntry:
     timestamp: float = 0.0
 
     def __post_init__(self) -> None:
+        """Stamp the audit entry with the current wall-clock time."""
         import time
 
         if self.timestamp == 0.0:
@@ -852,6 +880,7 @@ class AuditLog:
         epsilon_consumed: float,
         grad_norm: float,
     ) -> None:
+        """Record one federated round in the audit log."""
         self.entries.append(
             AuditEntry(
                 round_number=round_number,
@@ -862,6 +891,7 @@ class AuditLog:
         )
 
     def to_list(self) -> List[Dict[str, Any]]:
+        """Return the audit log as a list of serialisable dictionaries."""
         return [
             {
                 "round": e.round_number,
@@ -875,10 +905,12 @@ class AuditLog:
 
     @property
     def total_rounds(self) -> int:
+        """Return the number of logged federated rounds."""
         return len(self.entries)
 
     @property
     def max_epsilon(self) -> float:
+        """Return the maximum epsilon recorded across all rounds."""
         if not self.entries:
             return 0.0
         return max(e.epsilon_consumed for e in self.entries)
