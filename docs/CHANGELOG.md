@@ -6,6 +6,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `MATNeuron` from a split forward-Euler membrane update plus separate
+  threshold decay to candidate-first RK4 over `(v, theta1, theta2)` across the
+  Python reference, Go service, Julia mirror, Mojo helper, and Rust safety
+  surface. Replaced the Go/Rust/Mojo placeholders with numeric parity surfaces,
+  added Go/Rust tests and Python RK4/fail-closed coverage, refreshed the model
+  documentation with measured five-backend timings, and added a local
+  non-isolated benchmark gate for exact spike-count parity.
 - Promoted `SFANeuron` from forward-Euler voltage plus separate adaptation
   decay to candidate-first RK4 over the coupled `(v, g_sfa)` adaptation ODE
   across Python, Go, Julia, Mojo, and Rust safety surfaces. Added native Go/Rust
