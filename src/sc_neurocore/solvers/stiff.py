@@ -18,18 +18,17 @@ from __future__ import annotations
 from typing import Callable
 
 import numpy as np
-from numpy.typing import NDArray
 
-from .ode import ODESolver
+from .ode import ODESolver, Vector
 
 
 def _finite_difference_jacobian(
-    f: Callable[[float, NDArray], NDArray],
+    f: Callable[[float, Vector], Vector],
     t: float,
-    y: NDArray,
-    f_y: NDArray,
+    y: Vector,
+    f_y: Vector,
     epsilon: float,
-) -> NDArray:
+) -> Vector:
     n = y.size
     jacobian = np.empty((n, n), dtype=np.float64)
     for col in range(n):
@@ -61,11 +60,12 @@ class RosenbrockEuler(ODESolver):
 
     def step(
         self,
-        f: Callable[[float, NDArray], NDArray],
-        y: NDArray,
+        f: Callable[[float, Vector], Vector],
+        y: Vector,
         t: float,
         dt: float,
-    ) -> tuple[NDArray, float]:
+    ) -> tuple[Vector, float]:
+        """Advance one Rosenbrock-Euler step; return ``(y_new, dt_used)``."""
         y_vec = np.asarray(y, dtype=np.float64)
         f_y = np.asarray(f(t, y_vec), dtype=np.float64)
         jacobian = _finite_difference_jacobian(f, t, y_vec, f_y, self.jacobian_epsilon)
@@ -95,11 +95,12 @@ class ImplicitEuler(ODESolver):
 
     def step(
         self,
-        f: Callable[[float, NDArray], NDArray],
-        y: NDArray,
+        f: Callable[[float, Vector], Vector],
+        y: Vector,
         t: float,
         dt: float,
-    ) -> tuple[NDArray, float]:
+    ) -> tuple[Vector, float]:
+        """Advance one backward-Euler step; return ``(y_new, dt_used)``."""
         t_next = t + dt
         y_next = y + dt * f(t, y)  # initial guess from forward Euler
 
@@ -129,11 +130,12 @@ class TrapezoidalRule(ODESolver):
 
     def step(
         self,
-        f: Callable[[float, NDArray], NDArray],
-        y: NDArray,
+        f: Callable[[float, Vector], Vector],
+        y: Vector,
         t: float,
         dt: float,
-    ) -> tuple[NDArray, float]:
+    ) -> tuple[Vector, float]:
+        """Advance one trapezoidal-rule step; return ``(y_new, dt_used)``."""
         f_n = f(t, y)
         t_next = t + dt
         y_next = y + dt * f_n  # initial guess

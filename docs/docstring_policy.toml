@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 62
+expected_file_count = 68
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -256,3 +256,27 @@ rationale = "Public neuromorphic symbolic-reasoning package entry point."
 [[file]]
 path = "src/sc_neurocore/temporal_hierarchy/__init__.py"
 rationale = "Public multi-timescale SNN package entry point."
+
+[[file]]
+path = "src/sc_neurocore/solvers/__init__.py"
+rationale = "Public ODE/integrator solver-suite package entry point."
+
+[[file]]
+path = "src/sc_neurocore/solvers/ode.py"
+rationale = "Public fixed-step and adaptive ODE solvers (Euler, Heun, RK4, Dormand-Prince, exponential Euler)."
+
+[[file]]
+path = "src/sc_neurocore/solvers/stiff.py"
+rationale = "Public stiff-system solvers (Rosenbrock-Euler, implicit Euler, trapezoidal rule)."
+
+[[file]]
+path = "src/sc_neurocore/solvers/symplectic.py"
+rationale = "Public symplectic integrators (Störmer-Verlet, leapfrog) for conservative neuron dynamics."
+
+[[file]]
+path = "src/sc_neurocore/solvers/exact_lif.py"
+rationale = "Public exact exponential-integration LIF solver with validated membrane parameters."
+
+[[file]]
+path = "src/sc_neurocore/solvers/ising.py"
+rationale = "Public quantum-inspired stochastic Ising machine solver."

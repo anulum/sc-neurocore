@@ -20,6 +20,9 @@ from typing import Any, Callable
 import numpy as np
 from numpy.typing import NDArray
 
+# State vectors are dense float64 arrays throughout the solver suite.
+Vector = NDArray[np.float64]
+
 
 class ODESolver(abc.ABC):
     """Base class for ODE solvers: dy/dt = f(t, y)."""
@@ -27,11 +30,11 @@ class ODESolver(abc.ABC):
     @abc.abstractmethod
     def step(
         self,
-        f: Callable[[float, NDArray], NDArray],
-        y: NDArray,
+        f: Callable[[float, Vector], Vector],
+        y: Vector,
         t: float,
         dt: float,
-    ) -> tuple[NDArray, float]:
+    ) -> tuple[Vector, float]:
         """Advance one step. Returns (y_new, dt_used)."""
 
 
@@ -43,11 +46,12 @@ class EulerSolver(ODESolver):
 
     def step(
         self,
-        f: Callable[[float, NDArray], NDArray],
-        y: NDArray,
+        f: Callable[[float, Vector], Vector],
+        y: Vector,
         t: float,
         dt: float,
-    ) -> tuple[NDArray, float]:
+    ) -> tuple[Vector, float]:
+        """Advance one forward-Euler step; return ``(y_new, dt_used)``."""
         return y + dt * f(t, y), dt
 
 
@@ -61,11 +65,12 @@ class HeunSolver(ODESolver):
 
     def step(
         self,
-        f: Callable[[float, NDArray], NDArray],
-        y: NDArray,
+        f: Callable[[float, Vector], Vector],
+        y: Vector,
         t: float,
         dt: float,
-    ) -> tuple[NDArray, float]:
+    ) -> tuple[Vector, float]:
+        """Advance one Heun (improved-Euler) step; return ``(y_new, dt_used)``."""
         k1 = f(t, y)
         k2 = f(t + dt, y + dt * k1)
         return y + 0.5 * dt * (k1 + k2), dt
@@ -85,11 +90,12 @@ class RK4Solver(ODESolver):
 
     def step(
         self,
-        f: Callable[[float, NDArray], NDArray],
-        y: NDArray,
+        f: Callable[[float, Vector], Vector],
+        y: Vector,
         t: float,
         dt: float,
-    ) -> tuple[NDArray, float]:
+    ) -> tuple[Vector, float]:
+        """Advance one classical RK4 step; return ``(y_new, dt_used)``."""
         k1 = f(t, y)
         k2 = f(t + 0.5 * dt, y + 0.5 * dt * k1)
         k3 = f(t + 0.5 * dt, y + 0.5 * dt * k2)
@@ -158,11 +164,12 @@ class DormandPrinceSolver(ODESolver):
 
     def step(  # type: ignore[override]
         self,
-        f: Callable[[float, NDArray], NDArray],
-        y: NDArray,
+        f: Callable[[float, Vector], Vector],
+        y: Vector,
         t: float,
         dt: float,
-    ) -> tuple[NDArray, float, float]:
+    ) -> tuple[Vector, float, float]:
+        """Advance one adaptive RK45 step; return ``(y_new, dt_used, dt_next)``."""
         while True:
             k1 = f(t, y)
             k2 = f(t + self._a2 * dt, y + dt * self._b21 * k1)
@@ -218,11 +225,11 @@ class DormandPrinceSolver(ODESolver):
 
     def integrate(
         self,
-        f: Callable[[float, NDArray], NDArray],
-        y0: NDArray,
+        f: Callable[[float, Vector], Vector],
+        y0: Vector,
         t_span: tuple[float, float],
         dt0: float = 0.01,
-    ) -> tuple[NDArray, NDArray]:
+    ) -> tuple[Vector, Vector]:
         """Integrate over [t0, tf]. Returns (t_array, y_array)."""
         t0, tf = t_span
         t = t0
@@ -262,11 +269,12 @@ class ExponentialEuler(ODESolver):
 
     def step(
         self,
-        f: Callable[[float, NDArray], NDArray],
-        y: NDArray,
+        f: Callable[[float, Vector], Vector],
+        y: Vector,
         t: float,
         dt: float,
-    ) -> tuple[NDArray, float]:
+    ) -> tuple[Vector, float]:
+        """Advance one exponential-Euler step; return ``(y_new, dt_used)``."""
         decay = np.exp(-dt / self.tau)
         # f is expected to return current only (scalar)
         current = f(t, y)
@@ -277,7 +285,7 @@ class ExponentialEuler(ODESolver):
 
 
 def get_solver(name: str, **kwargs: Any) -> ODESolver:
-    """Factory function: return an ODE solver by name.
+    """Return an ODE solver instance selected by name.
 
     Supported names: 'euler', 'heun', 'rk4', 'dp45', 'exponential_euler',
     'rosenbrock', and 'rosenbrock_euler'.
