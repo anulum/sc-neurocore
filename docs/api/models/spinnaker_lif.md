@@ -13,9 +13,17 @@
 
 $$\frac{dV}{dt} = \frac{-(V - V_{rest}) + I + I_{offset}}{\tau_m}$$
 
-### Euler discretisation
+### Exact constant-current discretisation
 
-$$V_{t+1} = V_t + \frac{-(V_t - V_{rest}) + I + I_{offset}}{\tau_m} \cdot dt$$
+With current held constant during one integration interval:
+
+$$V_\infty = V_{rest} + I + I_{offset}$$
+
+$$V_{t+1} = V_\infty + (V_t - V_\infty)\exp(-dt/\tau_m)$$
+
+This is the closed-form solution of the linear LIF membrane equation. It
+removes the forward-Euler timestep bias while keeping the SpiNNaker software
+model's hard threshold, reset, and absolute refractory semantics.
 
 ### Refractory period
 
@@ -32,18 +40,22 @@ $$V \geq V_{threshold}: \quad V \leftarrow V_{reset}, \quad \text{refrac\_count}
 ```python
 def step(self, current: float) -> int:
     if self.refrac_count > 0:
-        self.refrac_count -= self.dt
+        self.refrac_count = max(0.0, self.refrac_count - self.dt)
         return 0
-    self.v += (-(self.v - self.v_rest) + (current + self.i_offset)) / self.tau_m * self.dt
-    if self.v >= self.v_threshold:
+    steady = self.v_rest + current + self.i_offset
+    next_v = steady + (self.v - steady) * math.exp(-self.dt / self.tau_m)
+    if next_v >= self.v_threshold:
         self.v = self.v_reset
         self.refrac_count = self.tau_refrac
         return 1
+    self.v = next_v
     return 0
 ```
 
-Forward Euler, single step per call. Float arithmetic (unlike SpiNNaker2
-which uses integer multiply-shift).
+Exact linear flow, single step per call. Float arithmetic (unlike SpiNNaker2
+which uses integer multiply-shift). Runtime scalar validation rejects
+non-finite currents, non-positive time constants, non-positive timesteps, and
+negative refractory timers before state mutation.
 
 ---
 
@@ -139,8 +151,8 @@ The SpiNNakerLIFNeuron is a standard LIF with two additional features:
 1. **Tonic offset current (i_offset):** Constant background drive
 2. **Timed refractory period:** In physical time (ms), not discrete steps
 
-Otherwise identical to a basic LIF: linear subthreshold dynamics,
-hard threshold, reset to V_reset.
+Otherwise identical to a basic LIF: linear subthreshold dynamics integrated
+analytically, hard threshold, reset to V_reset.
 
 ### Monotonic f-I curve
 
@@ -225,34 +237,49 @@ parameter transfer between simulation and hardware.
 
 ## Numerical Considerations
 
-- **Single Euler step:** dt=1.0ms with τ_m=20ms → dt/τ_m = 0.05 (safe).
-- **No sub-stepping:** Linear dynamics, no stiffness.
+- **Exact subthreshold flow:** Constant-current LIF dynamics are solved with
+  `exp(-dt/tau_m)`, so the membrane update is stable for positive finite `dt`
+  and `tau_m`.
+- **No sub-stepping:** Linear dynamics have a closed-form update.
 - **Float refractory:** refrac_count is float (not int). Decrements by dt.
-  Comparison `> 0` works correctly for float.
+  Countdown clamps at zero to avoid negative timer drift.
 - **No clipping:** V is not clipped. Can go below V_rest with strong
   inhibitory input.
+- **Fail-closed scalar validation:** Invalid currents or corrupted runtime
+  state are rejected before mutation in Python and return `-1` in Go, Julia,
+  and Rust safety mirrors.
 
 ---
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/spinnaker_lif.py` — 44 lines.
+- **Source:** `src/sc_neurocore/neurons/models/spinnaker_lif.py`.
 - **Two state variables:** v (float, mV), refrac_count (float, ms).
 - **Dataclass:** Uses `@dataclass`.
-- **Simplest biophysical LIF:** Float arithmetic with real units.
-- **Rust wiring:** Compatible (2 f64 state vars, standard dispatch).
+- **Exact biophysical LIF:** Float arithmetic with real units and analytic
+  membrane flow.
+- **Polyglot mirrors:** Python, Go service, Julia kernel, and Rust safety
+  module use the same exact-flow equations and refractory contract.
 
 ---
 
-## Performance
+## Local Measured Performance
 
-| Metric | Python | Rust |
-|--------|--------|------|
-| Isolation | ~500K steps/s | Not measured |
-| Network (10 neurons, 1s) | ~40K neuron-steps/s | — |
+Measured on `aaarthuus` on 2026-06-18 with
+`benchmarks/results/local_python_2026-06-18_spinnaker_lif_exact_flow.json`.
+This is a local, non-isolated regression artefact and is not a production speed
+claim.
 
-Fast model — single Euler step, no exp(), no sub-stepping. The refractory
-check (branch) adds minimal overhead.
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
+|---------|---------------:|------------:|------------:|-------:|
+| Python | 946.158910 | 903.234855 | 1115.113275 | 8333 |
+| Rust safety | 3.943260 | 3.930480 | 3.952630 | 8333 |
+| Go service | 20.070000 | 19.610000 | 25.730000 | 8333 |
+| Julia kernel | 9.166620 | 9.069005 | 9.183395 | 8333 |
+
+All measured mirrors emitted exactly 8,333 spikes over 200,000 steps at
+`current=30.0`, giving zero-tolerance spike parity across the maintained
+polyglot surfaces for this model.
 
 ---
 
@@ -260,13 +287,12 @@ check (branch) adds minimal overhead.
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 5 | defaults, binary return, V evolves, finite 50k, reset |
+| Isolation | 6 | defaults, binary return, finite 50k, reset, invalid parameter/current rejection |
 | Refractory | 4 | blocks spikes, decrements by dt, tau_refrac sets duration, max rate limited |
-| i_offset | 3 | adds to drive, shifts effective rest, i_offset=0 baseline |
-| f–I curve | 3 | subthreshold silent, monotonic, fires with drive |
-| Parameters | 3 | dt stability, tau_m sweep, deterministic |
-| Pipeline | 4 | Population, Network+drive, Projection, analysis |
-| **Total** | **22** | |
+| Dynamics and f-I | 4 | exact membrane solution, small-dt Euler limit, steady state, monotonic f-I |
+| Performance | 2 | isolation throughput and network throughput |
+| Pipeline | 5 | Population, Network+drive, Projection, analysis, determinism |
+| **Total** | **21** | |
 
 See `tests/test_model_spinnaker_lif.py`. No bugs found.
 
@@ -319,14 +345,14 @@ parameter conversion needed.
 
 ---
 
-## Measured Performance (2026-04-04)
+## Previous Measured Performance (2026-04-04)
 
 | Metric | Value |
 |--------|-------|
 | Python throughput | ~244K steps/s |
 | Spikes (10K steps, I=5.0) | 0 |
 | State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+| Rust parity | Historical note superseded by the 2026-06-18 four-backend measured table above |
 
 ---
 
@@ -337,7 +363,7 @@ parameter conversion needed.
 **Status: PASS**
 
 ### 2. step() → correct type
-Returns `int` (spike indicator) or `float` (rate/potential).
+Returns `int` as a binary spike indicator.
 **Status: PASS**
 
 ### 3. Spiking behaviour
@@ -356,14 +382,15 @@ State returns to initial values after `reset()`.
 `Population(SpiNNakerLIFNeuron, n=10)` creates correct instances.
 **Status: PASS**
 
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
+### 7. Polyglot parity
+Python, Rust safety, Go, and Julia produce identical spike counts in the
+2026-06-18 local regression artefact.
 
 ---
 
-## Findings (measured 2026-04-04)
+## Findings (measured 2026-04-04; refreshed 2026-06-18)
 
 1. Throughput: ~244K steps/s (Python, single-thread)
 2. All pipeline stages verified green
-3. Rust parity: EXACT
+3. Polyglot spike parity: exact across Python, Rust safety, Go, and Julia in the 2026-06-18 local regression artefact
 4. Numerical stability confirmed over 20K steps

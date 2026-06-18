@@ -13,9 +13,11 @@ Performance: ~1.8M isolation steps/s."""
 
 from __future__ import annotations
 
+import math
 import time
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neurons.models.spinnaker_lif import SpiNNakerLIFNeuron
 from sc_neurocore.network.population import Population
@@ -50,6 +52,21 @@ class TestSpiNNakerLIFIsolation:
             n.step(25.0)
         n.reset()
         assert n.v == n.v_rest and n.refrac_count == 0.0
+
+    def test_rejects_invalid_parameters(self):
+        with pytest.raises(ValueError, match="tau_m must be positive"):
+            SpiNNakerLIFNeuron(tau_m=0.0)
+        with pytest.raises(ValueError, match="dt must be positive"):
+            SpiNNakerLIFNeuron(dt=0.0)
+        with pytest.raises(ValueError, match="refrac_count must be non-negative"):
+            SpiNNakerLIFNeuron(refrac_count=-1.0)
+
+    def test_rejects_invalid_current_without_mutation(self):
+        n = SpiNNakerLIFNeuron()
+        v0 = n.v
+        with pytest.raises(ValueError, match="current must be finite"):
+            n.step(float("nan"))
+        assert n.v == v0
 
 
 class TestSpiNNakerLIFRefractory:
@@ -93,13 +110,22 @@ class TestSpiNNakerLIFRefractory:
 
 class TestSpiNNakerLIFDynamics:
     def test_membrane_equation(self):
-        """dV = (-(V-V_rest) + I) / tau_m * dt."""
+        """Exact LIF flow solves constant-current membrane dynamics."""
         n = SpiNNakerLIFNeuron(tau_refrac=0.0)
         v0 = n.v
-        I = 15.0
-        n.step(I)
-        expected = v0 + (-(v0 - n.v_rest) + I + n.i_offset) / n.tau_m * n.dt
+        current = 15.0
+        n.step(current)
+        steady = n.v_rest + current + n.i_offset
+        expected = steady + (v0 - steady) * math.exp(-n.dt / n.tau_m)
         assert abs(n.v - expected) < 1e-10
+
+    def test_exact_flow_reduces_to_euler_order_for_small_dt(self):
+        n = SpiNNakerLIFNeuron(dt=1.0e-6, tau_refrac=0.0)
+        v0 = n.v
+        current = 15.0
+        n.step(current)
+        euler = v0 + (-(v0 - n.v_rest) + current + n.i_offset) / n.tau_m * n.dt
+        assert abs(n.v - euler) < 1e-12
 
     def test_steady_state(self):
         """V_ss = V_rest + I. At I=10: V_ss = -60, below threshold."""

@@ -1,0 +1,214 @@
+{
+  "backend_summary": {
+    "go": {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/spinnaker_lif.go src/sc_neurocore/accel/go/services/spinnaker_lif_test.go -run ^$ -bench BenchmarkSpiNNakerLIFExactFlow$ -benchtime 200000x -count 5",
+      "current": 30.0,
+      "max_ns_per_step": 25.73,
+      "median_ns_per_step": 20.07,
+      "min_ns_per_step": 19.61,
+      "repeats": 5,
+      "results_ns_per_step": [
+        25.73,
+        20.65,
+        19.96,
+        20.07,
+        19.61
+      ],
+      "spike_counts": [
+        8333,
+        8333,
+        8333,
+        8333,
+        8333
+      ],
+      "spikes": 8333,
+      "steps": 200000
+    },
+    "julia": {
+      "backend": "julia",
+      "command": "julia --project=. -e <spinnaker_lif exact-flow benchmark>",
+      "current": 30.0,
+      "final_refracs": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_vs": [
+        -60.10960138106918,
+        -60.10960138106918,
+        -60.10960138106918,
+        -60.10960138106918,
+        -60.10960138106918
+      ],
+      "max_ns_per_step": 9.183395,
+      "median_ns_per_step": 9.16662,
+      "min_ns_per_step": 9.069005,
+      "repeats": 5,
+      "results_ns_per_step": [
+        9.183395,
+        9.17902,
+        9.16662,
+        9.162515,
+        9.069005
+      ],
+      "spike_counts": [
+        8333,
+        8333,
+        8333,
+        8333,
+        8333
+      ],
+      "spikes": 8333,
+      "steps": 200000
+    },
+    "python": {
+      "backend": "python",
+      "max_ns_per_step": 1115.113275,
+      "median_ns_per_step": 946.15891,
+      "min_ns_per_step": 903.234855,
+      "results": [
+        {
+          "backend": "python",
+          "current": 30.0,
+          "elapsed_ns": 195306894,
+          "ending_state": [
+            -60.10960138106918,
+            0.0
+          ],
+          "ns_per_step": 976.53447,
+          "spikes": 8333,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 30.0,
+          "elapsed_ns": 223022655,
+          "ending_state": [
+            -60.10960138106918,
+            0.0
+          ],
+          "ns_per_step": 1115.113275,
+          "spikes": 8333,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 30.0,
+          "elapsed_ns": 180646971,
+          "ending_state": [
+            -60.10960138106918,
+            0.0
+          ],
+          "ns_per_step": 903.234855,
+          "spikes": 8333,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 30.0,
+          "elapsed_ns": 189231782,
+          "ending_state": [
+            -60.10960138106918,
+            0.0
+          ],
+          "ns_per_step": 946.15891,
+          "spikes": 8333,
+          "steps": 200000
+        },
+        {
+          "backend": "python",
+          "current": 30.0,
+          "elapsed_ns": 188151631,
+          "ending_state": [
+            -60.10960138106918,
+            0.0
+          ],
+          "ns_per_step": 940.758155,
+          "spikes": 8333,
+          "steps": 200000
+        }
+      ],
+      "spikes": 8333
+    },
+    "rust": {
+      "backend": "rust",
+      "command": "rustc -O <temp spinnaker_lif safety benchmark> && <temp spinnaker_lif safety benchmark>",
+      "current": 30.0,
+      "final_refracs": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_vs": [
+        -60.10960138106918,
+        -60.10960138106918,
+        -60.10960138106918,
+        -60.10960138106918,
+        -60.10960138106918
+      ],
+      "max_ns_per_step": 3.95263,
+      "median_ns_per_step": 3.94326,
+      "min_ns_per_step": 3.93048,
+      "repeats": 5,
+      "results_ns_per_step": [
+        3.94326,
+        3.95263,
+        3.94144,
+        3.946055,
+        3.93048
+      ],
+      "spike_counts": [
+        8333,
+        8333,
+        8333,
+        8333,
+        8333
+      ],
+      "spikes": 8333,
+      "steps": 200000
+    }
+  },
+  "benchmark": "SpiNNakerLIFNeuron exact constant-current membrane flow",
+  "current": 30.0,
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "host": "aaarthuus",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "production_speed_claim": false,
+  "python": "3.12.3",
+  "repeats": 5,
+  "source_hashes": {
+    "benchmarks/bench_model_spinnaker_lif": {
+      "py": "00178f2fcc54eaad7fe92124cfdb0989ff03fd5c0dc38ee40e978cb7923ab94d"
+    },
+    "benchmarks/bench_model_spinnaker_lif.py": "00178f2fcc54eaad7fe92124cfdb0989ff03fd5c0dc38ee40e978cb7923ab94d",
+    "src/sc_neurocore/accel/go/services/spinnaker_lif": {
+      "go": "be6dd8edba81a83f30eb8c224756e64fe7b14169f4c06cedeeda69925bdc1080"
+    },
+    "src/sc_neurocore/accel/go/services/spinnaker_lif.go": "be6dd8edba81a83f30eb8c224756e64fe7b14169f4c06cedeeda69925bdc1080",
+    "src/sc_neurocore/accel/go/services/spinnaker_lif_test": {
+      "go": "22bc4837a15fbef42af367826de2df446b60ab996905c0dc2a7ff51663b93c0e"
+    },
+    "src/sc_neurocore/accel/go/services/spinnaker_lif_test.go": "22bc4837a15fbef42af367826de2df446b60ab996905c0dc2a7ff51663b93c0e",
+    "src/sc_neurocore/accel/julia/neurons/spinnaker_lif": {
+      "jl": "e5ef263f525ad2b530ee927cb3fe440d172bd9d79a403fc268c1cb3b519dee11"
+    },
+    "src/sc_neurocore/accel/julia/neurons/spinnaker_lif.jl": "e5ef263f525ad2b530ee927cb3fe440d172bd9d79a403fc268c1cb3b519dee11",
+    "src/sc_neurocore/accel/rust/safety/spinnaker_lif": {
+      "rs": "249d903b856431c8ffa09f7e5e283e09d9773e3585a00ec07ef5dee3a9f5387d"
+    },
+    "src/sc_neurocore/accel/rust/safety/spinnaker_lif.rs": "249d903b856431c8ffa09f7e5e283e09d9773e3585a00ec07ef5dee3a9f5387d",
+    "src/sc_neurocore/neurons/models/spinnaker_lif": {
+      "py": "34c74f77bc4573799f1a9dd48e8aeea1f24671cda113d31eefd38f7e161412a0"
+    },
+    "src/sc_neurocore/neurons/models/spinnaker_lif.py": "34c74f77bc4573799f1a9dd48e8aeea1f24671cda113d31eefd38f7e161412a0"
+  },
+  "spdx_license": "AGPL-3.0-or-later",
+  "steps": 200000,
+  "timestamp_utc": "2026-06-18T18:26:09.869505+00:00"
+}
