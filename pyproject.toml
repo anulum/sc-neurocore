@@ -289,7 +289,7 @@ module = [
   'sc_neurocore.federated.*', 'sc_neurocore.few_shot.*', 'sc_neurocore.fusion.*', 'sc_neurocore.generative.*',
   'sc_neurocore.graphs.*', 'sc_neurocore.hdc.*', 'sc_neurocore.hdl_gen.*', 'sc_neurocore.homeostasis.*',
   'sc_neurocore.hypervisor.*', 'sc_neurocore.identity.*', 'sc_neurocore.integrations.*', 'sc_neurocore.interfaces.*',
-  'sc_neurocore.layers.*', 'sc_neurocore.learning.*', 'sc_neurocore.memristor.*',
+  'sc_neurocore.learning.*', 'sc_neurocore.memristor.*',
   'sc_neurocore.meta_plasticity.*', 'sc_neurocore.model_zoo.*', 'sc_neurocore.nas.*', 'sc_neurocore._native.*',
   'sc_neurocore.network.*', 'sc_neurocore.neurons.*', 'sc_neurocore.neuro_symbolic.*', 'sc_neurocore.nir_bridge.*',
   'sc_neurocore.optics.*', 'sc_neurocore.optimizer.*', 'sc_neurocore.physics.*', 'sc_neurocore.pipeline.*',

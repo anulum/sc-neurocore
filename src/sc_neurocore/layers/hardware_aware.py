@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from typing import Any
 import numpy as np
 
 from .vectorized_layer import VectorizedSCLayer
@@ -54,6 +55,7 @@ class HardwareAwareSCLayer:
     seed: int = 42
 
     def __post_init__(self) -> None:
+        """Build the backing layer and inject stuck-at and variability defects."""
         self._layer = VectorizedSCLayer(
             n_inputs=self.n_inputs,
             n_neurons=self.n_neurons,
@@ -80,10 +82,11 @@ class HardwareAwareSCLayer:
             self._layer.weights[mask] = np.clip(self._layer.weights[mask] + noise[mask], 0.0, 1.0)
         self._layer._refresh_packed_weights()
 
-    def forward(self, input_values: list[float] | np.ndarray) -> np.ndarray:
+    def forward(self, input_values: list[float] | np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Run a forward pass through the defect-injected stochastic layer."""
         return self._layer.forward(input_values)  # type: ignore[arg-type]
 
-    def update_weights(self, gradient: np.ndarray, lr: float = 0.01) -> None:
+    def update_weights(self, gradient: np.ndarray[Any, Any], lr: float = 0.01) -> None:
         """Update weights with gradient, respecting stuck-at mask.
 
         Stuck synapses receive zero gradient — the network learns
@@ -96,13 +99,16 @@ class HardwareAwareSCLayer:
         self._apply_defects()
 
     @property
-    def weights(self) -> np.ndarray:
+    def weights(self) -> np.ndarray[Any, Any]:
+        """Return the current defect-affected weight matrix."""
         return self._layer.weights
 
     @property
     def n_stuck(self) -> int:
+        """Return the number of stuck-at synapses."""
         return int(self.stuck_mask.sum())
 
     @property
     def stuck_fraction(self) -> float:
+        """Return the fraction of synapses that are stuck-at."""
         return float(self.stuck_mask.mean())

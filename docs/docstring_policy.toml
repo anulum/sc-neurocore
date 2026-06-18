@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 75
+expected_file_count = 80
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -308,3 +308,23 @@ rationale = "Public spike encoders (rate, temporal-contrast, phase) over numeric
 [[file]]
 path = "src/sc_neurocore/encoding/optimizer.py"
 rationale = "Public encoding-scheme optimizer that profiles data and ranks encoder suitability."
+
+[[file]]
+path = "src/sc_neurocore/layers/rall_dendrite.py"
+rationale = "Public Rall multi-compartment dendrite layer."
+
+[[file]]
+path = "src/sc_neurocore/layers/circuit_primitives.py"
+rationale = "Public lateral-inhibition circuit primitive layer."
+
+[[file]]
+path = "src/sc_neurocore/layers/predictive_coding.py"
+rationale = "Public predictive-coding layer with per-neuron next-input prediction."
+
+[[file]]
+path = "src/sc_neurocore/layers/hardware_aware.py"
+rationale = "Public hardware-aware layer modelling stuck-at and variability synapse defects."
+
+[[file]]
+path = "src/sc_neurocore/layers/sc_learning_layer.py"
+rationale = "Public stochastic-computing dense layer with integrated STDP learning."
