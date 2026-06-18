@@ -8,7 +8,7 @@
 
 module SpinnakerLifAccel
 
-export step!, simulate, SpiNNakerLIFNeuronState
+export step!, simulate, valid, SpiNNakerLIFNeuronState
 
 mutable struct SpiNNakerLIFNeuronState
     v::Float64
@@ -26,25 +26,47 @@ function SpiNNakerLIFNeuronState()
     SpiNNakerLIFNeuronState(-70.0, -70.0, -70.0, -50.0, 20.0, 0.0, 2.0, 0.0, 1.0)
 end
 
-function step!(s::SpiNNakerLIFNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        if s.refrac_count > 0
-            s.refrac_count -= s.dt
-            return 0
-        end
-        s.v += (-(s.v - s.v_rest) + (I_ext + s.i_offset)) / s.tau_m * s.dt
-        if s.v >= s.v_threshold
-            s.v = s.v_reset
-            s.refrac_count = s.tau_refrac
-            return 1
-        end
-        return 0
-    catch _e
+function step!(s::SpiNNakerLIFNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)
+    if !valid(s) || !isfinite(I_ext) || !isfinite(dt) || dt <= 0.0
+        return -1
+    end
+    s.dt = dt
+    if s.refrac_count > 0.0
+        s.refrac_count = max(0.0, s.refrac_count - s.dt)
         return 0
     end
+    steady = s.v_rest + I_ext + s.i_offset
+    next_v = steady + (s.v - steady) * exp(-s.dt / s.tau_m)
+    if !isfinite(next_v)
+        return -1
+    end
+    if next_v >= s.v_threshold
+        s.v = s.v_reset
+        s.refrac_count = s.tau_refrac
+        return 1
+    end
+    s.v = next_v
+    return 0
 end
 
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
+function valid(s::SpiNNakerLIFNeuronState)
+    return isfinite(s.v) &&
+           isfinite(s.v_rest) &&
+           isfinite(s.v_reset) &&
+           isfinite(s.v_threshold) &&
+           s.v_threshold > s.v_reset &&
+           isfinite(s.tau_m) &&
+           s.tau_m > 0.0 &&
+           isfinite(s.i_offset) &&
+           isfinite(s.tau_refrac) &&
+           s.tau_refrac >= 0.0 &&
+           isfinite(s.refrac_count) &&
+           s.refrac_count >= 0.0 &&
+           isfinite(s.dt) &&
+           s.dt > 0.0
+end
+
+function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=1.0)
     s = SpiNNakerLIFNeuronState()
     trace = zeros(n_steps)
     spikes = 0
