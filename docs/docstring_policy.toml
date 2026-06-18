@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 116
+expected_file_count = 117
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -472,3 +472,7 @@ rationale = "Public stimulus-locked spike analysis."
 [[file]]
 path = "src/sc_neurocore/analysis/spike_stats/neural_decoders.py"
 rationale = "Public published neural decoder/encoder reference implementations (POYO, POSSM, NDT3, CEBRA)."
+
+[[file]]
+path = "src/sc_neurocore/bio/transcriptomic.py"
+rationale = "Public single-cell transcriptomic foundation-model interfaces (scKG-BERT, Geneformer)."

@@ -20,6 +20,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+from typing import Any
 import numpy as np
 
 
@@ -29,9 +30,9 @@ import numpy as np
 
 
 def rank_value_encode(
-    expression: np.ndarray,
-    global_medians: np.ndarray | None = None,
-) -> np.ndarray:
+    expression: np.ndarray[Any, Any],
+    global_medians: np.ndarray[Any, Any] | None = None,
+) -> np.ndarray[Any, Any]:
     """Rank-value encoding for single-cell gene expression.
 
     Theodoris et al. (2023): genes are ranked by their expression
@@ -92,6 +93,7 @@ class ScKGBERTInterface:
     seed: int = 42
 
     def __post_init__(self) -> None:
+        """Initialise the scKG-BERT interface weights from the seed."""
         rng = np.random.default_rng(self.seed)
         # Gene token embeddings (shared between S-Encoder and K-Encoder)
         self._gene_embeddings = rng.normal(
@@ -118,10 +120,10 @@ class ScKGBERTInterface:
 
     def gaussian_attention(
         self,
-        queries: np.ndarray,
-        keys: np.ndarray,
-        values: np.ndarray,
-    ) -> np.ndarray:
+        queries: np.ndarray[Any, Any],
+        keys: np.ndarray[Any, Any],
+        values: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         """Gaussian attention mechanism. Li et al. (2025).
 
         α_ij = exp(-||q_i - k_j||² / (2σ²)) / Σ_m exp(-||q_i - k_m||² / (2σ²))
@@ -139,9 +141,10 @@ class ScKGBERTInterface:
         log_weights -= log_weights.max(axis=-1, keepdims=True)
         weights = np.exp(log_weights)
         weights /= weights.sum(axis=-1, keepdims=True) + 1e-30
-        return weights @ values
+        attended: np.ndarray[Any, Any] = weights @ values
+        return attended
 
-    def encode_expression(self, expression: np.ndarray) -> np.ndarray:
+    def encode_expression(self, expression: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Encode a single-cell expression profile via S-Encoder.
 
         expression : [n_genes] raw counts.
@@ -163,9 +166,10 @@ class ScKGBERTInterface:
         k = tokens @ self._w_k
         v = tokens @ self._w_v
         attended = self.gaussian_attention(q, k, v)
-        return attended.mean(axis=0)
+        pooled: np.ndarray[Any, Any] = attended.mean(axis=0)
+        return pooled
 
-    def encode_with_knowledge(self, expression: np.ndarray) -> np.ndarray:
+    def encode_with_knowledge(self, expression: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Encode via dual S-Encoder + K-Encoder pathway.
 
         K-Encoder aggregates neighbourhood embeddings from the
@@ -195,12 +199,13 @@ class ScKGBERTInterface:
         v = kg_embs @ self._w_v
         k_emb = self.gaussian_attention(q, k, v).mean(axis=0)
         # Fusion: mean of S-Encoder and K-Encoder outputs
-        return (s_emb + k_emb) / 2.0
+        fused: np.ndarray[Any, Any] = (s_emb + k_emb) / 2.0
+        return fused
 
     def predict_cell_type(
         self,
-        expression: np.ndarray,
-        prototypes: np.ndarray,
+        expression: np.ndarray[Any, Any],
+        prototypes: np.ndarray[Any, Any],
         labels: list[str],
     ) -> str:
         """Predict cell type via nearest prototype.
@@ -213,7 +218,7 @@ class ScKGBERTInterface:
         dists = np.linalg.norm(prototypes - emb, axis=-1)
         return labels[int(np.argmin(dists))]
 
-    def gene_importance(self, expression: np.ndarray) -> np.ndarray:
+    def gene_importance(self, expression: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Compute gene importance scores via Gaussian attention weights.
 
         Returns [n_genes] importance array (higher = more important).
@@ -264,6 +269,7 @@ class GeneformerInterface:
     seed: int = 42
 
     def __post_init__(self) -> None:
+        """Initialise the Geneformer interface weights from the seed."""
         rng = np.random.default_rng(self.seed)
         self._gene_embeddings = rng.normal(
             0.0,
@@ -284,9 +290,9 @@ class GeneformerInterface:
 
     def tokenise(
         self,
-        expression: np.ndarray,
-        global_medians: np.ndarray | None = None,
-    ) -> np.ndarray:
+        expression: np.ndarray[Any, Any],
+        global_medians: np.ndarray[Any, Any] | None = None,
+    ) -> np.ndarray[Any, Any]:
         """Rank-value tokenisation. Theodoris et al. (2023).
 
         Returns gene indices sorted by weighted expression (descending),
@@ -297,9 +303,9 @@ class GeneformerInterface:
 
     def mask_tokens(
         self,
-        token_ids: np.ndarray,
+        token_ids: np.ndarray[Any, Any],
         rng_seed: int | None = None,
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Randomly mask tokens for MLM pretraining.
 
         Returns (masked_ids, mask_positions).
@@ -315,7 +321,7 @@ class GeneformerInterface:
         masked[mask] = -1  # sentinel for masked positions
         return masked, mask
 
-    def multi_head_attention(self, x: np.ndarray) -> np.ndarray:
+    def multi_head_attention(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Multi-head self-attention. Vaswani et al. (2017).
 
         x : [seq_len, d_model].
@@ -340,9 +346,9 @@ class GeneformerInterface:
 
     def encode_cell(
         self,
-        expression: np.ndarray,
-        global_medians: np.ndarray | None = None,
-    ) -> np.ndarray:
+        expression: np.ndarray[Any, Any],
+        global_medians: np.ndarray[Any, Any] | None = None,
+    ) -> np.ndarray[Any, Any]:
         """Extract cell-level embedding from expression profile.
 
         Returns [d_model] embedding (mean-pooled over gene tokens).
@@ -352,14 +358,15 @@ class GeneformerInterface:
             return np.zeros(self.d_model)
         tokens = self._gene_embeddings[token_ids]
         attended = self.multi_head_attention(tokens)
-        return attended.mean(axis=0)
+        pooled: np.ndarray[Any, Any] = attended.mean(axis=0)
+        return pooled
 
     def predict_masked_genes(
         self,
-        expression: np.ndarray,
-        global_medians: np.ndarray | None = None,
+        expression: np.ndarray[Any, Any],
+        global_medians: np.ndarray[Any, Any] | None = None,
         rng_seed: int | None = None,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Masked gene prediction (MLM objective).
 
         Returns (mask_positions, true_gene_ids, predicted_gene_ids).
@@ -387,9 +394,9 @@ class GeneformerInterface:
 
     def gene_network_attention(
         self,
-        expression: np.ndarray,
-        global_medians: np.ndarray | None = None,
-    ) -> np.ndarray:
+        expression: np.ndarray[Any, Any],
+        global_medians: np.ndarray[Any, Any] | None = None,
+    ) -> np.ndarray[Any, Any]:
         """Extract attention-derived gene–gene interaction matrix.
 
         Theodoris et al. (2023) showed that attention weights encode
