@@ -20,12 +20,11 @@ import numpy as np
 
 from typing import Callable
 
-from numpy.typing import NDArray
 
-from .ode import ODESolver
+from .ode import ODESolver, Vector
 
 
-def _validate_symplectic_inputs(y: NDArray, t: float, dt: float) -> NDArray:
+def _validate_symplectic_inputs(y: Vector, t: float, dt: float) -> Vector:
     if isinstance(dt, bool) or not isinstance(dt, int | float):
         raise ValueError("dt must be a finite positive number")
     if not np.isfinite(float(dt)) or float(dt) <= 0.0:
@@ -43,10 +42,10 @@ def _validate_symplectic_inputs(y: NDArray, t: float, dt: float) -> NDArray:
 
 
 def _validated_rhs(
-    f: Callable[[float, NDArray], NDArray],
+    f: Callable[[float, Vector], Vector],
     t: float,
-    y: NDArray,
-) -> NDArray:
+    y: Vector,
+) -> Vector:
     dy = np.asarray(f(t, y), dtype=np.float64)
     if dy.shape != y.shape:
         raise ValueError("symplectic RHS must return an array matching the state shape")
@@ -71,11 +70,12 @@ class StormerVerlet(ODESolver):
 
     def step(
         self,
-        f: Callable[[float, NDArray], NDArray],
-        y: NDArray,
+        f: Callable[[float, Vector], Vector],
+        y: Vector,
         t: float,
         dt: float,
-    ) -> tuple[NDArray, float]:
+    ) -> tuple[Vector, float]:
+        """Advance one Störmer-Verlet step; return ``(y_new, dt_used)``."""
         y = _validate_symplectic_inputs(y, t, dt)
         dt = float(dt)
         n = len(y) // 2
@@ -119,11 +119,12 @@ class LeapfrogSolver(ODESolver):
 
     def step(
         self,
-        f: Callable[[float, NDArray], NDArray],
-        y: NDArray,
+        f: Callable[[float, Vector], Vector],
+        y: Vector,
         t: float,
         dt: float,
-    ) -> tuple[NDArray, float]:
+    ) -> tuple[Vector, float]:
+        """Advance one leapfrog (kick-drift-kick) step; return ``(y_new, dt_used)``."""
         y = _validate_symplectic_inputs(y, t, dt)
         dt = float(dt)
         n = len(y) // 2

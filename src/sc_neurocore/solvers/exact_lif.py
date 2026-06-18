@@ -57,6 +57,7 @@ class ExactLIFSolver:
     r_m: float = 1.0
 
     def __post_init__(self) -> None:
+        """Validate and normalise the membrane parameters."""
         self.tau = _positive_float("tau", self.tau)
         self.v_rest = _finite_float("v_rest", self.v_rest)
         self.v_thresh = _finite_float("v_thresh", self.v_thresh)

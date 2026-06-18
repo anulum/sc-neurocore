@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Quantum-Inspired Ising Machine Solver
 
+"""Quantum-inspired Ising machine solver with stochastic Metropolis annealing."""
+
 from __future__ import annotations
 from typing import Any
 from dataclasses import dataclass
@@ -29,14 +31,19 @@ class StochasticIsingGraph:
     anneal_rate: float = 0.99
 
     def __post_init__(self) -> None:
+        """Initialise random spins and their bipolar ``{-1, 1}`` representation."""
         # Initialize spins randomly
         self.spins = np.random.randint(0, 2, self.num_spins).astype(np.int8)
         # Convert 0/1 to -1/1 for physics calc
         self.bipolar_spins = 2 * self.spins - 1
 
-    def step(self) -> None:
-        """
-        Perform one Metropolis-Hastings update step (parallel / cellular automaton style).
+    def step(self) -> float:
+        """Perform one parallel Metropolis-Hastings update and return the energy.
+
+        Returns
+        -------
+        float
+            The global Ising energy after applying the accepted spin flips.
         """
         # Calculate local field H_i = Sum(J_ij * S_j) + h_i
         # Using matrix multiplication
@@ -70,7 +77,7 @@ class StochasticIsingGraph:
         # Anneal
         self.temperature *= self.anneal_rate
 
-        return self.get_energy()  # type: ignore[return-value]
+        return self.get_energy()
 
     def get_energy(self) -> float:
         """Calculate global energy."""
@@ -78,7 +85,8 @@ class StochasticIsingGraph:
         # Factor 0.5 because J_ij is counted twice in full matrix sum
         interaction = -0.5 * np.dot(self.bipolar_spins, np.dot(self.J, self.bipolar_spins))
         bias = -np.dot(self.h, self.bipolar_spins)
-        return interaction + bias
+        return float(interaction + bias)
 
     def get_config(self) -> np.ndarray[Any, Any]:
+        """Return the current spin configuration as a ``0/1`` int8 array."""
         return self.spins
