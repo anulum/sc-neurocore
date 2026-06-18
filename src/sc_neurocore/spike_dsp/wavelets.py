@@ -10,14 +10,15 @@
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 
 def spike_wavelet_decompose(
-    spikes: np.ndarray,
+    spikes: np.ndarray[Any, Any],
     n_scales: int = 4,
     base_window: int = 4,
-) -> list[np.ndarray]:
+) -> list[np.ndarray[Any, Any]]:
     """Decompose spike train into frequency bands via multi-scale filtering.
 
     Uses cascaded moving-average filters at doubling window sizes:

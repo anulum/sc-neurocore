@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from typing import Any
 import numpy as np
 
 
@@ -36,10 +37,10 @@ class SpikeFIR:
         Output spike threshold (on weighted sum).
     """
 
-    coefficients: np.ndarray
+    coefficients: np.ndarray[Any, Any]
     threshold: float = 0.5
 
-    def filter(self, spikes: np.ndarray) -> np.ndarray:
+    def filter(self, spikes: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Apply FIR filter to spike train.
 
         Parameters
@@ -85,7 +86,7 @@ class SpikeIIR:
     threshold: float = 1.0
     gain: float = 0.5
 
-    def filter(self, spikes: np.ndarray) -> np.ndarray:
+    def filter(self, spikes: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Apply IIR filter to spike train."""
         if spikes.ndim == 1:
             spikes = spikes[:, np.newaxis]
@@ -102,7 +103,9 @@ class SpikeIIR:
         return output if output.shape[1] > 1 else output[:, 0]
 
 
-def spike_convolve(spikes: np.ndarray, kernel: np.ndarray, threshold: float = 0.5) -> np.ndarray:
+def spike_convolve(
+    spikes: np.ndarray[Any, Any], kernel: np.ndarray[Any, Any], threshold: float = 0.5
+) -> np.ndarray[Any, Any]:
     """Convolve a spike train with a kernel in spike domain.
 
     Parameters

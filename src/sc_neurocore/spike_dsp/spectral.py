@@ -15,14 +15,15 @@ uses a sliding window (kernel-based) that stays in the integer domain.
 
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 
 
 def spike_fft(
-    spikes: np.ndarray,
+    spikes: np.ndarray[Any, Any],
     dt: float = 0.001,
     window_size: int = 50,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Compute FFT of a spike train.
 
     Parameters
@@ -61,10 +62,10 @@ def spike_fft(
 
 
 def spike_power_spectrum(
-    spikes: np.ndarray,
+    spikes: np.ndarray[Any, Any],
     dt: float = 0.001,
     window_size: int = 50,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Compute power spectral density of a spike train.
 
     Returns
