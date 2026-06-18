@@ -25,7 +25,9 @@ import numpy as np
 SURROGATE_BETA = 25.0  # steepness of fast-sigmoid surrogate
 
 
-def _fast_sigmoid_surrogate(v: np.ndarray, threshold: float = 1.0) -> np.ndarray:
+def _fast_sigmoid_surrogate(
+    v: np.ndarray[Any, Any], threshold: float = 1.0
+) -> np.ndarray[Any, Any]:
     """Surrogate gradient: d/dv of fast-sigmoid spike function.
 
     Neftci et al. 2019, Eq. 5.
@@ -45,14 +47,14 @@ class BPTTLearner:
         self.loss_fn = loss_fn
         self.lr = lr
 
-    def train_step(self, inputs: np.ndarray, targets: np.ndarray) -> float:
+    def train_step(self, inputs: np.ndarray[Any, Any], targets: np.ndarray[Any, Any]) -> float:
         """One BPTT step: forward pass, loss, backward with surrogate gradients.
 
         Parameters
         ----------
-        inputs : np.ndarray
+        inputs : np.ndarray[Any, Any]
             Shape (n_steps, n_input) input currents.
-        targets : np.ndarray
+        targets : np.ndarray[Any, Any]
             Shape (n_steps, n_output) target spike trains.
 
         Returns
@@ -110,14 +112,14 @@ class TBPTTLearner:
         self.lr = lr
         self.k = k
 
-    def train_step(self, inputs: np.ndarray, targets: np.ndarray) -> float:
+    def train_step(self, inputs: np.ndarray[Any, Any], targets: np.ndarray[Any, Any]) -> float:
         """One TBPTT step over the full sequence, chunked into windows of k.
 
         Parameters
         ----------
-        inputs : np.ndarray
+        inputs : np.ndarray[Any, Any]
             Shape (n_steps, n_input).
-        targets : np.ndarray
+        targets : np.ndarray[Any, Any]
             Shape (n_steps, n_output).
 
         Returns
@@ -175,30 +177,34 @@ class EligibilityTrace:
 
     def __init__(self, tau_e: float = 20.0, dt: float = 1.0) -> None:
         self.decay = float(np.exp(-dt / tau_e))
-        self._trace: np.ndarray | None = None
+        self._trace: np.ndarray[Any, Any] | None = None
 
     def update(
-        self, pre_spike: np.ndarray, post_spike: np.ndarray, error_signal: np.ndarray
-    ) -> np.ndarray:
+        self,
+        pre_spike: np.ndarray[Any, Any],
+        post_spike: np.ndarray[Any, Any],
+        error_signal: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         """Compute weight delta from three-factor rule.
 
         Parameters
         ----------
-        pre_spike, post_spike : np.ndarray
+        pre_spike, post_spike : np.ndarray[Any, Any]
             Binary (0/1) vectors of length n_pre, n_post.
-        error_signal : np.ndarray
+        error_signal : np.ndarray[Any, Any]
             Error signal of length n_post.
 
         Returns
         -------
-        np.ndarray
+        np.ndarray[Any, Any]
             Weight delta matrix of shape (n_pre, n_post).
         """
         outer = np.outer(pre_spike, post_spike)
         if self._trace is None:
             self._trace = np.zeros_like(outer)
         self._trace = self.decay * self._trace + outer
-        return self._trace * error_signal[np.newaxis, :]
+        delta: np.ndarray[Any, Any] = self._trace * error_signal[np.newaxis, :]
+        return delta
 
 
 class RewardModulatedLearner:
@@ -211,9 +217,9 @@ class RewardModulatedLearner:
     def __init__(self, network: Any, tau_reward: float = 100.0) -> None:
         self.network = network
         self.reward_decay = np.exp(-1.0 / tau_reward)
-        self._elig: dict[int, np.ndarray] = {}
-        self._pre_trace: dict[int, np.ndarray] = {}
-        self._post_trace: dict[int, np.ndarray] = {}
+        self._elig: dict[int, np.ndarray[Any, Any]] = {}
+        self._pre_trace: dict[int, np.ndarray[Any, Any]] = {}
+        self._post_trace: dict[int, np.ndarray[Any, Any]] = {}
         self._init_traces()
 
     def _init_traces(self) -> None:
@@ -263,14 +269,16 @@ class MetaLearner:
         self.inner_lr = inner_lr
         self.outer_lr = outer_lr
 
-    def _snapshot_weights(self) -> list[np.ndarray]:
+    def _snapshot_weights(self) -> list[np.ndarray[Any, Any]]:
         return [proj.data.copy() for proj in self.network.projections]
 
-    def _restore_weights(self, snapshot: list[np.ndarray]) -> None:
+    def _restore_weights(self, snapshot: list[np.ndarray[Any, Any]]) -> None:
         for proj, w in zip(self.network.projections, snapshot):
             proj.data[:] = w
 
-    def inner_loop(self, task_data: tuple[np.ndarray, np.ndarray], n_steps: int = 5) -> None:
+    def inner_loop(
+        self, task_data: tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]], n_steps: int = 5
+    ) -> None:
         """Fast adaptation: n_steps of gradient descent on task_data.
 
         Parameters
@@ -301,7 +309,7 @@ class MetaLearner:
                             grad[k] += recorded_spikes[t][i] * error[t][j]
                 proj.data -= self.inner_lr * grad / max(n_t, 1)
 
-    def outer_step(self, tasks: list[tuple[np.ndarray, np.ndarray]]) -> None:
+    def outer_step(self, tasks: list[tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]]) -> None:
         """Meta-gradient update across multiple tasks.
 
         Parameters
@@ -370,20 +378,20 @@ class ShortTermPlasticity:
         self.tau_d = tau_d
         self.tau_f = tau_f
         self.u_se = u_se
-        self._x: np.ndarray | None = None
-        self._u: np.ndarray | None = None
+        self._x: np.ndarray[Any, Any] | None = None
+        self._u: np.ndarray[Any, Any] | None = None
 
-    def update(self, pre_spikes: np.ndarray) -> np.ndarray:
+    def update(self, pre_spikes: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Compute effective weight scaling given pre-synaptic spikes.
 
         Parameters
         ----------
-        pre_spikes : np.ndarray
+        pre_spikes : np.ndarray[Any, Any]
             Binary (0/1) vector of length n_pre.
 
         Returns
         -------
-        np.ndarray
+        np.ndarray[Any, Any]
             Effective weight multiplier per pre-synaptic neuron.
         """
         n = pre_spikes.shape[0]
@@ -398,7 +406,7 @@ class ShortTermPlasticity:
 
         mask = pre_spikes.astype(bool)
         self._u[mask] += self.u_se * (1.0 - self._u[mask])
-        release = self._u * self._x
+        release: np.ndarray[Any, Any] = self._u * self._x
         self._x[mask] -= release[mask]
 
         return release

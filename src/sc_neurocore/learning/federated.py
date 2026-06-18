@@ -6,28 +6,31 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Privacy-Preserving Federated Learning using SC Bitstreams
 
+"""Privacy-preserving federated aggregation over stochastic-computing bitstreams."""
+
 from __future__ import annotations
+
 from typing import Any
 
 import numpy as np
 
 
 class FederatedAggregator:
-    """
-    Privacy-Preserving Federated Learning using SC Bitstreams.
-    """
+    """Privacy-preserving federated learning using SC bitstreams."""
 
     @staticmethod
     def aggregate_gradients(client_gradients: list[np.ndarray[Any, Any]]) -> np.ndarray[Any, Any]:
-        """
-        Aggregates gradient bitstreams from multiple clients.
+        """Aggregate gradient bitstreams from multiple clients by majority vote.
 
-        Args:
-            client_gradients: List of numpy arrays (bitstreams).
-                              All must have same shape.
+        Parameters
+        ----------
+        client_gradients : list of numpy.ndarray
+            Per-client bitstream arrays; all must share the same shape.
 
-        Returns:
-            Aggregated bitstream (Majority Vote).
+        Returns
+        -------
+        numpy.ndarray
+            The majority-voted aggregated bitstream.
         """
         if not client_gradients:
             raise ValueError("No gradients to aggregate")
@@ -43,17 +46,20 @@ class FederatedAggregator:
         # If sum > num_clients / 2, output 1
         threshold = len(client_gradients) / 2.0
 
-        aggregated = (sums > threshold).astype(np.uint8)
+        aggregated: np.ndarray[Any, Any] = (sums > threshold).astype(np.uint8)
 
         return aggregated
 
     @staticmethod
     def secure_sum_protocol(client_gradients: list[np.ndarray[Any, Any]]) -> np.ndarray[Any, Any]:
-        """
-        Simulates a secure aggregation where the server only sees the sum,
-        not individual updates (like Secure Multi-Party Computation).
+        """Sum client bitstreams as a secure-aggregation surrogate.
+
+        Models a secure aggregation where the server observes only the
+        element-wise sum, not individual client updates, analogous to secure
+        multi-party computation.
         """
         # In SC, 'Summing' bitstreams usually produces an integer result (0..N).
         # This is strictly not a bitstream anymore but a discretized value.
         stack = np.stack(client_gradients, axis=0)
-        return np.sum(stack, axis=0)
+        summed: np.ndarray[Any, Any] = np.sum(stack, axis=0)
+        return summed
