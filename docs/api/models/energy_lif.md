@@ -1,580 +1,298 @@
 # EnergyLIFNeuron
 
-**Module:** `sc_neurocore.neurons.models.energy_lif`
-**Reference:** Fardet & Levina, Neural Comput. 32(12), 2020
-**Family:** Integrate-and-fire with metabolic energy constraint
-**State variables:** `v` (membrane potential), `epsilon` (metabolic energy reserve)
+**Module:** `sc_neurocore.neurons.models.energy_lif`<br>
+**Reference:** Fardet & Levina, Neural Comput. 32(12), 2020; Blouw et al. 2019<br>
+**Family:** Integrate-and-fire with metabolic energy constraint<br>
+**State variables:** membrane voltage `v`, metabolic energy reserve `epsilon`
 
----
+`EnergyLIFNeuron` models a leaky integrate-and-fire neuron whose input gain and
+spike eligibility are constrained by a slow metabolic reserve. High activity
+depletes `epsilon`; low energy weakens current response and prevents spiking
+until recovery restores enough reserve.
 
 ## Equations
 
-### Membrane potential
+The continuous state evolves under piecewise-constant current:
 
-$$\tau_m \frac{dV}{dt} = -(V - V_{rest}) + R \cdot \varepsilon \cdot I$$
+$$
+\frac{dV}{dt} =
+\frac{-(V - V_{rest}) + R I \epsilon(t)}{\tau_m}
+$$
 
-### Energy dynamics
+$$
+\frac{d\epsilon}{dt} =
+\frac{\epsilon_0 - \epsilon}{\tau_\epsilon}
+$$
 
-$$\tau_\varepsilon \frac{d\varepsilon}{dt} = \varepsilon_0 - \varepsilon$$
+Because `epsilon(t)` relaxes independently, the implementation uses the exact
+constant-current flow for the coupled `(V, epsilon)` candidate. With
+`a_m = exp(-dt/tau_m)`, `a_e = exp(-dt/tau_e)`, and
+`delta_e = epsilon - epsilon_0`:
 
-### Spike condition (energy-gated)
+$$
+\epsilon_{next} =
+\epsilon_0 + \delta_\epsilon a_e
+$$
 
-$$V \geq V_{threshold} \; \text{AND} \; \varepsilon > 0.1: \quad V \leftarrow V_{reset}, \quad \varepsilon \leftarrow \max(0, \varepsilon - \alpha)$$
+$$
+V_{next} =
+V_{rest} + (V - V_{rest})a_m +
+\frac{RI}{\tau_m}
+\left[
+\epsilon_0\tau_m(1-a_m) +
+\delta_\epsilon a_m
+\frac{\exp((1/\tau_m - 1/\tau_\epsilon)dt)-1}
+{1/\tau_m - 1/\tau_\epsilon}
+\right]
+$$
 
-### Implementation
+When `tau_m` and `tau_e` are equal, the implementation uses the continuous
+limit for the final fraction:
 
-```python
-def step(self, current: float) -> int:
-    effective_r = self.resistance * self.epsilon
-    self.v += (-(self.v - self.v_rest) + effective_r * current) / self.tau_m * self.dt
-    self.epsilon += (self.epsilon_0 - self.epsilon) / self.tau_e * self.dt
-    if self.v >= self.v_threshold and self.epsilon > 0.1:
-        self.v = self.v_reset
-        self.epsilon -= self.alpha
-        self.epsilon = max(0.0, self.epsilon)
-        return 1
-    return 0
-```
+$$
+\delta_\epsilon a_m dt
+$$
 
-Forward Euler. Two key mechanisms:
-1. **Energy scales input:** R_eff = R × ε. Low energy → weak input response.
-2. **Energy gates spikes:** Must have ε > 0.1 to fire.
+Spike handling is evaluated against the candidate:
 
-The implementation rejects non-physical configurations before integration:
-voltage state and parameters must be finite, `epsilon` and `epsilon_0`
-must be finite and non-negative, `epsilon` must not exceed `epsilon_0`,
-`alpha` must be finite and non-negative, `tau_m`, `tau_e`, `resistance`,
-and `dt` must be positive finite values, `dt` must not exceed either time
-constant, and `v_threshold` must be above both `v_rest` and `v_reset`.
-These constraints preserve bounded monotone energy recovery and avoid
-reset states that are already above threshold.
+$$
+V_{next} \geq V_{threshold}
+\quad \text{and} \quad
+\epsilon_{next} > 0.1
+$$
 
----
+On spike:
+
+$$
+V \leftarrow V_{reset}
+$$
+
+$$
+\epsilon \leftarrow \max(0, \epsilon_{next} - \alpha)
+$$
+
+Without a spike, the exact candidates are committed directly.
 
 ## Parameters
 
-| Parameter | Default | Unit | Description |
-|-----------|---------|------|-------------|
-| `v` | −70.0 | mV | Membrane potential |
-| `epsilon` | 1.0 | — | Metabolic energy reserve (0 to ε₀) |
-| `v_rest` | −70.0 | mV | Resting potential |
-| `v_reset` | −70.0 | mV | Post-spike reset |
-| `v_threshold` | −50.0 | mV | Spike threshold |
-| `tau_m` | 10.0 | ms | Membrane time constant |
-| `tau_e` | 500.0 | ms | Energy recovery time constant |
-| `alpha` | 0.1 | — | Energy cost per spike |
-| `epsilon_0` | 1.0 | — | Resting energy level |
-| `resistance` | 1.0 | MΩ | Membrane resistance |
-| `dt` | 1.0 | ms | Integration timestep |
+| Parameter | Default | Contract | Description |
+|-----------|--------:|----------|-------------|
+| `v` | -70.0 | finite, -200 to 100 | Membrane voltage. |
+| `epsilon` | 1.0 | finite, 0 to `epsilon_0` | Metabolic reserve. |
+| `v_rest` | -70.0 | finite | Resting voltage. |
+| `v_reset` | -70.0 | finite, -200 to 100 | Reset voltage after spike. |
+| `v_threshold` | -50.0 | finite, above rest and reset | Spike threshold. |
+| `tau_m` | 10.0 | positive finite | Membrane time constant. |
+| `tau_e` | 500.0 | positive finite | Energy recovery time constant. |
+| `alpha` | 0.1 | finite, non-negative | Energy cost per spike. |
+| `epsilon_0` | 1.0 | finite, non-negative | Resting energy reserve. |
+| `resistance` | 1.0 | positive finite | Input-current scaling. |
+| `dt` | 1.0 | positive finite, not above `tau_m` or `tau_e` | Integration timestep. |
 
-### τ_e = 500 ms (slow energy recovery)
+## Runtime Contract
 
-The energy time constant is 50× the membrane time constant (10 ms).
-This creates a slow metabolic constraint: energy depletes quickly (one
-spike costs α=0.1) but recovers slowly (τ_e=500 ms → ~5 seconds to
-full recovery from 0).
+- Constructor validation rejects non-finite voltages, non-positive time
+  constants, non-positive resistance or timestep, negative energy reserves,
+  negative spike cost, overfilled energy reserve, and threshold/reset geometry
+  that would be immediately spiking at rest.
+- `step(current)` rejects non-finite runtime current before evaluating the exact
+  flow.
+- Runtime state is revalidated before every step, so corrupted state is rejected
+  before mutation.
+- Exact-flow candidates must remain finite, with voltage inside -200 to 100 and
+  energy inside `[0, epsilon_0]`.
+- Python raises `ValueError` on invalid contracts. Go, Julia, Mojo, and Rust
+  mirrors return `-1` on invalid runtime input or state while preserving the
+  previous state.
 
-### α = 0.1 (spike cost)
+## Polyglot Surfaces
 
-Each spike reduces ε by 0.1. Starting from ε₀=1.0, the neuron can
-fire at most 10 rapid spikes before depleting to 0 (with no recovery
-between spikes). More realistically, the competition between spike
-cost (−0.1 per spike) and recovery (+Δε per dt) creates a sustainable
-firing rate.
-
-### Energy threshold at 0.1
-
-The neuron requires ε > 0.1 to spike. This is a hard gate — even if
-V >> V_threshold, no spike is emitted when ε ≤ 0.1. This creates
-metabolic silencing: after a burst of activity, the neuron enters a
-mandatory quiet period while energy recovers.
-
----
-
-## Analytical Properties
-
-### Energy-modulated input gain
-
-The effective resistance R_eff = R × ε scales the input current:
-- Full energy (ε=1.0): R_eff = 1.0 × I → full response
-- Half energy (ε=0.5): R_eff = 0.5 × I → half response
-- Depleted (ε=0.1): R_eff = 0.1 × I → minimal response
-
-This creates a **negative feedback loop**: high activity → low ε →
-weak response → less activity → ε recovers → cycle.
-
-### Maximum sustained firing rate
-
-At steady state, spike cost must balance recovery:
-
-$$\text{rate} \times \alpha = \frac{\varepsilon_0 - \varepsilon_{ss}}{\tau_\varepsilon}$$
-
-For ε_ss ≈ 0.5 (moderate depletion):
-$$\text{rate} = \frac{(1.0 - 0.5)}{500 \times 0.1} = 10 \text{ Hz}$$
-
-The metabolic constraint limits sustained firing rate to about 10 Hz —
-consistent with typical cortical firing rates in vivo.
-
-### Energy recovery dynamics
-
-Without spiking, ε recovers exponentially toward ε₀:
-$$\varepsilon(t) = \varepsilon_0 - (\varepsilon_0 - \varepsilon_i) e^{-t/\tau_\varepsilon}$$
-
-From ε=0 to ε=0.5: t = −500 ln(0.5) ≈ 347 ms.
-From ε=0 to ε=0.9: t = −500 ln(0.1) ≈ 1151 ms.
-
-### Comparison with standard LIF
-
-| Feature | EnergyLIF | Standard LIF |
-|---------|-----------|-------------|
-| State vars | 2 (V, ε) | 1 (V) |
-| Input scaling | R × ε × I | R × I |
-| Spike gate | V ≥ θ AND ε > 0.1 | V ≥ θ |
-| Spike cost | ε −= 0.1 | None |
-| Sustained rate | Limited by energy | Limited by refractory |
-| Recovery | τ_e = 500 ms | Immediate |
-| Adaptation | Via energy depletion | None (external w) |
-
-The EnergyLIF provides **intrinsic adaptation** through metabolic
-depletion — no explicit adaptation variable needed. The adaptation
-timescale (τ_e=500 ms) is much longer than typical w-based adaptation
-(τ_w=100–200 ms).
-
----
+| Surface | Path | Contract |
+|---------|------|----------|
+| Python reference | `src/sc_neurocore/neurons/models/energy_lif.py` | Stateful exact-flow implementation with exceptions on invalid contracts. |
+| Go service | `src/sc_neurocore/accel/go/services/energy_lif.go` | Stateful exact-flow mirror with invalid-state sentinel. |
+| Julia mirror | `src/sc_neurocore/accel/julia/neurons/energy_lif.jl` | Stateful exact-flow mirror with invalid-state sentinel. |
+| Mojo helper | `src/sc_neurocore/accel/mojo/kernels/energy_lif.mojo` | Stateless exact-flow helper functions for accelerator use. |
+| Rust safety | `src/sc_neurocore/accel/rust/safety/energy_lif.rs` | Stateful exact-flow safety mirror with invalid-state sentinel. |
 
 ## Behaviour
 
-### Three activity regimes
+At full energy, the membrane responds to `R * I`. As repeated spikes deplete
+`epsilon`, the effective drive decreases and the spike gate eventually blocks
+firing. During silence, `epsilon` recovers exponentially toward `epsilon_0`.
 
-1. **Subthreshold (I=10):** Current too weak to reach threshold even
-   at full energy. Zero spikes in 5000 steps.
+Three regimes are covered by module tests:
 
-2. **Spiking (I=30+):** Sufficient current drives V above threshold.
-   Energy gates permit spiking. Rate depends on both I and ε.
+- Subthreshold drive: weak current does not cross threshold at full energy.
+- Energy-gated spiking: sufficient current spikes while `epsilon > 0.1`.
+- Metabolic silence: depleted energy blocks spikes until recovery.
 
-3. **Energy-depleted silence:** After sustained high-frequency firing,
-   ε drops below 0.1 → neuron enters mandatory quiet period until
-   ε recovers. This creates bursty dynamics at high drive.
+## Analytical Properties
 
-### Energy depletion under drive
+### Energy-Modulated Input Gain
 
-At I=50 (high drive), ε decreases below 1.0 after sustained spiking.
-Verified by test: after 5000 steps at I=50, ε < 1.0.
+The input term is scaled by the current metabolic reserve:
 
-### Energy recovery without drive
+$$
+R_{eff}(t) = R\epsilon(t)
+$$
 
-Starting from ε=0.1, after 5000 steps at I=0 (no spiking), ε > 0.1.
-The exponential recovery toward ε₀=1.0 is verified.
+This creates a closed negative feedback loop:
 
-### Energy gates spiking
+| Energy state | Effective gain | Consequence |
+|--------------|----------------|-------------|
+| `epsilon = 1.0` | full `R * I` drive | The membrane follows the ordinary LIF response at full reserve. |
+| `epsilon = 0.5` | half `R * I` drive | The same current produces a weaker depolarisation. |
+| `epsilon <= 0.1` | low drive and spike gate closed | The neuron cannot emit a spike until recovery crosses the gate. |
 
-When ε=0.05 (< 0.1 threshold), even at I=50 (well above threshold),
-zero spikes are produced in 100 steps. The energy gate is absolute.
+The exact-flow implementation preserves this time-varying input gain inside the
+membrane integral. It does not freeze `epsilon` at the start of the step and does
+not approximate the recovery term with a raw Euler increment.
 
----
+### Energy Recovery Dynamics
 
-## Comparison with Related Models
+Without spikes, energy recovery follows the closed-form first-order relaxation:
 
-| Property | EnergyLIF | AdEx | SFA (Benda-Herz) | EPropALIF |
-|----------|-----------|------|-------------------|----------|
-| Adaptation | Energy depletion | w current | Threshold shift | Threshold shift |
-| Mechanism | ε scales R, gates spikes | w hyperpolarises | Dynamic θ | Dynamic θ |
-| Timescale | 500 ms (τ_e) | 100 ms (τ_w) | 50 ms (τ_a) | 200 ms (τ_a) |
-| Hard gate | Yes (ε > 0.1) | No | No | No |
-| Energy metric | ε (explicit) | None | None | None |
-| Metabolic | Yes (biological) | No | No | No |
-| Pipeline | Compatible | Compatible | Compatible | Compatible |
+$$
+\epsilon(t) = \epsilon_0 - (\epsilon_0 - \epsilon_i)e^{-t/\tau_\epsilon}
+$$
 
-The EnergyLIF is the only model with an explicit metabolic energy
-constraint — biologically motivated by ATP consumption during spiking.
+For the default `tau_e = 500 ms`, recovery is intentionally slower than the
+default membrane relaxation:
 
----
+| Initial reserve | Target reserve | Approximate recovery time |
+|-----------------|----------------|---------------------------|
+| 0.0 | 0.5 | 347 ms |
+| 0.0 | 0.9 | 1,151 ms |
+| 0.1 | 0.5 | 294 ms |
+
+### Spike-Cost Balance
+
+At a sustained operating point, average spike cost balances recovery:
+
+$$
+f\alpha \approx \frac{\epsilon_0 - \epsilon_{ss}}{\tau_\epsilon}
+$$
+
+For `epsilon_ss = 0.5`, `epsilon_0 = 1.0`, `tau_e = 500 ms`, and
+`alpha = 0.1`, the balance gives approximately:
+
+$$
+f \approx \frac{1.0 - 0.5}{500 \cdot 0.1} = 0.01 \text{ spikes/ms}
+$$
+
+That corresponds to about 10 Hz under this simplified balance argument. The
+actual emitted rate also depends on the voltage trajectory, reset timing,
+current amplitude, and the hard `epsilon > 0.1` spike gate.
+
+### Comparison With Standard LIF
+
+| Feature | EnergyLIF | Standard LIF |
+|---------|-----------|--------------|
+| State variables | `v`, `epsilon` | `v` |
+| Input gain | `R * epsilon * I` | `R * I` |
+| Spike eligibility | voltage threshold and energy gate | voltage threshold |
+| Spike cost | `epsilon -= alpha` after candidate recovery | none |
+| Recovery process | slow metabolic relaxation | not represented |
+| Main adaptation mechanism | intrinsic reserve depletion | absent unless another adaptation variable is added |
+
+EnergyLIF therefore acts as a compact adaptation model with an explicit
+metabolic reserve rather than a threshold or hyperpolarising adaptation current.
 
 ## Numerical Considerations
 
-- **No transcendental functions.** Pure linear ODE + threshold + clamp.
-- **ε ≥ 0 clamp.** Prevents negative energy (unphysical).
-- **ε > 0.1 gate.** Hard threshold on spiking — discontinuous but
-  numerically trivial (comparison).
-- **Single Euler step.** dt=1.0 ms with validation that `dt <= tau_m`
-  and `dt <= tau_e`, preserving monotone relaxation for the linear
-  membrane and energy dynamics.
-- **Two state variables.** V and ε. Both bounded by natural dynamics
-  (V by spike-reset, ε by [0, ε₀]).
+- The continuous two-state system is linear under constant input current because
+  `epsilon(t)` is independent of voltage within a step.
+- The implementation uses the exact coupled flow for `(v, epsilon)`, including
+  the integral of recovering energy through the membrane equation.
+- The branch for `tau_m == tau_e` uses the analytic limit
+  `delta_e * exp(-dt/tau_m) * dt`, avoiding division by a near-zero rate
+  difference.
+- Spike reset and energy cost remain discontinuous events after the exact
+  candidate is evaluated.
+- Candidate-first validation prevents partial state mutation when a runtime
+  current, corrupted state, or candidate value is invalid.
+- The committed benchmark is local non-isolated evidence. Production benchmark
+  claims require isolated CPU/core execution and recorded host-load context.
 
----
+## Measured Benchmark Evidence
 
-## Implementation Notes
+Benchmark artifact:
+`benchmarks/results/local_python_2026-06-18_energy_lif_exact_flow.json`
 
-- **Source:** `src/sc_neurocore/neurons/models/energy_lif.py` — 43 lines.
-- **Two state variables:** v, epsilon.
-- **Dataclass:** Uses `@dataclass`.
-- **No numpy dependency:** Pure Python arithmetic.
-- **Rust wiring:** Trivially compatible (2 f64 state vars, pure arithmetic).
+Evidence class: `local_regression_non_isolated`. The artifact records local
+functional and parity evidence only; it is not an isolated hardware-performance
+claim and does not claim production speed.
 
----
+Configuration:
 
-## Performance
+| Field | Value |
+|-------|------:|
+| Steps per repeat | 200,000 |
+| Repeats | 5 |
+| Constant current | 50.0 |
+| Expected spike parity | 2,550 spikes on every backend |
 
-| Metric | Python | Rust |
-|--------|--------|------|
-| Isolation | ~1.76M steps/s | Not measured |
-| Network (20n, 500ms) | ~1.4M neuron-steps/s | — |
+Measured timing on `aaarthuus`, Linux 6.17.0-35-generic, Python 3.12.3:
 
-Among the fastest models — no exp(), no sub-stepping, 2 state variables,
-pure arithmetic.
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
+|---------|---------------:|------------:|------------:|-------:|
+| Python | 1,692.761055 | 1,631.32507 | 1,947.13414 | 2,550 |
+| Rust safety | 33.077485 | 32.78194 | 33.554295 | 2,550 |
+| Go service | 42.83 | 42.08 | 43.72 | 2,550 |
+| Julia mirror | 29.38143 | 28.853575 | 31.57255 | 2,550 |
+| Mojo helper | 3.738814848475158 | 3.4707499435171485 | 3.9324749377556145 | 2,550 |
 
----
+The benchmark gate
+`energy-lif-exact-flow-multibackend-local-regression` requires numeric timing
+rows for Python, Rust, Go, Julia, and Mojo, plus zero-tolerance spike-count
+parity across all five backends.
+
+## Verification
+
+Focused checks for this hardening slice:
+
+| Command | Coverage |
+|---------|----------|
+| `ruff check src/sc_neurocore/neurons/models/energy_lif.py tests/test_model_energy_lif.py benchmarks/bench_model_energy_lif.py` | Python lint for model, tests, and benchmark. |
+| `mypy --strict src/sc_neurocore/neurons/models/energy_lif.py benchmarks/bench_model_energy_lif.py` | Strict typing for the Python model and benchmark harness. |
+| `pytest tests/test_model_energy_lif.py -q` | Exact-flow math, invalid-state preservation, network, and analysis coverage. |
+| `go test src/sc_neurocore/accel/go/services/energy_lif.go src/sc_neurocore/accel/go/services/energy_lif_test.go` | Go exact-flow candidate, spike-cost, invalid-state, and benchmark hook coverage. |
+| `rustc --test src/sc_neurocore/accel/rust/safety/energy_lif.rs -o /tmp/energy_lif_safety_test && /tmp/energy_lif_safety_test` | Rust safety exact-flow and invalid-state coverage. |
+| `julia --project=. -e '<EnergyLIF exact-flow smoke>'` | Julia exact-flow candidate smoke. |
+| `mojo -I src/sc_neurocore/accel/mojo/kernels <EnergyLIF exact-flow smoke>` | Mojo helper smoke. |
+| `python benchmarks/bench_model_energy_lif.py` | Regenerates the five-backend local benchmark artifact. |
+| `python tools/benchmark_evidence_gate.py --manifest /tmp/energy_lif_gate.json --output /tmp/energy_lif_gate_report.json` | Validates required timing rows, source hashes, and spike parity. |
 
 ## Test Coverage
 
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 58 parametrized/behavioral checks | construction, binary output, subthreshold (I=10), spikes (I=30), energy depletes (I=50), energy recovers (from ε=0.1), bounded monotone recovery, energy gates spiking (ε=0.05), energy non-negative (10K at I=50), reset, fail-closed parameter and current validation |
-| Network | 3 | Population(n=10/20), Network+PoissonInput spikes, Projection+spike_trains |
-| Analysis | 2 | firing_rate >0, spike_count >10 |
-| **Total** | **64** | **PASSED in scoped validation** |
+| Category | Coverage |
+|----------|----------|
+| Isolation | construction, binary output, subthreshold drive, spiking drive, energy depletion, recovery, non-negative reserve, reset |
+| Validation | non-finite voltage/current rejection, non-positive scales, invalid threshold geometry, overfilled reserve, corrupted runtime-state preservation |
+| Exact flow | exact candidate commit, separation from forward Euler, candidate-ordered spike energy cost |
+| Network | population construction, Poisson-driven network spiking, recurrent projection wiring |
+| Analysis | firing-rate and spike-count integration through the public analysis helpers |
+| Native mirrors | Go exact-flow tests, Rust safety tests, Julia smoke, Mojo smoke |
+| Benchmark | Python, Rust, Go, Julia, and Mojo rows with zero-tolerance spike-count parity |
 
-See `tests/test_model_energy_lif.py`.
-
----
-
-## Findings (Measured 2026-03-31)
-
-1. **64/64 tests PASSED in scoped validation.** No failures.
-
-2. **Subthreshold at I=10.** Zero spikes in 5000 steps.
-
-3. **Spiking at I=30.** More than 10 spikes in 5000 steps.
-
-4. **Energy depletes under drive.** After 5000 steps at I=50, ε < 1.0.
-
-5. **Energy recovers without drive.** From ε=0.1, after 5000 steps at
-   I=0, ε > 0.1.
-
-6. **Energy gates spiking absolutely.** At ε=0.05 (< 0.1), even high
-   drive (I=50) produces zero spikes in 100 steps.
-
-7. **Energy non-negative.** After 10K steps at I=50, ε ≥ 0.
-
-8. **Reset restores full energy.** v → v_rest, ε → ε₀.
-
-9. **Network pipeline functional.** Population(n=20) with PoissonInput
-   (rate=500Hz, weight=30) produces spikes. Projection(pop→pop,
-   weight=5, prob=0.3) works.
-
-10. **Analysis verified.** firing_rate > 0, spike_count > 10.
-
----
-
-## Usage Examples
-
-### Example 1: Energy depletion under sustained drive
+## Usage
 
 ```python
 from sc_neurocore.neurons.models.energy_lif import EnergyLIFNeuron
 
-n = EnergyLIFNeuron()
-spikes_per_100 = []
-for block in range(10):
-    block_spikes = sum(n.step(current=50.0) for _ in range(100))
-    spikes_per_100.append(block_spikes)
-    print(f"Block {block}: {block_spikes} spikes, energy={n.energy:.3f}")
+neuron = EnergyLIFNeuron()
+spikes = [neuron.step(50.0) for _ in range(1000)]
+print(sum(spikes), neuron.v, neuron.epsilon)
 ```
 
-### Example 2: Energy recovery after silence
+Invalid runtime current preserves state:
 
 ```python
-from sc_neurocore.neurons.models.energy_lif import EnergyLIFNeuron
-
-n = EnergyLIFNeuron()
-# Deplete energy
-for _ in range(1000):
-    n.step(current=50.0)
-depleted = n.energy
-# Let energy recover
-for _ in range(5000):
-    n.step(current=0.0)
-recovered = n.energy
-print(f"After depletion: {depleted:.3f}")
-print(f"After recovery:  {recovered:.3f}")
+neuron = EnergyLIFNeuron(v=-65.0, epsilon=0.5)
+before = (neuron.v, neuron.epsilon)
+try:
+    neuron.step(float("nan"))
+except ValueError:
+    assert (neuron.v, neuron.epsilon) == before
 ```
-
-### Example 3: Energy-gated sparse coding
-
-```python
-from sc_neurocore.neurons.models.energy_lif import EnergyLIFNeuron
-from sc_neurocore.network import Network, Population
-from sc_neurocore.input_sources import PoissonInput
-from sc_neurocore.monitors import SpikeMonitor
-from sc_neurocore.analysis import spike_count
-
-pop = Population(EnergyLIFNeuron, n=20, label="sparse")
-net = Network()
-net.add_population("layer", pop)
-stim = PoissonInput(rate=500.0, weight=30.0, dt=0.001, seed=42)
-net.add_input("drive", stim, target="layer")
-mon = SpikeMonitor()
-net.add_monitor("spk", mon, source="layer")
-net.run(duration=1.0)
-print(f"Total spikes: {spike_count(mon)}")
-```
-
----
-
-## Technical Reference
-
-### Rust parity
-
-| Aspect | Python | Rust | Status |
-|--------|--------|------|--------|
-| State variables | v, energy | same | **EXACT** |
-| LIF dynamics | leak + ε-gated input | same | **EXACT** |
-| Energy dynamics | depletion + recovery | same | **EXACT** |
-| All defaults | identical | identical | **EXACT** |
-
-**No parity defects.** EXACT parity verified by automated scan.
-
-### Source files
-
-| File | Lines | Description |
-|------|-------|-------------|
-| `src/sc_neurocore/neurons/models/energy_lif.py` | ~55 | Python reference |
-| `engine/src/neurons/trivial.rs` | (shared) | Rust implementation |
-| `tests/test_model_energy_lif.py` | ~180 | 14 tests |
-
----
-
-## Performance Benchmarks
-
-### Criterion benchmarks (local i5-11600K, measured 2026-04-05)
-
-| Metric | Value |
-|--------|-------|
-| Test | `energy_lif_10k_steps` |
-| Median | 158.4 µs |
-| Per-step | 15.8 ns |
-| Throughput | ~63.3M steps/s |
-
-### Python baseline
-
-| Metric | Value |
-|--------|-------|
-| Isolation | ~200K steps/s |
-
-Rust achieves a **316× speedup**. The model adds minimal overhead
-to the standard LIF — one extra variable (ε) with multiply and clip.
-
----
-
-## Limitations
-
-- **Simplified energy model:** Real metabolic constraints involve
-  complex ATP/ADP dynamics, mitochondrial buffering, and glucose
-  transport. The ε variable is a first-order approximation.
-- **No spatial energy gradients:** Each neuron has independent energy.
-  In reality, nearby neurons share blood supply and astrocyte support.
-- **Recovery rate is constant:** τ_ε does not depend on energy level.
-  Biological recovery may be nonlinear (faster at low ε).
-- **No energy-dependent threshold:** The threshold is fixed. In some
-  energy models, the threshold rises when energy is low.
-
----
-
-## Citations
-
-1. Fardet T, Levina A (2020). Simple models including energy and spike
-   constraints reproduce complex activity patterns and metabolic
-   disruptions. *PLoS Comput Biol* 16(12):e1008503.
-   DOI: [10.1371/journal.pcbi.1008503](https://doi.org/10.1371/journal.pcbi.1008503)
-
-2. Turrigiano GG (2008). The self-tuning neuron: synaptic scaling of
-   excitatory synapses. *Cell* 135(3):422–435.
-   DOI: [10.1016/j.cell.2008.10.008](https://doi.org/10.1016/j.cell.2008.10.008)
-
-3. Attwell D, Laughlin SB (2001). An energy budget for signaling in
-   the grey matter of the brain. *J Cereb Blood Flow Metab*
-   21(10):1133–1145.
-   DOI: [10.1097/00004647-200110000-00001](https://doi.org/10.1097/00004647-200110000-00001)
-
-4. Lennie P (2003). The cost of cortical computation. *Curr Biol*
-   13(6):493–497.
-   DOI: [10.1016/S0960-9822(03)00135-0](https://doi.org/10.1016/S0960-9822(03)00135-0)
-
-5. Beggs JM, Plenz D (2003). Neuronal avalanches in neocortical
-   circuits. *J Neurosci* 23(35):11167–11177.
-   DOI: [10.1523/JNEUROSCI.23-35-11167.2003](https://doi.org/10.1523/JNEUROSCI.23-35-11167.2003)
-
----
-
-**ALL 14 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
-**Rust parity: EXACT (no defects found).**
-**Criterion: 158.4 µs / 10K steps (15.8 ns/step, ~63.3M steps/s).**
-
----
-
-## Theoretical Context
-
-### Metabolic constraints in neural computation
-
-Fardet & Levina (2020) proposed that metabolic energy constraints
-(ATP supply/demand) shape neural firing patterns:
-
-1. **Spiking is expensive:** Each action potential consumes ~10⁹ ATP
-   molecules for Na⁺/K⁺-ATPase restoration of ionic gradients.
-2. **Brain uses 20% of body energy:** Despite being 2% of body mass.
-3. **Energy limits firing rate:** Real cortical neurons fire at
-   1–20 Hz, not the 100+ Hz that biophysics allows — metabolic
-   constraints explain this gap.
-4. **Sparse coding:** Energy constraints naturally produce sparse
-   representations — the neuron "saves energy" by firing rarely.
-
-### EnergyLIF as homeostatic mechanism
-
-The energy variable ε acts as a homeostatic regulator:
-- High activity → ε depletes → reduced sensitivity → less activity
-- Low activity → ε recovers → increased sensitivity → more activity
-- The system self-regulates to a sustainable firing rate
-
-This is computationally equivalent to synaptic scaling (Turrigiano 2008)
-but operates on a faster timescale (500 ms vs hours/days for synaptic
-homeostasis).
-
-### Implications for network dynamics
-
-In networks of EnergyLIF neurons:
-- **Self-organised criticality:** Energy constraints push the network
-  toward critical states — balanced between quiescence and runaway
-  activity (Fardet & Levina 2020).
-- **Avalanche statistics:** The energy-gated suppression creates
-  neuronal avalanches with power-law size distributions.
-- **Metabolically efficient coding:** The network naturally discovers
-  sparse, energy-efficient representations.
-
-### Neurovascular coupling and the BOLD signal
-
-The energy variable ε has a direct connection to functional
-neuroimaging. The BOLD (Blood-Oxygen-Level Dependent) signal in fMRI
-reflects local metabolic demand:
-
-1. **Neural activity → ATP consumption → ε decreases**
-2. **Low ε → increased cerebral blood flow (CBF) → oxygen delivery**
-3. **Oxygenated blood → BOLD signal increase (delayed ~5 s)**
-
-The EnergyLIF's ε trajectory provides a proxy for the neural component
-of the BOLD signal — high ε means low activity (weak BOLD), low ε
-means high activity (large BOLD). This connection enables the model
-to bridge between spiking dynamics and neuroimaging observables.
-
-### Energy-efficient sparse coding
-
-The information-theoretic perspective on metabolic constraints
-(Laughlin & Sejnowski 2003):
-
-- **Coding cost:** Each spike has a fixed metabolic cost $c$
-- **Information rate:** $R = f \cdot \log_2(1 + \text{SNR})$ bits/s
-- **Efficiency:** $R / (f \cdot c)$ bits per ATP molecule
-- **Optimal rate:** Maximising efficiency gives a finite optimal
-  firing rate $f^*$ — neither too sparse (low R) nor too dense
-  (high cost)
-
-The EnergyLIF naturally implements this tradeoff: ε depletion
-penalises high rates, pushing the neuron toward the efficient regime.
-
-### Comparison with other adaptation mechanisms
-
-| Mechanism | Timescale | Variable | Effect |
-|-----------|-----------|----------|--------|
-| SFA (AdEx w) | 100–500 ms | Adaptation current | Subtractive |
-| **Energy (ε)** | **500–2000 ms** | **Energy fraction** | **Multiplicative (gain)** |
-| Synaptic depression | 200–1000 ms | Available vesicles | Synaptic |
-| Synaptic scaling | Hours–days | Receptor density | Homeostatic |
-| Intrinsic plasticity | Hours | Ion channel density | Threshold shift |
-
-The EnergyLIF's multiplicative gain modulation ($I_{eff} = \varepsilon \cdot I$)
-is qualitatively different from the subtractive adaptation of AdEx
-($I_{eff} = I - w$). Multiplicative modulation preserves the
-signal-to-noise ratio of the input, while subtractive modulation
-reduces it.
-
-### Metabolic disorders and neural dysfunction
-
-Disruptions of energy metabolism are implicated in several
-neurological conditions:
-
-- **Epilepsy:** Mitochondrial dysfunction reduces ε recovery rate →
-  seizure-like bursting followed by prolonged silence (postictal
-  suppression). The EnergyLIF can model this by reducing τ_recovery.
-- **Stroke/ischaemia:** Sudden ε depletion (blood supply cutoff) →
-  complete silencing followed by excitotoxic burst. Model by
-  setting ε → 0 acutely.
-- **Neurodegeneration:** Chronic energy deficit (reduced baseline ε)
-  → lower firing rates, reduced cognitive capacity. Model by
-  reducing initial ε.
-- **Hypoglycaemia:** Reduced glucose → reduced ATP production →
-  slower ε recovery. Model by increasing τ_recovery.
-
-### Extensions of the energy model
-
-Several extensions of the basic EnergyLIF are possible:
-
-- **Nonlinear recovery:** $d\varepsilon/dt = (1-\varepsilon)^2 / \tau_\varepsilon$
-  — recovery accelerates as ε approaches 1 (matching the sigmoidal
-  kinetics of mitochondrial ATP production)
-- **Energy-dependent threshold:** $V_{threshold}(\varepsilon) = V_0 + \Delta V \cdot (1 - \varepsilon)$
-  — threshold rises when energy is low, providing additional
-  suppression
-- **Shared energy pool:** Multiple neurons draw from a common ε,
-  representing shared blood supply within a cortical microcolumn
-- **Astrocyte-mediated recovery:** An astrocyte model (see
-  `AstrocyteUnit`) could modulate τ_recovery based on local
-  glutamate concentration, implementing neuron-glia metabolic
-  coupling
-
-### Connection to reinforcement learning
-
-In reinforcement learning, the concept of "resource-rational"
-computation (Lieder & Griffiths 2020) postulates that cognitive
-agents allocate limited computational resources optimally. The
-EnergyLIF provides a neural implementation:
-
-- **ε as computational budget:** Each spike costs energy → neurons
-  "decide" which inputs are worth responding to
-- **Sparse representation = efficient policy:** The energy constraint
-  forces the network to learn which stimuli are behaviourally
-  relevant (worth spending ε on) vs irrelevant (ignore to save ε)
-- **Exploration-exploitation tradeoff:** When ε is high, the neuron
-  can afford to explore (respond broadly). When ε is low, it must
-  exploit (respond only to the most important inputs).
-
-### Experimental evidence for metabolic gating
-
-Direct evidence for energy-dependent neural activity modulation:
-
-- **In vitro:** Bhatt et al. (2008) showed that ATP depletion in
-  hippocampal slices reduces firing rates and eventually silences
-  neurons, with recovery upon ATP restoration — qualitatively
-  matching the EnergyLIF's ε dynamics.
-- **In vivo:** Huchzermeyer et al. (2013) measured simultaneous
-  neural activity and tissue oxygen in rat cortex during seizures,
-  showing that firing rate drops precede oxygen recovery — the
-  neuron "runs out of energy" before blood supply catches up.
-- **Computational:** Fardet & Levina (2020) showed that energy-
-  constrained LIF networks reproduce the power-law avalanche
-  statistics observed in cortical slice cultures (Beggs & Plenz 2003),
-  while standard LIF networks do not.
-
-### Relationship to spike-frequency adaptation
-
-The EnergyLIF's ε depletion produces spike-frequency adaptation
-(SFA) as an emergent property:
-
-- **Initial response:** ε ≈ 1.0, full sensitivity → high firing rate
-- **Sustained drive:** ε decreases → gain decreases → rate drops
-- **Steady state:** ε reaches equilibrium where depletion = recovery
-  → sustained but reduced firing rate
-
-This adaptation is qualitatively similar to AdEx's w-mediated SFA
-but has a different mathematical form (multiplicative gain vs
-subtractive current) and a different biophysical interpretation
-(metabolic vs ionic).

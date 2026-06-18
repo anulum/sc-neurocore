@@ -12,6 +12,10 @@ import (
 	"math"
 )
 
+const energyLIFVMin = -200.0
+const energyLIFVMax = 100.0
+const energyLIFGate = 0.1
+
 // EnergyLIFNeuronState holds the neuron state
 type EnergyLIFNeuronState struct {
 	V          float64
@@ -47,30 +51,58 @@ func NewEnergyLIFNeuron() *EnergyLIFNeuronState {
 // Step advances the neuron by one timestep
 func (s *EnergyLIFNeuronState) Step(iExt float64) int {
 	if !s.Valid() || !isFiniteEnergyLIF(iExt) {
-		return 0
+		return -1
 	}
 
-	effectiveR := s.Resistance * s.Epsilon
-	s.V += (-(s.V - s.VRest) + effectiveR*iExt) / s.TauM * s.Dt
-	s.Epsilon += (s.Epsilon0 - s.Epsilon) / s.TauE * s.Dt
-	if s.V >= s.VThreshold && s.Epsilon > 0.1 {
-		s.V = s.VReset
-		s.Epsilon -= s.Alpha
-		if s.Epsilon < 0.0 {
-			s.Epsilon = 0.0
+	vCandidate, epsilonCandidate := s.exactCandidate(iExt)
+	if !isFiniteEnergyLIF(vCandidate) || !isFiniteEnergyLIF(epsilonCandidate) ||
+		vCandidate < energyLIFVMin || vCandidate > energyLIFVMax ||
+		epsilonCandidate < 0.0 || epsilonCandidate > s.Epsilon0 {
+		return -1
+	}
+	if vCandidate >= s.VThreshold && epsilonCandidate > energyLIFGate {
+		epsilonAfterSpike := math.Max(0.0, epsilonCandidate-s.Alpha)
+		if !isFiniteEnergyLIF(epsilonAfterSpike) || epsilonAfterSpike > s.Epsilon0 {
+			return -1
 		}
+		s.V = s.VReset
+		s.Epsilon = epsilonAfterSpike
 		return 1
 	}
+	s.V = vCandidate
+	s.Epsilon = epsilonCandidate
 	return 0
+}
+
+func (s *EnergyLIFNeuronState) exactCandidate(iExt float64) (float64, float64) {
+	membraneDecay := math.Exp(-s.Dt / s.TauM)
+	energyDecay := math.Exp(-s.Dt / s.TauE)
+	energyDelta := s.Epsilon - s.Epsilon0
+	epsilonCandidate := s.Epsilon0 + energyDelta*energyDecay
+	steadyEnergyIntegral := s.Epsilon0 * s.TauM * (1.0 - membraneDecay)
+	coupledRate := (1.0 / s.TauM) - (1.0 / s.TauE)
+	transientEnergyIntegral := 0.0
+	if math.Abs(coupledRate) < 1.0e-12 {
+		transientEnergyIntegral = energyDelta * membraneDecay * s.Dt
+	} else {
+		transientEnergyIntegral = energyDelta * membraneDecay * math.Expm1(coupledRate*s.Dt) / coupledRate
+	}
+	vCandidate := s.VRest + (s.V-s.VRest)*membraneDecay +
+		(s.Resistance*iExt/s.TauM)*(steadyEnergyIntegral+transientEnergyIntegral)
+	return vCandidate, epsilonCandidate
 }
 
 // Valid returns true when the state satisfies the energy-LIF physics contract.
 func (s *EnergyLIFNeuronState) Valid() bool {
 	return isFiniteEnergyLIF(s.V) &&
+		s.V >= energyLIFVMin &&
+		s.V <= energyLIFVMax &&
 		isFiniteEnergyLIF(s.Epsilon) &&
 		s.Epsilon >= 0.0 &&
 		isFiniteEnergyLIF(s.VRest) &&
 		isFiniteEnergyLIF(s.VReset) &&
+		s.VReset >= energyLIFVMin &&
+		s.VReset <= energyLIFVMax &&
 		isFiniteEnergyLIF(s.VThreshold) &&
 		isFiniteEnergyLIF(s.TauM) &&
 		s.TauM > 0.0 &&

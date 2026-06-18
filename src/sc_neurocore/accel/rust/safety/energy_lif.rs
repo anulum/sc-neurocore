@@ -6,7 +6,9 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for energy_lif
 
-#![allow(unused_variables, dead_code, non_snake_case)]
+const ENERGY_LIF_V_MIN: f64 = -200.0_f64;
+const ENERGY_LIF_V_MAX: f64 = 100.0_f64;
+const ENERGY_LIF_GATE: f64 = 0.1_f64;
 
 #[derive(Debug, Clone)]
 pub struct EnergyLIFNeuron {
@@ -42,17 +44,24 @@ impl EnergyLIFNeuron {
 
     pub fn step(&mut self, i_ext: f64) -> i32 {
         if !validate_energy_lif(self) || !i_ext.is_finite() {
-            return 0;
+            return -1;
         }
 
-        let effective_r = self.resistance * self.epsilon;
-        self.v += (-(self.v - self.v_rest) + effective_r * i_ext) / self.tau_m * self.dt;
-        self.epsilon += (self.epsilon_0 - self.epsilon) / self.tau_e * self.dt;
-        if self.v >= self.v_threshold && self.epsilon > 0.1 {
+        let (v_candidate, epsilon_candidate) = self.exact_candidate(i_ext);
+        if !energy_lif_candidate_valid(v_candidate, epsilon_candidate, self.epsilon_0) {
+            return -1;
+        }
+        if v_candidate >= self.v_threshold && epsilon_candidate > ENERGY_LIF_GATE {
+            let epsilon_after_spike = (epsilon_candidate - self.alpha).max(0.0_f64);
+            if !(epsilon_after_spike.is_finite() && epsilon_after_spike <= self.epsilon_0) {
+                return -1;
+            }
             self.v = self.v_reset;
-            self.epsilon = (self.epsilon - self.alpha).max(0.0);
+            self.epsilon = epsilon_after_spike;
             return 1;
         }
+        self.v = v_candidate;
+        self.epsilon = epsilon_candidate;
         0
     }
 
@@ -60,14 +69,37 @@ impl EnergyLIFNeuron {
         self.v = self.v_rest;
         self.epsilon = self.epsilon_0;
     }
+
+    fn exact_candidate(&self, i_ext: f64) -> (f64, f64) {
+        let membrane_decay = (-self.dt / self.tau_m).exp();
+        let energy_decay = (-self.dt / self.tau_e).exp();
+        let energy_delta = self.epsilon - self.epsilon_0;
+        let epsilon_candidate = self.epsilon_0 + energy_delta * energy_decay;
+        let steady_energy_integral = self.epsilon_0 * self.tau_m * (1.0_f64 - membrane_decay);
+        let coupled_rate = (1.0_f64 / self.tau_m) - (1.0_f64 / self.tau_e);
+        let transient_energy_integral = if coupled_rate.abs() < 1.0e-12_f64 {
+            energy_delta * membrane_decay * self.dt
+        } else {
+            energy_delta * membrane_decay * (coupled_rate * self.dt).exp_m1() / coupled_rate
+        };
+        let v_candidate = self.v_rest
+            + (self.v - self.v_rest) * membrane_decay
+            + (self.resistance * i_ext / self.tau_m)
+                * (steady_energy_integral + transient_energy_integral);
+        (v_candidate, epsilon_candidate)
+    }
 }
 
 pub fn validate_energy_lif(state: &EnergyLIFNeuron) -> bool {
     state.v.is_finite()
+        && state.v >= ENERGY_LIF_V_MIN
+        && state.v <= ENERGY_LIF_V_MAX
         && state.epsilon.is_finite()
         && state.epsilon >= 0.0
         && state.v_rest.is_finite()
         && state.v_reset.is_finite()
+        && state.v_reset >= ENERGY_LIF_V_MIN
+        && state.v_reset <= ENERGY_LIF_V_MAX
         && state.v_threshold.is_finite()
         && state.tau_m.is_finite()
         && state.tau_m > 0.0
@@ -86,6 +118,15 @@ pub fn validate_energy_lif(state: &EnergyLIFNeuron) -> bool {
         && state.dt <= state.tau_e
         && state.v_threshold > state.v_rest
         && state.v_threshold > state.v_reset
+}
+
+fn energy_lif_candidate_valid(v: f64, epsilon: f64, epsilon_0: f64) -> bool {
+    v.is_finite()
+        && v >= ENERGY_LIF_V_MIN
+        && v <= ENERGY_LIF_V_MAX
+        && epsilon.is_finite()
+        && epsilon >= 0.0_f64
+        && epsilon <= epsilon_0
 }
 
 #[cfg(test)]
@@ -111,5 +152,35 @@ mod tests {
         let mut state = EnergyLIFNeuron::new();
         state.epsilon = 1.1;
         assert!(!validate_energy_lif(&state));
+    }
+
+    #[test]
+    fn test_energy_lif_exact_candidate_commit() {
+        let mut state = EnergyLIFNeuron::new();
+        state.epsilon = 0.5_f64;
+        let (v_candidate, epsilon_candidate) = state.exact_candidate(10.0_f64);
+        assert_eq!(state.step(10.0_f64), 0);
+        assert!((state.v - v_candidate).abs() < 1.0e-12_f64);
+        assert!((state.epsilon - epsilon_candidate).abs() < 1.0e-12_f64);
+    }
+
+    #[test]
+    fn test_energy_lif_invalid_state_does_not_mutate() {
+        let mut state = EnergyLIFNeuron::new();
+        state.epsilon = -1.0_f64;
+        let before = state.clone();
+        assert_eq!(state.step(10.0_f64), -1);
+        assert_eq!(state.v, before.v);
+        assert_eq!(state.epsilon, before.epsilon);
+    }
+
+    #[test]
+    fn test_energy_lif_spike_uses_energy_candidate() {
+        let mut state = EnergyLIFNeuron::new();
+        let (_, epsilon_candidate) = state.exact_candidate(250.0_f64);
+        assert_eq!(state.step(250.0_f64), 1);
+        assert_eq!(state.v, state.v_reset);
+        let expected = (epsilon_candidate - state.alpha).max(0.0_f64);
+        assert!((state.epsilon - expected).abs() < 1.0e-12_f64);
     }
 }

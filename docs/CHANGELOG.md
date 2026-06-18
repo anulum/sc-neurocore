@@ -6,6 +6,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `EnergyLIFNeuron` from raw Euler membrane and metabolic-reserve
+  updates to the exact constant-current flow for the coupled `(v, epsilon)`
+  state across Python, Go, Julia, Mojo, and Rust safety surfaces. Added
+  module-specific Python/Go/Rust exact-flow and invalid-state coverage,
+  refreshed the public model documentation with measured five-backend timing
+  rows, and added a local non-isolated benchmark gate for exact spike-count
+  parity.
 - Promoted `MATNeuron` from a split forward-Euler membrane update plus separate
   threshold decay to candidate-first RK4 over `(v, theta1, theta2)` across the
   Python reference, Go service, Julia mirror, Mojo helper, and Rust safety
