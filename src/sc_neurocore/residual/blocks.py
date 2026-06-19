@@ -18,6 +18,7 @@ Reference: MS-ResNet trained 482-layer SNN on CIFAR-10
 
 from __future__ import annotations
 
+from typing import Any
 
 import numpy as np
 
@@ -47,7 +48,7 @@ class MembraneShortcutBlock:
         self.W2 = rng.randn(n_features, n_features) * scale
         self._v = np.zeros(n_features)
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Forward pass: x -> W1 -> LIF -> W2 -> add residual -> LIF -> spikes."""
         alpha = np.exp(-1.0 / self.tau_mem)
 
@@ -67,6 +68,7 @@ class MembraneShortcutBlock:
         return spikes
 
     def reset(self) -> None:
+        """Reset the block membrane potential to zero."""
         self._v = np.zeros(self.n_features)
 
 
@@ -89,15 +91,17 @@ class SEWBlock:
         self.W = rng.randn(n_features, n_features) * np.sqrt(2.0 / n_features)
         self._v = np.zeros(n_features)
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Forward: spike(W@x) + x (element-wise, clamped to [0,1])."""
         h = self.W @ x
         self._v += h
         spikes = (self._v >= self.threshold).astype(np.float64)
         self._v -= spikes * self.threshold
-        return np.clip(spikes + x, 0, 1)
+        output: np.ndarray[Any, Any] = np.clip(spikes + x, 0, 1)
+        return output
 
     def reset(self) -> None:  # pragma: no cover
+        """Reset the block membrane potential to zero."""
         self._v = np.zeros(self.n_features)
 
 
@@ -120,20 +124,24 @@ class DeepSNNStack:
             else:
                 self.blocks.append(SEWBlock(n_features, seed=42 + i))  # type: ignore[arg-type]
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Propagate the input through every residual block in sequence."""
         h = x
         for block in self.blocks:
             h = block.forward(h)
         return h
 
     def reset(self) -> None:  # pragma: no cover
+        """Reset the membrane potential of every block in the stack."""
         for block in self.blocks:
             block.reset()
 
     @property
     def n_blocks(self) -> int:  # pragma: no cover
+        """Return the number of residual blocks in the stack."""
         return len(self.blocks)
 
     @property
     def depth(self) -> int:
+        """Return the effective depth (two weight layers per block)."""
         return len(self.blocks) * 2  # 2 weight layers per block
