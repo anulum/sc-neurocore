@@ -63,7 +63,7 @@ class ArcaneZenithCognitiveCore:
 
     def _map_to_range(self, w: float, min_val: float, max_val: float) -> float:
         """Smooth sigmoid mapping centered at 0.5 to prevent edge explosions."""
-        t = 1.0 / (1.0 + np.exp(-10.0 * (w - 0.5)))
+        t = float(1.0 / (1.0 + np.exp(-10.0 * (w - 0.5))))
         return max(min_val, min(max_val, min_val + t * (max_val - min_val)))
 
     def step(self, current: float) -> int:
