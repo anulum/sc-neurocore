@@ -1751,6 +1751,10 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- WebSocket progress streaming ---
     @app.websocket("/ws/progress")
     async def ws_progress(websocket: WebSocket) -> None:
+        origin = websocket.headers.get("origin")
+        if origin not in settings.websocket_allowed_origins:
+            await websocket.close(code=1008)
+            return
         await websocket.accept()
         from sc_neurocore.studio.progress import ws_progress_handler
 

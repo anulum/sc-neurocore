@@ -80,6 +80,10 @@ runtime features:
 - Studio rejects HTTP requests with a declared body larger than the configured
   limit before route handlers run. The default is 1 MiB; deployments can set
   `SC_NEUROCORE_STUDIO_MAX_REQUEST_BODY_BYTES` to a positive integer.
+- Studio WebSocket handshakes enforce an explicit `Origin` allow-list before
+  accepting progress streams. By default this allow-list follows the HTTP CORS
+  origins; deployments can set
+  `SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS` to a comma-separated list.
 - The backend adds default HTTP hardening headers to API responses:
   `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and
   `X-Frame-Options: DENY`.

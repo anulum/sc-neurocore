@@ -9,14 +9,17 @@
 from __future__ import annotations
 
 import queue
+from typing import Any
 
 import pytest
 
 fastapi = pytest.importorskip("fastapi")
 
 from starlette.testclient import TestClient
+from starlette.websockets import WebSocketDisconnect
 
 from sc_neurocore.studio.app import create_app
+from sc_neurocore.studio.platform import StudioRuntimeSettings
 from sc_neurocore.studio.progress import (
     _characterize_with_progress,
     _heatmap_with_progress,
@@ -25,18 +28,23 @@ from sc_neurocore.studio.progress import (
 
 
 @pytest.fixture(scope="module")
-def client():
-    return TestClient(create_app())
+def client() -> TestClient:
+    return TestClient(
+        create_app(
+            runtime_settings=StudioRuntimeSettings(allowed_hosts=("testserver",))
+        ),
+        headers={"origin": "http://127.0.0.1:8001"},
+    )
 
 
 # --- Characterise with progress ---
 
 
 class TestCharacteriseProgress:
-    def test_produces_progress_and_complete(self):
-        q: queue.Queue = queue.Queue()
+    def test_produces_progress_and_complete(self) -> None:
+        q: queue.Queue[dict[str, Any]] = queue.Queue()
 
-        def sim_fn(**kw):
+        def sim_fn(**kw: Any) -> dict[str, Any]:
             import numpy as np
 
             n = 100
@@ -66,10 +74,10 @@ class TestCharacteriseProgress:
         assert "fi_curve" in complete["result"]
         assert "pattern" in complete["result"]
 
-    def test_progress_has_pct(self):
-        q: queue.Queue = queue.Queue()
+    def test_progress_has_pct(self) -> None:
+        q: queue.Queue[dict[str, Any]] = queue.Queue()
 
-        def sim_fn(**kw):
+        def sim_fn(**kw: Any) -> dict[str, Any]:
             import numpy as np
 
             n = 50
@@ -103,10 +111,10 @@ class TestCharacteriseProgress:
 
 
 class TestHeatmapProgress:
-    def test_heatmap_progress(self):
-        q: queue.Queue = queue.Queue()
+    def test_heatmap_progress(self) -> None:
+        q: queue.Queue[dict[str, Any]] = queue.Queue()
 
-        def sim_fn(**kw):
+        def sim_fn(**kw: Any) -> dict[str, Any]:
             import numpy as np
 
             n = 50
@@ -148,8 +156,8 @@ class TestHeatmapProgress:
 
 
 class TestScanProgress:
-    def test_scan_produces_results(self):
-        q: queue.Queue = queue.Queue()
+    def test_scan_produces_results(self) -> None:
+        q: queue.Queue[dict[str, Any]] = queue.Queue()
         _scan_with_progress(q)
 
         messages = []
@@ -170,20 +178,20 @@ class TestScanProgress:
 
 
 class TestWebSocketEndpoint:
-    def test_ws_unknown_op(self, client):
+    def test_ws_unknown_op(self, client: TestClient) -> None:
         with client.websocket_connect("/ws/progress") as ws:
             ws.send_json({"op": "nonexistent"})
             msg = ws.receive_json()
             assert msg["type"] == "error"
             assert "Unknown op" in msg["msg"]
 
-    def test_ws_invalid_json(self, client):
+    def test_ws_invalid_json(self, client: TestClient) -> None:
         with client.websocket_connect("/ws/progress") as ws:
             ws.send_text("not json at all")
             msg = ws.receive_json()
             assert msg["type"] == "error"
 
-    def test_ws_characterize_streams_progress(self, client):
+    def test_ws_characterize_streams_progress(self, client: TestClient) -> None:
         with client.websocket_connect("/ws/progress") as ws:
             ws.send_json(
                 {
@@ -203,3 +211,20 @@ class TestWebSocketEndpoint:
             if "complete" in types:
                 progress_count = types.count("progress")
                 assert progress_count > 0
+
+    def test_ws_rejects_unconfigured_origin(self) -> None:
+        app = create_app(
+            runtime_settings=StudioRuntimeSettings(
+                allowed_hosts=("testserver",),
+                websocket_allowed_origins=("https://studio.example.test",)
+            )
+        )
+        client = TestClient(app)
+
+        with pytest.raises(WebSocketDisconnect) as exc_info, client.websocket_connect(
+            "/ws/progress",
+            headers={"origin": "https://attacker.example.test"},
+        ):
+            pass
+
+        assert exc_info.value.code == 1008
