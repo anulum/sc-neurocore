@@ -66,6 +66,10 @@ runtime features:
   protected Studio API surfaces. Public routes may run without a principal;
   authenticated and admin routes require an explicit policy and emit audit
   decisions.
+- Runtime route-policy enforcement is opt-in for the development preview via
+  `SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES=true`. When enabled, protected
+  HTTP routes require `X-Studio-Principal`; comma-separated `X-Studio-Roles`
+  values drive role and admin checks.
 - `RoutePolicyRegistry` records the expected policy for each platform API route
   and lets startup or test code detect unclassified Studio endpoints before
   they become accidental public surfaces. The default registry classifies the

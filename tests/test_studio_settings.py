@@ -107,6 +107,27 @@ def test_studio_runtime_settings_default_request_id_header_is_standard() -> None
     assert settings.request_id_header == "x-request-id"
 
 
+def test_studio_runtime_settings_disables_route_policy_enforcement_by_default() -> None:
+    settings = build_default_studio_runtime_settings(env={})
+
+    assert settings.enforce_route_policies is False
+
+
+def test_studio_runtime_settings_parses_route_policy_enforcement_flag() -> None:
+    settings = build_default_studio_runtime_settings(
+        env={"SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES": "true"}
+    )
+
+    assert settings.enforce_route_policies is True
+
+
+def test_studio_runtime_settings_rejects_invalid_route_policy_enforcement_flag() -> None:
+    with pytest.raises(ValueError, match="route policy enforcement"):
+        build_default_studio_runtime_settings(
+            env={"SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES": "sometimes"}
+        )
+
+
 def test_studio_runtime_settings_default_request_body_limit_is_bounded() -> None:
     settings = build_default_studio_runtime_settings(env={})
 
@@ -296,3 +317,49 @@ def test_studio_app_cors_preflight_rejects_unconfigured_origin() -> None:
 
     assert response.status_code == 400
     assert "access-control-allow-origin" not in response.headers
+
+
+def test_studio_app_route_policy_enforcement_allows_public_route() -> None:
+    app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.get("/api/health")
+
+    assert response.status_code == 200
+
+
+def test_studio_app_route_policy_enforcement_rejects_missing_principal() -> None:
+    app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.post("/api/simulate", json={})
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "missing_principal"
+
+
+def test_studio_app_route_policy_enforcement_allows_authenticated_principal() -> None:
+    app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.post(
+        "/api/simulate",
+        headers={"x-studio-principal": "operator-1", "x-studio-roles": "studio.viewer"},
+        json={},
+    )
+
+    assert response.status_code != 401
+
+
+def test_studio_app_route_policy_enforcement_rejects_missing_admin_role() -> None:
+    app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.post(
+        "/api/synth/run",
+        headers={"x-studio-principal": "operator-1", "x-studio-roles": "studio.viewer"},
+        json={"verilog": "module top; endmodule", "target": "ice40"},
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "missing_admin_role"
