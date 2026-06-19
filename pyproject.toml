@@ -286,7 +286,7 @@ module = [
 
  'sc_neurocore.evo_substrate.*',
 
-  'sc_neurocore.graphs.*', 'sc_neurocore.hdl_gen.*',
+ 'sc_neurocore.hdl_gen.*',
 
   'sc_neurocore.nas.*', 'sc_neurocore._native.*',
   'sc_neurocore.neurons.*',
