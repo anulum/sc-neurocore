@@ -6,8 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Network-wide homeostatic regulation
 
-"""Network-wide homeostasis: auto-adjust thresholds, learning rates,
-and inhibition to maintain stability. Deploy-and-forget self-regulation.
+"""Network-wide homeostatic regulation for deploy-and-forget stability.
+
+Auto-adjusts thresholds, learning rates, and inhibition to maintain
+stability without external supervision.
 
 Includes sleep consolidation: periodic synaptic renormalization +
 spontaneous replay for memory consolidation without external input.
@@ -18,6 +20,7 @@ Reference: Sleep-Based Homeostatic Regularization (arXiv Jan 2026)
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -34,6 +37,7 @@ class StabilityMetrics:
     adjustments_made: list[str] = field(default_factory=list)
 
     def summary(self) -> str:
+        """Render a multi-line human-readable network-stability report."""
         status = "STABLE" if self.is_stable else "UNSTABLE"
         lines = [
             f"Network Stability: {status}",
@@ -88,11 +92,11 @@ class NetworkRegulator:
 
     def regulate(
         self,
-        firing_rates: np.ndarray,
-        thresholds: np.ndarray,
+        firing_rates: np.ndarray[Any, Any],
+        thresholds: np.ndarray[Any, Any],
         learning_rate: float,
-        weights: list[np.ndarray] | None = None,
-    ) -> tuple[np.ndarray, float, StabilityMetrics]:
+        weights: list[np.ndarray[Any, Any]] | None = None,
+    ) -> tuple[np.ndarray[Any, Any], float, StabilityMetrics]:
         """Apply homeostatic regulation.
 
         Parameters
@@ -149,10 +153,10 @@ class NetworkRegulator:
 
     @staticmethod
     def _validate_regulate_inputs(
-        firing_rates: np.ndarray,
-        thresholds: np.ndarray,
+        firing_rates: np.ndarray[Any, Any],
+        thresholds: np.ndarray[Any, Any],
         learning_rate: float,
-        weights: list[np.ndarray] | None,
+        weights: list[np.ndarray[Any, Any]] | None,
     ) -> None:
         if not isinstance(firing_rates, np.ndarray) or firing_rates.ndim != 1:
             raise ValueError("regulate firing_rates must be a one-dimensional array")
@@ -209,9 +213,9 @@ class SleepConsolidation:
 
     def apply(
         self,
-        weights: list[np.ndarray],
+        weights: list[np.ndarray[Any, Any]],
         seed: int = 42,
-    ) -> list[np.ndarray]:
+    ) -> list[np.ndarray[Any, Any]]:
         """Apply sleep consolidation to weights.
 
         High-activity synapses (large |w|) undergo proportionally more decay.
@@ -258,7 +262,7 @@ class SleepConsolidation:
         return epoch > 0 and epoch % interval == 0
 
     @staticmethod
-    def _validate_weights(weights: list[np.ndarray]) -> None:
+    def _validate_weights(weights: list[np.ndarray[Any, Any]]) -> None:
         if not isinstance(weights, list) or len(weights) == 0:
             raise ValueError("weights must be a non-empty list of numpy arrays")
         for weight in weights:
