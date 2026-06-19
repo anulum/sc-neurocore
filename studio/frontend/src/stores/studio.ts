@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import {
   fetchTemplates, fetchModels, fetchModelDetail, fetchPresets, fetchPreset,
+  fetchStudioCapabilities,
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
   fetchCompare, fetchNullclines, fetchFreqResponse,
@@ -27,6 +28,7 @@ import {
   type SurrogateInfo, type TrainingEpochMetrics,
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSummary, type PipelineResult,
+  type StudioCapability,
   connectProgress,
 } from "../api/client";
 
@@ -48,6 +50,9 @@ interface StudioState {
   selectedModelName: string;
   modelDetail: ModelDetail | null;
   modelParams: Record<string, number>;
+  capabilities: StudioCapability[];
+  capabilitiesLoading: boolean;
+  capabilitiesError: string | null;
   templates: NeuronTemplate[];
   presets: PresetSummary[];
   dt: number;
@@ -123,6 +128,7 @@ interface StudioState {
   loadTemplates: () => Promise<void>;
   loadModels: () => Promise<void>;
   loadPresets: () => Promise<void>;
+  loadCapabilities: () => Promise<void>;
   selectTemplate: (name: string) => void;
   selectModel: (name: string) => Promise<void>;
   loadPreset: (id: string) => Promise<void>;
@@ -203,6 +209,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   odeParams: { E_L: -65, tau_m: 10, C: 1 },
   odeInit: { v: -65 },
   models: [], selectedModelName: "", modelDetail: null, modelParams: {},
+  capabilities: [], capabilitiesLoading: false, capabilitiesError: null,
   templates: [], presets: [],
   dt: 0.1, duration: 100, current: 10, protocol: "constant",
   result: null, fiResult: null, bifResult: null, sensResult: null, precResult: null,
@@ -243,6 +250,22 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   setSweepParamY: (p) => set({ sweepParamY: p }),
 
   loadTemplates: async () => set({ templates: await fetchTemplates() }),
+  loadCapabilities: async () => {
+    set({ capabilitiesLoading: true, capabilitiesError: null });
+    try {
+      const response = await fetchStudioCapabilities();
+      set({
+        capabilities: response.capabilities,
+        capabilitiesLoading: false,
+        capabilitiesError: null,
+      });
+    } catch (error: unknown) {
+      set({
+        capabilitiesLoading: false,
+        capabilitiesError: error instanceof Error ? error.message : "Capability check failed",
+      });
+    }
+  },
   loadModels: async () => {
     const models = await fetchModels();
     set({ models });

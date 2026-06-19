@@ -18,6 +18,7 @@ import SynthesisDashboard from "./components/SynthesisDashboard";
 import TrainingMonitor from "./components/TrainingMonitor";
 import NetworkCanvas from "./components/NetworkCanvas";
 import OnboardingOverlay from "./components/OnboardingOverlay";
+import CapabilityStrip from "./components/CapabilityStrip";
 
 function Tab({ active, color, label, onClick }: {
   active: boolean; color: string; label: string; onClick: () => void;
@@ -49,13 +50,18 @@ function Btn({ label, onClick, disabled, color, outline }: {
 
 export default function App() {
   const s = useStudioStore();
+  const loadCapabilities = s.loadCapabilities;
+  const loadPresets = s.loadPresets;
   const vars = s.result ? Object.keys(s.result.states) : [];
   const hasPhase = vars.length >= 2;
   const hasISI = s.result?.stats?.isi_histogram != null;
   const paramKeys = Object.keys(s.sourceMode === "model" ? s.modelParams : s.odeParams);
   const pattern = s.result?.pattern;
 
-  useEffect(() => { s.loadPresets(); }, []);
+  useEffect(() => {
+    void loadCapabilities();
+    void loadPresets();
+  }, [loadCapabilities, loadPresets]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -79,6 +85,7 @@ export default function App() {
           <div className="dot" />
           <h1>SC-NeuroCore Studio</h1>
         </div>
+        <CapabilityStrip />
 
         <div style={{ display: "flex", gap: 0, borderRadius: "var(--radius)", overflow: "hidden" }}>
           <Tab active={s.sourceMode === "model"} color="var(--accent)"
