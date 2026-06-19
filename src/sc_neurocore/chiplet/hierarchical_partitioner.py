@@ -19,10 +19,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
-
 
 # ── Hierarchy Levels ─────────────────────────────────────────────────
 
@@ -45,11 +44,11 @@ class CSRGraph:
     """
 
     num_vertices: int
-    indptr: np.ndarray  # shape (num_vertices + 1,)
-    indices: np.ndarray  # shape (nnz,)
-    conn_weights: np.ndarray  # shape (nnz,)
-    scc_weights: np.ndarray  # shape (nnz,)
-    vertex_weights: np.ndarray  # shape (num_vertices,)
+    indptr: np.ndarray[Any, Any]  # shape (num_vertices + 1,)
+    indices: np.ndarray[Any, Any]  # shape (nnz,)
+    conn_weights: np.ndarray[Any, Any]  # shape (nnz,)
+    scc_weights: np.ndarray[Any, Any]  # shape (nnz,)
+    vertex_weights: np.ndarray[Any, Any]  # shape (num_vertices,)
 
     @classmethod
     def from_edge_list(
@@ -90,16 +89,16 @@ class CSRGraph:
             vertex_weights=vw,
         )
 
-    def neighbors(self, v: int) -> np.ndarray:
+    def neighbors(self, v: int) -> np.ndarray[Any, Any]:
         return self.indices[self.indptr[v] : self.indptr[v + 1]]
 
     def degree(self, v: int) -> int:
         return int(self.indptr[v + 1] - self.indptr[v])
 
-    def edge_conn(self, v: int) -> np.ndarray:
+    def edge_conn(self, v: int) -> np.ndarray[Any, Any]:
         return self.conn_weights[self.indptr[v] : self.indptr[v + 1]]
 
-    def edge_scc(self, v: int) -> np.ndarray:
+    def edge_scc(self, v: int) -> np.ndarray[Any, Any]:
         return self.scc_weights[self.indptr[v] : self.indptr[v + 1]]
 
     @property
@@ -148,7 +147,7 @@ def _ensure_julia_kl_refine_loaded() -> bool:
     if _julia_kl_refine is not None:
         return True
     try:
-        from juliacall import (  # type: ignore[import-not-found,import-untyped]
+        from juliacall import (
             Main as _jl,
         )
     except ImportError:
@@ -537,13 +536,13 @@ class HierarchicalPartitioner:
         adj: Dict[int, List[int]],
         graph: CorrelationAwareGraph,
     ) -> Tuple[
-        np.ndarray,
-        np.ndarray,
-        np.ndarray,
-        np.ndarray,
-        np.ndarray,
-        np.ndarray,
-        np.ndarray,
+        np.ndarray[Any, Any],
+        np.ndarray[Any, Any],
+        np.ndarray[Any, Any],
+        np.ndarray[Any, Any],
+        np.ndarray[Any, Any],
+        np.ndarray[Any, Any],
+        np.ndarray[Any, Any],
     ]:
         """Pack the per-partition state into the flat CSR-style buffers
         every multi-language KL refine kernel expects:
@@ -601,7 +600,7 @@ class HierarchicalPartitioner:
 
     def _decode_part_map(
         self,
-        part_map: np.ndarray,
+        part_map: np.ndarray[Any, Any],
         n_parts: int,
     ) -> List[List[int]]:
         """Decode flat part_map[V] back into List[List[int]]."""

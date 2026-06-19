@@ -38,7 +38,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-
 # ── Interposer Technology ────────────────────────────────────────────
 
 
@@ -380,7 +379,7 @@ def find_disjoint_paths(
         return [[src_die]]
 
     paths = []
-    excluded_links: set = set()
+    excluded_links: set[tuple[int, int]] = set()
 
     for _ in range(max_paths):
         path = _bfs_path(topology, src_die, dst_die, excluded_links)
@@ -397,7 +396,7 @@ def _bfs_path(
     topology: ChipletTopology,
     src: int,
     dst: int,
-    excluded: set,
+    excluded: set[tuple[int, int]],
 ) -> Optional[List[int]]:
     """BFS shortest path avoiding excluded links."""
     visited = {src: [src]}
@@ -1007,17 +1006,17 @@ class PackageThermalReport:
     throttled_dies: List[int] = field(default_factory=list)
     # Transient time-series — populated only if `transient_steps>0`
     # was passed to `simulate_thermal`. Shape: (n_steps, n_dies).
-    transient_temps: Optional[np.ndarray] = None
-    transient_times_s: Optional[np.ndarray] = None
+    transient_temps: Optional[np.ndarray[Any, Any]] = None
+    transient_times_s: Optional[np.ndarray[Any, Any]] = None
     # Conductance matrix actually used (for inspection / debugging).
     # Shape: (n_dies, n_dies).
-    conductance_matrix: Optional[np.ndarray] = None
+    conductance_matrix: Optional[np.ndarray[Any, Any]] = None
 
 
 def _build_conductance_matrix(
     topology: ChipletTopology,
     die_state: Dict[int, DieThermal],
-) -> Tuple[np.ndarray, np.ndarray, List[int]]:
+) -> Tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], List[int]]:
     """Build (G, g_amb, die_id_order) for the thermal network.
 
     G is the off-diagonal conductance matrix (W/K) for inter-die
@@ -1067,11 +1066,11 @@ def _build_conductance_matrix(
 
 
 def _solve_steady_state(
-    G_off: np.ndarray,
-    g_amb: np.ndarray,
-    p_w: np.ndarray,
+    G_off: np.ndarray[Any, Any],
+    g_amb: np.ndarray[Any, Any],
+    p_w: np.ndarray[Any, Any],
     t_amb_c: float,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Solve `(D - G_off) · T = P + g_amb · T_amb` for T.
 
     where D is the diagonal of row-sums (Kirchhoff's current law
@@ -1089,15 +1088,15 @@ def _solve_steady_state(
 
 
 def _solve_transient(
-    G_off: np.ndarray,
-    g_amb: np.ndarray,
-    capacities: np.ndarray,
-    p_w: np.ndarray,
+    G_off: np.ndarray[Any, Any],
+    g_amb: np.ndarray[Any, Any],
+    capacities: np.ndarray[Any, Any],
+    p_w: np.ndarray[Any, Any],
     t_amb_c: float,
-    initial_t_c: np.ndarray,
+    initial_t_c: np.ndarray[Any, Any],
     dt_s: float,
     n_steps: int,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Implicit-Euler integration of `C · dT/dt = -A · T + b`.
 
     A and b are the same matrices as in `_solve_steady_state`.
