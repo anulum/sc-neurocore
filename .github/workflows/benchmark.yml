@@ -30,12 +30,14 @@ concurrency:
   group: bench-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CARGO_HTTP_MULTIPLEXING: "false"
+  CARGO_NET_RETRY: "10"
+
 jobs:
   benchmark:
     name: Run Benchmarks
     runs-on: ubuntu-latest
-    env:
-      CARGO_HTTP_MULTIPLEXING: "false"
     permissions:
       contents: write
       deployments: write
