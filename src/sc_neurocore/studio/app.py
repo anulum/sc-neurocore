@@ -694,7 +694,11 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     studio_capabilities = build_default_studio_capability_registry()
     studio_route_policies = build_default_studio_route_policy_registry()
     studio_audit_sink = (
-        JsonlAuditSink(Path(settings.audit_log_path))
+        JsonlAuditSink(
+            Path(settings.audit_log_path),
+            rotation_bytes=settings.audit_rotation_bytes,
+            retained_files=settings.audit_retained_files,
+        )
         if settings.audit_log_path is not None
         else InMemoryAuditSink()
     )

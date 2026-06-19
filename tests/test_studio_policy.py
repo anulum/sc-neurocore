@@ -264,6 +264,39 @@ def test_jsonl_audit_sink_reports_failed_append_policy(tmp_path: Path) -> None:
     assert "IsADirectoryError" in status.last_error
 
 
+def test_jsonl_audit_sink_rotates_and_retains_hash_chain(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_sink = contract["JsonlAuditSink"](
+        audit_path,
+        rotation_bytes=1,
+        retained_files=2,
+    )
+
+    for index in range(4):
+        audit_sink.record(
+            contract["AuditEvent"](
+                action=f"studio.simulate.run.{index}",
+                route="/api/simulate",
+                principal_id="operator-7",
+                decision="allow",
+                reason="authorized",
+            )
+        )
+
+    current_row = json.loads(audit_path.read_text(encoding="utf-8"))
+    rotated_latest = json.loads(audit_path.with_name("studio-audit.jsonl.1").read_text(encoding="utf-8"))
+    rotated_retained = json.loads(audit_path.with_name("studio-audit.jsonl.2").read_text(encoding="utf-8"))
+
+    assert current_row["action"] == "studio.simulate.run.3"
+    assert rotated_latest["action"] == "studio.simulate.run.2"
+    assert rotated_retained["action"] == "studio.simulate.run.1"
+    assert not audit_path.with_name("studio-audit.jsonl.3").exists()
+    assert current_row["previous_event_hash"] == rotated_latest["event_hash"]
+    assert rotated_latest["previous_event_hash"] == rotated_retained["event_hash"]
+    assert current_row["event_hash"] == _audit_event_hash(current_row)
+
+
 def test_policy_gateway_accepts_jsonl_audit_sink(tmp_path: Path) -> None:
     contract = _policy_contract()
     audit_path = tmp_path / "studio-audit.jsonl"

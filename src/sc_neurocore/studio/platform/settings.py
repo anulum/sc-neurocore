@@ -30,6 +30,7 @@ DEFAULT_STUDIO_ALLOWED_HOSTS: tuple[str, ...] = (
 )
 
 DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES = 1_048_576
+DEFAULT_STUDIO_AUDIT_RETAINED_FILES = 5
 
 DEFAULT_STUDIO_HTTP_SECURITY_HEADERS: Mapping[str, str] = MappingProxyType(
     {
@@ -52,6 +53,8 @@ class StudioRuntimeSettings:
     max_request_body_bytes: int = DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES
     enforce_route_policies: bool = False
     audit_log_path: str | None = None
+    audit_rotation_bytes: int | None = None
+    audit_retained_files: int = DEFAULT_STUDIO_AUDIT_RETAINED_FILES
 
     def __post_init__(self) -> None:
         """Validate settings that affect Studio security boundaries."""
@@ -78,6 +81,10 @@ class StudioRuntimeSettings:
             raise ValueError("Studio request body limit must be positive.")
         if self.audit_log_path is not None and not self.audit_log_path.strip():
             raise ValueError("Studio audit log path must not be empty.")
+        if self.audit_rotation_bytes is not None and self.audit_rotation_bytes <= 0:
+            raise ValueError("Studio audit rotation byte limit must be positive.")
+        if self.audit_retained_files < 0:
+            raise ValueError("Studio retained audit file count must not be negative.")
 
 
 def build_default_studio_runtime_settings(
@@ -92,6 +99,8 @@ def build_default_studio_runtime_settings(
     raw_max_request_body_bytes = source.get("SC_NEUROCORE_STUDIO_MAX_REQUEST_BODY_BYTES")
     raw_enforce_route_policies = source.get("SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES")
     raw_audit_log_path = source.get("SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH")
+    raw_audit_rotation_bytes = source.get("SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES")
+    raw_audit_retained_files = source.get("SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES")
     origins = (
         DEFAULT_STUDIO_CORS_ORIGINS
         if raw_origins is None or not raw_origins.strip()
@@ -133,6 +142,22 @@ def build_default_studio_runtime_settings(
         None if raw_audit_log_path is None or not raw_audit_log_path.strip()
         else raw_audit_log_path.strip()
     )
+    try:
+        audit_rotation_bytes = (
+            None
+            if raw_audit_rotation_bytes is None or not raw_audit_rotation_bytes.strip()
+            else int(raw_audit_rotation_bytes)
+        )
+    except ValueError as exc:
+        raise ValueError("Studio audit rotation byte limit must be an integer.") from exc
+    try:
+        audit_retained_files = (
+            DEFAULT_STUDIO_AUDIT_RETAINED_FILES
+            if raw_audit_retained_files is None or not raw_audit_retained_files.strip()
+            else int(raw_audit_retained_files)
+        )
+    except ValueError as exc:
+        raise ValueError("Studio retained audit file count must be an integer.") from exc
     return StudioRuntimeSettings(
         cors_allowed_origins=origins,
         websocket_allowed_origins=websocket_origins,
@@ -140,4 +165,6 @@ def build_default_studio_runtime_settings(
         max_request_body_bytes=max_request_body_bytes,
         enforce_route_policies=enforce_route_policies,
         audit_log_path=audit_log_path,
+        audit_rotation_bytes=audit_rotation_bytes,
+        audit_retained_files=audit_retained_files,
     )

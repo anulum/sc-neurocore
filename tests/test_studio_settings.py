@@ -143,9 +143,43 @@ def test_studio_runtime_settings_parses_audit_log_path() -> None:
     assert settings.audit_log_path == "/var/log/sc-neurocore/studio.jsonl"
 
 
+def test_studio_runtime_settings_disables_audit_rotation_by_default() -> None:
+    settings = build_default_studio_runtime_settings(env={})
+
+    assert settings.audit_rotation_bytes is None
+    assert settings.audit_retained_files == 5
+
+
+def test_studio_runtime_settings_parses_audit_rotation_policy() -> None:
+    settings = build_default_studio_runtime_settings(
+        env={
+            "SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES": "4096",
+            "SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES": "7",
+        }
+    )
+
+    assert settings.audit_rotation_bytes == 4096
+    assert settings.audit_retained_files == 7
+
+
 def test_studio_runtime_settings_rejects_empty_audit_log_path() -> None:
     with pytest.raises(ValueError, match="audit log path"):
         StudioRuntimeSettings(audit_log_path="")
+
+
+def test_studio_runtime_settings_rejects_invalid_audit_rotation_policy() -> None:
+    with pytest.raises(ValueError, match="audit rotation"):
+        build_default_studio_runtime_settings(
+            env={"SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES": "not-a-number"}
+        )
+    with pytest.raises(ValueError, match="retained audit"):
+        build_default_studio_runtime_settings(
+            env={"SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES": "not-a-number"}
+        )
+    with pytest.raises(ValueError, match="audit rotation"):
+        StudioRuntimeSettings(audit_rotation_bytes=0)
+    with pytest.raises(ValueError, match="retained audit"):
+        StudioRuntimeSettings(audit_retained_files=-1)
 
 
 def test_studio_runtime_settings_parses_route_policy_enforcement_flag() -> None:
