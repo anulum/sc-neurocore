@@ -1,0 +1,13 @@
+{
+  "schema": "sc-neurocore.ml350-posner-orca.v1",
+  "job_name": "posner_ml350_neutral_opt_20260507_r6_seeded",
+  "run_root": "/home/anulum/sc-neurocore-orca-runs/ml350_r6_seeded_20260507",
+  "install_root": "/home/anulum/.local/sc-neurocore/orca-6.1.1",
+  "orca_archive_sha1": "98490e09ad999792bd23ed7a06a6799aef01fb5a",
+  "nprocs": 1,
+  "maxcore_mb": 12000,
+  "method": "B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 Opt Freq",
+  "charge": 0,
+  "multiplicity": 1,
+  "seeded_from_gbw": true
+}

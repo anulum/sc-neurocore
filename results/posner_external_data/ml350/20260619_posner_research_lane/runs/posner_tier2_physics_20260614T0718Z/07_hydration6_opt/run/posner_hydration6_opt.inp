@@ -1,0 +1,10 @@
+! B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 Opt
+%maxcore 4000
+%pal
+  nprocs 24
+end
+%geom
+  MaxIter 120
+end
+
+* xyzfile 0 1 input.xyz

@@ -1,0 +1,249 @@
+{
+  "chemical_shielding": {
+    "by_element": {
+      "Ca": [
+        {
+          "anisotropy_ppm": 105.112,
+          "atom_index": 0,
+          "element": "Ca",
+          "isotropic_ppm": 1148.269
+        },
+        {
+          "anisotropy_ppm": 66.659,
+          "atom_index": 1,
+          "element": "Ca",
+          "isotropic_ppm": 1158.884
+        },
+        {
+          "anisotropy_ppm": 35.744,
+          "atom_index": 2,
+          "element": "Ca",
+          "isotropic_ppm": 1180.863
+        },
+        {
+          "anisotropy_ppm": 137.34,
+          "atom_index": 3,
+          "element": "Ca",
+          "isotropic_ppm": 1160.427
+        },
+        {
+          "anisotropy_ppm": 94.874,
+          "atom_index": 4,
+          "element": "Ca",
+          "isotropic_ppm": 1166.476
+        },
+        {
+          "anisotropy_ppm": 108.746,
+          "atom_index": 5,
+          "element": "Ca",
+          "isotropic_ppm": 1142.811
+        },
+        {
+          "anisotropy_ppm": 118.362,
+          "atom_index": 6,
+          "element": "Ca",
+          "isotropic_ppm": 1160.216
+        },
+        {
+          "anisotropy_ppm": 68.668,
+          "atom_index": 7,
+          "element": "Ca",
+          "isotropic_ppm": 1163.614
+        },
+        {
+          "anisotropy_ppm": 50.055,
+          "atom_index": 8,
+          "element": "Ca",
+          "isotropic_ppm": 1174.329
+        }
+      ],
+      "P": [
+        {
+          "anisotropy_ppm": 114.525,
+          "atom_index": 9,
+          "element": "P",
+          "isotropic_ppm": 274.939
+        },
+        {
+          "anisotropy_ppm": 112.897,
+          "atom_index": 10,
+          "element": "P",
+          "isotropic_ppm": 274.682
+        },
+        {
+          "anisotropy_ppm": 120.289,
+          "atom_index": 11,
+          "element": "P",
+          "isotropic_ppm": 274.813
+        },
+        {
+          "anisotropy_ppm": 92.228,
+          "atom_index": 12,
+          "element": "P",
+          "isotropic_ppm": 273.102
+        },
+        {
+          "anisotropy_ppm": 249.747,
+          "atom_index": 13,
+          "element": "P",
+          "isotropic_ppm": 291.812
+        },
+        {
+          "anisotropy_ppm": 114.332,
+          "atom_index": 14,
+          "element": "P",
+          "isotropic_ppm": 268.36
+        }
+      ]
+    },
+    "nucleus_count": 15
+  },
+  "final_single_point_energy_eh": -9954.022370142919,
+  "provenance": {
+    "sources": [
+      {
+        "name": "posner_neutral_nmr_r7.out",
+        "path": "/home/anulum/sc-neurocore-orca-runs/posner_followup_20260614T0218Z/01_neutral_nmr_r7/output/posner_neutral_nmr_r7.out",
+        "role": "orca_output",
+        "sha256": "511ed152fce1997799f135b1eb34e33daf4379d29050f5062429cb00be00bb30"
+      },
+      {
+        "name": "REPRODUCIBILITY_LOG.md",
+        "path": "/home/anulum/sc-neurocore-orca-runs/posner_followup_20260614T0218Z/REPRODUCIBILITY_LOG.md",
+        "role": "provenance",
+        "sha256": "ba56386592bcae5e752e8532c4b89c5dcaca1db3b333eafae68f62d79d4d179d"
+      },
+      {
+        "name": "run_pipeline.sh",
+        "path": "/home/anulum/sc-neurocore-orca-runs/posner_followup_20260614T0218Z/run_pipeline.sh",
+        "role": "provenance",
+        "sha256": "9e49530cdbc34b330e44ac556794fa84763a43c4692a28c96b0301c1a15e1b18"
+      },
+      {
+        "name": "posner_neutral_nmr_r7.inp",
+        "path": "/home/anulum/sc-neurocore-orca-runs/posner_followup_20260614T0218Z/01_neutral_nmr_r7/run/posner_neutral_nmr_r7.inp",
+        "role": "provenance",
+        "sha256": "12adcea685a0c30ae9d0046b108708de76ee1743c368724ee6cb91f3048b1796"
+      },
+      {
+        "name": "input.xyz",
+        "path": "/home/anulum/sc-neurocore-orca-runs/posner_followup_20260614T0218Z/01_neutral_nmr_r7/run/input.xyz",
+        "role": "provenance",
+        "sha256": "3ef73733b0eff3b81f1487cc2fe8c113fd9b6128e7ce28e9d1528dac7671e8e9"
+      }
+    ]
+  },
+  "run_settings": {
+    "basis_dimension": 1290,
+    "charge": 0,
+    "hartree_fock_type": "RHF",
+    "multiplicity": 1,
+    "number_of_electrons": 462,
+    "program_version": "6.1.1",
+    "route_line": "B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 NMR"
+  },
+  "schema_version": "1.0.0",
+  "spin_spin_coupling": {
+    "matrix_hz": {
+      "10P": {
+        "10P": 0.0,
+        "11P": 0.914,
+        "12P": 0.0,
+        "13P": 0.0,
+        "14P": 0.0,
+        "9P": 0.138
+      },
+      "11P": {
+        "10P": 0.914,
+        "11P": 0.0,
+        "12P": -0.087,
+        "13P": 0.0,
+        "14P": 0.0,
+        "9P": 0.0
+      },
+      "12P": {
+        "10P": 0.0,
+        "11P": -0.087,
+        "12P": 0.0,
+        "13P": 2.467,
+        "14P": 0.0,
+        "9P": 0.0
+      },
+      "13P": {
+        "10P": 0.0,
+        "11P": 0.0,
+        "12P": 2.467,
+        "13P": 0.0,
+        "14P": 0.0,
+        "9P": 0.0
+      },
+      "14P": {
+        "10P": 0.0,
+        "11P": 0.0,
+        "12P": 0.0,
+        "13P": 0.0,
+        "14P": 0.0,
+        "9P": -0.292
+      },
+      "9P": {
+        "10P": 0.138,
+        "11P": 0.0,
+        "12P": 0.0,
+        "13P": 0.0,
+        "14P": -0.292,
+        "9P": 0.0
+      }
+    },
+    "matrix_labels": [
+      "9P",
+      "10P",
+      "11P",
+      "12P",
+      "13P",
+      "14P"
+    ],
+    "nonzero_pairs": [
+      {
+        "atom_a": 9,
+        "atom_b": 10,
+        "element_a": "P",
+        "element_b": "P",
+        "j_iso_hz": 0.138
+      },
+      {
+        "atom_a": 9,
+        "atom_b": 14,
+        "element_a": "P",
+        "element_b": "P",
+        "j_iso_hz": -0.292
+      },
+      {
+        "atom_a": 10,
+        "atom_b": 11,
+        "element_a": "P",
+        "element_b": "P",
+        "j_iso_hz": 0.914
+      },
+      {
+        "atom_a": 11,
+        "atom_b": 12,
+        "element_a": "P",
+        "element_b": "P",
+        "j_iso_hz": -0.087
+      },
+      {
+        "atom_a": 12,
+        "atom_b": 13,
+        "element_a": "P",
+        "element_b": "P",
+        "j_iso_hz": 2.467
+      }
+    ],
+    "reported_pair_count": 5
+  },
+  "termination": {
+    "normal_termination": true,
+    "total_run_time_seconds": 3845.414,
+    "total_run_time_text": "0 days 1 hours 4 minutes 5 seconds 414 msec"
+  }
+}

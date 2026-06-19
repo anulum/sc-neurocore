@@ -1,0 +1,92 @@
+{
+  "schema": "sc-neurocore.ml350-posner-research-lane.v1",
+  "created_utc": "2026-06-19T14:50:50Z",
+  "source_host": "god-of-the-math",
+  "source_root": "/home/anulum/sc-neurocore-orca-runs",
+  "artifact_policy": "Curated lane outputs only; raw ORCA scratch and restart trees remain on ML350.",
+  "checksum_manifest": "SHA256SUMS.txt",
+  "accepted_jobs": [
+    {
+      "run_root": "ml350_r6_continuation_20260531",
+      "job": "posner_ml350_neutral_opt_20260531_r7_continue",
+      "status": "accepted",
+      "scope": "Converged neutral geometry continuation"
+    },
+    {
+      "run_root": "ml350_cation_radical_epr_20260613_r8c_mpi24_hwlocfix",
+      "job": "posner_cation_radical_epr_r8c",
+      "status": "accepted",
+      "scope": "Cation-radical EPR/HFC single point"
+    },
+    {
+      "run_root": "posner_followup_20260614T0218Z",
+      "job": "01_neutral_nmr_r7",
+      "status": "accepted",
+      "scope": "Neutral dry-cluster NMR constants"
+    },
+    {
+      "run_root": "posner_followup_20260614T0218Z",
+      "job": "02_hydration6_sp",
+      "status": "accepted",
+      "scope": "Heuristic six-water hydration single point"
+    },
+    {
+      "run_root": "posner_followup_20260614T0218Z",
+      "job": "03_dimer_sp",
+      "status": "accepted",
+      "scope": "First dimer candidate single point"
+    },
+    {
+      "run_root": "posner_handoff_extension_20260614T0340Z",
+      "job": "04_hydration6_nmr",
+      "status": "accepted",
+      "scope": "Hydrated-cluster NMR evidence"
+    },
+    {
+      "run_root": "posner_handoff_extension_20260614T0340Z",
+      "job": "05_neutral_ir_freq_r7",
+      "status": "accepted",
+      "scope": "Neutral r7 harmonic frequency/IR evidence"
+    },
+    {
+      "run_root": "posner_handoff_extension_20260614T0340Z",
+      "job": "06_dimer_far_sp",
+      "status": "accepted",
+      "scope": "Far-separated dimer reference single point"
+    },
+    {
+      "run_root": "posner_tier2_physics_20260614T0718Z",
+      "job": "07_hydration6_opt",
+      "status": "accepted",
+      "scope": "Optimized six-water hydrated cluster geometry"
+    }
+  ],
+  "retained_diagnostics": [
+    {
+      "run_root": "ml350_r6_seeded_20260507",
+      "job": "posner_ml350_neutral_opt_20260507_r6_seeded",
+      "status": "superseded_diagnostic",
+      "scope": "Long neutral optimization precursor retained for provenance continuity"
+    }
+  ],
+  "pending_jobs": [
+    {
+      "run_root": "posner_tier2_physics_20260614T0718Z",
+      "job": "08_dimer_opt",
+      "status": "running_on_ml350",
+      "scope": "Not promoted as an accepted artifact in this package"
+    },
+    {
+      "run_root": "posner_tier2_physics_20260614T0718Z",
+      "job": "09_bsse_counterpoise_to_13_dimer_pbe0_sp",
+      "status": "not_started_at_2026_06_19_audit",
+      "scope": "Will need a follow-up artifact package after completion"
+    }
+  ],
+  "extracted_artifacts": [
+    "extracts/posner_r7_neutral_nmr_params_2026-06-14.json",
+    "extracts/posner_r8c_cation_radical_epr_params_2026-06-14.json",
+    "notes/posner_r8c_cation_radical_epr_evidence_2026-06-14.md",
+    "notes/posner_orca_handoff_readiness_2026-06-14.md"
+  ]
+}

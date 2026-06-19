@@ -1,0 +1,426 @@
+{
+  "final_single_point_energy_eh": -9953.72619277419,
+  "g_tensor": {
+    "delta_g_isotropic": 0.0414932,
+    "delta_g_principal": [
+      0.0091769,
+      0.0253025,
+      0.0900002
+    ],
+    "g_isotropic": 2.0438125,
+    "g_matrix": [
+      [
+        2.0251815,
+        -0.0060895,
+        0.0127598
+      ],
+      [
+        -0.006384,
+        2.0679999,
+        -0.0347135
+      ],
+      [
+        0.013168,
+        -0.0328507,
+        2.0382556
+      ]
+    ],
+    "g_principal": [
+      2.0114962,
+      2.0276218,
+      2.0923195
+    ]
+  },
+  "hyperfine": {
+    "by_element": {
+      "Ca": [
+        {
+          "a_fc_isotropic_mhz": 1.2356,
+          "a_isotropic_mhz": 1.2356,
+          "a_orb_isotropic_mhz": null,
+          "a_orb_principal_mhz": null,
+          "a_sd_principal_mhz": [
+            -0.3397,
+            0.1405,
+            0.1992
+          ],
+          "a_tot_principal_mhz": [
+            0.8959,
+            1.3761,
+            1.4348
+          ],
+          "atom_index": 0,
+          "element": "Ca",
+          "isotope": 43,
+          "prefactor_mhz_per_au3": -35.9513,
+          "spin_quantum_number": 3.5
+        },
+        {
+          "a_fc_isotropic_mhz": 1.8511,
+          "a_isotropic_mhz": 1.8511,
+          "a_orb_isotropic_mhz": null,
+          "a_orb_principal_mhz": null,
+          "a_sd_principal_mhz": [
+            -0.3684,
+            0.0991,
+            0.2693
+          ],
+          "a_tot_principal_mhz": [
+            1.4826,
+            1.9502,
+            2.1204
+          ],
+          "atom_index": 1,
+          "element": "Ca",
+          "isotope": 43,
+          "prefactor_mhz_per_au3": -35.9513,
+          "spin_quantum_number": 3.5
+        },
+        {
+          "a_fc_isotropic_mhz": 0.0479,
+          "a_isotropic_mhz": 0.0479,
+          "a_orb_isotropic_mhz": null,
+          "a_orb_principal_mhz": null,
+          "a_sd_principal_mhz": [
+            -0.017,
+            -0.0014,
+            0.0184
+          ],
+          "a_tot_principal_mhz": [
+            0.0309,
+            0.0465,
+            0.0663
+          ],
+          "atom_index": 2,
+          "element": "Ca",
+          "isotope": 43,
+          "prefactor_mhz_per_au3": -35.9513,
+          "spin_quantum_number": 3.5
+        },
+        {
+          "a_fc_isotropic_mhz": 1.5593,
+          "a_isotropic_mhz": 1.5593,
+          "a_orb_isotropic_mhz": null,
+          "a_orb_principal_mhz": null,
+          "a_sd_principal_mhz": [
+            -0.143,
+            0.0207,
+            0.1223
+          ],
+          "a_tot_principal_mhz": [
+            1.4163,
+            1.58,
+            1.6816
+          ],
+          "atom_index": 3,
+          "element": "Ca",
+          "isotope": 43,
+          "prefactor_mhz_per_au3": -35.9513,
+          "spin_quantum_number": 3.5
+        },
+        {
+          "a_fc_isotropic_mhz": 0.6043,
+          "a_isotropic_mhz": 0.6043,
+          "a_orb_isotropic_mhz": null,
+          "a_orb_principal_mhz": null,
+          "a_sd_principal_mhz": [
+            -0.3438,
+            0.125,
+            0.2188
+          ],
+          "a_tot_principal_mhz": [
+            0.2604,
+            0.7293,
+            0.8231
+          ],
+          "atom_index": 4,
+          "element": "Ca",
+          "isotope": 43,
+          "prefactor_mhz_per_au3": -35.9513,
+          "spin_quantum_number": 3.5
+        },
+        {
+          "a_fc_isotropic_mhz": 0.6987,
+          "a_isotropic_mhz": 0.6987,
+          "a_orb_isotropic_mhz": null,
+          "a_orb_principal_mhz": null,
+          "a_sd_principal_mhz": [
+            -0.2173,
+            0.0968,
+            0.1205
+          ],
+          "a_tot_principal_mhz": [
+            0.4814,
+            0.7954,
+            0.8192
+          ],
+          "atom_index": 5,
+          "element": "Ca",
+          "isotope": 43,
+          "prefactor_mhz_per_au3": -35.9513,
+          "spin_quantum_number": 3.5
+        },
+        {
+          "a_fc_isotropic_mhz": 0.9473,
+          "a_isotropic_mhz": 0.9473,
+          "a_orb_isotropic_mhz": null,
+          "a_orb_principal_mhz": null,
+          "a_sd_principal_mhz": [
+            -0.1357,
+            0.0445,
+            0.0912
+          ],
+          "a_tot_principal_mhz": [
+            0.8116,
+            0.9918,
+            1.0385
+          ],
+          "atom_index": 6,
+          "element": "Ca",
+          "isotope": 43,
+          "prefactor_mhz_per_au3": -35.9513,
+          "spin_quantum_number": 3.5
+        },
+        {
+          "a_fc_isotropic_mhz": 0.1382,
+          "a_isotropic_mhz": 0.1382,
+          "a_orb_isotropic_mhz": null,
+          "a_orb_principal_mhz": null,
+          "a_sd_principal_mhz": [
+            -0.1783,
+            0.077,
+            0.1013
+          ],
+          "a_tot_principal_mhz": [
+            -0.0401,
+            0.2151,
+            0.2395
+          ],
+          "atom_index": 7,
+          "element": "Ca",
+          "isotope": 43,
+          "prefactor_mhz_per_au3": -35.9513,
+          "spin_quantum_number": 3.5
+        },
+        {
+          "a_fc_isotropic_mhz": 0.5491,
+          "a_isotropic_mhz": 0.5491,
+          "a_orb_isotropic_mhz": null,
+          "a_orb_principal_mhz": null,
+          "a_sd_principal_mhz": [
+            -0.0947,
+            0.0188,
+            0.0759
+          ],
+          "a_tot_principal_mhz": [
+            0.4544,
+            0.5679,
+            0.625
+          ],
+          "atom_index": 8,
+          "element": "Ca",
+          "isotope": 43,
+          "prefactor_mhz_per_au3": -35.9513,
+          "spin_quantum_number": 3.5
+        }
+      ],
+      "P": [
+        {
+          "a_fc_isotropic_mhz": -31.8049,
+          "a_isotropic_mhz": -31.7412,
+          "a_orb_isotropic_mhz": 0.0633,
+          "a_orb_principal_mhz": [
+            -0.0297,
+            0.0765,
+            0.1431
+          ],
+          "a_sd_principal_mhz": [
+            2.3221,
+            -0.1421,
+            -2.18
+          ],
+          "a_tot_principal_mhz": [
+            -29.512,
+            -31.8702,
+            -33.8414
+          ],
+          "atom_index": 9,
+          "element": "P",
+          "isotope": 31,
+          "prefactor_mhz_per_au3": 216.1834,
+          "spin_quantum_number": 0.5
+        },
+        {
+          "a_fc_isotropic_mhz": -0.5431,
+          "a_isotropic_mhz": -0.5423,
+          "a_orb_isotropic_mhz": 0.0007,
+          "a_orb_principal_mhz": [
+            0.0009,
+            0.0029,
+            -0.0016
+          ],
+          "a_sd_principal_mhz": [
+            0.2151,
+            -0.0707,
+            -0.1443
+          ],
+          "a_tot_principal_mhz": [
+            -0.3271,
+            -0.6109,
+            -0.6889
+          ],
+          "atom_index": 10,
+          "element": "P",
+          "isotope": 31,
+          "prefactor_mhz_per_au3": 216.1834,
+          "spin_quantum_number": 0.5
+        },
+        {
+          "a_fc_isotropic_mhz": -2.3085,
+          "a_isotropic_mhz": -2.31,
+          "a_orb_isotropic_mhz": -0.0017,
+          "a_orb_principal_mhz": [
+            0.0044,
+            -0.003,
+            -0.0064
+          ],
+          "a_sd_principal_mhz": [
+            0.1881,
+            0.0375,
+            -0.2256
+          ],
+          "a_tot_principal_mhz": [
+            -2.1158,
+            -2.2739,
+            -2.5404
+          ],
+          "atom_index": 11,
+          "element": "P",
+          "isotope": 31,
+          "prefactor_mhz_per_au3": 216.1834,
+          "spin_quantum_number": 0.5
+        },
+        {
+          "a_fc_isotropic_mhz": -7.0586,
+          "a_isotropic_mhz": -7.0536,
+          "a_orb_isotropic_mhz": 0.0049,
+          "a_orb_principal_mhz": [
+            -0.0106,
+            0.0331,
+            -0.0078
+          ],
+          "a_sd_principal_mhz": [
+            0.8683,
+            -0.0269,
+            -0.8413
+          ],
+          "a_tot_principal_mhz": [
+            -6.2009,
+            -7.0523,
+            -7.9076
+          ],
+          "atom_index": 12,
+          "element": "P",
+          "isotope": 31,
+          "prefactor_mhz_per_au3": 216.1834,
+          "spin_quantum_number": 0.5
+        },
+        {
+          "a_fc_isotropic_mhz": -63.2979,
+          "a_isotropic_mhz": -63.0283,
+          "a_orb_isotropic_mhz": 0.2688,
+          "a_orb_principal_mhz": [
+            0.6752,
+            0.0471,
+            0.0841
+          ],
+          "a_sd_principal_mhz": [
+            6.6329,
+            1.6013,
+            -8.2342
+          ],
+          "a_tot_principal_mhz": [
+            -55.989,
+            -61.6486,
+            -71.4474
+          ],
+          "atom_index": 13,
+          "element": "P",
+          "isotope": 31,
+          "prefactor_mhz_per_au3": 216.1834,
+          "spin_quantum_number": 0.5
+        },
+        {
+          "a_fc_isotropic_mhz": -8.1676,
+          "a_isotropic_mhz": -8.1512,
+          "a_orb_isotropic_mhz": 0.0161,
+          "a_orb_principal_mhz": [
+            0.0176,
+            0.0103,
+            0.0205
+          ],
+          "a_sd_principal_mhz": [
+            0.3926,
+            0.369,
+            -0.7616
+          ],
+          "a_tot_principal_mhz": [
+            -7.757,
+            -7.7881,
+            -8.9085
+          ],
+          "atom_index": 14,
+          "element": "P",
+          "isotope": 31,
+          "prefactor_mhz_per_au3": 216.1834,
+          "spin_quantum_number": 0.5
+        }
+      ]
+    },
+    "nucleus_count": 15
+  },
+  "provenance": {
+    "sources": [
+      {
+        "name": "posner_cation_radical_epr_r8c.out",
+        "path": "/home/anulum/sc-neurocore-orca-runs/ml350_cation_radical_epr_20260613_r8c_mpi24_hwlocfix/output/posner_cation_radical_epr_r8c.out",
+        "role": "orca_output",
+        "sha256": "71ea14b90ec596e59bdb31607ed6a33644ff0c89a6a02efe72628133cfaf8c89"
+      },
+      {
+        "name": "REPRODUCIBILITY_LOG.md",
+        "path": "/home/anulum/sc-neurocore-orca-runs/ml350_cation_radical_epr_20260613_r8c_mpi24_hwlocfix/REPRODUCIBILITY_LOG.md",
+        "role": "provenance",
+        "sha256": "7328c0bb6f21d99cc4d521041e9494f16c0a427886fe96e97efa768cd91b0508"
+      },
+      {
+        "name": "posner_cation_radical_epr_r8c.inp",
+        "path": "/home/anulum/sc-neurocore-orca-runs/ml350_cation_radical_epr_20260613_r8c_mpi24_hwlocfix/run/posner_cation_radical_epr_r8c.inp",
+        "role": "provenance",
+        "sha256": "c6f58d96400255a048b27dd8976663055947f0fffa27365722ba28a646e5a525"
+      },
+      {
+        "name": "input.xyz",
+        "path": "/home/anulum/sc-neurocore-orca-runs/ml350_cation_radical_epr_20260613_r8c_mpi24_hwlocfix/run/input.xyz",
+        "role": "provenance",
+        "sha256": "3ef73733b0eff3b81f1487cc2fe8c113fd9b6128e7ce28e9d1528dac7671e8e9"
+      }
+    ]
+  },
+  "run_settings": {
+    "basis_dimension": 1290,
+    "charge": 1,
+    "hartree_fock_type": "UHF",
+    "multiplicity": 2,
+    "number_of_electrons": 461,
+    "program_version": "6.1.1",
+    "property_module_energy_eh": -9953.479258238438,
+    "route_line": "UKS B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 SP"
+  },
+  "schema_version": "1.0.0",
+  "termination": {
+    "normal_termination": true,
+    "total_run_time_seconds": 14452.74,
+    "total_run_time_text": "0 days 4 hours 0 minutes 52 seconds 740 msec"
+  }
+}

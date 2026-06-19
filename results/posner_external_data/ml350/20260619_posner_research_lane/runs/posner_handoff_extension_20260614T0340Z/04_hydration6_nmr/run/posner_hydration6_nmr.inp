@@ -1,0 +1,14 @@
+! B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 NMR
+%maxcore 4000
+%pal
+  nprocs 24
+end
+
+* xyzfile 0 1 input.xyz
+
+%eprnmr
+  nuclei = all H {shift}
+  nuclei = all P {shift, ssall}
+  nuclei = all Ca {shift}
+  printlevel = 5
+end

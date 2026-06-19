@@ -1,0 +1,14 @@
+! UKS B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 SP
+%maxcore 4000
+%pal
+  nprocs 24
+end
+
+* xyzfile 1 2 input.xyz
+
+%eprnmr
+  gtensor = true
+  nuclei = all P {aiso, adip, aorb}
+  nuclei = all Ca {aiso, adip}
+  printlevel = 5
+end

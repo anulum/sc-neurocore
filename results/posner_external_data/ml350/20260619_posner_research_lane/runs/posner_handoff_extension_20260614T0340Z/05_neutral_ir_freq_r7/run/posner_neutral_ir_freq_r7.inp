@@ -1,0 +1,7 @@
+! B3LYP def2-TZVP D3BJ RIJCOSX VeryTightSCF DefGrid3 Freq
+%maxcore 4000
+%pal
+  nprocs 24
+end
+
+* xyzfile 0 1 input.xyz
