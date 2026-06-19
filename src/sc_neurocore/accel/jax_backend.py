@@ -30,6 +30,7 @@ from typing import Any
 
 import numpy as np
 
+jax: Any
 try:
     import jax
     import jax.numpy as jnp
@@ -39,7 +40,7 @@ try:
 except ImportError:
     HAS_JAX = False
     jnp: types.ModuleType = np  # type: ignore[no-redef]
-    jax = None  # type: ignore[assignment]
+    jax = None
 
 __all__ = [
     "jax",

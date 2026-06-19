@@ -18,6 +18,7 @@ from __future__ import annotations
 import ctypes as _ct
 import os
 import pathlib as _pl
+from collections.abc import Mapping
 from typing import Any, Sequence
 
 import numpy as np
@@ -1191,10 +1192,13 @@ try:
         def get_state_dict(self) -> dict[str, Any]:
             return dict(self.state_dict())
 
-        def load_state_dict(  # type: ignore[override]
-            self, state_dict: dict[str, Any]
-        ) -> None:
-            super().load_state_dict(state_dict)
+        def load_state_dict(
+            self,
+            state_dict: Mapping[str, Any],
+            strict: bool = True,
+            assign: bool = False,
+        ) -> Any:
+            return super().load_state_dict(state_dict, strict=strict, assign=assign)
 
         def get_weights(self) -> np.ndarray[Any, Any]:
             return self.weights.detach().cpu().numpy()

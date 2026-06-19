@@ -168,11 +168,16 @@ class LIFCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
-        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor, self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+        )
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor,
+            self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
+        )
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         v_next = self.beta * v + current
@@ -203,7 +208,10 @@ class IFCell(nn.Module):
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor,
+            self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
+        )
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         v_next = v + current
@@ -245,11 +253,16 @@ class SynapticCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
-        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor, self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+        )
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor,
+            self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
+        )
 
     def forward(
         self,
@@ -336,11 +349,16 @@ class ExpIFCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
-        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor, self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+        )
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor,
+            self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
+        )
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         exp_term = self.delta_t * torch.exp(torch.clamp((v - self.v_rh) / self.delta_t, max=5.0))
@@ -392,11 +410,16 @@ class AdExCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
-        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor, self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+        )
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor,
+            self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
+        )
 
     def forward(
         self,
@@ -442,7 +465,10 @@ class LapicqueCell(nn.Module):
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor,
+            self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
+        )
 
     def forward(self, current: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         v_next = self.decay * (v - self.v_rest) + self.v_rest + self.gain * current
@@ -486,11 +512,16 @@ class AlphaCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
-        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor, self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+        )
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor,
+            self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
+        )
 
     def forward(
         self,
@@ -542,11 +573,16 @@ class SecondOrderLIFCell(nn.Module):
 
     @property
     def beta(self) -> torch.Tensor:
-        return self._beta_logit.sigmoid() if self._learn_beta else self._beta_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor, self._beta_logit.sigmoid() if self._learn_beta else self._beta_val
+        )
 
     @property
     def threshold(self) -> torch.Tensor:
-        return self._threshold_log.exp() if self._learn_threshold else self._threshold_val  # type: ignore[return-value]
+        return cast(
+            torch.Tensor,
+            self._threshold_log.exp() if self._learn_threshold else self._threshold_val,
+        )
 
     def forward(
         self,
@@ -772,7 +808,7 @@ class ConvSpikingNet(nn.Module):
             w = (
                 mod.weight.detach().flatten(1)
                 if isinstance(mod, nn.Conv2d)
-                else mod.weight.detach()  # type: ignore[operator]
+                else cast(torch.Tensor, mod.weight).detach()
             )
             scale = _sc_weight_scale(w, encoding=encoding)
             w = _normalise_sc_weight_tensor(w, encoding=encoding)

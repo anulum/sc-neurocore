@@ -18,12 +18,13 @@ from typing import Any
 
 import numpy as np
 
+MPI: Any
 try:
     from mpi4py import MPI  # pragma: no cover  # type: ignore
 
     HAS_MPI = True  # pragma: no cover
 except ImportError:
-    MPI = None  # type: ignore[assignment]
+    MPI = None
     HAS_MPI = False
     warnings.warn("mpi4py not found. Distributed computing disabled. Install 'mpi4py'.")
 

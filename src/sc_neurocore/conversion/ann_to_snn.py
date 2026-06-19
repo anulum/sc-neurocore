@@ -26,7 +26,7 @@ deep networks through weight and threshold balancing"
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -193,7 +193,7 @@ def convert(
     biases = [b for _, b in layers]
 
     if calibration_data is not None:
-        max_acts = _compute_max_activations(model, calibration_data, percentile)  # type: ignore[arg-type]
+        max_acts = _compute_max_activations(model, cast(torch.Tensor, calibration_data), percentile)
         # Pad if fewer ReLUs than Linear layers
         while len(max_acts) < len(weights):
             max_acts.append(1.0)
