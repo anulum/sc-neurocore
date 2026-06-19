@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import json
 import hashlib
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import pytest
+
+UTC = timezone.utc
 
 
 def _policy_contract() -> dict[str, Any]:
