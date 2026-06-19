@@ -322,7 +322,7 @@ class SC3DGenerator:
     iso_level: float = 0.5  # Threshold for surface extraction
 
     def export_point_cloud_json(
-        self, points: np.ndarray, intensities: np.ndarray, filename: str
+        self, points: np.ndarray[Any, Any], intensities: np.ndarray[Any, Any], filename: str
     ) -> None:
         """
         Export a point cloud to JSON format.
@@ -344,7 +344,7 @@ class SC3DGenerator:
         logger.info("3D Export: Saved %d points to %s", len(points), filename)
 
     def generate_surface_mesh(
-        self, voxel_grid: np.ndarray, iso_level: float | None = None
+        self, voxel_grid: np.ndarray[Any, Any], iso_level: float | None = None
     ) -> dict[str, Any]:
         """
         Generate a surface mesh from a voxel grid using Marching Cubes.
@@ -424,7 +424,7 @@ class SC3DGenerator:
 
     def _get_edge_vertices(
         self, i: int, j: int, k: int, cube_vals: list[float], iso_level: float
-    ) -> dict[int, np.ndarray]:
+    ) -> dict[int, np.ndarray[Any, Any]]:
         """Compute vertex positions along cube edges."""
         # Cube corner positions
         corners = np.array(
@@ -469,7 +469,9 @@ class SC3DGenerator:
 
         return edge_verts
 
-    def _compute_normals(self, vertices: np.ndarray, faces: np.ndarray) -> np.ndarray:
+    def _compute_normals(
+        self, vertices: np.ndarray[Any, Any], faces: np.ndarray[Any, Any]
+    ) -> np.ndarray[Any, Any]:
         """Compute vertex normals from face normals."""
         if len(vertices) == 0 or len(faces) == 0:
             return np.zeros((0, 3))
@@ -552,8 +554,8 @@ class SC3DGenerator:
         logger.info("3D Export: Saved mesh JSON to %s", filename)
 
     def bitstream_to_voxels(
-        self, bitstreams: np.ndarray, grid_size: tuple[int, int, int] = (16, 16, 16)
-    ) -> np.ndarray:
+        self, bitstreams: np.ndarray[Any, Any], grid_size: tuple[int, int, int] = (16, 16, 16)
+    ) -> np.ndarray[Any, Any]:
         """
         Convert bitstream outputs to a voxel grid.
 
@@ -582,7 +584,8 @@ class SC3DGenerator:
             x_new = np.linspace(0, 1, n_voxels)
             voxel_values = np.interp(x_new, x_old, probs)
 
-        return voxel_values.reshape(grid_size)
+        voxel_grid: np.ndarray[Any, Any] = voxel_values.reshape(grid_size)
+        return voxel_grid
 
     def generate_from_scpn(
         self, scpn_outputs: dict[str, Any], grid_size: tuple[int, int, int] = (16, 16, 16)

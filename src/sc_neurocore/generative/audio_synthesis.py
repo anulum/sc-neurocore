@@ -27,7 +27,7 @@ class SCAudioSynthesizer:
         Synthesize a simple sine tone modulated by probability (amplitude).
         """
         t = np.linspace(0, duration_ms / 1000, int(self.sample_rate * duration_ms / 1000))
-        waveform = probability * np.sin(2 * np.pi * frequency * t)
+        waveform: np.ndarray[Any, Any] = probability * np.sin(2 * np.pi * frequency * t)
         return waveform
 
     def bitstream_to_audio(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
