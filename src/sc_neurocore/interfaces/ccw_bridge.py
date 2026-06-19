@@ -116,7 +116,7 @@ class CCWBridge:
             Frequency in Hz mapped from bitstream probability
         """
         prob = np.mean(bitstream)
-        return freq_min + prob * (freq_max - freq_min)
+        return float(freq_min + prob * (freq_max - freq_min))
 
     def scpn_metrics_to_ccw(self, metrics: Dict[str, float]) -> Dict[str, float]:
         """

@@ -95,7 +95,8 @@ class RateSpikeDecoder:
         if raster.ndim != 2:
             raise ValueError("spike_raster must have shape (samples, channels)")
         duration_s = max(raster.shape[0] / self.sampling_rate_hz, 1e-9)
-        return raster.sum(axis=0) / duration_s
+        firing_rates: np.ndarray[Any, Any] = raster.sum(axis=0) / duration_s
+        return firing_rates
 
 
 @dataclass

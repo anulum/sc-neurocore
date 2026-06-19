@@ -19,6 +19,7 @@ For spike compression/telemetry, see spike_codec (6 codecs).
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -49,7 +50,7 @@ class BCIEncoder:
     window_ms: float = 1.0
     seed: int = 42
 
-    def encode(self, signal: np.ndarray, T: int = 20) -> np.ndarray:
+    def encode(self, signal: np.ndarray[Any, Any], T: int = 20) -> np.ndarray[Any, Any]:
         """Encode a signal block into spike trains via rate coding.
 
         Parameters
@@ -72,7 +73,7 @@ class BCIEncoder:
         probs = self._normalize(probs)
         return rate_encode(probs, T, seed=self.seed)
 
-    def encode_stream(self, signal: np.ndarray) -> np.ndarray:
+    def encode_stream(self, signal: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Encode a multi-window signal stream.
 
         Parameters
@@ -102,23 +103,27 @@ class BCIEncoder:
         return np.vstack(chunks)
 
     @staticmethod
-    def _normalize(values: np.ndarray) -> np.ndarray:
+    def _normalize(values: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Normalize to [0, 1] for probability encoding."""
         vmin, vmax = values.min(), values.max()
         if vmax - vmin < 1e-10:
             return np.full_like(values, 0.5)
-        return (values - vmin) / (vmax - vmin)
+        normalised: np.ndarray[Any, Any] = (values - vmin) / (vmax - vmin)
+        return normalised
 
     # --- Backward-compatible API (old BCIDecoder methods) ---
 
-    def normalize_signal(self, signal: np.ndarray) -> np.ndarray:
+    def normalize_signal(self, signal: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Normalize signal to [0, 1]. Legacy API — use _normalize()."""
         s_min, s_max = np.min(signal), np.max(signal)
         if s_max - s_min == 0:
             return np.zeros_like(signal)
-        return (signal - s_min) / (s_max - s_min)
+        scaled: np.ndarray[Any, Any] = (signal - s_min) / (s_max - s_min)
+        return scaled
 
-    def encode_to_bitstream(self, signal: np.ndarray, length: int = 256) -> np.ndarray:
+    def encode_to_bitstream(
+        self, signal: np.ndarray[Any, Any], length: int = 256
+    ) -> np.ndarray[Any, Any]:
         """Legacy API. Encodes (channels, time) → (channels, length).
 
         New code should use .encode() which returns (T, channels).
