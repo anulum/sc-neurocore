@@ -27,6 +27,7 @@ from __future__ import annotations
 import math
 import types
 from typing import Any
+
 import numpy as np
 
 try:

@@ -16,6 +16,7 @@ and popcount accumulation for tests, CPU execution, and parity checks.
 from __future__ import annotations
 
 from typing import Any, Optional
+
 import numpy as np
 
 

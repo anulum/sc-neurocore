@@ -13,9 +13,10 @@ available, while exposing the same workload partitioning, result collection, and
 barrier interface used by multi-node stochastic-computing deployments.
 """
 
-from typing import Any
-import numpy as np
 import warnings
+from typing import Any
+
+import numpy as np
 
 try:
     from mpi4py import MPI  # pragma: no cover  # type: ignore

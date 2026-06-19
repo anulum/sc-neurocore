@@ -15,8 +15,8 @@ Provides:
 - ``jit_kernels``: Numba JIT-compiled hot loops
 """
 
+from .gpu_backend import HAS_CUPY, to_device, to_host, xp
 from .vector_ops import pack_bitstream, unpack_bitstream, vec_and, vec_popcount
-from .gpu_backend import xp, HAS_CUPY, to_device, to_host
 
 __all__ = [
     "pack_bitstream",

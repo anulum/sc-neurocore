@@ -77,9 +77,9 @@ def simulate_wong_wang(
     i_0: float,
     sigma: float,
     dt: float,
-    stim1: np.ndarray | list[float],
-    stim2: np.ndarray | list[float],
-    xi: np.ndarray | list[float],
+    stim1: np.ndarray[Any, Any] | list[float],
+    stim2: np.ndarray[Any, Any] | list[float],
+    xi: np.ndarray[Any, Any] | list[float],
 ) -> dict[str, Any]:
     """Mojo-accelerated N-step Wong-Wang simulator. Same signature + return
     shape as the Rust/Julia/Go dispatchers.

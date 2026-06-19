@@ -78,7 +78,7 @@ def simulate_wilson_cowan(
     a: float,
     theta: float,
     dt: float,
-    ext_input: np.ndarray | list[float],
+    ext_input: np.ndarray[Any, Any] | list[float],
 ) -> dict[str, Any]:
     """Mojo-accelerated Wilson-Cowan N-step simulator (ctypes dispatch)."""
     if _lib is None:

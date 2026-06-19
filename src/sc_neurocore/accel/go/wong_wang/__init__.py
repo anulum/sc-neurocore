@@ -71,9 +71,9 @@ def simulate_wong_wang(
     i_0: float,
     sigma: float,
     dt: float,
-    stim1: np.ndarray | list[float],
-    stim2: np.ndarray | list[float],
-    xi: np.ndarray | list[float],
+    stim1: np.ndarray[Any, Any] | list[float],
+    stim2: np.ndarray[Any, Any] | list[float],
+    xi: np.ndarray[Any, Any] | list[float],
 ) -> dict[str, Any]:
     """Go-accelerated N-step Wong-Wang simulator. Same signature + return
     shape as `sc_neurocore_engine.py_wong_wang_simulate` and the Julia

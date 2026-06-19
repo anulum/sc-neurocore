@@ -97,7 +97,7 @@ def _py_popcount32(word: int) -> int:
     return x & 0x3F
 
 
-def _py_popcount_array(arr: np.ndarray) -> int:
+def _py_popcount_array(arr: np.ndarray[Any, Any]) -> int:
     total = 0
     for w in arr.flat:
         total += _py_popcount32(int(w))
@@ -109,7 +109,7 @@ def _py_popcount_array(arr: np.ndarray) -> int:
 # ---------------------------------------------------------------------------
 
 
-def _np_popcount64(packed: np.ndarray) -> np.ndarray:
+def _np_popcount64(packed: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Wilkes-Wheeler-Gill popcount over uint64 array."""
     x = packed.astype(np.uint64)
     x -= (x >> np.uint64(1)) & np.uint64(0x5555555555555555)
@@ -118,7 +118,7 @@ def _np_popcount64(packed: np.ndarray) -> np.ndarray:
     return (x * np.uint64(0x0101010101010101)) >> np.uint64(56)
 
 
-def _np_pack_bitstream(bits: np.ndarray) -> np.ndarray:
+def _np_pack_bitstream(bits: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Pack uint8 {0,1} array into uint64 words."""
     bits = np.asarray(bits, dtype=np.uint8)
     n = len(bits)
@@ -127,30 +127,37 @@ def _np_pack_bitstream(bits: np.ndarray) -> np.ndarray:
     flat[:n] = bits
     padded = flat.reshape(n_words, 64)
     powers = np.uint64(1) << np.arange(64, dtype=np.uint64)
-    return (padded.astype(np.uint64) * powers).sum(axis=1).astype(np.uint64)
+    packed: np.ndarray[Any, Any] = (padded.astype(np.uint64) * powers).sum(axis=1).astype(np.uint64)
+    return packed
 
 
-def _np_sc_and(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    return np.bitwise_and(a, b)
+def _np_sc_and(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    result: np.ndarray[Any, Any] = np.bitwise_and(a, b)
+    return result
 
 
-def _np_sc_xor(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    return np.bitwise_xor(a, b)
+def _np_sc_xor(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    result: np.ndarray[Any, Any] = np.bitwise_xor(a, b)
+    return result
 
 
-def _np_sc_or(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    return np.bitwise_or(a, b)
+def _np_sc_or(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    result: np.ndarray[Any, Any] = np.bitwise_or(a, b)
+    return result
 
 
-def _np_sc_mux(a: np.ndarray, b: np.ndarray, sel: np.ndarray) -> np.ndarray:
-    return (a & sel) | (b & ~sel)
+def _np_sc_mux(
+    a: np.ndarray[Any, Any], b: np.ndarray[Any, Any], sel: np.ndarray[Any, Any]
+) -> np.ndarray[Any, Any]:
+    muxed: np.ndarray[Any, Any] = (a & sel) | (b & ~sel)
+    return muxed
 
 
-def _np_popcount(packed: np.ndarray) -> int:
+def _np_popcount(packed: np.ndarray[Any, Any]) -> int:
     return int(_np_popcount64(packed).sum())
 
 
-def _np_scc(a: np.ndarray, b: np.ndarray, bit_length: int) -> float:
+def _np_scc(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any], bit_length: int) -> float:
     if bit_length == 0:
         return 0.0
     n = float(bit_length)
@@ -175,7 +182,7 @@ def _np_scc(a: np.ndarray, b: np.ndarray, bit_length: int) -> float:
 # ---------------------------------------------------------------------------
 
 
-def pack_bitstream(bits: np.ndarray) -> np.ndarray:
+def pack_bitstream(bits: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Pack a uint8 {0,1} bitstream into uint64 packed words.
 
     Uses the fastest available backend.
@@ -183,53 +190,56 @@ def pack_bitstream(bits: np.ndarray) -> np.ndarray:
     return _np_pack_bitstream(bits)
 
 
-def popcount(packed: np.ndarray) -> int:
+def popcount(packed: np.ndarray[Any, Any]) -> int:
     """Count total set bits in a packed uint64 array."""
     return _np_popcount(packed)
 
 
-def sc_and(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+def sc_and(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """SC multiply (bitwise AND) on packed bitstreams."""
     return _np_sc_and(a, b)
 
 
-def sc_or(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+def sc_or(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """SC saturating addition (bitwise OR) on packed bitstreams."""
     return _np_sc_or(a, b)
 
 
-def sc_xor(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+def sc_xor(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """SC absolute difference (bitwise XOR) on packed bitstreams."""
     return _np_sc_xor(a, b)
 
 
-def sc_mux(a: np.ndarray, b: np.ndarray, sel: np.ndarray) -> np.ndarray:
+def sc_mux(
+    a: np.ndarray[Any, Any], b: np.ndarray[Any, Any], sel: np.ndarray[Any, Any]
+) -> np.ndarray[Any, Any]:
     """SC scaled addition (2:1 MUX) on packed bitstreams."""
     return _np_sc_mux(a, b, sel)
 
 
-def scc(a: np.ndarray, b: np.ndarray, bit_length: int) -> float:
+def scc(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any], bit_length: int) -> float:
     """Stochastic correlation coefficient between two packed bitstreams."""
     return _np_scc(a, b, bit_length)
 
 
-def vec_mac(weights: np.ndarray, inputs: np.ndarray) -> np.ndarray:
+def vec_mac(weights: np.ndarray[Any, Any], inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """SC multiply-accumulate: popcount(weights AND inputs) per row.
 
     Parameters
     ----------
-    weights : np.ndarray
+    weights : np.ndarray[Any, Any]
         Shape (N, W) packed uint64 weight matrix.
-    inputs : np.ndarray
+    inputs : np.ndarray[Any, Any]
         Shape (W,) packed uint64 input vector.
 
     Returns
     -------
-    np.ndarray
+    np.ndarray[Any, Any]
         Shape (N,) int array of popcount results.
     """
     products = np.bitwise_and(weights, inputs[None, :])
-    return _np_popcount64(products).sum(axis=1).astype(np.int64)
+    dot: np.ndarray[Any, Any] = _np_popcount64(products).sum(axis=1).astype(np.int64)
+    return dot
 
 
 # ---------------------------------------------------------------------------

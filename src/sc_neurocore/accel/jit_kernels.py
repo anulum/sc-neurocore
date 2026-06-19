@@ -15,9 +15,10 @@ when Numba is not installed.
 
 from __future__ import annotations
 
-from typing import Any, Callable, TypeVar
-import numpy as np
 import warnings
+from typing import Any, Callable, TypeVar
+
+import numpy as np
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 
@@ -43,7 +44,7 @@ except ImportError:
     )
 
 
-@jit(nopython=True)  # type: ignore[untyped-decorator]
+@jit(nopython=True)
 def jit_pack_bits(
     bitstream: np.ndarray[Any, Any], packed_arr: np.ndarray[Any, Any]
 ) -> None:  # pragma: no cover
@@ -68,7 +69,7 @@ def jit_pack_bits(
         packed_arr[i] = val
 
 
-@jit(nopython=True)  # type: ignore[untyped-decorator]
+@jit(nopython=True)
 def jit_vec_mac(
     packed_weights: np.ndarray[Any, Any],
     packed_inputs: np.ndarray[Any, Any],

@@ -113,7 +113,10 @@ def _numpy_pack_bitstream(bits: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
             bits_1d = np.concatenate([bits_1d, np.zeros(pad, dtype=np.uint8)])
         chunks = bits_1d.reshape(-1, 64)
         powers = np.uint64(1) << np.arange(64, dtype=np.uint64)
-        return (chunks.astype(np.uint64) * powers).sum(axis=1, dtype=np.uint64)
+        packed_1d: np.ndarray[Any, Any] = (chunks.astype(np.uint64) * powers).sum(
+            axis=1, dtype=np.uint64
+        )
+        return packed_1d
 
     if bits_np.ndim == 2:
         bits_2d = bits_np
@@ -124,7 +127,10 @@ def _numpy_pack_bitstream(bits: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         n_words = bits_2d.shape[1] // 64
         chunks_2d: np.ndarray[Any, Any] = bits_2d.reshape(batch, n_words, 64)
         powers = np.uint64(1) << np.arange(64, dtype=np.uint64)
-        return (chunks_2d.astype(np.uint64) * powers).sum(axis=2, dtype=np.uint64)
+        packed_2d: np.ndarray[Any, Any] = (chunks_2d.astype(np.uint64) * powers).sum(
+            axis=2, dtype=np.uint64
+        )
+        return packed_2d
 
     raise ValueError(f"Expected 1-D or 2-D, got {bits_np.ndim}-D")
 
