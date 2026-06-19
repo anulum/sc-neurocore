@@ -10,9 +10,10 @@
 
 from __future__ import annotations
 
-from typing import Any
-import numpy as np
 from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
 
 
 @dataclass
@@ -47,10 +48,12 @@ class TensorStream:
             return self.data
         if self.domain == "bitstream":
             # Mean along the last axis (time)
-            return np.mean(self.data, axis=-1)
+            mean_prob: np.ndarray[Any, Any] = np.mean(self.data, axis=-1)
+            return mean_prob
         if self.domain == "quantum":
             # Born Rule: p = |beta|^2
-            return np.abs(self.data[..., 1]) ** 2
+            born_prob: np.ndarray[Any, Any] = np.abs(self.data[..., 1]) ** 2
+            return born_prob
         return self.data  # Fallback
 
     def to_quantum(self) -> np.ndarray[Any, Any]:

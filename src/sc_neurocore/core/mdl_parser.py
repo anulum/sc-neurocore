@@ -10,11 +10,11 @@
 
 from __future__ import annotations
 
-from typing import Any
 import logging
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict
+
 import yaml
-from dataclasses import dataclass, field, asdict
-from typing import Dict
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +59,12 @@ class MindDescriptionLanguage:
     def decode(mdl_string: str) -> Dict[str, Any]:
         """Parse an MDL string back into a dictionary for reconstruction."""
         data = yaml.safe_load(mdl_string)
+        if not isinstance(data, dict):
+            raise ValueError("MDL string must decode into a mapping")
+        decoded: dict[str, Any] = data
         logger.info(
             "MDL: Decoded mind of '%s' (v%s)",
-            data.get("agent_name", "Unknown"),
-            data.get("version"),
+            decoded.get("agent_name", "Unknown"),
+            decoded.get("version"),
         )
-        return data
+        return decoded
