@@ -20,10 +20,11 @@ compiler that targets all chips via pluggable chip specs.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
-from .chip_spec import ChipSpec, BUILTIN_CHIPS
+from .chip_spec import BUILTIN_CHIPS, ChipSpec
 
 
 @dataclass
@@ -49,7 +50,7 @@ class CompilationResult:
     weight_bits: int = 0
     violations: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
-    quantized_weights: list[np.ndarray] = field(default_factory=list, repr=False)
+    quantized_weights: list[np.ndarray[Any, Any]] = field(default_factory=list, repr=False)
 
     def summary(self) -> str:
         status = "SUCCESS" if self.success else "FAILED"
@@ -68,7 +69,7 @@ class CompilationResult:
 
 def compile_for_chip(
     layer_sizes: list[tuple[int, int]],
-    weights: list[np.ndarray] | None = None,
+    weights: list[np.ndarray[Any, Any]] | None = None,
     neuron_types: list[str] | None = None,
     target: str | ChipSpec = "loihi2",
 ) -> CompilationResult:
