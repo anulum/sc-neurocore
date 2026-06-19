@@ -47,6 +47,40 @@ def test_studio_runtime_settings_parses_comma_separated_cors_origins() -> None:
     )
 
 
+def test_studio_runtime_settings_default_websocket_origins_match_cors() -> None:
+    settings = build_default_studio_runtime_settings(env={})
+
+    assert settings.websocket_allowed_origins == settings.cors_allowed_origins
+    assert "*" not in settings.websocket_allowed_origins
+
+
+def test_studio_runtime_settings_parses_comma_separated_websocket_origins() -> None:
+    settings = build_default_studio_runtime_settings(
+        env={
+            "SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS": (
+                "https://studio.example.test, http://127.0.0.1:9000 "
+            )
+        }
+    )
+
+    assert settings.websocket_allowed_origins == (
+        "https://studio.example.test",
+        "http://127.0.0.1:9000",
+    )
+
+
+def test_studio_runtime_settings_rejects_wildcard_websocket_origin() -> None:
+    with pytest.raises(ValueError, match="wildcard WebSocket"):
+        build_default_studio_runtime_settings(
+            env={"SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS": "http://localhost:5173,*"}
+        )
+
+
+def test_studio_runtime_settings_rejects_empty_websocket_origin_list() -> None:
+    with pytest.raises(ValueError, match="WebSocket origins"):
+        StudioRuntimeSettings(websocket_allowed_origins=())
+
+
 def test_studio_runtime_settings_rejects_wildcard_cors_origin() -> None:
     with pytest.raises(ValueError, match="wildcard CORS"):
         build_default_studio_runtime_settings(

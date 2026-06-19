@@ -22,6 +22,8 @@ DEFAULT_STUDIO_CORS_ORIGINS: tuple[str, ...] = (
     "http://localhost:5173",
 )
 
+DEFAULT_STUDIO_WEBSOCKET_ALLOWED_ORIGINS = DEFAULT_STUDIO_CORS_ORIGINS
+
 DEFAULT_STUDIO_ALLOWED_HOSTS: tuple[str, ...] = (
     "127.0.0.1",
     "localhost",
@@ -43,6 +45,7 @@ class StudioRuntimeSettings:
     """Runtime settings consumed by the Studio FastAPI application."""
 
     cors_allowed_origins: tuple[str, ...] = DEFAULT_STUDIO_CORS_ORIGINS
+    websocket_allowed_origins: tuple[str, ...] = DEFAULT_STUDIO_WEBSOCKET_ALLOWED_ORIGINS
     allowed_hosts: tuple[str, ...] = DEFAULT_STUDIO_ALLOWED_HOSTS
     http_security_headers: Mapping[str, str] = DEFAULT_STUDIO_HTTP_SECURITY_HEADERS
     request_id_header: str = "x-request-id"
@@ -55,6 +58,10 @@ class StudioRuntimeSettings:
             raise ValueError("Studio CORS origins must not be empty.")
         if any(origin == "*" for origin in self.cors_allowed_origins):
             raise ValueError("Studio runtime settings reject wildcard CORS origins.")
+        if not self.websocket_allowed_origins:
+            raise ValueError("Studio WebSocket origins must not be empty.")
+        if any(origin == "*" for origin in self.websocket_allowed_origins):
+            raise ValueError("Studio runtime settings reject wildcard WebSocket origins.")
         if not self.allowed_hosts:
             raise ValueError("Studio allowed hosts must not be empty.")
         if any(host == "*" for host in self.allowed_hosts):
@@ -76,6 +83,7 @@ def build_default_studio_runtime_settings(
 
     source = os.environ if env is None else env
     raw_origins = source.get("SC_NEUROCORE_STUDIO_CORS_ORIGINS")
+    raw_websocket_origins = source.get("SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS")
     raw_hosts = source.get("SC_NEUROCORE_STUDIO_ALLOWED_HOSTS")
     raw_max_request_body_bytes = source.get("SC_NEUROCORE_STUDIO_MAX_REQUEST_BODY_BYTES")
     origins = (
@@ -88,6 +96,13 @@ def build_default_studio_runtime_settings(
         if raw_hosts is None or not raw_hosts.strip()
         else tuple(host.strip() for host in raw_hosts.split(",") if host.strip())
     )
+    websocket_origins = (
+        origins
+        if raw_websocket_origins is None or not raw_websocket_origins.strip()
+        else tuple(
+            origin.strip() for origin in raw_websocket_origins.split(",") if origin.strip()
+        )
+    )
     try:
         max_request_body_bytes = (
             DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES
@@ -99,6 +114,7 @@ def build_default_studio_runtime_settings(
         raise ValueError("Studio request body limit must be an integer.") from exc
     return StudioRuntimeSettings(
         cors_allowed_origins=origins,
+        websocket_allowed_origins=websocket_origins,
         allowed_hosts=hosts,
         max_request_body_bytes=max_request_body_bytes,
     )
