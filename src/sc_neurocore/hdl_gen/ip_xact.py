@@ -164,7 +164,8 @@ def generate_ip_xact(
             val.set("spirit:resolve", "user")
 
     raw = tostring(comp, encoding="unicode")
-    return parseString(raw).toprettyxml(indent="  ")
+    pretty_xml: str = parseString(raw).toprettyxml(indent="  ")
+    return pretty_xml
 
 
 def _add_port(
