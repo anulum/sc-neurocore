@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 157
+expected_file_count = 158
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -476,6 +476,10 @@ rationale = "Public published neural decoder/encoder reference implementations (
 [[file]]
 path = "src/sc_neurocore/bio/transcriptomic.py"
 rationale = "Public single-cell transcriptomic foundation-model interfaces (scKG-BERT, Geneformer)."
+
+[[file]]
+path = "src/sc_neurocore/hdc/base.py"
+rationale = "Public hyperdimensional computing encoder and associative clean-up memory."
 
 [[file]]
 path = "src/sc_neurocore/transformers/block.py"
