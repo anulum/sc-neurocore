@@ -300,7 +300,7 @@ module = [
   'sc_neurocore.spike_ode.*', 'sc_neurocore.spintronic.*', 'sc_neurocore.stochastic_doctor.*',
   'sc_neurocore.swarm.*', 'sc_neurocore.symbolic.*', 'sc_neurocore.temporal_hierarchy.*',
   'sc_neurocore.topology.*', 'sc_neurocore.training.*', 'sc_neurocore.transfer.*',
-  'sc_neurocore.verification.*', 'sc_neurocore.viz.*', 'sc_neurocore.world_model.*',
+  'sc_neurocore.verification.*', 'sc_neurocore.viz.*',
 ]
 disallow_any_generics = false
 warn_return_any = false
