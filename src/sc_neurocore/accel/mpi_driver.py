@@ -18,9 +18,10 @@ from typing import Any
 
 import numpy as np
 
-MPI: Any
 try:
-    from mpi4py import MPI  # pragma: no cover  # type: ignore
+    from mpi4py import MPI as _MPI  # pragma: no cover  # type: ignore
+
+    MPI: Any = _MPI  # pragma: no cover
 
     HAS_MPI = True  # pragma: no cover
 except ImportError:

@@ -30,11 +30,11 @@ from typing import Any
 
 import numpy as np
 
-jax: Any
 try:
-    import jax
+    import jax as _jax
     import jax.numpy as jnp
 
+    jax: Any = _jax
     jax.config.update("jax_enable_x64", True)
     HAS_JAX = True
 except ImportError:

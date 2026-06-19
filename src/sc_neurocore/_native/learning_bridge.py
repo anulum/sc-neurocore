@@ -1201,7 +1201,8 @@ try:
             return super().load_state_dict(state_dict, strict=strict, assign=assign)
 
         def get_weights(self) -> np.ndarray[Any, Any]:
-            return self.weights.detach().cpu().numpy()
+            weights: np.ndarray[Any, Any] = self.weights.detach().cpu().numpy()
+            return weights
 
     # Bridge the deprecated prototype to the hardened module
     AutogradSTDPLayer = TorchRuleLayer
