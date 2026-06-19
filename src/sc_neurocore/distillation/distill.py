@@ -15,7 +15,9 @@ Reference: CVPR 2025 — temporal separation + entropy regularization
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -43,10 +45,10 @@ class TemporalDistillationLoss:
 
     def compute(
         self,
-        student_logits: np.ndarray,
-        teacher_logits: np.ndarray,
-        targets: np.ndarray | None = None,
-    ) -> dict:
+        student_logits: np.ndarray[Any, Any],
+        teacher_logits: np.ndarray[Any, Any],
+        targets: np.ndarray[Any, Any] | None = None,
+    ) -> dict[str, float]:
         """Compute distillation loss.
 
         Parameters
@@ -90,11 +92,12 @@ class TemporalDistillationLoss:
         }
 
     @staticmethod
-    def _softmax(x: np.ndarray) -> np.ndarray:
+    def _softmax(x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         if x.ndim > 1:
             x = x.mean(axis=0)
         e = np.exp(x - x.max())
-        return e / e.sum()
+        probs: np.ndarray[Any, Any] = e / e.sum()
+        return probs
 
 
 @dataclass
@@ -117,7 +120,11 @@ class SelfDistiller:
     T_student: int = 8
     temperature: float = 3.0
 
-    def generate_targets(self, run_fn, inputs: np.ndarray) -> np.ndarray:  # type: ignore[no-untyped-def]
+    def generate_targets(
+        self,
+        run_fn: Callable[[np.ndarray[Any, Any], int], np.ndarray[Any, Any]],
+        inputs: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         """Run model at T_teacher steps to generate soft targets.
 
         Parameters
@@ -133,6 +140,7 @@ class SelfDistiller:
         return self._softmax(teacher_logits / self.temperature)
 
     @staticmethod
-    def _softmax(x: np.ndarray) -> np.ndarray:
+    def _softmax(x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         e = np.exp(x - x.max())
-        return e / e.sum()
+        probs: np.ndarray[Any, Any] = e / e.sum()
+        return probs
