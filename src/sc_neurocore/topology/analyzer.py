@@ -15,6 +15,7 @@ degree distribution, centrality from weight/adjacency matrices.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -69,7 +70,7 @@ class TopologyAnalyzer:
 
     def __init__(
         self,
-        adjacency: np.ndarray,
+        adjacency: np.ndarray[Any, Any],
         directed: bool = False,
         n_path_samples: int = 100,
     ):
@@ -164,7 +165,7 @@ class TopologyAnalyzer:
         return q
 
     @staticmethod
-    def _connected_components(A: np.ndarray) -> list[int]:
+    def _connected_components(A: np.ndarray[Any, Any]) -> list[int]:
         """Label each node with its connected-component index (BFS)."""
         N = A.shape[0]
         labels = [-1] * N
@@ -220,7 +221,7 @@ class TopologyAnalyzer:
         return total / max(count, 1)
 
     @staticmethod
-    def _bfs(A: np.ndarray, src: int) -> np.ndarray:
+    def _bfs(A: np.ndarray[Any, Any], src: int) -> np.ndarray[Any, Any]:
         N = A.shape[0]
         dist = np.full(N, -1)
         dist[src] = 0
@@ -234,7 +235,7 @@ class TopologyAnalyzer:
         dist[dist == -1] = 0
         return dist
 
-    def _assortativity(self, degrees: np.ndarray) -> float:
+    def _assortativity(self, degrees: np.ndarray[Any, Any]) -> float:
         """Degree assortativity coefficient."""
         edges = np.argwhere(self.adj > 0)
         if len(edges) < 2:
