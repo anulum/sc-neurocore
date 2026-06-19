@@ -552,11 +552,13 @@ def test_default_route_policy_registry_classifies_platform_routes() -> None:
     health_policy = registry.policy_for("GET", "/api/health")
     capability_policy = registry.policy_for("GET", "/api/studio/capabilities")
     detail_policy = registry.policy_for("GET", "/api/studio/capabilities/{capability_id}")
+    operator_status_policy = registry.policy_for("GET", "/api/studio/operator/status")
     audit_export_policy = registry.policy_for("GET", "/api/studio/audit/export")
 
     assert health_policy.visibility is contract["RouteVisibility"].PUBLIC
     assert capability_policy.visibility is contract["RouteVisibility"].PUBLIC
     assert detail_policy.visibility is contract["RouteVisibility"].PUBLIC
+    assert operator_status_policy.visibility is contract["RouteVisibility"].ADMIN
     assert audit_export_policy.visibility is contract["RouteVisibility"].ADMIN
 
 

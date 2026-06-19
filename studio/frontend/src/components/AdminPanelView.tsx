@@ -6,6 +6,7 @@ export interface AdminPanelViewProps {
   onLoadAuditExport: () => Promise<void>;
   onLoadAuditStatus: () => Promise<void>;
   onLoadJobStatus: () => Promise<void>;
+  onLoadOperatorStatus: () => Promise<void>;
 }
 
 export default function AdminPanelView({
@@ -14,9 +15,25 @@ export default function AdminPanelView({
   onLoadAuditExport,
   onLoadAuditStatus,
   onLoadJobStatus,
+  onLoadOperatorStatus,
 }: AdminPanelViewProps) {
   return (
     <div className="admin-panel">
+      <section className="admin-section">
+        <div className="admin-section-header">
+          <h2>Operator</h2>
+          <div className="admin-actions">
+            <button onClick={() => void onLoadOperatorStatus()} disabled={auditLoading}>Status</button>
+          </div>
+        </div>
+        <div className="admin-metrics">
+          <div><span>Profile</span><strong>{model.operator.deploymentProfile}</strong></div>
+          <div><span>Routes</span><strong>{model.operator.routePolicyLabel}</strong></div>
+          <div><span>Identity</span><strong>{model.operator.identityMode}</strong></div>
+          <div><span>Schema</span><strong>{model.operator.schemaVersion}</strong></div>
+        </div>
+      </section>
+
       <section className="admin-section">
         <div className="admin-section-header">
           <h2>Audit</h2>

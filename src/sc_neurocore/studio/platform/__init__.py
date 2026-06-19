@@ -56,6 +56,15 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobStatusSnapshot,
     StudioJobTask,
 )
+from sc_neurocore.studio.platform.operator import (
+    OPERATOR_STATUS_SCHEMA_VERSION,
+    OperatorIdentityMode,
+    StudioOperatorCapabilityStatus,
+    StudioOperatorIdentityStatus,
+    StudioOperatorRoutePolicyStatus,
+    StudioOperatorStatus,
+    build_studio_operator_status,
+)
 from sc_neurocore.studio.platform.settings import (
     DEFAULT_STUDIO_AUDIT_RETAINED_FILES,
     DEFAULT_STUDIO_ALLOWED_HOSTS,
@@ -88,6 +97,8 @@ __all__ = [
     "JOBS_STATUS_SCHEMA_VERSION",
     "InMemoryAuditSink",
     "JsonlAuditSink",
+    "OPERATOR_STATUS_SCHEMA_VERSION",
+    "OperatorIdentityMode",
     "PolicyDecision",
     "PolicyGateway",
     "Principal",
@@ -116,8 +127,13 @@ __all__ = [
     "StudioJobStatus",
     "StudioJobStatusSnapshot",
     "StudioJobTask",
+    "StudioOperatorCapabilityStatus",
+    "StudioOperatorIdentityStatus",
+    "StudioOperatorRoutePolicyStatus",
+    "StudioOperatorStatus",
     "build_default_studio_capability_registry",
     "build_default_studio_route_policy_registry",
     "build_default_studio_runtime_settings",
+    "build_studio_operator_status",
     "load_studio_identity_store",
 ]

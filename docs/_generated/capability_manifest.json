@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 799
+    "test_files": 800
   },
   "documentation": {
     "public_pages": [
@@ -2502,6 +2502,7 @@
       "tests/test_studio_jobs.py",
       "tests/test_studio_model_scan.py",
       "tests/test_studio_network_canvas.py",
+      "tests/test_studio_operator_status.py",
       "tests/test_studio_platform.py",
       "tests/test_studio_policy.py",
       "tests/test_studio_progress.py",

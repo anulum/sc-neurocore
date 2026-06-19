@@ -6,6 +6,7 @@ import type {
   StudioAuditStatus,
   StudioCapability,
   StudioJobStatus,
+  StudioOperatorStatus,
 } from "../api/client";
 import { buildAdminShellModel } from "../adminShell";
 import AdminPanelView from "./AdminPanelView";
@@ -65,6 +66,27 @@ const jobStatus: StudioJobStatus = {
   timed_out_count: 1,
 };
 
+const operatorStatus: StudioOperatorStatus = {
+  audit: auditStatus,
+  capabilities: {
+    degraded_count: 0,
+    experimental_count: 2,
+    healthy_count: 1,
+    stable_count: 1,
+    total_count: 2,
+    unavailable_count: 1,
+  },
+  deployment_profile: "production",
+  identity: {
+    configured: true,
+    header_principal_allowed: false,
+    mode: "service_account",
+  },
+  jobs: jobStatus,
+  route_policies: { enforced: true },
+  schema_version: "studio.operator.status.v1",
+};
+
 describe("AdminPanel", () => {
   it("renders audit health, denied events, and degraded capabilities", () => {
     const model = buildAdminShellModel({
@@ -82,6 +104,7 @@ describe("AdminPanel", () => {
         }),
       ],
       jobStatus,
+      operatorStatus,
     });
 
     const html = renderToStaticMarkup(
@@ -91,9 +114,14 @@ describe("AdminPanel", () => {
         onLoadAuditExport={async () => undefined}
         onLoadAuditStatus={async () => undefined}
         onLoadJobStatus={async () => undefined}
+        onLoadOperatorStatus={async () => undefined}
       />,
     );
 
+    expect(html).toContain("Operator");
+    expect(html).toContain("production");
+    expect(html).toContain("service_account");
+    expect(html).toContain("enforced");
     expect(html).toContain("Audit");
     expect(html).toContain("jsonl");
     expect(html).toContain("unhealthy");

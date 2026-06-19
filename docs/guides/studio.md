@@ -274,6 +274,11 @@ per-job working directories on an operator-selected disk, and tune
 status payload is path-free and reports allowed job kinds plus
 active/completed/failed/timed-out counts.
 
+The Admin panel also uses the admin-gated `/api/studio/operator/status`
+aggregate when available. That endpoint reports deployment profile,
+route-policy enforcement, identity mode, audit health, worker health, and
+capability counts without exposing local paths or token material.
+
 For production deployments, set
 `SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE=production`. That profile fails closed
 unless route policies are enforced, header principals are disabled, and the

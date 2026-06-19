@@ -105,6 +105,10 @@ runtime features:
   the default cooperative timeout. The local worker manager tracks allowed job
   kinds, active/completed/failed/timed-out counts, and does not expose host
   filesystem paths.
+- `/api/studio/operator/status` is an admin-classified aggregate for the
+  Studio control plane. It combines deployment profile, route-policy
+  enforcement, identity mode, audit health, job-worker health, and capability
+  counts into one path-free payload for the Admin panel.
 - Deployments can set `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` to rotate the
   active JSONL audit file before the next append once it reaches the configured
   byte limit. `SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES` controls how many
@@ -306,6 +310,7 @@ for complete API details with request/response examples.
 | `/api/graph/*` | Network Canvas | Populations, projections, validate, simulate, NIR |
 | `/api/project/*`, `/api/pipeline/*` | Integration | Save/load, full pipeline |
 | `/api/studio/audit/*` | Admin | Audit status and admin-gated export |
+| `/api/studio/operator/status` | Admin | Aggregate operator control-plane health |
 
 ## Requirements
 

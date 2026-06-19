@@ -537,6 +537,12 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
             ),
             (
                 "GET",
+                "/api/studio/operator/status",
+                RouteVisibility.ADMIN,
+                "studio.operator.status.read",
+            ),
+            (
+                "GET",
                 "/api/studio/audit/export",
                 RouteVisibility.ADMIN,
                 "studio.audit.export",

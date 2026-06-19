@@ -5,6 +5,7 @@ import type {
   StudioAuditStatus,
   StudioCapability,
   StudioJobStatus,
+  StudioOperatorStatus,
 } from "./api/client";
 import { buildAdminShellModel } from "./adminShell";
 
@@ -75,6 +76,27 @@ const jobStatus: StudioJobStatus = {
   timed_out_count: 1,
 };
 
+const operatorStatus: StudioOperatorStatus = {
+  audit: auditStatus,
+  capabilities: {
+    degraded_count: 0,
+    experimental_count: 2,
+    healthy_count: 1,
+    stable_count: 1,
+    total_count: 2,
+    unavailable_count: 1,
+  },
+  deployment_profile: "production",
+  identity: {
+    configured: true,
+    header_principal_allowed: false,
+    mode: "service_account",
+  },
+  jobs: jobStatus,
+  route_policies: { enforced: true },
+  schema_version: "studio.operator.status.v1",
+};
+
 describe("admin shell model", () => {
   it("aggregates audit and capability health for the operator view", () => {
     const model = buildAdminShellModel({
@@ -92,6 +114,7 @@ describe("admin shell model", () => {
         }),
       ],
       jobStatus,
+      operatorStatus,
     });
 
     expect(model.audit).toEqual({
@@ -117,6 +140,12 @@ describe("admin shell model", () => {
       failed: 0,
       healthLabel: "attention",
       timedOut: 1,
+    });
+    expect(model.operator).toEqual({
+      deploymentProfile: "production",
+      identityMode: "service_account",
+      routePolicyLabel: "enforced",
+      schemaVersion: "studio.operator.status.v1",
     });
     expect(model.unhealthyCapabilities).toHaveLength(1);
     expect(model.recentAuditEvents.map((event) => event.action)).toEqual([

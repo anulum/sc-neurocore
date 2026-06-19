@@ -4,6 +4,7 @@ import type {
   StudioAuditStatus,
   StudioCapability,
   StudioJobStatus,
+  StudioOperatorStatus,
 } from "./api/client";
 import { summarizeAuditExport } from "./auditShell";
 
@@ -13,6 +14,7 @@ export interface AdminShellInput {
   auditStatus: StudioAuditStatus | null;
   capabilities: StudioCapability[];
   jobStatus: StudioJobStatus | null;
+  operatorStatus: StudioOperatorStatus | null;
 }
 
 export interface AdminAuditModel {
@@ -42,10 +44,18 @@ export interface AdminJobModel {
   timedOut: number;
 }
 
+export interface AdminOperatorModel {
+  deploymentProfile: "development" | "production" | "unknown";
+  identityMode: string;
+  routePolicyLabel: "enforced" | "disabled" | "unknown";
+  schemaVersion: string;
+}
+
 export interface AdminShellModel {
   audit: AdminAuditModel;
   capabilities: AdminCapabilityModel;
   jobs: AdminJobModel;
+  operator: AdminOperatorModel;
   recentAuditEvents: StudioAuditEvent[];
   unhealthyCapabilities: StudioCapability[];
 }
@@ -55,24 +65,29 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
   const auditSummary = summarizeAuditExport(input.auditExport);
   const unhealthyCapabilities = input.capabilities.filter((capability) => !capability.healthy);
   const recentAuditEvents = input.auditExport?.events.slice(-8).reverse() ?? [];
+  const auditStatus = input.operatorStatus?.audit ?? input.auditStatus;
+  const jobStatus = input.operatorStatus?.jobs ?? input.jobStatus;
+  const operatorCapabilities = input.operatorStatus?.capabilities;
 
   return {
     audit: {
       denied: auditSummary.denied,
       error: input.auditError,
-      healthLabel: input.auditStatus?.healthy === false ? "unhealthy" : "ready",
-      lastError: input.auditStatus?.last_error ?? null,
+      healthLabel: auditStatus?.healthy === false ? "unhealthy" : "ready",
+      lastError: auditStatus?.last_error ?? null,
       latestAction: auditSummary.latestAction,
-      sinkType: input.auditStatus?.sink_type ?? auditSummary.sinkType,
+      sinkType: auditStatus?.sink_type ?? auditSummary.sinkType,
       total: auditSummary.total,
       truncated: auditSummary.truncated,
     },
     capabilities: {
-      registered: input.capabilities.length,
-      unhealthy: unhealthyCapabilities.length,
-      healthLabel: unhealthyCapabilities.length === 0 ? "ready" : "degraded",
+      registered: operatorCapabilities?.total_count ?? input.capabilities.length,
+      unhealthy: operatorCapabilities?.unavailable_count ?? unhealthyCapabilities.length,
+      healthLabel: (operatorCapabilities?.unavailable_count ?? unhealthyCapabilities.length) === 0
+        ? "ready" : "degraded",
     },
-    jobs: buildJobModel(input.jobStatus),
+    jobs: buildJobModel(jobStatus),
+    operator: buildOperatorModel(input.operatorStatus),
     recentAuditEvents,
     unhealthyCapabilities,
   };
@@ -99,5 +114,22 @@ function buildJobModel(jobStatus: StudioJobStatus | null): AdminJobModel {
     failed: jobStatus.failed_count,
     healthLabel: !jobStatus.configured ? "unconfigured" : needsAttention ? "attention" : "ready",
     timedOut: jobStatus.timed_out_count,
+  };
+}
+
+function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminOperatorModel {
+  if (operatorStatus === null) {
+    return {
+      deploymentProfile: "unknown",
+      identityMode: "unknown",
+      routePolicyLabel: "unknown",
+      schemaVersion: "unavailable",
+    };
+  }
+  return {
+    deploymentProfile: operatorStatus.deployment_profile,
+    identityMode: operatorStatus.identity.mode,
+    routePolicyLabel: operatorStatus.route_policies.enforced ? "enforced" : "disabled",
+    schemaVersion: operatorStatus.schema_version,
   };
 }

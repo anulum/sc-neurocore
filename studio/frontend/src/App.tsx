@@ -76,6 +76,7 @@ export default function App() {
   const s = useStudioStore();
   const loadCapabilities = s.loadCapabilities;
   const loadAuditStatus = s.loadAuditStatus;
+  const loadOperatorStatus = s.loadOperatorStatus;
   const loadPresets = s.loadPresets;
   const vars = s.result ? Object.keys(s.result.states) : [];
   const hasPhase = vars.length >= 2;
@@ -93,8 +94,9 @@ export default function App() {
   useEffect(() => {
     void loadCapabilities();
     void loadAuditStatus();
+    void loadOperatorStatus();
     void loadPresets();
-  }, [loadAuditStatus, loadCapabilities, loadPresets]);
+  }, [loadAuditStatus, loadCapabilities, loadOperatorStatus, loadPresets]);
 
   // Keyboard shortcuts
   useEffect(() => {

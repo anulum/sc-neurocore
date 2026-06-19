@@ -146,6 +146,35 @@ export interface StudioJobStatus {
   timed_out_count: number;
 }
 
+export interface StudioOperatorCapabilityStatus {
+  degraded_count: number;
+  experimental_count: number;
+  healthy_count: number;
+  stable_count: number;
+  total_count: number;
+  unavailable_count: number;
+}
+
+export interface StudioOperatorIdentityStatus {
+  configured: boolean;
+  header_principal_allowed: boolean;
+  mode: "service_account" | "header_principal" | "disabled";
+}
+
+export interface StudioOperatorRoutePolicyStatus {
+  enforced: boolean;
+}
+
+export interface StudioOperatorStatus {
+  audit: StudioAuditStatus;
+  capabilities: StudioOperatorCapabilityStatus;
+  deployment_profile: "development" | "production";
+  identity: StudioOperatorIdentityStatus;
+  jobs: StudioJobStatus;
+  route_policies: StudioOperatorRoutePolicyStatus;
+  schema_version: string;
+}
+
 const BASE = "/api";
 
 async function json<T>(r: Response): Promise<T> {
@@ -180,6 +209,8 @@ export const fetchStudioAuditExport = (limit = 100) =>
   get<StudioAuditExport>(`/studio/audit/export?limit=${encodeURIComponent(limit)}`);
 export const fetchStudioJobStatus = () =>
   get<StudioJobStatus>("/studio/jobs/status");
+export const fetchStudioOperatorStatus = () =>
+  get<StudioOperatorStatus>("/studio/operator/status");
 
 export const simulateODE = (req: Record<string, unknown>) => post<SimulateResponse>("/simulate", req);
 export const simulateModel = (req: Record<string, unknown>) => post<SimulateResponse>("/models/simulate", req);

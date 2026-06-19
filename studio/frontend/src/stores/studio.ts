@@ -2,7 +2,7 @@ import { create } from "zustand";
 import {
   fetchTemplates, fetchModels, fetchModelDetail, fetchPresets, fetchPreset,
   fetchStudioAuditExport, fetchStudioAuditStatus, fetchStudioCapabilities,
-  fetchStudioJobStatus,
+  fetchStudioJobStatus, fetchStudioOperatorStatus,
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
   fetchCompare, fetchNullclines, fetchFreqResponse,
@@ -30,7 +30,7 @@ import {
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSummary, type PipelineResult,
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
-  type StudioJobStatus,
+  type StudioJobStatus, type StudioOperatorStatus,
   connectProgress,
 } from "../api/client";
 
@@ -58,6 +58,7 @@ interface StudioState {
   auditStatus: StudioAuditStatus | null;
   auditExport: StudioAuditExport | null;
   jobStatus: StudioJobStatus | null;
+  operatorStatus: StudioOperatorStatus | null;
   auditLoading: boolean;
   auditError: string | null;
   templates: NeuronTemplate[];
@@ -139,6 +140,7 @@ interface StudioState {
   loadAuditStatus: () => Promise<void>;
   loadAuditExport: () => Promise<void>;
   loadJobStatus: () => Promise<void>;
+  loadOperatorStatus: () => Promise<void>;
   selectTemplate: (name: string) => void;
   selectModel: (name: string) => Promise<void>;
   loadPreset: (id: string) => Promise<void>;
@@ -220,7 +222,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   odeInit: { v: -65 },
   models: [], selectedModelName: "", modelDetail: null, modelParams: {},
   capabilities: [], capabilitiesLoading: false, capabilitiesError: null,
-  auditStatus: null, auditExport: null, jobStatus: null, auditLoading: false, auditError: null,
+  auditStatus: null, auditExport: null, jobStatus: null, operatorStatus: null,
+  auditLoading: false, auditError: null,
   templates: [], presets: [],
   dt: 0.1, duration: 100, current: 10, protocol: "constant",
   result: null, fiResult: null, bifResult: null, sensResult: null, precResult: null,
@@ -310,6 +313,24 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set({
         auditLoading: false,
         auditError: error instanceof Error ? error.message : "Job status check failed",
+      });
+    }
+  },
+  loadOperatorStatus: async () => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      const operatorStatus = await fetchStudioOperatorStatus();
+      set({
+        auditStatus: operatorStatus.audit,
+        jobStatus: operatorStatus.jobs,
+        operatorStatus,
+        auditLoading: false,
+        auditError: null,
+      });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Operator status check failed",
       });
     }
   },

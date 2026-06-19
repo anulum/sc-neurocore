@@ -104,6 +104,7 @@ from sc_neurocore.studio.platform import (
     build_default_studio_capability_registry,
     build_default_studio_route_policy_registry,
     build_default_studio_runtime_settings,
+    build_studio_operator_status,
     load_studio_identity_store,
 )
 from sc_neurocore.studio.presets import (
@@ -844,6 +845,17 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         """Return path-free local worker health for operator dashboards."""
 
         return studio_job_manager.status().to_public_dict()
+
+    @app.get("/api/studio/operator/status")
+    def api_studio_operator_status() -> dict[str, object]:
+        """Return aggregate, path-free Studio operator control-plane health."""
+
+        return build_studio_operator_status(
+            settings=settings,
+            capabilities=tuple(studio_capabilities.health_all()),
+            audit_status=studio_audit_sink.status(),
+            job_status=studio_job_manager.status(),
+        ).to_public_dict()
 
     @app.get("/api/studio/audit/export")
     def api_studio_audit_export(limit: int = 100) -> dict[str, AuditExportValue]:
