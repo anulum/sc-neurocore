@@ -43,7 +43,11 @@ class TensorBoardCallback(TrainingCallback):
             from sc_neurocore.exceptions import SCDependencyError
 
             raise SCDependencyError("TensorBoard requires torch: pip install sc-neurocore[gpu]")
-        self._writer = SummaryWriter(log_dir=log_dir)
+        # ``SummaryWriter`` ships without type stubs; binding it through an ``Any``
+        # handle keeps construction and method calls strict-clean regardless of
+        # whether torch stubs are installed in the environment.
+        writer_factory: Any = SummaryWriter
+        self._writer: Any = writer_factory(log_dir=log_dir)
 
     def log(self, metrics: dict[str, float], step: int) -> None:
         """Write each metric as a TensorBoard scalar at the given step."""

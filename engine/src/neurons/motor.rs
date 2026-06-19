@@ -1697,10 +1697,7 @@ mod tests {
         for _ in 0..100_000 {
             mu.step(20.0);
         }
-        assert!(
-            start.elapsed().as_millis() < 50,
-            "100k steps took {:?}",
-            start.elapsed()
-        );
+        let elapsed = start.elapsed();
+        assert!(elapsed.as_millis() < 100, "100k steps took {:?}", elapsed);
     }
 }

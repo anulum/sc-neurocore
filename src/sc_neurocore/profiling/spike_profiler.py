@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 import numpy as np
 
@@ -59,8 +60,8 @@ class LayerStats:
 
     # Spike statistics
     total_spikes: int = 0
-    per_neuron_spikes: np.ndarray | None = None
-    firing_rates: np.ndarray | None = None
+    per_neuron_spikes: np.ndarray[Any, Any] | None = None
+    firing_rates: np.ndarray[Any, Any] | None = None
 
     # Voltage statistics
     voltage_mean: float = 0.0
@@ -160,9 +161,9 @@ class SpikeProfiler:
     def record_step(
         self,
         layer: str,
-        spikes: np.ndarray,
-        voltages: np.ndarray | None = None,
-        gradients: np.ndarray | None = None,
+        spikes: np.ndarray[Any, Any],
+        voltages: np.ndarray[Any, Any] | None = None,
+        gradients: np.ndarray[Any, Any] | None = None,
     ) -> None:
         """Record one timestep of data for a layer.
 
@@ -318,7 +319,7 @@ class _LayerAccumulator:
 
     def __init__(self, name: str) -> None:
         self.name = name
-        self._spike_sums: np.ndarray | None = None
+        self._spike_sums: np.ndarray[Any, Any] | None = None
         self._n_neurons = 0
         self._n_steps = 0
         self._total_spikes = 0
@@ -333,9 +334,9 @@ class _LayerAccumulator:
 
     def add(
         self,
-        spikes: np.ndarray,
-        voltages: np.ndarray | None,
-        gradients: np.ndarray | None,
+        spikes: np.ndarray[Any, Any],
+        voltages: np.ndarray[Any, Any] | None,
+        gradients: np.ndarray[Any, Any] | None,
     ) -> None:
         # Flatten batch dimension if present
         if spikes.ndim > 1:

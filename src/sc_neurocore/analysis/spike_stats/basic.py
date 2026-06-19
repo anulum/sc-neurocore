@@ -47,4 +47,5 @@ def bin_spike_train(binary_train: np.ndarray[Any, Any], bin_size: int = 10) -> n
     if n_bins == 0:
         return np.array([int(binary_train.sum())])
     trimmed = binary_train[: n_bins * bin_size]
-    return trimmed.reshape(n_bins, bin_size).sum(axis=1)
+    binned_counts: np.ndarray[Any, Any] = trimmed.reshape(n_bins, bin_size).sum(axis=1)
+    return binned_counts

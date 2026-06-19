@@ -66,7 +66,7 @@ except ImportError:
 # ── Soft imports ──────────────────────────────────────────────────────
 
 try:
-    import nupack  # type: ignore[import-untyped]
+    import nupack
 
     _HAS_NUPACK = True
 except ImportError:

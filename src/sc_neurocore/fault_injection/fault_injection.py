@@ -18,7 +18,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import numpy as np
 
@@ -183,10 +183,10 @@ class FaultInjector:
 
     def inject(
         self,
-        bitstream: np.ndarray,
+        bitstream: np.ndarray[Any, Any],
         model: FaultModel,
         ber: float,
-    ) -> Tuple[np.ndarray, int]:
+    ) -> Tuple[np.ndarray[Any, Any], int]:
         """Inject faults into a boolean bitstream.
 
         Returns (corrupted_bitstream, num_bits_affected).
@@ -261,9 +261,9 @@ class FaultInjector:
 
     def inject_at_positions(
         self,
-        bitstream: np.ndarray,
+        bitstream: np.ndarray[Any, Any],
         positions: List[int],
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Flip specific bit positions (deterministic injection)."""
         if not isinstance(bitstream, np.ndarray):
             raise ValueError("bitstream must be a numpy.ndarray")
@@ -296,7 +296,7 @@ class ResilienceBenchmark:
         self.injector = FaultInjector(seed=seed)
         self.rng = np.random.default_rng(seed)
 
-    def _generate_bitstream(self, length: int, probability: float) -> np.ndarray:
+    def _generate_bitstream(self, length: int, probability: float) -> np.ndarray[Any, Any]:
         """Generate a random SC bitstream encoding a given probability."""
         if isinstance(length, bool) or not isinstance(length, int) or length <= 0:
             raise ValueError("length must be a positive integer")

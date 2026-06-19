@@ -85,7 +85,7 @@ class SpikePromptAdapter:
 
     @staticmethod
     def summarise_rates(
-        rates_hz: np.ndarray,
+        rates_hz: np.ndarray[Any, Any],
         *,
         neuron_labels: list[str] | None = None,
         top_k: int = 8,
@@ -108,7 +108,7 @@ class SpikePromptAdapter:
 
     @staticmethod
     def raster_summary(
-        raster: np.ndarray,
+        raster: np.ndarray[Any, Any],
         *,
         dt_ms: float = 1.0,
         neuron_labels: list[str] | None = None,
@@ -278,7 +278,7 @@ class LocalLLMBridge:
 
     def analyse_spike_raster(
         self,
-        raster: np.ndarray,
+        raster: np.ndarray[Any, Any],
         *,
         question: str = "Summarise the neural activity and identify the most active neurons.",
         dt_ms: float = 1.0,

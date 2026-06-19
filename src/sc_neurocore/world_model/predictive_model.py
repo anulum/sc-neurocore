@@ -969,9 +969,10 @@ class PredictiveWorldModel:
         u: npt.NDArray[np.float64] = action.astype(np.float64)
         if u.shape == ():
             u = u[np.newaxis]
-        return self.model.A @ current_state + (
+        prediction: npt.NDArray[np.float64] = self.model.A @ current_state + (
             self.model.B @ u if self.model.control_dim > 0 else 0.0
         )
+        return prediction
 
     def predict_next_state_with_cov(
         self,
