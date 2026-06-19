@@ -18,6 +18,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Protocol
 
+AUDIT_SCHEMA_VERSION = "studio.audit.v1"
+
 
 class RouteVisibility(str, Enum):
     """Visibility class for a Studio API route."""
@@ -71,6 +73,7 @@ class AuditEvent:
     decision: str
     reason: str
     request_id: str | None = None
+    schema_version: str = AUDIT_SCHEMA_VERSION
     timestamp_utc: str | None = None
 
     def to_json_dict(self) -> dict[str, str | None]:
@@ -83,6 +86,7 @@ class AuditEvent:
             "reason": self.reason,
             "request_id": self.request_id,
             "route": self.route,
+            "schema_version": self.schema_version,
             "timestamp_utc": self.timestamp_utc,
         }
 

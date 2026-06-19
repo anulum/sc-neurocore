@@ -20,6 +20,7 @@ def _policy_contract() -> dict[str, Any]:
     try:
         from sc_neurocore.studio.platform.policy import (  # noqa: PLC0415
             AuditEvent,
+            AUDIT_SCHEMA_VERSION,
             InMemoryAuditSink,
             JsonlAuditSink,
             PolicyGateway,
@@ -33,6 +34,7 @@ def _policy_contract() -> dict[str, Any]:
         pytest.fail(f"Studio policy contract is missing: {exc}")
     return {
         "AuditEvent": AuditEvent,
+        "AUDIT_SCHEMA_VERSION": AUDIT_SCHEMA_VERSION,
         "InMemoryAuditSink": InMemoryAuditSink,
         "JsonlAuditSink": JsonlAuditSink,
         "PolicyGateway": PolicyGateway,
@@ -153,6 +155,7 @@ def test_jsonl_audit_sink_appends_policy_events(tmp_path: Path) -> None:
             "reason": "authorized",
             "request_id": None,
             "route": "/api/simulate",
+            "schema_version": "studio.audit.v1",
             "timestamp_utc": None,
         },
         {
@@ -162,9 +165,16 @@ def test_jsonl_audit_sink_appends_policy_events(tmp_path: Path) -> None:
             "reason": "missing_principal",
             "request_id": None,
             "route": "/api/synth/run",
+            "schema_version": "studio.audit.v1",
             "timestamp_utc": None,
         },
     ]
+
+
+def test_audit_schema_version_is_stable() -> None:
+    contract = _policy_contract()
+
+    assert contract["AUDIT_SCHEMA_VERSION"] == "studio.audit.v1"
 
 
 def test_jsonl_audit_sink_exposes_configured_path(tmp_path: Path) -> None:
@@ -190,6 +200,7 @@ def test_policy_gateway_accepts_jsonl_audit_sink(tmp_path: Path) -> None:
     assert decision.allowed is False
     assert row["decision"] == "deny"
     assert row["reason"] == "missing_principal"
+    assert row["schema_version"] == "studio.audit.v1"
 
 
 def test_policy_gateway_records_request_id_in_audit_event(tmp_path: Path) -> None:

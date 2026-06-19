@@ -18,6 +18,7 @@ from sc_neurocore.studio.platform.capabilities import (
     build_default_studio_capability_registry,
 )
 from sc_neurocore.studio.platform.policy import (
+    AUDIT_SCHEMA_VERSION,
     AuditEvent,
     AuditSink,
     InMemoryAuditSink,
@@ -41,6 +42,7 @@ from sc_neurocore.studio.platform.settings import (
 )
 
 __all__ = [
+    "AUDIT_SCHEMA_VERSION",
     "AuditEvent",
     "AuditSink",
     "CapabilityDescriptor",
