@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import numpy.typing as npt
 
@@ -19,7 +21,7 @@ def poisson_encode(
     T: int,
     dt_ms: float = 1.0,
     seed: int | None = None,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Convert firing-rate array to Poisson spike trains.
 
     Parameters
@@ -48,7 +50,7 @@ def latency_encode(
     T: int,
     tau: float = 5.0,
     strict: bool = True,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Convert normalised values in [0, 1] to first-spike-time trains.
 
     Higher values spike earlier. Each neuron fires exactly once.
