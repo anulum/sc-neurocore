@@ -99,6 +99,12 @@ runtime features:
   persisted audit events. The route is classified as admin-only by the Studio
   policy registry and records its own audit decision when policy enforcement is
   enabled.
+- `/api/studio/jobs/status` reports path-free local worker health for operator
+  dashboards. Deployments can set `SC_NEUROCORE_STUDIO_JOB_ROOT` for persistent
+  per-job working directories and `SC_NEUROCORE_STUDIO_JOB_TIMEOUT_SECONDS` for
+  the default cooperative timeout. The local worker manager tracks allowed job
+  kinds, active/completed/failed/timed-out counts, and does not expose host
+  filesystem paths.
 - Deployments can set `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` to rotate the
   active JSONL audit file before the next append once it reaches the configured
   byte limit. `SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES` controls how many

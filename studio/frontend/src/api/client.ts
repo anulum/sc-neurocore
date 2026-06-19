@@ -136,6 +136,16 @@ export interface StudioAuditExport {
   truncated: boolean;
 }
 
+export interface StudioJobStatus {
+  active_count: number;
+  allowed_kinds: string[];
+  completed_count: number;
+  configured: boolean;
+  failed_count: number;
+  schema_version: string;
+  timed_out_count: number;
+}
+
 const BASE = "/api";
 
 async function json<T>(r: Response): Promise<T> {
@@ -168,6 +178,8 @@ export const fetchStudioAuditStatus = () =>
   get<StudioAuditStatus>("/studio/audit/status");
 export const fetchStudioAuditExport = (limit = 100) =>
   get<StudioAuditExport>(`/studio/audit/export?limit=${encodeURIComponent(limit)}`);
+export const fetchStudioJobStatus = () =>
+  get<StudioJobStatus>("/studio/jobs/status");
 
 export const simulateODE = (req: Record<string, unknown>) => post<SimulateResponse>("/simulate", req);
 export const simulateModel = (req: Record<string, unknown>) => post<SimulateResponse>("/models/simulate", req);

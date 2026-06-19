@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import type { StudioAuditExport, StudioAuditStatus, StudioCapability } from "./api/client";
+import type {
+  StudioAuditExport,
+  StudioAuditStatus,
+  StudioCapability,
+  StudioJobStatus,
+} from "./api/client";
 import { buildAdminShellModel } from "./adminShell";
 
 function capability(overrides: Partial<StudioCapability> = {}): StudioCapability {
@@ -60,6 +65,16 @@ const auditExport: StudioAuditExport = {
   truncated: true,
 };
 
+const jobStatus: StudioJobStatus = {
+  active_count: 1,
+  allowed_kinds: ["compiler", "synthesis", "training"],
+  completed_count: 4,
+  configured: true,
+  failed_count: 0,
+  schema_version: "studio.jobs.status.v1",
+  timed_out_count: 1,
+};
+
 describe("admin shell model", () => {
   it("aggregates audit and capability health for the operator view", () => {
     const model = buildAdminShellModel({
@@ -76,6 +91,7 @@ describe("admin shell model", () => {
           message: "Yosys unavailable.",
         }),
       ],
+      jobStatus,
     });
 
     expect(model.audit).toEqual({
@@ -92,6 +108,15 @@ describe("admin shell model", () => {
       registered: 2,
       unhealthy: 1,
       healthLabel: "degraded",
+    });
+    expect(model.jobs).toEqual({
+      active: 1,
+      allowedKinds: "compiler, synthesis, training",
+      completed: 4,
+      configured: true,
+      failed: 0,
+      healthLabel: "attention",
+      timedOut: 1,
     });
     expect(model.unhealthyCapabilities).toHaveLength(1);
     expect(model.recentAuditEvents.map((event) => event.action)).toEqual([

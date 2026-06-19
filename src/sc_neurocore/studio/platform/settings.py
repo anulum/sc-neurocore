@@ -31,6 +31,7 @@ DEFAULT_STUDIO_ALLOWED_HOSTS: tuple[str, ...] = (
 
 DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES = 1_048_576
 DEFAULT_STUDIO_AUDIT_RETAINED_FILES = 5
+DEFAULT_STUDIO_JOB_TIMEOUT_SECONDS = 300.0
 
 DEFAULT_STUDIO_HTTP_SECURITY_HEADERS: Mapping[str, str] = MappingProxyType(
     {
@@ -62,6 +63,8 @@ class StudioRuntimeSettings:
     enforce_route_policies: bool = False
     identity_file_path: str | None = None
     allow_header_principal: bool = True
+    job_root_path: str | None = None
+    job_default_timeout_seconds: float = DEFAULT_STUDIO_JOB_TIMEOUT_SECONDS
     audit_log_path: str | None = None
     audit_rotation_bytes: int | None = None
     audit_retained_files: int = DEFAULT_STUDIO_AUDIT_RETAINED_FILES
@@ -93,6 +96,10 @@ class StudioRuntimeSettings:
             raise ValueError("Studio identity file path must not be empty.")
         if not isinstance(self.allow_header_principal, bool):
             raise ValueError("Studio header principal fallback must be boolean.")
+        if self.job_root_path is not None and not self.job_root_path.strip():
+            raise ValueError("Studio job root path must not be empty.")
+        if self.job_default_timeout_seconds <= 0:
+            raise ValueError("Studio job timeout must be positive.")
         if self.audit_log_path is not None and not self.audit_log_path.strip():
             raise ValueError("Studio audit log path must not be empty.")
         if self.audit_rotation_bytes is not None and self.audit_rotation_bytes <= 0:
@@ -114,6 +121,8 @@ def build_default_studio_runtime_settings(
     raw_enforce_route_policies = source.get("SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES")
     raw_identity_file_path = source.get("SC_NEUROCORE_STUDIO_IDENTITY_FILE")
     raw_allow_header_principal = source.get("SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL")
+    raw_job_root_path = source.get("SC_NEUROCORE_STUDIO_JOB_ROOT")
+    raw_job_default_timeout_seconds = source.get("SC_NEUROCORE_STUDIO_JOB_TIMEOUT_SECONDS")
     raw_audit_log_path = source.get("SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH")
     raw_audit_rotation_bytes = source.get("SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES")
     raw_audit_retained_files = source.get("SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES")
@@ -155,6 +164,18 @@ def build_default_studio_runtime_settings(
         if raw_identity_file_path is None or not raw_identity_file_path.strip()
         else raw_identity_file_path.strip()
     )
+    job_root_path = (
+        None if raw_job_root_path is None or not raw_job_root_path.strip() else raw_job_root_path.strip()
+    )
+    try:
+        job_default_timeout_seconds = (
+            DEFAULT_STUDIO_JOB_TIMEOUT_SECONDS
+            if raw_job_default_timeout_seconds is None
+            or not raw_job_default_timeout_seconds.strip()
+            else float(raw_job_default_timeout_seconds)
+        )
+    except ValueError as exc:
+        raise ValueError("Studio job timeout must be numeric.") from exc
     audit_log_path = (
         None
         if raw_audit_log_path is None or not raw_audit_log_path.strip()
@@ -184,6 +205,8 @@ def build_default_studio_runtime_settings(
         enforce_route_policies=enforce_route_policies,
         identity_file_path=identity_file_path,
         allow_header_principal=allow_header_principal,
+        job_root_path=job_root_path,
+        job_default_timeout_seconds=job_default_timeout_seconds,
         audit_log_path=audit_log_path,
         audit_rotation_bytes=audit_rotation_bytes,
         audit_retained_files=audit_retained_files,

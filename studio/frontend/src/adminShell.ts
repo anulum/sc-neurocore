@@ -1,4 +1,10 @@
-import type { StudioAuditEvent, StudioAuditExport, StudioAuditStatus, StudioCapability } from "./api/client";
+import type {
+  StudioAuditEvent,
+  StudioAuditExport,
+  StudioAuditStatus,
+  StudioCapability,
+  StudioJobStatus,
+} from "./api/client";
 import { summarizeAuditExport } from "./auditShell";
 
 export interface AdminShellInput {
@@ -6,6 +12,7 @@ export interface AdminShellInput {
   auditExport: StudioAuditExport | null;
   auditStatus: StudioAuditStatus | null;
   capabilities: StudioCapability[];
+  jobStatus: StudioJobStatus | null;
 }
 
 export interface AdminAuditModel {
@@ -25,9 +32,20 @@ export interface AdminCapabilityModel {
   healthLabel: "ready" | "degraded";
 }
 
+export interface AdminJobModel {
+  active: number;
+  allowedKinds: string;
+  completed: number;
+  configured: boolean;
+  failed: number;
+  healthLabel: "ready" | "attention" | "unconfigured";
+  timedOut: number;
+}
+
 export interface AdminShellModel {
   audit: AdminAuditModel;
   capabilities: AdminCapabilityModel;
+  jobs: AdminJobModel;
   recentAuditEvents: StudioAuditEvent[];
   unhealthyCapabilities: StudioCapability[];
 }
@@ -54,7 +72,32 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
       unhealthy: unhealthyCapabilities.length,
       healthLabel: unhealthyCapabilities.length === 0 ? "ready" : "degraded",
     },
+    jobs: buildJobModel(input.jobStatus),
     recentAuditEvents,
     unhealthyCapabilities,
+  };
+}
+
+function buildJobModel(jobStatus: StudioJobStatus | null): AdminJobModel {
+  if (jobStatus === null) {
+    return {
+      active: 0,
+      allowedKinds: "unavailable",
+      completed: 0,
+      configured: false,
+      failed: 0,
+      healthLabel: "unconfigured",
+      timedOut: 0,
+    };
+  }
+  const needsAttention = jobStatus.failed_count > 0 || jobStatus.timed_out_count > 0;
+  return {
+    active: jobStatus.active_count,
+    allowedKinds: jobStatus.allowed_kinds.join(", "),
+    completed: jobStatus.completed_count,
+    configured: jobStatus.configured,
+    failed: jobStatus.failed_count,
+    healthLabel: !jobStatus.configured ? "unconfigured" : needsAttention ? "attention" : "ready",
+    timedOut: jobStatus.timed_out_count,
   };
 }

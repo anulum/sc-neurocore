@@ -5,6 +5,7 @@ export interface AdminPanelViewProps {
   model: AdminShellModel;
   onLoadAuditExport: () => Promise<void>;
   onLoadAuditStatus: () => Promise<void>;
+  onLoadJobStatus: () => Promise<void>;
 }
 
 export default function AdminPanelView({
@@ -12,6 +13,7 @@ export default function AdminPanelView({
   model,
   onLoadAuditExport,
   onLoadAuditStatus,
+  onLoadJobStatus,
 }: AdminPanelViewProps) {
   return (
     <div className="admin-panel">
@@ -43,6 +45,28 @@ export default function AdminPanelView({
             ))}
           </div>
         )}
+      </section>
+
+      <section className="admin-section">
+        <div className="admin-section-header">
+          <h2>Jobs</h2>
+          <div className="admin-actions">
+            <button onClick={() => void onLoadJobStatus()} disabled={auditLoading}>Status</button>
+          </div>
+        </div>
+        <div className="admin-metrics">
+          <div><span>Health</span><strong>{model.jobs.healthLabel}</strong></div>
+          <div><span>Active</span><strong>{model.jobs.active}</strong></div>
+          <div><span>Completed</span><strong>{model.jobs.completed}</strong></div>
+          <div><span>Timed out</span><strong>{model.jobs.timedOut}</strong></div>
+        </div>
+        <div className="admin-audit-list">
+          <div className="admin-audit-row">
+            <span>{model.jobs.configured ? "configured" : "unconfigured"}</span>
+            <strong>{model.jobs.allowedKinds}</strong>
+            <small>{model.jobs.failed} failed jobs recorded by the local worker manager</small>
+          </div>
+        </div>
       </section>
 
       <section className="admin-section">

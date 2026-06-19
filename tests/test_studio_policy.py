@@ -623,7 +623,9 @@ def test_default_route_policy_registry_marks_stateful_routes_protected() -> None
     training_policy = registry.policy_for("POST", "/api/training/start")
     synth_policy = registry.policy_for("POST", "/api/synth/run")
     websocket_policy = registry.policy_for("WEBSOCKET", "/ws/progress")
+    jobs_status_policy = registry.policy_for("GET", "/api/studio/jobs/status")
 
     assert training_policy.visibility is contract["RouteVisibility"].AUTHENTICATED
     assert synth_policy.visibility is contract["RouteVisibility"].ADMIN
     assert websocket_policy.visibility is contract["RouteVisibility"].AUTHENTICATED
+    assert jobs_status_policy.visibility is contract["RouteVisibility"].PUBLIC

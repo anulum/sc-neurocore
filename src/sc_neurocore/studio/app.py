@@ -99,6 +99,7 @@ from sc_neurocore.studio.platform import (
     Principal,
     StudioIdentityAuthenticator,
     StudioIdentityResult,
+    StudioJobManager,
     StudioRuntimeSettings,
     build_default_studio_capability_registry,
     build_default_studio_route_policy_registry,
@@ -117,6 +118,7 @@ from sc_neurocore.studio.templates import get_template, list_templates
 
 
 logger = logging.getLogger(__name__)
+DEFAULT_STUDIO_JOB_KINDS = frozenset({"compiler", "synthesis", "training"})
 
 
 # --- Request schemas ---
@@ -730,12 +732,24 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         if settings.identity_file_path is not None
         else None
     )
+    studio_job_root = (
+        Path(settings.job_root_path)
+        if settings.job_root_path is not None
+        else Path(tempfile.gettempdir()) / "sc-neurocore-studio-jobs"
+    )
+    studio_job_manager = StudioJobManager(
+        root=studio_job_root,
+        allowed_kinds=DEFAULT_STUDIO_JOB_KINDS,
+        default_timeout_seconds=settings.job_default_timeout_seconds,
+        configured=settings.job_root_path is not None,
+    )
     studio_policy_gateway = PolicyGateway(audit_sink=studio_audit_sink)
     app.state.studio_runtime_settings = settings
     app.state.studio_capabilities = studio_capabilities
     app.state.studio_route_policies = studio_route_policies
     app.state.studio_audit_sink = studio_audit_sink
     app.state.studio_identity_authenticator = studio_identity_authenticator
+    app.state.studio_job_manager = studio_job_manager
     app.state.studio_policy_gateway = studio_policy_gateway
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(settings.allowed_hosts))
     app.add_middleware(
@@ -824,6 +838,12 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         """Return path-free health for the configured Studio audit sink."""
 
         return studio_audit_sink.status().to_public_dict()
+
+    @app.get("/api/studio/jobs/status")
+    def api_studio_jobs_status() -> dict[str, bool | int | list[str] | str]:
+        """Return path-free local worker health for operator dashboards."""
+
+        return studio_job_manager.status().to_public_dict()
 
     @app.get("/api/studio/audit/export")
     def api_studio_audit_export(limit: int = 100) -> dict[str, AuditExportValue]:

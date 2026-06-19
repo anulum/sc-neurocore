@@ -163,6 +163,29 @@ def test_studio_runtime_settings_rejects_invalid_header_fallback_flag() -> None:
         )
 
 
+def test_studio_runtime_settings_parses_job_root_and_timeout() -> None:
+    settings = build_default_studio_runtime_settings(
+        env={
+            "SC_NEUROCORE_STUDIO_JOB_ROOT": "/var/lib/sc-neurocore/studio-jobs",
+            "SC_NEUROCORE_STUDIO_JOB_TIMEOUT_SECONDS": "42.5",
+        }
+    )
+
+    assert settings.job_root_path == "/var/lib/sc-neurocore/studio-jobs"
+    assert settings.job_default_timeout_seconds == 42.5
+
+
+def test_studio_runtime_settings_rejects_invalid_job_settings() -> None:
+    with pytest.raises(ValueError, match="job root path"):
+        StudioRuntimeSettings(job_root_path="")
+    with pytest.raises(ValueError, match="job timeout"):
+        StudioRuntimeSettings(job_default_timeout_seconds=0)
+    with pytest.raises(ValueError, match="job timeout"):
+        build_default_studio_runtime_settings(
+            env={"SC_NEUROCORE_STUDIO_JOB_TIMEOUT_SECONDS": "not-a-number"}
+        )
+
+
 def test_studio_runtime_settings_parses_audit_log_path() -> None:
     settings = build_default_studio_runtime_settings(
         env={"SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH": "/var/log/sc-neurocore/studio.jsonl"}

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import {
   fetchTemplates, fetchModels, fetchModelDetail, fetchPresets, fetchPreset,
   fetchStudioAuditExport, fetchStudioAuditStatus, fetchStudioCapabilities,
+  fetchStudioJobStatus,
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
   fetchCompare, fetchNullclines, fetchFreqResponse,
@@ -29,6 +30,7 @@ import {
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSummary, type PipelineResult,
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
+  type StudioJobStatus,
   connectProgress,
 } from "../api/client";
 
@@ -55,6 +57,7 @@ interface StudioState {
   capabilitiesError: string | null;
   auditStatus: StudioAuditStatus | null;
   auditExport: StudioAuditExport | null;
+  jobStatus: StudioJobStatus | null;
   auditLoading: boolean;
   auditError: string | null;
   templates: NeuronTemplate[];
@@ -135,6 +138,7 @@ interface StudioState {
   loadCapabilities: () => Promise<void>;
   loadAuditStatus: () => Promise<void>;
   loadAuditExport: () => Promise<void>;
+  loadJobStatus: () => Promise<void>;
   selectTemplate: (name: string) => void;
   selectModel: (name: string) => Promise<void>;
   loadPreset: (id: string) => Promise<void>;
@@ -216,7 +220,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   odeInit: { v: -65 },
   models: [], selectedModelName: "", modelDetail: null, modelParams: {},
   capabilities: [], capabilitiesLoading: false, capabilitiesError: null,
-  auditStatus: null, auditExport: null, auditLoading: false, auditError: null,
+  auditStatus: null, auditExport: null, jobStatus: null, auditLoading: false, auditError: null,
   templates: [], presets: [],
   dt: 0.1, duration: 100, current: 10, protocol: "constant",
   result: null, fiResult: null, bifResult: null, sensResult: null, precResult: null,
@@ -294,6 +298,18 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set({
         auditLoading: false,
         auditError: error instanceof Error ? error.message : "Audit export failed",
+      });
+    }
+  },
+  loadJobStatus: async () => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      const jobStatus = await fetchStudioJobStatus();
+      set({ jobStatus, auditLoading: false, auditError: null });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Job status check failed",
       });
     }
   },

@@ -267,6 +267,13 @@ configure `SC_NEUROCORE_STUDIO_IDENTITY_FILE` with
 hashes in that file, authenticate API calls with `Authorization: Bearer
 <token>`, and give admin export accounts the `studio.admin` role.
 
+The same Admin surface displays local worker health from
+`/api/studio/jobs/status`. Configure `SC_NEUROCORE_STUDIO_JOB_ROOT` to keep
+per-job working directories on an operator-selected disk, and tune
+`SC_NEUROCORE_STUDIO_JOB_TIMEOUT_SECONDS` for cooperative worker timeouts. The
+status payload is path-free and reports allowed job kinds plus
+active/completed/failed/timed-out counts.
+
 ## Additional Panels (Blocks 2–6)
 
 The Studio includes five additional panels beyond the core research workbench:

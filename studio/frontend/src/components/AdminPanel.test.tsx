@@ -1,7 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import type { StudioAuditExport, StudioAuditStatus, StudioCapability } from "../api/client";
+import type {
+  StudioAuditExport,
+  StudioAuditStatus,
+  StudioCapability,
+  StudioJobStatus,
+} from "../api/client";
 import { buildAdminShellModel } from "../adminShell";
 import AdminPanelView from "./AdminPanelView";
 
@@ -50,6 +55,16 @@ const auditExport: StudioAuditExport = {
   truncated: false,
 };
 
+const jobStatus: StudioJobStatus = {
+  active_count: 1,
+  allowed_kinds: ["compiler", "synthesis", "training"],
+  completed_count: 4,
+  configured: true,
+  failed_count: 0,
+  schema_version: "studio.jobs.status.v1",
+  timed_out_count: 1,
+};
+
 describe("AdminPanel", () => {
   it("renders audit health, denied events, and degraded capabilities", () => {
     const model = buildAdminShellModel({
@@ -66,6 +81,7 @@ describe("AdminPanel", () => {
           message: "Yosys unavailable.",
         }),
       ],
+      jobStatus,
     });
 
     const html = renderToStaticMarkup(
@@ -74,6 +90,7 @@ describe("AdminPanel", () => {
         model={model}
         onLoadAuditExport={async () => undefined}
         onLoadAuditStatus={async () => undefined}
+        onLoadJobStatus={async () => undefined}
       />,
     );
 
@@ -84,5 +101,8 @@ describe("AdminPanel", () => {
     expect(html).toContain("missing_admin_role");
     expect(html).toContain("Synthesis Dashboard");
     expect(html).toContain("Yosys unavailable.");
+    expect(html).toContain("Jobs");
+    expect(html).toContain("attention");
+    expect(html).toContain("compiler, synthesis, training");
   });
 });
