@@ -172,7 +172,7 @@ class BitstreamToOptical:
 
     def convert(
         self,
-        bitstream: np.ndarray,
+        bitstream: np.ndarray[Any, Any],
         pulse_duration_ps: float = 10.0,
     ) -> List[OpticalPulse]:
         """Map a boolean SC bitstream to an optical pulse train.
@@ -203,7 +203,7 @@ class BitstreamToOptical:
             )
         return pulses
 
-    def to_phase_array(self, bitstream: np.ndarray) -> np.ndarray:
+    def to_phase_array(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Vectorised phase extraction."""
         bs: npt.NDArray[np.float64] = bitstream.astype(np.float64)
         if self.target.modulation == OpticalModulation.PHASE:
@@ -213,7 +213,7 @@ class BitstreamToOptical:
         else:
             return np.where(bs > 0.5, 0.0, math.pi / 2)
 
-    def to_amplitude_array(self, bitstream: np.ndarray) -> np.ndarray:
+    def to_amplitude_array(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Vectorised amplitude extraction."""
         bs: npt.NDArray[np.float64] = bitstream.astype(np.float64)
         if self.target.modulation == OpticalModulation.PHASE:
@@ -225,13 +225,14 @@ class BitstreamToOptical:
 
     def optical_power_profile(
         self,
-        bitstream: np.ndarray,
+        bitstream: np.ndarray[Any, Any],
         input_power_mw: float = 1.0,
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Compute output power profile accounting for insertion loss."""
         amplitudes = self.to_amplitude_array(bitstream)
         loss_linear = 10.0 ** (-self.target.insertion_loss_db / 10.0)
-        return amplitudes * amplitudes * input_power_mw * loss_linear
+        optical_power: np.ndarray[Any, Any] = amplitudes * amplitudes * input_power_mw * loss_linear
+        return optical_power
 
 
 # ── FDTD Co-Simulation ──────────────────────────────────────────────
@@ -322,7 +323,7 @@ class FDTDSolver:
         """Total electromagnetic energy in the grid."""
         return float(np.sum(self.ez**2) + np.sum(self.hy**2))
 
-    def snapshot(self) -> Tuple[np.ndarray, np.ndarray]:
+    def snapshot(self) -> Tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Return a copy of the current E and H fields."""
         return self.ez.copy(), self.hy.copy()
 
@@ -435,7 +436,7 @@ class PhotonicCompiler:
 
     def compile_bitstream(
         self,
-        bitstream: np.ndarray,
+        bitstream: np.ndarray[Any, Any],
         run_fdtd: bool = False,
         fdtd_steps: int = 100,
     ) -> CompilationResult:
@@ -607,11 +608,11 @@ class FDTD2DSolver:
         self.dt = dt_factor * ds_min / (self.c0 * math.sqrt(2))
         self.pml_layers = pml_layers
 
-        self.ezx: np.ndarray = np.zeros((nx, ny), dtype=np.float64)
-        self.ezy: np.ndarray = np.zeros((nx, ny), dtype=np.float64)
-        self.ez: np.ndarray = np.zeros((nx, ny), dtype=np.float64)
-        self.hx: np.ndarray = np.zeros((nx, ny), dtype=np.float64)
-        self.hy: np.ndarray = np.zeros((nx, ny), dtype=np.float64)
+        self.ezx: np.ndarray[Any, Any] = np.zeros((nx, ny), dtype=np.float64)
+        self.ezy: np.ndarray[Any, Any] = np.zeros((nx, ny), dtype=np.float64)
+        self.ez: np.ndarray[Any, Any] = np.zeros((nx, ny), dtype=np.float64)
+        self.hx: np.ndarray[Any, Any] = np.zeros((nx, ny), dtype=np.float64)
+        self.hy: np.ndarray[Any, Any] = np.zeros((nx, ny), dtype=np.float64)
 
         # Material map: refractive index per cell
         self.n_map: npt.NDArray[np.float64] = np.ones((nx, ny), dtype=np.float64)
@@ -722,11 +723,11 @@ class FDTD2DSolver:
         """Read Ez at a grid point."""
         return float(self.ez[x, y])
 
-    def cross_section(self, x: int) -> np.ndarray:
+    def cross_section(self, x: int) -> np.ndarray[Any, Any]:
         """Return Ez cross-section at a given x position."""
         return self.ez[x, :].copy()
 
-    def snapshot(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def snapshot(self) -> Tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Return copies of all field components."""
         return self.ez.copy(), self.hx.copy(), self.hy.copy()
 
@@ -920,7 +921,7 @@ class CrosstalkModel:
     def add_pair(self, pair: WaveguidePair) -> None:
         self.pairs.append(pair)
 
-    def transfer_matrix(self, pair: WaveguidePair) -> np.ndarray:
+    def transfer_matrix(self, pair: WaveguidePair) -> np.ndarray[Any, Any]:
         """2×2 transfer matrix for a directional coupler."""
         kl = pair.coupling_coefficient * pair.coupling_length_um
         c = math.cos(kl)
