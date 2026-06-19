@@ -28,6 +28,8 @@ importable.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 try:
@@ -47,10 +49,10 @@ except ImportError:
 
 
 def export_weights_loihi(
-    weights: np.ndarray,
+    weights: np.ndarray[Any, Any],
     weight_bits: int = 8,
     weight_exp: int = 0,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Convert SC probability weights [0,1] to Loihi fixed-point format.
 
     Loihi uses signed integer weights with configurable precision.
@@ -61,7 +63,8 @@ def export_weights_loihi(
     # SC weights are [0,1], shift to [-1,1] then scale
     scaled = (weights * 2.0 - 1.0) * max_val
     quantised = np.clip(np.round(scaled), min_val, max_val).astype(np.int32)
-    return quantised * (2**weight_exp)
+    encoded: np.ndarray[Any, Any] = quantised * (2**weight_exp)
+    return encoded
 
 
 def loihi_threshold_from_sc(sc_threshold: float, weight_bits: int = 8) -> int:
@@ -76,8 +79,8 @@ class LoihiNetworkConfig:
 
     n_inputs: int
     n_outputs: int
-    weights: np.ndarray
-    thresholds: np.ndarray
+    weights: np.ndarray[Any, Any]
+    thresholds: np.ndarray[Any, Any]
     weight_bits: int = 8
     weight_exp: int = 0
     decay: int = 128
@@ -142,10 +145,10 @@ if HAS_LAVA:
     class PySCDenseModel(PyLoihiProcessModel):  # type: ignore[misc]
         s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
         s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
-        weights: np.ndarray = LavaPyType(np.ndarray, int)
-        v: np.ndarray = LavaPyType(np.ndarray, int)
-        threshold: np.ndarray = LavaPyType(np.ndarray, int)
-        decay: np.ndarray = LavaPyType(np.ndarray, int)
+        weights: np.ndarray[Any, Any] = LavaPyType(np.ndarray, int)
+        v: np.ndarray[Any, Any] = LavaPyType(np.ndarray, int)
+        threshold: np.ndarray[Any, Any] = LavaPyType(np.ndarray, int)
+        decay: np.ndarray[Any, Any] = LavaPyType(np.ndarray, int)
 
         def run_spk(self) -> None:
             spikes_in = self.s_in.recv()
