@@ -41,7 +41,8 @@ class EnsembleOrchestrator:
             results.append(out.to_prob())
 
         # Majority vote / Average
-        return np.mean(results, axis=0)
+        ensemble_output: np.ndarray[Any, Any] = np.mean(results, axis=0)
+        return ensemble_output
 
     def coordinated_mission(self, goal: str) -> None:
         """
