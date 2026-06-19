@@ -27,7 +27,7 @@ from sc_neurocore.studio.network import simulate_ei_network
 
 @pytest.fixture
 def client():
-    return TestClient(create_app())
+    return TestClient(create_app(), base_url="http://127.0.0.1")
 
 
 # --- Network simulation ---

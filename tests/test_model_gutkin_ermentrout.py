@@ -24,6 +24,7 @@ import math
 
 import numpy as np
 import pytest
+from tests.performance_guard import assert_throughput_guard
 
 from sc_neurocore.neurons.models.gutkin_ermentrout import GutkinErmentroutNeuron
 from sc_neurocore.network.population import Population
@@ -260,7 +261,12 @@ class TestGEPerformance:
             n.step(5.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert rate > 50_000, f"isolation: {rate:.0f} steps/s"
+        assert_throughput_guard(
+            label="Gutkin-Ermentrout isolation",
+            observed_per_second=rate,
+            strict_minimum_per_second=50_000.0,
+            smoke_minimum_per_second=20_000.0,
+        )
 
     def test_network_throughput(self) -> None:
         pop = Population(GutkinErmentroutNeuron, n=20, label="bench")
