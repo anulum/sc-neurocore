@@ -95,6 +95,8 @@ full_test_report.txt
 # Studio frontend build artifacts
 studio/frontend/node_modules/
 studio/frontend/dist/
+studio/frontend/playwright-report/
+studio/frontend/test-results/
 studio/frontend/tsconfig.tsbuildinfo
 
 # MkDocs build output

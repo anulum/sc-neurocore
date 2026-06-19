@@ -25,6 +25,7 @@ on:
       - "crates/**"
       - "engine/**"
       - "src/**"
+      - "studio/frontend/**"
       - "tests/**"
       - "tools/**"
       - "docs/_generated/**"
@@ -36,8 +37,8 @@ on:
       - "pyproject.toml"
       - "requirements/**"
   # Pull requests run CI unconditionally. Branch protection requires
-  # these status checks (`lint`, `test (3.10-3.14)`, `test-training`,
-  # `spdx-guard`, `pre-commit`, `build`) to report SUCCESS before
+  # these status checks (`lint`, `frontend`, `test (3.10-3.14)`,
+  # `test-training`, `spdx-guard`, `pre-commit`, `build`) to report SUCCESS before
   # merge — a path filter here would leave frontend-only / deps-only
   # PRs with eternally "pending" contexts and permanently unmergeable.
   pull_request:
@@ -86,6 +87,37 @@ jobs:
 
       - name: mypy
         run: mypy --strict src/sc_neurocore/
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: studio/frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: studio/frontend
+        run: npm ci
+
+      - name: Vitest
+        working-directory: studio/frontend
+        run: npm test -- --run
+
+      - name: TypeScript and Vite build
+        working-directory: studio/frontend
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        working-directory: studio/frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright browser tests
+        working-directory: studio/frontend
+        run: npm run test:e2e
 
   test:
     runs-on: ubuntu-latest
