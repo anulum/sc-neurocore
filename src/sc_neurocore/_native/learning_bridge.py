@@ -296,12 +296,13 @@ class RustOnlineO1Synapse:
     def step(self, *, pre_spike: bool, post_spike: bool, reward: int) -> OnlineO1SnapshotFFI:
         """Advance one timestep and return the bounded fixed-point state."""
 
-        return _get_lib().step_online_o1_synapse(
+        snapshot: OnlineO1SnapshotFFI = _get_lib().step_online_o1_synapse(
             self._ptr,
             pre_spike,
             post_spike,
             _ct.c_int32(reward),
         )
+        return snapshot
 
     @property
     def per_synapse_state_bits(self) -> int:
@@ -347,9 +348,9 @@ class RustPlasticityRule:
 
     def step_batched(
         self,
-        pre_spikes: np.ndarray,
-        post_spikes: np.ndarray,
-        rewards: np.ndarray,
+        pre_spikes: np.ndarray[Any, Any],
+        post_spikes: np.ndarray[Any, Any],
+        rewards: np.ndarray[Any, Any],
         dt: float = 0.001,
     ) -> None:
         """Process Numpy arrays in a single FFI boundary crossing."""
@@ -409,9 +410,9 @@ class RustEligentLearner:
 
     def step_batched(
         self,
-        fired_slice: np.ndarray,
-        pre_spikes: np.ndarray,
-        rewards: np.ndarray,
+        fired_slice: np.ndarray[Any, Any],
+        pre_spikes: np.ndarray[Any, Any],
+        rewards: np.ndarray[Any, Any],
         dt: float = 0.001,
     ) -> None:
         if len(fired_slice) != len(pre_spikes) or len(fired_slice) != len(rewards):
@@ -511,14 +512,14 @@ class RustRuleLayer:
             buf = (_ct.c_byte * len(mem_buffer)).from_buffer_copy(mem_buffer)
             _get_lib().set_rule_layer_state_mem(self._ptr, buf)
 
-    def load_state_dict(self, state_dict: dict) -> None:
+    def load_state_dict(self, state_dict: dict[str, Any]) -> None:
         self.__setstate__(state_dict)
 
     def step(
         self,
-        pre_spikes: np.ndarray,
-        post_spikes: np.ndarray,
-        rewards: np.ndarray,
+        pre_spikes: np.ndarray[Any, Any],
+        post_spikes: np.ndarray[Any, Any],
+        rewards: np.ndarray[Any, Any],
         dt: float = 0.001,
     ) -> None:
         """Process spatial Numpy arrays natively across Rayon Rust threads."""
@@ -534,9 +535,9 @@ class RustRuleLayer:
 
     def step_analog(
         self,
-        pre_probs: np.ndarray,
-        post_probs: np.ndarray,
-        rewards: np.ndarray,
+        pre_probs: np.ndarray[Any, Any],
+        post_probs: np.ndarray[Any, Any],
+        rewards: np.ndarray[Any, Any],
         dt: float = 0.001,
         seed: int | None = None,
     ) -> None:
@@ -563,7 +564,7 @@ class RustRuleLayer:
             self._ptr, pre_ptr, post_ptr, rew_ptr, _ct.c_uint64(seed), _ct.c_float(dt)
         )
 
-    def get_weights(self) -> np.ndarray:
+    def get_weights(self) -> np.ndarray[Any, Any]:
         out = np.zeros(self._count, dtype=np.float32)
         out_ptr = out.ctypes.data_as(_ct.POINTER(_ct.c_float))
         _get_lib().get_rule_layer_weights(self._ptr, out_ptr)
@@ -646,9 +647,9 @@ class RustWgpuRuleLayer:
 
     def step(
         self,
-        pre_spikes: np.ndarray,
-        post_spikes: np.ndarray,
-        rewards: np.ndarray | None = None,
+        pre_spikes: np.ndarray[Any, Any],
+        post_spikes: np.ndarray[Any, Any],
+        rewards: np.ndarray[Any, Any] | None = None,
         dt: float = 0.001,
     ) -> None:
         # Convert deterministically to 1.0 or 0.0 floats matching hardware probabilities natively
@@ -667,9 +668,9 @@ class RustWgpuRuleLayer:
 
     def step_analog(
         self,
-        pre_probs: np.ndarray,
-        post_probs: np.ndarray,
-        rewards: np.ndarray,
+        pre_probs: np.ndarray[Any, Any],
+        post_probs: np.ndarray[Any, Any],
+        rewards: np.ndarray[Any, Any],
         dt: float = 0.001,
         seed: int | None = None,
     ) -> None:
@@ -680,7 +681,7 @@ class RustWgpuRuleLayer:
         """
         self.step(pre_probs, post_probs, rewards, dt)
 
-    def get_weights(self) -> np.ndarray:
+    def get_weights(self) -> np.ndarray[Any, Any]:
         out = np.zeros(self._count, dtype=np.float32)
         out_ptr = out.ctypes.data_as(_ct.POINTER(_ct.c_float))
         _get_lib().get_wgpu_weights(self._ptr, out_ptr)
@@ -689,7 +690,7 @@ class RustWgpuRuleLayer:
     def get_state_dict(self) -> dict[str, Any]:
         return {"weights": self.get_weights()}
 
-    def load_state_dict(self, state_dict: dict) -> None:
+    def load_state_dict(self, state_dict: dict[str, Any]) -> None:
         import warnings
 
         warnings.warn(
@@ -718,7 +719,7 @@ try:
         """Mathematically exact Jacobian estimations routing gradients through specific biological traces."""
 
         @staticmethod
-        def forward(  # type: ignore[override]
+        def forward(
             ctx: Any,
             pre_spikes_f: torch.Tensor,
             post_spikes_f: torch.Tensor,
@@ -813,7 +814,7 @@ try:
             return n_weights, n_pre_trace, n_post_trace, n_eligibility, n_theta_m, n_act_avg
 
         @staticmethod
-        def backward(  # type: ignore[override]
+        def backward(
             ctx: Any,
             gw: torch.Tensor,
             gp: torch.Tensor,
@@ -983,7 +984,7 @@ try:
 
         def _normalise_bit_spec(
             self,
-            spec: int | Sequence[int] | np.ndarray | torch.Tensor | None,
+            spec: int | Sequence[int] | np.ndarray[Any, Any] | torch.Tensor | None,
             field: str,
         ) -> torch.Tensor | None:
             if spec is None:
@@ -1028,7 +1029,8 @@ try:
             clipped = torch.clamp(values, min=-clip, max=clip)
             scaled = clipped * (levels / clip)
             rounded = torch.round(scaled)
-            return rounded * (clip / levels)
+            quantised: torch.Tensor = rounded * (clip / levels)
+            return quantised
 
         def _apply_precision_constraints(self) -> None:
             self.weights.copy_(
@@ -1133,7 +1135,8 @@ try:
                 self.act_avg = self._quantise_tensor(
                     new_avg.detach().clone(), self._act_avg_bits, self._act_avg_clip
                 )
-                return new_w
+                result: torch.Tensor = new_w
+                return result
             else:
                 with torch.no_grad():
                     n_w, n_pr, n_po, n_e, n_t, n_a = _BiologicalAutogradFactory.forward(
@@ -1162,9 +1165,9 @@ try:
 
         def step(
             self,
-            pre_spikes: torch.Tensor | np.ndarray,
-            post_spikes: torch.Tensor | np.ndarray,
-            rewards: torch.Tensor | np.ndarray,
+            pre_spikes: torch.Tensor | np.ndarray[Any, Any],
+            post_spikes: torch.Tensor | np.ndarray[Any, Any],
+            rewards: torch.Tensor | np.ndarray[Any, Any],
             dt: float = 1.0,
         ) -> None:
             """Legacy compatibility bridge for SC-NeuroCore benchmarks."""
@@ -1193,7 +1196,7 @@ try:
         ) -> None:
             super().load_state_dict(state_dict)
 
-        def get_weights(self) -> np.ndarray:
+        def get_weights(self) -> np.ndarray[Any, Any]:
             return self.weights.detach().cpu().numpy()
 
     # Bridge the deprecated prototype to the hardened module
@@ -1247,7 +1250,7 @@ except ImportError:
     # needs torch. `create_plasticity_layer` is the public re-export in
     # `src/sc_neurocore/plasticity.py`; without this stub the module-load
     # import fails on every test that transitively imports plasticity.
-    def create_plasticity_layer(  # type: ignore[no-redef]
+    def create_plasticity_layer(
         count: int,
         rule_type: int = RULE_STDP,
         backend: str = "torch",

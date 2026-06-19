@@ -24,7 +24,7 @@ def require_c_contiguous(
     arr: Any,
     name: str,
     dtype: np.dtype[Any] | type[np.generic] | None = None,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Validate array layout before a zero-copy native call."""
     expected_dtype = np.dtype(dtype) if dtype is not None else None
 
