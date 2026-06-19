@@ -304,7 +304,7 @@ class SpintronicArray:
     def total_area_um2(self) -> float:
         return sum(c.device.area_nm2 for row in self.cells for c in row) / 1e6
 
-    def program_weights(self, weights_q88: np.ndarray) -> None:
+    def program_weights(self, weights_q88: np.ndarray[Any, Any]) -> None:
         """Program Q8.8 weights into the array."""
         for r in range(min(self.rows, weights_q88.shape[0])):
             for c in range(min(self.cols, weights_q88.shape[1])):
@@ -312,7 +312,7 @@ class SpintronicArray:
                 self.cells[r][c].weight_q88 = w
                 self.cells[r][c].state = 1 if w > 128 else 0
 
-    def read_weights(self) -> np.ndarray:
+    def read_weights(self) -> np.ndarray[Any, Any]:
         """Read weights back from the array."""
         w = np.zeros((self.rows, self.cols), dtype=np.int32)
         for r in range(self.rows):
@@ -380,7 +380,7 @@ class SpintronicMapper:
 
     def map_network(
         self,
-        weights_q88: np.ndarray,
+        weights_q88: np.ndarray[Any, Any],
         bitstream_length: int = 256,
     ) -> Tuple[SpintronicArray, MappingResult]:
         """Map a weight matrix to a spintronic array."""
@@ -411,7 +411,7 @@ class SpintronicMapper:
 
     def monte_carlo_yield(
         self,
-        weights_q88: np.ndarray,
+        weights_q88: np.ndarray[Any, Any],
         n_trials: int = 100,
         tolerance_q88: int = 16,
     ) -> float:
@@ -578,7 +578,7 @@ class RacetrackShiftRegister:
     """
 
     n_positions: int
-    bits: Optional[np.ndarray] = None
+    bits: Optional[np.ndarray[Any, Any]] = None
     shift_current_ua: float = 100.0
     shift_time_ns: float = 0.5
     shift_error_rate: float = 1e-5
@@ -587,7 +587,7 @@ class RacetrackShiftRegister:
         if self.bits is None:
             self.bits = np.zeros(self.n_positions, dtype=np.int8)
 
-    def load(self, data: np.ndarray) -> None:
+    def load(self, data: np.ndarray[Any, Any]) -> None:
         self.bits = np.array(data[: self.n_positions], dtype=np.int8)
 
     def shift_right(self, n: int = 1, rng: Optional[np.random.Generator] = None) -> None:

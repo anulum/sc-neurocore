@@ -297,7 +297,7 @@ module = [
   'sc_neurocore.safety_cert.*', 'sc_neurocore.security.*',
   'sc_neurocore.sleep.*', 'sc_neurocore.snn_optimizer.*', 'sc_neurocore.sources.*',
   'sc_neurocore.spatial.*',
-  'sc_neurocore.spike_ode.*', 'sc_neurocore.spintronic.*', 'sc_neurocore.stochastic_doctor.*',
+  'sc_neurocore.spike_ode.*', 'sc_neurocore.stochastic_doctor.*',
   'sc_neurocore.swarm.*', 'sc_neurocore.symbolic.*', 'sc_neurocore.temporal_hierarchy.*',
   'sc_neurocore.topology.*', 'sc_neurocore.training.*', 'sc_neurocore.transfer.*',
   'sc_neurocore.verification.*', 'sc_neurocore.viz.*',
