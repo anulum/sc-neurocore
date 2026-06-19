@@ -180,7 +180,8 @@ def derive_probabilities_from_adjacency(
     scale = float(np.max(inbound))
     if scale <= 0.0:
         return np.full(matrix.shape[0], 0.5, dtype=np.float64)
-    return np.clip(inbound / scale, floor, ceiling)
+    scaled: npt.NDArray[np.float64] = np.clip(inbound / scale, floor, ceiling)
+    return scaled
 
 
 def encode_bitstream_bank(
