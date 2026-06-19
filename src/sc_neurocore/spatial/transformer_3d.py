@@ -50,6 +50,6 @@ class SpatialTransformer3D:
 
         # Reshape back to spatial dims
         # We take the mean of features to get back to 1 value per voxel
-        output_grid = np.mean(attn_out, axis=1).reshape((res, res, res))
+        output_grid: np.ndarray[Any, Any] = np.mean(attn_out, axis=1).reshape((res, res, res))
 
         return output_grid
