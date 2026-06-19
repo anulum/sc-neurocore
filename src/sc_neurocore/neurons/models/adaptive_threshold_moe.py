@@ -31,8 +31,8 @@ Reference: SpikingBrain-1.0, arXiv:2509.05276v2, September 2025.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import math
+from dataclasses import dataclass, field
 
 
 @dataclass

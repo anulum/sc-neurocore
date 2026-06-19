@@ -9,11 +9,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import numpy as np
 
 
 def _safe_exp(x: float) -> float:
-    return np.exp(np.clip(x, -500.0, 500.0))
+    return float(np.exp(np.clip(x, -500.0, 500.0)))
 
 
 @dataclass

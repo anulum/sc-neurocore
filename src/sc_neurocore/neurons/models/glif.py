@@ -356,7 +356,7 @@ class GLIFNeuron:
             trace[t] = v
         return trace, spikes, (v, theta, i_asc1, i_asc2)
 
-    def _scalar_args(self, n_steps: int, current: float) -> tuple:
+    def _scalar_args(self, n_steps: int, current: float) -> tuple[float, ...]:
         return (
             self.v,
             self.theta,

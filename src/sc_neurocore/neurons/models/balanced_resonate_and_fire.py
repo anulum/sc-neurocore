@@ -15,8 +15,8 @@ discrete-time divergence boundary ``p(omega)``.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
 
 def sustain_oscillation_boundary(omega: float, dt: float) -> float:

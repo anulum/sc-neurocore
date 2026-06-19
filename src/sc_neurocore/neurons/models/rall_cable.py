@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -79,7 +80,7 @@ class RallCableNeuron:
     v_threshold: float = -50.0
     v_reset: float = -65.0
     dt: float = 0.1
-    v: np.ndarray = field(init=False)
+    v: np.ndarray[Any, Any] = field(init=False)
 
     def __post_init__(self) -> None:
         if not isinstance(self.n_comp, int) or self.n_comp < 1:

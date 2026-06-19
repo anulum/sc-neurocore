@@ -359,7 +359,7 @@ class MihalasNieburNeuron:
             trace[t] = v
         return trace, spikes, (v, theta, i1, i2)
 
-    def _rust_args(self, n_steps: int, current: float) -> tuple:
+    def _rust_args(self, n_steps: int, current: float) -> tuple[float, ...]:
         return (
             self.v,
             self.theta,

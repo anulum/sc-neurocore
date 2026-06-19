@@ -25,8 +25,8 @@ Reference: De Pittà, M. et al. (2011). J. Biol. Phys. 37:195–230.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
 from .astrocyte import AstrocyteModel
 

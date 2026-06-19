@@ -7,24 +7,25 @@
 # SC-NeuroCore — Discrete-time noisy leaky integrate-and-fire neuron
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 
-from .base import BaseNeuron
-from ..utils.rng import RNG
 from ..constants import (
-    LIF_V_REST,
-    LIF_V_RESET,
-    LIF_V_THRESHOLD,
-    LIF_TAU_MEM,
     LIF_DT,
     LIF_NOISE_STD,
-    LIF_RESISTANCE,
     LIF_REFRACTORY_PERIOD,
+    LIF_RESISTANCE,
+    LIF_TAU_MEM,
+    LIF_V_RESET,
+    LIF_V_REST,
+    LIF_V_THRESHOLD,
 )
+from ..utils.rng import RNG
+from .base import BaseNeuron
 
 
 @dataclass

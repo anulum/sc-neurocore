@@ -8,9 +8,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
-from typing import Literal
+from dataclasses import dataclass
+from typing import Any, Literal
 
 import numpy as np
 
@@ -93,7 +93,7 @@ class AdExNeuron:
         if not math.isfinite(next_v) or not math.isfinite(next_w):
             raise ValueError("AdEx integrator update must remain finite")
 
-    def _rhs(self, _t: float, state: np.ndarray, current: float) -> np.ndarray:
+    def _rhs(self, _t: float, state: np.ndarray[Any, Any], current: float) -> np.ndarray[Any, Any]:
         v = float(state[0])
         w = float(state[1])
         exp_term = self.delta_t * np.exp(np.clip((v - self.v_rh) / self.delta_t, -20.0, 20.0))

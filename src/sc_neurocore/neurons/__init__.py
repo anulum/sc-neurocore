@@ -26,13 +26,13 @@ FixedPointLIFNeuron, etc.) are always available immediately.
 """
 
 from .base import BaseNeuron as BaseNeuron
-from .stochastic_lif import StochasticLIFNeuron as StochasticLIFNeuron
-from .fixed_point_lif import FixedPointLIFNeuron as FixedPointLIFNeuron
-from .fixed_point_lif import FixedPointLFSR as FixedPointLFSR
-from .fixed_point_lif import FixedPointBitstreamEncoder as FixedPointBitstreamEncoder
-from .homeostatic_lif import HomeostaticLIFNeuron as HomeostaticLIFNeuron
 from .dendritic import StochasticDendriticNeuron as StochasticDendriticNeuron
+from .fixed_point_lif import FixedPointBitstreamEncoder as FixedPointBitstreamEncoder
+from .fixed_point_lif import FixedPointLFSR as FixedPointLFSR
+from .fixed_point_lif import FixedPointLIFNeuron as FixedPointLIFNeuron
+from .homeostatic_lif import HomeostaticLIFNeuron as HomeostaticLIFNeuron
 from .sc_izhikevich import SCIzhikevichNeuron as SCIzhikevichNeuron
+from .stochastic_lif import StochasticLIFNeuron as StochasticLIFNeuron
 from .universal_dsl import UniversalNeuron as UniversalNeuron
 from .universal_dsl import list_bundled_schemas as list_bundled_schemas
 

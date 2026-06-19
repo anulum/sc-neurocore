@@ -9,6 +9,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
+
 import numpy as np
 
 
@@ -25,8 +27,8 @@ class ParallelSpikingNeuron:
 
     kernel_size: int = 8
     v_threshold: float = 1.0
-    kernel: np.ndarray = field(init=False)
-    buffer: np.ndarray = field(init=False)
+    kernel: np.ndarray[Any, Any] = field(init=False)
+    buffer: np.ndarray[Any, Any] = field(init=False)
     _ptr: int = field(init=False, default=0)
 
     def __post_init__(self) -> None:

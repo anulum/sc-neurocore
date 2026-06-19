@@ -8,15 +8,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 from typing import Any, Literal
 
 import numpy as np
 import numpy.typing as npt
 
-from .base import BaseNeuron
-from ..utils.rng import RNG
 from ..constants import (
     IZH_A,
     IZH_B,
@@ -25,6 +23,8 @@ from ..constants import (
     IZH_SPIKE_THRESHOLD,
     LIF_DT,
 )
+from ..utils.rng import RNG
+from .base import BaseNeuron
 
 
 @dataclass

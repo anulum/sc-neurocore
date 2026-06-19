@@ -8,8 +8,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 
@@ -79,7 +81,7 @@ class SiegertTransferFunction:
         max_rate = 1000.0 / self.tau_rp
         if not math.isfinite(rate) or rate < 0.0 or rate > max_rate:
             raise ValueError("Siegert runtime rate must remain finite and refractory-bounded")
-        return rate  # Hz
+        return float(rate)  # Hz
 
     def reset(self) -> None:
         pass
@@ -91,7 +93,7 @@ class SiegertTransferFunction:
             raise ValueError(f"Siegert runtime parameters invalid: {exc}") from exc
 
 
-def _erf_approx(x: np.ndarray) -> np.ndarray:
+def _erf_approx(x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Abramowitz & Stegun 7.1.26 rational approximation."""
     sign = np.sign(x)
     a = np.abs(x)
@@ -99,4 +101,5 @@ def _erf_approx(x: np.ndarray) -> np.ndarray:
     t = 1.0 / (1.0 + p * a)
     coeffs = np.array([0.254829592, -0.284496736, 1.421413741, -1.453152027, 1.061405429])
     poly = t * (coeffs[0] + t * (coeffs[1] + t * (coeffs[2] + t * (coeffs[3] + t * coeffs[4]))))
-    return sign * (1.0 - poly * np.exp(-a * a))
+    result: np.ndarray[Any, Any] = sign * (1.0 - poly * np.exp(-a * a))
+    return result

@@ -9,17 +9,15 @@
 from __future__ import annotations
 
 import importlib as _importlib
+import math
 import os as _os
 from dataclasses import dataclass
-from typing import Callable, Literal, Optional
-
-import math
+from typing import Any, Callable, Literal, Optional
 
 import numpy as np
 import numpy.typing as npt
 
 from sc_neurocore.solvers import RosenbrockEuler
-
 
 _STATE_NAMES = ("v", "w")
 _PARAM_NAMES = ("a", "b", "epsilon", "dt", "v_threshold")
@@ -386,7 +384,7 @@ class FitzHughNagumoNeuron:
             raise FloatingPointError("FitzHugh-Nagumo derivative became non-finite")
         return dv, dw
 
-    def _rhs(self, _t: float, state: np.ndarray, current: float) -> np.ndarray:
+    def _rhs(self, _t: float, state: np.ndarray[Any, Any], current: float) -> np.ndarray[Any, Any]:
         dv, dw = self._rhs_tuple(float(state[0]), float(state[1]), current)
         return np.array([dv, dw], dtype=np.float64)
 

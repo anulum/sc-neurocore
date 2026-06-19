@@ -9,11 +9,10 @@
 from __future__ import annotations
 
 import importlib as _importlib
+import math
 import os as _os
 from dataclasses import dataclass
 from typing import Callable, Literal, Optional
-
-import math
 
 import numpy as np
 import numpy.typing as npt

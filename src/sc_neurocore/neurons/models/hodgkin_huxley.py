@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 
@@ -58,7 +58,7 @@ class HodgkinHuxleyNeuron:
         d = v + 40.0
         if abs(d) < 1e-7:
             return 1.0
-        return 0.1 * d / (1.0 - np.exp(-d / 10.0))
+        return float(0.1 * d / (1.0 - np.exp(-d / 10.0)))
 
     def _beta_m(self, v: float) -> float:
         return float(4.0 * np.exp(-(v + 65.0) / 18.0))
@@ -73,7 +73,7 @@ class HodgkinHuxleyNeuron:
         d = v + 55.0
         if abs(d) < 1e-7:
             return 0.1
-        return 0.01 * d / (1.0 - np.exp(-d / 10.0))
+        return float(0.01 * d / (1.0 - np.exp(-d / 10.0)))
 
     def _beta_n(self, v: float) -> float:
         return float(0.125 * np.exp(-(v + 65.0) / 80.0))
@@ -88,7 +88,7 @@ class HodgkinHuxleyNeuron:
             self._step_rosenbrock(current)
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def _rhs(self, _t: float, state: np.ndarray, current: float) -> np.ndarray:
+    def _rhs(self, _t: float, state: np.ndarray[Any, Any], current: float) -> np.ndarray[Any, Any]:
         v, m, h, n = (float(value) for value in state)
         am, bm = self._alpha_m(v), self._beta_m(v)
         ah, bh = self._alpha_h(v), self._beta_h(v)

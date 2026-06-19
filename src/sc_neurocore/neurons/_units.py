@@ -23,7 +23,7 @@ try:
 except ImportError:  # pragma: no cover - exercised via dependency error path
     pint = None  # type: ignore[assignment]
     HAS_PINT = False
-    UNIT_REGISTRY = None  # type: ignore[assignment]
+    UNIT_REGISTRY = None
 
     class _FallbackDimensionalError(ValueError):
         """Fallback dimensional error when pint is unavailable."""

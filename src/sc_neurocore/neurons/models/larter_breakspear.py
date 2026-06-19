@@ -13,7 +13,6 @@ from typing import Any
 
 import numpy as np
 
-
 _STATE_NAMES = ("v", "w", "z")
 _PARAM_NAMES = (
     "g_ca",

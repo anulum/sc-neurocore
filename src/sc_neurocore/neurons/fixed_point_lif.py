@@ -14,10 +14,10 @@ from typing import Any, Dict
 from ..constants import (
     FP_DATA_WIDTH,
     FP_FRACTION,
-    FP_V_THRESHOLD,
-    FP_REFRACTORY_PERIOD,
-    FP_LFSR_WIDTH,
     FP_LFSR_SEED,
+    FP_LFSR_WIDTH,
+    FP_REFRACTORY_PERIOD,
+    FP_V_THRESHOLD,
 )
 
 

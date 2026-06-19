@@ -44,8 +44,8 @@ from __future__ import annotations
 import argparse
 import sys
 
-from sc_neurocore.neurons.universal_dsl import UniversalNeuron, list_bundled_schemas
 from sc_neurocore.neurons.schema_validator import validate_all_bundled, validate_schema
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron, list_bundled_schemas
 
 
 def cmd_list(args: argparse.Namespace) -> None:

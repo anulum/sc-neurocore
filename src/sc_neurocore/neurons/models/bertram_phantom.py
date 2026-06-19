@@ -8,9 +8,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
-
+from dataclasses import dataclass
 
 _VOLTAGE_MIN = -250.0
 _VOLTAGE_MAX = 250.0

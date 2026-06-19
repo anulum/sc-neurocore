@@ -8,15 +8,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Literal
-
 import math
+from dataclasses import dataclass
+from typing import Any, Literal
 
 import numpy as np
 
 from sc_neurocore.solvers import RK4Solver, RosenbrockEuler
-
 
 _STATE_NAMES = ("v", "w")
 _PARAM_NAMES = (
@@ -149,7 +147,7 @@ class MorrisLecarNeuron:
 
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
-    def _rhs(self, _t: float, state: np.ndarray, current: float) -> np.ndarray:
+    def _rhs(self, _t: float, state: np.ndarray[Any, Any], current: float) -> np.ndarray[Any, Any]:
         v = float(state[0])
         w = float(state[1])
         m_inf = self._m_inf(v)

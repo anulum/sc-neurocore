@@ -11,7 +11,6 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-
 _STATE_NAMES = ("e", "i")
 _PARAM_NAMES = ("w_ee", "w_ei", "w_ie", "w_ii", "tau_e", "tau_i", "a", "theta", "dt")
 _NON_NEGATIVE_PARAMS = ("w_ee", "w_ei", "w_ie", "w_ii")

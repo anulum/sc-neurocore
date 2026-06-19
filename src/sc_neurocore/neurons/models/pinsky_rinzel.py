@@ -8,9 +8,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
-
+from dataclasses import dataclass
 
 _STATE_NAMES = ("v_s", "v_d", "h", "n", "s", "c", "q")
 _PARAM_NAMES = (

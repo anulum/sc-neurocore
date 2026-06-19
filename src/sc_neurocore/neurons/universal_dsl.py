@@ -104,7 +104,8 @@ def _load_toml(path: Path) -> dict[str, Any]:
 def _load_json(path: Path) -> dict[str, Any]:
     """Load a JSON schema file."""
     with open(path) as f:
-        return json.load(f)
+        data: dict[str, Any] = json.load(f)
+        return data
 
 
 def load_schema(source: str | Path) -> dict[str, Any]:
@@ -342,12 +343,13 @@ class UniversalNeuron:
     @property
     def name(self) -> str:
         """Model name from metadata."""
-        return self._metadata.get("name", "UnnamedModel")
+        return str(self._metadata.get("name", "UnnamedModel"))
 
     @property
     def doi(self) -> str | None:
         """DOI of the source publication, if available."""
-        return self._metadata.get("doi")
+        doi: str | None = self._metadata.get("doi")
+        return doi
 
     @property
     def schema(self) -> dict[str, Any]:

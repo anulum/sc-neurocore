@@ -55,8 +55,10 @@ Reference: Original design, Šotek & Arcane Sapience 2026.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import math
+from dataclasses import dataclass, field
+from typing import Any
+
 import numpy as np
 
 
@@ -80,9 +82,9 @@ class ArcaneNeuron:
     gamma: float = 0.2
     delta_conf: float = 0.3
     # Gate weights (4 inputs: I, v_fast, v_work, confidence)
-    w_gate: np.ndarray = field(default_factory=lambda: np.array([0.8, 0.1, 0.05, 0.05]))
+    w_gate: np.ndarray[Any, Any] = field(default_factory=lambda: np.array([0.8, 0.1, 0.05, 0.05]))
     # Predictor weights (3 inputs: v_fast, v_work, v_deep)
-    w_pred: np.ndarray = field(default_factory=lambda: np.array([0.6, 0.3, 0.1]))
+    w_pred: np.ndarray[Any, Any] = field(default_factory=lambda: np.array([0.6, 0.3, 0.1]))
     # Novelty detection
     kappa: float = 5.0
     surprise_baseline: float = 0.1
@@ -94,8 +96,8 @@ class ArcaneNeuron:
     _surprise: float = 0.0
     _novelty: float = 0.0
     _confidence: float = 0.5
-    _spike_history: list = field(default_factory=lambda: [0] * 50)
-    _novelty_history: list = field(default_factory=lambda: [0.5] * 20)
+    _spike_history: list[int] = field(default_factory=lambda: [0] * 50)
+    _novelty_history: list[float] = field(default_factory=lambda: [0.5] * 20)
     _hist_idx: int = 0
     _nov_idx: int = 0
     _total_steps: int = 0
@@ -307,7 +309,7 @@ class ArcaneNeuron:
         hist_ix = (self._hist_idx - 1) % max(1, len(self._spike_history))
         return float(self._spike_history[hist_ix])
 
-    def get_state(self) -> dict:
+    def get_state(self) -> dict[str, float]:
         return {
             "v_fast": self.v_fast,
             "v_work": self.v_work,

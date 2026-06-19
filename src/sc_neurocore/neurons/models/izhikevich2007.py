@@ -9,9 +9,9 @@
 from __future__ import annotations
 
 import importlib as _importlib
+import math
 import os as _os
 from dataclasses import dataclass, field
-import math
 from typing import Any, Callable, Literal, Optional
 
 import numpy as np

@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import numpy as np
 
 
@@ -52,7 +53,7 @@ class MarderSTGNeuron:
     v_threshold: float = -20.0
 
     def _boltz(self, v: float, v_half: float, k: float) -> float:
-        return 1.0 / (1.0 + np.exp((v_half - v) / k))
+        return float(1.0 / (1.0 + np.exp((v_half - v) / k)))
 
     def step(self, current: float) -> int:
         v_prev = self.v

@@ -153,7 +153,7 @@ def __getattr__(name: str) -> type:
         import importlib
 
         module = importlib.import_module(f".{_CLASS_TO_MODULE[name]}", __name__)
-        obj = getattr(module, name)
+        obj: type = getattr(module, name)
         globals()[name] = obj
         return obj
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

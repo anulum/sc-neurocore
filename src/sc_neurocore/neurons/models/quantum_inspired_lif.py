@@ -26,8 +26,8 @@ Reference: Quantum-neural hybrid models, IBM Heron r2 noise models.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import math
+from dataclasses import dataclass, field
 
 
 @dataclass

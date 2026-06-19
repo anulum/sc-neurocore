@@ -26,8 +26,8 @@ Reference: Perea, Navarrete & Araque, "Tripartite synapses" (2009).
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
 
 def _finite(name: str, value: float) -> None:

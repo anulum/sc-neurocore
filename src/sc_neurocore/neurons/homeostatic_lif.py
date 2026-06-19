@@ -6,17 +6,18 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — LIF neuron with homeostatic threshold adaptation
 
-from dataclasses import dataclass
-from typing import Dict, Any
 import math
-from .stochastic_lif import StochasticLIFNeuron
+from dataclasses import dataclass
+from typing import Any, Dict
+
 from ..constants import (
-    HOMEOSTATIC_TARGET_RATE,
     HOMEOSTATIC_ADAPTATION_RATE,
-    HOMEOSTATIC_TRACE_DECAY,
-    HOMEOSTATIC_THRESHOLD_FLOOR,
+    HOMEOSTATIC_TARGET_RATE,
     HOMEOSTATIC_THRESHOLD_CEILING_MULT,
+    HOMEOSTATIC_THRESHOLD_FLOOR,
+    HOMEOSTATIC_TRACE_DECAY,
 )
+from .stochastic_lif import StochasticLIFNeuron
 
 THRESHOLD_FLOOR = HOMEOSTATIC_THRESHOLD_FLOOR
 THRESHOLD_CEILING_MULT = HOMEOSTATIC_THRESHOLD_CEILING_MULT

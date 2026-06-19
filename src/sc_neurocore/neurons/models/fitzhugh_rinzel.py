@@ -17,7 +17,6 @@ from typing import Callable, Optional
 import numpy as np
 import numpy.typing as npt
 
-
 _STATE_NAMES = ("v", "w", "y")
 _PARAMETER_NAMES = ("a", "b", "c", "d", "delta", "mu", "dt", "v_threshold")
 _POSITIVE_PARAMETERS = ("b", "d", "delta", "mu", "dt")
