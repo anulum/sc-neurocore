@@ -101,8 +101,8 @@ class SleepStageDetector:
 
     def __init__(self, config: Optional[DetectorConfig] = None) -> None:
         self.config = config or DetectorConfig()
-        self._buffer: deque = deque(maxlen=self.config.fft_window)
-        self._stage_history: deque = deque(maxlen=self.config.smoothing_window)
+        self._buffer: deque[float] = deque(maxlen=self.config.fft_window)
+        self._stage_history: deque[SleepStage] = deque(maxlen=self.config.smoothing_window)
         self._band_powers: Optional[Dict[str, float]] = None
 
     # -- public API ---------------------------------------------------------
