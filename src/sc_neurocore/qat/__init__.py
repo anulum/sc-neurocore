@@ -8,7 +8,7 @@
 
 """Train SNNs through quantization for hardware deployment."""
 
-from .quantize import QuantizedSNNLayer, quantize_aware_train_step, TernaryWeights
+from .quantize import QuantizedSNNLayer, TernaryWeights, quantize_aware_train_step
 
 __all__ = [
     "QuantizedSNNLayer",

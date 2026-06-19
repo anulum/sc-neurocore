@@ -19,7 +19,7 @@ At export: call export_quantized() to get integer weights at target bits.
 
 from __future__ import annotations
 
-from typing import Callable, Tuple, cast
+from typing import Any, Callable, Tuple, cast
 
 import torch
 import torch.nn as nn
@@ -52,7 +52,7 @@ class _STEQuantize(torch.autograd.Function):
 
 def ste_quantize(x: torch.Tensor, n_bits: int, symmetric: bool = True) -> torch.Tensor:
     """Quantize tensor with straight-through estimator."""
-    return _STEQuantize.apply(x, n_bits, symmetric)  # type: ignore[no-untyped-call]
+    return cast(torch.Tensor, _STEQuantize.apply(x, n_bits, symmetric))
 
 
 class QuantizedLinear(nn.Module):
@@ -68,7 +68,7 @@ class QuantizedLinear(nn.Module):
         out = nn.functional.linear(x, w_q, self.linear.bias)
         return out
 
-    def export_quantized(self) -> dict:
+    def export_quantized(self) -> dict[str, Any]:
         """Export integer weights at target precision."""
         w = self.linear.weight.detach()
         abs_max = w.abs().max().clamp(min=1e-8)
@@ -103,7 +103,7 @@ class QuantizedLIFNet(nn.Module):
         n_layers: int = 2,
         n_bits: int = 8,
         beta: float = 0.9,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: Callable[..., torch.Tensor] = atan_surrogate,
     ):
         super().__init__()
         self.n_output = n_output
@@ -140,7 +140,7 @@ class QuantizedLIFNet(nn.Module):
 
         return spike_sum, mem_sum
 
-    def export_quantized(self) -> list[dict]:
+    def export_quantized(self) -> list[dict[str, Any]]:
         """Export all layers as quantized integer weights."""
         return [cast(QuantizedLinear, lin).export_quantized() for lin in self.linears]
 
@@ -209,7 +209,7 @@ class SCAwareLIFNet(nn.Module):
         n_layers: int = 2,
         bitstream_length: int = 256,
         beta: float = 0.9,
-        surrogate_fn: Callable = atan_surrogate,
+        surrogate_fn: Callable[..., torch.Tensor] = atan_surrogate,
     ):
         super().__init__()
         self.n_output = n_output
@@ -247,7 +247,7 @@ class SCAwareLIFNet(nn.Module):
 
         return spike_sum, mem_sum
 
-    def export_bipolar_weights(self) -> list[dict]:
+    def export_bipolar_weights(self) -> list[dict[str, Any]]:
         """Export weights clamped to [-1, 1] for bipolar SC deployment."""
         layers = []
         for lin in self.linears:
