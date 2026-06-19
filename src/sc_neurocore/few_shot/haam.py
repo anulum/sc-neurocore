@@ -17,6 +17,7 @@ Reference: HAAM (BICS 2024)
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -46,7 +47,7 @@ class HebbianFewShot:
         self.memory = np.zeros((n_classes, n_features))
         self._counts = np.zeros(n_classes, dtype=int)
 
-    def store(self, spike_pattern: np.ndarray, label: int) -> None:
+    def store(self, spike_pattern: np.ndarray[Any, Any], label: int) -> None:
         """Store one support example via Hebbian update.
 
         Parameters
@@ -65,7 +66,7 @@ class HebbianFewShot:
         self.memory[label] += self.lr_hebbian * pattern
         self._counts[label] += 1
 
-    def query(self, spike_pattern: np.ndarray) -> int:
+    def query(self, spike_pattern: np.ndarray[Any, Any]) -> int:
         """Classify a query pattern by cosine similarity to stored memories.
 
         Parameters
@@ -94,9 +95,9 @@ class HebbianFewShot:
 
     def few_shot_episode(
         self,
-        support_x: list[np.ndarray],
+        support_x: list[np.ndarray[Any, Any]],
         support_y: list[int],
-        query_x: list[np.ndarray],
+        query_x: list[np.ndarray[Any, Any]],
     ) -> list[int]:
         """Run a complete few-shot episode.
 
@@ -119,6 +120,7 @@ class HebbianFewShot:
         return [self.query(q) for q in query_x]
 
     def reset(self) -> None:
+        """Clear the associative memory and per-slot usage counts."""
         self.memory[:] = 0
         self._counts[:] = 0
 
@@ -142,9 +144,9 @@ class SpikePrototypeNet:
 
     def classify(
         self,
-        support_x: list[np.ndarray],
+        support_x: list[np.ndarray[Any, Any]],
         support_y: list[int],
-        query_x: list[np.ndarray],
+        query_x: list[np.ndarray[Any, Any]],
     ) -> list[int]:
         """Classify query set using support set prototypes.
 
