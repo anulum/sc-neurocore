@@ -23,6 +23,7 @@ Reference:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -76,6 +77,7 @@ class ContinualReport:
     accuracy_per_task: list[float] = field(default_factory=list)
 
     def summary(self) -> str:
+        """Render a multi-line human-readable continual-learning report."""
         lines = [
             f"Continual Learning Report: {self.tasks_trained} tasks",
             f"  EWC lambda: {self.ewc_lambda}",
@@ -104,7 +106,7 @@ class ContinualLearner:
 
     def __init__(
         self,
-        weights: list[np.ndarray],
+        weights: list[np.ndarray[Any, Any]],
         layer_names: list[str] | None = None,
         ewc_lambda: float = 1000.0,
         plasticity_rule: str = "stdp",
@@ -114,12 +116,12 @@ class ContinualLearner:
         self.ewc_lambda = ewc_lambda
         self.plasticity_rule = plasticity_rule
 
-        self._fisher_diag: list[np.ndarray] | None = None
-        self._star_weights: list[np.ndarray] | None = None
+        self._fisher_diag: list[np.ndarray[Any, Any]] | None = None
+        self._star_weights: list[np.ndarray[Any, Any]] | None = None
         self._task_count = 0
         self._accuracy_history: list[float] = []
 
-    def compute_fisher(self, gradients_per_sample: list[list[np.ndarray]]) -> None:
+    def compute_fisher(self, gradients_per_sample: list[list[np.ndarray[Any, Any]]]) -> None:
         """Compute Fisher Information diagonal from per-sample gradients.
 
         Parameters
@@ -153,7 +155,7 @@ class ContinualLearner:
         self._task_count += 1
         self._accuracy_history.append(accuracy)
 
-    def update_weights(self, new_weights: list[np.ndarray]) -> None:
+    def update_weights(self, new_weights: list[np.ndarray[Any, Any]]) -> None:
         """Update weights (e.g., after training on a new task)."""
         self.weights = [w.copy() for w in new_weights]
 

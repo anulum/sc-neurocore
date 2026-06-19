@@ -280,7 +280,7 @@ module = [
   'sc_neurocore.arcane_zenith', 'sc_neurocore.audio.*', 'sc_neurocore.augmentation.*', 'sc_neurocore.autofit.*',
   'sc_neurocore.bci_studio.*', 'sc_neurocore.benchmarks.*', 'sc_neurocore.bioware.*',
   'sc_neurocore.bridges.*', 'sc_neurocore.chaos.*', 'sc_neurocore.chip_compiler.*', 'sc_neurocore.chiplet.*',
-  'sc_neurocore.comm.*', 'sc_neurocore.compiler.*', 'sc_neurocore.continual.*',
+  'sc_neurocore.comm.*', 'sc_neurocore.compiler.*',
   'sc_neurocore.control.*', 'sc_neurocore.conversion.*', 'sc_neurocore.datasets.*',
   'sc_neurocore.debug.*', 'sc_neurocore.digital_twin.*', 'sc_neurocore.distillation.*', 'sc_neurocore.doctor.*',
   'sc_neurocore.drivers.*', 'sc_neurocore.edge.*', 'sc_neurocore.energy_accounting.*',
