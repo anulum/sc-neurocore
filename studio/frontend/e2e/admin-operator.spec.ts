@@ -1,19 +1,61 @@
 import { expect, test, type Page } from "@playwright/test";
 
+function capability(overrides: Record<string, unknown>): Record<string, unknown> {
+  return {
+    capability_id: "studio.capability_registry",
+    docs_path: "docs/studio/index.md",
+    evidence: ["contract_test"],
+    healthy: true,
+    message: "Capability is available.",
+    requirements: [{ available: true, detail: "registry active", name: "studio.platform" }],
+    status: "stable",
+    summary: "Typed inventory for Studio capabilities, requirements, and evidence.",
+    title: "Capability Registry",
+    ui_placement: "Admin",
+    ...overrides,
+  };
+}
+
+function registry(capabilities: Record<string, unknown>[]): Record<string, unknown> {
+  return { capabilities };
+}
+
+const capabilityRegistryContract = capability({});
+
+const simulationCapability = capability({
+  capability_id: "studio.simulation_workbench",
+  summary: "Simulation traces and spike statistics.",
+  title: "Simulation Workbench",
+  ui_placement: "Trace",
+});
+
+const analysisUnavailable = capability({
+  capability_id: "studio.analysis_suite",
+  evidence: ["static_inventory"],
+  healthy: false,
+  message: "Analysis endpoints are unavailable.",
+  requirements: [{ available: false, detail: "analysis endpoint disabled", name: "analysis" }],
+  status: "unavailable",
+  summary: "Trace analysis and sweep tools.",
+  title: "Analysis Suite",
+  ui_placement: "Analysis",
+});
+
+const synthesisUnavailable = capability({
+  capability_id: "studio.synthesis_dashboard",
+  evidence: ["static_inventory"],
+  healthy: false,
+  message: "Synthesis tools are unavailable.",
+  requirements: [{ available: false, detail: "yosys unavailable", name: "yosys" }],
+  status: "unavailable",
+  summary: "FPGA synthesis and place-and-route tools.",
+  title: "Synthesis Dashboard",
+  ui_placement: "FPGA",
+});
+
 const capabilityRegistry = {
   capabilities: [
-    {
-      capability_id: "studio.capability_registry",
-      docs_path: "docs/studio/index.md",
-      evidence: ["contract_test"],
-      healthy: true,
-      message: "Capability is available.",
-      requirements: [{ available: true, detail: "registry active", name: "studio.platform" }],
-      status: "stable",
-      summary: "Typed inventory for Studio capabilities, requirements, and evidence.",
-      title: "Capability Registry",
-      ui_placement: "Admin",
-    },
+    capabilityRegistryContract,
   ],
 };
 
@@ -126,4 +168,61 @@ test("admin panel renders aggregate operator status", async ({ page }) => {
   await expect(page.getByText("compiler, synthesis, training")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Capabilities" })).toBeVisible();
   await expect(page.getByText("All registered capabilities healthy")).toBeVisible();
+});
+
+test("capability menu exposes unavailable requirements", async ({ page }) => {
+  await fulfillJson(page, "/api/studio/capabilities", registry([
+    capabilityRegistryContract,
+    simulationCapability,
+    analysisUnavailable,
+    synthesisUnavailable,
+  ]));
+
+  await page.goto("/");
+  await page.getByText("2/4 ready").click();
+
+  const capabilityMenu = page.locator(".capability-menu");
+  await expect(capabilityMenu.getByText("Analysis Suite")).toBeVisible();
+  await expect(capabilityMenu.getByText("analysis: analysis endpoint disabled")).toBeVisible();
+  await expect(capabilityMenu.getByText("Synthesis Dashboard")).toBeVisible();
+  await expect(capabilityMenu.getByText("yosys: yosys unavailable")).toBeVisible();
+});
+
+test("unavailable panel contracts disable toolbar and keyboard activation", async ({ page }) => {
+  await fulfillJson(page, "/api/studio/capabilities", registry([
+    capabilityRegistryContract,
+    simulationCapability,
+    analysisUnavailable,
+  ]));
+
+  await page.goto("/");
+
+  await expect(page.getByRole("button", { name: "f-I" }).first()).toBeDisabled();
+  await expect(page.getByRole("button", { name: "f-I" }).last()).toBeDisabled();
+
+  await page.keyboard.press("3");
+
+  await expect(page.getByText("Analysis endpoints are unavailable.")).toHaveCount(0);
+  await expect(page.locator("canvas")).toBeVisible();
+});
+
+test("missing active panel capability fails closed at startup", async ({ page }) => {
+  let simulateRequests = 0;
+  await fulfillJson(page, "/api/studio/capabilities", registry([capabilityRegistryContract]));
+  await page.route((url) => url.pathname === "/api/simulate", async (route) => {
+    simulateRequests += 1;
+    await route.fulfill({
+      contentType: "application/json",
+      json: { detail: "simulation should not run while the panel is unavailable" },
+      status: 500,
+    });
+  });
+
+  await page.goto("/");
+
+  await expect(page.locator(".capability-blocked-title", { hasText: "Trace" })).toBeVisible();
+  await expect(page.getByText("Backend capability contract is missing from the registry.")).toBeVisible();
+  await page.keyboard.press("Space");
+  await page.waitForTimeout(100);
+  expect(simulateRequests).toBe(0);
 });

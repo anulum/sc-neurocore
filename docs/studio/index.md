@@ -65,7 +65,8 @@ runtime features:
 - The frontend shell loads the capability registry during startup, surfaces
   aggregate capability health in the header, lists each capability with status,
   evidence, missing requirements, and documentation links, and disables
-  registered panels when backend or external-tool requirements are unavailable.
+  registered panels and matching toolbar/keyboard activation paths when backend
+  or external-tool requirements are unavailable.
 - The default registry covers the stateful Studio panel families: simulation
   workbench, analysis suite, compiler inspector, synthesis dashboard, training
   monitor, network canvas, project workspace, and export tools. Missing

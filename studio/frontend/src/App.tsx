@@ -85,6 +85,14 @@ export default function App() {
   const pattern = s.result?.pattern;
   const panelState = (panelKey: PanelKey) => panelCapabilityState(s.capabilities, panelKey);
   const activePanelState = panelState(s.activeTab as PanelKey);
+  const panelUnavailable = (panelKey: PanelKey) => !panelState(panelKey).available;
+  const panelControl = (panelKey: PanelKey) => {
+    const capabilityState = panelState(panelKey);
+    return {
+      disabled: !capabilityState.available,
+      title: capabilityState.message,
+    };
+  };
   const activatePanel = (panelKey: ViewTab) => {
     const capabilityState = panelState(panelKey as PanelKey);
     if (!capabilityState.available) return;
@@ -102,12 +110,15 @@ export default function App() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.code === "Space") { e.preventDefault(); s.runSimulation(); }
-      if (e.key === "1") s.setActiveTab("trace");
-      if (e.key === "2" && hasPhase) s.setActiveTab("phase");
-      if (e.key === "3") s.setActiveTab("fi-curve");
-      if (e.key === "4") s.setActiveTab("bifurcation");
-      if (e.key === "5") s.setActiveTab("sensitivity");
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (!panelUnavailable("trace")) void s.runSimulation();
+      }
+      if (e.key === "1") activatePanel("trace");
+      if (e.key === "2" && hasPhase) activatePanel("phase");
+      if (e.key === "3") activatePanel("fi-curve");
+      if (e.key === "4") activatePanel("bifurcation");
+      if (e.key === "5") activatePanel("sensitivity");
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -131,12 +142,25 @@ export default function App() {
 
         {s.sourceMode === "ode" && <TemplateLibrary />}
 
-        <Btn label={s.isSimulating ? "..." : "Run"} onClick={s.runSimulation} disabled={s.isSimulating} />
+        <Btn label={s.isSimulating ? "..." : "Run"} onClick={s.runSimulation}
+          disabled={s.isSimulating || panelUnavailable("trace")}
+          title={panelState("trace").message} />
         <Btn label="Char." onClick={s.runCharacterize}
-          disabled={s.isSimulating || s.sourceMode !== "model"} color="#fff176" />
-        <Btn label="f-I" onClick={s.runFICurve} disabled={s.isSimulating} color="var(--success)" />
-        <Btn label="Sens" onClick={s.runSensitivity} disabled={s.isSimulating} color="#ce93d8" />
-        <Btn label="Code" onClick={s.runCodegen} color="#90a4ae" />
+          disabled={s.isSimulating || s.sourceMode !== "model" || panelUnavailable("characterize")}
+          title={panelState("characterize").message}
+          color="#fff176" />
+        <Btn label="f-I" onClick={s.runFICurve}
+          disabled={s.isSimulating || panelUnavailable("fi-curve")}
+          title={panelState("fi-curve").message}
+          color="var(--success)" />
+        <Btn label="Sens" onClick={s.runSensitivity}
+          disabled={s.isSimulating || panelUnavailable("sensitivity")}
+          title={panelState("sensitivity").message}
+          color="#ce93d8" />
+        <Btn label="Code" onClick={s.runCodegen}
+          disabled={panelUnavailable("code")}
+          title={panelState("code").message}
+          color="#90a4ae" />
 
         {paramKeys.length > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -145,37 +169,66 @@ export default function App() {
               <option value="">X...</option>
               {paramKeys.map((k) => <option key={k} value={k}>{k}</option>)}
             </select>
-            <Btn label="Bif" onClick={s.runBifurcation} disabled={s.isSimulating || !s.sweepParam} color="#ef9a9a" />
+            <Btn label="Bif" onClick={s.runBifurcation}
+              disabled={s.isSimulating || !s.sweepParam || panelUnavailable("bifurcation")}
+              title={panelState("bifurcation").message}
+              color="#ef9a9a" />
             <select value={s.sweepParamY} onChange={(e) => s.setSweepParamY(e.target.value)}
               style={{ fontSize: 9, padding: "1px 2px", maxWidth: 70 }}>
               <option value="">Y...</option>
               {paramKeys.filter((k) => k !== s.sweepParam).map((k) => <option key={k} value={k}>{k}</option>)}
             </select>
             <Btn label="2D" onClick={s.runHeatmap}
-              disabled={s.isSimulating || !s.sweepParam || !s.sweepParamY} color="#ffab91" />
+              disabled={s.isSimulating || !s.sweepParam || !s.sweepParamY || panelUnavailable("heatmap")}
+              title={panelState("heatmap").message}
+              color="#ffab91" />
           </div>
         )}
 
         {s.sourceMode === "ode" && (
           <>
-            <Btn label="Q8.8" onClick={s.runPrecision} disabled={s.isSimulating} color="#80deea" />
-            <Btn label="RTL" onClick={s.runCompile} disabled={s.isSimulating} color="#a5d6a7" />
-            <Btn label="IR" onClick={s.runBuildIR} disabled={s.isSimulating} color="#ffcc80" />
-            <Btn label="SV" onClick={s.runEmitSV} disabled={s.isSimulating} color="#c5e1a5" />
+            <Btn label="Q8.8" onClick={s.runPrecision}
+              disabled={s.isSimulating || panelUnavailable("precision")}
+              title={panelState("precision").message}
+              color="#80deea" />
+            <Btn label="RTL" onClick={s.runCompile}
+              disabled={s.isSimulating || panelUnavailable("verilog")}
+              title={panelState("verilog").message}
+              color="#a5d6a7" />
+            <Btn label="IR" onClick={s.runBuildIR}
+              disabled={s.isSimulating || panelUnavailable("ir")}
+              title={panelState("ir").message}
+              color="#ffcc80" />
+            <Btn label="SV" onClick={s.runEmitSV}
+              disabled={s.isSimulating || panelUnavailable("ir")}
+              title={panelState("ir").message}
+              color="#c5e1a5" />
           </>
         )}
 
         <Btn label="Canvas" onClick={() => activatePanel("canvas")}
-          disabled={!panelState("canvas").available}
-          title={panelState("canvas").message}
+          {...panelControl("canvas")}
           color="#4fc3f7" />
-        <Btn label="Train" onClick={() => activatePanel("train")} color="#b39ddb" />
-        <Btn label="Admin" onClick={() => activatePanel("admin")} color="#ffcc80" />
-        <Btn label="E-I Net" onClick={s.runNetwork} disabled={s.isSimulating} color="#80cbc4" />
+        <Btn label="Train" onClick={() => activatePanel("train")}
+          {...panelControl("train")}
+          color="#b39ddb" />
+        <Btn label="Admin" onClick={() => activatePanel("admin")}
+          {...panelControl("admin")}
+          color="#ffcc80" />
+        <Btn label="E-I Net" onClick={s.runNetwork}
+          disabled={s.isSimulating || panelUnavailable("network")}
+          title={panelState("network").message}
+          color="#80cbc4" />
         <Btn label="STA" onClick={s.computeSTA} disabled={!s.result || s.result.spikes.length < 3} color="#b0bec5" />
-        <Btn label="Freq" onClick={s.runFreqResponse} disabled={s.isSimulating} color="#fff176" />
+        <Btn label="Freq" onClick={s.runFreqResponse}
+          disabled={s.isSimulating || panelUnavailable("freq")}
+          title={panelState("freq").message}
+          color="#fff176" />
         {s.sourceMode === "ode" && s.equations.length >= 2 && (
-          <Btn label="Nullcl." onClick={s.runNullclines} disabled={s.isSimulating} color="#ef9a9a" />
+          <Btn label="Nullcl." onClick={s.runNullclines}
+            disabled={s.isSimulating || panelUnavailable("sensitivity")}
+            title={panelState("sensitivity").message}
+            color="#ef9a9a" />
         )}
         <Btn label="Import" onClick={() => {
           const csv = prompt("Paste voltage trace (one value per line, or CSV):");
@@ -190,39 +243,37 @@ export default function App() {
         <div className="header-spacer" />
 
         <div style={{ display: "flex", gap: 0, borderRadius: "var(--radius)", overflow: "hidden" }}>
-          <Tab active={s.activeTab === "trace"} color="var(--accent)" label="Trace" onClick={() => activatePanel("trace")} />
-          {hasPhase && <Tab active={s.activeTab === "phase"} color="#ce93d8" label="Phase" onClick={() => activatePanel("phase")} />}
-          {hasISI && <Tab active={s.activeTab === "isi"} color="var(--warning)" label="ISI" onClick={() => activatePanel("isi")} />}
-          <Tab active={s.activeTab === "fi-curve"} color="var(--success)" label="f-I" onClick={() => activatePanel("fi-curve")} />
-          <Tab active={s.activeTab === "bifurcation"} color="#ef9a9a" label="Bif" onClick={() => activatePanel("bifurcation")} />
-          <Tab active={s.activeTab === "heatmap"} color="#ffab91" label="2D" onClick={() => activatePanel("heatmap")} />
-          <Tab active={s.activeTab === "sensitivity"} color="#ce93d8" label="Sens" onClick={() => activatePanel("sensitivity")} />
-          <Tab active={s.activeTab === "sta"} color="#b0bec5" label="STA" onClick={() => activatePanel("sta")} />
-          <Tab active={s.activeTab === "freq"} color="#fff176" label="Freq" onClick={() => activatePanel("freq")} />
+          <Tab active={s.activeTab === "trace"} color="var(--accent)" label="Trace" onClick={() => activatePanel("trace")} {...panelControl("trace")} />
+          {hasPhase && <Tab active={s.activeTab === "phase"} color="#ce93d8" label="Phase" onClick={() => activatePanel("phase")} {...panelControl("phase")} />}
+          {hasISI && <Tab active={s.activeTab === "isi"} color="var(--warning)" label="ISI" onClick={() => activatePanel("isi")} {...panelControl("isi")} />}
+          <Tab active={s.activeTab === "fi-curve"} color="var(--success)" label="f-I" onClick={() => activatePanel("fi-curve")} {...panelControl("fi-curve")} />
+          <Tab active={s.activeTab === "bifurcation"} color="#ef9a9a" label="Bif" onClick={() => activatePanel("bifurcation")} {...panelControl("bifurcation")} />
+          <Tab active={s.activeTab === "heatmap"} color="#ffab91" label="2D" onClick={() => activatePanel("heatmap")} {...panelControl("heatmap")} />
+          <Tab active={s.activeTab === "sensitivity"} color="#ce93d8" label="Sens" onClick={() => activatePanel("sensitivity")} {...panelControl("sensitivity")} />
+          <Tab active={s.activeTab === "sta"} color="#b0bec5" label="STA" onClick={() => activatePanel("sta")} {...panelControl("sta")} />
+          <Tab active={s.activeTab === "freq"} color="#fff176" label="Freq" onClick={() => activatePanel("freq")} {...panelControl("freq")} />
           {s.sourceMode === "model" && (
-            <Tab active={s.activeTab === "characterize"} color="#fff176" label="Char" onClick={() => activatePanel("characterize")} />
+            <Tab active={s.activeTab === "characterize"} color="#fff176" label="Char" onClick={() => activatePanel("characterize")} {...panelControl("characterize")} />
           )}
-          <Tab active={s.activeTab === "multi"} color="#80cbc4" label="Multi" onClick={() => activatePanel("multi")} />
-          <Tab active={s.activeTab === "compare"} color="#ce93d8" label="A/B" onClick={() => activatePanel("compare")} />
-          <Tab active={s.activeTab === "network"} color="#80cbc4" label="E-I" onClick={() => activatePanel("network")} />
-          <Tab active={s.activeTab === "code"} color="#90a4ae" label="Code" onClick={() => activatePanel("code")} />
+          <Tab active={s.activeTab === "multi"} color="#80cbc4" label="Multi" onClick={() => activatePanel("multi")} {...panelControl("multi")} />
+          <Tab active={s.activeTab === "compare"} color="#ce93d8" label="A/B" onClick={() => activatePanel("compare")} {...panelControl("compare")} />
+          <Tab active={s.activeTab === "network"} color="#80cbc4" label="E-I" onClick={() => activatePanel("network")} {...panelControl("network")} />
+          <Tab active={s.activeTab === "code"} color="#90a4ae" label="Code" onClick={() => activatePanel("code")} {...panelControl("code")} />
           {s.sourceMode === "ode" && (
             <>
-              <Tab active={s.activeTab === "precision"} color="#80deea" label="Q8.8" onClick={() => activatePanel("precision")} />
-              <Tab active={s.activeTab === "verilog"} color="#a5d6a7" label="RTL" onClick={() => activatePanel("verilog")} />
-              <Tab active={s.activeTab === "ir"} color="#ffcc80" label="IR" onClick={() => activatePanel("ir")} />
+              <Tab active={s.activeTab === "precision"} color="#80deea" label="Q8.8" onClick={() => activatePanel("precision")} {...panelControl("precision")} />
+              <Tab active={s.activeTab === "verilog"} color="#a5d6a7" label="RTL" onClick={() => activatePanel("verilog")} {...panelControl("verilog")} />
+              <Tab active={s.activeTab === "ir"} color="#ffcc80" label="IR" onClick={() => activatePanel("ir")} {...panelControl("ir")} />
               <Tab active={s.activeTab === "synth"} color="#a5d6a7" label="FPGA"
                 onClick={() => activatePanel("synth")}
-                disabled={!panelState("synth").available}
-                title={panelState("synth").message} />
+                {...panelControl("synth")} />
             </>
           )}
           <Tab active={s.activeTab === "canvas"} color="#4fc3f7" label="Canvas"
             onClick={() => activatePanel("canvas")}
-            disabled={!panelState("canvas").available}
-            title={panelState("canvas").message} />
-          <Tab active={s.activeTab === "train"} color="#b39ddb" label="Train" onClick={() => activatePanel("train")} />
-          <Tab active={s.activeTab === "admin"} color="#ffcc80" label="Admin" onClick={() => activatePanel("admin")} />
+            {...panelControl("canvas")} />
+          <Tab active={s.activeTab === "train"} color="#b39ddb" label="Train" onClick={() => activatePanel("train")} {...panelControl("train")} />
+          <Tab active={s.activeTab === "admin"} color="#ffcc80" label="Admin" onClick={() => activatePanel("admin")} {...panelControl("admin")} />
         </div>
 
         {pattern && (
