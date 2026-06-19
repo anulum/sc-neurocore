@@ -18,6 +18,7 @@ No SNN framework has an optimizer pass manager.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -29,9 +30,9 @@ class LayerNode:
     name: str
     n_inputs: int
     n_neurons: int
-    weights: np.ndarray
+    weights: np.ndarray[Any, Any]
     neuron_type: str = "LIF"
-    firing_rates: np.ndarray | None = None
+    firing_rates: np.ndarray[Any, Any] | None = None
 
     @property
     def n_params(self) -> int:
@@ -283,7 +284,7 @@ def optimize(
         fn = pass_map.get(pass_name)
         if fn is None:
             continue
-        result = fn(optimized)  # type: ignore[operator]
+        result = fn(optimized)
         report.pass_results.append(result)
 
     report.params_after = optimized.total_params
