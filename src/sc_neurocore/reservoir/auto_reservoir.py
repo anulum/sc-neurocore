@@ -21,6 +21,7 @@ for configuring spiking reservoirs at the critical regime.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -110,7 +111,7 @@ class AutoCriticalReservoir:
         self._v = np.zeros(self.n_neurons)
         self._spikes = np.zeros(self.n_neurons)
 
-    def step(self, x: np.ndarray) -> np.ndarray:
+    def step(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Process one timestep, return reservoir state (spikes)."""
         current = self.W_in @ x + self.W_res @ self._spikes
         self._v = (1 - self.leak) * self._v + self.leak * current
@@ -118,7 +119,7 @@ class AutoCriticalReservoir:
         self._v -= self._spikes * self.threshold
         return self._spikes.copy()
 
-    def run(self, inputs: np.ndarray) -> np.ndarray:
+    def run(self, inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Run input sequence through reservoir, return state matrix.
 
         Parameters
@@ -136,7 +137,9 @@ class AutoCriticalReservoir:
             states[t] = self.step(inputs[t])
         return states
 
-    def fit_readout(self, states: np.ndarray, targets: np.ndarray, ridge: float = 1e-4) -> None:
+    def fit_readout(
+        self, states: np.ndarray[Any, Any], targets: np.ndarray[Any, Any], ridge: float = 1e-4
+    ) -> None:
         """Train readout via ridge regression.
 
         Parameters
@@ -151,20 +154,23 @@ class AutoCriticalReservoir:
         reg = ridge * np.eye(self.n_neurons)
         self.W_out = np.linalg.solve(S.T @ S + reg, S.T @ targets).T
 
-    def predict(self, states: np.ndarray) -> np.ndarray:
+    def predict(self, states: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Predict from reservoir states."""
         return states @ self.W_out.T
 
     def train_and_predict(
-        self, train_inputs: np.ndarray, train_targets: np.ndarray, test_inputs: np.ndarray
-    ) -> np.ndarray:
+        self,
+        train_inputs: np.ndarray[Any, Any],
+        train_targets: np.ndarray[Any, Any],
+        test_inputs: np.ndarray[Any, Any],
+    ) -> np.ndarray[Any, Any]:
         """Full pipeline: run train, fit readout, run test, predict."""
         train_states = self.run(train_inputs)
         self.fit_readout(train_states, train_targets)
         test_states = self.run(test_inputs)
         return self.predict(test_states)
 
-    def metrics(self, inputs: np.ndarray) -> ReservoirMetrics:
+    def metrics(self, inputs: np.ndarray[Any, Any]) -> ReservoirMetrics:
         """Compute reservoir quality metrics."""
         states = self.run(inputs)
         firing_fraction = float(states.mean())
