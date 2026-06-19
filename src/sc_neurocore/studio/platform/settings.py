@@ -50,6 +50,7 @@ class StudioRuntimeSettings:
     http_security_headers: Mapping[str, str] = DEFAULT_STUDIO_HTTP_SECURITY_HEADERS
     request_id_header: str = "x-request-id"
     max_request_body_bytes: int = DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES
+    enforce_route_policies: bool = False
 
     def __post_init__(self) -> None:
         """Validate settings that affect Studio security boundaries."""
@@ -86,6 +87,7 @@ def build_default_studio_runtime_settings(
     raw_websocket_origins = source.get("SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS")
     raw_hosts = source.get("SC_NEUROCORE_STUDIO_ALLOWED_HOSTS")
     raw_max_request_body_bytes = source.get("SC_NEUROCORE_STUDIO_MAX_REQUEST_BODY_BYTES")
+    raw_enforce_route_policies = source.get("SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES")
     origins = (
         DEFAULT_STUDIO_CORS_ORIGINS
         if raw_origins is None or not raw_origins.strip()
@@ -112,9 +114,21 @@ def build_default_studio_runtime_settings(
         )
     except ValueError as exc:
         raise ValueError("Studio request body limit must be an integer.") from exc
+    normalized_enforcement = (
+        ""
+        if raw_enforce_route_policies is None
+        else raw_enforce_route_policies.strip().lower()
+    )
+    if normalized_enforcement in ("", "0", "false", "no"):
+        enforce_route_policies = False
+    elif normalized_enforcement in ("1", "true", "yes"):
+        enforce_route_policies = True
+    else:
+        raise ValueError("Studio route policy enforcement must be a boolean flag.")
     return StudioRuntimeSettings(
         cors_allowed_origins=origins,
         websocket_allowed_origins=websocket_origins,
         allowed_hosts=hosts,
         max_request_body_bytes=max_request_body_bytes,
+        enforce_route_policies=enforce_route_policies,
     )

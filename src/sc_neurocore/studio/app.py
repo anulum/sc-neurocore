@@ -15,7 +15,7 @@ import time
 import tempfile
 from uuid import uuid4
 from collections import OrderedDict
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +23,7 @@ from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconn
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.routing import Match, Route
 import numpy as np
 from pydantic import BaseModel, Field, StringConstraints
 from typing import Annotated
@@ -90,6 +91,9 @@ from sc_neurocore.studio.training import (
 )
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
 from sc_neurocore.studio.platform import (
+    InMemoryAuditSink,
+    PolicyGateway,
+    Principal,
     StudioRuntimeSettings,
     build_default_studio_capability_registry,
     build_default_studio_route_policy_registry,
@@ -663,14 +667,37 @@ def _studio_request_id(candidate: str | None) -> str:
     return str(uuid4())
 
 
+def _studio_principal_from_headers(headers: Mapping[str, str]) -> Principal | None:
+    principal_id = headers.get("x-studio-principal")
+    if principal_id is None or not principal_id.strip():
+        return None
+    raw_roles = headers.get("x-studio-roles", "")
+    roles = frozenset(role.strip() for role in raw_roles.split(",") if role.strip())
+    return Principal(principal_id=principal_id.strip(), roles=roles)
+
+
+def _studio_route_signature(app: FastAPI, request: Request) -> tuple[str, str] | None:
+    for route in app.routes:
+        if not isinstance(route, Route):
+            continue
+        match, _ = route.matches(request.scope)
+        if match is Match.FULL:
+            return request.method, route.path
+    return None
+
+
 def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI:
     app = FastAPI(title="SC-NeuroCore Studio", version="1.0.0")
     settings = runtime_settings or build_default_studio_runtime_settings()
     studio_capabilities = build_default_studio_capability_registry()
     studio_route_policies = build_default_studio_route_policy_registry()
+    studio_audit_sink = InMemoryAuditSink()
+    studio_policy_gateway = PolicyGateway(audit_sink=studio_audit_sink)
     app.state.studio_runtime_settings = settings
     app.state.studio_capabilities = studio_capabilities
     app.state.studio_route_policies = studio_route_policies
+    app.state.studio_audit_sink = studio_audit_sink
+    app.state.studio_policy_gateway = studio_policy_gateway
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(settings.allowed_hosts))
     app.add_middleware(
         CORSMiddleware,
@@ -692,6 +719,25 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 {"detail": "Studio request body exceeds configured limit."},
                 status_code=413,
             )
+        elif settings.enforce_route_policies:
+            route_signature = _studio_route_signature(app, request)
+            if route_signature is None:
+                response = JSONResponse({"detail": "unclassified_route"}, status_code=403)
+            else:
+                method, path_template = route_signature
+                policy = studio_route_policies.policy_for(method, path_template)
+                decision = studio_policy_gateway.authorize(
+                    policy,
+                    principal=_studio_principal_from_headers(request.headers),
+                    route=path_template,
+                )
+                if decision.allowed:
+                    response = await call_next(request)
+                else:
+                    response = JSONResponse(
+                        {"detail": decision.reason},
+                        status_code=decision.status_code,
+                    )
         else:
             response = await call_next(request)
         for name, value in settings.http_security_headers.items():
