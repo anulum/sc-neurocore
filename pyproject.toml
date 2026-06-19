@@ -297,7 +297,7 @@ module = [
   'sc_neurocore.sleep.*', 'sc_neurocore.snn_optimizer.*',
 
 
-  'sc_neurocore.swarm.*',
+
  'sc_neurocore.training.*',
 
 ]

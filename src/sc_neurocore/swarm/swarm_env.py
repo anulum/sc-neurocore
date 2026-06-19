@@ -108,7 +108,8 @@ class SwarmEnvironment:
         """Return (n_agents, n_agents) Euclidean distance matrix."""
         pos = self.get_positions()
         diff = pos[:, np.newaxis, :] - pos[np.newaxis, :, :]
-        return np.sqrt((diff**2).sum(axis=-1))
+        distances: np.ndarray[Any, Any] = np.sqrt((diff**2).sum(axis=-1))
+        return distances
 
     def get_neighbor_distances(self, agent_idx: int, k: int = 8) -> np.ndarray[Any, Any]:
         """Return sorted distances to the *k* nearest neighbours.
