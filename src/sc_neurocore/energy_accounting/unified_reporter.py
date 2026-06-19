@@ -13,7 +13,7 @@ into a single unified energy/carbon report.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from sc_neurocore.energy_accounting.sustainability_profiler import (
     CarbonModel,
@@ -68,7 +68,7 @@ class UnifiedEnergyReporter:
 
     def analyze(
         self,
-        layer_configs: List[Dict] | None = None,
+        layer_configs: List[Dict[str, Any]] | None = None,
         total_power_mw: float = 0.0,
         inference_time_s: float = 0.001,
     ) -> UnifiedEnergyReport:
