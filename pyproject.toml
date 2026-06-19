@@ -285,7 +285,7 @@ module = [
   'sc_neurocore.debug.*',
  'sc_neurocore.edge.*',
   'sc_neurocore.ensembles.*', 'sc_neurocore.evo_substrate.*',
-  'sc_neurocore.export.*',
+
   'sc_neurocore.graphs.*', 'sc_neurocore.hdl_gen.*',
   'sc_neurocore.hypervisor.*',
   'sc_neurocore.nas.*', 'sc_neurocore._native.*',

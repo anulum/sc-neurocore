@@ -20,7 +20,6 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple
 
-
 ONNX_OPSET_VERSION = 18
 SCPN_DOMAIN = "sc.neurocore"
 SCPN_OPSET_VERSION = 1
@@ -31,7 +30,7 @@ class ONNXTensorType:
     elem_type: int  # 1=float, 2=uint8, 3=int8, 6=int32, 7=int64, 9=bool
     shape: Tuple[int, ...]
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "elem_type": self.elem_type,
             "shape": {"dim": [{"dim_value": d} for d in self.shape]},
@@ -71,7 +70,7 @@ class ONNXGraph:
     outputs: List[Tuple[str, ONNXTensorType]] = field(default_factory=list)
     metadata: Dict[str, str] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "ir_version": 9,
             "opset_import": [
