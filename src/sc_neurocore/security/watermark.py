@@ -73,5 +73,5 @@ class WatermarkInjector:
         # SC Dot Product Ideal: Sum(x * w) / Length
         # Here we just check alignment
 
-        activation = np.mean(trigger_pattern * w)
+        activation = float(np.mean(trigger_pattern * w))
         return activation
