@@ -16,6 +16,7 @@ patterns via Poisson encoding for pipeline testing.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -41,7 +42,7 @@ def _synthetic_event_dataset(
     T: int,
     dt_ms: float,
     seed: int,
-) -> tuple[list[np.ndarray], np.ndarray]:
+) -> tuple[list[np.ndarray[Any, Any]], np.ndarray[Any, Any]]:
     """Generate synthetic Poisson-encoded event samples.
 
     Each class gets a distinct random rate template. Events are returned
@@ -51,7 +52,7 @@ def _synthetic_event_dataset(
     labels = rng.integers(0, n_classes, size=n_samples)
     templates = rng.uniform(0.0, 0.3, size=(n_classes, spatial_size, spatial_size))
 
-    samples: list[np.ndarray] = []
+    samples: list[np.ndarray[Any, Any]] = []
     for i in range(n_samples):
         rates = templates[labels[i]].ravel()
         spike_train = poisson_encode(rates, T, dt_ms=dt_ms, seed=seed + i + 1)
@@ -87,7 +88,7 @@ def load_nmnist(
     synthetic: bool = False,
     n_samples: int = 100,
     seed: int = 42,
-) -> tuple[list[np.ndarray], np.ndarray]:
+) -> tuple[list[np.ndarray[Any, Any]], np.ndarray[Any, Any]]:
     """Load N-MNIST spiking vision dataset.
 
     Neuromorphic-MNIST: 34x34 DVS recordings of MNIST digits moved on
@@ -135,7 +136,7 @@ def load_nmnist(
             f"Expected split directory {split_dir.resolve()}. Download from {_NMNIST_URL}"
         )
     # Real loader: N-MNIST uses .bin files, one per sample, grouped by class
-    samples: list[np.ndarray] = []
+    samples: list[np.ndarray[Any, Any]] = []
     label_list: list[int] = []
     for class_dir in sorted(split_dir.iterdir()):
         if not class_dir.is_dir():
@@ -148,7 +149,7 @@ def load_nmnist(
     return samples, np.array(label_list, dtype=np.int64)
 
 
-def _parse_nmnist_bin(path: Path, dt_ms: float) -> np.ndarray:
+def _parse_nmnist_bin(path: Path, dt_ms: float) -> np.ndarray[Any, Any]:
     """Parse a single N-MNIST .bin file into (N, 4) event array."""
     raw = np.fromfile(path, dtype=np.uint8)
     # Each event is 5 bytes: [addr_high, addr_low, ts2, ts1, ts0]
@@ -175,7 +176,7 @@ def load_shd(
     synthetic: bool = False,
     n_samples: int = 100,
     seed: int = 42,
-) -> tuple[list[np.ndarray], np.ndarray]:
+) -> tuple[list[np.ndarray[Any, Any]], np.ndarray[Any, Any]]:
     """Load Spiking Heidelberg Digits (SHD) dataset.
 
     Audio digits 0-9 in English and German, spike-encoded through an
@@ -217,7 +218,7 @@ def load_shd(
         raise FileNotFoundError(f"{h5_path.resolve()} not found. Download from {_SHD_URL}")
     import h5py
 
-    samples: list[np.ndarray] = []
+    samples: list[np.ndarray[Any, Any]] = []
     with h5py.File(h5_path, "r") as f:
         spike_times = f["spikes"]["times"]
         spike_units = f["spikes"]["units"]
@@ -244,11 +245,11 @@ def _synthetic_shd(
     T: int,
     dt_ms: float,
     seed: int,
-) -> tuple[list[np.ndarray], np.ndarray]:
+) -> tuple[list[np.ndarray[Any, Any]], np.ndarray[Any, Any]]:
     rng = np.random.default_rng(seed)
     labels = rng.integers(0, 20, size=n_samples)
     templates = rng.uniform(0.0, 0.1, size=(20, _SHD_CHANNELS))
-    samples: list[np.ndarray] = []
+    samples: list[np.ndarray[Any, Any]] = []
     for i in range(n_samples):
         spike_train = poisson_encode(
             templates[labels[i]],
@@ -268,7 +269,7 @@ def load_dvs_cifar10(
     synthetic: bool = False,
     n_samples: int = 100,
     seed: int = 42,
-) -> tuple[list[np.ndarray], np.ndarray]:
+) -> tuple[list[np.ndarray[Any, Any]], np.ndarray[Any, Any]]:
     """Load DVS-CIFAR10 event-camera dataset.
 
     CIFAR-10 images displayed on a monitor and recorded by a DVS camera
@@ -316,7 +317,7 @@ def load_dvs_cifar10(
             f"Expected split directory {split_dir.resolve()}. Download from {_DVS_CIFAR10_URL}"
         )
     # Real loader: .aedat or .mat files grouped by class
-    samples: list[np.ndarray] = []
+    samples: list[np.ndarray[Any, Any]] = []
     label_list: list[int] = []
     for class_dir in sorted(split_dir.iterdir()):
         if not class_dir.is_dir():
