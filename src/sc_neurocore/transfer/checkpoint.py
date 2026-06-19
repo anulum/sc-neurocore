@@ -27,7 +27,7 @@ import numpy as np
 class SNNCheckpoint:
     """Complete SNN model checkpoint."""
 
-    weights: list[np.ndarray]
+    weights: list[np.ndarray[Any, Any]]
     layer_names: list[str]
     layer_sizes: list[tuple[int, int]]
     neuron_types: list[str] = field(default_factory=list)
@@ -172,7 +172,7 @@ def _validate_layer_size(size: object) -> list[int]:
     return size
 
 
-def _validate_weight_array(array: np.ndarray, key: str) -> np.ndarray:
+def _validate_weight_array(array: np.ndarray[Any, Any], key: str) -> np.ndarray[Any, Any]:
     if array.dtype.hasobject:
         raise ValueError(f"Checkpoint weight {key} must not contain Python objects")
     if not np.issubdtype(array.dtype, np.number):

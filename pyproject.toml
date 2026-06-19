@@ -298,7 +298,7 @@ module = [
   'sc_neurocore.spatial.*',
 
   'sc_neurocore.swarm.*',
- 'sc_neurocore.training.*', 'sc_neurocore.transfer.*',
+ 'sc_neurocore.training.*',
   'sc_neurocore.viz.*',
 ]
 disallow_any_generics = false
