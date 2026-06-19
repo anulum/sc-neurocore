@@ -21,6 +21,7 @@ Projection(weight_threshold=) for runtime sparsity exploitation.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -38,10 +39,10 @@ class PruningReport:
 
 
 def prune_weights(
-    weights: list[np.ndarray],
+    weights: list[np.ndarray[Any, Any]],
     threshold: float = 0.01,
     method: str = "magnitude",
-) -> tuple[list[np.ndarray], PruningReport]:
+) -> tuple[list[np.ndarray[Any, Any]], PruningReport]:
     """Prune small weights from layer weight matrices.
 
     Parameters
@@ -90,10 +91,10 @@ def prune_weights(
 
 
 def prune_neurons(
-    weights: list[np.ndarray],
-    firing_rates: list[np.ndarray] | None = None,
+    weights: list[np.ndarray[Any, Any]],
+    firing_rates: list[np.ndarray[Any, Any]] | None = None,
     activity_threshold: float = 0.001,
-) -> tuple[list[np.ndarray], PruningReport]:
+) -> tuple[list[np.ndarray[Any, Any]], PruningReport]:
     """Structural pruning: remove neurons with low firing rates.
 
     Removes entire rows from weight matrices (output neurons) and
@@ -156,10 +157,10 @@ def prune_neurons(
 
 
 def prune_stochastic(
-    weights: list[np.ndarray],
+    weights: list[np.ndarray[Any, Any]],
     bitstream_length: int = 256,
     min_popcount_bits: float = 1.0,
-) -> tuple[list[np.ndarray], PruningReport]:
+) -> tuple[list[np.ndarray[Any, Any]], PruningReport]:
     """Stochastic-aware pruning: score weights by bitstream contribution.
 
     In SC networks, weight w encodes probability p = clip(|w|, 0, 1).

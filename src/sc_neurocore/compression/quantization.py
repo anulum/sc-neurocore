@@ -17,14 +17,16 @@ grids. Fewer delay levels = smaller delay buffers on FPGA.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 
 def quantize_weights(
-    weights: list[np.ndarray],
+    weights: list[np.ndarray[Any, Any]],
     bits: int = 8,
     symmetric: bool = True,
-) -> list[np.ndarray]:
+) -> list[np.ndarray[Any, Any]]:
     """Quantize weight matrices to fixed-point with given bit width.
 
     Parameters
@@ -63,10 +65,10 @@ def quantize_weights(
 
 
 def quantize_delays(
-    delays: np.ndarray,
+    delays: np.ndarray[Any, Any],
     resolution: int = 1,
     max_delay: int | None = None,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Quantize continuous delays to integer grid.
 
     Parameters
