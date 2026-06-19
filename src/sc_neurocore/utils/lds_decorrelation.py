@@ -31,17 +31,18 @@ decorrelation across the entire weight matrix with a single sequence.
 
 from __future__ import annotations
 
+from typing import Any
 
 import numpy as np
 import scipy.stats.qmc as qmc
 
 
 def generate_decorrelated_bitstreams(
-    probabilities: np.ndarray,
+    probabilities: np.ndarray[Any, Any],
     length: int = 1024,
     method: str = "sobol",
     seed: int | None = None,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Generate decorrelated bitstreams for a probability matrix.
 
     Each element of the probability matrix gets its own LDS dimension,
@@ -49,7 +50,7 @@ def generate_decorrelated_bitstreams(
 
     Parameters
     ----------
-    probabilities : np.ndarray
+    probabilities : np.ndarray[Any, Any]
         Probability matrix, any shape. Values in [0, 1].
     length : int
         Bitstream length per element.
@@ -60,7 +61,7 @@ def generate_decorrelated_bitstreams(
 
     Returns
     -------
-    np.ndarray
+    np.ndarray[Any, Any]
         Shape (*probabilities.shape, length), dtype uint8.
     """
     probs = np.asarray(probabilities, dtype=np.float64)
@@ -89,7 +90,7 @@ def generate_decorrelated_bitstreams(
 
 
 def star_discrepancy_estimate(
-    samples: np.ndarray,
+    samples: np.ndarray[Any, Any],
     n_test: int = 10000,
 ) -> float:
     """Estimate star discrepancy of a sample set (quality metric for LDS).
@@ -98,7 +99,7 @@ def star_discrepancy_estimate(
 
     Parameters
     ----------
-    samples : np.ndarray
+    samples : np.ndarray[Any, Any]
         Shape (n_samples, d), values in [0, 1].
     n_test : int
         Number of random test points.

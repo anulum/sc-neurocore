@@ -7,11 +7,15 @@
 # SC-NeuroCore — Generate a Bernoulli bitstream of given length with
 
 from __future__ import annotations
-from typing import Any, Optional
+
 from dataclasses import dataclass
+from typing import Any, Optional
+
 import numpy as np
-from .rng import RNG
+
 from sc_neurocore.exceptions import SCEncodingError
+
+from .rng import RNG
 
 
 def generate_bernoulli_bitstream(
@@ -41,7 +45,8 @@ def generate_bernoulli_bitstream(
     if rng is None:
         rng = RNG()
     bits = rng.bernoulli(p, size=length)
-    return bits.astype(np.uint8)
+    encoded: np.ndarray[Any, Any] = bits.astype(np.uint8)
+    return encoded
 
 
 def generate_sobol_bitstream(
@@ -91,7 +96,7 @@ def generate_sobol_bitstream(
 
     # Thresholding: The standard way to convert a U[0,1] sample 's' to a bit with prob 'p'
     # is: bit = 1 if s < p else 0
-    bits = (samples < p).astype(np.uint8)
+    bits: np.ndarray[Any, Any] = (samples < p).astype(np.uint8)
 
     return bits
 

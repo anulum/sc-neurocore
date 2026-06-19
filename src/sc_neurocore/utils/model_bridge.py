@@ -7,12 +7,14 @@
 # SC-NeuroCore — Bridge utilities for converting weights between DL
 
 from __future__ import annotations
+
 from typing import Any
 
 """Bridge utilities for converting weights between DL frameworks and SC-NeuroCore."""
 
 import logging
 from typing import Dict
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -25,8 +27,10 @@ def normalize_weights(weights: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     w_min = weights.min()
     w_max = weights.max()
     if w_max == w_min:
-        return np.ones_like(weights) * 0.5
-    return (weights - w_min) / (w_max - w_min)
+        uniform: np.ndarray[Any, Any] = np.ones_like(weights) * 0.5
+        return uniform
+    normalised: np.ndarray[Any, Any] = (weights - w_min) / (w_max - w_min)
+    return normalised
 
 
 class SCBridge:

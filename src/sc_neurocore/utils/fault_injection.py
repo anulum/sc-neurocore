@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from typing import Any
+
 import numpy as np
 
 
@@ -40,7 +41,8 @@ class FaultInjector:
         # 1 ^ 0 = 1
 
         corrupted = np.bitwise_xor(bitstream.astype(bool), mask)
-        return corrupted.astype(np.uint8)
+        flipped: np.ndarray[Any, Any] = corrupted.astype(np.uint8)
+        return flipped
 
     @staticmethod
     def inject_stuck_at(

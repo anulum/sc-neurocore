@@ -7,8 +7,10 @@
 # SC-NeuroCore — Thin wrapper around NumPy RNG for reproducible
 
 from __future__ import annotations
-import numpy as np
+
 from typing import Any, Optional
+
+import numpy as np
 
 
 class RNG:
@@ -44,5 +46,5 @@ class RNG:
     def random(self, size: int | tuple[int, ...] | None = None) -> Any:
         return self._rng.random(size)
 
-    def shuffle(self, x: np.ndarray) -> None:
+    def shuffle(self, x: np.ndarray[Any, Any]) -> None:
         self._rng.shuffle(x)
