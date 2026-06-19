@@ -17,13 +17,29 @@ from sc_neurocore.studio.platform.capabilities import (
     EvidenceClass,
     build_default_studio_capability_registry,
 )
+from sc_neurocore.studio.platform.policy import (
+    AuditEvent,
+    InMemoryAuditSink,
+    PolicyDecision,
+    PolicyGateway,
+    Principal,
+    RoutePolicy,
+    RouteVisibility,
+)
 
 __all__ = [
+    "AuditEvent",
     "CapabilityDescriptor",
     "CapabilityHealth",
     "CapabilityRegistry",
     "CapabilityRequirement",
     "CapabilityStatus",
     "EvidenceClass",
+    "InMemoryAuditSink",
+    "PolicyDecision",
+    "PolicyGateway",
+    "Principal",
+    "RoutePolicy",
+    "RouteVisibility",
     "build_default_studio_capability_registry",
 ]

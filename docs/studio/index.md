@@ -53,6 +53,24 @@ cd studio/frontend && npm run dev  # http://localhost:5173
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+## Platform Contracts
+
+The backend exposes typed platform contracts before UI panels call into
+runtime features:
+
+- `CapabilityRegistry` lists Studio capabilities, user-visible status,
+  requirement health, evidence class, UI placement, and documentation path.
+- `/api/studio/capabilities` and `/api/studio/capabilities/{capability_id}`
+  return non-secret capability health payloads for the frontend shell.
+- `PolicyGateway` is the fail-closed route authorization contract used for
+  protected Studio API surfaces. Public routes may run without a principal;
+  authenticated and admin routes require an explicit policy and emit audit
+  decisions.
+
+The policy gateway is intentionally a platform contract first. Existing public
+health and capability routes stay backward compatible while protected route
+integration is added panel by panel.
+
 ## Panels
 
 ### Equation Editor & Model Browser
