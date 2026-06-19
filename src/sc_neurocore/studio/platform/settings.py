@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import MappingProxyType
 
 DEFAULT_STUDIO_CORS_ORIGINS: tuple[str, ...] = (
@@ -41,6 +41,12 @@ DEFAULT_STUDIO_HTTP_SECURITY_HEADERS: Mapping[str, str] = MappingProxyType(
 )
 
 
+def _default_studio_http_security_headers() -> Mapping[str, str]:
+    """Return immutable default HTTP security headers for Studio responses."""
+
+    return DEFAULT_STUDIO_HTTP_SECURITY_HEADERS
+
+
 @dataclass(frozen=True, slots=True)
 class StudioRuntimeSettings:
     """Runtime settings consumed by the Studio FastAPI application."""
@@ -48,7 +54,9 @@ class StudioRuntimeSettings:
     cors_allowed_origins: tuple[str, ...] = DEFAULT_STUDIO_CORS_ORIGINS
     websocket_allowed_origins: tuple[str, ...] = DEFAULT_STUDIO_WEBSOCKET_ALLOWED_ORIGINS
     allowed_hosts: tuple[str, ...] = DEFAULT_STUDIO_ALLOWED_HOSTS
-    http_security_headers: Mapping[str, str] = DEFAULT_STUDIO_HTTP_SECURITY_HEADERS
+    http_security_headers: Mapping[str, str] = field(
+        default_factory=_default_studio_http_security_headers
+    )
     request_id_header: str = "x-request-id"
     max_request_body_bytes: int = DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES
     enforce_route_policies: bool = False

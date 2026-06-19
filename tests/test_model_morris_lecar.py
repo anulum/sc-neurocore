@@ -27,6 +27,7 @@ import time
 
 import numpy as np
 import pytest
+from tests.performance_guard import assert_throughput_guard
 
 from sc_neurocore.neurons.models.morris_lecar import MorrisLecarNeuron
 from sc_neurocore.network.population import Population
@@ -380,8 +381,12 @@ class TestMLPerformance:
         # Default RK4 evaluates the conductance RHS four times per step.
         # Hosted runners and the local workstation can share CPUs; this is
         # a regression guard, not an isolated benchmark claim.
-        min_rate = 20_000
-        assert rate > min_rate, f"isolation: {rate:.0f} steps/s"
+        assert_throughput_guard(
+            label="Morris-Lecar isolation",
+            observed_per_second=rate,
+            strict_minimum_per_second=20_000.0,
+            smoke_minimum_per_second=5_000.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(MorrisLecarNeuron, n=20, label="bench")

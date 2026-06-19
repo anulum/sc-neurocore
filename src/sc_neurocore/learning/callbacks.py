@@ -43,16 +43,16 @@ class TensorBoardCallback(TrainingCallback):
             from sc_neurocore.exceptions import SCDependencyError
 
             raise SCDependencyError("TensorBoard requires torch: pip install sc-neurocore[gpu]")
-        self._writer = SummaryWriter(log_dir=log_dir)  # type: ignore[no-untyped-call]
+        self._writer = SummaryWriter(log_dir=log_dir)
 
     def log(self, metrics: dict[str, float], step: int) -> None:
         """Write each metric as a TensorBoard scalar at the given step."""
         for key, value in metrics.items():
-            self._writer.add_scalar(key, value, step)  # type: ignore[no-untyped-call]
+            self._writer.add_scalar(key, value, step)
 
     def close(self) -> None:
         """Close the underlying TensorBoard summary writer."""
-        self._writer.close()  # type: ignore[no-untyped-call]
+        self._writer.close()
 
 
 class WandBCallback(TrainingCallback):

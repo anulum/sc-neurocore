@@ -14,12 +14,13 @@ import hashlib
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Protocol
 
 AUDIT_SCHEMA_VERSION = "studio.audit.v1"
+UTC = timezone.utc
 
 
 class AuditSinkError(RuntimeError):

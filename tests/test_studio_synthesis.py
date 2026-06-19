@@ -17,6 +17,7 @@ fastapi = pytest.importorskip("fastapi")
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
+from sc_neurocore.studio.platform import StudioRuntimeSettings
 from sc_neurocore.studio.synthesis import (
     _DEVICE_CAPACITY,
     _TARGETS,
@@ -30,7 +31,13 @@ from sc_neurocore.studio.synthesis import (
 
 @pytest.fixture(scope="module")
 def client():
-    return TestClient(create_app())
+    return TestClient(create_app(), base_url="http://127.0.0.1")
+
+
+@pytest.fixture(scope="module")
+def large_body_client():
+    settings = StudioRuntimeSettings(max_request_body_bytes=4 * 1024 * 1024)
+    return TestClient(create_app(runtime_settings=settings), base_url="http://127.0.0.1")
 
 
 # --- Tool Detection ---
@@ -74,9 +81,9 @@ class TestSynthesisEndpoint:
         r = client.post("/api/synth/run", json={"verilog": {"module": "x"}, "target": "ice40"})
         assert r.status_code == 422
 
-    def test_synth_oversized_verilog_rejected(self, client):
+    def test_synth_oversized_verilog_rejected(self, large_body_client):
         huge = "module x;\n" + ("wire a;\n" * 400_000) + "endmodule\n"
-        r = client.post("/api/synth/run", json={"verilog": huge, "target": "ice40"})
+        r = large_body_client.post("/api/synth/run", json={"verilog": huge, "target": "ice40"})
         assert r.status_code == 422
 
     def test_synth_with_stub_verilog(self, client):
@@ -270,9 +277,9 @@ class TestMultiTarget:
         )
         assert r.status_code == 422
 
-    def test_multi_target_rejects_oversized_verilog(self, client):
+    def test_multi_target_rejects_oversized_verilog(self, large_body_client):
         huge = "module x;\n" + ("wire a;\n" * 400_000) + "endmodule\n"
-        r = client.post("/api/synth/multi-target", json={"verilog": huge})
+        r = large_body_client.post("/api/synth/multi-target", json={"verilog": huge})
         assert r.status_code == 422
 
 

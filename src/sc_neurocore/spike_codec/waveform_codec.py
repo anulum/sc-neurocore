@@ -284,7 +284,7 @@ class WaveformCodec:
             import zstandard as zstd
 
             def _zstd_compress(data: bytes) -> bytes:
-                return zstd.ZstdCompressor(level=19).compress(data)
+                return bytes(zstd.ZstdCompressor(level=19).compress(data))
         except ImportError:
             import zlib
 
@@ -389,7 +389,7 @@ class WaveformCodec:
         try:
             import zstandard as zstd
 
-            compressed = zstd.ZstdCompressor(level=19).compress(raw_bytes)
+            compressed = bytes(zstd.ZstdCompressor(level=19).compress(raw_bytes))
         except ImportError:
             import zlib
 

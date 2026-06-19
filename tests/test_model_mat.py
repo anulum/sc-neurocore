@@ -26,6 +26,7 @@ import time
 
 import numpy as np
 import pytest
+from tests.performance_guard import assert_throughput_guard
 
 from sc_neurocore.neurons.models.mat import MATNeuron
 from sc_neurocore.network.population import Population
@@ -332,8 +333,12 @@ class TestMATPerformance:
             n.step(30.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        # Simple model: 1 dV + 2 exp + threshold compare
-        assert rate > 100_000, f"isolation: {rate:.0f} steps/s"
+        assert_throughput_guard(
+            label="MAT isolation",
+            observed_per_second=rate,
+            strict_minimum_per_second=100_000.0,
+            smoke_minimum_per_second=25_000.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(MATNeuron, n=20, label="bench")
