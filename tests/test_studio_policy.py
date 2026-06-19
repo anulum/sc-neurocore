@@ -150,6 +150,7 @@ def test_jsonl_audit_sink_appends_policy_events(tmp_path: Path) -> None:
             "decision": "allow",
             "principal_id": "operator-7",
             "reason": "authorized",
+            "request_id": None,
             "route": "/api/simulate",
         },
         {
@@ -157,6 +158,7 @@ def test_jsonl_audit_sink_appends_policy_events(tmp_path: Path) -> None:
             "decision": "deny",
             "principal_id": None,
             "reason": "missing_principal",
+            "request_id": None,
             "route": "/api/synth/run",
         },
     ]
@@ -185,6 +187,27 @@ def test_policy_gateway_accepts_jsonl_audit_sink(tmp_path: Path) -> None:
     assert decision.allowed is False
     assert row["decision"] == "deny"
     assert row["reason"] == "missing_principal"
+
+
+def test_policy_gateway_records_request_id_in_audit_event(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    gateway = contract["PolicyGateway"](audit_sink=contract["JsonlAuditSink"](audit_path))
+    policy = contract["RoutePolicy"](
+        visibility=contract["RouteVisibility"].AUTHENTICATED,
+        audit_action="studio.simulate.run",
+    )
+
+    decision = gateway.authorize(
+        policy,
+        principal=None,
+        route="/api/simulate",
+        request_id="studio-run-42",
+    )
+    row = json.loads(audit_path.read_text(encoding="utf-8"))
+
+    assert decision.allowed is False
+    assert row["request_id"] == "studio-run-42"
 
 
 def test_policy_gateway_rejects_admin_route_without_admin_role() -> None:

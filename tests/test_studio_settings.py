@@ -380,6 +380,28 @@ def test_studio_app_records_policy_events_to_configured_audit_log(tmp_path: Path
     assert row["route"] == "/api/simulate"
 
 
+def test_studio_app_correlates_policy_audit_with_request_id(tmp_path: Path) -> None:
+    audit_path = tmp_path / "audit" / "studio.jsonl"
+    app = create_app(
+        runtime_settings=StudioRuntimeSettings(
+            audit_log_path=str(audit_path),
+            enforce_route_policies=True,
+        )
+    )
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.post(
+        "/api/simulate",
+        headers={"x-request-id": "studio-run-42"},
+        json={},
+    )
+
+    assert response.status_code == 401
+    assert response.headers["x-request-id"] == "studio-run-42"
+    row = json.loads(audit_path.read_text(encoding="utf-8"))
+    assert row["request_id"] == "studio-run-42"
+
+
 def test_studio_app_route_policy_enforcement_allows_authenticated_principal() -> None:
     app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
     client = TestClient(app, base_url="http://127.0.0.1")

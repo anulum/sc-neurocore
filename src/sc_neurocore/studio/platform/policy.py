@@ -68,6 +68,7 @@ class AuditEvent:
     principal_id: str | None
     decision: str
     reason: str
+    request_id: str | None = None
 
     def to_json_dict(self) -> dict[str, str | None]:
         """Return a JSON-serializable representation of the audit event."""
@@ -77,6 +78,7 @@ class AuditEvent:
             "decision": self.decision,
             "principal_id": self.principal_id,
             "reason": self.reason,
+            "request_id": self.request_id,
             "route": self.route,
         }
 
@@ -177,6 +179,7 @@ class PolicyGateway:
         *,
         principal: Principal | None,
         route: str,
+        request_id: str | None = None,
     ) -> PolicyDecision:
         """Authorize a caller against a Studio route policy."""
 
@@ -184,16 +187,16 @@ class PolicyGateway:
             return PolicyDecision(allowed=True, reason="public_route", status_code=200)
 
         if principal is None:
-            return self._deny(policy, route, principal, "missing_principal", 401)
+            return self._deny(policy, route, principal, "missing_principal", 401, request_id)
 
         if policy.visibility is RouteVisibility.ADMIN and "studio.admin" not in principal.roles:
-            return self._deny(policy, route, principal, "missing_admin_role", 403)
+            return self._deny(policy, route, principal, "missing_admin_role", 403, request_id)
 
         if not policy.required_roles.issubset(principal.roles):
-            return self._deny(policy, route, principal, "missing_required_role", 403)
+            return self._deny(policy, route, principal, "missing_required_role", 403, request_id)
 
         decision = PolicyDecision(allowed=True, reason="authorized", status_code=200)
-        self._record(policy, route, principal, decision)
+        self._record(policy, route, principal, decision, request_id)
         return decision
 
     def _deny(
@@ -203,9 +206,10 @@ class PolicyGateway:
         principal: Principal | None,
         reason: str,
         status_code: int,
+        request_id: str | None,
     ) -> PolicyDecision:
         decision = PolicyDecision(allowed=False, reason=reason, status_code=status_code)
-        self._record(policy, route, principal, decision)
+        self._record(policy, route, principal, decision, request_id)
         return decision
 
     def _record(
@@ -214,6 +218,7 @@ class PolicyGateway:
         route: str,
         principal: Principal | None,
         decision: PolicyDecision,
+        request_id: str | None,
     ) -> None:
         self._audit_sink.record(
             AuditEvent(
@@ -222,6 +227,7 @@ class PolicyGateway:
                 principal_id=None if principal is None else principal.principal_id,
                 decision="allow" if decision.allowed else "deny",
                 reason=decision.reason,
+                request_id=request_id,
             )
         )
 
