@@ -21,6 +21,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 import numpy as np
 from pydantic import BaseModel, Field, StringConstraints
 from typing import Annotated
@@ -669,6 +670,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     app.state.studio_runtime_settings = settings
     app.state.studio_capabilities = studio_capabilities
     app.state.studio_route_policies = studio_route_policies
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(settings.allowed_hosts))
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.cors_allowed_origins),

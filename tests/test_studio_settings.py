@@ -73,6 +73,34 @@ def test_studio_runtime_settings_default_request_id_header_is_standard() -> None
     assert settings.request_id_header == "x-request-id"
 
 
+def test_studio_runtime_settings_default_hosts_are_loopback_only() -> None:
+    settings = build_default_studio_runtime_settings(env={})
+
+    assert "127.0.0.1" in settings.allowed_hosts
+    assert "localhost" in settings.allowed_hosts
+    assert "*" not in settings.allowed_hosts
+
+
+def test_studio_runtime_settings_parses_comma_separated_allowed_hosts() -> None:
+    settings = build_default_studio_runtime_settings(
+        env={"SC_NEUROCORE_STUDIO_ALLOWED_HOSTS": "studio.example.test, 127.0.0.1"}
+    )
+
+    assert settings.allowed_hosts == ("studio.example.test", "127.0.0.1")
+
+
+def test_studio_runtime_settings_rejects_wildcard_allowed_host() -> None:
+    with pytest.raises(ValueError, match="wildcard hosts"):
+        build_default_studio_runtime_settings(
+            env={"SC_NEUROCORE_STUDIO_ALLOWED_HOSTS": "localhost,*"}
+        )
+
+
+def test_studio_runtime_settings_rejects_empty_allowed_hosts() -> None:
+    with pytest.raises(ValueError, match="allowed hosts"):
+        StudioRuntimeSettings(allowed_hosts=())
+
+
 def test_studio_runtime_settings_rejects_empty_request_id_header() -> None:
     with pytest.raises(ValueError, match="request ID header"):
         StudioRuntimeSettings(request_id_header="")
@@ -123,6 +151,32 @@ def test_studio_app_replaces_invalid_inbound_request_id() -> None:
     request_id = response.headers["x-request-id"]
     assert request_id != "bad request id"
     assert UUID(request_id).version == 4
+
+
+def test_studio_app_allows_configured_host() -> None:
+    app = create_app(
+        runtime_settings=StudioRuntimeSettings(
+            allowed_hosts=("studio.example.test",),
+        )
+    )
+    client = TestClient(app)
+
+    response = client.get("/api/health", headers={"host": "studio.example.test"})
+
+    assert response.status_code == 200
+
+
+def test_studio_app_rejects_unconfigured_host() -> None:
+    app = create_app(
+        runtime_settings=StudioRuntimeSettings(
+            allowed_hosts=("studio.example.test",),
+        )
+    )
+    client = TestClient(app)
+
+    response = client.get("/api/health", headers={"host": "attacker.example.test"})
+
+    assert response.status_code == 400
 
 
 def test_studio_app_cors_preflight_allows_configured_origin() -> None:

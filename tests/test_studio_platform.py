@@ -74,7 +74,7 @@ def test_studio_capability_health_fails_closed_for_missing_requirement() -> None
 
 
 def test_studio_capabilities_endpoint_returns_safe_inventory() -> None:
-    client = TestClient(create_app())
+    client = TestClient(create_app(), base_url="http://127.0.0.1")
 
     response = client.get("/api/studio/capabilities")
 
@@ -88,7 +88,7 @@ def test_studio_capabilities_endpoint_returns_safe_inventory() -> None:
 
 
 def test_studio_capability_detail_returns_404_for_unknown_id() -> None:
-    client = TestClient(create_app())
+    client = TestClient(create_app(), base_url="http://127.0.0.1")
 
     response = client.get("/api/studio/capabilities/missing")
 

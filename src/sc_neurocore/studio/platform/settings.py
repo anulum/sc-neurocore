@@ -22,6 +22,11 @@ DEFAULT_STUDIO_CORS_ORIGINS: tuple[str, ...] = (
     "http://localhost:5173",
 )
 
+DEFAULT_STUDIO_ALLOWED_HOSTS: tuple[str, ...] = (
+    "127.0.0.1",
+    "localhost",
+)
+
 DEFAULT_STUDIO_HTTP_SECURITY_HEADERS: Mapping[str, str] = MappingProxyType(
     {
         "x-content-type-options": "nosniff",
@@ -36,6 +41,7 @@ class StudioRuntimeSettings:
     """Runtime settings consumed by the Studio FastAPI application."""
 
     cors_allowed_origins: tuple[str, ...] = DEFAULT_STUDIO_CORS_ORIGINS
+    allowed_hosts: tuple[str, ...] = DEFAULT_STUDIO_ALLOWED_HOSTS
     http_security_headers: Mapping[str, str] = DEFAULT_STUDIO_HTTP_SECURITY_HEADERS
     request_id_header: str = "x-request-id"
 
@@ -46,6 +52,10 @@ class StudioRuntimeSettings:
             raise ValueError("Studio CORS origins must not be empty.")
         if any(origin == "*" for origin in self.cors_allowed_origins):
             raise ValueError("Studio runtime settings reject wildcard CORS origins.")
+        if not self.allowed_hosts:
+            raise ValueError("Studio allowed hosts must not be empty.")
+        if any(host == "*" for host in self.allowed_hosts):
+            raise ValueError("Studio runtime settings reject wildcard hosts.")
         if any(not name.strip() for name in self.http_security_headers):
             raise ValueError("Studio security header names must not be empty.")
         if any(not value.strip() for value in self.http_security_headers.values()):
@@ -61,7 +71,15 @@ def build_default_studio_runtime_settings(
 
     source = os.environ if env is None else env
     raw_origins = source.get("SC_NEUROCORE_STUDIO_CORS_ORIGINS")
-    if raw_origins is None or not raw_origins.strip():
-        return StudioRuntimeSettings()
-    origins = tuple(origin.strip() for origin in raw_origins.split(",") if origin.strip())
-    return StudioRuntimeSettings(cors_allowed_origins=origins)
+    raw_hosts = source.get("SC_NEUROCORE_STUDIO_ALLOWED_HOSTS")
+    origins = (
+        DEFAULT_STUDIO_CORS_ORIGINS
+        if raw_origins is None or not raw_origins.strip()
+        else tuple(origin.strip() for origin in raw_origins.split(",") if origin.strip())
+    )
+    hosts = (
+        DEFAULT_STUDIO_ALLOWED_HOSTS
+        if raw_hosts is None or not raw_hosts.strip()
+        else tuple(host.strip() for host in raw_hosts.split(",") if host.strip())
+    )
+    return StudioRuntimeSettings(cors_allowed_origins=origins, allowed_hosts=hosts)

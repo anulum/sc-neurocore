@@ -73,6 +73,10 @@ runtime features:
   defaults are loopback-only for the packaged backend and Vite development
   server; production deployments must set `SC_NEUROCORE_STUDIO_CORS_ORIGINS`
   to a comma-separated allow-list instead of using wildcard origins.
+- Studio rejects requests whose `Host` header is outside the configured
+  allow-list. Packaged defaults accept only loopback hosts; deployments set
+  `SC_NEUROCORE_STUDIO_ALLOWED_HOSTS` to a comma-separated host allow-list and
+  wildcard hosts are rejected.
 - The backend adds default HTTP hardening headers to API responses:
   `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and
   `X-Frame-Options: DENY`.

@@ -24,7 +24,7 @@ from sc_neurocore.studio.templates import TEMPLATES
 @pytest.fixture
 def client():
     app = create_app()
-    return TestClient(app)
+    return TestClient(app, base_url="http://127.0.0.1")
 
 
 class TestHealth:
