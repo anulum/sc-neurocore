@@ -299,7 +299,7 @@ module = [
 
   'sc_neurocore.swarm.*',
  'sc_neurocore.training.*',
-  'sc_neurocore.viz.*',
+
 ]
 disallow_any_generics = false
 warn_return_any = false

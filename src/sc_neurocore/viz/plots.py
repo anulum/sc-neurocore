@@ -261,13 +261,13 @@ def instantaneous_rate_plot(
 
 
 def spike_train_comparison(
-    trains: list[np.ndarray], labels: list[str] | None = None, ax: Any = None
+    trains: list[np.ndarray[Any, Any]], labels: list[str] | None = None, ax: Any = None
 ) -> Any:
     """Overlay multiple spike trains as event plots.
 
     Parameters
     ----------
-    trains : list of np.ndarray
+    trains : list of np.ndarray[Any, Any]
         Each element is a 1-D array of spike timesteps.
     labels : list of str, optional
         Labels for each train.
