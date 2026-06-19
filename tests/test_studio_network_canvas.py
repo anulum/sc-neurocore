@@ -28,7 +28,7 @@ from sc_neurocore.studio.network_graph import (
 
 @pytest.fixture(scope="module")
 def client():
-    return TestClient(create_app())
+    return TestClient(create_app(), base_url="http://127.0.0.1")
 
 
 # --- Population & Projection Creation ---

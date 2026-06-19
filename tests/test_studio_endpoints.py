@@ -23,7 +23,7 @@ MODEL = "AdExNeuron"
 @pytest.fixture(scope="module")
 def client():
     app = create_app()
-    return TestClient(app)
+    return TestClient(app, base_url="http://127.0.0.1")
 
 
 class TestModelEndpoints:
