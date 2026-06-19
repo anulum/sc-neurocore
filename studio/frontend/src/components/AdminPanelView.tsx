@@ -23,7 +23,13 @@ export default function AdminPanelView({
         <div className="admin-section-header">
           <h2>Operator</h2>
           <div className="admin-actions">
-            <button onClick={() => void onLoadOperatorStatus()} disabled={auditLoading}>Status</button>
+            <button
+              aria-label="Refresh operator status"
+              onClick={() => void onLoadOperatorStatus()}
+              disabled={auditLoading}
+            >
+              Status
+            </button>
           </div>
         </div>
         <div className="admin-metrics">
@@ -38,8 +44,20 @@ export default function AdminPanelView({
         <div className="admin-section-header">
           <h2>Audit</h2>
           <div className="admin-actions">
-            <button onClick={() => void onLoadAuditStatus()} disabled={auditLoading}>Status</button>
-            <button onClick={() => void onLoadAuditExport()} disabled={auditLoading}>Export</button>
+            <button
+              aria-label="Refresh audit status"
+              onClick={() => void onLoadAuditStatus()}
+              disabled={auditLoading}
+            >
+              Status
+            </button>
+            <button
+              aria-label="Export audit events"
+              onClick={() => void onLoadAuditExport()}
+              disabled={auditLoading}
+            >
+              Export
+            </button>
           </div>
         </div>
         <div className="admin-metrics">
@@ -68,7 +86,13 @@ export default function AdminPanelView({
         <div className="admin-section-header">
           <h2>Jobs</h2>
           <div className="admin-actions">
-            <button onClick={() => void onLoadJobStatus()} disabled={auditLoading}>Status</button>
+            <button
+              aria-label="Refresh job status"
+              onClick={() => void onLoadJobStatus()}
+              disabled={auditLoading}
+            >
+              Status
+            </button>
           </div>
         </div>
         <div className="admin-metrics">

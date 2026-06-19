@@ -260,8 +260,9 @@ backend capability registry omits a panel contract, that panel is disabled
 instead of assuming the underlying API or external tool is available.
 
 The Playwright e2e suite starts the Vite dev server, mocks backend API
-contracts at the browser boundary, and verifies the Admin operator status
-workflow against the rendered React application.
+contracts at the browser boundary, and verifies the Admin operator status,
+audit status, audit export, and worker-status workflows against the rendered
+React application.
 
 The Admin panel loads path-free audit health at startup and can request the
 admin-gated audit export endpoint. Development-preview policy mode can still
