@@ -106,11 +106,11 @@ class FeynmanKacHeatSolver:
         self._rng = np.random.default_rng(self.seed)
         # Caller calls `set_initial_distribution` to seed the
         # walker positions; we leave them empty until then.
-        self.walkers: np.ndarray = np.empty(0, dtype=np.float64)
+        self.walkers: np.ndarray[Any, Any] = np.empty(0, dtype=np.float64)
         self._t: float = 0.0
 
     @staticmethod
-    def _reflect_into_interval(x: np.ndarray, length: float) -> np.ndarray:
+    def _reflect_into_interval(x: np.ndarray[Any, Any], length: float) -> np.ndarray[Any, Any]:
         """Reflect arbitrary real positions into ``[0, length]`` exactly.
 
         Reflection at both Neumann boundaries is equivalent to folding
@@ -126,7 +126,7 @@ class FeynmanKacHeatSolver:
 
     def set_initial_distribution(
         self,
-        f: Callable[[np.ndarray], np.ndarray],
+        f: Callable[[np.ndarray[Any, Any]], np.ndarray[Any, Any]],
         n_grid: int = 1024,
     ) -> None:
         """Sample walker positions from the initial distribution f(x).
@@ -223,7 +223,7 @@ class FeynmanKacHeatSolver:
 
     def expectation(
         self,
-        observable: Callable[[np.ndarray], np.ndarray],
+        observable: Callable[[np.ndarray[Any, Any]], np.ndarray[Any, Any]],
     ) -> float:
         """Compute the Feynman-Kac expectation `E[observable(X_T)]`.
 

@@ -290,7 +290,7 @@ module = [
 
   'sc_neurocore.nas.*', 'sc_neurocore._native.*',
   'sc_neurocore.neurons.*',
-  'sc_neurocore.optics.*', 'sc_neurocore.physics.*', 'sc_neurocore.pipeline.*',
+  'sc_neurocore.optics.*', 'sc_neurocore.pipeline.*',
   'sc_neurocore.privacy.*', 'sc_neurocore.qat.*', 'sc_neurocore.quantum.*',
   'sc_neurocore.quantum_cognition.*', 'sc_neurocore.resilience.*',
   'sc_neurocore.safety_cert.*', 'sc_neurocore.security.*',
