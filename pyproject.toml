@@ -282,7 +282,7 @@ module = [
   'sc_neurocore.chaos.*', 'sc_neurocore.chip_compiler.*', 'sc_neurocore.chiplet.*',
   'sc_neurocore.comm.*', 'sc_neurocore.compiler.*',
   'sc_neurocore.conversion.*',
-  'sc_neurocore.debug.*', 'sc_neurocore.digital_twin.*', 'sc_neurocore.doctor.*',
+  'sc_neurocore.debug.*', 'sc_neurocore.doctor.*',
   'sc_neurocore.drivers.*', 'sc_neurocore.edge.*', 'sc_neurocore.energy_accounting.*',
   'sc_neurocore.ensembles.*', 'sc_neurocore.evo_substrate.*', 'sc_neurocore.experiments.*',
   'sc_neurocore.explainability.*', 'sc_neurocore.export.*',
