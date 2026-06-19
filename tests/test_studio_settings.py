@@ -57,6 +57,34 @@ def test_studio_runtime_settings_rejects_empty_cors_origin_list() -> None:
         StudioRuntimeSettings(cors_allowed_origins=())
 
 
+def test_studio_runtime_settings_default_security_headers_are_fail_closed() -> None:
+    settings = build_default_studio_runtime_settings(env={})
+
+    assert settings.http_security_headers["x-content-type-options"] == "nosniff"
+    assert settings.http_security_headers["referrer-policy"] == "no-referrer"
+    assert settings.http_security_headers["x-frame-options"] == "DENY"
+
+
+def test_studio_runtime_settings_rejects_empty_security_header_name() -> None:
+    with pytest.raises(ValueError, match="security header names"):
+        StudioRuntimeSettings(http_security_headers={"": "nosniff"})
+
+
+def test_studio_runtime_settings_rejects_empty_security_header_value() -> None:
+    with pytest.raises(ValueError, match="security header values"):
+        StudioRuntimeSettings(http_security_headers={"x-content-type-options": ""})
+
+
+def test_studio_app_adds_default_security_headers_to_health_response() -> None:
+    client = TestClient(create_app())
+
+    response = client.get("/api/health")
+
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["referrer-policy"] == "no-referrer"
+    assert response.headers["x-frame-options"] == "DENY"
+
+
 def test_studio_app_cors_preflight_allows_configured_origin() -> None:
     app = create_app(
         runtime_settings=StudioRuntimeSettings(

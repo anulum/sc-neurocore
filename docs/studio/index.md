@@ -73,6 +73,9 @@ runtime features:
   defaults are loopback-only for the packaged backend and Vite development
   server; production deployments must set `SC_NEUROCORE_STUDIO_CORS_ORIGINS`
   to a comma-separated allow-list instead of using wildcard origins.
+- The backend adds default HTTP hardening headers to API responses:
+  `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and
+  `X-Frame-Options: DENY`.
 
 The policy gateway is intentionally a platform contract first. Existing public
 health and capability routes stay backward compatible while protected route
