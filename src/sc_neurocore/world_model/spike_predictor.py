@@ -82,7 +82,7 @@ class SpikePredictor:
         features = self._features()
         logits = self.W @ features + self.bias
         # Sigmoid activation
-        probs = 1.0 / (1.0 + np.exp(-np.clip(logits, -20, 20)))
+        probs: np.ndarray[Any, Any] = 1.0 / (1.0 + np.exp(-np.clip(logits, -20, 20)))
         return probs
 
     def predict(self) -> np.ndarray[Any, Any]:

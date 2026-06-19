@@ -58,11 +58,11 @@ _LASER_POWER_DBM = 0.0  # on-chip source power
 # ── Soft imports ──────────────────────────────────────────────────────
 
 try:
-    import gdstk  # type: ignore[import-untyped]
+    import gdstk
 
     _HAS_GDSTK = True
 except ImportError:
-    gdstk = None  # type: ignore[assignment]
+    gdstk = None
     _HAS_GDSTK = False
 
 

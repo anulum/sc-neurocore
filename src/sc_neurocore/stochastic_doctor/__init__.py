@@ -21,6 +21,6 @@ __tier__ = "research"
 try:
     from . import stochastic_doctor_core  # type: ignore[attr-defined]
 except ImportError:  # pragma: no cover — .so not built
-    stochastic_doctor_core = None  # type: ignore[assignment]
+    stochastic_doctor_core = None
 
 __all__ = ["stochastic_doctor_core"]
