@@ -9,8 +9,10 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 from uuid import UUID
 
 import pytest
@@ -25,6 +27,17 @@ from sc_neurocore.studio.platform import (
     StudioRuntimeSettings,
     build_default_studio_runtime_settings,
 )
+
+
+def _audit_event_hash(row: dict[str, Any]) -> str:
+    unsigned_row = dict(row)
+    unsigned_row.pop("event_hash", None)
+    canonical_row = json.dumps(
+        unsigned_row,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(canonical_row).hexdigest()
 
 
 def test_studio_runtime_settings_default_cors_origins_are_loopback_only() -> None:
@@ -380,6 +393,8 @@ def test_studio_app_records_policy_events_to_configured_audit_log(tmp_path: Path
     assert row["reason"] == "missing_principal"
     assert row["route"] == "/api/simulate"
     assert row["schema_version"] == "studio.audit.v1"
+    assert row["previous_event_hash"] is None
+    assert row["event_hash"] == _audit_event_hash(row)
     assert datetime.fromisoformat(row["timestamp_utc"].replace("Z", "+00:00")).tzinfo is UTC
 
 

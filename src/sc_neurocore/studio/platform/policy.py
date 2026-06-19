@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -132,13 +133,42 @@ class JsonlAuditSink:
         """Append a Studio policy audit event as one JSON object."""
 
         self._path.parent.mkdir(parents=True, exist_ok=True)
+        event_row = self._build_row(event)
         row = json.dumps(
-            event.to_json_dict(),
+            event_row,
             separators=(",", ":"),
             sort_keys=True,
         )
         with self._path.open("a", encoding="utf-8") as audit_file:
             audit_file.write(f"{row}\n")
+
+    def _build_row(self, event: AuditEvent) -> dict[str, str | None]:
+        row = event.to_json_dict()
+        row["previous_event_hash"] = self._previous_event_hash()
+        row["event_hash"] = self._event_hash(row)
+        return row
+
+    def _previous_event_hash(self) -> str | None:
+        if not self._path.exists():
+            return None
+        for line in reversed(self._path.read_text(encoding="utf-8").splitlines()):
+            if not line.strip():
+                continue
+            previous_row = json.loads(line)
+            previous_hash = previous_row.get("event_hash")
+            return previous_hash if isinstance(previous_hash, str) else None
+        return None
+
+    @staticmethod
+    def _event_hash(row: dict[str, str | None]) -> str:
+        unsigned_row = dict(row)
+        unsigned_row.pop("event_hash", None)
+        canonical_row = json.dumps(
+            unsigned_row,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+        return hashlib.sha256(canonical_row).hexdigest()
 
 
 class RoutePolicyRegistry:
