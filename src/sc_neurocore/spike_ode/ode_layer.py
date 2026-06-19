@@ -22,6 +22,7 @@ Reference: EventProp (Wunderlich & Pehle 2021)
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -49,7 +50,7 @@ class ODELIFDynamics:
     v_reset: float = 0.0
     C_mem: float = 1.0
 
-    def dvdt(self, v: np.ndarray, I: np.ndarray) -> np.ndarray:
+    def dvdt(self, v: np.ndarray[Any, Any], I: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Compute membrane voltage derivative."""
         return -(v - self.v_rest) / self.tau_mem + I / self.C_mem
 
@@ -95,7 +96,7 @@ class SpikingODELayer:
         self.W = rng.randn(n_neurons, n_inputs) * np.sqrt(2.0 / n_inputs)
         self._v = np.full(n_neurons, self.dynamics.v_rest)
 
-    def step(self, x: np.ndarray, interval: float = 1.0) -> np.ndarray:
+    def step(self, x: np.ndarray[Any, Any], interval: float = 1.0) -> np.ndarray[Any, Any]:
         """Integrate ODE over one interval, return spike counts.
 
         Parameters
@@ -156,7 +157,7 @@ class SpikingODELayer:
 
         return spike_counts
 
-    def forward(self, inputs: np.ndarray, interval: float = 1.0) -> np.ndarray:
+    def forward(self, inputs: np.ndarray[Any, Any], interval: float = 1.0) -> np.ndarray[Any, Any]:
         """Process a sequence of inputs.
 
         Parameters
@@ -181,6 +182,6 @@ class SpikingODELayer:
         self._v = np.full(self.n_neurons, self.dynamics.v_rest)
 
     @property
-    def voltage(self) -> np.ndarray:
+    def voltage(self) -> np.ndarray[Any, Any]:
         """Return a defensive copy of the current membrane voltages."""
         return self._v.copy()
