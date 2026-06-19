@@ -181,6 +181,10 @@ class JsonlAuditSink:
         """Append a Studio policy audit event as one JSON object."""
 
         try:
+            preflight_error = self._preflight_error()
+            if preflight_error is not None:
+                self._last_error = preflight_error
+                raise AuditSinkError("Studio audit append failed.")
             self._path.parent.mkdir(parents=True, exist_ok=True)
             previous_event_hash = self._previous_event_hash()
             self._rotate_if_needed()
@@ -200,13 +204,22 @@ class JsonlAuditSink:
     def status(self) -> AuditSinkStatus:
         """Return status for the persistent JSONL audit sink."""
 
+        preflight_error = self._preflight_error()
+        last_error = preflight_error or self._last_error
         return AuditSinkStatus(
             configured=True,
-            healthy=self._last_error is None,
-            last_error=self._last_error,
+            healthy=last_error is None,
+            last_error=last_error,
             path_configured=True,
             sink_type="jsonl",
         )
+
+    def _preflight_error(self) -> str | None:
+        if self._path.exists() and self._path.is_dir():
+            return "AuditPathIsDirectory"
+        if self._path.parent.exists() and not self._path.parent.is_dir():
+            return "AuditParentIsNotDirectory"
+        return None
 
     def _build_row(
         self,

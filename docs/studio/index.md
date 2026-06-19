@@ -87,6 +87,9 @@ runtime features:
   active JSONL audit file before the next append once it reaches the configured
   byte limit. `SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES` controls how many
   rotated files are retained; the default is `5`.
+- Audit status performs path-free storage preflight checks and reports stable
+  operator error codes such as `AuditPathIsDirectory` and
+  `AuditParentIsNotDirectory` instead of exposing local filesystem paths.
 - `RoutePolicyRegistry` records the expected policy for each platform API route
   and lets startup or test code detect unclassified Studio endpoints before
   they become accidental public surfaces. The default registry classifies the
