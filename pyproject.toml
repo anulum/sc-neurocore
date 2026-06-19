@@ -289,7 +289,7 @@ module = [
   'sc_neurocore.generative.*',
   'sc_neurocore.graphs.*', 'sc_neurocore.hdl_gen.*',
   'sc_neurocore.hypervisor.*', 'sc_neurocore.integrations.*', 'sc_neurocore.interfaces.*',
-  'sc_neurocore.model_zoo.*', 'sc_neurocore.nas.*', 'sc_neurocore._native.*',
+  'sc_neurocore.nas.*', 'sc_neurocore._native.*',
   'sc_neurocore.neurons.*',
   'sc_neurocore.optics.*', 'sc_neurocore.physics.*', 'sc_neurocore.pipeline.*',
   'sc_neurocore.privacy.*', 'sc_neurocore.qat.*', 'sc_neurocore.quantum.*',

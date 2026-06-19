@@ -16,6 +16,7 @@ subdirectory.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from scipy import sparse
@@ -39,7 +40,9 @@ _WEIGHT_SPECS: dict[str, tuple[tuple[str, tuple[int, int]], ...]] = {
 }
 
 
-def _dense_to_csr(dense: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _dense_to_csr(
+    dense: np.ndarray[Any, Any],
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Convert dense weight matrix (fan_in, fan_out) to CSR arrays."""
     sp = sparse.csr_matrix(dense)
     return (
@@ -49,7 +52,7 @@ def _dense_to_csr(dense: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray
     )
 
 
-def _apply_weights(proj: object, dense: np.ndarray) -> None:
+def _apply_weights(proj: object, dense: np.ndarray[Any, Any]) -> None:
     """Overwrite a Projection's CSR data with a dense weight matrix."""
     indptr, indices, data = _dense_to_csr(dense)
     proj.indptr = indptr  # type: ignore[attr-defined]
@@ -76,7 +79,7 @@ def _load_weight_matrix(
     archive: np.lib.npyio.NpzFile,
     key: str,
     expected_shape: tuple[int, int],
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     try:
         matrix = archive[key]
     except ValueError as exc:
@@ -125,7 +128,7 @@ def load_pretrained(name: str) -> Network:
     if not path.exists():
         raise FileNotFoundError(f"Weight file not found: {path}")
 
-    net = builder()  # type: ignore[operator]
+    net: Network = builder()  # type: ignore[operator]
 
     with np.load(path, allow_pickle=False) as data:
         _validate_archive_members(name, data)

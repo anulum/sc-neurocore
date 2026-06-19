@@ -22,7 +22,7 @@ import math
 import textwrap
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -94,10 +94,10 @@ class NeuronPlugin(ABC):
 
     def simulate(
         self,
-        current_trace: np.ndarray,
+        current_trace: np.ndarray[Any, Any],
         dt: float = 0.001,
         params: Optional[Dict[str, float]] = None,
-    ) -> Tuple[np.ndarray, List[int]]:
+    ) -> Tuple[np.ndarray[Any, Any], List[int]]:
         """Convenience: simulate a full current trace.
 
         Returns (voltage_trace, spike_indices).
