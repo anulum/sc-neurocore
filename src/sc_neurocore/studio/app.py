@@ -87,8 +87,10 @@ from sc_neurocore.studio.training import (
 )
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
 from sc_neurocore.studio.platform import (
+    StudioRuntimeSettings,
     build_default_studio_capability_registry,
     build_default_studio_route_policy_registry,
+    build_default_studio_runtime_settings,
 )
 from sc_neurocore.studio.presets import (
     get_preset,
@@ -648,14 +650,19 @@ def _execute_default_flow_with_overrides(
     }
 
 
-def create_app() -> FastAPI:
+def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI:
     app = FastAPI(title="SC-NeuroCore Studio", version="1.0.0")
+    settings = runtime_settings or build_default_studio_runtime_settings()
     studio_capabilities = build_default_studio_capability_registry()
     studio_route_policies = build_default_studio_route_policy_registry()
+    app.state.studio_runtime_settings = settings
     app.state.studio_capabilities = studio_capabilities
     app.state.studio_route_policies = studio_route_policies
     app.add_middleware(
-        CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
+        CORSMiddleware,
+        allow_origins=list(settings.cors_allowed_origins),
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     # --- Health ---

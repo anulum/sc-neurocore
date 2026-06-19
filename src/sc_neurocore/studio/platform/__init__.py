@@ -28,6 +28,11 @@ from sc_neurocore.studio.platform.policy import (
     RouteVisibility,
     build_default_studio_route_policy_registry,
 )
+from sc_neurocore.studio.platform.settings import (
+    DEFAULT_STUDIO_CORS_ORIGINS,
+    StudioRuntimeSettings,
+    build_default_studio_runtime_settings,
+)
 
 __all__ = [
     "AuditEvent",
@@ -44,6 +49,9 @@ __all__ = [
     "RoutePolicy",
     "RoutePolicyRegistry",
     "RouteVisibility",
+    "DEFAULT_STUDIO_CORS_ORIGINS",
+    "StudioRuntimeSettings",
     "build_default_studio_capability_registry",
     "build_default_studio_route_policy_registry",
+    "build_default_studio_runtime_settings",
 ]
