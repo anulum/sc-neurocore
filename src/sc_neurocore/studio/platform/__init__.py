@@ -24,7 +24,9 @@ from sc_neurocore.studio.platform.policy import (
     PolicyGateway,
     Principal,
     RoutePolicy,
+    RoutePolicyRegistry,
     RouteVisibility,
+    build_default_studio_route_policy_registry,
 )
 
 __all__ = [
@@ -40,6 +42,8 @@ __all__ = [
     "PolicyGateway",
     "Principal",
     "RoutePolicy",
+    "RoutePolicyRegistry",
     "RouteVisibility",
     "build_default_studio_capability_registry",
+    "build_default_studio_route_policy_registry",
 ]
