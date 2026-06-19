@@ -68,7 +68,9 @@ runtime features:
   decisions.
 - `RoutePolicyRegistry` records the expected policy for each platform API route
   and lets startup or test code detect unclassified Studio endpoints before
-  they become accidental public surfaces.
+  they become accidental public surfaces. The default registry classifies the
+  current `/api/*` and `/ws/*` Studio surface, including stateful simulation,
+  training, project, synthesis, and WebSocket progress routes.
 - `StudioRuntimeSettings` owns deployment-sensitive backend settings. CORS
   defaults are loopback-only for the packaged backend and Vite development
   server; production deployments must set `SC_NEUROCORE_STUDIO_CORS_ORIGINS`

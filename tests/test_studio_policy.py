@@ -194,3 +194,36 @@ def test_studio_app_exposes_route_policy_registry_for_platform_routes() -> None:
     missing = app.state.studio_route_policies.missing_policies(tuple(platform_routes))
 
     assert missing == ()
+
+
+def test_studio_app_classifies_every_api_and_websocket_route() -> None:
+    from sc_neurocore.studio.app import create_app  # noqa: PLC0415
+    from starlette.routing import Route, WebSocketRoute  # noqa: PLC0415
+
+    app = create_app()
+    route_signatures: list[tuple[str, str]] = []
+    for route in app.routes:
+        if isinstance(route, Route) and route.path.startswith("/api/"):
+            route_methods = route.methods or set()
+            route_signatures.extend(
+                (method, route.path) for method in sorted(route_methods) if method != "HEAD"
+            )
+        elif isinstance(route, WebSocketRoute) and route.path.startswith("/ws/"):
+            route_signatures.append(("WEBSOCKET", route.path))
+
+    missing = app.state.studio_route_policies.missing_policies(tuple(route_signatures))
+
+    assert missing == ()
+
+
+def test_default_route_policy_registry_marks_stateful_routes_protected() -> None:
+    contract = _policy_contract()
+    registry = contract["build_default_studio_route_policy_registry"]()
+
+    training_policy = registry.policy_for("POST", "/api/training/start")
+    synth_policy = registry.policy_for("POST", "/api/synth/run")
+    websocket_policy = registry.policy_for("WEBSOCKET", "/ws/progress")
+
+    assert training_policy.visibility is contract["RouteVisibility"].AUTHENTICATED
+    assert synth_policy.visibility is contract["RouteVisibility"].ADMIN
+    assert websocket_policy.visibility is contract["RouteVisibility"].AUTHENTICATED
