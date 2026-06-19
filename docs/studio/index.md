@@ -121,6 +121,10 @@ runtime features:
   defaults are loopback-only for the packaged backend and Vite development
   server; production deployments must set `SC_NEUROCORE_STUDIO_CORS_ORIGINS`
   to a comma-separated allow-list instead of using wildcard origins.
+- `SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE=production` is a fail-closed profile:
+  route-policy enforcement must be enabled, development header principals must
+  be disabled, and identity, audit log, and job-root paths must be configured
+  before the backend can start.
 - Studio rejects requests whose `Host` header is outside the configured
   allow-list. Packaged defaults accept only loopback hosts; deployments set
   `SC_NEUROCORE_STUDIO_ALLOWED_HOSTS` to a comma-separated host allow-list and

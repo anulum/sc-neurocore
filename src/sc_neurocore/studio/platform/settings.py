@@ -14,6 +14,9 @@ import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
+from typing import Literal
+
+StudioDeploymentProfile = Literal["development", "production"]
 
 DEFAULT_STUDIO_CORS_ORIGINS: tuple[str, ...] = (
     "http://127.0.0.1:8001",
@@ -52,6 +55,7 @@ def _default_studio_http_security_headers() -> Mapping[str, str]:
 class StudioRuntimeSettings:
     """Runtime settings consumed by the Studio FastAPI application."""
 
+    deployment_profile: StudioDeploymentProfile = "development"
     cors_allowed_origins: tuple[str, ...] = DEFAULT_STUDIO_CORS_ORIGINS
     websocket_allowed_origins: tuple[str, ...] = DEFAULT_STUDIO_WEBSOCKET_ALLOWED_ORIGINS
     allowed_hosts: tuple[str, ...] = DEFAULT_STUDIO_ALLOWED_HOSTS
@@ -72,6 +76,8 @@ class StudioRuntimeSettings:
     def __post_init__(self) -> None:
         """Validate settings that affect Studio security boundaries."""
 
+        if self.deployment_profile not in ("development", "production"):
+            raise ValueError("Studio deployment profile must be development or production.")
         if not self.cors_allowed_origins:
             raise ValueError("Studio CORS origins must not be empty.")
         if any(origin == "*" for origin in self.cors_allowed_origins):
@@ -106,6 +112,22 @@ class StudioRuntimeSettings:
             raise ValueError("Studio audit rotation byte limit must be positive.")
         if self.audit_retained_files < 0:
             raise ValueError("Studio retained audit file count must not be negative.")
+        if self.deployment_profile == "production":
+            self._validate_production_profile()
+
+    def _validate_production_profile(self) -> None:
+        """Validate fail-closed settings required for production deployments."""
+
+        if not self.enforce_route_policies:
+            raise ValueError("Studio production profile requires route policy enforcement.")
+        if self.allow_header_principal:
+            raise ValueError("Studio production profile requires header principal fallback disabled.")
+        if self.identity_file_path is None:
+            raise ValueError("Studio production profile requires an identity file.")
+        if self.audit_log_path is None:
+            raise ValueError("Studio production profile requires a persistent audit log.")
+        if self.job_root_path is None:
+            raise ValueError("Studio production profile requires a persistent job root.")
 
 
 def build_default_studio_runtime_settings(
@@ -114,6 +136,7 @@ def build_default_studio_runtime_settings(
     """Build Studio runtime settings from environment-style values."""
 
     source = os.environ if env is None else env
+    raw_deployment_profile = source.get("SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE")
     raw_origins = source.get("SC_NEUROCORE_STUDIO_CORS_ORIGINS")
     raw_websocket_origins = source.get("SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS")
     raw_hosts = source.get("SC_NEUROCORE_STUDIO_ALLOWED_HOSTS")
@@ -126,6 +149,7 @@ def build_default_studio_runtime_settings(
     raw_audit_log_path = source.get("SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH")
     raw_audit_rotation_bytes = source.get("SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES")
     raw_audit_retained_files = source.get("SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES")
+    deployment_profile = _parse_deployment_profile(raw_deployment_profile)
     origins = (
         DEFAULT_STUDIO_CORS_ORIGINS
         if raw_origins is None or not raw_origins.strip()
@@ -198,6 +222,7 @@ def build_default_studio_runtime_settings(
     except ValueError as exc:
         raise ValueError("Studio retained audit file count must be an integer.") from exc
     return StudioRuntimeSettings(
+        deployment_profile=deployment_profile,
         cors_allowed_origins=origins,
         websocket_allowed_origins=websocket_origins,
         allowed_hosts=hosts,
@@ -211,6 +236,17 @@ def build_default_studio_runtime_settings(
         audit_rotation_bytes=audit_rotation_bytes,
         audit_retained_files=audit_retained_files,
     )
+
+
+def _parse_deployment_profile(raw_value: str | None) -> StudioDeploymentProfile:
+    if raw_value is None or not raw_value.strip():
+        return "development"
+    normalized = raw_value.strip().lower()
+    if normalized == "development":
+        return "development"
+    if normalized == "production":
+        return "production"
+    raise ValueError("Studio deployment profile must be development or production.")
 
 
 def _parse_bool_env(

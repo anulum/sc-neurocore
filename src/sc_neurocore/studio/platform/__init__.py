@@ -64,6 +64,7 @@ from sc_neurocore.studio.platform.settings import (
     DEFAULT_STUDIO_JOB_TIMEOUT_SECONDS,
     DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES,
     DEFAULT_STUDIO_WEBSOCKET_ALLOWED_ORIGINS,
+    StudioDeploymentProfile,
     StudioRuntimeSettings,
     build_default_studio_runtime_settings,
 )
@@ -100,6 +101,7 @@ __all__ = [
     "DEFAULT_STUDIO_JOB_TIMEOUT_SECONDS",
     "DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES",
     "DEFAULT_STUDIO_WEBSOCKET_ALLOWED_ORIGINS",
+    "StudioDeploymentProfile",
     "StudioRuntimeSettings",
     "StudioIdentityAuthenticator",
     "StudioIdentityRecord",
