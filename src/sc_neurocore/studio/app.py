@@ -86,6 +86,7 @@ from sc_neurocore.studio.training import (
     stream_metrics,
 )
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
+from sc_neurocore.studio.platform import build_default_studio_capability_registry
 from sc_neurocore.studio.presets import (
     get_preset,
     get_preset_action,
@@ -646,6 +647,8 @@ def _execute_default_flow_with_overrides(
 
 def create_app() -> FastAPI:
     app = FastAPI(title="SC-NeuroCore Studio", version="1.0.0")
+    studio_capabilities = build_default_studio_capability_registry()
+    app.state.studio_capabilities = studio_capabilities
     app.add_middleware(
         CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
     )
@@ -654,6 +657,22 @@ def create_app() -> FastAPI:
     @app.get("/api/health")
     def health() -> dict[str, Any]:
         return {"status": "ok"}
+
+    @app.get("/api/studio/capabilities")
+    def api_studio_capabilities() -> dict[str, list[dict[str, object]]]:
+        return {
+            "capabilities": [
+                capability.to_public_dict()
+                for capability in studio_capabilities.health_all()
+            ]
+        }
+
+    @app.get("/api/studio/capabilities/{capability_id}")
+    def api_studio_capability(capability_id: str) -> dict[str, object]:
+        try:
+            return studio_capabilities.health(capability_id).to_public_dict()
+        except KeyError as exc:
+            raise HTTPException(404, f"Capability '{capability_id}' not found") from exc
 
     # --- Templates & Models ---
     @app.get("/api/templates")
