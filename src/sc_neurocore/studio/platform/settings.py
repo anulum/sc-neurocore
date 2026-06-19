@@ -37,6 +37,7 @@ class StudioRuntimeSettings:
 
     cors_allowed_origins: tuple[str, ...] = DEFAULT_STUDIO_CORS_ORIGINS
     http_security_headers: Mapping[str, str] = DEFAULT_STUDIO_HTTP_SECURITY_HEADERS
+    request_id_header: str = "x-request-id"
 
     def __post_init__(self) -> None:
         """Validate settings that affect Studio security boundaries."""
@@ -49,6 +50,8 @@ class StudioRuntimeSettings:
             raise ValueError("Studio security header names must not be empty.")
         if any(not value.strip() for value in self.http_security_headers.values()):
             raise ValueError("Studio security header values must not be empty.")
+        if not self.request_id_header.strip():
+            raise ValueError("Studio request ID header must not be empty.")
 
 
 def build_default_studio_runtime_settings(

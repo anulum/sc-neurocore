@@ -13,6 +13,7 @@ import json
 import logging
 import time
 import tempfile
+from uuid import uuid4
 from collections import OrderedDict
 from collections.abc import Callable
 from pathlib import Path
@@ -650,6 +651,16 @@ def _execute_default_flow_with_overrides(
     }
 
 
+def _studio_request_id(candidate: str | None) -> str:
+    if candidate is not None:
+        cleaned = candidate.strip()
+        if 0 < len(cleaned) <= 128 and all(
+            char.isascii() and (char.isalnum() or char in "._:-") for char in cleaned
+        ):
+            return cleaned
+    return str(uuid4())
+
+
 def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI:
     app = FastAPI(title="SC-NeuroCore Studio", version="1.0.0")
     settings = runtime_settings or build_default_studio_runtime_settings()
@@ -667,9 +678,11 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
 
     @app.middleware("http")
     async def add_studio_security_headers(request: Request, call_next: Callable[[Request], Any]) -> Any:
+        request_id = _studio_request_id(request.headers.get(settings.request_id_header))
         response = await call_next(request)
         for name, value in settings.http_security_headers.items():
             response.headers.setdefault(name, value)
+        response.headers.setdefault(settings.request_id_header, request_id)
         return response
 
     # --- Health ---
