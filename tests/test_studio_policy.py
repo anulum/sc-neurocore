@@ -260,8 +260,63 @@ def test_jsonl_audit_sink_reports_failed_append_policy(tmp_path: Path) -> None:
     assert status.healthy is False
     assert status.path_configured is True
     assert status.sink_type == "jsonl"
-    assert status.last_error is not None
-    assert "IsADirectoryError" in status.last_error
+    assert status.last_error == "AuditPathIsDirectory"
+
+
+def test_jsonl_audit_sink_status_rejects_directory_log_path(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_sink = contract["JsonlAuditSink"](tmp_path)
+
+    status = audit_sink.status()
+
+    assert status.configured is True
+    assert status.healthy is False
+    assert status.last_error == "AuditPathIsDirectory"
+
+
+def test_jsonl_audit_sink_status_rejects_file_parent(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_parent = tmp_path / "not-a-directory"
+    audit_parent.write_text("not a directory", encoding="utf-8")
+    audit_sink = contract["JsonlAuditSink"](audit_parent / "studio.jsonl")
+
+    status = audit_sink.status()
+
+    assert status.configured is True
+    assert status.healthy is False
+    assert status.last_error == "AuditParentIsNotDirectory"
+
+
+def test_jsonl_audit_sink_sanitizes_append_os_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+    original_open = Path.open
+
+    def blocked_open(path: Path, *args: Any, **kwargs: Any) -> Any:
+        if path == audit_path and args and args[0] == "a":
+            raise PermissionError("blocked path detail")
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", blocked_open)
+
+    with pytest.raises(contract["AuditSinkError"], match="append failed"):
+        audit_sink.record(
+            contract["AuditEvent"](
+                action="studio.simulate.run",
+                route="/api/simulate",
+                principal_id="operator-7",
+                decision="allow",
+                reason="authorized",
+            )
+        )
+
+    status = audit_sink.status()
+    assert status.healthy is False
+    assert status.last_error == "PermissionError"
 
 
 def test_jsonl_audit_sink_rotates_and_retains_hash_chain(tmp_path: Path) -> None:

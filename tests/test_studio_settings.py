@@ -450,6 +450,19 @@ def test_studio_app_exposes_safe_audit_status(tmp_path: Path) -> None:
     assert str(tmp_path) not in response.text
 
 
+def test_studio_app_exposes_unhealthy_audit_location_without_path(tmp_path: Path) -> None:
+    app = create_app(runtime_settings=StudioRuntimeSettings(audit_log_path=str(tmp_path)))
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.get("/api/studio/audit/status")
+
+    assert response.status_code == 200
+    assert response.json()["configured"] is True
+    assert response.json()["healthy"] is False
+    assert response.json()["last_error"] == "AuditPathIsDirectory"
+    assert str(tmp_path) not in response.text
+
+
 def test_studio_app_fails_closed_when_policy_audit_append_fails(tmp_path: Path) -> None:
     app = create_app(
         runtime_settings=StudioRuntimeSettings(
@@ -470,7 +483,7 @@ def test_studio_app_fails_closed_when_policy_audit_append_fails(tmp_path: Path) 
     assert response.json()["detail"] == "audit_append_failed"
     assert status_response.status_code == 200
     assert status_response.json()["healthy"] is False
-    assert "IsADirectoryError" in status_response.json()["last_error"]
+    assert status_response.json()["last_error"] == "AuditPathIsDirectory"
     assert str(tmp_path) not in status_response.text
 
 
