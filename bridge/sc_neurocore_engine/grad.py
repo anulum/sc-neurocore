@@ -87,9 +87,7 @@ class DifferentiableDenseLayer:
     def weights(self) -> npt.NDArray[np.float64]:
         return np.asarray(self._engine.get_weights(), dtype=np.float64)
 
-    def forward(
-        self, input_values: Sequence[float], seed: int = 44257
-    ) -> npt.NDArray[np.float64]:
+    def forward(self, input_values: Sequence[float], seed: int = 44257) -> npt.NDArray[np.float64]:
         values = np.asarray(input_values, dtype=np.float64)
         out = self._engine.forward(values.tolist(), int(seed))
         return np.asarray(out, dtype=np.float64)

@@ -340,8 +340,12 @@ def test_jsonl_audit_sink_rotates_and_retains_hash_chain(tmp_path: Path) -> None
         )
 
     current_row = json.loads(audit_path.read_text(encoding="utf-8"))
-    rotated_latest = json.loads(audit_path.with_name("studio-audit.jsonl.1").read_text(encoding="utf-8"))
-    rotated_retained = json.loads(audit_path.with_name("studio-audit.jsonl.2").read_text(encoding="utf-8"))
+    rotated_latest = json.loads(
+        audit_path.with_name("studio-audit.jsonl.1").read_text(encoding="utf-8")
+    )
+    rotated_retained = json.loads(
+        audit_path.with_name("studio-audit.jsonl.2").read_text(encoding="utf-8")
+    )
 
     assert current_row["action"] == "studio.simulate.run.3"
     assert rotated_latest["action"] == "studio.simulate.run.2"
@@ -549,7 +553,9 @@ def test_studio_app_exposes_route_policy_registry_for_platform_routes() -> None:
         if route.path != "/api/health" and not route.path.startswith("/api/studio/"):
             continue
         route_methods = route.methods or set()
-        platform_routes.extend((method, route.path) for method in sorted(route_methods) if method != "HEAD")
+        platform_routes.extend(
+            (method, route.path) for method in sorted(route_methods) if method != "HEAD"
+        )
 
     missing = app.state.studio_route_policies.missing_policies(tuple(platform_routes))
 

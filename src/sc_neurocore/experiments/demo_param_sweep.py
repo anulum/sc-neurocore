@@ -88,7 +88,6 @@ def demo() -> None:
     for n_neurons in n_neurons_grid:
         for T in T_grid:
             for noise_std in noise_std_grid:
-
                 n_train = 12
                 n_test_per_class = 18
 
@@ -112,16 +111,19 @@ def demo() -> None:
                 all_rates = []
                 all_labels_true = []
                 for label, pattern in enumerate(patterns):
-                    rates, labels_true = run_pattern_trials(
-                        label=label,
-                        x_inputs=pattern,
-                        weight_values=weight_values,
-                        n_neurons=n_neurons,
-                        T=T,
-                        noise_std=noise_std,
-                        n_trials=n_test_per_class,
-                        base_seed=999,
-                    ), np.full((n_test_per_class,), label, dtype=int)
+                    rates, labels_true = (
+                        run_pattern_trials(
+                            label=label,
+                            x_inputs=pattern,
+                            weight_values=weight_values,
+                            n_neurons=n_neurons,
+                            T=T,
+                            noise_std=noise_std,
+                            n_trials=n_test_per_class,
+                            base_seed=999,
+                        ),
+                        np.full((n_test_per_class,), label, dtype=int),
+                    )
                     all_rates.append(rates)
                     all_labels_true.append(labels_true)
 

@@ -32,9 +32,9 @@ class TestSynapseCosim:
         packed_and = [a & b for a, b in zip(packed_a, packed_b)]
         actual_count = v3.popcount(packed_and)
 
-        assert (
-            abs(expected_count - actual_count) <= 1
-        ), f"AND popcount mismatch: expected={expected_count}, actual={actual_count}"
+        assert abs(expected_count - actual_count) <= 1, (
+            f"AND popcount mismatch: expected={expected_count}, actual={actual_count}"
+        )
 
     def test_all_zeros(self):
         """AND with all-zero stream produces zero."""

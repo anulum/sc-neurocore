@@ -6,6 +6,7 @@ from sc_neurocore._native.learning_bridge import RULE_BCM, set_deterministic_mod
 
 print("--- ZENITH HYBRID RESNET INTEGRATION ---\n")
 
+
 class HybridResNet(nn.Module):
     def __init__(self, num_classes=10):
         super().__init__()
@@ -15,7 +16,7 @@ class HybridResNet(nn.Module):
             nn.ReLU(),
             nn.Flatten(),
             nn.Linear(16 * 112 * 112, 512),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
         # 2. Append Zenith Biological Bridge Layer (Metaplastic BCM Rule)
@@ -26,7 +27,7 @@ class HybridResNet(nn.Module):
             backend="torch",
             autograd=True,
             param_a=0.05,
-            param_b=20.0
+            param_b=20.0,
         )
 
         # Standard projection down to spike probability dimensions
@@ -48,8 +49,11 @@ class HybridResNet(nn.Module):
         if global_reward is None:
             global_reward = torch.zeros_like(pre_spikes)
 
-        biological_weights = self.bcm_plasticity(pre_spikes.squeeze(), post_spikes.squeeze(), rewards=global_reward, dt=dt)
+        biological_weights = self.bcm_plasticity(
+            pre_spikes.squeeze(), post_spikes.squeeze(), rewards=global_reward, dt=dt
+        )
         return biological_weights * spike_probs
+
 
 # Initialize network and lock deterministic seeds
 set_deterministic_mode(seed=1337)
@@ -70,19 +74,14 @@ for step in range(3):
     loss = out.sum()
     loss.backward()
     optimizer.step()
-    print(f"  Step {step+1}: Loss = {loss.item():.4f}")
+    print(f"  Step {step + 1}: Loss = {loss.item():.4f}")
 
 # Exfiltrate state and serialize bitstream natively via SC-NeuroCore
 print("\nSaving layer via Zenith Exascale persistence mechanics...")
 
 # Export layer directly to byte sequence
 rust_layer = create_plasticity_layer(count=10, rule_type=RULE_BCM, backend="rust")
-rust_layer.step(
-    pre_spikes=[True]*10,
-    post_spikes=[True]*10,
-    rewards=[0.1]*10,
-    dt=0.5
-)
+rust_layer.step(pre_spikes=[True] * 10, post_spikes=[True] * 10, rewards=[0.1] * 10, dt=0.5)
 
 # Canonicalized safe hardware save
 deploy_path = "bcm_deployment.scal"

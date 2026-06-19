@@ -189,7 +189,9 @@ def build_default_studio_capability_registry() -> CapabilityRegistry:
             title="Network Canvas",
             summary="Graph validation, simulation, and NIR import/export surfaces.",
             status=CapabilityStatus.EXPERIMENTAL,
-            requirements=(CapabilityRequirement("sc_neurocore.studio.network_graph", True, "importable"),),
+            requirements=(
+                CapabilityRequirement("sc_neurocore.studio.network_graph", True, "importable"),
+            ),
             evidence=(EvidenceClass.CONTRACT_TEST,),
             ui_placement="Build",
             docs_path="docs/studio/network-canvas.md",
@@ -201,7 +203,9 @@ def build_default_studio_capability_registry() -> CapabilityRegistry:
             title="Synthesis Dashboard",
             summary="SystemVerilog synthesis and target resource reporting.",
             status=CapabilityStatus.EXPERIMENTAL,
-            requirements=(CapabilityRequirement("yosys", False, "external tool availability not checked"),),
+            requirements=(
+                CapabilityRequirement("yosys", False, "external tool availability not checked"),
+            ),
             evidence=(EvidenceClass.STATIC_INVENTORY,),
             ui_placement="Deploy",
             docs_path="docs/studio/synthesis-dashboard.md",

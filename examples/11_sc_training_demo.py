@@ -121,9 +121,7 @@ def main():
 
     final_preds = [layer.forward(x, seed=9999)[0] for x in X_train]
     final_correct = sum(1 for p, t in zip(final_preds, y_train) if (p > 0.5) == (t > 0.5))
-    print(
-        f"\nFinal accuracy: {final_correct}/{len(y_train)} " f"({final_correct/len(y_train):.0%})"
-    )
+    print(f"\nFinal accuracy: {final_correct}/{len(y_train)} ({final_correct / len(y_train):.0%})")
 
 
 if __name__ == "__main__":

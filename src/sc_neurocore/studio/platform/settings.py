@@ -114,23 +114,18 @@ def build_default_studio_runtime_settings(
     websocket_origins = (
         origins
         if raw_websocket_origins is None or not raw_websocket_origins.strip()
-        else tuple(
-            origin.strip() for origin in raw_websocket_origins.split(",") if origin.strip()
-        )
+        else tuple(origin.strip() for origin in raw_websocket_origins.split(",") if origin.strip())
     )
     try:
         max_request_body_bytes = (
             DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES
-            if raw_max_request_body_bytes is None
-            or not raw_max_request_body_bytes.strip()
+            if raw_max_request_body_bytes is None or not raw_max_request_body_bytes.strip()
             else int(raw_max_request_body_bytes)
         )
     except ValueError as exc:
         raise ValueError("Studio request body limit must be an integer.") from exc
     normalized_enforcement = (
-        ""
-        if raw_enforce_route_policies is None
-        else raw_enforce_route_policies.strip().lower()
+        "" if raw_enforce_route_policies is None else raw_enforce_route_policies.strip().lower()
     )
     if normalized_enforcement in ("", "0", "false", "no"):
         enforce_route_policies = False
@@ -139,7 +134,8 @@ def build_default_studio_runtime_settings(
     else:
         raise ValueError("Studio route policy enforcement must be a boolean flag.")
     audit_log_path = (
-        None if raw_audit_log_path is None or not raw_audit_log_path.strip()
+        None
+        if raw_audit_log_path is None or not raw_audit_log_path.strip()
         else raw_audit_log_path.strip()
     )
     try:

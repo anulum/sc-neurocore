@@ -37,9 +37,7 @@ class FixedPointLIFNeuron:
             refractory_period,
         )
 
-    def step(
-        self, leak_k: int, gain_k: int, I_t: int, noise_in: int = 0
-    ) -> tuple[int, int]:
+    def step(self, leak_k: int, gain_k: int, I_t: int, noise_in: int = 0) -> tuple[int, int]:
         """Return (spike: int, v_out: int)."""
         return self._engine.step(leak_k, gain_k, I_t, noise_in)
 

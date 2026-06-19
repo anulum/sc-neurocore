@@ -52,7 +52,7 @@ def run_whitepaper_benchmark() -> None:
     ops_per_sec = total_ops / total_time
 
     print("\n[Performance Results]")
-    print(f"Average Latency (Forward Pass): {avg_latency*1000:.2f} ms")
+    print(f"Average Latency (Forward Pass): {avg_latency * 1000:.2f} ms")
     print(f"Throughput (Bit-Ops/sec): {ops_per_sec:.2e}")
     # Equivalent "TPS" if 1 Tx = 256 ops?
     # Let's say 1 Tx = processing 1 input vector against the network state
@@ -80,8 +80,8 @@ def run_whitepaper_benchmark() -> None:
     j_per_op = joules / ops_one_pass
 
     print("\n[Efficiency Results (45nm Simulation)]")
-    print(f"Energy per Inference: {joules*1e6:.2f} uJ")
-    print(f"Energy per Bit-Op: {j_per_op*1e15:.2f} fJ")
+    print(f"Energy per Inference: {joules * 1e6:.2f} uJ")
+    print(f"Energy per Bit-Op: {j_per_op * 1e15:.2f} fJ")
     print(f"CO2 Emissions per Inference: {co2:.2e} g")
 
 

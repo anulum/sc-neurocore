@@ -109,7 +109,7 @@ def main():
 
     print("SC-NeuroCore Fault-Tolerant Binary Streams Demo")
     print(f"  Redundancy: {LENGTH} bits per Boolean")
-    print(f"  Error rate: {ERROR_RATE*100:.1f}%")
+    print(f"  Error rate: {ERROR_RATE * 100:.1f}%")
     print("=" * 55)
 
     # ── Step 1: Encode Boolean values ─────────────────────────────
@@ -132,7 +132,7 @@ def main():
     b_noisy = inject_errors(b, ERROR_RATE, seed=2)
     c_noisy = inject_errors(c, ERROR_RATE, seed=3)
 
-    print(f"\nAfter {ERROR_RATE*100:.1f}% noise injection:")
+    print(f"\nAfter {ERROR_RATE * 100:.1f}% noise injection:")
     print(f"  A: {a_noisy.popcount()}/{LENGTH} ones ->decode={decode_majority(a_noisy)}")
     print(f"  B: {b_noisy.popcount()}/{LENGTH} ones ->decode={decode_majority(b_noisy)}")
     print(f"  C: {c_noisy.popcount()}/{LENGTH} ones ->decode={decode_majority(c_noisy)}")
@@ -162,8 +162,7 @@ def main():
     decoded_or = decode_majority(or_result)
     expected_or = val_a or val_b
     print(
-        f"  A OR  B: {decoded_or} (expected {expected_or}) "
-        f"[{or_result.popcount()}/{LENGTH} ones]"
+        f"  A OR  B: {decoded_or} (expected {expected_or}) [{or_result.popcount()}/{LENGTH} ones]"
     )
     assert decoded_or == expected_or
 
@@ -198,7 +197,7 @@ def main():
             if decode_majority(noisy) == val_a:
                 successes += 1
         pct = successes / trials * 100
-        print(f"  {rate*100:5.1f}% error rate ->{pct:5.1f}% correct decoding")
+        print(f"  {rate * 100:5.1f}% error rate ->{pct:5.1f}% correct decoding")
 
     print("\nDone. Stochastic redundancy provides robust error suppression!")
 

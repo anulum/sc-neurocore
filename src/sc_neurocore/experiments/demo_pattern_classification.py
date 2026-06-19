@@ -111,7 +111,9 @@ def demo() -> None:
     print("Centroid B (firing rates per neuron):", centroid_B)
 
     # --- TESTING: generate new samples and classify by nearest centroid ---
-    def gen_test_samples(label: int, pattern: list[float], n_samples: int) -> tuple[np.ndarray, np.ndarray]:
+    def gen_test_samples(
+        label: int, pattern: list[float], n_samples: int
+    ) -> tuple[np.ndarray, np.ndarray]:
         rates = run_pattern_trials(
             label=label,
             x_inputs=pattern,

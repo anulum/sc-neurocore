@@ -717,7 +717,9 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     )
 
     @app.middleware("http")
-    async def add_studio_security_headers(request: Request, call_next: Callable[[Request], Any]) -> Any:
+    async def add_studio_security_headers(
+        request: Request, call_next: Callable[[Request], Any]
+    ) -> Any:
         request_id = _studio_request_id(request.headers.get(settings.request_id_header))
         content_length = request.headers.get("content-length")
         if (
@@ -771,8 +773,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     def api_studio_capabilities() -> dict[str, list[dict[str, object]]]:
         return {
             "capabilities": [
-                capability.to_public_dict()
-                for capability in studio_capabilities.health_all()
+                capability.to_public_dict() for capability in studio_capabilities.health_all()
             ]
         }
 

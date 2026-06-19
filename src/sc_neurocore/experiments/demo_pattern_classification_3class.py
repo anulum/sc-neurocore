@@ -99,7 +99,9 @@ def demo() -> None:
         print(f"Centroid class {label}: {centroid}")
 
     # --- TESTING: confusion matrix for 3 classes ---
-    def gen_test_samples(label: int, pattern: list[float], n_samples: int) -> tuple[np.ndarray, np.ndarray]:
+    def gen_test_samples(
+        label: int, pattern: list[float], n_samples: int
+    ) -> tuple[np.ndarray, np.ndarray]:
         rates = run_pattern_trials(
             label=label,
             x_inputs=pattern,

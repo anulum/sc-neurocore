@@ -31,9 +31,7 @@ def _descriptor(capability_id: str) -> CapabilityDescriptor:
         title="Studio Capability Registry",
         summary="Typed capability inventory for Studio feature discovery.",
         status=CapabilityStatus.STABLE,
-        requirements=(
-            CapabilityRequirement(name="fastapi", available=True, detail="importable"),
-        ),
+        requirements=(CapabilityRequirement(name="fastapi", available=True, detail="importable"),),
         evidence=(EvidenceClass.CONTRACT_TEST,),
         ui_placement="Admin",
         docs_path="docs/studio/index.md",
