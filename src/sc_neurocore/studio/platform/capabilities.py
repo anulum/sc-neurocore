@@ -219,7 +219,9 @@ def build_default_studio_capability_registry() -> CapabilityRegistry:
             summary="f-I, bifurcation, sensitivity, heatmap, nullcline, frequency, and compare views.",
             status=CapabilityStatus.STABLE,
             requirements=(
-                CapabilityRequirement("sc_neurocore.studio.analysis", True, "analysis endpoints active"),
+                CapabilityRequirement(
+                    "sc_neurocore.studio.analysis", True, "analysis endpoints active"
+                ),
             ),
             evidence=(EvidenceClass.CONTRACT_TEST,),
             ui_placement="Analyze",
@@ -233,7 +235,9 @@ def build_default_studio_capability_registry() -> CapabilityRegistry:
             summary="IR build, verification, SystemVerilog emission, and co-simulation surfaces.",
             status=CapabilityStatus.EXPERIMENTAL,
             requirements=(
-                CapabilityRequirement("sc_neurocore.studio.compiler", True, "compiler endpoints active"),
+                CapabilityRequirement(
+                    "sc_neurocore.studio.compiler", True, "compiler endpoints active"
+                ),
             ),
             evidence=(EvidenceClass.CONTRACT_TEST,),
             ui_placement="Compile",
@@ -261,7 +265,9 @@ def build_default_studio_capability_registry() -> CapabilityRegistry:
             summary="Surrogate-gradient training job controls and live metric streaming.",
             status=CapabilityStatus.EXPERIMENTAL,
             requirements=(
-                CapabilityRequirement("sc_neurocore.studio.training", True, "training controller active"),
+                CapabilityRequirement(
+                    "sc_neurocore.studio.training", True, "training controller active"
+                ),
             ),
             evidence=(EvidenceClass.CONTRACT_TEST,),
             ui_placement="Train",
@@ -290,7 +296,9 @@ def build_default_studio_capability_registry() -> CapabilityRegistry:
             status=CapabilityStatus.STABLE,
             requirements=(
                 CapabilityRequirement("browser.download", True, "frontend download APIs available"),
-                CapabilityRequirement("sc_neurocore.studio.svg_export", True, "server SVG export active"),
+                CapabilityRequirement(
+                    "sc_neurocore.studio.svg_export", True, "server SVG export active"
+                ),
             ),
             evidence=(EvidenceClass.CONTRACT_TEST,),
             ui_placement="Export",

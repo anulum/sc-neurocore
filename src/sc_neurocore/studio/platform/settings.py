@@ -121,7 +121,9 @@ class StudioRuntimeSettings:
         if not self.enforce_route_policies:
             raise ValueError("Studio production profile requires route policy enforcement.")
         if self.allow_header_principal:
-            raise ValueError("Studio production profile requires header principal fallback disabled.")
+            raise ValueError(
+                "Studio production profile requires header principal fallback disabled."
+            )
         if self.identity_file_path is None:
             raise ValueError("Studio production profile requires an identity file.")
         if self.audit_log_path is None:
@@ -189,7 +191,9 @@ def build_default_studio_runtime_settings(
         else raw_identity_file_path.strip()
     )
     job_root_path = (
-        None if raw_job_root_path is None or not raw_job_root_path.strip() else raw_job_root_path.strip()
+        None
+        if raw_job_root_path is None or not raw_job_root_path.strip()
+        else raw_job_root_path.strip()
     )
     try:
         job_default_timeout_seconds = (

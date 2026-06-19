@@ -347,9 +347,7 @@ class JsonlAuditSink:
     def _public_export_row(self, parsed: dict[object, object]) -> dict[str, str | None]:
         row: dict[str, str | None] = {}
         for key, value in parsed.items():
-            if not isinstance(key, str) or not (
-                isinstance(value, str) or value is None
-            ):
+            if not isinstance(key, str) or not (isinstance(value, str) or value is None):
                 self._last_error = "AuditExportInvalidRow"
                 raise AuditSinkError("Studio audit export failed.")
             row[key] = value

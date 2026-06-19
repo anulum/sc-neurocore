@@ -102,7 +102,9 @@ class StudioIdentityAuthenticator:
             if not hmac.compare_digest(record.token_sha256, token_hash):
                 continue
             if not record.active:
-                return StudioIdentityResult(principal=None, failure_reason="disabled_identity_token")
+                return StudioIdentityResult(
+                    principal=None, failure_reason="disabled_identity_token"
+                )
             if record.expires_at_utc is not None and self._utc_now_value() >= record.expires_at_utc:
                 return StudioIdentityResult(principal=None, failure_reason="expired_identity_token")
             return StudioIdentityResult(
