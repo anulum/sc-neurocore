@@ -36,7 +36,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
-
 # ── Safety Standards ─────────────────────────────────────────────────
 
 
@@ -1420,7 +1419,7 @@ class ChangeImpactTracker:
         self.changes.append(change)
 
     def affected_requirements(self) -> List[str]:
-        reqs: set = set()
+        reqs: set[str] = set()
         for c in self.changes:
             if not isinstance(c, ChangeRecord):
                 raise ValueError("changes must contain ChangeRecord entries")
