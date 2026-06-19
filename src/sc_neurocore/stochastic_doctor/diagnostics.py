@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field, asdict
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -42,7 +42,7 @@ _sdc_rust = None
 
 if not _os.environ.get("SC_NEUROCORE_NO_RUST"):
     try:
-        from sc_neurocore.stochastic_doctor import stochastic_doctor_core as _sdc_rust  # type: ignore[attr-defined,no-redef]
+        from sc_neurocore.stochastic_doctor import stochastic_doctor_core as _sdc_rust
 
         # `stochastic_doctor/__init__.py` now returns `None` on missing
         # .so rather than raising — so the real gate is a non-None value.
@@ -76,7 +76,7 @@ class BitstreamAuditFinding:
     severity: AuditSeverity
     message: str
     metric: float = 0.0
-    neuron_pair: Optional[tuple] = None
+    neuron_pair: Optional[tuple[int, int]] = None
 
 
 @dataclass
@@ -92,11 +92,11 @@ class BitstreamAuditReport:
     max_correlation: float = 0.0
     mean_precision: float = 0.0
     precision_variance: float = 0.0
-    hot_neurons: List[tuple] = field(default_factory=list)
+    hot_neurons: List[tuple[int, int, float]] = field(default_factory=list)
     findings: List[BitstreamAuditFinding] = field(default_factory=list)
     status: AuditSeverity = AuditSeverity.OK
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Serialize to a plain dict (JSON-compatible)."""
         d = asdict(self)
         d["status"] = self.status.value
@@ -113,7 +113,7 @@ class BitstreamAuditReport:
 # ---------------------------------------------------------------------------
 
 
-def _scc_python(a: np.ndarray, b: np.ndarray) -> float:
+def _scc_python(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
     """Pure Python SCC (fallback when Rust core unavailable)."""
     pa = float(np.mean(a))
     pb = float(np.mean(b))
@@ -130,7 +130,7 @@ def _scc_python(a: np.ndarray, b: np.ndarray) -> float:
     return max(-1.0, min(1.0, numerator / denominator))
 
 
-def compute_scc(a: np.ndarray, b: np.ndarray) -> float:
+def compute_scc(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
     """Compute SCC between two bitstreams.
 
     Uses Rust PyO3 acceleration when available, falls back to pure Python.
@@ -214,11 +214,11 @@ class StochasticDoctor:
         self.correlation_threshold = correlation_threshold
         self.critical_threshold = critical_threshold
 
-    def compute_correlation(self, a: np.ndarray, b: np.ndarray) -> float:
+    def compute_correlation(self, a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
         """Compute SCC between two bitstreams."""
         return compute_scc(a, b)
 
-    def estimate_precision(self, bitstream: np.ndarray) -> tuple:
+    def estimate_precision(self, bitstream: np.ndarray[Any, Any]) -> tuple[float, float]:
         """Estimate probability and variance bound for a bitstream.
 
         Uses Rust PyO3 acceleration when available.
@@ -238,7 +238,9 @@ class StochasticDoctor:
         variance = p * (1.0 - p) / n
         return (p, variance)
 
-    def compute_histogram(self, bitstream: np.ndarray, word_size: int = 64) -> np.ndarray:
+    def compute_histogram(
+        self, bitstream: np.ndarray[Any, Any], word_size: int = 64
+    ) -> np.ndarray[Any, Any]:
         """Compute per-word popcount histogram.
 
         Splits the bitstream into chunks of ``word_size`` and counts
@@ -264,7 +266,7 @@ class StochasticDoctor:
             hist[pc] += 1
         return hist
 
-    def audit_layer(self, layer_id: str, bitstreams: np.ndarray) -> BitstreamAuditReport:
+    def audit_layer(self, layer_id: str, bitstreams: np.ndarray[Any, Any]) -> BitstreamAuditReport:
         """Audit a full layer of bitstreams.
 
         Parameters
@@ -296,7 +298,7 @@ class StochasticDoctor:
 
         # Pairwise SCC analysis
         max_corr = 0.0
-        hot_pairs: List[tuple] = []
+        hot_pairs: List[tuple[int, int, float]] = []
 
         for i in range(num_neurons):
             for j in range(i + 1, num_neurons):

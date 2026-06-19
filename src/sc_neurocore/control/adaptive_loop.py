@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
 
@@ -95,8 +95,8 @@ class AdaptiveController:
 
     def step(
         self,
-        bitstream_a: np.ndarray,
-        bitstream_b: np.ndarray,
+        bitstream_a: np.ndarray[Any, Any],
+        bitstream_b: np.ndarray[Any, Any],
     ) -> Optional[AdaptationEvent]:
         """Feed a bitstream pair; returns AdaptationEvent if re-optimisation triggered."""
         self.monitor.observe(bitstream_a, bitstream_b)

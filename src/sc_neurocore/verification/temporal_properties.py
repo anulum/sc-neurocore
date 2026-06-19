@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 import numpy as np
 
@@ -63,7 +64,7 @@ class VerificationResult:
 
 
 def fires_within(
-    spikes: np.ndarray,
+    spikes: np.ndarray[Any, Any],
     neuron_id: int,
     stimulus_times: list[int],
     max_latency: int,
@@ -111,7 +112,7 @@ def fires_within(
 
 
 def mutual_exclusion(
-    spikes: np.ndarray,
+    spikes: np.ndarray[Any, Any],
     neuron_set: list[int],
 ) -> VerificationResult:
     """Verify that no two neurons in the set fire at the same timestep.
@@ -147,7 +148,7 @@ def mutual_exclusion(
 
 
 def rate_bound(
-    spikes: np.ndarray,
+    spikes: np.ndarray[Any, Any],
     neuron_id: int,
     max_rate: float,
     window_size: int,
@@ -191,7 +192,7 @@ def rate_bound(
 
 
 def refractory_guarantee(
-    spikes: np.ndarray,
+    spikes: np.ndarray[Any, Any],
     neuron_id: int,
     min_gap: int,
 ) -> VerificationResult:
@@ -231,7 +232,7 @@ def refractory_guarantee(
 
 
 def causal_order(
-    spikes: np.ndarray,
+    spikes: np.ndarray[Any, Any],
     neuron_a: int,
     neuron_b: int,
     max_delay: int,
@@ -281,7 +282,7 @@ def causal_order(
 
 
 def bounded_activity(
-    spikes: np.ndarray,
+    spikes: np.ndarray[Any, Any],
     neuron_set: list[int],
     window_size: int,
     max_total_spikes: int,

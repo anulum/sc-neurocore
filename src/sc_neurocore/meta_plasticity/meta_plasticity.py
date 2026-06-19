@@ -87,11 +87,11 @@ class STDPParams:
     a_minus: float = 0.012
     lr: float = 0.01
 
-    def to_vector(self) -> np.ndarray:
+    def to_vector(self) -> np.ndarray[Any, Any]:
         return np.array([self.tau_plus, self.tau_minus, self.a_plus, self.a_minus, self.lr])
 
     @classmethod
-    def from_vector(cls, v: np.ndarray) -> STDPParams:
+    def from_vector(cls, v: np.ndarray[Any, Any]) -> STDPParams:
         return cls(
             tau_plus=max(1.0, float(v[0])),
             tau_minus=max(1.0, float(v[1])),
@@ -109,11 +109,11 @@ class STPParams:
     tau_d: float = 200.0  # ms, depression
     tau_f: float = 20.0  # ms, facilitation
 
-    def to_vector(self) -> np.ndarray:
+    def to_vector(self) -> np.ndarray[Any, Any]:
         return np.array([self.u_base, self.tau_d, self.tau_f])
 
     @classmethod
-    def from_vector(cls, v: np.ndarray) -> STPParams:
+    def from_vector(cls, v: np.ndarray[Any, Any]) -> STPParams:
         return cls(
             u_base=float(np.clip(v[0], 0.01, 0.99)),
             tau_d=max(1.0, float(v[1])),
@@ -160,7 +160,7 @@ class PlasticityRuleSet:
     generation: int = 0
     fitness: float = 0.0
 
-    def to_vector(self) -> np.ndarray:
+    def to_vector(self) -> np.ndarray[Any, Any]:
         """Serialise all mutable params to a flat vector."""
         return np.concatenate(
             [
@@ -177,7 +177,7 @@ class PlasticityRuleSet:
         )
 
     @classmethod
-    def from_vector(cls, v: np.ndarray, gen: int = 0) -> PlasticityRuleSet:
+    def from_vector(cls, v: np.ndarray[Any, Any], gen: int = 0) -> PlasticityRuleSet:
         stdp = STDPParams.from_vector(v[0:5])
         stp = STPParams.from_vector(v[5:8])
         homeo = HomeostaticParams(
@@ -578,7 +578,7 @@ class RuleCheckpoint:
     """Serialisable snapshot of a PlasticityRuleSet at a point in time."""
 
     step: int
-    vector: np.ndarray
+    vector: np.ndarray[Any, Any]
     fitness: float
     generation: int
     tag: str = ""
@@ -638,8 +638,8 @@ class EWCProtection:
     """
 
     importance: float = 1000.0
-    anchor: Optional[np.ndarray] = None
-    fisher: Optional[np.ndarray] = None
+    anchor: Optional[np.ndarray[Any, Any]] = None
+    fisher: Optional[np.ndarray[Any, Any]] = None
 
     def consolidate(self, rules: PlasticityRuleSet) -> None:
         """Set the current rules as the anchor point."""
@@ -678,10 +678,10 @@ class CuriositySignal:
     """
 
     alpha: float = 0.1  # EMA smoothing
-    _predicted: Optional[np.ndarray] = None
+    _predicted: Optional[np.ndarray[Any, Any]] = None
     curiosity: float = 0.0
 
-    def update(self, state_vector: np.ndarray) -> float:
+    def update(self, state_vector: np.ndarray[Any, Any]) -> float:
         """Update prediction model and return curiosity score."""
         if self._predicted is None:
             self._predicted = state_vector.copy()
