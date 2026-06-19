@@ -17,7 +17,7 @@ from uuid import uuid4
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -64,6 +64,7 @@ from sc_neurocore.studio.synthesis import (
     multi_target_synthesis,
     run_pnr,
     run_synthesis,
+    supported_targets,
 )
 from sc_neurocore.studio.project import (
     delete_project,
@@ -101,6 +102,7 @@ from sc_neurocore.studio.platform import (
     StudioIdentityAuthenticator,
     StudioIdentityResult,
     StudioJobArtifactUnavailable,
+    StudioJobContext,
     StudioJobManager,
     StudioRuntimeSettings,
     build_default_studio_capability_registry,
@@ -379,6 +381,33 @@ class _SimCache:
 
 
 _cache = _SimCache()
+
+
+def _serialize_studio_worker_result(result: dict[str, Any]) -> str:
+    """Serialize a Studio worker result into a stable artifact payload."""
+
+    return json.dumps(result, sort_keys=True, default=str)
+
+
+def _validate_synthesis_verilog(verilog: Any) -> str:
+    """Return validated Verilog source for bounded synthesis worker routes."""
+
+    if not isinstance(verilog, str):
+        raise HTTPException(422, "verilog source must be a string")
+    if not verilog.strip():
+        raise HTTPException(422, "verilog source required")
+    if len(verilog.encode("utf-8")) > 2 * 1024 * 1024:
+        raise HTTPException(422, "verilog source exceeds 2 MiB size limit")
+    return verilog
+
+
+def _validate_synthesis_target(target: Any) -> str:
+    """Return a validated synthesis target identifier."""
+
+    targets = supported_targets()
+    if not isinstance(target, str) or target not in targets:
+        raise HTTPException(422, f"unknown synthesis target; supported targets: {list(targets)}")
+    return target
 
 
 def _safe(fn: Callable[..., Any]) -> Any:
@@ -815,6 +844,38 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             response.headers.setdefault(name, value)
         response.headers.setdefault(settings.request_id_header, request_id)
         return response
+
+    def run_studio_worker_job_sync(
+        *,
+        kind: str,
+        owner: str,
+        artifact_path: str,
+        task: Callable[[], dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Run one API workload through the bounded Studio job manager."""
+
+        def job_task(context: StudioJobContext) -> dict[str, object]:
+            result = task()
+            context.write_artifact(artifact_path, _serialize_studio_worker_result(result))
+            return cast(dict[str, object], result)
+
+        submitted = studio_job_manager.submit(
+            kind=kind,
+            owner=owner,
+            request_id=None,
+            task=job_task,
+        )
+        completed = studio_job_manager.wait(
+            submitted.job_id,
+            timeout_seconds=settings.job_default_timeout_seconds + 1.0,
+        )
+        if completed.status == "completed" and completed.result is not None:
+            return cast(dict[str, Any], completed.result)
+        if completed.status in {"pending", "running", "cancelling"}:
+            raise HTTPException(503, "studio_job_wait_exceeded")
+        if completed.status == "timed_out":
+            raise HTTPException(504, "studio_job_timed_out")
+        raise HTTPException(500, "studio_job_failed")
 
     # --- Health ---
     @app.get("/api/health")
@@ -1513,7 +1574,14 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             )
             return {"verilog": verilog, "module_name": req.module_name, "chars": len(verilog)}
 
-        return _safe(fn)
+        return _safe(
+            lambda: run_studio_worker_job_sync(
+                kind="compiler",
+                owner="studio-compiler",
+                artifact_path="compiler/result.json",
+                task=fn,
+            )
+        )
 
     # --- Frequency Response (#11) ---
     @app.post("/api/freq-response")
@@ -1760,18 +1828,28 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
 
     @app.post("/api/synth/run")
     def api_synth_run(data: dict[str, Any]) -> Any:
-        verilog = data.get("verilog", "")
-        target = data.get("target", "ice40")
-        if not verilog:
-            raise HTTPException(422, "verilog source required")
-        return _safe(lambda: run_synthesis(verilog, target))
+        verilog = _validate_synthesis_verilog(data.get("verilog", ""))
+        target = _validate_synthesis_target(data.get("target", "ice40"))
+        return _safe(
+            lambda: run_studio_worker_job_sync(
+                kind="synthesis",
+                owner="studio-synthesis",
+                artifact_path="synthesis/result.json",
+                task=lambda: run_synthesis(verilog, target),
+            )
+        )
 
     @app.post("/api/synth/multi-target")
     def api_synth_multi(data: dict[str, Any]) -> Any:
-        verilog = data.get("verilog", "")
-        if not verilog:
-            raise HTTPException(422, "verilog source required")
-        return _safe(lambda: multi_target_synthesis(verilog))
+        verilog = _validate_synthesis_verilog(data.get("verilog", ""))
+        return _safe(
+            lambda: run_studio_worker_job_sync(
+                kind="synthesis",
+                owner="studio-synthesis",
+                artifact_path="synthesis/multi-target-result.json",
+                task=lambda: multi_target_synthesis(verilog),
+            )
+        )
 
     @app.post("/api/synth/estimate")
     def api_synth_estimate(data: dict[str, Any]) -> Any:
@@ -1787,10 +1865,17 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.post("/api/synth/pnr")
     def api_synth_pnr(data: dict[str, Any]) -> Any:
         json_path = data.get("json_path", "")
-        target = data.get("target", "ice40")
         if not json_path:
             raise HTTPException(422, "json_path required")
-        return _safe(lambda: run_pnr(json_path, target))
+        target = _validate_synthesis_target(data.get("target", "ice40"))
+        return _safe(
+            lambda: run_studio_worker_job_sync(
+                kind="synthesis",
+                owner="studio-pnr",
+                artifact_path="synthesis/pnr-result.json",
+                task=lambda: run_pnr(json_path, target),
+            )
+        )
 
     # --- Integration (Block 6) ---
     @app.post("/api/project/save")
@@ -1822,8 +1907,15 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.post("/api/pipeline/run")
     def api_pipeline_run(data: dict[str, Any]) -> Any:
         graph = data.get("graph", {})
-        target = data.get("target", "ice40")
-        return _safe(lambda: run_pipeline(graph, target))
+        target = _validate_synthesis_target(data.get("target", "ice40"))
+        return _safe(
+            lambda: run_studio_worker_job_sync(
+                kind="compiler",
+                owner="studio-pipeline",
+                artifact_path="pipeline/result.json",
+                task=lambda: run_pipeline(graph, target),
+            )
+        )
 
     # --- Network Canvas (Block 5) ---
     @app.get("/api/graph/models")

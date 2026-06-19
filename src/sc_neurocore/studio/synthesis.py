@@ -11,14 +11,25 @@ from __future__ import annotations
 from typing import Any
 import json
 import os
-import subprocess
+import shutil
+import subprocess  # nosec B404
 import tempfile
 from pathlib import Path
+
+_EDA_TOOL_ALLOWLIST = frozenset({"yosys", "nextpnr-ice40", "nextpnr-ecp5", "firtool"})
+
+
+def _resolve_eda_tool(name: str) -> str | None:
+    """Resolve an allowlisted EDA executable to an absolute path."""
+
+    if name not in _EDA_TOOL_ALLOWLIST:
+        raise ValueError(f"Unsupported EDA tool: {name}")
+    return shutil.which(name)
 
 
 def check_tools() -> dict[str, Any]:
     """Detect which EDA tools are installed."""
-    tools = {}
+    tools: dict[str, dict[str, bool | str | None]] = {}
     for name, cmd in [
         ("yosys", ["yosys", "--version"]),
         ("nextpnr_ice40", ["nextpnr-ice40", "--version"]),
@@ -26,7 +37,17 @@ def check_tools() -> dict[str, Any]:
         ("firtool", ["firtool", "--version"]),
     ]:
         try:
-            r = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            executable = _resolve_eda_tool(cmd[0])
+            if executable is None:
+                tools[name] = {"available": False, "version": None}
+                continue
+            r = subprocess.run(  # nosec B603
+                [executable, *cmd[1:]],
+                capture_output=True,
+                shell=False,
+                text=True,
+                timeout=5,
+            )
             version = r.stdout.strip().split("\n")[0] if r.returncode == 0 else None
             tools[name] = {"available": r.returncode == 0, "version": version}
         except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -47,6 +68,12 @@ _DEVICE_CAPACITY = {
     "gowin": {"luts": 20736, "ffs": 20736, "brams": 41, "dsps": 0},
     "xilinx": {"luts": 20800, "ffs": 41600, "brams": 50, "dsps": 90},
 }
+
+
+def supported_targets() -> tuple[str, ...]:
+    """Return synthesis targets accepted by the Studio EDA routes."""
+
+    return tuple(_TARGETS)
 
 
 def run_synthesis(verilog_source: str, target: str = "ice40") -> dict[str, Any]:
@@ -74,10 +101,19 @@ def run_synthesis(verilog_source: str, target: str = "ice40") -> dict[str, Any]:
         with open(script_path, "w") as f:
             f.write(script)
 
+        yosys_executable = _resolve_eda_tool("yosys")
+        if yosys_executable is None:
+            return {
+                "success": False,
+                "error": "yosys not found. Install: https://github.com/YosysHQ/yosys",
+                "target": target,
+            }
+
         try:
-            result = subprocess.run(
-                ["yosys", "-s", script_path],
+            result = subprocess.run(  # nosec B603
+                [yosys_executable, "-s", script_path],
                 capture_output=True,
+                shell=False,
                 text=True,
                 timeout=60,
             )
@@ -85,11 +121,7 @@ def run_synthesis(verilog_source: str, target: str = "ice40") -> dict[str, Any]:
             with open(log_path, "w") as f:
                 f.write(log)
         except FileNotFoundError:
-            return {
-                "success": False,
-                "error": "yosys not found. Install: https://github.com/YosysHQ/yosys",
-                "target": target,
-            }
+            return {"success": False, "error": "yosys not found", "target": target}
         except subprocess.TimeoutExpired:
             return {"success": False, "error": "Synthesis timed out (60s)", "target": target}
 
@@ -228,10 +260,18 @@ def run_pnr(json_path: str, target: str = "ice40") -> dict[str, Any]:
         return {"success": False, "error": "PnR input JSON must be an object"}
 
     asc_path = str(resolved_json.with_suffix(".asc"))
+    pnr_tool = cfg["pnr"]
+    if pnr_tool is None:
+        return {"success": False, "error": f"No PnR tool for target {target}"}
+    pnr_executable = _resolve_eda_tool(pnr_tool)
+    if pnr_executable is None:
+        return {"success": False, "error": f"{pnr_tool} not found"}
+
     try:
-        result = subprocess.run(
-            [cfg["pnr"], f"--{cfg['device']}", "--json", str(resolved_json), "--asc", asc_path],
+        result = subprocess.run(  # nosec B603
+            [pnr_executable, f"--{cfg['device']}", "--json", str(resolved_json), "--asc", asc_path],
             capture_output=True,
+            shell=False,
             text=True,
             timeout=120,
         )
@@ -257,6 +297,6 @@ def run_pnr(json_path: str, target: str = "ice40") -> dict[str, Any]:
             "log_excerpt": log[-300:],
         }
     except FileNotFoundError:
-        return {"success": False, "error": f"{cfg['pnr']} not found"}
+        return {"success": False, "error": f"{pnr_tool} not found"}
     except subprocess.TimeoutExpired:
         return {"success": False, "error": "PnR timed out (120s)"}

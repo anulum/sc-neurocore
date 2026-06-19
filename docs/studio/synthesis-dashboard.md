@@ -108,6 +108,12 @@ strings when available.
 | POST | `/api/synth/estimate` | IR op count → heuristic estimate |
 | POST | `/api/synth/pnr` | JSON netlist → nextpnr place & route |
 
+`/api/synth/run`, `/api/synth/multi-target`, and `/api/synth/pnr` execute
+through the Studio local worker manager. They preserve the synchronous response
+payloads shown below and additionally create Admin queue records with result
+artifacts at `synthesis/result.json`,
+`synthesis/multi-target-result.json`, and `synthesis/pnr-result.json`.
+
 ### GET /api/synth/tools-status
 
 Returns availability and version for each tool:

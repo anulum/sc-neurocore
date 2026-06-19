@@ -298,6 +298,13 @@ worker manager. The training monitor's SSE stream remains the live metric
 channel, while the Admin queue records the bounded training job and its
 path-free terminal artifact manifest.
 
+Compile, synthesis, PnR, and full-pipeline routes also submit through the
+bounded worker manager. Their HTTP responses remain synchronous for existing UI
+flows, and the Admin queue records path-free artifacts at
+`compiler/result.json`, `synthesis/result.json`,
+`synthesis/multi-target-result.json`, `synthesis/pnr-result.json`, and
+`pipeline/result.json`.
+
 Job artifacts are served through the admin-gated
 `/api/studio/jobs/{job_id}/artifacts/{artifact_path}` endpoint. The endpoint
 only serves manifest-declared artifacts, revalidates the recorded size and
@@ -324,9 +331,9 @@ identity file, audit log, and job root are all configured.
 The Studio includes five additional panels beyond the core research workbench:
 
 - **Compiler Inspector** — build SC IR, verify, emit SystemVerilog. [Details](../studio/compiler-inspector.md)
-- **Synthesis Dashboard** — Yosys synthesis for 4 FPGA targets, multi-target comparison, resource estimation. [Details](../studio/synthesis-dashboard.md)
+- **Synthesis Dashboard** — worker-backed Yosys synthesis for 4 FPGA targets, multi-target comparison, resource estimation. [Details](../studio/synthesis-dashboard.md)
 - **Training Monitor** — live SNN training with 6 surrogate gradients, SSE metric streaming. [Details](../studio/training-monitor.md)
 - **Network Canvas** — drag-and-drop populations and projections with React Flow, NIR export/import. [Details](../studio/network-canvas.md)
-- **Integration** — full pipeline (graph → compile → synthesise), project save/load. [Details](../studio/integration.md)
+- **Integration** — worker-backed full pipeline (graph → compile → synthesise), project save/load. [Details](../studio/integration.md)
 
 Full documentation: [Studio Hub](../studio/index.md)

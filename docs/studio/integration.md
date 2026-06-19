@@ -75,6 +75,11 @@ and why.
 | DELETE | `/api/project/{name}` | Delete a saved project |
 | POST | `/api/pipeline/run` | Run full pipeline |
 
+`/api/pipeline/run` executes through the Studio local worker manager. It keeps
+the synchronous pipeline response used by the Network Canvas and also records a
+`studio-pipeline` Admin queue job with the path-free result artifact
+`pipeline/result.json`.
+
 ### POST /api/project/save
 
 ```json

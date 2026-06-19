@@ -116,6 +116,12 @@ runtime features:
   `/api/training/status/{job_id}` now use the local worker manager for bounded
   training execution while preserving the training monitor's existing SSE
   metric stream contract.
+- `/api/compile`, `/api/synth/run`, `/api/synth/multi-target`,
+  `/api/synth/pnr`, and `/api/pipeline/run` execute through the same bounded
+  local worker manager while preserving their synchronous response payloads.
+  The Admin queue records `studio-compiler`, `studio-synthesis`, `studio-pnr`,
+  and `studio-pipeline` owners with path-free result artifacts under
+  `compiler/`, `synthesis/`, and `pipeline/`.
 - `/api/studio/jobs` and `/api/studio/jobs/{job_id}` return admin-only,
   path-free job records for the Admin panel queue view. Records include job
   status, owner, request ID, timestamps, result metadata, and artifact
@@ -324,10 +330,10 @@ for complete API details with request/response examples.
 | `/api/simulate`, `/api/models/*` | Phase 1 | ODE/model simulation, templates, presets |
 | `/api/fi-curve`, `/api/bifurcation`, `/api/heatmap`, ... | Phase 1 | Analysis views |
 | `/api/ir/*` | Compiler Inspector | IR build, verify, emit SV, co-sim |
-| `/api/synth/*` | Synthesis Dashboard | Yosys synthesis, multi-target, estimate |
+| `/api/compile`, `/api/synth/*` | Compiler/Synthesis | Worker-backed compile, Yosys synthesis, multi-target, estimate |
 | `/api/training/*` | Training Monitor | Start/stop, SSE stream, surrogates |
 | `/api/graph/*` | Network Canvas | Populations, projections, validate, simulate, NIR |
-| `/api/project/*`, `/api/pipeline/*` | Integration | Save/load, full pipeline |
+| `/api/project/*`, `/api/pipeline/*` | Integration | Save/load, worker-backed full pipeline |
 | `/api/studio/audit/*` | Admin | Audit status and admin-gated export |
 | `/api/studio/operator/status` | Admin | Aggregate operator control-plane health |
 
