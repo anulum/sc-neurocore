@@ -379,6 +379,7 @@ def test_studio_app_records_policy_events_to_configured_audit_log(tmp_path: Path
     assert row["principal_id"] is None
     assert row["reason"] == "missing_principal"
     assert row["route"] == "/api/simulate"
+    assert row["schema_version"] == "studio.audit.v1"
     assert datetime.fromisoformat(row["timestamp_utc"].replace("Z", "+00:00")).tzinfo is UTC
 
 
