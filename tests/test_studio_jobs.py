@@ -8,9 +8,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import time
 import threading
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -22,6 +24,7 @@ from starlette.testclient import TestClient
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import StudioRuntimeSettings
 from sc_neurocore.studio.platform.jobs import (
+    StudioJobArtifactUnavailable,
     StudioJobContext,
     StudioJobManager,
     StudioJobRejected,
@@ -55,6 +58,56 @@ def test_studio_job_manager_completes_job_with_path_free_artifact_manifest(
     assert completed.artifacts[0].relative_path == "reports/result.txt"
     assert str(tmp_path) not in str(completed.to_public_dict())
     assert (tmp_path / "jobs" / record.job_id / "reports" / "result.txt").read_bytes() == b"ok"
+
+
+def test_studio_job_manager_reads_manifest_declared_artifacts(tmp_path: Path) -> None:
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"synthesis"}),
+        default_timeout_seconds=1.0,
+    )
+
+    def task(context: StudioJobContext) -> dict[str, object]:
+        context.write_artifact("reports/result.txt", "artifact body")
+        return {"ok": True}
+
+    record = manager.submit(
+        kind="synthesis",
+        owner="operator-1",
+        request_id="req-1",
+        task=task,
+    )
+    manager.wait(record.job_id, timeout_seconds=2.0)
+
+    payload = manager.read_artifact(record.job_id, "reports/result.txt")
+
+    assert payload.payload == b"artifact body"
+    assert payload.artifact.relative_path == "reports/result.txt"
+    assert payload.artifact.sha256 == hashlib.sha256(b"artifact body").hexdigest()
+
+
+def test_studio_job_manager_rejects_tampered_manifest_artifact(tmp_path: Path) -> None:
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"synthesis"}),
+        default_timeout_seconds=1.0,
+    )
+
+    def task(context: StudioJobContext) -> dict[str, object]:
+        context.write_artifact("reports/result.txt", b"original")
+        return {"ok": True}
+
+    record = manager.submit(
+        kind="synthesis",
+        owner="operator-1",
+        request_id="req-1",
+        task=task,
+    )
+    manager.wait(record.job_id, timeout_seconds=2.0)
+    (tmp_path / "jobs" / record.job_id / "reports" / "result.txt").write_bytes(b"tampered")
+
+    with pytest.raises(StudioJobArtifactUnavailable, match="integrity"):
+        manager.read_artifact(record.job_id, "reports/result.txt")
 
 
 def test_studio_job_manager_rejects_artifact_path_traversal(tmp_path: Path) -> None:
@@ -238,4 +291,82 @@ def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:
         "schema_version": "studio.jobs.status.v1",
         "timed_out_count": 0,
     }
+    assert str(tmp_path) not in response.text
+
+
+def test_studio_job_artifact_endpoint_is_admin_gated_and_integrity_checked(
+    tmp_path: Path,
+) -> None:
+    app = create_app(
+        runtime_settings=StudioRuntimeSettings(
+            enforce_route_policies=True,
+            job_root_path=str(tmp_path / "jobs"),
+            job_default_timeout_seconds=3.0,
+        )
+    )
+    manager = cast(StudioJobManager, app.state.studio_job_manager)
+
+    def task(context: StudioJobContext) -> dict[str, object]:
+        context.write_artifact("reports/result.txt", b"artifact body")
+        return {"ok": True}
+
+    record = manager.submit(
+        kind="synthesis",
+        owner="operator-1",
+        request_id="req-1",
+        task=task,
+    )
+    manager.wait(record.job_id, timeout_seconds=2.0)
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    missing_principal = client.get(f"/api/studio/jobs/{record.job_id}/artifacts/reports/result.txt")
+    allowed = client.get(
+        f"/api/studio/jobs/{record.job_id}/artifacts/reports/result.txt",
+        headers={"x-studio-principal": "admin-1", "x-studio-roles": "studio.admin"},
+    )
+
+    assert missing_principal.status_code == 401
+    assert missing_principal.json()["detail"] == "missing_principal"
+    assert allowed.status_code == 200
+    assert allowed.content == b"artifact body"
+    assert allowed.headers["content-type"] == "application/octet-stream"
+    assert allowed.headers["x-studio-artifact-size"] == str(len(b"artifact body"))
+    assert (
+        allowed.headers["x-studio-artifact-sha256"] == hashlib.sha256(b"artifact body").hexdigest()
+    )
+    assert str(tmp_path) not in str(allowed.headers)
+    assert str(tmp_path) not in allowed.text
+
+
+def test_studio_job_artifact_endpoint_uses_generic_integrity_errors(tmp_path: Path) -> None:
+    app = create_app(
+        runtime_settings=StudioRuntimeSettings(
+            enforce_route_policies=True,
+            job_root_path=str(tmp_path / "jobs"),
+            job_default_timeout_seconds=3.0,
+        )
+    )
+    manager = cast(StudioJobManager, app.state.studio_job_manager)
+
+    def task(context: StudioJobContext) -> dict[str, object]:
+        context.write_artifact("reports/result.txt", b"original")
+        return {"ok": True}
+
+    record = manager.submit(
+        kind="synthesis",
+        owner="operator-1",
+        request_id="req-1",
+        task=task,
+    )
+    manager.wait(record.job_id, timeout_seconds=2.0)
+    (tmp_path / "jobs" / record.job_id / "reports" / "result.txt").write_bytes(b"tampered")
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.get(
+        f"/api/studio/jobs/{record.job_id}/artifacts/reports/result.txt",
+        headers={"x-studio-principal": "admin-1", "x-studio-roles": "studio.admin"},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "job_artifact_unavailable"
     assert str(tmp_path) not in response.text

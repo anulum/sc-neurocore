@@ -554,12 +554,18 @@ def test_default_route_policy_registry_classifies_platform_routes() -> None:
     detail_policy = registry.policy_for("GET", "/api/studio/capabilities/{capability_id}")
     operator_status_policy = registry.policy_for("GET", "/api/studio/operator/status")
     audit_export_policy = registry.policy_for("GET", "/api/studio/audit/export")
+    artifact_policy = registry.policy_for(
+        "GET",
+        "/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}",
+    )
 
     assert health_policy.visibility is contract["RouteVisibility"].PUBLIC
     assert capability_policy.visibility is contract["RouteVisibility"].PUBLIC
     assert detail_policy.visibility is contract["RouteVisibility"].PUBLIC
     assert operator_status_policy.visibility is contract["RouteVisibility"].ADMIN
     assert audit_export_policy.visibility is contract["RouteVisibility"].ADMIN
+    assert artifact_policy.visibility is contract["RouteVisibility"].ADMIN
+    assert artifact_policy.audit_action == "studio.jobs.artifact.read"
 
 
 def test_default_route_policy_registry_reports_unclassified_platform_route() -> None:
@@ -626,8 +632,13 @@ def test_default_route_policy_registry_marks_stateful_routes_protected() -> None
     synth_policy = registry.policy_for("POST", "/api/synth/run")
     websocket_policy = registry.policy_for("WEBSOCKET", "/ws/progress")
     jobs_status_policy = registry.policy_for("GET", "/api/studio/jobs/status")
+    artifact_policy = registry.policy_for(
+        "GET",
+        "/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}",
+    )
 
     assert training_policy.visibility is contract["RouteVisibility"].AUTHENTICATED
     assert synth_policy.visibility is contract["RouteVisibility"].ADMIN
     assert websocket_policy.visibility is contract["RouteVisibility"].AUTHENTICATED
     assert jobs_status_policy.visibility is contract["RouteVisibility"].PUBLIC
+    assert artifact_policy.visibility is contract["RouteVisibility"].ADMIN

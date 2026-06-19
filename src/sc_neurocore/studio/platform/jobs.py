@@ -42,6 +42,10 @@ class StudioJobCancelled(RuntimeError):
     """Raised inside a cooperative Studio job when cancellation is requested."""
 
 
+class StudioJobArtifactUnavailable(RuntimeError):
+    """Raised when a declared Studio job artifact cannot be safely served."""
+
+
 @dataclass(frozen=True, slots=True)
 class StudioJobArtifact:
     """Path-free manifest entry for one Studio job artifact.
@@ -130,6 +134,14 @@ class StudioJobStatusSnapshot:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class StudioJobArtifactPayload:
+    """Verified payload for one declared Studio job artifact."""
+
+    artifact: StudioJobArtifact
+    payload: bytes
+
+
 class StudioJobContext:
     """Execution context passed to one local Studio job task."""
 
@@ -198,14 +210,11 @@ class StudioJobContext:
         return artifact
 
     def _artifact_path(self, relative_path: str) -> Path:
-        candidate = Path(relative_path)
-        if candidate.is_absolute() or any(part == ".." for part in candidate.parts):
-            raise ValueError("Studio job artifact path escapes the job directory.")
-        resolved = (self._work_dir / candidate).resolve()
-        root = self._work_dir.resolve()
-        if root != resolved and root not in resolved.parents:
-            raise ValueError("Studio job artifact path escapes the job directory.")
-        return resolved
+        return _resolve_confined_child(
+            root=self._work_dir,
+            relative_path=relative_path,
+            error_message="Studio job artifact path escapes the job directory.",
+        )
 
 
 class StudioJobManager:
@@ -307,6 +316,31 @@ class StudioJobManager:
 
         with self._lock:
             return tuple(self._records.values())
+
+    def read_artifact(self, job_id: str, relative_path: str) -> StudioJobArtifactPayload:
+        """Return a verified payload for one declared job artifact.
+
+        The requested path must match a manifest entry exactly, resolve inside
+        the owning job directory, and still match the recorded size and SHA-256
+        digest. Missing jobs or manifest entries raise ``KeyError`` so callers
+        can return a generic not-found response without exposing local paths.
+        """
+
+        record = self.record(job_id)
+        requested_path = _normalize_artifact_lookup_path(relative_path)
+        artifact = _find_artifact(record.artifacts, requested_path)
+        artifact_path = _resolve_confined_child(
+            root=self._root / job_id,
+            relative_path=artifact.relative_path,
+            error_message="Studio job artifact path escapes the job directory.",
+        )
+        if not artifact_path.is_file():
+            raise StudioJobArtifactUnavailable("Studio job artifact is unavailable.")
+        payload = artifact_path.read_bytes()
+        digest = hashlib.sha256(payload).hexdigest()
+        if len(payload) != artifact.size_bytes or digest != artifact.sha256:
+            raise StudioJobArtifactUnavailable("Studio job artifact integrity check failed.")
+        return StudioJobArtifactPayload(artifact=artifact, payload=payload)
 
     def status(self) -> StudioJobStatusSnapshot:
         """Return aggregate, path-free job manager health."""
@@ -419,9 +453,39 @@ class StudioJobManager:
         return datetime.now(UTC)
 
 
+def _find_artifact(
+    artifacts: tuple[StudioJobArtifact, ...],
+    relative_path: str,
+) -> StudioJobArtifact:
+    for artifact in artifacts:
+        if artifact.relative_path == relative_path:
+            return artifact
+    raise KeyError(relative_path)
+
+
+def _normalize_artifact_lookup_path(relative_path: str) -> str:
+    candidate = Path(relative_path)
+    if candidate.is_absolute() or any(part == ".." for part in candidate.parts):
+        raise KeyError(relative_path)
+    return relative_path
+
+
+def _resolve_confined_child(*, root: Path, relative_path: str, error_message: str) -> Path:
+    candidate = Path(relative_path)
+    if candidate.is_absolute() or any(part == ".." for part in candidate.parts):
+        raise ValueError(error_message)
+    resolved = (root / candidate).resolve()
+    resolved_root = root.resolve()
+    if resolved_root != resolved and resolved_root not in resolved.parents:
+        raise ValueError(error_message)
+    return resolved
+
+
 __all__ = [
     "JOBS_STATUS_SCHEMA_VERSION",
     "StudioJobArtifact",
+    "StudioJobArtifactPayload",
+    "StudioJobArtifactUnavailable",
     "StudioJobCancelled",
     "StudioJobContext",
     "StudioJobManager",

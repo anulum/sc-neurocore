@@ -293,6 +293,12 @@ per-job working directories on an operator-selected disk, and tune
 status payload is path-free and reports allowed job kinds plus
 active/completed/failed/timed-out counts.
 
+Job artifacts are served through the admin-gated
+`/api/studio/jobs/{job_id}/artifacts/{artifact_path}` endpoint. The endpoint
+only serves manifest-declared artifacts, revalidates the recorded size and
+SHA-256 digest before returning bytes, and uses generic error details when an
+artifact is missing or fails integrity checks.
+
 The Admin panel also uses the admin-gated `/api/studio/operator/status`
 aggregate when available. That endpoint reports deployment profile,
 route-policy enforcement, identity mode, audit health, worker health, and

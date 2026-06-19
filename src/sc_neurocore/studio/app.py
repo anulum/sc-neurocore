@@ -22,6 +22,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
+from starlette.responses import Response
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.routing import Match, Route
 import numpy as np
@@ -99,6 +100,7 @@ from sc_neurocore.studio.platform import (
     Principal,
     StudioIdentityAuthenticator,
     StudioIdentityResult,
+    StudioJobArtifactUnavailable,
     StudioJobManager,
     StudioRuntimeSettings,
     build_default_studio_capability_registry,
@@ -845,6 +847,27 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         """Return path-free local worker health for operator dashboards."""
 
         return studio_job_manager.status().to_public_dict()
+
+    @app.get("/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}")
+    def api_studio_job_artifact(job_id: str, artifact_path: str) -> Response:
+        """Download one declared Studio job artifact after integrity validation."""
+
+        try:
+            artifact_payload = studio_job_manager.read_artifact(job_id, artifact_path)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="job_artifact_not_found") from exc
+        except (StudioJobArtifactUnavailable, ValueError) as exc:
+            raise HTTPException(status_code=409, detail="job_artifact_unavailable") from exc
+        filename = Path(artifact_payload.artifact.relative_path).name or "artifact.bin"
+        return Response(
+            content=artifact_payload.payload,
+            media_type="application/octet-stream",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "X-Studio-Artifact-SHA256": artifact_payload.artifact.sha256,
+                "X-Studio-Artifact-Size": str(artifact_payload.artifact.size_bytes),
+            },
+        )
 
     @app.get("/api/studio/operator/status")
     def api_studio_operator_status() -> dict[str, object]:

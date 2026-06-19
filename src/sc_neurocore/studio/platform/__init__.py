@@ -54,6 +54,8 @@ from sc_neurocore.studio.platform.identity import (
 from sc_neurocore.studio.platform.jobs import (
     JOBS_STATUS_SCHEMA_VERSION,
     StudioJobArtifact,
+    StudioJobArtifactPayload,
+    StudioJobArtifactUnavailable,
     StudioJobCancelled,
     StudioJobContext,
     StudioJobManager,
@@ -130,6 +132,8 @@ __all__ = [
     "StudioIdentityResult",
     "StudioIdentityStore",
     "StudioJobArtifact",
+    "StudioJobArtifactPayload",
+    "StudioJobArtifactUnavailable",
     "StudioJobCancelled",
     "StudioJobContext",
     "StudioJobManager",

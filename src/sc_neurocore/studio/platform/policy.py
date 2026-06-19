@@ -537,6 +537,12 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
             ),
             (
                 "GET",
+                "/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}",
+                RouteVisibility.ADMIN,
+                "studio.jobs.artifact.read",
+            ),
+            (
+                "GET",
                 "/api/studio/operator/status",
                 RouteVisibility.ADMIN,
                 "studio.operator.status.read",

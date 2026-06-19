@@ -112,6 +112,10 @@ runtime features:
   the default cooperative timeout. The local worker manager tracks allowed job
   kinds, active/completed/failed/timed-out counts, and does not expose host
   filesystem paths.
+- `/api/studio/jobs/{job_id}/artifacts/{artifact_path}` downloads declared job
+  artifacts for administrators. The server resolves artifacts through the job
+  manifest only, revalidates size and SHA-256 before serving, and returns
+  generic errors if the artifact is missing or fails integrity checks.
 - `/api/studio/operator/status` is an admin-classified aggregate for the
   Studio control plane. It combines deployment profile, route-policy
   enforcement, identity mode, audit health, job-worker health, and capability
