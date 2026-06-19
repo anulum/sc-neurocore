@@ -19,8 +19,10 @@ def _policy_contract() -> dict[str, Any]:
             InMemoryAuditSink,
             PolicyGateway,
             Principal,
+            RoutePolicyRegistry,
             RoutePolicy,
             RouteVisibility,
+            build_default_studio_route_policy_registry,
         )
     except ImportError as exc:
         pytest.fail(f"Studio policy contract is missing: {exc}")
@@ -28,8 +30,10 @@ def _policy_contract() -> dict[str, Any]:
         "InMemoryAuditSink": InMemoryAuditSink,
         "PolicyGateway": PolicyGateway,
         "Principal": Principal,
+        "RoutePolicyRegistry": RoutePolicyRegistry,
         "RoutePolicy": RoutePolicy,
         "RouteVisibility": RouteVisibility,
+        "build_default_studio_route_policy_registry": build_default_studio_route_policy_registry,
     }
 
 
@@ -130,3 +134,63 @@ def test_route_policy_rejects_empty_audit_action_for_protected_route() -> None:
 
     with pytest.raises(ValueError, match="audit_action"):
         contract["RoutePolicy"](visibility=contract["RouteVisibility"].AUTHENTICATED)
+
+
+def test_route_policy_registry_rejects_duplicate_method_path() -> None:
+    contract = _policy_contract()
+    registry = contract["RoutePolicyRegistry"]()
+    policy = contract["RoutePolicy"](
+        visibility=contract["RouteVisibility"].PUBLIC,
+        audit_action="studio.health.read",
+    )
+    registry.register("GET", "/api/health", policy)
+
+    with pytest.raises(ValueError, match="already has a Studio route policy"):
+        registry.register("get", "/api/health", policy)
+
+
+def test_default_route_policy_registry_classifies_platform_routes() -> None:
+    contract = _policy_contract()
+    registry = contract["build_default_studio_route_policy_registry"]()
+
+    health_policy = registry.policy_for("GET", "/api/health")
+    capability_policy = registry.policy_for("GET", "/api/studio/capabilities")
+    detail_policy = registry.policy_for("GET", "/api/studio/capabilities/{capability_id}")
+
+    assert health_policy.visibility is contract["RouteVisibility"].PUBLIC
+    assert capability_policy.visibility is contract["RouteVisibility"].PUBLIC
+    assert detail_policy.visibility is contract["RouteVisibility"].PUBLIC
+
+
+def test_default_route_policy_registry_reports_unclassified_platform_route() -> None:
+    contract = _policy_contract()
+    registry = contract["build_default_studio_route_policy_registry"]()
+
+    missing = registry.missing_policies(
+        (
+            ("GET", "/api/health"),
+            ("GET", "/api/studio/capabilities"),
+            ("POST", "/api/studio/admin"),
+        )
+    )
+
+    assert missing == ("POST /api/studio/admin",)
+
+
+def test_studio_app_exposes_route_policy_registry_for_platform_routes() -> None:
+    from sc_neurocore.studio.app import create_app  # noqa: PLC0415
+    from starlette.routing import Route  # noqa: PLC0415
+
+    app = create_app()
+    platform_routes: list[tuple[str, str]] = []
+    for route in app.routes:
+        if not isinstance(route, Route):
+            continue
+        if route.path != "/api/health" and not route.path.startswith("/api/studio/"):
+            continue
+        route_methods = route.methods or set()
+        platform_routes.extend((method, route.path) for method in sorted(route_methods) if method != "HEAD")
+
+    missing = app.state.studio_route_policies.missing_policies(tuple(platform_routes))
+
+    assert missing == ()

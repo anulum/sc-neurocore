@@ -85,6 +85,40 @@ class InMemoryAuditSink:
         self._events.append(event)
 
 
+class RoutePolicyRegistry:
+    """Registry of Studio route policies keyed by HTTP method and path."""
+
+    def __init__(self) -> None:
+        self._policies: dict[tuple[str, str], RoutePolicy] = {}
+
+    def register(self, method: str, path_template: str, policy: RoutePolicy) -> None:
+        """Register one Studio route policy."""
+
+        key = self._key(method, path_template)
+        if key in self._policies:
+            raise ValueError(f"{key[0]} {key[1]} already has a Studio route policy.")
+        self._policies[key] = policy
+
+    def policy_for(self, method: str, path_template: str) -> RoutePolicy:
+        """Return the policy for one HTTP method and path template."""
+
+        return self._policies[self._key(method, path_template)]
+
+    def missing_policies(self, routes: tuple[tuple[str, str], ...]) -> tuple[str, ...]:
+        """Return route signatures that have no registered Studio policy."""
+
+        missing: list[str] = []
+        for method, path_template in routes:
+            key = self._key(method, path_template)
+            if key not in self._policies:
+                missing.append(f"{key[0]} {key[1]}")
+        return tuple(missing)
+
+    @staticmethod
+    def _key(method: str, path_template: str) -> tuple[str, str]:
+        return method.upper(), path_template
+
+
 class PolicyGateway:
     """Fail-closed Studio route authorization gateway."""
 
@@ -144,3 +178,34 @@ class PolicyGateway:
                 reason=decision.reason,
             )
         )
+
+
+def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
+    """Build route policies for the current Studio platform API surface."""
+
+    registry = RoutePolicyRegistry()
+    registry.register(
+        "GET",
+        "/api/health",
+        RoutePolicy(
+            visibility=RouteVisibility.PUBLIC,
+            audit_action="studio.health.read",
+        ),
+    )
+    registry.register(
+        "GET",
+        "/api/studio/capabilities",
+        RoutePolicy(
+            visibility=RouteVisibility.PUBLIC,
+            audit_action="studio.capabilities.read",
+        ),
+    )
+    registry.register(
+        "GET",
+        "/api/studio/capabilities/{capability_id}",
+        RoutePolicy(
+            visibility=RouteVisibility.PUBLIC,
+            audit_action="studio.capabilities.read",
+        ),
+    )
+    return registry

@@ -66,10 +66,20 @@ runtime features:
   protected Studio API surfaces. Public routes may run without a principal;
   authenticated and admin routes require an explicit policy and emit audit
   decisions.
+- `RoutePolicyRegistry` records the expected policy for each platform API route
+  and lets startup or test code detect unclassified Studio endpoints before
+  they become accidental public surfaces.
 
 The policy gateway is intentionally a platform contract first. Existing public
 health and capability routes stay backward compatible while protected route
 integration is added panel by panel.
+
+## Development Gate
+
+Studio changes are shipped as complete slices. Each backend slice updates
+strict typing, public-symbol docstrings, module-specific tests, focused coverage
+for new modules, and documentation in the same change. Generic coverage-fill
+tests are not accepted.
 
 ## Panels
 
