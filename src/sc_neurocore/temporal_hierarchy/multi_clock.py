@@ -24,6 +24,7 @@ Reference: HetSyn (NeurIPS 2025)
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -88,7 +89,7 @@ class HetSynLayer:
         self._traces = np.zeros((n_neurons, n_inputs))
         self._v = np.zeros(n_neurons)
 
-    def step(self, x: np.ndarray, dt: float = 1.0) -> np.ndarray:
+    def step(self, x: np.ndarray[Any, Any], dt: float = 1.0) -> np.ndarray[Any, Any]:
         """Process one timestep.
 
         Parameters
@@ -146,9 +147,9 @@ class MultiClockSNN:
             clock_intervals = [1] * len(layers)
         self.clock_intervals = clock_intervals
         self._step_count = 0
-        self._last_outputs: list[np.ndarray] = [np.zeros(l.n_neurons) for l in layers]
+        self._last_outputs: list[np.ndarray[Any, Any]] = [np.zeros(l.n_neurons) for l in layers]
 
-    def step(self, x: np.ndarray, dt: float = 1.0) -> np.ndarray:
+    def step(self, x: np.ndarray[Any, Any], dt: float = 1.0) -> np.ndarray[Any, Any]:
         """Process one global timestep.
 
         Layers only update when their clock ticks.
@@ -173,7 +174,7 @@ class MultiClockSNN:
 
         return h
 
-    def run(self, inputs: np.ndarray, dt: float = 1.0) -> np.ndarray:
+    def run(self, inputs: np.ndarray[Any, Any], dt: float = 1.0) -> np.ndarray[Any, Any]:
         """Run full sequence.
 
         Parameters
