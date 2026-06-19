@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 148
+expected_file_count = 149
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -476,6 +476,10 @@ rationale = "Public published neural decoder/encoder reference implementations (
 [[file]]
 path = "src/sc_neurocore/bio/transcriptomic.py"
 rationale = "Public single-cell transcriptomic foundation-model interfaces (scKG-BERT, Geneformer)."
+
+[[file]]
+path = "src/sc_neurocore/residual/blocks.py"
+rationale = "Public SNN residual blocks (MS-ResNet membrane shortcut, SEW) and deep-SNN stack."
 
 [[file]]
 path = "src/sc_neurocore/identity/checkpoint.py"
