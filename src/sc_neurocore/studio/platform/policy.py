@@ -180,32 +180,364 @@ class PolicyGateway:
         )
 
 
+def _register_routes(
+    registry: RoutePolicyRegistry,
+    routes: tuple[tuple[str, str, RouteVisibility, str], ...],
+) -> None:
+    for method, path_template, visibility, audit_action in routes:
+        registry.register(
+            method,
+            path_template,
+            RoutePolicy(visibility=visibility, audit_action=audit_action),
+        )
+
+
 def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
     """Build route policies for the current Studio platform API surface."""
 
     registry = RoutePolicyRegistry()
-    registry.register(
-        "GET",
-        "/api/health",
-        RoutePolicy(
-            visibility=RouteVisibility.PUBLIC,
-            audit_action="studio.health.read",
-        ),
-    )
-    registry.register(
-        "GET",
-        "/api/studio/capabilities",
-        RoutePolicy(
-            visibility=RouteVisibility.PUBLIC,
-            audit_action="studio.capabilities.read",
-        ),
-    )
-    registry.register(
-        "GET",
-        "/api/studio/capabilities/{capability_id}",
-        RoutePolicy(
-            visibility=RouteVisibility.PUBLIC,
-            audit_action="studio.capabilities.read",
+    _register_routes(
+        registry,
+        (
+            ("GET", "/api/health", RouteVisibility.PUBLIC, "studio.health.read"),
+            (
+                "GET",
+                "/api/studio/capabilities",
+                RouteVisibility.PUBLIC,
+                "studio.capabilities.read",
+            ),
+            (
+                "GET",
+                "/api/studio/capabilities/{capability_id}",
+                RouteVisibility.PUBLIC,
+                "studio.capabilities.read",
+            ),
+            ("GET", "/api/templates", RouteVisibility.PUBLIC, "studio.templates.read"),
+            ("GET", "/api/templates/{name}", RouteVisibility.PUBLIC, "studio.templates.read"),
+            ("GET", "/api/models", RouteVisibility.PUBLIC, "studio.models.read"),
+            ("GET", "/api/models/{name}", RouteVisibility.PUBLIC, "studio.models.read"),
+            ("GET", "/api/models/scan", RouteVisibility.PUBLIC, "studio.models.scan"),
+            ("GET", "/api/presets", RouteVisibility.PUBLIC, "studio.presets.read"),
+            (
+                "GET",
+                "/api/presets/{preset_id}",
+                RouteVisibility.PUBLIC,
+                "studio.presets.read",
+            ),
+            (
+                "GET",
+                "/api/presets/actions/catalog",
+                RouteVisibility.PUBLIC,
+                "studio.presets.actions.catalog",
+            ),
+            (
+                "GET",
+                "/api/presets/{preset_id}/actions",
+                RouteVisibility.PUBLIC,
+                "studio.presets.actions.read",
+            ),
+            (
+                "GET",
+                "/api/presets/{preset_id}/default-flow/plan",
+                RouteVisibility.PUBLIC,
+                "studio.presets.default_flow.plan.read",
+            ),
+            (
+                "GET",
+                "/api/presets/{preset_id}/default-flow/contract",
+                RouteVisibility.PUBLIC,
+                "studio.presets.default_flow.contract.read",
+            ),
+            ("GET", "/api/cache/stats", RouteVisibility.PUBLIC, "studio.cache.stats.read"),
+            (
+                "GET",
+                "/api/synth/tools-status",
+                RouteVisibility.PUBLIC,
+                "studio.synth.tools.read",
+            ),
+            (
+                "GET",
+                "/api/training/surrogates",
+                RouteVisibility.PUBLIC,
+                "studio.training.surrogates.read",
+            ),
+            (
+                "GET",
+                "/api/training/cell-types",
+                RouteVisibility.PUBLIC,
+                "studio.training.cell_types.read",
+            ),
+            ("GET", "/api/graph/models", RouteVisibility.PUBLIC, "studio.graph.models.read"),
+            (
+                "POST",
+                "/api/simulate",
+                RouteVisibility.AUTHENTICATED,
+                "studio.simulation.run",
+            ),
+            (
+                "POST",
+                "/api/models/simulate",
+                RouteVisibility.AUTHENTICATED,
+                "studio.models.simulate",
+            ),
+            (
+                "POST",
+                "/api/multi-simulate",
+                RouteVisibility.AUTHENTICATED,
+                "studio.models.multi_simulate",
+            ),
+            (
+                "POST",
+                "/api/characterize",
+                RouteVisibility.AUTHENTICATED,
+                "studio.models.characterize",
+            ),
+            (
+                "POST",
+                "/api/classify",
+                RouteVisibility.AUTHENTICATED,
+                "studio.models.classify",
+            ),
+            ("POST", "/api/fi-curve", RouteVisibility.AUTHENTICATED, "studio.analysis.fi_curve"),
+            (
+                "POST",
+                "/api/bifurcation",
+                RouteVisibility.AUTHENTICATED,
+                "studio.analysis.bifurcation",
+            ),
+            (
+                "POST",
+                "/api/sensitivity",
+                RouteVisibility.AUTHENTICATED,
+                "studio.analysis.sensitivity",
+            ),
+            (
+                "POST",
+                "/api/nullclines",
+                RouteVisibility.AUTHENTICATED,
+                "studio.analysis.nullclines",
+            ),
+            ("POST", "/api/precision", RouteVisibility.AUTHENTICATED, "studio.analysis.precision"),
+            (
+                "POST",
+                "/api/freq-response",
+                RouteVisibility.AUTHENTICATED,
+                "studio.analysis.freq_response",
+            ),
+            ("POST", "/api/heatmap", RouteVisibility.AUTHENTICATED, "studio.analysis.heatmap"),
+            (
+                "POST",
+                "/api/compare",
+                RouteVisibility.AUTHENTICATED,
+                "studio.analysis.compare",
+            ),
+            (
+                "POST",
+                "/api/import-trace",
+                RouteVisibility.AUTHENTICATED,
+                "studio.trace.import",
+            ),
+            ("POST", "/api/codegen", RouteVisibility.AUTHENTICATED, "studio.codegen.generate"),
+            ("POST", "/api/compile", RouteVisibility.AUTHENTICATED, "studio.compiler.compile"),
+            (
+                "POST",
+                "/api/adaptive-precision/auto-tune",
+                RouteVisibility.AUTHENTICATED,
+                "studio.compiler.adaptive_precision.auto_tune",
+            ),
+            (
+                "POST",
+                "/api/adaptive-precision/formal-bundle",
+                RouteVisibility.AUTHENTICATED,
+                "studio.compiler.adaptive_precision.formal_bundle",
+            ),
+            ("POST", "/api/ir/build", RouteVisibility.AUTHENTICATED, "studio.ir.build"),
+            ("POST", "/api/ir/verify", RouteVisibility.AUTHENTICATED, "studio.ir.verify"),
+            ("POST", "/api/ir/emit-sv", RouteVisibility.AUTHENTICATED, "studio.ir.emit_sv"),
+            (
+                "POST",
+                "/api/ir/emit-sv-direct",
+                RouteVisibility.AUTHENTICATED,
+                "studio.ir.emit_sv_direct",
+            ),
+            ("POST", "/api/ir/cosim", RouteVisibility.AUTHENTICATED, "studio.ir.cosim"),
+            (
+                "POST",
+                "/api/synth/estimate",
+                RouteVisibility.AUTHENTICATED,
+                "studio.synth.estimate",
+            ),
+            ("POST", "/api/synth/run", RouteVisibility.ADMIN, "studio.synth.run"),
+            (
+                "POST",
+                "/api/synth/multi-target",
+                RouteVisibility.ADMIN,
+                "studio.synth.multi_target",
+            ),
+            ("POST", "/api/synth/pnr", RouteVisibility.ADMIN, "studio.synth.pnr"),
+            ("POST", "/api/export/svg", RouteVisibility.AUTHENTICATED, "studio.export.svg"),
+            (
+                "POST",
+                "/api/network/ei",
+                RouteVisibility.AUTHENTICATED,
+                "studio.network.ei.simulate",
+            ),
+            (
+                "POST",
+                "/api/graph/population",
+                RouteVisibility.AUTHENTICATED,
+                "studio.graph.population.create",
+            ),
+            (
+                "POST",
+                "/api/graph/projection",
+                RouteVisibility.AUTHENTICATED,
+                "studio.graph.projection.create",
+            ),
+            (
+                "POST",
+                "/api/graph/validate",
+                RouteVisibility.AUTHENTICATED,
+                "studio.graph.validate",
+            ),
+            (
+                "POST",
+                "/api/graph/simulate",
+                RouteVisibility.AUTHENTICATED,
+                "studio.graph.simulate",
+            ),
+            (
+                "POST",
+                "/api/graph/export-nir",
+                RouteVisibility.AUTHENTICATED,
+                "studio.graph.export_nir",
+            ),
+            (
+                "POST",
+                "/api/graph/import-nir",
+                RouteVisibility.AUTHENTICATED,
+                "studio.graph.import_nir",
+            ),
+            (
+                "GET",
+                "/api/training/jobs",
+                RouteVisibility.AUTHENTICATED,
+                "studio.training.jobs.read",
+            ),
+            (
+                "GET",
+                "/api/training/status/{job_id}",
+                RouteVisibility.AUTHENTICATED,
+                "studio.training.status.read",
+            ),
+            (
+                "GET",
+                "/api/training/stream/{job_id}",
+                RouteVisibility.AUTHENTICATED,
+                "studio.training.stream",
+            ),
+            (
+                "POST",
+                "/api/training/start",
+                RouteVisibility.AUTHENTICATED,
+                "studio.training.start",
+            ),
+            (
+                "POST",
+                "/api/training/stop",
+                RouteVisibility.AUTHENTICATED,
+                "studio.training.stop",
+            ),
+            (
+                "GET",
+                "/api/project/list",
+                RouteVisibility.AUTHENTICATED,
+                "studio.project.list",
+            ),
+            (
+                "GET",
+                "/api/project/load/{name}",
+                RouteVisibility.AUTHENTICATED,
+                "studio.project.load",
+            ),
+            (
+                "POST",
+                "/api/project/save",
+                RouteVisibility.AUTHENTICATED,
+                "studio.project.save",
+            ),
+            (
+                "DELETE",
+                "/api/project/{name}",
+                RouteVisibility.AUTHENTICATED,
+                "studio.project.delete",
+            ),
+            (
+                "POST",
+                "/api/pipeline/run",
+                RouteVisibility.AUTHENTICATED,
+                "studio.pipeline.run",
+            ),
+            (
+                "POST",
+                "/api/presets/{preset_id}/actions/{action_id}/resolve",
+                RouteVisibility.AUTHENTICATED,
+                "studio.presets.actions.resolve",
+            ),
+            (
+                "POST",
+                "/api/presets/{preset_id}/actions/{action_id}/execute",
+                RouteVisibility.AUTHENTICATED,
+                "studio.presets.actions.execute",
+            ),
+            (
+                "POST",
+                "/api/presets/{preset_id}/actions/execute-all",
+                RouteVisibility.AUTHENTICATED,
+                "studio.presets.actions.execute_all",
+            ),
+            (
+                "POST",
+                "/api/presets/{preset_id}/default-flow/run",
+                RouteVisibility.AUTHENTICATED,
+                "studio.presets.default_flow.run",
+            ),
+            (
+                "POST",
+                "/api/presets/{preset_id}/default-flow/verify",
+                RouteVisibility.AUTHENTICATED,
+                "studio.presets.default_flow.verify",
+            ),
+            (
+                "POST",
+                "/api/presets/{preset_id}/default-flow/run-guarded",
+                RouteVisibility.AUTHENTICATED,
+                "studio.presets.default_flow.run_guarded",
+            ),
+            (
+                "POST",
+                "/api/presets/{preset_id}/default-flow/run-from-contract",
+                RouteVisibility.AUTHENTICATED,
+                "studio.presets.default_flow.run_from_contract",
+            ),
+            (
+                "POST",
+                "/api/presets/{preset_id}/default-flow/attest",
+                RouteVisibility.AUTHENTICATED,
+                "studio.presets.default_flow.attest",
+            ),
+            (
+                "POST",
+                "/api/presets/{preset_id}/default-flow/attest/verify",
+                RouteVisibility.AUTHENTICATED,
+                "studio.presets.default_flow.attest_verify",
+            ),
+            (
+                "WEBSOCKET",
+                "/ws/progress",
+                RouteVisibility.AUTHENTICATED,
+                "studio.websocket.progress",
+            ),
         ),
     )
     return registry
