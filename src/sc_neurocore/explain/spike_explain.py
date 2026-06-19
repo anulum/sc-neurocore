@@ -6,9 +6,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Spike-level explainability methods
 
-"""Multi-method SNN explainability: why did the network make this decision?
+"""Multi-method SNN explainability for network decision attribution.
 
-Methods:
+Provided methods:
   - SpikeAttributor: backward attribution from output to input spikes
   - TemporalSaliency: perturbation-based — which input spikes matter most
   - CausalImportance: forward intervention — silence each neuron, measure impact
@@ -21,7 +21,9 @@ Reference:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -31,7 +33,7 @@ class ExplanationResult:
     """Result of an explanation method."""
 
     method: str
-    importance_map: np.ndarray  # (T, N) importance scores
+    importance_map: np.ndarray[Any, Any]  # (T, N) importance scores
     top_spikes: list[tuple[int, int, float]] = field(default_factory=list)
     summary_text: str = ""
 
@@ -48,6 +50,7 @@ class ExplanationResult:
         return results
 
     def summary(self) -> str:
+        """Render a human-readable report of the top attributed inputs."""
         top = self.top_k(5)
         lines = [f"Explanation ({self.method}):"]
         for t, n, score in top:
@@ -73,8 +76,8 @@ class SpikeAttributor:
 
     def attribute(
         self,
-        spikes: np.ndarray,
-        weights: list[np.ndarray],
+        spikes: np.ndarray[Any, Any],
+        weights: list[np.ndarray[Any, Any]],
         output_neuron: int = 0,
     ) -> ExplanationResult:
         """Compute per-input-spike attribution scores.
@@ -137,12 +140,12 @@ class TemporalSaliency:
         spike counts or rates (N_output,).
     """
 
-    def __init__(self, run_fn):  # type: ignore[no-untyped-def]
+    def __init__(self, run_fn: Callable[[np.ndarray[Any, Any]], np.ndarray[Any, Any]]):
         self.run_fn = run_fn
 
     def explain(
         self,
-        spikes: np.ndarray,
+        spikes: np.ndarray[Any, Any],
         output_neuron: int = 0,
     ) -> ExplanationResult:
         """Compute perturbation-based saliency for each input spike.
@@ -201,12 +204,12 @@ class CausalImportance:
         Function that takes input spikes (T, N) and returns output (N_output,).
     """
 
-    def __init__(self, run_fn):  # type: ignore[no-untyped-def]
+    def __init__(self, run_fn: Callable[[np.ndarray[Any, Any]], np.ndarray[Any, Any]]):
         self.run_fn = run_fn
 
     def explain(
         self,
-        spikes: np.ndarray,
+        spikes: np.ndarray[Any, Any],
         output_neuron: int = 0,
     ) -> ExplanationResult:
         """Compute causal importance by silencing each neuron.
