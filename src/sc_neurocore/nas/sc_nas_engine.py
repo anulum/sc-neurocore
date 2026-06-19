@@ -367,7 +367,7 @@ class EvolutionaryNAS:
         if _HAS_RUST_EVO and len(population) > 20:
             fitness = [c.fitness for c in population]
             indices = py_evo_tournament(fitness, 1, k, int(self.rng.integers(0, 2**32)))
-            return population[indices[0]]
+            return population[int(indices[0])]
         k_sel = min(k, len(population))
         sel_idx = self.rng.choice(len(population), size=k_sel, replace=False)
         candidates = [population[int(i)] for i in sel_idx]

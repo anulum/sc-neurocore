@@ -8,8 +8,8 @@
 
 """Hardware-aware SNN NAS: search {neuron, width, delays, L} under FPGA budgets."""
 
+from .search import NASResult, nas
 from .search_space import Architecture, SearchSpace
-from .search import nas, NASResult
 from .surrogate_bridge import (
     NASPolicyEvaluation,
     NASPolicyLayer,

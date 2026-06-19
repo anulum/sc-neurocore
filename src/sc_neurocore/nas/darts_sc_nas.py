@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
+import math
+from typing import Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import math
-from typing import Tuple
 
 
 class BitstreamCandidate(nn.Module):
@@ -74,7 +75,8 @@ class SCMixedOp(nn.Module):
         # Apply Gumbel-Softmax for differentiable, discrete selection during forward
         weights = F.gumbel_softmax(self.alphas, tau=1.0, hard=False)
 
-        return sum(w * op(conv_out) for w, op in zip(weights, self.ops))
+        mixed: torch.Tensor = sum(w * op(conv_out) for w, op in zip(weights, self.ops))
+        return mixed
 
     def expected_resource_cost(self) -> Tuple[torch.Tensor, torch.Tensor]:
         # Expected LUT and Power costs based on current architecture weights
@@ -107,7 +109,8 @@ class SCNASNetwork(nn.Module):
         x = torch.relu(self.layer3(x))
         x = self.pool(x)
         x = x.view(x.size(0), -1)
-        return self.fc(x)
+        logits: torch.Tensor = self.fc(x)
+        return logits
 
     def hardware_penalty(self) -> Tuple[torch.Tensor, torch.Tensor]:
         l1, p1 = self.layer1.expected_resource_cost()

@@ -164,7 +164,7 @@ def _tournament_select(
             rank_map[id(arch)] = rank
 
     i, j = rng.choice(len(population), size=2, replace=False)
-    a, b = population[i], population[j]
+    a, b = population[int(i)], population[int(j)]
     rank_a = rank_map.get(id(a), len(fronts))
     rank_b = rank_map.get(id(b), len(fronts))
 

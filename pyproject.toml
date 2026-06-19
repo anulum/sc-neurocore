@@ -284,7 +284,7 @@ module = [
 
 
 
-  'sc_neurocore.nas.*', 'sc_neurocore._native.*',
+  'sc_neurocore._native.*',
 
  'sc_neurocore.qat.*',
   'sc_neurocore.quantum_cognition.*',
