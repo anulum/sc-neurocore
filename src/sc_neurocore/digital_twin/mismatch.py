@@ -26,6 +26,7 @@ lower variation (~1-5%) but Q8.8 quantization is the dominant error.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -57,33 +58,35 @@ class FPGAMismatchModel:
     def __post_init__(self) -> None:
         self._rng = np.random.RandomState(self.seed)
 
-    def quantize(self, values: np.ndarray) -> np.ndarray:
+    def quantize(self, values: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Apply Q-format quantization noise."""
         fraction = self.quantization_bits // 2
         scale = 1 << fraction
         quantized = np.round(values * scale) / scale
         return quantized
 
-    def perturb_weights(self, weights: np.ndarray) -> np.ndarray:
+    def perturb_weights(self, weights: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Add process variation noise to weights."""
         noise = self._rng.normal(0, self.weight_cv, weights.shape)
         return self.quantize(weights * (1.0 + noise))
 
-    def perturb_thresholds(self, thresholds: np.ndarray) -> np.ndarray:
+    def perturb_thresholds(self, thresholds: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Add per-neuron threshold mismatch."""
         noise = self._rng.normal(0, self.threshold_cv, thresholds.shape)
         return self.quantize(thresholds * (1.0 + noise))
 
-    def jitter_timing(self, n_steps: int) -> np.ndarray:
+    def jitter_timing(self, n_steps: int) -> np.ndarray[Any, Any]:
         """Generate clock jitter: per-step timing variation."""
         jitter = self._rng.normal(1.0, self.clock_jitter_pct, n_steps)
         return np.clip(jitter, 0.9, 1.1)
 
-    def apply_to_network_weights(self, weights: list[np.ndarray]) -> list[np.ndarray]:
+    def apply_to_network_weights(
+        self, weights: list[np.ndarray[Any, Any]]
+    ) -> list[np.ndarray[Any, Any]]:
         """Apply all hardware imperfections to a list of weight matrices."""
         return [self.perturb_weights(w) for w in weights]
 
-    def mismatch_report(self, weights: list[np.ndarray]) -> dict[str, object]:
+    def mismatch_report(self, weights: list[np.ndarray[Any, Any]]) -> dict[str, object]:
         """Report expected mismatch statistics for given weights."""
         perturbed = self.apply_to_network_weights(weights)
         total_params = sum(w.size for w in weights)

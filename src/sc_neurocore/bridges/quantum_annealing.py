@@ -80,20 +80,20 @@ _BOLTZMANN_K = 1.380649e-23  # J/K
 # ── Soft imports ──────────────────────────────────────────────────────
 
 try:
-    import dimod  # type: ignore[import-untyped]
+    import dimod
 
     _HAS_DIMOD = True
 except ImportError:
-    dimod = None  # type: ignore[assignment]
+    dimod = None
     _HAS_DIMOD = False
 
 try:
-    from dwave.system import DWaveSampler, EmbeddingComposite  # type: ignore[import-untyped]
+    from dwave.system import DWaveSampler, EmbeddingComposite
 
     _HAS_DWAVE = True
 except ImportError:
-    DWaveSampler = None  # type: ignore[assignment,misc]
-    EmbeddingComposite = None  # type: ignore[assignment,misc]
+    DWaveSampler = None
+    EmbeddingComposite = None
     _HAS_DWAVE = False
 
 try:
@@ -199,7 +199,7 @@ class IsingModel:
             j_j = [k[1] for k in self.J]
             j_values = list(self.J.values())
             spin_arr = [spins.get(i, 1) for i in range(self.n_qubits)]
-            return _rust_ising_energy(
+            rust_energy: float = _rust_ising_energy(
                 h_indices,
                 h_values,
                 j_i,
@@ -208,6 +208,7 @@ class IsingModel:
                 spin_arr,
                 self.offset,
             )
+            return rust_energy
         e = self.offset
         for i, hi in self.h.items():
             e += hi * spins.get(i, 1)
@@ -1521,7 +1522,7 @@ class SCPrecisionEncoder:
     def n_levels(self) -> int:
         """Number of representable precision levels."""
         if self._encoding == "binary":
-            return 2**self._n_bits
+            return int(2**self._n_bits)
         elif self._encoding == "unary":
             return self._n_bits + 1
         else:  # one_hot
@@ -1567,7 +1568,7 @@ class SCPrecisionEncoder:
         """
         if self._encoding == "binary":
             level = sum(qubits.get(i, 0) << i for i in range(self._n_bits))
-            return level / max(2**self._n_bits - 1, 1)
+            return float(level / max(2**self._n_bits - 1, 1))
         elif self._encoding == "unary":
             n_ones = sum(qubits.get(i, 0) for i in range(self._n_bits))
             return n_ones / max(self._n_bits, 1)

@@ -136,8 +136,8 @@ class ActivityMonitor:
 
     def observe(
         self,
-        bitstream: np.ndarray,
-        reference: Optional[np.ndarray] = None,
+        bitstream: np.ndarray[Any, Any],
+        reference: Optional[np.ndarray[Any, Any]] = None,
     ) -> Dict[str, Any]:
         """Record one observation.
 
@@ -167,7 +167,7 @@ class ActivityMonitor:
             "activity_zone": zone.value,
         }
 
-    def _compute_scc(self, a: np.ndarray, b: np.ndarray) -> float:
+    def _compute_scc(self, a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
         a_f = a.astype(np.float64).flatten()
         b_f = b.astype(np.float64).flatten()
         pa = float(np.mean(a_f))
@@ -241,7 +241,7 @@ class HammingECC:
         cd4 = corrected & 1
         return (cd1 << 3) | (cd2 << 2) | (cd3 << 1) | cd4
 
-    def encode_bitstream(self, bitstream: np.ndarray) -> np.ndarray:
+    def encode_bitstream(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Apply Hamming(7,4) ECC to an entire bitstream (groups of 4 bits)."""
         n = len(bitstream)
         padded = np.zeros(((n + 3) // 4) * 4, dtype=np.uint8)
@@ -259,7 +259,7 @@ class HammingECC:
                 encoded.append((code >> bit) & 1)
         return np.array(encoded, dtype=np.uint8)
 
-    def decode_bitstream(self, encoded: np.ndarray) -> np.ndarray:
+    def decode_bitstream(self, encoded: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Decode Hamming(7,4) encoded bitstream."""
         decoded = []
         for i in range(0, len(encoded) - 6, 7):
@@ -330,7 +330,7 @@ class SECDEC_ECC:
             data = self._hamming.decode(hamming_7)
             return data, False
 
-    def encode_bitstream(self, bitstream: np.ndarray) -> np.ndarray:
+    def encode_bitstream(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Apply SECDED(8,4) to an entire bitstream."""
         n = len(bitstream)
         padded = np.zeros(((n + 3) // 4) * 4, dtype=np.uint8)
@@ -348,7 +348,7 @@ class SECDEC_ECC:
                 encoded.append((code >> bit) & 1)
         return np.array(encoded, dtype=np.uint8)
 
-    def decode_bitstream(self, encoded: np.ndarray) -> Tuple[np.ndarray, int]:
+    def decode_bitstream(self, encoded: np.ndarray[Any, Any]) -> Tuple[np.ndarray[Any, Any], int]:
         """Decode SECDED(8,4) encoded bitstream.
 
         Returns (decoded_data, num_uncorrectable_errors).
@@ -486,8 +486,8 @@ class SCRuntimeEngine:
 
     def observe(
         self,
-        bitstream: np.ndarray,
-        reference: Optional[np.ndarray] = None,
+        bitstream: np.ndarray[Any, Any],
+        reference: Optional[np.ndarray[Any, Any]] = None,
     ) -> Dict[str, Any]:
         """Feed one bitstream observation through the runtime.
 
@@ -531,7 +531,7 @@ class SCRuntimeEngine:
             "config_ecc_mode": self.config.ecc_mode.value,
         }
 
-    def protect(self, bitstream: np.ndarray) -> np.ndarray:
+    def protect(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Apply ECC protection if enabled in current config."""
         if not self.config.ecc_enabled:
             return bitstream
@@ -553,7 +553,7 @@ class SCRuntimeEngine:
             return np.array(out, dtype=np.uint8)
         return bitstream
 
-    def recover(self, encoded: np.ndarray) -> np.ndarray:
+    def recover(self, encoded: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Decode ECC-protected bitstream if enabled."""
         if not self.config.ecc_enabled:
             return encoded
@@ -570,10 +570,10 @@ class SCRuntimeEngine:
             return np.array(decoded_bits, dtype=np.uint8)
         return encoded
 
-    def protect_batch(self, bitstreams: List[np.ndarray]) -> List[np.ndarray]:
+    def protect_batch(self, bitstreams: List[np.ndarray[Any, Any]]) -> List[np.ndarray[Any, Any]]:
         """Apply ECC to a batch of bitstreams."""
         return [self.protect(bs) for bs in bitstreams]
 
-    def recover_batch(self, encoded_list: List[np.ndarray]) -> List[np.ndarray]:
+    def recover_batch(self, encoded_list: List[np.ndarray[Any, Any]]) -> List[np.ndarray[Any, Any]]:
         """Decode a batch of ECC-protected bitstreams."""
         return [self.recover(enc) for enc in encoded_list]

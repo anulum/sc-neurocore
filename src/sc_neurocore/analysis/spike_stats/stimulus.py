@@ -26,7 +26,8 @@ def spike_triggered_average(
     if valid.size == 0:
         return np.zeros(window_steps, dtype=np.float64)
     snippets = np.array([stimulus[t - window_steps : t] for t in valid])
-    return snippets.mean(axis=0)
+    triggered_average: np.ndarray[Any, Any] = snippets.mean(axis=0)
+    return triggered_average
 
 
 def spike_triggered_covariance(

@@ -95,7 +95,8 @@ def scaled_dot_product_attention(
     scores -= scores.max(axis=-1, keepdims=True)
     weights = np.exp(scores)
     weights /= weights.sum(axis=-1, keepdims=True) + 1e-30
-    return weights @ values
+    pooled: np.ndarray[Any, Any] = weights @ values
+    return pooled
 
 
 # ---------------------------------------------------------------------------
@@ -229,7 +230,8 @@ class POSSMDecoder:
         """
         a_bar, b_bar = self.discretise(self.dt)
         self._h = a_bar * self._h + b_bar @ x
-        return np.real(self._C @ self._h) + self._D @ x
+        readout: np.ndarray[Any, Any] = np.real(self._C @ self._h) + self._D @ x
+        return readout
 
     def encode_causal(
         self,
@@ -351,7 +353,8 @@ class NDT3Decoder:
         weights = np.exp(scores)
         weights /= weights.sum(axis=-1, keepdims=True) + 1e-30
         attended = weights @ embedded
-        return attended @ self._output_w.T + self._output_b
+        projected: np.ndarray[Any, Any] = attended @ self._output_w.T + self._output_b
+        return projected
 
     def decode(
         self,
@@ -421,7 +424,8 @@ class CEBRAEncoder:
         z = z / norms
         if squeeze:
             z = z[0]
-        return z
+        embedding: np.ndarray[Any, Any] = z
+        return embedding
 
     @staticmethod
     def cosine_similarity(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
@@ -431,7 +435,8 @@ class CEBRAEncoder:
         """
         a_norm = a / (np.linalg.norm(a, axis=-1, keepdims=True) + 1e-30)
         b_norm = b / (np.linalg.norm(b, axis=-1, keepdims=True) + 1e-30)
-        return a_norm @ b_norm.T
+        similarity: np.ndarray[Any, Any] = a_norm @ b_norm.T
+        return similarity
 
     def infonce_loss(
         self,
@@ -528,7 +533,10 @@ class CEBRAEncoder:
             d_z: np.ndarray[Any, Any], z_pre: np.ndarray[Any, Any], norms: np.ndarray[Any, Any]
         ) -> np.ndarray[Any, Any]:
             z_hat = z_pre / norms
-            return (d_z - z_hat * (d_z * z_hat).sum(axis=-1, keepdims=True)) / norms
+            grad: np.ndarray[Any, Any] = (
+                d_z - z_hat * (d_z * z_hat).sum(axis=-1, keepdims=True)
+            ) / norms
+            return grad
 
         d_z1_pre = grad_l2norm(d_za, cache["z1_pre"], cache["n1"])
         d_z2_pre = grad_l2norm(d_zp, cache["z2_pre"], cache["n2"])
