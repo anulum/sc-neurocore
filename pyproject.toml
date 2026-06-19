@@ -291,7 +291,7 @@ module = [
   'sc_neurocore.nas.*', 'sc_neurocore._native.*',
   'sc_neurocore.neurons.*',
   'sc_neurocore.optics.*',
-  'sc_neurocore.privacy.*', 'sc_neurocore.qat.*', 'sc_neurocore.quantum.*',
+  'sc_neurocore.privacy.*', 'sc_neurocore.qat.*',
   'sc_neurocore.quantum_cognition.*',
  'sc_neurocore.security.*',
   'sc_neurocore.sleep.*', 'sc_neurocore.snn_optimizer.*', 'sc_neurocore.sources.*',

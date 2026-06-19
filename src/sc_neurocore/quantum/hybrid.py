@@ -46,6 +46,6 @@ class QuantumStochasticLayer:
         # 4. Re-encode to bitstream (Collapse)
         # (n_qubits, length)
         rands = self._rng.random((self.n_qubits, self.length))
-        out_bits = (rands < p_measure[:, None]).astype(np.uint8)
+        out_bits: np.ndarray[Any, Any] = (rands < p_measure[:, None]).astype(np.uint8)
 
         return out_bits
