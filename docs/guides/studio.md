@@ -247,6 +247,13 @@ cd studio/frontend
 npm run build   # → studio/frontend/dist/
 ```
 
+Frontend contract tests:
+
+```bash
+cd studio/frontend
+npm test -- src/capabilityShell.test.ts
+```
+
 ## Additional Panels (Blocks 2–6)
 
 The Studio includes five additional panels beyond the core research workbench:

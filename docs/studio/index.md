@@ -62,9 +62,10 @@ runtime features:
   requirement health, evidence class, UI placement, and documentation path.
 - `/api/studio/capabilities` and `/api/studio/capabilities/{capability_id}`
   return non-secret capability health payloads for the frontend shell.
-- The frontend shell loads the capability registry during startup and surfaces
-  aggregate capability health in the header, so unavailable platform tools are
-  visible before an operator enters a panel workflow.
+- The frontend shell loads the capability registry during startup, surfaces
+  aggregate capability health in the header, lists each capability with status,
+  evidence, missing requirements, and documentation links, and disables
+  registered panels when backend or external-tool requirements are unavailable.
 - `PolicyGateway` is the fail-closed route authorization contract used for
   protected Studio API surfaces. Public routes may run without a principal;
   authenticated and admin routes require an explicit policy and emit audit
@@ -259,6 +260,7 @@ project from the sidebar.
 | State | Zustand |
 | Responsive | 4 breakpoints (1024, 768, 480px) |
 | Build | Vite |
+| Frontend tests | Vitest contract tests + TypeScript build |
 | Backend | FastAPI |
 | Simulation | SC-NeuroCore Python + Rust engine |
 | Training | PyTorch (optional `[research]` extra) |

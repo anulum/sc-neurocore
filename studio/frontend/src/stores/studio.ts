@@ -34,8 +34,8 @@ import {
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-type SourceMode = "model" | "ode";
-type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
+export type SourceMode = "model" | "ode";
+export type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
   "sensitivity" | "precision" | "heatmap" | "verilog" | "code" |
   "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth" | "train" | "canvas";
 
