@@ -25,6 +25,7 @@ Event format: structured array with fields (x, y, t, p)
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -46,9 +47,10 @@ class DVSLoader:
 
     @property
     def n_pixels(self) -> int:
+        """Return the total number of pixels in the DVS frame."""
         return self.width * self.height
 
-    def from_numpy(self, events: np.ndarray) -> np.ndarray:
+    def from_numpy(self, events: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Load events from structured numpy array.
 
         Expected fields: 'x', 'y', 't', 'p' (or positional columns).
@@ -66,7 +68,7 @@ class DVSLoader:
             return structured
         raise ValueError("Events must be structured array or (N, 4+) array with x, y, t, p columns")
 
-    def from_tonic(self, dataset_name: str, index: int = 0) -> tuple[np.ndarray, int]:
+    def from_tonic(self, dataset_name: str, index: int = 0) -> tuple[np.ndarray[Any, Any], int]:
         """Load events from a Tonic dataset (requires tonic package).
 
         Parameters
@@ -99,12 +101,12 @@ class DVSLoader:
 
 
 def events_to_spike_trains(
-    events: np.ndarray,
+    events: np.ndarray[Any, Any],
     width: int,
     height: int,
     dt_us: float = 1000.0,
     duration_us: float | None = None,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Convert DVS events to binary spike train matrix.
 
     Parameters
@@ -152,12 +154,12 @@ def events_to_spike_trains(
 
 
 def events_to_frames(
-    events: np.ndarray,
+    events: np.ndarray[Any, Any],
     width: int,
     height: int,
     dt_us: float = 10000.0,
     duration_us: float | None = None,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Convert DVS events to event count frames.
 
     Parameters
