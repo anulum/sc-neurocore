@@ -276,7 +276,7 @@ ignore_missing_imports = true
 # silence new code — newly written or modified code must be strict-clean from the first commit.
 [[tool.mypy.overrides]]
 module = [
-  'sc_neurocore.accel.*', 'sc_neurocore.adapters.*', 'sc_neurocore.analog_bridge.*', 'sc_neurocore.analysis.*',
+  'sc_neurocore.accel.*', 'sc_neurocore.adapters.*', 'sc_neurocore.analog_bridge.*',
   'sc_neurocore.arcane_zenith', 'sc_neurocore.audio.*', 'sc_neurocore.autofit.*',
   'sc_neurocore.bci_studio.*', 'sc_neurocore.benchmarks.*', 'sc_neurocore.bioware.*',
   'sc_neurocore.bridges.*', 'sc_neurocore.chaos.*', 'sc_neurocore.chip_compiler.*', 'sc_neurocore.chiplet.*',
