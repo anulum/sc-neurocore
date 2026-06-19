@@ -17,6 +17,8 @@ Reference: SGNNBench (2025) — 9 SGNN architectures benchmarked
 
 from __future__ import annotations
 
+from typing import Any
+
 from dataclasses import dataclass
 
 import numpy as np
@@ -53,14 +55,14 @@ class SpikeGraphConv:
 
         rng = np.random.RandomState(seed)
         self.W = rng.randn(out_features, in_features) * np.sqrt(2.0 / in_features)
-        self._v: np.ndarray | None = None
+        self._v: np.ndarray[Any, Any] | None = None
 
     def forward(
         self,
-        node_features: np.ndarray,
-        adjacency: np.ndarray,
+        node_features: np.ndarray[Any, Any],
+        adjacency: np.ndarray[Any, Any],
         T: int = 8,
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Spike-based graph convolution.
 
         Parameters
@@ -124,6 +126,7 @@ class SpikeGNNLayer:
     T: int = 8
 
     def __post_init__(self) -> None:
+        """Build the per-layer spiking graph-convolution stack."""
         self.convs = []
         for i in range(len(self.layer_dims) - 1):
             self.convs.append(
@@ -135,7 +138,9 @@ class SpikeGNNLayer:
                 )
             )
 
-    def forward(self, node_features: np.ndarray, adjacency: np.ndarray) -> np.ndarray:
+    def forward(
+        self, node_features: np.ndarray[Any, Any], adjacency: np.ndarray[Any, Any]
+    ) -> np.ndarray[Any, Any]:
         """Forward pass through all layers.
 
         Parameters
@@ -156,7 +161,9 @@ class SpikeGNNLayer:
                 h = h / max_val
         return h
 
-    def graph_classify(self, node_features: np.ndarray, adjacency: np.ndarray) -> int:
+    def graph_classify(
+        self, node_features: np.ndarray[Any, Any], adjacency: np.ndarray[Any, Any]
+    ) -> int:
         """Classify a graph by global readout (sum pooling + argmax)."""
         node_out = self.forward(node_features, adjacency)
         graph_vec = node_out.sum(axis=0)
@@ -164,4 +171,5 @@ class SpikeGNNLayer:
 
     @property
     def n_layers(self) -> int:
+        """Return the number of graph-convolution layers."""
         return len(self.convs)
