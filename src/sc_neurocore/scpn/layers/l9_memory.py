@@ -6,8 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SCPN L9 Holographic Memory Layer (Stochastic Implementation)
 
-"""
-SCPN L9: Holographic Memory Layer (Stochastic Implementation)
+"""SCPN L9: holographic memory layer (stochastic implementation).
 
 Hopfield-style associative memory with TSVF-inspired forward/backward
 overlap for memory retrieval quality.
@@ -28,6 +27,8 @@ import numpy as np
 
 @dataclass
 class L9_StochasticParameters:
+    """Stochastic configuration parameters for the SCPN holographic memory layer."""
+
     n_memory_slots: int = 64
     bitstream_length: int = 1024
     retrieval_gain: float = 0.8
@@ -51,7 +52,7 @@ class L9_MemoryLayer:
         self.n_stored = 0
         self.time = 0.0
 
-    def store(self, pattern: np.ndarray) -> None:
+    def store(self, pattern: np.ndarray[Any, Any]) -> None:
         """Hebbian imprint: W += pattern ⊗ pattern."""
         p = self._pattern_vector(pattern)
         self.patterns += self.params.imprint_rate * np.outer(p, p) / self.params.n_memory_slots
@@ -65,6 +66,7 @@ class L9_MemoryLayer:
         boundary_cue: Optional[np.ndarray[Any, Any]] = None,
         ebs_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
+        """Advance the holographic memory layer one timestep and return its output state."""
         if not math.isfinite(float(dt)) or float(dt) <= 0.0:
             raise ValueError("dt must be finite and positive")
         cue = self._boundary_cue_vector(boundary_cue)
@@ -125,6 +127,7 @@ class L9_MemoryLayer:
         return float(np.mean(np.sign(h) == np.sign(self.state)))
 
     def get_global_metric(self) -> float:
+        """Return the scalar global metric summarising this layer's state."""
         return self._retrieval_quality()
 
     @staticmethod
@@ -162,7 +165,7 @@ class L9_MemoryLayer:
             if params.rng_seed < 0:
                 raise ValueError("rng_seed must be a non-negative integer or None")
 
-    def _pattern_vector(self, pattern: np.ndarray) -> np.ndarray:
+    def _pattern_vector(self, pattern: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         values = np.asarray(pattern, dtype=np.float64).reshape(-1)
         if values.size < self.params.n_memory_slots:
             raise ValueError("pattern must contain at least n_memory_slots values")
@@ -224,7 +227,7 @@ class L9_MemoryLayer:
 
     def _boundary_cue_vector(
         self, boundary_cue: Optional[np.ndarray[Any, Any]]
-    ) -> Optional[np.ndarray]:
+    ) -> Optional[np.ndarray[Any, Any]]:
         if boundary_cue is None:
             return None
         values = np.asarray(boundary_cue, dtype=np.float64).reshape(-1)
@@ -249,7 +252,7 @@ class L9_MemoryLayer:
         return {"ebs_id": str(ebs_context["ebs_id"]), "terminal_set": terminals}
 
     @staticmethod
-    def _holographic_entropy(activation: np.ndarray) -> float:
+    def _holographic_entropy(activation: np.ndarray[Any, Any]) -> float:
         probs = np.clip(np.asarray(activation, dtype=np.float64), 1e-12, 1.0 - 1e-12)
         entropy = -(probs * np.log2(probs) + (1.0 - probs) * np.log2(1.0 - probs))
         return float(np.mean(entropy))

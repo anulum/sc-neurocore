@@ -6,8 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SCPN L14 Transdimensional Integration Layer (Stochastic
 
-"""
-SCPN L14: Transdimensional Integration Layer (Stochastic Implementation)
+"""SCPN L14: transdimensional integration layer (stochastic implementation).
 
 Weighted aggregation across all lower layers to produce a unified
 coherence metric. Acts as the integration hub of the SCPN stack.
@@ -46,15 +45,18 @@ _DEFAULT_WEIGHTS = np.array(
 
 @dataclass
 class L14_StochasticParameters:
+    """Stochastic configuration parameters for the SCPN transdimensional integration layer."""
+
     n_dimensions: int = 13  # one per lower layer
     bitstream_length: int = 1024
-    integration_weights: Optional[np.ndarray] = None
+    integration_weights: Optional[np.ndarray[Any, Any]] = None
     temporal_coupling: float = 0.1  # from L13
     bridge_decoherence_coupling: float = 0.1
     resonance_lock_tolerance: float = 1e-6
     rng_seed: Optional[int] = None
 
     def __post_init__(self) -> None:
+        """Validate and finalise the layer parameters after construction."""
         if self.integration_weights is None:
             if self.n_dimensions == len(_DEFAULT_WEIGHTS):
                 self.integration_weights = _DEFAULT_WEIGHTS.copy()
@@ -86,6 +88,7 @@ class L14_IntegrationLayer:
         layer_metrics: Optional[Dict[str, float]] = None,
         l13_input: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
+        """Advance the transdimensional integration layer one timestep and return its output state."""
         self._validate_step_inputs(dt, layer_metrics, l13_input)
         self.time += dt
 
@@ -149,6 +152,7 @@ class L14_IntegrationLayer:
         }
 
     def get_global_metric(self) -> float:
+        """Return the scalar global metric summarising this layer's state."""
         return self.integrated_coherence
 
     @staticmethod
@@ -207,12 +211,12 @@ class L14_IntegrationLayer:
             cls._l13_bridge_effect(l13_input)
 
     @staticmethod
-    def _normalised_weights(weights: np.ndarray) -> np.ndarray:
+    def _normalised_weights(weights: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         values = np.asarray(weights, dtype=np.float64)
         return values / float(np.sum(values))
 
     @staticmethod
-    def _metric_vector(layer_metrics: Dict[str, float], limit: int) -> np.ndarray:
+    def _metric_vector(layer_metrics: Dict[str, float], limit: int) -> np.ndarray[Any, Any]:
         values = np.asarray(list(layer_metrics.values())[:limit], dtype=np.float64)
         if values.size == 0 or not np.all(np.isfinite(values)):
             raise ValueError("layer_metrics must contain finite values")

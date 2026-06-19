@@ -6,8 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SCPN L13 Source / Temporal Binding Layer (Stochastic
 
-"""
-SCPN L13: Source / Temporal Binding Layer (Stochastic Implementation)
+"""SCPN L13: source / temporal binding layer (stochastic implementation).
 
 Cross-correlation temporal binding window: measures synchrony between
 oscillator signals within a short time window to determine binding
@@ -28,6 +27,8 @@ import numpy as np
 
 @dataclass
 class L13_StochasticParameters:
+    """Stochastic configuration parameters for the SCPN source / temporal binding layer."""
+
     n_channels: int = 64
     bitstream_length: int = 1024
     binding_window: int = 10  # timesteps
@@ -56,6 +57,7 @@ class L13_TemporalLayer:
         dt: float,
         l12_input: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
+        """Advance the source / temporal binding layer one timestep and return its output state."""
         if not math.isfinite(float(dt)) or float(dt) <= 0.0:
             raise ValueError("dt must be finite and positive")
         self.time += dt
@@ -118,6 +120,7 @@ class L13_TemporalLayer:
         }
 
     def get_global_metric(self) -> float:
+        """Return the scalar global metric summarising this layer's state."""
         n = self.params.n_channels
         off_diag = self.binding_matrix[~np.eye(n, dtype=bool)]
         return float(np.mean(np.abs(off_diag))) if len(off_diag) > 0 else 0.0
@@ -149,7 +152,7 @@ class L13_TemporalLayer:
                 raise ValueError("rng_seed must be a non-negative integer or None")
 
     @staticmethod
-    def _coherence_signal(coherence: Any, n_channels: int) -> np.ndarray:
+    def _coherence_signal(coherence: Any, n_channels: int) -> np.ndarray[Any, Any]:
         values = np.asarray(coherence, dtype=np.float64).reshape(-1)
         if values.size == 0:
             raise ValueError("coherence must contain at least one value")
@@ -238,7 +241,7 @@ class L13_TemporalLayer:
         return scalar
 
     @staticmethod
-    def _pearson(a: np.ndarray, b: np.ndarray) -> float:
+    def _pearson(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
         if a.size < 2 or b.size < 2:
             return 0.0
         a0 = a - float(np.mean(a))
@@ -248,7 +251,7 @@ class L13_TemporalLayer:
             return 0.0
         return float(np.dot(a0, b0) / denom)
 
-    def _max_lag_binding_matrix(self, history: np.ndarray) -> np.ndarray:
+    def _max_lag_binding_matrix(self, history: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         n, window = history.shape
         max_lag = min(self.params.binding_window - 1, window - 1)
         matrix = np.eye(n, dtype=np.float64)

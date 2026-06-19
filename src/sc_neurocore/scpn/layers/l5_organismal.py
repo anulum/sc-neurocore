@@ -6,9 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SCPN L5 Organismal-Psychoemotional Layer (Stochastic
 
-"""
-SCPN L5: Organismal-Psychoemotional Layer (Stochastic Implementation)
-======================================================================
+"""SCPN L5: organismal-psychoemotional layer (stochastic implementation).
 
 Implements Layer 5 of the SCPN framework: Organismal integration and
 psychoemotional states including HRV, autonomic nervous system,
@@ -107,7 +105,7 @@ class L5_OrganismalLayer:
         # Time tracking
         self.time = 0.0
 
-    def _init_emotional_attractors(self) -> np.ndarray:
+    def _init_emotional_attractors(self) -> np.ndarray[Any, Any]:
         """Initialize emotional attractor states."""
         # Define stable emotional configurations
         attractors = np.array(
@@ -135,7 +133,8 @@ class L5_OrganismalLayer:
             l4_input: Cellular layer output (synchronization).
             external_event: External emotional trigger {valence, arousal, ...}.
 
-        Returns:
+        Returns
+        -------
             Dict with emotional_state, autonomic, heart_rate, output_bitstreams
         """
         self._validate_step_inputs(dt, l4_input, external_event)

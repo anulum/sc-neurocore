@@ -6,8 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SCPN L11 Morphic Resonance / Noospheric Layer
 
-"""
-SCPN L11: Morphic Resonance / Noospheric Layer (Stochastic Implementation)
+"""SCPN L11: morphic resonance / noospheric layer (stochastic implementation).
 
 Ising-style spin-glass with memetic SIR dynamics for cultural/informational
 field evolution.
@@ -28,6 +27,8 @@ import numpy as np
 
 @dataclass
 class L11_StochasticParameters:
+    """Stochastic configuration parameters for the SCPN morphic resonance / noospheric layer."""
+
     n_nodes: int = 100
     bitstream_length: int = 1024
     j_coupling: float = 0.5
@@ -57,6 +58,7 @@ class L11_MorphicLayer:
         dt: float,
         l10_input: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
+        """Advance the morphic resonance / noospheric layer one timestep and return its output state."""
         if not math.isfinite(float(dt)) or float(dt) <= 0.0:
             raise ValueError("dt must be finite and positive")
         self.time += dt
@@ -115,6 +117,7 @@ class L11_MorphicLayer:
         }
 
     def get_global_metric(self) -> float:
+        """Return the scalar global metric summarising this layer's state."""
         return float(np.mean(self.spins))
 
     @staticmethod
@@ -257,7 +260,7 @@ class L11_MorphicLayer:
         }
 
     @staticmethod
-    def _project_nonnegative_vector(value: Any, n_nodes: int, name: str) -> np.ndarray:
+    def _project_nonnegative_vector(value: Any, n_nodes: int, name: str) -> np.ndarray[Any, Any]:
         values = np.asarray(value, dtype=np.float64).reshape(-1)
         if values.size == 0:
             raise ValueError(f"{name} must contain at least one value")
@@ -270,7 +273,7 @@ class L11_MorphicLayer:
         return np.pad(values, (0, n_nodes - values.size), constant_values=0.0)
 
     @staticmethod
-    def _project_rejection_mask(value: Any, n_nodes: int) -> np.ndarray:
+    def _project_rejection_mask(value: Any, n_nodes: int) -> np.ndarray[Any, Any]:
         values = np.asarray(value)
         if values.size == 0:
             raise ValueError("topological_rejection_mask must contain at least one value")
@@ -304,7 +307,7 @@ class L11_MorphicLayer:
             raise ValueError(f"{name} must be within [0, 1]")
         return scalar
 
-    def _update_info_density(self, dt: float, transmission: float) -> np.ndarray:
+    def _update_info_density(self, dt: float, transmission: float) -> np.ndarray[Any, Any]:
         memetic_activation = np.clip(2.0 * np.abs(self.spins - 0.5), 0.0, 1.0)
         susceptible = 1.0 - self.info_density
         infection = self.params.beta_infection * transmission * susceptible * memetic_activation
