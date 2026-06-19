@@ -85,6 +85,12 @@ runtime features:
   than raw tokens, grants explicit roles, and can include UTC expiry timestamps.
   Requests authenticate with `Authorization: Bearer <token>`; invalid,
   disabled, or expired tokens fail closed and emit distinct audit reasons.
+- First-deployment service-account identity files are created offline with
+  `sc-neurocore studio-bootstrap-admin --identity-file <path>`. The command
+  writes only the SHA-256 token hash to disk, returns the bearer token once to
+  the operator, refuses to overwrite existing files unless `--allow-overwrite`
+  is supplied, and applies owner-only file permissions where the host platform
+  supports POSIX modes.
 - Policy decisions can be persisted to an append-only JSONL audit log by
   setting `SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH` to a writable file path. Each
   `studio.audit.v1` line records the UTC timestamp, policy action, route

@@ -15,7 +15,8 @@ import importlib.metadata
 import json
 import re
 import shutil
-import subprocess
+# CLI subprocess calls use shell-free argument vectors and bounded local tool entrypoints.
+import subprocess  # nosec B404
 import sys
 from typing import Any, Sequence
 
@@ -63,6 +64,7 @@ def main() -> int:
             "compile",
             "compile-nir",
             "studio",
+            "studio-bootstrap-admin",
             "collect-synthesis",
             "scnir",
             "formal",
@@ -122,6 +124,42 @@ def main() -> int:
         help="For compile-nir, validate emitted SC-NIR HDL artefacts and write an audit report",
     )
     parser.add_argument("--port", type=int, default=8001, help="Port for serve command")
+    parser.add_argument(
+        "--identity-file",
+        default=None,
+        help="Studio identity JSON path for studio-bootstrap-admin",
+    )
+    parser.add_argument(
+        "--principal-id",
+        default="svc-studio-admin",
+        help="Service-account principal for studio-bootstrap-admin",
+    )
+    parser.add_argument(
+        "--role",
+        dest="roles",
+        action="append",
+        default=None,
+        help=(
+            "Role granted by studio-bootstrap-admin. Repeat to grant multiple "
+            "roles; defaults to studio.admin and studio.viewer."
+        ),
+    )
+    parser.add_argument(
+        "--token-bytes",
+        type=int,
+        default=32,
+        help="Entropy bytes for the generated Studio bootstrap bearer token",
+    )
+    parser.add_argument(
+        "--expires-at-utc",
+        default=None,
+        help="Optional ISO-8601 UTC expiry for the Studio bootstrap identity",
+    )
+    parser.add_argument(
+        "--allow-overwrite",
+        action="store_true",
+        help="Allow studio-bootstrap-admin to atomically replace an existing identity file",
+    )
     parser.add_argument(
         "--bind-host",
         default="127.0.0.1",
@@ -416,6 +454,8 @@ def main() -> int:
         )
     if args.command == "studio":
         return _cmd_studio(args.port)
+    if args.command == "studio-bootstrap-admin":
+        return _cmd_studio_bootstrap_admin(args)
     if args.command == "collect-synthesis":
         return _cmd_collect_synthesis(args)
     if args.command == "scnir":
@@ -1272,7 +1312,12 @@ def _cmd_formal(args: Any) -> int:
             symbiyosys_report["status"] = "tool_unavailable"
         else:
             command = [sby_bin, "-f", str(sby_path)]
-            completed = subprocess.run(command, capture_output=True, text=True, check=False)
+            completed = subprocess.run(  # nosec B603
+                command,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
             symbiyosys_report.update(
                 {
                     "status": "passed" if completed.returncode == 0 else "failed",
@@ -1534,9 +1579,7 @@ def _safe_simd_tier(engine: Any) -> str:
 
 
 def _cmd_benchmark() -> int:
-    import subprocess
-
-    return subprocess.run(
+    return subprocess.run(  # nosec B603
         [sys.executable, "-m", "pytest", "benchmarks/benchmark_suite.py", "--benchmark-only"],
     ).returncode
 
@@ -1835,7 +1878,6 @@ def _auto_synthesize(output_dir: str, target: str, top_module: str, cfg: dict[st
     """Run Yosys synthesis automatically if yosys is installed. Returns True on success."""
     import os
     import shutil
-    import subprocess
 
     yosys = shutil.which("yosys")
     if not yosys:
@@ -1857,7 +1899,7 @@ def _auto_synthesize(output_dir: str, target: str, top_module: str, cfg: dict[st
         f"{synth_cmd} -top {top_module}; "
         f"write_json {top_module}.json; stat"
     )
-    result = subprocess.run(
+    result = subprocess.run(  # nosec B603
         [yosys, "-p", yosys_script],
         cwd=output_dir,
         capture_output=True,
@@ -1874,7 +1916,7 @@ def _auto_synthesize(output_dir: str, target: str, top_module: str, cfg: dict[st
         pnr_tool = shutil.which(f"nextpnr-{cfg['family']}")
         if pnr_tool:
             print("  Running nextpnr place-and-route...")
-            pnr_result = subprocess.run(
+            pnr_result = subprocess.run(  # nosec B603
                 [
                     pnr_tool,
                     f"--{cfg['device']}",
@@ -1896,7 +1938,7 @@ def _auto_synthesize(output_dir: str, target: str, top_module: str, cfg: dict[st
                 pack_tool = "icepack" if cfg["family"] == "ice40" else "ecppack"
                 pack_bin = shutil.which(pack_tool)
                 if pack_bin:
-                    subprocess.run(
+                    subprocess.run(  # nosec B603
                         [pack_bin, f"{top_module}.asc", f"{top_module}.bin"],
                         cwd=output_dir,
                         capture_output=True,
@@ -2005,10 +2047,44 @@ def _cmd_studio(port: int) -> int:
     return 0
 
 
-def _cmd_preflight() -> int:
-    import subprocess
+def _cmd_studio_bootstrap_admin(args: Any) -> int:
+    """Create the first local Studio service-account identity file."""
+    from pathlib import Path
 
-    return subprocess.run([sys.executable, "tools/preflight.py"]).returncode
+    from sc_neurocore.studio.platform import (
+        DEFAULT_STUDIO_ADMIN_ROLES,
+        bootstrap_studio_admin_identity,
+    )
+
+    if args.identity_file is None:
+        print(
+            "Error: studio-bootstrap-admin requires --identity-file /path/to/studio-identities.json"
+        )
+        return 1
+    roles = tuple(args.roles) if args.roles is not None else DEFAULT_STUDIO_ADMIN_ROLES
+    try:
+        result = bootstrap_studio_admin_identity(
+            Path(args.identity_file),
+            principal_id=args.principal_id,
+            roles=roles,
+            token_bytes=args.token_bytes,
+            expires_at_utc=args.expires_at_utc,
+            overwrite=args.allow_overwrite,
+        )
+    except (FileExistsError, OSError, ValueError) as exc:
+        print(f"Error: {exc}")
+        return 1
+    output = result.to_public_dict()
+    output["bearer_token"] = result.bearer_token
+    output["environment"] = f"SC_NEUROCORE_STUDIO_IDENTITY_FILE={result.identity_file_path}"
+    print(json.dumps(output, indent=2, sort_keys=True))
+    return 0
+
+
+def _cmd_preflight() -> int:
+    return subprocess.run(  # nosec B603
+        [sys.executable, "tools/preflight.py"],
+    ).returncode
 
 
 if __name__ == "__main__":

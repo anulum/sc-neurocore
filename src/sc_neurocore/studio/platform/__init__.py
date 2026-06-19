@@ -17,6 +17,13 @@ from sc_neurocore.studio.platform.capabilities import (
     EvidenceClass,
     build_default_studio_capability_registry,
 )
+from sc_neurocore.studio.platform.bootstrap import (
+    DEFAULT_STUDIO_ADMIN_PRINCIPAL_ID,
+    DEFAULT_STUDIO_ADMIN_ROLES,
+    MIN_BOOTSTRAP_TOKEN_BYTES,
+    StudioIdentityBootstrapResult,
+    bootstrap_studio_admin_identity,
+)
 from sc_neurocore.studio.platform.policy import (
     AUDIT_SCHEMA_VERSION,
     AUDIT_EXPORT_SCHEMA_VERSION,
@@ -92,9 +99,12 @@ __all__ = [
     "CapabilityRegistry",
     "CapabilityRequirement",
     "CapabilityStatus",
+    "DEFAULT_STUDIO_ADMIN_PRINCIPAL_ID",
+    "DEFAULT_STUDIO_ADMIN_ROLES",
     "EvidenceClass",
     "IDENTITY_SCHEMA_VERSION",
     "JOBS_STATUS_SCHEMA_VERSION",
+    "MIN_BOOTSTRAP_TOKEN_BYTES",
     "InMemoryAuditSink",
     "JsonlAuditSink",
     "OPERATOR_STATUS_SCHEMA_VERSION",
@@ -115,6 +125,7 @@ __all__ = [
     "StudioDeploymentProfile",
     "StudioRuntimeSettings",
     "StudioIdentityAuthenticator",
+    "StudioIdentityBootstrapResult",
     "StudioIdentityRecord",
     "StudioIdentityResult",
     "StudioIdentityStore",
@@ -135,5 +146,6 @@ __all__ = [
     "build_default_studio_route_policy_registry",
     "build_default_studio_runtime_settings",
     "build_studio_operator_status",
+    "bootstrap_studio_admin_identity",
     "load_studio_identity_store",
 ]

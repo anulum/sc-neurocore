@@ -272,6 +272,19 @@ configure `SC_NEUROCORE_STUDIO_IDENTITY_FILE` with
 hashes in that file, authenticate API calls with `Authorization: Bearer
 <token>`, and give admin export accounts the `studio.admin` role.
 
+Create the first local service account before enabling the production profile:
+
+```bash
+sc-neurocore studio-bootstrap-admin \
+  --identity-file /etc/sc-neurocore/studio-identities.json \
+  --principal-id svc-studio-admin
+```
+
+The bootstrap command prints the bearer token once and stores only its
+SHA-256 digest in the identity file. Capture that token in the deployment
+secret manager, set `SC_NEUROCORE_STUDIO_IDENTITY_FILE` to the written path,
+and do not copy the token into repository files or shell history.
+
 The same Admin surface displays local worker health from
 `/api/studio/jobs/status`. Configure `SC_NEUROCORE_STUDIO_JOB_ROOT` to keep
 per-job working directories on an operator-selected disk, and tune
