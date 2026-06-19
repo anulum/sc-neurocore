@@ -57,7 +57,7 @@ class SpinCouplingTensor:
 
     i: int
     j: int
-    tensor_mhz: np.ndarray
+    tensor_mhz: np.ndarray[Any, Any]
 
 
 class SpinPoolMPS:
@@ -111,19 +111,19 @@ class SpinPoolMPS:
         # states require density-matrix evolution and are handled in the
         # radical-pair verification path, not by pretending a pure MPS is
         # mixed.
-        self.tensors: list[np.ndarray] = self._init_product_state()
+        self.tensors: list[np.ndarray[Any, Any]] = self._init_product_state()
 
         # Entanglement map (derived quantity, not fundamental)
-        self.entanglement_map: np.ndarray = np.ones(n_sites, dtype=np.float64) / n_sites
+        self.entanglement_map: np.ndarray[Any, Any] = np.ones(n_sites, dtype=np.float64) / n_sites
 
         # Two-site singlet projection operator |ψ⁻⟩⟨ψ⁻|
         # |ψ⁻⟩ = (|01⟩ - |10⟩)/√2
         # P_S = [[0,0,0,0],[0,½,-½,0],[0,-½,½,0],[0,0,0,0]] in {|00⟩,|01⟩,|10⟩,|11⟩}
         psi_minus = np.array([0, 1, -1, 0], dtype=np.complex128) / np.sqrt(2)
-        self.P_singlet_2site: np.ndarray = np.outer(psi_minus, psi_minus.conj())
+        self.P_singlet_2site: np.ndarray[Any, Any] = np.outer(psi_minus, psi_minus.conj())
         self._measurement_count = 0
 
-    def _init_product_state(self) -> list[np.ndarray]:
+    def _init_product_state(self) -> list[np.ndarray[Any, Any]]:
         """Initialise MPS as the pure product state |00…0⟩."""
         tensors = []
         for _ in range(self.n_sites):
@@ -135,7 +135,7 @@ class SpinPoolMPS:
             tensors.append(A)
         return tensors
 
-    def to_statevector(self, *, max_sites: int = 16) -> np.ndarray:
+    def to_statevector(self, *, max_sites: int = 16) -> np.ndarray[Any, Any]:
         """Return the exact statevector represented by this MPS.
 
         This is intended for verification-size systems.  Larger systems must
@@ -153,11 +153,12 @@ class SpinPoolMPS:
         norm = np.linalg.norm(vec)
         if norm == 0.0:
             raise ValueError("MPS state has zero norm")
-        return vec / norm
+        normed: np.ndarray[Any, Any] = vec / norm
+        return normed
 
     def set_statevector(
         self,
-        statevector: np.ndarray,
+        statevector: np.ndarray[Any, Any],
         *,
         atol: float = 1e-12,
     ) -> None:
@@ -171,7 +172,7 @@ class SpinPoolMPS:
             raise ValueError("statevector has zero norm")
         psi = (vec / norm).reshape([2] * self.n_sites)
 
-        tensors: list[np.ndarray] = []
+        tensors: list[np.ndarray[Any, Any]] = []
         left_dim = 1
         work = psi
         for site in range(self.n_sites - 1):
@@ -196,7 +197,7 @@ class SpinPoolMPS:
         self._update_entanglement_map()
 
     @staticmethod
-    def _full_spin_operator(n_sites: int, site: int, component: int) -> np.ndarray:
+    def _full_spin_operator(n_sites: int, site: int, component: int) -> np.ndarray[Any, Any]:
         matrices = [
             np.array([[0, 1], [1, 0]], dtype=np.complex128) / 2.0,
             np.array([[0, -1j], [1j, 0]], dtype=np.complex128) / 2.0,
@@ -255,7 +256,7 @@ class SpinPoolMPS:
         evolved = expm(-1j * H * time_us) @ psi
         self.set_statevector(evolved)
 
-    def _compute_rdm_single(self, site: int) -> np.ndarray:
+    def _compute_rdm_single(self, site: int) -> np.ndarray[Any, Any]:
         """Compute single-site reduced density matrix by contracting MPS."""
         n = self.n_sites
         # Contract from left up to site
@@ -275,14 +276,14 @@ class SpinPoolMPS:
             R = np.einsum("asc,bsd,cd->ab", A, A.conj(), R)
 
         # RDM: ρ[σ,σ'] = Σ L[α,α'] A[α,σ,β] A*[α',σ',β'] R[β,β']
-        rho = np.einsum("ab,asc,bud,cd->su", L, A_s, A_s.conj(), R)
+        rho: np.ndarray[Any, Any] = np.einsum("ab,asc,bud,cd->su", L, A_s, A_s.conj(), R)
         # Normalise
         tr = np.trace(rho)
         if abs(tr) > 0:
             rho /= tr
         return rho
 
-    def _compute_rdm_two_site(self, site: int) -> np.ndarray:
+    def _compute_rdm_two_site(self, site: int) -> np.ndarray[Any, Any]:
         """Compute two-site reduced density matrix for sites (site, site+1).
 
         Returns a 4×4 Hermitian matrix in the computational basis
@@ -315,7 +316,7 @@ class SpinPoolMPS:
         #                              A_i*[α',σ₁',γ'] A_j*[γ',σ₂',β'] R[β,β']
         rho_4 = np.einsum("ab,asc,cud,bve,ewf,df->suvw", L, A_i, A_j, A_i.conj(), A_j.conj(), R)
         # Reshape to 4×4: index = σ₁*2 + σ₂
-        rho = rho_4.reshape(4, 4)
+        rho: np.ndarray[Any, Any] = rho_4.reshape(4, 4)
         tr = np.trace(rho)
         if abs(tr) > 0:
             rho /= tr
@@ -382,7 +383,7 @@ class SpinPoolMPS:
 
         self._measurement_count += 1
 
-    def _apply_adjacent_unitary(self, i: int, unitary: np.ndarray) -> None:
+    def _apply_adjacent_unitary(self, i: int, unitary: np.ndarray[Any, Any]) -> None:
         """Apply a two-site unitary to adjacent sites ``i`` and ``i + 1``."""
         j = i + 1
         Ai = self.tensors[i]  # (d_L, 2, d_mid)
@@ -513,7 +514,7 @@ class SpinPoolMPS:
         return float(np.clip(singlet_prob, 0.0, 1.0))
 
     @property
-    def rho(self) -> np.ndarray:
+    def rho(self) -> np.ndarray[Any, Any]:
         """Return site-0 reduced density matrix (backward compat)."""
         return self._compute_rdm_single(0)
 

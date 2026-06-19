@@ -44,10 +44,10 @@ from typing import Any
 
 import numpy as np
 
-from .spin_pool import SpinPoolMPS
-from .fisher_posner import HybridFisherPosnerLIF
 from .bridge_adapter import FisherPosnerQuantumBridge, compute_max_qubits
 from .content_indexer import ContentChunk, embed_chunks, index_gotm_repo
+from .fisher_posner import HybridFisherPosnerLIF
+from .spin_pool import SpinPoolMPS
 
 logger = logging.getLogger(__name__)
 
@@ -57,8 +57,8 @@ try:
 
     # The agentic-shared llm module is available on the GOTM workstation
     _sys.path.insert(0, "/media/anulum/724AA8E84AA8AA75/agentic-shared")
-    from llm import chat as _llm_chat  # type: ignore[import-untyped]
-    from llm import Endpoint as _LLMEndpoint  # type: ignore[import-untyped]
+    from llm import Endpoint as _LLMEndpoint
+    from llm import chat as _llm_chat
 
     HAS_LLM = True
 except (ImportError, ModuleNotFoundError):
@@ -196,7 +196,7 @@ class GOTMBrain:
             }
             kwargs["endpoint"] = self._llm_endpoint
             response = _llm_chat(prompt, **kwargs)
-            directive = response.strip().split()[0].upper().strip(".,:;")
+            directive: str = response.strip().split()[0].upper().strip(".,:;")
             if directive in _DIRECTIVE_COHERENCE:
                 return directive
         except Exception as exc:
@@ -206,14 +206,14 @@ class GOTMBrain:
 
     def process_content(
         self,
-        input_vector: np.ndarray,
+        input_vector: np.ndarray[Any, Any],
         directive: str,
     ) -> list[int]:
         """Process a content vector through the neural network.
 
         Parameters
         ----------
-        input_vector : np.ndarray
+        input_vector : np.ndarray[Any, Any]
             Numerical vector from content embedding, shape ``(n_neurons,)``
             or broadcastable.
         directive : str
@@ -250,14 +250,14 @@ class GOTMBrain:
 
         return spikes
 
-    def learn_step(self, chunk: ContentChunk, vector: np.ndarray) -> LearningStep:
+    def learn_step(self, chunk: ContentChunk, vector: np.ndarray[Any, Any]) -> LearningStep:
         """Execute a single learning step on one content chunk.
 
         Parameters
         ----------
         chunk : ContentChunk
             The content chunk being processed.
-        vector : np.ndarray
+        vector : np.ndarray[Any, Any]
             Embedded numerical vector for the chunk.
 
         Returns

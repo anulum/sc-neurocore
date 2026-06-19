@@ -31,7 +31,7 @@ from __future__ import annotations
 import logging
 import math
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -98,7 +98,7 @@ def _get_available_ram() -> int:
     try:
         import psutil
 
-        return psutil.virtual_memory().available
+        return int(psutil.virtual_memory().available)
     except (ImportError, AttributeError):
         pass
     try:
@@ -209,7 +209,7 @@ class FisherPosnerQuantumBridge:
         """Active backend name."""
         return self._backend
 
-    def execute_non_local_sync(self, entangle_pairs: list[tuple[int, int]]) -> np.ndarray:
+    def execute_non_local_sync(self, entangle_pairs: list[tuple[int, int]]) -> np.ndarray[Any, Any]:
         """Execute non-local synchronisation via entanglement.
 
         Creates Bell pairs for the specified site pairs and measures
@@ -222,7 +222,7 @@ class FisherPosnerQuantumBridge:
 
         Returns
         -------
-        np.ndarray
+        np.ndarray[Any, Any]
             PauliZ expectation values for all qubits, shape (n_qubits,).
         """
         if self._backend == "pennylane" and self.dev is not None:
@@ -236,7 +236,7 @@ class FisherPosnerQuantumBridge:
 
     def _sync_ibm_qiskit(
         self, entangle_pairs: list[tuple[int, int]], shots: int = 4096
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Build and execute Bell pair circuit on IBM backend or AerSimulator.
 
         NOTE: This method dispatches COGNITIVE-LAYER entanglement (Bell
@@ -324,21 +324,21 @@ class FisherPosnerQuantumBridge:
         for reg_name in ("meas", "c", "cr", "c0", "c1"):
             register = getattr(data, reg_name, None)
             if register is not None and hasattr(register, "get_counts"):
-                return register.get_counts()
+                return cast("dict[str, int]", register.get_counts())
         for attr in dir(data):
             if attr.startswith("_"):
                 continue
             register = getattr(data, attr, None)
             if register is not None and hasattr(register, "get_counts"):
-                return register.get_counts()
+                return cast("dict[str, int]", register.get_counts())
         raise RuntimeError("SamplerV2 result does not expose a counts register")
 
-    def _dispatch_qiskit_circuit(self, qc: Any, shots: int) -> np.ndarray:
+    def _dispatch_qiskit_circuit(self, qc: Any, shots: int) -> np.ndarray[Any, Any]:
         """Dispatch a circuit and return ⟨Z⟩ expectation values."""
         if self._backend == "ibm_qiskit" and self._ibm_service is not None:
             try:
-                from qiskit_ibm_runtime import SamplerV2
                 from qiskit import transpile
+                from qiskit_ibm_runtime import SamplerV2
 
                 # Use qc.num_qubits (circuit size), NOT self.n_qubits
                 # (cognitive layer), because Posner circuits can be
@@ -389,18 +389,18 @@ class FisherPosnerQuantumBridge:
 
                 sim = AerSimulator()
                 tqc = transpile(qc, sim)
-                return sim.run(tqc, shots=shots).result().get_counts()
+                return cast("dict[str, int]", sim.run(tqc, shots=shots).result().get_counts())
             except ImportError as e:
                 raise RuntimeError("qiskit-aer is required for backend='ibm_aer'") from e
         raise RuntimeError(
             f"Raw Qiskit dispatch requires backend='ibm_qiskit' or 'ibm_aer', got {self._backend!r}"
         )
 
-    def _sync_ibm_aer(self, qc: Any, shots: int = 4096) -> np.ndarray:
+    def _sync_ibm_aer(self, qc: Any, shots: int = 4096) -> np.ndarray[Any, Any]:
         """Execute circuit on explicit local AerSimulator backend."""
         try:
-            from qiskit_aer import AerSimulator
             from qiskit import transpile
+            from qiskit_aer import AerSimulator
 
             sim = AerSimulator()
             tqc = transpile(qc, sim)
@@ -409,7 +409,7 @@ class FisherPosnerQuantumBridge:
         except ImportError as e:
             raise RuntimeError("qiskit-aer is required for backend='ibm_aer'") from e
 
-    def _counts_to_expvals(self, counts: dict, shots: int) -> np.ndarray:
+    def _counts_to_expvals(self, counts: dict[str, int], shots: int) -> np.ndarray[Any, Any]:
         """Convert bitstring counts to ⟨Z⟩ expectation values."""
         expvals = np.zeros(self.n_qubits, dtype=np.float64)
         for bitstring, count in counts.items():
@@ -420,12 +420,12 @@ class FisherPosnerQuantumBridge:
         expvals /= shots
         return expvals
 
-    def _sync_pennylane(self, entangle_pairs: list[tuple[int, int]]) -> np.ndarray:
+    def _sync_pennylane(self, entangle_pairs: list[tuple[int, int]]) -> np.ndarray[Any, Any]:
         """PennyLane Bell pair circuit → PauliZ expectations."""
         dev = self.dev
 
         @qml.qnode(dev)  # type: ignore[untyped-decorator]
-        def circuit() -> list:
+        def circuit() -> list[Any]:
             for p1, p2 in entangle_pairs:
                 qml.Hadamard(wires=p1)
                 qml.CNOT(wires=[p1, p2])
@@ -434,7 +434,7 @@ class FisherPosnerQuantumBridge:
         result = np.asarray(circuit(), dtype=np.float64)
         return result
 
-    def _sync_emulated(self, entangle_pairs: list[tuple[int, int]]) -> np.ndarray:
+    def _sync_emulated(self, entangle_pairs: list[tuple[int, int]]) -> np.ndarray[Any, Any]:
         """Pure-numpy emulation of Bell pair correlations."""
         expectations = np.ones(self.n_qubits, dtype=np.float64)
         for p1, p2 in entangle_pairs:
@@ -448,7 +448,7 @@ class FisherPosnerQuantumBridge:
         target_coherence: float,
         learning_rate: float = 0.05,
         n_steps: int = 1,
-    ) -> np.ndarray | None:
+    ) -> np.ndarray[Any, Any] | None:
         """Optimise qubit phases towards target coherence.
 
         Uses PennyLane autograd gradient descent when available,
@@ -466,7 +466,7 @@ class FisherPosnerQuantumBridge:
 
         Returns
         -------
-        np.ndarray or None
+        np.ndarray[Any, Any] or None
             Optimised phase parameters, or None if running emulated.
         """
         if self._backend != "pennylane" or not HAS_PENNYLANE or self.dev is None:
@@ -476,13 +476,13 @@ class FisherPosnerQuantumBridge:
         params = qml.numpy.array(np.random.uniform(0, np.pi, self.n_qubits), requires_grad=True)
 
         @qml.qnode(self.dev)  # type: ignore[untyped-decorator]
-        def cost_circuit(phi: np.ndarray) -> Any:
+        def cost_circuit(phi: np.ndarray[Any, Any]) -> Any:
             for i in range(self.n_qubits):
                 qml.Hadamard(wires=i)
                 qml.RZ(phi[i], wires=i)
             return qml.expval(qml.PauliX(0))
 
-        def cost(phi: np.ndarray) -> Any:
+        def cost(phi: np.ndarray[Any, Any]) -> Any:
             return (cost_circuit(phi) - target_coherence) ** 2
 
         grad_fn = qml.grad(cost)
@@ -496,10 +496,10 @@ class FisherPosnerQuantumBridge:
 
     def apply_orchestrator_bias(
         self,
-        global_phases: np.ndarray,
+        global_phases: np.ndarray[Any, Any],
         target_coherence: float,
         learning_rate: float = 0.2,
-    ) -> np.ndarray | None:
+    ) -> np.ndarray[Any, Any] | None:
         """Combine global orchestrator phases with local optimisation.
 
         Accepts a phase vector from the scpn-phase-orchestrator
@@ -508,7 +508,7 @@ class FisherPosnerQuantumBridge:
 
         Parameters
         ----------
-        global_phases : np.ndarray
+        global_phases : np.ndarray[Any, Any]
             Phase vector from the orchestrator, shape (n_qubits,).
         target_coherence : float
             Target coherence level.
@@ -517,7 +517,7 @@ class FisherPosnerQuantumBridge:
 
         Returns
         -------
-        np.ndarray or None
+        np.ndarray[Any, Any] or None
             Locally refined phase parameters.
         """
         if len(global_phases) != self.n_qubits:

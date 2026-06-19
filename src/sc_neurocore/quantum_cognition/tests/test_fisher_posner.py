@@ -8,11 +8,11 @@ from __future__ import annotations
 
 import pytest
 
-from sc_neurocore.quantum_cognition.spin_pool import SpinPoolMPS
 from sc_neurocore.quantum_cognition.fisher_posner import (
     HybridFisherPosnerLIF,
     HybridFisherPosnerLIFNeuron,
 )
+from sc_neurocore.quantum_cognition.spin_pool import SpinPoolMPS
 
 
 @pytest.fixture

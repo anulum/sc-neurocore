@@ -84,9 +84,9 @@ class KaneRegisterLayout:
     ----------
     n_qubits : int
         Number of ³¹P donor qubits.
-    qubit_positions : np.ndarray
+    qubit_positions : np.ndarray[Any, Any]
         Shape ``(n_qubits, 2)`` — (x, y) coordinates in nanometres.
-    coupling_matrix : np.ndarray
+    coupling_matrix : np.ndarray[Any, Any]
         Shape ``(n_qubits, n_qubits)`` — exchange coupling J(d) in meV.
         Symmetric, diagonal is zero.
     depth_nm : float
@@ -100,12 +100,12 @@ class KaneRegisterLayout:
     """
 
     n_qubits: int
-    qubit_positions: np.ndarray
-    coupling_matrix: np.ndarray
+    qubit_positions: np.ndarray[Any, Any]
+    coupling_matrix: np.ndarray[Any, Any]
     depth_nm: float = _DEPTH_NM
     t2_budget_ms: float = 0.0
     max_gate_depth: int = 0
-    gate_schedule: list = field(default_factory=list)
+    gate_schedule: list[Any] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Serialise to JSON-compatible dict."""
@@ -195,7 +195,7 @@ class KaneSiliconMapper:
 
         return layout
 
-    def _compute_positions(self, n: int) -> np.ndarray:
+    def _compute_positions(self, n: int) -> np.ndarray[Any, Any]:
         """Compute qubit positions based on topology."""
         if self.topology == "linear":
             positions = np.zeros((n, 2), dtype=np.float64)
@@ -240,7 +240,7 @@ class KaneSiliconMapper:
                 break
         return positions
 
-    def _compute_coupling_matrix(self, positions: np.ndarray) -> np.ndarray:
+    def _compute_coupling_matrix(self, positions: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Compute exchange coupling J(d) between all donor pairs."""
         n = len(positions)
         coupling = np.zeros((n, n), dtype=np.float64)
@@ -263,9 +263,9 @@ class KaneSiliconMapper:
         """
         if distance_nm <= 0:
             return _J0_MEV
-        return _J0_MEV * np.exp(-2.0 * distance_nm / _BOHR_RADIUS_STAR_NM)
+        return float(_J0_MEV * np.exp(-2.0 * distance_nm / _BOHR_RADIUS_STAR_NM))
 
-    def _build_gate_schedule(self, n: int, coupling: np.ndarray) -> list[dict[str, Any]]:
+    def _build_gate_schedule(self, n: int, coupling: np.ndarray[Any, Any]) -> list[dict[str, Any]]:
         """Build a gate schedule with DAG-based parallel scheduling.
 
         Produces an optimized gate schedule where:

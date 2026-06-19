@@ -357,7 +357,7 @@ def embed_chunks(
     chunks: list[ContentChunk],
     n_dims: int = 32,
     seed: int = 42,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Convert content chunks to numerical vectors for neural input.
 
     Uses a lightweight deterministic hashing approach (not a neural
@@ -380,7 +380,7 @@ def embed_chunks(
 
     Returns
     -------
-    np.ndarray
+    np.ndarray[Any, Any]
         Shape ``(len(chunks), n_dims)``, values normalised to [0, 1].
     """
     rng = np.random.default_rng(seed)
@@ -430,7 +430,7 @@ def embed_tfidf(
     n_dims: int = 256,
     min_df: int = 2,
     max_df_ratio: float = 0.85,
-) -> tuple[np.ndarray, dict[str, int]]:
+) -> tuple[np.ndarray[Any, Any], dict[str, int]]:
     """Compute proper TF-IDF vectors from a corpus of chunks.
 
     Unlike ``embed_chunks()`` which uses character statistics, this
@@ -453,7 +453,7 @@ def embed_tfidf(
 
     Returns
     -------
-    tuple[np.ndarray, dict[str, int]]
+    tuple[np.ndarray[Any, Any], dict[str, int]]
         - TF-IDF matrix of shape ``(len(chunks), n_dims)``, L2-normalised.
         - Vocabulary mapping {term: dimension_index}.
     """
@@ -573,7 +573,7 @@ def embed_tfidf(
         doc_tokens.append(tokens)
 
     # Compute document frequency for each term
-    df: Counter = Counter()
+    df: Counter[str] = Counter()
     for tokens in doc_tokens:
         for term in set(tokens):
             df[term] += 1

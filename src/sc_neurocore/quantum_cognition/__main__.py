@@ -38,7 +38,7 @@ from typing import Any
 
 import numpy as np
 
-from .gotm_brain import GOTMBrain, HAS_LLM
+from .gotm_brain import HAS_LLM, GOTMBrain
 
 logger = logging.getLogger("sc_neurocore.quantum_cognition")
 
@@ -74,7 +74,7 @@ def _make_llm_endpoint(model: str | None) -> Any:
         _sys_path = "/media/anulum/724AA8E84AA8AA75/agentic-shared"
         if _sys_path not in sys.path:
             sys.path.insert(0, _sys_path)
-        from llm import Endpoint  # type: ignore[import-untyped]
+        from llm import Endpoint
 
         return Endpoint(model=model)
     except ImportError:

@@ -11,12 +11,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from sc_neurocore.quantum_cognition.content_indexer import ContentChunk
 from sc_neurocore.quantum_cognition.gotm_brain import (
-    GOTMBrain,
     HAS_LLM,
+    GOTMBrain,
     LearningStep,
 )
-from sc_neurocore.quantum_cognition.content_indexer import ContentChunk
 
 
 class TestGOTMBrainPersistence:

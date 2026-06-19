@@ -18,8 +18,8 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from .spin_pool import SpinPoolMPS
 from .bridge_adapter import FisherPosnerQuantumBridge
+from .spin_pool import SpinPoolMPS
 
 
 @dataclass(frozen=True)

@@ -32,14 +32,14 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .content_indexer import ContentChunk, index_file, _EXTENSION_WEIGHTS
+from .content_indexer import _EXTENSION_WEIGHTS, ContentChunk, index_file
 
 logger = logging.getLogger(__name__)
 
 # Try importing watchdog for native FS events
 try:
-    from watchdog.observers import Observer  # type: ignore[import-untyped]
-    from watchdog.events import FileSystemEventHandler  # type: ignore[import-untyped]
+    from watchdog.events import FileSystemEventHandler
+    from watchdog.observers import Observer
 
     HAS_WATCHDOG = True
 except ImportError:

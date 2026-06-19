@@ -32,16 +32,16 @@ Install extras::
 
 __tier__ = "experimental"
 
-from .spin_pool import SpinPoolMPS
-from .fisher_posner import HybridFisherPosnerLIF, HybridFisherPosnerLIFNeuron
 from .bridge_adapter import FisherPosnerQuantumBridge, compute_max_qubits
-from .studio_hook import QuantumStudioHook
-from .content_indexer import ContentChunk, index_gotm_repo, embed_chunks
-from .gotm_brain import GOTMBrain
-from .radical_pair import RadicalPairModel, RadicalPairParams
-from .kane_mapper import KaneSiliconMapper, KaneRegisterLayout
+from .content_indexer import ContentChunk, embed_chunks, index_gotm_repo
 from .dashboard import TerminalDashboard
+from .fisher_posner import HybridFisherPosnerLIF, HybridFisherPosnerLIFNeuron
 from .fs_watcher import GOTMWatcher
+from .gotm_brain import GOTMBrain
+from .kane_mapper import KaneRegisterLayout, KaneSiliconMapper
+from .radical_pair import RadicalPairModel, RadicalPairParams
+from .spin_pool import SpinPoolMPS
+from .studio_hook import QuantumStudioHook
 
 __all__ = [
     "SpinPoolMPS",

@@ -84,7 +84,7 @@ class RadicalPairParams:
     lifetime_us : float
         Radical pair lifetime in µs.
         Posner molecules: ~1–1000 µs (protected by Ca₉(PO₄)₆ cage).
-    hyperfine_tensors_1, hyperfine_tensors_2 : list[np.ndarray]
+    hyperfine_tensors_1, hyperfine_tensors_2 : list[np.ndarray[Any, Any]]
         3×3 hyperfine tensors in MHz for nuclei coupled to electron 1 and
         electron 2 respectively.
     quadrature_order : int
@@ -95,8 +95,8 @@ class RadicalPairParams:
     exchange_j: float = 1.0  # MHz
     recombination_rate: float = 0.1  # µs⁻¹
     lifetime_us: float = 100.0  # µs
-    hyperfine_tensors_1: list[np.ndarray] = field(default_factory=list)
-    hyperfine_tensors_2: list[np.ndarray] = field(default_factory=list)
+    hyperfine_tensors_1: list[np.ndarray[Any, Any]] = field(default_factory=list)
+    hyperfine_tensors_2: list[np.ndarray[Any, Any]] = field(default_factory=list)
     quadrature_order: int = 64
 
 
@@ -119,15 +119,15 @@ class RadicalPairModel:
             raise ValueError("quadrature_order must be >= 2")
 
     @staticmethod
-    def _isotropic_tensor(a_mhz: float) -> np.ndarray:
+    def _isotropic_tensor(a_mhz: float) -> np.ndarray[Any, Any]:
         return np.eye(3, dtype=np.float64) * float(a_mhz)
 
     @classmethod
     def from_hyperfine_tensors(
         cls,
         *,
-        tensors_1: list[np.ndarray],
-        tensors_2: list[np.ndarray],
+        tensors_1: list[np.ndarray[Any, Any]],
+        tensors_2: list[np.ndarray[Any, Any]],
         exchange_j: float,
         recombination_rate: float,
         lifetime_us: float,
@@ -146,7 +146,7 @@ class RadicalPairModel:
             )
         )
 
-    def _validated_tensors(self) -> tuple[list[np.ndarray], list[np.ndarray]]:
+    def _validated_tensors(self) -> tuple[list[np.ndarray[Any, Any]], list[np.ndarray[Any, Any]]]:
         p = self.params
         tensors_1 = [np.asarray(t, dtype=np.float64) for t in p.hyperfine_tensors_1]
         tensors_2 = [np.asarray(t, dtype=np.float64) for t in p.hyperfine_tensors_2]
@@ -163,7 +163,7 @@ class RadicalPairModel:
         return tensors_1, tensors_2
 
     @staticmethod
-    def _spin_operator(n_spins: int, target: int, component: str) -> np.ndarray:
+    def _spin_operator(n_spins: int, target: int, component: str) -> np.ndarray[Any, Any]:
         matrices = {
             "x": np.array([[0, 1], [1, 0]], dtype=np.complex128) / 2.0,
             "y": np.array([[0, -1j], [1j, 0]], dtype=np.complex128) / 2.0,
@@ -176,7 +176,9 @@ class RadicalPairModel:
         return op
 
     @staticmethod
-    def _singlet_density_with_nuclear_bath(n_nuclei: int) -> tuple[np.ndarray, np.ndarray]:
+    def _singlet_density_with_nuclear_bath(
+        n_nuclei: int,
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         singlet = np.array([0, 1, -1, 0], dtype=np.complex128) / np.sqrt(2.0)
         rho_e = np.outer(singlet, singlet.conj())
         if n_nuclei == 0:
@@ -189,7 +191,7 @@ class RadicalPairModel:
             np.kron(rho_e, np.eye(bath_dim, dtype=np.complex128)),
         )
 
-    def _hamiltonian(self, b_local: float) -> tuple[np.ndarray, int]:
+    def _hamiltonian(self, b_local: float) -> tuple[np.ndarray[Any, Any], int]:
         p = self.params
         tensors_1, tensors_2 = self._validated_tensors()
         n_nuclei = len(tensors_1) + len(tensors_2)
@@ -269,17 +271,17 @@ class RadicalPairModel:
 
         return float(np.clip(numerator / norm, 0.0, 1.0))
 
-    def singlet_yield_field_sweep(self, b_range: np.ndarray) -> np.ndarray:
+    def singlet_yield_field_sweep(self, b_range: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Compute singlet yield over a range of magnetic fields.
 
         Parameters
         ----------
-        b_range : np.ndarray
+        b_range : np.ndarray[Any, Any]
             Array of magnetic field values in Tesla.
 
         Returns
         -------
-        np.ndarray
+        np.ndarray[Any, Any]
             Singlet yield at each field value.
         """
         return np.array([self.singlet_yield(b) for b in b_range])
