@@ -735,6 +735,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                     policy,
                     principal=_studio_principal_from_headers(request.headers),
                     route=path_template,
+                    request_id=request_id,
                 )
                 if decision.allowed:
                     response = await call_next(request)
