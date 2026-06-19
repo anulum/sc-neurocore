@@ -53,7 +53,7 @@ class MindDescriptionLanguage:
                 state[name] = {"weights": module.weights.tolist()}
 
         mdl = MDLSpecification(agent_name=agent_name, architecture=architecture, state=state)
-        return yaml.dump(asdict(mdl), sort_keys=False)
+        return str(yaml.dump(asdict(mdl), sort_keys=False))
 
     @staticmethod
     def decode(mdl_string: str) -> Dict[str, Any]:

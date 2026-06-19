@@ -178,7 +178,7 @@ class TrainingJob:
                 loss = spike_count_loss(spike_counts, targets)
 
                 optimizer.zero_grad()
-                loss.backward()  # type: ignore[no-untyped-call]
+                loss.backward()  # type: ignore[no-untyped-call, unused-ignore]
                 if max_grad_norm:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
                 optimizer.step()
