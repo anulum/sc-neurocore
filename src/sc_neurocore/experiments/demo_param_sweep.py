@@ -21,7 +21,7 @@ def run_pattern_trials(
     noise_std: float,
     n_trials: int,
     base_seed: int = 42,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """
     Run multiple trials of SCDenseLayer for a given pattern (x_inputs).
     Return matrix of shape (n_trials, n_neurons) with firing rates.

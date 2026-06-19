@@ -80,7 +80,7 @@ def _compute_p_h1_lightweight(
     mean_plv = np.mean(plvs)
     # Logistic squash centered at tau_h1
     p_h1 = float(1.0 / (1.0 + np.exp(-beta * (mean_plv - tau_h1 + 0.3))))
-    return np.clip(p_h1, 0.0, 1.0)
+    return float(np.clip(p_h1, 0.0, 1.0))
 
 
 # ── Scenarios ──────────────────────────────────────────────────────────

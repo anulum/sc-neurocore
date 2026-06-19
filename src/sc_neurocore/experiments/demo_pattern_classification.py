@@ -20,7 +20,7 @@ def run_pattern_trials(
     T: int = 2500,
     n_trials: int = 10,
     base_seed: int = 42,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """
     Run multiple trials of SCDenseLayer for a given pattern (x_inputs).
     Return matrix of shape (n_trials, n_neurons) with firing rates.
@@ -113,7 +113,7 @@ def demo() -> None:
     # --- TESTING: generate new samples and classify by nearest centroid ---
     def gen_test_samples(
         label: int, pattern: list[float], n_samples: int
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         rates = run_pattern_trials(
             label=label,
             x_inputs=pattern,
