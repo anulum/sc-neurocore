@@ -77,7 +77,8 @@ runtime features:
   setting `SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH` to a writable file path. Each
   `studio.audit.v1` line records the UTC timestamp, policy action, route
   template, principal identifier when present, request correlation ID when
-  available, allow/deny decision, and decision reason.
+  available, allow/deny decision, decision reason, previous event hash, and a
+  SHA-256 event hash over the canonical row content.
 - `RoutePolicyRegistry` records the expected policy for each platform API route
   and lets startup or test code detect unclassified Studio endpoints before
   they become accidental public surfaces. The default registry classifies the

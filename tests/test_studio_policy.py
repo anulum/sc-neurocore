@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -44,6 +45,17 @@ def _policy_contract() -> dict[str, Any]:
         "RouteVisibility": RouteVisibility,
         "build_default_studio_route_policy_registry": build_default_studio_route_policy_registry,
     }
+
+
+def _audit_event_hash(row: dict[str, Any]) -> str:
+    unsigned_row = dict(row)
+    unsigned_row.pop("event_hash", None)
+    canonical_row = json.dumps(
+        unsigned_row,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(canonical_row).hexdigest()
 
 
 def test_policy_gateway_allows_public_route_without_principal() -> None:
@@ -147,8 +159,13 @@ def test_jsonl_audit_sink_appends_policy_events(tmp_path: Path) -> None:
 
     rows = [json.loads(line) for line in audit_path.read_text(encoding="utf-8").splitlines()]
 
+    assert rows[0]["previous_event_hash"] is None
+    assert rows[0]["event_hash"] == _audit_event_hash(rows[0])
+    assert rows[1]["previous_event_hash"] == rows[0]["event_hash"]
+    assert rows[1]["event_hash"] == _audit_event_hash(rows[1])
     assert rows == [
-        {
+        rows[0]
+        | {
             "action": "studio.simulate.run",
             "decision": "allow",
             "principal_id": "operator-7",
@@ -158,7 +175,8 @@ def test_jsonl_audit_sink_appends_policy_events(tmp_path: Path) -> None:
             "schema_version": "studio.audit.v1",
             "timestamp_utc": None,
         },
-        {
+        rows[1]
+        | {
             "action": "studio.synth.run",
             "decision": "deny",
             "principal_id": None,
@@ -201,6 +219,50 @@ def test_policy_gateway_accepts_jsonl_audit_sink(tmp_path: Path) -> None:
     assert row["decision"] == "deny"
     assert row["reason"] == "missing_principal"
     assert row["schema_version"] == "studio.audit.v1"
+
+
+def test_jsonl_audit_sink_starts_chain_after_blank_log(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_path.write_text("\n\n", encoding="utf-8")
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+
+    audit_sink.record(
+        contract["AuditEvent"](
+            action="studio.simulate.run",
+            route="/api/simulate",
+            principal_id="operator-7",
+            decision="allow",
+            reason="authorized",
+        )
+    )
+
+    row = json.loads(audit_path.read_text(encoding="utf-8").splitlines()[-1])
+
+    assert row["previous_event_hash"] is None
+    assert row["event_hash"] == _audit_event_hash(row)
+
+
+def test_jsonl_audit_sink_starts_chain_after_legacy_row(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_path.write_text('{"schema_version":"studio.audit.v1"}\n', encoding="utf-8")
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+
+    audit_sink.record(
+        contract["AuditEvent"](
+            action="studio.simulate.run",
+            route="/api/simulate",
+            principal_id="operator-7",
+            decision="allow",
+            reason="authorized",
+        )
+    )
+
+    row = json.loads(audit_path.read_text(encoding="utf-8").splitlines()[-1])
+
+    assert row["previous_event_hash"] is None
+    assert row["event_hash"] == _audit_event_hash(row)
 
 
 def test_policy_gateway_records_request_id_in_audit_event(tmp_path: Path) -> None:
