@@ -576,17 +576,22 @@ mod tests {
         n.v = -60.0;
         let current = 10.0;
 
-        // Manual calculation of original formula
-        let exp_arg = ((-60.0_f64 - (-55.0)) / 2.0).clamp(-20.0, 20.0);
-        let exp_term = 2.0 * exp_arg.exp();
-        let expected_dv = (-(-60.0 - (-65.0)) + exp_term + current) / 20.0 * 0.1;
+        let rhs = |v: f64| {
+            let exp_arg = ((v - n.v_rh) / n.delta_t).clamp(-20.0, 20.0);
+            (-(v - n.v_rest) + n.delta_t * exp_arg.exp() + current) / n.tau
+        };
+        let k1 = rhs(n.v);
+        let k2 = rhs(n.v + 0.5 * n.dt * k1);
+        let k3 = rhs(n.v + 0.5 * n.dt * k2);
+        let k4 = rhs(n.v + n.dt * k3);
+        let expected_dv = n.dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
 
         n.step(current);
         let got_dv = n.v - (-60.0); // Simple check since we only did one step
 
-        // Use a small epsilon for float parity
+        // Use a small epsilon for float parity.
         assert!(
-            (got_dv - expected_dv).abs() < 1e-15,
+            (got_dv - expected_dv).abs() < 1e-12,
             "Logic mismatch in ExpIfNeuron: got {}, expected {}",
             got_dv,
             expected_dv
