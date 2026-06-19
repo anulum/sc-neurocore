@@ -73,6 +73,32 @@ def test_studio_runtime_settings_default_request_id_header_is_standard() -> None
     assert settings.request_id_header == "x-request-id"
 
 
+def test_studio_runtime_settings_default_request_body_limit_is_bounded() -> None:
+    settings = build_default_studio_runtime_settings(env={})
+
+    assert settings.max_request_body_bytes == 1_048_576
+
+
+def test_studio_runtime_settings_parses_request_body_limit() -> None:
+    settings = build_default_studio_runtime_settings(
+        env={"SC_NEUROCORE_STUDIO_MAX_REQUEST_BODY_BYTES": "2048"}
+    )
+
+    assert settings.max_request_body_bytes == 2048
+
+
+def test_studio_runtime_settings_rejects_non_positive_request_body_limit() -> None:
+    with pytest.raises(ValueError, match="request body limit"):
+        StudioRuntimeSettings(max_request_body_bytes=0)
+
+
+def test_studio_runtime_settings_rejects_invalid_request_body_limit() -> None:
+    with pytest.raises(ValueError, match="request body limit"):
+        build_default_studio_runtime_settings(
+            env={"SC_NEUROCORE_STUDIO_MAX_REQUEST_BODY_BYTES": "not-a-number"}
+        )
+
+
 def test_studio_runtime_settings_default_hosts_are_loopback_only() -> None:
     settings = build_default_studio_runtime_settings(env={})
 
@@ -177,6 +203,25 @@ def test_studio_app_rejects_unconfigured_host() -> None:
     response = client.get("/api/health", headers={"host": "attacker.example.test"})
 
     assert response.status_code == 400
+
+
+def test_studio_app_rejects_oversized_request_body() -> None:
+    app = create_app(runtime_settings=StudioRuntimeSettings(max_request_body_bytes=8))
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.post("/api/health", content=b"012345678")
+
+    assert response.status_code == 413
+    assert response.json()["detail"] == "Studio request body exceeds configured limit."
+
+
+def test_studio_app_allows_request_body_within_limit() -> None:
+    app = create_app(runtime_settings=StudioRuntimeSettings(max_request_body_bytes=8))
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.post("/api/health", content=b"01234567")
+
+    assert response.status_code == 405
 
 
 def test_studio_app_cors_preflight_allows_configured_origin() -> None:

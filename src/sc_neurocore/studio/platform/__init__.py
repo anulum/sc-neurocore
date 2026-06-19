@@ -32,6 +32,7 @@ from sc_neurocore.studio.platform.settings import (
     DEFAULT_STUDIO_ALLOWED_HOSTS,
     DEFAULT_STUDIO_CORS_ORIGINS,
     DEFAULT_STUDIO_HTTP_SECURITY_HEADERS,
+    DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES,
     StudioRuntimeSettings,
     build_default_studio_runtime_settings,
 )
@@ -54,6 +55,7 @@ __all__ = [
     "DEFAULT_STUDIO_ALLOWED_HOSTS",
     "DEFAULT_STUDIO_CORS_ORIGINS",
     "DEFAULT_STUDIO_HTTP_SECURITY_HEADERS",
+    "DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES",
     "StudioRuntimeSettings",
     "build_default_studio_capability_registry",
     "build_default_studio_route_policy_registry",

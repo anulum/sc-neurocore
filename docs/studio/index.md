@@ -77,6 +77,9 @@ runtime features:
   allow-list. Packaged defaults accept only loopback hosts; deployments set
   `SC_NEUROCORE_STUDIO_ALLOWED_HOSTS` to a comma-separated host allow-list and
   wildcard hosts are rejected.
+- Studio rejects HTTP requests with a declared body larger than the configured
+  limit before route handlers run. The default is 1 MiB; deployments can set
+  `SC_NEUROCORE_STUDIO_MAX_REQUEST_BODY_BYTES` to a positive integer.
 - The backend adds default HTTP hardening headers to API responses:
   `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and
   `X-Frame-Options: DENY`.

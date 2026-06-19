@@ -21,6 +21,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 import numpy as np
 from pydantic import BaseModel, Field, StringConstraints
@@ -681,7 +682,18 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.middleware("http")
     async def add_studio_security_headers(request: Request, call_next: Callable[[Request], Any]) -> Any:
         request_id = _studio_request_id(request.headers.get(settings.request_id_header))
-        response = await call_next(request)
+        content_length = request.headers.get("content-length")
+        if (
+            content_length is not None
+            and content_length.isdecimal()
+            and int(content_length) > settings.max_request_body_bytes
+        ):
+            response = JSONResponse(
+                {"detail": "Studio request body exceeds configured limit."},
+                status_code=413,
+            )
+        else:
+            response = await call_next(request)
         for name, value in settings.http_security_headers.items():
             response.headers.setdefault(name, value)
         response.headers.setdefault(settings.request_id_header, request_id)

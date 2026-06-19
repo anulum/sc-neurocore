@@ -27,6 +27,8 @@ DEFAULT_STUDIO_ALLOWED_HOSTS: tuple[str, ...] = (
     "localhost",
 )
 
+DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES = 1_048_576
+
 DEFAULT_STUDIO_HTTP_SECURITY_HEADERS: Mapping[str, str] = MappingProxyType(
     {
         "x-content-type-options": "nosniff",
@@ -44,6 +46,7 @@ class StudioRuntimeSettings:
     allowed_hosts: tuple[str, ...] = DEFAULT_STUDIO_ALLOWED_HOSTS
     http_security_headers: Mapping[str, str] = DEFAULT_STUDIO_HTTP_SECURITY_HEADERS
     request_id_header: str = "x-request-id"
+    max_request_body_bytes: int = DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES
 
     def __post_init__(self) -> None:
         """Validate settings that affect Studio security boundaries."""
@@ -62,6 +65,8 @@ class StudioRuntimeSettings:
             raise ValueError("Studio security header values must not be empty.")
         if not self.request_id_header.strip():
             raise ValueError("Studio request ID header must not be empty.")
+        if self.max_request_body_bytes <= 0:
+            raise ValueError("Studio request body limit must be positive.")
 
 
 def build_default_studio_runtime_settings(
@@ -72,6 +77,7 @@ def build_default_studio_runtime_settings(
     source = os.environ if env is None else env
     raw_origins = source.get("SC_NEUROCORE_STUDIO_CORS_ORIGINS")
     raw_hosts = source.get("SC_NEUROCORE_STUDIO_ALLOWED_HOSTS")
+    raw_max_request_body_bytes = source.get("SC_NEUROCORE_STUDIO_MAX_REQUEST_BODY_BYTES")
     origins = (
         DEFAULT_STUDIO_CORS_ORIGINS
         if raw_origins is None or not raw_origins.strip()
@@ -82,4 +88,17 @@ def build_default_studio_runtime_settings(
         if raw_hosts is None or not raw_hosts.strip()
         else tuple(host.strip() for host in raw_hosts.split(",") if host.strip())
     )
-    return StudioRuntimeSettings(cors_allowed_origins=origins, allowed_hosts=hosts)
+    try:
+        max_request_body_bytes = (
+            DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES
+            if raw_max_request_body_bytes is None
+            or not raw_max_request_body_bytes.strip()
+            else int(raw_max_request_body_bytes)
+        )
+    except ValueError as exc:
+        raise ValueError("Studio request body limit must be an integer.") from exc
+    return StudioRuntimeSettings(
+        cors_allowed_origins=origins,
+        allowed_hosts=hosts,
+        max_request_body_bytes=max_request_body_bytes,
+    )
