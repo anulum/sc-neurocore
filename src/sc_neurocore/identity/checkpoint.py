@@ -14,9 +14,8 @@ plasticity traces, and metadata in .npz for compact storage.
 
 from __future__ import annotations
 
-from typing import Any
-
 import time
+from typing import Any
 
 import numpy as np
 
@@ -31,7 +30,6 @@ class Checkpoint:
         Captures: population voltages, projection CSR arrays,
         STDP traces, spike history, and metadata.
         """
-
         cortical_v = substrate.cortical.voltages.copy()
         inhibitory_v = substrate.inhibitory.voltages.copy()
         memory_v = substrate.memory.voltages.copy()
@@ -132,7 +130,6 @@ class Checkpoint:
     @staticmethod
     def merge(paths: list[str]) -> Any:
         """Merge multiple checkpoints by averaging weights and concatenating history."""
-
         if not paths:
             raise ValueError("No checkpoint paths provided")
         if len(paths) == 1:
@@ -172,7 +169,7 @@ class Checkpoint:
         return base
 
 
-def _restore_voltages(population: Any, voltages: np.ndarray) -> None:
+def _restore_voltages(population: Any, voltages: np.ndarray[Any, Any]) -> None:
     """Write voltage array back into individual neuron objects."""
     for i, neuron in enumerate(population.neurons):
         if hasattr(neuron, "v"):

@@ -288,7 +288,7 @@ module = [
   'sc_neurocore.explain.*', 'sc_neurocore.explainability.*', 'sc_neurocore.export.*', 'sc_neurocore.fault_injection.*',
   'sc_neurocore.generative.*',
   'sc_neurocore.graphs.*', 'sc_neurocore.hdc.*', 'sc_neurocore.hdl_gen.*',
-  'sc_neurocore.hypervisor.*', 'sc_neurocore.identity.*', 'sc_neurocore.integrations.*', 'sc_neurocore.interfaces.*',
+  'sc_neurocore.hypervisor.*', 'sc_neurocore.integrations.*', 'sc_neurocore.interfaces.*',
   'sc_neurocore.meta_plasticity.*', 'sc_neurocore.model_zoo.*', 'sc_neurocore.nas.*', 'sc_neurocore._native.*',
   'sc_neurocore.neurons.*',
   'sc_neurocore.optics.*', 'sc_neurocore.physics.*', 'sc_neurocore.pipeline.*',

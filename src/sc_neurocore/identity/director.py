@@ -14,12 +14,14 @@ drift from healthy bounds.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from sc_neurocore.analysis import (
-    firing_rate,
     cv_isi,
     fano_factor,
+    firing_rate,
     permutation_entropy,
 )
 
@@ -42,7 +44,7 @@ class DirectorController:
         self.target_fano = FANO_BOUNDS
         self._corrections_applied = 0
 
-    def monitor(self) -> dict:
+    def monitor(self) -> dict[str, Any]:
         """Measure current dynamics from recent spike history."""
         history = self.substrate.spike_history
         if len(history) < 50:
@@ -145,7 +147,7 @@ class DirectorController:
         return "\n".join(lines)
 
 
-def _add_weight_noise(data: np.ndarray, scale: float) -> None:
+def _add_weight_noise(data: np.ndarray[Any, Any], scale: float) -> None:
     """Add Gaussian noise to nonzero weights, clip to non-negative."""
     mask = data > 0
     noise = np.random.default_rng().normal(0, scale, size=data.shape)
@@ -153,7 +155,7 @@ def _add_weight_noise(data: np.ndarray, scale: float) -> None:
     np.clip(data, 0, None, out=data)
 
 
-def _homeostatic_scale(data: np.ndarray, factor: float) -> None:
+def _homeostatic_scale(data: np.ndarray[Any, Any], factor: float) -> None:
     """Scale all weights toward the mean. Turrigiano 2008."""
     mean_w = data[data > 0].mean() if np.any(data > 0) else 0.0
     if mean_w > 0:
@@ -161,12 +163,12 @@ def _homeostatic_scale(data: np.ndarray, factor: float) -> None:
         np.clip(data, 0, None, out=data)
 
 
-def _prune_weak(data: np.ndarray, threshold: float) -> None:
+def _prune_weak(data: np.ndarray[Any, Any], threshold: float) -> None:
     """Zero out weights below threshold."""
     data[data < threshold] = 0.0
 
 
-def _grow_synapses(data: np.ndarray, fraction: float, seed: int) -> None:
+def _grow_synapses(data: np.ndarray[Any, Any], fraction: float, seed: int) -> None:
     """Reinitialize a fraction of zero weights to small positive values."""
     rng = np.random.default_rng(seed)
     zero_mask = data == 0.0
