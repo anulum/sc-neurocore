@@ -7,9 +7,11 @@
 # SC-NeuroCore — Base class for bitstream decorrelators
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
-import numpy as np
 from dataclasses import dataclass
+from typing import Any, Optional
+
+import numpy as np
+
 from .rng import RNG
 
 
@@ -73,4 +75,7 @@ class LFSRRegenDecorrelator(Decorrelator):
     def process(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         p_est = bitstream.mean()
         # Regenerate
-        return self._rng.bernoulli(p_est, size=len(bitstream)).astype(np.uint8)
+        regenerated: np.ndarray[Any, Any] = self._rng.bernoulli(p_est, size=len(bitstream)).astype(
+            np.uint8
+        )
+        return regenerated
