@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Any
 
 import numpy as np
 
@@ -120,7 +121,7 @@ class SC_NeuroCore_Driver:
         if "threshold" in params:
             layer_ip.write(0x14, int(params["threshold"] * 65536))
 
-    def run_step(self, input_vector: object) -> np.ndarray:
+    def run_step(self, input_vector: object) -> np.ndarray[Any, Any]:
         """
         Executes one integration step on the FPGA.
 
