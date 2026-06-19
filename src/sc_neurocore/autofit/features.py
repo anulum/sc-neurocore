@@ -10,17 +10,23 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 
-def extract_spike_times(voltage: np.ndarray, threshold: float = 0.0, dt: float = 1.0) -> np.ndarray:
+def extract_spike_times(
+    voltage: np.ndarray[Any, Any], threshold: float = 0.0, dt: float = 1.0
+) -> np.ndarray[Any, Any]:
     """Find spike times from a voltage trace via threshold crossing."""
     above = voltage > threshold
     crossings = np.where(np.diff(above.astype(int)) > 0)[0]
     return crossings.astype(np.float64) * dt
 
 
-def extract_features(voltage: np.ndarray, dt: float = 1.0, threshold: float = 0.0) -> dict:
+def extract_features(
+    voltage: np.ndarray[Any, Any], dt: float = 1.0, threshold: float = 0.0
+) -> dict[str, Any]:
     """Extract standard electrophysiology features from a voltage trace.
 
     Returns dict with:
