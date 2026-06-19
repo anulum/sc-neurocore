@@ -93,24 +93,24 @@ class VectorClock:
         self.num_nodes = num_nodes
         self.clock = np.zeros(num_nodes, dtype=np.int64)
 
-    def tick(self) -> np.ndarray:
+    def tick(self) -> np.ndarray[Any, Any]:
         self.clock[self.node_id] += 1
         return self.clock.copy()
 
-    def send(self) -> np.ndarray:
+    def send(self) -> np.ndarray[Any, Any]:
         self.clock[self.node_id] += 1
         return self.clock.copy()
 
-    def receive(self, remote_clock: np.ndarray) -> np.ndarray:
+    def receive(self, remote_clock: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         self.clock = np.maximum(self.clock, remote_clock)
         self.clock[self.node_id] += 1
         return self.clock.copy()
 
-    def happened_before(self, other: np.ndarray) -> bool:
+    def happened_before(self, other: np.ndarray[Any, Any]) -> bool:
         """Check if self happened-before other (self < other)."""
         return bool(np.all(self.clock <= other) and np.any(self.clock < other))
 
-    def concurrent_with(self, other: np.ndarray) -> bool:
+    def concurrent_with(self, other: np.ndarray[Any, Any]) -> bool:
         """Check if self is concurrent with other."""
         return not self.happened_before(other) and not bool(
             np.all(other <= self.clock) and np.any(other < self.clock)
@@ -140,7 +140,7 @@ class TwinEvent:
     target_node: int = field(compare=False, default=0)
     payload: Dict[str, Any] = field(compare=False, default_factory=dict)
     lamport_ts: int = field(compare=False, default=0)
-    vector_ts: Optional[np.ndarray] = field(compare=False, default=None)
+    vector_ts: Optional[np.ndarray[Any, Any]] = field(compare=False, default=None)
     cancelled: bool = field(compare=False, default=False)
 
 
@@ -154,12 +154,12 @@ class Checkpoint:
     checkpoint_id: int
     virtual_time_ns: int
     node_id: int
-    neuron_state: Optional[np.ndarray] = None
-    synapse_state: Optional[np.ndarray] = None
+    neuron_state: Optional[np.ndarray[Any, Any]] = None
+    synapse_state: Optional[np.ndarray[Any, Any]] = None
     lfsr_state: int = 0
     identity_deep: float = 0.0
     lamport_time: int = 0
-    vector_clock: Optional[np.ndarray] = None
+    vector_clock: Optional[np.ndarray[Any, Any]] = None
     checksum: str = ""
 
     def compute_checksum(self) -> str:
@@ -189,12 +189,12 @@ class CheckpointManager:
         self,
         node_id: int,
         virtual_time_ns: int,
-        neuron_state: Optional[np.ndarray] = None,
-        synapse_state: Optional[np.ndarray] = None,
+        neuron_state: Optional[np.ndarray[Any, Any]] = None,
+        synapse_state: Optional[np.ndarray[Any, Any]] = None,
         lfsr_state: int = 0,
         identity_deep: float = 0.0,
         lamport_time: int = 0,
-        vector_clock: Optional[np.ndarray] = None,
+        vector_clock: Optional[np.ndarray[Any, Any]] = None,
     ) -> Checkpoint:
         cp = Checkpoint(
             checkpoint_id=self._next_id,
@@ -605,15 +605,15 @@ class DeltaCheckpoint:
     checkpoint_id: int
     virtual_time_ns: int
     node_id: int
-    changed_indices: np.ndarray  # indices that changed
-    changed_values: np.ndarray  # new values at those indices
+    changed_indices: np.ndarray[Any, Any]  # indices that changed
+    changed_values: np.ndarray[Any, Any]  # new values at those indices
     lfsr_delta: int = 0
     size_bytes: int = 0
 
     @staticmethod
     def compute_delta(
-        base_state: np.ndarray,
-        new_state: np.ndarray,
+        base_state: np.ndarray[Any, Any],
+        new_state: np.ndarray[Any, Any],
         base_id: int,
         new_id: int,
         virtual_time_ns: int,
