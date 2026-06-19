@@ -14,7 +14,7 @@ Requires ``pip install sc-neurocore[torch]`` (PyTorch).
 
 def __getattr__(name):  # type: ignore[no-untyped-def]
     if name in ("convert", "ConvertedSNN"):
-        from .ann_to_snn import convert, ConvertedSNN
+        from .ann_to_snn import ConvertedSNN, convert
 
         return {"convert": convert, "ConvertedSNN": ConvertedSNN}[name]
     if name == "QCFSActivation":

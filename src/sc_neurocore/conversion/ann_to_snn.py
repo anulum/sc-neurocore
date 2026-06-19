@@ -57,8 +57,8 @@ class ConvertedSNN:
         Number of layers.
     """
 
-    weights: list[np.ndarray]
-    biases: list[np.ndarray | None]
+    weights: list[np.ndarray[Any, Any]]
+    biases: list[np.ndarray[Any, Any] | None]
     thresholds: list[float]
     T: int
     n_layers: int = field(init=False)
@@ -66,7 +66,7 @@ class ConvertedSNN:
     def __post_init__(self) -> None:
         self.n_layers = len(self.weights)
 
-    def run(self, x: np.ndarray) -> np.ndarray:
+    def run(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Run the converted SNN for T timesteps on input x.
 
         Parameters
@@ -111,13 +111,14 @@ class ConvertedSNN:
             spike_counts = spike_counts[0]
         return spike_counts
 
-    def classify(self, x: np.ndarray) -> np.ndarray:
+    def classify(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Run SNN and return predicted class indices."""
         counts = self.run(x)
-        return np.argmax(counts, axis=-1)
+        predictions: np.ndarray[Any, Any] = np.argmax(counts, axis=-1)
+        return predictions
 
 
-def _extract_layers(model: Any) -> list[tuple[np.ndarray, np.ndarray | None]]:
+def _extract_layers(model: Any) -> list[tuple[np.ndarray[Any, Any], np.ndarray[Any, Any] | None]]:
     """Extract (weight, bias) pairs from a PyTorch Sequential model."""
     layers = []
     for module in model.modules():

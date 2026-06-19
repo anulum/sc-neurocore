@@ -54,7 +54,8 @@ class QCFSActivation(nn.Module):
         # STE: floor in forward, pass gradient straight through
         quantized = scaled.floor() - (scaled.floor() - scaled).detach()
         clipped = quantized.clamp(0, self.T)
-        return clipped * self.theta / self.T
+        out: torch.Tensor = clipped * self.theta / self.T
+        return out
 
     def extra_repr(self) -> str:
         return f"T={self.T}, theta={self.theta.item():.2f}"
