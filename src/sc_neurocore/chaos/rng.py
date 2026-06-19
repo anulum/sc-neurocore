@@ -127,13 +127,14 @@ class ChaoticRNG:
 
         Returns
         -------
-        np.ndarray
+        np.ndarray[Any, Any]
             Binary array of shape (length,), dtype uint8.
         """
         vals = self.random(length)
         # CDF of Beta(0.5,0.5) is (2/pi)*arcsin(sqrt(x)) — apply to uniformize
         uniform = np.arcsin(np.sqrt(np.clip(vals, 1e-15, 1.0 - 1e-15))) * (2.0 / np.pi)
-        return (uniform < p).astype(np.uint8)
+        bits: np.ndarray[Any, Any] = (uniform < p).astype(np.uint8)
+        return bits
 
     def lyapunov_exponent(self, n_steps: int = 10_000) -> float:
         """Estimate the maximal Lyapunov exponent via derivative averaging.
@@ -165,7 +166,7 @@ class ChaoticRNG:
         probs = probs[probs > 0]
         return float(-np.sum(probs * np.log2(probs)))
 
-    def autocorrelation(self, n_samples: int = 10_000, max_lag: int = 50) -> np.ndarray:
+    def autocorrelation(self, n_samples: int = 10_000, max_lag: int = 50) -> np.ndarray[Any, Any]:
         """Compute autocorrelation of the chaotic sequence up to *max_lag*.
 
         A good chaotic RNG should show near-zero autocorrelation for all
