@@ -56,6 +56,7 @@ def test_studio_job_manager_completes_job_with_path_free_artifact_manifest(
     assert completed.result == {"ok": True}
     assert len(completed.artifacts) == 1
     assert completed.artifacts[0].relative_path == "reports/result.txt"
+    assert manager.list_snapshot().to_public_dict()["schema_version"] == "studio.jobs.list.v1"
     assert str(tmp_path) not in str(completed.to_public_dict())
     assert (tmp_path / "jobs" / record.job_id / "reports" / "result.txt").read_bytes() == b"ok"
 
@@ -336,6 +337,51 @@ def test_studio_job_artifact_endpoint_is_admin_gated_and_integrity_checked(
     )
     assert str(tmp_path) not in str(allowed.headers)
     assert str(tmp_path) not in allowed.text
+
+
+def test_studio_job_list_and_detail_endpoints_are_admin_gated_and_path_free(
+    tmp_path: Path,
+) -> None:
+    app = create_app(
+        runtime_settings=StudioRuntimeSettings(
+            enforce_route_policies=True,
+            job_root_path=str(tmp_path / "jobs"),
+            job_default_timeout_seconds=3.0,
+        )
+    )
+    manager = cast(StudioJobManager, app.state.studio_job_manager)
+
+    def task(context: StudioJobContext) -> dict[str, object]:
+        context.write_artifact("reports/result.txt", b"artifact body")
+        return {"ok": True}
+
+    record = manager.submit(
+        kind="compiler",
+        owner="operator-1",
+        request_id="req-1",
+        task=task,
+    )
+    manager.wait(record.job_id, timeout_seconds=2.0)
+    client = TestClient(app, base_url="http://127.0.0.1")
+    admin_headers = {"x-studio-principal": "admin-1", "x-studio-roles": "studio.admin"}
+
+    denied = client.get("/api/studio/jobs")
+    listed = client.get("/api/studio/jobs", headers=admin_headers)
+    detailed = client.get(f"/api/studio/jobs/{record.job_id}", headers=admin_headers)
+    missing = client.get("/api/studio/jobs/sj_missing", headers=admin_headers)
+
+    assert denied.status_code == 401
+    assert listed.status_code == 200
+    assert listed.json()["schema_version"] == "studio.jobs.list.v1"
+    assert listed.json()["jobs"][0]["job_id"] == record.job_id
+    assert listed.json()["jobs"][0]["artifacts"][0]["relative_path"] == "reports/result.txt"
+    assert detailed.status_code == 200
+    assert detailed.json()["job_id"] == record.job_id
+    assert detailed.json()["status"] == "completed"
+    assert missing.status_code == 404
+    assert missing.json()["detail"] == "job_not_found"
+    assert str(tmp_path) not in listed.text
+    assert str(tmp_path) not in detailed.text
 
 
 def test_studio_job_artifact_endpoint_uses_generic_integrity_errors(tmp_path: Path) -> None:

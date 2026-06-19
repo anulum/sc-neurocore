@@ -299,6 +299,11 @@ only serves manifest-declared artifacts, revalidates the recorded size and
 SHA-256 digest before returning bytes, and uses generic error details when an
 artifact is missing or fails integrity checks.
 
+The Admin panel queue uses `/api/studio/jobs` and `/api/studio/jobs/{job_id}`
+for path-free job records. Those endpoints are admin-gated and expose status,
+owner, request ID, timestamps, result metadata, and artifact manifests without
+revealing the configured job-root path.
+
 The Admin panel also uses the admin-gated `/api/studio/operator/status`
 aggregate when available. That endpoint reports deployment profile,
 route-policy enforcement, identity mode, audit health, worker health, and

@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Literal
 
 JOBS_STATUS_SCHEMA_VERSION = "studio.jobs.status.v1"
+JOBS_LIST_SCHEMA_VERSION = "studio.jobs.list.v1"
 UTC = timezone.utc
 
 StudioJobStatus = Literal[
@@ -131,6 +132,22 @@ class StudioJobStatusSnapshot:
             "failed_count": self.failed_count,
             "schema_version": self.schema_version,
             "timed_out_count": self.timed_out_count,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class StudioJobListSnapshot:
+    """Path-free list payload for Studio job operator views."""
+
+    records: tuple[StudioJobRecord, ...]
+    schema_version: str = JOBS_LIST_SCHEMA_VERSION
+
+    def to_public_dict(self) -> dict[str, object]:
+        """Return JSON-serializable job records without filesystem paths."""
+
+        return {
+            "jobs": [record.to_public_dict() for record in self.records],
+            "schema_version": self.schema_version,
         }
 
 
@@ -317,6 +334,11 @@ class StudioJobManager:
         with self._lock:
             return tuple(self._records.values())
 
+    def list_snapshot(self) -> StudioJobListSnapshot:
+        """Return a path-free snapshot of all known jobs."""
+
+        return StudioJobListSnapshot(records=self.list_records())
+
     def read_artifact(self, job_id: str, relative_path: str) -> StudioJobArtifactPayload:
         """Return a verified payload for one declared job artifact.
 
@@ -482,12 +504,14 @@ def _resolve_confined_child(*, root: Path, relative_path: str, error_message: st
 
 
 __all__ = [
+    "JOBS_LIST_SCHEMA_VERSION",
     "JOBS_STATUS_SCHEMA_VERSION",
     "StudioJobArtifact",
     "StudioJobArtifactPayload",
     "StudioJobArtifactUnavailable",
     "StudioJobCancelled",
     "StudioJobContext",
+    "StudioJobListSnapshot",
     "StudioJobManager",
     "StudioJobRecord",
     "StudioJobRejected",

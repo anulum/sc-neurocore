@@ -2,7 +2,7 @@ import { create } from "zustand";
 import {
   fetchTemplates, fetchModels, fetchModelDetail, fetchPresets, fetchPreset,
   fetchStudioAuditExport, fetchStudioAuditStatus, fetchStudioCapabilities,
-  fetchStudioJobStatus, fetchStudioOperatorStatus,
+  fetchStudioJobs, fetchStudioJobStatus, fetchStudioOperatorStatus,
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
   fetchCompare, fetchNullclines, fetchFreqResponse,
@@ -30,7 +30,7 @@ import {
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSummary, type PipelineResult,
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
-  type StudioJobStatus, type StudioOperatorStatus,
+  type StudioJobRecord, type StudioJobStatus, type StudioOperatorStatus,
   connectProgress,
 } from "../api/client";
 
@@ -58,6 +58,7 @@ interface StudioState {
   auditStatus: StudioAuditStatus | null;
   auditExport: StudioAuditExport | null;
   jobStatus: StudioJobStatus | null;
+  jobRecords: StudioJobRecord[];
   operatorStatus: StudioOperatorStatus | null;
   auditLoading: boolean;
   auditError: string | null;
@@ -222,7 +223,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   odeInit: { v: -65 },
   models: [], selectedModelName: "", modelDetail: null, modelParams: {},
   capabilities: [], capabilitiesLoading: false, capabilitiesError: null,
-  auditStatus: null, auditExport: null, jobStatus: null, operatorStatus: null,
+  auditStatus: null, auditExport: null, jobStatus: null, jobRecords: [], operatorStatus: null,
   auditLoading: false, auditError: null,
   templates: [], presets: [],
   dt: 0.1, duration: 100, current: 10, protocol: "constant",
@@ -307,8 +308,11 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   loadJobStatus: async () => {
     set({ auditLoading: true, auditError: null });
     try {
-      const jobStatus = await fetchStudioJobStatus();
-      set({ jobStatus, auditLoading: false, auditError: null });
+      const [jobStatus, jobList] = await Promise.all([
+        fetchStudioJobStatus(),
+        fetchStudioJobs(),
+      ]);
+      set({ jobStatus, jobRecords: jobList.jobs, auditLoading: false, auditError: null });
     } catch (error: unknown) {
       set({
         auditLoading: false,
@@ -319,10 +323,14 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   loadOperatorStatus: async () => {
     set({ auditLoading: true, auditError: null });
     try {
-      const operatorStatus = await fetchStudioOperatorStatus();
+      const [operatorStatus, jobList] = await Promise.all([
+        fetchStudioOperatorStatus(),
+        fetchStudioJobs(),
+      ]);
       set({
         auditStatus: operatorStatus.audit,
         jobStatus: operatorStatus.jobs,
+        jobRecords: jobList.jobs,
         operatorStatus,
         auditLoading: false,
         auditError: null,

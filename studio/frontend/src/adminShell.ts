@@ -3,6 +3,7 @@ import type {
   StudioAuditExport,
   StudioAuditStatus,
   StudioCapability,
+  StudioJobRecord,
   StudioJobStatus,
   StudioOperatorStatus,
 } from "./api/client";
@@ -13,6 +14,7 @@ export interface AdminShellInput {
   auditExport: StudioAuditExport | null;
   auditStatus: StudioAuditStatus | null;
   capabilities: StudioCapability[];
+  jobRecords: StudioJobRecord[];
   jobStatus: StudioJobStatus | null;
   operatorStatus: StudioOperatorStatus | null;
 }
@@ -44,6 +46,17 @@ export interface AdminJobModel {
   timedOut: number;
 }
 
+export interface AdminJobRecordModel {
+  artifactCount: number;
+  createdAt: string;
+  error: string | null;
+  finishedAt: string;
+  jobId: string;
+  kind: string;
+  owner: string;
+  status: StudioJobRecord["status"];
+}
+
 export interface AdminOperatorModel {
   deploymentProfile: "development" | "production" | "unknown";
   identityMode: string;
@@ -55,6 +68,7 @@ export interface AdminShellModel {
   audit: AdminAuditModel;
   capabilities: AdminCapabilityModel;
   jobs: AdminJobModel;
+  jobRecords: AdminJobRecordModel[];
   operator: AdminOperatorModel;
   recentAuditEvents: StudioAuditEvent[];
   unhealthyCapabilities: StudioCapability[];
@@ -87,6 +101,7 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
         ? "ready" : "degraded",
     },
     jobs: buildJobModel(jobStatus),
+    jobRecords: buildJobRecords(input.jobRecords),
     operator: buildOperatorModel(input.operatorStatus),
     recentAuditEvents,
     unhealthyCapabilities,
@@ -115,6 +130,22 @@ function buildJobModel(jobStatus: StudioJobStatus | null): AdminJobModel {
     healthLabel: !jobStatus.configured ? "unconfigured" : needsAttention ? "attention" : "ready",
     timedOut: jobStatus.timed_out_count,
   };
+}
+
+function buildJobRecords(records: StudioJobRecord[]): AdminJobRecordModel[] {
+  return records
+    .slice(-8)
+    .reverse()
+    .map((record) => ({
+      artifactCount: record.artifacts.length,
+      createdAt: record.created_at_utc,
+      error: record.error,
+      finishedAt: record.finished_at_utc ?? "running",
+      jobId: record.job_id,
+      kind: record.kind,
+      owner: record.owner,
+      status: record.status,
+    }));
 }
 
 function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminOperatorModel {

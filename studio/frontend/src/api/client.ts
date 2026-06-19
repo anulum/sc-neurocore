@@ -146,6 +146,31 @@ export interface StudioJobStatus {
   timed_out_count: number;
 }
 
+export interface StudioJobArtifact {
+  relative_path: string;
+  sha256: string;
+  size_bytes: number;
+}
+
+export interface StudioJobRecord {
+  artifacts: StudioJobArtifact[];
+  created_at_utc: string;
+  error: string | null;
+  finished_at_utc: string | null;
+  job_id: string;
+  kind: string;
+  owner: string;
+  request_id: string | null;
+  result: Record<string, unknown> | null;
+  started_at_utc: string | null;
+  status: "pending" | "running" | "completed" | "failed" | "cancelling" | "cancelled" | "timed_out";
+}
+
+export interface StudioJobListResponse {
+  jobs: StudioJobRecord[];
+  schema_version: string;
+}
+
 export interface StudioOperatorCapabilityStatus {
   degraded_count: number;
   experimental_count: number;
@@ -209,6 +234,8 @@ export const fetchStudioAuditExport = (limit = 100) =>
   get<StudioAuditExport>(`/studio/audit/export?limit=${encodeURIComponent(limit)}`);
 export const fetchStudioJobStatus = () =>
   get<StudioJobStatus>("/studio/jobs/status");
+export const fetchStudioJobs = () =>
+  get<StudioJobListResponse>("/studio/jobs");
 export const fetchStudioOperatorStatus = () =>
   get<StudioOperatorStatus>("/studio/operator/status");
 

@@ -112,6 +112,10 @@ runtime features:
   the default cooperative timeout. The local worker manager tracks allowed job
   kinds, active/completed/failed/timed-out counts, and does not expose host
   filesystem paths.
+- `/api/studio/jobs` and `/api/studio/jobs/{job_id}` return admin-only,
+  path-free job records for the Admin panel queue view. Records include job
+  status, owner, request ID, timestamps, result metadata, and artifact
+  manifests, but never host filesystem paths.
 - `/api/studio/jobs/{job_id}/artifacts/{artifact_path}` downloads declared job
   artifacts for administrators. The server resolves artifacts through the job
   manifest only, revalidates size and SHA-256 before serving, and returns

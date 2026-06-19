@@ -552,6 +552,8 @@ def test_default_route_policy_registry_classifies_platform_routes() -> None:
     health_policy = registry.policy_for("GET", "/api/health")
     capability_policy = registry.policy_for("GET", "/api/studio/capabilities")
     detail_policy = registry.policy_for("GET", "/api/studio/capabilities/{capability_id}")
+    jobs_list_policy = registry.policy_for("GET", "/api/studio/jobs")
+    job_detail_policy = registry.policy_for("GET", "/api/studio/jobs/{job_id}")
     operator_status_policy = registry.policy_for("GET", "/api/studio/operator/status")
     audit_export_policy = registry.policy_for("GET", "/api/studio/audit/export")
     artifact_policy = registry.policy_for(
@@ -562,6 +564,10 @@ def test_default_route_policy_registry_classifies_platform_routes() -> None:
     assert health_policy.visibility is contract["RouteVisibility"].PUBLIC
     assert capability_policy.visibility is contract["RouteVisibility"].PUBLIC
     assert detail_policy.visibility is contract["RouteVisibility"].PUBLIC
+    assert jobs_list_policy.visibility is contract["RouteVisibility"].ADMIN
+    assert jobs_list_policy.audit_action == "studio.jobs.list"
+    assert job_detail_policy.visibility is contract["RouteVisibility"].ADMIN
+    assert job_detail_policy.audit_action == "studio.jobs.detail"
     assert operator_status_policy.visibility is contract["RouteVisibility"].ADMIN
     assert audit_export_policy.visibility is contract["RouteVisibility"].ADMIN
     assert artifact_policy.visibility is contract["RouteVisibility"].ADMIN
@@ -632,6 +638,8 @@ def test_default_route_policy_registry_marks_stateful_routes_protected() -> None
     synth_policy = registry.policy_for("POST", "/api/synth/run")
     websocket_policy = registry.policy_for("WEBSOCKET", "/ws/progress")
     jobs_status_policy = registry.policy_for("GET", "/api/studio/jobs/status")
+    jobs_list_policy = registry.policy_for("GET", "/api/studio/jobs")
+    job_detail_policy = registry.policy_for("GET", "/api/studio/jobs/{job_id}")
     artifact_policy = registry.policy_for(
         "GET",
         "/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}",
@@ -641,4 +649,6 @@ def test_default_route_policy_registry_marks_stateful_routes_protected() -> None
     assert synth_policy.visibility is contract["RouteVisibility"].ADMIN
     assert websocket_policy.visibility is contract["RouteVisibility"].AUTHENTICATED
     assert jobs_status_policy.visibility is contract["RouteVisibility"].PUBLIC
+    assert jobs_list_policy.visibility is contract["RouteVisibility"].ADMIN
+    assert job_detail_policy.visibility is contract["RouteVisibility"].ADMIN
     assert artifact_policy.visibility is contract["RouteVisibility"].ADMIN

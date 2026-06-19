@@ -4,6 +4,7 @@ import type {
   StudioAuditExport,
   StudioAuditStatus,
   StudioCapability,
+  StudioJobRecord,
   StudioJobStatus,
   StudioOperatorStatus,
 } from "./api/client";
@@ -76,6 +77,26 @@ const jobStatus: StudioJobStatus = {
   timed_out_count: 1,
 };
 
+const jobRecord: StudioJobRecord = {
+  artifacts: [
+    {
+      relative_path: "reports/result.txt",
+      sha256: "a".repeat(64),
+      size_bytes: 12,
+    },
+  ],
+  created_at_utc: "2026-06-19T20:02:00Z",
+  error: null,
+  finished_at_utc: "2026-06-19T20:03:00Z",
+  job_id: "sj_1234",
+  kind: "synthesis",
+  owner: "operator-1",
+  request_id: "req-3",
+  result: { ok: true },
+  started_at_utc: "2026-06-19T20:02:01Z",
+  status: "completed",
+};
+
 const operatorStatus: StudioOperatorStatus = {
   audit: auditStatus,
   capabilities: {
@@ -113,6 +134,7 @@ describe("admin shell model", () => {
           message: "Yosys unavailable.",
         }),
       ],
+      jobRecords: [jobRecord],
       jobStatus,
       operatorStatus,
     });
@@ -141,6 +163,18 @@ describe("admin shell model", () => {
       healthLabel: "attention",
       timedOut: 1,
     });
+    expect(model.jobRecords).toEqual([
+      {
+        artifactCount: 1,
+        createdAt: "2026-06-19T20:02:00Z",
+        error: null,
+        finishedAt: "2026-06-19T20:03:00Z",
+        jobId: "sj_1234",
+        kind: "synthesis",
+        owner: "operator-1",
+        status: "completed",
+      },
+    ]);
     expect(model.operator).toEqual({
       deploymentProfile: "production",
       identityMode: "service_account",

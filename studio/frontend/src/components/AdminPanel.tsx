@@ -9,6 +9,7 @@ export default function AdminPanel() {
     auditLoading,
     auditStatus,
     capabilities,
+    jobRecords,
     jobStatus,
     operatorStatus,
     loadAuditExport,
@@ -21,6 +22,7 @@ export default function AdminPanel() {
     auditExport,
     auditStatus,
     capabilities,
+    jobRecords,
     jobStatus,
     operatorStatus,
   });

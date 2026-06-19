@@ -848,6 +848,21 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
 
         return studio_job_manager.status().to_public_dict()
 
+    @app.get("/api/studio/jobs")
+    def api_studio_jobs() -> dict[str, object]:
+        """Return path-free local job records for administrators."""
+
+        return studio_job_manager.list_snapshot().to_public_dict()
+
+    @app.get("/api/studio/jobs/{job_id}")
+    def api_studio_job(job_id: str) -> dict[str, object]:
+        """Return one path-free local job record for administrators."""
+
+        try:
+            return studio_job_manager.record(job_id).to_public_dict()
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="job_not_found") from exc
+
     @app.get("/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}")
     def api_studio_job_artifact(job_id: str, artifact_path: str) -> Response:
         """Download one declared Studio job artifact after integrity validation."""
