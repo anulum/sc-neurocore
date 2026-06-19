@@ -19,7 +19,9 @@ from sc_neurocore.studio.platform.capabilities import (
 )
 from sc_neurocore.studio.platform.policy import (
     AuditEvent,
+    AuditSink,
     InMemoryAuditSink,
+    JsonlAuditSink,
     PolicyDecision,
     PolicyGateway,
     Principal,
@@ -40,6 +42,7 @@ from sc_neurocore.studio.platform.settings import (
 
 __all__ = [
     "AuditEvent",
+    "AuditSink",
     "CapabilityDescriptor",
     "CapabilityHealth",
     "CapabilityRegistry",
@@ -47,6 +50,7 @@ __all__ = [
     "CapabilityStatus",
     "EvidenceClass",
     "InMemoryAuditSink",
+    "JsonlAuditSink",
     "PolicyDecision",
     "PolicyGateway",
     "Principal",

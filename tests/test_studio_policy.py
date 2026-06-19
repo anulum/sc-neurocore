@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -16,7 +18,9 @@ import pytest
 def _policy_contract() -> dict[str, Any]:
     try:
         from sc_neurocore.studio.platform.policy import (  # noqa: PLC0415
+            AuditEvent,
             InMemoryAuditSink,
+            JsonlAuditSink,
             PolicyGateway,
             Principal,
             RoutePolicyRegistry,
@@ -27,7 +31,9 @@ def _policy_contract() -> dict[str, Any]:
     except ImportError as exc:
         pytest.fail(f"Studio policy contract is missing: {exc}")
     return {
+        "AuditEvent": AuditEvent,
         "InMemoryAuditSink": InMemoryAuditSink,
+        "JsonlAuditSink": JsonlAuditSink,
         "PolicyGateway": PolicyGateway,
         "Principal": Principal,
         "RoutePolicyRegistry": RoutePolicyRegistry,
@@ -110,6 +116,75 @@ def test_policy_gateway_allows_authenticated_route_with_required_role() -> None:
     assert decision.status_code == 200
     assert audit_sink.events[-1].decision == "allow"
     assert audit_sink.events[-1].principal_id == "operator-3"
+
+
+def test_jsonl_audit_sink_appends_policy_events(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+
+    audit_sink.record(
+        contract["AuditEvent"](
+            action="studio.simulate.run",
+            route="/api/simulate",
+            principal_id="operator-7",
+            decision="allow",
+            reason="authorized",
+        )
+    )
+    audit_sink.record(
+        contract["AuditEvent"](
+            action="studio.synth.run",
+            route="/api/synth/run",
+            principal_id=None,
+            decision="deny",
+            reason="missing_principal",
+        )
+    )
+
+    rows = [json.loads(line) for line in audit_path.read_text(encoding="utf-8").splitlines()]
+
+    assert rows == [
+        {
+            "action": "studio.simulate.run",
+            "decision": "allow",
+            "principal_id": "operator-7",
+            "reason": "authorized",
+            "route": "/api/simulate",
+        },
+        {
+            "action": "studio.synth.run",
+            "decision": "deny",
+            "principal_id": None,
+            "reason": "missing_principal",
+            "route": "/api/synth/run",
+        },
+    ]
+
+
+def test_jsonl_audit_sink_exposes_configured_path(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+
+    assert audit_sink.path == audit_path
+
+
+def test_policy_gateway_accepts_jsonl_audit_sink(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    gateway = contract["PolicyGateway"](audit_sink=contract["JsonlAuditSink"](audit_path))
+    policy = contract["RoutePolicy"](
+        visibility=contract["RouteVisibility"].AUTHENTICATED,
+        audit_action="studio.simulate.run",
+    )
+
+    decision = gateway.authorize(policy, principal=None, route="/api/simulate")
+    row = json.loads(audit_path.read_text(encoding="utf-8"))
+
+    assert decision.allowed is False
+    assert row["decision"] == "deny"
+    assert row["reason"] == "missing_principal"
 
 
 def test_policy_gateway_rejects_admin_route_without_admin_role() -> None:

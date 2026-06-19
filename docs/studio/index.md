@@ -70,6 +70,10 @@ runtime features:
   `SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES=true`. When enabled, protected
   HTTP routes require `X-Studio-Principal`; comma-separated `X-Studio-Roles`
   values drive role and admin checks.
+- Policy decisions can be persisted to an append-only JSONL audit log by
+  setting `SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH` to a writable file path. Each
+  line records the policy action, route template, principal identifier when
+  present, allow/deny decision, and decision reason.
 - `RoutePolicyRegistry` records the expected policy for each platform API route
   and lets startup or test code detect unclassified Studio endpoints before
   they become accidental public surfaces. The default registry classifies the

@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from uuid import UUID
 
 import pytest
@@ -111,6 +113,25 @@ def test_studio_runtime_settings_disables_route_policy_enforcement_by_default() 
     settings = build_default_studio_runtime_settings(env={})
 
     assert settings.enforce_route_policies is False
+
+
+def test_studio_runtime_settings_disables_audit_log_by_default() -> None:
+    settings = build_default_studio_runtime_settings(env={})
+
+    assert settings.audit_log_path is None
+
+
+def test_studio_runtime_settings_parses_audit_log_path() -> None:
+    settings = build_default_studio_runtime_settings(
+        env={"SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH": "/var/log/sc-neurocore/studio.jsonl"}
+    )
+
+    assert settings.audit_log_path == "/var/log/sc-neurocore/studio.jsonl"
+
+
+def test_studio_runtime_settings_rejects_empty_audit_log_path() -> None:
+    with pytest.raises(ValueError, match="audit log path"):
+        StudioRuntimeSettings(audit_log_path="")
 
 
 def test_studio_runtime_settings_parses_route_policy_enforcement_flag() -> None:
@@ -336,6 +357,27 @@ def test_studio_app_route_policy_enforcement_rejects_missing_principal() -> None
 
     assert response.status_code == 401
     assert response.json()["detail"] == "missing_principal"
+
+
+def test_studio_app_records_policy_events_to_configured_audit_log(tmp_path: Path) -> None:
+    audit_path = tmp_path / "audit" / "studio.jsonl"
+    app = create_app(
+        runtime_settings=StudioRuntimeSettings(
+            audit_log_path=str(audit_path),
+            enforce_route_policies=True,
+        )
+    )
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.post("/api/simulate", json={})
+
+    assert response.status_code == 401
+    row = json.loads(audit_path.read_text(encoding="utf-8"))
+    assert row["action"] == "studio.simulation.run"
+    assert row["decision"] == "deny"
+    assert row["principal_id"] is None
+    assert row["reason"] == "missing_principal"
+    assert row["route"] == "/api/simulate"
 
 
 def test_studio_app_route_policy_enforcement_allows_authenticated_principal() -> None:
