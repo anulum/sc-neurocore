@@ -14,8 +14,9 @@ and health counters. Mirrors the bare-metal Rust implementation.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import threading
+from dataclasses import dataclass, field
+from typing import Any
 
 
 class TelemetryRing:
@@ -116,7 +117,7 @@ class DeviceTelemetry:
         self.total_spikes += n_spikes
         self.get_layer(layer_id).record_tick(n_spikes, n_neurons)
 
-    def summary(self) -> dict:
+    def summary(self) -> dict[str, Any]:
         return {
             "total_ticks": self.total_ticks,
             "total_spikes": self.total_spikes,

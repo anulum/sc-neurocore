@@ -15,6 +15,8 @@ generation (no matrix multiply needed).
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 
@@ -62,7 +64,7 @@ class SobolGenerator:
         self._index += np.uint32(1)
         return int(self._reg)
 
-    def encode(self, threshold: int, length: int) -> np.ndarray:
+    def encode(self, threshold: int, length: int) -> np.ndarray[Any, Any]:
         """Encode a probability into packed u64 words using Sobol sequence.
 
         Parameters
@@ -74,7 +76,7 @@ class SobolGenerator:
 
         Returns
         -------
-        np.ndarray
+        np.ndarray[Any, Any]
             Packed u64 bitstream array.
         """
         n_words = (length + 63) // 64
