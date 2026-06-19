@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 140
+expected_file_count = 142
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -476,6 +476,14 @@ rationale = "Public published neural decoder/encoder reference implementations (
 [[file]]
 path = "src/sc_neurocore/bio/transcriptomic.py"
 rationale = "Public single-cell transcriptomic foundation-model interfaces (scKG-BERT, Geneformer)."
+
+[[file]]
+path = "src/sc_neurocore/compression/quantization.py"
+rationale = "Public weight-quantisation helpers for FPGA-bound SNN compression."
+
+[[file]]
+path = "src/sc_neurocore/compression/pruning.py"
+rationale = "Public weight-pruning helpers for FPGA-bound SNN compression."
 
 [[file]]
 path = "src/sc_neurocore/scpn/datastream.py"
