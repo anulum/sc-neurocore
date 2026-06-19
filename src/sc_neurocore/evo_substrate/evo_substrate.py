@@ -83,7 +83,7 @@ class TopologyGene:
     recurrent_fraction: float = 0.1
     bitstream_length: int = 256
 
-    def to_vector(self) -> np.ndarray:
+    def to_vector(self) -> np.ndarray[Any, Any]:
         return np.array(
             [
                 self.num_neurons,
@@ -95,7 +95,7 @@ class TopologyGene:
         )
 
     @classmethod
-    def from_vector(cls, v: np.ndarray) -> TopologyGene:
+    def from_vector(cls, v: np.ndarray[Any, Any]) -> TopologyGene:
         return cls(
             num_neurons=max(2, int(v[0])),
             num_layers=max(1, int(v[1])),
@@ -118,7 +118,7 @@ class NeuronGene:
     kappa: float = 5.0
     w_inh: float = 0.3
 
-    def to_vector(self) -> np.ndarray:
+    def to_vector(self) -> np.ndarray[Any, Any]:
         return np.array(
             [
                 self.tau_fast,
@@ -133,7 +133,7 @@ class NeuronGene:
         )
 
     @classmethod
-    def from_vector(cls, v: np.ndarray) -> NeuronGene:
+    def from_vector(cls, v: np.ndarray[Any, Any]) -> NeuronGene:
         return cls(
             tau_fast=max(0.5, float(v[0])),
             tau_work=max(1.0, float(v[1])),
@@ -157,7 +157,7 @@ class PlasticityGene:
     homeostatic_rate: float = 0.001
     meta_sensitivity: float = 1.0
 
-    def to_vector(self) -> np.ndarray:
+    def to_vector(self) -> np.ndarray[Any, Any]:
         return np.array(
             [
                 self.stdp_lr,
@@ -170,7 +170,7 @@ class PlasticityGene:
         )
 
     @classmethod
-    def from_vector(cls, v: np.ndarray) -> PlasticityGene:
+    def from_vector(cls, v: np.ndarray[Any, Any]) -> PlasticityGene:
         return cls(
             stdp_lr=max(1e-6, float(v[0])),
             stdp_tau_plus=max(1.0, float(v[1])),
@@ -194,7 +194,7 @@ class Genome:
     weight_seed: int = 42
     identity_deep: float = 0.0
 
-    def to_vector(self) -> np.ndarray:
+    def to_vector(self) -> np.ndarray[Any, Any]:
         return np.concatenate(
             [
                 self.topology.to_vector(),
@@ -204,7 +204,7 @@ class Genome:
         )
 
     @classmethod
-    def from_vector(cls, v: np.ndarray, gen: int = 0) -> Genome:
+    def from_vector(cls, v: np.ndarray[Any, Any], gen: int = 0) -> Genome:
         return cls(
             generation=gen,
             topology=TopologyGene.from_vector(v[0:5]),
@@ -1134,9 +1134,9 @@ class NoveltyArchive:
     def __init__(self, k_nearest: int = 5, threshold: float = 0.1) -> None:
         self.k_nearest = k_nearest
         self.threshold = threshold
-        self.archive: List[np.ndarray] = []
+        self.archive: List[np.ndarray[Any, Any]] = []
 
-    def novelty_score(self, behaviour: np.ndarray) -> float:
+    def novelty_score(self, behaviour: np.ndarray[Any, Any]) -> float:
         if not self.archive:
             return 1.0
         dists = [float(np.linalg.norm(behaviour - a)) for a in self.archive]
@@ -1144,7 +1144,7 @@ class NoveltyArchive:
         k = min(self.k_nearest, len(dists))
         return float(np.mean(dists[:k]))
 
-    def maybe_add(self, behaviour: np.ndarray) -> bool:
+    def maybe_add(self, behaviour: np.ndarray[Any, Any]) -> bool:
         score = self.novelty_score(behaviour)
         if score > self.threshold:
             self.archive.append(behaviour.copy())
@@ -1556,7 +1556,7 @@ class CPPNGenome:
             return 1.0 if x > 0 else 0.0
         return float(x)  # LINEAR
 
-    def generate_weight_matrix(self, rows: int, cols: int) -> np.ndarray:
+    def generate_weight_matrix(self, rows: int, cols: int) -> np.ndarray[Any, Any]:
         """Generate a weight matrix by querying CPPN at grid positions."""
         w = np.zeros((rows, cols))
         for r in range(rows):
@@ -1705,7 +1705,7 @@ def genome_complexity(genome: Genome) -> float:
     topology_complexity = (
         genome.topology.num_neurons * genome.topology.num_layers * genome.topology.connectivity
     )
-    return entropy + np.log2(1 + topology_complexity)
+    return float(entropy + np.log2(1 + topology_complexity))
 
 
 class ComplexityTracker:
