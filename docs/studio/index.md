@@ -112,6 +112,10 @@ runtime features:
   the default cooperative timeout. The local worker manager tracks allowed job
   kinds, active/completed/failed/timed-out counts, and does not expose host
   filesystem paths.
+- `/api/training/start`, `/api/training/stop`, and
+  `/api/training/status/{job_id}` now use the local worker manager for bounded
+  training execution while preserving the training monitor's existing SSE
+  metric stream contract.
 - `/api/studio/jobs` and `/api/studio/jobs/{job_id}` return admin-only,
   path-free job records for the Admin panel queue view. Records include job
   status, owner, request ID, timestamps, result metadata, and artifact

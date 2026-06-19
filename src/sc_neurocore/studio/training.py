@@ -13,7 +13,14 @@ import secrets
 import threading
 import time
 import queue
+from collections.abc import Callable
 from typing import Any
+
+from sc_neurocore.studio.platform.jobs import (
+    StudioJobCancelled,
+    StudioJobContext,
+    StudioJobManager,
+)
 
 try:
     import torch
@@ -47,33 +54,88 @@ _CELL_TYPES = [
 
 
 def list_surrogates() -> list[dict[str, Any]]:
+    """Return available surrogate-gradient functions for the Studio UI."""
+
     return [{"name": s, "available": HAS_TORCH} for s in _SURROGATES]
 
 
 def list_cell_types() -> list[dict[str, Any]]:
+    """Return available training cell types for the Studio UI."""
+
     return [{"name": c, "available": HAS_TORCH} for c in _CELL_TYPES]
 
 
 class TrainingJob:
     """Manages a single training run in a background thread."""
 
-    def __init__(self, config: dict[str, Any]):
+    def __init__(
+        self,
+        config: dict[str, Any],
+        *,
+        job_id: str | None = None,
+        cancelled: Callable[[], bool] | None = None,
+    ) -> None:
         self.config = config
-        self.id = f"j{secrets.token_hex(6)}"
+        self.id = job_id or f"j{secrets.token_hex(6)}"
         self.status = "pending"
         self.metrics: queue.Queue[Any] = queue.Queue(maxsize=500)
         self._stop_event = threading.Event()
+        self._cancelled = cancelled
         self._thread: threading.Thread | None = None
         self.error: str | None = None
         self.final_metrics: dict[str, Any] | None = None
 
     def start(self) -> None:
+        """Start this training job in its legacy background thread."""
+
         self.status = "running"
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
 
     def stop(self) -> None:
+        """Request cooperative cancellation for this training job."""
+
         self._stop_event.set()
+
+    def run_blocking(self, context: StudioJobContext) -> dict[str, object]:
+        """Run this training job inside a bounded Studio job context.
+
+        Parameters
+        ----------
+        context:
+            Studio job execution context used for cancellation and artifact
+            publication.
+
+        Returns
+        -------
+        dict[str, object]
+            Path-free terminal training metadata for the Studio job record.
+
+        Raises
+        ------
+        StudioJobCancelled
+            If the platform job manager requested cancellation.
+        Exception
+            Re-raises training failures after emitting an SSE error event so the
+            platform job record also transitions to failed.
+        """
+
+        self.status = "running"
+        try:
+            self._train()
+        except Exception as exc:
+            self.error = str(exc)
+            self._emit("error", {"message": str(exc)})
+            self.status = "failed"
+            raise
+        if self.status == "stopped" or context.cancelled:
+            context.write_artifact("training/status.json", json.dumps(self._public_status()))
+            raise StudioJobCancelled("Studio training job was stopped.")
+        context.write_artifact("training/status.json", json.dumps(self._public_status()))
+        return {
+            "training_status": self.status,
+            "final_metrics": self.final_metrics,
+        }
 
     def _emit(self, event_type: str, data: dict[str, Any]) -> None:
         payload = {"event": event_type, "data": data, "timestamp": time.time()}
@@ -93,6 +155,17 @@ class TrainingJob:
             self.error = str(e)
             self._emit("error", {"message": str(e)})
             self.status = "failed"
+
+    def _stop_requested(self) -> bool:
+        return self._stop_event.is_set() or (self._cancelled is not None and self._cancelled())
+
+    def _public_status(self) -> dict[str, Any]:
+        return {
+            "error": self.error,
+            "final_metrics": self.final_metrics,
+            "job_id": self.id,
+            "status": self.status,
+        }
 
     def _train(self) -> None:
         if not HAS_TORCH:
@@ -155,7 +228,7 @@ class TrainingJob:
         )
 
         for epoch in range(n_epochs):
-            if self._stop_event.is_set():
+            if self._stop_requested():
                 self.status = "stopped"
                 self._emit("stopped", {"epoch": epoch})
                 return
@@ -167,7 +240,7 @@ class TrainingJob:
             total = 0
 
             for batch_idx, (data, targets) in enumerate(train_loader):
-                if self._stop_event.is_set():
+                if self._stop_requested():
                     break
 
                 data, targets = data.to(device), targets.to(device)
@@ -309,34 +382,77 @@ _jobs: dict[str, TrainingJob] = {}
 _jobs_lock = threading.Lock()
 
 
-def start_training(config: dict[str, Any]) -> dict[str, Any]:
-    job = TrainingJob(config)
+def _register_job(job: TrainingJob) -> None:
     with _jobs_lock:
         _jobs[job.id] = job
+
+
+def start_training(
+    config: dict[str, Any],
+    job_manager: StudioJobManager | None = None,
+) -> dict[str, Any]:
+    """Start a Studio training job.
+
+    When ``job_manager`` is supplied, execution is delegated to the bounded
+    Studio job sandbox. Without it, the legacy in-process training thread is
+    used for direct module tests and backward compatibility.
+    """
+
+    if job_manager is not None:
+        ready = threading.Event()
+
+        def task(context: StudioJobContext) -> dict[str, object]:
+            job = TrainingJob(
+                config,
+                job_id=context.job_id,
+                cancelled=lambda: context.cancelled,
+            )
+            _register_job(job)
+            ready.set()
+            return job.run_blocking(context)
+
+        record = job_manager.submit(
+            kind="training",
+            owner="studio-training",
+            request_id=None,
+            task=task,
+        )
+        ready.wait(timeout=1.0)
+        return {"job_id": record.job_id, "status": "running"}
+
+    job = TrainingJob(config)
+    _register_job(job)
     job.start()
     return {"job_id": job.id, "status": "running"}
 
 
-def stop_training(job_id: str) -> dict[str, Any]:
+def stop_training(
+    job_id: str,
+    job_manager: StudioJobManager | None = None,
+) -> dict[str, Any]:
+    """Request cooperative stop for a Studio training job."""
+
     with _jobs_lock:
         job = _jobs.get(job_id)
     if not job:
         return {"error": f"Job {job_id} not found"}
     job.stop()
+    if job_manager is not None:
+        try:
+            job_manager.cancel(job_id)
+        except KeyError:
+            pass
     return {"job_id": job_id, "status": "stopping"}
 
 
 def get_training_status(job_id: str) -> dict[str, Any]:
+    """Return path-free status for one Studio training job."""
+
     with _jobs_lock:
         job = _jobs.get(job_id)
     if not job:
         return {"error": f"Job {job_id} not found"}
-    return {
-        "job_id": job.id,
-        "status": job.status,
-        "error": job.error,
-        "final_metrics": job.final_metrics,
-    }
+    return job._public_status()
 
 
 def stream_metrics(job_id: str) -> Any:
@@ -360,5 +476,7 @@ def stream_metrics(job_id: str) -> Any:
 
 
 def list_jobs() -> list[dict[str, Any]]:
+    """Return path-free summaries for known Studio training jobs."""
+
     with _jobs_lock:
         return [{"job_id": j.id, "status": j.status, "config": j.config} for j in _jobs.values()]

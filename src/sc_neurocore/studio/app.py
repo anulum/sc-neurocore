@@ -1880,14 +1880,14 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
 
     @app.post("/api/training/start")
     def api_training_start(data: dict[str, Any]) -> Any:
-        return _safe(lambda: start_training(data))
+        return _safe(lambda: start_training(data, studio_job_manager))
 
     @app.post("/api/training/stop")
     def api_training_stop(data: dict[str, Any]) -> Any:
         job_id = data.get("job_id", "")
         if not job_id:
             raise HTTPException(422, "job_id required")
-        return stop_training(job_id)
+        return stop_training(job_id, studio_job_manager)
 
     @app.get("/api/training/jobs")
     def api_training_jobs() -> Any:

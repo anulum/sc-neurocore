@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import time
+from typing import cast
 
 import pytest
 
@@ -17,6 +18,7 @@ fastapi = pytest.importorskip("fastapi")
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
+from sc_neurocore.studio.platform.jobs import StudioJobManager
 from sc_neurocore.studio.training import (
     TrainingJob,
     _CELL_TYPES,
@@ -31,7 +33,7 @@ from sc_neurocore.studio.training import (
 
 
 @pytest.fixture(scope="module")
-def client():
+def client() -> TestClient:
     return TestClient(create_app(), base_url="http://127.0.0.1")
 
 
@@ -39,21 +41,21 @@ def client():
 
 
 class TestListing:
-    def test_list_surrogates(self):
+    def test_list_surrogates(self) -> None:
         result = list_surrogates()
         assert len(result) == len(_SURROGATES)
         names = {s["name"] for s in result}
         assert "atan_surrogate" in names
         assert "fast_sigmoid" in names
 
-    def test_list_cell_types(self):
+    def test_list_cell_types(self) -> None:
         result = list_cell_types()
         assert len(result) == len(_CELL_TYPES)
         names = {c["name"] for c in result}
         assert "LIFCell" in names
         assert "AdExCell" in names
 
-    def test_surrogates_endpoint(self, client):
+    def test_surrogates_endpoint(self, client: TestClient) -> None:
         r = client.get("/api/training/surrogates")
         assert r.status_code == 200
         data = r.json()
@@ -61,7 +63,7 @@ class TestListing:
         assert all("name" in s for s in data)
         assert all("available" in s for s in data)
 
-    def test_cell_types_endpoint(self, client):
+    def test_cell_types_endpoint(self, client: TestClient) -> None:
         r = client.get("/api/training/cell-types")
         assert r.status_code == 200
         data = r.json()
@@ -72,39 +74,39 @@ class TestListing:
 
 
 class TestJobLifecycle:
-    def test_create_job(self):
+    def test_create_job(self) -> None:
         job = TrainingJob({"epochs": 1, "dataset": "synthetic"})
         assert job.status == "pending"
         assert job.id.startswith("j")
         assert job.error is None
 
-    def test_start_training_returns_job_id(self):
+    def test_start_training_returns_job_id(self) -> None:
         result = start_training({"epochs": 1, "dataset": "synthetic", "batch_size": 32})
         assert "job_id" in result
         assert result["status"] == "running"
 
-    def test_job_appears_in_list(self):
+    def test_job_appears_in_list(self) -> None:
         result = start_training({"epochs": 1, "dataset": "synthetic"})
         jobs = list_jobs()
         ids = [j["job_id"] for j in jobs]
         assert result["job_id"] in ids
 
-    def test_get_status_existing_job(self):
+    def test_get_status_existing_job(self) -> None:
         result = start_training({"epochs": 1, "dataset": "synthetic"})
         status = get_training_status(result["job_id"])
         assert status["job_id"] == result["job_id"]
         assert status["status"] in ("running", "completed", "pending")
 
-    def test_get_status_nonexistent(self):
+    def test_get_status_nonexistent(self) -> None:
         status = get_training_status("nonexistent_id")
         assert "error" in status
 
-    def test_stop_training(self):
+    def test_stop_training(self) -> None:
         result = start_training({"epochs": 50, "dataset": "synthetic"})
         stop_result = stop_training(result["job_id"])
         assert stop_result["status"] == "stopping"
 
-    def test_stop_nonexistent(self):
+    def test_stop_nonexistent(self) -> None:
         result = stop_training("nonexistent_id")
         assert "error" in result
 
@@ -113,7 +115,7 @@ class TestJobLifecycle:
 
 
 class TestTrainingEndpoints:
-    def test_start_endpoint(self, client):
+    def test_start_endpoint(self, client: TestClient) -> None:
         r = client.post(
             "/api/training/start",
             json={"epochs": 1, "dataset": "synthetic", "batch_size": 32},
@@ -121,12 +123,13 @@ class TestTrainingEndpoints:
         assert r.status_code == 200
         data = r.json()
         assert "job_id" in data
+        assert data["job_id"].startswith("sj_")
 
-    def test_stop_endpoint_requires_job_id(self, client):
+    def test_stop_endpoint_requires_job_id(self, client: TestClient) -> None:
         r = client.post("/api/training/stop", json={})
         assert r.status_code == 422
 
-    def test_stop_endpoint(self, client):
+    def test_stop_endpoint(self, client: TestClient) -> None:
         start = client.post(
             "/api/training/start",
             json={"epochs": 50, "dataset": "synthetic"},
@@ -135,7 +138,7 @@ class TestTrainingEndpoints:
         r = client.post("/api/training/stop", json={"job_id": job_id})
         assert r.status_code == 200
 
-    def test_status_endpoint(self, client):
+    def test_status_endpoint(self, client: TestClient) -> None:
         start = client.post(
             "/api/training/start",
             json={"epochs": 1, "dataset": "synthetic"},
@@ -146,27 +149,42 @@ class TestTrainingEndpoints:
         data = r.json()
         assert data["job_id"] == job_id
 
-    def test_status_nonexistent(self, client):
+    def test_status_nonexistent(self, client: TestClient) -> None:
         r = client.get("/api/training/status/nonexistent")
         assert r.status_code == 404
 
-    def test_jobs_endpoint(self, client):
+    def test_jobs_endpoint(self, client: TestClient) -> None:
         r = client.get("/api/training/jobs")
         assert r.status_code == 200
         assert isinstance(r.json(), list)
+
+    def test_training_endpoint_registers_platform_job(self) -> None:
+        app = create_app()
+        client = TestClient(app, base_url="http://127.0.0.1")
+        r = client.post(
+            "/api/training/start",
+            json={"epochs": 1, "dataset": "synthetic", "batch_size": 32},
+        )
+        assert r.status_code == 200
+        job_id = r.json()["job_id"]
+
+        manager = cast(StudioJobManager, app.state.studio_job_manager)
+        records = manager.list_records()
+
+        assert any(record.job_id == job_id and record.kind == "training" for record in records)
 
 
 # --- SSE Stream ---
 
 
 class TestSSEStream:
-    def test_stream_nonexistent_job(self, client):
+    def test_stream_nonexistent_job(self, client: TestClient) -> None:
         r = client.get("/api/training/stream/nonexistent")
         assert r.status_code == 200
         content = r.text
         assert "error" in content or "not found" in content.lower()
 
-    def test_stream_endpoint_returns_event_stream(self, client):
+    def test_stream_endpoint_returns_event_stream(self, client: TestClient) -> None:
         start = client.post(
             "/api/training/start",
             json={"epochs": 2, "dataset": "synthetic", "batch_size": 32},
@@ -182,10 +200,11 @@ class TestSSEStream:
 
 
 class TestTrainingConfig:
-    def test_default_config_runs(self):
+    def test_default_config_runs(self) -> None:
         result = start_training({"epochs": 2, "batch_size": 32, "dataset": "synthetic"})
         assert result["status"] == "running"
         # Wait for completion (synthetic is fast)
+        status = get_training_status(result["job_id"])
         for _ in range(20):
             time.sleep(1)
             status = get_training_status(result["job_id"])
@@ -193,7 +212,7 @@ class TestTrainingConfig:
                 break
         assert status["status"] == "completed", f"Expected completed, got {status}"
 
-    def test_all_surrogates_listed(self):
+    def test_all_surrogates_listed(self) -> None:
         expected = {
             "fast_sigmoid",
             "superspike",

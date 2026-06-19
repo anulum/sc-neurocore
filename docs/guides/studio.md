@@ -293,6 +293,11 @@ per-job working directories on an operator-selected disk, and tune
 status payload is path-free and reports allowed job kinds plus
 active/completed/failed/timed-out counts.
 
+Training start, stop, and status routes now submit work through the same local
+worker manager. The training monitor's SSE stream remains the live metric
+channel, while the Admin queue records the bounded training job and its
+path-free terminal artifact manifest.
+
 Job artifacts are served through the admin-gated
 `/api/studio/jobs/{job_id}/artifacts/{artifact_path}` endpoint. The endpoint
 only serves manifest-declared artifacts, revalidates the recorded size and
