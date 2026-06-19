@@ -48,7 +48,7 @@ class LFSRReplay:
         self.reg = ((self.reg << 1) | feedback) & 0xFFFF
         return self.reg
 
-    def encode(self, threshold: int, length: int) -> np.ndarray:
+    def encode(self, threshold: int, length: int) -> np.ndarray[Any, Any]:
         """Generate a bitstream by comparing LFSR output against threshold."""
         bits = np.zeros(length, dtype=np.uint8)
         for i in range(length):
@@ -120,7 +120,7 @@ class SpikeDecisionTree:
     def add_decision(
         self,
         neuron_id: str,
-        bitstream: np.ndarray,
+        bitstream: np.ndarray[Any, Any],
         threshold: int,
         scc: float = 0.0,
         parent: Optional[DecisionNode] = None,
@@ -258,7 +258,7 @@ class ProvenanceTrace:
         self,
         stage: str,
         description: str,
-        data: Optional[np.ndarray] = None,
+        data: Optional[np.ndarray[Any, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> ProvenanceStep:
         """Record one provenance step."""
@@ -426,7 +426,7 @@ class CausalAttributor:
     @staticmethod
     def attribute(
         target: DecisionNode,
-        input_bitstreams: Dict[str, np.ndarray],
+        input_bitstreams: Dict[str, np.ndarray[Any, Any]],
         weights: Optional[Dict[str, float]] = None,
     ) -> CausalAttribution:
         """Compute per-input-neuron contribution to the target popcount."""
@@ -581,7 +581,8 @@ class NaturalLanguageExplainer:
         module keeps no hard runtime dependency on any local model server.
         """
         response = bridge.chat(f"{question}\n\nBase explanation:\n{text}")
-        return response.text
+        enhanced: str = response.text
+        return enhanced
 
     @staticmethod
     def explain_node_with_local_llm(
@@ -681,7 +682,7 @@ class ExplainabilityEngine:
         self.temporal = TemporalWindow()
         self.multi_layer = MultiLayerTrace()
         self.symbolic = SymbolicPath()
-        self._replayed_bitstreams: Dict[str, np.ndarray] = {}
+        self._replayed_bitstreams: Dict[str, np.ndarray[Any, Any]] = {}
 
     def explain_spike(
         self,
@@ -787,7 +788,7 @@ class ExplainabilityEngine:
         self,
         threshold_q16: int,
         length: int,
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Replay a bitstream from the engine's seed (for external comparison)."""
         replay = LFSRReplay(self.seed)
         return replay.encode(threshold_q16, length)
@@ -803,7 +804,7 @@ class ExplainabilityEngine:
     def attribute(
         self,
         target: DecisionNode,
-        input_bitstreams: Dict[str, np.ndarray],
+        input_bitstreams: Dict[str, np.ndarray[Any, Any]],
         weights: Optional[Dict[str, float]] = None,
     ) -> CausalAttribution:
         """Compute causal attribution for a decision."""
