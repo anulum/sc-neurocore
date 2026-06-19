@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID
 
@@ -378,6 +379,7 @@ def test_studio_app_records_policy_events_to_configured_audit_log(tmp_path: Path
     assert row["principal_id"] is None
     assert row["reason"] == "missing_principal"
     assert row["route"] == "/api/simulate"
+    assert datetime.fromisoformat(row["timestamp_utc"].replace("Z", "+00:00")).tzinfo is UTC
 
 
 def test_studio_app_correlates_policy_audit_with_request_id(tmp_path: Path) -> None:

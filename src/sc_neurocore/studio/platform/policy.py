@@ -11,7 +11,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Protocol
@@ -69,6 +71,7 @@ class AuditEvent:
     decision: str
     reason: str
     request_id: str | None = None
+    timestamp_utc: str | None = None
 
     def to_json_dict(self) -> dict[str, str | None]:
         """Return a JSON-serializable representation of the audit event."""
@@ -80,6 +83,7 @@ class AuditEvent:
             "reason": self.reason,
             "request_id": self.request_id,
             "route": self.route,
+            "timestamp_utc": self.timestamp_utc,
         }
 
 
@@ -170,8 +174,13 @@ class RoutePolicyRegistry:
 class PolicyGateway:
     """Fail-closed Studio route authorization gateway."""
 
-    def __init__(self, audit_sink: AuditSink) -> None:
+    def __init__(
+        self,
+        audit_sink: AuditSink,
+        clock: Callable[[], datetime] | None = None,
+    ) -> None:
         self._audit_sink = audit_sink
+        self._clock = clock or self._utc_now
 
     def authorize(
         self,
@@ -228,8 +237,17 @@ class PolicyGateway:
                 decision="allow" if decision.allowed else "deny",
                 reason=decision.reason,
                 request_id=request_id,
+                timestamp_utc=self._timestamp_utc(),
             )
         )
+
+    def _timestamp_utc(self) -> str:
+        timestamp = self._clock().astimezone(UTC).replace(microsecond=0)
+        return timestamp.isoformat().replace("+00:00", "Z")
+
+    @staticmethod
+    def _utc_now() -> datetime:
+        return datetime.now(UTC)
 
 
 def _register_routes(
