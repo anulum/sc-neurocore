@@ -100,8 +100,8 @@ class AnalogBridge:
         actual = v_min + (dac / (self.dac_levels - 1)) * (v_max - v_min)
         return dac, actual
 
-    def emit_analog_config(self, nodes: List[Any]) -> Dict:
-        config: Dict[str, Dict] = {"synapses": {}, "neurons": {}, "errors": {}}
+    def emit_analog_config(self, nodes: List[Any]) -> Dict[str, Dict[str, Any]]:
+        config: Dict[str, Dict[str, Any]] = {"synapses": {}, "neurons": {}, "errors": {}}
         for n in nodes:
             if n.type == "SC_WEIGHT":
                 target_g = self.g_min + n.probability * (self.g_max - self.g_min)
@@ -121,7 +121,9 @@ class EventDrivenInterface:
     def __init__(self, clock_period_us: float = 1.0):
         self.clock_period_us = clock_period_us
 
-    def bitstream_to_events(self, neuron_id: int, bitstream: np.ndarray) -> List[AEREvent]:
+    def bitstream_to_events(
+        self, neuron_id: int, bitstream: np.ndarray[Any, Any]
+    ) -> List[AEREvent]:
         """Convert a boolean bitstream to a sequence of AER spike events."""
         events = []
         for i, bit in enumerate(bitstream):
@@ -140,7 +142,7 @@ class EventDrivenInterface:
         duration_us: float,
         tau_syn: float = 5.0,
         weight: float = 1.0,
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Convert AER events to time-discretized synaptic current trace.
 
         Applies an exponential decay kernel per event.
@@ -190,7 +192,7 @@ class CalibrationRoutine:
         full_range = self.bridge.g_max - self.bridge.g_min
         if max_err == 0 or full_range == 0:
             return float(self.bridge.dac_res)
-        return np.log2(full_range / max_err)
+        return float(np.log2(full_range / max_err))
 
 
 if __name__ == "__main__":
