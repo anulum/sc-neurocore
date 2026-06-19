@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import json
 import hashlib
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from uuid import UUID
 
 import pytest
+
+UTC = timezone.utc
 
 fastapi = pytest.importorskip("fastapi")
 httpx = pytest.importorskip("httpx")
@@ -267,7 +269,7 @@ def test_studio_runtime_settings_rejects_empty_security_header_value() -> None:
 
 
 def test_studio_app_adds_default_security_headers_to_health_response() -> None:
-    client = TestClient(create_app())
+    client = TestClient(create_app(), base_url="http://127.0.0.1")
 
     response = client.get("/api/health")
 
@@ -277,7 +279,7 @@ def test_studio_app_adds_default_security_headers_to_health_response() -> None:
 
 
 def test_studio_app_generates_request_id_header() -> None:
-    client = TestClient(create_app())
+    client = TestClient(create_app(), base_url="http://127.0.0.1")
 
     response = client.get("/api/health")
 
@@ -286,7 +288,7 @@ def test_studio_app_generates_request_id_header() -> None:
 
 
 def test_studio_app_preserves_valid_inbound_request_id() -> None:
-    client = TestClient(create_app())
+    client = TestClient(create_app(), base_url="http://127.0.0.1")
 
     response = client.get("/api/health", headers={"x-request-id": "studio-run-42"})
 
@@ -294,7 +296,7 @@ def test_studio_app_preserves_valid_inbound_request_id() -> None:
 
 
 def test_studio_app_replaces_invalid_inbound_request_id() -> None:
-    client = TestClient(create_app())
+    client = TestClient(create_app(), base_url="http://127.0.0.1")
 
     response = client.get("/api/health", headers={"x-request-id": "bad request id"})
 
