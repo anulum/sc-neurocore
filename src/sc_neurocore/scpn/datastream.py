@@ -46,10 +46,10 @@ class SCPNDatastream:
 
     dt_s: float
     seed: int
-    probabilities: np.ndarray
-    spike_train: np.ndarray
-    omega_rad_s: np.ndarray
-    knm: np.ndarray
+    probabilities: np.ndarray[Any, Any]
+    spike_train: np.ndarray[Any, Any]
+    omega_rad_s: np.ndarray[Any, Any]
+    knm: np.ndarray[Any, Any]
 
     @property
     def n_steps(self) -> int:
@@ -62,17 +62,18 @@ class SCPNDatastream:
         return int(self.spike_train.shape[1])
 
     @property
-    def firing_rates(self) -> np.ndarray:
+    def firing_rates(self) -> np.ndarray[Any, Any]:
         """Mean spike probability per layer over this stream window."""
-        return self.spike_train.astype(np.float64).mean(axis=0)
+        rates: np.ndarray[Any, Any] = self.spike_train.astype(np.float64).mean(axis=0)
+        return rates
 
     @property
-    def rotation_angles_rad(self) -> np.ndarray:
+    def rotation_angles_rad(self) -> np.ndarray[Any, Any]:
         """``Ry`` angles for quantum-control bridges: firing rate times pi."""
         return self.firing_rates * np.pi
 
     @property
-    def quantum_amplitudes(self) -> np.ndarray:
+    def quantum_amplitudes(self) -> np.ndarray[Any, Any]:
         """Real amplitude encoding of firing rates as ``[alpha, beta]`` pairs."""
         amplitudes = TensorStream.from_prob(self.firing_rates).to_quantum()
         return np.real(amplitudes).astype(np.float64)
@@ -237,7 +238,7 @@ def _int_scalar_from_payload(value: Any, *, key: str) -> int:
     return int(value)
 
 
-def _numeric_array_from_payload(value: Any, *, key: str) -> np.ndarray:
+def _numeric_array_from_payload(value: Any, *, key: str) -> np.ndarray[Any, Any]:
     _validate_numeric_json_tree(value, key=key)
     try:
         return np.asarray(value, dtype=np.float64)

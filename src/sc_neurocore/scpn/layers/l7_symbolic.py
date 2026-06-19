@@ -6,29 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SCPN L7 Geometric-Symbolic Layer (Stochastic Implementation)
 
-from typing import Any, Optional
-
-"""
-SCPN L7: Geometric-Symbolic Layer (Stochastic Implementation)
-==============================================================
+"""SCPN L7: geometric-symbolic layer (stochastic implementation).
 
 Implements Layer 7 of the SCPN framework: Geometric and symbolic
 representations including sacred geometry, E8 lattice encoding,
 acupuncture meridian mapping, and symbolic resonance patterns.
 
-Key Features:
-- Stochastic sacred geometry encoding (Phi, Metatron, Platonic)
-- E8 lattice alignment metrics
-- Symbolic health computation
-- Acupuncture point activation patterns
-- Integration with glyph streams
-
+Key features: stochastic sacred-geometry encoding (Phi, Metatron, Platonic),
+E8 lattice alignment metrics, symbolic health computation, acupuncture point
+activation patterns, and integration with glyph streams.
 """
 
 from dataclasses import dataclass
 import logging
 import math
-from typing import Dict
+from typing import Any, Dict, Optional
 
 import numpy as np
 
@@ -134,7 +126,8 @@ class L7_SymbolicLayer:
             symbol_input: External symbolic input vector.
             acupoint_stimulus: Dict of {point_id: intensity} for acupuncture.
 
-        Returns:
+        Returns
+        -------
             Dict with glyph_vector, meridian_qi, sacred_geometry, output_bitstreams
         """
         if not math.isfinite(float(dt)) or float(dt) <= 0.0:
@@ -313,8 +306,8 @@ class L7_SymbolicLayer:
         }
 
     @staticmethod
-    def _e8_roots() -> np.ndarray:
-        roots: list[np.ndarray] = []
+    def _e8_roots() -> np.ndarray[Any, Any]:
+        roots: list[np.ndarray[Any, Any]] = []
         for i in range(8):
             for j in range(i + 1, 8):
                 for si in (-1.0, 1.0):
@@ -385,7 +378,7 @@ class L7_SymbolicLayer:
             if params.rng_seed < 0:
                 raise ValueError("rng_seed must be a non-negative integer or None")
 
-    def _symbol_input(self, symbol_input: np.ndarray[Any, Any]) -> np.ndarray:
+    def _symbol_input(self, symbol_input: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         values = np.asarray(symbol_input, dtype=np.float64).reshape(-1)
         if values.size < self.params.n_symbols:
             raise ValueError("symbol_input must contain at least n_symbols values")

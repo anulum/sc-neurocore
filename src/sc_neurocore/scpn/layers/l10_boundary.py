@@ -6,8 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SCPN L10 Boundary Firewall Layer (Stochastic Implementation)
 
-"""
-SCPN L10: Boundary Firewall Layer (Stochastic Implementation)
+"""SCPN L10: boundary firewall layer (stochastic implementation).
 
 Topological boundary insulation with dissonance-triggered rejection.
 Firewall strength decays under external noise (dissonance) and grows
@@ -29,6 +28,8 @@ import numpy as np
 
 @dataclass
 class L10_StochasticParameters:
+    """Stochastic configuration parameters for the L10 boundary firewall layer."""
+
     n_boundary_nodes: int = 100
     bitstream_length: int = 1024
     rejection_threshold: float = 0.4
@@ -55,8 +56,9 @@ class L10_BoundaryLayer:
         self,
         dt: float,
         l9_input: Optional[Dict[str, Any]] = None,
-        external_noise: Optional[np.ndarray] = None,
+        external_noise: Optional[np.ndarray[Any, Any]] = None,
     ) -> Dict[str, Any]:
+        """Advance the firewall one timestep and return its boundary state."""
         if not math.isfinite(float(dt)) or float(dt) <= 0.0:
             raise ValueError("dt must be finite and positive")
         self.time += dt
@@ -111,6 +113,7 @@ class L10_BoundaryLayer:
         return float(np.mean(self.firewall_strength))
 
     def get_global_metric(self) -> float:
+        """Return the scalar boundary-integrity metric for this layer."""
         return self._integrity()
 
     @staticmethod
@@ -161,7 +164,7 @@ class L10_BoundaryLayer:
         return retrieval_quality
 
     @staticmethod
-    def _qec_residual(l9_input: Dict[str, Any], n_boundary_nodes: int) -> np.ndarray:
+    def _qec_residual(l9_input: Dict[str, Any], n_boundary_nodes: int) -> np.ndarray[Any, Any]:
         if "qec_syndrome" not in l9_input:
             return np.zeros(n_boundary_nodes, dtype=np.float64)
 
@@ -179,7 +182,7 @@ class L10_BoundaryLayer:
     @staticmethod
     def _bounded_l9_vector(
         value: Any, n_boundary_nodes: int, name: str, *, pad_value: float
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         values = np.asarray(value, dtype=np.float64).reshape(-1)
         if values.size == 0:
             raise ValueError(f"{name} must contain at least one value")
@@ -225,7 +228,9 @@ class L10_BoundaryLayer:
         return {"ebs_id": ebs_id, "terminal_set": terminals}
 
     @staticmethod
-    def _noise_vector(external_noise: np.ndarray, n_boundary_nodes: int) -> np.ndarray:
+    def _noise_vector(
+        external_noise: np.ndarray[Any, Any], n_boundary_nodes: int
+    ) -> np.ndarray[Any, Any]:
         values = np.asarray(external_noise, dtype=np.float64).reshape(-1)
         if not np.all(np.isfinite(values)):
             raise ValueError("external_noise must contain only finite values")

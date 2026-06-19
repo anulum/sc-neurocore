@@ -6,8 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SCPN L8 Cosmic Phase-Locking Layer (Stochastic
 
-"""
-SCPN L8: Cosmic Phase-Locking Layer (Stochastic Implementation)
+"""SCPN L8: cosmic phase-locking layer (stochastic implementation).
 
 Pulsar Timing Array synchronization: local oscillators phase-lock to
 cosmic reference frequencies via Kuramoto coupling.
@@ -27,15 +26,18 @@ import numpy as np
 
 @dataclass
 class L8_StochasticParameters:
+    """Stochastic configuration parameters for the SCPN cosmic phase-locking layer."""
+
     n_pulsars: int = 12
     bitstream_length: int = 1024
     k_cosmic: float = 0.05
     symbolic_coupling: float = 0.1  # from L7
     director_coupling: float = 0.15  # to L16
-    pulsar_omegas: Optional[np.ndarray] = None
+    pulsar_omegas: Optional[np.ndarray[Any, Any]] = None
     rng_seed: Optional[int] = None
 
     def __post_init__(self) -> None:
+        """Validate and finalise the layer parameters after construction."""
         if self.pulsar_omegas is None:
             base_omegas = np.array([1.6, 2.3, 0.8, 4.1, 1.1, 0.5, 3.2, 2.7, 1.9, 0.4, 5.5, 0.2])
             self.pulsar_omegas = np.resize(base_omegas, self.n_pulsars)
@@ -56,6 +58,7 @@ class L8_PhaseFieldLayer:
         dt: float,
         l7_input: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
+        """Advance the cosmic phase-locking layer one timestep and return its output state."""
         if not math.isfinite(float(dt)) or float(dt) <= 0.0:
             raise ValueError("dt must be finite and positive")
         self.time += dt
@@ -101,6 +104,7 @@ class L8_PhaseFieldLayer:
         }
 
     def get_global_metric(self) -> float:
+        """Return the scalar global metric summarising this layer's state."""
         return self._order_parameter()
 
     @staticmethod

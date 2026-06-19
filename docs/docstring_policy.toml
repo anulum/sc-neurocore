@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 130
+expected_file_count = 140
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -476,6 +476,46 @@ rationale = "Public published neural decoder/encoder reference implementations (
 [[file]]
 path = "src/sc_neurocore/bio/transcriptomic.py"
 rationale = "Public single-cell transcriptomic foundation-model interfaces (scKG-BERT, Geneformer)."
+
+[[file]]
+path = "src/sc_neurocore/scpn/datastream.py"
+rationale = "Public SCPN spike-train datastream type with derived firing-rate metrics."
+
+[[file]]
+path = "src/sc_neurocore/scpn/params.py"
+rationale = "Public SCPN framework parameters and inter-layer coupling matrix builder."
+
+[[file]]
+path = "src/sc_neurocore/scpn/layers/l5_organismal.py"
+rationale = "Public SCPN L5 organismal-psychoemotional layer."
+
+[[file]]
+path = "src/sc_neurocore/scpn/layers/l7_symbolic.py"
+rationale = "Public SCPN L7 geometric-symbolic layer."
+
+[[file]]
+path = "src/sc_neurocore/scpn/layers/l8_phase_field.py"
+rationale = "Public SCPN L8 cosmic phase-locking layer."
+
+[[file]]
+path = "src/sc_neurocore/scpn/layers/l9_memory.py"
+rationale = "Public SCPN L9 holographic memory layer."
+
+[[file]]
+path = "src/sc_neurocore/scpn/layers/l10_boundary.py"
+rationale = "Public SCPN L10 boundary firewall layer."
+
+[[file]]
+path = "src/sc_neurocore/scpn/layers/l11_morphic.py"
+rationale = "Public SCPN L11 morphic resonance / noospheric layer."
+
+[[file]]
+path = "src/sc_neurocore/scpn/layers/l13_temporal.py"
+rationale = "Public SCPN L13 source / temporal binding layer."
+
+[[file]]
+path = "src/sc_neurocore/scpn/layers/l14_integration.py"
+rationale = "Public SCPN L14 transdimensional integration layer."
 
 [[file]]
 path = "src/sc_neurocore/learning/advanced.py"

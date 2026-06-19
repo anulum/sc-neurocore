@@ -15,6 +15,8 @@ Rust engine reads from engine/src/scpn/params.json (generated from this file).
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 # Natural frequencies Omega_n (rad/s) for the 16 SCPN layers.
@@ -64,7 +66,7 @@ CROSS_BOOSTS = {
 }
 
 
-def build_knm_matrix(n_layers: int = N_LAYERS) -> np.ndarray:
+def build_knm_matrix(n_layers: int = N_LAYERS) -> np.ndarray[Any, Any]:
     """
     Build the Knm inter-layer coupling matrix.
 
