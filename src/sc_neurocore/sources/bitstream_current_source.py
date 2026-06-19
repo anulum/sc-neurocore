@@ -140,12 +140,16 @@ class BitstreamCurrentSource:
             probs = self.post_matrix.mean(axis=0, dtype=np.float64)
             bipolar_values = (2.0 * probs) - 1.0
             clipped = np.clip(bipolar_values, -1.0, 1.0)
-            return (self.y_min + ((clipped + 1.0) / 2.0) * (self.y_max - self.y_min)).astype(
-                np.float64, copy=False
-            )
+            bipolar_current: np.ndarray[Any, Any] = (
+                self.y_min + ((clipped + 1.0) / 2.0) * (self.y_max - self.y_min)
+            ).astype(np.float64, copy=False)
+            return bipolar_current
 
         probs = self.post_matrix.mean(axis=0, dtype=np.float64)
-        return (self.y_min + probs * (self.y_max - self.y_min)).astype(np.float64, copy=False)
+        unipolar_current: np.ndarray[Any, Any] = (
+            self.y_min + probs * (self.y_max - self.y_min)
+        ).astype(np.float64, copy=False)
+        return unipolar_current
 
     def reset(self) -> None:
         """Reset the realised current trace cursor to its first timestep."""
