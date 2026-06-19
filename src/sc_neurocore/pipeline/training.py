@@ -30,8 +30,8 @@ class SCTrainingLoop:
     @staticmethod
     def run_rl_epoch(
         agent: SCLearningLayer,
-        env_step_func: Callable[[np.ndarray], float],
-        input_data: np.ndarray,
+        env_step_func: Callable[[np.ndarray[Any, Any]], float],
+        input_data: np.ndarray[Any, Any],
         generations: int = 10,
     ) -> None:
         """
