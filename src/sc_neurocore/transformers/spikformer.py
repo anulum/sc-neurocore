@@ -23,6 +23,7 @@ Reference:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -55,6 +56,7 @@ class SpikeDrivenAttention:
     threshold: float = 1.0
 
     def __post_init__(self) -> None:
+        """Derive the head dimension and initialise the projection weights."""
         self.head_dim = self.embed_dim // self.num_heads
         rng = np.random.RandomState(42)
         # Linear projections (Q, K, V)
@@ -64,16 +66,18 @@ class SpikeDrivenAttention:
         self.W_v = rng.randn(self.embed_dim, self.embed_dim) * scale
         self.W_out = rng.randn(self.embed_dim, self.embed_dim) * scale
         # Membrane state for Q/K spike generation
-        self._v_q: np.ndarray | None = None
-        self._v_k: np.ndarray | None = None
+        self._v_q: np.ndarray[Any, Any] | None = None
+        self._v_k: np.ndarray[Any, Any] | None = None
 
-    def _spike_fn(self, membrane: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def _spike_fn(
+        self, membrane: np.ndarray[Any, Any]
+    ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Integrate-and-fire: returns (spikes, new_membrane)."""
         spikes = (membrane >= self.threshold).astype(np.float64)
         membrane = membrane - spikes * self.threshold
         return spikes, membrane
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Forward pass: spike-driven attention over T timesteps.
 
         Parameters
@@ -118,7 +122,7 @@ class SpikeDrivenAttention:
             # Weighted sum of V
             output_acc += attn @ V_proj
 
-        output = (output_acc / self.T) @ self.W_out
+        output: np.ndarray[Any, Any] = (output_acc / self.T) @ self.W_out
 
         if squeeze:
             output = output[0]
@@ -160,6 +164,7 @@ class SpikyStateSpace:
     dt: float = 0.01
 
     def __post_init__(self) -> None:
+        """Initialise the discretised state-space matrices."""
         rng = np.random.RandomState(42)
         # State-space matrices (discretized)
         # A: state transition (diagonal for efficiency)
@@ -174,7 +179,7 @@ class SpikyStateSpace:
         self._h = np.zeros(self.d_state)
         self._v = np.zeros(self.d_model)
 
-    def step(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def step(self, x: np.ndarray[Any, Any]) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
         """Process one timestep.
 
         Parameters
@@ -197,7 +202,7 @@ class SpikyStateSpace:
 
         return spikes, y
 
-    def forward(self, x_seq: np.ndarray) -> np.ndarray:
+    def forward(self, x_seq: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Process a full sequence.
 
         Parameters
@@ -238,11 +243,12 @@ class CPGPositionalEncoding:
     max_len: int = 1024
 
     def __post_init__(self) -> None:
+        """Sample the central-pattern-generator oscillator frequencies."""
         rng = np.random.RandomState(42)
         self.frequencies = np.exp(rng.randn(self.d_model) * 0.5)
         self.phases = rng.uniform(0, 2 * np.pi, self.d_model)
 
-    def encode(self, seq_len: int) -> np.ndarray:
+    def encode(self, seq_len: int) -> np.ndarray[Any, Any]:
         """Generate positional encoding.
 
         Returns
@@ -252,9 +258,12 @@ class CPGPositionalEncoding:
         """
         t = np.arange(seq_len)[:, np.newaxis]
         angles = t * self.frequencies[np.newaxis, :] * 0.01 + self.phases[np.newaxis, :]
-        return (np.sin(angles) + 1.0) / 2.0  # Map to [0, 1]
+        rates: np.ndarray[Any, Any] = (np.sin(angles) + 1.0) / 2.0  # Map to [0, 1]
+        return rates
 
-    def encode_spikes(self, seq_len: int, rng: np.random.RandomState | None = None) -> np.ndarray:
+    def encode_spikes(
+        self, seq_len: int, rng: np.random.RandomState | None = None
+    ) -> np.ndarray[Any, Any]:
         """Generate spike-encoded positional encoding.
 
         Returns
@@ -264,4 +273,5 @@ class CPGPositionalEncoding:
         if rng is None:
             rng = np.random.RandomState(0)
         rates = self.encode(seq_len)
-        return (rng.random(rates.shape) < rates).astype(np.int8)
+        spikes: np.ndarray[Any, Any] = (rng.random(rates.shape) < rates).astype(np.int8)
+        return spikes

@@ -6,9 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Spiking Transformer Block (S-Former)
 
+"""Spiking transformer block (S-Former) with stochastic multi-head attention."""
+
 from __future__ import annotations
-from typing import Any, Protocol
+
 from dataclasses import dataclass
+from typing import Any, Protocol
+
 import numpy as np
 
 from ..layers.attention import StochasticAttention
@@ -28,10 +32,10 @@ class _AttentionHead(Protocol):
 
 @dataclass
 class StochasticTransformerBlock:
-    """
-    Spiking Transformer Block (S-Former).
-    Structure:
-    Input -> Multi-Head Attention -> Add & Norm -> Feed Forward -> Add & Norm -> Output
+    """Spiking transformer block (S-Former).
+
+    Structure: input -> multi-head attention -> add & norm -> feed forward
+    -> add & norm -> output.
     """
 
     d_model: int
@@ -39,6 +43,7 @@ class StochasticTransformerBlock:
     length: int = 1024
 
     def __post_init__(self) -> None:
+        """Validate the block dimensions and build the attention heads and FFN."""
         if self.d_model <= 0:
             raise ValueError("d_model must be positive")
         if self.n_heads <= 0:
@@ -64,9 +69,7 @@ class StochasticTransformerBlock:
         )
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-        """
-        x: (d_model,) or (Sequence_Length, d_model). Returns same shape.
-        """
+        """Run the block on input of shape (d_model,) or (seq_len, d_model)."""
         x = np.asarray(x, dtype=np.float64)
         if x.ndim not in (1, 2):
             raise ValueError("x must be a one- or two-dimensional array")
@@ -86,7 +89,7 @@ class StochasticTransformerBlock:
         res1 = np.clip(0.5 * x + 0.5 * attn_out, 0.0, 1.0)
 
         # Position-wise FFN: apply same weights to each token
-        def _ffn(token: np.ndarray) -> np.ndarray:
+        def _ffn(token: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
             vals = token.tolist() if hasattr(token, "tolist") else token
             h = np.clip(self.ffn_1.forward(vals), 0.0, 1.0)  # type: ignore[arg-type]
             return self.ffn_2.forward(h.tolist() if hasattr(h, "tolist") else h)  # type: ignore[arg-type]
