@@ -79,6 +79,10 @@ runtime features:
   template, principal identifier when present, request correlation ID when
   available, allow/deny decision, decision reason, previous event hash, and a
   SHA-256 event hash over the canonical row content.
+- If a protected route cannot append its required audit event, Studio returns
+  `503 audit_append_failed` instead of executing the operation without audit
+  evidence. `/api/studio/audit/status` reports a path-free audit sink status
+  for operator dashboards.
 - `RoutePolicyRegistry` records the expected policy for each platform API route
   and lets startup or test code detect unclassified Studio endpoints before
   they become accidental public surfaces. The default registry classifies the

@@ -10,8 +10,8 @@
 
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -20,6 +20,32 @@ from pathlib import Path
 from typing import Protocol
 
 AUDIT_SCHEMA_VERSION = "studio.audit.v1"
+
+
+class AuditSinkError(RuntimeError):
+    """Raised when a Studio audit sink cannot persist an event."""
+
+
+@dataclass(frozen=True, slots=True)
+class AuditSinkStatus:
+    """Operator-safe status for a Studio audit sink."""
+
+    configured: bool
+    healthy: bool
+    path_configured: bool
+    sink_type: str
+    last_error: str | None = None
+
+    def to_public_dict(self) -> dict[str, bool | str | None]:
+        """Return an operator-safe status dictionary without local paths."""
+
+        return {
+            "configured": self.configured,
+            "healthy": self.healthy,
+            "last_error": self.last_error,
+            "path_configured": self.path_configured,
+            "sink_type": self.sink_type,
+        }
 
 
 class RouteVisibility(str, Enum):
@@ -98,6 +124,9 @@ class AuditSink(Protocol):
     def record(self, event: AuditEvent) -> None:
         """Record a Studio policy audit event."""
 
+    def status(self) -> AuditSinkStatus:
+        """Return operator-safe audit sink status."""
+
 
 class InMemoryAuditSink:
     """Append-only in-memory audit sink for local Studio policy tests."""
@@ -116,12 +145,23 @@ class InMemoryAuditSink:
 
         self._events.append(event)
 
+    def status(self) -> AuditSinkStatus:
+        """Return status for the non-persistent in-memory audit sink."""
+
+        return AuditSinkStatus(
+            configured=False,
+            healthy=True,
+            path_configured=False,
+            sink_type="memory",
+        )
+
 
 class JsonlAuditSink:
     """Append-only JSONL audit sink for Studio policy decisions."""
 
     def __init__(self, path: Path) -> None:
         self._path = path
+        self._last_error: str | None = None
 
     @property
     def path(self) -> Path:
@@ -132,15 +172,31 @@ class JsonlAuditSink:
     def record(self, event: AuditEvent) -> None:
         """Append a Studio policy audit event as one JSON object."""
 
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        event_row = self._build_row(event)
-        row = json.dumps(
-            event_row,
-            separators=(",", ":"),
-            sort_keys=True,
+        try:
+            self._path.parent.mkdir(parents=True, exist_ok=True)
+            event_row = self._build_row(event)
+            row = json.dumps(
+                event_row,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
+            with self._path.open("a", encoding="utf-8") as audit_file:
+                audit_file.write(f"{row}\n")
+        except OSError as exc:
+            self._last_error = type(exc).__name__
+            raise AuditSinkError("Studio audit append failed.") from exc
+        self._last_error = None
+
+    def status(self) -> AuditSinkStatus:
+        """Return status for the persistent JSONL audit sink."""
+
+        return AuditSinkStatus(
+            configured=True,
+            healthy=self._last_error is None,
+            last_error=self._last_error,
+            path_configured=True,
+            sink_type="jsonl",
         )
-        with self._path.open("a", encoding="utf-8") as audit_file:
-            audit_file.write(f"{row}\n")
 
     def _build_row(self, event: AuditEvent) -> dict[str, str | None]:
         row = event.to_json_dict()
@@ -315,6 +371,12 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
                 "/api/studio/capabilities/{capability_id}",
                 RouteVisibility.PUBLIC,
                 "studio.capabilities.read",
+            ),
+            (
+                "GET",
+                "/api/studio/audit/status",
+                RouteVisibility.PUBLIC,
+                "studio.audit.status.read",
             ),
             ("GET", "/api/templates", RouteVisibility.PUBLIC, "studio.templates.read"),
             ("GET", "/api/templates/{name}", RouteVisibility.PUBLIC, "studio.templates.read"),
