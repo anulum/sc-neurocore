@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -27,7 +28,7 @@ class CDCReport:
     safe : bool
     """
 
-    crossings: list[dict]
+    crossings: list[dict[str, Any]]
     violations: list[str]
     total_crossings: int
     safe: bool
@@ -42,7 +43,7 @@ def analyze_cdc(
     if clock_domains is None:
         clock_domains = {k: "clk_main" for k in equations}
 
-    crossings: list[dict] = []
+    crossings: list[dict[str, Any]] = []
     violations: list[str] = []
     for sv, expr in equations.items():
         src = clock_domains.get(sv, "clk_main")

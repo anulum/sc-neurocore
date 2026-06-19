@@ -71,8 +71,8 @@ def recommend_target(
         Ranked recommendations.
     """
     from ..platforms import (
-        list_profile_names,
         get_profile,
+        list_profile_names,
     )
 
     # Count operations for complexity

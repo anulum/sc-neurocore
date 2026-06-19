@@ -42,8 +42,8 @@ def score_portability(
 ) -> PortabilityScore:
     """Score how portable a model is across all profiles."""
     from ..platforms import (
-        list_profile_names,
         get_profile,
+        list_profile_names,
     )
 
     total_ops = sum(e.count("*") + e.count("/") for e in equations.values())

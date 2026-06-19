@@ -236,7 +236,7 @@ class HardwareProfile:
 # ═══════════════════════════════════════════════════════════════════════
 
 _PROFILES: dict[str, HardwareProfile] = {}
-_DISCOVERY_HOOKS: list = []
+_DISCOVERY_HOOKS: list[Callable[[], list[HardwareProfile]]] = []
 
 
 def _reg(p: HardwareProfile) -> HardwareProfile:

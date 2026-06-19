@@ -47,8 +47,10 @@ def generate_compilation_summary(
     from ..platforms import get_profile
     from ..static_analysis import (
         compute_guard_bits,
-        critical_path_depth as cpd,
         pipeline_stages_needed,
+    )
+    from ..static_analysis import (
+        critical_path_depth as cpd,
     )
 
     profile = get_profile(target)

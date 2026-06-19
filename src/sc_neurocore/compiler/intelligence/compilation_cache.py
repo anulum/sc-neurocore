@@ -14,6 +14,8 @@ running multi-target comparisons.
 
 from __future__ import annotations
 
+from typing import Any
+
 
 class CompilationCache:
     """Memoized compilation result cache.
@@ -23,7 +25,7 @@ class CompilationCache:
     """
 
     def __init__(self) -> None:
-        self._store: dict[str, dict] = {}
+        self._store: dict[str, dict[str, Any]] = {}
         self.hits: int = 0
         self.misses: int = 0
 
@@ -51,7 +53,7 @@ class CompilationCache:
         target: str,
         data_width: int = 16,
         fraction: int = 8,
-    ) -> dict | None:
+    ) -> dict[str, Any] | None:
         """Look up a cached compilation result.
 
         Parameters
@@ -84,7 +86,7 @@ class CompilationCache:
         target: str,
         data_width: int,
         fraction: int,
-        result: dict,
+        result: dict[str, Any],
     ) -> None:
         """Store a compilation result in cache.
 

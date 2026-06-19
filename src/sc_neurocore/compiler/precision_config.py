@@ -15,7 +15,7 @@ from typing import Any
 
 import numpy as np
 
-from .block_floating import BlockFloatingMode, BlockExponentLayout
+from .block_floating import BlockExponentLayout, BlockFloatingMode
 
 
 @dataclass(frozen=True)

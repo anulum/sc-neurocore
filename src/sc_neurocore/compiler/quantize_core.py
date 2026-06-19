@@ -11,14 +11,14 @@
 from __future__ import annotations
 
 from .quantizer import (
+    Q8_8,
+    Q16_16,
     BlockExponentLayout,
     BlockFloatingMode,
     CompiledBlockFloatingDense,
     CompiledMixedDense,
     PrecisionEnvelopeReport,
     PrecisionTrapReport,
-    Q8_8,
-    Q16_16,
     QFormat,
     QFormatMixed,
     RoundingMode,

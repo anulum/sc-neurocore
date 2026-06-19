@@ -17,9 +17,9 @@ the MLIREmitter and compile it down to a bitstream using open-source FPGA tools:
 4. IcePack / Project Xray -> Bitstream
 """
 
+import logging
 import os
 import subprocess
-import logging
 
 from sc_neurocore.exceptions import SCCompilerError
 

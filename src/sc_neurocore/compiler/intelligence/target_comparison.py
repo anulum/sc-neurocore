@@ -61,6 +61,8 @@ def compare_targets(
     from ..platforms import get_profile
     from ..static_analysis import (
         critical_path_depth as cpd,
+    )
+    from ..static_analysis import (
         pipeline_stages_needed,
     )
 

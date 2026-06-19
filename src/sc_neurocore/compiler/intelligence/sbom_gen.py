@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -25,7 +26,7 @@ class SBOM:
     """
 
     format: str
-    components: list[dict]
+    components: list[dict[str, Any]]
     total_components: int
 
 

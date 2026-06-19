@@ -18,7 +18,6 @@ from ..platforms import (
     register_platform_hook,
 )
 from ..platforms.registry import _DISCOVERY_HOOKS
-
 from .auto_quantization import (
     QuantSweepResult,
     auto_quantisation_sweep,
@@ -57,8 +56,8 @@ from .exotic_physics import (
     CognitiveBounds,
     HolographicRouter,
     MEAMapping,
-    MZIWeightEncoding,
     Morphology,
+    MZIWeightEncoding,
     OmniDispatchMap,
     ReversibleNetlist,
     dispatch_omni_paradigm,
@@ -81,11 +80,11 @@ from .learning_export import (
 )
 from .mxfp_encoding import (
     FP8_E4M3,
-    MXFPConfig,
     MXFP4,
     MXFP6,
     MXFP8_E4M3,
     MXFP8_E5M2,
+    MXFPConfig,
     mxfp_decode_block,
     mxfp_encode_block,
 )
@@ -139,11 +138,11 @@ from .reporting import (
     score_portability,
 )
 from .security_and_compliance import (
+    SBOM,
     CarbonEstimate,
     LicenseCheck,
     ObfuscationResult,
     PQCProtection,
-    SBOM,
     SideChannelFinding,
     SupplyChainRisk,
     TrojanLintResult,

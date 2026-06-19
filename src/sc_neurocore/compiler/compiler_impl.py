@@ -17,8 +17,8 @@ from ..neurons.equation_builder import EquationNeuron
 from .equation_compiler import Q88, compile_to_verilog
 from .validation import (
     _coerce_precision,
-    _validate_lp_hp,
     _validate_hysteresis,
+    _validate_lp_hp,
 )
 
 

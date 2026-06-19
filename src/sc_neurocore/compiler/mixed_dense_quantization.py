@@ -16,17 +16,17 @@ from typing import Any
 
 import numpy as np
 
-from .q_format import QFormatMixed
-from .quantization_reports import (
-    PrecisionTrapReport,
-    PrecisionEnvelopeReport,
-    _fixed_integer_bounds,
-)
 from .fixed_point_quantization import (
     _finite_float_array,
     _quantize_fixed_array,
     _round_scaled,
     quantize_weights,
+)
+from .q_format import QFormatMixed
+from .quantization_reports import (
+    PrecisionEnvelopeReport,
+    PrecisionTrapReport,
+    _fixed_integer_bounds,
 )
 
 
@@ -97,7 +97,10 @@ class CompiledMixedDense:
         ).astype(np.int64)
 
     def _raw_accumulator_products(self, input_codes: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-        return self.quantized_weights.astype(np.int64) @ input_codes.astype(np.int64)
+        products: np.ndarray[Any, Any] = self.quantized_weights.astype(
+            np.int64
+        ) @ input_codes.astype(np.int64)
+        return products
 
     def _forward_anomaly_masks(
         self, inputs: np.ndarray[Any, Any]

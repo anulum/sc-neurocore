@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -37,7 +38,7 @@ class ProvenanceRecord:
     input_hash: str
     output_hash: str
     timestamp: str
-    parameters: dict
+    parameters: dict[str, Any]
 
 
 def generate_provenance_chain(

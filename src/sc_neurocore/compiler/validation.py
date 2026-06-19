@@ -13,8 +13,8 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from .manifest_gen import _precision_label, _precision_manifest
 from .quantizer import BlockFloatingMode, QFormat, parse_precision_format
-from .manifest_gen import _precision_manifest, _precision_label
 
 
 def _coerce_precision(

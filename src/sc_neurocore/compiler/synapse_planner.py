@@ -15,6 +15,7 @@ from typing import Any
 import numpy as np
 
 from sc_neurocore.utils.bitstreams import adaptive_length
+
 from .synapse_precision import SynapsePrecision
 
 
@@ -26,7 +27,7 @@ def _select_bit_width(sensitivity: float, target: float, min_bits: int, max_bits
 
 
 def _quantization_error_bound(sensitivity: float, bits: int) -> float:
-    levels = max(1, 2**bits - 1)
+    levels: int = max(1, 2**bits - 1)
     return float(sensitivity) * 0.5 / levels
 
 

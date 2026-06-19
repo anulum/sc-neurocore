@@ -15,6 +15,7 @@ from typing import Any
 import numpy as np
 
 from sc_neurocore.utils.bitstreams import adaptive_length
+
 from .layer_precision import LayerPrecision
 from .sensitivity_analysis import analyze_sensitivity
 

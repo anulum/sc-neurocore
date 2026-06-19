@@ -14,7 +14,7 @@ from typing import Any
 
 import numpy as np
 
-from .synapse_planner import assign_synapse_precisions, _precision_cost_summary
+from .synapse_planner import _precision_cost_summary, assign_synapse_precisions
 
 
 def precision_plan_manifest(assignments: list[Any]) -> dict[str, Any]:

@@ -11,10 +11,10 @@
 from __future__ import annotations
 
 import struct
-from dataclasses import dataclass
 import zlib
+from dataclasses import dataclass
 
-from .live_control_types import MMIOWritePurpose, MMIOReadPurpose
+from .live_control_types import MMIOReadPurpose, MMIOWritePurpose
 
 
 @dataclass(frozen=True)

@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -24,7 +25,7 @@ class ApproximationConfig:
     max_output_error_pct : float
     """
 
-    populations: dict[str, dict]
+    populations: dict[str, dict[str, Any]]
     total_energy_savings_pct: float
     max_output_error_pct: float
 

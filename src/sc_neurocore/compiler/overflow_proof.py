@@ -80,8 +80,8 @@ class _IntervalEvaluator(ast.NodeVisitor):
 
     def visit_BinOp(self, node: ast.BinOp) -> Interval:
         """Evaluate a binary operation on intervals."""
-        left = self.visit(node.left)
-        right = self.visit(node.right)
+        left: Interval = self.visit(node.left)
+        right: Interval = self.visit(node.right)
         if isinstance(node.op, ast.Add):
             return left + right
         elif isinstance(node.op, ast.Sub):
@@ -94,7 +94,7 @@ class _IntervalEvaluator(ast.NodeVisitor):
 
     def visit_UnaryOp(self, node: ast.UnaryOp) -> Interval:
         """Evaluate a unary operation on an interval."""
-        operand = self.visit(node.operand)
+        operand: Interval = self.visit(node.operand)
         if isinstance(node.op, ast.USub):
             return -operand
         if isinstance(node.op, ast.UAdd):

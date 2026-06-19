@@ -39,13 +39,18 @@ def _finite_float_array(values: np.ndarray[Any, Any], *, label: str) -> np.ndarr
 
 def _round_scaled(scaled: np.ndarray[Any, Any], rounding: str) -> np.ndarray[Any, Any]:
     if rounding == "nearest":
-        return np.rint(scaled).astype(np.int64)
+        rounded: np.ndarray[Any, Any] = np.rint(scaled).astype(np.int64)
+        return rounded
     if rounding == "stochastic":
         floor = np.floor(scaled)
         probability = scaled - floor
-        return (floor + (np.random.random(scaled.shape) < probability)).astype(np.int64)
+        stochastic: np.ndarray[Any, Any] = (
+            floor + (np.random.random(scaled.shape) < probability)
+        ).astype(np.int64)
+        return stochastic
     if rounding == "floor":
-        return np.floor(scaled).astype(np.int64)
+        floored: np.ndarray[Any, Any] = np.floor(scaled).astype(np.int64)
+        return floored
     raise ValueError(
         f"Unknown rounding mode: {rounding!r}. Use 'nearest', 'stochastic', or 'floor'."
     )

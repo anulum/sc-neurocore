@@ -9,6 +9,7 @@
 """Register neuromorphic and event-driven hardware profiles."""
 
 from __future__ import annotations
+
 from .registry import HardwareProfile, _reg
 
 # ── Neuromorphic Chips ───────────────────────────────────────────────

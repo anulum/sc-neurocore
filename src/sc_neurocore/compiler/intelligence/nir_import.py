@@ -15,6 +15,7 @@ ODE equations for the SC-NeuroCore compiler.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -33,14 +34,14 @@ class NIRGraph:
         Source framework.
     """
 
-    nodes: dict[str, dict]
+    nodes: dict[str, dict[str, Any]]
     edges: list[tuple[str, str]]
     equations: dict[str, str]
     framework: str
 
 
 def import_nir_graph(
-    nir_data: dict,
+    nir_data: dict[str, Any],
     *,
     framework: str = "snnTorch",
 ) -> NIRGraph:

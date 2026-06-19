@@ -20,7 +20,7 @@ import shutil
 from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List, Any
+from typing import Any, List
 
 from ..hdl_gen._ident import sanitize_ident
 

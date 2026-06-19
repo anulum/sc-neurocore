@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -25,7 +26,7 @@ class ParetoPoint:
     latency_ns : float
     """
 
-    config: dict
+    config: dict[str, Any]
     power_mw: float
     area_luts: int
     latency_ns: float

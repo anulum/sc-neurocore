@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .precision_config import PrecisionConfig, BlockFloatingPrecisionConfig
+from .precision_config import BlockFloatingPrecisionConfig, PrecisionConfig
 
 
 @dataclass

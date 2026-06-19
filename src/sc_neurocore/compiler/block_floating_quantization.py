@@ -11,22 +11,22 @@
 from __future__ import annotations
 
 import math
-from dataclasses import field, dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
 
-from .q_format import QFormat, Q16_16
-from .block_floating import BlockFloatingMode, BlockExponentLayout
-from .quantization_reports import (
-    PrecisionTrapReport,
-    PrecisionEnvelopeReport,
-    _fixed_integer_bounds,
-)
+from .block_floating import BlockExponentLayout, BlockFloatingMode
 from .fixed_point_quantization import (
+    _coerce_q_format,
     _finite_float_array,
     _quantize_fixed_array,
-    _coerce_q_format,
+)
+from .q_format import Q16_16, QFormat
+from .quantization_reports import (
+    PrecisionEnvelopeReport,
+    PrecisionTrapReport,
+    _fixed_integer_bounds,
 )
 
 
@@ -129,7 +129,10 @@ class CompiledBlockFloatingDense:
 
     def forward_float(self, inputs: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Return dense outputs from BFP weights and quantised fixed-point inputs."""
-        return np.asarray(self._weight_values, dtype=np.float64) @ self._input_values(inputs)
+        outputs: np.ndarray[Any, Any] = np.asarray(
+            self._weight_values, dtype=np.float64
+        ) @ self._input_values(inputs)
+        return outputs
 
     def _forward_anomaly_masks(
         self, inputs: np.ndarray[Any, Any]

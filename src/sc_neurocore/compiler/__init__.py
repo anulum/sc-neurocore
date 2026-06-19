@@ -8,33 +8,6 @@
 
 """Public compiler package exports for equation, IR, MLIR, and precision tooling."""
 
-from .equation_compiler import compile_to_verilog, equation_to_fpga, Q88
-from .pipeline import CompilerPipeline
-from .mlir_emitter import MLIRBundle, MLIREmitter, generate_mlir_bundle
-from .quantizer import (
-    CompiledBlockFloatingDense,
-    CompiledMixedDense,
-    PrecisionEnvelopeReport,
-    PrecisionTrapReport,
-    QFormat,
-    QFormatMixed,
-    Q8_8,
-    Q16_16,
-    compile_dense_block_floating,
-    compile_dense_mixed_precision,
-    dequantize,
-    quantize_weights,
-    dequantize_weights,
-    q_weights_to_sc_probabilities,
-    quantization_error,
-)
-from .ir_type_checker import (
-    check_ir_types,
-    IRNode,
-    IREdge,
-    IRTypeError,
-    SignalType,
-)
 from .adaptive_precision import (
     LayerPrecision,
     SynapsePrecision,
@@ -45,10 +18,37 @@ from .adaptive_precision import (
     precision_plan_manifest,
     write_precision_formal_evidence_bundle,
 )
+from .equation_compiler import Q88, compile_to_verilog, equation_to_fpga
+from .ir_type_checker import (
+    IREdge,
+    IRNode,
+    IRTypeError,
+    SignalType,
+    check_ir_types,
+)
 from .live_control import (
     MMIOUpdateSpec,
     ParameterBankSpec,
     TrapSpec,
+)
+from .mlir_emitter import MLIRBundle, MLIREmitter, generate_mlir_bundle
+from .pipeline import CompilerPipeline
+from .quantizer import (
+    Q8_8,
+    Q16_16,
+    CompiledBlockFloatingDense,
+    CompiledMixedDense,
+    PrecisionEnvelopeReport,
+    PrecisionTrapReport,
+    QFormat,
+    QFormatMixed,
+    compile_dense_block_floating,
+    compile_dense_mixed_precision,
+    dequantize,
+    dequantize_weights,
+    q_weights_to_sc_probabilities,
+    quantization_error,
+    quantize_weights,
 )
 
 __all__ = [

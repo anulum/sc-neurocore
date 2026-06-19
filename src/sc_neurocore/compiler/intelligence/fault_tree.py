@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -30,8 +31,8 @@ class FaultTree:
     """
 
     top_event: str
-    gates: list[dict]
-    basic_events: list[dict]
+    gates: list[dict[str, Any]]
+    basic_events: list[dict[str, Any]]
     mcs: list[list[str]]
 
 

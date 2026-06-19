@@ -13,35 +13,35 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, cast
 
-from .q_format import QFormat
+from .live_control_ops import MMIORead, MMIOWrite, _crc32_update_guard
 from .live_control_types import (
+    _VALID_PROTOCOLS,
+    CONTROL_CLEAR_TRAP,
+    CONTROL_COMMIT,
+    CONTROL_REGISTER_OFFSETS,
+    CONTROL_REGISTER_SPAN_BYTES,
+    CONTROL_ROLLBACK,
+    CONTROL_UPDATE_VALID,
+    STATUS_APPLIED,
+    STATUS_BUSY,
+    STATUS_CHECKSUM_VALID,
+    STATUS_READY,
+    STATUS_ROLLBACK_ACK,
+    STATUS_SHADOW_LOADED,
+    STATUS_TRAP_LATCHED,
+    STATUS_UPDATE_ACK,
+    TRAP_CHECKSUM_MISMATCH,
+    TRAP_INVALID_SELECTION,
+    TRAP_PARTIAL_WRITE,
+    TRAP_READ_ONLY_BANK,
+    TRAP_STAGED_OVERFLOW,
+    TRAP_STAGED_UNDERFLOW,
+    UPDATE_CHECKSUM_ALGORITHM,
     BusProtocol,
     PrecisionMode,
     TrapAction,
-    _VALID_PROTOCOLS,
-    CONTROL_REGISTER_OFFSETS,
-    CONTROL_REGISTER_SPAN_BYTES,
-    CONTROL_UPDATE_VALID,
-    CONTROL_COMMIT,
-    CONTROL_CLEAR_TRAP,
-    CONTROL_ROLLBACK,
-    STATUS_READY,
-    STATUS_BUSY,
-    STATUS_UPDATE_ACK,
-    STATUS_TRAP_LATCHED,
-    STATUS_SHADOW_LOADED,
-    STATUS_APPLIED,
-    STATUS_ROLLBACK_ACK,
-    STATUS_CHECKSUM_VALID,
-    TRAP_STAGED_OVERFLOW,
-    TRAP_STAGED_UNDERFLOW,
-    TRAP_CHECKSUM_MISMATCH,
-    TRAP_INVALID_SELECTION,
-    TRAP_READ_ONLY_BANK,
-    TRAP_PARTIAL_WRITE,
-    UPDATE_CHECKSUM_ALGORITHM,
 )
-from .live_control_ops import MMIOWrite, MMIORead, _crc32_update_guard
+from .q_format import QFormat
 
 
 def _normalise_bus_protocol(protocol: str) -> BusProtocol:

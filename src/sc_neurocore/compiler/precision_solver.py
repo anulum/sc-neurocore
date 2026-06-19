@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import math
 
-from .precision_config import BlockFloatingPrecisionConfig, PrecisionConfig
 from .mixed_precision_spec import MixedPrecisionSpec
+from .precision_config import BlockFloatingPrecisionConfig, PrecisionConfig
 
 
 def _min_bits_for_range(lo: float, hi: float, signed: bool = True) -> int:

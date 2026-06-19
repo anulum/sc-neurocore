@@ -10,15 +10,15 @@
 
 from __future__ import annotations
 
+from .block_floating import BlockFloatingMode
+from .mixed_precision_spec import MixedPrecisionSpec
 from .precision_config import (
-    PrecisionConfig,
     BlockFloatingPrecisionConfig,
+    PrecisionConfig,
     PrecisionSpecLike,
 )
-from .block_floating import BlockFloatingMode
 from .q_format import QFormat
 from .quantizer import parse_precision_format
-from .mixed_precision_spec import MixedPrecisionSpec
 
 PRECISION_PRESETS: dict[str, PrecisionConfig | BlockFloatingPrecisionConfig] = {
     "q17": PrecisionConfig(8, 7),

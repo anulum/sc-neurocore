@@ -10,11 +10,13 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 
 def generate_dvfs_controller(
     module_name: str,
     *,
-    operating_points: list[dict] | None = None,
+    operating_points: list[dict[str, Any]] | None = None,
     spike_rate_thresholds: list[float] | None = None,
 ) -> str:
     """Generate a Verilog DVFS controller FSM."""

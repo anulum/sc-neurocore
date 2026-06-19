@@ -10,8 +10,8 @@
 
 from __future__ import annotations
 
-from .carbon_footprint import estimate_carbon_footprint
 from .aging_reliability import predict_reliability
+from .carbon_footprint import estimate_carbon_footprint
 
 
 def generate_compilation_report(

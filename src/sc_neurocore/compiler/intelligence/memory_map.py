@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -30,7 +31,7 @@ class MemoryMap:
     """
 
     base_address: int
-    entries: list[dict]
+    entries: list[dict[str, Any]]
     total_bytes: int
     decoder_verilog: str
 

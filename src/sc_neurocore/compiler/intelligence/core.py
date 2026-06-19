@@ -45,11 +45,11 @@ from .learning_export import (
 )
 from .mxfp_encoding import (
     FP8_E4M3,
-    MXFPConfig,
     MXFP4,
     MXFP6,
     MXFP8_E4M3,
     MXFP8_E5M2,
+    MXFPConfig,
     mxfp_decode_block,
     mxfp_encode_block,
 )
