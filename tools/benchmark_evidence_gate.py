@@ -176,17 +176,32 @@ def _check_parity_groups(
     for index, group in enumerate(parity_groups):
         paths = group.get("paths")
         if not isinstance(paths, list) or len(paths) < 2:
-            _fail(failures, gate_id, "parity_group_requires_at_least_two_paths", f"parity_groups.{index}.paths")
+            _fail(
+                failures,
+                gate_id,
+                "parity_group_requires_at_least_two_paths",
+                f"parity_groups.{index}.paths",
+            )
             continue
         tolerance = group.get("tolerance", 0.0)
         if not _is_finite_number(tolerance) or tolerance < 0.0:
-            _fail(failures, gate_id, "parity_group_tolerance_is_not_finite_non_negative", f"parity_groups.{index}.tolerance")
+            _fail(
+                failures,
+                gate_id,
+                "parity_group_tolerance_is_not_finite_non_negative",
+                f"parity_groups.{index}.tolerance",
+            )
             continue
 
         values: list[float] = []
         for metric_path in paths:
             if not isinstance(metric_path, str):
-                _fail(failures, gate_id, "parity_metric_path_is_not_string", f"parity_groups.{index}.paths")
+                _fail(
+                    failures,
+                    gate_id,
+                    "parity_metric_path_is_not_string",
+                    f"parity_groups.{index}.paths",
+                )
                 continue
             try:
                 value = _path_value(payload, metric_path)
@@ -235,7 +250,13 @@ def _check_gate_manifest_entry(
     seen_artefacts.add(artefact_path)
     if not gate.get("required_numbers") and not gate.get("expected_values"):
         _fail(failures, gate_id, "gate_has_no_required_metrics_or_contracts", artefact_path)
-    for field in ("required_numbers", "expected_values", "source_hashes", "regression_limits", "parity_groups"):
+    for field in (
+        "required_numbers",
+        "expected_values",
+        "source_hashes",
+        "regression_limits",
+        "parity_groups",
+    ):
         if field not in gate:
             continue
         value = gate[field]

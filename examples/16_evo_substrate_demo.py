@@ -9,6 +9,7 @@ from sc_neurocore.evo_substrate.evo_substrate import (
     MutationConfig,
 )
 
+
 def mock_fpga_runner(genome: Genome) -> dict:
     """Simulates hardware execution of an SC organism."""
     # Compute accuracy as a function of optimal neuron / topology mapping.
@@ -25,6 +26,7 @@ def mock_fpga_runner(genome: Genome) -> dict:
         "latency_ms": genome.topology.num_layers * 0.5,
     }
 
+
 def run_evolution():
     print("==================================================================")
     print(" SC-NEUROCORE EVOLUTIONARY SUBSTRATE : EXPERIMENTAL DEMO")
@@ -34,7 +36,9 @@ def run_evolution():
     mutator = MutationEngine(config=mut_config, rng_seed=42)
 
     # Enable industrial features (FormalSafetyGuard, Extinction, Tournament)
-    engine = ReplicationEngine(mutation_engine=mutator, max_population=20, elitism=2, industrial_mode=True)
+    engine = ReplicationEngine(
+        mutation_engine=mutator, max_population=20, elitism=2, industrial_mode=True
+    )
 
     # 1. Seed Population
     print("[1] Seeding ancient primordial ArcaneZenith organisms...")
@@ -49,13 +53,15 @@ def run_evolution():
 
     for gen in range(generations):
         stats = engine.evolve_generation(mock_fpga_runner)
-        best = stats['best_fitness']
-        mean = stats['mean_fitness']
-        div = stats['diversity']
-        ext = stats.get('extinctions', 0)
+        best = stats["best_fitness"]
+        mean = stats["mean_fitness"]
+        div = stats["diversity"]
+        ext = stats.get("extinctions", 0)
 
         warn = " [MASS EXTINCTION TRIGGERED]" if ext > 0 else ""
-        print(f"   Gen {gen+1:02d} | Pop: {stats['population_size']:02d} | Best Fit: {best:.4f} | Mean Fit: {mean:.4f} | Diversity: {div:.2f}{warn}")
+        print(
+            f"   Gen {gen + 1:02d} | Pop: {stats['population_size']:02d} | Best Fit: {best:.4f} | Mean Fit: {mean:.4f} | Diversity: {div:.2f}{warn}"
+        )
         time.sleep(0.05)
 
     # 3. Harvest Champion
@@ -82,6 +88,7 @@ def run_evolution():
     print("   → Ready to bridge Photonic Netlists (`pc.emit_from_genome(champion)`)")
 
     print("\nEvolution complete.")
+
 
 if __name__ == "__main__":
     run_evolution()

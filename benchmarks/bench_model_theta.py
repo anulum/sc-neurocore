@@ -36,7 +36,8 @@ SOURCE_HASH_PATHS = {
     "src/sc_neurocore/neurons/models/theta.py": REPO_ROOT
     / "src/sc_neurocore/neurons/models/theta.py",
     "engine/src/neurons/trivial.rs": REPO_ROOT / "engine/src/neurons/trivial.rs",
-    "src/sc_neurocore/accel/go/services/theta.go": REPO_ROOT / "src/sc_neurocore/accel/go/services/theta.go",
+    "src/sc_neurocore/accel/go/services/theta.go": REPO_ROOT
+    / "src/sc_neurocore/accel/go/services/theta.go",
     "src/sc_neurocore/accel/go/services/theta_test.go": REPO_ROOT
     / "src/sc_neurocore/accel/go/services/theta_test.go",
     "src/sc_neurocore/accel/julia/neurons/theta.jl": REPO_ROOT
@@ -80,9 +81,7 @@ def _sha256(path: Path) -> str:
 
 
 def _source_hashes() -> dict[str, object]:
-    flat: dict[str, object] = {
-        source: _sha256(path) for source, path in SOURCE_HASH_PATHS.items()
-    }
+    flat: dict[str, object] = {source: _sha256(path) for source, path in SOURCE_HASH_PATHS.items()}
     for source, path in SOURCE_HASH_PATHS.items():
         stem, extension = source.rsplit(".", 1)
         existing = flat.get(stem)

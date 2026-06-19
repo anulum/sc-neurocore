@@ -92,7 +92,7 @@ def generate_neurocore_header():
     out_path = "docs/assets/sc_neurocore_header.png"
     plt.savefig(out_path, bbox_inches="tight", pad_inches=0)
     plt.close(fig)
-    print(f"Generated {out_path} ({WIDTH*DPI:.0f}x{HEIGHT*DPI:.0f})")
+    print(f"Generated {out_path} ({WIDTH * DPI:.0f}x{HEIGHT * DPI:.0f})")
 
 
 if __name__ == "__main__":

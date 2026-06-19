@@ -9,7 +9,6 @@ from meta.black_hole import EventHorizonLayer
 
 
 class TestMetaComputing(unittest.TestCase):
-
     def test_time_crystal(self):
         tc = TimeCrystalLayer(n_spins=4)
         bits = tc.get_bitstream(cycles=4)

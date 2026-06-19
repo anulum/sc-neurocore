@@ -89,9 +89,9 @@ class TestLifCosim:
             hdl_spike = hdl_row.get("spike", None)
             hdl_v = hdl_row.get("v_out", None)
             if hdl_spike is not None:
-                assert (
-                    rust_spike == hdl_spike
-                ), f"Spike mismatch at step {i}: Rust={rust_spike}, HDL={hdl_spike}"
+                assert rust_spike == hdl_spike, (
+                    f"Spike mismatch at step {i}: Rust={rust_spike}, HDL={hdl_spike}"
+                )
             if hdl_v is not None:
                 assert rust_v == hdl_v, f"Voltage mismatch at step {i}: Rust={rust_v}, HDL={hdl_v}"
 
@@ -114,6 +114,6 @@ class TestLifCosim:
             if spike == 1:
                 for j in range(1, 3):
                     if i + j < len(rust_results):
-                        assert (
-                            rust_results[i + j][0] == 0
-                        ), f"Spike during refractory at step {i + j}"
+                        assert rust_results[i + j][0] == 0, (
+                            f"Spike during refractory at step {i + j}"
+                        )

@@ -30,9 +30,7 @@ from sc_neurocore.studio.progress import (
 @pytest.fixture(scope="module")
 def client() -> TestClient:
     return TestClient(
-        create_app(
-            runtime_settings=StudioRuntimeSettings(allowed_hosts=("testserver",))
-        ),
+        create_app(runtime_settings=StudioRuntimeSettings(allowed_hosts=("testserver",))),
         headers={"origin": "http://127.0.0.1:8001"},
     )
 
@@ -216,14 +214,17 @@ class TestWebSocketEndpoint:
         app = create_app(
             runtime_settings=StudioRuntimeSettings(
                 allowed_hosts=("testserver",),
-                websocket_allowed_origins=("https://studio.example.test",)
+                websocket_allowed_origins=("https://studio.example.test",),
             )
         )
         client = TestClient(app)
 
-        with pytest.raises(WebSocketDisconnect) as exc_info, client.websocket_connect(
-            "/ws/progress",
-            headers={"origin": "https://attacker.example.test"},
+        with (
+            pytest.raises(WebSocketDisconnect) as exc_info,
+            client.websocket_connect(
+                "/ws/progress",
+                headers={"origin": "https://attacker.example.test"},
+            ),
         ):
             pass
 

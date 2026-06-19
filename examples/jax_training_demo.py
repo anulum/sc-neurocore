@@ -50,7 +50,7 @@ def main():
 
     # Forward pass demo
     all_spikes, v_final = jax_forward_pass(weights, x_train[:8], n_steps)
-    print(f"Forward pass: {len(all_spikes)} layers, " f"output shape {v_final.shape}")
+    print(f"Forward pass: {len(all_spikes)} layers, output shape {v_final.shape}")
 
     # Training loop
     for epoch in range(n_epochs):

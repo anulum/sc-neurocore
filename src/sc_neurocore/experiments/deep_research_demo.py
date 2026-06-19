@@ -41,13 +41,13 @@ def run_deep_research_demo() -> None:
     print("\n[3] Testing Dendritic Neuron (XOR Logic)...")
     dend = StochasticDendriticNeuron()
     # 0,0 -> 0
-    print(f"    0,0 -> {dend.step(0,0)}")
+    print(f"    0,0 -> {dend.step(0, 0)}")
     # 1,0 -> 1
-    print(f"    1,0 -> {dend.step(1,0)}")
+    print(f"    1,0 -> {dend.step(1, 0)}")
     # 0,1 -> 1
-    print(f"    0,1 -> {dend.step(0,1)}")
+    print(f"    0,1 -> {dend.step(0, 1)}")
     # 1,1 -> 0
-    print(f"    1,1 -> {dend.step(1,1)}")
+    print(f"    1,1 -> {dend.step(1, 1)}")
 
     # 4. Stochastic Heat Solver
     print("\n[4] Testing Heat Equation Solver...")

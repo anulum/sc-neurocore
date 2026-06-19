@@ -45,7 +45,7 @@ def run_system_demo() -> None:
 
     energy = profiler.estimate_energy()
     co2 = profiler.co2_emission_g()
-    print(f"    Est. Energy: {energy*1e12:.4f} pJ")
+    print(f"    Est. Energy: {energy * 1e12:.4f} pJ")
     print(f"    Est. CO2: {co2:.9f} g")
 
     # 3. ONNX Export

@@ -10,7 +10,6 @@
 from __future__ import annotations
 
 
-
 def _q88_encode(val: float) -> int:
     raw = int(round(val * 256))
     return raw & 0xFFFF

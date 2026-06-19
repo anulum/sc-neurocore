@@ -45,7 +45,7 @@ class VectorizedSCLayer:
         in_probs = np.asarray(input_values, dtype=np.float64)
         if in_probs.ndim != 1 or in_probs.shape[0] != self.n_inputs:
             raise ValueError(
-                f"Expected 1-D input of length {self.n_inputs}, " f"got shape {in_probs.shape}"
+                f"Expected 1-D input of length {self.n_inputs}, got shape {in_probs.shape}"
             )
         result = self._engine.forward(in_probs.tolist())
         return np.array(result, dtype=np.float64)
@@ -54,7 +54,7 @@ class VectorizedSCLayer:
         in_probs = np.asarray(input_values, dtype=np.float64)
         if in_probs.ndim != 1 or in_probs.shape[0] != self.n_inputs:
             raise ValueError(
-                f"Expected 1-D input of length {self.n_inputs}, " f"got shape {in_probs.shape}"
+                f"Expected 1-D input of length {self.n_inputs}, got shape {in_probs.shape}"
             )
         result = self._engine.forward_fast(in_probs.tolist(), seed)
         return np.array(result, dtype=np.float64)

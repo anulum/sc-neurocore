@@ -115,7 +115,14 @@ def _run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
 
 
 def _run_rust_backend() -> dict[str, object]:
-    command = ["cargo", "run", "--manifest-path", "engine/Cargo.toml", "--example", "bench_expif_rk4"]
+    command = [
+        "cargo",
+        "run",
+        "--manifest-path",
+        "engine/Cargo.toml",
+        "--example",
+        "bench_expif_rk4",
+    ]
     try:
         completed = _run_command(command)
     except (FileNotFoundError, subprocess.CalledProcessError) as exc:

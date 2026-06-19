@@ -75,7 +75,7 @@ def main() -> None:
 
     results = []
     for n in [30, 50, 100, 200]:
-        predicted = 0.149 * n ** 1.02
+        predicted = 0.149 * n**1.02
         measured = find_lambda_c(n)
         ratio = measured / predicted if predicted > 0 else float("inf")
         results.append((n, measured, predicted, ratio))

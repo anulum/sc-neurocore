@@ -32,8 +32,10 @@ from sc_neurocore.bioware.bioware import (
 )
 from sc_neurocore.arcane_zenith import ArcaneZenithCognitiveCore
 
+
 class SyntheticMEA:
     """Realistic synthetic MEA generator for demos and tests."""
+
     def __init__(self, config: MEAConfig, active_fraction: float = 0.25):
         self.cfg = config
         self.active = int(config.num_channels * active_fraction)
@@ -51,9 +53,12 @@ class SyntheticMEA:
                 num_spikes = np.random.randint(2, 6)
                 idx = np.random.randint(0, n_samples - 30, num_spikes)
                 for i in idx:
-                    voltage[i:i+12, ch] += np.array([25, 60, 110, 55, -35, -75, -25, 5, 12, 8, 3, 0])
+                    voltage[i : i + 12, ch] += np.array(
+                        [25, 60, 110, 55, -35, -75, -25, 5, 12, 8, 3, 0]
+                    )
         self.t_s += duration_s
         return voltage
+
 
 def run_bio_hybrid_demo() -> None:
     print("=== SC-NeuroCore: Bioware × ArcaneZenith Closed-Loop Demo (SOTA) ===\n")
@@ -105,20 +110,24 @@ def run_bio_hybrid_demo() -> None:
         bursts.extend(detect_network_bursts(result.spikes))
 
         if frame_id % 20 == 0:
-            print(f"  Frame {frame_id:03d} | Spikes: {result.num_spikes:3d} | "
-                  f"Opto: {result.num_opto_pulses} | Health: {result.health['health_score']:.3f} | "
-                  f"Drift: {session.zenith_core.neuron.identity_drift:.4f} | Latency: {result.latency_us:.1f} μs")
+            print(
+                f"  Frame {frame_id:03d} | Spikes: {result.num_spikes:3d} | "
+                f"Opto: {result.num_opto_pulses} | Health: {result.health['health_score']:.3f} | "
+                f"Drift: {session.zenith_core.neuron.identity_drift:.4f} | Latency: {result.latency_us:.1f} μs"
+            )
 
-        audit_log.log(BioAuditEntry(
-            round_number=result.round,
-            timestamp_iso="2026-04-20T00:00:00Z",
-            num_spikes=result.num_spikes,
-            num_opto_pulses=result.num_opto_pulses,
-            latency_us=result.latency_us,
-            health_score=result.health["health_score"],
-        ))
+        audit_log.log(
+            BioAuditEntry(
+                round_number=result.round,
+                timestamp_iso="2026-04-20T00:00:00Z",
+                num_spikes=result.num_spikes,
+                num_opto_pulses=result.num_opto_pulses,
+                latency_us=result.latency_us,
+                health_score=result.health["health_score"],
+            )
+        )
 
-    print(f"\n[3] Experiment complete in {time.time()-t_start:.2f}s.")
+    print(f"\n[3] Experiment complete in {time.time() - t_start:.2f}s.")
     print(f"    Final checksum: {audit_log.checksum()}")
     print(f"    Total network bursts detected: {len(bursts)}")
     print(f"    Final ArcaneZenith identity drift: {session.zenith_core.neuron.identity_drift:.4f}")
@@ -140,6 +149,7 @@ def run_bio_hybrid_demo() -> None:
 
     plt.tight_layout()
     plt.show()
+
 
 if __name__ == "__main__":
     run_bio_hybrid_demo()
