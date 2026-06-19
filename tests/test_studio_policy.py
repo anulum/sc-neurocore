@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -152,6 +153,7 @@ def test_jsonl_audit_sink_appends_policy_events(tmp_path: Path) -> None:
             "reason": "authorized",
             "request_id": None,
             "route": "/api/simulate",
+            "timestamp_utc": None,
         },
         {
             "action": "studio.synth.run",
@@ -160,6 +162,7 @@ def test_jsonl_audit_sink_appends_policy_events(tmp_path: Path) -> None:
             "reason": "missing_principal",
             "request_id": None,
             "route": "/api/synth/run",
+            "timestamp_utc": None,
         },
     ]
 
@@ -208,6 +211,43 @@ def test_policy_gateway_records_request_id_in_audit_event(tmp_path: Path) -> Non
 
     assert decision.allowed is False
     assert row["request_id"] == "studio-run-42"
+
+
+def test_policy_gateway_records_injected_utc_timestamp(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    timestamp = datetime(2026, 6, 19, 3, 52, 0, tzinfo=UTC)
+    gateway = contract["PolicyGateway"](
+        audit_sink=contract["JsonlAuditSink"](audit_path),
+        clock=lambda: timestamp,
+    )
+    policy = contract["RoutePolicy"](
+        visibility=contract["RouteVisibility"].AUTHENTICATED,
+        audit_action="studio.simulate.run",
+    )
+
+    decision = gateway.authorize(policy, principal=None, route="/api/simulate")
+    row = json.loads(audit_path.read_text(encoding="utf-8"))
+
+    assert decision.allowed is False
+    assert row["timestamp_utc"] == "2026-06-19T03:52:00Z"
+
+
+def test_policy_gateway_records_default_utc_timestamp(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    gateway = contract["PolicyGateway"](audit_sink=contract["JsonlAuditSink"](audit_path))
+    policy = contract["RoutePolicy"](
+        visibility=contract["RouteVisibility"].AUTHENTICATED,
+        audit_action="studio.simulate.run",
+    )
+
+    decision = gateway.authorize(policy, principal=None, route="/api/simulate")
+    row = json.loads(audit_path.read_text(encoding="utf-8"))
+
+    assert decision.allowed is False
+    assert row["timestamp_utc"].endswith("Z")
+    assert datetime.fromisoformat(row["timestamp_utc"].replace("Z", "+00:00")).tzinfo is UTC
 
 
 def test_policy_gateway_rejects_admin_route_without_admin_role() -> None:
