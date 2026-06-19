@@ -72,7 +72,7 @@ def bipolar_encode(value: float, L: int, rng: Any = None) -> UInt8Array:
     return result
 
 
-def bipolar_decode(bits: np.ndarray) -> float:
+def bipolar_decode(bits: np.ndarray[Any, Any]) -> float:
     """Decode a bitstream back to bipolar value in [-1, 1].
 
     value = 2 * mean(bits) - 1.
@@ -81,7 +81,7 @@ def bipolar_decode(bits: np.ndarray) -> float:
     return float(2.0 * bit_array.mean() - 1.0)
 
 
-def bipolar_multiply(a: np.ndarray, b: np.ndarray) -> UInt8Array:
+def bipolar_multiply(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> UInt8Array:
     """XNOR gate: bipolar multiplication.
 
     XNOR(a, b) = NOT(XOR(a, b)) = 1 when a == b, 0 when a != b.
@@ -96,8 +96,8 @@ def bipolar_multiply(a: np.ndarray, b: np.ndarray) -> UInt8Array:
 
 
 def bipolar_mac(
-    inputs: np.ndarray,
-    weights: np.ndarray,
+    inputs: np.ndarray[Any, Any],
+    weights: np.ndarray[Any, Any],
     L: int,
     seed: int = 42,
 ) -> FloatArray:
@@ -151,9 +151,9 @@ def bipolar_mac(
 
 
 def bipolar_sc_layer(
-    inputs: np.ndarray,
-    weights: np.ndarray,
-    bias: np.ndarray | None,
+    inputs: np.ndarray[Any, Any],
+    weights: np.ndarray[Any, Any],
+    bias: np.ndarray[Any, Any] | None,
     L: int,
     seed: int = 42,
     activation: str = "relu",
