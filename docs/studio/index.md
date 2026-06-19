@@ -66,6 +66,10 @@ runtime features:
   aggregate capability health in the header, lists each capability with status,
   evidence, missing requirements, and documentation links, and disables
   registered panels when backend or external-tool requirements are unavailable.
+- The default registry covers the stateful Studio panel families: simulation
+  workbench, analysis suite, compiler inspector, synthesis dashboard, training
+  monitor, network canvas, project workspace, and export tools. Missing
+  registry entries fail closed in the frontend shell.
 - `PolicyGateway` is the fail-closed route authorization contract used for
   protected Studio API surfaces. Public routes may run without a principal;
   authenticated and admin routes require an explicit policy and emit audit

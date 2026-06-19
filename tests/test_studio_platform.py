@@ -85,6 +85,33 @@ def test_studio_capabilities_endpoint_returns_safe_inventory() -> None:
     assert "token" not in response.text.lower()
 
 
+def test_default_studio_capability_registry_covers_stateful_panels() -> None:
+    client = TestClient(create_app(), base_url="http://127.0.0.1")
+
+    response = client.get("/api/studio/capabilities")
+
+    assert response.status_code == 200
+    payload = response.json()
+    capabilities = {row["capability_id"]: row for row in payload["capabilities"]}
+    expected_ids = {
+        "studio.simulation_workbench",
+        "studio.analysis_suite",
+        "studio.compiler_inspector",
+        "studio.synthesis_dashboard",
+        "studio.training_monitor",
+        "studio.network_canvas",
+        "studio.project_workspace",
+        "studio.export_tools",
+    }
+    assert expected_ids <= capabilities.keys()
+    for capability_id in expected_ids:
+        row = capabilities[capability_id]
+        assert row["requirements"], capability_id
+        assert row["evidence"], capability_id
+        assert row["ui_placement"], capability_id
+        assert row["docs_path"], capability_id
+
+
 def test_studio_capability_detail_returns_404_for_unknown_id() -> None:
     client = TestClient(create_app(), base_url="http://127.0.0.1")
 

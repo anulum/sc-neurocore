@@ -57,8 +57,26 @@ export interface PanelCapabilityState {
 }
 
 const PANEL_CAPABILITY_IDS: Partial<Record<PanelKey, string>> = {
+  trace: "studio.simulation_workbench",
+  phase: "studio.simulation_workbench",
+  isi: "studio.simulation_workbench",
+  "fi-curve": "studio.analysis_suite",
+  bifurcation: "studio.analysis_suite",
+  sensitivity: "studio.analysis_suite",
+  precision: "studio.analysis_suite",
+  heatmap: "studio.analysis_suite",
+  compare: "studio.analysis_suite",
+  freq: "studio.analysis_suite",
+  sta: "studio.analysis_suite",
+  characterize: "studio.analysis_suite",
+  multi: "studio.analysis_suite",
+  network: "studio.simulation_workbench",
+  verilog: "studio.compiler_inspector",
+  code: "studio.export_tools",
+  ir: "studio.compiler_inspector",
   canvas: "studio.network_canvas",
   synth: "studio.synthesis_dashboard",
+  train: "studio.training_monitor",
 };
 
 const PANEL_TITLES: Record<PanelKey, string> = {

@@ -87,14 +87,42 @@ describe("capability shell contract", () => {
     });
   });
 
-  it("keeps panels without a backend capability binding available but explicit", () => {
+  it("binds stateful workbench panels to their backend capability contracts", () => {
+    const analysis = capability({
+      capability_id: "studio.analysis_suite",
+      title: "Analysis Suite",
+      status: "unavailable",
+      healthy: false,
+      message: "Analysis service offline.",
+      requirements: [{ name: "analysis", available: false, detail: "endpoint disabled" }],
+    });
+    const compiler = capability({
+      capability_id: "studio.compiler_inspector",
+      title: "Compiler Inspector",
+      status: "experimental",
+      healthy: true,
+    });
+
+    expect(panelCapabilityState([analysis, compiler], "fi-curve")).toMatchObject({
+      capabilityId: "studio.analysis_suite",
+      available: false,
+      title: "Analysis Suite",
+    });
+    expect(panelCapabilityState([analysis, compiler], "ir")).toMatchObject({
+      capabilityId: "studio.compiler_inspector",
+      available: true,
+      title: "Compiler Inspector",
+    });
+  });
+
+  it("fails closed when a bound panel capability is missing from the registry", () => {
     expect(panelCapabilityState([], "trace")).toEqual({
       panelKey: "trace",
-      capabilityId: null,
+      capabilityId: "studio.simulation_workbench",
       title: "Trace",
-      available: true,
-      status: "unregistered",
-      message: "No backend capability contract is registered for this panel.",
+      available: false,
+      status: "unavailable",
+      message: "Backend capability contract is missing from the registry.",
       requirements: [],
       evidence: [],
       docsPath: null,

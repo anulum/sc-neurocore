@@ -199,6 +199,49 @@ def build_default_studio_capability_registry() -> CapabilityRegistry:
     )
     registry.register(
         CapabilityDescriptor(
+            capability_id="studio.simulation_workbench",
+            title="Simulation Workbench",
+            summary="Model and ODE simulation workflow for traces and spike statistics.",
+            status=CapabilityStatus.STABLE,
+            requirements=(
+                CapabilityRequirement("sc_neurocore.studio.simulation", True, "importable"),
+                CapabilityRequirement("sc_neurocore.studio.models", True, "model browser active"),
+            ),
+            evidence=(EvidenceClass.CONTRACT_TEST,),
+            ui_placement="Run",
+            docs_path="docs/studio/index.md",
+        )
+    )
+    registry.register(
+        CapabilityDescriptor(
+            capability_id="studio.analysis_suite",
+            title="Analysis Suite",
+            summary="f-I, bifurcation, sensitivity, heatmap, nullcline, frequency, and compare views.",
+            status=CapabilityStatus.STABLE,
+            requirements=(
+                CapabilityRequirement("sc_neurocore.studio.analysis", True, "analysis endpoints active"),
+            ),
+            evidence=(EvidenceClass.CONTRACT_TEST,),
+            ui_placement="Analyze",
+            docs_path="docs/studio/index.md",
+        )
+    )
+    registry.register(
+        CapabilityDescriptor(
+            capability_id="studio.compiler_inspector",
+            title="Compiler Inspector",
+            summary="IR build, verification, SystemVerilog emission, and co-simulation surfaces.",
+            status=CapabilityStatus.EXPERIMENTAL,
+            requirements=(
+                CapabilityRequirement("sc_neurocore.studio.compiler", True, "compiler endpoints active"),
+            ),
+            evidence=(EvidenceClass.CONTRACT_TEST,),
+            ui_placement="Compile",
+            docs_path="docs/studio/compiler-inspector.md",
+        )
+    )
+    registry.register(
+        CapabilityDescriptor(
             capability_id="studio.synthesis_dashboard",
             title="Synthesis Dashboard",
             summary="SystemVerilog synthesis and target resource reporting.",
@@ -209,6 +252,49 @@ def build_default_studio_capability_registry() -> CapabilityRegistry:
             evidence=(EvidenceClass.STATIC_INVENTORY,),
             ui_placement="Deploy",
             docs_path="docs/studio/synthesis-dashboard.md",
+        )
+    )
+    registry.register(
+        CapabilityDescriptor(
+            capability_id="studio.training_monitor",
+            title="Training Monitor",
+            summary="Surrogate-gradient training job controls and live metric streaming.",
+            status=CapabilityStatus.EXPERIMENTAL,
+            requirements=(
+                CapabilityRequirement("sc_neurocore.studio.training", True, "training controller active"),
+            ),
+            evidence=(EvidenceClass.CONTRACT_TEST,),
+            ui_placement="Train",
+            docs_path="docs/studio/training-monitor.md",
+        )
+    )
+    registry.register(
+        CapabilityDescriptor(
+            capability_id="studio.project_workspace",
+            title="Project Workspace",
+            summary="Server-side project save/load/delete and graph-to-synthesis pipeline.",
+            status=CapabilityStatus.EXPERIMENTAL,
+            requirements=(
+                CapabilityRequirement("sc_neurocore.studio.project", True, "project API active"),
+            ),
+            evidence=(EvidenceClass.CONTRACT_TEST,),
+            ui_placement="Workspace",
+            docs_path="docs/studio/integration.md",
+        )
+    )
+    registry.register(
+        CapabilityDescriptor(
+            capability_id="studio.export_tools",
+            title="Export Tools",
+            summary="JSON, CSV, SVG, generated script, and URL-sharing export surfaces.",
+            status=CapabilityStatus.STABLE,
+            requirements=(
+                CapabilityRequirement("browser.download", True, "frontend download APIs available"),
+                CapabilityRequirement("sc_neurocore.studio.svg_export", True, "server SVG export active"),
+            ),
+            evidence=(EvidenceClass.CONTRACT_TEST,),
+            ui_placement="Export",
+            docs_path="docs/studio/svg-export.md",
         )
     )
     return registry

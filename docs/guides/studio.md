@@ -254,6 +254,10 @@ cd studio/frontend
 npm test -- src/capabilityShell.test.ts
 ```
 
+The frontend capability shell is fail-closed for registered panels. If the
+backend capability registry omits a panel contract, that panel is disabled
+instead of assuming the underlying API or external tool is available.
+
 ## Additional Panels (Blocks 2–6)
 
 The Studio includes five additional panels beyond the core research workbench:
