@@ -29,14 +29,10 @@ click==8.4.1 \
     --hash=sha256:482be17c6991b8c19c5429a1e995d9b0efdbb63172824c41f99965dc0ade8ec2 \
     --hash=sha256:918b5633eddf6b41c32d4f454bf0de810065c74e3f7dbf8ee5452f8be88d3e96
     # via uvicorn
-exceptiongroup==1.3.1 \
-    --hash=sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219 \
-    --hash=sha256:a7a39a3bd276781e98394987d3a5701d0c4edffb633bb7a5144577f82c773598
-    # via anyio
 fastapi==0.136.3 \
     --hash=sha256:3d2a69bdf04b7e9f3afa292c3bc7a98816bbfafa10bc9b45f3f3700d2f761620 \
     --hash=sha256:e487fae93ad408e6f47641ee4dfe389864fd7bec92e547ea8498fc13f43e83ab
-    # via -r requirements/hub.in
+    # via -r hub.in
 h11==0.16.0 \
     --hash=sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1 \
     --hash=sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86
@@ -145,7 +141,7 @@ httptools==0.7.1 \
 httpx==0.28.1 \
     --hash=sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc \
     --hash=sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad
-    # via -r requirements/hub.in
+    # via -r hub.in
 idna==3.15 \
     --hash=sha256:048adeaf8c2d788c40fee287673ccaa74c24ffd8dcf09ffa555a2fbb59f10ac8 \
     --hash=sha256:ca962446ea538f7092a95e057da437618e886f4d349216d2b1e294abfdb65fdc
@@ -155,7 +151,7 @@ idna==3.15 \
 nir==1.0.7 \
     --hash=sha256:a34e702ae2dbbc86d006e7fa094c62706c2b1a11bbd704edfdb49802f14f90b6 \
     --hash=sha256:e11ccc59328171da28c604c489e611f3bd1074b1e4e1f65e459d12d29782b0c6
-    # via -r requirements/hub.in
+    # via -r hub.in
 numpy==2.2.6 \
     --hash=sha256:038613e9fb8c72b0a41f025a7e4c3f0b7a1b5d768ece4796b674c8f3fe13efff \
     --hash=sha256:0678000bb9ac1475cd454c6b8c799206af8107e310843532b04d49649c717a47 \
@@ -420,22 +416,20 @@ pyyaml==6.0.3 \
     --hash=sha256:fa160448684b4e94d80416c0fa4aac48967a969efe22931448d853ada8baf926 \
     --hash=sha256:fc09d0aa354569bc501d4e787133afc08552722d3ab34836a80547331bb5d4a0
     # via uvicorn
-starlette==1.0.1 \
-    --hash=sha256:512399c5f1de7fac99c88572212ded9ddeddef2fb32afa82d724000e88b38f4f \
-    --hash=sha256:7c0e69b2ee1c848bd54669d908500117a3ee13de603a21427e5c6fc1adf98dcd
+starlette==1.3.1 \
+    --hash=sha256:05d0213193f2fbaae60e2ecb593b4add4262ad4e46536b54abe36f11a71724e0 \
+    --hash=sha256:c7372aae11c3c3f26a42df7bd626cec2f47d03483d261d369516a615a53714c6
     # via fastapi
 typing-extensions==4.15.0 \
     --hash=sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466 \
     --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548
     # via
     #   anyio
-    #   exceptiongroup
     #   fastapi
     #   pydantic
     #   pydantic-core
     #   starlette
     #   typing-inspection
-    #   uvicorn
 typing-inspection==0.4.2 \
     --hash=sha256:4ed1cacbdc298c220f1bd249ed5287caa16f34d44ef4e9c3d0cbad5b521545e7 \
     --hash=sha256:ba561c48a67c5958007083d386c3295464928b01faa735ab8547c5692e87f464
@@ -445,7 +439,7 @@ typing-inspection==0.4.2 \
 uvicorn[standard]==0.48.0 \
     --hash=sha256:48097851328b87ec36117d3d575234519eb58c2b22d79666e9bbc6c49a761dad \
     --hash=sha256:a5504207195d08c2511bf9125ede5ac4a4b71725d519e758d01dcf0bc2d31c37
-    # via -r requirements/hub.in
+    # via -r hub.in
 uvloop==0.22.1 \
     --hash=sha256:017bd46f9e7b78e81606329d07141d3da446f8798c6baeec124260e22c262772 \
     --hash=sha256:0530a5fbad9c9e4ee3f2b33b148c6a64d47bbad8000ea63704fa8260f4cf728e \
