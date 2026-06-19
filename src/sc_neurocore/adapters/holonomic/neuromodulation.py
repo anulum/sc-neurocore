@@ -6,8 +6,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Global Emotional/Chemical System
 
-from typing import Any
 from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 

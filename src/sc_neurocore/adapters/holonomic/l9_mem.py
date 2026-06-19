@@ -21,12 +21,12 @@ Key Equations:
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
-from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
-
 from ..base import BaseStochasticAdapter
+from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 
 @dataclass
@@ -78,7 +78,7 @@ class L9_MemoryAdapter(BaseStochasticAdapter):
         self.rng_key, subkey = split_rng(self.rng_key)
         rands = uniform(subkey, (self.params.bitstream_length,))
         # Single channel output representing retrieved memory content
-        bitstream = (rands < retrieval_prob).astype(jnp.uint8)
+        bitstream: jnp.ndarray = (rands < retrieval_prob).astype(jnp.uint8)
         return bitstream
 
     @staticmethod

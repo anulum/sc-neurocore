@@ -14,8 +14,10 @@ stochastic bitstreams and JAX-accelerated kernels.
 """
 
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
+
 from ..accel.jax_backend import jnp
 
 

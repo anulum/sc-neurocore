@@ -21,14 +21,14 @@ Key Equations:
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
-from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
-
 from ..base import BaseStochasticAdapter
+from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 
 @dataclass
@@ -70,7 +70,7 @@ class L6_PlanetaryAdapter(BaseStochasticAdapter):
         """
         self.rng_key, subkey = split_rng(self.rng_key)
         rands = uniform(subkey, (self.params.n_regions, self.params.bitstream_length))
-        bitstreams = (rands < self.regional_coherence[:, None]).astype(jnp.uint8)
+        bitstreams: jnp.ndarray = (rands < self.regional_coherence[:, None]).astype(jnp.uint8)
         return bitstreams
 
     @staticmethod

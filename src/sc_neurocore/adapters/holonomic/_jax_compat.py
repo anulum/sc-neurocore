@@ -32,7 +32,7 @@ except ImportError:
 __all__ = ["jnp", "HAS_JAX", "make_rng", "split_rng", "uniform", "normal", "maybe_jit"]
 
 
-def make_rng(seed: int = 0) -> np.ndarray:
+def make_rng(seed: int = 0) -> np.ndarray[Any, Any]:
     """Create a PRNG key (JAX) or seed array (NumPy fallback)."""
     if HAS_JAX:
         return jax.random.PRNGKey(seed)  # type: ignore[return-value]

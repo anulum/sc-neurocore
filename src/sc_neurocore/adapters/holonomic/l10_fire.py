@@ -21,12 +21,12 @@ Key Equations:
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
-from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
-
 from ..base import BaseStochasticAdapter
+from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 
 @dataclass
@@ -63,7 +63,7 @@ class L10_FirewallAdapter(BaseStochasticAdapter):
         """
         self.rng_key, subkey = split_rng(self.rng_key)
         rands = uniform(subkey, (self.params.n_boundary_nodes, self.params.bitstream_length))
-        bitstreams = (rands < self.firewall_strength[:, None]).astype(jnp.uint8)
+        bitstreams: jnp.ndarray = (rands < self.firewall_strength[:, None]).astype(jnp.uint8)
         return bitstreams
 
     @staticmethod

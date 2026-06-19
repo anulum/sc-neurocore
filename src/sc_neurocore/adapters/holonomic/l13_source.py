@@ -21,14 +21,14 @@ Key Equations:
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 import numpy as np
 
-from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
-
 from ..base import BaseStochasticAdapter
+from ._jax_compat import jnp, make_rng, maybe_jit, split_rng, uniform
 
 
 @dataclass
@@ -87,7 +87,7 @@ class L13_SourceAdapter(BaseStochasticAdapter):
         """
         self.rng_key, subkey = split_rng(self.rng_key)
         rands = uniform(subkey, (self.params.n_vacuum_nodes, self.params.bitstream_length))
-        bitstreams = (rands < self.vacuum_state[:, None]).astype(jnp.uint8)
+        bitstreams: jnp.ndarray = (rands < self.vacuum_state[:, None]).astype(jnp.uint8)
         return bitstreams
 
     @staticmethod
@@ -96,9 +96,10 @@ class L13_SourceAdapter(BaseStochasticAdapter):
         """
         Advances local spin-like vacuum lattice dynamics.
         """
-        return L13_SourceAdapter._vacuum_lattice_kernel(
+        result: jnp.ndarray = L13_SourceAdapter._vacuum_lattice_kernel(
             state, coupling, bias, 0.0, jnp.zeros_like(state), dt
         )
+        return result
 
     @staticmethod
     @maybe_jit

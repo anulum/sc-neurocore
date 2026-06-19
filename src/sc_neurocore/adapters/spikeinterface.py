@@ -30,10 +30,10 @@ import numpy as np
 
 
 def spike_trains_to_bitstreams(
-    spike_times: dict[int, np.ndarray],
+    spike_times: dict[int, np.ndarray[Any, Any]],
     duration_ms: float,
     dt: float = 1.0,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Convert spike times to binary bitstream matrix.
 
     Parameters
@@ -63,10 +63,10 @@ def spike_trains_to_bitstreams(
 
 
 def spike_trains_to_population_input(
-    spike_times: dict[int, np.ndarray],
+    spike_times: dict[int, np.ndarray[Any, Any]],
     duration_ms: float,
     dt: float = 1.0,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Convert spike times to current input array for Population.step_all().
 
     Each spike becomes a current pulse of amplitude 1.0 at the spike time bin.
@@ -87,10 +87,10 @@ def spike_trains_to_population_input(
 
 
 def firing_rates_to_sc_probs(
-    spike_times: dict[int, np.ndarray],
+    spike_times: dict[int, np.ndarray[Any, Any]],
     duration_ms: float,
     max_rate_hz: float = 100.0,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Convert firing rates to SC probabilities in [0, 1].
 
     Parameters
@@ -114,7 +114,7 @@ def firing_rates_to_sc_probs(
     return probs
 
 
-def from_sorting(sorting: Any, dt: float = 1.0) -> np.ndarray:  # pragma: no cover
+def from_sorting(sorting: Any, dt: float = 1.0) -> np.ndarray[Any, Any]:  # pragma: no cover
     """Convert a SpikeInterface SortingExtractor to bitstream matrix.
 
     Parameters

@@ -6,9 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Interface for DNA Data Storage
 
-from typing import Any
-import numpy as np
 from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
 
 
 @dataclass

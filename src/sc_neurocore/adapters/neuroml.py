@@ -24,7 +24,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-
 NS = "{http://www.neuroml.org/schema/neuroml2}"
 
 
