@@ -489,6 +489,62 @@ def test_studio_app_fails_closed_when_policy_audit_append_fails(tmp_path: Path) 
     assert str(tmp_path) not in status_response.text
 
 
+def test_studio_app_exports_audit_events_for_admin_without_paths(tmp_path: Path) -> None:
+    from sc_neurocore.studio.platform import AuditEvent, JsonlAuditSink
+
+    audit_path = tmp_path / "audit" / "studio.jsonl"
+    JsonlAuditSink(audit_path).record(
+        AuditEvent(
+            action="studio.simulation.run",
+            route="/api/simulate",
+            principal_id="operator-1",
+            decision="allow",
+            reason="authorized",
+            request_id="seed-request",
+        )
+    )
+    app = create_app(
+        runtime_settings=StudioRuntimeSettings(
+            audit_log_path=str(audit_path),
+            enforce_route_policies=True,
+        )
+    )
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.get(
+        "/api/studio/audit/export",
+        headers={"x-studio-principal": "admin-1", "x-studio-roles": "studio.admin"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["schema_version"] == "studio.audit.export.v1"
+    assert payload["configured"] is True
+    assert payload["sink_type"] == "jsonl"
+    assert payload["event_count"] >= 1
+    assert payload["events"][0]["action"] == "studio.simulation.run"
+    assert str(tmp_path) not in response.text
+
+
+def test_studio_app_rejects_audit_export_without_admin_role(tmp_path: Path) -> None:
+    audit_path = tmp_path / "audit" / "studio.jsonl"
+    app = create_app(
+        runtime_settings=StudioRuntimeSettings(
+            audit_log_path=str(audit_path),
+            enforce_route_policies=True,
+        )
+    )
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.get(
+        "/api/studio/audit/export",
+        headers={"x-studio-principal": "operator-1", "x-studio-roles": "studio.viewer"},
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "missing_admin_role"
+
+
 def test_studio_app_correlates_policy_audit_with_request_id(tmp_path: Path) -> None:
     audit_path = tmp_path / "audit" / "studio.jsonl"
     app = create_app(

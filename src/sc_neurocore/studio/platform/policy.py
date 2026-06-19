@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Protocol
 
 AUDIT_SCHEMA_VERSION = "studio.audit.v1"
+AUDIT_EXPORT_SCHEMA_VERSION = "studio.audit.export.v1"
 UTC = timezone.utc
 
 
@@ -46,6 +47,33 @@ class AuditSinkStatus:
             "last_error": self.last_error,
             "path_configured": self.path_configured,
             "sink_type": self.sink_type,
+        }
+
+
+AuditExportValue = bool | int | str | None | list[dict[str, str | None]]
+
+
+@dataclass(frozen=True, slots=True)
+class AuditExport:
+    """Operator-safe export of persisted Studio audit rows."""
+
+    configured: bool
+    sink_type: str
+    event_count: int
+    truncated: bool
+    events: tuple[dict[str, str | None], ...]
+    schema_version: str = AUDIT_EXPORT_SCHEMA_VERSION
+
+    def to_public_dict(self) -> dict[str, AuditExportValue]:
+        """Return a path-free JSON export payload for admin operators."""
+
+        return {
+            "configured": self.configured,
+            "event_count": self.event_count,
+            "events": [dict(event) for event in self.events],
+            "schema_version": self.schema_version,
+            "sink_type": self.sink_type,
+            "truncated": self.truncated,
         }
 
 
@@ -215,6 +243,44 @@ class JsonlAuditSink:
             sink_type="jsonl",
         )
 
+    def export_recent(self, limit: int = 100) -> AuditExport:
+        """Export the most recent persisted audit rows without exposing paths.
+
+        Parameters
+        ----------
+        limit:
+            Maximum number of audit events to include. Must be positive.
+
+        Returns
+        -------
+        AuditExport
+            Path-free export payload containing the newest retained rows across
+            rotated JSONL files and the active audit log.
+
+        Raises
+        ------
+        AuditSinkError
+            If the sink location is malformed or a stored row is not a JSON
+            object with scalar public values.
+        """
+
+        if limit < 1:
+            raise ValueError("Audit export limit must be positive.")
+        preflight_error = self._preflight_error()
+        if preflight_error is not None:
+            self._last_error = preflight_error
+            raise AuditSinkError("Studio audit export failed.")
+        rows = self._export_rows()
+        truncated = len(rows) > limit
+        selected_rows = rows[-limit:]
+        return AuditExport(
+            configured=True,
+            sink_type="jsonl",
+            event_count=len(selected_rows),
+            truncated=truncated,
+            events=tuple(selected_rows),
+        )
+
     def _preflight_error(self) -> str | None:
         if self._path.exists() and self._path.is_dir():
             return "AuditPathIsDirectory"
@@ -247,6 +313,47 @@ class JsonlAuditSink:
 
     def _rotated_path(self, index: int) -> Path:
         return self._path.with_name(f"{self._path.name}.{index}")
+
+    def _export_paths(self) -> tuple[Path, ...]:
+        rotated_paths = tuple(
+            self._rotated_path(index)
+            for index in range(self._retained_files, 0, -1)
+            if self._rotated_path(index).exists()
+        )
+        return (*rotated_paths, self._path)
+
+    def _export_rows(self) -> list[dict[str, str | None]]:
+        rows: list[dict[str, str | None]] = []
+        try:
+            for path in self._export_paths():
+                if not path.exists():
+                    continue
+                for line in path.read_text(encoding="utf-8").splitlines():
+                    if not line.strip():
+                        continue
+                    parsed = json.loads(line)
+                    if not isinstance(parsed, dict):
+                        self._last_error = "AuditExportInvalidRow"
+                        raise AuditSinkError("Studio audit export failed.")
+                    rows.append(self._public_export_row(parsed))
+        except json.JSONDecodeError as exc:
+            self._last_error = "AuditExportInvalidJson"
+            raise AuditSinkError("Studio audit export failed.") from exc
+        except OSError as exc:
+            self._last_error = type(exc).__name__
+            raise AuditSinkError("Studio audit export failed.") from exc
+        return rows
+
+    def _public_export_row(self, parsed: dict[object, object]) -> dict[str, str | None]:
+        row: dict[str, str | None] = {}
+        for key, value in parsed.items():
+            if not isinstance(key, str) or not (
+                isinstance(value, str) or value is None
+            ):
+                self._last_error = "AuditExportInvalidRow"
+                raise AuditSinkError("Studio audit export failed.")
+            row[key] = value
+        return row
 
     def _previous_event_hash(self) -> str | None:
         if not self._path.exists():
@@ -421,6 +528,12 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
                 "/api/studio/audit/status",
                 RouteVisibility.PUBLIC,
                 "studio.audit.status.read",
+            ),
+            (
+                "GET",
+                "/api/studio/audit/export",
+                RouteVisibility.ADMIN,
+                "studio.audit.export",
             ),
             ("GET", "/api/templates", RouteVisibility.PUBLIC, "studio.templates.read"),
             ("GET", "/api/templates/{name}", RouteVisibility.PUBLIC, "studio.templates.read"),

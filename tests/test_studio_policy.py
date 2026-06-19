@@ -358,6 +358,36 @@ def test_jsonl_audit_sink_rotates_and_retains_hash_chain(tmp_path: Path) -> None
     assert current_row["event_hash"] == _audit_event_hash(current_row)
 
 
+def test_jsonl_audit_sink_exports_bounded_recent_events_without_paths(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_sink = contract["JsonlAuditSink"](audit_path, rotation_bytes=1, retained_files=4)
+    for index in range(4):
+        audit_sink.record(
+            contract["AuditEvent"](
+                action=f"studio.simulate.run.{index}",
+                route="/api/simulate",
+                principal_id="operator-1",
+                decision="allow",
+                reason="authorized",
+            )
+        )
+
+    exported = audit_sink.export_recent(limit=3).to_public_dict()
+
+    assert exported["schema_version"] == "studio.audit.export.v1"
+    assert exported["sink_type"] == "jsonl"
+    assert exported["event_count"] == 3
+    assert exported["truncated"] is True
+    actions = [row["action"] for row in exported["events"]]
+    assert actions == [
+        "studio.simulate.run.1",
+        "studio.simulate.run.2",
+        "studio.simulate.run.3",
+    ]
+    assert str(tmp_path) not in json.dumps(exported)
+
+
 def test_policy_gateway_accepts_jsonl_audit_sink(tmp_path: Path) -> None:
     contract = _policy_contract()
     audit_path = tmp_path / "studio-audit.jsonl"
@@ -522,10 +552,12 @@ def test_default_route_policy_registry_classifies_platform_routes() -> None:
     health_policy = registry.policy_for("GET", "/api/health")
     capability_policy = registry.policy_for("GET", "/api/studio/capabilities")
     detail_policy = registry.policy_for("GET", "/api/studio/capabilities/{capability_id}")
+    audit_export_policy = registry.policy_for("GET", "/api/studio/audit/export")
 
     assert health_policy.visibility is contract["RouteVisibility"].PUBLIC
     assert capability_policy.visibility is contract["RouteVisibility"].PUBLIC
     assert detail_policy.visibility is contract["RouteVisibility"].PUBLIC
+    assert audit_export_policy.visibility is contract["RouteVisibility"].ADMIN
 
 
 def test_default_route_policy_registry_reports_unclassified_platform_route() -> None:

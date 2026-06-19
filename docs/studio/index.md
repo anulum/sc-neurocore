@@ -88,6 +88,10 @@ runtime features:
   `503 audit_append_failed` instead of executing the operation without audit
   evidence. `/api/studio/audit/status` reports a path-free audit sink status
   for operator dashboards.
+- `/api/studio/audit/export` returns a bounded, path-free JSON export of recent
+  persisted audit events. The route is classified as admin-only by the Studio
+  policy registry and records its own audit decision when policy enforcement is
+  enabled.
 - Deployments can set `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` to rotate the
   active JSONL audit file before the next append once it reaches the configured
   byte limit. `SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES` controls how many
@@ -284,6 +288,7 @@ for complete API details with request/response examples.
 | `/api/training/*` | Training Monitor | Start/stop, SSE stream, surrogates |
 | `/api/graph/*` | Network Canvas | Populations, projections, validate, simulate, NIR |
 | `/api/project/*`, `/api/pipeline/*` | Integration | Save/load, full pipeline |
+| `/api/studio/audit/*` | Admin | Audit status and admin-gated export |
 
 ## Requirements
 

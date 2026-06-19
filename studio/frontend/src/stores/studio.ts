@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import {
   fetchTemplates, fetchModels, fetchModelDetail, fetchPresets, fetchPreset,
-  fetchStudioCapabilities,
+  fetchStudioAuditExport, fetchStudioAuditStatus, fetchStudioCapabilities,
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
   fetchCompare, fetchNullclines, fetchFreqResponse,
@@ -28,7 +28,7 @@ import {
   type SurrogateInfo, type TrainingEpochMetrics,
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSummary, type PipelineResult,
-  type StudioCapability,
+  type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
   connectProgress,
 } from "../api/client";
 
@@ -37,7 +37,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 export type SourceMode = "model" | "ode";
 export type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
   "sensitivity" | "precision" | "heatmap" | "verilog" | "code" |
-  "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth" | "train" | "canvas";
+  "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth" | "train" | "canvas" | "admin";
 
 interface StudioState {
   sourceMode: SourceMode;
@@ -53,6 +53,10 @@ interface StudioState {
   capabilities: StudioCapability[];
   capabilitiesLoading: boolean;
   capabilitiesError: string | null;
+  auditStatus: StudioAuditStatus | null;
+  auditExport: StudioAuditExport | null;
+  auditLoading: boolean;
+  auditError: string | null;
   templates: NeuronTemplate[];
   presets: PresetSummary[];
   dt: number;
@@ -129,6 +133,8 @@ interface StudioState {
   loadModels: () => Promise<void>;
   loadPresets: () => Promise<void>;
   loadCapabilities: () => Promise<void>;
+  loadAuditStatus: () => Promise<void>;
+  loadAuditExport: () => Promise<void>;
   selectTemplate: (name: string) => void;
   selectModel: (name: string) => Promise<void>;
   loadPreset: (id: string) => Promise<void>;
@@ -210,6 +216,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   odeInit: { v: -65 },
   models: [], selectedModelName: "", modelDetail: null, modelParams: {},
   capabilities: [], capabilitiesLoading: false, capabilitiesError: null,
+  auditStatus: null, auditExport: null, auditLoading: false, auditError: null,
   templates: [], presets: [],
   dt: 0.1, duration: 100, current: 10, protocol: "constant",
   result: null, fiResult: null, bifResult: null, sensResult: null, precResult: null,
@@ -263,6 +270,30 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set({
         capabilitiesLoading: false,
         capabilitiesError: error instanceof Error ? error.message : "Capability check failed",
+      });
+    }
+  },
+  loadAuditStatus: async () => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      const auditStatus = await fetchStudioAuditStatus();
+      set({ auditStatus, auditLoading: false, auditError: null });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Audit status check failed",
+      });
+    }
+  },
+  loadAuditExport: async () => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      const auditExport = await fetchStudioAuditExport(100);
+      set({ auditExport, auditLoading: false, auditError: null });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Audit export failed",
       });
     }
   },

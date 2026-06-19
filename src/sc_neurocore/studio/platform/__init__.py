@@ -19,6 +19,9 @@ from sc_neurocore.studio.platform.capabilities import (
 )
 from sc_neurocore.studio.platform.policy import (
     AUDIT_SCHEMA_VERSION,
+    AUDIT_EXPORT_SCHEMA_VERSION,
+    AuditExport,
+    AuditExportValue,
     AuditEvent,
     AuditSink,
     AuditSinkError,
@@ -46,6 +49,9 @@ from sc_neurocore.studio.platform.settings import (
 
 __all__ = [
     "AUDIT_SCHEMA_VERSION",
+    "AUDIT_EXPORT_SCHEMA_VERSION",
+    "AuditExport",
+    "AuditExportValue",
     "AuditEvent",
     "AuditSink",
     "AuditSinkError",

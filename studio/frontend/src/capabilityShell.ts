@@ -29,7 +29,8 @@ export type PanelKey =
   | "ir"
   | "synth"
   | "train"
-  | "canvas";
+  | "canvas"
+  | "admin";
 
 /** Aggregate health projection for the backend capability registry. */
 export interface CapabilitySummary {
@@ -77,6 +78,7 @@ const PANEL_CAPABILITY_IDS: Partial<Record<PanelKey, string>> = {
   canvas: "studio.network_canvas",
   synth: "studio.synthesis_dashboard",
   train: "studio.training_monitor",
+  admin: "studio.capability_registry",
 };
 
 const PANEL_TITLES: Record<PanelKey, string> = {
@@ -100,6 +102,7 @@ const PANEL_TITLES: Record<PanelKey, string> = {
   synth: "FPGA",
   train: "Training",
   canvas: "Canvas",
+  admin: "Admin",
 };
 
 /** Return one capability by its stable backend identifier. */

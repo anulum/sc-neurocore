@@ -106,6 +106,36 @@ export interface StudioCapabilitiesResponse {
   capabilities: StudioCapability[];
 }
 
+export interface StudioAuditStatus {
+  configured: boolean;
+  healthy: boolean;
+  last_error: string | null;
+  path_configured: boolean;
+  sink_type: string;
+}
+
+export interface StudioAuditEvent {
+  action: string;
+  decision: string;
+  principal_id: string | null;
+  reason: string;
+  request_id: string | null;
+  route: string;
+  schema_version: string;
+  timestamp_utc: string | null;
+  previous_event_hash: string | null;
+  event_hash: string | null;
+}
+
+export interface StudioAuditExport {
+  configured: boolean;
+  event_count: number;
+  events: StudioAuditEvent[];
+  schema_version: string;
+  sink_type: string;
+  truncated: boolean;
+}
+
 const BASE = "/api";
 
 async function json<T>(r: Response): Promise<T> {
@@ -134,6 +164,10 @@ export const fetchPresets = () => get<PresetSummary[]>("/presets");
 export const fetchPreset = (id: string) => get<Record<string, unknown>>(`/presets/${id}`);
 export const fetchStudioCapabilities = () =>
   get<StudioCapabilitiesResponse>("/studio/capabilities");
+export const fetchStudioAuditStatus = () =>
+  get<StudioAuditStatus>("/studio/audit/status");
+export const fetchStudioAuditExport = (limit = 100) =>
+  get<StudioAuditExport>(`/studio/audit/export?limit=${encodeURIComponent(limit)}`);
 
 export const simulateODE = (req: Record<string, unknown>) => post<SimulateResponse>("/simulate", req);
 export const simulateModel = (req: Record<string, unknown>) => post<SimulateResponse>("/models/simulate", req);

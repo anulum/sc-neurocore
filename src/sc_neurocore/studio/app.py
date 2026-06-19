@@ -91,6 +91,7 @@ from sc_neurocore.studio.training import (
 )
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
 from sc_neurocore.studio.platform import (
+    AuditExportValue,
     AuditSinkError,
     InMemoryAuditSink,
     JsonlAuditSink,
@@ -786,7 +787,22 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
 
     @app.get("/api/studio/audit/status")
     def api_studio_audit_status() -> dict[str, bool | str | None]:
+        """Return path-free health for the configured Studio audit sink."""
+
         return studio_audit_sink.status().to_public_dict()
+
+    @app.get("/api/studio/audit/export")
+    def api_studio_audit_export(limit: int = 100) -> dict[str, AuditExportValue]:
+        """Return a bounded, path-free audit export for Studio administrators."""
+
+        if not isinstance(studio_audit_sink, JsonlAuditSink):
+            raise HTTPException(status_code=409, detail="audit_export_unavailable")
+        if limit < 1 or limit > 1000:
+            raise HTTPException(status_code=422, detail="Audit export limit must be 1..1000")
+        try:
+            return studio_audit_sink.export_recent(limit=limit).to_public_dict()
+        except AuditSinkError as exc:
+            raise HTTPException(status_code=503, detail="audit_export_failed") from exc
 
     # --- Templates & Models ---
     @app.get("/api/templates")

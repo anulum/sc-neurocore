@@ -22,6 +22,7 @@ import TrainingMonitor from "./components/TrainingMonitor";
 import NetworkCanvas from "./components/NetworkCanvas";
 import OnboardingOverlay from "./components/OnboardingOverlay";
 import CapabilityStrip from "./components/CapabilityStrip";
+import AdminPanel from "./components/AdminPanel";
 
 function Tab({ active, color, label, onClick, disabled, title }: {
   active: boolean; color: string; label: string; onClick: () => void; disabled?: boolean; title?: string;
@@ -74,6 +75,7 @@ function CapabilityUnavailable({ state }: { state: PanelCapabilityState }) {
 export default function App() {
   const s = useStudioStore();
   const loadCapabilities = s.loadCapabilities;
+  const loadAuditStatus = s.loadAuditStatus;
   const loadPresets = s.loadPresets;
   const vars = s.result ? Object.keys(s.result.states) : [];
   const hasPhase = vars.length >= 2;
@@ -90,8 +92,9 @@ export default function App() {
 
   useEffect(() => {
     void loadCapabilities();
+    void loadAuditStatus();
     void loadPresets();
-  }, [loadCapabilities, loadPresets]);
+  }, [loadAuditStatus, loadCapabilities, loadPresets]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -165,6 +168,7 @@ export default function App() {
           title={panelState("canvas").message}
           color="#4fc3f7" />
         <Btn label="Train" onClick={() => activatePanel("train")} color="#b39ddb" />
+        <Btn label="Admin" onClick={() => activatePanel("admin")} color="#ffcc80" />
         <Btn label="E-I Net" onClick={s.runNetwork} disabled={s.isSimulating} color="#80cbc4" />
         <Btn label="STA" onClick={s.computeSTA} disabled={!s.result || s.result.spikes.length < 3} color="#b0bec5" />
         <Btn label="Freq" onClick={s.runFreqResponse} disabled={s.isSimulating} color="#fff176" />
@@ -216,6 +220,7 @@ export default function App() {
             disabled={!panelState("canvas").available}
             title={panelState("canvas").message} />
           <Tab active={s.activeTab === "train"} color="#b39ddb" label="Train" onClick={() => activatePanel("train")} />
+          <Tab active={s.activeTab === "admin"} color="#ffcc80" label="Admin" onClick={() => activatePanel("admin")} />
         </div>
 
         {pattern && (
@@ -389,6 +394,8 @@ export default function App() {
             <NetworkCanvas />
           ) : s.activeTab === "train" ? (
             <TrainingMonitor />
+          ) : s.activeTab === "admin" ? (
+            <AdminPanel />
           ) : s.activeTab === "synth" ? (
             <SynthesisDashboard />
           ) : s.activeTab === "ir" ? (
