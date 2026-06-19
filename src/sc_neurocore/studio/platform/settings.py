@@ -60,6 +60,8 @@ class StudioRuntimeSettings:
     request_id_header: str = "x-request-id"
     max_request_body_bytes: int = DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES
     enforce_route_policies: bool = False
+    identity_file_path: str | None = None
+    allow_header_principal: bool = True
     audit_log_path: str | None = None
     audit_rotation_bytes: int | None = None
     audit_retained_files: int = DEFAULT_STUDIO_AUDIT_RETAINED_FILES
@@ -87,6 +89,10 @@ class StudioRuntimeSettings:
             raise ValueError("Studio request ID header must not be empty.")
         if self.max_request_body_bytes <= 0:
             raise ValueError("Studio request body limit must be positive.")
+        if self.identity_file_path is not None and not self.identity_file_path.strip():
+            raise ValueError("Studio identity file path must not be empty.")
+        if not isinstance(self.allow_header_principal, bool):
+            raise ValueError("Studio header principal fallback must be boolean.")
         if self.audit_log_path is not None and not self.audit_log_path.strip():
             raise ValueError("Studio audit log path must not be empty.")
         if self.audit_rotation_bytes is not None and self.audit_rotation_bytes <= 0:
@@ -106,6 +112,8 @@ def build_default_studio_runtime_settings(
     raw_hosts = source.get("SC_NEUROCORE_STUDIO_ALLOWED_HOSTS")
     raw_max_request_body_bytes = source.get("SC_NEUROCORE_STUDIO_MAX_REQUEST_BODY_BYTES")
     raw_enforce_route_policies = source.get("SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES")
+    raw_identity_file_path = source.get("SC_NEUROCORE_STUDIO_IDENTITY_FILE")
+    raw_allow_header_principal = source.get("SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL")
     raw_audit_log_path = source.get("SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH")
     raw_audit_rotation_bytes = source.get("SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES")
     raw_audit_retained_files = source.get("SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES")
@@ -132,15 +140,21 @@ def build_default_studio_runtime_settings(
         )
     except ValueError as exc:
         raise ValueError("Studio request body limit must be an integer.") from exc
-    normalized_enforcement = (
-        "" if raw_enforce_route_policies is None else raw_enforce_route_policies.strip().lower()
+    enforce_route_policies = _parse_bool_env(
+        raw_enforce_route_policies,
+        default=False,
+        error_message="Studio route policy enforcement must be a boolean flag.",
     )
-    if normalized_enforcement in ("", "0", "false", "no"):
-        enforce_route_policies = False
-    elif normalized_enforcement in ("1", "true", "yes"):
-        enforce_route_policies = True
-    else:
-        raise ValueError("Studio route policy enforcement must be a boolean flag.")
+    allow_header_principal = _parse_bool_env(
+        raw_allow_header_principal,
+        default=True,
+        error_message="Studio header principal fallback must be a boolean flag.",
+    )
+    identity_file_path = (
+        None
+        if raw_identity_file_path is None or not raw_identity_file_path.strip()
+        else raw_identity_file_path.strip()
+    )
     audit_log_path = (
         None
         if raw_audit_log_path is None or not raw_audit_log_path.strip()
@@ -168,7 +182,25 @@ def build_default_studio_runtime_settings(
         allowed_hosts=hosts,
         max_request_body_bytes=max_request_body_bytes,
         enforce_route_policies=enforce_route_policies,
+        identity_file_path=identity_file_path,
+        allow_header_principal=allow_header_principal,
         audit_log_path=audit_log_path,
         audit_rotation_bytes=audit_rotation_bytes,
         audit_retained_files=audit_retained_files,
     )
+
+
+def _parse_bool_env(
+    raw_value: str | None,
+    *,
+    default: bool,
+    error_message: str,
+) -> bool:
+    if raw_value is None or not raw_value.strip():
+        return default
+    normalized = raw_value.strip().lower()
+    if normalized in ("0", "false", "no"):
+        return False
+    if normalized in ("1", "true", "yes"):
+        return True
+    raise ValueError(error_message)

@@ -259,8 +259,13 @@ backend capability registry omits a panel contract, that panel is disabled
 instead of assuming the underlying API or external tool is available.
 
 The Admin panel loads path-free audit health at startup and can request the
-admin-gated audit export endpoint. In production policy mode, callers need
-`X-Studio-Principal` plus the `studio.admin` role to export audit rows.
+admin-gated audit export endpoint. Development-preview policy mode can still
+use `X-Studio-Principal` plus the `studio.admin` role, but production
+deployments should set `SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL=false` and
+configure `SC_NEUROCORE_STUDIO_IDENTITY_FILE` with
+`sc-neurocore.studio.identity.v1` service accounts. Store only SHA-256 token
+hashes in that file, authenticate API calls with `Authorization: Bearer
+<token>`, and give admin export accounts the `studio.admin` role.
 
 ## Additional Panels (Blocks 2–6)
 

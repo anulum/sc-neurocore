@@ -97,10 +97,13 @@ from sc_neurocore.studio.platform import (
     JsonlAuditSink,
     PolicyGateway,
     Principal,
+    StudioIdentityAuthenticator,
+    StudioIdentityResult,
     StudioRuntimeSettings,
     build_default_studio_capability_registry,
     build_default_studio_route_policy_registry,
     build_default_studio_runtime_settings,
+    load_studio_identity_store,
 )
 from sc_neurocore.studio.presets import (
     get_preset,
@@ -679,6 +682,25 @@ def _studio_principal_from_headers(headers: Mapping[str, str]) -> Principal | No
     return Principal(principal_id=principal_id.strip(), roles=roles)
 
 
+def _studio_identity_from_headers(
+    headers: Mapping[str, str],
+    *,
+    authenticator: StudioIdentityAuthenticator | None,
+    allow_header_principal: bool,
+) -> StudioIdentityResult:
+    authorization = headers.get("authorization")
+    if authorization is not None and authorization.strip():
+        if authenticator is None:
+            return StudioIdentityResult(
+                principal=None,
+                failure_reason="invalid_identity_token",
+            )
+        return authenticator.authenticate_authorization_header(authorization)
+    if allow_header_principal:
+        return StudioIdentityResult(principal=_studio_principal_from_headers(headers))
+    return StudioIdentityResult(principal=None)
+
+
 def _studio_route_signature(app: FastAPI, request: Request) -> tuple[str, str] | None:
     for route in app.routes:
         if not isinstance(route, Route):
@@ -703,11 +725,17 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         if settings.audit_log_path is not None
         else InMemoryAuditSink()
     )
+    studio_identity_authenticator = (
+        StudioIdentityAuthenticator(load_studio_identity_store(Path(settings.identity_file_path)))
+        if settings.identity_file_path is not None
+        else None
+    )
     studio_policy_gateway = PolicyGateway(audit_sink=studio_audit_sink)
     app.state.studio_runtime_settings = settings
     app.state.studio_capabilities = studio_capabilities
     app.state.studio_route_policies = studio_route_policies
     app.state.studio_audit_sink = studio_audit_sink
+    app.state.studio_identity_authenticator = studio_identity_authenticator
     app.state.studio_policy_gateway = studio_policy_gateway
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(settings.allowed_hosts))
     app.add_middleware(
@@ -739,12 +767,18 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             else:
                 method, path_template = route_signature
                 policy = studio_route_policies.policy_for(method, path_template)
+                identity_result = _studio_identity_from_headers(
+                    request.headers,
+                    authenticator=studio_identity_authenticator,
+                    allow_header_principal=settings.allow_header_principal,
+                )
                 try:
                     decision = studio_policy_gateway.authorize(
                         policy,
-                        principal=_studio_principal_from_headers(request.headers),
+                        principal=identity_result.principal,
                         route=path_template,
                         request_id=request_id,
+                        identity_failure_reason=identity_result.failure_reason,
                     )
                     if decision.allowed:
                         response = await call_next(request)

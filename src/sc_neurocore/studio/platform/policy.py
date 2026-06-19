@@ -430,6 +430,7 @@ class PolicyGateway:
         principal: Principal | None,
         route: str,
         request_id: str | None = None,
+        identity_failure_reason: str | None = None,
     ) -> PolicyDecision:
         """Authorize a caller against a Studio route policy."""
 
@@ -437,7 +438,8 @@ class PolicyGateway:
             return PolicyDecision(allowed=True, reason="public_route", status_code=200)
 
         if principal is None:
-            return self._deny(policy, route, principal, "missing_principal", 401, request_id)
+            reason = identity_failure_reason or "missing_principal"
+            return self._deny(policy, route, principal, reason, 401, request_id)
 
         if policy.visibility is RouteVisibility.ADMIN and "studio.admin" not in principal.roles:
             return self._deny(policy, route, principal, "missing_admin_role", 403, request_id)

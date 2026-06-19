@@ -76,8 +76,15 @@ runtime features:
   decisions.
 - Runtime route-policy enforcement is opt-in for the development preview via
   `SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES=true`. When enabled, protected
-  HTTP routes require `X-Studio-Principal`; comma-separated `X-Studio-Roles`
-  values drive role and admin checks.
+  HTTP routes require an authenticated principal. Development builds may still
+  use `X-Studio-Principal` plus comma-separated `X-Studio-Roles`; production
+  deployments should set `SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL=false`.
+- Durable service-account identity is configured with
+  `SC_NEUROCORE_STUDIO_IDENTITY_FILE`. The file uses
+  `sc-neurocore.studio.identity.v1`, stores SHA-256 bearer-token hashes rather
+  than raw tokens, grants explicit roles, and can include UTC expiry timestamps.
+  Requests authenticate with `Authorization: Bearer <token>`; invalid,
+  disabled, or expired tokens fail closed and emit distinct audit reasons.
 - Policy decisions can be persisted to an append-only JSONL audit log by
   setting `SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH` to a writable file path. Each
   `studio.audit.v1` line records the UTC timestamp, policy action, route
