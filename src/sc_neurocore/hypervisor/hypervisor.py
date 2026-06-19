@@ -55,7 +55,6 @@ from typing import Any, Deque, Dict, List, Optional, Tuple
 
 import numpy as np
 
-
 # ── Hardware Region ──────────────────────────────────────────────────
 
 
@@ -118,9 +117,9 @@ class QoSPolicy:
 class TenantState:
     """Checkpointable state for live migration."""
 
-    neuron_voltages: Optional[np.ndarray] = None
-    synapse_weights: Optional[np.ndarray] = None
-    spike_queues: Optional[np.ndarray] = None
+    neuron_voltages: Optional[np.ndarray[Any, Any]] = None
+    synapse_weights: Optional[np.ndarray[Any, Any]] = None
+    spike_queues: Optional[np.ndarray[Any, Any]] = None
     lfsr_state: int = 0
     timestep: int = 0
     checksum: str = ""
