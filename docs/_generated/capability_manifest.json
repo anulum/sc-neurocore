@@ -5,11 +5,11 @@
     "model_documentation_pages": 174,
     "optional_extras": 24,
     "public_api_exports": 44,
-    "public_documentation_pages": 545,
+    "public_documentation_pages": 546,
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 794
+    "test_files": 797
   },
   "documentation": {
     "public_pages": [
@@ -441,6 +441,7 @@
       "docs/hardware/SYNTHESIS_RESULTS.md",
       "docs/hardware/adc_to_spike_quantiser.md",
       "docs/hardware/aer_priority_queue.md",
+      "docs/hardware/sc_cordiv.md",
       "docs/hardware/ultrascale_plus.md",
       "docs/index.md",
       "docs/pricing.md",
@@ -2499,8 +2500,11 @@
       "tests/test_studio_integration.py",
       "tests/test_studio_model_scan.py",
       "tests/test_studio_network_canvas.py",
+      "tests/test_studio_platform.py",
+      "tests/test_studio_policy.py",
       "tests/test_studio_progress.py",
       "tests/test_studio_rust_integration.py",
+      "tests/test_studio_settings.py",
       "tests/test_studio_simulation.py",
       "tests/test_studio_svg_export.py",
       "tests/test_studio_synthesis.py",

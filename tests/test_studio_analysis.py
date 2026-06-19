@@ -22,7 +22,7 @@ from sc_neurocore.studio.simulation import _make_current_trace, simulate
 
 @pytest.fixture
 def client():
-    return TestClient(create_app())
+    return TestClient(create_app(), base_url="http://127.0.0.1")
 
 
 class TestFiringClassifier:

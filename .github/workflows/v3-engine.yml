@@ -31,6 +31,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  CARGO_HTTP_MULTIPLEXING: "false"
   CMAKE_POLICY_VERSION_MINIMUM: "3.5"
 
 jobs:
@@ -117,8 +118,12 @@ jobs:
         shell: pwsh
         run: Remove-Item bridge/sc_neurocore_engine/sc_neurocore_engine.cp312-win_amd64.pyd -ErrorAction SilentlyContinue
 
-      - name: Run engine unit tests
-        if: runner.os != 'macOS'
+      - name: Run engine unit tests on Linux
+        if: runner.os == 'Linux'
+        run: cargo test --manifest-path engine/Cargo.toml --jobs 1
+
+      - name: Run engine unit tests on Windows
+        if: runner.os == 'Windows'
         run: cargo test --manifest-path engine/Cargo.toml
 
       - name: Run v3 integration tests
