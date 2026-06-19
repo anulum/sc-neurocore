@@ -26,6 +26,7 @@ from __future__ import annotations
 import socket
 import struct
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -80,7 +81,7 @@ class AERSender:
             packets_sent += 1
         return packets_sent
 
-    def send_spikes(self, spike_vector: np.ndarray, timestamp: int) -> int:
+    def send_spikes(self, spike_vector: np.ndarray[Any, Any], timestamp: int) -> int:
         """Convert a binary spike vector to AER events and send."""
         events = [
             AEREvent(timestamp=timestamp, neuron_id=int(i)) for i in np.nonzero(spike_vector)[0]
@@ -138,7 +139,7 @@ class AERReceiver:
 
         return events
 
-    def receive_as_vector(self, n_neurons: int) -> tuple[np.ndarray, int]:
+    def receive_as_vector(self, n_neurons: int) -> tuple[np.ndarray[Any, Any], int]:
         """Receive and convert to binary spike vector.
 
         Returns (spike_vector, timestamp) or (zeros, -1) on timeout.
