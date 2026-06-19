@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 import numpy as np
 
@@ -105,7 +106,7 @@ class FaultResilienceSuite:
         Baseline (unfaulted) weight matrices.
     """
 
-    def __init__(self, eval_fn, weights: list[np.ndarray]):  # type: ignore[no-untyped-def]
+    def __init__(self, eval_fn, weights: list[np.ndarray[Any, Any]]):  # type: ignore[no-untyped-def]
         self.eval_fn = eval_fn
         self.weights = [w.copy() for w in weights]
         self._baseline_accuracy: float | None = None
@@ -116,7 +117,7 @@ class FaultResilienceSuite:
             self._baseline_accuracy = self.eval_fn(self.weights)
         return self._baseline_accuracy
 
-    def inject_fault(self, fault: FaultModel) -> list[np.ndarray]:
+    def inject_fault(self, fault: FaultModel) -> list[np.ndarray[Any, Any]]:
         """Apply a fault model to weights, return faulted copies."""
         rng = np.random.RandomState(fault.seed)
         faulted = [w.copy() for w in self.weights]
