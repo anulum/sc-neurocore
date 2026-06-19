@@ -773,6 +773,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         root=studio_job_root,
         allowed_kinds=DEFAULT_STUDIO_JOB_KINDS,
         default_timeout_seconds=settings.job_default_timeout_seconds,
+        max_artifact_bytes=settings.job_max_artifact_bytes,
         configured=settings.job_root_path is not None,
     )
     studio_policy_gateway = PolicyGateway(audit_sink=studio_audit_sink)

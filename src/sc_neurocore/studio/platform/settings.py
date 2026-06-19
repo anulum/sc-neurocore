@@ -16,6 +16,10 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Literal
 
+from sc_neurocore.studio.platform.jobs import (
+    DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES as DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES,
+)
+
 StudioDeploymentProfile = Literal["development", "production"]
 
 DEFAULT_STUDIO_CORS_ORIGINS: tuple[str, ...] = (
@@ -69,6 +73,7 @@ class StudioRuntimeSettings:
     allow_header_principal: bool = True
     job_root_path: str | None = None
     job_default_timeout_seconds: float = DEFAULT_STUDIO_JOB_TIMEOUT_SECONDS
+    job_max_artifact_bytes: int = DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES
     audit_log_path: str | None = None
     audit_rotation_bytes: int | None = None
     audit_retained_files: int = DEFAULT_STUDIO_AUDIT_RETAINED_FILES
@@ -106,6 +111,8 @@ class StudioRuntimeSettings:
             raise ValueError("Studio job root path must not be empty.")
         if self.job_default_timeout_seconds <= 0:
             raise ValueError("Studio job timeout must be positive.")
+        if self.job_max_artifact_bytes <= 0:
+            raise ValueError("Studio job artifact size limit must be positive.")
         if self.audit_log_path is not None and not self.audit_log_path.strip():
             raise ValueError("Studio audit log path must not be empty.")
         if self.audit_rotation_bytes is not None and self.audit_rotation_bytes <= 0:
@@ -148,6 +155,7 @@ def build_default_studio_runtime_settings(
     raw_allow_header_principal = source.get("SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL")
     raw_job_root_path = source.get("SC_NEUROCORE_STUDIO_JOB_ROOT")
     raw_job_default_timeout_seconds = source.get("SC_NEUROCORE_STUDIO_JOB_TIMEOUT_SECONDS")
+    raw_job_max_artifact_bytes = source.get("SC_NEUROCORE_STUDIO_JOB_MAX_ARTIFACT_BYTES")
     raw_audit_log_path = source.get("SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH")
     raw_audit_rotation_bytes = source.get("SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES")
     raw_audit_retained_files = source.get("SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES")
@@ -204,6 +212,14 @@ def build_default_studio_runtime_settings(
         )
     except ValueError as exc:
         raise ValueError("Studio job timeout must be numeric.") from exc
+    try:
+        job_max_artifact_bytes = (
+            DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES
+            if raw_job_max_artifact_bytes is None or not raw_job_max_artifact_bytes.strip()
+            else int(raw_job_max_artifact_bytes)
+        )
+    except ValueError as exc:
+        raise ValueError("Studio job artifact size limit must be an integer.") from exc
     audit_log_path = (
         None
         if raw_audit_log_path is None or not raw_audit_log_path.strip()
@@ -236,6 +252,7 @@ def build_default_studio_runtime_settings(
         allow_header_principal=allow_header_principal,
         job_root_path=job_root_path,
         job_default_timeout_seconds=job_default_timeout_seconds,
+        job_max_artifact_bytes=job_max_artifact_bytes,
         audit_log_path=audit_log_path,
         audit_rotation_bytes=audit_rotation_bytes,
         audit_retained_files=audit_retained_files,

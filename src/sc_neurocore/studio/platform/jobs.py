@@ -21,6 +21,7 @@ from typing import Literal
 
 JOBS_STATUS_SCHEMA_VERSION = "studio.jobs.status.v1"
 JOBS_LIST_SCHEMA_VERSION = "studio.jobs.list.v1"
+DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES = 16 * 1024 * 1024
 UTC = timezone.utc
 
 StudioJobStatus = Literal[
@@ -168,10 +169,12 @@ class StudioJobContext:
         job_id: str,
         work_dir: Path,
         cancel_event: threading.Event,
+        max_artifact_bytes: int,
     ) -> None:
         self.job_id = job_id
         self._work_dir = work_dir
         self._cancel_event = cancel_event
+        self._max_artifact_bytes = max_artifact_bytes
         self._artifacts: list[StudioJobArtifact] = []
 
     @property
@@ -216,6 +219,8 @@ class StudioJobContext:
 
         target_path = self._artifact_path(relative_path)
         data = payload.encode("utf-8") if isinstance(payload, str) else payload
+        if len(data) > self._max_artifact_bytes:
+            raise ValueError("Studio job artifact exceeds configured size limit.")
         target_path.parent.mkdir(parents=True, exist_ok=True)
         target_path.write_bytes(data)
         artifact = StudioJobArtifact(
@@ -243,6 +248,7 @@ class StudioJobManager:
         root: Path,
         allowed_kinds: frozenset[str],
         default_timeout_seconds: float,
+        max_artifact_bytes: int = DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES,
         configured: bool = True,
         clock: Callable[[], datetime] | None = None,
     ) -> None:
@@ -250,9 +256,12 @@ class StudioJobManager:
             raise ValueError("Studio job manager requires at least one allowed job kind.")
         if default_timeout_seconds <= 0:
             raise ValueError("Studio job timeout must be positive.")
+        if max_artifact_bytes <= 0:
+            raise ValueError("Studio job artifact size limit must be positive.")
         self._root = root
         self._allowed_kinds = frozenset(sorted(allowed_kinds))
         self._default_timeout_seconds = default_timeout_seconds
+        self._max_artifact_bytes = max_artifact_bytes
         self._configured = configured
         self._clock = clock or self._utc_now
         self._lock = threading.Lock()
@@ -391,6 +400,7 @@ class StudioJobManager:
             job_id=job_id,
             work_dir=work_dir,
             cancel_event=cancel_event,
+            max_artifact_bytes=self._max_artifact_bytes,
         )
         result_box: dict[str, dict[str, object]] = {}
         error_box: dict[str, BaseException] = {}
@@ -506,6 +516,7 @@ def _resolve_confined_child(*, root: Path, relative_path: str, error_message: st
 __all__ = [
     "JOBS_LIST_SCHEMA_VERSION",
     "JOBS_STATUS_SCHEMA_VERSION",
+    "DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES",
     "StudioJobArtifact",
     "StudioJobArtifactPayload",
     "StudioJobArtifactUnavailable",

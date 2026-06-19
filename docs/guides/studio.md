@@ -289,9 +289,10 @@ and do not copy the token into repository files or shell history.
 The same Admin surface displays local worker health from
 `/api/studio/jobs/status`. Configure `SC_NEUROCORE_STUDIO_JOB_ROOT` to keep
 per-job working directories on an operator-selected disk, and tune
-`SC_NEUROCORE_STUDIO_JOB_TIMEOUT_SECONDS` for cooperative worker timeouts. The
-status payload is path-free and reports allowed job kinds plus
-active/completed/failed/timed-out counts.
+`SC_NEUROCORE_STUDIO_JOB_TIMEOUT_SECONDS` for cooperative worker timeouts. Use
+`SC_NEUROCORE_STUDIO_JOB_MAX_ARTIFACT_BYTES` to cap each declared artifact
+written by a worker. The status payload is path-free and reports allowed job
+kinds plus active/completed/failed/timed-out counts.
 
 Training start, stop, and status routes now submit work through the same local
 worker manager. The training monitor's SSE stream remains the live metric

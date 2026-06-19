@@ -109,9 +109,11 @@ runtime features:
 - `/api/studio/jobs/status` reports path-free local worker health for operator
   dashboards. Deployments can set `SC_NEUROCORE_STUDIO_JOB_ROOT` for persistent
   per-job working directories and `SC_NEUROCORE_STUDIO_JOB_TIMEOUT_SECONDS` for
-  the default cooperative timeout. The local worker manager tracks allowed job
-  kinds, active/completed/failed/timed-out counts, and does not expose host
-  filesystem paths.
+  the default cooperative timeout. Set
+  `SC_NEUROCORE_STUDIO_JOB_MAX_ARTIFACT_BYTES` to cap each worker artifact.
+  The local worker manager tracks allowed job kinds,
+  active/completed/failed/timed-out counts, and does not expose host filesystem
+  paths.
 - `/api/training/start`, `/api/training/stop`, and
   `/api/training/status/{job_id}` now use the local worker manager for bounded
   training execution while preserving the training monitor's existing SSE
