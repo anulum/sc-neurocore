@@ -103,7 +103,7 @@ class SpikeLevelDP:
         else:
             raise ValueError(f"Unknown mechanism '{mechanism}'")
 
-    def privatize(self, spikes: np.ndarray) -> np.ndarray:
+    def privatize(self, spikes: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Apply DP mechanism to a spike tensor.
 
         Parameters
@@ -123,7 +123,8 @@ class SpikeLevelDP:
             return privatized
         else:
             keep_mask = self._rng.random(spikes.shape) < self.keep_prob
-            return (spikes * keep_mask).astype(spikes.dtype)
+            masked_spikes: np.ndarray[Any, Any] = (spikes * keep_mask).astype(spikes.dtype)
+            return masked_spikes
 
     @property
     def per_step_epsilon(self) -> float:
@@ -149,8 +150,8 @@ class MembershipAudit:
 
     def audit(
         self,
-        member_samples: list[np.ndarray],
-        non_member_samples: list[np.ndarray],
+        member_samples: list[np.ndarray[Any, Any]],
+        non_member_samples: list[np.ndarray[Any, Any]],
     ) -> dict[str, Any]:
         """Run membership inference audit.
 
