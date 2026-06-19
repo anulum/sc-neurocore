@@ -91,6 +91,7 @@ from sc_neurocore.studio.training import (
 )
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
 from sc_neurocore.studio.platform import (
+    AuditSinkError,
     InMemoryAuditSink,
     JsonlAuditSink,
     PolicyGateway,
@@ -731,18 +732,24 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             else:
                 method, path_template = route_signature
                 policy = studio_route_policies.policy_for(method, path_template)
-                decision = studio_policy_gateway.authorize(
-                    policy,
-                    principal=_studio_principal_from_headers(request.headers),
-                    route=path_template,
-                    request_id=request_id,
-                )
-                if decision.allowed:
-                    response = await call_next(request)
-                else:
+                try:
+                    decision = studio_policy_gateway.authorize(
+                        policy,
+                        principal=_studio_principal_from_headers(request.headers),
+                        route=path_template,
+                        request_id=request_id,
+                    )
+                    if decision.allowed:
+                        response = await call_next(request)
+                    else:
+                        response = JSONResponse(
+                            {"detail": decision.reason},
+                            status_code=decision.status_code,
+                        )
+                except AuditSinkError:
                     response = JSONResponse(
-                        {"detail": decision.reason},
-                        status_code=decision.status_code,
+                        {"detail": "audit_append_failed"},
+                        status_code=503,
                     )
         else:
             response = await call_next(request)
@@ -771,6 +778,10 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             return studio_capabilities.health(capability_id).to_public_dict()
         except KeyError as exc:
             raise HTTPException(404, f"Capability '{capability_id}' not found") from exc
+
+    @app.get("/api/studio/audit/status")
+    def api_studio_audit_status() -> dict[str, bool | str | None]:
+        return studio_audit_sink.status().to_public_dict()
 
     # --- Templates & Models ---
     @app.get("/api/templates")

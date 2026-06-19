@@ -22,6 +22,8 @@ def _policy_contract() -> dict[str, Any]:
         from sc_neurocore.studio.platform.policy import (  # noqa: PLC0415
             AuditEvent,
             AUDIT_SCHEMA_VERSION,
+            AuditSinkError,
+            AuditSinkStatus,
             InMemoryAuditSink,
             JsonlAuditSink,
             PolicyGateway,
@@ -36,6 +38,8 @@ def _policy_contract() -> dict[str, Any]:
     return {
         "AuditEvent": AuditEvent,
         "AUDIT_SCHEMA_VERSION": AUDIT_SCHEMA_VERSION,
+        "AuditSinkError": AuditSinkError,
+        "AuditSinkStatus": AuditSinkStatus,
         "InMemoryAuditSink": InMemoryAuditSink,
         "JsonlAuditSink": JsonlAuditSink,
         "PolicyGateway": PolicyGateway,
@@ -201,6 +205,63 @@ def test_jsonl_audit_sink_exposes_configured_path(tmp_path: Path) -> None:
     audit_sink = contract["JsonlAuditSink"](audit_path)
 
     assert audit_sink.path == audit_path
+
+
+def test_in_memory_audit_sink_reports_non_persistent_status() -> None:
+    contract = _policy_contract()
+    audit_sink = contract["InMemoryAuditSink"]()
+
+    status = audit_sink.status()
+
+    assert status.configured is False
+    assert status.healthy is True
+    assert status.path_configured is False
+    assert status.sink_type == "memory"
+    assert status.last_error is None
+    assert status.to_public_dict() == {
+        "configured": False,
+        "healthy": True,
+        "last_error": None,
+        "path_configured": False,
+        "sink_type": "memory",
+    }
+
+
+def test_jsonl_audit_sink_reports_healthy_status(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_sink = contract["JsonlAuditSink"](tmp_path / "studio-audit.jsonl")
+
+    status = audit_sink.status()
+
+    assert status.configured is True
+    assert status.healthy is True
+    assert status.path_configured is True
+    assert status.sink_type == "jsonl"
+    assert status.last_error is None
+
+
+def test_jsonl_audit_sink_reports_failed_append_policy(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_sink = contract["JsonlAuditSink"](tmp_path)
+
+    with pytest.raises(contract["AuditSinkError"], match="append failed"):
+        audit_sink.record(
+            contract["AuditEvent"](
+                action="studio.simulate.run",
+                route="/api/simulate",
+                principal_id="operator-7",
+                decision="allow",
+                reason="authorized",
+            )
+        )
+
+    status = audit_sink.status()
+    assert status.configured is True
+    assert status.healthy is False
+    assert status.path_configured is True
+    assert status.sink_type == "jsonl"
+    assert status.last_error is not None
+    assert "IsADirectoryError" in status.last_error
 
 
 def test_policy_gateway_accepts_jsonl_audit_sink(tmp_path: Path) -> None:

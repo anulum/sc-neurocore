@@ -398,6 +398,48 @@ def test_studio_app_records_policy_events_to_configured_audit_log(tmp_path: Path
     assert datetime.fromisoformat(row["timestamp_utc"].replace("Z", "+00:00")).tzinfo is UTC
 
 
+def test_studio_app_exposes_safe_audit_status(tmp_path: Path) -> None:
+    audit_path = tmp_path / "audit" / "studio.jsonl"
+    app = create_app(runtime_settings=StudioRuntimeSettings(audit_log_path=str(audit_path)))
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.get("/api/studio/audit/status")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "configured": True,
+        "healthy": True,
+        "last_error": None,
+        "path_configured": True,
+        "sink_type": "jsonl",
+    }
+    assert str(tmp_path) not in response.text
+
+
+def test_studio_app_fails_closed_when_policy_audit_append_fails(tmp_path: Path) -> None:
+    app = create_app(
+        runtime_settings=StudioRuntimeSettings(
+            audit_log_path=str(tmp_path),
+            enforce_route_policies=True,
+        )
+    )
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.post(
+        "/api/simulate",
+        headers={"x-studio-principal": "operator-1", "x-studio-roles": "studio.viewer"},
+        json={},
+    )
+    status_response = client.get("/api/studio/audit/status")
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "audit_append_failed"
+    assert status_response.status_code == 200
+    assert status_response.json()["healthy"] is False
+    assert "IsADirectoryError" in status_response.json()["last_error"]
+    assert str(tmp_path) not in status_response.text
+
+
 def test_studio_app_correlates_policy_audit_with_request_id(tmp_path: Path) -> None:
     audit_path = tmp_path / "audit" / "studio.jsonl"
     app = create_app(
