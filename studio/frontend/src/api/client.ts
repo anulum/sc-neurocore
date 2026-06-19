@@ -83,6 +83,29 @@ export interface CompareResponse { a: SimulateResponse; b: SimulateResponse; }
 
 export interface FreqResponse { frequencies_hz: number[]; rates: number[]; amplitude: number; }
 
+export interface CapabilityRequirement {
+  name: string;
+  available: boolean;
+  detail: string;
+}
+
+export interface StudioCapability {
+  capability_id: string;
+  title: string;
+  summary: string;
+  status: "stable" | "experimental" | "degraded" | "unavailable";
+  healthy: boolean;
+  message: string;
+  requirements: CapabilityRequirement[];
+  evidence: string[];
+  ui_placement: string;
+  docs_path: string | null;
+}
+
+export interface StudioCapabilitiesResponse {
+  capabilities: StudioCapability[];
+}
+
 const BASE = "/api";
 
 async function json<T>(r: Response): Promise<T> {
@@ -109,6 +132,8 @@ export const fetchModels = () => get<ModelSummary[]>("/models");
 export const fetchModelDetail = (name: string) => get<ModelDetail>(`/models/${name}`);
 export const fetchPresets = () => get<PresetSummary[]>("/presets");
 export const fetchPreset = (id: string) => get<Record<string, unknown>>(`/presets/${id}`);
+export const fetchStudioCapabilities = () =>
+  get<StudioCapabilitiesResponse>("/studio/capabilities");
 
 export const simulateODE = (req: Record<string, unknown>) => post<SimulateResponse>("/simulate", req);
 export const simulateModel = (req: Record<string, unknown>) => post<SimulateResponse>("/models/simulate", req);

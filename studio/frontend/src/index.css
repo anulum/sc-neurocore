@@ -65,6 +65,33 @@ body {
   box-shadow: 0 0 6px var(--accent);
 }
 
+.capability-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+  max-width: 230px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--success);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.capability-strip-warning {
+  color: var(--warning);
+}
+
+.capability-strip-detail {
+  overflow: hidden;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+}
+
 .header-spacer { flex: 1; }
 
 .header-stats {
