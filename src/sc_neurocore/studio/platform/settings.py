@@ -13,6 +13,7 @@ from __future__ import annotations
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 
 DEFAULT_STUDIO_CORS_ORIGINS: tuple[str, ...] = (
     "http://127.0.0.1:8001",
@@ -21,12 +22,21 @@ DEFAULT_STUDIO_CORS_ORIGINS: tuple[str, ...] = (
     "http://localhost:5173",
 )
 
+DEFAULT_STUDIO_HTTP_SECURITY_HEADERS: Mapping[str, str] = MappingProxyType(
+    {
+        "x-content-type-options": "nosniff",
+        "referrer-policy": "no-referrer",
+        "x-frame-options": "DENY",
+    }
+)
+
 
 @dataclass(frozen=True, slots=True)
 class StudioRuntimeSettings:
     """Runtime settings consumed by the Studio FastAPI application."""
 
     cors_allowed_origins: tuple[str, ...] = DEFAULT_STUDIO_CORS_ORIGINS
+    http_security_headers: Mapping[str, str] = DEFAULT_STUDIO_HTTP_SECURITY_HEADERS
 
     def __post_init__(self) -> None:
         """Validate settings that affect Studio security boundaries."""
@@ -35,6 +45,10 @@ class StudioRuntimeSettings:
             raise ValueError("Studio CORS origins must not be empty.")
         if any(origin == "*" for origin in self.cors_allowed_origins):
             raise ValueError("Studio runtime settings reject wildcard CORS origins.")
+        if any(not name.strip() for name in self.http_security_headers):
+            raise ValueError("Studio security header names must not be empty.")
+        if any(not value.strip() for value in self.http_security_headers.values()):
+            raise ValueError("Studio security header values must not be empty.")
 
 
 def build_default_studio_runtime_settings(

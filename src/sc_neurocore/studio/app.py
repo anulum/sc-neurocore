@@ -18,7 +18,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
 from pydantic import BaseModel, Field, StringConstraints
@@ -664,6 +664,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.middleware("http")
+    async def add_studio_security_headers(request: Request, call_next: Callable[[Request], Any]) -> Any:
+        response = await call_next(request)
+        for name, value in settings.http_security_headers.items():
+            response.headers.setdefault(name, value)
+        return response
 
     # --- Health ---
     @app.get("/api/health")
