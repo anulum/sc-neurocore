@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 import numpy as np
 
@@ -85,8 +86,8 @@ class DiagnosticReport:
 
 def diagnose(
     layer_sizes: list[tuple[int, int]],
-    weights: list[np.ndarray] | None = None,
-    spike_rates: list[np.ndarray] | None = None,
+    weights: list[np.ndarray[Any, Any]] | None = None,
+    spike_rates: list[np.ndarray[Any, Any]] | None = None,
     target: str = "ice40",
     bitstream_length: int = 256,
 ) -> DiagnosticReport:
@@ -183,7 +184,7 @@ def _check_hardware(
         )
 
 
-def _check_weights(report: DiagnosticReport, weights: list[np.ndarray]) -> None:
+def _check_weights(report: DiagnosticReport, weights: list[np.ndarray[Any, Any]]) -> None:
     for i, w in enumerate(weights):
         # Near-zero weights (dead synapses)
         sparsity = float(np.mean(np.abs(w) < 1e-6))
@@ -226,7 +227,7 @@ def _check_weights(report: DiagnosticReport, weights: list[np.ndarray]) -> None:
             )
 
 
-def _check_spike_rates(report: DiagnosticReport, spike_rates: list[np.ndarray]) -> None:
+def _check_spike_rates(report: DiagnosticReport, spike_rates: list[np.ndarray[Any, Any]]) -> None:
     for i, rates in enumerate(spike_rates):
         dead = float(np.mean(rates < 0.01))
         saturated = float(np.mean(rates > 0.95))
