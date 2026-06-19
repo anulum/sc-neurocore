@@ -185,6 +185,12 @@ results/posner_external_data/orca/*.xyz
 results/posner_external_data/orca/orca_env.sh
 results/posner_external_data/vertex/**/input_from_local_cycle_snapshot.xyz
 results/posner_external_data/vertex/**/output*/
+# ML350 research-lane raw ORCA outputs. The curated provenance record (extracted
+# JSON parameters, manifests, inputs, run scripts, READMEs, SHA256SUMS, evidence
+# notes) stays tracked; raw .out/.xyz outputs live on ML350 under
+# /mnt/data_sas/sc-neurocore-orca-runs/ and are verifiable via SHA256SUMS.
+results/posner_external_data/ml350/**/*.out
+results/posner_external_data/ml350/**/*.xyz
 
 # Local downloads from Vertex/GCS jobs. Keep curated summaries or fixtures in
 # tracked docs/results paths; raw job payloads, checkpoints, and archives do not
