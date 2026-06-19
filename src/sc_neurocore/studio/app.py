@@ -92,6 +92,7 @@ from sc_neurocore.studio.training import (
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
 from sc_neurocore.studio.platform import (
     InMemoryAuditSink,
+    JsonlAuditSink,
     PolicyGateway,
     Principal,
     StudioRuntimeSettings,
@@ -691,7 +692,11 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     settings = runtime_settings or build_default_studio_runtime_settings()
     studio_capabilities = build_default_studio_capability_registry()
     studio_route_policies = build_default_studio_route_policy_registry()
-    studio_audit_sink = InMemoryAuditSink()
+    studio_audit_sink = (
+        JsonlAuditSink(Path(settings.audit_log_path))
+        if settings.audit_log_path is not None
+        else InMemoryAuditSink()
+    )
     studio_policy_gateway = PolicyGateway(audit_sink=studio_audit_sink)
     app.state.studio_runtime_settings = settings
     app.state.studio_capabilities = studio_capabilities

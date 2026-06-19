@@ -51,6 +51,7 @@ class StudioRuntimeSettings:
     request_id_header: str = "x-request-id"
     max_request_body_bytes: int = DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES
     enforce_route_policies: bool = False
+    audit_log_path: str | None = None
 
     def __post_init__(self) -> None:
         """Validate settings that affect Studio security boundaries."""
@@ -75,6 +76,8 @@ class StudioRuntimeSettings:
             raise ValueError("Studio request ID header must not be empty.")
         if self.max_request_body_bytes <= 0:
             raise ValueError("Studio request body limit must be positive.")
+        if self.audit_log_path is not None and not self.audit_log_path.strip():
+            raise ValueError("Studio audit log path must not be empty.")
 
 
 def build_default_studio_runtime_settings(
@@ -88,6 +91,7 @@ def build_default_studio_runtime_settings(
     raw_hosts = source.get("SC_NEUROCORE_STUDIO_ALLOWED_HOSTS")
     raw_max_request_body_bytes = source.get("SC_NEUROCORE_STUDIO_MAX_REQUEST_BODY_BYTES")
     raw_enforce_route_policies = source.get("SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES")
+    raw_audit_log_path = source.get("SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH")
     origins = (
         DEFAULT_STUDIO_CORS_ORIGINS
         if raw_origins is None or not raw_origins.strip()
@@ -125,10 +129,15 @@ def build_default_studio_runtime_settings(
         enforce_route_policies = True
     else:
         raise ValueError("Studio route policy enforcement must be a boolean flag.")
+    audit_log_path = (
+        None if raw_audit_log_path is None or not raw_audit_log_path.strip()
+        else raw_audit_log_path.strip()
+    )
     return StudioRuntimeSettings(
         cors_allowed_origins=origins,
         websocket_allowed_origins=websocket_origins,
         allowed_hosts=hosts,
         max_request_body_bytes=max_request_body_bytes,
         enforce_route_policies=enforce_route_policies,
+        audit_log_path=audit_log_path,
     )

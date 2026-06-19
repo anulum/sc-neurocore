@@ -10,8 +10,11 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
+from typing import Protocol
 
 
 class RouteVisibility(str, Enum):
@@ -66,6 +69,24 @@ class AuditEvent:
     decision: str
     reason: str
 
+    def to_json_dict(self) -> dict[str, str | None]:
+        """Return a JSON-serializable representation of the audit event."""
+
+        return {
+            "action": self.action,
+            "decision": self.decision,
+            "principal_id": self.principal_id,
+            "reason": self.reason,
+            "route": self.route,
+        }
+
+
+class AuditSink(Protocol):
+    """Append-only sink for Studio policy audit events."""
+
+    def record(self, event: AuditEvent) -> None:
+        """Record a Studio policy audit event."""
+
 
 class InMemoryAuditSink:
     """Append-only in-memory audit sink for local Studio policy tests."""
@@ -83,6 +104,31 @@ class InMemoryAuditSink:
         """Record a Studio policy audit event."""
 
         self._events.append(event)
+
+
+class JsonlAuditSink:
+    """Append-only JSONL audit sink for Studio policy decisions."""
+
+    def __init__(self, path: Path) -> None:
+        self._path = path
+
+    @property
+    def path(self) -> Path:
+        """Return the configured JSONL audit log path."""
+
+        return self._path
+
+    def record(self, event: AuditEvent) -> None:
+        """Append a Studio policy audit event as one JSON object."""
+
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        row = json.dumps(
+            event.to_json_dict(),
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        with self._path.open("a", encoding="utf-8") as audit_file:
+            audit_file.write(f"{row}\n")
 
 
 class RoutePolicyRegistry:
@@ -122,7 +168,7 @@ class RoutePolicyRegistry:
 class PolicyGateway:
     """Fail-closed Studio route authorization gateway."""
 
-    def __init__(self, audit_sink: InMemoryAuditSink) -> None:
+    def __init__(self, audit_sink: AuditSink) -> None:
         self._audit_sink = audit_sink
 
     def authorize(
