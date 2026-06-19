@@ -20,6 +20,8 @@ Applied to SNNs: no framework provides this as a built-in scheduler.
 
 from __future__ import annotations
 
+from typing import Any
+
 from dataclasses import dataclass
 
 import numpy as np
@@ -71,7 +73,7 @@ class SpikeCurriculum:
         return int(self.start_timesteps + p * (self.end_timesteps - self.start_timesteps))
 
     def rate_scale(self, epoch: int) -> float:
-        """Firing rate multiplier for this epoch."""
+        """Return the firing-rate multiplier for the given epoch."""
         p = self._progress(epoch)
         return self.start_rate_scale + p * (self.end_rate_scale - self.start_rate_scale)
 
@@ -80,7 +82,9 @@ class SpikeCurriculum:
         p = self._progress(epoch)
         return self.start_noise + p * (self.end_noise - self.start_noise)
 
-    def apply_to_spikes(self, spikes: np.ndarray, epoch: int, seed: int = 0) -> np.ndarray:
+    def apply_to_spikes(
+        self, spikes: np.ndarray[Any, Any], epoch: int, seed: int = 0
+    ) -> np.ndarray[Any, Any]:
         """Apply curriculum-scheduled transforms to a spike tensor.
 
         Parameters
