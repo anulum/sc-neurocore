@@ -34,6 +34,7 @@ from sc_neurocore.studio.platform.policy import (
     build_default_studio_route_policy_registry,
 )
 from sc_neurocore.studio.platform.settings import (
+    DEFAULT_STUDIO_AUDIT_RETAINED_FILES,
     DEFAULT_STUDIO_ALLOWED_HOSTS,
     DEFAULT_STUDIO_CORS_ORIGINS,
     DEFAULT_STUDIO_HTTP_SECURITY_HEADERS,
@@ -63,6 +64,7 @@ __all__ = [
     "RoutePolicy",
     "RoutePolicyRegistry",
     "RouteVisibility",
+    "DEFAULT_STUDIO_AUDIT_RETAINED_FILES",
     "DEFAULT_STUDIO_ALLOWED_HOSTS",
     "DEFAULT_STUDIO_CORS_ORIGINS",
     "DEFAULT_STUDIO_HTTP_SECURITY_HEADERS",

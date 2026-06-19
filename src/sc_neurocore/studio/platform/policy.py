@@ -159,8 +159,16 @@ class InMemoryAuditSink:
 class JsonlAuditSink:
     """Append-only JSONL audit sink for Studio policy decisions."""
 
-    def __init__(self, path: Path) -> None:
+    def __init__(
+        self,
+        path: Path,
+        *,
+        rotation_bytes: int | None = None,
+        retained_files: int = 5,
+    ) -> None:
         self._path = path
+        self._rotation_bytes = rotation_bytes
+        self._retained_files = retained_files
         self._last_error: str | None = None
 
     @property
@@ -174,7 +182,9 @@ class JsonlAuditSink:
 
         try:
             self._path.parent.mkdir(parents=True, exist_ok=True)
-            event_row = self._build_row(event)
+            previous_event_hash = self._previous_event_hash()
+            self._rotate_if_needed()
+            event_row = self._build_row(event, previous_event_hash)
             row = json.dumps(
                 event_row,
                 separators=(",", ":"),
@@ -198,11 +208,31 @@ class JsonlAuditSink:
             sink_type="jsonl",
         )
 
-    def _build_row(self, event: AuditEvent) -> dict[str, str | None]:
+    def _build_row(
+        self,
+        event: AuditEvent,
+        previous_event_hash: str | None,
+    ) -> dict[str, str | None]:
         row = event.to_json_dict()
-        row["previous_event_hash"] = self._previous_event_hash()
+        row["previous_event_hash"] = previous_event_hash
         row["event_hash"] = self._event_hash(row)
         return row
+
+    def _rotate_if_needed(self) -> None:
+        if self._rotation_bytes is None or self._retained_files == 0:
+            return
+        if not self._path.exists() or self._path.stat().st_size < self._rotation_bytes:
+            return
+        oldest_path = self._rotated_path(self._retained_files)
+        oldest_path.unlink(missing_ok=True)
+        for index in range(self._retained_files - 1, 0, -1):
+            source = self._rotated_path(index)
+            if source.exists():
+                source.replace(self._rotated_path(index + 1))
+        self._path.replace(self._rotated_path(1))
+
+    def _rotated_path(self, index: int) -> Path:
+        return self._path.with_name(f"{self._path.name}.{index}")
 
     def _previous_event_hash(self) -> str | None:
         if not self._path.exists():
