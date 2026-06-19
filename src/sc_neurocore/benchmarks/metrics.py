@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -38,7 +39,7 @@ class BenchmarkResult:
     timesteps: int
     latency_ms: float
     energy_nj: float = 0.0
-    extra: dict = field(default_factory=dict)
+    extra: dict[str, Any] = field(default_factory=dict)
 
     def to_neurobench_json(self) -> str:
         """Export as NeuroBench-compatible JSON."""
@@ -83,10 +84,10 @@ class BenchmarkResult:
 
 
 def compute_metrics(
-    predictions: np.ndarray,
-    targets: np.ndarray,
-    spike_counts: np.ndarray | None = None,
-    weights: list[np.ndarray] | None = None,
+    predictions: np.ndarray[Any, Any],
+    targets: np.ndarray[Any, Any],
+    spike_counts: np.ndarray[Any, Any] | None = None,
+    weights: list[np.ndarray[Any, Any]] | None = None,
     timesteps: int = 1,
     latency_ms: float = 0.0,
     task: str = "classification",
