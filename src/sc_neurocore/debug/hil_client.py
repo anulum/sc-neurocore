@@ -24,7 +24,7 @@ import io
 import json
 import threading
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -83,7 +83,7 @@ class LayerAggregator:
     """Per-layer running statistics collector."""
 
     def __init__(self) -> None:
-        self._layers: dict[str, dict] = {}
+        self._layers: dict[str, dict[str, Any]] = {}
         self._lock = threading.Lock()
 
     def record(self, evt: SpikeEvent) -> None:
@@ -109,26 +109,26 @@ class LayerAggregator:
             if evt.correlation > ls["max_correlation"]:
                 ls["max_correlation"] = evt.correlation
 
-    def get(self, layer_id: str) -> Optional[dict]:
+    def get(self, layer_id: str) -> Optional[dict[str, Any]]:
         with self._lock:
             ls = self._layers.get(layer_id)
             return dict(ls) if ls else None
 
-    def all(self) -> dict[str, dict]:
+    def all(self) -> dict[str, dict[str, Any]]:
         with self._lock:
             return {k: dict(v) for k, v in self._layers.items()}
 
     @staticmethod
-    def mean_correlation(ls: dict) -> float:
+    def mean_correlation(ls: dict[str, Any]) -> float:
         if ls["event_count"] == 0:
             return 0.0
-        return ls["sum_correlation"] / ls["event_count"]
+        return float(ls["sum_correlation"] / ls["event_count"])
 
     @staticmethod
-    def mean_precision(ls: dict) -> float:
+    def mean_precision(ls: dict[str, Any]) -> float:
         if ls["event_count"] == 0:
             return 0.0
-        return ls["sum_precision"] / ls["event_count"]
+        return float(ls["sum_precision"] / ls["event_count"])
 
 
 @dataclass

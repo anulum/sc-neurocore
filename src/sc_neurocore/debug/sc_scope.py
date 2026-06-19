@@ -106,7 +106,7 @@ class TransportBackend:
         self._sim_rng = None
         self._sim_step = 0
 
-    def read_bitstream(self, num_words: int, layer_id: int = 0) -> Optional[np.ndarray]:
+    def read_bitstream(self, num_words: int, layer_id: int = 0) -> Optional[np.ndarray[Any, Any]]:
         """Read packed bitstream words from the target.
 
         Returns u32-packed words, or None on timeout/error.
@@ -120,7 +120,7 @@ class TransportBackend:
         # Hardware transports are registered by deployment-specific backends.
         return None
 
-    def _sim_read(self, num_words: int, layer_id: int) -> np.ndarray:
+    def _sim_read(self, num_words: int, layer_id: int) -> np.ndarray[Any, Any]:
         """Generate simulated bitstream data."""
         assert self._sim_rng is not None
         self._sim_step += 1
@@ -147,7 +147,7 @@ class BitstreamSample:
     timestamp_ns: int
     layer_id: int
     neuron_id: int
-    words: np.ndarray  # u32-packed bitstream
+    words: np.ndarray[Any, Any]  # u32-packed bitstream
     sample_index: int = 0
 
     @property
@@ -172,7 +172,7 @@ class BitstreamSample:
         p = self.density
         if p <= 0.0 or p >= 1.0:
             return 0.0
-        return -(p * np.log2(p) + (1 - p) * np.log2(1 - p)) * self.bit_length
+        return float(-(p * np.log2(p) + (1 - p) * np.log2(1 - p)) * self.bit_length)
 
 
 # ── Live Analyzer ────────────────────────────────────────────────────
@@ -231,7 +231,7 @@ class AnalysisWindow:
         return (len(self.timestamps) - 1) * 1e9 / dt_ns
 
 
-def _compute_scc_python(a: np.ndarray, b: np.ndarray) -> float:
+def _compute_scc_python(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
     """Pure-Python Alaghi-Hayes SCC (reference implementation + fallback)."""
     total_bits = len(a) * 32
     ones_a = sum(bin(int(w)).count("1") for w in a)
@@ -254,7 +254,7 @@ def _compute_scc_python(a: np.ndarray, b: np.ndarray) -> float:
     return max(-1.0, min(1.0, numerator / denominator))
 
 
-def compute_scc(a: np.ndarray, b: np.ndarray) -> float:
+def compute_scc(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
     """Stochastic Computing Correlation between two u32-packed bitstreams.
 
     Dispatches to the Rust ``stochastic_doctor_core.py_scc_packed`` when the

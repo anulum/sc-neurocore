@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -78,7 +79,7 @@ def find_divergence(
 def spike_diff(
     trace_a: ExecutionTrace,
     trace_b: ExecutionTrace,
-) -> dict:
+) -> dict[str, Any]:
     """Summary of spike differences between two traces.
 
     Returns

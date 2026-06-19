@@ -16,6 +16,7 @@ chains through synaptic connections, compare two runs.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 
@@ -44,9 +45,9 @@ class ExecutionTrace:
 
     n_neurons: int
     n_steps: int
-    spikes: np.ndarray
-    voltages: np.ndarray
-    currents: np.ndarray
+    spikes: np.ndarray[Any, Any]
+    voltages: np.ndarray[Any, Any]
+    currents: np.ndarray[Any, Any]
     population_labels: list[str] = field(default_factory=list)
     population_ranges: list[tuple[int, int]] = field(default_factory=list)
 
@@ -56,11 +57,12 @@ class ExecutionTrace:
         return int(self.spikes.sum())
 
     @property
-    def firing_rates(self) -> np.ndarray:
+    def firing_rates(self) -> np.ndarray[Any, Any]:
         """Per-neuron firing rate (spikes per step)."""
-        return self.spikes.mean(axis=0)
+        rates: np.ndarray[Any, Any] = self.spikes.mean(axis=0)
+        return rates
 
-    def neuron_trace(self, neuron_id: int) -> dict:
+    def neuron_trace(self, neuron_id: int) -> dict[str, np.ndarray[Any, Any]]:
         """Extract full trace for one neuron."""
         return {
             "spikes": self.spikes[:, neuron_id],
@@ -69,11 +71,11 @@ class ExecutionTrace:
             "spike_times": np.where(self.spikes[:, neuron_id] > 0)[0],
         }
 
-    def spike_times(self, neuron_id: int) -> np.ndarray:
+    def spike_times(self, neuron_id: int) -> np.ndarray[Any, Any]:
         """Timesteps when a neuron spiked."""
         return np.where(self.spikes[:, neuron_id] > 0)[0]
 
-    def population_spikes(self, pop_label: str) -> np.ndarray:
+    def population_spikes(self, pop_label: str) -> np.ndarray[Any, Any]:
         """Spike matrix for one population."""
         for label, (start, end) in zip(self.population_labels, self.population_ranges):
             if label == pop_label:

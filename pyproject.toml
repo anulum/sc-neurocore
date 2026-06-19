@@ -282,7 +282,7 @@ module = [
 
  'sc_neurocore.compiler.*',
   'sc_neurocore.conversion.*',
-  'sc_neurocore.debug.*',
+
 
 
 

@@ -29,7 +29,7 @@ class HILServerDaemon:
     """Manages the background execution of the Go HIL Debugger service."""
 
     port: int = 8081
-    _process: Optional[subprocess.Popen] = None
+    _process: Optional[subprocess.Popen[bytes]] = None
     _go_dir: Path = Path(__file__).parent.parent / "accel" / "go" / "services" / "hil_debugger"
 
     def __post_init__(self) -> None:
