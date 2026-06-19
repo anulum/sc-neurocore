@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 153
+expected_file_count = 155
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -476,6 +476,14 @@ rationale = "Public published neural decoder/encoder reference implementations (
 [[file]]
 path = "src/sc_neurocore/bio/transcriptomic.py"
 rationale = "Public single-cell transcriptomic foundation-model interfaces (scKG-BERT, Geneformer)."
+
+[[file]]
+path = "src/sc_neurocore/augmentation/spike_augment.py"
+rationale = "Public composable spike-domain data augmentation transforms."
+
+[[file]]
+path = "src/sc_neurocore/augmentation/curriculum.py"
+rationale = "Public curriculum-learning scheduler for SNN training."
 
 [[file]]
 path = "src/sc_neurocore/spike_gnn/spike_gnn.py"
