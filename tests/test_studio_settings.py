@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 import pytest
 
 fastapi = pytest.importorskip("fastapi")
@@ -65,6 +67,17 @@ def test_studio_runtime_settings_default_security_headers_are_fail_closed() -> N
     assert settings.http_security_headers["x-frame-options"] == "DENY"
 
 
+def test_studio_runtime_settings_default_request_id_header_is_standard() -> None:
+    settings = build_default_studio_runtime_settings(env={})
+
+    assert settings.request_id_header == "x-request-id"
+
+
+def test_studio_runtime_settings_rejects_empty_request_id_header() -> None:
+    with pytest.raises(ValueError, match="request ID header"):
+        StudioRuntimeSettings(request_id_header="")
+
+
 def test_studio_runtime_settings_rejects_empty_security_header_name() -> None:
     with pytest.raises(ValueError, match="security header names"):
         StudioRuntimeSettings(http_security_headers={"": "nosniff"})
@@ -83,6 +96,33 @@ def test_studio_app_adds_default_security_headers_to_health_response() -> None:
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["referrer-policy"] == "no-referrer"
     assert response.headers["x-frame-options"] == "DENY"
+
+
+def test_studio_app_generates_request_id_header() -> None:
+    client = TestClient(create_app())
+
+    response = client.get("/api/health")
+
+    request_id = response.headers["x-request-id"]
+    assert UUID(request_id).version == 4
+
+
+def test_studio_app_preserves_valid_inbound_request_id() -> None:
+    client = TestClient(create_app())
+
+    response = client.get("/api/health", headers={"x-request-id": "studio-run-42"})
+
+    assert response.headers["x-request-id"] == "studio-run-42"
+
+
+def test_studio_app_replaces_invalid_inbound_request_id() -> None:
+    client = TestClient(create_app())
+
+    response = client.get("/api/health", headers={"x-request-id": "bad request id"})
+
+    request_id = response.headers["x-request-id"]
+    assert request_id != "bad request id"
+    assert UUID(request_id).version == 4
 
 
 def test_studio_app_cors_preflight_allows_configured_origin() -> None:

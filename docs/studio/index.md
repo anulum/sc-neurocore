@@ -76,6 +76,9 @@ runtime features:
 - The backend adds default HTTP hardening headers to API responses:
   `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and
   `X-Frame-Options: DENY`.
+- Every HTTP response carries an `X-Request-ID` correlation header. Valid
+  inbound request IDs are preserved; malformed values are replaced with a
+  server-generated UUID.
 
 The policy gateway is intentionally a platform contract first. Existing public
 health and capability routes stay backward compatible while protected route
