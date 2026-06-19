@@ -291,7 +291,6 @@ module = [
 
 
 
- 'sc_neurocore.training.*',
 
 ]
 disallow_any_generics = false

@@ -153,7 +153,8 @@ class DelayLinear(nn.Module):
         output = output.unsqueeze(0).expand(batch_size, -1)
         if squeeze:
             output = output.squeeze(0)
-        return output
+        result: torch.Tensor = output
+        return result
 
     @property
     def delays_int(self) -> torch.Tensor:

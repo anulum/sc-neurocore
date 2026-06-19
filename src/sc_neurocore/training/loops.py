@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Tuple
+from typing import Any, Callable, Tuple
 
 import torch
 from torch.utils.data import DataLoader
@@ -45,10 +45,10 @@ def auto_device() -> torch.device:
 
 def train_epoch(
     model: torch.nn.Module,
-    loader: DataLoader,
+    loader: DataLoader[Any],
     optimizer: torch.optim.Optimizer,
     n_timesteps: int,
-    loss_fn: Callable = spike_count_loss,
+    loss_fn: Callable[..., torch.Tensor] = spike_count_loss,
     device: str | torch.device = "cpu",
     max_grad_norm: float | None = None,
     flatten_input: bool = True,
@@ -92,9 +92,9 @@ def train_epoch(
 @torch.no_grad()
 def evaluate(
     model: torch.nn.Module,
-    loader: DataLoader,
+    loader: DataLoader[Any],
     n_timesteps: int,
-    loss_fn: Callable = spike_count_loss,
+    loss_fn: Callable[..., torch.Tensor] = spike_count_loss,
     device: str = "cpu",
     flatten_input: bool = True,
 ) -> Tuple[float, float]:

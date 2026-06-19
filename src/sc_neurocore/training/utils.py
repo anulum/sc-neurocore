@@ -10,13 +10,13 @@
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Any, Callable
 
 import torch
 import torch.nn as nn
 
 
-def reset_states(monitors: list | None = None) -> None:
+def reset_states(monitors: list[Any] | None = None) -> None:
     """Clear SpikeMonitor recorded data.
 
     Parameters
@@ -50,7 +50,7 @@ class SpikeMonitor:
 
     def __init__(self, model: nn.Module):
         self.model = model
-        self._hooks: list = []
+        self._hooks: list[Any] = []
         self._records: dict[str, list[torch.Tensor]] = {}
         self._attach()
 
@@ -61,7 +61,7 @@ class SpikeMonitor:
                 hook = module.register_forward_hook(self._make_hook(name))
                 self._hooks.append(hook)
 
-    def _make_hook(self, name: str) -> Callable:
+    def _make_hook(self, name: str) -> Callable[..., None]:
         def hook(module, input, output):  # type: ignore[no-untyped-def]
             # output is (spike, v_next) or (spike, v_next, a_next) etc.
             if isinstance(output, tuple) and len(output) >= 1:
@@ -90,7 +90,7 @@ class SpikeMonitor:
         self._records.clear()
 
 
-def model_info(model: nn.Module) -> dict:
+def model_info(model: nn.Module) -> dict[str, Any]:
     """Quick architecture summary for SNN models."""
     n_params = sum(p.numel() for p in model.parameters())
     n_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)

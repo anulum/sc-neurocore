@@ -21,7 +21,9 @@ except ImportError:
     HAS_TORCH = False
 
 if HAS_TORCH:
+    from .delay_linear import DelayLinear
     from .encoding import delta_encode, latency_encode, rate_encode
+    from .loops import auto_device, evaluate, train_epoch
     from .losses import (
         membrane_loss,
         spike_count_loss,
@@ -29,41 +31,23 @@ if HAS_TORCH:
         spike_l2_loss,
         spike_rate_loss,
     )
-    from .loops import auto_device, evaluate, train_epoch
     from .sc_correlation_regularizers import (
         correlation_matrix,
         correlation_penalty,
         pairwise_correlation_penalty,
     )
     from .sc_estimators import (
-        SCBitstreamSample,
-        SCBitstreamStatistics,
         DifferentiableSCConfig,
         RelaxedSCProduct,
         SampledSCProduct,
+        SCBitstreamSample,
+        SCBitstreamStatistics,
         estimate_bitstream_statistics,
         finite_difference_gradients,
         relaxed_sc_multiply,
         sample_sc_bitstreams,
         sampled_sc_multiply,
     )
-    from .stochastic_backprop import (
-        SCBackpropDesignSpace,
-        SCBackpropJointReport,
-        SCObjectiveBreakdown,
-        SCResourceProxy,
-        SCTrainingObjectiveConfig,
-        relaxed_sc_linear,
-        stochastic_backprop_joint_objective,
-        stochastic_training_objective,
-    )
-    from .stochastic_backprop_export import (
-        STOCHASTIC_BACKPROP_EXPORT_SCHEMA_VERSION,
-        build_stochastic_backprop_export_manifest,
-        write_stochastic_backprop_handoff_bundle,
-        write_stochastic_backprop_export_manifest,
-    )
-    from .utils import SpikeMonitor, model_info, population_decode, reset_states
     from .snn_modules import (
         AdExCell,
         ALIFCell,
@@ -79,7 +63,22 @@ if HAS_TORCH:
         SpikingNet,
         SynapticCell,
     )
-    from .delay_linear import DelayLinear
+    from .stochastic_backprop import (
+        SCBackpropDesignSpace,
+        SCBackpropJointReport,
+        SCObjectiveBreakdown,
+        SCResourceProxy,
+        SCTrainingObjectiveConfig,
+        relaxed_sc_linear,
+        stochastic_backprop_joint_objective,
+        stochastic_training_objective,
+    )
+    from .stochastic_backprop_export import (
+        STOCHASTIC_BACKPROP_EXPORT_SCHEMA_VERSION,
+        build_stochastic_backprop_export_manifest,
+        write_stochastic_backprop_export_manifest,
+        write_stochastic_backprop_handoff_bundle,
+    )
     from .surrogate import (
         SURROGATE_PATHS,
         atan_surrogate,
@@ -101,6 +100,7 @@ if HAS_TORCH:
         triangular_custom_op,
         triangular_legacy,
     )
+    from .utils import SpikeMonitor, model_info, population_decode, reset_states
 
 __all__ = [
     "HAS_TORCH",

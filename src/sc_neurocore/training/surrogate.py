@@ -35,20 +35,24 @@ def _heaviside(x: torch.Tensor) -> torch.Tensor:
 
 
 def _fast_sigmoid_grad(x: torch.Tensor, slope: float) -> torch.Tensor:
-    return slope / (1.0 + slope * x.abs()) ** 2
+    grad: torch.Tensor = slope / (1.0 + slope * x.abs()) ** 2
+    return grad
 
 
 def _superspike_grad(x: torch.Tensor, beta: float) -> torch.Tensor:
-    return 1.0 / (1.0 + beta * x.abs()) ** 2
+    grad: torch.Tensor = 1.0 / (1.0 + beta * x.abs()) ** 2
+    return grad
 
 
 def _atan_grad(x: torch.Tensor, alpha: float) -> torch.Tensor:
-    return alpha / (2.0 * (1.0 + (torch.pi * alpha * x / 2.0) ** 2))
+    grad: torch.Tensor = alpha / (2.0 * (1.0 + (torch.pi * alpha * x / 2.0) ** 2))
+    return grad
 
 
 def _sigmoid_grad(x: torch.Tensor, slope: float) -> torch.Tensor:
     sx = torch.sigmoid(slope * x)
-    return slope * sx * (1.0 - sx)
+    grad: torch.Tensor = slope * sx * (1.0 - sx)
+    return grad
 
 
 def _triangular_grad(x: torch.Tensor, width: float) -> torch.Tensor:

@@ -48,12 +48,12 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def _rho(x: np.ndarray) -> np.ndarray:
+def _rho(x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Hard-sigmoid activation (hardware-friendly, no exp)."""
     return np.clip(x, 0.0, 1.0)
 
 
-def _rho_prime(x: np.ndarray) -> np.ndarray:
+def _rho_prime(x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Derivative of hard-sigmoid."""
     return np.where((x > 0.0) & (x < 1.0), 1.0, 0.0)
 
@@ -79,8 +79,8 @@ class EPNetwork:
         self.rng = np.random.default_rng(rng_seed)
 
         # Xavier initialisation
-        self.weights: list[np.ndarray] = []
-        self.biases: list[np.ndarray] = []
+        self.weights: list[np.ndarray[Any, Any]] = []
+        self.biases: list[np.ndarray[Any, Any]] = []
         for i in range(self.n_layers - 1):
             fan_in = layer_sizes[i]
             fan_out = layer_sizes[i + 1]
@@ -94,7 +94,7 @@ class EPNetwork:
             sum(w.size + b.size for w, b in zip(self.weights, self.biases)),
         )
 
-    def _energy(self, states: list[np.ndarray]) -> float:
+    def _energy(self, states: list[np.ndarray[Any, Any]]) -> float:
         """Compute the Hopfield energy of the network."""
         E = 0.0
         for i in range(self.n_layers - 1):
@@ -104,13 +104,13 @@ class EPNetwork:
 
     def _settle(
         self,
-        x: np.ndarray,
+        x: np.ndarray[Any, Any],
         *,
         n_steps: int = 20,
         epsilon: float = 0.5,
         beta: float = 0.0,
-        target: np.ndarray | None = None,
-    ) -> list[np.ndarray]:
+        target: np.ndarray[Any, Any] | None = None,
+    ) -> list[np.ndarray[Any, Any]]:
         """Settle the network to (near) equilibrium.
 
         Parameters
@@ -127,7 +127,7 @@ class EPNetwork:
             Target output (required when beta > 0).
         """
         # Initialise states
-        states: list[np.ndarray] = [x.copy()]
+        states: list[np.ndarray[Any, Any]] = [x.copy()]
         for i in range(1, self.n_layers):
             states.append(np.zeros(self.layer_sizes[i], dtype=np.float64))
 
@@ -150,8 +150,8 @@ class EPNetwork:
 
     def train(
         self,
-        x_batch: np.ndarray,
-        y_batch: np.ndarray,
+        x_batch: np.ndarray[Any, Any],
+        y_batch: np.ndarray[Any, Any],
         *,
         beta: float = 1.0,
         lr: float = 0.01,
@@ -214,9 +214,9 @@ class EPNetwork:
             self.weights[i] += lr / (beta * batch_size) * dW[i]
             self.biases[i] += lr / (beta * batch_size) * dB[i]
 
-        return total_mse / batch_size
+        return float(total_mse / batch_size)
 
-    def predict(self, x: np.ndarray, n_settle: int = 20) -> np.ndarray:
+    def predict(self, x: np.ndarray[Any, Any], n_settle: int = 20) -> np.ndarray[Any, Any]:
         """Predict output by settling in free phase."""
         states = self._settle(x, n_steps=n_settle, beta=0.0)
         return _rho(states[-1])

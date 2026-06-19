@@ -35,7 +35,7 @@ def correlation_matrix(streams: torch.Tensor, *, eps: float = 1e-8) -> torch.Ten
     centered = data - data.mean(dim=1, keepdim=True)
     norm = torch.linalg.vector_norm(centered, ord=2, dim=1, keepdim=True).clamp_min(eps)
     normalized = centered / norm
-    corr = normalized @ normalized.T
+    corr: torch.Tensor = normalized @ normalized.T
     corr = corr.clamp(min=-1.0, max=1.0)
     indices = torch.arange(corr.shape[0], device=corr.device)
     corr[indices, indices] = 1.0
