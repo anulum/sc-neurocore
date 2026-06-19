@@ -90,7 +90,7 @@ class DetectedSpike:
     timestamp_s: float
     amplitude_uv: float
     unit_id: int = 0  # cluster assignment
-    waveform: Optional[np.ndarray] = None
+    waveform: Optional[np.ndarray[Any, Any]] = None
 
 
 @dataclass
@@ -104,19 +104,21 @@ class SpikeDetector:
 
     config: MEAConfig
     refractory_samples: int = 30
-    _noise_estimates: Optional[np.ndarray] = field(default=None, repr=False)
+    _noise_estimates: Optional[np.ndarray[Any, Any]] = field(default=None, repr=False)
 
-    def estimate_noise(self, voltage_data: np.ndarray) -> np.ndarray:
+    def estimate_noise(self, voltage_data: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Estimate per-channel noise from voltage data.
 
         Uses median absolute deviation (MAD) for robustness against spikes.
         voltage_data: shape (num_samples, num_channels)
         """
-        mad = np.median(np.abs(voltage_data), axis=0) / 0.6745
+        mad: np.ndarray[Any, Any] = np.median(np.abs(voltage_data), axis=0) / 0.6745
         self._noise_estimates = mad
         return mad
 
-    def detect(self, voltage_data: np.ndarray, snippet_ms: float = 2.0) -> List[DetectedSpike]:
+    def detect(
+        self, voltage_data: np.ndarray[Any, Any], snippet_ms: float = 2.0
+    ) -> List[DetectedSpike]:
         """Detect spikes in multi-channel voltage data.
 
         voltage_data: shape (num_samples, num_channels)
@@ -247,7 +249,7 @@ class AERToSCConverter:
     num_neurons: int = 128
     lfsr_seed: int = 0xACE1
 
-    def convert(self, events: List[AEREvent]) -> Dict[int, np.ndarray]:
+    def convert(self, events: List[AEREvent]) -> Dict[int, np.ndarray[Any, Any]]:
         """Convert AER events to per-neuron SC bitstreams."""
         # Count events per neuron in the window
         counts: Dict[int, int] = {}
@@ -262,7 +264,7 @@ class AERToSCConverter:
             bitstreams[nid] = self._lfsr_encode(prob, nid)
         return bitstreams
 
-    def _lfsr_encode(self, probability: float, neuron_id: int) -> np.ndarray:
+    def _lfsr_encode(self, probability: float, neuron_id: int) -> np.ndarray[Any, Any]:
         """LFSR-16 encoding (bit-compatible with core_engine)."""
         threshold = int(np.clip(probability, 0.0, 1.0) * 65535)
         seed = (self.lfsr_seed + neuron_id * 7919) & 0xFFFF
@@ -318,7 +320,7 @@ class SCToOptoEncoder:
 
     def encode(
         self,
-        bitstreams: Dict[int, np.ndarray],
+        bitstreams: Dict[int, np.ndarray[Any, Any]],
         t_start_ms: float = 0.0,
     ) -> List[OptogeneticPulse]:
         """Convert SC bitstreams to optogenetic pulses."""
@@ -375,9 +377,9 @@ class BiologicalSTDP:
         dt_ms = t_post - t_pre (positive = potentiation, negative = depression)
         """
         if dt_ms > 0:
-            return self.a_plus * np.exp(-dt_ms / self.tau_plus_ms)
+            return float(self.a_plus * np.exp(-dt_ms / self.tau_plus_ms))
         elif dt_ms < 0:
-            return -self.a_minus * np.exp(dt_ms / self.tau_minus_ms)
+            return float(-self.a_minus * np.exp(dt_ms / self.tau_minus_ms))
         return 0.0
 
     def update_weight(self, current_q88: int, dt_ms: float) -> int:
@@ -433,7 +435,7 @@ class CultureHealth:
     max_firing_rate_hz: float = 100.0
     burst_threshold_hz: float = 50.0
 
-    def assess(self, spike_counts: np.ndarray, duration_s: float) -> Dict[str, float]:
+    def assess(self, spike_counts: np.ndarray[Any, Any], duration_s: float) -> Dict[str, float]:
         """Assess culture health from spike activity.
 
         spike_counts: per-channel spike counts over duration_s
@@ -480,7 +482,7 @@ class BioHybridFrameResult:
     health: Dict[str, Any]
     spikes: List[DetectedSpike]
     aer_events: List[AEREvent]
-    bitstreams: Dict[int, np.ndarray]
+    bitstreams: Dict[int, np.ndarray[Any, Any]]
     opto_pulses: List[OptogeneticPulse]
 
     def __getitem__(self, key: str) -> Any:
@@ -525,7 +527,7 @@ class BioHybridSession:
 
     def process_frame(
         self,
-        voltage_data: np.ndarray,
+        voltage_data: np.ndarray[Any, Any],
         t_start_s: float = 0.0,
         stim_times_s: Optional[List[float]] = None,
     ) -> BioHybridFrameResult:
@@ -686,10 +688,10 @@ DEFAULT_LFP_BANDS = [
 
 
 def extract_lfp_power(
-    voltage_data: np.ndarray,
+    voltage_data: np.ndarray[Any, Any],
     sample_rate_hz: float,
     bands: Optional[List[LFPBand]] = None,
-) -> Dict[str, np.ndarray]:
+) -> Dict[str, np.ndarray[Any, Any]]:
     """Extract per-channel power in each LFP band.
 
     Uses FFT-based power spectral density estimation.
@@ -773,7 +775,9 @@ class PharmModel:
             return 1.0 + frac * (self.gain - 1.0)
         return self.gain
 
-    def modulate_spikes(self, spike_counts: np.ndarray, t_current_s: float) -> np.ndarray:
+    def modulate_spikes(
+        self, spike_counts: np.ndarray[Any, Any], t_current_s: float
+    ) -> np.ndarray[Any, Any]:
         """Modulate spike counts by pharmacological gain."""
         g = self.effective_gain(t_current_s)
         return np.round(spike_counts * g).astype(int)
@@ -926,7 +930,7 @@ def detect_network_bursts(
 
     n_bins = max(1, int((t_end - t_start) / bin_width_s) + 1)
     bin_counts = np.zeros(n_bins)
-    bin_channels: List[set] = [set() for _ in range(n_bins)]
+    bin_channels: List[set[int]] = [set() for _ in range(n_bins)]
 
     for s in spikes:
         idx = min(int((s.timestamp_s - t_start) / bin_width_s), n_bins - 1)
@@ -968,10 +972,10 @@ class ArtifactRejector:
 
     def blank(
         self,
-        voltage_data: np.ndarray,
+        voltage_data: np.ndarray[Any, Any],
         stim_times_s: List[float],
         sample_rate_hz: float,
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Return voltage data with stimulus artifacts blanked."""
         result = voltage_data.copy()
         pre_samples = int(self.blanking_pre_ms * sample_rate_hz / 1000.0)
@@ -1015,7 +1019,7 @@ class BioAuditLog:
     def total_rounds(self) -> int:
         return len(self.entries)
 
-    def to_list(self) -> List[Dict]:
+    def to_list(self) -> List[Dict[str, Any]]:
         return [
             {
                 "round": e.round_number,
@@ -1051,7 +1055,7 @@ class BioAuditLog:
 
 
 def decode_bitstream_rate(
-    bitstreams: Dict[int, np.ndarray],
+    bitstreams: Dict[int, np.ndarray[Any, Any]],
     sc_clock_hz: float = 1e6,
 ) -> Dict[int, float]:
     """Decode SC bitstreams back to biological firing rates (Hz).

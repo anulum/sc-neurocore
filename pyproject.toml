@@ -278,7 +278,7 @@ ignore_missing_imports = true
 module = [
   'sc_neurocore.accel.*', 'sc_neurocore.adapters.*',
   'sc_neurocore.arcane_zenith',
-  'sc_neurocore.bci_studio.*', 'sc_neurocore.bioware.*',
+  'sc_neurocore.bci_studio.*',
 
  'sc_neurocore.compiler.*',
   'sc_neurocore.conversion.*',
