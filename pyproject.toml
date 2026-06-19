@@ -277,7 +277,7 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = [
   'sc_neurocore.accel.*', 'sc_neurocore.adapters.*',
-  'sc_neurocore.arcane_zenith', 'sc_neurocore.audio.*',
+  'sc_neurocore.arcane_zenith',
   'sc_neurocore.bci_studio.*', 'sc_neurocore.bioware.*',
   'sc_neurocore.chaos.*', 'sc_neurocore.chiplet.*',
  'sc_neurocore.compiler.*',
