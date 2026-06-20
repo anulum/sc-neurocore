@@ -34,7 +34,7 @@ import {
   type CompareResponse, type NullclineResponse, type FreqResponse,
   type SynthResult, type SynthEstimate, type MultiTargetResult,
   type SynthToolInfo,
-  type SurrogateInfo, type TrainingCheckpointPayload, type TrainingEpochMetrics,
+  type SurrogateInfo, type TrainingEpochMetrics,
   type TrainingWeightRestorePlan,
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSaveResponse, type ProjectSummary, type PipelineResult,
@@ -52,6 +52,7 @@ import {
   updateStudioIdentityServiceAccount,
   connectProgress,
 } from "../api/client";
+import { parseTrainingCheckpointPayload } from "../trainingCheckpoint";
 import {
   buildTrainingWeightRestoreVerificationManifest,
   verifyTrainingWeightArtifactBlob,
@@ -1332,7 +1333,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   importTrainingCheckpointText: async (checkpointJson) => {
     try {
-      const parsed = JSON.parse(checkpointJson) as TrainingCheckpointPayload;
+      const parsed = parseTrainingCheckpointPayload(checkpointJson);
       const imported = await apiImportTrainingCheckpoint(parsed);
       set((s) => ({
         trainingConfig: { ...s.trainingConfig, ...imported.config },

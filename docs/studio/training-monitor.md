@@ -105,7 +105,10 @@ Training checkpoints use the `studio.training.checkpoint.v1` schema. They are
 portable JSON manifests for Studio configuration, terminal status, metrics, and
 evidence metadata. They do not expose local filesystem paths and do not include
 raw model-weight tensors. Import validates both the config digest and full
-checkpoint digest before returning the restored training config to the UI.
+checkpoint digest before returning the restored training config to the UI. The
+browser import control first validates the JSON schema, lowercase SHA-256
+digest fields, training config shape, and optional weight-artifact paths before
+submitting the checkpoint to the backend.
 
 Completed process-backed training jobs also publish binary model weights as
 job artifacts:
