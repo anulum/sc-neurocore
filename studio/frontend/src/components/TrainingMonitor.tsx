@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useStudioStore } from "../stores/studio";
 import { buildTrainingEvidenceModel, type TrainingEvidenceModel } from "../trainingEvidence";
+import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
 function MetricChart({ data, xKey, yKeys, colors, height, yLabel }: {
   data: Record<string, unknown>[];
@@ -85,25 +86,19 @@ function LayerRateBar({ name, rate }: { name: string; rate: number }) {
 
 export function TrainingEvidenceStrip({ evidence }: { evidence: TrainingEvidenceModel }) {
   return (
-    <div style={{
-      padding: "6px 12px",
-      borderBottom: "1px solid var(--border)",
-      background: "var(--bg-primary)",
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-      gap: 6,
-      fontSize: 9,
-      color: "var(--text-muted)",
-    }}>
-      <div><span>Evidence</span><strong style={{ marginLeft: 4 }}>{evidence.classification}</strong></div>
-      <div><span>Action</span><strong style={{ marginLeft: 4 }}>{evidence.actionKind}</strong></div>
-      <div><span>Job</span><strong style={{ marginLeft: 4 }}>{evidence.jobId}</strong></div>
-      <div><span>Status</span><strong style={{ marginLeft: 4 }}>{evidence.status}</strong></div>
-      <div><span>Replay</span><strong style={{ marginLeft: 4 }}>{evidence.replayRoute}</strong></div>
-      <div><span>Artifacts</span><strong style={{ marginLeft: 4 }}>{evidence.statusArtifact} / {evidence.evidenceArtifact}</strong></div>
-      <div><span>Config</span><strong style={{ marginLeft: 4 }}>{evidence.configSummary}</strong></div>
-      <div><span>Epoch</span><strong style={{ marginLeft: 4 }}>{evidence.latestEpoch}</strong></div>
-    </div>
+    <EvidenceSummaryStrip
+      variant="banner"
+      items={[
+        { label: "Evidence", value: evidence.classification },
+        { label: "Action", value: evidence.actionKind },
+        { label: "Job", value: evidence.jobId },
+        { label: "Status", value: evidence.status },
+        { label: "Replay", value: evidence.replayRoute },
+        { label: "Artifacts", value: `${evidence.statusArtifact} / ${evidence.evidenceArtifact}` },
+        { label: "Config", value: evidence.configSummary },
+        { label: "Epoch", value: evidence.latestEpoch },
+      ]}
+    />
   );
 }
 

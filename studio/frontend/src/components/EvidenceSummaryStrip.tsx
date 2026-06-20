@@ -1,0 +1,70 @@
+import type { CSSProperties } from "react";
+
+export interface EvidenceSummaryItem {
+  label: string;
+  value: string;
+}
+
+export type EvidenceSummaryVariant = "banner" | "grid" | "panel";
+
+function buildContainerStyle(variant: EvidenceSummaryVariant): CSSProperties {
+  if (variant === "banner") {
+    return {
+      padding: "6px 12px",
+      borderBottom: "1px solid var(--border)",
+      background: "var(--bg-primary)",
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+      gap: 6,
+      fontSize: 9,
+      color: "var(--text-muted)",
+    };
+  }
+  if (variant === "grid") {
+    return {
+      marginTop: 6,
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))",
+      gap: 6,
+      color: "var(--text-muted)",
+    };
+  }
+  return {
+    marginTop: 4,
+    padding: 4,
+    border: "1px solid var(--border)",
+    borderRadius: 4,
+    color: "var(--text-muted)",
+    fontSize: 9,
+    lineHeight: 1.5,
+  };
+}
+
+function renderItem(item: EvidenceSummaryItem, variant: EvidenceSummaryVariant) {
+  if (variant === "banner") {
+    return (
+      <div key={item.label}>
+        <span>{item.label}</span>
+        <span style={{ fontWeight: 700, marginLeft: 4 }}>{item.value}</span>
+      </div>
+    );
+  }
+  if (variant === "grid") {
+    return <span key={item.label}>{item.label} {item.value}</span>;
+  }
+  return <div key={item.label}>{item.label} {item.value}</div>;
+}
+
+export default function EvidenceSummaryStrip({
+  items,
+  variant,
+}: {
+  items: EvidenceSummaryItem[];
+  variant: EvidenceSummaryVariant;
+}) {
+  return (
+    <div style={buildContainerStyle(variant)}>
+      {items.map((item) => renderItem(item, variant))}
+    </div>
+  );
+}
