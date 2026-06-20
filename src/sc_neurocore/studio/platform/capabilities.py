@@ -292,12 +292,20 @@ def build_default_studio_capability_registry() -> CapabilityRegistry:
         CapabilityDescriptor(
             capability_id="studio.export_tools",
             title="Export Tools",
-            summary="JSON, CSV, SVG, generated script, and URL-sharing export surfaces.",
+            summary=(
+                "JSON, CSV, SVG, generated script, URL-sharing, and evidence-bundle "
+                "export surfaces."
+            ),
             status=CapabilityStatus.STABLE,
             requirements=(
                 CapabilityRequirement("browser.download", True, "frontend download APIs available"),
                 CapabilityRequirement(
                     "sc_neurocore.studio.svg_export", True, "server SVG export active"
+                ),
+                CapabilityRequirement(
+                    "sc_neurocore.studio.platform.evidence_bundle",
+                    True,
+                    "evidence bundle export active",
                 ),
             ),
             evidence=(EvidenceClass.CONTRACT_TEST,),

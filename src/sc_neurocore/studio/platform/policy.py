@@ -562,6 +562,12 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
             ),
             (
                 "POST",
+                "/api/studio/evidence/bundle",
+                RouteVisibility.ADMIN,
+                "studio.evidence.bundle.create",
+            ),
+            (
+                "POST",
                 "/api/studio/auth/login",
                 RouteVisibility.PUBLIC,
                 "studio.auth.login",

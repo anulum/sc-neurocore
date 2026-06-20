@@ -43,6 +43,14 @@ from sc_neurocore.studio.platform.deployment_profiles import (
     build_studio_deployment_profile_package,
     list_studio_deployment_profile_packages,
 )
+from sc_neurocore.studio.platform.evidence_bundle import (
+    STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION,
+    JsonScalar,
+    JsonValue,
+    StudioArtifactReader,
+    StudioEvidenceBundleResult,
+    write_studio_evidence_bundle,
+)
 from sc_neurocore.studio.platform.policy import (
     AUDIT_SCHEMA_VERSION,
     AUDIT_EXPORT_SCHEMA_VERSION,
@@ -169,6 +177,8 @@ __all__ = [
     "MIN_BOOTSTRAP_TOKEN_BYTES",
     "InMemoryAuditSink",
     "JsonlAuditSink",
+    "JsonScalar",
+    "JsonValue",
     "OPERATOR_STATUS_SCHEMA_VERSION",
     "OperatorIdentityMode",
     "PolicyDecision",
@@ -178,6 +188,7 @@ __all__ = [
     "RoutePolicyRegistry",
     "RouteVisibility",
     "STUDIO_BACKUP_PLAN_SCHEMA_VERSION",
+    "STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION",
     "THROTTLED_BROWSER_LOGIN_REASON",
     "DEFAULT_STUDIO_AUDIT_RETAINED_FILES",
     "DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS",
@@ -197,8 +208,10 @@ __all__ = [
     "StudioBackupPlan",
     "StudioBackupPlanItem",
     "StudioBackupTargetKind",
+    "StudioArtifactReader",
     "StudioDeploymentPackageName",
     "StudioDeploymentProfilePackage",
+    "StudioEvidenceBundleResult",
     "StudioBrowserLoginThrottle",
     "StudioBrowserSessionIssue",
     "StudioBrowserSessionManager",
@@ -254,4 +267,5 @@ __all__ = [
     "update_studio_browser_user_record",
     "update_studio_identity_record",
     "verify_browser_user_password",
+    "write_studio_evidence_bundle",
 ]

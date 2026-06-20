@@ -122,6 +122,7 @@ from sc_neurocore.studio.platform import (
     rotate_studio_browser_user_password,
     update_studio_identity_record,
     update_studio_browser_user_record,
+    write_studio_evidence_bundle,
 )
 from sc_neurocore.studio.presets import (
     get_preset,
@@ -135,7 +136,7 @@ from sc_neurocore.studio.templates import get_template, list_templates
 
 
 logger = logging.getLogger(__name__)
-DEFAULT_STUDIO_JOB_KINDS = frozenset({"compiler", "synthesis", "training"})
+DEFAULT_STUDIO_JOB_KINDS = frozenset({"compiler", "evidence", "synthesis", "training"})
 
 
 # --- Request schemas ---
@@ -329,6 +330,16 @@ class StudioBrowserLoginRequest(BaseModel):
 
     username: str = Field(min_length=1, max_length=128)
     password: str = Field(min_length=1, max_length=4096)
+
+
+class StudioEvidenceBundleRequest(BaseModel):
+    """Request body for admin evidence bundle export."""
+
+    project_name: str | None = Field(default=None, min_length=1, max_length=128)
+    job_ids: list[str] = Field(default_factory=list, max_length=64)
+    include_audit: bool = True
+    audit_limit: int = Field(default=100, ge=1, le=1000)
+    command_replay: dict[str, Any] | None = None
 
 
 class PresetDefaultFlowAttestationVerifyRequest(BaseModel):
@@ -1055,6 +1066,73 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             return studio_audit_sink.export_recent(limit=limit).to_public_dict()
         except AuditSinkError as exc:
             raise HTTPException(status_code=503, detail="audit_export_failed") from exc
+
+    @app.post("/api/studio/evidence/bundle")
+    def api_studio_evidence_bundle(
+        export_request: StudioEvidenceBundleRequest,
+        request: Request,
+    ) -> dict[str, object]:
+        """Create a path-confined evidence bundle as a Studio worker artifact."""
+
+        project_payload: dict[str, Any] | None = None
+        if export_request.project_name is not None:
+            project_name = export_request.project_name
+            loaded_project = _safe(lambda: load_project(project_name))
+            if "error" in loaded_project:
+                raise HTTPException(status_code=404, detail=loaded_project["error"])
+            project_payload = loaded_project
+        job_records = []
+        for job_id in export_request.job_ids:
+            try:
+                job_records.append(studio_job_manager.record(job_id))
+            except KeyError as exc:
+                raise HTTPException(status_code=404, detail="job_not_found") from exc
+        audit_export: dict[str, AuditExportValue] | None = None
+        if export_request.include_audit:
+            if not isinstance(studio_audit_sink, JsonlAuditSink):
+                raise HTTPException(status_code=409, detail="audit_export_unavailable")
+            try:
+                audit_export = studio_audit_sink.export_recent(
+                    limit=export_request.audit_limit
+                ).to_public_dict()
+            except AuditSinkError as exc:
+                raise HTTPException(status_code=503, detail="audit_export_failed") from exc
+
+        request_id = getattr(request.state, "studio_request_id", None)
+
+        def task(context: StudioJobContext) -> dict[str, object]:
+            result = write_studio_evidence_bundle(
+                context,
+                project_payload=project_payload,
+                job_records=tuple(job_records),
+                artifact_reader=studio_job_manager.read_artifact,
+                audit_export=audit_export,
+                command_replay=export_request.command_replay,
+            ).to_public_dict()
+            return cast(dict[str, object], result)
+
+        submitted = studio_job_manager.submit(
+            kind="evidence",
+            owner="studio-evidence",
+            request_id=request_id if isinstance(request_id, str) else None,
+            task=task,
+        )
+        completed = studio_job_manager.wait(
+            submitted.job_id,
+            timeout_seconds=settings.job_default_timeout_seconds + 1.0,
+        )
+        if completed.status == "completed" and completed.result is not None:
+            result = dict(completed.result)
+            result["job_id"] = completed.job_id
+            result["artifacts"] = [
+                artifact.to_public_dict() for artifact in completed.artifacts
+            ]
+            return result
+        if completed.status in {"pending", "running", "cancelling"}:
+            raise HTTPException(status_code=503, detail="studio_job_wait_exceeded")
+        if completed.status == "timed_out":
+            raise HTTPException(status_code=504, detail="studio_job_timed_out")
+        raise HTTPException(status_code=500, detail="studio_job_failed")
 
     @app.post("/api/studio/auth/login")
     def api_studio_auth_login(

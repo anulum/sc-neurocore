@@ -707,7 +707,7 @@ def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:
     assert response.status_code == 200
     assert response.json() == {
         "active_count": 0,
-        "allowed_kinds": ["compiler", "synthesis", "training"],
+        "allowed_kinds": ["compiler", "evidence", "synthesis", "training"],
         "completed_count": 0,
         "configured": True,
         "failed_count": 0,

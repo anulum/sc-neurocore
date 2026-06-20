@@ -194,6 +194,14 @@ runtime features:
   artifacts for administrators. The server resolves artifacts through the job
   manifest only, revalidates size and SHA-256 before serving, and returns
   generic errors if the artifact is missing or fails integrity checks.
+- `/api/studio/evidence/bundle` creates an admin-only evidence export as a
+  bounded `studio-evidence` worker job. The request can name one saved project,
+  selected job IDs, bounded audit export length, and command replay metadata.
+  The resulting `studio.evidence-bundle.v1` manifest, project payload, job
+  records, copied verified job artifacts, audit excerpt, and replay metadata are
+  all written as job artifacts under `evidence/`. The response and manifest are
+  path-free and omit bearer tokens, token hashes, password material, and local
+  filesystem paths.
 - New backend workflows can use `StudioJobManager.submit_process_task(...)` for
   process-backed execution. The task is an importable `module:function` that
   receives a `StudioJobContext` plus a JSON payload and returns a JSON result.
@@ -429,6 +437,7 @@ for complete API details with request/response examples.
 | `/api/graph/*` | Network Canvas | Populations, projections, validate, simulate, NIR |
 | `/api/project/*`, `/api/pipeline/*` | Integration | Save/load, worker-backed full pipeline |
 | `/api/studio/audit/*` | Admin | Audit status and admin-gated export |
+| `/api/studio/evidence/bundle` | Admin | Job-backed project/job/audit evidence bundle |
 | `/api/studio/auth/*` | Platform | Browser-user login, current bearer session, logout |
 | `/api/studio/identity/*` | Admin | Token-free service-account inventory and role updates |
 | `/api/studio/operator/status` | Admin | Aggregate operator control-plane health |

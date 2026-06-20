@@ -381,6 +381,16 @@ for path-free job records. Those endpoints are admin-gated and expose status,
 owner, request ID, timestamps, result metadata, and artifact manifests without
 revealing the configured job-root path.
 
+Administrators can create reproducible handoff bundles with
+`POST /api/studio/evidence/bundle`. The route runs as a bounded
+`studio-evidence` worker job and can include one saved project payload,
+selected job records, verified copies of selected job artifacts, a bounded
+audit export, and command replay metadata such as method, route, and request
+body digest. Bundle files are declared job artifacts under `evidence/`, with a
+`studio.evidence-bundle.v1` manifest at `evidence/manifest.json`. The bundle
+manifest is path-free and omits bearer tokens, token hashes, password material,
+and host-local filesystem paths.
+
 Studio also exposes a process-backed job-manager path for new backend work
 that can be expressed as an importable `module:function` task with a
 JSON-serializable payload and result. Process jobs use the same path-confined
