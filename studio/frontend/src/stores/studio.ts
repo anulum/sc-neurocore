@@ -5,6 +5,7 @@ import {
   fetchStudioIdentityServiceAccounts,
   fetchStudioAuditExport, fetchStudioAuditStatus, fetchStudioCapabilities,
   fetchStudioJobs, fetchStudioJobStatus, fetchStudioOperatorStatus,
+  fetchStudioIdentityBrowserUsers,
   loginStudioBrowserUser, logoutStudioBrowserUser,
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
@@ -34,9 +35,11 @@ import {
   type ProjectSummary, type PipelineResult,
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
   type StudioAuthSession,
+  type StudioIdentityBrowserUser,
   type StudioIdentityServiceAccount, type StudioJobRecord, type StudioJobStatus,
   type StudioOperatorStatus,
   setStudioAuthToken,
+  updateStudioIdentityBrowserUser,
   updateStudioIdentityServiceAccount,
   connectProgress,
 } from "../api/client";
@@ -74,6 +77,7 @@ interface StudioState {
   auditExport: StudioAuditExport | null;
   jobStatus: StudioJobStatus | null;
   jobRecords: StudioJobRecord[];
+  identityBrowserUsers: StudioIdentityBrowserUser[];
   identityServiceAccounts: StudioIdentityServiceAccount[];
   operatorStatus: StudioOperatorStatus | null;
   auditLoading: boolean;
@@ -165,6 +169,10 @@ interface StudioState {
     principalId: string,
     update: { active: boolean; expires_at_utc: string | null; roles: string[] },
   ) => Promise<void>;
+  updateIdentityBrowserUser: (
+    username: string,
+    update: { active: boolean; expires_at_utc: string | null; roles: string[] },
+  ) => Promise<void>;
   loadOperatorStatus: () => Promise<void>;
   selectTemplate: (name: string) => void;
   selectModel: (name: string) => Promise<void>;
@@ -249,7 +257,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   capabilities: [], capabilitiesLoading: false, capabilitiesError: null,
   authSession: null, authLoading: false, authError: null,
   auditStatus: null, auditExport: null, jobStatus: null, jobRecords: [],
-  identityServiceAccounts: [], operatorStatus: null,
+  identityBrowserUsers: [], identityServiceAccounts: [], operatorStatus: null,
   auditLoading: false, auditError: null,
   templates: [], presets: [],
   dt: 0.1, duration: 100, current: 10, protocol: "constant",
@@ -404,11 +412,15 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   loadIdentityServiceAccounts: async () => {
     set({ auditLoading: true, auditError: null });
     try {
-      const response = await fetchStudioIdentityServiceAccounts();
+      const [accountsResponse, usersResponse] = await Promise.all([
+        fetchStudioIdentityServiceAccounts(),
+        fetchStudioIdentityBrowserUsers(),
+      ]);
       set({
         auditLoading: false,
         auditError: null,
-        identityServiceAccounts: response.service_accounts,
+        identityBrowserUsers: usersResponse.browser_users,
+        identityServiceAccounts: accountsResponse.service_accounts,
       });
     } catch (error: unknown) {
       set({
@@ -421,20 +433,45 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     set({ auditLoading: true, auditError: null });
     try {
       await updateStudioIdentityServiceAccount(principalId, update);
-      const [identityResponse, auditExport] = await Promise.all([
+      const [accountsResponse, usersResponse, auditExport] = await Promise.all([
         fetchStudioIdentityServiceAccounts(),
+        fetchStudioIdentityBrowserUsers(),
         fetchStudioAuditExport(100),
       ]);
       set({
         auditExport,
         auditLoading: false,
         auditError: null,
-        identityServiceAccounts: identityResponse.service_accounts,
+        identityBrowserUsers: usersResponse.browser_users,
+        identityServiceAccounts: accountsResponse.service_accounts,
       });
     } catch (error: unknown) {
       set({
         auditLoading: false,
         auditError: error instanceof Error ? error.message : "Identity account update failed",
+      });
+    }
+  },
+  updateIdentityBrowserUser: async (username, update) => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      await updateStudioIdentityBrowserUser(username, update);
+      const [accountsResponse, usersResponse, auditExport] = await Promise.all([
+        fetchStudioIdentityServiceAccounts(),
+        fetchStudioIdentityBrowserUsers(),
+        fetchStudioAuditExport(100),
+      ]);
+      set({
+        auditExport,
+        auditLoading: false,
+        auditError: null,
+        identityBrowserUsers: usersResponse.browser_users,
+        identityServiceAccounts: accountsResponse.service_accounts,
+      });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Browser user update failed",
       });
     }
   },

@@ -443,6 +443,74 @@ def update_studio_identity_record(
     return updated.to_public_record()
 
 
+def update_studio_browser_user_record(
+    path: Path,
+    *,
+    username: str,
+    roles: Sequence[str],
+    active: bool,
+    expires_at_utc: str | None,
+) -> StudioBrowserUserPublicRecord:
+    """Atomically update mutable browser-user metadata.
+
+    The stored PBKDF2-HMAC-SHA256 password verifier is preserved and never
+    returned.
+
+    Parameters
+    ----------
+    path:
+        Persistent identity JSON file.
+    username:
+        Existing browser-login username to update.
+    roles:
+        Replacement role set. The set must be non-empty.
+    active:
+        Replacement active flag.
+    expires_at_utc:
+        Optional replacement UTC expiry timestamp.
+
+    Returns
+    -------
+    StudioBrowserUserPublicRecord
+        Updated password-free browser-user record.
+
+    Raises
+    ------
+    KeyError
+        If ``username`` is not present in the store.
+    ValueError
+        If replacement metadata is malformed.
+    """
+
+    store = load_studio_identity_store(path)
+    clean_username = _parse_username(username)
+    clean_roles = frozenset(_parse_roles(roles))
+    clean_expires_at = _parse_expiry(expires_at_utc)
+    updated: StudioBrowserUserRecord | None = None
+    records: list[StudioBrowserUserRecord] = []
+    for record in store.browser_users:
+        if record.username == clean_username:
+            updated = StudioBrowserUserRecord(
+                active=active,
+                expires_at_utc=clean_expires_at,
+                password_pbkdf2_sha256=record.password_pbkdf2_sha256,
+                principal_id=record.principal_id,
+                roles=clean_roles,
+                username=record.username,
+            )
+            records.append(updated)
+        else:
+            records.append(record)
+    if updated is None:
+        raise KeyError(clean_username)
+    _write_identity_store(
+        path,
+        service_accounts=store.service_accounts,
+        browser_users=tuple(records),
+    )
+    return updated.to_public_record()
+
+
 def add_studio_browser_user_record(
     path: Path,
     *,
@@ -764,6 +832,7 @@ __all__ = [
     "list_studio_identity_public_records",
     "load_studio_identity_store",
     "make_browser_user_password_verifier",
+    "update_studio_browser_user_record",
     "update_studio_identity_record",
     "verify_browser_user_password",
 ]

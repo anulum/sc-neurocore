@@ -592,6 +592,18 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
             ),
             (
                 "GET",
+                "/api/studio/identity/browser-users/{username}",
+                RouteVisibility.ADMIN,
+                "studio.identity.browser_users.detail",
+            ),
+            (
+                "PATCH",
+                "/api/studio/identity/browser-users/{username}",
+                RouteVisibility.ADMIN,
+                "studio.identity.browser_users.update",
+            ),
+            (
+                "GET",
                 "/api/studio/identity/service-accounts/{principal_id}",
                 RouteVisibility.ADMIN,
                 "studio.identity.service_accounts.detail",

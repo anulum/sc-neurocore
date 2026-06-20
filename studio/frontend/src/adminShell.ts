@@ -3,6 +3,7 @@ import type {
   StudioAuditExport,
   StudioAuditStatus,
   StudioCapability,
+  StudioIdentityBrowserUser,
   StudioIdentityServiceAccount,
   StudioJobRecord,
   StudioJobStatus,
@@ -17,6 +18,7 @@ export interface AdminShellInput {
   capabilities: StudioCapability[];
   jobRecords: StudioJobRecord[];
   jobStatus: StudioJobStatus | null;
+  identityBrowserUsers: StudioIdentityBrowserUser[];
   identityServiceAccounts: StudioIdentityServiceAccount[];
   operatorStatus: StudioOperatorStatus | null;
 }
@@ -67,6 +69,15 @@ export interface AdminIdentityAccountModel {
   rolesText: string;
 }
 
+export interface AdminIdentityBrowserUserModel {
+  active: boolean;
+  activeLabel: "active" | "disabled";
+  expiresAt: string;
+  principalId: string;
+  rolesText: string;
+  username: string;
+}
+
 export interface AdminOperatorModel {
   deploymentProfile: "development" | "production" | "unknown";
   edaCpuLimit: string;
@@ -84,6 +95,7 @@ export interface AdminShellModel {
   capabilities: AdminCapabilityModel;
   jobs: AdminJobModel;
   jobRecords: AdminJobRecordModel[];
+  identityBrowserUsers: AdminIdentityBrowserUserModel[];
   identityAccounts: AdminIdentityAccountModel[];
   operator: AdminOperatorModel;
   recentAuditEvents: StudioAuditEvent[];
@@ -118,11 +130,28 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
     },
     jobs: buildJobModel(jobStatus),
     jobRecords: buildJobRecords(input.jobRecords),
+    identityBrowserUsers: buildIdentityBrowserUsers(input.identityBrowserUsers),
     identityAccounts: buildIdentityAccounts(input.identityServiceAccounts),
     operator: buildOperatorModel(input.operatorStatus),
     recentAuditEvents,
     unhealthyCapabilities,
   };
+}
+
+function buildIdentityBrowserUsers(
+  users: StudioIdentityBrowserUser[],
+): AdminIdentityBrowserUserModel[] {
+  return users
+    .slice()
+    .sort((left, right) => left.username.localeCompare(right.username))
+    .map((user) => ({
+      active: user.active,
+      activeLabel: user.active ? "active" : "disabled",
+      expiresAt: user.expires_at_utc ?? "never",
+      principalId: user.principal_id,
+      rolesText: user.roles.join(", "),
+      username: user.username,
+    }));
 }
 
 function buildIdentityAccounts(

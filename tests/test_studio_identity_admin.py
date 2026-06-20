@@ -18,8 +18,11 @@ from starlette.testclient import TestClient
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform.identity import (
     StudioIdentityAuthenticator,
+    list_studio_browser_user_public_records,
     list_studio_identity_public_records,
     load_studio_identity_store,
+    make_browser_user_password_verifier,
+    update_studio_browser_user_record,
     update_studio_identity_record,
 )
 from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
@@ -30,6 +33,18 @@ def _write_identity_file(path: Path, *, active: bool = True) -> str:
     path.write_text(
         json.dumps(
             {
+                "browser_users": [
+                    {
+                        "active": True,
+                        "expires_at_utc": None,
+                        "password_pbkdf2_sha256": make_browser_user_password_verifier(
+                            "operator-password"
+                        ),
+                        "principal_id": "human-operator",
+                        "roles": ["studio.admin", "studio.viewer"],
+                        "username": "operator",
+                    }
+                ],
                 "schema_version": "sc-neurocore.studio.identity.v1",
                 "service_accounts": [
                     {
@@ -117,6 +132,54 @@ def test_identity_record_update_preserves_token_hash_and_reloads_auth(tmp_path: 
     assert auth_result.failure_reason == "disabled_identity_token"
 
 
+def test_browser_user_public_records_never_expose_password_verifiers(tmp_path: Path) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    _write_identity_file(identity_path)
+
+    records = list_studio_browser_user_public_records(identity_path)
+
+    assert [record.username for record in records] == ["operator"]
+    assert records[0].to_public_dict() == {
+        "active": True,
+        "expires_at_utc": None,
+        "principal_id": "human-operator",
+        "roles": ["studio.admin", "studio.viewer"],
+        "username": "operator",
+    }
+    assert "password" not in json.dumps([record.to_public_dict() for record in records])
+
+
+def test_browser_user_update_preserves_password_verifier_and_reloads_auth(
+    tmp_path: Path,
+) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    _write_identity_file(identity_path)
+    before = json.loads(identity_path.read_text(encoding="utf-8"))
+    original_verifier = before["browser_users"][0]["password_pbkdf2_sha256"]
+
+    updated = update_studio_browser_user_record(
+        identity_path,
+        active=False,
+        expires_at_utc="2030-01-01T00:00:00Z",
+        roles=["studio.viewer", "studio.viewer"],
+        username="operator",
+    )
+
+    after = json.loads(identity_path.read_text(encoding="utf-8"))
+    authenticator = StudioIdentityAuthenticator(load_studio_identity_store(identity_path))
+    auth_result = authenticator.authenticate_browser_user("operator", "operator-password")
+    assert updated.to_public_dict() == {
+        "active": False,
+        "expires_at_utc": "2030-01-01T00:00:00Z",
+        "principal_id": "human-operator",
+        "roles": ["studio.viewer"],
+        "username": "operator",
+    }
+    assert after["browser_users"][0]["password_pbkdf2_sha256"] == original_verifier
+    assert auth_result.principal is None
+    assert auth_result.failure_reason == "disabled_browser_user"
+
+
 def test_identity_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
@@ -161,6 +224,61 @@ def test_identity_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -> No
     assert "studio.identity.service_accounts.list" in actions
     assert "studio.identity.service_accounts.update" in actions
     assert "studio.identity.service_account.update" in actions
+
+
+def test_browser_user_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    audit_path = tmp_path / "studio-audit.jsonl"
+    token = _write_identity_file(identity_path)
+    client = _client(identity_path, audit_path)
+
+    denied = client.get("/api/studio/identity/browser-users")
+    listed = client.get(
+        "/api/studio/identity/browser-users",
+        headers=_admin_headers(token),
+    )
+    detail = client.get(
+        "/api/studio/identity/browser-users/operator",
+        headers=_admin_headers(token),
+    )
+    updated = client.patch(
+        "/api/studio/identity/browser-users/operator",
+        headers=_admin_headers(token),
+        json={"active": False, "expires_at_utc": None, "roles": ["studio.viewer"]},
+    )
+    login_after_disable = client.post(
+        "/api/studio/auth/login",
+        json={"username": "operator", "password": "operator-password"},
+    )
+
+    assert denied.status_code == 401
+    assert denied.json()["detail"] == "missing_principal"
+    assert listed.status_code == 200
+    assert listed.json()["browser_users"][0] == {
+        "active": True,
+        "expires_at_utc": None,
+        "principal_id": "human-operator",
+        "roles": ["studio.admin", "studio.viewer"],
+        "username": "operator",
+    }
+    assert "password" not in listed.text
+    assert detail.status_code == 200
+    assert detail.json()["username"] == "operator"
+    assert updated.status_code == 200
+    assert updated.json() == {
+        "active": False,
+        "expires_at_utc": None,
+        "principal_id": "human-operator",
+        "roles": ["studio.viewer"],
+        "username": "operator",
+    }
+    assert login_after_disable.status_code == 401
+    assert login_after_disable.json()["detail"] == "disabled_browser_user"
+    actions = [row["action"] for row in _audit_rows(audit_path)]
+    assert "studio.identity.browser_users.list" in actions
+    assert "studio.identity.browser_users.detail" in actions
+    assert "studio.identity.browser_users.update" in actions
+    assert "studio.identity.browser_user.update" in actions
 
 
 def test_identity_admin_routes_reject_unconfigured_store(tmp_path: Path) -> None:

@@ -58,6 +58,7 @@ from sc_neurocore.studio.platform.identity import (
     list_studio_identity_public_records,
     load_studio_identity_store,
     make_browser_user_password_verifier,
+    update_studio_browser_user_record,
     update_studio_identity_record,
     verify_browser_user_password,
 )
@@ -194,6 +195,7 @@ __all__ = [
     "list_studio_identity_public_records",
     "load_studio_identity_store",
     "make_browser_user_password_verifier",
+    "update_studio_browser_user_record",
     "update_studio_identity_record",
     "verify_browser_user_password",
 ]

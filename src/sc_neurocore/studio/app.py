@@ -117,6 +117,7 @@ from sc_neurocore.studio.platform import (
     list_studio_identity_public_records,
     load_studio_identity_store,
     update_studio_identity_record,
+    update_studio_browser_user_record,
 )
 from sc_neurocore.studio.presets import (
     get_preset,
@@ -288,6 +289,14 @@ class PresetDefaultFlowAttestRequest(BaseModel):
 
 class StudioIdentityServiceAccountUpdateRequest(BaseModel):
     """Request body for admin service-account metadata updates."""
+
+    roles: list[str] = Field(min_length=1)
+    active: bool
+    expires_at_utc: str | None = None
+
+
+class StudioBrowserUserUpdateRequest(BaseModel):
+    """Request body for admin browser-user metadata updates."""
 
     roles: list[str] = Field(min_length=1)
     active: bool
@@ -1131,6 +1140,23 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             "schema_version": "sc-neurocore.studio.identity.browser-users.v1",
         }
 
+    @app.get("/api/studio/identity/browser-users/{username}")
+    def api_studio_identity_browser_user(
+        username: str,
+    ) -> dict[str, bool | list[str] | str | None]:
+        """Return one password-free persistent browser user for administrators."""
+
+        if settings.identity_file_path is None:
+            raise HTTPException(status_code=409, detail="identity_store_unavailable")
+        try:
+            records = list_studio_browser_user_public_records(Path(settings.identity_file_path))
+        except ValueError as exc:
+            raise HTTPException(status_code=503, detail="identity_store_unhealthy") from exc
+        for record in records:
+            if record.username == username:
+                return record.to_public_dict()
+        raise HTTPException(status_code=404, detail="identity_browser_user_not_found")
+
     @app.get("/api/studio/identity/service-accounts/{principal_id}")
     def api_studio_identity_service_account(
         principal_id: str,
@@ -1191,6 +1217,56 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             raise HTTPException(
                 status_code=404,
                 detail="identity_service_account_not_found",
+            ) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except AuditSinkError as exc:
+            raise HTTPException(status_code=503, detail="audit_append_failed") from exc
+        return updated.to_public_dict()
+
+    @app.patch("/api/studio/identity/browser-users/{username}")
+    def api_update_studio_identity_browser_user(
+        username: str,
+        update: StudioBrowserUserUpdateRequest,
+        request: Request,
+    ) -> dict[str, bool | list[str] | str | None]:
+        """Update persistent browser-user role metadata for administrators."""
+
+        nonlocal studio_identity_authenticator
+        if settings.identity_file_path is None:
+            raise HTTPException(status_code=409, detail="identity_store_unavailable")
+        identity_path = Path(settings.identity_file_path)
+        try:
+            updated = update_studio_browser_user_record(
+                identity_path,
+                active=update.active,
+                expires_at_utc=update.expires_at_utc,
+                roles=update.roles,
+                username=username,
+            )
+            studio_identity_authenticator = StudioIdentityAuthenticator(
+                load_studio_identity_store(identity_path)
+            )
+            app.state.studio_identity_authenticator = studio_identity_authenticator
+            actor = getattr(request.state, "studio_principal", None)
+            request_id = getattr(request.state, "studio_request_id", None)
+            studio_audit_sink.record(
+                AuditEvent(
+                    action="studio.identity.browser_user.update",
+                    decision="allow",
+                    principal_id=(
+                        actor.principal_id if isinstance(actor, Principal) else None
+                    ),
+                    reason=f"updated:{updated.username}",
+                    request_id=request_id if isinstance(request_id, str) else None,
+                    route="/api/studio/identity/browser-users/{username}",
+                    timestamp_utc=_studio_timestamp_utc(),
+                )
+            )
+        except KeyError as exc:
+            raise HTTPException(
+                status_code=404,
+                detail="identity_browser_user_not_found",
             ) from exc
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc

@@ -14,6 +14,10 @@ export interface AdminPanelViewProps {
     principalId: string,
     update: { active: boolean; expires_at_utc: string | null; roles: string[] },
   ) => Promise<void>;
+  onUpdateIdentityBrowserUser: (
+    username: string,
+    update: { active: boolean; expires_at_utc: string | null; roles: string[] },
+  ) => Promise<void>;
 }
 
 export default function AdminPanelView({
@@ -24,18 +28,33 @@ export default function AdminPanelView({
   onLoadIdentityServiceAccounts,
   onLoadJobStatus,
   onLoadOperatorStatus,
+  onUpdateIdentityBrowserUser,
   onUpdateIdentityServiceAccount,
 }: AdminPanelViewProps) {
-  function submitIdentityUpdate(event: FormEvent<HTMLFormElement>, principalId: string) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
+  function identityUpdateFromForm(form: FormData) {
     const rolesText = String(form.get("roles") ?? "");
     const roles = rolesText.split(",").map((role) => role.trim()).filter(Boolean);
-    void onUpdateIdentityServiceAccount(principalId, {
+    return {
       active: form.get("active") === "on",
       expires_at_utc: null,
       roles,
-    });
+    };
+  }
+
+  function submitIdentityUpdate(event: FormEvent<HTMLFormElement>, principalId: string) {
+    event.preventDefault();
+    void onUpdateIdentityServiceAccount(
+      principalId,
+      identityUpdateFromForm(new FormData(event.currentTarget)),
+    );
+  }
+
+  function submitBrowserUserUpdate(event: FormEvent<HTMLFormElement>, username: string) {
+    event.preventDefault();
+    void onUpdateIdentityBrowserUser(
+      username,
+      identityUpdateFromForm(new FormData(event.currentTarget)),
+    );
   }
 
   return (
@@ -122,6 +141,49 @@ export default function AdminPanelView({
               <small>{account.expiresAt}</small>
               <button
                 aria-label={`Save ${account.principalId} identity`}
+                disabled={auditLoading}
+                type="submit"
+              >
+                Save
+              </button>
+            </form>
+          ))}
+          {model.identityBrowserUsers.length === 0 ? (
+            <div className="admin-audit-row">
+              <span>unavailable</span>
+              <strong>No browser users loaded</strong>
+              <small>browser-user store not returned by backend</small>
+            </div>
+          ) : model.identityBrowserUsers.map((user) => (
+            <form
+              key={user.username}
+              className="admin-audit-row admin-identity-row"
+              onSubmit={(event) => submitBrowserUserUpdate(event, user.username)}
+            >
+              <span>{user.activeLabel}</span>
+              <strong>{user.username}</strong>
+              <label>
+                Roles
+                <input
+                  aria-label={`${user.username} browser roles`}
+                  name="roles"
+                  defaultValue={user.rolesText}
+                  disabled={auditLoading}
+                />
+              </label>
+              <label>
+                <input
+                  aria-label={`${user.username} browser active`}
+                  name="active"
+                  type="checkbox"
+                  defaultChecked={user.active}
+                  disabled={auditLoading}
+                />
+                Active
+              </label>
+              <small>{user.principalId} - {user.expiresAt}</small>
+              <button
+                aria-label={`Save ${user.username} browser user`}
                 disabled={auditLoading}
                 type="submit"
               >

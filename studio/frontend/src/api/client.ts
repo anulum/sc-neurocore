@@ -221,7 +221,26 @@ export interface StudioIdentityServiceAccountsResponse {
   service_accounts: StudioIdentityServiceAccount[];
 }
 
+export interface StudioIdentityBrowserUser {
+  active: boolean;
+  expires_at_utc: string | null;
+  principal_id: string;
+  roles: string[];
+  username: string;
+}
+
+export interface StudioIdentityBrowserUsersResponse {
+  browser_users: StudioIdentityBrowserUser[];
+  schema_version: string;
+}
+
 export interface StudioIdentityServiceAccountUpdate {
+  active: boolean;
+  expires_at_utc: string | null;
+  roles: string[];
+}
+
+export interface StudioIdentityBrowserUserUpdate {
   active: boolean;
   expires_at_utc: string | null;
   roles: string[];
@@ -301,12 +320,22 @@ export const fetchStudioOperatorStatus = () =>
   get<StudioOperatorStatus>("/studio/operator/status");
 export const fetchStudioIdentityServiceAccounts = () =>
   get<StudioIdentityServiceAccountsResponse>("/studio/identity/service-accounts");
+export const fetchStudioIdentityBrowserUsers = () =>
+  get<StudioIdentityBrowserUsersResponse>("/studio/identity/browser-users");
 export const updateStudioIdentityServiceAccount = (
   principalId: string,
   update: StudioIdentityServiceAccountUpdate,
 ) =>
   patch<StudioIdentityServiceAccount>(
     `/studio/identity/service-accounts/${encodeURIComponent(principalId)}`,
+    update,
+  );
+export const updateStudioIdentityBrowserUser = (
+  username: string,
+  update: StudioIdentityBrowserUserUpdate,
+) =>
+  patch<StudioIdentityBrowserUser>(
+    `/studio/identity/browser-users/${encodeURIComponent(username)}`,
     update,
   );
 export const loginStudioBrowserUser = (username: string, password: string) =>

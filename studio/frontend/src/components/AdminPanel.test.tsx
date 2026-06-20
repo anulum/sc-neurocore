@@ -5,6 +5,7 @@ import type {
   StudioAuditExport,
   StudioAuditStatus,
   StudioCapability,
+  StudioIdentityBrowserUser,
   StudioIdentityServiceAccount,
   StudioJobRecord,
   StudioJobStatus,
@@ -95,6 +96,14 @@ const identityServiceAccount: StudioIdentityServiceAccount = {
   roles: ["studio.admin", "studio.viewer"],
 };
 
+const identityBrowserUser: StudioIdentityBrowserUser = {
+  active: false,
+  expires_at_utc: "2030-01-01T00:00:00Z",
+  principal_id: "human-operator",
+  roles: ["studio.viewer"],
+  username: "operator",
+};
+
 const operatorStatus: StudioOperatorStatus = {
   audit: auditStatus,
   capabilities: {
@@ -139,6 +148,7 @@ describe("AdminPanel", () => {
           message: "Yosys unavailable.",
         }),
       ],
+      identityBrowserUsers: [identityBrowserUser],
       identityServiceAccounts: [identityServiceAccount],
       jobRecords: [jobRecord],
       jobStatus,
@@ -154,6 +164,7 @@ describe("AdminPanel", () => {
         onLoadIdentityServiceAccounts={async () => undefined}
         onLoadJobStatus={async () => undefined}
         onLoadOperatorStatus={async () => undefined}
+        onUpdateIdentityBrowserUser={async () => undefined}
         onUpdateIdentityServiceAccount={async () => undefined}
       />,
     );
@@ -176,7 +187,11 @@ describe("AdminPanel", () => {
     expect(html).toContain("Identity");
     expect(html).toContain("svc-admin");
     expect(html).toContain("studio.admin, studio.viewer");
+    expect(html).toContain("operator");
+    expect(html).toContain("human-operator - 2030-01-01T00:00:00Z");
+    expect(html).toContain("studio.viewer");
     expect(html).not.toContain("token_sha256");
+    expect(html).not.toContain("password");
     expect(html).toContain("attention");
     expect(html).toContain("compiler, synthesis, training");
     expect(html).toContain("synthesis - sj_1234");

@@ -318,6 +318,14 @@ session mode, so cookie CSRF tokens are intentionally not part of the current
 contract. Set `SC_NEUROCORE_STUDIO_BROWSER_SESSION_TTL_SECONDS` to tune the
 server-side session expiry; the default is 12 hours.
 
+Administrators can inspect and update browser-user lifecycle metadata from the
+Admin panel Identity section or through `/api/studio/identity/browser-users`.
+The detail and PATCH routes return only username, principal ID, roles, active
+state, and optional UTC expiry. Role, active-state, and expiry updates preserve
+the stored password verifier, reload backend authentication immediately, and
+record both the route-policy audit decision and a dedicated
+`studio.identity.browser_user.update` audit event.
+
 The same Admin surface displays local worker health from
 `/api/studio/jobs/status`. Configure `SC_NEUROCORE_STUDIO_JOB_ROOT` to keep
 per-job working directories on an operator-selected disk, and tune

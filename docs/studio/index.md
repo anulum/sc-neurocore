@@ -125,6 +125,13 @@ runtime features:
 - `/api/studio/identity/browser-users` returns an admin-only, password-free
   browser-user inventory for the same identity file. The payload includes
   usernames, principal IDs, roles, active state, and expiry only.
+  `/api/studio/identity/browser-users/{username}` returns one password-free
+  browser-user record, and `PATCH /api/studio/identity/browser-users/{username}`
+  updates roles, active state, and optional UTC expiry while preserving the
+  stored password verifier. The backend reloads the identity authenticator
+  after a successful update, so disabling a browser user or changing roles
+  applies without a Studio restart. The Admin panel exposes the same lifecycle
+  controls without returning password verifier material.
 - Policy decisions can be persisted to an append-only JSONL audit log by
   setting `SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH` to a writable file path. Each
   `studio.audit.v1` line records the UTC timestamp, policy action, route
