@@ -28,6 +28,10 @@ from sc_neurocore.studio.simulation_manifest import STUDIO_SIMULATION_RUN_SCHEMA
 
 STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION = "studio.evidence-bundle.v1"
 STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION = "studio.action-evidence.v1"
+STUDIO_DEFAULT_FLOW_RUN_SCHEMA_VERSION = "sc-neurocore.studio.default-flow-run.v1"
+STUDIO_DEFAULT_FLOW_ATTESTATION_SCHEMA_VERSION = (
+    "sc-neurocore.studio.default-flow-attestation.v1"
+)
 UTC = timezone.utc
 
 JsonScalar: TypeAlias = str | int | float | bool | None
@@ -81,6 +85,8 @@ def write_studio_evidence_bundle(
     project_payload: Mapping[str, object] | None = None,
     simulation_payloads: Sequence[Mapping[str, object]] = (),
     analysis_payloads: Sequence[Mapping[str, object]] = (),
+    default_flow_runs: Sequence[Mapping[str, object]] = (),
+    default_flow_attestations: Sequence[Mapping[str, object]] = (),
     job_records: Sequence[StudioJobRecord] = (),
     artifact_reader: StudioArtifactReader | None = None,
     audit_export: Mapping[str, object] | None = None,
@@ -102,6 +108,12 @@ def write_studio_evidence_bundle(
     analysis_payloads:
         Optional Studio analysis responses carrying ``studio.analysis-result.v1``
         analysis metadata.
+    default_flow_runs:
+        Optional guided default-flow run responses carrying reproducibility
+        fingerprints.
+    default_flow_attestations:
+        Optional guided default-flow attestations for the supplied run
+        responses.
     job_records:
         Completed or failed Studio job records to preserve with their declared
         artifacts. Artifacts ending in ``evidence.json`` must carry the
@@ -165,6 +177,37 @@ def write_studio_evidence_bundle(
                 "analysis_result",
                 f"evidence/analyses/{index:03d}.json",
                 _analysis_result_payload(analysis_payload),
+            )
+        )
+
+    default_flow_run_fingerprints: dict[tuple[str, str], tuple[str, str]] = {}
+    for index, default_flow_run in enumerate(default_flow_runs):
+        payload = _default_flow_run_payload(default_flow_run)
+        default_flow_run_fingerprints[_default_flow_key(payload)] = _default_flow_fingerprints(
+            payload
+        )
+        entries.append(
+            _write_json_entry(
+                context,
+                written_paths,
+                "default_flow_run",
+                f"evidence/default-flows/runs/{index:03d}.json",
+                payload,
+            )
+        )
+
+    for index, default_flow_attestation in enumerate(default_flow_attestations):
+        payload = _default_flow_attestation_payload(
+            default_flow_attestation,
+            run_fingerprints=default_flow_run_fingerprints,
+        )
+        entries.append(
+            _write_json_entry(
+                context,
+                written_paths,
+                "default_flow_attestation",
+                f"evidence/default-flows/attestations/{index:03d}.json",
+                payload,
             )
         )
 
@@ -297,6 +340,80 @@ def _analysis_result_payload(payload: Mapping[str, object]) -> dict[str, JsonVal
     if evidence_classification != "analysis":
         raise ValueError("Studio analysis payload must be classified as analysis evidence.")
     return result
+
+
+def _default_flow_run_payload(payload: Mapping[str, object]) -> dict[str, JsonValue]:
+    result = _json_object(payload, "Studio default-flow run payload must be JSON.")
+    if result.get("schema_version") != STUDIO_DEFAULT_FLOW_RUN_SCHEMA_VERSION:
+        raise ValueError("Studio default-flow run payload has unsupported schema.")
+    preset_id = result.get("preset_id")
+    flow_id = result.get("flow_id")
+    if not isinstance(preset_id, str) or not preset_id:
+        raise ValueError("Studio default-flow run payload requires a preset ID.")
+    if not isinstance(flow_id, str) or not flow_id:
+        raise ValueError("Studio default-flow run payload requires a flow ID.")
+    action_order = result.get("action_order")
+    if not isinstance(action_order, list) or not all(
+        isinstance(action_id, str) and action_id for action_id in action_order
+    ):
+        raise ValueError("Studio default-flow run payload requires action order.")
+    executed_count = result.get("executed_count")
+    if not isinstance(executed_count, int) or executed_count < 0:
+        raise ValueError("Studio default-flow run payload requires executed count.")
+    reproducibility = result.get("reproducibility_manifest")
+    if not isinstance(reproducibility, Mapping):
+        raise ValueError("Studio default-flow run payload requires reproducibility metadata.")
+    if reproducibility.get("hash_algorithm") != "sha256":
+        raise ValueError("Studio default-flow run payload has unsupported hash algorithm.")
+    inputs_fingerprint = reproducibility.get("inputs_fingerprint_sha256")
+    run_fingerprint = reproducibility.get("run_fingerprint_sha256")
+    if not _is_sha256_hex(inputs_fingerprint) or not _is_sha256_hex(run_fingerprint):
+        raise ValueError("Studio default-flow run payload requires SHA-256 fingerprints.")
+    return result
+
+
+def _default_flow_attestation_payload(
+    payload: Mapping[str, object],
+    *,
+    run_fingerprints: Mapping[tuple[str, str], tuple[str, str]],
+) -> dict[str, JsonValue]:
+    result = _json_object(payload, "Studio default-flow attestation payload must be JSON.")
+    if result.get("schema_version") != STUDIO_DEFAULT_FLOW_ATTESTATION_SCHEMA_VERSION:
+        raise ValueError("Studio default-flow attestation payload has unsupported schema.")
+    preset_id = result.get("preset_id")
+    flow_id = result.get("flow_id")
+    if not isinstance(preset_id, str) or not preset_id:
+        raise ValueError("Studio default-flow attestation payload requires a preset ID.")
+    if not isinstance(flow_id, str) or not flow_id:
+        raise ValueError("Studio default-flow attestation payload requires a flow ID.")
+    for key in (
+        "attestation_fingerprint_sha256",
+        "inputs_fingerprint_sha256",
+        "plan_fingerprint_sha256",
+        "run_fingerprint_sha256",
+    ):
+        if not _is_sha256_hex(result.get(key)):
+            raise ValueError("Studio default-flow attestation payload requires SHA-256 fingerprints.")
+    expected = run_fingerprints.get((preset_id, flow_id))
+    observed = (
+        cast(str, result["inputs_fingerprint_sha256"]),
+        cast(str, result["run_fingerprint_sha256"]),
+    )
+    if expected is not None and observed != expected:
+        raise ValueError("Studio default-flow attestation payload does not match supplied run.")
+    return result
+
+
+def _default_flow_key(payload: Mapping[str, JsonValue]) -> tuple[str, str]:
+    return (cast(str, payload["preset_id"]), cast(str, payload["flow_id"]))
+
+
+def _default_flow_fingerprints(payload: Mapping[str, JsonValue]) -> tuple[str, str]:
+    reproducibility = cast(Mapping[str, JsonValue], payload["reproducibility_manifest"])
+    return (
+        cast(str, reproducibility["inputs_fingerprint_sha256"]),
+        cast(str, reproducibility["run_fingerprint_sha256"]),
+    )
 
 
 def _job_artifact_entry(

@@ -110,6 +110,39 @@ def _action_evidence_payload(job_id: str) -> dict[str, object]:
     }
 
 
+def _default_flow_run_payload() -> dict[str, object]:
+    """Return a minimal default-flow run response with reproducibility hashes."""
+
+    return {
+        "action_order": ["auto_tune_adaptive_precision"],
+        "executed_count": 1,
+        "execution_time_ms": 1.0,
+        "flow_id": "studio_default_adaptive_precision_v1",
+        "preset_id": "fpga_precision",
+        "reproducibility_manifest": {
+            "hash_algorithm": "sha256",
+            "inputs_fingerprint_sha256": "7" * 64,
+            "run_fingerprint_sha256": "8" * 64,
+        },
+        "results": [],
+        "schema_version": "sc-neurocore.studio.default-flow-run.v1",
+    }
+
+
+def _default_flow_attestation_payload() -> dict[str, object]:
+    """Return a minimal default-flow attestation for the test run payload."""
+
+    return {
+        "attestation_fingerprint_sha256": "9" * 64,
+        "flow_id": "studio_default_adaptive_precision_v1",
+        "inputs_fingerprint_sha256": "7" * 64,
+        "plan_fingerprint_sha256": "a" * 64,
+        "preset_id": "fpga_precision",
+        "run_fingerprint_sha256": "8" * 64,
+        "schema_version": "sc-neurocore.studio.default-flow-attestation.v1",
+    }
+
+
 def _client_with_evidence_state(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -203,6 +236,8 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
         project_payload={"name": "demo", "state": {"duration": 10}},
         simulation_payloads=(_simulation_payload(),),
         analysis_payloads=(_analysis_payload(),),
+        default_flow_runs=(_default_flow_run_payload(),),
+        default_flow_attestations=(_default_flow_attestation_payload(),),
         job_records=(completed_source,),
         artifact_reader=manager.read_artifact,
         audit_export={"schema_version": "studio.audit.export.v1", "events": []},
@@ -217,6 +252,8 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     assert "evidence/project.json" in result.artifact_paths
     assert "evidence/simulations/000.json" in result.artifact_paths
     assert "evidence/analyses/000.json" in result.artifact_paths
+    assert "evidence/default-flows/runs/000.json" in result.artifact_paths
+    assert "evidence/default-flows/attestations/000.json" in result.artifact_paths
     assert f"evidence/jobs/{source_record.job_id}/record.json" in result.artifact_paths
     assert (
         f"evidence/jobs/{source_record.job_id}/artifacts/compiler/result.json"
@@ -230,6 +267,8 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     assert "compiler/result.json" in json.dumps(payload)
     assert "simulation_result" in json.dumps(payload)
     assert "analysis_result" in json.dumps(payload)
+    assert "default_flow_run" in json.dumps(payload)
+    assert "default_flow_attestation" in json.dumps(payload)
     assert "action_evidence" in json.dumps(payload)
 
 
@@ -414,6 +453,31 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
             context,
             analysis_payloads=(invalid_analysis_classification,),
         )
+    with pytest.raises(ValueError, match="default-flow run payload has unsupported schema"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_runs=({"schema_version": "legacy"},),
+        )
+    invalid_default_flow_run = _default_flow_run_payload()
+    invalid_default_flow_run["reproducibility_manifest"] = {"hash_algorithm": "md5"}
+    with pytest.raises(ValueError, match="unsupported hash algorithm"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_runs=(invalid_default_flow_run,),
+        )
+    with pytest.raises(ValueError, match="default-flow attestation payload has unsupported schema"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_attestations=({"schema_version": "legacy"},),
+        )
+    mismatched_attestation = _default_flow_attestation_payload()
+    mismatched_attestation["run_fingerprint_sha256"] = "b" * 64
+    with pytest.raises(ValueError, match="does not match supplied run"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_runs=(_default_flow_run_payload(),),
+            default_flow_attestations=(mismatched_attestation,),
+        )
 
     manager = StudioJobManager(
         root=tmp_path / "jobs",
@@ -570,6 +634,20 @@ def test_studio_evidence_bundle_route_exports_selected_state(
         },
     )
     assert analysis_response.status_code == 200
+    default_flow_run_response = client.post(
+        "/api/presets/fpga_precision/default-flow/run",
+        json={
+            "action_overrides": {
+                "auto_tune_adaptive_precision": {"target_error_percent": 0.05}
+            }
+        },
+    )
+    assert default_flow_run_response.status_code == 200
+    default_flow_attestation_response = client.post(
+        "/api/presets/fpga_precision/default-flow/attest",
+        json={"run_result": default_flow_run_response.json()},
+    )
+    assert default_flow_attestation_response.status_code == 200
     source_records = [
         record
         for record in _job_manager(app).list_records()
@@ -583,6 +661,8 @@ def test_studio_evidence_bundle_route_exports_selected_state(
             "project_name": "demo",
             "simulation_results": [simulation_response.json()],
             "analysis_results": [analysis_response.json()],
+            "default_flow_runs": [default_flow_run_response.json()],
+            "default_flow_attestations": [default_flow_attestation_response.json()],
             "job_ids": [source_records[0].job_id],
             "include_audit": True,
             "audit_limit": 10,
@@ -609,6 +689,16 @@ def test_studio_evidence_bundle_route_exports_selected_state(
         evidence_job_id,
         "evidence/analyses/000.json",
     )
+    default_flow_run_payload = _json_artifact(
+        manager,
+        evidence_job_id,
+        "evidence/default-flows/runs/000.json",
+    )
+    default_flow_attestation_payload = _json_artifact(
+        manager,
+        evidence_job_id,
+        "evidence/default-flows/attestations/000.json",
+    )
     copied_result = _json_artifact(
         manager,
         evidence_job_id,
@@ -629,9 +719,16 @@ def test_studio_evidence_bundle_route_exports_selected_state(
     assert project_payload["name"] == "demo"
     assert simulation_payload["run_metadata"] == simulation_response.json()["run_metadata"]
     assert analysis_payload["analysis_metadata"] == analysis_response.json()["analysis_metadata"]
+    assert default_flow_run_payload["schema_version"] == "sc-neurocore.studio.default-flow-run.v1"
+    assert (
+        default_flow_attestation_payload["schema_version"]
+        == "sc-neurocore.studio.default-flow-attestation.v1"
+    )
     assert copied_action_evidence["schema_version"] == "studio.action-evidence.v1"
     assert copied_action_evidence["evidence_classification"] == "compile"
     assert "action_evidence" in json.dumps(manifest)
+    assert "default_flow_run" in json.dumps(manifest)
+    assert "default_flow_attestation" in json.dumps(manifest)
     assert replay_payload["path"] == "/api/compile"
     assert copied_result == compile_response.json()
     assert str(tmp_path) not in encoded_body

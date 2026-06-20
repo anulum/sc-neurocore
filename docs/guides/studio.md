@@ -441,22 +441,25 @@ Administrators can create reproducible handoff bundles with
 `studio-evidence` worker job and can include one saved project payload,
 selected simulation responses carrying `studio.simulation-run.v1` run metadata,
 selected analysis responses carrying `studio.analysis-result.v1` analysis
-metadata, selected job records, verified copies of selected job artifacts, a
-bounded audit export, and command replay metadata such as method, route, and
-request body digest. Bundle files are declared job artifacts under
-`evidence/`, with simulation payloads stored under `evidence/simulations/`,
-analysis payloads stored under `evidence/analyses/`, and a
-`studio.evidence-bundle.v1` manifest at `evidence/manifest.json`. Selected job
-action-evidence artifacts are copied under `evidence/jobs/{job_id}/artifacts/`
-and classified as `action_evidence` only after `studio.action-evidence.v1`
-validation. The bundle manifest is path-free and omits bearer tokens, token
-hashes, password material, and host-local filesystem paths.
+metadata, selected default-flow run and attestation responses, selected job
+records, verified copies of selected job artifacts, a bounded audit export,
+and command replay metadata such as method, route, and request body digest.
+Bundle files are declared job artifacts under `evidence/`, with simulation
+payloads stored under `evidence/simulations/`, analysis payloads stored under
+`evidence/analyses/`, default-flow payloads stored under
+`evidence/default-flows/`, and a `studio.evidence-bundle.v1` manifest at
+`evidence/manifest.json`. Selected job action-evidence artifacts are copied
+under `evidence/jobs/{job_id}/artifacts/` and classified as `action_evidence`
+only after `studio.action-evidence.v1` validation. The bundle manifest is
+path-free and omits bearer tokens, token hashes, password material, and
+host-local filesystem paths.
 
 The Admin panel exposes the same evidence-bundle workflow. Operators can enter
 an optional saved project name, simulation-result JSON, analysis-result JSON,
-comma-separated job IDs, audit export settings, and replay metadata; after
-export, the panel refreshes the worker queue and shows the bundle ID, evidence
-job ID, artifact count, and manifest entry count.
+default-flow run JSON, default-flow attestation JSON, comma-separated job IDs,
+audit export settings, and replay metadata; after export, the panel refreshes
+the worker queue and shows the bundle ID, evidence job ID, artifact count, and
+manifest entry count.
 
 Studio also exposes a process-backed job-manager path for new backend work
 that can be expressed as an importable `module:function` task with a

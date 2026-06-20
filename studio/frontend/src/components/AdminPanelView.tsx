@@ -174,6 +174,8 @@ export default function AdminPanelView({
       audit_limit: boundedInteger(form.get("auditLimit"), 100, 1, 1000),
       analysis_results: jsonObjects(form.get("analysisResults")),
       command_replay: Object.keys(commandReplay).length > 0 ? commandReplay : null,
+      default_flow_attestations: jsonObjects(form.get("defaultFlowAttestations")),
+      default_flow_runs: jsonObjects(form.get("defaultFlowRuns")),
       include_audit: form.get("includeAudit") === "on",
       job_ids: textList(form.get("jobIds")),
       project_name: optionalText(form.get("projectName")),
@@ -526,6 +528,24 @@ export default function AdminPanelView({
             <textarea
               aria-label="Evidence analysis JSON"
               name="analysisResults"
+              disabled={model.evidenceBundle.loading}
+              rows={4}
+            />
+          </label>
+          <label className="admin-evidence-wide">
+            Flow Run JSON
+            <textarea
+              aria-label="Evidence default-flow run JSON"
+              name="defaultFlowRuns"
+              disabled={model.evidenceBundle.loading}
+              rows={4}
+            />
+          </label>
+          <label className="admin-evidence-wide">
+            Flow Attestation JSON
+            <textarea
+              aria-label="Evidence default-flow attestation JSON"
+              name="defaultFlowAttestations"
               disabled={model.evidenceBundle.loading}
               rows={4}
             />

@@ -217,6 +217,8 @@ function defaultApiMocks(): Map<string, ApiMockPayload> {
       artifact_paths: [
         "evidence/simulations/000.json",
         "evidence/analyses/000.json",
+        "evidence/default-flows/runs/000.json",
+        "evidence/default-flows/attestations/000.json",
         "evidence/manifest.json",
       ],
       artifacts: [
@@ -230,6 +232,16 @@ function defaultApiMocks(): Map<string, ApiMockPayload> {
           sha256: "d".repeat(64),
           size_bytes: 192,
         },
+        {
+          relative_path: "evidence/default-flows/runs/000.json",
+          sha256: "e".repeat(64),
+          size_bytes: 512,
+        },
+        {
+          relative_path: "evidence/default-flows/attestations/000.json",
+          sha256: "f".repeat(64),
+          size_bytes: 256,
+        },
       ],
       bundle_id: "seb_sj_browser",
       job_id: "sj_browser",
@@ -237,6 +249,8 @@ function defaultApiMocks(): Map<string, ApiMockPayload> {
         entries: [
           { type: "simulation_result" },
           { type: "analysis_result" },
+          { type: "default_flow_run" },
+          { type: "default_flow_attestation" },
           { type: "manifest" },
         ],
       },
@@ -404,12 +418,41 @@ test("admin evidence bundle form submits simulation and analysis result payloads
     currents: [0, 1],
     rates: [0, 10],
   };
+  const defaultFlowRunPayload = {
+    action_order: ["auto_tune_adaptive_precision"],
+    executed_count: 1,
+    execution_time_ms: 1,
+    flow_id: "studio_default_adaptive_precision_v1",
+    preset_id: "fpga_precision",
+    reproducibility_manifest: {
+      hash_algorithm: "sha256",
+      inputs_fingerprint_sha256: "7".repeat(64),
+      run_fingerprint_sha256: "8".repeat(64),
+    },
+    results: [],
+    schema_version: "sc-neurocore.studio.default-flow-run.v1",
+  };
+  const defaultFlowAttestationPayload = {
+    attestation_fingerprint_sha256: "9".repeat(64),
+    flow_id: "studio_default_adaptive_precision_v1",
+    inputs_fingerprint_sha256: "7".repeat(64),
+    plan_fingerprint_sha256: "a".repeat(64),
+    preset_id: "fpga_precision",
+    run_fingerprint_sha256: "8".repeat(64),
+    schema_version: "sc-neurocore.studio.default-flow-attestation.v1",
+  };
 
   await page.getByRole("textbox", { name: "Evidence simulation JSON" }).fill(
     JSON.stringify(simulationPayload),
   );
   await page.getByRole("textbox", { name: "Evidence analysis JSON" }).fill(
     JSON.stringify(analysisPayload),
+  );
+  await page.getByRole("textbox", { name: "Evidence default-flow run JSON" }).fill(
+    JSON.stringify(defaultFlowRunPayload),
+  );
+  await page.getByRole("textbox", { name: "Evidence default-flow attestation JSON" }).fill(
+    JSON.stringify(defaultFlowAttestationPayload),
   );
   await page.getByRole("button", { name: "Create evidence bundle" }).click();
 
@@ -419,6 +462,8 @@ test("admin evidence bundle form submits simulation and analysis result payloads
   expect(bodies).toHaveLength(1);
   expect(bodies[0]).toMatchObject({
     analysis_results: [analysisPayload],
+    default_flow_attestations: [defaultFlowAttestationPayload],
+    default_flow_runs: [defaultFlowRunPayload],
     include_audit: true,
     simulation_results: [simulationPayload],
   });

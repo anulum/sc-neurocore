@@ -223,22 +223,25 @@ runtime features:
 - `/api/studio/evidence/bundle` creates an admin-only evidence export as a
   bounded `studio-evidence` worker job. The request can name one saved project,
   selected `studio.simulation-run.v1` simulation responses, selected
-  `studio.analysis-result.v1` analysis responses, selected job IDs, bounded
-  audit export length, and command replay metadata. The resulting
+  `studio.analysis-result.v1` analysis responses, selected default-flow run
+  and attestation responses, selected job IDs, bounded audit export length, and
+  command replay metadata. The resulting
   `studio.evidence-bundle.v1` manifest, project payload, simulation result
-  payloads, analysis result payloads, job records, copied verified job
-  artifacts, audit excerpt, and replay metadata are all written as job
-  artifacts under `evidence/`. Simulation payloads are stored under
-  `evidence/simulations/`; analysis payloads are stored under
-  `evidence/analyses/`. Selected job action-evidence artifacts are copied under
-  `evidence/jobs/{job_id}/artifacts/` and classified as `action_evidence` only
-  after `studio.action-evidence.v1` validation. The response and manifest are
-  path-free and omit bearer tokens, token hashes, password material, and local
-  filesystem paths.
+  payloads, analysis result payloads, default-flow run/attestation payloads,
+  job records, copied verified job artifacts, audit excerpt, and replay
+  metadata are all written as job artifacts under `evidence/`. Simulation
+  payloads are stored under `evidence/simulations/`; analysis payloads are
+  stored under `evidence/analyses/`; default-flow payloads are stored under
+  `evidence/default-flows/`. Selected job action-evidence artifacts are copied
+  under `evidence/jobs/{job_id}/artifacts/` and classified as `action_evidence`
+  only after `studio.action-evidence.v1` validation. The response and manifest
+  are path-free and omit bearer tokens, token hashes, password material, and
+  local filesystem paths.
 - The Admin panel surfaces that evidence route as an operator workflow with
-  project, simulation JSON, analysis JSON, job ID, audit, and replay metadata
-  fields. After export it refreshes the job queue and displays the bundle ID,
-  evidence job ID, artifact count, and manifest entry count.
+  project, simulation JSON, analysis JSON, default-flow run JSON,
+  default-flow attestation JSON, job ID, audit, and replay metadata fields.
+  After export it refreshes the job queue and displays the bundle ID, evidence
+  job ID, artifact count, and manifest entry count.
 - New backend workflows can use `StudioJobManager.submit_process_task(...)` for
   process-backed execution. The task is an importable `module:function` that
   receives a `StudioJobContext` plus a JSON payload and returns a JSON result.
@@ -486,7 +489,7 @@ for complete API details with request/response examples.
 | `/api/graph/*` | Network Canvas | Populations, projections, validate, simulate, NIR |
 | `/api/project/*`, `/api/pipeline/*` | Integration | Save/load, worker-backed full pipeline |
 | `/api/studio/audit/*` | Admin | Audit status and admin-gated export |
-| `/api/studio/evidence/bundle` | Admin | Job-backed project/job/audit simulation and analysis evidence bundle |
+| `/api/studio/evidence/bundle` | Admin | Job-backed project/job/audit simulation, analysis, and default-flow evidence bundle |
 | `/api/studio/auth/*` | Platform | Browser-user login, current bearer session, logout |
 | `/api/studio/identity/*` | Admin | Token-free service-account inventory and role updates |
 | `/api/studio/operator/status` | Admin | Aggregate operator control-plane health |
