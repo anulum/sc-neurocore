@@ -22,6 +22,7 @@ from sc_neurocore.studio.platform.training_weights import (
     STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION,
     TRAINING_WEIGHT_ARTIFACT_PATH,
     TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+    validate_training_weight_checkpoint_metadata,
     write_training_weight_checkpoint,
 )
 
@@ -96,4 +97,59 @@ def test_write_training_weight_checkpoint_rejects_invalid_payload(
             architecture="64->10",
             parameter_count=1,
             final_metrics={"bad": float("nan")},
+        )
+
+
+def test_validate_training_weight_checkpoint_metadata_accepts_writer_output(
+    tmp_path: Path,
+) -> None:
+    """Weight checkpoint import validation accepts writer-produced metadata."""
+
+    context = _context(tmp_path)
+    summary = write_training_weight_checkpoint(
+        context,
+        weights_payload=b"weights",
+        config={"dataset": "synthetic", "epochs": 2},
+        architecture="64->10",
+        parameter_count=650,
+        final_metrics={"train_accuracy": 0.75},
+    ).to_public_dict()
+
+    validated = validate_training_weight_checkpoint_metadata(
+        summary,
+        expected_config_sha256=str(summary["config_sha256"]),
+    )
+
+    assert validated == summary
+
+
+def test_validate_training_weight_checkpoint_metadata_rejects_forged_artifacts(
+    tmp_path: Path,
+) -> None:
+    """Weight checkpoint import validation rejects forged artifact metadata."""
+
+    context = _context(tmp_path)
+    summary = write_training_weight_checkpoint(
+        context,
+        weights_payload=b"weights",
+        config={"dataset": "synthetic"},
+        architecture="64->10",
+        parameter_count=650,
+        final_metrics=None,
+    ).to_public_dict()
+    forged_path = dict(summary)
+    forged_path["weights_artifact"] = {
+        "relative_path": "../model_state.pt",
+        "sha256": "0" * 64,
+        "size_bytes": 7,
+    }
+    forged_digest = dict(summary)
+    forged_digest["config_sha256"] = "1" * 64
+
+    with pytest.raises(ValueError, match="path"):
+        validate_training_weight_checkpoint_metadata(forged_path)
+    with pytest.raises(ValueError, match="config digest mismatch"):
+        validate_training_weight_checkpoint_metadata(
+            forged_digest,
+            expected_config_sha256=str(summary["config_sha256"]),
         )

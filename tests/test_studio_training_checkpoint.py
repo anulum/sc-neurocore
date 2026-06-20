@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
+import threading
 
 import pytest
 
@@ -21,41 +21,60 @@ fastapi = pytest.importorskip("fastapi")
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
-from sc_neurocore.studio.platform import StudioRuntimeSettings
+from sc_neurocore.studio.platform import JsonValue, StudioRuntimeSettings
 from sc_neurocore.studio.platform.training_checkpoint import (
     STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION,
     build_training_checkpoint,
     import_training_checkpoint_payload,
 )
+from sc_neurocore.studio.platform.jobs import StudioJobContext
+from sc_neurocore.studio.platform.training_weights import write_training_weight_checkpoint
 
 
-def test_training_checkpoint_round_trip_validates_hashes() -> None:
+def _weight_checkpoint_metadata(
+    tmp_path: Path,
+    *,
+    config: dict[str, object],
+) -> dict[str, JsonValue]:
+    """Return writer-produced weight metadata for checkpoint tests."""
+
+    context = StudioJobContext(
+        job_id="sj_training",
+        work_dir=tmp_path,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4096,
+    )
+    return write_training_weight_checkpoint(
+        context,
+        weights_payload=b"weights",
+        config=config,
+        architecture="64->128->10",
+        parameter_count=9610,
+        final_metrics={"train_accuracy": 0.9},
+    ).to_public_dict()
+
+
+def test_training_checkpoint_round_trip_validates_hashes(tmp_path: Path) -> None:
     """Checkpoint import accepts an untampered exported checkpoint."""
 
+    config = {
+        "batch_size": 32,
+        "dataset": "synthetic",
+        "epochs": 4,
+        "hidden": [128],
+        "surrogate": "superspike",
+        "timesteps": 16,
+    }
     checkpoint = build_training_checkpoint(
         job_id="sj_training",
-        config={
-            "batch_size": 32,
-            "dataset": "synthetic",
-            "epochs": 4,
-            "hidden": [128],
-            "surrogate": "superspike",
-            "timesteps": 16,
-        },
+        config=config,
         status="completed",
         final_metrics={"train_accuracy": 0.9},
         evidence_summary={
             "action_kind": "studio.training.run",
             "schema_version": "studio.training.evidence-summary.v1",
         },
-        weight_checkpoint={
-            "schema_version": "studio.training.weight-checkpoint.v1",
-            "weights_artifact": {
-                "relative_path": "training/model_state.pt",
-                "sha256": "abc",
-                "size_bytes": 12,
-            },
-        },
+        weight_checkpoint=_weight_checkpoint_metadata(tmp_path, config=config),
         clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
     ).to_public_dict()
 
@@ -78,11 +97,35 @@ def test_training_checkpoint_import_rejects_tampered_config() -> None:
         status="completed",
         clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
     ).to_public_dict()
-    tampered = dict(checkpoint)
+    tampered: dict[str, object] = dict(checkpoint)
     tampered["config"] = {"dataset": "synthetic", "epochs": 99}
 
     with pytest.raises(ValueError, match="config digest mismatch"):
-        import_training_checkpoint_payload(cast(dict[str, object], tampered))
+        import_training_checkpoint_payload(tampered)
+
+
+def test_training_checkpoint_import_rejects_tampered_weight_metadata(
+    tmp_path: Path,
+) -> None:
+    """Checkpoint import rejects invalid weight metadata after export."""
+
+    config = {"dataset": "synthetic", "epochs": 4}
+    checkpoint = build_training_checkpoint(
+        job_id="sj_training",
+        config=config,
+        status="completed",
+        weight_checkpoint=_weight_checkpoint_metadata(tmp_path, config=config),
+        clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
+    ).to_public_dict()
+    weight_value = checkpoint["weight_checkpoint"]
+    assert isinstance(weight_value, dict)
+    tampered_weight: dict[str, object] = dict(weight_value)
+    tampered_weight["config_sha256"] = "1" * 64
+    tampered: dict[str, object] = dict(checkpoint)
+    tampered["weight_checkpoint"] = tampered_weight
+
+    with pytest.raises(ValueError, match="config digest mismatch"):
+        import_training_checkpoint_payload(tampered)
 
 
 def test_training_checkpoint_endpoints_round_trip(tmp_path: Path) -> None:

@@ -140,6 +140,7 @@ from sc_neurocore.studio.platform.training_weights import (
     TRAINING_WEIGHT_ARTIFACT_PATH,
     TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
     StudioTrainingWeightCheckpoint,
+    validate_training_weight_checkpoint_metadata,
     write_training_weight_checkpoint,
 )
 from sc_neurocore.studio.platform.operator import (
@@ -302,6 +303,7 @@ __all__ = [
     "build_studio_operator_status",
     "build_training_evidence_summary",
     "build_training_checkpoint",
+    "validate_training_weight_checkpoint_metadata",
     "write_training_weight_checkpoint",
     "import_training_checkpoint_payload",
     "list_studio_deployment_profile_packages",

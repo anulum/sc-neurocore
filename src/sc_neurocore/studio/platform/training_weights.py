@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import cast
@@ -23,6 +24,7 @@ from sc_neurocore.studio.platform.jobs import StudioJobArtifact, StudioJobContex
 STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION = "studio.training.weight-checkpoint.v1"
 TRAINING_WEIGHT_ARTIFACT_PATH = "training/model_state.pt"
 TRAINING_WEIGHT_METADATA_ARTIFACT_PATH = "training/model_state.json"
+_SHA256_HEX_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,6 +157,71 @@ def write_training_weight_checkpoint(
     )
 
 
+def validate_training_weight_checkpoint_metadata(
+    payload: Mapping[str, object],
+    *,
+    expected_config_sha256: str | None = None,
+) -> dict[str, JsonValue]:
+    """Validate imported Training Monitor weight metadata.
+
+    Parameters
+    ----------
+    payload:
+        Path-free weight metadata from a ``studio.training.checkpoint.v1``
+        payload.
+    expected_config_sha256:
+        Optional checkpoint configuration digest that must match the weight
+        metadata configuration digest.
+
+    Returns
+    -------
+    dict[str, JsonValue]
+        JSON-compatible, validated weight metadata.
+
+    Raises
+    ------
+    ValueError
+        If the schema, framework, format, config digest, artifact paths,
+        artifact sizes, artifact hashes, or metadata payload are invalid.
+    """
+
+    metadata = _json_object(
+        payload,
+        "Training weight checkpoint metadata must be JSON.",
+    )
+    if metadata.get("schema_version") != STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION:
+        raise ValueError("Training weight checkpoint schema is unsupported.")
+    if metadata.get("framework") != "pytorch":
+        raise ValueError("Training weight checkpoint framework is unsupported.")
+    if metadata.get("format") != "torch_state_dict":
+        raise ValueError("Training weight checkpoint format is unsupported.")
+    architecture = metadata.get("architecture")
+    if not isinstance(architecture, str) or not architecture:
+        raise ValueError("Training weight checkpoint requires architecture.")
+    parameter_count = metadata.get("parameter_count")
+    if not isinstance(parameter_count, int) or parameter_count < 0:
+        raise ValueError("Training weight checkpoint parameter count is invalid.")
+    config_sha256 = metadata.get("config_sha256")
+    if not isinstance(config_sha256, str) or not _SHA256_HEX_PATTERN.fullmatch(config_sha256):
+        raise ValueError("Training weight checkpoint config digest is invalid.")
+    if expected_config_sha256 is not None and config_sha256 != expected_config_sha256:
+        raise ValueError("Training weight checkpoint config digest mismatch.")
+    _validate_artifact_metadata(
+        metadata.get("weights_artifact"),
+        expected_path=TRAINING_WEIGHT_ARTIFACT_PATH,
+        field_name="weights_artifact",
+    )
+    _validate_artifact_metadata(
+        metadata.get("metadata_artifact"),
+        expected_path=TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+        field_name="metadata_artifact",
+    )
+    final_metrics = metadata.get("final_metrics")
+    if final_metrics is not None and not isinstance(final_metrics, dict):
+        raise ValueError("Training weight checkpoint metrics must be an object.")
+    return metadata
+
+
 def _json_object(payload: Mapping[str, object], error_message: str) -> dict[str, JsonValue]:
     """Return a JSON object after recursively validating portable values."""
 
@@ -165,6 +232,27 @@ def _artifact_public_dict(artifact: StudioJobArtifact) -> dict[str, JsonValue]:
     """Return a JSON-compatible public artifact manifest entry."""
 
     return cast(dict[str, JsonValue], artifact.to_public_dict())
+
+
+def _validate_artifact_metadata(
+    value: object,
+    *,
+    expected_path: str,
+    field_name: str,
+) -> None:
+    """Validate one path-free artifact manifest entry."""
+
+    if not isinstance(value, dict):
+        raise ValueError(f"Training weight checkpoint requires {field_name}.")
+    artifact = _json_object(value, f"Training weight checkpoint {field_name} must be JSON.")
+    if artifact.get("relative_path") != expected_path:
+        raise ValueError(f"Training weight checkpoint {field_name} path is invalid.")
+    size_bytes = artifact.get("size_bytes")
+    if not isinstance(size_bytes, int) or size_bytes <= 0:
+        raise ValueError(f"Training weight checkpoint {field_name} size is invalid.")
+    sha256 = artifact.get("sha256")
+    if not isinstance(sha256, str) or not _SHA256_HEX_PATTERN.fullmatch(sha256):
+        raise ValueError(f"Training weight checkpoint {field_name} digest is invalid.")
 
 
 def _json_value(value: object, error_message: str) -> JsonValue:
@@ -210,5 +298,6 @@ __all__ = [
     "TRAINING_WEIGHT_ARTIFACT_PATH",
     "TRAINING_WEIGHT_METADATA_ARTIFACT_PATH",
     "StudioTrainingWeightCheckpoint",
+    "validate_training_weight_checkpoint_metadata",
     "write_training_weight_checkpoint",
 ]

@@ -19,6 +19,9 @@ from datetime import UTC, datetime
 from typing import TypeAlias, cast
 
 from sc_neurocore.studio.platform.evidence_bundle import JsonValue
+from sc_neurocore.studio.platform.training_weights import (
+    validate_training_weight_checkpoint_metadata,
+)
 
 STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION = "studio.training.checkpoint.v1"
 
@@ -132,18 +135,19 @@ def build_training_checkpoint(
         if evidence_summary is None
         else _json_object(evidence_summary, "Training checkpoint evidence must be JSON.")
     )
+    generated_at = (clock or datetime.now(UTC)).astimezone(UTC).replace(microsecond=0)
+    config_sha256 = _sha256_json(checkpoint_config)
     weight_payload = (
         None
         if weight_checkpoint is None
-        else _json_object(
+        else validate_training_weight_checkpoint_metadata(
             weight_checkpoint,
-            "Training checkpoint weight metadata must be JSON.",
+            expected_config_sha256=config_sha256,
         )
     )
-    generated_at = (clock or datetime.now(UTC)).astimezone(UTC).replace(microsecond=0)
     base_payload: dict[str, JsonValue] = {
         "config": checkpoint_config,
-        "config_sha256": _sha256_json(checkpoint_config),
+        "config_sha256": config_sha256,
         "evidence_summary": evidence_payload,
         "final_metrics": metrics_payload,
         "generated_at_utc": generated_at.isoformat().replace("+00:00", "Z"),
@@ -198,6 +202,12 @@ def import_training_checkpoint_payload(
     expected_config_sha = _required_string_field(checkpoint, "config_sha256")
     if expected_config_sha != _sha256_json(config):
         raise ValueError("Training checkpoint config digest mismatch.")
+    weight_value = checkpoint.get("weight_checkpoint")
+    weight_checkpoint = (
+        None
+        if weight_value is None
+        else _weight_checkpoint_payload(weight_value, expected_config_sha256=expected_config_sha)
+    )
     checkpoint_without_digest = {
         key: value for key, value in checkpoint.items() if key != "checkpoint_sha256"
     }
@@ -210,7 +220,7 @@ def import_training_checkpoint_payload(
         "imported_schema_version": STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION,
         "source_job_id": _required_string_field(checkpoint, "job_id"),
         "source_status": _required_string_field(checkpoint, "status"),
-        "source_weight_checkpoint": checkpoint.get("weight_checkpoint"),
+        "source_weight_checkpoint": weight_checkpoint,
     }
 
 
@@ -265,6 +275,21 @@ def _required_string_field(payload: Mapping[str, JsonValue], field_name: str) ->
     if not isinstance(value, str) or not value:
         raise ValueError(f"Training checkpoint requires {field_name}.")
     return value
+
+
+def _weight_checkpoint_payload(
+    value: JsonValue,
+    *,
+    expected_config_sha256: str,
+) -> dict[str, JsonValue]:
+    """Validate and return path-free weight checkpoint metadata."""
+
+    if not isinstance(value, dict):
+        raise ValueError("Training checkpoint weight metadata must be an object.")
+    return validate_training_weight_checkpoint_metadata(
+        value,
+        expected_config_sha256=expected_config_sha256,
+    )
 
 
 __all__ = [

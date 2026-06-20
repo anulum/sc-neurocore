@@ -120,7 +120,10 @@ job artifacts:
 The portable checkpoint JSON may include that weight metadata under
 `weight_checkpoint`, but the raw tensor payload remains behind the authenticated
 job artifact download route so API consumers do not accidentally move large
-binary weights through ordinary status or checkpoint responses.
+binary weights through ordinary status or checkpoint responses. Checkpoint
+import validates the weight metadata schema, framework, format, artifact paths,
+artifact sizes, SHA-256 digests, and config digest before returning it as
+source metadata.
 
 ## API Endpoints
 
