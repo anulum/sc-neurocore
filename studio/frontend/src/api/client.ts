@@ -227,6 +227,7 @@ export interface StudioEvidenceBundleRequest {
   include_audit: boolean;
   job_ids: string[];
   project_name: string | null;
+  simulation_results: Record<string, unknown>[];
 }
 
 export interface StudioEvidenceBundleResponse {

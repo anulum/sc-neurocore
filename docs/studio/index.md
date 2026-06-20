@@ -220,16 +220,17 @@ runtime features:
   generic errors if the artifact is missing or fails integrity checks.
 - `/api/studio/evidence/bundle` creates an admin-only evidence export as a
   bounded `studio-evidence` worker job. The request can name one saved project,
-  selected job IDs, bounded audit export length, and command replay metadata.
-  The resulting `studio.evidence-bundle.v1` manifest, project payload, job
-  records, copied verified job artifacts, audit excerpt, and replay metadata are
-  all written as job artifacts under `evidence/`. The response and manifest are
-  path-free and omit bearer tokens, token hashes, password material, and local
-  filesystem paths.
+  selected `studio.simulation-run.v1` simulation responses, selected job IDs,
+  bounded audit export length, and command replay metadata. The resulting
+  `studio.evidence-bundle.v1` manifest, project payload, simulation result
+  payloads, job records, copied verified job artifacts, audit excerpt, and
+  replay metadata are all written as job artifacts under `evidence/`. The
+  response and manifest are path-free and omit bearer tokens, token hashes,
+  password material, and local filesystem paths.
 - The Admin panel surfaces that evidence route as an operator workflow with
-  project, job ID, audit, and replay metadata fields. After export it refreshes
-  the job queue and displays the bundle ID, evidence job ID, artifact count,
-  and manifest entry count.
+  project, simulation JSON, job ID, audit, and replay metadata fields. After
+  export it refreshes the job queue and displays the bundle ID, evidence job
+  ID, artifact count, and manifest entry count.
 - New backend workflows can use `StudioJobManager.submit_process_task(...)` for
   process-backed execution. The task is an importable `module:function` that
   receives a `StudioJobContext` plus a JSON payload and returns a JSON result.

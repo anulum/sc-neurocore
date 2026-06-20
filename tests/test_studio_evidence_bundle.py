@@ -38,6 +38,32 @@ from sc_neurocore.studio.project import save_project
 UTC = timezone.utc
 
 
+def _simulation_payload() -> dict[str, object]:
+    """Return a minimal Studio simulation response carrying run metadata."""
+
+    return {
+        "current_trace": [1.0, 1.0],
+        "dt": 0.1,
+        "n_steps": 2,
+        "run_metadata": {
+            "dt": 0.1,
+            "evidence_classification": "simulation",
+            "input_sha256": "1" * 64,
+            "n_steps": 2,
+            "result_sha256": "2" * 64,
+            "sample_count": 2,
+            "schema_version": "studio.simulation-run.v1",
+            "source": "ode",
+            "spike_count": 0,
+            "state_variables": ["v"],
+        },
+        "spike_count": 0,
+        "spikes": [],
+        "states": {"v": [0.0, 0.1]},
+        "time": [0.0, 0.1],
+    }
+
+
 def _client_with_evidence_state(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -119,6 +145,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     result = write_studio_evidence_bundle(
         bundle_context,
         project_payload={"name": "demo", "state": {"duration": 10}},
+        simulation_payloads=(_simulation_payload(),),
         job_records=(completed_source,),
         artifact_reader=manager.read_artifact,
         audit_export={"schema_version": "studio.audit.export.v1", "events": []},
@@ -131,6 +158,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     assert payload["bundle_id"] == "seb_sj_evidence"
     assert "evidence/manifest.json" in result.artifact_paths
     assert "evidence/project.json" in result.artifact_paths
+    assert "evidence/simulations/000.json" in result.artifact_paths
     assert f"evidence/jobs/{source_record.job_id}/record.json" in result.artifact_paths
     assert (
         f"evidence/jobs/{source_record.job_id}/artifacts/compiler/result.json"
@@ -138,6 +166,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     )
     assert (tmp_path / "evidence" / "evidence" / "command-replay.json").is_file()
     assert "compiler/result.json" in json.dumps(payload)
+    assert "simulation_result" in json.dumps(payload)
 
 
 def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
@@ -165,6 +194,18 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
         write_studio_evidence_bundle(
             context,
             project_payload=cast(dict[str, object], {1: "bad"}),
+        )
+    with pytest.raises(ValueError, match="Studio simulation payload requires run metadata"):
+        write_studio_evidence_bundle(
+            context,
+            simulation_payloads=({"time": []},),
+        )
+    invalid_simulation = _simulation_payload()
+    invalid_simulation["run_metadata"] = {"schema_version": "legacy"}
+    with pytest.raises(ValueError, match="unsupported run metadata"):
+        write_studio_evidence_bundle(
+            context,
+            simulation_payloads=(invalid_simulation,),
         )
 
     manager = StudioJobManager(
@@ -227,6 +268,17 @@ def test_studio_evidence_bundle_route_exports_selected_state(
         },
     )
     assert compile_response.status_code == 200
+    simulation_response = client.post(
+        "/api/simulate",
+        json={
+            "current": 1.0,
+            "dt": 0.1,
+            "duration": 1.0,
+            "equations": ["dv/dt = I"],
+            "init": {"v": 0.0},
+        },
+    )
+    assert simulation_response.status_code == 200
     source_records = [
         record
         for record in _job_manager(app).list_records()
@@ -238,6 +290,7 @@ def test_studio_evidence_bundle_route_exports_selected_state(
         "/api/studio/evidence/bundle",
         json={
             "project_name": "demo",
+            "simulation_results": [simulation_response.json()],
             "job_ids": [source_records[0].job_id],
             "include_audit": True,
             "audit_limit": 10,
@@ -254,6 +307,11 @@ def test_studio_evidence_bundle_route_exports_selected_state(
     manifest = _json_artifact(manager, evidence_job_id, "evidence/manifest.json")
     project_payload = _json_artifact(manager, evidence_job_id, "evidence/project.json")
     replay_payload = _json_artifact(manager, evidence_job_id, "evidence/command-replay.json")
+    simulation_payload = _json_artifact(
+        manager,
+        evidence_job_id,
+        "evidence/simulations/000.json",
+    )
     copied_result = _json_artifact(
         manager,
         evidence_job_id,
@@ -267,6 +325,7 @@ def test_studio_evidence_bundle_route_exports_selected_state(
     assert body["artifacts"]
     assert manifest["schema_version"] == STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION
     assert project_payload["name"] == "demo"
+    assert simulation_payload["run_metadata"] == simulation_response.json()["run_metadata"]
     assert replay_payload["path"] == "/api/compile"
     assert copied_result == compile_response.json()
     assert str(tmp_path) not in encoded_body

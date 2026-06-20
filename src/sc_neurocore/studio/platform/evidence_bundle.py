@@ -23,6 +23,7 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobContext,
     StudioJobRecord,
 )
+from sc_neurocore.studio.simulation_manifest import STUDIO_SIMULATION_RUN_SCHEMA_VERSION
 
 STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION = "studio.evidence-bundle.v1"
 UTC = timezone.utc
@@ -65,6 +66,7 @@ def write_studio_evidence_bundle(
     context: StudioJobContext,
     *,
     project_payload: Mapping[str, object] | None = None,
+    simulation_payloads: Sequence[Mapping[str, object]] = (),
     job_records: Sequence[StudioJobRecord] = (),
     artifact_reader: StudioArtifactReader | None = None,
     audit_export: Mapping[str, object] | None = None,
@@ -80,6 +82,9 @@ def write_studio_evidence_bundle(
         path confinement, byte ceilings, and SHA-256 manifests.
     project_payload:
         Optional saved Studio project payload from ``load_project``.
+    simulation_payloads:
+        Optional Studio simulation responses carrying ``studio.simulation-run.v1``
+        run metadata.
     job_records:
         Completed or failed Studio job records to preserve with their declared
         artifacts.
@@ -119,6 +124,17 @@ def write_studio_evidence_bundle(
                 "project",
                 "evidence/project.json",
                 _json_object(project_payload, "Studio project payload must be JSON."),
+            )
+        )
+
+    for index, simulation_payload in enumerate(simulation_payloads):
+        entries.append(
+            _write_json_entry(
+                context,
+                written_paths,
+                "simulation_result",
+                f"evidence/simulations/{index:03d}.json",
+                _simulation_result_payload(simulation_payload),
             )
         )
 
@@ -223,6 +239,20 @@ def _write_json_entry(
 
 def _json_object(payload: Mapping[str, object], error_message: str) -> dict[str, JsonValue]:
     return cast(dict[str, JsonValue], _json_value(dict(payload), error_message))
+
+
+def _simulation_result_payload(payload: Mapping[str, object]) -> dict[str, JsonValue]:
+    result = _json_object(payload, "Studio simulation payload must be JSON.")
+    metadata = result.get("run_metadata")
+    if not isinstance(metadata, Mapping):
+        raise ValueError("Studio simulation payload requires run metadata.")
+    schema_version = metadata.get("schema_version")
+    if schema_version != STUDIO_SIMULATION_RUN_SCHEMA_VERSION:
+        raise ValueError("Studio simulation payload has unsupported run metadata.")
+    evidence_classification = metadata.get("evidence_classification")
+    if evidence_classification != "simulation":
+        raise ValueError("Studio simulation payload must be classified as simulation evidence.")
+    return result
 
 
 def _json_value(value: object, error_message: str) -> JsonValue:

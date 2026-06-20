@@ -437,7 +437,8 @@ body {
   font-size: 10px;
 }
 
-.admin-evidence-form input {
+.admin-evidence-form input,
+.admin-evidence-form textarea {
   width: 100%;
   min-width: 0;
   padding: 4px 6px;
@@ -447,6 +448,15 @@ body {
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: 11px;
+}
+
+.admin-evidence-form textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.admin-evidence-wide {
+  grid-column: span 2;
 }
 
 .admin-evidence-form input[type="checkbox"] {

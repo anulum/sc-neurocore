@@ -156,6 +156,7 @@ interface ApiMockSequence {
 type ApiMockPayload = object | ApiMockSequence;
 
 interface ApiDispatcher {
+  bodies: (path: string) => unknown[];
   requests: (path: string) => number;
 }
 
@@ -164,12 +165,23 @@ async function installApiDispatcher(
   mocks: Map<string, ApiMockPayload>,
 ): Promise<ApiDispatcher> {
   await page.unrouteAll({ behavior: "ignoreErrors" });
+  const bodies = new Map<string, unknown[]>();
   const counts = new Map<string, number>();
   await page.route((url) => url.pathname.startsWith("/api/"), async (route) => {
     const url = new URL(route.request().url());
     const path = `${url.pathname}${url.search}`;
     const count = counts.get(path) ?? 0;
     counts.set(path, count + 1);
+    const postData = route.request().postData();
+    if (postData !== null) {
+      const recorded = bodies.get(path) ?? [];
+      try {
+        recorded.push(JSON.parse(postData) as unknown);
+      } catch {
+        recorded.push(postData);
+      }
+      bodies.set(path, recorded);
+    }
     const payload = mocks.get(path);
     if (payload === undefined) {
       await route.fulfill({
@@ -188,7 +200,10 @@ async function installApiDispatcher(
       status: 200,
     });
   });
-  return { requests: (path: string) => counts.get(path) ?? 0 };
+  return {
+    bodies: (path: string) => bodies.get(path) ?? [],
+    requests: (path: string) => counts.get(path) ?? 0,
+  };
 }
 
 function defaultApiMocks(): Map<string, ApiMockPayload> {
@@ -198,6 +213,22 @@ function defaultApiMocks(): Map<string, ApiMockPayload> {
     ["/api/studio/audit/export?limit=100", auditExport],
     ["/api/studio/jobs/status", jobStatus],
     ["/api/studio/jobs", jobList],
+    ["/api/studio/evidence/bundle", {
+      artifact_paths: ["evidence/simulations/000.json", "evidence/manifest.json"],
+      artifacts: [
+        {
+          relative_path: "evidence/simulations/000.json",
+          sha256: "c".repeat(64),
+          size_bytes: 256,
+        },
+      ],
+      bundle_id: "seb_sj_browser",
+      job_id: "sj_browser",
+      manifest: {
+        entries: [{ type: "simulation_result" }, { type: "manifest" }],
+      },
+      schema_version: "studio.evidence-bundle.v1",
+    }],
     ["/api/studio/operator/status", operatorStatus],
     ["/api/models", []],
     ["/api/templates", []],
@@ -320,6 +351,47 @@ test("admin panel refreshes operator, audit, export, and job status", async ({ p
   expect(api.requests("/api/studio/audit/status")).toBeGreaterThanOrEqual(2);
   expect(api.requests("/api/studio/audit/export?limit=100")).toBe(1);
   expect(api.requests("/api/studio/jobs/status")).toBe(1);
+});
+
+test("admin evidence bundle form submits simulation result payloads", async ({ page }) => {
+  const api = await installApiDispatcher(page, defaultApiMocks());
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Admin" }).first().click();
+
+  const simulationPayload = {
+    dt: 0.1,
+    n_steps: 2,
+    run_metadata: {
+      dt: 0.1,
+      evidence_classification: "simulation",
+      input_sha256: "1".repeat(64),
+      n_steps: 2,
+      result_sha256: "2".repeat(64),
+      sample_count: 2,
+      schema_version: "studio.simulation-run.v1",
+      source: "ode",
+      spike_count: 0,
+      state_variables: ["v"],
+    },
+    spike_count: 0,
+    states: { v: [0, 0.1] },
+    time: [0, 0.1],
+  };
+
+  await page.getByRole("textbox", { name: "Evidence simulation JSON" }).fill(
+    JSON.stringify(simulationPayload),
+  );
+  await page.getByRole("button", { name: "Create evidence bundle" }).click();
+
+  await expect(page.getByText("seb_sj_browser")).toBeVisible();
+
+  const bodies = api.bodies("/api/studio/evidence/bundle");
+  expect(bodies).toHaveLength(1);
+  expect(bodies[0]).toMatchObject({
+    include_audit: true,
+    simulation_results: [simulationPayload],
+  });
 });
 
 test("capability menu exposes unavailable requirements", async ({ page }) => {

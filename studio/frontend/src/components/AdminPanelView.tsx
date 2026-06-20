@@ -72,6 +72,28 @@ export default function AdminPanelView({
     return Math.min(Math.max(Math.trunc(parsed), minimum), maximum);
   }
 
+  function jsonObjects(value: FormDataEntryValue | null): Record<string, unknown>[] {
+    const text = String(value ?? "").trim();
+    if (text.length === 0) {
+      return [];
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      return [];
+    }
+    if (Array.isArray(parsed)) {
+      return parsed.filter((item): item is Record<string, unknown> =>
+        typeof item === "object" && item !== null && !Array.isArray(item),
+      );
+    }
+    if (typeof parsed === "object" && parsed !== null) {
+      return [parsed as Record<string, unknown>];
+    }
+    return [];
+  }
+
   function identityUpdateFromForm(form: FormData) {
     return {
       active: form.get("active") === "on",
@@ -154,6 +176,7 @@ export default function AdminPanelView({
       include_audit: form.get("includeAudit") === "on",
       job_ids: textList(form.get("jobIds")),
       project_name: optionalText(form.get("projectName")),
+      simulation_results: jsonObjects(form.get("simulationResults")),
     });
   }
 
@@ -486,6 +509,15 @@ export default function AdminPanelView({
               aria-label="Evidence job IDs"
               name="jobIds"
               disabled={model.evidenceBundle.loading}
+            />
+          </label>
+          <label className="admin-evidence-wide">
+            Simulation JSON
+            <textarea
+              aria-label="Evidence simulation JSON"
+              name="simulationResults"
+              disabled={model.evidenceBundle.loading}
+              rows={4}
             />
           </label>
           <label>

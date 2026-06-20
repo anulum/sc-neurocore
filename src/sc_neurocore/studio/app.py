@@ -345,6 +345,7 @@ class StudioEvidenceBundleRequest(BaseModel):
     """Request body for admin evidence bundle export."""
 
     project_name: str | None = Field(default=None, min_length=1, max_length=128)
+    simulation_results: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     job_ids: list[str] = Field(default_factory=list, max_length=64)
     include_audit: bool = True
     audit_limit: int = Field(default=100, ge=1, le=1000)
@@ -1145,6 +1146,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             result = write_studio_evidence_bundle(
                 context,
                 project_payload=project_payload,
+                simulation_payloads=tuple(export_request.simulation_results),
                 job_records=tuple(job_records),
                 artifact_reader=studio_job_manager.read_artifact,
                 audit_export=audit_export,
