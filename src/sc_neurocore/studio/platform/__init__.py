@@ -29,6 +29,13 @@ from sc_neurocore.studio.platform.auth_throttle import (
     StudioBrowserLoginThrottle,
     StudioLoginThrottleDecision,
 )
+from sc_neurocore.studio.platform.deployment_profiles import (
+    STUDIO_DEPLOYMENT_PROFILE_SCHEMA_VERSION,
+    StudioDeploymentPackageName,
+    StudioDeploymentProfilePackage,
+    build_studio_deployment_profile_package,
+    list_studio_deployment_profile_packages,
+)
 from sc_neurocore.studio.platform.policy import (
     AUDIT_SCHEMA_VERSION,
     AUDIT_EXPORT_SCHEMA_VERSION,
@@ -177,7 +184,10 @@ __all__ = [
     "DEFAULT_STUDIO_WEBSOCKET_ALLOWED_ORIGINS",
     "DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS",
     "StudioDeploymentProfile",
+    "STUDIO_DEPLOYMENT_PROFILE_SCHEMA_VERSION",
     "StudioRuntimeSettings",
+    "StudioDeploymentPackageName",
+    "StudioDeploymentProfilePackage",
     "StudioBrowserLoginThrottle",
     "StudioBrowserSessionIssue",
     "StudioBrowserSessionManager",
@@ -218,7 +228,9 @@ __all__ = [
     "build_default_studio_capability_registry",
     "build_default_studio_route_policy_registry",
     "build_default_studio_runtime_settings",
+    "build_studio_deployment_profile_package",
     "build_studio_operator_status",
+    "list_studio_deployment_profile_packages",
     "run_studio_preflight",
     "add_studio_browser_user_record",
     "bootstrap_studio_admin_identity",

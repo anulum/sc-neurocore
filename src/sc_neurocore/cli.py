@@ -64,6 +64,7 @@ def main() -> int:
             "compile",
             "compile-nir",
             "studio",
+            "studio-deployment-profile",
             "studio-preflight",
             "studio-bootstrap-admin",
             "studio-add-browser-user",
@@ -145,6 +146,18 @@ def main() -> int:
         "--password-stdin",
         action="store_true",
         help="Read browser-user password from standard input",
+    )
+    parser.add_argument(
+        "--studio-profile",
+        choices=["local", "lab", "server"],
+        default="local",
+        help="Deployment package for studio-deployment-profile",
+    )
+    parser.add_argument(
+        "--format",
+        choices=["json", "env"],
+        default="json",
+        help="Output format for studio-deployment-profile",
     )
     parser.add_argument(
         "--role",
@@ -466,6 +479,8 @@ def main() -> int:
         )
     if args.command == "studio":
         return _cmd_studio(args.port)
+    if args.command == "studio-deployment-profile":
+        return _cmd_studio_deployment_profile(args)
     if args.command == "studio-preflight":
         return _cmd_studio_preflight(args)
     if args.command == "studio-bootstrap-admin":
@@ -2094,6 +2109,31 @@ def _cmd_studio_bootstrap_admin(args: Any) -> int:
     output["bearer_token"] = result.bearer_token
     output["environment"] = f"SC_NEUROCORE_STUDIO_IDENTITY_FILE={result.identity_file_path}"
     print(json.dumps(output, indent=2, sort_keys=True))
+    return 0
+
+
+def _cmd_studio_deployment_profile(args: Any) -> int:
+    """Emit a Studio local, lab, or server deployment profile package."""
+    from pathlib import Path
+
+    from sc_neurocore.studio.platform import build_studio_deployment_profile_package
+
+    try:
+        package = build_studio_deployment_profile_package(args.studio_profile)
+    except ValueError as exc:
+        print(f"Error: {exc}")
+        return 1
+    payload = (
+        "\n".join(package.to_env_lines())
+        if args.format == "env"
+        else json.dumps(package.to_public_dict(), indent=2, sort_keys=True)
+    )
+    if args.output_supplied:
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(f"{payload}\n", encoding="utf-8")
+    else:
+        print(payload)
     return 0
 
 

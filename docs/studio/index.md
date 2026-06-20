@@ -226,6 +226,14 @@ runtime features:
   route-policy enforcement must be enabled, development header principals must
   be disabled, and identity, audit log, and job-root paths must be configured
   before the backend can start.
+- `sc-neurocore studio-deployment-profile --studio-profile local|lab|server`
+  emits a `studio.deployment-profile.v1` package for the supported operating
+  contexts. `local` is loopback-only development use. `lab` and `server` are
+  production-profile packages with route-policy enforcement, disabled header
+  principals, durable identity/audit/job-root placeholders, explicit host and
+  origin allow-lists, preflight command, launch command, and backup items. The
+  command can emit JSON or shell `export` lines and does not include secrets,
+  token hashes, password material, or host-local paths.
 - `sc-neurocore studio-preflight` runs the Studio release-readiness gate from
   the current environment and emits a `studio.preflight.v1` JSON report. The
   report exits non-zero on any failed check and verifies runtime settings,
