@@ -1,0 +1,132 @@
+{
+  "benchmark": "dcls_tent_kernel_batch",
+  "date_utc": "2026-06-20T21:18:56Z",
+  "language_surfaces": [
+    "Python",
+    "Rust",
+    "Julia",
+    "Go",
+    "Mojo"
+  ],
+  "kernel": "dcls_max_forward_batch_q88",
+  "hardware_measurement_claimed": false,
+  "benchmark_isolation_mode": "runtime-cpuset-shield",
+  "workload": {
+    "n_channels": 4096,
+    "n_taps": 64,
+    "elements": 262144,
+    "seed": 20260620,
+    "spike_density": 0.5
+  },
+  "meta": {
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "numpy": "2.2.6",
+    "toolchains": {
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "julia": "julia version 1.12.6",
+      "go": "go version go1.24.0 linux/amd64",
+      "mojo": "Mojo 1.0.0b1 (a9591de6)"
+    }
+  },
+  "backends": {
+    "python": {
+      "available": true,
+      "used": true,
+      "reason": "primary reference",
+      "median_call_ms": 112.135801,
+      "channels_per_s": 36527.1,
+      "elements_per_s": 2337736.9,
+      "repeats": 3
+    },
+    "rust": {
+      "available": true,
+      "used": true,
+      "reason": "available",
+      "median_call_ms": 1.312861,
+      "channels_per_s": 3119903.5,
+      "elements_per_s": 199673826.5,
+      "repeats": 25,
+      "speedup_over_python": 85.41
+    },
+    "mojo": {
+      "available": true,
+      "used": true,
+      "reason": "available",
+      "median_call_ms": 1.53202,
+      "channels_per_s": 2673594.3,
+      "elements_per_s": 171110032.4,
+      "repeats": 25,
+      "speedup_over_python": 73.19
+    },
+    "julia": {
+      "available": true,
+      "used": true,
+      "reason": "available",
+      "median_call_ms": 1.390021,
+      "channels_per_s": 2946717.9,
+      "elements_per_s": 188589948.2,
+      "repeats": 25,
+      "speedup_over_python": 80.67
+    },
+    "go": {
+      "available": true,
+      "used": true,
+      "reason": "available",
+      "median_call_ms": 1.647302,
+      "channels_per_s": 2486489.9,
+      "elements_per_s": 159135355.6,
+      "repeats": 25,
+      "speedup_over_python": 68.07
+    }
+  },
+  "parity": {
+    "reference": "rust",
+    "tolerance": 0,
+    "python": {
+      "max_abs_delta": 0,
+      "bit_exact": true
+    },
+    "rust": {
+      "max_abs_delta": 0,
+      "bit_exact": true
+    },
+    "mojo": {
+      "max_abs_delta": 0,
+      "bit_exact": true
+    },
+    "julia": {
+      "max_abs_delta": 0,
+      "bit_exact": true
+    },
+    "go": {
+      "max_abs_delta": 0,
+      "bit_exact": true
+    }
+  },
+  "host_context": {
+    "affinity_cpus": [
+      10,
+      11
+    ],
+    "affinity_cpu_count": 2,
+    "cgroup_effective_cpuset": "10-11",
+    "load_average_before": [
+      17.91748046875,
+      18.30712890625,
+      14.72607421875
+    ],
+    "load_average_after": [
+      17.91748046875,
+      18.30712890625,
+      14.72607421875
+    ],
+    "cpu_governors_sample": {
+      "10": "powersave",
+      "11": "powersave"
+    },
+    "runtime_cpuset_shield_claimed": true,
+    "isolation_mode": "runtime-cpuset-shield"
+  }
+}

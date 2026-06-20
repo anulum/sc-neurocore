@@ -543,6 +543,51 @@ fn py_wong_wang_simulate<'py>(
     Ok(d.into_any().unbind())
 }
 
+// ── DCLS-max Q8.8 tent kernel — batch PyO3 wrapper ───────────────────
+
+/// Batched DCLS-max triangular (tent) contraction in bit-true Q8.8 arithmetic.
+///
+/// Parity contract with `sc_neurocore.scpn.dcls_tent_kernel`: this Rust path,
+/// the Mojo, Julia and Go backends, and the Python floor all return
+/// bit-identical arrays because the kernel is exact integer arithmetic.
+///
+/// `spikes` and `weights_q88` are row-major `n_channels * n_taps`; `centres_q88`
+/// and `sigmas_q88` carry one learnable `(centre, sigma)` per output channel.
+///
+/// Returns a dict with keys `outputs_q88` (int16), `accumulators_q16_16`
+/// (int32), `overflow` (bool), `active_tap_counts` (int64) and `max_gates_q88`
+/// (int16), each a 1-D array of length `n_channels`.
+#[pyfunction]
+#[pyo3(signature = (spikes, weights_q88, centres_q88, sigmas_q88, n_taps))]
+fn py_dcls_max_forward_batch_q88<'py>(
+    py: Python<'py>,
+    spikes: PyReadonlyArray1<'py, u8>,
+    weights_q88: PyReadonlyArray1<'py, i16>,
+    centres_q88: PyReadonlyArray1<'py, i16>,
+    sigmas_q88: PyReadonlyArray1<'py, i16>,
+    n_taps: usize,
+) -> PyResult<Py<PyAny>> {
+    let result = scpn::dcls_max_forward_batch_q88(
+        spikes.as_slice()?,
+        weights_q88.as_slice()?,
+        centres_q88.as_slice()?,
+        sigmas_q88.as_slice()?,
+        n_taps,
+    )
+    .map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let active_tap_counts: Vec<i64> = result.active_tap_counts.iter().map(|&c| c as i64).collect();
+    let d = PyDict::new(py);
+    d.set_item("outputs_q88", result.outputs_q88.into_pyarray(py))?;
+    d.set_item(
+        "accumulators_q16_16",
+        result.accumulators_q16_16.into_pyarray(py),
+    )?;
+    d.set_item("overflow", result.overflow.into_pyarray(py))?;
+    d.set_item("active_tap_counts", active_tap_counts.into_pyarray(py))?;
+    d.set_item("max_gates_q88", result.max_gates_q88.into_pyarray(py))?;
+    Ok(d.into_any().unbind())
+}
+
 // ── Wilson-Cowan 1972 E/I rate model — batch PyO3 wrapper ─────────────
 
 /// Simulate a single Wilson-Cowan E/I unit for `ext_input.len()` steps
@@ -609,6 +654,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(batch_encode, m)?)?;
     m.add_function(wrap_pyfunction!(batch_encode_numpy, m)?)?;
     m.add_function(wrap_pyfunction!(py_wong_wang_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_dcls_max_forward_batch_q88, m)?)?;
     m.add_function(wrap_pyfunction!(py_wilson_cowan_simulate, m)?)?;
     m.add_class::<Lfsr16>()?;
     m.add_class::<BitstreamEncoder>()?;

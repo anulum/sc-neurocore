@@ -77,6 +77,11 @@ pub enum DclsError {
     TapIndexOverflow {
         tap_index: usize,
     },
+    EmptyChannels,
+    ChannelLengthMismatch {
+        centres: usize,
+        sigmas: usize,
+    },
 }
 
 impl fmt::Display for DclsError {
@@ -101,6 +106,13 @@ impl fmt::Display for DclsError {
             Self::TapIndexOverflow { tap_index } => {
                 write!(f, "DCLS tap index {tap_index} cannot be represented as Q8.8")
             }
+            Self::EmptyChannels => {
+                write!(f, "DCLS batch requires at least one output channel")
+            }
+            Self::ChannelLengthMismatch { centres, sigmas } => write!(
+                f,
+                "DCLS centre/sigma length mismatch: centres={centres}, sigmas={sigmas}"
+            ),
         }
     }
 }
@@ -205,6 +217,88 @@ pub fn dcls_max_forward_q88_with_config(
     })
 }
 
+/// Per-channel results of a batched DCLS-max tent contraction.
+///
+/// Each vector is indexed by output channel; all have length equal to the
+/// number of `(centre, sigma)` pairs supplied to
+/// [`dcls_max_forward_batch_q88`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DclsBatchResult {
+    /// Saturated Q8.8 outputs.
+    pub outputs_q88: Vec<i16>,
+    /// Saturated Q16.16 accumulators.
+    pub accumulators_q16_16: Vec<i32>,
+    /// Saturation flags.
+    pub overflow: Vec<bool>,
+    /// Active spike-tap counts per channel.
+    pub active_tap_counts: Vec<usize>,
+    /// Largest applied tent gate per channel.
+    pub max_gates_q88: Vec<i16>,
+}
+
+/// Execute the DCLS-max tent contraction across many output channels.
+///
+/// Channel `c` contracts its own `n_taps`-long spike/weight row through a tent
+/// kernel with channel-specific learnable `centre`/`sigma`. The spike and
+/// weight buffers are row-major: channel `c` occupies `[c * n_taps, (c + 1) *
+/// n_taps)`. The per-channel result is bit-identical to
+/// [`dcls_max_forward_q88`].
+pub fn dcls_max_forward_batch_q88(
+    spikes: &[u8],
+    weights_q88: &[i16],
+    centres_q88: &[i16],
+    sigmas_q88: &[i16],
+    n_taps: usize,
+) -> Result<DclsBatchResult, DclsError> {
+    if n_taps == 0 {
+        return Err(DclsError::EmptyTaps);
+    }
+    let n_channels = centres_q88.len();
+    if n_channels == 0 {
+        return Err(DclsError::EmptyChannels);
+    }
+    if sigmas_q88.len() != n_channels {
+        return Err(DclsError::ChannelLengthMismatch {
+            centres: n_channels,
+            sigmas: sigmas_q88.len(),
+        });
+    }
+    let expected = n_channels * n_taps;
+    if spikes.len() != expected || weights_q88.len() != expected {
+        return Err(DclsError::MismatchedLengths {
+            spikes: spikes.len(),
+            weights: weights_q88.len(),
+        });
+    }
+
+    let mut outputs_q88 = Vec::with_capacity(n_channels);
+    let mut accumulators_q16_16 = Vec::with_capacity(n_channels);
+    let mut overflow = Vec::with_capacity(n_channels);
+    let mut active_tap_counts = Vec::with_capacity(n_channels);
+    let mut max_gates_q88 = Vec::with_capacity(n_channels);
+    for channel in 0..n_channels {
+        let base = channel * n_taps;
+        let result = dcls_max_forward_q88(
+            &spikes[base..base + n_taps],
+            &weights_q88[base..base + n_taps],
+            centres_q88[channel],
+            sigmas_q88[channel],
+        )?;
+        outputs_q88.push(result.output_q88);
+        accumulators_q16_16.push(result.accumulator_q16_16);
+        overflow.push(result.overflow);
+        active_tap_counts.push(result.active_tap_count);
+        max_gates_q88.push(result.max_gate_q88);
+    }
+    Ok(DclsBatchResult {
+        outputs_q88,
+        accumulators_q16_16,
+        overflow,
+        active_tap_counts,
+        max_gates_q88,
+    })
+}
+
 fn saturate_i32(value: i64) -> (i32, bool) {
     if value > I32_MAX_AS_I64 {
         (i32::MAX, true)
@@ -280,5 +374,82 @@ mod tests {
         let result = dcls_max_forward_q88(&spikes, &weights, 0, i16::MAX).unwrap();
         assert_eq!(result.output_q88, i16::MAX);
         assert!(result.overflow);
+    }
+
+    #[test]
+    fn batch_matches_per_channel_single_forward() {
+        let spikes = [1_u8, 1, 1, 0, 1, 0];
+        let weights = [256_i16, 128, -64, 256, 128, -64];
+        let centres = [256_i16, 256];
+        let sigmas = [512_i16, 512];
+        let batch = dcls_max_forward_batch_q88(&spikes, &weights, &centres, &sigmas, 3).unwrap();
+        assert_eq!(batch.outputs_q88, vec![224, 128]);
+        assert_eq!(batch.accumulators_q16_16, vec![57_344, 32_768]);
+        assert_eq!(batch.active_tap_counts, vec![3, 1]);
+        assert_eq!(batch.max_gates_q88, vec![256, 256]);
+        assert_eq!(batch.overflow, vec![false, false]);
+        // Every channel equals the standalone single contraction.
+        for channel in 0..2 {
+            let base = channel * 3;
+            let single = dcls_max_forward_q88(
+                &spikes[base..base + 3],
+                &weights[base..base + 3],
+                centres[channel],
+                sigmas[channel],
+            )
+            .unwrap();
+            assert_eq!(batch.outputs_q88[channel], single.output_q88);
+            assert_eq!(
+                batch.accumulators_q16_16[channel],
+                single.accumulator_q16_16
+            );
+        }
+    }
+
+    #[test]
+    fn batch_rejects_zero_taps() {
+        assert_eq!(
+            dcls_max_forward_batch_q88(&[], &[], &[256], &[512], 0).unwrap_err(),
+            DclsError::EmptyTaps
+        );
+    }
+
+    #[test]
+    fn batch_rejects_empty_channels() {
+        assert_eq!(
+            dcls_max_forward_batch_q88(&[], &[], &[], &[], 3).unwrap_err(),
+            DclsError::EmptyChannels
+        );
+    }
+
+    #[test]
+    fn batch_rejects_centre_sigma_mismatch() {
+        assert_eq!(
+            dcls_max_forward_batch_q88(&[1, 1], &[256, 128], &[256, 0], &[512], 1).unwrap_err(),
+            DclsError::ChannelLengthMismatch {
+                centres: 2,
+                sigmas: 1
+            }
+        );
+    }
+
+    #[test]
+    fn batch_rejects_flat_length_mismatch() {
+        assert_eq!(
+            dcls_max_forward_batch_q88(&[1, 1, 1], &[256, 128, -64], &[256], &[512], 2)
+                .unwrap_err(),
+            DclsError::MismatchedLengths {
+                spikes: 3,
+                weights: 3
+            }
+        );
+    }
+
+    #[test]
+    fn batch_propagates_invalid_sigma() {
+        assert_eq!(
+            dcls_max_forward_batch_q88(&[1], &[256], &[0], &[0], 1).unwrap_err(),
+            DclsError::InvalidSigma { sigma_q88: 0 }
+        );
     }
 }

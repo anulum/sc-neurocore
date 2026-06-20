@@ -83,6 +83,64 @@ estimate of `106003` cells.  Any throughput claim must be rerun on reserved
 isolated cores with CPU affinity, host load, governor, frequency, and tool
 versions recorded in the raw JSON.
 
+## Multi-language reference kernel
+
+The same Q8.8 tent arithmetic is exposed as a wired, importable batch kernel in
+`sc_neurocore.scpn.dcls_tent_kernel`. It contracts many output channels in one
+call, each with a per-channel learnable `(centre, sigma)` tent — the shape an
+emitted DCLS layer evaluates per spike frame. Because every operation is exact
+integer arithmetic (truncating gate division, arithmetic-shift output), all five
+backends return identical raw arrays; the parity tolerance is exactly zero, with
+no last-ULP allowance.
+
+### Kernel sources
+
+| Backend | File | Build |
+| --- | --- | --- |
+| Python primary | `src/sc_neurocore/scpn/dcls_tent_kernel.py` | — (floor reference) |
+| Rust | `engine/src/scpn/dcls.rs` + `py_dcls_max_forward_batch_q88` | `maturin develop --release` |
+| Julia | `src/sc_neurocore/accel/julia/scpn/dcls.jl` | `juliacall` (lazy include) |
+| Go | `src/sc_neurocore/accel/go/dcls_tent/dcls_tent.go` | `go build -buildmode=c-shared` |
+| Mojo | `src/sc_neurocore/accel/mojo/dcls_tent/dcls_tent.mojo` | `mojo build --emit shared-lib` |
+
+`dcls_max_forward_batch(...)` dispatches fastest-first (Rust → Mojo → Julia → Go
+→ Python) and accepts an explicit `backend=` override; `available_backends()`
+reports which compiled artefacts are present. Inputs are a row-major
+`n_channels * n_taps` spike (`uint8`) and weight (`int16`) buffer plus per-channel
+`int16` `centres`/`sigmas`. The result carries `outputs_q88` (`int16`),
+`accumulators_q16_16` (`int32`), `overflow` (`bool`), `active_tap_counts`
+(`int64`) and `max_gates_q88` (`int16`).
+
+### Cross-language parity and throughput
+
+Measured on an 11th Gen Intel Core i5-11600K at 3.90 GHz, CPU affinity pinned to
+cores 10-11, workload 4096 channels × 64 taps (262 144 elements), via
+`benchmarks/bench_dcls_tent_kernel.py`
+(`benchmarks/results/bench_dcls_tent_kernel.json`):
+
+| Backend | Channels/s | Per-call (ms) | Speedup vs Python | Parity |
+| --- | --- | --- | --- | --- |
+| Rust | 3 119 904 | 1.313 | 85.41× | bit-exact (Δ = 0) |
+| Julia | 2 946 718 | 1.390 | 80.67× | bit-exact (Δ = 0) |
+| Mojo | 2 673 594 | 1.532 | 73.19× | bit-exact (Δ = 0) |
+| Go | 2 486 490 | 1.647 | 68.07× | bit-exact (Δ = 0) |
+| Python | 36 527 | 112.136 | reference | reference |
+
+The host carried a load average of ≈17.9 during this run, so the absolute
+throughput figures are functional and regression evidence only and must be
+re-measured on a reserved, quiet host before any production speedup claim. The
+zero parity delta is independent of host load. The JSON artefact records the
+command, affinity, cpuset shield, host load before/after, governor sample and
+toolchain versions.
+
+### Tests
+
+| File | Verifies |
+| --- | --- |
+| `tests/test_dcls_tent_kernel.py` | Gate, single/batch contraction, saturation, validation, dispatch and fallback |
+| `tests/test_dcls_tent_kernel_parity.py` | Bit-exact parity of every built backend against the Python floor across deterministic, all-silent, saturating and large random workloads |
+| `engine/src/scpn/dcls.rs` (`#[cfg(test)]`) | Rust single + batch arithmetic, error boundaries and saturation |
+
 ## Open hardware evidence
 
 `tests/test_dcls_synth_zu3eg.py` is gated by `MIF_VIVADO_CI=1`.  The ZU3EG

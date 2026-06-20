@@ -165,8 +165,11 @@ omit = [
     "*/layers/jax_dense_layer.py",      # JAX dense layer
     "*/accel/julia/neurons/__init__.py",  # Optional Julia backend shim
     "*/accel/julia/solvers/__init__.py",  # Optional Julia backend shim
+    "*/accel/julia/scpn/__init__.py",   # Optional Julia backend shim (DCLS tent)
     "*/accel/go/rk4_neurons/__init__.py",  # Optional Go backend shim
+    "*/accel/go/dcls_tent/__init__.py",  # Optional Go backend shim (DCLS tent)
     "*/accel/mojo/rk4_neurons/__init__.py",  # Optional Mojo backend shim
+    "*/accel/mojo/dcls_tent/__init__.py",  # Optional Mojo backend shim (DCLS tent)
     # --- 116 neuron model files (each tested via model-agnostic step/reset) ---
     "*/neurons/models/*",
     # --- Network engine: coverage enforced since v3.14.0 ---

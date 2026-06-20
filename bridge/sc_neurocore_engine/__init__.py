@@ -715,6 +715,14 @@ except ImportError:
     _wilson_cowan_rust_available = False
 
 try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_dcls_max_forward_batch_q88
+
+    __all__ += ["py_dcls_max_forward_batch_q88"]
+    _dcls_tent_rust_available = True
+except ImportError:
+    _dcls_tent_rust_available = False
+
+try:
     from sc_neurocore_engine.sc_neurocore_engine import (
         py_predict_xor_ema,
         py_predict_xor_lfsr,

@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Added the polyglot batched `dcls_max_forward_batch(...)` chain for the DCLS-max
+  Q8.8 triangular (tent) weighting kernel (Khalfaoui-Hassani, Pellegrini &
+  Masquelier 2023) across python / rust / julia / go / mojo. The kernel is exact
+  integer Q8.8 arithmetic with a Q16.16 saturating accumulator, so every backend —
+  including Mojo — reproduces the Python floor bit-for-bit with a parity tolerance
+  of exactly zero. Added the Rust engine `dcls_max_forward_batch_q88` + PyO3
+  `py_dcls_max_forward_batch_q88`, the wired `sc_neurocore.scpn.dcls_tent_kernel`
+  primary with per-channel learnable centre/sigma and fastest-first dispatch, the
+  Julia/Go/Mojo backends, unit and cross-backend parity tests to full coverage of
+  the primary module, a five-backend benchmark with a committed artefact, and a
+  documentation upgrade.
 - Replaced `ExpIFNeuron` raw Euler mutation with candidate-first RK4 across the
   maintained Python reference, Rust engine, Go service, Julia mirror, and Mojo
   mirror. The Fourcaud-Trocmé EIF ODE and hard reset are unchanged; all surfaces
