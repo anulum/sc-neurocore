@@ -36,7 +36,10 @@ class AuditSinkStatus:
     healthy: bool
     path_configured: bool
     sink_type: str
+    integrity_verified: bool | None = None
     last_error: str | None = None
+    latest_event_hash: str | None = None
+    integrity_error: str | None = None
 
     def to_public_dict(self) -> dict[str, bool | str | None]:
         """Return an operator-safe status dictionary without local paths."""
@@ -44,7 +47,10 @@ class AuditSinkStatus:
         return {
             "configured": self.configured,
             "healthy": self.healthy,
+            "integrity_error": self.integrity_error,
+            "integrity_verified": self.integrity_verified,
             "last_error": self.last_error,
+            "latest_event_hash": self.latest_event_hash,
             "path_configured": self.path_configured,
             "sink_type": self.sink_type,
         }
@@ -62,6 +68,9 @@ class AuditExport:
     event_count: int
     truncated: bool
     events: tuple[dict[str, str | None], ...]
+    integrity_verified: bool
+    latest_event_hash: str | None
+    integrity_error: str | None = None
     schema_version: str = AUDIT_EXPORT_SCHEMA_VERSION
 
     def to_public_dict(self) -> dict[str, AuditExportValue]:
@@ -71,6 +80,9 @@ class AuditExport:
             "configured": self.configured,
             "event_count": self.event_count,
             "events": [dict(event) for event in self.events],
+            "integrity_error": self.integrity_error,
+            "integrity_verified": self.integrity_verified,
+            "latest_event_hash": self.latest_event_hash,
             "schema_version": self.schema_version,
             "sink_type": self.sink_type,
             "truncated": self.truncated,
@@ -180,9 +192,19 @@ class InMemoryAuditSink:
         return AuditSinkStatus(
             configured=False,
             healthy=True,
+            integrity_verified=None,
             path_configured=False,
             sink_type="memory",
         )
+
+
+@dataclass(frozen=True, slots=True)
+class _AuditIntegrityReport:
+    """Path-free integrity status for retained JSONL audit rows."""
+
+    verified: bool
+    error: str | None
+    latest_event_hash: str | None
 
 
 class JsonlAuditSink:
@@ -234,11 +256,19 @@ class JsonlAuditSink:
         """Return status for the persistent JSONL audit sink."""
 
         preflight_error = self._preflight_error()
-        last_error = preflight_error or self._last_error
+        integrity = (
+            _AuditIntegrityReport(False, preflight_error, None)
+            if preflight_error is not None
+            else self._verify_integrity()
+        )
+        last_error = preflight_error or self._last_error or integrity.error
         return AuditSinkStatus(
             configured=True,
-            healthy=last_error is None,
+            healthy=last_error is None and integrity.verified,
+            integrity_error=integrity.error,
+            integrity_verified=integrity.verified,
             last_error=last_error,
+            latest_event_hash=integrity.latest_event_hash,
             path_configured=True,
             sink_type="jsonl",
         )
@@ -271,6 +301,7 @@ class JsonlAuditSink:
             self._last_error = preflight_error
             raise AuditSinkError("Studio audit export failed.")
         rows = self._export_rows()
+        integrity = self._verify_integrity()
         truncated = len(rows) > limit
         selected_rows = rows[-limit:]
         return AuditExport(
@@ -279,6 +310,9 @@ class JsonlAuditSink:
             event_count=len(selected_rows),
             truncated=truncated,
             events=tuple(selected_rows),
+            integrity_error=integrity.error,
+            integrity_verified=integrity.verified,
+            latest_event_hash=integrity.latest_event_hash,
         )
 
     def _preflight_error(self) -> str | None:
@@ -324,6 +358,12 @@ class JsonlAuditSink:
 
     def _export_rows(self) -> list[dict[str, str | None]]:
         rows: list[dict[str, str | None]] = []
+        for parsed in self._raw_export_rows():
+            rows.append(self._public_export_row(parsed))
+        return rows
+
+    def _raw_export_rows(self) -> list[dict[object, object]]:
+        rows: list[dict[object, object]] = []
         try:
             for path in self._export_paths():
                 if not path.exists():
@@ -335,7 +375,7 @@ class JsonlAuditSink:
                     if not isinstance(parsed, dict):
                         self._last_error = "AuditExportInvalidRow"
                         raise AuditSinkError("Studio audit export failed.")
-                    rows.append(self._public_export_row(parsed))
+                    rows.append(parsed)
         except json.JSONDecodeError as exc:
             self._last_error = "AuditExportInvalidJson"
             raise AuditSinkError("Studio audit export failed.") from exc
@@ -352,6 +392,27 @@ class JsonlAuditSink:
                 raise AuditSinkError("Studio audit export failed.")
             row[key] = value
         return row
+
+    def _verify_integrity(self) -> _AuditIntegrityReport:
+        try:
+            rows = [self._public_export_row(row) for row in self._raw_export_rows()]
+        except AuditSinkError:
+            return _AuditIntegrityReport(False, self._last_error, None)
+        previous_hash: str | None = None
+        latest_hash: str | None = None
+        for index, row in enumerate(rows):
+            event_hash = row.get("event_hash")
+            expected_hash = self._event_hash(row)
+            if event_hash is None:
+                return _AuditIntegrityReport(False, "AuditIntegrityMissingHash", latest_hash)
+            if event_hash != expected_hash:
+                return _AuditIntegrityReport(False, "AuditIntegrityHashMismatch", latest_hash)
+            previous_event_hash = row.get("previous_event_hash")
+            if index > 0 and previous_event_hash != previous_hash:
+                return _AuditIntegrityReport(False, "AuditIntegrityChainMismatch", latest_hash)
+            previous_hash = event_hash
+            latest_hash = event_hash
+        return _AuditIntegrityReport(True, None, latest_hash)
 
     def _previous_event_hash(self) -> str | None:
         if not self._path.exists():

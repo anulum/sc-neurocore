@@ -703,7 +703,10 @@ def test_studio_app_exposes_safe_audit_status(tmp_path: Path) -> None:
     assert response.json() == {
         "configured": True,
         "healthy": True,
+        "integrity_error": None,
+        "integrity_verified": True,
         "last_error": None,
+        "latest_event_hash": None,
         "path_configured": True,
         "sink_type": "jsonl",
     }
@@ -778,6 +781,9 @@ def test_studio_app_exports_audit_events_for_admin_without_paths(tmp_path: Path)
     payload = response.json()
     assert payload["schema_version"] == "studio.audit.export.v1"
     assert payload["configured"] is True
+    assert payload["integrity_error"] is None
+    assert payload["integrity_verified"] is True
+    assert payload["latest_event_hash"] == payload["events"][-1]["event_hash"]
     assert payload["sink_type"] == "jsonl"
     assert payload["event_count"] >= 1
     assert payload["events"][0]["action"] == "studio.simulation.run"

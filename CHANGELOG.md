@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Studio platform
+- Added retained-chain integrity verification to persistent Studio JSONL audit
+  logs. Audit status, audit export, and operator status now report
+  path-free `integrity_verified`, `integrity_error`, and latest retained event
+  hash fields.
 - Authenticated `/ws/progress` when Studio route-policy enforcement is enabled.
   Non-browser clients can use bearer headers, while the React frontend carries
   browser-session tokens through the `studio-auth` WebSocket subprotocol.

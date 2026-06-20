@@ -144,7 +144,10 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
     assert payload["audit"] == {
         "configured": True,
         "healthy": True,
+        "integrity_error": None,
+        "integrity_verified": None,
         "last_error": None,
+        "latest_event_hash": None,
         "path_configured": True,
         "sink_type": "jsonl",
     }

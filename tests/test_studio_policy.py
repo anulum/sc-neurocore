@@ -8,8 +8,8 @@
 
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -223,7 +223,10 @@ def test_in_memory_audit_sink_reports_non_persistent_status() -> None:
     assert status.to_public_dict() == {
         "configured": False,
         "healthy": True,
+        "integrity_error": None,
+        "integrity_verified": None,
         "last_error": None,
+        "latest_event_hash": None,
         "path_configured": False,
         "sink_type": "memory",
     }
@@ -237,9 +240,12 @@ def test_jsonl_audit_sink_reports_healthy_status(tmp_path: Path) -> None:
 
     assert status.configured is True
     assert status.healthy is True
+    assert status.integrity_error is None
+    assert status.integrity_verified is True
     assert status.path_configured is True
     assert status.sink_type == "jsonl"
     assert status.last_error is None
+    assert status.latest_event_hash is None
 
 
 def test_jsonl_audit_sink_reports_failed_append_policy(tmp_path: Path) -> None:
@@ -356,6 +362,7 @@ def test_jsonl_audit_sink_rotates_and_retains_hash_chain(tmp_path: Path) -> None
     assert current_row["previous_event_hash"] == rotated_latest["event_hash"]
     assert rotated_latest["previous_event_hash"] == rotated_retained["event_hash"]
     assert current_row["event_hash"] == _audit_event_hash(current_row)
+    assert audit_sink.status().integrity_verified is True
 
 
 def test_jsonl_audit_sink_exports_bounded_recent_events_without_paths(tmp_path: Path) -> None:
@@ -378,6 +385,9 @@ def test_jsonl_audit_sink_exports_bounded_recent_events_without_paths(tmp_path: 
     assert exported["schema_version"] == "studio.audit.export.v1"
     assert exported["sink_type"] == "jsonl"
     assert exported["event_count"] == 3
+    assert exported["integrity_error"] is None
+    assert exported["integrity_verified"] is True
+    assert exported["latest_event_hash"] == exported["events"][-1]["event_hash"]
     assert exported["truncated"] is True
     actions = [row["action"] for row in exported["events"]]
     assert actions == [
@@ -386,6 +396,72 @@ def test_jsonl_audit_sink_exports_bounded_recent_events_without_paths(tmp_path: 
         "studio.simulate.run.3",
     ]
     assert str(tmp_path) not in json.dumps(exported)
+
+
+def test_jsonl_audit_sink_status_reports_hash_mismatch_without_paths(
+    tmp_path: Path,
+) -> None:
+    """Audit status reports retained-row tampering without exposing paths."""
+
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+    audit_sink.record(
+        contract["AuditEvent"](
+            action="studio.simulate.run",
+            route="/api/simulate",
+            principal_id="operator-1",
+            decision="allow",
+            reason="authorized",
+        )
+    )
+    row = json.loads(audit_path.read_text(encoding="utf-8"))
+    row["reason"] = "tampered"
+    audit_path.write_text(json.dumps(row, sort_keys=True), encoding="utf-8")
+
+    status = audit_sink.status().to_public_dict()
+    exported = audit_sink.export_recent().to_public_dict()
+
+    assert status["healthy"] is False
+    assert status["integrity_verified"] is False
+    assert status["integrity_error"] == "AuditIntegrityHashMismatch"
+    assert status["last_error"] == "AuditIntegrityHashMismatch"
+    assert str(tmp_path) not in json.dumps(status)
+    assert exported["integrity_verified"] is False
+    assert exported["integrity_error"] == "AuditIntegrityHashMismatch"
+    assert str(tmp_path) not in json.dumps(exported)
+
+
+def test_jsonl_audit_sink_status_reports_chain_mismatch(tmp_path: Path) -> None:
+    """Audit status rejects retained rows with broken previous-hash links."""
+
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+    for index in range(2):
+        audit_sink.record(
+            contract["AuditEvent"](
+                action=f"studio.simulate.run.{index}",
+                route="/api/simulate",
+                principal_id="operator-1",
+                decision="allow",
+                reason="authorized",
+            )
+        )
+    rows = [json.loads(line) for line in audit_path.read_text(encoding="utf-8").splitlines()]
+    rows[1]["previous_event_hash"] = "0" * 64
+    rows[1]["event_hash"] = _audit_event_hash(rows[1])
+    audit_path.write_text(
+        "\n".join(json.dumps(row, sort_keys=True) for row in rows),
+        encoding="utf-8",
+    )
+
+    status = audit_sink.status()
+
+    assert status.healthy is False
+    assert status.integrity_verified is False
+    assert status.integrity_error == "AuditIntegrityChainMismatch"
+    assert status.last_error == "AuditIntegrityChainMismatch"
 
 
 def test_jsonl_audit_sink_rejects_non_positive_export_limit(tmp_path: Path) -> None:

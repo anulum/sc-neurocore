@@ -293,6 +293,10 @@ configure `SC_NEUROCORE_STUDIO_IDENTITY_FILE` with
 `sc-neurocore.studio.identity.v1` service accounts. Store only SHA-256 token
 hashes in that file, authenticate API calls with `Authorization: Bearer
 <token>`, and give admin export accounts the `studio.admin` role.
+Persistent audit rows are written as canonical JSONL with `previous_event_hash`
+and `event_hash` fields. The audit status and export endpoints verify the
+retained hash chain and report `integrity_verified`, `integrity_error`, and the
+latest retained event hash without exposing filesystem paths or secret material.
 
 Create the first local service account before enabling the production profile:
 
@@ -520,9 +524,9 @@ tasks with explicit payload contracts.
 The Admin panel also uses the admin-gated `/api/studio/operator/status`
 aggregate when available. That endpoint reports deployment profile,
 route-policy enforcement, route inventory counts, protected-route audit
-coverage, identity mode, audit health, worker health, resource-limit posture,
-browser-login lockout limits, and capability counts without exposing local
-paths or token material.
+coverage, identity mode, audit health plus retained-chain integrity, worker
+health, resource-limit posture, browser-login lockout limits, and capability
+counts without exposing local paths or token material.
 
 For production deployments, set
 `SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE=production`. That profile fails closed
