@@ -297,6 +297,10 @@ Persistent audit rows are written as canonical JSONL with `previous_event_hash`
 and `event_hash` fields. The audit status and export endpoints verify the
 retained hash chain and report `integrity_verified`, `integrity_error`, and the
 latest retained event hash without exposing filesystem paths or secret material.
+Legacy or unverifiable retained rows are not silently trusted: status and export
+payloads include `retained_event_count`, `quarantined_event_count`, and
+`quarantine_reason` so operators can separate verified evidence from rows that
+must be migrated, quarantined, or reviewed during incident reconstruction.
 When `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` is set, the retained-file count
 must be a positive integer so rotation always keeps at least one archived JSONL
 segment for incident review and retained-chain verification.

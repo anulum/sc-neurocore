@@ -1117,7 +1117,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             raise HTTPException(404, f"Capability '{capability_id}' not found") from exc
 
     @app.get("/api/studio/audit/status")
-    def api_studio_audit_status() -> dict[str, bool | str | None]:
+    def api_studio_audit_status() -> dict[str, bool | int | str | None]:
         """Return path-free health for the configured Studio audit sink."""
 
         return studio_audit_sink.status().to_public_dict()

@@ -40,8 +40,11 @@ class AuditSinkStatus:
     last_error: str | None = None
     latest_event_hash: str | None = None
     integrity_error: str | None = None
+    quarantined_event_count: int | None = None
+    quarantine_reason: str | None = None
+    retained_event_count: int | None = None
 
-    def to_public_dict(self) -> dict[str, bool | str | None]:
+    def to_public_dict(self) -> dict[str, bool | int | str | None]:
         """Return an operator-safe status dictionary without local paths."""
 
         return {
@@ -52,6 +55,9 @@ class AuditSinkStatus:
             "last_error": self.last_error,
             "latest_event_hash": self.latest_event_hash,
             "path_configured": self.path_configured,
+            "quarantine_reason": self.quarantine_reason,
+            "quarantined_event_count": self.quarantined_event_count,
+            "retained_event_count": self.retained_event_count,
             "sink_type": self.sink_type,
         }
 
@@ -71,6 +77,9 @@ class AuditExport:
     integrity_verified: bool
     latest_event_hash: str | None
     integrity_error: str | None = None
+    quarantined_event_count: int = 0
+    quarantine_reason: str | None = None
+    retained_event_count: int = 0
     schema_version: str = AUDIT_EXPORT_SCHEMA_VERSION
 
     def to_public_dict(self) -> dict[str, AuditExportValue]:
@@ -83,6 +92,9 @@ class AuditExport:
             "integrity_error": self.integrity_error,
             "integrity_verified": self.integrity_verified,
             "latest_event_hash": self.latest_event_hash,
+            "quarantine_reason": self.quarantine_reason,
+            "quarantined_event_count": self.quarantined_event_count,
+            "retained_event_count": self.retained_event_count,
             "schema_version": self.schema_version,
             "sink_type": self.sink_type,
             "truncated": self.truncated,
@@ -205,6 +217,9 @@ class _AuditIntegrityReport:
     verified: bool
     error: str | None
     latest_event_hash: str | None
+    retained_event_count: int = 0
+    quarantined_event_count: int = 0
+    quarantine_reason: str | None = None
 
 
 class JsonlAuditSink:
@@ -274,6 +289,9 @@ class JsonlAuditSink:
             last_error=last_error,
             latest_event_hash=integrity.latest_event_hash,
             path_configured=True,
+            quarantine_reason=integrity.quarantine_reason,
+            quarantined_event_count=integrity.quarantined_event_count,
+            retained_event_count=integrity.retained_event_count,
             sink_type="jsonl",
         )
 
@@ -317,6 +335,9 @@ class JsonlAuditSink:
             integrity_error=integrity.error,
             integrity_verified=integrity.verified,
             latest_event_hash=integrity.latest_event_hash,
+            quarantine_reason=integrity.quarantine_reason,
+            quarantined_event_count=integrity.quarantined_event_count,
+            retained_event_count=integrity.retained_event_count,
         )
 
     def _preflight_error(self) -> str | None:
@@ -404,19 +425,52 @@ class JsonlAuditSink:
             return _AuditIntegrityReport(False, self._last_error, None)
         previous_hash: str | None = None
         latest_hash: str | None = None
+        quarantined_event_count = 0
+        quarantine_reason: str | None = None
         for index, row in enumerate(rows):
             event_hash = row.get("event_hash")
-            expected_hash = self._event_hash(row)
             if event_hash is None:
-                return _AuditIntegrityReport(False, "AuditIntegrityMissingHash", latest_hash)
+                quarantined_event_count += 1
+                quarantine_reason = "legacy_or_unverifiable_rows"
+                previous_hash = None
+                continue
+            expected_hash = self._event_hash(row)
             if event_hash != expected_hash:
-                return _AuditIntegrityReport(False, "AuditIntegrityHashMismatch", latest_hash)
+                return _AuditIntegrityReport(
+                    False,
+                    "AuditIntegrityHashMismatch",
+                    latest_hash,
+                    retained_event_count=len(rows),
+                    quarantined_event_count=len(rows) - index,
+                    quarantine_reason="tampered_or_corrupt_rows",
+                )
             previous_event_hash = row.get("previous_event_hash")
             if index > 0 and previous_event_hash != previous_hash:
-                return _AuditIntegrityReport(False, "AuditIntegrityChainMismatch", latest_hash)
+                return _AuditIntegrityReport(
+                    False,
+                    "AuditIntegrityChainMismatch",
+                    latest_hash,
+                    retained_event_count=len(rows),
+                    quarantined_event_count=len(rows) - index,
+                    quarantine_reason="chain_break_rows",
+                )
             previous_hash = event_hash
             latest_hash = event_hash
-        return _AuditIntegrityReport(True, None, latest_hash)
+        if quarantined_event_count:
+            return _AuditIntegrityReport(
+                False,
+                "AuditIntegrityMissingHash",
+                latest_hash,
+                retained_event_count=len(rows),
+                quarantined_event_count=quarantined_event_count,
+                quarantine_reason=quarantine_reason,
+            )
+        return _AuditIntegrityReport(
+            True,
+            None,
+            latest_hash,
+            retained_event_count=len(rows),
+        )
 
     def _previous_event_hash(self) -> str | None:
         if not self._path.exists():

@@ -710,6 +710,9 @@ def test_studio_app_exposes_safe_audit_status(tmp_path: Path) -> None:
         "last_error": None,
         "latest_event_hash": None,
         "path_configured": True,
+        "quarantine_reason": None,
+        "quarantined_event_count": 0,
+        "retained_event_count": 0,
         "sink_type": "jsonl",
     }
     assert str(tmp_path) not in response.text
@@ -786,6 +789,9 @@ def test_studio_app_exports_audit_events_for_admin_without_paths(tmp_path: Path)
     assert payload["integrity_error"] is None
     assert payload["integrity_verified"] is True
     assert payload["latest_event_hash"] == payload["events"][-1]["event_hash"]
+    assert payload["quarantine_reason"] is None
+    assert payload["quarantined_event_count"] == 0
+    assert payload["retained_event_count"] >= 1
     assert payload["sink_type"] == "jsonl"
     assert payload["event_count"] >= 1
     assert payload["events"][0]["action"] == "studio.simulation.run"

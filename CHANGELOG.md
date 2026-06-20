@@ -27,6 +27,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   C-extension crash; torch loads only when a torch-dependent feature is used.
 
 ### Studio platform
+- Added path-free quarantine metadata to Studio audit status and export payloads
+  so legacy, corrupt, or chain-broken retained audit rows are counted separately
+  from verified retained evidence.
 - Fail closed on non-positive Studio audit retained-file settings so configured
   rotation always keeps at least one archived JSONL segment for incident review
   and retained-chain verification.

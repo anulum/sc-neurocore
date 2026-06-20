@@ -149,6 +149,9 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
         "last_error": None,
         "latest_event_hash": None,
         "path_configured": True,
+        "quarantine_reason": None,
+        "quarantined_event_count": None,
+        "retained_event_count": None,
         "sink_type": "jsonl",
     }
     assert payload["jobs"] == {

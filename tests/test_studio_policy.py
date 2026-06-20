@@ -238,6 +238,9 @@ def test_in_memory_audit_sink_reports_non_persistent_status() -> None:
         "last_error": None,
         "latest_event_hash": None,
         "path_configured": False,
+        "quarantine_reason": None,
+        "quarantined_event_count": None,
+        "retained_event_count": None,
         "sink_type": "memory",
     }
 
@@ -256,6 +259,9 @@ def test_jsonl_audit_sink_reports_healthy_status(tmp_path: Path) -> None:
     assert status.sink_type == "jsonl"
     assert status.last_error is None
     assert status.latest_event_hash is None
+    assert status.quarantine_reason is None
+    assert status.quarantined_event_count == 0
+    assert status.retained_event_count == 0
 
 
 def test_jsonl_audit_sink_reports_failed_append_policy(tmp_path: Path) -> None:
@@ -398,6 +404,9 @@ def test_jsonl_audit_sink_exports_bounded_recent_events_without_paths(tmp_path: 
     assert exported["integrity_error"] is None
     assert exported["integrity_verified"] is True
     assert exported["latest_event_hash"] == exported["events"][-1]["event_hash"]
+    assert exported["quarantine_reason"] is None
+    assert exported["quarantined_event_count"] == 0
+    assert exported["retained_event_count"] == 4
     assert exported["truncated"] is True
     actions = [row["action"] for row in exported["events"]]
     assert actions == [
@@ -436,9 +445,49 @@ def test_jsonl_audit_sink_status_reports_hash_mismatch_without_paths(
     assert status["integrity_verified"] is False
     assert status["integrity_error"] == "AuditIntegrityHashMismatch"
     assert status["last_error"] == "AuditIntegrityHashMismatch"
+    assert status["quarantine_reason"] == "tampered_or_corrupt_rows"
+    assert status["quarantined_event_count"] == 1
+    assert status["retained_event_count"] == 1
     assert str(tmp_path) not in json.dumps(status)
     assert exported["integrity_verified"] is False
     assert exported["integrity_error"] == "AuditIntegrityHashMismatch"
+    assert exported["quarantine_reason"] == "tampered_or_corrupt_rows"
+    assert exported["quarantined_event_count"] == 1
+    assert exported["retained_event_count"] == 1
+    assert str(tmp_path) not in json.dumps(exported)
+
+
+def test_jsonl_audit_sink_quarantines_legacy_rows_without_paths(tmp_path: Path) -> None:
+    """Legacy rows remain exportable but are counted as quarantined."""
+
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_path.write_text('{"schema_version":"studio.audit.v1"}\n', encoding="utf-8")
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+    audit_sink.record(
+        contract["AuditEvent"](
+            action="studio.simulate.run",
+            route="/api/simulate",
+            principal_id="operator-1",
+            decision="allow",
+            reason="authorized",
+        )
+    )
+
+    status = audit_sink.status().to_public_dict()
+    exported = audit_sink.export_recent().to_public_dict()
+
+    assert status["healthy"] is False
+    assert status["integrity_error"] == "AuditIntegrityMissingHash"
+    assert status["integrity_verified"] is False
+    assert status["latest_event_hash"] == exported["events"][-1]["event_hash"]
+    assert status["quarantine_reason"] == "legacy_or_unverifiable_rows"
+    assert status["quarantined_event_count"] == 1
+    assert status["retained_event_count"] == 2
+    assert exported["quarantine_reason"] == "legacy_or_unverifiable_rows"
+    assert exported["quarantined_event_count"] == 1
+    assert exported["retained_event_count"] == 2
+    assert str(tmp_path) not in json.dumps(status)
     assert str(tmp_path) not in json.dumps(exported)
 
 
@@ -472,6 +521,9 @@ def test_jsonl_audit_sink_status_reports_chain_mismatch(tmp_path: Path) -> None:
     assert status.integrity_verified is False
     assert status.integrity_error == "AuditIntegrityChainMismatch"
     assert status.last_error == "AuditIntegrityChainMismatch"
+    assert status.quarantine_reason == "chain_break_rows"
+    assert status.quarantined_event_count == 1
+    assert status.retained_event_count == 2
 
 
 def test_jsonl_audit_sink_rejects_non_positive_export_limit(tmp_path: Path) -> None:
@@ -568,6 +620,30 @@ def test_jsonl_audit_sink_starts_chain_after_blank_log(tmp_path: Path) -> None:
     assert row["event_hash"] == _audit_event_hash(row)
 
 
+def test_jsonl_audit_sink_ignores_blank_export_lines(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+    audit_sink.record(
+        contract["AuditEvent"](
+            action="studio.simulate.run",
+            route="/api/simulate",
+            principal_id="operator-7",
+            decision="allow",
+            reason="authorized",
+        )
+    )
+    audit_path.write_text(
+        f"\n{audit_path.read_text(encoding='utf-8')}\n",
+        encoding="utf-8",
+    )
+
+    exported = audit_sink.export_recent().to_public_dict()
+
+    assert exported["event_count"] == 1
+    assert exported["integrity_verified"] is True
+
+
 def test_jsonl_audit_sink_starts_chain_after_legacy_row(tmp_path: Path) -> None:
     contract = _policy_contract()
     audit_path = tmp_path / "studio-audit.jsonl"
@@ -588,6 +664,37 @@ def test_jsonl_audit_sink_starts_chain_after_legacy_row(tmp_path: Path) -> None:
 
     assert row["previous_event_hash"] is None
     assert row["event_hash"] == _audit_event_hash(row)
+
+
+def test_jsonl_audit_sink_sanitizes_export_os_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+    audit_sink.record(
+        contract["AuditEvent"](
+            action="studio.simulate.run",
+            route="/api/simulate",
+            principal_id="operator-7",
+            decision="allow",
+            reason="authorized",
+        )
+    )
+    original_read_text = Path.read_text
+
+    def blocked_read_text(path: Path, *args: Any, **kwargs: Any) -> str:
+        if path == audit_path:
+            raise PermissionError("blocked path detail")
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", blocked_read_text)
+
+    with pytest.raises(contract["AuditSinkError"], match="export failed"):
+        audit_sink.export_recent()
+
+    assert audit_sink.status().last_error == "PermissionError"
 
 
 def test_policy_gateway_records_request_id_in_audit_event(tmp_path: Path) -> None:
