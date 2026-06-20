@@ -54,6 +54,7 @@ describe("TrainingMonitor", () => {
   it("renders checkpoint weight restore plan metadata", () => {
     const html = renderToStaticMarkup(
       <TrainingWeightRestorePlanStrip
+        onVerify={() => undefined}
         restorePlan={{
           architecture: "64->128->10",
           artifact_route_template: "/api/studio/jobs/{job_id}/artifacts/{artifact_path}",
@@ -77,6 +78,15 @@ describe("TrainingMonitor", () => {
             size_bytes: 4096,
           },
         }}
+        verification={{
+          actual_sha256: "c".repeat(64),
+          expected_sha256: "a".repeat(64),
+          relative_path: "training/model_state.pt",
+          size_bytes: 4096,
+          source_job_id: "sj_training",
+          status: "verified",
+          verified_at_utc: "2026-06-20T12:00:00.000Z",
+        }}
       />,
     );
 
@@ -87,6 +97,9 @@ describe("TrainingMonitor", () => {
     expect(html).toContain("/api/studio/jobs/{job_id}/artifacts/{artifact_path}");
     expect(html).toContain("training/model_state.pt #aaaaaaaaaaaa");
     expect(html).toContain("training/model_state.json #bbbbbbbbbbbb");
+    expect(html).toContain("Verified");
+    expect(html).toContain("cccccccccccc");
+    expect(html).toContain("Verify weights");
     expect(html).toContain(">9610<");
   });
 });

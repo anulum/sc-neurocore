@@ -52,6 +52,10 @@ import {
   updateStudioIdentityServiceAccount,
   connectProgress,
 } from "../api/client";
+import {
+  verifyTrainingWeightArtifactBlob,
+  type TrainingWeightRestoreVerification,
+} from "../trainingRestore";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 const AUTH_STORAGE_KEY = "sc-neurocore-studio-auth-token";
@@ -139,6 +143,7 @@ interface StudioState {
   trainingStatus: string;
   trainingEpochs: TrainingEpochMetrics[];
   trainingWeightRestorePlan: TrainingWeightRestorePlan | null;
+  trainingWeightRestoreVerification: TrainingWeightRestoreVerification | null;
   trainingSurrogates: SurrogateInfo[];
   trainingConfig: {
     dataset: string; epochs: number; batch_size: number; lr: number;
@@ -240,6 +245,7 @@ interface StudioState {
   stopTraining: () => Promise<void>;
   exportTrainingCheckpoint: () => Promise<void>;
   importTrainingCheckpointText: (checkpointJson: string) => Promise<void>;
+  verifyTrainingWeightRestoreArtifact: () => Promise<void>;
   setTrainingConfig: (key: string, value: unknown) => void;
   autoSimulate: () => void;
   exportData: () => void;
@@ -295,7 +301,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   projectSaveResult: null, serverProjects: [], pipelineResult: null,
   synthTarget: "ice40", synthResult: null, synthEstimate: null, multiTargetResult: null, toolsAvailable: null,
   trainingJobId: null, trainingStatus: "idle", trainingEpochs: [],
-  trainingWeightRestorePlan: null, trainingSurrogates: [],
+  trainingWeightRestorePlan: null, trainingWeightRestoreVerification: null,
+  trainingSurrogates: [],
   trainingConfig: {
     dataset: "synthetic", epochs: 10, batch_size: 64, lr: 0.001,
     hidden: [128], timesteps: 25, surrogate: "atan_surrogate",
@@ -1262,6 +1269,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       trainingStatus: "starting",
       trainingEpochs: [],
       trainingWeightRestorePlan: null,
+      trainingWeightRestoreVerification: null,
       error: null,
       activeTab: "train",
     });
@@ -1330,11 +1338,35 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         trainingStatus: `checkpoint:${imported.source_status}`,
         trainingEpochs: [],
         trainingWeightRestorePlan: imported.weight_restore_plan,
+        trainingWeightRestoreVerification: null,
         activeTab: "train",
         error: null,
       }));
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  verifyTrainingWeightRestoreArtifact: async () => {
+    const restorePlan = get().trainingWeightRestorePlan;
+    if (restorePlan === null) {
+      set({ error: "No training weight restore plan is available." });
+      return;
+    }
+    set({ error: null, trainingWeightRestoreVerification: null });
+    try {
+      const payload = await fetchStudioJobArtifact(
+        restorePlan.source_job_id,
+        restorePlan.weights_artifact.relative_path,
+      );
+      const verification = await verifyTrainingWeightArtifactBlob(restorePlan, payload);
+      set({ trainingWeightRestoreVerification: verification });
+    } catch (error: unknown) {
+      set({
+        error: error instanceof Error
+          ? error.message
+          : "Training weight artifact verification failed",
+      });
     }
   },
 

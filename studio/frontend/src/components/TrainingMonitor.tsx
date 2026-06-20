@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { TrainingWeightRestorePlan } from "../api/client";
+import type { TrainingWeightRestoreVerification } from "../trainingRestore";
 import { useStudioStore } from "../stores/studio";
 import { buildTrainingEvidenceModel, type TrainingEvidenceModel } from "../trainingEvidence";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
@@ -163,38 +164,69 @@ export function TrainingCheckpointControls({
 }
 
 export function TrainingWeightRestorePlanStrip({
+  onVerify,
   restorePlan,
+  verification,
 }: {
+  onVerify?: () => void;
   restorePlan: TrainingWeightRestorePlan | null;
+  verification?: TrainingWeightRestoreVerification | null;
 }) {
   if (!restorePlan) return null;
 
   const weightHash = restorePlan.weights_artifact.sha256.slice(0, 12);
   const metadataHash = restorePlan.metadata_artifact.sha256.slice(0, 12);
+  const verifiedHash = verification?.actual_sha256.slice(0, 12) ?? "pending";
 
   return (
-    <EvidenceSummaryStrip
-      variant="banner"
-      items={[
-        { label: "Schema", value: restorePlan.schema_version },
-        { label: "Job", value: restorePlan.source_job_id },
-        { label: "Status", value: restorePlan.source_status },
-        { label: "Policy", value: restorePlan.loader_policy },
-        { label: "Route", value: restorePlan.artifact_route_template },
-        { label: "Weights", value: `${restorePlan.weights_artifact.relative_path} #${weightHash}` },
-        { label: "Metadata", value: `${restorePlan.metadata_artifact.relative_path} #${metadataHash}` },
-        { label: "Params", value: String(restorePlan.parameter_count) },
-      ]}
-    />
+    <div style={{ borderBottom: "1px solid var(--border)" }}>
+      <EvidenceSummaryStrip
+        variant="banner"
+        items={[
+          { label: "Schema", value: restorePlan.schema_version },
+          { label: "Job", value: restorePlan.source_job_id },
+          { label: "Status", value: restorePlan.source_status },
+          { label: "Policy", value: restorePlan.loader_policy },
+          { label: "Route", value: restorePlan.artifact_route_template },
+          { label: "Weights", value: `${restorePlan.weights_artifact.relative_path} #${weightHash}` },
+          { label: "Metadata", value: `${restorePlan.metadata_artifact.relative_path} #${metadataHash}` },
+          { label: "Verified", value: verifiedHash },
+          { label: "Params", value: String(restorePlan.parameter_count) },
+        ]}
+      />
+      {onVerify && (
+        <div style={{
+          background: "var(--bg-primary)",
+          display: "flex",
+          justifyContent: "flex-end",
+          padding: "0 12px 6px",
+        }}>
+          <button
+            onClick={onVerify}
+            style={{
+              background: "var(--bg-tertiary)",
+              border: "1px solid var(--border)",
+              color: "var(--text-secondary)",
+              cursor: "pointer",
+              fontSize: 10,
+              padding: "3px 8px",
+            }}
+            title="Verify training weight artifact"
+          >
+            Verify weights
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
 export default function TrainingMonitor() {
   const {
     trainingStatus, trainingEpochs, trainingSurrogates, trainingConfig,
-    trainingJobId, trainingWeightRestorePlan,
+    trainingJobId, trainingWeightRestorePlan, trainingWeightRestoreVerification,
     startTraining, stopTraining, setTrainingConfig, loadSurrogates, isSimulating,
-    exportTrainingCheckpoint, importTrainingCheckpointText,
+    exportTrainingCheckpoint, importTrainingCheckpointText, verifyTrainingWeightRestoreArtifact,
   } = useStudioStore();
 
   useEffect(() => { loadSurrogates(); }, [loadSurrogates]);
@@ -261,7 +293,11 @@ export default function TrainingMonitor() {
       </div>
 
       <TrainingEvidenceStrip evidence={evidence} />
-      <TrainingWeightRestorePlanStrip restorePlan={trainingWeightRestorePlan} />
+      <TrainingWeightRestorePlanStrip
+        onVerify={() => { void verifyTrainingWeightRestoreArtifact(); }}
+        restorePlan={trainingWeightRestorePlan}
+        verification={trainingWeightRestoreVerification}
+      />
 
       {/* Config panel */}
       {!isRunning && (

@@ -129,7 +129,9 @@ status, artifact route template, loader policy, and exact artifact hashes that
 clients must verify before materializing the PyTorch state dictionary. The
 Training panel surfaces that restore-plan metadata after checkpoint import so
 operators can inspect the source job, loader policy, route template, and
-artifact hashes before any later weight materialization step.
+artifact hashes before any later weight materialization step. The panel can
+also fetch the declared weight artifact through the authenticated job-artifact
+route and verify its byte length plus SHA-256 digest against the restore plan.
 
 ## API Endpoints
 
