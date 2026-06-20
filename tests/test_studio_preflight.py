@@ -134,6 +134,31 @@ def test_studio_preflight_requires_identity_lifecycle_route_policies() -> None:
     }
 
 
+def test_studio_preflight_requires_job_and_evidence_route_policies() -> None:
+    required = {
+        (method, path, visibility, audit_action)
+        for method, path, visibility, audit_action in preflight._REQUIRED_ROUTE_POLICIES
+        if path.startswith("/api/studio/jobs") or path == "/api/studio/evidence/bundle"
+    }
+
+    assert required == {
+        ("GET", "/api/studio/jobs", RouteVisibility.ADMIN, "studio.jobs.list"),
+        ("GET", "/api/studio/jobs/{job_id}", RouteVisibility.ADMIN, "studio.jobs.detail"),
+        (
+            "GET",
+            "/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}",
+            RouteVisibility.ADMIN,
+            "studio.jobs.artifact.read",
+        ),
+        (
+            "POST",
+            "/api/studio/evidence/bundle",
+            RouteVisibility.ADMIN,
+            "studio.evidence.bundle.create",
+        ),
+    }
+
+
 def test_studio_preflight_fails_closed_for_development_defaults() -> None:
     report = run_studio_preflight({})
     failed_ids = {check.check_id for check in report.checks if check.status == "fail"}

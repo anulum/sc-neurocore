@@ -521,7 +521,8 @@ principals, required admin route policies, a valid identity store with at least
 one active unexpired `studio.admin` principal, audit-log readiness, and
 job-root readiness. The required route-policy inventory includes service
 account list/detail/update routes and browser-user list/detail/create/update
-and password-rotation routes. The JSON report uses schema
+and password-rotation routes, job list/detail/artifact routes, and the
+evidence bundle export route. The JSON report uses schema
 `studio.preflight.v1` and is safe for deployment logs: it reports booleans,
 counts, stable check IDs, and path-free remediation steps without local
 filesystem paths, bearer tokens, token hashes, passwords, or password

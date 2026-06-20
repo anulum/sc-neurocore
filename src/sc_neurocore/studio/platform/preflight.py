@@ -90,6 +90,15 @@ _REQUIRED_ROUTE_POLICIES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         RouteVisibility.ADMIN,
         "studio.identity.browser_users.password.rotate",
     ),
+    ("GET", "/api/studio/jobs", RouteVisibility.ADMIN, "studio.jobs.list"),
+    ("GET", "/api/studio/jobs/{job_id}", RouteVisibility.ADMIN, "studio.jobs.detail"),
+    (
+        "GET",
+        "/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}",
+        RouteVisibility.ADMIN,
+        "studio.jobs.artifact.read",
+    ),
+    ("POST", "/api/studio/evidence/bundle", RouteVisibility.ADMIN, "studio.evidence.bundle.create"),
     ("POST", "/api/synth/run", RouteVisibility.ADMIN, "studio.synth.run"),
     ("POST", "/api/synth/pnr", RouteVisibility.ADMIN, "studio.synth.pnr"),
 )
