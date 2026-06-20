@@ -125,6 +125,93 @@ def test_studio_job_manager_reads_manifest_declared_artifacts(tmp_path: Path) ->
     assert payload.artifact.sha256 == hashlib.sha256(b"artifact body").hexdigest()
 
 
+def test_studio_job_context_appends_and_publishes_live_event_artifact(
+    tmp_path: Path,
+) -> None:
+    """Live JSONL artifacts can be appended first and manifested once."""
+
+    work_dir = tmp_path / "job"
+    work_dir.mkdir()
+    context = StudioJobContext(
+        job_id="sj_live_events",
+        work_dir=work_dir,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4096,
+    )
+
+    context.append_artifact_event("events/live.jsonl", {"event": "epoch", "data": {"n": 1}})
+    artifact = context.publish_existing_artifact("events/live.jsonl")
+
+    payload = (work_dir / "events" / "live.jsonl").read_bytes()
+    assert json.loads(payload.decode("utf-8")) == {"data": {"n": 1}, "event": "epoch"}
+    assert artifact.relative_path == "events/live.jsonl"
+    assert artifact.size_bytes == len(payload)
+    assert artifact.sha256 == hashlib.sha256(payload).hexdigest()
+    assert context.artifacts == (artifact,)
+
+
+def test_studio_job_context_rejects_live_event_artifact_escape(tmp_path: Path) -> None:
+    """Live JSONL artifact writes use the same confinement as normal artifacts."""
+
+    work_dir = tmp_path / "job"
+    work_dir.mkdir()
+    context = StudioJobContext(
+        job_id="sj_live_escape",
+        work_dir=work_dir,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4096,
+    )
+
+    with pytest.raises(ValueError, match="escapes"):
+        context.append_artifact_event("../escape.jsonl", {"event": "bad"})
+
+    assert not (tmp_path / "escape.jsonl").exists()
+
+
+def test_studio_job_manager_tails_live_artifact_before_manifest(
+    tmp_path: Path,
+) -> None:
+    """Live artifact reads are path-confined and available before completion."""
+
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"training"}),
+        default_timeout_seconds=1.0,
+    )
+    release = threading.Event()
+
+    def task(context: StudioJobContext) -> dict[str, object]:
+        context.append_artifact_event("training/events.jsonl", {"event": "epoch"})
+        release.wait(timeout=1.0)
+        return {"ok": True}
+
+    record = manager.submit(
+        kind="training",
+        owner="operator-1",
+        request_id="req-1",
+        task=task,
+    )
+
+    payload = b""
+    offset = 0
+    for _ in range(20):
+        payload, offset = manager.read_live_artifact_bytes(
+            record.job_id,
+            "training/events.jsonl",
+            offset=0,
+        )
+        if payload:
+            break
+        time.sleep(0.05)
+    release.set()
+    manager.wait(record.job_id, timeout_seconds=2.0)
+
+    assert json.loads(payload.decode("utf-8")) == {"event": "epoch"}
+    assert offset == len(payload)
+    with pytest.raises(KeyError):
+        manager.read_live_artifact_bytes(record.job_id, "../escape.jsonl", offset=0)
+
+
 def test_studio_job_manager_rejects_tampered_manifest_artifact(tmp_path: Path) -> None:
     manager = StudioJobManager(
         root=tmp_path / "jobs",

@@ -9,12 +9,13 @@
 from __future__ import annotations
 
 import json
+import math
 import secrets
 import threading
 import time
 import queue
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 from sc_neurocore.studio.platform.jobs import (
     StudioJobCancelled,
@@ -61,6 +62,9 @@ _CELL_TYPES = [
     "RecurrentLIFCell",
 ]
 
+TRAINING_EVENT_LOG_ARTIFACT_PATH = "training/events.jsonl"
+_PERSISTED_TRAINING_EVENT_TYPES = frozenset({"config", "epoch", "completed", "stopped", "error"})
+
 
 def list_surrogates() -> list[dict[str, Any]]:
     """Return available surrogate-gradient functions for the Studio UI."""
@@ -83,6 +87,7 @@ class TrainingJob:
         *,
         job_id: str | None = None,
         cancelled: Callable[[], bool] | None = None,
+        event_sink: Callable[[dict[str, object]], None] | None = None,
     ) -> None:
         self.config = config
         self.id = job_id or f"j{secrets.token_hex(6)}"
@@ -90,6 +95,8 @@ class TrainingJob:
         self.metrics: queue.Queue[Any] = queue.Queue(maxsize=500)
         self._stop_event = threading.Event()
         self._cancelled = cancelled
+        self._event_sink = event_sink
+        self._persisted_event_count = 0
         self._thread: threading.Thread | None = None
         self.error: str | None = None
         self.final_metrics: dict[str, Any] | None = None
@@ -155,6 +162,8 @@ class TrainingJob:
     ) -> None:
         """Write terminal training status and evidence artifacts."""
 
+        if self._persisted_event_count > 0:
+            context.publish_existing_artifact(TRAINING_EVENT_LOG_ARTIFACT_PATH)
         status_payload = self._public_status()
         status_artifact = context.write_artifact(
             "training/status.json",
@@ -182,6 +191,9 @@ class TrainingJob:
             except queue.Empty:
                 pass
             self.metrics.put_nowait(payload)
+        if self._event_sink is not None and event_type in _PERSISTED_TRAINING_EVENT_TYPES:
+            self._event_sink(_json_event_payload(payload))
+            self._persisted_event_count += 1
 
     def _run(self) -> None:
         try:
@@ -525,6 +537,9 @@ def stream_metrics(job_id: str, job_manager: StudioJobManager | None = None) -> 
         yield f"data: {json.dumps({'event': 'error', 'data': {'message': 'Job not found'}})}\n\n"
         return
 
+    live_event_offset = 0
+    live_event_buffer = ""
+    live_terminal_seen = False
     while True:
         if job_manager is not None:
             try:
@@ -533,8 +548,19 @@ def stream_metrics(job_id: str, job_manager: StudioJobManager | None = None) -> 
                 record = None
             if record is not None:
                 _sync_proxy_job(job, record.status, record.error, record.result)
+                live_events, live_event_offset, live_event_buffer = _read_live_training_events(
+                    job_manager,
+                    job_id,
+                    offset=live_event_offset,
+                    buffer=live_event_buffer,
+                )
+                for event in live_events:
+                    if event.get("event") in ("completed", "stopped", "error"):
+                        live_terminal_seen = True
+                    yield f"data: {json.dumps(event)}\n\n"
                 if job.status in ("completed", "stopped", "failed"):
-                    yield f"data: {json.dumps(_event_from_platform_record(record.status, record.error, record.result))}\n\n"
+                    if not live_terminal_seen:
+                        yield f"data: {json.dumps(_event_from_platform_record(record.status, record.error, record.result))}\n\n"
                     break
         try:
             event = job.metrics.get(timeout=1.0)
@@ -716,3 +742,61 @@ def _training_status_from_platform_status(platform_status: str) -> str:
     if platform_status in ("pending", "running"):
         return "running"
     return "pending"
+
+
+def _json_event_payload(payload: dict[str, object]) -> dict[str, object]:
+    """Return a JSON-compatible copy of a Training Monitor SSE event."""
+
+    converted = _json_compatible(payload)
+    if not isinstance(converted, dict):
+        raise ValueError("Training event payload must remain a JSON object.")
+    return cast(dict[str, object], converted)
+
+
+def _json_compatible(value: object) -> Any:
+    """Return ``value`` converted to JSON-compatible containers."""
+
+    if value is None or isinstance(value, str | bool | int):
+        return value
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {str(key): _json_compatible(item) for key, item in value.items()}
+    if isinstance(value, list | tuple):
+        return [_json_compatible(item) for item in value]
+    return str(value)
+
+
+def _read_live_training_events(
+    job_manager: StudioJobManager,
+    job_id: str,
+    *,
+    offset: int,
+    buffer: str,
+) -> tuple[list[dict[str, object]], int, str]:
+    """Read complete JSONL Training Monitor events appended by a process worker."""
+
+    payload, new_offset = job_manager.read_live_artifact_bytes(
+        job_id,
+        TRAINING_EVENT_LOG_ARTIFACT_PATH,
+        offset=offset,
+    )
+    if not payload:
+        return [], new_offset, buffer
+    text = buffer + payload.decode("utf-8")
+    lines = text.splitlines(keepends=True)
+    next_buffer = ""
+    if lines and not lines[-1].endswith("\n"):
+        next_buffer = lines.pop()
+    events: list[dict[str, object]] = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        try:
+            event = json.loads(stripped)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(event, dict):
+            events.append(dict(event))
+    return events, new_offset, next_buffer

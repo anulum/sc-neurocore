@@ -34,12 +34,14 @@ from sc_neurocore.studio.training import (
     TrainingJob,
     _CELL_TYPES,
     _SURROGATES,
+    _register_job,
     get_training_status,
     list_cell_types,
     list_jobs,
     list_surrogates,
     start_training,
     stop_training,
+    stream_metrics,
 )
 
 
@@ -303,6 +305,54 @@ class TestSSEStream:
         time.sleep(0.5)
         r = client.get(f"/api/training/stream/{job_id}")
         assert r.headers.get("content-type", "").startswith("text/event-stream")
+
+    def test_stream_metrics_tails_process_worker_event_log(self, tmp_path: Path) -> None:
+        """Parent-process SSE stream yields child-process live event rows."""
+
+        manager = StudioJobManager(
+            root=tmp_path / "jobs",
+            allowed_kinds=frozenset({"training"}),
+            default_timeout_seconds=2.0,
+        )
+        release = threading.Event()
+
+        def task(context: StudioJobContext) -> dict[str, object]:
+            context.append_artifact_event(
+                "training/events.jsonl",
+                {"event": "epoch", "data": {"epoch": 0}, "timestamp": 1.0},
+            )
+            release.wait(timeout=1.0)
+            return {"final_metrics": {"train_accuracy": 0.5}, "training_status": "completed"}
+
+        record = manager.submit(
+            kind="training",
+            owner="studio-training",
+            request_id=None,
+            task=task,
+        )
+        proxy = TrainingJob({"epochs": 1}, job_id=record.job_id)
+        proxy.status = "running"
+        _register_job(proxy)
+
+        for _ in range(20):
+            payload, _offset = manager.read_live_artifact_bytes(
+                record.job_id,
+                "training/events.jsonl",
+                offset=0,
+            )
+            if payload:
+                break
+            time.sleep(0.05)
+        generator = stream_metrics(record.job_id, manager)
+        first_event = next(generator)
+        release.set()
+        manager.wait(record.job_id, timeout_seconds=2.0)
+
+        assert json.loads(first_event.removeprefix("data: ").strip()) == {
+            "data": {"epoch": 0},
+            "event": "epoch",
+            "timestamp": 1.0,
+        }
 
 
 # --- Training Config Validation ---

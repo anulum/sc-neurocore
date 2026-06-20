@@ -273,6 +273,67 @@ class StudioJobContext:
         self._artifacts.append(artifact)
         return artifact
 
+    def append_artifact_event(
+        self,
+        relative_path: str,
+        payload: Mapping[str, object],
+    ) -> None:
+        """Append one JSON event to a confined live artifact log.
+
+        Parameters
+        ----------
+        relative_path:
+            Relative event-log path below the job directory.
+        payload:
+            JSON-serializable event object to append as one JSONL row.
+
+        Raises
+        ------
+        ValueError
+            If the path escapes the job directory, the event is not JSON, or
+            the event log would exceed the per-artifact byte limit.
+        """
+
+        target_path = self._artifact_path(relative_path)
+        try:
+            line = json.dumps(dict(payload), sort_keys=True) + "\n"
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Studio job event payload must be JSON.") from exc
+        data = line.encode("utf-8")
+        current_size = target_path.stat().st_size if target_path.exists() else 0
+        if current_size + len(data) > self._max_artifact_bytes:
+            raise ValueError("Studio job event log exceeds configured size limit.")
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        with target_path.open("ab") as handle:
+            handle.write(data)
+
+    def publish_existing_artifact(self, relative_path: str) -> StudioJobArtifact:
+        """Declare an already-written confined artifact in the manifest.
+
+        Live event logs are appended while a process task runs, then published
+        once at terminal state so normal artifact download and integrity checks
+        use the same manifest contract as other Studio job outputs.
+        """
+
+        target_path = self._artifact_path(relative_path)
+        if not target_path.is_file():
+            raise ValueError("Studio job artifact is unavailable.")
+        data = target_path.read_bytes()
+        if len(data) > self._max_artifact_bytes:
+            raise ValueError("Studio job artifact exceeds configured size limit.")
+        artifact = StudioJobArtifact(
+            relative_path=relative_path,
+            size_bytes=len(data),
+            sha256=hashlib.sha256(data).hexdigest(),
+        )
+        self._artifacts = [
+            existing
+            for existing in self._artifacts
+            if existing.relative_path != artifact.relative_path
+        ]
+        self._artifacts.append(artifact)
+        return artifact
+
     def _artifact_path(self, relative_path: str) -> Path:
         return _resolve_confined_child(
             root=self._work_dir,
@@ -498,6 +559,41 @@ class StudioJobManager:
         if len(payload) != artifact.size_bytes or digest != artifact.sha256:
             raise StudioJobArtifactUnavailable("Studio job artifact integrity check failed.")
         return StudioJobArtifactPayload(artifact=artifact, payload=payload)
+
+    def read_live_artifact_bytes(
+        self,
+        job_id: str,
+        relative_path: str,
+        *,
+        offset: int,
+        max_bytes: int = 64 * 1024,
+    ) -> tuple[bytes, int]:
+        """Return newly appended bytes from a confined live artifact.
+
+        The live reader is intentionally not manifest-gated because child
+        processes append evidence rows before terminal artifact publication.
+        It still requires a known job, confines the requested relative path to
+        that job directory, rejects negative offsets, and returns at most
+        ``max_bytes`` bytes per read.
+        """
+
+        self.record(job_id)
+        if offset < 0:
+            raise ValueError("Studio live artifact offset must be non-negative.")
+        if max_bytes <= 0:
+            raise ValueError("Studio live artifact read size must be positive.")
+        requested_path = _normalize_artifact_lookup_path(relative_path)
+        artifact_path = _resolve_confined_child(
+            root=self._root / job_id,
+            relative_path=requested_path,
+            error_message="Studio job artifact path escapes the job directory.",
+        )
+        if not artifact_path.is_file():
+            return b"", offset
+        with artifact_path.open("rb") as handle:
+            handle.seek(offset)
+            payload = handle.read(max_bytes)
+            return payload, offset + len(payload)
 
     def status(self) -> StudioJobStatusSnapshot:
         """Return aggregate, path-free job manager health."""

@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from sc_neurocore.studio.platform.jobs import StudioJobContext
-from sc_neurocore.studio.training import TrainingJob
+from sc_neurocore.studio.training import TRAINING_EVENT_LOG_ARTIFACT_PATH, TrainingJob
 
 TRAINING_PROCESS_TASK = (
     "sc_neurocore.studio.platform.training_process:run_training_process_task"
@@ -51,6 +51,10 @@ def run_training_process_task(
         config,
         job_id=context.job_id,
         cancelled=lambda: context.cancelled,
+        event_sink=lambda event: context.append_artifact_event(
+            TRAINING_EVENT_LOG_ARTIFACT_PATH,
+            event,
+        ),
     )
     return job.run_blocking(context)
 

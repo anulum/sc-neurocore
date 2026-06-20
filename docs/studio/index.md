@@ -191,8 +191,11 @@ runtime features:
   bounded training execution, while `/api/training/stop`,
   `/api/training/status/{job_id}`, and `/api/training/stream/{job_id}` keep the
   parent-process control and observation surface for the Training Monitor.
-  Terminal training jobs write `training/status.json` and
-  `training/evidence.json`; the evidence manifest uses
+  Process workers append live `config`, `epoch`, and terminal rows to
+  `training/events.jsonl`; the parent SSE stream tails that path-confined
+  event log before it is declared as a terminal artifact. Terminal training
+  jobs also write `training/status.json` and `training/evidence.json`; the
+  evidence manifest uses
   `studio.action-evidence.v1` and records terminal status, action kind, replay
   route, job ID, evidence classification, status payload SHA-256, and status
   artifact metadata without local paths or secret material. Once the verified
@@ -444,9 +447,11 @@ Start SNN training from the browser. Configure:
 
 Watch loss curves, accuracy, per-layer spike rates, and parameter
 evolution update in real time via Server-Sent Events. The Training Monitor
-also surfaces the path-free action-evidence contract for the current training
-run: evidence classification, action kind, job ID, terminal status, replay
-route, terminal artifact names, configuration summary, and latest epoch.
+tails process-worker rows from the path-confined `training/events.jsonl`
+artifact for live `config`, `epoch`, and terminal updates, then surfaces the
+path-free action-evidence contract for the current training run: evidence
+classification, action kind, job ID, terminal status, replay route, terminal
+artifact names, configuration summary, and latest epoch.
 Terminal status responses also include a verified
 `studio.training.evidence-summary.v1` summary when `training/evidence.json`
 is available from the worker artifact manifest.

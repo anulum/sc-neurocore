@@ -80,6 +80,46 @@ def test_training_process_task_writes_terminal_evidence(
     assert evidence_payload["replay_route"] == "POST /api/training/start"
 
 
+def test_training_process_task_publishes_worker_event_log(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Training process task persists child-process events for live tailing."""
+
+    def complete_training(job: TrainingJob) -> None:
+        job._emit("config", {"job_id": job.id, "dataset": "synthetic"})
+        job._emit("batch", {"batch": 1})
+        job._emit("epoch", {"epoch": 0, "train_accuracy": 0.75})
+        job.status = "completed"
+        job.final_metrics = {
+            "train_loss": 0.3,
+            "train_accuracy": 0.75,
+            "val_loss": 0.4,
+            "val_accuracy": 0.7,
+        }
+        job._emit("completed", job.final_metrics)
+
+    monkeypatch.setattr(TrainingJob, "_train", complete_training)
+    context = _context(tmp_path, "sj_training_process_events")
+
+    run_training_process_task(context, {"epochs": 1, "dataset": "synthetic"})
+
+    assert [artifact.relative_path for artifact in context.artifacts] == [
+        "training/events.jsonl",
+        "training/status.json",
+        "training/evidence.json",
+    ]
+    events = [
+        json.loads(line)
+        for line in (
+            tmp_path / "sj_training_process_events" / "training" / "events.jsonl"
+        ).read_text().splitlines()
+    ]
+    assert [event["event"] for event in events] == ["config", "epoch", "completed"]
+    assert events[0]["data"] == {"dataset": "synthetic", "job_id": "sj_training_process_events"}
+    assert events[1]["data"]["train_accuracy"] == 0.75
+
+
 def test_training_process_task_writes_failed_evidence(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
