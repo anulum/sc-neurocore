@@ -132,6 +132,11 @@ operators can inspect the source job, loader policy, route template, and
 artifact hashes before any later weight materialization step. The panel can
 also fetch the declared weight artifact through the authenticated job-artifact
 route and verify its byte length plus SHA-256 digest against the restore plan.
+After verification, operators can export a
+`studio.training.weight-restore-verification.v1` manifest that records the
+source job, route template, loader policy, metadata artifact hash, weight
+artifact hash, byte count, and verification timestamp without embedding raw
+model weights.
 
 ## API Endpoints
 

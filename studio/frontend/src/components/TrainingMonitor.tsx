@@ -164,10 +164,12 @@ export function TrainingCheckpointControls({
 }
 
 export function TrainingWeightRestorePlanStrip({
+  onExportVerification,
   onVerify,
   restorePlan,
   verification,
 }: {
+  onExportVerification?: () => void;
   onVerify?: () => void;
   restorePlan: TrainingWeightRestorePlan | null;
   verification?: TrainingWeightRestoreVerification | null;
@@ -194,27 +196,47 @@ export function TrainingWeightRestorePlanStrip({
           { label: "Params", value: String(restorePlan.parameter_count) },
         ]}
       />
-      {onVerify && (
+      {(onVerify || onExportVerification) && (
         <div style={{
           background: "var(--bg-primary)",
           display: "flex",
+          gap: 6,
           justifyContent: "flex-end",
           padding: "0 12px 6px",
         }}>
-          <button
-            onClick={onVerify}
-            style={{
-              background: "var(--bg-tertiary)",
-              border: "1px solid var(--border)",
-              color: "var(--text-secondary)",
-              cursor: "pointer",
-              fontSize: 10,
-              padding: "3px 8px",
-            }}
-            title="Verify training weight artifact"
-          >
-            Verify weights
-          </button>
+          {onVerify && (
+            <button
+              onClick={onVerify}
+              style={{
+                background: "var(--bg-tertiary)",
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+                fontSize: 10,
+                padding: "3px 8px",
+              }}
+              title="Verify training weight artifact"
+            >
+              Verify weights
+            </button>
+          )}
+          {onExportVerification && (
+            <button
+              disabled={!verification}
+              onClick={onExportVerification}
+              style={{
+                background: "var(--bg-tertiary)",
+                border: "1px solid var(--border)",
+                color: verification ? "var(--text-secondary)" : "var(--text-muted)",
+                cursor: verification ? "pointer" : "not-allowed",
+                fontSize: 10,
+                padding: "3px 8px",
+              }}
+              title="Export training weight verification manifest"
+            >
+              Export verification
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -226,7 +248,8 @@ export default function TrainingMonitor() {
     trainingStatus, trainingEpochs, trainingSurrogates, trainingConfig,
     trainingJobId, trainingWeightRestorePlan, trainingWeightRestoreVerification,
     startTraining, stopTraining, setTrainingConfig, loadSurrogates, isSimulating,
-    exportTrainingCheckpoint, importTrainingCheckpointText, verifyTrainingWeightRestoreArtifact,
+    exportTrainingCheckpoint, importTrainingCheckpointText,
+    exportTrainingWeightRestoreVerification, verifyTrainingWeightRestoreArtifact,
   } = useStudioStore();
 
   useEffect(() => { loadSurrogates(); }, [loadSurrogates]);
@@ -294,6 +317,7 @@ export default function TrainingMonitor() {
 
       <TrainingEvidenceStrip evidence={evidence} />
       <TrainingWeightRestorePlanStrip
+        onExportVerification={exportTrainingWeightRestoreVerification}
         onVerify={() => { void verifyTrainingWeightRestoreArtifact(); }}
         restorePlan={trainingWeightRestorePlan}
         verification={trainingWeightRestoreVerification}

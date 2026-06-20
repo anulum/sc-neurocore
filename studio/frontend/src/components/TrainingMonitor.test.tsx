@@ -54,6 +54,7 @@ describe("TrainingMonitor", () => {
   it("renders checkpoint weight restore plan metadata", () => {
     const html = renderToStaticMarkup(
       <TrainingWeightRestorePlanStrip
+        onExportVerification={() => undefined}
         onVerify={() => undefined}
         restorePlan={{
           architecture: "64->128->10",
@@ -100,6 +101,42 @@ describe("TrainingMonitor", () => {
     expect(html).toContain("Verified");
     expect(html).toContain("cccccccccccc");
     expect(html).toContain("Verify weights");
+    expect(html).toContain("Export verification");
     expect(html).toContain(">9610<");
+  });
+
+  it("renders verification export disabled before artifact verification", () => {
+    const html = renderToStaticMarkup(
+      <TrainingWeightRestorePlanStrip
+        onExportVerification={() => undefined}
+        restorePlan={{
+          architecture: "64->128->10",
+          artifact_route_template: "/api/studio/jobs/{job_id}/artifacts/{artifact_path}",
+          config_sha256: "2".repeat(64),
+          format: "torch_state_dict",
+          framework: "pytorch",
+          loader_policy: "download_from_authenticated_artifact_route_and_verify_sha256",
+          metadata_artifact: {
+            relative_path: "training/model_state.json",
+            sha256: "b".repeat(64),
+            size_bytes: 512,
+          },
+          parameter_count: 9610,
+          restore_ready: true,
+          schema_version: "studio.training.weight-restore-plan.v1",
+          source_job_id: "sj_training",
+          source_status: "completed",
+          weights_artifact: {
+            relative_path: "training/model_state.pt",
+            sha256: "a".repeat(64),
+            size_bytes: 4096,
+          },
+        }}
+      />,
+    );
+
+    expect(html).toContain("pending");
+    expect(html).toContain("Export verification");
+    expect(html).toContain("disabled");
   });
 });

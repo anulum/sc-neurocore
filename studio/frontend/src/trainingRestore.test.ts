@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import type { TrainingWeightRestorePlan } from "./api/client";
-import { sha256Blob, verifyTrainingWeightArtifactBlob } from "./trainingRestore";
+import {
+  buildTrainingWeightRestoreVerificationManifest,
+  sha256Blob,
+  verifyTrainingWeightArtifactBlob,
+} from "./trainingRestore";
 
 async function restorePlanForPayload(payload: string): Promise<TrainingWeightRestorePlan> {
   const blob = new Blob([payload]);
@@ -70,5 +74,46 @@ describe("trainingRestore", () => {
     await expect(
       verifyTrainingWeightArtifactBlob(forgedPlan, new Blob(["forged"])),
     ).rejects.toThrow("SHA-256 mismatch");
+  });
+
+  it("builds a path-free restore verification manifest", async () => {
+    const plan = await restorePlanForPayload("weights");
+    const verification = await verifyTrainingWeightArtifactBlob(
+      plan,
+      new Blob(["weights"]),
+      () => new Date("2026-06-20T12:00:00Z"),
+    );
+
+    expect(buildTrainingWeightRestoreVerificationManifest(plan, verification)).toEqual({
+      artifact_route_template: "/api/studio/jobs/{job_id}/artifacts/{artifact_path}",
+      loader_policy: "download_from_authenticated_artifact_route_and_verify_sha256",
+      metadata_artifact_path: "training/model_state.json",
+      metadata_artifact_sha256: "b".repeat(64),
+      metadata_artifact_size_bytes: 512,
+      schema_version: "studio.training.weight-restore-verification.v1",
+      source_job_id: "sj_training",
+      source_status: "completed",
+      verification,
+      weights_artifact_path: "training/model_state.pt",
+      weights_artifact_sha256: plan.weights_artifact.sha256,
+      weights_artifact_size_bytes: new Blob(["weights"]).size,
+    });
+  });
+
+  it("rejects restore verification manifests for inconsistent hashes", async () => {
+    const plan = await restorePlanForPayload("weights");
+    const verification = {
+      actual_sha256: "c".repeat(64),
+      expected_sha256: plan.weights_artifact.sha256,
+      relative_path: "training/model_state.pt",
+      size_bytes: new Blob(["weights"]).size,
+      source_job_id: "sj_training",
+      status: "verified" as const,
+      verified_at_utc: "2026-06-20T12:00:00.000Z",
+    };
+
+    expect(() => buildTrainingWeightRestoreVerificationManifest(plan, verification)).toThrow(
+      "digest is not confirmed",
+    );
   });
 });

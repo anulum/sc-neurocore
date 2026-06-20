@@ -53,6 +53,7 @@ import {
   connectProgress,
 } from "../api/client";
 import {
+  buildTrainingWeightRestoreVerificationManifest,
   verifyTrainingWeightArtifactBlob,
   type TrainingWeightRestoreVerification,
 } from "../trainingRestore";
@@ -246,6 +247,7 @@ interface StudioState {
   exportTrainingCheckpoint: () => Promise<void>;
   importTrainingCheckpointText: (checkpointJson: string) => Promise<void>;
   verifyTrainingWeightRestoreArtifact: () => Promise<void>;
+  exportTrainingWeightRestoreVerification: () => void;
   setTrainingConfig: (key: string, value: unknown) => void;
   autoSimulate: () => void;
   exportData: () => void;
@@ -1366,6 +1368,33 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         error: error instanceof Error
           ? error.message
           : "Training weight artifact verification failed",
+      });
+    }
+  },
+
+  exportTrainingWeightRestoreVerification: () => {
+    const { trainingWeightRestorePlan, trainingWeightRestoreVerification } = get();
+    if (trainingWeightRestorePlan === null || trainingWeightRestoreVerification === null) {
+      set({ error: "No verified training weight artifact is available for export." });
+      return;
+    }
+    try {
+      const manifest = buildTrainingWeightRestoreVerificationManifest(
+        trainingWeightRestorePlan,
+        trainingWeightRestoreVerification,
+      );
+      const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
+      const anchor = document.createElement("a");
+      anchor.href = URL.createObjectURL(blob);
+      anchor.download = `training_weight_restore_${manifest.source_job_id}.json`;
+      anchor.click();
+      URL.revokeObjectURL(anchor.href);
+      set({ error: null });
+    } catch (error: unknown) {
+      set({
+        error: error instanceof Error
+          ? error.message
+          : "Training weight restore verification export failed",
       });
     }
   },
