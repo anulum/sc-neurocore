@@ -50,6 +50,18 @@ _REQUIRED_ROUTE_POLICIES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ),
     (
         "GET",
+        "/api/studio/identity/service-accounts/{principal_id}",
+        RouteVisibility.ADMIN,
+        "studio.identity.service_accounts.detail",
+    ),
+    (
+        "PATCH",
+        "/api/studio/identity/service-accounts/{principal_id}",
+        RouteVisibility.ADMIN,
+        "studio.identity.service_accounts.update",
+    ),
+    (
+        "GET",
         "/api/studio/identity/browser-users",
         RouteVisibility.ADMIN,
         "studio.identity.browser_users.list",
@@ -59,6 +71,18 @@ _REQUIRED_ROUTE_POLICIES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         "/api/studio/identity/browser-users",
         RouteVisibility.ADMIN,
         "studio.identity.browser_users.create",
+    ),
+    (
+        "GET",
+        "/api/studio/identity/browser-users/{username}",
+        RouteVisibility.ADMIN,
+        "studio.identity.browser_users.detail",
+    ),
+    (
+        "PATCH",
+        "/api/studio/identity/browser-users/{username}",
+        RouteVisibility.ADMIN,
+        "studio.identity.browser_users.update",
     ),
     (
         "POST",

@@ -66,10 +66,72 @@ def test_studio_preflight_passes_release_posture_without_secret_leaks(tmp_path: 
     assert payload["schema_version"] == STUDIO_PREFLIGHT_SCHEMA_VERSION
     assert payload["deployment_profile"] == "production"
     assert _check_by_id(report.checks, "identity_store").evidence["active_admin_principals"] == 1
+    assert _check_by_id(report.checks, "route_policy_inventory").evidence[
+        "required_route_count"
+    ] == len(preflight._REQUIRED_ROUTE_POLICIES)
     assert all(check.remediation == () for check in report.checks)
     assert bootstrap.bearer_token not in encoded_payload
     assert bootstrap.token_sha256 not in encoded_payload
     assert str(tmp_path) not in encoded_payload
+
+
+def test_studio_preflight_requires_identity_lifecycle_route_policies() -> None:
+    required = {
+        (method, path, visibility, audit_action)
+        for method, path, visibility, audit_action in preflight._REQUIRED_ROUTE_POLICIES
+        if path.startswith("/api/studio/identity/")
+    }
+
+    assert required == {
+        (
+            "GET",
+            "/api/studio/identity/service-accounts",
+            RouteVisibility.ADMIN,
+            "studio.identity.service_accounts.list",
+        ),
+        (
+            "GET",
+            "/api/studio/identity/service-accounts/{principal_id}",
+            RouteVisibility.ADMIN,
+            "studio.identity.service_accounts.detail",
+        ),
+        (
+            "PATCH",
+            "/api/studio/identity/service-accounts/{principal_id}",
+            RouteVisibility.ADMIN,
+            "studio.identity.service_accounts.update",
+        ),
+        (
+            "GET",
+            "/api/studio/identity/browser-users",
+            RouteVisibility.ADMIN,
+            "studio.identity.browser_users.list",
+        ),
+        (
+            "POST",
+            "/api/studio/identity/browser-users",
+            RouteVisibility.ADMIN,
+            "studio.identity.browser_users.create",
+        ),
+        (
+            "GET",
+            "/api/studio/identity/browser-users/{username}",
+            RouteVisibility.ADMIN,
+            "studio.identity.browser_users.detail",
+        ),
+        (
+            "PATCH",
+            "/api/studio/identity/browser-users/{username}",
+            RouteVisibility.ADMIN,
+            "studio.identity.browser_users.update",
+        ),
+        (
+            "POST",
+            "/api/studio/identity/browser-users/{username}/password",
+            RouteVisibility.ADMIN,
+            "studio.identity.browser_users.password.rotate",
+        ),
+    }
 
 
 def test_studio_preflight_fails_closed_for_development_defaults() -> None:

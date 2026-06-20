@@ -280,10 +280,12 @@ runtime features:
   report exits non-zero on any failed check and verifies runtime settings,
   route-policy enforcement, disabled header-principal fallback, required admin
   route policies, at least one active unexpired `studio.admin` identity,
-  audit-log readiness, and job-root readiness. Its payload contains stable
-  check IDs, booleans, counts, and path-free remediation steps; it does not
-  expose local paths, bearer tokens, token hashes, passwords, or password
-  verifiers.
+  audit-log readiness, and job-root readiness. The required admin route set
+  covers identity list/detail/update, browser-user create/update, and password
+  rotation routes in addition to operator/audit/synthesis checks. Its payload
+  contains stable check IDs, booleans, counts, and path-free remediation steps;
+  it does not expose local paths, bearer tokens, token hashes, passwords, or
+  password verifiers.
 - Studio rejects requests whose `Host` header is outside the configured
   allow-list. Packaged defaults accept only loopback hosts; deployments set
   `SC_NEUROCORE_STUDIO_ALLOWED_HOSTS` to a comma-separated host allow-list and
