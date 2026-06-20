@@ -118,6 +118,7 @@ from sc_neurocore.studio.platform import (
     list_studio_browser_user_public_records,
     list_studio_identity_public_records,
     load_studio_identity_store,
+    rotate_studio_browser_user_password,
     update_studio_identity_record,
     update_studio_browser_user_record,
 )
@@ -303,6 +304,12 @@ class StudioBrowserUserUpdateRequest(BaseModel):
     roles: list[str] = Field(min_length=1)
     active: bool
     expires_at_utc: str | None = None
+
+
+class StudioBrowserUserPasswordRotateRequest(BaseModel):
+    """Request body for admin browser-user password rotation."""
+
+    password: str = Field(min_length=1, max_length=4096)
 
 
 class StudioBrowserLoginRequest(BaseModel):
@@ -1315,6 +1322,58 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                     reason=f"updated:{updated.username}",
                     request_id=request_id if isinstance(request_id, str) else None,
                     route="/api/studio/identity/browser-users/{username}",
+                    timestamp_utc=_studio_timestamp_utc(),
+                )
+            )
+        except KeyError as exc:
+            raise HTTPException(
+                status_code=404,
+                detail="identity_browser_user_not_found",
+            ) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except AuditSinkError as exc:
+            raise HTTPException(status_code=503, detail="audit_append_failed") from exc
+        return updated.to_public_dict()
+
+    @app.post("/api/studio/identity/browser-users/{username}/password")
+    def api_rotate_studio_identity_browser_user_password(
+        username: str,
+        update: StudioBrowserUserPasswordRotateRequest,
+        request: Request,
+    ) -> dict[str, bool | list[str] | str | None]:
+        """Rotate one persistent browser-user password verifier."""
+
+        nonlocal studio_identity_authenticator
+        if settings.identity_file_path is None:
+            raise HTTPException(status_code=409, detail="identity_store_unavailable")
+        identity_path = Path(settings.identity_file_path)
+        try:
+            updated = rotate_studio_browser_user_password(
+                identity_path,
+                password=update.password,
+                username=username,
+            )
+            studio_identity_authenticator = StudioIdentityAuthenticator(
+                load_studio_identity_store(identity_path)
+            )
+            app.state.studio_identity_authenticator = studio_identity_authenticator
+            revoked_sessions = studio_browser_session_manager.revoke_principal(
+                updated.principal_id
+            )
+            studio_browser_login_throttle.record_success(username)
+            actor = getattr(request.state, "studio_principal", None)
+            request_id = getattr(request.state, "studio_request_id", None)
+            studio_audit_sink.record(
+                AuditEvent(
+                    action="studio.identity.browser_user.password.rotate",
+                    decision="allow",
+                    principal_id=(
+                        actor.principal_id if isinstance(actor, Principal) else None
+                    ),
+                    reason=f"rotated:{updated.username}:sessions_revoked:{revoked_sessions}",
+                    request_id=request_id if isinstance(request_id, str) else None,
+                    route="/api/studio/identity/browser-users/{username}/password",
                     timestamp_utc=_studio_timestamp_utc(),
                 )
             )

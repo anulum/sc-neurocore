@@ -136,6 +136,19 @@ class StudioBrowserSessionManager:
         token_hash = _token_hash(token)
         return self._records.pop(token_hash, None) is not None
 
+    def revoke_principal(self, principal_id: str) -> int:
+        """Revoke all browser sessions for one principal identifier."""
+
+        self._purge_expired()
+        revoked = [
+            token_hash
+            for token_hash, record in self._records.items()
+            if record.principal.principal_id == principal_id
+        ]
+        for token_hash in revoked:
+            self._records.pop(token_hash, None)
+        return len(revoked)
+
     def public_session(
         self,
         authorization: str | None,

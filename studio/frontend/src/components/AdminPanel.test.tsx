@@ -164,6 +164,7 @@ describe("AdminPanel", () => {
         onLoadIdentityServiceAccounts={async () => undefined}
         onLoadJobStatus={async () => undefined}
         onLoadOperatorStatus={async () => undefined}
+        onRotateIdentityBrowserUserPassword={async () => undefined}
         onUpdateIdentityBrowserUser={async () => undefined}
         onUpdateIdentityServiceAccount={async () => undefined}
       />,
@@ -189,9 +190,10 @@ describe("AdminPanel", () => {
     expect(html).toContain("studio.admin, studio.viewer");
     expect(html).toContain("operator");
     expect(html).toContain("human-operator - 2030-01-01T00:00:00Z");
+    expect(html).toContain("operator new secret");
     expect(html).toContain("studio.viewer");
     expect(html).not.toContain("token_sha256");
-    expect(html).not.toContain("password");
+    expect(html).not.toContain("password_pbkdf2_sha256");
     expect(html).toContain("attention");
     expect(html).toContain("compiler, synthesis, training");
     expect(html).toContain("synthesis - sj_1234");

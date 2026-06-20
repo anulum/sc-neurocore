@@ -22,6 +22,7 @@ from sc_neurocore.studio.platform.identity import (
     list_studio_identity_public_records,
     load_studio_identity_store,
     make_browser_user_password_verifier,
+    rotate_studio_browser_user_password,
     update_studio_browser_user_record,
     update_studio_identity_record,
 )
@@ -279,6 +280,87 @@ def test_browser_user_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -
     assert "studio.identity.browser_users.detail" in actions
     assert "studio.identity.browser_users.update" in actions
     assert "studio.identity.browser_user.update" in actions
+
+
+def test_rotate_browser_user_password_preserves_public_metadata(tmp_path: Path) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    _write_identity_file(identity_path)
+
+    rotated = rotate_studio_browser_user_password(
+        identity_path,
+        password="rotated-password",
+        username="operator",
+    )
+    store = load_studio_identity_store(identity_path)
+    authenticator = StudioIdentityAuthenticator(store)
+    old_login = authenticator.authenticate_browser_user("operator", "operator-password")
+    new_login = authenticator.authenticate_browser_user("operator", "rotated-password")
+
+    assert rotated.to_public_dict() == {
+        "active": True,
+        "expires_at_utc": None,
+        "principal_id": "human-operator",
+        "roles": ["studio.admin", "studio.viewer"],
+        "username": "operator",
+    }
+    assert old_login.principal is None
+    assert old_login.failure_reason == "invalid_browser_login"
+    assert new_login.principal is not None
+    assert "rotated-password" not in identity_path.read_text(encoding="utf-8")
+
+
+def test_browser_user_password_rotation_revokes_sessions_and_is_audited(
+    tmp_path: Path,
+) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    audit_path = tmp_path / "studio-audit.jsonl"
+    token = _write_identity_file(identity_path)
+    client = _client(identity_path, audit_path)
+
+    login = client.post(
+        "/api/studio/auth/login",
+        json={"username": "operator", "password": "operator-password"},
+    )
+    session_token = login.json()["access_token"]
+    rotated = client.post(
+        "/api/studio/identity/browser-users/operator/password",
+        headers=_admin_headers(token),
+        json={"password": "rotated-password"},
+    )
+    old_session = client.get(
+        "/api/studio/auth/session",
+        headers={"authorization": f"Bearer {session_token}"},
+    )
+    old_password = client.post(
+        "/api/studio/auth/login",
+        json={"username": "operator", "password": "operator-password"},
+    )
+    new_password = client.post(
+        "/api/studio/auth/login",
+        json={"username": "operator", "password": "rotated-password"},
+    )
+
+    assert login.status_code == 200
+    assert rotated.status_code == 200
+    assert rotated.json() == {
+        "active": True,
+        "expires_at_utc": None,
+        "principal_id": "human-operator",
+        "roles": ["studio.admin", "studio.viewer"],
+        "username": "operator",
+    }
+    assert old_session.status_code == 401
+    assert old_session.json()["detail"] in {
+        "invalid_browser_session",
+        "invalid_identity_token",
+    }
+    assert old_password.status_code == 401
+    assert old_password.json()["detail"] == "invalid_browser_login"
+    assert new_password.status_code == 200
+    assert "rotated-password" not in audit_path.read_text(encoding="utf-8")
+    actions = [row["action"] for row in _audit_rows(audit_path)]
+    assert "studio.identity.browser_users.password.rotate" in actions
+    assert "studio.identity.browser_user.password.rotate" in actions
 
 
 def test_identity_admin_routes_reject_unconfigured_store(tmp_path: Path) -> None:

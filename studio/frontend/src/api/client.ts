@@ -246,6 +246,10 @@ export interface StudioIdentityBrowserUserUpdate {
   roles: string[];
 }
 
+export interface StudioIdentityBrowserUserPasswordRotate {
+  password: string;
+}
+
 export interface StudioAuthSession {
   authenticated: boolean;
   principal_id: string | null;
@@ -336,6 +340,14 @@ export const updateStudioIdentityBrowserUser = (
 ) =>
   patch<StudioIdentityBrowserUser>(
     `/studio/identity/browser-users/${encodeURIComponent(username)}`,
+    update,
+  );
+export const rotateStudioIdentityBrowserUserPassword = (
+  username: string,
+  update: StudioIdentityBrowserUserPasswordRotate,
+) =>
+  post<StudioIdentityBrowserUser>(
+    `/studio/identity/browser-users/${encodeURIComponent(username)}/password`,
     update,
   );
 export const loginStudioBrowserUser = (username: string, password: string) =>

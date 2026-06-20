@@ -19,6 +19,7 @@ export default function AdminPanel() {
     loadIdentityServiceAccounts,
     loadJobStatus,
     loadOperatorStatus,
+    rotateIdentityBrowserUserPassword,
     updateIdentityBrowserUser,
     updateIdentityServiceAccount,
   } = useStudioStore();
@@ -43,6 +44,7 @@ export default function AdminPanel() {
       onLoadIdentityServiceAccounts={loadIdentityServiceAccounts}
       onLoadJobStatus={loadJobStatus}
       onLoadOperatorStatus={loadOperatorStatus}
+      onRotateIdentityBrowserUserPassword={rotateIdentityBrowserUserPassword}
       onUpdateIdentityBrowserUser={updateIdentityBrowserUser}
       onUpdateIdentityServiceAccount={updateIdentityServiceAccount}
     />

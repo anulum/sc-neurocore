@@ -148,6 +148,32 @@ def test_browser_session_manager_issues_and_revokes_bearer_session() -> None:
     assert after_revoke.failure_reason == "invalid_browser_session"
 
 
+def test_browser_session_manager_revokes_all_sessions_for_principal() -> None:
+    tokens = iter(("session-token-a", "session-token-b", "session-token-c"))
+    manager = StudioBrowserSessionManager(
+        token_factory=lambda: next(tokens),
+        ttl_seconds=60.0,
+    )
+    operator = Principal(principal_id="user-operator", roles=frozenset({"studio.admin"}))
+    other = Principal(principal_id="other-user", roles=frozenset({"studio.viewer"}))
+    manager.issue(operator)
+    manager.issue(operator)
+    manager.issue(other)
+
+    revoked = manager.revoke_principal("user-operator")
+
+    assert revoked == 2
+    assert (
+        manager.authenticate_authorization_header("Bearer session-token-a").failure_reason
+        == "invalid_browser_session"
+    )
+    assert (
+        manager.authenticate_authorization_header("Bearer session-token-b").failure_reason
+        == "invalid_browser_session"
+    )
+    assert manager.authenticate_authorization_header("Bearer session-token-c").principal == other
+
+
 def test_browser_session_manager_expires_sessions() -> None:
     current = datetime(2026, 6, 20, 12, 0, tzinfo=UTC)
 

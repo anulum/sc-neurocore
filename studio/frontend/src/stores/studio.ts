@@ -7,6 +7,7 @@ import {
   fetchStudioJobs, fetchStudioJobStatus, fetchStudioOperatorStatus,
   fetchStudioIdentityBrowserUsers,
   loginStudioBrowserUser, logoutStudioBrowserUser,
+  rotateStudioIdentityBrowserUserPassword,
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
   fetchCompare, fetchNullclines, fetchFreqResponse,
@@ -173,6 +174,7 @@ interface StudioState {
     username: string,
     update: { active: boolean; expires_at_utc: string | null; roles: string[] },
   ) => Promise<void>;
+  rotateIdentityBrowserUserPassword: (username: string, password: string) => Promise<void>;
   loadOperatorStatus: () => Promise<void>;
   selectTemplate: (name: string) => void;
   selectModel: (name: string) => Promise<void>;
@@ -472,6 +474,29 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set({
         auditLoading: false,
         auditError: error instanceof Error ? error.message : "Browser user update failed",
+      });
+    }
+  },
+  rotateIdentityBrowserUserPassword: async (username, password) => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      await rotateStudioIdentityBrowserUserPassword(username, { password });
+      const [accountsResponse, usersResponse, auditExport] = await Promise.all([
+        fetchStudioIdentityServiceAccounts(),
+        fetchStudioIdentityBrowserUsers(),
+        fetchStudioAuditExport(100),
+      ]);
+      set({
+        auditExport,
+        auditLoading: false,
+        auditError: null,
+        identityBrowserUsers: usersResponse.browser_users,
+        identityServiceAccounts: accountsResponse.service_accounts,
+      });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Browser user secret rotation failed",
       });
     }
   },

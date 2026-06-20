@@ -140,6 +140,13 @@ runtime features:
   after a successful update, so disabling a browser user or changing roles
   applies without a Studio restart. The Admin panel exposes the same lifecycle
   controls without returning password verifier material.
+- Admins rotate a browser user's password with
+  `POST /api/studio/identity/browser-users/{username}/password`. The request
+  writes a fresh PBKDF2-HMAC-SHA256 verifier, preserves password-free user
+  metadata, reloads authentication immediately, clears that user's login
+  throttle bucket, revokes active browser sessions for the user's principal,
+  and emits `studio.identity.browser_user.password.rotate` without password
+  material. The Admin panel exposes this as a per-user secret-rotation control.
 - Policy decisions can be persisted to an append-only JSONL audit log by
   setting `SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH` to a writable file path. Each
   `studio.audit.v1` line records the UTC timestamp, policy action, route

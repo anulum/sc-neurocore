@@ -603,6 +603,12 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
                 "studio.identity.browser_users.update",
             ),
             (
+                "POST",
+                "/api/studio/identity/browser-users/{username}/password",
+                RouteVisibility.ADMIN,
+                "studio.identity.browser_users.password.rotate",
+            ),
+            (
                 "GET",
                 "/api/studio/identity/service-accounts/{principal_id}",
                 RouteVisibility.ADMIN,

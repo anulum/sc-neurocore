@@ -10,6 +10,7 @@ export interface AdminPanelViewProps {
   onLoadIdentityServiceAccounts: () => Promise<void>;
   onLoadJobStatus: () => Promise<void>;
   onLoadOperatorStatus: () => Promise<void>;
+  onRotateIdentityBrowserUserPassword: (username: string, password: string) => Promise<void>;
   onUpdateIdentityServiceAccount: (
     principalId: string,
     update: { active: boolean; expires_at_utc: string | null; roles: string[] },
@@ -28,6 +29,7 @@ export default function AdminPanelView({
   onLoadIdentityServiceAccounts,
   onLoadJobStatus,
   onLoadOperatorStatus,
+  onRotateIdentityBrowserUserPassword,
   onUpdateIdentityBrowserUser,
   onUpdateIdentityServiceAccount,
 }: AdminPanelViewProps) {
@@ -51,10 +53,19 @@ export default function AdminPanelView({
 
   function submitBrowserUserUpdate(event: FormEvent<HTMLFormElement>, username: string) {
     event.preventDefault();
-    void onUpdateIdentityBrowserUser(
-      username,
-      identityUpdateFromForm(new FormData(event.currentTarget)),
-    );
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const nextSecret = String(form.get("newSecret") ?? "");
+    void (async () => {
+      await onUpdateIdentityBrowserUser(username, identityUpdateFromForm(form));
+      if (nextSecret.length > 0) {
+        await onRotateIdentityBrowserUserPassword(username, nextSecret);
+        const secretInput = formElement.elements.namedItem("newSecret");
+        if (secretInput instanceof HTMLInputElement) {
+          secretInput.value = "";
+        }
+      }
+    })();
   }
 
   return (
@@ -182,6 +193,16 @@ export default function AdminPanelView({
                 Active
               </label>
               <small>{user.principalId} - {user.expiresAt}</small>
+              <label>
+                New secret
+                <input
+                  aria-label={`${user.username} new secret`}
+                  autoComplete="new-password"
+                  name="newSecret"
+                  type="password"
+                  disabled={auditLoading}
+                />
+              </label>
               <button
                 aria-label={`Save ${user.username} browser user`}
                 disabled={auditLoading}

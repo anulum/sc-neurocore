@@ -336,6 +336,13 @@ the stored password verifier, reload backend authentication immediately, and
 record both the route-policy audit decision and a dedicated
 `studio.identity.browser_user.update` audit event.
 
+Use `POST /api/studio/identity/browser-users/{username}/password` or the Admin
+panel per-user secret field to rotate a browser user's password verifier. The
+route preserves public metadata, writes a fresh PBKDF2-HMAC-SHA256 verifier,
+reloads backend authentication, clears the login throttle bucket for that
+username, revokes active browser sessions for the user's principal, and records
+`studio.identity.browser_user.password.rotate` without password material.
+
 The same Admin surface displays local worker health from
 `/api/studio/jobs/status`. Configure `SC_NEUROCORE_STUDIO_JOB_ROOT` to keep
 per-job working directories on an operator-selected disk, and tune

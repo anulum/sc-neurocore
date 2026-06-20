@@ -511,6 +511,63 @@ def update_studio_browser_user_record(
     return updated.to_public_record()
 
 
+def rotate_studio_browser_user_password(
+    path: Path,
+    *,
+    username: str,
+    password: str,
+) -> StudioBrowserUserPublicRecord:
+    """Atomically rotate one browser user's password verifier.
+
+    Parameters
+    ----------
+    path:
+        Persistent identity JSON file.
+    username:
+        Existing browser-login username to update.
+    password:
+        New raw password supplied through an authenticated admin request.
+
+    Returns
+    -------
+    StudioBrowserUserPublicRecord
+        Password-free browser-user record after verifier rotation.
+
+    Raises
+    ------
+    KeyError
+        If ``username`` is not present in the store.
+    ValueError
+        If the username or replacement password is malformed.
+    """
+
+    store = load_studio_identity_store(path)
+    clean_username = _parse_username(username)
+    updated: StudioBrowserUserRecord | None = None
+    records: list[StudioBrowserUserRecord] = []
+    for record in store.browser_users:
+        if record.username == clean_username:
+            updated = StudioBrowserUserRecord(
+                active=record.active,
+                expires_at_utc=record.expires_at_utc,
+                password_pbkdf2_sha256=make_browser_user_password_verifier(password),
+                principal_id=record.principal_id,
+                roles=record.roles,
+                username=record.username,
+            )
+            records.append(updated)
+        else:
+            records.append(record)
+    if updated is None:
+        raise KeyError(clean_username)
+    _write_identity_store(
+        path,
+        service_accounts=store.service_accounts,
+        browser_users=tuple(records),
+    )
+    return updated.to_public_record()
+
+
 def add_studio_browser_user_record(
     path: Path,
     *,
@@ -832,6 +889,7 @@ __all__ = [
     "list_studio_identity_public_records",
     "load_studio_identity_store",
     "make_browser_user_password_verifier",
+    "rotate_studio_browser_user_password",
     "update_studio_browser_user_record",
     "update_studio_identity_record",
     "verify_browser_user_password",
