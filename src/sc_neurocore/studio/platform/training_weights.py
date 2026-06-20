@@ -22,8 +22,12 @@ from sc_neurocore.studio.platform.evidence_bundle import JsonValue
 from sc_neurocore.studio.platform.jobs import StudioJobArtifact, StudioJobContext
 
 STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION = "studio.training.weight-checkpoint.v1"
+STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION = "studio.training.weight-restore-plan.v1"
 TRAINING_WEIGHT_ARTIFACT_PATH = "training/model_state.pt"
 TRAINING_WEIGHT_METADATA_ARTIFACT_PATH = "training/model_state.json"
+TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE = (
+    "/api/studio/jobs/{job_id}/artifacts/{artifact_path}"
+)
 _SHA256_HEX_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -76,6 +80,71 @@ class StudioTrainingWeightCheckpoint:
             "parameter_count": self.parameter_count,
             "schema_version": self.schema_version,
             "weights_artifact": _artifact_public_dict(self.weights_artifact),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class StudioTrainingWeightRestorePlan:
+    """Path-free contract for reloading a Training Monitor weight artifact.
+
+    Parameters
+    ----------
+    source_job_id:
+        Studio job ID that owns the published weight artifacts.
+    source_status:
+        Source training job status reported by the checkpoint import.
+    config_sha256:
+        SHA-256 digest of the training configuration associated with weights.
+    framework:
+        Framework expected by the weight payload.
+    format:
+        Serialized payload format.
+    architecture:
+        Human-readable model architecture summary.
+    parameter_count:
+        Number of serialized model parameters.
+    weights_artifact:
+        Path-free manifest entry for the binary weight artifact.
+    metadata_artifact:
+        Path-free manifest entry for the JSON metadata artifact.
+    artifact_route_template:
+        Authenticated artifact download route template for this Studio API.
+    loader_policy:
+        Required loader trust boundary for clients that materialize weights.
+    schema_version:
+        Schema identifier for this restore-plan contract.
+    """
+
+    source_job_id: str
+    source_status: str
+    config_sha256: str
+    framework: str
+    format: str
+    architecture: str
+    parameter_count: int
+    weights_artifact: dict[str, JsonValue]
+    metadata_artifact: dict[str, JsonValue]
+    artifact_route_template: str = TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE
+    loader_policy: str = "download_from_authenticated_artifact_route_and_verify_sha256"
+    schema_version: str = STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION
+
+    def to_public_dict(self) -> dict[str, JsonValue]:
+        """Return a JSON-compatible restore plan without local paths."""
+
+        return {
+            "architecture": self.architecture,
+            "artifact_route_template": self.artifact_route_template,
+            "config_sha256": self.config_sha256,
+            "format": self.format,
+            "framework": self.framework,
+            "loader_policy": self.loader_policy,
+            "metadata_artifact": dict(self.metadata_artifact),
+            "parameter_count": self.parameter_count,
+            "restore_ready": True,
+            "schema_version": self.schema_version,
+            "source_job_id": self.source_job_id,
+            "source_status": self.source_status,
+            "weights_artifact": dict(self.weights_artifact),
         }
 
 
@@ -157,6 +226,57 @@ def write_training_weight_checkpoint(
     )
 
 
+def build_training_weight_restore_plan(
+    *,
+    source_job_id: str,
+    source_status: str,
+    weight_checkpoint: Mapping[str, object],
+    expected_config_sha256: str | None = None,
+) -> StudioTrainingWeightRestorePlan:
+    """Build a safe restore plan from validated weight metadata.
+
+    Parameters
+    ----------
+    source_job_id:
+        Studio job ID that owns the published training weight artifacts.
+    source_status:
+        Source training job status associated with the checkpoint.
+    weight_checkpoint:
+        Path-free weight metadata from a portable training checkpoint.
+    expected_config_sha256:
+        Optional training config digest that the metadata must match.
+
+    Returns
+    -------
+    StudioTrainingWeightRestorePlan
+        Path-free restore plan that identifies the authenticated artifact route
+        and digest checks required before a client materializes weights.
+
+    Raises
+    ------
+    ValueError
+        If source metadata is missing or the weight checkpoint is invalid.
+    """
+
+    metadata = validate_training_weight_checkpoint_metadata(
+        weight_checkpoint,
+        expected_config_sha256=expected_config_sha256,
+    )
+    weights_artifact = _required_artifact_dict(metadata, "weights_artifact")
+    metadata_artifact = _required_artifact_dict(metadata, "metadata_artifact")
+    return StudioTrainingWeightRestorePlan(
+        source_job_id=_required_non_empty_string(source_job_id, "source_job_id"),
+        source_status=_required_non_empty_string(source_status, "source_status"),
+        config_sha256=cast(str, metadata["config_sha256"]),
+        framework=cast(str, metadata["framework"]),
+        format=cast(str, metadata["format"]),
+        architecture=cast(str, metadata["architecture"]),
+        parameter_count=cast(int, metadata["parameter_count"]),
+        weights_artifact=weights_artifact,
+        metadata_artifact=metadata_artifact,
+    )
+
+
 def validate_training_weight_checkpoint_metadata(
     payload: Mapping[str, object],
     *,
@@ -234,6 +354,18 @@ def _artifact_public_dict(artifact: StudioJobArtifact) -> dict[str, JsonValue]:
     return cast(dict[str, JsonValue], artifact.to_public_dict())
 
 
+def _required_artifact_dict(
+    metadata: Mapping[str, JsonValue],
+    field_name: str,
+) -> dict[str, JsonValue]:
+    """Return one validated artifact metadata object from a checkpoint."""
+
+    value = metadata.get(field_name)
+    if not isinstance(value, dict):
+        raise ValueError(f"Training weight checkpoint requires {field_name}.")
+    return cast(dict[str, JsonValue], dict(value))
+
+
 def _validate_artifact_metadata(
     value: object,
     *,
@@ -295,9 +427,13 @@ def _required_non_empty_string(value: str, field_name: str) -> str:
 
 __all__ = [
     "STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION",
+    "STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION",
+    "TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE",
     "TRAINING_WEIGHT_ARTIFACT_PATH",
     "TRAINING_WEIGHT_METADATA_ARTIFACT_PATH",
     "StudioTrainingWeightCheckpoint",
+    "StudioTrainingWeightRestorePlan",
+    "build_training_weight_restore_plan",
     "validate_training_weight_checkpoint_metadata",
     "write_training_weight_checkpoint",
 ]

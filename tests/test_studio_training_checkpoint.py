@@ -28,7 +28,11 @@ from sc_neurocore.studio.platform.training_checkpoint import (
     import_training_checkpoint_payload,
 )
 from sc_neurocore.studio.platform.jobs import StudioJobContext
-from sc_neurocore.studio.platform.training_weights import write_training_weight_checkpoint
+from sc_neurocore.studio.platform.training_weights import (
+    STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION,
+    TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE,
+    write_training_weight_checkpoint,
+)
 
 
 def _weight_checkpoint_metadata(
@@ -86,6 +90,16 @@ def test_training_checkpoint_round_trip_validates_hashes(tmp_path: Path) -> None
     assert imported["source_weight_checkpoint"] == checkpoint["weight_checkpoint"]
     assert imported["config"] == checkpoint["config"]
     assert imported["config_sha256"] == checkpoint["config_sha256"]
+    restore_plan = imported["weight_restore_plan"]
+    assert isinstance(restore_plan, dict)
+    assert restore_plan["schema_version"] == STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION
+    assert restore_plan["artifact_route_template"] == TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE
+    assert restore_plan["source_job_id"] == "sj_training"
+    assert restore_plan["source_status"] == "completed"
+    weight_checkpoint = checkpoint["weight_checkpoint"]
+    assert isinstance(weight_checkpoint, dict)
+    assert restore_plan["weights_artifact"] == weight_checkpoint["weights_artifact"]
+    assert restore_plan["restore_ready"] is True
 
 
 def test_training_checkpoint_import_rejects_tampered_config() -> None:
@@ -102,6 +116,22 @@ def test_training_checkpoint_import_rejects_tampered_config() -> None:
 
     with pytest.raises(ValueError, match="config digest mismatch"):
         import_training_checkpoint_payload(tampered)
+
+
+def test_training_checkpoint_import_without_weights_has_no_restore_plan() -> None:
+    """Checkpoint import omits restore plans when no weight artifact exists."""
+
+    checkpoint = build_training_checkpoint(
+        job_id="sj_training",
+        config={"dataset": "synthetic", "epochs": 4},
+        status="running",
+        clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
+    ).to_public_dict()
+
+    imported = import_training_checkpoint_payload(checkpoint)
+
+    assert imported["source_weight_checkpoint"] is None
+    assert imported["weight_restore_plan"] is None
 
 
 def test_training_checkpoint_import_rejects_tampered_weight_metadata(
@@ -167,6 +197,7 @@ def test_training_checkpoint_endpoints_round_trip(tmp_path: Path) -> None:
     assert import_payload["source_job_id"] == job_id
     assert import_payload["config"] == checkpoint["config"]
     assert import_payload["source_weight_checkpoint"] == checkpoint["weight_checkpoint"]
+    assert import_payload["weight_restore_plan"] is None
 
 
 def test_training_checkpoint_export_rejects_unknown_job(tmp_path: Path) -> None:

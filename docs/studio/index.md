@@ -249,6 +249,11 @@ runtime features:
   artifacts for administrators. The server resolves artifacts through the job
   manifest only, revalidates size and SHA-256 before serving, and returns
   generic errors if the artifact is missing or fails integrity checks.
+- `/api/training/checkpoint/import` returns a path-free
+  `studio.training.weight-restore-plan.v1` object when an imported checkpoint
+  carries validated Training Monitor weight metadata. The plan points clients to
+  the authenticated job artifact route and preserves the expected artifact
+  hashes instead of moving raw model weights through checkpoint JSON.
 - `/api/studio/evidence/bundle` creates an admin-only evidence export as a
   bounded `studio-evidence` worker job. The request can name one saved project,
   selected `studio.simulation-run.v1` simulation responses, selected

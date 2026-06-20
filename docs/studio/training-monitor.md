@@ -123,7 +123,10 @@ job artifact download route so API consumers do not accidentally move large
 binary weights through ordinary status or checkpoint responses. Checkpoint
 import validates the weight metadata schema, framework, format, artifact paths,
 artifact sizes, SHA-256 digests, and config digest before returning it as
-source metadata.
+source metadata. When weight metadata is present, import also returns a
+`studio.training.weight-restore-plan.v1` object with the owning job ID, source
+status, artifact route template, loader policy, and exact artifact hashes that
+clients must verify before materializing the PyTorch state dictionary.
 
 ## API Endpoints
 
@@ -194,7 +197,28 @@ Accepts the checkpoint JSON and returns the validated config:
   "source_job_id": "sj_1711504200000",
   "source_status": "completed",
   "config": {"dataset": "synthetic", "epochs": 10},
-  "config_sha256": "..."
+  "config_sha256": "...",
+  "source_weight_checkpoint": {
+    "schema_version": "studio.training.weight-checkpoint.v1",
+    "weights_artifact": {
+      "relative_path": "training/model_state.pt",
+      "size_bytes": 12345,
+      "sha256": "..."
+    }
+  },
+  "weight_restore_plan": {
+    "schema_version": "studio.training.weight-restore-plan.v1",
+    "source_job_id": "sj_1711504200000",
+    "source_status": "completed",
+    "artifact_route_template": "/api/studio/jobs/{job_id}/artifacts/{artifact_path}",
+    "loader_policy": "download_from_authenticated_artifact_route_and_verify_sha256",
+    "restore_ready": true,
+    "weights_artifact": {
+      "relative_path": "training/model_state.pt",
+      "size_bytes": 12345,
+      "sha256": "..."
+    }
+  }
 }
 ```
 

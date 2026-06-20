@@ -20,6 +20,7 @@ from typing import TypeAlias, cast
 
 from sc_neurocore.studio.platform.evidence_bundle import JsonValue
 from sc_neurocore.studio.platform.training_weights import (
+    build_training_weight_restore_plan,
     validate_training_weight_checkpoint_metadata,
 )
 
@@ -214,13 +215,26 @@ def import_training_checkpoint_payload(
     expected_checkpoint_sha = checkpoint.get("checkpoint_sha256")
     if expected_checkpoint_sha != _sha256_json(checkpoint_without_digest):
         raise ValueError("Training checkpoint digest mismatch.")
+    source_job_id = _required_string_field(checkpoint, "job_id")
+    source_status = _required_string_field(checkpoint, "status")
+    weight_restore_plan = (
+        None
+        if weight_checkpoint is None
+        else build_training_weight_restore_plan(
+            source_job_id=source_job_id,
+            source_status=source_status,
+            weight_checkpoint=weight_checkpoint,
+            expected_config_sha256=expected_config_sha,
+        ).to_public_dict()
+    )
     return {
         "config": config,
         "config_sha256": expected_config_sha,
         "imported_schema_version": STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION,
-        "source_job_id": _required_string_field(checkpoint, "job_id"),
-        "source_status": _required_string_field(checkpoint, "status"),
+        "source_job_id": source_job_id,
+        "source_status": source_status,
         "source_weight_checkpoint": weight_checkpoint,
+        "weight_restore_plan": weight_restore_plan,
     }
 
 

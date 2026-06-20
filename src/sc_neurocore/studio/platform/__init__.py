@@ -137,9 +137,13 @@ from sc_neurocore.studio.platform.training_checkpoint import (
 )
 from sc_neurocore.studio.platform.training_weights import (
     STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION,
+    STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION,
+    TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE,
     TRAINING_WEIGHT_ARTIFACT_PATH,
     TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
     StudioTrainingWeightCheckpoint,
+    StudioTrainingWeightRestorePlan,
+    build_training_weight_restore_plan,
     validate_training_weight_checkpoint_metadata,
     write_training_weight_checkpoint,
 )
@@ -266,6 +270,8 @@ __all__ = [
     "STUDIO_PREFLIGHT_SCHEMA_VERSION",
     "STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION",
     "STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION",
+    "STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION",
+    "TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE",
     "TRAINING_WEIGHT_ARTIFACT_PATH",
     "TRAINING_WEIGHT_METADATA_ARTIFACT_PATH",
     "StudioJobArtifact",
@@ -284,6 +290,7 @@ __all__ = [
     "StudioProcessJobPayload",
     "StudioTrainingCheckpoint",
     "StudioTrainingWeightCheckpoint",
+    "StudioTrainingWeightRestorePlan",
     "TrainingEvidenceSummary",
     "TrainingCheckpointConfig",
     "StudioOperatorCapabilityStatus",
@@ -303,6 +310,7 @@ __all__ = [
     "build_studio_operator_status",
     "build_training_evidence_summary",
     "build_training_checkpoint",
+    "build_training_weight_restore_plan",
     "validate_training_weight_checkpoint_metadata",
     "write_training_weight_checkpoint",
     "import_training_checkpoint_payload",

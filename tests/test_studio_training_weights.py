@@ -20,8 +20,11 @@ import pytest
 from sc_neurocore.studio.platform.jobs import StudioJobContext
 from sc_neurocore.studio.platform.training_weights import (
     STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION,
+    STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION,
+    TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE,
     TRAINING_WEIGHT_ARTIFACT_PATH,
     TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+    build_training_weight_restore_plan,
     validate_training_weight_checkpoint_metadata,
     write_training_weight_checkpoint,
 )
@@ -123,6 +126,38 @@ def test_validate_training_weight_checkpoint_metadata_accepts_writer_output(
     assert validated == summary
 
 
+def test_build_training_weight_restore_plan_returns_digest_bound_route(
+    tmp_path: Path,
+) -> None:
+    """Weight restore plans expose authenticated routes and expected hashes."""
+
+    context = _context(tmp_path)
+    summary = write_training_weight_checkpoint(
+        context,
+        weights_payload=b"weights",
+        config={"dataset": "synthetic", "epochs": 2},
+        architecture="64->10",
+        parameter_count=650,
+        final_metrics={"train_accuracy": 0.75},
+    ).to_public_dict()
+
+    plan = build_training_weight_restore_plan(
+        source_job_id="sj_training",
+        source_status="completed",
+        weight_checkpoint=summary,
+        expected_config_sha256=str(summary["config_sha256"]),
+    ).to_public_dict()
+
+    assert plan["schema_version"] == STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION
+    assert plan["artifact_route_template"] == TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE
+    assert plan["loader_policy"] == "download_from_authenticated_artifact_route_and_verify_sha256"
+    assert plan["restore_ready"] is True
+    assert plan["source_job_id"] == "sj_training"
+    assert plan["source_status"] == "completed"
+    assert plan["weights_artifact"] == summary["weights_artifact"]
+    assert plan["metadata_artifact"] == summary["metadata_artifact"]
+
+
 def test_validate_training_weight_checkpoint_metadata_rejects_forged_artifacts(
     tmp_path: Path,
 ) -> None:
@@ -152,4 +187,27 @@ def test_validate_training_weight_checkpoint_metadata_rejects_forged_artifacts(
         validate_training_weight_checkpoint_metadata(
             forged_digest,
             expected_config_sha256=str(summary["config_sha256"]),
+        )
+
+
+def test_build_training_weight_restore_plan_rejects_missing_source_metadata(
+    tmp_path: Path,
+) -> None:
+    """Weight restore plans require explicit source job metadata."""
+
+    context = _context(tmp_path)
+    summary = write_training_weight_checkpoint(
+        context,
+        weights_payload=b"weights",
+        config={"dataset": "synthetic"},
+        architecture="64->10",
+        parameter_count=650,
+        final_metrics=None,
+    ).to_public_dict()
+
+    with pytest.raises(ValueError, match="source_job_id"):
+        build_training_weight_restore_plan(
+            source_job_id="",
+            source_status="completed",
+            weight_checkpoint=summary,
         )
