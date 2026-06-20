@@ -392,6 +392,22 @@ For production deployments, set
 unless route policies are enforced, header principals are disabled, and the
 identity file, audit log, and job root are all configured.
 
+Before promoting a Studio deployment, run the release preflight from the same
+environment that will launch the backend:
+
+```bash
+sc-neurocore studio-preflight --output studio-preflight.json
+```
+
+The command exits with status `0` only when the release posture passes. It
+checks runtime settings, route-policy enforcement, disabled development header
+principals, required admin route policies, a valid identity store with at least
+one active unexpired `studio.admin` principal, audit-log readiness, and
+job-root readiness. The JSON report uses schema `studio.preflight.v1` and is
+safe for deployment logs: it reports booleans, counts, and stable check IDs
+without local filesystem paths, bearer tokens, token hashes, passwords, or
+password verifiers.
+
 ## Additional Panels (Blocks 2–6)
 
 The Studio includes five additional panels beyond the core research workbench:

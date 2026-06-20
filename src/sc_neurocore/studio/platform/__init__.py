@@ -100,6 +100,14 @@ from sc_neurocore.studio.platform.operator import (
     StudioOperatorStatus,
     build_studio_operator_status,
 )
+from sc_neurocore.studio.platform.preflight import (
+    STUDIO_PREFLIGHT_SCHEMA_VERSION,
+    StudioPreflightCheck,
+    StudioPreflightEvidenceValue,
+    StudioPreflightReport,
+    StudioPreflightStatus,
+    run_studio_preflight,
+)
 from sc_neurocore.studio.platform.settings import (
     DEFAULT_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS,
     DEFAULT_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS,
@@ -183,6 +191,7 @@ __all__ = [
     "StudioIdentityResult",
     "StudioIdentityStore",
     "StudioLoginThrottleDecision",
+    "STUDIO_PREFLIGHT_SCHEMA_VERSION",
     "StudioJobArtifact",
     "StudioJobArtifactPayload",
     "StudioJobArtifactUnavailable",
@@ -200,10 +209,15 @@ __all__ = [
     "StudioOperatorResourceLimitStatus",
     "StudioOperatorRoutePolicyStatus",
     "StudioOperatorStatus",
+    "StudioPreflightCheck",
+    "StudioPreflightEvidenceValue",
+    "StudioPreflightReport",
+    "StudioPreflightStatus",
     "build_default_studio_capability_registry",
     "build_default_studio_route_policy_registry",
     "build_default_studio_runtime_settings",
     "build_studio_operator_status",
+    "run_studio_preflight",
     "add_studio_browser_user_record",
     "bootstrap_studio_admin_identity",
     "list_studio_browser_user_public_records",

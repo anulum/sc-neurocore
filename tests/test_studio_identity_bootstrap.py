@@ -31,9 +31,37 @@ from sc_neurocore.studio.platform.identity import (
     load_studio_identity_store,
 )
 
+_STUDIO_PREFLIGHT_ENV_KEYS = (
+    "SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL",
+    "SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH",
+    "SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE",
+    "SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES",
+    "SC_NEUROCORE_STUDIO_IDENTITY_FILE",
+    "SC_NEUROCORE_STUDIO_JOB_ROOT",
+)
+
 
 def _fixed_token(_: int) -> str:
     return "generated-admin-token"
+
+
+def _configure_release_preflight_env(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    identity_path: Path,
+) -> None:
+    for key in tuple(os.environ):
+        if key.startswith("SC_NEUROCORE_STUDIO_") and key not in _STUDIO_PREFLIGHT_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL", "false")
+    monkeypatch.setenv(
+        "SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH",
+        str(tmp_path / "audit" / "studio.jsonl"),
+    )
+    monkeypatch.setenv("SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE", "production")
+    monkeypatch.setenv("SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES", "true")
+    monkeypatch.setenv("SC_NEUROCORE_STUDIO_IDENTITY_FILE", str(identity_path))
+    monkeypatch.setenv("SC_NEUROCORE_STUDIO_JOB_ROOT", str(tmp_path / "jobs"))
 
 
 def test_bootstrap_studio_admin_identity_creates_authenticating_store(tmp_path: Path) -> None:
@@ -350,6 +378,52 @@ def test_studio_bootstrap_admin_cli_requires_identity_file(
 
     assert exit_code == 1
     assert "--identity-file" in capsys.readouterr().out
+
+
+def test_studio_preflight_cli_prints_release_report(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    bootstrap_studio_admin_identity(identity_path, token_factory=_fixed_token)
+    (tmp_path / "audit").mkdir()
+    (tmp_path / "jobs").mkdir()
+    _configure_release_preflight_env(monkeypatch, tmp_path, identity_path)
+    monkeypatch.setattr(sys, "argv", ["sc-neurocore", "studio-preflight"])
+
+    exit_code = main()
+    output = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert output["passed"] is True
+    assert output["schema_version"] == "studio.preflight.v1"
+    assert str(tmp_path) not in json.dumps(output)
+
+
+def test_studio_preflight_cli_writes_report_to_explicit_output(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    output_path = tmp_path / "reports" / "studio-preflight.json"
+    bootstrap_studio_admin_identity(identity_path, token_factory=_fixed_token)
+    (tmp_path / "audit").mkdir()
+    (tmp_path / "jobs").mkdir()
+    _configure_release_preflight_env(monkeypatch, tmp_path, identity_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["sc-neurocore", "studio-preflight", "--output", str(output_path)],
+    )
+
+    exit_code = main()
+    output = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert capsys.readouterr().out == ""
+    assert output["passed"] is True
 
 
 def test_studio_add_browser_user_cli_writes_password_verifier(

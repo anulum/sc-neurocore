@@ -64,6 +64,7 @@ def main() -> int:
             "compile",
             "compile-nir",
             "studio",
+            "studio-preflight",
             "studio-bootstrap-admin",
             "studio-add-browser-user",
             "collect-synthesis",
@@ -465,6 +466,8 @@ def main() -> int:
         )
     if args.command == "studio":
         return _cmd_studio(args.port)
+    if args.command == "studio-preflight":
+        return _cmd_studio_preflight(args)
     if args.command == "studio-bootstrap-admin":
         return _cmd_studio_bootstrap_admin(args)
     if args.command == "studio-add-browser-user":
@@ -2092,6 +2095,23 @@ def _cmd_studio_bootstrap_admin(args: Any) -> int:
     output["environment"] = f"SC_NEUROCORE_STUDIO_IDENTITY_FILE={result.identity_file_path}"
     print(json.dumps(output, indent=2, sort_keys=True))
     return 0
+
+
+def _cmd_studio_preflight(args: Any) -> int:
+    """Run the Studio release-readiness preflight and emit JSON."""
+    from pathlib import Path
+
+    from sc_neurocore.studio.platform import run_studio_preflight
+
+    report = run_studio_preflight()
+    payload = json.dumps(report.to_public_dict(), indent=2, sort_keys=True)
+    if args.output_supplied:
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(f"{payload}\n", encoding="utf-8")
+    else:
+        print(payload)
+    return 0 if report.passed else 1
 
 
 def _cmd_studio_add_browser_user(args: Any) -> int:

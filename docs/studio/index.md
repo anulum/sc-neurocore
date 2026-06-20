@@ -220,6 +220,14 @@ runtime features:
   route-policy enforcement must be enabled, development header principals must
   be disabled, and identity, audit log, and job-root paths must be configured
   before the backend can start.
+- `sc-neurocore studio-preflight` runs the Studio release-readiness gate from
+  the current environment and emits a `studio.preflight.v1` JSON report. The
+  report exits non-zero on any failed check and verifies runtime settings,
+  route-policy enforcement, disabled header-principal fallback, required admin
+  route policies, at least one active unexpired `studio.admin` identity,
+  audit-log readiness, and job-root readiness. Its payload contains stable
+  check IDs, booleans, and counts only; it does not expose local paths, bearer
+  tokens, token hashes, passwords, or password verifiers.
 - Studio rejects requests whose `Host` header is outside the configured
   allow-list. Packaged defaults accept only loopback hosts; deployments set
   `SC_NEUROCORE_STUDIO_ALLOWED_HOSTS` to a comma-separated host allow-list and
