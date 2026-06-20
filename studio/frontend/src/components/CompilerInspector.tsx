@@ -1,8 +1,45 @@
+import { useState } from "react";
+
 import { useStudioStore } from "../stores/studio";
 
 export default function CompilerInspector() {
-  const { compileTraceability, irText, svSource, irErrors, isSimulating, verilogSrc } = useStudioStore();
+  const {
+    compileTraceability,
+    createEvidenceBundle,
+    evidenceBundle,
+    evidenceBundleError,
+    evidenceBundleLoading,
+    irText,
+    svSource,
+    irErrors,
+    isSimulating,
+    verilogSrc,
+  } = useStudioStore();
+  const [compileBundleRequested, setCompileBundleRequested] = useState(false);
   const rtlSource = svSource || verilogSrc;
+
+  function exportCompileEvidence() {
+    if (compileTraceability === null) {
+      return;
+    }
+    setCompileBundleRequested(true);
+    void createEvidenceBundle({
+      audit_limit: 100,
+      analysis_results: [],
+      command_replay: {
+        method: "POST",
+        note: `compile trace ${compileTraceability.traceability_sha256}`,
+        request_sha256: compileTraceability.input_sha256,
+        route: "/api/ir/emit-sv-direct",
+      },
+      default_flow_attestations: [],
+      default_flow_runs: [],
+      include_audit: true,
+      job_ids: [],
+      project_name: `compile-${compileTraceability.output.module_name}`,
+      simulation_results: [],
+    });
+  }
 
   if (!irText && !rtlSource) {
     return (
@@ -45,6 +82,29 @@ export default function CompilerInspector() {
           <span>input {compileTraceability.input_sha256.slice(0, 12)}</span>
           <span>rtl {compileTraceability.output.rtl_sha256.slice(0, 12)}</span>
           <span>trace {compileTraceability.traceability_sha256.slice(0, 12)}</span>
+          <button
+            aria-label="Export compile evidence bundle"
+            disabled={evidenceBundleLoading}
+            onClick={exportCompileEvidence}
+            style={{
+              padding: "3px 8px",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius)",
+              background: "var(--accent)",
+              color: "var(--bg-primary)",
+              cursor: evidenceBundleLoading ? "wait" : "pointer",
+              fontSize: 10,
+            }}
+            type="button"
+          >
+            Export
+          </button>
+          {compileBundleRequested && evidenceBundle && (
+            <span>bundle {evidenceBundle.bundle_id}</span>
+          )}
+          {compileBundleRequested && evidenceBundleError && (
+            <span style={{ color: "#ff5252" }}>{evidenceBundleError}</span>
+          )}
         </div>
       )}
 

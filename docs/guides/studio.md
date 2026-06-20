@@ -403,6 +403,9 @@ The manifest records the source equation payload, emitted RTL module metadata,
 source and RTL SHA-256 digests, and `evidence_classification: "compile"`
 without exposing host-local paths. The Compiler Inspector displays shortened
 source, RTL, and manifest digests beside direct equation-to-Verilog output.
+The same strip can export a compile evidence bundle with replay metadata for
+`/api/ir/emit-sv-direct`, using the compile input digest as the replay request
+fingerprint and the traceability digest as the operator note.
 
 Synthesis results include path-free `studio.synthesis-target-provenance.v1`
 metadata for the selected target. Multi-target runs include the

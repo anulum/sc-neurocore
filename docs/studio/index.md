@@ -423,7 +423,9 @@ Build SC Intermediate Representation from ODE equations, verify the
 graph, and emit synthesisable SystemVerilog. View the IR text and
 generated Verilog side-by-side with a verification badge. Direct
 equation-to-Verilog output includes a source-to-RTL traceability strip with
-source, RTL, and manifest digests for evidence review.
+source, RTL, and manifest digests for evidence review. The strip can export a
+compile evidence bundle with replay metadata for the direct SystemVerilog emit
+route.
 
 ### Synthesis Dashboard
 

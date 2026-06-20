@@ -563,7 +563,7 @@ test("admin job rows can seed evidence bundle job IDs", async ({ page }) => {
 
 test("synthesis dashboard renders target provenance matrix from all-target run", async ({ page }) => {
   const verilog = "module test(input clk, output y); assign y = clk; endmodule";
-  await installApiDispatcher(
+  const api = await installApiDispatcher(
     page,
     new Map<string, ApiMockPayload>([
       [
@@ -603,6 +603,42 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
         module_name: "test",
         verilog,
       }],
+      ["/api/studio/evidence/bundle", {
+        artifact_paths: [
+          "evidence/replay.json",
+          "evidence/manifest.json",
+        ],
+        artifacts: [
+          {
+            relative_path: "evidence/replay.json",
+            sha256: "c".repeat(64),
+            size_bytes: 128,
+          },
+        ],
+        bundle_id: "seb_compile",
+        job_id: "sj_compile",
+        manifest: {
+          entries: [
+            { type: "command_replay" },
+            { type: "manifest" },
+          ],
+        },
+        schema_version: "studio.evidence-bundle.v1",
+        summary: {
+          artifact_path_count: 2,
+          entry_count: 2,
+          entry_type_counts: {
+            command_replay: 1,
+            manifest: 1,
+          },
+          evidence_classification_counts: {},
+          source_job_count: 0,
+          source_job_kind_counts: {},
+          source_job_owner_counts: {},
+        },
+      }],
+      ["/api/studio/operator/status", operatorStatus],
+      ["/api/studio/jobs", jobList],
       ["/api/synth/multi-target", {
         supported: ["ice40", "gowin"],
         target_provenance_matrix: {
@@ -708,6 +744,22 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
   await page.getByRole("button", { name: "ODE", exact: true }).click();
   await page.getByRole("button", { name: "SV", exact: true }).click();
   await expect(page.getByText("SystemVerilog")).toBeVisible();
+  await expect(page.getByText("trace 333333333333")).toBeVisible();
+  await page.getByRole("button", { name: "Export compile evidence bundle" }).click();
+  await expect(page.getByText("bundle seb_compile")).toBeVisible();
+
+  const evidenceBodies = api.bodies("/api/studio/evidence/bundle");
+  expect(evidenceBodies).toHaveLength(1);
+  expect(evidenceBodies[0]).toMatchObject({
+    command_replay: {
+      method: "POST",
+      request_sha256: "1".repeat(64),
+      route: "/api/ir/emit-sv-direct",
+    },
+    include_audit: true,
+    project_name: "compile-test",
+  });
+
   await page.getByRole("button", { name: "FPGA" }).first().click();
   await page.getByRole("button", { name: "All Targets" }).click();
 
