@@ -4,6 +4,7 @@ import type {
   StudioAuditExport,
   StudioAuditStatus,
   StudioCapability,
+  StudioEvidenceBundleResponse,
   StudioIdentityBrowserUser,
   StudioIdentityServiceAccount,
   StudioJobRecord,
@@ -71,12 +72,32 @@ const auditExport: StudioAuditExport = {
 
 const jobStatus: StudioJobStatus = {
   active_count: 1,
-  allowed_kinds: ["compiler", "synthesis", "training"],
+  allowed_kinds: ["compiler", "evidence", "synthesis", "training"],
   completed_count: 4,
   configured: true,
   failed_count: 0,
   schema_version: "studio.jobs.status.v1",
   timed_out_count: 1,
+};
+
+const evidenceBundle: StudioEvidenceBundleResponse = {
+  artifact_paths: [
+    "evidence/audit-export.json",
+    "evidence/manifest.json",
+  ],
+  artifacts: [
+    {
+      relative_path: "evidence/audit-export.json",
+      sha256: "b".repeat(64),
+      size_bytes: 128,
+    },
+  ],
+  bundle_id: "seb_sj_evidence",
+  job_id: "sj_evidence",
+  manifest: {
+    entries: [{ type: "audit_export" }, { type: "manifest" }],
+  },
+  schema_version: "studio.evidence-bundle.v1",
 };
 
 const jobRecord: StudioJobRecord = {
@@ -158,6 +179,9 @@ describe("admin shell model", () => {
           message: "Yosys unavailable.",
         }),
       ],
+      evidenceBundle,
+      evidenceBundleError: null,
+      evidenceBundleLoading: false,
       identityBrowserUsers: [identityBrowserUser],
       identityServiceAccounts: [identityServiceAccount],
       jobRecords: [jobRecord],
@@ -182,12 +206,20 @@ describe("admin shell model", () => {
     });
     expect(model.jobs).toEqual({
       active: 1,
-      allowedKinds: "compiler, synthesis, training",
+      allowedKinds: "compiler, evidence, synthesis, training",
       completed: 4,
       configured: true,
       failed: 0,
       healthLabel: "attention",
       timedOut: 1,
+    });
+    expect(model.evidenceBundle).toEqual({
+      artifactCount: 2,
+      bundleId: "seb_sj_evidence",
+      error: null,
+      jobId: "sj_evidence",
+      loading: false,
+      manifestEntryCount: 2,
     });
     expect(model.jobRecords).toEqual([
       {

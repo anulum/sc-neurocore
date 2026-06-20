@@ -391,6 +391,11 @@ body digest. Bundle files are declared job artifacts under `evidence/`, with a
 manifest is path-free and omits bearer tokens, token hashes, password material,
 and host-local filesystem paths.
 
+The Admin panel exposes the same evidence-bundle workflow. Operators can enter
+an optional saved project name, comma-separated job IDs, audit export settings,
+and replay metadata; after export, the panel refreshes the worker queue and
+shows the bundle ID, evidence job ID, artifact count, and manifest entry count.
+
 Studio also exposes a process-backed job-manager path for new backend work
 that can be expressed as an importable `module:function` task with a
 JSON-serializable payload and result. Process jobs use the same path-confined

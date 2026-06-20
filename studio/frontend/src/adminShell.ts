@@ -3,6 +3,7 @@ import type {
   StudioAuditExport,
   StudioAuditStatus,
   StudioCapability,
+  StudioEvidenceBundleResponse,
   StudioIdentityBrowserUser,
   StudioIdentityServiceAccount,
   StudioJobRecord,
@@ -16,6 +17,9 @@ export interface AdminShellInput {
   auditExport: StudioAuditExport | null;
   auditStatus: StudioAuditStatus | null;
   capabilities: StudioCapability[];
+  evidenceBundle: StudioEvidenceBundleResponse | null;
+  evidenceBundleError: string | null;
+  evidenceBundleLoading: boolean;
   jobRecords: StudioJobRecord[];
   jobStatus: StudioJobStatus | null;
   identityBrowserUsers: StudioIdentityBrowserUser[];
@@ -61,6 +65,15 @@ export interface AdminJobRecordModel {
   status: StudioJobRecord["status"];
 }
 
+export interface AdminEvidenceBundleModel {
+  artifactCount: number;
+  bundleId: string;
+  error: string | null;
+  jobId: string;
+  loading: boolean;
+  manifestEntryCount: number;
+}
+
 export interface AdminIdentityAccountModel {
   active: boolean;
   activeLabel: "active" | "disabled";
@@ -93,6 +106,7 @@ export interface AdminOperatorModel {
 export interface AdminShellModel {
   audit: AdminAuditModel;
   capabilities: AdminCapabilityModel;
+  evidenceBundle: AdminEvidenceBundleModel;
   jobs: AdminJobModel;
   jobRecords: AdminJobRecordModel[];
   identityBrowserUsers: AdminIdentityBrowserUserModel[];
@@ -129,12 +143,33 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
         ? "ready" : "degraded",
     },
     jobs: buildJobModel(jobStatus),
+    evidenceBundle: buildEvidenceBundleModel(
+      input.evidenceBundle,
+      input.evidenceBundleError,
+      input.evidenceBundleLoading,
+    ),
     jobRecords: buildJobRecords(input.jobRecords),
     identityBrowserUsers: buildIdentityBrowserUsers(input.identityBrowserUsers),
     identityAccounts: buildIdentityAccounts(input.identityServiceAccounts),
     operator: buildOperatorModel(input.operatorStatus),
     recentAuditEvents,
     unhealthyCapabilities,
+  };
+}
+
+function buildEvidenceBundleModel(
+  evidenceBundle: StudioEvidenceBundleResponse | null,
+  error: string | null,
+  loading: boolean,
+): AdminEvidenceBundleModel {
+  const entries = evidenceBundle?.manifest.entries;
+  return {
+    artifactCount: evidenceBundle?.artifact_paths.length ?? 0,
+    bundleId: evidenceBundle?.bundle_id ?? "none",
+    error,
+    jobId: evidenceBundle?.job_id ?? "none",
+    loading,
+    manifestEntryCount: Array.isArray(entries) ? entries.length : 0,
   };
 }
 

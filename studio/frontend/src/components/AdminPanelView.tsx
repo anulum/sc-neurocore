@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 
 import type { AdminShellModel } from "../adminShell";
+import type { StudioEvidenceBundleRequest } from "../api/client";
 
 export interface AdminPanelViewProps {
   auditLoading: boolean;
@@ -15,6 +16,7 @@ export interface AdminPanelViewProps {
       username: string;
     },
   ) => Promise<void>;
+  onCreateEvidenceBundle: (request: StudioEvidenceBundleRequest) => Promise<void>;
   onLoadAuditExport: () => Promise<void>;
   onLoadAuditStatus: () => Promise<void>;
   onLoadIdentityServiceAccounts: () => Promise<void>;
@@ -34,6 +36,7 @@ export interface AdminPanelViewProps {
 export default function AdminPanelView({
   auditLoading,
   model,
+  onCreateEvidenceBundle,
   onCreateIdentityBrowserUser,
   onLoadAuditExport,
   onLoadAuditStatus,
@@ -44,13 +47,36 @@ export default function AdminPanelView({
   onUpdateIdentityBrowserUser,
   onUpdateIdentityServiceAccount,
 }: AdminPanelViewProps) {
+  function textList(value: FormDataEntryValue | null): string[] {
+    return String(value ?? "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  function optionalText(value: FormDataEntryValue | null): string | null {
+    const text = String(value ?? "").trim();
+    return text.length > 0 ? text : null;
+  }
+
+  function boundedInteger(
+    value: FormDataEntryValue | null,
+    fallback: number,
+    minimum: number,
+    maximum: number,
+  ): number {
+    const parsed = Number(value ?? fallback);
+    if (!Number.isFinite(parsed)) {
+      return fallback;
+    }
+    return Math.min(Math.max(Math.trunc(parsed), minimum), maximum);
+  }
+
   function identityUpdateFromForm(form: FormData) {
-    const rolesText = String(form.get("roles") ?? "");
-    const roles = rolesText.split(",").map((role) => role.trim()).filter(Boolean);
     return {
       active: form.get("active") === "on",
       expires_at_utc: null,
-      roles,
+      roles: textList(form.get("roles")),
     };
   }
 
@@ -99,6 +125,36 @@ export default function AdminPanelView({
         }
       }
     })();
+  }
+
+  function submitEvidenceBundle(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const method = optionalText(form.get("replayMethod"));
+    const route = optionalText(form.get("replayRoute"));
+    const requestSha256 = optionalText(form.get("requestSha256"));
+    const note = optionalText(form.get("operatorNote"));
+    const commandReplay: Record<string, unknown> = {};
+    if (method !== null) {
+      commandReplay.method = method;
+    }
+    if (route !== null) {
+      commandReplay.route = route;
+    }
+    if (requestSha256 !== null) {
+      commandReplay.request_sha256 = requestSha256;
+    }
+    if (note !== null) {
+      commandReplay.note = note;
+    }
+
+    void onCreateEvidenceBundle({
+      audit_limit: boundedInteger(form.get("auditLimit"), 100, 1, 1000),
+      command_replay: Object.keys(commandReplay).length > 0 ? commandReplay : null,
+      include_audit: form.get("includeAudit") === "on",
+      job_ids: textList(form.get("jobIds")),
+      project_name: optionalText(form.get("projectName")),
+    });
   }
 
   return (
@@ -390,6 +446,102 @@ export default function AdminPanelView({
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="admin-section">
+        <div className="admin-section-header">
+          <h2>Evidence</h2>
+          <span>{model.evidenceBundle.loading ? "exporting" : "ready"}</span>
+        </div>
+        <div className="admin-metrics">
+          <div><span>Bundle</span><strong>{model.evidenceBundle.bundleId}</strong></div>
+          <div><span>Job</span><strong>{model.evidenceBundle.jobId}</strong></div>
+          <div><span>Artifacts</span><strong>{model.evidenceBundle.artifactCount}</strong></div>
+          <div><span>Entries</span><strong>{model.evidenceBundle.manifestEntryCount}</strong></div>
+        </div>
+        {model.evidenceBundle.error && (
+          <div className="admin-warning">{model.evidenceBundle.error}</div>
+        )}
+        <form className="admin-evidence-form" onSubmit={submitEvidenceBundle}>
+          <label>
+            Project
+            <input
+              aria-label="Evidence project name"
+              name="projectName"
+              disabled={model.evidenceBundle.loading}
+            />
+          </label>
+          <label>
+            Job IDs
+            <input
+              aria-label="Evidence job IDs"
+              name="jobIds"
+              disabled={model.evidenceBundle.loading}
+            />
+          </label>
+          <label>
+            Audit
+            <input
+              aria-label="Include audit export"
+              name="includeAudit"
+              type="checkbox"
+              defaultChecked
+              disabled={model.evidenceBundle.loading}
+            />
+          </label>
+          <label>
+            Limit
+            <input
+              aria-label="Evidence audit limit"
+              name="auditLimit"
+              type="number"
+              min={1}
+              max={1000}
+              defaultValue={100}
+              disabled={model.evidenceBundle.loading}
+            />
+          </label>
+          <label>
+            Method
+            <input
+              aria-label="Evidence replay method"
+              name="replayMethod"
+              defaultValue="POST"
+              disabled={model.evidenceBundle.loading}
+            />
+          </label>
+          <label>
+            Route
+            <input
+              aria-label="Evidence replay route"
+              name="replayRoute"
+              disabled={model.evidenceBundle.loading}
+            />
+          </label>
+          <label>
+            Request SHA
+            <input
+              aria-label="Evidence request SHA-256"
+              name="requestSha256"
+              disabled={model.evidenceBundle.loading}
+            />
+          </label>
+          <label>
+            Note
+            <input
+              aria-label="Evidence operator note"
+              name="operatorNote"
+              disabled={model.evidenceBundle.loading}
+            />
+          </label>
+          <button
+            aria-label="Create evidence bundle"
+            disabled={model.evidenceBundle.loading}
+            type="submit"
+          >
+            Export
+          </button>
+        </form>
       </section>
 
       <section className="admin-section">

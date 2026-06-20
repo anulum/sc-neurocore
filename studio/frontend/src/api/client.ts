@@ -171,6 +171,23 @@ export interface StudioJobListResponse {
   schema_version: string;
 }
 
+export interface StudioEvidenceBundleRequest {
+  audit_limit: number;
+  command_replay: Record<string, unknown> | null;
+  include_audit: boolean;
+  job_ids: string[];
+  project_name: string | null;
+}
+
+export interface StudioEvidenceBundleResponse {
+  artifact_paths: string[];
+  artifacts: StudioJobArtifact[];
+  bundle_id: string;
+  job_id: string;
+  manifest: Record<string, unknown>;
+  schema_version: string;
+}
+
 export interface StudioOperatorCapabilityStatus {
   degraded_count: number;
   experimental_count: number;
@@ -329,6 +346,8 @@ export const fetchStudioJobStatus = () =>
   get<StudioJobStatus>("/studio/jobs/status");
 export const fetchStudioJobs = () =>
   get<StudioJobListResponse>("/studio/jobs");
+export const createStudioEvidenceBundle = (request: StudioEvidenceBundleRequest) =>
+  post<StudioEvidenceBundleResponse>("/studio/evidence/bundle", request);
 export const fetchStudioOperatorStatus = () =>
   get<StudioOperatorStatus>("/studio/operator/status");
 export const fetchStudioIdentityServiceAccounts = () =>

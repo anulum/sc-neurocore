@@ -9,6 +9,10 @@ export default function AdminPanel() {
     auditLoading,
     auditStatus,
     capabilities,
+    createEvidenceBundle,
+    evidenceBundle,
+    evidenceBundleError,
+    evidenceBundleLoading,
     identityBrowserUsers,
     identityServiceAccounts,
     jobRecords,
@@ -29,6 +33,9 @@ export default function AdminPanel() {
     auditExport,
     auditStatus,
     capabilities,
+    evidenceBundle,
+    evidenceBundleError,
+    evidenceBundleLoading,
     identityBrowserUsers,
     identityServiceAccounts,
     jobRecords,
@@ -40,6 +47,7 @@ export default function AdminPanel() {
     <AdminPanelView
       auditLoading={auditLoading}
       model={model}
+      onCreateEvidenceBundle={createEvidenceBundle}
       onCreateIdentityBrowserUser={createIdentityBrowserUser}
       onLoadAuditExport={loadAuditExport}
       onLoadAuditStatus={loadAuditStatus}

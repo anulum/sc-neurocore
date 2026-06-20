@@ -202,6 +202,10 @@ runtime features:
   all written as job artifacts under `evidence/`. The response and manifest are
   path-free and omit bearer tokens, token hashes, password material, and local
   filesystem paths.
+- The Admin panel surfaces that evidence route as an operator workflow with
+  project, job ID, audit, and replay metadata fields. After export it refreshes
+  the job queue and displays the bundle ID, evidence job ID, artifact count,
+  and manifest entry count.
 - New backend workflows can use `StudioJobManager.submit_process_task(...)` for
   process-backed execution. The task is an importable `module:function` that
   receives a `StudioJobContext` plus a JSON payload and returns a JSON result.

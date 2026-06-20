@@ -5,6 +5,7 @@ import type {
   StudioAuditExport,
   StudioAuditStatus,
   StudioCapability,
+  StudioEvidenceBundleResponse,
   StudioIdentityBrowserUser,
   StudioIdentityServiceAccount,
   StudioJobRecord,
@@ -61,12 +62,32 @@ const auditExport: StudioAuditExport = {
 
 const jobStatus: StudioJobStatus = {
   active_count: 1,
-  allowed_kinds: ["compiler", "synthesis", "training"],
+  allowed_kinds: ["compiler", "evidence", "synthesis", "training"],
   completed_count: 4,
   configured: true,
   failed_count: 0,
   schema_version: "studio.jobs.status.v1",
   timed_out_count: 1,
+};
+
+const evidenceBundle: StudioEvidenceBundleResponse = {
+  artifact_paths: [
+    "evidence/audit-export.json",
+    "evidence/manifest.json",
+  ],
+  artifacts: [
+    {
+      relative_path: "evidence/manifest.json",
+      sha256: "b".repeat(64),
+      size_bytes: 256,
+    },
+  ],
+  bundle_id: "seb_sj_evidence",
+  job_id: "sj_evidence",
+  manifest: {
+    entries: [{ type: "audit_export" }, { type: "manifest" }],
+  },
+  schema_version: "studio.evidence-bundle.v1",
 };
 
 const jobRecord: StudioJobRecord = {
@@ -148,6 +169,9 @@ describe("AdminPanel", () => {
           message: "Yosys unavailable.",
         }),
       ],
+      evidenceBundle,
+      evidenceBundleError: null,
+      evidenceBundleLoading: false,
       identityBrowserUsers: [identityBrowserUser],
       identityServiceAccounts: [identityServiceAccount],
       jobRecords: [jobRecord],
@@ -159,6 +183,7 @@ describe("AdminPanel", () => {
       <AdminPanelView
         auditLoading={false}
         model={model}
+        onCreateEvidenceBundle={async () => undefined}
         onCreateIdentityBrowserUser={async () => undefined}
         onLoadAuditExport={async () => undefined}
         onLoadAuditStatus={async () => undefined}
@@ -200,8 +225,12 @@ describe("AdminPanel", () => {
     expect(html).not.toContain("token_sha256");
     expect(html).not.toContain("password_pbkdf2_sha256");
     expect(html).toContain("attention");
-    expect(html).toContain("compiler, synthesis, training");
+    expect(html).toContain("compiler, evidence, synthesis, training");
     expect(html).toContain("synthesis - sj_1234");
     expect(html).toContain("operator-1");
+    expect(html).toContain("Evidence");
+    expect(html).toContain("seb_sj_evidence");
+    expect(html).toContain("Evidence job IDs");
+    expect(html).toContain("Create evidence bundle");
   });
 });

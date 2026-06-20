@@ -2,6 +2,7 @@ import { create } from "zustand";
 import {
   fetchTemplates, fetchModels, fetchModelDetail, fetchPresets, fetchPreset,
   fetchStudioAuthSession,
+  createStudioEvidenceBundle,
   fetchStudioIdentityServiceAccounts,
   fetchStudioAuditExport, fetchStudioAuditStatus, fetchStudioCapabilities,
   fetchStudioJobs, fetchStudioJobStatus, fetchStudioOperatorStatus,
@@ -36,6 +37,8 @@ import {
   type ProjectSummary, type PipelineResult,
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
   type StudioAuthSession,
+  type StudioEvidenceBundleRequest,
+  type StudioEvidenceBundleResponse,
   type StudioIdentityBrowserUser,
   type StudioIdentityBrowserUserCreate,
   type StudioIdentityServiceAccount, type StudioJobRecord, type StudioJobStatus,
@@ -78,6 +81,9 @@ interface StudioState {
   authError: string | null;
   auditStatus: StudioAuditStatus | null;
   auditExport: StudioAuditExport | null;
+  evidenceBundle: StudioEvidenceBundleResponse | null;
+  evidenceBundleError: string | null;
+  evidenceBundleLoading: boolean;
   jobStatus: StudioJobStatus | null;
   jobRecords: StudioJobRecord[];
   identityBrowserUsers: StudioIdentityBrowserUser[];
@@ -166,6 +172,7 @@ interface StudioState {
   logoutBrowserUser: () => Promise<void>;
   loadAuditStatus: () => Promise<void>;
   loadAuditExport: () => Promise<void>;
+  createEvidenceBundle: (request: StudioEvidenceBundleRequest) => Promise<void>;
   loadJobStatus: () => Promise<void>;
   loadIdentityServiceAccounts: () => Promise<void>;
   createIdentityBrowserUser: (create: StudioIdentityBrowserUserCreate) => Promise<void>;
@@ -261,7 +268,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   models: [], selectedModelName: "", modelDetail: null, modelParams: {},
   capabilities: [], capabilitiesLoading: false, capabilitiesError: null,
   authSession: null, authLoading: false, authError: null,
-  auditStatus: null, auditExport: null, jobStatus: null, jobRecords: [],
+  auditStatus: null, auditExport: null,
+  evidenceBundle: null, evidenceBundleError: null, evidenceBundleLoading: false,
+  jobStatus: null, jobRecords: [],
   identityBrowserUsers: [], identityServiceAccounts: [], operatorStatus: null,
   auditLoading: false, auditError: null,
   templates: [], presets: [],
@@ -396,6 +405,30 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set({
         auditLoading: false,
         auditError: error instanceof Error ? error.message : "Audit export failed",
+      });
+    }
+  },
+  createEvidenceBundle: async (request) => {
+    set({ evidenceBundleLoading: true, evidenceBundleError: null });
+    try {
+      const evidenceBundle = await createStudioEvidenceBundle(request);
+      const [operatorStatus, jobList] = await Promise.all([
+        fetchStudioOperatorStatus(),
+        fetchStudioJobs(),
+      ]);
+      set({
+        auditStatus: operatorStatus.audit,
+        evidenceBundle,
+        evidenceBundleError: null,
+        evidenceBundleLoading: false,
+        jobRecords: jobList.jobs,
+        jobStatus: operatorStatus.jobs,
+        operatorStatus,
+      });
+    } catch (error: unknown) {
+      set({
+        evidenceBundleError: error instanceof Error ? error.message : "Evidence bundle export failed",
+        evidenceBundleLoading: false,
       });
     }
   },
