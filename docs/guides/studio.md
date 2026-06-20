@@ -409,7 +409,9 @@ metadata for the selected target. Multi-target runs include the
 `studio.synthesis-target-provenance-matrix.v1` matrix with a stable SHA-256
 digest across every supported target. These records capture target capacity,
 Yosys command, optional nextpnr command/device, tool availability, and tool
-version strings when available.
+version strings when available. The frontend renders the all-target matrix as
+device, synthesis-readiness, PnR-readiness, tool, evidence-class, and digest
+rows so operators can inspect target support without opening raw JSON.
 
 Each worker-backed compile, synthesis, PnR, and pipeline action also writes a
 normalized `studio.action-evidence.v1` manifest next to the result artifact:

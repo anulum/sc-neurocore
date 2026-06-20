@@ -53,6 +53,22 @@ const synthesisUnavailable = capability({
   ui_placement: "FPGA",
 });
 
+const synthesisCapability = capability({
+  capability_id: "studio.synthesis_dashboard",
+  evidence: ["target_provenance_matrix"],
+  summary: "FPGA synthesis and target provenance.",
+  title: "Synthesis Dashboard",
+  ui_placement: "FPGA",
+});
+
+const compilerCapability = capability({
+  capability_id: "studio.compiler_inspector",
+  evidence: ["compile_traceability"],
+  summary: "IR and RTL inspection.",
+  title: "Compiler Inspector",
+  ui_placement: "IR",
+});
+
 const capabilityRegistry = {
   capabilities: [
     capabilityRegistryContract,
@@ -487,6 +503,165 @@ test("admin evidence bundle form submits simulation and analysis result payloads
     include_audit: true,
     simulation_results: [simulationPayload],
   });
+});
+
+test("synthesis dashboard renders target provenance matrix from all-target run", async ({ page }) => {
+  const verilog = "module test(input clk, output y); assign y = clk; endmodule";
+  await installApiDispatcher(
+    page,
+    new Map<string, ApiMockPayload>([
+      [
+        "/api/studio/capabilities",
+        registry([capabilityRegistryContract, compilerCapability, synthesisCapability]),
+      ],
+      ["/api/models", []],
+      ["/api/templates", []],
+      ["/api/presets", []],
+      ["/api/synth/tools-status", {
+        nextpnr_ice40: { available: false, version: null },
+        yosys: { available: true, version: "Yosys 0.test" },
+      }],
+      ["/api/ir/emit-sv-direct", {
+        chars: verilog.length,
+        compile_traceability: {
+          evidence_classification: "compile",
+          input_sha256: "1".repeat(64),
+          output: {
+            language: "systemverilog",
+            module_name: "test",
+            rtl_chars: verilog.length,
+            rtl_sha256: "2".repeat(64),
+          },
+          schema_version: "studio.compile-traceability.v1",
+          source: "ode",
+          source_payload: {
+            equations: ["dv/dt = -(v - E_L) / tau_m + I / C"],
+            init: { v: -65 },
+            params: { C: 1, E_L: -65, tau_m: 10 },
+            reset: "v = -65",
+            threshold: "v > -50",
+          },
+          traceability_sha256: "3".repeat(64),
+        },
+        ir_repr: "%0 = input clk",
+        module_name: "test",
+        verilog,
+      }],
+      ["/api/synth/multi-target", {
+        supported: ["ice40", "gowin"],
+        target_provenance_matrix: {
+          matrix_sha256: "a".repeat(64),
+          schema_version: "studio.synthesis-target-provenance-matrix.v1",
+          targets: {
+            gowin: {
+              capacity: { brams: 41, dsps: 0, ffs: 20736, luts: 20736 },
+              device: null,
+              evidence_classification: "synthesis",
+              pnr_ready: true,
+              pnr_tool: null,
+              schema_version: "studio.synthesis-target-provenance.v1",
+              synthesis_command: "synth_gowin",
+              synthesis_ready: true,
+              target: "gowin",
+              tools: [
+                {
+                  available: true,
+                  executable: "yosys",
+                  key: "yosys",
+                  role: "synthesis",
+                  version: "Yosys 0.test",
+                },
+              ],
+            },
+            ice40: {
+              capacity: { brams: 30, dsps: 0, ffs: 5280, luts: 5280 },
+              device: "up5k",
+              evidence_classification: "synthesis",
+              pnr_ready: false,
+              pnr_tool: "nextpnr-ice40",
+              schema_version: "studio.synthesis-target-provenance.v1",
+              synthesis_command: "synth_ice40",
+              synthesis_ready: true,
+              target: "ice40",
+              tools: [
+                {
+                  available: true,
+                  executable: "yosys",
+                  key: "yosys",
+                  role: "synthesis",
+                  version: "Yosys 0.test",
+                },
+                {
+                  available: false,
+                  executable: "nextpnr-ice40",
+                  key: "nextpnr_ice40",
+                  role: "place_and_route",
+                  version: null,
+                },
+              ],
+            },
+          },
+        },
+        targets: {
+          gowin: {
+            capacity: { brams: 41, dsps: 0, ffs: 20736, luts: 20736 },
+            log_excerpt: "",
+            resources: { brams: 0, cells: 1, dsps: 0, ffs: 1, luts: 2, wires: 1 },
+            success: true,
+            target: "gowin",
+            target_provenance: {
+              capacity: { brams: 41, dsps: 0, ffs: 20736, luts: 20736 },
+              device: null,
+              evidence_classification: "synthesis",
+              pnr_ready: true,
+              pnr_tool: null,
+              schema_version: "studio.synthesis-target-provenance.v1",
+              synthesis_command: "synth_gowin",
+              synthesis_ready: true,
+              target: "gowin",
+              tools: [],
+            },
+            utilisation: { brams: 0, dsps: 0, ffs: 0, luts: 0 },
+          },
+          ice40: {
+            capacity: { brams: 30, dsps: 0, ffs: 5280, luts: 5280 },
+            log_excerpt: "",
+            resources: { brams: 0, cells: 1, dsps: 0, ffs: 1, luts: 2, wires: 1 },
+            success: true,
+            target: "ice40",
+            target_provenance: {
+              capacity: { brams: 30, dsps: 0, ffs: 5280, luts: 5280 },
+              device: "up5k",
+              evidence_classification: "synthesis",
+              pnr_ready: false,
+              pnr_tool: "nextpnr-ice40",
+              schema_version: "studio.synthesis-target-provenance.v1",
+              synthesis_command: "synth_ice40",
+              synthesis_ready: true,
+              target: "ice40",
+              tools: [],
+            },
+            utilisation: { brams: 0, dsps: 0, ffs: 0, luts: 0 },
+          },
+        },
+      }],
+    ]),
+  );
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "ODE", exact: true }).click();
+  await page.getByRole("button", { name: "SV", exact: true }).click();
+  await expect(page.getByText("SystemVerilog")).toBeVisible();
+  await page.getByRole("button", { name: "FPGA" }).first().click();
+  await page.getByRole("button", { name: "All Targets" }).click();
+
+  await expect(page.getByText("Target provenance matrix")).toBeVisible();
+  await expect(page.getByText("aaaaaaaaaaaa")).toBeVisible();
+  const matrixTable = page.getByRole("table").nth(1);
+  await expect(matrixTable.getByRole("cell", { exact: true, name: "ICE40" })).toBeVisible();
+  await expect(matrixTable.getByRole("cell", { exact: true, name: "up5k" })).toBeVisible();
+  await expect(matrixTable.getByText("missing - nextpnr-ice40 missing")).toBeVisible();
+  await expect(matrixTable.getByText("ready - not required")).toBeVisible();
 });
 
 test("capability menu exposes unavailable requirements", async ({ page }) => {

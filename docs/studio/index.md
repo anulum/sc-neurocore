@@ -435,7 +435,10 @@ Multi-target comparison table shows resource usage across all targets.
 Quick heuristic estimation available without Yosys installed.
 Synthesis responses include path-free target provenance with tool readiness,
 tool versions where available, capacity metadata, and a multi-target matrix
-digest for comparison runs.
+digest for comparison runs. The FPGA panel renders the provenance matrix after
+all-target synthesis, including target device, synthesis readiness, PnR
+readiness, tool command state, and evidence classification for each supported
+target.
 
 ### Full Pipeline
 

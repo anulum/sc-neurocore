@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import { useStudioStore } from "../stores/studio";
-import type { SynthesisTargetProvenance } from "../api/client";
+import type {
+  SynthesisTargetProvenance,
+  SynthesisTargetProvenanceMatrix,
+} from "../api/client";
 
 function ResourceBar({ label, used, total, color }: {
   label: string; used: number; total: number; color: string;
@@ -72,6 +75,68 @@ function ProvenanceSummary({ provenance }: { provenance: SynthesisTargetProvenan
         {provenance.pnr_tool ? (provenance.pnr_ready ? "available" : "missing") : "not required"})
       </div>
       <div>Evidence: {provenance.evidence_classification}</div>
+    </div>
+  );
+}
+
+function readinessLabel(isReady: boolean): "ready" | "missing" {
+  return isReady ? "ready" : "missing";
+}
+
+function toolLabel(provenance: SynthesisTargetProvenance, role: string): string {
+  const tool = provenance.tools.find((item) => item.role === role);
+  if (tool === undefined) {
+    return role === "place_and_route" && provenance.pnr_tool === null ? "not required" : "missing";
+  }
+  const version = tool.version === null ? "" : ` ${tool.version}`;
+  return `${tool.executable} ${readinessLabel(tool.available)}${version}`;
+}
+
+export function ProvenanceMatrixSummary({
+  matrix,
+}: {
+  matrix: SynthesisTargetProvenanceMatrix;
+}) {
+  const entries = Object.entries(matrix.targets).sort(([left], [right]) =>
+    left.localeCompare(right),
+  );
+  return (
+    <div style={{
+      marginTop: 10, padding: 8, background: "var(--bg-secondary)",
+      borderRadius: 4, fontSize: 10, color: "var(--text-secondary)",
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+        <strong>Target provenance matrix</strong>
+        <span style={{ fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
+          {matrix.matrix_sha256.slice(0, 12)}
+        </span>
+      </div>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr style={{ borderBottom: "1px solid var(--border)" }}>
+            <th style={{ padding: "3px 6px", textAlign: "left" }}>Target</th>
+            <th style={{ padding: "3px 6px", textAlign: "left" }}>Device</th>
+            <th style={{ padding: "3px 6px", textAlign: "left" }}>Synthesis</th>
+            <th style={{ padding: "3px 6px", textAlign: "left" }}>PnR</th>
+            <th style={{ padding: "3px 6px", textAlign: "left" }}>Evidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.map(([target, provenance]) => (
+            <tr key={target} style={{ borderBottom: "1px solid var(--border)" }}>
+              <td style={{ padding: "3px 6px", fontWeight: 600 }}>{target.toUpperCase()}</td>
+              <td style={{ padding: "3px 6px" }}>{provenance.device ?? "none"}</td>
+              <td style={{ padding: "3px 6px" }}>
+                {readinessLabel(provenance.synthesis_ready)} - {toolLabel(provenance, "synthesis")}
+              </td>
+              <td style={{ padding: "3px 6px" }}>
+                {readinessLabel(provenance.pnr_ready)} - {toolLabel(provenance, "place_and_route")}
+              </td>
+              <td style={{ padding: "3px 6px" }}>{provenance.evidence_classification}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -224,9 +289,7 @@ export default function SynthesisDashboard() {
                 ))}
               </tbody>
             </table>
-            <div style={{ marginTop: 8, fontSize: 9, color: "var(--text-muted)" }}>
-              Provenance matrix: {multiTargetResult.target_provenance_matrix.matrix_sha256.slice(0, 12)}
-            </div>
+            <ProvenanceMatrixSummary matrix={multiTargetResult.target_provenance_matrix} />
           </div>
         )}
 

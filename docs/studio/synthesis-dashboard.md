@@ -112,7 +112,10 @@ Multi-target responses additionally include
 `studio.synthesis-target-provenance-matrix.v1`. The matrix captures the same
 target records for every supported target plus a stable `matrix_sha256` digest
 so operators can compare target-support evidence across runs without relying on
-local filesystem paths.
+local filesystem paths. The Studio dashboard renders that matrix after an
+all-target run, showing each target's device selector, synthesis readiness,
+PnR readiness, tool command, evidence classification, and shortened matrix
+digest without exposing host-local paths.
 
 ## API Endpoints
 
