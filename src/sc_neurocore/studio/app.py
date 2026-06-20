@@ -1022,7 +1022,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         return studio_audit_sink.status().to_public_dict()
 
     @app.get("/api/studio/jobs/status")
-    def api_studio_jobs_status() -> dict[str, bool | int | list[str] | str]:
+    def api_studio_jobs_status() -> dict[str, object]:
         """Return path-free local worker health for operator dashboards."""
 
         return studio_job_manager.status().to_public_dict()

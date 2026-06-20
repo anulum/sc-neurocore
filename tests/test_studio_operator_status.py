@@ -131,6 +131,14 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
         "completed_count": 0,
         "configured": True,
         "failed_count": 0,
+        "resource_profiles": [
+            {
+                "default_timeout_seconds": 1.0,
+                "execution_models": ["thread", "process"],
+                "kind": "training",
+                "max_artifact_bytes": 16777216,
+            }
+        ],
         "schema_version": "studio.jobs.status.v1",
         "timed_out_count": 0,
     }

@@ -117,6 +117,38 @@ class StudioJobRecord:
 
 
 @dataclass(frozen=True, slots=True)
+class StudioJobResourceProfile:
+    """Path-free execution limits for one Studio job kind.
+
+    Parameters
+    ----------
+    kind:
+        Job kind covered by this profile.
+    default_timeout_seconds:
+        Default wall-clock timeout applied when a job omits an override.
+    max_artifact_bytes:
+        Maximum size for each artifact written through ``StudioJobContext``.
+    execution_models:
+        Supported manager execution models for this job kind.
+    """
+
+    kind: str
+    default_timeout_seconds: float
+    max_artifact_bytes: int
+    execution_models: tuple[str, ...]
+
+    def to_public_dict(self) -> dict[str, float | int | list[str] | str]:
+        """Return a JSON-serializable, path-free resource profile."""
+
+        return {
+            "default_timeout_seconds": self.default_timeout_seconds,
+            "execution_models": list(self.execution_models),
+            "kind": self.kind,
+            "max_artifact_bytes": self.max_artifact_bytes,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class StudioJobStatusSnapshot:
     """Path-free aggregate health for the local Studio job manager."""
 
@@ -126,9 +158,10 @@ class StudioJobStatusSnapshot:
     completed_count: int
     failed_count: int
     timed_out_count: int
+    resource_profiles: tuple[StudioJobResourceProfile, ...]
     schema_version: str = JOBS_STATUS_SCHEMA_VERSION
 
-    def to_public_dict(self) -> dict[str, bool | int | list[str] | str]:
+    def to_public_dict(self) -> dict[str, object]:
         """Return a JSON-serializable, path-free status snapshot."""
 
         return {
@@ -137,6 +170,9 @@ class StudioJobStatusSnapshot:
             "completed_count": self.completed_count,
             "configured": self.configured,
             "failed_count": self.failed_count,
+            "resource_profiles": [
+                profile.to_public_dict() for profile in self.resource_profiles
+            ],
             "schema_version": self.schema_version,
             "timed_out_count": self.timed_out_count,
         }
@@ -468,13 +504,23 @@ class StudioJobManager:
 
         records = self.list_records()
         active_statuses = {"pending", "running", "cancelling"}
+        allowed_kinds = tuple(sorted(self._allowed_kinds))
         return StudioJobStatusSnapshot(
             configured=self._configured,
-            allowed_kinds=tuple(sorted(self._allowed_kinds)),
+            allowed_kinds=allowed_kinds,
             active_count=sum(record.status in active_statuses for record in records),
             completed_count=sum(record.status == "completed" for record in records),
             failed_count=sum(record.status == "failed" for record in records),
             timed_out_count=sum(record.status == "timed_out" for record in records),
+            resource_profiles=tuple(
+                StudioJobResourceProfile(
+                    kind=kind,
+                    default_timeout_seconds=self._default_timeout_seconds,
+                    max_artifact_bytes=self._max_artifact_bytes,
+                    execution_models=("thread", "process"),
+                )
+                for kind in allowed_kinds
+            ),
         )
 
     def _run_supervised(
@@ -797,6 +843,7 @@ __all__ = [
     "StudioJobManager",
     "StudioJobRecord",
     "StudioJobRejected",
+    "StudioJobResourceProfile",
     "StudioJobStatus",
     "StudioJobStatusSnapshot",
     "StudioJobTask",

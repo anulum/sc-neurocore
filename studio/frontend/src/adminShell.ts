@@ -51,6 +51,7 @@ export interface AdminJobModel {
   configured: boolean;
   failed: number;
   healthLabel: "ready" | "attention" | "unconfigured";
+  resourceProfiles: string[];
   timedOut: number;
 }
 
@@ -213,6 +214,7 @@ function buildJobModel(jobStatus: StudioJobStatus | null): AdminJobModel {
       configured: false,
       failed: 0,
       healthLabel: "unconfigured",
+      resourceProfiles: [],
       timedOut: 0,
     };
   }
@@ -224,6 +226,9 @@ function buildJobModel(jobStatus: StudioJobStatus | null): AdminJobModel {
     configured: jobStatus.configured,
     failed: jobStatus.failed_count,
     healthLabel: !jobStatus.configured ? "unconfigured" : needsAttention ? "attention" : "ready",
+    resourceProfiles: jobStatus.resource_profiles.map((profile) =>
+      `${profile.kind}: ${profile.default_timeout_seconds}s, ${profile.max_artifact_bytes} bytes, ${profile.execution_models.join("+")}`,
+    ),
     timedOut: jobStatus.timed_out_count,
   };
 }

@@ -361,7 +361,9 @@ written by a worker. Use `SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS` and
 `SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES` to apply host-supported CPU and
 memory ceilings to Yosys and nextpnr child processes. The status payload is
 path-free and reports allowed job kinds plus active/completed/failed/timed-out
-counts.
+counts. It also includes one `resource_profiles` entry per allowed job kind,
+recording the default timeout, per-artifact size ceiling, and supported
+execution models (`thread` and `process`) without exposing the job-root path.
 
 Training start, stop, and status routes now submit work through the same local
 worker manager. The training monitor's SSE stream remains the live metric
@@ -410,6 +412,9 @@ The Admin panel queue uses `/api/studio/jobs` and `/api/studio/jobs/{job_id}`
 for path-free job records. Those endpoints are admin-gated and expose status,
 owner, request ID, timestamps, result metadata, and artifact manifests without
 revealing the configured job-root path.
+The Admin Jobs section also displays the resource profiles published by
+`/api/studio/jobs/status`, so operators can see per-kind timeout, artifact, and
+execution-model limits before launching long-running work.
 
 Administrators can create reproducible handoff bundles with
 `POST /api/studio/evidence/bundle`. The route runs as a bounded

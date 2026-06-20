@@ -156,8 +156,16 @@ export interface StudioJobStatus {
   completed_count: number;
   configured: boolean;
   failed_count: number;
+  resource_profiles: StudioJobResourceProfile[];
   schema_version: string;
   timed_out_count: number;
+}
+
+export interface StudioJobResourceProfile {
+  default_timeout_seconds: number;
+  execution_models: string[];
+  kind: string;
+  max_artifact_bytes: number;
 }
 
 export interface StudioJobArtifact {

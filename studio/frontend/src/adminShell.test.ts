@@ -76,6 +76,14 @@ const jobStatus: StudioJobStatus = {
   completed_count: 4,
   configured: true,
   failed_count: 0,
+  resource_profiles: [
+    {
+      default_timeout_seconds: 3,
+      execution_models: ["thread", "process"],
+      kind: "compiler",
+      max_artifact_bytes: 16777216,
+    },
+  ],
   schema_version: "studio.jobs.status.v1",
   timed_out_count: 1,
 };
@@ -211,6 +219,7 @@ describe("admin shell model", () => {
       configured: true,
       failed: 0,
       healthLabel: "attention",
+      resourceProfiles: ["compiler: 3s, 16777216 bytes, thread+process"],
       timedOut: 1,
     });
     expect(model.evidenceBundle).toEqual({

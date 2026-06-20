@@ -174,8 +174,10 @@ runtime features:
   External EDA child processes also receive host-supported CPU and memory
   ceilings from `SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS` and
   `SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES`. The local worker manager
-  tracks allowed job kinds, active/completed/failed/timed-out counts, and does
-  not expose host filesystem paths.
+  tracks allowed job kinds, active/completed/failed/timed-out counts, and one
+  resource profile per allowed job kind. Each profile records default timeout,
+  per-artifact size ceiling, and supported execution models without exposing
+  host filesystem paths.
 - `/api/training/start`, `/api/training/stop`, and
   `/api/training/status/{job_id}` now use the local worker manager for bounded
   training execution while preserving the training monitor's existing SSE
@@ -227,10 +229,10 @@ runtime features:
   closures remain compatible with the thread-backed path during migration.
 - `/api/studio/operator/status` is an admin-classified aggregate for the
   Studio control plane. It combines deployment profile, route-policy
-  enforcement, identity mode, audit health, job-worker health, and capability
-  counts into one path-free payload for the Admin panel. It also reports
-  path-free worker and EDA process resource ceilings so operators can verify
-  runtime bounds without reading environment files.
+  enforcement, identity mode, audit health, job-worker health, job resource
+  profiles, and capability counts into one path-free payload for the Admin
+  panel. It also reports path-free worker and EDA process resource ceilings so
+  operators can verify runtime bounds without reading environment files.
 - Deployments can set `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` to rotate the
   active JSONL audit file before the next append once it reaches the configured
   byte limit. `SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES` controls how many

@@ -711,6 +711,32 @@ def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:
         "completed_count": 0,
         "configured": True,
         "failed_count": 0,
+        "resource_profiles": [
+            {
+                "default_timeout_seconds": 3.0,
+                "execution_models": ["thread", "process"],
+                "kind": "compiler",
+                "max_artifact_bytes": 16777216,
+            },
+            {
+                "default_timeout_seconds": 3.0,
+                "execution_models": ["thread", "process"],
+                "kind": "evidence",
+                "max_artifact_bytes": 16777216,
+            },
+            {
+                "default_timeout_seconds": 3.0,
+                "execution_models": ["thread", "process"],
+                "kind": "synthesis",
+                "max_artifact_bytes": 16777216,
+            },
+            {
+                "default_timeout_seconds": 3.0,
+                "execution_models": ["thread", "process"],
+                "kind": "training",
+                "max_artifact_bytes": 16777216,
+            },
+        ],
         "schema_version": "studio.jobs.status.v1",
         "timed_out_count": 0,
     }

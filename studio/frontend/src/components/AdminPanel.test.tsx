@@ -66,6 +66,14 @@ const jobStatus: StudioJobStatus = {
   completed_count: 4,
   configured: true,
   failed_count: 0,
+  resource_profiles: [
+    {
+      default_timeout_seconds: 3,
+      execution_models: ["thread", "process"],
+      kind: "compiler",
+      max_artifact_bytes: 16777216,
+    },
+  ],
   schema_version: "studio.jobs.status.v1",
   timed_out_count: 1,
 };
@@ -226,6 +234,7 @@ describe("AdminPanel", () => {
     expect(html).not.toContain("password_pbkdf2_sha256");
     expect(html).toContain("attention");
     expect(html).toContain("compiler, evidence, synthesis, training");
+    expect(html).toContain("compiler: 3s, 16777216 bytes, thread+process");
     expect(html).toContain("synthesis - sj_1234");
     expect(html).toContain("operator-1");
     expect(html).toContain("Evidence");

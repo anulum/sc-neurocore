@@ -435,6 +435,13 @@ export default function AdminPanelView({
             <strong>{model.jobs.allowedKinds}</strong>
             <small>{model.jobs.failed} failed jobs recorded by the local worker manager</small>
           </div>
+          {model.jobs.resourceProfiles.map((profile) => (
+            <div key={profile} className="admin-audit-row">
+              <span>profile</span>
+              <strong>{profile}</strong>
+              <small>default timeout, artifact ceiling, and execution model</small>
+            </div>
+          ))}
           {model.jobRecords.map((job) => (
             <div key={job.jobId} className="admin-audit-row">
               <span>{job.status}</span>
