@@ -76,6 +76,7 @@ const jobStatus: StudioJobStatus = {
   completed_count: 4,
   configured: true,
   failed_count: 0,
+  process_count: 3,
   resource_profiles: [
     {
       default_timeout_seconds: 3,
@@ -85,6 +86,7 @@ const jobStatus: StudioJobStatus = {
     },
   ],
   schema_version: "studio.jobs.status.v1",
+  thread_count: 2,
   timed_out_count: 1,
 };
 
@@ -154,6 +156,7 @@ const jobRecord: StudioJobRecord = {
   ],
   created_at_utc: "2026-06-19T20:02:00Z",
   error: null,
+  execution_model: "process",
   finished_at_utc: "2026-06-19T20:03:00Z",
   job_id: "sj_1234",
   kind: "synthesis",
@@ -276,7 +279,9 @@ describe("admin shell model", () => {
       configured: true,
       failed: 0,
       healthLabel: "attention",
+      processCount: 3,
       resourceProfiles: ["compiler: 3s, 16777216 bytes, thread+process"],
+      threadCount: 2,
       timedOut: 1,
     });
     expect(model.evidenceBundle).toEqual({
@@ -336,6 +341,7 @@ describe("admin shell model", () => {
         createdAt: "2026-06-19T20:02:00Z",
         evidenceArtifactCount: 1,
         error: null,
+        executionModel: "process",
         finishedAt: "2026-06-19T20:03:00Z",
         jobId: "sj_1234",
         kind: "synthesis",

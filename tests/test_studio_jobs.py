@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
 import threading
 import time
@@ -448,10 +449,26 @@ def test_studio_job_manager_completes_process_task_with_manifest(tmp_path: Path)
     artifact = manager.read_artifact(record.job_id, "reports/process-result.txt")
 
     assert completed.status == "completed"
+    assert completed.execution_model == "process"
     assert completed.result == {"payload": {"model": "lif"}, "worker_job_id": record.job_id}
     assert completed.artifacts[0].relative_path == "reports/process-result.txt"
     assert artifact.payload == b"process ok"
     assert str(tmp_path) not in str(completed.to_public_dict())
+
+
+def test_studio_process_worker_environment_prepends_source_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Process workers can import the repo package without shell PYTHONPATH state."""
+
+    monkeypatch.setenv("PYTHONPATH", "existing")
+
+    environment = jobs_module._process_worker_environment()
+    pythonpath = environment["PYTHONPATH"].split(os.pathsep)
+
+    assert pythonpath[0].endswith("/src")
+    assert pythonpath[1].endswith("/SC-NEUROCORE")
+    assert "existing" in pythonpath
 
 
 def test_studio_job_manager_fails_process_task_without_error_detail(tmp_path: Path) -> None:
@@ -471,7 +488,45 @@ def test_studio_job_manager_fails_process_task_without_error_detail(tmp_path: Pa
     completed = manager.wait(record.job_id, timeout_seconds=20.0)
 
     assert completed.status == "failed"
+    assert completed.execution_model == "process"
     assert completed.error == "ValueError"
+
+
+def test_studio_job_status_counts_execution_models(tmp_path: Path) -> None:
+    """Status snapshots expose thread/process coverage without local paths."""
+
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"compiler"}),
+        default_timeout_seconds=15.0,
+    )
+
+    def thread_task(context: StudioJobContext) -> dict[str, object]:
+        context.write_artifact("reports/thread-result.txt", "thread ok")
+        return {"thread": True}
+
+    thread_record = manager.submit(
+        kind="compiler",
+        owner="operator-1",
+        request_id="req-thread",
+        task=thread_task,
+    )
+    process_record = manager.submit_process_task(
+        kind="compiler",
+        owner="operator-1",
+        request_id="req-process",
+        task_path="tests.test_studio_jobs:process_echo_task",
+        payload={"model": "lif"},
+    )
+    manager.wait(thread_record.job_id, timeout_seconds=2.0)
+    manager.wait(process_record.job_id, timeout_seconds=20.0)
+
+    payload = manager.status().to_public_dict()
+
+    assert payload["completed_count"] == 2
+    assert payload["process_count"] == 1
+    assert payload["thread_count"] == 1
+    assert str(tmp_path) not in str(payload)
 
 
 def test_studio_job_manager_rejects_invalid_process_inputs(tmp_path: Path) -> None:
@@ -798,6 +853,7 @@ def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:
         "completed_count": 0,
         "configured": True,
         "failed_count": 0,
+        "process_count": 0,
         "resource_profiles": [
             {
                 "default_timeout_seconds": 3.0,
@@ -825,6 +881,7 @@ def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:
             },
         ],
         "schema_version": "studio.jobs.status.v1",
+        "thread_count": 0,
         "timed_out_count": 0,
     }
     assert str(tmp_path) not in response.text
@@ -909,9 +966,11 @@ def test_studio_job_list_and_detail_endpoints_are_admin_gated_and_path_free(
     assert listed.status_code == 200
     assert listed.json()["schema_version"] == "studio.jobs.list.v1"
     assert listed.json()["jobs"][0]["job_id"] == record.job_id
+    assert listed.json()["jobs"][0]["execution_model"] == "thread"
     assert listed.json()["jobs"][0]["artifacts"][0]["relative_path"] == "reports/result.txt"
     assert detailed.status_code == 200
     assert detailed.json()["job_id"] == record.job_id
+    assert detailed.json()["execution_model"] == "thread"
     assert detailed.json()["status"] == "completed"
     assert missing.status_code == 404
     assert missing.json()["detail"] == "job_not_found"

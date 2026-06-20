@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import secrets
 # Process workers use shell-free local argument vectors.
 import subprocess  # nosec B404
@@ -38,6 +39,7 @@ StudioJobStatus = Literal[
     "cancelled",
     "timed_out",
 ]
+StudioJobExecutionModel = Literal["thread", "process"]
 StudioJobTask = Callable[["StudioJobContext"], dict[str, object]]
 StudioProcessJobPayload: TypeAlias = Mapping[str, object]
 
@@ -91,6 +93,7 @@ class StudioJobRecord:
     owner: str
     request_id: str | None
     status: StudioJobStatus
+    execution_model: StudioJobExecutionModel
     created_at_utc: str
     started_at_utc: str | None = None
     finished_at_utc: str | None = None
@@ -105,6 +108,7 @@ class StudioJobRecord:
             "artifacts": [artifact.to_public_dict() for artifact in self.artifacts],
             "created_at_utc": self.created_at_utc,
             "error": self.error,
+            "execution_model": self.execution_model,
             "finished_at_utc": self.finished_at_utc,
             "job_id": self.job_id,
             "kind": self.kind,
@@ -157,6 +161,8 @@ class StudioJobStatusSnapshot:
     active_count: int
     completed_count: int
     failed_count: int
+    process_count: int
+    thread_count: int
     timed_out_count: int
     resource_profiles: tuple[StudioJobResourceProfile, ...]
     schema_version: str = JOBS_STATUS_SCHEMA_VERSION
@@ -170,10 +176,12 @@ class StudioJobStatusSnapshot:
             "completed_count": self.completed_count,
             "configured": self.configured,
             "failed_count": self.failed_count,
+            "process_count": self.process_count,
             "resource_profiles": [
                 profile.to_public_dict() for profile in self.resource_profiles
             ],
             "schema_version": self.schema_version,
+            "thread_count": self.thread_count,
             "timed_out_count": self.timed_out_count,
         }
 
@@ -399,6 +407,7 @@ class StudioJobManager:
             owner=owner,
             request_id=request_id,
             status="pending",
+            execution_model="thread",
             created_at_utc=self._timestamp_utc(),
         )
         with self._lock:
@@ -474,6 +483,7 @@ class StudioJobManager:
             owner=owner,
             request_id=request_id,
             status="pending",
+            execution_model="process",
             created_at_utc=self._timestamp_utc(),
         )
         with self._lock:
@@ -607,6 +617,8 @@ class StudioJobManager:
             active_count=sum(record.status in active_statuses for record in records),
             completed_count=sum(record.status == "completed" for record in records),
             failed_count=sum(record.status == "failed" for record in records),
+            process_count=sum(record.execution_model == "process" for record in records),
+            thread_count=sum(record.execution_model == "thread" for record in records),
             timed_out_count=sum(record.status == "timed_out" for record in records),
             resource_profiles=tuple(
                 StudioJobResourceProfile(
@@ -712,7 +724,7 @@ class StudioJobManager:
             "--max-artifact-bytes",
             str(self._max_artifact_bytes),
         ]
-        process = subprocess.Popen(command)  # nosec B603
+        process = subprocess.Popen(command, env=_process_worker_environment())  # nosec B603
         deadline = time.monotonic() + timeout_seconds
         while process.poll() is None:
             if cancel_event.is_set():
@@ -814,6 +826,24 @@ def _resolve_confined_child(*, root: Path, relative_path: str, error_message: st
     if resolved_root != resolved and resolved_root not in resolved.parents:
         raise ValueError(error_message)
     return resolved
+
+
+def _process_worker_environment() -> dict[str, str]:
+    """Return an import-stable environment for Studio process workers."""
+
+    environment = dict(os.environ)
+    src_path = Path(__file__).resolve().parents[3]
+    repo_path = src_path.parent
+    required_paths = (str(src_path), str(repo_path))
+    existing_pythonpath = environment.get("PYTHONPATH")
+    if existing_pythonpath:
+        paths = existing_pythonpath.split(os.pathsep)
+        missing_paths = [path for path in required_paths if path not in paths]
+        if missing_paths:
+            environment["PYTHONPATH"] = os.pathsep.join((*missing_paths, existing_pythonpath))
+    else:
+        environment["PYTHONPATH"] = os.pathsep.join(required_paths)
+    return environment
 
 
 @dataclass(frozen=True, slots=True)
@@ -935,6 +965,7 @@ __all__ = [
     "StudioJobArtifactUnavailable",
     "StudioJobCancelled",
     "StudioJobContext",
+    "StudioJobExecutionModel",
     "StudioJobListSnapshot",
     "StudioJobManager",
     "StudioJobRecord",

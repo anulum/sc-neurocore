@@ -482,6 +482,8 @@ export default function AdminPanelView({
           <div><span>Health</span><strong>{model.jobs.healthLabel}</strong></div>
           <div><span>Active</span><strong>{model.jobs.active}</strong></div>
           <div><span>Completed</span><strong>{model.jobs.completed}</strong></div>
+          <div><span>Process</span><strong>{model.jobs.processCount}</strong></div>
+          <div><span>Thread</span><strong>{model.jobs.threadCount}</strong></div>
           <div><span>Timed out</span><strong>{model.jobs.timedOut}</strong></div>
         </div>
         <div className="admin-audit-list">
@@ -502,7 +504,7 @@ export default function AdminPanelView({
               <span>{job.status}</span>
               <strong>{job.kind} - {job.jobId}</strong>
               <small>
-                {job.owner} - {job.finishedAt} - {job.artifactCount} artifacts
+                {job.owner} - {job.executionModel} - {job.finishedAt} - {job.artifactCount} artifacts
                 {" - "}{job.evidenceArtifactCount} evidence
                 {job.error ? ` - ${job.error}` : ""}
               </small>

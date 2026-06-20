@@ -184,8 +184,10 @@ export interface StudioJobStatus {
   completed_count: number;
   configured: boolean;
   failed_count: number;
+  process_count: number;
   resource_profiles: StudioJobResourceProfile[];
   schema_version: string;
+  thread_count: number;
   timed_out_count: number;
 }
 
@@ -206,6 +208,7 @@ export interface StudioJobRecord {
   artifacts: StudioJobArtifact[];
   created_at_utc: string;
   error: string | null;
+  execution_model: "thread" | "process";
   finished_at_utc: string | null;
   job_id: string;
   kind: string;

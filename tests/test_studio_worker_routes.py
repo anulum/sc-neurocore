@@ -10,8 +10,8 @@
 
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 from pathlib import Path
 from typing import cast
 
@@ -117,6 +117,7 @@ def test_synthesis_route_records_bounded_worker_job(tmp_path: Path) -> None:
     assert data["target"] == "ice40"
     assert "success" in data
     record = _single_job(app, owner="studio-synthesis", kind="synthesis")
+    assert record.execution_model == "process"
     assert [artifact.relative_path for artifact in record.artifacts] == [
         "synthesis/result.json",
         "synthesis/evidence.json",
@@ -154,6 +155,7 @@ def test_multi_target_synthesis_route_records_bounded_worker_job(tmp_path: Path)
         == "studio.synthesis-target-provenance-matrix.v1"
     )
     record = _single_job(app, owner="studio-synthesis", kind="synthesis")
+    assert record.execution_model == "process"
     assert [artifact.relative_path for artifact in record.artifacts] == [
         "synthesis/multi-target-result.json",
         "synthesis/multi-target-evidence.json",
@@ -189,6 +191,7 @@ def test_pnr_route_records_bounded_worker_job(tmp_path: Path) -> None:
     data = response.json()
     assert "success" in data
     record = _single_job(app, owner="studio-pnr", kind="synthesis")
+    assert record.execution_model == "process"
     assert [artifact.relative_path for artifact in record.artifacts] == [
         "synthesis/pnr-result.json",
         "synthesis/pnr-evidence.json",
@@ -228,6 +231,7 @@ def test_compile_route_records_bounded_worker_job(tmp_path: Path) -> None:
     assert "module" in data["verilog"]
     assert data["chars"] > 100
     record = _single_job(app, owner="studio-compiler", kind="compiler")
+    assert record.execution_model == "process"
     assert [artifact.relative_path for artifact in record.artifacts] == [
         "compiler/result.json",
         "compiler/evidence.json",
@@ -261,6 +265,7 @@ def test_pipeline_route_records_bounded_worker_job(tmp_path: Path) -> None:
     data = response.json()
     assert data["success"] is False
     record = _single_job(app, owner="studio-pipeline", kind="compiler")
+    assert record.execution_model == "process"
     assert [artifact.relative_path for artifact in record.artifacts] == [
         "pipeline/result.json",
         "pipeline/evidence.json",

@@ -55,7 +55,9 @@ export interface AdminJobModel {
   configured: boolean;
   failed: number;
   healthLabel: "ready" | "attention" | "unconfigured";
+  processCount: number;
   resourceProfiles: string[];
+  threadCount: number;
   timedOut: number;
 }
 
@@ -65,6 +67,7 @@ export interface AdminJobRecordModel {
   createdAt: string;
   evidenceArtifactCount: number;
   error: string | null;
+  executionModel: string;
   finishedAt: string;
   jobId: string;
   kind: string;
@@ -359,7 +362,9 @@ function buildJobModel(jobStatus: StudioJobStatus | null): AdminJobModel {
       configured: false,
       failed: 0,
       healthLabel: "unconfigured",
+      processCount: 0,
       resourceProfiles: [],
+      threadCount: 0,
       timedOut: 0,
     };
   }
@@ -371,9 +376,11 @@ function buildJobModel(jobStatus: StudioJobStatus | null): AdminJobModel {
     configured: jobStatus.configured,
     failed: jobStatus.failed_count,
     healthLabel: !jobStatus.configured ? "unconfigured" : needsAttention ? "attention" : "ready",
+    processCount: jobStatus.process_count,
     resourceProfiles: jobStatus.resource_profiles.map((profile) =>
       `${profile.kind}: ${profile.default_timeout_seconds}s, ${profile.max_artifact_bytes} bytes, ${profile.execution_models.join("+")}`,
     ),
+    threadCount: jobStatus.thread_count,
     timedOut: jobStatus.timed_out_count,
   };
 }
@@ -390,6 +397,7 @@ function buildJobRecords(records: StudioJobRecord[]): AdminJobRecordModel[] {
         createdAt: record.created_at_utc,
         evidenceArtifactCount: artifactPaths.filter(isEvidenceArtifactPath).length,
         error: record.error,
+        executionModel: record.execution_model,
         finishedAt: record.finished_at_utc ?? "running",
         jobId: record.job_id,
         kind: record.kind,

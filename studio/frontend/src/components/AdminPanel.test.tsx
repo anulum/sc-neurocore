@@ -78,6 +78,7 @@ const jobStatus: StudioJobStatus = {
   completed_count: 4,
   configured: true,
   failed_count: 0,
+  process_count: 3,
   resource_profiles: [
     {
       default_timeout_seconds: 3,
@@ -87,6 +88,7 @@ const jobStatus: StudioJobStatus = {
     },
   ],
   schema_version: "studio.jobs.status.v1",
+  thread_count: 2,
   timed_out_count: 1,
 };
 
@@ -150,6 +152,7 @@ const jobRecord: StudioJobRecord = {
   ],
   created_at_utc: "2026-06-19T20:02:00Z",
   error: null,
+  execution_model: "process",
   finished_at_utc: "2026-06-19T20:03:00Z",
   job_id: "sj_1234",
   kind: "synthesis",
@@ -306,10 +309,13 @@ describe("AdminPanel", () => {
     expect(html).not.toContain("token_sha256");
     expect(html).not.toContain("password_pbkdf2_sha256");
     expect(html).toContain("attention");
+    expect(html).toContain("Process");
+    expect(html).toContain("Thread");
     expect(html).toContain("compiler, evidence, synthesis, training");
     expect(html).toContain("compiler: 3s, 16777216 bytes, thread+process");
     expect(html).toContain("synthesis - sj_1234");
     expect(html).toContain("operator-1");
+    expect(html).toContain("process");
     expect(html).toContain("2 artifacts - 1 evidence");
     expect(html).toContain("reports/result.txt, compiler/compile-evidence.json");
     expect(html).toContain("Add sj_1234 to evidence bundle");

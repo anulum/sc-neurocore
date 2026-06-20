@@ -120,6 +120,7 @@ def test_training_evidence_summary_reports_unavailable_artifact() -> None:
         owner="studio-training",
         request_id=None,
         status="completed",
+        execution_model="thread",
         created_at_utc="2026-06-20T00:00:00Z",
         artifacts=(artifact,),
     )

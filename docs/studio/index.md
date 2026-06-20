@@ -186,10 +186,13 @@ runtime features:
   External EDA child processes also receive host-supported CPU and memory
   ceilings from `SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS` and
   `SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES`. The local worker manager
-  tracks allowed job kinds, active/completed/failed/timed-out counts, and one
-  resource profile per allowed job kind. Each profile records default timeout,
-  per-artifact size ceiling, and supported execution models without exposing
-  host filesystem paths.
+  tracks allowed job kinds, active/completed/failed/timed-out counts,
+  aggregate thread/process execution-model counts, and one resource profile per
+  allowed job kind. Each profile records default timeout, per-artifact size
+  ceiling, and supported execution models without exposing host filesystem
+  paths. Job list and detail payloads also label each job as `thread` or
+  `process`, allowing operators to verify isolation coverage without reading
+  local worker directories.
 - `/api/training/start` now uses the process-backed local worker manager for
   bounded training execution, while `/api/training/stop`,
   `/api/training/status/{job_id}`, and `/api/training/stream/{job_id}` keep the
@@ -296,10 +299,10 @@ runtime features:
   `/api/compile`, `/api/synth/run`, `/api/synth/multi-target`,
   `/api/synth/pnr`, and `/api/pipeline/run` use this path for training,
   ODE-to-RTL compilation, synthesis, PnR, target comparison, and
-  graph-to-synthesis execution while preserving their response contracts and
-  writing the same `studio.action-evidence.v1` artifacts. Existing Studio
-  route closures remain compatible with the thread-backed path during
-  migration.
+  graph-to-synthesis execution while preserving their response contracts,
+  writing the same `studio.action-evidence.v1` artifacts, and reporting
+  `execution_model: "process"` in job rows. Existing Studio route closures
+  remain compatible with the thread-backed path during migration.
 - `/api/studio/operator/status` is an admin-classified aggregate for the
   Studio control plane. It combines deployment profile, route-policy
   enforcement, route inventory counts, protected-route audit coverage,

@@ -522,6 +522,7 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
         owner="operator",
         request_id=None,
         status="completed",
+        execution_model="thread",
         created_at_utc="2026-06-20T00:00:00Z",
         artifacts=(
             StudioJobArtifact(
