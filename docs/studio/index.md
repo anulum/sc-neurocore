@@ -208,7 +208,12 @@ runtime features:
   `studio.training.checkpoint.v1` JSON checkpoint for the selected Training
   Monitor job. `/api/training/checkpoint/import` validates checkpoint and
   config digests before returning the restored training config. The Training
-  Monitor UI exposes matching import/export controls.
+  Monitor UI exposes matching import/export controls. Completed worker-backed
+  training jobs also publish `training/model_state.pt` plus
+  `training/model_state.json` metadata using
+  `studio.training.weight-checkpoint.v1`; checkpoint JSON may reference that
+  metadata, while raw tensors remain behind authenticated job artifact
+  downloads.
 - `/api/compile`, `/api/synth/run`, `/api/synth/multi-target`,
   `/api/synth/pnr`, and `/api/pipeline/run` execute through the same bounded
   local worker manager while preserving their synchronous response payloads.
@@ -457,7 +462,10 @@ Terminal status responses also include a verified
 is available from the worker artifact manifest.
 The panel can export and import `studio.training.checkpoint.v1` JSON
 checkpoints to restore training configuration and source status metadata
-without exposing local paths or raw model-weight tensors.
+without exposing local paths or raw model-weight tensors. Completed process
+jobs publish the actual learned weights as authenticated job artifacts, with
+path-free size, SHA-256, architecture, and parameter-count metadata attached to
+status and checkpoint payloads.
 
 ### Compiler Inspector
 

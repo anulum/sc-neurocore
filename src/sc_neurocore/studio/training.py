@@ -15,8 +15,10 @@ import threading
 import time
 import queue
 from collections.abc import Callable
+from io import BytesIO
 from typing import Any, cast
 
+from sc_neurocore.studio.platform.evidence_bundle import JsonValue
 from sc_neurocore.studio.platform.jobs import (
     StudioJobCancelled,
     StudioJobContext,
@@ -31,6 +33,7 @@ from sc_neurocore.studio.platform.training_checkpoint import (
     import_training_checkpoint_payload,
 )
 from sc_neurocore.studio.platform.training_evidence import build_training_evidence_summary
+from sc_neurocore.studio.platform.training_weights import write_training_weight_checkpoint
 
 try:
     import torch
@@ -100,6 +103,10 @@ class TrainingJob:
         self._thread: threading.Thread | None = None
         self.error: str | None = None
         self.final_metrics: dict[str, Any] | None = None
+        self.weight_checkpoint: dict[str, JsonValue] | None = None
+        self._weight_checkpoint_payload: bytes | None = None
+        self._weight_checkpoint_architecture: str | None = None
+        self._weight_checkpoint_parameter_count: int | None = None
 
     def start(self) -> None:
         """Start this training job in its legacy background thread."""
@@ -152,6 +159,7 @@ class TrainingJob:
         return {
             "training_status": self.status,
             "final_metrics": self.final_metrics,
+            "weight_checkpoint": self.weight_checkpoint,
         }
 
     def _write_terminal_artifacts(
@@ -164,6 +172,7 @@ class TrainingJob:
 
         if self._persisted_event_count > 0:
             context.publish_existing_artifact(TRAINING_EVENT_LOG_ARTIFACT_PATH)
+        self._publish_weight_checkpoint(context)
         status_payload = self._public_status()
         status_artifact = context.write_artifact(
             "training/status.json",
@@ -212,6 +221,7 @@ class TrainingJob:
             "final_metrics": self.final_metrics,
             "job_id": self.id,
             "status": self.status,
+            "weight_checkpoint": self.weight_checkpoint,
         }
 
     def _train(self) -> None:
@@ -377,8 +387,61 @@ class TrainingJob:
             "val_loss": round(val_loss, 6),
             "val_accuracy": round(val_acc, 4),
         }
+        hidden_architecture = "->".join(str(n_hidden) for _ in range(n_layers))
+        architecture = (
+            f"{n_inputs}->{hidden_architecture}->{n_outputs}"
+            if hidden_architecture
+            else f"{n_inputs}->{n_outputs}"
+        )
+        self._capture_weight_checkpoint(
+            model=model,
+            architecture=architecture,
+            model_info=info,
+        )
         self._emit("completed", self.final_metrics)
         monitor.remove()
+
+    def _capture_weight_checkpoint(
+        self,
+        *,
+        model: Any,
+        architecture: str,
+        model_info: dict[str, Any],
+    ) -> None:
+        """Serialize terminal model weights for later job artifact publication."""
+
+        payload = {
+            "config": self.config,
+            "final_metrics": self.final_metrics,
+            "model_info": model_info,
+            "model_state_dict": model.state_dict(),
+            "schema_version": "studio.training.torch-state-dict.v1",
+        }
+        buffer = BytesIO()
+        torch.save(payload, buffer)
+        self._weight_checkpoint_payload = buffer.getvalue()
+        self._weight_checkpoint_architecture = architecture
+        self._weight_checkpoint_parameter_count = int(
+            sum(parameter.numel() for parameter in model.parameters())
+        )
+
+    def _publish_weight_checkpoint(self, context: StudioJobContext) -> None:
+        """Publish captured terminal weights into the job artifact manifest."""
+
+        if self._weight_checkpoint_payload is None:
+            return
+        if self._weight_checkpoint_architecture is None:
+            raise ValueError("Training weight checkpoint architecture is missing.")
+        if self._weight_checkpoint_parameter_count is None:
+            raise ValueError("Training weight checkpoint parameter count is missing.")
+        self.weight_checkpoint = write_training_weight_checkpoint(
+            context,
+            weights_payload=self._weight_checkpoint_payload,
+            config=self.config,
+            architecture=self._weight_checkpoint_architecture,
+            parameter_count=self._weight_checkpoint_parameter_count,
+            final_metrics=self.final_metrics,
+        ).to_public_dict()
 
 
 def _make_synthetic(batch_size: int) -> Any:
@@ -609,12 +672,14 @@ def export_training_checkpoint(
     status = get_training_status(job_id, job_manager)
     final_metrics = status.get("final_metrics")
     evidence_summary = status.get("evidence_summary")
+    weight_checkpoint = status.get("weight_checkpoint")
     checkpoint = build_training_checkpoint(
         job_id=job_id,
         config=job.config,
         status=str(status.get("status", job.status)),
         final_metrics=final_metrics if isinstance(final_metrics, dict) else None,
         evidence_summary=evidence_summary if isinstance(evidence_summary, dict) else None,
+        weight_checkpoint=weight_checkpoint if isinstance(weight_checkpoint, dict) else None,
     )
     return checkpoint.to_public_dict()
 
@@ -656,6 +721,9 @@ def _sync_proxy_job(
         final_metrics = (platform_result or {}).get("final_metrics")
         if isinstance(final_metrics, dict):
             job.final_metrics = dict(final_metrics)
+        weight_checkpoint = (platform_result or {}).get("weight_checkpoint")
+        if isinstance(weight_checkpoint, dict):
+            job.weight_checkpoint = cast(dict[str, JsonValue], dict(weight_checkpoint))
         return
     if platform_status in ("cancelled", "cancelling", "timed_out"):
         job.status = "stopped"
@@ -675,12 +743,14 @@ def _status_from_platform_record(
 
     platform_result = record.result if isinstance(record.result, dict) else None
     final_metrics = (platform_result or {}).get("final_metrics")
+    weight_checkpoint = (platform_result or {}).get("weight_checkpoint")
     return _status_with_evidence_summary(
         {
             "error": record.error,
             "final_metrics": final_metrics if isinstance(final_metrics, dict) else None,
             "job_id": record.job_id,
             "status": _training_status_from_platform_status(record.status),
+            "weight_checkpoint": weight_checkpoint if isinstance(weight_checkpoint, dict) else None,
         },
         evidence_summary,
     )

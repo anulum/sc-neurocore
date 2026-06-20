@@ -18,6 +18,10 @@ import pytest
 
 from sc_neurocore.studio.platform.jobs import StudioJobContext
 from sc_neurocore.studio.platform.training_process import run_training_process_task
+from sc_neurocore.studio.platform.training_weights import (
+    TRAINING_WEIGHT_ARTIFACT_PATH,
+    TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+)
 from sc_neurocore.studio.training import TrainingJob
 
 
@@ -118,6 +122,64 @@ def test_training_process_task_publishes_worker_event_log(
     assert [event["event"] for event in events] == ["config", "epoch", "completed"]
     assert events[0]["data"] == {"dataset": "synthetic", "job_id": "sj_training_process_events"}
     assert events[1]["data"]["train_accuracy"] == 0.75
+
+
+def test_training_process_task_publishes_weight_checkpoint_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Training process task publishes terminal weight artifacts when captured."""
+
+    def complete_training(job: TrainingJob) -> None:
+        job.status = "completed"
+        job.final_metrics = {
+            "train_loss": 0.1,
+            "train_accuracy": 0.9,
+            "val_loss": 0.2,
+            "val_accuracy": 0.8,
+        }
+        job._weight_checkpoint_payload = b"torch weights"
+        job._weight_checkpoint_architecture = "64->128->10"
+        job._weight_checkpoint_parameter_count = 9610
+
+    monkeypatch.setattr(TrainingJob, "_train", complete_training)
+    context = _context(tmp_path, "sj_training_process_weights")
+
+    result = run_training_process_task(context, {"epochs": 1, "dataset": "synthetic"})
+    weight_checkpoint = result["weight_checkpoint"]
+
+    assert isinstance(weight_checkpoint, dict)
+    assert weight_checkpoint == {
+        "architecture": "64->128->10",
+        "config_sha256": weight_checkpoint["config_sha256"],
+        "final_metrics": {
+            "train_accuracy": 0.9,
+            "train_loss": 0.1,
+            "val_accuracy": 0.8,
+            "val_loss": 0.2,
+        },
+        "format": "torch_state_dict",
+        "framework": "pytorch",
+        "metadata_artifact": weight_checkpoint["metadata_artifact"],
+        "parameter_count": 9610,
+        "schema_version": "studio.training.weight-checkpoint.v1",
+        "weights_artifact": weight_checkpoint["weights_artifact"],
+    }
+    assert [artifact.relative_path for artifact in context.artifacts] == [
+        TRAINING_WEIGHT_ARTIFACT_PATH,
+        TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+        "training/status.json",
+        "training/evidence.json",
+    ]
+    metadata = json.loads(
+        (
+            tmp_path
+            / "sj_training_process_weights"
+            / TRAINING_WEIGHT_METADATA_ARTIFACT_PATH
+        ).read_text()
+    )
+    assert metadata["architecture"] == "64->128->10"
+    assert metadata["weights_artifact"]["relative_path"] == TRAINING_WEIGHT_ARTIFACT_PATH
 
 
 def test_training_process_task_writes_failed_evidence(

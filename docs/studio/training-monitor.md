@@ -107,6 +107,21 @@ evidence metadata. They do not expose local filesystem paths and do not include
 raw model-weight tensors. Import validates both the config digest and full
 checkpoint digest before returning the restored training config to the UI.
 
+Completed process-backed training jobs also publish binary model weights as
+job artifacts:
+
+- `training/model_state.pt` stores a PyTorch `state_dict` payload with the
+  training config, model info, final metrics, and learned parameters.
+- `training/model_state.json` stores path-free metadata using
+  `studio.training.weight-checkpoint.v1`, including artifact size, SHA-256,
+  framework, format, architecture, parameter count, config digest, and final
+  metrics.
+
+The portable checkpoint JSON may include that weight metadata under
+`weight_checkpoint`, but the raw tensor payload remains behind the authenticated
+job artifact download route so API consumers do not accidentally move large
+binary weights through ordinary status or checkpoint responses.
+
 ## API Endpoints
 
 | Method | Endpoint | Description |
@@ -154,6 +169,14 @@ Returns a `studio.training.checkpoint.v1` payload:
   "status": "completed",
   "config": {"dataset": "synthetic", "epochs": 10},
   "config_sha256": "...",
+  "weight_checkpoint": {
+    "schema_version": "studio.training.weight-checkpoint.v1",
+    "weights_artifact": {
+      "relative_path": "training/model_state.pt",
+      "size_bytes": 12345,
+      "sha256": "..."
+    }
+  },
   "checkpoint_sha256": "..."
 }
 ```

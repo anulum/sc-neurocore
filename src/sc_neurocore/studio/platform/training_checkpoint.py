@@ -42,6 +42,8 @@ class StudioTrainingCheckpoint:
         Terminal metric map, when the source job reached a terminal state.
     evidence_summary:
         Optional path-free terminal evidence summary from the source job.
+    weight_checkpoint:
+        Optional path-free metadata for a job-managed binary weight artifact.
     generated_at_utc:
         UTC timestamp for the export operation.
     config_sha256:
@@ -55,6 +57,7 @@ class StudioTrainingCheckpoint:
     status: str
     final_metrics: dict[str, JsonValue] | None
     evidence_summary: dict[str, JsonValue] | None
+    weight_checkpoint: dict[str, JsonValue] | None
     generated_at_utc: str
     config_sha256: str
     checkpoint_sha256: str
@@ -73,6 +76,7 @@ class StudioTrainingCheckpoint:
             "job_id": self.job_id,
             "schema_version": self.schema_version,
             "status": self.status,
+            "weight_checkpoint": self.weight_checkpoint,
         }
         return payload
 
@@ -84,6 +88,7 @@ def build_training_checkpoint(
     status: str,
     final_metrics: Mapping[str, object] | None = None,
     evidence_summary: Mapping[str, object] | None = None,
+    weight_checkpoint: Mapping[str, object] | None = None,
     clock: datetime | None = None,
 ) -> StudioTrainingCheckpoint:
     """Build a portable Training Monitor checkpoint manifest.
@@ -100,6 +105,8 @@ def build_training_checkpoint(
         Optional terminal metrics from the training status response.
     evidence_summary:
         Optional path-free terminal evidence summary.
+    weight_checkpoint:
+        Optional path-free metadata for a job-managed binary weight artifact.
     clock:
         Optional UTC timestamp override for deterministic tests.
 
@@ -125,6 +132,14 @@ def build_training_checkpoint(
         if evidence_summary is None
         else _json_object(evidence_summary, "Training checkpoint evidence must be JSON.")
     )
+    weight_payload = (
+        None
+        if weight_checkpoint is None
+        else _json_object(
+            weight_checkpoint,
+            "Training checkpoint weight metadata must be JSON.",
+        )
+    )
     generated_at = (clock or datetime.now(UTC)).astimezone(UTC).replace(microsecond=0)
     base_payload: dict[str, JsonValue] = {
         "config": checkpoint_config,
@@ -135,6 +150,7 @@ def build_training_checkpoint(
         "job_id": _required_non_empty_string(job_id, "job_id"),
         "schema_version": STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION,
         "status": _required_non_empty_string(status, "status"),
+        "weight_checkpoint": weight_payload,
     }
     checkpoint_sha256 = _sha256_json(base_payload)
     return StudioTrainingCheckpoint(
@@ -143,6 +159,7 @@ def build_training_checkpoint(
         status=cast(str, base_payload["status"]),
         final_metrics=metrics_payload,
         evidence_summary=evidence_payload,
+        weight_checkpoint=weight_payload,
         generated_at_utc=cast(str, base_payload["generated_at_utc"]),
         config_sha256=cast(str, base_payload["config_sha256"]),
         checkpoint_sha256=checkpoint_sha256,
@@ -193,6 +210,7 @@ def import_training_checkpoint_payload(
         "imported_schema_version": STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION,
         "source_job_id": _required_string_field(checkpoint, "job_id"),
         "source_status": _required_string_field(checkpoint, "status"),
+        "source_weight_checkpoint": checkpoint.get("weight_checkpoint"),
     }
 
 

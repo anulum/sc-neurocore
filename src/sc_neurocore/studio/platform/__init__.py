@@ -135,6 +135,13 @@ from sc_neurocore.studio.platform.training_checkpoint import (
     build_training_checkpoint,
     import_training_checkpoint_payload,
 )
+from sc_neurocore.studio.platform.training_weights import (
+    STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION,
+    TRAINING_WEIGHT_ARTIFACT_PATH,
+    TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+    StudioTrainingWeightCheckpoint,
+    write_training_weight_checkpoint,
+)
 from sc_neurocore.studio.platform.operator import (
     OPERATOR_STATUS_SCHEMA_VERSION,
     OperatorIdentityMode,
@@ -257,6 +264,9 @@ __all__ = [
     "StudioLoginThrottleDecision",
     "STUDIO_PREFLIGHT_SCHEMA_VERSION",
     "STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION",
+    "STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION",
+    "TRAINING_WEIGHT_ARTIFACT_PATH",
+    "TRAINING_WEIGHT_METADATA_ARTIFACT_PATH",
     "StudioJobArtifact",
     "StudioJobArtifactPayload",
     "StudioJobArtifactUnavailable",
@@ -272,6 +282,7 @@ __all__ = [
     "StudioJobTask",
     "StudioProcessJobPayload",
     "StudioTrainingCheckpoint",
+    "StudioTrainingWeightCheckpoint",
     "TrainingEvidenceSummary",
     "TrainingCheckpointConfig",
     "StudioOperatorCapabilityStatus",
@@ -291,6 +302,7 @@ __all__ = [
     "build_studio_operator_status",
     "build_training_evidence_summary",
     "build_training_checkpoint",
+    "write_training_weight_checkpoint",
     "import_training_checkpoint_payload",
     "list_studio_deployment_profile_packages",
     "run_studio_preflight",

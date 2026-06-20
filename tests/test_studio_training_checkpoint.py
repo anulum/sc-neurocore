@@ -48,6 +48,14 @@ def test_training_checkpoint_round_trip_validates_hashes() -> None:
             "action_kind": "studio.training.run",
             "schema_version": "studio.training.evidence-summary.v1",
         },
+        weight_checkpoint={
+            "schema_version": "studio.training.weight-checkpoint.v1",
+            "weights_artifact": {
+                "relative_path": "training/model_state.pt",
+                "sha256": "abc",
+                "size_bytes": 12,
+            },
+        },
         clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
     ).to_public_dict()
 
@@ -56,6 +64,7 @@ def test_training_checkpoint_round_trip_validates_hashes() -> None:
     assert imported["imported_schema_version"] == STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION
     assert imported["source_job_id"] == "sj_training"
     assert imported["source_status"] == "completed"
+    assert imported["source_weight_checkpoint"] == checkpoint["weight_checkpoint"]
     assert imported["config"] == checkpoint["config"]
     assert imported["config_sha256"] == checkpoint["config_sha256"]
 
@@ -107,12 +116,14 @@ def test_training_checkpoint_endpoints_round_trip(tmp_path: Path) -> None:
     assert checkpoint["config"]["dataset"] == "synthetic"
     assert checkpoint["config"]["epochs"] == 1
     assert "checkpoint_sha256" in checkpoint
+    assert "weight_checkpoint" in checkpoint
 
     imported = client.post("/api/training/checkpoint/import", json=checkpoint)
     assert imported.status_code == 200
     import_payload = imported.json()
     assert import_payload["source_job_id"] == job_id
     assert import_payload["config"] == checkpoint["config"]
+    assert import_payload["source_weight_checkpoint"] == checkpoint["weight_checkpoint"]
 
 
 def test_training_checkpoint_export_rejects_unknown_job(tmp_path: Path) -> None:
