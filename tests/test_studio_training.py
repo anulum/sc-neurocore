@@ -8,7 +8,10 @@
 
 from __future__ import annotations
 
+import json
+import threading
 import time
+from pathlib import Path
 from typing import cast
 
 import pytest
@@ -18,7 +21,12 @@ fastapi = pytest.importorskip("fastapi")
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
-from sc_neurocore.studio.platform.jobs import StudioJobManager
+from sc_neurocore.studio.platform import STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION
+from sc_neurocore.studio.platform.jobs import (
+    StudioJobCancelled,
+    StudioJobContext,
+    StudioJobManager,
+)
 from sc_neurocore.studio.training import (
     TrainingJob,
     _CELL_TYPES,
@@ -109,6 +117,98 @@ class TestJobLifecycle:
     def test_stop_nonexistent(self) -> None:
         result = stop_training("nonexistent_id")
         assert "error" in result
+
+    def test_blocking_training_writes_terminal_evidence(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        """Bounded training writes status and action evidence artifacts."""
+
+        def complete_training(job: TrainingJob) -> None:
+            job.status = "completed"
+            job.final_metrics = {
+                "train_loss": 0.1,
+                "train_accuracy": 0.9,
+                "val_loss": 0.2,
+                "val_accuracy": 0.8,
+            }
+
+        monkeypatch.setattr(TrainingJob, "_train", complete_training)
+        context = StudioJobContext(
+            job_id="sj_training",
+            work_dir=tmp_path,
+            cancel_event=threading.Event(),
+            max_artifact_bytes=4096,
+        )
+        job = TrainingJob({"epochs": 1}, job_id="sj_training")
+
+        result = job.run_blocking(context)
+
+        assert result["training_status"] == "completed"
+        assert [artifact.relative_path for artifact in context.artifacts] == [
+            "training/status.json",
+            "training/evidence.json",
+        ]
+        evidence = json.loads((tmp_path / "training" / "evidence.json").read_text())
+        assert evidence["schema_version"] == STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION
+        assert evidence["action_kind"] == "studio.training.run"
+        assert evidence["evidence_classification"] == "training"
+        assert evidence["job_id"] == "sj_training"
+        assert evidence["replay_route"] == "POST /api/training/start"
+        assert evidence["status"] == "completed"
+        assert evidence["artifacts"][0]["relative_path"] == "training/status.json"
+
+    def test_blocking_training_failure_writes_error_evidence(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        """Failed bounded training writes failed evidence before propagating."""
+
+        def fail_training(job: TrainingJob) -> None:
+            raise RuntimeError("training boom")
+
+        monkeypatch.setattr(TrainingJob, "_train", fail_training)
+        context = StudioJobContext(
+            job_id="sj_training_failed",
+            work_dir=tmp_path,
+            cancel_event=threading.Event(),
+            max_artifact_bytes=4096,
+        )
+        job = TrainingJob({"epochs": 1}, job_id="sj_training_failed")
+
+        with pytest.raises(RuntimeError, match="training boom"):
+            job.run_blocking(context)
+
+        evidence = json.loads((tmp_path / "training" / "evidence.json").read_text())
+        assert evidence["error_message"] == "training boom"
+        assert evidence["status"] == "failed"
+
+    def test_blocking_training_stop_writes_cancelled_evidence(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        """Stopped bounded training writes cancelled evidence before propagating."""
+
+        def stop_training_run(job: TrainingJob) -> None:
+            job.status = "stopped"
+
+        monkeypatch.setattr(TrainingJob, "_train", stop_training_run)
+        context = StudioJobContext(
+            job_id="sj_training_stopped",
+            work_dir=tmp_path,
+            cancel_event=threading.Event(),
+            max_artifact_bytes=4096,
+        )
+        job = TrainingJob({"epochs": 1}, job_id="sj_training_stopped")
+
+        with pytest.raises(StudioJobCancelled, match="stopped"):
+            job.run_blocking(context)
+
+        evidence = json.loads((tmp_path / "training" / "evidence.json").read_text())
+        assert evidence["status"] == "cancelled"
 
 
 # --- Training Endpoints ---

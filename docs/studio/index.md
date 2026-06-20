@@ -179,7 +179,11 @@ runtime features:
 - `/api/training/start`, `/api/training/stop`, and
   `/api/training/status/{job_id}` now use the local worker manager for bounded
   training execution while preserving the training monitor's existing SSE
-  metric stream contract.
+  metric stream contract. Terminal training jobs write `training/status.json`
+  and `training/evidence.json`; the evidence manifest uses
+  `studio.action-evidence.v1` and records terminal status, action kind, replay
+  route, job ID, evidence classification, status payload SHA-256, and status
+  artifact metadata without local paths or secret material.
 - `/api/compile`, `/api/synth/run`, `/api/synth/multi-target`,
   `/api/synth/pnr`, and `/api/pipeline/run` execute through the same bounded
   local worker manager while preserving their synchronous response payloads.

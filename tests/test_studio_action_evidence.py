@@ -62,3 +62,33 @@ def test_write_studio_action_evidence_manifest_is_path_free(tmp_path: Path) -> N
     assert payload["artifacts"] == [result_artifact.to_public_dict()]
     assert evidence.artifact.relative_path == "synthesis/evidence.json"
     assert str(tmp_path) not in json.dumps(payload)
+
+
+def test_write_studio_action_evidence_manifest_records_error_status(tmp_path: Path) -> None:
+    """Action evidence can describe failed terminal worker actions."""
+
+    context = StudioJobContext(
+        job_id="sj_failed",
+        work_dir=tmp_path,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4096,
+    )
+    result = {"error": "solver_failed", "status": "failed"}
+    result_artifact = context.write_artifact("training/status.json", json.dumps(result))
+
+    evidence = write_studio_action_evidence_manifest(
+        context,
+        action_kind="studio.training.run",
+        result=result,
+        result_artifact=result_artifact,
+        evidence_artifact_path="training/evidence.json",
+        evidence_classification="training",
+        replay_route="POST /api/training/start",
+        status="failed",
+        error_message="solver_failed",
+    )
+
+    payload = evidence.to_public_dict()
+    assert payload["evidence_classification"] == "training"
+    assert payload["error_message"] == "solver_failed"
+    assert payload["status"] == "failed"

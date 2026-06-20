@@ -32,6 +32,7 @@ from sc_neurocore.studio.platform.auth_throttle import (
 from sc_neurocore.studio.platform.action_evidence import (
     STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION,
     EvidenceClassification,
+    EvidenceStatus,
     StudioActionEvidence,
     write_studio_action_evidence_manifest,
 )
@@ -178,6 +179,7 @@ __all__ = [
     "DEFAULT_STUDIO_BROWSER_LOGIN_MAX_FAILURES",
     "EvidenceClass",
     "EvidenceClassification",
+    "EvidenceStatus",
     "IDENTITY_SCHEMA_VERSION",
     "JOBS_LIST_SCHEMA_VERSION",
     "JOBS_STATUS_SCHEMA_VERSION",

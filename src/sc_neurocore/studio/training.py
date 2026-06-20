@@ -21,6 +21,10 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobContext,
     StudioJobManager,
 )
+from sc_neurocore.studio.platform.action_evidence import (
+    EvidenceStatus,
+    write_studio_action_evidence_manifest,
+)
 
 try:
     import torch
@@ -127,15 +131,41 @@ class TrainingJob:
             self.error = str(exc)
             self._emit("error", {"message": str(exc)})
             self.status = "failed"
+            self._write_terminal_artifacts(context, evidence_status="failed")
             raise
         if self.status == "stopped" or context.cancelled:
-            context.write_artifact("training/status.json", json.dumps(self._public_status()))
+            self._write_terminal_artifacts(context, evidence_status="cancelled")
             raise StudioJobCancelled("Studio training job was stopped.")
-        context.write_artifact("training/status.json", json.dumps(self._public_status()))
+        self._write_terminal_artifacts(context, evidence_status="completed")
         return {
             "training_status": self.status,
             "final_metrics": self.final_metrics,
         }
+
+    def _write_terminal_artifacts(
+        self,
+        context: StudioJobContext,
+        *,
+        evidence_status: EvidenceStatus,
+    ) -> None:
+        """Write terminal training status and evidence artifacts."""
+
+        status_payload = self._public_status()
+        status_artifact = context.write_artifact(
+            "training/status.json",
+            json.dumps(status_payload, sort_keys=True),
+        )
+        write_studio_action_evidence_manifest(
+            context,
+            action_kind="studio.training.run",
+            result=status_payload,
+            result_artifact=status_artifact,
+            evidence_artifact_path="training/evidence.json",
+            evidence_classification="training",
+            replay_route="POST /api/training/start",
+            status=evidence_status,
+            error_message=self.error,
+        )
 
     def _emit(self, event_type: str, data: dict[str, Any]) -> None:
         payload = {"event": event_type, "data": data, "timestamp": time.time()}

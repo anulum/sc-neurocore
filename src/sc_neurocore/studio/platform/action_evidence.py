@@ -28,8 +28,10 @@ EvidenceClassification: TypeAlias = Literal[
     "simulation",
     "compile",
     "synthesis",
+    "training",
     "release_benchmark",
 ]
+EvidenceStatus: TypeAlias = Literal["completed", "failed", "cancelled", "timed_out"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,8 +56,10 @@ def write_studio_action_evidence_manifest(
     evidence_artifact_path: str,
     evidence_classification: EvidenceClassification,
     replay_route: str,
+    status: EvidenceStatus = "completed",
     request_id: str | None = None,
     principal_id: str | None = None,
+    error_message: str | None = None,
 ) -> StudioActionEvidence:
     """Write a normalized evidence manifest for a completed worker action."""
 
@@ -76,8 +80,10 @@ def write_studio_action_evidence_manifest(
         "replay_route": replay_route,
         "request_id": request_id,
         "schema_version": STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION,
-        "status": "completed",
+        "status": status,
     }
+    if error_message is not None:
+        payload["error_message"] = error_message
     encoded = json.dumps(payload, indent=2, sort_keys=True)
     artifact = context.write_artifact(evidence_artifact_path, f"{encoded}\n")
     return StudioActionEvidence(payload=payload, artifact=artifact)
@@ -91,6 +97,7 @@ def _payload_sha256(result: Mapping[str, object]) -> str:
 __all__ = [
     "STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION",
     "EvidenceClassification",
+    "EvidenceStatus",
     "StudioActionEvidence",
     "write_studio_action_evidence_manifest",
 ]
