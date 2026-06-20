@@ -168,13 +168,6 @@ def test_studio_preflight_counts_active_browser_admin(tmp_path: Path) -> None:
         identity_path,
         token_factory=lambda _: "release-preflight-token",
     )
-    update_studio_identity_record(
-        identity_path,
-        principal_id="svc-studio-admin",
-        roles=("studio.viewer",),
-        active=True,
-        expires_at_utc=None,
-    )
     add_studio_browser_user_record(
         identity_path,
         username="viewer",
@@ -188,6 +181,13 @@ def test_studio_preflight_counts_active_browser_admin(tmp_path: Path) -> None:
         principal_id="human-operator",
         roles=("studio.admin",),
         password="operator-secret",
+    )
+    update_studio_identity_record(
+        identity_path,
+        principal_id="svc-studio-admin",
+        roles=("studio.viewer",),
+        active=True,
+        expires_at_utc=None,
     )
     (tmp_path / "audit").mkdir()
     (tmp_path / "jobs").mkdir()

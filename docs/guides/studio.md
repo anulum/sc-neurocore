@@ -312,7 +312,9 @@ not expose bearer-token hashes or filesystem paths. The PATCH endpoint updates
 roles, active state, and expiry atomically, preserves the stored token hash,
 reloads the backend authenticator after success, and records a dedicated
 `studio.identity.service_account.update` audit event in addition to the normal
-route-policy audit decision.
+route-policy audit decision. Lifecycle updates fail with `409` if the change
+would leave the identity file without any active unexpired `studio.admin`
+principal.
 
 Interactive operators can use persistent browser users from the same identity
 file. Add them offline through the maintained provisioning command:
@@ -357,6 +359,8 @@ immediately, rejects duplicate usernames with `409`, and records
 active-state, and expiry updates preserve the stored password verifier, reload
 backend authentication immediately, and record both the route-policy audit
 decision and a dedicated `studio.identity.browser_user.update` audit event.
+Browser-user lifecycle updates use the same last-admin guard as
+service-account updates.
 
 Use `POST /api/studio/identity/browser-users/{username}/password` or the Admin
 panel per-user secret field to rotate a browser user's password verifier. The

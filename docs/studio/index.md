@@ -124,7 +124,9 @@ runtime features:
   and `PATCH /api/studio/identity/service-accounts/{principal_id}` updates
   roles, active state, and optional UTC expiry while preserving the stored
   bearer-token hash. The backend reloads the identity authenticator after a
-  successful update, so role changes apply without a Studio restart.
+  successful update, so role changes apply without a Studio restart. Updates
+  fail with `409` if they would remove the final active unexpired
+  `studio.admin` principal.
 - The Admin panel includes an Identity section backed by the same endpoints.
   It displays principal IDs, active state, expiry, and role lists without
   exposing token hashes or local identity-file paths. Role changes emit both
@@ -143,8 +145,10 @@ runtime features:
   updates roles, active state, and optional UTC expiry while preserving the
   stored password verifier. The backend reloads the identity authenticator
   after a successful update, so disabling a browser user or changing roles
-  applies without a Studio restart. The Admin panel exposes create, lifecycle,
-  and secret-rotation controls without returning password verifier material.
+  applies without a Studio restart. The same last-admin guard prevents
+  browser-user changes that would remove the final active admin path. The Admin
+  panel exposes create, lifecycle, and secret-rotation controls without
+  returning password verifier material.
 - Admins rotate a browser user's password with
   `POST /api/studio/identity/browser-users/{username}/password`. The request
   writes a fresh PBKDF2-HMAC-SHA256 verifier, preserves password-free user

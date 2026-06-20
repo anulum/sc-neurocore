@@ -13,11 +13,13 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform.identity import (
     StudioIdentityAuthenticator,
+    StudioIdentityLifecycleError,
     list_studio_browser_user_public_records,
     list_studio_identity_public_records,
     load_studio_identity_store,
@@ -67,6 +69,60 @@ def _write_identity_file(path: Path, *, active: bool = True) -> str:
         encoding="utf-8",
     )
     return token
+
+
+def _write_single_service_admin_identity_file(path: Path) -> str:
+    token = "sole-admin-token"
+    path.write_text(
+        json.dumps(
+            {
+                "browser_users": [],
+                "schema_version": "sc-neurocore.studio.identity.v1",
+                "service_accounts": [
+                    {
+                        "active": True,
+                        "expires_at_utc": None,
+                        "principal_id": "svc-sole-admin",
+                        "roles": ["studio.admin"],
+                        "token_sha256": hashlib.sha256(token.encode("utf-8")).hexdigest(),
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return token
+
+
+def _write_single_browser_admin_identity_file(path: Path) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "browser_users": [
+                    {
+                        "active": True,
+                        "expires_at_utc": None,
+                        "password_pbkdf2_sha256": make_browser_user_password_verifier(
+                            "operator-password"
+                        ),
+                        "principal_id": "human-sole-admin",
+                        "roles": ["studio.admin"],
+                        "username": "operator",
+                    }
+                ],
+                "schema_version": "sc-neurocore.studio.identity.v1",
+                "service_accounts": [
+                    {
+                        "active": True,
+                        "principal_id": "svc-viewer",
+                        "roles": ["studio.viewer"],
+                        "token_sha256": hashlib.sha256(b"viewer-token").hexdigest(),
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
 
 
 def _client(identity_path: Path, audit_path: Path) -> TestClient:
@@ -181,6 +237,40 @@ def test_browser_user_update_preserves_password_verifier_and_reloads_auth(
     assert auth_result.failure_reason == "disabled_browser_user"
 
 
+def test_service_account_update_refuses_to_remove_last_admin(tmp_path: Path) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    _write_single_service_admin_identity_file(identity_path)
+    before = identity_path.read_text(encoding="utf-8")
+
+    with pytest.raises(StudioIdentityLifecycleError, match="active unexpired studio.admin"):
+        update_studio_identity_record(
+            identity_path,
+            active=False,
+            expires_at_utc=None,
+            principal_id="svc-sole-admin",
+            roles=["studio.viewer"],
+        )
+
+    assert identity_path.read_text(encoding="utf-8") == before
+
+
+def test_browser_user_update_refuses_to_remove_last_admin(tmp_path: Path) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    _write_single_browser_admin_identity_file(identity_path)
+    before = identity_path.read_text(encoding="utf-8")
+
+    with pytest.raises(StudioIdentityLifecycleError, match="active unexpired studio.admin"):
+        update_studio_browser_user_record(
+            identity_path,
+            active=False,
+            expires_at_utc=None,
+            roles=["studio.viewer"],
+            username="operator",
+        )
+
+    assert identity_path.read_text(encoding="utf-8") == before
+
+
 def test_identity_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
@@ -225,6 +315,32 @@ def test_identity_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -> No
     assert "studio.identity.service_accounts.list" in actions
     assert "studio.identity.service_accounts.update" in actions
     assert "studio.identity.service_account.update" in actions
+
+
+def test_identity_admin_route_rejects_last_admin_removal(tmp_path: Path) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    audit_path = tmp_path / "studio-audit.jsonl"
+    token = _write_single_service_admin_identity_file(identity_path)
+    client = _client(identity_path, audit_path)
+
+    response = client.patch(
+        "/api/studio/identity/service-accounts/svc-sole-admin",
+        headers=_admin_headers(token),
+        json={"active": False, "expires_at_utc": None, "roles": ["studio.viewer"]},
+    )
+
+    assert response.status_code == 409
+    assert "active unexpired studio.admin" in response.json()["detail"]
+    records = list_studio_identity_public_records(identity_path)
+    assert records[0].to_public_dict() == {
+        "active": True,
+        "expires_at_utc": None,
+        "principal_id": "svc-sole-admin",
+        "roles": ["studio.admin"],
+    }
+    actions = [row["action"] for row in _audit_rows(audit_path)]
+    assert "studio.identity.service_accounts.update" in actions
+    assert "studio.identity.service_account.update" not in actions
 
 
 def test_browser_user_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -> None:

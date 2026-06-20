@@ -108,6 +108,7 @@ from sc_neurocore.studio.platform import (
     StudioBrowserLoginThrottle,
     StudioBrowserSessionManager,
     StudioIdentityAuthenticator,
+    StudioIdentityLifecycleError,
     StudioIdentityResult,
     StudioJobArtifactUnavailable,
     StudioJobContext,
@@ -1457,6 +1458,8 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 status_code=404,
                 detail="identity_service_account_not_found",
             ) from exc
+        except StudioIdentityLifecycleError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         except AuditSinkError as exc:
@@ -1507,6 +1510,8 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 status_code=404,
                 detail="identity_browser_user_not_found",
             ) from exc
+        except StudioIdentityLifecycleError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         except AuditSinkError as exc:

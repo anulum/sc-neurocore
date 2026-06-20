@@ -28,6 +28,11 @@ UTC = timezone.utc
 DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS = 390_000
 MIN_BROWSER_USER_PASSWORD_ITERATIONS = 100_000
 MIN_BROWSER_USER_PASSWORD_SALT_BYTES = 16
+_ADMIN_ROLE = "studio.admin"
+
+
+class StudioIdentityLifecycleError(ValueError):
+    """Raised when an identity mutation would break lifecycle invariants."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -439,6 +444,10 @@ def update_studio_identity_record(
             records.append(record)
     if updated is None:
         raise KeyError(clean_principal_id)
+    _require_active_admin_principal(
+        service_accounts=tuple(records),
+        browser_users=store.browser_users,
+    )
     _write_identity_store(path, service_accounts=tuple(records), browser_users=store.browser_users)
     return updated.to_public_record()
 
@@ -503,6 +512,10 @@ def update_studio_browser_user_record(
             records.append(record)
     if updated is None:
         raise KeyError(clean_username)
+    _require_active_admin_principal(
+        service_accounts=store.service_accounts,
+        browser_users=tuple(records),
+    )
     _write_identity_store(
         path,
         service_accounts=store.service_accounts,
@@ -811,6 +824,34 @@ def _write_identity_store(
         raise
 
 
+def _require_active_admin_principal(
+    *,
+    service_accounts: tuple[StudioIdentityRecord, ...],
+    browser_users: tuple[StudioBrowserUserRecord, ...],
+    now: datetime | None = None,
+) -> None:
+    clock = datetime.now(UTC) if now is None else now.astimezone(UTC)
+    if any(_active_admin_service_account(record, now=clock) for record in service_accounts):
+        return
+    if any(_active_admin_browser_user(record, now=clock) for record in browser_users):
+        return
+    raise StudioIdentityLifecycleError(
+        "Studio identity updates must leave at least one active unexpired studio.admin principal."
+    )
+
+
+def _active_admin_service_account(record: StudioIdentityRecord, *, now: datetime) -> bool:
+    if not record.active or _ADMIN_ROLE not in record.roles:
+        return False
+    return record.expires_at_utc is None or now < record.expires_at_utc
+
+
+def _active_admin_browser_user(record: StudioBrowserUserRecord, *, now: datetime) -> bool:
+    if not record.active or _ADMIN_ROLE not in record.roles:
+        return False
+    return record.expires_at_utc is None or now < record.expires_at_utc
+
+
 def _record_to_json(record: StudioIdentityRecord) -> dict[str, bool | list[str] | str | None]:
     expiry = (
         None
@@ -880,6 +921,7 @@ __all__ = [
     "StudioBrowserUserPublicRecord",
     "StudioBrowserUserRecord",
     "StudioIdentityAuthenticator",
+    "StudioIdentityLifecycleError",
     "StudioIdentityPublicRecord",
     "StudioIdentityRecord",
     "StudioIdentityResult",
