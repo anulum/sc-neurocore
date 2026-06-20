@@ -130,6 +130,7 @@ export default function SimulationPlot() {
     activeTab === "freq" ? resultMetadata(freqResult) :
     activeTab === "phase" ? resultMetadata(nullclineResult) :
     null;
+  const simulationMetadata = activeTab === "trace" ? result?.run_metadata ?? null : null;
 
   function handleCanvasClick(e: React.MouseEvent<HTMLCanvasElement>) {
     if (activeTab !== "heatmap" || !heatmapResult) return;
@@ -788,9 +789,26 @@ export default function SimulationPlot() {
           fontSize: 10, pointerEvents: "none",
         }}>
           <span>{analysisMetadata.analysis_type}</span>
+          <span>class {analysisMetadata.evidence_classification}</span>
           <span>{analysisMetadata.source}</span>
           <span>in {analysisMetadata.input_sha256.slice(0, 10)}</span>
           <span>out {analysisMetadata.result_sha256.slice(0, 10)}</span>
+        </div>
+      )}
+      {simulationMetadata && (
+        <div style={{
+          position: "absolute", top: 8, right: 8, zIndex: 2,
+          display: "flex", gap: 10, flexWrap: "wrap",
+          maxWidth: "calc(100% - 16px)",
+          padding: "4px 8px", border: "1px solid var(--border)",
+          borderRadius: 4, background: "rgba(13,17,23,0.92)",
+          color: "var(--text-secondary)", fontFamily: "var(--font-mono)",
+          fontSize: 10, pointerEvents: "none",
+        }}>
+          <span>class {simulationMetadata.evidence_classification}</span>
+          <span>{simulationMetadata.source}</span>
+          <span>in {simulationMetadata.input_sha256.slice(0, 10)}</span>
+          <span>out {simulationMetadata.result_sha256.slice(0, 10)}</span>
         </div>
       )}
       <canvas ref={canvasRef}

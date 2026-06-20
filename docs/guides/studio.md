@@ -141,6 +141,8 @@ Four injection protocols for all simulations:
 - **CSV export**: download simulation data as comma-separated values
 - **JSON export**: download the simulation response with path-free
   `studio.simulation-run.v1` reproducibility metadata
+- **Evidence labels**: trace and analysis plots surface evidence
+  classification, source, input digest, and result digest labels
 - **PNG export**: screenshot the current plot
 
 ## API Reference
@@ -177,7 +179,8 @@ and `/api/nullclines` include `analysis_metadata` with the
 `studio.analysis-result.v1` schema. The manifest records the analysis type,
 evidence classification, source (`ode`, `model`, `mixed`, or `unknown`),
 input and result SHA-256 digests, and the returned result keys without
-exposing host-local paths.
+exposing host-local paths. The corresponding plot views surface the evidence
+class, source, input digest, and result digest next to the rendered analysis.
 
 The frequency-response endpoint runs the simulator with a true sinusoidal
 current protocol for each frequency. The injected trace is

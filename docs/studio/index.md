@@ -204,7 +204,9 @@ runtime features:
   `/api/heatmap`, `/api/freq-response`, `/api/precision`, and
   `/api/nullclines` responses include `studio.analysis-result.v1` metadata
   with the analysis type, evidence classification, source, input and result
-  SHA-256 digests, and output keys without host-local paths.
+  SHA-256 digests, and output keys without host-local paths. Studio plot panels
+  surface those class/source/digest labels beside analysis views, and the trace
+  view surfaces the same labels from `studio.simulation-run.v1` metadata.
 - Those worker-backed compile, synthesis, PnR, and pipeline routes also write
   `studio.action-evidence.v1` manifests beside the result artifacts. These
   manifests record action kind, replay route, job ID, evidence classification,
