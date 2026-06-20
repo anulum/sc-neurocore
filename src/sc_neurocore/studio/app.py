@@ -1128,6 +1128,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             settings=settings,
             capabilities=tuple(studio_capabilities.health_all()),
             audit_status=studio_audit_sink.status(),
+            browser_login_snapshot=studio_browser_login_throttle.snapshot(),
             job_status=studio_job_manager.status(),
             route_policy_registry=studio_route_policies,
         ).to_public_dict()

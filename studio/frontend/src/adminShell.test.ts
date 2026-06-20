@@ -182,8 +182,11 @@ const identityBrowserUser: StudioIdentityBrowserUser = {
 const operatorStatus: StudioOperatorStatus = {
   audit: auditStatus,
   browser_login: {
+    active_bucket_count: 2,
     cooldown_seconds: 900,
     failure_window_seconds: 300,
+    locked_bucket_count: 1,
+    max_retry_after_seconds: 120,
     max_failures: 5,
   },
   capabilities: {
@@ -210,13 +213,13 @@ const operatorStatus: StudioOperatorStatus = {
   },
   route_policies: {
     admin_count: 17,
-    authenticated_count: 54,
+    authenticated_count: 56,
     enforced: true,
-    protected_audit_action_count: 71,
-    protected_count: 71,
+    protected_audit_action_count: 73,
+    protected_count: 73,
     protected_routes_audited: true,
     public_count: 22,
-    total_count: 93,
+    total_count: 95,
   },
   schema_version: "studio.operator.status.v1",
 };
@@ -360,8 +363,11 @@ describe("admin shell model", () => {
       },
     ]);
     expect(model.operator).toEqual({
+      browserLoginActiveBuckets: "2",
       browserLoginCooldown: "900s",
+      browserLoginLockedBuckets: "1",
       browserLoginLimit: "5",
+      browserLoginMaxRetryAfter: "120s",
       browserLoginWindow: "300s",
       deploymentProfile: "production",
       edaCpuLimit: "120s",
@@ -371,7 +377,7 @@ describe("admin shell model", () => {
       jobArtifactLimit: "16 MiB",
       jobTimeout: "300s",
       routePolicyAuditLabel: "audited",
-      routePolicyInventory: "93 total / 71 protected",
+      routePolicyInventory: "95 total / 73 protected",
       routePolicyLabel: "enforced",
       schemaVersion: "studio.operator.status.v1",
     });

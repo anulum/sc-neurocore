@@ -256,6 +256,10 @@ def test_browser_login_throttles_repeated_invalid_passwords(tmp_path: Path) -> N
         "/api/studio/auth/login",
         json={"username": "operator", "password": "browser-password"},
     )
+    operator_status = client.get(
+        "/api/studio/operator/status",
+        headers={"authorization": "Bearer service-token"},
+    )
 
     assert first.status_code == 401
     assert first.json()["detail"] == "invalid_browser_login"
@@ -264,7 +268,19 @@ def test_browser_login_throttles_repeated_invalid_passwords(tmp_path: Path) -> N
     assert second.headers["retry-after"] == "60"
     assert correct_while_locked.status_code == 429
     assert correct_while_locked.json()["detail"] == "browser_login_throttled"
-    rows = _audit_rows(audit_path)
+    assert operator_status.status_code == 200
+    browser_login_status = operator_status.json()["browser_login"]
+    assert browser_login_status["active_bucket_count"] == 1
+    assert browser_login_status["cooldown_seconds"] == 60.0
+    assert browser_login_status["failure_window_seconds"] == 300.0
+    assert browser_login_status["locked_bucket_count"] == 1
+    assert browser_login_status["max_failures"] == 2
+    assert 1 <= browser_login_status["max_retry_after_seconds"] <= 60
+    assert "operator" not in json.dumps(browser_login_status)
+    rows = [
+        row for row in _audit_rows(audit_path)
+        if row["action"] == "studio.auth.login"
+    ]
     assert [row["reason"] for row in rows[-3:]] == [
         "invalid_browser_login",
         "browser_login_throttled",

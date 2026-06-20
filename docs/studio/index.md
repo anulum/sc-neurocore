@@ -106,8 +106,10 @@ runtime features:
   `SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS`, and
   `SC_NEUROCORE_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS`. Throttle denials emit
   `studio.auth.login` audit rows without password material. The Admin panel
-  Operator section reports the active lockout threshold, failure window, and
-  cooldown from `/api/studio/operator/status`.
+  Operator section reports the active lockout threshold, failure window,
+  cooldown, active throttle-bucket count, locked-bucket count, and maximum
+  retry interval from `/api/studio/operator/status` without exposing usernames
+  or password material.
 - First-deployment service-account identity files are created offline with
   `sc-neurocore studio-bootstrap-admin --identity-file <path>`. The command
   writes only the SHA-256 token hash to disk, returns the bearer token once to
@@ -301,10 +303,11 @@ runtime features:
 - `/api/studio/operator/status` is an admin-classified aggregate for the
   Studio control plane. It combines deployment profile, route-policy
   enforcement, route inventory counts, protected-route audit coverage,
-  identity mode, audit health, job-worker health, job resource profiles, and
-  capability counts into one path-free payload for the Admin panel. It also
-  reports path-free worker and EDA process resource ceilings so operators can
-  verify runtime bounds without reading environment files.
+  identity mode, audit health, job-worker health, job resource profiles,
+  browser-login lockout aggregates, and capability counts into one path-free
+  payload for the Admin panel. It also reports path-free worker and EDA process
+  resource ceilings so operators can verify runtime bounds without reading
+  environment files.
 - Deployments can set `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` to rotate the
   active JSONL audit file before the next append once it reaches the configured
   byte limit. `SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES` controls how many

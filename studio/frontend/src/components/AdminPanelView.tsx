@@ -229,6 +229,9 @@ export default function AdminPanelView({
           <div><span>Login limit</span><span style={{ fontWeight: 700 }}>{model.operator.browserLoginLimit}</span></div>
           <div><span>Login window</span><span style={{ fontWeight: 700 }}>{model.operator.browserLoginWindow}</span></div>
           <div><span>Login cooldown</span><span style={{ fontWeight: 700 }}>{model.operator.browserLoginCooldown}</span></div>
+          <div><span>Login buckets</span><span style={{ fontWeight: 700 }}>{model.operator.browserLoginActiveBuckets}</span></div>
+          <div><span>Login locked</span><span style={{ fontWeight: 700 }}>{model.operator.browserLoginLockedBuckets}</span></div>
+          <div><span>Max retry</span><span style={{ fontWeight: 700 }}>{model.operator.browserLoginMaxRetryAfter}</span></div>
         </div>
         <div className="admin-audit-list">
           <div className="admin-audit-row">

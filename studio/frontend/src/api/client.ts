@@ -288,8 +288,11 @@ export interface StudioOperatorResourceLimitStatus {
 }
 
 export interface StudioOperatorBrowserLoginStatus {
+  active_bucket_count: number;
   cooldown_seconds: number;
   failure_window_seconds: number;
+  locked_bucket_count: number;
+  max_retry_after_seconds: number;
   max_failures: number;
 }
 

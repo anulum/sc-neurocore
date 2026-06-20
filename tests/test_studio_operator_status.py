@@ -19,6 +19,7 @@ httpx = pytest.importorskip("httpx")
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
+from sc_neurocore.studio.platform.auth_throttle import StudioLoginThrottleSnapshot
 from sc_neurocore.studio.platform import (
     OPERATOR_STATUS_SCHEMA_VERSION,
     AuditSinkStatus,
@@ -112,6 +113,11 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
             path_configured=True,
             sink_type="jsonl",
         ),
+        browser_login_snapshot=StudioLoginThrottleSnapshot(
+            active_bucket_count=2,
+            locked_bucket_count=1,
+            max_retry_after_seconds=58,
+        ),
         job_status=_job_status(tmp_path, configured=True),
         route_policy_registry=build_default_studio_route_policy_registry(),
     )
@@ -122,13 +128,13 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
     assert payload["deployment_profile"] == "development"
     assert payload["route_policies"] == {
         "admin_count": 17,
-        "authenticated_count": 54,
+        "authenticated_count": 56,
         "enforced": True,
-        "protected_audit_action_count": 71,
-        "protected_count": 71,
+        "protected_audit_action_count": 73,
+        "protected_count": 73,
         "protected_routes_audited": True,
         "public_count": 22,
-        "total_count": 93,
+        "total_count": 95,
     }
     assert payload["identity"] == {
         "configured": True,
@@ -160,8 +166,11 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
         "timed_out_count": 0,
     }
     assert payload["browser_login"] == {
+        "active_bucket_count": 2,
         "cooldown_seconds": 900.0,
         "failure_window_seconds": 120.0,
+        "locked_bucket_count": 1,
+        "max_retry_after_seconds": 58,
         "max_failures": 3,
     }
     assert payload["resource_limits"] == {
@@ -299,8 +308,11 @@ def test_operator_status_endpoint_is_admin_protected() -> None:
     assert payload["route_policies"]["protected_routes_audited"] is True
     assert payload["route_policies"]["protected_count"] > 0
     assert payload["browser_login"] == {
+        "active_bucket_count": 0,
         "cooldown_seconds": 900.0,
         "failure_window_seconds": 300.0,
+        "locked_bucket_count": 0,
+        "max_retry_after_seconds": 0,
         "max_failures": 5,
     }
     assert "token" not in allowed.text.lower()

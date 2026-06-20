@@ -41,6 +41,38 @@ def test_studio_browser_login_throttle_locks_after_configured_failures() -> None
     assert denied.reason == THROTTLED_BROWSER_LOGIN_REASON
 
 
+def test_studio_browser_login_throttle_snapshot_reports_secret_free_counts() -> None:
+    current = datetime(2026, 6, 20, 12, 0, tzinfo=UTC)
+    throttle = StudioBrowserLoginThrottle(
+        max_failed_attempts=2,
+        failure_window_seconds=300.0,
+        cooldown_seconds=60.0,
+        clock=lambda: current,
+    )
+
+    throttle.record_failure("operator")
+    throttle.record_failure("operator")
+    throttle.record_failure("other")
+
+    assert throttle.snapshot().to_public_dict() == {
+        "active_bucket_count": 2,
+        "locked_bucket_count": 1,
+        "max_retry_after_seconds": 60,
+    }
+    current = current + timedelta(seconds=61)
+    assert throttle.snapshot().to_public_dict() == {
+        "active_bucket_count": 2,
+        "locked_bucket_count": 0,
+        "max_retry_after_seconds": 0,
+    }
+    current = current + timedelta(seconds=300)
+    assert throttle.snapshot().to_public_dict() == {
+        "active_bucket_count": 0,
+        "locked_bucket_count": 0,
+        "max_retry_after_seconds": 0,
+    }
+
+
 def test_studio_browser_login_throttle_expires_failure_window() -> None:
     current = datetime(2026, 6, 20, 12, 0, tzinfo=UTC)
     throttle = StudioBrowserLoginThrottle(

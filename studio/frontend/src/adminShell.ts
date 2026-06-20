@@ -120,8 +120,11 @@ export interface AdminIdentityBrowserUserModel {
 }
 
 export interface AdminOperatorModel {
+  browserLoginActiveBuckets: string;
   browserLoginCooldown: string;
+  browserLoginLockedBuckets: string;
   browserLoginLimit: string;
+  browserLoginMaxRetryAfter: string;
   browserLoginWindow: string;
   deploymentProfile: "development" | "production" | "unknown";
   edaCpuLimit: string;
@@ -406,7 +409,10 @@ function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminO
   if (operatorStatus === null) {
     return {
       browserLoginCooldown: "unknown",
+      browserLoginActiveBuckets: "unknown",
+      browserLoginLockedBuckets: "unknown",
       browserLoginLimit: "unknown",
+      browserLoginMaxRetryAfter: "unknown",
       browserLoginWindow: "unknown",
       deploymentProfile: "unknown",
       edaCpuLimit: "unknown",
@@ -425,8 +431,11 @@ function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminO
   const limits = operatorStatus.resource_limits;
   const routePolicies = operatorStatus.route_policies;
   return {
+    browserLoginActiveBuckets: `${browserLogin.active_bucket_count}`,
     browserLoginCooldown: formatSeconds(browserLogin.cooldown_seconds),
+    browserLoginLockedBuckets: `${browserLogin.locked_bucket_count}`,
     browserLoginLimit: `${browserLogin.max_failures}`,
+    browserLoginMaxRetryAfter: formatSeconds(browserLogin.max_retry_after_seconds),
     browserLoginWindow: formatSeconds(browserLogin.failure_window_seconds),
     deploymentProfile: operatorStatus.deployment_profile,
     edaCpuLimit: formatSeconds(limits.eda_process_cpu_seconds),

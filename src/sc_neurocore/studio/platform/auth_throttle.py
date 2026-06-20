@@ -37,6 +37,35 @@ class StudioLoginThrottleDecision:
     retry_after_seconds: int | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class StudioLoginThrottleSnapshot:
+    """Secret-free aggregate state for browser-login throttling.
+
+    Parameters
+    ----------
+    active_bucket_count:
+        Number of normalized login keys with live failure or lockout state.
+    locked_bucket_count:
+        Number of live buckets currently locked out.
+    max_retry_after_seconds:
+        Largest remaining retry interval across locked buckets, or ``0`` when
+        no bucket is locked.
+    """
+
+    active_bucket_count: int
+    locked_bucket_count: int
+    max_retry_after_seconds: int
+
+    def to_public_dict(self) -> dict[str, int]:
+        """Return a secret-free throttle aggregate for operator APIs."""
+
+        return {
+            "active_bucket_count": self.active_bucket_count,
+            "locked_bucket_count": self.locked_bucket_count,
+            "max_retry_after_seconds": self.max_retry_after_seconds,
+        }
+
+
 @dataclass(slots=True)
 class _ThrottleBucket:
     """Mutable failure bucket for one normalized browser-login key."""
@@ -114,6 +143,38 @@ class StudioBrowserLoginThrottle:
         """Clear the failure bucket after a successful browser login."""
 
         self._buckets.pop(self._key(username), None)
+
+    def snapshot(self) -> StudioLoginThrottleSnapshot:
+        """Return aggregate lockout state without exposing login keys."""
+
+        now = self._now()
+        active_bucket_count = 0
+        locked_bucket_count = 0
+        max_retry_after_seconds = 0
+        stale_keys: list[str] = []
+        for key, bucket in self._buckets.items():
+            self._prune(bucket, now)
+            if not bucket.failure_times and bucket.locked_until is None:
+                stale_keys.append(key)
+                continue
+            active_bucket_count += 1
+            if bucket.locked_until is not None and now < bucket.locked_until:
+                locked_bucket_count += 1
+                retry_after_seconds = max(
+                    1,
+                    int((bucket.locked_until - now).total_seconds()),
+                )
+                max_retry_after_seconds = max(
+                    max_retry_after_seconds,
+                    retry_after_seconds,
+                )
+        for key in stale_keys:
+            self._buckets.pop(key, None)
+        return StudioLoginThrottleSnapshot(
+            active_bucket_count=active_bucket_count,
+            locked_bucket_count=locked_bucket_count,
+            max_retry_after_seconds=max_retry_after_seconds,
+        )
 
     def _prune(self, bucket: _ThrottleBucket, now: datetime) -> None:
         cutoff = now - self._failure_window

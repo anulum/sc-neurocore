@@ -178,8 +178,11 @@ const identityBrowserUser: StudioIdentityBrowserUser = {
 const operatorStatus: StudioOperatorStatus = {
   audit: auditStatus,
   browser_login: {
+    active_bucket_count: 2,
     cooldown_seconds: 900,
     failure_window_seconds: 300,
+    locked_bucket_count: 1,
+    max_retry_after_seconds: 120,
     max_failures: 5,
   },
   capabilities: {
@@ -206,13 +209,13 @@ const operatorStatus: StudioOperatorStatus = {
   },
   route_policies: {
     admin_count: 17,
-    authenticated_count: 54,
+    authenticated_count: 56,
     enforced: true,
-    protected_audit_action_count: 71,
-    protected_count: 71,
+    protected_audit_action_count: 73,
+    protected_count: 73,
     protected_routes_audited: true,
     public_count: 22,
-    total_count: 93,
+    total_count: 95,
   },
   schema_version: "studio.operator.status.v1",
 };
@@ -265,7 +268,7 @@ describe("AdminPanel", () => {
     expect(html).toContain("production");
     expect(html).toContain("service_account");
     expect(html).toContain("enforced");
-    expect(html).toContain("93 total / 71 protected");
+    expect(html).toContain("95 total / 73 protected");
     expect(html).toContain("audited");
     expect(html).toContain("120s");
     expect(html).toContain("2 GiB");
@@ -273,6 +276,9 @@ describe("AdminPanel", () => {
     expect(html).toContain("Login limit");
     expect(html).toContain("Login window");
     expect(html).toContain("Login cooldown");
+    expect(html).toContain("Login buckets");
+    expect(html).toContain("Login locked");
+    expect(html).toContain("Max retry");
     expect(html).toContain("900s");
     expect(html).toContain("Audit");
     expect(html).toContain("Identity lifecycle");

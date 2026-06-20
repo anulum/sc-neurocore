@@ -14,6 +14,7 @@ import os
 from dataclasses import dataclass
 from typing import Literal
 
+from sc_neurocore.studio.platform.auth_throttle import StudioLoginThrottleSnapshot
 from sc_neurocore.studio.platform.capabilities import CapabilityHealth, CapabilityStatus
 from sc_neurocore.studio.platform.jobs import StudioJobStatusSnapshot
 from sc_neurocore.studio.platform.policy import AuditSinkStatus, RoutePolicyRegistry, RouteVisibility
@@ -119,16 +120,22 @@ class StudioOperatorResourceLimitStatus:
 class StudioOperatorBrowserLoginStatus:
     """Path-free browser-login lockout posture for Studio operators."""
 
+    active_bucket_count: int
     cooldown_seconds: float
     failure_window_seconds: float
+    locked_bucket_count: int
+    max_retry_after_seconds: int
     max_failures: int
 
     def to_public_dict(self) -> dict[str, float | int]:
         """Return browser-login lockout limits without identity material."""
 
         return {
+            "active_bucket_count": self.active_bucket_count,
             "cooldown_seconds": self.cooldown_seconds,
             "failure_window_seconds": self.failure_window_seconds,
+            "locked_bucket_count": self.locked_bucket_count,
+            "max_retry_after_seconds": self.max_retry_after_seconds,
             "max_failures": self.max_failures,
         }
 
@@ -170,6 +177,7 @@ def build_studio_operator_status(
     audit_status: AuditSinkStatus,
     job_status: StudioJobStatusSnapshot,
     route_policy_registry: RoutePolicyRegistry,
+    browser_login_snapshot: StudioLoginThrottleSnapshot | None = None,
 ) -> StudioOperatorStatus:
     """Build the aggregate operator status from live Studio platform components."""
 
@@ -184,7 +192,7 @@ def build_studio_operator_status(
         jobs=job_status,
         capabilities=_build_capability_status(capabilities),
         resource_limits=_build_resource_limit_status(settings),
-        browser_login=_build_browser_login_status(settings),
+        browser_login=_build_browser_login_status(settings, browser_login_snapshot),
     )
 
 
@@ -269,10 +277,19 @@ def _build_resource_limit_status(
 
 def _build_browser_login_status(
     settings: StudioRuntimeSettings,
+    snapshot: StudioLoginThrottleSnapshot | None,
 ) -> StudioOperatorBrowserLoginStatus:
+    aggregate = snapshot or StudioLoginThrottleSnapshot(
+        active_bucket_count=0,
+        locked_bucket_count=0,
+        max_retry_after_seconds=0,
+    )
     return StudioOperatorBrowserLoginStatus(
+        active_bucket_count=aggregate.active_bucket_count,
         cooldown_seconds=settings.browser_login_cooldown_seconds,
         failure_window_seconds=settings.browser_login_failure_window_seconds,
+        locked_bucket_count=aggregate.locked_bucket_count,
+        max_retry_after_seconds=aggregate.max_retry_after_seconds,
         max_failures=settings.browser_login_max_failures,
     )
 
