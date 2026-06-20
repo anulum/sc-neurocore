@@ -270,6 +270,24 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     assert "default_flow_run" in json.dumps(payload)
     assert "default_flow_attestation" in json.dumps(payload)
     assert "action_evidence" in json.dumps(payload)
+    assert result.manifest["summary"] == payload["summary"]
+    summary = cast(dict[str, object], payload["summary"])
+    entry_type_counts = cast(dict[str, int], summary["entry_type_counts"])
+    evidence_classification_counts = cast(
+        dict[str, int],
+        summary["evidence_classification_counts"],
+    )
+    source_job_kind_counts = cast(dict[str, int], summary["source_job_kind_counts"])
+    source_job_owner_counts = cast(dict[str, int], summary["source_job_owner_counts"])
+    assert summary["artifact_path_count"] == len(result.artifact_paths)
+    assert summary["entry_count"] == 10
+    assert entry_type_counts["action_evidence"] == 1
+    assert entry_type_counts["default_flow_attestation"] == 1
+    assert entry_type_counts["default_flow_run"] == 1
+    assert entry_type_counts["simulation_result"] == 1
+    assert evidence_classification_counts["compile"] == 1
+    assert source_job_kind_counts["compiler"] == 1
+    assert source_job_owner_counts["studio-compiler"] == 1
 
 
 @pytest.mark.parametrize(
@@ -716,6 +734,13 @@ def test_studio_evidence_bundle_route_exports_selected_state(
     assert body["bundle_id"] == f"seb_{evidence_job_id}"
     assert body["artifacts"]
     assert manifest["schema_version"] == STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION
+    assert manifest["summary"] == body["summary"]
+    assert body["summary"]["artifact_path_count"] == len(body["artifact_paths"])
+    assert body["summary"]["entry_type_counts"]["simulation_result"] == 1
+    assert body["summary"]["entry_type_counts"]["analysis_result"] == 1
+    assert body["summary"]["entry_type_counts"]["default_flow_run"] == 1
+    assert body["summary"]["evidence_classification_counts"]["compile"] == 1
+    assert body["summary"]["source_job_kind_counts"]["compiler"] == 1
     assert project_payload["name"] == "demo"
     assert simulation_payload["run_metadata"] == simulation_response.json()["run_metadata"]
     assert analysis_payload["analysis_metadata"] == analysis_response.json()["analysis_metadata"]

@@ -69,10 +69,13 @@ export interface AdminJobRecordModel {
 export interface AdminEvidenceBundleModel {
   artifactCount: number;
   bundleId: string;
+  entryTypes: string;
   error: string | null;
+  evidenceClasses: string;
   jobId: string;
   loading: boolean;
   manifestEntryCount: number;
+  sourceJobs: string;
 }
 
 export interface AdminIdentityAccountModel {
@@ -166,14 +169,38 @@ function buildEvidenceBundleModel(
   loading: boolean,
 ): AdminEvidenceBundleModel {
   const entries = evidenceBundle?.manifest.entries;
+  const summary = evidenceBundle?.summary;
   return {
-    artifactCount: evidenceBundle?.artifact_paths.length ?? 0,
+    artifactCount: summary?.artifact_path_count ?? evidenceBundle?.artifact_paths.length ?? 0,
     bundleId: evidenceBundle?.bundle_id ?? "none",
+    entryTypes: formatCounts(summary?.entry_type_counts),
     error,
+    evidenceClasses: formatCounts(summary?.evidence_classification_counts),
     jobId: evidenceBundle?.job_id ?? "none",
     loading,
-    manifestEntryCount: Array.isArray(entries) ? entries.length : 0,
+    manifestEntryCount: summary?.entry_count ?? (Array.isArray(entries) ? entries.length : 0),
+    sourceJobs: formatSourceJobs(summary?.source_job_count, summary?.source_job_kind_counts),
   };
+}
+
+function formatCounts(counts: Record<string, number> | undefined): string {
+  if (counts === undefined) {
+    return "none";
+  }
+  const parts = Object.entries(counts)
+    .filter(([, count]) => count > 0)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([name, count]) => `${name}:${count}`);
+  return parts.length > 0 ? parts.join(", ") : "none";
+}
+
+function formatSourceJobs(
+  sourceJobCount: number | undefined,
+  sourceJobKindCounts: Record<string, number> | undefined,
+): string {
+  const count = sourceJobCount ?? 0;
+  const kinds = formatCounts(sourceJobKindCounts);
+  return kinds === "none" ? `${count}` : `${count} - ${kinds}`;
 }
 
 function buildIdentityBrowserUsers(

@@ -233,6 +233,16 @@ export interface StudioEvidenceBundleRequest {
   simulation_results: Record<string, unknown>[];
 }
 
+export interface StudioEvidenceBundleSummary {
+  artifact_path_count: number;
+  entry_count: number;
+  entry_type_counts: Record<string, number>;
+  evidence_classification_counts: Record<string, number>;
+  source_job_count: number;
+  source_job_kind_counts: Record<string, number>;
+  source_job_owner_counts: Record<string, number>;
+}
+
 export interface StudioEvidenceBundleResponse {
   artifact_paths: string[];
   artifacts: StudioJobArtifact[];
@@ -240,6 +250,7 @@ export interface StudioEvidenceBundleResponse {
   job_id: string;
   manifest: Record<string, unknown>;
   schema_version: string;
+  summary: StudioEvidenceBundleSummary;
 }
 
 export interface StudioOperatorCapabilityStatus {

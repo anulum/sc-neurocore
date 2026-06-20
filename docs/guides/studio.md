@@ -452,14 +452,19 @@ payloads stored under `evidence/simulations/`, analysis payloads stored under
 under `evidence/jobs/{job_id}/artifacts/` and classified as `action_evidence`
 only after `studio.action-evidence.v1` validation. The bundle manifest is
 path-free and omits bearer tokens, token hashes, password material, and
-host-local filesystem paths.
+host-local filesystem paths. The response and manifest also include a
+path-free summary with artifact-path count, manifest-entry count, entry-type
+counts, action-evidence classification counts, and selected source-job counts
+by kind and owner.
 
 The Admin panel exposes the same evidence-bundle workflow. Operators can enter
 an optional saved project name, simulation-result JSON, analysis-result JSON,
 default-flow run JSON, default-flow attestation JSON, comma-separated job IDs,
 audit export settings, and replay metadata; after export, the panel refreshes
 the worker queue and shows the bundle ID, evidence job ID, artifact count, and
-manifest entry count.
+manifest entry count. The panel also surfaces entry-type, evidence-class, and
+source-job summaries so operators can verify bundle content without opening the
+raw manifest JSON.
 
 Studio also exposes a process-backed job-manager path for new backend work
 that can be expressed as an importable `module:function` task with a

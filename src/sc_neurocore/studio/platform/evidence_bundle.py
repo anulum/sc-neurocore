@@ -60,12 +60,15 @@ class StudioEvidenceBundleResult:
         Stable bundle identifier derived from the evidence job ID.
     manifest:
         JSON manifest describing every file written into the bundle.
+    summary:
+        Path-free aggregate counts for operator review and UI rendering.
     artifact_paths:
         Bundle-relative artifact paths written through the Studio job context.
     """
 
     bundle_id: str
     manifest: dict[str, JsonValue]
+    summary: dict[str, JsonValue]
     artifact_paths: tuple[str, ...]
 
     def to_public_dict(self) -> dict[str, JsonValue]:
@@ -76,6 +79,7 @@ class StudioEvidenceBundleResult:
             "bundle_id": self.bundle_id,
             "manifest": self.manifest,
             "schema_version": STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION,
+            "summary": self.summary,
         }
 
 
@@ -269,6 +273,11 @@ def write_studio_evidence_bundle(
                 )
             )
 
+    summary = _bundle_summary(
+        entries,
+        artifact_path_count=len(written_paths) + 1,
+        job_records=job_records,
+    )
     manifest: dict[str, JsonValue] = {
         "artifact_count": len(entries),
         "bundle_id": bundle_id,
@@ -276,6 +285,7 @@ def write_studio_evidence_bundle(
         "entries": cast(list[JsonValue], entries),
         "job_ids": [record.job_id for record in job_records],
         "schema_version": STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION,
+        "summary": summary,
     }
     manifest_entry = _write_json_entry(
         context,
@@ -288,8 +298,49 @@ def write_studio_evidence_bundle(
     return StudioEvidenceBundleResult(
         bundle_id=bundle_id,
         manifest=manifest,
+        summary=summary,
         artifact_paths=tuple(written_paths),
     )
+
+
+def _bundle_summary(
+    entries: Sequence[Mapping[str, JsonValue]],
+    *,
+    artifact_path_count: int,
+    job_records: Sequence[StudioJobRecord],
+) -> dict[str, JsonValue]:
+    entry_type_counts: dict[str, int] = {}
+    evidence_classification_counts: dict[str, int] = {}
+    source_job_kind_counts: dict[str, int] = {}
+    source_job_owner_counts: dict[str, int] = {}
+
+    for entry in entries:
+        entry_type = entry.get("type")
+        if isinstance(entry_type, str):
+            entry_type_counts[entry_type] = entry_type_counts.get(entry_type, 0) + 1
+        classification = entry.get("evidence_classification")
+        if isinstance(classification, str):
+            evidence_classification_counts[classification] = (
+                evidence_classification_counts.get(classification, 0) + 1
+            )
+
+    for record in job_records:
+        source_job_kind_counts[record.kind] = source_job_kind_counts.get(record.kind, 0) + 1
+        source_job_owner_counts[record.owner] = (
+            source_job_owner_counts.get(record.owner, 0) + 1
+        )
+
+    return {
+        "artifact_path_count": artifact_path_count,
+        "entry_count": len(entries),
+        "entry_type_counts": dict(sorted(entry_type_counts.items())),
+        "evidence_classification_counts": dict(
+            sorted(evidence_classification_counts.items())
+        ),
+        "source_job_count": len(job_records),
+        "source_job_kind_counts": dict(sorted(source_job_kind_counts.items())),
+        "source_job_owner_counts": dict(sorted(source_job_owner_counts.items())),
+    }
 
 
 def _write_json_entry(

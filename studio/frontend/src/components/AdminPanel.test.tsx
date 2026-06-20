@@ -96,6 +96,15 @@ const evidenceBundle: StudioEvidenceBundleResponse = {
     entries: [{ type: "audit_export" }, { type: "manifest" }],
   },
   schema_version: "studio.evidence-bundle.v1",
+  summary: {
+    artifact_path_count: 2,
+    entry_count: 2,
+    entry_type_counts: { audit_export: 1, manifest: 1 },
+    evidence_classification_counts: { compile: 1 },
+    source_job_count: 1,
+    source_job_kind_counts: { compiler: 1 },
+    source_job_owner_counts: { "studio-compiler": 1 },
+  },
 };
 
 const jobRecord: StudioJobRecord = {
@@ -255,6 +264,9 @@ describe("AdminPanel", () => {
     expect(html).toContain("Evidence analysis JSON");
     expect(html).toContain("Evidence default-flow run JSON");
     expect(html).toContain("Evidence default-flow attestation JSON");
+    expect(html).toContain("audit_export:1, manifest:1");
+    expect(html).toContain("compile:1");
+    expect(html).toContain("1 - compiler:1");
     expect(html).toContain("Create evidence bundle");
   });
 });

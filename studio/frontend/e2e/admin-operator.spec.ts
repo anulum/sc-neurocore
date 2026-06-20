@@ -255,6 +255,24 @@ function defaultApiMocks(): Map<string, ApiMockPayload> {
         ],
       },
       schema_version: "studio.evidence-bundle.v1",
+      summary: {
+        artifact_path_count: 5,
+        entry_count: 5,
+        entry_type_counts: {
+          analysis_result: 1,
+          default_flow_attestation: 1,
+          default_flow_run: 1,
+          manifest: 1,
+          simulation_result: 1,
+        },
+        evidence_classification_counts: {
+          analysis: 1,
+          simulation: 1,
+        },
+        source_job_count: 0,
+        source_job_kind_counts: {},
+        source_job_owner_counts: {},
+      },
     }],
     ["/api/studio/operator/status", operatorStatus],
     ["/api/models", []],
@@ -457,6 +475,8 @@ test("admin evidence bundle form submits simulation and analysis result payloads
   await page.getByRole("button", { name: "Create evidence bundle" }).click();
 
   await expect(page.getByText("seb_sj_browser")).toBeVisible();
+  await expect(page.getByText("analysis_result:1")).toBeVisible();
+  await expect(page.getByText("simulation:1")).toBeVisible();
 
   const bodies = api.bodies("/api/studio/evidence/bundle");
   expect(bodies).toHaveLength(1);

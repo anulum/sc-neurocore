@@ -493,6 +493,9 @@ export default function AdminPanelView({
           <div><span>Job</span><strong>{model.evidenceBundle.jobId}</strong></div>
           <div><span>Artifacts</span><strong>{model.evidenceBundle.artifactCount}</strong></div>
           <div><span>Entries</span><strong>{model.evidenceBundle.manifestEntryCount}</strong></div>
+          <div><span>Types</span><strong>{model.evidenceBundle.entryTypes}</strong></div>
+          <div><span>Classes</span><strong>{model.evidenceBundle.evidenceClasses}</strong></div>
+          <div><span>Sources</span><strong>{model.evidenceBundle.sourceJobs}</strong></div>
         </div>
         {model.evidenceBundle.error && (
           <div className="admin-warning">{model.evidenceBundle.error}</div>

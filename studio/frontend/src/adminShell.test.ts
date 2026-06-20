@@ -106,6 +106,15 @@ const evidenceBundle: StudioEvidenceBundleResponse = {
     entries: [{ type: "audit_export" }, { type: "manifest" }],
   },
   schema_version: "studio.evidence-bundle.v1",
+  summary: {
+    artifact_path_count: 2,
+    entry_count: 2,
+    entry_type_counts: { audit_export: 1, manifest: 1 },
+    evidence_classification_counts: { compile: 1 },
+    source_job_count: 1,
+    source_job_kind_counts: { compiler: 1 },
+    source_job_owner_counts: { "studio-compiler": 1 },
+  },
 };
 
 const jobRecord: StudioJobRecord = {
@@ -234,10 +243,13 @@ describe("admin shell model", () => {
     expect(model.evidenceBundle).toEqual({
       artifactCount: 2,
       bundleId: "seb_sj_evidence",
+      entryTypes: "audit_export:1, manifest:1",
       error: null,
+      evidenceClasses: "compile:1",
       jobId: "sj_evidence",
       loading: false,
       manifestEntryCount: 2,
+      sourceJobs: "1 - compiler:1",
     });
     expect(model.jobRecords).toEqual([
       {
