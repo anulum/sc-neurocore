@@ -1,5 +1,16 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import { useStudioStore } from "../stores/studio";
+import type {
+  AnalysisResultMetadata,
+  BifurcationResponse,
+  CompareResponse,
+  FICurveResponse,
+  FreqResponse,
+  HeatmapResponse,
+  NullclineResponse,
+  PrecisionResponse,
+  SensitivityResponse,
+} from "../api/client";
 
 const COLORS = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ce93d8", "#90a4ae"];
 const BG = "#0d1117";
@@ -7,6 +18,21 @@ const PANEL_BG = "#0a0e14";
 const GRID = "#1a1f2a";
 const AXIS = "#484f58";
 const BORDER = "#21262d";
+
+type AnalysisResult =
+  | BifurcationResponse
+  | CompareResponse
+  | FICurveResponse
+  | FreqResponse
+  | HeatmapResponse
+  | NullclineResponse
+  | PrecisionResponse
+  | SensitivityResponse
+  | null;
+
+function resultMetadata(result: AnalysisResult): AnalysisResultMetadata | null {
+  return result?.analysis_metadata ?? null;
+}
 
 function niceStep(range: number, ticks: number): number {
   if (range <= 0 || !isFinite(range)) return 1;
@@ -94,6 +120,16 @@ export default function SimulationPlot() {
     heatmapResult, compareResult, nullclineResult, freqResult, staResult,
     charResult, multiResults, importedTrace, networkResult,
   } = store;
+  const analysisMetadata =
+    activeTab === "fi-curve" ? resultMetadata(fiResult) :
+    activeTab === "bifurcation" ? resultMetadata(bifResult) :
+    activeTab === "sensitivity" ? resultMetadata(sensResult) :
+    activeTab === "precision" ? resultMetadata(precResult) :
+    activeTab === "heatmap" ? resultMetadata(heatmapResult) :
+    activeTab === "compare" ? resultMetadata(compareResult) :
+    activeTab === "freq" ? resultMetadata(freqResult) :
+    activeTab === "phase" ? resultMetadata(nullclineResult) :
+    null;
 
   function handleCanvasClick(e: React.MouseEvent<HTMLCanvasElement>) {
     if (activeTab !== "heatmap" || !heatmapResult) return;
@@ -740,6 +776,22 @@ export default function SimulationPlot() {
           fontFamily: "var(--font-mono)", pointerEvents: "none",
           border: "1px solid var(--border)", whiteSpace: "nowrap",
         }}>{tooltip.text}</div>
+      )}
+      {analysisMetadata && (
+        <div style={{
+          position: "absolute", top: 8, right: 8, zIndex: 2,
+          display: "flex", gap: 10, flexWrap: "wrap",
+          maxWidth: "calc(100% - 16px)",
+          padding: "4px 8px", border: "1px solid var(--border)",
+          borderRadius: 4, background: "rgba(13,17,23,0.92)",
+          color: "var(--text-secondary)", fontFamily: "var(--font-mono)",
+          fontSize: 10, pointerEvents: "none",
+        }}>
+          <span>{analysisMetadata.analysis_type}</span>
+          <span>{analysisMetadata.source}</span>
+          <span>in {analysisMetadata.input_sha256.slice(0, 10)}</span>
+          <span>out {analysisMetadata.result_sha256.slice(0, 10)}</span>
+        </div>
       )}
       <canvas ref={canvasRef}
         onClick={handleCanvasClick}

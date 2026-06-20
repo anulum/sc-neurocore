@@ -134,6 +134,10 @@ from sc_neurocore.studio.presets import (
     list_preset_action_catalog,
     list_presets,
 )
+from sc_neurocore.studio.analysis_manifest import (
+    attach_analysis_result_manifest,
+    infer_analysis_source,
+)
 from sc_neurocore.studio.simulation_manifest import build_simulation_run_manifest
 from sc_neurocore.studio.simulation import simulate
 from sc_neurocore.studio.templates import get_template, list_templates
@@ -523,6 +527,21 @@ def _make_simulate_fn(req_dict: dict[str, Any]) -> Callable[..., dict[str, Any]]
             )
 
         return fn
+
+
+def _attach_analysis_metadata(
+    analysis_type: str,
+    request_payload: dict[str, Any],
+    result_payload: dict[str, Any],
+) -> dict[str, Any]:
+    """Attach path-free analysis metadata to one Studio analysis response."""
+
+    return attach_analysis_result_manifest(
+        analysis_type=analysis_type,
+        source=infer_analysis_source(request_payload),
+        request_payload=request_payload,
+        result_payload=result_payload,
+    )
 
 
 def _parse_layer_weight_arrays(
@@ -2055,7 +2074,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         def fn() -> dict[str, Any]:
             sim_a = _make_simulate_fn(req.config_a)
             sim_b = _make_simulate_fn(req.config_b)
-            return {"a": sim_a(), "b": sim_b()}
+            payload = {"a": sim_a(), "b": sim_b()}
+            return attach_analysis_result_manifest(
+                analysis_type="compare",
+                source="mixed",
+                request_payload=req.model_dump(),
+                result_payload=payload,
+            )
 
         return _safe(fn)
 
@@ -2068,7 +2093,8 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             sim_fn = _make_simulate_fn(req.model_dump())
             currents = np.linspace(req.i_min, req.i_max, req.i_steps).tolist()
             rates = [sim_fn(current=float(I))["stats"]["rate_hz"] for I in currents]
-            return {"currents": currents, "rates": rates}
+            payload = {"currents": currents, "rates": rates}
+            return _attach_analysis_metadata("fi_curve", req.model_dump(), payload)
 
         return _safe(fn)
 
@@ -2085,9 +2111,10 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 "current": req.current,
                 "protocol": "sine",
             }
-            return bifurcation_sweep(
+            payload = bifurcation_sweep(
                 sim_fn, base_cfg, req.sweep_param, req.sweep_min, req.sweep_max, req.sweep_steps
             )
+            return _attach_analysis_metadata("bifurcation", req.model_dump(), payload)
 
         return _safe(fn)
 
@@ -2105,7 +2132,8 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 "current": req.current,
                 "protocol": "constant",
             }
-            return sensitivity_analysis(sim_fn, base_cfg, param_names)
+            payload = sensitivity_analysis(sim_fn, base_cfg, param_names)
+            return _attach_analysis_metadata("sensitivity", req.model_dump(), payload)
 
         return _safe(fn)
 
@@ -2114,15 +2142,16 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     def api_nullclines(req: NullclineRequest) -> Any:
         def fn() -> dict[str, Any]:
             ranges = {k: (v[0], v[1]) for k, v in req.ranges.items()}
-            return nullclines_2d(req.equations, req.params, req.var_names, ranges, req.grid_size)
+            payload = nullclines_2d(req.equations, req.params, req.var_names, ranges, req.grid_size)
+            return _attach_analysis_metadata("nullclines", req.model_dump(), payload)
 
         return _safe(fn)
 
     # --- Precision Compare (#5) ---
     @app.post("/api/precision")
     def api_precision(req: PrecisionRequest) -> Any:
-        return _safe(
-            lambda: precision_compare(
+        def fn() -> dict[str, Any]:
+            payload = precision_compare(
                 equations=req.equations,
                 threshold=req.threshold,
                 reset=req.reset,
@@ -2132,7 +2161,9 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 duration=req.duration,
                 current=req.current,
             )
-        )
+            return _attach_analysis_metadata("precision", req.model_dump(), payload)
+
+        return _safe(fn)
 
     # --- Adaptive Precision Auto-Tune ---
     @app.post("/api/adaptive-precision/auto-tune")
@@ -2200,9 +2231,10 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 "current": req.amplitude,
                 "protocol": "constant",
             }
-            return frequency_response(
+            payload = frequency_response(
                 sim_fn, base_cfg, req.freq_min, req.freq_max, req.n_freqs, req.amplitude
             )
+            return _attach_analysis_metadata("frequency_response", req.model_dump(), payload)
 
         return _safe(fn)
 
@@ -2219,7 +2251,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 "current": req.current,
                 "protocol": "constant",
             }
-            return heatmap_2d(
+            payload = heatmap_2d(
                 sim_fn,
                 base_cfg,
                 req.param_x,
@@ -2231,6 +2263,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 req.y_max,
                 req.y_steps,
             )
+            return _attach_analysis_metadata("heatmap", req.model_dump(), payload)
 
         return _safe(fn)
 

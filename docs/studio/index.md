@@ -196,6 +196,11 @@ runtime features:
   with the source equation payload, RTL module metadata, source and RTL
   SHA-256 digests, and `evidence_classification: "compile"` without
   host-local paths.
+- `/api/compare`, `/api/fi-curve`, `/api/bifurcation`, `/api/sensitivity`,
+  `/api/heatmap`, `/api/freq-response`, `/api/precision`, and
+  `/api/nullclines` responses include `studio.analysis-result.v1` metadata
+  with the analysis type, evidence classification, source, input and result
+  SHA-256 digests, and output keys without host-local paths.
 - Those worker-backed compile, synthesis, PnR, and pipeline routes also write
   `studio.action-evidence.v1` manifests beside the result artifacts. These
   manifests record action kind, replay route, job ID, evidence classification,
@@ -457,7 +462,7 @@ for complete API details with request/response examples.
 | Prefix | Block | Endpoints |
 |--------|-------|-----------|
 | `/api/simulate`, `/api/models/*` | Phase 1 | ODE/model simulation with path-free run metadata, templates, presets |
-| `/api/fi-curve`, `/api/bifurcation`, `/api/heatmap`, ... | Phase 1 | Analysis views |
+| `/api/fi-curve`, `/api/bifurcation`, `/api/heatmap`, ... | Phase 1 | Analysis views with path-free result metadata |
 | `/api/ir/*` | Compiler Inspector | IR build, verify, emit SV, co-sim, direct-SV traceability |
 | `/api/compile`, `/api/synth/*` | Compiler/Synthesis | Worker-backed compile traceability, Yosys synthesis, target provenance, multi-target, estimate |
 | `/api/training/*` | Training Monitor | Start/stop, SSE stream, surrogates |

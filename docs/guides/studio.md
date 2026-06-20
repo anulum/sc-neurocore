@@ -171,6 +171,14 @@ Simulations are cached (LRU, 64 slots) for instant replay.
 | POST | `/api/precision` | Float vs Q8.8 precision compare |
 | POST | `/api/nullclines` | Nullcline computation for 2D ODEs |
 
+Analysis responses for `/api/compare`, `/api/fi-curve`, `/api/bifurcation`,
+`/api/sensitivity`, `/api/heatmap`, `/api/freq-response`, `/api/precision`,
+and `/api/nullclines` include `analysis_metadata` with the
+`studio.analysis-result.v1` schema. The manifest records the analysis type,
+evidence classification, source (`ode`, `model`, `mixed`, or `unknown`),
+input and result SHA-256 digests, and the returned result keys without
+exposing host-local paths.
+
 The frequency-response endpoint runs the simulator with a true sinusoidal
 current protocol for each frequency. The injected trace is
 `I(t) = amplitude * sin(2*pi*frequency_hz*t)`, not a DC approximation.
@@ -230,6 +238,11 @@ Response includes `time`, `states`, `spikes`, `spike_count`, `dt`, `n_steps`,
 evidence classification, source (`ode` or `model`), input and result SHA-256
 digests, effective `dt`, executed step count, returned sample count, spike
 count, and state variable names.
+
+Analysis responses include `analysis_metadata` with path-free result
+provenance. The frontend displays the analysis type, source, and shortened
+input/result digests beside the active analysis plot so exported JSON can be
+matched back to the API result contract.
 
 ## Development
 

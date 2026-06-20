@@ -25,6 +25,16 @@ export interface SimulationRunMetadata {
   state_variables: string[];
 }
 
+export interface AnalysisResultMetadata {
+  analysis_type: string;
+  evidence_classification: "analysis";
+  input_sha256: string;
+  output_keys: string[];
+  result_sha256: string;
+  schema_version: "studio.analysis-result.v1";
+  source: "ode" | "model" | "mixed" | "unknown";
+}
+
 export interface SimulateResponse {
   time: number[];
   states: Record<string, number[]>;
@@ -44,9 +54,14 @@ export interface HeatmapResponse {
   param_y: string; y_values: number[];
   rates: number[][];
   rate_min: number; rate_max: number;
+  analysis_metadata: AnalysisResultMetadata;
 }
 
-export interface FICurveResponse { currents: number[]; rates: number[]; }
+export interface FICurveResponse {
+  analysis_metadata: AnalysisResultMetadata;
+  currents: number[];
+  rates: number[];
+}
 
 export interface NeuronTemplate {
   name: string; description: string; equations: string[];
@@ -73,14 +88,17 @@ export interface PresetSummary {
 
 export interface BifurcationResponse {
   param_name: string; param_values: number[]; attractors: number[][];
+  analysis_metadata: AnalysisResultMetadata;
 }
 
 export interface SensitivityResponse {
+  analysis_metadata: AnalysisResultMetadata;
   base_rate: number;
   sensitivities: { param: string; sensitivity: number; rate_minus: number; rate_plus: number }[];
 }
 
 export interface PrecisionResponse {
+  analysis_metadata: AnalysisResultMetadata;
   float_result: SimulateResponse;
   fixed_result: SimulateResponse;
   error: { variable: string; max_error: number; mean_error: number; rms_error: number; trace: number[] };
@@ -88,14 +106,24 @@ export interface PrecisionResponse {
 }
 
 export interface NullclineResponse {
+  analysis_metadata: AnalysisResultMetadata;
   var_names: string[];
   nullcline_0: { variable: string; points: number[][] };
   nullcline_1: { variable: string; points: number[][] };
 }
 
-export interface CompareResponse { a: SimulateResponse; b: SimulateResponse; }
+export interface CompareResponse {
+  a: SimulateResponse;
+  analysis_metadata: AnalysisResultMetadata;
+  b: SimulateResponse;
+}
 
-export interface FreqResponse { frequencies_hz: number[]; rates: number[]; amplitude: number; }
+export interface FreqResponse {
+  analysis_metadata: AnalysisResultMetadata;
+  frequencies_hz: number[];
+  rates: number[];
+  amplitude: number;
+}
 
 export interface CapabilityRequirement {
   name: string;
