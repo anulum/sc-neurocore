@@ -11,6 +11,8 @@ import type {
   PrecisionResponse,
   SensitivityResponse,
 } from "../api/client";
+import { buildAnalysisEvidenceItems, buildSimulationEvidenceItems } from "../plotEvidence";
+import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
 const COLORS = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ce93d8", "#90a4ae"];
 const BG = "#0d1117";
@@ -779,37 +781,10 @@ export default function SimulationPlot() {
         }}>{tooltip.text}</div>
       )}
       {analysisMetadata && (
-        <div style={{
-          position: "absolute", top: 8, right: 8, zIndex: 2,
-          display: "flex", gap: 10, flexWrap: "wrap",
-          maxWidth: "calc(100% - 16px)",
-          padding: "4px 8px", border: "1px solid var(--border)",
-          borderRadius: 4, background: "rgba(13,17,23,0.92)",
-          color: "var(--text-secondary)", fontFamily: "var(--font-mono)",
-          fontSize: 10, pointerEvents: "none",
-        }}>
-          <span>{analysisMetadata.analysis_type}</span>
-          <span>class {analysisMetadata.evidence_classification}</span>
-          <span>{analysisMetadata.source}</span>
-          <span>in {analysisMetadata.input_sha256.slice(0, 10)}</span>
-          <span>out {analysisMetadata.result_sha256.slice(0, 10)}</span>
-        </div>
+        <EvidenceSummaryStrip variant="overlay" items={buildAnalysisEvidenceItems(analysisMetadata)} />
       )}
       {simulationMetadata && (
-        <div style={{
-          position: "absolute", top: 8, right: 8, zIndex: 2,
-          display: "flex", gap: 10, flexWrap: "wrap",
-          maxWidth: "calc(100% - 16px)",
-          padding: "4px 8px", border: "1px solid var(--border)",
-          borderRadius: 4, background: "rgba(13,17,23,0.92)",
-          color: "var(--text-secondary)", fontFamily: "var(--font-mono)",
-          fontSize: 10, pointerEvents: "none",
-        }}>
-          <span>class {simulationMetadata.evidence_classification}</span>
-          <span>{simulationMetadata.source}</span>
-          <span>in {simulationMetadata.input_sha256.slice(0, 10)}</span>
-          <span>out {simulationMetadata.result_sha256.slice(0, 10)}</span>
-        </div>
+        <EvidenceSummaryStrip variant="overlay" items={buildSimulationEvidenceItems(simulationMetadata)} />
       )}
       <canvas ref={canvasRef}
         onClick={handleCanvasClick}

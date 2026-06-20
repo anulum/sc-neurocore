@@ -83,7 +83,7 @@ describe("SimulationPlot", () => {
     const html = renderToStaticMarkup(<SimulationPlot />);
 
     expect(html).toContain("class simulation");
-    expect(html).toContain("ode");
+    expect(html).toContain("source ode");
     expect(html).toContain("in 1111111111");
     expect(html).toContain("out 2222222222");
   });
@@ -93,7 +93,7 @@ describe("SimulationPlot", () => {
 
     const html = renderToStaticMarkup(<SimulationPlot />);
 
-    expect(html).toContain("fi_curve");
+    expect(html).toContain("type fi_curve");
     expect(html).toContain("class analysis");
     expect(html).toContain("in 3333333333");
     expect(html).toContain("out 4444444444");

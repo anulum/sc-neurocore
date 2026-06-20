@@ -5,7 +5,7 @@ export interface EvidenceSummaryItem {
   value: string;
 }
 
-export type EvidenceSummaryVariant = "banner" | "grid" | "panel";
+export type EvidenceSummaryVariant = "banner" | "grid" | "overlay" | "panel";
 
 function buildContainerStyle(variant: EvidenceSummaryVariant): CSSProperties {
   if (variant === "banner") {
@@ -29,6 +29,26 @@ function buildContainerStyle(variant: EvidenceSummaryVariant): CSSProperties {
       color: "var(--text-muted)",
     };
   }
+  if (variant === "overlay") {
+    return {
+      position: "absolute",
+      top: 8,
+      right: 8,
+      zIndex: 2,
+      display: "flex",
+      gap: 10,
+      flexWrap: "wrap",
+      maxWidth: "calc(100% - 16px)",
+      padding: "4px 8px",
+      border: "1px solid var(--border)",
+      borderRadius: 4,
+      background: "rgba(13,17,23,0.92)",
+      color: "var(--text-secondary)",
+      fontFamily: "var(--font-mono)",
+      fontSize: 10,
+      pointerEvents: "none",
+    };
+  }
   return {
     marginTop: 4,
     padding: 4,
@@ -49,7 +69,7 @@ function renderItem(item: EvidenceSummaryItem, variant: EvidenceSummaryVariant) 
       </div>
     );
   }
-  if (variant === "grid") {
+  if (variant === "grid" || variant === "overlay") {
     return <span key={item.label}>{item.label} {item.value}</span>;
   }
   return <div key={item.label}>{item.label} {item.value}</div>;

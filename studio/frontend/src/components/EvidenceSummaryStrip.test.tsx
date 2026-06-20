@@ -18,4 +18,19 @@ describe("EvidenceSummaryStrip", () => {
     expect(html).toContain("class compile");
     expect(html).toContain("artifact pipeline/evidence.json");
   });
+
+  it("renders overlay evidence without changing label content", () => {
+    const html = renderToStaticMarkup(
+      <EvidenceSummaryStrip
+        variant="overlay"
+        items={[
+          { label: "class", value: "simulation" },
+          { label: "out", value: "aaaaaaaaaa" },
+        ]}
+      />,
+    );
+
+    expect(html).toContain("class simulation");
+    expect(html).toContain("out aaaaaaaaaa");
+  });
 });
