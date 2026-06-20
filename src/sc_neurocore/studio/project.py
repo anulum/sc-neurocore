@@ -16,6 +16,7 @@ import logging
 from pathlib import Path
 
 from sc_neurocore.hdl_gen._ident import sanitize_ident
+from sc_neurocore.studio.synthesis import EdaProcessLimits
 
 _PROJECTS_DIR = os.path.join(os.path.expanduser("~"), ".sc-neurocore", "studio", "projects")
 
@@ -186,12 +187,33 @@ def delete_project(name: str) -> dict[str, Any]:
     return {"deleted": name}
 
 
-def run_pipeline(graph: dict[str, Any], target: str = "ice40") -> dict[str, Any]:
-    """Full pipeline: graph → compile equations → emit SV → synthesise.
+def run_pipeline(
+    graph: dict[str, Any],
+    target: str = "ice40",
+    *,
+    process_limits: EdaProcessLimits | None = None,
+) -> dict[str, Any]:
+    """Run the Studio graph-to-synthesis pipeline.
 
-    If the graph has ODE equations in population params, compiles them
-    to SystemVerilog and runs synthesis. Otherwise uses a default LIF
+    If the graph has ODE equations in population params, the pipeline compiles
+    them to SystemVerilog and runs synthesis. Otherwise it uses a default LIF
     compile path.
+
+    Parameters
+    ----------
+    graph:
+        Studio network graph payload.
+    target:
+        Studio synthesis target identifier.
+    process_limits:
+        Optional host-supported CPU and address-space ceilings for the
+        downstream synthesis child process.
+
+    Returns
+    -------
+    dict[str, Any]
+        Pipeline result containing validation, simulation, compile, and
+        synthesis step payloads, or a bounded failure payload.
     """
     from sc_neurocore.studio.network_graph import validate_graph, simulate_graph
     from sc_neurocore.studio.synthesis import run_synthesis
@@ -231,7 +253,7 @@ def run_pipeline(graph: dict[str, Any], target: str = "ice40") -> dict[str, Any]
         return {"success": False, "step": "compile", "error": "Compilation failed"}
 
     # Step 4: Synthesise
-    synth_result = run_synthesis(verilog, target)
+    synth_result = run_synthesis(verilog, target, process_limits=process_limits)
     steps["synthesise"] = synth_result
 
     return {

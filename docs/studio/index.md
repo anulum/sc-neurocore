@@ -111,9 +111,11 @@ runtime features:
   per-job working directories and `SC_NEUROCORE_STUDIO_JOB_TIMEOUT_SECONDS` for
   the default cooperative timeout. Set
   `SC_NEUROCORE_STUDIO_JOB_MAX_ARTIFACT_BYTES` to cap each worker artifact.
-  The local worker manager tracks allowed job kinds,
-  active/completed/failed/timed-out counts, and does not expose host filesystem
-  paths.
+  External EDA child processes also receive host-supported CPU and memory
+  ceilings from `SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS` and
+  `SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES`. The local worker manager
+  tracks allowed job kinds, active/completed/failed/timed-out counts, and does
+  not expose host filesystem paths.
 - `/api/training/start`, `/api/training/stop`, and
   `/api/training/status/{job_id}` now use the local worker manager for bounded
   training execution while preserving the training monitor's existing SSE

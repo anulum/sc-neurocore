@@ -59,6 +59,7 @@ from sc_neurocore.studio.compiler import (
     verify_ir,
 )
 from sc_neurocore.studio.synthesis import (
+    EdaProcessLimits,
     check_tools,
     estimate_resources,
     multi_target_synthesis,
@@ -784,6 +785,10 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     app.state.studio_identity_authenticator = studio_identity_authenticator
     app.state.studio_job_manager = studio_job_manager
     app.state.studio_policy_gateway = studio_policy_gateway
+    eda_process_limits = EdaProcessLimits(
+        cpu_seconds=settings.eda_process_cpu_seconds,
+        address_space_bytes=settings.eda_process_memory_bytes,
+    )
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(settings.allowed_hosts))
     app.add_middleware(
         CORSMiddleware,
@@ -1836,7 +1841,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 kind="synthesis",
                 owner="studio-synthesis",
                 artifact_path="synthesis/result.json",
-                task=lambda: run_synthesis(verilog, target),
+                task=lambda: run_synthesis(verilog, target, process_limits=eda_process_limits),
             )
         )
 
@@ -1848,7 +1853,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 kind="synthesis",
                 owner="studio-synthesis",
                 artifact_path="synthesis/multi-target-result.json",
-                task=lambda: multi_target_synthesis(verilog),
+                task=lambda: multi_target_synthesis(verilog, process_limits=eda_process_limits),
             )
         )
 
@@ -1874,7 +1879,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 kind="synthesis",
                 owner="studio-pnr",
                 artifact_path="synthesis/pnr-result.json",
-                task=lambda: run_pnr(json_path, target),
+                task=lambda: run_pnr(json_path, target, process_limits=eda_process_limits),
             )
         )
 
@@ -1914,7 +1919,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 kind="compiler",
                 owner="studio-pipeline",
                 artifact_path="pipeline/result.json",
-                task=lambda: run_pipeline(graph, target),
+                task=lambda: run_pipeline(graph, target, process_limits=eda_process_limits),
             )
         )
 

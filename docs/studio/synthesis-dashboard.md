@@ -113,6 +113,10 @@ through the Studio local worker manager. They preserve the synchronous response
 payloads shown below and additionally create Admin queue records with result
 artifacts at `synthesis/result.json`,
 `synthesis/multi-target-result.json`, and `synthesis/pnr-result.json`.
+On POSIX hosts, Yosys and nextpnr child processes receive configured CPU and
+address-space ceilings from `SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS` and
+`SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES`; unsupported hosts keep the
+existing wall-clock subprocess timeouts.
 
 ### GET /api/synth/tools-status
 

@@ -39,6 +39,8 @@ DEFAULT_STUDIO_ALLOWED_HOSTS: tuple[str, ...] = (
 DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES = 1_048_576
 DEFAULT_STUDIO_AUDIT_RETAINED_FILES = 5
 DEFAULT_STUDIO_JOB_TIMEOUT_SECONDS = 300.0
+DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS = 120.0
+DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES = 2 * 1024 * 1024 * 1024
 
 DEFAULT_STUDIO_HTTP_SECURITY_HEADERS: Mapping[str, str] = MappingProxyType(
     {
@@ -74,6 +76,8 @@ class StudioRuntimeSettings:
     job_root_path: str | None = None
     job_default_timeout_seconds: float = DEFAULT_STUDIO_JOB_TIMEOUT_SECONDS
     job_max_artifact_bytes: int = DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES
+    eda_process_cpu_seconds: float | None = DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS
+    eda_process_memory_bytes: int | None = DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES
     audit_log_path: str | None = None
     audit_rotation_bytes: int | None = None
     audit_retained_files: int = DEFAULT_STUDIO_AUDIT_RETAINED_FILES
@@ -113,6 +117,10 @@ class StudioRuntimeSettings:
             raise ValueError("Studio job timeout must be positive.")
         if self.job_max_artifact_bytes <= 0:
             raise ValueError("Studio job artifact size limit must be positive.")
+        if self.eda_process_cpu_seconds is not None and self.eda_process_cpu_seconds <= 0:
+            raise ValueError("Studio EDA process CPU limit must be positive.")
+        if self.eda_process_memory_bytes is not None and self.eda_process_memory_bytes <= 0:
+            raise ValueError("Studio EDA process memory limit must be positive.")
         if self.audit_log_path is not None and not self.audit_log_path.strip():
             raise ValueError("Studio audit log path must not be empty.")
         if self.audit_rotation_bytes is not None and self.audit_rotation_bytes <= 0:
@@ -156,6 +164,8 @@ def build_default_studio_runtime_settings(
     raw_job_root_path = source.get("SC_NEUROCORE_STUDIO_JOB_ROOT")
     raw_job_default_timeout_seconds = source.get("SC_NEUROCORE_STUDIO_JOB_TIMEOUT_SECONDS")
     raw_job_max_artifact_bytes = source.get("SC_NEUROCORE_STUDIO_JOB_MAX_ARTIFACT_BYTES")
+    raw_eda_process_cpu_seconds = source.get("SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS")
+    raw_eda_process_memory_bytes = source.get("SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES")
     raw_audit_log_path = source.get("SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH")
     raw_audit_rotation_bytes = source.get("SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES")
     raw_audit_retained_files = source.get("SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES")
@@ -220,6 +230,22 @@ def build_default_studio_runtime_settings(
         )
     except ValueError as exc:
         raise ValueError("Studio job artifact size limit must be an integer.") from exc
+    try:
+        eda_process_cpu_seconds = (
+            DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS
+            if raw_eda_process_cpu_seconds is None or not raw_eda_process_cpu_seconds.strip()
+            else float(raw_eda_process_cpu_seconds)
+        )
+    except ValueError as exc:
+        raise ValueError("Studio EDA process CPU limit must be numeric.") from exc
+    try:
+        eda_process_memory_bytes = (
+            DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES
+            if raw_eda_process_memory_bytes is None or not raw_eda_process_memory_bytes.strip()
+            else int(raw_eda_process_memory_bytes)
+        )
+    except ValueError as exc:
+        raise ValueError("Studio EDA process memory limit must be an integer.") from exc
     audit_log_path = (
         None
         if raw_audit_log_path is None or not raw_audit_log_path.strip()
@@ -253,6 +279,8 @@ def build_default_studio_runtime_settings(
         job_root_path=job_root_path,
         job_default_timeout_seconds=job_default_timeout_seconds,
         job_max_artifact_bytes=job_max_artifact_bytes,
+        eda_process_cpu_seconds=eda_process_cpu_seconds,
+        eda_process_memory_bytes=eda_process_memory_bytes,
         audit_log_path=audit_log_path,
         audit_rotation_bytes=audit_rotation_bytes,
         audit_retained_files=audit_retained_files,

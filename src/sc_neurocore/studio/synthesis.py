@@ -8,6 +8,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
+from math import ceil
 from typing import Any
 import json
 import os
@@ -19,12 +22,94 @@ from pathlib import Path
 _EDA_TOOL_ALLOWLIST = frozenset({"yosys", "nextpnr-ice40", "nextpnr-ecp5", "firtool"})
 
 
+@dataclass(frozen=True, slots=True)
+class EdaProcessLimits:
+    """Optional process resource limits for external Studio EDA commands.
+
+    Parameters
+    ----------
+    cpu_seconds:
+        Maximum CPU seconds allowed for the child process on hosts that expose
+        POSIX ``RLIMIT_CPU``. ``None`` leaves CPU accounting to the existing
+        wall-clock timeout.
+    address_space_bytes:
+        Maximum address space bytes allowed for the child process on hosts that
+        expose POSIX ``RLIMIT_AS``. ``None`` leaves memory unconstrained by this
+        helper.
+    """
+
+    cpu_seconds: float | None = None
+    address_space_bytes: int | None = None
+
+    def __post_init__(self) -> None:
+        """Validate positive resource ceilings when they are configured."""
+
+        if self.cpu_seconds is not None and self.cpu_seconds <= 0:
+            raise ValueError("EDA process CPU limit must be positive.")
+        if self.address_space_bytes is not None and self.address_space_bytes <= 0:
+            raise ValueError("EDA process memory limit must be positive.")
+
+
 def _resolve_eda_tool(name: str) -> str | None:
     """Resolve an allowlisted EDA executable to an absolute path."""
 
     if name not in _EDA_TOOL_ALLOWLIST:
         raise ValueError(f"Unsupported EDA tool: {name}")
     return shutil.which(name)
+
+
+def _eda_process_limits_supported() -> bool:
+    """Return whether this host can apply POSIX child-process limits."""
+
+    return os.name == "posix"
+
+
+def _build_limit_preexec(limits: EdaProcessLimits | None) -> Callable[[], None] | None:
+    """Build a POSIX pre-exec hook that applies configured EDA limits."""
+
+    if limits is None or not _eda_process_limits_supported():
+        return None
+    if limits.cpu_seconds is None and limits.address_space_bytes is None:
+        return None
+
+    def apply_limits() -> None:
+        import resource
+
+        if limits.cpu_seconds is not None:
+            cpu_limit = max(1, ceil(limits.cpu_seconds))
+            resource.setrlimit(resource.RLIMIT_CPU, (cpu_limit, cpu_limit))
+        if limits.address_space_bytes is not None and hasattr(resource, "RLIMIT_AS"):
+            memory_limit = int(limits.address_space_bytes)
+            resource.setrlimit(resource.RLIMIT_AS, (memory_limit, memory_limit))
+
+    return apply_limits
+
+
+def _run_eda_command(
+    command: Sequence[str],
+    *,
+    timeout_seconds: float,
+    process_limits: EdaProcessLimits | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run one allowlisted EDA command with optional child-process limits."""
+
+    limit_preexec = _build_limit_preexec(process_limits)
+    if limit_preexec is None:
+        return subprocess.run(  # nosec B603
+            list(command),
+            capture_output=True,
+            shell=False,
+            text=True,
+            timeout=timeout_seconds,
+        )
+    return subprocess.run(  # nosec B603
+        list(command),
+        capture_output=True,
+        preexec_fn=limit_preexec,
+        shell=False,
+        text=True,
+        timeout=timeout_seconds,
+    )
 
 
 def check_tools() -> dict[str, Any]:
@@ -41,13 +126,7 @@ def check_tools() -> dict[str, Any]:
             if executable is None:
                 tools[name] = {"available": False, "version": None}
                 continue
-            r = subprocess.run(  # nosec B603
-                [executable, *cmd[1:]],
-                capture_output=True,
-                shell=False,
-                text=True,
-                timeout=5,
-            )
+            r = _run_eda_command([executable, *cmd[1:]], timeout_seconds=5)
             version = r.stdout.strip().split("\n")[0] if r.returncode == 0 else None
             tools[name] = {"available": r.returncode == 0, "version": version}
         except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -76,8 +155,30 @@ def supported_targets() -> tuple[str, ...]:
     return tuple(_TARGETS)
 
 
-def run_synthesis(verilog_source: str, target: str = "ice40") -> dict[str, Any]:
-    """Run Yosys synthesis and return resource usage."""
+def run_synthesis(
+    verilog_source: str,
+    target: str = "ice40",
+    *,
+    process_limits: EdaProcessLimits | None = None,
+) -> dict[str, Any]:
+    """Run Yosys synthesis and return resource usage.
+
+    Parameters
+    ----------
+    verilog_source:
+        SystemVerilog or Verilog source text to synthesise.
+    target:
+        Studio synthesis target identifier.
+    process_limits:
+        Optional host-supported CPU and address-space ceilings for the Yosys
+        child process.
+
+    Returns
+    -------
+    dict[str, Any]
+        Path-free synthesis result with success state, target, resource counts,
+        capacity metadata, utilisation, or a bounded error message.
+    """
     if not isinstance(verilog_source, str):
         raise ValueError("verilog_source must be a string")
     if not verilog_source.strip():
@@ -110,12 +211,10 @@ def run_synthesis(verilog_source: str, target: str = "ice40") -> dict[str, Any]:
             }
 
         try:
-            result = subprocess.run(  # nosec B603
+            result = _run_eda_command(
                 [yosys_executable, "-s", script_path],
-                capture_output=True,
-                shell=False,
-                text=True,
-                timeout=60,
+                timeout_seconds=60,
+                process_limits=process_limits,
             )
             log = result.stdout + result.stderr
             with open(log_path, "w") as f:
@@ -219,8 +318,26 @@ def estimate_resources(ir_op_count: int, target: str = "ice40") -> dict[str, Any
     }
 
 
-def multi_target_synthesis(verilog_source: str) -> dict[str, Any]:
-    """Run synthesis on all supported targets, return comparison."""
+def multi_target_synthesis(
+    verilog_source: str,
+    *,
+    process_limits: EdaProcessLimits | None = None,
+) -> dict[str, Any]:
+    """Run synthesis on all supported targets and return a comparison.
+
+    Parameters
+    ----------
+    verilog_source:
+        SystemVerilog or Verilog source text to synthesise.
+    process_limits:
+        Optional host-supported CPU and address-space ceilings applied to every
+        Yosys child process.
+
+    Returns
+    -------
+    dict[str, Any]
+        Mapping with per-target synthesis results and the supported target list.
+    """
     if not isinstance(verilog_source, str):
         raise ValueError("verilog_source must be a string")
     if not verilog_source.strip():
@@ -229,12 +346,35 @@ def multi_target_synthesis(verilog_source: str) -> dict[str, Any]:
         raise ValueError("verilog_source exceeds 2 MiB size limit")
     results = {}
     for target in _TARGETS:
-        results[target] = run_synthesis(verilog_source, target)
+        results[target] = run_synthesis(verilog_source, target, process_limits=process_limits)
     return {"targets": results, "supported": list(_TARGETS.keys())}
 
 
-def run_pnr(json_path: str, target: str = "ice40") -> dict[str, Any]:
-    """Run nextpnr place-and-route and return timing report."""
+def run_pnr(
+    json_path: str,
+    target: str = "ice40",
+    *,
+    process_limits: EdaProcessLimits | None = None,
+) -> dict[str, Any]:
+    """Run nextpnr place-and-route and return timing report.
+
+    Parameters
+    ----------
+    json_path:
+        Path to a Yosys JSON netlist. The path must point to a regular JSON
+        file and must not be a symlink.
+    target:
+        Studio target identifier with nextpnr support.
+    process_limits:
+        Optional host-supported CPU and address-space ceilings for the nextpnr
+        child process.
+
+    Returns
+    -------
+    dict[str, Any]
+        Path-free PnR result with success state, timing metadata, log excerpt,
+        or a bounded error message.
+    """
     cfg = _TARGETS.get(target)
     if not cfg or not cfg["pnr"]:
         return {"success": False, "error": f"No PnR tool for target {target}"}
@@ -268,12 +408,10 @@ def run_pnr(json_path: str, target: str = "ice40") -> dict[str, Any]:
         return {"success": False, "error": f"{pnr_tool} not found"}
 
     try:
-        result = subprocess.run(  # nosec B603
+        result = _run_eda_command(
             [pnr_executable, f"--{cfg['device']}", "--json", str(resolved_json), "--asc", asc_path],
-            capture_output=True,
-            shell=False,
-            text=True,
-            timeout=120,
+            timeout_seconds=120,
+            process_limits=process_limits,
         )
         log = result.stdout + result.stderr
 

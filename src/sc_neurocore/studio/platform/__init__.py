@@ -77,6 +77,8 @@ from sc_neurocore.studio.platform.operator import (
     build_studio_operator_status,
 )
 from sc_neurocore.studio.platform.settings import (
+    DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS,
+    DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES,
     DEFAULT_STUDIO_AUDIT_RETAINED_FILES,
     DEFAULT_STUDIO_ALLOWED_HOSTS,
     DEFAULT_STUDIO_CORS_ORIGINS,
@@ -122,6 +124,8 @@ __all__ = [
     "RoutePolicyRegistry",
     "RouteVisibility",
     "DEFAULT_STUDIO_AUDIT_RETAINED_FILES",
+    "DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS",
+    "DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES",
     "DEFAULT_STUDIO_ALLOWED_HOSTS",
     "DEFAULT_STUDIO_CORS_ORIGINS",
     "DEFAULT_STUDIO_HTTP_SECURITY_HEADERS",

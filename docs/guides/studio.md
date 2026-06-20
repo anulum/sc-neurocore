@@ -291,8 +291,11 @@ The same Admin surface displays local worker health from
 per-job working directories on an operator-selected disk, and tune
 `SC_NEUROCORE_STUDIO_JOB_TIMEOUT_SECONDS` for cooperative worker timeouts. Use
 `SC_NEUROCORE_STUDIO_JOB_MAX_ARTIFACT_BYTES` to cap each declared artifact
-written by a worker. The status payload is path-free and reports allowed job
-kinds plus active/completed/failed/timed-out counts.
+written by a worker. Use `SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS` and
+`SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES` to apply host-supported CPU and
+memory ceilings to Yosys and nextpnr child processes. The status payload is
+path-free and reports allowed job kinds plus active/completed/failed/timed-out
+counts.
 
 Training start, stop, and status routes now submit work through the same local
 worker manager. The training monitor's SSE stream remains the live metric
