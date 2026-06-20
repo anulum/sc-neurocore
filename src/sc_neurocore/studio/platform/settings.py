@@ -143,8 +143,8 @@ class StudioRuntimeSettings:
             raise ValueError("Studio audit log path must not be empty.")
         if self.audit_rotation_bytes is not None and self.audit_rotation_bytes <= 0:
             raise ValueError("Studio audit rotation byte limit must be positive.")
-        if self.audit_retained_files < 0:
-            raise ValueError("Studio retained audit file count must not be negative.")
+        if self.audit_retained_files <= 0:
+            raise ValueError("Studio retained audit file count must be positive.")
         if self.deployment_profile == "production":
             self._validate_production_profile()
 

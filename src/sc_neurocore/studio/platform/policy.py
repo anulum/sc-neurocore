@@ -217,6 +217,10 @@ class JsonlAuditSink:
         rotation_bytes: int | None = None,
         retained_files: int = 5,
     ) -> None:
+        if rotation_bytes is not None and rotation_bytes <= 0:
+            raise ValueError("Studio audit rotation byte limit must be positive.")
+        if retained_files <= 0:
+            raise ValueError("Studio retained audit file count must be positive.")
         self._path = path
         self._rotation_bytes = rotation_bytes
         self._retained_files = retained_files
@@ -333,7 +337,7 @@ class JsonlAuditSink:
         return row
 
     def _rotate_if_needed(self) -> None:
-        if self._rotation_bytes is None or self._retained_files == 0:
+        if self._rotation_bytes is None:
             return
         if not self._path.exists() or self._path.stat().st_size < self._rotation_bytes:
             return

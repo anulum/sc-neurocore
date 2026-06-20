@@ -344,6 +344,8 @@ def test_studio_runtime_settings_rejects_invalid_audit_rotation_policy() -> None
         StudioRuntimeSettings(audit_rotation_bytes=0)
     with pytest.raises(ValueError, match="retained audit"):
         StudioRuntimeSettings(audit_retained_files=-1)
+    with pytest.raises(ValueError, match="retained audit"):
+        StudioRuntimeSettings(audit_retained_files=0)
 
 
 def test_studio_runtime_settings_parses_route_policy_enforcement_flag() -> None:

@@ -209,6 +209,16 @@ def test_jsonl_audit_sink_exposes_configured_path(tmp_path: Path) -> None:
     assert audit_sink.path == audit_path
 
 
+def test_jsonl_audit_sink_rejects_invalid_retention_policy(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+
+    with pytest.raises(ValueError, match="rotation byte"):
+        contract["JsonlAuditSink"](audit_path, rotation_bytes=0)
+    with pytest.raises(ValueError, match="retained audit"):
+        contract["JsonlAuditSink"](audit_path, retained_files=0)
+
+
 def test_in_memory_audit_sink_reports_non_persistent_status() -> None:
     contract = _policy_contract()
     audit_sink = contract["InMemoryAuditSink"]()
