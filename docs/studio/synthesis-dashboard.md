@@ -98,6 +98,22 @@ The `/api/synth/tools-status` endpoint reports which tools are available.
 The dashboard shows green/grey indicators for each tool, with version
 strings when available.
 
+## Target Provenance
+
+Synthesis responses include `target_provenance` using the
+`studio.synthesis-target-provenance.v1` schema. The payload records the target
+ID, Yosys synthesis command, optional nextpnr command and device selector,
+static capacity metadata, tool availability, tool version strings when
+available, readiness booleans, and the `synthesis` evidence classification.
+It is path-free and suitable for operator logs and evidence bundles.
+
+Multi-target responses additionally include
+`target_provenance_matrix` with schema
+`studio.synthesis-target-provenance-matrix.v1`. The matrix captures the same
+target records for every supported target plus a stable `matrix_sha256` digest
+so operators can compare target-support evidence across runs without relying on
+local filesystem paths.
+
 ## API Endpoints
 
 | Method | Endpoint | Description |
@@ -149,7 +165,20 @@ Returns:
   "resources": {"luts": 42, "ffs": 18, "brams": 0, "dsps": 0, "cells": 60, "wires": 85},
   "capacity": {"luts": 5280, "ffs": 5280, "brams": 30, "dsps": 0},
   "utilisation": {"luts": 0.8, "ffs": 0.3, "brams": 0.0, "dsps": 0.0},
-  "log_excerpt": "..."
+  "log_excerpt": "...",
+  "target_provenance": {
+    "schema_version": "studio.synthesis-target-provenance.v1",
+    "target": "ice40",
+    "synthesis_command": "synth_ice40",
+    "pnr_tool": "nextpnr-ice40",
+    "device": "up5k",
+    "synthesis_ready": true,
+    "pnr_ready": true,
+    "evidence_classification": "synthesis",
+    "tools": [
+      {"key": "yosys", "executable": "yosys", "role": "synthesis", "available": true, "version": "Yosys 0.40"}
+    ]
+  }
 }
 ```
 
@@ -168,6 +197,11 @@ Returns synthesis results for all supported targets:
     "ecp5": {"success": true, "target": "ecp5", "resources": {...}, ...},
     "gowin": {"success": true, ...},
     "xilinx": {"success": true, ...}
+  },
+  "target_provenance_matrix": {
+    "schema_version": "studio.synthesis-target-provenance-matrix.v1",
+    "matrix_sha256": "<64 lowercase hex characters>",
+    "targets": {"ice40": {...}, "ecp5": {...}, "gowin": {...}, "xilinx": {...}}
   },
   "supported": ["ice40", "ecp5", "gowin", "xilinx"]
 }

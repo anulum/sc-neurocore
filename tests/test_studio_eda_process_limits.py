@@ -13,13 +13,14 @@ from __future__ import annotations
 import os
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from pytest import MonkeyPatch
 
 from sc_neurocore.studio import synthesis
 from sc_neurocore.studio.synthesis import EdaProcessLimits, run_pnr, run_synthesis
+from sc_neurocore.studio.synthesis_provenance import ToolStatusMap
 
 
 def test_eda_process_limits_reject_non_positive_values() -> None:
@@ -67,6 +68,13 @@ def test_run_synthesis_passes_posix_preexec_when_limits_are_configured(
         "module test(); endmodule",
         "ice40",
         process_limits=EdaProcessLimits(cpu_seconds=3.0, address_space_bytes=64 * 1024 * 1024),
+        tool_status=cast(
+            ToolStatusMap,
+            {
+                "yosys": {"available": True, "version": "Yosys test"},
+                "nextpnr_ice40": {"available": False, "version": None},
+            },
+        ),
     )
 
     assert result["success"] is True

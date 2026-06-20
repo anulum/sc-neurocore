@@ -519,6 +519,33 @@ export interface SynthCapacity {
   dsps: number;
 }
 
+export interface SynthesisToolProvenance {
+  available: boolean;
+  executable: string;
+  key: string;
+  role: "synthesis" | "place_and_route";
+  version: string | null;
+}
+
+export interface SynthesisTargetProvenance {
+  capacity: Partial<SynthCapacity>;
+  device: string | null;
+  evidence_classification: "synthesis";
+  pnr_ready: boolean;
+  pnr_tool: string | null;
+  schema_version: "studio.synthesis-target-provenance.v1";
+  synthesis_command: string;
+  synthesis_ready: boolean;
+  target: string;
+  tools: SynthesisToolProvenance[];
+}
+
+export interface SynthesisTargetProvenanceMatrix {
+  matrix_sha256: string;
+  schema_version: "studio.synthesis-target-provenance-matrix.v1";
+  targets: Record<string, SynthesisTargetProvenance>;
+}
+
 export interface SynthResult {
   success: boolean;
   error?: string;
@@ -527,6 +554,7 @@ export interface SynthResult {
   capacity: SynthCapacity;
   utilisation: Record<string, number>;
   log_excerpt: string;
+  target_provenance: SynthesisTargetProvenance;
 }
 
 export interface SynthEstimate {
@@ -540,6 +568,7 @@ export interface SynthEstimate {
 export interface MultiTargetResult {
   targets: Record<string, SynthResult>;
   supported: string[];
+  target_provenance_matrix: SynthesisTargetProvenanceMatrix;
 }
 
 export interface PnRResult {

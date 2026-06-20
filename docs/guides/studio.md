@@ -379,6 +379,13 @@ flows, and the Admin queue records path-free artifacts at
 `synthesis/multi-target-result.json`, `synthesis/pnr-result.json`, and
 `pipeline/result.json`.
 
+Synthesis results include path-free `studio.synthesis-target-provenance.v1`
+metadata for the selected target. Multi-target runs include the
+`studio.synthesis-target-provenance-matrix.v1` matrix with a stable SHA-256
+digest across every supported target. These records capture target capacity,
+Yosys command, optional nextpnr command/device, tool availability, and tool
+version strings when available.
+
 Each worker-backed compile, synthesis, PnR, and pipeline action also writes a
 normalized `studio.action-evidence.v1` manifest next to the result artifact:
 `compiler/evidence.json`, `synthesis/evidence.json`,
@@ -494,7 +501,7 @@ token hashes, passwords, or password verifiers.
 The Studio includes five additional panels beyond the core research workbench:
 
 - **Compiler Inspector** — build SC IR, verify, emit SystemVerilog. [Details](../studio/compiler-inspector.md)
-- **Synthesis Dashboard** — worker-backed Yosys synthesis for 4 FPGA targets, multi-target comparison, resource estimation. [Details](../studio/synthesis-dashboard.md)
+- **Synthesis Dashboard** — worker-backed Yosys synthesis for 4 FPGA targets, multi-target comparison, target provenance, resource estimation. [Details](../studio/synthesis-dashboard.md)
 - **Training Monitor** — live SNN training with 6 surrogate gradients, SSE metric streaming. [Details](../studio/training-monitor.md)
 - **Network Canvas** — drag-and-drop populations and projections with React Flow, NIR export/import. [Details](../studio/network-canvas.md)
 - **Integration** — worker-backed full pipeline (graph → compile → synthesise), project save/load. [Details](../studio/integration.md)

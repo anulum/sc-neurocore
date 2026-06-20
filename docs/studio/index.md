@@ -397,6 +397,9 @@ Run Yosys synthesis on generated Verilog for 4 FPGA targets:
 
 Multi-target comparison table shows resource usage across all targets.
 Quick heuristic estimation available without Yosys installed.
+Synthesis responses include path-free target provenance with tool readiness,
+tool versions where available, capacity metadata, and a multi-target matrix
+digest for comparison runs.
 
 ### Full Pipeline
 
@@ -448,7 +451,7 @@ for complete API details with request/response examples.
 | `/api/simulate`, `/api/models/*` | Phase 1 | ODE/model simulation with path-free run metadata, templates, presets |
 | `/api/fi-curve`, `/api/bifurcation`, `/api/heatmap`, ... | Phase 1 | Analysis views |
 | `/api/ir/*` | Compiler Inspector | IR build, verify, emit SV, co-sim |
-| `/api/compile`, `/api/synth/*` | Compiler/Synthesis | Worker-backed compile, Yosys synthesis, multi-target, estimate |
+| `/api/compile`, `/api/synth/*` | Compiler/Synthesis | Worker-backed compile, Yosys synthesis, target provenance, multi-target, estimate |
 | `/api/training/*` | Training Monitor | Start/stop, SSE stream, surrogates |
 | `/api/graph/*` | Network Canvas | Populations, projections, validate, simulate, NIR |
 | `/api/project/*`, `/api/pipeline/*` | Integration | Save/load, worker-backed full pipeline |

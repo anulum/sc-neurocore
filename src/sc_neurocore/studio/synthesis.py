@@ -19,6 +19,12 @@ import subprocess  # nosec B404
 import tempfile
 from pathlib import Path
 
+from sc_neurocore.studio.synthesis_provenance import (
+    ToolStatusMap,
+    build_synthesis_target_provenance,
+    build_synthesis_target_provenance_matrix,
+)
+
 _EDA_TOOL_ALLOWLIST = frozenset({"yosys", "nextpnr-ice40", "nextpnr-ecp5", "firtool"})
 
 
@@ -160,6 +166,7 @@ def run_synthesis(
     target: str = "ice40",
     *,
     process_limits: EdaProcessLimits | None = None,
+    tool_status: ToolStatusMap | None = None,
 ) -> dict[str, Any]:
     """Run Yosys synthesis and return resource usage.
 
@@ -172,6 +179,9 @@ def run_synthesis(
     process_limits:
         Optional host-supported CPU and address-space ceilings for the Yosys
         child process.
+    tool_status:
+        Optional path-free EDA tool status snapshot. When omitted, the backend
+        captures a fresh snapshot for this result.
 
     Returns
     -------
@@ -187,6 +197,13 @@ def run_synthesis(
         raise ValueError("verilog_source exceeds 2 MiB size limit")
     if target not in _TARGETS:
         raise ValueError(f"Unknown target: {target}. Supported: {list(_TARGETS.keys())}")
+    status = check_tools() if tool_status is None else tool_status
+    target_provenance = build_synthesis_target_provenance(
+        target,
+        target_config=_TARGETS[target],
+        capacity=_DEVICE_CAPACITY.get(target, {}),
+        tool_status=status,
+    ).to_public_dict()
 
     with tempfile.TemporaryDirectory(prefix="sc_synth_") as tmpdir:
         v_path = os.path.join(tmpdir, "design.v")
@@ -208,6 +225,7 @@ def run_synthesis(
                 "success": False,
                 "error": "yosys not found. Install: https://github.com/YosysHQ/yosys",
                 "target": target,
+                "target_provenance": target_provenance,
             }
 
         try:
@@ -220,15 +238,26 @@ def run_synthesis(
             with open(log_path, "w") as f:
                 f.write(log)
         except FileNotFoundError:
-            return {"success": False, "error": "yosys not found", "target": target}
+            return {
+                "success": False,
+                "error": "yosys not found",
+                "target": target,
+                "target_provenance": target_provenance,
+            }
         except subprocess.TimeoutExpired:
-            return {"success": False, "error": "Synthesis timed out (60s)", "target": target}
+            return {
+                "success": False,
+                "error": "Synthesis timed out (60s)",
+                "target": target,
+                "target_provenance": target_provenance,
+            }
 
         if not os.path.exists(json_path):
             return {
                 "success": False,
                 "error": f"Synthesis failed. Log:\n{log[-500:]}",
                 "target": target,
+                "target_provenance": target_provenance,
             }
 
         resources = _parse_yosys_json(json_path)
@@ -244,6 +273,7 @@ def run_synthesis(
                 for k in ["luts", "ffs", "brams", "dsps"]
             },
             "log_excerpt": log[-300:] if log else "",
+            "target_provenance": target_provenance,
         }
 
 
@@ -344,10 +374,24 @@ def multi_target_synthesis(
         raise ValueError("verilog_source must not be empty")
     if len(verilog_source.encode("utf-8")) > 2 * 1024 * 1024:
         raise ValueError("verilog_source exceeds 2 MiB size limit")
+    tool_status = check_tools()
     results = {}
     for target in _TARGETS:
-        results[target] = run_synthesis(verilog_source, target, process_limits=process_limits)
-    return {"targets": results, "supported": list(_TARGETS.keys())}
+        results[target] = run_synthesis(
+            verilog_source,
+            target,
+            process_limits=process_limits,
+            tool_status=tool_status,
+        )
+    return {
+        "target_provenance_matrix": build_synthesis_target_provenance_matrix(
+            targets=_TARGETS,
+            capacities=_DEVICE_CAPACITY,
+            tool_status=tool_status,
+        ),
+        "targets": results,
+        "supported": list(_TARGETS.keys()),
+    }
 
 
 def run_pnr(

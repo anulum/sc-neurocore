@@ -146,7 +146,11 @@ def test_multi_target_synthesis_route_records_bounded_worker_job(tmp_path: Path)
 
     assert response.status_code == 200
     data = response.json()
-    assert set(data) == {"supported", "targets"}
+    assert set(data) == {"supported", "target_provenance_matrix", "targets"}
+    assert (
+        data["target_provenance_matrix"]["schema_version"]
+        == "studio.synthesis-target-provenance-matrix.v1"
+    )
     record = _single_job(app, owner="studio-synthesis", kind="synthesis")
     assert [artifact.relative_path for artifact in record.artifacts] == [
         "synthesis/multi-target-result.json",

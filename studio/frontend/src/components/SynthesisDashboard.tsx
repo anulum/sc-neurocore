@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useStudioStore } from "../stores/studio";
+import type { SynthesisTargetProvenance } from "../api/client";
 
 function ResourceBar({ label, used, total, color }: {
   label: string; used: number; total: number; color: string;
@@ -48,6 +49,30 @@ function TargetComparisonRow({ target, result }: {
       <td style={{ padding: "3px 8px", fontFamily: "var(--font-mono)" }}>{r.brams} ({u.brams}%)</td>
       <td style={{ padding: "3px 8px", fontFamily: "var(--font-mono)" }}>{r.dsps} ({u.dsps}%)</td>
     </tr>
+  );
+}
+
+function ProvenanceSummary({ provenance }: { provenance: SynthesisTargetProvenance }) {
+  const synthesisTool = provenance.tools.find((tool) => tool.role === "synthesis");
+  const pnrTool = provenance.tools.find((tool) => tool.role === "place_and_route");
+  return (
+    <div style={{
+      marginTop: 10, padding: 8, background: "var(--bg-secondary)",
+      borderRadius: 4, fontSize: 10, color: "var(--text-secondary)",
+    }}>
+      <div style={{ fontWeight: 600, marginBottom: 4 }}>Target provenance</div>
+      <div>Command: {provenance.synthesis_command}</div>
+      <div>
+        Synthesis tool: {synthesisTool?.executable ?? "yosys"} (
+        {provenance.synthesis_ready ? "available" : "missing"}
+        {synthesisTool?.version ? `, ${synthesisTool.version}` : ""})
+      </div>
+      <div>
+        PnR: {pnrTool?.executable ?? "not configured"} (
+        {provenance.pnr_tool ? (provenance.pnr_ready ? "available" : "missing") : "not required"})
+      </div>
+      <div>Evidence: {provenance.evidence_classification}</div>
+    </div>
   );
 }
 
@@ -199,6 +224,9 @@ export default function SynthesisDashboard() {
                 ))}
               </tbody>
             </table>
+            <div style={{ marginTop: 8, fontSize: 9, color: "var(--text-muted)" }}>
+              Provenance matrix: {multiTargetResult.target_provenance_matrix.matrix_sha256.slice(0, 12)}
+            </div>
           </div>
         )}
 
@@ -248,6 +276,7 @@ export default function SynthesisDashboard() {
                     </div>
                   )}
                 </div>
+                <ProvenanceSummary provenance={synthResult.target_provenance} />
               </>
             )}
           </div>
