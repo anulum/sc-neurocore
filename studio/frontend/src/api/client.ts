@@ -287,8 +287,15 @@ export interface StudioOperatorResourceLimitStatus {
   job_max_artifact_bytes: number;
 }
 
+export interface StudioOperatorBrowserLoginStatus {
+  cooldown_seconds: number;
+  failure_window_seconds: number;
+  max_failures: number;
+}
+
 export interface StudioOperatorStatus {
   audit: StudioAuditStatus;
+  browser_login: StudioOperatorBrowserLoginStatus;
   capabilities: StudioOperatorCapabilityStatus;
   deployment_profile: "development" | "production";
   identity: StudioOperatorIdentityStatus;

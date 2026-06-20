@@ -177,6 +177,11 @@ const identityBrowserUser: StudioIdentityBrowserUser = {
 
 const operatorStatus: StudioOperatorStatus = {
   audit: auditStatus,
+  browser_login: {
+    cooldown_seconds: 900,
+    failure_window_seconds: 300,
+    max_failures: 5,
+  },
   capabilities: {
     degraded_count: 0,
     experimental_count: 2,
@@ -265,6 +270,10 @@ describe("AdminPanel", () => {
     expect(html).toContain("120s");
     expect(html).toContain("2 GiB");
     expect(html).toContain("16 MiB");
+    expect(html).toContain("Login limit");
+    expect(html).toContain("Login window");
+    expect(html).toContain("Login cooldown");
+    expect(html).toContain("900s");
     expect(html).toContain("Audit");
     expect(html).toContain("Identity lifecycle");
     expect(html).toContain("studio.identity.browser_user.password.rotate");

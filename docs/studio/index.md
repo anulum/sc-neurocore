@@ -105,7 +105,9 @@ runtime features:
   `SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES`,
   `SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS`, and
   `SC_NEUROCORE_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS`. Throttle denials emit
-  `studio.auth.login` audit rows without password material.
+  `studio.auth.login` audit rows without password material. The Admin panel
+  Operator section reports the active lockout threshold, failure window, and
+  cooldown from `/api/studio/operator/status`.
 - First-deployment service-account identity files are created offline with
   `sc-neurocore studio-bootstrap-admin --identity-file <path>`. The command
   writes only the SHA-256 token hash to disk, returns the bearer token once to
@@ -527,7 +529,7 @@ for complete API details with request/response examples.
 | `/api/studio/evidence/bundle` | Admin | Job-backed project/job/audit simulation, analysis, and default-flow evidence bundle |
 | `/api/studio/auth/*` | Platform | Browser-user login, current bearer session, logout |
 | `/api/studio/identity/*` | Admin | Token-free service-account inventory and role updates |
-| `/api/studio/operator/status` | Admin | Aggregate operator control-plane health |
+| `/api/studio/operator/status` | Admin | Aggregate operator control-plane health, including browser-login lockout limits |
 
 ## Requirements
 

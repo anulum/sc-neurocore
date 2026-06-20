@@ -226,6 +226,9 @@ export default function AdminPanelView({
           <div><span>EDA limits</span><strong>{model.operator.edaLimitSupport}</strong></div>
           <div><span>Job timeout</span><strong>{model.operator.jobTimeout}</strong></div>
           <div><span>Artifact cap</span><strong>{model.operator.jobArtifactLimit}</strong></div>
+          <div><span>Login limit</span><span style={{ fontWeight: 700 }}>{model.operator.browserLoginLimit}</span></div>
+          <div><span>Login window</span><span style={{ fontWeight: 700 }}>{model.operator.browserLoginWindow}</span></div>
+          <div><span>Login cooldown</span><span style={{ fontWeight: 700 }}>{model.operator.browserLoginCooldown}</span></div>
         </div>
         <div className="admin-audit-list">
           <div className="admin-audit-row">

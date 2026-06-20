@@ -66,6 +66,11 @@ def test_studio_preflight_passes_release_posture_without_secret_leaks(tmp_path: 
     assert payload["schema_version"] == STUDIO_PREFLIGHT_SCHEMA_VERSION
     assert payload["deployment_profile"] == "production"
     assert _check_by_id(report.checks, "identity_store").evidence["active_admin_principals"] == 1
+    assert _check_by_id(report.checks, "browser_login_lockout").evidence == {
+        "cooldown_seconds": 900.0,
+        "failure_window_seconds": 300.0,
+        "max_failures": 5,
+    }
     assert _check_by_id(report.checks, "route_policy_inventory").evidence[
         "required_route_count"
     ] == len(preflight._REQUIRED_ROUTE_POLICIES)
@@ -175,6 +180,33 @@ def test_studio_preflight_fails_closed_for_development_defaults() -> None:
         if check.status == "fail":
             assert check.remediation
     assert _check_by_id(report.checks, "route_policy_inventory").status == "pass"
+    assert _check_by_id(report.checks, "browser_login_lockout").status == "pass"
+
+
+def test_studio_preflight_reports_browser_login_lockout_limits(tmp_path: Path) -> None:
+    identity_path = tmp_path / "private" / "studio-identities.json"
+    bootstrap_studio_admin_identity(
+        identity_path,
+        token_factory=lambda _: "release-preflight-token",
+    )
+    (tmp_path / "audit").mkdir()
+    (tmp_path / "jobs").mkdir()
+    env = _release_env(tmp_path, identity_path)
+    env["SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES"] = "3"
+    env["SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS"] = "60"
+    env["SC_NEUROCORE_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS"] = "600"
+
+    report = run_studio_preflight(env)
+    lockout_check = _check_by_id(report.checks, "browser_login_lockout")
+
+    assert report.passed is True
+    assert lockout_check.status == "pass"
+    assert lockout_check.message == "Browser login lockout limits are configured."
+    assert lockout_check.evidence == {
+        "cooldown_seconds": 600.0,
+        "failure_window_seconds": 60.0,
+        "max_failures": 3,
+    }
 
 
 def test_studio_preflight_fails_on_invalid_runtime_settings() -> None:

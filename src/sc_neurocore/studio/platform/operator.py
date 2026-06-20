@@ -116,6 +116,24 @@ class StudioOperatorResourceLimitStatus:
 
 
 @dataclass(frozen=True, slots=True)
+class StudioOperatorBrowserLoginStatus:
+    """Path-free browser-login lockout posture for Studio operators."""
+
+    cooldown_seconds: float
+    failure_window_seconds: float
+    max_failures: int
+
+    def to_public_dict(self) -> dict[str, float | int]:
+        """Return browser-login lockout limits without identity material."""
+
+        return {
+            "cooldown_seconds": self.cooldown_seconds,
+            "failure_window_seconds": self.failure_window_seconds,
+            "max_failures": self.max_failures,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class StudioOperatorStatus:
     """Path-free aggregate status for the Studio operator control plane."""
 
@@ -126,6 +144,7 @@ class StudioOperatorStatus:
     jobs: StudioJobStatusSnapshot
     capabilities: StudioOperatorCapabilityStatus
     resource_limits: StudioOperatorResourceLimitStatus
+    browser_login: StudioOperatorBrowserLoginStatus
     schema_version: str = OPERATOR_STATUS_SCHEMA_VERSION
 
     def to_public_dict(self) -> dict[str, object]:
@@ -133,6 +152,7 @@ class StudioOperatorStatus:
 
         return {
             "audit": self.audit.to_public_dict(),
+            "browser_login": self.browser_login.to_public_dict(),
             "capabilities": self.capabilities.to_public_dict(),
             "deployment_profile": self.deployment_profile,
             "identity": self.identity.to_public_dict(),
@@ -164,6 +184,7 @@ def build_studio_operator_status(
         jobs=job_status,
         capabilities=_build_capability_status(capabilities),
         resource_limits=_build_resource_limit_status(settings),
+        browser_login=_build_browser_login_status(settings),
     )
 
 
@@ -246,9 +267,20 @@ def _build_resource_limit_status(
     )
 
 
+def _build_browser_login_status(
+    settings: StudioRuntimeSettings,
+) -> StudioOperatorBrowserLoginStatus:
+    return StudioOperatorBrowserLoginStatus(
+        cooldown_seconds=settings.browser_login_cooldown_seconds,
+        failure_window_seconds=settings.browser_login_failure_window_seconds,
+        max_failures=settings.browser_login_max_failures,
+    )
+
+
 __all__ = [
     "OPERATOR_STATUS_SCHEMA_VERSION",
     "OperatorIdentityMode",
+    "StudioOperatorBrowserLoginStatus",
     "StudioOperatorCapabilityStatus",
     "StudioOperatorIdentityStatus",
     "StudioOperatorResourceLimitStatus",

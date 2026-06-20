@@ -37,7 +37,7 @@ STUDIO_PREFLIGHT_SCHEMA_VERSION = "studio.preflight.v1"
 UTC = timezone.utc
 
 StudioPreflightStatus: TypeAlias = Literal["pass", "fail"]
-StudioPreflightEvidenceValue: TypeAlias = bool | int | str | None
+StudioPreflightEvidenceValue: TypeAlias = bool | float | int | str | None
 
 _REQUIRED_ROUTE_POLICIES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ("GET", "/api/studio/operator/status", RouteVisibility.ADMIN, "studio.operator.status.read"),
@@ -227,6 +227,7 @@ def run_studio_preflight(
         )
     )
     checks.extend(_profile_checks(settings))
+    checks.append(_browser_login_lockout_check(settings))
     checks.append(_route_policy_inventory_check())
     checks.append(_identity_store_check(settings, now=clock or datetime.now(UTC)))
     checks.append(
@@ -276,6 +277,34 @@ def _profile_checks(settings: StudioRuntimeSettings) -> tuple[StudioPreflightChe
             remediation=()
             if not settings.allow_header_principal
             else ("Set SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL=false.",),
+        ),
+    )
+
+
+def _browser_login_lockout_check(settings: StudioRuntimeSettings) -> StudioPreflightCheck:
+    passed = (
+        settings.browser_login_max_failures > 0
+        and settings.browser_login_failure_window_seconds > 0
+        and settings.browser_login_cooldown_seconds > 0
+    )
+    return StudioPreflightCheck(
+        check_id="browser_login_lockout",
+        status="pass" if passed else "fail",
+        message=(
+            "Browser login lockout limits are configured."
+            if passed
+            else "Browser login lockout limits must be positive."
+        ),
+        evidence={
+            "cooldown_seconds": settings.browser_login_cooldown_seconds,
+            "failure_window_seconds": settings.browser_login_failure_window_seconds,
+            "max_failures": settings.browser_login_max_failures,
+        },
+        remediation=()
+        if passed
+        else (
+            "Set positive SC_NEUROCORE_STUDIO_BROWSER_LOGIN_* limits before launch.",
+            "Rerun studio-preflight from the deployment environment.",
         ),
     )
 

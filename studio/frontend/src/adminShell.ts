@@ -118,6 +118,9 @@ export interface AdminIdentityBrowserUserModel {
 }
 
 export interface AdminOperatorModel {
+  browserLoginCooldown: string;
+  browserLoginLimit: string;
+  browserLoginWindow: string;
   deploymentProfile: "development" | "production" | "unknown";
   edaCpuLimit: string;
   edaMemoryLimit: string;
@@ -398,6 +401,9 @@ function isEvidenceArtifactPath(path: string): boolean {
 function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminOperatorModel {
   if (operatorStatus === null) {
     return {
+      browserLoginCooldown: "unknown",
+      browserLoginLimit: "unknown",
+      browserLoginWindow: "unknown",
       deploymentProfile: "unknown",
       edaCpuLimit: "unknown",
       edaMemoryLimit: "unknown",
@@ -411,9 +417,13 @@ function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminO
       schemaVersion: "unavailable",
     };
   }
+  const browserLogin = operatorStatus.browser_login;
   const limits = operatorStatus.resource_limits;
   const routePolicies = operatorStatus.route_policies;
   return {
+    browserLoginCooldown: formatSeconds(browserLogin.cooldown_seconds),
+    browserLoginLimit: `${browserLogin.max_failures}`,
+    browserLoginWindow: formatSeconds(browserLogin.failure_window_seconds),
     deploymentProfile: operatorStatus.deployment_profile,
     edaCpuLimit: formatSeconds(limits.eda_process_cpu_seconds),
     edaMemoryLimit: formatBytes(limits.eda_process_memory_bytes),

@@ -349,7 +349,9 @@ for a 15-minute cooldown. Tune this deployment policy with
 `SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS`, and
 `SC_NEUROCORE_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS`. A successful login clears
 prior invalid-attempt state for that username; disabled or expired users keep
-their explicit failure reason and are not converted into throttle events.
+their explicit failure reason and are not converted into throttle events. The
+Admin panel Operator section reports the active lockout threshold, failure
+window, and cooldown without exposing identity-file paths or secret material.
 
 Administrators can inspect and update browser-user lifecycle metadata from the
 Admin panel Identity section or through `/api/studio/identity/browser-users`.
@@ -506,7 +508,8 @@ The Admin panel also uses the admin-gated `/api/studio/operator/status`
 aggregate when available. That endpoint reports deployment profile,
 route-policy enforcement, route inventory counts, protected-route audit
 coverage, identity mode, audit health, worker health, resource-limit posture,
-and capability counts without exposing local paths or token material.
+browser-login lockout limits, and capability counts without exposing local
+paths or token material.
 
 For production deployments, set
 `SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE=production`. That profile fails closed
@@ -566,8 +569,9 @@ sc-neurocore studio-preflight --output studio-preflight.json
 The command exits with status `0` only when the release posture passes. It
 checks runtime settings, route-policy enforcement, disabled development header
 principals, required admin route policies, a valid identity store with at least
-one active unexpired `studio.admin` principal, audit-log readiness, and
-job-root readiness. The required route-policy inventory includes service
+one active unexpired `studio.admin` principal, browser-login lockout settings,
+audit-log readiness, and job-root readiness. The required route-policy
+inventory includes service
 account list/detail/update routes and browser-user list/detail/create/update
 and password-rotation routes, job list/detail/artifact routes, and the
 evidence bundle export route. The JSON report uses schema

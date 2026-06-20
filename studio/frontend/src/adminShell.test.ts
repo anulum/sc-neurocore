@@ -181,6 +181,11 @@ const identityBrowserUser: StudioIdentityBrowserUser = {
 
 const operatorStatus: StudioOperatorStatus = {
   audit: auditStatus,
+  browser_login: {
+    cooldown_seconds: 900,
+    failure_window_seconds: 300,
+    max_failures: 5,
+  },
   capabilities: {
     degraded_count: 0,
     experimental_count: 2,
@@ -353,6 +358,9 @@ describe("admin shell model", () => {
       },
     ]);
     expect(model.operator).toEqual({
+      browserLoginCooldown: "900s",
+      browserLoginLimit: "5",
+      browserLoginWindow: "300s",
       deploymentProfile: "production",
       edaCpuLimit: "120s",
       edaLimitSupport: "supported",

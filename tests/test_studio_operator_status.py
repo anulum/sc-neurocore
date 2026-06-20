@@ -101,6 +101,9 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
             job_max_artifact_bytes=4096,
             eda_process_cpu_seconds=12.0,
             eda_process_memory_bytes=268435456,
+            browser_login_max_failures=3,
+            browser_login_failure_window_seconds=120.0,
+            browser_login_cooldown_seconds=900.0,
         ),
         capabilities=tuple(registry.health_all()),
         audit_status=AuditSinkStatus(
@@ -155,6 +158,11 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
         ],
         "schema_version": "studio.jobs.status.v1",
         "timed_out_count": 0,
+    }
+    assert payload["browser_login"] == {
+        "cooldown_seconds": 900.0,
+        "failure_window_seconds": 120.0,
+        "max_failures": 3,
     }
     assert payload["resource_limits"] == {
         "eda_process_cpu_seconds": 12.0,
@@ -290,5 +298,10 @@ def test_operator_status_endpoint_is_admin_protected() -> None:
     assert payload["route_policies"]["enforced"] is True
     assert payload["route_policies"]["protected_routes_audited"] is True
     assert payload["route_policies"]["protected_count"] > 0
+    assert payload["browser_login"] == {
+        "cooldown_seconds": 900.0,
+        "failure_window_seconds": 300.0,
+        "max_failures": 5,
+    }
     assert "token" not in allowed.text.lower()
     assert "/tmp" not in allowed.text
