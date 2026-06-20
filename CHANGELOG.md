@@ -13,6 +13,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   workflow.
 
 ### Physics and mathematics hardening
+- Added the polyglot `adc_to_spike_windows(...)` chain for the ADC-to-spike
+  decimating rate-code encoder across python / rust / julia / go / mojo. Each
+  decimation window is centred and quantised to a Q-format code, sign-aware
+  averaged (round half away-from-zero then truncate toward zero) and converted
+  into a deterministic spike count (`|window| // threshold`) with the window sign
+  as polarity. The arithmetic is exact integer, so every backend reproduces the
+  Python floor bit-for-bit, and a dedicated test pins the Python floor against the
+  cycle-stepped golden model in `tools/adc_to_spike_reference.py`. Added the Rust
+  engine `adc_to_spike_windows` + PyO3 `py_adc_to_spike_windows`, the wired
+  `sc_neurocore.sensors.adc_to_spike_kernel` primary with fastest-first dispatch,
+  the Julia/Go/Mojo backends, unit, cross-backend and golden-reference parity
+  tests to full coverage of the primary module, a five-backend benchmark with a
+  committed artefact, and documentation.
 - Added the polyglot batched `mixed_dense_forward_batch(...)` chain for the
   mixed-precision Q8.8 × Q16.16 dense MAC across python / rust / julia / go / mojo.
   The integer branch (per-tensor scale folded so the accumulator divisor equals

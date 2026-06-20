@@ -731,6 +731,14 @@ except ImportError:
     _mixed_dense_rust_available = False
 
 try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_adc_to_spike_windows
+
+    __all__ += ["py_adc_to_spike_windows"]
+    _adc_to_spike_rust_available = True
+except ImportError:
+    _adc_to_spike_rust_available = False
+
+try:
     from sc_neurocore_engine.sc_neurocore_engine import (
         py_predict_xor_ema,
         py_predict_xor_lfsr,

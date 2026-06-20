@@ -1,0 +1,127 @@
+{
+  "benchmark": "adc_to_spike_kernel_windows",
+  "date_utc": "2026-06-20T22:46:39Z",
+  "language_surfaces": [
+    "Python",
+    "Rust",
+    "Julia",
+    "Go",
+    "Mojo"
+  ],
+  "kernel": "adc_to_spike_windows_q",
+  "hardware_measurement_claimed": false,
+  "benchmark_isolation_mode": "runtime-cpuset-shield",
+  "workload": {
+    "n_windows": 65536,
+    "n_samples": 524288,
+    "decimation": 8,
+    "adc_width": 16,
+    "seed": 20260621
+  },
+  "meta": {
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "numpy": "2.2.6",
+    "toolchains": {
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "julia": "julia version 1.12.6",
+      "go": "go version go1.24.0 linux/amd64",
+      "mojo": "Mojo 1.0.0b1 (a9591de6)"
+    }
+  },
+  "backends": {
+    "python": {
+      "available": true,
+      "used": true,
+      "reason": "primary reference",
+      "median_call_ms": 618.964942,
+      "samples_per_s": 847039.9,
+      "repeats": 3
+    },
+    "rust": {
+      "available": true,
+      "used": true,
+      "reason": "available",
+      "median_call_ms": 1.177833,
+      "samples_per_s": 445129336.9,
+      "repeats": 15,
+      "speedup_over_python": 525.51
+    },
+    "mojo": {
+      "available": true,
+      "used": true,
+      "reason": "available",
+      "median_call_ms": 0.947479,
+      "samples_per_s": 553350498.1,
+      "repeats": 15,
+      "speedup_over_python": 653.28
+    },
+    "julia": {
+      "available": true,
+      "used": true,
+      "reason": "available",
+      "median_call_ms": 1.758218,
+      "samples_per_s": 298192841.5,
+      "repeats": 15,
+      "speedup_over_python": 352.04
+    },
+    "go": {
+      "available": true,
+      "used": true,
+      "reason": "available",
+      "median_call_ms": 5.692024,
+      "samples_per_s": 92109238.9,
+      "repeats": 15,
+      "speedup_over_python": 108.74
+    }
+  },
+  "parity": {
+    "reference": "rust",
+    "tolerance": 0,
+    "python": {
+      "max_abs_delta": 0,
+      "bit_exact": true
+    },
+    "rust": {
+      "max_abs_delta": 0,
+      "bit_exact": true
+    },
+    "mojo": {
+      "max_abs_delta": 0,
+      "bit_exact": true
+    },
+    "julia": {
+      "max_abs_delta": 0,
+      "bit_exact": true
+    },
+    "go": {
+      "max_abs_delta": 0,
+      "bit_exact": true
+    }
+  },
+  "host_context": {
+    "affinity_cpus": [
+      10,
+      11
+    ],
+    "affinity_cpu_count": 2,
+    "cgroup_effective_cpuset": "10-11",
+    "load_average_before": [
+      5.3662109375,
+      6.9423828125,
+      7.27490234375
+    ],
+    "load_average_after": [
+      5.3662109375,
+      6.9423828125,
+      7.27490234375
+    ],
+    "cpu_governors_sample": {
+      "10": "powersave",
+      "11": "powersave"
+    },
+    "runtime_cpuset_shield_claimed": true,
+    "isolation_mode": "runtime-cpuset-shield"
+  }
+}

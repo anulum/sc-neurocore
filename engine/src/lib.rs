@@ -22,6 +22,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObject;
 
+pub mod adc_to_spike;
 pub mod analysis;
 pub mod attention;
 pub mod bitstream;
@@ -588,6 +589,49 @@ fn py_dcls_max_forward_batch_q88<'py>(
     Ok(d.into_any().unbind())
 }
 
+// ── ADC-to-spike decimating rate-code — per-window PyO3 wrapper ───────
+
+/// Encode raw ADC samples into per-window spike rate codes.
+///
+/// Parity contract with `sc_neurocore.sensors.adc_to_spike_kernel`: this Rust
+/// path and the Julia, Go, Mojo and Python backends return bit-identical arrays
+/// because the per-window quantise/average/rate-code arithmetic is exact integer.
+///
+/// `signed_input` is `0` for offset-binary or `1` for two's-complement ADC
+/// samples. Returns a dict with `window_values_q` (int32), `spike_counts` (int32)
+/// and `polarities` (bool), each of length `samples.len() / decimation`.
+#[pyfunction]
+#[pyo3(signature = (
+    samples, adc_width, q_int, q_frac, decimation, signed_input, threshold_q,
+))]
+#[allow(clippy::too_many_arguments)]
+fn py_adc_to_spike_windows<'py>(
+    py: Python<'py>,
+    samples: PyReadonlyArray1<'py, i64>,
+    adc_width: u32,
+    q_int: u32,
+    q_frac: u32,
+    decimation: u32,
+    signed_input: i64,
+    threshold_q: i64,
+) -> PyResult<Py<PyAny>> {
+    let result = adc_to_spike::adc_to_spike_windows(
+        samples.as_slice()?,
+        adc_width,
+        q_int,
+        q_frac,
+        decimation,
+        signed_input != 0,
+        threshold_q,
+    )
+    .map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let d = PyDict::new(py);
+    d.set_item("window_values_q", result.window_values_q.into_pyarray(py))?;
+    d.set_item("spike_counts", result.spike_counts.into_pyarray(py))?;
+    d.set_item("polarities", result.polarities.into_pyarray(py))?;
+    Ok(d.into_any().unbind())
+}
+
 // ── Mixed-precision Q8.8 × Q16.16 dense MAC — batch PyO3 wrapper ──────
 
 /// Batched integer mixed-precision Q8.8 × Q16.16 dense MAC.
@@ -690,6 +734,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_wong_wang_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_dcls_max_forward_batch_q88, m)?)?;
     m.add_function(wrap_pyfunction!(py_mixed_dense_forward_batch_q88_q1616, m)?)?;
+    m.add_function(wrap_pyfunction!(py_adc_to_spike_windows, m)?)?;
     m.add_function(wrap_pyfunction!(py_wilson_cowan_simulate, m)?)?;
     m.add_class::<Lfsr16>()?;
     m.add_class::<BitstreamEncoder>()?;
