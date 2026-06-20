@@ -759,6 +759,41 @@ export interface TrainingCheckpointPayload {
   job_id: string;
   schema_version: "studio.training.checkpoint.v1";
   status: string;
+  weight_checkpoint?: TrainingWeightCheckpoint | null;
+}
+
+export interface TrainingWeightArtifact {
+  relative_path: string;
+  sha256: string;
+  size_bytes: number;
+}
+
+export interface TrainingWeightCheckpoint {
+  architecture?: string;
+  config_sha256?: string;
+  final_metrics?: Record<string, unknown> | null;
+  format?: string;
+  framework?: string;
+  metadata_artifact?: TrainingWeightArtifact;
+  parameter_count?: number;
+  schema_version: "studio.training.weight-checkpoint.v1";
+  weights_artifact: TrainingWeightArtifact;
+}
+
+export interface TrainingWeightRestorePlan {
+  architecture: string;
+  artifact_route_template: "/api/studio/jobs/{job_id}/artifacts/{artifact_path}";
+  config_sha256: string;
+  format: string;
+  framework: string;
+  loader_policy: "download_from_authenticated_artifact_route_and_verify_sha256";
+  metadata_artifact: TrainingWeightArtifact;
+  parameter_count: number;
+  restore_ready: boolean;
+  schema_version: "studio.training.weight-restore-plan.v1";
+  source_job_id: string;
+  source_status: string;
+  weights_artifact: TrainingWeightArtifact;
 }
 
 export interface TrainingCheckpointImportResponse {
@@ -767,6 +802,8 @@ export interface TrainingCheckpointImportResponse {
   imported_schema_version: "studio.training.checkpoint.v1";
   source_job_id: string;
   source_status: string;
+  source_weight_checkpoint: TrainingWeightCheckpoint | null;
+  weight_restore_plan: TrainingWeightRestorePlan | null;
 }
 
 export interface TrainingJobSummary {

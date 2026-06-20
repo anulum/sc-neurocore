@@ -35,6 +35,7 @@ import {
   type SynthResult, type SynthEstimate, type MultiTargetResult,
   type SynthToolInfo,
   type SurrogateInfo, type TrainingCheckpointPayload, type TrainingEpochMetrics,
+  type TrainingWeightRestorePlan,
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSaveResponse, type ProjectSummary, type PipelineResult,
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
@@ -137,6 +138,7 @@ interface StudioState {
   trainingJobId: string | null;
   trainingStatus: string;
   trainingEpochs: TrainingEpochMetrics[];
+  trainingWeightRestorePlan: TrainingWeightRestorePlan | null;
   trainingSurrogates: SurrogateInfo[];
   trainingConfig: {
     dataset: string; epochs: number; batch_size: number; lr: number;
@@ -292,7 +294,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   graphPopulations: [], graphProjections: [], graphModels: [], graphSimResult: null, graphErrors: [],
   projectSaveResult: null, serverProjects: [], pipelineResult: null,
   synthTarget: "ice40", synthResult: null, synthEstimate: null, multiTargetResult: null, toolsAvailable: null,
-  trainingJobId: null, trainingStatus: "idle", trainingEpochs: [], trainingSurrogates: [],
+  trainingJobId: null, trainingStatus: "idle", trainingEpochs: [],
+  trainingWeightRestorePlan: null, trainingSurrogates: [],
   trainingConfig: {
     dataset: "synthetic", epochs: 10, batch_size: 64, lr: 0.001,
     hidden: [128], timesteps: 25, surrogate: "atan_surrogate",
@@ -1255,7 +1258,13 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   startTraining: async () => {
     const s = get();
     if (s.trainingStatus === "running") return;
-    set({ trainingStatus: "starting", trainingEpochs: [], error: null, activeTab: "train" });
+    set({
+      trainingStatus: "starting",
+      trainingEpochs: [],
+      trainingWeightRestorePlan: null,
+      error: null,
+      activeTab: "train",
+    });
     try {
       const result = await apiStartTraining(s.trainingConfig);
       set({ trainingJobId: result.job_id, trainingStatus: "running" });
@@ -1320,6 +1329,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         trainingJobId: imported.source_job_id,
         trainingStatus: `checkpoint:${imported.source_status}`,
         trainingEpochs: [],
+        trainingWeightRestorePlan: imported.weight_restore_plan,
         activeTab: "train",
         error: null,
       }));

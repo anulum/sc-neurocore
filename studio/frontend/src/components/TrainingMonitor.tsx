@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import type { TrainingWeightRestorePlan } from "../api/client";
 import { useStudioStore } from "../stores/studio";
 import { buildTrainingEvidenceModel, type TrainingEvidenceModel } from "../trainingEvidence";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
@@ -161,10 +162,38 @@ export function TrainingCheckpointControls({
   );
 }
 
+export function TrainingWeightRestorePlanStrip({
+  restorePlan,
+}: {
+  restorePlan: TrainingWeightRestorePlan | null;
+}) {
+  if (!restorePlan) return null;
+
+  const weightHash = restorePlan.weights_artifact.sha256.slice(0, 12);
+  const metadataHash = restorePlan.metadata_artifact.sha256.slice(0, 12);
+
+  return (
+    <EvidenceSummaryStrip
+      variant="banner"
+      items={[
+        { label: "Schema", value: restorePlan.schema_version },
+        { label: "Job", value: restorePlan.source_job_id },
+        { label: "Status", value: restorePlan.source_status },
+        { label: "Policy", value: restorePlan.loader_policy },
+        { label: "Route", value: restorePlan.artifact_route_template },
+        { label: "Weights", value: `${restorePlan.weights_artifact.relative_path} #${weightHash}` },
+        { label: "Metadata", value: `${restorePlan.metadata_artifact.relative_path} #${metadataHash}` },
+        { label: "Params", value: String(restorePlan.parameter_count) },
+      ]}
+    />
+  );
+}
+
 export default function TrainingMonitor() {
   const {
     trainingStatus, trainingEpochs, trainingSurrogates, trainingConfig,
-    trainingJobId, startTraining, stopTraining, setTrainingConfig, loadSurrogates, isSimulating,
+    trainingJobId, trainingWeightRestorePlan,
+    startTraining, stopTraining, setTrainingConfig, loadSurrogates, isSimulating,
     exportTrainingCheckpoint, importTrainingCheckpointText,
   } = useStudioStore();
 
@@ -232,6 +261,7 @@ export default function TrainingMonitor() {
       </div>
 
       <TrainingEvidenceStrip evidence={evidence} />
+      <TrainingWeightRestorePlanStrip restorePlan={trainingWeightRestorePlan} />
 
       {/* Config panel */}
       {!isRunning && (

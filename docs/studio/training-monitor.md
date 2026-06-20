@@ -126,7 +126,10 @@ artifact sizes, SHA-256 digests, and config digest before returning it as
 source metadata. When weight metadata is present, import also returns a
 `studio.training.weight-restore-plan.v1` object with the owning job ID, source
 status, artifact route template, loader policy, and exact artifact hashes that
-clients must verify before materializing the PyTorch state dictionary.
+clients must verify before materializing the PyTorch state dictionary. The
+Training panel surfaces that restore-plan metadata after checkpoint import so
+operators can inspect the source job, loader policy, route template, and
+artifact hashes before any later weight materialization step.
 
 ## API Endpoints
 
