@@ -80,7 +80,10 @@ and why.
 `/api/pipeline/run` executes through the Studio local worker manager. It keeps
 the synchronous pipeline response used by the Network Canvas and also records a
 `studio-pipeline` Admin queue job with the path-free result artifact
-`pipeline/result.json`.
+`pipeline/result.json`. The Network Canvas displays the same action-evidence
+contract beside the terminal pipeline result, including evidence
+classification, action kind, status, target, step, replay route, and the
+`pipeline/result.json` plus `pipeline/evidence.json` artifact names.
 
 ### POST /api/project/save
 

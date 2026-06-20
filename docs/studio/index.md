@@ -464,6 +464,11 @@ One-click pipeline from the Network Canvas:
 Network Graph → Validate → Simulate → Compile → Synthesise
 ```
 
+The Network Canvas displays the worker-backed pipeline evidence contract beside
+the terminal result: evidence classification, action kind, terminal status,
+target, step, replay route, and the `pipeline/result.json` plus
+`pipeline/evidence.json` artifact names.
+
 ### Project Save/Load
 
 Save complete workspace state (equations, parameters, network graph,

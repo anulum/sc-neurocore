@@ -14,6 +14,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useStudioStore } from "../stores/studio";
+import { buildPipelineEvidenceModel, type PipelineEvidenceModel } from "../pipelineEvidence";
 
 function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
   const isExc = data.neuron_type === "excitatory";
@@ -38,6 +39,26 @@ function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
 }
 
 const nodeTypes = { population: PopulationNodeContent };
+
+export function PipelineEvidenceStrip({ evidence }: { evidence: PipelineEvidenceModel }) {
+  return (
+    <div style={{
+      marginTop: 6,
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))",
+      gap: 6,
+      color: "var(--text-muted)",
+    }}>
+      <span>class {evidence.classification}</span>
+      <span>action {evidence.actionKind}</span>
+      <span>status {evidence.status}</span>
+      <span>target {evidence.target}</span>
+      <span>step {evidence.step}</span>
+      <span>replay {evidence.replayRoute}</span>
+      <span>artifacts {evidence.resultArtifact} / {evidence.evidenceArtifact}</span>
+    </div>
+  );
+}
 
 export default function NetworkCanvas() {
   const {
@@ -184,6 +205,7 @@ export default function NetworkCanvas() {
           {pipelineResult.success
             ? `Pipeline complete: ${pipelineResult.pipeline} → ${pipelineResult.target?.toUpperCase()}`
             : `Pipeline failed at ${pipelineResult.step}: ${pipelineResult.errors?.join(", ") || pipelineResult.error || "unknown"}`}
+          <PipelineEvidenceStrip evidence={buildPipelineEvidenceModel(pipelineResult)} />
         </div>
       )}
 

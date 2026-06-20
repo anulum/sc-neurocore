@@ -402,7 +402,10 @@ bounded worker manager. Their HTTP responses remain synchronous for existing UI
 flows, and the Admin queue records path-free artifacts at
 `compiler/result.json`, `synthesis/result.json`,
 `synthesis/multi-target-result.json`, `synthesis/pnr-result.json`, and
-`pipeline/result.json`.
+`pipeline/result.json`. The Network Canvas also surfaces the pipeline
+action-evidence contract beside the terminal result, including evidence
+classification, action kind, status, target, step, replay route, and the
+`pipeline/result.json` plus `pipeline/evidence.json` artifact names.
 
 Compile responses include path-free `studio.compile-traceability.v1` metadata.
 The manifest records the source equation payload, emitted RTL module metadata,
