@@ -14,7 +14,6 @@ import os
 import subprocess
 import threading
 import time
-from collections.abc import Mapping
 from pathlib import Path
 from typing import cast
 
@@ -23,6 +22,7 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 httpx = pytest.importorskip("httpx")
 
+import tests.studio_job_tasks as studio_job_tasks
 from starlette.testclient import TestClient
 
 import sc_neurocore.studio.platform.jobs as jobs_module
@@ -34,40 +34,6 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobManager,
     StudioJobRejected,
 )
-
-NON_CALLABLE_TASK = 1
-
-
-def process_echo_task(
-    context: StudioJobContext,
-    payload: Mapping[str, object],
-) -> dict[str, object]:
-    """Importable process task used by Studio job-manager tests."""
-
-    context.write_artifact("reports/process-result.txt", "process ok")
-    return {"payload": dict(payload), "worker_job_id": context.job_id}
-
-
-def process_sleep_task(
-    context: StudioJobContext,
-    payload: Mapping[str, object],
-) -> dict[str, object]:
-    """Importable sleep task used to exercise process cancellation paths."""
-
-    del context
-    seconds = payload.get("seconds")
-    time.sleep(float(seconds) if isinstance(seconds, int | float) else 1.0)
-    return {"slept": True}
-
-
-def process_failure_task(
-    context: StudioJobContext,
-    payload: Mapping[str, object],
-) -> dict[str, object]:
-    """Importable task that raises a stable failure for process tests."""
-
-    del context, payload
-    raise ValueError("hidden local failure detail")
 
 
 def test_studio_job_manager_completes_job_with_path_free_artifact_manifest(
@@ -442,16 +408,16 @@ def test_studio_job_manager_completes_process_task_with_manifest(tmp_path: Path)
         kind="compiler",
         owner="operator-1",
         request_id="req-1",
-        task_path="tests.test_studio_jobs:process_echo_task",
+        task_path="tests.studio_job_tasks:process_echo_task",
         payload={"model": "lif"},
     )
     completed = manager.wait(record.job_id, timeout_seconds=20.0)
-    artifact = manager.read_artifact(record.job_id, "reports/process-result.txt")
 
     assert completed.status == "completed"
     assert completed.execution_model == "process"
     assert completed.result == {"payload": {"model": "lif"}, "worker_job_id": record.job_id}
     assert completed.artifacts[0].relative_path == "reports/process-result.txt"
+    artifact = manager.read_artifact(record.job_id, "reports/process-result.txt")
     assert artifact.payload == b"process ok"
     assert str(tmp_path) not in str(completed.to_public_dict())
 
@@ -471,6 +437,41 @@ def test_studio_process_worker_environment_prepends_source_path(
     assert "existing" in pythonpath
 
 
+def test_studio_process_worker_sleep_task_uses_payload_seconds(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Import-stable worker helper consumes numeric sleep payloads."""
+
+    observed_sleep_seconds: list[float] = []
+    context = StudioJobContext(
+        job_id="sj_sleep",
+        work_dir=tmp_path / "job",
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4096,
+    )
+    monkeypatch.setattr("tests.studio_job_tasks.time.sleep", observed_sleep_seconds.append)
+
+    result = studio_job_tasks.process_sleep_task(context, {"seconds": 0.25})
+
+    assert observed_sleep_seconds == [0.25]
+    assert result == {"slept": True}
+
+
+def test_studio_process_worker_failure_task_raises_stable_error(tmp_path: Path) -> None:
+    """Import-stable worker helper raises a redacted deterministic error."""
+
+    context = StudioJobContext(
+        job_id="sj_failure",
+        work_dir=tmp_path / "job",
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4096,
+    )
+
+    with pytest.raises(ValueError, match="hidden local failure detail"):
+        studio_job_tasks.process_failure_task(context, {})
+
+
 def test_studio_job_manager_fails_process_task_without_error_detail(tmp_path: Path) -> None:
     manager = StudioJobManager(
         root=tmp_path / "jobs",
@@ -482,7 +483,7 @@ def test_studio_job_manager_fails_process_task_without_error_detail(tmp_path: Pa
         kind="compiler",
         owner="operator-1",
         request_id="req-1",
-        task_path="tests.test_studio_jobs:process_failure_task",
+        task_path="tests.studio_job_tasks:process_failure_task",
         payload={},
     )
     completed = manager.wait(record.job_id, timeout_seconds=20.0)
@@ -515,14 +516,16 @@ def test_studio_job_status_counts_execution_models(tmp_path: Path) -> None:
         kind="compiler",
         owner="operator-1",
         request_id="req-process",
-        task_path="tests.test_studio_jobs:process_echo_task",
+        task_path="tests.studio_job_tasks:process_echo_task",
         payload={"model": "lif"},
     )
-    manager.wait(thread_record.job_id, timeout_seconds=2.0)
-    manager.wait(process_record.job_id, timeout_seconds=20.0)
+    completed_thread = manager.wait(thread_record.job_id, timeout_seconds=2.0)
+    completed_process = manager.wait(process_record.job_id, timeout_seconds=20.0)
 
     payload = manager.status().to_public_dict()
 
+    assert completed_thread.status == "completed"
+    assert completed_process.status == "completed"
     assert payload["completed_count"] == 2
     assert payload["process_count"] == 1
     assert payload["thread_count"] == 1
@@ -557,7 +560,7 @@ def test_studio_job_manager_rejects_invalid_process_inputs(tmp_path: Path) -> No
             kind="compiler",
             owner="operator-1",
             request_id="req-1",
-            task_path="tests.test_studio_jobs:not-valid",
+            task_path="tests.studio_job_tasks:not-valid",
             payload={},
         )
     with pytest.raises(StudioJobRejected, match="JSON"):
@@ -565,7 +568,7 @@ def test_studio_job_manager_rejects_invalid_process_inputs(tmp_path: Path) -> No
             kind="compiler",
             owner="operator-1",
             request_id="req-1",
-            task_path="tests.test_studio_jobs:process_echo_task",
+            task_path="tests.studio_job_tasks:process_echo_task",
             payload={"bad": object()},
         )
     with pytest.raises(StudioJobRejected, match="not allowed"):
@@ -573,7 +576,7 @@ def test_studio_job_manager_rejects_invalid_process_inputs(tmp_path: Path) -> No
             kind="training",
             owner="operator-1",
             request_id="req-1",
-            task_path="tests.test_studio_jobs:process_echo_task",
+            task_path="tests.studio_job_tasks:process_echo_task",
             payload={},
         )
     with pytest.raises(StudioJobRejected, match="timeout"):
@@ -581,7 +584,7 @@ def test_studio_job_manager_rejects_invalid_process_inputs(tmp_path: Path) -> No
             kind="compiler",
             owner="operator-1",
             request_id="req-1",
-            task_path="tests.test_studio_jobs:process_echo_task",
+            task_path="tests.studio_job_tasks:process_echo_task",
             payload={},
             timeout_seconds=0,
         )
@@ -597,7 +600,7 @@ def test_studio_job_manager_cancels_process_task(tmp_path: Path) -> None:
         kind="compiler",
         owner="operator-1",
         request_id="req-1",
-        task_path="tests.test_studio_jobs:process_sleep_task",
+        task_path="tests.studio_job_tasks:process_sleep_task",
         payload={"seconds": 3},
     )
 
@@ -618,7 +621,7 @@ def test_studio_job_manager_times_out_process_task(tmp_path: Path) -> None:
         kind="compiler",
         owner="operator-1",
         request_id="req-1",
-        task_path="tests.test_studio_jobs:process_sleep_task",
+        task_path="tests.studio_job_tasks:process_sleep_task",
         payload={"seconds": 3},
     )
     completed = manager.wait(record.job_id, timeout_seconds=5.0)
@@ -637,11 +640,12 @@ def test_studio_job_manager_rejects_missing_or_unknown_artifacts(tmp_path: Path)
         kind="compiler",
         owner="operator-1",
         request_id="req-1",
-        task_path="tests.test_studio_jobs:process_echo_task",
+        task_path="tests.studio_job_tasks:process_echo_task",
         payload={},
     )
-    manager.wait(record.job_id, timeout_seconds=20.0)
+    completed = manager.wait(record.job_id, timeout_seconds=20.0)
 
+    assert completed.status == "completed"
     with pytest.raises(KeyError):
         manager.read_artifact(record.job_id, "../escape.txt")
     with pytest.raises(KeyError):
@@ -760,7 +764,7 @@ def test_studio_process_worker_main_writes_result_files(tmp_path: Path) -> None:
     exit_code = process_worker.main(
         [
             "--task",
-            "tests.test_studio_jobs:process_echo_task",
+            "tests.studio_job_tasks:process_echo_task",
             "--payload",
             str(payload_path),
             "--result",
@@ -789,7 +793,7 @@ def test_studio_process_worker_main_records_failure(tmp_path: Path) -> None:
     exit_code = process_worker.main(
         [
             "--task",
-            "tests.test_studio_jobs:process_echo_task",
+            "tests.studio_job_tasks:process_echo_task",
             "--payload",
             str(payload_path),
             "--result",
@@ -817,7 +821,7 @@ def test_studio_process_worker_main_rejects_non_callable_task(tmp_path: Path) ->
     exit_code = process_worker.main(
         [
             "--task",
-            "tests.test_studio_jobs:NON_CALLABLE_TASK",
+            "tests.studio_job_tasks:NON_CALLABLE_TASK",
             "--payload",
             str(payload_path),
             "--result",
