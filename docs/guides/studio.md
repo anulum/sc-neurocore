@@ -500,7 +500,9 @@ JSON-serializable payload and result. Process jobs use the same path-confined
 artifact context and public manifest shape as thread-backed jobs, but they run
 in a separate Python process so timeout or cancellation can terminate the
 worker instead of leaving a long-running Python callable alive in the backend
-process. Existing route closures remain on the thread-backed path until each
+process. `/api/compile` uses this process-backed path for ODE-to-RTL
+compilation while preserving its synchronous response and compiler evidence
+artifacts. Remaining route closures stay on the thread-backed path until each
 workflow is migrated to importable process tasks with explicit payload
 contracts.
 

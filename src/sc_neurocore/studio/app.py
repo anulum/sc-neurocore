@@ -59,7 +59,6 @@ from sc_neurocore.studio.compiler import (
     emit_systemverilog,
     verify_ir,
 )
-from sc_neurocore.studio.compile_traceability import build_compile_traceability
 from sc_neurocore.studio.synthesis import (
     EdaProcessLimits,
     check_tools,
@@ -95,6 +94,7 @@ from sc_neurocore.studio.training import (
     stream_metrics,
 )
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
+from sc_neurocore.studio.platform.compile_process import COMPILE_PROCESS_TASK
 from sc_neurocore.studio.platform import (
     AuditExportValue,
     AuditEvent,
@@ -113,6 +113,7 @@ from sc_neurocore.studio.platform import (
     StudioJobArtifactUnavailable,
     StudioJobContext,
     StudioJobManager,
+    StudioProcessJobPayload,
     StudioRuntimeSettings,
     add_studio_browser_user_record,
     build_default_studio_capability_registry,
@@ -1006,6 +1007,34 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             owner=owner,
             request_id=None,
             task=job_task,
+        )
+        completed = studio_job_manager.wait(
+            submitted.job_id,
+            timeout_seconds=settings.job_default_timeout_seconds + 1.0,
+        )
+        if completed.status == "completed" and completed.result is not None:
+            return cast(dict[str, Any], completed.result)
+        if completed.status in {"pending", "running", "cancelling"}:
+            raise HTTPException(503, "studio_job_wait_exceeded")
+        if completed.status == "timed_out":
+            raise HTTPException(504, "studio_job_timed_out")
+        raise HTTPException(500, "studio_job_failed")
+
+    def run_studio_process_job_sync(
+        *,
+        kind: str,
+        owner: str,
+        task_path: str,
+        payload: StudioProcessJobPayload,
+    ) -> dict[str, Any]:
+        """Run one importable task through the bounded process worker."""
+
+        submitted = studio_job_manager.submit_process_task(
+            kind=kind,
+            owner=owner,
+            request_id=None,
+            task_path=task_path,
+            payload=payload,
         )
         completed = studio_job_manager.wait(
             submitted.job_id,
@@ -2193,42 +2222,12 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- Compile (#5 adjacent) ---
     @app.post("/api/compile")
     def api_compile(req: CompileRequest) -> Any:
-        def fn() -> dict[str, Any]:
-            from sc_neurocore.compiler.equation_compiler import equation_to_fpga
-
-            _, verilog = equation_to_fpga(
-                req.equations[0],
-                threshold=req.threshold,
-                reset=req.reset,
-                params=req.params,
-                init=req.init,
-                module_name=req.module_name,
-            )
-            return {
-                "verilog": verilog,
-                "module_name": req.module_name,
-                "chars": len(verilog),
-                "compile_traceability": build_compile_traceability(
-                    equations=req.equations,
-                    threshold=req.threshold,
-                    reset=req.reset,
-                    params=req.params,
-                    init=req.init,
-                    module_name=req.module_name,
-                    verilog=verilog,
-                ).to_public_dict(),
-            }
-
         return _safe(
-            lambda: run_studio_worker_job_sync(
-                action_kind="studio.compile",
-                evidence_artifact_path="compiler/evidence.json",
-                evidence_classification="compile",
+            lambda: run_studio_process_job_sync(
                 kind="compiler",
                 owner="studio-compiler",
-                artifact_path="compiler/result.json",
-                replay_route="POST /api/compile",
-                task=fn,
+                task_path=COMPILE_PROCESS_TASK,
+                payload=req.model_dump(),
             )
         )
 

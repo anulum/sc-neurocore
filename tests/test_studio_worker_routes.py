@@ -226,6 +226,8 @@ def test_compile_route_records_bounded_worker_job(tmp_path: Path) -> None:
         "compiler/result.json",
         "compiler/evidence.json",
     ]
+    assert (tmp_path / "jobs" / record.job_id / ".studio_process_payload.json").is_file()
+    assert (tmp_path / "jobs" / record.job_id / ".studio_process_result.json").is_file()
     assert _artifact_json(_job_manager(app), record, "compiler/result.json") == data
     _assert_evidence_manifest(
         _job_manager(app),
