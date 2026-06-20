@@ -395,6 +395,14 @@ class RoutePolicyRegistry:
 
         return self._policies[self._key(method, path_template)]
 
+    def policies(self) -> tuple[tuple[str, str, RoutePolicy], ...]:
+        """Return registered route policies in stable method/path order."""
+
+        return tuple(
+            (method, path_template, policy)
+            for (method, path_template), policy in sorted(self._policies.items())
+        )
+
     def missing_policies(self, routes: tuple[tuple[str, str], ...]) -> tuple[str, ...]:
         """Return route signatures that have no registered Studio policy."""
 

@@ -100,6 +100,8 @@ export interface AdminOperatorModel {
   identityMode: string;
   jobArtifactLimit: string;
   jobTimeout: string;
+  routePolicyAuditLabel: "audited" | "incomplete" | "unknown";
+  routePolicyInventory: string;
   routePolicyLabel: "enforced" | "disabled" | "unknown";
   schemaVersion: string;
 }
@@ -259,11 +261,14 @@ function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminO
       identityMode: "unknown",
       jobArtifactLimit: "unknown",
       jobTimeout: "unknown",
+      routePolicyAuditLabel: "unknown",
+      routePolicyInventory: "unknown",
       routePolicyLabel: "unknown",
       schemaVersion: "unavailable",
     };
   }
   const limits = operatorStatus.resource_limits;
+  const routePolicies = operatorStatus.route_policies;
   return {
     deploymentProfile: operatorStatus.deployment_profile,
     edaCpuLimit: formatSeconds(limits.eda_process_cpu_seconds),
@@ -272,7 +277,10 @@ function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminO
     identityMode: operatorStatus.identity.mode,
     jobArtifactLimit: formatBytes(limits.job_max_artifact_bytes),
     jobTimeout: formatSeconds(limits.job_default_timeout_seconds),
-    routePolicyLabel: operatorStatus.route_policies.enforced ? "enforced" : "disabled",
+    routePolicyAuditLabel: routePolicies.protected_routes_audited ? "audited" : "incomplete",
+    routePolicyInventory:
+      `${routePolicies.total_count} total / ${routePolicies.protected_count} protected`,
+    routePolicyLabel: routePolicies.enforced ? "enforced" : "disabled",
     schemaVersion: operatorStatus.schema_version,
   };
 }

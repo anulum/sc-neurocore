@@ -95,8 +95,21 @@ const jobStatus = {
   completed_count: 7,
   configured: true,
   failed_count: 0,
+  resource_profiles: [
+    {
+      default_timeout_seconds: 120,
+      execution_models: ["thread", "process"],
+      kind: "compiler",
+      max_artifact_bytes: 16777216,
+    },
+  ],
   schema_version: "studio.jobs.status.v1",
   timed_out_count: 0,
+};
+
+const jobList = {
+  jobs: [],
+  schema_version: "studio.jobs.list.v1",
 };
 
 const operatorStatus = {
@@ -116,57 +129,87 @@ const operatorStatus = {
     mode: "service_account",
   },
   jobs: jobStatus,
-  route_policies: { enforced: true },
+  resource_limits: {
+    eda_process_cpu_seconds: 120,
+    eda_process_limits_supported: true,
+    eda_process_memory_bytes: 2147483648,
+    job_default_timeout_seconds: 300,
+    job_max_artifact_bytes: 16777216,
+  },
+  route_policies: {
+    admin_count: 17,
+    authenticated_count: 54,
+    enforced: true,
+    protected_audit_action_count: 71,
+    protected_count: 71,
+    protected_routes_audited: true,
+    public_count: 22,
+    total_count: 93,
+  },
   schema_version: "studio.operator.status.v1",
 };
 
-async function fulfillJson(page: Page, path: string, payload: object): Promise<void> {
-  await page.route((url) => `${url.pathname}${url.search}` === path, async (route) => {
-    await route.fulfill({
-      contentType: "application/json",
-      json: payload,
-      status: 200,
-    });
-  });
+interface ApiMockSequence {
+  sequence: object[];
 }
 
-async function fulfillJsonSequence(
+type ApiMockPayload = object | ApiMockSequence;
+
+interface ApiDispatcher {
+  requests: (path: string) => number;
+}
+
+async function installApiDispatcher(
   page: Page,
-  path: string,
-  payloads: object[],
-): Promise<() => number> {
-  let requestCount = 0;
-  await page.route((url) => `${url.pathname}${url.search}` === path, async (route) => {
-    const index = Math.min(requestCount, payloads.length - 1);
-    requestCount += 1;
+  mocks: Map<string, ApiMockPayload>,
+): Promise<ApiDispatcher> {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  const counts = new Map<string, number>();
+  await page.route((url) => url.pathname.startsWith("/api/"), async (route) => {
+    const url = new URL(route.request().url());
+    const path = `${url.pathname}${url.search}`;
+    const count = counts.get(path) ?? 0;
+    counts.set(path, count + 1);
+    const payload = mocks.get(path);
+    if (payload === undefined) {
+      await route.fulfill({
+        contentType: "application/json",
+        json: { detail: "unmocked Studio browser test route" },
+        status: 404,
+      });
+      return;
+    }
+    const selectedPayload = "sequence" in payload
+      ? payload.sequence[Math.min(count, payload.sequence.length - 1)]
+      : payload;
     await route.fulfill({
       contentType: "application/json",
-      json: payloads[index],
+      json: selectedPayload,
       status: 200,
     });
   });
-  return () => requestCount;
+  return { requests: (path: string) => counts.get(path) ?? 0 };
+}
+
+function defaultApiMocks(): Map<string, ApiMockPayload> {
+  return new Map<string, ApiMockPayload>([
+    ["/api/studio/capabilities", capabilityRegistry],
+    ["/api/studio/audit/status", auditStatus],
+    ["/api/studio/audit/export?limit=100", auditExport],
+    ["/api/studio/jobs/status", jobStatus],
+    ["/api/studio/jobs", jobList],
+    ["/api/studio/operator/status", operatorStatus],
+    ["/api/models", []],
+    ["/api/templates", []],
+    ["/api/presets", []],
+  ]);
 }
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem("sc-studio-onboarding-dismissed", "true");
   });
-  await page.route((url) => url.pathname.startsWith("/api/"), async (route) => {
-    await route.fulfill({
-      contentType: "application/json",
-      json: { detail: "unmocked Studio browser test route" },
-      status: 404,
-    });
-  });
-  await fulfillJson(page, "/api/studio/capabilities", capabilityRegistry);
-  await fulfillJson(page, "/api/studio/audit/status", auditStatus);
-  await fulfillJson(page, "/api/studio/audit/export?limit=100", auditExport);
-  await fulfillJson(page, "/api/studio/jobs/status", jobStatus);
-  await fulfillJson(page, "/api/studio/operator/status", operatorStatus);
-  await fulfillJson(page, "/api/models", []);
-  await fulfillJson(page, "/api/templates", []);
-  await fulfillJson(page, "/api/presets", []);
+  await installApiDispatcher(page, defaultApiMocks());
 });
 
 test("admin panel renders aggregate operator status", async ({ page }) => {
@@ -178,6 +221,8 @@ test("admin panel renders aggregate operator status", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Operator" })).toBeVisible();
   await expect(page.getByText("production")).toBeVisible();
   await expect(page.getByText("enforced")).toBeVisible();
+  await expect(page.getByText("93 total / 71 protected")).toBeVisible();
+  await expect(page.getByText("audited")).toBeVisible();
   await expect(page.getByText("service_account")).toBeVisible();
   await expect(page.getByText("studio.operator.status.v1")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Audit" })).toBeVisible();
@@ -225,23 +270,31 @@ test("admin panel refreshes operator, audit, export, and job status", async ({ p
     audit: refreshedAuditStatus,
     deployment_profile: "development",
     jobs: refreshedJobStatus,
-    route_policies: { enforced: false },
+    route_policies: {
+      ...operatorStatus.route_policies,
+      enforced: false,
+      protected_audit_action_count: 39,
+      protected_routes_audited: false,
+    },
     schema_version: "studio.operator.status.v2",
   };
-  const operatorRequests = await fulfillJsonSequence(page, "/api/studio/operator/status", [
-    operatorStatus,
-    refreshedOperatorStatus,
-  ]);
-  const auditStatusRequests = await fulfillJsonSequence(page, "/api/studio/audit/status", [
-    auditStatus,
-    refreshedAuditStatus,
-  ]);
-  const auditExportRequests = await fulfillJsonSequence(page, "/api/studio/audit/export?limit=100", [
-    refreshedAuditExport,
-  ]);
-  const jobStatusRequests = await fulfillJsonSequence(page, "/api/studio/jobs/status", [
-    refreshedJobStatus,
-  ]);
+  const api = await installApiDispatcher(
+    page,
+    new Map<string, ApiMockPayload>([
+      ["/api/studio/capabilities", capabilityRegistry],
+      [
+        "/api/studio/operator/status",
+        { sequence: [operatorStatus, refreshedOperatorStatus] },
+      ],
+      ["/api/studio/audit/status", { sequence: [auditStatus, refreshedAuditStatus] }],
+      ["/api/studio/audit/export?limit=100", refreshedAuditExport],
+      ["/api/studio/jobs/status", refreshedJobStatus],
+      ["/api/studio/jobs", jobList],
+      ["/api/models", []],
+      ["/api/templates", []],
+      ["/api/presets", []],
+    ]),
+  );
 
   await page.goto("/");
   await page.getByRole("button", { name: "Admin" }).first().click();
@@ -249,6 +302,7 @@ test("admin panel refreshes operator, audit, export, and job status", async ({ p
   await page.getByRole("button", { name: "Refresh operator status" }).click();
   await expect(page.getByText("development")).toBeVisible();
   await expect(page.getByText("disabled")).toBeVisible();
+  await expect(page.getByText("incomplete")).toBeVisible();
   await expect(page.getByText("studio.operator.status.v2")).toBeVisible();
 
   await page.getByRole("button", { name: "Refresh audit status" }).click();
@@ -262,19 +316,24 @@ test("admin panel refreshes operator, audit, export, and job status", async ({ p
   await page.getByRole("button", { name: "Refresh job status" }).click();
   await expect(page.getByText("1 failed jobs recorded by the local worker manager")).toBeVisible();
 
-  expect(operatorRequests()).toBeGreaterThanOrEqual(2);
-  expect(auditStatusRequests()).toBeGreaterThanOrEqual(2);
-  expect(auditExportRequests()).toBe(1);
-  expect(jobStatusRequests()).toBe(1);
+  expect(api.requests("/api/studio/operator/status")).toBeGreaterThanOrEqual(2);
+  expect(api.requests("/api/studio/audit/status")).toBeGreaterThanOrEqual(2);
+  expect(api.requests("/api/studio/audit/export?limit=100")).toBe(1);
+  expect(api.requests("/api/studio/jobs/status")).toBe(1);
 });
 
 test("capability menu exposes unavailable requirements", async ({ page }) => {
-  await fulfillJson(page, "/api/studio/capabilities", registry([
-    capabilityRegistryContract,
-    simulationCapability,
-    analysisUnavailable,
-    synthesisUnavailable,
-  ]));
+  const mocks = defaultApiMocks();
+  mocks.set(
+    "/api/studio/capabilities",
+    registry([
+      capabilityRegistryContract,
+      simulationCapability,
+      analysisUnavailable,
+      synthesisUnavailable,
+    ]),
+  );
+  await installApiDispatcher(page, mocks);
 
   await page.goto("/");
   await page.getByText("2/4 ready").click();
@@ -287,11 +346,16 @@ test("capability menu exposes unavailable requirements", async ({ page }) => {
 });
 
 test("unavailable panel contracts disable toolbar and keyboard activation", async ({ page }) => {
-  await fulfillJson(page, "/api/studio/capabilities", registry([
-    capabilityRegistryContract,
-    simulationCapability,
-    analysisUnavailable,
-  ]));
+  const mocks = defaultApiMocks();
+  mocks.set(
+    "/api/studio/capabilities",
+    registry([
+      capabilityRegistryContract,
+      simulationCapability,
+      analysisUnavailable,
+    ]),
+  );
+  await installApiDispatcher(page, mocks);
 
   await page.goto("/");
 
@@ -305,16 +369,9 @@ test("unavailable panel contracts disable toolbar and keyboard activation", asyn
 });
 
 test("missing active panel capability fails closed at startup", async ({ page }) => {
-  let simulateRequests = 0;
-  await fulfillJson(page, "/api/studio/capabilities", registry([capabilityRegistryContract]));
-  await page.route((url) => url.pathname === "/api/simulate", async (route) => {
-    simulateRequests += 1;
-    await route.fulfill({
-      contentType: "application/json",
-      json: { detail: "simulation should not run while the panel is unavailable" },
-      status: 500,
-    });
-  });
+  const mocks = defaultApiMocks();
+  mocks.set("/api/studio/capabilities", registry([capabilityRegistryContract]));
+  const api = await installApiDispatcher(page, mocks);
 
   await page.goto("/");
 
@@ -322,5 +379,5 @@ test("missing active panel capability fails closed at startup", async ({ page })
   await expect(page.getByText("Backend capability contract is missing from the registry.")).toBeVisible();
   await page.keyboard.press("Space");
   await page.waitForTimeout(100);
-  expect(simulateRequests).toBe(0);
+  expect(api.requests("/api/simulate")).toBe(0);
 });

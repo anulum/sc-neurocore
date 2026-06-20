@@ -175,6 +175,8 @@ export default function AdminPanelView({
         <div className="admin-metrics">
           <div><span>Profile</span><strong>{model.operator.deploymentProfile}</strong></div>
           <div><span>Routes</span><strong>{model.operator.routePolicyLabel}</strong></div>
+          <div><span>Route inventory</span><strong>{model.operator.routePolicyInventory}</strong></div>
+          <div><span>Route audit</span><strong>{model.operator.routePolicyAuditLabel}</strong></div>
           <div><span>Identity</span><strong>{model.operator.identityMode}</strong></div>
           <div><span>EDA CPU</span><strong>{model.operator.edaCpuLimit}</strong></div>
           <div><span>EDA memory</span><strong>{model.operator.edaMemoryLimit}</strong></div>

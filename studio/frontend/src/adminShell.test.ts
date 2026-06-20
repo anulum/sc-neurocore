@@ -167,7 +167,16 @@ const operatorStatus: StudioOperatorStatus = {
     job_default_timeout_seconds: 300,
     job_max_artifact_bytes: 16777216,
   },
-  route_policies: { enforced: true },
+  route_policies: {
+    admin_count: 17,
+    authenticated_count: 54,
+    enforced: true,
+    protected_audit_action_count: 71,
+    protected_count: 71,
+    protected_routes_audited: true,
+    public_count: 22,
+    total_count: 93,
+  },
   schema_version: "studio.operator.status.v1",
 };
 
@@ -269,6 +278,8 @@ describe("admin shell model", () => {
       identityMode: "service_account",
       jobArtifactLimit: "16 MiB",
       jobTimeout: "300s",
+      routePolicyAuditLabel: "audited",
+      routePolicyInventory: "93 total / 71 protected",
       routePolicyLabel: "enforced",
       schemaVersion: "studio.operator.status.v1",
     });

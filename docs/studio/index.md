@@ -238,10 +238,11 @@ runtime features:
   closures remain compatible with the thread-backed path during migration.
 - `/api/studio/operator/status` is an admin-classified aggregate for the
   Studio control plane. It combines deployment profile, route-policy
-  enforcement, identity mode, audit health, job-worker health, job resource
-  profiles, and capability counts into one path-free payload for the Admin
-  panel. It also reports path-free worker and EDA process resource ceilings so
-  operators can verify runtime bounds without reading environment files.
+  enforcement, route inventory counts, protected-route audit coverage,
+  identity mode, audit health, job-worker health, job resource profiles, and
+  capability counts into one path-free payload for the Admin panel. It also
+  reports path-free worker and EDA process resource ceilings so operators can
+  verify runtime bounds without reading environment files.
 - Deployments can set `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` to rotate the
   active JSONL audit file before the next append once it reaches the configured
   byte limit. `SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES` controls how many

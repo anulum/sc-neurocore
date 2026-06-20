@@ -388,6 +388,60 @@ def test_jsonl_audit_sink_exports_bounded_recent_events_without_paths(tmp_path: 
     assert str(tmp_path) not in json.dumps(exported)
 
 
+def test_jsonl_audit_sink_rejects_non_positive_export_limit(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_sink = contract["JsonlAuditSink"](tmp_path / "studio-audit.jsonl")
+
+    with pytest.raises(ValueError, match="positive"):
+        audit_sink.export_recent(limit=0)
+
+
+def test_jsonl_audit_sink_rejects_export_from_directory(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_sink = contract["JsonlAuditSink"](tmp_path)
+
+    with pytest.raises(contract["AuditSinkError"], match="export failed"):
+        audit_sink.export_recent()
+
+    assert audit_sink.status().last_error == "AuditPathIsDirectory"
+
+
+def test_jsonl_audit_sink_rejects_invalid_export_json(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_path.write_text("{not-json}\n", encoding="utf-8")
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+
+    with pytest.raises(contract["AuditSinkError"], match="export failed"):
+        audit_sink.export_recent()
+
+    assert audit_sink.status().last_error == "AuditExportInvalidJson"
+
+
+def test_jsonl_audit_sink_rejects_non_object_export_row(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_path.write_text('["not", "an", "object"]\n', encoding="utf-8")
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+
+    with pytest.raises(contract["AuditSinkError"], match="export failed"):
+        audit_sink.export_recent()
+
+    assert audit_sink.status().last_error == "AuditExportInvalidRow"
+
+
+def test_jsonl_audit_sink_rejects_non_scalar_export_row_value(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_path.write_text('{"action":["studio.simulate.run"]}\n', encoding="utf-8")
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+
+    with pytest.raises(contract["AuditSinkError"], match="export failed"):
+        audit_sink.export_recent()
+
+    assert audit_sink.status().last_error == "AuditExportInvalidRow"
+
+
 def test_policy_gateway_accepts_jsonl_audit_sink(tmp_path: Path) -> None:
     contract = _policy_contract()
     audit_path = tmp_path / "studio-audit.jsonl"
@@ -596,6 +650,27 @@ def test_default_route_policy_registry_reports_unclassified_platform_route() -> 
     )
 
     assert missing == ("POST /api/studio/admin",)
+
+
+def test_route_policy_registry_exports_stable_policy_inventory() -> None:
+    contract = _policy_contract()
+    registry = contract["RoutePolicyRegistry"]()
+    health_policy = contract["RoutePolicy"](
+        visibility=contract["RouteVisibility"].PUBLIC,
+        audit_action="studio.health.read",
+    )
+    admin_policy = contract["RoutePolicy"](
+        visibility=contract["RouteVisibility"].ADMIN,
+        audit_action="studio.admin.write",
+    )
+
+    registry.register("POST", "/api/studio/admin", admin_policy)
+    registry.register("GET", "/api/health", health_policy)
+
+    assert registry.policies() == (
+        ("GET", "/api/health", health_policy),
+        ("POST", "/api/studio/admin", admin_policy),
+    )
 
 
 def test_studio_app_exposes_route_policy_registry_for_platform_routes() -> None:

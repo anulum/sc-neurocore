@@ -27,10 +27,14 @@ from sc_neurocore.studio.platform import (
     CapabilityRequirement,
     CapabilityStatus,
     EvidenceClass,
+    RoutePolicy,
+    RoutePolicyRegistry,
+    RouteVisibility,
     StudioJobManager,
     StudioJobStatusSnapshot,
     StudioRuntimeSettings,
     build_studio_operator_status,
+    build_default_studio_route_policy_registry,
 )
 
 
@@ -106,13 +110,23 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
             sink_type="jsonl",
         ),
         job_status=_job_status(tmp_path, configured=True),
+        route_policy_registry=build_default_studio_route_policy_registry(),
     )
 
     payload = status.to_public_dict()
 
     assert payload["schema_version"] == OPERATOR_STATUS_SCHEMA_VERSION
     assert payload["deployment_profile"] == "development"
-    assert payload["route_policies"] == {"enforced": True}
+    assert payload["route_policies"] == {
+        "admin_count": 17,
+        "authenticated_count": 54,
+        "enforced": True,
+        "protected_audit_action_count": 71,
+        "protected_count": 71,
+        "protected_routes_audited": True,
+        "public_count": 22,
+        "total_count": 93,
+    }
     assert payload["identity"] == {
         "configured": True,
         "header_principal_allowed": False,
@@ -170,6 +184,7 @@ def test_build_studio_operator_status_reports_header_identity_mode(tmp_path: Pat
             sink_type="memory",
         ),
         job_status=_job_status(tmp_path, configured=False),
+        route_policy_registry=build_default_studio_route_policy_registry(),
     )
 
     assert status.identity.to_public_dict() == {
@@ -190,12 +205,65 @@ def test_build_studio_operator_status_reports_disabled_identity_mode(tmp_path: P
             sink_type="memory",
         ),
         job_status=_job_status(tmp_path, configured=False),
+        route_policy_registry=build_default_studio_route_policy_registry(),
     )
 
     assert status.identity.to_public_dict() == {
         "configured": False,
         "header_principal_allowed": False,
         "mode": "disabled",
+    }
+
+
+def test_build_studio_operator_status_counts_route_policy_inventory(tmp_path: Path) -> None:
+    registry = RoutePolicyRegistry()
+    registry.register(
+        "GET",
+        "/api/health",
+        RoutePolicy(
+            visibility=RouteVisibility.PUBLIC,
+            audit_action="studio.health.read",
+        ),
+    )
+    registry.register(
+        "GET",
+        "/api/studio/session",
+        RoutePolicy(
+            visibility=RouteVisibility.AUTHENTICATED,
+            audit_action="studio.session.read",
+        ),
+    )
+    registry.register(
+        "POST",
+        "/api/studio/admin",
+        RoutePolicy(
+            visibility=RouteVisibility.ADMIN,
+            audit_action="studio.admin.write",
+        ),
+    )
+
+    status = build_studio_operator_status(
+        settings=StudioRuntimeSettings(enforce_route_policies=True),
+        capabilities=(),
+        audit_status=AuditSinkStatus(
+            configured=False,
+            healthy=True,
+            path_configured=False,
+            sink_type="memory",
+        ),
+        job_status=_job_status(tmp_path, configured=False),
+        route_policy_registry=registry,
+    )
+
+    assert status.route_policies.to_public_dict() == {
+        "admin_count": 1,
+        "authenticated_count": 1,
+        "enforced": True,
+        "protected_audit_action_count": 2,
+        "protected_count": 2,
+        "protected_routes_audited": True,
+        "public_count": 1,
+        "total_count": 3,
     }
 
 
@@ -219,6 +287,8 @@ def test_operator_status_endpoint_is_admin_protected() -> None:
     assert payload["schema_version"] == OPERATOR_STATUS_SCHEMA_VERSION
     assert payload["deployment_profile"] == "development"
     assert payload["identity"]["mode"] == "header_principal"
-    assert payload["route_policies"] == {"enforced": True}
+    assert payload["route_policies"]["enforced"] is True
+    assert payload["route_policies"]["protected_routes_audited"] is True
+    assert payload["route_policies"]["protected_count"] > 0
     assert "token" not in allowed.text.lower()
     assert "/tmp" not in allowed.text

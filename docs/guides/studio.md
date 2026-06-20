@@ -460,9 +460,9 @@ contracts.
 
 The Admin panel also uses the admin-gated `/api/studio/operator/status`
 aggregate when available. That endpoint reports deployment profile,
-route-policy enforcement, identity mode, audit health, worker health,
-resource-limit posture, and capability counts without exposing local paths or
-token material.
+route-policy enforcement, route inventory counts, protected-route audit
+coverage, identity mode, audit health, worker health, resource-limit posture,
+and capability counts without exposing local paths or token material.
 
 For production deployments, set
 `SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE=production`. That profile fails closed

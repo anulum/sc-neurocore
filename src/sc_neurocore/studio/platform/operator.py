@@ -16,7 +16,7 @@ from typing import Literal
 
 from sc_neurocore.studio.platform.capabilities import CapabilityHealth, CapabilityStatus
 from sc_neurocore.studio.platform.jobs import StudioJobStatusSnapshot
-from sc_neurocore.studio.platform.policy import AuditSinkStatus
+from sc_neurocore.studio.platform.policy import AuditSinkStatus, RoutePolicyRegistry, RouteVisibility
 from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
 
 OPERATOR_STATUS_SCHEMA_VERSION = "studio.operator.status.v1"
@@ -70,11 +70,27 @@ class StudioOperatorRoutePolicyStatus:
     """Route-policy enforcement posture for Studio operator APIs."""
 
     enforced: bool
+    admin_count: int
+    authenticated_count: int
+    protected_audit_action_count: int
+    protected_count: int
+    protected_routes_audited: bool
+    public_count: int
+    total_count: int
 
-    def to_public_dict(self) -> dict[str, bool]:
+    def to_public_dict(self) -> dict[str, bool | int]:
         """Return public route-policy posture."""
 
-        return {"enforced": self.enforced}
+        return {
+            "admin_count": self.admin_count,
+            "authenticated_count": self.authenticated_count,
+            "enforced": self.enforced,
+            "protected_audit_action_count": self.protected_audit_action_count,
+            "protected_count": self.protected_count,
+            "protected_routes_audited": self.protected_routes_audited,
+            "public_count": self.public_count,
+            "total_count": self.total_count,
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,12 +149,16 @@ def build_studio_operator_status(
     capabilities: tuple[CapabilityHealth, ...],
     audit_status: AuditSinkStatus,
     job_status: StudioJobStatusSnapshot,
+    route_policy_registry: RoutePolicyRegistry,
 ) -> StudioOperatorStatus:
     """Build the aggregate operator status from live Studio platform components."""
 
     return StudioOperatorStatus(
         deployment_profile=settings.deployment_profile,
-        route_policies=StudioOperatorRoutePolicyStatus(enforced=settings.enforce_route_policies),
+        route_policies=_build_route_policy_status(
+            settings,
+            route_policy_registry=route_policy_registry,
+        ),
         identity=_build_identity_status(settings),
         audit=audit_status,
         jobs=job_status,
@@ -158,6 +178,38 @@ def _build_identity_status(settings: StudioRuntimeSettings) -> StudioOperatorIde
         configured=settings.identity_file_path is not None,
         header_principal_allowed=settings.allow_header_principal,
         mode=mode,
+    )
+
+
+def _build_route_policy_status(
+    settings: StudioRuntimeSettings,
+    *,
+    route_policy_registry: RoutePolicyRegistry,
+) -> StudioOperatorRoutePolicyStatus:
+    policies = route_policy_registry.policies()
+    public_count = sum(
+        policy.visibility is RouteVisibility.PUBLIC for _, _, policy in policies
+    )
+    authenticated_count = sum(
+        policy.visibility is RouteVisibility.AUTHENTICATED for _, _, policy in policies
+    )
+    admin_count = sum(policy.visibility is RouteVisibility.ADMIN for _, _, policy in policies)
+    protected_count = authenticated_count + admin_count
+    protected_audit_action_count = sum(
+        policy.visibility is not RouteVisibility.PUBLIC
+        and policy.audit_action is not None
+        and bool(policy.audit_action.strip())
+        for _, _, policy in policies
+    )
+    return StudioOperatorRoutePolicyStatus(
+        enforced=settings.enforce_route_policies,
+        admin_count=admin_count,
+        authenticated_count=authenticated_count,
+        protected_audit_action_count=protected_audit_action_count,
+        protected_count=protected_count,
+        protected_routes_audited=protected_audit_action_count == protected_count,
+        public_count=public_count,
+        total_count=len(policies),
     )
 
 

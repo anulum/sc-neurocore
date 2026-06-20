@@ -1092,6 +1092,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             capabilities=tuple(studio_capabilities.health_all()),
             audit_status=studio_audit_sink.status(),
             job_status=studio_job_manager.status(),
+            route_policy_registry=studio_route_policies,
         ).to_public_dict()
 
     @app.get("/api/studio/audit/export")

@@ -254,7 +254,14 @@ export interface StudioOperatorIdentityStatus {
 }
 
 export interface StudioOperatorRoutePolicyStatus {
+  admin_count: number;
+  authenticated_count: number;
   enforced: boolean;
+  protected_audit_action_count: number;
+  protected_count: number;
+  protected_routes_audited: boolean;
+  public_count: number;
+  total_count: number;
 }
 
 export interface StudioOperatorResourceLimitStatus {
