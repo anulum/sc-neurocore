@@ -63,9 +63,6 @@ from sc_neurocore.studio.synthesis import (
     EdaProcessLimits,
     check_tools,
     estimate_resources,
-    multi_target_synthesis,
-    run_pnr,
-    run_synthesis,
     supported_targets,
 )
 from sc_neurocore.studio.project import (
@@ -95,6 +92,11 @@ from sc_neurocore.studio.training import (
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
 from sc_neurocore.studio.platform.compile_process import COMPILE_PROCESS_TASK
 from sc_neurocore.studio.platform.pipeline_process import PIPELINE_PROCESS_TASK
+from sc_neurocore.studio.platform.synthesis_process import (
+    SYNTHESIS_MULTI_TARGET_PROCESS_TASK,
+    SYNTHESIS_PNR_PROCESS_TASK,
+    SYNTHESIS_RUN_PROCESS_TASK,
+)
 from sc_neurocore.studio.platform import (
     AuditExportValue,
     AuditEvent,
@@ -2481,15 +2483,16 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         verilog = _validate_synthesis_verilog(data.get("verilog", ""))
         target = _validate_synthesis_target(data.get("target", "ice40"))
         return _safe(
-            lambda: run_studio_worker_job_sync(
-                action_kind="studio.synthesis.run",
-                evidence_artifact_path="synthesis/evidence.json",
-                evidence_classification="synthesis",
+            lambda: run_studio_process_job_sync(
                 kind="synthesis",
                 owner="studio-synthesis",
-                artifact_path="synthesis/result.json",
-                replay_route="POST /api/synth/run",
-                task=lambda: run_synthesis(verilog, target, process_limits=eda_process_limits),
+                task_path=SYNTHESIS_RUN_PROCESS_TASK,
+                payload={
+                    "eda_process_cpu_seconds": eda_process_limits.cpu_seconds,
+                    "eda_process_memory_bytes": eda_process_limits.address_space_bytes,
+                    "target": target,
+                    "verilog": verilog,
+                },
             )
         )
 
@@ -2497,15 +2500,15 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     def api_synth_multi(data: dict[str, Any]) -> Any:
         verilog = _validate_synthesis_verilog(data.get("verilog", ""))
         return _safe(
-            lambda: run_studio_worker_job_sync(
-                action_kind="studio.synthesis.multi_target",
-                evidence_artifact_path="synthesis/multi-target-evidence.json",
-                evidence_classification="synthesis",
+            lambda: run_studio_process_job_sync(
                 kind="synthesis",
                 owner="studio-synthesis",
-                artifact_path="synthesis/multi-target-result.json",
-                replay_route="POST /api/synth/multi-target",
-                task=lambda: multi_target_synthesis(verilog, process_limits=eda_process_limits),
+                task_path=SYNTHESIS_MULTI_TARGET_PROCESS_TASK,
+                payload={
+                    "eda_process_cpu_seconds": eda_process_limits.cpu_seconds,
+                    "eda_process_memory_bytes": eda_process_limits.address_space_bytes,
+                    "verilog": verilog,
+                },
             )
         )
 
@@ -2527,15 +2530,16 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             raise HTTPException(422, "json_path required")
         target = _validate_synthesis_target(data.get("target", "ice40"))
         return _safe(
-            lambda: run_studio_worker_job_sync(
-                action_kind="studio.synthesis.pnr",
-                evidence_artifact_path="synthesis/pnr-evidence.json",
-                evidence_classification="synthesis",
+            lambda: run_studio_process_job_sync(
                 kind="synthesis",
                 owner="studio-pnr",
-                artifact_path="synthesis/pnr-result.json",
-                replay_route="POST /api/synth/pnr",
-                task=lambda: run_pnr(json_path, target, process_limits=eda_process_limits),
+                task_path=SYNTHESIS_PNR_PROCESS_TASK,
+                payload={
+                    "eda_process_cpu_seconds": eda_process_limits.cpu_seconds,
+                    "eda_process_memory_bytes": eda_process_limits.address_space_bytes,
+                    "json_path": json_path,
+                    "target": target,
+                },
             )
         )
 

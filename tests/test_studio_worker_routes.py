@@ -121,6 +121,8 @@ def test_synthesis_route_records_bounded_worker_job(tmp_path: Path) -> None:
         "synthesis/result.json",
         "synthesis/evidence.json",
     ]
+    assert (tmp_path / "jobs" / record.job_id / ".studio_process_payload.json").is_file()
+    assert (tmp_path / "jobs" / record.job_id / ".studio_process_result.json").is_file()
     assert _artifact_json(_job_manager(app), record, "synthesis/result.json") == data
     _assert_evidence_manifest(
         _job_manager(app),
@@ -156,6 +158,8 @@ def test_multi_target_synthesis_route_records_bounded_worker_job(tmp_path: Path)
         "synthesis/multi-target-result.json",
         "synthesis/multi-target-evidence.json",
     ]
+    assert (tmp_path / "jobs" / record.job_id / ".studio_process_payload.json").is_file()
+    assert (tmp_path / "jobs" / record.job_id / ".studio_process_result.json").is_file()
     assert _artifact_json(_job_manager(app), record, "synthesis/multi-target-result.json") == data
     _assert_evidence_manifest(
         _job_manager(app),
@@ -189,6 +193,8 @@ def test_pnr_route_records_bounded_worker_job(tmp_path: Path) -> None:
         "synthesis/pnr-result.json",
         "synthesis/pnr-evidence.json",
     ]
+    assert (tmp_path / "jobs" / record.job_id / ".studio_process_payload.json").is_file()
+    assert (tmp_path / "jobs" / record.job_id / ".studio_process_result.json").is_file()
     assert _artifact_json(_job_manager(app), record, "synthesis/pnr-result.json") == data
     _assert_evidence_manifest(
         _job_manager(app),

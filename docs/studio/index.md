@@ -265,12 +265,13 @@ runtime features:
   process-backed execution. The task is an importable `module:function` that
   receives a `StudioJobContext` plus a JSON payload and returns a JSON result.
   It shares the same artifact manifest contract as thread-backed jobs, while
-  timeout and cancellation terminate the worker process. `/api/compile` and
-  `/api/pipeline/run` use this path for ODE-to-RTL compilation and
-  graph-to-synthesis execution while preserving their synchronous response
-  contracts and writing the same `studio.action-evidence.v1` compiler-family
-  artifacts. Existing Studio route closures remain compatible with the
-  thread-backed path during migration.
+  timeout and cancellation terminate the worker process. `/api/compile`,
+  `/api/synth/run`, `/api/synth/multi-target`, `/api/synth/pnr`, and
+  `/api/pipeline/run` use this path for ODE-to-RTL compilation, synthesis,
+  PnR, target comparison, and graph-to-synthesis execution while preserving
+  their synchronous response contracts and writing the same
+  `studio.action-evidence.v1` artifacts. Existing Studio route closures remain
+  compatible with the thread-backed path during migration.
 - `/api/studio/operator/status` is an admin-classified aggregate for the
   Studio control plane. It combines deployment profile, route-policy
   enforcement, route inventory counts, protected-route audit coverage,
