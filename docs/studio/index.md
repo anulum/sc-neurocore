@@ -215,7 +215,10 @@ runtime features:
 - `/api/studio/jobs` and `/api/studio/jobs/{job_id}` return admin-only,
   path-free job records for the Admin panel queue view. Records include job
   status, owner, request ID, timestamps, result metadata, and artifact
-  manifests, but never host filesystem paths.
+  manifests, but never host filesystem paths. The Admin queue view surfaces the
+  declared artifact paths, counts evidence manifest artifacts (`evidence.json`
+  and `*-evidence.json`), and lets an operator add a job ID directly to the
+  evidence bundle export form.
 - `/api/studio/jobs/{job_id}/artifacts/{artifact_path}` downloads declared job
   artifacts for administrators. The server resolves artifacts through the job
   manifest only, revalidates size and SHA-256 before serving, and returns
@@ -242,9 +245,11 @@ runtime features:
 - The Admin panel surfaces that evidence route as an operator workflow with
   project, simulation JSON, analysis JSON, default-flow run JSON,
   default-flow attestation JSON, job ID, audit, and replay metadata fields.
-  After export it refreshes the job queue and displays the bundle ID, evidence
-  job ID, artifact count, manifest entry count, entry-type summary,
-  evidence-class summary, and selected source-job summary.
+  Operators can seed the job ID field from recent job rows, using the displayed
+  artifact and evidence-manifest counts before exporting. After export it
+  refreshes the job queue and displays the bundle ID, evidence job ID, artifact
+  count, manifest entry count, entry-type summary, evidence-class summary, and
+  selected source-job summary.
 - New backend workflows can use `StudioJobManager.submit_process_task(...)` for
   process-backed execution. The task is an importable `module:function` that
   receives a `StudioJobContext` plus a JSON payload and returns a JSON result.

@@ -462,11 +462,12 @@ by kind and owner.
 The Admin panel exposes the same evidence-bundle workflow. Operators can enter
 an optional saved project name, simulation-result JSON, analysis-result JSON,
 default-flow run JSON, default-flow attestation JSON, comma-separated job IDs,
-audit export settings, and replay metadata; after export, the panel refreshes
-the worker queue and shows the bundle ID, evidence job ID, artifact count, and
-manifest entry count. The panel also surfaces entry-type, evidence-class, and
-source-job summaries so operators can verify bundle content without opening the
-raw manifest JSON.
+audit export settings, and replay metadata. Recent job rows display declared
+artifact paths plus evidence-manifest counts and can seed the job ID field for
+bundle export. After export, the panel refreshes the worker queue and shows the
+bundle ID, evidence job ID, artifact count, and manifest entry count. The panel
+also surfaces entry-type, evidence-class, and source-job summaries so operators
+can verify bundle content without opening the raw manifest JSON.
 
 Studio also exposes a process-backed job-manager path for new backend work
 that can be expressed as an importable `module:function` task with a

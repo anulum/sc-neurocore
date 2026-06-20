@@ -383,6 +383,32 @@ body {
   font-size: 10px;
 }
 
+.admin-job-row {
+  grid-template-columns: 72px minmax(0, 1fr) 72px;
+}
+
+.admin-job-row span {
+  grid-row: span 3;
+}
+
+.admin-job-row button {
+  grid-column: 3;
+  grid-row: 1 / span 3;
+  align-self: center;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.admin-job-row button:disabled {
+  cursor: wait;
+  opacity: 0.45;
+}
+
 .admin-identity-row {
   grid-template-columns: 72px minmax(120px, 1fr) minmax(160px, 2fr) 84px 92px 64px;
   align-items: center;

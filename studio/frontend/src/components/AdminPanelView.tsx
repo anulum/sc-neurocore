@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 import type { AdminShellModel } from "../adminShell";
 import type { StudioEvidenceBundleRequest } from "../api/client";
@@ -47,6 +47,8 @@ export default function AdminPanelView({
   onUpdateIdentityBrowserUser,
   onUpdateIdentityServiceAccount,
 }: AdminPanelViewProps) {
+  const [evidenceJobIds, setEvidenceJobIds] = useState("");
+
   function textList(value: FormDataEntryValue | null): string[] {
     return String(value ?? "")
       .split(",")
@@ -180,6 +182,19 @@ export default function AdminPanelView({
       job_ids: textList(form.get("jobIds")),
       project_name: optionalText(form.get("projectName")),
       simulation_results: jsonObjects(form.get("simulationResults")),
+    });
+  }
+
+  function addEvidenceJobId(jobId: string) {
+    setEvidenceJobIds((current) => {
+      const selected = current
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+      if (!selected.includes(jobId)) {
+        selected.push(jobId);
+      }
+      return selected.join(", ");
     });
   }
 
@@ -471,13 +486,23 @@ export default function AdminPanelView({
             </div>
           ))}
           {model.jobRecords.map((job) => (
-            <div key={job.jobId} className="admin-audit-row">
+            <div key={job.jobId} className="admin-audit-row admin-job-row">
               <span>{job.status}</span>
               <strong>{job.kind} - {job.jobId}</strong>
               <small>
                 {job.owner} - {job.finishedAt} - {job.artifactCount} artifacts
+                {" - "}{job.evidenceArtifactCount} evidence
                 {job.error ? ` - ${job.error}` : ""}
               </small>
+              <small title={job.artifactPaths}>{job.artifactPaths}</small>
+              <button
+                aria-label={`Add ${job.jobId} to evidence bundle`}
+                disabled={model.evidenceBundle.loading}
+                onClick={() => addEvidenceJobId(job.jobId)}
+                type="button"
+              >
+                Bundle
+              </button>
             </div>
           ))}
         </div>
@@ -514,6 +539,8 @@ export default function AdminPanelView({
             <input
               aria-label="Evidence job IDs"
               name="jobIds"
+              onChange={(event) => setEvidenceJobIds(event.currentTarget.value)}
+              value={evidenceJobIds}
               disabled={model.evidenceBundle.loading}
             />
           </label>

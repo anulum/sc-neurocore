@@ -114,6 +114,11 @@ const jobRecord: StudioJobRecord = {
       sha256: "a".repeat(64),
       size_bytes: 12,
     },
+    {
+      relative_path: "compiler/compile-evidence.json",
+      sha256: "b".repeat(64),
+      size_bytes: 256,
+    },
   ],
   created_at_utc: "2026-06-19T20:02:00Z",
   error: null,
@@ -257,6 +262,9 @@ describe("AdminPanel", () => {
     expect(html).toContain("compiler: 3s, 16777216 bytes, thread+process");
     expect(html).toContain("synthesis - sj_1234");
     expect(html).toContain("operator-1");
+    expect(html).toContain("2 artifacts - 1 evidence");
+    expect(html).toContain("reports/result.txt, compiler/compile-evidence.json");
+    expect(html).toContain("Add sj_1234 to evidence bundle");
     expect(html).toContain("Evidence");
     expect(html).toContain("seb_sj_evidence");
     expect(html).toContain("Evidence job IDs");

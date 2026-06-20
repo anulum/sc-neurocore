@@ -124,6 +124,11 @@ const jobRecord: StudioJobRecord = {
       sha256: "a".repeat(64),
       size_bytes: 12,
     },
+    {
+      relative_path: "compiler/compile-evidence.json",
+      sha256: "b".repeat(64),
+      size_bytes: 256,
+    },
   ],
   created_at_utc: "2026-06-19T20:02:00Z",
   error: null,
@@ -253,8 +258,10 @@ describe("admin shell model", () => {
     });
     expect(model.jobRecords).toEqual([
       {
-        artifactCount: 1,
+        artifactCount: 2,
+        artifactPaths: "reports/result.txt, compiler/compile-evidence.json",
         createdAt: "2026-06-19T20:02:00Z",
+        evidenceArtifactCount: 1,
         error: null,
         finishedAt: "2026-06-19T20:03:00Z",
         jobId: "sj_1234",

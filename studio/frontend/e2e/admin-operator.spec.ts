@@ -128,6 +128,36 @@ const jobList = {
   schema_version: "studio.jobs.list.v1",
 };
 
+const artifactJobList = {
+  jobs: [
+    {
+      artifacts: [
+        {
+          relative_path: "reports/result.txt",
+          sha256: "a".repeat(64),
+          size_bytes: 12,
+        },
+        {
+          relative_path: "compiler/compile-evidence.json",
+          sha256: "b".repeat(64),
+          size_bytes: 256,
+        },
+      ],
+      created_at_utc: "2026-06-20T01:00:00Z",
+      error: null,
+      finished_at_utc: "2026-06-20T01:01:00Z",
+      job_id: "sj_artifact",
+      kind: "compiler",
+      owner: "svc-admin",
+      request_id: "req-artifact",
+      result: { ok: true },
+      started_at_utc: "2026-06-20T01:00:01Z",
+      status: "completed",
+    },
+  ],
+  schema_version: "studio.jobs.list.v1",
+};
+
 const operatorStatus = {
   audit: auditStatus,
   capabilities: {
@@ -502,6 +532,32 @@ test("admin evidence bundle form submits simulation and analysis result payloads
     default_flow_runs: [defaultFlowRunPayload],
     include_audit: true,
     simulation_results: [simulationPayload],
+  });
+});
+
+test("admin job rows can seed evidence bundle job IDs", async ({ page }) => {
+  const mocks = defaultApiMocks();
+  mocks.set("/api/studio/jobs", artifactJobList);
+  const api = await installApiDispatcher(page, mocks);
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Admin" }).first().click();
+
+  await expect(page.getByText("compiler - sj_artifact")).toBeVisible();
+  await expect(page.getByText("2 artifacts - 1 evidence")).toBeVisible();
+  await expect(page.getByText("reports/result.txt, compiler/compile-evidence.json")).toBeVisible();
+
+  await page.getByRole("button", { name: "Add sj_artifact to evidence bundle" }).click();
+  await expect(page.getByRole("textbox", { name: "Evidence job IDs" })).toHaveValue("sj_artifact");
+
+  await page.getByRole("button", { name: "Create evidence bundle" }).click();
+  await expect(page.getByText("seb_sj_browser")).toBeVisible();
+
+  const bodies = api.bodies("/api/studio/evidence/bundle");
+  expect(bodies).toHaveLength(1);
+  expect(bodies[0]).toMatchObject({
+    include_audit: true,
+    job_ids: ["sj_artifact"],
   });
 });
 

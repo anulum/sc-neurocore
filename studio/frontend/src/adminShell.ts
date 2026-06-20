@@ -57,7 +57,9 @@ export interface AdminJobModel {
 
 export interface AdminJobRecordModel {
   artifactCount: number;
+  artifactPaths: string;
   createdAt: string;
+  evidenceArtifactCount: number;
   error: string | null;
   finishedAt: string;
   jobId: string;
@@ -266,16 +268,27 @@ function buildJobRecords(records: StudioJobRecord[]): AdminJobRecordModel[] {
   return records
     .slice(-8)
     .reverse()
-    .map((record) => ({
-      artifactCount: record.artifacts.length,
-      createdAt: record.created_at_utc,
-      error: record.error,
-      finishedAt: record.finished_at_utc ?? "running",
-      jobId: record.job_id,
-      kind: record.kind,
-      owner: record.owner,
-      status: record.status,
-    }));
+    .map((record) => {
+      const artifactPaths = record.artifacts.map((artifact) => artifact.relative_path);
+      return {
+        artifactCount: record.artifacts.length,
+        artifactPaths: artifactPaths.length > 0 ? artifactPaths.join(", ") : "none",
+        createdAt: record.created_at_utc,
+        evidenceArtifactCount: artifactPaths.filter(isEvidenceArtifactPath).length,
+        error: record.error,
+        finishedAt: record.finished_at_utc ?? "running",
+        jobId: record.job_id,
+        kind: record.kind,
+        owner: record.owner,
+        status: record.status,
+      };
+    });
+}
+
+function isEvidenceArtifactPath(path: string): boolean {
+  const parts = path.split("/");
+  const filename = parts.length > 0 ? parts[parts.length - 1] : path;
+  return filename === "evidence.json" || filename.endsWith("-evidence.json");
 }
 
 function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminOperatorModel {
