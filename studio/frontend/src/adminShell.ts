@@ -59,7 +59,12 @@ export interface AdminJobRecordModel {
 
 export interface AdminOperatorModel {
   deploymentProfile: "development" | "production" | "unknown";
+  edaCpuLimit: string;
+  edaMemoryLimit: string;
+  edaLimitSupport: "supported" | "unsupported" | "unknown";
   identityMode: string;
+  jobArtifactLimit: string;
+  jobTimeout: string;
   routePolicyLabel: "enforced" | "disabled" | "unknown";
   schemaVersion: string;
 }
@@ -152,15 +157,48 @@ function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminO
   if (operatorStatus === null) {
     return {
       deploymentProfile: "unknown",
+      edaCpuLimit: "unknown",
+      edaMemoryLimit: "unknown",
+      edaLimitSupport: "unknown",
       identityMode: "unknown",
+      jobArtifactLimit: "unknown",
+      jobTimeout: "unknown",
       routePolicyLabel: "unknown",
       schemaVersion: "unavailable",
     };
   }
+  const limits = operatorStatus.resource_limits;
   return {
     deploymentProfile: operatorStatus.deployment_profile,
+    edaCpuLimit: formatSeconds(limits.eda_process_cpu_seconds),
+    edaMemoryLimit: formatBytes(limits.eda_process_memory_bytes),
+    edaLimitSupport: limits.eda_process_limits_supported ? "supported" : "unsupported",
     identityMode: operatorStatus.identity.mode,
+    jobArtifactLimit: formatBytes(limits.job_max_artifact_bytes),
+    jobTimeout: formatSeconds(limits.job_default_timeout_seconds),
     routePolicyLabel: operatorStatus.route_policies.enforced ? "enforced" : "disabled",
     schemaVersion: operatorStatus.schema_version,
   };
+}
+
+function formatSeconds(value: number | null): string {
+  if (value === null) {
+    return "unbounded";
+  }
+  return Number.isInteger(value) ? `${value}s` : `${value.toFixed(1)}s`;
+}
+
+function formatBytes(value: number | null): string {
+  if (value === null) {
+    return "unbounded";
+  }
+  const gib = 1024 * 1024 * 1024;
+  const mib = 1024 * 1024;
+  if (value >= gib && value % gib === 0) {
+    return `${value / gib} GiB`;
+  }
+  if (value >= mib && value % mib === 0) {
+    return `${value / mib} MiB`;
+  }
+  return `${value} B`;
 }

@@ -137,7 +137,9 @@ runtime features:
 - `/api/studio/operator/status` is an admin-classified aggregate for the
   Studio control plane. It combines deployment profile, route-policy
   enforcement, identity mode, audit health, job-worker health, and capability
-  counts into one path-free payload for the Admin panel.
+  counts into one path-free payload for the Admin panel. It also reports
+  path-free worker and EDA process resource ceilings so operators can verify
+  runtime bounds without reading environment files.
 - Deployments can set `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` to rotate the
   active JSONL audit file before the next append once it reaches the configured
   byte limit. `SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES` controls how many

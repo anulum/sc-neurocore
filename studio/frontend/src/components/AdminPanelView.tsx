@@ -36,7 +36,18 @@ export default function AdminPanelView({
           <div><span>Profile</span><strong>{model.operator.deploymentProfile}</strong></div>
           <div><span>Routes</span><strong>{model.operator.routePolicyLabel}</strong></div>
           <div><span>Identity</span><strong>{model.operator.identityMode}</strong></div>
-          <div><span>Schema</span><strong>{model.operator.schemaVersion}</strong></div>
+          <div><span>EDA CPU</span><strong>{model.operator.edaCpuLimit}</strong></div>
+          <div><span>EDA memory</span><strong>{model.operator.edaMemoryLimit}</strong></div>
+          <div><span>EDA limits</span><strong>{model.operator.edaLimitSupport}</strong></div>
+          <div><span>Job timeout</span><strong>{model.operator.jobTimeout}</strong></div>
+          <div><span>Artifact cap</span><strong>{model.operator.jobArtifactLimit}</strong></div>
+        </div>
+        <div className="admin-audit-list">
+          <div className="admin-audit-row">
+            <span>schema</span>
+            <strong>{model.operator.schemaVersion}</strong>
+            <small>Operator status contract version</small>
+          </div>
         </div>
       </section>
 

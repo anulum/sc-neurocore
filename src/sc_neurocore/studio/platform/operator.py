@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Literal
 
@@ -77,6 +78,28 @@ class StudioOperatorRoutePolicyStatus:
 
 
 @dataclass(frozen=True, slots=True)
+class StudioOperatorResourceLimitStatus:
+    """Path-free runtime resource limits relevant to Studio operators."""
+
+    eda_process_cpu_seconds: float | None
+    eda_process_memory_bytes: int | None
+    eda_process_limits_supported: bool
+    job_default_timeout_seconds: float
+    job_max_artifact_bytes: int
+
+    def to_public_dict(self) -> dict[str, bool | float | int | None]:
+        """Return configured resource ceilings without host paths."""
+
+        return {
+            "eda_process_cpu_seconds": self.eda_process_cpu_seconds,
+            "eda_process_limits_supported": self.eda_process_limits_supported,
+            "eda_process_memory_bytes": self.eda_process_memory_bytes,
+            "job_default_timeout_seconds": self.job_default_timeout_seconds,
+            "job_max_artifact_bytes": self.job_max_artifact_bytes,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class StudioOperatorStatus:
     """Path-free aggregate status for the Studio operator control plane."""
 
@@ -86,6 +109,7 @@ class StudioOperatorStatus:
     audit: AuditSinkStatus
     jobs: StudioJobStatusSnapshot
     capabilities: StudioOperatorCapabilityStatus
+    resource_limits: StudioOperatorResourceLimitStatus
     schema_version: str = OPERATOR_STATUS_SCHEMA_VERSION
 
     def to_public_dict(self) -> dict[str, object]:
@@ -97,6 +121,7 @@ class StudioOperatorStatus:
             "deployment_profile": self.deployment_profile,
             "identity": self.identity.to_public_dict(),
             "jobs": self.jobs.to_public_dict(),
+            "resource_limits": self.resource_limits.to_public_dict(),
             "route_policies": self.route_policies.to_public_dict(),
             "schema_version": self.schema_version,
         }
@@ -118,6 +143,7 @@ def build_studio_operator_status(
         audit=audit_status,
         jobs=job_status,
         capabilities=_build_capability_status(capabilities),
+        resource_limits=_build_resource_limit_status(settings),
     )
 
 
@@ -156,11 +182,24 @@ def _build_capability_status(
     )
 
 
+def _build_resource_limit_status(
+    settings: StudioRuntimeSettings,
+) -> StudioOperatorResourceLimitStatus:
+    return StudioOperatorResourceLimitStatus(
+        eda_process_cpu_seconds=settings.eda_process_cpu_seconds,
+        eda_process_memory_bytes=settings.eda_process_memory_bytes,
+        eda_process_limits_supported=os.name == "posix",
+        job_default_timeout_seconds=settings.job_default_timeout_seconds,
+        job_max_artifact_bytes=settings.job_max_artifact_bytes,
+    )
+
+
 __all__ = [
     "OPERATOR_STATUS_SCHEMA_VERSION",
     "OperatorIdentityMode",
     "StudioOperatorCapabilityStatus",
     "StudioOperatorIdentityStatus",
+    "StudioOperatorResourceLimitStatus",
     "StudioOperatorRoutePolicyStatus",
     "StudioOperatorStatus",
     "build_studio_operator_status",

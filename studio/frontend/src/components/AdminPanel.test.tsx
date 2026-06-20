@@ -104,6 +104,13 @@ const operatorStatus: StudioOperatorStatus = {
     mode: "service_account",
   },
   jobs: jobStatus,
+  resource_limits: {
+    eda_process_cpu_seconds: 120,
+    eda_process_limits_supported: true,
+    eda_process_memory_bytes: 2147483648,
+    job_default_timeout_seconds: 300,
+    job_max_artifact_bytes: 16777216,
+  },
   route_policies: { enforced: true },
   schema_version: "studio.operator.status.v1",
 };
@@ -144,6 +151,9 @@ describe("AdminPanel", () => {
     expect(html).toContain("production");
     expect(html).toContain("service_account");
     expect(html).toContain("enforced");
+    expect(html).toContain("120s");
+    expect(html).toContain("2 GiB");
+    expect(html).toContain("16 MiB");
     expect(html).toContain("Audit");
     expect(html).toContain("jsonl");
     expect(html).toContain("unhealthy");

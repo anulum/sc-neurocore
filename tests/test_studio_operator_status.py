@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -92,6 +93,10 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
             identity_file_path="/etc/sc-neurocore/studio-identities.json",
             allow_header_principal=False,
             job_root_path=str(tmp_path / "jobs"),
+            job_default_timeout_seconds=7.5,
+            job_max_artifact_bytes=4096,
+            eda_process_cpu_seconds=12.0,
+            eda_process_memory_bytes=268435456,
         ),
         capabilities=tuple(registry.health_all()),
         audit_status=AuditSinkStatus(
@@ -128,6 +133,13 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
         "failed_count": 0,
         "schema_version": "studio.jobs.status.v1",
         "timed_out_count": 0,
+    }
+    assert payload["resource_limits"] == {
+        "eda_process_cpu_seconds": 12.0,
+        "eda_process_limits_supported": os.name == "posix",
+        "eda_process_memory_bytes": 268435456,
+        "job_default_timeout_seconds": 7.5,
+        "job_max_artifact_bytes": 4096,
     }
     assert payload["capabilities"] == {
         "degraded_count": 1,

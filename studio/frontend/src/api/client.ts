@@ -190,12 +190,21 @@ export interface StudioOperatorRoutePolicyStatus {
   enforced: boolean;
 }
 
+export interface StudioOperatorResourceLimitStatus {
+  eda_process_cpu_seconds: number | null;
+  eda_process_memory_bytes: number | null;
+  eda_process_limits_supported: boolean;
+  job_default_timeout_seconds: number;
+  job_max_artifact_bytes: number;
+}
+
 export interface StudioOperatorStatus {
   audit: StudioAuditStatus;
   capabilities: StudioOperatorCapabilityStatus;
   deployment_profile: "development" | "production";
   identity: StudioOperatorIdentityStatus;
   jobs: StudioJobStatus;
+  resource_limits: StudioOperatorResourceLimitStatus;
   route_policies: StudioOperatorRoutePolicyStatus;
   schema_version: string;
 }

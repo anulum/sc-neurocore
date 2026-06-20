@@ -114,6 +114,13 @@ const operatorStatus: StudioOperatorStatus = {
     mode: "service_account",
   },
   jobs: jobStatus,
+  resource_limits: {
+    eda_process_cpu_seconds: 120,
+    eda_process_limits_supported: true,
+    eda_process_memory_bytes: 2147483648,
+    job_default_timeout_seconds: 300,
+    job_max_artifact_bytes: 16777216,
+  },
   route_policies: { enforced: true },
   schema_version: "studio.operator.status.v1",
 };
@@ -177,7 +184,12 @@ describe("admin shell model", () => {
     ]);
     expect(model.operator).toEqual({
       deploymentProfile: "production",
+      edaCpuLimit: "120s",
+      edaLimitSupport: "supported",
+      edaMemoryLimit: "2 GiB",
       identityMode: "service_account",
+      jobArtifactLimit: "16 MiB",
+      jobTimeout: "300s",
       routePolicyLabel: "enforced",
       schemaVersion: "studio.operator.status.v1",
     });
