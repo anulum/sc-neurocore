@@ -93,13 +93,29 @@ const evidenceBundle: StudioEvidenceBundleResponse = {
   bundle_id: "seb_sj_evidence",
   job_id: "sj_evidence",
   manifest: {
-    entries: [{ type: "audit_export" }, { type: "manifest" }],
+    entries: [
+      {
+        bundle_path: "evidence/audit-export.json",
+        evidence_classification: "audit",
+        type: "audit_export",
+      },
+      {
+        evidence_classification: "compile",
+        source_job_artifact_path: "compiler/compile-evidence.json",
+        source_job_id: "sj_compile",
+        type: "action_evidence",
+      },
+      {
+        sha256: "d".repeat(64),
+        type: "manifest",
+      },
+    ],
   },
   schema_version: "studio.evidence-bundle.v1",
   summary: {
     artifact_path_count: 2,
-    entry_count: 2,
-    entry_type_counts: { audit_export: 1, manifest: 1 },
+    entry_count: 3,
+    entry_type_counts: { action_evidence: 1, audit_export: 1, manifest: 1 },
     evidence_classification_counts: { compile: 1 },
     source_job_count: 1,
     source_job_kind_counts: { compiler: 1 },
@@ -273,9 +289,13 @@ describe("AdminPanel", () => {
     expect(html).toContain("Evidence analysis JSON");
     expect(html).toContain("Evidence default-flow run JSON");
     expect(html).toContain("Evidence default-flow attestation JSON");
-    expect(html).toContain("audit_export:1, manifest:1");
+    expect(html).toContain("action_evidence:1, audit_export:1, manifest:1");
     expect(html).toContain("compile:1");
     expect(html).toContain("1 - compiler:1");
+    expect(html).toContain("audit - evidence/audit-export.json");
+    expect(html).toContain("job sj_compile");
+    expect(html).toContain("compile - compiler/compile-evidence.json");
+    expect(html).toContain("unclassified - sha dddddddddddd");
     expect(html).toContain("evidence/manifest.json");
     expect(html).toContain("256 B - sha bbbbbbbbbbbb");
     expect(html).toContain("Download evidence artifact evidence/manifest.json");

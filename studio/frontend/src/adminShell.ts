@@ -72,6 +72,7 @@ export interface AdminEvidenceBundleModel {
   artifactCount: number;
   artifacts: AdminEvidenceBundleArtifactModel[];
   bundleId: string;
+  entries: AdminEvidenceBundleEntryModel[];
   entryTypes: string;
   error: string | null;
   evidenceClasses: string;
@@ -87,6 +88,14 @@ export interface AdminEvidenceBundleArtifactModel {
   sha256Label: string;
   sizeBytes: number | null;
   sizeLabel: string;
+}
+
+export interface AdminEvidenceBundleEntryModel {
+  classification: string;
+  detail: string;
+  index: number;
+  source: string;
+  type: string;
 }
 
 export interface AdminIdentityAccountModel {
@@ -185,6 +194,7 @@ function buildEvidenceBundleModel(
     artifactCount: summary?.artifact_path_count ?? evidenceBundle?.artifact_paths.length ?? 0,
     artifacts: buildEvidenceBundleArtifacts(evidenceBundle),
     bundleId: evidenceBundle?.bundle_id ?? "none",
+    entries: buildEvidenceBundleEntries(evidenceBundle),
     entryTypes: formatCounts(summary?.entry_type_counts),
     error,
     evidenceClasses: formatCounts(summary?.evidence_classification_counts),
@@ -217,6 +227,24 @@ function buildEvidenceBundleArtifacts(
   });
 }
 
+function buildEvidenceBundleEntries(
+  evidenceBundle: StudioEvidenceBundleResponse | null,
+): AdminEvidenceBundleEntryModel[] {
+  const entries = evidenceBundle?.manifest.entries;
+  if (!Array.isArray(entries)) {
+    return [];
+  }
+  return entries
+    .filter(isRecord)
+    .map((entry, index) => ({
+      classification: textField(entry, "evidence_classification") ?? "unclassified",
+      detail: formatEvidenceBundleEntryDetail(entry),
+      index,
+      source: formatEvidenceBundleEntrySource(entry),
+      type: textField(entry, "type") ?? "unknown",
+    }));
+}
+
 function formatCounts(counts: Record<string, number> | undefined): string {
   if (counts === undefined) {
     return "none";
@@ -235,6 +263,46 @@ function formatSourceJobs(
   const count = sourceJobCount ?? 0;
   const kinds = formatCounts(sourceJobKindCounts);
   return kinds === "none" ? `${count}` : `${count} - ${kinds}`;
+}
+
+function formatEvidenceBundleEntrySource(entry: Record<string, unknown>): string {
+  const sourceJobId = textField(entry, "source_job_id");
+  if (sourceJobId !== null) {
+    return `job ${sourceJobId}`;
+  }
+  return textField(entry, "source")
+    ?? textField(entry, "replay_route")
+    ?? textField(entry, "bundle_path")
+    ?? "bundle";
+}
+
+function formatEvidenceBundleEntryDetail(entry: Record<string, unknown>): string {
+  const artifactPath = textField(entry, "source_job_artifact_path");
+  if (artifactPath !== null) {
+    return artifactPath;
+  }
+  const bundlePath = textField(entry, "bundle_path");
+  if (bundlePath !== null) {
+    return bundlePath;
+  }
+  const replayRoute = textField(entry, "replay_route");
+  if (replayRoute !== null) {
+    return replayRoute;
+  }
+  const sha256 = textField(entry, "sha256");
+  if (sha256 !== null) {
+    return `sha ${sha256.slice(0, 12)}`;
+  }
+  return "manifest entry";
+}
+
+function textField(entry: Record<string, unknown>, key: string): string | null {
+  const value = entry[key];
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function buildIdentityBrowserUsers(

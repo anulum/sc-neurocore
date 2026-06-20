@@ -317,11 +317,31 @@ function defaultApiMocks(): Map<string, ApiMockPayload> {
       job_id: "sj_browser",
       manifest: {
         entries: [
-          { type: "simulation_result" },
-          { type: "analysis_result" },
-          { type: "default_flow_run" },
-          { type: "default_flow_attestation" },
-          { type: "manifest" },
+          {
+            bundle_path: "evidence/simulations/000.json",
+            evidence_classification: "simulation",
+            source: "ode",
+            type: "simulation_result",
+          },
+          {
+            bundle_path: "evidence/analyses/000.json",
+            evidence_classification: "analysis",
+            source: "ode",
+            type: "analysis_result",
+          },
+          {
+            bundle_path: "evidence/default-flows/runs/000.json",
+            evidence_classification: "default_flow",
+            source: "studio_default_adaptive_precision_v1",
+            type: "default_flow_run",
+          },
+          {
+            bundle_path: "evidence/default-flows/attestations/000.json",
+            evidence_classification: "default_flow",
+            source: "studio_default_adaptive_precision_v1",
+            type: "default_flow_attestation",
+          },
+          { sha256: "f".repeat(64), type: "manifest" },
         ],
       },
       schema_version: "studio.evidence-bundle.v1",
@@ -553,7 +573,10 @@ test("admin evidence bundle form submits simulation and analysis result payloads
   await expect(page.getByText("seb_sj_browser")).toBeVisible();
   await expect(page.getByText("analysis_result:1")).toBeVisible();
   await expect(page.getByText("simulation:1")).toBeVisible();
-  await expect(page.getByText("evidence/simulations/000.json")).toBeVisible();
+  await expect(page.getByText("simulation - evidence/simulations/000.json")).toBeVisible();
+  await expect(page.getByText("analysis - evidence/analyses/000.json")).toBeVisible();
+  await expect(page.getByText("unclassified - sha ffffffffffff")).toBeVisible();
+  await expect(page.getByText("evidence/simulations/000.json", { exact: true })).toBeVisible();
   await expect(page.getByText("256 B - sha cccccccccccc")).toBeVisible();
 
   const bodies = api.bodies("/api/studio/evidence/bundle");

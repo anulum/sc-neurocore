@@ -108,13 +108,30 @@ const evidenceBundle: StudioEvidenceBundleResponse = {
   bundle_id: "seb_sj_evidence",
   job_id: "sj_evidence",
   manifest: {
-    entries: [{ type: "audit_export" }, { type: "manifest" }],
+    entries: [
+      {
+        bundle_path: "evidence/audit-export.json",
+        evidence_classification: "audit",
+        type: "audit_export",
+      },
+      {
+        bundle_path: "evidence/jobs/sj_compile/artifacts/compiler/compile-evidence.json",
+        evidence_classification: "compile",
+        source_job_artifact_path: "compiler/compile-evidence.json",
+        source_job_id: "sj_compile",
+        type: "action_evidence",
+      },
+      {
+        sha256: "d".repeat(64),
+        type: "manifest",
+      },
+    ],
   },
   schema_version: "studio.evidence-bundle.v1",
   summary: {
     artifact_path_count: 2,
-    entry_count: 2,
-    entry_type_counts: { audit_export: 1, manifest: 1 },
+    entry_count: 3,
+    entry_type_counts: { action_evidence: 1, audit_export: 1, manifest: 1 },
     evidence_classification_counts: { compile: 1 },
     source_job_count: 1,
     source_job_kind_counts: { compiler: 1 },
@@ -269,12 +286,35 @@ describe("admin shell model", () => {
         },
       ],
       bundleId: "seb_sj_evidence",
-      entryTypes: "audit_export:1, manifest:1",
+      entries: [
+        {
+          classification: "audit",
+          detail: "evidence/audit-export.json",
+          index: 0,
+          source: "evidence/audit-export.json",
+          type: "audit_export",
+        },
+        {
+          classification: "compile",
+          detail: "compiler/compile-evidence.json",
+          index: 1,
+          source: "job sj_compile",
+          type: "action_evidence",
+        },
+        {
+          classification: "unclassified",
+          detail: "sha dddddddddddd",
+          index: 2,
+          source: "bundle",
+          type: "manifest",
+        },
+      ],
+      entryTypes: "action_evidence:1, audit_export:1, manifest:1",
       error: null,
       evidenceClasses: "compile:1",
       jobId: "sj_evidence",
       loading: false,
-      manifestEntryCount: 2,
+      manifestEntryCount: 3,
       sourceJobs: "1 - compiler:1",
     });
     expect(model.jobRecords).toEqual([

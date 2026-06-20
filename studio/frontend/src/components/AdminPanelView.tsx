@@ -527,6 +527,20 @@ export default function AdminPanelView({
         {model.evidenceBundle.error && (
           <div className="admin-warning">{model.evidenceBundle.error}</div>
         )}
+        {model.evidenceBundle.entries.length > 0 && (
+          <div className="admin-audit-list">
+            {model.evidenceBundle.entries.map((entry) => (
+              <div
+                key={`${entry.index}-${entry.type}-${entry.detail}`}
+                className="admin-audit-row admin-manifest-row"
+              >
+                <span>{entry.type}</span>
+                <strong title={entry.source}>{entry.source}</strong>
+                <small>{entry.classification} - {entry.detail}</small>
+              </div>
+            ))}
+          </div>
+        )}
         {model.evidenceBundle.artifacts.length > 0 && (
           <div className="admin-audit-list">
             {model.evidenceBundle.artifacts.map((artifact) => (
