@@ -223,6 +223,7 @@ export interface StudioJobListResponse {
 
 export interface StudioEvidenceBundleRequest {
   audit_limit: number;
+  analysis_results: Record<string, unknown>[];
   command_replay: Record<string, unknown> | null;
   include_audit: boolean;
   job_ids: string[];

@@ -23,6 +23,7 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobContext,
     StudioJobRecord,
 )
+from sc_neurocore.studio.analysis_manifest import STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION
 from sc_neurocore.studio.simulation_manifest import STUDIO_SIMULATION_RUN_SCHEMA_VERSION
 
 STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION = "studio.evidence-bundle.v1"
@@ -67,6 +68,7 @@ def write_studio_evidence_bundle(
     *,
     project_payload: Mapping[str, object] | None = None,
     simulation_payloads: Sequence[Mapping[str, object]] = (),
+    analysis_payloads: Sequence[Mapping[str, object]] = (),
     job_records: Sequence[StudioJobRecord] = (),
     artifact_reader: StudioArtifactReader | None = None,
     audit_export: Mapping[str, object] | None = None,
@@ -85,6 +87,9 @@ def write_studio_evidence_bundle(
     simulation_payloads:
         Optional Studio simulation responses carrying ``studio.simulation-run.v1``
         run metadata.
+    analysis_payloads:
+        Optional Studio analysis responses carrying ``studio.analysis-result.v1``
+        analysis metadata.
     job_records:
         Completed or failed Studio job records to preserve with their declared
         artifacts.
@@ -135,6 +140,17 @@ def write_studio_evidence_bundle(
                 "simulation_result",
                 f"evidence/simulations/{index:03d}.json",
                 _simulation_result_payload(simulation_payload),
+            )
+        )
+
+    for index, analysis_payload in enumerate(analysis_payloads):
+        entries.append(
+            _write_json_entry(
+                context,
+                written_paths,
+                "analysis_result",
+                f"evidence/analyses/{index:03d}.json",
+                _analysis_result_payload(analysis_payload),
             )
         )
 
@@ -252,6 +268,20 @@ def _simulation_result_payload(payload: Mapping[str, object]) -> dict[str, JsonV
     evidence_classification = metadata.get("evidence_classification")
     if evidence_classification != "simulation":
         raise ValueError("Studio simulation payload must be classified as simulation evidence.")
+    return result
+
+
+def _analysis_result_payload(payload: Mapping[str, object]) -> dict[str, JsonValue]:
+    result = _json_object(payload, "Studio analysis payload must be JSON.")
+    metadata = result.get("analysis_metadata")
+    if not isinstance(metadata, Mapping):
+        raise ValueError("Studio analysis payload requires analysis metadata.")
+    schema_version = metadata.get("schema_version")
+    if schema_version != STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION:
+        raise ValueError("Studio analysis payload has unsupported analysis metadata.")
+    evidence_classification = metadata.get("evidence_classification")
+    if evidence_classification != "analysis":
+        raise ValueError("Studio analysis payload must be classified as analysis evidence.")
     return result
 
 

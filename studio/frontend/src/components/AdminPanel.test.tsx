@@ -252,6 +252,7 @@ describe("AdminPanel", () => {
     expect(html).toContain("seb_sj_evidence");
     expect(html).toContain("Evidence job IDs");
     expect(html).toContain("Evidence simulation JSON");
+    expect(html).toContain("Evidence analysis JSON");
     expect(html).toContain("Create evidence bundle");
   });
 });

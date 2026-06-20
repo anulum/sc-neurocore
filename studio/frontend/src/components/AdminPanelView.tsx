@@ -172,6 +172,7 @@ export default function AdminPanelView({
 
     void onCreateEvidenceBundle({
       audit_limit: boundedInteger(form.get("auditLimit"), 100, 1, 1000),
+      analysis_results: jsonObjects(form.get("analysisResults")),
       command_replay: Object.keys(commandReplay).length > 0 ? commandReplay : null,
       include_audit: form.get("includeAudit") === "on",
       job_ids: textList(form.get("jobIds")),
@@ -480,7 +481,7 @@ export default function AdminPanelView({
         </div>
       </section>
 
-      <section className="admin-section">
+      <section className="admin-section admin-evidence-section">
         <div className="admin-section-header">
           <h2>Evidence</h2>
           <span>{model.evidenceBundle.loading ? "exporting" : "ready"}</span>
@@ -516,6 +517,15 @@ export default function AdminPanelView({
             <textarea
               aria-label="Evidence simulation JSON"
               name="simulationResults"
+              disabled={model.evidenceBundle.loading}
+              rows={4}
+            />
+          </label>
+          <label className="admin-evidence-wide">
+            Analysis JSON
+            <textarea
+              aria-label="Evidence analysis JSON"
+              name="analysisResults"
               disabled={model.evidenceBundle.loading}
               rows={4}
             />
@@ -577,6 +587,7 @@ export default function AdminPanelView({
           </label>
           <button
             aria-label="Create evidence bundle"
+            className="admin-evidence-submit"
             disabled={model.evidenceBundle.loading}
             type="submit"
           >

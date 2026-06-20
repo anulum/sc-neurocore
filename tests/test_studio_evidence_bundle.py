@@ -64,6 +64,24 @@ def _simulation_payload() -> dict[str, object]:
     }
 
 
+def _analysis_payload() -> dict[str, object]:
+    """Return a minimal Studio analysis response carrying analysis metadata."""
+
+    return {
+        "analysis_metadata": {
+            "analysis_type": "fi_curve",
+            "evidence_classification": "analysis",
+            "input_sha256": "3" * 64,
+            "output_keys": ["currents", "rates"],
+            "result_sha256": "4" * 64,
+            "schema_version": "studio.analysis-result.v1",
+            "source": "ode",
+        },
+        "currents": [0.0, 1.0],
+        "rates": [0.0, 10.0],
+    }
+
+
 def _client_with_evidence_state(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -146,6 +164,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
         bundle_context,
         project_payload={"name": "demo", "state": {"duration": 10}},
         simulation_payloads=(_simulation_payload(),),
+        analysis_payloads=(_analysis_payload(),),
         job_records=(completed_source,),
         artifact_reader=manager.read_artifact,
         audit_export={"schema_version": "studio.audit.export.v1", "events": []},
@@ -159,6 +178,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     assert "evidence/manifest.json" in result.artifact_paths
     assert "evidence/project.json" in result.artifact_paths
     assert "evidence/simulations/000.json" in result.artifact_paths
+    assert "evidence/analyses/000.json" in result.artifact_paths
     assert f"evidence/jobs/{source_record.job_id}/record.json" in result.artifact_paths
     assert (
         f"evidence/jobs/{source_record.job_id}/artifacts/compiler/result.json"
@@ -167,6 +187,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     assert (tmp_path / "evidence" / "evidence" / "command-replay.json").is_file()
     assert "compiler/result.json" in json.dumps(payload)
     assert "simulation_result" in json.dumps(payload)
+    assert "analysis_result" in json.dumps(payload)
 
 
 def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
@@ -206,6 +227,18 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
         write_studio_evidence_bundle(
             context,
             simulation_payloads=(invalid_simulation,),
+        )
+    with pytest.raises(ValueError, match="Studio analysis payload requires analysis metadata"):
+        write_studio_evidence_bundle(
+            context,
+            analysis_payloads=({"rates": []},),
+        )
+    invalid_analysis = _analysis_payload()
+    invalid_analysis["analysis_metadata"] = {"schema_version": "legacy"}
+    with pytest.raises(ValueError, match="unsupported analysis metadata"):
+        write_studio_evidence_bundle(
+            context,
+            analysis_payloads=(invalid_analysis,),
         )
 
     manager = StudioJobManager(
@@ -279,6 +312,18 @@ def test_studio_evidence_bundle_route_exports_selected_state(
         },
     )
     assert simulation_response.status_code == 200
+    analysis_response = client.post(
+        "/api/fi-curve",
+        json={
+            "duration": 1.0,
+            "equations": ["dv/dt = I"],
+            "i_max": 1.0,
+            "i_min": 0.0,
+            "i_steps": 2,
+            "init": {"v": 0.0},
+        },
+    )
+    assert analysis_response.status_code == 200
     source_records = [
         record
         for record in _job_manager(app).list_records()
@@ -291,6 +336,7 @@ def test_studio_evidence_bundle_route_exports_selected_state(
         json={
             "project_name": "demo",
             "simulation_results": [simulation_response.json()],
+            "analysis_results": [analysis_response.json()],
             "job_ids": [source_records[0].job_id],
             "include_audit": True,
             "audit_limit": 10,
@@ -312,6 +358,11 @@ def test_studio_evidence_bundle_route_exports_selected_state(
         evidence_job_id,
         "evidence/simulations/000.json",
     )
+    analysis_payload = _json_artifact(
+        manager,
+        evidence_job_id,
+        "evidence/analyses/000.json",
+    )
     copied_result = _json_artifact(
         manager,
         evidence_job_id,
@@ -326,6 +377,7 @@ def test_studio_evidence_bundle_route_exports_selected_state(
     assert manifest["schema_version"] == STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION
     assert project_payload["name"] == "demo"
     assert simulation_payload["run_metadata"] == simulation_response.json()["run_metadata"]
+    assert analysis_payload["analysis_metadata"] == analysis_response.json()["analysis_metadata"]
     assert replay_payload["path"] == "/api/compile"
     assert copied_result == compile_response.json()
     assert str(tmp_path) not in encoded_body

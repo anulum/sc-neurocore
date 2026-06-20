@@ -214,18 +214,31 @@ function defaultApiMocks(): Map<string, ApiMockPayload> {
     ["/api/studio/jobs/status", jobStatus],
     ["/api/studio/jobs", jobList],
     ["/api/studio/evidence/bundle", {
-      artifact_paths: ["evidence/simulations/000.json", "evidence/manifest.json"],
+      artifact_paths: [
+        "evidence/simulations/000.json",
+        "evidence/analyses/000.json",
+        "evidence/manifest.json",
+      ],
       artifacts: [
         {
           relative_path: "evidence/simulations/000.json",
           sha256: "c".repeat(64),
           size_bytes: 256,
         },
+        {
+          relative_path: "evidence/analyses/000.json",
+          sha256: "d".repeat(64),
+          size_bytes: 192,
+        },
       ],
       bundle_id: "seb_sj_browser",
       job_id: "sj_browser",
       manifest: {
-        entries: [{ type: "simulation_result" }, { type: "manifest" }],
+        entries: [
+          { type: "simulation_result" },
+          { type: "analysis_result" },
+          { type: "manifest" },
+        ],
       },
       schema_version: "studio.evidence-bundle.v1",
     }],
@@ -353,7 +366,7 @@ test("admin panel refreshes operator, audit, export, and job status", async ({ p
   expect(api.requests("/api/studio/jobs/status")).toBe(1);
 });
 
-test("admin evidence bundle form submits simulation result payloads", async ({ page }) => {
+test("admin evidence bundle form submits simulation and analysis result payloads", async ({ page }) => {
   const api = await installApiDispatcher(page, defaultApiMocks());
 
   await page.goto("/");
@@ -378,9 +391,25 @@ test("admin evidence bundle form submits simulation result payloads", async ({ p
     states: { v: [0, 0.1] },
     time: [0, 0.1],
   };
+  const analysisPayload = {
+    analysis_metadata: {
+      analysis_type: "fi_curve",
+      evidence_classification: "analysis",
+      input_sha256: "3".repeat(64),
+      output_keys: ["currents", "rates"],
+      result_sha256: "4".repeat(64),
+      schema_version: "studio.analysis-result.v1",
+      source: "ode",
+    },
+    currents: [0, 1],
+    rates: [0, 10],
+  };
 
   await page.getByRole("textbox", { name: "Evidence simulation JSON" }).fill(
     JSON.stringify(simulationPayload),
+  );
+  await page.getByRole("textbox", { name: "Evidence analysis JSON" }).fill(
+    JSON.stringify(analysisPayload),
   );
   await page.getByRole("button", { name: "Create evidence bundle" }).click();
 
@@ -389,6 +418,7 @@ test("admin evidence bundle form submits simulation result payloads", async ({ p
   const bodies = api.bodies("/api/studio/evidence/bundle");
   expect(bodies).toHaveLength(1);
   expect(bodies[0]).toMatchObject({
+    analysis_results: [analysisPayload],
     include_audit: true,
     simulation_results: [simulationPayload],
   });
