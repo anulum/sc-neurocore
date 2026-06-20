@@ -27,11 +27,23 @@ from sc_neurocore.studio.analysis_manifest import STUDIO_ANALYSIS_RESULT_SCHEMA_
 from sc_neurocore.studio.simulation_manifest import STUDIO_SIMULATION_RUN_SCHEMA_VERSION
 
 STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION = "studio.evidence-bundle.v1"
+STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION = "studio.action-evidence.v1"
 UTC = timezone.utc
 
 JsonScalar: TypeAlias = str | int | float | bool | None
 JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
 StudioArtifactReader: TypeAlias = Callable[[str, str], StudioJobArtifactPayload]
+ACTION_EVIDENCE_CLASSIFICATIONS = frozenset(
+    {
+        "compile",
+        "local_regression",
+        "release_benchmark",
+        "simulation",
+        "synthesis",
+        "training",
+    }
+)
+ACTION_EVIDENCE_STATUSES = frozenset({"cancelled", "completed", "failed", "timed_out"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,7 +104,9 @@ def write_studio_evidence_bundle(
         analysis metadata.
     job_records:
         Completed or failed Studio job records to preserve with their declared
-        artifacts.
+        artifacts. Artifacts ending in ``evidence.json`` must carry the
+        ``studio.action-evidence.v1`` contract and are classified as
+        first-class action evidence in the bundle manifest.
     artifact_reader:
         Reader used to fetch verified job artifact bytes. Required when
         ``job_records`` contains artifacts.
@@ -202,14 +216,14 @@ def write_studio_evidence_bundle(
             written = context.write_artifact(bundle_path, artifact_payload.payload)
             written_paths.append(written.relative_path)
             entries.append(
-                {
-                    "bundle_path": written.relative_path,
-                    "sha256": written.sha256,
-                    "size_bytes": written.size_bytes,
-                    "source_job_artifact_path": artifact.relative_path,
-                    "source_job_id": record.job_id,
-                    "type": "job_artifact",
-                }
+                _job_artifact_entry(
+                    record=record,
+                    source_path=artifact.relative_path,
+                    bundle_path=written.relative_path,
+                    sha256=written.sha256,
+                    size_bytes=written.size_bytes,
+                    payload=artifact_payload.payload,
+                )
             )
 
     manifest: dict[str, JsonValue] = {
@@ -283,6 +297,93 @@ def _analysis_result_payload(payload: Mapping[str, object]) -> dict[str, JsonVal
     if evidence_classification != "analysis":
         raise ValueError("Studio analysis payload must be classified as analysis evidence.")
     return result
+
+
+def _job_artifact_entry(
+    *,
+    record: StudioJobRecord,
+    source_path: str,
+    bundle_path: str,
+    sha256: str,
+    size_bytes: int,
+    payload: bytes,
+) -> dict[str, JsonValue]:
+    entry: dict[str, JsonValue] = {
+        "bundle_path": bundle_path,
+        "sha256": sha256,
+        "size_bytes": size_bytes,
+        "source_job_artifact_path": source_path,
+        "source_job_id": record.job_id,
+        "type": "job_artifact",
+    }
+    if _is_action_evidence_artifact(source_path):
+        action_evidence = _action_evidence_payload(payload, source_job_id=record.job_id)
+        entry.update(
+            {
+                "action_kind": action_evidence["action_kind"],
+                "action_status": action_evidence["status"],
+                "evidence_classification": action_evidence["evidence_classification"],
+                "payload_sha256": action_evidence["payload_sha256"],
+                "type": "action_evidence",
+            }
+        )
+    return entry
+
+
+def _is_action_evidence_artifact(relative_path: str) -> bool:
+    name = PurePosixPath(relative_path).name
+    return name == "evidence.json" or name.endswith("-evidence.json")
+
+
+def _action_evidence_payload(payload: bytes, *, source_job_id: str) -> dict[str, JsonValue]:
+    try:
+        decoded = json.loads(payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("Studio action evidence artifact must be JSON.") from exc
+    if not isinstance(decoded, Mapping):
+        raise ValueError("Studio action evidence artifact must be a JSON object.")
+    result = _json_object(decoded, "Studio action evidence artifact must be JSON.")
+    if result.get("schema_version") != STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION:
+        raise ValueError("Studio action evidence artifact has unsupported schema.")
+    if result.get("job_id") != source_job_id:
+        raise ValueError("Studio action evidence artifact job ID does not match source job.")
+    action_kind = result.get("action_kind")
+    if not isinstance(action_kind, str) or not action_kind:
+        raise ValueError("Studio action evidence artifact requires an action kind.")
+    evidence_classification = result.get("evidence_classification")
+    if evidence_classification not in ACTION_EVIDENCE_CLASSIFICATIONS:
+        raise ValueError("Studio action evidence artifact has unsupported classification.")
+    status = result.get("status")
+    if status not in ACTION_EVIDENCE_STATUSES:
+        raise ValueError("Studio action evidence artifact has unsupported status.")
+    payload_sha256 = result.get("payload_sha256")
+    if not _is_sha256_hex(payload_sha256):
+        raise ValueError("Studio action evidence artifact requires a payload SHA-256.")
+    if not isinstance(result.get("replay_route"), str):
+        raise ValueError("Studio action evidence artifact requires a replay route.")
+    artifacts = result.get("artifacts")
+    if not isinstance(artifacts, list) or not artifacts:
+        raise ValueError("Studio action evidence artifact requires artifact metadata.")
+    for artifact in artifacts:
+        if not isinstance(artifact, Mapping):
+            raise ValueError("Studio action evidence artifact has invalid artifact metadata.")
+        relative_path = artifact.get("relative_path")
+        sha256 = artifact.get("sha256")
+        size_bytes = artifact.get("size_bytes")
+        if not isinstance(relative_path, str):
+            raise ValueError("Studio action evidence artifact has invalid artifact metadata.")
+        _safe_bundle_artifact_path(relative_path)
+        if not _is_sha256_hex(sha256) or not isinstance(size_bytes, int) or size_bytes < 0:
+            raise ValueError("Studio action evidence artifact has invalid artifact metadata.")
+    return result
+
+
+def _is_sha256_hex(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
 
 
 def _json_value(value: object, error_message: str) -> JsonValue:

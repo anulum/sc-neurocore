@@ -209,7 +209,9 @@ runtime features:
   `studio.action-evidence.v1` manifests beside the result artifacts. These
   manifests record action kind, replay route, job ID, evidence classification,
   result payload SHA-256, and result artifact metadata without local paths or
-  secret material.
+  secret material. Evidence bundle export validates selected job evidence
+  artifacts (`evidence.json` and `*-evidence.json`) against this contract and
+  marks them as `action_evidence` entries in the bundle manifest.
 - `/api/studio/jobs` and `/api/studio/jobs/{job_id}` return admin-only,
   path-free job records for the Admin panel queue view. Records include job
   status, owner, request ID, timestamps, result metadata, and artifact
@@ -228,8 +230,11 @@ runtime features:
   artifacts, audit excerpt, and replay metadata are all written as job
   artifacts under `evidence/`. Simulation payloads are stored under
   `evidence/simulations/`; analysis payloads are stored under
-  `evidence/analyses/`. The response and manifest are path-free and omit bearer
-  tokens, token hashes, password material, and local filesystem paths.
+  `evidence/analyses/`. Selected job action-evidence artifacts are copied under
+  `evidence/jobs/{job_id}/artifacts/` and classified as `action_evidence` only
+  after `studio.action-evidence.v1` validation. The response and manifest are
+  path-free and omit bearer tokens, token hashes, password material, and local
+  filesystem paths.
 - The Admin panel surfaces that evidence route as an operator workflow with
   project, simulation JSON, analysis JSON, job ID, audit, and replay metadata
   fields. After export it refreshes the job queue and displays the bundle ID,

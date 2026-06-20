@@ -417,7 +417,10 @@ normalized `studio.action-evidence.v1` manifest next to the result artifact:
 `synthesis/multi-target-evidence.json`, `synthesis/pnr-evidence.json`, or
 `pipeline/evidence.json`. The manifest records the action kind, replay route,
 job ID, evidence classification, result payload SHA-256, and result artifact
-metadata without exposing host-local paths or secrets.
+metadata without exposing host-local paths or secrets. Evidence bundle export
+validates selected job evidence artifacts (`evidence.json` and
+`*-evidence.json`) against this contract and classifies them as
+`action_evidence` entries in the bundle manifest.
 
 Job artifacts are served through the admin-gated
 `/api/studio/jobs/{job_id}/artifacts/{artifact_path}` endpoint. The endpoint
@@ -443,9 +446,11 @@ bounded audit export, and command replay metadata such as method, route, and
 request body digest. Bundle files are declared job artifacts under
 `evidence/`, with simulation payloads stored under `evidence/simulations/`,
 analysis payloads stored under `evidence/analyses/`, and a
-`studio.evidence-bundle.v1` manifest at `evidence/manifest.json`. The bundle
-manifest is path-free and omits bearer tokens, token hashes, password material,
-and host-local filesystem paths.
+`studio.evidence-bundle.v1` manifest at `evidence/manifest.json`. Selected job
+action-evidence artifacts are copied under `evidence/jobs/{job_id}/artifacts/`
+and classified as `action_evidence` only after `studio.action-evidence.v1`
+validation. The bundle manifest is path-free and omits bearer tokens, token
+hashes, password material, and host-local filesystem paths.
 
 The Admin panel exposes the same evidence-bundle workflow. Operators can enter
 an optional saved project name, simulation-result JSON, analysis-result JSON,
