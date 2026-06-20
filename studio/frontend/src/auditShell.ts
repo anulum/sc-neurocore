@@ -4,12 +4,16 @@ export interface AuditExportSummary {
   total: number;
   allowed: number;
   denied: number;
+  browserAuth: number;
+  browserAuthAllowed: number;
+  browserAuthDenied: number;
   identityLifecycle: number;
   identityLifecycleAllowed: number;
   identityLifecycleDenied: number;
   truncated: boolean;
   sinkType: string;
   latestAction: string | null;
+  latestBrowserAuthAction: string | null;
   latestIdentityLifecycleAction: string | null;
   latestTimestamp: string | null;
   headline: string;
@@ -24,12 +28,16 @@ export function summarizeAuditExport(
       total: 0,
       allowed: 0,
       denied: 0,
+      browserAuth: 0,
+      browserAuthAllowed: 0,
+      browserAuthDenied: 0,
       identityLifecycle: 0,
       identityLifecycleAllowed: 0,
       identityLifecycleDenied: 0,
       truncated: false,
       sinkType: "unavailable",
       latestAction: null,
+      latestBrowserAuthAction: null,
       latestIdentityLifecycleAction: null,
       latestTimestamp: null,
       headline: "audit export unavailable",
@@ -37,6 +45,11 @@ export function summarizeAuditExport(
   }
   const allowed = exportPayload.events.filter((event) => event.decision === "allow").length;
   const denied = exportPayload.events.filter((event) => event.decision === "deny").length;
+  const browserAuthEvents = exportPayload.events.filter(isBrowserAuthAction);
+  const browserAuthAllowed = browserAuthEvents.filter(
+    (event) => event.decision === "allow",
+  ).length;
+  const browserAuthDenied = browserAuthEvents.filter((event) => event.decision === "deny").length;
   const identityLifecycleEvents = exportPayload.events.filter(isIdentityLifecycleAction);
   const identityLifecycleAllowed = identityLifecycleEvents.filter(
     (event) => event.decision === "allow",
@@ -52,17 +65,23 @@ export function summarizeAuditExport(
     identityLifecycleEvents.length > 0
       ? identityLifecycleEvents[identityLifecycleEvents.length - 1]
       : null;
+  const latestBrowserAuth =
+    browserAuthEvents.length > 0 ? browserAuthEvents[browserAuthEvents.length - 1] : null;
 
   return {
     total: exportPayload.event_count,
     allowed,
     denied,
+    browserAuth: browserAuthEvents.length,
+    browserAuthAllowed,
+    browserAuthDenied,
     identityLifecycle: identityLifecycleEvents.length,
     identityLifecycleAllowed,
     identityLifecycleDenied,
     truncated: exportPayload.truncated,
     sinkType: exportPayload.sink_type,
     latestAction: latest?.action ?? null,
+    latestBrowserAuthAction: latestBrowserAuth?.action ?? null,
     latestIdentityLifecycleAction: latestIdentityLifecycle?.action ?? null,
     latestTimestamp: latest?.timestamp_utc ?? null,
     headline: `${exportPayload.event_count} events, ${denied} denied`,
@@ -71,4 +90,8 @@ export function summarizeAuditExport(
 
 function isIdentityLifecycleAction(event: StudioAuditExport["events"][number]): boolean {
   return event.action.startsWith("studio.identity.");
+}
+
+function isBrowserAuthAction(event: StudioAuditExport["events"][number]): boolean {
+  return event.action.startsWith("studio.auth.");
 }

@@ -7,7 +7,7 @@ describe("audit shell contract", () => {
   it("summarizes exported audit decisions without exposing paths", () => {
     const exportPayload: StudioAuditExport = {
       configured: true,
-      event_count: 5,
+      event_count: 6,
       events: [
         {
           action: "studio.simulation.run",
@@ -46,6 +46,18 @@ describe("audit shell contract", () => {
           event_hash: "hash-3",
         },
         {
+          action: "studio.auth.login",
+          decision: "deny",
+          principal_id: null,
+          reason: "invalid_browser_login",
+          route: "/api/studio/auth/login",
+          schema_version: "studio.audit.v1",
+          request_id: "req-auth",
+          timestamp_utc: "2026-06-19T18:02:30Z",
+          previous_event_hash: "hash-3",
+          event_hash: "hash-auth",
+        },
+        {
           action: "studio.identity.browser_user.update",
           decision: "allow",
           principal_id: "admin-1",
@@ -54,7 +66,7 @@ describe("audit shell contract", () => {
           schema_version: "studio.audit.v1",
           request_id: "req-3",
           timestamp_utc: "2026-06-19T18:03:00Z",
-          previous_event_hash: "hash-3",
+          previous_event_hash: "hash-auth",
           event_hash: "hash-4",
         },
         {
@@ -76,18 +88,22 @@ describe("audit shell contract", () => {
     };
 
     expect(summarizeAuditExport(exportPayload)).toEqual({
-      total: 5,
+      total: 6,
       allowed: 3,
-      denied: 2,
+      denied: 3,
+      browserAuth: 1,
+      browserAuthAllowed: 0,
+      browserAuthDenied: 1,
       identityLifecycle: 2,
       identityLifecycleAllowed: 1,
       identityLifecycleDenied: 1,
       truncated: false,
       sinkType: "jsonl",
       latestAction: "studio.identity.service_account.update",
+      latestBrowserAuthAction: "studio.auth.login",
       latestIdentityLifecycleAction: "studio.identity.service_account.update",
       latestTimestamp: "2026-06-19T18:04:00Z",
-      headline: "5 events, 2 denied",
+      headline: "6 events, 3 denied",
     });
   });
 
@@ -96,12 +112,16 @@ describe("audit shell contract", () => {
       total: 0,
       allowed: 0,
       denied: 0,
+      browserAuth: 0,
+      browserAuthAllowed: 0,
+      browserAuthDenied: 0,
       identityLifecycle: 0,
       identityLifecycleAllowed: 0,
       identityLifecycleDenied: 0,
       truncated: false,
       sinkType: "unavailable",
       latestAction: null,
+      latestBrowserAuthAction: null,
       latestIdentityLifecycleAction: null,
       latestTimestamp: null,
       headline: "audit export unavailable",

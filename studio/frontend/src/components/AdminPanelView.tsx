@@ -444,6 +444,10 @@ export default function AdminPanelView({
           <div><span>Health</span><strong>{model.audit.healthLabel}</strong></div>
           <div><span>Events</span><strong>{model.audit.total}</strong></div>
           <div><span>Denied</span><strong>{model.audit.denied}</strong></div>
+          <div><span>Browser auth</span><span style={{ fontWeight: 700 }}>{model.audit.browserAuth}</span></div>
+          <div><span>Auth allowed</span><span style={{ fontWeight: 700 }}>{model.audit.browserAuthAllowed}</span></div>
+          <div><span>Auth denied</span><span style={{ fontWeight: 700 }}>{model.audit.browserAuthDenied}</span></div>
+          <div><span>Latest auth</span><span style={{ fontWeight: 700 }}>{model.audit.latestBrowserAuthAction ?? "none"}</span></div>
           <div><span>Identity lifecycle</span><span style={{ fontWeight: 700 }}>{model.audit.identityLifecycle}</span></div>
           <div><span>Identity allowed</span><span style={{ fontWeight: 700 }}>{model.audit.identityLifecycleAllowed}</span></div>
           <div><span>Identity denied</span><span style={{ fontWeight: 700 }}>{model.audit.identityLifecycleDenied}</span></div>

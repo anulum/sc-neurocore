@@ -30,12 +30,16 @@ export interface AdminShellInput {
 export interface AdminAuditModel {
   denied: number;
   error: string | null;
+  browserAuth: number;
+  browserAuthAllowed: number;
+  browserAuthDenied: number;
   healthLabel: "ready" | "unhealthy";
   identityLifecycle: number;
   identityLifecycleAllowed: number;
   identityLifecycleDenied: number;
   lastError: string | null;
   latestAction: string | null;
+  latestBrowserAuthAction: string | null;
   latestIdentityLifecycleAction: string | null;
   sinkType: string;
   total: number;
@@ -168,12 +172,16 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
     audit: {
       denied: auditSummary.denied,
       error: input.auditError,
+      browserAuth: auditSummary.browserAuth,
+      browserAuthAllowed: auditSummary.browserAuthAllowed,
+      browserAuthDenied: auditSummary.browserAuthDenied,
       healthLabel: auditStatus?.healthy === false ? "unhealthy" : "ready",
       identityLifecycle: auditSummary.identityLifecycle,
       identityLifecycleAllowed: auditSummary.identityLifecycleAllowed,
       identityLifecycleDenied: auditSummary.identityLifecycleDenied,
       lastError: auditStatus?.last_error ?? null,
       latestAction: auditSummary.latestAction,
+      latestBrowserAuthAction: auditSummary.latestBrowserAuthAction,
       latestIdentityLifecycleAction: auditSummary.latestIdentityLifecycleAction,
       sinkType: auditStatus?.sink_type ?? auditSummary.sinkType,
       total: auditSummary.total,

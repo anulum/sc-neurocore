@@ -40,7 +40,7 @@ const auditStatus: StudioAuditStatus = {
 
 const auditExport: StudioAuditExport = {
   configured: true,
-  event_count: 2,
+  event_count: 3,
   events: [
     {
       action: "studio.audit.export",
@@ -55,10 +55,22 @@ const auditExport: StudioAuditExport = {
       timestamp_utc: "2026-06-19T20:01:00Z",
     },
     {
+      action: "studio.auth.login",
+      decision: "deny",
+      event_hash: "hash-auth",
+      previous_event_hash: "hash-1",
+      principal_id: null,
+      reason: "invalid_browser_login",
+      request_id: "req-auth",
+      route: "/api/studio/auth/login",
+      schema_version: "studio.audit.v1",
+      timestamp_utc: "2026-06-19T20:01:30Z",
+    },
+    {
       action: "studio.identity.browser_user.password.rotate",
       decision: "allow",
       event_hash: "hash-2",
-      previous_event_hash: "hash-1",
+      previous_event_hash: "hash-auth",
       principal_id: "operator-1",
       reason: "authorized",
       request_id: "req-2",
@@ -284,6 +296,11 @@ describe("AdminPanel", () => {
     expect(html).toContain("Max retry");
     expect(html).toContain("900s");
     expect(html).toContain("Audit");
+    expect(html).toContain("Browser auth");
+    expect(html).toContain("Auth allowed");
+    expect(html).toContain("Auth denied");
+    expect(html).toContain("Latest auth");
+    expect(html).toContain("studio.auth.login");
     expect(html).toContain("Identity lifecycle");
     expect(html).toContain("Identity allowed");
     expect(html).toContain("Identity denied");
