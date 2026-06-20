@@ -847,6 +847,50 @@ def _studio_identity_from_headers(
     return StudioIdentityResult(principal=None)
 
 
+def _studio_websocket_authorization_from_headers(headers: Mapping[str, str]) -> str | None:
+    authorization = headers.get("authorization")
+    if authorization is not None and authorization.strip():
+        return authorization
+    protocols = headers.get("sec-websocket-protocol", "")
+    for raw_protocol in protocols.split(","):
+        protocol = raw_protocol.strip()
+        if protocol.startswith("studio-bearer.") and len(protocol) > len("studio-bearer."):
+            return f"Bearer {protocol.removeprefix('studio-bearer.')}"
+    return None
+
+
+def _studio_identity_from_websocket_headers(
+    headers: Mapping[str, str],
+    *,
+    authenticator: StudioIdentityAuthenticator | None,
+    session_manager: StudioBrowserSessionManager,
+    allow_header_principal: bool,
+) -> StudioIdentityResult:
+    authorization = _studio_websocket_authorization_from_headers(headers)
+    if authorization is not None:
+        return _studio_identity_from_headers(
+            {"authorization": authorization},
+            authenticator=authenticator,
+            session_manager=session_manager,
+            allow_header_principal=False,
+        )
+    return _studio_identity_from_headers(
+        headers,
+        authenticator=authenticator,
+        session_manager=session_manager,
+        allow_header_principal=allow_header_principal,
+    )
+
+
+def _studio_websocket_accept_subprotocol(headers: Mapping[str, str]) -> str | None:
+    protocols = {
+        raw_protocol.strip()
+        for raw_protocol in headers.get("sec-websocket-protocol", "").split(",")
+        if raw_protocol.strip()
+    }
+    return "studio-auth" if "studio-auth" in protocols else None
+
+
 def _studio_route_signature(app: FastAPI, request: Request) -> tuple[str, str] | None:
     for route in app.routes:
         if not isinstance(route, Route):
@@ -2724,7 +2768,32 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         if origin not in settings.websocket_allowed_origins:
             await websocket.close(code=1008)
             return
-        await websocket.accept()
+        if settings.enforce_route_policies:
+            websocket_request_id = _studio_request_id(
+                websocket.headers.get(settings.request_id_header)
+            )
+            websocket_policy = studio_route_policies.policy_for("WEBSOCKET", "/ws/progress")
+            identity_result = _studio_identity_from_websocket_headers(
+                websocket.headers,
+                authenticator=studio_identity_authenticator,
+                session_manager=studio_browser_session_manager,
+                allow_header_principal=settings.allow_header_principal,
+            )
+            try:
+                decision = studio_policy_gateway.authorize(
+                    websocket_policy,
+                    principal=identity_result.principal,
+                    route="/ws/progress",
+                    request_id=websocket_request_id,
+                    identity_failure_reason=identity_result.failure_reason,
+                )
+            except AuditSinkError:
+                await websocket.close(code=1011)
+                return
+            if not decision.allowed:
+                await websocket.close(code=1008)
+                return
+        await websocket.accept(subprotocol=_studio_websocket_accept_subprotocol(websocket.headers))
         from sc_neurocore.studio.progress import ws_progress_handler
 
         try:

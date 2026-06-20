@@ -4,6 +4,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio platform
+- Authenticated `/ws/progress` when Studio route-policy enforcement is enabled.
+  Non-browser clients can use bearer headers, while the React frontend carries
+  browser-session tokens through the `studio-auth` WebSocket subprotocol.
+
 ### Physics and mathematics hardening
 - Added the polyglot batched `dcls_max_forward_batch(...)` chain for the DCLS-max
   Q8.8 triangular (tent) weighting kernel (Khalfaoui-Hassani, Pellegrini &

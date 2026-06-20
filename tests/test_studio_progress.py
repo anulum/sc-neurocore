@@ -8,7 +8,10 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import queue
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -19,7 +22,7 @@ from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 from sc_neurocore.studio.app import create_app
-from sc_neurocore.studio.platform import StudioRuntimeSettings
+from sc_neurocore.studio.platform import Principal, StudioRuntimeSettings
 from sc_neurocore.studio.progress import (
     _characterize_with_progress,
     _heatmap_with_progress,
@@ -229,3 +232,109 @@ class TestWebSocketEndpoint:
             pass
 
         assert exc_info.value.code == 1008
+
+    def test_ws_policy_rejects_missing_principal(self, tmp_path: Path) -> None:
+        audit_path = tmp_path / "audit" / "studio.jsonl"
+        app = create_app(
+            runtime_settings=StudioRuntimeSettings(
+                allowed_hosts=("testserver",),
+                audit_log_path=str(audit_path),
+                enforce_route_policies=True,
+            )
+        )
+        client = TestClient(app)
+
+        with (
+            pytest.raises(WebSocketDisconnect) as exc_info,
+            client.websocket_connect(
+                "/ws/progress",
+                headers={"origin": "http://127.0.0.1:8001"},
+            ),
+        ):
+            pass
+
+        row = json.loads(audit_path.read_text(encoding="utf-8"))
+        assert exc_info.value.code == 1008
+        assert row["action"] == "studio.websocket.progress"
+        assert row["decision"] == "deny"
+        assert row["principal_id"] is None
+        assert row["reason"] == "missing_principal"
+        assert row["route"] == "/ws/progress"
+
+    def test_ws_policy_rejects_invalid_bearer_identity_token(self, tmp_path: Path) -> None:
+        identity_path = tmp_path / "studio-identities.json"
+        audit_path = tmp_path / "audit" / "studio.jsonl"
+        identity_path.write_text(
+            json.dumps(
+                {
+                    "schema_version": "sc-neurocore.studio.identity.v1",
+                    "service_accounts": [
+                        {
+                            "principal_id": "svc-admin",
+                            "roles": ["studio.admin"],
+                            "token_sha256": hashlib.sha256(b"admin-token").hexdigest(),
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        app = create_app(
+            runtime_settings=StudioRuntimeSettings(
+                allowed_hosts=("testserver",),
+                allow_header_principal=False,
+                audit_log_path=str(audit_path),
+                enforce_route_policies=True,
+                identity_file_path=str(identity_path),
+            )
+        )
+        client = TestClient(app)
+
+        with (
+            pytest.raises(WebSocketDisconnect) as exc_info,
+            client.websocket_connect(
+                "/ws/progress",
+                headers={
+                    "authorization": "Bearer wrong-token",
+                    "origin": "http://127.0.0.1:8001",
+                },
+            ),
+        ):
+            pass
+
+        row = json.loads(audit_path.read_text(encoding="utf-8"))
+        assert exc_info.value.code == 1008
+        assert row["action"] == "studio.websocket.progress"
+        assert row["decision"] == "deny"
+        assert row["reason"] == "invalid_identity_token"
+
+    def test_ws_policy_accepts_browser_session_subprotocol(self, tmp_path: Path) -> None:
+        audit_path = tmp_path / "audit" / "studio.jsonl"
+        app = create_app(
+            runtime_settings=StudioRuntimeSettings(
+                allowed_hosts=("testserver",),
+                allow_header_principal=False,
+                audit_log_path=str(audit_path),
+                enforce_route_policies=True,
+            )
+        )
+        issued = app.state.studio_browser_session_manager.issue(
+            Principal(principal_id="browser-operator", roles=frozenset({"studio.viewer"}))
+        )
+        client = TestClient(app)
+
+        with client.websocket_connect(
+            "/ws/progress",
+            headers={"origin": "http://127.0.0.1:8001"},
+            subprotocols=["studio-auth", f"studio-bearer.{issued.bearer_token}"],
+        ) as ws:
+            ws.send_json({"op": "nonexistent"})
+            message = ws.receive_json()
+
+        row = json.loads(audit_path.read_text(encoding="utf-8"))
+        assert message["type"] == "error"
+        assert "Unknown op" in message["msg"]
+        assert row["action"] == "studio.websocket.progress"
+        assert row["decision"] == "allow"
+        assert row["principal_id"] == "browser-operator"
+        assert row["reason"] == "authorized"

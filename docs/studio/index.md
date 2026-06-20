@@ -77,9 +77,10 @@ runtime features:
   decisions.
 - Runtime route-policy enforcement is opt-in for the development preview via
   `SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES=true`. When enabled, protected
-  HTTP routes require an authenticated principal. Development builds may still
-  use `X-Studio-Principal` plus comma-separated `X-Studio-Roles`; production
-  deployments should set `SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL=false`.
+  HTTP routes and `/ws/progress` require an authenticated principal.
+  Development builds may still use `X-Studio-Principal` plus comma-separated
+  `X-Studio-Roles`; production deployments should set
+  `SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL=false`.
 - Durable service-account identity is configured with
   `SC_NEUROCORE_STUDIO_IDENTITY_FILE`. The file uses
   `sc-neurocore.studio.identity.v1`, stores SHA-256 bearer-token hashes rather
@@ -326,7 +327,10 @@ runtime features:
   and lets startup or test code detect unclassified Studio endpoints before
   they become accidental public surfaces. The default registry classifies the
   current `/api/*` and `/ws/*` Studio surface, including stateful simulation,
-  training, project, synthesis, and WebSocket progress routes.
+  training, project, synthesis, and WebSocket progress routes. The progress
+  WebSocket uses `Authorization: Bearer <token>` for non-browser clients and
+  the `studio-auth, studio-bearer.<token>` WebSocket subprotocol pair for the
+  browser frontend when route-policy enforcement is enabled.
 - `StudioRuntimeSettings` owns deployment-sensitive backend settings. CORS
   defaults are loopback-only for the packaged backend and Vite development
   server; production deployments must set `SC_NEUROCORE_STUDIO_CORS_ORIGINS`

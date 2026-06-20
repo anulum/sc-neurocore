@@ -14,8 +14,8 @@ showing the current step, percentage, and description.
 
 ## Protocol
 
-Connect via WebSocket to `/ws/progress`, send a JSON request, receive
-progress frames:
+Connect via WebSocket to `/ws/progress`, authenticate when route-policy
+enforcement is enabled, send a JSON request, and receive progress frames:
 
 ```
 Client → Server: {"op": "characterize", "config": {"name": "AdExNeuron", "current": 15.0}}
@@ -28,6 +28,22 @@ Server → Client: {"type": "progress", "step": "sensitivity", "pct": 60, "msg":
 ...
 Server → Client: {"type": "complete", "pct": 100, "result": {...}}
 ```
+
+Studio rejects handshakes whose `Origin` header is not in the configured
+WebSocket allow-list. When `SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES=true`,
+the same `studio.websocket.progress` policy gate used by preflight and audit
+requires an authenticated principal before the socket is accepted.
+
+Non-browser clients can send `Authorization: Bearer <token>` during the
+handshake. Browser clients cannot set custom WebSocket headers, so the frontend
+sends the current browser-session bearer token as a WebSocket subprotocol:
+
+```text
+studio-auth, studio-bearer.<token>
+```
+
+The backend selects `studio-auth` on accepted browser-session handshakes and
+never requires tokens in query strings.
 
 ## Message Types
 
@@ -49,6 +65,8 @@ and `progressMsg` is non-empty. It shows:
 
 When WebSocket is unavailable (e.g. behind a proxy that strips WS),
 the frontend falls back to the standard HTTP endpoint without progress.
+If the browser is authenticated, the WebSocket connection carries the same
+session token through the `studio-bearer.<token>` subprotocol.
 
 ## API
 

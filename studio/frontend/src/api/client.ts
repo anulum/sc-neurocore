@@ -386,6 +386,13 @@ export function setStudioAuthToken(token: string | null): void {
   studioAuthToken = token;
 }
 
+export function progressWebSocketProtocols(token: string | null = studioAuthToken): string[] | undefined {
+  if (token === null) {
+    return undefined;
+  }
+  return ["studio-auth", `studio-bearer.${token}`];
+}
+
 function authHeaders(): Record<string, string> {
   return studioAuthToken === null ? {} : { Authorization: `Bearer ${studioAuthToken}` };
 }
@@ -950,7 +957,10 @@ export function connectProgress(
   onMessage: (msg: ProgressMessage) => void,
 ): WebSocket {
   const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const ws = new WebSocket(`${proto}//${window.location.host}/ws/progress`);
+  const ws = new WebSocket(
+    `${proto}//${window.location.host}/ws/progress`,
+    progressWebSocketProtocols(),
+  );
   ws.onopen = () => ws.send(JSON.stringify({ op, config }));
   ws.onmessage = (e) => {
     try {
