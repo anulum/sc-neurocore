@@ -545,6 +545,10 @@ SHA-256, full-project SHA-256, and `project_workspace` evidence classification.
 The response is path-free so deployment logs and UI state do not expose
 operator-local workspace roots.
 
+The Projects panel keeps the latest save response in UI state and renders the
+classification, project name, state digest, project digest, and schema version
+as the operator-visible confirmation for the persisted workspace.
+
 Before promoting a Studio deployment, run the release preflight from the same
 environment that will launch the backend:
 

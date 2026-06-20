@@ -24,6 +24,8 @@ import OnboardingOverlay from "./components/OnboardingOverlay";
 import CapabilityStrip from "./components/CapabilityStrip";
 import AdminPanel from "./components/AdminPanel";
 import AuthControl from "./components/AuthControl";
+import ProjectEvidenceStrip from "./components/ProjectEvidenceStrip";
+import { buildProjectEvidenceModel } from "./projectEvidence";
 
 function Tab({ active, color, label, onClick, disabled, title }: {
   active: boolean; color: string; label: string; onClick: () => void; disabled?: boolean; title?: string;
@@ -386,6 +388,9 @@ export default function App() {
                   </div>
                 ))}
               </div>
+            )}
+            {s.projectSaveResult && (
+              <ProjectEvidenceStrip evidence={buildProjectEvidenceModel(s.projectSaveResult)} />
             )}
           </div>
 

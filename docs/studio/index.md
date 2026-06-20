@@ -478,6 +478,11 @@ metadata with state and project SHA-256 digests plus the
 `project_workspace` evidence classification; it does not expose resolved
 local filesystem paths.
 
+After a save completes, the Projects panel renders the path-free evidence
+summary returned by the API: classification, project name, state digest,
+project digest, and schema version. That keeps the operator-visible save
+confirmation tied to the persisted payload without leaking host-local paths.
+
 ## Detailed Guides
 
 - [Synthesis Dashboard](synthesis-dashboard.md) — FPGA targets, multi-target comparison, API

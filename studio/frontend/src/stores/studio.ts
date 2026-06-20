@@ -34,7 +34,7 @@ import {
   type SynthToolInfo,
   type SurrogateInfo, type TrainingEpochMetrics,
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
-  type ProjectSummary, type PipelineResult,
+  type ProjectSaveResponse, type ProjectSummary, type PipelineResult,
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
   type StudioAuthSession,
   type StudioEvidenceBundleRequest,
@@ -129,6 +129,7 @@ interface StudioState {
   progressPct: number;
   progressMsg: string;
   graphErrors: string[];
+  projectSaveResult: ProjectSaveResponse | null;
   serverProjects: ProjectSummary[];
   pipelineResult: PipelineResult | null;
   trainingJobId: string | null;
@@ -285,7 +286,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   verilogSrc: "", irText: "", svSource: "", irErrors: [] as string[], compileTraceability: null,
   progressPct: 0, progressMsg: "",
   graphPopulations: [], graphProjections: [], graphModels: [], graphSimResult: null, graphErrors: [],
-  serverProjects: [], pipelineResult: null,
+  projectSaveResult: null, serverProjects: [], pipelineResult: null,
   synthTarget: "ice40", synthResult: null, synthEstimate: null, multiTargetResult: null, toolsAvailable: null,
   trainingJobId: null, trainingStatus: "idle", trainingEpochs: [], trainingSurrogates: [],
   trainingConfig: {
@@ -1099,7 +1100,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       synthTarget: s.synthTarget, trainingConfig: s.trainingConfig,
     };
     try {
-      await apiSaveProject(name, state);
+      const projectSaveResult = await apiSaveProject(name, state);
+      set({ projectSaveResult });
       await get().listServerProjects();
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
   },

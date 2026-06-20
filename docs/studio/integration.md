@@ -15,6 +15,8 @@ Click **Save** in the Projects panel (left sidebar), enter a name. The
 full state is serialised into the server-side Studio project workspace. The
 API response is path-free and returns `studio.project-save.v1` metadata with
 SHA-256 digests for the project state and full saved project payload.
+The Projects panel displays the returned evidence classification, project
+name, state digest, project digest, and schema version after a successful save.
 
 ### Load
 
@@ -104,6 +106,10 @@ Returns path-free save evidence:
   "version": "0.3.0"
 }
 ```
+
+The frontend stores this response and renders it as the latest project-save
+evidence strip in the Projects panel. The strip uses digest labels only; it
+does not render server filesystem paths.
 
 ### POST /api/pipeline/run
 
