@@ -249,7 +249,10 @@ runtime features:
   artifact and evidence-manifest counts before exporting. After export it
   refreshes the job queue and displays the bundle ID, evidence job ID, artifact
   count, manifest entry count, entry-type summary, evidence-class summary, and
-  selected source-job summary.
+  selected source-job summary. The panel also lists bundle artifact paths with
+  size and SHA-256 labels and downloads them through the authenticated job
+  artifact endpoint, so bearer-session operators do not need unauthenticated
+  direct links.
 - New backend workflows can use `StudioJobManager.submit_process_task(...)` for
   process-backed execution. The task is an importable `module:function` that
   receives a `StudioJobContext` plus a JSON payload and returns a JSON result.

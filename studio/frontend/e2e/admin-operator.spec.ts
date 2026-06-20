@@ -196,13 +196,19 @@ const operatorStatus = {
 };
 
 interface ApiMockSequence {
-  sequence: object[];
+  sequence: (object | ApiMockBinary)[];
 }
 
-type ApiMockPayload = object | ApiMockSequence;
+interface ApiMockBinary {
+  binaryBody: string;
+  contentType: string;
+}
+
+type ApiMockPayload = object | ApiMockSequence | ApiMockBinary;
 
 interface ApiDispatcher {
   bodies: (path: string) => unknown[];
+  headers: (path: string) => Record<string, string>[];
   requests: (path: string) => number;
 }
 
@@ -213,11 +219,15 @@ async function installApiDispatcher(
   await page.unrouteAll({ behavior: "ignoreErrors" });
   const bodies = new Map<string, unknown[]>();
   const counts = new Map<string, number>();
+  const headers = new Map<string, Record<string, string>[]>();
   await page.route((url) => url.pathname.startsWith("/api/"), async (route) => {
     const url = new URL(route.request().url());
     const path = `${url.pathname}${url.search}`;
     const count = counts.get(path) ?? 0;
     counts.set(path, count + 1);
+    const recordedHeaders = headers.get(path) ?? [];
+    recordedHeaders.push(route.request().headers());
+    headers.set(path, recordedHeaders);
     const postData = route.request().postData();
     if (postData !== null) {
       const recorded = bodies.get(path) ?? [];
@@ -240,6 +250,14 @@ async function installApiDispatcher(
     const selectedPayload = "sequence" in payload
       ? payload.sequence[Math.min(count, payload.sequence.length - 1)]
       : payload;
+    if ("binaryBody" in selectedPayload) {
+      await route.fulfill({
+        body: selectedPayload.binaryBody,
+        contentType: selectedPayload.contentType,
+        status: 200,
+      });
+      return;
+    }
     await route.fulfill({
       contentType: "application/json",
       json: selectedPayload,
@@ -248,6 +266,7 @@ async function installApiDispatcher(
   });
   return {
     bodies: (path: string) => bodies.get(path) ?? [],
+    headers: (path: string) => headers.get(path) ?? [],
     requests: (path: string) => counts.get(path) ?? 0,
   };
 }
@@ -259,6 +278,11 @@ function defaultApiMocks(): Map<string, ApiMockPayload> {
     ["/api/studio/audit/export?limit=100", auditExport],
     ["/api/studio/jobs/status", jobStatus],
     ["/api/studio/jobs", jobList],
+    ["/api/studio/auth/session", {
+      authenticated: true,
+      principal_id: "svc-admin",
+      roles: ["studio.admin", "studio.viewer"],
+    }],
     ["/api/studio/evidence/bundle", {
       artifact_paths: [
         "evidence/simulations/000.json",
@@ -330,6 +354,7 @@ function defaultApiMocks(): Map<string, ApiMockPayload> {
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem("sc-studio-onboarding-dismissed", "true");
+    window.sessionStorage.setItem("sc-neurocore-studio-auth-token", "browser-token");
   });
   await installApiDispatcher(page, defaultApiMocks());
 });
@@ -445,7 +470,12 @@ test("admin panel refreshes operator, audit, export, and job status", async ({ p
 });
 
 test("admin evidence bundle form submits simulation and analysis result payloads", async ({ page }) => {
-  const api = await installApiDispatcher(page, defaultApiMocks());
+  const mocks = defaultApiMocks();
+  mocks.set("/api/studio/jobs/sj_browser/artifacts/evidence/simulations/000.json", {
+    binaryBody: "{\"kind\":\"simulation\"}\n",
+    contentType: "application/json",
+  });
+  const api = await installApiDispatcher(page, mocks);
 
   await page.goto("/");
   await page.getByRole("button", { name: "Admin" }).first().click();
@@ -523,6 +553,8 @@ test("admin evidence bundle form submits simulation and analysis result payloads
   await expect(page.getByText("seb_sj_browser")).toBeVisible();
   await expect(page.getByText("analysis_result:1")).toBeVisible();
   await expect(page.getByText("simulation:1")).toBeVisible();
+  await expect(page.getByText("evidence/simulations/000.json")).toBeVisible();
+  await expect(page.getByText("256 B - sha cccccccccccc")).toBeVisible();
 
   const bodies = api.bodies("/api/studio/evidence/bundle");
   expect(bodies).toHaveLength(1);
@@ -532,6 +564,15 @@ test("admin evidence bundle form submits simulation and analysis result payloads
     default_flow_runs: [defaultFlowRunPayload],
     include_audit: true,
     simulation_results: [simulationPayload],
+  });
+
+  await page
+    .getByRole("button", { name: "Download evidence artifact evidence/simulations/000.json" })
+    .click();
+  const artifactPath = "/api/studio/jobs/sj_browser/artifacts/evidence/simulations/000.json";
+  expect(api.requests(artifactPath)).toBe(1);
+  expect(api.headers(artifactPath)[0]).toMatchObject({
+    authorization: "Bearer browser-token",
   });
 });
 

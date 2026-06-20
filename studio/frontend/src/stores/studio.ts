@@ -5,7 +5,7 @@ import {
   createStudioEvidenceBundle,
   fetchStudioIdentityServiceAccounts,
   fetchStudioAuditExport, fetchStudioAuditStatus, fetchStudioCapabilities,
-  fetchStudioJobs, fetchStudioJobStatus, fetchStudioOperatorStatus,
+  fetchStudioJobArtifact, fetchStudioJobs, fetchStudioJobStatus, fetchStudioOperatorStatus,
   fetchStudioIdentityBrowserUsers,
   loginStudioBrowserUser, logoutStudioBrowserUser,
   rotateStudioIdentityBrowserUserPassword,
@@ -174,6 +174,7 @@ interface StudioState {
   loadAuditStatus: () => Promise<void>;
   loadAuditExport: () => Promise<void>;
   createEvidenceBundle: (request: StudioEvidenceBundleRequest) => Promise<void>;
+  downloadEvidenceBundleArtifact: (relativePath: string) => Promise<void>;
   loadJobStatus: () => Promise<void>;
   loadIdentityServiceAccounts: () => Promise<void>;
   createIdentityBrowserUser: (create: StudioIdentityBrowserUserCreate) => Promise<void>;
@@ -430,6 +431,29 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set({
         evidenceBundleError: error instanceof Error ? error.message : "Evidence bundle export failed",
         evidenceBundleLoading: false,
+      });
+    }
+  },
+  downloadEvidenceBundleArtifact: async (relativePath) => {
+    const evidenceBundle = get().evidenceBundle;
+    if (evidenceBundle === null) {
+      set({ evidenceBundleError: "No evidence bundle is available for artifact download." });
+      return;
+    }
+    set({ evidenceBundleError: null });
+    try {
+      const payload = await fetchStudioJobArtifact(evidenceBundle.job_id, relativePath);
+      const url = URL.createObjectURL(payload);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = relativePath.split("/").filter(Boolean).pop() ?? "studio-artifact";
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (error: unknown) {
+      set({
+        evidenceBundleError: error instanceof Error
+          ? error.message
+          : "Evidence artifact download failed",
       });
     }
   },

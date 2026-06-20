@@ -470,7 +470,9 @@ artifact paths plus evidence-manifest counts and can seed the job ID field for
 bundle export. After export, the panel refreshes the worker queue and shows the
 bundle ID, evidence job ID, artifact count, and manifest entry count. The panel
 also surfaces entry-type, evidence-class, and source-job summaries so operators
-can verify bundle content without opening the raw manifest JSON.
+can verify bundle content without opening the raw manifest JSON. Bundle artifact
+rows expose path, size, and SHA-256 labels and download through the authenticated
+job artifact route, preserving bearer-session access control for browser users.
 
 Studio also exposes a process-backed job-manager path for new backend work
 that can be expressed as an importable `module:function` task with a

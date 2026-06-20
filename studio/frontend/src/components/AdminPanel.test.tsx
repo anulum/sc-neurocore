@@ -216,6 +216,7 @@ describe("AdminPanel", () => {
         model={model}
         onCreateEvidenceBundle={async () => undefined}
         onCreateIdentityBrowserUser={async () => undefined}
+        onDownloadEvidenceArtifact={async () => undefined}
         onLoadAuditExport={async () => undefined}
         onLoadAuditStatus={async () => undefined}
         onLoadIdentityServiceAccounts={async () => undefined}
@@ -275,6 +276,9 @@ describe("AdminPanel", () => {
     expect(html).toContain("audit_export:1, manifest:1");
     expect(html).toContain("compile:1");
     expect(html).toContain("1 - compiler:1");
+    expect(html).toContain("evidence/manifest.json");
+    expect(html).toContain("256 B - sha bbbbbbbbbbbb");
+    expect(html).toContain("Download evidence artifact evidence/manifest.json");
     expect(html).toContain("Create evidence bundle");
   });
 });

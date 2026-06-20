@@ -17,6 +17,7 @@ export interface AdminPanelViewProps {
     },
   ) => Promise<void>;
   onCreateEvidenceBundle: (request: StudioEvidenceBundleRequest) => Promise<void>;
+  onDownloadEvidenceArtifact: (relativePath: string) => Promise<void>;
   onLoadAuditExport: () => Promise<void>;
   onLoadAuditStatus: () => Promise<void>;
   onLoadIdentityServiceAccounts: () => Promise<void>;
@@ -38,6 +39,7 @@ export default function AdminPanelView({
   model,
   onCreateEvidenceBundle,
   onCreateIdentityBrowserUser,
+  onDownloadEvidenceArtifact,
   onLoadAuditExport,
   onLoadAuditStatus,
   onLoadIdentityServiceAccounts,
@@ -524,6 +526,25 @@ export default function AdminPanelView({
         </div>
         {model.evidenceBundle.error && (
           <div className="admin-warning">{model.evidenceBundle.error}</div>
+        )}
+        {model.evidenceBundle.artifacts.length > 0 && (
+          <div className="admin-audit-list">
+            {model.evidenceBundle.artifacts.map((artifact) => (
+              <div key={artifact.relativePath} className="admin-audit-row admin-artifact-row">
+                <span>file</span>
+                <strong title={artifact.relativePath}>{artifact.relativePath}</strong>
+                <small>{artifact.sizeLabel} - sha {artifact.sha256Label}</small>
+                <button
+                  aria-label={`Download evidence artifact ${artifact.relativePath}`}
+                  disabled={model.evidenceBundle.loading}
+                  onClick={() => void onDownloadEvidenceArtifact(artifact.relativePath)}
+                  type="button"
+                >
+                  Download
+                </button>
+              </div>
+            ))}
+          </div>
         )}
         <form className="admin-evidence-form" onSubmit={submitEvidenceBundle}>
           <label>

@@ -70,6 +70,7 @@ export interface AdminJobRecordModel {
 
 export interface AdminEvidenceBundleModel {
   artifactCount: number;
+  artifacts: AdminEvidenceBundleArtifactModel[];
   bundleId: string;
   entryTypes: string;
   error: string | null;
@@ -78,6 +79,14 @@ export interface AdminEvidenceBundleModel {
   loading: boolean;
   manifestEntryCount: number;
   sourceJobs: string;
+}
+
+export interface AdminEvidenceBundleArtifactModel {
+  relativePath: string;
+  sha256: string;
+  sha256Label: string;
+  sizeBytes: number | null;
+  sizeLabel: string;
 }
 
 export interface AdminIdentityAccountModel {
@@ -174,6 +183,7 @@ function buildEvidenceBundleModel(
   const summary = evidenceBundle?.summary;
   return {
     artifactCount: summary?.artifact_path_count ?? evidenceBundle?.artifact_paths.length ?? 0,
+    artifacts: buildEvidenceBundleArtifacts(evidenceBundle),
     bundleId: evidenceBundle?.bundle_id ?? "none",
     entryTypes: formatCounts(summary?.entry_type_counts),
     error,
@@ -183,6 +193,28 @@ function buildEvidenceBundleModel(
     manifestEntryCount: summary?.entry_count ?? (Array.isArray(entries) ? entries.length : 0),
     sourceJobs: formatSourceJobs(summary?.source_job_count, summary?.source_job_kind_counts),
   };
+}
+
+function buildEvidenceBundleArtifacts(
+  evidenceBundle: StudioEvidenceBundleResponse | null,
+): AdminEvidenceBundleArtifactModel[] {
+  if (evidenceBundle === null) {
+    return [];
+  }
+  const artifactMetadata = new Map(
+    evidenceBundle.artifacts.map((artifact) => [artifact.relative_path, artifact]),
+  );
+  return evidenceBundle.artifact_paths.map((relativePath) => {
+    const artifact = artifactMetadata.get(relativePath);
+    const sha256 = artifact?.sha256 ?? "unknown";
+    return {
+      relativePath,
+      sha256,
+      sha256Label: sha256 === "unknown" ? "unknown" : sha256.slice(0, 12),
+      sizeBytes: artifact?.size_bytes ?? null,
+      sizeLabel: artifact === undefined ? "unknown" : formatBytes(artifact.size_bytes),
+    };
+  });
 }
 
 function formatCounts(counts: Record<string, number> | undefined): string {

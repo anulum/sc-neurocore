@@ -99,6 +99,11 @@ const evidenceBundle: StudioEvidenceBundleResponse = {
       sha256: "b".repeat(64),
       size_bytes: 128,
     },
+    {
+      relative_path: "evidence/manifest.json",
+      sha256: "c".repeat(64),
+      size_bytes: 256,
+    },
   ],
   bundle_id: "seb_sj_evidence",
   job_id: "sj_evidence",
@@ -247,6 +252,22 @@ describe("admin shell model", () => {
     });
     expect(model.evidenceBundle).toEqual({
       artifactCount: 2,
+      artifacts: [
+        {
+          relativePath: "evidence/audit-export.json",
+          sha256: "b".repeat(64),
+          sha256Label: "bbbbbbbbbbbb",
+          sizeBytes: 128,
+          sizeLabel: "128 B",
+        },
+        {
+          relativePath: "evidence/manifest.json",
+          sha256: "c".repeat(64),
+          sha256Label: "cccccccccccc",
+          sizeBytes: 256,
+          sizeLabel: "256 B",
+        },
+      ],
       bundleId: "seb_sj_evidence",
       entryTypes: "audit_export:1, manifest:1",
       error: null,

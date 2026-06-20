@@ -10,6 +10,7 @@ export default function AdminPanel() {
     auditStatus,
     capabilities,
     createEvidenceBundle,
+    downloadEvidenceBundleArtifact,
     evidenceBundle,
     evidenceBundleError,
     evidenceBundleLoading,
@@ -49,6 +50,7 @@ export default function AdminPanel() {
       model={model}
       onCreateEvidenceBundle={createEvidenceBundle}
       onCreateIdentityBrowserUser={createIdentityBrowserUser}
+      onDownloadEvidenceArtifact={downloadEvidenceBundleArtifact}
       onLoadAuditExport={loadAuditExport}
       onLoadAuditStatus={loadAuditStatus}
       onLoadIdentityServiceAccounts={loadIdentityServiceAccounts}

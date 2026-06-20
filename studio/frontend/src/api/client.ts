@@ -403,6 +403,22 @@ function get<T>(path: string): Promise<T> {
   return fetch(`${BASE}${path}`, { headers: authHeaders() }).then((r) => json<T>(r));
 }
 
+async function blob(r: Response): Promise<Blob> {
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ detail: r.statusText }));
+    throw new Error(err.detail || `${r.status}`);
+  }
+  return r.blob();
+}
+
+function getBlob(path: string): Promise<Blob> {
+  return fetch(`${BASE}${path}`, { headers: authHeaders() }).then((r) => blob(r));
+}
+
+function encodeArtifactPath(path: string): string {
+  return path.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+}
+
 export const fetchTemplates = () => get<NeuronTemplate[]>("/templates");
 export const fetchModels = () => get<ModelSummary[]>("/models");
 export const fetchModelDetail = (name: string) => get<ModelDetail>(`/models/${name}`);
@@ -418,6 +434,10 @@ export const fetchStudioJobStatus = () =>
   get<StudioJobStatus>("/studio/jobs/status");
 export const fetchStudioJobs = () =>
   get<StudioJobListResponse>("/studio/jobs");
+export const fetchStudioJobArtifact = (jobId: string, artifactPath: string) =>
+  getBlob(
+    `/studio/jobs/${encodeURIComponent(jobId)}/artifacts/${encodeArtifactPath(artifactPath)}`,
+  );
 export const createStudioEvidenceBundle = (request: StudioEvidenceBundleRequest) =>
   post<StudioEvidenceBundleResponse>("/studio/evidence/bundle", request);
 export const fetchStudioOperatorStatus = () =>
