@@ -12,7 +12,9 @@ graph, synthesis target, training config — as JSON files on the server.
 ### Save
 
 Click **Save** in the Projects panel (left sidebar), enter a name. The
-full state is serialised and stored in `~/.sc-neurocore/studio/projects/`.
+full state is serialised into the server-side Studio project workspace. The
+API response is path-free and returns `studio.project-save.v1` metadata with
+SHA-256 digests for the project state and full saved project payload.
 
 ### Load
 
@@ -84,6 +86,20 @@ the synchronous pipeline response used by the Network Canvas and also records a
 
 ```json
 {"name": "my_network", "state": {"sourceMode": "model", ...}}
+```
+
+Returns path-free save evidence:
+
+```json
+{
+  "evidence_classification": "project_workspace",
+  "name": "my_network",
+  "project_sha256": "<64 lowercase hex characters>",
+  "saved_at": 1711504200.0,
+  "schema_version": "studio.project-save.v1",
+  "state_sha256": "<64 lowercase hex characters>",
+  "version": "0.3.0"
+}
 ```
 
 ### POST /api/pipeline/run

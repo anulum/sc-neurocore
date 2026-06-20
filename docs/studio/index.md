@@ -410,7 +410,10 @@ Network Graph → Validate → Simulate → Compile → Synthesise
 
 Save complete workspace state (equations, parameters, network graph,
 synthesis target, training config) as JSON files. Restore any saved
-project from the sidebar.
+project from the sidebar. The save API returns `studio.project-save.v1`
+metadata with state and project SHA-256 digests plus the
+`project_workspace` evidence classification; it does not expose resolved
+local filesystem paths.
 
 ## Detailed Guides
 

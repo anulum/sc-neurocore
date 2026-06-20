@@ -677,6 +677,16 @@ export interface ProjectSummary {
   version: string;
 }
 
+export interface ProjectSaveResponse {
+  evidence_classification: "project_workspace";
+  name: string;
+  project_sha256: string;
+  saved_at: number;
+  schema_version: "studio.project-save.v1";
+  state_sha256: string;
+  version: string;
+}
+
 export interface PipelineResult {
   success: boolean;
   target: string;
@@ -688,7 +698,7 @@ export interface PipelineResult {
 }
 
 export const saveProject = (name: string, state: Record<string, unknown>) =>
-  post<{ name: string; path: string; saved_at: number }>("/project/save", { name, state });
+  post<ProjectSaveResponse>("/project/save", { name, state });
 export const loadProject = (name: string) => get<Record<string, unknown>>(`/project/load/${name}`);
 export const listProjects = () => get<ProjectSummary[]>("/project/list");
 export const deleteProject = (name: string) =>

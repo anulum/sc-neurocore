@@ -9,13 +9,17 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
-from typing import Any
-import logging
 from pathlib import Path
+from typing import Any
 
 from sc_neurocore.hdl_gen._ident import sanitize_ident
+from sc_neurocore.studio.project_manifest import (
+    build_project_save_manifest,
+    dump_project_payload,
+)
 from sc_neurocore.studio.synthesis import EdaProcessLimits
 
 _PROJECTS_DIR = os.path.join(os.path.expanduser("~"), ".sc-neurocore", "studio", "projects")
@@ -117,22 +121,32 @@ def _safe_path(name: str) -> Path:
 
 
 def save_project(name: str, state: dict[str, Any]) -> dict[str, Any]:
-    """Save full studio state to a JSON file."""
+    """Save full Studio state and return path-free evidence metadata."""
     _ensure_dir()
     path = _safe_path(name)
     name = _safe_name(name)
     if not isinstance(state, dict):
         raise ValueError("Project state must be an object")
+    saved_at = time.time()
+    version = "0.3.0"
     payload = {
         "name": name,
-        "saved_at": time.time(),
-        "version": "0.3.0",
+        "saved_at": saved_at,
+        "version": version,
         "state": state,
     }
     _validate_hdl_identifiers(payload)
+    manifest = build_project_save_manifest(
+        name=name,
+        saved_at=saved_at,
+        version=version,
+        state=state,
+        project_payload=payload,
+    )
     with open(path, "w") as f:
-        json.dump(payload, f, indent=2, default=str)
-    return {"name": name, "path": str(path), "saved_at": payload["saved_at"]}
+        f.write(dump_project_payload(payload))
+        f.write("\n")
+    return manifest.to_public_dict()
 
 
 def load_project(name: str) -> dict[str, Any]:

@@ -461,6 +461,13 @@ workspace by stable item IDs and source labels without resolved local paths or
 secret material. Use `--include-local-paths` only for an internal host-local
 handoff that must name the exact paths to capture and restore.
 
+Saved project writes use the `studio.project-save.v1` response schema. The
+backend persists the full project JSON for later restore, while the API returns
+only the project name, saved timestamp, Studio payload version, project-state
+SHA-256, full-project SHA-256, and `project_workspace` evidence classification.
+The response is path-free so deployment logs and UI state do not expose
+operator-local workspace roots.
+
 Before promoting a Studio deployment, run the release preflight from the same
 environment that will launch the backend:
 
