@@ -65,6 +65,7 @@ def main() -> int:
             "compile-nir",
             "studio",
             "studio-bootstrap-admin",
+            "studio-add-browser-user",
             "collect-synthesis",
             "scnir",
             "formal",
@@ -127,12 +128,22 @@ def main() -> int:
     parser.add_argument(
         "--identity-file",
         default=None,
-        help="Studio identity JSON path for studio-bootstrap-admin",
+        help="Studio identity JSON path for Studio identity-management commands",
     )
     parser.add_argument(
         "--principal-id",
         default="svc-studio-admin",
-        help="Service-account principal for studio-bootstrap-admin",
+        help="Principal for Studio identity-management commands",
+    )
+    parser.add_argument(
+        "--username",
+        default=None,
+        help="Browser-login username for studio-add-browser-user",
+    )
+    parser.add_argument(
+        "--password-stdin",
+        action="store_true",
+        help="Read browser-user password from standard input",
     )
     parser.add_argument(
         "--role",
@@ -140,8 +151,8 @@ def main() -> int:
         action="append",
         default=None,
         help=(
-            "Role granted by studio-bootstrap-admin. Repeat to grant multiple "
-            "roles; defaults to studio.admin and studio.viewer."
+            "Studio role grant. Repeat to grant multiple roles; "
+            "studio-bootstrap-admin defaults to studio.admin and studio.viewer."
         ),
     )
     parser.add_argument(
@@ -456,6 +467,8 @@ def main() -> int:
         return _cmd_studio(args.port)
     if args.command == "studio-bootstrap-admin":
         return _cmd_studio_bootstrap_admin(args)
+    if args.command == "studio-add-browser-user":
+        return _cmd_studio_add_browser_user(args)
     if args.command == "collect-synthesis":
         return _cmd_collect_synthesis(args)
     if args.command == "scnir":
@@ -2077,6 +2090,50 @@ def _cmd_studio_bootstrap_admin(args: Any) -> int:
     output = result.to_public_dict()
     output["bearer_token"] = result.bearer_token
     output["environment"] = f"SC_NEUROCORE_STUDIO_IDENTITY_FILE={result.identity_file_path}"
+    print(json.dumps(output, indent=2, sort_keys=True))
+    return 0
+
+
+def _cmd_studio_add_browser_user(args: Any) -> int:
+    """Add a persistent browser-login user to a Studio identity file."""
+    from pathlib import Path
+
+    from sc_neurocore.studio.platform import add_studio_browser_user_record
+
+    if args.identity_file is None:
+        print(
+            "Error: studio-add-browser-user requires --identity-file /path/to/studio-identities.json"
+        )
+        return 1
+    if args.username is None:
+        print("Error: studio-add-browser-user requires --username <browser-user>")
+        return 1
+    if args.roles is None:
+        print("Error: studio-add-browser-user requires at least one --role")
+        return 1
+    if not args.password_stdin:
+        print("Error: studio-add-browser-user requires --password-stdin")
+        return 1
+    password = sys.stdin.readline()
+    if password.endswith("\n"):
+        password = password[:-1]
+    try:
+        record = add_studio_browser_user_record(
+            Path(args.identity_file),
+            username=args.username,
+            principal_id=args.principal_id,
+            roles=tuple(args.roles),
+            password=password,
+            expires_at_utc=args.expires_at_utc,
+        )
+    except (OSError, ValueError) as exc:
+        print(f"Error: {exc}")
+        return 1
+    output = {
+        "browser_user": record.to_public_dict(),
+        "environment": f"SC_NEUROCORE_STUDIO_IDENTITY_FILE={Path(args.identity_file).expanduser()}",
+        "schema_version": "sc-neurocore.studio.identity.browser-user.add.v1",
+    }
     print(json.dumps(output, indent=2, sort_keys=True))
     return 0
 

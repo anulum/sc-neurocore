@@ -227,7 +227,34 @@ export interface StudioIdentityServiceAccountUpdate {
   roles: string[];
 }
 
+export interface StudioAuthSession {
+  authenticated: boolean;
+  principal_id: string | null;
+  roles: string[];
+}
+
+export interface StudioLoginResponse {
+  access_token: string;
+  expires_at_utc: string;
+  principal_id: string;
+  roles: string[];
+  token_type: "bearer";
+}
+
+export interface StudioLogoutResponse {
+  revoked: boolean;
+}
+
 const BASE = "/api";
+let studioAuthToken: string | null = null;
+
+export function setStudioAuthToken(token: string | null): void {
+  studioAuthToken = token;
+}
+
+function authHeaders(): Record<string, string> {
+  return studioAuthToken === null ? {} : { Authorization: `Bearer ${studioAuthToken}` };
+}
 
 async function json<T>(r: Response): Promise<T> {
   if (!r.ok) {
@@ -239,20 +266,20 @@ async function json<T>(r: Response): Promise<T> {
 
 function post<T>(path: string, body: unknown): Promise<T> {
   return fetch(`${BASE}${path}`, {
-    method: "POST", headers: { "Content-Type": "application/json" },
+    method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(body),
   }).then((r) => json<T>(r));
 }
 
 function patch<T>(path: string, body: unknown): Promise<T> {
   return fetch(`${BASE}${path}`, {
-    method: "PATCH", headers: { "Content-Type": "application/json" },
+    method: "PATCH", headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(body),
   }).then((r) => json<T>(r));
 }
 
 function get<T>(path: string): Promise<T> {
-  return fetch(`${BASE}${path}`).then((r) => json<T>(r));
+  return fetch(`${BASE}${path}`, { headers: authHeaders() }).then((r) => json<T>(r));
 }
 
 export const fetchTemplates = () => get<NeuronTemplate[]>("/templates");
@@ -282,6 +309,12 @@ export const updateStudioIdentityServiceAccount = (
     `/studio/identity/service-accounts/${encodeURIComponent(principalId)}`,
     update,
   );
+export const loginStudioBrowserUser = (username: string, password: string) =>
+  post<StudioLoginResponse>("/studio/auth/login", { username, password });
+export const fetchStudioAuthSession = () =>
+  get<StudioAuthSession>("/studio/auth/session");
+export const logoutStudioBrowserUser = () =>
+  post<StudioLogoutResponse>("/studio/auth/logout", {});
 
 export const simulateODE = (req: Record<string, unknown>) => post<SimulateResponse>("/simulate", req);
 export const simulateModel = (req: Record<string, unknown>) => post<SimulateResponse>("/models/simulate", req);

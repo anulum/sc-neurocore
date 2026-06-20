@@ -561,10 +561,34 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
                 "studio.audit.export",
             ),
             (
+                "POST",
+                "/api/studio/auth/login",
+                RouteVisibility.PUBLIC,
+                "studio.auth.login",
+            ),
+            (
+                "GET",
+                "/api/studio/auth/session",
+                RouteVisibility.AUTHENTICATED,
+                "studio.auth.session.read",
+            ),
+            (
+                "POST",
+                "/api/studio/auth/logout",
+                RouteVisibility.AUTHENTICATED,
+                "studio.auth.logout",
+            ),
+            (
                 "GET",
                 "/api/studio/identity/service-accounts",
                 RouteVisibility.ADMIN,
                 "studio.identity.service_accounts.list",
+            ),
+            (
+                "GET",
+                "/api/studio/identity/browser-users",
+                RouteVisibility.ADMIN,
+                "studio.identity.browser_users.list",
             ),
             (
                 "GET",

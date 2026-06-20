@@ -1,9 +1,11 @@
 import { create } from "zustand";
 import {
   fetchTemplates, fetchModels, fetchModelDetail, fetchPresets, fetchPreset,
+  fetchStudioAuthSession,
   fetchStudioIdentityServiceAccounts,
   fetchStudioAuditExport, fetchStudioAuditStatus, fetchStudioCapabilities,
   fetchStudioJobs, fetchStudioJobStatus, fetchStudioOperatorStatus,
+  loginStudioBrowserUser, logoutStudioBrowserUser,
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
   fetchCompare, fetchNullclines, fetchFreqResponse,
@@ -31,13 +33,20 @@ import {
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSummary, type PipelineResult,
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
+  type StudioAuthSession,
   type StudioIdentityServiceAccount, type StudioJobRecord, type StudioJobStatus,
   type StudioOperatorStatus,
+  setStudioAuthToken,
   updateStudioIdentityServiceAccount,
   connectProgress,
 } from "../api/client";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+const AUTH_STORAGE_KEY = "sc-neurocore-studio-auth-token";
+const browserSessionStorage = typeof sessionStorage === "undefined" ? null : sessionStorage;
+const browserLocalStorage = typeof localStorage === "undefined" ? null : localStorage;
+const initialAuthToken = browserSessionStorage?.getItem(AUTH_STORAGE_KEY) ?? null;
+setStudioAuthToken(initialAuthToken);
 
 export type SourceMode = "model" | "ode";
 export type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
@@ -58,6 +67,9 @@ interface StudioState {
   capabilities: StudioCapability[];
   capabilitiesLoading: boolean;
   capabilitiesError: string | null;
+  authSession: StudioAuthSession | null;
+  authLoading: boolean;
+  authError: string | null;
   auditStatus: StudioAuditStatus | null;
   auditExport: StudioAuditExport | null;
   jobStatus: StudioJobStatus | null;
@@ -142,6 +154,9 @@ interface StudioState {
   loadModels: () => Promise<void>;
   loadPresets: () => Promise<void>;
   loadCapabilities: () => Promise<void>;
+  loadAuthSession: () => Promise<void>;
+  loginBrowserUser: (username: string, password: string) => Promise<void>;
+  logoutBrowserUser: () => Promise<void>;
   loadAuditStatus: () => Promise<void>;
   loadAuditExport: () => Promise<void>;
   loadJobStatus: () => Promise<void>;
@@ -232,6 +247,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   odeInit: { v: -65 },
   models: [], selectedModelName: "", modelDetail: null, modelParams: {},
   capabilities: [], capabilitiesLoading: false, capabilitiesError: null,
+  authSession: null, authLoading: false, authError: null,
   auditStatus: null, auditExport: null, jobStatus: null, jobRecords: [],
   identityServiceAccounts: [], operatorStatus: null,
   auditLoading: false, auditError: null,
@@ -254,7 +270,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     learn_beta: false, learn_threshold: false,
   },
   codeScript: "", codeOneliner: "",
-  savedSessions: JSON.parse(localStorage.getItem("sc-studio-sessions") || "[]"),
+  savedSessions: JSON.parse(browserLocalStorage?.getItem("sc-studio-sessions") ?? "[]"),
   error: null, isSimulating: false,
   activeTab: "trace", modelFilter: "", sweepParam: "", sweepParamY: "",
 
@@ -288,6 +304,61 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set({
         capabilitiesLoading: false,
         capabilitiesError: error instanceof Error ? error.message : "Capability check failed",
+      });
+    }
+  },
+  loadAuthSession: async () => {
+    const currentToken = browserSessionStorage?.getItem(AUTH_STORAGE_KEY) ?? null;
+    setStudioAuthToken(currentToken);
+    if (currentToken === null) {
+      set({ authSession: { authenticated: false, principal_id: null, roles: [] } });
+      return;
+    }
+    set({ authLoading: true, authError: null });
+    try {
+      const authSession = await fetchStudioAuthSession();
+      set({ authLoading: false, authError: null, authSession });
+    } catch (error: unknown) {
+      browserSessionStorage?.removeItem(AUTH_STORAGE_KEY);
+      setStudioAuthToken(null);
+      set({
+        authLoading: false,
+        authError: error instanceof Error ? error.message : "Session check failed",
+        authSession: { authenticated: false, principal_id: null, roles: [] },
+      });
+    }
+  },
+  loginBrowserUser: async (username, password) => {
+    set({ authLoading: true, authError: null });
+    try {
+      const login = await loginStudioBrowserUser(username, password);
+      browserSessionStorage?.setItem(AUTH_STORAGE_KEY, login.access_token);
+      setStudioAuthToken(login.access_token);
+      const authSession = await fetchStudioAuthSession();
+      set({ authLoading: false, authError: null, authSession });
+      await get().loadOperatorStatus();
+    } catch (error: unknown) {
+      browserSessionStorage?.removeItem(AUTH_STORAGE_KEY);
+      setStudioAuthToken(null);
+      set({
+        authLoading: false,
+        authError: error instanceof Error ? error.message : "Login failed",
+        authSession: { authenticated: false, principal_id: null, roles: [] },
+      });
+    }
+  },
+  logoutBrowserUser: async () => {
+    set({ authLoading: true, authError: null });
+    try {
+      await logoutStudioBrowserUser();
+    } catch (error: unknown) {
+      set({ authError: error instanceof Error ? error.message : "Logout failed" });
+    } finally {
+      browserSessionStorage?.removeItem(AUTH_STORAGE_KEY);
+      setStudioAuthToken(null);
+      set({
+        authLoading: false,
+        authSession: { authenticated: false, principal_id: null, roles: [] },
       });
     }
   },
@@ -1089,7 +1160,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     const sessions = s.savedSessions.filter((ss) => ss.name !== name);
     sessions.unshift({ name, state });
     set({ savedSessions: sessions });
-    localStorage.setItem("sc-studio-sessions", JSON.stringify(sessions));
+    browserLocalStorage?.setItem("sc-studio-sessions", JSON.stringify(sessions));
   },
 
   loadSession: (name) => {
@@ -1116,7 +1187,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   deleteSession: (name) => {
     const sessions = get().savedSessions.filter((ss) => ss.name !== name);
     set({ savedSessions: sessions });
-    localStorage.setItem("sc-studio-sessions", JSON.stringify(sessions));
+    browserLocalStorage?.setItem("sc-studio-sessions", JSON.stringify(sessions));
   },
 
   shareURL: () => {

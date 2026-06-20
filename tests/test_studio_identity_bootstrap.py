@@ -27,6 +27,7 @@ from sc_neurocore.studio.platform.bootstrap import (
 )
 from sc_neurocore.studio.platform.identity import (
     StudioIdentityAuthenticator,
+    add_studio_browser_user_record,
     load_studio_identity_store,
 )
 
@@ -222,6 +223,87 @@ def test_bootstrap_permission_hardening_reports_false_without_posix(
     assert hardened is False
 
 
+def test_add_studio_browser_user_record_preserves_service_account(
+    tmp_path: Path,
+) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    bootstrap_studio_admin_identity(identity_path, token_factory=_fixed_token)
+
+    public_record = add_studio_browser_user_record(
+        identity_path,
+        username="operator",
+        principal_id="human-operator",
+        roles=("studio.viewer", "studio.admin", "studio.viewer"),
+        password="browser-secret",
+        expires_at_utc="2030-01-01T00:00:00+00:00",
+    )
+    store = load_studio_identity_store(identity_path)
+    authenticator = StudioIdentityAuthenticator(store)
+    auth_result = authenticator.authenticate_browser_user("operator", "browser-secret")
+    payload = json.loads(identity_path.read_text(encoding="utf-8"))
+
+    assert public_record.username == "operator"
+    assert public_record.principal_id == "human-operator"
+    assert public_record.roles == ("studio.admin", "studio.viewer")
+    assert public_record.expires_at_utc == "2030-01-01T00:00:00Z"
+    assert len(store.service_accounts) == 1
+    assert len(store.browser_users) == 1
+    assert payload["browser_users"][0]["password_pbkdf2_sha256"].startswith("pbkdf2_sha256$")
+    assert "browser-secret" not in identity_path.read_text(encoding="utf-8")
+    assert auth_result.principal is not None
+    assert auth_result.principal.principal_id == "human-operator"
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"username": " "}, "username"),
+        ({"username": "human operator"}, "whitespace"),
+        ({"roles": ()}, "roles"),
+        ({"password": ""}, "password"),
+    ],
+)
+def test_add_studio_browser_user_rejects_invalid_inputs(
+    tmp_path: Path,
+    kwargs: dict[str, Any],
+    match: str,
+) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    bootstrap_studio_admin_identity(identity_path, token_factory=_fixed_token)
+
+    arguments: dict[str, Any] = {
+        "username": "operator",
+        "principal_id": "human-operator",
+        "roles": ("studio.viewer",),
+        "password": "browser-secret",
+    }
+    arguments.update(kwargs)
+
+    with pytest.raises(ValueError, match=match):
+        add_studio_browser_user_record(identity_path, **arguments)
+
+
+def test_add_studio_browser_user_rejects_duplicate_username(tmp_path: Path) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    bootstrap_studio_admin_identity(identity_path, token_factory=_fixed_token)
+    add_studio_browser_user_record(
+        identity_path,
+        username="operator",
+        principal_id="human-operator",
+        roles=("studio.viewer",),
+        password="browser-secret",
+    )
+
+    with pytest.raises(ValueError, match="already exists"):
+        add_studio_browser_user_record(
+            identity_path,
+            username="operator",
+            principal_id="human-operator-2",
+            roles=("studio.viewer",),
+            password="browser-secret-2",
+        )
+
+
 def test_studio_bootstrap_admin_cli_writes_identity_file(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -268,3 +350,108 @@ def test_studio_bootstrap_admin_cli_requires_identity_file(
 
     assert exit_code == 1
     assert "--identity-file" in capsys.readouterr().out
+
+
+def test_studio_add_browser_user_cli_writes_password_verifier(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    bootstrap_studio_admin_identity(identity_path, token_factory=_fixed_token)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "sc-neurocore",
+            "studio-add-browser-user",
+            "--identity-file",
+            str(identity_path),
+            "--username",
+            "operator",
+            "--principal-id",
+            "human-operator",
+            "--role",
+            "studio.viewer",
+            "--password-stdin",
+        ],
+    )
+    monkeypatch.setattr("sys.stdin", _StringStdin("browser-secret\n"))
+
+    exit_code = main()
+    output = json.loads(capsys.readouterr().out)
+    authenticator = StudioIdentityAuthenticator(load_studio_identity_store(identity_path))
+    auth_result = authenticator.authenticate_browser_user("operator", "browser-secret")
+
+    assert exit_code == 0
+    assert output["browser_user"]["username"] == "operator"
+    assert output["browser_user"]["principal_id"] == "human-operator"
+    assert "password" not in json.dumps(output)
+    assert "browser-secret" not in identity_path.read_text(encoding="utf-8")
+    assert auth_result.principal is not None
+    assert auth_result.principal.roles == frozenset({"studio.viewer"})
+
+
+@pytest.mark.parametrize(
+    ("argv", "match"),
+    [
+        (["sc-neurocore", "studio-add-browser-user"], "--identity-file"),
+        (
+            [
+                "sc-neurocore",
+                "studio-add-browser-user",
+                "--identity-file",
+                "identity.json",
+            ],
+            "--username",
+        ),
+        (
+            [
+                "sc-neurocore",
+                "studio-add-browser-user",
+                "--identity-file",
+                "identity.json",
+                "--username",
+                "operator",
+            ],
+            "--role",
+        ),
+        (
+            [
+                "sc-neurocore",
+                "studio-add-browser-user",
+                "--identity-file",
+                "identity.json",
+                "--username",
+                "operator",
+                "--role",
+                "studio.viewer",
+            ],
+            "--password-stdin",
+        ),
+    ],
+)
+def test_studio_add_browser_user_cli_requires_operational_inputs(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    argv: list[str],
+    match: str,
+) -> None:
+    monkeypatch.setattr(sys, "argv", argv)
+
+    exit_code = main()
+
+    assert exit_code == 1
+    assert match in capsys.readouterr().out
+
+
+class _StringStdin:
+    """Small stdin stand-in for CLI password input tests."""
+
+    def __init__(self, text: str) -> None:
+        self._text = text
+
+    def readline(self) -> str:
+        """Return the configured input once."""
+
+        return self._text

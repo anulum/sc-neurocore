@@ -102,6 +102,7 @@ from sc_neurocore.studio.platform import (
     JsonlAuditSink,
     PolicyGateway,
     Principal,
+    StudioBrowserSessionManager,
     StudioIdentityAuthenticator,
     StudioIdentityResult,
     StudioJobArtifactUnavailable,
@@ -112,6 +113,7 @@ from sc_neurocore.studio.platform import (
     build_default_studio_route_policy_registry,
     build_default_studio_runtime_settings,
     build_studio_operator_status,
+    list_studio_browser_user_public_records,
     list_studio_identity_public_records,
     load_studio_identity_store,
     update_studio_identity_record,
@@ -290,6 +292,13 @@ class StudioIdentityServiceAccountUpdateRequest(BaseModel):
     roles: list[str] = Field(min_length=1)
     active: bool
     expires_at_utc: str | None = None
+
+
+class StudioBrowserLoginRequest(BaseModel):
+    """Request body for browser-user login."""
+
+    username: str = Field(min_length=1, max_length=128)
+    password: str = Field(min_length=1, max_length=4096)
 
 
 class PresetDefaultFlowAttestationVerifyRequest(BaseModel):
@@ -738,16 +747,27 @@ def _studio_identity_from_headers(
     headers: Mapping[str, str],
     *,
     authenticator: StudioIdentityAuthenticator | None,
+    session_manager: StudioBrowserSessionManager,
     allow_header_principal: bool,
 ) -> StudioIdentityResult:
     authorization = headers.get("authorization")
     if authorization is not None and authorization.strip():
         if authenticator is None:
+            session_result = session_manager.authenticate_authorization_header(authorization)
             return StudioIdentityResult(
-                principal=None,
-                failure_reason="invalid_identity_token",
+                principal=session_result.principal,
+                failure_reason=session_result.failure_reason or "invalid_identity_token",
             )
-        return authenticator.authenticate_authorization_header(authorization)
+        identity_result = authenticator.authenticate_authorization_header(authorization)
+        if identity_result.principal is not None:
+            return identity_result
+        session_result = session_manager.authenticate_authorization_header(authorization)
+        if session_result.principal is not None:
+            return StudioIdentityResult(
+                principal=session_result.principal,
+                failure_reason=session_result.failure_reason,
+            )
+        return identity_result
     if allow_header_principal:
         return StudioIdentityResult(principal=_studio_principal_from_headers(headers))
     return StudioIdentityResult(principal=None)
@@ -782,6 +802,9 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         if settings.identity_file_path is not None
         else None
     )
+    studio_browser_session_manager = StudioBrowserSessionManager(
+        ttl_seconds=settings.browser_session_ttl_seconds
+    )
     studio_job_root = (
         Path(settings.job_root_path)
         if settings.job_root_path is not None
@@ -800,6 +823,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     app.state.studio_route_policies = studio_route_policies
     app.state.studio_audit_sink = studio_audit_sink
     app.state.studio_identity_authenticator = studio_identity_authenticator
+    app.state.studio_browser_session_manager = studio_browser_session_manager
     app.state.studio_job_manager = studio_job_manager
     app.state.studio_policy_gateway = studio_policy_gateway
     eda_process_limits = EdaProcessLimits(
@@ -841,6 +865,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 identity_result = _studio_identity_from_headers(
                     request.headers,
                     authenticator=studio_identity_authenticator,
+                    session_manager=studio_browser_session_manager,
                     allow_header_principal=settings.allow_header_principal,
                 )
                 try:
@@ -995,6 +1020,87 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         except AuditSinkError as exc:
             raise HTTPException(status_code=503, detail="audit_export_failed") from exc
 
+    @app.post("/api/studio/auth/login")
+    def api_studio_auth_login(
+        login: StudioBrowserLoginRequest,
+        request: Request,
+    ) -> dict[str, list[str] | str]:
+        """Authenticate a browser user and issue an expiring bearer session."""
+
+        if studio_identity_authenticator is None:
+            raise HTTPException(status_code=409, detail="identity_store_unavailable")
+        identity_result = studio_identity_authenticator.authenticate_browser_user(
+            login.username,
+            login.password,
+        )
+        request_id = getattr(request.state, "studio_request_id", None)
+        if identity_result.principal is None:
+            try:
+                studio_audit_sink.record(
+                    AuditEvent(
+                        action="studio.auth.login",
+                        decision="deny",
+                        principal_id=None,
+                        reason=identity_result.failure_reason or "invalid_browser_login",
+                        request_id=request_id if isinstance(request_id, str) else None,
+                        route="/api/studio/auth/login",
+                        timestamp_utc=_studio_timestamp_utc(),
+                    )
+                )
+            except AuditSinkError as exc:
+                raise HTTPException(status_code=503, detail="audit_append_failed") from exc
+            raise HTTPException(
+                status_code=401,
+                detail=identity_result.failure_reason or "invalid_browser_login",
+            )
+        issued = studio_browser_session_manager.issue(identity_result.principal)
+        try:
+            studio_audit_sink.record(
+                AuditEvent(
+                    action="studio.auth.login",
+                    decision="allow",
+                    principal_id=identity_result.principal.principal_id,
+                    reason="authenticated",
+                    request_id=request_id if isinstance(request_id, str) else None,
+                    route="/api/studio/auth/login",
+                    timestamp_utc=_studio_timestamp_utc(),
+                )
+            )
+        except AuditSinkError as exc:
+            raise HTTPException(status_code=503, detail="audit_append_failed") from exc
+        return issued.to_public_dict()
+
+    @app.get("/api/studio/auth/session")
+    def api_studio_auth_session(request: Request) -> dict[str, bool | list[str] | str | None]:
+        """Return the current browser bearer-session principal."""
+
+        return studio_browser_session_manager.public_session(request.headers.get("authorization"))
+
+    @app.post("/api/studio/auth/logout")
+    def api_studio_auth_logout(request: Request) -> dict[str, bool]:
+        """Revoke the current browser bearer session."""
+
+        revoked = studio_browser_session_manager.revoke_authorization_header(
+            request.headers.get("authorization")
+        )
+        actor = getattr(request.state, "studio_principal", None)
+        request_id = getattr(request.state, "studio_request_id", None)
+        try:
+            studio_audit_sink.record(
+                AuditEvent(
+                    action="studio.auth.logout",
+                    decision="allow",
+                    principal_id=actor.principal_id if isinstance(actor, Principal) else None,
+                    reason="revoked" if revoked else "not_found",
+                    request_id=request_id if isinstance(request_id, str) else None,
+                    route="/api/studio/auth/logout",
+                    timestamp_utc=_studio_timestamp_utc(),
+                )
+            )
+        except AuditSinkError as exc:
+            raise HTTPException(status_code=503, detail="audit_append_failed") from exc
+        return {"revoked": revoked}
+
     @app.get("/api/studio/identity/service-accounts")
     def api_studio_identity_service_accounts() -> dict[str, object]:
         """Return token-free persistent service accounts for administrators."""
@@ -1008,6 +1114,21 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         return {
             "schema_version": "sc-neurocore.studio.identity.service-accounts.v1",
             "service_accounts": [record.to_public_dict() for record in records],
+        }
+
+    @app.get("/api/studio/identity/browser-users")
+    def api_studio_identity_browser_users() -> dict[str, object]:
+        """Return password-free persistent browser users for administrators."""
+
+        if settings.identity_file_path is None:
+            raise HTTPException(status_code=409, detail="identity_store_unavailable")
+        try:
+            records = list_studio_browser_user_public_records(Path(settings.identity_file_path))
+        except ValueError as exc:
+            raise HTTPException(status_code=503, detail="identity_store_unhealthy") from exc
+        return {
+            "browser_users": [record.to_public_dict() for record in records],
+            "schema_version": "sc-neurocore.studio.identity.browser-users.v1",
         }
 
     @app.get("/api/studio/identity/service-accounts/{principal_id}")

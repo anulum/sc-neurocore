@@ -23,6 +23,7 @@ import NetworkCanvas from "./components/NetworkCanvas";
 import OnboardingOverlay from "./components/OnboardingOverlay";
 import CapabilityStrip from "./components/CapabilityStrip";
 import AdminPanel from "./components/AdminPanel";
+import AuthControl from "./components/AuthControl";
 
 function Tab({ active, color, label, onClick, disabled, title }: {
   active: boolean; color: string; label: string; onClick: () => void; disabled?: boolean; title?: string;
@@ -76,6 +77,7 @@ export default function App() {
   const s = useStudioStore();
   const loadCapabilities = s.loadCapabilities;
   const loadAuditStatus = s.loadAuditStatus;
+  const loadAuthSession = s.loadAuthSession;
   const loadOperatorStatus = s.loadOperatorStatus;
   const loadPresets = s.loadPresets;
   const vars = s.result ? Object.keys(s.result.states) : [];
@@ -101,10 +103,11 @@ export default function App() {
 
   useEffect(() => {
     void loadCapabilities();
+    void loadAuthSession();
     void loadAuditStatus();
     void loadOperatorStatus();
     void loadPresets();
-  }, [loadAuditStatus, loadCapabilities, loadOperatorStatus, loadPresets]);
+  }, [loadAuditStatus, loadAuthSession, loadCapabilities, loadOperatorStatus, loadPresets]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -132,6 +135,7 @@ export default function App() {
           <h1>SC-NeuroCore Studio</h1>
         </div>
         <CapabilityStrip />
+        <AuthControl />
 
         <div style={{ display: "flex", gap: 0, borderRadius: "var(--radius)", overflow: "hidden" }}>
           <Tab active={s.sourceMode === "model"} color="var(--accent)"

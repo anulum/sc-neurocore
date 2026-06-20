@@ -86,12 +86,30 @@ runtime features:
   than raw tokens, grants explicit roles, and can include UTC expiry timestamps.
   Requests authenticate with `Authorization: Bearer <token>`; invalid,
   disabled, or expired tokens fail closed and emit distinct audit reasons.
+- The same identity file can include persistent `browser_users` with
+  PBKDF2-HMAC-SHA256 password verifiers, explicit roles, active state, and
+  optional UTC expiry timestamps. Browser users authenticate through
+  `POST /api/studio/auth/login`, which returns an expiring bearer token for
+  `Authorization: Bearer <token>` requests. Studio does not set browser auth
+  cookies in this mode, so cookie CSRF tokens are not part of the current
+  contract; deployments should protect the browser against script injection
+  and transport the bearer token only over HTTPS or loopback-local channels.
+- Browser bearer sessions are server-side and expire after
+  `SC_NEUROCORE_STUDIO_BROWSER_SESSION_TTL_SECONDS`, defaulting to 12 hours.
+  `/api/studio/auth/session` returns the current principal without token
+  material, and `POST /api/studio/auth/logout` revokes the presented session.
 - First-deployment service-account identity files are created offline with
   `sc-neurocore studio-bootstrap-admin --identity-file <path>`. The command
   writes only the SHA-256 token hash to disk, returns the bearer token once to
   the operator, refuses to overwrite existing files unless `--allow-overwrite`
   is supplied, and applies owner-only file permissions where the host platform
   supports POSIX modes.
+- Persistent browser users are added offline with
+  `sc-neurocore studio-add-browser-user --identity-file <path> --username <name>
+  --principal-id <principal> --role <role> --password-stdin`. The command reads
+  the password from standard input, writes only the PBKDF2-HMAC-SHA256 verifier
+  to the same identity file, preserves existing service accounts, and returns a
+  password-free JSON summary.
 - `/api/studio/identity/service-accounts` returns an admin-only, token-free
   service-account inventory for the configured persistent identity file.
   `/api/studio/identity/service-accounts/{principal_id}` returns one account,
@@ -104,6 +122,9 @@ runtime features:
   exposing token hashes or local identity-file paths. Role changes emit both
   the route-policy audit decision and a dedicated
   `studio.identity.service_account.update` audit event.
+- `/api/studio/identity/browser-users` returns an admin-only, password-free
+  browser-user inventory for the same identity file. The payload includes
+  usernames, principal IDs, roles, active state, and expiry only.
 - Policy decisions can be persisted to an append-only JSONL audit log by
   setting `SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH` to a writable file path. Each
   `studio.audit.v1` line records the UTC timestamp, policy action, route
@@ -353,6 +374,7 @@ for complete API details with request/response examples.
 | `/api/graph/*` | Network Canvas | Populations, projections, validate, simulate, NIR |
 | `/api/project/*`, `/api/pipeline/*` | Integration | Save/load, worker-backed full pipeline |
 | `/api/studio/audit/*` | Admin | Audit status and admin-gated export |
+| `/api/studio/auth/*` | Platform | Browser-user login, current bearer session, logout |
 | `/api/studio/identity/*` | Admin | Token-free service-account inventory and role updates |
 | `/api/studio/operator/status` | Admin | Aggregate operator control-plane health |
 

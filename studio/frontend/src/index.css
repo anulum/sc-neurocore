@@ -208,6 +208,53 @@ body {
   font-size: 10px;
 }
 
+.auth-control {
+  display: grid;
+  grid-template-columns: minmax(64px, 92px) minmax(72px, 104px) 58px;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.auth-control span {
+  overflow: hidden;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.auth-control input {
+  min-width: 0;
+  padding: 2px 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 10px;
+}
+
+.auth-control button {
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.auth-control button:disabled {
+  cursor: wait;
+  opacity: 0.45;
+}
+
+.auth-error {
+  grid-column: 1 / -1;
+  color: var(--warning);
+}
+
 .admin-panel {
   display: grid;
   grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);

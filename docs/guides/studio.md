@@ -296,6 +296,28 @@ reloads the backend authenticator after success, and records a dedicated
 `studio.identity.service_account.update` audit event in addition to the normal
 route-policy audit decision.
 
+Interactive operators can use persistent browser users from the same identity
+file. Add them offline through the maintained provisioning command:
+
+```bash
+printf '%s\n' "$STUDIO_OPERATOR_PASSWORD" | sc-neurocore studio-add-browser-user \
+  --identity-file /etc/sc-neurocore/studio-identities.json \
+  --username operator \
+  --principal-id human-operator \
+  --role studio.viewer \
+  --password-stdin
+```
+
+The command writes username, principal ID, roles, active state, optional UTC
+expiry, and a PBKDF2-HMAC-SHA256 password verifier while preserving existing
+service accounts. The browser login form calls `POST /api/studio/auth/login`;
+a successful login stores the returned bearer token in `sessionStorage`, sends
+it as an `Authorization` header for subsequent API calls, and can revoke it
+with `POST /api/studio/auth/logout`. Studio does not use auth cookies for this
+session mode, so cookie CSRF tokens are intentionally not part of the current
+contract. Set `SC_NEUROCORE_STUDIO_BROWSER_SESSION_TTL_SECONDS` to tune the
+server-side session expiry; the default is 12 hours.
+
 The same Admin surface displays local worker health from
 `/api/studio/jobs/status`. Configure `SC_NEUROCORE_STUDIO_JOB_ROOT` to keep
 per-job working directories on an operator-selected disk, and tune

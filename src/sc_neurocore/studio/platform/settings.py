@@ -41,6 +41,7 @@ DEFAULT_STUDIO_AUDIT_RETAINED_FILES = 5
 DEFAULT_STUDIO_JOB_TIMEOUT_SECONDS = 300.0
 DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS = 120.0
 DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES = 2 * 1024 * 1024 * 1024
+DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS = 12 * 60 * 60.0
 
 DEFAULT_STUDIO_HTTP_SECURITY_HEADERS: Mapping[str, str] = MappingProxyType(
     {
@@ -78,6 +79,7 @@ class StudioRuntimeSettings:
     job_max_artifact_bytes: int = DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES
     eda_process_cpu_seconds: float | None = DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS
     eda_process_memory_bytes: int | None = DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES
+    browser_session_ttl_seconds: float = DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS
     audit_log_path: str | None = None
     audit_rotation_bytes: int | None = None
     audit_retained_files: int = DEFAULT_STUDIO_AUDIT_RETAINED_FILES
@@ -121,6 +123,8 @@ class StudioRuntimeSettings:
             raise ValueError("Studio EDA process CPU limit must be positive.")
         if self.eda_process_memory_bytes is not None and self.eda_process_memory_bytes <= 0:
             raise ValueError("Studio EDA process memory limit must be positive.")
+        if self.browser_session_ttl_seconds <= 0:
+            raise ValueError("Studio browser session TTL must be positive.")
         if self.audit_log_path is not None and not self.audit_log_path.strip():
             raise ValueError("Studio audit log path must not be empty.")
         if self.audit_rotation_bytes is not None and self.audit_rotation_bytes <= 0:
@@ -166,6 +170,9 @@ def build_default_studio_runtime_settings(
     raw_job_max_artifact_bytes = source.get("SC_NEUROCORE_STUDIO_JOB_MAX_ARTIFACT_BYTES")
     raw_eda_process_cpu_seconds = source.get("SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS")
     raw_eda_process_memory_bytes = source.get("SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES")
+    raw_browser_session_ttl_seconds = source.get(
+        "SC_NEUROCORE_STUDIO_BROWSER_SESSION_TTL_SECONDS"
+    )
     raw_audit_log_path = source.get("SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH")
     raw_audit_rotation_bytes = source.get("SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES")
     raw_audit_retained_files = source.get("SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES")
@@ -246,6 +253,15 @@ def build_default_studio_runtime_settings(
         )
     except ValueError as exc:
         raise ValueError("Studio EDA process memory limit must be an integer.") from exc
+    try:
+        browser_session_ttl_seconds = (
+            DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS
+            if raw_browser_session_ttl_seconds is None
+            or not raw_browser_session_ttl_seconds.strip()
+            else float(raw_browser_session_ttl_seconds)
+        )
+    except ValueError as exc:
+        raise ValueError("Studio browser session TTL must be numeric.") from exc
     audit_log_path = (
         None
         if raw_audit_log_path is None or not raw_audit_log_path.strip()
@@ -281,6 +297,7 @@ def build_default_studio_runtime_settings(
         job_max_artifact_bytes=job_max_artifact_bytes,
         eda_process_cpu_seconds=eda_process_cpu_seconds,
         eda_process_memory_bytes=eda_process_memory_bytes,
+        browser_session_ttl_seconds=browser_session_ttl_seconds,
         audit_log_path=audit_log_path,
         audit_rotation_bytes=audit_rotation_bytes,
         audit_retained_files=audit_retained_files,

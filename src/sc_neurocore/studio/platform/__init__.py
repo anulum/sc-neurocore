@@ -44,15 +44,28 @@ from sc_neurocore.studio.platform.policy import (
     build_default_studio_route_policy_registry,
 )
 from sc_neurocore.studio.platform.identity import (
+    DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS,
     IDENTITY_SCHEMA_VERSION,
+    StudioBrowserUserPublicRecord,
+    StudioBrowserUserRecord,
     StudioIdentityAuthenticator,
     StudioIdentityPublicRecord,
     StudioIdentityRecord,
     StudioIdentityResult,
     StudioIdentityStore,
+    add_studio_browser_user_record,
+    list_studio_browser_user_public_records,
     list_studio_identity_public_records,
     load_studio_identity_store,
+    make_browser_user_password_verifier,
     update_studio_identity_record,
+    verify_browser_user_password,
+)
+from sc_neurocore.studio.platform.sessions import (
+    StudioBrowserSessionIssue,
+    StudioBrowserSessionManager,
+    StudioBrowserSessionRecord,
+    StudioBrowserSessionResult,
 )
 from sc_neurocore.studio.platform.jobs import (
     JOBS_LIST_SCHEMA_VERSION,
@@ -81,6 +94,7 @@ from sc_neurocore.studio.platform.operator import (
     build_studio_operator_status,
 )
 from sc_neurocore.studio.platform.settings import (
+    DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS,
     DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS,
     DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES,
     DEFAULT_STUDIO_AUDIT_RETAINED_FILES,
@@ -128,6 +142,7 @@ __all__ = [
     "RoutePolicyRegistry",
     "RouteVisibility",
     "DEFAULT_STUDIO_AUDIT_RETAINED_FILES",
+    "DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS",
     "DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS",
     "DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES",
     "DEFAULT_STUDIO_ALLOWED_HOSTS",
@@ -137,8 +152,15 @@ __all__ = [
     "DEFAULT_STUDIO_JOB_TIMEOUT_SECONDS",
     "DEFAULT_STUDIO_MAX_REQUEST_BODY_BYTES",
     "DEFAULT_STUDIO_WEBSOCKET_ALLOWED_ORIGINS",
+    "DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS",
     "StudioDeploymentProfile",
     "StudioRuntimeSettings",
+    "StudioBrowserSessionIssue",
+    "StudioBrowserSessionManager",
+    "StudioBrowserSessionRecord",
+    "StudioBrowserSessionResult",
+    "StudioBrowserUserPublicRecord",
+    "StudioBrowserUserRecord",
     "StudioIdentityAuthenticator",
     "StudioIdentityBootstrapResult",
     "StudioIdentityPublicRecord",
@@ -166,8 +188,12 @@ __all__ = [
     "build_default_studio_route_policy_registry",
     "build_default_studio_runtime_settings",
     "build_studio_operator_status",
+    "add_studio_browser_user_record",
     "bootstrap_studio_admin_identity",
+    "list_studio_browser_user_public_records",
     "list_studio_identity_public_records",
     "load_studio_identity_store",
+    "make_browser_user_password_verifier",
     "update_studio_identity_record",
+    "verify_browser_user_password",
 ]

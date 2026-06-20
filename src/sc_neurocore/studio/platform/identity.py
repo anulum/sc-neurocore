@@ -14,6 +14,7 @@ import hashlib
 import hmac
 import json
 import os
+import secrets
 import tempfile
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -24,6 +25,9 @@ from sc_neurocore.studio.platform.policy import Principal
 
 IDENTITY_SCHEMA_VERSION = "sc-neurocore.studio.identity.v1"
 UTC = timezone.utc
+DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS = 390_000
+MIN_BROWSER_USER_PASSWORD_ITERATIONS = 100_000
+MIN_BROWSER_USER_PASSWORD_SALT_BYTES = 16
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,15 +104,87 @@ class StudioIdentityPublicRecord:
 
 
 @dataclass(frozen=True, slots=True)
+class StudioBrowserUserRecord:
+    """Persistent browser-login identity for Studio operators.
+
+    Parameters
+    ----------
+    username:
+        Stable browser-login username.
+    principal_id:
+        Principal identifier recorded in audit events after login.
+    roles:
+        Role names granted to the browser user.
+    password_pbkdf2_sha256:
+        Encoded PBKDF2-HMAC-SHA256 password verifier.
+    expires_at_utc:
+        Optional UTC expiry instant. Expired users cannot log in.
+    active:
+        Whether the user can currently authenticate.
+    """
+
+    username: str
+    principal_id: str
+    roles: frozenset[str]
+    password_pbkdf2_sha256: str
+    expires_at_utc: datetime | None = None
+    active: bool = True
+
+    def to_public_record(self) -> "StudioBrowserUserPublicRecord":
+        """Return a password-free operator representation of this user."""
+
+        expiry = (
+            None
+            if self.expires_at_utc is None
+            else self.expires_at_utc.isoformat().replace("+00:00", "Z")
+        )
+        return StudioBrowserUserPublicRecord(
+            active=self.active,
+            expires_at_utc=expiry,
+            principal_id=self.principal_id,
+            roles=tuple(sorted(self.roles)),
+            username=self.username,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class StudioBrowserUserPublicRecord:
+    """Path-free and password-free browser-user record for operators."""
+
+    username: str
+    principal_id: str
+    roles: tuple[str, ...]
+    expires_at_utc: str | None
+    active: bool
+
+    def to_public_dict(self) -> dict[str, bool | list[str] | str | None]:
+        """Return an API payload without password verifier material."""
+
+        return {
+            "active": self.active,
+            "expires_at_utc": self.expires_at_utc,
+            "principal_id": self.principal_id,
+            "roles": list(self.roles),
+            "username": self.username,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class StudioIdentityStore:
     """Validated Studio identity store loaded from a local JSON file."""
 
     service_accounts: tuple[StudioIdentityRecord, ...]
+    browser_users: tuple[StudioBrowserUserRecord, ...] = ()
 
     def public_records(self) -> tuple[StudioIdentityPublicRecord, ...]:
         """Return token-free service-account records for admin APIs."""
 
         return tuple(record.to_public_record() for record in self.service_accounts)
+
+    def public_browser_users(self) -> tuple[StudioBrowserUserPublicRecord, ...]:
+        """Return password-free browser-user records for admin APIs."""
+
+        return tuple(record.to_public_record() for record in self.browser_users)
 
 
 @dataclass(frozen=True, slots=True)
@@ -166,6 +242,48 @@ class StudioIdentityAuthenticator:
             )
         return StudioIdentityResult(principal=None, failure_reason="invalid_identity_token")
 
+    def authenticate_browser_user(self, username: str, password: str) -> StudioIdentityResult:
+        """Authenticate one browser user with username and password.
+
+        Parameters
+        ----------
+        username:
+            Browser-login username.
+        password:
+            Raw password supplied by the browser login form.
+
+        Returns
+        -------
+        StudioIdentityResult
+            Authenticated principal or a stable failure reason for audit rows.
+        """
+
+        clean_username = username.strip()
+        if not clean_username or not password:
+            return StudioIdentityResult(principal=None, failure_reason="invalid_browser_login")
+        for record in self._identity_store.browser_users:
+            if not hmac.compare_digest(record.username, clean_username):
+                continue
+            if not record.active:
+                return StudioIdentityResult(
+                    principal=None,
+                    failure_reason="disabled_browser_user",
+                )
+            if record.expires_at_utc is not None and self._utc_now_value() >= record.expires_at_utc:
+                return StudioIdentityResult(
+                    principal=None,
+                    failure_reason="expired_browser_user",
+                )
+            if not verify_browser_user_password(password, record.password_pbkdf2_sha256):
+                return StudioIdentityResult(
+                    principal=None,
+                    failure_reason="invalid_browser_login",
+                )
+            return StudioIdentityResult(
+                principal=Principal(principal_id=record.principal_id, roles=record.roles)
+            )
+        return StudioIdentityResult(principal=None, failure_reason="invalid_browser_login")
+
     def _utc_now_value(self) -> datetime:
         return self._clock().astimezone(UTC)
 
@@ -208,7 +326,13 @@ def load_studio_identity_store(path: Path) -> StudioIdentityStore:
     if not isinstance(raw_accounts, list):
         raise ValueError("Studio identity service_accounts must be a list.")
     records = tuple(_parse_identity_record(index, item) for index, item in enumerate(raw_accounts))
-    return StudioIdentityStore(service_accounts=records)
+    raw_browser_users = payload.get("browser_users", [])
+    if not isinstance(raw_browser_users, list):
+        raise ValueError("Studio identity browser_users must be a list.")
+    browser_users = tuple(
+        _parse_browser_user_record(index, item) for index, item in enumerate(raw_browser_users)
+    )
+    return StudioIdentityStore(service_accounts=records, browser_users=browser_users)
 
 
 def list_studio_identity_public_records(path: Path) -> tuple[StudioIdentityPublicRecord, ...]:
@@ -229,6 +353,30 @@ def list_studio_identity_public_records(path: Path) -> tuple[StudioIdentityPubli
         sorted(
             load_studio_identity_store(path).public_records(),
             key=lambda record: record.principal_id,
+        )
+    )
+
+
+def list_studio_browser_user_public_records(
+    path: Path,
+) -> tuple[StudioBrowserUserPublicRecord, ...]:
+    """Load password-free Studio browser-user records from an identity file.
+
+    Parameters
+    ----------
+    path:
+        Persistent identity JSON file.
+
+    Returns
+    -------
+    tuple[StudioBrowserUserPublicRecord, ...]
+        Public browser-user records sorted by username.
+    """
+
+    return tuple(
+        sorted(
+            load_studio_identity_store(path).public_browser_users(),
+            key=lambda record: record.username,
         )
     )
 
@@ -291,8 +439,106 @@ def update_studio_identity_record(
             records.append(record)
     if updated is None:
         raise KeyError(clean_principal_id)
-    _write_identity_store(path, tuple(records))
+    _write_identity_store(path, service_accounts=tuple(records), browser_users=store.browser_users)
     return updated.to_public_record()
+
+
+def add_studio_browser_user_record(
+    path: Path,
+    *,
+    username: str,
+    principal_id: str,
+    roles: Sequence[str],
+    password: str,
+    active: bool = True,
+    expires_at_utc: str | None = None,
+) -> StudioBrowserUserPublicRecord:
+    """Atomically add one persistent browser-login user to an identity file.
+
+    Parameters
+    ----------
+    path:
+        Persistent identity JSON file.
+    username:
+        Unique browser-login username.
+    principal_id:
+        Stable principal identifier recorded in policy audit events.
+    roles:
+        Non-empty role set granted after login.
+    password:
+        Raw password read from an operator-controlled secret channel.
+    active:
+        Whether the new browser user can authenticate immediately.
+    expires_at_utc:
+        Optional UTC expiry timestamp.
+
+    Returns
+    -------
+    StudioBrowserUserPublicRecord
+        Password-free representation of the new browser user.
+
+    Raises
+    ------
+    ValueError
+        If the new user metadata is malformed or conflicts with an existing
+        browser username.
+    """
+
+    store = load_studio_identity_store(path)
+    clean_username = _parse_username(username)
+    if any(record.username == clean_username for record in store.browser_users):
+        raise ValueError("Studio browser user username already exists.")
+    record = StudioBrowserUserRecord(
+        active=active,
+        expires_at_utc=_parse_expiry(expires_at_utc),
+        password_pbkdf2_sha256=make_browser_user_password_verifier(password),
+        principal_id=_parse_principal_id(principal_id),
+        roles=frozenset(_parse_roles(roles)),
+        username=clean_username,
+    )
+    _write_identity_store(
+        path,
+        service_accounts=store.service_accounts,
+        browser_users=(*store.browser_users, record),
+    )
+    return record.to_public_record()
+
+
+def make_browser_user_password_verifier(password: str) -> str:
+    """Create an encoded PBKDF2-HMAC-SHA256 password verifier.
+
+    Parameters
+    ----------
+    password:
+        Raw browser-user password.
+
+    Returns
+    -------
+    str
+        Encoded verifier containing algorithm, iteration count, salt, and hash.
+    """
+
+    if not password:
+        raise ValueError("Studio browser-user password must not be empty.")
+    salt = secrets.token_hex(MIN_BROWSER_USER_PASSWORD_SALT_BYTES)
+    password_hash = _pbkdf2_sha256(password, salt, DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS)
+    return (
+        "pbkdf2_sha256"
+        f"${DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS}"
+        f"${salt}"
+        f"${password_hash}"
+    )
+
+
+def verify_browser_user_password(password: str, encoded_verifier: str) -> bool:
+    """Verify a raw browser-user password against an encoded verifier."""
+
+    parsed = _parse_password_verifier(encoded_verifier)
+    if parsed is None:
+        return False
+    iterations, salt, expected_hash = parsed
+    candidate = _pbkdf2_sha256(password, salt, iterations)
+    return hmac.compare_digest(candidate, expected_hash)
 
 
 def _parse_identity_record(index: int, item: object) -> StudioIdentityRecord:
@@ -321,10 +567,49 @@ def _parse_identity_record(index: int, item: object) -> StudioIdentityRecord:
     )
 
 
+def _parse_browser_user_record(index: int, item: object) -> StudioBrowserUserRecord:
+    if not isinstance(item, dict):
+        raise ValueError(f"Studio identity browser user {index} must be an object.")
+    username = item.get("username")
+    if not isinstance(username, str) or not username.strip():
+        raise ValueError("Studio browser user username must be a non-empty string.")
+    principal_id = item.get("principal_id")
+    if not isinstance(principal_id, str) or not principal_id.strip():
+        raise ValueError("Studio browser user principal_id must be a non-empty string.")
+    raw_roles = item.get("roles")
+    if not isinstance(raw_roles, list) or not raw_roles:
+        raise ValueError("Studio browser user roles must be a non-empty list.")
+    roles = frozenset(_parse_role(role) for role in raw_roles)
+    password_verifier = item.get("password_pbkdf2_sha256")
+    if not isinstance(password_verifier, str) or _parse_password_verifier(password_verifier) is None:
+        raise ValueError("Studio browser user password verifier is invalid.")
+    raw_active = item.get("active", True)
+    if not isinstance(raw_active, bool):
+        raise ValueError("Studio browser user active flag must be boolean.")
+    expires_at_utc = _parse_expiry(item.get("expires_at_utc"))
+    return StudioBrowserUserRecord(
+        active=raw_active,
+        expires_at_utc=expires_at_utc,
+        password_pbkdf2_sha256=password_verifier,
+        principal_id=principal_id.strip(),
+        roles=roles,
+        username=username.strip(),
+    )
+
+
 def _parse_principal_id(principal_id: str) -> str:
     cleaned = principal_id.strip()
     if not cleaned:
         raise ValueError("Studio identity principal_id must be a non-empty string.")
+    return cleaned
+
+
+def _parse_username(username: str) -> str:
+    cleaned = username.strip()
+    if not cleaned:
+        raise ValueError("Studio browser user username must be a non-empty string.")
+    if any(character.isspace() for character in cleaned):
+        raise ValueError("Studio browser user username must not contain whitespace.")
     return cleaned
 
 
@@ -366,10 +651,16 @@ def _is_sha256_hex(value: str) -> bool:
     return len(value) == 64 and all(character in "0123456789abcdefABCDEF" for character in value)
 
 
-def _write_identity_store(path: Path, records: tuple[StudioIdentityRecord, ...]) -> None:
+def _write_identity_store(
+    path: Path,
+    *,
+    service_accounts: tuple[StudioIdentityRecord, ...],
+    browser_users: tuple[StudioBrowserUserRecord, ...],
+) -> None:
     payload = {
+        "browser_users": [_browser_user_to_json(record) for record in browser_users],
         "schema_version": IDENTITY_SCHEMA_VERSION,
-        "service_accounts": [_record_to_json(record) for record in records],
+        "service_accounts": [_record_to_json(record) for record in service_accounts],
     }
     encoded = json.dumps(payload, indent=2, sort_keys=True)
     parent = path.parent
@@ -410,14 +701,69 @@ def _record_to_json(record: StudioIdentityRecord) -> dict[str, bool | list[str] 
     }
 
 
+def _browser_user_to_json(
+    record: StudioBrowserUserRecord,
+) -> dict[str, bool | list[str] | str | None]:
+    expiry = (
+        None
+        if record.expires_at_utc is None
+        else record.expires_at_utc.isoformat().replace("+00:00", "Z")
+    )
+    return {
+        "active": record.active,
+        "expires_at_utc": expiry,
+        "password_pbkdf2_sha256": record.password_pbkdf2_sha256,
+        "principal_id": record.principal_id,
+        "roles": sorted(record.roles),
+        "username": record.username,
+    }
+
+
+def _pbkdf2_sha256(password: str, salt_hex: str, iterations: int) -> str:
+    return hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        bytes.fromhex(salt_hex),
+        iterations,
+    ).hex()
+
+
+def _parse_password_verifier(value: str) -> tuple[int, str, str] | None:
+    parts = value.split("$")
+    if len(parts) != 4:
+        return None
+    algorithm, raw_iterations, salt_hex, digest_hex = parts
+    if algorithm != "pbkdf2_sha256":
+        return None
+    try:
+        iterations = int(raw_iterations)
+        bytes.fromhex(salt_hex)
+    except ValueError:
+        return None
+    if iterations < MIN_BROWSER_USER_PASSWORD_ITERATIONS:
+        return None
+    if len(salt_hex) < MIN_BROWSER_USER_PASSWORD_SALT_BYTES * 2:
+        return None
+    if not _is_sha256_hex(digest_hex):
+        return None
+    return iterations, salt_hex, digest_hex
+
+
 __all__ = [
+    "DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS",
     "IDENTITY_SCHEMA_VERSION",
+    "StudioBrowserUserPublicRecord",
+    "StudioBrowserUserRecord",
     "StudioIdentityAuthenticator",
     "StudioIdentityPublicRecord",
     "StudioIdentityRecord",
     "StudioIdentityResult",
     "StudioIdentityStore",
+    "add_studio_browser_user_record",
+    "list_studio_browser_user_public_records",
     "list_studio_identity_public_records",
     "load_studio_identity_store",
+    "make_browser_user_password_verifier",
     "update_studio_identity_record",
+    "verify_browser_user_password",
 ]
