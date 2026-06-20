@@ -72,7 +72,6 @@ from sc_neurocore.studio.project import (
     delete_project,
     list_projects,
     load_project,
-    run_pipeline,
     save_project,
 )
 from sc_neurocore.studio.network_graph import (
@@ -95,6 +94,7 @@ from sc_neurocore.studio.training import (
 )
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
 from sc_neurocore.studio.platform.compile_process import COMPILE_PROCESS_TASK
+from sc_neurocore.studio.platform.pipeline_process import PIPELINE_PROCESS_TASK
 from sc_neurocore.studio.platform import (
     AuditExportValue,
     AuditEvent,
@@ -2571,15 +2571,16 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         graph = data.get("graph", {})
         target = _validate_synthesis_target(data.get("target", "ice40"))
         return _safe(
-            lambda: run_studio_worker_job_sync(
-                action_kind="studio.pipeline.run",
-                evidence_artifact_path="pipeline/evidence.json",
-                evidence_classification="compile",
+            lambda: run_studio_process_job_sync(
                 kind="compiler",
                 owner="studio-pipeline",
-                artifact_path="pipeline/result.json",
-                replay_route="POST /api/pipeline/run",
-                task=lambda: run_pipeline(graph, target, process_limits=eda_process_limits),
+                task_path=PIPELINE_PROCESS_TASK,
+                payload={
+                    "eda_process_cpu_seconds": eda_process_limits.cpu_seconds,
+                    "eda_process_memory_bytes": eda_process_limits.address_space_bytes,
+                    "graph": graph,
+                    "target": target,
+                },
             )
         )
 
