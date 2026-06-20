@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useStudioStore } from "../stores/studio";
+import { buildTrainingEvidenceModel, type TrainingEvidenceModel } from "../trainingEvidence";
 
 function MetricChart({ data, xKey, yKeys, colors, height, yLabel }: {
   data: Record<string, unknown>[];
@@ -82,16 +83,46 @@ function LayerRateBar({ name, rate }: { name: string; rate: number }) {
   );
 }
 
+export function TrainingEvidenceStrip({ evidence }: { evidence: TrainingEvidenceModel }) {
+  return (
+    <div style={{
+      padding: "6px 12px",
+      borderBottom: "1px solid var(--border)",
+      background: "var(--bg-primary)",
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+      gap: 6,
+      fontSize: 9,
+      color: "var(--text-muted)",
+    }}>
+      <div><span>Evidence</span><strong style={{ marginLeft: 4 }}>{evidence.classification}</strong></div>
+      <div><span>Action</span><strong style={{ marginLeft: 4 }}>{evidence.actionKind}</strong></div>
+      <div><span>Job</span><strong style={{ marginLeft: 4 }}>{evidence.jobId}</strong></div>
+      <div><span>Status</span><strong style={{ marginLeft: 4 }}>{evidence.status}</strong></div>
+      <div><span>Replay</span><strong style={{ marginLeft: 4 }}>{evidence.replayRoute}</strong></div>
+      <div><span>Artifacts</span><strong style={{ marginLeft: 4 }}>{evidence.statusArtifact} / {evidence.evidenceArtifact}</strong></div>
+      <div><span>Config</span><strong style={{ marginLeft: 4 }}>{evidence.configSummary}</strong></div>
+      <div><span>Epoch</span><strong style={{ marginLeft: 4 }}>{evidence.latestEpoch}</strong></div>
+    </div>
+  );
+}
+
 export default function TrainingMonitor() {
   const {
     trainingStatus, trainingEpochs, trainingSurrogates, trainingConfig,
-    startTraining, stopTraining, setTrainingConfig, loadSurrogates, isSimulating,
+    trainingJobId, startTraining, stopTraining, setTrainingConfig, loadSurrogates, isSimulating,
   } = useStudioStore();
 
   useEffect(() => { loadSurrogates(); }, [loadSurrogates]);
 
   const latestEpoch = trainingEpochs.length > 0 ? trainingEpochs[trainingEpochs.length - 1] : null;
   const isRunning = trainingStatus === "running" || trainingStatus === "starting";
+  const evidence = buildTrainingEvidenceModel(
+    trainingJobId,
+    trainingStatus,
+    trainingConfig,
+    latestEpoch,
+  );
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "auto" }}>
@@ -139,6 +170,8 @@ export default function TrainingMonitor() {
           </button>
         )}
       </div>
+
+      <TrainingEvidenceStrip evidence={evidence} />
 
       {/* Config panel */}
       {!isRunning && (

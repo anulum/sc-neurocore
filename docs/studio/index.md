@@ -421,7 +421,10 @@ Start SNN training from the browser. Configure:
 - Batch size, learning rate, timesteps, epochs
 
 Watch loss curves, accuracy, per-layer spike rates, and parameter
-evolution update in real time via Server-Sent Events.
+evolution update in real time via Server-Sent Events. The Training Monitor
+also surfaces the path-free action-evidence contract for the current training
+run: evidence classification, action kind, job ID, terminal status, replay
+route, terminal artifact names, configuration summary, and latest epoch.
 
 ### Compiler Inspector
 
