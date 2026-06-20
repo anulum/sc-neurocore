@@ -394,8 +394,9 @@ counts. It also includes one `resource_profiles` entry per allowed job kind,
 recording the default timeout, per-artifact size ceiling, and supported
 execution models (`thread` and `process`) without exposing the job-root path.
 
-Training start, stop, and status routes now submit work through the same local
-worker manager. The training monitor's SSE stream remains the live metric
+Training start now submits work through the process-backed local worker manager;
+stop, status, and SSE stream routes retain the parent-process control and
+observation surface. The training monitor's SSE stream remains the live metric
 channel, while the panel surfaces the path-free action-evidence contract for
 the active run: evidence classification, action kind, job ID, terminal status,
 replay route, terminal artifact names, configuration summary, and latest

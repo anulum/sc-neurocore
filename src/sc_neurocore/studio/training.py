@@ -75,7 +75,7 @@ def list_cell_types() -> list[dict[str, Any]]:
 
 
 class TrainingJob:
-    """Manages a single training run in a background thread."""
+    """Manage one Studio training run for thread or process execution."""
 
     def __init__(
         self,

@@ -87,7 +87,10 @@ The monitor displays four live panels:
 
 ### Job Lifecycle
 
-Training runs in a background thread. The lifecycle is:
+Training starts through the Studio job manager. In the web backend,
+`/api/training/start` uses an isolated process-backed worker task; direct
+module callers can still use the legacy in-process thread path for local
+compatibility. The lifecycle is:
 
 ```
 idle → starting → running → completed | stopped | failed
