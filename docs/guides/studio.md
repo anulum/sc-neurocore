@@ -416,10 +416,23 @@ the runtime profile in `development` with loopback-only hosts and origins for a
 single workstation. The `lab` and `server` packages set the runtime profile to
 `production`, require route-policy enforcement, disable header principals, and
 include placeholders for the durable identity file, audit log, job root,
-allowed hosts, allowed origins, preflight command, launch command, and backup
-items. Package output contains placeholders and safe defaults only; bearer
-tokens, password material, token hashes, and host-local paths must be supplied
-outside the repository by the operator.
+saved project workspace, allowed hosts, allowed origins, preflight command,
+launch command, and backup items. Package output contains placeholders and safe
+defaults only; bearer tokens, password material, token hashes, and host-local
+paths must be supplied outside the repository by the operator.
+
+Generate the durable-state backup and restore plan from the same runtime
+environment:
+
+```bash
+sc-neurocore studio-backup-plan --output studio-backup-plan.json
+```
+
+The plan schema is `studio.backup-plan.v1`. By default it is safe for deployment
+logs: it lists the identity file, audit log, job root, and saved project
+workspace by stable item IDs and source labels without resolved local paths or
+secret material. Use `--include-local-paths` only for an internal host-local
+handoff that must name the exact paths to capture and restore.
 
 Before promoting a Studio deployment, run the release preflight from the same
 environment that will launch the backend:

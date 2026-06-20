@@ -64,6 +64,7 @@ def main() -> int:
             "compile",
             "compile-nir",
             "studio",
+            "studio-backup-plan",
             "studio-deployment-profile",
             "studio-preflight",
             "studio-bootstrap-admin",
@@ -158,6 +159,11 @@ def main() -> int:
         choices=["json", "env"],
         default="json",
         help="Output format for studio-deployment-profile",
+    )
+    parser.add_argument(
+        "--include-local-paths",
+        action="store_true",
+        help="Include resolved local paths in studio-backup-plan output",
     )
     parser.add_argument(
         "--role",
@@ -479,6 +485,8 @@ def main() -> int:
         )
     if args.command == "studio":
         return _cmd_studio(args.port)
+    if args.command == "studio-backup-plan":
+        return _cmd_studio_backup_plan(args)
     if args.command == "studio-deployment-profile":
         return _cmd_studio_deployment_profile(args)
     if args.command == "studio-preflight":
@@ -2076,6 +2084,27 @@ def _cmd_studio(port: int) -> int:
     webbrowser.open(url)
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
     return 0
+
+
+def _cmd_studio_backup_plan(args: Any) -> int:
+    """Emit the Studio durable-state backup and restore plan."""
+    from pathlib import Path
+
+    from sc_neurocore.studio.platform import build_studio_backup_plan
+
+    try:
+        plan = build_studio_backup_plan(include_local_paths=args.include_local_paths)
+    except ValueError as exc:
+        print(f"Error: {exc}")
+        return 1
+    payload = json.dumps(plan.to_public_dict(), indent=2, sort_keys=True)
+    if args.output_supplied:
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(f"{payload}\n", encoding="utf-8")
+    else:
+        print(payload)
+    return 0 if plan.missing_required_count == 0 else 1
 
 
 def _cmd_studio_bootstrap_admin(args: Any) -> int:

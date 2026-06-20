@@ -29,6 +29,13 @@ from sc_neurocore.studio.platform.auth_throttle import (
     StudioBrowserLoginThrottle,
     StudioLoginThrottleDecision,
 )
+from sc_neurocore.studio.platform.backup_plan import (
+    STUDIO_BACKUP_PLAN_SCHEMA_VERSION,
+    StudioBackupPlan,
+    StudioBackupPlanItem,
+    StudioBackupTargetKind,
+    build_studio_backup_plan,
+)
 from sc_neurocore.studio.platform.deployment_profiles import (
     STUDIO_DEPLOYMENT_PROFILE_SCHEMA_VERSION,
     StudioDeploymentPackageName,
@@ -170,6 +177,7 @@ __all__ = [
     "RoutePolicy",
     "RoutePolicyRegistry",
     "RouteVisibility",
+    "STUDIO_BACKUP_PLAN_SCHEMA_VERSION",
     "THROTTLED_BROWSER_LOGIN_REASON",
     "DEFAULT_STUDIO_AUDIT_RETAINED_FILES",
     "DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS",
@@ -186,6 +194,9 @@ __all__ = [
     "StudioDeploymentProfile",
     "STUDIO_DEPLOYMENT_PROFILE_SCHEMA_VERSION",
     "StudioRuntimeSettings",
+    "StudioBackupPlan",
+    "StudioBackupPlanItem",
+    "StudioBackupTargetKind",
     "StudioDeploymentPackageName",
     "StudioDeploymentProfilePackage",
     "StudioBrowserLoginThrottle",
@@ -228,6 +239,7 @@ __all__ = [
     "build_default_studio_capability_registry",
     "build_default_studio_route_policy_registry",
     "build_default_studio_runtime_settings",
+    "build_studio_backup_plan",
     "build_studio_deployment_profile_package",
     "build_studio_operator_status",
     "list_studio_deployment_profile_packages",

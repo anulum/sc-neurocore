@@ -158,7 +158,7 @@ def _local_profile_package() -> StudioDeploymentProfilePackage:
             "development header principal allowed for local-only use",
             "persistent job root recommended",
         ),
-        backup_items=("<local-job-root>",),
+        backup_items=("<local-job-root>", "<studio-project-root>"),
         preflight_command="sc-neurocore studio-preflight",
         launch_command="sc-neurocore studio --port 8001",
     )
@@ -200,7 +200,12 @@ def _lab_profile_package() -> StudioDeploymentProfilePackage:
             "persistent job root",
             "explicit host and origin allow-lists",
         ),
-        backup_items=("<identity-file>", "<audit-log-path>", "<job-root>"),
+        backup_items=(
+            "<identity-file>",
+            "<audit-log-path>",
+            "<job-root>",
+            "<studio-project-root>",
+        ),
         preflight_command="sc-neurocore studio-preflight --output studio-preflight.json",
         launch_command="sc-neurocore studio --port 8001",
     )
@@ -253,7 +258,12 @@ def _server_profile_package() -> StudioDeploymentProfilePackage:
             "process CPU and memory ceilings for EDA jobs",
             "reverse proxy TLS required",
         ),
-        backup_items=("<identity-file>", "<audit-log-path>", "<job-root>"),
+        backup_items=(
+            "<identity-file>",
+            "<audit-log-path>",
+            "<job-root>",
+            "<studio-project-root>",
+        ),
         preflight_command="sc-neurocore studio-preflight --output studio-preflight.json",
         launch_command="sc-neurocore studio --port 8001",
     )
