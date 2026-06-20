@@ -14,6 +14,8 @@ No other SNN framework exposes this pipeline visually.
 3. The left pane shows the IR text; the right pane shows SystemVerilog
 4. A green/red badge indicates verification status
 5. Click **SV** for direct equation-to-Verilog via the Python compiler
+6. Inspect the source-to-RTL traceability strip for the source digest,
+   RTL digest, module name, and compile evidence class
 
 ## What the IR Represents
 
@@ -66,7 +68,7 @@ SystemVerilog module.
 | POST | `/api/ir/build` | Equation → ScGraph → IR text |
 | POST | `/api/ir/verify` | Parse and verify IR text |
 | POST | `/api/ir/emit-sv` | IR text → SystemVerilog |
-| POST | `/api/ir/emit-sv-direct` | Equation → Verilog (Python compiler) |
+| POST | `/api/ir/emit-sv-direct` | Equation → Verilog plus compile traceability |
 | POST | `/api/ir/cosim` | Float vs Q8.8 co-simulation |
 
 ## Two Compilation Paths
@@ -83,6 +85,24 @@ SystemVerilog module.
 Both paths produce synthesisable output. The Rust IR path is more suitable
 for stochastic computing architectures; the Python path targets conventional
 fixed-point RTL.
+
+## Source-to-RTL Traceability
+
+The direct equation-to-Verilog path returns a path-free
+`studio.compile-traceability.v1` manifest in `compile_traceability`.
+The manifest records:
+
+- the submitted equations, threshold, reset, initial state, and numeric
+  parameter map;
+- `input_sha256`, a stable SHA-256 digest over the canonical source payload;
+- the emitted RTL language, module name, source length, and `rtl_sha256`;
+- `traceability_sha256`, a stable digest over the complete public manifest;
+- `evidence_classification: "compile"` for evidence-bundle consumers.
+
+The manifest is included in both `/api/compile` and
+`/api/ir/emit-sv-direct` responses. The Compiler Inspector displays the
+schema version, evidence class, module name, and shortened source/RTL/manifest
+digests beside the generated RTL. It deliberately contains no host-local paths.
 
 ## Co-Simulation
 

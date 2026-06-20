@@ -1,9 +1,10 @@
 import { useStudioStore } from "../stores/studio";
 
 export default function CompilerInspector() {
-  const { irText, svSource, irErrors, isSimulating } = useStudioStore();
+  const { compileTraceability, irText, svSource, irErrors, isSimulating, verilogSrc } = useStudioStore();
+  const rtlSource = svSource || verilogSrc;
 
-  if (!irText && !svSource) {
+  if (!irText && !rtlSource) {
     return (
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
         <div style={{ textAlign: "center" }}>
@@ -30,6 +31,22 @@ export default function CompilerInspector() {
         <span>{irErrors.length > 0 ? `${irErrors.length} error(s)` : "Verified"}</span>
         {isSimulating && <span style={{ color: "var(--text-muted)" }}>compiling...</span>}
       </div>
+
+      {compileTraceability && (
+        <div style={{
+          padding: "6px 12px", fontSize: 10, fontFamily: "var(--font-mono)",
+          color: "var(--text-secondary)", background: "var(--bg-secondary)",
+          borderBottom: "1px solid var(--border)", display: "flex", gap: 14,
+          alignItems: "center", flexWrap: "wrap",
+        }}>
+          <span>schema {compileTraceability.schema_version}</span>
+          <span>class {compileTraceability.evidence_classification}</span>
+          <span>module {compileTraceability.output.module_name}</span>
+          <span>input {compileTraceability.input_sha256.slice(0, 12)}</span>
+          <span>rtl {compileTraceability.output.rtl_sha256.slice(0, 12)}</span>
+          <span>trace {compileTraceability.traceability_sha256.slice(0, 12)}</span>
+        </div>
+      )}
 
       {/* Error list */}
       {irErrors.length > 0 && (
@@ -73,7 +90,7 @@ export default function CompilerInspector() {
             fontSize: 11, fontFamily: "var(--font-mono)",
             color: "var(--text-primary)", background: "var(--bg-primary)",
             whiteSpace: "pre-wrap",
-          }}>{svSource || "(click Emit SV to generate)"}</pre>
+          }}>{rtlSource || "(click Emit SV to generate)"}</pre>
         </div>
       </div>
     </div>

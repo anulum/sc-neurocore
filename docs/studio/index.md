@@ -190,6 +190,10 @@ runtime features:
   The Admin queue records `studio-compiler`, `studio-synthesis`, `studio-pnr`,
   and `studio-pipeline` owners with path-free result artifacts under
   `compiler/`, `synthesis/`, and `pipeline/`.
+- `/api/compile` responses include `studio.compile-traceability.v1` metadata
+  with the source equation payload, RTL module metadata, source and RTL
+  SHA-256 digests, and `evidence_classification: "compile"` without
+  host-local paths.
 - Those worker-backed compile, synthesis, PnR, and pipeline routes also write
   `studio.action-evidence.v1` manifests beside the result artifacts. These
   manifests record action kind, replay route, job ID, evidence classification,
@@ -382,7 +386,9 @@ evolution update in real time via Server-Sent Events.
 
 Build SC Intermediate Representation from ODE equations, verify the
 graph, and emit synthesisable SystemVerilog. View the IR text and
-generated Verilog side-by-side with a verification badge.
+generated Verilog side-by-side with a verification badge. Direct
+equation-to-Verilog output includes a source-to-RTL traceability strip with
+source, RTL, and manifest digests for evidence review.
 
 ### Synthesis Dashboard
 
@@ -450,8 +456,8 @@ for complete API details with request/response examples.
 |--------|-------|-----------|
 | `/api/simulate`, `/api/models/*` | Phase 1 | ODE/model simulation with path-free run metadata, templates, presets |
 | `/api/fi-curve`, `/api/bifurcation`, `/api/heatmap`, ... | Phase 1 | Analysis views |
-| `/api/ir/*` | Compiler Inspector | IR build, verify, emit SV, co-sim |
-| `/api/compile`, `/api/synth/*` | Compiler/Synthesis | Worker-backed compile, Yosys synthesis, target provenance, multi-target, estimate |
+| `/api/ir/*` | Compiler Inspector | IR build, verify, emit SV, co-sim, direct-SV traceability |
+| `/api/compile`, `/api/synth/*` | Compiler/Synthesis | Worker-backed compile traceability, Yosys synthesis, target provenance, multi-target, estimate |
 | `/api/training/*` | Training Monitor | Start/stop, SSE stream, surrogates |
 | `/api/graph/*` | Network Canvas | Populations, projections, validate, simulate, NIR |
 | `/api/project/*`, `/api/pipeline/*` | Integration | Save/load, worker-backed full pipeline |

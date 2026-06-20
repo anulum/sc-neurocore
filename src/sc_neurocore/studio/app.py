@@ -59,6 +59,7 @@ from sc_neurocore.studio.compiler import (
     emit_systemverilog,
     verify_ir,
 )
+from sc_neurocore.studio.compile_traceability import build_compile_traceability
 from sc_neurocore.studio.synthesis import (
     EdaProcessLimits,
     check_tools,
@@ -181,7 +182,7 @@ class FICurveRequest(BaseModel):
 
 
 class CompileRequest(BaseModel):
-    equations: list[str]
+    equations: list[str] = Field(min_length=1)
     threshold: str | None = None
     reset: str | None = None
     params: dict[str, float] | None = None
@@ -2158,7 +2159,20 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 init=req.init,
                 module_name=req.module_name,
             )
-            return {"verilog": verilog, "module_name": req.module_name, "chars": len(verilog)}
+            return {
+                "verilog": verilog,
+                "module_name": req.module_name,
+                "chars": len(verilog),
+                "compile_traceability": build_compile_traceability(
+                    equations=req.equations,
+                    threshold=req.threshold,
+                    reset=req.reset,
+                    params=req.params,
+                    init=req.init,
+                    module_name=req.module_name,
+                    verilog=verilog,
+                ).to_public_dict(),
+            }
 
         return _safe(
             lambda: run_studio_worker_job_sync(

@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from sc_neurocore.studio.compile_traceability import build_compile_traceability
+
 
 def build_ir_from_equation(
     equations: list[str],
@@ -127,6 +129,15 @@ def emit_sv_from_equation(
         "ir_repr": str(ir_repr),
         "chars": len(verilog),
         "module_name": "sc_ode_neuron",
+        "compile_traceability": build_compile_traceability(
+            equations=equations,
+            threshold=threshold,
+            reset=reset,
+            params=params,
+            init=None,
+            module_name="sc_ode_neuron",
+            verilog=verilog,
+        ).to_public_dict(),
     }
 
 

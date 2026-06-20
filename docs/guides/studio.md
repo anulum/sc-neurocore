@@ -187,7 +187,7 @@ current protocol for each frequency. The injected trace is
 | GET | `/api/presets` | List preset experiments |
 | GET | `/api/presets/{id}` | Get preset detail |
 | POST | `/api/codegen` | Generate Python script |
-| POST | `/api/compile` | Compile ODE to Verilog |
+| POST | `/api/compile` | Compile ODE to Verilog with source-to-RTL traceability |
 | GET | `/api/cache/stats` | Cache hit/miss statistics |
 | GET | `/api/health` | Health check |
 
@@ -378,6 +378,12 @@ flows, and the Admin queue records path-free artifacts at
 `compiler/result.json`, `synthesis/result.json`,
 `synthesis/multi-target-result.json`, `synthesis/pnr-result.json`, and
 `pipeline/result.json`.
+
+Compile responses include path-free `studio.compile-traceability.v1` metadata.
+The manifest records the source equation payload, emitted RTL module metadata,
+source and RTL SHA-256 digests, and `evidence_classification: "compile"`
+without exposing host-local paths. The Compiler Inspector displays shortened
+source, RTL, and manifest digests beside direct equation-to-Verilog output.
 
 Synthesis results include path-free `studio.synthesis-target-provenance.v1`
 metadata for the selected target. Multi-target runs include the

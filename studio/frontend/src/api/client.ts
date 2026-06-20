@@ -409,7 +409,6 @@ export const logoutStudioBrowserUser = () =>
 export const simulateODE = (req: Record<string, unknown>) => post<SimulateResponse>("/simulate", req);
 export const simulateModel = (req: Record<string, unknown>) => post<SimulateResponse>("/models/simulate", req);
 export const fetchFICurve = (req: Record<string, unknown>) => post<FICurveResponse>("/fi-curve", req);
-export const compileVerilog = (req: Record<string, unknown>) => post<{ verilog: string }>("/compile", req);
 export const fetchBifurcation = (req: Record<string, unknown>) => post<BifurcationResponse>("/bifurcation", req);
 export const fetchSensitivity = (req: Record<string, unknown>) => post<SensitivityResponse>("/sensitivity", req);
 export const fetchNullclines = (req: Record<string, unknown>) => post<NullclineResponse>("/nullclines", req);
@@ -460,6 +459,38 @@ export interface ImportedTrace {
 
 // --- Compiler Inspector (Block 2) ---
 
+export interface CompileSourcePayload {
+  equations: string[];
+  init: Record<string, number>;
+  params: Record<string, number>;
+  reset: string | null;
+  threshold: string | null;
+}
+
+export interface CompileTraceabilityOutput {
+  language: "verilog" | "systemverilog";
+  module_name: string;
+  rtl_chars: number;
+  rtl_sha256: string;
+}
+
+export interface CompileTraceability {
+  evidence_classification: "compile";
+  input_sha256: string;
+  output: CompileTraceabilityOutput;
+  schema_version: "studio.compile-traceability.v1";
+  source: "ode";
+  source_payload: CompileSourcePayload;
+  traceability_sha256: string;
+}
+
+export interface CompileResponse {
+  chars: number;
+  compile_traceability: CompileTraceability;
+  module_name: string;
+  verilog: string;
+}
+
 export interface IRBuildResponse {
   ir_text: string;
   errors: string[];
@@ -488,8 +519,10 @@ export interface SVDirectResponse {
   ir_repr: string;
   chars: number;
   module_name: string;
+  compile_traceability: CompileTraceability;
 }
 
+export const compileVerilog = (req: Record<string, unknown>) => post<CompileResponse>("/compile", req);
 export const buildIR = (req: Record<string, unknown>) => post<IRBuildResponse>("/ir/build", req);
 export const verifyIR = (irText: string) => post<IRVerifyResponse>("/ir/verify", { ir_text: irText });
 export const emitSV = (irText: string) => post<SVEmitResponse>("/ir/emit-sv", { ir_text: irText });

@@ -25,7 +25,7 @@ import {
   saveProject as apiSaveProject, loadProject as apiLoadProject,
   listProjects as apiListProjects, deleteProject as apiDeleteProject,
   runPipeline as apiRunPipeline,
-  type CharacterizeResponse, type ImportedTrace, type NetworkResult,
+  type CharacterizeResponse, type CompileTraceability, type ImportedTrace, type NetworkResult,
   type NeuronTemplate, type ModelSummary, type ModelDetail, type PresetSummary,
   type SimulateResponse, type FICurveResponse, type BifurcationResponse,
   type SensitivityResponse, type PrecisionResponse, type HeatmapResponse,
@@ -116,6 +116,7 @@ interface StudioState {
   irText: string;
   svSource: string;
   irErrors: string[];
+  compileTraceability: CompileTraceability | null;
   synthTarget: string;
   synthResult: SynthResult | null;
   synthEstimate: SynthEstimate | null;
@@ -280,7 +281,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   freqResult: null, staResult: null,
   charResult: null, multiResults: null, importedTrace: null, networkResult: null,
   networkParams: { n_exc: 80, n_inh: 20, w_ee: 0.1, w_ei: 0.4, w_ie: 0.1, w_ii: 0.4, p_conn: 0.2, ext_rate: 5.0 },
-  verilogSrc: "", irText: "", svSource: "", irErrors: [] as string[],
+  verilogSrc: "", irText: "", svSource: "", irErrors: [] as string[], compileTraceability: null,
   progressPct: 0, progressMsg: "",
   graphPopulations: [], graphProjections: [], graphModels: [], graphSimResult: null, graphErrors: [],
   serverProjects: [], pipelineResult: null,
@@ -726,7 +727,11 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       const res = await compileVerilog({
         equations: s.equations, threshold: s.threshold, reset: s.reset, params: s.odeParams,
       });
-      set({ verilogSrc: res.verilog, isSimulating: false });
+      set({
+        compileTraceability: res.compile_traceability,
+        verilogSrc: res.verilog,
+        isSimulating: false,
+      });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
   },
 
@@ -1009,7 +1014,12 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         equations: s.equations, threshold: s.threshold || null, reset: s.reset || null,
         params: s.odeParams,
       });
-      set({ svSource: result.verilog, irText: result.ir_repr, isSimulating: false });
+      set({
+        compileTraceability: result.compile_traceability,
+        svSource: result.verilog,
+        irText: result.ir_repr,
+        isSimulating: false,
+      });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
   },
 
