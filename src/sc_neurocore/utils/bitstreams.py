@@ -309,8 +309,11 @@ class BitstreamEncoder:
     x_rec = encoder.decode(bitstream)
     """
 
-    x_min: float
-    x_max: float
+    # x_min/x_max default to the unipolar probability domain [0, 1] so callers
+    # that only set length/seed (e.g. the SCPN-CONTROL compiler) construct a valid
+    # encoder; explicit ranges remain supported positionally and by keyword.
+    x_min: float = 0.0
+    x_max: float = 1.0
     length: int = 256
     seed: Optional[int] = None
     mode: str = "bernoulli"  # "bernoulli", "sobol", "bipolar", or "chaotic"

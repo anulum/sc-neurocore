@@ -17,6 +17,8 @@ Provides:
 
 from .gpu_backend import HAS_CUPY, to_device, to_host, xp
 from .vector_ops import pack_bitstream, unpack_bitstream, vec_and, vec_popcount
+from .backend import Backend, available_backends, get_backend
+from .sc_inference import sc_forward, sc_forward_numpy
 
 __all__ = [
     "pack_bitstream",
@@ -27,4 +29,9 @@ __all__ = [
     "HAS_CUPY",
     "to_device",
     "to_host",
+    "Backend",
+    "available_backends",
+    "get_backend",
+    "sc_forward",
+    "sc_forward_numpy",
 ]

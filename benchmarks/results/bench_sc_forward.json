@@ -1,0 +1,65 @@
+{
+  "benchmark": "sc_forward_packed",
+  "date_utc": "2026-06-20T23:16:14Z",
+  "language_surfaces": [
+    "Python",
+    "Rust"
+  ],
+  "kernel": "sc_forward",
+  "hardware_measurement_claimed": false,
+  "workload": {
+    "n_out": 128,
+    "n_in": 128,
+    "length": 4096,
+    "multiply_accumulates": 67108864,
+    "seed": 20260621
+  },
+  "accuracy_max_abs_error_vs_dense": 0.2305662922623597,
+  "meta": {
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "numpy": "2.2.6"
+  },
+  "backends": {
+    "numpy": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 46.346375,
+      "mac_per_s": 1447985179.8,
+      "repeats": 3
+    },
+    "rust": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 2.810324,
+      "mac_per_s": 23879404001.7,
+      "repeats": 15,
+      "speedup_over_numpy": 16.49
+    }
+  },
+  "parity": {
+    "reference": "numpy",
+    "rust_numpy_bit_identical": true,
+    "rust_numpy_raw_delta": 0
+  },
+  "host_context": {
+    "affinity_cpus": [
+      10,
+      11
+    ],
+    "cgroup_effective_cpuset": "10-11",
+    "load_average_before": [
+      5.6474609375,
+      7.0263671875,
+      7.21142578125
+    ],
+    "load_average_after": [
+      5.6474609375,
+      7.0263671875,
+      7.21142578125
+    ],
+    "runtime_cpuset_shield_claimed": true,
+    "isolation_mode": "runtime-cpuset-shield"
+  }
+}

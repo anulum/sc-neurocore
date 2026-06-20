@@ -4,7 +4,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Public bitstream-inference API
+- Restored a stable public stochastic-inference surface over caller-owned packed
+  weight bitstreams. `sc_neurocore.accel.sc_forward(weights_packed, input_probs,
+  *, length, backend, seed)` returns the AND-then-popcount estimate of
+  `weights @ input_probs` for unipolar stochastic computing; the input encoder is
+  the deterministic 16-bit LFSR comparator, so the Rust accelerated path and the
+  NumPy fallback are bit-identical for a fixed seed. Added
+  `sc_neurocore.accel.get_backend()` / `available_backends()` as a fastest-first
+  backend selector (Rust accelerated path, NumPy fallback), the Rust engine
+  `sc_forward_packed` + PyO3 `py_sc_forward_packed`, a parity test proving the
+  estimate matches the dense reference within stochastic tolerance and that the
+  Rust and NumPy paths agree exactly, a Rust-vs-NumPy benchmark with a committed
+  artefact, and documentation.
+- `BitstreamEncoder` again accepts `BitstreamEncoder(length=..., seed=...)`:
+  `x_min`/`x_max` default to the unipolar probability domain `[0, 1]`, with
+  explicit ranges still supported.
+
 ### Studio platform
+- Fail closed on non-positive Studio audit retained-file settings so configured
+  rotation always keeps at least one archived JSONL segment for incident review
+  and retained-chain verification.
 - Added retained-chain integrity verification to persistent Studio JSONL audit
   logs. Audit status, audit export, and operator status now report
   path-free `integrity_verified`, `integrity_error`, and latest retained event
