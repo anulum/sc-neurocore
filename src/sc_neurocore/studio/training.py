@@ -429,25 +429,18 @@ def start_training(
     """
 
     if job_manager is not None:
-        ready = threading.Event()
+        from sc_neurocore.studio.platform.training_process import TRAINING_PROCESS_TASK
 
-        def task(context: StudioJobContext) -> dict[str, object]:
-            job = TrainingJob(
-                config,
-                job_id=context.job_id,
-                cancelled=lambda: context.cancelled,
-            )
-            _register_job(job)
-            ready.set()
-            return job.run_blocking(context)
-
-        record = job_manager.submit(
+        record = job_manager.submit_process_task(
             kind="training",
             owner="studio-training",
             request_id=None,
-            task=task,
+            task_path=TRAINING_PROCESS_TASK,
+            payload=config,
         )
-        ready.wait(timeout=1.0)
+        proxy = TrainingJob(config, job_id=record.job_id)
+        proxy.status = "running"
+        _register_job(proxy)
         return {"job_id": record.job_id, "status": "running"}
 
     job = TrainingJob(config)
@@ -475,25 +468,57 @@ def stop_training(
     return {"job_id": job_id, "status": "stopping"}
 
 
-def get_training_status(job_id: str) -> dict[str, Any]:
+def get_training_status(
+    job_id: str,
+    job_manager: StudioJobManager | None = None,
+) -> dict[str, Any]:
     """Return path-free status for one Studio training job."""
 
     with _jobs_lock:
         job = _jobs.get(job_id)
     if not job:
+        if job_manager is not None:
+            try:
+                return _status_from_platform_record(job_manager.record(job_id))
+            except KeyError:
+                pass
         return {"error": f"Job {job_id} not found"}
+    if job_manager is not None:
+        try:
+            record = job_manager.record(job_id)
+        except KeyError:
+            return job._public_status()
+        _sync_proxy_job(job, record.status, record.error, record.result)
     return job._public_status()
 
 
-def stream_metrics(job_id: str) -> Any:
+def stream_metrics(job_id: str, job_manager: StudioJobManager | None = None) -> Any:
     """Generator that yields SSE-formatted metric events."""
     with _jobs_lock:
         job = _jobs.get(job_id)
     if not job:
+        if job_manager is not None:
+            try:
+                record = job_manager.record(job_id)
+            except KeyError:
+                record = None
+            if record is not None:
+                yield f"data: {json.dumps(_event_from_platform_record(record.status, record.error, record.result))}\n\n"
+                return
         yield f"data: {json.dumps({'event': 'error', 'data': {'message': 'Job not found'}})}\n\n"
         return
 
     while True:
+        if job_manager is not None:
+            try:
+                record = job_manager.record(job_id)
+            except KeyError:
+                record = None
+            if record is not None:
+                _sync_proxy_job(job, record.status, record.error, record.result)
+                if job.status in ("completed", "stopped", "failed"):
+                    yield f"data: {json.dumps(_event_from_platform_record(record.status, record.error, record.result))}\n\n"
+                    break
         try:
             event = job.metrics.get(timeout=1.0)
             yield f"data: {json.dumps(event)}\n\n"
@@ -510,3 +535,83 @@ def list_jobs() -> list[dict[str, Any]]:
 
     with _jobs_lock:
         return [{"job_id": j.id, "status": j.status, "config": j.config} for j in _jobs.values()]
+
+
+def _sync_proxy_job(
+    job: TrainingJob,
+    platform_status: str,
+    platform_error: str | None,
+    platform_result: dict[str, object] | None,
+) -> None:
+    """Update a parent-process proxy job from platform job terminal state."""
+
+    if platform_status == "completed":
+        job.status = "completed"
+        final_metrics = (platform_result or {}).get("final_metrics")
+        if isinstance(final_metrics, dict):
+            job.final_metrics = dict(final_metrics)
+        return
+    if platform_status in ("cancelled", "cancelling", "timed_out"):
+        job.status = "stopped"
+        job.error = platform_error
+        return
+    if platform_status == "failed":
+        job.status = "failed"
+        job.error = platform_error
+
+
+def _status_from_platform_record(record: Any) -> dict[str, Any]:
+    """Return Training Monitor status synthesized from a platform job record."""
+
+    platform_result = record.result if isinstance(record.result, dict) else None
+    final_metrics = (platform_result or {}).get("final_metrics")
+    return {
+        "error": record.error,
+        "final_metrics": final_metrics if isinstance(final_metrics, dict) else None,
+        "job_id": record.job_id,
+        "status": _training_status_from_platform_status(record.status),
+    }
+
+
+def _event_from_platform_record(
+    platform_status: str,
+    platform_error: str | None,
+    platform_result: dict[str, object] | None,
+) -> dict[str, Any]:
+    """Return an SSE event synthesized from a platform job record."""
+
+    training_status = _training_status_from_platform_status(platform_status)
+    if training_status == "completed":
+        final_metrics = (platform_result or {}).get("final_metrics")
+        return {
+            "data": final_metrics if isinstance(final_metrics, dict) else {},
+            "event": "completed",
+            "timestamp": time.time(),
+        }
+    if training_status == "failed":
+        return {
+            "data": {"message": platform_error or "Training failed."},
+            "event": "error",
+            "timestamp": time.time(),
+        }
+    if training_status == "stopped":
+        return {
+            "data": {"message": platform_error or "Training stopped."},
+            "event": "stopped",
+            "timestamp": time.time(),
+        }
+    return {"event": "heartbeat"}
+
+
+def _training_status_from_platform_status(platform_status: str) -> str:
+    """Map platform job status into the Training Monitor status vocabulary."""
+
+    if platform_status == "completed":
+        return "completed"
+    if platform_status == "failed":
+        return "failed"
+    if platform_status in ("cancelled", "cancelling", "timed_out"):
+        return "stopped"
+    if platform_status in ("pending", "running"):
+        return "running"
+    return "pending"

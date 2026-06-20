@@ -2658,7 +2658,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
 
     @app.get("/api/training/status/{job_id}")
     def api_training_status(job_id: str) -> Any:
-        result = get_training_status(job_id)
+        result = get_training_status(job_id, studio_job_manager)
         if result.get("error") and "job_id" not in result:
             raise HTTPException(404, result["error"])
         return result
@@ -2668,7 +2668,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         from starlette.responses import StreamingResponse
 
         return StreamingResponse(
-            stream_metrics(job_id),
+            stream_metrics(job_id, studio_job_manager),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )

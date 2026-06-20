@@ -187,11 +187,12 @@ runtime features:
   resource profile per allowed job kind. Each profile records default timeout,
   per-artifact size ceiling, and supported execution models without exposing
   host filesystem paths.
-- `/api/training/start`, `/api/training/stop`, and
-  `/api/training/status/{job_id}` now use the local worker manager for bounded
-  training execution while preserving the training monitor's existing SSE
-  metric stream contract. Terminal training jobs write `training/status.json`
-  and `training/evidence.json`; the evidence manifest uses
+- `/api/training/start` now uses the process-backed local worker manager for
+  bounded training execution, while `/api/training/stop`,
+  `/api/training/status/{job_id}`, and `/api/training/stream/{job_id}` keep the
+  parent-process control and observation surface for the Training Monitor.
+  Terminal training jobs write `training/status.json` and
+  `training/evidence.json`; the evidence manifest uses
   `studio.action-evidence.v1` and records terminal status, action kind, replay
   route, job ID, evidence classification, status payload SHA-256, and status
   artifact metadata without local paths or secret material.
@@ -265,13 +266,14 @@ runtime features:
   process-backed execution. The task is an importable `module:function` that
   receives a `StudioJobContext` plus a JSON payload and returns a JSON result.
   It shares the same artifact manifest contract as thread-backed jobs, while
-  timeout and cancellation terminate the worker process. `/api/compile`,
-  `/api/synth/run`, `/api/synth/multi-target`, `/api/synth/pnr`, and
-  `/api/pipeline/run` use this path for ODE-to-RTL compilation, synthesis,
-  PnR, target comparison, and graph-to-synthesis execution while preserving
-  their synchronous response contracts and writing the same
-  `studio.action-evidence.v1` artifacts. Existing Studio route closures remain
-  compatible with the thread-backed path during migration.
+  timeout and cancellation terminate the worker process. `/api/training/start`,
+  `/api/compile`, `/api/synth/run`, `/api/synth/multi-target`,
+  `/api/synth/pnr`, and `/api/pipeline/run` use this path for training,
+  ODE-to-RTL compilation, synthesis, PnR, target comparison, and
+  graph-to-synthesis execution while preserving their response contracts and
+  writing the same `studio.action-evidence.v1` artifacts. Existing Studio
+  route closures remain compatible with the thread-backed path during
+  migration.
 - `/api/studio/operator/status` is an admin-classified aggregate for the
   Studio control plane. It combines deployment profile, route-policy
   enforcement, route inventory counts, protected-route audit coverage,

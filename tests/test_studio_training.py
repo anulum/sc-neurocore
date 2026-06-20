@@ -21,7 +21,10 @@ fastapi = pytest.importorskip("fastapi")
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
-from sc_neurocore.studio.platform import STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION
+from sc_neurocore.studio.platform import (
+    STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION,
+    StudioRuntimeSettings,
+)
 from sc_neurocore.studio.platform.jobs import (
     StudioJobCancelled,
     StudioJobContext,
@@ -258,8 +261,13 @@ class TestTrainingEndpoints:
         assert r.status_code == 200
         assert isinstance(r.json(), list)
 
-    def test_training_endpoint_registers_platform_job(self) -> None:
-        app = create_app()
+    def test_training_endpoint_registers_platform_job(self, tmp_path: Path) -> None:
+        job_root = tmp_path / "jobs"
+        settings = StudioRuntimeSettings(
+            job_root_path=str(job_root),
+            job_default_timeout_seconds=10.0,
+        )
+        app = create_app(settings)
         client = TestClient(app, base_url="http://127.0.0.1")
         r = client.post(
             "/api/training/start",
@@ -272,6 +280,7 @@ class TestTrainingEndpoints:
         records = manager.list_records()
 
         assert any(record.job_id == job_id and record.kind == "training" for record in records)
+        assert (job_root / job_id / ".studio_process_payload.json").is_file()
 
 
 # --- SSE Stream ---
