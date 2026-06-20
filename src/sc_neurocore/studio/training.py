@@ -25,6 +25,10 @@ from sc_neurocore.studio.platform.action_evidence import (
     EvidenceStatus,
     write_studio_action_evidence_manifest,
 )
+from sc_neurocore.studio.platform.training_checkpoint import (
+    build_training_checkpoint,
+    import_training_checkpoint_payload,
+)
 from sc_neurocore.studio.platform.training_evidence import build_training_evidence_summary
 
 try:
@@ -548,6 +552,69 @@ def list_jobs() -> list[dict[str, Any]]:
 
     with _jobs_lock:
         return [{"job_id": j.id, "status": j.status, "config": j.config} for j in _jobs.values()]
+
+
+def export_training_checkpoint(
+    job_id: str,
+    job_manager: StudioJobManager | None = None,
+) -> dict[str, Any]:
+    """Return a portable checkpoint for one Studio training job.
+
+    Parameters
+    ----------
+    job_id:
+        Training Monitor job identifier.
+    job_manager:
+        Optional Studio job manager used to attach terminal worker evidence
+        metadata when the job has reached a terminal state.
+
+    Returns
+    -------
+    dict[str, Any]
+        `studio.training.checkpoint.v1` payload, or an error payload when the
+        training job is unknown to the parent-process Training Monitor
+        registry.
+    """
+
+    with _jobs_lock:
+        job = _jobs.get(job_id)
+    if job is None:
+        return {"error": f"Job {job_id} not found"}
+    status = get_training_status(job_id, job_manager)
+    final_metrics = status.get("final_metrics")
+    evidence_summary = status.get("evidence_summary")
+    checkpoint = build_training_checkpoint(
+        job_id=job_id,
+        config=job.config,
+        status=str(status.get("status", job.status)),
+        final_metrics=final_metrics if isinstance(final_metrics, dict) else None,
+        evidence_summary=evidence_summary if isinstance(evidence_summary, dict) else None,
+    )
+    return checkpoint.to_public_dict()
+
+
+def import_training_checkpoint(data: dict[str, Any]) -> dict[str, Any]:
+    """Validate a portable checkpoint and return its training config.
+
+    Parameters
+    ----------
+    data:
+        JSON object submitted to `/api/training/checkpoint/import`.
+
+    Returns
+    -------
+    dict[str, Any]
+        Validated checkpoint import payload containing restored training
+        configuration and source-job metadata.
+
+    Raises
+    ------
+    ValueError
+        If the checkpoint schema, config digest, or checkpoint digest is
+        invalid.
+    """
+
+    return import_training_checkpoint_payload(data)
 
 
 def _sync_proxy_job(

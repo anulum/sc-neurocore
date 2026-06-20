@@ -128,6 +128,13 @@ from sc_neurocore.studio.platform.training_evidence import (
     TrainingEvidenceSummary,
     build_training_evidence_summary,
 )
+from sc_neurocore.studio.platform.training_checkpoint import (
+    STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION,
+    StudioTrainingCheckpoint,
+    TrainingCheckpointConfig,
+    build_training_checkpoint,
+    import_training_checkpoint_payload,
+)
 from sc_neurocore.studio.platform.operator import (
     OPERATOR_STATUS_SCHEMA_VERSION,
     OperatorIdentityMode,
@@ -249,6 +256,7 @@ __all__ = [
     "StudioIdentityStore",
     "StudioLoginThrottleDecision",
     "STUDIO_PREFLIGHT_SCHEMA_VERSION",
+    "STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION",
     "StudioJobArtifact",
     "StudioJobArtifactPayload",
     "StudioJobArtifactUnavailable",
@@ -263,7 +271,9 @@ __all__ = [
     "StudioJobStatusSnapshot",
     "StudioJobTask",
     "StudioProcessJobPayload",
+    "StudioTrainingCheckpoint",
     "TrainingEvidenceSummary",
+    "TrainingCheckpointConfig",
     "StudioOperatorCapabilityStatus",
     "StudioOperatorIdentityStatus",
     "StudioOperatorResourceLimitStatus",
@@ -280,6 +290,8 @@ __all__ = [
     "build_studio_deployment_profile_package",
     "build_studio_operator_status",
     "build_training_evidence_summary",
+    "build_training_checkpoint",
+    "import_training_checkpoint_payload",
     "list_studio_deployment_profile_packages",
     "run_studio_preflight",
     "add_studio_browser_user_record",

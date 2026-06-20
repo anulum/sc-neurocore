@@ -409,6 +409,10 @@ the terminal evidence artifact is available, `/api/training/status/{job_id}`
 returns a `studio.training.evidence-summary.v1` operator summary containing the
 verified action kind, evidence classification, replay route, evidence artifact
 digest, and result artifact metadata.
+Training checkpoint controls export `studio.training.checkpoint.v1` JSON from
+`/api/training/checkpoint/{job_id}` and import it through
+`/api/training/checkpoint/import`, validating both the config digest and the
+full checkpoint digest before restoring the training configuration.
 
 Compile, synthesis, PnR, and full-pipeline routes also submit through the
 bounded worker manager. Their HTTP responses remain synchronous for existing UI

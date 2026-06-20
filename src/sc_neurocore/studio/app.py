@@ -81,7 +81,9 @@ from sc_neurocore.studio.network_graph import (
     validate_graph,
 )
 from sc_neurocore.studio.training import (
+    export_training_checkpoint,
     get_training_status,
+    import_training_checkpoint,
     list_cell_types,
     list_jobs,
     list_surrogates,
@@ -2662,6 +2664,21 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         if result.get("error") and "job_id" not in result:
             raise HTTPException(404, result["error"])
         return result
+
+    @app.get("/api/training/checkpoint/{job_id}")
+    def api_training_checkpoint_export(job_id: str) -> Any:
+        """Export one portable Training Monitor checkpoint."""
+
+        result = export_training_checkpoint(job_id, studio_job_manager)
+        if result.get("error"):
+            raise HTTPException(404, result["error"])
+        return result
+
+    @app.post("/api/training/checkpoint/import")
+    def api_training_checkpoint_import(data: dict[str, Any]) -> Any:
+        """Validate an imported Training Monitor checkpoint."""
+
+        return _safe(lambda: import_training_checkpoint(data))
 
     @app.get("/api/training/stream/{job_id}")
     def api_training_stream(job_id: str) -> Any:

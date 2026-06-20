@@ -18,6 +18,8 @@ import {
   fetchSynthEstimate,
   fetchSurrogates as apiFetchSurrogates, startTraining as apiStartTraining,
   stopTraining as apiStopTraining,
+  exportTrainingCheckpoint as apiExportTrainingCheckpoint,
+  importTrainingCheckpoint as apiImportTrainingCheckpoint,
   fetchGraphModels as apiFetchGraphModels,
   createPopulation as apiCreatePop, createProjection as apiCreateProj,
   simulateGraph as apiSimGraph, validateGraph as apiValidateGraph,
@@ -32,7 +34,7 @@ import {
   type CompareResponse, type NullclineResponse, type FreqResponse,
   type SynthResult, type SynthEstimate, type MultiTargetResult,
   type SynthToolInfo,
-  type SurrogateInfo, type TrainingEpochMetrics,
+  type SurrogateInfo, type TrainingCheckpointPayload, type TrainingEpochMetrics,
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSaveResponse, type ProjectSummary, type PipelineResult,
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
@@ -234,6 +236,8 @@ interface StudioState {
   loadSurrogates: () => Promise<void>;
   startTraining: () => Promise<void>;
   stopTraining: () => Promise<void>;
+  exportTrainingCheckpoint: () => Promise<void>;
+  importTrainingCheckpointText: (checkpointJson: string) => Promise<void>;
   setTrainingConfig: (key: string, value: unknown) => void;
   autoSimulate: () => void;
   exportData: () => void;
@@ -1286,6 +1290,39 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     try {
       await apiStopTraining(s.trainingJobId);
       set({ trainingStatus: "stopping" });
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  exportTrainingCheckpoint: async () => {
+    const s = get();
+    if (!s.trainingJobId) return;
+    try {
+      const checkpoint = await apiExportTrainingCheckpoint(s.trainingJobId);
+      const blob = new Blob([JSON.stringify(checkpoint, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `training_checkpoint_${checkpoint.job_id}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  importTrainingCheckpointText: async (checkpointJson) => {
+    try {
+      const parsed = JSON.parse(checkpointJson) as TrainingCheckpointPayload;
+      const imported = await apiImportTrainingCheckpoint(parsed);
+      set((s) => ({
+        trainingConfig: { ...s.trainingConfig, ...imported.config },
+        trainingJobId: imported.source_job_id,
+        trainingStatus: `checkpoint:${imported.source_status}`,
+        trainingEpochs: [],
+        activeTab: "train",
+        error: null,
+      }));
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
     }

@@ -860,6 +860,18 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
             ),
             (
                 "GET",
+                "/api/training/checkpoint/{job_id}",
+                RouteVisibility.AUTHENTICATED,
+                "studio.training.checkpoint.export",
+            ),
+            (
+                "POST",
+                "/api/training/checkpoint/import",
+                RouteVisibility.AUTHENTICATED,
+                "studio.training.checkpoint.import",
+            ),
+            (
+                "GET",
                 "/api/training/stream/{job_id}",
                 RouteVisibility.AUTHENTICATED,
                 "studio.training.stream",

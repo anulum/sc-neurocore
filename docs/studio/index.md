@@ -201,6 +201,11 @@ runtime features:
   `studio.training.evidence-summary.v1` operator summary with the action kind,
   classification, replay route, evidence artifact digest, and result artifact
   metadata.
+- `/api/training/checkpoint/{job_id}` exports a portable
+  `studio.training.checkpoint.v1` JSON checkpoint for the selected Training
+  Monitor job. `/api/training/checkpoint/import` validates checkpoint and
+  config digests before returning the restored training config. The Training
+  Monitor UI exposes matching import/export controls.
 - `/api/compile`, `/api/synth/run`, `/api/synth/multi-target`,
   `/api/synth/pnr`, and `/api/pipeline/run` execute through the same bounded
   local worker manager while preserving their synchronous response payloads.
@@ -445,6 +450,9 @@ route, terminal artifact names, configuration summary, and latest epoch.
 Terminal status responses also include a verified
 `studio.training.evidence-summary.v1` summary when `training/evidence.json`
 is available from the worker artifact manifest.
+The panel can export and import `studio.training.checkpoint.v1` JSON
+checkpoints to restore training configuration and source status metadata
+without exposing local paths or raw model-weight tensors.
 
 ### Compiler Inspector
 

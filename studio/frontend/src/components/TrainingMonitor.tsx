@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useStudioStore } from "../stores/studio";
 import { buildTrainingEvidenceModel, type TrainingEvidenceModel } from "../trainingEvidence";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
@@ -102,10 +102,70 @@ export function TrainingEvidenceStrip({ evidence }: { evidence: TrainingEvidence
   );
 }
 
+export function TrainingCheckpointControls({
+  canExport,
+  onExport,
+  onImportText,
+}: {
+  canExport: boolean;
+  onExport: () => void;
+  onImportText: (checkpointJson: string) => void;
+}) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  return (
+    <>
+      <button
+        onClick={onExport}
+        disabled={!canExport}
+        title="Export training checkpoint"
+        style={{
+          background: "var(--bg-tertiary)",
+          border: "1px solid var(--border)",
+          color: canExport ? "var(--text-secondary)" : "var(--text-muted)",
+          cursor: canExport ? "pointer" : "not-allowed",
+          fontSize: 10,
+          padding: "3px 8px",
+        }}
+      >
+        Export checkpoint
+      </button>
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        title="Import training checkpoint"
+        style={{
+          background: "var(--bg-tertiary)",
+          border: "1px solid var(--border)",
+          color: "var(--text-secondary)",
+          cursor: "pointer",
+          fontSize: 10,
+          padding: "3px 8px",
+        }}
+      >
+        Import checkpoint
+      </button>
+      <input
+        ref={fileInputRef}
+        accept="application/json,.json"
+        aria-label="Import training checkpoint file"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+          void file.text().then(onImportText);
+          event.target.value = "";
+        }}
+        style={{ display: "none" }}
+        type="file"
+      />
+    </>
+  );
+}
+
 export default function TrainingMonitor() {
   const {
     trainingStatus, trainingEpochs, trainingSurrogates, trainingConfig,
     trainingJobId, startTraining, stopTraining, setTrainingConfig, loadSurrogates, isSimulating,
+    exportTrainingCheckpoint, importTrainingCheckpointText,
   } = useStudioStore();
 
   useEffect(() => { loadSurrogates(); }, [loadSurrogates]);
@@ -164,6 +224,11 @@ export default function TrainingMonitor() {
             Stop
           </button>
         )}
+        <TrainingCheckpointControls
+          canExport={trainingJobId !== null}
+          onExport={() => { void exportTrainingCheckpoint(); }}
+          onImportText={(checkpointJson) => { void importTrainingCheckpointText(checkpointJson); }}
+        />
       </div>
 
       <TrainingEvidenceStrip evidence={evidence} />

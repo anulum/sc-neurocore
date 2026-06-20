@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { TrainingEvidenceStrip } from "./TrainingMonitor";
+import { TrainingCheckpointControls, TrainingEvidenceStrip } from "./TrainingMonitor";
 
 describe("TrainingMonitor", () => {
   it("renders path-free training evidence metadata for submitted jobs", () => {
@@ -30,5 +30,20 @@ describe("TrainingMonitor", () => {
     expect(html).toContain("synthetic, 4 epochs, superspike, 16 steps");
     expect(html).toContain("Epoch");
     expect(html).toContain(">2<");
+  });
+
+  it("renders checkpoint controls with export disabled until a job exists", () => {
+    const html = renderToStaticMarkup(
+      <TrainingCheckpointControls
+        canExport={false}
+        onExport={() => undefined}
+        onImportText={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("Export checkpoint");
+    expect(html).toContain("Import checkpoint");
+    expect(html).toContain("disabled");
+    expect(html).toContain("Import training checkpoint file");
   });
 });

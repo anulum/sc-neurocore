@@ -719,6 +719,14 @@ def test_default_route_policy_registry_marks_stateful_routes_protected() -> None
     registry = contract["build_default_studio_route_policy_registry"]()
 
     training_policy = registry.policy_for("POST", "/api/training/start")
+    training_checkpoint_export_policy = registry.policy_for(
+        "GET",
+        "/api/training/checkpoint/{job_id}",
+    )
+    training_checkpoint_import_policy = registry.policy_for(
+        "POST",
+        "/api/training/checkpoint/import",
+    )
     synth_policy = registry.policy_for("POST", "/api/synth/run")
     websocket_policy = registry.policy_for("WEBSOCKET", "/ws/progress")
     jobs_status_policy = registry.policy_for("GET", "/api/studio/jobs/status")
@@ -730,6 +738,14 @@ def test_default_route_policy_registry_marks_stateful_routes_protected() -> None
     )
 
     assert training_policy.visibility is contract["RouteVisibility"].AUTHENTICATED
+    assert (
+        training_checkpoint_export_policy.visibility
+        is contract["RouteVisibility"].AUTHENTICATED
+    )
+    assert (
+        training_checkpoint_import_policy.visibility
+        is contract["RouteVisibility"].AUTHENTICATED
+    )
     assert synth_policy.visibility is contract["RouteVisibility"].ADMIN
     assert websocket_policy.visibility is contract["RouteVisibility"].AUTHENTICATED
     assert jobs_status_policy.visibility is contract["RouteVisibility"].PUBLIC

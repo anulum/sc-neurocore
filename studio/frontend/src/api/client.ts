@@ -749,6 +749,26 @@ export interface TrainingJobStatus {
   final_metrics: Record<string, number> | null;
 }
 
+export interface TrainingCheckpointPayload {
+  checkpoint_sha256: string;
+  config: Partial<TrainingConfig>;
+  config_sha256: string;
+  evidence_summary: Record<string, unknown> | null;
+  final_metrics: Record<string, number> | null;
+  generated_at_utc: string;
+  job_id: string;
+  schema_version: "studio.training.checkpoint.v1";
+  status: string;
+}
+
+export interface TrainingCheckpointImportResponse {
+  config: Partial<TrainingConfig>;
+  config_sha256: string;
+  imported_schema_version: "studio.training.checkpoint.v1";
+  source_job_id: string;
+  source_status: string;
+}
+
 export interface TrainingJobSummary {
   job_id: string;
   status: string;
@@ -764,6 +784,10 @@ export const stopTraining = (jobId: string) =>
 export const fetchTrainingStatus = (jobId: string) =>
   get<TrainingJobStatus>(`/training/status/${jobId}`);
 export const fetchTrainingJobs = () => get<TrainingJobSummary[]>("/training/jobs");
+export const exportTrainingCheckpoint = (jobId: string) =>
+  get<TrainingCheckpointPayload>(`/training/checkpoint/${jobId}`);
+export const importTrainingCheckpoint = (checkpoint: TrainingCheckpointPayload) =>
+  post<TrainingCheckpointImportResponse>("/training/checkpoint/import", checkpoint);
 
 // --- Network Canvas (Block 5) ---
 
