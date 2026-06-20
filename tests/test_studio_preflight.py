@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -65,6 +66,7 @@ def test_studio_preflight_passes_release_posture_without_secret_leaks(tmp_path: 
     assert payload["schema_version"] == STUDIO_PREFLIGHT_SCHEMA_VERSION
     assert payload["deployment_profile"] == "production"
     assert _check_by_id(report.checks, "identity_store").evidence["active_admin_principals"] == 1
+    assert all(check.remediation == () for check in report.checks)
     assert bootstrap.bearer_token not in encoded_payload
     assert bootstrap.token_sha256 not in encoded_payload
     assert str(tmp_path) not in encoded_payload
@@ -82,6 +84,9 @@ def test_studio_preflight_fails_closed_for_development_defaults() -> None:
         "job_root",
         "route_policy_enforcement",
     }.issubset(failed_ids)
+    for check in report.checks:
+        if check.status == "fail":
+            assert check.remediation
     assert _check_by_id(report.checks, "route_policy_inventory").status == "pass"
 
 
@@ -96,6 +101,10 @@ def test_studio_preflight_fails_on_invalid_runtime_settings() -> None:
             status="fail",
             message="Studio runtime settings reject wildcard CORS origins.",
             evidence={},
+            remediation=(
+                "Fix the invalid SC_NEUROCORE_STUDIO_* environment value.",
+                "Regenerate a deployment package with sc-neurocore studio-deployment-profile.",
+            ),
         ),
     )
 
@@ -132,6 +141,7 @@ def test_studio_preflight_detects_required_route_policy_drift(
     assert route_check.status == "fail"
     assert route_check.evidence["missing_count"] == 1
     assert route_check.evidence["mismatched_count"] == 1
+    assert "route policy registry" in route_check.remediation[0]
 
 
 def test_studio_preflight_reports_invalid_identity_without_path_leak(tmp_path: Path) -> None:
@@ -148,6 +158,7 @@ def test_studio_preflight_reports_invalid_identity_without_path_leak(tmp_path: P
     assert identity_check.status == "fail"
     assert identity_check.evidence["configured"] is True
     assert identity_check.evidence["valid"] is False
+    assert "identity file" in identity_check.remediation[0]
     assert str(identity_path) not in encoded_payload
 
 
@@ -205,6 +216,7 @@ def test_studio_preflight_fails_when_admin_principal_is_expired(tmp_path: Path) 
     assert report.passed is False
     assert identity_check.status == "fail"
     assert identity_check.evidence["active_admin_principals"] == 0
+    assert "studio.admin" in identity_check.remediation[0]
 
 
 def test_studio_preflight_rejects_audit_log_directory(tmp_path: Path) -> None:
@@ -224,3 +236,29 @@ def test_studio_preflight_rejects_audit_log_directory(tmp_path: Path) -> None:
     assert report.passed is False
     assert audit_check.status == "fail"
     assert audit_check.evidence["target_is_directory"] is True
+    assert "audit-log parent" in audit_check.remediation[0]
+
+
+def test_studio_preflight_public_remediation_is_path_and_secret_free() -> None:
+    report = run_studio_preflight({})
+    payload = report.to_public_dict()
+    checks_payload = cast(list[dict[str, object]], payload["checks"])
+    encoded_payload = json.dumps(payload).lower()
+    identity_check = _check_by_id(report.checks, "identity_store")
+    audit_check = _check_by_id(report.checks, "audit_log")
+    job_check = _check_by_id(report.checks, "job_root")
+
+    assert "remediation" in checks_payload[0]
+    assert "sc_neurocore_studio_identity_file" in encoded_payload
+    assert "password" not in encoded_payload
+    assert "token_sha256" not in encoded_payload
+    assert "bearer_token" not in encoded_payload
+    assert "/home/" not in encoded_payload
+    assert "/media/" not in encoded_payload
+    assert identity_check.remediation[0].startswith("Create the first admin identity")
+    assert audit_check.remediation[0].startswith("Set SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH")
+    assert job_check.remediation[0].startswith("Set SC_NEUROCORE_STUDIO_JOB_ROOT")
+    assert (
+        preflight._environment_variable_for_check("identity_store")
+        == "SC_NEUROCORE_STUDIO_IDENTITY_FILE"
+    )

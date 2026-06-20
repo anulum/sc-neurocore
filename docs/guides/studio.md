@@ -433,9 +433,9 @@ checks runtime settings, route-policy enforcement, disabled development header
 principals, required admin route policies, a valid identity store with at least
 one active unexpired `studio.admin` principal, audit-log readiness, and
 job-root readiness. The JSON report uses schema `studio.preflight.v1` and is
-safe for deployment logs: it reports booleans, counts, and stable check IDs
-without local filesystem paths, bearer tokens, token hashes, passwords, or
-password verifiers.
+safe for deployment logs: it reports booleans, counts, stable check IDs, and
+path-free remediation steps without local filesystem paths, bearer tokens,
+token hashes, passwords, or password verifiers.
 
 ## Additional Panels (Blocks 2–6)
 

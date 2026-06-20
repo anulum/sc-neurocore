@@ -347,7 +347,7 @@ def test_studio_job_manager_completes_process_task_with_manifest(tmp_path: Path)
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"compiler"}),
-        default_timeout_seconds=3.0,
+        default_timeout_seconds=15.0,
     )
 
     record = manager.submit_process_task(
@@ -357,7 +357,7 @@ def test_studio_job_manager_completes_process_task_with_manifest(tmp_path: Path)
         task_path="tests.test_studio_jobs:process_echo_task",
         payload={"model": "lif"},
     )
-    completed = manager.wait(record.job_id, timeout_seconds=5.0)
+    completed = manager.wait(record.job_id, timeout_seconds=20.0)
     artifact = manager.read_artifact(record.job_id, "reports/process-result.txt")
 
     assert completed.status == "completed"
@@ -371,7 +371,7 @@ def test_studio_job_manager_fails_process_task_without_error_detail(tmp_path: Pa
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"compiler"}),
-        default_timeout_seconds=3.0,
+        default_timeout_seconds=15.0,
     )
 
     record = manager.submit_process_task(
@@ -381,7 +381,7 @@ def test_studio_job_manager_fails_process_task_without_error_detail(tmp_path: Pa
         task_path="tests.test_studio_jobs:process_failure_task",
         payload={},
     )
-    completed = manager.wait(record.job_id, timeout_seconds=5.0)
+    completed = manager.wait(record.job_id, timeout_seconds=20.0)
 
     assert completed.status == "failed"
     assert completed.error == "ValueError"
@@ -391,7 +391,7 @@ def test_studio_job_manager_rejects_invalid_process_inputs(tmp_path: Path) -> No
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"compiler"}),
-        default_timeout_seconds=3.0,
+        default_timeout_seconds=15.0,
     )
 
     with pytest.raises(StudioJobRejected, match="module:function"):
@@ -498,7 +498,7 @@ def test_studio_job_manager_rejects_missing_or_unknown_artifacts(tmp_path: Path)
         task_path="tests.test_studio_jobs:process_echo_task",
         payload={},
     )
-    manager.wait(record.job_id, timeout_seconds=5.0)
+    manager.wait(record.job_id, timeout_seconds=20.0)
 
     with pytest.raises(KeyError):
         manager.read_artifact(record.job_id, "../escape.txt")

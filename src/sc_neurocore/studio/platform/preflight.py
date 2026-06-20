@@ -85,12 +85,16 @@ class StudioPreflightCheck:
         Operator-facing summary that does not include local paths or secrets.
     evidence:
         Small scalar evidence fields suitable for JSON reports.
+    remediation:
+        Operator actions that can resolve a failed check. Entries must not
+        expose local filesystem paths or secret material.
     """
 
     check_id: str
     status: StudioPreflightStatus
     message: str
     evidence: Mapping[str, StudioPreflightEvidenceValue] = field(default_factory=dict)
+    remediation: tuple[str, ...] = ()
 
     def to_public_dict(self) -> dict[str, object]:
         """Return a JSON-serializable, path-free check payload."""
@@ -99,6 +103,7 @@ class StudioPreflightCheck:
             "check_id": self.check_id,
             "evidence": dict(sorted(self.evidence.items())),
             "message": self.message,
+            "remediation": list(self.remediation),
             "status": self.status,
         }
 
@@ -171,6 +176,10 @@ def run_studio_preflight(
                     status="fail",
                     message=str(exc),
                     evidence={},
+                    remediation=(
+                        "Fix the invalid SC_NEUROCORE_STUDIO_* environment value.",
+                        "Regenerate a deployment package with sc-neurocore studio-deployment-profile.",
+                    ),
                 ),
             ),
             deployment_profile=None,
@@ -218,6 +227,9 @@ def _profile_checks(settings: StudioRuntimeSettings) -> tuple[StudioPreflightChe
                 else "Release preflight requires route-policy enforcement."
             ),
             evidence={"enforced": settings.enforce_route_policies},
+            remediation=()
+            if settings.enforce_route_policies
+            else ("Set SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES=true.",),
         ),
         StudioPreflightCheck(
             check_id="header_principal_fallback",
@@ -228,6 +240,9 @@ def _profile_checks(settings: StudioRuntimeSettings) -> tuple[StudioPreflightChe
                 else "Release preflight requires development header-principal fallback disabled."
             ),
             evidence={"allow_header_principal": settings.allow_header_principal},
+            remediation=()
+            if not settings.allow_header_principal
+            else ("Set SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL=false.",),
         ),
     )
 
@@ -258,6 +273,12 @@ def _route_policy_inventory_check() -> StudioPreflightCheck:
             "missing_count": len(missing),
             "mismatched_count": len(mismatched),
         },
+        remediation=()
+        if failure_count == 0
+        else (
+            "Update the Studio route policy registry for every protected route.",
+            "Rerun the Studio route-policy tests before deployment.",
+        ),
     )
 
 
@@ -281,6 +302,10 @@ def _identity_store_check(
             status="fail",
             message="Release preflight requires a configured Studio identity file.",
             evidence={"configured": False},
+            remediation=(
+                "Create the first admin identity with sc-neurocore studio-bootstrap-admin.",
+                "Set SC_NEUROCORE_STUDIO_IDENTITY_FILE to the identity file location.",
+            ),
         )
     try:
         store = load_studio_identity_store(Path(settings.identity_file_path))
@@ -290,6 +315,10 @@ def _identity_store_check(
             status="fail",
             message=str(exc),
             evidence={"configured": True, "valid": False},
+            remediation=(
+                "Replace the identity file with a valid sc-neurocore.studio.identity.v1 document.",
+                "Store raw operator secrets outside repository files.",
+            ),
         )
     active_admin_count = _active_admin_principal_count(store, now=now.astimezone(UTC))
     passed = active_admin_count > 0
@@ -308,6 +337,12 @@ def _identity_store_check(
             "service_account_count": len(store.service_accounts),
             "valid": True,
         },
+        remediation=()
+        if passed
+        else (
+            "Enable or create at least one unexpired principal with the studio.admin role.",
+            "Rotate expired or disabled identities before deployment.",
+        ),
     )
 
 
@@ -349,6 +384,10 @@ def _path_readiness_check(
             status="fail",
             message=f"Release preflight requires configured Studio {check_id.replace('_', ' ')}.",
             evidence={"configured": False},
+            remediation=(
+                f"Set {_environment_variable_for_check(check_id)} to a durable deployment path.",
+                "Include that location in the Studio backup and restore plan.",
+            ),
         )
     path = Path(configured_path)
     if target_kind == "file":
@@ -379,6 +418,12 @@ def _file_path_readiness_check(*, check_id: str, path: Path) -> StudioPreflightC
             "target_exists": path_exists,
             "target_is_directory": path_is_directory,
         },
+        remediation=()
+        if passed
+        else (
+            "Create a writable audit-log parent directory before launch.",
+            "Ensure the configured audit-log target is a file path, not a directory.",
+        ),
     )
 
 
@@ -407,4 +452,18 @@ def _directory_path_readiness_check(*, check_id: str, path: Path) -> StudioPrefl
             "target_exists": target_exists,
             "target_is_directory": target_is_directory,
         },
+        remediation=()
+        if passed
+        else (
+            "Create the Studio job-root directory or a writable parent directory before launch.",
+            "Place the job root on storage included in the Studio backup plan.",
+        ),
     )
+
+
+def _environment_variable_for_check(check_id: str) -> str:
+    if check_id == "audit_log":
+        return "SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH"
+    if check_id == "job_root":
+        return "SC_NEUROCORE_STUDIO_JOB_ROOT"
+    return "SC_NEUROCORE_STUDIO_IDENTITY_FILE"
