@@ -573,6 +573,88 @@ pub fn mixed_dense_q88_q1616(
     })
 }
 
+/// Per-element results of a batched mixed-precision Q8.8 × Q16.16 dense MAC.
+///
+/// Each vector is row-major `n_batch * n_outputs`; element `(b, o)` lives at
+/// index `b * n_outputs + o`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MixedDenseBatchResult {
+    /// Saturated Q16.16 accumulator codes.
+    pub outputs_q1616: Vec<i32>,
+    /// `true` where the accumulator left the Q16.16 range.
+    pub overflow: Vec<bool>,
+    /// `true` where a non-zero contraction rounded to zero without overflowing.
+    pub underflow: Vec<bool>,
+}
+
+/// Batched integer mixed-precision Q8.8 × Q16.16 dense MAC.
+///
+/// `weights_q88` is a row-major `n_outputs * n_inputs` Q8.8 matrix; `inputs_q1616`
+/// is a row-major `n_batch * n_inputs` Q16.16 code buffer. Each output divides the
+/// integer contraction by the Q8.8 weight scale (an arithmetic shift, i.e. floor
+/// division) and saturates to the Q16.16 code range, matching the Python floor and
+/// the Julia/Go/Mojo backends bit-for-bit.
+pub fn mixed_dense_forward_batch_q88_q1616(
+    weights_q88: &[i16],
+    inputs_q1616: &[i32],
+    n_outputs: usize,
+    n_inputs: usize,
+) -> Result<MixedDenseBatchResult, MixedDenseError> {
+    if n_inputs == 0 || n_outputs == 0 {
+        return Err(MixedDenseError::EmptyShape);
+    }
+    let expected_weights = n_outputs
+        .checked_mul(n_inputs)
+        .ok_or(MixedDenseError::ShapeOverflow)?;
+    if weights_q88.len() != expected_weights {
+        return Err(MixedDenseError::WeightLengthMismatch {
+            expected: expected_weights,
+            actual: weights_q88.len(),
+        });
+    }
+    if inputs_q1616.is_empty() || !inputs_q1616.len().is_multiple_of(n_inputs) {
+        return Err(MixedDenseError::InputLengthMismatch {
+            expected: n_inputs,
+            actual: inputs_q1616.len(),
+        });
+    }
+
+    let n_batch = inputs_q1616.len() / n_inputs;
+    let count = n_batch * n_outputs;
+    let mut outputs_q1616 = Vec::with_capacity(count);
+    let mut overflow = Vec::with_capacity(count);
+    let mut underflow = Vec::with_capacity(count);
+    for batch_idx in 0..n_batch {
+        let input_row = &inputs_q1616[batch_idx * n_inputs..(batch_idx + 1) * n_inputs];
+        for output_idx in 0..n_outputs {
+            let weight_row = &weights_q88[output_idx * n_inputs..(output_idx + 1) * n_inputs];
+            let mut sum: i128 = 0;
+            for input_idx in 0..n_inputs {
+                sum += i128::from(weight_row[input_idx]) * i128::from(input_row[input_idx]);
+            }
+            let scaled = sum >> 8;
+            if scaled > i128::from(i32::MAX) {
+                outputs_q1616.push(i32::MAX);
+                overflow.push(true);
+                underflow.push(false);
+            } else if scaled < i128::from(i32::MIN) {
+                outputs_q1616.push(i32::MIN);
+                overflow.push(true);
+                underflow.push(false);
+            } else {
+                outputs_q1616.push(scaled as i32);
+                overflow.push(false);
+                underflow.push(sum != 0 && scaled == 0);
+            }
+        }
+    }
+    Ok(MixedDenseBatchResult {
+        outputs_q1616,
+        overflow,
+        underflow,
+    })
+}
+
 pub fn block_floating_dense_q16(
     mantissas: &[i16],
     exponents: &[u8],
@@ -682,6 +764,64 @@ pub fn block_floating_dense_q16(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn mixed_dense_batch_matches_single_per_output() {
+        let weights = [256_i16, -128, 64, 512];
+        let inputs = [512_i32, 1024, 256, 768];
+        let batch = mixed_dense_forward_batch_q88_q1616(&weights, &inputs, 2, 2).unwrap();
+        // n_batch = 2, n_outputs = 2.
+        assert_eq!(batch.outputs_q1616.len(), 4);
+        for batch_idx in 0..2 {
+            let row = &inputs[batch_idx * 2..batch_idx * 2 + 2];
+            let single = mixed_dense_q88_q1616(&weights, row, 2, 2).unwrap();
+            for output_idx in 0..2 {
+                assert_eq!(
+                    batch.outputs_q1616[batch_idx * 2 + output_idx],
+                    single.outputs_q1616[output_idx]
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn mixed_dense_batch_floor_division_is_signed() {
+        // raw = -1 -> -1 >> 8 = -1 (floor, not truncation toward zero).
+        let batch = mixed_dense_forward_batch_q88_q1616(&[1], &[-1], 1, 1).unwrap();
+        assert_eq!(batch.outputs_q1616, vec![-1]);
+        assert!(!batch.overflow[0]);
+        assert!(!batch.underflow[0]);
+    }
+
+    #[test]
+    fn mixed_dense_batch_flags_overflow_and_underflow() {
+        let weights = [i16::MAX; 4];
+        let inputs = [2_000_000_000_i32, 2_000_000_000, 1, 1];
+        let batch = mixed_dense_forward_batch_q88_q1616(&weights, &inputs, 1, 4).unwrap();
+        assert!(batch.overflow[0]);
+        assert_eq!(batch.outputs_q1616[0], i32::MAX);
+        // A tiny non-zero contraction that rounds to zero is an underflow.
+        let under = mixed_dense_forward_batch_q88_q1616(&[1], &[1], 1, 1).unwrap();
+        assert_eq!(under.outputs_q1616, vec![0]);
+        assert!(under.underflow[0]);
+        assert!(!under.overflow[0]);
+    }
+
+    #[test]
+    fn mixed_dense_batch_rejects_bad_shapes() {
+        assert_eq!(
+            mixed_dense_forward_batch_q88_q1616(&[1], &[1], 0, 1).unwrap_err(),
+            MixedDenseError::EmptyShape
+        );
+        assert!(matches!(
+            mixed_dense_forward_batch_q88_q1616(&[1, 1], &[1], 1, 1).unwrap_err(),
+            MixedDenseError::WeightLengthMismatch { .. }
+        ));
+        assert!(matches!(
+            mixed_dense_forward_batch_q88_q1616(&[1, 1], &[1, 1, 1], 1, 2).unwrap_err(),
+            MixedDenseError::InputLengthMismatch { .. }
+        ));
+    }
 
     #[test]
     fn qformat_mixed_default_matches_python_contract() {

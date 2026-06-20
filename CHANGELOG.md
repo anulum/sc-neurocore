@@ -8,8 +8,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Authenticated `/ws/progress` when Studio route-policy enforcement is enabled.
   Non-browser clients can use bearer headers, while the React frontend carries
   browser-session tokens through the `studio-auth` WebSocket subprotocol.
+- Sent the active Studio bearer token on frontend project-delete requests so
+  production route-policy enforcement does not reject the saved-project delete
+  workflow.
 
 ### Physics and mathematics hardening
+- Added the polyglot batched `mixed_dense_forward_batch(...)` chain for the
+  mixed-precision Q8.8 × Q16.16 dense MAC across python / rust / julia / go / mojo.
+  The integer branch (per-tensor scale folded so the accumulator divisor equals
+  the Q8.8 weight scale) contracts in a signed 64-bit accumulator, divides by an
+  arithmetic right shift (floor division) and saturates to the Q16.16 code range
+  with explicit overflow/underflow flags, so every backend reproduces the Python
+  floor bit-for-bit. Added the Rust engine `mixed_dense_forward_batch_q88_q1616` +
+  PyO3 `py_mixed_dense_forward_batch_q88_q1616`, the wired
+  `sc_neurocore.compiler.mixed_dense_kernel` primary with fastest-first dispatch,
+  the Julia/Go/Mojo backends, unit and cross-backend parity tests to full coverage
+  of the primary module, a five-backend benchmark with a committed artefact (the
+  NumPy and Julia matmul paths measured competitive with or faster than the scalar
+  FFI backends), and documentation.
 - Added the polyglot batched `dcls_max_forward_batch(...)` chain for the DCLS-max
   Q8.8 triangular (tent) weighting kernel (Khalfaoui-Hassani, Pellegrini &
   Masquelier 2023) across python / rust / julia / go / mojo. The kernel is exact

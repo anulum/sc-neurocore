@@ -723,6 +723,14 @@ except ImportError:
     _dcls_tent_rust_available = False
 
 try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_mixed_dense_forward_batch_q88_q1616
+
+    __all__ += ["py_mixed_dense_forward_batch_q88_q1616"]
+    _mixed_dense_rust_available = True
+except ImportError:
+    _mixed_dense_rust_available = False
+
+try:
     from sc_neurocore_engine.sc_neurocore_engine import (
         py_predict_xor_ema,
         py_predict_xor_lfsr,
