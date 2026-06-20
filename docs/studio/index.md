@@ -132,6 +132,9 @@ runtime features:
   exposing token hashes or local identity-file paths. Role changes emit both
   the route-policy audit decision and a dedicated
   `studio.identity.service_account.update` audit event.
+- The Admin panel Audit section summarises exported `studio.identity.*`
+  lifecycle rows with a count and latest identity action, so account and
+  password-rotation activity can be checked without exposing secret material.
 - `/api/studio/identity/browser-users` returns an admin-only, password-free
   browser-user inventory for the same identity file. The payload includes
   usernames, principal IDs, roles, active state, and expiry only.

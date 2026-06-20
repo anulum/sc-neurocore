@@ -40,7 +40,7 @@ const auditStatus: StudioAuditStatus = {
 
 const auditExport: StudioAuditExport = {
   configured: true,
-  event_count: 1,
+  event_count: 2,
   events: [
     {
       action: "studio.audit.export",
@@ -53,6 +53,18 @@ const auditExport: StudioAuditExport = {
       route: "/api/studio/audit/export",
       schema_version: "studio.audit.v1",
       timestamp_utc: "2026-06-19T20:01:00Z",
+    },
+    {
+      action: "studio.identity.browser_user.password.rotate",
+      decision: "allow",
+      event_hash: "hash-2",
+      previous_event_hash: "hash-1",
+      principal_id: "operator-1",
+      reason: "authorized",
+      request_id: "req-2",
+      route: "/api/studio/identity/browser-users/operator/password",
+      schema_version: "studio.audit.v1",
+      timestamp_utc: "2026-06-19T20:02:00Z",
     },
   ],
   schema_version: "studio.audit.export.v1",
@@ -254,6 +266,8 @@ describe("AdminPanel", () => {
     expect(html).toContain("2 GiB");
     expect(html).toContain("16 MiB");
     expect(html).toContain("Audit");
+    expect(html).toContain("Identity lifecycle");
+    expect(html).toContain("studio.identity.browser_user.password.rotate");
     expect(html).toContain("jsonl");
     expect(html).toContain("unhealthy");
     expect(html).toContain("1");

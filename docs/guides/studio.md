@@ -365,6 +365,13 @@ decision and a dedicated `studio.identity.browser_user.update` audit event.
 Browser-user lifecycle updates use the same last-admin guard as
 service-account updates.
 
+The Admin panel Audit section derives an identity-lifecycle count and latest
+identity-lifecycle action from exported audit rows whose action starts with
+`studio.identity.`. This gives operators a compact confirmation that account
+creation, role changes, active-state changes, expiry changes, and password
+rotation are present in the audit trail without exposing token hashes,
+password verifiers, or local identity-file paths.
+
 Use `POST /api/studio/identity/browser-users/{username}/password` or the Admin
 panel per-user secret field to rotate a browser user's password verifier. The
 route preserves public metadata, writes a fresh PBKDF2-HMAC-SHA256 verifier,

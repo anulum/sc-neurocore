@@ -31,8 +31,10 @@ export interface AdminAuditModel {
   denied: number;
   error: string | null;
   healthLabel: "ready" | "unhealthy";
+  identityLifecycle: number;
   lastError: string | null;
   latestAction: string | null;
+  latestIdentityLifecycleAction: string | null;
   sinkType: string;
   total: number;
   truncated: boolean;
@@ -156,8 +158,10 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
       denied: auditSummary.denied,
       error: input.auditError,
       healthLabel: auditStatus?.healthy === false ? "unhealthy" : "ready",
+      identityLifecycle: auditSummary.identityLifecycle,
       lastError: auditStatus?.last_error ?? null,
       latestAction: auditSummary.latestAction,
+      latestIdentityLifecycleAction: auditSummary.latestIdentityLifecycleAction,
       sinkType: auditStatus?.sink_type ?? auditSummary.sinkType,
       total: auditSummary.total,
       truncated: auditSummary.truncated,
