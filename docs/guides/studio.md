@@ -404,7 +404,11 @@ terminal artifact manifest. Terminal training jobs write
 `training/status.json` and `training/evidence.json`; the latter uses the
 `studio.action-evidence.v1` contract to record the action kind, replay route,
 job ID, terminal status, evidence classification, status payload SHA-256, and
-status artifact metadata without exposing host-local paths or secrets.
+status artifact metadata without exposing host-local paths or secrets. After
+the terminal evidence artifact is available, `/api/training/status/{job_id}`
+returns a `studio.training.evidence-summary.v1` operator summary containing the
+verified action kind, evidence classification, replay route, evidence artifact
+digest, and result artifact metadata.
 
 Compile, synthesis, PnR, and full-pipeline routes also submit through the
 bounded worker manager. Their HTTP responses remain synchronous for existing UI

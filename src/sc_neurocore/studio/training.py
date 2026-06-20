@@ -25,6 +25,7 @@ from sc_neurocore.studio.platform.action_evidence import (
     EvidenceStatus,
     write_studio_action_evidence_manifest,
 )
+from sc_neurocore.studio.platform.training_evidence import build_training_evidence_summary
 
 try:
     import torch
@@ -479,9 +480,17 @@ def get_training_status(
     if not job:
         if job_manager is not None:
             try:
-                return _status_from_platform_record(job_manager.record(job_id))
+                record = job_manager.record(job_id)
             except KeyError:
                 pass
+            else:
+                return _status_from_platform_record(
+                    record,
+                    evidence_summary=build_training_evidence_summary(
+                        record,
+                        job_manager.read_artifact,
+                    ),
+                )
         return {"error": f"Job {job_id} not found"}
     if job_manager is not None:
         try:
@@ -489,6 +498,10 @@ def get_training_status(
         except KeyError:
             return job._public_status()
         _sync_proxy_job(job, record.status, record.error, record.result)
+        return _status_with_evidence_summary(
+            job._public_status(),
+            build_training_evidence_summary(record, job_manager.read_artifact),
+        )
     return job._public_status()
 
 
@@ -560,16 +573,37 @@ def _sync_proxy_job(
         job.error = platform_error
 
 
-def _status_from_platform_record(record: Any) -> dict[str, Any]:
+def _status_from_platform_record(
+    record: Any,
+    *,
+    evidence_summary: dict[str, object] | None = None,
+) -> dict[str, Any]:
     """Return Training Monitor status synthesized from a platform job record."""
 
     platform_result = record.result if isinstance(record.result, dict) else None
     final_metrics = (platform_result or {}).get("final_metrics")
+    return _status_with_evidence_summary(
+        {
+            "error": record.error,
+            "final_metrics": final_metrics if isinstance(final_metrics, dict) else None,
+            "job_id": record.job_id,
+            "status": _training_status_from_platform_status(record.status),
+        },
+        evidence_summary,
+    )
+
+
+def _status_with_evidence_summary(
+    status: dict[str, Any],
+    evidence_summary: dict[str, object] | None,
+) -> dict[str, Any]:
+    """Attach path-free evidence metadata to a public training status."""
+
+    if evidence_summary is None:
+        return status
     return {
-        "error": record.error,
-        "final_metrics": final_metrics if isinstance(final_metrics, dict) else None,
-        "job_id": record.job_id,
-        "status": _training_status_from_platform_status(record.status),
+        **status,
+        "evidence_summary": evidence_summary,
     }
 
 

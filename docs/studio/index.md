@@ -195,7 +195,12 @@ runtime features:
   `training/evidence.json`; the evidence manifest uses
   `studio.action-evidence.v1` and records terminal status, action kind, replay
   route, job ID, evidence classification, status payload SHA-256, and status
-  artifact metadata without local paths or secret material.
+  artifact metadata without local paths or secret material. Once the verified
+  evidence artifact is declared by the worker record,
+  `/api/training/status/{job_id}` includes a path-free
+  `studio.training.evidence-summary.v1` operator summary with the action kind,
+  classification, replay route, evidence artifact digest, and result artifact
+  metadata.
 - `/api/compile`, `/api/synth/run`, `/api/synth/multi-target`,
   `/api/synth/pnr`, and `/api/pipeline/run` execute through the same bounded
   local worker manager while preserving their synchronous response payloads.
@@ -437,6 +442,9 @@ evolution update in real time via Server-Sent Events. The Training Monitor
 also surfaces the path-free action-evidence contract for the current training
 run: evidence classification, action kind, job ID, terminal status, replay
 route, terminal artifact names, configuration summary, and latest epoch.
+Terminal status responses also include a verified
+`studio.training.evidence-summary.v1` summary when `training/evidence.json`
+is available from the worker artifact manifest.
 
 ### Compiler Inspector
 

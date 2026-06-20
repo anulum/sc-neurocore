@@ -122,6 +122,12 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobTask,
     StudioProcessJobPayload,
 )
+from sc_neurocore.studio.platform.training_evidence import (
+    TRAINING_EVIDENCE_ARTIFACT_PATH,
+    TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION,
+    TrainingEvidenceSummary,
+    build_training_evidence_summary,
+)
 from sc_neurocore.studio.platform.operator import (
     OPERATOR_STATUS_SCHEMA_VERSION,
     OperatorIdentityMode,
@@ -202,6 +208,8 @@ __all__ = [
     "STUDIO_BACKUP_PLAN_SCHEMA_VERSION",
     "STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION",
     "THROTTLED_BROWSER_LOGIN_REASON",
+    "TRAINING_EVIDENCE_ARTIFACT_PATH",
+    "TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION",
     "DEFAULT_STUDIO_AUDIT_RETAINED_FILES",
     "DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS",
     "DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS",
@@ -255,6 +263,7 @@ __all__ = [
     "StudioJobStatusSnapshot",
     "StudioJobTask",
     "StudioProcessJobPayload",
+    "TrainingEvidenceSummary",
     "StudioOperatorCapabilityStatus",
     "StudioOperatorIdentityStatus",
     "StudioOperatorResourceLimitStatus",
@@ -270,6 +279,7 @@ __all__ = [
     "build_studio_backup_plan",
     "build_studio_deployment_profile_package",
     "build_studio_operator_status",
+    "build_training_evidence_summary",
     "list_studio_deployment_profile_packages",
     "run_studio_preflight",
     "add_studio_browser_user_record",
