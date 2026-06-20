@@ -24,6 +24,11 @@ from sc_neurocore.studio.platform.bootstrap import (
     StudioIdentityBootstrapResult,
     bootstrap_studio_admin_identity,
 )
+from sc_neurocore.studio.platform.auth_throttle import (
+    THROTTLED_BROWSER_LOGIN_REASON,
+    StudioBrowserLoginThrottle,
+    StudioLoginThrottleDecision,
+)
 from sc_neurocore.studio.platform.policy import (
     AUDIT_SCHEMA_VERSION,
     AUDIT_EXPORT_SCHEMA_VERSION,
@@ -95,6 +100,9 @@ from sc_neurocore.studio.platform.operator import (
     build_studio_operator_status,
 )
 from sc_neurocore.studio.platform.settings import (
+    DEFAULT_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS,
+    DEFAULT_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS,
+    DEFAULT_STUDIO_BROWSER_LOGIN_MAX_FAILURES,
     DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS,
     DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS,
     DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES,
@@ -127,6 +135,9 @@ __all__ = [
     "CapabilityStatus",
     "DEFAULT_STUDIO_ADMIN_PRINCIPAL_ID",
     "DEFAULT_STUDIO_ADMIN_ROLES",
+    "DEFAULT_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS",
+    "DEFAULT_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS",
+    "DEFAULT_STUDIO_BROWSER_LOGIN_MAX_FAILURES",
     "EvidenceClass",
     "IDENTITY_SCHEMA_VERSION",
     "JOBS_LIST_SCHEMA_VERSION",
@@ -142,6 +153,7 @@ __all__ = [
     "RoutePolicy",
     "RoutePolicyRegistry",
     "RouteVisibility",
+    "THROTTLED_BROWSER_LOGIN_REASON",
     "DEFAULT_STUDIO_AUDIT_RETAINED_FILES",
     "DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS",
     "DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS",
@@ -156,6 +168,7 @@ __all__ = [
     "DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS",
     "StudioDeploymentProfile",
     "StudioRuntimeSettings",
+    "StudioBrowserLoginThrottle",
     "StudioBrowserSessionIssue",
     "StudioBrowserSessionManager",
     "StudioBrowserSessionRecord",
@@ -168,6 +181,7 @@ __all__ = [
     "StudioIdentityRecord",
     "StudioIdentityResult",
     "StudioIdentityStore",
+    "StudioLoginThrottleDecision",
     "StudioJobArtifact",
     "StudioJobArtifactPayload",
     "StudioJobArtifactUnavailable",

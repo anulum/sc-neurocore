@@ -75,6 +75,24 @@ def _client(identity_path: Path, audit_path: Path) -> TestClient:
     )
 
 
+def _throttled_client(identity_path: Path, audit_path: Path) -> TestClient:
+    return TestClient(
+        create_app(
+            StudioRuntimeSettings(
+                allow_header_principal=False,
+                audit_log_path=str(audit_path),
+                browser_login_cooldown_seconds=60.0,
+                browser_login_failure_window_seconds=300.0,
+                browser_login_max_failures=2,
+                browser_session_ttl_seconds=600.0,
+                enforce_route_policies=True,
+                identity_file_path=str(identity_path),
+            )
+        ),
+        base_url="http://127.0.0.1",
+    )
+
+
 def _audit_rows(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
 
@@ -192,3 +210,88 @@ def test_browser_login_session_logout_flow_is_audited(tmp_path: Path) -> None:
     assert actions.count("studio.auth.login") == 2
     assert "studio.auth.logout" in actions
     assert "studio.identity.browser_users.list" in actions
+
+
+def test_browser_login_throttles_repeated_invalid_passwords(tmp_path: Path) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    audit_path = tmp_path / "studio-audit.jsonl"
+    _write_identity_file(identity_path)
+    client = _throttled_client(identity_path, audit_path)
+
+    first = client.post(
+        "/api/studio/auth/login",
+        json={"username": "operator", "password": "wrong-password"},
+    )
+    second = client.post(
+        "/api/studio/auth/login",
+        json={"username": "operator", "password": "still-wrong"},
+    )
+    correct_while_locked = client.post(
+        "/api/studio/auth/login",
+        json={"username": "operator", "password": "browser-password"},
+    )
+
+    assert first.status_code == 401
+    assert first.json()["detail"] == "invalid_browser_login"
+    assert second.status_code == 429
+    assert second.json()["detail"] == "browser_login_throttled"
+    assert second.headers["retry-after"] == "60"
+    assert correct_while_locked.status_code == 429
+    assert correct_while_locked.json()["detail"] == "browser_login_throttled"
+    rows = _audit_rows(audit_path)
+    assert [row["reason"] for row in rows[-3:]] == [
+        "invalid_browser_login",
+        "browser_login_throttled",
+        "browser_login_throttled",
+    ]
+    assert "browser-password" not in audit_path.read_text(encoding="utf-8")
+
+
+def test_browser_login_success_resets_prior_invalid_attempts(tmp_path: Path) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    audit_path = tmp_path / "studio-audit.jsonl"
+    _write_identity_file(identity_path)
+    client = _throttled_client(identity_path, audit_path)
+
+    first_invalid = client.post(
+        "/api/studio/auth/login",
+        json={"username": "operator", "password": "wrong-password"},
+    )
+    success = client.post(
+        "/api/studio/auth/login",
+        json={"username": "operator", "password": "browser-password"},
+    )
+    invalid_after_success = client.post(
+        "/api/studio/auth/login",
+        json={"username": "operator", "password": "wrong-again"},
+    )
+
+    assert first_invalid.status_code == 401
+    assert success.status_code == 200
+    assert invalid_after_success.status_code == 401
+    assert invalid_after_success.json()["detail"] == "invalid_browser_login"
+
+
+def test_disabled_browser_user_is_not_counted_toward_login_throttle(tmp_path: Path) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    audit_path = tmp_path / "studio-audit.jsonl"
+    _write_identity_file(identity_path)
+    disabled = json.loads(identity_path.read_text(encoding="utf-8"))
+    disabled["browser_users"][0]["active"] = False
+    identity_path.write_text(json.dumps(disabled), encoding="utf-8")
+    client = _throttled_client(identity_path, audit_path)
+
+    first = client.post(
+        "/api/studio/auth/login",
+        json={"username": "operator", "password": "browser-password"},
+    )
+    second = client.post(
+        "/api/studio/auth/login",
+        json={"username": "operator", "password": "browser-password"},
+    )
+
+    assert first.status_code == 401
+    assert first.json()["detail"] == "disabled_browser_user"
+    assert second.status_code == 401
+    assert second.json()["detail"] == "disabled_browser_user"
+    assert "browser_login_throttled" not in audit_path.read_text(encoding="utf-8")

@@ -210,6 +210,51 @@ def test_studio_runtime_settings_parses_identity_file_and_header_fallback() -> N
     assert settings.allow_header_principal is False
 
 
+def test_studio_runtime_settings_default_browser_login_throttle_is_bounded() -> None:
+    settings = build_default_studio_runtime_settings(env={})
+
+    assert settings.browser_login_max_failures == 5
+    assert settings.browser_login_failure_window_seconds == 300.0
+    assert settings.browser_login_cooldown_seconds == 900.0
+
+
+def test_studio_runtime_settings_parses_browser_login_throttle() -> None:
+    settings = build_default_studio_runtime_settings(
+        env={
+            "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS": "120",
+            "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS": "30",
+            "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES": "3",
+        }
+    )
+
+    assert settings.browser_login_max_failures == 3
+    assert settings.browser_login_failure_window_seconds == 30.0
+    assert settings.browser_login_cooldown_seconds == 120.0
+
+
+def test_studio_runtime_settings_rejects_invalid_browser_login_throttle() -> None:
+    with pytest.raises(ValueError, match="browser login max failures"):
+        build_default_studio_runtime_settings(
+            env={"SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES": "not-a-number"}
+        )
+    with pytest.raises(ValueError, match="browser login failure window"):
+        build_default_studio_runtime_settings(
+            env={
+                "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS": "not-a-number"
+            }
+        )
+    with pytest.raises(ValueError, match="browser login cooldown"):
+        build_default_studio_runtime_settings(
+            env={"SC_NEUROCORE_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS": "not-a-number"}
+        )
+    with pytest.raises(ValueError, match="browser login max failures"):
+        StudioRuntimeSettings(browser_login_max_failures=0)
+    with pytest.raises(ValueError, match="browser login failure window"):
+        StudioRuntimeSettings(browser_login_failure_window_seconds=0.0)
+    with pytest.raises(ValueError, match="browser login cooldown"):
+        StudioRuntimeSettings(browser_login_cooldown_seconds=0.0)
+
+
 def test_studio_runtime_settings_rejects_invalid_header_fallback_flag() -> None:
     with pytest.raises(ValueError, match="header principal"):
         build_default_studio_runtime_settings(

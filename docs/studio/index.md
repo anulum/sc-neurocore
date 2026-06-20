@@ -98,6 +98,14 @@ runtime features:
   `SC_NEUROCORE_STUDIO_BROWSER_SESSION_TTL_SECONDS`, defaulting to 12 hours.
   `/api/studio/auth/session` returns the current principal without token
   material, and `POST /api/studio/auth/logout` revokes the presented session.
+- Browser login attempts are guarded by an in-memory, per-username lockout
+  policy. Defaults allow five invalid password attempts within five minutes
+  and then return `429 browser_login_throttled` with a `Retry-After` header for
+  a 15-minute cooldown. Tune the policy with
+  `SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES`,
+  `SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS`, and
+  `SC_NEUROCORE_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS`. Throttle denials emit
+  `studio.auth.login` audit rows without password material.
 - First-deployment service-account identity files are created offline with
   `sc-neurocore studio-bootstrap-admin --identity-file <path>`. The command
   writes only the SHA-256 token hash to disk, returns the bearer token once to

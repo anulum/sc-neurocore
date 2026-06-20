@@ -318,6 +318,16 @@ session mode, so cookie CSRF tokens are intentionally not part of the current
 contract. Set `SC_NEUROCORE_STUDIO_BROWSER_SESSION_TTL_SECONDS` to tune the
 server-side session expiry; the default is 12 hours.
 
+Repeated invalid browser-login attempts are throttled before another password
+check is performed. The default policy permits five invalid attempts within
+five minutes and then returns `429 browser_login_throttled` with `Retry-After`
+for a 15-minute cooldown. Tune this deployment policy with
+`SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES`,
+`SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS`, and
+`SC_NEUROCORE_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS`. A successful login clears
+prior invalid-attempt state for that username; disabled or expired users keep
+their explicit failure reason and are not converted into throttle events.
+
 Administrators can inspect and update browser-user lifecycle metadata from the
 Admin panel Identity section or through `/api/studio/identity/browser-users`.
 The detail and PATCH routes return only username, principal ID, roles, active

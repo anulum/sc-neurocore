@@ -42,6 +42,9 @@ DEFAULT_STUDIO_JOB_TIMEOUT_SECONDS = 300.0
 DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS = 120.0
 DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES = 2 * 1024 * 1024 * 1024
 DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS = 12 * 60 * 60.0
+DEFAULT_STUDIO_BROWSER_LOGIN_MAX_FAILURES = 5
+DEFAULT_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS = 5 * 60.0
+DEFAULT_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS = 15 * 60.0
 
 DEFAULT_STUDIO_HTTP_SECURITY_HEADERS: Mapping[str, str] = MappingProxyType(
     {
@@ -80,6 +83,11 @@ class StudioRuntimeSettings:
     eda_process_cpu_seconds: float | None = DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS
     eda_process_memory_bytes: int | None = DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES
     browser_session_ttl_seconds: float = DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS
+    browser_login_max_failures: int = DEFAULT_STUDIO_BROWSER_LOGIN_MAX_FAILURES
+    browser_login_failure_window_seconds: float = (
+        DEFAULT_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS
+    )
+    browser_login_cooldown_seconds: float = DEFAULT_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS
     audit_log_path: str | None = None
     audit_rotation_bytes: int | None = None
     audit_retained_files: int = DEFAULT_STUDIO_AUDIT_RETAINED_FILES
@@ -125,6 +133,12 @@ class StudioRuntimeSettings:
             raise ValueError("Studio EDA process memory limit must be positive.")
         if self.browser_session_ttl_seconds <= 0:
             raise ValueError("Studio browser session TTL must be positive.")
+        if self.browser_login_max_failures <= 0:
+            raise ValueError("Studio browser login max failures must be positive.")
+        if self.browser_login_failure_window_seconds <= 0:
+            raise ValueError("Studio browser login failure window must be positive.")
+        if self.browser_login_cooldown_seconds <= 0:
+            raise ValueError("Studio browser login cooldown must be positive.")
         if self.audit_log_path is not None and not self.audit_log_path.strip():
             raise ValueError("Studio audit log path must not be empty.")
         if self.audit_rotation_bytes is not None and self.audit_rotation_bytes <= 0:
@@ -172,6 +186,15 @@ def build_default_studio_runtime_settings(
     raw_eda_process_memory_bytes = source.get("SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES")
     raw_browser_session_ttl_seconds = source.get(
         "SC_NEUROCORE_STUDIO_BROWSER_SESSION_TTL_SECONDS"
+    )
+    raw_browser_login_max_failures = source.get(
+        "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES"
+    )
+    raw_browser_login_failure_window_seconds = source.get(
+        "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS"
+    )
+    raw_browser_login_cooldown_seconds = source.get(
+        "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS"
     )
     raw_audit_log_path = source.get("SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH")
     raw_audit_rotation_bytes = source.get("SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES")
@@ -262,6 +285,33 @@ def build_default_studio_runtime_settings(
         )
     except ValueError as exc:
         raise ValueError("Studio browser session TTL must be numeric.") from exc
+    try:
+        browser_login_max_failures = (
+            DEFAULT_STUDIO_BROWSER_LOGIN_MAX_FAILURES
+            if raw_browser_login_max_failures is None
+            or not raw_browser_login_max_failures.strip()
+            else int(raw_browser_login_max_failures)
+        )
+    except ValueError as exc:
+        raise ValueError("Studio browser login max failures must be an integer.") from exc
+    try:
+        browser_login_failure_window_seconds = (
+            DEFAULT_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS
+            if raw_browser_login_failure_window_seconds is None
+            or not raw_browser_login_failure_window_seconds.strip()
+            else float(raw_browser_login_failure_window_seconds)
+        )
+    except ValueError as exc:
+        raise ValueError("Studio browser login failure window must be numeric.") from exc
+    try:
+        browser_login_cooldown_seconds = (
+            DEFAULT_STUDIO_BROWSER_LOGIN_COOLDOWN_SECONDS
+            if raw_browser_login_cooldown_seconds is None
+            or not raw_browser_login_cooldown_seconds.strip()
+            else float(raw_browser_login_cooldown_seconds)
+        )
+    except ValueError as exc:
+        raise ValueError("Studio browser login cooldown must be numeric.") from exc
     audit_log_path = (
         None
         if raw_audit_log_path is None or not raw_audit_log_path.strip()
@@ -298,6 +348,9 @@ def build_default_studio_runtime_settings(
         eda_process_cpu_seconds=eda_process_cpu_seconds,
         eda_process_memory_bytes=eda_process_memory_bytes,
         browser_session_ttl_seconds=browser_session_ttl_seconds,
+        browser_login_max_failures=browser_login_max_failures,
+        browser_login_failure_window_seconds=browser_login_failure_window_seconds,
+        browser_login_cooldown_seconds=browser_login_cooldown_seconds,
         audit_log_path=audit_log_path,
         audit_rotation_bytes=audit_rotation_bytes,
         audit_retained_files=audit_retained_files,

@@ -102,6 +102,8 @@ from sc_neurocore.studio.platform import (
     JsonlAuditSink,
     PolicyGateway,
     Principal,
+    THROTTLED_BROWSER_LOGIN_REASON,
+    StudioBrowserLoginThrottle,
     StudioBrowserSessionManager,
     StudioIdentityAuthenticator,
     StudioIdentityResult,
@@ -814,6 +816,11 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     studio_browser_session_manager = StudioBrowserSessionManager(
         ttl_seconds=settings.browser_session_ttl_seconds
     )
+    studio_browser_login_throttle = StudioBrowserLoginThrottle(
+        max_failed_attempts=settings.browser_login_max_failures,
+        failure_window_seconds=settings.browser_login_failure_window_seconds,
+        cooldown_seconds=settings.browser_login_cooldown_seconds,
+    )
     studio_job_root = (
         Path(settings.job_root_path)
         if settings.job_root_path is not None
@@ -833,6 +840,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     app.state.studio_audit_sink = studio_audit_sink
     app.state.studio_identity_authenticator = studio_identity_authenticator
     app.state.studio_browser_session_manager = studio_browser_session_manager
+    app.state.studio_browser_login_throttle = studio_browser_login_throttle
     app.state.studio_job_manager = studio_job_manager
     app.state.studio_policy_gateway = studio_policy_gateway
     eda_process_limits = EdaProcessLimits(
@@ -1038,19 +1046,16 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
 
         if studio_identity_authenticator is None:
             raise HTTPException(status_code=409, detail="identity_store_unavailable")
-        identity_result = studio_identity_authenticator.authenticate_browser_user(
-            login.username,
-            login.password,
-        )
-        request_id = getattr(request.state, "studio_request_id", None)
-        if identity_result.principal is None:
+        throttle_decision = studio_browser_login_throttle.check(login.username)
+        if not throttle_decision.allowed:
+            request_id = getattr(request.state, "studio_request_id", None)
             try:
                 studio_audit_sink.record(
                     AuditEvent(
                         action="studio.auth.login",
                         decision="deny",
                         principal_id=None,
-                        reason=identity_result.failure_reason or "invalid_browser_login",
+                        reason=throttle_decision.reason or THROTTLED_BROWSER_LOGIN_REASON,
                         request_id=request_id if isinstance(request_id, str) else None,
                         route="/api/studio/auth/login",
                         timestamp_utc=_studio_timestamp_utc(),
@@ -1058,10 +1063,60 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 )
             except AuditSinkError as exc:
                 raise HTTPException(status_code=503, detail="audit_append_failed") from exc
+            headers = (
+                {}
+                if throttle_decision.retry_after_seconds is None
+                else {"Retry-After": str(throttle_decision.retry_after_seconds)}
+            )
+            raise HTTPException(
+                status_code=429,
+                detail=throttle_decision.reason or THROTTLED_BROWSER_LOGIN_REASON,
+                headers=headers,
+            )
+        identity_result = studio_identity_authenticator.authenticate_browser_user(
+            login.username,
+            login.password,
+        )
+        request_id = getattr(request.state, "studio_request_id", None)
+        if identity_result.principal is None:
+            throttle_after_failure = (
+                studio_browser_login_throttle.record_failure(login.username)
+                if identity_result.failure_reason == "invalid_browser_login"
+                else None
+            )
+            reason = identity_result.failure_reason or "invalid_browser_login"
+            if (
+                throttle_after_failure is not None
+                and not throttle_after_failure.allowed
+                and throttle_after_failure.reason is not None
+            ):
+                reason = throttle_after_failure.reason
+            try:
+                studio_audit_sink.record(
+                    AuditEvent(
+                        action="studio.auth.login",
+                        decision="deny",
+                        principal_id=None,
+                        reason=reason,
+                        request_id=request_id if isinstance(request_id, str) else None,
+                        route="/api/studio/auth/login",
+                        timestamp_utc=_studio_timestamp_utc(),
+                    )
+                )
+            except AuditSinkError as exc:
+                raise HTTPException(status_code=503, detail="audit_append_failed") from exc
+            if throttle_after_failure is not None and not throttle_after_failure.allowed:
+                headers = (
+                    {}
+                    if throttle_after_failure.retry_after_seconds is None
+                    else {"Retry-After": str(throttle_after_failure.retry_after_seconds)}
+                )
+                raise HTTPException(status_code=429, detail=reason, headers=headers)
             raise HTTPException(
                 status_code=401,
-                detail=identity_result.failure_reason or "invalid_browser_login",
+                detail=reason,
             )
+        studio_browser_login_throttle.record_success(login.username)
         issued = studio_browser_session_manager.issue(identity_result.principal)
         try:
             studio_audit_sink.record(
