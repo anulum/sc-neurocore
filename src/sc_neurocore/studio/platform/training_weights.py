@@ -14,7 +14,7 @@ import hashlib
 import json
 import math
 import re
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import cast
 
@@ -29,6 +29,7 @@ TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE = (
     "/api/studio/jobs/{job_id}/artifacts/{artifact_path}"
 )
 _SHA256_HEX_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+TrainingWeightStateLoader = Callable[[bytes], Mapping[str, object]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -145,6 +146,62 @@ class StudioTrainingWeightRestorePlan:
             "source_job_id": self.source_job_id,
             "source_status": self.source_status,
             "weights_artifact": dict(self.weights_artifact),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class StudioTrainingWeightMaterialization:
+    """Trusted in-memory materialization of verified training weights.
+
+    Parameters
+    ----------
+    source_job_id:
+        Studio job ID that owns the source weight artifacts.
+    config_sha256:
+        SHA-256 digest of the training configuration associated with weights.
+    framework:
+        Framework used by the trusted loader.
+    format:
+        Serialized payload format consumed by the trusted loader.
+    architecture:
+        Human-readable model architecture summary.
+    parameter_count:
+        Number of parameters declared by the checkpoint metadata.
+    state_dict:
+        In-memory state dictionary returned by the trusted loader.
+    weights_sha256:
+        Verified SHA-256 digest of the binary weight payload.
+    metadata_sha256:
+        Verified SHA-256 digest of the metadata payload.
+    schema_version:
+        Schema identifier for this materialization contract.
+    """
+
+    source_job_id: str
+    config_sha256: str
+    framework: str
+    format: str
+    architecture: str
+    parameter_count: int
+    state_dict: Mapping[str, object]
+    weights_sha256: str
+    metadata_sha256: str
+    schema_version: str = "studio.training.weight-materialization.v1"
+
+    def to_public_dict(self) -> dict[str, JsonValue]:
+        """Return path-free materialization metadata without tensor payloads."""
+
+        return {
+            "architecture": self.architecture,
+            "config_sha256": self.config_sha256,
+            "format": self.format,
+            "framework": self.framework,
+            "loaded_key_count": len(self.state_dict),
+            "metadata_sha256": self.metadata_sha256,
+            "parameter_count": self.parameter_count,
+            "schema_version": self.schema_version,
+            "source_job_id": self.source_job_id,
+            "weights_sha256": self.weights_sha256,
         }
 
 
@@ -277,6 +334,74 @@ def build_training_weight_restore_plan(
     )
 
 
+def materialize_training_weight_payload(
+    *,
+    restore_plan: Mapping[str, object],
+    metadata_payload: bytes,
+    weights_payload: bytes,
+    trusted_loader: TrainingWeightStateLoader,
+) -> StudioTrainingWeightMaterialization:
+    """Validate and materialize a Training Monitor weight payload in memory.
+
+    Parameters
+    ----------
+    restore_plan:
+        ``studio.training.weight-restore-plan.v1`` object produced by a
+        validated checkpoint import.
+    metadata_payload:
+        Raw bytes fetched from the authenticated metadata artifact route.
+    weights_payload:
+        Raw bytes fetched from the authenticated weight artifact route.
+    trusted_loader:
+        Loader that deserializes ``weights_payload`` after all schema, size,
+        and digest checks pass. Production PyTorch integrations should use a
+        loader that restricts deserialization to state dictionaries.
+
+    Returns
+    -------
+    StudioTrainingWeightMaterialization
+        Verified, path-free in-memory materialization metadata plus the loaded
+        state dictionary.
+
+    Raises
+    ------
+    ValueError
+        If the restore plan, metadata payload, artifact digests, artifact
+        sizes, or loader output is invalid.
+    """
+
+    plan = _validate_restore_plan(restore_plan)
+    metadata_artifact = _required_artifact_dict(plan, "metadata_artifact")
+    weights_artifact = _required_artifact_dict(plan, "weights_artifact")
+    _verify_artifact_payload(metadata_payload, metadata_artifact, "metadata_artifact")
+    _verify_artifact_payload(weights_payload, weights_artifact, "weights_artifact")
+
+    metadata_json = _metadata_payload_object(metadata_payload)
+    metadata_for_validation = dict(metadata_json)
+    metadata_for_validation["metadata_artifact"] = dict(metadata_artifact)
+    metadata = validate_training_weight_checkpoint_metadata(
+        metadata_for_validation,
+        expected_config_sha256=cast(str, plan["config_sha256"]),
+    )
+    if _required_artifact_dict(metadata, "metadata_artifact") != metadata_artifact:
+        raise ValueError("Training weight metadata artifact does not match restore plan.")
+    if _required_artifact_dict(metadata, "weights_artifact") != weights_artifact:
+        raise ValueError("Training weight artifact does not match restore plan.")
+
+    state_dict = _loaded_state_dict(trusted_loader(weights_payload))
+    return StudioTrainingWeightMaterialization(
+        source_job_id=cast(str, plan["source_job_id"]),
+        config_sha256=cast(str, plan["config_sha256"]),
+        framework=cast(str, plan["framework"]),
+        format=cast(str, plan["format"]),
+        architecture=cast(str, plan["architecture"]),
+        parameter_count=cast(int, plan["parameter_count"]),
+        state_dict=state_dict,
+        weights_sha256=cast(str, weights_artifact["sha256"]),
+        metadata_sha256=cast(str, metadata_artifact["sha256"]),
+    )
+
+
 def validate_training_weight_checkpoint_metadata(
     payload: Mapping[str, object],
     *,
@@ -340,6 +465,91 @@ def validate_training_weight_checkpoint_metadata(
     if final_metrics is not None and not isinstance(final_metrics, dict):
         raise ValueError("Training weight checkpoint metrics must be an object.")
     return metadata
+
+
+def _validate_restore_plan(payload: Mapping[str, object]) -> dict[str, JsonValue]:
+    """Return a validated weight restore plan."""
+
+    plan = _json_object(payload, "Training weight restore plan must be JSON.")
+    if plan.get("schema_version") != STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION:
+        raise ValueError("Training weight restore plan schema is unsupported.")
+    if plan.get("loader_policy") != "download_from_authenticated_artifact_route_and_verify_sha256":
+        raise ValueError("Training weight restore plan loader policy is unsupported.")
+    if plan.get("artifact_route_template") != TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE:
+        raise ValueError("Training weight restore plan route template is unsupported.")
+    for field_name in (
+        "source_job_id",
+        "source_status",
+        "config_sha256",
+        "framework",
+        "format",
+        "architecture",
+    ):
+        _required_json_string(plan, field_name)
+    if not _SHA256_HEX_PATTERN.fullmatch(_required_json_string(plan, "config_sha256")):
+        raise ValueError("Training weight restore plan config digest is invalid.")
+    parameter_count = plan.get("parameter_count")
+    if not isinstance(parameter_count, int) or parameter_count < 0:
+        raise ValueError("Training weight restore plan parameter count is invalid.")
+    if plan.get("framework") != "pytorch":
+        raise ValueError("Training weight restore plan framework is unsupported.")
+    if plan.get("format") != "torch_state_dict":
+        raise ValueError("Training weight restore plan format is unsupported.")
+    _validate_artifact_metadata(
+        plan.get("weights_artifact"),
+        expected_path=TRAINING_WEIGHT_ARTIFACT_PATH,
+        field_name="weights_artifact",
+    )
+    _validate_artifact_metadata(
+        plan.get("metadata_artifact"),
+        expected_path=TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+        field_name="metadata_artifact",
+    )
+    return plan
+
+
+def _verify_artifact_payload(
+    payload: bytes,
+    artifact: Mapping[str, JsonValue],
+    field_name: str,
+) -> None:
+    """Verify one artifact payload against its path-free manifest entry."""
+
+    size_bytes = artifact.get("size_bytes")
+    if not isinstance(size_bytes, int) or size_bytes <= 0:
+        raise ValueError(f"Training weight {field_name} size is invalid.")
+    if len(payload) != size_bytes:
+        raise ValueError(f"Training weight {field_name} size mismatch.")
+    sha256 = artifact.get("sha256")
+    if not isinstance(sha256, str) or not _SHA256_HEX_PATTERN.fullmatch(sha256):
+        raise ValueError(f"Training weight {field_name} digest is invalid.")
+    if _sha256_bytes(payload) != sha256:
+        raise ValueError(f"Training weight {field_name} digest mismatch.")
+
+
+def _metadata_payload_object(payload: bytes) -> dict[str, JsonValue]:
+    """Decode a portable weight metadata payload."""
+
+    try:
+        decoded = json.loads(payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("Training weight metadata payload is invalid JSON.") from exc
+    if not isinstance(decoded, dict):
+        raise ValueError("Training weight metadata payload must be a JSON object.")
+    return _json_object(
+        cast(Mapping[str, object], decoded),
+        "Training weight metadata payload must be JSON.",
+    )
+
+
+def _loaded_state_dict(payload: Mapping[str, object]) -> Mapping[str, object]:
+    """Validate trusted loader output as a state dictionary."""
+
+    state_dict = dict(payload)
+    for key in state_dict:
+        if not isinstance(key, str) or not key:
+            raise ValueError("Training weight loader returned an invalid state key.")
+    return state_dict
 
 
 def _json_object(payload: Mapping[str, object], error_message: str) -> dict[str, JsonValue]:
@@ -417,6 +627,21 @@ def _sha256_json(payload: Mapping[str, JsonValue]) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _sha256_bytes(payload: bytes) -> str:
+    """Return the SHA-256 digest of a byte payload."""
+
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _required_json_string(payload: Mapping[str, JsonValue], field_name: str) -> str:
+    """Return a required non-empty string from a JSON object."""
+
+    value = payload.get(field_name)
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"Training weight restore plan requires {field_name}.")
+    return value
+
+
 def _required_non_empty_string(value: str, field_name: str) -> str:
     """Return a required non-empty string value."""
 
@@ -432,8 +657,11 @@ __all__ = [
     "TRAINING_WEIGHT_ARTIFACT_PATH",
     "TRAINING_WEIGHT_METADATA_ARTIFACT_PATH",
     "StudioTrainingWeightCheckpoint",
+    "StudioTrainingWeightMaterialization",
     "StudioTrainingWeightRestorePlan",
+    "TrainingWeightStateLoader",
     "build_training_weight_restore_plan",
+    "materialize_training_weight_payload",
     "validate_training_weight_checkpoint_metadata",
     "write_training_weight_checkpoint",
 ]

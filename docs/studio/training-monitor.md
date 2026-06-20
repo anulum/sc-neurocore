@@ -139,7 +139,11 @@ After verification, operators can export a
 `studio.training.weight-restore-verification.v1` manifest that records the
 source job, route template, loader policy, metadata artifact hash, weight
 artifact hash, byte count, and verification timestamp without embedding raw
-model weights.
+model weights. Backend integrations that need actual in-memory weights should
+use the platform materializer for the restore plan, metadata bytes, and weight
+bytes; it rechecks artifact sizes and SHA-256 digests before invoking a trusted
+state-dictionary loader and returns only path-free materialization metadata to
+operator-facing surfaces.
 
 ## API Endpoints
 
