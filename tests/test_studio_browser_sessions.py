@@ -238,6 +238,110 @@ def test_browser_login_session_logout_flow_is_audited(tmp_path: Path) -> None:
     assert "studio.identity.browser_users.list" in actions
 
 
+def test_identity_lifecycle_routes_emit_allow_and_deny_audit_rows(
+    tmp_path: Path,
+) -> None:
+    """Identity lifecycle APIs leave password-free allow and deny evidence."""
+
+    identity_path = tmp_path / "studio-identities.json"
+    audit_path = tmp_path / "studio-audit.jsonl"
+    _write_identity_file(identity_path)
+    client = _client(identity_path, audit_path)
+    admin_headers = {"authorization": "Bearer service-token"}
+
+    create_viewer = client.post(
+        "/api/studio/identity/browser-users",
+        headers=admin_headers,
+        json={
+            "active": True,
+            "expires_at_utc": None,
+            "password": "viewer-password",
+            "principal_id": "user-viewer",
+            "roles": ["studio.viewer"],
+            "username": "viewer",
+        },
+    )
+    viewer_login = client.post(
+        "/api/studio/auth/login",
+        json={"username": "viewer", "password": "viewer-password"},
+    )
+    viewer_headers = {"authorization": f"Bearer {viewer_login.json()['access_token']}"}
+    denied_update = client.patch(
+        "/api/studio/identity/browser-users/operator",
+        headers=viewer_headers,
+        json={
+            "active": True,
+            "expires_at_utc": None,
+            "roles": ["studio.admin", "studio.viewer"],
+        },
+    )
+    update_viewer = client.patch(
+        "/api/studio/identity/browser-users/viewer",
+        headers=admin_headers,
+        json={
+            "active": False,
+            "expires_at_utc": None,
+            "roles": ["studio.viewer"],
+        },
+    )
+    rotate_operator_password = client.post(
+        "/api/studio/identity/browser-users/operator/password",
+        headers=admin_headers,
+        json={"password": "rotated-browser-password"},
+    )
+    update_service_account = client.patch(
+        "/api/studio/identity/service-accounts/svc-admin",
+        headers=admin_headers,
+        json={
+            "active": True,
+            "expires_at_utc": None,
+            "roles": ["studio.admin", "studio.viewer"],
+        },
+    )
+
+    assert create_viewer.status_code == 200
+    assert viewer_login.status_code == 200
+    assert denied_update.status_code == 403
+    assert denied_update.json()["detail"] == "missing_admin_role"
+    assert update_viewer.status_code == 200
+    assert rotate_operator_password.status_code == 200
+    assert update_service_account.status_code == 200
+
+    rows = _audit_rows(audit_path)
+    lifecycle_rows = [
+        row
+        for row in rows
+        if row["action"].startswith("studio.identity.browser_user.")
+        or row["action"].startswith("studio.identity.service_account.")
+    ]
+    route_rows = [row for row in rows if row["action"].startswith("studio.identity.browser_users.")]
+
+    assert {
+        (row["action"], row["decision"], row["reason"])
+        for row in lifecycle_rows
+    } >= {
+        ("studio.identity.browser_user.create", "allow", "created:viewer"),
+        ("studio.identity.browser_user.update", "allow", "updated:viewer"),
+        (
+            "studio.identity.browser_user.password.rotate",
+            "allow",
+            "rotated:operator:sessions_revoked:0",
+        ),
+        ("studio.identity.service_account.update", "allow", "updated:svc-admin"),
+    }
+    assert any(
+        row["action"] == "studio.identity.browser_users.update"
+        and row["decision"] == "deny"
+        and row["principal_id"] == "user-viewer"
+        and row["reason"] == "missing_admin_role"
+        for row in route_rows
+    )
+    audit_text = audit_path.read_text(encoding="utf-8")
+    assert "viewer-password" not in audit_text
+    assert "rotated-browser-password" not in audit_text
+    assert "service-token" not in audit_text
+
+
 def test_browser_login_throttles_repeated_invalid_passwords(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
