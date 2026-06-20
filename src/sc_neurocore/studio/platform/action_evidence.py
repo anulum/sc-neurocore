@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Studio action evidence manifests
 
-"""Normalized evidence manifests for Studio worker-backed actions."""
+"""Normalised evidence manifests for Studio worker-backed actions."""
 
 from __future__ import annotations
 
@@ -32,6 +32,17 @@ EvidenceClassification: TypeAlias = Literal[
     "release_benchmark",
 ]
 EvidenceStatus: TypeAlias = Literal["completed", "failed", "cancelled", "timed_out"]
+ACTION_EVIDENCE_CLASSIFICATIONS = frozenset(
+    {
+        "compile",
+        "local_regression",
+        "release_benchmark",
+        "simulation",
+        "synthesis",
+        "training",
+    }
+)
+ACTION_EVIDENCE_STATUSES = frozenset({"cancelled", "completed", "failed", "timed_out"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,8 +72,50 @@ def write_studio_action_evidence_manifest(
     principal_id: str | None = None,
     error_message: str | None = None,
 ) -> StudioActionEvidence:
-    """Write a normalized evidence manifest for a completed worker action."""
+    """Write a normalised evidence manifest for a worker-backed action.
 
+    Parameters
+    ----------
+    context:
+        Job sandbox used to write the path-confined evidence artifact.
+    action_kind:
+        Stable Studio action identifier, such as ``studio.compile``.
+    result:
+        Portable JSON result payload whose canonical SHA-256 digest is recorded.
+    result_artifact:
+        Manifest entry for the result artifact produced by the same job.
+    evidence_artifact_path:
+        Relative path for the evidence manifest artifact.
+    evidence_classification:
+        Controlled evidence class used by bundle and operator views.
+    replay_route:
+        HTTP method and route template used to reproduce the action.
+    status:
+        Terminal action status.
+    request_id:
+        Optional request correlation identifier.
+    principal_id:
+        Optional authenticated principal identifier.
+    error_message:
+        Optional bounded terminal error message.
+
+    Returns
+    -------
+    StudioActionEvidence
+        Path-free evidence payload plus its artifact manifest entry.
+
+    Raises
+    ------
+    ValueError
+        If any controlled field is invalid or ``result`` is not portable JSON.
+    """
+
+    _validate_manifest_fields(
+        action_kind=action_kind,
+        evidence_classification=evidence_classification,
+        replay_route=replay_route,
+        status=status,
+    )
     generated_at = datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     result_artifact_payload: dict[str, JsonValue] = {
         "relative_path": result_artifact.relative_path,
@@ -90,12 +143,56 @@ def write_studio_action_evidence_manifest(
 
 
 def _payload_sha256(result: Mapping[str, object]) -> str:
-    encoded = json.dumps(result, sort_keys=True, default=str).encode("utf-8")
+    encoded = json.dumps(
+        dict(result),
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _validate_manifest_fields(
+    *,
+    action_kind: str,
+    evidence_classification: str,
+    replay_route: str,
+    status: str,
+) -> None:
+    if not _is_dotted_action_kind(action_kind):
+        raise ValueError("Studio action evidence action kind is invalid.")
+    if evidence_classification not in ACTION_EVIDENCE_CLASSIFICATIONS:
+        raise ValueError("Studio action evidence classification is invalid.")
+    if status not in ACTION_EVIDENCE_STATUSES:
+        raise ValueError("Studio action evidence status is invalid.")
+    if not _is_replay_route(replay_route):
+        raise ValueError("Studio action evidence replay route is invalid.")
+
+
+def _is_dotted_action_kind(value: str) -> bool:
+    parts = value.split(".")
+    return (
+        len(parts) >= 2
+        and all(part and part.replace("_", "").isalnum() for part in parts)
+        and value == value.strip()
+    )
+
+
+def _is_replay_route(value: str) -> bool:
+    method, separator, route = value.partition(" ")
+    return (
+        separator == " "
+        and method in {"DELETE", "GET", "PATCH", "POST", "PUT"}
+        and route.startswith("/")
+        and route == route.strip()
+        and " " not in route
+    )
 
 
 __all__ = [
     "STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION",
+    "ACTION_EVIDENCE_CLASSIFICATIONS",
+    "ACTION_EVIDENCE_STATUSES",
     "EvidenceClassification",
     "EvidenceStatus",
     "StudioActionEvidence",

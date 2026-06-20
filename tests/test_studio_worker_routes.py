@@ -85,7 +85,9 @@ def _assert_evidence_manifest(
 
     evidence = _artifact_json(manager, record, evidence_path)
     expected_sha256 = hashlib.sha256(
-        json.dumps(result, sort_keys=True, default=str).encode("utf-8")
+        json.dumps(result, allow_nan=False, sort_keys=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
     ).hexdigest()
     assert evidence["schema_version"] == STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION
     assert evidence["action_kind"] == action_kind
