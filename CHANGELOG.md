@@ -20,6 +20,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - `BitstreamEncoder` again accepts `BitstreamEncoder(length=..., seed=...)`:
   `x_min`/`x_max` default to the unipolar probability domain `[0, 1]`, with
   explicit ranges still supported.
+- `import sc_neurocore` is now lightweight and torch-free: public symbols and
+  submodules load lazily (PEP 562) instead of eagerly importing the torch-pulling
+  graph (plasticity, datasets, layers). Downstream consumers can run their
+  coverage tracers over code that imports sc-neurocore without the torch
+  C-extension crash; torch loads only when a torch-dependent feature is used.
 
 ### Studio platform
 - Fail closed on non-positive Studio audit retained-file settings so configured

@@ -34,78 +34,145 @@ Module Tiers
 """
 
 
+import importlib
+from typing import TYPE_CHECKING, Any
+
 __version__ = "3.15.34"
 
-# ── Datasets ────────────────────────────────────────────────────────────────
-from . import datasets  # noqa: F401
-from . import plasticity
+# Public symbols load lazily (PEP 562) so ``import sc_neurocore`` stays
+# lightweight and, crucially, torch-free: eager submodule imports pulled torch
+# (via plasticity/datasets/layers), which segfaults a downstream consumer's
+# coverage tracer. Importing a symbol or submodule triggers its module on first
+# access. The TYPE_CHECKING block keeps the names visible to type checkers/IDEs.
+if TYPE_CHECKING:
+    from . import datasets, plasticity
+    from .exceptions import (
+        SCCompilerError,
+        SCConfigError,
+        SCDependencyError,
+        SCEncodingError,
+        SCHardwareError,
+        SCNeuroError,
+        SCWeightError,
+    )
+    from .layers import (
+        MemristiveDenseLayer,
+        SCConv2DLayer,
+        SCDenseLayer,
+        SCFusionLayer,
+        SCLearningLayer,
+        SCRecurrentLayer,
+        StochasticAttention,
+        VectorizedSCLayer,
+    )
+    from .license import (
+        CommercialLicenseStatus,
+        get_license_status,
+        load_license_from_env,
+        set_license_key,
+        validate_license_key,
+    )
+    from .neurons import (
+        BaseNeuron,
+        FixedPointBitstreamEncoder,
+        FixedPointLFSR,
+        FixedPointLIFNeuron,
+        HomeostaticLIFNeuron,
+        SCIzhikevichNeuron,
+        StochasticDendriticNeuron,
+        StochasticLIFNeuron,
+    )
+    from .recorders import BitstreamSpikeRecorder
+    from .sources import BitstreamCurrentSource
+    from .synapses import (
+        BitstreamDotProduct,
+        BitstreamSynapse,
+        RewardModulatedSTDPSynapse,
+        StochasticSTDPSynapse,
+    )
+    from .utils import (
+        RNG,
+        BitstreamAverager,
+        BitstreamEncoder,
+        bitstream_to_probability,
+        deprecated,
+        estimate_memory,
+        generate_bernoulli_bitstream,
+        generate_sobol_bitstream,
+    )
 
-# ── Neurons ──────────────────────────────────────────────────────────────────
-from .neurons import (
-    BaseNeuron,
-    StochasticLIFNeuron,
-    FixedPointLIFNeuron,
-    FixedPointLFSR,
-    FixedPointBitstreamEncoder,
-    HomeostaticLIFNeuron,
-    StochasticDendriticNeuron,
-    SCIzhikevichNeuron,
-)
+#: Public submodules exposed as attributes of the package.
+_LAZY_SUBMODULES = frozenset({"datasets", "plasticity"})
 
-# ── Synapses ─────────────────────────────────────────────────────────────────
-from .synapses import (
-    BitstreamSynapse,
-    BitstreamDotProduct,
-    StochasticSTDPSynapse,
-    RewardModulatedSTDPSynapse,
-)
+#: Public symbol name → the submodule that defines it.
+_SYMBOL_SOURCES: dict[str, str] = {
+    "BaseNeuron": "neurons",
+    "StochasticLIFNeuron": "neurons",
+    "FixedPointLIFNeuron": "neurons",
+    "FixedPointLFSR": "neurons",
+    "FixedPointBitstreamEncoder": "neurons",
+    "HomeostaticLIFNeuron": "neurons",
+    "StochasticDendriticNeuron": "neurons",
+    "SCIzhikevichNeuron": "neurons",
+    "BitstreamSynapse": "synapses",
+    "BitstreamDotProduct": "synapses",
+    "StochasticSTDPSynapse": "synapses",
+    "RewardModulatedSTDPSynapse": "synapses",
+    "SCDenseLayer": "layers",
+    "SCConv2DLayer": "layers",
+    "SCLearningLayer": "layers",
+    "VectorizedSCLayer": "layers",
+    "SCRecurrentLayer": "layers",
+    "MemristiveDenseLayer": "layers",
+    "SCFusionLayer": "layers",
+    "StochasticAttention": "layers",
+    "BitstreamCurrentSource": "sources",
+    "RNG": "utils",
+    "BitstreamEncoder": "utils",
+    "BitstreamAverager": "utils",
+    "generate_bernoulli_bitstream": "utils",
+    "generate_sobol_bitstream": "utils",
+    "bitstream_to_probability": "utils",
+    "deprecated": "utils",
+    "estimate_memory": "utils",
+    "BitstreamSpikeRecorder": "recorders",
+    "CommercialLicenseStatus": "license",
+    "get_license_status": "license",
+    "load_license_from_env": "license",
+    "set_license_key": "license",
+    "validate_license_key": "license",
+    "SCNeuroError": "exceptions",
+    "SCEncodingError": "exceptions",
+    "SCConfigError": "exceptions",
+    "SCWeightError": "exceptions",
+    "SCDependencyError": "exceptions",
+    "SCHardwareError": "exceptions",
+    "SCCompilerError": "exceptions",
+}
 
-# ── Layers ───────────────────────────────────────────────────────────────────
-from .layers import (
-    SCDenseLayer,
-    SCConv2DLayer,
-    SCLearningLayer,
-    VectorizedSCLayer,
-    SCRecurrentLayer,
-    MemristiveDenseLayer,
-    SCFusionLayer,
-    StochasticAttention,
-)
 
-# ── Sources ──────────────────────────────────────────────────────────────────
-from .sources import BitstreamCurrentSource
+def __getattr__(name: str) -> Any:
+    """Lazily resolve public symbols and submodules (PEP 562).
 
-# ── Utilities ────────────────────────────────────────────────────────────────
-from .utils import (
-    RNG,
-    BitstreamEncoder,
-    BitstreamAverager,
-    generate_bernoulli_bitstream,
-    generate_sobol_bitstream,
-    bitstream_to_probability,
-    deprecated,
-    estimate_memory,
-)
+    Keeps ``import sc_neurocore`` free of heavy/optional dependencies (notably
+    torch), which is required for downstream coverage tracers not to crash.
+    """
+    if name in _LAZY_SUBMODULES:
+        module = importlib.import_module(f"{__name__}.{name}")
+        globals()[name] = module
+        return module
+    source = _SYMBOL_SOURCES.get(name)
+    if source is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(importlib.import_module(f"{__name__}.{source}"), name)
+    globals()[name] = value
+    return value
 
-# ── Recorders ────────────────────────────────────────────────────────────────
-from .recorders import BitstreamSpikeRecorder
-from .license import (
-    CommercialLicenseStatus,
-    get_license_status,
-    load_license_from_env,
-    set_license_key,
-    validate_license_key,
-)
 
-from .exceptions import (
-    SCNeuroError,
-    SCEncodingError,
-    SCConfigError,
-    SCWeightError,
-    SCDependencyError,
-    SCHardwareError,
-    SCCompilerError,
-)
+def __dir__() -> list[str]:
+    """List the lazily-exposed public API plus the module's own attributes."""
+    return sorted(set(__all__) | set(globals()))
+
 
 __all__ = [
     # General
