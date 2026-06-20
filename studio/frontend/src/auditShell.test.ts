@@ -7,7 +7,7 @@ describe("audit shell contract", () => {
   it("summarizes exported audit decisions without exposing paths", () => {
     const exportPayload: StudioAuditExport = {
       configured: true,
-      event_count: 4,
+      event_count: 5,
       events: [
         {
           action: "studio.simulation.run",
@@ -57,6 +57,18 @@ describe("audit shell contract", () => {
           previous_event_hash: "hash-3",
           event_hash: "hash-4",
         },
+        {
+          action: "studio.identity.service_account.update",
+          decision: "deny",
+          principal_id: "admin-2",
+          reason: "last_admin_guard",
+          route: "/api/studio/identity/service-accounts/svc-admin",
+          schema_version: "studio.audit.v1",
+          request_id: "req-4",
+          timestamp_utc: "2026-06-19T18:04:00Z",
+          previous_event_hash: "hash-4",
+          event_hash: "hash-5",
+        },
       ],
       schema_version: "studio.audit.export.v1",
       sink_type: "jsonl",
@@ -64,16 +76,18 @@ describe("audit shell contract", () => {
     };
 
     expect(summarizeAuditExport(exportPayload)).toEqual({
-      total: 4,
+      total: 5,
       allowed: 3,
-      denied: 1,
-      identityLifecycle: 1,
+      denied: 2,
+      identityLifecycle: 2,
+      identityLifecycleAllowed: 1,
+      identityLifecycleDenied: 1,
       truncated: false,
       sinkType: "jsonl",
-      latestAction: "studio.identity.browser_user.update",
-      latestIdentityLifecycleAction: "studio.identity.browser_user.update",
-      latestTimestamp: "2026-06-19T18:03:00Z",
-      headline: "4 events, 1 denied",
+      latestAction: "studio.identity.service_account.update",
+      latestIdentityLifecycleAction: "studio.identity.service_account.update",
+      latestTimestamp: "2026-06-19T18:04:00Z",
+      headline: "5 events, 2 denied",
     });
   });
 
@@ -83,6 +97,8 @@ describe("audit shell contract", () => {
       allowed: 0,
       denied: 0,
       identityLifecycle: 0,
+      identityLifecycleAllowed: 0,
+      identityLifecycleDenied: 0,
       truncated: false,
       sinkType: "unavailable",
       latestAction: null,

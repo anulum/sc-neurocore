@@ -276,6 +276,8 @@ describe("AdminPanel", () => {
     expect(html).toContain("900s");
     expect(html).toContain("Audit");
     expect(html).toContain("Identity lifecycle");
+    expect(html).toContain("Identity allowed");
+    expect(html).toContain("Identity denied");
     expect(html).toContain("studio.identity.browser_user.password.rotate");
     expect(html).toContain("jsonl");
     expect(html).toContain("unhealthy");

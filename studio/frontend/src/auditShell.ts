@@ -5,6 +5,8 @@ export interface AuditExportSummary {
   allowed: number;
   denied: number;
   identityLifecycle: number;
+  identityLifecycleAllowed: number;
+  identityLifecycleDenied: number;
   truncated: boolean;
   sinkType: string;
   latestAction: string | null;
@@ -23,6 +25,8 @@ export function summarizeAuditExport(
       allowed: 0,
       denied: 0,
       identityLifecycle: 0,
+      identityLifecycleAllowed: 0,
+      identityLifecycleDenied: 0,
       truncated: false,
       sinkType: "unavailable",
       latestAction: null,
@@ -34,6 +38,12 @@ export function summarizeAuditExport(
   const allowed = exportPayload.events.filter((event) => event.decision === "allow").length;
   const denied = exportPayload.events.filter((event) => event.decision === "deny").length;
   const identityLifecycleEvents = exportPayload.events.filter(isIdentityLifecycleAction);
+  const identityLifecycleAllowed = identityLifecycleEvents.filter(
+    (event) => event.decision === "allow",
+  ).length;
+  const identityLifecycleDenied = identityLifecycleEvents.filter(
+    (event) => event.decision === "deny",
+  ).length;
   const latest =
     exportPayload.events.length > 0
       ? exportPayload.events[exportPayload.events.length - 1]
@@ -48,6 +58,8 @@ export function summarizeAuditExport(
     allowed,
     denied,
     identityLifecycle: identityLifecycleEvents.length,
+    identityLifecycleAllowed,
+    identityLifecycleDenied,
     truncated: exportPayload.truncated,
     sinkType: exportPayload.sink_type,
     latestAction: latest?.action ?? null,

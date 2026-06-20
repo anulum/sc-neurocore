@@ -252,6 +252,8 @@ describe("admin shell model", () => {
       error: "Audit export failed",
       healthLabel: "unhealthy",
       identityLifecycle: 0,
+      identityLifecycleAllowed: 0,
+      identityLifecycleDenied: 0,
       lastError: "AuditPathIsDirectory",
       latestAction: "studio.audit.export",
       latestIdentityLifecycleAction: null,

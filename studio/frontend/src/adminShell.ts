@@ -32,6 +32,8 @@ export interface AdminAuditModel {
   error: string | null;
   healthLabel: "ready" | "unhealthy";
   identityLifecycle: number;
+  identityLifecycleAllowed: number;
+  identityLifecycleDenied: number;
   lastError: string | null;
   latestAction: string | null;
   latestIdentityLifecycleAction: string | null;
@@ -162,6 +164,8 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
       error: input.auditError,
       healthLabel: auditStatus?.healthy === false ? "unhealthy" : "ready",
       identityLifecycle: auditSummary.identityLifecycle,
+      identityLifecycleAllowed: auditSummary.identityLifecycleAllowed,
+      identityLifecycleDenied: auditSummary.identityLifecycleDenied,
       lastError: auditStatus?.last_error ?? null,
       latestAction: auditSummary.latestAction,
       latestIdentityLifecycleAction: auditSummary.latestIdentityLifecycleAction,

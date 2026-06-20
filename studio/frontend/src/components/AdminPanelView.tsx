@@ -442,6 +442,8 @@ export default function AdminPanelView({
           <div><span>Events</span><strong>{model.audit.total}</strong></div>
           <div><span>Denied</span><strong>{model.audit.denied}</strong></div>
           <div><span>Identity lifecycle</span><span style={{ fontWeight: 700 }}>{model.audit.identityLifecycle}</span></div>
+          <div><span>Identity allowed</span><span style={{ fontWeight: 700 }}>{model.audit.identityLifecycleAllowed}</span></div>
+          <div><span>Identity denied</span><span style={{ fontWeight: 700 }}>{model.audit.identityLifecycleDenied}</span></div>
           <div><span>Latest identity</span><span style={{ fontWeight: 700 }}>{model.audit.latestIdentityLifecycleAction ?? "none"}</span></div>
         </div>
         {model.audit.error && <div className="admin-warning">{model.audit.error}</div>}
